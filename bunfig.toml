@@ -1,0 +1,22 @@
+# ── Bun configuration ──────────────────────────────────────────────────────
+# https://bun.sh/docs/runtime/bunfig
+
+[install]
+# Freeze exact versions in lockfile
+exact = false
+# Cache directory
+cache = "~/.bun/install/cache"
+
+[install.scopes]
+# Use npm registry for all packages
+"@modelcontextprotocol" = "https://registry.npmjs.org/"
+"@huggingface"          = "https://registry.npmjs.org/"
+"@lancedb"              = "https://registry.npmjs.org/"
+
+[run]
+# Use Bun runtime for all scripts
+bun = true
+
+[test]
+# Test files pattern
+coverage = true

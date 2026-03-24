@@ -1,0 +1,185 @@
+# TASKS — VN Market Intelligence MCP
+# Kanban Board | Agile/Kanban | DDD + TDD | Bun + TypeScript
+
+> **WIP Limit**: max 2 tasks In Progress simultaneously
+> **Workflow**: Backlog → Todo → In Progress → Review → Done
+> **Branch**: `task/NNN-kebab-name`
+> **Report**: `reports/TASK_REPORT_NNN.md` generated after every Review
+
+---
+
+## ✅ DONE
+
+| # | Title | Branch | Merged | Report |
+|---|-------|--------|--------|--------|
+| 000 | Initial project structure | `main` | 2026-03-24 | — |
+
+---
+
+## 🔍 REVIEW
+
+*Empty — no tasks currently in review*
+
+---
+
+## 🚧 IN PROGRESS
+
+*Empty — ready to start*
+
+---
+
+## 📋 TODO
+*(Dependencies cleared — ready to assign)*
+
+| # | Title | Branch | Layer | Depends on |
+|---|-------|--------|-------|------------|
+| 001 | Project setup & DDD folder structure | `task/001-project-setup` | all | — |
+| 002 | SQLite schema + migrations | `task/002-db-schema` | infra | 001 |
+| 003 | Env config + structured logging | `task/003-env-config` | infra | 001 |
+
+---
+
+## 🗂 BACKLOG
+*(Ordered by priority — move to Todo when dependencies are Done)*
+
+### 🏗 Foundation (001–009)
+
+| # | Title | Branch | Layer | Depends on | Acceptance Criteria |
+|---|-------|--------|-------|------------|---------------------|
+| 001 | Project setup & DDD folder structure | `task/001-project-setup` | all | — | `bun install` succeeds; DDD folders exist; `bun tsc --noEmit` passes |
+| 002 | SQLite schema + migrations | `task/002-db-schema` | infra | 001 | All tables created; `initDatabase()` idempotent; test: re-run doesn't crash |
+| 003 | Env config + structured logging | `task/003-env-config` | infra | 001 | `Bun.env` typed config object; log() with levels; missing required var throws at startup |
+
+---
+
+### 🧠 RAG Pipeline (011–019)
+
+| # | Title | Branch | Layer | Depends on | Acceptance Criteria |
+|---|-------|--------|-------|------------|---------------------|
+| 011 | Embedding pipeline (HuggingFace local ONNX) | `task/011-rag-embeddings` | infra | 001 | `embed("text")` returns Float32Array[384]; model auto-downloads on first call; test: cosine similarity of identical texts = 1.0 |
+| 012 | LanceDB vector store (read/write/search) | `task/012-lancedb-store` | infra | 011 | `insertVector()` stores entry; `searchSimilar(query, k=5)` returns top-5; test: insert then search by same text returns it as #1 |
+| 013 | RAG multi-level retriever | `task/013-rag-retriever` | infra | 012 | `searchContext(query, level='action', actionCode='VCB')` filters correctly; test: level filter excludes wrong-level results |
+| 014 | Embedding text builder (domain) | `task/014-embedding-text-builder` | domain | 011 | `buildEmbeddingText(analysisEntry)` returns concatenated title+summary+tags; deterministic output |
+
+---
+
+### 📡 Infrastructure Fetchers (021–039)
+
+| # | Title | Branch | Layer | Depends on | Acceptance Criteria |
+|---|-------|--------|-------|------------|---------------------|
+| 021 | RSS base fetcher + CafeF news | `task/021-rss-cafef` | infra | 003 | `fetchCafeF()` returns ≥5 items with title, url, publishedAt, content; test with mock HTTP |
+| 022 | VnExpress Finance RSS fetcher | `task/022-rss-vnexpress` | infra | 021 | Same as 021 for VnExpress Finance RSS |
+| 023 | Reuters / AP News RSS fetcher | `task/023-rss-reuters` | infra | 021 | `fetchReuters()` returns ≥5 international news items |
+| 024 | Trading Economics scraper | `task/024-scraper-trading-economics` | infra | 003 | `fetchMacroIndicators()` returns oil price, gold, VN GDP; fallback if API key absent |
+| 025 | Yahoo Finance commodity fetcher | `task/025-yahoo-finance` | infra | 003 | `fetchCommodities()` returns WTI, Brent, XAU, DXY; values > 0 |
+| 026 | HOSE market data fetcher | `task/026-hose-prices` | infra | 003 | `fetchHosePrices(['VCB','HPG'])` returns price, changeAmt, changePct, volume for each; test with mock |
+| 027 | HNX + UPCOM market data fetcher | `task/027-hnx-prices` | infra | 003 | Same as 026 for HNX/UPCOM exchange |
+| 028 | SBV (State Bank Vietnam) macro fetcher | `task/028-sbv-macro` | infra | 003 | `fetchSbvIndicators()` returns USD/VND rate, interbank rate; updates market_prices table |
+| 029 | SSC portal scraper (congbothongtin.ssc.gov.vn) | `task/029-ssc-scraper` | infra | 002, 003 | `listSscDocuments('VCB', 'quarterly', 2025)` returns ≥1 doc with title, url, publishedAt; test with mock HTML |
+| 030 | PDF downloader + pdf-parse text extractor | `task/030-pdf-extractor` | infra | 029 | `downloadAndExtractPdf(url)` returns string with confidence > 0; handles scanned PDF gracefully (returns low confidence, not crash) |
+
+---
+
+### 📊 Domain: BCTC Parser (041–059)
+
+| # | Title | Branch | Layer | Depends on | Acceptance Criteria |
+|---|-------|--------|-------|------------|---------------------|
+| 041 | Vietnamese number parser | `task/041-vn-number-parser` | domain | 001 | `parseVnNumber('1.234.567')` = 1234567; `parseVnNumber('(456.789)')` = -456789; 15 edge cases pass |
+| 042 | Balance sheet extractor | `task/042-bctc-balance-sheet` | domain | 041 | `extractBalanceSheet(rawText)` returns BalanceSheet with totalAssets = currentAssets+nonCurrentAssets; 3 test PDFs pass |
+| 043 | Income statement extractor | `task/043-bctc-income-stmt` | domain | 041 | `extractIncomeStatement(rawText)` returns grossProfit = netRevenue - cogs; EPS > 0 for profitable companies |
+| 044 | Cash flow extractor | `task/044-bctc-cashflow` | domain | 041 | `extractCashFlow(rawText)` returns endingCash = beginningCash + net; FCF = operatingCF + capex |
+| 045 | Ratio computation | `task/045-bctc-ratios` | domain | 042, 043, 044 | `computeRatios(bs, is, cf, shares)` all 22 ratios populated; ROE = netProfit/avgEquity×100; currentRatio = currentAssets/currentLiabilities |
+| 046 | Period delta (QoQ / YoY) | `task/046-period-delta` | domain | 042, 043, 044 | `computePeriodDelta(current, previous, 'YoY')` correct % and absolute changes; handles prev=0 (returns null not Infinity) |
+| 047 | BCTC orchestrator (full parse pipeline) | `task/047-bctc-orchestrator` | application | 042-046, 030 | `parseBctcPdf(pdfText, actionCode, period)` returns complete FinancialReport; confidence ≥ 0.7 for standard PDF; stores in SQLite |
+| 048 | SSC fetch → parse → store pipeline | `task/048-ssc-pipeline` | application | 047, 029, 011 | `fetchParseAndStoreBctc('VCB', 2025, 'Q1')` full pipeline: scrape → download → parse → ratios → embed → SQLite + LanceDB |
+
+---
+
+### ⚙️ Domain: Analysis Engine (061–079)
+
+| # | Title | Branch | Layer | Depends on | Acceptance Criteria |
+|---|-------|--------|-------|------------|---------------------|
+| 061 | News normalizer → AnalysisEntry | `task/061-news-normalizer` | domain | 014 | `normalizeNews(rawItem)` returns valid AnalysisEntry with level, sentiment, impactScore (0-10); test: neutral news scores 0-3 |
+| 062 | Causal cascade engine | `task/062-cascade-engine` | domain | 061, 013 | `runImpactChain(newsText, watchlist)` returns chain with ≥1 domain entry and ≥1 action entry; confidence ≥ 0.5; test: oil news → oil_gas sector |
+| 063 | Signal detector (price + news + report) | `task/063-signal-detector` | domain | 002 | `detectSignals(snapshot, history)` returns SignalType[]; price drop -5% triggers `price_drop`; new report triggers `report_new` |
+| 064 | Multi-signal alert generator | `task/064-alert-generator` | domain | 063 | `generateAlerts(signals, watchlist, thresholds)` creates Alert with correct severity; 3-signal combo → critical; stores in SQLite |
+| 065 | Historical pattern matcher | `task/065-pattern-matcher` | application | 013, 046 | `getPatternSummary('GAS', 'oil price', 24)` returns summary with ≥3 historical precedents; averages impact direction |
+| 066 | AI summary generator | `task/066-ai-summary` | application | 061, 047 | `generateAiSummary(report)` returns AIAnalysis with signals[], outlook, keyStrengths[]; stores in FinancialReport.aiAnalysis |
+
+---
+
+### 🔌 Interface: MCP Server + Tools (081–099)
+
+| # | Title | Branch | Layer | Depends on | Acceptance Criteria |
+|---|-------|--------|-------|------------|---------------------|
+| 081 | Bun HTTP server + SSE transport | `task/081-bun-mcp-server` | interface | 002, 003 | Server starts on PORT; GET /sse returns 200 text/event-stream; GET /health returns JSON; test: HTTP request to /health |
+| 082 | Watchlist MCP tools (add/remove/get/update) | `task/082-tool-watchlist` | interface | 081, 002 | All 4 tools registered; add then get returns the stock; thresholds persist across restart |
+| 083 | Analysis MCP tools (fetch_and_analyze, impact_chain) | `task/083-tool-analysis` | interface | 081, 062 | fetch_and_analyze returns ≥1 analysis entry; run_impact_chain returns chain for oil-related text |
+| 084 | Market tools (snapshot, search_context, patterns) | `task/084-tool-market` | interface | 081, 013, 065 | get_market_snapshot returns VN-Index + prices; search_similar_context returns relevant past analysis |
+| 085 | SSC report MCP tools (fetch/summary/compare) | `task/085-tool-reports` | interface | 081, 048 | fetch_ssc_reports triggers full pipeline; get_financial_summary returns formatted metrics; compare_financials shows YoY |
+| 086 | Alert MCP tools (get_alerts, briefing, history) | `task/086-tool-alerts` | interface | 081, 064 | get_alerts filters correctly; run_daily_briefing returns structured report; mark_alert_read updates DB |
+
+---
+
+### ⏰ Interface: Scheduler (101–119)
+
+| # | Title | Branch | Layer | Depends on | Acceptance Criteria |
+|---|-------|--------|-------|------------|---------------------|
+| 101 | Morning briefing job (08:00 GMT+7) | `task/101-job-morning-briefing` | interface | 083, 086 | Cron fires at 08:00; calls fetchAllNews + generateDailyBriefing; stores result; test: manual trigger works |
+| 102 | News polling job (every 30 min) | `task/102-job-news-poll` | interface | 021-023, 062, 064 | Polls all sources; runs cascade analysis; generates alerts if signals detected; deduplicates already-seen URLs |
+| 103 | Market open/close scan jobs | `task/103-job-market-scan` | interface | 026, 027, 063 | Open job at 09:00 + close job at 15:30 (weekdays only); stores MarketSnapshot; detects abnormal volume |
+| 104 | SSC nightly report check (20:00) | `task/104-job-ssc-check` | interface | 048 | Checks all watchlist stocks for new reports; triggers parse pipeline if new; sends alert if found |
+| 105 | Evening summary job (22:00) | `task/105-job-evening-summary` | interface | 086 | Generates end-of-day digest; stores in reports/ folder with date filename |
+
+---
+
+### 🧪 Tests (121–139)
+
+| # | Title | Branch | Layer | Depends on | Acceptance Criteria |
+|---|-------|--------|-------|------------|---------------------|
+| 121 | Unit tests — BCTC parser (Vietnamese edge cases) | `task/121-test-bctc-edge-cases` | test | 042-047 | 20+ edge cases: parentheses negatives, missing fields, image-only PDF, corrupt PDF |
+| 122 | Unit tests — domain services | `task/122-test-domain-services` | test | 061-066 | Cascade engine, signal detector, alert generator all have ≥90% branch coverage |
+| 123 | Integration tests — MCP tools with real SQLite | `task/123-test-integration-mcp` | test | 082-086 | Full tool call roundtrip: add watchlist → fetch news → generate alert → get alert |
+| 124 | Integration tests — SSC pipeline (mock HTTP) | `task/124-test-ssc-pipeline` | test | 048 | Mock SSC HTML + PDF; verify full parse → store → embed pipeline |
+| 125 | E2E test — daily briefing flow | `task/125-test-e2e-briefing` | test | 101-105 | Full daily briefing: trigger → fetch → analyze → alert → report; assert final output structure |
+
+---
+
+## Kanban Summary
+
+| Column | Count | Tasks |
+|--------|-------|-------|
+| ✅ Done | 1 | 000 |
+| 🔍 Review | 0 | — |
+| 🚧 In Progress | 0 | — |
+| 📋 Todo | 3 | 001, 002, 003 |
+| 🗂 Backlog | 31 | 011-125 |
+| **Total** | **35** | |
+
+---
+
+## DDD Layer Summary
+
+| Layer | Tasks | Description |
+|-------|-------|-------------|
+| **Domain** | 041-048, 061-066, 014 | Pure business logic, no I/O |
+| **Infrastructure** | 002, 003, 011-013, 021-030 | SQLite, LanceDB, HTTP, scrapers |
+| **Application** | 047, 048, 065, 066 | Use case orchestration |
+| **Interface** | 081-105 | MCP tools, Bun server, scheduler |
+| **Test** | 121-125 | Cross-cutting |
+
+---
+
+## Definition of Done (DoD)
+
+A task is **Done** when ALL of the following are true:
+
+- [ ] Code is on `task/NNN` branch
+- [ ] `bun test src/__tests__/NNN-*.test.ts` → all pass
+- [ ] `bun tsc --noEmit` → 0 errors
+- [ ] Reviewer checklist: 100% ✅
+- [ ] Zero BLOCKING issues in Task Report
+- [ ] Merged to `main` via `--no-ff`
+- [ ] `reports/TASK_REPORT_NNN.md` generated
+- [ ] Kanban card moved to Done
+- [ ] TASKS.md updated (move row to Done table)
