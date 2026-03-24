@@ -16,5 +16,20 @@
  *   - Task 021-030: News and market data fetchers
  */
 
-// Re-export all infrastructure adapters as they are implemented
-export {};
+// ── Task 003: Env config + structured logging ────────────────────────────────
+export {
+  AppConfigError,
+  requireEnv,
+  loadConfig,
+  config,
+  type AppConfig,
+  type LogLevel,
+} from "./config.js";
+
+export {
+  createLogger,
+  logger,
+  type Logger,
+  type LogEntry,
+  type LogSink,
+} from "./logger.js";
