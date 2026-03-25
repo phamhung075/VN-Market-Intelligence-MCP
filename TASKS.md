@@ -13,6 +13,7 @@
 | # | Title | Branch | Merged | Report |
 |---|-------|--------|--------|--------|
 | 000 | Initial project structure | `main` | 2026-03-24 | — |
+| 002 | SQLite schema + migrations | `task/002-db-schema` | 2026-03-25 | [TASK_REPORT_002](reports/TASK_REPORT_002.md) |
 | 003 | Env config + structured logging | `task/003-env-config` | 2026-03-25 | [TASK_REPORT_003](reports/TASK_REPORT_003.md) |
 
 ---
@@ -35,7 +36,6 @@
 | # | Title | Branch | Layer | Depends on |
 |---|-------|--------|-------|------------|
 | 001 | Project setup & DDD folder structure | `task/001-project-setup` | all | — |
-| 002 | SQLite schema + migrations | `task/002-db-schema` | infra | 001 |
 
 ---
 
@@ -149,10 +149,10 @@
 
 | Column | Count | Tasks |
 |--------|-------|-------|
-| ✅ Done | 2 | 000, 003 |
+| ✅ Done | 3 | 000, 002, 003 |
 | 🔍 Review | 0 | — |
 | 🚧 In Progress | 0 | — |
-| 📋 Todo | 2 | 001, 002 |
+| 📋 Todo | 1 | 001 |
 | 🗂 Backlog | 31 | 011-125 |
 | **Total** | **35** | |
 
