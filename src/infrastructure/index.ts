@@ -10,11 +10,13 @@
  *   rag/       — LanceDB vector store + embedding pipeline
  *
  * Populated by future tasks:
- *   - Task 002: SQLite schema + migrations
  *   - Task 011: Embedding pipeline (HuggingFace ONNX)
  *   - Task 012: LanceDB vector store
  *   - Task 021-030: News and market data fetchers
  */
+
+// ── Task 002: SQLite schema + migrations ─────────────────────────────────────
+export { getDb, initDatabase, closeDb } from "./db/index.js";
 
 // ── Task 003: Env config + structured logging ────────────────────────────────
 export {
