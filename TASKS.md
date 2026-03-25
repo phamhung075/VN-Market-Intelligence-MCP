@@ -15,6 +15,7 @@
 | 000 | Initial project structure | `main` | 2026-03-24 | — |
 | 002 | SQLite schema + migrations | `task/002-db-schema` | 2026-03-25 | [TASK_REPORT_002](reports/TASK_REPORT_002.md) |
 | 003 | Env config + structured logging | `task/003-env-config` | 2026-03-25 | [TASK_REPORT_003](reports/TASK_REPORT_003.md) |
+| 041 | Vietnamese number parser | `task/041-vn-number-parser` | 2026-03-25 | [TASK_REPORT_041](reports/TASK_REPORT_041.md) |
 
 ---
 
@@ -84,7 +85,7 @@
 
 | # | Title | Branch | Layer | Depends on | Acceptance Criteria |
 |---|-------|--------|-------|------------|---------------------|
-| 041 | Vietnamese number parser | `task/041-vn-number-parser` | domain | 001 | `parseVnNumber('1.234.567')` = 1234567; `parseVnNumber('(456.789)')` = -456789; 15 edge cases pass |
+| 041 | Vietnamese number parser | `task/041-vn-number-parser` | domain | 001 | ~~Done~~ |
 | 042 | Balance sheet extractor | `task/042-bctc-balance-sheet` | domain | 041 | `extractBalanceSheet(rawText)` returns BalanceSheet with totalAssets = currentAssets+nonCurrentAssets; 3 test PDFs pass |
 | 043 | Income statement extractor | `task/043-bctc-income-stmt` | domain | 041 | `extractIncomeStatement(rawText)` returns grossProfit = netRevenue - cogs; EPS > 0 for profitable companies |
 | 044 | Cash flow extractor | `task/044-bctc-cashflow` | domain | 041 | `extractCashFlow(rawText)` returns endingCash = beginningCash + net; FCF = operatingCF + capex |
@@ -149,11 +150,11 @@
 
 | Column | Count | Tasks |
 |--------|-------|-------|
-| ✅ Done | 3 | 000, 002, 003 |
+| ✅ Done | 4 | 000, 002, 003, 041 |
 | 🔍 Review | 0 | — |
 | 🚧 In Progress | 0 | — |
 | 📋 Todo | 1 | 001 |
-| 🗂 Backlog | 31 | 011-125 |
+| 🗂 Backlog | 30 | 011-125 |
 | **Total** | **35** | |
 
 ---
