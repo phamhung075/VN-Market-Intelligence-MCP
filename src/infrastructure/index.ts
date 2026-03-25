@@ -35,3 +35,12 @@ export {
   type LogEntry,
   type LogSink,
 } from "./logger.js";
+
+// ── Task 011: Embedding pipeline (HuggingFace ONNX) ──────────────────────────
+export {
+  embed,
+  embedBatch,
+  cosineSimilarity,
+  getEmbeddingPipeline,
+  buildBctcEmbeddingText,
+} from "./rag/index.js";
