@@ -17,6 +17,7 @@
 | 003 | Env config + structured logging | `task/003-env-config` | 2026-03-25 | [TASK_REPORT_003](reports/TASK_REPORT_003.md) |
 | 041 | Vietnamese number parser | `task/041-vn-number-parser` | 2026-03-25 | [TASK_REPORT_041](reports/TASK_REPORT_041.md) |
 | 011 | Embedding pipeline (HuggingFace local ONNX) | `task/011-rag-embeddings` | 2026-03-25 | [TASK_REPORT_011](reports/TASK_REPORT_011.md) |
+| 042 | Balance sheet extractor | `task/042-bctc-balance-sheet` | 2026-03-25 | [TASK_REPORT_042](reports/TASK_REPORT_042.md) |
 
 ---
 
@@ -87,7 +88,7 @@
 | # | Title | Branch | Layer | Depends on | Acceptance Criteria |
 |---|-------|--------|-------|------------|---------------------|
 | 041 | Vietnamese number parser | `task/041-vn-number-parser` | domain | 001 | ~~Done~~ |
-| 042 | Balance sheet extractor | `task/042-bctc-balance-sheet` | domain | 041 | `extractBalanceSheet(rawText)` returns BalanceSheet with totalAssets = currentAssets+nonCurrentAssets; 3 test PDFs pass |
+| 042 | ~~Balance sheet extractor~~ | `task/042-bctc-balance-sheet` | domain | 041 | ~~Done~~ |
 | 043 | Income statement extractor | `task/043-bctc-income-stmt` | domain | 041 | `extractIncomeStatement(rawText)` returns grossProfit = netRevenue - cogs; EPS > 0 for profitable companies |
 | 044 | Cash flow extractor | `task/044-bctc-cashflow` | domain | 041 | `extractCashFlow(rawText)` returns endingCash = beginningCash + net; FCF = operatingCF + capex |
 | 045 | Ratio computation | `task/045-bctc-ratios` | domain | 042, 043, 044 | `computeRatios(bs, is, cf, shares)` all 22 ratios populated; ROE = netProfit/avgEquity×100; currentRatio = currentAssets/currentLiabilities |
@@ -151,11 +152,11 @@
 
 | Column | Count | Tasks |
 |--------|-------|-------|
-| ✅ Done | 5 | 000, 002, 003, 011, 041 |
+| ✅ Done | 6 | 000, 002, 003, 011, 041, 042 |
 | 🔍 Review | 0 | — |
 | 🚧 In Progress | 0 | — |
 | 📋 Todo | 1 | 001 |
-| 🗂 Backlog | 29 | 012-125 |
+| 🗂 Backlog | 28 | 012-125 |
 | **Total** | **35** | |
 
 ---
