@@ -1,8 +1,7 @@
 /**
  * RAG — barrel export
  *
- * Re-exports embedding pipeline and utilities.
- * Future tasks will add vector store (LanceDB) exports here.
+ * Re-exports embedding pipeline, utilities, and LanceDB vector store.
  */
 
 export {
@@ -12,3 +11,13 @@ export {
   getEmbeddingPipeline,
   buildBctcEmbeddingText,
 } from "./embeddings.js";
+
+export {
+  initVectorStore,
+  insertVector,
+  searchSimilar,
+  closeVectorStore,
+  type VectorEntry,
+  type SearchResult,
+  type SearchFilters,
+} from "./vectorstore.js";

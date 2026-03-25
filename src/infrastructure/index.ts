@@ -44,3 +44,14 @@ export {
   getEmbeddingPipeline,
   buildBctcEmbeddingText,
 } from "./rag/index.js";
+
+// ── Task 012: LanceDB vector store ──────────────────────────────────────────
+export {
+  initVectorStore,
+  insertVector,
+  searchSimilar,
+  closeVectorStore,
+  type VectorEntry,
+  type SearchResult,
+  type SearchFilters,
+} from "./rag/index.js";

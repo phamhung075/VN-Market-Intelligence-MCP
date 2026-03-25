@@ -1,0 +1,198 @@
+/**
+ * RAG — LanceDB Vector Store
+ *
+ * Generic vector store for RAG analysis entries.
+ * Stores entries with 384-dim embeddings (multilingual-MiniLM)
+ * and supports filtered similarity search.
+ *
+ * Exports:
+ *   initVectorStore(dbPath?)   — open / create the LanceDB database
+ *   insertVector(entry)        — store a single entry
+ *   searchSimilar(query, k, filters) — top-k similarity search
+ *   closeVectorStore()         — release resources
+ */
+
+import * as lancedb from "@lancedb/lancedb";
+
+const DEFAULT_LANCEDB_PATH = Bun.env.LANCEDB_PATH ?? "./data/lancedb";
+const TABLE_NAME = "rag_entries";
+
+// ── Types ─────────────────────────────────────────────────────────────────
+
+export interface VectorEntry {
+  id: string;
+  level: string; // "global" | "country" | "domain" | "action"
+  title: string;
+  summary: string;
+  vector: Float32Array | number[];
+  tags: string[]; // stored as JSON string internally
+  actionCode?: string;
+  createdAt: string; // ISO timestamp
+}
+
+/**
+ * Internal row shape stored in LanceDB.
+ * Uses snake_case column names because LanceDB/DataFusion
+ * lowercases unquoted identifiers in SQL filter expressions.
+ */
+interface StoredRow {
+  id: string;
+  level: string;
+  title: string;
+  summary: string;
+  vector: number[];
+  tags: string; // JSON string
+  action_code: string;
+  created_at: string;
+}
+
+export interface SearchResult {
+  id: string;
+  level: string;
+  title: string;
+  summary: string;
+  tags: string[];
+  actionCode: string;
+  createdAt: string;
+  distance: number; // L2 distance — lower is more similar
+}
+
+export interface SearchFilters {
+  level?: string;
+  actionCode?: string;
+}
+
+// ── DB connection singleton ───────────────────────────────────────────────
+
+let _db: Awaited<ReturnType<typeof lancedb.connect>> | null = null;
+let _table: Awaited<ReturnType<Awaited<ReturnType<typeof lancedb.connect>>["openTable"]>> | null =
+  null;
+
+/**
+ * Initialise (or re-initialise) the vector store.
+ * Creates the LanceDB directory and table if they do not exist.
+ */
+export async function initVectorStore(dbPath?: string): Promise<void> {
+  const resolvedPath = dbPath ?? DEFAULT_LANCEDB_PATH;
+
+  // Ensure parent directory exists
+  const fs = await import("node:fs");
+  if (!fs.existsSync(resolvedPath)) {
+    fs.mkdirSync(resolvedPath, { recursive: true });
+  }
+
+  _db = await lancedb.connect(resolvedPath);
+  _table = null; // will be lazily created on first operation
+}
+
+/**
+ * Get or create the table (lazy).
+ */
+async function getTable() {
+  if (_table) return _table;
+  if (!_db) {
+    await initVectorStore();
+  }
+  const db = _db!;
+
+  const names = await db.tableNames();
+  if (names.includes(TABLE_NAME)) {
+    _table = await db.openTable(TABLE_NAME);
+    return _table;
+  }
+
+  // Create table with a seed row then delete it to establish the schema
+  const seed: StoredRow = {
+    id: "__init__",
+    level: "",
+    title: "",
+    summary: "",
+    vector: new Array(384).fill(0),
+    tags: "[]",
+    action_code: "",
+    created_at: new Date().toISOString(),
+  };
+  _table = await db.createTable(TABLE_NAME, [seed as unknown as Record<string, unknown>]);
+  await _table.delete("id = '__init__'");
+  return _table;
+}
+
+// ── Write ─────────────────────────────────────────────────────────────────
+
+/**
+ * Insert a single vector entry into the store.
+ */
+export async function insertVector(entry: VectorEntry): Promise<void> {
+  const table = await getTable();
+  const row: StoredRow = {
+    id: entry.id,
+    level: entry.level,
+    title: entry.title,
+    summary: entry.summary,
+    vector: Array.from(entry.vector),
+    tags: JSON.stringify(entry.tags),
+    action_code: entry.actionCode ?? "",
+    created_at: entry.createdAt,
+  };
+  await table.add([row as unknown as Record<string, unknown>]);
+}
+
+// ── Search ────────────────────────────────────────────────────────────────
+
+/**
+ * Search for the top-k most similar entries to the given query vector.
+ *
+ * @param queryVector 384-dim vector
+ * @param k           max results (default 5)
+ * @param filters     optional level / actionCode filter
+ */
+export async function searchSimilar(
+  queryVector: Float32Array | number[],
+  k: number = 5,
+  filters?: SearchFilters,
+): Promise<SearchResult[]> {
+  const table = await getTable();
+  const qv = Array.from(queryVector);
+
+  let query = table.vectorSearch(qv).limit(k);
+
+  // Apply filters (use snake_case column names to match stored schema)
+  const clauses: string[] = [];
+  if (filters?.level) clauses.push(`level = '${filters.level}'`);
+  if (filters?.actionCode) clauses.push(`action_code = '${filters.actionCode}'`);
+  if (clauses.length > 0) {
+    query = query.where(clauses.join(" AND "));
+  }
+
+  const rows = (await query.toArray()) as unknown as (StoredRow & { _distance: number })[];
+
+  return rows.map((r) => ({
+    id: r.id,
+    level: r.level,
+    title: r.title,
+    summary: r.summary,
+    tags: safeParseTags(r.tags),
+    actionCode: r.action_code,
+    createdAt: r.created_at,
+    distance: r._distance ?? 0,
+  }));
+}
+
+function safeParseTags(raw: string | string[]): string[] {
+  if (Array.isArray(raw)) return raw;
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return [];
+  }
+}
+
+// ── Lifecycle ─────────────────────────────────────────────────────────────
+
+/**
+ * Close the vector store connection and release resources.
+ */
+export async function closeVectorStore(): Promise<void> {
+  _table = null;
+  _db = null;
+}
