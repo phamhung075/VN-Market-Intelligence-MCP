@@ -18,6 +18,7 @@
 | 041 | Vietnamese number parser | `task/041-vn-number-parser` | 2026-03-25 | [TASK_REPORT_041](reports/TASK_REPORT_041.md) |
 | 011 | Embedding pipeline (HuggingFace local ONNX) | `task/011-rag-embeddings` | 2026-03-25 | [TASK_REPORT_011](reports/TASK_REPORT_011.md) |
 | 042 | Balance sheet extractor | `task/042-bctc-balance-sheet` | 2026-03-25 | [TASK_REPORT_042](reports/TASK_REPORT_042.md) |
+| 012 | LanceDB vector store (read/write/search) | `task/012-lancedb-store` | 2026-03-25 | [TASK_REPORT_012](reports/TASK_REPORT_012.md) |
 
 ---
 
@@ -60,7 +61,7 @@
 | # | Title | Branch | Layer | Depends on | Acceptance Criteria |
 |---|-------|--------|-------|------------|---------------------|
 | 011 | ~~Embedding pipeline (HuggingFace local ONNX)~~ | `task/011-rag-embeddings` | infra | 001 | ~~Done~~ |
-| 012 | LanceDB vector store (read/write/search) | `task/012-lancedb-store` | infra | 011 | `insertVector()` stores entry; `searchSimilar(query, k=5)` returns top-5; test: insert then search by same text returns it as #1 |
+| 012 | ~~LanceDB vector store (read/write/search)~~ | `task/012-lancedb-store` | infra | 011 | ~~Done~~ |
 | 013 | RAG multi-level retriever | `task/013-rag-retriever` | infra | 012 | `searchContext(query, level='action', actionCode='VCB')` filters correctly; test: level filter excludes wrong-level results |
 | 014 | Embedding text builder (domain) | `task/014-embedding-text-builder` | domain | 011 | `buildEmbeddingText(analysisEntry)` returns concatenated title+summary+tags; deterministic output |
 
@@ -152,11 +153,11 @@
 
 | Column | Count | Tasks |
 |--------|-------|-------|
-| ✅ Done | 6 | 000, 002, 003, 011, 041, 042 |
+| ✅ Done | 7 | 000, 002, 003, 011, 012, 041, 042 |
 | 🔍 Review | 0 | — |
 | 🚧 In Progress | 0 | — |
 | 📋 Todo | 1 | 001 |
-| 🗂 Backlog | 28 | 012-125 |
+| 🗂 Backlog | 27 | 013-125 |
 | **Total** | **35** | |
 
 ---
