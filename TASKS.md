@@ -16,6 +16,7 @@
 | 002 | SQLite schema + migrations | `task/002-db-schema` | 2026-03-25 | [TASK_REPORT_002](reports/TASK_REPORT_002.md) |
 | 003 | Env config + structured logging | `task/003-env-config` | 2026-03-25 | [TASK_REPORT_003](reports/TASK_REPORT_003.md) |
 | 041 | Vietnamese number parser | `task/041-vn-number-parser` | 2026-03-25 | [TASK_REPORT_041](reports/TASK_REPORT_041.md) |
+| 011 | Embedding pipeline (HuggingFace local ONNX) | `task/011-rag-embeddings` | 2026-03-25 | [TASK_REPORT_011](reports/TASK_REPORT_011.md) |
 
 ---
 
@@ -57,7 +58,7 @@
 
 | # | Title | Branch | Layer | Depends on | Acceptance Criteria |
 |---|-------|--------|-------|------------|---------------------|
-| 011 | Embedding pipeline (HuggingFace local ONNX) | `task/011-rag-embeddings` | infra | 001 | `embed("text")` returns Float32Array[384]; model auto-downloads on first call; test: cosine similarity of identical texts = 1.0 |
+| 011 | ~~Embedding pipeline (HuggingFace local ONNX)~~ | `task/011-rag-embeddings` | infra | 001 | ~~Done~~ |
 | 012 | LanceDB vector store (read/write/search) | `task/012-lancedb-store` | infra | 011 | `insertVector()` stores entry; `searchSimilar(query, k=5)` returns top-5; test: insert then search by same text returns it as #1 |
 | 013 | RAG multi-level retriever | `task/013-rag-retriever` | infra | 012 | `searchContext(query, level='action', actionCode='VCB')` filters correctly; test: level filter excludes wrong-level results |
 | 014 | Embedding text builder (domain) | `task/014-embedding-text-builder` | domain | 011 | `buildEmbeddingText(analysisEntry)` returns concatenated title+summary+tags; deterministic output |
@@ -150,11 +151,11 @@
 
 | Column | Count | Tasks |
 |--------|-------|-------|
-| ✅ Done | 4 | 000, 002, 003, 041 |
+| ✅ Done | 5 | 000, 002, 003, 011, 041 |
 | 🔍 Review | 0 | — |
 | 🚧 In Progress | 0 | — |
 | 📋 Todo | 1 | 001 |
-| 🗂 Backlog | 30 | 011-125 |
+| 🗂 Backlog | 29 | 012-125 |
 | **Total** | **35** | |
 
 ---
