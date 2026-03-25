@@ -11,4 +11,4 @@
  */
 
 // Re-export all domain services as they are implemented
-export {};
+export { parseVnNumber } from "./vnNumberParser";
