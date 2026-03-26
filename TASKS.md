@@ -26,6 +26,7 @@
 | 013 | RAG multi-level retriever | `task/013-rag-retriever` | 2026-03-26 | [TASK_REPORT_013](reports/TASK_REPORT_013.md) |
 | 045 | Ratio computation | `task/045-bctc-ratios` | 2026-03-26 | [TASK_REPORT_045](reports/TASK_REPORT_045.md) |
 | 046 | Period delta (QoQ / YoY) | `task/046-period-delta` | 2026-03-26 | [TASK_REPORT_046](reports/TASK_REPORT_046.md) |
+| 047 | BCTC orchestrator (full parse pipeline) | `task/047-bctc-orchestrator` | 2026-03-26 | [TASK_REPORT_047](reports/TASK_REPORT_047.md) |
 
 ---
 
@@ -75,7 +76,6 @@
 
 | # | Title | Branch | Layer | Depends on | Acceptance Criteria |
 |---|-------|--------|-------|------------|---------------------|
-| ~~047~~ | ~~BCTC orchestrator (full parse pipeline)~~ | ~~`task/047-bctc-orchestrator`~~ | ~~application~~ | ~~042-046, 030~~ | **Review** — `parseBctcReport` implemented; 9/9 tests pass |
 | 048 | SSC fetch → parse → store pipeline | `task/048-ssc-pipeline` | application | 047, 029, 011 | `fetchParseAndStoreBctc('VCB', 2025, 'Q1')` full pipeline: scrape → download → parse → ratios → embed → SQLite + LanceDB |
 
 ---
@@ -132,8 +132,8 @@
 
 | Column | Count | Tasks |
 |--------|-------|-------|
-| ✅ Done | 14 | 000, 001, 002, 003, 011, 012, 013, 014, 041, 042, 043, 044, 045, 046 |
-| 🔍 Review | 1 | 047 |
+| ✅ Done | 15 | 000, 001, 002, 003, 011, 012, 013, 014, 041, 042, 043, 044, 045, 046, 047 |
+| 🔍 Review | 0 | — |
 | 🚧 In Progress | 0 | — |
 | 📋 Todo | 9 | 021, 024-029, 063, 081 |
 | 🗂 Backlog | 10 | 022, 023, 030, 048, 061, 062, 064-066, 082-086, 101-105, 121-125 |
