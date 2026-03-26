@@ -31,14 +31,13 @@
 | 081 | Bun HTTP server + SSE transport | `task/081-bun-mcp-server` | 2026-03-26 | [TASK_REPORT_081](reports/TASK_REPORT_081.md) |
 | 030 | PDF downloader + pdf-parse text extractor | `task/030-pdf-extractor` | 2026-03-26 | [TASK_REPORT_030](reports/TASK_REPORT_030.md) |
 | 048 | SSC fetch → parse → store pipeline | `task/048-ssc-pipeline` | 2026-03-26 | [TASK_REPORT_048](reports/TASK_REPORT_048.md) |
+| 085 | SSC report MCP tools (fetch/summary/compare) | `task/085-tool-reports` | 2026-03-26 | [TASK_REPORT_085](reports/TASK_REPORT_085.md) |
 
 ---
 
 ## 🔍 REVIEW
 
-| # | Title | Branch | Layer | Depends on | Sprint |
-|---|-------|--------|-------|------------|--------|
-| 085 | SSC report MCP tools (fetch/summary/compare) | `task/085-tool-reports` | interface | 081 ✅, 048 ✅ | 002 |
+*Empty*
 
 ---
 
@@ -53,7 +52,7 @@
 
 ### Sprint 002 tasks (priority — do these first)
 
-*Empty — 085 moved to Review*
+*Empty — Sprint 002 complete*
 
 ### Deferred to Sprint 003+
 
@@ -132,10 +131,10 @@
 
 | Column | Count | Tasks |
 |--------|-------|-------|
-| ✅ Done | 19 | 000, 001, 002, 003, 011, 012, 013, 014, 029, 030, 041, 042, 043, 044, 045, 046, 047, 048, 081 |
+| ✅ Done | 20 | 000, 001, 002, 003, 011, 012, 013, 014, 029, 030, 041, 042, 043, 044, 045, 046, 047, 048, 081, 085 |
 | 🔍 Review | 0 | — |
 | 🚧 In Progress | 0 | — |
-| 📋 Todo | 7 | Sprint 002: 085 — Sprint 003+: 021, 024-028, 063 |
+| 📋 Todo | 6 | Sprint 003+: 021, 024-028, 063 |
 | 🗂 Backlog | 8 | 022, 023, 061, 062, 064-066, 082-084, 086, 101-105, 121-125 |
 | **Total** | **35** | |
 
