@@ -2,7 +2,7 @@
 
 ## Current Sprint
 
-status: PLANNING
+status: DONE
 sprint_id: 001
 
 ### Goal
@@ -26,3 +26,4 @@ Agent can call `fetch_ssc_reports('VCB', 'quarterly', 2024)` and receive a respo
 | Sprint | Goal | Status |
 |--------|------|--------|
 | 000 | Project setup, DB schema, env config, embeddings, vectorstore, watchlist, BCTC balance sheet + income stmt | Done |
+| 001 | BCTC RAG pipeline: cash flow, ratio, delta, orchestrator, RAG retriever | Done |
