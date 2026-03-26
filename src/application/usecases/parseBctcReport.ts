@@ -1,0 +1,401 @@
+/**
+ * Task 047 — BCTC Orchestrator (Full Parse Pipeline)
+ *
+ * Application use case: orchestrates the full BCTC parse pipeline.
+ *
+ * Pipeline:
+ *   1. extractBalanceSheet     (domain)
+ *   2. extractIncomeStatement  (domain)
+ *   3. extractCashFlow         (domain)
+ *   4. computeEbitda           (derived: operatingProfit + depreciation)
+ *   5. computeFinancialRatios  (domain)
+ *   6. computePeriodDelta      (domain, optional — only when previousReport given)
+ *   7. computeConfidence       (count non-zero fields / total key fields)
+ *   8. store in SQLite         (infrastructure)
+ *
+ * Layering rule: this file (application) is allowed to import from both
+ * domain/ and infrastructure/. Domain services must never import infrastructure.
+ */
+
+import { randomUUID } from "node:crypto";
+
+import { extractBalanceSheet } from "../../domain/services/balanceSheetExtractor.js";
+import { extractIncomeStatement } from "../../domain/services/incomeStatementExtractor.js";
+import { extractCashFlow } from "../../domain/services/cashFlowExtractor.js";
+import { computeFinancialRatios } from "../../domain/services/ratioComputer.js";
+import { computePeriodDelta } from "../../domain/services/periodDeltaComputer.js";
+import type { FinancialMetrics } from "../../domain/services/periodDeltaComputer.js";
+import { getDb, initDatabase } from "../../infrastructure/db/schema.js";
+
+import type {
+  FinancialReport,
+  FiscalPeriod,
+  BalanceSheet,
+  IncomeStatement,
+  CashFlowStatement,
+  FinancialRatios,
+  PeriodDelta,
+} from "../../../bctc-schema.js";
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Input / Output types
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface ParseBctcReportParams {
+  /** Raw text extracted from a BCTC PDF (all three statements) */
+  rawText: string;
+  /** Stock ticker / action code e.g. "VCB", "HPG" */
+  actionCode: string;
+  /** Fiscal period this report covers */
+  period: FiscalPeriod;
+  /** Shares outstanding — optional, enables per-share ratios */
+  shares?: number;
+  /** Market price per share in VND — optional, enables valuation ratios */
+  price?: number;
+  /**
+   * Previous period FinancialReport — optional.
+   * When provided, QoQ/YoY delta is computed and attached to the result.
+   * Also used for average-based ratios (ROE, ROA, etc.).
+   */
+  previousReport?: FinancialReport;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Confidence scoring
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Compute extraction confidence: fraction of key financial fields that
+ * are non-zero. A complete, well-structured BCTC should score ≥ 0.7.
+ *
+ * Key fields sampled:
+ *  - Balance Sheet: 6 fields
+ *  - Income Statement: 6 fields
+ *  - Cash Flow: 4 fields
+ *  Total: 16 key fields
+ */
+function computeConfidence(
+  bs: BalanceSheet,
+  is: IncomeStatement,
+  cf: CashFlowStatement,
+): number {
+  const keyFields: number[] = [
+    // Balance Sheet (6 fields)
+    bs.totalAssets,
+    bs.currentAssets.cash,
+    bs.currentAssets.inventory,
+    bs.totalLiabilities,
+    bs.equity.total,
+    bs.totalLiabilitiesAndEquity,
+
+    // Income Statement (6 fields)
+    is.netRevenue,
+    is.grossProfit,
+    is.operatingProfit,
+    is.profitBeforeTax,
+    is.netProfit,
+    is.totalIncomeTax,
+
+    // Cash Flow (4 fields)
+    cf.operatingCF,
+    cf.netCashFlow,
+    cf.beginningCash,
+    cf.endingCash,
+  ];
+
+  const nonZeroCount = keyFields.filter((v) => v !== 0).length;
+  return nonZeroCount / keyFields.length;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Delta helper: build FinancialMetrics from a FinancialReport
+// ─────────────────────────────────────────────────────────────────────────────
+
+function toMetrics(report: FinancialReport): FinancialMetrics {
+  return {
+    netRevenue: report.incomeStatement.netRevenue,
+    grossProfit: report.incomeStatement.grossProfit,
+    operatingProfit: report.incomeStatement.operatingProfit,
+    netProfit: report.incomeStatement.netProfit,
+    ebitda: report.incomeStatement.ebitda,
+    eps: report.incomeStatement.eps,
+    totalAssets: report.balanceSheet.totalAssets,
+    equity: report.balanceSheet.equity.total,
+    totalDebt:
+      report.balanceSheet.currentLiabilities.shortTermDebt +
+      report.balanceSheet.longTermLiabilities.longTermDebt,
+    cash: report.balanceSheet.currentAssets.cash,
+    operatingCF: report.cashFlow.operatingCF,
+    freeCashFlow: report.cashFlow.freeCashFlow,
+    grossMarginPct: report.ratios.grossMarginPct ?? 0,
+    netMarginPct: report.ratios.netMarginPct ?? 0,
+    roe: report.ratios.roe ?? 0,
+    debtToEquity: report.ratios.debtToEquity ?? 0,
+  };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SQLite persistence
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Upsert a FinancialReport into the financial_reports SQLite table.
+ * Uses INSERT OR REPLACE to handle re-runs idempotently.
+ */
+function storeReport(report: FinancialReport): void {
+  const db = getDb();
+  const stmt = db.prepare(`
+    INSERT OR REPLACE INTO financial_reports (
+      id, action_code, company_name, exchange, domain,
+      period_year, period_quarter, period_type, period_start, period_end, sort_key,
+      ssc_url, pdf_path, published_at, parsed_at, audit_status, auditor,
+      extraction_confidence,
+      net_revenue, gross_profit, operating_profit, ebitda,
+      profit_before_tax, net_profit, eps, diluted_eps,
+      total_assets, current_assets, cash, inventory,
+      total_liabilities, short_term_debt, long_term_debt, equity_total,
+      operating_cf, investing_cf, financing_cf, capex, free_cash_flow,
+      gross_margin_pct, operating_margin_pct, net_margin_pct,
+      roe, roa, current_ratio, debt_to_equity, net_debt_to_ebitda, pe, pb,
+      balance_sheet_json, income_stmt_json, cash_flow_json, ratios_json,
+      yoy_delta_json, qoq_delta_json,
+      market_data_json, embedding_text, notes_raw_text
+    ) VALUES (
+      $id, $actionCode, $companyName, $exchange, $domain,
+      $periodYear, $periodQuarter, $periodType, $periodStart, $periodEnd, $sortKey,
+      $sscUrl, $pdfPath, $publishedAt, $parsedAt, $auditStatus, $auditor,
+      $extractionConfidence,
+      $netRevenue, $grossProfit, $operatingProfit, $ebitda,
+      $profitBeforeTax, $netProfit, $eps, $dilutedEps,
+      $totalAssets, $currentAssets, $cash, $inventory,
+      $totalLiabilities, $shortTermDebt, $longTermDebt, $equityTotal,
+      $operatingCf, $investingCf, $financingCf, $capex, $freeCashFlow,
+      $grossMarginPct, $operatingMarginPct, $netMarginPct,
+      $roe, $roa, $currentRatio, $debtToEquity, $netDebtToEbitda, $pe, $pb,
+      $balanceSheetJson, $incomeStmtJson, $cashFlowJson, $ratiosJson,
+      $yoyDeltaJson, $qoqDeltaJson,
+      $marketDataJson, $embeddingText, $notesRawText
+    )
+  `);
+
+  stmt.run({
+    $id: report.id,
+    $actionCode: report.actionCode,
+    $companyName: report.companyName,
+    $exchange: report.exchange,
+    $domain: report.domain,
+
+    $periodYear: report.period.year,
+    $periodQuarter: report.period.quarter,
+    $periodType: report.period.periodType,
+    $periodStart: report.period.startDate,
+    $periodEnd: report.period.endDate,
+    $sortKey: report.period.sortKey,
+
+    $sscUrl: report.source.sscUrl,
+    $pdfPath: report.source.pdfPath,
+    $publishedAt: report.source.publishedAt,
+    $parsedAt: report.source.parsedAt,
+    $auditStatus: report.source.auditStatus,
+    $auditor: report.source.auditor,
+    $extractionConfidence: report.source.extractionConfidence,
+
+    $netRevenue: report.incomeStatement.netRevenue,
+    $grossProfit: report.incomeStatement.grossProfit,
+    $operatingProfit: report.incomeStatement.operatingProfit,
+    $ebitda: report.incomeStatement.ebitda,
+    $profitBeforeTax: report.incomeStatement.profitBeforeTax,
+    $netProfit: report.incomeStatement.netProfit,
+    $eps: report.incomeStatement.eps,
+    $dilutedEps: report.incomeStatement.dilutedEps,
+
+    $totalAssets: report.balanceSheet.totalAssets,
+    $currentAssets: report.balanceSheet.currentAssets.total,
+    $cash: report.balanceSheet.currentAssets.cash,
+    $inventory: report.balanceSheet.currentAssets.inventory,
+    $totalLiabilities: report.balanceSheet.totalLiabilities,
+    $shortTermDebt: report.balanceSheet.currentLiabilities.shortTermDebt,
+    $longTermDebt: report.balanceSheet.longTermLiabilities.longTermDebt,
+    $equityTotal: report.balanceSheet.equity.total,
+
+    $operatingCf: report.cashFlow.operatingCF,
+    $investingCf: report.cashFlow.investingCF,
+    $financingCf: report.cashFlow.financingCF,
+    $capex: report.cashFlow.capex,
+    $freeCashFlow: report.cashFlow.freeCashFlow,
+
+    $grossMarginPct: report.ratios.grossMarginPct ?? null,
+    $operatingMarginPct: report.ratios.operatingMarginPct ?? null,
+    $netMarginPct: report.ratios.netMarginPct ?? null,
+    $roe: report.ratios.roe ?? null,
+    $roa: report.ratios.roa ?? null,
+    $currentRatio: report.ratios.currentRatio ?? null,
+    $debtToEquity: report.ratios.debtToEquity ?? null,
+    $netDebtToEbitda: report.ratios.netDebtToEbitda ?? null,
+    $pe: report.ratios.pe ?? null,
+    $pb: report.ratios.pb ?? null,
+
+    $balanceSheetJson: JSON.stringify(report.balanceSheet),
+    $incomeStmtJson: JSON.stringify(report.incomeStatement),
+    $cashFlowJson: JSON.stringify(report.cashFlow),
+    $ratiosJson: JSON.stringify(report.ratios),
+
+    $yoyDeltaJson: report.yoyDelta ? JSON.stringify(report.yoyDelta) : null,
+    $qoqDeltaJson: report.qoqDelta ? JSON.stringify(report.qoqDelta) : null,
+
+    $marketDataJson: report.marketData ? JSON.stringify(report.marketData) : null,
+    $embeddingText: report.embeddingText,
+    $notesRawText: report.notesRawText,
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Main use case
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Parse a BCTC text document and produce a complete, stored FinancialReport.
+ *
+ * Steps:
+ *   1. Extract three financial statements from raw text (domain services)
+ *   2. Compute EBITDA = operatingProfit + depreciationAmortization
+ *   3. Compute all financial ratios (domain service)
+ *   4. Optionally compute QoQ/YoY period deltas
+ *   5. Score extraction confidence (fraction of key non-zero fields)
+ *   6. Assemble FinancialReport and persist to SQLite
+ *
+ * @param params.rawText        - Raw text from BCTC PDF (all three statements)
+ * @param params.actionCode     - Stock ticker e.g. "VCB"
+ * @param params.period         - FiscalPeriod this report covers
+ * @param params.shares         - Shares outstanding (optional, for per-share ratios)
+ * @param params.price          - Market price in VND (optional, for valuation ratios)
+ * @param params.previousReport - Prior period report (optional, enables QoQ/YoY delta)
+ * @returns Fully populated FinancialReport (also stored in SQLite)
+ */
+export async function parseBctcReport(
+  params: ParseBctcReportParams,
+): Promise<FinancialReport> {
+  const { rawText, actionCode, period, shares, price, previousReport } = params;
+
+  // ── Step 1: Extract the three financial statements ────────────────────────
+  const balanceSheet = extractBalanceSheet(rawText);
+  const incomeStatement = extractIncomeStatement(rawText);
+  const cashFlow = extractCashFlow(rawText);
+
+  // ── Step 2: Compute EBITDA (requires depreciation from cash flow) ─────────
+  // EBITDA = EBIT + D&A ≈ operatingProfit + depreciationAmortization
+  incomeStatement.ebitda =
+    incomeStatement.operatingProfit + cashFlow.depreciationAmortization;
+
+  // ── Step 3: Compute financial ratios ─────────────────────────────────────
+  const prevBs = previousReport?.balanceSheet;
+  const ratioParams: import("../../domain/services/ratioComputer.js").ComputeRatiosParams = {
+    bs: balanceSheet,
+    is: incomeStatement,
+    cf: cashFlow,
+    ...(shares !== undefined ? { shares } : {}),
+    ...(price !== undefined ? { price } : {}),
+    ...(prevBs !== undefined ? { prevBs } : {}),
+  };
+  const ratios = computeFinancialRatios(ratioParams);
+
+  // ── Step 4: Compute period deltas (optional) ──────────────────────────────
+  let qoqDelta: PeriodDelta | null = null;
+  let yoyDelta: PeriodDelta | null = null;
+
+  if (previousReport) {
+    const currentMetrics = toMetrics({
+      id: "",
+      actionCode,
+      companyName: "",
+      exchange: "HOSE",
+      domain: "other",
+      period,
+      source: {
+        sscUrl: "",
+        pdfPath: null,
+        publishedAt: "",
+        parsedAt: new Date().toISOString(),
+        auditStatus: "unaudited",
+        auditor: null,
+        reportLanguage: "vi",
+        pageCount: null,
+        extractionConfidence: 0,
+      },
+      balanceSheet,
+      incomeStatement,
+      cashFlow,
+      ratios,
+      yoyDelta: null,
+      qoqDelta: null,
+      marketData: null,
+      aiAnalysis: null,
+      embedding: null,
+      embeddingText: "",
+      notesRawText: null,
+    });
+    const previousMetrics = toMetrics(previousReport);
+
+    // Determine delta type based on period distance
+    const deltaType: "QoQ" | "YoY" =
+      period.year !== previousReport.period.year ? "YoY" : "QoQ";
+
+    const delta = computePeriodDelta(currentMetrics, previousMetrics, deltaType);
+    delta.comparedTo = previousReport.period.sortKey;
+
+    if (deltaType === "QoQ") {
+      qoqDelta = delta;
+    } else {
+      yoyDelta = delta;
+    }
+  }
+
+  // ── Step 5: Compute extraction confidence ────────────────────────────────
+  const extractionConfidence = computeConfidence(balanceSheet, incomeStatement, cashFlow);
+
+  // ── Step 6: Assemble the FinancialReport ──────────────────────────────────
+  const parsedAt = new Date().toISOString();
+
+  const report: FinancialReport = {
+    id: randomUUID(),
+    actionCode,
+    companyName: "",          // Not extracted from text in this task; set by caller or task 048
+    exchange: "HOSE",         // Default; overridable by caller
+    domain: "other",          // Default; overridable by caller
+
+    period,
+
+    source: {
+      sscUrl: "",
+      pdfPath: null,
+      publishedAt: parsedAt,  // No SSC source in this task — use parsedAt as placeholder
+      parsedAt,
+      auditStatus: "unaudited",
+      auditor: null,
+      reportLanguage: "vi",
+      pageCount: null,
+      extractionConfidence,
+    },
+
+    balanceSheet,
+    incomeStatement,
+    cashFlow,
+    ratios,
+
+    yoyDelta,
+    qoqDelta,
+
+    marketData: null,
+    aiAnalysis: null,
+    embedding: null,
+    embeddingText: "",
+    notesRawText: null,
+  };
+
+  // ── Step 7: Persist to SQLite ─────────────────────────────────────────────
+  // Ensure DB is initialised (idempotent — no-op if already done)
+  await initDatabase();
+  storeReport(report);
+
+  return report;
+}
