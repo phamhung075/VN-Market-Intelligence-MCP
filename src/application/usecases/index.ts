@@ -13,4 +13,7 @@
  */
 
 // Re-export all use cases as they are implemented
-export {};
+
+// Task 047: BCTC parse pipeline (text → FinancialReport → SQLite)
+export { parseBctcReport } from "./parseBctcReport.js";
+export type { ParseBctcReportParams } from "./parseBctcReport.js";
