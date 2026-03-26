@@ -28,7 +28,9 @@
 
 ## 🔍 REVIEW
 
-*Empty — no tasks currently in review*
+| # | Title | Branch | Layer | Depends on |
+|---|-------|--------|-------|------------|
+| 013 | RAG multi-level retriever | `task/013-rag-retriever` | infra | 012 ✅ |
 
 ---
 
@@ -43,7 +45,6 @@
 
 | # | Title | Branch | Layer | Depends on |
 |---|-------|--------|-------|------------|
-| 013 | RAG multi-level retriever | `task/013-rag-retriever` | infra | 012 ✅ |
 | 063 | Signal detector (price + news + report) | `task/063-signal-detector` | domain | 002 ✅ |
 | 021 | RSS base fetcher + CafeF news | `task/021-rss-cafef` | infra | 003 ✅ |
 | 024 | Trading Economics scraper | `task/024-scraper-trading-economics` | infra | 003 ✅ |
@@ -135,7 +136,8 @@
 | ✅ Done | 11 | 000, 001, 002, 003, 011, 012, 014, 041, 042, 043, 044 |
 | 🔍 Review | 0 | — |
 | 🚧 In Progress | 0 | — |
-| 📋 Todo | 10 | 013, 021, 024-029, 063, 081 |
+| 🔍 Review | 1 | 013 |
+| 📋 Todo | 9 | 021, 024-029, 063, 081 |
 | 🗂 Backlog | 14 | 022, 023, 030, 045-048, 061, 062, 064-066, 082-086, 101-105, 121-125 |
 | **Total** | **35** | |
 
