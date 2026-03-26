@@ -45,6 +45,18 @@
 ## 📋 TODO
 *(Dependencies cleared — ready to assign)*
 
+### Sprint 002 tasks (priority — do these first)
+
+| # | Title | Branch | Layer | Depends on | Sprint |
+|---|-------|--------|-------|------------|--------|
+| 081 | Bun HTTP server + SSE transport | `task/081-bun-mcp-server` | interface | 002 ✅, 003 ✅ | 002 |
+| 029 | SSC portal scraper | `task/029-ssc-scraper` | infra | 002 ✅, 003 ✅ | 002 |
+| 030 | PDF downloader + pdf-parse text extractor | `task/030-pdf-extractor` | infra | 029 | 002 |
+| 048 | SSC fetch → parse → store pipeline | `task/048-ssc-pipeline` | application | 047 ✅, 029, 030, 011 ✅ | 002 |
+| 085 | SSC report MCP tools (fetch/summary/compare) | `task/085-tool-reports` | interface | 081, 048 | 002 |
+
+### Deferred to Sprint 003+
+
 | # | Title | Branch | Layer | Depends on |
 |---|-------|--------|-------|------------|
 | 063 | Signal detector (price + news + report) | `task/063-signal-detector` | domain | 002 ✅ |
@@ -54,8 +66,6 @@
 | 026 | HOSE market data fetcher | `task/026-hose-prices` | infra | 003 ✅ |
 | 027 | HNX + UPCOM market data fetcher | `task/027-hnx-prices` | infra | 003 ✅ |
 | 028 | SBV (State Bank Vietnam) macro fetcher | `task/028-sbv-macro` | infra | 003 ✅ |
-| 029 | SSC portal scraper | `task/029-ssc-scraper` | infra | 002 ✅, 003 ✅ |
-| 081 | Bun HTTP server + SSE transport | `task/081-bun-mcp-server` | interface | 002 ✅, 003 ✅ |
 
 ---
 
@@ -68,15 +78,6 @@
 |---|-------|--------|-------|------------|---------------------|
 | 022 | VnExpress Finance RSS fetcher | `task/022-rss-vnexpress` | infra | 021 | Same as 021 for VnExpress Finance RSS |
 | 023 | Reuters / AP News RSS fetcher | `task/023-rss-reuters` | infra | 021 | `fetchReuters()` returns ≥5 international news items |
-| 030 | PDF downloader + pdf-parse text extractor | `task/030-pdf-extractor` | infra | 029 | `downloadAndExtractPdf(url)` returns string with confidence > 0; handles scanned PDF gracefully (returns low confidence, not crash) |
-
----
-
-### 📊 Domain: BCTC Parser (041–059)
-
-| # | Title | Branch | Layer | Depends on | Acceptance Criteria |
-|---|-------|--------|-------|------------|---------------------|
-| 048 | SSC fetch → parse → store pipeline | `task/048-ssc-pipeline` | application | 047, 029, 011 | `fetchParseAndStoreBctc('VCB', 2025, 'Q1')` full pipeline: scrape → download → parse → ratios → embed → SQLite + LanceDB |
 
 ---
 
@@ -99,7 +100,6 @@
 | 082 | Watchlist MCP tools (add/remove/get/update) | `task/082-tool-watchlist` | interface | 081, 002 | All 4 tools registered; add then get returns the stock; thresholds persist across restart |
 | 083 | Analysis MCP tools (fetch_and_analyze, impact_chain) | `task/083-tool-analysis` | interface | 081, 062 | fetch_and_analyze returns ≥1 analysis entry; run_impact_chain returns chain for oil-related text |
 | 084 | Market tools (snapshot, search_context, patterns) | `task/084-tool-market` | interface | 081, 013, 065 | get_market_snapshot returns VN-Index + prices; search_similar_context returns relevant past analysis |
-| 085 | SSC report MCP tools (fetch/summary/compare) | `task/085-tool-reports` | interface | 081, 048 | fetch_ssc_reports triggers full pipeline; get_financial_summary returns formatted metrics; compare_financials shows YoY |
 | 086 | Alert MCP tools (get_alerts, briefing, history) | `task/086-tool-alerts` | interface | 081, 064 | get_alerts filters correctly; run_daily_briefing returns structured report; mark_alert_read updates DB |
 
 ---
@@ -135,8 +135,8 @@
 | ✅ Done | 15 | 000, 001, 002, 003, 011, 012, 013, 014, 041, 042, 043, 044, 045, 046, 047 |
 | 🔍 Review | 0 | — |
 | 🚧 In Progress | 0 | — |
-| 📋 Todo | 9 | 021, 024-029, 063, 081 |
-| 🗂 Backlog | 10 | 022, 023, 030, 048, 061, 062, 064-066, 082-086, 101-105, 121-125 |
+| 📋 Todo | 12 | Sprint 002: 029, 030, 048, 081, 085 — Sprint 003+: 021, 024-028, 063 |
+| 🗂 Backlog | 8 | 022, 023, 061, 062, 064-066, 082-084, 086, 101-105, 121-125 |
 | **Total** | **35** | |
 
 ---
