@@ -55,3 +55,12 @@ export {
   type SearchResult,
   type SearchFilters,
 } from "./rag/index.js";
+
+// ── Task 029: SSC portal scraper ─────────────────────────────────────────────
+export {
+  listSscDocuments,
+  buildSscSearchUrl,
+  parseSscHtml,
+  type SscDocument,
+  type HttpClient,
+} from "./fetchers/index.js";
