@@ -30,7 +30,9 @@
 
 ## 🔍 REVIEW
 
-*Empty*
+| # | Title | Branch | Layer | Status |
+|---|-------|--------|-------|--------|
+| 046 | Period delta (QoQ / YoY) | `task/046-period-delta` | domain | Ready for QA |
 
 ---
 
@@ -74,7 +76,6 @@
 
 | # | Title | Branch | Layer | Depends on | Acceptance Criteria |
 |---|-------|--------|-------|------------|---------------------|
-| 046 | Period delta (QoQ / YoY) | `task/046-period-delta` | domain | 042, 043, 044 | `computePeriodDelta(current, previous, 'YoY')` correct % and absolute changes; handles prev=0 (returns null not Infinity) |
 | 047 | BCTC orchestrator (full parse pipeline) | `task/047-bctc-orchestrator` | application | 042-046, 030 | `parseBctcPdf(pdfText, actionCode, period)` returns complete FinancialReport; confidence ≥ 0.7 for standard PDF; stores in SQLite |
 | 048 | SSC fetch → parse → store pipeline | `task/048-ssc-pipeline` | application | 047, 029, 011 | `fetchParseAndStoreBctc('VCB', 2025, 'Q1')` full pipeline: scrape → download → parse → ratios → embed → SQLite + LanceDB |
 
@@ -133,10 +134,10 @@
 | Column | Count | Tasks |
 |--------|-------|-------|
 | ✅ Done | 13 | 000, 001, 002, 003, 011, 012, 013, 014, 041, 042, 043, 044, 045 |
-| 🔍 Review | 0 | — |
+| 🔍 Review | 1 | 046 |
 | 🚧 In Progress | 0 | — |
 | 📋 Todo | 9 | 021, 024-029, 063, 081 |
-| 🗂 Backlog | 12 | 022, 023, 030, 046-048, 061, 062, 064-066, 082-086, 101-105, 121-125 |
+| 🗂 Backlog | 11 | 022, 023, 030, 047-048, 061, 062, 064-066, 082-086, 101-105, 121-125 |
 | **Total** | **35** | |
 
 ---

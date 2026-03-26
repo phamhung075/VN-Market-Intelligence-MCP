@@ -19,3 +19,5 @@ export type { EmbeddingTextInput } from "./embeddingTextBuilder";
 export { extractCashFlow } from "./cashFlowExtractor";
 export { computeFinancialRatios } from "./ratioComputer";
 export type { ComputeRatiosParams } from "./ratioComputer";
+export { computePeriodDelta } from "./periodDeltaComputer";
+export type { FinancialMetrics } from "./periodDeltaComputer";
