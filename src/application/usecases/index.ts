@@ -17,3 +17,11 @@
 // Task 047: BCTC parse pipeline (text → FinancialReport → SQLite)
 export { parseBctcReport } from "./parseBctcReport.js";
 export type { ParseBctcReportParams } from "./parseBctcReport.js";
+
+// Task 048: SSC fetch → parse → store pipeline (SSC portal → PDF → SQLite + LanceDB)
+export { fetchParseAndStoreBctc } from "./fetchParseAndStoreBctc.js";
+export type {
+  FetchParseAndStoreBctcParams,
+  InsertAnalysisFn,
+  QuarterString,
+} from "./fetchParseAndStoreBctc.js";
