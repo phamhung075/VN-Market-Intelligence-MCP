@@ -10,12 +10,12 @@
  *
  * Implemented tasks:
  *   - Task 081: Bun HTTP server + SSEServerTransport
+ *   - Task 085: SSC report tools (fetch / summary / compare)
  *
  * Pending tasks:
  *   - Task 082: Watchlist tools (add / remove / get / update_thresholds)
  *   - Task 083: Analysis tools (fetch_and_analyze, run_impact_chain)
  *   - Task 084: Market tools (snapshot, search_context, patterns)
- *   - Task 085: SSC report tools (fetch / summary / compare)
  *   - Task 086: Alert tools (get_alerts, briefing, history)
  */
 
@@ -27,3 +27,9 @@ export {
 } from "./server.js";
 
 export { SseSessionManager } from "./transport.js";
+
+// ── Task 085: SSC report MCP tools ─────────────────────────────────────────
+export {
+  registerReportTools,
+  type PipelineFn,
+} from "./tools/reports.js";
