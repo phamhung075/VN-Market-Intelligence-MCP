@@ -23,14 +23,13 @@
 | 014 | Embedding text builder (domain) | `task/014-embedding-text-builder` | 2026-03-26 | [TASK_REPORT_014](reports/TASK_REPORT_014.md) |
 | 043 | Income statement extractor | `task/043-bctc-income-stmt` | 2026-03-26 | [TASK_REPORT_043](reports/TASK_REPORT_043.md) |
 | 044 | Cash flow extractor | `task/044-bctc-cashflow` | 2026-03-26 | [TASK_REPORT_044](reports/TASK_REPORT_044.md) |
+| 013 | RAG multi-level retriever | `task/013-rag-retriever` | 2026-03-26 | [TASK_REPORT_013](reports/TASK_REPORT_013.md) |
 
 ---
 
 ## 🔍 REVIEW
 
-| # | Title | Branch | Layer | Depends on |
-|---|-------|--------|-------|------------|
-| 013 | RAG multi-level retriever | `task/013-rag-retriever` | infra | 012 ✅ |
+*Empty*
 
 ---
 
@@ -133,10 +132,9 @@
 
 | Column | Count | Tasks |
 |--------|-------|-------|
-| ✅ Done | 11 | 000, 001, 002, 003, 011, 012, 014, 041, 042, 043, 044 |
+| ✅ Done | 12 | 000, 001, 002, 003, 011, 012, 013, 014, 041, 042, 043, 044 |
 | 🔍 Review | 0 | — |
 | 🚧 In Progress | 0 | — |
-| 🔍 Review | 1 | 013 |
 | 📋 Todo | 9 | 021, 024-029, 063, 081 |
 | 🗂 Backlog | 14 | 022, 023, 030, 045-048, 061, 062, 064-066, 082-086, 101-105, 121-125 |
 | **Total** | **35** | |
