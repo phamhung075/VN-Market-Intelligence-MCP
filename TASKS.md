@@ -35,7 +35,9 @@
 
 ## 🔍 REVIEW
 
-*Empty*
+| # | Title | Branch | Layer | Depends on | Sprint |
+|---|-------|--------|-------|------------|--------|
+| 048 | SSC fetch → parse → store pipeline | `task/048-ssc-pipeline` | application | 047 ✅, 029 ✅, 030 ✅, 011 ✅ | 002 |
 
 ---
 
@@ -52,7 +54,6 @@
 
 | # | Title | Branch | Layer | Depends on | Sprint |
 |---|-------|--------|-------|------------|--------|
-| 048 | SSC fetch → parse → store pipeline | `task/048-ssc-pipeline` | application | 047 ✅, 029 ✅, 030 ✅, 011 ✅ | 002 |
 | 085 | SSC report MCP tools (fetch/summary/compare) | `task/085-tool-reports` | interface | 081 ✅, 048 | 002 |
 
 ### Deferred to Sprint 003+
