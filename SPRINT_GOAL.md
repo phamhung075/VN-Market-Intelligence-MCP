@@ -3,47 +3,50 @@
 ## Current Sprint
 
 status: PLANNING
-sprint_id: 002
+sprint_id: 003
 
 ### Goal
-Connect the BCTC pipeline to real Vietnamese financial data and serve it via MCP — so Claude can fetch, parse, and return live financial reports for any listed stock.
+Add news intelligence and the watchlist/alert system so Claude can monitor stocks and detect market-moving events in real time.
 
 ### Scope
 
 **IN**
-- 029: SSC portal scraper — get report URLs from congbothongtin.ssc.gov.vn
-- 030: PDF downloader + pdf-parse text extractor
-- 048: SSC fetch → parse → store pipeline (full end-to-end application use case)
-- 081: Bun HTTP server + SSE transport (MCP server entry point)
-- 085: SSC report MCP tools (fetch_ssc_reports / get_financial_summary / compare_financials)
+- 021: RSS base fetcher + CafeF news — pull live headlines from CafeF RSS feed
+- 082: Watchlist MCP tools (add/remove/get/update) — CRUD operations + threshold persistence
+- 063: Signal detector (price + news + report) — domain service that classifies raw events into typed signals
+- 064: Multi-signal alert generator — combines signals against thresholds and writes Alert rows to SQLite
+- 086: Alert MCP tools (get_alerts, briefing, history) — Claude-callable interface for the alert system
 
-**OUT (deferred to Sprint 003)**
-- News fetchers (021–028)
-- Analysis / cascade engine (061–066)
-- Alert tools (086)
-- Scheduler jobs (101–105)
+**OUT (deferred to Sprint 004+)**
+- 022-028: Other news fetchers (VnExpress, Reuters, Trading Economics, Yahoo Finance, HOSE/HNX prices, SBV macro)
+- 061-062: News normalizer + cascade engine (needs more fetchers first)
+- 065-066: Pattern matcher, AI summary generator
+- 083-084: Analysis MCP tools, Market MCP tools
+- 101-105: Scheduler jobs (morning briefing, news poll, market scan, SSC nightly, evening summary)
+- 121-125: Dedicated integration/E2E test suites
 
 ### Success Metric
-1. Claude connects to the server via MCP SSE (`GET http://localhost:3000/sse` returns 200).
-2. User calls `fetch_ssc_reports('VCB', 'quarterly', 2024)` — tool triggers full pipeline: scrape SSC → download PDF → parse all 3 statements → compute ratios → embed → store in SQLite + LanceDB.
-3. Returned payload has `netRevenue > 0`, `totalAssets > 0`, PE and ROE ratios populated.
-4. User calls `get_financial_summary('VCB')` — returns formatted human-readable metrics block.
+1. User calls `add_to_watchlist('VCB', 'HOSE', 'banking')` — tool returns success; stock persists in SQLite.
+2. `fetch_cafef_news()` returns ≥ 5 news items with title, url, publishedAt, and summary.
+3. Signal detector processes a news item mentioning VCB and returns at least one Signal with type `news_mention` and stock `VCB`.
+4. Alert generator produces an Alert with severity ≥ `medium` when 2+ signals fire for a watchlist stock.
+5. `get_alerts()` returns the generated alert; `run_daily_briefing()` returns a structured report containing VCB.
 
 ### Dependency chain
 
 ```
-029 (SSC scraper)
-  └─ 030 (PDF extractor)
-       └─ 048 (pipeline: fetch → parse → store)  ← depends on 047 ✅, 011 ✅
-            └─ 085 (MCP tools: fetch/summary/compare)
-                 └─ requires 081 (Bun MCP server) — can run in parallel with 029
+082 (Watchlist tools)  ← depends on 081 ✅, 002 ✅ — start immediately
+021 (CafeF RSS fetcher) ← depends on 003 ✅ — start immediately
+  └─ 063 (Signal detector) ← depends on 021, 082
+       └─ 064 (Alert generator) ← depends on 063, 002 ✅
+            └─ 086 (Alert MCP tools) ← depends on 064, 081 ✅
 ```
 
 ### Sprint task order (recommended)
-1. 081 + 029 in parallel (no shared dependency)
-2. 030 (depends on 029)
-3. 048 (depends on 029, 030, 047 ✅, 011 ✅)
-4. 085 (depends on 048, 081)
+1. 082 + 021 in parallel (independent, all dependencies already Done)
+2. 063 (depends on 021 and 082)
+3. 064 (depends on 063)
+4. 086 (depends on 064 and 081 ✅)
 
 ---
 
@@ -53,3 +56,4 @@ Connect the BCTC pipeline to real Vietnamese financial data and serve it via MCP
 |--------|------|--------|
 | 000 | Project setup, DB schema, env config, embeddings, vectorstore, watchlist, BCTC balance sheet + income stmt | Done |
 | 001 | BCTC RAG pipeline: cash flow, ratio, delta, orchestrator, RAG retriever | Done |
+| 002 | SSC portal scraper, PDF extractor, full BCTC pipeline, Bun MCP server, SSC report MCP tools | Done |

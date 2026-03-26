@@ -50,16 +50,20 @@
 ## 📋 TODO
 *(Dependencies cleared — ready to assign)*
 
-### Sprint 002 tasks (priority — do these first)
-
-*Empty — Sprint 002 complete*
-
-### Deferred to Sprint 003+
+### Sprint 003 tasks (priority — do these first)
 
 | # | Title | Branch | Layer | Depends on |
 |---|-------|--------|-------|------------|
-| 063 | Signal detector (price + news + report) | `task/063-signal-detector` | domain | 002 ✅ |
 | 021 | RSS base fetcher + CafeF news | `task/021-rss-cafef` | infra | 003 ✅ |
+| 082 | Watchlist MCP tools (add/remove/get/update) | `task/082-tool-watchlist` | interface | 081 ✅, 002 ✅ |
+| 063 | Signal detector (price + news + report) | `task/063-signal-detector` | domain | 021, 082 |
+| 064 | Multi-signal alert generator | `task/064-alert-generator` | domain | 063 |
+| 086 | Alert MCP tools (get_alerts, briefing, history) | `task/086-tool-alerts` | interface | 064, 081 ✅ |
+
+### Deferred to Sprint 004+
+
+| # | Title | Branch | Layer | Depends on |
+|---|-------|--------|-------|------------|
 | 024 | Trading Economics scraper | `task/024-scraper-trading-economics` | infra | 003 ✅ |
 | 025 | Yahoo Finance commodity fetcher | `task/025-yahoo-finance` | infra | 003 ✅ |
 | 026 | HOSE market data fetcher | `task/026-hose-prices` | infra | 003 ✅ |
@@ -86,7 +90,6 @@
 |---|-------|--------|-------|------------|---------------------|
 | 061 | News normalizer → AnalysisEntry | `task/061-news-normalizer` | domain | 014 | `normalizeNews(rawItem)` returns valid AnalysisEntry with level, sentiment, impactScore (0-10); test: neutral news scores 0-3 |
 | 062 | Causal cascade engine | `task/062-cascade-engine` | domain | 061, 013 | `runImpactChain(newsText, watchlist)` returns chain with ≥1 domain entry and ≥1 action entry; confidence ≥ 0.5; test: oil news → oil_gas sector |
-| 064 | Multi-signal alert generator | `task/064-alert-generator` | domain | 063 | `generateAlerts(signals, watchlist, thresholds)` creates Alert with correct severity; 3-signal combo → critical; stores in SQLite |
 | 065 | Historical pattern matcher | `task/065-pattern-matcher` | application | 013, 046 | `getPatternSummary('GAS', 'oil price', 24)` returns summary with ≥3 historical precedents; averages impact direction |
 | 066 | AI summary generator | `task/066-ai-summary` | application | 061, 047 | `generateAiSummary(report)` returns AIAnalysis with signals[], outlook, keyStrengths[]; stores in FinancialReport.aiAnalysis |
 
@@ -96,10 +99,8 @@
 
 | # | Title | Branch | Layer | Depends on | Acceptance Criteria |
 |---|-------|--------|-------|------------|---------------------|
-| 082 | Watchlist MCP tools (add/remove/get/update) | `task/082-tool-watchlist` | interface | 081, 002 | All 4 tools registered; add then get returns the stock; thresholds persist across restart |
 | 083 | Analysis MCP tools (fetch_and_analyze, impact_chain) | `task/083-tool-analysis` | interface | 081, 062 | fetch_and_analyze returns ≥1 analysis entry; run_impact_chain returns chain for oil-related text |
 | 084 | Market tools (snapshot, search_context, patterns) | `task/084-tool-market` | interface | 081, 013, 065 | get_market_snapshot returns VN-Index + prices; search_similar_context returns relevant past analysis |
-| 086 | Alert MCP tools (get_alerts, briefing, history) | `task/086-tool-alerts` | interface | 081, 064 | get_alerts filters correctly; run_daily_briefing returns structured report; mark_alert_read updates DB |
 
 ---
 
@@ -134,9 +135,9 @@
 | ✅ Done | 20 | 000, 001, 002, 003, 011, 012, 013, 014, 029, 030, 041, 042, 043, 044, 045, 046, 047, 048, 081, 085 |
 | 🔍 Review | 0 | — |
 | 🚧 In Progress | 0 | — |
-| 📋 Todo | 6 | Sprint 003+: 021, 024-028, 063 |
-| 🗂 Backlog | 8 | 022, 023, 061, 062, 064-066, 082-084, 086, 101-105, 121-125 |
-| **Total** | **35** | |
+| 📋 Todo | 10 | Sprint 003: 021, 063, 064, 082, 086 — Sprint 004+: 024, 025, 026, 027, 028 |
+| 🗂 Backlog | 13 | 022, 023, 061, 062, 065, 066, 083, 084, 101-105, 121-125 |
+| **Total** | **43** | |
 
 ---
 
