@@ -13,5 +13,6 @@
 // Re-export all domain services as they are implemented
 export { parseVnNumber } from "./vnNumberParser";
 export { extractBalanceSheet } from "./balanceSheetExtractor";
+export { extractIncomeStatement } from "./incomeStatementExtractor";
 export { buildEmbeddingText } from "./embeddingTextBuilder";
 export type { EmbeddingTextInput } from "./embeddingTextBuilder";
