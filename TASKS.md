@@ -36,7 +36,9 @@
 
 ## 🔍 REVIEW
 
-*Empty*
+| # | Title | Branch | Layer | Depends on | Sprint |
+|---|-------|--------|-------|------------|--------|
+| 085 | SSC report MCP tools (fetch/summary/compare) | `task/085-tool-reports` | interface | 081 ✅, 048 ✅ | 002 |
 
 ---
 
@@ -51,9 +53,7 @@
 
 ### Sprint 002 tasks (priority — do these first)
 
-| # | Title | Branch | Layer | Depends on | Sprint |
-|---|-------|--------|-------|------------|--------|
-| 085 | SSC report MCP tools (fetch/summary/compare) | `task/085-tool-reports` | interface | 081 ✅, 048 ✅ | 002 |
+*Empty — 085 moved to Review*
 
 ### Deferred to Sprint 003+
 
