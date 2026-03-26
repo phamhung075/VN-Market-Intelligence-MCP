@@ -1,15 +1,17 @@
 /**
  * MCP Interface — barrel export
  *
- * MCP tool handlers and the McpServer factory.
+ * Bun HTTP server + SSE transport + McpServer factory.
  * Validates input with Zod, delegates to application use cases,
  * and always returns { content: [{ type: 'text', text: ... }] }.
  *
  * Sub-folders:
- *   tools/  — individual tool handler modules (watchlist, analysis, reports, alerts)
+ *   tools/  — individual tool handler modules (task 082+)
  *
- * Populated by future tasks:
+ * Implemented tasks:
  *   - Task 081: Bun HTTP server + SSEServerTransport
+ *
+ * Pending tasks:
  *   - Task 082: Watchlist tools (add / remove / get / update_thresholds)
  *   - Task 083: Analysis tools (fetch_and_analyze, run_impact_chain)
  *   - Task 084: Market tools (snapshot, search_context, patterns)
@@ -17,5 +19,11 @@
  *   - Task 086: Alert tools (get_alerts, briefing, history)
  */
 
-// Re-export MCP interface components as they are implemented
-export {};
+// ── Task 081: Bun HTTP server + SSE transport ─────────────────────────────
+export {
+  createBunServer,
+  type BunServerOptions,
+  type BunServerInstance,
+} from "./server.js";
+
+export { SseSessionManager } from "./transport.js";

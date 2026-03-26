@@ -28,6 +28,7 @@
 | 046 | Period delta (QoQ / YoY) | `task/046-period-delta` | 2026-03-26 | [TASK_REPORT_046](reports/TASK_REPORT_046.md) |
 | 047 | BCTC orchestrator (full parse pipeline) | `task/047-bctc-orchestrator` | 2026-03-26 | [TASK_REPORT_047](reports/TASK_REPORT_047.md) |
 | 029 | SSC portal scraper | `task/029-ssc-scraper` | 2026-03-26 | [TASK_REPORT_029](reports/TASK_REPORT_029.md) |
+| 081 | Bun HTTP server + SSE transport | `task/081-bun-mcp-server` | 2026-03-26 | [TASK_REPORT_081](reports/TASK_REPORT_081.md) |
 
 ---
 
@@ -50,10 +51,9 @@
 
 | # | Title | Branch | Layer | Depends on | Sprint |
 |---|-------|--------|-------|------------|--------|
-| 081 | Bun HTTP server + SSE transport | `task/081-bun-mcp-server` | interface | 002 ✅, 003 ✅ | 002 |
 | 030 | PDF downloader + pdf-parse text extractor | `task/030-pdf-extractor` | infra | 029 ✅ | 002 |
-| 048 | SSC fetch → parse → store pipeline | `task/048-ssc-pipeline` | application | 047 ✅, 029, 030, 011 ✅ | 002 |
-| 085 | SSC report MCP tools (fetch/summary/compare) | `task/085-tool-reports` | interface | 081, 048 | 002 |
+| 048 | SSC fetch → parse → store pipeline | `task/048-ssc-pipeline` | application | 047 ✅, 029 ✅, 030, 011 ✅ | 002 |
+| 085 | SSC report MCP tools (fetch/summary/compare) | `task/085-tool-reports` | interface | 081 ✅, 048 | 002 |
 
 ### Deferred to Sprint 003+
 
@@ -132,10 +132,10 @@
 
 | Column | Count | Tasks |
 |--------|-------|-------|
-| ✅ Done | 16 | 000, 001, 002, 003, 011, 012, 013, 014, 029, 041, 042, 043, 044, 045, 046, 047 |
+| ✅ Done | 17 | 000, 001, 002, 003, 011, 012, 013, 014, 029, 041, 042, 043, 044, 045, 046, 047, 081 |
 | 🔍 Review | 0 | — |
 | 🚧 In Progress | 0 | — |
-| 📋 Todo | 10 | Sprint 002: 030, 048, 081, 085 — Sprint 003+: 021, 024-028, 063 |
+| 📋 Todo | 9 | Sprint 002: 030, 048, 085 — Sprint 003+: 021, 024-028, 063 |
 | 🗂 Backlog | 8 | 022, 023, 061, 062, 064-066, 082-084, 086, 101-105, 121-125 |
 | **Total** | **35** | |
 
