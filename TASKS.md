@@ -32,14 +32,13 @@
 | 030 | PDF downloader + pdf-parse text extractor | `task/030-pdf-extractor` | 2026-03-26 | [TASK_REPORT_030](reports/TASK_REPORT_030.md) |
 | 048 | SSC fetch → parse → store pipeline | `task/048-ssc-pipeline` | 2026-03-26 | [TASK_REPORT_048](reports/TASK_REPORT_048.md) |
 | 085 | SSC report MCP tools (fetch/summary/compare) | `task/085-tool-reports` | 2026-03-26 | [TASK_REPORT_085](reports/TASK_REPORT_085.md) |
+| 021 | RSS base fetcher + CafeF news | `task/021-rss-cafef` | 2026-03-26 | [TASK_REPORT_021](reports/TASK_REPORT_021.md) |
 
 ---
 
 ## 🔍 REVIEW
 
-| # | Title | Branch | Layer | Started |
-|---|-------|--------|-------|---------|
-| 021 | RSS base fetcher + CafeF news | `task/021-rss-cafef` | infra | 2026-03-26 |
+*Empty*
 
 ---
 
@@ -56,7 +55,6 @@
 
 | # | Title | Branch | Layer | Depends on |
 |---|-------|--------|-------|------------|
-| ~~021~~ | ~~RSS base fetcher + CafeF news~~ | ~~`task/021-rss-cafef`~~ | ~~infra~~ | ~~003 ✅~~ |
 | 082 | Watchlist MCP tools (add/remove/get/update) | `task/082-tool-watchlist` | interface | 081 ✅, 002 ✅ |
 | 063 | Signal detector (price + news + report) | `task/063-signal-detector` | domain | 021, 082 |
 | 064 | Multi-signal alert generator | `task/064-alert-generator` | domain | 063 |
