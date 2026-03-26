@@ -32,7 +32,9 @@
 
 ## 🔍 REVIEW
 
-*Empty*
+| # | Title | Branch | Layer |
+|---|-------|--------|-------|
+| 081 | Bun HTTP server + SSE transport | `task/081-bun-mcp-server` | interface |
 
 ---
 
@@ -49,7 +51,6 @@
 
 | # | Title | Branch | Layer | Depends on | Sprint |
 |---|-------|--------|-------|------------|--------|
-| 081 | Bun HTTP server + SSE transport | `task/081-bun-mcp-server` | interface | 002 ✅, 003 ✅ | 002 |
 | 029 | SSC portal scraper | `task/029-ssc-scraper` | infra | 002 ✅, 003 ✅ | 002 |
 | 030 | PDF downloader + pdf-parse text extractor | `task/030-pdf-extractor` | infra | 029 | 002 |
 | 048 | SSC fetch → parse → store pipeline | `task/048-ssc-pipeline` | application | 047 ✅, 029, 030, 011 ✅ | 002 |
@@ -133,9 +134,9 @@
 | Column | Count | Tasks |
 |--------|-------|-------|
 | ✅ Done | 15 | 000, 001, 002, 003, 011, 012, 013, 014, 041, 042, 043, 044, 045, 046, 047 |
-| 🔍 Review | 0 | — |
+| 🔍 Review | 1 | 081 |
 | 🚧 In Progress | 0 | — |
-| 📋 Todo | 12 | Sprint 002: 029, 030, 048, 081, 085 — Sprint 003+: 021, 024-028, 063 |
+| 📋 Todo | 4 | Sprint 002: 029, 030, 048, 085 — Sprint 003+: 021, 024-028, 063 |
 | 🗂 Backlog | 8 | 022, 023, 061, 062, 064-066, 082-084, 086, 101-105, 121-125 |
 | **Total** | **35** | |
 
