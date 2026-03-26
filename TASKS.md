@@ -40,6 +40,7 @@
 | # | Title | Branch | Layer | Started |
 |---|-------|--------|-------|---------|
 | 021 | RSS base fetcher + CafeF news | `task/021-rss-cafef` | infra | 2026-03-26 |
+| 082 | Watchlist MCP tools (add/remove/get/update) | `task/082-tool-watchlist` | interface | 2026-03-26 |
 
 ---
 
@@ -57,7 +58,7 @@
 | # | Title | Branch | Layer | Depends on |
 |---|-------|--------|-------|------------|
 | ~~021~~ | ~~RSS base fetcher + CafeF news~~ | ~~`task/021-rss-cafef`~~ | ~~infra~~ | ~~003 ✅~~ |
-| 082 | Watchlist MCP tools (add/remove/get/update) | `task/082-tool-watchlist` | interface | 081 ✅, 002 ✅ |
+| ~~082~~ | ~~Watchlist MCP tools (add/remove/get/update)~~ | ~~`task/082-tool-watchlist`~~ | ~~interface~~ | ~~081 ✅, 002 ✅~~ |
 | 063 | Signal detector (price + news + report) | `task/063-signal-detector` | domain | 021, 082 |
 | 064 | Multi-signal alert generator | `task/064-alert-generator` | domain | 063 |
 | 086 | Alert MCP tools (get_alerts, briefing, history) | `task/086-tool-alerts` | interface | 064, 081 ✅ |
