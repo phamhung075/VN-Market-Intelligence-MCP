@@ -13,12 +13,13 @@
 | # | Title | Branch | Merged | Report |
 |---|-------|--------|--------|--------|
 | 000 | Initial project structure | `main` | 2026-03-24 | — |
+| 001 | Project setup & DDD folder structure | `task/001-project-setup` | 2026-03-25 | [TASK_REPORT_001](reports/TASK_REPORT_001.md) |
 | 002 | SQLite schema + migrations | `task/002-db-schema` | 2026-03-25 | [TASK_REPORT_002](reports/TASK_REPORT_002.md) |
 | 003 | Env config + structured logging | `task/003-env-config` | 2026-03-25 | [TASK_REPORT_003](reports/TASK_REPORT_003.md) |
-| 041 | Vietnamese number parser | `task/041-vn-number-parser` | 2026-03-25 | [TASK_REPORT_041](reports/TASK_REPORT_041.md) |
 | 011 | Embedding pipeline (HuggingFace local ONNX) | `task/011-rag-embeddings` | 2026-03-25 | [TASK_REPORT_011](reports/TASK_REPORT_011.md) |
-| 042 | Balance sheet extractor | `task/042-bctc-balance-sheet` | 2026-03-25 | [TASK_REPORT_042](reports/TASK_REPORT_042.md) |
 | 012 | LanceDB vector store (read/write/search) | `task/012-lancedb-store` | 2026-03-25 | [TASK_REPORT_012](reports/TASK_REPORT_012.md) |
+| 041 | Vietnamese number parser | `task/041-vn-number-parser` | 2026-03-25 | [TASK_REPORT_041](reports/TASK_REPORT_041.md) |
+| 042 | Balance sheet extractor | `task/042-bctc-balance-sheet` | 2026-03-25 | [TASK_REPORT_042](reports/TASK_REPORT_042.md) |
 
 ---
 
@@ -39,47 +40,31 @@
 
 | # | Title | Branch | Layer | Depends on |
 |---|-------|--------|-------|------------|
-| 001 | Project setup & DDD folder structure | `task/001-project-setup` | all | — |
+| 013 | RAG multi-level retriever | `task/013-rag-retriever` | infra | 012 ✅ |
+| 014 | Embedding text builder (domain) | `task/014-embedding-text-builder` | domain | 011 ✅ |
+| 043 | Income statement extractor | `task/043-bctc-income-stmt` | domain | 041 ✅ |
+| 044 | Cash flow extractor | `task/044-bctc-cashflow` | domain | 041 ✅ |
+| 063 | Signal detector (price + news + report) | `task/063-signal-detector` | domain | 002 ✅ |
+| 021 | RSS base fetcher + CafeF news | `task/021-rss-cafef` | infra | 003 ✅ |
+| 024 | Trading Economics scraper | `task/024-scraper-trading-economics` | infra | 003 ✅ |
+| 025 | Yahoo Finance commodity fetcher | `task/025-yahoo-finance` | infra | 003 ✅ |
+| 026 | HOSE market data fetcher | `task/026-hose-prices` | infra | 003 ✅ |
+| 027 | HNX + UPCOM market data fetcher | `task/027-hnx-prices` | infra | 003 ✅ |
+| 028 | SBV (State Bank Vietnam) macro fetcher | `task/028-sbv-macro` | infra | 003 ✅ |
+| 029 | SSC portal scraper | `task/029-ssc-scraper` | infra | 002 ✅, 003 ✅ |
+| 081 | Bun HTTP server + SSE transport | `task/081-bun-mcp-server` | interface | 002 ✅, 003 ✅ |
 
 ---
 
 ## 🗂 BACKLOG
 *(Ordered by priority — move to Todo when dependencies are Done)*
 
-### 🏗 Foundation (001–009)
-
-| # | Title | Branch | Layer | Depends on | Acceptance Criteria |
-|---|-------|--------|-------|------------|---------------------|
-| 001 | Project setup & DDD folder structure | `task/001-project-setup` | all | — | `bun install` succeeds; DDD folders exist; `bun tsc --noEmit` passes |
-| 002 | SQLite schema + migrations | `task/002-db-schema` | infra | 001 | All tables created; `initDatabase()` idempotent; test: re-run doesn't crash |
-| 003 | Env config + structured logging | `task/003-env-config` | infra | 001 | `Bun.env` typed config object; log() with levels; missing required var throws at startup |
-
----
-
-### 🧠 RAG Pipeline (011–019)
-
-| # | Title | Branch | Layer | Depends on | Acceptance Criteria |
-|---|-------|--------|-------|------------|---------------------|
-| 011 | ~~Embedding pipeline (HuggingFace local ONNX)~~ | `task/011-rag-embeddings` | infra | 001 | ~~Done~~ |
-| 012 | ~~LanceDB vector store (read/write/search)~~ | `task/012-lancedb-store` | infra | 011 | ~~Done~~ |
-| 013 | RAG multi-level retriever | `task/013-rag-retriever` | infra | 012 | `searchContext(query, level='action', actionCode='VCB')` filters correctly; test: level filter excludes wrong-level results |
-| 014 | Embedding text builder (domain) | `task/014-embedding-text-builder` | domain | 011 | `buildEmbeddingText(analysisEntry)` returns concatenated title+summary+tags; deterministic output |
-
----
-
 ### 📡 Infrastructure Fetchers (021–039)
 
 | # | Title | Branch | Layer | Depends on | Acceptance Criteria |
 |---|-------|--------|-------|------------|---------------------|
-| 021 | RSS base fetcher + CafeF news | `task/021-rss-cafef` | infra | 003 | `fetchCafeF()` returns ≥5 items with title, url, publishedAt, content; test with mock HTTP |
 | 022 | VnExpress Finance RSS fetcher | `task/022-rss-vnexpress` | infra | 021 | Same as 021 for VnExpress Finance RSS |
 | 023 | Reuters / AP News RSS fetcher | `task/023-rss-reuters` | infra | 021 | `fetchReuters()` returns ≥5 international news items |
-| 024 | Trading Economics scraper | `task/024-scraper-trading-economics` | infra | 003 | `fetchMacroIndicators()` returns oil price, gold, VN GDP; fallback if API key absent |
-| 025 | Yahoo Finance commodity fetcher | `task/025-yahoo-finance` | infra | 003 | `fetchCommodities()` returns WTI, Brent, XAU, DXY; values > 0 |
-| 026 | HOSE market data fetcher | `task/026-hose-prices` | infra | 003 | `fetchHosePrices(['VCB','HPG'])` returns price, changeAmt, changePct, volume for each; test with mock |
-| 027 | HNX + UPCOM market data fetcher | `task/027-hnx-prices` | infra | 003 | Same as 026 for HNX/UPCOM exchange |
-| 028 | SBV (State Bank Vietnam) macro fetcher | `task/028-sbv-macro` | infra | 003 | `fetchSbvIndicators()` returns USD/VND rate, interbank rate; updates market_prices table |
-| 029 | SSC portal scraper (congbothongtin.ssc.gov.vn) | `task/029-ssc-scraper` | infra | 002, 003 | `listSscDocuments('VCB', 'quarterly', 2025)` returns ≥1 doc with title, url, publishedAt; test with mock HTML |
 | 030 | PDF downloader + pdf-parse text extractor | `task/030-pdf-extractor` | infra | 029 | `downloadAndExtractPdf(url)` returns string with confidence > 0; handles scanned PDF gracefully (returns low confidence, not crash) |
 
 ---
@@ -88,10 +73,6 @@
 
 | # | Title | Branch | Layer | Depends on | Acceptance Criteria |
 |---|-------|--------|-------|------------|---------------------|
-| 041 | Vietnamese number parser | `task/041-vn-number-parser` | domain | 001 | ~~Done~~ |
-| 042 | ~~Balance sheet extractor~~ | `task/042-bctc-balance-sheet` | domain | 041 | ~~Done~~ |
-| 043 | Income statement extractor | `task/043-bctc-income-stmt` | domain | 041 | `extractIncomeStatement(rawText)` returns grossProfit = netRevenue - cogs; EPS > 0 for profitable companies |
-| 044 | Cash flow extractor | `task/044-bctc-cashflow` | domain | 041 | `extractCashFlow(rawText)` returns endingCash = beginningCash + net; FCF = operatingCF + capex |
 | 045 | Ratio computation | `task/045-bctc-ratios` | domain | 042, 043, 044 | `computeRatios(bs, is, cf, shares)` all 22 ratios populated; ROE = netProfit/avgEquity×100; currentRatio = currentAssets/currentLiabilities |
 | 046 | Period delta (QoQ / YoY) | `task/046-period-delta` | domain | 042, 043, 044 | `computePeriodDelta(current, previous, 'YoY')` correct % and absolute changes; handles prev=0 (returns null not Infinity) |
 | 047 | BCTC orchestrator (full parse pipeline) | `task/047-bctc-orchestrator` | application | 042-046, 030 | `parseBctcPdf(pdfText, actionCode, period)` returns complete FinancialReport; confidence ≥ 0.7 for standard PDF; stores in SQLite |
@@ -105,7 +86,6 @@
 |---|-------|--------|-------|------------|---------------------|
 | 061 | News normalizer → AnalysisEntry | `task/061-news-normalizer` | domain | 014 | `normalizeNews(rawItem)` returns valid AnalysisEntry with level, sentiment, impactScore (0-10); test: neutral news scores 0-3 |
 | 062 | Causal cascade engine | `task/062-cascade-engine` | domain | 061, 013 | `runImpactChain(newsText, watchlist)` returns chain with ≥1 domain entry and ≥1 action entry; confidence ≥ 0.5; test: oil news → oil_gas sector |
-| 063 | Signal detector (price + news + report) | `task/063-signal-detector` | domain | 002 | `detectSignals(snapshot, history)` returns SignalType[]; price drop -5% triggers `price_drop`; new report triggers `report_new` |
 | 064 | Multi-signal alert generator | `task/064-alert-generator` | domain | 063 | `generateAlerts(signals, watchlist, thresholds)` creates Alert with correct severity; 3-signal combo → critical; stores in SQLite |
 | 065 | Historical pattern matcher | `task/065-pattern-matcher` | application | 013, 046 | `getPatternSummary('GAS', 'oil price', 24)` returns summary with ≥3 historical precedents; averages impact direction |
 | 066 | AI summary generator | `task/066-ai-summary` | application | 061, 047 | `generateAiSummary(report)` returns AIAnalysis with signals[], outlook, keyStrengths[]; stores in FinancialReport.aiAnalysis |
@@ -116,7 +96,6 @@
 
 | # | Title | Branch | Layer | Depends on | Acceptance Criteria |
 |---|-------|--------|-------|------------|---------------------|
-| 081 | Bun HTTP server + SSE transport | `task/081-bun-mcp-server` | interface | 002, 003 | Server starts on PORT; GET /sse returns 200 text/event-stream; GET /health returns JSON; test: HTTP request to /health |
 | 082 | Watchlist MCP tools (add/remove/get/update) | `task/082-tool-watchlist` | interface | 081, 002 | All 4 tools registered; add then get returns the stock; thresholds persist across restart |
 | 083 | Analysis MCP tools (fetch_and_analyze, impact_chain) | `task/083-tool-analysis` | interface | 081, 062 | fetch_and_analyze returns ≥1 analysis entry; run_impact_chain returns chain for oil-related text |
 | 084 | Market tools (snapshot, search_context, patterns) | `task/084-tool-market` | interface | 081, 013, 065 | get_market_snapshot returns VN-Index + prices; search_similar_context returns relevant past analysis |
@@ -153,11 +132,11 @@
 
 | Column | Count | Tasks |
 |--------|-------|-------|
-| ✅ Done | 7 | 000, 002, 003, 011, 012, 041, 042 |
+| ✅ Done | 8 | 000, 001, 002, 003, 011, 012, 041, 042 |
 | 🔍 Review | 0 | — |
 | 🚧 In Progress | 0 | — |
-| 📋 Todo | 1 | 001 |
-| 🗂 Backlog | 27 | 013-125 |
+| 📋 Todo | 13 | 013, 014, 021, 024-029, 043, 044, 063, 081 |
+| 🗂 Backlog | 14 | 022, 023, 030, 045-048, 061, 062, 064-066, 082-086, 101-105, 121-125 |
 | **Total** | **35** | |
 
 ---
@@ -181,7 +160,7 @@ A task is **Done** when ALL of the following are true:
 - [ ] Code is on `task/NNN` branch
 - [ ] `bun test src/__tests__/NNN-*.test.ts` → all pass
 - [ ] `bun tsc --noEmit` → 0 errors
-- [ ] Reviewer checklist: 100% ✅
+- [ ] QA checklist: 100% ✅
 - [ ] Zero BLOCKING issues in Task Report
 - [ ] Merged to `main` via `--no-ff`
 - [ ] `reports/TASK_REPORT_NNN.md` generated

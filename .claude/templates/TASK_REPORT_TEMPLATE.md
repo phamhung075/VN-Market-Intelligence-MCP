@@ -13,8 +13,8 @@
 | Column | Date | Notes |
 |--------|------|-------|
 | Backlog → Todo | YYYY-MM-DD | Dependencies cleared |
-| Todo → In Progress | YYYY-MM-DD | Assigned to Coder |
-| In Progress → Review | YYYY-MM-DD | Coder submitted |
+| Todo → In Progress | YYYY-MM-DD | Assigned to Developer |
+| In Progress → Review | YYYY-MM-DD | Developer submitted |
 | Review → [In Progress / Done] | YYYY-MM-DD | Approved or changes requested |
 | Done | YYYY-MM-DD | Merged to main |
 
@@ -22,13 +22,13 @@
 
 ## Role Activity Log
 
-### Planner
+### PM (Project Manager)
 - Defined task scope and acceptance criteria
 - Identified dependencies: Task(s) [NNN, NNN]
 - DDD layer assigned: [domain/infra/application/interface]
-- Key design decisions made: [...]
+- Context injection: [files to read, files to create/modify]
 
-### Coder
+### Developer
 - Files created: [list]
 - Files modified: [list]
 - TDD cycle followed: YES | NO (explain if no)
@@ -36,7 +36,7 @@
 - Assumptions made: [list any]
 - Time to implement: ~Xh
 
-### Reviewer — Review 1
+### QA — Review 1
 - Date: YYYY-MM-DD
 - Outcome: APPROVED | CHANGES REQUESTED
 - `bun test` result: PASS (X tests) | FAIL (X failures)
@@ -48,7 +48,7 @@
 - Files changed: [list]
 - Root causes identified: [list]
 
-### Reviewer — Review 2 (if re-review needed)
+### QA — Review 2 (if re-review needed)
 - Date: YYYY-MM-DD
 - Outcome: APPROVED
 - All previous issues resolved: YES | NO
