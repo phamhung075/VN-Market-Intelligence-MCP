@@ -20,6 +20,7 @@
 | 012 | LanceDB vector store (read/write/search) | `task/012-lancedb-store` | 2026-03-25 | [TASK_REPORT_012](reports/TASK_REPORT_012.md) |
 | 041 | Vietnamese number parser | `task/041-vn-number-parser` | 2026-03-25 | [TASK_REPORT_041](reports/TASK_REPORT_041.md) |
 | 042 | Balance sheet extractor | `task/042-bctc-balance-sheet` | 2026-03-25 | [TASK_REPORT_042](reports/TASK_REPORT_042.md) |
+| 014 | Embedding text builder (domain) | `task/014-embedding-text-builder` | 2026-03-26 | [TASK_REPORT_014](reports/TASK_REPORT_014.md) |
 
 ---
 
@@ -41,7 +42,6 @@
 | # | Title | Branch | Layer | Depends on |
 |---|-------|--------|-------|------------|
 | 013 | RAG multi-level retriever | `task/013-rag-retriever` | infra | 012 ✅ |
-| 014 | Embedding text builder (domain) | `task/014-embedding-text-builder` | domain | 011 ✅ |
 | 043 | Income statement extractor | `task/043-bctc-income-stmt` | domain | 041 ✅ |
 | 044 | Cash flow extractor | `task/044-bctc-cashflow` | domain | 041 ✅ |
 | 063 | Signal detector (price + news + report) | `task/063-signal-detector` | domain | 002 ✅ |
@@ -132,10 +132,10 @@
 
 | Column | Count | Tasks |
 |--------|-------|-------|
-| ✅ Done | 8 | 000, 001, 002, 003, 011, 012, 041, 042 |
+| ✅ Done | 9 | 000, 001, 002, 003, 011, 012, 014, 041, 042 |
 | 🔍 Review | 0 | — |
 | 🚧 In Progress | 0 | — |
-| 📋 Todo | 13 | 013, 014, 021, 024-029, 043, 044, 063, 081 |
+| 📋 Todo | 12 | 013, 021, 024-029, 043, 044, 063, 081 |
 | 🗂 Backlog | 14 | 022, 023, 030, 045-048, 061, 062, 064-066, 082-086, 101-105, 121-125 |
 | **Total** | **35** | |
 
