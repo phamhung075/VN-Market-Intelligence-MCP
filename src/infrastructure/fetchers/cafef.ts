@@ -1,0 +1,87 @@
+/**
+ * Infrastructure — CafeF RSS Fetcher
+ *
+ * Fetches the latest news from CafeF (cafef.vn) via their public RSS feed
+ * and normalises it into RssItem records.
+ *
+ * Layer: infrastructure/fetchers — may use HTTP libs, must not import domain/.
+ */
+
+import { parseRssFeed, type RssItem } from "./rss.js";
+import type { HttpClient } from "./ssc.js";
+import { logger } from "../logger.js";
+
+// ---------------------------------------------------------------------------
+// Constants
+// ---------------------------------------------------------------------------
+
+/** Primary CafeF RSS feed (homepage / trang chủ). */
+const CAFEF_RSS_URL = "https://cafef.vn/rss/trang-chu.rss";
+
+/** Source tag applied to all items fetched from CafeF. */
+const CAFEF_SOURCE = "cafef";
+
+// ---------------------------------------------------------------------------
+// Default HTTP client (axios)
+// ---------------------------------------------------------------------------
+
+/**
+ * Creates the default production HTTP client backed by axios.
+ * Lazy-imported so tests that inject a mock never load axios.
+ */
+async function makeDefaultHttpClient(): Promise<HttpClient> {
+  const axiosModule = await import("axios");
+  const axios = axiosModule.default;
+
+  return {
+    async get(url: string): Promise<string> {
+      const response = await axios.get<string>(url, {
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (compatible; VN-Market-Intelligence/1.0; +https://github.com/vn-market)",
+          Accept: "application/rss+xml, text/xml, application/xml, */*",
+        },
+        timeout: 15_000,
+        responseType: "text",
+      });
+      return response.data;
+    },
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Public API
+// ---------------------------------------------------------------------------
+
+/**
+ * Fetches the CafeF homepage RSS feed and returns the parsed items.
+ *
+ * Each returned item has `source = 'cafef'` set.
+ *
+ * @param httpClient - Optional HTTP client; defaults to an axios-backed client.
+ *                     Inject a mock in tests to avoid real network calls.
+ * @returns Promise resolving to an array of RssItem (empty on error).
+ */
+export async function fetchCafeF(httpClient?: HttpClient): Promise<RssItem[]> {
+  const client = httpClient ?? (await makeDefaultHttpClient());
+
+  logger.debug("[cafef] fetching RSS feed", { url: CAFEF_RSS_URL });
+
+  try {
+    const xml = await client.get(CAFEF_RSS_URL);
+    const items = parseRssFeed(xml);
+
+    // Tag every item with the CafeF source identifier
+    const tagged = items.map((item) => ({ ...item, source: CAFEF_SOURCE }));
+
+    logger.info("[cafef] fetched RSS items", { count: tagged.length });
+
+    return tagged;
+  } catch (err) {
+    logger.error("[cafef] failed to fetch RSS feed", {
+      url: CAFEF_RSS_URL,
+      error: err instanceof Error ? err.message : String(err),
+    });
+    return [];
+  }
+}
