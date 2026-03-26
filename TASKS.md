@@ -22,6 +22,7 @@
 | 042 | Balance sheet extractor | `task/042-bctc-balance-sheet` | 2026-03-25 | [TASK_REPORT_042](reports/TASK_REPORT_042.md) |
 | 014 | Embedding text builder (domain) | `task/014-embedding-text-builder` | 2026-03-26 | [TASK_REPORT_014](reports/TASK_REPORT_014.md) |
 | 043 | Income statement extractor | `task/043-bctc-income-stmt` | 2026-03-26 | [TASK_REPORT_043](reports/TASK_REPORT_043.md) |
+| 044 | Cash flow extractor | `task/044-bctc-cashflow` | 2026-03-26 | [TASK_REPORT_044](reports/TASK_REPORT_044.md) |
 
 ---
 
@@ -43,7 +44,6 @@
 | # | Title | Branch | Layer | Depends on |
 |---|-------|--------|-------|------------|
 | 013 | RAG multi-level retriever | `task/013-rag-retriever` | infra | 012 ✅ |
-| 044 | Cash flow extractor | `task/044-bctc-cashflow` | domain | 041 ✅ |
 | 063 | Signal detector (price + news + report) | `task/063-signal-detector` | domain | 002 ✅ |
 | 021 | RSS base fetcher + CafeF news | `task/021-rss-cafef` | infra | 003 ✅ |
 | 024 | Trading Economics scraper | `task/024-scraper-trading-economics` | infra | 003 ✅ |
@@ -132,10 +132,10 @@
 
 | Column | Count | Tasks |
 |--------|-------|-------|
-| ✅ Done | 10 | 000, 001, 002, 003, 011, 012, 014, 041, 042, 043 |
+| ✅ Done | 11 | 000, 001, 002, 003, 011, 012, 014, 041, 042, 043, 044 |
 | 🔍 Review | 0 | — |
 | 🚧 In Progress | 0 | — |
-| 📋 Todo | 11 | 013, 021, 024-029, 044, 063, 081 |
+| 📋 Todo | 10 | 013, 021, 024-029, 063, 081 |
 | 🗂 Backlog | 14 | 022, 023, 030, 045-048, 061, 062, 064-066, 082-086, 101-105, 121-125 |
 | **Total** | **35** | |
 
