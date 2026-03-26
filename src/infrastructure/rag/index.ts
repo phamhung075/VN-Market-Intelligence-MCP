@@ -21,3 +21,10 @@ export {
   type SearchResult,
   type SearchFilters,
 } from "./vectorstore.js";
+
+export {
+  searchContext,
+  insertAnalysis,
+  type SearchOptions,
+  type AnalysisInput,
+} from "./retriever.js";
