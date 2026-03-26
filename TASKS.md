@@ -25,14 +25,13 @@
 | 044 | Cash flow extractor | `task/044-bctc-cashflow` | 2026-03-26 | [TASK_REPORT_044](reports/TASK_REPORT_044.md) |
 | 013 | RAG multi-level retriever | `task/013-rag-retriever` | 2026-03-26 | [TASK_REPORT_013](reports/TASK_REPORT_013.md) |
 | 045 | Ratio computation | `task/045-bctc-ratios` | 2026-03-26 | [TASK_REPORT_045](reports/TASK_REPORT_045.md) |
+| 046 | Period delta (QoQ / YoY) | `task/046-period-delta` | 2026-03-26 | [TASK_REPORT_046](reports/TASK_REPORT_046.md) |
 
 ---
 
 ## 🔍 REVIEW
 
-| # | Title | Branch | Layer | Status |
-|---|-------|--------|-------|--------|
-| 046 | Period delta (QoQ / YoY) | `task/046-period-delta` | domain | Ready for QA |
+*Empty*
 
 ---
 
@@ -133,8 +132,8 @@
 
 | Column | Count | Tasks |
 |--------|-------|-------|
-| ✅ Done | 13 | 000, 001, 002, 003, 011, 012, 013, 014, 041, 042, 043, 044, 045 |
-| 🔍 Review | 1 | 046 |
+| ✅ Done | 14 | 000, 001, 002, 003, 011, 012, 013, 014, 041, 042, 043, 044, 045, 046 |
+| 🔍 Review | 0 | — |
 | 🚧 In Progress | 0 | — |
 | 📋 Todo | 9 | 021, 024-029, 063, 081 |
 | 🗂 Backlog | 11 | 022, 023, 030, 047-048, 061, 062, 064-066, 082-086, 101-105, 121-125 |
