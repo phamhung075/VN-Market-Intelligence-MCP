@@ -17,3 +17,5 @@ export { extractIncomeStatement } from "./incomeStatementExtractor";
 export { buildEmbeddingText } from "./embeddingTextBuilder";
 export type { EmbeddingTextInput } from "./embeddingTextBuilder";
 export { extractCashFlow } from "./cashFlowExtractor";
+export { computeFinancialRatios } from "./ratioComputer";
+export type { ComputeRatiosParams } from "./ratioComputer";
