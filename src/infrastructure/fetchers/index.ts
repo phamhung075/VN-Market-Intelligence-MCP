@@ -4,6 +4,7 @@
  * HTTP scrapers and data fetchers for external services:
  *   - SSC portal (congbothongtin.ssc.gov.vn) — Task 029
  *   - PDF downloader + pdf-parse extractor    — Task 030
+ *   - RSS base parser + CafeF fetcher         — Task 021
  */
 
 // ── Task 029: SSC portal scraper ─────────────────────────────────────────────
@@ -22,3 +23,7 @@ export {
   PDF_CONFIDENCE_HIGH_THRESHOLD,
   type PdfExtractionResult,
 } from "./pdf.js";
+
+// ── Task 021: RSS base parser + CafeF fetcher ─────────────────────────────────
+export { parseRssFeed, type RssItem } from "./rss.js";
+export { fetchCafeF } from "./cafef.js";
