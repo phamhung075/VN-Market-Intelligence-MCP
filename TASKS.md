@@ -54,15 +54,13 @@
 
 | # | Title | Branch | Notes |
 |---|-------|--------|-------|
-| — | — | — | — |
+| 083 | Analysis MCP tools (fetch_and_analyze, run_impact_chain, search_similar_context) | `task/083-tool-analysis` | 16 tests pass, 0 fail; tsc clean |
 
 ---
 
 ## 🚧 IN PROGRESS
 
-| # | Title | Branch | Started |
-|---|-------|--------|---------|
-| 083 | Analysis MCP tools (fetch_and_analyze, run_impact_chain, search_similar_context) | `task/083-tool-analysis` | 2026-03-27 |
+*Empty — ready to start*
 
 ---
 
