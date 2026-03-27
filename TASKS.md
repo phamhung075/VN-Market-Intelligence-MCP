@@ -47,7 +47,9 @@
 
 ## 🔍 REVIEW
 
-*Empty*
+| # | Title | Branch | Notes |
+|---|-------|--------|-------|
+| 023 | Reuters / AP News RSS fetcher | `task/023-rss-reuters` | 14 tests pass; sequential fallback Reuters→AP; barrel export added |
 
 ---
 
