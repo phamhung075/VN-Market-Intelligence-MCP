@@ -29,3 +29,5 @@ export type {
   SignalContext,
   Signal,
 } from "./signalDetector";
+export { generateAlerts } from "./alertGenerator";
+export type { Alert } from "./alertGenerator";
