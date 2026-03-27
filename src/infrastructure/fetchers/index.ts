@@ -6,6 +6,7 @@
  *   - PDF downloader + pdf-parse extractor    — Task 030
  *   - RSS base parser + CafeF fetcher         — Task 021
  *   - VnExpress Finance RSS fetcher           — Task 022
+ *   - Reuters / AP News RSS fetcher          — Task 023
  */
 
 // ── Task 029: SSC portal scraper ─────────────────────────────────────────────
@@ -31,3 +32,6 @@ export { fetchCafeF } from "./cafef.js";
 
 // ── Task 022: VnExpress Finance RSS fetcher ───────────────────────────────────
 export { fetchVnExpress } from "./vnexpress.js";
+
+// ── Task 023: Reuters / AP News RSS fetcher ────────────────────────────────────
+export { fetchReuters } from "./reuters.js";
