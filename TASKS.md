@@ -60,7 +60,9 @@
 
 ## 🚧 IN PROGRESS
 
-*Empty — ready to start*
+| # | Title | Branch | Started |
+|---|-------|--------|---------|
+| 083 | Analysis MCP tools (fetch_and_analyze, run_impact_chain, search_similar_context) | `task/083-tool-analysis` | 2026-03-27 |
 
 ---
 
@@ -81,7 +83,7 @@
 | ~~023~~ | ~~Reuters / AP News RSS fetcher~~ | ~~`task/023-rss-reuters`~~ | ~~infra~~ | ~~021 ✅~~ | ~~1 — done~~ |
 | ~~061~~ | ~~News normalizer → AnalysisEntry~~ | ~~`task/061-news-normalizer`~~ | ~~domain~~ | ~~022 ✅, 023 ✅, 014 ✅, 021 ✅~~ | ~~2 — done~~ |
 | ~~062~~ | ~~Causal cascade engine + runImpactChain use case~~ | ~~`task/062-cascade-engine`~~ | ~~domain + application~~ | ~~061 ✅, 013 ✅~~ | ~~3 — done~~ |
-| 083 | Analysis MCP tools (fetch_and_analyze, run_impact_chain, search_similar_context) | `task/083-tool-analysis` | interface | 062 ✓, 022 ✓, 023 ✓, 081 ✅ | 4 — after 062 done |
+| ~~083~~ | ~~Analysis MCP tools (fetch_and_analyze, run_impact_chain, search_similar_context)~~ | ~~`task/083-tool-analysis`~~ | ~~interface~~ | ~~062 ✓, 022 ✓, 023 ✓, 081 ✅~~ | ~~4 — in progress~~ |
 
 ### Deferred to Sprint 005+
 
