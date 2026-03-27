@@ -25,6 +25,12 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { loadConfig } from "../../infrastructure/config.js";
 import { createLogger } from "../../infrastructure/logger.js";
 import { SseSessionManager } from "./transport.js";
+import {
+  registerWatchlistTools,
+  registerReportTools,
+  registerAlertTools,
+  registerAnalysisTools,
+} from "./tools/index.js";
 
 /** Options for starting the Bun HTTP server. */
 export interface BunServerOptions {
@@ -41,6 +47,11 @@ export interface BunServerOptions {
 export interface BunServerInstance {
   /** The TCP port the server is listening on. */
   readonly port: number;
+  /**
+   * The number of MCP tools registered on this server instance.
+   * Exposed here so tests and monitoring can verify wiring without an HTTP round-trip.
+   */
+  readonly toolCount: number;
   /** Gracefully stops the HTTP server. Resolves when all connections are closed. */
   close(): Promise<void>;
 }
@@ -64,6 +75,19 @@ export async function createBunServer(
     { name: "vn-market-intelligence", version: "1.0.0" },
     { capabilities: { tools: {} } },
   );
+
+  // ── Register all MCP tool groups ────────────────────────────────────────
+  registerWatchlistTools(mcpServer);
+  registerReportTools(mcpServer);
+  registerAlertTools(mcpServer);
+  registerAnalysisTools(mcpServer); // stub until task 083
+
+  // Count registered tools via the SDK's internal registry
+  const registeredToolsMap = (
+    mcpServer as unknown as { _registeredTools: Record<string, unknown> }
+  )._registeredTools;
+  const toolCount = Object.keys(registeredToolsMap ?? {}).length;
+  log.info("[createBunServer] Tools registered", { toolCount });
 
   // ── Session manager handles SSE + message routing ──────────────────────
   const sessions = new SseSessionManager(mcpServer, log);
@@ -119,6 +143,7 @@ export async function createBunServer(
           status: "ok",
           name: "vn-market-intelligence-mcp",
           version: "1.0.0",
+          toolCount,
           sessions: sessions.sessionCount,
           uptime: process.uptime(),
         }),
@@ -174,6 +199,7 @@ export async function createBunServer(
   // ── Return the instance handle ──────────────────────────────────────────
   return {
     port,
+    toolCount,
     close(): Promise<void> {
       return new Promise<void>((resolve, reject) => {
         httpServer.close((err) => {
