@@ -38,6 +38,7 @@
 | 064 | Multi-signal alert generator | `task/064-alert-generator` | 2026-03-27 | [TASK_REPORT_064](reports/TASK_REPORT_064.md) |
 | 086 | Alert MCP tools (get_alerts, briefing, history) | `task/086-tool-alerts` | 2026-03-27 | [TASK_REPORT_086](reports/TASK_REPORT_086.md) |
 | 087 | Server tool wiring (register all tools in createBunServer) | `task/087-server-wiring` | 2026-03-27 | [TASK_REPORT_087](reports/TASK_REPORT_087.md) |
+| 022 | VnExpress Finance RSS fetcher | `task/022-rss-vnexpress` | 2026-03-27 | [TASK_REPORT_022](reports/TASK_REPORT_022.md) |
 
 > **Sprint 003 COMPLETE** — All 5 tasks merged: 021, 082, 063, 064, 086. PO sign-off: APPROVED 2026-03-27.
 > **Sprint 004 Wave 1** — Task 087 merged: 2026-03-27. Tasks 022 + 023 unblocked.
@@ -69,7 +70,7 @@
 
 | # | Title | Branch | Layer | Depends on | Wave |
 |---|-------|--------|-------|------------|------|
-| 022 | VnExpress Finance RSS fetcher | `task/022-rss-vnexpress` | infra | 021 ✅ | 1 — parallel (087 ✅ done) |
+| ~~022~~ | ~~VnExpress Finance RSS fetcher~~ | ~~`task/022-rss-vnexpress`~~ | ~~infra~~ | ~~021 ✅~~ | ~~1 — done~~ |
 | 023 | Reuters / AP News RSS fetcher | `task/023-rss-reuters` | infra | 021 ✅ | 1 — parallel (087 ✅ done) |
 | 061 | News normalizer → AnalysisEntry | `task/061-news-normalizer` | domain | 022 ✓, 023 ✓, 014 ✅, 021 ✅ | 2 — after 022+023 done |
 | 062 | Causal cascade engine + runImpactChain use case | `task/062-cascade-engine` | domain + application | 061 ✓, 013 ✅ | 3 — after 061 done |
@@ -155,10 +156,10 @@
 
 | Column | Count | Tasks |
 |--------|-------|-------|
-| ✅ Done | 25 | 000, 001, 002, 003, 011, 012, 013, 014, 021, 029, 030, 041, 042, 043, 044, 045, 046, 047, 048, 063, 064, 081, 082, 085, 086 |
+| ✅ Done | 26 | 000, 001, 002, 003, 011, 012, 013, 014, 021, 022, 029, 030, 041, 042, 043, 044, 045, 046, 047, 048, 063, 064, 081, 082, 085, 086, 087 |
 | 🔍 Review | 0 | — |
 | 🚧 In Progress | 0 | — |
-| 📋 Todo | 11 | Sprint 004 (wave order): 087, 022, 023, 061, 062, 083 — Deferred Sprint 005+: 024, 025, 026, 027, 028 |
+| 📋 Todo | 10 | Sprint 004 (wave order): 023, 061, 062, 083 — Deferred Sprint 005+: 024, 025, 026, 027, 028 |
 | 🗂 Backlog | 11 | 065, 066, 084, 101-105, 121-125 |
 | **Total** | **47** | |
 

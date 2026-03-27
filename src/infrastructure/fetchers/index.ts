@@ -5,6 +5,7 @@
  *   - SSC portal (congbothongtin.ssc.gov.vn) — Task 029
  *   - PDF downloader + pdf-parse extractor    — Task 030
  *   - RSS base parser + CafeF fetcher         — Task 021
+ *   - VnExpress Finance RSS fetcher           — Task 022
  */
 
 // ── Task 029: SSC portal scraper ─────────────────────────────────────────────
@@ -27,3 +28,6 @@ export {
 // ── Task 021: RSS base parser + CafeF fetcher ─────────────────────────────────
 export { parseRssFeed, type RssItem } from "./rss.js";
 export { fetchCafeF } from "./cafef.js";
+
+// ── Task 022: VnExpress Finance RSS fetcher ───────────────────────────────────
+export { fetchVnExpress } from "./vnexpress.js";
