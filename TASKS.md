@@ -44,7 +44,9 @@
 
 ## 🔍 REVIEW
 
-*Empty*
+| # | Title | Branch | Report |
+|---|-------|--------|--------|
+| 022 | VnExpress Finance RSS fetcher | `task/022-rss-vnexpress` | pending |
 
 ---
 
@@ -86,7 +88,6 @@
 
 | # | Title | Branch | Layer | Depends on | Acceptance Criteria |
 |---|-------|--------|-------|------------|---------------------|
-| 022 | VnExpress Finance RSS fetcher | `task/022-rss-vnexpress` | infra | 021 | Same as 021 for VnExpress Finance RSS |
 | 023 | Reuters / AP News RSS fetcher | `task/023-rss-reuters` | infra | 021 | `fetchReuters()` returns ≥5 international news items |
 
 ---
@@ -140,10 +141,10 @@
 | Column | Count | Tasks |
 |--------|-------|-------|
 | ✅ Done | 22 | 000, 001, 002, 003, 011, 012, 013, 014, 021, 029, 030, 041, 042, 043, 044, 045, 046, 047, 048, 081, 082, 085 |
-| 🔍 Review | 1 | 063 |
+| 🔍 Review | 1 | 022 |
 | 🚧 In Progress | 0 | — |
 | 📋 Todo | 7 | Sprint 003: 064, 086 — Sprint 004+: 024, 025, 026, 027, 028 |
-| 🗂 Backlog | 13 | 022, 023, 061, 062, 065, 066, 083, 084, 101-105, 121-125 |
+| 🗂 Backlog | 12 | 023, 061, 062, 065, 066, 083, 084, 101-105, 121-125 |
 | **Total** | **43** | |
 
 ---
