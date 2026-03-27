@@ -36,14 +36,15 @@
 | 082 | Watchlist MCP tools (add/remove/get/update) | `task/082-tool-watchlist` | 2026-03-26 | [TASK_REPORT_082](reports/TASK_REPORT_082.md) |
 | 063 | Signal detector (price + news + report) | `task/063-signal-detector` | 2026-03-27 | [TASK_REPORT_063](reports/TASK_REPORT_063.md) |
 | 064 | Multi-signal alert generator | `task/064-alert-generator` | 2026-03-27 | [TASK_REPORT_064](reports/TASK_REPORT_064.md) |
+| 086 | Alert MCP tools (get_alerts, briefing, history) | `task/086-tool-alerts` | 2026-03-27 | [TASK_REPORT_086](reports/TASK_REPORT_086.md) |
+
+> **Sprint 003 COMPLETE** — All 5 tasks merged: 021, 082, 063, 064, 086. Pending PO sign-off for Sprint 004.
 
 ---
 
 ## 🔍 REVIEW
 
-| # | Title | Branch | Layer | Depends on |
-|---|-------|--------|-------|------------|
-| 086 | Alert MCP tools (get_alerts, briefing, history) | `task/086-tool-alerts` | interface | 064 ✅, 081 ✅ |
+*Empty*
 
 ---
 
@@ -56,7 +57,7 @@
 ## 📋 TODO
 *(Dependencies cleared — ready to assign)*
 
-### Sprint 003 tasks (priority — do these first)
+### Sprint 003 — DONE
 
 | # | Title | Branch | Layer | Depends on |
 |---|-------|--------|-------|------------|
@@ -64,6 +65,7 @@
 | ~~082~~ | ~~Watchlist MCP tools (add/remove/get/update)~~ | ~~`task/082-tool-watchlist`~~ | ~~interface~~ | ~~081 ✅, 002 ✅~~ |
 | ~~063~~ | ~~Signal detector (price + news + report)~~ | ~~`task/063-signal-detector`~~ | ~~domain~~ | ~~021, 082~~ |
 | ~~064~~ | ~~Multi-signal alert generator~~ | ~~`task/064-alert-generator`~~ | ~~domain~~ | ~~063 ✅~~ |
+| ~~086~~ | ~~Alert MCP tools (get_alerts, briefing, history)~~ | ~~`task/086-tool-alerts`~~ | ~~interface~~ | ~~064 ✅, 081 ✅~~ |
 
 ### Deferred to Sprint 004+
 
