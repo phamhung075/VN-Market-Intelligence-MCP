@@ -29,3 +29,12 @@ export type {
 // Task 062: Causal cascade orchestrator (news → RAG → CausalChain)
 export { runImpactChain } from "./runImpactChain.js";
 export type { RunCascadeInput, RagRetriever } from "./runImpactChain.js";
+
+// Task 104: SSC nightly report check (20:00 GMT+7)
+export { checkSscReports } from "./checkSscReports.js";
+export type {
+  CheckSscReportsOptions,
+  SscCheckResult,
+  WatchlistEntry,
+  PipelineParams,
+} from "./checkSscReports.js";

@@ -4,8 +4,9 @@
  */
 
 import cron from 'node-cron'
+import { runSscCheck } from './sscCheckerJob.js'
 
-const CRONS = {
+export const CRONS = {
   morningBriefing: Bun.env.CRON_MORNING_BRIEFING ?? '0 8 * * *',
   marketOpen:      Bun.env.CRON_MARKET_OPEN      ?? '0 9 * * 1-5',
   newsPoll:        Bun.env.CRON_NEWS_POLL         ?? '*/30 * * * *',
