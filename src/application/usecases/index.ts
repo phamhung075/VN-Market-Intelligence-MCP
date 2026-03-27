@@ -25,3 +25,7 @@ export type {
   InsertAnalysisFn,
   QuarterString,
 } from "./fetchParseAndStoreBctc.js";
+
+// Task 062: Causal cascade orchestrator (news → RAG → CausalChain)
+export { runImpactChain } from "./runImpactChain.js";
+export type { RunCascadeInput, RagRetriever } from "./runImpactChain.js";
