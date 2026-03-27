@@ -56,7 +56,7 @@
 
 | # | Title | Branch | Notes |
 |---|-------|--------|-------|
-| — | — | — | Empty — all Sprint 004 tasks Done |
+| — | — | — | Empty — ready for Sprint 005 |
 
 ---
 
@@ -69,33 +69,177 @@
 ## 📋 TODO
 *(Dependencies cleared — ready to assign)*
 
-### Sprint 004
-<!-- Execution order per TECH_004.md:
-  Wave 1 — 087 + 022 + 023 in parallel (all deps Done; WIP limit: start 087 first, then 022+023)
-  Wave 2 — 061 (after 022 ✓ + 023 ✓)
-  Wave 3 — 062 (after 061 ✓)
-  Wave 4 — 083 (after 062 ✓)
+### Sprint 005
+<!-- Execution waves per TECH_005.md:
+  Wave 1 — 088 (independent cleanup, no deps beyond already-done 087)
+  Wave 2 — 026 + 102 + 104 in parallel (all independent of each other)
+  Wave 3 — 103 (after 026 done)
+  Wave 4 — 101 (after 102 done)
 -->
 
-| # | Title | Branch | Layer | Depends on | Wave |
-|---|-------|--------|-------|------------|------|
-| ~~022~~ | ~~VnExpress Finance RSS fetcher~~ | ~~`task/022-rss-vnexpress`~~ | ~~infra~~ | ~~021 ✅~~ | ~~1 — done~~ |
-| ~~023~~ | ~~Reuters / AP News RSS fetcher~~ | ~~`task/023-rss-reuters`~~ | ~~infra~~ | ~~021 ✅~~ | ~~1 — done~~ |
-| ~~061~~ | ~~News normalizer → AnalysisEntry~~ | ~~`task/061-news-normalizer`~~ | ~~domain~~ | ~~022 ✅, 023 ✅, 014 ✅, 021 ✅~~ | ~~2 — done~~ |
-| ~~062~~ | ~~Causal cascade engine + runImpactChain use case~~ | ~~`task/062-cascade-engine`~~ | ~~domain + application~~ | ~~061 ✅, 013 ✅~~ | ~~3 — done~~ |
-| ~~083~~ | ~~Analysis MCP tools (fetch_and_analyze, run_impact_chain, search_similar_context)~~ | ~~`task/083-tool-analysis`~~ | ~~interface~~ | ~~062 ✓, 022 ✓, 023 ✓, 081 ✅~~ | ~~4 — done~~ |
+> REQ-005 written — TECH-005 approved by Architect. See docs/TECH_005.md. Status: ACTIVE.
 
-### Deferred to Sprint 005+
+#### Wave 1 — Run immediately (no blocking dependencies)
+
+| # | Title | Branch | Agent | Layer | Depends on | Status |
+|---|-------|--------|-------|-------|------------|--------|
+| 088 | Legacy cleanup — delete src/server.ts + src/tools/ stubs | `task/088-legacy-cleanup` | Developer | interface | 087 ✅ | Review |
+
+**Task 088 — Acceptance Criteria**
+
+**Given** `src/server.ts` and `src/tools/` exist as dead stubs (no live imports confirmed by Architect)
+**When** task 088 is implemented and merged
+**Then**
+- `src/server.ts` file does not exist on disk
+- `src/tools/` directory does not exist on disk
+- `grep -r "from.*src/server" src/` returns zero matches in production code
+- `bun tsc --noEmit` reports 0 errors
+- `bun test` full suite passes with 0 failures
+
+**Files to delete**: `src/server.ts`, `src/tools/watchlist.ts`, `src/tools/analysis.ts`, `src/tools/reports.ts`, `src/tools/alerts.ts`
+**Pre-deletion check**: `grep -r "from.*['\"].*src/server\|from.*['\"]../tools/\|from.*['\"]./tools/" src/` must return empty before deleting
+**Note**: `src/db/schema.ts` (legacy, different path) — do NOT delete; check if test files import it first.
+
+---
+
+#### Wave 2 — Run in parallel after Wave 1 (all three are independent of each other)
+
+| # | Title | Branch | Agent | Layer | Depends on | Status |
+|---|-------|--------|-------|-------|------------|--------|
+| 026 | HOSE market data fetcher (VnDirect primary, CafeF fallback) | `task/026-hose-prices` | Developer | infrastructure | 003 ✅ | Todo |
+| 102 | News polling job (every 30 min) | `task/102-job-news-poll` | Developer | interface/scheduler | 061 ✅, 062 ✅, 064 ✅ | Todo |
+| 104 | SSC nightly report check (20:00 GMT+7) | `task/104-job-ssc-check` | Developer | interface/scheduler | 048 ✅, 086 ✅ | Todo |
+
+**Task 026 — Acceptance Criteria**
+
+**Given** a list of HOSE ticker codes e.g. `["VCB", "HPG"]`
+**When** `fetchHosePrices(codes)` is called
+**Then**
+- Returns `MarketPrice[]` with `code`, `price`, `previousPrice`, `changeAmt`, `changePct`, `volume`, `updatedAt`
+- Primary source: VnDirect JSON API (`https://finfo-api.vndirect.com.vn/v4/stocks?q=code:...`)
+- Fallback to CafeF HTML scraper if VnDirect returns 0 rows or HTTP error
+- Returns `[]` (never throws) on total failure; logs warning
+- `storePrices(prices)` upserts into `market_prices` (INSERT OR REPLACE) and appends to `market_prices_history`
+- `fetchVnIndex()` returns `VnIndexSnapshot | null`
+- Schema: `market_prices` gains `previous_price REAL` column; `market_prices_history` table created
+- `bun test src/__tests__/026-*.test.ts` passes with mocked HTTP (no real network calls)
+- `bun tsc --noEmit` 0 errors
+
+**Files to create/modify**:
+- CREATE: `src/infrastructure/fetchers/hose.ts`
+- MODIFY: `src/infrastructure/db/schema.ts` (add `previous_price` column to `market_prices`; add `market_prices_history` table + index)
+
+---
+
+**Task 102 — Acceptance Criteria**
+
+**Given** RSS sources (CafeF, VnExpress, Reuters) have articles not yet in `rag_analyses`
+**When** `pollNews()` is called
+**Then**
+- Returns `PollNewsResult` with `fetched`, `inserted`, `duplicates`, `alerts`, `errors` counts
+- New articles stored via `INSERT OR IGNORE INTO rag_analyses` using UNIQUE index on `source_url`
+- Second call with same articles increments `duplicates`, does NOT create duplicate rows
+- Each source failure increments `errors` but does not abort remaining sources
+- Impact chain (`runImpactChain`) runs on each new entry; resulting alerts stored via `INSERT OR IGNORE INTO alerts`
+- Schema: `CREATE UNIQUE INDEX IF NOT EXISTS idx_rag_source_url ON rag_analyses(source_url) WHERE source_url IS NOT NULL AND source_url != ''` added in `initDatabase()`
+- `runNewsPoller()` in `newsPollerJob.ts` has concurrency guard (skips if previous cycle still running)
+- `bun test src/__tests__/102-*.test.ts` passes with mocked fetchers
+- `bun tsc --noEmit` 0 errors
+
+**Files to create/modify**:
+- CREATE: `src/application/usecases/pollNews.ts`
+- CREATE: `src/scheduler/newsPollerJob.ts`
+- MODIFY: `src/infrastructure/db/schema.ts` (add UNIQUE index on `rag_analyses.source_url`)
+
+---
+
+**Task 104 — Acceptance Criteria**
+
+**Given** watchlist stocks exist in SQLite and SSC portal is reachable
+**When** `runSscCheck()` is called
+**Then**
+- Queries SSC for new BCTC documents for each watchlist stock
+- Skips documents whose `source_url` already exists in `financial_reports`
+- Calls `fetchParseAndStoreBctc({ url, actionCode })` for each new document
+- 2-second delay between documents per stock to avoid rate-limiting
+- 3-retry exponential backoff (2 s → 4 s → 8 s) on SSC HTTP errors
+- If `financial_reports` lacks `source_url` column, adds it via `ALTER TABLE`
+- No crash on empty watchlist or SSC unreachable (logs warning, returns gracefully)
+- `bun test src/__tests__/104-*.test.ts` passes with mocked HTTP
+- `bun tsc --noEmit` 0 errors
+
+**Files to create**:
+- CREATE: `src/scheduler/sscCheckerJob.ts`
+
+---
+
+#### Wave 3 — After task 026 is merged
+
+| # | Title | Branch | Agent | Layer | Depends on | Status |
+|---|-------|--------|-------|-------|------------|--------|
+| 103 | Market open/close scan (09:00 + 15:30 GMT+7) | `task/103-job-market-scan` | Developer | interface/scheduler | 026, 063 ✅, 064 ✅ | Backlog |
+
+**Task 103 — Acceptance Criteria**
+
+**Given** watchlist stocks have HOSE price data and `market_prices_history` table exists
+**When** `runMarketScan("open")` or `runMarketScan("close")` is called
+**Then**
+- Calls `fetchHosePrices` for all watchlist stock codes
+- Inserts fetched prices into `market_prices_history` (in addition to upsert in `market_prices`)
+- Assembles `MarketSnapshot` per stock: `{ actionCode, price, previousPrice, volume, avgVolume }`
+- `avgVolume` = AVG of last 20 rows in `market_prices_history`; if < 5 rows exist, returns `0` (suppresses `volume_spike`)
+- Passes snapshots through `detectSignals` filtering for `price_drop`, `price_surge`, `volume_spike` only
+- Calls `generateAlerts` and stores resulting alerts via `INSERT OR IGNORE INTO alerts`
+- No crash on empty watchlist or HOSE fetch failure
+- `bun test src/__tests__/103-*.test.ts` passes with mocked fetcher
+- `bun tsc --noEmit` 0 errors
+
+**Files to create**:
+- CREATE: `src/scheduler/marketScanJob.ts`
+
+---
+
+#### Wave 4 — After task 102 is merged
+
+| # | Title | Branch | Agent | Layer | Depends on | Status |
+|---|-------|--------|-------|-------|------------|--------|
+| 101 | Morning briefing job (08:00 GMT+7) | `task/101-job-morning-briefing` | Developer | interface/scheduler | 102, 086 ✅ | Backlog |
+
+**Task 101 — Acceptance Criteria**
+
+**Given** SQLite contains recent `rag_analyses`, `alerts`, `watchlist`, `market_prices`, and `financial_reports` rows
+**When** `runMorningBriefing()` is called (or cron fires at 08:00 Asia/Ho_Chi_Minh)
+**Then**
+- Runs `pollNews()` as best-effort pre-fetch (failure does not abort briefing)
+- Fetches VnIndex via `fetchVnIndex()` (best-effort; null on failure)
+- `assembleBriefing(vnIndex)` returns `DailyBriefing` with:
+  - `topStories`: up to 5 `rag_analyses` rows since midnight Vietnam time, sorted by `impact_score DESC`
+  - `alerts`: unread alerts from last 12 hours
+  - `watchlistSummary`: one entry per watchlist stock with price + changePct from `market_prices`
+  - `newReports`: stock codes with new `financial_reports` since midnight Vietnam time
+- `persistBriefing(briefing)` writes to `./data/briefings/YYYY-MM-DD.json` (creates dir if absent, overwrites if re-run)
+- `jobs.ts` updated: imports all four job modules; `eveningSummary` cron entry removed
+- `src/index.ts` updated: calls `startScheduler()` as step 3 of bootstrap
+- `bun run src/index.ts` logs `[scheduler] jobs registered` at startup (manual verify)
+- `bun test src/__tests__/101-*.test.ts` passes with mocked DB + file system
+- `bun tsc --noEmit` 0 errors
+
+**Files to create/modify**:
+- CREATE: `src/application/usecases/assembleBriefing.ts`
+- CREATE: `src/scheduler/morningBriefingJob.ts`
+- MODIFY: `src/scheduler/jobs.ts` (import + wire all 4 job modules; remove `eveningSummary` cron entry)
+- MODIFY: `src/index.ts` (add `startScheduler()` call as step 3 of bootstrap)
+
+### Deferred to Sprint 006+
 
 | # | Title | Branch | Layer | Depends on |
 |---|-------|--------|-------|------------|
 | 024 | Trading Economics scraper | `task/024-scraper-trading-economics` | infra | 003 ✅ |
 | 025 | Yahoo Finance commodity fetcher | `task/025-yahoo-finance` | infra | 003 ✅ |
-| 026 | HOSE market data fetcher | `task/026-hose-prices` | infra | 003 ✅ |
 | 027 | HNX + UPCOM market data fetcher | `task/027-hnx-prices` | infra | 003 ✅ |
 | 028 | SBV (State Bank Vietnam) macro fetcher | `task/028-sbv-macro` | infra | 003 ✅ |
 
-### Sprint 003 — DONE (historical)
+### Sprint 004 — DONE (historical)
 
 | # | Title | Branch | Layer | Depends on |
 |---|-------|--------|-------|------------|
@@ -112,13 +256,20 @@
 
 ### 📡 Infrastructure Fetchers (021–039)
 
-*(022, 023 promoted to Sprint 004 Todo)*
+*(022, 023 promoted to Sprint 004; 026 promoted to Sprint 005 Todo)*
+
+| # | Title | Branch | Layer | Depends on | Acceptance Criteria |
+|---|-------|--------|-------|------------|---------------------|
+| 024 | Trading Economics scraper | `task/024-scraper-trading-economics` | infra | 003 ✅ | Returns macro indicators (CPI, GDP, interest rate) as structured JSON; deferred Sprint 006 |
+| 025 | Yahoo Finance commodity fetcher | `task/025-yahoo-finance` | infra | 003 ✅ | Returns Brent crude, gold, USD/VND prices; deferred Sprint 006 |
+| 027 | HNX + UPCOM market data fetcher | `task/027-hnx-prices` | infra | 003 ✅ | Returns price + volume for HNX and UPCOM listed stocks; deferred Sprint 006 |
+| 028 | SBV (State Bank Vietnam) macro fetcher | `task/028-sbv-macro` | infra | 003 ✅ | Returns SBV interest rate, FX rate; deferred Sprint 006 |
 
 ---
 
 ### ⚙️ Domain: Analysis Engine (061–079)
 
-*(061, 062 promoted to Sprint 004 Todo)*
+*(061, 062 promoted to Sprint 004)*
 
 | # | Title | Branch | Layer | Depends on | Acceptance Criteria |
 |---|-------|--------|-------|------------|---------------------|
@@ -129,23 +280,21 @@
 
 ### 🔌 Interface: MCP Server + Tools (081–099)
 
-*(083 promoted to Sprint 004 Todo)*
+*(083 promoted to Sprint 004; 088 promoted to Sprint 005 Todo)*
 
 | # | Title | Branch | Layer | Depends on | Acceptance Criteria |
 |---|-------|--------|-------|------------|---------------------|
-| 084 | Market tools (snapshot, search_context, patterns) | `task/084-tool-market` | interface | 081, 013, 065 | get_market_snapshot returns VN-Index + prices; search_similar_context returns relevant past analysis |
+| 084 | Market tools (snapshot, search_context, patterns) | `task/084-tool-market` | interface | 081 ✅, 013 ✅, 065 | `get_market_snapshot` returns VN-Index + prices; `search_similar_context` returns relevant past analysis |
 
 ---
 
 ### ⏰ Interface: Scheduler (101–119)
 
+*(101, 102, 103, 104 promoted to Sprint 005 Todo)*
+
 | # | Title | Branch | Layer | Depends on | Acceptance Criteria |
 |---|-------|--------|-------|------------|---------------------|
-| 101 | Morning briefing job (08:00 GMT+7) | `task/101-job-morning-briefing` | interface | 083, 086 | Cron fires at 08:00; calls fetchAllNews + generateDailyBriefing; stores result; test: manual trigger works |
-| 102 | News polling job (every 30 min) | `task/102-job-news-poll` | interface | 021-023, 062, 064 | Polls all sources; runs cascade analysis; generates alerts if signals detected; deduplicates already-seen URLs |
-| 103 | Market open/close scan jobs | `task/103-job-market-scan` | interface | 026, 027, 063 | Open job at 09:00 + close job at 15:30 (weekdays only); stores MarketSnapshot; detects abnormal volume |
-| 104 | SSC nightly report check (20:00) | `task/104-job-ssc-check` | interface | 048 | Checks all watchlist stocks for new reports; triggers parse pipeline if new; sends alert if found |
-| 105 | Evening summary job (22:00) | `task/105-job-evening-summary` | interface | 086 | Generates end-of-day digest; stores in reports/ folder with date filename |
+| 105 | Evening summary job (22:00) | `task/105-job-evening-summary` | interface | 086 ✅ | Generates end-of-day digest; stores in reports/ folder with date filename |
 
 ---
 
@@ -165,12 +314,12 @@
 
 | Column | Count | Tasks |
 |--------|-------|-------|
-| ✅ Done | 27 | 000, 001, 002, 003, 011, 012, 013, 014, 021, 022, 023, 029, 030, 041, 042, 043, 044, 045, 046, 047, 048, 063, 064, 081, 082, 085, 086, 087 |
+| ✅ Done | 31 | 000, 001, 002, 003, 011, 012, 013, 014, 021, 022, 023, 029, 030, 041, 042, 043, 044, 045, 046, 047, 048, 061, 062, 063, 064, 081, 082, 083, 085, 086, 087 |
 | 🔍 Review | 0 | — |
 | 🚧 In Progress | 0 | — |
-| 📋 Todo | 9 | Sprint 004 (wave order): 061, 062, 083 — Deferred Sprint 005+: 024, 025, 026, 027, 028 |
-| 🗂 Backlog | 11 | 065, 066, 084, 101-105, 121-125 |
-| **Total** | **47** | |
+| 📋 Todo | 4 | Sprint 005 Wave 1–2: 088, 026, 102, 104 |
+| 🗂 Backlog | 14 | Sprint 005 Wave 3–4: 103 (waits for 026), 101 (waits for 102); Deferred: 024, 025, 027, 028, 065, 066, 084, 105, 121-125 |
+| **Total** | **49** | |
 
 ---
 
