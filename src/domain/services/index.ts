@@ -34,3 +34,11 @@ export type {
   ImpactDirection,
   TimeHorizon,
 } from "./newsNormalizer.js";
+export { buildCausalChain } from "./cascadeEngine.js";
+export type {
+  WatchlistEntry,
+  CausalChainEntry,
+  WatchlistImpact,
+  CausalChain,
+  SearchResult,
+} from "./cascadeEngine.js";
