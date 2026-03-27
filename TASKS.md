@@ -41,7 +41,9 @@
 
 ## 🔍 REVIEW
 
-*Empty*
+| # | Title | Branch | Layer | Depends on |
+|---|-------|--------|-------|------------|
+| 086 | Alert MCP tools (get_alerts, briefing, history) | `task/086-tool-alerts` | interface | 064 ✅, 081 ✅ |
 
 ---
 
@@ -62,7 +64,6 @@
 | ~~082~~ | ~~Watchlist MCP tools (add/remove/get/update)~~ | ~~`task/082-tool-watchlist`~~ | ~~interface~~ | ~~081 ✅, 002 ✅~~ |
 | ~~063~~ | ~~Signal detector (price + news + report)~~ | ~~`task/063-signal-detector`~~ | ~~domain~~ | ~~021, 082~~ |
 | ~~064~~ | ~~Multi-signal alert generator~~ | ~~`task/064-alert-generator`~~ | ~~domain~~ | ~~063 ✅~~ |
-| 086 | Alert MCP tools (get_alerts, briefing, history) | `task/086-tool-alerts` | interface | 064, 081 ✅ |
 
 ### Deferred to Sprint 004+
 
