@@ -21,3 +21,11 @@ export { computeFinancialRatios } from "./ratioComputer";
 export type { ComputeRatiosParams } from "./ratioComputer";
 export { computePeriodDelta } from "./periodDeltaComputer";
 export type { FinancialMetrics } from "./periodDeltaComputer";
+export { detectSignals } from "./signalDetector";
+export type {
+  SignalType,
+  Severity,
+  MarketSnapshot,
+  SignalContext,
+  Signal,
+} from "./signalDetector";
