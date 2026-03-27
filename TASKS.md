@@ -38,13 +38,15 @@
 | 064 | Multi-signal alert generator | `task/064-alert-generator` | 2026-03-27 | [TASK_REPORT_064](reports/TASK_REPORT_064.md) |
 | 086 | Alert MCP tools (get_alerts, briefing, history) | `task/086-tool-alerts` | 2026-03-27 | [TASK_REPORT_086](reports/TASK_REPORT_086.md) |
 
-> **Sprint 003 COMPLETE** — All 5 tasks merged: 021, 082, 063, 064, 086. Pending PO sign-off for Sprint 004.
+> **Sprint 003 COMPLETE** — All 5 tasks merged: 021, 082, 063, 064, 086. PO sign-off: APPROVED 2026-03-27.
 
 ---
 
 ## 🔍 REVIEW
 
-*Empty*
+| # | Title | Branch | Ready |
+|---|-------|--------|-------|
+| 087 | Server tool wiring (register all tools in createBunServer) | `task/087-server-wiring` | 2026-03-27 |
 
 ---
 
@@ -57,17 +59,24 @@
 ## 📋 TODO
 *(Dependencies cleared — ready to assign)*
 
-### Sprint 003 — DONE
+### Sprint 004
+<!-- Execution order per TECH_004.md:
+  Wave 1 — 087 + 022 + 023 in parallel (all deps Done; WIP limit: start 087 first, then 022+023)
+  Wave 2 — 061 (after 022 ✓ + 023 ✓)
+  Wave 3 — 062 (after 061 ✓)
+  Wave 4 — 083 (after 062 ✓)
+-->
 
-| # | Title | Branch | Layer | Depends on |
-|---|-------|--------|-------|------------|
-| ~~021~~ | ~~RSS base fetcher + CafeF news~~ | ~~`task/021-rss-cafef`~~ | ~~infra~~ | ~~003 ✅~~ |
-| ~~082~~ | ~~Watchlist MCP tools (add/remove/get/update)~~ | ~~`task/082-tool-watchlist`~~ | ~~interface~~ | ~~081 ✅, 002 ✅~~ |
-| ~~063~~ | ~~Signal detector (price + news + report)~~ | ~~`task/063-signal-detector`~~ | ~~domain~~ | ~~021, 082~~ |
-| ~~064~~ | ~~Multi-signal alert generator~~ | ~~`task/064-alert-generator`~~ | ~~domain~~ | ~~063 ✅~~ |
-| ~~086~~ | ~~Alert MCP tools (get_alerts, briefing, history)~~ | ~~`task/086-tool-alerts`~~ | ~~interface~~ | ~~064 ✅, 081 ✅~~ |
+| # | Title | Branch | Layer | Depends on | Wave |
+|---|-------|--------|-------|------------|------|
+| 087 | Server tool wiring (register all tools in createBunServer) | `task/087-server-wiring` | interface | 082 ✅, 085 ✅, 086 ✅, 081 ✅ | 1 — start first |
+| 022 | VnExpress Finance RSS fetcher | `task/022-rss-vnexpress` | infra | 021 ✅ | 1 — parallel with 087 |
+| 023 | Reuters / AP News RSS fetcher | `task/023-rss-reuters` | infra | 021 ✅ | 1 — parallel with 087 |
+| 061 | News normalizer → AnalysisEntry | `task/061-news-normalizer` | domain | 022 ✓, 023 ✓, 014 ✅, 021 ✅ | 2 — after 022+023 done |
+| 062 | Causal cascade engine + runImpactChain use case | `task/062-cascade-engine` | domain + application | 061 ✓, 013 ✅ | 3 — after 061 done |
+| 083 | Analysis MCP tools (fetch_and_analyze, run_impact_chain, search_similar_context) | `task/083-tool-analysis` | interface | 062 ✓, 022 ✓, 023 ✓, 081 ✅ | 4 — after 062 done |
 
-### Deferred to Sprint 004+
+### Deferred to Sprint 005+
 
 | # | Title | Branch | Layer | Depends on |
 |---|-------|--------|-------|------------|
@@ -77,6 +86,16 @@
 | 027 | HNX + UPCOM market data fetcher | `task/027-hnx-prices` | infra | 003 ✅ |
 | 028 | SBV (State Bank Vietnam) macro fetcher | `task/028-sbv-macro` | infra | 003 ✅ |
 
+### Sprint 003 — DONE (historical)
+
+| # | Title | Branch | Layer | Depends on |
+|---|-------|--------|-------|------------|
+| ~~021~~ | ~~RSS base fetcher + CafeF news~~ | ~~`task/021-rss-cafef`~~ | ~~infra~~ | ~~003 ✅~~ |
+| ~~082~~ | ~~Watchlist MCP tools (add/remove/get/update)~~ | ~~`task/082-tool-watchlist`~~ | ~~interface~~ | ~~081 ✅, 002 ✅~~ |
+| ~~063~~ | ~~Signal detector (price + news + report)~~ | ~~`task/063-signal-detector`~~ | ~~domain~~ | ~~021, 082~~ |
+| ~~064~~ | ~~Multi-signal alert generator~~ | ~~`task/064-alert-generator`~~ | ~~domain~~ | ~~063 ✅~~ |
+| ~~086~~ | ~~Alert MCP tools (get_alerts, briefing, history)~~ | ~~`task/086-tool-alerts`~~ | ~~interface~~ | ~~064 ✅, 081 ✅~~ |
+
 ---
 
 ## 🗂 BACKLOG
@@ -84,19 +103,16 @@
 
 ### 📡 Infrastructure Fetchers (021–039)
 
-| # | Title | Branch | Layer | Depends on | Acceptance Criteria |
-|---|-------|--------|-------|------------|---------------------|
-| 022 | VnExpress Finance RSS fetcher | `task/022-rss-vnexpress` | infra | 021 | Same as 021 for VnExpress Finance RSS |
-| 023 | Reuters / AP News RSS fetcher | `task/023-rss-reuters` | infra | 021 | `fetchReuters()` returns ≥5 international news items |
+*(022, 023 promoted to Sprint 004 Todo)*
 
 ---
 
 ### ⚙️ Domain: Analysis Engine (061–079)
 
+*(061, 062 promoted to Sprint 004 Todo)*
+
 | # | Title | Branch | Layer | Depends on | Acceptance Criteria |
 |---|-------|--------|-------|------------|---------------------|
-| 061 | News normalizer → AnalysisEntry | `task/061-news-normalizer` | domain | 014 | `normalizeNews(rawItem)` returns valid AnalysisEntry with level, sentiment, impactScore (0-10); test: neutral news scores 0-3 |
-| 062 | Causal cascade engine | `task/062-cascade-engine` | domain | 061, 013 | `runImpactChain(newsText, watchlist)` returns chain with ≥1 domain entry and ≥1 action entry; confidence ≥ 0.5; test: oil news → oil_gas sector |
 | 065 | Historical pattern matcher | `task/065-pattern-matcher` | application | 013, 046 | `getPatternSummary('GAS', 'oil price', 24)` returns summary with ≥3 historical precedents; averages impact direction |
 | 066 | AI summary generator | `task/066-ai-summary` | application | 061, 047 | `generateAiSummary(report)` returns AIAnalysis with signals[], outlook, keyStrengths[]; stores in FinancialReport.aiAnalysis |
 
@@ -104,9 +120,10 @@
 
 ### 🔌 Interface: MCP Server + Tools (081–099)
 
+*(083 promoted to Sprint 004 Todo)*
+
 | # | Title | Branch | Layer | Depends on | Acceptance Criteria |
 |---|-------|--------|-------|------------|---------------------|
-| 083 | Analysis MCP tools (fetch_and_analyze, impact_chain) | `task/083-tool-analysis` | interface | 081, 062 | fetch_and_analyze returns ≥1 analysis entry; run_impact_chain returns chain for oil-related text |
 | 084 | Market tools (snapshot, search_context, patterns) | `task/084-tool-market` | interface | 081, 013, 065 | get_market_snapshot returns VN-Index + prices; search_similar_context returns relevant past analysis |
 
 ---
@@ -139,12 +156,12 @@
 
 | Column | Count | Tasks |
 |--------|-------|-------|
-| ✅ Done | 22 | 000, 001, 002, 003, 011, 012, 013, 014, 021, 029, 030, 041, 042, 043, 044, 045, 046, 047, 048, 081, 082, 085 |
-| 🔍 Review | 1 | 063 |
+| ✅ Done | 25 | 000, 001, 002, 003, 011, 012, 013, 014, 021, 029, 030, 041, 042, 043, 044, 045, 046, 047, 048, 063, 064, 081, 082, 085, 086 |
+| 🔍 Review | 0 | — |
 | 🚧 In Progress | 0 | — |
-| 📋 Todo | 7 | Sprint 003: 064, 086 — Sprint 004+: 024, 025, 026, 027, 028 |
-| 🗂 Backlog | 13 | 022, 023, 061, 062, 065, 066, 083, 084, 101-105, 121-125 |
-| **Total** | **43** | |
+| 📋 Todo | 11 | Sprint 004 (wave order): 087, 022, 023, 061, 062, 083 — Deferred Sprint 005+: 024, 025, 026, 027, 028 |
+| 🗂 Backlog | 11 | 065, 066, 084, 101-105, 121-125 |
+| **Total** | **47** | |
 
 ---
 
