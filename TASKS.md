@@ -41,15 +41,15 @@
 
 ## 🔍 REVIEW
 
-*Empty*
+| # | Title | Branch | Layer | Depends on |
+|---|-------|--------|-------|------------|
+| 086 | Alert MCP tools (get_alerts, briefing, history) | `task/086-tool-alerts` | interface | 064 ✅, 081 ✅ |
 
 ---
 
 ## 🚧 IN PROGRESS
 
-| # | Title | Branch | Layer | Depends on |
-|---|-------|--------|-------|------------|
-| 086 | Alert MCP tools (get_alerts, briefing, history) | `task/086-tool-alerts` | interface | 064 ✅, 081 ✅ |
+*Empty — ready to start*
 
 ---
 
