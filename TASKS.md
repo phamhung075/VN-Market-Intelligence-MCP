@@ -42,11 +42,13 @@
 | 023 | Reuters / AP News RSS fetcher | `task/023-rss-reuters` | 2026-03-27 | [TASK_REPORT_023](reports/TASK_REPORT_023.md) |
 | 061 | News normalizer → AnalysisEntry | `task/061-news-normalizer` | 2026-03-27 | [TASK_REPORT_061](reports/TASK_REPORT_061.md) |
 | 062 | Causal cascade engine + runImpactChain use case | `task/062-cascade-engine` | 2026-03-27 | [TASK_REPORT_062](reports/TASK_REPORT_062.md) |
+| 083 | Analysis MCP tools (fetch_and_analyze, run_impact_chain, search_similar_context) | `task/083-tool-analysis` | 2026-03-27 | [TASK_REPORT_083](reports/TASK_REPORT_083.md) |
 
 > **Sprint 003 COMPLETE** — All 5 tasks merged: 021, 082, 063, 064, 086. PO sign-off: APPROVED 2026-03-27.
 > **Sprint 004 Wave 1** — Tasks 087, 022, 023 merged: 2026-03-27.
 > **Sprint 004 Wave 2** — Task 061 merged: 2026-03-27. Task 062 unblocked.
 > **Sprint 004 Wave 3** — Task 062 merged: 2026-03-27. Task 083 now unblocked (Wave 4).
+> **Sprint 004 COMPLETE** — All 6 tasks merged: 087, 022, 023, 061, 062, 083. QA approved: 2026-03-27.
 
 ---
 
@@ -54,7 +56,7 @@
 
 | # | Title | Branch | Notes |
 |---|-------|--------|-------|
-| 083 | Analysis MCP tools (fetch_and_analyze, run_impact_chain, search_similar_context) | `task/083-tool-analysis` | 16 tests pass, 0 fail; tsc clean |
+| — | — | — | Empty — all Sprint 004 tasks Done |
 
 ---
 
@@ -81,7 +83,7 @@
 | ~~023~~ | ~~Reuters / AP News RSS fetcher~~ | ~~`task/023-rss-reuters`~~ | ~~infra~~ | ~~021 ✅~~ | ~~1 — done~~ |
 | ~~061~~ | ~~News normalizer → AnalysisEntry~~ | ~~`task/061-news-normalizer`~~ | ~~domain~~ | ~~022 ✅, 023 ✅, 014 ✅, 021 ✅~~ | ~~2 — done~~ |
 | ~~062~~ | ~~Causal cascade engine + runImpactChain use case~~ | ~~`task/062-cascade-engine`~~ | ~~domain + application~~ | ~~061 ✅, 013 ✅~~ | ~~3 — done~~ |
-| ~~083~~ | ~~Analysis MCP tools (fetch_and_analyze, run_impact_chain, search_similar_context)~~ | ~~`task/083-tool-analysis`~~ | ~~interface~~ | ~~062 ✓, 022 ✓, 023 ✓, 081 ✅~~ | ~~4 — in progress~~ |
+| ~~083~~ | ~~Analysis MCP tools (fetch_and_analyze, run_impact_chain, search_similar_context)~~ | ~~`task/083-tool-analysis`~~ | ~~interface~~ | ~~062 ✓, 022 ✓, 023 ✓, 081 ✅~~ | ~~4 — done~~ |
 
 ### Deferred to Sprint 005+
 
