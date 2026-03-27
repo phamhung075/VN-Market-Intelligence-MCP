@@ -61,7 +61,7 @@
 |---|-------|--------|-------|------------|
 | ~~021~~ | ~~RSS base fetcher + CafeF news~~ | ~~`task/021-rss-cafef`~~ | ~~infra~~ | ~~003 ✅~~ |
 | ~~082~~ | ~~Watchlist MCP tools (add/remove/get/update)~~ | ~~`task/082-tool-watchlist`~~ | ~~interface~~ | ~~081 ✅, 002 ✅~~ |
-| 063 | Signal detector (price + news + report) | `task/063-signal-detector` | domain | 021, 082 |
+| ~~063~~ | ~~Signal detector (price + news + report)~~ | ~~`task/063-signal-detector`~~ | ~~domain~~ | ~~021, 082~~ |
 | 064 | Multi-signal alert generator | `task/064-alert-generator` | domain | 063 |
 | 086 | Alert MCP tools (get_alerts, briefing, history) | `task/086-tool-alerts` | interface | 064, 081 ✅ |
 
@@ -138,9 +138,9 @@
 | Column | Count | Tasks |
 |--------|-------|-------|
 | ✅ Done | 22 | 000, 001, 002, 003, 011, 012, 013, 014, 021, 029, 030, 041, 042, 043, 044, 045, 046, 047, 048, 081, 082, 085 |
-| 🔍 Review | 0 | — |
+| 🔍 Review | 1 | 063 |
 | 🚧 In Progress | 0 | — |
-| 📋 Todo | 8 | Sprint 003: 063, 064, 086 — Sprint 004+: 024, 025, 026, 027, 028 |
+| 📋 Todo | 7 | Sprint 003: 064, 086 — Sprint 004+: 024, 025, 026, 027, 028 |
 | 🗂 Backlog | 13 | 022, 023, 061, 062, 065, 066, 083, 084, 101-105, 121-125 |
 | **Total** | **43** | |
 
