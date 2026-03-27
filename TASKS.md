@@ -44,6 +44,7 @@
 | 062 | Causal cascade engine + runImpactChain use case | `task/062-cascade-engine` | 2026-03-27 | [TASK_REPORT_062](reports/TASK_REPORT_062.md) |
 | 083 | Analysis MCP tools (fetch_and_analyze, run_impact_chain, search_similar_context) | `task/083-tool-analysis` | 2026-03-27 | [TASK_REPORT_083](reports/TASK_REPORT_083.md) |
 | 088 | Legacy cleanup — delete src/server.ts + src/tools/ stubs | `task/088-legacy-cleanup` | 2026-03-27 | [TASK_REPORT_088](reports/TASK_REPORT_088.md) |
+| 026 | HOSE market data fetcher (VnDirect API) | `task/026-hose-prices` | 2026-03-27 | [TASK_REPORT_026](reports/TASK_REPORT_026.md) |
 
 > **Sprint 003 COMPLETE** — All 5 tasks merged: 021, 082, 063, 064, 086. PO sign-off: APPROVED 2026-03-27.
 > **Sprint 004 Wave 1** — Tasks 087, 022, 023 merged: 2026-03-27.
@@ -51,6 +52,7 @@
 > **Sprint 004 Wave 3** — Task 062 merged: 2026-03-27. Task 083 now unblocked (Wave 4).
 > **Sprint 004 COMPLETE** — All 6 tasks merged: 087, 022, 023, 061, 062, 083. QA approved: 2026-03-27.
 > **Sprint 005 Wave 1** — Task 088 merged: 2026-03-27. Wave 2 (026, 102, 104) now unblocked.
+> **Sprint 005 Wave 2** — Task 026 merged: 2026-03-27. Task 103 (market scan jobs) now unblocked.
 
 ---
 
@@ -238,6 +240,7 @@
 |---|-------|--------|-------|------------|
 | 024 | Trading Economics scraper | `task/024-scraper-trading-economics` | infra | 003 ✅ |
 | 025 | Yahoo Finance commodity fetcher | `task/025-yahoo-finance` | infra | 003 ✅ |
+| ~~026~~ | ~~HOSE market data fetcher~~ | ~~`task/026-hose-prices`~~ | ~~infra~~ | ~~003 ✅~~ |
 | 027 | HNX + UPCOM market data fetcher | `task/027-hnx-prices` | infra | 003 ✅ |
 | 028 | SBV (State Bank Vietnam) macro fetcher | `task/028-sbv-macro` | infra | 003 ✅ |
 
@@ -316,11 +319,11 @@
 
 | Column | Count | Tasks |
 |--------|-------|-------|
-| ✅ Done | 31 | 000, 001, 002, 003, 011, 012, 013, 014, 021, 022, 023, 029, 030, 041, 042, 043, 044, 045, 046, 047, 048, 061, 062, 063, 064, 081, 082, 083, 085, 086, 087 |
+| ✅ Done | 33 | 000, 001, 002, 003, 011, 012, 013, 014, 021, 022, 023, 026, 029, 030, 041, 042, 043, 044, 045, 046, 047, 048, 061, 062, 063, 064, 081, 082, 083, 085, 086, 087, 088 |
 | 🔍 Review | 0 | — |
 | 🚧 In Progress | 0 | — |
-| 📋 Todo | 4 | Sprint 005 Wave 1–2: 088, 026, 102, 104 |
-| 🗂 Backlog | 14 | Sprint 005 Wave 3–4: 103 (waits for 026), 101 (waits for 102); Deferred: 024, 025, 027, 028, 065, 066, 084, 105, 121-125 |
+| 📋 Todo | 2 | Sprint 005 Wave 2–3: 102, 104; Wave 3: 103 (026 ✅ unblocked) |
+| 🗂 Backlog | 14 | Sprint 005 Wave 3–4: 101 (waits for 102); Deferred: 024, 025, 027, 028, 065, 066, 084, 105, 121-125 |
 | **Total** | **49** | |
 
 ---

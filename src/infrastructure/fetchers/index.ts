@@ -7,6 +7,7 @@
  *   - RSS base parser + CafeF fetcher         — Task 021
  *   - VnExpress Finance RSS fetcher           — Task 022
  *   - Reuters / AP News RSS fetcher          — Task 023
+ *   - HOSE market data fetcher (VnDirect)    — Task 026
  */
 
 // ── Task 029: SSC portal scraper ─────────────────────────────────────────────
@@ -35,3 +36,13 @@ export { fetchVnExpress } from "./vnexpress.js";
 
 // ── Task 023: Reuters / AP News RSS fetcher ────────────────────────────────────
 export { fetchReuters } from "./reuters.js";
+
+// ── Task 026: HOSE market data fetcher (VnDirect API) ─────────────────────────
+export {
+  fetchHosePrices,
+  storeMarketPrices,
+  getAvgVolume,
+  buildVnDirectUrl,
+  parseVnDirectResponse,
+  type MarketPrice,
+} from "./hose.js";
