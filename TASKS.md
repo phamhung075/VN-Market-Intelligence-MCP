@@ -45,6 +45,7 @@
 > **Sprint 003 COMPLETE** — All 5 tasks merged: 021, 082, 063, 064, 086. PO sign-off: APPROVED 2026-03-27.
 > **Sprint 004 Wave 1** — Tasks 087, 022, 023 merged: 2026-03-27.
 > **Sprint 004 Wave 2** — Task 061 merged: 2026-03-27. Task 062 unblocked.
+> **Sprint 004 Wave 3** — Task 062 in Review: 2026-03-27. Task 083 unblocked pending merge.
 
 ---
 
@@ -52,8 +53,7 @@
 
 | # | Title | Branch | Notes |
 |---|-------|--------|-------|
-
-*(empty)*
+| 062 | Causal cascade engine + runImpactChain use case | `task/062-cascade-engine` | 23/23 tests pass, tsc clean |
 
 ---
 
@@ -79,7 +79,7 @@
 | ~~022~~ | ~~VnExpress Finance RSS fetcher~~ | ~~`task/022-rss-vnexpress`~~ | ~~infra~~ | ~~021 ✅~~ | ~~1 — done~~ |
 | ~~023~~ | ~~Reuters / AP News RSS fetcher~~ | ~~`task/023-rss-reuters`~~ | ~~infra~~ | ~~021 ✅~~ | ~~1 — done~~ |
 | ~~061~~ | ~~News normalizer → AnalysisEntry~~ | ~~`task/061-news-normalizer`~~ | ~~domain~~ | ~~022 ✅, 023 ✅, 014 ✅, 021 ✅~~ | ~~2 — done~~ |
-| 062 | Causal cascade engine + runImpactChain use case | `task/062-cascade-engine` | domain + application | 061 ✅, 013 ✅ | 3 — unblocked |
+| ~~062~~ | ~~Causal cascade engine + runImpactChain use case~~ | ~~`task/062-cascade-engine`~~ | ~~domain + application~~ | ~~061 ✅, 013 ✅~~ | ~~3 — in review~~ |
 | 083 | Analysis MCP tools (fetch_and_analyze, run_impact_chain, search_similar_context) | `task/083-tool-analysis` | interface | 062 ✓, 022 ✓, 023 ✓, 081 ✅ | 4 — after 062 done |
 
 ### Deferred to Sprint 005+
