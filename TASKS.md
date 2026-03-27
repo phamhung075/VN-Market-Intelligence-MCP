@@ -181,7 +181,7 @@
 
 | # | Title | Branch | Agent | Layer | Depends on | Status |
 |---|-------|--------|-------|-------|------------|--------|
-| 103 | Market open/close scan (09:00 + 15:30 GMT+7) | `task/103-job-market-scan` | Developer | interface/scheduler | 026, 063 ✅, 064 ✅ | Backlog |
+| 103 | Market open/close scan (09:00 + 15:30 GMT+7) | `task/103-job-market-scan` | Developer | interface/scheduler | 026, 063 ✅, 064 ✅ | Review |
 
 **Task 103 — Acceptance Criteria**
 

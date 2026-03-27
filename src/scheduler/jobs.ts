@@ -4,8 +4,9 @@
  */
 
 import cron from 'node-cron'
+import { runSscCheck } from './sscCheckerJob.js'
 
-const CRONS = {
+export const CRONS = {
   morningBriefing: Bun.env.CRON_MORNING_BRIEFING ?? '0 8 * * *',
   marketOpen:      Bun.env.CRON_MARKET_OPEN      ?? '0 9 * * 1-5',
   newsPoll:        Bun.env.CRON_NEWS_POLL         ?? '*/30 * * * *',
@@ -43,10 +44,9 @@ export function startScheduler() {
     // TODO: getMarketSnapshot() + daily performance summary
   }, { timezone: 'Asia/Ho_Chi_Minh' })
 
-  // 20:00 — SSC report check
+  // 20:00 — SSC nightly report check
   cron.schedule(CRONS.sscCheck, async () => {
-    log('SSC report check...')
-    // TODO: fetchSscReports(allWatchlistStocks)
+    await runSscCheck()
   }, { timezone: 'Asia/Ho_Chi_Minh' })
 
   // 22:00 — Evening summary

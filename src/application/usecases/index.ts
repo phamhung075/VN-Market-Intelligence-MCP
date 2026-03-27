@@ -29,3 +29,7 @@ export type {
 // Task 062: Causal cascade orchestrator (news → RAG → CausalChain)
 export { runImpactChain } from "./runImpactChain.js";
 export type { RunCascadeInput, RagRetriever } from "./runImpactChain.js";
+
+// Task 103: Market open/close scan use case
+export { scanMarket } from "./scanMarket.js";
+export type { MarketScanResult, ScanMarketOptions, PriceFetcher } from "./scanMarket.js";
