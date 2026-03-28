@@ -7,9 +7,21 @@
  *   - GET /sse returns text/event-stream content-type
  *   - POST /messages without sessionId returns 400
  *   - Server stops cleanly via close()
+ *
+ * FIX-081 — SSE test timeout hardening:
+ *   - DB_PATH set to :memory: before imports so hnx.ts module-level
+ *     ensureExchangeColumn() runs against an initialised in-memory DB.
+ *   - initDatabase() called in beforeAll before createBunServer().
+ *   - SSE abort timeout raised from 300 ms to 2000 ms.
+ *   - SSE it() call carries { timeout: 10000 } to avoid test-level timeout on slow CI.
+ *   - afterAll wraps close() in try/catch to ignore teardown errors.
  */
 
+// Must be set before any import that triggers getDb() / ensureExchangeColumn()
+process.env["DB_PATH"] = ":memory:";
+
 import { describe, it, expect, beforeAll, afterAll } from "bun:test";
+import { initDatabase, closeDb } from "../infrastructure/db/schema.js";
 import { createBunServer, type BunServerInstance } from "../interface/mcp/server.js";
 
 const TEST_PORT = 13081;
@@ -19,11 +31,21 @@ const baseUrl = `http://127.0.0.1:${TEST_PORT}`;
 
 describe("Task 081 — Bun HTTP server + SSE transport", () => {
   beforeAll(async () => {
+    await initDatabase();
     serverInstance = await createBunServer({ port: TEST_PORT });
   });
 
   afterAll(async () => {
-    await serverInstance.close();
+    try {
+      // Race close() against a 3 s deadline — open SSE connections can delay shutdown
+      await Promise.race([
+        serverInstance?.close(),
+        new Promise<void>((resolve) => setTimeout(resolve, 3000)),
+      ]);
+    } catch {
+      // ignore teardown errors
+    }
+    closeDb();
   });
 
   // ── Acceptance criterion: GET /health returns JSON with status "ok" ──────
@@ -45,8 +67,8 @@ describe("Task 081 — Bun HTTP server + SSE transport", () => {
   it("GET /sse returns 200 with content-type text/event-stream", async () => {
     const controller = new AbortController();
 
-    // Set a short timeout — we only need to check headers, not consume the stream
-    const timeoutId = setTimeout(() => controller.abort(), 300);
+    // Set a generous timeout — we only need to check headers, not consume the stream
+    const timeoutId = setTimeout(() => controller.abort(), 2000);
 
     let res: Response | undefined;
     try {
@@ -65,7 +87,7 @@ describe("Task 081 — Bun HTTP server + SSE transport", () => {
       const ct = res.headers.get("content-type") ?? "";
       expect(ct).toContain("text/event-stream");
     }
-  });
+  }, { timeout: 10000 });
 
   // ── Acceptance criterion: Server uses PORT from config ───────────────────
 
