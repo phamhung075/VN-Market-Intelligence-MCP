@@ -1,6 +1,6 @@
 ---
 name: qa
-color: "#F44336"
+color: red
 description: QA / CI-CD agent for VN Market Intelligence MCP. Runs the full test suite, performs integration tests, validates DDD and security compliance, triggers the merge pipeline, and produces the sprint report. Invoke when Developer marks a task as Review-ready, or when PM requests a sprint smoke test.
 tools: Read, Edit, Write, Glob, Grep, Bash
 model: sonnet

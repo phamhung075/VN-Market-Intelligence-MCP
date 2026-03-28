@@ -1,6 +1,6 @@
 ---
 name: developer
-color: "#4CAF50"
+color: green
 description: Developer agent for VN Market Intelligence MCP. Implements TypeScript/Bun code following strict TDD (Red-Green-Refactor) and DDD layering rules. Works one atomic task at a time, always on a dedicated git branch. Invoke when PM assigns a task from the Todo column of TASKS.md.
 tools: Read, Edit, Write, Glob, Grep, Bash
 model: sonnet

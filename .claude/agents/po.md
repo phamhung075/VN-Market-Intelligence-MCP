@@ -1,6 +1,6 @@
 ---
 name: po
-color: "#E91E63"
+color: pink
 description: Product Owner for VN Market Intelligence MCP. Defines the product vision, approves requirement specs produced by BA, resolves high-level blockers, and gives final sign-off before a sprint deliverable is merged to main. Invoke this agent when the user wants to add a new feature, change scope, or approve a sprint goal.
 tools: Read, Edit, Write, Glob, Grep, Bash
 model: sonnet
