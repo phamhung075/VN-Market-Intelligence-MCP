@@ -45,6 +45,10 @@
 | 083 | Analysis MCP tools (fetch_and_analyze, run_impact_chain, search_similar_context) | `task/083-tool-analysis` | 2026-03-27 | [TASK_REPORT_083](reports/TASK_REPORT_083.md) |
 | 088 | Legacy cleanup — delete src/server.ts + src/tools/ stubs | `task/088-legacy-cleanup` | 2026-03-27 | [TASK_REPORT_088](reports/TASK_REPORT_088.md) |
 | 026 | HOSE market data fetcher (VnDirect API) | `task/026-hose-prices` | 2026-03-27 | [TASK_REPORT_026](reports/TASK_REPORT_026.md) |
+| 102 | News polling job (every 30 min) | `task/102-job-news-poll` | 2026-03-28 | [TASK_REPORT_102](reports/TASK_REPORT_102.md) |
+| 104 | SSC nightly report check (20:00 GMT+7) | `task/104-job-ssc-check` | 2026-03-28 | [TASK_REPORT_104](reports/TASK_REPORT_104.md) |
+| 103 | Market open/close scan (09:00 + 15:30 GMT+7) | `task/103-job-market-scan` | 2026-03-28 | [TASK_REPORT_103](reports/TASK_REPORT_103.md) |
+| 101 | Morning briefing job (08:00 GMT+7) | `task/101-job-morning-briefing` | 2026-03-28 | [TASK_REPORT_101](reports/TASK_REPORT_101.md) |
 
 > **Sprint 003 COMPLETE** — All 5 tasks merged: 021, 082, 063, 064, 086. PO sign-off: APPROVED 2026-03-27.
 > **Sprint 004 Wave 1** — Tasks 087, 022, 023 merged: 2026-03-27.
@@ -54,6 +58,7 @@
 > **Sprint 005 Wave 1** — Task 088 merged: 2026-03-27. Wave 2 (026, 102, 104) now unblocked.
 > **Sprint 005 Wave 2** — Task 026 merged: 2026-03-27. Task 103 (market scan jobs) now unblocked.
 > **Sprint 005 Wave 2** — Task 104 merged: 2026-03-28. SSC nightly check live at 20:00 GMT+7.
+> **Sprint 005 COMPLETE** — All 6 tasks merged: 088, 026, 102, 104, 103, 101. QA approved: 2026-03-28.
 
 ---
 
@@ -61,8 +66,7 @@
 
 | # | Title | Branch | Notes |
 |---|-------|--------|-------|
-| 101 | Morning briefing job (08:00 GMT+7) | `task/101-job-morning-briefing` | Ready for review — 14 tests pass, bun tsc 0 errors |
-| 103 | Market open/close scan (09:00 + 15:30 GMT+7) | `task/103-job-market-scan` | Fixed — blocking issues 103-01/02/03 resolved (see TASK_REPORT_103) |
+| — | — | — | Empty |
 
 ---
 
@@ -211,7 +215,7 @@
 
 | # | Title | Branch | Agent | Layer | Depends on | Status |
 |---|-------|--------|-------|-------|------------|--------|
-| 101 | Morning briefing job (08:00 GMT+7) | `task/101-job-morning-briefing` | Developer | interface/scheduler | 102 ✅, 086 ✅ | Review 🔍 |
+| 101 | Morning briefing job (08:00 GMT+7) | `task/101-job-morning-briefing` | Developer | interface/scheduler | 102 ✅, 086 ✅ | Done ✅ |
 
 **Task 101 — Acceptance Criteria**
 
@@ -323,12 +327,12 @@
 
 | Column | Count | Tasks |
 |--------|-------|-------|
-| ✅ Done | 33 | 000, 001, 002, 003, 011, 012, 013, 014, 021, 022, 023, 026, 029, 030, 041, 042, 043, 044, 045, 046, 047, 048, 061, 062, 063, 064, 081, 082, 083, 085, 086, 087, 088 |
+| ✅ Done | 38 | 000, 001, 002, 003, 011, 012, 013, 014, 021, 022, 023, 026, 029, 030, 041, 042, 043, 044, 045, 046, 047, 048, 061, 062, 063, 064, 081, 082, 083, 085, 086, 087, 088, 101, 102, 103, 104 |
 | 🔍 Review | 0 | — |
 | 🚧 In Progress | 0 | — |
-| 📋 Todo | 2 | Sprint 005 Wave 2–3: 102, 104; Wave 3: 103 (026 ✅ unblocked) |
-| 🗂 Backlog | 14 | Sprint 005 Wave 3–4: 101 (waits for 102); Deferred: 024, 025, 027, 028, 065, 066, 084, 105, 121-125 |
-| **Total** | **49** | |
+| 📋 Todo | 0 | — (Sprint 005 COMPLETE) |
+| 🗂 Backlog | 13 | Deferred: 024, 025, 027, 028, 065, 066, 084, 105, 121-125 |
+| **Total** | **51** | |
 
 ---
 
