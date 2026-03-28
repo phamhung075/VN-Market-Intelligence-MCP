@@ -8,6 +8,7 @@
  *   - VnExpress Finance RSS fetcher           — Task 022
  *   - Reuters / AP News RSS fetcher          — Task 023
  *   - HOSE market data fetcher (VnDirect)    — Task 026
+ *   - Yahoo Finance commodity fetcher        — Task 025
  */
 
 // ── Task 029: SSC portal scraper ─────────────────────────────────────────────
@@ -62,3 +63,10 @@ export {
   storeMacroIndicators,
   type MacroIndicators,
 } from "./tradingEconomics.js";
+
+// ── Task 025: Yahoo Finance commodity fetcher ──────────────────────────────────
+export {
+  fetchYahooFinancePrices,
+  storeCommoditySnapshot,
+  type CommoditySnapshot,
+} from "./yahooFinance.js";
