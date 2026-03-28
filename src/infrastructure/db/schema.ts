@@ -162,4 +162,19 @@ export async function initDatabase(): Promise<void> {
   // all scalar columns, JSON blobs, indexes, v_chart_timeseries and
   // v_yoy_comparison views.
   db.exec(SQLITE_DDL);
+
+  // ── Macro Indicators (Task 024) ────────────────────────────────────────────
+  // Stores macro economic data fetched from Trading Economics.
+  // UNIQUE(country) enforces upsert semantics via INSERT OR REPLACE.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS macro_indicators (
+      id            INTEGER PRIMARY KEY AUTOINCREMENT,
+      country       TEXT NOT NULL,
+      cpi           REAL,
+      gdp_growth    REAL,
+      interest_rate REAL,
+      fetched_at    TEXT NOT NULL,
+      UNIQUE(country)
+    );
+  `);
 }
