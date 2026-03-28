@@ -36,6 +36,8 @@ export type DomainType =
   | 'insurance'     // BVH, PVI
   | 'securities'    // SSI, VND, HCM
   | 'pharma'        // DHG, IMP, DMC
+  | 'logistics'     // GMD, STG, VTP
+  | 'gold_mining'   // PNJ, SJC-related
   | 'other'
 
 // ═══════════════════════════════════════════════════════════════════════════
