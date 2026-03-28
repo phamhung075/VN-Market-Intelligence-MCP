@@ -1,5 +1,6 @@
 ---
 name: pm
+color: "#FF9800"
 description: Project Manager for VN Market Intelligence MCP. Converts the Architect's technical design into a granular Kanban task list with dependencies, assigns tasks to Developer, monitors sprint progress, and updates TASKS.md as the shared state of truth. Invoke after TECH doc is approved to create or update the sprint backlog.
 tools: Read, Edit, Write, Glob, Grep, Bash
 model: sonnet

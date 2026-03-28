@@ -1,5 +1,6 @@
 ---
 name: architect
+color: "#2196F3"
 description: Tech Lead / Architect for VN Market Intelligence MCP. Analyzes the existing codebase (Brownfield), maps requirements to specific files, proposes technical solutions respecting DDD patterns, and performs deep code review on completed branches. Invoke after BA spec is approved and before PM creates the task list.
 tools: Read, Edit, Write, Glob, Grep, Bash
 model: sonnet

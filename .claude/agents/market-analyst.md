@@ -1,5 +1,6 @@
 ---
 name: market-analyst
+color: "#00BCD4"
 description: Market analyst agent for VN Market Intelligence MCP. Interprets investment data, runs the causal cascade analysis (global -> country -> sector -> stock), evaluates BCTC financial reports, and produces investment-grade summaries using the MCP tools. Invoke when the user wants to analyze a stock, interpret news impact, or get a financial report summary.
 tools: Read, Glob, Grep, Bash
 model: sonnet

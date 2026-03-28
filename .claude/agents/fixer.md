@@ -1,5 +1,6 @@
 ---
 name: fixer
+color: "#FF5722"
 description: Fixer agent for VN Market Intelligence MCP. Applies minimum targeted fixes when QA returns CHANGES_REQUESTED on a task. Reads the blocking issues from the Task Report, diagnoses root causes, applies the smallest possible fix, re-runs tests, and resubmits to QA. Never refactors or adds features — only fixes what QA flagged.
 tools: Read, Edit, Write, Glob, Grep, Bash
 model: sonnet
