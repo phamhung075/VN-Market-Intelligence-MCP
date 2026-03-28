@@ -244,23 +244,43 @@ export async function storeMarketPrices(prices: MarketPrice[]): Promise<void> {
   if (prices.length === 0) return;
 
   ensureHistoryTable();
+
+  // Ensure the exchange column exists before preparing statements that use it.
+  // This guard runs inline so that HOSE prices also carry the exchange value
+  // even when hnx.ts has not been imported in the current process.
   const db = getDb();
+  const cols = db
+    .query<{ name: string }, []>("PRAGMA table_info(market_prices)")
+    .all();
+  if (!cols.some((c) => c.name === "exchange")) {
+    db.exec(
+      "ALTER TABLE market_prices ADD COLUMN exchange TEXT DEFAULT 'HOSE'",
+    );
+  }
+  const histCols = db
+    .query<{ name: string }, []>("PRAGMA table_info(market_prices_history)")
+    .all();
+  if (!histCols.some((c) => c.name === "exchange")) {
+    db.exec(
+      "ALTER TABLE market_prices_history ADD COLUMN exchange TEXT DEFAULT 'HOSE'",
+    );
+  }
 
   const insertHistory = db.prepare(`
-    INSERT OR REPLACE INTO market_prices_history (code, price, volume, fetched_at)
-    VALUES (?, ?, ?, ?)
+    INSERT OR REPLACE INTO market_prices_history (code, price, volume, exchange, fetched_at)
+    VALUES (?, ?, ?, ?, ?)
   `);
 
   const upsertLatest = db.prepare(`
-    INSERT OR REPLACE INTO market_prices (code, price, change_pct, volume, updated_at)
-    VALUES (?, ?, ?, ?, ?)
+    INSERT OR REPLACE INTO market_prices (code, price, change_pct, volume, exchange, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?)
   `);
 
   // Run all inserts in a single transaction for performance
   const insertAll = db.transaction((rows: MarketPrice[]) => {
     for (const p of rows) {
-      insertHistory.run(p.code, p.price, p.volume, p.fetchedAt);
-      upsertLatest.run(p.code, p.price, p.changePct, p.volume, p.fetchedAt);
+      insertHistory.run(p.code, p.price, p.volume, p.exchange, p.fetchedAt);
+      upsertLatest.run(p.code, p.price, p.changePct, p.volume, p.exchange, p.fetchedAt);
     }
   });
 

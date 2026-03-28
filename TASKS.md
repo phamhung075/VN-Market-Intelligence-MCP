@@ -242,6 +242,39 @@
 - MODIFY: `src/scheduler/jobs.ts` (import + wire all 4 job modules; remove `eveningSummary` cron entry)
 - MODIFY: `src/index.ts` (add `startScheduler()` call as step 3 of bootstrap)
 
+---
+
+## 🔍 REVIEW
+
+### Sprint 006 — Wave 1
+
+| # | Title | Branch | Agent | Layer | Depends on | Status |
+|---|-------|--------|-------|-------|------------|--------|
+| 027 | HNX + UPCOM market data fetcher | `task/027-hnx-prices` | Developer | infrastructure | 026 ✅, 003 ✅ | Review |
+
+**Task 027 — Acceptance Criteria**
+
+**Given** a list of HNX ticker codes e.g. `["ACB", "NVB"]`
+**When** `fetchHnxPrices(codes)` is called
+**Then**
+- Returns `MarketPrice[]` with `exchange: 'HNX'` on all items
+- Returns `[]` (never throws) on network error
+- Returns `[]` on empty input
+
+**Given** a list of UPCOM ticker codes e.g. `["FRT"]`
+**When** `fetchUpcomPrices(codes)` is called
+**Then**
+- Returns `MarketPrice[]` with `exchange: 'UPCOM'` on all items
+
+**Given** `storeMarketPrices(prices)` is called with HNX or UPCOM prices
+**When** the exchange column migration guard runs
+**Then**
+- `market_prices.exchange` column exists and carries the correct exchange tag
+- `bun test src/__tests__/027-*.test.ts` 32 pass, 0 fail
+- `bun tsc --noEmit` 0 errors
+
+---
+
 ### Deferred to Sprint 006+
 
 | # | Title | Branch | Layer | Depends on |
@@ -249,7 +282,7 @@
 | 024 | Trading Economics scraper | `task/024-scraper-trading-economics` | infra | 003 ✅ |
 | 025 | Yahoo Finance commodity fetcher | `task/025-yahoo-finance` | infra | 003 ✅ |
 | ~~026~~ | ~~HOSE market data fetcher~~ | ~~`task/026-hose-prices`~~ | ~~infra~~ | ~~003 ✅~~ |
-| 027 | HNX + UPCOM market data fetcher | `task/027-hnx-prices` | infra | 003 ✅ |
+| ~~027~~ | ~~HNX + UPCOM market data fetcher~~ | ~~`task/027-hnx-prices`~~ | ~~infra~~ | ~~003 ✅~~ |
 | 028 | SBV (State Bank Vietnam) macro fetcher | `task/028-sbv-macro` | infra | 003 ✅ |
 
 ### Sprint 004 — DONE (historical)
@@ -275,7 +308,6 @@
 |---|-------|--------|-------|------------|---------------------|
 | 024 | Trading Economics scraper | `task/024-scraper-trading-economics` | infra | 003 ✅ | Returns macro indicators (CPI, GDP, interest rate) as structured JSON; deferred Sprint 006 |
 | 025 | Yahoo Finance commodity fetcher | `task/025-yahoo-finance` | infra | 003 ✅ | Returns Brent crude, gold, USD/VND prices; deferred Sprint 006 |
-| 027 | HNX + UPCOM market data fetcher | `task/027-hnx-prices` | infra | 003 ✅ | Returns price + volume for HNX and UPCOM listed stocks; deferred Sprint 006 |
 | 028 | SBV (State Bank Vietnam) macro fetcher | `task/028-sbv-macro` | infra | 003 ✅ | Returns SBV interest rate, FX rate; deferred Sprint 006 |
 
 ---
@@ -328,10 +360,10 @@
 | Column | Count | Tasks |
 |--------|-------|-------|
 | ✅ Done | 38 | 000, 001, 002, 003, 011, 012, 013, 014, 021, 022, 023, 026, 029, 030, 041, 042, 043, 044, 045, 046, 047, 048, 061, 062, 063, 064, 081, 082, 083, 085, 086, 087, 088, 101, 102, 103, 104 |
-| 🔍 Review | 0 | — |
+| 🔍 Review | 1 | 027 |
 | 🚧 In Progress | 0 | — |
 | 📋 Todo | 0 | — (Sprint 005 COMPLETE) |
-| 🗂 Backlog | 13 | Deferred: 024, 025, 027, 028, 065, 066, 084, 105, 121-125 |
+| 🗂 Backlog | 12 | Deferred: 024, 025, 028, 065, 066, 084, 105, 121-125 |
 | **Total** | **51** | |
 
 ---
