@@ -80,8 +80,19 @@ function ensureExchangeColumn(): void {
   }
 }
 
-// Run once at module load time
-ensureExchangeColumn();
+/** Guard so ensureExchangeColumn runs at most once per process. */
+let exchangeColumnEnsured = false;
+
+/**
+ * Lazily ensures the exchange column exists.
+ * Called on the first actual fetch rather than at module load time,
+ * so the database is guaranteed to be initialized first.
+ */
+function ensureExchangeColumnOnce(): void {
+  if (exchangeColumnEnsured) return;
+  exchangeColumnEnsured = true;
+  ensureExchangeColumn();
+}
 
 // ---------------------------------------------------------------------------
 // HNX API response types (internal)
@@ -264,6 +275,8 @@ export async function fetchHnxPrices(
   codes: string[],
   httpClient?: HttpClient,
 ): Promise<MarketPrice[]> {
+  ensureExchangeColumnOnce();
+
   if (codes.length === 0) {
     logger.debug("[hnx] no codes requested — returning empty");
     return [];
@@ -311,6 +324,8 @@ export async function fetchUpcomPrices(
   codes: string[],
   httpClient?: HttpClient,
 ): Promise<MarketPrice[]> {
+  ensureExchangeColumnOnce();
+
   if (codes.length === 0) {
     logger.debug("[hnx] no UPCOM codes requested — returning empty");
     return [];

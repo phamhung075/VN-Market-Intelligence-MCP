@@ -321,6 +321,7 @@
 | # | Title | Branch | Layer | Depends on | Acceptance Criteria |
 |---|-------|--------|-------|------------|---------------------|
 | ~~084~~ | ~~Market tools (get_market_snapshot, get_patterns)~~ | ~~`task/084-tool-market`~~ | ~~interface~~ | ~~081 ✅, 013 ✅, 065 ✅~~ | ~~Done ✅~~ |
+| 089 | Macro snapshot MCP tool (get_macro_snapshot) | `task/089-tool-macro` | interface | 025, 028 | **Review** — `get_macro_snapshot` tool registered; 16 tests pass, tsc 0 errors |
 
 ---
 
@@ -351,11 +352,11 @@
 | Column | Count | Tasks |
 |--------|-------|-------|
 | ✅ Done | 43 | 000, 001, 002, 003, 011, 012, 013, 014, 021, 022, 023, 026, 027, 029, 030, 041, 042, 043, 044, 045, 046, 047, 048, 061, 062, 063, 064, 065, 066, 081, 082, 083, 084, 085, 086, 087, 088, 101, 102, 103, 104, 105 |
-| 🔍 Review | 0 | — |
+| 🔍 Review | 1 | 089 |
 | 🚧 In Progress | 0 | — |
 | 📋 Todo | 0 | — (Sprint 006 Wave 2 COMPLETE; Task 123 now unblocked for Wave 3) |
 | 🗂 Backlog | 8 | Deferred: 024, 025, 028, 121-125 |
-| **Total** | **51** | |
+| **Total** | **52** | |
 
 ---
 
