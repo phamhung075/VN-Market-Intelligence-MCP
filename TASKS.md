@@ -54,6 +54,7 @@
 | 084 | Market MCP tools (get_market_snapshot, get_patterns) | `task/084-tool-market` | 2026-03-28 | [TASK_REPORT_084](reports/TASK_REPORT_084.md) |
 | 123 | Integration tests — MCP tools with real SQLite | `task/123-test-integration-mcp` | 2026-03-28 | [TASK_REPORT_123](reports/TASK_REPORT_123.md) |
 | DOC-001 | Update CLAUDE.md architecture section | `task/doc-001-claude-md-update` | 2026-03-28 | [TASK_REPORT_DOC-001](reports/TASK_REPORT_DOC-001.md) |
+| 024 | Trading Economics macro indicator scraper | `task/024-scraper-trading-economics` | 2026-03-28 | [TASK_REPORT_024](reports/TASK_REPORT_024.md) |
 
 > **Sprint 003 COMPLETE** — All 5 tasks merged: 021, 082, 063, 064, 086. PO sign-off: APPROVED 2026-03-27.
 > **Sprint 004 Wave 1** — Tasks 087, 022, 023 merged: 2026-03-27.
@@ -271,7 +272,7 @@
 
 | # | Title | Branch | Layer | Depends on |
 |---|-------|--------|-------|------------|
-| 024 | Trading Economics scraper | `task/024-scraper-trading-economics` | infra | 003 ✅ |
+| ~~024~~ | ~~Trading Economics scraper~~ | ~~`task/024-scraper-trading-economics`~~ | ~~infra~~ | ~~003 ✅~~ |
 | 025 | Yahoo Finance commodity fetcher | `task/025-yahoo-finance` | infra | 003 ✅ |
 | ~~026~~ | ~~HOSE market data fetcher~~ | ~~`task/026-hose-prices`~~ | ~~infra~~ | ~~003 ✅~~ |
 | ~~027~~ | ~~HNX + UPCOM market data fetcher~~ | ~~`task/027-hnx-prices`~~ | ~~infra~~ | ~~003 ✅~~ |
@@ -298,7 +299,7 @@
 
 | # | Title | Branch | Layer | Depends on | Acceptance Criteria |
 |---|-------|--------|-------|------------|---------------------|
-| 024 | Trading Economics scraper | `task/024-scraper-trading-economics` | infra | 003 ✅ | Returns macro indicators (CPI, GDP, interest rate) as structured JSON; deferred Sprint 006 |
+| ~~024~~ | ~~Trading Economics scraper~~ | ~~`task/024-scraper-trading-economics`~~ | ~~infra~~ | ~~003 ✅~~ | ~~Done — merged 2026-03-28~~ |
 | 025 | Yahoo Finance commodity fetcher | `task/025-yahoo-finance` | infra | 003 ✅ | Returns Brent crude, gold, USD/VND prices; deferred Sprint 006 |
 | 028 | SBV (State Bank Vietnam) macro fetcher | `task/028-sbv-macro` | infra | 003 ✅ | Returns SBV interest rate, FX rate; deferred Sprint 006 |
 
@@ -351,12 +352,12 @@
 
 | Column | Count | Tasks |
 |--------|-------|-------|
-| ✅ Done | 43 | 000, 001, 002, 003, 011, 012, 013, 014, 021, 022, 023, 026, 027, 029, 030, 041, 042, 043, 044, 045, 046, 047, 048, 061, 062, 063, 064, 065, 066, 081, 082, 083, 084, 085, 086, 087, 088, 101, 102, 103, 104, 105 |
-| 🔍 Review | 1 | 024 |
+| ✅ Done | 46 | 000, 001, 002, 003, 011, 012, 013, 014, 021, 022, 023, 024, 026, 027, 029, 030, 041, 042, 043, 044, 045, 046, 047, 048, 061, 062, 063, 064, 065, 066, 081, 082, 083, 084, 085, 086, 087, 088, 101, 102, 103, 104, 105, 123, DOC-001 |
+| 🔍 Review | 0 | — |
 | 🚧 In Progress | 0 | — |
-| 📋 Todo | 0 | — (Sprint 006 Wave 2 COMPLETE; Task 123 now unblocked for Wave 3) |
+| 📋 Todo | 0 | — |
 | 🗂 Backlog | 7 | Deferred: 025, 028, 121-125 |
-| **Total** | **51** | |
+| **Total** | **53** | |
 
 ---
 
