@@ -60,13 +60,15 @@
 
 | # | Title | Branch | Notes |
 |---|-------|--------|-------|
-| — | — | — | Empty — ready for Sprint 005 |
+| — | — | — | Empty |
 
 ---
 
 ## 🚧 IN PROGRESS
 
-*Empty — ready to start*
+| # | Title | Branch | Notes |
+|---|-------|--------|-------|
+| 103 | Market open/close scan (09:00 + 15:30 GMT+7) | `task/103-job-market-scan` | CHANGES REQUESTED — fix jobs.ts (see TASK_REPORT_103) |
 
 ---
 
@@ -181,7 +183,7 @@
 
 | # | Title | Branch | Agent | Layer | Depends on | Status |
 |---|-------|--------|-------|-------|------------|--------|
-| 103 | Market open/close scan (09:00 + 15:30 GMT+7) | `task/103-job-market-scan` | Developer | interface/scheduler | 026, 063 ✅, 064 ✅ | Review |
+| 103 | Market open/close scan (09:00 + 15:30 GMT+7) | `task/103-job-market-scan` | Developer | interface/scheduler | 026, 063 ✅, 064 ✅ | In Progress (changes requested) |
 
 **Task 103 — Acceptance Criteria**
 
