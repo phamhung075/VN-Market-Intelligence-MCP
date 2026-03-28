@@ -339,7 +339,7 @@
 | # | Title | Branch | Layer | Depends on | Acceptance Criteria |
 |---|-------|--------|-------|------------|---------------------|
 | 121 | Unit tests — BCTC parser (Vietnamese edge cases) | `task/121-test-bctc-edge-cases` | test | 042-047 | 20+ edge cases: parentheses negatives, missing fields, image-only PDF, corrupt PDF |
-| 122 | Unit tests — domain services | `task/122-test-domain-services` | test | 061-066 | Cascade engine, signal detector, alert generator all have ≥90% branch coverage |
+| 122 | Unit tests — domain services | `task/122-test-domain-services` | test | 061-066 | **Review** — 78 tests, 4 services at 100% func/line coverage; `bun test` 0 fail, `tsc` 0 errors |
 | 123 | Integration tests — MCP tools with real SQLite | `task/123-test-integration-mcp` | test | 082-086, 084 ✅ | Full tool call roundtrip: add watchlist → fetch news → generate alert → get alert. **UNBLOCKED — ready for Wave 3** |
 | 124 | Integration tests — SSC pipeline (mock HTTP) | `task/124-test-ssc-pipeline` | test | 048 | Mock SSC HTML + PDF; verify full parse → store → embed pipeline |
 | 125 | E2E test — daily briefing flow | `task/125-test-e2e-briefing` | test | 101-105 | Full daily briefing: trigger → fetch → analyze → alert → report; assert final output structure |
@@ -354,7 +354,8 @@
 | 🔍 Review | 0 | — |
 | 🚧 In Progress | 0 | — |
 | 📋 Todo | 0 | — (Sprint 006 Wave 2 COMPLETE; Task 123 now unblocked for Wave 3) |
-| 🗂 Backlog | 8 | Deferred: 024, 025, 028, 121-125 |
+| 🔍 Review | 1 | 122 |
+| 🗂 Backlog | 7 | Deferred: 024, 025, 028, 121, 123, 124, 125 |
 | **Total** | **51** | |
 
 ---
