@@ -149,6 +149,14 @@ export async function initDatabase(): Promise<void> {
     CREATE INDEX IF NOT EXISTS idx_rag_sentiment ON rag_analyses(sentiment);
   `);
 
+  // Task 102: dedup news by source_url — partial unique index excludes NULL + empty string rows
+  // (articles with missing URLs bypass the constraint and may generate duplicates — acceptable per REQ-005)
+  db.exec(`
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_rag_source_url
+      ON rag_analyses(source_url)
+      WHERE source_url IS NOT NULL AND source_url != '';
+  `);
+
   // ── Financial Reports (BCTC) ───────────────────────────────────────────────
   // DDL imported from bctc-schema.ts — includes financial_reports table,
   // all scalar columns, JSON blobs, indexes, v_chart_timeseries and
