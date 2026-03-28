@@ -58,6 +58,7 @@
 | 122 | Unit tests — domain services branch coverage | `task/122-domain-services` | 2026-03-28 | [TASK_REPORT_122](reports/TASK_REPORT_122.md) |
 | 124 | Integration tests — SSC pipeline mock HTTP | `task/124-test-ssc-pipeline` | 2026-03-28 | [TASK_REPORT_124](reports/TASK_REPORT_124.md) |
 | 125 | E2E test — daily briefing flow | `task/125-test-e2e-briefing` | 2026-03-28 | [TASK_REPORT_125](reports/TASK_REPORT_125.md) |
+| 025 | Yahoo Finance commodity fetcher | `task/025-yahoo-finance` | 2026-03-28 | — |
 
 > **Sprint 003 COMPLETE** — All 5 tasks merged: 021, 082, 063, 064, 086. PO sign-off: APPROVED 2026-03-27.
 > **Sprint 004 Wave 1** — Tasks 087, 022, 023 merged: 2026-03-27.
@@ -81,7 +82,7 @@
 
 | # | Title | Branch | Notes |
 |---|-------|--------|-------|
-| — | — | — | Empty |
+| 025 | Yahoo Finance commodity fetcher | `task/025-yahoo-finance` | Ready for QA — 13 tests pass, tsc 0 errors |
 
 ---
 
@@ -276,7 +277,7 @@
 | # | Title | Branch | Layer | Depends on |
 |---|-------|--------|-------|------------|
 | ~~024~~ | ~~Trading Economics scraper~~ | ~~`task/024-scraper-trading-economics`~~ | ~~infra~~ | ~~003 ✅~~ |
-| 025 | Yahoo Finance commodity fetcher | `task/025-yahoo-finance` | infra | 003 ✅ |
+| ~~025~~ | ~~Yahoo Finance commodity fetcher~~ | ~~`task/025-yahoo-finance`~~ | ~~infra~~ | ~~003 ✅~~ |
 | ~~026~~ | ~~HOSE market data fetcher~~ | ~~`task/026-hose-prices`~~ | ~~infra~~ | ~~003 ✅~~ |
 | ~~027~~ | ~~HNX + UPCOM market data fetcher~~ | ~~`task/027-hnx-prices`~~ | ~~infra~~ | ~~003 ✅~~ |
 | 028 | SBV (State Bank Vietnam) macro fetcher | `task/028-sbv-macro` | infra | 003 ✅ |
@@ -303,7 +304,7 @@
 | # | Title | Branch | Layer | Depends on | Acceptance Criteria |
 |---|-------|--------|-------|------------|---------------------|
 | ~~024~~ | ~~Trading Economics scraper~~ | ~~`task/024-scraper-trading-economics`~~ | ~~infra~~ | ~~003 ✅~~ | ~~Done — merged 2026-03-28~~ |
-| 025 | Yahoo Finance commodity fetcher | `task/025-yahoo-finance` | infra | 003 ✅ | Returns Brent crude, gold, USD/VND prices; deferred Sprint 006 |
+| ~~025~~ | ~~Yahoo Finance commodity fetcher~~ | ~~`task/025-yahoo-finance`~~ | ~~infra~~ | ~~003 ✅~~ | ~~Done — ready for review 2026-03-28~~ |
 | 028 | SBV (State Bank Vietnam) macro fetcher | `task/028-sbv-macro` | infra | 003 ✅ | Returns SBV interest rate, FX rate; deferred Sprint 006 |
 
 ---

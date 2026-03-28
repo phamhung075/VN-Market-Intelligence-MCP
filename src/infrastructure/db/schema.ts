@@ -177,4 +177,29 @@ export async function initDatabase(): Promise<void> {
       UNIQUE(country)
     );
   `);
+
+  // ── Commodity Prices (Task 025 — Yahoo Finance) ────────────────────────────
+  // commodity_prices: latest snapshot per source (upsert target, PRIMARY KEY = source)
+  // commodity_prices_history: append-only audit log for trend queries
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS commodity_prices (
+      source           TEXT PRIMARY KEY,
+      brent_crude_usd  REAL NOT NULL DEFAULT 0,
+      gold_usd_per_oz  REAL NOT NULL DEFAULT 0,
+      usd_vnd_rate     REAL NOT NULL DEFAULT 0,
+      fetched_at       TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS commodity_prices_history (
+      id               INTEGER PRIMARY KEY AUTOINCREMENT,
+      source           TEXT NOT NULL,
+      brent_crude_usd  REAL NOT NULL DEFAULT 0,
+      gold_usd_per_oz  REAL NOT NULL DEFAULT 0,
+      usd_vnd_rate     REAL NOT NULL DEFAULT 0,
+      fetched_at       TEXT NOT NULL
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_commodity_history_source_time
+      ON commodity_prices_history(source, fetched_at DESC);
+  `);
 }
