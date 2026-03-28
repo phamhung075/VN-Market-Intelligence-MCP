@@ -392,6 +392,12 @@ describe("Task 085 — SSC Report MCP Tools", () => {
     process.env["DB_PATH"] = ":memory:";
     await initDatabase();
 
+    // Remove any rows left by earlier test files that share the same singleton
+    // DB connection (e.g. 066-ai-summary.test.ts inserts VCB rows whose
+    // sort_key sorts above '2024-Q1', causing get_financial_summary to return
+    // zeros instead of the fixture values).
+    getDb().exec("DELETE FROM financial_reports WHERE action_code = 'VCB'");
+
     // Insert fixture reports so get_financial_summary and compare_financials
     // have data to query
     insertFixtureReport(FIXTURE_REPORT);

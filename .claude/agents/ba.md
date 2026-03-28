@@ -1,6 +1,6 @@
 ---
 name: ba
-color: "#9C27B0"
+color: purple
 description: Business Analyst for VN Market Intelligence MCP. Transforms PO vision into a detailed technical Requirement Spec, identifies edge cases, lists blockers, and maps requirements to DDD layers. Invoke after PO approves a sprint goal and before Architect designs the solution.
 tools: Read, Edit, Write, Glob, Grep, Bash
 model: sonnet

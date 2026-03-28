@@ -53,6 +53,11 @@
 | 065 | Historical pattern matcher | `task/065-pattern-matcher` | 2026-03-28 | [TASK_REPORT_065](reports/TASK_REPORT_065.md) |
 | 084 | Market MCP tools (get_market_snapshot, get_patterns) | `task/084-tool-market` | 2026-03-28 | [TASK_REPORT_084](reports/TASK_REPORT_084.md) |
 | 123 | Integration tests — MCP tools with real SQLite | `task/123-test-integration-mcp` | 2026-03-28 | [TASK_REPORT_123](reports/TASK_REPORT_123.md) |
+| DOC-001 | Update CLAUDE.md architecture section | `task/doc-001-claude-md-update` | 2026-03-28 | [TASK_REPORT_DOC-001](reports/TASK_REPORT_DOC-001.md) |
+| 024 | Trading Economics macro indicator scraper | `task/024-scraper-trading-economics` | 2026-03-28 | [TASK_REPORT_024](reports/TASK_REPORT_024.md) |
+| 122 | Unit tests — domain services branch coverage | `task/122-domain-services` | 2026-03-28 | [TASK_REPORT_122](reports/TASK_REPORT_122.md) |
+| 124 | Integration tests — SSC pipeline mock HTTP | `task/124-test-ssc-pipeline` | 2026-03-28 | [TASK_REPORT_124](reports/TASK_REPORT_124.md) |
+| 125 | E2E test — daily briefing flow | `task/125-test-e2e-briefing` | 2026-03-28 | [TASK_REPORT_125](reports/TASK_REPORT_125.md) |
 
 > **Sprint 003 COMPLETE** — All 5 tasks merged: 021, 082, 063, 064, 086. PO sign-off: APPROVED 2026-03-27.
 > **Sprint 004 Wave 1** — Tasks 087, 022, 023 merged: 2026-03-27.
@@ -69,6 +74,9 @@
 > **Sprint 006 Wave 1** — Task 065 completed: 2026-03-28. Historical pattern matcher, 15 tests pass.
 > **Sprint 006 Wave 2** — Task 084 merged: 2026-03-28. Market MCP tools (get_market_snapshot, get_patterns), 14/14 tests pass, toolCount 14→16. Task 123 now unblocked (Wave 3).
 > **Sprint 006 COMPLETE** — All 6 tasks merged: 065, 066, 027, 105, 084, 123. QA approved: 2026-03-28. 28-test integration harness covers all 16 MCP tools across 5 end-to-end roundtrip chains with real SQLite.
+> **Sprint 007 PLANNING** — Tasks 025, 028 promoted to Todo. See SPRINT_GOAL.md sprint_id: 007. Both fetchers are independent; build in parallel (Wave 1 only).
+> **Sprint 008 PLANNING** — Tasks 025, 028 carried forward; new tasks 126, 089, FIX-081 added. See SPRINT_GOAL.md sprint_id: 008. Wave 1: 025 + 028 + FIX-081 in parallel. Wave 2: 126 + 089 after Wave 1.
+> **Sprint 008 BA** — REQ_008.md written. B1 resolved (DomainType missing logistics + gold_mining — user must confirm patch approach). B2 + B3 pending user answer. Architect unblocked for task design pending B1 confirmation.
 
 ---
 
@@ -76,7 +84,7 @@
 
 | # | Title | Branch | Notes |
 |---|-------|--------|-------|
-| DOC-001 | Update CLAUDE.md architecture section | `task/doc-001-claude-md-update` | Ready for QA |
+| — | — | — | Empty |
 
 ---
 
@@ -90,6 +98,110 @@
 
 ## 📋 TODO
 *(Dependencies cleared — ready to assign)*
+
+### Sprint 008
+
+> Sprint 007 tasks 025 and 028 carried forward with no work done. Sprint 008 adds cascade integration (126), macro MCP tool (089), and SSE test fix (FIX-081). Status: ACTIVE.
+> TECH-007 approved by Architect (2026-03-28). See docs/TECH_007.md for interface contracts, DB DDL, test strategy, and wave execution plan for tasks 025 and 028.
+> **Sprint 008 ACTIVE** — 2026-03-28. Wave 1 tasks (025, 028, FIX-081) ready to assign. WIP limit: 2. Tasks 025 and 028 are independent and can be built in parallel.
+
+#### Wave 1 — Run in parallel (025, 028, FIX-081 are all independent of each other)
+
+| # | Title | Branch | Agent | Layer | Depends on | Status |
+|---|-------|--------|-------|-------|------------|--------|
+| 025 | Yahoo Finance commodity fetcher | `task/025-yahoo-finance` | Developer | infrastructure | 003 ✅ | Todo |
+| 028 | SBV (State Bank Vietnam) macro fetcher | `task/028-sbv-macro` | Developer | infrastructure | 003 ✅ | Todo |
+| FIX-081 | Fix SSE test timeout flakiness | `task/fix-081-sse-timeout` | Fixer | interface/test | 081 ✅ | Todo |
+
+**Task 025 — Acceptance Criteria**
+
+**Given** Yahoo Finance is reachable (or mocked)
+**When** `fetchYahooFinancePrices()` is called
+**Then**
+- Returns `CommoditySnapshot` with `brentCrudeUSD`, `goldUSDPerOz`, `usdVndRate`, `fetchedAt`
+- All numeric fields are positive, non-zero numbers on a successful fetch
+- Returns `null` (never throws) on HTTP error or parse failure; logs a warning
+- `bun test src/__tests__/025-*.test.ts` passes with mocked HTTP — no real network calls
+- `bun tsc --noEmit` 0 errors
+
+**Files to create**:
+- CREATE: `src/infrastructure/fetchers/yahooFinance.ts`
+
+---
+
+**Task 028 — Acceptance Criteria**
+
+**Given** SBV website is reachable (or mocked)
+**When** `fetchSbvRates()` is called
+**Then**
+- Returns `SbvMacroSnapshot` with `overnightRatePct`, `refinancingRatePct`, `usdVndOfficial`, `fetchedAt`
+- All numeric fields are positive, non-zero numbers on a successful fetch
+- Returns `null` (never throws) on HTTP error or parse failure; logs a warning
+- `bun test src/__tests__/028-*.test.ts` passes with mocked HTTP — no real network calls
+- `bun tsc --noEmit` 0 errors
+
+**Files to create**:
+- CREATE: `src/infrastructure/fetchers/sbv.ts`
+
+---
+
+**Task FIX-081 — Acceptance Criteria**
+
+**Given** `src/__tests__/081-*.test.ts` intermittently times out on SSE transport startup
+**When** FIX-081 is applied
+**Then**
+- `src/__tests__/081-*.test.ts` passes consistently (10 consecutive runs with no timeout)
+- No behaviour change to `src/interface/mcp/transport.ts` or `src/interface/mcp/server.ts`
+- `bun test` full suite passes; `bun tsc --noEmit` 0 errors
+
+**Files to modify** (minimal — test setup only, no production code change unless root-cause requires it):
+- MODIFY: `src/__tests__/081-*.test.ts` (adjust timeout, use proper teardown, or mock transport)
+
+---
+
+#### Wave 2 — Run in parallel after Wave 1 (both depend on 025 ✅ and 028 ✅)
+
+| # | Title | Branch | Agent | Layer | Depends on | Status |
+|---|-------|--------|-------|-------|------------|--------|
+| 126 | Macro cascade integration | `task/126-macro-cascade` | Developer | domain | 025 ✅, 028 ✅ | Blocked (Wave 1) |
+| 089 | `get_macro_snapshot` MCP tool | `task/089-tool-macro` | Developer | interface | 025 ✅, 028 ✅, 081 ✅ | Blocked (Wave 1) |
+
+**Task 126 — Acceptance Criteria**
+
+**Given** `fetchYahooFinancePrices()` and `fetchSbvRates()` are available (025 ✅, 028 ✅)
+**When** `runImpactChain(entry)` processes a news item
+**Then**
+- Cascade engine fetches current `CommoditySnapshot` and `SbvMacroSnapshot` at chain start (cached per run, not per stock)
+- High Brent crude price (> $90 USD) adds `+0.10` confidence boost to energy and logistics sector stocks
+- High gold price (> $2000 USD/oz) adds `+0.05` confidence boost to gold-mining stocks
+- High SBV interest rate (> 6%) subtracts `−0.08` confidence from banking and real-estate sector stocks
+- On fetcher failure, impact chain continues with neutral (zero) macro adjustments and logs a warning
+- `bun test src/__tests__/126-*.test.ts` passes with mocked fetchers; no real network calls
+- `bun tsc --noEmit` 0 errors
+
+**Files to modify**:
+- MODIFY: `src/domain/services/cascadeEngine.ts` (inject macro adjustment step)
+- MODIFY: `src/application/usecases/runImpactChain.ts` (pass macro context to engine)
+
+---
+
+**Task 089 — Acceptance Criteria**
+
+**Given** Yahoo Finance and SBV fetchers are available (025 ✅, 028 ✅)
+**When** Claude calls the `get_macro_snapshot` MCP tool
+**Then**
+- Returns a JSON object with shape `{ commodity: CommoditySnapshot | null, rates: SbvMacroSnapshot | null, fetchedAt: string }`
+- If either fetcher fails, the corresponding field is `null` and the other field is still returned
+- Tool is registered in `src/interface/mcp/server.ts` (tool count increments from 16 to 17)
+- `bun test src/__tests__/089-*.test.ts` passes with mocked fetchers; no real network calls
+- `bun tsc --noEmit` 0 errors
+
+**Files to create/modify**:
+- CREATE: `src/interface/mcp/tools/macroTools.ts`
+- MODIFY: `src/interface/mcp/server.ts` (register `get_macro_snapshot`)
+- MODIFY: `src/interface/mcp/tools/index.ts` (export `macroTools`)
+
+---
 
 ### Sprint 005
 <!-- Execution waves per TECH_005.md:
@@ -270,7 +382,7 @@
 
 | # | Title | Branch | Layer | Depends on |
 |---|-------|--------|-------|------------|
-| 024 | Trading Economics scraper | `task/024-scraper-trading-economics` | infra | 003 ✅ |
+| ~~024~~ | ~~Trading Economics scraper~~ | ~~`task/024-scraper-trading-economics`~~ | ~~infra~~ | ~~003 ✅~~ |
 | 025 | Yahoo Finance commodity fetcher | `task/025-yahoo-finance` | infra | 003 ✅ |
 | ~~026~~ | ~~HOSE market data fetcher~~ | ~~`task/026-hose-prices`~~ | ~~infra~~ | ~~003 ✅~~ |
 | ~~027~~ | ~~HNX + UPCOM market data fetcher~~ | ~~`task/027-hnx-prices`~~ | ~~infra~~ | ~~003 ✅~~ |
@@ -293,13 +405,13 @@
 
 ### 📡 Infrastructure Fetchers (021–039)
 
-*(022, 023 promoted to Sprint 004; 026 promoted to Sprint 005 Todo)*
+*(022, 023 promoted to Sprint 004; 026 promoted to Sprint 005 Todo; 025, 028 promoted to Sprint 007 Todo → carried into Sprint 008)*
 
 | # | Title | Branch | Layer | Depends on | Acceptance Criteria |
 |---|-------|--------|-------|------------|---------------------|
-| 024 | Trading Economics scraper | `task/024-scraper-trading-economics` | infra | 003 ✅ | Returns macro indicators (CPI, GDP, interest rate) as structured JSON; deferred Sprint 006 |
-| 025 | Yahoo Finance commodity fetcher | `task/025-yahoo-finance` | infra | 003 ✅ | Returns Brent crude, gold, USD/VND prices; deferred Sprint 006 |
-| 028 | SBV (State Bank Vietnam) macro fetcher | `task/028-sbv-macro` | infra | 003 ✅ | Returns SBV interest rate, FX rate; deferred Sprint 006 |
+| ~~024~~ | ~~Trading Economics scraper~~ | ~~`task/024-scraper-trading-economics`~~ | ~~infra~~ | ~~003 ✅~~ | ~~Done — merged 2026-03-28~~ |
+| ~~025~~ | ~~Yahoo Finance commodity fetcher~~ | ~~`task/025-yahoo-finance`~~ | ~~infra~~ | ~~003 ✅~~ | ~~Promoted to Sprint 007 Todo → carried into Sprint 008~~ |
+| ~~028~~ | ~~SBV (State Bank Vietnam) macro fetcher~~ | ~~`task/028-sbv-macro`~~ | ~~infra~~ | ~~003 ✅~~ | ~~Promoted to Sprint 007 Todo → carried into Sprint 008~~ |
 
 ---
 
@@ -338,11 +450,11 @@
 
 | # | Title | Branch | Layer | Depends on | Acceptance Criteria |
 |---|-------|--------|-------|------------|---------------------|
-| 121 | Unit tests — BCTC parser (Vietnamese edge cases) | `task/121-test-bctc-edge-cases` | test | 042-047 | 20+ edge cases: parentheses negatives, missing fields, image-only PDF, corrupt PDF |
-| 122 | Unit tests — domain services | `task/122-test-domain-services` | test | 061-066 | Cascade engine, signal detector, alert generator all have ≥90% branch coverage |
+| 121 | Unit tests — BCTC parser (Vietnamese edge cases) | `task/121-test-bctc-edge-cases` | test | 042-047 | 20+ edge cases: parentheses negatives, missing fields, image-only PDF, corrupt PDF | **Done** — merged to main 2026-03-28; 36 tests pass (P-01–P-15, B-01–B-08, I-01–I-08, C-01–C-05), tsc 0 errors |
+| ~~122~~ | ~~Unit tests — domain services~~ | ~~`task/122-test-domain-services`~~ | ~~test~~ | ~~061-066~~ | ~~Done — 78 tests, 4 services ≥90% branch coverage; merged 2026-03-28~~ |
 | 123 | Integration tests — MCP tools with real SQLite | `task/123-test-integration-mcp` | test | 082-086, 084 ✅ | Full tool call roundtrip: add watchlist → fetch news → generate alert → get alert. **UNBLOCKED — ready for Wave 3** |
-| 124 | Integration tests — SSC pipeline (mock HTTP) | `task/124-test-ssc-pipeline` | test | 048 | Mock SSC HTML + PDF; verify full parse → store → embed pipeline |
-| 125 | E2E test — daily briefing flow | `task/125-test-e2e-briefing` | test | 101-105 | Full daily briefing: trigger → fetch → analyze → alert → report; assert final output structure |
+| 124 | Integration tests — SSC pipeline (mock HTTP) | `task/124-test-ssc-pipeline` | test | 048 | Mock SSC HTML + PDF; verify full parse → store → embed pipeline — **Done** — 17 tests pass (SSC-01–SSC-12 + 5 extra); tsc 0 errors; merged 2026-03-28 |
+| 125 | E2E test — daily briefing flow | `task/125-test-e2e-briefing` | test | 101-105 | Full daily briefing: trigger → fetch → analyze → alert → report; assert final output structure | **Done** — 39 tests pass (13 sections: DailyBriefing structure, full pipeline, topStories, alerts, watchlistSummary, newReports, vnIndex, macro indicators Task-024, graceful degradation, file persistence, evening summary, bookend E2E, concurrency guards); tsc 0 errors; merged 2026-03-28 |
 
 ---
 
@@ -350,12 +462,12 @@
 
 | Column | Count | Tasks |
 |--------|-------|-------|
-| ✅ Done | 43 | 000, 001, 002, 003, 011, 012, 013, 014, 021, 022, 023, 026, 027, 029, 030, 041, 042, 043, 044, 045, 046, 047, 048, 061, 062, 063, 064, 065, 066, 081, 082, 083, 084, 085, 086, 087, 088, 101, 102, 103, 104, 105 |
+| ✅ Done | 50 | 000, 001, 002, 003, 011, 012, 013, 014, 021, 022, 023, 024, 026, 027, 029, 030, 041, 042, 043, 044, 045, 046, 047, 048, 061, 062, 063, 064, 065, 066, 081, 082, 083, 084, 085, 086, 087, 088, 101, 102, 103, 104, 105, 121, 122, 123, 124, 125, DOC-001 |
 | 🔍 Review | 0 | — |
 | 🚧 In Progress | 0 | — |
-| 📋 Todo | 0 | — (Sprint 006 Wave 2 COMPLETE; Task 123 now unblocked for Wave 3) |
-| 🗂 Backlog | 8 | Deferred: 024, 025, 028, 121-125 |
-| **Total** | **51** | |
+| 📋 Todo | 5 | Sprint 008: 025, 028, FIX-081, 126 (blocked), 089 (blocked) |
+| 🗂 Backlog | 0 | — |
+| **Total** | **58** | |
 
 ---
 

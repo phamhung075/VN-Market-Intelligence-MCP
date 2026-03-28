@@ -83,3 +83,13 @@ git merge --no-ff task/085-tool-reports -m "merge(085): SSC report MCP tools"
 ```
 
 Branch `task/085-tool-reports` deleted. TASKS.md updated: 085 moved to Done (Done count: 19 → 20).
+
+---
+
+### Fix — 2026-03-28
+
+- **Issue**: 085 test `get_financial_summary returns formatted revenue and profit for stored report` fails when `bun test` runs the full suite, but passes in isolation. The assertion `expect(text).toContain("39")` receives a summary string showing all-zero financials (`Net Revenue: 0 tỷ VND`) instead of the fixture values.
+- **Root cause**: `066-ai-summary.test.ts` runs before `085-tool-reports.test.ts` in the full suite and inserts a `VCB` row into the shared singleton in-memory SQLite DB with `sort_key = 'test-report-summary-text-001'`. The `get_financial_summary` tool queries with `ORDER BY sort_key DESC LIMIT 1`. Since `'test-report-summary-text-001'` sorts alphabetically above `'2024-Q1'`, the 066 row (which has `net_revenue = NULL / 0`) is returned instead of the 085 fixture row.
+- **Fix**: Added `getDb().exec("DELETE FROM financial_reports WHERE action_code = 'VCB'")` at the start of the 085 `beforeAll` block (after `initDatabase()`), removing any rows left by earlier test files before the 085 fixtures are inserted. File: `src/__tests__/085-tool-reports.test.ts`, `beforeAll` block.
+- **Tests added**: None — the existing 7 tests now pass in both isolation and full-suite runs.
+- **Verified**: `bun test src/__tests__/085-tool-reports.test.ts` PASS (7/7) | `bun test src/__tests__/066-ai-summary.test.ts src/__tests__/085-tool-reports.test.ts` PASS (47/47) | `bun tsc --noEmit` PASS
