@@ -58,7 +58,9 @@
 | 122 | Unit tests — domain services branch coverage | `task/122-domain-services` | 2026-03-28 | [TASK_REPORT_122](reports/TASK_REPORT_122.md) |
 | 124 | Integration tests — SSC pipeline mock HTTP | `task/124-test-ssc-pipeline` | 2026-03-28 | [TASK_REPORT_124](reports/TASK_REPORT_124.md) |
 | 125 | E2E test — daily briefing flow | `task/125-test-e2e-briefing` | 2026-03-28 | [TASK_REPORT_125](reports/TASK_REPORT_125.md) |
-| 025 | Yahoo Finance commodity fetcher | `task/025-yahoo-finance` | 2026-03-28 | — |
+| 025 | Yahoo Finance commodity fetcher | `task/025-yahoo-finance` | 2026-03-29 | — |
+| 028 | SBV (State Bank Vietnam) macro fetcher | `task/028-sbv-macro` | 2026-03-29 | — |
+| FIX-081 | Fix SSE test timeout flakiness | `task/fix-081-sse-timeout` | 2026-03-29 | — |
 
 > **Sprint 003 COMPLETE** — All 5 tasks merged: 021, 082, 063, 064, 086. PO sign-off: APPROVED 2026-03-27.
 > **Sprint 004 Wave 1** — Tasks 087, 022, 023 merged: 2026-03-27.
@@ -356,12 +358,12 @@
 
 | Column | Count | Tasks |
 |--------|-------|-------|
-| ✅ Done | 50 | 000, 001, 002, 003, 011, 012, 013, 014, 021, 022, 023, 024, 026, 027, 029, 030, 041, 042, 043, 044, 045, 046, 047, 048, 061, 062, 063, 064, 065, 066, 081, 082, 083, 084, 085, 086, 087, 088, 101, 102, 103, 104, 105, 121, 122, 123, 124, 125, DOC-001 |
+| ✅ Done | 53 | 000-DOC-001 + 025, 028, FIX-081 (Sprint 008 Wave 1) |
 | 🔍 Review | 0 | — |
-| 🚧 In Progress | 0 | — |
+| 🚧 In Progress | 2 | 126 (macro cascade), 089 (macro MCP tool) |
 | 📋 Todo | 0 | — |
-| 🗂 Backlog | 2 | Deferred: 025, 028 |
-| **Total** | **53** | |
+| 🗂 Backlog | 0 | — |
+| **Total** | **55** | |
 
 ---
 
