@@ -49,6 +49,7 @@
 | 104 | SSC nightly report check (20:00 GMT+7) | `task/104-job-ssc-check` | 2026-03-28 | [TASK_REPORT_104](reports/TASK_REPORT_104.md) |
 | 103 | Market open/close scan (09:00 + 15:30 GMT+7) | `task/103-job-market-scan` | 2026-03-28 | [TASK_REPORT_103](reports/TASK_REPORT_103.md) |
 | 101 | Morning briefing job (08:00 GMT+7) | `task/101-job-morning-briefing` | 2026-03-28 | [TASK_REPORT_101](reports/TASK_REPORT_101.md) |
+| 066 | AI summary generator (rule-based BCTC) | `task/066-ai-summary` | 2026-03-28 | [TASK_REPORT_066](reports/TASK_REPORT_066.md) |
 
 > **Sprint 003 COMPLETE** — All 5 tasks merged: 021, 082, 063, 064, 086. PO sign-off: APPROVED 2026-03-27.
 > **Sprint 004 Wave 1** — Tasks 087, 022, 023 merged: 2026-03-27.
@@ -59,6 +60,9 @@
 > **Sprint 005 Wave 2** — Task 026 merged: 2026-03-27. Task 103 (market scan jobs) now unblocked.
 > **Sprint 005 Wave 2** — Task 104 merged: 2026-03-28. SSC nightly check live at 20:00 GMT+7.
 > **Sprint 005 COMPLETE** — All 6 tasks merged: 088, 026, 102, 104, 103, 101. QA approved: 2026-03-28.
+> **Sprint 006 PLANNING** — Tasks 065, 066, 027, 084, 105, 123 promoted to Todo. See SPRINT_GOAL.md sprint_id: 006.
+> **Sprint 006 ACTIVE** — 2026-03-28. Wave 1 (065, 066, 027, 105) ready to assign. WIP limit: 2. TECH_006.md approved by Architect.
+> **Sprint 006 Wave 1** — Task 066 completed: 2026-03-28. Rule-based AI summary generator with 40 tests.
 
 ---
 
@@ -299,7 +303,7 @@
 | # | Title | Branch | Layer | Depends on | Acceptance Criteria |
 |---|-------|--------|-------|------------|---------------------|
 | 065 | Historical pattern matcher | `task/065-pattern-matcher` | application | 013, 046 | `getPatternSummary('GAS', 'oil price', 24)` returns summary with ≥3 historical precedents; averages impact direction |
-| 066 | AI summary generator | `task/066-ai-summary` | application | 061, 047 | `generateAiSummary(report)` returns AIAnalysis with signals[], outlook, keyStrengths[]; stores in FinancialReport.aiAnalysis |
+| ~~066~~ | ~~AI summary generator~~ | ~~`task/066-ai-summary`~~ | ~~application~~ | ~~061 ✅, 047 ✅~~ | ~~Done ✅~~ |
 
 ---
 
@@ -339,11 +343,11 @@
 
 | Column | Count | Tasks |
 |--------|-------|-------|
-| ✅ Done | 40 | 000, 001, 002, 003, 011, 012, 013, 014, 021, 022, 023, 026, 027, 029, 030, 041, 042, 043, 044, 045, 046, 047, 048, 061, 062, 063, 064, 065, 081, 082, 083, 085, 086, 087, 088, 101, 102, 103, 104 |
+| ✅ Done | 41 | 000, 001, 002, 003, 011, 012, 013, 014, 021, 022, 023, 026, 027, 029, 030, 041, 042, 043, 044, 045, 046, 047, 048, 061, 062, 063, 064, 065, 066, 081, 082, 083, 085, 086, 087, 088, 101, 102, 103, 104 |
 | 🔍 Review | 1 | 065 |
 | 🚧 In Progress | 0 | — |
 | 📋 Todo | 0 | — (Sprint 005 COMPLETE) |
-| 🗂 Backlog | 11 | Deferred: 024, 025, 028, 066, 084, 105, 121-125 |
+| 🗂 Backlog | 10 | Deferred: 024, 025, 028, 084, 105, 121-125 |
 | **Total** | **51** | |
 
 ---

@@ -47,6 +47,16 @@ export type {
   PipelineParams,
 } from "./checkSscReports.js";
 
+// Task 066: AI summary generator (rule-based BCTC)
+export {
+  generateAiSummary,
+  detectFinancialSignals,
+  deriveOutlook,
+  buildStrengthsWeaknesses,
+  buildSummaryNarrative,
+} from "./generateAiSummary.js";
+export type { GenerateAiSummaryOptions } from "./generateAiSummary.js";
+
 // Task 101: Morning briefing use case (08:00 weekday cron)
 export { assembleBriefing } from "./assembleBriefing.js";
 export type {
