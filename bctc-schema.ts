@@ -65,7 +65,9 @@ export function buildPeriod(year: number, quarter: 1|2|3|4|null): FiscalPeriod {
       startDate: `${year}-01-01`, endDate: `${year}-12-31`,
       sortKey: `${year}-ANNUAL` }
   }
-  const q = qMap[quarter]
+  // quarter is typed as 1|2|3|4 so qMap lookup is always defined
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+  const q = qMap[quarter]!
   return { year, quarter, periodType: q.type,
     startDate: q.start, endDate: q.end,
     sortKey: `${year}-${q.type}` }
@@ -537,11 +539,13 @@ function calcYoY(
   sorted: FinancialReport[], i: number, key: string, isRatio = false
 ): number | null {
   if (i === 0) return null
-  const curr = getMetricValue(sorted[i], key)
+  // sorted[i] is always defined because i > 0 and caller bounds-checks
+  const current = sorted[i]!
+  const curr = getMetricValue(current, key)
   // Find same quarter/type previous year
   const prev = sorted.find(r =>
-    r.period.year === sorted[i].period.year - 1 &&
-    r.period.quarter === sorted[i].period.quarter
+    r.period.year === current.period.year - 1 &&
+    r.period.quarter === current.period.quarter
   )
   if (!prev) return null
   const prevVal = getMetricValue(prev, key)
@@ -554,8 +558,9 @@ function calcQoQ(
   sorted: FinancialReport[], i: number, key: string, isRatio = false
 ): number | null {
   if (i === 0) return null
-  const curr = getMetricValue(sorted[i], key)
-  const prevVal = getMetricValue(sorted[i - 1], key)
+  // sorted[i] and sorted[i-1] are always defined because i > 0 and caller bounds-checks
+  const curr = getMetricValue(sorted[i]!, key)
+  const prevVal = getMetricValue(sorted[i - 1]!, key)
   if (prevVal === 0) return null
   if (isRatio) return curr - prevVal
   return ((curr - prevVal) / Math.abs(prevVal)) * 100
@@ -953,4 +958,3 @@ export function emptyReport(
     notesRawText: null,
   }
 }
-`
