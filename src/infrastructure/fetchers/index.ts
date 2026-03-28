@@ -46,3 +46,12 @@ export {
   parseVnDirectResponse,
   type MarketPrice,
 } from "./hose.js";
+
+// ── Task 027: HNX + UPCOM market data fetcher ─────────────────────────────────
+export {
+  fetchHnxPrices,
+  fetchUpcomPrices,
+  buildHnxUrl,
+  buildUpcomUrl,
+  parseHnxResponse,
+} from "./hnx.js";
