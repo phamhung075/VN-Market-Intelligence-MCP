@@ -34,6 +34,4 @@ export type { RunCascadeInput, RagRetriever } from "./runImpactChain.js";
 export { pollNews } from "./pollNews.js";
 export type { PollNewsResult, PollNewsOptions, SourceFetchers } from "./pollNews.js";
 
-// Task 103: Market open/close scan use case
-export { scanMarket } from "./scanMarket.js";
-export type { MarketScanResult, ScanMarketOptions, PriceFetcher } from "./scanMarket.js";
+// Task 103: Market open/close scan use case (not yet implemented)

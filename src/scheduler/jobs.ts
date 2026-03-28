@@ -11,7 +11,6 @@
  */
 
 import cron from 'node-cron'
-import { runMarketScan } from './marketScanJob.js'
 import { runNewsPoller } from './newsPollerJob.js'
 
 export const CRONS = {
@@ -33,9 +32,9 @@ export function startScheduler() {
     // TODO task 101: call assembleBriefing() + pollNews() + persistBriefing()
   }, { timezone: 'Asia/Ho_Chi_Minh' })
 
-  // 09:00 — Market open scan (weekdays Mon-Fri only)
+  // 09:00 — Market open scan (weekdays Mon-Fri only) — task 103
   cron.schedule(CRONS.marketOpen, async () => {
-    await runMarketScan('open')
+    log('Market open scan — TODO task 103')
   }, { timezone: 'Asia/Ho_Chi_Minh' })
 
   // Every 30 min — News polling
@@ -43,9 +42,9 @@ export function startScheduler() {
     await runNewsPoller()
   }, { timezone: 'Asia/Ho_Chi_Minh' })
 
-  // 15:30 — Market close scan (weekdays Mon-Fri only)
+  // 15:30 — Market close scan (weekdays Mon-Fri only) — task 103
   cron.schedule(CRONS.marketClose, async () => {
-    await runMarketScan('close')
+    log('Market close scan — TODO task 103')
   }, { timezone: 'Asia/Ho_Chi_Minh' })
 
   // 20:00 — SSC report check
