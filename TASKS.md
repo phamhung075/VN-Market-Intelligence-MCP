@@ -57,6 +57,7 @@
 | 024 | Trading Economics macro indicator scraper | `task/024-scraper-trading-economics` | 2026-03-28 | [TASK_REPORT_024](reports/TASK_REPORT_024.md) |
 | 122 | Unit tests — domain services branch coverage | `task/122-domain-services` | 2026-03-28 | [TASK_REPORT_122](reports/TASK_REPORT_122.md) |
 | 124 | Integration tests — SSC pipeline mock HTTP | `task/124-test-ssc-pipeline` | 2026-03-28 | [TASK_REPORT_124](reports/TASK_REPORT_124.md) |
+| 125 | E2E test — daily briefing flow | `task/125-test-e2e-briefing` | 2026-03-28 | [TASK_REPORT_125](reports/TASK_REPORT_125.md) |
 
 > **Sprint 003 COMPLETE** — All 5 tasks merged: 021, 082, 063, 064, 086. PO sign-off: APPROVED 2026-03-27.
 > **Sprint 004 Wave 1** — Tasks 087, 022, 023 merged: 2026-03-27.
@@ -80,7 +81,7 @@
 
 | # | Title | Branch | Notes |
 |---|-------|--------|-------|
-| DOC-001 | Update CLAUDE.md architecture section | `task/doc-001-claude-md-update` | Ready for QA |
+| — | — | — | Empty |
 
 ---
 
@@ -346,7 +347,7 @@
 | ~~122~~ | ~~Unit tests — domain services~~ | ~~`task/122-test-domain-services`~~ | ~~test~~ | ~~061-066~~ | ~~Done — 78 tests, 4 services ≥90% branch coverage; merged 2026-03-28~~ |
 | 123 | Integration tests — MCP tools with real SQLite | `task/123-test-integration-mcp` | test | 082-086, 084 ✅ | Full tool call roundtrip: add watchlist → fetch news → generate alert → get alert. **UNBLOCKED — ready for Wave 3** |
 | 124 | Integration tests — SSC pipeline (mock HTTP) | `task/124-test-ssc-pipeline` | test | 048 | Mock SSC HTML + PDF; verify full parse → store → embed pipeline — **Done** — 17 tests pass (SSC-01–SSC-12 + 5 extra); tsc 0 errors; merged 2026-03-28 |
-| 125 | E2E test — daily briefing flow | `task/125-test-e2e-briefing` | test | 101-105 | Full daily briefing: trigger → fetch → analyze → alert → report; assert final output structure | **Review** — 39 tests pass (13 sections: DailyBriefing structure, full pipeline, topStories, alerts, watchlistSummary, newReports, vnIndex, macro indicators Task-024, graceful degradation, file persistence, evening summary, bookend E2E, concurrency guards); tsc 0 errors |
+| 125 | E2E test — daily briefing flow | `task/125-test-e2e-briefing` | test | 101-105 | Full daily briefing: trigger → fetch → analyze → alert → report; assert final output structure | **Done** — 39 tests pass (13 sections: DailyBriefing structure, full pipeline, topStories, alerts, watchlistSummary, newReports, vnIndex, macro indicators Task-024, graceful degradation, file persistence, evening summary, bookend E2E, concurrency guards); tsc 0 errors; merged 2026-03-28 |
 
 ---
 
@@ -354,8 +355,8 @@
 
 | Column | Count | Tasks |
 |--------|-------|-------|
-| ✅ Done | 49 | 000, 001, 002, 003, 011, 012, 013, 014, 021, 022, 023, 024, 026, 027, 029, 030, 041, 042, 043, 044, 045, 046, 047, 048, 061, 062, 063, 064, 065, 066, 081, 082, 083, 084, 085, 086, 087, 088, 101, 102, 103, 104, 105, 121, 122, 123, 124, DOC-001 |
-| 🔍 Review | 1 | 125 |
+| ✅ Done | 50 | 000, 001, 002, 003, 011, 012, 013, 014, 021, 022, 023, 024, 026, 027, 029, 030, 041, 042, 043, 044, 045, 046, 047, 048, 061, 062, 063, 064, 065, 066, 081, 082, 083, 084, 085, 086, 087, 088, 101, 102, 103, 104, 105, 121, 122, 123, 124, 125, DOC-001 |
+| 🔍 Review | 0 | — |
 | 🚧 In Progress | 0 | — |
 | 📋 Todo | 0 | — |
 | 🗂 Backlog | 2 | Deferred: 025, 028 |
