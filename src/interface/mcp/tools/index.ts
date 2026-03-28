@@ -11,3 +11,4 @@ export { registerWatchlistTools } from "./watchlist.js";
 export { registerReportTools } from "./reports.js";
 export { registerAlertTools } from "./alerts.js";
 export { registerAnalysisTools } from "./analysis.js";
+export { registerMarketTools } from "./marketTools.js";

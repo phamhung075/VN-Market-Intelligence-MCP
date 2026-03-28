@@ -50,6 +50,7 @@
 | 103 | Market open/close scan (09:00 + 15:30 GMT+7) | `task/103-job-market-scan` | 2026-03-28 | [TASK_REPORT_103](reports/TASK_REPORT_103.md) |
 | 101 | Morning briefing job (08:00 GMT+7) | `task/101-job-morning-briefing` | 2026-03-28 | [TASK_REPORT_101](reports/TASK_REPORT_101.md) |
 | 066 | AI summary generator (rule-based BCTC) | `task/066-ai-summary` | 2026-03-28 | [TASK_REPORT_066](reports/TASK_REPORT_066.md) |
+| 065 | Historical pattern matcher | `task/065-pattern-matcher` | 2026-03-28 | [TASK_REPORT_065](reports/TASK_REPORT_065.md) |
 
 > **Sprint 003 COMPLETE** — All 5 tasks merged: 021, 082, 063, 064, 086. PO sign-off: APPROVED 2026-03-27.
 > **Sprint 004 Wave 1** — Tasks 087, 022, 023 merged: 2026-03-27.
@@ -63,6 +64,8 @@
 > **Sprint 006 PLANNING** — Tasks 065, 066, 027, 084, 105, 123 promoted to Todo. See SPRINT_GOAL.md sprint_id: 006.
 > **Sprint 006 ACTIVE** — 2026-03-28. Wave 1 (065, 066, 027, 105) ready to assign. WIP limit: 2. TECH_006.md approved by Architect.
 > **Sprint 006 Wave 1** — Task 066 completed: 2026-03-28. Rule-based AI summary generator with 40 tests.
+> **Sprint 006 Wave 1** — Task 065 completed: 2026-03-28. Historical pattern matcher, 15 tests pass.
+> **Sprint 006 Wave 2** — Task 084 in Review: 2026-03-28. Market MCP tools (get_market_snapshot, get_patterns), 14 tests pass, toolCount 14→16.
 
 ---
 
@@ -70,7 +73,7 @@
 
 | # | Title | Branch | Notes |
 |---|-------|--------|-------|
-| 065 | Historical pattern matcher | `task/065-pattern-matcher` | 15/15 tests pass, tsc clean |
+| 084 | Market MCP tools (get_market_snapshot, get_patterns) | `task/084-tool-market` | 14/14 tests pass, tsc clean, toolCount 14→16 |
 
 ---
 
@@ -255,7 +258,7 @@
 | # | Title | Branch | Agent | Layer | Depends on | Status |
 |---|-------|--------|-------|-------|------------|--------|
 | ~~027~~ | ~~HNX + UPCOM market data fetcher~~ | ~~`task/027-hnx-prices`~~ | ~~Developer~~ | ~~infrastructure~~ | ~~026 ✅, 003 ✅~~ | ~~Done~~ |
-| 065 | Historical pattern matcher | `task/065-pattern-matcher` | Developer | application | 013 ✅, 046 ✅ | Review |
+| ~~065~~ | ~~Historical pattern matcher~~ | ~~`task/065-pattern-matcher`~~ | ~~Developer~~ | ~~application~~ | ~~013 ✅, 046 ✅~~ | ~~Done~~ |
 
 ---
 
@@ -313,7 +316,7 @@
 
 | # | Title | Branch | Layer | Depends on | Acceptance Criteria |
 |---|-------|--------|-------|------------|---------------------|
-| 084 | Market tools (snapshot, search_context, patterns) | `task/084-tool-market` | interface | 081 ✅, 013 ✅, 065 | `get_market_snapshot` returns VN-Index + prices; `search_similar_context` returns relevant past analysis |
+| ~~084~~ | ~~Market tools (snapshot, search_context, patterns)~~ | ~~`task/084-tool-market`~~ | ~~interface~~ | ~~081 ✅, 013 ✅, 065 ✅~~ | ~~Done — in Review~~ |
 
 ---
 
