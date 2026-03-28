@@ -74,6 +74,9 @@
 > **Sprint 006 Wave 1** — Task 065 completed: 2026-03-28. Historical pattern matcher, 15 tests pass.
 > **Sprint 006 Wave 2** — Task 084 merged: 2026-03-28. Market MCP tools (get_market_snapshot, get_patterns), 14/14 tests pass, toolCount 14→16. Task 123 now unblocked (Wave 3).
 > **Sprint 006 COMPLETE** — All 6 tasks merged: 065, 066, 027, 105, 084, 123. QA approved: 2026-03-28. 28-test integration harness covers all 16 MCP tools across 5 end-to-end roundtrip chains with real SQLite.
+> **Sprint 007 PLANNING** — Tasks 025, 028 promoted to Todo. See SPRINT_GOAL.md sprint_id: 007. Both fetchers are independent; build in parallel (Wave 1 only).
+> **Sprint 008 PLANNING** — Tasks 025, 028 carried forward; new tasks 126, 089, FIX-081 added. See SPRINT_GOAL.md sprint_id: 008. Wave 1: 025 + 028 + FIX-081 in parallel. Wave 2: 126 + 089 after Wave 1.
+> **Sprint 008 BA** — REQ_008.md written. B1 resolved (DomainType missing logistics + gold_mining — user must confirm patch approach). B2 + B3 pending user answer. Architect unblocked for task design pending B1 confirmation.
 
 ---
 
@@ -95,6 +98,110 @@
 
 ## 📋 TODO
 *(Dependencies cleared — ready to assign)*
+
+### Sprint 008
+
+> Sprint 007 tasks 025 and 028 carried forward with no work done. Sprint 008 adds cascade integration (126), macro MCP tool (089), and SSE test fix (FIX-081). Status: ACTIVE.
+> TECH-007 approved by Architect (2026-03-28). See docs/TECH_007.md for interface contracts, DB DDL, test strategy, and wave execution plan for tasks 025 and 028.
+> **Sprint 008 ACTIVE** — 2026-03-28. Wave 1 tasks (025, 028, FIX-081) ready to assign. WIP limit: 2. Tasks 025 and 028 are independent and can be built in parallel.
+
+#### Wave 1 — Run in parallel (025, 028, FIX-081 are all independent of each other)
+
+| # | Title | Branch | Agent | Layer | Depends on | Status |
+|---|-------|--------|-------|-------|------------|--------|
+| 025 | Yahoo Finance commodity fetcher | `task/025-yahoo-finance` | Developer | infrastructure | 003 ✅ | Todo |
+| 028 | SBV (State Bank Vietnam) macro fetcher | `task/028-sbv-macro` | Developer | infrastructure | 003 ✅ | Todo |
+| FIX-081 | Fix SSE test timeout flakiness | `task/fix-081-sse-timeout` | Fixer | interface/test | 081 ✅ | Todo |
+
+**Task 025 — Acceptance Criteria**
+
+**Given** Yahoo Finance is reachable (or mocked)
+**When** `fetchYahooFinancePrices()` is called
+**Then**
+- Returns `CommoditySnapshot` with `brentCrudeUSD`, `goldUSDPerOz`, `usdVndRate`, `fetchedAt`
+- All numeric fields are positive, non-zero numbers on a successful fetch
+- Returns `null` (never throws) on HTTP error or parse failure; logs a warning
+- `bun test src/__tests__/025-*.test.ts` passes with mocked HTTP — no real network calls
+- `bun tsc --noEmit` 0 errors
+
+**Files to create**:
+- CREATE: `src/infrastructure/fetchers/yahooFinance.ts`
+
+---
+
+**Task 028 — Acceptance Criteria**
+
+**Given** SBV website is reachable (or mocked)
+**When** `fetchSbvRates()` is called
+**Then**
+- Returns `SbvMacroSnapshot` with `overnightRatePct`, `refinancingRatePct`, `usdVndOfficial`, `fetchedAt`
+- All numeric fields are positive, non-zero numbers on a successful fetch
+- Returns `null` (never throws) on HTTP error or parse failure; logs a warning
+- `bun test src/__tests__/028-*.test.ts` passes with mocked HTTP — no real network calls
+- `bun tsc --noEmit` 0 errors
+
+**Files to create**:
+- CREATE: `src/infrastructure/fetchers/sbv.ts`
+
+---
+
+**Task FIX-081 — Acceptance Criteria**
+
+**Given** `src/__tests__/081-*.test.ts` intermittently times out on SSE transport startup
+**When** FIX-081 is applied
+**Then**
+- `src/__tests__/081-*.test.ts` passes consistently (10 consecutive runs with no timeout)
+- No behaviour change to `src/interface/mcp/transport.ts` or `src/interface/mcp/server.ts`
+- `bun test` full suite passes; `bun tsc --noEmit` 0 errors
+
+**Files to modify** (minimal — test setup only, no production code change unless root-cause requires it):
+- MODIFY: `src/__tests__/081-*.test.ts` (adjust timeout, use proper teardown, or mock transport)
+
+---
+
+#### Wave 2 — Run in parallel after Wave 1 (both depend on 025 ✅ and 028 ✅)
+
+| # | Title | Branch | Agent | Layer | Depends on | Status |
+|---|-------|--------|-------|-------|------------|--------|
+| 126 | Macro cascade integration | `task/126-macro-cascade` | Developer | domain | 025 ✅, 028 ✅ | Blocked (Wave 1) |
+| 089 | `get_macro_snapshot` MCP tool | `task/089-tool-macro` | Developer | interface | 025 ✅, 028 ✅, 081 ✅ | Blocked (Wave 1) |
+
+**Task 126 — Acceptance Criteria**
+
+**Given** `fetchYahooFinancePrices()` and `fetchSbvRates()` are available (025 ✅, 028 ✅)
+**When** `runImpactChain(entry)` processes a news item
+**Then**
+- Cascade engine fetches current `CommoditySnapshot` and `SbvMacroSnapshot` at chain start (cached per run, not per stock)
+- High Brent crude price (> $90 USD) adds `+0.10` confidence boost to energy and logistics sector stocks
+- High gold price (> $2000 USD/oz) adds `+0.05` confidence boost to gold-mining stocks
+- High SBV interest rate (> 6%) subtracts `−0.08` confidence from banking and real-estate sector stocks
+- On fetcher failure, impact chain continues with neutral (zero) macro adjustments and logs a warning
+- `bun test src/__tests__/126-*.test.ts` passes with mocked fetchers; no real network calls
+- `bun tsc --noEmit` 0 errors
+
+**Files to modify**:
+- MODIFY: `src/domain/services/cascadeEngine.ts` (inject macro adjustment step)
+- MODIFY: `src/application/usecases/runImpactChain.ts` (pass macro context to engine)
+
+---
+
+**Task 089 — Acceptance Criteria**
+
+**Given** Yahoo Finance and SBV fetchers are available (025 ✅, 028 ✅)
+**When** Claude calls the `get_macro_snapshot` MCP tool
+**Then**
+- Returns a JSON object with shape `{ commodity: CommoditySnapshot | null, rates: SbvMacroSnapshot | null, fetchedAt: string }`
+- If either fetcher fails, the corresponding field is `null` and the other field is still returned
+- Tool is registered in `src/interface/mcp/server.ts` (tool count increments from 16 to 17)
+- `bun test src/__tests__/089-*.test.ts` passes with mocked fetchers; no real network calls
+- `bun tsc --noEmit` 0 errors
+
+**Files to create/modify**:
+- CREATE: `src/interface/mcp/tools/macroTools.ts`
+- MODIFY: `src/interface/mcp/server.ts` (register `get_macro_snapshot`)
+- MODIFY: `src/interface/mcp/tools/index.ts` (export `macroTools`)
+
+---
 
 ### Sprint 005
 <!-- Execution waves per TECH_005.md:
@@ -298,13 +405,13 @@
 
 ### 📡 Infrastructure Fetchers (021–039)
 
-*(022, 023 promoted to Sprint 004; 026 promoted to Sprint 005 Todo)*
+*(022, 023 promoted to Sprint 004; 026 promoted to Sprint 005 Todo; 025, 028 promoted to Sprint 007 Todo → carried into Sprint 008)*
 
 | # | Title | Branch | Layer | Depends on | Acceptance Criteria |
 |---|-------|--------|-------|------------|---------------------|
 | ~~024~~ | ~~Trading Economics scraper~~ | ~~`task/024-scraper-trading-economics`~~ | ~~infra~~ | ~~003 ✅~~ | ~~Done — merged 2026-03-28~~ |
-| 025 | Yahoo Finance commodity fetcher | `task/025-yahoo-finance` | infra | 003 ✅ | Returns Brent crude, gold, USD/VND prices; deferred Sprint 006 |
-| 028 | SBV (State Bank Vietnam) macro fetcher | `task/028-sbv-macro` | infra | 003 ✅ | Returns SBV interest rate, FX rate; deferred Sprint 006 |
+| ~~025~~ | ~~Yahoo Finance commodity fetcher~~ | ~~`task/025-yahoo-finance`~~ | ~~infra~~ | ~~003 ✅~~ | ~~Promoted to Sprint 007 Todo → carried into Sprint 008~~ |
+| ~~028~~ | ~~SBV (State Bank Vietnam) macro fetcher~~ | ~~`task/028-sbv-macro`~~ | ~~infra~~ | ~~003 ✅~~ | ~~Promoted to Sprint 007 Todo → carried into Sprint 008~~ |
 
 ---
 
@@ -358,9 +465,9 @@
 | ✅ Done | 50 | 000, 001, 002, 003, 011, 012, 013, 014, 021, 022, 023, 024, 026, 027, 029, 030, 041, 042, 043, 044, 045, 046, 047, 048, 061, 062, 063, 064, 065, 066, 081, 082, 083, 084, 085, 086, 087, 088, 101, 102, 103, 104, 105, 121, 122, 123, 124, 125, DOC-001 |
 | 🔍 Review | 0 | — |
 | 🚧 In Progress | 0 | — |
-| 📋 Todo | 0 | — |
-| 🗂 Backlog | 2 | Deferred: 025, 028 |
-| **Total** | **53** | |
+| 📋 Todo | 5 | Sprint 008: 025, 028, FIX-081, 126 (blocked), 089 (blocked) |
+| 🗂 Backlog | 0 | — |
+| **Total** | **58** | |
 
 ---
 
