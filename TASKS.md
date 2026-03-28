@@ -77,6 +77,7 @@
 > **Sprint 007 PLANNING** — Tasks 025, 028 promoted to Todo. See SPRINT_GOAL.md sprint_id: 007. Both fetchers are independent; build in parallel (Wave 1 only).
 > **Sprint 008 PLANNING** — Tasks 025, 028 carried forward; new tasks 126, 089, FIX-081 added. See SPRINT_GOAL.md sprint_id: 008. Wave 1: 025 + 028 + FIX-081 in parallel. Wave 2: 126 + 089 after Wave 1.
 > **Sprint 008 BA** — REQ_008.md written. B1 resolved (DomainType missing logistics + gold_mining — user must confirm patch approach). B2 + B3 pending user answer. Architect unblocked for task design pending B1 confirmation.
+> **Sprint 008 ARCH** — TECH_008.md written and approved by Architect (2026-03-28). Wave execution plan: Wave 1 (025 + 028 + FIX-081 in parallel) → Wave 2 (126 + 089 in parallel). PM sprint planning unblocked. See docs/TECH_008.md.
 
 ---
 
@@ -104,6 +105,7 @@
 > Sprint 007 tasks 025 and 028 carried forward with no work done. Sprint 008 adds cascade integration (126), macro MCP tool (089), and SSE test fix (FIX-081). Status: ACTIVE.
 > TECH-007 approved by Architect (2026-03-28). See docs/TECH_007.md for interface contracts, DB DDL, test strategy, and wave execution plan for tasks 025 and 028.
 > **Sprint 008 ACTIVE** — 2026-03-28. Wave 1 tasks (025, 028, FIX-081) ready to assign. WIP limit: 2. Tasks 025 and 028 are independent and can be built in parallel.
+> **Sprint 008 TECH** — TECH_008.md approved. PM: plan sprint execution per TECH_008 wave plan. Ref: docs/TECH_008.md.
 
 #### Wave 1 — Run in parallel (025, 028, FIX-081 are all independent of each other)
 
