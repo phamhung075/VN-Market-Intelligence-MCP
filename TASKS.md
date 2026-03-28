@@ -340,7 +340,7 @@
 
 | # | Title | Branch | Layer | Depends on | Acceptance Criteria |
 |---|-------|--------|-------|------------|---------------------|
-| 121 | Unit tests — BCTC parser (Vietnamese edge cases) | `task/121-test-bctc-edge-cases` | test | 042-047 | 20+ edge cases: parentheses negatives, missing fields, image-only PDF, corrupt PDF |
+| 121 | Unit tests — BCTC parser (Vietnamese edge cases) | `task/121-test-bctc-edge-cases` | test | 042-047 | 20+ edge cases: parentheses negatives, missing fields, image-only PDF, corrupt PDF | **Done** — merged to main 2026-03-28; 36 tests pass (P-01–P-15, B-01–B-08, I-01–I-08, C-01–C-05), tsc 0 errors |
 | 122 | Unit tests — domain services | `task/122-test-domain-services` | test | 061-066 | Cascade engine, signal detector, alert generator all have ≥90% branch coverage |
 | 123 | Integration tests — MCP tools with real SQLite | `task/123-test-integration-mcp` | test | 082-086, 084 ✅ | Full tool call roundtrip: add watchlist → fetch news → generate alert → get alert. **UNBLOCKED — ready for Wave 3** |
 | 124 | Integration tests — SSC pipeline (mock HTTP) | `task/124-test-ssc-pipeline` | test | 048 | Mock SSC HTML + PDF; verify full parse → store → embed pipeline |
@@ -352,11 +352,11 @@
 
 | Column | Count | Tasks |
 |--------|-------|-------|
-| ✅ Done | 46 | 000, 001, 002, 003, 011, 012, 013, 014, 021, 022, 023, 024, 026, 027, 029, 030, 041, 042, 043, 044, 045, 046, 047, 048, 061, 062, 063, 064, 065, 066, 081, 082, 083, 084, 085, 086, 087, 088, 101, 102, 103, 104, 105, 123, DOC-001 |
+| ✅ Done | 47 | 000, 001, 002, 003, 011, 012, 013, 014, 021, 022, 023, 024, 026, 027, 029, 030, 041, 042, 043, 044, 045, 046, 047, 048, 061, 062, 063, 064, 065, 066, 081, 082, 083, 084, 085, 086, 087, 088, 101, 102, 103, 104, 105, 121, 123, DOC-001 |
 | 🔍 Review | 0 | — |
 | 🚧 In Progress | 0 | — |
 | 📋 Todo | 0 | — |
-| 🗂 Backlog | 7 | Deferred: 025, 028, 121-125 |
+| 🗂 Backlog | 6 | Deferred: 025, 028, 122-125 |
 | **Total** | **53** | |
 
 ---
