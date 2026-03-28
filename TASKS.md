@@ -60,7 +60,7 @@
 
 | # | Title | Branch | Notes |
 |---|-------|--------|-------|
-| — | — | — | Empty |
+| 103 | Market open/close scan (09:00 + 15:30 GMT+7) | `task/103-job-market-scan` | Fixed — blocking issues 103-01/02/03 resolved (see TASK_REPORT_103) |
 
 ---
 
@@ -68,7 +68,7 @@
 
 | # | Title | Branch | Notes |
 |---|-------|--------|-------|
-| 103 | Market open/close scan (09:00 + 15:30 GMT+7) | `task/103-job-market-scan` | CHANGES REQUESTED — fix jobs.ts (see TASK_REPORT_103) |
+| — | — | — | Empty |
 
 ---
 
