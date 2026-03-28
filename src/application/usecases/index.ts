@@ -46,3 +46,14 @@ export type {
   WatchlistEntry,
   PipelineParams,
 } from "./checkSscReports.js";
+
+// Task 101: Morning briefing use case (08:00 weekday cron)
+export { assembleBriefing } from "./assembleBriefing.js";
+export type {
+  AssembleBriefingOptions,
+  DailyBriefing,
+  TopStory,
+  BriefingAlert,
+  NewReport,
+  VnIndexSnapshot,
+} from "./assembleBriefing.js";
