@@ -57,3 +57,11 @@ export type {
   NewReport,
   VnIndexSnapshot,
 } from "./assembleBriefing.js";
+
+// Task 105: Evening summary use case (22:00 weekday cron)
+export { assembleEveningSummary } from "./assembleEveningSummary.js";
+export type {
+  AssembleEveningSummaryOptions,
+  EveningSummary,
+  WatchlistMover,
+} from "./assembleEveningSummary.js";

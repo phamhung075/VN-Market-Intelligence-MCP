@@ -8,6 +8,7 @@
  *   newsPoll         every 30 min       (task 102) ✓
  *   marketClose      15:30 weekdays     (task 103) ✓
  *   sscCheck         20:00 daily        (task 104) ✓
+ *   eveningSummary   22:00 weekdays     (task 105) ✓
  */
 
 import cron from 'node-cron'
@@ -15,6 +16,7 @@ import { runSscCheck } from './sscCheckerJob.js'
 import { runMarketScan } from './marketScanJob.js'
 import { runNewsPoller } from './newsPollerJob.js'
 import { runMorningBriefing } from './morningBriefingJob.js'
+import { runEveningSummary } from './eveningSummaryJob.js'
 
 export const CRONS = {
   morningBriefing: Bun.env.CRON_MORNING_BRIEFING ?? '0 8 * * 1-5',
@@ -22,6 +24,7 @@ export const CRONS = {
   newsPoll:        Bun.env.CRON_NEWS_POLL         ?? '*/30 * * * *',
   marketClose:     Bun.env.CRON_MARKET_CLOSE      ?? '30 15 * * 1-5',
   sscCheck:        Bun.env.CRON_SSC_CHECK         ?? '0 20 * * *',
+  eveningSummary:  Bun.env.CRON_EVENING_SUMMARY   ?? '0 22 * * 1-5',
 }
 
 function log(msg: string) {
@@ -52,6 +55,11 @@ export function startScheduler() {
   // 20:00 — SSC report check (task 104)
   cron.schedule(CRONS.sscCheck, async () => {
     await runSscCheck()
+  }, { timezone: 'Asia/Ho_Chi_Minh' })
+
+  // 22:00 — Evening summary (weekdays Mon-Fri only) — task 105
+  cron.schedule(CRONS.eveningSummary, async () => {
+    await runEveningSummary()
   }, { timezone: 'Asia/Ho_Chi_Minh' })
 
   log(`[scheduler] jobs registered — ${Object.keys(CRONS).length} cron jobs active`)
