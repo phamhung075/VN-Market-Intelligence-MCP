@@ -7,10 +7,11 @@
  *   marketOpen       09:00 weekdays     (task 103) ✓
  *   newsPoll         every 30 min       (task 102) ✓
  *   marketClose      15:30 weekdays     (task 103) ✓
- *   sscCheck         20:00 daily        (task 104 — TODO)
+ *   sscCheck         20:00 daily        (task 104) ✓
  */
 
 import cron from 'node-cron'
+import { runSscCheck } from './sscCheckerJob.js'
 import { runNewsPoller } from './newsPollerJob.js'
 
 export const CRONS = {
@@ -47,10 +48,9 @@ export function startScheduler() {
     log('Market close scan — TODO task 103')
   }, { timezone: 'Asia/Ho_Chi_Minh' })
 
-  // 20:00 — SSC report check
+  // 20:00 — SSC report check (task 104)
   cron.schedule(CRONS.sscCheck, async () => {
-    log('SSC report check...')
-    // TODO task 104: call runSscCheck()
+    await runSscCheck()
   }, { timezone: 'Asia/Ho_Chi_Minh' })
 
   log(`Scheduler started — ${Object.keys(CRONS).length} jobs registered`)

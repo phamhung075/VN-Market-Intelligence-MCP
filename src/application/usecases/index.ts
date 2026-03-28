@@ -35,3 +35,12 @@ export { pollNews } from "./pollNews.js";
 export type { PollNewsResult, PollNewsOptions, SourceFetchers } from "./pollNews.js";
 
 // Task 103: Market open/close scan use case (not yet implemented)
+
+// Task 104: SSC nightly report check (20:00 GMT+7)
+export { checkSscReports } from "./checkSscReports.js";
+export type {
+  CheckSscReportsOptions,
+  SscCheckResult,
+  WatchlistEntry,
+  PipelineParams,
+} from "./checkSscReports.js";
