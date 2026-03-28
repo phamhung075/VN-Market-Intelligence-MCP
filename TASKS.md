@@ -74,7 +74,7 @@
 
 | # | Title | Branch | Notes |
 |---|-------|--------|-------|
-| — | — | — | Empty |
+| 123 | Integration tests — MCP tools with real SQLite | `task/123-test-integration-mcp` | 28 tests, 77 expects, 5 roundtrip chains — ready for QA |
 
 ---
 
