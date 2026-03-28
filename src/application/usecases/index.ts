@@ -57,3 +57,7 @@ export type {
   NewReport,
   VnIndexSnapshot,
 } from "./assembleBriefing.js";
+
+// Task 065: Historical pattern matcher
+export { getPatternSummary } from "./getPatternSummary.js";
+export type { Precedent, PatternSummary } from "./getPatternSummary.js";
