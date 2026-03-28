@@ -58,9 +58,9 @@
 | 122 | Unit tests — domain services branch coverage | `task/122-domain-services` | 2026-03-28 | [TASK_REPORT_122](reports/TASK_REPORT_122.md) |
 | 124 | Integration tests — SSC pipeline mock HTTP | `task/124-test-ssc-pipeline` | 2026-03-28 | [TASK_REPORT_124](reports/TASK_REPORT_124.md) |
 | 125 | E2E test — daily briefing flow | `task/125-test-e2e-briefing` | 2026-03-28 | [TASK_REPORT_125](reports/TASK_REPORT_125.md) |
-| 025 | Yahoo Finance commodity fetcher | `task/025-yahoo-finance` | 2026-03-29 | — |
-| 028 | SBV (State Bank Vietnam) macro fetcher | `task/028-sbv-macro` | 2026-03-29 | — |
-| FIX-081 | Fix SSE test timeout flakiness | `task/fix-081-sse-timeout` | 2026-03-29 | — |
+| 025 | Yahoo Finance commodity fetcher | `task/025-yahoo-finance` | 2026-03-29 | [TASK_REPORT_025](reports/TASK_REPORT_025.md) |
+| 028 | SBV (State Bank Vietnam) macro fetcher | `task/028-sbv-macro` | 2026-03-29 | [TASK_REPORT_028](reports/TASK_REPORT_028.md) |
+| FIX-081 | Fix SSE test timeout flakiness | `task/fix-081-sse-timeout` | 2026-03-29 | [TASK_REPORT_FIX-081](reports/TASK_REPORT_FIX-081.md) |
 
 > **Sprint 003 COMPLETE** — All 5 tasks merged: 021, 082, 063, 064, 086. PO sign-off: APPROVED 2026-03-27.
 > **Sprint 004 Wave 1** — Tasks 087, 022, 023 merged: 2026-03-27.
@@ -77,6 +77,7 @@
 > **Sprint 006 Wave 1** — Task 065 completed: 2026-03-28. Historical pattern matcher, 15 tests pass.
 > **Sprint 006 Wave 2** — Task 084 merged: 2026-03-28. Market MCP tools (get_market_snapshot, get_patterns), 14/14 tests pass, toolCount 14→16. Task 123 now unblocked (Wave 3).
 > **Sprint 006 COMPLETE** — All 6 tasks merged: 065, 066, 027, 105, 084, 123. QA approved: 2026-03-28. 28-test integration harness covers all 16 MCP tools across 5 end-to-end roundtrip chains with real SQLite.
+> **Sprint 008 Wave 1** — All 3 tasks merged: FIX-081, 025, 028. QA approved: 2026-03-29. Full suite: 842 pass, 0 fail. Yahoo Finance commodity fetcher (13 tests), SBV macro fetcher (14 tests), SSE timeout fix (8 tests hardened).
 
 ---
 
