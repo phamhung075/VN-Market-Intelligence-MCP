@@ -61,6 +61,7 @@
 
 | # | Title | Branch | Notes |
 |---|-------|--------|-------|
+| 101 | Morning briefing job (08:00 GMT+7) | `task/101-job-morning-briefing` | Ready for review — 14 tests pass, bun tsc 0 errors |
 | 103 | Market open/close scan (09:00 + 15:30 GMT+7) | `task/103-job-market-scan` | Fixed — blocking issues 103-01/02/03 resolved (see TASK_REPORT_103) |
 
 ---
@@ -210,7 +211,7 @@
 
 | # | Title | Branch | Agent | Layer | Depends on | Status |
 |---|-------|--------|-------|-------|------------|--------|
-| 101 | Morning briefing job (08:00 GMT+7) | `task/101-job-morning-briefing` | Developer | interface/scheduler | 102 ✅, 086 ✅ | Todo |
+| 101 | Morning briefing job (08:00 GMT+7) | `task/101-job-morning-briefing` | Developer | interface/scheduler | 102 ✅, 086 ✅ | Review 🔍 |
 
 **Task 101 — Acceptance Criteria**
 
