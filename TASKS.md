@@ -82,7 +82,7 @@
 
 | # | Title | Branch | Notes |
 |---|-------|--------|-------|
-| — | — | — | Empty |
+| 123 | Integration tests — MCP tools with real SQLite | `task/123-test-integration-mcp` | 5 roundtrip chains: watchlist CRUD, news→alert, BCTC summary, pattern matching, market snapshot |
 
 ---
 
