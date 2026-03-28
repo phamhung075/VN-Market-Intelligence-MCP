@@ -60,3 +60,18 @@ git merge --no-ff task/081-bun-mcp-server -m "merge(081): Bun HTTP server + SSE 
 ```
 
 Post-merge verification: 195 tests pass, 0 TypeScript errors.
+
+---
+
+### Fix — 2026-03-29
+
+- **Issue**: FIX-081 — SSE test timeout flakiness; test fails with `SQLiteError: no such table: market_prices` and `beforeEach/afterEach hook timed out`
+- **Root cause (1 — crash)**: `hnx.ts` runs `ensureExchangeColumn()` at module load time. It calls `getDb()` and immediately tries `ALTER TABLE market_prices ADD COLUMN exchange` without first checking whether the table exists. When the DB is a fresh `:memory:` instance (used in tests), `initDatabase()` has not yet been called so no tables exist. `PRAGMA table_info` on a non-existent table returns empty rows, causing the unconditional `ALTER TABLE` to throw `SQLiteError: no such table: market_prices`.
+- **Root cause (2 — afterAll timeout)**: After the SSE test the server still has an open SSE TCP connection. `httpServer.close()` waits for all connections to drain before resolving, so `afterAll` hung indefinitely until the default 5 s hook timeout.
+- **Fix (hnx.ts)**: Added a `SELECT name FROM sqlite_master` existence check around the `market_prices` ALTER branch in `ensureExchangeColumn()`, mirroring the identical guard already applied to `market_prices_history` on line 60 of the same function. File: `src/infrastructure/fetchers/hnx.ts`.
+- **Fix (test — DB init)**: Added `process.env["DB_PATH"] = ":memory:"` before all imports (so `getDb()` opens an in-memory DB); added `import { initDatabase, closeDb }` and called `await initDatabase()` in `beforeAll` before `createBunServer()`, and `closeDb()` in `afterAll`. File: `src/__tests__/081-bun-mcp-server.test.ts`.
+- **Fix (test — SSE abort timeout)**: Raised abort timer from `300` ms to `2000` ms so the SSE connection has time to establish headers on slow CI.
+- **Fix (test — it timeout option)**: Added `{ timeout: 10000 }` as third argument to the SSE `it(...)` call.
+- **Fix (test — afterAll guard)**: Wrapped `serverInstance?.close()` in `Promise.race([close(), 3 s deadline])` inside try/catch so a lingering SSE connection cannot block teardown indefinitely.
+- **Tests added**: None (existing 8 tests now pass reliably).
+- **Verified**: `bun test src/__tests__/081-bun-mcp-server.test.ts` — 10/10 consecutive runs PASS | `bun tsc --noEmit` — 0 errors | Full suite — 815 pass / 0 fail (pre-existing Bun runtime crash in teardown unaffected by these changes; identical on `main`).

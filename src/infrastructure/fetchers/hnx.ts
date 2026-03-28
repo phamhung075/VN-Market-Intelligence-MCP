@@ -46,14 +46,23 @@ const HTTP_TIMEOUT_MS = 15_000;
 function ensureExchangeColumn(): void {
   const db = getDb();
 
-  const cols = db
-    .query<{ name: string }, []>("PRAGMA table_info(market_prices)")
-    .all();
-  if (!cols.some((c) => c.name === "exchange")) {
-    db.exec(
-      "ALTER TABLE market_prices ADD COLUMN exchange TEXT DEFAULT 'HOSE'",
-    );
-    logger.debug("[hnx] added exchange column to market_prices");
+  // Only migrate if the table exists — initDatabase() may not have run yet
+  const mainTableExists = db
+    .query<{ name: string }, [string]>(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name=?",
+    )
+    .get("market_prices");
+
+  if (mainTableExists) {
+    const cols = db
+      .query<{ name: string }, []>("PRAGMA table_info(market_prices)")
+      .all();
+    if (!cols.some((c) => c.name === "exchange")) {
+      db.exec(
+        "ALTER TABLE market_prices ADD COLUMN exchange TEXT DEFAULT 'HOSE'",
+      );
+      logger.debug("[hnx] added exchange column to market_prices");
+    }
   }
 
   // market_prices_history may not exist yet — only migrate if it does

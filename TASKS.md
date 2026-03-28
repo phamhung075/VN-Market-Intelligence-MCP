@@ -86,7 +86,7 @@
 
 | # | Title | Branch | Notes |
 |---|-------|--------|-------|
-| — | — | — | Empty |
+| FIX-081 | Fix SSE test timeout flakiness | `task/fix-081-sse-timeout` | 3 fixes applied: hnx.ts guard + DB init in test + abort/timeout/afterAll hardening. 10/10 runs PASS. |
 
 ---
 
@@ -115,7 +115,7 @@
 |---|-------|--------|-------|-------|------------|--------|
 | 025 | Yahoo Finance commodity fetcher | `task/025-yahoo-finance` | Developer | infrastructure | 003 ✅ | Todo |
 | 028 | SBV (State Bank Vietnam) macro fetcher | `task/028-sbv-macro` | Developer | infrastructure | 003 ✅ | Todo |
-| FIX-081 | Fix SSE test timeout flakiness | `task/fix-081-sse-timeout` | Fixer | interface/test | 081 ✅ | Todo |
+| FIX-081 | Fix SSE test timeout flakiness | `task/fix-081-sse-timeout` | Fixer | interface/test | 081 ✅ | Review |
 
 ---
 
