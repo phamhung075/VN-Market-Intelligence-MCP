@@ -71,3 +71,11 @@ export type {
 // Task 065: Historical pattern matcher
 export { getPatternSummary } from "./getPatternSummary.js";
 export type { Precedent, PatternSummary } from "./getPatternSummary.js";
+
+// Task 105: Evening summary use case (22:00 weekday cron)
+export { assembleEveningSummary } from "./assembleEveningSummary.js";
+export type {
+  AssembleEveningSummaryOptions,
+  EveningSummary,
+  WatchlistMover,
+} from "./assembleEveningSummary.js";

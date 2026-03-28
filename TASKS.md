@@ -323,7 +323,7 @@
 
 | # | Title | Branch | Layer | Depends on | Acceptance Criteria |
 |---|-------|--------|-------|------------|---------------------|
-| 105 | Evening summary job (22:00) | `task/105-job-evening-summary` | interface | 086 ✅ | Generates end-of-day digest; stores in reports/ folder with date filename |
+| 105 | Evening summary job (22:00) | `task/105-job-evening-summary` | interface | 086 ✅ | **Done** — merged to main 2026-03-28; 14 tests pass, tsc 0 errors |
 
 ---
 
@@ -343,11 +343,11 @@
 
 | Column | Count | Tasks |
 |--------|-------|-------|
-| ✅ Done | 41 | 000, 001, 002, 003, 011, 012, 013, 014, 021, 022, 023, 026, 027, 029, 030, 041, 042, 043, 044, 045, 046, 047, 048, 061, 062, 063, 064, 065, 066, 081, 082, 083, 085, 086, 087, 088, 101, 102, 103, 104 |
-| 🔍 Review | 1 | 065 |
+| ✅ Done | 42 | 000, 001, 002, 003, 011, 012, 013, 014, 021, 022, 023, 026, 027, 029, 030, 041, 042, 043, 044, 045, 046, 047, 048, 061, 062, 063, 064, 065, 066, 081, 082, 083, 085, 086, 087, 088, 101, 102, 103, 104, 105 |
+| 🔍 Review | 0 | — |
 | 🚧 In Progress | 0 | — |
-| 📋 Todo | 0 | — (Sprint 005 COMPLETE) |
-| 🗂 Backlog | 10 | Deferred: 024, 025, 028, 084, 105, 121-125 |
+| 📋 Todo | 0 | — (Sprint 006 COMPLETE) |
+| 🗂 Backlog | 9 | Deferred: 024, 025, 028, 084, 121-125 |
 | **Total** | **51** | |
 
 ---
