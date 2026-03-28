@@ -202,4 +202,27 @@ export async function initDatabase(): Promise<void> {
     CREATE INDEX IF NOT EXISTS idx_commodity_history_source_time
       ON commodity_prices_history(source, fetched_at DESC);
   `);
+
+  // ── SBV (State Bank of Vietnam) Rates — Task 028 ──────────────────────────
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS sbv_rates (
+      source               TEXT PRIMARY KEY,
+      overnight_rate_pct   REAL NOT NULL DEFAULT 0,
+      refinancing_rate_pct REAL NOT NULL DEFAULT 0,
+      usd_vnd_official     REAL NOT NULL DEFAULT 0,
+      fetched_at           TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS sbv_rates_history (
+      id                   INTEGER PRIMARY KEY AUTOINCREMENT,
+      source               TEXT NOT NULL,
+      overnight_rate_pct   REAL NOT NULL DEFAULT 0,
+      refinancing_rate_pct REAL NOT NULL DEFAULT 0,
+      usd_vnd_official     REAL NOT NULL DEFAULT 0,
+      fetched_at           TEXT NOT NULL
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_sbv_history_source_time
+      ON sbv_rates_history(source, fetched_at DESC);
+  `);
 }

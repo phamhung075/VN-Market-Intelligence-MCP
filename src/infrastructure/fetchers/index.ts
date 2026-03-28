@@ -70,3 +70,10 @@ export {
   storeCommoditySnapshot,
   type CommoditySnapshot,
 } from "./yahooFinance.js";
+
+// ── Task 028: SBV (State Bank of Vietnam) macro fetcher ───────────────────────
+export {
+  fetchSbvRates,
+  storeSbvSnapshot,
+  type SbvMacroSnapshot,
+} from "./sbv.js";

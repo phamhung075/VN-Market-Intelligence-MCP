@@ -82,7 +82,7 @@
 
 | # | Title | Branch | Notes |
 |---|-------|--------|-------|
-| 025 | Yahoo Finance commodity fetcher | `task/025-yahoo-finance` | Ready for QA — 13 tests pass, tsc 0 errors |
+| — | — | — | Empty |
 
 ---
 
