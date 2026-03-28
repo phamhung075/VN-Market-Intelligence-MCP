@@ -55,3 +55,10 @@ export {
   buildUpcomUrl,
   parseHnxResponse,
 } from "./hnx.js";
+
+// ── Task 024: Trading Economics macro indicator scraper ────────────────────────
+export {
+  fetchMacroIndicators,
+  storeMacroIndicators,
+  type MacroIndicators,
+} from "./tradingEconomics.js";

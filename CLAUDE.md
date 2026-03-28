@@ -45,21 +45,83 @@ Use @po agent: "I want to add [feature]. Investment goal: [why]."
 
 ## Architecture summary
 
+DDD layered architecture (task 001 + task 088 legacy cleanup):
+
 ```
 src/
-├── index.ts          ← Bun HTTP server + MCP SSE transport (entry point)
-├── server.ts         ← McpServer factory, registers all tools
-├── tools/
-│   ├── watchlist.ts  ← add/remove/get watchlist, update thresholds
-│   ├── analysis.ts   ← fetch_and_analyze, run_impact_chain, RAG search
-│   ├── reports.ts    ← SSC BCTC scraping + financial summary/compare
-│   └── alerts.ts     ← get_alerts, daily briefing, analysis history
-├── db/
-│   └── schema.ts     ← SQLite init (watchlist, alerts, rag_analyses, financial_reports)
+├── index.ts                        ← Bun HTTP server entry point (bootstrap + startScheduler)
+├── domain/
+│   ├── models/index.ts             ← FinancialReport, Alert, AnalysisEntry, Signal, WatchlistAction
+│   ├── repositories/index.ts       ← Repository interfaces (ports)
+│   └── services/
+│       ├── vnNumberParser.ts       ← Vietnamese number parser (parentheses, VND suffixes)
+│       ├── balanceSheetExtractor.ts
+│       ├── incomeStatementExtractor.ts
+│       ├── cashFlowExtractor.ts
+│       ├── ratioComputer.ts
+│       ├── periodDeltaComputer.ts
+│       ├── embeddingTextBuilder.ts
+│       ├── newsNormalizer.ts       ← RSS item → AnalysisEntry
+│       ├── cascadeEngine.ts        ← Global → country → sector → stock causal chain
+│       ├── signalDetector.ts       ← Price drop/surge, volume spike, news mention, report
+│       └── alertGenerator.ts      ← Multi-signal → Alert with severity
+├── infrastructure/
+│   ├── config.ts                   ← Env config (dotenv)
+│   ├── logger.ts                   ← Structured logger
+│   ├── db/
+│   │   ├── schema.ts               ← SQLite init (all tables + indexes)
+│   │   ├── alertStore.ts           ← Alert read/write helpers
+│   │   └── index.ts
+│   ├── fetchers/
+│   │   ├── rss.ts                  ← RSS base fetcher
+│   │   ├── cafef.ts                ← CafeF news (Vietnamese)
+│   │   ├── vnexpress.ts            ← VnExpress Finance RSS
+│   │   ├── reuters.ts              ← Reuters / AP News RSS
+│   │   ├── hose.ts                 ← HOSE prices (VnDirect API + CafeF fallback)
+│   │   ├── hnx.ts                  ← HNX + UPCOM prices
+│   │   ├── ssc.ts                  ← SSC portal scraper (BCTC document links)
+│   │   ├── pdf.ts                  ← PDF downloader + pdf-parse text extractor
+│   │   └── index.ts
+│   └── rag/
+│       ├── embeddings.ts           ← HuggingFace multilingual-MiniLM (local ONNX)
+│       ├── vectorstore.ts          ← LanceDB read/write/search
+│       ├── retriever.ts            ← Multi-level RAG search
+│       └── index.ts
+├── application/
+│   └── usecases/
+│       ├── assembleBriefing.ts     ← Morning briefing assembly
+│       ├── assembleEveningSummary.ts ← Evening summary assembly
+│       ├── checkSscReports.ts      ← SSC nightly BCTC document check
+│       ├── fetchParseAndStoreBctc.ts ← SSC fetch → parse → store pipeline
+│       ├── generateAiSummary.ts    ← Rule-based plain-language BCTC summary
+│       ├── getPatternSummary.ts    ← Historical pattern detection
+│       ├── parseBctcReport.ts      ← BCTC PDF text → FinancialReport
+│       ├── pollNews.ts             ← RSS poll → embed → alert
+│       ├── runImpactChain.ts       ← Causal chain orchestrator
+│       ├── scanMarket.ts           ← Market open/close price scan
+│       └── index.ts
+├── interface/
+│   ├── mcp/
+│   │   ├── server.ts               ← McpServer factory, registers all 16 tools
+│   │   ├── transport.ts            ← SSEServerTransport setup
+│   │   └── tools/
+│   │       ├── watchlist.ts        ← add/remove/get/update watchlist MCP tools
+│   │       ├── alerts.ts           ← get_alerts, run_daily_briefing, analysis history
+│   │       ├── analysis.ts         ← fetch_and_analyze, run_impact_chain, search_similar_context
+│   │       ├── reports.ts          ← fetch_bctc_report, get_financial_summary, compare_reports
+│   │       ├── marketTools.ts      ← get_market_snapshot, get_patterns
+│   │       └── index.ts
+│   └── scheduler/
+│       └── index.ts                ← startScheduler() — registers all 6 cron jobs
 └── scheduler/
-    └── jobs.ts       ← node-cron jobs (GMT+7 timezone)
+    ├── jobs.ts                     ← Cron job definitions (GMT+7)
+    ├── morningBriefingJob.ts       ← 08:00 daily briefing
+    ├── newsPollerJob.ts            ← Every 30 min news poll
+    ├── marketScanJob.ts            ← 09:00 + 15:30 market open/close scan
+    ├── sscCheckerJob.ts            ← 20:00 SSC nightly BCTC check
+    └── eveningSummaryJob.ts        ← 22:00 evening summary
 
-bctc-schema.ts        ← Complete BCTC data model + SQLite DDL (root level)
+bctc-schema.ts                      ← Complete BCTC data model + SQLite DDL (root level)
 ```
 
 ## Key data flow
@@ -161,45 +223,82 @@ reports/SPRINT_REPORT_NNN.md ← QA: sprint summary
 SPRINT_GOAL.md           ← PO: current sprint vision
 ```
 
-### DDD folder structure (target)
+### DDD folder structure (implemented)
+
+The DDD structure is fully in place. See Architecture summary above for the complete layout.
 
 ```
 src/
-├── domain/           ← Pure business logic (no I/O)
-│   ├── models/       ← FinancialReport, Alert, AnalysisEntry
-│   ├── services/     ← ImpactChainService, AlertService
-│   └── repositories/ ← Interfaces (ports)
-├── infrastructure/   ← Adapters: SQLite, LanceDB, HTTP
-├── application/      ← Use cases (orchestration)
-└── interface/        ← MCP tools, scheduler (entry points)
+├── domain/           ← Pure business logic (no I/O) — tasks 041-066, 014
+├── infrastructure/   ← Adapters: SQLite, LanceDB, HTTP fetchers — tasks 002, 003, 011-013, 021-030
+├── application/      ← Use cases (orchestration) — tasks 047, 048, 101-105
+└── interface/        ← MCP tools, scheduler (entry points) — tasks 081-088, 101-105
 ```
 
 ---
 
 ## Current implementation status
 
-### Done ✓
+### Done (43 tasks, Sprint 000-006) ✓
+
+**Foundation (Sprint 000)**
+- `src/infrastructure/db/schema.ts` — SQLite schema init (all tables)
+- `src/infrastructure/config.ts` — Env config
+- `src/infrastructure/logger.ts` — Structured logging
+- `src/infrastructure/rag/embeddings.ts` — HuggingFace multilingual-MiniLM (local ONNX)
+- `src/infrastructure/rag/vectorstore.ts` — LanceDB vector store
+- `src/infrastructure/rag/retriever.ts` — Multi-level RAG search
 - `src/domain/services/vnNumberParser.ts` — Vietnamese number parser
 - `src/domain/services/balanceSheetExtractor.ts` — BCTC balance sheet
-- `src/domain/services/incomeStatementExtractor.ts` — BCTC income statement
 - `src/domain/services/embeddingTextBuilder.ts` — RAG text builder
-- `src/infrastructure/rag/embeddings.ts` — HuggingFace multilingual-MiniLM
-- `src/infrastructure/rag/vectorstore.ts` — LanceDB vector store
-- `src/tools/watchlist.ts` — Watchlist CRUD MCP tools
-- `src/tools/alerts.ts` — Alert MCP tools
-- `src/db/schema.ts` — SQLite schema init
-- `src/scheduler/jobs.ts` — Cron jobs (GMT+7)
 
-### Pending (next sprint — see SPRINT_GOAL.md)
-- `src/domain/services/incomeStatementExtractor.ts` — BCTC income statement (task 043)
-- `src/domain/services/cashFlowExtractor.ts` — BCTC cash flow (task 044)
-- `src/infrastructure/rag/retriever.ts` — Multi-level RAG search (task 013)
-- `src/domain/services/embeddingTextBuilder.ts` — RAG text builder (task 014, on wrong branch)
-- `src/application/usecases/bctcRagPipeline.ts` — Full BCTC pipeline (task 047)
-- `src/infrastructure/fetchers/ssc.ts` — SSC portal scraper (task 029)
-- `src/infrastructure/fetchers/pdf.ts` — PDF text extractor (task 030)
-- `src/analysis/cascade.ts` — Causal chain engine (task 061)
-- `src/analysis/signals.ts` — Multi-signal detector (task 062)
+**BCTC Pipeline (Sprint 001-002)**
+- `src/domain/services/incomeStatementExtractor.ts` — income statement
+- `src/domain/services/cashFlowExtractor.ts` — cash flow
+- `src/domain/services/ratioComputer.ts` — 22 financial ratios
+- `src/domain/services/periodDeltaComputer.ts` — QoQ / YoY deltas
+- `src/infrastructure/fetchers/ssc.ts` — SSC portal scraper
+- `src/infrastructure/fetchers/pdf.ts` — PDF downloader + text extractor
+- `src/application/usecases/fetchParseAndStoreBctc.ts` — SSC fetch → parse → store pipeline (task 048)
+- `src/interface/mcp/tools/reports.ts` — `fetch_bctc_report`, `get_financial_summary`, `compare_reports` (task 085)
+
+**News + Alerts (Sprint 003-004)**
+- `src/infrastructure/fetchers/cafef.ts`, `vnexpress.ts`, `reuters.ts` — 3 RSS news sources
+- `src/domain/services/newsNormalizer.ts` — RSS item → AnalysisEntry
+- `src/domain/services/cascadeEngine.ts` — causal chain (global → stock)
+- `src/domain/services/signalDetector.ts` — price/news/report signals
+- `src/domain/services/alertGenerator.ts` — multi-signal alert generator
+- `src/interface/mcp/tools/watchlist.ts` — 4 watchlist MCP tools
+- `src/interface/mcp/tools/alerts.ts` — 3 alert MCP tools
+- `src/interface/mcp/tools/analysis.ts` — 3 analysis MCP tools
+- `src/interface/mcp/server.ts` — McpServer factory + SSEServerTransport (16 tools registered)
+
+**Market Data + Scheduler (Sprint 005)**
+- `src/infrastructure/fetchers/hose.ts` — HOSE prices (VnDirect + CafeF fallback)
+- `src/scheduler/newsPollerJob.ts` — every 30 min news poll with dedup
+- `src/scheduler/sscCheckerJob.ts` — 20:00 SSC nightly check with retry
+- `src/scheduler/marketScanJob.ts` — 09:00 + 15:30 market open/close scan
+- `src/scheduler/morningBriefingJob.ts` — 08:00 daily briefing
+
+**Analytical Depth (Sprint 006)**
+- `src/application/usecases/getPatternSummary.ts` — historical pattern matcher (task 065)
+- `src/application/usecases/generateAiSummary.ts` — rule-based BCTC plain-language summary (task 066)
+- `src/infrastructure/fetchers/hnx.ts` — HNX + UPCOM prices (task 027)
+- `src/scheduler/eveningSummaryJob.ts` — 22:00 evening summary (task 105)
+- `src/interface/mcp/tools/marketTools.ts` — `get_market_snapshot`, `get_patterns` (task 084)
+- 28-test MCP integration harness covering all 16 tools (task 123)
+
+### Pending (Sprint 007 — see SPRINT_GOAL.md)
+- `CLAUDE.md` architecture section update (DOC-001)
+- Unit tests — BCTC parser Vietnamese edge cases (task 121)
+- Unit tests — domain services ≥90% branch coverage (task 122)
+- Integration tests — SSC pipeline mock HTTP (task 124)
+- `src/infrastructure/fetchers/tradingEconomics.ts` — CPI, GDP, interest rate (task 024)
+- E2E test — daily briefing flow (task 125, after 024)
+
+### Deferred (Sprint 008+)
+- `src/infrastructure/fetchers/yahooFinance.ts` — Brent crude, gold, USD/VND (task 025)
+- `src/infrastructure/fetchers/sbv.ts` — SBV central bank rates + FX (task 028)
 
 ## Data model references
 
