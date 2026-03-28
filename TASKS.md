@@ -78,6 +78,7 @@
 > **Sprint 008 PLANNING** — Tasks 025, 028 carried forward; new tasks 126, 089, FIX-081 added. See SPRINT_GOAL.md sprint_id: 008. Wave 1: 025 + 028 + FIX-081 in parallel. Wave 2: 126 + 089 after Wave 1.
 > **Sprint 008 BA** — REQ_008.md written. B1 resolved (DomainType missing logistics + gold_mining — user must confirm patch approach). B2 + B3 pending user answer. Architect unblocked for task design pending B1 confirmation.
 > **Sprint 008 ARCH** — TECH_008.md written and approved by Architect (2026-03-28). Wave execution plan: Wave 1 (025 + 028 + FIX-081 in parallel) → Wave 2 (126 + 089 in parallel). PM sprint planning unblocked. See docs/TECH_008.md.
+> **Sprint 008 PM** — 5 tasks broken down (2026-03-28). Wave 1: 025 + 028 + FIX-081 → Todo. Wave 2: 126 + 089 → Backlog. Full acceptance criteria + file-level context injected per TECH_008. WIP limit: max 2 In Progress simultaneously. See TASKS.md Sprint 008 section.
 
 ---
 
@@ -106,6 +107,7 @@
 > TECH-007 approved by Architect (2026-03-28). See docs/TECH_007.md for interface contracts, DB DDL, test strategy, and wave execution plan for tasks 025 and 028.
 > **Sprint 008 ACTIVE** — 2026-03-28. Wave 1 tasks (025, 028, FIX-081) ready to assign. WIP limit: 2. Tasks 025 and 028 are independent and can be built in parallel.
 > **Sprint 008 TECH** — TECH_008.md approved. PM: plan sprint execution per TECH_008 wave plan. Ref: docs/TECH_008.md.
+> **Sprint 008 PM** — 5 tasks broken down, 2 waves defined. Wave 1 (025 + 028 + FIX-081) all Todo. Wave 2 (126 + 089) Backlog until Wave 1 merges. WIP limit enforced: start any 2 of the 3 Wave 1 tasks simultaneously.
 
 #### Wave 1 — Run in parallel (025, 028, FIX-081 are all independent of each other)
 
@@ -115,93 +117,448 @@
 | 028 | SBV (State Bank Vietnam) macro fetcher | `task/028-sbv-macro` | Developer | infrastructure | 003 ✅ | Todo |
 | FIX-081 | Fix SSE test timeout flakiness | `task/fix-081-sse-timeout` | Fixer | interface/test | 081 ✅ | Todo |
 
-**Task 025 — Acceptance Criteria**
+---
 
-**Given** Yahoo Finance is reachable (or mocked)
-**When** `fetchYahooFinancePrices()` is called
+**Task 025 — Yahoo Finance commodity fetcher**
+
+**Branch**: `task/025-yahoo-finance`
+**Layer**: infrastructure
+**Depends on**: 003 ✅
+
+**Files to read first**:
+- `src/infrastructure/fetchers/tradingEconomics.ts` (follow this exact pattern for HttpClient + never-throw contract)
+- `src/infrastructure/db/schema.ts` (add DDL after existing `macro_indicators` block)
+- `src/infrastructure/fetchers/index.ts` (barrel export to update)
+
+**Files to create/modify**:
+- CREATE: `src/infrastructure/fetchers/yahooFinance.ts`
+- CREATE: `src/__tests__/025-yahoo-finance.test.ts` (12 test cases YF-01 through YF-12)
+- MODIFY: `src/infrastructure/db/schema.ts` (add `commodity_prices` + `commodity_prices_history` DDL blocks)
+- MODIFY: `src/infrastructure/fetchers/index.ts` (barrel export `fetchYahooFinancePrices`, `storeCommoditySnapshot`)
+
+**Interface to implement**:
+```typescript
+export interface CommoditySnapshot {
+  brentCrudeUSD: number | null;   // USD per barrel
+  goldUSDPerOz: number | null;    // USD per troy oz
+  usdVndRate: number | null;      // VND per 1 USD (market rate)
+  fetchedAt: string;              // ISO 8601
+}
+
+export async function fetchYahooFinancePrices(httpClient?: HttpClient): Promise<CommoditySnapshot | null>
+export function storeCommoditySnapshot(snapshot: CommoditySnapshot, db?: Database): void
+```
+
+**JSON API approach (recommended over HTML scraping)**:
+- Base URL env var: `YAHOO_FINANCE_BASE_URL` (default: `https://query1.finance.yahoo.com`)
+- Brent: `${base}/v8/finance/chart/BZ=F?interval=1d&range=1d`
+- Gold:  `${base}/v8/finance/chart/GC=F?interval=1d&range=1d`
+- USDVND: `${base}/v8/finance/chart/USDVND=X?interval=1d&range=1d`
+- Response field: `result[0].meta.regularMarketPrice`
+- Strip commas before parseFloat: `replace(/,/g, "")`
+- Headers: `User-Agent: Mozilla/5.0 ...`, `Referer: https://finance.yahoo.com`, timeout 15s
+
+**DB DDL to add** (inside `initDatabase()`, after `macro_indicators` block):
+```sql
+CREATE TABLE IF NOT EXISTS commodity_prices (
+  source          TEXT PRIMARY KEY,
+  brent_crude_usd REAL,
+  gold_usd_per_oz REAL,
+  usd_vnd_rate    REAL,
+  fetched_at      TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS commodity_prices_history (
+  id              INTEGER PRIMARY KEY AUTOINCREMENT,
+  source          TEXT NOT NULL,
+  brent_crude_usd REAL,
+  gold_usd_per_oz REAL,
+  usd_vnd_rate    REAL,
+  fetched_at      TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_cph_source_fetched
+  ON commodity_prices_history(source, fetched_at DESC);
+```
+
+**storeCommoditySnapshot contract**: single `db.transaction()` — INSERT OR REPLACE into `commodity_prices` (source = "yahoo_finance") + INSERT INTO `commodity_prices_history`.
+
+**Acceptance Criteria**
+
+**Given** Yahoo Finance JSON API is reachable (or mocked via injectable `HttpClient`)
+**When** `fetchYahooFinancePrices(httpClient)` is called
 **Then**
 - Returns `CommoditySnapshot` with `brentCrudeUSD`, `goldUSDPerOz`, `usdVndRate`, `fetchedAt`
-- All numeric fields are positive, non-zero numbers on a successful fetch
-- Returns `null` (never throws) on HTTP error or parse failure; logs a warning
+- YF-01: Happy path — all 3 values returned as positive numbers (BZ=F=84.37, GC=F=2341.50, USDVND=X=25450)
+- YF-02/03/04: Each of `brentCrudeUSD`, `goldUSDPerOz`, `usdVndRate` is a `number` type
+- YF-05: Partial success — one symbol missing still returns the other two (missing symbol field = null)
+- YF-06: All 3 symbols fail — returns `null`, never throws
+- YF-07: HTTP error — returns `null`, never throws, logs warning
+- YF-08: HTML fallback — if JSON unavailable, parses `<fin-streamer value="">` attribute; falls back to element text if no `value` attr
+- YF-E5: Comma in value `"2,341.50"` is stripped correctly → `2341.50`
+- YF-09: `storeCommoditySnapshot` writes to both `commodity_prices` (1 row upsert) and `commodity_prices_history` (appended row) using in-memory SQLite
+- YF-10: Two calls to `storeCommoditySnapshot` — `commodity_prices` stays 1 row, `commodity_prices_history` becomes 2 rows
+- YF-11: `fetchYahooFinancePrices` and `storeCommoditySnapshot` are importable from `src/infrastructure/fetchers/index.ts`
+- YF-12: `fetchedAt` is a valid ISO 8601 timestamp string
 - `bun test src/__tests__/025-*.test.ts` passes with mocked HTTP — no real network calls
 - `bun tsc --noEmit` 0 errors
 
-**Files to create**:
-- CREATE: `src/infrastructure/fetchers/yahooFinance.ts`
+**TDD test file**: `src/__tests__/025-yahoo-finance.test.ts`
+Mock pattern:
+```typescript
+function makeHttpClient(json: string) {
+  return { get: async (_url: string): Promise<string> => json };
+}
+function makeErrorHttpClient() {
+  return { get: async (_url: string): Promise<string> => { throw new Error("Network error"); } };
+}
+```
 
 ---
 
-**Task 028 — Acceptance Criteria**
+**Task 028 — SBV (State Bank Vietnam) macro fetcher**
 
-**Given** SBV website is reachable (or mocked)
-**When** `fetchSbvRates()` is called
+**Branch**: `task/028-sbv-macro`
+**Layer**: infrastructure
+**Depends on**: 003 ✅
+
+**Files to read first**:
+- `src/infrastructure/fetchers/tradingEconomics.ts` (follow HttpClient + never-throw pattern)
+- `src/infrastructure/db/schema.ts` (add DDL after `commodity_prices` block from task 025)
+- `src/infrastructure/fetchers/index.ts` (barrel export to update)
+
+**Files to create/modify**:
+- CREATE: `src/infrastructure/fetchers/sbv.ts`
+- CREATE: `src/__tests__/028-sbv-rates.test.ts` (14 test cases SBV-01 through SBV-14)
+- MODIFY: `src/infrastructure/db/schema.ts` (add `sbv_rates` + `sbv_rates_history` DDL blocks)
+- MODIFY: `src/infrastructure/fetchers/index.ts` (barrel export `fetchSbvRates`, `storeSbvSnapshot`)
+
+**Interface to implement**:
+```typescript
+export interface SbvMacroSnapshot {
+  overnightRatePct: number | null;    // percent
+  refinancingRatePct: number | null;  // percent (policy rate)
+  usdVndOfficial: number | null;      // VND per 1 USD (central rate)
+  fetchedAt: string;                  // ISO 8601
+}
+
+export async function fetchSbvRates(httpClient?: HttpClient): Promise<SbvMacroSnapshot | null>
+export function storeSbvSnapshot(snapshot: SbvMacroSnapshot, db?: Database): void
+```
+
+**Two-page fetch strategy** (env var: `SBV_BASE_URL`, default `https://www.sbv.gov.vn`):
+- Interest rates page: `${base}/webcenter/portal/en/home/rm/ir`
+- FX rates page:       `${base}/webcenter/portal/en/home/fm/exchangerate`
+- Pages fetched independently; partial failure is valid (one page down = null fields for that page only)
+- Returns `null` only when BOTH pages fail
+- Header: `Accept-Language: en`
+
+**Parse rules**:
+- `overnightRatePct`: `<td>` label contains `"overnight"` or `"qua đêm"` (case-insensitive), strip `%` and whitespace, `parseFloat`
+- `refinancingRatePct`: label contains `"refinancing"` or `"tái cấp vốn"`, must NOT match `"discount"` or `"chiết khấu"` (SBV-E6 non-contamination)
+- `usdVndOfficial`: USD row (`"USD"` or `"Đô la Mỹ"`), "Central rate" / "Tỷ giá trung tâm" column
+- VN decimal normalisation: `replace(/\./g, "")` then `replace(",", ".")` before parseFloat (e.g. `"25.450,50"` → `25450.5`)
+
+**DB DDL to add** (inside `initDatabase()`, after `commodity_prices_history` block):
+```sql
+CREATE TABLE IF NOT EXISTS sbv_rates (
+  source               TEXT PRIMARY KEY,
+  overnight_rate_pct   REAL,
+  refinancing_rate_pct REAL,
+  usd_vnd_official     REAL,
+  fetched_at           TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS sbv_rates_history (
+  id                   INTEGER PRIMARY KEY AUTOINCREMENT,
+  source               TEXT NOT NULL,
+  overnight_rate_pct   REAL,
+  refinancing_rate_pct REAL,
+  usd_vnd_official     REAL,
+  fetched_at           TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_sbvh_source_fetched
+  ON sbv_rates_history(source, fetched_at DESC);
+```
+
+**storeSbvSnapshot contract**: single `db.transaction()` — INSERT OR REPLACE into `sbv_rates` (source = "sbv") + INSERT INTO `sbv_rates_history`.
+
+**Acceptance Criteria**
+
+**Given** SBV website pages are reachable (or mocked via two-page injectable `HttpClient`)
+**When** `fetchSbvRates(httpClient)` is called
 **Then**
-- Returns `SbvMacroSnapshot` with `overnightRatePct`, `refinancingRatePct`, `usdVndOfficial`, `fetchedAt`
-- All numeric fields are positive, non-zero numbers on a successful fetch
-- Returns `null` (never throws) on HTTP error or parse failure; logs a warning
+- SBV-01: Happy path — all 3 fields returned as positive numbers from both pages
+- SBV-02: `overnightRatePct` parses correctly from the interest-rate page
+- SBV-03: `refinancingRatePct` parses correctly and is NOT contaminated by the discount rate row
+- SBV-04: `usdVndOfficial` parses the "Central rate" column from the FX page correctly
+- SBV-05: Both pages fail — returns `null`, never throws
+- SBV-06: IR page fails, FX page succeeds — `overnightRatePct`/`refinancingRatePct` = null, `usdVndOfficial` > 0 (not null)
+- SBV-07: FX page fails, IR page succeeds — `usdVndOfficial` = null, rate fields > 0
+- SBV-08: Vietnamese labels `"qua đêm"` / `"tái cấp vốn"` are parsed correctly
+- SBV-09: `refinancingRatePct` NOT contaminated by discount/chiết khấu row appearing above it
+- SBV-E3: VN decimal `"25.450,50"` normalises to `25450.5`
+- SBV-10: `storeSbvSnapshot` writes to both `sbv_rates` (upsert) and `sbv_rates_history` (append) using in-memory SQLite
+- SBV-11: Two calls — `sbv_rates` stays 1 row, `sbv_rates_history` becomes 2 rows
+- SBV-12: `fetchSbvRates` and `storeSbvSnapshot` are importable from `src/infrastructure/fetchers/index.ts`
+- SBV-13: VN number format `"25.450"` (dots as thousands separator) → `25450`
+- SBV-14: `fetchedAt` is a valid ISO 8601 timestamp string
 - `bun test src/__tests__/028-*.test.ts` passes with mocked HTTP — no real network calls
 - `bun tsc --noEmit` 0 errors
 
-**Files to create**:
-- CREATE: `src/infrastructure/fetchers/sbv.ts`
+**TDD test file**: `src/__tests__/028-sbv-rates.test.ts`
+Mock pattern:
+```typescript
+function makeTwoPageHttpClient(irHtml: string, fxHtml: string) {
+  return {
+    get: async (url: string): Promise<string> => {
+      if (url.includes("/rm/ir")) return irHtml;
+      if (url.includes("/fm/exchangerate")) return fxHtml;
+      throw new Error(`Unexpected URL: ${url}`);
+    },
+  };
+}
+```
 
 ---
 
-**Task FIX-081 — Acceptance Criteria**
+**Task FIX-081 — Fix SSE test timeout flakiness**
 
-**Given** `src/__tests__/081-*.test.ts` intermittently times out on SSE transport startup
+**Branch**: `task/fix-081-sse-timeout`
+**Layer**: interface/test
+**Depends on**: 081 ✅
+**Agent**: Fixer (minimal change, no new features)
+
+**Files to read first**:
+- `src/__tests__/081-bun-mcp-server.test.ts` (identify the SSE fetch + afterAll teardown)
+
+**Files to modify** (test setup only — no production code unless root-cause requires it):
+- MODIFY: `src/__tests__/081-bun-mcp-server.test.ts`
+
+**Three targeted changes**:
+1. SSE abort timeout: `setTimeout(() => controller.abort(), 300)` → `setTimeout(() => controller.abort(), 2000)`
+2. Test-level timeout: add `{ timeout: 10000 }` option to the SSE `it(...)` call (Bun test API)
+3. afterAll guard: wrap `serverInstance.close()` in try/catch so a failed test that leaves `serverInstance` undefined does not cause a secondary teardown failure:
+```typescript
+afterAll(async () => {
+  try {
+    await serverInstance?.close();
+  } catch {
+    // ignore teardown errors
+  }
+});
+```
+
+**Acceptance Criteria**
+
+**Given** `src/__tests__/081-bun-mcp-server.test.ts` intermittently times out on SSE transport startup
 **When** FIX-081 is applied
 **Then**
-- `src/__tests__/081-*.test.ts` passes consistently (10 consecutive runs with no timeout)
+- `bun test src/__tests__/081-*.test.ts` passes 10 consecutive runs without any timeout failure
+- Verify: `for i in $(seq 1 10); do bun test src/__tests__/081-bun-mcp-server.test.ts || break; done`
 - No behaviour change to `src/interface/mcp/transport.ts` or `src/interface/mcp/server.ts`
 - `bun test` full suite passes; `bun tsc --noEmit` 0 errors
 
-**Files to modify** (minimal — test setup only, no production code change unless root-cause requires it):
-- MODIFY: `src/__tests__/081-*.test.ts` (adjust timeout, use proper teardown, or mock transport)
-
 ---
 
-#### Wave 2 — Run in parallel after Wave 1 (both depend on 025 ✅ and 028 ✅)
+#### Wave 2 — Run in parallel after Wave 1 merges (126 and 089 are independent of each other)
 
 | # | Title | Branch | Agent | Layer | Depends on | Status |
 |---|-------|--------|-------|-------|------------|--------|
-| 126 | Macro cascade integration | `task/126-macro-cascade` | Developer | domain | 025 ✅, 028 ✅ | Blocked (Wave 1) |
-| 089 | `get_macro_snapshot` MCP tool | `task/089-tool-macro` | Developer | interface | 025 ✅, 028 ✅, 081 ✅ | Blocked (Wave 1) |
-
-**Task 126 — Acceptance Criteria**
-
-**Given** `fetchYahooFinancePrices()` and `fetchSbvRates()` are available (025 ✅, 028 ✅)
-**When** `runImpactChain(entry)` processes a news item
-**Then**
-- Cascade engine fetches current `CommoditySnapshot` and `SbvMacroSnapshot` at chain start (cached per run, not per stock)
-- High Brent crude price (> $90 USD) adds `+0.10` confidence boost to energy and logistics sector stocks
-- High gold price (> $2000 USD/oz) adds `+0.05` confidence boost to gold-mining stocks
-- High SBV interest rate (> 6%) subtracts `−0.08` confidence from banking and real-estate sector stocks
-- On fetcher failure, impact chain continues with neutral (zero) macro adjustments and logs a warning
-- `bun test src/__tests__/126-*.test.ts` passes with mocked fetchers; no real network calls
-- `bun tsc --noEmit` 0 errors
-
-**Files to modify**:
-- MODIFY: `src/domain/services/cascadeEngine.ts` (inject macro adjustment step)
-- MODIFY: `src/application/usecases/runImpactChain.ts` (pass macro context to engine)
+| 126 | Macro cascade integration | `task/126-macro-cascade` | Developer | domain + application | 025 ✅, 028 ✅ | Backlog (Wave 1) |
+| 089 | `get_macro_snapshot` MCP tool | `task/089-tool-macro` | Developer | interface | 025 ✅, 028 ✅, FIX-081 ✅ | Backlog (Wave 1) |
 
 ---
 
-**Task 089 — Acceptance Criteria**
+**Task 126 — Macro cascade integration**
 
-**Given** Yahoo Finance and SBV fetchers are available (025 ✅, 028 ✅)
-**When** Claude calls the `get_macro_snapshot` MCP tool
+**Branch**: `task/126-macro-cascade`
+**Layer**: domain (cascadeEngine) + application (runImpactChain) + schema (bctc-schema.ts)
+**Depends on**: 025 ✅, 028 ✅
+
+**Files to read first**:
+- `src/domain/services/cascadeEngine.ts` (buildCausalChain signature, CausalChainEntry type)
+- `src/application/usecases/runImpactChain.ts` (RunCascadeInput interface, current pipeline steps)
+- `bctc-schema.ts` (DomainType union — add `logistics` and `gold_mining` before `other`)
+- `src/infrastructure/fetchers/yahooFinance.ts` (CommoditySnapshot interface — from task 025)
+- `src/infrastructure/fetchers/sbv.ts` (SbvMacroSnapshot interface — from task 028)
+
+**Files to create/modify**:
+- CREATE: `src/__tests__/126-macro-cascade.test.ts` (12 scenario tests)
+- MODIFY: `bctc-schema.ts` — add `'logistics'` and `'gold_mining'` to DomainType union (before `'other'`)
+- MODIFY: `src/domain/services/cascadeEngine.ts` — add `MacroContext` interface, `MACRO_ADJUSTMENTS` constant, `applyMacroAdjustments()` helper, extend `buildCausalChain` signature with optional 4th param
+- MODIFY: `src/application/usecases/runImpactChain.ts` — extend `RunCascadeInput` with `commodityFetcher?` + `sbvFetcher?`, add Step 0 (parallel macro fetch), pass `macroContext` as 4th arg to `buildCausalChain`
+
+**DomainType patch** (must be committed in the same PR as cascadeEngine.ts):
+```typescript
+// bctc-schema.ts — add before 'other':
+| 'logistics'    // NEW Sprint 008
+| 'gold_mining'  // NEW Sprint 008
+```
+
+**MacroContext interface** (pure domain type, no infrastructure imports):
+```typescript
+export interface MacroContext {
+  brentCrudeUSD: number | null;
+  goldUSDPerOz: number | null;
+  usdVndMarket: number | null;       // from CommoditySnapshot.usdVndRate
+  refinancingRatePct: number | null;
+  overnightRatePct: number | null;
+  usdVndOfficial: number | null;
+}
+```
+
+**MACRO_ADJUSTMENTS rules** (hardcoded domain constants):
+- `brentCrudeUSD > 90` → `oil_gas`, `logistics`: `+0.10`; `aviation`: `−0.08`
+- `brentCrudeUSD < 70` → `oil_gas`: `−0.10`; `aviation`: `+0.06`
+- `goldUSDPerOz > 2000` → `gold_mining`: `+0.05`
+- `refinancingRatePct > 6` → `banking`: `−0.08`; `real_estate`: `−0.10`
+- `refinancingRatePct < 4` → `banking`: `+0.06`; `real_estate`: `+0.08`
+- `usdVndMarket > 25500 || usdVndOfficial > 25500` → `aviation`: `−0.07`
+- `usdVndMarket > 25500` → `steel`: `+0.05`
+
+**applyMacroAdjustments** (internal pure helper):
+- Modifies `CausalChainEntry[]` in-place; null MacroContext fields → rule silently skipped
+- After summing all applicable deltas, clamps confidence to `[0.05, 0.99]`
+- Annotates `entry.reasoning` with: `" [Macro: label=VALUE → DELTA domain]"`
+
+**buildCausalChain extended signature** (optional 4th param — backwards compatible):
+```typescript
+export function buildCausalChain(
+  seedEntry: AnalysisEntry,
+  watchlist: WatchlistEntry[],
+  ragResults?: SearchResult[],
+  macroContext?: MacroContext | null,  // NEW — optional, omitting = pre-Sprint-008 behaviour
+): CausalChain
+```
+Macro adjustment step inserted as Step 2b (after domain entries built, before action entries).
+
+**RunCascadeInput extensions**:
+```typescript
+export interface RunCascadeInput {
+  // existing fields unchanged ...
+  commodityFetcher?: () => Promise<CommoditySnapshot | null>;  // NEW
+  sbvFetcher?: () => Promise<SbvMacroSnapshot | null>;          // NEW
+}
+```
+Default fetchers use dynamic import (same lazy-import pattern as `defaultRagRetriever`):
+- `defaultCommodityFetcher`: dynamic imports `fetchYahooFinancePrices`, returns null on failure
+- `defaultSbvFetcher`: dynamic imports `fetchSbvRates`, returns null on failure
+- Both called in `Promise.all` in Step 0; each wrapped in try/catch
+- `usdVndMarket` field mapped from `commodity?.usdVndRate ?? null`
+
+**Acceptance Criteria**
+
+**Given** `fetchYahooFinancePrices()` and `fetchSbvRates()` are available (025 ✅, 028 ✅) and injectable via `RunCascadeInput`
+**When** `runImpactChain(input)` processes a news item with mocked fetchers
 **Then**
-- Returns a JSON object with shape `{ commodity: CommoditySnapshot | null, rates: SbvMacroSnapshot | null, fetchedAt: string }`
-- If either fetcher fails, the corresponding field is `null` and the other field is still returned
-- Tool is registered in `src/interface/mcp/server.ts` (tool count increments from 16 to 17)
-- `bun test src/__tests__/089-*.test.ts` passes with mocked fetchers; no real network calls
+- High Brent (> $90): oil_gas domain entry confidence boosted by `+0.10`; aviation entry reduced by `−0.08`
+- Low Brent (< $70): oil_gas confidence reduced by `−0.10`; aviation confidence boosted by `+0.06`
+- High gold (> $2000/oz): gold_mining confidence boosted by `+0.05`
+- High refi rate (> 6%): banking confidence `−0.08`, real_estate confidence `−0.10`
+- Low refi rate (< 4%): banking confidence `+0.06`, real_estate confidence `+0.08`
+- Null `MacroContext`: zero adjustments — confidence identical to pre-macro baseline
+- Fetcher throws: chain still completes with zero macro adjustment, warning logged (never throws to caller)
+- Confidence clamped to `[0.05, 0.99]` even on extreme macro values (e.g. brent=$200)
+- Reasoning annotation present: `entry.reasoning` contains `"[Macro: brentCrudeUSD=..."` when rule fires
+- `runImpactChain` passes `macroContext` to `buildCausalChain` (verify via injected mock fetchers in RunCascadeInput)
+- `DomainType` in `bctc-schema.ts` includes `'logistics'` and `'gold_mining'` — `bun tsc --noEmit` 0 errors
+- `bun test src/__tests__/126-*.test.ts` passes with mocked fetchers; no real network calls
 - `bun tsc --noEmit` 0 errors
+
+**TDD test file**: `src/__tests__/126-macro-cascade.test.ts`
+Inject mocked fetchers via `RunCascadeInput.commodityFetcher` and `RunCascadeInput.sbvFetcher`. Use a minimal watchlist with at least one `oil_gas` stock and one `banking` stock.
+
+---
+
+**Task 089 — `get_macro_snapshot` MCP tool**
+
+**Branch**: `task/089-tool-macro`
+**Layer**: interface
+**Depends on**: 025 ✅, 028 ✅, FIX-081 ✅
+
+**Files to read first**:
+- `src/interface/mcp/tools/marketTools.ts` (follow this pattern for registerXxxTools + tool handler)
+- `src/interface/mcp/server.ts` (find the `registerMarketTools` call — add `registerMacroTools` after it)
+- `src/interface/mcp/tools/index.ts` (barrel export to update)
+- `src/infrastructure/fetchers/yahooFinance.ts` (CommoditySnapshot — from task 025)
+- `src/infrastructure/fetchers/sbv.ts` (SbvMacroSnapshot — from task 028)
 
 **Files to create/modify**:
 - CREATE: `src/interface/mcp/tools/macroTools.ts`
-- MODIFY: `src/interface/mcp/server.ts` (register `get_macro_snapshot`)
-- MODIFY: `src/interface/mcp/tools/index.ts` (export `macroTools`)
+- CREATE: `src/__tests__/089-tool-macro.test.ts` (8 test scenarios)
+- MODIFY: `src/interface/mcp/server.ts` — add `registerMacroTools(mcpServer)` after `registerMarketTools` (toolCount 16 → 17)
+- MODIFY: `src/interface/mcp/tools/index.ts` — add `export { registerMacroTools } from "./macroTools.js"`
+
+**Interface to implement**:
+```typescript
+// import types only — actual function calls via dynamic import or direct call
+import type { CommoditySnapshot } from "../../../infrastructure/fetchers/yahooFinance.js";
+import type { SbvMacroSnapshot } from "../../../infrastructure/fetchers/sbv.js";
+
+interface MacroSnapshotResponse {
+  commodity: CommoditySnapshot | null;
+  rates: SbvMacroSnapshot | null;
+  fetchedAt: string;
+}
+
+export function registerMacroTools(server: McpServer): void
+```
+
+**Tool: `get_macro_snapshot`**
+- Input schema (Zod): `{ _testCommodityClient: z.any().optional(), _testSbvClient: z.any().optional() }`
+- Calls `fetchYahooFinancePrices(_testCommodityClient)` and `fetchSbvRates(_testSbvClient)` in parallel via `Promise.all`
+- Each call error-isolated with `.catch(() => null)`
+- Output: formatted plain-text content (type: "text")
+
+Output format:
+```
+=== Macro Snapshot ===
+Generated: <ISO timestamp>
+
+[Commodity Prices]
+  Brent Crude:  84.37 USD/bbl
+  Gold:        2341.50 USD/oz
+  USD/VND:   25,450.00
+
+[SBV Central Bank Rates]
+  Overnight Rate:    5.00%
+  Refinancing Rate:  4.50%
+  USD/VND Official: 25,452.00
+
+[Macro Signal Summary]
+  Energy sector:       neutral (brent $84.37 — below $90 threshold)
+  Gold sector:         neutral (gold < $2000)
+  Banking/Real Estate: neutral (refi rate 4.50% — below 6% threshold)
+  Currency pressure:   LOW (USD/VND 25450 — below 25500 threshold)
+```
+
+Macro Signal Summary rules (mirror MACRO_ADJUSTMENTS for display only):
+- `brentCrudeUSD > 90`: `"HIGH OIL (>$90) — cascade +0.10 oil_gas confidence"`
+- `brentCrudeUSD < 70`: `"LOW OIL (<$70) — cascade -0.10 oil_gas confidence"`
+- Otherwise: `"neutral (brent $X.XX — below $90 threshold)"`
+- `goldUSDPerOz > 2000`: `"HIGH GOLD (>$2000) — cascade +0.05 gold_mining confidence"`
+- Otherwise: `"neutral (gold < $2000)"`
+- `refinancingRatePct > 6`: `"TIGHT POLICY (>6%) — cascade -0.08 banking, -0.10 real_estate"`
+- `refinancingRatePct < 4`: `"LOOSE POLICY (<4%) — cascade +0.06 banking, +0.08 real_estate"`
+- Otherwise: `"neutral (refi rate X% — below 6% threshold)"`
+- `usdVndMarket > 25500 || usdVndOfficial > 25500`: `"HIGH (USD/VND X — above 25500 threshold) — cascade -0.07 aviation, +0.05 steel"`
+- Otherwise: `"LOW (USD/VND X — below 25500 threshold)"`
+
+**Acceptance Criteria**
+
+**Given** Yahoo Finance and SBV fetchers are available (025 ✅, 028 ✅) and injectable via Zod `_testCommodityClient` / `_testSbvClient`
+**When** Claude calls the `get_macro_snapshot` MCP tool
+**Then**
+- Happy path: output text contains all three sections `"[Commodity Prices]"`, `"[SBV Central Bank Rates]"`, `"[Macro Signal Summary]"`
+- Commodity fetcher fails: commodity section shows N/A values; rates section still present and populated
+- SBV fetcher fails: rates section shows N/A values; commodity section still present and populated
+- Both fetchers fail: returns error-friendly text (no throw, no crash)
+- Tool is registered with name `"get_macro_snapshot"` in McpServer
+- Tool count = 17 after `registerMacroTools` (assert `toolCount >= 17` or check tool name presence)
+- High Brent (> $90): Macro Signal Summary line contains `"HIGH OIL (>$90)"`
+- High refi rate (> 6%): Macro Signal Summary line contains `"TIGHT POLICY (>6%)"`
+- `bun test src/__tests__/089-*.test.ts` passes with mocked fetchers; no real network calls
+- `bun tsc --noEmit` 0 errors
+
+**TDD test file**: `src/__tests__/089-tool-macro.test.ts`
 
 ---
 
