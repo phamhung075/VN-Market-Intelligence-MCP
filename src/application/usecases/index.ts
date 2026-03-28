@@ -29,3 +29,9 @@ export type {
 // Task 062: Causal cascade orchestrator (news → RAG → CausalChain)
 export { runImpactChain } from "./runImpactChain.js";
 export type { RunCascadeInput, RagRetriever } from "./runImpactChain.js";
+
+// Task 102: News polling use case (30-min cron + dedup + cascade + alert)
+export { pollNews } from "./pollNews.js";
+export type { PollNewsResult, PollNewsOptions, SourceFetchers } from "./pollNews.js";
+
+// Task 103: Market open/close scan use case (not yet implemented)
