@@ -481,17 +481,24 @@ export function buildCausalChain(
 
     const adjustedConfidence = Math.min(0.99, Math.max(0.05, rule.confidence + sentimentAdjustment));
 
-    // Derive the effective sentiment from the rule direction, but override with
-    // seed classifier result when the classifier is confident (≥ 0.6) and
-    // the seed has a clear direction. This corrects cases like "giá dầu giảm sâu"
-    // matching the bullish "giá dầu tăng" keyword due to a generic "giá dầu" match
-    // in a broader keyword scan.
+    // Derive the effective sentiment from the rule direction, combining with
+    // the seed classifier result. For inverse relationships (e.g., oil up → aviation down),
+    // the domain sentiment should INVERT the seed sentiment, not inherit it.
     let effectiveSentiment: Sentiment = direction2sentiment(rule.direction);
     if (
       seedSentimentResult.confidence >= 0.6 &&
       seedSentimentDirection !== "neutral"
     ) {
-      effectiveSentiment = seedSentimentDirection;
+      // If rule direction matches seed direction → keep seed sentiment
+      // If rule direction opposes seed direction → invert seed sentiment
+      const ruleIsBullish = rule.direction === "up";
+      const seedIsBullish = seedSentimentDirection === "bullish";
+      if (ruleIsBullish === seedIsBullish) {
+        effectiveSentiment = seedSentimentDirection;
+      } else {
+        // Invert: bullish seed + down rule → bearish domain
+        effectiveSentiment = seedIsBullish ? "bearish" : "bullish";
+      }
     }
 
     const domainEntry: CausalChainEntry = {
