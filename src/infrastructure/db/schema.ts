@@ -294,4 +294,22 @@ export async function initDatabase(): Promise<void> {
     );
     CREATE INDEX IF NOT EXISTS idx_pdf_filename ON pdf_extracted_text(filename);
   `);
+
+  // ── Seed default watchlist from mcp.config.json ───────────────────────────
+  try {
+    const { mcpConfig } = await import("../config.js");
+    const defaultStocks = mcpConfig.market.watchlist;
+    if (defaultStocks.length > 0) {
+      const existing = db.query("SELECT COUNT(*) as c FROM watchlist").get() as { c: number };
+      if (existing.c === 0) {
+        const domainMap: Record<string, string> = { VNM: "retail", FPT: "tech", VCB: "banking", VEA: "aviation" };
+        const ins = db.prepare(
+          "INSERT OR IGNORE INTO watchlist (code, exchange, domain, added_at, alert_drop_pct, alert_rise_pct, alert_impact_min, alert_report_new) VALUES (?, 'HOSE', ?, datetime('now'), -3, 5, 7, 1)"
+        );
+        for (const code of defaultStocks) {
+          ins.run(code, domainMap[code] ?? "other");
+        }
+      }
+    }
+  } catch { /* config not available — skip seeding */ }
 }
