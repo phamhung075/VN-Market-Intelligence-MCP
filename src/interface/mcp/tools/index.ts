@@ -13,3 +13,4 @@ export { registerAlertTools } from "./alerts.js";
 export { registerAnalysisTools } from "./analysis.js";
 export { registerMarketTools } from "./marketTools.js";
 export { registerMacroTools } from "./macroTools.js";
+export { registerTelegramTools } from "./telegramTools.js";
