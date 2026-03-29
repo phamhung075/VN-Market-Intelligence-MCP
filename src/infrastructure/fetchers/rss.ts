@@ -72,11 +72,16 @@ export function parseRssFeed(xml: string): RssItem[] {
         return;
       }
 
+      // Decode any remaining HTML entities (some RSS feeds double-encode)
+      const decodeEntities = (s: string) =>
+        s.replace(/&#(\d+);/g, (_, n) => String.fromCharCode(parseInt(n as string)))
+         .replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"');
+
       items.push({
-        title,
+        title: decodeEntities(title),
         url,
         publishedAt,
-        content,
+        content: decodeEntities(content),
         source: "", // caller sets the source (e.g. 'cafef')
       });
     });

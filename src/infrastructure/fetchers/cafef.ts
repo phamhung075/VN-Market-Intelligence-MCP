@@ -15,8 +15,8 @@ import { logger } from "../logger.js";
 // Constants
 // ---------------------------------------------------------------------------
 
-/** Primary CafeF RSS feed (homepage / trang chủ). */
-const CAFEF_RSS_URL = "https://cafef.vn/rss/trang-chu.rss";
+/** Primary CafeF RSS feed (stock market / thị trường chứng khoán). */
+const CAFEF_RSS_URL = "https://cafef.vn/thi-truong-chung-khoan.rss";
 
 /** Source tag applied to all items fetched from CafeF. */
 const CAFEF_SOURCE = "cafef";

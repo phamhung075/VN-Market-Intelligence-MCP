@@ -82,7 +82,7 @@
       "apiBase": "https://api.hnx.vn/api/snapshot"
     },
     "rss": {
-      "cafef": "https://cafef.vn/rss/trang-chu.rss",
+      "cafef": "https://cafef.vn/thi-truong-chung-khoan.rss",
       "vnexpress": "https://vnexpress.net/rss/kinh-doanh.rss",
       "reuters": "https://news.google.com/rss/search?q=vietnam+economy+OR+stock+market&hl=en",
       "apNews": "https://news.google.com/rss/search?q=asia+finance+OR+emerging+markets&hl=en",

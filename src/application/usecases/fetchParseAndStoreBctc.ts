@@ -17,8 +17,8 @@
 
 import { randomUUID } from "node:crypto";
 
-import { listSscDocuments } from "../../infrastructure/fetchers/ssc.js";
-import { downloadAndExtractPdf } from "../../infrastructure/fetchers/pdf.js";
+import { listSscDocuments, downloadSscDocument } from "../../infrastructure/fetchers/ssc.js";
+import { downloadAndExtractPdf, extractPdfText } from "../../infrastructure/fetchers/pdf.js";
 import { parseBctcReport } from "./parseBctcReport.js";
 import { logger } from "../../infrastructure/logger.js";
 
@@ -175,9 +175,27 @@ export async function fetchParseAndStoreBctc(
       rawText = "";
     }
   } else if (doc.url.startsWith("ssc-download://") || doc.url.startsWith("ssc-adf://")) {
-    // SSC download not yet captured — skip
-    logger.warn(`${tag} SSC document URL not resolved — PDF not downloaded`);
-    rawText = "";
+    // CDP download did not capture the PDF — fall back to response interception
+    logger.info(`${tag} SSC document URL not resolved — retrying via response interception`);
+    try {
+      const downloaded = await downloadSscDocument(actionCode, 0, sscHttpClient);
+      if (downloaded && downloaded.buffer.length > 0) {
+        const extraction = await extractPdfText(downloaded.buffer);
+        rawText = extraction.text;
+        logger.info(`${tag} response interception succeeded`, {
+          filename: downloaded.filename,
+          chars: rawText.length,
+        });
+      } else {
+        logger.warn(`${tag} response interception returned no data`);
+        rawText = "";
+      }
+    } catch (err) {
+      logger.error(`${tag} response interception failed`, {
+        error: err instanceof Error ? err.message : String(err),
+      });
+      rawText = "";
+    }
   } else {
     const extraction = await downloadAndExtractPdf(doc.url, pdfHttpClient);
     rawText = extraction.text;

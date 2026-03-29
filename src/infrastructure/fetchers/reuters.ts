@@ -62,9 +62,11 @@ async function makeDefaultHttpClient(): Promise<HttpClient> {
     async get(url: string): Promise<string> {
       const response = await axios.get<string>(url, {
         headers: {
+          // Google News blocks bot-like User-Agents with 403 — use a browser UA
           "User-Agent":
-            "Mozilla/5.0 (compatible; VN-Market-Intelligence/1.0; +https://github.com/vn-market)",
-          Accept: "application/rss+xml, text/xml, application/xml, */*",
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+          Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+          "Accept-Language": "en-US,en;q=0.9",
         },
         timeout: 15_000,
         responseType: "text",
