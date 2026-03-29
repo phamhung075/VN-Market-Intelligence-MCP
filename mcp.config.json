@@ -112,5 +112,24 @@
     "warnThresholdMinutes": 12,
     "offHoursIntervalMinutes": 60,
     "maxConcurrent": 1
+  },
+
+  "fetchLimits": {
+    "marketHours": {
+      "newsPerSource": 5,
+      "totalNews": 15
+    },
+    "prePostMarket": {
+      "newsPerSource": 10,
+      "totalNews": 30
+    },
+    "offHours": {
+      "newsPerSource": 15,
+      "totalNews": 40
+    },
+    "manual": {
+      "newsPerSource": 20,
+      "totalNews": 50
+    }
   }
 }

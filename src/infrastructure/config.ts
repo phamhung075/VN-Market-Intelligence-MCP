@@ -106,6 +106,18 @@ export interface CycleConfig {
   maxConcurrent: number;
 }
 
+export interface FetchLimitProfile {
+  newsPerSource: number;
+  totalNews: number;
+}
+
+export interface FetchLimitsConfig {
+  marketHours: FetchLimitProfile;
+  prePostMarket: FetchLimitProfile;
+  offHours: FetchLimitProfile;
+  manual: FetchLimitProfile;
+}
+
 export interface McpConfig {
   server: ServerConfig;
   data: DataConfig;
@@ -116,6 +128,7 @@ export interface McpConfig {
   alerts: AlertConfig;
   fetchers: FetchersConfig;
   cycle: CycleConfig;
+  fetchLimits: FetchLimitsConfig;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -338,6 +351,24 @@ export function loadMcpConfig(): McpConfig {
       offHoursIntervalMinutes: num(f, "cycle.offHoursIntervalMinutes", null, 60),
       maxConcurrent: num(f, "cycle.maxConcurrent", null, 1),
     },
+    fetchLimits: {
+      marketHours: {
+        newsPerSource: num(f, "fetchLimits.marketHours.newsPerSource", null, 5),
+        totalNews: num(f, "fetchLimits.marketHours.totalNews", null, 15),
+      },
+      prePostMarket: {
+        newsPerSource: num(f, "fetchLimits.prePostMarket.newsPerSource", null, 10),
+        totalNews: num(f, "fetchLimits.prePostMarket.totalNews", null, 30),
+      },
+      offHours: {
+        newsPerSource: num(f, "fetchLimits.offHours.newsPerSource", null, 15),
+        totalNews: num(f, "fetchLimits.offHours.totalNews", null, 40),
+      },
+      manual: {
+        newsPerSource: num(f, "fetchLimits.manual.newsPerSource", null, 20),
+        totalNews: num(f, "fetchLimits.manual.totalNews", null, 50),
+      },
+    },
   };
 }
 
@@ -347,6 +378,38 @@ export function loadMcpConfig(): McpConfig {
 
 /** Full MCP configuration (singleton). */
 export const mcpConfig: McpConfig = loadMcpConfig();
+
+/**
+ * Returns the appropriate fetch limits based on current Vietnam time.
+ * - Market hours (09:00-15:30 weekdays): small batches (5/source, 15 total)
+ * - Pre/post market (07:00-09:00, 15:30-22:00): medium (10/source, 30 total)
+ * - Off hours / weekends: larger batches (15/source, 40 total)
+ */
+export function getCurrentFetchLimits(now?: Date): FetchLimitProfile {
+  const cfg = loadMcpConfig();
+  const d = now ?? new Date();
+  const utcH = d.getUTCHours();
+  const utcM = d.getUTCMinutes();
+  const vnMinutes = (utcH + cfg.market.utcOffset) * 60 + utcM;
+  // Normalize to 0-1440 range
+  const mins = ((vnMinutes % 1440) + 1440) % 1440;
+  const dayOfWeek = d.getUTCDay();
+  // Adjust for timezone (if VN time crosses midnight)
+  const vnDay = vnMinutes >= 1440 ? (dayOfWeek + 1) % 7 : vnMinutes < 0 ? (dayOfWeek + 6) % 7 : dayOfWeek;
+  const isWeekday = cfg.market.tradingDays.includes(vnDay);
+
+  if (!isWeekday) return cfg.fetchLimits.offHours;
+
+  const [openH, openM] = cfg.market.openTime.split(":").map(Number) as [number, number];
+  const [closeH, closeM] = cfg.market.closeTime.split(":").map(Number) as [number, number];
+  const openMins = openH * 60 + openM;
+  const closeMins = closeH * 60 + closeM;
+
+  if (mins >= openMins && mins < closeMins) return cfg.fetchLimits.marketHours;
+  if (mins >= openMins - 120 && mins < openMins) return cfg.fetchLimits.prePostMarket; // 2h before open
+  if (mins >= closeMins && mins < closeMins + 390) return cfg.fetchLimits.prePostMarket; // until 22:00
+  return cfg.fetchLimits.offHours;
+}
 
 /** Legacy AppConfig — re-reads env vars each call for test compatibility. */
 export function loadConfig(): AppConfig {
