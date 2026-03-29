@@ -72,29 +72,31 @@ export async function createBunServer(
   const host = options.host ?? "127.0.0.1";
   const log = createLogger(cfg.logLevel);
 
-  // ── Instantiate McpServer ───────────────────────────────────────────────
-  const mcpServer = new McpServer(
-    { name: "vn-market-intelligence", version: "1.0.0" },
-    { capabilities: { tools: {} } },
-  );
+  // ── McpServer factory — one instance per SSE session ────────────────────
+  function createMcpServerInstance(): McpServer {
+    const server = new McpServer(
+      { name: "vn-market-intelligence", version: "1.0.0" },
+      { capabilities: { tools: {} } },
+    );
+    registerWatchlistTools(server);
+    registerReportTools(server);
+    registerAlertTools(server);
+    registerAnalysisTools(server);
+    registerMarketTools(server);
+    registerMacroTools(server);
+    return server;
+  }
 
-  // ── Register all MCP tool groups ────────────────────────────────────────
-  registerWatchlistTools(mcpServer);
-  registerReportTools(mcpServer);
-  registerAlertTools(mcpServer);
-  registerAnalysisTools(mcpServer);
-  registerMarketTools(mcpServer); // task 084: get_market_snapshot, get_patterns
-  registerMacroTools(mcpServer);  // task 089: get_macro_snapshot (commodity + SBV rates)
-
-  // Count registered tools via the SDK's internal registry
+  // Count tools from a probe instance (not connected to any transport)
+  const probeServer = createMcpServerInstance();
   const registeredToolsMap = (
-    mcpServer as unknown as { _registeredTools: Record<string, unknown> }
+    probeServer as unknown as { _registeredTools: Record<string, unknown> }
   )._registeredTools;
   const toolCount = Object.keys(registeredToolsMap ?? {}).length;
   log.info("[createBunServer] Tools registered", { toolCount });
 
   // ── Session manager handles SSE + message routing ──────────────────────
-  const sessions = new SseSessionManager(mcpServer, log);
+  const sessions = new SseSessionManager(createMcpServerInstance, log);
 
   // ── HTTP request handler ────────────────────────────────────────────────
   async function handleRequest(

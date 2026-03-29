@@ -393,6 +393,8 @@ describe("Task 062 — runImpactChain (application wrapper)", () => {
       newsText: "Oil prices rose sharply as OPEC announced output cuts",
       watchlist: [makeWatchlistEntry("GAS", "oil_gas")],
       ragRetriever: mockRagRetriever,
+      commodityFetcher: async () => null,
+      sbvFetcher: async () => null,
     });
 
     expect(result).toBeDefined();
@@ -416,6 +418,8 @@ describe("Task 062 — runImpactChain (application wrapper)", () => {
       seedEntry,
       watchlist: [],
       ragRetriever: async () => [],
+      commodityFetcher: async () => null,
+      sbvFetcher: async () => null,
     });
 
     expect(result.seedTitle).toBe("Pre-normalized Oil News");
@@ -434,6 +438,8 @@ describe("Task 062 — runImpactChain (application wrapper)", () => {
       newsText: "interest rate hike fed hike announced",
       watchlist: [makeWatchlistEntry("VCB", "banking")],
       ragRetriever: failingRag,
+      commodityFetcher: async () => null,
+      sbvFetcher: async () => null,
     });
 
     // Should still return a chain (without RAG context)
@@ -461,6 +467,8 @@ describe("Task 062 — runImpactChain (application wrapper)", () => {
       newsText: "oil price rise crude oil up opec announces cut",
       watchlist: [],
       ragRetriever: mockRag,
+      commodityFetcher: async () => null,
+      sbvFetcher: async () => null,
     });
 
     const allReasoning = result.entries.map((e) => e.reasoning).join(" ");

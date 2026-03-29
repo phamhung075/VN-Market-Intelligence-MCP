@@ -14,19 +14,25 @@ import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { Logger } from "../../infrastructure/logger.js";
 
+/** Factory function that creates a fresh McpServer with all tools registered. */
+export type McpServerFactory = () => McpServer;
+
 /**
  * Manages the set of active SSE sessions and routes POST messages to them.
+ * Each session gets its own McpServer instance (MCP SDK limitation:
+ * one transport per server).
  */
 export class SseSessionManager {
   private readonly sessions = new Map<string, SSEServerTransport>();
 
   constructor(
-    private readonly mcpServer: McpServer,
+    private readonly createServer: McpServerFactory,
     private readonly log: Logger,
   ) {}
 
   /**
    * Handles GET /sse — opens an SSE stream and registers the session.
+   * Creates a dedicated McpServer instance per connection.
    *
    * @param req - Incoming HTTP request
    * @param res - Outgoing HTTP response (kept open as SSE stream)
@@ -49,8 +55,9 @@ export class SseSessionManager {
       });
     });
 
-    // Wire transport to the MCP server — starts the SSE stream
-    await this.mcpServer.connect(transport);
+    // Each session gets its own McpServer instance
+    const mcpServer = this.createServer();
+    await mcpServer.connect(transport);
   }
 
   /**

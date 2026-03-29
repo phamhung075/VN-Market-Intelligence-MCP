@@ -31,6 +31,14 @@ mock.module("../infrastructure/rag/retriever.js", () => ({
   insertAnalysis: async () => {},
 }));
 
+// Mock external HTTP fetchers to avoid network I/O in integration tests
+mock.module("../infrastructure/fetchers/yahooFinance.js", () => ({
+  fetchYahooFinancePrices: async () => null,
+}));
+mock.module("../infrastructure/fetchers/sbv.js", () => ({
+  fetchSbvRates: async () => null,
+}));
+
 import { initDatabase, getDb, closeDb } from "../infrastructure/db/schema.js";
 import {
   registerWatchlistTools,
