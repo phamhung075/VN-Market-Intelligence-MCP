@@ -122,6 +122,29 @@
     "neverSuppressSeverity": ["critical"]
   },
 
+  "adaptiveThresholds": {
+    "enabled": true,
+    "windowDays": 20,
+    "dropSigma": 2.0,
+    "riseSigma": 2.0,
+    "volumeSigma": 2.0,
+    "minDropPct": -1,
+    "maxDropPct": -15,
+    "minRisePct": 1,
+    "maxRisePct": 15,
+    "minVolumeMult": 1.5,
+    "maxVolumeMult": 5.0
+  },
+
+  "rag": {
+    "temporalDecay": {
+      "enabled": true,
+      "halfLifeDays": 7,
+      "maxBoost": 0.3
+    },
+    "maxDistance": 0.8
+  },
+
   "fetchLimits": {
     "marketHours": {
       "newsPerSource": 5,
