@@ -1,22 +1,23 @@
 /**
- * Infrastructure — Structured Logger
+ * Infrastructure — Structured Logger (Two-Tier)
  *
- * Emits newline-delimited JSON log entries to stdout (or a custom sink).
- * Each entry always contains: timestamp (ISO 8601), level, message.
- * Extra context fields are merged into the top-level JSON object.
+ * Tier 1: Global log (data/logs/global.log) — one-line summaries for quick AI scan
+ * Tier 2: Per-tool logs (data/logs/tool-{name}.log) — detailed context for debugging
  *
- * Log level hierarchy (ascending severity):
- *   debug < info < warn < error
- *
- * A message is emitted only when its level >= the configured minimum level.
+ * Both tiers also persist warn/error to SQLite system_logs table for MCP tool queries.
+ * Console output (JSON) is kept for real-time monitoring.
  */
 
+import { mkdirSync, appendFileSync } from "node:fs";
+import { resolve } from "node:path";
 import type { LogLevel } from "./config.js";
 
-/** A function that receives a formatted log line (before the newline). */
+// ─────────────────────────────────────────────────────────────────────────────
+// Types
+// ─────────────────────────────────────────────────────────────────────────────
+
 export type LogSink = (line: string) => void;
 
-/** Shape of a single structured log entry. */
 export interface LogEntry {
   timestamp: string;
   level: LogLevel;
@@ -24,19 +25,26 @@ export interface LogEntry {
   [key: string]: unknown;
 }
 
-/** Logger interface exposing one method per log level. */
 export interface Logger {
-  /** Log at debug level with optional context. */
   debug(message: string, context?: Record<string, unknown>): void;
-  /** Log at info level with optional context. */
   info(message: string, context?: Record<string, unknown>): void;
-  /** Log at warn level with optional context. */
   warn(message: string, context?: Record<string, unknown>): void;
-  /** Log at error level with optional context. */
   error(message: string, context?: Record<string, unknown>): void;
 }
 
-/** Numeric weight for each log level — higher = more severe. */
+/** Extended logger with tool-specific logging */
+export interface ToolLogger extends Logger {
+  /** Log to tool-specific file with full detail */
+  toolDebug(tool: string, message: string, context?: Record<string, unknown>): void;
+  toolInfo(tool: string, message: string, context?: Record<string, unknown>): void;
+  toolWarn(tool: string, message: string, context?: Record<string, unknown>): void;
+  toolError(tool: string, message: string, context?: Record<string, unknown>): void;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Constants
+// ─────────────────────────────────────────────────────────────────────────────
+
 const LEVEL_WEIGHT: Record<LogLevel, number> = {
   debug: 0,
   info: 1,
@@ -44,44 +52,166 @@ const LEVEL_WEIGHT: Record<LogLevel, number> = {
   error: 3,
 };
 
-/**
- * Creates a structured JSON logger.
- *
- * @param minLevel - Minimum level to emit. Messages below this are silently dropped.
- * @param sink     - Optional output function. Defaults to console.log (stdout).
- * @returns Logger instance.
- */
+const LOG_DIR = resolve(process.cwd(), "data", "logs");
+const GLOBAL_LOG = resolve(LOG_DIR, "global.log");
+
+/** Vietnam time offset (UTC+7) */
+const VN_OFFSET_MS = 7 * 3600_000;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// File helpers
+// ─────────────────────────────────────────────────────────────────────────────
+
+let _logDirReady = false;
+
+function ensureLogDir(): void {
+  if (_logDirReady) return;
+  try {
+    mkdirSync(LOG_DIR, { recursive: true });
+    _logDirReady = true;
+  } catch {
+    // Ignore — may be read-only in test environments
+  }
+}
+
+function vnTimestamp(now?: Date): string {
+  const d = now ?? new Date();
+  const vn = new Date(d.getTime() + VN_OFFSET_MS);
+  return vn.toISOString().replace("T", " ").slice(0, 19);
+}
+
+function appendToFile(filePath: string, line: string): void {
+  try {
+    ensureLogDir();
+    appendFileSync(filePath, line + "\n", "utf-8");
+  } catch {
+    // Never crash on log write failure
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Global log format (Tier 1) — one-line for AI quick scan
+// Format: [2026-03-29 14:30:05] [ERROR] [ssc] SSC portal fetch failed — timeout after 30s
+// ─────────────────────────────────────────────────────────────────────────────
+
+function formatGlobalLine(level: LogLevel, source: string, message: string, errorSummary?: string): string {
+  const ts = vnTimestamp();
+  const lvl = level.toUpperCase().padEnd(5);
+  const src = source.padEnd(20);
+  const errPart = errorSummary ? ` — ${errorSummary}` : "";
+  return `[${ts}] [${lvl}] [${src}] ${message}${errPart}`;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Tool log format (Tier 2) — detailed JSON for AI debugging
+// File: data/logs/tool-{name}.log
+// ─────────────────────────────────────────────────────────────────────────────
+
+function getToolLogPath(toolName: string): string {
+  const safe = toolName.replace(/[^a-zA-Z0-9_-]/g, "_").toLowerCase();
+  return resolve(LOG_DIR, `tool-${safe}.log`);
+}
+
+function formatToolLine(level: LogLevel, tool: string, message: string, context?: Record<string, unknown>): string {
+  const entry = {
+    t: vnTimestamp(),
+    level,
+    tool,
+    msg: message,
+    ...context,
+  };
+  return JSON.stringify(entry);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Extract source from message (e.g. "[ssc] fetch failed" → "ssc")
+// ─────────────────────────────────────────────────────────────────────────────
+
+function extractSource(message: string): string {
+  const match = message.match(/^\[([^\]]+)\]/);
+  return match ? match[1]! : "system";
+}
+
+function extractErrorSummary(context?: Record<string, unknown>): string | undefined {
+  if (!context) return undefined;
+  const err = context["error"];
+  if (typeof err === "string") return err.slice(0, 100);
+  if (err instanceof Error) return err.message.slice(0, 100);
+  return undefined;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Main logger factory
+// ─────────────────────────────────────────────────────────────────────────────
+
 export function createLogger(
   minLevel: LogLevel = "info",
   sink: LogSink = (line) => console.log(line),
-): Logger {
-  /**
-   * Internal write function — builds the JSON entry and passes it to the sink.
-   */
+): ToolLogger {
   function write(
     level: LogLevel,
     message: string,
     context?: Record<string, unknown>,
   ): void {
-    if (LEVEL_WEIGHT[level] < LEVEL_WEIGHT[minLevel]) {
-      return;
-    }
+    if (LEVEL_WEIGHT[level] < LEVEL_WEIGHT[minLevel]) return;
 
+    // Console output (JSON, existing behavior)
     const entry: LogEntry = {
       timestamp: new Date().toISOString(),
       level,
       message,
       ...context,
     };
-
     try {
       sink(JSON.stringify(entry));
-    } catch (err) {
-      // Fallback: write to stderr so a broken sink never crashes the process.
-      console.error(
-        "[logger] sink threw an error:",
-        err instanceof Error ? err.message : String(err),
-      );
+    } catch {
+      // Ignore sink errors
+    }
+
+    // Tier 1: Global log (one-liner) — always for warn/error, info for key events
+    if (LEVEL_WEIGHT[level] >= LEVEL_WEIGHT["warn"] || LEVEL_WEIGHT[level] >= LEVEL_WEIGHT["info"]) {
+      const source = extractSource(message);
+      const errSummary = extractErrorSummary(context);
+      appendToFile(GLOBAL_LOG, formatGlobalLine(level, source, message, errSummary));
+    }
+
+    // Tier 2: Auto-detect tool from source tag and write to tool log
+    if (LEVEL_WEIGHT[level] >= LEVEL_WEIGHT["info"]) {
+      const source = extractSource(message);
+      if (source !== "system") {
+        const toolPath = getToolLogPath(source);
+        appendToFile(toolPath, formatToolLine(level, source, message, context));
+      }
+    }
+
+    // Persist warn/error to SQLite (async, fire-and-forget)
+    if (LEVEL_WEIGHT[level] >= LEVEL_WEIGHT["warn"]) {
+      const source = extractSource(message);
+      persistLog(level, source, message, context).catch(() => {});
+    }
+  }
+
+  function toolWrite(
+    level: LogLevel,
+    tool: string,
+    message: string,
+    context?: Record<string, unknown>,
+  ): void {
+    // Always write to tool-specific log regardless of minLevel
+    const toolPath = getToolLogPath(tool);
+    appendToFile(toolPath, formatToolLine(level, tool, message, context));
+
+    // Also write to global log if warn/error
+    if (LEVEL_WEIGHT[level] >= LEVEL_WEIGHT["warn"]) {
+      const errSummary = extractErrorSummary(context);
+      appendToFile(GLOBAL_LOG, formatGlobalLine(level, tool, message, errSummary));
+      persistLog(level, tool, message, context).catch(() => {});
+    }
+
+    // Console output for debug visibility
+    if (LEVEL_WEIGHT[level] >= LEVEL_WEIGHT[minLevel]) {
+      const entry: LogEntry = { timestamp: new Date().toISOString(), level, message: `[${tool}] ${message}`, ...context };
+      try { sink(JSON.stringify(entry)); } catch { /* ignore */ }
     }
   }
 
@@ -90,36 +220,27 @@ export function createLogger(
     info: (message, context) => write("info", message, context),
     warn: (message, context) => write("warn", message, context),
     error: (message, context) => write("error", message, context),
+    toolDebug: (tool, message, context) => toolWrite("debug", tool, message, context),
+    toolInfo: (tool, message, context) => toolWrite("info", tool, message, context),
+    toolWarn: (tool, message, context) => toolWrite("warn", tool, message, context),
+    toolError: (tool, message, context) => toolWrite("error", tool, message, context),
   };
 }
 
-/**
- * Default application logger.
- * Reads LOG_LEVEL from Bun.env at import time; falls back to 'info'.
- */
+// ─────────────────────────────────────────────────────────────────────────────
+// Default logger instance
+// ─────────────────────────────────────────────────────────────────────────────
+
 import { loadConfig } from "./config.js";
 
 const _cfg = loadConfig();
 
-/** Pre-built application-wide logger instance. */
-export const logger: Logger = createLogger(_cfg.logLevel);
+export const logger: ToolLogger = createLogger(_cfg.logLevel);
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Persistent log helper (Task 130)
+// Persistent log helper (SQLite)
 // ─────────────────────────────────────────────────────────────────────────────
 
-/**
- * Persist a log entry to the `system_logs` SQLite table.
- *
- * Intended for `warn` and `error` level entries only — debug/info are
- * not persisted to avoid excessive DB churn.
- *
- * @param level   - Log severity: 'debug' | 'info' | 'warn' | 'error'
- * @param source  - Module or component name (e.g. "scheduler", "fetchSscReport")
- * @param message - Human-readable description of the event
- * @param details - Optional structured context (stack trace, request params, etc.)
- * @param db      - Optional Database instance for testing; falls back to getDb()
- */
 export async function persistLog(
   level: LogLevel,
   source: string,
@@ -128,20 +249,74 @@ export async function persistLog(
   db?: import("bun:sqlite").Database,
 ): Promise<void> {
   try {
-    // Lazy import to avoid circular dependency at module initialisation time
     const { getDb } = await import("./db/schema.js");
     const database = db ?? getDb();
-
     const detailsJson = details !== undefined ? JSON.stringify(details) : null;
     database.run(
       `INSERT INTO system_logs (level, source, message, details_json) VALUES (?, ?, ?, ?)`,
       [level, source, message, detailsJson],
     );
-  } catch (err) {
-    // Never throw from a log helper — just emit to stderr as fallback
-    console.error(
-      "[persistLog] Failed to write system log:",
-      err instanceof Error ? err.message : String(err),
-    );
+  } catch {
+    // Never throw from a log helper
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MCP tool: read logs for AI debugging
+// ─────────────────────────────────────────────────────────────────────────────
+
+import { readFileSync, readdirSync } from "node:fs";
+
+/**
+ * Read the last N lines from the global log — for AI quick scan.
+ */
+export function readGlobalLog(lines: number = 50): string {
+  try {
+    const content = readFileSync(GLOBAL_LOG, "utf-8");
+    const allLines = content.trim().split("\n");
+    return allLines.slice(-lines).join("\n");
+  } catch {
+    return "(no global log available)";
+  }
+}
+
+/**
+ * Read the last N lines from a tool-specific log — for AI deep debugging.
+ */
+export function readToolLog(toolName: string, lines: number = 100): string {
+  try {
+    const filePath = getToolLogPath(toolName);
+    const content = readFileSync(filePath, "utf-8");
+    const allLines = content.trim().split("\n");
+    return allLines.slice(-lines).join("\n");
+  } catch {
+    return `(no log available for tool: ${toolName})`;
+  }
+}
+
+/**
+ * List all available tool log files.
+ */
+export function listToolLogs(): string[] {
+  try {
+    return readdirSync(LOG_DIR)
+      .filter(f => f.startsWith("tool-") && f.endsWith(".log"))
+      .map(f => f.replace("tool-", "").replace(".log", ""));
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Get error summary from global log — only WARN and ERROR lines.
+ */
+export function getErrorSummary(lines: number = 30): string {
+  try {
+    const content = readFileSync(GLOBAL_LOG, "utf-8");
+    const allLines = content.trim().split("\n");
+    const errors = allLines.filter(l => l.includes("[WARN ]") || l.includes("[ERROR]"));
+    return errors.slice(-lines).join("\n") || "(no warnings or errors)";
+  } catch {
+    return "(no global log available)";
   }
 }

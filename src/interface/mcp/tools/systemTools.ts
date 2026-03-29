@@ -1,21 +1,23 @@
 /**
- * Task 136 — System Health MCP Tool
- *
- * Interface layer: registers one diagnostic MCP tool on a McpServer instance.
+ * System Tools — MCP diagnostic + log tools for AI self-debugging
  *
  * Tools registered:
- *   1. get_system_health — circuit breaker status, recent errors, DB size, uptime
+ *   1. get_system_health  — circuit breaker status, recent errors, DB size, uptime
+ *   2. get_global_log     — quick scan: last N lines from global.log (one-liners)
+ *   3. get_tool_log       — deep debug: last N lines from a specific tool log
+ *   4. get_error_summary  — only WARN/ERROR lines from global log
  *
  * @module interface/mcp/tools/systemTools
  */
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { z } from "zod";
 import { statSync } from "node:fs";
 import { resolve } from "node:path";
 
 import { getAllBreakerStats } from "../../../infrastructure/circuitBreakerRegistry.js";
 import { getDb, initDatabase } from "../../../infrastructure/db/schema.js";
-import { logger } from "../../../infrastructure/logger.js";
+import { logger, readGlobalLog, readToolLog, listToolLogs, getErrorSummary } from "../../../infrastructure/logger.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SQLite row type
@@ -165,6 +167,64 @@ export function registerSystemTools(server: McpServer): void {
           ],
         };
       }
+    },
+  );
+
+  // ── get_global_log — quick AI scan of recent activity ──────────────────
+  server.tool(
+    "get_global_log",
+    "Read the last N lines from the global log file (data/logs/global.log). " +
+      "Each line is a one-liner summary: [timestamp] [LEVEL] [source] message. " +
+      "Use this for a quick scan of system activity and to spot problems fast.",
+    {
+      lines: z.number().int().min(1).max(500).default(50)
+        .describe("Number of recent log lines to return (default: 50)"),
+    },
+    async ({ lines: n }) => {
+      const content = readGlobalLog(n ?? 50);
+      return { content: [{ type: "text" as const, text: content }] };
+    },
+  );
+
+  // ── get_tool_log — deep debug for specific tool/module ─────────────────
+  server.tool(
+    "get_tool_log",
+    "Read detailed log entries for a specific tool or module (data/logs/tool-{name}.log). " +
+      "Each line is a full JSON object with timestamp, level, message, and all context fields. " +
+      "Use this to find the root cause of a problem after identifying it in the global log. " +
+      "Call with tool='list' to see all available tool logs.",
+    {
+      tool: z.string().min(1).max(50)
+        .describe("Tool/module name (e.g. 'ssc', 'cafef', 'hose', 'telegram'). Use 'list' to see available logs."),
+      lines: z.number().int().min(1).max(500).default(100)
+        .describe("Number of recent log lines to return (default: 100)"),
+    },
+    async ({ tool: toolName, lines: n }) => {
+      if (toolName === "list") {
+        const tools = listToolLogs();
+        if (tools.length === 0) {
+          return { content: [{ type: "text" as const, text: "No tool logs found yet. Logs are created when tools run." }] };
+        }
+        return { content: [{ type: "text" as const, text: `Available tool logs:\n${tools.map(t => `  - ${t}`).join("\n")}` }] };
+      }
+      const content = readToolLog(toolName, n ?? 100);
+      return { content: [{ type: "text" as const, text: content }] };
+    },
+  );
+
+  // ── get_error_summary — WARN + ERROR lines only ────────────────────────
+  server.tool(
+    "get_error_summary",
+    "Extract only WARN and ERROR lines from the global log. " +
+      "Use this as the first step when investigating a problem — it filters out " +
+      "all INFO/DEBUG noise and shows only issues that need attention.",
+    {
+      lines: z.number().int().min(1).max(200).default(30)
+        .describe("Number of recent error/warning lines to return (default: 30)"),
+    },
+    async ({ lines: n }) => {
+      const content = getErrorSummary(n ?? 30);
+      return { content: [{ type: "text" as const, text: content }] };
     },
   );
 }
