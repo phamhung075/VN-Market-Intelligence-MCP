@@ -105,10 +105,7 @@ export async function createBunServer(
   // ── Session manager handles SSE + message routing ──────────────────────
   const sessions = new SseSessionManager(createMcpServerInstance, log);
 
-  // ── Streamable HTTP transport for Claude.ai connectors ─────────────────
-  const streamableTransport = new StreamableHTTPServerTransport({});
-  const streamableMcp = createMcpServerInstance();
-  await streamableMcp.connect(streamableTransport as unknown as import("@modelcontextprotocol/sdk/shared/transport.js").Transport);
+  // ── Streamable HTTP: stateless mode (one server+transport per request) ──
 
   // ── HTTP request handler ────────────────────────────────────────────────
   async function handleRequest(
@@ -121,11 +118,12 @@ export async function createBunServer(
 
     // CORS — allow Claude Desktop and web clients
     res.setHeader("Access-Control-Allow-Origin", "*");
-    res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+    res.setHeader("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS");
     res.setHeader(
       "Access-Control-Allow-Headers",
       "Content-Type, mcp-session-id",
     );
+    res.setHeader("Access-Control-Expose-Headers", "mcp-session-id");
 
     if (method === "OPTIONS") {
       res.writeHead(204);
@@ -135,9 +133,13 @@ export async function createBunServer(
 
     // ── /mcp — Streamable HTTP for Claude.ai connectors ───────────────
     if (pathname === "/mcp") {
-      // Parse body for POST requests
+      // Disable buffering for SSE streaming through proxies
+      res.setHeader("Cache-Control", "no-cache, no-transform");
+      res.setHeader("X-Accel-Buffering", "no");
+
+      // Parse body for POST/PUT/DELETE
       let parsedBody: unknown = undefined;
-      if (method === "POST" || method === "PUT") {
+      if (method === "POST" || method === "PUT" || method === "DELETE") {
         const chunks: Buffer[] = [];
         for await (const chunk of req) {
           chunks.push(typeof chunk === "string" ? Buffer.from(chunk) : chunk);
@@ -147,7 +149,11 @@ export async function createBunServer(
           try { parsedBody = JSON.parse(raw); } catch { /* leave undefined */ }
         }
       }
-      await streamableTransport.handleRequest(req, res, parsedBody);
+      // Stateless: create fresh server + transport per request
+      const reqTransport = new StreamableHTTPServerTransport({});
+      const reqMcp = createMcpServerInstance();
+      await reqMcp.connect(reqTransport as unknown as import("@modelcontextprotocol/sdk/shared/transport.js").Transport);
+      await reqTransport.handleRequest(req, res, parsedBody);
       return;
     }
 
