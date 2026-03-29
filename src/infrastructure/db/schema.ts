@@ -254,6 +254,16 @@ export async function initDatabase(): Promise<void> {
     CREATE INDEX IF NOT EXISTS idx_ms_created ON market_summaries(created_at);
   `);
 
+  // ── Task 132: BCTC Validator columns ──────────────────────────────────────
+  // ALTER TABLE is idempotent-safe via try/catch: SQLite throws if column
+  // already exists; we swallow those errors and carry on.
+  try {
+    db.exec(`ALTER TABLE financial_reports ADD COLUMN validation_status TEXT DEFAULT 'pending'`);
+  } catch (_) { /* column already exists — safe to ignore */ }
+  try {
+    db.exec(`ALTER TABLE financial_reports ADD COLUMN validation_notes TEXT`);
+  } catch (_) { /* column already exists — safe to ignore */ }
+
   // ── System Logs (Task 130) ─────────────────────────────────────────────────
   // Persistent log table for warn/error entries.
   db.exec(`

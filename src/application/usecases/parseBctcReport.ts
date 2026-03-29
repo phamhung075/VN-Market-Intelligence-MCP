@@ -25,6 +25,7 @@ import { extractCashFlow } from "../../domain/services/cashFlowExtractor.js";
 import { computeFinancialRatios } from "../../domain/services/ratioComputer.js";
 import { computePeriodDelta } from "../../domain/services/periodDeltaComputer.js";
 import type { FinancialMetrics } from "../../domain/services/periodDeltaComputer.js";
+import { validateFinancialReport } from "../../domain/services/bctcValidator.js";
 import { getDb, initDatabase } from "../../infrastructure/db/schema.js";
 
 import type {
@@ -142,7 +143,7 @@ function toMetrics(report: FinancialReport): FinancialMetrics {
  * Upsert a FinancialReport into the financial_reports SQLite table.
  * Uses INSERT OR REPLACE to handle re-runs idempotently.
  */
-function storeReport(report: FinancialReport): void {
+function storeReport(report: FinancialReport, validationStatus: string, validationNotes: string | null): void {
   const db = getDb();
   const stmt = db.prepare(`
     INSERT OR REPLACE INTO financial_reports (
@@ -159,7 +160,8 @@ function storeReport(report: FinancialReport): void {
       roe, roa, current_ratio, debt_to_equity, net_debt_to_ebitda, pe, pb,
       balance_sheet_json, income_stmt_json, cash_flow_json, ratios_json,
       yoy_delta_json, qoq_delta_json,
-      market_data_json, embedding_text, notes_raw_text
+      market_data_json, embedding_text, notes_raw_text,
+      validation_status, validation_notes
     ) VALUES (
       $id, $actionCode, $companyName, $exchange, $domain,
       $periodYear, $periodQuarter, $periodType, $periodStart, $periodEnd, $sortKey,
@@ -174,7 +176,8 @@ function storeReport(report: FinancialReport): void {
       $roe, $roa, $currentRatio, $debtToEquity, $netDebtToEbitda, $pe, $pb,
       $balanceSheetJson, $incomeStmtJson, $cashFlowJson, $ratiosJson,
       $yoyDeltaJson, $qoqDeltaJson,
-      $marketDataJson, $embeddingText, $notesRawText
+      $marketDataJson, $embeddingText, $notesRawText,
+      $validationStatus, $validationNotes
     )
   `);
 
@@ -246,6 +249,8 @@ function storeReport(report: FinancialReport): void {
     $marketDataJson: report.marketData ? JSON.stringify(report.marketData) : null,
     $embeddingText: report.embeddingText,
     $notesRawText: report.notesRawText,
+    $validationStatus: validationStatus,
+    $validationNotes: validationNotes,
   });
 }
 
@@ -353,6 +358,46 @@ export async function parseBctcReport(
   // ── Step 5: Compute extraction confidence ────────────────────────────────
   const extractionConfidence = computeConfidence(balanceSheet, incomeStatement, cashFlow);
 
+  // ── Step 5b: Validate the extracted data (Task 132) ──────────────────────
+  const validation = validateFinancialReport({
+    balanceSheet: {
+      totalAssets: balanceSheet.totalAssets,
+      totalLiabilities: balanceSheet.totalLiabilities,
+      equityTotal: balanceSheet.equity.total,
+      currentAssets: balanceSheet.currentAssets.total,
+      nonCurrentAssets: balanceSheet.nonCurrentAssets.total,
+    },
+    incomeStatement: {
+      netRevenue: incomeStatement.netRevenue,
+      grossProfit: incomeStatement.grossProfit,
+      netProfit: incomeStatement.netProfit,
+    },
+    cashFlow: {
+      operatingCF: cashFlow.operatingCF,
+    },
+    extractionConfidence,
+  });
+
+  // Determine validation status and notes for persistence
+  let validationStatus: string;
+  let validationNotes: string | null = null;
+
+  if (!validation.isValid) {
+    validationStatus = "failed";
+    const notes: string[] = [];
+    if (validation.errors.length > 0) notes.push(`Errors: ${validation.errors.join(" | ")}`);
+    if (validation.warnings.length > 0) notes.push(`Warnings: ${validation.warnings.join(" | ")}`);
+    validationNotes = notes.join("\n");
+    console.error(
+      `[parseBctcReport] Validation FAILED for ${actionCode} ${period.sortKey}: ${validation.errors.join("; ")}`,
+    );
+  } else if (validation.warnings.length > 0) {
+    validationStatus = "passed_with_warnings";
+    validationNotes = `Warnings: ${validation.warnings.join(" | ")}`;
+  } else {
+    validationStatus = "passed";
+  }
+
   // ── Step 6: Assemble the FinancialReport ──────────────────────────────────
   const parsedAt = new Date().toISOString();
 
@@ -395,7 +440,7 @@ export async function parseBctcReport(
   // ── Step 7: Persist to SQLite ─────────────────────────────────────────────
   // Ensure DB is initialised (idempotent — no-op if already done)
   await initDatabase();
-  storeReport(report);
+  storeReport(report, validationStatus, validationNotes);
 
   return report;
 }
