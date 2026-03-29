@@ -17,6 +17,10 @@ export interface AppConfig {
   dbPath: string;
   /** Minimum log level to emit. Default: 'info'. */
   logLevel: LogLevel;
+  /** Telegram Bot API token. Empty string when TELEGRAM_BOT_TOKEN is not set. */
+  telegramBotToken: string;
+  /** Telegram target chat ID. Empty string when TELEGRAM_CHAT_ID is not set. */
+  telegramChatId: string;
 }
 
 /**
@@ -66,7 +70,10 @@ export function loadConfig(): AppConfig {
       ? (rawLevel as LogLevel)
       : "info";
 
-  return { port, dbPath, logLevel };
+  const telegramBotToken = Bun.env["TELEGRAM_BOT_TOKEN"] ?? "";
+  const telegramChatId = Bun.env["TELEGRAM_CHAT_ID"] ?? "";
+
+  return { port, dbPath, logLevel, telegramBotToken, telegramChatId };
 }
 
 /** Singleton config instance — loaded once at module import time. */

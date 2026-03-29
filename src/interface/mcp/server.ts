@@ -32,6 +32,7 @@ import {
   registerAnalysisTools,
   registerMarketTools,
   registerMacroTools,
+  registerTelegramTools,
 } from "./tools/index.js";
 
 /** Options for starting the Bun HTTP server. */
@@ -84,6 +85,7 @@ export async function createBunServer(
     registerAnalysisTools(server);
     registerMarketTools(server);
     registerMacroTools(server);
+    registerTelegramTools(server);
     return server;
   }
 
