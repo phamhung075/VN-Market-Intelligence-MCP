@@ -530,9 +530,9 @@
 | Column | Count | Tasks |
 |--------|-------|-------|
 | ✅ Done | 55 | 000-DOC-001 + 025, 028, FIX-081, 126, 089 (Sprint 008 complete) |
-| 🔍 Review | 0 | — |
+| 🔍 Review | 1 | 034 |
 | 🚧 In Progress | 0 | — |
-| 📋 Todo | 10 | 127, 031, 032, 033 (SSC Puppeteer) + 128, 034 (Telegram) + 129, 106 (15-min cycle) |
+| 📋 Todo | 9 | 127, 031, 032, 033 (SSC Puppeteer) + 128 (Telegram) + 129, 106 (15-min cycle) |
 | 🗂 Backlog | 0 | — |
 | **Total** | **65** | |
 
