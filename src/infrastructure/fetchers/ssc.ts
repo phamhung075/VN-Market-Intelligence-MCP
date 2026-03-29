@@ -163,11 +163,11 @@ export async function listSscDocuments(
     const page = await browser.newPage();
 
     try {
-      // Navigate to SSC search page
-      await page.goto(SSC_URL, { waitUntil: "networkidle2", timeout: 30000 });
+      // Navigate to SSC search page (60s timeout — SSC can be slow)
+      await page.goto(SSC_URL, { waitUntil: "networkidle2", timeout: 60000 });
 
       // Wait for search form
-      await page.waitForSelector('input[id$="it8112::content"]', { timeout: 15000 });
+      await page.waitForSelector('input[id$="it8112::content"]', { timeout: 30000 });
 
       // Fill stock code
       const inputSelector = 'input[id$="it8112::content"]';
@@ -234,107 +234,19 @@ export async function listSscDocuments(
         return results;
       }, code);
 
-      // For each document with a downloadId, click the download button
-      // and capture the PDF via CDP download behavior
-      const docs: SscDocument[] = [];
-
-      for (const d of rawDocs.filter((d) => titleMatchesReportType(d.title, reportType))) {
-        let pdfUrl = "";
-        let pdfFilenameResult = "";
-
-        if (d.downloadId) {
-          try {
-            // Set up CDP download to a temp directory
-            const downloadDir = `/tmp/ssc-dl-${Date.now()}`;
-            const { mkdirSync } = await import("node:fs");
-            mkdirSync(downloadDir, { recursive: true });
-
-            const cdpSession = await (page as any).createCDPSession();
-            await cdpSession.send("Page.setDownloadBehavior", {
-              behavior: "allow",
-              downloadPath: downloadDir,
-            });
-
-            // Click the download button
-            await page.click(`[id="${d.downloadId}"]`);
-
-            // Wait for download to start and complete (poll for .pdf file)
-            const { readdirSync, readFileSync, rmSync } = await import("node:fs");
-            const { join } = await import("node:path");
-            let downloaded = false;
-            for (let i = 0; i < 120; i++) { // max 120s wait
-              await new Promise((r) => setTimeout(r, 1000));
-              const files = readdirSync(downloadDir);
-              const pdfFiles = files.filter((f) => f.endsWith(".pdf"));
-              if (pdfFiles.length > 0) {
-                pdfFilenameResult = pdfFiles[0]!;
-                const filePath = join(downloadDir, pdfFilenameResult);
-                // Move to data/pdfs/ for persistence
-                const pdfDir = join(process.cwd(), "data", "pdfs");
-                mkdirSync(pdfDir, { recursive: true });
-                const destPath = join(pdfDir, pdfFilenameResult);
-                const fs2 = await import("node:fs");
-                fs2.copyFileSync(filePath, destPath);
-                pdfUrl = destPath;
-                downloaded = true;
-                break;
-              }
-              // Check if .crdownload exists (still downloading)
-              const tempFiles = files.filter((f) => f.endsWith(".crdownload"));
-              if (tempFiles.length > 0 && i > 5) {
-                // Check if file size is stable (download complete but not renamed)
-                const tempPath = join(downloadDir, tempFiles[0]!);
-                const size1 = readFileSync(tempPath).length;
-                await new Promise((r) => setTimeout(r, 2000));
-                i++;
-                try {
-                  const size2 = readFileSync(tempPath).length;
-                  if (size2 === size1 && size2 > 1000) {
-                    // File stopped growing — likely complete
-                    pdfFilenameResult = tempFiles[0]!.replace(".crdownload", "");
-                    const pdfDir2 = join(process.cwd(), "data", "pdfs");
-                    mkdirSync(pdfDir2, { recursive: true });
-                    const destPath2 = join(pdfDir2, pdfFilenameResult);
-                    const fs3 = await import("node:fs");
-                    fs3.copyFileSync(tempPath, destPath2);
-                    pdfUrl = destPath2;
-                    downloaded = true;
-                    break;
-                  }
-                } catch { /* file may have been renamed */ }
-              }
-            }
-
-            // Cleanup temp dir
-            try { rmSync(downloadDir, { recursive: true }); } catch { /* ignore */ }
-
-            if (downloaded) {
-              logger.info("[ssc] PDF downloaded", { file: pdfFilenameResult, path: pdfUrl });
-            } else {
-              logger.warn("[ssc] PDF download timed out", { downloadId: d.downloadId });
-            }
-
-            await cdpSession.detach().catch(() => {});
-          } catch (err) {
-            logger.warn("[ssc] PDF download failed", {
-              downloadId: d.downloadId,
-              error: err instanceof Error ? err.message : String(err),
-            });
-          }
-        }
-
-        docs.push({
+      // Convert to SscDocument[] (fast — no downloads, just metadata)
+      const docs: SscDocument[] = rawDocs
+        .filter((d) => titleMatchesReportType(d.title, reportType))
+        .map((d, idx) => ({
           title: d.title,
-          url: pdfUrl || `ssc-download://${d.downloadId || "unknown"}`,
+          url: `ssc-download://${code}/${idx}/${d.downloadId || "unknown"}`,
           publishedAt: d.date,
           reportType: classifyReportType(d.title),
           actionCode: d.code,
           companyName: d.company,
           exchange: d.exchange,
           description: d.description,
-          ...(pdfFilenameResult ? { pdfFilename: pdfFilenameResult } : {}),
-        });
-      }
+        }));
 
       logger.info("[ssc] parsed documents", {
         actionCode: code,
@@ -385,8 +297,8 @@ export async function downloadSscDocument(
     const page = await browser.newPage();
 
     try {
-      await page.goto(SSC_URL, { waitUntil: "networkidle2", timeout: 30000 });
-      await page.waitForSelector('input[id$="it8112::content"]', { timeout: 15000 });
+      await page.goto(SSC_URL, { waitUntil: "networkidle2", timeout: 60000 });
+      await page.waitForSelector('input[id$="it8112::content"]', { timeout: 30000 });
 
       // Search
       const inputSelector = 'input[id$="it8112::content"]';
@@ -438,42 +350,74 @@ export async function downloadSscDocument(
         return null;
       }
 
-      // Intercept the download response
-      let pdfBuffer: Buffer | null = null;
-      let pdfFilename = "";
+      // Use CDP to download the PDF to a temp directory
+      const { mkdirSync, readdirSync, readFileSync, rmSync } = await import("node:fs");
+      const { join } = await import("node:path");
+      const downloadDir = `/tmp/ssc-dl-${Date.now()}-${code}`;
+      mkdirSync(downloadDir, { recursive: true });
 
-      page.on("response", async (res: any) => {
-        const ct = res.headers()?.["content-type"] || "";
-        const cd = res.headers()?.["content-disposition"] || "";
-        if (ct.includes("octet-stream") || cd.includes("attachment")) {
-          try {
-            pdfBuffer = Buffer.from(await res.buffer());
-            // Parse filename from Content-Disposition
-            const filenameMatch = cd.match(/filename\*?=(?:utf-8'')?([^;\s]+)/i);
-            pdfFilename = filenameMatch
-              ? decodeURIComponent(filenameMatch[1])
-              : `${code}_doc_${docIndex}.pdf`;
-          } catch {
-            // response buffer may not be available
-          }
-        }
+      const cdpSession = await (page as any).createCDPSession();
+      await cdpSession.send("Page.setDownloadBehavior", {
+        behavior: "allow",
+        downloadPath: downloadDir,
       });
 
-      // Click the download icon
+      // Click the download button
+      logger.info("[ssc] clicking download button", { downloadId, actionCode: code });
       await page.click(`[id="${downloadId}"]`);
-      await new Promise((r) => setTimeout(r, 5000));
 
+      // Poll for the PDF file (max 120s)
+      let pdfBuffer: Buffer | null = null;
+      let pdfFilename = `${code}_doc_${docIndex}.pdf`;
+
+      for (let i = 0; i < 120; i++) {
+        await new Promise((r) => setTimeout(r, 1000));
+        const files = readdirSync(downloadDir);
+
+        // Check for completed PDF
+        const pdfFiles = files.filter((f) => f.endsWith(".pdf"));
+        if (pdfFiles.length > 0) {
+          pdfFilename = pdfFiles[0]!;
+          pdfBuffer = readFileSync(join(downloadDir, pdfFilename));
+          break;
+        }
+
+        // Check if .crdownload is stable (download done, just not renamed)
+        const tempFiles = files.filter((f) => f.endsWith(".crdownload"));
+        if (tempFiles.length > 0 && i > 10) {
+          const tempPath = join(downloadDir, tempFiles[0]!);
+          const size1 = readFileSync(tempPath).length;
+          await new Promise((r) => setTimeout(r, 3000));
+          i += 3;
+          try {
+            const size2 = readFileSync(tempPath).length;
+            if (size2 === size1 && size2 > 1000) {
+              pdfFilename = tempFiles[0]!.replace(".crdownload", "");
+              pdfBuffer = readFileSync(tempPath);
+              break;
+            }
+          } catch { /* file may have been renamed in the meantime */ }
+        }
+      }
+
+      // Cleanup
+      await cdpSession.detach().catch(() => {});
+      try { rmSync(downloadDir, { recursive: true }); } catch { /* ignore */ }
       await page.close();
 
-      if (pdfBuffer !== null) {
-        const buf = pdfBuffer as Buffer;
-        logger.info("[ssc] document downloaded", {
-          actionCode: code,
-          docIndex,
-          filename: pdfFilename,
-          bytes: buf.length,
-        });
-        return { buffer: buf, filename: pdfFilename };
+      if (pdfBuffer && pdfBuffer.length > 100) {
+        // Verify it's a real PDF
+        const header = pdfBuffer.slice(0, 5).toString();
+        if (header === "%PDF-") {
+          logger.info("[ssc] PDF downloaded successfully", {
+            actionCode: code,
+            docIndex,
+            filename: pdfFilename,
+            bytes: pdfBuffer.length,
+          });
+          return { buffer: pdfBuffer, filename: pdfFilename };
+        }
+        logger.warn("[ssc] downloaded file is not a valid PDF", { header, actionCode: code });
       }
 
       logger.warn("[ssc] download did not produce a file", { actionCode: code, docIndex });

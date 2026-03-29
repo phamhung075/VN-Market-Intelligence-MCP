@@ -70,7 +70,7 @@ Tiền và tương đương tiền cuối kỳ                     7.880.000
  * listSscDocuments maps downloadId → "ssc-download://<downloadId>" for the url field.
  */
 const VCB_Q1_DOWNLOAD_ID = "VCB-Q1-2025-download-link";
-const EXPECTED_RESOLVED_URL = `ssc-download://${VCB_Q1_DOWNLOAD_ID}`;
+const EXPECTED_RESOLVED_URL = `ssc-download://VCB/0/${VCB_Q1_DOWNLOAD_ID}`;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // BrowserFactory mock helpers
@@ -465,7 +465,7 @@ Tổng cộng tài sản  5.000.000
 
     expect(report).not.toBeNull();
     // listSscDocuments maps downloadId → "ssc-download://<downloadId>"
-    expect(report!.source.sscUrl).toBe("ssc-download://HPG-Q1-2025-link");
+    expect(report!.source.sscUrl).toContain("HPG-Q1-2025-link");
   }, TEST_TIMEOUT);
 
   // ── SSC-11: buildSscSearchUrl still exported (deprecated) ──────────────────

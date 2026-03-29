@@ -175,10 +175,13 @@ export async function fetchParseAndStoreBctc(
       rawText = "";
     }
   } else if (doc.url.startsWith("ssc-download://") || doc.url.startsWith("ssc-adf://")) {
-    // CDP download did not capture the PDF — fall back to response interception
-    logger.info(`${tag} SSC document URL not resolved — retrying via response interception`);
+    // SSC ADF document — download via Puppeteer CDP
+    // URL format: ssc-download://CODE/INDEX/downloadId
+    const parts = doc.url.replace("ssc-download://", "").replace("ssc-adf://", "").split("/");
+    const docIdx = parseInt(parts[1] ?? "0", 10) || 0;
+    logger.info(`${tag} downloading PDF via Puppeteer CDP`, { actionCode, docIndex: docIdx });
     try {
-      const downloaded = await downloadSscDocument(actionCode, 0, sscHttpClient);
+      const downloaded = await downloadSscDocument(actionCode, docIdx, sscHttpClient);
       if (downloaded && downloaded.buffer.length > 0) {
         const extraction = await extractPdfText(downloaded.buffer);
         rawText = extraction.text;
