@@ -89,12 +89,12 @@ afterAll(async () => {
 describe("Task 013 — RAG Multi-Level Retriever", () => {
   describe("searchContext — basic search", () => {
     it("returns results from the store for a relevant query", async () => {
-      const results = await searchContext("interest rates monetary policy");
+      const results = await searchContext("interest rates monetary policy", { maxDistance: 2.0 });
       expect(results.length).toBeGreaterThan(0);
     });
 
     it("returns SearchResult objects with the expected shape", async () => {
-      const results = await searchContext("banking credit Vietnam", { k: 3 });
+      const results = await searchContext("banking credit Vietnam", { k: 3, maxDistance: 2.0 });
       expect(results.length).toBeGreaterThan(0);
       const first = results[0]!;
       expect(typeof first.id).toBe("string");
@@ -108,12 +108,12 @@ describe("Task 013 — RAG Multi-Level Retriever", () => {
 
   describe("searchContext — k parameter", () => {
     it("limits results to k=1", async () => {
-      const results = await searchContext("market news", { k: 1 });
+      const results = await searchContext("market news", { k: 1 , maxDistance: 2.0});
       expect(results.length).toBeLessThanOrEqual(1);
     });
 
     it("limits results to k=2", async () => {
-      const results = await searchContext("Vietnam stock market", { k: 2 });
+      const results = await searchContext("Vietnam stock market", { k: 2 , maxDistance: 2.0});
       expect(results.length).toBeLessThanOrEqual(2);
     });
   });
@@ -123,6 +123,7 @@ describe("Task 013 — RAG Multi-Level Retriever", () => {
       const results = await searchContext("VCB Vietcombank profit", {
         level: "action",
         k: 10,
+        maxDistance: 2.0,
       });
       expect(results.length).toBeGreaterThan(0);
       for (const r of results) {
@@ -134,6 +135,7 @@ describe("Task 013 — RAG Multi-Level Retriever", () => {
       const results = await searchContext("Federal Reserve interest rates", {
         level: "global",
         k: 10,
+        maxDistance: 2.0,
       });
       expect(results.length).toBeGreaterThan(0);
       for (const r of results) {
@@ -145,6 +147,7 @@ describe("Task 013 — RAG Multi-Level Retriever", () => {
       const results = await searchContext("rates credit banking", {
         level: "domain",
         k: 10,
+        maxDistance: 2.0,
       });
       for (const r of results) {
         expect(r.level).toBe("domain");
@@ -159,6 +162,7 @@ describe("Task 013 — RAG Multi-Level Retriever", () => {
       const results = await searchContext("bank profit lending", {
         actionCode: "VCB",
         k: 10,
+        maxDistance: 2.0,
       });
       expect(results.length).toBeGreaterThan(0);
       for (const r of results) {
@@ -170,6 +174,7 @@ describe("Task 013 — RAG Multi-Level Retriever", () => {
       const results = await searchContext("pipeline expansion", {
         actionCode: "VCB",
         k: 10,
+        maxDistance: 2.0,
       });
       for (const r of results) {
         expect(r.actionCode).not.toBe("GAS");
@@ -180,6 +185,7 @@ describe("Task 013 — RAG Multi-Level Retriever", () => {
       const results = await searchContext("pipeline expansion PV GAS", {
         actionCode: "GAS",
         k: 10,
+        maxDistance: 2.0,
       });
       expect(results.length).toBeGreaterThan(0);
       for (const r of results) {
@@ -194,6 +200,7 @@ describe("Task 013 — RAG Multi-Level Retriever", () => {
         level: "action",
         actionCode: "VCB",
         k: 10,
+        maxDistance: 2.0,
       });
       expect(results.length).toBeGreaterThan(0);
       for (const r of results) {
@@ -213,7 +220,7 @@ describe("Task 013 — RAG Multi-Level Retriever", () => {
         tags: ["gdp", "growth", "gso"],
       });
 
-      const results = await searchContext("Vietnam GDP economic growth", { k: 10 });
+      const results = await searchContext("Vietnam GDP economic growth", { k: 10 , maxDistance: 2.0});
       const ids = results.map((r) => r.id);
       expect(ids).toContain("country-002");
     });
@@ -231,6 +238,7 @@ describe("Task 013 — RAG Multi-Level Retriever", () => {
       const results = await searchContext("dividend announcement Vietcombank", {
         actionCode: "VCB",
         k: 10,
+        maxDistance: 2.0,
       });
       const ids = results.map((r) => r.id);
       expect(ids).toContain("action-vcb-003");

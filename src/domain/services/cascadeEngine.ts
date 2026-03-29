@@ -16,6 +16,7 @@
 
 import type { AnalysisEntry, AnalysisLevel, Sentiment, ImpactDirection } from "./newsNormalizer.js";
 import type { DomainType } from "../../../bctc-schema.js";
+import { classifySentiment } from "./sentimentClassifier.js";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Exported types
@@ -433,6 +434,11 @@ export function buildCausalChain(
   const entries: CausalChainEntry[] = [seedChainEntry];
 
   // ── Step 2: Domain entries from SECTOR_RULES ──────────────────────────
+  // Classify sentiment from seed summary before building domain entries.
+  // This allows directional adjustment of confidence per rule.
+  const seedSentimentResult = classifySentiment(seedEntry.summary);
+  const seedSentimentDirection = seedSentimentResult.direction; // 'bullish' | 'bearish' | 'neutral'
+
   // Group by domain — keep only the first matching rule per domain.
   const triggeredDomains = new Map<DomainType, { rule: SectorRule; matchedKeyword: string }>();
 
@@ -454,16 +460,57 @@ export function buildCausalChain(
 
   // From SECTOR_RULES matches
   for (const [domain, { rule, matchedKeyword }] of triggeredDomains) {
+    // Sentiment-direction alignment check:
+    //   - rule.direction "up"   ↔ seedSentiment "bullish"  → matching   → +0.05
+    //   - rule.direction "down" ↔ seedSentiment "bearish"  → matching   → +0.05
+    //   - opposing direction                                → contradicting → -0.10
+    //   - rule.direction "neutral" or seedSentiment "neutral" → no adjustment
+    let sentimentAdjustment = 0;
+    let sentimentNote = "";
+    if (seedSentimentDirection !== "neutral" && rule.direction !== "neutral") {
+      const ruleIsBullish = rule.direction === "up";
+      const seedIsBullish = seedSentimentDirection === "bullish";
+      if (ruleIsBullish === seedIsBullish) {
+        sentimentAdjustment = +0.05;
+        sentimentNote = ` [Sentiment: matches rule direction (${rule.direction}) → +0.05]`;
+      } else {
+        sentimentAdjustment = -0.10;
+        sentimentNote = ` [Sentiment: contradicts rule direction (${rule.direction}) → -0.10]`;
+      }
+    }
+
+    const adjustedConfidence = Math.min(0.99, Math.max(0.05, rule.confidence + sentimentAdjustment));
+
+    // Derive the effective sentiment from the rule direction, combining with
+    // the seed classifier result. For inverse relationships (e.g., oil up → aviation down),
+    // the domain sentiment should INVERT the seed sentiment, not inherit it.
+    let effectiveSentiment: Sentiment = direction2sentiment(rule.direction);
+    if (
+      seedSentimentResult.confidence >= 0.6 &&
+      seedSentimentDirection !== "neutral"
+    ) {
+      // If rule direction matches seed direction → keep seed sentiment
+      // If rule direction opposes seed direction → invert seed sentiment
+      const ruleIsBullish = rule.direction === "up";
+      const seedIsBullish = seedSentimentDirection === "bullish";
+      if (ruleIsBullish === seedIsBullish) {
+        effectiveSentiment = seedSentimentDirection;
+      } else {
+        // Invert: bullish seed + down rule → bearish domain
+        effectiveSentiment = seedIsBullish ? "bearish" : "bullish";
+      }
+    }
+
     const domainEntry: CausalChainEntry = {
       level: "domain",
       title: rule.title,
       summary: `${rule.title}. Seed: "${seedEntry.sourceTitle}"`,
       affectedDomains: [domain],
       affectedActions: [],
-      sentiment: direction2sentiment(rule.direction),
-      impactScore: Math.round(seedEntry.impactScore * rule.confidence),
-      confidence: rule.confidence,
-      reasoning: `Keyword match: "${matchedKeyword}". Domain ${domain} expected to move ${rule.direction}.`,
+      sentiment: effectiveSentiment,
+      impactScore: Math.round(seedEntry.impactScore * adjustedConfidence),
+      confidence: adjustedConfidence,
+      reasoning: `Keyword match: "${matchedKeyword}". Domain ${domain} expected to move ${rule.direction}.${sentimentNote}`,
     };
     entries.push(domainEntry);
     domainEntryMap.set(domain, domainEntry);

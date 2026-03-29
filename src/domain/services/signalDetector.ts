@@ -1,5 +1,5 @@
 /**
- * Signal Detector — Task 063
+ * Signal Detector — Task 063 (updated Task 133: adaptive thresholds)
  *
  * Pure domain function that identifies market signals from a price snapshot
  * and optional context (news, report dates, custom thresholds).
@@ -13,7 +13,21 @@
  *   - volume_spike : volume >= 2× avgVolume
  *   - report_new   : latestReportDate within last 24 hours
  *   - news_mention : recentNews array has at least one entry
+ *
+ * Adaptive thresholds (Task 133):
+ *   When SignalContext.volatility is provided, thresholds are derived from
+ *   per-stock historical volatility via computeStockVolatility().
+ *   Priority order:
+ *     1. watchlistThresholds (explicit override — highest priority)
+ *     2. volatility.adaptiveDropPct / adaptiveRisePct / adaptiveVolumeMult
+ *     3. fixed defaults (fallback)
  */
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Imports
+// ─────────────────────────────────────────────────────────────────────────────
+
+import type { StockVolatility } from "./volatilityCalculator.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -54,7 +68,10 @@ export interface SignalContext {
   recentNews?: { title: string; source: string }[];
   /** ISO 8601 timestamp of the most recently published BCTC report */
   latestReportDate?: string;
-  /** Per-watchlist thresholds that override defaults */
+  /**
+   * Per-watchlist thresholds that override defaults (and adaptive thresholds).
+   * Highest priority — if provided, overrides both defaults and volatility.
+   */
   watchlistThresholds?: {
     /** Drop threshold in percent, e.g. -5 means -5 % (negative number) */
     dropPct: number;
@@ -63,6 +80,12 @@ export interface SignalContext {
     /** Minimum impact score for news/macro signals (0-10) */
     impactScore: number;
   };
+  /**
+   * Per-stock historical volatility from computeStockVolatility().
+   * When provided, adaptiveDropPct / adaptiveRisePct / adaptiveVolumeMult
+   * replace the fixed defaults (unless watchlistThresholds also provided).
+   */
+  volatility?: StockVolatility;
 }
 
 /**
@@ -142,9 +165,22 @@ export function detectSignals(
   const now = new Date().toISOString();
   const { actionCode, price, previousPrice, volume, avgVolume } = snapshot;
 
+  // ── Threshold resolution (priority: watchlist > adaptive > default) ─────
   const thresholds = context?.watchlistThresholds;
-  const dropThreshold = thresholds?.dropPct ?? DEFAULT_DROP_PCT;
-  const riseThreshold = thresholds?.risePct ?? DEFAULT_RISE_PCT;
+  const volatility = context?.volatility;
+
+  const dropThreshold =
+    thresholds?.dropPct ??
+    volatility?.adaptiveDropPct ??
+    DEFAULT_DROP_PCT;
+
+  const riseThreshold =
+    thresholds?.risePct ??
+    volatility?.adaptiveRisePct ??
+    DEFAULT_RISE_PCT;
+
+  const volumeMultiplier =
+    volatility?.adaptiveVolumeMult ?? VOLUME_SPIKE_MULTIPLIER;
 
   // ── 1. Price change % ────────────────────────────────────────────────────
   const changePct =
@@ -173,7 +209,7 @@ export function detectSignals(
   }
 
   // ── 2. Volume spike ──────────────────────────────────────────────────────
-  if (avgVolume > 0 && volume >= avgVolume * VOLUME_SPIKE_MULTIPLIER) {
+  if (avgVolume > 0 && volume >= avgVolume * volumeMultiplier) {
     const multiplier = volume / avgVolume;
     signals.push({
       type: "volume_spike",
