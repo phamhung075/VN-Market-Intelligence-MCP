@@ -363,8 +363,8 @@ describe("Task 084 — Market MCP Tools", () => {
       registerAnalysisTools(freshServer);
       registerMarketTools(freshServer);
       const tools = (freshServer as unknown as { _registeredTools: Record<string, unknown> })._registeredTools;
-      // 4 (watchlist) + 3 (reports) + 4 (alerts) + 3 (analysis) + 2 (market) = 16
-      expect(Object.keys(tools).length).toBe(16);
+      // 4 (watchlist) + 5 (reports) + 4 (alerts) + 3 (analysis) + 2 (market) = 18
+      expect(Object.keys(tools).length).toBe(18);
     });
 
     it("does NOT register search_similar_context (it is already in analysis.ts)", () => {

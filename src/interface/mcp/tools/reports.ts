@@ -18,6 +18,8 @@
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
+import { readdirSync, readFileSync, statSync } from "node:fs";
+import { join, resolve } from "node:path";
 
 import { getDb, initDatabase } from "../../../infrastructure/db/schema.js";
 import { computePeriodDelta } from "../../../domain/services/periodDeltaComputer.js";
@@ -559,6 +561,120 @@ export function registerReportTools(
             },
           ],
         };
+      }
+    },
+  );
+
+  // ── list_stored_pdfs — Show all downloaded BCTC PDFs ─────────────────
+  server.tool(
+    "list_stored_pdfs",
+    "List all BCTC PDF files downloaded from the SSC portal. " +
+      "Shows filename, size, and download date. Use this to see what reports are available " +
+      "before calling read_bctc_pdf to analyze them.",
+    {},
+    async () => {
+      const pdfDir = resolve(process.cwd(), "data", "pdfs");
+      try {
+        const files = readdirSync(pdfDir)
+          .filter((f) => f.endsWith(".pdf"))
+          .map((f) => {
+            const stat = statSync(join(pdfDir, f));
+            return {
+              name: f,
+              sizeMB: (stat.size / 1024 / 1024).toFixed(1),
+              date: stat.mtime.toISOString().slice(0, 10),
+            };
+          })
+          .sort((a, b) => b.date.localeCompare(a.date));
+
+        if (files.length === 0) {
+          return { content: [{ type: "text" as const, text: "No BCTC PDFs found in data/pdfs/. Run fetch_ssc_reports to download some." }] };
+        }
+
+        const lines = ["BCTC PDFs available:", ""];
+        for (const f of files) {
+          lines.push(`  ${f.date}  ${f.sizeMB.padStart(6)} MB  ${f.name}`);
+        }
+        lines.push("", `Total: ${files.length} files`);
+        lines.push("", "Use read_bctc_pdf with the filename to extract and analyze the report content.");
+
+        return { content: [{ type: "text" as const, text: lines.join("\n") }] };
+      } catch {
+        return { content: [{ type: "text" as const, text: "No data/pdfs/ directory found. Run fetch_ssc_reports first." }] };
+      }
+    },
+  );
+
+  // ── read_bctc_pdf — Extract text from a stored PDF for AI analysis ───
+  server.tool(
+    "read_bctc_pdf",
+    "Extract and return the full text content from a downloaded BCTC PDF file. " +
+      "The Claude agent can then analyze the Vietnamese financial statements directly " +
+      "with full AI intelligence — identifying revenue, profit, balance sheet items, " +
+      "cash flow, ratios, and any critical issues. " +
+      "This is more accurate than the automated regex extraction. " +
+      "Use list_stored_pdfs first to see available files.",
+    {
+      filename: z
+        .string()
+        .min(1)
+        .describe("PDF filename from list_stored_pdfs (e.g. 'BCTC VNM 31.12.2025 - HOP NHAT - VN.pdf')"),
+      maxChars: z
+        .number()
+        .int()
+        .min(1000)
+        .max(100000)
+        .default(50000)
+        .describe("Maximum characters to return (default: 50000). Large PDFs may be truncated."),
+    },
+    async ({ filename, maxChars }) => {
+      const pdfDir = resolve(process.cwd(), "data", "pdfs");
+      const filePath = join(pdfDir, filename);
+
+      try {
+        // Security: ensure file is within data/pdfs/
+        const resolved = resolve(filePath);
+        if (!resolved.startsWith(resolve(pdfDir))) {
+          return { content: [{ type: "text" as const, text: "Error: filename must be within data/pdfs/ directory." }] };
+        }
+
+        const pdfBuffer = readFileSync(filePath);
+
+        // Verify PDF header
+        if (pdfBuffer.slice(0, 5).toString() !== "%PDF-") {
+          return { content: [{ type: "text" as const, text: `Error: ${filename} is not a valid PDF file.` }] };
+        }
+
+        // Extract text using pdf-parse
+        const { extractPdfText } = await import("../../../infrastructure/fetchers/pdf.js");
+        const { text, confidence } = await extractPdfText(pdfBuffer);
+
+        if (!text || text.trim().length === 0) {
+          return { content: [{ type: "text" as const, text: `Error: Could not extract text from ${filename}. The PDF may be image-only (scanned). Confidence: ${(confidence * 100).toFixed(0)}%` }] };
+        }
+
+        const truncated = text.length > (maxChars ?? 50000) ? text.slice(0, maxChars ?? 50000) + "\n\n[... truncated ...]" : text;
+
+        const header = [
+          `=== BCTC PDF: ${filename} ===`,
+          `Size: ${(pdfBuffer.length / 1024 / 1024).toFixed(1)} MB`,
+          `Extracted text: ${text.length} chars (showing ${truncated.length})`,
+          `Extraction confidence: ${(confidence * 100).toFixed(0)}%`,
+          "",
+          "Analyze this Vietnamese financial report. Look for:",
+          "- Bảng cân đối kế toán (Balance Sheet): Tổng tài sản, Vốn chủ sở hữu, Nợ",
+          "- Báo cáo KQHĐKD (Income Statement): Doanh thu, Lợi nhuận sau thuế",
+          "- Lưu chuyển tiền tệ (Cash Flow): Tiền từ HĐKD, HĐĐT, HĐTC",
+          "- Key ratios: ROE, ROA, D/E, Current ratio",
+          "- Red flags: negative equity, revenue decline, cash burn",
+          "",
+          "--- BEGIN PDF TEXT ---",
+          "",
+        ].join("\n");
+
+        return { content: [{ type: "text" as const, text: header + truncated }] };
+      } catch (err) {
+        return { content: [{ type: "text" as const, text: `Error reading ${filename}: ${err instanceof Error ? err.message : String(err)}` }] };
       }
     },
   );
