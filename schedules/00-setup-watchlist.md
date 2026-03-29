@@ -1,7 +1,7 @@
 # Setup Watchlist — Run ONCE on first deploy
 
 ## MCP Connection
-Connect to your MCP server URL (e.g. `https://your-tunnel.trycloudflare.com/mcp`)
+Connect to your MCP server URL (e.g. `https://zenmidi.com/mcp`)
 
 ## Prompt
 
