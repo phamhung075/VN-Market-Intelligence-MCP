@@ -22,6 +22,7 @@
 
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { loadConfig } from "../../infrastructure/config.js";
 import { createLogger } from "../../infrastructure/logger.js";
 import { SseSessionManager } from "./transport.js";
@@ -104,6 +105,11 @@ export async function createBunServer(
   // ── Session manager handles SSE + message routing ──────────────────────
   const sessions = new SseSessionManager(createMcpServerInstance, log);
 
+  // ── Streamable HTTP transport for Claude.ai connectors ─────────────────
+  const streamableTransport = new StreamableHTTPServerTransport({});
+  const streamableMcp = createMcpServerInstance();
+  await streamableMcp.connect(streamableTransport as unknown as import("@modelcontextprotocol/sdk/shared/transport.js").Transport);
+
   // ── HTTP request handler ────────────────────────────────────────────────
   async function handleRequest(
     req: IncomingMessage,
@@ -124,6 +130,24 @@ export async function createBunServer(
     if (method === "OPTIONS") {
       res.writeHead(204);
       res.end();
+      return;
+    }
+
+    // ── /mcp — Streamable HTTP for Claude.ai connectors ───────────────
+    if (pathname === "/mcp") {
+      // Parse body for POST requests
+      let parsedBody: unknown = undefined;
+      if (method === "POST" || method === "PUT") {
+        const chunks: Buffer[] = [];
+        for await (const chunk of req) {
+          chunks.push(typeof chunk === "string" ? Buffer.from(chunk) : chunk);
+        }
+        const raw = Buffer.concat(chunks).toString("utf-8");
+        if (raw.length > 0) {
+          try { parsedBody = JSON.parse(raw); } catch { /* leave undefined */ }
+        }
+      }
+      await streamableTransport.handleRequest(req, res, parsedBody);
       return;
     }
 
