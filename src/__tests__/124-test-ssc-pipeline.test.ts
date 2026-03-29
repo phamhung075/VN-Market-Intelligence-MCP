@@ -67,10 +67,10 @@ Tiền và tương đương tiền cuối kỳ                     7.880.000
 
 /**
  * The downloadId used in the default VCB Q1 mock row.
- * listSscDocuments maps downloadId → "ssc-adf://<downloadId>" for the url field.
+ * listSscDocuments maps downloadId → "ssc-download://<downloadId>" for the url field.
  */
 const VCB_Q1_DOWNLOAD_ID = "VCB-Q1-2025-download-link";
-const EXPECTED_RESOLVED_URL = `ssc-adf://${VCB_Q1_DOWNLOAD_ID}`;
+const EXPECTED_RESOLVED_URL = `ssc-download://${VCB_Q1_DOWNLOAD_ID}`;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // BrowserFactory mock helpers
@@ -134,7 +134,7 @@ const ROW_VCB_Q1_SINGLE: RawSscRow = {
   company: "Vietcombank",
   description: "BCTC quý I",
   date: "15/04/2025",
-  // downloadId is mapped to "ssc-adf://<downloadId>" by listSscDocuments
+  // downloadId is mapped to "ssc-download://<downloadId>" by listSscDocuments
   downloadId: VCB_Q1_DOWNLOAD_ID,
 };
 
@@ -270,7 +270,7 @@ describe("Task 124 — SSC pipeline integration tests (mock browser, real SQLite
     });
 
     expect(report).not.toBeNull();
-    // sscUrl is "ssc-adf://<downloadId>" — first doc's downloadId contains "v1"
+    // sscUrl is "ssc-download://<downloadId>" — first doc's downloadId contains "v1"
     expect(report!.source.sscUrl).toContain("v1");
     expect(insertSpy.calls.length).toBe(1);
   }, TEST_TIMEOUT);
@@ -464,8 +464,8 @@ Tổng cộng tài sản  5.000.000
     });
 
     expect(report).not.toBeNull();
-    // listSscDocuments maps downloadId → "ssc-adf://<downloadId>"
-    expect(report!.source.sscUrl).toBe("ssc-adf://HPG-Q1-2025-link");
+    // listSscDocuments maps downloadId → "ssc-download://<downloadId>"
+    expect(report!.source.sscUrl).toBe("ssc-download://HPG-Q1-2025-link");
   }, TEST_TIMEOUT);
 
   // ── SSC-11: buildSscSearchUrl still exported (deprecated) ──────────────────

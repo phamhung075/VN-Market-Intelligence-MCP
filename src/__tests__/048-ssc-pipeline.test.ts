@@ -62,7 +62,7 @@ Tiền và tương đương tiền cuối kỳ                     7.880.000
  * listSscDocuments maps downloadId → "ssc-adf://<downloadId>" for the url field.
  */
 const VCB_DOWNLOAD_ID = "vcb-q1-2025-download-link";
-const FAKE_DOC_URL = `ssc-adf://${VCB_DOWNLOAD_ID}`;
+const FAKE_DOC_URL = `ssc-download://${VCB_DOWNLOAD_ID}`;
 
 /** Fake PDF binary string (treated as binary by downloadAndExtractPdf) */
 const FAKE_PDF_BINARY = Buffer.from("FAKE_PDF_CONTENT").toString("binary");

@@ -234,21 +234,107 @@ export async function listSscDocuments(
         return results;
       }, code);
 
-      // Convert to SscDocument[]
-      const docs: SscDocument[] = rawDocs
-        .filter((d) => titleMatchesReportType(d.title, reportType))
-        .map((d) => ({
+      // For each document with a downloadId, click the download button
+      // and capture the PDF via CDP download behavior
+      const docs: SscDocument[] = [];
+
+      for (const d of rawDocs.filter((d) => titleMatchesReportType(d.title, reportType))) {
+        let pdfUrl = "";
+        let pdfFilenameResult = "";
+
+        if (d.downloadId) {
+          try {
+            // Set up CDP download to a temp directory
+            const downloadDir = `/tmp/ssc-dl-${Date.now()}`;
+            const { mkdirSync } = await import("node:fs");
+            mkdirSync(downloadDir, { recursive: true });
+
+            const cdpSession = await (page as any).createCDPSession();
+            await cdpSession.send("Page.setDownloadBehavior", {
+              behavior: "allow",
+              downloadPath: downloadDir,
+            });
+
+            // Click the download button
+            await page.click(`[id="${d.downloadId}"]`);
+
+            // Wait for download to start and complete (poll for .pdf file)
+            const { readdirSync, readFileSync, rmSync } = await import("node:fs");
+            const { join } = await import("node:path");
+            let downloaded = false;
+            for (let i = 0; i < 120; i++) { // max 120s wait
+              await new Promise((r) => setTimeout(r, 1000));
+              const files = readdirSync(downloadDir);
+              const pdfFiles = files.filter((f) => f.endsWith(".pdf"));
+              if (pdfFiles.length > 0) {
+                pdfFilenameResult = pdfFiles[0]!;
+                const filePath = join(downloadDir, pdfFilenameResult);
+                // Move to data/pdfs/ for persistence
+                const pdfDir = join(process.cwd(), "data", "pdfs");
+                mkdirSync(pdfDir, { recursive: true });
+                const destPath = join(pdfDir, pdfFilenameResult);
+                const fs2 = await import("node:fs");
+                fs2.copyFileSync(filePath, destPath);
+                pdfUrl = destPath;
+                downloaded = true;
+                break;
+              }
+              // Check if .crdownload exists (still downloading)
+              const tempFiles = files.filter((f) => f.endsWith(".crdownload"));
+              if (tempFiles.length > 0 && i > 5) {
+                // Check if file size is stable (download complete but not renamed)
+                const tempPath = join(downloadDir, tempFiles[0]!);
+                const size1 = readFileSync(tempPath).length;
+                await new Promise((r) => setTimeout(r, 2000));
+                i++;
+                try {
+                  const size2 = readFileSync(tempPath).length;
+                  if (size2 === size1 && size2 > 1000) {
+                    // File stopped growing — likely complete
+                    pdfFilenameResult = tempFiles[0]!.replace(".crdownload", "");
+                    const pdfDir2 = join(process.cwd(), "data", "pdfs");
+                    mkdirSync(pdfDir2, { recursive: true });
+                    const destPath2 = join(pdfDir2, pdfFilenameResult);
+                    const fs3 = await import("node:fs");
+                    fs3.copyFileSync(tempPath, destPath2);
+                    pdfUrl = destPath2;
+                    downloaded = true;
+                    break;
+                  }
+                } catch { /* file may have been renamed */ }
+              }
+            }
+
+            // Cleanup temp dir
+            try { rmSync(downloadDir, { recursive: true }); } catch { /* ignore */ }
+
+            if (downloaded) {
+              logger.info("[ssc] PDF downloaded", { file: pdfFilenameResult, path: pdfUrl });
+            } else {
+              logger.warn("[ssc] PDF download timed out", { downloadId: d.downloadId });
+            }
+
+            await cdpSession.detach().catch(() => {});
+          } catch (err) {
+            logger.warn("[ssc] PDF download failed", {
+              downloadId: d.downloadId,
+              error: err instanceof Error ? err.message : String(err),
+            });
+          }
+        }
+
+        docs.push({
           title: d.title,
-          url: d.downloadId
-            ? `ssc-adf://${d.downloadId}`
-            : "",
+          url: pdfUrl || `ssc-download://${d.downloadId || "unknown"}`,
           publishedAt: d.date,
           reportType: classifyReportType(d.title),
           actionCode: d.code,
           companyName: d.company,
           exchange: d.exchange,
           description: d.description,
-        }));
+          ...(pdfFilenameResult ? { pdfFilename: pdfFilenameResult } : {}),
+        });
+      }
 
       logger.info("[ssc] parsed documents", {
         actionCode: code,

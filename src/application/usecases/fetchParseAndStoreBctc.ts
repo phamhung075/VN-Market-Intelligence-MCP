@@ -159,6 +159,25 @@ export async function fetchParseAndStoreBctc(
   if (pdfTextOverride !== undefined) {
     // Test shortcut — bypass real PDF extraction
     rawText = pdfTextOverride;
+  } else if (doc.url.startsWith("/") || doc.url.startsWith("./")) {
+    // Local file path (PDF already downloaded by SSC Puppeteer scraper)
+    const { readFileSync } = await import("node:fs");
+    const { extractPdfText } = await import("../../infrastructure/fetchers/pdf.js");
+    try {
+      const pdfBuffer = readFileSync(doc.url);
+      const extraction = await extractPdfText(pdfBuffer);
+      rawText = extraction.text;
+    } catch (err) {
+      logger.error(`${tag} failed to read local PDF`, {
+        path: doc.url,
+        error: err instanceof Error ? err.message : String(err),
+      });
+      rawText = "";
+    }
+  } else if (doc.url.startsWith("ssc-download://") || doc.url.startsWith("ssc-adf://")) {
+    // SSC download not yet captured — skip
+    logger.warn(`${tag} SSC document URL not resolved — PDF not downloaded`);
+    rawText = "";
   } else {
     const extraction = await downloadAndExtractPdf(doc.url, pdfHttpClient);
     rawText = extraction.text;
