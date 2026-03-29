@@ -119,6 +119,24 @@ function titleMatchesReportType(
 }
 
 // ---------------------------------------------------------------------------
+// Browser lifecycle management — prevent zombie Chrome processes
+// ---------------------------------------------------------------------------
+
+/** Track active browser instances for cleanup */
+const _activeBrowsers = new Set<SscBrowser>();
+
+/** Kill all orphaned Chrome processes from Puppeteer (call on server shutdown) */
+export function cleanupBrowsers(): void {
+  for (const b of _activeBrowsers) {
+    b.close().catch(() => {});
+  }
+  _activeBrowsers.clear();
+}
+
+/** Max time a browser instance can live before force-kill (3 minutes) */
+const BROWSER_MAX_LIFETIME_MS = 180_000;
+
+// ---------------------------------------------------------------------------
 // Default browser factory (real Puppeteer + Chrome)
 // ---------------------------------------------------------------------------
 
@@ -127,9 +145,27 @@ async function defaultBrowserFactory(): Promise<SscBrowser> {
   const browser = await puppeteer.default.launch({
     executablePath: CHROME_PATH,
     headless: true,
-    args: ["--no-sandbox", "--disable-dev-shm-usage", "--disable-gpu"],
+    args: ["--no-sandbox", "--disable-dev-shm-usage", "--disable-gpu", "--single-process"],
   });
-  return browser as unknown as SscBrowser;
+  const wrapped = browser as unknown as SscBrowser;
+
+  // Track for cleanup + auto-kill after max lifetime
+  _activeBrowsers.add(wrapped);
+  const timer = setTimeout(() => {
+    logger.warn("[ssc] browser exceeded max lifetime — force closing");
+    wrapped.close().catch(() => {});
+    _activeBrowsers.delete(wrapped);
+  }, BROWSER_MAX_LIFETIME_MS);
+
+  // Wrap close to clear tracking
+  const origClose = wrapped.close.bind(wrapped);
+  wrapped.close = async () => {
+    clearTimeout(timer);
+    _activeBrowsers.delete(wrapped);
+    await origClose();
+  };
+
+  return wrapped;
 }
 
 // ---------------------------------------------------------------------------
