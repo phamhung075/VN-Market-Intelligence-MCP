@@ -64,9 +64,15 @@ src/
 │       ├── newsNormalizer.ts       ← RSS item → AnalysisEntry
 │       ├── cascadeEngine.ts        ← Global → country → sector → stock causal chain
 │       ├── signalDetector.ts       ← Price drop/surge, volume spike, news mention, report
-│       └── alertGenerator.ts      ← Multi-signal → Alert with severity
+│       ├── alertGenerator.ts      ← Multi-signal → Alert with severity
+│       ├── alertCooldown.ts        ← Suppress duplicate alerts within cooldown window (task 131)
+│       ├── alertDedup.ts           ← djb2 fingerprint hash to drop exact-duplicate alerts (task 131)
+│       ├── alertGrouper.ts         ← Cluster related alerts within 15-min window (task 131)
+│       ├── bctcValidator.ts        ← Validate extracted BCTC data (accounting identity, magnitude) (task 132)
+│       ├── sentimentClassifier.ts  ← Rule-based bullish/bearish/neutral classifier, Vi + EN (task 134)
+│       └── volatilityCalculator.ts ← Historical volatility → adaptive signal thresholds (task 133)
 ├── infrastructure/
-│   ├── config.ts                   ← Env config (dotenv)
+│   ├── config.ts                   ← Env config (dotenv + mcp.config.json)
 │   ├── logger.ts                   ← Structured logger
 │   ├── db/
 │   │   ├── schema.ts               ← SQLite init (all tables + indexes)
@@ -76,16 +82,20 @@ src/
 │   │   ├── rss.ts                  ← RSS base fetcher
 │   │   ├── cafef.ts                ← CafeF news (Vietnamese)
 │   │   ├── vnexpress.ts            ← VnExpress Finance RSS
+│   │   ├── vneconomy.ts            ← VnEconomy stocks + finance RSS feeds (task 035)
 │   │   ├── reuters.ts              ← Reuters / AP News RSS
 │   │   ├── hose.ts                 ← HOSE prices (VnDirect API + CafeF fallback)
 │   │   ├── hnx.ts                  ← HNX + UPCOM prices
-│   │   ├── ssc.ts                  ← SSC portal scraper (BCTC document links)
+│   │   ├── ssc.ts                  ← SSC portal scraper — Puppeteer automation (task 031)
 │   │   ├── pdf.ts                  ← PDF downloader + pdf-parse text extractor
+│   │   └── index.ts
+│   ├── notifiers/
+│   │   ├── telegram.ts             ← Telegram Bot API notifier — never throws, uses Bun.fetch (task 034)
 │   │   └── index.ts
 │   └── rag/
 │       ├── embeddings.ts           ← HuggingFace multilingual-MiniLM (local ONNX)
 │       ├── vectorstore.ts          ← LanceDB read/write/search
-│       ├── retriever.ts            ← Multi-level RAG search
+│       ├── retriever.ts            ← Multi-level RAG search with temporal decay (task 135)
 │       └── index.ts
 ├── application/
 │   └── usecases/
@@ -94,6 +104,7 @@ src/
 │       ├── checkSscReports.ts      ← SSC nightly BCTC document check
 │       ├── fetchParseAndStoreBctc.ts ← SSC fetch → parse → store pipeline
 │       ├── generateAiSummary.ts    ← Rule-based plain-language BCTC summary
+│       ├── generatePeriodicSummary.ts ← Daily/weekly/monthly/quarterly/yearly summaries (task 130)
 │       ├── getPatternSummary.ts    ← Historical pattern detection
 │       ├── parseBctcReport.ts      ← BCTC PDF text → FinancialReport
 │       ├── pollNews.ts             ← RSS poll → embed → alert
@@ -102,7 +113,7 @@ src/
 │       └── index.ts
 ├── interface/
 │   ├── mcp/
-│   │   ├── server.ts               ← McpServer factory, registers all 16 tools
+│   │   ├── server.ts               ← McpServer factory, registers all 20 tools
 │   │   ├── transport.ts            ← SSEServerTransport setup
 │   │   └── tools/
 │   │       ├── watchlist.ts        ← add/remove/get/update watchlist MCP tools
@@ -110,17 +121,23 @@ src/
 │   │       ├── analysis.ts         ← fetch_and_analyze, run_impact_chain, search_similar_context
 │   │       ├── reports.ts          ← fetch_bctc_report, get_financial_summary, compare_reports
 │   │       ├── marketTools.ts      ← get_market_snapshot, get_patterns
+│   │       ├── macroTools.ts       ← get_macro_snapshot (commodity + SBV rates)
+│   │       ├── telegramTools.ts    ← send_test_telegram connectivity check (task 034)
+│   │       ├── summaryTools.ts     ← get_market_summary, generate_market_summary (task 130)
 │   │       └── index.ts
 │   └── scheduler/
-│       └── index.ts                ← startScheduler() — registers all 6 cron jobs
+│       └── index.ts                ← startScheduler() — registers all cron jobs
 └── scheduler/
     ├── jobs.ts                     ← Cron job definitions (GMT+7)
     ├── morningBriefingJob.ts       ← 08:00 daily briefing
-    ├── newsPollerJob.ts            ← Every 30 min news poll
+    ├── newsPollerJob.ts            ← Legacy 30-min news poll (superseded by intelligenceCycleJob)
     ├── marketScanJob.ts            ← 09:00 + 15:30 market open/close scan
     ├── sscCheckerJob.ts            ← 20:00 SSC nightly BCTC check
-    └── eveningSummaryJob.ts        ← 22:00 evening summary
+    ├── eveningSummaryJob.ts        ← 22:00 evening summary
+    ├── intelligenceCycleJob.ts     ← Every 15 min unified cycle: poll → SSC → prices → chain → Telegram (task 106)
+    └── summaryJobs.ts              ← Daily/weekly/monthly/quarterly/yearly summary triggers (task 130)
 
+mcp.config.json                     ← Central JSON config: server, data paths, scheduler, alerts, RAG, fetchers
 bctc-schema.ts                      ← Complete BCTC data model + SQLite DDL (root level)
 ```
 
@@ -129,13 +146,19 @@ bctc-schema.ts                      ← Complete BCTC data model + SQLite DDL (r
 ```
 News/SSC PDF → Fetcher → Parser → AnalysisEntry/FinancialReport
                                         ↓
+                    bctcValidator (accounting identity check)
+                                        ↓
                               Embedding (multilingual-MiniLM)
                                         ↓
-                    LanceDB (vectors) + SQLite (structured)
+                    LanceDB (vectors, temporal decay) + SQLite (structured)
                                         ↓
-                        RAG retrieval → Impact chain analysis
+              RAG retrieval → sentimentClassifier → Impact chain analysis
                                         ↓
-                              Alert if watchlist impacted
+            volatilityCalculator → adaptive thresholds → signalDetector
+                                        ↓
+          alertDedup / alertCooldown / alertGrouper → Alert if watchlist impacted
+                                        ↓
+              HIGH/CRITICAL → Telegram notifier  +  periodic summaries
 ```
 
 ## Tech stack
@@ -148,9 +171,11 @@ News/SSC PDF → Fetcher → Parser → AnalysisEntry/FinancialReport
 | lancedb | Local vector store for RAG |
 | @huggingface/transformers | Local embeddings: paraphrase-multilingual-MiniLM-L12-v2 |
 | cheerio + axios | HTML scraping (CafeF, SSC portal) |
+| puppeteer-core | SSC portal automation for JS-rendered BCTC pages (task 031) |
 | pdf-parse | Extract text from BCTC PDF reports |
 | node-cron | Scheduled jobs (daily briefing, news polling) |
 | zod | Tool input validation |
+| Telegram Bot API | Push HIGH/CRITICAL alerts to a Telegram chat (task 034) |
 
 ## Development
 
@@ -176,6 +201,29 @@ GET  http://localhost:3000/health
   }
 }
 ```
+
+## mcp.config.json — central configuration
+
+`mcp.config.json` (root level) is the single source of truth for all tuneable parameters.
+Environment variables in `.env` override individual fields at runtime.
+
+Key sections:
+
+| Section | Purpose |
+|---------|---------|
+| `server` | Port, host, log level |
+| `data` | Paths for SQLite, LanceDB, briefings, reports |
+| `embedding` | Model name, cache dir, vector dimensions |
+| `telegram` | Bot token, chat ID, parse mode, enabled flag |
+| `market` | Timezone, open/close times, default watchlist |
+| `scheduler` | Cron expressions for all jobs |
+| `alerts` | Default thresholds, severity escalation, Telegram trigger levels |
+| `alertQuality` | Cooldown minutes, max alerts/day, dedup window, group window |
+| `adaptiveThresholds` | Enabled flag, rolling window days, sigma multipliers, min/max clamps |
+| `rag` | Temporal decay half-life, max vector distance |
+| `fetchers` | Per-source URLs, Puppeteer paths, timeouts |
+| `fetchLimits` | News-per-source caps for market-hours / off-hours / manual runs |
+| `cycle` | Intelligence cycle warn threshold, off-hours interval, max concurrent |
 
 ## Dev Team & Workflow
 
@@ -239,7 +287,7 @@ src/
 
 ## Current implementation status
 
-### Done (43 tasks, Sprint 000-006) ✓
+### Done (60+ tasks, Sprint 000-012) ✓
 
 **Foundation (Sprint 000)**
 - `src/infrastructure/db/schema.ts` — SQLite schema init (all tables)
@@ -288,17 +336,41 @@ src/
 - `src/interface/mcp/tools/marketTools.ts` — `get_market_snapshot`, `get_patterns` (task 084)
 - 28-test MCP integration harness covering all 16 tools (task 123)
 
-### Pending (Sprint 007 — see SPRINT_GOAL.md)
-- `CLAUDE.md` architecture section update (DOC-001)
-- Unit tests — BCTC parser Vietnamese edge cases (task 121)
-- Unit tests — domain services ≥90% branch coverage (task 122)
-- Integration tests — SSC pipeline mock HTTP (task 124)
-- `src/infrastructure/fetchers/tradingEconomics.ts` — CPI, GDP, interest rate (task 024)
-- E2E test — daily briefing flow (task 125, after 024)
+**SSC Automation + Telegram + Intelligence Cycle (Sprint 009)**
+- `src/infrastructure/fetchers/ssc.ts` — upgraded to Puppeteer automation for JS-rendered SSC portal (task 031)
+- `src/infrastructure/notifiers/telegram.ts` — Telegram Bot API notifier, never-throw, Bun.fetch (task 034)
+- `src/interface/mcp/tools/telegramTools.ts` — `send_test_telegram` MCP tool (task 034)
+- `src/scheduler/intelligenceCycleJob.ts` — unified 15-min cycle: poll → SSC → prices → chain → Telegram (task 106)
+- `mcp.config.json` — central JSON config (server, paths, scheduler, alerts, RAG, adaptive thresholds)
 
-### Deferred (Sprint 008+)
+**Security + Alert Quality + BCTC Validation (Sprint 010)**
+- SQL injection fix — parameterised queries across all SQLite helpers (security patch)
+- `src/domain/services/alertCooldown.ts` — suppress same-stock/signal within cooldown window (task 131)
+- `src/domain/services/alertDedup.ts` — djb2 fingerprint deduplication within 60-min window (task 131)
+- `src/domain/services/alertGrouper.ts` — cluster overlapping alerts into grouped notifications (task 131)
+- `src/domain/services/bctcValidator.ts` — accounting identity, magnitude, and confidence checks (task 132)
+
+**Adaptive Thresholds + Sentiment + RAG Temporal Decay (Sprint 011)**
+- `src/domain/services/volatilityCalculator.ts` — per-stock stdDev → adaptive ±sigma thresholds (task 133)
+- `src/domain/services/sentimentClassifier.ts` — rule-based bullish/bearish/neutral, Vi + EN, negation-aware (task 134)
+- `src/infrastructure/rag/retriever.ts` — RAG temporal decay: recency boost via configurable half-life (task 135)
+- `src/infrastructure/fetchers/vneconomy.ts` — VnEconomy stocks + finance RSS feeds (task 035)
+
+**Periodic Summaries (Sprint 012)**
+- `src/application/usecases/generatePeriodicSummary.ts` — daily/weekly/monthly/quarterly/yearly rule-based summaries stored in SQLite (task 130)
+- `src/scheduler/summaryJobs.ts` — cron triggers: 22:30 daily, Sunday 23:00, monthly, quarterly, yearly (task 130)
+- `src/interface/mcp/tools/summaryTools.ts` — `get_market_summary`, `generate_market_summary` MCP tools (task 130)
+- `src/interface/mcp/server.ts` — updated to 20 registered tools
+
+### In Progress (Sprint 013)
+- Circuit breaker pattern for fetchers — prevents cascade failures on source outages (task 136)
+- System health MCP tool — `get_system_health` exposing job status, DB size, RAG size (planned: `src/interface/mcp/tools/systemTools.ts`)
+
+### Deferred (Sprint 008+ backlog)
 - `src/infrastructure/fetchers/yahooFinance.ts` — Brent crude, gold, USD/VND (task 025)
 - `src/infrastructure/fetchers/sbv.ts` — SBV central bank rates + FX (task 028)
+- `src/infrastructure/fetchers/tradingEconomics.ts` — CPI, GDP, interest rate (task 024)
+- E2E test — daily briefing flow (task 125, after 024)
 
 ## Data model references
 
