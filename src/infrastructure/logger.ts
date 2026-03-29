@@ -8,7 +8,7 @@
  * Console output (JSON) is kept for real-time monitoring.
  */
 
-import { mkdirSync, appendFileSync } from "node:fs";
+import { mkdirSync, appendFile } from "node:fs";
 import { resolve } from "node:path";
 import type { LogLevel } from "./config.js";
 
@@ -83,7 +83,8 @@ function vnTimestamp(now?: Date): string {
 function appendToFile(filePath: string, line: string): void {
   try {
     ensureLogDir();
-    appendFileSync(filePath, line + "\n", "utf-8");
+    // Async fire-and-forget — never blocks the event loop
+    appendFile(filePath, line + "\n", "utf-8", () => {});
   } catch {
     // Never crash on log write failure
   }

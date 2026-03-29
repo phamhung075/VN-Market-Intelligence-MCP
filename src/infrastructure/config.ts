@@ -386,7 +386,7 @@ export const mcpConfig: McpConfig = loadMcpConfig();
  * - Off hours / weekends: larger batches (15/source, 40 total)
  */
 export function getCurrentFetchLimits(now?: Date): FetchLimitProfile {
-  const cfg = loadMcpConfig();
+  const cfg = mcpConfig; // Use cached singleton — avoids disk read on every call
   const d = now ?? new Date();
   const utcH = d.getUTCHours();
   const utcM = d.getUTCMinutes();

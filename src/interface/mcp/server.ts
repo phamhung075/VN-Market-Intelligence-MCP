@@ -153,7 +153,13 @@ export async function createBunServer(
       const reqTransport = new StreamableHTTPServerTransport({});
       const reqMcp = createMcpServerInstance();
       await reqMcp.connect(reqTransport as unknown as import("@modelcontextprotocol/sdk/shared/transport.js").Transport);
-      await reqTransport.handleRequest(req, res, parsedBody);
+      try {
+        await reqTransport.handleRequest(req, res, parsedBody);
+      } finally {
+        // Explicit cleanup prevents memory leak on long-running servers
+        await reqTransport.close().catch(() => {});
+        await reqMcp.close().catch(() => {});
+      }
       return;
     }
 

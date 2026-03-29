@@ -8,14 +8,18 @@
  * The read_bctc_pdf MCP tool reads from this table — instant response.
  */
 
-import { execSync, spawnSync } from "node:child_process";
+import { execFile, execSync, spawn } from "node:child_process";
+import { promisify } from "node:util";
 import { readFileSync, writeFileSync, mkdirSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { logger } from "../logger.js";
 import { getDb } from "../db/schema.js";
 
+const execFileAsync = promisify(execFile);
+
 export function isOcrAvailable(): boolean {
   try {
+    // Synchronous availability check — called once at startup, acceptable cost
     execSync("which pdftoppm", { stdio: "ignore" });
     execSync("which tesseract", { stdio: "ignore" });
     return true;
@@ -25,13 +29,82 @@ export function isOcrAvailable(): boolean {
 }
 
 /**
+ * Run pdftoppm for a single page and pipe output to tesseract.
+ * Returns the OCR text for that page, or empty string on failure.
+ * Fully async — never blocks the event loop.
+ */
+async function ocrOnePage(tmpPdf: string, page: number): Promise<string> {
+  return new Promise((resolve) => {
+    // Spawn pdftoppm
+    const ppm = spawn("pdftoppm", [
+      "-f", String(page), "-l", String(page), "-r", "200", tmpPdf,
+    ]);
+
+    // Spawn tesseract reading from stdin
+    const tess = spawn("tesseract", ["stdin", "stdout", "-l", "vie+eng"]);
+
+    const ppmChunks: Buffer[] = [];
+    const tessChunks: Buffer[] = [];
+    let resolved = false;
+
+    function done(text: string) {
+      if (!resolved) {
+        resolved = true;
+        resolve(text);
+      }
+    }
+
+    // Pipe pdftoppm stdout → tesseract stdin
+    ppm.stdout.on("data", (chunk: Buffer) => {
+      ppmChunks.push(chunk);
+      tess.stdin.write(chunk);
+    });
+
+    ppm.stderr.on("data", () => {}); // swallow
+
+    ppm.on("close", (code) => {
+      if (code !== 0 || ppmChunks.length === 0) {
+        tess.kill();
+        done("");
+        return;
+      }
+      tess.stdin.end();
+    });
+
+    ppm.on("error", () => {
+      tess.kill();
+      done("");
+    });
+
+    // Collect tesseract output
+    tess.stdout.on("data", (chunk: Buffer) => tessChunks.push(chunk));
+    tess.stderr.on("data", () => {}); // swallow
+
+    tess.on("close", () => {
+      const text = Buffer.concat(tessChunks).toString("utf-8").trim();
+      done(text);
+    });
+
+    tess.on("error", () => done(""));
+
+    // Per-page timeout safety net (45s)
+    setTimeout(() => {
+      ppm.kill();
+      tess.kill();
+      done("");
+    }, 45_000);
+  });
+}
+
+/**
  * Extract text from PDF page-by-page via OCR and store in SQLite.
  * Skips if already extracted.
+ * Async — never blocks the event loop.
  */
-export function extractAndStorePdfPages(
+export async function extractAndStorePdfPages(
   pdfPath: string,
   filename: string,
-): { pages: number; totalChars: number } {
+): Promise<{ pages: number; totalChars: number }> {
   const db = getDb();
 
   // Already extracted?
@@ -46,11 +119,13 @@ export function extractAndStorePdfPages(
     return { pages: 0, totalChars: 0 };
   }
 
-  // Get page count
+  // Get page count (execFile is async)
   let totalPages = 30;
   try {
-    const info = execSync(`pdfinfo "${pdfPath}" 2>/dev/null | grep Pages`, { encoding: "utf-8" });
-    totalPages = parseInt(info.replace(/[^0-9]/g, ""), 10) || 30;
+    const { stdout } = await execFileAsync("sh", [
+      "-c", `pdfinfo "${pdfPath}" 2>/dev/null | grep Pages`,
+    ]);
+    totalPages = parseInt(stdout.replace(/[^0-9]/g, ""), 10) || 30;
   } catch { /* use default */ }
 
   logger.info("[pdfOcr] starting", { filename, totalPages });
@@ -70,25 +145,16 @@ export function extractAndStorePdfPages(
 
   for (let page = 1; page <= maxPages; page++) {
     try {
-      const ppmResult = spawnSync("pdftoppm", [
-        "-f", String(page), "-l", String(page), "-r", "200", tmpPdf
-      ], { maxBuffer: 50 * 1024 * 1024, timeout: 30000 });
-
-      if (ppmResult.stdout.length === 0) {
-        insert.run(filename, page, "", 0);
-        continue;
-      }
-
-      const ocrResult = spawnSync("tesseract", [
-        "stdin", "stdout", "-l", "vie+eng"
-      ], { input: ppmResult.stdout, maxBuffer: 5 * 1024 * 1024, timeout: 30000 });
-
-      const pageText = ocrResult.stdout.toString("utf-8").trim();
+      const pageText = await ocrOnePage(tmpPdf, page);
       const confidence = pageText.length > 50 ? 0.8 : pageText.length > 10 ? 0.5 : 0.1;
 
       insert.run(filename, page, pageText, confidence);
-      extractedPages++;
-      totalChars += pageText.length;
+      if (pageText.length > 0) {
+        extractedPages++;
+        totalChars += pageText.length;
+      } else {
+        insert.run(filename, page, "", 0);
+      }
 
       if (page % 10 === 0) {
         logger.info("[pdfOcr] progress", { filename, page, of: maxPages, chars: totalChars });
@@ -96,6 +162,9 @@ export function extractAndStorePdfPages(
     } catch {
       insert.run(filename, page, "", 0);
     }
+
+    // Yield to the event loop between pages
+    await new Promise(r => setTimeout(r, 50));
   }
 
   try { rmSync(tmpDir, { recursive: true }); } catch { /* ignore */ }

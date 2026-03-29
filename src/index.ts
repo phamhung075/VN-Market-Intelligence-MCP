@@ -65,7 +65,13 @@ setTimeout(async () => {
     log.info("[bootstrap] checking PDFs for OCR extraction", { count: pdfs.length });
 
     for (const pdf of pdfs) {
-      extractAndStorePdfPages(join(pdfDir, pdf), pdf);
+      // Fire-and-forget: extractAndStorePdfPages is now async, errors are swallowed
+      extractAndStorePdfPages(join(pdfDir, pdf), pdf).catch((err) => {
+        log.warn("[bootstrap] OCR extraction error", {
+          pdf,
+          error: err instanceof Error ? err.message : String(err),
+        });
+      });
     }
   } catch (err) {
     log.warn("[bootstrap] background OCR check failed", {
@@ -77,6 +83,16 @@ setTimeout(async () => {
 // ── 5. Graceful shutdown ───────────────────────────────────────────────────
 async function shutdown(signal: string) {
   log.info(`[bootstrap] Received ${signal} — shutting down...`);
+  // Clean up Chrome browser instances first to prevent zombie processes
+  const { cleanupBrowsers } = await import("./infrastructure/fetchers/ssc.js");
+  cleanupBrowsers();
+  // Close LanceDB vector store
+  const { closeVectorStore } = await import("./infrastructure/rag/vectorstore.js");
+  await closeVectorStore().catch(() => {});
+  // Close SQLite database
+  const { closeDb } = await import("./infrastructure/db/schema.js");
+  closeDb();
+  // Stop HTTP server
   await srv.close();
   log.info("[bootstrap] Shutdown complete");
   process.exit(0);

@@ -99,11 +99,15 @@ export async function sendTelegramMessage(
     parse_mode: parseMode,
   });
 
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10_000);
+
   try {
     const response = await fetchFn(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body,
+      signal: controller.signal,
     });
 
     if (!response.ok) {
@@ -121,6 +125,8 @@ export async function sendTelegramMessage(
       chatId,
     });
     return false;
+  } finally {
+    clearTimeout(timeoutId);
   }
 }
 

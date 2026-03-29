@@ -247,5 +247,12 @@ function safeParseTags(raw: string | string[]): string[] {
  */
 export async function closeVectorStore(): Promise<void> {
   _table = null;
-  _db = null;
+  if (_db !== null) {
+    // LanceDB connection may expose a close() method — call it if present
+    const db = _db as unknown as { close?: () => void | Promise<void> };
+    if (typeof db.close === "function") {
+      await Promise.resolve(db.close()).catch(() => {});
+    }
+    _db = null;
+  }
 }

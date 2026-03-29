@@ -65,13 +65,16 @@ export interface PdfExtractionResult {
  */
 async function ocrPdfBuffer(buffer: Buffer, totalPages: number): Promise<string> {
   try {
-    const { execSync, spawnSync } = await import("node:child_process");
-    const { writeFileSync, unlinkSync, mkdirSync } = await import("node:fs");
+    const { execFile, spawn } = await import("node:child_process");
+    const { promisify } = await import("node:util");
+    const { writeFileSync, mkdirSync } = await import("node:fs");
     const { join } = await import("node:path");
 
-    // Check if required tools are available
-    try { execSync("which pdftoppm", { stdio: "ignore" }); } catch { return ""; }
-    try { execSync("which tesseract", { stdio: "ignore" }); } catch { return ""; }
+    const execFileAsync = promisify(execFile);
+
+    // Check if required tools are available (async)
+    try { await execFileAsync("which", ["pdftoppm"]); } catch { return ""; }
+    try { await execFileAsync("which", ["tesseract"]); } catch { return ""; }
 
     // Write PDF to a temp file (pdftoppm needs a file path)
     const tmpDir = `/tmp/ocr-${Date.now()}`;
@@ -85,26 +88,50 @@ async function ocrPdfBuffer(buffer: Buffer, totalPages: number): Promise<string>
 
     for (let page = 1; page <= maxPages; page++) {
       try {
-        // Convert page to PPM via pdftoppm
-        const ppmResult = spawnSync("pdftoppm", [
-          "-f", String(page), "-l", String(page),
-          "-r", "200", tmpPdf
-        ], { maxBuffer: 50 * 1024 * 1024, timeout: 30000 });
+        // Async pipe: pdftoppm stdout → tesseract stdin
+        const pageText = await new Promise<string>((resolve) => {
+          const ppm = spawn("pdftoppm", [
+            "-f", String(page), "-l", String(page), "-r", "200", tmpPdf,
+          ]);
+          const tess = spawn("tesseract", ["stdin", "stdout", "-l", "vie+eng"]);
 
-        if (ppmResult.stdout.length === 0) continue;
+          const ppmChunks: Buffer[] = [];
+          const tessChunks: Buffer[] = [];
+          let resolved = false;
 
-        // Pipe PPM to tesseract via stdin (workaround for leptonica bug)
-        const ocrResult = spawnSync("tesseract", [
-          "stdin", "stdout", "-l", "vie+eng"
-        ], { input: ppmResult.stdout, maxBuffer: 5 * 1024 * 1024, timeout: 30000 });
+          function done(text: string) {
+            if (!resolved) { resolved = true; resolve(text); }
+          }
 
-        const pageText = ocrResult.stdout.toString("utf-8").trim();
+          ppm.stdout.on("data", (chunk: Buffer) => {
+            ppmChunks.push(chunk);
+            tess.stdin.write(chunk);
+          });
+          ppm.stderr.on("data", () => {});
+          ppm.on("close", (code) => {
+            if (code !== 0 || ppmChunks.length === 0) { tess.kill(); done(""); return; }
+            tess.stdin.end();
+          });
+          ppm.on("error", () => { tess.kill(); done(""); });
+
+          tess.stdout.on("data", (chunk: Buffer) => tessChunks.push(chunk));
+          tess.stderr.on("data", () => {});
+          tess.on("close", () => done(Buffer.concat(tessChunks).toString("utf-8").trim()));
+          tess.on("error", () => done(""));
+
+          // Per-page safety timeout (45s)
+          setTimeout(() => { ppm.kill(); tess.kill(); done(""); }, 45_000);
+        });
+
         if (pageText.length > 10) {
           allText.push(pageText);
         }
       } catch {
         // Skip pages that fail OCR
       }
+
+      // Yield to event loop between pages
+      await new Promise(r => setTimeout(r, 50));
     }
 
     // Cleanup

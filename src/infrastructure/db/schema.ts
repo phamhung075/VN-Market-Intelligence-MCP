@@ -295,7 +295,10 @@ export async function initDatabase(): Promise<void> {
     CREATE INDEX IF NOT EXISTS idx_pdf_filename ON pdf_extracted_text(filename);
   `);
 
-  // ── Seed default watchlist from mcp.config.json ───────────────────────────
+  // ── Seed default watchlist from mcp.config.json (skip in tests) ────────────
+  // Skip seeding in test environments
+  const currentDbPath = Bun.env["DB_PATH"] ?? DB_PATH;
+  if (currentDbPath === ":memory:" || Bun.env["BUN_ENV"] === "test" || typeof Bun.env["BUN_TEST"] !== "undefined") return;
   try {
     const { mcpConfig } = await import("../config.js");
     const defaultStocks = mcpConfig.market.watchlist;

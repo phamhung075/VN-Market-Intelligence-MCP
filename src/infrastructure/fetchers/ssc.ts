@@ -133,8 +133,8 @@ export function cleanupBrowsers(): void {
   _activeBrowsers.clear();
 }
 
-/** Max time a browser instance can live before force-kill (3 minutes) */
-const BROWSER_MAX_LIFETIME_MS = 180_000;
+/** Max time a browser instance can live before force-kill (45 seconds) */
+const BROWSER_MAX_LIFETIME_MS = 45_000;
 
 // ---------------------------------------------------------------------------
 // Default browser factory (real Puppeteer + Chrome)
