@@ -3,73 +3,143 @@
 ## Prerequisites
 1. MCP server running: `bun run src/index.ts`
 2. Telegram configured in `.env` (bot token + chat ID)
-3. Claude Cowork / Claude Schedule account
+3. Cloudflare tunnel running: `cloudflared tunnel run --token $CLOUDFLARE_TOKEN`
+4. Claude Cowork / Claude Schedule account
+
+## Configuration
+
+### mcp.config.json (single source of truth)
+
+All settings are in `mcp.config.json` at project root. Key sections:
+
+| Section | What it controls |
+|---------|-----------------|
+| `server` | port, host, logLevel |
+| `market.watchlist` | **Default stocks** — auto-seeded on server restart if DB is empty |
+| `market.openTime/closeTime` | Vietnam market hours (09:00-15:30) |
+| `alerts` | drop/rise thresholds, Telegram trigger levels |
+| `scheduler` | All cron expressions |
+| `fetchers` | RSS URLs, API endpoints, timeouts |
+| `fetchLimits` | News per source by time of day |
+| `telegram` | Bot token, chat ID (override via .env) |
+
+### Watchlist Management
+
+**Default watchlist** is in `mcp.config.json`:
+```json
+"market": {
+  "watchlist": ["VNM", "FPT", "VCB", "VEA"]
+}
+```
+
+This auto-seeds the database on every server restart (only if watchlist table is empty).
+
+**To change stocks**:
+- Edit `mcp.config.json` → `market.watchlist` for permanent changes
+- Or use MCP tools at runtime: `add_to_watchlist` / `remove_from_watchlist`
+- Runtime changes persist in SQLite — they won't be overwritten by config
+
+**All agents read watchlist dynamically** via `get_watchlist` — no hardcoded stock codes.
+
+### .env (secrets only)
+```
+TELEGRAM_BOT_TOKEN=your_token
+TELEGRAM_CHAT_ID=your_chat_id
+TELEGRAM_ENABLED=true
+CLOUDFLARE_TOKEN=your_tunnel_token
+CLOUDFLARE_TUNNEL=vn-market-mcp
+```
 
 ## Quick Start
 
-### Step 1: Start the MCP Server
+### Step 1: Start MCP Server
 ```bash
 cd /path/to/VN-Market-Intelligence-MCP
 bun run src/index.ts
 ```
-Verify: `curl http://localhost:3000/health` → `{"status":"ok","toolCount":24}`
+Server auto-seeds watchlist from config, starts OCR for unprocessed PDFs, registers 26 tools.
 
-### Step 2: Create 6 Agents in Claude Cowork
+Verify: `curl https://zenmidi.com/health` → `{"status":"ok","toolCount":26}`
 
-For each agent, create a new scheduled task with:
-- **MCP Server**: `http://localhost:3000/sse`
-- **Prompt**: copy from the corresponding file below
-- **Schedule**: as specified in each file
+### Step 2: Start Cloudflare Tunnel
+```bash
+source .env
+cloudflared tunnel --no-autoupdate run --token "$CLOUDFLARE_TOKEN"
+```
+Permanent URL: `https://zenmidi.com/mcp`
 
-| Order | File | Cron (UTC) | Agent Name |
-|-------|------|------------|------------|
-| 1 | `01-news-scout.md` | `*/15 2-8 * * 1-5` + `0 * * * *` | News Scout |
-| 2 | `02-bctc-collector.md` | `0 1,13 * * *` | BCTC Collector |
-| 3 | `03-report-analyzer.md` | `0 2,14 * * *` | Report Analyzer |
-| 4 | `04-market-watcher.md` | `*/5 2-8 * * 1-5` | Market Watcher |
-| 5 | `05-alert-commander.md` | `*/10 * * * 1-5` + `*/30 * * * 0,6` | Alert Commander |
-| 6 | `06-digest-writer.md` | `30 15 * * *` + `0 16 * * 0` | Digest Writer |
+### Step 3: Create 6 Agents in Claude Cowork
 
-### Step 3: Verify
-After creating all agents, you should see in your Telegram group:
-- "✅ System online" at 08:55 Vietnam time (from Alert Commander)
-- Price updates during market hours
-- Daily digest at 22:30 Vietnam time
+MCP connector URL: `https://zenmidi.com/mcp`
+
+| Order | Agent | Schedule | File |
+|-------|-------|----------|------|
+| 1 | **News Scout** | Every 15 min (market), 60 min (off) | `01-news-scout.md` |
+| 2 | **Market Watcher** | Every 5 min (market hours) | `04-market-watcher.md` |
+| 3 | **BCTC Collector** | Daily 20:00 + 08:00 Vietnam | `02-bctc-collector.md` |
+| 4 | **Report Analyzer** | Daily 21:00 + 09:00 Vietnam | `03-report-analyzer.md` |
+| 5 | **Alert Commander** | Every 10 min (ONLY Telegram sender) | `05-alert-commander.md` |
+| 6 | **Digest Writer** | Daily 22:30 + Weekly Sunday | `06-digest-writer.md` |
+
+### Step 4: Verify
+- Telegram: "✅ System online" at 08:55 Vietnam (03:55 France CET)
+- Health: `curl https://zenmidi.com/health`
+
+## 26 MCP Tools Available
+
+| Category | Tools |
+|----------|-------|
+| **Watchlist** | add_to_watchlist, remove_from_watchlist, get_watchlist, update_thresholds |
+| **News** | fetch_and_analyze, run_impact_chain, search_similar_context, get_analysis_history |
+| **Market** | get_market_snapshot, get_macro_snapshot, get_patterns |
+| **Reports** | fetch_ssc_reports, get_financial_summary, compare_financials, list_stored_pdfs, read_bctc_pdf |
+| **Alerts** | get_alerts, mark_alert_read, run_daily_briefing |
+| **Summaries** | get_market_summary, generate_market_summary |
+| **Telegram** | send_test_telegram |
+| **System** | get_system_health, get_global_log, get_tool_log, get_error_summary |
 
 ## Agent Cooperation Flow
 
 ```
-07:00 VN  News Scout starts monitoring pre-market news
-08:55 VN  Alert Commander sends "System online" to Telegram
+07:00 VN  News Scout monitors pre-market news
+08:55 VN  Alert Commander sends "✅ System online"
 09:00 VN  Market Watcher starts 5-min price tracking
-09:00-15:30  All agents running at full frequency
-15:30 VN  Market closes — Market Watcher slows to 30-min
+09:00-15:30  All agents at full frequency
+15:30 VN  Market closes → Market Watcher slows
 15:45 VN  Alert Commander sends end-of-day summary
-20:00 VN  BCTC Collector checks SSC portal
-21:00 VN  Report Analyzer processes any new reports
-22:30 VN  Digest Writer compiles and sends daily digest
+20:00 VN  Server's SSC nightly job downloads new BCTC PDFs
+20:00 VN  BCTC Collector checks what's available
+21:00 VN  Report Analyzer reads financial data from DB
+22:30 VN  Digest Writer sends daily summary via Telegram
 ```
 
-## Telegram Output You'll Receive
+## Key Architecture Rules
 
-On a normal trading day (France time):
-```
-~03:55  ✅ System online (Alert Commander)
-~04:00-10:30  Price alerts if any stock moves significantly
-~10:45  📊 Market close summary (Alert Commander)
-~15:30  📊 Daily Digest with full analysis (Digest Writer)
-```
+1. **Watchlist is dynamic** — all agents call `get_watchlist`, never hardcode stocks
+2. **BCTC Collector does NOT call `fetch_ssc_reports`** — too heavy (Puppeteer). Server handles downloads via nightly cron.
+3. **Report Analyzer reads from DB** — uses `get_financial_summary` + `compare_financials`, NOT `read_bctc_pdf` each cycle
+4. **Only `read_bctc_pdf` for NEW files** — text is cached in SQLite after background OCR
+5. **Only Alert Commander sends Telegram** — max 10 messages/day
+6. **OCR runs in background** on server startup — processes unextracted PDFs automatically
 
-On weekends:
+## Telegram Output (France time)
+
 ```
-Occasional news alerts if significant global events occur
-Sunday ~17:00 CET: 📊 Weekly Digest
+~03:55 CET  ✅ System online
+~04:00-10:30  Price alerts (only significant moves)
+~10:45  📊 Market close summary
+~15:30  📊 Daily Digest
+Sunday ~17:00  📊 Weekly Digest
 ```
 
 ## Troubleshooting
 
-If an agent isn't working:
-1. Check MCP server: `curl http://localhost:3000/health`
-2. Use the `get_system_health` tool to check circuit breakers
-3. Use `get_error_summary` to see recent errors
-4. Use `get_tool_log` with the specific tool name for details
+| Problem | Fix |
+|---------|-----|
+| Server timeout | Kill zombie Chrome: `pkill -9 -f "Google Chrome.*no-sandbox"` then restart |
+| Watchlist empty | Auto-seeds on restart from mcp.config.json. Check `market.watchlist` |
+| Telegram fails | Check `.env` has TELEGRAM_BOT_TOKEN + TELEGRAM_CHAT_ID |
+| SSC timeout | Normal — portal is slow. Nightly job retries automatically |
+| OCR not working | Install: `brew install tesseract tesseract-lang poppler` |
+| Errors in log | Clear: run `get_system_health` tool, errors auto-resolve |
+| Tunnel down | Restart: `cloudflared tunnel run --token $CLOUDFLARE_TOKEN` |
