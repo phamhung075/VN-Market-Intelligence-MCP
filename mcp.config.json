@@ -162,5 +162,11 @@
       "newsPerSource": 20,
       "totalNews": 50
     }
+  },
+
+  "circuitBreaker": {
+    "failureThreshold": 5,
+    "resetTimeoutMs": 60000,
+    "halfOpenMaxAttempts": 2
   }
 }

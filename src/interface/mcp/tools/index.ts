@@ -15,3 +15,4 @@ export { registerMarketTools } from "./marketTools.js";
 export { registerMacroTools } from "./macroTools.js";
 export { registerTelegramTools } from "./telegramTools.js";
 export { registerSummaryTools } from "./summaryTools.js";
+export { registerSystemTools } from "./systemTools.js";
