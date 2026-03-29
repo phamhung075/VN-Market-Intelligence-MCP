@@ -89,7 +89,7 @@
 
 | # | Title | Branch | Notes |
 |---|-------|--------|-------|
-| — | — | — | Empty |
+| 131 | Alert quality system — cooldown, dedup, grouping | `task/131-alert-quality-system` | 35 tests, 0 fail |
 
 ---
 

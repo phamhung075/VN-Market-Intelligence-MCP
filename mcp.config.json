@@ -114,6 +114,14 @@
     "maxConcurrent": 1
   },
 
+  "alertQuality": {
+    "cooldownMinutes": 30,
+    "maxAlertsPerStockPerDay": 5,
+    "dedupWindowMinutes": 60,
+    "groupWindowMinutes": 15,
+    "neverSuppressSeverity": ["critical"]
+  },
+
   "fetchLimits": {
     "marketHours": {
       "newsPerSource": 5,
