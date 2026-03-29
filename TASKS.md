@@ -63,6 +63,7 @@
 | FIX-081 | Fix SSE test timeout flakiness | `task/fix-081-sse-timeout` | 2026-03-29 | [TASK_REPORT_FIX-081](reports/TASK_REPORT_FIX-081.md) |
 | 126 | Macro cascade integration | `task/126-macro-cascade` | 2026-03-29 | — |
 | 089 | `get_macro_snapshot` MCP tool | `task/089-tool-macro` | 2026-03-29 | — |
+| 134 | Sentiment classifier + cascade directional signals | `task/134-sentiment-classifier` | 2026-03-29 | — |
 
 > **Sprint 003 COMPLETE** — All 5 tasks merged: 021, 082, 063, 064, 086. PO sign-off: APPROVED 2026-03-27.
 > **Sprint 004 Wave 1** — Tasks 087, 022, 023 merged: 2026-03-27.
