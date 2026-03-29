@@ -633,31 +633,43 @@ export function registerReportTools(
 
       try {
         // Security: ensure file is within data/pdfs/
-        const resolved = resolve(filePath);
-        if (!resolved.startsWith(resolve(pdfDir))) {
+        const resolvedPath = resolve(filePath);
+        if (!resolvedPath.startsWith(resolve(pdfDir))) {
           return { content: [{ type: "text" as const, text: "Error: filename must be within data/pdfs/ directory." }] };
         }
 
-        const pdfBuffer = readFileSync(filePath);
+        // Try cached text first (instant — from background OCR)
+        const { getCachedPdfText } = await import("../../../infrastructure/fetchers/pdfOcrWorker.js");
+        const cached = getCachedPdfText(filename, maxChars ?? 50000);
 
-        // Verify PDF header
-        if (pdfBuffer.slice(0, 5).toString() !== "%PDF-") {
-          return { content: [{ type: "text" as const, text: `Error: ${filename} is not a valid PDF file.` }] };
-        }
+        let text: string;
+        let confidence: number;
 
-        // Extract text using pdf-parse
-        const { extractPdfText } = await import("../../../infrastructure/fetchers/pdf.js");
-        const { text, confidence } = await extractPdfText(pdfBuffer);
+        if (cached && cached.text.trim().length > 100) {
+          text = cached.text;
+          confidence = cached.confidence;
+        } else {
+          // No cache — try pdf-parse (fast, for text-based PDFs)
+          const pdfBuffer = readFileSync(filePath);
+          if (pdfBuffer.slice(0, 5).toString() !== "%PDF-") {
+            return { content: [{ type: "text" as const, text: `Error: ${filename} is not a valid PDF file.` }] };
+          }
 
-        if (!text || text.trim().length === 0) {
-          return { content: [{ type: "text" as const, text: `Error: Could not extract text from ${filename}. The PDF may be image-only (scanned). Confidence: ${(confidence * 100).toFixed(0)}%` }] };
+          const pdfParse = (await import("pdf-parse")).default;
+          const data = await pdfParse(pdfBuffer);
+          text = data.text ?? "";
+          confidence = text.trim().length > 200 ? 0.9 : 0.1;
+
+          if (text.trim().length < 200) {
+            return { content: [{ type: "text" as const, text: `Text extraction returned minimal content (${text.length} chars). OCR has not been run yet for this file. The server will process it in the background — try again in a few minutes.` }] };
+          }
         }
 
         const truncated = text.length > (maxChars ?? 50000) ? text.slice(0, maxChars ?? 50000) + "\n\n[... truncated ...]" : text;
 
         const header = [
           `=== BCTC PDF: ${filename} ===`,
-          `Size: ${(pdfBuffer.length / 1024 / 1024).toFixed(1)} MB`,
+          `File: ${filename}`,
           `Extracted text: ${text.length} chars (showing ${truncated.length})`,
           `Extraction confidence: ${(confidence * 100).toFixed(0)}%`,
           "",

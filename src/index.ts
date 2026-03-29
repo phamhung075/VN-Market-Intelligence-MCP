@@ -48,7 +48,33 @@ log.info("[bootstrap] Endpoints", {
 startScheduler();
 log.info("[bootstrap] Scheduler started — cron jobs active");
 
-// ── 4. Graceful shutdown ───────────────────────────────────────────────────
+// ── 4. Background OCR for unprocessed PDFs ────────────────────────────────
+setTimeout(async () => {
+  try {
+    const { readdirSync } = await import("node:fs");
+    const { resolve, join } = await import("node:path");
+    const { extractAndStorePdfPages, isOcrAvailable } = await import("./infrastructure/fetchers/pdfOcrWorker.js");
+
+    if (!isOcrAvailable()) {
+      log.info("[bootstrap] OCR not available (tesseract/pdftoppm) — skipping");
+      return;
+    }
+
+    const pdfDir = resolve(process.cwd(), "data", "pdfs");
+    const pdfs = readdirSync(pdfDir).filter(f => f.endsWith(".pdf"));
+    log.info("[bootstrap] checking PDFs for OCR extraction", { count: pdfs.length });
+
+    for (const pdf of pdfs) {
+      extractAndStorePdfPages(join(pdfDir, pdf), pdf);
+    }
+  } catch (err) {
+    log.warn("[bootstrap] background OCR check failed", {
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
+}, 10_000); // Start 10s after boot to not block startup
+
+// ── 5. Graceful shutdown ───────────────────────────────────────────────────
 async function shutdown(signal: string) {
   log.info(`[bootstrap] Received ${signal} — shutting down...`);
   await srv.close();

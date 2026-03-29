@@ -280,4 +280,18 @@ export async function initDatabase(): Promise<void> {
     CREATE INDEX IF NOT EXISTS idx_syslog_level  ON system_logs(level, timestamp);
     CREATE INDEX IF NOT EXISTS idx_syslog_source ON system_logs(source, timestamp);
   `);
+
+  // ── PDF Extracted Text (OCR cache) ──────────────────────────────────────
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS pdf_extracted_text (
+      id            INTEGER PRIMARY KEY AUTOINCREMENT,
+      filename      TEXT NOT NULL,
+      page_number   INTEGER NOT NULL,
+      text_content  TEXT NOT NULL,
+      confidence    REAL DEFAULT 0,
+      extracted_at  TEXT NOT NULL DEFAULT (datetime('now')),
+      UNIQUE(filename, page_number)
+    );
+    CREATE INDEX IF NOT EXISTS idx_pdf_filename ON pdf_extracted_text(filename);
+  `);
 }

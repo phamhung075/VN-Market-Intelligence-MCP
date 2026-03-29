@@ -12,6 +12,7 @@
         "better-sqlite3": "^11.0.0",
         "cheerio": "^1.0.0",
         "node-cron": "^3.0.3",
+        "node-tesseract-ocr": "^2.2.1",
         "pdf-parse": "^1.1.1",
         "puppeteer-core": "^24.40.0",
         "rss-parser": "^3.13.0",
@@ -474,6 +475,8 @@
     "node-cron": ["node-cron@3.0.3", "", { "dependencies": { "uuid": "8.3.2" } }, "sha512-dOal67//nohNgYWb+nWmg5dkFdIwDm8EpeGYMekPMrngV3637lqnX0lbUcCtgibHTz6SEz7DAIjKvKDFYCnO1A=="],
 
     "node-ensure": ["node-ensure@0.0.0", "", {}, "sha512-DRI60hzo2oKN1ma0ckc6nQWlHU69RH6xN0sjQTjMpChPfTYvKZdcQFfdYK2RWbJcKyUizSIy/l8OTGxMAM1QDw=="],
+
+    "node-tesseract-ocr": ["node-tesseract-ocr@2.2.1", "", {}, "sha512-Q9cD79JGpPNQBxbi1fV+OAsTxYKLpx22sagsxSyKbu1u+t6UarApf5m32uVc8a5QAP1Wk7fIPN0aJFGGEE9DyQ=="],
 
     "nth-check": ["nth-check@2.1.1", "", { "dependencies": { "boolbase": "^1.0.0" } }, "sha512-lqjrjmaOoAnWfMmBPL+XNnynZh2+swxiX3WUE0s4yEHI6m+AwrK2UZOimIRl3X/4QctVqS8AiZjFqyOGrMXb/w=="],
 
