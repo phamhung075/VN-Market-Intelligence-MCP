@@ -348,6 +348,7 @@ export function registerAnalysisTools(server: McpServer): void {
         .describe("Filter results to a specific level in the causal hierarchy"),
       actionCode: z
         .string()
+        .regex(/^[A-Z0-9]{1,10}$/, "actionCode must be 1–10 uppercase letters/digits (e.g. VCB)")
         .optional()
         .describe("Filter results to entries for a specific stock code, e.g. VCB"),
       k: z
