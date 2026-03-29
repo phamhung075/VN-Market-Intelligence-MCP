@@ -450,6 +450,7 @@ describe("Task 125 — E2E Daily Briefing Flow", () => {
           cafef: async () => [mockRssItem],
           vnexpress: async () => [],
           reuters: async () => [],
+          vneconomy: async () => [],
         },
         db,
         ragRetriever: async () => [],
@@ -887,19 +888,20 @@ describe("Task 125 — E2E Daily Briefing Flow", () => {
       expect(briefing.vnIndex).toBeUndefined();
     });
 
-    it("pollNews with all three sources failing returns errors=3 but no crash", async () => {
+    it("pollNews with all four sources failing returns errors=4 but no crash", async () => {
       const result = await pollNews({
         fetchers: {
           cafef: async () => { throw new Error("CafeF timeout"); },
           vnexpress: async () => { throw new Error("VnExpress timeout"); },
           reuters: async () => { throw new Error("Reuters timeout"); },
+          vneconomy: async () => { throw new Error("VnEconomy timeout"); },
         },
         db,
         ragRetriever: async () => [],
         watchlist: [],
       });
 
-      expect(result.errors).toBe(3);
+      expect(result.errors).toBe(4);
       expect(result.fetched).toBe(0);
       expect(result.inserted).toBe(0);
     });

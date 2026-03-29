@@ -51,6 +51,7 @@ export interface SourceFetchers {
   cafef?: () => Promise<RssItem[]>;
   vnexpress?: () => Promise<RssItem[]>;
   reuters?: () => Promise<RssItem[]>;
+  vneconomy?: () => Promise<RssItem[]>;
 }
 
 /**
@@ -95,6 +96,11 @@ async function defaultVnExpressFetcher(): Promise<RssItem[]> {
 async function defaultReutersFetcher(): Promise<RssItem[]> {
   const { fetchReuters } = await import("../../infrastructure/fetchers/reuters.js");
   return fetchReuters();
+}
+
+async function defaultVnEconomyFetcher(): Promise<RssItem[]> {
+  const { fetchVnEconomy } = await import("../../infrastructure/fetchers/vneconomy.js");
+  return fetchVnEconomy();
 }
 
 async function defaultRagRetriever(
@@ -198,13 +204,15 @@ export async function pollNews(options: PollNewsOptions = {}): Promise<PollNewsR
     cafef: options.fetchers?.cafef ?? defaultCafefFetcher,
     vnexpress: options.fetchers?.vnexpress ?? defaultVnExpressFetcher,
     reuters: options.fetchers?.reuters ?? defaultReutersFetcher,
+    vneconomy: options.fetchers?.vneconomy ?? defaultVnEconomyFetcher,
   };
 
-  // ── Step 1: Fetch all 3 sources in parallel ──────────────────────────────
+  // ── Step 1: Fetch all 4 sources in parallel ──────────────────────────────
   const results = await Promise.allSettled([
     fetchers.cafef(),
     fetchers.vnexpress(),
     fetchers.reuters(),
+    fetchers.vneconomy(),
   ]);
 
   const allItems: RssItem[] = [];

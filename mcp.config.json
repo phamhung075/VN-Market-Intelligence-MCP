@@ -85,7 +85,9 @@
       "cafef": "https://cafef.vn/rss/trang-chu.rss",
       "vnexpress": "https://vnexpress.net/rss/kinh-doanh.rss",
       "reuters": "https://www.reutersagency.com/feed/?best-topics=business-finance&post_type=best",
-      "apNews": "https://rsshub.app/apnews/topics/business"
+      "apNews": "https://rsshub.app/apnews/topics/business",
+      "vneconomyStocks": "https://vneconomy.vn/chung-khoan.rss",
+      "vneconomyFinance": "https://vneconomy.vn/tai-chinh.rss"
     },
     "tradingEconomics": {
       "baseUrl": "https://tradingeconomics.com",

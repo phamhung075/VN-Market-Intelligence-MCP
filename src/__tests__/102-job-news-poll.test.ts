@@ -122,6 +122,7 @@ describe("Task 102 — News Polling Job", () => {
           cafef: async () => [],
           vnexpress: async () => [],
           reuters: async () => [],
+          vneconomy: async () => [],
         },
         db: testDb,
         ragRetriever: async () => [],
@@ -150,6 +151,7 @@ describe("Task 102 — News Polling Job", () => {
           cafef: async () => items,
           vnexpress: async () => [],
           reuters: async () => [],
+          vneconomy: async () => [],
         },
         db: testDb,
         ragRetriever: async () => [],
@@ -175,6 +177,7 @@ describe("Task 102 — News Polling Job", () => {
         cafef: async () => items,
         vnexpress: async () => [],
         reuters: async () => [],
+        vneconomy: async () => [],
       };
 
       // First call
@@ -218,6 +221,7 @@ describe("Task 102 — News Polling Job", () => {
           cafef: async () => [noUrlItem],
           vnexpress: async () => [],
           reuters: async () => [],
+          vneconomy: async () => [],
         },
         db: testDb,
         ragRetriever: async () => [],
@@ -231,6 +235,7 @@ describe("Task 102 — News Polling Job", () => {
           cafef: async () => [noUrlItem],
           vnexpress: async () => [],
           reuters: async () => [],
+          vneconomy: async () => [],
         },
         db: testDb,
         ragRetriever: async () => [],
@@ -250,6 +255,7 @@ describe("Task 102 — News Polling Job", () => {
           cafef: async () => { throw new Error("network failure"); },
           vnexpress: async () => [makeRssItem("https://vnexpress.net/a1", "VnExpress article")],
           reuters: async () => [],
+          vneconomy: async () => [],
         },
         db: testDb,
         ragRetriever: async () => [],
@@ -282,6 +288,7 @@ describe("Task 102 — News Polling Job", () => {
           cafef: async () => [vcbItem],
           vnexpress: async () => [],
           reuters: async () => [],
+          vneconomy: async () => [],
         },
         db: testDb,
         ragRetriever: async () => [],
@@ -293,7 +300,7 @@ describe("Task 102 — News Polling Job", () => {
       expect(result.alerts).toBeGreaterThanOrEqual(0);
     });
 
-    it("fetches from all 3 sources in parallel and aggregates counts", async () => {
+    it("fetches from all 4 sources in parallel and aggregates counts", async () => {
       const { pollNews } = await import("../application/usecases/pollNews.js");
 
       const result = await pollNews({
@@ -304,14 +311,15 @@ describe("Task 102 — News Polling Job", () => {
           ],
           vnexpress: async () => [makeRssItem("https://vnexpress.net/s1", "VnExpress story 1")],
           reuters: async () => [makeRssItem("https://reuters.com/s1", "Reuters story 1")],
+          vneconomy: async () => [makeRssItem("https://vneconomy.vn/s1", "VnEconomy story 1")],
         },
         db: testDb,
         ragRetriever: async () => [],
         watchlist: [],
       });
 
-      expect(result.fetched).toBe(4);
-      expect(result.inserted).toBe(4);
+      expect(result.fetched).toBe(5);
+      expect(result.inserted).toBe(5);
       expect(result.errors).toBe(0);
     });
   });

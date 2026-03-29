@@ -38,6 +38,9 @@ export { fetchVnExpress } from "./vnexpress.js";
 // ── Task 023: Reuters / AP News RSS fetcher ────────────────────────────────────
 export { fetchReuters } from "./reuters.js";
 
+// ── VnEconomy RSS fetcher ───────────────────────────────────────────────────
+export { fetchVnEconomy } from "./vneconomy.js";
+
 // ── Task 026: HOSE market data fetcher (VnDirect API) ─────────────────────────
 export {
   fetchHosePrices,
