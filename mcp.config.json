@@ -1,0 +1,114 @@
+{
+  "server": {
+    "port": 3000,
+    "host": "127.0.0.1",
+    "name": "vn-market-intelligence",
+    "version": "1.0.0",
+    "logLevel": "info"
+  },
+
+  "data": {
+    "dbPath": "./data/market.db",
+    "lancedbPath": "./data/lancedb",
+    "briefingsDir": "./data/briefings",
+    "reportsDir": "./data/reports"
+  },
+
+  "embedding": {
+    "model": "Xenova/paraphrase-multilingual-MiniLM-L12-v2",
+    "cacheDir": "./data/models",
+    "dimensions": 384,
+    "maxTextLength": 2000
+  },
+
+  "telegram": {
+    "botToken": "",
+    "chatId": "",
+    "parseMode": "Markdown",
+    "enabled": false
+  },
+
+  "market": {
+    "timezone": "Asia/Ho_Chi_Minh",
+    "utcOffset": 7,
+    "openTime": "09:00",
+    "closeTime": "15:30",
+    "tradingDays": [1, 2, 3, 4, 5],
+    "watchlist": ["VNM", "FPT", "VCB", "VEA"]
+  },
+
+  "scheduler": {
+    "intelligenceCycle": "*/15 * * * *",
+    "morningBriefing": "0 8 * * 1-5",
+    "marketOpen": "0 9 * * 1-5",
+    "marketClose": "30 15 * * 1-5",
+    "sscCheck": "0 20 * * *",
+    "eveningSummary": "0 22 * * 1-5"
+  },
+
+  "alerts": {
+    "defaultDropPct": -3,
+    "defaultRisePct": 5,
+    "defaultImpactScoreMin": 7,
+    "volumeSpikeMultiplier": 2,
+    "reportFreshHours": 24,
+    "severityEscalation": {
+      "signalsForHigh": 2,
+      "signalsForCritical": 3
+    },
+    "telegramOnSeverity": ["high", "critical"],
+    "telegramOnNewDocument": true,
+    "telegramMinCascadeConfidence": 0.7
+  },
+
+  "fetchers": {
+    "httpTimeoutMs": 15000,
+    "ssc": {
+      "url": "https://congbothongtin.ssc.gov.vn/faces/NewsSearch",
+      "chromePath": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+      "pageTimeoutMs": 30000,
+      "selectorTimeoutMs": 15000,
+      "inputDelayMs": 80,
+      "resultsWaitMs": 5000,
+      "downloadWaitMs": 5000,
+      "headless": true
+    },
+    "hose": {
+      "apiBase": "https://finfo-api.vndirect.com.vn/v4",
+      "maxPageSize": 100,
+      "avgVolumeWindow": 20
+    },
+    "hnx": {
+      "apiBase": "https://api.hnx.vn/api/snapshot"
+    },
+    "rss": {
+      "cafef": "https://cafef.vn/rss/trang-chu.rss",
+      "vnexpress": "https://vnexpress.net/rss/kinh-doanh.rss",
+      "reuters": "https://www.reutersagency.com/feed/?best-topics=business-finance&post_type=best",
+      "apNews": "https://rsshub.app/apnews/topics/business"
+    },
+    "tradingEconomics": {
+      "baseUrl": "https://tradingeconomics.com",
+      "indicatorsPath": "/vietnam/indicators"
+    },
+    "yahooFinance": {
+      "baseUrl": "https://finance.yahoo.com",
+      "symbols": {
+        "brentCrude": "BZ=F",
+        "gold": "GC=F",
+        "usdVnd": "USDVND=X"
+      }
+    },
+    "sbv": {
+      "baseUrl": "https://www.sbv.gov.vn",
+      "ratesPath": "/en/home/rm/ir",
+      "fxPath": "/en/home/rm/ex"
+    }
+  },
+
+  "cycle": {
+    "warnThresholdMinutes": 12,
+    "offHoursIntervalMinutes": 60,
+    "maxConcurrent": 1
+  }
+}

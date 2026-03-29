@@ -19,6 +19,11 @@ import { logger } from "../infrastructure/logger.js";
 
 let isRunning = false;
 
+/** Reset concurrency guard — exported for test isolation. */
+export function resetMorningBriefingGuard(): void {
+  isRunning = false;
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Public API
 // ─────────────────────────────────────────────────────────────────────────────
