@@ -84,8 +84,8 @@
     "rss": {
       "cafef": "https://cafef.vn/rss/trang-chu.rss",
       "vnexpress": "https://vnexpress.net/rss/kinh-doanh.rss",
-      "reuters": "https://www.reutersagency.com/feed/?best-topics=business-finance&post_type=best",
-      "apNews": "https://rsshub.app/apnews/topics/business",
+      "reuters": "https://news.google.com/rss/search?q=vietnam+economy+OR+stock+market&hl=en",
+      "apNews": "https://news.google.com/rss/search?q=asia+finance+OR+emerging+markets&hl=en",
       "vneconomyStocks": "https://vneconomy.vn/chung-khoan.rss",
       "vneconomyFinance": "https://vneconomy.vn/tai-chinh.rss"
     },
@@ -94,7 +94,7 @@
       "indicatorsPath": "/vietnam/indicators"
     },
     "yahooFinance": {
-      "baseUrl": "https://finance.yahoo.com",
+      "apiUrl": "https://query1.finance.yahoo.com/v8/finance/chart",
       "symbols": {
         "brentCrude": "BZ=F",
         "gold": "GC=F",
@@ -102,9 +102,9 @@
       }
     },
     "sbv": {
-      "baseUrl": "https://www.sbv.gov.vn",
-      "ratesPath": "/en/home/rm/ir",
-      "fxPath": "/en/home/rm/ex"
+      "vcbRatesUrl": "https://portal.vietcombank.com.vn/Usercontrols/TVPortal.TyGia/pXML.aspx?b=68",
+      "fallbackOvernightRate": 3.0,
+      "fallbackRefinancingRate": 4.5
     }
   },
 

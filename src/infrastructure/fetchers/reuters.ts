@@ -1,10 +1,19 @@
 /**
- * Infrastructure — Reuters / AP News RSS Fetcher
+ * Infrastructure — International Finance News RSS Fetcher
  *
  * Fetches international business/finance news with a sequential fallback:
- *   1. Try Reuters Agency RSS feed first.
- *   2. If Reuters returns an empty result or throws, try AP News via RSSHub.
+ *   1. Try the primary Google News RSS feed for Vietnam economy / stock market news.
+ *   2. If the primary returns an empty result or throws, try the secondary Google News
+ *      feed for broader Asia finance / emerging markets news.
  *   3. If both fail, return an empty array (never throws).
+ *
+ * Google News RSS endpoints (replaces the defunct Reuters/AP feeds):
+ *   Primary:   https://news.google.com/rss/search?q=vietnam+economy+OR+stock+market&hl=en
+ *   Secondary: https://news.google.com/rss/search?q=asia+finance+OR+emerging+markets&hl=en
+ *
+ * Source tags are kept for backward compatibility:
+ *   - Primary feed items are tagged source = 'reuters'
+ *   - Secondary feed items are tagged source = 'ap_news'
  *
  * Layer: infrastructure/fetchers — may use HTTP libs, must not import domain/.
  */
@@ -17,17 +26,24 @@ import { logger } from "../logger.js";
 // Constants
 // ---------------------------------------------------------------------------
 
-/** Reuters Agency RSS feed for business/finance topics. */
-const REUTERS_RSS_URL =
-  "https://www.reutersagency.com/feed/?best-topics=business-finance&post_type=best";
+/** Primary Google News RSS feed — Vietnam economy + stock market news. */
+const GOOGLE_NEWS_PRIMARY_URL =
+  "https://news.google.com/rss/search?q=vietnam+economy+OR+stock+market&hl=en";
 
-/** AP News RSS feed via RSSHub (public mirror). */
-const AP_NEWS_RSS_URL = "https://rsshub.app/apnews/topics/business";
+/** Secondary Google News RSS feed — Asia finance + emerging markets. */
+const GOOGLE_NEWS_SECONDARY_URL =
+  "https://news.google.com/rss/search?q=asia+finance+OR+emerging+markets&hl=en";
 
-/** Source tag for items fetched from the Reuters feed. */
+/**
+ * Source tag for primary feed items.
+ * Kept as 'reuters' for backward compatibility with downstream consumers.
+ */
 const REUTERS_SOURCE = "reuters";
 
-/** Source tag for items fetched from the AP News fallback feed. */
+/**
+ * Source tag for secondary feed items.
+ * Kept as 'ap_news' for backward compatibility with downstream consumers.
+ */
 const AP_NEWS_SOURCE = "ap_news";
 
 // ---------------------------------------------------------------------------
@@ -103,16 +119,17 @@ async function tryFetchFeed(
 // ---------------------------------------------------------------------------
 
 /**
- * Fetches international business/finance news from Reuters with fallback to AP News.
+ * Fetches international finance news from Google News RSS feeds with fallback.
  *
  * Strategy:
- *   1. Fetch Reuters RSS (`reutersagency.com`). If ≥1 item returned → done.
- *   2. Otherwise fall back to AP News via RSSHub. If ≥1 item → done.
+ *   1. Fetch primary Google News RSS (Vietnam economy / stocks). If ≥1 item → done.
+ *   2. Otherwise fall back to secondary Google News RSS (Asia finance / emerging markets).
+ *      If ≥1 item → done.
  *   3. Return `[]` if both fail — never throws.
  *
- * Items are tagged:
- *   - `source = 'reuters'`  when the Reuters feed succeeds.
- *   - `source = 'ap_news'`  when the AP News fallback is used.
+ * Source tags (preserved for backward compatibility):
+ *   - `source = 'reuters'`  when the primary feed succeeds.
+ *   - `source = 'ap_news'`  when the secondary fallback is used.
  *
  * @param httpClient - Optional HTTP client; defaults to an axios-backed client.
  *                     Inject a mock in tests to avoid real network calls.
@@ -121,17 +138,27 @@ async function tryFetchFeed(
 export async function fetchReuters(httpClient?: HttpClient): Promise<RssItem[]> {
   const client = httpClient ?? (await makeDefaultHttpClient());
 
-  // Step 1: Reuters primary
-  const reutersItems = await tryFetchFeed(REUTERS_RSS_URL, REUTERS_SOURCE, client);
-  if (reutersItems.length > 0) {
-    return reutersItems;
+  // Step 1: Primary Google News feed (Vietnam economy / stocks)
+  const primaryItems = await tryFetchFeed(
+    GOOGLE_NEWS_PRIMARY_URL,
+    REUTERS_SOURCE,
+    client,
+  );
+  if (primaryItems.length > 0) {
+    return primaryItems;
   }
 
-  // Step 2: AP News fallback
-  logger.info("[reuters] Reuters feed empty or failed — trying AP News fallback");
-  const apItems = await tryFetchFeed(AP_NEWS_RSS_URL, AP_NEWS_SOURCE, client);
-  if (apItems.length > 0) {
-    return apItems;
+  // Step 2: Secondary Google News feed (Asia finance / emerging markets)
+  logger.info(
+    "[reuters] primary Google News feed empty or failed — trying secondary feed",
+  );
+  const secondaryItems = await tryFetchFeed(
+    GOOGLE_NEWS_SECONDARY_URL,
+    AP_NEWS_SOURCE,
+    client,
+  );
+  if (secondaryItems.length > 0) {
+    return secondaryItems;
   }
 
   // Step 3: total failure — return empty array

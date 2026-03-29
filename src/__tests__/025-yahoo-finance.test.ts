@@ -4,10 +4,14 @@
  * Tests for fetchYahooFinancePrices() and storeCommoditySnapshot()
  * in src/infrastructure/fetchers/yahooFinance.ts.
  *
- * All HTTP calls are mocked — no real network traffic.
- * DB tests use an in-memory SQLite via DB_PATH=:memory:.
+ * Implementation uses the Yahoo Finance Chart JSON API:
+ *   GET https://query1.finance.yahoo.com/v8/finance/chart/{SYMBOL}?interval=1d&range=1d
+ * Response field: data.chart.result[0].meta.regularMarketPrice
  *
- * Test IDs: YF-01 through YF-12
+ * All HTTP calls are mocked — no real network traffic.
+ * DB tests use an in-memory SQLite via local Database instances.
+ *
+ * Test IDs: YF-01 through YF-13
  */
 
 import { Database } from "bun:sqlite";
@@ -18,51 +22,73 @@ import {
   type CommoditySnapshot,
   type HttpClient,
 } from "../infrastructure/fetchers/yahooFinance.js";
-import { initDatabase, getDb, closeDb } from "../infrastructure/db/schema.js";
 
 // ---------------------------------------------------------------------------
-// Mock HTML builders
+// Mock JSON builders
 // ---------------------------------------------------------------------------
 
 /**
- * Builds minimal Yahoo Finance HTML containing fin-streamer elements
- * for the requested symbols.
+ * Builds a Yahoo Finance Chart API JSON response for a given price.
+ * Mirrors the real API structure: chart.result[0].meta.regularMarketPrice
  */
-function buildYahooHtml(
-  symbols: Record<string, string | null>,
-): string {
-  const elements = Object.entries(symbols)
-    .map(([symbol, value]) => {
-      if (value === null) return ""; // simulate missing element
-      return `<fin-streamer data-symbol="${symbol}" data-field="regularMarketPrice" value="${value}">${value}</fin-streamer>`;
-    })
-    .join("\n");
-
-  return `<!DOCTYPE html><html><body>${elements}</body></html>`;
+function buildYahooJsonResponse(price: number): string {
+  return JSON.stringify({
+    chart: {
+      result: [
+        {
+          meta: {
+            regularMarketPrice: price,
+            symbol: "TEST",
+          },
+        },
+      ],
+      error: null,
+    },
+  });
 }
 
 /**
- * Builds Yahoo Finance HTML using only text content (no value attribute)
- * to test the text fallback path.
+ * Builds an "empty / no data" Yahoo Finance JSON response (missing result array).
+ * Used to simulate a symbol that returns no market data.
  */
-function buildYahooHtmlTextOnly(
-  symbols: Record<string, string>,
-): string {
-  const elements = Object.entries(symbols)
-    .map(
-      ([symbol, value]) =>
-        `<fin-streamer data-symbol="${symbol}" data-field="regularMarketPrice">${value}</fin-streamer>`,
-    )
-    .join("\n");
-
-  return `<!DOCTYPE html><html><body>${elements}</body></html>`;
+function buildEmptyYahooJsonResponse(): string {
+  return JSON.stringify({
+    chart: {
+      result: null,
+      error: { code: "Not Found", description: "No data found" },
+    },
+  });
 }
 
-/** Creates a mock HttpClient that always returns the provided HTML body. */
-function mockClient(html: string): HttpClient {
+// ---------------------------------------------------------------------------
+// Mock HTTP client factories
+// ---------------------------------------------------------------------------
+
+/**
+ * Creates a mock HttpClient that returns per-symbol JSON responses based on
+ * which symbol appears in the requested URL.
+ *
+ * @param responses - Map of symbol substring to response string or Error.
+ *                    "default" key is used for unmatched URLs.
+ */
+function symbolAwareClient(
+  responses: Record<string, string | Error>,
+): HttpClient {
   return {
-    async get(_url: string): Promise<string> {
-      return html;
+    async get(url: string): Promise<string> {
+      for (const [symbol, response] of Object.entries(responses)) {
+        if (url.includes(encodeURIComponent(symbol)) || url.includes(symbol)) {
+          if (response instanceof Error) throw response;
+          return response;
+        }
+      }
+      // "default" fallback
+      const defaultResponse = responses["default"];
+      if (defaultResponse !== undefined) {
+        if (defaultResponse instanceof Error) throw defaultResponse;
+        return defaultResponse;
+      }
+      throw new Error(`No mock configured for URL: ${url}`);
     },
   };
 }
@@ -80,10 +106,10 @@ function failingClient(): HttpClient {
 // Standard mock responses
 // ---------------------------------------------------------------------------
 
-const ALL_SYMBOLS_HTML = buildYahooHtml({
-  "BZ=F": "82.50",
-  "GC=F": "2341.80",
-  "USDVND=X": "25100.00",
+const ALL_SYMBOLS_CLIENT = symbolAwareClient({
+  "BZ%3DF": buildYahooJsonResponse(82.5),
+  "GC%3DF": buildYahooJsonResponse(2341.8),
+  "USDVND%3DX": buildYahooJsonResponse(25100.0),
 });
 
 // ---------------------------------------------------------------------------
@@ -92,8 +118,8 @@ const ALL_SYMBOLS_HTML = buildYahooHtml({
 
 describe("Task 025 — Yahoo Finance Commodity Fetcher", () => {
   // ── YF-01: Successful parse of all 3 symbols ────────────────────────────
-  it("YF-01: returns CommoditySnapshot with all 3 prices on valid HTML", async () => {
-    const result = await fetchYahooFinancePrices(mockClient(ALL_SYMBOLS_HTML));
+  it("YF-01: returns CommoditySnapshot with all 3 prices on valid JSON API response", async () => {
+    const result = await fetchYahooFinancePrices(ALL_SYMBOLS_CLIENT);
 
     expect(result).not.toBeNull();
     expect(result!.brentCrudeUSD).toBeCloseTo(82.5, 2);
@@ -101,15 +127,15 @@ describe("Task 025 — Yahoo Finance Commodity Fetcher", () => {
     expect(result!.usdVndRate).toBeCloseTo(25100.0, 0);
   });
 
-  // ── YF-02: Brent crude parse failure → field=0, others still work ────────
-  it("YF-02: sets brentCrudeUSD=0 when BZ=F element is missing, others succeed", async () => {
-    const html = buildYahooHtml({
-      "BZ=F": null,
-      "GC=F": "2341.80",
-      "USDVND=X": "25100.00",
+  // ── YF-02: Brent crude API returns no data → field=0, others still work ──
+  it("YF-02: sets brentCrudeUSD=0 when BZ=F returns no data, others succeed", async () => {
+    const client = symbolAwareClient({
+      "BZ%3DF": buildEmptyYahooJsonResponse(),
+      "GC%3DF": buildYahooJsonResponse(2341.8),
+      "USDVND%3DX": buildYahooJsonResponse(25100.0),
     });
 
-    const result = await fetchYahooFinancePrices(mockClient(html));
+    const result = await fetchYahooFinancePrices(client);
 
     expect(result).not.toBeNull();
     expect(result!.brentCrudeUSD).toBe(0);
@@ -117,15 +143,15 @@ describe("Task 025 — Yahoo Finance Commodity Fetcher", () => {
     expect(result!.usdVndRate).toBeCloseTo(25100.0, 0);
   });
 
-  // ── YF-03: Gold parse failure → field=0 ─────────────────────────────────
-  it("YF-03: sets goldUSDPerOz=0 when GC=F element is missing, others succeed", async () => {
-    const html = buildYahooHtml({
-      "BZ=F": "82.50",
-      "GC=F": null,
-      "USDVND=X": "25100.00",
+  // ── YF-03: Gold API returns no data → field=0 ────────────────────────────
+  it("YF-03: sets goldUSDPerOz=0 when GC=F returns no data, others succeed", async () => {
+    const client = symbolAwareClient({
+      "BZ%3DF": buildYahooJsonResponse(82.5),
+      "GC%3DF": buildEmptyYahooJsonResponse(),
+      "USDVND%3DX": buildYahooJsonResponse(25100.0),
     });
 
-    const result = await fetchYahooFinancePrices(mockClient(html));
+    const result = await fetchYahooFinancePrices(client);
 
     expect(result).not.toBeNull();
     expect(result!.brentCrudeUSD).toBeCloseTo(82.5, 2);
@@ -133,15 +159,15 @@ describe("Task 025 — Yahoo Finance Commodity Fetcher", () => {
     expect(result!.usdVndRate).toBeCloseTo(25100.0, 0);
   });
 
-  // ── YF-04: USD/VND parse failure → field=0 ──────────────────────────────
-  it("YF-04: sets usdVndRate=0 when USDVND=X element is missing, others succeed", async () => {
-    const html = buildYahooHtml({
-      "BZ=F": "82.50",
-      "GC=F": "2341.80",
-      "USDVND=X": null,
+  // ── YF-04: USD/VND API returns no data → field=0 ─────────────────────────
+  it("YF-04: sets usdVndRate=0 when USDVND=X returns no data, others succeed", async () => {
+    const client = symbolAwareClient({
+      "BZ%3DF": buildYahooJsonResponse(82.5),
+      "GC%3DF": buildYahooJsonResponse(2341.8),
+      "USDVND%3DX": buildEmptyYahooJsonResponse(),
     });
 
-    const result = await fetchYahooFinancePrices(mockClient(html));
+    const result = await fetchYahooFinancePrices(client);
 
     expect(result).not.toBeNull();
     expect(result!.brentCrudeUSD).toBeCloseTo(82.5, 2);
@@ -149,48 +175,48 @@ describe("Task 025 — Yahoo Finance Commodity Fetcher", () => {
     expect(result!.usdVndRate).toBe(0);
   });
 
-  // ── YF-05: All 3 fail → returns null ────────────────────────────────────
-  it("YF-05: returns null when all 3 symbols fail to parse", async () => {
-    const html = buildYahooHtml({
-      "BZ=F": null,
-      "GC=F": null,
-      "USDVND=X": null,
+  // ── YF-05: All 3 return no data → returns null ───────────────────────────
+  it("YF-05: returns null when all 3 symbols return empty JSON (no prices)", async () => {
+    const client = symbolAwareClient({
+      "default": buildEmptyYahooJsonResponse(),
     });
 
-    const result = await fetchYahooFinancePrices(mockClient(html));
+    const result = await fetchYahooFinancePrices(client);
     expect(result).toBeNull();
   });
 
-  // ── YF-06: HTTP error → returns null, no throw ──────────────────────────
+  // ── YF-06: HTTP error → returns null, no throw ───────────────────────────
   it("YF-06: returns null on HTTP error and does not throw", async () => {
     const result = await fetchYahooFinancePrices(failingClient());
     expect(result).toBeNull();
   });
 
-  // ── YF-07: Missing fin-streamer element (empty page) → field=0 ──────────
-  it("YF-07: fields default to 0 when fin-streamer elements are absent from page", async () => {
-    const emptyHtml = `<!DOCTYPE html><html><body><p>No data here</p></body></html>`;
-    const result = await fetchYahooFinancePrices(mockClient(emptyHtml));
+  // ── YF-07: Malformed JSON response → field=0 ────────────────────────────
+  it("YF-07: fields default to 0 when API returns malformed JSON", async () => {
+    const client = symbolAwareClient({
+      "default": "not valid json <<<",
+    });
+    const result = await fetchYahooFinancePrices(client);
     // All fields are 0 → returns null because all failed
     expect(result).toBeNull();
   });
 
-  // ── YF-08: Comma in price string → correct parse ─────────────────────────
-  it("YF-08: correctly parses prices with US comma separators like '2,341.50'", async () => {
-    const html = buildYahooHtml({
-      "BZ=F": "82.50",
-      "GC=F": "2,341.50",
-      "USDVND=X": "25,100.00",
+  // ── YF-08: Large price value (USD/VND ~25100) → correct parse ───────────
+  it("YF-08: correctly parses large numeric prices like USD/VND rate ~25000", async () => {
+    const client = symbolAwareClient({
+      "BZ%3DF": buildYahooJsonResponse(82.5),
+      "GC%3DF": buildYahooJsonResponse(2341.5),
+      "USDVND%3DX": buildYahooJsonResponse(25100.0),
     });
 
-    const result = await fetchYahooFinancePrices(mockClient(html));
+    const result = await fetchYahooFinancePrices(client);
 
     expect(result).not.toBeNull();
     expect(result!.goldUSDPerOz).toBeCloseTo(2341.5, 1);
     expect(result!.usdVndRate).toBeCloseTo(25100.0, 0);
   });
 
-  // ── YF-09: storeCommoditySnapshot upsert semantics ──────────────────────
+  // ── YF-09: storeCommoditySnapshot upsert semantics ─────────────────────
   it("YF-09: storeCommoditySnapshot upserts (INSERT OR REPLACE) into commodity_prices", () => {
     // Use a fully local in-memory DB — bypasses the singleton to ensure isolation
     const db = new Database(":memory:");
@@ -245,7 +271,7 @@ describe("Task 025 — Yahoo Finance Commodity Fetcher", () => {
     db.close();
   });
 
-  // ── YF-10: storeCommoditySnapshot history append ─────────────────────────
+  // ── YF-10: storeCommoditySnapshot history append ────────────────────────
   it("YF-10: storeCommoditySnapshot appends each call to commodity_prices_history", () => {
     // Use a fully local in-memory DB — bypasses the singleton to ensure isolation
     const db = new Database(":memory:");
@@ -295,16 +321,16 @@ describe("Task 025 — Yahoo Finance Commodity Fetcher", () => {
     db.close();
   });
 
-  // ── YF-11: barrel export check ───────────────────────────────────────────
+  // ── YF-11: barrel export check ──────────────────────────────────────────
   it("YF-11: fetchYahooFinancePrices and storeCommoditySnapshot are exported from barrel", async () => {
     const barrel = await import("../infrastructure/fetchers/index.js");
     expect(typeof barrel.fetchYahooFinancePrices).toBe("function");
     expect(typeof barrel.storeCommoditySnapshot).toBe("function");
   });
 
-  // ── YF-12: fetchedAt is ISO 8601 ─────────────────────────────────────────
+  // ── YF-12: fetchedAt is ISO 8601 ────────────────────────────────────────
   it("YF-12: fetchedAt in returned CommoditySnapshot is a valid ISO 8601 timestamp", async () => {
-    const result = await fetchYahooFinancePrices(mockClient(ALL_SYMBOLS_HTML));
+    const result = await fetchYahooFinancePrices(ALL_SYMBOLS_CLIENT);
 
     expect(result).not.toBeNull();
     const parsed = new Date(result!.fetchedAt);
@@ -313,19 +339,18 @@ describe("Task 025 — Yahoo Finance Commodity Fetcher", () => {
     expect(result!.fetchedAt).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/);
   });
 
-  // ── YF-13: value attribute takes priority over text content ──────────────
-  it("YF-13: reads value attribute first, falls back to text content when attribute absent", async () => {
-    // Text-only HTML (no value= attribute)
-    const textHtml = buildYahooHtmlTextOnly({
-      "BZ=F": "77.77",
-      "GC=F": "2222.22",
-      "USDVND=X": "24999.00",
+  // ── YF-13: Three concurrent API calls — one HTTP error → partial results ─
+  it("YF-13: HTTP error on one symbol sets that field to 0 while others succeed", async () => {
+    const client = symbolAwareClient({
+      "BZ%3DF": new Error("429 Rate limited"),
+      "GC%3DF": buildYahooJsonResponse(2222.22),
+      "USDVND%3DX": buildYahooJsonResponse(24999.0),
     });
 
-    const result = await fetchYahooFinancePrices(mockClient(textHtml));
+    const result = await fetchYahooFinancePrices(client);
 
     expect(result).not.toBeNull();
-    expect(result!.brentCrudeUSD).toBeCloseTo(77.77, 2);
+    expect(result!.brentCrudeUSD).toBe(0);
     expect(result!.goldUSDPerOz).toBeCloseTo(2222.22, 1);
     expect(result!.usdVndRate).toBeCloseTo(24999.0, 0);
   });

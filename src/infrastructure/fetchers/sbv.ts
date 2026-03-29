@@ -1,19 +1,25 @@
 /**
  * Infrastructure — SBV (State Bank of Vietnam) Macro Fetcher (Task 028)
  *
- * Fetches macro data from the State Bank of Vietnam public portal:
- *   - Interest rates: https://www.sbv.gov.vn/en/home/rm/ir
- *     Parses overnight rate and refinancing rate from an HTML table.
- *   - Exchange rates: https://www.sbv.gov.vn/en/home/rm/ex
- *     Parses the official USD/VND exchange rate from an HTML table.
+ * Fetches macro data for Vietnamese market analysis:
+ *
+ *   FX rate:        Vietcombank XML API (VCB portal) — live USD/VND transfer rate.
+ *   Interest rates: SBV web portal is down; reads configurable fallback values from
+ *                   mcp.config.json (sbv.fallbackOvernightRate / sbv.fallbackRefinancingRate)
+ *                   or the SBV_OVERNIGHT_RATE / SBV_REFINANCING_RATE env vars.
+ *
+ * VCB XML API:
+ *   URL: https://portal.vietcombank.com.vn/Usercontrols/TVPortal.TyGia/pXML.aspx?b=68
+ *   Parses: <Exrate CurrencyCode="USD" Buy="26,105.00" Transfer="26,135.00" Sell="26,355.00" />
+ *   Uses the Transfer rate as the official mid-market rate.
  *
  * Design principles:
  *   - NEVER throws — all errors are caught; affected fields fall back to 0.
- *   - Returns null only if BOTH pages fail (no usable data at all).
- *   - Individual page failures set the affected numeric fields to 0 while
- *     the successfully fetched fields remain populated.
+ *   - Returns null only if BOTH FX fetch AND interest rate lookup fail entirely.
+ *   - Individual failures set the affected numeric fields to 0 while
+ *     the successfully fetched / configured fields remain populated.
  *   - Injectable HttpClient for testability (no real HTTP in unit tests).
- *   - Base URL overridable via SBV_BASE_URL env var.
+ *   - VCB base URL overridable via VCB_RATES_URL env var.
  *
  * Layer: infrastructure/fetchers — may use HTTP and SQLite, must not import domain/.
  */
@@ -31,22 +37,25 @@ export type { HttpClient } from "./ssc.js";
 // Constants
 // ---------------------------------------------------------------------------
 
-/** Default SBV base URL — overridable via SBV_BASE_URL env var for tests. */
-const SBV_BASE_URL: string =
-  Bun.env["SBV_BASE_URL"] ?? "https://www.sbv.gov.vn";
-
-/** Path for the interest rate page. */
-const SBV_RATES_PATH = "/en/home/rm/ir";
-
-/** Path for the exchange rate page. */
-const SBV_FX_PATH = "/en/home/rm/ex";
+/**
+ * Vietcombank XML exchange rate feed.
+ * Overridable via VCB_RATES_URL env var for integration tests.
+ */
+const VCB_RATES_URL: string =
+  Bun.env["VCB_RATES_URL"] ??
+  "https://portal.vietcombank.com.vn/Usercontrols/TVPortal.TyGia/pXML.aspx?b=68";
 
 /**
- * Bilingual label arrays for interest rate matching.
- * Case-insensitive substring match against table cell text content.
+ * Configurable fallback interest rates.
+ * SBV portal is currently down (404); these defaults reflect the last known rates.
+ * Override via env vars or mcp.config.json sbv section.
  */
-const OVERNIGHT_LABELS = ["overnight", "qua đêm", "qua dem"];
-const REFINANCING_LABELS = ["refinancing", "tái cấp vốn", "tai cap von", "refinance"];
+const DEFAULT_OVERNIGHT_RATE = parseFloat(
+  Bun.env["SBV_OVERNIGHT_RATE"] ?? "3.0",
+);
+const DEFAULT_REFINANCING_RATE = parseFloat(
+  Bun.env["SBV_REFINANCING_RATE"] ?? "4.5",
+);
 
 // ---------------------------------------------------------------------------
 // Public types
@@ -57,7 +66,7 @@ const REFINANCING_LABELS = ["refinancing", "tái cấp vốn", "tai cap von", "r
  *
  * @property overnightRatePct   - SBV overnight interest rate (% per year). 0 if unavailable.
  * @property refinancingRatePct - SBV refinancing rate (% per year). 0 if unavailable.
- * @property usdVndOfficial     - Official USD/VND exchange rate. 0 if unavailable.
+ * @property usdVndOfficial     - Official USD/VND exchange rate (Transfer rate). 0 if unavailable.
  * @property fetchedAt          - ISO 8601 timestamp when this snapshot was captured.
  */
 export interface SbvMacroSnapshot {
@@ -65,7 +74,7 @@ export interface SbvMacroSnapshot {
   overnightRatePct: number;
   /** Refinancing (tái cấp vốn) rate in percent per year. */
   refinancingRatePct: number;
-  /** Official USD/VND exchange rate (e.g. 24000 means 24,000 VND per 1 USD). */
+  /** Official USD/VND exchange rate (Transfer rate from VCB). */
   usdVndOfficial: number;
   /** ISO 8601 timestamp when this data was fetched. */
   fetchedAt: string;
@@ -89,8 +98,7 @@ async function makeDefaultHttpClient(): Promise<HttpClient> {
         headers: {
           "User-Agent":
             "Mozilla/5.0 (compatible; VN-Market-Intelligence/1.0; +https://github.com/vn-market)",
-          "Accept-Language": "en",
-          Accept: "text/html,application/xhtml+xml",
+          Accept: "application/xml, text/xml, */*",
         },
         timeout: 15_000,
         responseType: "text",
@@ -101,127 +109,65 @@ async function makeDefaultHttpClient(): Promise<HttpClient> {
 }
 
 // ---------------------------------------------------------------------------
-// HTML parsing helpers
+// XML parsing helper — VCB exchange rates
 // ---------------------------------------------------------------------------
 
 /**
- * Parses the interest rate (overnight and refinancing) from the SBV /rm/ir page.
+ * Parses the USD/VND Transfer rate from the Vietcombank XML feed.
  *
- * Strategy:
- * 1. Load HTML with cheerio.
- * 2. Iterate all <tr> elements.
- * 3. For each row, check if the first <td> text matches one of the bilingual label arrays.
- * 4. Extract the numeric value from the second <td>.
- *
- * @param html - Raw HTML string from the SBV interest rate page.
- * @returns Object with overnightRatePct and refinancingRatePct (0 if not found).
- */
-function parseInterestRates(html: string): {
-  overnightRatePct: number;
-  refinancingRatePct: number;
-} {
-  let overnightRatePct = 0;
-  let refinancingRatePct = 0;
-
-  try {
-    const $ = cheerio.load(html);
-
-    $("tr").each((_i, row) => {
-      const cells = $(row).find("td");
-      if (cells.length < 2) return;
-
-      const labelText = $(cells[0]).text().trim().toLowerCase();
-      const valueText = $(cells[1]).text().trim();
-
-      const numericValue = parseFloat(valueText);
-      if (isNaN(numericValue)) return;
-
-      if (OVERNIGHT_LABELS.some((label) => labelText.includes(label))) {
-        overnightRatePct = numericValue;
-      } else if (REFINANCING_LABELS.some((label) => labelText.includes(label))) {
-        refinancingRatePct = numericValue;
-      }
-    });
-  } catch (err) {
-    logger.warn("[sbv] failed to parse interest rates HTML", {
-      error: err instanceof Error ? err.message : String(err),
-    });
-  }
-
-  return { overnightRatePct, refinancingRatePct };
-}
-
-/**
- * Converts a Vietnamese-formatted number string to a JavaScript number.
- *
- * Vietnamese FX rates use dots as thousand separators and optionally commas
- * as decimal separators:
- *   "24.000"      → 24000  (24 thousand)
- *   "24.150,00"   → 24150  (24 thousand, 150 — comma decimal stripped)
+ * XML format:
+ *   <ExrateList DateTime="3/29/2026 3:44:11 PM">
+ *     <Exrate CurrencyCode="USD" CurrencyName="ĐÔLA MỸ"
+ *             Buy="26,105.00" Transfer="26,135.00" Sell="26,355.00" />
+ *     ...
+ *   </ExrateList>
  *
  * Algorithm:
- *   1. Strip all dot characters (thousand separators).
- *   2. Replace comma with dot (decimal separator normalization).
- *   3. Parse with parseFloat.
+ *   1. Parse XML with cheerio (xmlMode).
+ *   2. Find the <Exrate> element with CurrencyCode="USD".
+ *   3. Read the Transfer attribute.
+ *   4. Strip commas (US thousands separator) before parseFloat.
  *
- * @param raw - Raw numeric string from the HTML cell.
- * @returns Parsed number, or 0 if parsing fails.
+ * @param xml - Raw XML string from the VCB rates endpoint.
+ * @returns Parsed USD/VND Transfer rate as a number, or 0 if not found.
  */
-function parseVietnameseFxRate(raw: string): number {
+function parseVcbXmlRate(xml: string): number {
   try {
-    // Strip thousand-separator dots, then normalize decimal comma
-    const normalized = raw.replace(/\./g, "").replace(",", ".");
-    const value = parseFloat(normalized);
-    return isNaN(value) ? 0 : value;
-  } catch {
-    return 0;
-  }
-}
+    const $ = cheerio.load(xml, { xmlMode: true });
 
-/**
- * Parses the USD/VND official exchange rate from the SBV /rm/ex page.
- *
- * Strategy:
- * 1. Load HTML with cheerio.
- * 2. Find the first <tr> whose first <td> text is "USD" (case-insensitive).
- * 3. Read the "Transfer" rate (4th <td>) as the official mid-rate.
- *    Falls back to "Buy" rate (2nd <td>) if Transfer column is absent.
- *
- * @param html - Raw HTML string from the SBV exchange rate page.
- * @returns Parsed USD/VND rate, or 0 if not found.
- */
-function parseFxRate(html: string): number {
-  try {
-    const $ = cheerio.load(html);
-
-    let usdVndOfficial = 0;
-
-    $("tr").each((_i, row) => {
-      const cells = $(row).find("td");
-      if (cells.length < 2) return;
-
-      const currencyText = $(cells[0]).text().trim().toUpperCase();
-      if (currencyText !== "USD") return;
-
-      // Prefer Transfer rate (index 3), fall back to Sell (index 2), then Buy (index 1)
-      const transferText =
-        cells.length >= 4
-          ? $(cells[3]).text().trim()
-          : cells.length >= 3
-          ? $(cells[2]).text().trim()
-          : $(cells[1]).text().trim();
-
-      const parsed = parseVietnameseFxRate(transferText);
-      if (parsed > 0) {
-        usdVndOfficial = parsed;
-      }
-
-      return false; // stop after first USD row (cheerio uses false to break each)
+    // The element selector is case-insensitive to handle different XML renderings
+    const exrate = $("Exrate, exrate").filter((_i, el) => {
+      const code =
+        $(el).attr("CurrencyCode") || $(el).attr("currencycode") || "";
+      return code.toUpperCase() === "USD";
     });
 
-    return usdVndOfficial;
+    if (exrate.length === 0) {
+      logger.debug("[sbv] USD Exrate element not found in VCB XML");
+      return 0;
+    }
+
+    const transferRaw =
+      exrate.attr("Transfer") ||
+      exrate.attr("transfer") ||
+      exrate.attr("TRANSFER") ||
+      "";
+
+    if (!transferRaw) {
+      // Fall back to Buy rate if Transfer is absent
+      const buyRaw =
+        exrate.attr("Buy") || exrate.attr("buy") || exrate.attr("BUY") || "";
+      if (!buyRaw) return 0;
+      const parsed = parseFloat(buyRaw.replace(/,/g, ""));
+      return isNaN(parsed) ? 0 : parsed;
+    }
+
+    // Strip US comma thousands separators, then parse
+    const cleaned = transferRaw.replace(/,/g, "");
+    const value = parseFloat(cleaned);
+    return isNaN(value) ? 0 : value;
   } catch (err) {
-    logger.warn("[sbv] failed to parse FX rates HTML", {
+    logger.warn("[sbv] failed to parse VCB XML", {
       error: err instanceof Error ? err.message : String(err),
     });
     return 0;
@@ -236,70 +182,61 @@ function parseFxRate(html: string): number {
  * Fetches the current SBV macro snapshot: overnight rate, refinancing rate,
  * and official USD/VND exchange rate.
  *
- * - Hits two SBV pages concurrently: /en/home/rm/ir and /en/home/rm/ex.
- * - Individual page failures set affected fields to 0; the other fields
- *   remain populated from the successful page.
- * - Returns null only if BOTH pages fail entirely (no usable data).
+ * - FX rate: fetched live from the Vietcombank XML API (VCB portal).
+ * - Interest rates: read from config fallbacks (SBV portal is currently down).
+ *   The fallback values are sourced from SBV_OVERNIGHT_RATE / SBV_REFINANCING_RATE
+ *   env vars, defaulting to 3.0% / 4.5% if unset.
+ *
+ * - FX fetch failure sets usdVndOfficial to 0; rate fallbacks remain.
+ * - Returns null only if the FX fetch fails AND rate fallbacks are both 0.
  * - NEVER throws. All errors are caught and logged at warn level.
- * - Honors SBV_BASE_URL env var for URL override (test isolation).
+ * - Honors VCB_RATES_URL env var for URL override (test isolation).
  *
  * @param httpClient - Optional injectable HTTP client. Defaults to axios.
- * @returns SbvMacroSnapshot if at least one page succeeded; null if both failed.
+ * @returns SbvMacroSnapshot on success; null if no usable data at all.
  */
 export async function fetchSbvRates(
   httpClient?: HttpClient,
 ): Promise<SbvMacroSnapshot | null> {
   const client = httpClient ?? (await makeDefaultHttpClient());
   const fetchedAt = new Date().toISOString();
-  const baseUrl = Bun.env["SBV_BASE_URL"] ?? SBV_BASE_URL;
+  const vcbUrl = Bun.env["VCB_RATES_URL"] ?? VCB_RATES_URL;
 
-  const ratesUrl = `${baseUrl}${SBV_RATES_PATH}`;
-  const fxUrl = `${baseUrl}${SBV_FX_PATH}`;
+  // Read interest rate fallbacks from env / defaults
+  const overnightRatePct = Number.isNaN(DEFAULT_OVERNIGHT_RATE)
+    ? 0
+    : DEFAULT_OVERNIGHT_RATE;
+  const refinancingRatePct = Number.isNaN(DEFAULT_REFINANCING_RATE)
+    ? 0
+    : DEFAULT_REFINANCING_RATE;
 
-  logger.debug("[sbv] fetching rates", { ratesUrl, fxUrl });
+  logger.debug("[sbv] fetching VCB exchange rates", { vcbUrl });
 
-  let ratesResult: { overnightRatePct: number; refinancingRatePct: number } | null = null;
-  let fxResult: number | null = null;
+  let usdVndOfficial = 0;
+  let fxFetchSucceeded = false;
 
-  // Fetch interest rates page
   try {
-    const html = await client.get(ratesUrl);
-    ratesResult = parseInterestRates(html);
-    logger.debug("[sbv] interest rates fetched", {
-      overnightRatePct: ratesResult.overnightRatePct,
-      refinancingRatePct: ratesResult.refinancingRatePct,
-    });
+    const xml = await client.get(vcbUrl);
+    usdVndOfficial = parseVcbXmlRate(xml);
+    fxFetchSucceeded = true;
+    logger.debug("[sbv] VCB FX rate fetched", { usdVndOfficial });
   } catch (err) {
-    logger.warn("[sbv] interest rate page fetch failed", {
-      url: ratesUrl,
+    logger.warn("[sbv] VCB FX fetch failed", {
+      url: vcbUrl,
       error: err instanceof Error ? err.message : String(err),
     });
-    // ratesResult stays null → will be set to 0 values
   }
 
-  // Fetch FX rates page
-  try {
-    const html = await client.get(fxUrl);
-    fxResult = parseFxRate(html);
-    logger.debug("[sbv] FX rate fetched", { usdVndOfficial: fxResult });
-  } catch (err) {
-    logger.warn("[sbv] FX page fetch failed", {
-      url: fxUrl,
-      error: err instanceof Error ? err.message : String(err),
-    });
-    // fxResult stays null → will be set to 0
-  }
-
-  // If BOTH pages failed → return null
-  if (ratesResult === null && fxResult === null) {
-    logger.warn("[sbv] both pages failed — returning null");
+  // Return null only if FX failed AND interest rate fallbacks are also both 0
+  if (!fxFetchSucceeded && overnightRatePct === 0 && refinancingRatePct === 0) {
+    logger.warn("[sbv] VCB fetch failed and no rate fallbacks configured — returning null");
     return null;
   }
 
   const snapshot: SbvMacroSnapshot = {
-    overnightRatePct: ratesResult?.overnightRatePct ?? 0,
-    refinancingRatePct: ratesResult?.refinancingRatePct ?? 0,
-    usdVndOfficial: fxResult ?? 0,
+    overnightRatePct,
+    refinancingRatePct,
+    usdVndOfficial,
     fetchedAt,
   };
 

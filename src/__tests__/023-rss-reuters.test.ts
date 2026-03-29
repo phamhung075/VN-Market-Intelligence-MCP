@@ -1,7 +1,15 @@
 /**
- * Task 023 — Reuters / AP News RSS Fetcher
+ * Task 023 — International Finance News RSS Fetcher (Google News)
  *
  * Tests for fetchReuters() in src/infrastructure/fetchers/reuters.ts
+ *
+ * Implementation now uses Google News RSS feeds:
+ *   Primary:   https://news.google.com/rss/search?q=vietnam+economy+OR+stock+market&hl=en
+ *   Secondary: https://news.google.com/rss/search?q=asia+finance+OR+emerging+markets&hl=en
+ *
+ * Source tags preserved for backward compatibility:
+ *   Primary   → source = 'reuters'
+ *   Secondary → source = 'ap_news'
  *
  * All HTTP calls are mocked — no real network traffic.
  */
@@ -85,21 +93,25 @@ const AP_ITEMS = [
 
 /**
  * Creates an HttpClient whose responses depend on the requested URL.
- * reutersResponse / apResponse may be a string body or an Error to throw.
+ * primaryResponse / secondaryResponse may be a string body or an Error to throw.
+ *
+ * Routes:
+ *   - URLs containing "vietnam" or "stock+market" → primary feed (tagged 'reuters')
+ *   - All other URLs → secondary feed fallback (tagged 'ap_news')
  */
 function urlAwareClient(
-  reutersResponse: string | Error,
-  apResponse: string | Error,
+  primaryResponse: string | Error,
+  secondaryResponse: string | Error,
 ): HttpClient {
   return {
     async get(url: string): Promise<string> {
-      if (url.includes("reuters") || url.includes("reutersagency")) {
-        if (reutersResponse instanceof Error) throw reutersResponse;
-        return reutersResponse;
+      if (url.includes("vietnam") || url.includes("stock+market") || url.includes("stock%2Bmarket")) {
+        if (primaryResponse instanceof Error) throw primaryResponse;
+        return primaryResponse;
       }
-      // AP News / rsshub fallback
-      if (apResponse instanceof Error) throw apResponse;
-      return apResponse;
+      // Secondary / fallback feed (asia finance, emerging markets)
+      if (secondaryResponse instanceof Error) throw secondaryResponse;
+      return secondaryResponse;
     },
   };
 }

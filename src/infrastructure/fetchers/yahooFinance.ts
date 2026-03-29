@@ -1,20 +1,20 @@
 /**
  * Infrastructure — Yahoo Finance Commodity Fetcher (Task 025)
  *
- * Fetches live commodity prices and the USD/VND exchange rate from
- * Yahoo Finance for three instruments:
+ * Fetches live commodity prices and the USD/VND exchange rate from the
+ * Yahoo Finance Chart API for three instruments:
  *
  *   BZ=F      — Brent crude oil (USD per barrel)
  *   GC=F      — Gold futures (USD per troy ounce)
  *   USDVND=X  — USD / Vietnamese Dong exchange rate
  *
- * Parsing strategy:
- *   1. Load HTML with cheerio.
- *   2. For each symbol, select:
- *        fin-streamer[data-symbol="<SYM>"][data-field="regularMarketPrice"]
- *   3. Read `value` attribute first; fall back to trimmed text content.
- *   4. Strip US comma separators before parseFloat.
- *   5. If the result is NaN, treat that symbol's field as 0.
+ * API strategy (replaces the deprecated HTML scraping approach):
+ *   1. For each symbol, call:
+ *        GET https://query1.finance.yahoo.com/v8/finance/chart/{SYMBOL}?interval=1d&range=1d
+ *   2. Parse `data.chart.result[0].meta.regularMarketPrice` from the JSON response.
+ *   3. If the result is missing or NaN, treat that symbol's field as 0.
+ *
+ * The three symbol requests run concurrently via Promise.allSettled.
  *
  * Return semantics:
  *   - Individual field failures set the field to 0 and do NOT abort others.
@@ -30,7 +30,6 @@
  *        Must NOT import anything from domain/.
  */
 
-import * as cheerio from "cheerio";
 import type { Database } from "bun:sqlite";
 import { logger } from "../logger.js";
 import { getDb } from "../db/schema.js";
@@ -43,9 +42,10 @@ import type { HttpClient } from "./ssc.js";
 // Constants
 // ---------------------------------------------------------------------------
 
-/** Yahoo Finance quote-summary base URL. */
-const YAHOO_FINANCE_BASE_URL =
-  Bun.env["YAHOO_FINANCE_BASE_URL"] ?? "https://finance.yahoo.com";
+/** Yahoo Finance Chart API base URL — overridable via YAHOO_FINANCE_API_URL env var. */
+const YAHOO_API_BASE =
+  Bun.env["YAHOO_FINANCE_API_URL"] ??
+  "https://query1.finance.yahoo.com/v8/finance/chart";
 
 /** The three commodity symbols fetched on every call. */
 const SYMBOLS = {
@@ -92,7 +92,7 @@ async function makeDefaultHttpClient(): Promise<HttpClient> {
         headers: {
           "User-Agent":
             "Mozilla/5.0 (compatible; VN-Market-Intelligence/1.0; +https://github.com/vn-market)",
-          Accept: "text/html,application/xhtml+xml",
+          Accept: "application/json",
         },
         timeout: 15_000,
         responseType: "text",
@@ -103,52 +103,79 @@ async function makeDefaultHttpClient(): Promise<HttpClient> {
 }
 
 // ---------------------------------------------------------------------------
-// HTML parsing helpers
+// JSON parsing helper
 // ---------------------------------------------------------------------------
 
 /**
- * Extracts the numeric price for a single Yahoo Finance symbol from the
- * parsed cheerio document.
+ * Fetches the regularMarketPrice for a single Yahoo Finance symbol using the
+ * v8/finance/chart JSON API.
  *
- * Selector: fin-streamer[data-symbol="SYM"][data-field="regularMarketPrice"]
+ * Endpoint: GET {YAHOO_API_BASE}/{symbol}?interval=1d&range=1d
+ * Response field: data.chart.result[0].meta.regularMarketPrice
  *
- * Priority:
- *   1. `value` attribute of the element (preferred — already a clean number string)
- *   2. Text content of the element (fallback — may be formatted for display)
- *
- * US comma separators (e.g. "2,341.50") are stripped before parseFloat.
- *
- * @param $ - Loaded cheerio document.
- * @param symbol - Yahoo Finance symbol string (e.g. "BZ=F").
- * @returns Parsed floating-point price, or 0 if the element is missing or value is non-numeric.
+ * @param symbol     - Yahoo Finance symbol (e.g. "BZ=F").
+ * @param client     - HTTP client to use for the request.
+ * @param apiBase    - Base URL for the chart API.
+ * @returns Parsed price as a number, or null on any failure.
  */
-function extractPrice($: cheerio.CheerioAPI, symbol: string): number {
+async function fetchSymbolPrice(
+  symbol: string,
+  client: HttpClient,
+  apiBase: string,
+): Promise<number | null> {
+  const url = `${apiBase}/${encodeURIComponent(symbol)}?interval=1d&range=1d`;
+
   try {
-    const el = $(
-      `fin-streamer[data-symbol="${symbol}"][data-field="regularMarketPrice"]`,
-    ).first();
+    logger.debug("[yahooFinance] fetching symbol price", { symbol, url });
+    const raw = await client.get(url);
 
-    if (el.length === 0) {
-      return 0;
+    let data: unknown;
+    try {
+      data = JSON.parse(raw);
+    } catch {
+      logger.warn("[yahooFinance] JSON parse failed for symbol", { symbol });
+      return null;
     }
 
-    // Try value= attribute first (no formatting applied by the browser)
-    const attrVal = el.attr("value");
-    const rawText = attrVal !== undefined && attrVal.trim() !== ""
-      ? attrVal.trim()
-      : el.text().trim();
+    // Navigate: data.chart.result[0].meta.regularMarketPrice
+    const price =
+      (data as Record<string, unknown>)?.chart &&
+      (
+        (data as Record<string, unknown>).chart as Record<string, unknown>
+      )?.result &&
+      Array.isArray(
+        (
+          (data as Record<string, unknown>).chart as Record<string, unknown>
+        ).result,
+      )
+        ? (
+            (
+              (
+                (data as Record<string, unknown>).chart as Record<
+                  string,
+                  unknown
+                >
+              ).result as Array<Record<string, unknown>>
+            )[0]?.meta as Record<string, unknown>
+          )?.regularMarketPrice
+        : undefined;
 
-    if (rawText === "") {
-      return 0;
+    if (typeof price !== "number" || Number.isNaN(price)) {
+      logger.debug("[yahooFinance] regularMarketPrice missing or non-numeric", {
+        symbol,
+        price,
+      });
+      return null;
     }
 
-    // Strip US comma separators before parsing
-    const cleaned = rawText.replace(/,/g, "");
-    const value = parseFloat(cleaned);
-
-    return Number.isNaN(value) ? 0 : value;
-  } catch {
-    return 0;
+    return price;
+  } catch (err) {
+    logger.warn("[yahooFinance] HTTP request failed for symbol", {
+      symbol,
+      url,
+      error: err instanceof Error ? err.message : String(err),
+    });
+    return null;
   }
 }
 
@@ -157,14 +184,14 @@ function extractPrice($: cheerio.CheerioAPI, symbol: string): number {
 // ---------------------------------------------------------------------------
 
 /**
- * Fetches the latest commodity prices from Yahoo Finance.
+ * Fetches the latest commodity prices from the Yahoo Finance Chart JSON API.
  *
- * Makes a single HTTP GET request to the Yahoo Finance commodity page.
- * Uses cheerio to parse fin-streamer elements for BZ=F, GC=F, and USDVND=X.
+ * Makes three concurrent HTTP GET requests — one per symbol (BZ=F, GC=F, USDVND=X).
+ * Uses Promise.allSettled so a failure for one symbol does not abort others.
  *
  * @param httpClient - Optional injectable HTTP client (defaults to axios).
  *                     Pass a mock in tests to avoid real network calls.
- *                     Reads YAHOO_FINANCE_BASE_URL env var to override the base URL.
+ *                     Reads YAHOO_FINANCE_API_URL env var to override the base URL.
  * @returns CommoditySnapshot if at least one price was parsed, null otherwise.
  *          Never throws — all errors are caught and logged as warnings.
  */
@@ -172,41 +199,42 @@ export async function fetchYahooFinancePrices(
   httpClient?: HttpClient,
 ): Promise<CommoditySnapshot | null> {
   const client = httpClient ?? (await makeDefaultHttpClient());
-  const url = `${YAHOO_FINANCE_BASE_URL}/commodities`;
+  const apiBase =
+    Bun.env["YAHOO_FINANCE_API_URL"] ?? YAHOO_API_BASE;
   const fetchedAt = new Date().toISOString();
 
-  logger.debug("[yahooFinance] fetching commodity prices", { url });
+  logger.debug("[yahooFinance] fetching commodity prices via JSON API", {
+    apiBase,
+  });
 
-  let html: string;
-  try {
-    html = await client.get(url);
-  } catch (err) {
-    logger.warn("[yahooFinance] HTTP request failed", {
-      url,
-      error: err instanceof Error ? err.message : String(err),
-    });
-    return null;
-  }
+  // Fetch all three symbols concurrently
+  const [brentResult, goldResult, usdVndResult] = await Promise.allSettled([
+    fetchSymbolPrice(SYMBOLS.brent, client, apiBase),
+    fetchSymbolPrice(SYMBOLS.gold, client, apiBase),
+    fetchSymbolPrice(SYMBOLS.usdVnd, client, apiBase),
+  ]);
 
-  let $: cheerio.CheerioAPI;
-  try {
-    $ = cheerio.load(html);
-  } catch (err) {
-    logger.warn("[yahooFinance] failed to parse HTML", {
-      error: err instanceof Error ? err.message : String(err),
-    });
-    return null;
-  }
+  const brentCrudeUSD =
+    brentResult.status === "fulfilled" && brentResult.value !== null
+      ? brentResult.value
+      : 0;
 
-  const brentCrudeUSD = extractPrice($, SYMBOLS.brent);
-  const goldUSDPerOz = extractPrice($, SYMBOLS.gold);
-  const usdVndRate = extractPrice($, SYMBOLS.usdVnd);
+  const goldUSDPerOz =
+    goldResult.status === "fulfilled" && goldResult.value !== null
+      ? goldResult.value
+      : 0;
+
+  const usdVndRate =
+    usdVndResult.status === "fulfilled" && usdVndResult.value !== null
+      ? usdVndResult.value
+      : 0;
 
   // If ALL three fields are 0, nothing was parsed — return null.
   if (brentCrudeUSD === 0 && goldUSDPerOz === 0 && usdVndRate === 0) {
-    logger.warn("[yahooFinance] all three symbols returned 0 — no data parsed", {
-      url,
-    });
+    logger.warn(
+      "[yahooFinance] all three symbols returned 0 — no data parsed",
+      { apiBase },
+    );
     return null;
   }
 
