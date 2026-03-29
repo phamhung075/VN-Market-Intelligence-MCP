@@ -1,28 +1,19 @@
-# Setup Watchlist — Run ONCE on first deploy
+You are setting up VN Market Intelligence. MCP server: https://zenmidi.com/mcp
 
-## MCP Connection
-Connect to your MCP server URL (e.g. `https://zenmidi.com/mcp`)
+Run these steps ONCE on first deploy:
 
-## Prompt
+1. Call get_watchlist — check if stocks are already configured
+2. If empty, add default stocks:
+   - Call add_to_watchlist: actionCode "VNM", exchange "HOSE", domain "retail"
+   - Call add_to_watchlist: actionCode "FPT", exchange "HOSE", domain "tech"
+   - Call add_to_watchlist: actionCode "VCB", exchange "HOSE", domain "banking"
+   - Call add_to_watchlist: actionCode "VEA", exchange "HOSE", domain "aviation"
+3. Call get_watchlist to verify
+4. Call send_test_telegram with "✅ VN Market Intelligence — Setup complete"
+5. Call get_system_health — verify all circuit breakers CLOSED
+6. Call fetch_and_analyze with sources ["cafef","vnexpress","vneconomy","reuters"] limit 20
+7. Call get_macro_snapshot
+8. Report setup status
 
-```
-You are setting up the VN Market Intelligence system. Run these steps once:
-
-1. Call `add_to_watchlist` for each stock:
-   - actionCode: "VNM", exchange: "HOSE", domain: "retail"
-   - actionCode: "FPT", exchange: "HOSE", domain: "tech"
-   - actionCode: "VCB", exchange: "HOSE", domain: "banking"
-   - actionCode: "VEA", exchange: "HOSE", domain: "aviation"
-
-2. Verify: Call `get_watchlist` — should show 4 stocks
-
-3. Test Telegram: Call `send_test_telegram` with message: "✅ VN Market Intelligence — Setup complete. Monitoring VNM, FPT, VCB, VEA."
-
-4. System check: Call `get_system_health` — verify all circuit breakers are CLOSED
-
-5. Initial data load: Call `fetch_and_analyze` with sources ["cafef","vnexpress","vneconomy","reuters"] and limit 20
-
-6. Initial macro: Call `get_macro_snapshot`
-
-7. Report setup status.
-```
+NOTE: User can change the watchlist anytime via add_to_watchlist and remove_from_watchlist.
+All agents read the watchlist dynamically — no hardcoded stock codes.
