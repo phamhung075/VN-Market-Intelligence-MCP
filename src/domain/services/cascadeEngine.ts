@@ -16,6 +16,7 @@
 
 import type { AnalysisEntry, AnalysisLevel, Sentiment, ImpactDirection } from "./newsNormalizer.js";
 import type { DomainType } from "../../../bctc-schema.js";
+import { classifySentiment } from "./sentimentClassifier.js";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Exported types
@@ -433,6 +434,11 @@ export function buildCausalChain(
   const entries: CausalChainEntry[] = [seedChainEntry];
 
   // ── Step 2: Domain entries from SECTOR_RULES ──────────────────────────
+  // Classify sentiment from seed summary before building domain entries.
+  // This allows directional adjustment of confidence per rule.
+  const seedSentimentResult = classifySentiment(seedEntry.summary);
+  const seedSentimentDirection = seedSentimentResult.direction; // 'bullish' | 'bearish' | 'neutral'
+
   // Group by domain — keep only the first matching rule per domain.
   const triggeredDomains = new Map<DomainType, { rule: SectorRule; matchedKeyword: string }>();
 
@@ -454,16 +460,50 @@ export function buildCausalChain(
 
   // From SECTOR_RULES matches
   for (const [domain, { rule, matchedKeyword }] of triggeredDomains) {
+    // Sentiment-direction alignment check:
+    //   - rule.direction "up"   ↔ seedSentiment "bullish"  → matching   → +0.05
+    //   - rule.direction "down" ↔ seedSentiment "bearish"  → matching   → +0.05
+    //   - opposing direction                                → contradicting → -0.10
+    //   - rule.direction "neutral" or seedSentiment "neutral" → no adjustment
+    let sentimentAdjustment = 0;
+    let sentimentNote = "";
+    if (seedSentimentDirection !== "neutral" && rule.direction !== "neutral") {
+      const ruleIsBullish = rule.direction === "up";
+      const seedIsBullish = seedSentimentDirection === "bullish";
+      if (ruleIsBullish === seedIsBullish) {
+        sentimentAdjustment = +0.05;
+        sentimentNote = ` [Sentiment: matches rule direction (${rule.direction}) → +0.05]`;
+      } else {
+        sentimentAdjustment = -0.10;
+        sentimentNote = ` [Sentiment: contradicts rule direction (${rule.direction}) → -0.10]`;
+      }
+    }
+
+    const adjustedConfidence = Math.min(0.99, Math.max(0.05, rule.confidence + sentimentAdjustment));
+
+    // Derive the effective sentiment from the rule direction, but override with
+    // seed classifier result when the classifier is confident (≥ 0.6) and
+    // the seed has a clear direction. This corrects cases like "giá dầu giảm sâu"
+    // matching the bullish "giá dầu tăng" keyword due to a generic "giá dầu" match
+    // in a broader keyword scan.
+    let effectiveSentiment: Sentiment = direction2sentiment(rule.direction);
+    if (
+      seedSentimentResult.confidence >= 0.6 &&
+      seedSentimentDirection !== "neutral"
+    ) {
+      effectiveSentiment = seedSentimentDirection;
+    }
+
     const domainEntry: CausalChainEntry = {
       level: "domain",
       title: rule.title,
       summary: `${rule.title}. Seed: "${seedEntry.sourceTitle}"`,
       affectedDomains: [domain],
       affectedActions: [],
-      sentiment: direction2sentiment(rule.direction),
-      impactScore: Math.round(seedEntry.impactScore * rule.confidence),
-      confidence: rule.confidence,
-      reasoning: `Keyword match: "${matchedKeyword}". Domain ${domain} expected to move ${rule.direction}.`,
+      sentiment: effectiveSentiment,
+      impactScore: Math.round(seedEntry.impactScore * adjustedConfidence),
+      confidence: adjustedConfidence,
+      reasoning: `Keyword match: "${matchedKeyword}". Domain ${domain} expected to move ${rule.direction}.${sentimentNote}`,
     };
     entries.push(domainEntry);
     domainEntryMap.set(domain, domainEntry);
