@@ -26,6 +26,7 @@ import { runMarketScan } from './marketScanJob.js'
 import { runMorningBriefing } from './morningBriefingJob.js'
 import { runEveningSummary } from './eveningSummaryJob.js'
 import { runIntelligenceCycle } from './intelligenceCycleJob.js'
+import { registerSummaryJobs } from './summaryJobs.js'
 
 export const CRONS = {
   morningBriefing:   Bun.env.CRON_MORNING_BRIEFING    ?? '0 8 * * 1-5',
@@ -74,5 +75,8 @@ export function startScheduler() {
     await runEveningSummary()
   }, { timezone: 'Asia/Ho_Chi_Minh' })
 
-  log(`[scheduler] jobs registered — ${Object.keys(CRONS).length} cron jobs active`)
+  // Periodic summary jobs (task 130): daily, weekly, monthly, quarterly, yearly
+  registerSummaryJobs()
+
+  log(`[scheduler] jobs registered — ${Object.keys(CRONS).length} core cron jobs + 5 summary jobs active`)
 }

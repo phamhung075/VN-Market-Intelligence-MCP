@@ -103,3 +103,45 @@ const _cfg = loadConfig();
 
 /** Pre-built application-wide logger instance. */
 export const logger: Logger = createLogger(_cfg.logLevel);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Persistent log helper (Task 130)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Persist a log entry to the `system_logs` SQLite table.
+ *
+ * Intended for `warn` and `error` level entries only — debug/info are
+ * not persisted to avoid excessive DB churn.
+ *
+ * @param level   - Log severity: 'debug' | 'info' | 'warn' | 'error'
+ * @param source  - Module or component name (e.g. "scheduler", "fetchSscReport")
+ * @param message - Human-readable description of the event
+ * @param details - Optional structured context (stack trace, request params, etc.)
+ * @param db      - Optional Database instance for testing; falls back to getDb()
+ */
+export async function persistLog(
+  level: LogLevel,
+  source: string,
+  message: string,
+  details?: Record<string, unknown>,
+  db?: import("bun:sqlite").Database,
+): Promise<void> {
+  try {
+    // Lazy import to avoid circular dependency at module initialisation time
+    const { getDb } = await import("./db/schema.js");
+    const database = db ?? getDb();
+
+    const detailsJson = details !== undefined ? JSON.stringify(details) : null;
+    database.run(
+      `INSERT INTO system_logs (level, source, message, details_json) VALUES (?, ?, ?, ?)`,
+      [level, source, message, detailsJson],
+    );
+  } catch (err) {
+    // Never throw from a log helper — just emit to stderr as fallback
+    console.error(
+      "[persistLog] Failed to write system log:",
+      err instanceof Error ? err.message : String(err),
+    );
+  }
+}

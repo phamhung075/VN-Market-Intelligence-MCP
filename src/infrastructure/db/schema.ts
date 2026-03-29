@@ -225,4 +225,49 @@ export async function initDatabase(): Promise<void> {
     CREATE INDEX IF NOT EXISTS idx_sbv_history_source_time
       ON sbv_rates_history(source, fetched_at DESC);
   `);
+
+  // ── Market Summaries (Task 130) ────────────────────────────────────────────
+  // Stores periodic intelligence summaries (daily / weekly / monthly / quarterly / yearly).
+  // Upsert target: unique on (period_type, period_start).
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS market_summaries (
+      id                    TEXT PRIMARY KEY,
+      period_type           TEXT NOT NULL,
+      period_start          TEXT NOT NULL,
+      period_end            TEXT NOT NULL,
+      created_at            TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at            TEXT NOT NULL DEFAULT (datetime('now')),
+      summary_text          TEXT NOT NULL,
+      key_events_json       TEXT,
+      stock_performance_json TEXT,
+      alerts_summary_json   TEXT,
+      macro_context_json    TEXT,
+      recommendation_json   TEXT,
+      news_count            INTEGER DEFAULT 0,
+      alert_count           INTEGER DEFAULT 0,
+      report_count          INTEGER DEFAULT 0,
+      data_sources_json     TEXT,
+      UNIQUE(period_type, period_start)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_ms_period  ON market_summaries(period_type, period_start);
+    CREATE INDEX IF NOT EXISTS idx_ms_created ON market_summaries(created_at);
+  `);
+
+  // ── System Logs (Task 130) ─────────────────────────────────────────────────
+  // Persistent log table for warn/error entries.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS system_logs (
+      id           INTEGER PRIMARY KEY AUTOINCREMENT,
+      timestamp    TEXT NOT NULL DEFAULT (datetime('now')),
+      level        TEXT NOT NULL,
+      source       TEXT NOT NULL,
+      message      TEXT NOT NULL,
+      details_json TEXT,
+      resolved     INTEGER DEFAULT 0
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_syslog_level  ON system_logs(level, timestamp);
+    CREATE INDEX IF NOT EXISTS idx_syslog_source ON system_logs(source, timestamp);
+  `);
 }
