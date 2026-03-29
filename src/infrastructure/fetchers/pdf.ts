@@ -51,6 +51,77 @@ export interface PdfExtractionResult {
 // Helpers
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// OCR fallback (Tesseract via pdftoppm + stdin pipe)
+// ---------------------------------------------------------------------------
+
+/**
+ * OCR a scanned PDF buffer using pdftoppm + tesseract (Vietnamese + English).
+ * Uses stdin piping to work around a known leptonica file-reading bug on macOS.
+ *
+ * @param buffer - Raw PDF bytes
+ * @param totalPages - Total number of pages in the PDF
+ * @returns Extracted text from OCR, or empty string on failure
+ */
+async function ocrPdfBuffer(buffer: Buffer, totalPages: number): Promise<string> {
+  try {
+    const { execSync, spawnSync } = await import("node:child_process");
+    const { writeFileSync, unlinkSync, mkdirSync } = await import("node:fs");
+    const { join } = await import("node:path");
+
+    // Check if required tools are available
+    try { execSync("which pdftoppm", { stdio: "ignore" }); } catch { return ""; }
+    try { execSync("which tesseract", { stdio: "ignore" }); } catch { return ""; }
+
+    // Write PDF to a temp file (pdftoppm needs a file path)
+    const tmpDir = `/tmp/ocr-${Date.now()}`;
+    mkdirSync(tmpDir, { recursive: true });
+    const tmpPdf = join(tmpDir, "input.pdf");
+    writeFileSync(tmpPdf, buffer);
+
+    // OCR key pages (first 30 or all, whichever is fewer)
+    const maxPages = Math.min(totalPages || 30, 30);
+    const allText: string[] = [];
+
+    for (let page = 1; page <= maxPages; page++) {
+      try {
+        // Convert page to PPM via pdftoppm
+        const ppmResult = spawnSync("pdftoppm", [
+          "-f", String(page), "-l", String(page),
+          "-r", "200", tmpPdf
+        ], { maxBuffer: 50 * 1024 * 1024, timeout: 30000 });
+
+        if (ppmResult.stdout.length === 0) continue;
+
+        // Pipe PPM to tesseract via stdin (workaround for leptonica bug)
+        const ocrResult = spawnSync("tesseract", [
+          "stdin", "stdout", "-l", "vie+eng"
+        ], { input: ppmResult.stdout, maxBuffer: 5 * 1024 * 1024, timeout: 30000 });
+
+        const pageText = ocrResult.stdout.toString("utf-8").trim();
+        if (pageText.length > 10) {
+          allText.push(pageText);
+        }
+      } catch {
+        // Skip pages that fail OCR
+      }
+    }
+
+    // Cleanup
+    try {
+      const { rmSync } = await import("node:fs");
+      rmSync(tmpDir, { recursive: true });
+    } catch { /* ignore */ }
+
+    return allText.join("\n\n--- Page Break ---\n\n");
+  } catch (err) {
+    logger.warn("[pdf] OCR fallback failed", {
+      error: err instanceof Error ? err.message : String(err),
+    });
+    return "";
+  }
+}
+
 /**
  * Computes a confidence score based on how much text was extracted.
  *
@@ -95,8 +166,24 @@ export async function extractPdfText(
     // environments that don't need it.
     const pdfParse = (await import("pdf-parse")).default;
     const data = await pdfParse(buffer);
-    const text = data.text ?? "";
-    const confidence = computeConfidence(text);
+    let text = data.text ?? "";
+    let confidence = computeConfidence(text);
+
+    // If pdf-parse returned minimal text, try OCR fallback (scanned PDF)
+    if (text.trim().length < PDF_CONFIDENCE_HIGH_THRESHOLD) {
+      logger.info("[pdf] low text extraction — attempting OCR fallback", {
+        pdfParseChars: text.length,
+      });
+      const ocrText = await ocrPdfBuffer(buffer, data.numpages ?? 0);
+      if (ocrText.length > text.length) {
+        text = ocrText;
+        confidence = computeConfidence(text);
+        logger.info("[pdf] OCR extraction succeeded", {
+          chars: text.length,
+          confidence,
+        });
+      }
+    }
 
     logger.debug("[pdf] extracted text", {
       chars: text.length,
