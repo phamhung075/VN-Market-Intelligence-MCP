@@ -91,6 +91,7 @@
 |---|-------|--------|-------|
 | 131 | Alert quality system — cooldown, dedup, grouping | `task/131-alert-quality-system` | 35 tests, 0 fail |
 | 132 | BCTC validation pipeline — bad data guard | `task/132-bctc-validator` | 26 tests, 100% coverage, 0 fail |
+| 133 | Adaptive signal detection thresholds | `task/133-adaptive-thresholds` | 25 tests, 100% coverage, 0 fail |
 
 ---
 
