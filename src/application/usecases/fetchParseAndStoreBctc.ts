@@ -22,7 +22,7 @@ import { downloadAndExtractPdf } from "../../infrastructure/fetchers/pdf.js";
 import { parseBctcReport } from "./parseBctcReport.js";
 import { logger } from "../../infrastructure/logger.js";
 
-import type { HttpClient } from "../../infrastructure/fetchers/ssc.js";
+import type { HttpClient, BrowserFactory } from "../../infrastructure/fetchers/ssc.js";
 import type { AnalysisInput } from "../../infrastructure/rag/retriever.js";
 import type { FinancialReport, FiscalPeriod } from "../../../bctc-schema.js";
 
@@ -47,10 +47,10 @@ export interface FetchParseAndStoreBctcParams {
   /** Quarter string e.g. "Q1", "Q2", "Q3", "Q4" */
   quarter: QuarterString;
   /**
-   * Optional HTTP client used by listSscDocuments when fetching the SSC portal.
-   * Inject a mock in tests to avoid real network calls.
+   * Optional browser factory used by listSscDocuments when fetching the SSC portal.
+   * Inject a mock in tests to avoid launching a real browser.
    */
-  sscHttpClient?: HttpClient;
+  sscHttpClient?: BrowserFactory;
   /**
    * Optional HTTP client used by downloadAndExtractPdf when downloading the PDF.
    * Inject a mock in tests to avoid real network calls.

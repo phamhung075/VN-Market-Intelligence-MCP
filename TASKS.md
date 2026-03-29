@@ -359,6 +359,172 @@
 
 ---
 
+---
+
+## 📋 TODO — Sprint 009
+
+*(Sprint 009 active — TECH-009 approved by Architect 2026-03-29 — ready for PM sprint planning)*
+
+> **PM action required**: Read `docs/TECH_009.md` and assign tasks per dependency chain. See Task Breakdown table in TECH-009 for recommended order (127 → 128 → 129 → 031 → 034 → 032 → 033 → 106). Brief for each chain:
+> - Chain A: fix 4 broken test files + fetchParseAndStoreBctc.ts compile error before implementing 031/032/033
+> - Chain B: telegram.ts uses plain fetch(), no SDK; hook lives in application/scheduler layer only
+> - Chain C: intelligenceCycleJob.ts absorbs newsPollerJob; jobs.ts is the single cron registry
+
+### Chain A — SSC Puppeteer scraper
+
+| # | Title | Branch | Agent | Layer | Depends on |
+|---|-------|--------|-------|-------|------------|
+| 127 | Unit + integration tests — Puppeteer SSC fetcher (mock browser API) | `task/127-test-ssc-puppeteer` | QA | test | — (write first, TDD Red) |
+| 031 | Puppeteer-based SSC browser fetcher (replaces ssc.ts plain-HTTP) | `task/031-ssc-puppeteer` | Developer | infrastructure | 127 |
+| 032 | Multi-category document listing + dedup (BCTC + 3 other categories) | `task/032-ssc-multi-category` | Developer | infrastructure | 031 |
+| 033 | Wire Puppeteer fetcher into sscCheckerJob (replace plain-HTTP call) | `task/033-ssc-checker-wiring` | Developer | interface/scheduler | 032 |
+
+**Task 127 — Acceptance Criteria**
+
+**Given** a mock Puppeteer `page` object that simulates the SSC portal ADF form
+**When** the test suite runs
+**Then**
+- `listSscDocuments('VCB', 'quarterly', 2025)` with mock page returns at least 1 `SscDocument` with `url`, `title`, `publishedAt`, `reportType`
+- Search form uses CSS attribute-suffix selector `input[id$="it8112::content"]` for stock code; search button found by visible text "Tìm kiếm"
+- Results table parser correctly extracts STT, Exchange, Stock Code, Title, Company, Description, Date, Download URL from `tr[_afrRK]` rows (8 cells)
+- Empty results table returns `[]` without throwing
+- Portal timeout (page never settles) returns `[]` after 10 s and closes browser
+- All four disclosure categories (BCTC, Dinh ky khac, Bat thuong 24h, Chao ban) are tested
+- Dedup: two calls for the same stock produce no duplicate URLs in merged output
+- Min 20 test cases; `bun tsc --noEmit` 0 errors
+
+**Task 031 — Acceptance Criteria**
+
+**Given** Chrome is installed at `/Applications/Google Chrome.app/Contents/MacOS/Google Chrome` and `puppeteer-core@24.40.0` is installed
+**When** `listSscDocuments('VCB', 'quarterly', 2025)` is called (production path)
+**Then**
+- Puppeteer launches Chrome headless (`headless: 'new'`) with `--no-sandbox`, `--disable-dev-shm-usage`
+- Navigates to `https://congbothongtin.ssc.gov.vn/faces/NewsSearch`
+- Types stock code into `input[id$="it8112::content"]`, clicks button with text "Tìm kiếm", waits for `tr[_afrRK]` row selector
+- Returns `SscDocument[]` matching the existing interface (title, url, publishedAt, reportType)
+- Browser is closed via `browser.close()` in ALL code paths (try/finally)
+- Returns `[]` (never throws) on navigation failure, selector timeout, or parse error; logs warning
+- `SscDocument.url` is absolute (`https://congbothongtin.ssc.gov.vn/...`)
+- `bun tsc --noEmit` 0 errors; existing 127 tests pass
+
+**Files to create/modify**:
+- MODIFY: `src/infrastructure/fetchers/ssc.ts` (replace plain-HTTP implementation with Puppeteer driver; preserve `SscDocument` interface and `listSscDocuments` signature)
+
+**Task 032 — Acceptance Criteria**
+
+**Given** the Puppeteer fetcher from task 031 is available
+**When** `listAllSscDocuments(actionCode)` is called
+**Then**
+- Queries all four categories in sequence: BCTC, Dinh ky khac, Bat thuong 24h, Chao ban / phat hanh
+- Merges results into a single `SscDocument[]` deduplicated by `url`
+- Category label is stored in a new optional `category` field on `SscDocument` (non-breaking addition)
+- Total result count logged at INFO level
+- `bun tsc --noEmit` 0 errors; all 127 tests still pass
+
+**Files to create/modify**:
+- MODIFY: `src/infrastructure/fetchers/ssc.ts` (add `listAllSscDocuments` export)
+
+**Task 033 — Acceptance Criteria**
+
+**Given** `listAllSscDocuments` from task 032 is available
+**When** `runSscCheck()` fires (20:00 GMT+7 cron or manual call)
+**Then**
+- Calls `listAllSscDocuments(code)` instead of the old `listSscDocuments(code, 'quarterly', year)` for each watchlist stock
+- Skips documents whose URL already exists in `financial_reports.source_url`
+- Passes new documents to `fetchParseAndStoreBctc({ url, actionCode })` unchanged
+- Rate-limit delay (2 s between stocks) and 3-retry exponential backoff preserved from task 104
+- No crash on empty watchlist, Puppeteer launch failure, or network timeout
+- `bun test src/__tests__/104-*.test.ts` (existing SSC checker tests) still pass
+- `bun tsc --noEmit` 0 errors
+
+**Files to modify**:
+- MODIFY: `src/scheduler/sscCheckerJob.ts` (replace import + call site)
+
+---
+
+### Chain B — Telegram Bot alerts
+
+| # | Title | Branch | Agent | Layer | Depends on |
+|---|-------|--------|-------|-------|------------|
+| 128 | Unit tests — Telegram notifier (mock Telegram API) | `task/128-test-telegram` | QA | test | — (write first, TDD Red) |
+| 034 | Telegram notifier + alert hook + send_test_telegram MCP tool | `task/034-telegram-notifier` | Developer | infrastructure + interface | 128 |
+
+**Task 128 — Acceptance Criteria**
+
+**Given** a mock HTTPS server that stubs `https://api.telegram.org/bot<TOKEN>/sendMessage`
+**When** the test suite runs
+**Then**
+- `notifyTelegram(alert)` with severity HIGH posts to `sendMessage` with `chat_id` and markdown message body
+- `notifyTelegram(alert)` with severity LOW does NOT call the API (filtered out)
+- Message body contains: stock code(s), signal type, severity label, one-line summary, ISO timestamp
+- Returns gracefully (does not throw) when the API returns a non-200 status
+- Returns gracefully when the network is unreachable (connection refused)
+- `TELEGRAM_BOT_TOKEN` or `TELEGRAM_CHAT_ID` missing from env → logs warning, skips send, returns `false`
+- `send_test_telegram` MCP tool (schema: `{ message: string }`) calls `notifyTelegram` and returns `{ sent: boolean, error?: string }`
+- Min 15 test cases; `bun tsc --noEmit` 0 errors
+
+**Task 034 — Acceptance Criteria**
+
+**Given** `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` are set in `.env`
+**When** a HIGH or CRITICAL severity alert is generated by `alertGenerator.ts`
+**Then**
+- `notifyTelegram(alert)` is called; sends HTTPS POST to `https://api.telegram.org/bot${TOKEN}/sendMessage`
+- Payload: `{ chat_id, parse_mode: 'Markdown', text: <formatted message> }`
+- Message format: `*[SEVERITY] STOCK_CODE*\nSignal: <type>\nSummary: <one line>\nTime: <ISO>`
+- Also triggered when SSC discovers a new document (called from `sscCheckerJob.ts` after task 033)
+- `send_test_telegram` MCP tool registered in `src/interface/mcp/server.ts`; increments `toolCount` to 18
+- Does NOT throw on Telegram API failure — logs warning, continues
+- `bun tsc --noEmit` 0 errors; 128 tests pass
+
+**Files to create/modify**:
+- CREATE: `src/infrastructure/notifiers/telegram.ts`
+- CREATE: `src/infrastructure/notifiers/index.ts`
+- MODIFY: `src/infrastructure/config.ts` (add `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` env vars)
+- MODIFY: `src/scheduler/sscCheckerJob.ts` (call `notifyTelegram` for new documents)
+- MODIFY: `src/interface/mcp/tools/alerts.ts` (add `send_test_telegram` tool)
+- MODIFY: `src/interface/mcp/server.ts` (register new tool; toolCount 17 → 18)
+
+---
+
+### Chain C — 15-minute intelligence cycle
+
+| # | Title | Branch | Agent | Layer | Depends on |
+|---|-------|--------|-------|-------|------------|
+| 129 | Unit tests — 15-min intelligence cycle (mock sub-jobs) | `task/129-test-intelligence-cycle` | QA | test | — (write first, TDD Red) |
+| 106 | 15-min intelligence cycle job (replaces ad-hoc cron slots during market hours) | `task/106-job-intelligence-cycle` | Developer | interface/scheduler | 033, 034, 129 |
+
+**Task 129 — Acceptance Criteria**
+
+**Given** mocked `pollNews`, `runSscCheck`, `fetchHosePrices`, `runImpactChain`, and `notifyTelegram`
+**When** the test suite runs
+**Then**
+- `runIntelligenceCycle()` calls each sub-job in correct sequence: news → SSC list → prices → impact chain → Telegram
+- Concurrency guard: second call while first is running logs warning and returns early without calling sub-jobs
+- Cycle duration is measured; a mocked slow cycle (> 12 min) logs a warning
+- Outside market hours (09:00–15:30 GMT+7 weekdays): SSC and price fetch are skipped; news poll still runs
+- Sub-job failure (throws) is caught, logged, and does NOT abort the remaining sub-jobs in the cycle
+- Min 15 test cases; `bun tsc --noEmit` 0 errors
+
+**Task 106 — Acceptance Criteria**
+
+**Given** the server is running and market hours are 09:00–15:30 GMT+7 weekdays
+**When** the intelligence cycle fires (every 15 min during market hours; every 60 min outside)
+**Then**
+- `runIntelligenceCycle()` executes: `pollNews()` → `runSscCheck()` (list only, no full PDF parse if no new docs) → `fetchHosePrices(watchlistCodes)` → `runImpactChain(newEntries)` → `notifyTelegram(alerts)` for HIGH/CRITICAL
+- Concurrency guard: overlapping cycles are skipped with `[scheduler] intelligence cycle already running — skipping` log
+- Cycle wall-clock duration logged at INFO; > 12 min logs WARN
+- Outside market hours (or weekends): SSC list + price fetch skipped; news poll runs at 60-min interval
+- `startScheduler()` in `src/interface/scheduler/index.ts` registers the 15-min cron and removes the now-redundant `newsPollerJob` cron (news poll is absorbed into the cycle)
+- `bun test src/__tests__/106-*.test.ts` passes with mocked sub-jobs
+- `bun tsc --noEmit` 0 errors
+
+**Files to create/modify**:
+- CREATE: `src/scheduler/intelligenceCycleJob.ts`
+- MODIFY: `src/interface/scheduler/index.ts` (register 15-min cycle; decommission standalone `newsPollerJob` cron entry)
+- MODIFY: `src/scheduler/jobs.ts` (add cycle cron definition)
+
+---
+
 ## Kanban Summary
 
 | Column | Count | Tasks |
@@ -366,9 +532,9 @@
 | ✅ Done | 55 | 000-DOC-001 + 025, 028, FIX-081, 126, 089 (Sprint 008 complete) |
 | 🔍 Review | 0 | — |
 | 🚧 In Progress | 0 | — |
-| 📋 Todo | 0 | — |
+| 📋 Todo | 10 | 127, 031, 032, 033 (SSC Puppeteer) + 128, 034 (Telegram) + 129, 106 (15-min cycle) |
 | 🗂 Backlog | 0 | — |
-| **Total** | **55** | |
+| **Total** | **65** | |
 
 ---
 

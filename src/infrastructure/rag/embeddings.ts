@@ -29,7 +29,7 @@ export async function getEmbeddingPipeline(): Promise<FeatureExtractionPipeline>
     env.cacheDir = CACHE
     env.localModelPath = CACHE
 
-    const pipe = await pipeline('feature-extraction', MODEL, {
+    const pipe = await (pipeline as Function)('feature-extraction', MODEL, {
       dtype: 'fp32',
     }) as FeatureExtractionPipeline
 

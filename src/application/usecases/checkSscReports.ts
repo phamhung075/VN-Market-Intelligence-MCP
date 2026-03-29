@@ -155,29 +155,13 @@ async function defaultPipeline(params: PipelineParams): Promise<unknown> {
 
   const year = new Date().getFullYear();
 
-  // Inject a mock SSC client that returns the pre-found URL directly
-  const mockSscClient = {
-    async get(_url: string): Promise<string> {
-      return `
-        <html><body>
-          <table class="tbl-data">
-            <tbody>
-              <tr>
-                <td><a href="${params.pdfUrl}">${params.actionCode} báo cáo tài chính quý</a></td>
-                <td>${params.publishedAt}</td>
-              </tr>
-            </tbody>
-          </table>
-        </body></html>
-      `;
-    },
-  };
+  // Inject a mock browser factory that returns the pre-found document directly
+  const mockBrowserFactory = undefined; // Use default Puppeteer browser
 
   return fetchParseAndStoreBctc({
     actionCode: params.actionCode,
     year,
     quarter: "Q1",
-    sscHttpClient: mockSscClient,
   });
 }
 
