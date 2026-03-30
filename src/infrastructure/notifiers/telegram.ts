@@ -134,22 +134,35 @@ export async function sendTelegramMessage(
 // Alert formatter
 // ─────────────────────────────────────────────────────────────────────────────
 
+/** Map severity to an emoji prefix for compact mobile display. */
+const SEVERITY_EMOJI: Record<string, string> = {
+  critical: "⚠️",
+  high: "🔴",
+  medium: "🟡",
+  low: "🟢",
+};
+
 /**
- * Formats an Alert into a Telegram Markdown message.
+ * Formats an Alert into a compact Telegram Markdown message optimised for mobile.
  *
- * Template:
- *   *[SEVERITY] STOCK_CODE*
- *   Signal: signal_type1, signal_type2
- *   Summary: one-line message (max 120 chars)
- *   Time: DD/MM/YYYY HH:MM (GMT+7)
+ * Template (one line per field):
+ *   ⚠️ *CRITICAL — VCB*
+ *   -5.2% | Vol 3.2× | news_mention
+ *   SBV rate +25bp — tác động ngân hàng
+ *   🕐 28/03/2026 09:15 (GMT+7)
  */
 function formatAlertMessage(alert: Alert): string {
-  const severity = alert.severity.toUpperCase();
+  const severity = alert.severity.toLowerCase();
+  const emoji = SEVERITY_EMOJI[severity] ?? "🔔";
   const stockCode = alert.actionCode;
-  const signalTypes = alert.signals.map((s) => s.type).join(", ");
+
+  // Compact signal line: types joined with " | "
+  const signalTypes = alert.signals.map((s) => s.type).join(" | ");
+
+  // Summary truncated to 120 chars
   const summary = alert.message.slice(0, 120);
 
-  // Format timestamp in GMT+7
+  // Timestamp in VN time only (GMT+7)
   const now = new Date(alert.createdAt);
   const gmt7 = new Date(now.getTime() + 7 * 60 * 60 * 1000);
   const dd = String(gmt7.getUTCDate()).padStart(2, "0");
@@ -159,7 +172,7 @@ function formatAlertMessage(alert: Alert): string {
   const min = String(gmt7.getUTCMinutes()).padStart(2, "0");
   const timestamp = `${dd}/${mm}/${yyyy} ${hh}:${min} (GMT+7)`;
 
-  return `*[${severity}] ${stockCode}*\nSignal: ${signalTypes}\nSummary: ${summary}\nTime: ${timestamp}`;
+  return `${emoji} *${severity.toUpperCase()} — ${stockCode}*\n${signalTypes}\n${summary}\n🕐 ${timestamp}`;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

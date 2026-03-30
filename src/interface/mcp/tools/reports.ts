@@ -650,7 +650,14 @@ export function registerReportTools(
           confidence = cached.confidence;
         } else {
           // No cache — try pdf-parse (fast, for text-based PDFs)
-          const pdfBuffer = readFileSync(filePath);
+          // Check if the physical file exists before attempting to read it
+          let pdfBuffer: Buffer;
+          try {
+            pdfBuffer = readFileSync(filePath);
+          } catch {
+            return { content: [{ type: "text" as const, text: `Error: ${filename} not found in data/pdfs/. Use list_stored_pdfs to see available files.` }] };
+          }
+
           if (pdfBuffer.slice(0, 5).toString() !== "%PDF-") {
             return { content: [{ type: "text" as const, text: `Error: ${filename} is not a valid PDF file.` }] };
           }
@@ -661,7 +668,8 @@ export function registerReportTools(
           confidence = text.trim().length > 200 ? 0.9 : 0.1;
 
           if (text.trim().length < 200) {
-            return { content: [{ type: "text" as const, text: `Text extraction returned minimal content (${text.length} chars). OCR has not been run yet for this file. The server will process it in the background — try again in a few minutes.` }] };
+            // File exists but OCR has not yet processed it — give a clear, actionable message
+            return { content: [{ type: "text" as const, text: `PDF exists but OCR extraction is still in progress. Please retry in 60 seconds.` }] };
           }
         }
 

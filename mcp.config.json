@@ -58,7 +58,16 @@
     },
     "telegramOnSeverity": ["high", "critical"],
     "telegramOnNewDocument": true,
-    "telegramMinCascadeConfidence": 0.7
+    "telegramMinCascadeConfidence": 0.7,
+    "domainThresholds": {
+      "banking":      { "dropPct": -4, "risePct": 6 },
+      "oil_gas":      { "dropPct": -5, "risePct": 7 },
+      "aviation":     { "dropPct": -4, "risePct": 6 },
+      "retail":       { "dropPct": -3, "risePct": 5 },
+      "tech":         { "dropPct": -5, "risePct": 8 },
+      "steel":        { "dropPct": -5, "risePct": 7 },
+      "real_estate":  { "dropPct": -4, "risePct": 6 }
+    }
   },
 
   "fetchers": {
@@ -142,7 +151,7 @@
       "halfLifeDays": 7,
       "maxBoost": 0.3
     },
-    "maxDistance": 0.8
+    "maxDistance": 0.9
   },
 
   "fetchLimits": {

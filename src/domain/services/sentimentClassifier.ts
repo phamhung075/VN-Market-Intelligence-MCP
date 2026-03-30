@@ -206,6 +206,26 @@ function findOccurrences(text: string, phrase: string): Array<[number, number]> 
 }
 
 /**
+ * Extract the current sentence ending at `charPos` from `text`.
+ *
+ * Sentences are delimited by `.`, `!`, `?`, and `;`.
+ * This scopes negation detection to the same sentence, preventing
+ * cross-sentence false positives like "Không tăng. Thị trường giảm."
+ * from marking "giảm" as flipped.
+ */
+function currentSentenceBefore(text: string, charPos: number): string {
+  const preceding = text.slice(0, charPos);
+  // Find the last sentence boundary before charPos
+  const lastBoundary = Math.max(
+    preceding.lastIndexOf("."),
+    preceding.lastIndexOf("!"),
+    preceding.lastIndexOf("?"),
+    preceding.lastIndexOf(";"),
+  );
+  return lastBoundary === -1 ? preceding : preceding.slice(lastBoundary + 1);
+}
+
+/**
  * Determine the negation effect on a sentiment keyword at `charPos`.
  *
  * Returns:
@@ -215,17 +235,20 @@ function findOccurrences(text: string, phrase: string): Array<[number, number]> 
  *  - "none"   — no negation detected
  *
  * Strategy:
- *  1. Extract the substring ending at `charPos` (the start of the sentiment word).
- *  2. Tokenize that substring.
+ *  1. Extract only the current sentence (split on `.!?;`) ending at `charPos`.
+ *     This prevents negation in one sentence from affecting sentiment words
+ *     in subsequent sentences.
+ *  2. Tokenize that sentence fragment.
  *  3. Look at the last NEGATION_WINDOW tokens for any negation token.
- *  4. Check multi-word negation phrases in the last ~40 characters.
+ *  4. Check multi-word negation phrases in the last ~40 characters of the sentence.
  *  "flip" takes priority over "cancel" if both are present.
  */
 function detectNegation(text: string, charPos: number): "flip" | "cancel" | "none" {
-  const preceding = text.slice(0, charPos).trimEnd();
-  const tokens = tokenize(preceding);
+  // Scope to current sentence only — prevents cross-sentence negation leakage
+  const sentenceFragment = currentSentenceBefore(text, charPos).trimEnd();
+  const tokens = tokenize(sentenceFragment);
   const window = tokens.slice(-NEGATION_WINDOW);
-  const nearbyText = preceding.slice(Math.max(0, preceding.length - 40));
+  const nearbyText = sentenceFragment.slice(Math.max(0, sentenceFragment.length - 40));
 
   // Check flip negation (strong)
   for (const tok of window) {

@@ -421,19 +421,38 @@ function collectKeywords(text: string, keywords: string[]): string[] {
 
 /**
  * Extract all VN stock tickers mentioned in text.
- * Looks for 2–5 uppercase letter sequences that are in KNOWN_VN_STOCKS.
+ *
+ * Handles:
+ *  - Standard uppercase tickers: "HPG tăng mạnh"
+ *  - Tickers in parentheses: "Vietcombank (VCB)" or "Vietcombank (vcb)"
+ *  - Lowercase tickers: "vcb" → "VCB"
+ *  - Filters against KNOWN_VN_STOCKS (2-5 uppercase letters after normalization)
  */
 function extractStockTickers(text: string): string[] {
-  // Match sequences of 2-5 uppercase letters surrounded by word boundaries or spaces
-  const matches = text.match(/\b[A-Z]{2,5}\b/g) ?? [];
   const found: string[] = [];
   const seen = new Set<string>();
-  for (const m of matches) {
-    if (KNOWN_VN_STOCKS.has(m) && !seen.has(m)) {
-      found.push(m);
-      seen.add(m);
+
+  // Pattern 1: tickers in parentheses (case-insensitive), e.g. "(VCB)" or "(vcb)"
+  const parenMatches = text.matchAll(/\(([A-Za-z]{2,5})\)/gi);
+  for (const m of parenMatches) {
+    const code = m[1]!.toUpperCase();
+    if (KNOWN_VN_STOCKS.has(code) && !seen.has(code)) {
+      found.push(code);
+      seen.add(code);
     }
   }
+
+  // Pattern 2: standalone word-boundary matches (2-5 letters, any case)
+  // Use case-insensitive flag and normalise to uppercase for lookup
+  const wordMatches = text.matchAll(/\b([A-Za-z]{2,5})\b/g);
+  for (const m of wordMatches) {
+    const code = m[1]!.toUpperCase();
+    if (KNOWN_VN_STOCKS.has(code) && !seen.has(code)) {
+      found.push(code);
+      seen.add(code);
+    }
+  }
+
   return found;
 }
 

@@ -364,6 +364,51 @@ const SECTOR_RULES: SectorRule[] = [
     confidence: 0.60,
     title: "USD/VND tăng — tăng giá trị xuất khẩu thép tính bằng VND",
   },
+  // ── Logistics: high oil price → cost pressure (bearish) ──────────────────
+  {
+    keywords: ["giá dầu tăng", "oil price rise", "crude oil up", "fuel cost"],
+    domain: "logistics",
+    direction: "down",
+    confidence: 0.70,
+    title: "Giá dầu tăng — tăng chi phí vận chuyển, áp lực lên logistics",
+  },
+  {
+    keywords: ["giá dầu giảm", "oil price fall", "crude oil down"],
+    domain: "logistics",
+    direction: "up",
+    confidence: 0.65,
+    title: "Giá dầu giảm — giảm chi phí nhiên liệu, tích cực cho logistics",
+  },
+  // ── Cement / construction: infrastructure spending → bullish ─────────────
+  {
+    keywords: ["đầu tư công", "infrastructure spending", "public investment", "gói kích thích", "xây dựng hạ tầng", "cầu đường"],
+    domain: "steel",
+    direction: "up",
+    confidence: 0.72,
+    title: "Đầu tư công tăng — tích cực cho thép và vật liệu xây dựng",
+  },
+  {
+    keywords: ["đầu tư công", "infrastructure spending", "public investment", "xây dựng hạ tầng"],
+    domain: "real_estate",
+    direction: "up",
+    confidence: 0.65,
+    title: "Đầu tư công tăng — tích cực cho bất động sản khu vực hạ tầng",
+  },
+  // ── Seafood / agriculture: USD/VND rate → export revenue impact ──────────
+  {
+    keywords: ["tỷ giá usd", "usd/vnd tăng", "vnd weakens", "đồng đô la tăng"],
+    domain: "agriculture",
+    direction: "up",
+    confidence: 0.68,
+    title: "USD/VND tăng — tăng doanh thu xuất khẩu thủy sản và nông sản tính bằng VND",
+  },
+  {
+    keywords: ["usd/vnd giảm", "vnd strengthens", "vnd mạnh hơn"],
+    domain: "agriculture",
+    direction: "down",
+    confidence: 0.65,
+    title: "USD/VND giảm — giảm doanh thu xuất khẩu thủy sản tính bằng VND",
+  },
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════

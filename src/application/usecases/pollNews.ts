@@ -120,13 +120,54 @@ async function defaultRagRetriever(
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
+ * Compute a short title fingerprint: first 50 characters, lowercase, whitespace-normalised.
+ * Used for title-based deduplication to catch identical stories published under
+ * slightly different URLs (e.g. pagination parameters, tracking suffixes).
+ */
+function titleFingerprint(title: string): string {
+  return title.toLowerCase().replace(/\s+/g, " ").trim().slice(0, 50);
+}
+
+/**
+ * Returns true if a similar title (matching the first 50 chars) was already
+ * stored in rag_analyses within the past 24 hours.
+ * This catches re-published stories that differ only in URL.
+ */
+function isTitleDuplicate(db: Database, title: string): boolean {
+  if (!title || title.trim().length === 0) return false;
+  const fp = titleFingerprint(title);
+  if (fp.length < 10) return false; // too short to be meaningful
+
+  const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+  const row = db
+    .prepare(
+      `SELECT 1 FROM rag_analyses
+       WHERE LOWER(SUBSTR(REPLACE(source_title, '  ', ' '), 1, 50)) = ?
+         AND created_at >= ?
+       LIMIT 1`,
+    )
+    .get(fp, cutoff);
+  return row != null;
+}
+
+/**
  * Attempt to insert one AnalysisEntry into rag_analyses.
- * Uses INSERT OR IGNORE — returns true if inserted, false if duplicate.
+ * Uses INSERT OR IGNORE (URL dedup) + title fingerprint dedup (24 h window).
+ * Title dedup is only applied when the entry has a non-empty URL — empty-URL
+ * items use a different storage path and must remain insertable on every call
+ * (they have no URL uniqueness constraint to rely on).
+ * Returns true if inserted, false if duplicate.
  */
 function tryInsertEntry(
   db: Database,
   entry: ReturnType<typeof normalizeNews>,
 ): boolean {
+  // Title-based dedup: only when entry has a URL (skip for no-URL items to
+  // preserve the existing behaviour that empty-URL articles are always inserted)
+  if (entry.sourceUrl && isTitleDuplicate(db, entry.sourceTitle)) {
+    return false;
+  }
+
   const stmt = db.prepare(`
     INSERT OR IGNORE INTO rag_analyses
       (id, created_at, level, source_url, source_title, source_type,
