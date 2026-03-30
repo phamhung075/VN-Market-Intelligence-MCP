@@ -93,6 +93,7 @@
 | 131 | Alert quality system — cooldown, dedup, grouping | `task/131-alert-quality-system` | 35 tests, 0 fail |
 | 132 | BCTC validation pipeline — bad data guard | `task/132-bctc-validator` | 26 tests, 100% coverage, 0 fail |
 | 133 | Adaptive signal detection thresholds | `task/133-adaptive-thresholds` | 25 tests, 100% coverage, 0 fail |
+| 137 | Fix Step E — read alerts from DB and send to Telegram | `task/137-fix-step-e-alerts` | 18 tests, 0 fail, tsc 0 errors |
 
 ---
 
@@ -106,6 +107,296 @@
 
 ## 📋 TODO
 *(Dependencies cleared — ready to assign)*
+
+### Sprint 014 — Alert Pipeline Fix, VN-Index Feed, WAL Checkpoint, Circuit Breaker, System Health
+
+> Sprint 014 — REQ_014.md approved. TECH_014.md approved by Architect 2026-03-29.
+> Architect confirmed: `circuitBreaker.ts` and `circuitBreakerRegistry.ts` already exist — task 136 is a WIRING task only.
+> Architect confirmed: `systemTools.ts` already exists with 4 tools — task 141 is an ENHANCEMENT task only.
+> Recommended execution order: 137 → 138 (parallel) → 139 → 140 → 136 → 141
+
+| # | Title | Branch | Agent | Layer | Priority | Depends on | Status |
+|---|-------|--------|-------|-------|----------|------------|--------|
+| 137 | Fix alert pipeline — read DB alerts in Step E of intelligence cycle | `task/137-fix-alert-pipeline` | Developer | interface/scheduler + infrastructure/db | P0 | — | Todo |
+| 138 | Fix impact chain — replace Step D placeholder with real runImpactChain call | `task/138-fix-impact-chain` | Developer | application + interface/scheduler | P0 | — | Todo |
+| 139 | VN-Index live feed via CafeF index endpoint | `task/139-vnindex-cafef` | Developer | infrastructure/fetchers | P1 | — | Todo |
+| 140 | SQLite WAL checkpoint — daily cron + SIGTERM hook | `task/140-wal-checkpoint` | Developer | infrastructure/db + scheduler | P2 | — | Todo |
+| 136 | Wire circuit breaker into hose.ts + ssc.ts fetchers | `task/136-circuit-breaker` | Developer | infrastructure/fetchers | P3 | — | Todo |
+| 141 | Enhance get_system_health — WAL size, alert stats, last cycle result | `task/141-system-health-tool` | Developer | interface/mcp | P4 | 136 ✓ | Todo |
+
+---
+
+#### Task 137 — Fix alert pipeline (Step E read from DB + `notified_telegram` migration)
+
+**Branch**: `task/137-fix-alert-pipeline`
+**Layer**: infrastructure/db + interface/scheduler
+**Priority**: P0 — production is deaf without this fix
+**Depends on**: none
+
+**Files to read first**:
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/scheduler/intelligenceCycleJob.ts` (lines 290–310 — current Step E bug)
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/infrastructure/db/alertStore.ts` (existing `storeAlerts`)
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/infrastructure/db/schema.ts` (existing `initDatabase`, find `ALTER TABLE` block for task 132)
+
+**Files to create**:
+- none
+
+**Files to modify**:
+- MODIFY: `src/infrastructure/db/schema.ts` — add `ALTER TABLE alerts ADD COLUMN notified_telegram INTEGER NOT NULL DEFAULT 0` (try/catch) + `CREATE INDEX IF NOT EXISTS idx_alerts_notified ON alerts(notified_telegram, severity)` after the task 132 block
+- MODIFY: `src/infrastructure/db/alertStore.ts` — add `markAlertNotified(id, db)` and `readUnnotifiedAlerts(windowMs, db)` functions after `storeAlerts`
+- MODIFY: `src/scheduler/intelligenceCycleJob.ts` — (1) add `readUnnotifiedAlertsFn?: (windowMs: number) => Promise<Alert[]>` to `CycleDeps`, (2) add `defaultReadUnnotifiedAlerts()` above `_runCycle`, (3) replace the hardcoded `const alerts: Alert[] = []` in Step E with a real DB query + per-alert Telegram send + `markAlertNotified` update
+
+**Test file**: `src/__tests__/137-fix-alert-pipeline.test.ts`
+
+**Acceptance Criteria**:
+
+**Given** the `alerts` table contains two rows with `severity = 'high'`, `notified_telegram = 0`, and `triggered_at = now - 5 minutes`
+**When** `runIntelligenceCycle()` is called with a mocked `sendAlertsFn` that counts invocations and `isMarketHoursFn` returning `true`
+**Then**
+- `telegramAlertsSent === 2`
+- The mocked `sendAlertsFn` receives exactly those two `Alert` objects
+- Both `alerts` rows have `notified_telegram = 1` after the call
+- A second call to `runIntelligenceCycle()` sends 0 alerts (idempotency)
+- When `sendAlertsFn` returns `0` (Telegram not configured), alert rows still have `notified_telegram = 0` (retry on next cycle)
+- `bun test src/__tests__/137-fix-alert-pipeline.test.ts` passes with 0 failures
+- `bun tsc --noEmit` reports 0 errors
+
+**Key implementation notes**:
+- Step E window is hardcoded `WINDOW_MS = 16 * 60 * 1000` in default; injectable via `CycleDeps.readUnnotifiedAlertsFn` for tests
+- `markAlertNotified` is called only after a successful Telegram send (return value `true`); a failed send leaves the flag at 0
+- `ALTER TABLE` try/catch must swallow the error silently when the column already exists (second server start)
+- SQLite window expression uses `'-' || ? || ' minutes'` pattern (safe — `windowMinutes` is a `Math.round()` result, not user input)
+- Critical alerts are never suppressed by existing cooldown rules (`alertQuality.neverSuppressSeverity = ["critical"]` is preserved)
+
+---
+
+#### Task 138 — Fix impact chain (Step D real runImpactChain + `insertedIds` plumbing)
+
+**Branch**: `task/138-fix-impact-chain`
+**Layer**: application + interface/scheduler
+**Priority**: P0 — `impactEventsRan` is always 0 without this fix
+**Depends on**: none (touches different lines of `intelligenceCycleJob.ts` than 137)
+
+**Files to read first**:
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/scheduler/intelligenceCycleJob.ts` (lines 150–165 — `defaultRunImpactChain` placeholder; line 282 — call site)
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/application/usecases/pollNews.ts` (current `PollNewsResult` type + `tryInsertEntry` loop)
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/application/usecases/runImpactChain.ts` (signature to call correctly)
+
+**Files to create**:
+- none
+
+**Files to modify**:
+- MODIFY: `src/application/usecases/pollNews.ts` — add `insertedIds: string[]` field to `PollNewsResult` interface; populate it inside the `tryInsertEntry` loop whenever `tryInsertEntry()` returns `true`
+- MODIFY: `src/scheduler/intelligenceCycleJob.ts` — (1) update `CycleDeps.runImpactChainFn` signature to `(insertedIds: string[]) => Promise<number>`, (2) capture `insertedIds` from Step A result, (3) replace `defaultRunImpactChain` stub with a real implementation that loads watchlist from SQLite, reads each `rag_analyses` row by ID, calls `runImpactChain`, counts successful calls, and isolates per-entry errors
+
+**Test file**: `src/__tests__/138-fix-impact-chain.test.ts`
+
+**Acceptance Criteria**:
+
+**Given** `pollNewsFn` returns `PollNewsResult` with `insertedIds = ["id-1", "id-2"]` and two matching rows in `rag_analyses`
+**When** `runIntelligenceCycle()` runs with `isMarketHoursFn = () => true`
+**Then**
+- `impactEventsRan === 2` (one call per inserted ID)
+- `PollNewsResult` type includes `insertedIds: string[]`
+- `pollNews()` in a test with 3 newly inserted entries populates `insertedIds` with 3 IDs
+- When `runImpactChain` throws on the second ID: `impactEventsRan === 1`; error is logged but does not propagate
+- When `insertedIds` is empty: `impactEventsRan === 0`; no DB queries are made
+- `bun test src/__tests__/138-fix-impact-chain.test.ts` passes with 0 failures
+- `bun tsc --noEmit` reports 0 errors
+
+**Key implementation notes**:
+- `defaultRunImpactChain(ids)` must be error-isolated per entry (one failure does not abort the rest)
+- The injectable `CycleDeps.runImpactChainFn` signature change is backward-compatible (optional field)
+- `PollNewsResult.insertedIds` is additive — existing callers that do not read it are unaffected
+- Empty `insertedIds` short-circuits immediately with `return 0`, no watchlist DB query
+
+---
+
+#### Task 139 — VN-Index live feed via CafeF index endpoint
+
+**Branch**: `task/139-vnindex-cafef`
+**Layer**: infrastructure/fetchers
+**Priority**: P1 — geo-blocked VnDirect means VNINDEX is always N/A
+**Depends on**: none
+
+**Files to read first**:
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/infrastructure/fetchers/hose.ts` (full file — find existing `CafefStockRecord` shape, `fetchFromCafef`, and `fetchHosePrices` routing logic)
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/interface/mcp/tools/marketTools.ts` (lines ~140–200 — how `fetchHosePrices(["VNINDEX"])` and `storeMarketPrices` are already called)
+
+**Files to create**:
+- none
+
+**Files to modify**:
+- MODIFY: `src/infrastructure/fetchers/hose.ts` — (1) add `VnIndexSnapshot` interface export, (2) add `fetchVnIndex()` function that GETs `https://banggia.cafef.vn/stockhandler.ashx?index=0`, finds the `a === "VNINDEX"` record, computes `changePct`, returns `VnIndexSnapshot`, (3) add routing branch in `fetchHosePrices`: if the only requested code is `"VNINDEX"`, call `fetchVnIndex()` and return a `MarketPrice[]` with one element (`exchange = "INDEX"`, `price = snapshot.value`, no ×1000 conversion)
+
+**Test file**: `src/__tests__/139-vnindex-cafef.test.ts`
+
+**Acceptance Criteria**:
+
+**Given** a mocked CafeF response: `[{"a":"VNINDEX","b":1240.5,"l":1247.35,"k":6.85,"totalvolume":350000000}]`
+**When** `fetchVnIndex()` is called with the mock
+**Then**
+- Returns `VnIndexSnapshot` with `value === 1247.35`, `previousValue === 1240.5`, `changePct ≈ 0.55`, `code === "VNINDEX"`
+- No ×1000 multiplication is applied (value is stored as-is: `1247.35`)
+- `fetchHosePrices(["VNINDEX"])` returns `MarketPrice[]` with `price === 1247.35`
+- After `storeMarketPrices()`, `market_prices` has a row with `code = "VNINDEX"` and `price = 1247.35`
+- `get_market_snapshot` renders `VN-Index: 1,247.35  +0.55%` (not `N/A`)
+- When the CafeF response is empty or lacks `a === "VNINDEX"`: `fetchVnIndex()` returns `null` / `fetchHosePrices(["VNINDEX"])` returns `[]`; a WARN is logged; no exception thrown
+- Timeout: 10 seconds (same as existing `fetchFromCafef`)
+- `bun test src/__tests__/139-vnindex-cafef.test.ts` passes with 0 failures
+- `bun tsc --noEmit` reports 0 errors
+
+**Key implementation notes**:
+- CafeF index values are floating-point points (e.g. `1247.35`), NOT multiplied by 1000 — the ×1000 multiplier only applies to stock prices in `fetchFromCafef`
+- The `VnIndexSnapshot` interface must be exported from `hose.ts` for use by `systemTools.ts` (task 141)
+- `marketTools.ts` requires no changes — the existing code at line ~188 already handles `code === "VNINDEX"` in the stored `market_prices` row
+- Endpoint: `https://banggia.cafef.vn/stockhandler.ashx?index=0`
+
+---
+
+#### Task 140 — SQLite WAL checkpoint (daily cron at 03:00 GMT+7 + SIGTERM/SIGINT hook)
+
+**Branch**: `task/140-wal-checkpoint`
+**Layer**: infrastructure/db + scheduler + interface
+**Priority**: P2 — WAL file is 2.5x main DB size
+**Depends on**: none
+
+**Files to read first**:
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/infrastructure/db/schema.ts` (find `getDb()` and confirm `journal_mode = WAL` pragma location)
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/scheduler/jobs.ts` (find `startScheduler` and how existing cron jobs are registered)
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/index.ts` (find existing shutdown handling and server bootstrap)
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/mcp.config.json` (find `scheduler` section to add `walCheckpoint` cron key)
+
+**Files to create**:
+- CREATE: `src/infrastructure/db/checkpoint.ts` — export `runWalCheckpoint(db?: Database): void` that calls `db.pragma('wal_checkpoint(PASSIVE)')` then `db.pragma('optimize')` then logs at INFO level
+- CREATE: `src/scheduler/walCheckpointJob.ts` — import `runWalCheckpoint`, export `runWalCheckpointJob()` function
+
+**Files to modify**:
+- MODIFY: `mcp.config.json` — add `"walCheckpoint": "0 20 * * *"` to the `scheduler` section (= 03:00 GMT+7 expressed as UTC)
+- MODIFY: `src/scheduler/jobs.ts` — import `walCheckpointJob` and register it with the cron expression from config
+- MODIFY: `src/index.ts` — call `runWalCheckpoint()` inside the existing `shutdown()` function (before `process.exit(0)`), covering both SIGTERM and SIGINT paths
+
+**Test file**: `src/__tests__/140-wal-checkpoint.test.ts`
+
+**Acceptance Criteria**:
+
+**Given** `runWalCheckpoint()` is called with a real SQLite database (WAL mode, at least 100 writes)
+**When** the function returns
+**Then**
+- The WAL file size drops to near-zero bytes
+- A log line at INFO level containing `WAL checkpoint + optimize complete` is emitted
+- `bun test` full suite passes (tests use `:memory:` DBs — no side effects on test DBs)
+
+**Given** the server is running with a live WAL
+**When** SIGTERM is sent
+**Then**
+- `runWalCheckpoint()` is called before `process.exit(0)`
+- The process exits with code 0
+
+**Key implementation notes**:
+- Use `PASSIVE` mode only — `PASSIVE` does not block readers/writers. Never use `FULL` or `RESTART` mode
+- The default `db` parameter resolves via `getDb()` (singleton) if no explicit DB is passed
+- The cron expression `"0 20 * * *"` = 20:00 UTC = 03:00 next day GMT+7
+
+---
+
+#### Task 136 — Wire circuit breaker into hose.ts + ssc.ts (WIRING TASK — class already exists)
+
+**Branch**: `task/136-circuit-breaker`
+**Layer**: infrastructure/fetchers
+**Priority**: P3 — VnDirect geo-block stalls the full cycle for 30-50s
+**Depends on**: none
+**Architect note**: `src/infrastructure/circuitBreaker.ts` and `src/infrastructure/circuitBreakerRegistry.ts` ALREADY EXIST with singletons `breakers.cafef`, `breakers.hose`, `breakers.ssc` and `getAllBreakerStats()`. This task ONLY wires the existing singletons into the fetchers. The error class is `CircuitOpenError` (not `CircuitBreakerOpenError`). State strings are lowercase: `"closed"/"open"/"half-open"`.
+
+**Files to read first**:
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/infrastructure/circuitBreaker.ts` (full API: `execute()`, `getState()`, `getStats()`, `CircuitOpenError`)
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/infrastructure/circuitBreakerRegistry.ts` (singleton exports: `breakers.hose`, `breakers.cafef`, `breakers.ssc`, `getAllBreakerStats()`)
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/infrastructure/fetchers/hose.ts` (find VnDirect HTTP call + CafeF fallback — wrap both with breakers)
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/infrastructure/fetchers/ssc.ts` (find Puppeteer `defaultBrowserFactory` or equivalent — wrap with `breakers.ssc.execute()`)
+
+**Files to create**:
+- none (class and registry already exist)
+
+**Files to modify**:
+- MODIFY: `src/infrastructure/fetchers/hose.ts` — wrap the VnDirect HTTP call with `breakers.hose.execute()` and the CafeF fallback `fetchFromCafef` call with `breakers.cafef.execute()`; catch `CircuitOpenError`, log WARN, return `[]`
+- MODIFY: `src/infrastructure/fetchers/ssc.ts` — wrap the Puppeteer browser launch (`defaultBrowserFactory`) with `breakers.ssc.execute()`; catch `CircuitOpenError`, log WARN, return safe default
+
+**Test file**: `src/__tests__/136-circuit-breaker.test.ts`
+
+**Acceptance Criteria**:
+
+**Given** `CircuitBreaker` configured with `failureThreshold: 5, resetTimeoutMs: 1000`
+**When** `execute()` is called 5 times with a function that always throws
+**Then**
+- After 5 failures: `getState() === 'open'` (lowercase, as per existing implementation)
+- The 6th `execute()` throws `CircuitOpenError` immediately (no `fn` invoked)
+- After 1001ms: `getState() === 'half-open'`
+- A probe call that succeeds transitions state to `'closed'`
+
+**Given** `breakers.hose` is in `'open'` state
+**When** `fetchHosePrices(["VCB"])` is called
+**Then**
+- Returns `[]` immediately (no HTTP call made)
+- A WARN log entry is emitted referencing the breaker name
+- `CycleResult.pricesFetched === 0`
+
+**Key implementation notes**:
+- The existing exponential backoff in `hose.ts` (`_consecutiveFailures`, `_backoffUntil`) is RETAINED alongside the circuit breaker — they are complementary
+- When `breakers.hose` is open, catch `CircuitOpenError` and return `[]` — never rethrow
+- When `breakers.ssc` is open, catch `CircuitOpenError` and return the safe default (empty document list)
+- State strings in the existing implementation are lowercase: `"closed"/"open"/"half-open"` — do not change them
+- `getAllBreakerStats()` from the registry is what task 141 will use — do not remove or rename it
+
+---
+
+#### Task 141 — Enhance `get_system_health` with WAL size, alert stats, last cycle result (ENHANCEMENT TASK — tool already exists)
+
+**Branch**: `task/141-system-health-tool`
+**Layer**: interface/mcp + interface/scheduler
+**Priority**: P4 — observability
+**Depends on**: 136 (needs `getAllBreakerStats()` wired into fetchers first)
+**Architect note**: `src/interface/mcp/tools/systemTools.ts` ALREADY EXISTS and already registers `get_system_health`, `get_global_log`, `get_tool_log`, `get_error_summary`. Task 141 ENHANCES `get_system_health` only — it adds new fields to the response; it does NOT register a new tool. The server already has this tool registered. Tool count stays at 21+ (no increment needed).
+
+**Files to read first**:
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/interface/mcp/tools/systemTools.ts` (full file — find current `get_system_health` response shape)
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/infrastructure/circuitBreakerRegistry.ts` (confirm `getAllBreakerStats()` export shape)
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/scheduler/intelligenceCycleJob.ts` (find `CycleResult` type; identify where to add `getLastCycleResult()` export)
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/infrastructure/config.ts` (find DB_PATH and LanceDB path config keys)
+
+**Files to create**:
+- none
+
+**Files to modify**:
+- MODIFY: `src/scheduler/intelligenceCycleJob.ts` — add module-level `let _lastCycleResult: CycleResult | null = null`; set it at the end of `_runCycle`; export `getLastCycleResult(): CycleResult | null`
+- MODIFY: `src/interface/mcp/tools/systemTools.ts` — extend `get_system_health` response to include: `walSizeBytes` (`fs.statSync(DB_PATH + '-wal').size`, 0 if absent), `lancedbSizeBytes` (recursive dir sum, 0 if absent), `lastTelegramSentAt` (query `MAX(triggered_at) WHERE notified_telegram=1`), `circuitBreakers` (from `getAllBreakerStats()`), `alertStats` (`totalLast24h`, `highCriticalLast24h`, `unnotified` counts from SQLite), `lastCycleResult` (from `getLastCycleResult()`)
+
+**Test file**: `src/__tests__/141-system-health-tool.test.ts`
+
+**Acceptance Criteria**:
+
+**Given** the server has completed at least one cycle and sent at least one Telegram alert
+**When** `get_system_health` MCP tool is called
+**Then**
+- Response JSON contains keys: `uptimeSeconds`, `dbSizeBytes`, `walSizeBytes`, `lancedbSizeBytes`, `lastTelegramSentAt`, `circuitBreakers`, `alertStats`, `lastCycleResult`
+- `circuitBreakers` has entries for `hose`, `cafef`, `ssc` (keyed by breaker name from registry)
+- `uptimeSeconds > 0`
+- All values are non-null
+
+**Given** a fresh server with no completed cycles and no WAL file
+**When** `get_system_health` is called
+**Then**
+- `lastCycleResult === null`
+- `walSizeBytes === 0`
+- `lancedbSizeBytes === 0`
+- No exception is thrown; all numeric fields return 0
+
+**Key implementation notes**:
+- File size operations use `fs.statSync` (sync); wrap in try/catch; return 0 if file/dir absent — never throw
+- LanceDB directory size: sum of all file sizes under the LanceDB path via recursive walk
+- `getLastCycleResult()` import from `intelligenceCycleJob.ts` must use `.js` extension (Bun ESM requirement)
+- `alertStats.unnotified` counts `WHERE notified_telegram = 0 AND severity IN ('high', 'critical')` — depends on task 137 schema migration having run
+- `bun test src/__tests__/141-system-health-tool.test.ts` passes with 0 failures
+- `bun tsc --noEmit` reports 0 errors
 
 ### Sprint 005
 <!-- Execution waves per TECH_005.md:
