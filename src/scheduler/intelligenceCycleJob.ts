@@ -56,14 +56,16 @@ export interface CycleResult {
  * Injectable sub-job functions for testing.
  * All default to real production implementations via dynamic import.
  *
- * @property pollNewsFn           - Override for the news poll step
- * @property listSscDocsFn        - Override for SSC document listing (one stock code)
- * @property fetchPricesFn        - Override for HOSE price fetcher (returns count)
- * @property runImpactChainFn     - Override for impact chain runner (returns count)
- * @property sendAlertsFn         - Override for Telegram alert sender (returns sent count)
- * @property getWatchlistCodesFn  - Override for watchlist code lookup
- * @property isMarketHoursFn      - Override for market-hours check (for test determinism)
- * @property fakeDurationMs       - Inject a fake elapsed duration (for warning test)
+ * @property pollNewsFn               - Override for the news poll step
+ * @property listSscDocsFn            - Override for SSC document listing (one stock code)
+ * @property fetchPricesFn            - Override for HOSE price fetcher (returns count)
+ * @property runImpactChainFn         - Override for impact chain runner (returns count)
+ * @property sendAlertsFn             - Override for Telegram alert sender (returns sent count)
+ * @property getWatchlistCodesFn      - Override for watchlist code lookup
+ * @property isMarketHoursFn          - Override for market-hours check (for test determinism)
+ * @property readUnnotifiedAlertsFn   - Override for reading unnotified HIGH/CRITICAL alerts from DB
+ * @property markAlertNotifiedFn      - Override for marking a single alert as Telegram-notified
+ * @property fakeDurationMs           - Inject a fake elapsed duration (for warning test)
  */
 export interface CycleDeps {
   pollNewsFn?: () => Promise<PollNewsResult>;
@@ -73,6 +75,16 @@ export interface CycleDeps {
   sendAlertsFn?: (alerts: Alert[]) => Promise<number>;
   getWatchlistCodesFn?: () => Promise<string[]>;
   isMarketHoursFn?: () => boolean;
+  /**
+   * Read unnotified HIGH/CRITICAL alerts from DB within the given window.
+   * @param windowMs - Look-back window in milliseconds (e.g. 16 * 60 * 1000)
+   */
+  readUnnotifiedAlertsFn?: (windowMs: number) => Promise<Alert[]>;
+  /**
+   * Mark a single alert as successfully sent to Telegram.
+   * @param alertId - The id of the alert to mark notified
+   */
+  markAlertNotifiedFn?: (alertId: string) => Promise<void>;
   /** For testing only: override the measured durationMs (triggers warning if > 12 min) */
   fakeDurationMs?: number;
 }
@@ -181,6 +193,20 @@ async function defaultGetWatchlistCodes(): Promise<string[]> {
   const db = getDb();
   const rows = db.prepare("SELECT code FROM watchlist").all() as Array<{ code: string }>;
   return rows.map((r) => r.code);
+}
+
+/** 16 minutes in milliseconds — Step E look-back window (15-min cycle + 1-min overlap) */
+const ALERT_WINDOW_MS = 16 * 60 * 1000;
+
+async function defaultReadUnnotifiedAlerts(windowMs: number): Promise<Alert[]> {
+  const { readUnnotifiedAlerts } = await import("../infrastructure/db/alertStore.js");
+  const windowMinutes = windowMs / 60_000;
+  return readUnnotifiedAlerts(windowMinutes);
+}
+
+async function defaultMarkAlertNotified(alertId: string): Promise<void> {
+  const { markAlertNotified } = await import("../infrastructure/db/alertStore.js");
+  markAlertNotified(alertId);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -292,11 +318,35 @@ async function _runCycle(deps: CycleDeps = {}): Promise<CycleResult> {
 
     // Step E: Send HIGH/CRITICAL alerts to Telegram
     try {
-      // Collect alerts from DB (or injected — for testing pass empty array)
-      const alerts: Alert[] = [];
-      telegramAlertsSent = await sendAlertsFn(alerts);
+      const readUnnotifiedAlertsFn =
+        deps.readUnnotifiedAlertsFn ?? ((windowMs) => defaultReadUnnotifiedAlerts(windowMs));
+      const markAlertNotifiedFn =
+        deps.markAlertNotifiedFn ?? ((id) => defaultMarkAlertNotified(id));
+
+      // Read unnotified HIGH/CRITICAL alerts from DB within the 16-minute window.
+      // This window matches the 15-minute cron cadence with 1-minute overlap for drift.
+      const unnotifiedAlerts = await readUnnotifiedAlertsFn(ALERT_WINDOW_MS);
+
+      // Send each alert individually so we can track per-alert success.
+      for (const alert of unnotifiedAlerts) {
+        const sent = await sendAlertsFn([alert]);
+        if (sent > 0) {
+          telegramAlertsSent += sent;
+          // Mark as notified only after a confirmed successful send.
+          try {
+            await markAlertNotifiedFn(alert.id);
+          } catch (markErr) {
+            logger.warn("[intelligence-cycle] step E — failed to mark alert notified", {
+              alertId: alert.id,
+              error: markErr instanceof Error ? markErr.message : String(markErr),
+            });
+          }
+        }
+      }
+
       logger.debug("[intelligence-cycle] step E complete — alerts sent", {
         telegramAlertsSent,
+        unnotifiedCount: unnotifiedAlerts.length,
       });
     } catch (err) {
       errors++;

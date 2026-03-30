@@ -254,6 +254,19 @@ export async function initDatabase(): Promise<void> {
     CREATE INDEX IF NOT EXISTS idx_ms_created ON market_summaries(created_at);
   `);
 
+  // ── Task 137: Alert Telegram notification tracking ────────────────────────
+  // ALTER TABLE is idempotent-safe via try/catch: SQLite throws if column
+  // already exists; we swallow those errors and carry on.
+  try {
+    db.exec(`ALTER TABLE alerts ADD COLUMN notified_telegram INTEGER NOT NULL DEFAULT 0`);
+  } catch (_) { /* column already exists — safe to ignore */ }
+
+  // Index for fast lookup of unnotified HIGH/CRITICAL alerts
+  db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_alerts_notified
+      ON alerts(notified_telegram, severity);
+  `);
+
   // ── Task 132: BCTC Validator columns ──────────────────────────────────────
   // ALTER TABLE is idempotent-safe via try/catch: SQLite throws if column
   // already exists; we swallow those errors and carry on.

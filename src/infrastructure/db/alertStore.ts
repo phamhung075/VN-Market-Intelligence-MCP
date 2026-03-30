@@ -15,6 +15,7 @@
 
 import type { Database } from "bun:sqlite";
 import type { Alert } from "../../domain/services/alertGenerator.js";
+import { getDb } from "./schema.js";
 
 /**
  * Persist alert records to the SQLite `alerts` table.
@@ -50,4 +51,81 @@ export function storeAlerts(alerts: Alert[], db: Database): void {
   });
 
   insertMany(alerts);
+}
+
+/**
+ * Row shape returned from the `alerts` table for unnotified queries.
+ * We map it back to a minimal Alert-compatible object.
+ */
+interface AlertRow {
+  id: string;
+  triggered_at: string;
+  severity: string;
+  signals_json: string | null;
+  affected_actions_json: string | null;
+  analysis_ids_json: string | null;
+  message: string | null;
+  read: number;
+  user_note: string | null;
+  notified_telegram: number;
+}
+
+/**
+ * Read all HIGH/CRITICAL alerts that have not yet been sent to Telegram,
+ * constrained to the given rolling time window.
+ *
+ * The window prevents re-sending old alerts on server restart: only alerts
+ * created within the last `windowMinutes` minutes are considered.
+ *
+ * The 16-minute default matches the 15-minute intelligence cycle with 1-minute
+ * overlap to absorb clock drift.
+ *
+ * @param windowMinutes - Look-back window in minutes (e.g. 16 for 16 min)
+ * @param db            - SQLite Database connection (defaults to singleton `getDb()`)
+ * @returns Alert array sorted oldest-first (triggered_at ASC)
+ */
+export function readUnnotifiedAlerts(
+  windowMinutes: number,
+  db: Database = getDb(),
+): Alert[] {
+  // Use unixepoch arithmetic so the comparison works regardless of whether
+  // triggered_at is stored as ISO 8601 (e.g. "2026-03-30T14:00:00.000Z")
+  // or as SQLite datetime string (e.g. "2026-03-30 14:00:00").
+  const windowSeconds = Math.round(windowMinutes * 60);
+  const rows = db
+    .prepare(
+      `SELECT * FROM alerts
+       WHERE severity IN ('high', 'critical')
+         AND notified_telegram = 0
+         AND unixepoch(triggered_at) >= unixepoch('now') - ?
+       ORDER BY triggered_at ASC`,
+    )
+    .all(windowSeconds) as AlertRow[];
+
+  return rows.map((row) => ({
+    id: row.id,
+    createdAt: row.triggered_at,
+    severity: row.severity as Alert["severity"],
+    signals: row.signals_json ? (JSON.parse(row.signals_json) as Alert["signals"]) : [],
+    actionCode:
+      row.affected_actions_json
+        ? (JSON.parse(row.affected_actions_json) as Array<{ code: string }>)[0]?.code ?? ""
+        : "",
+    message: row.message ?? "",
+    isRead: row.read === 1,
+  }));
+}
+
+/**
+ * Mark a single alert as successfully sent to Telegram.
+ *
+ * Sets `notified_telegram = 1` for the given alert ID. This prevents the next
+ * cycle from re-sending the same alert. Call this only after a confirmed
+ * successful Telegram send (i.e. `notifyTelegramAlert` returned `true`).
+ *
+ * @param alertId - The `id` field of the alert to mark
+ * @param db      - SQLite Database connection (defaults to singleton `getDb()`)
+ */
+export function markAlertNotified(alertId: string, db: Database = getDb()): void {
+  db.prepare("UPDATE alerts SET notified_telegram = 1 WHERE id = ?").run(alertId);
 }
