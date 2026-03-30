@@ -146,7 +146,7 @@ export function registerMarketTools(server: McpServer): void {
         const [vnIndexResult, hoseResult, hnxResult, upcomResult] =
           await Promise.all([
             // Always fetch VNINDEX for the header
-            fetchHosePrices(["VNINDEX"], _testHoseClient).catch((err) => {
+            fetchHosePrices(["VNINDEX"], _testHoseClient, _testHoseClient ? { force: true } : undefined).catch((err) => {
               logger.warn("[get_market_snapshot] VN-Index fetch failed", {
                 error: err instanceof Error ? err.message : String(err),
               });
@@ -154,7 +154,7 @@ export function registerMarketTools(server: McpServer): void {
             }),
             // Fetch requested HOSE stocks
             hoseCodes.length > 0
-              ? fetchHosePrices(hoseCodes, _testHoseClient).catch((err) => {
+              ? fetchHosePrices(hoseCodes, _testHoseClient, _testHoseClient ? { force: true } : undefined).catch((err) => {
                   logger.warn("[get_market_snapshot] HOSE fetch failed", {
                     error: err instanceof Error ? err.message : String(err),
                   });

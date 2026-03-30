@@ -35,13 +35,16 @@ export function isOcrAvailable(): boolean {
  */
 async function ocrOnePage(tmpPdf: string, page: number): Promise<string> {
   return new Promise((resolve) => {
-    // Spawn pdftoppm
-    const ppm = spawn("pdftoppm", [
-      "-f", String(page), "-l", String(page), "-r", "200", tmpPdf,
+    // Spawn pdftoppm at low priority (nice 19) and reduced DPI for speed
+    const ppm = spawn("nice", [
+      "-n", "19", "pdftoppm",
+      "-f", String(page), "-l", String(page), "-r", "150", tmpPdf,
     ]);
 
-    // Spawn tesseract reading from stdin
-    const tess = spawn("tesseract", ["stdin", "stdout", "-l", "vie+eng"]);
+    // Spawn tesseract at low priority
+    const tess = spawn("nice", [
+      "-n", "19", "tesseract", "stdin", "stdout", "-l", "vie+eng",
+    ]);
 
     const ppmChunks: Buffer[] = [];
     const tessChunks: Buffer[] = [];
@@ -177,7 +180,8 @@ export async function extractAndStorePdfPages(
     }
 
     // Yield to the event loop between pages
-    await new Promise(r => setTimeout(r, 50));
+    // Yield 2 seconds between pages to keep server responsive
+    await new Promise(r => setTimeout(r, 2000));
   }
 
   try { rmSync(tmpDir, { recursive: true }); } catch { /* ignore */ }

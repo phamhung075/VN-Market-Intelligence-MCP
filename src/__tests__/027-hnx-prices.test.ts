@@ -256,7 +256,7 @@ describe("Task 027 — HNX + UPCOM Market Data Fetcher", () => {
   describe("fetchHnxPrices()", () => {
     it("returns MarketPrice[] with exchange=HNX from mock response", async () => {
       const json = buildHnxResponse([MOCK_ACB, MOCK_NVB]);
-      const result = await fetchHnxPrices(["ACB", "NVB"], mockClient(json));
+      const result = await fetchHnxPrices(["ACB", "NVB"], mockClient(json), { force: true });
 
       expect(result).toBeArray();
       expect(result.length).toBe(2);
@@ -266,7 +266,7 @@ describe("Task 027 — HNX + UPCOM Market Data Fetcher", () => {
     });
 
     it("returns [] for empty codes list", async () => {
-      const result = await fetchHnxPrices([], mockClient("[]"));
+      const result = await fetchHnxPrices([], mockClient("[]"), { force: true });
       expect(result).toBeArray();
       expect(result.length).toBe(0);
     });
@@ -278,14 +278,14 @@ describe("Task 027 — HNX + UPCOM Market Data Fetcher", () => {
     });
 
     it("returns [] on malformed API response", async () => {
-      const result = await fetchHnxPrices(["ACB"], mockClient("NOT_JSON"));
+      const result = await fetchHnxPrices(["ACB"], mockClient("NOT_JSON"), { force: true });
       expect(result).toBeArray();
       expect(result.length).toBe(0);
     });
 
     it("maps HNX price fields correctly", async () => {
       const json = buildHnxResponse([MOCK_ACB]);
-      const result = await fetchHnxPrices(["ACB"], mockClient(json));
+      const result = await fetchHnxPrices(["ACB"], mockClient(json), { force: true });
 
       const price = result[0] as MarketPrice;
       expect(price.code).toBe("ACB");
@@ -304,7 +304,7 @@ describe("Task 027 — HNX + UPCOM Market Data Fetcher", () => {
   describe("fetchUpcomPrices()", () => {
     it("returns MarketPrice[] with exchange=UPCOM from mock response", async () => {
       const json = buildHnxResponse([MOCK_FRT]);
-      const result = await fetchUpcomPrices(["FRT"], mockClient(json));
+      const result = await fetchUpcomPrices(["FRT"], mockClient(json), { force: true });
 
       expect(result).toBeArray();
       expect(result.length).toBe(1);
@@ -312,7 +312,7 @@ describe("Task 027 — HNX + UPCOM Market Data Fetcher", () => {
     });
 
     it("returns [] for empty codes list", async () => {
-      const result = await fetchUpcomPrices([], mockClient("[]"));
+      const result = await fetchUpcomPrices([], mockClient("[]"), { force: true });
       expect(result).toBeArray();
       expect(result.length).toBe(0);
     });
@@ -325,7 +325,7 @@ describe("Task 027 — HNX + UPCOM Market Data Fetcher", () => {
 
     it("maps UPCOM price fields correctly", async () => {
       const json = buildHnxResponse([MOCK_FRT]);
-      const result = await fetchUpcomPrices(["FRT"], mockClient(json));
+      const result = await fetchUpcomPrices(["FRT"], mockClient(json), { force: true });
 
       const price = result[0] as MarketPrice;
       expect(price.code).toBe("FRT");

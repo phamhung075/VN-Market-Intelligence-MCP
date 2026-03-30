@@ -284,6 +284,7 @@ export function parseHnxResponse(
 export async function fetchHnxPrices(
   codes: string[],
   httpClient?: HttpClient,
+  options?: { force?: boolean },
 ): Promise<MarketPrice[]> {
   ensureExchangeColumnOnce();
 
@@ -292,7 +293,7 @@ export async function fetchHnxPrices(
     return [];
   }
 
-  if (!isTradingSession()) {
+  if (!options?.force && !isTradingSession()) {
     logger.debug("[hnx] market closed — skipping HNX fetch", { codes });
     return [];
   }
@@ -338,6 +339,7 @@ export async function fetchHnxPrices(
 export async function fetchUpcomPrices(
   codes: string[],
   httpClient?: HttpClient,
+  options?: { force?: boolean },
 ): Promise<MarketPrice[]> {
   ensureExchangeColumnOnce();
 
@@ -346,7 +348,7 @@ export async function fetchUpcomPrices(
     return [];
   }
 
-  if (!isTradingSession()) {
+  if (!options?.force && !isTradingSession()) {
     logger.debug("[hnx] market closed — skipping UPCOM fetch", { codes });
     return [];
   }

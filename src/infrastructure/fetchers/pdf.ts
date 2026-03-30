@@ -90,10 +90,13 @@ async function ocrPdfBuffer(buffer: Buffer, totalPages: number): Promise<string>
       try {
         // Async pipe: pdftoppm stdout → tesseract stdin
         const pageText = await new Promise<string>((resolve) => {
-          const ppm = spawn("pdftoppm", [
-            "-f", String(page), "-l", String(page), "-r", "200", tmpPdf,
+          const ppm = spawn("nice", [
+            "-n", "19", "pdftoppm",
+            "-f", String(page), "-l", String(page), "-r", "150", tmpPdf,
           ]);
-          const tess = spawn("tesseract", ["stdin", "stdout", "-l", "vie+eng"]);
+          const tess = spawn("nice", [
+            "-n", "19", "tesseract", "stdin", "stdout", "-l", "vie+eng",
+          ]);
 
           const ppmChunks: Buffer[] = [];
           const tessChunks: Buffer[] = [];
@@ -131,7 +134,8 @@ async function ocrPdfBuffer(buffer: Buffer, totalPages: number): Promise<string>
       }
 
       // Yield to event loop between pages
-      await new Promise(r => setTimeout(r, 50));
+      // Yield 2 seconds between pages to keep server responsive
+      await new Promise(r => setTimeout(r, 2000));
     }
 
     // Cleanup
