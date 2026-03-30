@@ -16,6 +16,7 @@
 import { logger } from "../logger.js";
 import { getDb } from "../db/schema.js";
 import type { HttpClient } from "./ssc.js";
+import { isTradingSession } from "./hose.js";
 
 // Re-export for callers who only import from hnx.ts
 export type { MarketPrice } from "./hose.js";
@@ -291,6 +292,11 @@ export async function fetchHnxPrices(
     return [];
   }
 
+  if (!isTradingSession()) {
+    logger.debug("[hnx] market closed — skipping HNX fetch", { codes });
+    return [];
+  }
+
   const client = httpClient ?? (await makeDefaultHttpClient());
   const url = buildHnxUrl(codes);
 
@@ -337,6 +343,11 @@ export async function fetchUpcomPrices(
 
   if (codes.length === 0) {
     logger.debug("[hnx] no UPCOM codes requested — returning empty");
+    return [];
+  }
+
+  if (!isTradingSession()) {
+    logger.debug("[hnx] market closed — skipping UPCOM fetch", { codes });
     return [];
   }
 

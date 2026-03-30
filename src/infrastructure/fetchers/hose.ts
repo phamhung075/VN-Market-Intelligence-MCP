@@ -34,6 +34,69 @@ const VNDIRECT_API_BASE = "https://finfo-api.vndirect.com.vn/v4";
 const VNDIRECT_MAX_PAGE_SIZE = 100;
 
 // ---------------------------------------------------------------------------
+// Trading session check + exponential backoff
+// ---------------------------------------------------------------------------
+
+/**
+ * Returns true when the current time (GMT+7) falls within a reasonable window
+ * around Vietnamese stock market trading hours on a weekday.
+ *
+ * Window: Monday–Friday, 08:30–16:00 GMT+7 (30 min buffer each side of 09:00–15:30).
+ * Returns false on weekends — VnDirect API tends to be unavailable / returns stale data.
+ */
+export function isTradingSession(now?: Date): boolean {
+  const date = now ?? new Date();
+  const gmt7 = new Date(date.getTime() + 7 * 60 * 60 * 1000);
+  const dayOfWeek = gmt7.getUTCDay(); // 0=Sun … 6=Sat
+  if (dayOfWeek < 1 || dayOfWeek > 5) return false;
+  const totalMinutes = gmt7.getUTCHours() * 60 + gmt7.getUTCMinutes();
+  // 08:30 = 510, 16:00 = 960
+  return totalMinutes >= 510 && totalMinutes <= 960;
+}
+
+/** Consecutive failure counter for exponential backoff. */
+let _consecutiveFailures = 0;
+/** Timestamp (ms) before which all fetches are skipped. */
+let _backoffUntil = 0;
+/** Maximum backoff delay: 30 minutes. */
+const MAX_BACKOFF_MS = 30 * 60 * 1000;
+
+/**
+ * Reset backoff state (for testing or after manual successful fetch).
+ * @internal
+ */
+export function resetBackoff(): void {
+  _consecutiveFailures = 0;
+  _backoffUntil = 0;
+}
+
+function recordFailure(): void {
+  _consecutiveFailures++;
+  if (_consecutiveFailures >= 3) {
+    // Exponential backoff: 1min, 2min, 4min, 8min, … capped at 30min
+    const delayMs = Math.min(
+      (2 ** (_consecutiveFailures - 3)) * 60_000,
+      MAX_BACKOFF_MS,
+    );
+    _backoffUntil = Date.now() + delayMs;
+    logger.warn("[hose] entering backoff after consecutive failures", {
+      failures: _consecutiveFailures,
+      backoffMs: delayMs,
+    });
+  }
+}
+
+function recordSuccess(): void {
+  if (_consecutiveFailures > 0) {
+    logger.info("[hose] VnDirect recovered after failures", {
+      previousFailures: _consecutiveFailures,
+    });
+  }
+  _consecutiveFailures = 0;
+  _backoffUntil = 0;
+}
+
+// ---------------------------------------------------------------------------
 // Public types
 // ---------------------------------------------------------------------------
 
@@ -107,7 +170,7 @@ async function makeDefaultHttpClient(): Promise<HttpClient> {
             "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
           Accept: "application/json",
         },
-        timeout: 30_000,
+        timeout: 15_000,
         responseType: "text",
       });
       return response.data;
@@ -335,14 +398,35 @@ export async function getAvgVolume(code: string, days = 20): Promise<number> {
  * @param codes      - List of stock tickers to fetch (e.g. ["VCB", "HPG"]).
  * @param httpClient - Optional HTTP client; defaults to an axios-backed client.
  *                     Inject a mock in tests to avoid real network calls.
+ * @param options    - Optional flags: `force` bypasses market-hours + backoff guards.
  * @returns Promise resolving to an array of MarketPrice (empty on error).
  */
 export async function fetchHosePrices(
   codes: string[],
   httpClient?: HttpClient,
+  options?: { force?: boolean },
 ): Promise<MarketPrice[]> {
   if (codes.length === 0) {
     logger.debug("[hose] no codes requested — returning empty");
+    return [];
+  }
+
+  const force = options?.force ?? false;
+
+  // Guard 1: Skip outside trading session (weekends + off-hours)
+  if (!force && !isTradingSession()) {
+    logger.debug("[hose] market closed — skipping VnDirect fetch", { codes });
+    return [];
+  }
+
+  // Guard 2: Exponential backoff after consecutive failures
+  if (!force && Date.now() < _backoffUntil) {
+    const remainingSec = Math.round((_backoffUntil - Date.now()) / 1000);
+    logger.debug("[hose] in backoff period — skipping fetch", {
+      codes,
+      remainingSec,
+      consecutiveFailures: _consecutiveFailures,
+    });
     return [];
   }
 
@@ -372,12 +456,16 @@ export async function fetchHosePrices(
       received: prices.length,
     });
 
+    recordSuccess();
     return prices;
   } catch (err) {
-    logger.error("[hose] failed to fetch prices from VnDirect", {
+    recordFailure();
+    // Log first failure as error, subsequent as debug to reduce noise
+    const logFn = _consecutiveFailures <= 3 ? logger.error : logger.debug;
+    logFn("[hose] failed to fetch prices from VnDirect", {
       codes,
-      url,
       error: err instanceof Error ? err.message : String(err),
+      consecutiveFailures: _consecutiveFailures,
     });
     return [];
   }
