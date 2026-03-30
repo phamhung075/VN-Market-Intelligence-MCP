@@ -107,11 +107,24 @@ export async function extractAndStorePdfPages(
 ): Promise<{ pages: number; totalChars: number }> {
   const db = getDb();
 
-  // Already extracted?
+  // Already fully extracted? Check page count matches total
   const existing = db.query("SELECT COUNT(*) as c FROM pdf_extracted_text WHERE filename = ?").get(filename) as { c: number };
   if (existing.c > 0) {
-    logger.info("[pdfOcr] already extracted", { filename, pages: existing.c });
-    return { pages: existing.c, totalChars: 0 };
+    // Verify extraction is complete — check against actual PDF page count
+    let expectedPages = 0;
+    try {
+      const { stdout } = await execFileAsync("sh", ["-c", `pdfinfo "${pdfPath}" 2>/dev/null | grep Pages`]);
+      expectedPages = parseInt(stdout.replace(/[^0-9]/g, ""), 10) || 0;
+    } catch { /* can't verify — assume complete */ }
+
+    const threshold = Math.max(expectedPages * 0.8, 5); // Allow 80% extracted = complete enough
+    if (expectedPages === 0 || existing.c >= threshold) {
+      logger.info("[pdfOcr] already extracted", { filename, pages: existing.c, expected: expectedPages });
+      return { pages: existing.c, totalChars: 0 };
+    }
+    // Incomplete extraction — delete partial and re-extract
+    logger.info("[pdfOcr] incomplete extraction detected, re-extracting", { filename, have: existing.c, expected: expectedPages });
+    db.run("DELETE FROM pdf_extracted_text WHERE filename = ?", [filename]);
   }
 
   if (!isOcrAvailable()) {

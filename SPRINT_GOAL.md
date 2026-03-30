@@ -3,97 +3,163 @@
 ## Current Sprint
 
 status: PLANNING
-sprint_id: 009
+sprint_id: 014
 
 ### Goal
 
-Deliver three production-ready capabilities that close the real-time intelligence loop: (1) replace the broken plain-HTTP SSC scraper with a Puppeteer-driven browser automation layer so all official filings for the four surveillance stocks are fetched reliably; (2) add a Telegram Bot notifier so high-severity alerts reach the user instantly without polling Claude; and (3) upgrade the scheduler from event-driven cron slots to a unified 15-minute intelligence cycle that polls news, checks SSC, fetches prices, and runs the impact chain automatically.
+Fix the broken alert pipeline and harden the intelligence cycle so that a solo
+investor in France actually receives actionable Telegram alerts about their four
+Vietnamese stocks — the core promise of the product that has been silently
+broken since Sprint 009.
 
 ### Scope
 
 **IN**
 
-SSC Puppeteer scraper (tasks 031, 032, 033, 127):
-- Replace `src/infrastructure/fetchers/ssc.ts` plain-HTTP implementation with a Puppeteer driver
-- Launch Chrome at `/Applications/Google Chrome.app/Contents/MacOS/Google Chrome`, navigate to `/faces/NewsSearch`
-- Search form: input `pt9:it8112` for stock code, button `pt9:b1` to submit
-- Results table: `tr[_afrRK]` rows, 8 cells (STT, Exchange, Code, Title, Company, Description, Date, Download URL)
-- Fan-out across all four disclosure categories: BCTC, Dinh ky khac, Bat thuong 24h, Chao ban / phat hanh
-- Dedup by URL; persist each discovered URL in `financial_reports.source_url`
-- Wire updated fetcher into the existing `runSscCheck()` scheduler job
-- Mock-browser tests: min 20 test cases covering form interaction, table parsing, dedup, graceful degradation
+**P0 — Alert pipeline fix (tasks 137, 138): production is deaf**
 
-Telegram Bot alerts (tasks 034, 128):
-- `src/infrastructure/notifiers/telegram.ts` — thin wrapper over Telegram Bot API `sendMessage`
-- Reads `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` from env (`.env` / config.ts)
-- Sends alert when: alert severity = HIGH or CRITICAL, new BCTC document discovered on SSC, impact chain detects strong causal event (confidence >= 0.7)
-- Message format: markdown, includes stock code, signal type, severity, one-line summary, timestamp
-- Does NOT throw if Telegram is unreachable — logs warning, returns gracefully
-- New MCP tool `send_test_telegram` lets the user verify connectivity from Claude Desktop
-- Unit tests: min 15 cases (mock Telegram API)
+The cycle's Step E always passes an empty `alerts` array to `sendAlertsFn`
+(line 297 of `intelligenceCycleJob.ts`). This is a structural bug: alerts are
+generated inside `pollNews` and written to SQLite, but the cycle never reads
+them back before dispatching to Telegram.
 
-Enhanced scheduler / 15-min intelligence cycle (tasks 106, 129):
-- New `src/scheduler/intelligenceCycleJob.ts` that runs every 15 minutes during market hours (09:00–15:30 GMT+7 weekdays)
-- Each cycle in sequence: poll news → check SSC (lightweight: only list, skip full parse if no new docs) → fetch market prices → run impact chain on new entries → send Telegram alerts for HIGH/CRITICAL signals
-- Concurrency guard: if previous cycle is still running, skip with log warning
-- Cycle duration tracked and logged; warn if > 12 minutes
-- Outside market hours: reduced 60-min cycle for news-only polling (no SSC, no price fetch)
-- `bun test src/__tests__/106-*.test.ts` min 15 cases with mocked sub-jobs
+- Task 137: Fix Step E — query `alerts` table for HIGH/CRITICAL entries created
+  in the current cycle window (last 16 minutes) and pass them to `sendAlertsFn`.
+- Task 138: Fix Step D — replace the hardcoded `return 0` placeholder in
+  `defaultRunImpactChain` with a real call to `runImpactChain` on the new
+  `AnalysisEntry` rows inserted by `pollNews` in step A. Pass entry IDs through
+  from the `PollNewsResult`.
+
+**P1 — VN-Index live data (task 139): the market's primary signal is missing**
+
+VnDirect is geo-blocked from France. CafeF banggia only serves stocks, not the
+VNINDEX. Without a live index feed the user cannot gauge broad market direction
+during the trading session.
+
+- Task 139: Add `fetchVnIndex()` using the CafeF index endpoint
+  `https://banggia.cafef.vn/stockhandler.ashx?index=0` (returns VN-Index,
+  HNX-Index, UPCOM-Index as separate records). Store as a special row
+  `code = "VNINDEX"` in `market_prices`. Expose the current value in
+  `get_market_snapshot` MCP tool output.
+
+**P2 — Database WAL checkpoint (task 140): data safety**
+
+The WAL file is 2.5x the main DB. SQLite WAL is designed to checkpoint
+automatically at 1000 pages but better-sqlite3 does not trigger this from Bun's
+process lifecycle.
+
+- Task 140: Add `db.pragma('wal_checkpoint(PASSIVE)')` called once daily (new
+  cron at 03:00 GMT+7) and on graceful server shutdown (`process.on('SIGTERM')`
+  / `process.on('SIGINT')`). Add `db.pragma('optimize')` alongside it. No
+  schema changes required.
+
+**P3 — Circuit breaker for fetchers (task 136): already planned in Sprint 013**
+
+The VnDirect geo-block exposed that a timed-out fetcher stalls the whole cycle.
+The `circuitBreaker` config block already exists in `mcp.config.json`. Wire it
+into the three external fetchers (VnDirect, CafeF banggia, SSC) so a source
+that trips 5 consecutive failures opens its breaker for 60 seconds before
+retrying (half-open probe). This prevents the 30-50s cycle stall when VnDirect
+is blocked.
+
+- Task 136 (carried over from Sprint 013): implement `CircuitBreaker` class in
+  `src/infrastructure/circuitBreaker.ts`, wrap `fetchHosePrices` (VnDirect
+  path), `fetchFromCafef`, and `listSscDocuments`.
+
+**P4 — System health MCP tool (task 141): observability**
+
+The operator (the user) has no programmatic way to check whether the server is
+healthy without reading logs. A `get_system_health` tool would allow Claude
+Desktop to surface cycle status, DB file sizes, last Telegram send time, and
+circuit breaker states on demand.
+
+- Task 141: `src/interface/mcp/tools/systemTools.ts` — register
+  `get_system_health` tool that returns: last cycle result, DB file size (bytes),
+  WAL file size, LanceDB directory size, last Telegram alert timestamp, circuit
+  breaker states per source, server uptime.
 
 **OUT**
-- Changes to the BCTC PDF parser, ratio computer, or alert generator domain logic
-- Any UI or MCP tool changes to existing reports/watchlist/market tools
-- Headless browser automation for portals other than SSC
-- Pagination beyond the first results page on SSC
-- Telegram group chats or multi-user routing (single chat ID only)
-- Full AI auto-scheduling / LLM-driven task creation (deferred to Sprint 010)
 
-### Success Metric
+- Changes to BCTC PDF parser, ratio computer, or any domain business logic
+- New RSS sources beyond the six already wired
+- Any changes to MCP tool signatures for watchlist / analysis / reports tools
+- Pagination or full parse changes to the SSC Puppeteer scraper
+- Telegram group routing or multi-user support
+- LLM-driven auto-analysis (deferred indefinitely)
 
-1. `listSscDocuments('VCB', 'quarterly', 2025)` returns at least one `SscDocument` with a non-empty `url` pointing to a real PDF on `congbothongtin.ssc.gov.vn` — verified by running the live browser driver.
-2. All four disclosure categories are queried per stock in a single `listAllSscDocuments` call; at least the BCTC category returns a download link.
-3. A HIGH-severity alert (simulated by unit test or real watchlist trigger) results in a Telegram message sent to `TELEGRAM_CHAT_ID` containing the stock code and severity level.
-4. The 15-minute intelligence cycle completes one full pass (news + SSC list + prices + impact chain) within 12 minutes without crashing; the concurrency guard prevents overlapping cycles.
-5. `bun test` full suite passes with 0 failures; `bun tsc --noEmit` reports 0 errors.
-6. Puppeteer `browser.close()` is called in ALL code paths — no zombie Chrome processes.
+### Success Metrics
+
+1. **Alert pipeline**: given one or more HIGH/CRITICAL alerts in the `alerts`
+   table created within the last 16 minutes, `runIntelligenceCycle()` returns
+   `telegramAlertsSent >= 1` and the Telegram Bot API receives the corresponding
+   `sendMessage` call — verified by unit test with mocked Telegram + seeded DB.
+
+2. **Impact chain**: `impactEventsRan` in `CycleResult` reflects the actual
+   number of `runImpactChain` calls processed during step D (not hardcoded 0).
+   At least one new news entry in a test scenario produces `impactEventsRan = 1`.
+
+3. **VN-Index**: `fetchVnIndex()` returns a `VnIndexSnapshot` with a non-null
+   `value > 0` when called in isolation (mocked CafeF response). The
+   `get_market_snapshot` MCP tool response includes a `vnIndex` field.
+
+4. **WAL checkpoint**: after calling the new checkpoint function with a live DB,
+   the WAL file size drops to near-zero (verified in integration test using a
+   real SQLite file). The SIGTERM handler runs checkpoint before exit.
+
+5. **Circuit breaker**: after 5 simulated VnDirect failures the breaker enters
+   OPEN state; `fetchHosePrices` returns `[]` immediately (no HTTP call) until
+   the reset timeout elapses, at which point it enters HALF_OPEN and makes
+   exactly one probe request.
+
+6. **System health tool**: `get_system_health` returns a JSON object with keys
+   `lastCycleResult`, `dbSizeBytes`, `walSizeBytes`, `uptimeSeconds`,
+   `circuitBreakers`, `lastTelegramSentAt`. All values are non-null when the
+   server has completed at least one cycle.
+
+7. **Full test suite**: `bun test` passes with 0 failures; `bun tsc --noEmit`
+   reports 0 errors after all tasks merged.
 
 ### Dependency chain
 
 ```
-127  (TDD Red — mock Puppeteer tests, write first)
-  └─ 031 (Puppeteer SSC fetcher — passes 127 tests)
-       └─ 032 (multi-category fan-out + dedup)
-            └─ 033 (wire into sscCheckerJob)
+137 (fix Step E — read alerts from DB)      — independent
+138 (fix Step D — real impact chain)         — independent
+  └─ 137 + 138 can run in parallel
 
-128  (TDD Red — mock Telegram API tests, write first, independent of SSC chain)
-  └─ 034 (Telegram notifier + alert hook + send_test_telegram MCP tool)
-
-129  (TDD Red — mock cycle tests, can write in parallel)
-  └─ 106 (15-min intelligence cycle job — depends on 033 + 034)
+139 (VN-Index via CafeF)                     — independent of 137/138
+140 (WAL checkpoint)                          — independent, no schema change
+136 (circuit breaker)                         — independent; wraps hose.ts + ssc.ts
+  └─ 141 (system health tool) — depends on 136 (needs breaker state API)
 ```
 
 ### Sprint task order (recommended)
 
-1. 127 (TDD Red — failing Puppeteer mock tests)
-2. 128 (TDD Red — failing Telegram mock tests, parallel with 127)
-3. 031 (TDD Green — Puppeteer SSC fetcher)
-4. 034 (TDD Green — Telegram notifier)
-5. 032 (multi-category fan-out, depends on 031)
-6. 033 (scheduler wiring, depends on 032)
-7. 129 (TDD Red — failing cycle tests, can start after 033 + 034 are clear)
-8. 106 (15-min intelligence cycle, depends on 033 + 034 + 129)
+1. 137 (TDD Red + Green — alert DB read + Step E fix) — P0, fast win
+2. 138 (TDD Red + Green — Step D real impact chain) — P0, parallel with 137
+3. 139 (TDD Red + Green — VN-Index CafeF fetcher) — P1, parallel
+4. 140 (checkpoint job + shutdown hook) — P2, small change
+5. 136 (circuit breaker class + wrapping) — P3, foundational
+6. 141 (system health MCP tool) — P4, depends on 136
 
 ### Key technical decisions (locked at PO level)
 
-- **Browser binary**: `/Applications/Google Chrome.app/Contents/MacOS/Google Chrome`; `puppeteer-core@24.40.0` already installed
-- **Puppeteer launch flags**: `headless: 'new'`, `--no-sandbox`, `--disable-dev-shm-usage`
-- **SSC search input selector**: `input[id$="it8112::content"]` (CSS attribute suffix); button text "Tìm kiếm"
-- **Results table selector**: `tr[_afrRK]`, 8 cells per row
-- **Wait strategy**: `waitForSelector` on table row after button click; 10 s timeout, up to 3 retries
-- **Existing interface preserved**: `SscDocument` (title, url, publishedAt, reportType) and `listSscDocuments` signature unchanged; `listAllSscDocuments` is a new additive export
-- **Telegram transport**: `https://api.telegram.org/bot<TOKEN>/sendMessage` — plain HTTPS POST, no third-party SDK
-- **Alert hook location**: `alertGenerator.ts` calls `notifyTelegram(alert)` only when severity is HIGH or CRITICAL; notifier is injected as optional dependency to keep domain pure
-- **Cycle frequency**: 15 min during 09:00–15:30 GMT+7 weekdays; 60 min outside market hours (news only)
+- **Alert query window**: Step E reads `alerts` WHERE `created_at >= now - 16min`
+  AND severity IN ('high', 'critical') AND `notified_telegram = 0`. Update
+  `notified_telegram = 1` after successful send to prevent re-sends on next cycle.
+  This requires adding `notified_telegram INTEGER DEFAULT 0` column to `alerts`
+  table — migration via `ALTER TABLE IF NOT EXISTS` in `initDatabase()`.
+- **Impact chain entry IDs**: `PollNewsResult` gains an optional `insertedIds`
+  field (`string[]`). `pollNews` populates it; `intelligenceCycleJob` passes
+  those IDs to `runImpactChain`.
+- **VN-Index CafeF URL**: `https://banggia.cafef.vn/stockhandler.ashx?index=0`
+  returns an array; the record with `a === "VNINDEX"` is extracted.
+- **Circuit breaker state**: exported as `CircuitBreakerState = 'CLOSED' | 'OPEN' | 'HALF_OPEN'`.
+  The `CircuitBreaker` class is a simple counter + timestamp, no external dependency.
+- **WAL checkpoint pragma**: `db.pragma('wal_checkpoint(PASSIVE)')` — PASSIVE
+  mode does not block readers/writers, safe to call from a scheduler job.
+- **Telegram `notified_telegram` flag**: avoids double-sending if the server
+  restarts between cycles. Critical alerts are never suppressed by cooldown
+  (existing `neverSuppressSeverity: ["critical"]` rule preserved).
 
 ---
 
@@ -110,3 +176,8 @@ Enhanced scheduler / 15-min intelligence cycle (tasks 106, 129):
 | 006 | Analytical depth — pattern matcher, AI summary, HNX fetcher, market MCP tools, integration tests (065, 066, 027, 084, 105, 123) | Done |
 | 007 | BCTC edge-case tests, domain coverage, SSC pipeline mock tests, E2E briefing (121, 122, 124, 125, DOC-001, 024) | Done |
 | 008 | Macro intelligence layer — Yahoo Finance commodities, SBV rates, macro cascade, get_macro_snapshot MCP tool (FIX-081, 025, 028, 126, 089) | Done |
+| 009 | SSC Puppeteer automation, Telegram notifier, 15-min intelligence cycle (031, 034, 106) | Done |
+| 010 | Security (SQL injection), alert quality system — cooldown/dedup/grouping, BCTC validator (131, 132, SQL-fix) | Done |
+| 011 | Adaptive signal thresholds, sentiment classifier, RAG temporal decay, VnEconomy RSS (133, 134, 135, 035) | Done |
+| 012 | Periodic summaries — daily/weekly/monthly/quarterly/yearly, cron triggers, MCP tools (130) | Done |
+| 013 | OCR fallback for scanned BCTCs (Tesseract + Vietnamese), BCTC Collector SSC call removal, Chrome zombie fix | Done |

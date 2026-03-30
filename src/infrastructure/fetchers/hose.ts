@@ -170,7 +170,7 @@ async function makeDefaultHttpClient(): Promise<HttpClient> {
             "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
           Accept: "application/json",
         },
-        timeout: 15_000,
+        timeout: 5_000,
         responseType: "text",
       });
       return response.data;
@@ -383,12 +383,87 @@ export async function getAvgVolume(code: string, days = 20): Promise<number> {
 }
 
 // ---------------------------------------------------------------------------
+// CafeF fallback — banggia.cafef.vn returns all HOSE stocks as JSON
+// ---------------------------------------------------------------------------
+
+/** CafeF banggia endpoint (returns all HOSE stocks, ~109 KB). */
+const CAFEF_BANGGIA_URL = "https://banggia.cafef.vn/stockhandler.ashx?index=1";
+
+/** Shape of a single stock in CafeF banggia response. */
+interface CafefStockRecord {
+  /** Stock code */
+  a: string;
+  /** Reference / previous close price (×1000 VND) */
+  b: number;
+  /** Current / last matched price (×1000 VND) */
+  l: number;
+  /** Change from reference (×1000 VND) */
+  k: number;
+  /** Total volume */
+  totalvolume: number;
+}
+
+/**
+ * Fetches HOSE prices from CafeF banggia endpoint.
+ * Returns only the requested codes. Prices are converted to VND (×1000).
+ */
+async function fetchFromCafef(
+  codes: string[],
+  fetchedAt: string,
+): Promise<MarketPrice[]> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10_000);
+
+  try {
+    const response = await fetch(CAFEF_BANGGIA_URL, {
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
+        Accept: "application/json",
+      },
+      signal: controller.signal,
+    });
+
+    if (!response.ok) {
+      throw new Error(`CafeF HTTP ${response.status}`);
+    }
+
+    const data: CafefStockRecord[] = await response.json();
+    const codeSet = new Set(codes.map((c) => c.toUpperCase()));
+    const prices: MarketPrice[] = [];
+
+    for (const rec of data) {
+      if (!codeSet.has(rec.a)) continue;
+      const price = rec.l * 1000;       // CafeF returns ×1000 VND
+      const prevPrice = rec.b * 1000;
+      const changePct = prevPrice > 0 ? ((price - prevPrice) / prevPrice) * 100 : 0;
+
+      prices.push({
+        code: rec.a,
+        exchange: "HOSE",
+        price,
+        previousPrice: prevPrice,
+        changePct: Math.round(changePct * 100) / 100,
+        volume: rec.totalvolume ?? 0,
+        avgVolume: 0,
+        fetchedAt,
+      });
+    }
+
+    return prices;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Public API
 // ---------------------------------------------------------------------------
 
 /**
- * Fetches live price and volume data for a list of HOSE-listed stocks
- * from the VnDirect finfo-api.
+ * Fetches live price and volume data for a list of HOSE-listed stocks.
+ *
+ * Strategy: try VnDirect first (5s timeout), fallback to CafeF banggia.
  *
  * - Returns an empty array immediately if `codes` is empty.
  * - Returns an empty array (without throwing) on any network or parse error.
@@ -415,7 +490,7 @@ export async function fetchHosePrices(
 
   // Guard 1: Skip outside trading session (weekends + off-hours)
   if (!force && !isTradingSession()) {
-    logger.debug("[hose] market closed — skipping VnDirect fetch", { codes });
+    logger.debug("[hose] market closed — skipping fetch", { codes });
     return [];
   }
 
@@ -430,43 +505,67 @@ export async function fetchHosePrices(
     return [];
   }
 
-  const client = httpClient ?? (await makeDefaultHttpClient());
-  const url = buildVnDirectUrl(codes);
   const fetchedAt = new Date().toISOString();
 
-  logger.debug("[hose] fetching prices from VnDirect", {
-    codes,
-    url,
-  });
+  // --- Strategy: VnDirect (5s) → CafeF fallback ---
 
+  // Try VnDirect first (reduced timeout to fail fast)
   try {
+    const client = httpClient ?? (await makeDefaultHttpClient());
+    const url = buildVnDirectUrl(codes);
+
+    logger.debug("[hose] trying VnDirect", { codes });
     const json = await client.get(url);
     const records = parseVnDirectResponse(json);
 
     const prices: MarketPrice[] = [];
     for (const record of records) {
       const price = recordToMarketPrice(record, fetchedAt);
-      if (price !== null) {
-        prices.push(price);
-      }
+      if (price !== null) prices.push(price);
     }
 
-    logger.info("[hose] fetched market prices", {
-      requested: codes.length,
-      received: prices.length,
-    });
+    if (prices.length > 0) {
+      logger.info("[hose] fetched from VnDirect", {
+        requested: codes.length,
+        received: prices.length,
+      });
+      recordSuccess();
+      return prices;
+    }
+    // VnDirect returned empty — fall through to CafeF
+  } catch {
+    logger.debug("[hose] VnDirect unavailable, trying CafeF fallback");
+  }
 
-    recordSuccess();
-    return prices;
+  // Fallback: CafeF banggia
+  try {
+    const prices = await fetchFromCafef(codes, fetchedAt);
+    if (prices.length > 0) {
+      logger.info("[hose] fetched from CafeF fallback", {
+        requested: codes.length,
+        received: prices.length,
+      });
+      recordSuccess();
+      return prices;
+    }
   } catch (err) {
-    recordFailure();
-    // Log first failure as error, subsequent as debug to reduce noise
-    const logFn = _consecutiveFailures <= 3 ? logger.error : logger.debug;
-    logFn("[hose] failed to fetch prices from VnDirect", {
-      codes,
+    logger.warn("[hose] CafeF fallback also failed", {
       error: err instanceof Error ? err.message : String(err),
+    });
+  }
+
+  // Both sources failed
+  // VNINDEX is an index (not a stock) — CafeF banggia only has stocks,
+  // so this is expected when only VNINDEX was requested. Don't count as failure.
+  const onlyIndex = codes.every((c) => c.toUpperCase().includes("INDEX"));
+  if (!onlyIndex) {
+    recordFailure();
+    logger.error("[hose] all price sources failed", {
+      codes,
       consecutiveFailures: _consecutiveFailures,
     });
-    return [];
+  } else {
+    logger.debug("[hose] index-only request — no CafeF data available", { codes });
   }
+  return [];
 }
