@@ -7,6 +7,10 @@
     "logLevel": "info"
   },
 
+  "logging": {
+    "maxFileSizeMb": 50
+  },
+
   "data": {
     "dbPath": "./data/market.db",
     "lancedbPath": "./data/lancedb",

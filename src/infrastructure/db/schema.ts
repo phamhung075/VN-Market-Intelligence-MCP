@@ -382,4 +382,24 @@ export async function initDatabase(): Promise<void> {
       }
     }
   } catch { /* config not available — skip seeding */ }
+
+  // ── Migrations (try/catch so re-runs are safe) ─────────────────────────────
+
+  // Task 153: add ssc_doc_id column for SSC scan deduplication.
+  // ALTER TABLE is a no-op if the column already exists (caught and ignored).
+  try {
+    db.exec(
+      `ALTER TABLE financial_reports ADD COLUMN ssc_doc_id TEXT`,
+    );
+  } catch (_) {
+    // Column already exists — safe to ignore
+  }
+
+  // Task 153: partial index on ssc_doc_id for fast duplicate lookups.
+  // CREATE INDEX IF NOT EXISTS is idempotent.
+  db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_fr_ssc_doc_id
+      ON financial_reports(ssc_doc_id)
+      WHERE ssc_doc_id IS NOT NULL
+  `);
 }

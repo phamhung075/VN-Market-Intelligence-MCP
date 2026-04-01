@@ -64,6 +64,10 @@
 | 126 | Macro cascade integration | `task/126-macro-cascade` | 2026-03-29 | — |
 | 089 | `get_macro_snapshot` MCP tool | `task/089-tool-macro` | 2026-03-29 | — |
 | 134 | Sentiment classifier + cascade directional signals | `task/134-sentiment-classifier` | 2026-03-29 | — |
+| 131 | Alert quality system — cooldown, dedup, grouping | `task/131-alert-quality-system` | 2026-04-01 | [TASK_REPORT_131](reports/TASK_REPORT_131.md) |
+| 132 | BCTC validation pipeline — bad data guard | `task/132-bctc-validator` | 2026-04-01 | [TASK_REPORT_132](reports/TASK_REPORT_132.md) |
+| 133 | Adaptive signal detection thresholds | `task/133-adaptive-thresholds` | 2026-04-01 | [TASK_REPORT_133](reports/TASK_REPORT_133.md) |
+| 137 | Fix Step E — read alerts from DB and send to Telegram | `task/137-fix-step-e-alerts` | 2026-04-01 | [TASK_REPORT_137](reports/TASK_REPORT_137.md) |
 
 > **Sprint 003 COMPLETE** — All 5 tasks merged: 021, 082, 063, 064, 086. PO sign-off: APPROVED 2026-03-27.
 > **Sprint 004 Wave 1** — Tasks 087, 022, 023 merged: 2026-03-27.
@@ -83,6 +87,7 @@
 > **Sprint 008 Wave 1** — All 3 tasks merged: FIX-081, 025, 028. QA approved: 2026-03-29. Full suite: 842 pass, 0 fail. Yahoo Finance commodity fetcher (13 tests), SBV macro fetcher (14 tests), SSE timeout fix (8 tests hardened).
 > **Sprint 008 Wave 2** — All 2 tasks merged: 126, 089. QA approved: 2026-03-29. Macro cascade integration (15 tests), get_macro_snapshot MCP tool (16 tests). toolCount 16 → 17.
 > **Sprint 008 COMPLETE** — All 5 tasks merged: FIX-081, 025, 028, 126, 089. Sprint 008 delivers the macro intelligence layer: commodity prices, SBV central bank rates, causal chain macro adjustments, and get_macro_snapshot MCP tool. 66 new tests added.
+> **Sprint 010-011 QA batch** — Tasks 131, 132, 133, 137 merged: 2026-04-01. Alert quality system (35 tests), BCTC validator (26 tests, 100% coverage), adaptive thresholds (25 tests), Step E fix (18 tests). Full suite: 1171 pass, 3 fail (pre-existing locale). tsc: 0 errors.
 
 ---
 
@@ -90,10 +95,7 @@
 
 | # | Title | Branch | Notes |
 |---|-------|--------|-------|
-| 131 | Alert quality system — cooldown, dedup, grouping | `task/131-alert-quality-system` | 35 tests, 0 fail |
-| 132 | BCTC validation pipeline — bad data guard | `task/132-bctc-validator` | 26 tests, 100% coverage, 0 fail |
-| 133 | Adaptive signal detection thresholds | `task/133-adaptive-thresholds` | 25 tests, 100% coverage, 0 fail |
-| 137 | Fix Step E — read alerts from DB and send to Telegram | `task/137-fix-step-e-alerts` | 18 tests, 0 fail, tsc 0 errors |
+| — | — | — | Empty |
 
 ---
 
@@ -101,12 +103,128 @@
 
 | # | Title | Branch | Notes |
 |---|-------|--------|-------|
-| — | — | — | Empty |
+| 160 | Company name alias dictionary (`stockAliases.ts`) | `task/160-stock-aliases` | Sprint 019 — first task, no dependencies |
+
+---
+
+### Task 160 — Company name alias dictionary (`stockAliases.ts`)
+
+**Branch**: `task/160-stock-aliases`
+**Layer**: domain/services
+**Priority**: P0
+**Depends on**: TECH-019 ✓ (approved)
+**Estimated effort**: ~2 hours
+
+**Files to read first**:
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/docs/TECH_019.md` — full interface contracts, alias map spec, normalisation rules
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/docs/REQ_019.md` — acceptance criteria AC-1 through AC-13
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/domain/services/cascadeEngine.ts` — reference for domain-layer import style (no infrastructure imports)
+
+**Files to create**:
+- CREATE: `src/domain/services/stockAliases.ts`
+- CREATE: `src/__tests__/160-stock-aliases.test.ts`
+
+**Files to modify**: none
+
+**Acceptance Criteria**:
+
+**Given** a valid uppercase ticker (e.g. `"VNM"`)
+**When** `getAliasesForCode("VNM")` is called
+**Then**
+- Returns a non-empty array of lowercase strings
+- Array contains at least 3 entries including `"vinamilk"`, `"cong ty co phan sua viet nam"`, and `"viet nam dairy"`
+- All returned strings are lowercase, no empty strings
+
+**Given** an unknown ticker `"ZZZZ"`
+**When** `getAliasesForCode("ZZZZ")` is called
+**Then**
+- Returns `[]` without throwing
+
+**Given** article text `"Vinamilk lên kế hoạch mở rộng thị trường"` and watchlist `["VNM"]`
+**When** `detectStocksInText(text, ["VNM"])` is called
+**Then**
+- Returns `["VNM"]` (AC-1)
+
+**Given** article text `"Hòa Phát tăng sản lượng thép"` and watchlist `["HPG"]`
+**When** `detectStocksInText(text, ["HPG"])` is called
+**Then**
+- Returns `["HPG"]` (alias detected via NFD diacritic-stripping)
+
+**Given** article text `"Hoa Phat tang san luong thep"` (no diacritics) and watchlist `["HPG"]`
+**When** `detectStocksInText(text, ["HPG"])` is called
+**Then**
+- Returns `["HPG"]` (AC-2 accent-free variant)
+
+**Given** generic market news with no trade names and watchlist `["VNM", "FPT"]`
+**When** `detectStocksInText(text, ["VNM", "FPT"])` is called
+**Then**
+- Returns `[]` — no false positives (AC-4)
+
+**Given** an article mentioning both `"Vinamilk"` and `"FPT Corporation"` and watchlist `["VNM", "FPT"]`
+**When** `detectStocksInText(text, ["VNM", "FPT"])` is called
+**Then**
+- Returns both `"VNM"` and `"FPT"` (AC-5, order not significant)
+- Each code appears at most once (deduplication)
+
+**Given** empty text `""` or empty watchlist `[]`
+**When** `detectStocksInText` is called with either
+**Then**
+- Returns `[]` without throwing
+
+**Given** a 500-char text and 20-stock watchlist
+**When** `detectStocksInText` is called
+**Then**
+- Completes in under 5 ms (performance smoke test)
+
+**Required alias coverage** (minimum 3 aliases per ticker, 22 tickers minimum):
+VNM, FPT, VCB, VEA, HPG, VIC, VHM, MSN, MWG, TCB, BID, CTG, ACB, VPB, HDB, STB, GAS, PLX, SAB, REE, PNJ, DHG
+
+**TypeScript constraints**:
+- No imports from infrastructure or application layers
+- No runtime I/O (static `const` alias map only)
+- `normalizeText()` is private (not exported)
+- `STOCK_ALIASES` is private (not exported)
+
+**TDD test location**: `src/__tests__/160-stock-aliases.test.ts`
+- Minimum 30 tests (see TECH_019.md test strategy table for required groups)
+- Run: `bun test src/__tests__/160-stock-aliases.test.ts` — must PASS
+- Then: `bun tsc --noEmit` — must show 0 errors
 
 ---
 
 ## 📋 TODO
 *(Dependencies cleared — ready to assign)*
+
+### Sprint 017 — Production Hardening
+
+> Sprint 017 ACTIVE — started 2026-03-30. 3 of 5 tasks already merged to main.
+> Remaining: 153 (SSC scan dedup), 155 (log file rotation).
+
+| # | Title | Branch | Priority | Status |
+|---|-------|--------|----------|--------|
+| 152 | News-mention alert noise filter | `main` | P0 | Done — merged |
+| 153 | SSC scan deduplication | `task/153-ssc-scan-dedup` | P0 | **Review** |
+| 154 | Silence LanceDB TRACE logging | `main` | P1 | Done — merged |
+| 155 | Log file rotation | `task/155-log-rotation` | P1 | **Review** |
+| 156 | Off-hours cycle interval increase | `main` | P2 | Done — merged |
+
+---
+
+### Sprint 019 — Know What You're Watching
+
+> Sprint 019 ACTIVE — started 2026-04-01. Task 160 In Progress.
+> Design refs: docs/REQ_019.md (BA — complete, no blockers) + docs/TECH_019.md (Architect — approved).
+> Dependency order: 160 first → 161 depends on 160 → 162 can run in parallel with 161 after 160 merges.
+
+| # | Title | Branch | Agent | Layer | Priority | Depends on | Status |
+|---|-------|--------|-------|-------|----------|------------|--------|
+| REQ-019 | BA: Requirement Spec for Sprint 019 | `task/doc-001-claude-md-update` | BA | docs/ | P0 | — | Done — docs/REQ_019.md |
+| TECH-019 | Architect: Technical Design for Sprint 019 | `task/doc-001-claude-md-update` | Architect | docs/ | P0 | REQ-019 ✓ | Done — docs/TECH_019.md |
+| 160 | Company name alias dictionary (`stockAliases.ts`) | `task/160-stock-aliases` | Developer | domain/services | P0 | TECH-019 ✓ | **In Progress** |
+| 161 | Wire aliases into cascade engine + pollNews Gate 3 | `task/161-alias-wiring` | Developer | domain/services + application/usecases | P0 | 160 | Backlog |
+| 162 | Market-wide pattern cascade to all watchlist stocks | `task/162-market-wide-broadcast` | Developer | domain/services + application/usecases + mcp.config.json | P1 | 160 | Backlog |
+
+---
 
 ### Sprint 018 — Data Integrity First
 
@@ -122,6 +240,18 @@
 | 157 | Data audit engine: `dataAuditJob.ts` + schema migration + `getCount()` | `task/157-data-audit-job` | Developer | scheduler + infrastructure/db + infrastructure/rag | P0 | TECH-018 ✓ | Done — merged 2026-04-01 |
 | 158 | Scheduler wiring: `CRONS.dataAuditDaily` + `CRONS.dataAuditWeekly` in `jobs.ts` | `task/158-audit-scheduler-wiring` | Developer | scheduler | P1 | 157 ✓ | Done — merged 2026-04-01 |
 | 159 | `get_system_health` db_audit section: `audit_state` reads + live `agent_feedback` counts | `task/159-health-db-audit` | Developer | interface/mcp/tools + infrastructure/db | P2 | 157 ✓ | Done — merged 2026-04-01 |
+
+---
+
+### Backlog — System Reliability Improvements
+*(Phát hiện bởi system-improver — 2026-04-02)*
+
+> Không có agent feedback mới. Các task dưới đây được tạo từ phân tích error log + system health.
+
+| # | Title | Agent | Layer | Priority | Status |
+|---|-------|-------|-------|----------|--------|
+| 163 | [feedback] Investigate Telegram "never sent" — 6 HIGH/CRITICAL alerts undelivered post-task-137 | @po | scheduler + infrastructure/notifiers | P0 | Backlog |
+| 164 | [feedback] Fix morning briefing cycle lock starvation — briefing skipped mỗi ngày | @po | scheduler/morningBriefingJob | P1 | Backlog |
 
 ---
 
@@ -318,9 +448,9 @@
 | # | Title | Branch | Agent | Layer | Priority | Depends on | Status |
 |---|-------|--------|-------|-------|----------|------------|--------|
 | 152 | News-mention alert noise filter | `task/152-news-alert-filter` | BA → Developer | domain/services + mcp.config.json | P0 | — | Review |
-| 153 | SSC scan deduplication (skip already-processed docs) | `task/153-ssc-scan-dedup` | BA → Developer | infrastructure/db + application/usecases | P0 | — | Backlog |
+| 153 | SSC scan deduplication (skip already-processed docs) | `task/153-ssc-scan-dedup` | BA → Developer | infrastructure/db + application/usecases | P0 | — | **Review** |
 | 154 | Silence LanceDB TRACE logging | `task/154-lancedb-log-silence` | BA → Developer | infrastructure (index.ts + logger) | P1 | — | Backlog |
-| 155 | Log file rotation (size-based, 3 rolling files) | `task/155-log-rotation` | BA → Developer | infrastructure/logger | P1 | — | Backlog |
+| 155 | Log file rotation (size-based, 3 rolling files) | `task/155-log-rotation` | BA → Developer | infrastructure/logger | P1 | — | **Review** |
 | 156 | Off-hours cycle interval increase (15 min → 60 min) | `task/156-offhours-interval` | BA → Developer | scheduler/intelligenceCycleJob | P2 | 152, 153 | Backlog |
 
 ---
