@@ -65,54 +65,32 @@ export interface SchedulerConfig {
   predictionMarketPoll: string;
 }
 
-/** Polymarket REST API endpoint configuration. */
-export interface PolymarketConfig {
-  /** CLOB REST API base URL. Default: https://clob.polymarket.com */
-  clobApiUrl: string;
-  /** Gamma Markets API base URL. Default: https://gamma-api.polymarket.com */
-  gammaApiUrl: string;
-  /** HTTP request timeout in milliseconds. Default: 15000 */
-  timeout: number;
-  /** Maximum markets to fetch per request. Default: 50 */
-  maxMarketsPerFetch: number;
-}
-
-/** Signal detection thresholds for prediction market intelligence. */
-export interface PredictionSignalsConfig {
-  /** Minimum absolute probability shift (%) to trigger a signal. Default: 10 */
-  probabilityShiftPct: number;
-  /** Probability threshold above which a market is "high conviction". Default: 0.85 */
-  highConvictionThreshold: number;
-  /** Volume multiplier vs 24-hour average to flag a volume spike. Default: 3 */
-  volumeSpikeMultiplier: number;
-  /** Minimum market liquidity in USD to consider. Default: 10000 */
-  minLiquidityUsd: number;
-}
-
-/** Keyword groups used to match prediction markets to VN-market impact categories. */
-export interface PredictionKeywordsConfig {
-  /** Keywords matching Vietnam-specific markets. */
-  vietnam: string[];
-  /** Keywords matching trade/tariff markets. */
-  trade: string[];
-  /** Keywords matching commodity markets. */
-  commodities: string[];
-  /** Keywords matching macro-economic markets. */
-  macro: string[];
-}
-
-/** Top-level prediction markets configuration block. */
+/** Flat prediction markets configuration block (TECH-020, Section 5). */
 export interface PredictionMarketsConfig {
   /** Whether prediction market polling is active. Default: true */
   enabled: boolean;
-  /** List of active prediction market sources. Default: ["polymarket"] */
-  sources: string[];
-  /** Polymarket-specific configuration. */
-  polymarket: PolymarketConfig;
-  /** Signal detection thresholds. */
-  signals: PredictionSignalsConfig;
-  /** Keyword groups for VN-market impact classification. */
-  keywords: PredictionKeywordsConfig;
+  /** How often (in minutes) to poll prediction markets. Default: 30 */
+  pollingIntervalMinutes: number;
+  /** Polymarket CLOB REST API base URL. Default: https://clob-api.polymarket.com */
+  clobApiUrl: string;
+  /** Polymarket Gamma Markets API base URL. Default: https://gamma-api.polymarket.com */
+  gammaApiUrl: string;
+  /** Minimum absolute probability shift (%) to trigger a signal. Default: 5 */
+  probabilityShiftPct: number;
+  /** USD volume threshold above which a market is flagged as a volume spike. Default: 50000 */
+  volumeSpikeThresholdUsd: number;
+  /** Minimum distinct wallet count to raise signal severity. Default: 10 */
+  minUniqueWallets: number;
+  /** USD trade size considered a whale trade. Default: 10000 */
+  whaleTradeThresholdUsd: number;
+  /** Maximum markets to fetch per poll cycle. Default: 50 */
+  maxMarketsPerPoll: number;
+  /** Delay (ms) between CLOB and Gamma API calls to respect rate limits. Default: 500 */
+  rateLimitDelayMs: number;
+  /** Keywords used to filter relevant prediction markets. */
+  relevantKeywords: string[];
+  /** Explicitly curated market IDs to always include regardless of keyword match. */
+  curatedMarketIds: string[];
 }
 
 export interface NewsMentionConfig {
@@ -305,6 +283,45 @@ function numArr(file: Record<string, unknown>, path: string, fallback: number[])
   return fallback;
 }
 
+/**
+ * Returns boolean from a raw object by key, with env-var override support.
+ * Accepts: true (boolean), "true", "1" (string) as truthy.
+ */
+function boolVal(obj: Record<string, unknown>, key: string, fallback: boolean): boolean {
+  const v = obj[key];
+  if (v === true || v === "true" || v === "1") return true;
+  if (v === false || v === "false" || v === "0") return false;
+  return fallback;
+}
+
+/**
+ * Returns string[] from a raw object by key, falling back to provided default.
+ */
+function arrVal(obj: Record<string, unknown>, key: string, fallback: string[]): string[] {
+  const v = obj[key];
+  if (Array.isArray(v)) return v.filter((x): x is string => typeof x === "string");
+  return fallback;
+}
+
+/**
+ * Returns number from a raw object by key, falling back to provided default.
+ */
+function numVal(obj: Record<string, unknown>, key: string, fallback: number): number {
+  const v = obj[key];
+  if (typeof v === "number") return v;
+  if (typeof v === "string") {
+    const n = Number(v);
+    if (!isNaN(n)) return n;
+  }
+  return fallback;
+}
+
+/** Default keyword list for prediction market relevance filtering. */
+const DEFAULT_PREDICTION_KEYWORDS: string[] = [
+  "fed", "china", "oil", "tariff", "asean", "vietnam",
+  "interest rate", "war", "sanctions", "trade", "inflation", "currency",
+];
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Main loader
 // ─────────────────────────────────────────────────────────────────────────────
@@ -447,28 +464,28 @@ export function loadMcpConfig(): McpConfig {
         totalNews: num(f, "fetchLimits.manual.totalNews", null, 50),
       },
     },
-    predictionMarkets: {
-      enabled: bool(f, "predictionMarkets.enabled", "PREDICTION_MARKETS_ENABLED", true),
-      sources: strArr(f, "predictionMarkets.sources", null, ["polymarket"]),
-      polymarket: {
-        clobApiUrl: str(f, "predictionMarkets.polymarket.clobApiUrl", "POLYMARKET_CLOB_API_URL", "https://clob.polymarket.com"),
-        gammaApiUrl: str(f, "predictionMarkets.polymarket.gammaApiUrl", "POLYMARKET_GAMMA_API_URL", "https://gamma-api.polymarket.com"),
-        timeout: num(f, "predictionMarkets.polymarket.timeout", null, 15000),
-        maxMarketsPerFetch: num(f, "predictionMarkets.polymarket.maxMarketsPerFetch", null, 50),
-      },
-      signals: {
-        probabilityShiftPct: num(f, "predictionMarkets.signals.probabilityShiftPct", null, 10),
-        highConvictionThreshold: num(f, "predictionMarkets.signals.highConvictionThreshold", null, 0.85),
-        volumeSpikeMultiplier: num(f, "predictionMarkets.signals.volumeSpikeMultiplier", null, 3),
-        minLiquidityUsd: num(f, "predictionMarkets.signals.minLiquidityUsd", null, 10000),
-      },
-      keywords: {
-        vietnam: strArr(f, "predictionMarkets.keywords.vietnam", null, ["vietnam", "vietnamese", "hanoi", "ho chi minh"]),
-        trade: strArr(f, "predictionMarkets.keywords.trade", null, ["tariff", "trade war", "import duty", "export ban"]),
-        commodities: strArr(f, "predictionMarkets.keywords.commodities", null, ["oil price", "gold price", "commodity"]),
-        macro: strArr(f, "predictionMarkets.keywords.macro", null, ["fed rate", "interest rate", "inflation", "recession", "gdp"]),
-      },
-    },
+    predictionMarkets: (() => {
+      const pm = (get(f, "predictionMarkets") ?? {}) as Record<string, unknown>;
+      const envEnabled = Bun.env["PREDICTION_MARKETS_ENABLED"];
+      const enabled =
+        envEnabled === "true" || envEnabled === "1" ? true
+        : envEnabled === "false" || envEnabled === "0" ? false
+        : boolVal(pm, "enabled", true);
+      return {
+        enabled,
+        pollingIntervalMinutes: numVal(pm, "pollingIntervalMinutes", 30),
+        clobApiUrl: (typeof pm["clobApiUrl"] === "string" && pm["clobApiUrl"]) ? pm["clobApiUrl"] : (Bun.env["POLYMARKET_CLOB_API_URL"] ?? "https://clob-api.polymarket.com"),
+        gammaApiUrl: (typeof pm["gammaApiUrl"] === "string" && pm["gammaApiUrl"]) ? pm["gammaApiUrl"] : (Bun.env["POLYMARKET_GAMMA_API_URL"] ?? "https://gamma-api.polymarket.com"),
+        probabilityShiftPct: numVal(pm, "probabilityShiftPct", 5),
+        volumeSpikeThresholdUsd: numVal(pm, "volumeSpikeThresholdUsd", 50000),
+        minUniqueWallets: numVal(pm, "minUniqueWallets", 10),
+        whaleTradeThresholdUsd: numVal(pm, "whaleTradeThresholdUsd", 10000),
+        maxMarketsPerPoll: numVal(pm, "maxMarketsPerPoll", 50),
+        rateLimitDelayMs: numVal(pm, "rateLimitDelayMs", 500),
+        relevantKeywords: arrVal(pm, "relevantKeywords", DEFAULT_PREDICTION_KEYWORDS),
+        curatedMarketIds: arrVal(pm, "curatedMarketIds", []),
+      };
+    })(),
   };
 }
 
