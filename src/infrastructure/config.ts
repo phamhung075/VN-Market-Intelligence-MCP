@@ -63,6 +63,19 @@ export interface SchedulerConfig {
   eveningSummary: string;
 }
 
+export interface NewsMentionConfig {
+  /** Max article age in minutes before it's considered stale (default: 240) */
+  maxAgeMinutes: number;
+  /** Require non-neutral sentiment to create a news_mention signal (default: true) */
+  requireNonNeutralSentiment: boolean;
+  /** Minimum sentiment confidence for cascade-only impacts (default: 0.5) */
+  minSentimentConfidence: number;
+  /** Minimum cascade confidence for non-direct-mention impacts (default: 0.7) */
+  minCascadeConfidence: number;
+  /** Sources considered trustworthy for Vietnamese stock news (default: cafef, vnexpress, vneconomy) */
+  highTrustSources: string[];
+}
+
 export interface AlertConfig {
   defaultDropPct: number;
   defaultRisePct: number;
@@ -73,6 +86,7 @@ export interface AlertConfig {
     signalsForHigh: number;
     signalsForCritical: number;
   };
+  newsMention: NewsMentionConfig;
   telegramOnSeverity: string[];
   telegramOnNewDocument: boolean;
   telegramMinCascadeConfidence: number;
@@ -297,6 +311,13 @@ export function loadMcpConfig(): McpConfig {
       severityEscalation: {
         signalsForHigh: num(f, "alerts.severityEscalation.signalsForHigh", null, 2),
         signalsForCritical: num(f, "alerts.severityEscalation.signalsForCritical", null, 3),
+      },
+      newsMention: {
+        maxAgeMinutes: num(f, "alerts.newsMention.maxAgeMinutes", null, 240),
+        requireNonNeutralSentiment: bool(f, "alerts.newsMention.requireNonNeutralSentiment", null, true),
+        minSentimentConfidence: num(f, "alerts.newsMention.minSentimentConfidence", null, 0.5),
+        minCascadeConfidence: num(f, "alerts.newsMention.minCascadeConfidence", null, 0.7),
+        highTrustSources: strArr(f, "alerts.newsMention.highTrustSources", null, ["cafef", "vnexpress", "vneconomy"]),
       },
       telegramOnSeverity: strArr(f, "alerts.telegramOnSeverity", null, ["high", "critical"]),
       telegramOnNewDocument: bool(f, "alerts.telegramOnNewDocument", null, true),

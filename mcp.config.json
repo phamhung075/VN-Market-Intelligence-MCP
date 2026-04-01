@@ -56,6 +56,13 @@
       "signalsForHigh": 2,
       "signalsForCritical": 3
     },
+    "newsMention": {
+      "maxAgeMinutes": 240,
+      "requireNonNeutralSentiment": true,
+      "minSentimentConfidence": 0.5,
+      "minCascadeConfidence": 0.7,
+      "highTrustSources": ["cafef", "vnexpress", "vneconomy"]
+    },
     "telegramOnSeverity": ["high", "critical"],
     "telegramOnNewDocument": true,
     "telegramMinCascadeConfidence": 0.7,

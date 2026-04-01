@@ -425,8 +425,15 @@ export async function pollNews(options: PollNewsOptions = {}): Promise<PollNewsR
 
         // Convert watchlist impacts into news_mention signals
         // Relevance gate (task 152): filter noise before creating signals
-        const highTrustSources = ["cafef", "vnexpress", "vneconomy"];
-        const maxAgeMs = 4 * 60 * 60 * 1000; // 4 hours (TE stream articles may be delayed)
+        // Read gate config from mcp.config.json (with sensible defaults)
+        let nmCfg = { maxAgeMinutes: 240, requireNonNeutralSentiment: true, minSentimentConfidence: 0.5, minCascadeConfidence: 0.7, highTrustSources: ["cafef", "vnexpress", "vneconomy"] };
+        try {
+          const { loadMcpConfig } = await import("../../infrastructure/config.js");
+          const cfg = loadMcpConfig();
+          nmCfg = cfg.alerts.newsMention;
+        } catch { /* use defaults */ }
+        const highTrustSources = nmCfg.highTrustSources;
+        const maxAgeMs = nmCfg.maxAgeMinutes * 60 * 1000;
 
         // Pre-compute sentiment once per entry (not per impact — perf fix)
         const { classifySentiment: classify } = await import("../../domain/services/sentimentClassifier.js");
@@ -441,14 +448,25 @@ export async function pollNews(options: PollNewsOptions = {}): Promise<PollNewsR
 
           // Gate 2: Sentiment — skip neutral articles (no investment signal)
           const sentiment = entrySentiment;
-          if (sentiment.direction === "neutral" && sentiment.confidence < 0.3) continue;
+          if (nmCfg.requireNonNeutralSentiment && sentiment.direction === "neutral" && sentiment.confidence < 0.3) continue;
 
-          // Gate 3: Source trust OR direct stock mention
-          // entry.sourceUrl contains the domain — check if it's from a trusted source
+          // Gate 3: Direct stock mention OR (trusted source + strong signal)
+          // A direct mention in the article always passes.
+          // For cascade-only impacts (no direct mention), require BOTH:
+          //   a) trusted source, AND
+          //   b) strong non-neutral sentiment (confidence >= 0.5) + high cascade confidence (>= 0.7)
+          // This prevents generic macro news from triggering alerts for every stock in every sector.
           const sourceUrl = entry.sourceUrl.toLowerCase();
           const sourceTrusted = highTrustSources.some((s) => sourceUrl.includes(s));
-          const directMention = entry.summary.toLowerCase().includes(impact.actionCode.toLowerCase());
-          if (!sourceTrusted && !directMention) continue;
+          const titleAndSummary = `${entry.sourceTitle} ${entry.summary}`.toLowerCase();
+          const directMention = titleAndSummary.includes(impact.actionCode.toLowerCase());
+          if (directMention) {
+            // Always pass — article explicitly mentions this stock
+          } else if (sourceTrusted && sentiment.direction !== "neutral" && sentiment.confidence >= nmCfg.minSentimentConfidence && impact.confidence >= nmCfg.minCascadeConfidence) {
+            // Trusted source + strong directional sentiment + high cascade confidence — pass
+          } else {
+            continue; // Not relevant enough for this stock
+          }
 
           allSignals.push({
             type: "news_mention",
@@ -481,6 +499,11 @@ export async function pollNews(options: PollNewsOptions = {}): Promise<PollNewsR
               (s) => s.actionCode === ti.code && s.type === "news_mention",
             );
             if (alreadyCovered) continue;
+
+            // Gate: trade impacts also require non-neutral sentiment + article freshness
+            const tradeArticleAge = Date.now() - new Date(entry.createdAt).getTime();
+            if (tradeArticleAge > maxAgeMs) continue;
+            if (nmCfg.requireNonNeutralSentiment && entrySentiment.direction === "neutral" && entrySentiment.confidence < 0.3) continue;
 
             allSignals.push({
               type: "news_mention",
