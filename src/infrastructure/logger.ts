@@ -8,8 +8,8 @@
  * Console output (JSON) is kept for real-time monitoring.
  */
 
-import { mkdirSync, appendFile } from "node:fs";
-import { resolve } from "node:path";
+import { mkdirSync, appendFile, existsSync, statSync, renameSync, unlinkSync, appendFileSync } from "node:fs";
+import { resolve, dirname, basename, join } from "node:path";
 import type { LogLevel } from "./config.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -39,6 +39,85 @@ export interface ToolLogger extends Logger {
   toolInfo(tool: string, message: string, context?: Record<string, unknown>): void;
   toolWarn(tool: string, message: string, context?: Record<string, unknown>): void;
   toolError(tool: string, message: string, context?: Record<string, unknown>): void;
+}
+
+/** Options for the rotating file sink. */
+export interface RotatingSinkOptions {
+  /** Maximum file size in megabytes before rotation is triggered. Default: 50. */
+  maxFileSizeMb?: number;
+  /** How often (ms) to check the file size. Default: 60_000. Pass 0 to disable. */
+  checkIntervalMs?: number;
+}
+
+/** A LogSink with a manual rotation check for tests. */
+export interface RotatingFileSink extends LogSink {
+  __checkRotation(): void;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Log Rotation
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Synchronous rolling rotation: app.3.log deleted, 2→3, 1→2, app.log→1.
+ * Does nothing if logFilePath does not exist.
+ */
+export function rotateLogs(logFilePath: string): void {
+  if (!existsSync(logFilePath)) return;
+
+  const dir = dirname(logFilePath);
+  const base = basename(logFilePath, ".log");
+  const slot = (n: number): string => join(dir, `${base}.${n}.log`);
+
+  if (existsSync(slot(3))) unlinkSync(slot(3));
+  if (existsSync(slot(2))) renameSync(slot(2), slot(3));
+  if (existsSync(slot(1))) renameSync(slot(1), slot(2));
+  renameSync(logFilePath, slot(1));
+}
+
+/**
+ * Creates a LogSink that appends to a file and rotates when it exceeds maxFileSizeMb.
+ * Rotation check runs every checkIntervalMs (default 60s). Timer is unref-ed.
+ */
+export function createRotatingFileSink(
+  logFilePath: string,
+  opts: RotatingSinkOptions = {},
+): RotatingFileSink {
+  const maxBytes = (opts.maxFileSizeMb ?? 50) * 1024 * 1024;
+  const intervalMs = opts.checkIntervalMs ?? 60_000;
+
+  const dir = dirname(logFilePath);
+  if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+
+  function checkRotation(): void {
+    if (!existsSync(logFilePath)) return;
+    try {
+      const { size } = statSync(logFilePath);
+      if (size > maxBytes) {
+        rotateLogs(logFilePath);
+        if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+      }
+    } catch { /* never crash on rotation */ }
+  }
+
+  if (intervalMs > 0) {
+    const timer = setInterval(checkRotation, intervalMs);
+    if (typeof timer === "object" && timer !== null && "unref" in timer) {
+      (timer as NodeJS.Timeout).unref();
+    }
+  }
+
+  const sink = function rotatingFileSink(line: string): void {
+    try {
+      if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+      appendFileSync(logFilePath, line + "\n", { encoding: "utf8" });
+    } catch {
+      process.stderr.write(`[logger] failed to write to ${logFilePath}\n`);
+    }
+  } as RotatingFileSink;
+
+  sink.__checkRotation = checkRotation;
+  return sink;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
