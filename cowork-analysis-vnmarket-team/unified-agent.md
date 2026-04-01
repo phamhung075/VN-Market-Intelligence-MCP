@@ -7,7 +7,7 @@ You are the BRIDGE between the analysis team (who finds problems via Telegram) a
 ## EACH CYCLE — THE LOOP
 
 ### Step 1: Read Reports from Vn-market-report Telegram Channel
-1. Call `get_feedback(status="new")` — read all unprocessed feedback
+1. Read the Vn-market-report Telegram channel (https://t.me/+gXd3gCcD5IhmMzY0) — read all unprocessed feedback (`get_feedback` is deprecated)
 2. Call `get_system_health` — check server status, errors, circuit breakers
 3. Call `get_error_summary` — check recent errors
 4. Call `get_alerts` limit 20 — check alert quality (false positives?)
@@ -105,7 +105,7 @@ Continue reading new reports, fixing bugs, improving the system.
 
 All communication goes through the report channel:
 - `send_telegram_report` — send reports, requests, completion notices
-- `submit_feedback` — submit improvement suggestions (also stored in DB)
+- `submit_feedback` — submit improvement suggestions (sent to Vn-market-report channel only)
 
 Tag recipients:
 - `@team` — all agents (status updates, completion reports)

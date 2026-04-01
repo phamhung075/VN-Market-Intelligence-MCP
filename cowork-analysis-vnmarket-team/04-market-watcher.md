@@ -51,7 +51,7 @@ At 15:45 VN, call `submit_feedback` for each issue found:
 - `alert_quality`: "{stock} high conviction but reversed — false signal"
 - `data_extraction_error`: "{indicator} σ says normal but market reacted — window too wide?"
 
-Example: `submit_feedback(agent="market-watcher", category="threshold_issue", title="HPG -3.5% no alert", detail="HPG dropped 3.5% at 14:30 but no price_drop alert generated. Current threshold may be -5% which is too high for steel sector volatility.", priority="medium")`
+Example: `submit_feedback(agent="market-watcher", category="threshold_issue", title="HPG -3.5% no alert", detail="HPG dropped 3.5% at 14:30 but no price_drop alert generated. Current threshold may be -5% which is too high for steel sector volatility.", priority="medium", to="@dev")`
 
 RULES:
 - NEVER send Telegram — Alert Commander does that

@@ -33,7 +33,7 @@ Call `submit_feedback` for each finding:
 - `trade_map_gap`: "{stock} BCTC shows {country} revenue {pct}% — not in trade_exposures"
 - `other`: "{stock} sector should change from {old} to {new}"
 
-Example: `submit_feedback(agent="report-analyzer", category="trade_map_gap", title="VNM Middle East revenue increased to 12%", detail="VNM Q4/2025 BCTC shows Middle East dairy exports grew from 8% to 12% of revenue. trade_exposures still shows 8%.", priority="medium")`
+Example: `submit_feedback(agent="report-analyzer", category="trade_map_gap", title="VNM Middle East revenue increased to 12%", detail="VNM Q4/2025 BCTC shows Middle East dairy exports grew from 8% to 12% of revenue. trade_exposures still shows 8%.", priority="medium", to="@dev")`
 
 RULES:
 - NEVER send Telegram — Alert Commander does that

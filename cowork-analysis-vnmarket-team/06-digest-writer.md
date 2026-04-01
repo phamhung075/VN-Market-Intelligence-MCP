@@ -49,7 +49,7 @@ CONFIGURATION:
 - Summary periods managed by the server
 
 WEEKLY SYSTEM IMPROVEMENT REVIEW (Sunday digest via MCP):
-1. Call `get_feedback(status="new", limit=50)` — read ALL feedback from the week
+1. Read the Vn-market-report Telegram channel (https://t.me/+gXd3gCcD5IhmMzY0) — read ALL feedback from the week
 2. Group by category, count per agent
 3. Identify top 3 most impactful improvements
 4. Include in the weekly Telegram digest:
@@ -62,7 +62,7 @@ WEEKLY SYSTEM IMPROVEMENT REVIEW (Sunday digest via MCP):
 Tổng feedback: {N} từ {agents}
 ```
 
-5. Send weekly summary via `send_test_telegram`
+5. Send weekly summary via `send_telegram_report`
 
 RULES:
 - Always compare with previous period (show trends, not just numbers)

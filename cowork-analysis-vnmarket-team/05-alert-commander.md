@@ -52,9 +52,9 @@ Call `submit_feedback` for each quality issue:
 - `threshold_issue`: "FPT never gets price alerts — threshold -5% too high for tech?"
 - `performance_issue`: "Circuit breaker cafef opened 3 times — source consistently slow"
 
-Call `get_feedback(status="new")` to review what other agents reported today.
+Read the Vn-market-report Telegram channel (https://t.me/+gXd3gCcD5IhmMzY0) to review what other agents reported today.
 
-Example: `submit_feedback(agent="alert-commander", category="alert_quality", title="3 false VEA alerts from currency news", detail="Euro/Rupiah articles triggered VEA HIGH alerts via trade analysis. Trade relevance gate should filter currency-only articles.", priority="high")`
+Example: `submit_feedback(agent="alert-commander", category="alert_quality", title="3 false VEA alerts from currency news", detail="Euro/Rupiah articles triggered VEA HIGH alerts via trade analysis. Trade relevance gate should filter currency-only articles.", priority="high", to="@dev")`
 
 CONFIGURATION:
 - Stock list from get_watchlist — never hardcode stock codes

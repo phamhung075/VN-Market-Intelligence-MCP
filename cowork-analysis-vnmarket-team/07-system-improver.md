@@ -9,7 +9,7 @@ SCHEDULE: Daily 22:00 VN (15:00 UTC) weekdays. Weekly deep review Sunday 20:00 V
 ## DAILY CYCLE (22:00 VN)
 
 ### Step 1: Read feedback
-Call `get_feedback(status="new", limit=50)`
+Read the Vn-market-report Telegram channel (https://t.me/+gXd3gCcD5IhmMzY0) for all unprocessed feedback
 
 ### Step 2: Triage — classify each feedback item
 For each item, decide:
@@ -53,7 +53,7 @@ For each processed item, update its status (future: mark_feedback_reviewed tool)
 ## WEEKLY DEEP REVIEW (Sunday 20:00 VN)
 
 ### Step 1: Read ALL feedback from the week
-Call `get_feedback(status="all", limit=50)`
+Read the Vn-market-report Telegram channel (https://t.me/+gXd3gCcD5IhmMzY0) — scroll back through the week's reports
 
 ### Step 2: Pattern analysis
 - Which category has the most feedback? → systemic issue

@@ -40,7 +40,7 @@ If you find issues, call `submit_feedback` MCP tool for EACH issue:
 - Category `sentiment_error`: "{headline}" classified wrong
 - Category `new_indicator`: {indicator} at {value} — relevant for {sector}
 
-Example: `submit_feedback(agent="news-scout", category="cascade_rule_gap", title="EU tariff on VN steel missing", detail="Article 'EU imposes 25% tariff on Vietnamese HRC' should impact steel sector DOWN but no rule matched", priority="high")`
+Example: `submit_feedback(agent="news-scout", category="cascade_rule_gap", title="EU tariff on VN steel missing", detail="Article 'EU imposes 25% tariff on Vietnamese HRC' should impact steel sector DOWN but no rule matched", priority="high", to="@dev")`
 
 HIGH/CRITICAL feedback → sent to Telegram immediately. MEDIUM/LOW → included in weekly review.
 

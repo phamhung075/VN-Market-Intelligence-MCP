@@ -98,7 +98,7 @@ MCP connector URL: `https://zenmidi.com/mcp`
 | **Portfolio** | get_portfolio_conviction |
 | **Summaries** | get_market_summary, generate_market_summary |
 | **Telegram** | send_test_telegram, **send_telegram_report** |
-| **Feedback** | **submit_feedback**, **get_feedback** |
+| **Feedback** | **submit_feedback** (→ Telegram channel), **get_feedback** (deprecated — read channel directly) |
 | **System** | get_system_health, get_global_log, get_tool_log, get_error_summary |
 
 ## Vn-market-report Channel (Inter-Agent Communication)
@@ -106,7 +106,7 @@ MCP connector URL: `https://zenmidi.com/mcp`
 All agents communicate via the **Vn-market-report** Telegram channel instead of database-only feedback.
 
 - `send_telegram_report` — send reports, requests, analysis to the team
-- `submit_feedback` — submit improvement suggestions (sent to report channel + stored in DB)
+- `submit_feedback` — submit improvement suggestions (sent to Vn-market-report channel only)
 - Tag recipients: `@team`, `@po`, `@dev`, `@qa`, `@ba`, `@architect`, `@market-analyst`
 - Dev team reads the channel and acts on reports
 - Review agent deletes reports when issues are fixed
@@ -148,7 +148,7 @@ Agents submit feedback via `submit_feedback` MCP tool:
 - **Market Watcher**: threshold_issue, sector_peer_issue, alert_quality
 - **Alert Commander**: alert_quality, performance_issue
 - **Report Analyzer**: data_extraction_error, trade_map_gap from BCTC
-- **Digest Writer**: compiles weekly review via get_feedback
+- **Digest Writer**: compiles weekly review from Vn-market-report Telegram channel
 - **System Improver**: triages feedback → FIX NOW or SPRINT TASK → triggers dev team chain
 
 ## Key Architecture Rules
