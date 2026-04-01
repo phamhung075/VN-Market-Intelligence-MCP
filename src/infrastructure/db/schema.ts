@@ -362,8 +362,70 @@ export async function initDatabase(): Promise<void> {
     CREATE INDEX IF NOT EXISTS idx_pdf_filename ON pdf_extracted_text(filename);
   `);
 
+  // ── Migrations (try/catch so re-runs are safe) ─────────────────────────────
+
+  // Task 153: add ssc_doc_id column for SSC scan deduplication.
+  // ALTER TABLE is a no-op if the column already exists (caught and ignored).
+  try {
+    db.exec(
+      `ALTER TABLE financial_reports ADD COLUMN ssc_doc_id TEXT`,
+    );
+  } catch (_) {
+    // Column already exists — safe to ignore
+  }
+
+  // Task 153: partial index on ssc_doc_id for fast duplicate lookups.
+  try {
+    db.exec(`CREATE INDEX IF NOT EXISTS idx_fr_ssc_doc_id ON financial_reports(ssc_doc_id) WHERE ssc_doc_id IS NOT NULL`);
+  } catch { /* partial index may fail on some SQLite builds */ }
+
+  // ── Prediction Markets (task 163) ──────────────────────────────────────────
+  // `prediction_markets` is an upsert target — one row per market, overwritten
+  // each poll cycle via INSERT OR REPLACE.
+  // `prediction_signals` is append-only — every detected signal is kept for
+  // audit and for the `get_prediction_markets` MCP tool's signals_only filter.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS prediction_markets (
+      id               TEXT PRIMARY KEY,
+      question         TEXT NOT NULL,
+      end_date         TEXT NOT NULL,
+      yes_price        REAL NOT NULL,
+      no_price         REAL NOT NULL,
+      volume_24h       REAL NOT NULL DEFAULT 0,
+      volume_total     REAL NOT NULL DEFAULT 0,
+      liquidity        REAL NOT NULL DEFAULT 0,
+      last_trade_price REAL NOT NULL DEFAULT 0,
+      unique_wallets   INTEGER NOT NULL DEFAULT 0,
+      tags             TEXT NOT NULL DEFAULT '[]',
+      fetched_at       TEXT NOT NULL,
+      updated_at       TEXT NOT NULL
+    )
+  `);
+
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS prediction_signals (
+      id              TEXT PRIMARY KEY,
+      market_id       TEXT NOT NULL,
+      signal_type     TEXT NOT NULL,
+      severity        TEXT NOT NULL,
+      yes_price_prev  REAL,
+      yes_price_curr  REAL NOT NULL,
+      volume_24h      REAL NOT NULL DEFAULT 0,
+      unique_wallets  INTEGER NOT NULL DEFAULT 0,
+      confidence      REAL NOT NULL,
+      mapped_sectors  TEXT NOT NULL DEFAULT '[]',
+      mapped_stocks   TEXT NOT NULL DEFAULT '[]',
+      reasoning       TEXT NOT NULL,
+      detected_at     TEXT NOT NULL,
+      FOREIGN KEY (market_id) REFERENCES prediction_markets(id)
+    )
+  `);
+
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_prediction_signals_detected_at ON prediction_signals(detected_at DESC)`);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_prediction_signals_market ON prediction_signals(market_id)`);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_prediction_signals_severity ON prediction_signals(severity)`);
+
   // ── Seed default watchlist from mcp.config.json (skip in tests) ────────────
-  // Skip seeding in test environments
   const currentDbPath = process.env["DB_PATH"] ?? Bun.env["DB_PATH"] ?? DEFAULT_DB_PATH;
   if (currentDbPath === ":memory:" || Bun.env["BUN_ENV"] === "test" || typeof Bun.env["BUN_TEST"] !== "undefined") return;
   try {
@@ -382,71 +444,4 @@ export async function initDatabase(): Promise<void> {
       }
     }
   } catch { /* config not available — skip seeding */ }
-
-  // ── Migrations (try/catch so re-runs are safe) ─────────────────────────────
-
-  // Task 153: add ssc_doc_id column for SSC scan deduplication.
-  // ALTER TABLE is a no-op if the column already exists (caught and ignored).
-  try {
-    db.exec(
-      `ALTER TABLE financial_reports ADD COLUMN ssc_doc_id TEXT`,
-    );
-  } catch (_) {
-    // Column already exists — safe to ignore
-  }
-
-  // Task 153: partial index on ssc_doc_id for fast duplicate lookups.
-  // CREATE INDEX IF NOT EXISTS is idempotent.
-  db.exec(`
-    CREATE INDEX IF NOT EXISTS idx_fr_ssc_doc_id
-      ON financial_reports(ssc_doc_id)
-      WHERE ssc_doc_id IS NOT NULL
-  `);
-
-  // ── Prediction Markets (task 163) ──────────────────────────────────────────
-  // `prediction_markets` is an upsert target — one row per market, overwritten
-  // each poll cycle via INSERT OR REPLACE.
-  // `prediction_signals` is append-only — every detected signal is kept for
-  // audit and for the `get_prediction_markets` MCP tool's signals_only filter.
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS prediction_markets (
-      id               TEXT PRIMARY KEY,   -- Polymarket condition_id
-      question         TEXT NOT NULL,
-      end_date         TEXT NOT NULL,      -- ISO 8601
-      yes_price        REAL NOT NULL,      -- 0.0–1.0
-      no_price         REAL NOT NULL,
-      volume_24h       REAL NOT NULL DEFAULT 0,
-      volume_total     REAL NOT NULL DEFAULT 0,
-      liquidity        REAL NOT NULL DEFAULT 0,
-      last_trade_price REAL NOT NULL DEFAULT 0,
-      unique_wallets   INTEGER NOT NULL DEFAULT 0,
-      tags             TEXT NOT NULL DEFAULT '[]',  -- JSON string[]
-      fetched_at       TEXT NOT NULL,
-      updated_at       TEXT NOT NULL
-    );
-
-    CREATE TABLE IF NOT EXISTS prediction_signals (
-      id              TEXT PRIMARY KEY,         -- UUID
-      market_id       TEXT NOT NULL,            -- FK → prediction_markets.id
-      signal_type     TEXT NOT NULL,            -- volume_spike|probability_shift|insider_timing|sentiment_divergence
-      severity        TEXT NOT NULL,            -- low|medium|high|critical
-      yes_price_prev  REAL,                     -- NULL for volume_spike signals with no prior snapshot
-      yes_price_curr  REAL NOT NULL,
-      volume_24h      REAL NOT NULL DEFAULT 0,
-      unique_wallets  INTEGER NOT NULL DEFAULT 0,
-      confidence      REAL NOT NULL,
-      mapped_sectors  TEXT NOT NULL DEFAULT '[]',  -- JSON DomainType[]
-      mapped_stocks   TEXT NOT NULL DEFAULT '[]',  -- JSON string[]
-      reasoning       TEXT NOT NULL,
-      detected_at     TEXT NOT NULL,
-      FOREIGN KEY (market_id) REFERENCES prediction_markets(id)
-    );
-
-    CREATE INDEX IF NOT EXISTS idx_prediction_signals_detected_at
-      ON prediction_signals(detected_at DESC);
-    CREATE INDEX IF NOT EXISTS idx_prediction_signals_market
-      ON prediction_signals(market_id);
-    CREATE INDEX IF NOT EXISTS idx_prediction_signals_severity
-      ON prediction_signals(severity);
-  `);
 }
