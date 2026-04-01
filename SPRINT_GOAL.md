@@ -2,6 +2,140 @@
 
 ## Current Sprint
 
+status: PLANNING
+sprint_id: 020
+started: 2026-04-01
+updated: 2026-04-01
+
+---
+
+### Theme
+
+**"Prediction Market Intelligence — The Crowd Knows First"**
+
+---
+
+### Goal
+
+Add Polymarket as a Level 1 (global) intelligence source: poll macro and geopolitical
+prediction markets every 30 minutes, detect abnormal crowd-money flows (large bets, sharp
+probability shifts), and feed those signals into the existing cascade engine so that
+Vietnam-relevant events (US-China trade, Fed rate decisions, oil supply shocks, ASEAN
+geopolitics) surface as actionable alerts before traditional news reports them.
+
+---
+
+### Scope
+
+**IN**
+
+1. **Polymarket REST fetcher** (`src/infrastructure/fetchers/polymarket.ts`)
+   - Public Clob API: `https://clob.polymarket.com/markets` — no API key required
+   - Gamma Markets API: `https://gamma-api.polymarket.com/markets` — richer metadata
+   - Fetch open markets tagged with categories relevant to Vietnam macro:
+     `economics`, `crypto`, `politics`, `fed`, `trade`, `oil`, `asia`, `china`
+   - Return typed `PredictionMarket` objects: `{ id, question, endDate, yesPrice, noPrice,
+     volume24h, volumeTotal, liquidity, lastTradePrice, outcomes }`
+
+2. **Smart-money signal detector** (`src/domain/services/predictionSignalDetector.ts`)
+   - Detect `volume_spike`: 24h volume crosses configurable threshold (default $50K USD)
+   - Detect `probability_shift`: yes/no price moves >= configurable delta in one cycle
+     (default 5 percentage points)
+   - Detect `new_whale`: single-trade bet > configurable threshold (default $10K) — requires
+     the Polymarket order book / trade history endpoint
+   - Output `PredictionSignal` objects that map to the existing `Signal` interface
+
+3. **Cascade mapping** (`src/domain/services/predictionCascadeMapper.ts`)
+   - Keyword rules mapping market question text to `DomainType` sectors and stock codes
+   - Examples:
+     - "Fed rate cut" → `banking` → VCB, TCB, BID, CTG
+     - "US-China trade war" → `manufacturing`, `steel` → HPG, GAS
+     - "Oil price above $X" → `energy`, `petroleum` → GAS, PLX
+     - "Vietnam GDP" → all watchlist stocks (country-level event)
+     - "ASEAN summit" → broad VN macro signal
+
+4. **Poll integration** — `predictionMarketJob.ts` (new scheduler job, every 30 min)
+   OR integrate into existing `intelligenceCycleJob.ts` as Step A3
+
+5. **MCP tool** — `get_prediction_markets` returning current market prices, volumes, and
+   detected signals for Vietnam-relevant markets
+
+6. **Telegram alerts** — when a `PredictionSignal` of sufficient severity is detected,
+   format and push via existing Telegram notifier in Vietnamese
+
+7. **Configuration** in `mcp.config.json` under new `predictionMarkets` section:
+   `enabled`, `pollingIntervalMinutes`, `volumeSpikeThresholdUsd`, `probabilityShiftPct`,
+   `whaleTradeThresholdUsd`, `relevantCategories`, `maxMarketsPerPoll`
+
+**OUT**
+
+- On-chain Polygon transaction monitoring (too complex, deferred)
+- Kalshi, Manifold, or other prediction market platforms (add later if Polymarket proves
+  value; one source first)
+- Automated trading or position management of any kind
+- Real-money Polymarket account integration
+- LLM calls for market interpretation
+- Changes to existing MCP tool signatures
+
+---
+
+### Success Metric
+
+1. `get_prediction_markets` MCP tool returns at least 5 Vietnam-relevant open markets with
+   live yes/no prices and 24h volume.
+2. A simulated volume spike (injected in test) produces a `PredictionSignal` that propagates
+   through `predictionCascadeMapper` to at least one watchlist stock alert.
+3. End-to-end: `intelligenceCycleJob` (or new job) calls the Polymarket fetcher every 30
+   minutes; a HIGH-severity `prediction_market` signal triggers a Telegram notification in
+   Vietnamese with market question, current probability, and affected VN stocks.
+4. Full `bun test` suite passes; `bun tsc --noEmit` reports 0 errors.
+
+---
+
+### Blockers requiring human input before BA can proceed
+
+**BLOCKER-020-A**: Polymarket API access pattern
+- The Clob API (`clob.polymarket.com`) is public but rate-limits unauthenticated requests.
+  Do you have a Polymarket API key (L1/L2 credentials via Polymarket account)? If not,
+  unauthenticated polling at 30-min intervals should be within limits, but this must be
+  confirmed. Answer: YES (have key) / NO (use unauthenticated).
+
+**BLOCKER-020-B**: Whale trade detection feasibility
+- Detecting individual large trades requires the Polymarket trade history endpoint
+  (`/trades?market=...`), which returns all recent trades. On liquid markets this can be
+  thousands of rows per poll. Should the system: (A) poll trade history and flag trades
+  above threshold, (B) rely only on 24h volume and probability shift as signals (no
+  per-trade analysis), or (C) skip whale detection entirely for now?
+  Answer: A / B / C.
+
+**BLOCKER-020-C**: Vietnam-relevant market discovery strategy
+- Polymarket has thousands of open markets. Should the system: (A) use pre-configured
+  keyword filters (Fed, China, oil, Vietnam, ASEAN, trade) applied to market question text,
+  (B) rely solely on Polymarket category tags, or (C) maintain a manually curated list of
+  market IDs in `mcp.config.json` (most precise, requires manual updates)?
+  Answer: A / B / C (or combination).
+
+**BLOCKER-020-D**: Polling cadence during market hours vs off-hours
+- The current intelligence cycle runs every 15 min during market hours and 60 min off-hours.
+  Prediction markets are global and 24/7. Should prediction market polling: (A) follow the
+  same market-hours/off-hours split as existing cycle, (B) run at a fixed 30-min interval
+  24/7 regardless of VN market hours, or (C) run more frequently during VN market hours
+  (e.g. 15 min) and less frequently off-hours (e.g. 60 min)?
+  Answer: A / B / C.
+
+---
+
+### Task queue (pending blocker answers)
+
+| # | Title | Role | Status |
+|---|-------|------|--------|
+| REQ-020 | BA: Requirement Spec for Sprint 020 | BA | Blocked — awaiting BLOCKER-020-A through D |
+| TECH-020 | Architect: Technical Design for Sprint 020 | Architect | Blocked — awaiting REQ-020 |
+
+---
+
+## Previous Sprint
+
 status: ACTIVE
 sprint_id: 017
 started: 2026-03-30

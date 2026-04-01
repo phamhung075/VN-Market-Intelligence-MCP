@@ -141,21 +141,476 @@
 
 ### Sprint 020 — Prediction Market Intelligence
 
-> Sprint 020 PLANNING — started 2026-04-01. BA spec complete. Awaiting Architect.
-> Design refs: docs/REQ_020.md (BA — READY_FOR_ARCHITECT).
-> Dependency order: 163 (schema) → 164 (fetcher), 165 (mapper), 169 (config) in parallel → 166 (detector) → 167 (scheduler job) → 168 (MCP tool).
+> Sprint 020 PLANNING — started 2026-04-01. BA spec complete. Architect design complete.
+> Design refs: docs/REQ_020.md (BA — READY_FOR_ARCHITECT) + docs/TECH_020.md (Architect — APPROVED_BY_ARCHITECT).
+> Dependency order: 163 (schema) + 169 (config) + 165 (mapper) in parallel → 164 (fetcher, needs 163+169) → 166 (detector, needs 163+165) → 167 (scheduler job, needs 164+165+166) → 168 (MCP tool, needs 163+167).
 
 | # | Title | Branch | Agent | Layer | Priority | Depends on | Status |
 |---|-------|--------|-------|-------|----------|------------|--------|
 | REQ-020 | BA: Requirement Spec for Sprint 020 | `task/doc-001-claude-md-update` | BA | docs/ | P0 | — | Done — docs/REQ_020.md |
-| TECH-020 | Architect: Technical Design for Sprint 020 | `task/doc-001-claude-md-update` | Architect | docs/ | P0 | REQ-020 | **Todo** |
-| 163 | SQLite schema: `prediction_markets` + `prediction_signals` tables | `task/163-prediction-schema` | Developer | infrastructure/db | P0 | TECH-020 | Backlog |
-| 164 | Polymarket REST fetcher (`polymarket.ts`) | `task/164-polymarket-fetcher` | Developer | infrastructure/fetchers | P0 | 163, TECH-020 | Backlog |
-| 165 | Prediction cascade mapper (`predictionCascadeMapper.ts`) | `task/165-prediction-cascade-mapper` | Developer | domain/services | P0 | TECH-020 | Backlog |
-| 166 | Prediction signal detector (`predictionSignalDetector.ts`) + SignalType extension | `task/166-prediction-signal-detector` | Developer | domain/services | P0 | 163, 165 | Backlog |
-| 167 | Prediction market scheduler job + cron wiring | `task/167-prediction-market-job` | Developer | scheduler + interface/scheduler | P0 | 164, 165, 166 | Backlog |
-| 168 | `get_prediction_markets` MCP tool + server.ts registration | `task/168-prediction-mcp-tool` | Developer | interface/mcp | P1 | 163, 167 | Backlog |
-| 169 | `mcp.config.json` predictionMarkets section + config.ts type extension | `task/169-prediction-config` | Developer | infrastructure/config | P0 | — | Backlog |
+| TECH-020 | Architect: Technical Design for Sprint 020 | `task/doc-001-claude-md-update` | Architect | docs/ | P0 | REQ-020 | Done — docs/TECH_020.md |
+| 163 | SQLite schema: `prediction_markets` + `prediction_signals` tables | `task/163-prediction-schema` | Developer | infrastructure/db | P0 | TECH-020 ✓ | **Todo** |
+| 169 | `mcp.config.json` predictionMarkets section + config.ts type extension | `task/169-prediction-config` | Developer | infrastructure/config | P0 | TECH-020 ✓ | **Todo** |
+| 165 | Prediction cascade mapper (`predictionCascadeMapper.ts`) | `task/165-prediction-cascade-mapper` | Developer | domain/services | P0 | TECH-020 ✓ | **Todo** |
+| 164 | Polymarket REST fetcher (`polymarket.ts`) | `task/164-polymarket-fetcher` | Developer | infrastructure/fetchers | P0 | 163 ✓, 169 ✓ | Backlog |
+| 166 | Prediction signal detector (`predictionSignalDetector.ts`) + SignalType extension | `task/166-prediction-signal-detector` | Developer | domain/services | P0 | 163 ✓, 165 ✓ | Backlog |
+| 167 | Prediction market scheduler job + cron wiring | `task/167-prediction-market-job` | Developer | scheduler | P0 | 164 ✓, 165 ✓, 166 ✓ | Backlog |
+| 168 | `get_prediction_markets` MCP tool + server.ts + index.ts registration | `task/168-prediction-mcp-tool` | Developer | interface/mcp | P1 | 163 ✓, 167 ✓ | Backlog |
+
+---
+
+#### Task 163 — SQLite schema: `prediction_markets` + `prediction_signals` tables
+
+**Branch**: `task/163-prediction-schema`
+**Layer**: infrastructure/db
+**Priority**: P0
+**Depends on**: TECH-020 ✓ (approved 2026-04-01)
+**Estimated effort**: ~1 hour
+
+**Files to read first**:
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/infrastructure/db/schema.ts` — existing `initDatabase()` + `CREATE TABLE IF NOT EXISTS` pattern; insert new DDL after the `sbv_rates_history` block
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/docs/TECH_020.md` — Section 6 "SQLite schema additions": exact DDL for `prediction_markets`, `prediction_signals`, and three indexes
+
+**Files to modify**:
+- MODIFY: `src/infrastructure/db/schema.ts` — add `prediction_markets` table (upsert target, PK = `id`) and `prediction_signals` table (append-only, FK → `prediction_markets.id`) plus three indexes: `idx_prediction_signals_detected_at DESC`, `idx_prediction_signals_market`, `idx_prediction_signals_severity`
+
+**Files to create**:
+- CREATE: `src/__tests__/163-prediction-schema.test.ts`
+
+**Acceptance Criteria**:
+
+**Given** `initDatabase()` is called on a fresh `:memory:` SQLite instance
+**When** the schema initialises
+**Then**
+- `SELECT name FROM sqlite_master WHERE type='table' AND name='prediction_markets'` returns one row
+- `SELECT name FROM sqlite_master WHERE type='table' AND name='prediction_signals'` returns one row
+- `prediction_markets` columns: `id TEXT PRIMARY KEY`, `question TEXT NOT NULL`, `end_date TEXT NOT NULL`, `yes_price REAL NOT NULL`, `no_price REAL NOT NULL`, `volume_24h REAL NOT NULL DEFAULT 0`, `volume_total REAL NOT NULL DEFAULT 0`, `liquidity REAL NOT NULL DEFAULT 0`, `last_trade_price REAL NOT NULL DEFAULT 0`, `unique_wallets INTEGER NOT NULL DEFAULT 0`, `tags TEXT NOT NULL DEFAULT '[]'`, `fetched_at TEXT NOT NULL`, `updated_at TEXT NOT NULL`
+- `prediction_signals` columns: `id TEXT PRIMARY KEY`, `market_id TEXT NOT NULL`, `signal_type TEXT NOT NULL`, `severity TEXT NOT NULL`, `yes_price_prev REAL`, `yes_price_curr REAL NOT NULL`, `volume_24h REAL NOT NULL DEFAULT 0`, `unique_wallets INTEGER NOT NULL DEFAULT 0`, `confidence REAL NOT NULL`, `mapped_sectors TEXT NOT NULL DEFAULT '[]'`, `mapped_stocks TEXT NOT NULL DEFAULT '[]'`, `reasoning TEXT NOT NULL`, `detected_at TEXT NOT NULL`; foreign key references `prediction_markets(id)`
+- Three indexes exist: `idx_prediction_signals_detected_at`, `idx_prediction_signals_market`, `idx_prediction_signals_severity`
+- `INSERT OR REPLACE INTO prediction_markets` succeeds for an upsert (same `id`, different `yes_price`)
+- `INSERT INTO prediction_signals` succeeds and is FK-safe when referencing an existing `prediction_markets` row
+- `bun test src/__tests__/163-prediction-schema.test.ts` passes with 0 failures
+- `bun tsc --noEmit` reports 0 errors
+
+**TDD test location**: `src/__tests__/163-prediction-schema.test.ts`
+- Use `process.env.DB_PATH = ":memory:"` — call `initDatabase()` fresh in `beforeEach`
+- Test table existence, column names via `PRAGMA table_info()`, upsert behaviour, and FK constraint on `prediction_signals`
+
+---
+
+#### Task 169 — `mcp.config.json` predictionMarkets section + `config.ts` type extension
+
+**Branch**: `task/169-prediction-config`
+**Layer**: infrastructure/config
+**Priority**: P0
+**Depends on**: TECH-020 ✓
+**Estimated effort**: ~1 hour
+
+**Files to read first**:
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/infrastructure/config.ts` — `McpConfig`, `SchedulerConfig` interfaces and `loadConfig()` with `str()` / `num()` / `bool()` helpers; look for the `get(file, path)` pattern used for nested objects (e.g. `alerts.newsMention`)
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/mcp.config.json` — existing top-level keys and `scheduler` object to see where to insert new fields
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/docs/TECH_020.md` — Section 5 "PredictionMarketsConfig" interface, `loadConfig()` additions block, and "mcp.config.json additions" block (exact JSON to insert)
+
+**Files to modify**:
+- MODIFY: `src/infrastructure/config.ts` — add `PredictionMarketsConfig` interface; add `predictionMarkets: PredictionMarketsConfig` field to `McpConfig`; add `predictionMarketPoll: string` field to `SchedulerConfig`; add `boolVal` and `arrVal` helper functions alongside existing `str()` / `num()` helpers; add `predictionMarkets` block to `loadConfig()` using the `get(file, "predictionMarkets")` pattern; add `predictionMarketPoll` to the scheduler sub-object read
+- MODIFY: `mcp.config.json` — add `"predictionMarkets"` top-level section with all 10 fields (enabled, pollingIntervalMinutes, volumeSpikeThresholdUsd, probabilityShiftPct, minUniqueWallets, whaleTradeThresholdUsd, maxMarketsPerPoll, rateLimitDelayMs, relevantKeywords array, curatedMarketIds array); add `"predictionMarketPoll": "*/30 * * * *"` inside the existing `"scheduler"` object
+
+**Files to create**:
+- No dedicated test file — config correctness is verified by TypeScript compile + the loader reading defaults
+
+**Acceptance Criteria**:
+
+**Given** `mcp.config.json` contains the `predictionMarkets` section
+**When** `loadConfig()` is called
+**Then**
+- `config.predictionMarkets.enabled` is `true`
+- `config.predictionMarkets.pollingIntervalMinutes` is `30`
+- `config.predictionMarkets.volumeSpikeThresholdUsd` is `50000`
+- `config.predictionMarkets.probabilityShiftPct` is `5`
+- `config.predictionMarkets.minUniqueWallets` is `10`
+- `config.predictionMarkets.maxMarketsPerPoll` is `50` (default; overridable by `Bun.env`)
+- `config.predictionMarkets.rateLimitDelayMs` is `500`
+- `config.predictionMarkets.relevantKeywords` is a non-empty string array containing at least `"fed"`, `"oil"`, `"vietnam"`
+- `config.predictionMarkets.curatedMarketIds` is an empty array `[]`
+- `config.scheduler.predictionMarketPoll` equals `"*/30 * * * *"`
+- `bun tsc --noEmit` reports 0 errors (all new interface fields are typed correctly)
+
+**Key implementation notes**:
+- `boolVal(obj, key, fallback)` — returns `obj[key] === true || obj[key] === "true"` falling back to the provided default
+- `arrVal(obj, key, fallback)` — returns `Array.isArray(obj[key]) ? obj[key] as string[] : fallback`
+- `DEFAULT_PREDICTION_KEYWORDS` — const string array defined at module level in `config.ts`, mirrors the `relevantKeywords` list from `mcp.config.json`
+- Do not break existing `loadConfig()` return shape — all existing fields must remain unchanged
+
+---
+
+#### Task 165 — Prediction cascade mapper (`predictionCascadeMapper.ts`)
+
+**Branch**: `task/165-prediction-cascade-mapper`
+**Layer**: domain/services
+**Priority**: P0
+**Depends on**: TECH-020 ✓
+**Estimated effort**: ~1.5 hours
+
+**Files to read first**:
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/docs/TECH_020.md` — Section 2 "CascadeMapping and predictionCascadeMapper": `KeywordRule` interface with `keywordGroups: string[][]`, `CascadeMapping` interface, `mapPredictionToCascade()` signature, keyword matching algorithm (AND-across-groups / OR-within-group), 14 built-in rules R01–R14
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/bctc-schema.ts` — `DomainType` union (need `"banking"`, `"manufacturing"`, `"steel"`, `"oil_gas"`, `"tech"`, `"retail"` values)
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/domain/services/cascadeEngine.ts` — reference for how SECTOR_RULES are structured (for style consistency only; do not import)
+
+**Files to create**:
+- CREATE: `src/domain/services/predictionCascadeMapper.ts`
+- CREATE: `src/__tests__/165-prediction-cascade-mapper.test.ts`
+
+**Acceptance Criteria**:
+
+**Given** the question `"Will the Fed cut rates in June 2026?"`
+**When** `mapPredictionToCascade(question, ["VNM","FPT","VCB","VEA"])` is called
+**Then**
+- `result.matched` is `true`
+- `result.domains` contains `"banking"`
+- `result.stocks` contains `"VCB"`, `"TCB"`, `"BID"`, `"CTG"`
+- `result.direction` is `"bullish"` (R01 matches: "fed" + "cut rates")
+- `result.reasoning` is a non-empty string
+
+**Given** the question `"Will China impose new tariffs on US goods in 2026?"`
+**When** `mapPredictionToCascade(question, ["VNM","FPT","VCB","VEA"])` is called
+**Then**
+- `result.matched` is `true`
+- `result.domains` contains `"manufacturing"` or `"steel"`
+- `result.stocks` contains `"HPG"` and/or `"GAS"`
+- `result.direction` is `"bearish"`
+
+**Given** the question `"Will Vietnam's GDP exceed 7% in 2026?"`
+**When** `mapPredictionToCascade(question, ["VNM","FPT","VCB","VEA"])` is called
+**Then**
+- `result.matched` is `true`
+- `result.stocks` contains all injected watchlist codes (`"VNM"`, `"FPT"`, `"VCB"`, `"VEA"`) because R06 uses `stocks: []` (all watchlist fallback)
+- `result.direction` is `"bullish"`
+
+**Given** the question `"Will Arsenal win the Premier League 2026?"`
+**When** `mapPredictionToCascade(question, ["VNM"])` is called
+**Then**
+- `result.matched` is `false`
+- `result.domains` is `[]`
+- `result.stocks` is `[]`
+- `result.reasoning` equals `"No Vietnam-relevant keywords found"`
+
+**Given** a question matching both R08 (`"war"`) and R07 (`"asean"`)
+**When** `mapPredictionToCascade(question, ["VNM","FPT"])` is called
+**Then**
+- `result.domains` is the union of both rules' domains (deduplicated)
+- `result.stocks` includes the injected watchlist codes from both rules (deduplicated)
+- `result.direction` is the direction of the first matching rule (R07 or R08 by rule order)
+
+**Given** a `customRules` parameter is passed
+**When** `mapPredictionToCascade(question, watchlist, customRules)` is called
+**Then** custom rules are evaluated in addition to the 14 built-in rules (custom rules appended, not replacing)
+
+- `bun test src/__tests__/165-prediction-cascade-mapper.test.ts` passes with 0 failures
+- `bun tsc --noEmit` reports 0 errors
+- File has zero imports from `infrastructure/` or `application/` layers
+
+**TDD test location**: `src/__tests__/165-prediction-cascade-mapper.test.ts`
+- Pure unit tests, no mocks needed
+- One describe block per rule group (Fed rules, trade war rules, oil rules, Vietnam/ASEAN rules, geopolitical rules)
+- Include a no-match test and a multi-rule union test
+
+**Key implementation notes**:
+- `KeywordRule.keywordGroups: string[][]` — AND across groups, OR within each group: `groups.every(group => group.some(kw => q.includes(kw)))`
+- Direction: first matching rule wins for `direction`; reasoning: all matching rules' `reasoning` joined with `"; "`
+- Stocks from rules with `stocks: []` receive the full `watchlistCodes` array; deduplication via `Set`
+- Zero domain imports — only import `DomainType` from `bctc-schema.js`
+
+---
+
+#### Task 164 — Polymarket REST fetcher (`polymarket.ts`)
+
+**Branch**: `task/164-polymarket-fetcher`
+**Layer**: infrastructure/fetchers
+**Priority**: P0
+**Depends on**: 163 ✓ (schema exists for test fixtures), 169 ✓ (`PredictionMarketsConfig` type available)
+**Estimated effort**: ~1.5 hours
+
+**Files to read first**:
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/docs/TECH_020.md` — Section 1 "PredictionMarket interface + fetchPolymarkets()", implementation notes (two-call sequence, CLOB/Gamma response shapes, enrichment strategy, relevance filter), Polymarket API Research section (exact endpoint URLs, response JSON, key extraction)
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/infrastructure/fetchers/tradingEconomicsStream.ts` — reference for the never-throw, empty-array-on-error pattern
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/infrastructure/config.ts` — `PredictionMarketsConfig` interface (added by task 169)
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/domain/services/predictionSignalDetector.ts` — `PredictionMarket` domain interface (added by task 166 — wait for 166 to merge, OR define the interface here and import it in the domain file; align with TECH-020 DDD Compliance Note)
+
+**Files to create**:
+- CREATE: `src/infrastructure/fetchers/polymarket.ts`
+- CREATE: `src/__tests__/164-polymarket-fetcher.test.ts`
+
+**Acceptance Criteria**:
+
+**Given** the CLOB API returns a list of markets and Gamma API enriches them
+**When** `fetchPolymarkets(config)` is called with valid config
+**Then**
+- Returns `PredictionMarket[]` (non-empty)
+- Each item has `id`, `question`, `endDate`, `yesPrice` (0.0–1.0), `noPrice`, `volume24h`, `volumeTotal`, `liquidity`, `lastTradePrice`, `uniqueWalletsCount`, `tags: string[]`, `fetchedAt`
+- `yesPrice` is derived from `tokens[outcome="Yes"].price` (float, not percentage)
+- `uniqueWalletsCount` is sourced from Gamma API enrichment (default `0` when Gamma has no match)
+- `tags` is normalized to `string[]` (from `{id, label}` objects if Gamma returns that shape)
+
+**Given** a market question does not contain any keyword from `config.relevantKeywords` and its `id` is not in `config.curatedMarketIds`
+**When** the relevance filter is applied
+**Then** that market is excluded from the returned array
+
+**Given** a market's `id` appears in `config.curatedMarketIds`
+**When** the relevance filter is applied
+**Then** that market is included regardless of keyword match
+
+**Given** the CLOB API returns an HTTP 500 error
+**When** `fetchPolymarkets(config)` is called
+**Then**
+- Returns `[]` (empty array)
+- No exception propagates to the caller
+- A `warn`-level log entry is emitted
+
+**Given** the Gamma API is unreachable (timeout)
+**When** `fetchPolymarkets(config)` is called
+**Then**
+- Returns the CLOB-only results (Gamma enrichment degrades gracefully)
+- `uniqueWalletsCount` defaults to `0` for all markets
+- No exception propagates
+
+- `bun test src/__tests__/164-polymarket-fetcher.test.ts` passes with 0 failures (tests use `fetch` mock — no real network calls)
+- `bun tsc --noEmit` reports 0 errors
+- File has zero imports from `domain/` or `application/` layers
+
+**TDD test location**: `src/__tests__/164-polymarket-fetcher.test.ts`
+- Mock `fetch` globally using `jest.spyOn` / `mock.module` for Bun
+- Provide fixture JSON matching the CLOB and Gamma shapes documented in TECH-020
+- Test: happy path, CLOB-only (Gamma 500), keyword relevance filter, curated ID override, never-throw guarantee
+
+**Key implementation notes**:
+- `PredictionMarket` interface ownership: define in `src/domain/services/predictionSignalDetector.ts` (domain layer) per the DDD Compliance Note in TECH-020; the fetcher imports and returns that domain type
+- Two sequential `fetch` calls: CLOB first, then `await new Promise(r => setTimeout(r, config.rateLimitDelayMs))`, then Gamma
+- Gamma enrichment: build `Map<string, GammaMarket>` keyed on both `id` and `conditionId` for safe matching
+- 15-second `AbortController` timeout per fetch call
+- `volume` field in CLOB response is a string — use `parseFloat()`
+- `fetchedAt` = `new Date().toISOString()` at call time, same value for all markets in one batch
+
+---
+
+#### Task 166 — Prediction signal detector (`predictionSignalDetector.ts`) + SignalType extension
+
+**Branch**: `task/166-prediction-signal-detector`
+**Layer**: domain/services
+**Priority**: P0
+**Depends on**: 163 ✓ (schema exists so test helpers can use SQLite fixtures), 165 ✓ (`CascadeMapping` types available for reference)
+**Estimated effort**: ~2 hours
+
+**Files to read first**:
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/docs/TECH_020.md` — Section 3 "PredictionSignal and detectPredictionSignals": full interface definitions (`PredictionMarket`, `PredictionSignal`, `PredictionSignalConfig`, `RecentSentimentEntry`), `detectPredictionSignals()` signature, confidence formula, signal severity mapping table
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/docs/TECH_020.md` — Section 4 "SignalType extension": exact one-line union change
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/domain/services/signalDetector.ts` — current `SignalType` union definition to confirm exact location of the one-line change
+
+**Files to create**:
+- CREATE: `src/domain/services/predictionSignalDetector.ts` — defines `PredictionMarket` interface (canonical owner), `PredictionSignal`, `PredictionSignalType`, `PredictionSignalConfig`, `RecentSentimentEntry`, `detectPredictionSignals()`
+- CREATE: `src/__tests__/166-prediction-signal-detector.test.ts`
+
+**Files to modify**:
+- MODIFY: `src/domain/services/signalDetector.ts` — add `"prediction_market"` to `SignalType` union
+
+**Acceptance Criteria**:
+
+**Given** `current` has a market with `volume24h = 75000` and `config.volumeSpikeThresholdUsd = 50000`
+**When** `detectPredictionSignals(current, [], config, new Set(), [])` is called
+**Then**
+- Returns at least one `PredictionSignal` with `signalType = "volume_spike"`
+- Signal `severity` is `"low"` (base severity for volume_spike)
+- Signal `confidence` equals `min(1.0, uniqueWalletsCount / 100) * 0.5` (shiftMagnitude = 0, no prev)
+
+**Given** `current` has `yesPrice = 0.72` and `previous` has the same market with `yesPrice = 0.65` and `config.probabilityShiftPct = 5`
+**When** `detectPredictionSignals(current, previous, config, new Set(), [])` is called
+**Then**
+- Returns a `PredictionSignal` with `signalType = "probability_shift"`, `severity = "medium"`
+- `yesPricePrev = 0.65`, `yesPriceCurr = 0.72`
+- `confidence` computed as `clamp(walletQuality * 0.5 + shiftMagnitude * 0.5, 0.1, 0.95)` where `shiftMagnitude = min(1.0, 0.07 / 0.20) = 0.35`
+
+**Given** a `probability_shift` is detected AND `uniqueWalletsCount` increased by >= 3 AND the market `id` is NOT in `hasRecentNews`
+**When** `detectPredictionSignals()` is called
+**Then** returns an additional `PredictionSignal` with `signalType = "insider_timing"`, `severity = "high"`
+
+**Given** a market has `yesPrice >= 0.65` (risk event at 65%+) AND `recentSentiments` contains a matching stock with `sentiment = "bullish"` and `confidence >= 0.6`
+**When** `detectPredictionSignals()` is called
+**Then** returns a `PredictionSignal` with `signalType = "sentiment_divergence"`, `severity = "medium"` or `"high"` based on confidence
+
+**Given** a market has `uniqueWalletsCount = 5` (below `config.minUniqueWallets = 10`) and would otherwise be `"medium"` severity
+**When** any signal is detected for this market
+**Then** all signals for that market are downgraded to `severity = "low"` (wash trading filter)
+
+**Given** `current` and `previous` have identical prices and `volume24h < volumeSpikeThresholdUsd`
+**When** `detectPredictionSignals()` is called
+**Then** returns `[]` (no false signals)
+
+**Given** `"prediction_market"` is added to the `SignalType` union in `signalDetector.ts`
+**When** `bun tsc --noEmit` is run
+**Then** 0 TypeScript errors (no exhaustiveness breakage in downstream files)
+
+- `bun test src/__tests__/166-prediction-signal-detector.test.ts` passes with 0 failures
+- File has zero imports from `infrastructure/` or `application/` layers (pure domain)
+
+**TDD test location**: `src/__tests__/166-prediction-signal-detector.test.ts`
+- All tests are pure — pass market arrays directly, no DB or HTTP
+- One describe block per signal type (volume_spike, probability_shift, insider_timing, sentiment_divergence)
+- Include boundary tests: shift exactly at threshold (4.99pp → no signal, 5.00pp → signal), wallet count at boundary (9 → downgraded, 10 → not downgraded)
+
+**Key implementation notes**:
+- `PredictionMarket` is defined and exported from this file — the fetcher imports it from here
+- `insider_timing` requires THREE conditions simultaneously: probability_shift detected AND wallet count increased AND market NOT in `hasRecentNews`; check previous `uniqueWalletsCount` by looking up the previous snapshot map
+- Confidence formula: `walletQuality = min(1.0, uniqueWalletsCount / 100)`, `shiftMagnitude = min(1.0, Math.abs(curr - prev) / 0.20)`, `confidence = Math.max(0.1, Math.min(0.95, walletQuality * 0.5 + shiftMagnitude * 0.5))`
+- For `volume_spike` with no previous snapshot, `shiftMagnitude = 0`
+- Build a `Map<string, PredictionMarket>` from `previous` array for O(1) lookup
+
+---
+
+#### Task 167 — Prediction market scheduler job + cron wiring
+
+**Branch**: `task/167-prediction-market-job`
+**Layer**: scheduler
+**Priority**: P0
+**Depends on**: 164 ✓ (`fetchPolymarkets` available), 165 ✓ (`mapPredictionToCascade` available), 166 ✓ (`detectPredictionSignals` + `PredictionMarket` type available)
+**Estimated effort**: ~2 hours
+
+**Files to read first**:
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/docs/TECH_020.md` — Section 7 "predictionMarketJob.ts": `PredictionJobDeps` interface, `runPredictionMarketJob()` signature, 19-step job execution flow, helper functions list, `formatVietnamesePredictionAlert()` format
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/scheduler/intelligenceCycleJob.ts` — reference for concurrency guard pattern (`_isRunning` flag, `try/finally` release)
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/scheduler/jobs.ts` — `CRONS` constant and `startScheduler()` structure; add `predictionMarketPoll` cron entry and `cron.schedule()` call
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/domain/services/alertGenerator.ts` — `generateAlerts()` signature
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/infrastructure/db/alertStore.ts` — `storeAlerts()` signature
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/infrastructure/notifiers/telegram.ts` — `sendTelegramMessage()` signature
+
+**Files to create**:
+- CREATE: `src/scheduler/predictionMarketJob.ts`
+- CREATE: `src/__tests__/167-prediction-market-job.test.ts`
+
+**Files to modify**:
+- MODIFY: `src/scheduler/jobs.ts` — add `import { runPredictionMarketJob } from './predictionMarketJob.js'`; add `predictionMarketPoll: Bun.env.CRON_PREDICTION_MARKET ?? cfg.scheduler.predictionMarketPoll` to `CRONS`; add `cron.schedule(CRONS.predictionMarketPoll, async () => { await runPredictionMarketJob() }, { timezone: 'Asia/Ho_Chi_Minh' })` inside `startScheduler()`
+
+**Acceptance Criteria**:
+
+**Given** `config.predictionMarkets.enabled = false`
+**When** `runPredictionMarketJob()` is called
+**Then**
+- Function returns immediately without calling `fetchPolymarkets`
+- A `debug`-level log entry is emitted
+
+**Given** the job is already running (lock set)
+**When** `runPredictionMarketJob()` is called again concurrently
+**Then**
+- Second call returns immediately with a `warn`-level log entry
+- Lock is NOT double-set
+
+**Given** `fetchPolymarkets()` returns `[]`
+**When** `runPredictionMarketJob()` runs
+**Then**
+- A `warn`-level log is emitted
+- No `storeAlerts()` or `sendTelegramMessage()` calls are made
+- Lock is released (`_isRunning = false`) before function returns
+
+**Given** `fetchPolymarkets()` returns 3 markets, one with a `probability_shift` signal, `severity = "high"`, mapped to `VCB`
+**When** `runPredictionMarketJob()` runs end-to-end
+**Then**
+- `upsertMarkets` inserts/replaces those 3 markets in `prediction_markets` table
+- `detectPredictionSignals` is called with current + previous markets
+- The signal is persisted to `prediction_signals` table
+- `generateAlerts()` is called with a `Signal` of `type = "prediction_market"`
+- `storeAlerts()` is called with the resulting alert
+- `sendTelegramMessage()` is called exactly once with a string containing `"VCB"` and `"QUAN TRONG"` (Vietnamese format for HIGH)
+
+**Given** an alert has `severity = "medium"` (below HIGH threshold)
+**When** `runPredictionMarketJob()` runs
+**Then** `sendTelegramMessage()` is NOT called
+
+**Given** `runPredictionMarketJob()` throws mid-execution (e.g. DB error)
+**When** the error propagates
+**Then** `_isRunning` is reset to `false` (finally block)
+
+- `CRONS.predictionMarketPoll` equals `"*/30 * * * *"` after `startScheduler()` reads config
+- `bun test src/__tests__/167-prediction-market-job.test.ts` passes with 0 failures
+- `bun tsc --noEmit` reports 0 errors
+
+**TDD test location**: `src/__tests__/167-prediction-market-job.test.ts`
+- Use `process.env.DB_PATH = ":memory:"` and call `initDatabase()` in `beforeEach`
+- Inject all external deps via `PredictionJobDeps`: mock `fetchMarketsFn`, `detectSignalsFn`, `mapCascadeFn`, `sendTelegramFn`
+- Test: enabled=false early exit, concurrency lock, empty API response, happy path end-to-end, telegram called only for HIGH+, lock released on error
+
+**Key implementation notes**:
+- Module-level `let _isRunning = false` — guard with `if (_isRunning) { logger.warn(...); return; }` at the very start of the try block; release in `finally { _isRunning = false; }`
+- `queryRecentNewsMarketIds(db)`: `SELECT source_title, source_url FROM rag_analyses WHERE created_at > datetime('now', '-2 hours')` — build `Set<string>` of market IDs that share >= 2 words with any recent `source_title`
+- `queryRecentSentiments(db)`: `SELECT affected_actions, direction, confidence FROM rag_analyses ORDER BY created_at DESC LIMIT 50` — map to `RecentSentimentEntry[]`
+- `formatVietnamesePredictionAlert()` format: see TECH-020 "Telegram Alert Format" section — plain text, no Markdown
+- `Signal` conversion from `PredictionSignal`: `{ type: "prediction_market", severity: signal.severity, actionCode: stock, message: formatPredictionMessage(...), confidence: signal.confidence, detectedAt: signal.detectedAt }`
+
+---
+
+#### Task 168 — `get_prediction_markets` MCP tool + server.ts + index.ts registration
+
+**Branch**: `task/168-prediction-mcp-tool`
+**Layer**: interface/mcp
+**Priority**: P1
+**Depends on**: 163 ✓ (`prediction_markets` + `prediction_signals` tables exist), 167 ✓ (job populates those tables)
+**Estimated effort**: ~1.5 hours
+
+**Files to read first**:
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/docs/TECH_020.md` — Section 8 "get_prediction_markets MCP tool": `registerPredictionTools()` signature, Zod input schema, SQL query (JOIN with `prediction_signals`, `signals_only` HAVING clause), output shape matching REQ-020 FR-6
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/interface/mcp/tools/summaryTools.ts` — reference for `registerXxxTools(server: McpServer)` pattern
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/interface/mcp/tools/index.ts` — existing barrel exports; add `export { registerPredictionTools } from './predictionTools.js'`
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/interface/mcp/server.ts` — existing `createBunServer()` and tool registration calls; add `registerPredictionTools(server)` alongside other `registerXxx` calls
+
+**Files to create**:
+- CREATE: `src/interface/mcp/tools/predictionTools.ts`
+- CREATE: `src/__tests__/168-prediction-mcp-tool.test.ts`
+
+**Files to modify**:
+- MODIFY: `src/interface/mcp/tools/index.ts` — add barrel export for `registerPredictionTools`
+- MODIFY: `src/interface/mcp/server.ts` — call `registerPredictionTools(server)` (tool count 20 → 21)
+
+**Acceptance Criteria**:
+
+**Given** `prediction_markets` table has 3 rows and `prediction_signals` has 2 rows for 2 of those markets (detected within the last hour)
+**When** the `get_prediction_markets` MCP tool is called with `{ filter: "all", limit: 20 }`
+**Then**
+- Returns JSON with `markets` array containing all 3 markets
+- Each market object has: `id`, `question`, `yesPrice`, `noPrice`, `volume24h`, `uniqueWalletsCount`, `fetchedAt`, `activeSignals` (array, may be empty), `mappedSectors` (array), `mappedStocks` (array)
+- `totalRelevantMarkets` equals `3`
+- `lastPollAt` equals the most recent `fetched_at` value
+- `signalCount` equals `2`
+
+**Given** `filter = "signals_only"`
+**When** the tool is called
+**Then**
+- `markets` contains only the 2 markets that have active signals (detected within the last hour)
+- The third market (no recent signals) is excluded
+
+**Given** `limit = 2`
+**When** the tool is called with `filter = "all"`
+**Then** `markets` contains at most 2 items
+
+**Given** both `prediction_markets` and `prediction_signals` tables are empty
+**When** the tool is called
+**Then**
+- Returns `{ markets: [], totalRelevantMarkets: 0, lastPollAt: null, signalCount: 0 }`
+- No exception is thrown
+
+**Given** `registerPredictionTools(server)` is called in `server.ts`
+**When** the MCP server initialises
+**Then** total registered tool count is 21 (was 20 before this task)
+
+- `bun test src/__tests__/168-prediction-mcp-tool.test.ts` passes with 0 failures
+- `bun tsc --noEmit` reports 0 errors
+
+**TDD test location**: `src/__tests__/168-prediction-mcp-tool.test.ts`
+- Use `process.env.DB_PATH = ":memory:"`, call `initDatabase()` in `beforeEach`, seed fixture rows directly
+- Test: empty DB, all-markets filter, signals-only filter, limit parameter, active-signals aggregation from GROUP_CONCAT
+
+**Key implementation notes**:
+- SQL query: `SELECT pm.*, GROUP_CONCAT(ps.signal_type) as active_signal_types, GROUP_CONCAT(ps.mapped_stocks) as all_mapped_stocks, GROUP_CONCAT(ps.mapped_sectors) as all_mapped_sectors FROM prediction_markets pm LEFT JOIN prediction_signals ps ON ps.market_id = pm.id AND ps.detected_at >= datetime('now', '-1 hour') GROUP BY pm.id ORDER BY pm.fetched_at DESC LIMIT ?`
+- For `signals_only`: append `HAVING active_signal_types IS NOT NULL`
+- Parse `GROUP_CONCAT` results: split on `,`, flatten, deduplicate via `[...new Set()]`
+- `tags` is stored as JSON string in SQLite — parse with `JSON.parse(row.tags)`
+- Tool description string: `"Returns current Polymarket prediction markets relevant to Vietnamese stocks, with detected probability shift and volume spike signals."`
 
 ---
 
