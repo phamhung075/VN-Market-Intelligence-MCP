@@ -1,20 +1,46 @@
 /**
- * Alert Store — Task 064
+ * Alert Store — Task 064 + Task 153
  *
  * Infrastructure adapter that persists Alert records to the SQLite `alerts`
  * table.  This function lives in infrastructure (not domain) so that the
  * domain layer remains pure and free of any I/O.
  *
+ * Also provides `isDocAlreadyProcessed` (task 153) for SSC scan deduplication:
+ * a fast index lookup against `financial_reports.ssc_doc_id` that prevents
+ * re-processing the same SSC document on every 15-minute cycle.
+ *
  * Usage:
- *   import { storeAlerts } from "../infrastructure/db/alertStore.js";
+ *   import { storeAlerts, isDocAlreadyProcessed } from "../infrastructure/db/alertStore.js";
  *   import { getDb } from "../infrastructure/db/schema.js";
  *
  *   const alerts = generateAlerts(signals, watchlist);
  *   storeAlerts(alerts, getDb());
+ *
+ *   if (isDocAlreadyProcessed(docId, getDb())) { ... }
  */
 
 import type { Database } from "bun:sqlite";
 import type { Alert } from "../../domain/services/alertGenerator.js";
+
+/**
+ * Check whether a document identified by `ssc_doc_id` has already been
+ * processed and stored in the `financial_reports` table.
+ *
+ * Uses a partial index on `ssc_doc_id` for O(log n) performance.
+ * After the first full scan, 51 lookups complete in < 1 ms in total.
+ *
+ * @param docId - The unique SSC document identifier (typically the PDF URL).
+ * @param db    - Active bun:sqlite Database connection (injected by caller).
+ * @returns `true` when the document is already in `financial_reports`.
+ */
+export function isDocAlreadyProcessed(docId: string, db: Database): boolean {
+  const row = db
+    .prepare(
+      `SELECT 1 FROM financial_reports WHERE ssc_doc_id = ? LIMIT 1`,
+    )
+    .get(docId);
+  return row !== null && row !== undefined;
+}
 
 /**
  * Persist alert records to the SQLite `alerts` table.

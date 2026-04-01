@@ -733,6 +733,7 @@ CREATE TABLE IF NOT EXISTS financial_reports (
 
   -- Source metadata
   ssc_url                 TEXT,
+  ssc_doc_id              TEXT,            -- unique document identifier from SSC portal listing
   pdf_path                TEXT,
   published_at            TEXT,
   parsed_at               TEXT NOT NULL,
