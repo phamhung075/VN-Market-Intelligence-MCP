@@ -86,7 +86,7 @@
 > **Sprint 010-011 QA batch** — Tasks 131, 132, 133, 137 merged: 2026-04-01. Alert quality (35 tests), BCTC validator (26 tests), adaptive thresholds (25 tests), Step E fix (18 tests). tsc: 0 errors.
 > **Sprint 017 COMPLETE** — All 5 tasks merged: 152, 153, 154, 155, 156. Production Hardening: noise filter, SSC dedup, LanceDB silence, log rotation, off-hours interval. 16 new tests.
 > **Sprint 018 COMPLETE** — All 3 tasks merged: 157, 158, 159. Data audit engine, scheduler wiring, health tool enhancement. 2026-04-01.
-> **Sprint 019 ACTIVE** — started 2026-04-01. Task 160 complete (34 tests, 100% coverage).
+> **Sprint 019 ACTIVE** — started 2026-04-01. Task 160 merged 2026-04-01 (34 tests, 100% coverage). Task 161 unblocked.
 
 ---
 
@@ -94,7 +94,6 @@
 
 | # | Title | Branch | Notes |
 |---|-------|--------|-------|
-| 160 | Company name alias dictionary (`stockAliases.ts`) | `task/160-stock-aliases` | 34 tests, 100% coverage, tsc clean |
 | 161 | Wire aliases into cascade engine + pollNews Gate 3 | `task/161-alias-wiring` | 19 tests, AC-7/AC-8/AC-12 pass, tsc clean |
 
 ---
@@ -140,6 +139,26 @@
 
 ---
 
+### Sprint 020 — Prediction Market Intelligence
+
+> Sprint 020 PLANNING — started 2026-04-01. BA spec complete. Awaiting Architect.
+> Design refs: docs/REQ_020.md (BA — READY_FOR_ARCHITECT).
+> Dependency order: 163 (schema) → 164 (fetcher), 165 (mapper), 169 (config) in parallel → 166 (detector) → 167 (scheduler job) → 168 (MCP tool).
+
+| # | Title | Branch | Agent | Layer | Priority | Depends on | Status |
+|---|-------|--------|-------|-------|----------|------------|--------|
+| REQ-020 | BA: Requirement Spec for Sprint 020 | `task/doc-001-claude-md-update` | BA | docs/ | P0 | — | Done — docs/REQ_020.md |
+| TECH-020 | Architect: Technical Design for Sprint 020 | `task/doc-001-claude-md-update` | Architect | docs/ | P0 | REQ-020 | **Todo** |
+| 163 | SQLite schema: `prediction_markets` + `prediction_signals` tables | `task/163-prediction-schema` | Developer | infrastructure/db | P0 | TECH-020 | Backlog |
+| 164 | Polymarket REST fetcher (`polymarket.ts`) | `task/164-polymarket-fetcher` | Developer | infrastructure/fetchers | P0 | 163, TECH-020 | Backlog |
+| 165 | Prediction cascade mapper (`predictionCascadeMapper.ts`) | `task/165-prediction-cascade-mapper` | Developer | domain/services | P0 | TECH-020 | Backlog |
+| 166 | Prediction signal detector (`predictionSignalDetector.ts`) + SignalType extension | `task/166-prediction-signal-detector` | Developer | domain/services | P0 | 163, 165 | Backlog |
+| 167 | Prediction market scheduler job + cron wiring | `task/167-prediction-market-job` | Developer | scheduler + interface/scheduler | P0 | 164, 165, 166 | Backlog |
+| 168 | `get_prediction_markets` MCP tool + server.ts registration | `task/168-prediction-mcp-tool` | Developer | interface/mcp | P1 | 163, 167 | Backlog |
+| 169 | `mcp.config.json` predictionMarkets section + config.ts type extension | `task/169-prediction-config` | Developer | infrastructure/config | P0 | — | Backlog |
+
+---
+
 ### Sprint 019 — Know What You're Watching
 
 > Sprint 019 ACTIVE — started 2026-04-01. Task 160 Review.
@@ -150,7 +169,7 @@
 |---|-------|--------|-------|-------|----------|------------|--------|
 | REQ-019 | BA: Requirement Spec for Sprint 019 | `task/doc-001-claude-md-update` | BA | docs/ | P0 | — | Done — docs/REQ_019.md |
 | TECH-019 | Architect: Technical Design for Sprint 019 | `task/doc-001-claude-md-update` | Architect | docs/ | P0 | REQ-019 | Done — docs/TECH_019.md |
-| 160 | Company name alias dictionary (`stockAliases.ts`) | `task/160-stock-aliases` | Developer | domain/services | P0 | TECH-019 | **Review** |
+| 160 | Company name alias dictionary (`stockAliases.ts`) | `task/160-stock-aliases` | Developer | domain/services | P0 | TECH-019 | Done — merged 2026-04-01 |
 | 161 | Wire aliases into cascade engine + pollNews Gate 3 | `task/161-alias-wiring` | Developer | domain/services + application/usecases | P0 | 160 ✓ | **Review** |
 | 162 | Market-wide pattern cascade to all watchlist stocks | `task/162-market-wide-broadcast` | Developer | domain/services + application/usecases + mcp.config.json | P1 | 160 ✓ | **Review** |
 
