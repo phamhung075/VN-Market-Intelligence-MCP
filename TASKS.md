@@ -95,6 +95,7 @@
 | # | Title | Branch | Notes |
 |---|-------|--------|-------|
 | 160 | Company name alias dictionary (`stockAliases.ts`) | `task/160-stock-aliases` | 34 tests, 100% coverage, tsc clean |
+| 161 | Wire aliases into cascade engine + pollNews Gate 3 | `task/161-alias-wiring` | 19 tests, AC-7/AC-8/AC-12 pass, tsc clean |
 
 ---
 
@@ -150,7 +151,7 @@
 | REQ-019 | BA: Requirement Spec for Sprint 019 | `task/doc-001-claude-md-update` | BA | docs/ | P0 | — | Done — docs/REQ_019.md |
 | TECH-019 | Architect: Technical Design for Sprint 019 | `task/doc-001-claude-md-update` | Architect | docs/ | P0 | REQ-019 | Done — docs/TECH_019.md |
 | 160 | Company name alias dictionary (`stockAliases.ts`) | `task/160-stock-aliases` | Developer | domain/services | P0 | TECH-019 | **Review** |
-| 161 | Wire aliases into cascade engine + pollNews Gate 3 | `task/161-alias-wiring` | Developer | domain/services + application/usecases | P0 | 160 | Backlog |
+| 161 | Wire aliases into cascade engine + pollNews Gate 3 | `task/161-alias-wiring` | Developer | domain/services + application/usecases | P0 | 160 ✓ | **Review** |
 | 162 | Market-wide pattern cascade to all watchlist stocks | `task/162-market-wide-broadcast` | Developer | domain/services + application/usecases + mcp.config.json | P1 | 160 | Backlog |
 
 ---
@@ -1091,6 +1092,19 @@
 - CREATE: `src/scheduler/intelligenceCycleJob.ts`
 - MODIFY: `src/interface/scheduler/index.ts` (register 15-min cycle; decommission standalone `newsPollerJob` cron entry)
 - MODIFY: `src/scheduler/jobs.ts` (add cycle cron definition)
+
+---
+
+---
+
+## Sprint 020 — Prediction Market Intelligence
+*(PLANNING — 2026-04-01. Blocked on human answers to BLOCKER-020-A through D.)*
+*(See SPRINT_GOAL.md sprint_id: 020 for full vision, scope, and blocker details.)*
+
+| # | Title | Agent | Layer | Priority | Status |
+|---|-------|-------|-------|----------|--------|
+| REQ-020 | BA: Requirement Spec for Sprint 020 — Polymarket intelligence feed | BA | docs/ | P0 | BLOCKED — awaiting BLOCKER-020-A through D |
+| TECH-020 | Architect: Technical Design for Sprint 020 | Architect | docs/ | P0 | BLOCKED — awaiting REQ-020 |
 
 ---
 

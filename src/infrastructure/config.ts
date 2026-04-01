@@ -90,6 +90,8 @@ export interface AlertConfig {
   telegramOnSeverity: string[];
   telegramOnNewDocument: boolean;
   telegramMinCascadeConfidence: number;
+  /** Minimum impactScore for market-wide cascade broadcast (Task 162). Default: 6. */
+  marketWideCascadeMinImpact?: number;
 }
 
 export interface SscFetcherConfig {
