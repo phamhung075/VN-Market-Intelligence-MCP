@@ -317,7 +317,7 @@
 
 | # | Title | Branch | Agent | Layer | Priority | Depends on | Status |
 |---|-------|--------|-------|-------|----------|------------|--------|
-| 152 | News-mention alert noise filter | `task/152-news-alert-filter` | BA → Developer | domain/services + mcp.config.json | P0 | — | Backlog |
+| 152 | News-mention alert noise filter | `task/152-news-alert-filter` | BA → Developer | domain/services + mcp.config.json | P0 | — | Review |
 | 153 | SSC scan deduplication (skip already-processed docs) | `task/153-ssc-scan-dedup` | BA → Developer | infrastructure/db + application/usecases | P0 | — | Backlog |
 | 154 | Silence LanceDB TRACE logging | `task/154-lancedb-log-silence` | BA → Developer | infrastructure (index.ts + logger) | P1 | — | Backlog |
 | 155 | Log file rotation (size-based, 3 rolling files) | `task/155-log-rotation` | BA → Developer | infrastructure/logger | P1 | — | Backlog |
