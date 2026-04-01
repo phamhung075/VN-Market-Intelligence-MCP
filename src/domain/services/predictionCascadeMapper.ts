@@ -1,17 +1,32 @@
 /**
  * Prediction Cascade Mapper — Task 165
  *
- * Pure domain function that maps a prediction market question string to
- * affected Vietnamese stock sectors (DomainType) and individual stock codes.
+ * Maps a prediction question (text + tags) to affected Vietnamese sectors
+ * and stocks via 14 keyword rules (R01–R14).
  *
- * Design notes:
- *  - Synchronous, no I/O, no side effects.
- *  - ZERO imports from infrastructure/ or application/.
- *  - Keyword matching: AND across groups, OR within each group (case-insensitive).
- *  - All matching rules contribute sectors/stocks (union); first match wins for direction.
- *  - Rules with stocks=[] automatically include all watchlistCodes.
- *  - Custom rules (injected at call-site) are evaluated BEFORE built-in rules,
- *    so they can override direction for a given question.
+ * Rules cover:
+ *   R01 — Fed rate cut
+ *   R02 — Fed rate hike
+ *   R03 — Oil price rise
+ *   R04 — Oil price fall
+ *   R05 — Gold price rise
+ *   R06 — US-China trade tensions (AND-groups: tariff context + China context)
+ *   R07 — Vietnam GDP / economic growth
+ *   R08 — ASEAN / regional integration
+ *   R09 — War / armed conflict
+ *   R10 — Sanctions
+ *   R11 — Inflation
+ *   R12 — Currency / USD strength
+ *   R13 — Tech / semiconductor boom
+ *   R14 — China economy slowdown
+ *
+ * Keyword matching semantics:
+ *   - keywordGroups: string[][] — AND across groups, OR within each group.
+ *     Every group must have at least one keyword present in the combined
+ *     text (questionText + tags joined).
+ *   - Matching is case-insensitive.
+ *
+ * Pure domain service — no I/O, no side effects.
  *
  * Layer: domain/services
  */
@@ -19,312 +34,376 @@
 import type { DomainType } from "../../../bctc-schema.js";
 
 // ═══════════════════════════════════════════════════════════════════════════
-// Public types
+// Public interfaces
 // ═══════════════════════════════════════════════════════════════════════════
 
 /**
- * A single keyword rule.
+ * A single keyword rule mapping a macro event to affected VN sectors/stocks.
  *
- * `keywordGroups` is an array of groups — AND across groups, OR within each group.
+ * keywordGroups semantics:
+ *   AND across groups — every group must match.
+ *   OR within a group — any keyword in the group is sufficient.
  *
- * Examples:
- *   [["fed"], ["rate cut", "cut rates"]]
- *     → question must contain "fed" AND ("rate cut" OR "cut rates")
- *
- *   [["oil", "crude", "brent", "opec"]]
- *     → question must contain at least one of "oil", "crude", "brent", "opec"
+ * @example
+ * // R06: US-China trade — requires BOTH a tariff word AND a China word
+ * {
+ *   id: "R06",
+ *   keywordGroups: [
+ *     ["tariff", "trade war", "trade tension"],   // group 1 — tariff context
+ *     ["china", "beijing", "prc", "chinese"],     // group 2 — China context
+ *   ],
+ *   ...
+ * }
  */
 export interface KeywordRule {
+  /** Unique rule identifier, e.g. "R01" */
+  id: string;
+  /**
+   * Two-dimensional keyword matrix.
+   * Outer array: AND-groups (all must match).
+   * Inner array: OR-alternatives within a group (any one suffices).
+   */
   keywordGroups: string[][];
-  domains: DomainType[];
-  /** Specific stock codes. Empty array means "use entire watchlist". */
-  stocks: string[];
-  direction: "bullish" | "bearish" | "neutral";
-  reasoning: string;
-}
-
-export interface CascadeMapping {
-  /** All affected sectors (union across matched rules, deduplicated). */
+  /** VN sectors affected by this macro event */
   sectors: DomainType[];
-  /** All affected stock codes (union across matched rules, deduplicated). */
+  /** Representative VN stock codes affected */
   stocks: string[];
+  /** Net directional bias for these sectors/stocks */
   direction: "bullish" | "bearish" | "neutral";
-  /** True when at least one rule matched. */
-  matched: boolean;
-  /** Concatenated reasoning from all matching rules. */
-  reasoning: string;
-  /** Confidence score in [0, 1]: proportion of matched rules that agree on direction. */
-  confidence: number;
+}
+
+/**
+ * Result of a single rule firing for the given input.
+ */
+export interface CascadeMapping {
+  /** Which rule produced this mapping */
+  ruleId: string;
+  /** Affected VN sectors */
+  sectors: DomainType[];
+  /** Affected VN stock codes */
+  stocks: string[];
+  /** Directional bias for the sectors/stocks */
+  direction: "bullish" | "bearish" | "neutral";
+  /** The specific keywords that triggered the match (one per AND-group) */
+  matchedKeywords: string[];
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// Built-in keyword rules (R01–R14)
+// Keyword rules R01–R14
 // ═══════════════════════════════════════════════════════════════════════════
 
-const BUILT_IN_RULES: KeywordRule[] = [
-  // R01 — Fed rate CUT → banking bullish
+/**
+ * The 14 macro keyword rules.
+ *
+ * Each keywordGroups entry is an AND-group of OR-alternatives.
+ * A rule fires when EVERY group has at least one matching keyword in the text.
+ */
+const KEYWORD_RULES: KeywordRule[] = [
+  // ── R01: Fed rate cut ──────────────────────────────────────────────────
   {
-    keywordGroups: [["fed", "federal reserve"], ["rate cut", "cut rates", "interest rate cut", "rate reduction"]],
-    domains: ["banking"],
-    stocks: ["VCB", "TCB", "BID", "CTG"],
+    id: "R01",
+    keywordGroups: [
+      [
+        "rate cut", "rate cuts", "lãi suất giảm", "cắt giảm lãi suất",
+        "interest rate cut", "fed cuts", "dovish", "lower rates",
+        "easing", "lowers rates", "cuts interest", "cut interest",
+        "cuts rates", "cut rates", "reducing rates", "reduce rates",
+      ],
+    ],
+    sectors: ["real_estate", "banking", "securities", "utilities"],
+    stocks: ["VIC", "VHM", "NVL", "VCB", "TCB", "SSI", "REE"],
     direction: "bullish",
-    reasoning: "Fed rate cut lowers global borrowing costs → positive for VN banking sector (lower funding costs, credit growth)",
   },
 
-  // R02 — Fed rate HIKE → banking bearish
+  // ── R02: Fed rate hike ─────────────────────────────────────────────────
   {
-    keywordGroups: [["fed", "federal reserve"], ["rate hike", "rate rise", "tighten", "raise rates", "increase rates"]],
-    domains: ["banking"],
-    stocks: ["VCB", "TCB", "BID", "CTG"],
+    id: "R02",
+    keywordGroups: [
+      [
+        "rate hike", "rate hikes", "lãi suất tăng", "tăng lãi suất",
+        "interest rate hike", "interest rate increase", "fed hike",
+        "fed raises", "hawkish", "tightening", "hikes interest",
+        "hike interest", "hikes rates", "hike rates", "raises rates",
+        "raise rates", "raising rates", "increases rates",
+      ],
+    ],
+    sectors: ["real_estate", "banking", "securities"],
+    stocks: ["VIC", "VHM", "NVL", "KDH", "VCB", "SSI"],
     direction: "bearish",
-    reasoning: "Fed rate hike tightens global liquidity → capital outflows from VN, pressure on VND, NIM squeeze for banks",
   },
 
-  // R03 — China tariffs / trade barriers (explicit China mention) → steel/manufacturing bearish
+  // ── R03: Oil price rise ────────────────────────────────────────────────
   {
-    keywordGroups: [["china"], ["tariff", "trade war", "trade barrier"]],
-    domains: ["steel"],
-    stocks: ["HPG", "GAS"],
-    direction: "bearish",
-    reasoning: "China trade friction reduces regional supply chain activity → steel demand drop hurts HPG",
-  },
-
-  // R04 — US-China trade war (broader phrasing) → steel bearish
-  {
-    keywordGroups: [["us-china", "sino-american", "america china"]],
-    domains: ["steel"],
-    stocks: ["HPG", "GAS"],
-    direction: "bearish",
-    reasoning: "US-China trade tensions reduce regional manufacturing orders, hurting VN steel exports",
-  },
-
-  // R05 — Oil / crude / brent / OPEC → oil_gas neutral (price-direction-dependent)
-  {
-    keywordGroups: [["oil", "crude", "brent", "opec", "petroleum"]],
-    domains: ["oil_gas"],
-    stocks: ["GAS", "PLX"],
-    direction: "neutral",
-    reasoning: "Oil market news affects GAS/PLX directly; direction depends on whether price is rising or falling",
-  },
-
-  // R06 — Vietnam GDP / economy → all watchlist bullish
-  {
-    keywordGroups: [["vietnam"], ["gdp", "growth", "economy", "economic"]],
-    domains: ["banking", "real_estate", "tech", "retail"],
-    stocks: [],   // empty → inject watchlist
+    id: "R03",
+    keywordGroups: [
+      [
+        "oil price rise", "oil price surge", "oil price up", "oil prices rise",
+        "oil prices surge", "oil prices up", "crude oil up", "crude oil rise",
+        "crude surging", "crude prices surge", "crude prices surging",
+        "oil rise", "oil surge", "oil surging", "oil prices surging",
+        "giá dầu tăng", "dầu thô tăng", "opec cut", "opec cuts",
+      ],
+    ],
+    sectors: ["oil_gas", "aviation"],
+    stocks: ["GAS", "PLX", "PVD", "PVS", "BSR", "OIL"],
     direction: "bullish",
-    reasoning: "Strong Vietnam GDP growth lifts broad market sentiment, benefits entire watchlist",
   },
 
-  // R07 — ASEAN / Southeast Asia → all watchlist neutral
+  // ── R04: Oil price fall ────────────────────────────────────────────────
   {
-    keywordGroups: [["asean", "southeast asia", "sea region"]],
-    domains: ["banking", "real_estate", "logistics"],
-    stocks: [],
-    direction: "neutral",
-    reasoning: "ASEAN-level events have broad but modest impact on VN equities; direction depends on context",
-  },
-
-  // R08 — War / conflict / sanctions / military → all watchlist bearish
-  {
-    keywordGroups: [["war", "conflict", "sanctions", "military", "invasion", "geopolit"]],
-    domains: ["banking", "oil_gas", "steel", "aviation"],
-    stocks: [],
+    id: "R04",
+    keywordGroups: [
+      [
+        "oil price fall", "oil price drop", "oil price down", "oil prices fall",
+        "oil prices drop", "oil price decline", "crude oil down", "crude oil fall",
+        "crude falls", "crude drops", "oil fall", "oil drop",
+        "giá dầu giảm", "dầu thô giảm",
+      ],
+    ],
+    sectors: ["oil_gas", "aviation"],
+    stocks: ["GAS", "PLX", "PVD", "HVN", "VJC"],
     direction: "bearish",
-    reasoning: "Geopolitical conflict and sanctions elevate global risk-off sentiment, hurting VN equities broadly",
   },
 
-  // R09 — China economy slowdown → manufacturing/steel/tech bearish
+  // ── R05: Gold price rise ───────────────────────────────────────────────
   {
-    keywordGroups: [["china"], ["gdp", "economy", "slowdown", "recession", "slow growth"]],
-    domains: ["steel", "tech"],
-    stocks: ["HPG", "FPT"],
-    direction: "bearish",
-    reasoning: "China slowdown reduces demand for VN exports (steel, electronics assembly components)",
-  },
-
-  // R10 — Dollar / DXY strength → banking+retail bearish
-  {
-    keywordGroups: [["dollar", "dxy", "usd strength", "strong usd", "us dollar"]],
-    domains: ["banking", "retail"],
-    stocks: ["VCB", "VNM"],
-    direction: "bearish",
-    reasoning: "USD strength pressures VND, increases import costs for retail and squeezes bank FX margins",
-  },
-
-  // R11 — Inflation / CPI → banking+retail bearish
-  {
-    keywordGroups: [["inflation", "cpi", "consumer price"]],
-    domains: ["banking", "retail"],
-    stocks: ["VCB", "MWG"],
-    direction: "bearish",
-    reasoning: "High inflation erodes consumer purchasing power (retail) and prompts rate hikes (banking pressure)",
-  },
-
-  // R12 — Tariff / import duty / trade barrier (generic, not China-specific) → manufacturing bearish
-  {
-    keywordGroups: [["tariff", "import duty", "trade barrier", "anti-dumping"]],
-    domains: ["steel", "agriculture"],
-    stocks: ["HPG", "VNM"],
-    direction: "bearish",
-    reasoning: "Trade barriers reduce export competitiveness for VN steel and agriculture",
-  },
-
-  // R13 — Taiwan / Taiwan Strait → tech+manufacturing bearish
-  {
-    keywordGroups: [["taiwan", "taiwan strait"]],
-    domains: ["tech", "steel"],
-    stocks: ["FPT", "HPG"],
-    direction: "bearish",
-    reasoning: "Taiwan Strait tensions disrupt semiconductor supply chain → VN tech/manufacturing sector disruption",
-  },
-
-  // R14 — Federal Reserve (standalone mention, no specific direction) → banking neutral
-  {
-    keywordGroups: [["federal reserve"]],
-    domains: ["banking"],
-    stocks: ["VCB", "TCB", "BID", "CTG"],
-    direction: "neutral",
-    reasoning: "Federal Reserve policy changes broadly affect VN banking via global liquidity channels",
-  },
-
-  // R15 — Gold → banking+retail (safe haven demand, inflation hedge)
-  {
-    keywordGroups: [["gold", "gold price", "precious metal"]],
-    domains: ["gold_mining", "banking", "retail"],
-    stocks: ["PNJ", "VCB"],
+    id: "R05",
+    keywordGroups: [
+      [
+        "gold price", "gold prices", "gold rise", "gold surge", "gold rally",
+        "gold up", "gold hit", "gold record", "giá vàng", "vàng tăng",
+        "vàng lên", "gold", "vàng",
+      ],
+    ],
+    sectors: ["gold_mining", "banking", "insurance"],
+    stocks: ["PNJ", "SJC", "BVH", "PVI"],
     direction: "bullish",
-    reasoning: "Rising gold prices benefit PNJ (jewellery/retail gold) and signal global risk-off (mixed for banks)",
   },
 
-  // R16 — Interest rates (generic, no Fed qualifier)
+  // ── R06: US-China trade tensions (AND: tariff context + China context) ─
   {
-    keywordGroups: [["interest rate", "central bank rate", "policy rate"]],
-    domains: ["banking", "real_estate"],
-    stocks: ["VCB", "TCB"],
-    direction: "neutral",
-    reasoning: "Generic interest rate changes affect banking NIM and real estate financing costs",
-  },
-
-  // R17 — US recession → broad market bearish
-  {
-    keywordGroups: [["us recession", "american recession", "recession in the us", "recession in us"]],
-    domains: ["tech", "banking", "logistics"],
-    stocks: ["FPT", "VCB", "GMD"],
+    id: "R06",
+    keywordGroups: [
+      [
+        "tariff", "tariffs", "trade war", "trade tension", "trade tensions",
+        "trade dispute", "trade conflict", "trade restriction", "trade ban",
+        "import duty", "export control", "decoupling",
+      ],
+      [
+        "china", "chinese", "beijing", "prc", "sino", "trung quốc",
+        "bắc kinh", "chiến tranh thương mại",
+      ],
+    ],
+    sectors: ["tech", "steel", "agriculture", "retail"],
+    stocks: ["FPT", "HPG", "HSG", "VHC", "ANV", "MWG"],
     direction: "bearish",
-    reasoning: "US recession shrinks export demand (tech/manufacturing) and tightens global credit",
   },
 
-  // R18 — Seafood / shrimp / fisheries export
+  // ── R07: Vietnam GDP / economic growth ────────────────────────────────
   {
-    keywordGroups: [["seafood", "shrimp", "fisheries", "aquaculture"]],
-    domains: ["agriculture"],
-    stocks: ["VHC", "ANV", "IDI"],
-    direction: "neutral",
-    reasoning: "Seafood trade news directly affects VN seafood exporters (VHC, ANV)",
-  },
-
-  // R19 — Real estate / property market
-  {
-    keywordGroups: [["real estate", "property market", "housing market", "mortgage"]],
-    domains: ["real_estate", "banking"],
-    stocks: ["VIC", "NVL", "PDR"],
-    direction: "neutral",
-    reasoning: "Real estate market conditions affect VIC/NVL/PDR valuations and bank mortgage books",
-  },
-
-  // R20 — Energy transition / EV / electric vehicle
-  {
-    keywordGroups: [["electric vehicle", "ev sales", "energy transition", "renewable energy"]],
-    domains: ["automotive", "utilities"],
-    stocks: ["VEA", "REE", "POW"],
+    id: "R07",
+    keywordGroups: [
+      [
+        "vietnam gdp", "vietnam economy", "gdp vietnam", "vn gdp",
+        "vietnam growth", "tăng trưởng gdp", "tăng trưởng kinh tế",
+        "kinh tế việt nam", "gdp việt nam", "việt nam tăng trưởng",
+      ],
+    ],
+    sectors: ["securities", "banking", "real_estate", "retail"],
+    stocks: ["SSI", "VND", "HCM", "VCB", "BID", "VIC", "MWG"],
     direction: "bullish",
-    reasoning: "EV and renewable energy growth benefits VEA (automotive JV) and utilities (REE/POW)",
+  },
+
+  // ── R08: ASEAN / regional integration ─────────────────────────────────
+  {
+    id: "R08",
+    keywordGroups: [
+      [
+        "asean", "rcep", "afta", "regional trade", "southeast asia trade",
+        "regional integration", "free trade agreement", "fta", "hiệp định thương mại",
+        "cộng đồng kinh tế asean", "aec",
+      ],
+    ],
+    sectors: ["retail", "logistics", "agriculture", "tech"],
+    stocks: ["MWG", "FRT", "DGW", "GMD", "STG", "VHC", "FPT"],
+    direction: "bullish",
+  },
+
+  // ── R09: War / armed conflict ──────────────────────────────────────────
+  {
+    id: "R09",
+    keywordGroups: [
+      [
+        "war", "armed conflict", "military conflict", "warfare", "combat",
+        "invasion", "attack", "missile", "airstrike", "bombing",
+        "chiến tranh", "xung đột vũ trang", "tấn công quân sự",
+        "xung đột", "bùng nổ chiến sự",
+      ],
+    ],
+    sectors: ["aviation", "oil_gas", "insurance", "securities"],
+    stocks: ["HVN", "VJC", "GAS", "PLX", "BVH", "SSI"],
+    direction: "bearish",
+  },
+
+  // ── R10: Sanctions ─────────────────────────────────────────────────────
+  {
+    id: "R10",
+    keywordGroups: [
+      [
+        "sanction", "sanctions", "sanctioned", "economic sanction",
+        "financial sanction", "trade sanction", "export ban",
+        "cấm vận", "trừng phạt kinh tế", "trừng phạt tài chính",
+      ],
+    ],
+    sectors: ["banking", "steel", "oil_gas"],
+    stocks: ["VCB", "BID", "HPG", "HSG", "GAS", "PVS"],
+    direction: "bearish",
+  },
+
+  // ── R11: Inflation ─────────────────────────────────────────────────────
+  {
+    id: "R11",
+    keywordGroups: [
+      [
+        "inflation", "cpi", "consumer price", "price pressure",
+        "inflationary", "price surge", "cost of living",
+        "lạm phát", "chỉ số giá tiêu dùng", "giá cả tăng",
+        "áp lực lạm phát",
+      ],
+    ],
+    sectors: ["banking", "real_estate", "retail", "utilities"],
+    stocks: ["VCB", "BID", "VIC", "MWG", "REE"],
+    direction: "neutral",
+  },
+
+  // ── R12: Currency / USD strength ──────────────────────────────────────
+  {
+    id: "R12",
+    keywordGroups: [
+      [
+        "usd", "dollar", "dxy", "dollar strength", "dollar rally",
+        "usd/vnd", "usd vnd", "vnd weakens", "dong depreciates",
+        "đồng đô la", "tỷ giá usd", "đô la tăng", "usd mạnh",
+      ],
+    ],
+    sectors: ["aviation", "steel", "oil_gas", "agriculture"],
+    stocks: ["HVN", "VJC", "HPG", "GAS", "VHC"],
+    direction: "bearish",
+  },
+
+  // ── R13: Tech / semiconductor boom ────────────────────────────────────
+  {
+    id: "R13",
+    keywordGroups: [
+      [
+        "semiconductor", "chip", "ai chip", "silicon", "wafer",
+        "nvidia", "tsmc", "tech boom", "tech rally", "technology boom",
+        "ai boom", "artificial intelligence", "data center",
+        "bán dẫn", "chip bán dẫn", "công nghệ", "trí tuệ nhân tạo",
+      ],
+    ],
+    sectors: ["tech", "utilities", "real_estate"],
+    stocks: ["FPT", "CMG", "ELC", "REE"],
+    direction: "bullish",
+  },
+
+  // ── R14: China economy slowdown ───────────────────────────────────────
+  {
+    id: "R14",
+    keywordGroups: [
+      [
+        "china slowdown", "china gdp miss", "china economy slows",
+        "china economy slowdown", "chinese economy slowdown",
+        "chinese economy", "china growth slows", "china weakness",
+        "china deflation", "china contraction", "china misses",
+        "china gdp misses", "china economy", "chinese economy slows",
+        "kinh tế trung quốc", "trung quốc tăng trưởng chậm",
+        "suy thoái trung quốc", "trung quốc chậm lại",
+      ],
+    ],
+    sectors: ["steel", "agriculture", "oil_gas", "aviation"],
+    stocks: ["HPG", "HSG", "NKG", "VHC", "ANV", "GAS", "HVN"],
+    direction: "bearish",
   },
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════
-// Matching helpers
+// Core matching logic
 // ═══════════════════════════════════════════════════════════════════════════
 
 /**
- * Returns true if ALL keyword groups have at least one match in the question.
- * Matching is case-insensitive.
- */
-function ruleMatches(q: string, rule: KeywordRule): boolean {
-  return rule.keywordGroups.every((group) =>
-    group.some((kw) => q.includes(kw.toLowerCase())),
-  );
-}
-
-function dedup<T>(arr: T[]): T[] {
-  return [...new Set(arr)];
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-// Public entry point
-// ═══════════════════════════════════════════════════════════════════════════
-
-/**
- * Maps a prediction market question to affected VN sectors and stocks.
+ * Check if a rule fires for the given normalized text.
  *
- * @param question       - The market question string (any case).
- * @param watchlistCodes - All stock codes currently in the user's watchlist.
- *                         Used when a rule has an empty stocks[] array.
- * @param customRules    - Optional additional rules injected at runtime.
- *                         Evaluated BEFORE built-in rules (custom rules win direction).
- * @returns CascadeMapping with matched=true when at least one rule fired.
+ * AND-across-groups: every group must have at least one keyword matched.
+ * OR-within-group: any keyword in the group is sufficient.
+ *
+ * @returns Array of matched keywords (one representative per AND-group),
+ *          or null if the rule does not fire.
  */
-export function mapPredictionToCascade(
-  question: string,
-  watchlistCodes: string[],
-  customRules?: KeywordRule[],
-): CascadeMapping {
-  const q = question.toLowerCase();
+function matchRule(rule: KeywordRule, normalizedText: string): string[] | null {
+  const matchedPerGroup: string[] = [];
 
-  const allRules: KeywordRule[] = [
-    ...(customRules ?? []),
-    ...BUILT_IN_RULES,
-  ];
-
-  const matchedRules = allRules.filter((rule) => ruleMatches(q, rule));
-
-  if (matchedRules.length === 0) {
-    return {
-      sectors: [],
-      stocks: [],
-      direction: "neutral",
-      matched: false,
-      reasoning: "",
-      confidence: 0,
-    };
+  for (const group of rule.keywordGroups) {
+    let groupMatch: string | null = null;
+    for (const keyword of group) {
+      if (normalizedText.includes(keyword.toLowerCase())) {
+        groupMatch = keyword;
+        break; // OR — first match in the group wins
+      }
+    }
+    if (groupMatch === null) {
+      // This AND-group has no match — rule does not fire
+      return null;
+    }
+    matchedPerGroup.push(groupMatch);
   }
 
-  // Union of all sectors
-  const sectors = dedup(matchedRules.flatMap((r) => r.domains)) as DomainType[];
+  return matchedPerGroup;
+}
 
-  // Union of all stocks; rules with empty stocks[] inject the full watchlist
-  const stocks = dedup(
-    matchedRules.flatMap((r) => (r.stocks.length > 0 ? r.stocks : watchlistCodes)),
-  );
+// ═══════════════════════════════════════════════════════════════════════════
+// Public API
+// ═══════════════════════════════════════════════════════════════════════════
 
-  // First matching rule determines the primary direction (matchedRules.length >= 1 guaranteed above)
-  const firstRule = matchedRules[0]!;
-  const direction = firstRule.direction;
+/**
+ * Map a prediction question to affected Vietnamese sectors and stocks.
+ *
+ * Evaluates all 14 keyword rules against the combined input text
+ * (questionText + space-joined tags).  Returns one CascadeMapping per
+ * rule that fires.  No rule fires twice — each ruleId appears at most once.
+ *
+ * Pure function — synchronous, no I/O, no side effects.
+ *
+ * @param questionText - Free-form prediction question or news headline
+ * @param tags         - Optional structured tags (appended to search text)
+ * @returns            Array of CascadeMapping, one per fired rule
+ */
+export function mapPredictionToVn(
+  questionText: string,
+  tags: string[],
+): CascadeMapping[] {
+  // Combine all input into a single normalised string for matching
+  const combined = [questionText, ...tags].join(" ").toLowerCase();
 
-  // Concatenate all reasoning strings
-  const reasoning = matchedRules.map((r) => r.reasoning).join("; ");
+  // Early exit — nothing to match
+  if (combined.trim().length === 0) {
+    return [];
+  }
 
-  // Confidence: proportion of matched rules that agree with the primary direction
-  const agreeing = matchedRules.filter((r) => r.direction === direction).length;
-  const confidence = parseFloat((agreeing / matchedRules.length).toFixed(4));
+  const results: CascadeMapping[] = [];
 
-  return {
-    sectors,
-    stocks,
-    direction,
-    matched: true,
-    reasoning,
-    confidence,
-  };
+  for (const rule of KEYWORD_RULES) {
+    const matchedKeywords = matchRule(rule, combined);
+    if (matchedKeywords === null) continue; // rule did not fire
+
+    results.push({
+      ruleId: rule.id,
+      sectors: rule.sectors,
+      stocks: rule.stocks,
+      direction: rule.direction,
+      matchedKeywords,
+    });
+  }
+
+  return results;
 }
