@@ -35,92 +35,86 @@ describe("Task 169 — predictionMarkets config section", () => {
     expect(cfg.predictionMarkets.enabled).toBe(true);
   });
 
-  it("predictionMarkets.sources includes polymarket by default", async () => {
+  it("predictionMarkets.pollingIntervalMinutes defaults to 30", async () => {
     const { loadMcpConfig } = await import("../infrastructure/config.js");
     const cfg = loadMcpConfig();
-    expect(cfg.predictionMarkets.sources).toContain("polymarket");
+    expect(cfg.predictionMarkets.pollingIntervalMinutes).toBe(30);
   });
 
-  // ── Polymarket sub-config ─────────────────────────────────────────────────
+  // ── API URLs ──────────────────────────────────────────────────────────────
 
-  it("predictionMarkets.polymarket.clobApiUrl has correct default", async () => {
+  it("predictionMarkets.clobApiUrl has correct default", async () => {
     const { loadMcpConfig } = await import("../infrastructure/config.js");
     const cfg = loadMcpConfig();
-    expect(cfg.predictionMarkets.polymarket.clobApiUrl).toBe("https://clob.polymarket.com");
+    expect(cfg.predictionMarkets.clobApiUrl).toBe("https://clob-api.polymarket.com");
   });
 
-  it("predictionMarkets.polymarket.gammaApiUrl has correct default", async () => {
+  it("predictionMarkets.gammaApiUrl has correct default", async () => {
     const { loadMcpConfig } = await import("../infrastructure/config.js");
     const cfg = loadMcpConfig();
-    expect(cfg.predictionMarkets.polymarket.gammaApiUrl).toBe("https://gamma-api.polymarket.com");
-  });
-
-  it("predictionMarkets.polymarket.timeout defaults to 15000", async () => {
-    const { loadMcpConfig } = await import("../infrastructure/config.js");
-    const cfg = loadMcpConfig();
-    expect(cfg.predictionMarkets.polymarket.timeout).toBe(15000);
-  });
-
-  it("predictionMarkets.polymarket.maxMarketsPerFetch defaults to 50", async () => {
-    const { loadMcpConfig } = await import("../infrastructure/config.js");
-    const cfg = loadMcpConfig();
-    expect(cfg.predictionMarkets.polymarket.maxMarketsPerFetch).toBe(50);
+    expect(cfg.predictionMarkets.gammaApiUrl).toBe("https://gamma-api.polymarket.com");
   });
 
   // ── Signal thresholds ─────────────────────────────────────────────────────
 
-  it("predictionMarkets.signals.probabilityShiftPct defaults to 10", async () => {
+  it("predictionMarkets.probabilityShiftPct defaults to 5", async () => {
     const { loadMcpConfig } = await import("../infrastructure/config.js");
     const cfg = loadMcpConfig();
-    expect(cfg.predictionMarkets.signals.probabilityShiftPct).toBe(10);
+    expect(cfg.predictionMarkets.probabilityShiftPct).toBe(5);
   });
 
-  it("predictionMarkets.signals.highConvictionThreshold defaults to 0.85", async () => {
+  it("predictionMarkets.volumeSpikeThresholdUsd defaults to 50000", async () => {
     const { loadMcpConfig } = await import("../infrastructure/config.js");
     const cfg = loadMcpConfig();
-    expect(cfg.predictionMarkets.signals.highConvictionThreshold).toBe(0.85);
+    expect(cfg.predictionMarkets.volumeSpikeThresholdUsd).toBe(50000);
   });
 
-  it("predictionMarkets.signals.volumeSpikeMultiplier defaults to 3", async () => {
+  it("predictionMarkets.minUniqueWallets defaults to 10", async () => {
     const { loadMcpConfig } = await import("../infrastructure/config.js");
     const cfg = loadMcpConfig();
-    expect(cfg.predictionMarkets.signals.volumeSpikeMultiplier).toBe(3);
+    expect(cfg.predictionMarkets.minUniqueWallets).toBe(10);
   });
 
-  it("predictionMarkets.signals.minLiquidityUsd defaults to 10000", async () => {
+  it("predictionMarkets.whaleTradeThresholdUsd defaults to 10000", async () => {
     const { loadMcpConfig } = await import("../infrastructure/config.js");
     const cfg = loadMcpConfig();
-    expect(cfg.predictionMarkets.signals.minLiquidityUsd).toBe(10000);
+    expect(cfg.predictionMarkets.whaleTradeThresholdUsd).toBe(10000);
+  });
+
+  it("predictionMarkets.maxMarketsPerPoll defaults to 50", async () => {
+    const { loadMcpConfig } = await import("../infrastructure/config.js");
+    const cfg = loadMcpConfig();
+    expect(cfg.predictionMarkets.maxMarketsPerPoll).toBe(50);
+  });
+
+  it("predictionMarkets.rateLimitDelayMs defaults to 500", async () => {
+    const { loadMcpConfig } = await import("../infrastructure/config.js");
+    const cfg = loadMcpConfig();
+    expect(cfg.predictionMarkets.rateLimitDelayMs).toBe(500);
   });
 
   // ── Keywords ──────────────────────────────────────────────────────────────
 
-  it("predictionMarkets.keywords.vietnam contains expected terms", async () => {
+  it("predictionMarkets.relevantKeywords is a non-empty string array", async () => {
     const { loadMcpConfig } = await import("../infrastructure/config.js");
     const cfg = loadMcpConfig();
-    expect(cfg.predictionMarkets.keywords.vietnam).toContain("vietnam");
-    expect(cfg.predictionMarkets.keywords.vietnam).toContain("vietnamese");
+    expect(Array.isArray(cfg.predictionMarkets.relevantKeywords)).toBe(true);
+    expect(cfg.predictionMarkets.relevantKeywords.length).toBeGreaterThan(0);
   });
 
-  it("predictionMarkets.keywords.trade contains tariff-related terms", async () => {
+  it("predictionMarkets.relevantKeywords contains fed, oil, and vietnam", async () => {
     const { loadMcpConfig } = await import("../infrastructure/config.js");
     const cfg = loadMcpConfig();
-    expect(cfg.predictionMarkets.keywords.trade).toContain("tariff");
-    expect(cfg.predictionMarkets.keywords.trade).toContain("trade war");
+    expect(cfg.predictionMarkets.relevantKeywords).toContain("fed");
+    expect(cfg.predictionMarkets.relevantKeywords).toContain("oil");
+    expect(cfg.predictionMarkets.relevantKeywords).toContain("vietnam");
   });
 
-  it("predictionMarkets.keywords.commodities contains oil and gold", async () => {
+  it("predictionMarkets.curatedMarketIds defaults to empty array", async () => {
     const { loadMcpConfig } = await import("../infrastructure/config.js");
     const cfg = loadMcpConfig();
-    expect(cfg.predictionMarkets.keywords.commodities).toContain("oil price");
-    expect(cfg.predictionMarkets.keywords.commodities).toContain("gold price");
-  });
-
-  it("predictionMarkets.keywords.macro contains macro economic terms", async () => {
-    const { loadMcpConfig } = await import("../infrastructure/config.js");
-    const cfg = loadMcpConfig();
-    expect(cfg.predictionMarkets.keywords.macro).toContain("fed rate");
-    expect(cfg.predictionMarkets.keywords.macro).toContain("inflation");
+    expect(Array.isArray(cfg.predictionMarkets.curatedMarketIds)).toBe(true);
+    expect(cfg.predictionMarkets.curatedMarketIds).toHaveLength(0);
   });
 
   // ── Scheduler field ───────────────────────────────────────────────────────
@@ -146,21 +140,33 @@ describe("Task 169 — predictionMarkets config section", () => {
     expect(scheduler["predictionMarketPoll"]).toBe("*/30 * * * *");
   });
 
+  it("mcp.config.json predictionMarkets has clobApiUrl field", () => {
+    const raw = readFileSync(MCP_CONFIG_PATH, "utf-8");
+    const json = JSON.parse(raw) as Record<string, unknown>;
+    const pm = json["predictionMarkets"] as Record<string, unknown>;
+    expect(pm["clobApiUrl"]).toBe("https://clob-api.polymarket.com");
+  });
+
+  it("mcp.config.json predictionMarkets has gammaApiUrl field", () => {
+    const raw = readFileSync(MCP_CONFIG_PATH, "utf-8");
+    const json = JSON.parse(raw) as Record<string, unknown>;
+    const pm = json["predictionMarkets"] as Record<string, unknown>;
+    expect(pm["gammaApiUrl"]).toBe("https://gamma-api.polymarket.com");
+  });
+
   // ── Type shape (structural — TypeScript compile-time check) ───────────────
 
   it("PredictionMarketsConfig type is exported and structurally valid", async () => {
-    // This test verifies the interface can be used as a type annotation.
-    // If PredictionMarketsConfig is not exported the import at the top of this file
-    // would cause a compile-time error which Bun catches at runtime too.
     const { loadMcpConfig } = await import("../infrastructure/config.js");
     const cfg = loadMcpConfig();
 
     // Structural check: assign to typed variable — TS will catch any mismatch
     const pm: PredictionMarketsConfig = cfg.predictionMarkets;
     expect(pm.enabled).toBeDefined();
-    expect(pm.sources).toBeInstanceOf(Array);
-    expect(pm.polymarket).toBeDefined();
-    expect(pm.signals).toBeDefined();
-    expect(pm.keywords).toBeDefined();
+    expect(typeof pm.pollingIntervalMinutes).toBe("number");
+    expect(typeof pm.clobApiUrl).toBe("string");
+    expect(typeof pm.gammaApiUrl).toBe("string");
+    expect(Array.isArray(pm.relevantKeywords)).toBe(true);
+    expect(Array.isArray(pm.curatedMarketIds)).toBe(true);
   });
 });
