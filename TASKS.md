@@ -139,6 +139,22 @@
 
 ---
 
+### Sprint 019 — Know What You're Watching
+
+> Sprint 019 ACTIVE — started 2026-04-01. Task 160 Review.
+> Design refs: docs/REQ_019.md (BA) + docs/TECH_019.md (Architect — approved).
+> Dependency order: 160 first → 161 depends on 160 → 162 can run in parallel with 161 after 160 merges.
+
+| # | Title | Branch | Agent | Layer | Priority | Depends on | Status |
+|---|-------|--------|-------|-------|----------|------------|--------|
+| REQ-019 | BA: Requirement Spec for Sprint 019 | `task/doc-001-claude-md-update` | BA | docs/ | P0 | — | Done — docs/REQ_019.md |
+| TECH-019 | Architect: Technical Design for Sprint 019 | `task/doc-001-claude-md-update` | Architect | docs/ | P0 | REQ-019 | Done — docs/TECH_019.md |
+| 160 | Company name alias dictionary (`stockAliases.ts`) | `task/160-stock-aliases` | Developer | domain/services | P0 | TECH-019 | **Review** |
+| 161 | Wire aliases into cascade engine + pollNews Gate 3 | `task/161-alias-wiring` | Developer | domain/services + application/usecases | P0 | 160 | Backlog |
+| 162 | Market-wide pattern cascade to all watchlist stocks | `task/162-market-wide-broadcast` | Developer | domain/services + application/usecases + mcp.config.json | P1 | 160 | Backlog |
+
+---
+
 #### Task 157 — Data audit engine
 
 **Branch**: `task/157-data-audit-engine`
