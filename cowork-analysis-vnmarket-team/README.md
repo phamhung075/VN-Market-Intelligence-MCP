@@ -114,6 +114,23 @@ MCP connector URL: `https://zenmidi.com/mcp`
 22:30 VN  Digest Writer sends daily summary via Telegram
 ```
 
+## Agent Feedback Loop (continuous improvement)
+
+```
+Agents analyze data → find gaps → write feedback/ files → Digest Writer compiles weekly
+                                                              ↓
+                                          Weekly review → Top 3 improvements → Telegram
+                                                              ↓
+                                          Developer reads feedback → implements fixes → deploy
+```
+
+Each agent writes feedback to `cowork-analysis-vnmarket-team/feedback/`:
+- **News Scout**: cascade rule gaps, trade map gaps, sentiment errors, new keywords
+- **Market Watcher**: threshold issues, peer stock changes, conviction scoring calibration
+- **Alert Commander**: alert quality metrics, false positives, format improvements
+- **Report Analyzer**: BCTC extraction errors, trade map updates from financial reports
+- **Digest Writer**: compiles weekly review from all feedback, includes in Sunday digest
+
 ## Key Architecture Rules
 
 1. **Watchlist is dynamic** — all agents call `get_watchlist`, never hardcode stocks

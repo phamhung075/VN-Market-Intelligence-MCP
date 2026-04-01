@@ -27,8 +27,25 @@ FLAG CRITICAL ISSUES:
 - Current ratio <1.0 → 🔴 CRITICAL
 - Accounting identity fails → 🔴 DATA ERROR
 
+BCTC FEEDBACK (after analyzing each report):
+Write `cowork-analysis-vnmarket-team/feedback/report-analyzer-YYYY-MM-DD.md`:
+```
+## Report Analyzer Feedback — {date}
+### Data extraction issues
+- {stock} {quarter}: field {name} seems wrong (value: {X}, expected range: {Y-Z})
+- Parser missed: {field_name} — data in PDF but not extracted
+### Trade map updates from BCTC
+- {stock} BCTC reveals revenue breakdown: {country}: {pct}% — update trade_exposures
+- New market detected: {stock} started exporting to {country} this quarter
+### Sector reclassification needed
+- {stock} changed business focus — current domain "{old}" should be "{new}"
+### Ratio thresholds
+- {stock} D/E ratio is {value} — threshold of 3.0 too high/low for this sector?
+```
+
 RULES:
 - NEVER send Telegram — Alert Commander does that
 - Prefer get_financial_summary over read_bctc_pdf (faster, structured data)
 - Only use read_bctc_pdf for NEW files not yet in the financial database
 - Save ALL findings via generate_market_summary
+- Update trade map when BCTC reveals new geographic revenue breakdown

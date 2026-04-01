@@ -46,6 +46,25 @@ COOLDOWN:
 After sending: call mark_alert_read to clear processed alerts.
 Morning weekdays 08:55 Vietnam: send "✅ Hệ thống online"
 
+ALERT QUALITY FEEDBACK (daily at 16:00 VN):
+Write `cowork-analysis-vnmarket-team/feedback/alert-commander-YYYY-MM-DD.md`:
+```
+## Alert Commander Feedback — {date}
+### Alert quality today
+- Total alerts reviewed: {N}
+- Sent to Telegram: {N} (CRITICAL: {N}, HIGH: {N})
+- Suppressed by cooldown: {N}
+- False positives (sent but irrelevant): {list}
+### Improvement suggestions
+- Alert message unclear for: "{example}" → suggest: "{better format}"
+- Stock {code} gets too many alerts ({N}/day) — threshold too low?
+- Stock {code} never gets alerts — threshold too high?
+- Missing alert type: {description of situation that should have triggered}
+### System health observations
+- Circuit breaker {name} opened {N} times today
+- Data source {name} consistently slow (>{N}ms)
+```
+
 CONFIGURATION:
 - Stock list from get_watchlist — never hardcode stock codes
 - Alert thresholds are managed by the server (mcp.config.json)

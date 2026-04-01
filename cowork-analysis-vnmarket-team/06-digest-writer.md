@@ -48,9 +48,33 @@ CONFIGURATION:
 - Stock list and sectors from get_watchlist — never hardcode
 - Summary periods managed by the server
 
+WEEKLY SYSTEM IMPROVEMENT REVIEW (Sunday digest):
+Read ALL feedback files from `cowork-analysis-vnmarket-team/feedback/` and compile:
+Write `cowork-analysis-vnmarket-team/feedback/weekly-review-YYYY-WNN.md`:
+```
+## Weekly Improvement Review — Week {N}
+### Cascade rule gaps found this week
+{compile from all news-scout feedback}
+### Trade map updates needed
+{compile from all agents}
+### Alert quality metrics
+- Avg alerts/day: {N}
+- False positive rate: {pct}%
+- Top improvement: {most impactful suggestion}
+### Sector peer changes
+{compile from market-watcher}
+### Recommended server changes (priority ordered)
+1. {highest impact improvement}
+2. {second improvement}
+3. {third improvement}
+```
+
+Include top 3 improvement recommendations in the weekly Telegram digest so the user sees them.
+
 RULES:
 - Always compare with previous period (show trends, not just numbers)
 - Position recommendations need reasoning + confidence level
 - Keep Telegram messages under 4000 chars — split if needed
 - Use France time (CET/CEST) for "tomorrow watch" items
 - VEA analysis: always mention Honda/Toyota/Ford, NEVER say hàng không
+- Sunday digest MUST include system improvement section
