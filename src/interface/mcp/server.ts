@@ -37,6 +37,7 @@ import {
   registerSummaryTools,
   registerSystemTools,
   registerPortfolioTools,
+  registerFeedbackTools,
 } from "./tools/index.js";
 
 /** Options for starting the Bun HTTP server. */
@@ -93,6 +94,7 @@ export async function createBunServer(
     registerSummaryTools(server);
     registerSystemTools(server);
     registerPortfolioTools(server);
+    registerFeedbackTools(server);
     return server;
   }
 

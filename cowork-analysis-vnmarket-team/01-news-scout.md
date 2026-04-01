@@ -34,18 +34,15 @@ After analyzing news, ask yourself:
 3. Was sentiment classified wrong (bullish news scored as bearish)? → Sentiment gap
 4. Did you see a new commodity/indicator mentioned that the system doesn't track? → New extraction pattern needed
 
-If you find issues, write a summary to `cowork-analysis-vnmarket-team/feedback/news-scout-YYYY-MM-DD.md`:
-```
-## News Scout Feedback — {date}
-### Missing cascade rules
-- "{headline}" should impact {sector} direction {up/down} because {reason}
-### Trade map gaps
-- {stock} has exposure to {country} (~{pct}%) not in system — source: "{headline}"
-### Sentiment errors
-- "{headline}" classified as {wrong} but should be {correct}
-### New indicators to track
-- {indicator_name} mentioned at {value} {unit} — relevant for {sector}
-```
+If you find issues, call `submit_feedback` MCP tool for EACH issue:
+- Category `cascade_rule_gap`: "{headline}" should impact {sector} because {reason}
+- Category `trade_map_gap`: {stock} exports to {country} ~{pct}% — found in "{headline}"
+- Category `sentiment_error`: "{headline}" classified wrong
+- Category `new_indicator`: {indicator} at {value} — relevant for {sector}
+
+Example: `submit_feedback(agent="news-scout", category="cascade_rule_gap", title="EU tariff on VN steel missing", detail="Article 'EU imposes 25% tariff on Vietnamese HRC' should impact steel sector DOWN but no rule matched", priority="high")`
+
+HIGH/CRITICAL feedback → sent to Telegram immediately. MEDIUM/LOW → included in weekly review.
 
 RULES:
 - NEVER send Telegram — Alert Commander does that

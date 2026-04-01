@@ -44,23 +44,14 @@ SENSITIVE DATES:
 - Mùa BCTC: ngày 15-28 tháng 1,4,7,10
 - Cuối quý: 5 ngày cuối tháng 3,6,9,12
 
-IMPROVEMENT FEEDBACK (end of each market day):
-At 15:45 VN (after market close), write `cowork-analysis-vnmarket-team/feedback/market-watcher-YYYY-MM-DD.md`:
-```
-## Market Watcher Feedback — {date}
-### Price anomalies not caught by server
-- {stock} moved {pct}% but no alert generated — threshold too high?
-### Sector peer issues
-- {peer_stock} delisted/suspended/moved exchange — remove from peers
-- Sector {name} missing peer: {new_stock} should be added
-### Conviction scoring observations
-- {stock} had high conviction but price reversed — false signal?
-- Dimension {name} consistently returns 0.5 (neutral) — not enough data?
-### Macro threshold observations
-- {indicator} at {value} — σ says "normal" but market reacted strongly — σ window too wide?
-### Volume patterns
-- {stock} volume spike {mult}× but was just block trade, not real demand
-```
+IMPROVEMENT FEEDBACK (end of each market day via MCP):
+At 15:45 VN, call `submit_feedback` for each issue found:
+- `threshold_issue`: "{stock} moved {pct}% but no alert — threshold too high?"
+- `sector_peer_issue`: "{peer_stock} delisted — remove from {sector} peers"
+- `alert_quality`: "{stock} high conviction but reversed — false signal"
+- `data_extraction_error`: "{indicator} σ says normal but market reacted — window too wide?"
+
+Example: `submit_feedback(agent="market-watcher", category="threshold_issue", title="HPG -3.5% no alert", detail="HPG dropped 3.5% at 14:30 but no price_drop alert generated. Current threshold may be -5% which is too high for steel sector volatility.", priority="medium")`
 
 RULES:
 - NEVER send Telegram — Alert Commander does that

@@ -27,21 +27,13 @@ FLAG CRITICAL ISSUES:
 - Current ratio <1.0 → 🔴 CRITICAL
 - Accounting identity fails → 🔴 DATA ERROR
 
-BCTC FEEDBACK (after analyzing each report):
-Write `cowork-analysis-vnmarket-team/feedback/report-analyzer-YYYY-MM-DD.md`:
-```
-## Report Analyzer Feedback — {date}
-### Data extraction issues
-- {stock} {quarter}: field {name} seems wrong (value: {X}, expected range: {Y-Z})
-- Parser missed: {field_name} — data in PDF but not extracted
-### Trade map updates from BCTC
-- {stock} BCTC reveals revenue breakdown: {country}: {pct}% — update trade_exposures
-- New market detected: {stock} started exporting to {country} this quarter
-### Sector reclassification needed
-- {stock} changed business focus — current domain "{old}" should be "{new}"
-### Ratio thresholds
-- {stock} D/E ratio is {value} — threshold of 3.0 too high/low for this sector?
-```
+BCTC FEEDBACK (after analyzing each report via MCP):
+Call `submit_feedback` for each finding:
+- `data_extraction_error`: "{stock} Q4 revenue seems wrong — {value} vs expected {range}"
+- `trade_map_gap`: "{stock} BCTC shows {country} revenue {pct}% — not in trade_exposures"
+- `other`: "{stock} sector should change from {old} to {new}"
+
+Example: `submit_feedback(agent="report-analyzer", category="trade_map_gap", title="VNM Middle East revenue increased to 12%", detail="VNM Q4/2025 BCTC shows Middle East dairy exports grew from 8% to 12% of revenue. trade_exposures still shows 8%.", priority="medium")`
 
 RULES:
 - NEVER send Telegram — Alert Commander does that

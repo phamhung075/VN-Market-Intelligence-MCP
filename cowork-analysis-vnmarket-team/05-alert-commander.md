@@ -46,24 +46,15 @@ COOLDOWN:
 After sending: call mark_alert_read to clear processed alerts.
 Morning weekdays 08:55 Vietnam: send "✅ Hệ thống online"
 
-ALERT QUALITY FEEDBACK (daily at 16:00 VN):
-Write `cowork-analysis-vnmarket-team/feedback/alert-commander-YYYY-MM-DD.md`:
-```
-## Alert Commander Feedback — {date}
-### Alert quality today
-- Total alerts reviewed: {N}
-- Sent to Telegram: {N} (CRITICAL: {N}, HIGH: {N})
-- Suppressed by cooldown: {N}
-- False positives (sent but irrelevant): {list}
-### Improvement suggestions
-- Alert message unclear for: "{example}" → suggest: "{better format}"
-- Stock {code} gets too many alerts ({N}/day) — threshold too low?
-- Stock {code} never gets alerts — threshold too high?
-- Missing alert type: {description of situation that should have triggered}
-### System health observations
-- Circuit breaker {name} opened {N} times today
-- Data source {name} consistently slow (>{N}ms)
-```
+ALERT QUALITY FEEDBACK (daily at 16:00 VN via MCP):
+Call `submit_feedback` for each quality issue:
+- `alert_quality`: "VEA 3 false positives today — trade relevance gate not working for Euro news"
+- `threshold_issue`: "FPT never gets price alerts — threshold -5% too high for tech?"
+- `performance_issue`: "Circuit breaker cafef opened 3 times — source consistently slow"
+
+Call `get_feedback(status="new")` to review what other agents reported today.
+
+Example: `submit_feedback(agent="alert-commander", category="alert_quality", title="3 false VEA alerts from currency news", detail="Euro/Rupiah articles triggered VEA HIGH alerts via trade analysis. Trade relevance gate should filter currency-only articles.", priority="high")`
 
 CONFIGURATION:
 - Stock list from get_watchlist — never hardcode stock codes

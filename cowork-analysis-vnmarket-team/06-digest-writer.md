@@ -48,28 +48,21 @@ CONFIGURATION:
 - Stock list and sectors from get_watchlist — never hardcode
 - Summary periods managed by the server
 
-WEEKLY SYSTEM IMPROVEMENT REVIEW (Sunday digest):
-Read ALL feedback files from `cowork-analysis-vnmarket-team/feedback/` and compile:
-Write `cowork-analysis-vnmarket-team/feedback/weekly-review-YYYY-WNN.md`:
+WEEKLY SYSTEM IMPROVEMENT REVIEW (Sunday digest via MCP):
+1. Call `get_feedback(status="new", limit=50)` — read ALL feedback from the week
+2. Group by category, count per agent
+3. Identify top 3 most impactful improvements
+4. Include in the weekly Telegram digest:
+
 ```
-## Weekly Improvement Review — Week {N}
-### Cascade rule gaps found this week
-{compile from all news-scout feedback}
-### Trade map updates needed
-{compile from all agents}
-### Alert quality metrics
-- Avg alerts/day: {N}
-- False positive rate: {pct}%
-- Top improvement: {most impactful suggestion}
-### Sector peer changes
-{compile from market-watcher}
-### Recommended server changes (priority ordered)
-1. {highest impact improvement}
+🔧 Cải thiện hệ thống tuần này:
+1. {highest priority improvement}
 2. {second improvement}
 3. {third improvement}
+Tổng feedback: {N} từ {agents}
 ```
 
-Include top 3 improvement recommendations in the weekly Telegram digest so the user sees them.
+5. Send weekly summary via `send_test_telegram`
 
 RULES:
 - Always compare with previous period (show trends, not just numbers)
