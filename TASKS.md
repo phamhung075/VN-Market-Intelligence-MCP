@@ -86,6 +86,7 @@
 > **Sprint 010-011 QA batch** — Tasks 131, 132, 133, 137 merged: 2026-04-01. Alert quality (35 tests), BCTC validator (26 tests), adaptive thresholds (25 tests), Step E fix (18 tests). tsc: 0 errors.
 > **Sprint 017 COMPLETE** — All 5 tasks merged: 152, 153, 154, 155, 156. Production Hardening: noise filter, SSC dedup, LanceDB silence, log rotation, off-hours interval. 16 new tests.
 > **Sprint 018 COMPLETE** — All 3 tasks merged: 157, 158, 159. Data audit engine, scheduler wiring, health tool enhancement. 2026-04-01.
+> **Sprint 019 ACTIVE** — started 2026-04-01. Task 160 complete (34 tests, 100% coverage).
 
 ---
 
@@ -93,7 +94,7 @@
 
 | # | Title | Branch | Notes |
 |---|-------|--------|-------|
-| — | — | — | Empty |
+| 160 | Company name alias dictionary (`stockAliases.ts`) | `task/160-stock-aliases` | 34 tests, 100% coverage, tsc clean |
 
 ---
 
