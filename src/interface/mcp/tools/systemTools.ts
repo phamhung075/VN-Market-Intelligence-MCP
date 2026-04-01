@@ -142,6 +142,90 @@ export function registerSystemTools(server: McpServer): void {
         }
         lines.push("");
 
+        // ── WAL file size ─────────────────────────────────────────────────────
+        const walPath = `${dbPath}-wal`;
+        lines.push(`  WAL:   ${getDbFileSize(walPath)}`);
+        lines.push("");
+
+        // ── Alert Stats (last 24h) ───────────────────────────────────────────
+        lines.push("--- Alert Stats (last 24h) ---");
+        try {
+          const since24h = new Date(Date.now() - 24 * 3600_000).toISOString();
+          const totalAlerts = db.query<{ cnt: number }, [string]>(
+            "SELECT COUNT(*) as cnt FROM alerts WHERE triggered_at >= ?",
+          ).get(since24h);
+          const highCritical = db.query<{ cnt: number }, [string]>(
+            "SELECT COUNT(*) as cnt FROM alerts WHERE triggered_at >= ? AND severity IN ('high', 'critical')",
+          ).get(since24h);
+          const unnotified = db.query<{ cnt: number }, []>(
+            "SELECT COUNT(*) as cnt FROM alerts WHERE notified_telegram = 0 AND severity IN ('high', 'critical')",
+          ).get();
+          const lastTelegram = db.query<{ triggered_at: string }, []>(
+            "SELECT triggered_at FROM alerts WHERE notified_telegram = 1 ORDER BY triggered_at DESC LIMIT 1",
+          ).get();
+
+          lines.push(`  Total (24h):        ${totalAlerts?.cnt ?? 0}`);
+          lines.push(`  HIGH/CRITICAL (24h): ${highCritical?.cnt ?? 0}`);
+          lines.push(`  Unnotified:         ${unnotified?.cnt ?? 0}`);
+          lines.push(`  Last Telegram sent: ${lastTelegram?.triggered_at ?? "never"}`);
+        } catch {
+          lines.push("  (alerts table not ready)");
+        }
+        lines.push("");
+
+        // ── Tracked Commodities ──────────────────────────────────────────────
+        lines.push("--- Auto-tracked Indicators ---");
+        try {
+          const indicators = db.query<{ indicator: string; value: number; cnt: number }, []>(
+            `SELECT indicator, value, (SELECT COUNT(*) FROM tracked_indicators t2 WHERE t2.indicator = t1.indicator) as cnt
+             FROM tracked_indicators t1
+             WHERE extracted_at = (SELECT MAX(extracted_at) FROM tracked_indicators t3 WHERE t3.indicator = t1.indicator)
+             GROUP BY indicator ORDER BY cnt DESC LIMIT 10`,
+          ).all();
+          if (indicators.length === 0) {
+            lines.push("  (none yet — will populate after first news cycle)");
+          } else {
+            for (const ind of indicators) {
+              lines.push(`  ${ind.indicator.padEnd(22)} ${String(ind.value).padEnd(12)} (${ind.cnt} data points)`);
+            }
+          }
+        } catch {
+          lines.push("  (table not ready)");
+        }
+        lines.push("");
+
+        // ── σ Threshold Readiness ─────────────────────────────────────────────
+        lines.push("--- Threshold Readiness (σ data) ---");
+        try {
+          const commodityCount = db.query<{ cnt: number }, []>(
+            "SELECT COUNT(DISTINCT fetched_at) as cnt FROM commodity_prices_history",
+          ).get();
+          const sbvCount = db.query<{ cnt: number }, []>(
+            "SELECT COUNT(DISTINCT fetched_at) as cnt FROM sbv_rates_history",
+          ).get();
+          const need = 30;
+          const cPts = commodityCount?.cnt ?? 0;
+          const sPts = sbvCount?.cnt ?? 0;
+          const cReady = cPts >= need;
+          const sReady = sPts >= need;
+          lines.push(`  Commodity σ:  ${cPts}/${need} points ${cReady ? "✅ READY" : `⏳ ${need - cPts} more needed`}`);
+          lines.push(`  SBV rates σ:  ${sPts}/${need} points ${sReady ? "✅ READY" : `⏳ ${need - sPts} more needed`}`);
+
+          // Per-stock price history
+          const stockCounts = db.query<{ code: string; cnt: number }, []>(
+            `SELECT code, COUNT(*) as cnt FROM market_prices_history
+             GROUP BY code ORDER BY cnt DESC LIMIT 10`,
+          ).all();
+          if (stockCounts.length > 0) {
+            for (const s of stockCounts) {
+              lines.push(`  ${s.code.padEnd(8)} σ:  ${s.cnt}/${need} ${s.cnt >= need ? "✅" : "⏳"}`);
+            }
+          }
+        } catch {
+          lines.push("  (history tables not ready)");
+        }
+        lines.push("");
+
         // ── Summary counts ────────────────────────────────────────────────────
         const openBreakers = Object.values(stats).filter(s => s.state === "open").length;
         const halfOpenBreakers = Object.values(stats).filter(s => s.state === "half-open").length;

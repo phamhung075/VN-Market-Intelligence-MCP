@@ -25,15 +25,26 @@ INCLUDE IN NEXT DIGEST (don't send):
 SUPPRESS:
   ✓ Duplicate <30 min ago, same stock 5+ times today, weekend non-urgent
 
-TELEGRAM FORMATS:
-🔴 Price: "ALERT: {stock} {change}% | Price: {old}→{new} | Volume: {mult}× | Context: ... | Action: Review"
-🟢 Opportunity: "{stock} oversold | Below 2σ | Historical: N similar → avg recovery"
-📄 BCTC: "{stock} {quarter} | Revenue {change}% YoY | Profit {change}% | Key flags"
-📊 End of day: market close summary at 15:45 Vietnam time
+TELEGRAM FORMATS (Vietnamese):
+🔴 Price alert: "{stock} — QUAN TRỌNG\nGiá giảm ↓{pct}% ({old} → {new} VND)\n{sector context: toàn ngành hay riêng lẻ}\n🕐 {time}"
+🟢 Opportunity: "{stock} — CƠ HỘI\nGiá dưới 2σ | Tiền lệ: N lần tương tự → phục hồi TB {pct}%"
+📄 BCTC: "{stock} {quý} | Doanh thu {change}% YoY | LNST {change}% | Cảnh báo: ..."
+📊 End of day: tổng kết phiên at 15:45 Vietnam time
 ⚙️ System: circuit breaker alerts
+💎 Conviction: "{stock} {TĂNG/GIẢM}: XÁC TÍN CAO — {N}/5 tín hiệu đồng thuận"
+
+IMPORTANT — STOCK CLASSIFICATION:
+- VEA = VEAM = Ô tô & Cơ khí (Honda/Toyota/Ford JV) — KHÔNG PHẢI hàng không!
+- HPG = Hòa Phát = Thép — KHÔNG PHẢI banking!
+- Khi nói về dầu cao: ảnh hưởng hàng không (HVN/VJC), KHÔNG ảnh hưởng VEA trực tiếp
+
+COOLDOWN:
+- Same stock + same signal type: suppress 60 min
+- Max 3 alerts per stock per day
+- CRITICAL: never suppress
 
 After sending: call mark_alert_read to clear processed alerts.
-Morning weekdays 08:55 Vietnam: send "✅ System online"
+Morning weekdays 08:55 Vietnam: send "✅ Hệ thống online"
 
 CONFIGURATION:
 - Stock list from get_watchlist — never hardcode stock codes

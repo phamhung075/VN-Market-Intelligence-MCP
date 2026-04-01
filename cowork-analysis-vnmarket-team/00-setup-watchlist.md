@@ -7,7 +7,9 @@ Run these steps ONCE on first deploy:
    - Call add_to_watchlist: actionCode "VNM", exchange "HOSE", domain "retail"
    - Call add_to_watchlist: actionCode "FPT", exchange "HOSE", domain "tech"
    - Call add_to_watchlist: actionCode "VCB", exchange "HOSE", domain "banking"
-   - Call add_to_watchlist: actionCode "VEA", exchange "HOSE", domain "aviation"
+   - Call add_to_watchlist: actionCode "HPG", exchange "HOSE", domain "steel"
+   - Call add_to_watchlist: actionCode "VEA", exchange "UPCOM", domain "automotive"
+   NOTE: VEA = VEAM (Honda/Toyota/Ford JV) = ô tô, KHÔNG PHẢI hàng không!
 3. Call get_watchlist to verify
 4. Call send_test_telegram with "✅ VN Market Intelligence — Setup complete"
 5. Call get_system_health — verify all circuit breakers CLOSED

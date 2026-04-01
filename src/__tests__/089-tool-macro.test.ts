@@ -201,8 +201,8 @@ describe("Task 089 — get_macro_snapshot MCP tool", () => {
     });
 
     const text = firstText(result);
-    expect(text).toContain("HIGH OIL (>$90)");
-    expect(text).toContain("oil_gas confidence");
+    expect(text).toContain("CAO");
+    expect(text).toContain("dầu khí");
   });
 
   // MT-06: Low oil signal (brent=60)
@@ -214,8 +214,8 @@ describe("Task 089 — get_macro_snapshot MCP tool", () => {
     });
 
     const text = firstText(result);
-    expect(text).toContain("LOW OIL (<$70)");
-    expect(text).toContain("oil_gas confidence");
+    expect(text).toContain("THẤP");
+    expect(text).toContain("dầu khí");
   });
 
   // MT-07: High gold signal (gold=2500)
@@ -227,8 +227,8 @@ describe("Task 089 — get_macro_snapshot MCP tool", () => {
     });
 
     const text = firstText(result);
-    expect(text).toContain("HIGH GOLD (>$2000)");
-    expect(text).toContain("gold_mining confidence");
+    expect(text).toContain("CAO ($");
+    expect(text).toContain("vàng");
   });
 
   // MT-08: Tight policy signal (refi=7)
@@ -240,9 +240,9 @@ describe("Task 089 — get_macro_snapshot MCP tool", () => {
     });
 
     const text = firstText(result);
-    expect(text).toContain("TIGHT POLICY (>6%)");
-    expect(text).toContain("banking");
-    expect(text).toContain("real_estate");
+    expect(text).toContain("THẮT CHẶT");
+    expect(text).toContain("ngân hàng");
+    expect(text).toContain("bất động sản");
   });
 
   // MT-09: Loose policy signal (refi=3)
@@ -254,9 +254,9 @@ describe("Task 089 — get_macro_snapshot MCP tool", () => {
     });
 
     const text = firstText(result);
-    expect(text).toContain("LOOSE POLICY (<4%)");
-    expect(text).toContain("banking");
-    expect(text).toContain("real_estate");
+    expect(text).toContain("NỚI LỎNG");
+    expect(text).toContain("ngân hàng");
+    expect(text).toContain("bất động sản");
   });
 
   // MT-10: High USD/VND signal (26000)
@@ -269,9 +269,9 @@ describe("Task 089 — get_macro_snapshot MCP tool", () => {
 
     const text = firstText(result);
     expect(text).toContain("HIGH (USD/VND");
-    expect(text).toContain("above 25500 threshold");
-    expect(text).toContain("aviation");
-    expect(text).toContain("steel");
+    expect(text).toContain("trên 25500");
+    expect(text).toContain("hàng không");
+    expect(text).toContain("thép");
   });
 
   // MT-11: registerMacroTools importable from tools/index.ts
@@ -298,9 +298,9 @@ describe("Task 089 — get_macro_snapshot MCP tool", () => {
     });
 
     const text = firstText(result);
-    expect(text).not.toContain("HIGH OIL");
-    expect(text).not.toContain("LOW OIL");
-    expect(text).toContain("neutral");
+    expect(text).not.toContain("CAO ($");
+    expect(text).not.toContain("THẤP ($");
+    expect(text).toContain("bình thường");
   });
 
   it("neutral gold signal (gold <= 2000)", async () => {
@@ -311,7 +311,7 @@ describe("Task 089 — get_macro_snapshot MCP tool", () => {
     });
 
     const text = firstText(result);
-    expect(text).toContain("neutral (gold < $2000)");
+    expect(text).toContain("bình thường ($");
   });
 
   it("neutral USD/VND signal (rate <= 25500)", async () => {
@@ -334,7 +334,7 @@ describe("Task 089 — get_macro_snapshot MCP tool", () => {
     });
 
     const text = firstText(result);
-    expect(text).toContain("neutral (refi rate");
-    expect(text).toContain("below 6% threshold");
+    expect(text).toContain("bình thường (");
+    expect(text).toContain("bình thường");
   });
 });

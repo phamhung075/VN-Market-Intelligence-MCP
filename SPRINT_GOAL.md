@@ -2,182 +2,281 @@
 
 ## Current Sprint
 
-status: PLANNING
-sprint_id: 014
+status: ACTIVE
+sprint_id: 017
+started: 2026-03-30
+updated: 2026-03-30
+
+---
+
+### Theme
+
+**"Production Hardening"**
+
+Sprint 016 delivered the analyst's dashboard: portfolio conviction on demand, alert
+lifecycle management, conviction history, morning briefing pushed to Telegram, and sigma
+readiness diagnostics. The system is now functionally complete for a single investor's
+daily workflow.
+
+Sprint 017 shifts focus entirely to production quality. Four problems observed during
+real market-hours operation on 2026-03-30 limit the system's day-to-day reliability:
+
+1. All alerts are `low` severity (`news_mention` only). No price-based alert has ever fired
+   because the alert noise floor is too high — every news item generates an alert regardless
+   of investment relevance. The investor receives dozens of low-signal notifications.
+2. SSC document scanning checks 51 documents per cycle against 5 stocks. Each lookup hits
+   the database and the full list is re-evaluated every 15 minutes, adding ~30 seconds of
+   unnecessary I/O per cycle.
+3. LanceDB emits TRACE-level log lines on every vector search, flooding the log file with
+   hundreds of lines per cycle that obscure real warnings.
+4. The log file has no rotation or size cap. Running production for 48 hours produces a
+   log file that overwhelms the filesystem.
+
+The guiding constraint remains: no LLM calls, no new external data sources. All changes are
+internal to the system.
+
+---
 
 ### Goal
 
-Fix the broken alert pipeline and harden the intelligence cycle so that a solo
-investor in France actually receives actionable Telegram alerts about their four
-Vietnamese stocks — the core promise of the product that has been silently
-broken since Sprint 009.
+Reduce alert noise by filtering low-relevance news mentions, cut SSC scan time by 60%,
+silence LanceDB trace logging, and cap log file growth so the system can run unattended
+for weeks without operator intervention.
+
+---
 
 ### Scope
 
 **IN**
 
-**P0 — Alert pipeline fix (tasks 137, 138): production is deaf**
+**P0 — News-mention alert noise filter (task 152): only fire when news is relevant**
 
-The cycle's Step E always passes an empty `alerts` array to `sendAlertsFn`
-(line 297 of `intelligenceCycleJob.ts`). This is a structural bug: alerts are
-generated inside `pollNews` and written to SQLite, but the cycle never reads
-them back before dispatching to Telegram.
+Every news item that mentions a watchlist stock currently produces a `news_mention` alert
+regardless of the article's content, source credibility, or recency. The result is dozens
+of `low`-severity alerts per day that bury any real signal.
 
-- Task 137: Fix Step E — query `alerts` table for HIGH/CRITICAL entries created
-  in the current cycle window (last 16 minutes) and pass them to `sendAlertsFn`.
-- Task 138: Fix Step D — replace the hardcoded `return 0` placeholder in
-  `defaultRunImpactChain` with a real call to `runImpactChain` on the new
-  `AnalysisEntry` rows inserted by `pollNews` in step A. Pass entry IDs through
-  from the `PollNewsResult`.
+This task introduces a relevance gate inside `signalDetector.ts` (or `alertGenerator.ts`)
+before a `news_mention` signal is promoted to an alert:
 
-**P1 — VN-Index live data (task 139): the market's primary signal is missing**
+Gate conditions (ALL must pass):
+1. The article's sentiment score (from `sentimentClassifier.ts`) is not `neutral` — purely
+   neutral articles do not warrant an alert.
+2. The article was published within the last 60 minutes at signal-detection time — stale
+   news does not re-trigger.
+3. The article title or summary contains at least one of the stock's configured keywords
+   OR the article source is in a configurable `highTrustSources` list (e.g. cafef, vnexpress
+   for Vietnamese stocks). Generic macro articles that happen to contain a ticker symbol
+   are filtered out.
 
-VnDirect is geo-blocked from France. CafeF banggia only serves stocks, not the
-VNINDEX. Without a live index feed the user cannot gauge broad market direction
-during the trading session.
+Configuration: add `alerts.newsMention.maxAgeMinutes` (default 60),
+`alerts.newsMention.requireNonNeutralSentiment` (default true), and
+`alerts.newsMention.highTrustSources` (default `["cafef", "vnexpress", "vneconomy"]`) to
+`mcp.config.json`. No hardcoded values in production code.
 
-- Task 139: Add `fetchVnIndex()` using the CafeF index endpoint
-  `https://banggia.cafef.vn/stockhandler.ashx?index=0` (returns VN-Index,
-  HNX-Index, UPCOM-Index as separate records). Store as a special row
-  `code = "VNINDEX"` in `market_prices`. Expose the current value in
-  `get_market_snapshot` MCP tool output.
+Expected outcome: news_mention alert volume drops by >= 70% while actual high-relevance
+news still fires.
 
-**P2 — Database WAL checkpoint (task 140): data safety**
+- Task 152: modify `src/domain/services/signalDetector.ts` + `mcp.config.json`
 
-The WAL file is 2.5x the main DB. SQLite WAL is designed to checkpoint
-automatically at 1000 pages but better-sqlite3 does not trigger this from Bun's
-process lifecycle.
+**P0 — SSC scan deduplication (task 153): stop re-scanning already-processed documents**
 
-- Task 140: Add `db.pragma('wal_checkpoint(PASSIVE)')` called once daily (new
-  cron at 03:00 GMT+7) and on graceful server shutdown (`process.on('SIGTERM')`
-  / `process.on('SIGINT')`). Add `db.pragma('optimize')` alongside it. No
-  schema changes required.
+The SSC nightly checker (`checkSscReports.ts` + `sscCheckerJob.ts`) fetches 51 documents
+per run. At 15-minute cycle intervals this is wasteful — documents do not change between
+scans. The fix is a simple "already seen" guard in SQLite.
 
-**P3 — Circuit breaker for fetchers (task 136): already planned in Sprint 013**
+New column on `financial_reports` table (try/catch ALTER TABLE):
+- `ssc_doc_id TEXT` — the unique document identifier from the SSC portal listing (the URL
+  path or document ID extracted by `ssc.ts`).
 
-The VnDirect geo-block exposed that a timed-out fetcher stalls the whole cycle.
-The `circuitBreaker` config block already exists in `mcp.config.json`. Wire it
-into the three external fetchers (VnDirect, CafeF banggia, SSC) so a source
-that trips 5 consecutive failures opens its breaker for 60 seconds before
-retrying (half-open probe). This prevents the 30-50s cycle stall when VnDirect
-is blocked.
+New function `isDocAlreadyProcessed(docId: string, db: Database): boolean` in
+`src/infrastructure/db/alertStore.ts` (or a new `reportStore.ts`). Uses a
+`SELECT 1 FROM financial_reports WHERE ssc_doc_id = ?` query.
 
-- Task 136 (carried over from Sprint 013): implement `CircuitBreaker` class in
-  `src/infrastructure/circuitBreaker.ts`, wrap `fetchHosePrices` (VnDirect
-  path), `fetchFromCafef`, and `listSscDocuments`.
+In `checkSscReports.ts`, before calling `fetchParseAndStoreBctc` for each candidate
+document, call `isDocAlreadyProcessed`. Skip the document if it returns `true`.
 
-**P4 — System health MCP tool (task 141): observability**
+Expected outcome: after the first full scan, subsequent scans skip all 51 documents in
+< 100 ms (single index lookup per doc vs. full parse pipeline).
 
-The operator (the user) has no programmatic way to check whether the server is
-healthy without reading logs. A `get_system_health` tool would allow Claude
-Desktop to surface cycle status, DB file sizes, last Telegram send time, and
-circuit breaker states on demand.
+- Task 153: schema migration + `isDocAlreadyProcessed` helper +
+  `checkSscReports.ts` guard
 
-- Task 141: `src/interface/mcp/tools/systemTools.ts` — register
-  `get_system_health` tool that returns: last cycle result, DB file size (bytes),
-  WAL file size, LanceDB directory size, last Telegram alert timestamp, circuit
-  breaker states per source, server uptime.
+**P1 — Silence LanceDB TRACE logging (task 154): clean logs**
+
+LanceDB's internal logger emits TRACE-level lines on every vector search call. At 15-minute
+cycle intervals with 5 watchlist stocks this produces ~150 TRACE lines per hour. These lines
+are not controlled by the project's own logger (`src/infrastructure/logger.ts`) — they come
+from the LanceDB package itself via an environment variable.
+
+Fix: set `LANCEDB_LOG_LEVEL=warn` (or `error`) in the Bun process environment before any
+LanceDB import. The correct place is `src/index.ts` at the very top, before any other
+import, using `process.env.LANCEDB_LOG_LEVEL = 'warn'`.
+
+Add a smoke test: after setting the env var, import and call `vectorstore.ts`'s search
+function in the test harness and assert that the captured stdout/stderr contains zero lines
+matching `/TRACE/i`.
+
+- Task 154: one-line change in `src/index.ts` + env var documented in `mcp.config.json`
+  under a new `logging.lancedbLevel` key (read at startup and applied before import)
+
+**P1 — Log file rotation (task 155): prevent unbounded growth**
+
+The structured logger in `src/infrastructure/logger.ts` writes to a single file with no
+rotation. After 48 hours of market-hours operation the file exceeds 100 MB.
+
+This task adds size-based rotation to the logger:
+
+- Maximum file size: configurable via `logging.maxFileSizeMb` in `mcp.config.json`
+  (default: 50).
+- Rotation strategy: when the file exceeds `maxFileSizeMb`, rename the current log file to
+  `<name>.1.log` and open a fresh `<name>.log`. Keep at most 3 rotated files
+  (`<name>.1.log`, `<name>.2.log`, `<name>.3.log`). Delete `<name>.3.log` before rotating
+  if it exists (simple rolling window, no external library).
+- Rotation check: performed once per minute using a lightweight `setInterval` in the logger
+  module — not on every write (avoids `stat()` on every log line).
+- If the log directory does not exist, create it (already done at startup — this is a
+  defensive check only).
+
+No external log-rotation library. Pure Bun `Bun.file` + `fs.renameSync`.
+
+- Task 155: modify `src/infrastructure/logger.ts` + `mcp.config.json`
+
+**P2 — Off-hours cycle interval increase (task 156): reduce idle resource use**
+
+During off-hours (outside 08:00-16:00 GMT+7) the intelligence cycle currently runs every
+15 minutes. Off-hours cycles only poll news and fetch macro prices — no SSC, no price scan,
+no cascade. The 15-minute interval is unnecessarily frequent for off-hours work.
+
+This task makes the off-hours interval configurable and increases the default to 60 minutes.
+
+Changes:
+- Add `cycle.offHoursIntervalMinutes` (default 60) to `mcp.config.json` alongside the
+  existing `cycle.intervalMinutes` (market-hours interval, stays at 15).
+- In `intelligenceCycleJob.ts`, read `offHoursIntervalMinutes` and use it to compute the
+  next off-hours cycle delay via a `setTimeout`-based re-schedule (or by skipping cycle
+  runs when the elapsed time is < `offHoursIntervalMinutes` since last off-hours run).
+- Market-hours cycles are not affected.
+
+Expected outcome: off-hours CPU and network use drops by ~75% (4 cycles/hour → 1
+cycle/hour).
+
+- Task 156: modify `src/scheduler/intelligenceCycleJob.ts` + `mcp.config.json`
 
 **OUT**
 
-- Changes to BCTC PDF parser, ratio computer, or any domain business logic
-- New RSS sources beyond the six already wired
-- Any changes to MCP tool signatures for watchlist / analysis / reports tools
-- Pagination or full parse changes to the SSC Puppeteer scraper
-- Telegram group routing or multi-user support
-- LLM-driven auto-analysis (deferred indefinitely)
+- Telegram Bot API inline keyboard / callback_query handling (deferred to Sprint 018)
+- Backtest mode for conviction scorer (deferred to Sprint 018)
+- LLM calls of any kind
+- New external data sources
+- BCTC extractor, ratio computer, or validator changes
+- MCP tool signature changes for any existing tool
+- Multi-user Telegram routing
+- Database compaction / VACUUM automation (separate concern)
+
+---
 
 ### Success Metrics
 
-1. **Alert pipeline**: given one or more HIGH/CRITICAL alerts in the `alerts`
-   table created within the last 16 minutes, `runIntelligenceCycle()` returns
-   `telegramAlertsSent >= 1` and the Telegram Bot API receives the corresponding
-   `sendMessage` call — verified by unit test with mocked Telegram + seeded DB.
+1. **News-mention noise reduction**: after deploying task 152, a manual run of the
+   intelligence cycle against the current news corpus produces <= 30% of the previous
+   `news_mention` alert count. Sentiment-negative or sentiment-positive articles from
+   `highTrustSources` still generate alerts. Neutral articles do not.
 
-2. **Impact chain**: `impactEventsRan` in `CycleResult` reflects the actual
-   number of `runImpactChain` calls processed during step D (not hardcoded 0).
-   At least one new news entry in a test scenario produces `impactEventsRan = 1`.
+2. **SSC scan speed**: after the first full scan stores `ssc_doc_id` values, a second
+   `checkSscReports` run completes the document-existence check for all 51 docs in < 500 ms
+   total (verified by log timestamps). No full parse pipeline is triggered for already-seen
+   documents.
 
-3. **VN-Index**: `fetchVnIndex()` returns a `VnIndexSnapshot` with a non-null
-   `value > 0` when called in isolation (mocked CafeF response). The
-   `get_market_snapshot` MCP tool response includes a `vnIndex` field.
+3. **Clean logs**: after deploying task 154, running one full intelligence cycle produces
+   zero log lines matching `/TRACE/i` in the application log file.
 
-4. **WAL checkpoint**: after calling the new checkpoint function with a live DB,
-   the WAL file size drops to near-zero (verified in integration test using a
-   real SQLite file). The SIGTERM handler runs checkpoint before exit.
+4. **Log rotation**: after deploying task 155, when the log file exceeds `maxFileSizeMb`,
+   the logger automatically renames it to `app.1.log` and continues writing to a fresh
+   `app.log`. The `bun test` suite includes a test that writes > `maxFileSizeMb` worth of
+   log lines and asserts that `app.1.log` exists and `app.log` is smaller than the limit.
 
-5. **Circuit breaker**: after 5 simulated VnDirect failures the breaker enters
-   OPEN state; `fetchHosePrices` returns `[]` immediately (no HTTP call) until
-   the reset timeout elapses, at which point it enters HALF_OPEN and makes
-   exactly one probe request.
+5. **Off-hours frequency**: after deploying task 156, between 16:01 and 07:59 GMT+7 the
+   intelligence cycle fires once per hour rather than every 15 minutes. The `get_system_health`
+   tool shows `last_cycle_at` timestamps spaced ~60 minutes apart during off-hours.
 
-6. **System health tool**: `get_system_health` returns a JSON object with keys
-   `lastCycleResult`, `dbSizeBytes`, `walSizeBytes`, `uptimeSeconds`,
-   `circuitBreakers`, `lastTelegramSentAt`. All values are non-null when the
-   server has completed at least one cycle.
+6. **Full test suite**: `bun test` passes with 0 failures; `bun tsc --noEmit` reports
+   0 errors after all Sprint 017 tasks are merged.
 
-7. **Full test suite**: `bun test` passes with 0 failures; `bun tsc --noEmit`
-   reports 0 errors after all tasks merged.
+---
+
+### Task board (Sprint 017)
+
+| # | Title | Priority | Status | Depends on |
+|---|-------|----------|--------|------------|
+| 152 | News-mention alert noise filter | P0 | Backlog | — |
+| 153 | SSC scan deduplication | P0 | Backlog | — |
+| 154 | Silence LanceDB TRACE logging | P1 | Backlog | — |
+| 155 | Log file rotation | P1 | Backlog | — |
+| 156 | Off-hours cycle interval increase | P2 | Backlog | — |
+
+---
 
 ### Dependency chain
 
 ```
-137 (fix Step E — read alerts from DB)      — independent
-138 (fix Step D — real impact chain)         — independent
-  └─ 137 + 138 can run in parallel
+152 (news-mention noise filter)   — P0, independent, start immediately
+153 (SSC scan dedup)              — P0, independent, start immediately
 
-139 (VN-Index via CafeF)                     — independent of 137/138
-140 (WAL checkpoint)                          — independent, no schema change
-136 (circuit breaker)                         — independent; wraps hose.ts + ssc.ts
-  └─ 141 (system health tool) — depends on 136 (needs breaker state API)
+154 (LanceDB TRACE silence)       — P1, independent of 152-153, start in parallel
+155 (log file rotation)           — P1, independent of all above, start in parallel
+
+156 (off-hours cycle interval)    — P2, independent, start after 152-153 land
+
+152 + 153 + 154 + 155 can all start in parallel (different files, no conflict)
+156 unblocks once 152 and 153 are merged (confirms cycle overhead is reduced enough)
 ```
 
-### Sprint task order (recommended)
-
-1. 137 (TDD Red + Green — alert DB read + Step E fix) — P0, fast win
-2. 138 (TDD Red + Green — Step D real impact chain) — P0, parallel with 137
-3. 139 (TDD Red + Green — VN-Index CafeF fetcher) — P1, parallel
-4. 140 (checkpoint job + shutdown hook) — P2, small change
-5. 136 (circuit breaker class + wrapping) — P3, foundational
-6. 141 (system health MCP tool) — P4, depends on 136
+---
 
 ### Key technical decisions (locked at PO level)
 
-- **Alert query window**: Step E reads `alerts` WHERE `created_at >= now - 16min`
-  AND severity IN ('high', 'critical') AND `notified_telegram = 0`. Update
-  `notified_telegram = 1` after successful send to prevent re-sends on next cycle.
-  This requires adding `notified_telegram INTEGER DEFAULT 0` column to `alerts`
-  table — migration via `ALTER TABLE IF NOT EXISTS` in `initDatabase()`.
-- **Impact chain entry IDs**: `PollNewsResult` gains an optional `insertedIds`
-  field (`string[]`). `pollNews` populates it; `intelligenceCycleJob` passes
-  those IDs to `runImpactChain`.
-- **VN-Index CafeF URL**: `https://banggia.cafef.vn/stockhandler.ashx?index=0`
-  returns an array; the record with `a === "VNINDEX"` is extracted.
-- **Circuit breaker state**: exported as `CircuitBreakerState = 'CLOSED' | 'OPEN' | 'HALF_OPEN'`.
-  The `CircuitBreaker` class is a simple counter + timestamp, no external dependency.
-- **WAL checkpoint pragma**: `db.pragma('wal_checkpoint(PASSIVE)')` — PASSIVE
-  mode does not block readers/writers, safe to call from a scheduler job.
-- **Telegram `notified_telegram` flag**: avoids double-sending if the server
-  restarts between cycles. Critical alerts are never suppressed by cooldown
-  (existing `neverSuppressSeverity: ["critical"]` rule preserved).
+- **Noise filter placement**: the gate lives in `signalDetector.ts` before a `news_mention`
+  Signal object is created, not in `alertGenerator.ts`. This keeps the alert generator
+  agnostic of news-specific rules and ensures the filter applies regardless of how signals
+  reach the generator.
+- **`ssc_doc_id` source**: the document identifier is the URL path segment used by the SSC
+  portal (already extracted by `ssc.ts` when building the document list). No new HTTP call
+  is needed — the ID is available at the point where `checkSscReports.ts` iterates
+  candidates.
+- **LanceDB env var timing**: `process.env.LANCEDB_LOG_LEVEL = 'warn'` must appear in
+  `src/index.ts` before any `import` that transitively loads LanceDB. In ESM/Bun, `import`
+  statements are hoisted. Use a dynamic `await import(...)` for the LanceDB-dependent
+  modules, or set the env var in a preload script. The simplest correct approach: set it at
+  the top of `src/index.ts` before the static imports — Bun evaluates top-level code in
+  file order before resolving dynamic imports, so this works.
+- **Log rotation strategy**: synchronous `fs.renameSync` inside the rotation check. The
+  check runs every 60 seconds via `setInterval` — contention with concurrent writes is
+  negligible in a single-process Bun server. No mutex required.
+- **Off-hours interval implementation**: a simple timestamp comparison in `intelligenceCycleJob.ts`.
+  Store `lastOffHoursCycleAt: number` at module scope. At cycle entry, if not market hours
+  and `Date.now() - lastOffHoursCycleAt < offHoursIntervalMs`, return early. This avoids
+  modifying the cron schedule and requires zero external library changes.
 
 ---
 
 ## Completed Sprints
 
-| Sprint | Goal | Status |
-|--------|------|--------|
-| 000 | Project setup, DB schema, env config, embeddings, vectorstore, watchlist, BCTC balance sheet + income stmt | Done |
-| 001 | BCTC RAG pipeline: cash flow, ratio, delta, orchestrator, RAG retriever | Done |
-| 002 | SSC portal scraper, PDF extractor, full BCTC pipeline, Bun MCP server, SSC report MCP tools | Done |
-| 003 | News intelligence + watchlist/alert system (021, 082, 063, 064, 086) | Done |
-| 004 | Cascade engine, analysis MCP tools, legacy cleanup (087, 022, 023, 061, 062, 083, 088) | Done |
-| 005 | Market data, scheduler jobs — morning briefing, news poll, market scan, SSC nightly (088, 026, 102, 104, 103, 101) | Done |
-| 006 | Analytical depth — pattern matcher, AI summary, HNX fetcher, market MCP tools, integration tests (065, 066, 027, 084, 105, 123) | Done |
-| 007 | BCTC edge-case tests, domain coverage, SSC pipeline mock tests, E2E briefing (121, 122, 124, 125, DOC-001, 024) | Done |
-| 008 | Macro intelligence layer — Yahoo Finance commodities, SBV rates, macro cascade, get_macro_snapshot MCP tool (FIX-081, 025, 028, 126, 089) | Done |
-| 009 | SSC Puppeteer automation, Telegram notifier, 15-min intelligence cycle (031, 034, 106) | Done |
-| 010 | Security (SQL injection), alert quality system — cooldown/dedup/grouping, BCTC validator (131, 132, SQL-fix) | Done |
-| 011 | Adaptive signal thresholds, sentiment classifier, RAG temporal decay, VnEconomy RSS (133, 134, 135, 035) | Done |
-| 012 | Periodic summaries — daily/weekly/monthly/quarterly/yearly, cron triggers, MCP tools (130) | Done |
-| 013 | OCR fallback for scanned BCTCs (Tesseract + Vietnamese), BCTC Collector SSC call removal, Chrome zombie fix | Done |
+| Sprint | Theme | Key Deliverables | Status |
+|--------|-------|------------------|--------|
+| 000 | Foundation | DB schema, env config, embeddings, vectorstore, watchlist, BCTC balance sheet + income stmt | Done |
+| 001 | BCTC RAG pipeline | Cash flow, ratio, delta, orchestrator, RAG retriever | Done |
+| 002 | SSC + MCP server | SSC portal scraper, PDF extractor, full BCTC pipeline, Bun MCP server, SSC MCP tools | Done |
+| 003 | News intelligence | News + watchlist + alert system (021, 082, 063, 064, 086) | Done |
+| 004 | Cascade engine | Cascade engine, analysis MCP tools, legacy cleanup (087, 022, 023, 061, 062, 083, 088) | Done |
+| 005 | Market data + scheduler | Market data, morning briefing, news poll, market scan, SSC nightly (088, 026, 102, 104, 103, 101) | Done |
+| 006 | Analytical depth | Pattern matcher, AI summary, HNX fetcher, market MCP tools, 28-test integration harness | Done |
+| 007 | Test coverage | BCTC edge-case tests, domain coverage, SSC pipeline mock tests, E2E briefing | Done |
+| 008 | Macro intelligence | Yahoo Finance commodities, SBV rates, macro cascade, get_macro_snapshot MCP tool | Done |
+| 009 | Automation + alerts | SSC Puppeteer, Telegram notifier, 15-min intelligence cycle | Done |
+| 010 | Security + quality | SQL injection fix, alert cooldown/dedup/grouping, BCTC validator | Done |
+| 011 | Adaptive intelligence | Adaptive signal thresholds, sentiment classifier (Vi + EN), RAG temporal decay, VnEconomy RSS | Done |
+| 012 | Periodic summaries | Daily/weekly/monthly/quarterly/yearly summaries, cron triggers, MCP tools | Done |
+| 013 | Reliability + depth | OCR fallback (Tesseract + Vietnamese), sector peer mapping, sigma-based macro thresholds, price-news divergence detector, commodity auto-tracking from news text, tradingEconomicsStream fetcher, macroStatsStore, Vietnamese Telegram format, Chrome zombie fix, BCTC Collector SSC call removal, 50+ cascade rules, sensitive-date awareness | Done |
+| 014 | Make the system speak | Alert pipeline fix (Step E + D), VN-Index live feed, WAL checkpoint, circuit breaker wiring, system health enhancement | Done |
+| 015 | Know Before the Market Does | convictionScorer.ts (5-dimension cross-signal, tasks 142-146), sector peer wiring, historical parallel in alerts, morning briefing upgrade (unresolved alerts + top conviction), weekly pattern watch Sunday 22:30 | Done |
+| 016 | The Analyst's Dashboard | Morning briefing Telegram delivery (task 147), alert resolution lifecycle + resolve_alert MCP tool (task 148), get_portfolio_conviction MCP tool (task 149), conviction_history table + trend read (task 150), sigma data sufficiency health check (task 151). 27 MCP tools, conviction dashboard, full alert lifecycle. | Done |

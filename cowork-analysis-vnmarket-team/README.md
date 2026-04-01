@@ -28,7 +28,7 @@ All settings are in `mcp.config.json` at project root. Key sections:
 **Default watchlist** is in `mcp.config.json`:
 ```json
 "market": {
-  "watchlist": ["VNM", "FPT", "VCB", "VEA"]
+  "watchlist": ["VNM", "FPT", "VCB", "HPG", "VEA"]
 }
 ```
 
@@ -57,9 +57,9 @@ CLOUDFLARE_TUNNEL=vn-market-mcp
 cd /path/to/VN-Market-Intelligence-MCP
 bun run src/index.ts
 ```
-Server auto-seeds watchlist from config, starts OCR for unprocessed PDFs, registers 26 tools.
+Server auto-seeds watchlist from config, starts OCR for unprocessed PDFs, registers 27 tools.
 
-Verify: `curl https://zenmidi.com/health` → `{"status":"ok","toolCount":26}`
+Verify: `curl https://zenmidi.com/health` → `{"status":"ok","toolCount":27}`
 
 ### Step 2: Start Cloudflare Tunnel
 ```bash
@@ -94,6 +94,7 @@ MCP connector URL: `https://zenmidi.com/mcp`
 | **Market** | get_market_snapshot, get_macro_snapshot, get_patterns |
 | **Reports** | fetch_ssc_reports, get_financial_summary, compare_financials, list_stored_pdfs, read_bctc_pdf |
 | **Alerts** | get_alerts, mark_alert_read, run_daily_briefing |
+| **Portfolio** | get_portfolio_conviction |
 | **Summaries** | get_market_summary, generate_market_summary |
 | **Telegram** | send_test_telegram |
 | **System** | get_system_health, get_global_log, get_tool_log, get_error_summary |

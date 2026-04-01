@@ -52,6 +52,7 @@ export interface SourceFetchers {
   vnexpress?: () => Promise<RssItem[]>;
   reuters?: () => Promise<RssItem[]>;
   vneconomy?: () => Promise<RssItem[]>;
+  tradingeconomics?: () => Promise<RssItem[]>;
 }
 
 /**
@@ -80,27 +81,104 @@ export interface PollNewsOptions {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Signal deduplication — prevents N× news_mention spam for the same stock
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Merges duplicate signals that share the same (actionCode, type) pair.
+ *
+ * For each group:
+ *   - Keeps the signal with the highest confidence
+ *   - Updates the message to include a count and the top headlines
+ *   - Caps severity: a single news_mention cannot exceed "medium" on its own
+ *
+ * This prevents 30 separate news_mention signals from escalating to CRITICAL
+ * in alertGenerator (which treats 3+ signals as CRITICAL).
+ */
+function deduplicateSignalsByStockAndType(
+  signals: import("../../domain/services/signalDetector.js").Signal[],
+): import("../../domain/services/signalDetector.js").Signal[] {
+  // Group by (actionCode, type)
+  const groups = new Map<string, typeof signals>();
+  for (const sig of signals) {
+    const key = `${sig.actionCode}::${sig.type}`;
+    const group = groups.get(key);
+    if (group) {
+      group.push(sig);
+    } else {
+      groups.set(key, [sig]);
+    }
+  }
+
+  // Merge each group into a single signal
+  const merged: typeof signals = [];
+  for (const group of groups.values()) {
+    if (group.length === 1) {
+      merged.push(group[0]!);
+      continue;
+    }
+
+    // Sort by confidence descending — keep the best one as base
+    group.sort((a, b) => b.confidence - a.confidence);
+    const best = group[0]!;
+
+    // Collect unique headlines (from the message field)
+    const headlines = group
+      .map((s) => s.message)
+      .filter((m, i, arr) => arr.indexOf(m) === i)
+      .slice(0, 3); // top 3 headlines
+
+    const count = group.length;
+    const headlineSummary = headlines.join(" | ");
+
+    merged.push({
+      ...best,
+      message: `${best.actionCode} mentioned in ${count} articles — ${headlineSummary}`,
+      // A batch of news_mention should stay at most "medium" as a single signal.
+      // Escalation to high/critical should only happen when combined with
+      // price_drop, volume_spike, or report_new signals.
+      severity:
+        best.type === "news_mention" && best.severity === "high"
+          ? "medium"
+          : best.severity,
+    });
+  }
+
+  return merged;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Default real fetchers (loaded lazily so tests never trigger network calls)
 // ─────────────────────────────────────────────────────────────────────────────
 
 async function defaultCafefFetcher(): Promise<RssItem[]> {
+  const { breakers } = await import("../../infrastructure/circuitBreakerRegistry.js");
   const { fetchCafeF } = await import("../../infrastructure/fetchers/cafef.js");
-  return fetchCafeF();
+  return breakers.cafef.execute(() => fetchCafeF());
 }
 
 async function defaultVnExpressFetcher(): Promise<RssItem[]> {
+  const { breakers } = await import("../../infrastructure/circuitBreakerRegistry.js");
   const { fetchVnExpress } = await import("../../infrastructure/fetchers/vnexpress.js");
-  return fetchVnExpress();
+  return breakers.vnexpress.execute(() => fetchVnExpress());
 }
 
 async function defaultReutersFetcher(): Promise<RssItem[]> {
+  const { breakers } = await import("../../infrastructure/circuitBreakerRegistry.js");
   const { fetchReuters } = await import("../../infrastructure/fetchers/reuters.js");
-  return fetchReuters();
+  return breakers.reuters.execute(() => fetchReuters());
 }
 
 async function defaultVnEconomyFetcher(): Promise<RssItem[]> {
+  const { breakers } = await import("../../infrastructure/circuitBreakerRegistry.js");
   const { fetchVnEconomy } = await import("../../infrastructure/fetchers/vneconomy.js");
-  return fetchVnEconomy();
+  return breakers.vneconomy.execute(() => fetchVnEconomy());
+}
+
+async function defaultTradingEconomicsFetcher(): Promise<RssItem[]> {
+  const { breakers } = await import("../../infrastructure/circuitBreakerRegistry.js");
+  const { fetchTradingEconomicsStream } = await import("../../infrastructure/fetchers/tradingEconomicsStream.js");
+  return breakers.tradingEconomics.execute(() => fetchTradingEconomicsStream());
 }
 
 async function defaultRagRetriever(
@@ -246,14 +324,16 @@ export async function pollNews(options: PollNewsOptions = {}): Promise<PollNewsR
     vnexpress: options.fetchers?.vnexpress ?? defaultVnExpressFetcher,
     reuters: options.fetchers?.reuters ?? defaultReutersFetcher,
     vneconomy: options.fetchers?.vneconomy ?? defaultVnEconomyFetcher,
+    tradingeconomics: options.fetchers?.tradingeconomics ?? defaultTradingEconomicsFetcher,
   };
 
-  // ── Step 1: Fetch all 4 sources in parallel ──────────────────────────────
+  // ── Step 1: Fetch all 5 sources in parallel ──────────────────────────────
   const results = await Promise.allSettled([
     fetchers.cafef(),
     fetchers.vnexpress(),
     fetchers.reuters(),
     fetchers.vneconomy(),
+    fetchers.tradingeconomics(),
   ]);
 
   const allItems: RssItem[] = [];
@@ -271,6 +351,18 @@ export async function pollNews(options: PollNewsOptions = {}): Promise<PollNewsR
   }
 
   const fetched = allItems.length;
+
+  // ── Step 1b: Auto-extract commodity/indicator prices from news text ─────
+  // Stores discovered prices in tracked_indicators for σ-based analysis.
+  try {
+    const { extractAndStoreIndicators } = await import("../../infrastructure/db/commodityTracker.js");
+    for (const item of allItems) {
+      const text = `${item.title} ${item.content}`;
+      extractAndStoreIndicators(text, item.source);
+    }
+  } catch {
+    // Best-effort — table may not exist yet
+  }
 
   // ── Step 2–3: Normalize and dedup ────────────────────────────────────────
   let inserted = 0;
@@ -299,34 +391,108 @@ export async function pollNews(options: PollNewsOptions = {}): Promise<PollNewsR
     // Collect all signals from all cascade chains
     const allSignals: import("../../domain/services/signalDetector.js").Signal[] = [];
 
+    // Pre-fetch macro data ONCE for the whole batch (avoid 95× HTTP calls)
+    let macroStats: import("../../domain/services/macroThresholds.js").MacroStats[] = [];
+    let macroContext: import("../../domain/services/cascadeEngine.js").MacroContext | null = null;
+    try {
+      const { getAllMacroStats } = await import("../../infrastructure/db/macroStatsStore.js");
+      macroStats = getAllMacroStats();
+    } catch { /* no σ data yet */ }
+    try {
+      const { fetchYahooFinancePrices } = await import("../../infrastructure/fetchers/yahooFinance.js");
+      const { fetchSbvRates } = await import("../../infrastructure/fetchers/sbv.js");
+      const [commodity, sbv] = await Promise.allSettled([fetchYahooFinancePrices(), fetchSbvRates()]);
+      macroContext = {
+        brentCrudeUSD: commodity.status === "fulfilled" ? commodity.value?.brentCrudeUSD ?? null : null,
+        goldUSDPerOz: commodity.status === "fulfilled" ? commodity.value?.goldUSDPerOz ?? null : null,
+        usdVndMarket: commodity.status === "fulfilled" ? commodity.value?.usdVndRate ?? null : null,
+        refinancingRatePct: sbv.status === "fulfilled" ? sbv.value?.refinancingRatePct ?? null : null,
+        overnightRatePct: sbv.status === "fulfilled" ? sbv.value?.overnightRatePct ?? null : null,
+        usdVndOfficial: sbv.status === "fulfilled" ? sbv.value?.usdVndOfficial ?? null : null,
+      };
+    } catch { /* no macro context */ }
+
     for (const entry of newEntries) {
       try {
-        // Fetch RAG context (best-effort)
+        let chain: import("../../domain/services/cascadeEngine.js").CausalChain;
+
+        // Use buildCausalChain directly with pre-fetched macro data (fast, no HTTP per entry)
         let ragResults: SearchResult[] = [];
         try {
           ragResults = await retriever(entry.summary, { k: 3 });
-        } catch (ragErr) {
-          logger.warn("[pollNews] RAG retrieval failed — proceeding without context", {
-            error: ragErr instanceof Error ? ragErr.message : String(ragErr),
-          });
-        }
-
-        // Build causal chain (pure domain)
-        const chain = buildCausalChain(entry, watchlist, ragResults);
+        } catch { /* silent */ }
+        chain = buildCausalChain(entry, watchlist, ragResults, macroContext, macroStats);
 
         // Convert watchlist impacts into news_mention signals
+        // Relevance gate (task 152): filter noise before creating signals
+        const highTrustSources = ["cafef", "vnexpress", "vneconomy"];
+        const maxAgeMs = 4 * 60 * 60 * 1000; // 4 hours (TE stream articles may be delayed)
+
+        // Pre-compute sentiment once per entry (not per impact — perf fix)
+        const { classifySentiment: classify } = await import("../../domain/services/sentimentClassifier.js");
+        const entrySentiment = classify(`${entry.sourceTitle} ${entry.summary}`);
+
         for (const impact of chain.watchlistImpacts) {
-          if (impact.confidence > 0) {
+          if (impact.confidence <= 0) continue;
+
+          // Gate 1: Article age — skip stale news
+          const articleAge = Date.now() - new Date(entry.createdAt).getTime();
+          if (articleAge > maxAgeMs) continue;
+
+          // Gate 2: Sentiment — skip neutral articles (no investment signal)
+          const sentiment = entrySentiment;
+          if (sentiment.direction === "neutral" && sentiment.confidence < 0.3) continue;
+
+          // Gate 3: Source trust OR direct stock mention
+          // entry.sourceUrl contains the domain — check if it's from a trusted source
+          const sourceUrl = entry.sourceUrl.toLowerCase();
+          const sourceTrusted = highTrustSources.some((s) => sourceUrl.includes(s));
+          const directMention = entry.summary.toLowerCase().includes(impact.actionCode.toLowerCase());
+          if (!sourceTrusted && !directMention) continue;
+
+          allSignals.push({
+            type: "news_mention",
+            severity: impact.confidence >= 0.8 ? "high" : impact.confidence >= 0.6 ? "medium" : "low",
+            actionCode: impact.actionCode,
+            message: `${entry.sourceTitle} — ${impact.reasoning}`,
+            confidence: impact.confidence,
+            detectedAt: entry.createdAt,
+          });
+        }
+        // ── Trade relationship analysis — country-to-stock impact ──────────
+        // Goes beyond sector rules: "Middle East peace" → VNM (8% export Iraq)
+        try {
+          const { analyzeTradeImpact } = await import("../../domain/services/tradeRelationships.js");
+          const { detectAndLearnTradeRelationship } = await import("../../infrastructure/db/tradeStore.js");
+
+          // Auto-learn new trade relationships from news
+          const wlCodes = new Set(watchlist.map((w) => w.actionCode));
+          detectAndLearnTradeRelationship(`${entry.sourceTitle} ${entry.summary}`, wlCodes);
+
+          // Analyze trade impact
+          const tradeImpacts = analyzeTradeImpact(
+            `${entry.sourceTitle} ${entry.summary}`,
+            watchlist.map((w) => w.actionCode),
+          );
+
+          for (const ti of tradeImpacts) {
+            // Skip if already covered by cascade (same stock already has a signal)
+            const alreadyCovered = allSignals.some(
+              (s) => s.actionCode === ti.code && s.type === "news_mention",
+            );
+            if (alreadyCovered) continue;
+
             allSignals.push({
               type: "news_mention",
-              severity: impact.confidence >= 0.8 ? "high" : impact.confidence >= 0.6 ? "medium" : "low",
-              actionCode: impact.actionCode,
-              message: `${entry.sourceTitle} — ${impact.reasoning}`,
-              confidence: impact.confidence,
+              severity: ti.revenuePct >= 15 ? "high" : ti.revenuePct >= 5 ? "medium" : "low",
+              actionCode: ti.code,
+              message: `${entry.sourceTitle} — ${ti.reasoning}`,
+              confidence: Math.min(0.9, ti.revenuePct / 100 + 0.3),
               detectedAt: entry.createdAt,
             });
           }
-        }
+        } catch { /* trade analysis best-effort */ }
+
       } catch (err) {
         logger.error("[pollNews] cascade failed for entry", {
           entryId: entry.id,
@@ -335,9 +501,14 @@ export async function pollNews(options: PollNewsOptions = {}): Promise<PollNewsR
       }
     }
 
-    // Generate alerts from collected signals
-    if (allSignals.length > 0) {
-      const alerts = generateAlerts(allSignals, watchlist);
+    // Deduplicate signals: merge multiple news_mention for the same stock
+    // into a single signal with the highest-confidence entry's message.
+    // This prevents 30× "news_mention" spam when many articles mention the same stock.
+    const dedupedSignals = deduplicateSignalsByStockAndType(allSignals);
+
+    // Generate alerts from deduplicated signals
+    if (dedupedSignals.length > 0) {
+      const alerts = generateAlerts(dedupedSignals, watchlist);
       if (alerts.length > 0) {
         storeAlerts(alerts, db);
         totalAlerts = alerts.length;

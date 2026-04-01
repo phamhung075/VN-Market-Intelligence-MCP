@@ -173,8 +173,17 @@ export async function runImpactChain(input: RunCascadeInput): Promise<CausalChai
     });
   }
 
+  // ── Step 2b: Compute σ-based macro stats from history (best-effort) ──────
+  let macroStats: import("../../domain/services/macroThresholds.js").MacroStats[] = [];
+  try {
+    const { getAllMacroStats } = await import("../../infrastructure/db/macroStatsStore.js");
+    macroStats = getAllMacroStats();
+  } catch {
+    // No historical data yet — σ adjustments will be skipped
+  }
+
   // ── Step 3: Build causal chain (pure domain call) ────────────────────────
-  return buildCausalChain(seedEntry, input.watchlist, ragResults, macroContext);
+  return buildCausalChain(seedEntry, input.watchlist, ragResults, macroContext, macroStats);
 }
 
 // ── Default RAG retriever (real implementation, loaded lazily) ───────────────

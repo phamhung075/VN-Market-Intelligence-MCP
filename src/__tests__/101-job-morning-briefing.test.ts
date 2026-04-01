@@ -650,6 +650,11 @@ describe("Task 101 — Morning Briefing Job", () => {
           alerts: [],
           watchlistSummary: [],
           newReports: [],
+          macroSnapshot: [],
+          sensitiveWarnings: [],
+          trackedCommodities: [],
+          unresolvedAlerts: [],
+          topConviction: null,
           generatedAt: new Date().toISOString(),
         };
       };
@@ -677,6 +682,11 @@ describe("Task 101 — Morning Briefing Job", () => {
           alerts: [],
           watchlistSummary: [],
           newReports: [],
+          macroSnapshot: [],
+          sensitiveWarnings: [],
+          trackedCommodities: [],
+          unresolvedAlerts: [],
+          topConviction: null,
           generatedAt: new Date().toISOString(),
         };
       };

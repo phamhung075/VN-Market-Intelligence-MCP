@@ -316,6 +316,8 @@ function makeMockHoseClient(codeToJson: Record<string, string> = {}) {
 let server: McpServer;
 
 beforeAll(async () => {
+  // Use isolated test DB to prevent corrupting production watchlist
+  process.env["DB_PATH"] = ":memory:";
   await initDatabase();
 
   server = new McpServer(

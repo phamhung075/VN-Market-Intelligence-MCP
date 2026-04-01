@@ -21,6 +21,11 @@
  * ─────────────────────────────────────────────────────────────────────────
  */
 
+// Suppress verbose LanceDB/Rust TRACE logs — only show errors
+// Must be set before any LanceDB import (Bun reads .env at startup too)
+if (!process.env.RUST_LOG) process.env.RUST_LOG = "error";
+if (!process.env.LANCEDB_LOG_LEVEL) process.env.LANCEDB_LOG_LEVEL = "warn";
+
 import { loadConfig } from "./infrastructure/config.js";
 import { createLogger } from "./infrastructure/logger.js";
 import { initDatabase } from "./infrastructure/db/index.js";
@@ -35,6 +40,17 @@ log.info("[bootstrap] Starting VN Market Intelligence MCP...");
 // ── 1. SQLite tables ───────────────────────────────────────────────────────
 await initDatabase();
 log.info("[bootstrap] Database ready");
+
+// ── 1b. Seed trade relationship profiles (first run only) ────────────────
+try {
+  const { seedTradeProfiles } = await import("./infrastructure/db/tradeStore.js");
+  // Import seed data from domain — only inserts if table is empty
+  const profiles = await import("./domain/services/tradeRelationships.js");
+  const allProfiles = ["VNM", "FPT", "VCB", "HPG", "VEA"]
+    .map((code) => profiles.getTradeProfile(code))
+    .filter((p): p is NonNullable<typeof p> => p !== null);
+  seedTradeProfiles(allProfiles);
+} catch { /* best-effort — trade analysis will work without seed data */ }
 
 // ── 2. Bun HTTP server + SSE transport ────────────────────────────────────
 const srv = await createBunServer({ port: cfg.port });

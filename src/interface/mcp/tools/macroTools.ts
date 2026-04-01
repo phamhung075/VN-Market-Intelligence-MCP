@@ -55,39 +55,35 @@ export interface MacroSnapshotResponse {
  */
 function oilSignal(brent: number): string {
   if (brent > 90) {
-    return "HIGH OIL (>$90) — cascade +0.10 oil_gas confidence";
+    return `CAO ($${brent.toFixed(0)}/bbl >$90) — tích cực dầu khí (GAS/PVD), áp lực hàng không (HVN/VJC) & logistics`;
   }
   if (brent < 70) {
-    return "LOW OIL (<$70) — cascade -0.10 oil_gas confidence";
+    return `THẤP ($${brent.toFixed(0)}/bbl <$70) — tiêu cực dầu khí, tích cực hàng không & logistics`;
   }
-  return "neutral";
+  return `bình thường ($${brent.toFixed(0)}/bbl)`;
 }
 
 /**
  * Derive the gold sector signal text.
- *
- * @param gold - Gold futures price in USD/oz.
  */
 function goldSignal(gold: number): string {
   if (gold > 2000) {
-    return "HIGH GOLD (>$2000) — cascade +0.05 gold_mining confidence";
+    return `CAO ($${gold.toFixed(0)}/oz) — tích cực vàng (PNJ), tín hiệu risk-off nếu quá cao`;
   }
-  return "neutral (gold < $2000)";
+  return `bình thường ($${gold.toFixed(0)}/oz)`;
 }
 
 /**
  * Derive the banking/real estate sector signal from the SBV refinancing rate.
- *
- * @param refi - Refinancing rate in percent per year.
  */
 function policySignal(refi: number): string {
   if (refi > 6) {
-    return "TIGHT POLICY (>6%) — cascade -0.08 banking, -0.10 real_estate";
+    return `THẮT CHẶT (${refi.toFixed(1)}% >6%) — áp lực ngân hàng (VCB) & bất động sản`;
   }
   if (refi < 4) {
-    return "LOOSE POLICY (<4%) — cascade +0.06 banking, +0.08 real_estate";
+    return `NỚI LỎNG (${refi.toFixed(1)}% <4%) — tích cực ngân hàng & bất động sản`;
   }
-  return `neutral (refi rate ${refi.toFixed(2)}% — below 6% threshold)`;
+  return `bình thường (${refi.toFixed(1)}%)`;
 }
 
 /**
@@ -97,7 +93,7 @@ function policySignal(refi: number): string {
  */
 function currencySignal(usdVnd: number): string {
   if (usdVnd > 25500) {
-    return `HIGH (USD/VND ${Math.round(usdVnd).toLocaleString("en-US")} — above 25500 threshold) — cascade -0.07 aviation, +0.05 steel`;
+    return `HIGH (USD/VND ${Math.round(usdVnd).toLocaleString("en-US")} — trên 25500) — áp lực: hàng không (HVN/VJC), ô tô nhập khẩu (VEA) | tích cực: thép xuất khẩu (HPG), nông sản (VHC)`;
   }
   return `LOW (USD/VND ${Math.round(usdVnd).toLocaleString("en-US")} — below 25500 threshold)`;
 }

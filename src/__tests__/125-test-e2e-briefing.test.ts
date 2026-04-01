@@ -451,6 +451,7 @@ describe("Task 125 — E2E Daily Briefing Flow", () => {
           vnexpress: async () => [],
           reuters: async () => [],
           vneconomy: async () => [],
+          tradingeconomics: async () => [],
         },
         db,
         ragRetriever: async () => [],
@@ -895,13 +896,14 @@ describe("Task 125 — E2E Daily Briefing Flow", () => {
           vnexpress: async () => { throw new Error("VnExpress timeout"); },
           reuters: async () => { throw new Error("Reuters timeout"); },
           vneconomy: async () => { throw new Error("VnEconomy timeout"); },
+          tradingeconomics: async () => { throw new Error("TE timeout"); },
         },
         db,
         ragRetriever: async () => [],
         watchlist: [],
       });
 
-      expect(result.errors).toBe(4);
+      expect(result.errors).toBe(5);
       expect(result.fetched).toBe(0);
       expect(result.inserted).toBe(0);
     });
@@ -1155,6 +1157,11 @@ describe("Task 125 — E2E Daily Briefing Flow", () => {
           alerts: [],
           watchlistSummary: [],
           newReports: [],
+          macroSnapshot: [],
+          sensitiveWarnings: [],
+          trackedCommodities: [],
+          unresolvedAlerts: [],
+          topConviction: null,
           generatedAt: new Date().toISOString(),
         };
       };
@@ -1181,6 +1188,11 @@ describe("Task 125 — E2E Daily Briefing Flow", () => {
           alerts: [],
           watchlistSummary: [],
           newReports: [],
+          macroSnapshot: [],
+          sensitiveWarnings: [],
+          trackedCommodities: [],
+          unresolvedAlerts: [],
+          topConviction: null,
           generatedAt: new Date().toISOString(),
         };
       };

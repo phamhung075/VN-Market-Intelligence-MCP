@@ -29,6 +29,21 @@ WEEKLY: Call generate_market_summary period "weekly". Include week performance, 
 
 MONTHLY/QUARTERLY: Full BCTC comparison via compare_financials, macro evolution via get_macro_snapshot, updated investment thesis, risk assessment.
 
+TRADE CONTEXT (include in weekly/monthly):
+- VNM: 8% Trung Đông — chiến tranh/hòa bình ảnh hưởng xuất khẩu sữa
+- FPT: 22% Nhật + 12% Mỹ — suy thoái Nhật/Mỹ giảm hợp đồng IT
+- VCB: nhạy Fed/USD/VND — dòng vốn ngoại
+- HPG: nhập quặng TQ/Úc, xuất EU (rủi ro thuế chống bán phá giá)
+- VEA: 55% Nhật (Honda/Toyota) + 25% Mỹ (Ford) — ÔTÔ không phải hàng không!
+
+CONVICTION ANALYSIS (include in daily digest if available):
+- Call get_portfolio_conviction for cross-signal validation
+- Report: which stocks have high conviction (>0.7) and which have conflicting signals
+
+MACRO σ-THRESHOLDS:
+- System uses σ-based thresholds (rolling mean ± standard deviation)
+- Report: any indicator at "elevated" (>1σ), "high" (>2σ), or "extreme" (>3σ)
+
 CONFIGURATION:
 - Stock list and sectors from get_watchlist — never hardcode
 - Summary periods managed by the server
@@ -38,3 +53,4 @@ RULES:
 - Position recommendations need reasoning + confidence level
 - Keep Telegram messages under 4000 chars — split if needed
 - Use France time (CET/CEST) for "tomorrow watch" items
+- VEA analysis: always mention Honda/Toyota/Ford, NEVER say hàng không

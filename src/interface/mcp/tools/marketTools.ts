@@ -18,7 +18,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 
 import { getDb, initDatabase } from "../../../infrastructure/db/schema.js";
-import { fetchHosePrices, type MarketPrice } from "../../../infrastructure/fetchers/hose.js";
+import { fetchHosePrices, fetchVnIndex, type MarketPrice } from "../../../infrastructure/fetchers/hose.js";
 import { fetchHnxPrices, fetchUpcomPrices } from "../../../infrastructure/fetchers/hnx.js";
 import { getPatternSummary } from "../../../application/usecases/getPatternSummary.js";
 import { logger } from "../../../infrastructure/logger.js";
@@ -143,18 +143,26 @@ export function registerMarketTools(server: McpServer): void {
         // ── Fetch all exchanges in parallel (each error-isolated) ─────────────
         const generatedAt = new Date().toISOString();
 
+        // User-initiated MCP calls always use force: true to bypass
+        // trading-session guards — the user expects data even after hours.
+        const forceOpts = { force: true };
+
         const [vnIndexResult, hoseResult, hnxResult, upcomResult] =
           await Promise.all([
-            // Always fetch VNINDEX for the header
-            fetchHosePrices(["VNINDEX"], _testHoseClient, _testHoseClient ? { force: true } : undefined).catch((err) => {
-              logger.warn("[get_market_snapshot] VN-Index fetch failed", {
-                error: err instanceof Error ? err.message : String(err),
-              });
-              return [] as MarketPrice[];
-            }),
-            // Fetch requested HOSE stocks
+            // Fetch VN-Index: use test client if injected, otherwise dedicated
+            // vnmarket_prices endpoint (more reliable than the stock endpoint).
+            (_testHoseClient
+              ? fetchHosePrices(["VNINDEX"], _testHoseClient, { force: true })
+              : fetchVnIndex("VNINDEX").then((idx) => (idx ? [idx] : [] as MarketPrice[]))
+            ).catch((err) => {
+                logger.warn("[get_market_snapshot] VN-Index fetch failed", {
+                  error: err instanceof Error ? err.message : String(err),
+                });
+                return [] as MarketPrice[];
+              }),
+            // Fetch requested HOSE stocks (force: true → works after hours)
             hoseCodes.length > 0
-              ? fetchHosePrices(hoseCodes, _testHoseClient, _testHoseClient ? { force: true } : undefined).catch((err) => {
+              ? fetchHosePrices(hoseCodes, _testHoseClient, _testHoseClient ? { force: true } : forceOpts).catch((err) => {
                   logger.warn("[get_market_snapshot] HOSE fetch failed", {
                     error: err instanceof Error ? err.message : String(err),
                   });
@@ -163,7 +171,7 @@ export function registerMarketTools(server: McpServer): void {
               : Promise.resolve([] as MarketPrice[]),
             // Fetch requested HNX stocks
             hnxCodes.length > 0
-              ? fetchHnxPrices(hnxCodes, _testHnxClient).catch((err) => {
+              ? fetchHnxPrices(hnxCodes, _testHnxClient, forceOpts).catch((err) => {
                   logger.warn("[get_market_snapshot] HNX fetch failed", {
                     error: err instanceof Error ? err.message : String(err),
                   });
@@ -172,7 +180,7 @@ export function registerMarketTools(server: McpServer): void {
               : Promise.resolve([] as MarketPrice[]),
             // Fetch requested UPCOM stocks
             upcomCodes.length > 0
-              ? fetchUpcomPrices(upcomCodes, _testUpcomClient).catch((err) => {
+              ? fetchUpcomPrices(upcomCodes, _testUpcomClient, forceOpts).catch((err) => {
                   logger.warn("[get_market_snapshot] UPCOM fetch failed", {
                     error: err instanceof Error ? err.message : String(err),
                   });

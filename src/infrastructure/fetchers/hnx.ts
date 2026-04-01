@@ -16,7 +16,7 @@
 import { logger } from "../logger.js";
 import { getDb } from "../db/schema.js";
 import type { HttpClient } from "./ssc.js";
-import { isTradingSession } from "./hose.js";
+import { isTradingSession, fetchFromVnDirectStockPrices } from "./hose.js";
 
 // Re-export for callers who only import from hnx.ts
 export type { MarketPrice } from "./hose.js";
@@ -298,6 +298,9 @@ export async function fetchHnxPrices(
     return [];
   }
 
+  const fetchedAt = new Date().toISOString();
+
+  // Source 1: HNX native API
   const client = httpClient ?? (await makeDefaultHttpClient());
   const url = buildHnxUrl(codes);
 
@@ -307,24 +310,44 @@ export async function fetchHnxPrices(
     const json = await client.get(url);
     const prices = parseHnxResponse(json, "HNX");
 
-    logger.info("[hnx] fetched HNX prices", {
-      requested: codes.length,
-      received: prices.length,
-    });
-
-    return prices;
+    if (prices.length > 0) {
+      logger.info("[hnx] fetched HNX prices", {
+        requested: codes.length,
+        received: prices.length,
+      });
+      return prices;
+    }
   } catch (err) {
-    logger.error("[hnx] failed to fetch HNX prices", {
-      codes,
-      url,
+    logger.debug("[hnx] HNX API failed, trying VnDirect stock_prices fallback", {
       error: err instanceof Error ? err.message : String(err),
     });
-    return [];
   }
+
+  // Source 2: VnDirect stock_prices API (works for HNX)
+  // Skip when an httpClient is injected (test mode).
+  if (!httpClient) {
+    try {
+      const prices = await fetchFromVnDirectStockPrices(codes, fetchedAt, "HNX");
+      if (prices.length > 0) {
+        logger.info("[hnx] fetched HNX from VnDirect stock_prices fallback", {
+          requested: codes.length,
+          received: prices.length,
+        });
+        return prices;
+      }
+    } catch {
+      // silent — fall through
+    }
+  }
+
+  logger.error("[hnx] all HNX price sources failed", { codes });
+  return [];
 }
 
 /**
  * Fetches live price and volume data for a list of UPCOM-listed stocks.
+ *
+ * Strategy: HNX native API → VnDirect stock_prices fallback.
  *
  * - Returns an empty array immediately if `codes` is empty.
  * - Returns an empty array (without throwing) on any network or parse error.
@@ -353,6 +376,9 @@ export async function fetchUpcomPrices(
     return [];
   }
 
+  const fetchedAt = new Date().toISOString();
+
+  // Source 1: HNX native API (type=upcom)
   const client = httpClient ?? (await makeDefaultHttpClient());
   const url = buildUpcomUrl(codes);
 
@@ -362,18 +388,36 @@ export async function fetchUpcomPrices(
     const json = await client.get(url);
     const prices = parseHnxResponse(json, "UPCOM");
 
-    logger.info("[hnx] fetched UPCOM prices", {
-      requested: codes.length,
-      received: prices.length,
-    });
-
-    return prices;
+    if (prices.length > 0) {
+      logger.info("[hnx] fetched UPCOM prices", {
+        requested: codes.length,
+        received: prices.length,
+      });
+      return prices;
+    }
   } catch (err) {
-    logger.error("[hnx] failed to fetch UPCOM prices", {
-      codes,
-      url,
+    logger.debug("[hnx] UPCOM API failed, trying VnDirect stock_prices fallback", {
       error: err instanceof Error ? err.message : String(err),
     });
-    return [];
   }
+
+  // Source 2: VnDirect stock_prices API (works for UPCOM)
+  // Skip when an httpClient is injected (test mode).
+  if (!httpClient) {
+    try {
+      const prices = await fetchFromVnDirectStockPrices(codes, fetchedAt, "UPCOM");
+      if (prices.length > 0) {
+        logger.info("[hnx] fetched UPCOM from VnDirect stock_prices fallback", {
+          requested: codes.length,
+          received: prices.length,
+        });
+        return prices;
+      }
+    } catch {
+      // silent — fall through
+    }
+  }
+
+  logger.error("[hnx] all UPCOM price sources failed", { codes });
+  return [];
 }

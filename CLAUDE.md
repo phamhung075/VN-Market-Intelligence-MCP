@@ -70,27 +70,36 @@ src/
 │       ├── alertGrouper.ts         ← Cluster related alerts within 15-min window (task 131)
 │       ├── bctcValidator.ts        ← Validate extracted BCTC data (accounting identity, magnitude) (task 132)
 │       ├── sentimentClassifier.ts  ← Rule-based bullish/bearish/neutral classifier, Vi + EN (task 134)
-│       └── volatilityCalculator.ts ← Historical volatility → adaptive signal thresholds (task 133)
+│       ├── volatilityCalculator.ts ← Historical volatility → adaptive signal thresholds (task 133)
+│       ├── sectorPeers.ts         ← Sector peer mapping → auto context stocks for sector-wide comparison
+│       ├── macroThresholds.ts     ← σ-based macro thresholds (replaces hardcoded $100/bbl, $4000/oz)
+│       ├── priceNewsValidator.ts  ← Price-news divergence detection + sensitive dates + historical parallels
+│       ├── convictionScorer.ts   ← 5-dimension cross-signal validation (price, volume, sentiment, cascade, sector)
+│       └── tradeRelationships.ts ← Stock-level trade map: export destinations, import sources, JV partners, revenue %
 ├── infrastructure/
 │   ├── config.ts                   ← Env config (dotenv + mcp.config.json)
 │   ├── logger.ts                   ← Structured logger
 │   ├── db/
 │   │   ├── schema.ts               ← SQLite init (all tables + indexes)
 │   │   ├── alertStore.ts           ← Alert read/write helpers
+│   │   ├── macroStatsStore.ts      ← Rolling mean/σ from commodity_prices_history + sbv_rates_history
+│   │   ├── commodityTracker.ts     ← Auto-extract & store commodity prices from news text (tracked_indicators table)
+│   │   ├── tradeStore.ts          ← Trade exposure SQLite CRUD + auto-learn from news
 │   │   └── index.ts
 │   ├── fetchers/
 │   │   ├── rss.ts                  ← RSS base fetcher
 │   │   ├── cafef.ts                ← CafeF news (Vietnamese)
 │   │   ├── vnexpress.ts            ← VnExpress Finance RSS
 │   │   ├── vneconomy.ts            ← VnEconomy stocks + finance RSS feeds (task 035)
-│   │   ├── reuters.ts              ← Reuters / AP News RSS
-│   │   ├── hose.ts                 ← HOSE prices (VnDirect API + CafeF fallback)
-│   │   ├── hnx.ts                  ← HNX + UPCOM prices
+│   │   ├── reuters.ts              ← Reuters / AP News RSS (Google News)
+│   │   ├── tradingEconomicsStream.ts ← TE global macro news stream (Level 1-2 cascade input)
+│   │   ├── hose.ts                 ← HOSE prices (3-tier: VnDirect legacy → stock_prices → CafeF) + fetchVnIndex()
+│   │   ├── hnx.ts                  ← HNX + UPCOM prices (HNX API → VnDirect stock_prices fallback)
 │   │   ├── ssc.ts                  ← SSC portal scraper — Puppeteer automation (task 031)
 │   │   ├── pdf.ts                  ← PDF downloader + pdf-parse text extractor
 │   │   └── index.ts
 │   ├── notifiers/
-│   │   ├── telegram.ts             ← Telegram Bot API notifier — never throws, uses Bun.fetch (task 034)
+│   │   ├── telegram.ts             ← Telegram Bot API notifier — Vietnamese format, plain text, auto-retry (task 034)
 │   │   └── index.ts
 │   └── rag/
 │       ├── embeddings.ts           ← HuggingFace multilingual-MiniLM (local ONNX)
@@ -99,7 +108,7 @@ src/
 │       └── index.ts
 ├── application/
 │   └── usecases/
-│       ├── assembleBriefing.ts     ← Morning briefing assembly
+│       ├── assembleBriefing.ts     ← Morning briefing + macro dashboard + sensitive dates + commodity tracker
 │       ├── assembleEveningSummary.ts ← Evening summary assembly
 │       ├── checkSscReports.ts      ← SSC nightly BCTC document check
 │       ├── fetchParseAndStoreBctc.ts ← SSC fetch → parse → store pipeline
@@ -107,9 +116,9 @@ src/
 │       ├── generatePeriodicSummary.ts ← Daily/weekly/monthly/quarterly/yearly summaries (task 130)
 │       ├── getPatternSummary.ts    ← Historical pattern detection
 │       ├── parseBctcReport.ts      ← BCTC PDF text → FinancialReport
-│       ├── pollNews.ts             ← RSS poll → embed → alert
+│       ├── pollNews.ts             ← 5-source poll (RSS + TE stream) → embed → alert
 │       ├── runImpactChain.ts       ← Causal chain orchestrator
-│       ├── scanMarket.ts           ← Market open/close price scan
+│       ├── scanMarket.ts           ← Market scan + sector context comparison (toàn ngành vs riêng lẻ)
 │       └── index.ts
 ├── interface/
 │   ├── mcp/
@@ -129,7 +138,8 @@ src/
 │       └── index.ts                ← startScheduler() — registers all cron jobs
 └── scheduler/
     ├── jobs.ts                     ← Cron job definitions (GMT+7)
-    ├── morningBriefingJob.ts       ← 08:00 daily briefing
+    ├── morningBriefingJob.ts       ← 08:00 daily briefing (macro dashboard + conviction + unresolved alerts)
+    ├── patternWatchJob.ts         ← Sunday 22:30 weekly pattern watch → Telegram
     ├── newsPollerJob.ts            ← Legacy 30-min news poll (superseded by intelligenceCycleJob)
     ├── marketScanJob.ts            ← 09:00 + 15:30 market open/close scan
     ├── sscCheckerJob.ts            ← 20:00 SSC nightly BCTC check
@@ -144,21 +154,29 @@ bctc-schema.ts                      ← Complete BCTC data model + SQLite DDL (r
 ## Key data flow
 
 ```
-News/SSC PDF → Fetcher → Parser → AnalysisEntry/FinancialReport
-                                        ↓
-                    bctcValidator (accounting identity check)
-                                        ↓
-                              Embedding (multilingual-MiniLM)
-                                        ↓
-                    LanceDB (vectors, temporal decay) + SQLite (structured)
-                                        ↓
-              RAG retrieval → sentimentClassifier → Impact chain analysis
-                                        ↓
-            volatilityCalculator → adaptive thresholds → signalDetector
-                                        ↓
-          alertDedup / alertCooldown / alertGrouper → Alert if watchlist impacted
-                                        ↓
-              HIGH/CRITICAL → Telegram notifier  +  periodic summaries
+News (5 sources) + SSC PDF → Fetcher → Parser → AnalysisEntry/FinancialReport
+         ↓                                              ↓
+  commodityTracker                        bctcValidator (accounting identity)
+  (auto-extract prices                              ↓
+   wheat/oil/gold/coffee              Embedding (multilingual-MiniLM)
+   → tracked_indicators)                            ↓
+         ↓                     LanceDB (vectors, temporal decay) + SQLite
+         ↓                                          ↓
+  macroStatsStore              RAG retrieval → sentimentClassifier → cascadeEngine
+  (rolling mean/σ                                   ↓
+   from history)           cascadeEngine + σ-based macro adjustments (50+ rules)
+         ↓                                          ↓
+         └──────────→  volatilityCalculator → adaptive thresholds → signalDetector
+                                                    ↓
+                  alertDedup / alertCooldown / alertGrouper → Alert if watchlist
+                                                    ↓
+                  tradeRelationships: "Middle East peace" → VNM 8% Iraq export
+                  priceNewsValidator: tin bullish + giá giảm → ⚠️ thận trọng
+                  sectorPeers: context prices → toàn ngành vs riêng lẻ
+                                                    ↓
+              HIGH/CRITICAL → Telegram (Vietnamese) + 📅 sensitive dates
+                                                    ↓
+              Morning briefing: macro dashboard + tracked commodities + warnings
 ```
 
 ## Tech stack
@@ -177,12 +195,64 @@ News/SSC PDF → Fetcher → Parser → AnalysisEntry/FinancialReport
 | zod | Tool input validation |
 | Telegram Bot API | Push HIGH/CRITICAL alerts to a Telegram chat (task 034) |
 
+## Scheduled Jobs (all times GMT+7 / Asia/Ho_Chi_Minh)
+
+### Core cron jobs (`src/scheduler/jobs.ts`)
+
+| Time | Job | Cron | What it does |
+|------|-----|------|-------------|
+| **Every 15 min** | `intelligenceCycle` | `*/15 * * * *` | **Main engine.** Market hours (09:00–15:30 M–F): full 5-step cycle (A→E). Off-hours: news poll only (step A). Concurrency guard with 14-min stale auto-release + 2-min per-step timeout. |
+| 08:00 M–F | `morningBriefing` | `0 8 * * 1-5` | Morning briefing: VN-Index + top stories + alerts + **macro dashboard (σ)** + **sensitive dates** + **tracked commodities** |
+| 09:00 M–F | `marketOpen` | `0 9 * * 1-5` | Scan prices + **sector context** + **price-news divergence** + **volume anomaly detection** |
+| 15:30 M–F | `marketClose` | `30 15 * * 1-5` | Same as open scan — close-of-day snapshot |
+| 20:00 daily | `sscCheck` | `0 20 * * *` | Check SSC portal for new BCTC filings |
+| 22:00 M–F | `eveningSummary` | `0 22 * * 1-5` | Generate evening market summary |
+
+### Intelligence cycle steps (15-min tick)
+
+| Step | What | When | Timeout |
+|------|------|------|---------|
+| A | `pollNews()` — fetch 5 sources + **auto-extract commodity prices** → `tracked_indicators` | Always | 2 min |
+| A2 | `fetchMacro()` — Yahoo Finance (Brent/Gold/USD) + Vietcombank SBV → **σ history accumulation** | Always (24/7) | 2 min |
+| B | `listSscDocuments()` — check SSC for each watchlist stock | Market hours only | 2 min |
+| C | `fetchHosePrices()` — prices for watchlist + **sector context peers** | Market hours only | 2 min |
+| D | `runImpactChain()` — cascade analysis with macro context + σ adjustments | Market hours only | 2 min |
+| E | `sendAlerts()` — read unnotified HIGH/CRITICAL from DB → Telegram (Vietnamese) | Market hours only | 2 min |
+
+### Periodic summary jobs (`src/scheduler/summaryJobs.ts`)
+
+| Schedule | Job | Cron |
+|----------|-----|------|
+| 22:30 daily | Daily summary | `30 22 * * *` |
+| 23:00 Sunday | Weekly summary | `0 23 * * 0` |
+| 00:30 1st of month | Monthly summary | `30 0 1 * *` |
+| 01:00 Jan/Apr/Jul/Oct 1st | Quarterly summary | `0 1 1 1,4,7,10 *` |
+| 02:00 Jan 2nd | Yearly summary | `0 2 2 1 *` |
+
+### Data sources & fallback chain
+
+| Source | Primary | Fallback 1 | Fallback 2 | Status |
+|--------|---------|-----------|-----------|--------|
+| **VN-Index** | `api-finfo.vndirect.com.vn/v4/vnmarket_prices` | — | — | ✅ |
+| **HOSE stocks** | VnDirect legacy `/v4/stocks` (5s) | VnDirect `stock_prices` (10s) | CafeF banggia (10s) | ✅ 3-tier |
+| **HNX stocks** | HNX API `api.hnx.vn` (15s) | VnDirect `stock_prices` (10s) | — | ✅ 2-tier |
+| **UPCOM stocks** | HNX API type=upcom (15s) | VnDirect `stock_prices` (10s) | — | ✅ 2-tier |
+| **CafeF news** | `cafef.vn/rss` | — | — | ✅ Browser UA |
+| **VnExpress** | `vnexpress.net/rss` | — | — | ✅ Browser UA |
+| **VnEconomy** | `vneconomy.vn/rss` (2 feeds) | — | — | ✅ Browser UA |
+| **Google News** | `news.google.com/rss` (redirect-follow) | Secondary feed | — | ✅ |
+| **Yahoo Finance** | `query1.finance.yahoo.com` | — | — | ✅ Commodities |
+| **Vietcombank FX** | `portal.vietcombank.com.vn` XML | — | — | ✅ USD/VND |
+| **TE Indicators** | `tradingeconomics.com/vietnam/indicators` scrape | — | — | ✅ CPI/GDP |
+| **TE News Stream** | `tradingeconomics.com/ws/stream.ashx` JSON | — | — | ✅ Global macro news (country, category, importance 1-3) |
+| **SSC portal** | Puppeteer automation | — | — | ✅ BCTC PDFs |
+
 ## Development
 
 ```bash
 bun install           # install dependencies
 bun --watch src/index.ts   # dev with hot reload
-bun run src/index.ts  # production
+./start.sh            # production (suppresses LanceDB TRACE, rotates logs)
 
 # Server endpoints
 GET  http://localhost:3000/sse               ← Claude connects here
@@ -362,14 +432,35 @@ src/
 - `src/interface/mcp/tools/summaryTools.ts` — `get_market_summary`, `generate_market_summary` MCP tools (task 130)
 - `src/interface/mcp/server.ts` — updated to 20 registered tools
 
-### In Progress (Sprint 013)
+**Fetcher Reliability + Sector Context + Telegram Vietnamese (Sprint 013)**
+- `src/infrastructure/fetchers/hose.ts` — 3-tier fallback: VnDirect legacy → `api-finfo.vndirect.com.vn/v4/stock_prices` → CafeF banggia. New `fetchVnIndex()` via `vnmarket_prices` endpoint
+- `src/infrastructure/fetchers/hnx.ts` — VnDirect `stock_prices` fallback when HNX native API is down (works for HNX+UPCOM)
+- `src/infrastructure/fetchers/reuters.ts` — `maxRedirects: 5` to follow Google News 302 redirects
+- `src/infrastructure/fetchers/cafef.ts`, `vnexpress.ts`, `vneconomy.ts` — browser User-Agent (avoids 503 blocks)
+- `src/scheduler/intelligenceCycleJob.ts` — stale guard auto-release after 14 min + per-step 2-min timeout (prevents permanent hangs)
+- `src/interface/mcp/tools/marketTools.ts` — `force: true` on user-initiated MCP calls (data available after market hours)
+- `src/domain/services/sectorPeers.ts` — sector peer mapping (DomainType → top stocks), auto context stocks, sector-wide vs stock-specific classification
+- `src/application/usecases/scanMarket.ts` — fetches sector context prices, computes sector average, enriches alerts with "toàn ngành" vs "riêng lẻ"
+- `src/application/usecases/pollNews.ts` — signal deduplication: merges N× `news_mention` for same stock into single signal with top headlines
+- `src/infrastructure/notifiers/telegram.ts` — full Vietnamese format, plain text (no Markdown errors), severity labels (NGHIÊM TRỌNG/QUAN TRỌNG/LƯU Ý), real data in messages
+- `src/infrastructure/fetchers/tradingEconomicsStream.ts` — Trading Economics global news stream (`/ws/stream.ashx`), Level 1-2 cascade input with country/category/importance metadata
+- `src/application/usecases/pollNews.ts` — now fetches **5 sources** in parallel (added TE stream as 5th source)
+- `bctc-schema.ts` — added `automotive` DomainType (VEA/VEAM — Honda/Toyota/Ford JV)
+- `src/domain/services/macroThresholds.ts` — σ-based thresholds (z-score classification: normal/elevated/high/extreme) replaces hardcoded $100/bbl etc.
+- `src/infrastructure/db/macroStatsStore.ts` — reads commodity_prices_history + sbv_rates_history, computes rolling mean/σ for each indicator
+- `src/domain/services/cascadeEngine.ts` — `applyDynamicMacroAdjustments()` uses σ instead of fixed thresholds; expanded to **50+ SECTOR_RULES** (Fed, DXY, US-China, geopolitics, FDI, bonds, EV, pharma, insurance, energy transition)
+- `src/domain/services/priceNewsValidator.ts` — cross-validates news sentiment vs price action ("tin bullish + giá giảm → thận trọng"); volume anomaly detection; sensitive date calendar (đáo hạn phái sinh, mùa BCTC, FOMC, Tết, window dressing)
+- `src/infrastructure/db/commodityTracker.ts` — auto-extracts commodity prices from news text (regex patterns for 20+ commodities: oil, gold, wheat, coffee, copper, rice, rubber, indices, CPI, GDP, interest rates) → `tracked_indicators` table auto-expands
+- `src/application/usecases/pollNews.ts` — wired commodity auto-extraction on every poll cycle
+- `src/application/usecases/scanMarket.ts` — wired price-news divergence validator + volume anomaly detection into signal pipeline
+- `src/application/usecases/runImpactChain.ts` — wired σ-based macro stats into cascade engine
+- `src/application/usecases/assembleBriefing.ts` — enhanced with macro dashboard (σ status), sensitive date warnings, auto-tracked commodities list
+
+### In Progress
 - Circuit breaker pattern for fetchers — prevents cascade failures on source outages (task 136)
 - System health MCP tool — `get_system_health` exposing job status, DB size, RAG size (planned: `src/interface/mcp/tools/systemTools.ts`)
 
 ### Deferred (Sprint 008+ backlog)
-- `src/infrastructure/fetchers/yahooFinance.ts` — Brent crude, gold, USD/VND (task 025)
-- `src/infrastructure/fetchers/sbv.ts` — SBV central bank rates + FX (task 028)
-- `src/infrastructure/fetchers/tradingEconomics.ts` — CPI, GDP, interest rate (task 024)
 - E2E test — daily briefing flow (task 125, after 024)
 
 ## Data model references

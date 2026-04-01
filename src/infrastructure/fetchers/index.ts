@@ -41,9 +41,14 @@ export { fetchReuters } from "./reuters.js";
 // ── VnEconomy RSS fetcher ───────────────────────────────────────────────────
 export { fetchVnEconomy } from "./vneconomy.js";
 
+// ── Trading Economics global news stream ────────────────────────────────────
+export { fetchTradingEconomicsStream } from "./tradingEconomicsStream.js";
+
 // ── Task 026: HOSE market data fetcher (VnDirect API) ─────────────────────────
 export {
   fetchHosePrices,
+  fetchVnIndex,
+  fetchFromVnDirectStockPrices,
   storeMarketPrices,
   getAvgVolume,
   buildVnDirectUrl,

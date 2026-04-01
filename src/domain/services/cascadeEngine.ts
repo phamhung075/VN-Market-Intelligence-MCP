@@ -15,8 +15,9 @@
  */
 
 import type { AnalysisEntry, AnalysisLevel, Sentiment, ImpactDirection } from "./newsNormalizer.js";
-import type { DomainType } from "../../../bctc-schema.js";
+import type { DomainType } from "../../../bctc-schema";
 import { classifySentiment } from "./sentimentClassifier.js";
+import { classifyDeviation, deviationToDelta, type MacroStats, type MacroDeviation } from "./macroThresholds.js";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Exported types
@@ -197,10 +198,207 @@ const MACRO_ADJUSTMENTS: MacroRule[] = [
     domain: "steel",
     delta: +0.05,
   },
+  // USD/VND > 25500 → export agriculture benefits
+  {
+    label: "usdVnd>25500",
+    condition: (ctx) => ctx.usdVndMarket !== null && ctx.usdVndMarket > 25500,
+    domain: "agriculture",
+    delta: +0.06,
+  },
+  // USD/VND > 25500 → automotive (import parts cost up)
+  {
+    label: "usdVnd>25500",
+    condition: (ctx) => ctx.usdVndMarket !== null && ctx.usdVndMarket > 25500,
+    domain: "automotive",
+    delta: -0.05,
+  },
+  // USD/VND < 24500 → reverse effects
+  {
+    label: "usdVnd<24500",
+    condition: (ctx) => ctx.usdVndMarket !== null && ctx.usdVndMarket < 24500,
+    domain: "agriculture",
+    delta: -0.05,
+  },
+  {
+    label: "usdVnd<24500",
+    condition: (ctx) => ctx.usdVndMarket !== null && ctx.usdVndMarket < 24500,
+    domain: "securities",
+    delta: +0.06,
+  },
+  // Brent crude > 100 → severe oil crisis
+  {
+    label: "brentCrudeUSD>100",
+    condition: (ctx) => ctx.brentCrudeUSD !== null && ctx.brentCrudeUSD > 100,
+    domain: "aviation",
+    delta: -0.12,
+  },
+  {
+    label: "brentCrudeUSD>100",
+    condition: (ctx) => ctx.brentCrudeUSD !== null && ctx.brentCrudeUSD > 100,
+    domain: "oil_gas",
+    delta: +0.15,
+  },
+  {
+    label: "brentCrudeUSD>100",
+    condition: (ctx) => ctx.brentCrudeUSD !== null && ctx.brentCrudeUSD > 100,
+    domain: "logistics",
+    delta: -0.10,
+  },
+  {
+    label: "brentCrudeUSD>100",
+    condition: (ctx) => ctx.brentCrudeUSD !== null && ctx.brentCrudeUSD > 100,
+    domain: "retail",
+    delta: -0.06,
+  },
+  // Gold > 3000 → strong safe haven demand
+  {
+    label: "goldUSDPerOz>3000",
+    condition: (ctx) => ctx.goldUSDPerOz !== null && ctx.goldUSDPerOz > 3000,
+    domain: "gold_mining",
+    delta: +0.10,
+  },
+  // Gold > 4000 → extreme risk-off environment
+  {
+    label: "goldUSDPerOz>4000",
+    condition: (ctx) => ctx.goldUSDPerOz !== null && ctx.goldUSDPerOz > 4000,
+    domain: "gold_mining",
+    delta: +0.08,
+  },
+  {
+    label: "goldUSDPerOz>4000",
+    condition: (ctx) => ctx.goldUSDPerOz !== null && ctx.goldUSDPerOz > 4000,
+    domain: "securities",
+    delta: -0.06,
+  },
+  // Overnight rate > 5% → tight liquidity
+  {
+    label: "overnightRatePct>5",
+    condition: (ctx) => ctx.overnightRatePct !== null && ctx.overnightRatePct > 5,
+    domain: "securities",
+    delta: -0.08,
+  },
+  {
+    label: "overnightRatePct>5",
+    condition: (ctx) => ctx.overnightRatePct !== null && ctx.overnightRatePct > 5,
+    domain: "real_estate",
+    delta: -0.08,
+  },
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════
-// Macro adjustment helper
+// Dynamic macro adjustments (σ-based, replaces hardcoded thresholds)
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * Maps each macro indicator to the domains it affects and the direction.
+ *
+ * When an indicator is "above" its rolling mean:
+ *   - domains listed under "above" get a positive delta (bullish)
+ *   - domains listed under "below_means_bearish" get a negative delta (bearish)
+ *
+ * The delta magnitude is computed from deviationToDelta (±0.06/0.10/0.15)
+ * based on how many σ away from the mean the current value is.
+ */
+interface DynamicMacroMapping {
+  indicator: string;
+  /** Domains that benefit when indicator is ABOVE mean */
+  aboveBullish: DomainType[];
+  /** Domains that suffer when indicator is ABOVE mean */
+  aboveBearish: DomainType[];
+}
+
+const DYNAMIC_MACRO_MAP: DynamicMacroMapping[] = [
+  {
+    indicator: "brentCrudeUSD",
+    aboveBullish: ["oil_gas"],
+    aboveBearish: ["aviation", "logistics", "retail"],
+  },
+  {
+    indicator: "goldUSDPerOz",
+    aboveBullish: ["gold_mining"],
+    aboveBearish: ["securities"], // extreme gold = risk-off = sell equities
+  },
+  {
+    indicator: "usdVndRate",
+    aboveBullish: ["agriculture", "steel"],   // exporters benefit
+    aboveBearish: ["aviation", "automotive"], // importers suffer
+  },
+  {
+    indicator: "usdVndOfficial",
+    aboveBullish: ["agriculture"],
+    aboveBearish: ["aviation"],
+  },
+  {
+    indicator: "refinancingRatePct",
+    aboveBullish: ["banking"],        // NIM expansion
+    aboveBearish: ["real_estate"],    // borrowing cost up
+  },
+  {
+    indicator: "overnightRatePct",
+    aboveBullish: [],
+    aboveBearish: ["securities", "real_estate"], // tight liquidity
+  },
+];
+
+/**
+ * Apply **dynamic σ-based** macro adjustments to domain-level entries.
+ *
+ * Instead of "oil > $100 → +0.15", this uses:
+ *   "oil is +2.3σ above 30-day mean → HIGH → +0.10 for oil_gas, -0.10 for aviation"
+ *
+ * Falls through to the old hardcoded `applyMacroAdjustments` if no stats are provided.
+ *
+ * @param entries    - Chain entries to adjust (only "domain" level are modified)
+ * @param macroStats - Pre-computed rolling statistics from macroStatsStore
+ * @returns Array of MacroDeviation summaries for logging/display
+ */
+export function applyDynamicMacroAdjustments(
+  entries: CausalChainEntry[],
+  macroStats: MacroStats[],
+): MacroDeviation[] {
+  const deviations: MacroDeviation[] = [];
+
+  for (const stats of macroStats) {
+    const deviation = classifyDeviation(stats);
+    deviations.push(deviation);
+
+    if (deviation.level === "normal") continue;
+
+    // Find the mapping for this indicator
+    const mapping = DYNAMIC_MACRO_MAP.find((m) => m.indicator === stats.name);
+    if (!mapping) continue;
+
+    const rawDelta = deviationToDelta(deviation.level, deviation.direction);
+    if (rawDelta === 0) continue;
+
+    for (const entry of entries) {
+      if (entry.level !== "domain") continue;
+
+      // Check bullish domains (benefit when above mean)
+      for (const domain of mapping.aboveBullish) {
+        if (!entry.affectedDomains.includes(domain)) continue;
+        const delta = rawDelta; // positive when above = good for bullish domains
+        const newConf = Math.min(0.99, Math.max(0.05, entry.confidence + delta));
+        entry.reasoning += ` [σ-Macro: ${deviation.summary} → ${delta >= 0 ? "+" : ""}${delta.toFixed(2)} ${domain}]`;
+        entry.confidence = newConf;
+      }
+
+      // Check bearish domains (suffer when above mean)
+      for (const domain of mapping.aboveBearish) {
+        if (!entry.affectedDomains.includes(domain)) continue;
+        const delta = -rawDelta; // negative when above = bad for bearish domains
+        const newConf = Math.min(0.99, Math.max(0.05, entry.confidence + delta));
+        entry.reasoning += ` [σ-Macro: ${deviation.summary} → ${delta >= 0 ? "+" : ""}${delta.toFixed(2)} ${domain}]`;
+        entry.confidence = newConf;
+      }
+    }
+  }
+
+  return deviations;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Legacy macro adjustment helper (fallback when no stats available)
 // ═══════════════════════════════════════════════════════════════════════════
 
 /**
@@ -409,6 +607,309 @@ const SECTOR_RULES: SectorRule[] = [
     confidence: 0.65,
     title: "USD/VND giảm — giảm doanh thu xuất khẩu thủy sản tính bằng VND",
   },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Global macro → Vietnam cascade (Level 1 → Level 2-3)
+  // Triggered by Trading Economics stream data
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // ── Fed / US monetary policy ───────────────────────────────────────────────
+  {
+    keywords: ["fed rate", "federal reserve", "fomc", "fed funds", "powell", "fed hike", "fed cut"],
+    domain: "banking",
+    direction: "neutral",
+    confidence: 0.72,
+    title: "Fed thay đổi chính sách — tác động đến dòng vốn ngoại và lãi suất VN",
+  },
+  {
+    keywords: ["fed rate", "federal reserve", "fomc", "fed tightening", "quantitative tightening"],
+    domain: "securities",
+    direction: "down",
+    confidence: 0.70,
+    title: "Fed thắt chặt — rủi ro rút vốn ngoại khỏi thị trường mới nổi (EM outflow)",
+  },
+  {
+    keywords: ["fed cut", "fed easing", "rate cut", "dovish fed"],
+    domain: "real_estate",
+    direction: "up",
+    confidence: 0.68,
+    title: "Fed nới lỏng — giảm áp lực tỷ giá, hỗ trợ dòng vốn vào bất động sản",
+  },
+
+  // ── US-China trade / tariffs ───────────────────────────────────────────────
+  {
+    keywords: ["us tariff", "trade war", "china tariff", "trade tension", "us-china"],
+    domain: "agriculture",
+    direction: "up",
+    confidence: 0.65,
+    title: "Chiến tranh thương mại Mỹ-Trung — VN hưởng lợi từ chuyển dịch chuỗi cung ứng (thủy sản, nông sản)",
+  },
+  {
+    keywords: ["us tariff", "trade war", "china tariff", "trade tension"],
+    domain: "tech",
+    direction: "up",
+    confidence: 0.60,
+    title: "Chiến tranh thương mại — FDI công nghệ chuyển dịch sang VN (Samsung, Apple suppliers)",
+  },
+  {
+    keywords: ["tariff on vietnam", "us vietnam tariff", "vietnam trade deficit"],
+    domain: "agriculture",
+    direction: "down",
+    confidence: 0.75,
+    title: "Mỹ áp thuế VN — rủi ro xuất khẩu thủy sản và nông sản sang Mỹ",
+  },
+  {
+    keywords: ["tariff on vietnam", "us vietnam tariff"],
+    domain: "retail",
+    direction: "down",
+    confidence: 0.65,
+    title: "Mỹ áp thuế VN — rủi ro xuất khẩu dệt may và hàng tiêu dùng",
+  },
+
+  // ── China economy / PMI / slowdown ─────────────────────────────────────────
+  {
+    keywords: ["china pmi", "china manufacturing", "china slowdown", "china gdp"],
+    domain: "steel",
+    direction: "down",
+    confidence: 0.75,
+    title: "Trung Quốc giảm tốc — giảm nhu cầu thép và vật liệu xây dựng khu vực",
+  },
+  {
+    keywords: ["china pmi", "china manufacturing", "china recovery", "china stimulus"],
+    domain: "oil_gas",
+    direction: "up",
+    confidence: 0.65,
+    title: "Trung Quốc phục hồi — tăng nhu cầu năng lượng khu vực",
+  },
+  {
+    keywords: ["china stock", "shanghai composite", "hang seng", "china market"],
+    domain: "securities",
+    direction: "neutral",
+    confidence: 0.60,
+    title: "Thị trường TQ biến động — tâm lý lan tỏa sang EM Đông Nam Á",
+  },
+
+  // ── Commodity prices ───────────────────────────────────────────────────────
+  {
+    keywords: ["gold price", "giá vàng", "gold surge", "gold rally", "precious metal"],
+    domain: "gold_mining",
+    direction: "up",
+    confidence: 0.85,
+    title: "Vàng tăng — tích cực trực tiếp cho PNJ và ngành vàng",
+  },
+  {
+    keywords: ["gold price fall", "giá vàng giảm", "gold drop"],
+    domain: "gold_mining",
+    direction: "down",
+    confidence: 0.80,
+    title: "Vàng giảm — tiêu cực cho ngành vàng và trang sức",
+  },
+  {
+    keywords: ["wheat", "soybean", "corn", "grain", "food price", "commodity price"],
+    domain: "agriculture",
+    direction: "neutral",
+    confidence: 0.60,
+    title: "Giá nông sản thế giới biến động — tác động đến chi phí/doanh thu nông nghiệp VN",
+  },
+  {
+    keywords: ["copper price", "giá đồng", "copper surge", "industrial metal"],
+    domain: "steel",
+    direction: "up",
+    confidence: 0.55,
+    title: "Giá kim loại công nghiệp tăng — tín hiệu tích cực cho ngành vật liệu",
+  },
+
+  // ── Global inflation / CPI ─────────────────────────────────────────────────
+  {
+    keywords: ["us inflation", "us cpi", "consumer price", "inflation surge", "inflation rate"],
+    domain: "banking",
+    direction: "neutral",
+    confidence: 0.65,
+    title: "Lạm phát Mỹ — ảnh hưởng kỳ vọng Fed, gián tiếp tác động lãi suất VN",
+  },
+  {
+    keywords: ["global recession", "recession risk", "economic downturn", "slowdown"],
+    domain: "securities",
+    direction: "down",
+    confidence: 0.70,
+    title: "Rủi ro suy thoái toàn cầu — giảm dòng vốn vào thị trường mới nổi",
+  },
+  {
+    keywords: ["global recession", "recession risk", "economic downturn"],
+    domain: "logistics",
+    direction: "down",
+    confidence: 0.65,
+    title: "Rủi ro suy thoái — giảm khối lượng thương mại và vận tải quốc tế",
+  },
+
+  // ── DXY / Dollar strength ──────────────────────────────────────────────────
+  {
+    keywords: ["dollar index", "dxy", "strong dollar", "dollar surge", "usd rally"],
+    domain: "securities",
+    direction: "down",
+    confidence: 0.68,
+    title: "USD mạnh — rút vốn ngoại khỏi thị trường mới nổi (Sell VN → Buy USD assets)",
+  },
+  {
+    keywords: ["dollar index", "dxy", "weak dollar", "dollar fall"],
+    domain: "securities",
+    direction: "up",
+    confidence: 0.65,
+    title: "USD yếu — dòng vốn ngoại quay lại thị trường mới nổi",
+  },
+
+  // ── Geopolitical DE-ESCALATION (MUST be before escalation — first match wins) ──
+  // When news contains BOTH "war" and "peace", de-escalation wins because
+  // peace/ceasefire keywords are checked first.
+  // Moved from bottom of array to before escalation rules.
+  {
+    keywords: ["peace", "ceasefire", "war end", "de-escalation", "hòa bình", "ngừng bắn", "hạ nhiệt", "peace talks", "peace deal", "peace prospects", "iran peace", "iran address", "iran talks", "iran deal", "hormuz reopen"],
+    domain: "oil_gas",
+    direction: "down",
+    confidence: 0.80,
+    title: "Hạ nhiệt địa chính trị — giá dầu giảm (nguồn cung phục hồi, Hormuz mở lại)",
+  },
+  {
+    keywords: ["peace", "ceasefire", "war end", "de-escalation", "hòa bình", "hạ nhiệt", "peace talks"],
+    domain: "aviation",
+    direction: "up",
+    confidence: 0.78,
+    title: "Hạ nhiệt — giá nhiên liệu giảm, tích cực cho hàng không (VJC, HVN)",
+  },
+  {
+    keywords: ["peace", "ceasefire", "war end", "de-escalation", "hòa bình", "hạ nhiệt", "hormuz reopen"],
+    domain: "logistics",
+    direction: "up",
+    confidence: 0.75,
+    title: "Hạ nhiệt — chuỗi cung ứng phục hồi, vận tải biển bình thường hóa",
+  },
+  {
+    keywords: ["peace", "ceasefire", "war end", "de-escalation", "hòa bình", "hạ nhiệt", "risk-on"],
+    domain: "gold_mining",
+    direction: "down",
+    confidence: 0.75,
+    title: "Hạ nhiệt — vàng giảm (bớt nhu cầu trú ẩn safe haven → risk-on)",
+  },
+  {
+    keywords: ["peace", "ceasefire", "war end", "de-escalation", "hòa bình", "hạ nhiệt", "risk-on"],
+    domain: "securities",
+    direction: "up",
+    confidence: 0.78,
+    title: "Hạ nhiệt — risk-on, dòng vốn ngoại quay lại thị trường mới nổi",
+  },
+  {
+    keywords: ["peace", "ceasefire", "war end", "de-escalation", "hòa bình", "hạ nhiệt"],
+    domain: "real_estate",
+    direction: "up",
+    confidence: 0.60,
+    title: "Hạ nhiệt — kỳ vọng lãi suất ổn định, tâm lý đầu tư BĐS cải thiện",
+  },
+  {
+    keywords: ["peace", "ceasefire", "war end", "de-escalation", "hạ nhiệt"],
+    domain: "retail",
+    direction: "up",
+    confidence: 0.60,
+    title: "Hạ nhiệt — chi phí vận hành giảm, tích cực bán lẻ",
+  },
+  {
+    keywords: ["peace", "ceasefire", "war end", "de-escalation", "hạ nhiệt"],
+    domain: "steel",
+    direction: "up",
+    confidence: 0.55,
+    title: "Hạ nhiệt — thương mại quốc tế phục hồi, xuất khẩu cải thiện",
+  },
+
+  // ── Geopolitical ESCALATION (after de-escalation — only fires if no peace keyword matched) ──
+  {
+    keywords: ["war", "conflict", "geopolitical", "middle east", "chiến tranh", "xung đột", "iran attack", "iran strike", "iran war", "strait of hormuz", "military strike"],
+    domain: "oil_gas",
+    direction: "up",
+    confidence: 0.78,
+    title: "Rủi ro địa chính trị — đẩy giá dầu lên (supply disruption)",
+  },
+  {
+    keywords: ["war", "conflict", "geopolitical", "middle east", "strait of hormuz"],
+    domain: "logistics",
+    direction: "down",
+    confidence: 0.72,
+    title: "Xung đột — gián đoạn chuỗi cung ứng toàn cầu, tăng chi phí vận tải",
+  },
+  {
+    keywords: ["war", "conflict", "geopolitical", "risk aversion", "safe haven"],
+    domain: "gold_mining",
+    direction: "up",
+    confidence: 0.75,
+    title: "Rủi ro địa chính trị — vàng tăng do nhu cầu trú ẩn (safe haven)",
+  },
+
+  // ── FDI / foreign investment ───────────────────────────────────────────────
+  {
+    keywords: ["fdi vietnam", "foreign investment vietnam", "đầu tư nước ngoài", "fdi tăng"],
+    domain: "real_estate",
+    direction: "up",
+    confidence: 0.72,
+    title: "FDI vào VN tăng — tích cực cho BĐS khu công nghiệp và đô thị",
+  },
+  {
+    keywords: ["fdi vietnam", "foreign investment vietnam", "fdi tăng"],
+    domain: "tech",
+    direction: "up",
+    confidence: 0.70,
+    title: "FDI vào VN tăng — tích cực cho công nghệ (outsourcing, R&D centers)",
+  },
+
+  // ── Bond yields / treasury ─────────────────────────────────────────────────
+  {
+    keywords: ["treasury yield", "10-year yield", "bond yield", "government bond"],
+    domain: "real_estate",
+    direction: "down",
+    confidence: 0.62,
+    title: "Lợi suất trái phiếu tăng — tăng chi phí vốn, tiêu cực cho BĐS",
+  },
+  {
+    keywords: ["treasury yield", "10-year yield", "bond yield rise"],
+    domain: "banking",
+    direction: "up",
+    confidence: 0.58,
+    title: "Lợi suất trái phiếu tăng — mở rộng biên lãi suất cho ngân hàng",
+  },
+
+  // ── Automotive / EV ────────────────────────────────────────────────────────
+  {
+    keywords: ["auto sales", "car sales", "automobile", "honda", "toyota", "ford", "ev sales", "electric vehicle"],
+    domain: "automotive",
+    direction: "neutral",
+    confidence: 0.70,
+    title: "Tin ngành ô tô — tác động trực tiếp đến VEAM (Honda/Toyota/Ford VN)",
+  },
+
+  // ── Pharma / healthcare ────────────────────────────────────────────────────
+  {
+    keywords: ["pharma", "healthcare", "drug approval", "dược phẩm", "y tế"],
+    domain: "pharma",
+    direction: "neutral",
+    confidence: 0.60,
+    title: "Tin ngành dược — tác động đến DHG, IMP, DMC",
+  },
+
+  // ── Insurance: natural disaster / catastrophe ──────────────────────────────
+  {
+    keywords: ["typhoon", "flood", "natural disaster", "bão", "lũ lụt", "thiên tai", "catastrophe"],
+    domain: "insurance",
+    direction: "down",
+    confidence: 0.75,
+    title: "Thiên tai — tăng chi trả bồi thường bảo hiểm (BVH, PVI)",
+  },
+
+  // ── Energy transition ──────────────────────────────────────────────────────
+  {
+    keywords: ["renewable energy", "solar", "wind power", "năng lượng tái tạo", "điện mặt trời", "điện gió"],
+    domain: "utilities",
+    direction: "up",
+    confidence: 0.65,
+    title: "Chuyển đổi năng lượng — tích cực cho REE, PC1, GEG (năng lượng sạch)",
+  },
+
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -459,6 +960,7 @@ export function buildCausalChain(
   watchlist: WatchlistEntry[],
   ragResults?: SearchResult[],
   macroContext?: MacroContext | null,
+  macroStats?: MacroStats[],
 ): CausalChain {
   const chainId = `chain-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   const summaryLower = seedEntry.summary.toLowerCase();
@@ -583,6 +1085,11 @@ export function buildCausalChain(
   // Modifies domain entries in-place; adjusts confidence + annotates reasoning.
   if (macroContext != null) {
     applyMacroAdjustments(entries, macroContext);
+  }
+
+  // ── Step 2c: Apply σ-based dynamic adjustments (when stats available) ──
+  if (macroStats && macroStats.length > 0) {
+    applyDynamicMacroAdjustments(entries, macroStats);
   }
 
   // ── Step 3: Action entries from watchlist ─────────────────────────────

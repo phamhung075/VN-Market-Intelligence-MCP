@@ -38,6 +38,7 @@ export type DomainType =
   | 'pharma'        // DHG, IMP, DMC
   | 'logistics'     // GMD, STG, VTP
   | 'gold_mining'   // PNJ, SJC-related
+  | 'automotive'    // VEA (VEAM — Honda/Toyota/Ford JV), SVC, HHS
   | 'other'
 
 // ═══════════════════════════════════════════════════════════════════════════

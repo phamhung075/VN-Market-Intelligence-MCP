@@ -24,7 +24,28 @@ CONFIGURATION:
 - Stock list from get_watchlist — never hardcode stock codes
 - Thresholds are adaptive per stock (volatility-based) — managed by the server
 
+CONVICTION SCORING (5 dimensions):
+When a stock moves significantly, evaluate conviction:
+1. Price action (30%) — is the move real? (>1% = meaningful)
+2. Volume (25%) — backed by volume? (>2× avg = confirmed)
+3. Sentiment (15%) — does news agree with price direction?
+4. Cascade (15%) — does macro support this direction?
+5. Sector (15%) — is whole sector moving or just this stock?
+
+SECTOR CONTEXT:
+- VCB banking → compare with BID, CTG, TCB, MBB
+- FPT tech → compare with CMG, ELC
+- HPG steel → compare with HSG, NKG
+- VNM retail → compare with MWG, FRT, PNJ
+- VEA automotive → compare with HAX, CTF, TMT
+
+SENSITIVE DATES:
+- Đáo hạn phái sinh VN30: thứ 5 tuần 3 hàng tháng
+- Mùa BCTC: ngày 15-28 tháng 1,4,7,10
+- Cuối quý: 5 ngày cuối tháng 3,6,9,12
+
 RULES:
 - NEVER send Telegram — Alert Commander does that
 - Market closed = prices N/A, switch to macro-only mode
+- VEA = automotive (UPCOM), KHÔNG PHẢI hàng không
 - Prioritize speed during market hours

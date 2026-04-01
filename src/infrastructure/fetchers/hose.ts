@@ -27,8 +27,14 @@ export type { HttpClient } from "./ssc.js";
 // Constants
 // ---------------------------------------------------------------------------
 
-/** Base URL for VnDirect finfo-api v4. */
+/** Base URL for VnDirect finfo-api v4 (legacy — often unavailable). */
 const VNDIRECT_API_BASE = "https://finfo-api.vndirect.com.vn/v4";
+
+/**
+ * Base URL for VnDirect api-finfo v4 (reliable alternative).
+ * Endpoint: /v4/stock_prices — returns OHLCV for HOSE, HNX, and UPCOM.
+ */
+const VNDIRECT_STOCK_PRICES_BASE = "https://api-finfo.vndirect.com.vn/v4";
 
 /** Maximum number of stocks per single API request. */
 const VNDIRECT_MAX_PAGE_SIZE = 100;
@@ -383,6 +389,88 @@ export async function getAvgVolume(code: string, days = 20): Promise<number> {
 }
 
 // ---------------------------------------------------------------------------
+// VN-Index dedicated endpoint — api-finfo.vndirect.com.vn/v4/vnmarket_prices
+// ---------------------------------------------------------------------------
+
+/** VnDirect vnmarket_prices API returns index data (VNINDEX, HNX-INDEX, etc.). */
+const VNDIRECT_VNMARKET_URL =
+  "https://api-finfo.vndirect.com.vn/v4/vnmarket_prices";
+
+/** Shape of the vnmarket_prices API response. */
+interface VnMarketPriceRecord {
+  code?: string;
+  close?: number;
+  open?: number;
+  high?: number;
+  low?: number;
+  change?: number;
+  pctChange?: number;
+  accumulatedVol?: number;
+}
+
+/**
+ * Fetches VN-Index (or other index) data from VnDirect vnmarket_prices API.
+ * This endpoint is separate from the stock-price endpoint and reliably returns
+ * index values even when the stock endpoint is down.
+ *
+ * @param indexCode - Index code, e.g. "VNINDEX"
+ * @returns MarketPrice or null if unavailable.
+ */
+export async function fetchVnIndex(
+  indexCode = "VNINDEX",
+): Promise<MarketPrice | null> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10_000);
+
+  try {
+    const url = `${VNDIRECT_VNMARKET_URL}?sort=date&q=code:${encodeURIComponent(indexCode)}&size=1&page=1`;
+    const response = await fetch(url, {
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
+        Accept: "application/json",
+      },
+      signal: controller.signal,
+    });
+
+    if (!response.ok) {
+      throw new Error(`vnmarket_prices HTTP ${response.status}`);
+    }
+
+    const json = (await response.json()) as {
+      data?: VnMarketPriceRecord[];
+    };
+    const rec = json.data?.[0];
+    if (!rec?.code || rec.close == null) return null;
+
+    const fetchedAt = new Date().toISOString();
+    const prevPrice =
+      rec.change != null ? rec.close - rec.change : rec.close;
+
+    return {
+      code: rec.code,
+      exchange: "HOSE",
+      price: rec.close,
+      previousPrice: prevPrice,
+      changePct:
+        rec.pctChange != null
+          ? Math.round(rec.pctChange * 100) / 100
+          : 0,
+      volume: rec.accumulatedVol ?? 0,
+      avgVolume: 0,
+      fetchedAt,
+    };
+  } catch (err) {
+    logger.debug("[hose] vnmarket_prices fetch failed", {
+      error: err instanceof Error ? err.message : String(err),
+    });
+    return null;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+// ---------------------------------------------------------------------------
 // CafeF fallback — banggia.cafef.vn returns all HOSE stocks as JSON
 // ---------------------------------------------------------------------------
 
@@ -457,13 +545,105 @@ async function fetchFromCafef(
 }
 
 // ---------------------------------------------------------------------------
+// VnDirect stock_prices fallback — api-finfo.vndirect.com.vn (works for all exchanges)
+// ---------------------------------------------------------------------------
+
+/** Shape of a single record from the stock_prices API. */
+interface VnDirectStockPriceRecord {
+  code?: string;
+  floor?: string;
+  close?: number;
+  open?: number;
+  high?: number;
+  low?: number;
+  basicPrice?: number;
+  change?: number;
+  pctChange?: number;
+  nmVolume?: number;
+  date?: string;
+}
+
+/**
+ * Fetches stock prices from the reliable VnDirect stock_prices API.
+ * This endpoint works for HOSE, HNX, and UPCOM simultaneously.
+ *
+ * Endpoint: GET /v4/stock_prices?sort=date&q=code:{CODES}~date:gte:{TODAY}&size={N}
+ */
+export async function fetchFromVnDirectStockPrices(
+  codes: string[],
+  fetchedAt: string,
+  exchange = "HOSE",
+): Promise<MarketPrice[]> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10_000);
+
+  try {
+    const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+    const codeList = codes.map((c) => c.toUpperCase()).join(",");
+    const url = `${VNDIRECT_STOCK_PRICES_BASE}/stock_prices?sort=date&q=code:${codeList}~date:gte:${today}&size=${codes.length * 2}`;
+
+    const response = await fetch(url, {
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
+        Accept: "application/json",
+      },
+      signal: controller.signal,
+    });
+
+    if (!response.ok) {
+      throw new Error(`stock_prices HTTP ${response.status}`);
+    }
+
+    const json = (await response.json()) as { data?: VnDirectStockPriceRecord[] };
+    if (!Array.isArray(json.data)) return [];
+
+    // Only keep the latest date per code
+    const latestByCode = new Map<string, VnDirectStockPriceRecord>();
+    for (const rec of json.data) {
+      if (!rec.code) continue;
+      const existing = latestByCode.get(rec.code);
+      if (!existing || (rec.date && existing.date && rec.date > existing.date)) {
+        latestByCode.set(rec.code, rec);
+      }
+    }
+
+    const prices: MarketPrice[] = [];
+    for (const rec of latestByCode.values()) {
+      if (!rec.code || rec.close == null) continue;
+      const prevPrice = rec.change != null ? rec.close - rec.change : (rec.basicPrice ?? rec.close);
+
+      prices.push({
+        code: rec.code,
+        exchange: rec.floor ?? exchange,
+        price: rec.close * 1000,        // stock_prices returns ×1000 VND
+        previousPrice: prevPrice * 1000,
+        changePct: rec.pctChange != null ? Math.round(rec.pctChange * 100) / 100 : 0,
+        volume: rec.nmVolume ?? 0,
+        avgVolume: 0,
+        fetchedAt,
+      });
+    }
+
+    return prices;
+  } catch (err) {
+    logger.debug("[hose] VnDirect stock_prices fallback failed", {
+      error: err instanceof Error ? err.message : String(err),
+    });
+    return [];
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Public API
 // ---------------------------------------------------------------------------
 
 /**
  * Fetches live price and volume data for a list of HOSE-listed stocks.
  *
- * Strategy: try VnDirect first (5s timeout), fallback to CafeF banggia.
+ * Strategy: VnDirect legacy (5s) → VnDirect stock_prices (10s) → CafeF banggia (10s).
  *
  * - Returns an empty array immediately if `codes` is empty.
  * - Returns an empty array (without throwing) on any network or parse error.
@@ -507,14 +687,14 @@ export async function fetchHosePrices(
 
   const fetchedAt = new Date().toISOString();
 
-  // --- Strategy: VnDirect (5s) → CafeF fallback ---
+  // --- Strategy: VnDirect legacy (5s) → VnDirect stock_prices (10s) → CafeF (10s) ---
 
-  // Try VnDirect first (reduced timeout to fail fast)
+  // Source 1: VnDirect legacy finfo-api (often down, 5s fail-fast)
   try {
     const client = httpClient ?? (await makeDefaultHttpClient());
     const url = buildVnDirectUrl(codes);
 
-    logger.debug("[hose] trying VnDirect", { codes });
+    logger.debug("[hose] trying VnDirect legacy", { codes });
     const json = await client.get(url);
     const records = parseVnDirectResponse(json);
 
@@ -525,47 +705,65 @@ export async function fetchHosePrices(
     }
 
     if (prices.length > 0) {
-      logger.info("[hose] fetched from VnDirect", {
+      logger.info("[hose] fetched from VnDirect legacy", {
         requested: codes.length,
         received: prices.length,
       });
       recordSuccess();
       return prices;
     }
-    // VnDirect returned empty — fall through to CafeF
   } catch {
-    logger.debug("[hose] VnDirect unavailable, trying CafeF fallback");
+    logger.debug("[hose] VnDirect legacy unavailable, trying stock_prices");
   }
 
-  // Fallback: CafeF banggia
-  try {
-    const prices = await fetchFromCafef(codes, fetchedAt);
-    if (prices.length > 0) {
-      logger.info("[hose] fetched from CafeF fallback", {
-        requested: codes.length,
-        received: prices.length,
-      });
-      recordSuccess();
-      return prices;
+  // Source 2: VnDirect stock_prices API (reliable, works for all exchanges)
+  // Skip when an httpClient is injected (test mode — don't make real network calls).
+  if (!httpClient) {
+    try {
+      const prices = await fetchFromVnDirectStockPrices(codes, fetchedAt, "HOSE");
+      if (prices.length > 0) {
+        logger.info("[hose] fetched from VnDirect stock_prices", {
+          requested: codes.length,
+          received: prices.length,
+        });
+        recordSuccess();
+        return prices;
+      }
+    } catch {
+      logger.debug("[hose] VnDirect stock_prices failed, trying CafeF");
     }
-  } catch (err) {
-    logger.warn("[hose] CafeF fallback also failed", {
-      error: err instanceof Error ? err.message : String(err),
-    });
   }
 
-  // Both sources failed
-  // VNINDEX is an index (not a stock) — CafeF banggia only has stocks,
-  // so this is expected when only VNINDEX was requested. Don't count as failure.
+  // Source 3: CafeF banggia (HOSE stocks only)
+  // Skip when an httpClient is injected (test mode — don't make real network calls).
+  if (!httpClient) {
+    try {
+      const prices = await fetchFromCafef(codes, fetchedAt);
+      if (prices.length > 0) {
+        logger.info("[hose] fetched from CafeF fallback", {
+          requested: codes.length,
+          received: prices.length,
+        });
+        recordSuccess();
+        return prices;
+      }
+    } catch (err) {
+      logger.warn("[hose] CafeF fallback also failed", {
+        error: err instanceof Error ? err.message : String(err),
+      });
+    }
+  }
+
+  // All 3 sources failed
   const onlyIndex = codes.every((c) => c.toUpperCase().includes("INDEX"));
   if (!onlyIndex) {
     recordFailure();
-    logger.error("[hose] all price sources failed", {
+    logger.error("[hose] all 3 price sources failed", {
       codes,
       consecutiveFailures: _consecutiveFailures,
     });
   } else {
-    logger.debug("[hose] index-only request — no CafeF data available", { codes });
+    logger.debug("[hose] index-only request — stock sources don't have index data", { codes });
   }
   return [];
 }

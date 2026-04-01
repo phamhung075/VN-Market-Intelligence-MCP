@@ -27,6 +27,8 @@ import { runMorningBriefing } from './morningBriefingJob.js'
 import { runEveningSummary } from './eveningSummaryJob.js'
 import { runIntelligenceCycle } from './intelligenceCycleJob.js'
 import { registerSummaryJobs } from './summaryJobs.js'
+import { runWalCheckpoint, registerShutdownHook } from '../infrastructure/db/checkpoint.js'
+import { runPatternWatch } from './patternWatchJob.js'
 
 export const CRONS = {
   morningBriefing:   Bun.env.CRON_MORNING_BRIEFING    ?? '0 8 * * 1-5',
@@ -75,8 +77,21 @@ export function startScheduler() {
     await runEveningSummary()
   }, { timezone: 'Asia/Ho_Chi_Minh' })
 
+  // 03:00 GMT+7 — WAL checkpoint (task 140)
+  cron.schedule('0 20 * * *', () => {  // 20:00 UTC = 03:00 GMT+7
+    runWalCheckpoint()
+  })
+
+  // Sunday 22:30 GMT+7 — Weekly pattern watch (task 146)
+  cron.schedule('30 22 * * 0', async () => {
+    await runPatternWatch()
+  }, { timezone: 'Asia/Ho_Chi_Minh' })
+
   // Periodic summary jobs (task 130): daily, weekly, monthly, quarterly, yearly
   registerSummaryJobs()
 
-  log(`[scheduler] jobs registered — ${Object.keys(CRONS).length} core cron jobs + 5 summary jobs active`)
+  // Register shutdown hooks for graceful WAL checkpoint on exit
+  registerShutdownHook()
+
+  log(`[scheduler] jobs registered — ${Object.keys(CRONS).length} core cron jobs + 5 summary jobs + WAL checkpoint active`)
 }

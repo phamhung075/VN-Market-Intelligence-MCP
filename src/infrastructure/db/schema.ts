@@ -21,25 +21,29 @@ import { mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 import { SQLITE_DDL } from "../../../bctc-schema.js";
 
-/** Resolved DB path — can be overridden via DB_PATH env var (useful in tests) */
-const DB_PATH: string = Bun.env["DB_PATH"] ?? "./data/market.db";
+/** Default DB path — re-read from env on each new connection to support test isolation */
+const DEFAULT_DB_PATH = "./data/market.db";
 
 let _db: Database | null = null;
 
 /**
  * Returns the singleton `bun:sqlite` Database instance.
  * Opens the database on first call and creates the data directory if needed.
+ * Re-reads DB_PATH env var on each new connection so tests can override it.
  */
 export function getDb(): Database {
   if (_db) return _db;
 
+  // Re-read env var each time — tests may set it after module load
+  const dbPath = process.env["DB_PATH"] ?? Bun.env["DB_PATH"] ?? DEFAULT_DB_PATH;
+
   // Ensure data directory exists — skip for the special `:memory:` path
-  if (DB_PATH !== ":memory:") {
-    const dir = dirname(DB_PATH);
+  if (dbPath !== ":memory:") {
+    const dir = dirname(dbPath);
     mkdirSync(dir, { recursive: true });
   }
 
-  _db = new Database(DB_PATH);
+  _db = new Database(dbPath);
   _db.exec("PRAGMA journal_mode = WAL");
   _db.exec("PRAGMA foreign_keys = ON");
   return _db;
@@ -116,6 +120,36 @@ export async function initDatabase(): Promise<void> {
     CREATE INDEX IF NOT EXISTS idx_alerts_triggered ON alerts(triggered_at);
     CREATE INDEX IF NOT EXISTS idx_alerts_read      ON alerts(read);
     CREATE INDEX IF NOT EXISTS idx_alerts_severity  ON alerts(severity);
+  `);
+
+  // Alert resolution lifecycle (task 148) + notified_telegram column
+  try {
+    const alertCols = db.query<{ name: string }, []>("PRAGMA table_info(alerts)").all();
+    const colNames = new Set(alertCols.map((c) => c.name));
+    if (!colNames.has("resolved_at")) {
+      db.exec("ALTER TABLE alerts ADD COLUMN resolved_at TEXT");
+    }
+    if (!colNames.has("resolution_notes")) {
+      db.exec("ALTER TABLE alerts ADD COLUMN resolution_notes TEXT");
+    }
+    if (!colNames.has("notified_telegram")) {
+      db.exec("ALTER TABLE alerts ADD COLUMN notified_telegram INTEGER NOT NULL DEFAULT 0");
+      db.exec("CREATE INDEX IF NOT EXISTS idx_alerts_notified ON alerts(notified_telegram)");
+    }
+  } catch { /* columns may already exist */ }
+
+  // Conviction history (task 150)
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS conviction_history (
+      id              INTEGER PRIMARY KEY AUTOINCREMENT,
+      symbol          TEXT NOT NULL,
+      date            TEXT NOT NULL,
+      peak_score      REAL NOT NULL,
+      dominant_signal TEXT,
+      created_at      TEXT NOT NULL
+    );
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_conviction_history_symbol_date
+      ON conviction_history(symbol, date);
   `);
 
   // ── RAG Analyses ────────────────────────────────────────────────────────────
@@ -310,7 +344,7 @@ export async function initDatabase(): Promise<void> {
 
   // ── Seed default watchlist from mcp.config.json (skip in tests) ────────────
   // Skip seeding in test environments
-  const currentDbPath = Bun.env["DB_PATH"] ?? DB_PATH;
+  const currentDbPath = process.env["DB_PATH"] ?? Bun.env["DB_PATH"] ?? DEFAULT_DB_PATH;
   if (currentDbPath === ":memory:" || Bun.env["BUN_ENV"] === "test" || typeof Bun.env["BUN_TEST"] !== "undefined") return;
   try {
     const { mcpConfig } = await import("../config.js");

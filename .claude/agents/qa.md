@@ -91,6 +91,9 @@ grep -rn "any" src/                               # zero 'any' types
 - [ ] All SQL uses parameterized queries (no string interpolation)
 - [ ] PDF file paths validated — no `../` path traversal
 - [ ] HTTP scrapers: rate limiting / exponential backoff on 429/503
+- [ ] HTTP fetchers: browser User-Agent (not bot UA — Vietnamese sites return 503)
+- [ ] HTTP fetchers: multi-tier fallback with `!httpClient` guard for test isolation
+- [ ] Telegram messages: plain text format (no Markdown), Vietnamese language
 - [ ] All MCP tool inputs validated with Zod schemas
 - [ ] `Bun.env` only — never `process.env`
 

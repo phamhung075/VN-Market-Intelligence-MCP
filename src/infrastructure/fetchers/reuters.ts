@@ -70,6 +70,8 @@ async function makeDefaultHttpClient(): Promise<HttpClient> {
         },
         timeout: 15_000,
         responseType: "text",
+        // Google News returns 302 redirects — must follow them
+        maxRedirects: 5,
       });
       return response.data;
     },

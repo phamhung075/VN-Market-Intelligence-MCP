@@ -227,7 +227,8 @@ describe("Task 026 — HOSE Market Data Fetcher", () => {
 
   describe("storeMarketPrices() + getAvgVolume()", () => {
     beforeAll(async () => {
-      // Ensure all tables (including market_prices_history) exist
+      // Use isolated test DB
+      process.env["DB_PATH"] = ":memory:";
       await initDatabase();
       // Trigger table creation for the history table
       const db = getDb();

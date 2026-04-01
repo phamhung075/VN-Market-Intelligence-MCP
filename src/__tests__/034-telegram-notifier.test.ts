@@ -312,7 +312,7 @@ describe("Task 034 — Telegram Bot Notifier", () => {
     await notifyTelegramAlert(alert, { fetchFn: mockFetch as unknown as typeof fetch });
 
     const text = capturedBody.text as string;
-    expect(text).toContain("HIGH");
+    expect(text).toContain("QUAN TRỌNG");
     expect(text).toContain("VCB");
     // Message should contain a timestamp or time indicator
     expect(text.length).toBeGreaterThan(10);
