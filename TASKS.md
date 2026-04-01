@@ -152,7 +152,7 @@
 | TECH-019 | Architect: Technical Design for Sprint 019 | `task/doc-001-claude-md-update` | Architect | docs/ | P0 | REQ-019 | Done — docs/TECH_019.md |
 | 160 | Company name alias dictionary (`stockAliases.ts`) | `task/160-stock-aliases` | Developer | domain/services | P0 | TECH-019 | **Review** |
 | 161 | Wire aliases into cascade engine + pollNews Gate 3 | `task/161-alias-wiring` | Developer | domain/services + application/usecases | P0 | 160 ✓ | **Review** |
-| 162 | Market-wide pattern cascade to all watchlist stocks | `task/162-market-wide-broadcast` | Developer | domain/services + application/usecases + mcp.config.json | P1 | 160 | Backlog |
+| 162 | Market-wide pattern cascade to all watchlist stocks | `task/162-market-wide-broadcast` | Developer | domain/services + application/usecases + mcp.config.json | P1 | 160 ✓ | **Review** |
 
 ---
 
