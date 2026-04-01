@@ -2,6 +2,277 @@
 
 ## Current Sprint
 
+status: ACTIVE
+sprint_id: 021
+started: 2026-04-01
+updated: 2026-04-01
+
+---
+
+### Theme
+
+**"Close the Loop — Prediction Signals Live and Test Suite Green"**
+
+---
+
+### Goal
+
+Complete the Prediction Market pipeline so that `detectPredictionSignals` runs in
+production (not just as a stub), fix the 3 known pre-existing test failures so the CI gate
+is trustworthy, and surface prediction-market conviction directly in the morning briefing so
+the investor sees crowd-sourced early warnings without needing to call a separate tool.
+
+---
+
+### Scope
+
+**IN**
+
+1. **Task 170 — Fix pre-existing test failures (P0)**
+
+   Three tests currently fail on every `bun test` run:
+
+   - `062-cascade-engine.test.ts` line 221: assertion `bankImpacts.length === 0` fails because
+     Sprint 013 added macro rules that cause an oil-price shock to also impact banking
+     (oil-sector loan NPL risk via `SECTOR_RULES`). The rule is correct behaviour — the test
+     expectation is stale. Fix: update the test to reflect the correct current behaviour (oil
+     price rise DOES indirectly impact banking stocks via the macro expansion). The fix is a
+     test update, not a production code change.
+
+   - `166-prediction-signal-detector.test.ts`: module import fails because
+     `detectPredictionSignals` is not exported from `predictionSignalDetector.ts` (file is a
+     type-only stub from task 164). This cascades into a runtime error in
+     `predictionMarketJob.ts` which dynamically imports the same function. Fix: covered by
+     Task 171 (see below) — once 171 is merged, the test passes automatically. Task 170
+     only touches the 062 test assertion.
+
+   Files: `src/__tests__/062-cascade-engine.test.ts` (test update only).
+   No production code changes in this task.
+
+2. **Task 171 — Implement `detectPredictionSignals` (P0)**
+
+   `src/domain/services/predictionSignalDetector.ts` currently exports only type definitions.
+   The function `detectPredictionSignals` does not exist, so `predictionMarketJob.ts` will
+   throw a runtime import error on the first 30-minute cron tick.
+
+   Implement the full detection function:
+
+   ```typescript
+   export function detectPredictionSignals(
+     current: PredictionMarket[],
+     previous: PredictionMarket[],
+     config: PredictionSignalConfig,
+   ): PredictionSignal[]
+   ```
+
+   Signal logic (pure domain — zero I/O, zero imports from infrastructure):
+
+   - **`volume_spike`**: `current.volume24h >= config.volumeSpikeThresholdUsd` AND
+     `current.uniqueWalletsCount >= config.minUniqueWallets`. Severity: high if volume >=
+     3× threshold, medium otherwise.
+
+   - **`probability_shift`**: `|current.yesPrice - prev.yesPrice| >= config.probabilityShiftPct / 100`.
+     Requires a matching `prev` entry by `market.id`. Severity: high if shift >= 15pp,
+     medium if >= config threshold.
+
+   - **`sentiment_divergence`**: reserved type — not yet implemented, return empty. The
+     interface already declares this type; leave a `// TODO task 172` stub comment.
+
+   - No `insider_timing` detection (whale detection deferred per BLOCKER-020-B resolution).
+
+   `PredictionSignalConfig` interface:
+
+   ```typescript
+   export interface PredictionSignalConfig {
+     volumeSpikeThresholdUsd: number;   // default 50_000
+     probabilityShiftPct: number;        // default 5  (percentage points)
+     minUniqueWallets: number;           // default 10
+   }
+   ```
+
+   Tests: `src/__tests__/166-prediction-signal-detector.test.ts` — 20+ test cases covering
+   volume spike detection, probability shift, edge cases (empty arrays, missing prev entry,
+   config boundary values).
+
+   Files:
+   - MODIFY: `src/domain/services/predictionSignalDetector.ts`
+   - MODIFY (update assertions): `src/__tests__/166-prediction-signal-detector.test.ts`
+
+3. **Task 172 — Prediction signals in morning briefing (P1)**
+
+   The morning briefing (`src/scheduler/morningBriefingJob.ts` +
+   `src/application/usecases/assembleBriefing.ts`) currently has no prediction market
+   section. After task 171 ships, the `prediction_signals` table receives data every 30
+   minutes. Surface the top 3 high/critical prediction signals in the morning briefing output.
+
+   Briefing section format (plain text, Vietnamese):
+
+   ```
+   DU BOAN THI TRUONG (Prediction Markets):
+   - [HIGH] "Will Fed cut rates in May?" → 72% (tang 8pp) → Anh huong: VCB, TCB, BID
+   - [HIGH] "US-China trade war escalation?" → 61% (tang 12pp) → Anh huong: HPG, GAS
+   ```
+
+   Implementation:
+
+   - New function `getPredictionHighlights(db, limit = 3): PredictionHighlight[]` in
+     `src/infrastructure/db/alertStore.ts` — reads
+     `SELECT * FROM prediction_signals WHERE severity IN ('high','critical') AND detected_at > ?
+     ORDER BY detected_at DESC LIMIT ?` (past 24h window).
+   - Wire into `assembleBriefing.ts` after the macro dashboard section.
+   - Wire into `assembleEveningSummary.ts` as well (same highlight format).
+   - If zero signals in past 24h: omit the section entirely (no "no data" filler text).
+
+   Tests: `src/__tests__/172-briefing-prediction-highlights.test.ts` — test that briefing
+   text includes prediction section when signals exist and omits it when table is empty.
+
+   Files:
+   - MODIFY: `src/infrastructure/db/alertStore.ts`
+   - MODIFY: `src/application/usecases/assembleBriefing.ts`
+   - MODIFY: `src/application/usecases/assembleEveningSummary.ts`
+   - CREATE: `src/__tests__/172-briefing-prediction-highlights.test.ts`
+
+4. **Task 173 — Prediction market cascade depth (P1)**
+
+   `predictionCascadeMapper.ts` (task 165) maps market question text to `DomainType` and
+   stock codes. Currently the mapper returns only the stocks. Wire the mapper output into
+   the existing `buildCausalChain` so that a `PredictionSignal` of severity `high` or
+   `critical` generates a domain-level `AnalysisEntry` that flows through the cascade engine
+   — producing watchlist stock impacts that appear in `get_alerts` alongside price and news
+   signals.
+
+   This closes the final loop: Polymarket crowd money → cascade engine → watchlist alert →
+   Telegram.
+
+   Implementation:
+
+   - New use-case function `runPredictionImpactChain(signals: PredictionSignal[], watchlist,
+     db)` in `src/application/usecases/runImpactChain.ts` (new exported function alongside
+     the existing `runImpactChain`).
+   - Called from `predictionMarketJob.ts` after `detectPredictionSignals` returns results.
+   - Output alerts are stored via existing `alertStore.ts` helpers and picked up by Step E
+     of `intelligenceCycleJob.ts` (Telegram send).
+
+   Tests: `src/__tests__/173-prediction-impact-chain.test.ts` — inject a high-severity
+   `probability_shift` signal, assert that at least one watchlist stock alert is generated.
+
+   Files:
+   - MODIFY: `src/application/usecases/runImpactChain.ts`
+   - MODIFY: `src/scheduler/predictionMarketJob.ts` (wire the new function)
+   - CREATE: `src/__tests__/173-prediction-impact-chain.test.ts`
+
+**OUT**
+
+- `sentiment_divergence` signal type (deferred — requires comparing Polymarket probability
+  with `sentimentClassifier` output; too complex for this sprint)
+- On-chain transaction monitoring
+- Kalshi or other prediction markets
+- Backtest mode for conviction scorer
+- New MCP tool signatures
+- LLM calls of any kind
+- New external data sources
+
+---
+
+### Success Metrics
+
+1. `bun test` passes with 0 failures and 0 TypeScript errors after all 4 tasks merge.
+   The previously failing `062-cascade-engine.test.ts` and `166-prediction-signal-detector.test.ts`
+   both pass.
+
+2. `detectPredictionSignals` is a real exported function in `predictionSignalDetector.ts`,
+   not a stub. The `predictionMarketJob.ts` cron no longer throws a runtime import error.
+
+3. The morning briefing text includes a "DU BOAN THI TRUONG" section when at least one
+   high/critical prediction signal was detected in the past 24 hours. The section is absent
+   when the `prediction_signals` table is empty.
+
+4. A simulated high-severity `probability_shift` signal injected in the test produces at
+   least one watchlist stock alert via `runPredictionImpactChain`, which is then retrievable
+   via `get_alerts`.
+
+5. Total test count increases from 1398 to >= 1440 (42+ new tests across tasks 171-173).
+
+---
+
+### Task board (Sprint 021)
+
+| # | Title | Priority | Status | Depends on |
+|---|-------|----------|--------|------------|
+| 170 | Fix pre-existing test failures (062 stale assertion) | P0 | Backlog | — |
+| 171 | Implement `detectPredictionSignals` in `predictionSignalDetector.ts` | P0 | Backlog | — |
+| 172 | Prediction signals section in morning briefing | P1 | Backlog | 171 |
+| 173 | Prediction market cascade: wire signals into `buildCausalChain` | P1 | Backlog | 171, 165 |
+
+---
+
+### Dependency chain
+
+```
+170 (fix stale test assertion)         — P0, independent, start immediately
+171 (detectPredictionSignals impl)     — P0, independent, start immediately
+  ↓
+172 (briefing prediction section)      — P1, needs 171 merged (reads prediction_signals)
+173 (prediction cascade wiring)        — P1, needs 171 + 165 (both already merged)
+
+170 and 171 can run in parallel (zero shared files).
+172 and 173 can run in parallel once 171 is merged.
+```
+
+---
+
+### Key technical decisions (locked at PO level)
+
+- **Test-first on 062 fix**: the cascade engine's banking trigger from oil-price news is
+  correct behaviour added in Sprint 013 (oil sector loan NPL risk rule). The test assertion
+  is wrong, not the engine. The fix updates the test to assert that banking IS triggered
+  indirectly by oil shocks — this reflects real-world portfolio risk.
+
+- **`detectPredictionSignals` is pure domain**: zero imports from infrastructure. It takes
+  two `PredictionMarket[]` arrays (current + previous snapshot) and a config struct, returns
+  `PredictionSignal[]`. All I/O (reading previous snapshot from DB, writing signals to DB)
+  stays in `predictionMarketJob.ts`. This preserves DDD layering.
+
+- **Morning briefing prediction section is read-only**: `assembleBriefing.ts` reads from
+  `prediction_signals` table but never writes to it. The write path is exclusively
+  `predictionMarketJob.ts`. No circular dependency introduced.
+
+- **Cascade integration via new function**: `runPredictionImpactChain` is a sibling export
+  in `runImpactChain.ts`, not a modification of the existing `runImpactChain` signature.
+  This avoids breaking the 28-test integration harness that tests the existing function.
+
+---
+
+## Completed Sprints
+
+| Sprint | Theme | Completed | Tasks |
+|--------|-------|-----------|-------|
+| 000 | Foundation | 2026-03-24 | 000 |
+| 001 | BCTC Pipeline Wave 1 | 2026-03-25 | 001, 002, 003, 011, 012, 041, 042, 014 |
+| 002 | BCTC Pipeline Wave 2 | 2026-03-26 | 043, 044, 013, 045, 046, 047, 029, 030, 048, 085 |
+| 003 | News + Alerts | 2026-03-27 | 021, 082, 063, 064, 086 |
+| 004 | MCP Wiring + Analysis | 2026-03-27 | 087, 022, 023, 061, 062, 083 |
+| 005 | Market Data + Scheduler | 2026-03-28 | 088, 026, 102, 104, 103, 101 |
+| 006 | Analytical Depth | 2026-03-28 | 065, 066, 027, 084, 105, 123 |
+| 007 | Doc + Tests | 2026-03-28 | DOC-001, 081, 122, 124, 125 |
+| 008 | Macro Intelligence | 2026-03-29 | FIX-081, 025, 028, 126, 089 |
+| 009 | SSC Automation + Telegram | 2026-03-29 | 031, 034, 106 |
+| 010 | Security + Alert Quality | 2026-04-01 | SQL-fix, 131, 132 |
+| 011 | Adaptive Signals + Sentiment | 2026-04-01 | 133, 134, 135, 137 |
+| 012 | Periodic Summaries | 2026-04-01 | 130 |
+| 013 | Fetcher Reliability + Sector Context | 2026-04-01 | 035, 024, 035-TE, sectorPeers, macroThresholds, priceNewsValidator, commodityTracker |
+| 014 | Trade Relationships | 2026-04-01 | tradeRelationships, tradeStore |
+| 015 | Circuit Breaker | 2026-04-01 | 136 |
+| 016 | Conviction Scorer + Portfolio Tools | 2026-04-01 | convictionScorer, portfolioTools, feedbackTools |
+| 017 | Production Hardening | 2026-04-01 | 152, 153, 154, 155, 156 |
+| 018 | Data Integrity First | 2026-04-01 | 157, 158, 159 |
+| 019 | Stock Aliases + Market Broadcast | 2026-04-01 | 160, 161, 162 |
+| 020 | Prediction Market Intelligence | 2026-04-01 | 163, 164, 165, 166 (stub), 167, 168, 169 |
+
+---
+
+## Previous Sprint (Sprint 020)
+
 status: COMPLETE
 sprint_id: 020
 started: 2026-04-01
