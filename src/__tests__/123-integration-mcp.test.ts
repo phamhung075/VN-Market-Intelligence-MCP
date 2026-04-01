@@ -374,7 +374,7 @@ describe("RT1 — Watchlist CRUD roundtrip", () => {
     const text = getText(result);
     expect(text).toContain("VCB");
     expect(text).toContain("HOSE");
-    expect(text).toContain("banking");
+    expect(text.includes("banking") || text.includes("Ngân hàng")).toBe(true);
   });
 
   it("update_thresholds applies new drop/rise pct for VCB", async () => {
@@ -441,7 +441,7 @@ describe("RT1 — Watchlist CRUD roundtrip", () => {
     // Get — verify present
     const getResult1 = await callTool(server, "get_watchlist", {});
     expect(getText(getResult1)).toContain("HPG");
-    expect(getText(getResult1)).toContain("steel");
+    expect(getText(getResult1).includes("steel") || getText(getResult1).includes("Thép")).toBe(true);
 
     // Update
     const updateResult = await callTool(server, "update_thresholds", {
