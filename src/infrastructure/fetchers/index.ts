@@ -85,3 +85,10 @@ export {
   storeSbvSnapshot,
   type SbvMacroSnapshot,
 } from "./sbv.js";
+
+// ── Task 164: Polymarket REST fetcher ─────────────────────────────────────────
+export {
+  fetchPolymarkets,
+  storePolymarketSnapshot,
+  type PolyFetchFn,
+} from "./polymarket.js";
