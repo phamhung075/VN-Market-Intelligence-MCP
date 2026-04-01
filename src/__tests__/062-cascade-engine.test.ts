@@ -200,25 +200,27 @@ describe("Task 062 — buildCausalChain (pure domain)", () => {
     expect(codes).toContain("PVD");
   });
 
-  // ── No watchlist match ──────────────────────────────────────────────────
+  // ── Market-wide broadcast for global events ─────────────────────────────
 
   it("returns empty watchlistImpacts when no watchlist stocks match triggered domains", () => {
     const entry = makeEntry({
       level: "global",
       summary: "oil price rise crude oil up sharply",
     });
-    // Banking stocks — not affected by oil price
+    // Banking stocks have no direct SECTOR_RULE match for oil price keywords,
+    // but Task 162 market-wide broadcast fires for global events with impactScore >= 6.
     const watchlist: WatchlistEntry[] = [
       makeWatchlistEntry("VCB", "banking"),
       makeWatchlistEntry("BID", "banking"),
     ];
     const chain = buildCausalChain(entry, watchlist);
 
-    // Oil price rise triggers oil_gas and aviation, not banking
+    // Global event with impactScore 7 triggers market-wide broadcast (Task 162),
+    // cascading to all watchlist stocks not covered by direct SECTOR_RULE matches.
     const bankImpacts = chain.watchlistImpacts.filter(
       (i) => i.actionCode === "VCB" || i.actionCode === "BID",
     );
-    expect(bankImpacts.length).toBe(0);
+    expect(bankImpacts.length).toBe(2);
   });
 
   it("returns empty watchlistImpacts with an empty watchlist", () => {
