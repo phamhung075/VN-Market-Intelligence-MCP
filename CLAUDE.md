@@ -483,3 +483,6 @@ src/
 | Vốn chủ sở hữu | Equity |
 | Quý (Q1/Q2/Q3/Q4) | Quarter |
 | VN-Index | Vietnamese main stock index (HOSE) |
+
+## dev workflow
+full SDLC — Run the agent chain (PO → BA → Architect → PM → Dev → QA) for a proper spec

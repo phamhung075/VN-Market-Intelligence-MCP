@@ -259,6 +259,247 @@ cycle/hour).
 
 ---
 
+## Next Sprint (queued — Sprint 017 must merge first)
+
+status: PLANNED
+sprint_id: 018
+queued_at: 2026-04-01
+
+---
+
+### Theme
+
+**"Data Integrity First"**
+
+Sprint 017 hardens the production runtime (noise filter, SSC dedup, log rotation, cycle
+frequency). Sprint 018 addresses the silent risk underneath: bad data flowing through the
+pipeline undetected.
+
+Every layer of the system — cascade engine, conviction scorer, morning briefing, Telegram
+alerts — reads from five SQLite tables and LanceDB. When those stores accumulate zero-price
+rows, stale history, orphaned analyses, or unfixed failed BCTC reports, the pipeline
+operates on corrupted inputs without any signal to the operator. The damage is invisible
+until a wrong alert fires or a briefing cites a $5 oil price.
+
+Sprint 018 adds a scheduled auditor that runs autonomously, cleans what is safe to clean,
+flags what requires human judgment, and routes all findings through the existing
+`submit_feedback` / `agent_feedback` infrastructure so the user sees a consolidated digest
+rather than a flood of raw errors.
+
+The guiding constraint from Sprint 017 remains: no LLM calls, no new external data sources,
+no changes to existing MCP tool signatures.
+
+---
+
+### Goal
+
+Add a `dataAuditJob.ts` scheduler that runs lightweight checks nightly and deep checks
+weekly, auto-cleans safe bad data (zero prices, stale history rows, old unread alerts,
+expired system logs), flags issues that require judgment via `agent_feedback`, and sends a
+single Telegram summary so the operator knows the DB health without querying it manually.
+
+---
+
+### Scope
+
+**IN**
+
+**P0 — Core audit engine: `dataAuditJob.ts` (task 157)**
+
+A new scheduler module `src/scheduler/dataAuditJob.ts` containing two exported functions:
+
+- `runDailyAudit()` — lightweight checks, target runtime < 5 s
+- `runWeeklyAudit()` — deep checks including LanceDB sync, target runtime < 30 s
+
+Both functions share a private `AuditReport` accumulator type:
+
+```typescript
+interface AuditFinding {
+  table: string;
+  check: string;
+  severity: "info" | "warning" | "critical";
+  rowsAffected: number;
+  action: "auto_cleaned" | "flagged" | "none";
+  detail: string;
+}
+```
+
+Each check appends one or more `AuditFinding` objects. After all checks complete, the job:
+1. Persists critical/warning findings to `agent_feedback` via direct DB insert (same schema
+   as `submit_feedback` MCP tool — agent = `"data-auditor"`).
+2. Sends one Telegram summary message (plain text, no Markdown): total rows cleaned, count
+   of warnings, count of criticals. If zero issues: "DB audit: clean." Only send if
+   `telegram.enabled` is true in `mcp.config.json`.
+3. Logs all findings to `system_logs` table (level = "info" for auto-cleaned, "warn" for
+   flagged, "error" for critical).
+
+No external libraries. All reads/writes use the existing `getDb()` singleton.
+
+**P0 — Daily audit checks (task 157, part of same file)**
+
+Run every night at 23:00 GMT+7 (new cron entry in `jobs.ts`):
+
+| Table | Check | Safe auto-clean? | Severity if found |
+|-------|-------|-----------------|-------------------|
+| `market_prices` | `price = 0 OR price IS NULL` | Yes — DELETE row | warning |
+| `market_prices` | `updated_at` older than 3 calendar days | Yes — DELETE row | info |
+| `alerts` | `read = 0` and `triggered_at` older than 30 days | Yes — mark `read = 1` | info |
+| `alerts` | `resolved_at IS NULL` and `triggered_at` older than 60 days | Yes — set `resolved_at = now(), resolution_notes = 'auto-expired by audit'` | info |
+| `rag_analyses` | `sentiment IS NULL OR impact_score = 0` | No — flag only | warning |
+| `rag_analyses` | `source_url IS NULL` and `created_at` older than 7 days | No — flag count only | info |
+| `financial_reports` | `validation_status = 'failed'` | No — flag only | warning |
+| `agent_feedback` | `status = 'new'` and `created_at` older than 14 days | No — escalate: set `priority = 'high'` where `priority IN ('low','medium')` | warning |
+| `system_logs` | `timestamp` older than 60 days | Yes — DELETE rows | info |
+| `DB overall` | Row counts for all major tables | No — log info | info |
+
+**P0 — Weekly audit checks (task 157, part of same file)**
+
+Run every Sunday at 01:00 GMT+7 (new cron entry in `jobs.ts`):
+
+All daily checks are included, PLUS:
+
+| Table | Check | Safe auto-clean? | Severity if found |
+|-------|-------|-----------------|-------------------|
+| `commodity_prices_history` | `fetched_at` older than 180 days | Yes — DELETE rows | info |
+| `sbv_rates_history` | `fetched_at` older than 180 days | Yes — DELETE rows | info |
+| `market_prices_history` | Duplicate `(code, updated_at)` pairs — keep row with lowest `id` | Yes — DELETE higher-id dupes | warning |
+| `rag_analyses` | Duplicate `source_url IS NULL` entries older than 30 days — keep newest per `source_title` | Yes — DELETE older dupes | warning |
+| `tracked_indicators` | `value` outside plausible range for known indicator types: oil < 20 or > 300 USD/bbl; gold < 500 or > 5000 USD/oz; CPI outside -5% to +30% | No — flag as `data_extraction_error` via `agent_feedback` | critical if oil/gold; warning if CPI |
+| `alerts` | `analysis_ids_json` references IDs not present in `rag_analyses` (orphan check) | No — flag count only | warning |
+| LanceDB | Row count in `analyses` table via `vectorstore.getCount()` vs `COUNT(*)` in `rag_analyses` | No — flag delta if > 100 rows diverge | warning |
+
+**P1 — Scheduler wiring (task 158)**
+
+Wire both audit functions into `src/scheduler/jobs.ts`:
+
+- Daily: `cron.schedule('0 23 * * *', runDailyAudit, { timezone: 'Asia/Ho_Chi_Minh' })`
+- Weekly: `cron.schedule('0 1 * * 0', runWeeklyAudit, { timezone: 'Asia/Ho_Chi_Minh' })`
+
+Add `CRON_DATA_AUDIT_DAILY` and `CRON_DATA_AUDIT_WEEKLY` to the `CRONS` constant (same
+pattern as existing entries — env-var override supported).
+
+**P2 — DB stats MCP tool enhancement (task 159)**
+
+Enhance the existing `get_system_health` MCP tool
+(`src/interface/mcp/tools/systemTools.ts`) to include a new `db_audit` section:
+
+```
+db_audit:
+  last_daily_audit_at: <ISO timestamp or "never">
+  last_weekly_audit_at: <ISO timestamp or "never">
+  pending_feedback_count: <int>   ← agent_feedback WHERE status='new'
+  open_warnings: <int>            ← agent_feedback WHERE status='new' AND priority IN ('high','critical')
+```
+
+Source: read from a new `audit_state` table (one-row, upserted after each audit run).
+The `audit_state` table is created inside `dataAuditJob.ts` using `CREATE TABLE IF NOT EXISTS`
+at first audit run — no schema.ts change required for this table.
+
+**OUT**
+
+- VACUUM / page defragmentation (separate concern, deferred to Sprint 019)
+- LanceDB vector deletion / re-embedding (requires LanceDB API investigation — deferred)
+- Interactive feedback resolution UI (Telegram inline keyboard — deferred to Sprint 019)
+- Any change to existing MCP tool input/output schemas
+- Any change to BCTC extractors, ratio computer, or cascade engine rules
+- New external data sources
+- LLM calls of any kind
+- Automated backup / restore
+
+---
+
+### Success Metrics
+
+1. **Daily audit runs and produces output**: after `runDailyAudit()` executes, `system_logs`
+   contains at least one row with `source = 'data-auditor'` and `level IN ('info','warn')`.
+   Telegram receives exactly one summary message per run (if `telegram.enabled = true`).
+
+2. **Zero-price rows auto-cleaned**: seed one row in `market_prices` with `price = 0` before
+   the test; call `runDailyAudit()`; assert the row is deleted and an `AuditFinding` with
+   `action = "auto_cleaned"` is returned.
+
+3. **Stale alert auto-archival**: seed an alert with `read = 0` and
+   `triggered_at = 35 days ago`; call `runDailyAudit()`; assert `read = 1` for that alert.
+
+4. **Out-of-range commodity flagged**: seed a `tracked_indicators` row with `value = 5.0`
+   for indicator `brent_crude_usd`; call `runWeeklyAudit()`; assert an `agent_feedback`
+   row is inserted with `category = 'data_extraction_error'` and `priority = 'critical'`.
+
+5. **Stale history pruned**: seed rows in `commodity_prices_history` with
+   `fetched_at = 200 days ago`; call `runWeeklyAudit()`; assert those rows are deleted.
+
+6. **Old feedback escalated**: seed an `agent_feedback` row with `status = 'new'`,
+   `priority = 'medium'`, `created_at = 15 days ago`; call `runDailyAudit()`; assert
+   `priority` is updated to `'high'`.
+
+7. **Scheduler wired**: `startScheduler()` in `jobs.ts` registers both audit cron entries.
+   Verify by checking `CRONS.dataAuditDaily` and `CRONS.dataAuditWeekly` are defined.
+
+8. **Full test suite**: `bun test` passes with 0 failures; `bun tsc --noEmit` reports
+   0 errors after all Sprint 018 tasks are merged.
+
+---
+
+### Task board (Sprint 018)
+
+| # | Title | Priority | Status | Depends on |
+|---|-------|----------|--------|------------|
+| 157 | Data audit engine + daily + weekly checks | P0 | Backlog | — |
+| 158 | Scheduler wiring for daily + weekly audit crons | P1 | Backlog | 157 |
+| 159 | Enhance get_system_health with db_audit section | P2 | Backlog | 157 |
+
+---
+
+### Dependency chain
+
+```
+157 (audit engine + checks)   — P0, start first, all checks live in one file
+158 (scheduler wiring)        — P1, depends on 157 exported API being stable
+159 (health tool enhancement) — P2, depends on 157 audit_state table being defined
+```
+
+---
+
+### Key technical decisions (locked at PO level)
+
+- **Single file for audit logic**: `src/scheduler/dataAuditJob.ts` contains both
+  `runDailyAudit` and `runWeeklyAudit`. No separate service file in `domain/` — the audit
+  job is infrastructure-level (it reads raw DB rows and deletes them), not domain business
+  logic. This is consistent with how `sscCheckerJob.ts` and `intelligenceCycleJob.ts` are
+  structured.
+
+- **No new DB helper module**: all SQL in `dataAuditJob.ts` uses `getDb()` directly, same
+  pattern as other scheduler jobs. Creating a `auditStore.ts` would add indirection with
+  no benefit for a standalone job.
+
+- **`agent_feedback` reuse (not a new table)**: audit findings that need human attention
+  are inserted directly into `agent_feedback` with `agent = 'data-auditor'`. This means
+  the existing `get_feedback` MCP tool immediately surfaces audit issues with no new tool
+  needed. The `submit_feedback` MCP tool is NOT called (it is an MCP endpoint, not an
+  internal function) — the audit job writes to the DB directly using the same INSERT
+  statement pattern.
+
+- **Plausible-range thresholds for `tracked_indicators`**: hardcoded as constants inside
+  `dataAuditJob.ts` (not in `mcp.config.json`) because these are physical validity
+  constraints (oil cannot be $5 or $500 in normal markets), not tunable policy. The
+  user is not expected to adjust them. Document the constants clearly in JSDoc.
+
+- **LanceDB count check**: use the existing `vectorstore.ts` export for count access
+  (or add a `getCount(): Promise<number>` helper if not already present). Do not add
+  a new LanceDB dependency. If `getCount()` throws, swallow the error and log it — the
+  weekly audit must not fail hard on a LanceDB API change.
+
+- **Telegram message format**: plain text, no Markdown, consistent with all other
+  Telegram messages in the system. Example:
+  ```
+  DB audit (daily) — 2026-04-01 23:00
+  Cleaned: 3 rows (0-price: 2, stale alerts: 1)
+  Flagged: 2 warnings, 0 criticals
+  Feedback queue: 5 new items (1 high priority)
+  ```
+
+---
+
 ## Completed Sprints
 
 | Sprint | Theme | Key Deliverables | Status |
