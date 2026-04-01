@@ -500,6 +500,244 @@ at first audit run — no schema.ts change required for this table.
 
 ---
 
+## Next-Next Sprint (queued — Sprint 018 must sign-off and Sprint 017 must merge first)
+
+status: PLANNED
+sprint_id: 019
+queued_at: 2026-04-01
+
+---
+
+### Theme
+
+**"Know What You're Watching"**
+
+The analysis team identified two silent intelligence failures observed on 2026-04-01:
+
+1. The headline "Vinamilk lên kế hoạch doanh thu 2026 cao kỷ lục" scored an impact of 5/10
+   yet the Stocks field was empty. `run_impact_chain` returned "No watchlist stocks directly
+   affected." VNM is on the watchlist. The cascade engine does not know that "Vinamilk" the
+   company name refers to stock code VNM. The same gap exists for every company whose
+   Vietnamese trade name differs from its ticker: Hòa Phát → HPG, Vietcombank → VCB,
+   FPT Corporation → FPT, and dozens more.
+
+2. The VN-Index seasonal pattern "VN-Index 4 năm liên tiếp mất điểm tháng 4" scored an
+   impact of 8/10 yet produced zero individual-stock alerts. A market-wide pattern of that
+   magnitude should cascade to every watchlist stock as a contextual risk signal — not be
+   silently discarded because no single stock name appears in the headline.
+
+Both gaps are correctness bugs, not performance issues. They cause the system to silently
+miss its primary purpose: alerting the investor about news that directly affects their
+portfolio.
+
+The guiding constraint from earlier sprints remains: no LLM calls, no new external data
+sources, no changes to existing MCP tool signatures.
+
+---
+
+### Goal
+
+Wire company-name-to-stock-code aliases into the cascade and signal-detection pipeline so
+that Vietnamese trade names in news headlines resolve to watchlist stock codes; and make
+market-wide pattern articles cascade as contextual risk signals to all watchlist stocks.
+
+---
+
+### Scope
+
+**IN**
+
+**P0 — Company name alias dictionary (task 160)**
+
+A new domain service `src/domain/services/stockAliases.ts` that exports:
+
+```typescript
+// Returns all known aliases (trade names, abbreviations, full Vietnamese names)
+// for a given stock code, lower-cased, accent-normalised.
+export function getAliasesForCode(code: string): string[];
+
+// Given a text string, returns all watchlist stock codes whose aliases
+// appear in the text. Case-insensitive, accent-insensitive.
+export function detectStocksInText(text: string, watchlistCodes: string[]): string[];
+```
+
+The alias map is a static, hard-coded object in the same file. Initial coverage must
+include at minimum every stock in the default watchlist (VNM, FPT, VCB, VEA) plus the
+20 most-liquid HOSE stocks (HPG, VIC, VHM, MSN, MWG, TCB, BID, CTG, ACB, VPB, HDB, STB,
+VNM, GAS, PLX, SAB, REE, PNJ, DHG, FPT). The alias object must be extensible — a developer
+adds entries without touching any other file.
+
+Aliases for each stock must cover: full Vietnamese company name, common abbreviation, known
+brand names (e.g. VNM → ["vinamilk", "viet nam dairy", "sữa vinamilk"]).
+
+Configuration: the alias map lives entirely in `stockAliases.ts`. No database table, no
+`mcp.config.json` key. Aliases are static knowledge, not runtime data.
+
+Test requirement: >= 30 test cases covering: exact match, partial match inside a sentence,
+accent-normalised match (Vinamilk vs vinamilk), no false-positive on a stock whose name does
+not appear, and multi-stock detection in a single headline.
+
+- Task 160: create `src/domain/services/stockAliases.ts` + `src/__tests__/160-stock-aliases.test.ts`
+
+**P0 — Wire aliases into cascade engine and signal detector (task 161)**
+
+Modify `src/domain/services/cascadeEngine.ts` and `src/application/usecases/pollNews.ts`
+(the news-mention signal detection path) to call `detectStocksInText()` when the primary
+stock-code scan finds zero watchlist hits.
+
+Precise logic change in the cascade engine's article-to-stock mapping step:
+
+1. Current: scan `article.title + article.summary` for exact stock code tokens
+   (e.g. "VNM", "FPT").
+2. Addition: if step 1 yields zero hits, call `detectStocksInText(text, watchlistCodes)`
+   and merge results.
+3. Alias-resolved stocks are tagged with `resolvedViaAlias: true` in the intermediate
+   signal object (for logging / future explainability — not surfaced in the Alert output
+   schema, no breaking change).
+
+The same logic must apply in `signalDetector.ts` when it scans article text for
+watchlist-relevant news mentions.
+
+No change to the `Alert` or `Signal` domain model types. No new MCP tool. No change to
+Telegram message format.
+
+- Task 161: modify `src/domain/services/cascadeEngine.ts` +
+  `src/domain/services/signalDetector.ts` +
+  `src/application/usecases/pollNews.ts`
+
+**P1 — Market-wide pattern cascade to all watchlist stocks (task 162)**
+
+Market-wide articles (VN-Index, toàn thị trường, thị trường chứng khoán, index seasonal
+patterns) currently produce a cascade analysis entry but generate no per-stock signals
+because no individual stock ticker appears in the text.
+
+This task adds a "market-wide broadcast" path in the cascade engine:
+
+Detection: an article is classified as "market-wide" if it matches >= 1 of:
+- Contains "VN-Index" (case-insensitive)
+- Contains any of: "toàn thị trường", "thị trường chứng khoán", "index", "thị trường"
+  combined with a price/percentage token (e.g. "giảm X%", "tăng X điểm", "mất điểm")
+- The cascade level resolves to `country` or `global` with impact score >= 6
+
+Broadcast behaviour: when an article is classified market-wide AND impact >= 6 (threshold
+configurable via `alerts.marketWideCascadeMinImpact` in `mcp.config.json`, default 6), emit
+one `news_mention` signal for EACH watchlist stock with:
+- `direction`: inherited from the article's cascade direction (bearish → sell pressure)
+- `confidence`: `article.impactScore / 10` (capped at 0.7 — lower than a direct mention)
+- `note`: "market-wide cascade: <article title truncated to 80 chars>"
+
+This means "VN-Index 4 năm liên tiếp mất điểm tháng 4" (impact 8, bearish) generates a
+`low`-severity signal for VNM, FPT, VCB, VEA simultaneously — which then flows through
+the existing alert cooldown / dedup / grouping stack.
+
+The existing news-mention alert noise filter from Sprint 017 (task 152) naturally limits
+how many of these broadcast signals become alerts: only non-neutral sentiment articles from
+trusted sources within 60 minutes will pass the gate.
+
+Configuration key added to `mcp.config.json`: `alerts.marketWideCascadeMinImpact` (integer,
+default 6). No hardcoded thresholds in production code.
+
+- Task 162: modify `src/domain/services/cascadeEngine.ts` +
+  `src/application/usecases/runImpactChain.ts` +
+  `mcp.config.json`
+
+**OUT**
+
+- Building a database-backed alias store with CRUD MCP tools (deferred — static map is
+  sufficient for the watchlist size; adds complexity with no user-facing benefit at this stage)
+- Alias learning from news text (deferred — requires NLP entity extraction, out of scope
+  without LLM calls)
+- Changes to the Alert or Signal domain model type signatures
+- Changes to existing MCP tool input/output schemas
+- New external data sources
+- LLM calls of any kind
+- BCTC extractor, ratio computer, or validator changes
+- Telegram format changes
+
+---
+
+### Success Metrics
+
+1. **Vinamilk → VNM resolved**: given a news article with title "Vinamilk lên kế hoạch
+   doanh thu 2026 cao kỷ lục" and VNM in the watchlist, calling `detectStocksInText()` with
+   the title returns `["VNM"]`. A full `run_impact_chain` call for this article produces a
+   cascade entry with `affectedStocks` containing VNM.
+
+2. **Alias accuracy**: `detectStocksInText()` test suite passes >= 30 cases with 0 false
+   positives on the negative-case set (articles that contain neither the stock code nor any
+   alias must return an empty array).
+
+3. **HPG detected from "Hòa Phát"**: `detectStocksInText("Tập đoàn Hòa Phát ghi nhận lợi
+   nhuận kỷ lục", ["HPG"])` returns `["HPG"]`.
+
+4. **Market-wide broadcast fires**: given an article "VN-Index 4 năm liên tiếp mất điểm
+   tháng 4" with impact score 8 and cascade level `country`, and watchlist = [VNM, FPT,
+   VCB, VEA], the cascade engine emits exactly 4 `news_mention` signals — one per watchlist
+   stock — each with confidence <= 0.7 and a note starting with "market-wide cascade:".
+
+5. **Market-wide broadcast respects threshold**: an article classified market-wide with
+   impact score 5 (below `marketWideCascadeMinImpact = 6`) emits zero broadcast signals.
+
+6. **No regression**: `bun test` passes with 0 failures and `bun tsc --noEmit` reports
+   0 errors after all Sprint 019 tasks are merged. The Sprint 017 noise filter (task 152)
+   still correctly suppresses neutral, stale, and low-trust articles even when they are
+   broadcast via the market-wide path.
+
+---
+
+### Task board (Sprint 019)
+
+| # | Title | Priority | Status | Depends on |
+|---|-------|----------|--------|------------|
+| 160 | Company name alias dictionary (`stockAliases.ts`) | P0 | Backlog | — |
+| 161 | Wire aliases into cascade engine + signal detector | P0 | Backlog | 160 |
+| 162 | Market-wide pattern cascade to all watchlist stocks | P1 | Backlog | — |
+
+---
+
+### Dependency chain
+
+```
+160 (alias dictionary)          — P0, independent, start first
+161 (wire aliases)              — P0, depends on 160 API stable
+162 (market-wide broadcast)     — P1, independent of 160/161, can start in parallel with 160
+
+Sprint 017 tasks 152-156 must merge before Sprint 019 starts.
+Sprint 018 sign-off must complete before Sprint 019 starts.
+```
+
+---
+
+### Key technical decisions (locked at PO level)
+
+- **Static alias map, not a database**: the alias dictionary is a TypeScript const object.
+  The watchlist is small (4-20 stocks). A database table adds operational overhead
+  (migrations, CRUD tools, backup) with no benefit at this scale. When the watchlist grows
+  beyond 50 stocks this decision will be revisited in a future sprint.
+
+- **Accent normalisation strategy**: normalise both the alias keys and the incoming text to
+  NFD + remove combining diacritical marks before comparison. This ensures "Vinamílk" (typo
+  in source) and "Vinamilk" both hit the same alias. The normaliser is a 3-line pure function
+  inside `stockAliases.ts` — no external library.
+
+- **Alias resolution is additive, not replacing**: the current stock-code token scan remains
+  as the primary pass. Alias resolution runs only as a fallback (step 2). This avoids any
+  risk of false-positive alias matches overriding an explicit ticker symbol.
+
+- **Market-wide confidence cap at 0.7**: a direct mention of "VNM" in a headline warrants
+  full confidence. A market-index article that doesn't name a stock warrants lower confidence.
+  The cap of 0.7 ensures broadcast signals are downstream of direct signals in the conviction
+  scorer without requiring changes to the scorer's weighting logic.
+
+- **`marketWideCascadeMinImpact` default = 6**: impact scores 1-5 are informational or
+  low-relevance macro context. Scores 6-10 represent sector-moving or market-moving events
+  where every portfolio stock faces exposure. The threshold of 6 was chosen based on the
+  observed score distribution: the Vinamilk revenue plan article scored 5 (company-specific,
+  should NOT broadcast) while the VN-Index seasonal pattern scored 8 (market-wide, SHOULD
+  broadcast). This correctly separates the two cases at the default threshold.
+
+---
+
 ## Completed Sprints
 
 | Sprint | Theme | Key Deliverables | Status |

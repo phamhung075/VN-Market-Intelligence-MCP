@@ -270,18 +270,21 @@ export async function assembleBriefing(
     options.fetchVnIndexFn ??
     (async () => {
       try {
-        const { fetchHosePrices } = await import(
+        const { fetchVnIndex } = await import(
           "../../infrastructure/fetchers/hose.js"
         );
-        const prices = await fetchHosePrices(["VNINDEX"]);
-        if (prices.length > 0) {
+        const result = await fetchVnIndex();
+        if (result) {
           return {
-            price: prices[0]!.price,
-            changePct: prices[0]!.changePct,
+            price: result.price,
+            changePct: result.changePct,
           };
         }
         return null;
-      } catch {
+      } catch (err) {
+        logger.warn("[assembleBriefing] fetchVnIndex failed", {
+          error: err instanceof Error ? err.message : String(err),
+        });
         return null;
       }
     });

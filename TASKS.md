@@ -83,6 +83,10 @@
 > **Sprint 008 Wave 1** — All 3 tasks merged: FIX-081, 025, 028. QA approved: 2026-03-29. Full suite: 842 pass, 0 fail. Yahoo Finance commodity fetcher (13 tests), SBV macro fetcher (14 tests), SSE timeout fix (8 tests hardened).
 > **Sprint 008 Wave 2** — All 2 tasks merged: 126, 089. QA approved: 2026-03-29. Macro cascade integration (15 tests), get_macro_snapshot MCP tool (16 tests). toolCount 16 → 17.
 > **Sprint 008 COMPLETE** — All 5 tasks merged: FIX-081, 025, 028, 126, 089. Sprint 008 delivers the macro intelligence layer: commodity prices, SBV central bank rates, causal chain macro adjustments, and get_macro_snapshot MCP tool. 66 new tests added.
+> **Sprint 010-011 QA batch** — Tasks 131, 132, 133, 137 merged: 2026-04-01. Alert quality (35 tests), BCTC validator (26 tests), adaptive thresholds (25 tests), Step E fix (18 tests). tsc: 0 errors.
+> **Sprint 017 COMPLETE** — All 5 tasks merged: 152, 153, 154, 155, 156. Production Hardening: noise filter, SSC dedup, LanceDB silence, log rotation, off-hours interval. 16 new tests.
+> **Sprint 018 COMPLETE** — All 3 tasks merged: 157, 158, 159. Data audit engine, scheduler wiring, health tool enhancement. 2026-04-01.
+> **Sprint 019 ACTIVE** — started 2026-04-01. Task 160 complete (34 tests, 100% coverage).
 
 ---
 
@@ -90,10 +94,7 @@
 
 | # | Title | Branch | Notes |
 |---|-------|--------|-------|
-| 131 | Alert quality system — cooldown, dedup, grouping | `task/131-alert-quality-system` | 35 tests, 0 fail |
-| 132 | BCTC validation pipeline — bad data guard | `task/132-bctc-validator` | 26 tests, 100% coverage, 0 fail |
-| 133 | Adaptive signal detection thresholds | `task/133-adaptive-thresholds` | 25 tests, 100% coverage, 0 fail |
-| 137 | Fix Step E — read alerts from DB and send to Telegram | `task/137-fix-step-e-alerts` | 18 tests, 0 fail, tsc 0 errors |
+| 160 | Company name alias dictionary (`stockAliases.ts`) | `task/160-stock-aliases` | 34 tests, 100% coverage, tsc clean |
 
 ---
 
@@ -107,6 +108,19 @@
 
 ## 📋 TODO
 *(Dependencies cleared — ready to assign)*
+
+### Sprint 017 — Production Hardening
+
+> Sprint 017 COMPLETE — 2026-04-01. All 5 tasks done.
+> Tasks 152, 154, 156 merged in earlier sessions. Tasks 153, 155 merged 2026-04-01.
+
+| # | Title | Priority | Status |
+|---|-------|----------|--------|
+| 152 | News-mention alert noise filter | P0 | Done |
+| 153 | SSC scan deduplication | P0 | Done — merged 2026-04-01 |
+| 154 | Silence LanceDB TRACE logging | P1 | Done |
+| 155 | Log file rotation | P1 | Done — merged 2026-04-01 |
+| 156 | Off-hours cycle interval increase | P2 | Done |
 
 ### Sprint 018 — Data Integrity First
 

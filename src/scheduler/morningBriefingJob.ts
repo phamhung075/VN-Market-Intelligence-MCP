@@ -89,7 +89,18 @@ export async function runMorningBriefing(
       } catch { /* best effort */ }
     }
 
-    if (alreadySent) {
+    // ── Empty-data guard: skip Telegram when briefing has no useful content ──
+    const hasContent =
+      briefing.vnIndex != null ||
+      briefing.watchlistSummary.length > 0 ||
+      briefing.topStories.length > 0 ||
+      briefing.alerts.length > 0 ||
+      briefing.newReports.length > 0 ||
+      (briefing.unresolvedAlerts && briefing.unresolvedAlerts.length > 0);
+
+    if (!hasContent) {
+      logger.info("[morning-briefing] briefing has no useful data — skipping Telegram send");
+    } else if (alreadySent) {
       logger.debug("[morning-briefing] Telegram already sent for today — skipping");
     } else {
     try {
