@@ -2,10 +2,11 @@
 
 ## Current Sprint
 
-status: ACTIVE
+status: COMPLETE
 sprint_id: 020
 started: 2026-04-01
 updated: 2026-04-01
+completed: 2026-04-01
 
 ---
 
