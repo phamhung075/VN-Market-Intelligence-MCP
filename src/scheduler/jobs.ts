@@ -3,12 +3,13 @@
  * All crons configurable via .env
  *
  * Registered jobs:
- *   morningBriefing  08:00 weekdays     (task 101) ✓
- *   marketOpen       09:00 weekdays     (task 103) ✓
- *   newsPoll         every 30 min       (task 102) ✓
- *   marketClose      15:30 weekdays     (task 103) ✓
- *   sscCheck         20:00 daily        (task 104) ✓
- *   eveningSummary   22:00 weekdays     (task 105) ✓
+ *   morningBriefing       08:00 weekdays     (task 101) ✓
+ *   marketOpen            09:00 weekdays     (task 103) ✓
+ *   newsPoll              every 30 min       (task 102) ✓
+ *   marketClose           15:30 weekdays     (task 103) ✓
+ *   sscCheck              20:00 daily        (task 104) ✓
+ *   eveningSummary        22:00 weekdays     (task 105) ✓
+ *   predictionMarketPoll  every 30 min       (task 167) ✓
  */
 
 import cron from 'node-cron'
@@ -17,14 +18,16 @@ import { runMarketScan } from './marketScanJob.js'
 import { runNewsPoller } from './newsPollerJob.js'
 import { runMorningBriefing } from './morningBriefingJob.js'
 import { runEveningSummary } from './eveningSummaryJob.js'
+import { runPredictionMarketPoll } from './predictionMarketJob.js'
 
 export const CRONS = {
-  morningBriefing: Bun.env.CRON_MORNING_BRIEFING ?? '0 8 * * 1-5',
-  marketOpen:      Bun.env.CRON_MARKET_OPEN      ?? '0 9 * * 1-5',
-  newsPoll:        Bun.env.CRON_NEWS_POLL         ?? '*/30 * * * *',
-  marketClose:     Bun.env.CRON_MARKET_CLOSE      ?? '30 15 * * 1-5',
-  sscCheck:        Bun.env.CRON_SSC_CHECK         ?? '0 20 * * *',
-  eveningSummary:  Bun.env.CRON_EVENING_SUMMARY   ?? '0 22 * * 1-5',
+  morningBriefing:      Bun.env.CRON_MORNING_BRIEFING          ?? '0 8 * * 1-5',
+  marketOpen:           Bun.env.CRON_MARKET_OPEN               ?? '0 9 * * 1-5',
+  newsPoll:             Bun.env.CRON_NEWS_POLL                  ?? '*/30 * * * *',
+  marketClose:          Bun.env.CRON_MARKET_CLOSE               ?? '30 15 * * 1-5',
+  sscCheck:             Bun.env.CRON_SSC_CHECK                  ?? '0 20 * * *',
+  eveningSummary:       Bun.env.CRON_EVENING_SUMMARY            ?? '0 22 * * 1-5',
+  predictionMarketPoll: Bun.env.CRON_PREDICTION_MARKET_POLL     ?? '*/30 * * * *',
 }
 
 function log(msg: string) {
@@ -60,6 +63,11 @@ export function startScheduler() {
   // 22:00 — Evening summary (weekdays Mon-Fri only) — task 105
   cron.schedule(CRONS.eveningSummary, async () => {
     await runEveningSummary()
+  }, { timezone: 'Asia/Ho_Chi_Minh' })
+
+  // Every 30 min — Prediction market poll — task 167
+  cron.schedule(CRONS.predictionMarketPoll, async () => {
+    await runPredictionMarketPoll()
   }, { timezone: 'Asia/Ho_Chi_Minh' })
 
   log(`[scheduler] jobs registered — ${Object.keys(CRONS).length} cron jobs active`)
