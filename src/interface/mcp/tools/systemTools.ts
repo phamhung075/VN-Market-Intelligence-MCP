@@ -173,6 +173,32 @@ export function registerSystemTools(server: McpServer): void {
         }
         lines.push("");
 
+        // ── DB Audit ──────────────────────────────────────────────────────────
+        lines.push("--- DB Audit ---");
+        try {
+          const auditRow = db.query<{
+            last_daily_audit_at: string | null;
+            last_weekly_audit_at: string | null;
+          }, []>(
+            "SELECT last_daily_audit_at, last_weekly_audit_at FROM audit_state WHERE id = 1",
+          ).get();
+
+          const pendingFeedback = db.query<{ cnt: number }, []>(
+            "SELECT COUNT(*) as cnt FROM agent_feedback WHERE status = 'new'",
+          ).get();
+          const openWarnings = db.query<{ cnt: number }, []>(
+            "SELECT COUNT(*) as cnt FROM agent_feedback WHERE status = 'new' AND priority IN ('high', 'critical')",
+          ).get();
+
+          lines.push(`  last_daily_audit:   ${auditRow?.last_daily_audit_at ?? "never"}`);
+          lines.push(`  last_weekly_audit:  ${auditRow?.last_weekly_audit_at ?? "never"}`);
+          lines.push(`  pending_feedback:   ${pendingFeedback?.cnt ?? 0} new items`);
+          lines.push(`  open_warnings:      ${openWarnings?.cnt ?? 0} high/critical items`);
+        } catch {
+          lines.push("  (audit_state table not yet created — no audit has run)");
+        }
+        lines.push("");
+
         // ── Tracked Commodities ──────────────────────────────────────────────
         lines.push("--- Auto-tracked Indicators ---");
         try {
