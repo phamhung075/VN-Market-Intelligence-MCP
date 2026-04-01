@@ -155,7 +155,7 @@
 | 164 | Polymarket REST fetcher (`polymarket.ts`) | `task/164-polymarket-fetcher` | Developer | infrastructure/fetchers | P0 | 163 ✓, 169 ✓ | Backlog |
 | 166 | Prediction signal detector (`predictionSignalDetector.ts`) + SignalType extension | `task/166-prediction-signal-detector` | Developer | domain/services | P0 | 163 ✓, 165 ✓ | Review |
 | 167 | Prediction market scheduler job + cron wiring | `task/167-prediction-market-job` | Developer | scheduler | P0 | 164 ✓, 165 ✓, 166 ✓ | Backlog |
-| 168 | `get_prediction_markets` MCP tool + server.ts + index.ts registration | `task/168-prediction-mcp-tool` | Developer | interface/mcp | P1 | 163 ✓, 167 ✓ | Backlog |
+| 168 | `get_prediction_markets` MCP tool + server.ts + index.ts registration | `task/168-prediction-mcp-tool` | Developer | interface/mcp | P1 | 163 ✓, 167 ✓ | **Review** |
 
 ---
 
