@@ -2,7 +2,7 @@
 
 ## Current Sprint
 
-status: PLANNING
+status: ACTIVE
 sprint_id: 020
 started: 2026-04-01
 updated: 2026-04-01
