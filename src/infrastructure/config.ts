@@ -61,6 +61,58 @@ export interface SchedulerConfig {
   marketClose: string;
   sscCheck: string;
   eveningSummary: string;
+  /** Cron for prediction market polling. Default: every 30 minutes. */
+  predictionMarketPoll: string;
+}
+
+/** Polymarket REST API endpoint configuration. */
+export interface PolymarketConfig {
+  /** CLOB REST API base URL. Default: https://clob.polymarket.com */
+  clobApiUrl: string;
+  /** Gamma Markets API base URL. Default: https://gamma-api.polymarket.com */
+  gammaApiUrl: string;
+  /** HTTP request timeout in milliseconds. Default: 15000 */
+  timeout: number;
+  /** Maximum markets to fetch per request. Default: 50 */
+  maxMarketsPerFetch: number;
+}
+
+/** Signal detection thresholds for prediction market intelligence. */
+export interface PredictionSignalsConfig {
+  /** Minimum absolute probability shift (%) to trigger a signal. Default: 10 */
+  probabilityShiftPct: number;
+  /** Probability threshold above which a market is "high conviction". Default: 0.85 */
+  highConvictionThreshold: number;
+  /** Volume multiplier vs 24-hour average to flag a volume spike. Default: 3 */
+  volumeSpikeMultiplier: number;
+  /** Minimum market liquidity in USD to consider. Default: 10000 */
+  minLiquidityUsd: number;
+}
+
+/** Keyword groups used to match prediction markets to VN-market impact categories. */
+export interface PredictionKeywordsConfig {
+  /** Keywords matching Vietnam-specific markets. */
+  vietnam: string[];
+  /** Keywords matching trade/tariff markets. */
+  trade: string[];
+  /** Keywords matching commodity markets. */
+  commodities: string[];
+  /** Keywords matching macro-economic markets. */
+  macro: string[];
+}
+
+/** Top-level prediction markets configuration block. */
+export interface PredictionMarketsConfig {
+  /** Whether prediction market polling is active. Default: true */
+  enabled: boolean;
+  /** List of active prediction market sources. Default: ["polymarket"] */
+  sources: string[];
+  /** Polymarket-specific configuration. */
+  polymarket: PolymarketConfig;
+  /** Signal detection thresholds. */
+  signals: PredictionSignalsConfig;
+  /** Keyword groups for VN-market impact classification. */
+  keywords: PredictionKeywordsConfig;
 }
 
 export interface NewsMentionConfig {
@@ -145,6 +197,8 @@ export interface McpConfig {
   fetchers: FetchersConfig;
   cycle: CycleConfig;
   fetchLimits: FetchLimitsConfig;
+  /** Prediction market intelligence configuration. */
+  predictionMarkets: PredictionMarketsConfig;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -303,6 +357,7 @@ export function loadMcpConfig(): McpConfig {
       marketClose: str(f, "scheduler.marketClose", "CRON_MARKET_CLOSE", "30 15 * * 1-5"),
       sscCheck: str(f, "scheduler.sscCheck", "CRON_SSC_CHECK", "0 20 * * *"),
       eveningSummary: str(f, "scheduler.eveningSummary", "CRON_EVENING_SUMMARY", "0 22 * * 1-5"),
+      predictionMarketPoll: str(f, "scheduler.predictionMarketPoll", "CRON_PREDICTION_MARKET_POLL", "*/30 * * * *"),
     },
     alerts: {
       defaultDropPct: num(f, "alerts.defaultDropPct", "DEFAULT_ALERT_DROP_PCT", -3),
@@ -390,6 +445,28 @@ export function loadMcpConfig(): McpConfig {
       manual: {
         newsPerSource: num(f, "fetchLimits.manual.newsPerSource", null, 20),
         totalNews: num(f, "fetchLimits.manual.totalNews", null, 50),
+      },
+    },
+    predictionMarkets: {
+      enabled: bool(f, "predictionMarkets.enabled", "PREDICTION_MARKETS_ENABLED", true),
+      sources: strArr(f, "predictionMarkets.sources", null, ["polymarket"]),
+      polymarket: {
+        clobApiUrl: str(f, "predictionMarkets.polymarket.clobApiUrl", "POLYMARKET_CLOB_API_URL", "https://clob.polymarket.com"),
+        gammaApiUrl: str(f, "predictionMarkets.polymarket.gammaApiUrl", "POLYMARKET_GAMMA_API_URL", "https://gamma-api.polymarket.com"),
+        timeout: num(f, "predictionMarkets.polymarket.timeout", null, 15000),
+        maxMarketsPerFetch: num(f, "predictionMarkets.polymarket.maxMarketsPerFetch", null, 50),
+      },
+      signals: {
+        probabilityShiftPct: num(f, "predictionMarkets.signals.probabilityShiftPct", null, 10),
+        highConvictionThreshold: num(f, "predictionMarkets.signals.highConvictionThreshold", null, 0.85),
+        volumeSpikeMultiplier: num(f, "predictionMarkets.signals.volumeSpikeMultiplier", null, 3),
+        minLiquidityUsd: num(f, "predictionMarkets.signals.minLiquidityUsd", null, 10000),
+      },
+      keywords: {
+        vietnam: strArr(f, "predictionMarkets.keywords.vietnam", null, ["vietnam", "vietnamese", "hanoi", "ho chi minh"]),
+        trade: strArr(f, "predictionMarkets.keywords.trade", null, ["tariff", "trade war", "import duty", "export ban"]),
+        commodities: strArr(f, "predictionMarkets.keywords.commodities", null, ["oil price", "gold price", "commodity"]),
+        macro: strArr(f, "predictionMarkets.keywords.macro", null, ["fed rate", "interest rate", "inflation", "recession", "gdp"]),
       },
     },
   };

@@ -42,13 +42,37 @@
     "watchlist": ["VNM", "FPT", "VCB", "VEA"]
   },
 
+  "predictionMarkets": {
+    "enabled": true,
+    "sources": ["polymarket"],
+    "polymarket": {
+      "clobApiUrl": "https://clob.polymarket.com",
+      "gammaApiUrl": "https://gamma-api.polymarket.com",
+      "timeout": 15000,
+      "maxMarketsPerFetch": 50
+    },
+    "signals": {
+      "probabilityShiftPct": 10,
+      "highConvictionThreshold": 0.85,
+      "volumeSpikeMultiplier": 3,
+      "minLiquidityUsd": 10000
+    },
+    "keywords": {
+      "vietnam": ["vietnam", "vietnamese", "hanoi", "ho chi minh"],
+      "trade": ["tariff", "trade war", "import duty", "export ban"],
+      "commodities": ["oil price", "gold price", "commodity"],
+      "macro": ["fed rate", "interest rate", "inflation", "recession", "gdp"]
+    }
+  },
+
   "scheduler": {
     "intelligenceCycle": "*/15 * * * *",
     "morningBriefing": "0 8 * * 1-5",
     "marketOpen": "0 9 * * 1-5",
     "marketClose": "30 15 * * 1-5",
     "sscCheck": "0 20 * * *",
-    "eveningSummary": "0 22 * * 1-5"
+    "eveningSummary": "0 22 * * 1-5",
+    "predictionMarketPoll": "*/30 * * * *"
   },
 
   "alerts": {
