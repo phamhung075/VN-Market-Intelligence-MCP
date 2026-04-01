@@ -183,7 +183,15 @@ export async function runImpactChain(input: RunCascadeInput): Promise<CausalChai
   }
 
   // ── Step 3: Build causal chain (pure domain call) ────────────────────────
-  return buildCausalChain(seedEntry, input.watchlist, ragResults, macroContext, macroStats);
+  // Load broadcast threshold from config (best-effort; default 6 on failure)
+  let broadcastMinImpact = 6;
+  try {
+    const { loadMcpConfig } = await import("../../infrastructure/config.js");
+    const cfg = loadMcpConfig();
+    broadcastMinImpact = cfg.alerts?.marketWideCascadeMinImpact ?? 6;
+  } catch { /* use default */ }
+
+  return buildCausalChain(seedEntry, input.watchlist, ragResults, macroContext, macroStats, broadcastMinImpact);
 }
 
 // ── Default RAG retriever (real implementation, loaded lazily) ───────────────

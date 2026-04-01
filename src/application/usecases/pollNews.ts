@@ -21,6 +21,7 @@ import type { WatchlistEntry } from "../../domain/services/cascadeEngine.js";
 import type { SearchResult } from "../../domain/services/cascadeEngine.js";
 import { normalizeNews } from "../../domain/services/newsNormalizer.js";
 import { buildCausalChain } from "../../domain/services/cascadeEngine.js";
+import { detectStocksInText } from "../../domain/services/stockAliases.js";
 import { generateAlerts } from "../../domain/services/alertGenerator.js";
 import { storeAlerts } from "../../infrastructure/db/alertStore.js";
 import { getDb } from "../../infrastructure/db/schema.js";
@@ -412,6 +413,14 @@ export async function pollNews(options: PollNewsOptions = {}): Promise<PollNewsR
       };
     } catch { /* no macro context */ }
 
+    // Load broadcastMinImpact from config once for the whole batch (default 6)
+    let broadcastMinImpact = 6;
+    try {
+      const { loadMcpConfig } = await import("../../infrastructure/config.js");
+      const cfg = loadMcpConfig();
+      broadcastMinImpact = cfg.alerts?.marketWideCascadeMinImpact ?? 6;
+    } catch { /* use default */ }
+
     for (const entry of newEntries) {
       try {
         let chain: import("../../domain/services/cascadeEngine.js").CausalChain;
@@ -421,7 +430,7 @@ export async function pollNews(options: PollNewsOptions = {}): Promise<PollNewsR
         try {
           ragResults = await retriever(entry.summary, { k: 3 });
         } catch { /* silent */ }
-        chain = buildCausalChain(entry, watchlist, ragResults, macroContext, macroStats);
+        chain = buildCausalChain(entry, watchlist, ragResults, macroContext, macroStats, broadcastMinImpact);
 
         // Convert watchlist impacts into news_mention signals
         // Relevance gate (task 152): filter noise before creating signals
@@ -459,7 +468,11 @@ export async function pollNews(options: PollNewsOptions = {}): Promise<PollNewsR
           const sourceUrl = entry.sourceUrl.toLowerCase();
           const sourceTrusted = highTrustSources.some((s) => sourceUrl.includes(s));
           const titleAndSummary = `${entry.sourceTitle} ${entry.summary}`.toLowerCase();
-          const directMention = titleAndSummary.includes(impact.actionCode.toLowerCase());
+          const tickerMatch = titleAndSummary.includes(impact.actionCode.toLowerCase());
+          const aliasMatch = tickerMatch
+            ? false // short-circuit: ticker already matched, skip alias scan
+            : detectStocksInText(titleAndSummary, [impact.actionCode]).length > 0;
+          const directMention = tickerMatch || aliasMatch;
           if (directMention) {
             // Always pass — article explicitly mentions this stock
           } else if (sourceTrusted && sentiment.direction !== "neutral" && sentiment.confidence >= nmCfg.minSentimentConfidence && impact.confidence >= nmCfg.minCascadeConfidence) {

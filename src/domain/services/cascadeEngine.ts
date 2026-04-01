@@ -18,6 +18,7 @@ import type { AnalysisEntry, AnalysisLevel, Sentiment, ImpactDirection } from ".
 import type { DomainType } from "../../../bctc-schema";
 import { classifySentiment } from "./sentimentClassifier.js";
 import { classifyDeviation, deviationToDelta, type MacroStats, type MacroDeviation } from "./macroThresholds.js";
+import { detectStocksInText } from "./stockAliases.js";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Exported types
@@ -937,6 +938,65 @@ function findKeyword(text: string, keywords: string[]): string | null {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
+// Market-wide detection helper (Task 162)
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * Returns true when the article text and metadata indicate a market-wide event.
+ *
+ * An article is market-wide if ANY of the following:
+ *   (a) Contains "vn-index"
+ *   (b) Contains ("toan thi truong" OR "thi truong chung khoan") AND at least
+ *       one price/movement token ("giam", "tang", "mat diem", "diem", "%")
+ *   (c) seedEntry.level is "country" or "global" AND impactScore >= minImpact
+ *
+ * All string comparisons use NFD-normalised, lowercased text.
+ * Private — not exported.
+ *
+ * @param seedTextLower - Article title+summary, lowercased before calling
+ * @param level         - AnalysisLevel of the seed entry
+ * @param impactScore   - impactScore of the seed entry
+ * @param minImpact     - Minimum impact score threshold for criteria (c)
+ */
+function isMarketWide(
+  seedTextLower: string,
+  level: AnalysisLevel,
+  impactScore: number,
+  minImpact: number,
+): boolean {
+  // Apply NFD normalisation to strip Vietnamese diacritics for substring matching.
+  // Sources may emit text with or without diacritics; NFD strip gives uniform comparison.
+  const normText = seedTextLower
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "")
+    .toLowerCase();
+
+  // (a) VN-Index mention
+  if (normText.includes("vn-index")) return true;
+
+  // (b) Broad market vocabulary + price movement token
+  const broadMarket =
+    normText.includes("toan thi truong") ||
+    normText.includes("thi truong chung khoan");
+  if (broadMarket) {
+    const hasMovement =
+      normText.includes("giam") ||
+      normText.includes("tang") ||
+      normText.includes("mat diem") ||
+      normText.includes("diem") ||
+      normText.includes("%");
+    if (hasMovement) return true;
+  }
+
+  // (c) Country or global level with sufficient impact
+  if ((level === "country" || level === "global") && impactScore >= minImpact) {
+    return true;
+  }
+
+  return false;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
 // Main exported function
 // ═══════════════════════════════════════════════════════════════════════════
 
@@ -953,7 +1013,10 @@ function findKeyword(text: string, keywords: string[]): string | null {
  * @param ragResults   - Pre-fetched historical context (optional, injected by app layer)
  * @param macroContext - Real-time macro indicators for confidence adjustments (optional).
  *                       When omitted or null, behavior is identical to pre-Sprint-008.
- * @returns            - CausalChain with all levels: seed → domain → action
+ * @param broadcastMinImpact - Minimum impactScore required to trigger market-wide broadcast.
+ *                             Default: 6. Market-wide events (e.g. "VN-Index drops 5%")
+ *                             cascade to ALL watchlist stocks not already covered by domain rules.
+ * @returns                  - CausalChain with all levels: seed → domain → action
  */
 export function buildCausalChain(
   seedEntry: AnalysisEntry,
@@ -961,6 +1024,7 @@ export function buildCausalChain(
   ragResults?: SearchResult[],
   macroContext?: MacroContext | null,
   macroStats?: MacroStats[],
+  broadcastMinImpact?: number,
 ): CausalChain {
   const chainId = `chain-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   const summaryLower = seedEntry.summary.toLowerCase();
@@ -1103,25 +1167,91 @@ export function buildCausalChain(
 
   const actionEntries: CausalChainEntry[] = [];
 
+  // Seed text used for alias detection — pre-computed once outside the loop
+  const seedText = `${seedEntry.sourceTitle} ${seedEntry.summary}`;
+
   for (const stock of deduplicatedWatchlist) {
     const domainEntry = domainEntryMap.get(stock.domain);
-    if (!domainEntry) continue; // no matching domain triggered — skip
 
-    const actionEntry: CausalChainEntry = {
-      level: "action",
-      title: `${stock.actionCode} — tác động gián tiếp`,
-      summary: `Cổ phiếu ${stock.actionCode} thuộc ngành ${stock.domain}.`,
-      affectedDomains: [stock.domain],
-      affectedActions: [stock.actionCode],
-      sentiment: domainEntry.sentiment,
-      impactScore: Math.round(domainEntry.impactScore * 0.9),
-      confidence: domainEntry.confidence * 0.9,
-      reasoning: `Cổ phiếu ${stock.actionCode} thuộc ngành ${stock.domain}, bị ảnh hưởng bởi: ${domainEntry.title}`,
-    };
+    // Alias fallback (Task 161): check if seed text mentions this stock by trade name
+    const aliasHits = detectStocksInText(seedText, [stock.actionCode]);
+    const resolvedViaAlias = aliasHits.length > 0;
+
+    if (!domainEntry && !resolvedViaAlias) continue; // neither path matched — skip
+
+    let actionEntry: CausalChainEntry;
+
+    if (domainEntry) {
+      // Primary path: domain rule fired — use domain-rule confidence
+      actionEntry = {
+        level: "action",
+        title: `${stock.actionCode} — tác động gián tiếp`,
+        summary: `Cổ phiếu ${stock.actionCode} thuộc ngành ${stock.domain}.`,
+        affectedDomains: [stock.domain],
+        affectedActions: [stock.actionCode],
+        sentiment: domainEntry.sentiment,
+        impactScore: Math.round(domainEntry.impactScore * 0.9),
+        confidence: domainEntry.confidence * 0.9,
+        reasoning: `Cổ phiếu ${stock.actionCode} thuộc ngành ${stock.domain}, bị ảnh hưởng bởi: ${domainEntry.title}`,
+      };
+    } else {
+      // Alias fallback path: company trade name found in text, no domain rule fired
+      // Use fixed confidence 0.55 (same as uncoveredDomains default)
+      actionEntry = {
+        level: "action",
+        title: `${stock.actionCode} — phát hiện qua tên thương hiệu`,
+        summary: `Cổ phiếu ${stock.actionCode} được phát hiện qua tên thương hiệu trong bài viết.`,
+        affectedDomains: [stock.domain],
+        affectedActions: [stock.actionCode],
+        sentiment: seedEntry.sentiment,
+        impactScore: Math.round(seedEntry.impactScore * 0.55),
+        confidence: 0.55,
+        reasoning: `[AliasResolved: ${stock.actionCode}] Cổ phiếu được phát hiện qua tên thương hiệu. Không có quy tắc ngành khớp.`,
+      };
+    }
+
     actionEntries.push(actionEntry);
   }
 
   entries.push(...actionEntries);
+
+  // ── Step 3b: Market-wide broadcast pass (Task 162) ────────────────────
+  // If this is a market-wide event (VN-Index, "toàn thị trường", or a
+  // country/global article with sufficient impact score), cascade to ALL
+  // watchlist stocks not already covered by domain rules or alias resolution.
+  const effectiveBroadcastMin = broadcastMinImpact ?? 6;
+  const seedTextForBroadcast = `${seedEntry.sourceTitle} ${seedEntry.summary}`;
+
+  if (
+    isMarketWide(seedTextForBroadcast.toLowerCase(), seedEntry.level, seedEntry.impactScore, effectiveBroadcastMin) &&
+    seedEntry.impactScore >= effectiveBroadcastMin
+  ) {
+    // Compute the set of action codes already covered — no double broadcast
+    const alreadyCoveredCodes = new Set(
+      actionEntries.map((ae) => ae.affectedActions[0] ?? ""),
+    );
+
+    for (const stock of deduplicatedWatchlist) {
+      if (alreadyCoveredCodes.has(stock.actionCode)) continue; // no double broadcast
+
+      const broadcastConfidence = Math.min(0.7, seedEntry.impactScore / 10);
+
+      const broadcastEntry: CausalChainEntry = {
+        level: "action",
+        title: `${stock.actionCode} — ảnh hưởng toàn thị trường`,
+        summary: `Cổ phiếu ${stock.actionCode} bị ảnh hưởng theo diễn biến chung của thị trường.`,
+        affectedDomains: [stock.domain],
+        affectedActions: [stock.actionCode],
+        sentiment: seedEntry.sentiment,
+        impactScore: Math.round(seedEntry.impactScore * broadcastConfidence),
+        confidence: broadcastConfidence,
+        reasoning: `market-wide cascade: ${seedEntry.sourceTitle.slice(0, 80)}`,
+      };
+
+      actionEntries.push(broadcastEntry);
+      entries.push(broadcastEntry);
+    }
+  }
 
   // ── Step 4: RAG enrichment ────────────────────────────────────────────
   if (ragResults && ragResults.length > 0) {

@@ -70,6 +70,7 @@
     "telegramOnSeverity": ["high", "critical"],
     "telegramOnNewDocument": true,
     "telegramMinCascadeConfidence": 0.7,
+    "marketWideCascadeMinImpact": 6,
     "domainThresholds": {
       "banking":      { "dropPct": -4, "risePct": 6 },
       "oil_gas":      { "dropPct": -5, "risePct": 7 },
