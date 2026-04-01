@@ -163,18 +163,50 @@ export async function initDatabase(): Promise<void> {
   // v_yoy_comparison views.
   db.exec(SQLITE_DDL);
 
-  // ── Macro Indicators (Task 024) ────────────────────────────────────────────
-  // Stores macro economic data fetched from Trading Economics.
-  // UNIQUE(country) enforces upsert semantics via INSERT OR REPLACE.
+  // ── Prediction Markets (task 163) ──────────────────────────────────────────
+  // `prediction_markets` is an upsert target — one row per market, overwritten
+  // each poll cycle via INSERT OR REPLACE.
+  // `prediction_signals` is append-only — every detected signal is kept for
+  // audit and for the `get_prediction_markets` MCP tool's signals_only filter.
   db.exec(`
-    CREATE TABLE IF NOT EXISTS macro_indicators (
-      id            INTEGER PRIMARY KEY AUTOINCREMENT,
-      country       TEXT NOT NULL,
-      cpi           REAL,
-      gdp_growth    REAL,
-      interest_rate REAL,
-      fetched_at    TEXT NOT NULL,
-      UNIQUE(country)
+    CREATE TABLE IF NOT EXISTS prediction_markets (
+      id               TEXT PRIMARY KEY,   -- Polymarket condition_id
+      question         TEXT NOT NULL,
+      end_date         TEXT NOT NULL,      -- ISO 8601
+      yes_price        REAL NOT NULL,      -- 0.0–1.0
+      no_price         REAL NOT NULL,
+      volume_24h       REAL NOT NULL DEFAULT 0,
+      volume_total     REAL NOT NULL DEFAULT 0,
+      liquidity        REAL NOT NULL DEFAULT 0,
+      last_trade_price REAL NOT NULL DEFAULT 0,
+      unique_wallets   INTEGER NOT NULL DEFAULT 0,
+      tags             TEXT NOT NULL DEFAULT '[]',  -- JSON string[]
+      fetched_at       TEXT NOT NULL,
+      updated_at       TEXT NOT NULL
     );
+
+    CREATE TABLE IF NOT EXISTS prediction_signals (
+      id              TEXT PRIMARY KEY,         -- UUID
+      market_id       TEXT NOT NULL,            -- FK → prediction_markets.id
+      signal_type     TEXT NOT NULL,            -- volume_spike|probability_shift|insider_timing|sentiment_divergence
+      severity        TEXT NOT NULL,            -- low|medium|high|critical
+      yes_price_prev  REAL,                     -- NULL for volume_spike signals with no prior snapshot
+      yes_price_curr  REAL NOT NULL,
+      volume_24h      REAL NOT NULL DEFAULT 0,
+      unique_wallets  INTEGER NOT NULL DEFAULT 0,
+      confidence      REAL NOT NULL,
+      mapped_sectors  TEXT NOT NULL DEFAULT '[]',  -- JSON DomainType[]
+      mapped_stocks   TEXT NOT NULL DEFAULT '[]',  -- JSON string[]
+      reasoning       TEXT NOT NULL,
+      detected_at     TEXT NOT NULL,
+      FOREIGN KEY (market_id) REFERENCES prediction_markets(id)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_prediction_signals_detected_at
+      ON prediction_signals(detected_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_prediction_signals_market
+      ON prediction_signals(market_id);
+    CREATE INDEX IF NOT EXISTS idx_prediction_signals_severity
+      ON prediction_signals(severity);
   `);
 }
