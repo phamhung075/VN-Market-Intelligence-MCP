@@ -18,3 +18,4 @@ export { registerSummaryTools } from "./summaryTools.js";
 export { registerSystemTools } from "./systemTools.js";
 export { registerPortfolioTools } from "./portfolioTools.js";
 export { registerFeedbackTools } from "./feedbackTools.js";
+export { registerPredictionTools } from "./predictionTools.js";
