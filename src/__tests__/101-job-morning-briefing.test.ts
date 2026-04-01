@@ -655,6 +655,7 @@ describe("Task 101 — Morning Briefing Job", () => {
           trackedCommodities: [],
           unresolvedAlerts: [],
           topConviction: null,
+          predictionSignals: [],
           generatedAt: new Date().toISOString(),
         };
       };
@@ -687,6 +688,7 @@ describe("Task 101 — Morning Briefing Job", () => {
           trackedCommodities: [],
           unresolvedAlerts: [],
           topConviction: null,
+          predictionSignals: [],
           generatedAt: new Date().toISOString(),
         };
       };

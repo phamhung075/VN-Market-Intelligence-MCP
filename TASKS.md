@@ -96,6 +96,7 @@
 | # | Title | Branch | Notes |
 |---|-------|--------|-------|
 | 165 | Prediction cascade mapper | `task/165-prediction-cascade-mapper` | 38 tests pass, tsc 0 errors |
+| 172 | Prediction signals section in morning briefing + evening summary | `task/172-prediction-briefing` | 18 tests pass, tsc 0 errors |
 
 ---
 
@@ -170,7 +171,7 @@
 |---|-------|--------|-------|-------|----------|------------|--------|
 | 170 | Fix pre-existing test failures — 062 stale assertion | `task/170-fix-test-failures` | Developer | tests | P0 | — | **Backlog** |
 | 171 | Implement `detectPredictionSignals` (full logic, not stub) | `task/171-prediction-signal-impl` | Developer | domain/services | P0 | — | **Backlog** |
-| 172 | Prediction signals section in morning briefing + evening summary | `task/172-briefing-prediction` | Developer | application/usecases + scheduler | P1 | 171 ✓ | **Backlog** |
+| 172 | Prediction signals section in morning briefing + evening summary | `task/172-prediction-briefing` | Developer | application/usecases + scheduler | P1 | 171 ✓ | **Review** |
 | 173 | Prediction market cascade: wire signals into `buildCausalChain` via `runPredictionImpactChain` | `task/173-prediction-cascade-wiring` | Developer | application/usecases + scheduler | P1 | 171 ✓, 165 ✓ | **Backlog** |
 
 ---

@@ -18,6 +18,7 @@ import type { Database } from "bun:sqlite";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { logger } from "../../infrastructure/logger.js";
+import type { BriefingPredictionSignal } from "../../infrastructure/db/predictionStore.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Public types
@@ -99,6 +100,8 @@ export interface DailyBriefing {
   unresolvedAlerts: BriefingAlert[];
   /** Top conviction signal — cross-validated strongest signal for today */
   topConviction: { code: string; score: number; direction: string; summary: string } | null;
+  /** HIGH/CRITICAL prediction market signals from the last 24h (crowd-sourced early warnings) */
+  predictionSignals: BriefingPredictionSignal[];
   /** ISO 8601 timestamp when this briefing was generated */
   generatedAt: string;
 }
@@ -470,7 +473,17 @@ export async function assembleBriefing(
     }
   } catch { /* best-effort */ }
 
-  // ── Step 12: Persist briefing ─────────────────────────────────────────────
+  // ── Step 12: Prediction market signals (HIGH/CRITICAL only, last 24h) ────────
+  let predictionSignals: BriefingPredictionSignal[] = [];
+  try {
+    const { getRecentPredictionSignals } = await import("../../infrastructure/db/predictionStore.js");
+    const allSignals = getRecentPredictionSignals(db, 24);
+    predictionSignals = allSignals.filter(
+      (s) => s.severity === "high" || s.severity === "critical",
+    );
+  } catch { /* best-effort */ }
+
+  // ── Step 13: Persist briefing ─────────────────────────────────────────────
   const date = todayVietnam();
   const generatedAt = new Date().toISOString();
 
@@ -486,6 +499,7 @@ export async function assembleBriefing(
     trackedCommodities,
     unresolvedAlerts,
     topConviction,
+    predictionSignals,
     generatedAt,
   };
 
