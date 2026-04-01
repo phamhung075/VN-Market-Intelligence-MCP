@@ -108,21 +108,64 @@
 ## 📋 TODO
 *(Dependencies cleared — ready to assign)*
 
-### Sprint 014 — Alert Pipeline Fix, VN-Index Feed, WAL Checkpoint, Circuit Breaker, System Health
+### Sprint 017 — Production Hardening
 
-> Sprint 014 — REQ_014.md approved. TECH_014.md approved by Architect 2026-03-29.
-> Architect confirmed: `circuitBreaker.ts` and `circuitBreakerRegistry.ts` already exist — task 136 is a WIRING task only.
-> Architect confirmed: `systemTools.ts` already exists with 4 tools — task 141 is an ENHANCEMENT task only.
-> Recommended execution order: 137 → 138 (parallel) → 139 → 140 → 136 → 141
+> Sprint 017 ACTIVE — 2026-03-30. PO sign-off: 2026-03-30.
+> Dependency order: 152 + 153 + 154 + 155 can start in parallel → 156 unblocks after 152 + 153.
 
 | # | Title | Branch | Agent | Layer | Priority | Depends on | Status |
 |---|-------|--------|-------|-------|----------|------------|--------|
-| 137 | Fix alert pipeline — read DB alerts in Step E of intelligence cycle | `task/137-fix-alert-pipeline` | Developer | interface/scheduler + infrastructure/db | P0 | — | Todo |
-| 138 | Fix impact chain — replace Step D placeholder with real runImpactChain call | `task/138-fix-impact-chain` | Developer | application + interface/scheduler | P0 | — | Todo |
-| 139 | VN-Index live feed via CafeF index endpoint | `task/139-vnindex-cafef` | Developer | infrastructure/fetchers | P1 | — | Todo |
-| 140 | SQLite WAL checkpoint — daily cron + SIGTERM hook | `task/140-wal-checkpoint` | Developer | infrastructure/db + scheduler | P2 | — | Todo |
-| 136 | Wire circuit breaker into hose.ts + ssc.ts fetchers | `task/136-circuit-breaker` | Developer | infrastructure/fetchers | P3 | — | Todo |
-| 141 | Enhance get_system_health — WAL size, alert stats, last cycle result | `task/141-system-health-tool` | Developer | interface/mcp | P4 | 136 ✓ | Todo |
+| 152 | News-mention alert noise filter | `task/152-news-alert-filter` | BA → Developer | domain/services + mcp.config.json | P0 | — | Backlog |
+| 153 | SSC scan deduplication (skip already-processed docs) | `task/153-ssc-scan-dedup` | BA → Developer | infrastructure/db + application/usecases | P0 | — | Backlog |
+| 154 | Silence LanceDB TRACE logging | `task/154-lancedb-log-silence` | BA → Developer | infrastructure (index.ts + logger) | P1 | — | Backlog |
+| 155 | Log file rotation (size-based, 3 rolling files) | `task/155-log-rotation` | BA → Developer | infrastructure/logger | P1 | — | Backlog |
+| 156 | Off-hours cycle interval increase (15 min → 60 min) | `task/156-offhours-interval` | BA → Developer | scheduler/intelligenceCycleJob | P2 | 152, 153 | Backlog |
+
+---
+
+### Sprint 016 — The Analyst's Dashboard
+
+> Sprint 016 COMPLETE — all 5 tasks done. PO sign-off: 2026-03-30.
+> Tasks 147, 148, 149, 150, 151 — all merged. Sprint 017 is now ACTIVE.
+
+| # | Title | Branch | Agent | Layer | Priority | Depends on | Status |
+|---|-------|--------|-------|-------|----------|------------|--------|
+| 147 | Morning briefing Telegram delivery | `task/147-briefing-telegram` | BA → Developer | scheduler + infrastructure/notifiers + infrastructure/db | P0 | — | Done |
+| 148 | Alert resolution lifecycle + resolve_alert MCP tool | `task/148-alert-resolution` | BA → Developer | infrastructure/db + interface/mcp/tools | P0 | — | Done |
+| 149 | get_portfolio_conviction MCP tool | `task/149-portfolio-conviction` | BA → Developer | interface/mcp/tools + infrastructure/db | P1 | 148 | Done |
+| 150 | Conviction score history (conviction_history table) | `task/150-conviction-history` | BA → Developer | infrastructure/db + domain/services + interface/mcp/tools | P1 | 149 | Done |
+| 151 | Sigma data sufficiency health check | `task/151-sigma-readiness` | BA → Developer | interface/mcp/tools + application/usecases | P2 | — | Done |
+
+---
+
+### Sprint 015 — Know Before the Market Does
+
+> Sprint 015 COMPLETE — all 5 tasks done. PO sign-off: 2026-03-30.
+> Tasks 142, 143, 144, 145, 146 — all merged. Sprint 016 is now ACTIVE.
+
+| # | Title | Branch | Agent | Layer | Priority | Depends on | Status |
+|---|-------|--------|-------|-------|----------|------------|--------|
+| 142 | Cross-signal conviction scorer | `task/142-conviction-scorer` | BA → Architect → Developer | domain/services + infrastructure/db | P0 | — | Done |
+| 143 | Sector peer wiring into Telegram alert body | `task/143-sector-peer-alerts` | BA → Developer | domain/services + infrastructure | P1 | 142 | Done |
+| 144 | Historical parallel in Telegram alert body | `task/144-historical-parallel-alert` | BA → Developer | application/usecases + infrastructure | P1 | — | Done |
+| 145 | Morning briefing upgrade — conviction + unresolved alerts | `task/145-briefing-upgrade` | BA → Developer | application/usecases + scheduler | P2 | 142 | Done |
+| 146 | Proactive weekly pattern watch (Sunday 22:30 Telegram) | `task/146-weekly-pattern-watch` | BA → Developer | scheduler + infrastructure/notifiers | P3 | 144 | Done |
+
+---
+
+### Sprint 014 — Alert Pipeline Fix, VN-Index Feed, WAL Checkpoint, Circuit Breaker, System Health
+
+> Sprint 014 COMPLETE — all 6 tasks done. REQ_014.md approved. TECH_014.md approved by Architect 2026-03-29.
+> Tasks 137, 138, 139, 140, 136, 141 — all merged. Sprint 015 is now ACTIVE.
+
+| # | Title | Branch | Agent | Layer | Priority | Depends on | Status |
+|---|-------|--------|-------|-------|----------|------------|--------|
+| 137 | Fix alert pipeline — read DB alerts in Step E of intelligence cycle | `task/137-fix-alert-pipeline` | Developer | interface/scheduler + infrastructure/db | P0 | — | Done |
+| 138 | Fix impact chain — replace Step D placeholder with real runImpactChain call | `task/138-fix-impact-chain` | Developer | application + interface/scheduler | P0 | — | Done |
+| 139 | VN-Index live feed via CafeF index endpoint | `task/139-vnindex-cafef` | Developer | infrastructure/fetchers | P1 | — | Done |
+| 140 | SQLite WAL checkpoint — daily cron + SIGTERM hook | `task/140-wal-checkpoint` | Developer | infrastructure/db + scheduler | P2 | — | Done |
+| 136 | Wire circuit breaker into hose.ts + ssc.ts fetchers | `task/136-circuit-breaker` | Developer | infrastructure/fetchers | P3 | — | Done |
+| 141 | Enhance get_system_health — WAL size, alert stats, last cycle result | `task/141-system-health-tool` | Developer | interface/mcp | P4 | 136 ✓ | Done |
 
 ---
 

@@ -317,6 +317,19 @@ const DOMAIN_KEYWORD_MAP: Record<DomainType, string[]> = {
     "precious metals",
     "kim loại quý",
   ],
+  automotive: [
+    "ô tô",
+    "xe hơi",
+    "xe máy",
+    "honda",
+    "toyota",
+    "ford",
+    "veam",
+    "automotive",
+    "automobile",
+    "lắp ráp ô tô",
+    "công nghiệp ô tô",
+  ],
   other: [],
 };
 
