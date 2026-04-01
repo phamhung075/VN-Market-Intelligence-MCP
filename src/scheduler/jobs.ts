@@ -3,23 +3,15 @@
  * All crons configurable via .env
  *
  * Registered jobs:
- *   morningBriefing    08:00 weekdays         (task 101) ✓
- *   marketOpen         09:00 weekdays         (task 103) ✓
- *   intelligenceCycle  every 15 min           (task 106) ✓  ← replaces newsPoll
- *   marketClose        15:30 weekdays         (task 103) ✓
- *   sscCheck           20:00 daily            (task 104) ✓
- *   eveningSummary     22:00 weekdays         (task 105) ✓
- *   dataAuditDaily     23:00 daily            (task 157) ✓
- *   dataAuditWeekly    01:00 Sunday           (task 157) ✓
- *
- * NOTE: The standalone newsPoll cron (task 102) has been removed.
- * News polling is now absorbed into intelligenceCycle — step A runs on every
- * 15-min tick regardless of market hours, and the cycle skips SSC/prices/impact
- * outside market hours (effectively acting as a 15-min news-only poll at night).
- *
- * NOTE: The intelligenceCycle and marketOpen/marketClose crons may overlap at
- * 09:00 and 15:30. Both call fetchHosePrices concurrently — this is safe because
- * they are independent read operations with no shared mutable state.
+ *   morningBriefing       08:00 weekdays       (task 101) ✓
+ *   marketOpen            09:00 weekdays       (task 103) ✓
+ *   intelligenceCycle     every 15 min         (task 106) ✓
+ *   marketClose           15:30 weekdays       (task 103) ✓
+ *   sscCheck              20:00 daily          (task 104) ✓
+ *   eveningSummary        22:00 weekdays       (task 105) ✓
+ *   dataAuditDaily        23:00 daily          (task 157) ✓
+ *   dataAuditWeekly       01:00 Sunday         (task 157) ✓
+ *   predictionMarketPoll  every 30 min         (task 167) ✓
  */
 
 import cron from 'node-cron'
@@ -32,16 +24,18 @@ import { registerSummaryJobs } from './summaryJobs.js'
 import { runWalCheckpoint, registerShutdownHook } from '../infrastructure/db/checkpoint.js'
 import { runPatternWatch } from './patternWatchJob.js'
 import { runDailyAudit, runWeeklyAudit } from './dataAuditJob.js'
+import { runPredictionMarketPoll } from './predictionMarketJob.js'
 
 export const CRONS = {
-  morningBriefing:   Bun.env.CRON_MORNING_BRIEFING    ?? '0 8 * * 1-5',
-  marketOpen:        Bun.env.CRON_MARKET_OPEN          ?? '0 9 * * 1-5',
-  intelligenceCycle: Bun.env.CRON_INTELLIGENCE_CYCLE   ?? '*/15 * * * *',
-  marketClose:       Bun.env.CRON_MARKET_CLOSE         ?? '30 15 * * 1-5',
-  sscCheck:          Bun.env.CRON_SSC_CHECK            ?? '0 20 * * *',
-  eveningSummary:    Bun.env.CRON_EVENING_SUMMARY      ?? '0 22 * * 1-5',
-  dataAuditDaily:    Bun.env.CRON_DATA_AUDIT_DAILY     ?? '0 23 * * *',
-  dataAuditWeekly:   Bun.env.CRON_DATA_AUDIT_WEEKLY    ?? '0 1 * * 0',
+  morningBriefing:      Bun.env.CRON_MORNING_BRIEFING          ?? '0 8 * * 1-5',
+  marketOpen:           Bun.env.CRON_MARKET_OPEN               ?? '0 9 * * 1-5',
+  intelligenceCycle:    Bun.env.CRON_INTELLIGENCE_CYCLE         ?? '*/15 * * * *',
+  marketClose:          Bun.env.CRON_MARKET_CLOSE               ?? '30 15 * * 1-5',
+  sscCheck:             Bun.env.CRON_SSC_CHECK                  ?? '0 20 * * *',
+  eveningSummary:       Bun.env.CRON_EVENING_SUMMARY            ?? '0 22 * * 1-5',
+  dataAuditDaily:       Bun.env.CRON_DATA_AUDIT_DAILY           ?? '0 23 * * *',
+  dataAuditWeekly:      Bun.env.CRON_DATA_AUDIT_WEEKLY          ?? '0 1 * * 0',
+  predictionMarketPoll: Bun.env.CRON_PREDICTION_MARKET_POLL     ?? '*/30 * * * *',
 }
 
 function log(msg: string) {
@@ -103,6 +97,11 @@ export function startScheduler() {
   // 01:00 every Sunday — weekly deep audit (task 157)
   cron.schedule(CRONS.dataAuditWeekly, async () => {
     await runWeeklyAudit()
+  }, { timezone: 'Asia/Ho_Chi_Minh' })
+
+  // Every 30 min — Prediction market poll — task 167
+  cron.schedule(CRONS.predictionMarketPoll, async () => {
+    await runPredictionMarketPoll()
   }, { timezone: 'Asia/Ho_Chi_Minh' })
 
   // Register shutdown hooks for graceful WAL checkpoint on exit
