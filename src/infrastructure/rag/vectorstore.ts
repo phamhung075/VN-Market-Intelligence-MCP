@@ -243,6 +243,20 @@ function safeParseTags(raw: string | string[]): string[] {
 // ── Lifecycle ─────────────────────────────────────────────────────────────
 
 /**
+ * Returns the total number of rows stored in the LanceDB rag_entries table.
+ * Returns 0 if the table does not yet exist (first startup before any analysis).
+ * Never throws — returns 0 on any LanceDB error.
+ */
+export async function getCount(): Promise<number> {
+  try {
+    const table = await getTable();
+    return await table.countRows();
+  } catch {
+    return 0;
+  }
+}
+
+/**
  * Close the vector store connection and release resources.
  */
 export async function closeVectorStore(): Promise<void> {

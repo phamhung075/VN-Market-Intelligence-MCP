@@ -108,6 +108,208 @@
 ## 📋 TODO
 *(Dependencies cleared — ready to assign)*
 
+### Sprint 018 — Data Integrity First
+
+> Sprint 018 ACTIVE — 2026-04-01. PO sign-off: 2026-04-01.
+> Design refs: docs/REQ_018.md (BA) + docs/TECH_018.md (Architect).
+> Dependency order: 157 first (P0, Todo) → 158 and 159 unblock in parallel once 157 API is stable (both Backlog).
+> WIP limit: 2. Assign 157 immediately. 158 and 159 stay Backlog until 157 is In Review.
+
+| # | Title | Branch | Agent | Layer | Priority | Depends on | Status |
+|---|-------|--------|-------|-------|----------|------------|--------|
+| REQ-018 | BA: Requirement Spec for Sprint 018 | `task/doc-001-claude-md-update` | BA | docs/ | P0 | — | Done — docs/REQ_018.md |
+| TECH-018 | Architect: Technical Design for Sprint 018 | `task/doc-001-claude-md-update` | Architect | docs/ | P0 | REQ-018 | Done — docs/TECH_018.md |
+| 157 | Data audit engine: `dataAuditJob.ts` + schema migration + `getCount()` | `task/157-data-audit-job` | Developer | scheduler + infrastructure/db + infrastructure/rag | P0 | TECH-018 ✓ | Review |
+| 158 | Scheduler wiring: `CRONS.dataAuditDaily` + `CRONS.dataAuditWeekly` in `jobs.ts` | `task/158-audit-scheduler-wiring` | Developer | scheduler | P1 | 157 | Backlog |
+| 159 | `get_system_health` db_audit section: `audit_state` reads + live `agent_feedback` counts | `task/159-health-db-audit` | Developer | interface/mcp/tools + infrastructure/db | P2 | 157 | Backlog |
+
+---
+
+#### Task 157 — Data audit engine
+
+**Branch**: `task/157-data-audit-engine`
+**Layer**: scheduler + infrastructure/db + infrastructure/rag
+**Priority**: P0
+**Depends on**: TECH-018 ✓ (approved 2026-04-01)
+**Estimated effort**: ~2 hours (implement checks in catalogue order D-1 → D-10 then W-1 → W-7; write a matching test for each AC before moving on)
+
+**Files to read first**:
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/docs/TECH_018.md` — full design: interface contracts, DDL blocks, check catalogues, risk notes
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/docs/REQ_018.md` — AC-1 through AC-12, FR-4 through FR-11 check tables
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/infrastructure/db/schema.ts` — existing `initDatabase()` + ALTER TABLE pattern to copy for `market_prices_history`
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/infrastructure/rag/vectorstore.ts` — existing exports; add `getCount()` here
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/infrastructure/notifiers/telegram.ts` — `sendTelegramMessage` signature
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/infrastructure/db/schema.ts` — `getDb()` import pattern
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/scheduler/intelligenceCycleJob.ts` — reference for scheduler-layer module structure
+- `/Users/admin/Documents/Hung/__works__/__PROJETO/__labo/VN-Market-Intelligence-MCP/src/interface/mcp/tools/feedbackTools.ts` — `agent_feedback` INSERT pattern (for reference only — do NOT import from here)
+
+**Files to create**:
+- CREATE: `src/scheduler/dataAuditJob.ts`
+- CREATE: `src/__tests__/157-data-audit-job.test.ts`
+
+**Files to modify**:
+- MODIFY: `src/infrastructure/db/schema.ts` — add `market_prices_history` canonical DDL block (after `sbv_rates_history`, before `market_summaries`) + `exchange` column ALTER TABLE migration (try/catch pattern)
+- MODIFY: `src/infrastructure/rag/vectorstore.ts` — add `export async function getCount(): Promise<number>` (uses `(await getTable()).countRows()`, wraps in try/catch, returns 0 on any error)
+
+**Acceptance Criteria**:
+
+**Given** a `market_prices` row with `price = 0` exists (AC-1)
+**When** `runDailyAudit()` is called
+**Then**
+- The zero-price row is deleted from `market_prices`
+- Returned array contains a finding with `table = "market_prices"`, `check = "zero_price_rows"`, `action = "auto_cleaned"`, `rowsAffected >= 1`
+- A `system_logs` row with `source = "data-auditor"` is inserted
+
+**Given** an alert with `read = 0` and `triggered_at = 35 days ago` exists (AC-2)
+**When** `runDailyAudit()` is called
+**Then**
+- The alert's `read` column is updated to `1`
+- A finding with `check = "stale_unread_alerts"`, `action = "auto_cleaned"` is returned
+
+**Given** an `agent_feedback` row with `status = 'new'`, `priority = 'medium'`, `created_at = 15 days ago` (AC-3)
+**When** `runDailyAudit()` is called
+**Then**
+- The row's `priority` is updated to `'high'`
+- A finding with `check = "stale_new_feedback"`, `action = "escalated"` is returned
+- A new `agent_feedback` row with `agent = 'data-auditor'`, title containing `"stale_new_feedback"` is inserted
+
+**Given** a `tracked_indicators` row with `indicator = 'brent_crude_usd'`, `value = 5.0` (AC-4)
+**When** `runWeeklyAudit()` is called
+**Then**
+- An `agent_feedback` row is inserted with `agent = 'data-auditor'`, `category = 'data_extraction_error'`, `priority = 'critical'`
+- Finding has `severity = "critical"`, `check = "outlier_indicator_values"`
+- Original `tracked_indicators` row is NOT deleted
+
+**Given** `commodity_prices_history` rows with `fetched_at = 200 days ago` exist (AC-5)
+**When** `runWeeklyAudit()` is called
+**Then**
+- Those rows are deleted
+- Finding with `check = "old_commodity_history"`, `action = "auto_cleaned"`, `rowsAffected >= 1`
+
+**Given** all tables are clean and `telegram.enabled = true` (AC-6)
+**When** `runDailyAudit()` is called
+**Then**
+- No Telegram message is sent
+- Function still returns non-empty `AuditFinding[]` (row count snapshots from D-10)
+
+**Given** at least one finding with `rowsAffected > 0` and `telegram.enabled = true` (AC-7)
+**When** `runDailyAudit()` or `runWeeklyAudit()` completes
+**Then**
+- Exactly one Telegram message is sent
+- Message contains "Cleaned:", "Flagged:", and "Feedback queue:" lines
+
+**Given** `vectorstore.getCount()` throws (LanceDB unavailable) (AC-8)
+**When** `runWeeklyAudit()` is called
+**Then**
+- Audit run completes without throwing
+- Finding with `check = "lancedb_rag_count_drift"`, `severity = "warning"`, `action = "none"` is returned
+- Error message is in `detail`
+
+**Given** `runDailyAudit()` is called twice on the same calendar day with the same findings (AC-11)
+**When** the second run completes
+**Then**
+- No additional `agent_feedback` rows with `agent = 'data-auditor'` and same title are inserted
+
+**All checks**: `bun test src/__tests__/157-data-audit-job.test.ts` passes with 0 failures (AC-12)
+**TypeScript**: `bun tsc --noEmit` reports 0 errors
+
+**TDD test location**: `src/__tests__/157-data-audit-job.test.ts`
+- Use `process.env.DB_PATH = ":memory:"` for in-process SQLite
+- Mock `sendTelegramMessage` to capture calls without network I/O
+- Write one `describe` block per AC, implement tests in order AC-1 → AC-12 before moving to the next
+
+**Key implementation notes**:
+- `dataAuditJob.ts` lives in `src/scheduler/` — imports `getDb()`, `sendTelegramMessage`, and `getCount()` only; never imports from `application/` or `interface/`
+- Call `ensureAuditDependencies(db)` at the top of both exported functions (creates `audit_state` and `agent_feedback` tables using `CREATE TABLE IF NOT EXISTS`)
+- `runWeeklyAudit()` calls `runDailyAudit()` internally and merges the findings array before running W-1 → W-7
+- Every check is wrapped in its own `try/catch` — a failing check logs to `system_logs` and continues; the audit run never aborts
+- Dedup guard before every `agent_feedback` insert: `SELECT COUNT(*) FROM agent_feedback WHERE agent = 'data-auditor' AND title = ? AND created_at >= date('now')` — skip if > 0
+- `getCount()` in `vectorstore.ts`: call `(await getTable()).countRows()`, wrap in `try/catch`, return `0` on any error
+- `market_prices_history` DDL in `schema.ts`: insert after the `sbv_rates_history` block, before `market_summaries`, using the exact DDL from TECH_018.md (CREATE TABLE IF NOT EXISTS + idx + try/catch ALTER TABLE for `exchange` column)
+- Timestamp display in Telegram: GMT+7 via `new Date(Date.now() + 7 * 3600_000).toISOString().slice(0, 16).replace('T', ' ') + ' GMT+7'`
+- W-3 duplicate dedup uses `MAX(rowid)` per `(code, DATE(fetched_at))` — see exact SQL in REQ_018.md FR-5
+- W-6 orphan check uses `json_each(analysis_ids_json)` — guard with `WHERE analysis_ids_json IS NOT NULL AND analysis_ids_json != '[]'`
+
+---
+
+#### Task 158 — Scheduler wiring for audit crons
+
+**Branch**: `task/158-audit-scheduler-wiring`
+**Layer**: scheduler
+**Priority**: P1
+**Depends on**: 157 (exported `runDailyAudit` and `runWeeklyAudit` API must be stable)
+**Status**: Backlog — move to Todo when task 157 reaches Review
+
+**Files to read first**:
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/scheduler/jobs.ts` — existing `CRONS` constant and `startScheduler()` structure
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/scheduler/dataAuditJob.ts` — (created by task 157) confirm exported function names
+
+**Files to modify**:
+- MODIFY: `src/scheduler/jobs.ts` — append `dataAuditDaily` and `dataAuditWeekly` to the `CRONS` constant; add two `cron.schedule(...)` calls inside `startScheduler()` after `registerSummaryJobs()`; add `import { runDailyAudit, runWeeklyAudit } from './dataAuditJob.js'`
+
+**Acceptance Criteria**:
+
+**Given** `startScheduler()` is called (AC-10)
+**When** the scheduler initialises
+**Then**
+- `CRONS.dataAuditDaily` equals `'0 23 * * *'` (or `Bun.env.CRON_DATA_AUDIT_DAILY` if set)
+- `CRONS.dataAuditWeekly` equals `'0 1 * * 0'` (or `Bun.env.CRON_DATA_AUDIT_WEEKLY` if set)
+- Both cron entries are registered with `timezone: 'Asia/Ho_Chi_Minh'`
+- `Object.keys(CRONS).length` increases from 6 to 8 — the log line at the end of `startScheduler()` automatically prints the correct count (no hardcoded `8`)
+- `bun tsc --noEmit` reports 0 errors
+
+**Key implementation notes**:
+- Registration must come after the existing `registerSummaryJobs()` call
+- The log line at the end of `startScheduler()` uses `Object.keys(CRONS).length` — no hardcoded count to update
+- Both crons use `async () => { await runDailyAudit() }` / `async () => { await runWeeklyAudit() }` wrappers (same pattern as other jobs)
+- No test file needed for this task — AC-10 is verified by reading `CRONS` keys and checking the cron registration call (TypeScript compile check is sufficient; runtime cron trigger is tested via task 157 unit tests)
+
+---
+
+#### Task 159 — `get_system_health` db_audit section
+
+**Branch**: `task/159-health-db-audit`
+**Layer**: interface/mcp/tools + infrastructure/db
+**Priority**: P2
+**Depends on**: 157 (needs `audit_state` table schema + `agent_feedback` table to exist)
+**Status**: Backlog — move to Todo when task 157 reaches Review
+
+**Files to read first**:
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/interface/mcp/tools/systemTools.ts` — existing `get_system_health` tool, find the `--- Alert Stats ---` section and the lines just after it
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/scheduler/dataAuditJob.ts` — (created by task 157) `audit_state` table schema (column names: `last_daily_audit_at`, `last_weekly_audit_at`)
+
+**Files to modify**:
+- MODIFY: `src/interface/mcp/tools/systemTools.ts` — insert the `--- DB Audit ---` section after the `--- Alert Stats ---` section and before the `--- Summary ---` section
+
+**Acceptance Criteria**:
+
+**Given** at least one daily audit has run (task 157 has executed) (AC-9)
+**When** the `get_system_health` MCP tool is called
+**Then**
+- The response text contains a `--- DB Audit ---` section
+- `last_daily_audit` shows a valid ISO timestamp (not "never")
+- `last_weekly_audit` shows an ISO timestamp or "never"
+- `pending_feedback` shows current live count from `agent_feedback WHERE status = 'new'`
+- `open_warnings` shows current live count from `agent_feedback WHERE status = 'new' AND priority IN ('high', 'critical')`
+
+**Given** the `audit_state` table does not yet exist (first startup before any audit has run)
+**When** `get_system_health` is called
+**Then**
+- The `--- DB Audit ---` section still renders
+- All timestamps show `"never"`, counts show `0`
+- No exception is thrown (wrapped in try/catch)
+
+**TypeScript**: `bun tsc --noEmit` reports 0 errors
+
+**Key implementation notes**:
+- Use the exact code block from TECH_018.md "get_system_health db_audit section addition"
+- Insert after `--- Alert Stats ---` section, before `--- Summary ---` section
+- `pending_feedback` and `open_warnings` are always live queries against `agent_feedback` (not read from cached `audit_state`)
+- Full try/catch: if `audit_state` table is missing, emit `"(audit_state table not yet created — no audit has run)"` and push empty line
+- No new MCP tool signature change — this is a pure text-output extension of the existing tool
+
+---
+
 ### Sprint 017 — Production Hardening
 
 > Sprint 017 ACTIVE — 2026-03-30. PO sign-off: 2026-03-30.
