@@ -440,8 +440,8 @@ export async function scanMarket(
       const db = getDb();
       const vnNow = new Date(Date.now() + 7 * 3600_000);
       const dateStr = `${vnNow.getUTCFullYear()}-${String(vnNow.getUTCMonth() + 1).padStart(2, "0")}-${String(vnNow.getUTCDate()).padStart(2, "0")}`;
-      db.exec(`INSERT OR REPLACE INTO conviction_history (symbol, date, peak_score, dominant_signal, created_at)
-        VALUES ('${price.code}', '${dateStr}', ${conviction.score}, '${conviction.direction}', '${new Date().toISOString()}')`);
+      db.prepare(`INSERT OR REPLACE INTO conviction_history (symbol, date, peak_score, dominant_signal, created_at)
+        VALUES (?, ?, ?, ?, ?)`).run(price.code, dateStr, conviction.score, conviction.direction, new Date().toISOString());
     } catch { /* conviction_history table may not exist */ }
   }
 

@@ -199,7 +199,7 @@ export async function runMorningBriefing(
       try {
         const { getDb } = await import("../infrastructure/db/schema.js");
         const db = getDb();
-        db.exec(`INSERT OR IGNORE INTO briefing_log (date, sent_at) VALUES ('${briefing.date}', '${new Date().toISOString()}')`);
+        db.prepare(`INSERT OR IGNORE INTO briefing_log (date, sent_at) VALUES (?, ?)`).run(briefing.date, new Date().toISOString());
       } catch { /* best effort */ }
       logger.info("[morning-briefing] sent to Telegram", { chars: text.length });
     } catch (tgErr) {
