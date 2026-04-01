@@ -86,7 +86,7 @@ MCP connector URL: `https://zenmidi.com/mcp`
 - Telegram: "✅ System online" at 08:55 Vietnam (03:55 France CET)
 - Health: `curl https://zenmidi.com/health`
 
-## 26 MCP Tools Available
+## 30 MCP Tools Available
 
 | Category | Tools |
 |----------|-------|
@@ -97,8 +97,19 @@ MCP connector URL: `https://zenmidi.com/mcp`
 | **Alerts** | get_alerts, mark_alert_read, run_daily_briefing |
 | **Portfolio** | get_portfolio_conviction |
 | **Summaries** | get_market_summary, generate_market_summary |
-| **Telegram** | send_test_telegram |
+| **Telegram** | send_test_telegram, **send_telegram_report** |
+| **Feedback** | **submit_feedback**, **get_feedback** |
 | **System** | get_system_health, get_global_log, get_tool_log, get_error_summary |
+
+## Vn-market-report Channel (Inter-Agent Communication)
+
+All agents communicate via the **Vn-market-report** Telegram channel instead of database-only feedback.
+
+- `send_telegram_report` — send reports, requests, analysis to the team
+- `submit_feedback` — submit improvement suggestions (sent to report channel + stored in DB)
+- Tag recipients: `@team`, `@po`, `@dev`, `@qa`, `@ba`, `@architect`, `@market-analyst`
+- Dev team reads the channel and acts on reports
+- Review agent deletes reports when issues are fixed
 
 ## Agent Cooperation Flow
 
@@ -116,23 +127,20 @@ MCP connector URL: `https://zenmidi.com/mcp`
 22:30 VN  Digest Writer sends daily summary + weekly review (Sunday)
 ```
 
-## Agent Feedback Loop (continuous improvement)
+## Agent Feedback Loop (via Vn-market-report Telegram channel)
 
 ```
-Analysis team finds gaps → submit_feedback MCP tool → SQLite agent_feedback table
-                                                              ↓
-                                          HIGH/CRITICAL → Telegram immediately
-                                          MEDIUM/LOW → stored for review
-                                                              ↓
-                               System Improver (daily 22:00 VN) reads feedback
-                                                              ↓
-                        ┌── FIX NOW (<20 lines): implement + test + push
-                        │
-                        └── SPRINT TASK: write to TASKS.md → trigger dev chain
+Analysis team finds gaps → submit_feedback / send_telegram_report
                                           ↓
-                              PO → BA → Architect → PM → Developer → QA
+                          Vn-market-report Telegram channel (@po, @dev, @team)
+                                          ↓
+                    ┌── @dev reads → FIX NOW (<20 lines): implement + test + push
+                    │
+                    └── @po reads → SPRINT TASK: PO → BA → Architect → PM → Dev → QA
                                           ↓
                                     Merged to main
+                                          ↓
+                              Review agent deletes resolved reports
 ```
 
 Agents submit feedback via `submit_feedback` MCP tool:

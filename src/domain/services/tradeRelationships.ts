@@ -52,16 +52,24 @@ export interface StockTradeProfile {
 
 /** Maps country/region names to keywords that appear in news articles */
 export const COUNTRY_KEYWORDS: Record<string, string[]> = {
-  us: ["united states", "us ", "usa", "american", "mỹ", "hoa kỳ", "fed ", "washington", "wall street"],
+  us: ["united states", "usa", "american", "mỹ", "hoa kỳ", "washington", "wall street", "u.s."],
   china: ["china", "chinese", "trung quốc", "beijing", "shanghai", "pmi china"],
-  japan: ["japan", "japanese", "nhật bản", "tokyo", "boj", "yen", "honda", "toyota", "mitsubishi", "suzuki"],
+  japan: ["japan", "japanese", "nhật bản", "tokyo", "boj", "honda", "toyota", "mitsubishi", "suzuki"],
   korea: ["korea", "korean", "hàn quốc", "seoul", "kospi"],
-  eu: ["europe", "european", "eu ", "eurozone", "châu âu", "ecb", "euro area"],
+  eu: ["europe", "european", "eurozone", "châu âu", "ecb", "euro area"],
   asean: ["asean", "southeast asia", "đông nam á", "indonesia", "thailand", "philippines", "malaysia"],
   middle_east: ["middle east", "trung đông", "iran", "iraq", "saudi", "uae", "dubai", "hormuz", "opec"],
   australia: ["australia", "australian", "úc"],
   india: ["india", "indian", "ấn độ"],
-  uk: ["united kingdom", "uk ", "british", "anh quốc", "london"],
+  uk: ["united kingdom", "british", "anh quốc", "london"],
+};
+
+/** Keywords that need whole-word matching (too short for substring matching). */
+const WHOLE_WORD_COUNTRY_KEYWORDS: Record<string, string[]> = {
+  us: ["us", "fed"],
+  eu: ["eu"],
+  uk: ["uk"],
+  japan: ["yen"],
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -139,6 +147,12 @@ const TRADE_PROFILES: Record<string, StockTradeProfile> = {
 // Public API
 // ─────────────────────────────────────────────────────────────────────────────
 
+/** Checks if a short keyword appears as a whole word (not a substring of another word). */
+function matchesWholeWord(text: string, word: string): boolean {
+  const regex = new RegExp(`\\b${word}\\b`, "i");
+  return regex.test(text);
+}
+
 /**
  * Returns the trade profile for a stock, or null if not mapped.
  */
@@ -185,6 +199,13 @@ export function detectCountries(text: string): string[] {
     for (const kw of keywords) {
       if (lower.includes(kw)) matchCount++;
     }
+    // Also check whole-word keywords (short terms like "us", "eu", "uk", "fed")
+    const wholeWordKws = WHOLE_WORD_COUNTRY_KEYWORDS[country];
+    if (wholeWordKws) {
+      for (const kw of wholeWordKws) {
+        if (matchesWholeWord(lower, kw)) matchCount++;
+      }
+    }
     if (matchCount > 0) {
       counts.push({ country, matches: matchCount });
     }
@@ -195,13 +216,16 @@ export function detectCountries(text: string): string[] {
     .map((c) => c.country);
 }
 
-/** Product/industry keywords per stock — article must mention these to be relevant. */
+/** Product/industry keywords per stock — article must mention these to be relevant.
+ * IMPORTANT: Short keywords like "xe", "ai", "it" cause false positives via substring
+ * matching (e.g., "fixed" contains "xe", "affordable" contains "ford").
+ * Use word-boundary-safe terms or multi-word phrases instead. */
 const STOCK_RELEVANCE_KEYWORDS: Record<string, string[]> = {
   VNM: ["dairy", "milk", "sữa", "vinamilk", "thực phẩm", "food", "tiêu dùng", "consumer"],
-  FPT: ["technology", "it ", "outsourcing", "software", "cloud", "ai ", "digital", "công nghệ", "phần mềm"],
+  FPT: ["technology", "outsourcing", "software", "cloud", "digital", "công nghệ", "phần mềm", "fpt"],
   VCB: ["bank", "ngân hàng", "credit", "tín dụng", "lending", "interest rate", "lãi suất", "forex", "ngoại hối"],
-  HPG: ["steel", "thép", "iron ore", "quặng", "construction", "xây dựng", "metal", "hrc"],
-  VEA: ["auto", "car", "vehicle", "honda", "toyota", "ford", "ô tô", "xe", "motor"],
+  HPG: ["steel", "thép", "iron ore", "quặng", "xây dựng", "hrc", "hòa phát"],
+  VEA: ["automotive", "automobile", "vehicle", "honda", "toyota", "ô tô", "xe hơi", "xe ô tô", "veam", "motor vehicle"],
 };
 
 /**
@@ -234,10 +258,10 @@ export function analyzeTradeImpact(
     if (!profile) continue;
 
     // Relevance gate: article must mention the stock's industry/products
-    // OR mention the stock code directly
+    // OR mention the stock code directly (whole word only)
     const keywords = STOCK_RELEVANCE_KEYWORDS[code] ?? [];
     const isRelevant = keywords.some((kw) => lower.includes(kw)) ||
-                       lower.includes(code.toLowerCase());
+                       matchesWholeWord(lower, code.toLowerCase());
     if (!isRelevant) continue;
 
     for (const country of countries) {

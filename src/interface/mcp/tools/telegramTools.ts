@@ -12,7 +12,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 
-import { sendTelegramMessage } from "../../../infrastructure/notifiers/telegram.js";
+import { sendTelegramMessage, sendTelegramReport } from "../../../infrastructure/notifiers/telegram.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tool registration
@@ -94,6 +94,46 @@ export function registerTelegramTools(server: McpServer): void {
               ),
             },
           ],
+        };
+      }
+    },
+  );
+
+  // ── 2. send_telegram_report — inter-agent communication channel ────────
+  server.tool(
+    "send_telegram_report",
+    "Send a message to the Vn-market-report Telegram channel for inter-agent communication. " +
+      "Use this channel to: send analysis reports, request dev team action, " +
+      "share improvement ideas between cowork agents and dev team. " +
+      "Tag recipient: @team, @po, @dev, @qa, @ba, @architect, @market-analyst.",
+    {
+      message: z.string().min(5).max(4000)
+        .describe("The report message to send to the team channel"),
+      to: z.string().max(30).default("@team")
+        .describe("Recipient tag: @team (all), @po (Product Owner), @dev, @qa, etc."),
+      from: z.string().max(30).default("unified-agent")
+        .describe("Your agent name (sender)"),
+    },
+    async ({ message, to, from }) => {
+      try {
+        const recipient = to.startsWith("@") ? to : `@${to}`;
+        const fullMsg = `${recipient}\nFrom: ${from}\n\n${message}`;
+        const success = await sendTelegramReport(fullMsg);
+
+        return {
+          content: [{
+            type: "text" as const,
+            text: success
+              ? `Report sent to Vn-market-report channel. To: ${recipient}`
+              : "Failed — check TELEGRAM_BOT_TOKEN / TELEGRAM_REPORT_ID env vars",
+          }],
+        };
+      } catch (err) {
+        return {
+          content: [{
+            type: "text" as const,
+            text: `Error: ${(err as Error).message}`,
+          }],
         };
       }
     },

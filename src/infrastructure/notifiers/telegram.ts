@@ -139,6 +139,75 @@ export async function sendTelegramMessage(
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Report channel — inter-agent communication (TELEGRAM_REPORT_ID)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Sends a message to the REPORT channel (TELEGRAM_REPORT_ID).
+ * Used for inter-agent communication: feedback, improvement reports, dev requests.
+ * Separate from the user alert channel (TELEGRAM_CHAT_ID).
+ *
+ * @param text    - The message text.
+ * @param options - Optional parse mode and injectable fetch.
+ * @returns true on success, false on failure.
+ */
+export async function sendTelegramReport(
+  text: string,
+  options: SendTelegramOptions = {},
+): Promise<boolean> {
+  const botToken = Bun.env.TELEGRAM_BOT_TOKEN ?? "";
+  const reportChatId = Bun.env.TELEGRAM_REPORT_ID ?? "";
+
+  if (!botToken) {
+    log.warn("[telegram] TELEGRAM_BOT_TOKEN is not set — skipping report send");
+    return false;
+  }
+
+  if (!reportChatId) {
+    log.warn("[telegram] TELEGRAM_REPORT_ID is not set — skipping report send");
+    return false;
+  }
+
+  const parseMode = options.parseMode ?? "";
+  const fetchFn = options.fetchFn ?? (globalThis.fetch as FetchFn);
+
+  const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
+  const body = JSON.stringify({
+    chat_id: reportChatId,
+    text,
+    parse_mode: parseMode || undefined,
+    disable_web_page_preview: true,
+  });
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 30_000);
+
+  try {
+    const response = await fetchFn(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body,
+      signal: controller.signal,
+    });
+
+    if (!response.ok) {
+      log.warn("[telegram] sendReport failed", { status: response.status, chatId: reportChatId });
+      return false;
+    }
+
+    return true;
+  } catch (err) {
+    log.warn("[telegram] sendReport network error", {
+      error: err instanceof Error ? err.message : String(err),
+      chatId: reportChatId,
+    });
+    return false;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Alert formatter (Vietnamese)
 // ─────────────────────────────────────────────────────────────────────────────
 

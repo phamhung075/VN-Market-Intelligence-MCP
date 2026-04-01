@@ -48,13 +48,14 @@ export function registerFeedbackTools(server: McpServer): void {
   // ── 1. submit_feedback ──────────────────────────────────────────────────
   server.tool(
     "submit_feedback",
-    "Submit an improvement suggestion for the VN Market Intelligence system. " +
+    "Submit an improvement suggestion to the Vn-market-report Telegram channel. " +
       "Use this when you find: missing cascade rules, wrong trade mappings, " +
       "data extraction errors, alert quality issues, or any system gap. " +
-      "Feedback is stored in the database and sent to the user via Telegram.",
+      "Feedback is sent to the report channel AND stored in DB for tracking. " +
+      "Tag a recipient: @team (all), @po (Product Owner), @dev, @qa, etc.",
     {
       agent: z.string().min(1).max(30)
-        .describe("Your agent name (e.g. 'news-scout', 'market-watcher', 'alert-commander')"),
+        .describe("Your agent name (e.g. 'news-scout', 'market-watcher', 'alert-commander', 'unified-agent')"),
       category: z.enum([
         "cascade_rule_gap",
         "trade_map_gap",
@@ -73,20 +74,42 @@ export function registerFeedbackTools(server: McpServer): void {
         .describe("Detailed description: what happened, what should happen, evidence"),
       priority: z.enum(["low", "medium", "high", "critical"]).default("medium")
         .describe("Priority: critical=blocks analysis, high=wrong results, medium=improvement, low=nice-to-have"),
+      to: z.string().max(30).default("@po")
+        .describe("Recipient: @team (all agents), @po (Product Owner), @dev, @qa, @ba, @architect"),
     },
-    async ({ agent, category, title, detail, priority }) => {
+    async ({ agent, category, title, detail, priority, to }) => {
       try {
         await initDatabase();
         ensureFeedbackTable();
         const db = getDb();
         const now = new Date().toISOString();
 
+        // Store in DB for tracking
         db.prepare(
           `INSERT INTO agent_feedback (agent, category, title, detail, priority, status, created_at)
            VALUES (?, ?, ?, ?, ?, 'new', ?)`,
         ).run(agent, category, title, detail ?? "", priority, now);
 
-        // Send HIGH/CRITICAL feedback to Telegram immediately
+        // Send to REPORT channel (TELEGRAM_REPORT_ID)
+        let reportSent = false;
+        try {
+          const { sendTelegramReport } = await import("../../../infrastructure/notifiers/telegram.js");
+          const emoji = priority === "critical" ? "🚨" : priority === "high" ? "🔴" : priority === "medium" ? "🟡" : "🟢";
+          const recipient = to.startsWith("@") ? to : `@${to}`;
+          const msg = [
+            `${emoji} [${priority.toUpperCase()}] ${recipient}`,
+            `📋 ${category}`,
+            `From: ${agent}`,
+            ``,
+            `${title}`,
+            detail ? `\n${detail.slice(0, 500)}` : "",
+            ``,
+            `🕐 ${now.slice(0, 16).replace("T", " ")} UTC`,
+          ].filter(Boolean).join("\n");
+          reportSent = await sendTelegramReport(msg);
+        } catch { /* best-effort */ }
+
+        // Also send HIGH/CRITICAL to the user alert channel
         if (priority === "high" || priority === "critical") {
           try {
             const { sendTelegramMessage } = await import("../../../infrastructure/notifiers/telegram.js");
@@ -96,12 +119,15 @@ export function registerFeedbackTools(server: McpServer): void {
           } catch { /* best-effort */ }
         }
 
-        logger.info("[feedback] submitted", { agent, category, title, priority });
+        logger.info("[feedback] submitted", { agent, category, title, priority, to, reportSent });
 
         return {
           content: [{
             type: "text" as const,
-            text: `Feedback submitted: [${priority.toUpperCase()}] ${title}\nStored in database. ${priority === "high" || priority === "critical" ? "Sent to Telegram." : "Will appear in weekly review."}`,
+            text: `Feedback submitted: [${priority.toUpperCase()}] ${title}\n` +
+              `Recipient: ${to}\n` +
+              `Report channel: ${reportSent ? "sent" : "failed (check TELEGRAM_REPORT_ID)"}\n` +
+              `DB: stored`,
           }],
         };
       } catch (err) {
