@@ -260,6 +260,26 @@ export async function initDatabase(): Promise<void> {
       ON sbv_rates_history(source, fetched_at DESC);
   `);
 
+  // ── Market Prices History (canonical — task 018) ──────────────────────────
+  // Previously created lazily by hose.ts ensureHistoryTable(). Added here to
+  // include it in the canonical schema so initDatabase() guarantees its existence.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS market_prices_history (
+      code       TEXT NOT NULL,
+      price      REAL NOT NULL,
+      volume     REAL NOT NULL,
+      fetched_at TEXT NOT NULL,
+      PRIMARY KEY (code, fetched_at)
+    );
+    CREATE INDEX IF NOT EXISTS idx_mph_code_fetched
+      ON market_prices_history(code, fetched_at DESC);
+  `);
+
+  // exchange column migration (same pattern as hose.ts inline guard)
+  try {
+    db.exec("ALTER TABLE market_prices_history ADD COLUMN exchange TEXT DEFAULT 'HOSE'");
+  } catch { /* column already exists — safe to ignore */ }
+
   // ── Market Summaries (Task 130) ────────────────────────────────────────────
   // Stores periodic intelligence summaries (daily / weekly / monthly / quarterly / yearly).
   // Upsert target: unique on (period_type, period_start).
