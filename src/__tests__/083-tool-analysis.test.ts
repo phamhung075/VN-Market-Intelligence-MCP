@@ -10,6 +10,19 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, mock } from "bun:test";
+
+// Mock external HTTP fetchers used by runImpactChain (avoid network I/O + timeouts)
+mock.module("../infrastructure/fetchers/yahooFinance.js", () => ({
+  fetchYahooFinancePrices: async () => null,
+}));
+mock.module("../infrastructure/fetchers/sbv.js", () => ({
+  fetchSbvRates: async () => null,
+}));
+mock.module("../infrastructure/rag/retriever.js", () => ({
+  searchContext: async () => [],
+  insertAnalysis: async () => {},
+}));
+
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { registerAnalysisTools } from "../interface/mcp/tools/analysis.js";
 import { closeDb } from "../infrastructure/db/schema.js";

@@ -62,6 +62,41 @@ export interface SearchFilters {
   actionCode?: string;
 }
 
+// ── Input validation & sanitization ──────────────────────────────────────────
+
+/** Valid levels for the causal hierarchy. */
+const VALID_LEVELS = new Set(["global", "country", "domain", "action"]);
+
+/**
+ * Validate that `value` is a legal stock ticker: 1–10 uppercase letters/digits only.
+ * Returns `true` if the value is safe to use as an `actionCode` filter.
+ */
+export function validateActionCode(value: string): boolean {
+  return /^[A-Z0-9]{1,10}$/.test(value);
+}
+
+/**
+ * Validate that `value` is one of the four allowed causal hierarchy levels.
+ * Returns `true` if the value is safe to use as a `level` filter.
+ */
+export function validateLevel(value: string): boolean {
+  return VALID_LEVELS.has(value);
+}
+
+/**
+ * Escape a filter string value for safe embedding in a LanceDB / DataFusion
+ * SQL WHERE clause by doubling all single-quote characters (SQL standard).
+ *
+ * The caller is responsible for surrounding the result with single-quote
+ * delimiters: `column = '${sanitizeFilterValue(raw)}'`.
+ *
+ * This is a defence-in-depth measure on top of input validation.
+ * Prefer `validateActionCode` / `validateLevel` as the primary gate.
+ */
+export function sanitizeFilterValue(value: string): string {
+  return value.replace(/'/g, "''");
+}
+
 // ── DB connection singleton ───────────────────────────────────────────────
 
 let _db: Awaited<ReturnType<typeof lancedb.connect>> | null = null;
@@ -156,10 +191,28 @@ export async function searchSimilar(
 
   let query = table.vectorSearch(qv).limit(k);
 
-  // Apply filters (use snake_case column names to match stored schema)
+  // Apply filters (use snake_case column names to match stored schema).
+  // Defence-in-depth: validate format first, then sanitize with SQL-standard
+  // single-quote doubling before embedding in the WHERE clause.
   const clauses: string[] = [];
-  if (filters?.level) clauses.push(`level = '${filters.level}'`);
-  if (filters?.actionCode) clauses.push(`action_code = '${filters.actionCode}'`);
+  if (filters?.level) {
+    if (!validateLevel(filters.level)) {
+      throw new Error(
+        `[searchSimilar] Invalid level filter value: "${filters.level}". ` +
+          `Must be one of: global, country, domain, action.`,
+      );
+    }
+    clauses.push(`level = '${sanitizeFilterValue(filters.level)}'`);
+  }
+  if (filters?.actionCode) {
+    if (!validateActionCode(filters.actionCode)) {
+      throw new Error(
+        `[searchSimilar] Invalid actionCode filter value: "${filters.actionCode}". ` +
+          `Must match /^[A-Z0-9]{1,10}$/.`,
+      );
+    }
+    clauses.push(`action_code = '${sanitizeFilterValue(filters.actionCode)}'`);
+  }
   if (clauses.length > 0) {
     query = query.where(clauses.join(" AND "));
   }
@@ -190,9 +243,30 @@ function safeParseTags(raw: string | string[]): string[] {
 // ── Lifecycle ─────────────────────────────────────────────────────────────
 
 /**
+ * Returns the total number of rows stored in the LanceDB rag_entries table.
+ * Returns 0 if the table does not yet exist (first startup before any analysis).
+ * Never throws — returns 0 on any LanceDB error.
+ */
+export async function getCount(): Promise<number> {
+  try {
+    const table = await getTable();
+    return await table.countRows();
+  } catch {
+    return 0;
+  }
+}
+
+/**
  * Close the vector store connection and release resources.
  */
 export async function closeVectorStore(): Promise<void> {
   _table = null;
-  _db = null;
+  if (_db !== null) {
+    // LanceDB connection may expose a close() method — call it if present
+    const db = _db as unknown as { close?: () => void | Promise<void> };
+    if (typeof db.close === "function") {
+      await Promise.resolve(db.close()).catch(() => {});
+    }
+    _db = null;
+  }
 }

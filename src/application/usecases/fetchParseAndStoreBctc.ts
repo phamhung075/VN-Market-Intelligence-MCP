@@ -17,12 +17,12 @@
 
 import { randomUUID } from "node:crypto";
 
-import { listSscDocuments } from "../../infrastructure/fetchers/ssc.js";
-import { downloadAndExtractPdf } from "../../infrastructure/fetchers/pdf.js";
+import { listSscDocuments, downloadSscDocument } from "../../infrastructure/fetchers/ssc.js";
+import { downloadAndExtractPdf, extractPdfText } from "../../infrastructure/fetchers/pdf.js";
 import { parseBctcReport } from "./parseBctcReport.js";
 import { logger } from "../../infrastructure/logger.js";
 
-import type { HttpClient } from "../../infrastructure/fetchers/ssc.js";
+import type { HttpClient, BrowserFactory } from "../../infrastructure/fetchers/ssc.js";
 import type { AnalysisInput } from "../../infrastructure/rag/retriever.js";
 import type { FinancialReport, FiscalPeriod } from "../../../bctc-schema.js";
 
@@ -47,10 +47,10 @@ export interface FetchParseAndStoreBctcParams {
   /** Quarter string e.g. "Q1", "Q2", "Q3", "Q4" */
   quarter: QuarterString;
   /**
-   * Optional HTTP client used by listSscDocuments when fetching the SSC portal.
-   * Inject a mock in tests to avoid real network calls.
+   * Optional browser factory used by listSscDocuments when fetching the SSC portal.
+   * Inject a mock in tests to avoid launching a real browser.
    */
-  sscHttpClient?: HttpClient;
+  sscHttpClient?: BrowserFactory;
   /**
    * Optional HTTP client used by downloadAndExtractPdf when downloading the PDF.
    * Inject a mock in tests to avoid real network calls.
@@ -159,6 +159,46 @@ export async function fetchParseAndStoreBctc(
   if (pdfTextOverride !== undefined) {
     // Test shortcut — bypass real PDF extraction
     rawText = pdfTextOverride;
+  } else if (doc.url.startsWith("/") || doc.url.startsWith("./")) {
+    // Local file path (PDF already downloaded by SSC Puppeteer scraper)
+    const { readFileSync } = await import("node:fs");
+    const { extractPdfText } = await import("../../infrastructure/fetchers/pdf.js");
+    try {
+      const pdfBuffer = readFileSync(doc.url);
+      const extraction = await extractPdfText(pdfBuffer);
+      rawText = extraction.text;
+    } catch (err) {
+      logger.error(`${tag} failed to read local PDF`, {
+        path: doc.url,
+        error: err instanceof Error ? err.message : String(err),
+      });
+      rawText = "";
+    }
+  } else if (doc.url.startsWith("ssc-download://") || doc.url.startsWith("ssc-adf://")) {
+    // SSC ADF document — download via Puppeteer CDP
+    // URL format: ssc-download://CODE/INDEX/downloadId
+    const parts = doc.url.replace("ssc-download://", "").replace("ssc-adf://", "").split("/");
+    const docIdx = parseInt(parts[1] ?? "0", 10) || 0;
+    logger.info(`${tag} downloading PDF via Puppeteer CDP`, { actionCode, docIndex: docIdx });
+    try {
+      const downloaded = await downloadSscDocument(actionCode, docIdx, sscHttpClient);
+      if (downloaded && downloaded.buffer.length > 0) {
+        const extraction = await extractPdfText(downloaded.buffer);
+        rawText = extraction.text;
+        logger.info(`${tag} response interception succeeded`, {
+          filename: downloaded.filename,
+          chars: rawText.length,
+        });
+      } else {
+        logger.warn(`${tag} response interception returned no data`);
+        rawText = "";
+      }
+    } catch (err) {
+      logger.error(`${tag} response interception failed`, {
+        error: err instanceof Error ? err.message : String(err),
+      });
+      rawText = "";
+    }
   } else {
     const extraction = await downloadAndExtractPdf(doc.url, pdfHttpClient);
     rawText = extraction.text;

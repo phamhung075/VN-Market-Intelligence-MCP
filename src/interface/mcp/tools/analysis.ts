@@ -21,6 +21,7 @@ import { getDb, initDatabase } from "../../../infrastructure/db/schema.js";
 import { fetchCafeF } from "../../../infrastructure/fetchers/cafef.js";
 import { fetchVnExpress } from "../../../infrastructure/fetchers/vnexpress.js";
 import { fetchReuters } from "../../../infrastructure/fetchers/reuters.js";
+import { fetchVnEconomy } from "../../../infrastructure/fetchers/vneconomy.js";
 import { normalizeNews } from "../../../domain/services/newsNormalizer.js";
 import { runImpactChain } from "../../../application/usecases/runImpactChain.js";
 import { searchContext, insertAnalysis } from "../../../infrastructure/rag/retriever.js";
@@ -86,9 +87,9 @@ export function registerAnalysisTools(server: McpServer): void {
       "and return a formatted summary of the market intelligence gathered.",
     {
       sources: z
-        .array(z.enum(["cafef", "vnexpress", "reuters"]))
-        .default(["cafef", "vnexpress", "reuters"])
-        .describe("Which RSS sources to fetch from (default: all three)"),
+        .array(z.enum(["cafef", "vnexpress", "reuters", "vneconomy"]))
+        .default(["cafef", "vnexpress", "reuters", "vneconomy"])
+        .describe("Which RSS sources to fetch from (default: all four)"),
       limit: z
         .number()
         .int()
@@ -98,7 +99,7 @@ export function registerAnalysisTools(server: McpServer): void {
         .describe("Maximum total number of news items to analyze (default: 20)"),
     },
     async ({ sources: sourcesRaw, limit: limitRaw }) => {
-      const sources = sourcesRaw ?? ["cafef", "vnexpress", "reuters"];
+      const sources = sourcesRaw ?? ["cafef", "vnexpress", "reuters", "vneconomy"];
       const limit = limitRaw ?? 20;
 
       try {
@@ -110,6 +111,7 @@ export function registerAnalysisTools(server: McpServer): void {
         if (sources.includes("cafef")) fetchPromises.push(fetchCafeF());
         if (sources.includes("vnexpress")) fetchPromises.push(fetchVnExpress());
         if (sources.includes("reuters")) fetchPromises.push(fetchReuters());
+        if (sources.includes("vneconomy")) fetchPromises.push(fetchVnEconomy());
 
         const results = await Promise.all(fetchPromises);
         const allItems = results.flat().slice(0, limit);
@@ -346,6 +348,7 @@ export function registerAnalysisTools(server: McpServer): void {
         .describe("Filter results to a specific level in the causal hierarchy"),
       actionCode: z
         .string()
+        .regex(/^[A-Z0-9]{1,10}$/, "actionCode must be 1–10 uppercase letters/digits (e.g. VCB)")
         .optional()
         .describe("Filter results to entries for a specific stock code, e.g. VCB"),
       k: z

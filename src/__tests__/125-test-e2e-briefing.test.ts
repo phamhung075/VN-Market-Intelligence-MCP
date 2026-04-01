@@ -450,6 +450,8 @@ describe("Task 125 — E2E Daily Briefing Flow", () => {
           cafef: async () => [mockRssItem],
           vnexpress: async () => [],
           reuters: async () => [],
+          vneconomy: async () => [],
+          tradingeconomics: async () => [],
         },
         db,
         ragRetriever: async () => [],
@@ -887,19 +889,21 @@ describe("Task 125 — E2E Daily Briefing Flow", () => {
       expect(briefing.vnIndex).toBeUndefined();
     });
 
-    it("pollNews with all three sources failing returns errors=3 but no crash", async () => {
+    it("pollNews with all four sources failing returns errors=4 but no crash", async () => {
       const result = await pollNews({
         fetchers: {
           cafef: async () => { throw new Error("CafeF timeout"); },
           vnexpress: async () => { throw new Error("VnExpress timeout"); },
           reuters: async () => { throw new Error("Reuters timeout"); },
+          vneconomy: async () => { throw new Error("VnEconomy timeout"); },
+          tradingeconomics: async () => { throw new Error("TE timeout"); },
         },
         db,
         ragRetriever: async () => [],
         watchlist: [],
       });
 
-      expect(result.errors).toBe(3);
+      expect(result.errors).toBe(5);
       expect(result.fetched).toBe(0);
       expect(result.inserted).toBe(0);
     });
@@ -1064,8 +1068,14 @@ describe("Task 125 — E2E Daily Briefing Flow", () => {
 
   describe("Full morning + evening cycle (bookend E2E)", () => {
     it("morning briefing + evening summary share the same Vietnam date", async () => {
-      const midnight = midnightVietnamUtc();
-      const afterMidnight = new Date(new Date(midnight).getTime() + 60_000).toISOString();
+      // Reset concurrency guards from previous tests
+      const { resetMorningBriefingGuard } = await import("../scheduler/morningBriefingJob.js");
+      const { resetEveningSummaryGuard } = await import("../scheduler/eveningSummaryJob.js");
+      resetMorningBriefingGuard();
+      resetEveningSummaryGuard();
+
+      // Use a recent timestamp (within 12h window) so alerts are found regardless of test execution time
+      const recentTimestamp = new Date(Date.now() - 3600_000).toISOString(); // 1 hour ago
 
       // Shared test data
       seedWatchlist(db, "VCB", "HOSE", "banking");
@@ -1074,7 +1084,7 @@ describe("Task 125 — E2E Daily Briefing Flow", () => {
       seedMarketPrice(db, "HPG", 55000, -1.8);
       seedRagAnalysis(db, {
         id: "cycle-ra-1",
-        created_at: afterMidnight,
+        created_at: recentTimestamp,
         impact_score: 8.5,
         source_title: "Banking sector outlook positive",
         sentiment: "bullish",
@@ -1082,7 +1092,7 @@ describe("Task 125 — E2E Daily Briefing Flow", () => {
       });
       seedAlert(db, {
         id: "cycle-al-1",
-        triggered_at: afterMidnight,
+        triggered_at: recentTimestamp,
         severity: "warning",
         message: "HPG down 1.8% on commodity price pressures",
         affected_actions_json: '["HPG"]',
@@ -1147,6 +1157,11 @@ describe("Task 125 — E2E Daily Briefing Flow", () => {
           alerts: [],
           watchlistSummary: [],
           newReports: [],
+          macroSnapshot: [],
+          sensitiveWarnings: [],
+          trackedCommodities: [],
+          unresolvedAlerts: [],
+          topConviction: null,
           generatedAt: new Date().toISOString(),
         };
       };
@@ -1173,6 +1188,11 @@ describe("Task 125 — E2E Daily Briefing Flow", () => {
           alerts: [],
           watchlistSummary: [],
           newReports: [],
+          macroSnapshot: [],
+          sensitiveWarnings: [],
+          trackedCommodities: [],
+          unresolvedAlerts: [],
+          topConviction: null,
           generatedAt: new Date().toISOString(),
         };
       };

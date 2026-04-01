@@ -179,3 +179,18 @@ None.
 Merged to `main` via commit `5075825` on 2026-03-28.
 
 TASKS.md updated: task 122 moved from Backlog to Done. Kanban Done count: 47 → 48.
+
+---
+
+### Fix — 2026-04-01
+
+- **Issue**: CE-06 — `expect(vcbImpacts).toHaveLength(0)` fails because VCB now receives a market-wide broadcast impact.
+- **Root cause**: Tasks 161+162 added market-wide broadcast logic in `cascadeEngine.ts`. The `isMarketWide()` function returns `true` for any entry with `level === "global"` and `impactScore >= 6`. The CE-06 test used the `makeEntry` default (`level: "global"`, `impactScore: 7`), which now triggers the broadcast pass and adds VCB even though no domain rule matched `banking` for an oil price article.
+- **Fix**: Added `impactScore: 5` override to the CE-06 test entry (below the broadcast threshold of 6), isolating the "untriggered domain" code path as originally intended. File: `src/__tests__/122-domain-services.test.ts` line 588.
+
+- **Issue**: CE-13 — `expect(pharmaEntry!.confidence).toBe(0.55)` fails; actual value is `0.6`.
+- **Root cause**: Task 161/162 added a `pharma` SECTOR_RULE in `cascadeEngine.ts` (keywords: `["pharma", "healthcare", ...]`, confidence: `0.60`). The CE-13 test assumed `pharma` was an uncovered domain (defaulting to `0.55`), but the keyword "pharma" in the test summary now matches the new rule, producing confidence `0.6`.
+- **Fix**: Updated CE-13 test description and assertion to match the new correct behavior (`0.6`). File: `src/__tests__/122-domain-services.test.ts` line 713.
+
+- **Tests added**: None (fixes are assertion corrections only, no new test cases).
+- **Verified**: `bun test src/__tests__/122-domain-services.test.ts` 78 pass / 0 fail | `bun tsc --noEmit` 0 errors.

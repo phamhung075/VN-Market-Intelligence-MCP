@@ -61,6 +61,15 @@ export interface VnIndexSnapshot {
   changePct: number;
 }
 
+/** Macro indicator status for the briefing dashboard. */
+export interface MacroIndicator {
+  name: string;
+  value: number;
+  unit: string;
+  /** σ-based status (e.g., "bình thường", "cao bất thường +2.3σ") */
+  status: string;
+}
+
 /**
  * Structured daily market digest.
  *
@@ -80,6 +89,16 @@ export interface DailyBriefing {
   watchlistSummary: WatchlistEntry[];
   /** Stock codes with new financial_reports since midnight */
   newReports: NewReport[];
+  /** Macro dashboard: key indicators with σ-based status */
+  macroSnapshot: MacroIndicator[];
+  /** Sensitive dates / upcoming events affecting the market */
+  sensitiveWarnings: string[];
+  /** Auto-tracked commodity indicators discovered from news */
+  trackedCommodities: { indicator: string; value: number; unit: string; dataPoints: number }[];
+  /** Unresolved HIGH/CRITICAL alerts from previous session (not yet read) */
+  unresolvedAlerts: BriefingAlert[];
+  /** Top conviction signal — cross-validated strongest signal for today */
+  topConviction: { code: string; score: number; direction: string; summary: string } | null;
   /** ISO 8601 timestamp when this briefing was generated */
   generatedAt: string;
 }
@@ -251,18 +270,21 @@ export async function assembleBriefing(
     options.fetchVnIndexFn ??
     (async () => {
       try {
-        const { fetchHosePrices } = await import(
+        const { fetchVnIndex } = await import(
           "../../infrastructure/fetchers/hose.js"
         );
-        const prices = await fetchHosePrices(["VNINDEX"]);
-        if (prices.length > 0) {
+        const result = await fetchVnIndex();
+        if (result) {
           return {
-            price: prices[0]!.price,
-            changePct: prices[0]!.changePct,
+            price: result.price,
+            changePct: result.changePct,
           };
         }
         return null;
-      } catch {
+      } catch (err) {
+        logger.warn("[assembleBriefing] fetchVnIndex failed", {
+          error: err instanceof Error ? err.message : String(err),
+        });
         return null;
       }
     });
@@ -356,7 +378,99 @@ export async function assembleBriefing(
         : String(row.period_year ?? "unknown"),
   }));
 
-  // ── Step 7: Persist briefing ──────────────────────────────────────────────
+  // ── Step 7: Macro dashboard (σ-based) ──────────────────────────────────────
+  let macroSnapshot: MacroIndicator[] = [];
+  try {
+    const { getAllMacroStats } = await import("../../infrastructure/db/macroStatsStore.js");
+    const { classifyDeviation } = await import("../../domain/services/macroThresholds.js");
+
+    const stats = getAllMacroStats();
+    macroSnapshot = stats.map((s) => {
+      const dev = classifyDeviation(s);
+      return {
+        name: s.name,
+        value: s.current,
+        unit: s.name.includes("Pct") ? "%" : s.name.includes("usd") ? "USD" : "",
+        status: dev.summary,
+      };
+    });
+  } catch { /* best-effort */ }
+
+  // ── Step 8: Sensitive date warnings ─────────────────────────────────────────
+  let sensitiveWarnings: string[] = [];
+  try {
+    const { detectSensitiveDates } = await import("../../domain/services/priceNewsValidator.js");
+    sensitiveWarnings = detectSensitiveDates();
+  } catch { /* best-effort */ }
+
+  // ── Step 9: Auto-tracked commodities ────────────────────────────────────────
+  let trackedCommodities: { indicator: string; value: number; unit: string; dataPoints: number }[] = [];
+  try {
+    const { listTrackedIndicators } = await import("../../infrastructure/db/commodityTracker.js");
+    trackedCommodities = listTrackedIndicators().map((t) => ({
+      indicator: t.indicator,
+      value: t.value,
+      unit: t.unit,
+      dataPoints: t.dataPoints,
+    }));
+  } catch { /* best-effort */ }
+
+  // ── Step 10: Auto-resolve stale low/medium alerts (72h) ──────────────────
+  try {
+    db.exec(`
+      UPDATE alerts
+      SET resolved_at = datetime('now'), resolution_notes = 'Auto-resolved: stale >72h'
+      WHERE severity IN ('low', 'medium')
+        AND resolved_at IS NULL
+        AND triggered_at < datetime('now', '-72 hours')
+    `);
+  } catch { /* resolved_at column may not exist */ }
+
+  // ── Step 10b: Unresolved HIGH/CRITICAL alerts ─────────────────────────────
+  let unresolvedAlerts: BriefingAlert[] = [];
+  try {
+    const unresolvedRows = db
+      .prepare<AlertRow, []>(`
+        SELECT severity, message, affected_actions_json
+        FROM alerts
+        WHERE severity IN ('high', 'critical')
+          AND resolved_at IS NULL
+        ORDER BY triggered_at DESC
+        LIMIT 5
+      `)
+      .all();
+    unresolvedAlerts = unresolvedRows.map((row) => ({
+      severity: row.severity,
+      message: row.message ?? "",
+      stocks: parseAffectedCodes(row.affected_actions_json),
+    }));
+  } catch { /* best-effort */ }
+
+  // ── Step 11: Top conviction signal from watchlist ──────────────────────────
+  let topConviction: DailyBriefing["topConviction"] = null;
+  try {
+    const { computeConviction } = await import("../../domain/services/convictionScorer.js");
+    let bestScore = 0;
+
+    for (const stock of watchlistRows) {
+      if (stock.price == null || stock.change_pct == null) continue;
+      const result = computeConviction({
+        code: stock.code,
+        changePct: stock.change_pct,
+      });
+      if (result.score > bestScore && result.level !== "weak") {
+        bestScore = result.score;
+        topConviction = {
+          code: result.code,
+          score: result.score,
+          direction: result.direction,
+          summary: result.summary,
+        };
+      }
+    }
+  } catch { /* best-effort */ }
+
+  // ── Step 12: Persist briefing ─────────────────────────────────────────────
   const date = todayVietnam();
   const generatedAt = new Date().toISOString();
 
@@ -367,6 +481,11 @@ export async function assembleBriefing(
     alerts,
     watchlistSummary,
     newReports,
+    macroSnapshot,
+    sensitiveWarnings,
+    trackedCommodities,
+    unresolvedAlerts,
+    topConviction,
     generatedAt,
   };
 

@@ -86,7 +86,7 @@
 > **Sprint 010-011 QA batch** — Tasks 131, 132, 133, 137 merged: 2026-04-01. Alert quality (35 tests), BCTC validator (26 tests), adaptive thresholds (25 tests), Step E fix (18 tests). tsc: 0 errors.
 > **Sprint 017 COMPLETE** — All 5 tasks merged: 152, 153, 154, 155, 156. Production Hardening: noise filter, SSC dedup, LanceDB silence, log rotation, off-hours interval. 16 new tests.
 > **Sprint 018 COMPLETE** — All 3 tasks merged: 157, 158, 159. Data audit engine, scheduler wiring, health tool enhancement. 2026-04-01.
-> **Sprint 019 ACTIVE** — started 2026-04-01. Task 160 merged 2026-04-01 (34 tests, 100% coverage). Task 161 unblocked.
+> **Sprint 019 COMPLETE** — All 3 tasks merged: 160, 161, 162. QA approved: 2026-04-01. 69 new tests (160: 34, 161: 19, 162: 16). stockAliases, alias wiring in cascadeEngine + pollNews, market-wide broadcast.
 
 ---
 
@@ -94,7 +94,7 @@
 
 | # | Title | Branch | Notes |
 |---|-------|--------|-------|
-| 161 | Wire aliases into cascade engine + pollNews Gate 3 | `task/161-alias-wiring` | 19 tests, AC-7/AC-8/AC-12 pass, tsc clean |
+| 165 | Prediction cascade mapper | `task/165-prediction-cascade-mapper` | 38 tests pass, tsc 0 errors |
 
 ---
 
@@ -149,11 +149,11 @@
 |---|-------|--------|-------|-------|----------|------------|--------|
 | REQ-020 | BA: Requirement Spec for Sprint 020 | `task/doc-001-claude-md-update` | BA | docs/ | P0 | — | Done — docs/REQ_020.md |
 | TECH-020 | Architect: Technical Design for Sprint 020 | `task/doc-001-claude-md-update` | Architect | docs/ | P0 | REQ-020 | Done — docs/TECH_020.md |
-| 163 | SQLite schema: `prediction_markets` + `prediction_signals` tables | `task/163-prediction-schema` | Developer | infrastructure/db | P0 | TECH-020 ✓ | **Review** |
-| 169 | `mcp.config.json` predictionMarkets section + config.ts type extension | `task/169-prediction-config` | Developer | infrastructure/config | P0 | TECH-020 ✓ | **Todo** |
+| 163 | SQLite schema: `prediction_markets` + `prediction_signals` tables | `task/163-prediction-schema` | Developer | infrastructure/db | P0 | TECH-020 ✓ | **Todo** |
+| 169 | `mcp.config.json` predictionMarkets section + config.ts type extension | `task/169-prediction-config` | Developer | infrastructure/config | P0 | TECH-020 ✓ | **Review** |
 | 165 | Prediction cascade mapper (`predictionCascadeMapper.ts`) | `task/165-prediction-cascade-mapper` | Developer | domain/services | P0 | TECH-020 ✓ | **Review** |
 | 164 | Polymarket REST fetcher (`polymarket.ts`) | `task/164-polymarket-fetcher` | Developer | infrastructure/fetchers | P0 | 163 ✓, 169 ✓ | Backlog |
-| 166 | Prediction signal detector (`predictionSignalDetector.ts`) + SignalType extension | `task/166-prediction-signal-detector` | Developer | domain/services | P0 | 163 ✓, 165 ✓ | Backlog |
+| 166 | Prediction signal detector (`predictionSignalDetector.ts`) + SignalType extension | `task/166-prediction-signal-detector` | Developer | domain/services | P0 | 163 ✓, 165 ✓ | Review |
 | 167 | Prediction market scheduler job + cron wiring | `task/167-prediction-market-job` | Developer | scheduler | P0 | 164 ✓, 165 ✓, 166 ✓ | Backlog |
 | 168 | `get_prediction_markets` MCP tool + server.ts + index.ts registration | `task/168-prediction-mcp-tool` | Developer | interface/mcp | P1 | 163 ✓, 167 ✓ | Backlog |
 

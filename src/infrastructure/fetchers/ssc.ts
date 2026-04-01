@@ -1,35 +1,44 @@
 /**
- * Infrastructure — SSC Portal Scraper
+ * Infrastructure — SSC Portal Scraper (Puppeteer)
  *
  * Fetches and parses the Vietnamese Securities Commission (SSC) disclosure
- * portal at congbothongtin.ssc.gov.vn to list financial reports for a given
- * listed company (identified by stock action code).
+ * portal at congbothongtin.ssc.gov.vn using Puppeteer (headless Chrome).
+ *
+ * The SSC portal is an Oracle ADF application that requires JavaScript
+ * execution. Plain HTTP scraping (the prior approach) no longer works
+ * because the search form relies on ADF ViewState round-trips.
  *
  * Layer: infrastructure/fetchers — may use HTTP, must not import domain/.
  */
 
-import * as cheerio from "cheerio";
 import { logger } from "../logger.js";
 
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
 
-/** Base URL of the SSC public disclosure portal. */
-const SSC_BASE_URL = "https://congbothongtin.ssc.gov.vn";
+const SSC_URL = "https://congbothongtin.ssc.gov.vn/faces/NewsSearch";
 
 /**
- * Search endpoint path.
- * The portal accepts query parameters:
- *   - keyword : stock action code (e.g. "VCB")
- *   - type    : document category (e.g. "BCTC")
- *   - year    : four-digit year
+ * Path to Chrome executable.
+ * Falls back to common paths; override with CHROME_PATH env var.
  */
-const SSC_SEARCH_PATH = "/faces/search";
+const CHROME_PATH =
+  process.env["CHROME_PATH"] ??
+  "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
 
 // ---------------------------------------------------------------------------
 // Public types
 // ---------------------------------------------------------------------------
+
+/**
+ * Minimal HTTP client interface — shared across fetchers for dependency injection.
+ * Kept here for backward compatibility (many files import HttpClient from ssc.js).
+ */
+export interface HttpClient {
+  /** Fetch the HTML body of the given URL. */
+  get(url: string): Promise<string>;
+}
 
 /**
  * A single document entry returned by the SSC portal.
@@ -37,212 +46,449 @@ const SSC_SEARCH_PATH = "/faces/search";
 export interface SscDocument {
   /** Document title as shown on the portal. */
   title: string;
-  /** Absolute URL to the document (PDF or HTML). */
+  /** Absolute URL to the document (PDF or HTML). Empty when download is ADF-triggered. */
   url: string;
   /** Publication date string as found on the page (e.g. "15/04/2025"). */
   publishedAt: string;
-  /** Report type passed to listSscDocuments: 'quarterly' | 'annual'. */
+  /** Report type: 'quarterly' | 'annual' | 'semi-annual' | 'other'. */
   reportType: string;
+  /** Stock ticker code (e.g. "VCB"). */
+  actionCode?: string;
+  /** Company name from the portal. */
+  companyName?: string;
+  /** Exchange (HOSE / HNX / UPCOM / OTC). */
+  exchange?: string;
+  /** Full description line from the portal. */
+  description?: string;
+  /** PDF filename from Content-Disposition when downloaded. */
+  pdfFilename?: string;
 }
 
 /**
- * Minimal HTTP client interface — allows the real axios implementation and
- * lightweight test mocks to be injected via the same contract.
+ * Minimal browser page interface for dependency injection in tests.
+ * Matches a subset of Puppeteer's Page API.
  */
-export interface HttpClient {
-  /** Fetch the HTML body of the given URL. */
-  get(url: string): Promise<string>;
+export interface SscBrowserPage {
+  goto(url: string, options?: { waitUntil?: string; timeout?: number }): Promise<unknown>;
+  waitForSelector(selector: string, options?: { timeout?: number }): Promise<unknown>;
+  click(selector: string, options?: { clickCount?: number }): Promise<void>;
+  type(selector: string, text: string, options?: { delay?: number }): Promise<void>;
+  evaluate<T>(fn: (...args: unknown[]) => T, ...args: unknown[]): Promise<T>;
+  keyboard: { press(key: string): Promise<void> };
+  on(event: string, handler: (...args: unknown[]) => void): void;
+  close(): Promise<void>;
 }
 
-// ---------------------------------------------------------------------------
-// Default HTTP client (axios)
-// ---------------------------------------------------------------------------
-
-/**
- * Creates the default production HTTP client backed by axios.
- * Lazy-imported so tests that inject a mock never load axios.
- */
-async function makeDefaultHttpClient(): Promise<HttpClient> {
-  // Dynamic import keeps the module testable without axios in test environments.
-  const axiosModule = await import("axios");
-  const axios = axiosModule.default;
-
-  return {
-    async get(url: string): Promise<string> {
-      const response = await axios.get<string>(url, {
-        headers: {
-          "User-Agent":
-            "Mozilla/5.0 (compatible; VN-Market-Intelligence/1.0; +https://github.com/vn-market)",
-          Accept: "text/html,application/xhtml+xml",
-        },
-        timeout: 15_000,
-        responseType: "text",
-      });
-      return response.data;
-    },
-  };
+export interface SscBrowser {
+  newPage(): Promise<SscBrowserPage>;
+  close(): Promise<void>;
 }
 
+/**
+ * Factory that creates a browser instance. Inject a mock in tests.
+ */
+export type BrowserFactory = () => Promise<SscBrowser>;
+
 // ---------------------------------------------------------------------------
-// URL builder
+// Report type classification
 // ---------------------------------------------------------------------------
 
 /**
- * Builds the SSC portal search URL for a given action code, report type
- * category, and year.
- *
- * @param actionCode - Stock ticker (e.g. "VCB", "TCB").
- * @param year       - Four-digit year (e.g. 2025).
- * @returns Fully qualified search URL string.
+ * Classify a document title into a report type.
  */
-export function buildSscSearchUrl(actionCode: string, year: number): string {
-  const params = new URLSearchParams({
-    keyword: actionCode.toUpperCase(),
-    type: "BCTC",
-    year: String(year),
-  });
-  return `${SSC_BASE_URL}${SSC_SEARCH_PATH}?${params.toString()}`;
+function classifyReportType(title: string): string {
+  const lower = title.toLowerCase();
+  if (/quý|q\s*[1-4]/i.test(lower)) return "quarterly";
+  if (/bán niên|ban nien|semi/i.test(lower)) return "semi-annual";
+  if (/năm|annual|niên độ/i.test(lower)) return "annual";
+  return "other";
 }
 
-// ---------------------------------------------------------------------------
-// HTML parser
-// ---------------------------------------------------------------------------
-
 /**
- * Keywords in document titles that indicate a quarterly financial report.
- * Vietnamese: "quý" = quarter.
- */
-const QUARTERLY_KEYWORDS: Array<string | RegExp> = ["quý", /\bq[1-4]\b/i];
-
-/**
- * Keywords in document titles that indicate an annual financial report.
- * Vietnamese: "năm" = year, "niên độ" = fiscal year.
- */
-const ANNUAL_KEYWORDS: Array<string | RegExp> = ["năm", "annual", "niên độ"];
-
-/**
- * Returns true if the given title matches the expected report type.
+ * Check if a title matches the requested report type filter.
  */
 function titleMatchesReportType(
   title: string,
-  reportType: "quarterly" | "annual",
+  reportType: "quarterly" | "annual" | "all",
 ): boolean {
-  const lower = title.toLowerCase();
-  const keywords = reportType === "quarterly" ? QUARTERLY_KEYWORDS : ANNUAL_KEYWORDS;
-
-  return keywords.some((kw) =>
-    typeof kw === "string" ? lower.includes(kw) : kw.test(title),
-  );
+  if (reportType === "all") return true;
+  const classified = classifyReportType(title);
+  if (reportType === "quarterly") return classified === "quarterly";
+  if (reportType === "annual") return classified === "annual" || classified === "semi-annual";
+  return true;
 }
 
-/**
- * Resolves a possibly-relative href to an absolute URL against the SSC base.
- */
-function resolveUrl(href: string): string {
-  if (/^https?:\/\//i.test(href)) {
-    return href;
+// ---------------------------------------------------------------------------
+// Browser lifecycle management — prevent zombie Chrome processes
+// ---------------------------------------------------------------------------
+
+/** Track active browser instances for cleanup */
+const _activeBrowsers = new Set<SscBrowser>();
+
+/** Kill all orphaned Chrome processes from Puppeteer (call on server shutdown) */
+export function cleanupBrowsers(): void {
+  for (const b of _activeBrowsers) {
+    b.close().catch(() => {});
   }
-  const normalised = href.startsWith("/") ? href : `/${href}`;
-  return `${SSC_BASE_URL}${normalised}`;
+  _activeBrowsers.clear();
 }
 
-/**
- * Parses the HTML of an SSC portal search-results page and extracts document
- * entries from the `.tbl-data` table.
- *
- * Table structure assumed:
- *   <table class="tbl-data">
- *     <tbody>
- *       <tr>
- *         <td><a href="...">title</a></td>
- *         <td>DD/MM/YYYY</td>   ← publication date
- *       </tr>
- *     </tbody>
- *   </table>
- *
- * @param html       - Raw HTML page content.
- * @param reportType - Expected report type used for filtering and tagging.
- * @returns Array of matching SscDocument entries.
- */
-export function parseSscHtml(
-  html: string,
-  reportType: "quarterly" | "annual",
-): SscDocument[] {
-  const $ = cheerio.load(html);
-  const docs: SscDocument[] = [];
+/** Max time a browser instance can live before force-kill (45 seconds) */
+const BROWSER_MAX_LIFETIME_MS = 45_000;
 
-  $("table.tbl-data tbody tr").each((_idx, row) => {
-    const cells = $(row).find("td");
-    if (cells.length < 2) return;
+// ---------------------------------------------------------------------------
+// Default browser factory (real Puppeteer + Chrome)
+// ---------------------------------------------------------------------------
 
-    const anchor = $(cells.get(0)).find("a").first();
-    const title = anchor.text().trim();
-    const href = anchor.attr("href") ?? "";
-    const publishedAt = $(cells.get(1)).text().trim();
-
-    // Skip rows with no title or href
-    if (!title || !href) return;
-
-    // Filter by report type keyword in the title
-    if (!titleMatchesReportType(title, reportType)) return;
-
-    docs.push({
-      title,
-      url: resolveUrl(href),
-      publishedAt,
-      reportType,
-    });
+async function defaultBrowserFactory(): Promise<SscBrowser> {
+  const puppeteer = await import("puppeteer-core");
+  const browser = await puppeteer.default.launch({
+    executablePath: CHROME_PATH,
+    headless: true,
+    args: ["--no-sandbox", "--disable-dev-shm-usage", "--disable-gpu", "--single-process"],
   });
+  const wrapped = browser as unknown as SscBrowser;
 
-  return docs;
+  // Track for cleanup + auto-kill after max lifetime
+  _activeBrowsers.add(wrapped);
+  const timer = setTimeout(() => {
+    logger.warn("[ssc] browser exceeded max lifetime — force closing");
+    wrapped.close().catch(() => {});
+    _activeBrowsers.delete(wrapped);
+  }, BROWSER_MAX_LIFETIME_MS);
+
+  // Wrap close to clear tracking
+  const origClose = wrapped.close.bind(wrapped);
+  wrapped.close = async () => {
+    clearTimeout(timer);
+    _activeBrowsers.delete(wrapped);
+    await origClose();
+  };
+
+  return wrapped;
 }
 
 // ---------------------------------------------------------------------------
-// Public API
+// Core search function
 // ---------------------------------------------------------------------------
 
 /**
- * Lists financial report documents for a Vietnamese listed company from the
- * SSC public disclosure portal.
+ * Searches the SSC portal for documents matching a stock code.
+ * Uses Puppeteer to drive the Oracle ADF search form.
  *
- * @param actionCode - Stock ticker (e.g. "VCB", "HPG").
- * @param reportType - "quarterly" for quý reports, "annual" for năm reports.
- * @param year       - Four-digit year to filter results (e.g. 2025).
- * @param httpClient - Optional HTTP client; defaults to an axios-backed client.
- *                     Inject a mock in tests to avoid real network calls.
+ * @param actionCode     - Stock ticker (e.g. "VCB", "VNM").
+ * @param reportType     - "quarterly" | "annual" | "all" — filters results by title keywords.
+ * @param _year          - Kept for backward compatibility but not used (portal returns all years).
+ * @param browserFactory - Optional browser factory; defaults to real Puppeteer + Chrome.
  * @returns Promise resolving to an array of SscDocument (empty on error).
  */
 export async function listSscDocuments(
   actionCode: string,
-  reportType: "quarterly" | "annual",
-  year: number,
-  httpClient?: HttpClient,
+  reportType: "quarterly" | "annual" | "all" = "all",
+  _year?: number,
+  browserFactory?: BrowserFactory,
 ): Promise<SscDocument[]> {
-  const client = httpClient ?? (await makeDefaultHttpClient());
-  const url = buildSscSearchUrl(actionCode, year);
+  const factory = browserFactory ?? defaultBrowserFactory;
+  const code = actionCode.toUpperCase();
 
-  logger.debug("[ssc] fetching SSC portal", { actionCode, reportType, year, url });
+  logger.debug("[ssc] searching SSC portal", { actionCode: code, reportType });
 
+  let browser: SscBrowser | null = null;
   try {
-    const html = await client.get(url);
-    const docs = parseSscHtml(html, reportType);
+    browser = await factory();
+    const page = await browser.newPage();
 
-    logger.info("[ssc] parsed documents", {
-      actionCode,
-      reportType,
-      year,
-      count: docs.length,
-    });
+    try {
+      // Navigate to SSC search page (60s timeout — SSC can be slow)
+      await page.goto(SSC_URL, { waitUntil: "networkidle2", timeout: 60000 });
 
-    return docs;
+      // Wait for search form
+      await page.waitForSelector('input[id$="it8112::content"]', { timeout: 30000 });
+
+      // Fill stock code
+      const inputSelector = 'input[id$="it8112::content"]';
+      await page.click(inputSelector, { clickCount: 3 });
+      await page.type(inputSelector, code, { delay: 80 });
+
+      // Tab to trigger ADF value change event
+      await new Promise((r) => setTimeout(r, 500));
+      await page.keyboard.press("Tab");
+      await new Promise((r) => setTimeout(r, 300));
+
+      // Click search button
+      await page.evaluate((() => {
+        const links = Array.from(document.querySelectorAll("a"));
+        for (let i = 0; i < links.length; i++) {
+          const a = links[i]!;
+          const span = a.querySelector("span");
+          if (
+            span &&
+            (span.textContent?.includes("Tìm ki") ||
+              span.textContent?.includes("Tim kiem"))
+          ) {
+            a.click();
+            return;
+          }
+        }
+      }) as () => void);
+
+      // Wait for results to load
+      await new Promise((r) => setTimeout(r, 5000));
+
+      // Extract all matching rows
+      const rawDocs = await page.evaluate((targetCode: unknown) => {
+        const code = targetCode as string;
+        const results: Array<{
+          code: string;
+          exchange: string;
+          title: string;
+          company: string;
+          description: string;
+          date: string;
+          downloadId: string;
+        }> = [];
+
+        document.querySelectorAll("tr[_afrRK]").forEach((row) => {
+          const cells = row.querySelectorAll("td");
+          if (cells.length < 7) return;
+
+          const rowCode = cells[2]?.textContent?.trim() || "";
+          if (rowCode !== code) return;
+
+          const downloadLink = cells[7]?.querySelector("a");
+
+          results.push({
+            code: rowCode,
+            exchange: cells[1]?.textContent?.trim() || "",
+            title: cells[3]?.textContent?.trim() || "",
+            company: cells[4]?.textContent?.trim() || "",
+            description: cells[5]?.textContent?.trim() || "",
+            date: cells[6]?.textContent?.trim() || "",
+            downloadId: downloadLink?.id || "",
+          });
+        });
+        return results;
+      }, code);
+
+      // Convert to SscDocument[] (fast — no downloads, just metadata)
+      const docs: SscDocument[] = rawDocs
+        .filter((d) => titleMatchesReportType(d.title, reportType))
+        .map((d, idx) => ({
+          title: d.title,
+          url: `ssc-download://${code}/${idx}/${d.downloadId || "unknown"}`,
+          publishedAt: d.date,
+          reportType: classifyReportType(d.title),
+          actionCode: d.code,
+          companyName: d.company,
+          exchange: d.exchange,
+          description: d.description,
+        }));
+
+      logger.info("[ssc] parsed documents", {
+        actionCode: code,
+        reportType,
+        count: docs.length,
+      });
+
+      await page.close();
+      return docs;
+    } catch (err) {
+      await page.close().catch(() => {});
+      throw err;
+    }
   } catch (err) {
     logger.error("[ssc] failed to fetch/parse SSC portal", {
-      actionCode,
+      actionCode: code,
       reportType,
-      year,
-      url,
       error: err instanceof Error ? err.message : String(err),
     });
     return [];
+  } finally {
+    if (browser) {
+      await browser.close().catch(() => {});
+    }
   }
+}
+
+/**
+ * Downloads a document from the SSC portal by clicking the ADF download link.
+ * Returns the PDF buffer and filename.
+ *
+ * @param actionCode     - Stock ticker to search for.
+ * @param docIndex       - 0-based index of the document in the search results.
+ * @param browserFactory - Optional browser factory for testing.
+ * @returns PDF buffer + filename, or null if download fails.
+ */
+export async function downloadSscDocument(
+  actionCode: string,
+  docIndex: number = 0,
+  browserFactory?: BrowserFactory,
+): Promise<{ buffer: Buffer; filename: string } | null> {
+  const factory = browserFactory ?? defaultBrowserFactory;
+  const code = actionCode.toUpperCase();
+
+  let browser: SscBrowser | null = null;
+  try {
+    browser = await factory();
+    const page = await browser.newPage();
+
+    try {
+      await page.goto(SSC_URL, { waitUntil: "networkidle2", timeout: 60000 });
+      await page.waitForSelector('input[id$="it8112::content"]', { timeout: 30000 });
+
+      // Search
+      const inputSelector = 'input[id$="it8112::content"]';
+      await page.click(inputSelector, { clickCount: 3 });
+      await page.type(inputSelector, code, { delay: 80 });
+      await new Promise((r) => setTimeout(r, 500));
+      await page.keyboard.press("Tab");
+      await new Promise((r) => setTimeout(r, 300));
+
+      await page.evaluate(() => {
+        document.querySelectorAll("a").forEach((a) => {
+          const span = a.querySelector("span");
+          if (span?.textContent?.includes("Tìm ki")) (a as HTMLElement).click();
+        });
+      });
+
+      await new Promise((r) => setTimeout(r, 5000));
+
+      // Find the download link for the target row
+      const downloadId = await page.evaluate(
+        (targetCode: unknown, targetIdx: unknown) => {
+          const code = targetCode as string;
+          const idx = targetIdx as number;
+          let matchCount = 0;
+
+          const rows = Array.from(document.querySelectorAll("tr[_afrRK]"));
+          for (let i = 0; i < rows.length; i++) {
+            const row = rows[i]!;
+            const cells = row.querySelectorAll("td");
+            if (cells.length < 7) continue;
+            const rowCode = cells[2]?.textContent?.trim() || "";
+            if (rowCode !== code) continue;
+
+            if (matchCount === idx) {
+              const downloadLink = cells[7]?.querySelector("a");
+              return downloadLink?.id || null;
+            }
+            matchCount++;
+          }
+          return null;
+        },
+        code,
+        docIndex,
+      );
+
+      if (!downloadId) {
+        logger.warn("[ssc] download link not found", { actionCode: code, docIndex });
+        await page.close();
+        return null;
+      }
+
+      // Use CDP to download the PDF to a temp directory
+      const { mkdirSync, readdirSync, readFileSync, rmSync } = await import("node:fs");
+      const { join } = await import("node:path");
+      const downloadDir = `/tmp/ssc-dl-${Date.now()}-${code}`;
+      mkdirSync(downloadDir, { recursive: true });
+
+      const cdpSession = await (page as any).createCDPSession();
+      await cdpSession.send("Page.setDownloadBehavior", {
+        behavior: "allow",
+        downloadPath: downloadDir,
+      });
+
+      // Click the download button
+      logger.info("[ssc] clicking download button", { downloadId, actionCode: code });
+      await page.click(`[id="${downloadId}"]`);
+
+      // Poll for the PDF file (max 120s)
+      let pdfBuffer: Buffer | null = null;
+      let pdfFilename = `${code}_doc_${docIndex}.pdf`;
+
+      for (let i = 0; i < 120; i++) {
+        await new Promise((r) => setTimeout(r, 1000));
+        const files = readdirSync(downloadDir);
+
+        // Check for completed PDF
+        const pdfFiles = files.filter((f) => f.endsWith(".pdf"));
+        if (pdfFiles.length > 0) {
+          pdfFilename = pdfFiles[0]!;
+          pdfBuffer = readFileSync(join(downloadDir, pdfFilename));
+          break;
+        }
+
+        // Check if .crdownload is stable (download done, just not renamed)
+        const tempFiles = files.filter((f) => f.endsWith(".crdownload"));
+        if (tempFiles.length > 0 && i > 10) {
+          const tempPath = join(downloadDir, tempFiles[0]!);
+          const size1 = readFileSync(tempPath).length;
+          await new Promise((r) => setTimeout(r, 3000));
+          i += 3;
+          try {
+            const size2 = readFileSync(tempPath).length;
+            if (size2 === size1 && size2 > 1000) {
+              pdfFilename = tempFiles[0]!.replace(".crdownload", "");
+              pdfBuffer = readFileSync(tempPath);
+              break;
+            }
+          } catch { /* file may have been renamed in the meantime */ }
+        }
+      }
+
+      // Cleanup
+      await cdpSession.detach().catch(() => {});
+      try { rmSync(downloadDir, { recursive: true }); } catch { /* ignore */ }
+      await page.close();
+
+      if (pdfBuffer && pdfBuffer.length > 100) {
+        // Verify it's a real PDF
+        const header = pdfBuffer.slice(0, 5).toString();
+        if (header === "%PDF-") {
+          logger.info("[ssc] PDF downloaded successfully", {
+            actionCode: code,
+            docIndex,
+            filename: pdfFilename,
+            bytes: pdfBuffer.length,
+          });
+          return { buffer: pdfBuffer, filename: pdfFilename };
+        }
+        logger.warn("[ssc] downloaded file is not a valid PDF", { header, actionCode: code });
+      }
+
+      logger.warn("[ssc] download did not produce a file", { actionCode: code, docIndex });
+      return null;
+    } catch (err) {
+      await page.close().catch(() => {});
+      throw err;
+    }
+  } catch (err) {
+    logger.error("[ssc] document download failed", {
+      actionCode: code,
+      docIndex,
+      error: err instanceof Error ? err.message : String(err),
+    });
+    return null;
+  } finally {
+    if (browser) {
+      await browser.close().catch(() => {});
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Legacy exports (backward compatibility)
+// ---------------------------------------------------------------------------
+
+/** @deprecated Use listSscDocuments directly. */
+export function buildSscSearchUrl(actionCode: string, _year: number): string {
+  return `${SSC_URL}?keyword=${actionCode.toUpperCase()}`;
+}
+
+/** @deprecated The portal is now ADF-driven; HTML parsing alone doesn't work. */
+export function parseSscHtml(
+  _html: string,
+  _reportType: "quarterly" | "annual",
+): SscDocument[] {
+  return [];
 }

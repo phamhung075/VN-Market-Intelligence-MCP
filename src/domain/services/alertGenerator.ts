@@ -84,15 +84,21 @@ function escalateSeverity(signals: Signal[]): Severity {
  *   "HPG alert [CRITICAL]: price_drop, volume_spike, news_mention — 3 signals detected"
  */
 function buildMessage(actionCode: string, signals: Signal[], severity: Severity): string {
-  const types = signals.map((s) => s.type).join(", ");
   const prefix = `${actionCode} alert`;
   const severityTag = severity === "critical" ? " [CRITICAL]" : severity === "high" ? " [HIGH]" : "";
 
   if (signals.length === 1) {
-    return `${prefix}${severityTag}: ${types} — ${signals[0]!.message}`;
+    return `${prefix}${severityTag}: ${signals[0]!.type} — ${signals[0]!.message}`;
   }
 
-  return `${prefix}${severityTag}: ${types} — ${signals.length} signals detected`;
+  // List unique signal types, then include the most informative message
+  const uniqueTypes = [...new Set(signals.map((s) => s.type))].join(", ");
+  // Pick the signal with the longest (most detailed) message
+  const bestMessage = signals
+    .slice()
+    .sort((a, b) => b.message.length - a.message.length)[0]!.message;
+
+  return `${prefix}${severityTag}: ${uniqueTypes} — ${bestMessage}`;
 }
 
 /**

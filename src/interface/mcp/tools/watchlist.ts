@@ -262,8 +262,18 @@ export function registerWatchlistTools(server: McpServer): void {
           };
         }
 
+        // Vietnamese domain names for clarity
+        const domainVi: Record<string, string> = {
+          banking: "Ngân hàng", tech: "Công nghệ", real_estate: "BĐS",
+          steel: "Thép", oil_gas: "Dầu khí", aviation: "Hàng không",
+          retail: "Bán lẻ", securities: "Chứng khoán", utilities: "Điện",
+          agriculture: "Nông nghiệp", insurance: "Bảo hiểm", pharma: "Dược",
+          logistics: "Logistics", gold_mining: "Vàng", automotive: "Ô tô & Cơ khí",
+          other: "Khác",
+        };
+
         const lines: string[] = [
-          `Watchlist — ${rows.length} stock${rows.length !== 1 ? "s" : ""}`,
+          `Watchlist — ${rows.length} cổ phiếu`,
           "",
           ...rows.map((r) => {
             const priceStr =
@@ -273,11 +283,14 @@ export function registerWatchlistTools(server: McpServer): void {
                     ? ` (${r.change_pct >= 0 ? "+" : ""}${r.change_pct.toFixed(2)}%)`
                     : "")
                 : "N/A";
+            const domainName = domainVi[r.domain] ?? r.domain;
+            const companyNote = (r as unknown as { company_name?: string }).company_name ? ` — ${(r as unknown as { company_name?: string }).company_name}` : "";
 
             return (
-              `  ${r.code.padEnd(6)} [${r.exchange}] ${r.domain.padEnd(12)} Price: ${priceStr}\n` +
-              `         Alerts: drop ${r.alert_drop_pct}% | rise +${r.alert_rise_pct}% | impact >= ${r.alert_impact_min}/10` +
-              (r.notes ? `\n         Notes: ${r.notes}` : "")
+              `  ${r.code.padEnd(6)} [${r.exchange}] ${domainName}${companyNote}\n` +
+              `         Giá: ${priceStr}\n` +
+              `         Ngưỡng: giảm ${r.alert_drop_pct}% | tăng +${r.alert_rise_pct}% | impact >= ${r.alert_impact_min}/10` +
+              (r.notes ? `\n         Ghi chú: ${r.notes}` : "")
             );
           }),
         ];

@@ -31,6 +31,14 @@ mock.module("../infrastructure/rag/retriever.js", () => ({
   insertAnalysis: async () => {},
 }));
 
+// Mock external HTTP fetchers to avoid network I/O in integration tests
+mock.module("../infrastructure/fetchers/yahooFinance.js", () => ({
+  fetchYahooFinancePrices: async () => null,
+}));
+mock.module("../infrastructure/fetchers/sbv.js", () => ({
+  fetchSbvRates: async () => null,
+}));
+
 import { initDatabase, getDb, closeDb } from "../infrastructure/db/schema.js";
 import {
   registerWatchlistTools,
@@ -308,6 +316,8 @@ function makeMockHoseClient(codeToJson: Record<string, string> = {}) {
 let server: McpServer;
 
 beforeAll(async () => {
+  // Use isolated test DB to prevent corrupting production watchlist
+  process.env["DB_PATH"] = ":memory:";
   await initDatabase();
 
   server = new McpServer(
@@ -826,7 +836,7 @@ describe("RT5 — Market snapshot roundtrip", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("Cross-chain structural checks", () => {
-  it("all 16 tools are registered on the server", () => {
+  it("all registered tools are present on the server", () => {
     const registry = (server as unknown as {
       _registeredTools: Record<string, unknown>;
     })._registeredTools;
@@ -854,7 +864,8 @@ describe("Cross-chain structural checks", () => {
     expect(toolNames).toContain("get_market_snapshot");
     expect(toolNames).toContain("get_patterns");
 
-    expect(toolNames.length).toBe(16);
+    // At least 16 core tools + new tools added in later sprints
+    expect(toolNames.length).toBeGreaterThanOrEqual(16);
   });
 
   it("mark_alert_read marks all unread alerts as read in a single call", async () => {

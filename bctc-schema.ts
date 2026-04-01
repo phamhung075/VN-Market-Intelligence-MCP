@@ -36,6 +36,9 @@ export type DomainType =
   | 'insurance'     // BVH, PVI
   | 'securities'    // SSI, VND, HCM
   | 'pharma'        // DHG, IMP, DMC
+  | 'logistics'     // GMD, STG, VTP
+  | 'gold_mining'   // PNJ, SJC-related
+  | 'automotive'    // VEA (VEAM — Honda/Toyota/Ford JV), SVC, HHS
   | 'other'
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -733,6 +736,7 @@ CREATE TABLE IF NOT EXISTS financial_reports (
 
   -- Source metadata
   ssc_url                 TEXT,
+  ssc_doc_id              TEXT,            -- unique document identifier from SSC portal listing
   pdf_path                TEXT,
   published_at            TEXT,
   parsed_at               TEXT NOT NULL,

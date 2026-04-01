@@ -22,6 +22,7 @@
 
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { loadConfig } from "../../infrastructure/config.js";
 import { createLogger } from "../../infrastructure/logger.js";
 import { SseSessionManager } from "./transport.js";
@@ -31,6 +32,12 @@ import {
   registerAlertTools,
   registerAnalysisTools,
   registerMarketTools,
+  registerMacroTools,
+  registerTelegramTools,
+  registerSummaryTools,
+  registerSystemTools,
+  registerPortfolioTools,
+  registerFeedbackTools,
 } from "./tools/index.js";
 
 /** Options for starting the Bun HTTP server. */
@@ -71,28 +78,38 @@ export async function createBunServer(
   const host = options.host ?? "127.0.0.1";
   const log = createLogger(cfg.logLevel);
 
-  // ── Instantiate McpServer ───────────────────────────────────────────────
-  const mcpServer = new McpServer(
-    { name: "vn-market-intelligence", version: "1.0.0" },
-    { capabilities: { tools: {} } },
-  );
+  // ── McpServer factory — one instance per SSE session ────────────────────
+  function createMcpServerInstance(): McpServer {
+    const server = new McpServer(
+      { name: "vn-market-intelligence", version: "1.0.0" },
+      { capabilities: { tools: {} } },
+    );
+    registerWatchlistTools(server);
+    registerReportTools(server);
+    registerAlertTools(server);
+    registerAnalysisTools(server);
+    registerMarketTools(server);
+    registerMacroTools(server);
+    registerTelegramTools(server);
+    registerSummaryTools(server);
+    registerSystemTools(server);
+    registerPortfolioTools(server);
+    registerFeedbackTools(server);
+    return server;
+  }
 
-  // ── Register all MCP tool groups ────────────────────────────────────────
-  registerWatchlistTools(mcpServer);
-  registerReportTools(mcpServer);
-  registerAlertTools(mcpServer);
-  registerAnalysisTools(mcpServer);
-  registerMarketTools(mcpServer); // task 084: get_market_snapshot, get_patterns
-
-  // Count registered tools via the SDK's internal registry
+  // Count tools from a probe instance (not connected to any transport)
+  const probeServer = createMcpServerInstance();
   const registeredToolsMap = (
-    mcpServer as unknown as { _registeredTools: Record<string, unknown> }
+    probeServer as unknown as { _registeredTools: Record<string, unknown> }
   )._registeredTools;
   const toolCount = Object.keys(registeredToolsMap ?? {}).length;
   log.info("[createBunServer] Tools registered", { toolCount });
 
   // ── Session manager handles SSE + message routing ──────────────────────
-  const sessions = new SseSessionManager(mcpServer, log);
+  const sessions = new SseSessionManager(createMcpServerInstance, log);
+
+  // ── Streamable HTTP: stateless mode (one server+transport per request) ──
 
   // ── HTTP request handler ────────────────────────────────────────────────
   async function handleRequest(
@@ -105,15 +122,48 @@ export async function createBunServer(
 
     // CORS — allow Claude Desktop and web clients
     res.setHeader("Access-Control-Allow-Origin", "*");
-    res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+    res.setHeader("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS");
     res.setHeader(
       "Access-Control-Allow-Headers",
       "Content-Type, mcp-session-id",
     );
+    res.setHeader("Access-Control-Expose-Headers", "mcp-session-id");
 
     if (method === "OPTIONS") {
       res.writeHead(204);
       res.end();
+      return;
+    }
+
+    // ── /mcp — Streamable HTTP for Claude.ai connectors ───────────────
+    if (pathname === "/mcp") {
+      // Disable buffering for SSE streaming through proxies
+      res.setHeader("Cache-Control", "no-cache, no-transform");
+      res.setHeader("X-Accel-Buffering", "no");
+
+      // Parse body for POST/PUT/DELETE
+      let parsedBody: unknown = undefined;
+      if (method === "POST" || method === "PUT" || method === "DELETE") {
+        const chunks: Buffer[] = [];
+        for await (const chunk of req) {
+          chunks.push(typeof chunk === "string" ? Buffer.from(chunk) : chunk);
+        }
+        const raw = Buffer.concat(chunks).toString("utf-8");
+        if (raw.length > 0) {
+          try { parsedBody = JSON.parse(raw); } catch { /* leave undefined */ }
+        }
+      }
+      // Stateless: create fresh server + transport per request
+      const reqTransport = new StreamableHTTPServerTransport({});
+      const reqMcp = createMcpServerInstance();
+      await reqMcp.connect(reqTransport as unknown as import("@modelcontextprotocol/sdk/shared/transport.js").Transport);
+      try {
+        await reqTransport.handleRequest(req, res, parsedBody);
+      } finally {
+        // Explicit cleanup prevents memory leak on long-running servers
+        await reqTransport.close().catch(() => {});
+        await reqMcp.close().catch(() => {});
+      }
       return;
     }
 

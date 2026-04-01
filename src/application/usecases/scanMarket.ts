@@ -21,6 +21,16 @@ import { getDb } from "../../infrastructure/db/schema.js";
 import { storeMarketPrices } from "../../infrastructure/fetchers/hose.js";
 import type { MarketPrice } from "../../infrastructure/fetchers/hose.js";
 import { logger } from "../../infrastructure/logger.js";
+import { validatePriceNews, type PriceAction, type NewsSentiment } from "../../domain/services/priceNewsValidator.js";
+import { classifySentiment } from "../../domain/services/sentimentClassifier.js";
+import { computeConviction, type ConvictionInput } from "../../domain/services/convictionScorer.js";
+import {
+  getContextStocksForWatchlist,
+  computeSectorAverage,
+  classifyMovement,
+  SECTOR_NAME_VI,
+} from "../../domain/services/sectorPeers.js";
+import type { DomainType } from "../../../bctc-schema";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -52,23 +62,28 @@ export interface ScanMarketOptions {
 // Helpers
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** A watchlist entry with the shape expected by generateAlerts. */
+/** A watchlist entry with the shape expected by generateAlerts + sector context. */
 interface WatchlistItem {
   actionCode: string;
+  domain: DomainType;
 }
 
 /**
- * Read all stock codes from the watchlist table.
- * Maps `code` column → `actionCode` to match the `generateAlerts` interface.
+ * Read all stock codes + domains from the watchlist table.
  * Returns an empty array if the table is empty or missing.
  */
 function getWatchlistEntries(): WatchlistItem[] {
   try {
     const db = getDb();
     const rows = db
-      .query<{ code: string }, []>("SELECT code FROM watchlist")
+      .query<{ code: string; domain: string }, []>(
+        "SELECT code, domain FROM watchlist",
+      )
       .all();
-    return rows.map((r) => ({ actionCode: r.code }));
+    return rows.map((r) => ({
+      actionCode: r.code,
+      domain: (r.domain || "other") as DomainType,
+    }));
   } catch (err) {
     logger.warn("[scanMarket] failed to read watchlist", {
       error: err instanceof Error ? err.message : String(err),
@@ -162,13 +177,78 @@ export async function scanMarket(
     return result;
   }
 
-  // ── Step 3: Persist prices to history + latest snapshot ─────────────────
+  // ── Step 3: Persist watchlist prices ─────────────────────────────────────
   try {
     await storeMarketPrices(prices);
   } catch (err) {
     logger.warn("[scanMarket] storeMarketPrices failed — signals still run", {
       error: err instanceof Error ? err.message : String(err),
     });
+  }
+
+  // ── Step 3b: Fetch sector context prices (best-effort) ─────────────────
+  const contextStocks = getContextStocksForWatchlist(watchlistEntries);
+  let contextPrices: MarketPrice[] = [];
+
+  if (contextStocks.length > 0) {
+    try {
+      const contextCodes = contextStocks.map((c) => c.code);
+      const fetcher: PriceFetcher =
+        options.fetchPrices ??
+        (async (c) => {
+          const { fetchHosePrices } = await import(
+            "../../infrastructure/fetchers/hose.js"
+          );
+          return fetchHosePrices(c, undefined, { force: true });
+        });
+      contextPrices = await fetcher(contextCodes);
+
+      if (contextPrices.length > 0) {
+        try {
+          await storeMarketPrices(contextPrices);
+        } catch { /* best-effort */ }
+      }
+
+      logger.debug("[scanMarket] fetched sector context prices", {
+        requested: contextCodes.length,
+        received: contextPrices.length,
+      });
+    } catch (err) {
+      logger.debug("[scanMarket] sector context fetch failed (non-fatal)", {
+        error: err instanceof Error ? err.message : String(err),
+      });
+    }
+  }
+
+  // ── Build sector averages from context prices ─────────────────────────
+  // Group all prices (watchlist + context) by domain
+  const pricesByDomain = new Map<DomainType, { code: string; changePct: number }[]>();
+
+  // Add watchlist stock prices to their domains
+  const codeToDomain = new Map(watchlistEntries.map((w) => [w.actionCode, w.domain]));
+  for (const p of prices) {
+    const domain = codeToDomain.get(p.code);
+    if (!domain || domain === "other") continue;
+    const list = pricesByDomain.get(domain) ?? [];
+    list.push({ code: p.code, changePct: p.changePct });
+    pricesByDomain.set(domain, list);
+  }
+
+  // Add context stock prices to their domains
+  const contextCodeToDomain = new Map(contextStocks.map((c) => [c.code, c.domain]));
+  for (const p of contextPrices) {
+    const domain = contextCodeToDomain.get(p.code);
+    if (!domain) continue;
+    const list = pricesByDomain.get(domain) ?? [];
+    list.push({ code: p.code, changePct: p.changePct });
+    pricesByDomain.set(domain, list);
+  }
+
+  // Compute sector averages
+  const sectorAverages = new Map<DomainType, number>();
+  for (const [domain, domainPrices] of pricesByDomain) {
+    const avg = computeSectorAverage(domainPrices);
+    if (avg !== null) sectorAverages.set(domain, avg);
   }
 
   // ── Step 4–5: Build snapshots + detect signals ────────────────────────────
@@ -185,7 +265,6 @@ export async function scanMarket(
       avgVolume,
     };
 
-    // Only price_drop / price_surge / volume_spike — no context (no recentNews / latestReportDate)
     const detected = detectSignals(snapshot);
 
     // Filter to only the three price-based signal types
@@ -196,8 +275,110 @@ export async function scanMarket(
         s.type === "volume_spike",
     );
 
+    // Enrich signal messages with sector context
+    const domain = codeToDomain.get(price.code);
+    if (domain && domain !== "other") {
+      const sectorAvg = sectorAverages.get(domain) ?? null;
+      const movement = classifyMovement(price.changePct, sectorAvg);
+      const sectorName = SECTOR_NAME_VI[domain] ?? domain;
+
+      for (const sig of priceSignals) {
+        if (sig.type === "price_drop" || sig.type === "price_surge") {
+          const sectorInfo = sectorAvg !== null
+            ? `Ngành ${sectorName}: ${sectorAvg >= 0 ? "+" : ""}${sectorAvg}% TB`
+            : "";
+          const movementTag = movement === "sector_wide"
+            ? " (toàn ngành)"
+            : movement === "stock_specific"
+              ? " (riêng lẻ)"
+              : "";
+          sig.message = `${sig.message}${movementTag}${sectorInfo ? ` | ${sectorInfo}` : ""}`;
+        }
+      }
+    }
+
     allSignals.push(...priceSignals);
     result.scanned++;
+  }
+
+  // ── Step 5b: Price-news divergence validation ──────────────────────────
+  // Cross-validate news sentiment against actual price action.
+  // "Tin tức có thể giả nhưng giá phản ánh tất cả"
+  try {
+    const db = getDb();
+    for (const price of prices) {
+      // Get recent news sentiment for this stock from rag_analyses
+      let recentTitles: { source_title: string }[] = [];
+      try {
+        recentTitles = db
+          .query<{ source_title: string }, [string]>(
+            `SELECT source_title FROM rag_analyses
+             WHERE affected_actions LIKE '%' || ? || '%'
+               AND created_at > datetime('now', '-4 hours')
+             ORDER BY created_at DESC LIMIT 10`,
+          )
+          .all(price.code);
+      } catch { /* table may not exist yet */ }
+
+      if (recentTitles.length === 0) {
+        // Check volume anomaly without news
+        const avgVol = getAvgVolumeSync(price.code);
+        const priceAction: PriceAction = {
+          code: price.code,
+          changePct: price.changePct,
+          volume: price.volume,
+          avgVolume: avgVol,
+        };
+        const validation = validatePriceNews(priceAction, null);
+        if (validation.severity === "alert" && validation.insight) {
+          // Add as a signal
+          allSignals.push({
+            type: "volume_spike",
+            severity: "high",
+            actionCode: price.code,
+            message: validation.insight,
+            confidence: 0.70,
+            detectedAt: new Date().toISOString(),
+          });
+        }
+        continue;
+      }
+
+      // Aggregate sentiment from recent titles
+      const allText = recentTitles.map((r) => r.source_title).join(". ");
+      const sentiment = classifySentiment(allText);
+
+      const priceAction: PriceAction = {
+        code: price.code,
+        changePct: price.changePct,
+        volume: price.volume,
+        avgVolume: getAvgVolumeSync(price.code),
+      };
+      const newsSentiment: NewsSentiment = {
+        code: price.code,
+        direction: sentiment.direction,
+        confidence: sentiment.confidence,
+        articleCount: recentTitles.length,
+      };
+
+      const validation = validatePriceNews(priceAction, newsSentiment);
+      if (validation.severity !== "info" && validation.insight) {
+        // Enrich existing signals for this stock with the divergence insight
+        for (const sig of allSignals) {
+          if (sig.actionCode === price.code) {
+            sig.message += ` | ${validation.insight}`;
+          }
+        }
+        logger.info("[scanMarket] price-news divergence detected", {
+          code: price.code,
+          divergence: validation.divergence,
+        });
+      }
+    }
+  } catch (err) {
+    logger.debug("[scanMarket] price-news validation failed (non-fatal)", {
+      error: err instanceof Error ? err.message : String(err),
+    });
   }
 
   result.signals = allSignals.length;
@@ -205,8 +386,63 @@ export async function scanMarket(
   if (allSignals.length === 0) {
     logger.debug("[scanMarket] no signals detected", {
       scanned: result.scanned,
+      sectorContextFetched: contextPrices.length,
     });
     return result;
+  }
+
+  // ── Step 5c: Conviction scoring — cross-validate all signals per stock ───
+  for (const price of prices) {
+    const domain = codeToDomain.get(price.code);
+    const sectorAvg = domain && domain !== "other" ? sectorAverages.get(domain) ?? undefined : undefined;
+
+    const avgVol = getAvgVolumeSync(price.code);
+    const convictionInput: ConvictionInput = {
+      code: price.code,
+      changePct: price.changePct,
+      volume: price.volume,
+    };
+    if (avgVol > 0) convictionInput.avgVolume = avgVol;
+    if (sectorAvg != null) convictionInput.sectorAvgPct = sectorAvg;
+
+    // Enrich conviction with sentiment from recent news about this stock
+    try {
+      const db = getDb();
+      const recentTitles = db
+        .query<{ source_title: string }, [string]>(
+          `SELECT source_title FROM rag_analyses
+           WHERE affected_actions LIKE '%' || ? || '%'
+             AND created_at > datetime('now', '-4 hours')
+           LIMIT 5`,
+        )
+        .all(price.code);
+      if (recentTitles.length > 0) {
+        const allText = recentTitles.map((r) => r.source_title).join(". ");
+        const sent = classifySentiment(allText);
+        convictionInput.sentimentDirection = sent.direction;
+        convictionInput.sentimentConfidence = sent.confidence;
+      }
+    } catch { /* best-effort */ }
+
+    const conviction = computeConviction(convictionInput);
+
+    // Append conviction summary to relevant signals
+    if (conviction.level !== "moderate" && conviction.summary) {
+      for (const sig of allSignals) {
+        if (sig.actionCode === price.code) {
+          sig.message += ` | ${conviction.summary}`;
+        }
+      }
+    }
+
+    // Store conviction history (task 150)
+    try {
+      const db = getDb();
+      const vnNow = new Date(Date.now() + 7 * 3600_000);
+      const dateStr = `${vnNow.getUTCFullYear()}-${String(vnNow.getUTCMonth() + 1).padStart(2, "0")}-${String(vnNow.getUTCDate()).padStart(2, "0")}`;
+      db.prepare(`INSERT OR REPLACE INTO conviction_history (symbol, date, peak_score, dominant_signal, created_at)
+        VALUES (?, ?, ?, ?, ?)`).run(price.code, dateStr, conviction.score, conviction.direction, new Date().toISOString());
+    } catch { /* conviction_history table may not exist */ }
   }
 
   // ── Step 6: Generate and persist alerts ──────────────────────────────────
@@ -231,6 +467,7 @@ export async function scanMarket(
     scanned: result.scanned,
     signals: result.signals,
     alerts: result.alerts,
+    sectorContextFetched: contextPrices.length,
   });
 
   return result;

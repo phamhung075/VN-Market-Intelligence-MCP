@@ -142,6 +142,21 @@ return {
 // All financial numbers: million VND (document in JSDoc)
 /** @param revenue - Net revenue in million VND (triệu đồng) */
 
+// Fetchers: ALWAYS use browser User-Agent (Vietnamese sites block bots with 503)
+"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+
+// Fetchers: multi-tier fallback pattern (see hose.ts as reference)
+// Source 1 (fast, may be down) → Source 2 (reliable) → Source 3 (slow but stable)
+// When httpClient is injected (test mode), skip real-network fallbacks (!httpClient guard)
+
+// Fetchers: VnDirect stock_prices works for ALL exchanges (HOSE, HNX, UPCOM)
+// Endpoint: api-finfo.vndirect.com.vn/v4/stock_prices?sort=date&q=code:{CODES}~date:gte:{TODAY}
+
+// Sector context: use sectorPeers.ts for sector peer mapping
+// DomainType has 16 sectors including 'automotive' (VEA/VEAM)
+
+// Telegram alerts: plain text, Vietnamese format, no Markdown (avoids parse errors)
+
 // Error handling: always log context before returning
 try {
   await doSomething();

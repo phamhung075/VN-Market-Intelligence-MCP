@@ -8,6 +8,7 @@
  *   - VnExpress Finance RSS fetcher           — Task 022
  *   - Reuters / AP News RSS fetcher          — Task 023
  *   - HOSE market data fetcher (VnDirect)    — Task 026
+ *   - Yahoo Finance commodity fetcher        — Task 025
  */
 
 // ── Task 029: SSC portal scraper ─────────────────────────────────────────────
@@ -37,9 +38,17 @@ export { fetchVnExpress } from "./vnexpress.js";
 // ── Task 023: Reuters / AP News RSS fetcher ────────────────────────────────────
 export { fetchReuters } from "./reuters.js";
 
+// ── VnEconomy RSS fetcher ───────────────────────────────────────────────────
+export { fetchVnEconomy } from "./vneconomy.js";
+
+// ── Trading Economics global news stream ────────────────────────────────────
+export { fetchTradingEconomicsStream } from "./tradingEconomicsStream.js";
+
 // ── Task 026: HOSE market data fetcher (VnDirect API) ─────────────────────────
 export {
   fetchHosePrices,
+  fetchVnIndex,
+  fetchFromVnDirectStockPrices,
   storeMarketPrices,
   getAvgVolume,
   buildVnDirectUrl,
@@ -62,3 +71,17 @@ export {
   storeMacroIndicators,
   type MacroIndicators,
 } from "./tradingEconomics.js";
+
+// ── Task 025: Yahoo Finance commodity fetcher ──────────────────────────────────
+export {
+  fetchYahooFinancePrices,
+  storeCommoditySnapshot,
+  type CommoditySnapshot,
+} from "./yahooFinance.js";
+
+// ── Task 028: SBV (State Bank of Vietnam) macro fetcher ───────────────────────
+export {
+  fetchSbvRates,
+  storeSbvSnapshot,
+  type SbvMacroSnapshot,
+} from "./sbv.js";

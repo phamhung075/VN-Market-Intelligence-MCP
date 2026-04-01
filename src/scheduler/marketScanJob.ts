@@ -12,6 +12,7 @@
 
 import { scanMarket } from "../application/usecases/scanMarket.js";
 import { logger } from "../infrastructure/logger.js";
+import { isTradingSession } from "../infrastructure/fetchers/hose.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Concurrency guard
@@ -35,6 +36,12 @@ let isRunning = false;
 export async function runMarketScan(label: "open" | "close"): Promise<void> {
   if (isRunning) {
     logger.warn(`[market-scan:${label}] previous scan still running — skipped`);
+    return;
+  }
+
+  // Skip on non-trading days/hours (safety net beyond cron expression)
+  if (!isTradingSession()) {
+    logger.debug(`[market-scan:${label}] market closed — skipping scan`);
     return;
   }
 
