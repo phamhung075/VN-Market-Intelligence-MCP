@@ -35,8 +35,8 @@ export interface AnalysisEntry {
   sourceTitle: string;
   /** RssItem.url */
   sourceUrl: string;
-  /** Always 'news' for RSS items */
-  sourceType: "news";
+  /** 'news' for RSS items, 'prediction_market' for Polymarket signals */
+  sourceType: "news" | "prediction_market";
   /** ISO 8601 timestamp derived from RssItem.publishedAt */
   publishedAt: string;
   sentiment: Sentiment;
