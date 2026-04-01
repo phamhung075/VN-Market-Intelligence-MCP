@@ -72,14 +72,15 @@ Permanent URL: `https://zenmidi.com/mcp`
 
 MCP connector URL: `https://zenmidi.com/mcp`
 
-| Order | Agent | Schedule | File |
-|-------|-------|----------|------|
-| 1 | **News Scout** | Every 15 min (market), 60 min (off) | `01-news-scout.md` |
-| 2 | **Market Watcher** | Every 5 min (market hours) | `04-market-watcher.md` |
-| 3 | **BCTC Collector** | Daily 20:00 + 08:00 Vietnam | `02-bctc-collector.md` |
-| 4 | **Report Analyzer** | Daily 21:00 + 09:00 Vietnam | `03-report-analyzer.md` |
-| 5 | **Alert Commander** | Every 10 min (ONLY Telegram sender) | `05-alert-commander.md` |
-| 6 | **Digest Writer** | Daily 22:30 + Weekly Sunday | `06-digest-writer.md` |
+| Order | Agent | Schedule | File | Role |
+|-------|-------|----------|------|------|
+| 1 | **News Scout** | Every hour | `01-news-scout.md` | Fetch news + submit feedback on gaps |
+| 2 | **BCTC Collector** | Daily 20:00 + 08:00 VN | `02-bctc-collector.md` | Track BCTC reports |
+| 3 | **Report Analyzer** | Daily 21:00 + 09:00 VN | `03-report-analyzer.md` | Analyze financials + feedback |
+| 4 | **Market Watcher** | Hourly market hours | `04-market-watcher.md` | Track prices + feedback on thresholds |
+| 5 | **Alert Commander** | Every hour | `05-alert-commander.md` | ONLY Telegram sender + alert quality feedback |
+| 6 | **Digest Writer** | Daily 22:30 + Sunday | `06-digest-writer.md` | Compile summaries + weekly review |
+| 7 | **System Improver** | Daily 22:00 VN + Sunday | `07-system-improver.md` | Read feedback → FIX NOW or trigger PO→BA→...→QA chain |
 
 ### Step 4: Verify
 - Telegram: "✅ System online" at 08:55 Vietnam (03:55 France CET)
@@ -102,34 +103,45 @@ MCP connector URL: `https://zenmidi.com/mcp`
 ## Agent Cooperation Flow
 
 ```
-07:00 VN  News Scout monitors pre-market news
-08:55 VN  Alert Commander sends "✅ System online"
-09:00 VN  Market Watcher starts 5-min price tracking
+07:00 VN  News Scout monitors pre-market news + submits feedback
+08:55 VN  Alert Commander sends "✅ Hệ thống online"
+09:00 VN  Market Watcher starts hourly price tracking + submits feedback
 09:00-15:30  All agents at full frequency
 15:30 VN  Market closes → Market Watcher slows
-15:45 VN  Alert Commander sends end-of-day summary
+15:45 VN  Alert Commander sends end-of-day summary + alert quality feedback
 20:00 VN  Server's SSC nightly job downloads new BCTC PDFs
 20:00 VN  BCTC Collector checks what's available
-21:00 VN  Report Analyzer reads financial data from DB
-22:30 VN  Digest Writer sends daily summary via Telegram
+21:00 VN  Report Analyzer reads financial data + submits BCTC feedback
+22:00 VN  ⭐ System Improver reads ALL feedback → FIX NOW or → PO→BA→Arch→PM→Dev→QA
+22:30 VN  Digest Writer sends daily summary + weekly review (Sunday)
 ```
 
 ## Agent Feedback Loop (continuous improvement)
 
 ```
-Agents analyze data → find gaps → write feedback/ files → Digest Writer compiles weekly
+Analysis team finds gaps → submit_feedback MCP tool → SQLite agent_feedback table
                                                               ↓
-                                          Weekly review → Top 3 improvements → Telegram
+                                          HIGH/CRITICAL → Telegram immediately
+                                          MEDIUM/LOW → stored for review
                                                               ↓
-                                          Developer reads feedback → implements fixes → deploy
+                               System Improver (daily 22:00 VN) reads feedback
+                                                              ↓
+                        ┌── FIX NOW (<20 lines): implement + test + push
+                        │
+                        └── SPRINT TASK: write to TASKS.md → trigger dev chain
+                                          ↓
+                              PO → BA → Architect → PM → Developer → QA
+                                          ↓
+                                    Merged to main
 ```
 
-Each agent writes feedback to `cowork-analysis-vnmarket-team/feedback/`:
-- **News Scout**: cascade rule gaps, trade map gaps, sentiment errors, new keywords
-- **Market Watcher**: threshold issues, peer stock changes, conviction scoring calibration
-- **Alert Commander**: alert quality metrics, false positives, format improvements
-- **Report Analyzer**: BCTC extraction errors, trade map updates from financial reports
-- **Digest Writer**: compiles weekly review from all feedback, includes in Sunday digest
+Agents submit feedback via `submit_feedback` MCP tool:
+- **News Scout**: cascade_rule_gap, trade_map_gap, sentiment_error, new_indicator
+- **Market Watcher**: threshold_issue, sector_peer_issue, alert_quality
+- **Alert Commander**: alert_quality, performance_issue
+- **Report Analyzer**: data_extraction_error, trade_map_gap from BCTC
+- **Digest Writer**: compiles weekly review via get_feedback
+- **System Improver**: triages feedback → FIX NOW or SPRINT TASK → triggers dev team chain
 
 ## Key Architecture Rules
 
