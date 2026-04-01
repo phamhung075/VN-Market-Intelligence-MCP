@@ -438,6 +438,7 @@ describe("Task 105 — Evening Summary Job", () => {
             topAlerts: [],
             topStories: [],
             watchlistMovers: [],
+            predictionSignals: [],
             generatedAt: new Date().toISOString(),
           });
         }, 50);

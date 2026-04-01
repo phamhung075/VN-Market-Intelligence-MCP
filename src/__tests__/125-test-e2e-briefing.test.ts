@@ -1162,6 +1162,7 @@ describe("Task 125 — E2E Daily Briefing Flow", () => {
           trackedCommodities: [],
           unresolvedAlerts: [],
           topConviction: null,
+          predictionSignals: [],
           generatedAt: new Date().toISOString(),
         };
       };
@@ -1193,6 +1194,7 @@ describe("Task 125 — E2E Daily Briefing Flow", () => {
           trackedCommodities: [],
           unresolvedAlerts: [],
           topConviction: null,
+          predictionSignals: [],
           generatedAt: new Date().toISOString(),
         };
       };
@@ -1217,6 +1219,7 @@ describe("Task 125 — E2E Daily Briefing Flow", () => {
           topAlerts: [],
           topStories: [],
           watchlistMovers: [],
+          predictionSignals: [],
           generatedAt: new Date().toISOString(),
         };
       };
@@ -1242,6 +1245,7 @@ describe("Task 125 — E2E Daily Briefing Flow", () => {
           topAlerts: [],
           topStories: [],
           watchlistMovers: [],
+          predictionSignals: [],
           generatedAt: new Date().toISOString(),
         };
       };
