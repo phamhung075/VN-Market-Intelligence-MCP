@@ -120,7 +120,7 @@
 | REQ-018 | BA: Requirement Spec for Sprint 018 | `task/doc-001-claude-md-update` | BA | docs/ | P0 | — | Done — docs/REQ_018.md |
 | TECH-018 | Architect: Technical Design for Sprint 018 | `task/doc-001-claude-md-update` | Architect | docs/ | P0 | REQ-018 | Done — docs/TECH_018.md |
 | 157 | Data audit engine: `dataAuditJob.ts` + schema migration + `getCount()` | `task/157-data-audit-job` | Developer | scheduler + infrastructure/db + infrastructure/rag | P0 | TECH-018 ✓ | Done — merged 2026-04-01 |
-| 158 | Scheduler wiring: `CRONS.dataAuditDaily` + `CRONS.dataAuditWeekly` in `jobs.ts` | `task/158-audit-scheduler-wiring` | Developer | scheduler | P1 | 157 ✓ | Todo |
+| 158 | Scheduler wiring: `CRONS.dataAuditDaily` + `CRONS.dataAuditWeekly` in `jobs.ts` | `task/158-audit-scheduler-wiring` | Developer | scheduler | P1 | 157 ✓ | Review |
 | 159 | `get_system_health` db_audit section: `audit_state` reads + live `agent_feedback` counts | `task/159-health-db-audit` | Developer | interface/mcp/tools + infrastructure/db | P2 | 157 ✓ | Todo |
 
 ---

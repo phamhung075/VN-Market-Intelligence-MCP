@@ -9,6 +9,8 @@
  *   marketClose        15:30 weekdays         (task 103) ✓
  *   sscCheck           20:00 daily            (task 104) ✓
  *   eveningSummary     22:00 weekdays         (task 105) ✓
+ *   dataAuditDaily     23:00 daily            (task 157) ✓
+ *   dataAuditWeekly    01:00 Sunday           (task 157) ✓
  *
  * NOTE: The standalone newsPoll cron (task 102) has been removed.
  * News polling is now absorbed into intelligenceCycle — step A runs on every
@@ -29,6 +31,7 @@ import { runIntelligenceCycle } from './intelligenceCycleJob.js'
 import { registerSummaryJobs } from './summaryJobs.js'
 import { runWalCheckpoint, registerShutdownHook } from '../infrastructure/db/checkpoint.js'
 import { runPatternWatch } from './patternWatchJob.js'
+import { runDailyAudit, runWeeklyAudit } from './dataAuditJob.js'
 
 export const CRONS = {
   morningBriefing:   Bun.env.CRON_MORNING_BRIEFING    ?? '0 8 * * 1-5',
@@ -37,6 +40,8 @@ export const CRONS = {
   marketClose:       Bun.env.CRON_MARKET_CLOSE         ?? '30 15 * * 1-5',
   sscCheck:          Bun.env.CRON_SSC_CHECK            ?? '0 20 * * *',
   eveningSummary:    Bun.env.CRON_EVENING_SUMMARY      ?? '0 22 * * 1-5',
+  dataAuditDaily:    Bun.env.CRON_DATA_AUDIT_DAILY     ?? '0 23 * * *',
+  dataAuditWeekly:   Bun.env.CRON_DATA_AUDIT_WEEKLY    ?? '0 1 * * 0',
 }
 
 function log(msg: string) {
@@ -89,6 +94,16 @@ export function startScheduler() {
 
   // Periodic summary jobs (task 130): daily, weekly, monthly, quarterly, yearly
   registerSummaryJobs()
+
+  // 23:00 daily — DB audit (task 157)
+  cron.schedule(CRONS.dataAuditDaily, async () => {
+    await runDailyAudit()
+  }, { timezone: 'Asia/Ho_Chi_Minh' })
+
+  // 01:00 every Sunday — weekly deep audit (task 157)
+  cron.schedule(CRONS.dataAuditWeekly, async () => {
+    await runWeeklyAudit()
+  }, { timezone: 'Asia/Ho_Chi_Minh' })
 
   // Register shutdown hooks for graceful WAL checkpoint on exit
   registerShutdownHook()
