@@ -94,7 +94,7 @@
 
 | # | Title | Branch | Notes |
 |---|-------|--------|-------|
-| — | — | — | Empty |
+| 165 | Prediction cascade mapper | `task/165-prediction-cascade-mapper` | 38 tests pass, tsc 0 errors |
 
 ---
 
@@ -152,8 +152,8 @@
 | 163 | SQLite schema: `prediction_markets` + `prediction_signals` tables | `task/163-prediction-schema` | Developer | infrastructure/db | P0 | TECH-020 ✓ | **Todo** |
 | 169 | `mcp.config.json` predictionMarkets section + config.ts type extension | `task/169-prediction-config` | Developer | infrastructure/config | P0 | TECH-020 ✓ | **Review** |
 | 165 | Prediction cascade mapper (`predictionCascadeMapper.ts`) | `task/165-prediction-cascade-mapper` | Developer | domain/services | P0 | TECH-020 ✓ | **Review** |
-| 164 | Polymarket REST fetcher (`polymarket.ts`) | `task/164-polymarket-fetcher` | Developer | infrastructure/fetchers | P0 | 163 ✓, 169 ✓ | **Review** |
-| 166 | Prediction signal detector (`predictionSignalDetector.ts`) + SignalType extension | `task/166-prediction-signal-detector` | Developer | domain/services | P0 | 163 ✓, 165 ✓ | Backlog |
+| 164 | Polymarket REST fetcher (`polymarket.ts`) | `task/164-polymarket-fetcher` | Developer | infrastructure/fetchers | P0 | 163 ✓, 169 ✓ | Backlog |
+| 166 | Prediction signal detector (`predictionSignalDetector.ts`) + SignalType extension | `task/166-prediction-signal-detector` | Developer | domain/services | P0 | 163 ✓, 165 ✓ | Review |
 | 167 | Prediction market scheduler job + cron wiring | `task/167-prediction-market-job` | Developer | scheduler | P0 | 164 ✓, 165 ✓, 166 ✓ | Backlog |
 | 168 | `get_prediction_markets` MCP tool + server.ts + index.ts registration | `task/168-prediction-mcp-tool` | Developer | interface/mcp | P1 | 163 ✓, 167 ✓ | Backlog |
 
