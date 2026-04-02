@@ -157,9 +157,30 @@ export function extractAndStoreIndicators(
       vnindex: 500,           // VN-Index never below 500
       wheat_usd_bushel: 3,
       copper_usd: 1,
+      interest_rate_pct: 0.1, // Base rates never below 0.1%
+      inflation_pct: 0,
+      gdp_growth_pct: -20,
+      natgas_usd_mmbtu: 0.5,
+      soybean_usd_bushel: 5,
+      coffee_usd: 0.5,
+    };
+    const MAX_VALUES: Record<string, number> = {
+      interest_rate_pct: 15,  // Base/policy rates never above 15%
+      inflation_pct: 30,      // CPI never above 30%
+      gdp_growth_pct: 20,     // GDP growth never above 20%
+      brent_crude_usd: 300,
+      wti_crude_usd: 300,
+      gold_usd_oz: 10000,
+      natgas_usd_mmbtu: 30,
+      wheat_usd_bushel: 20,
+      soybean_usd_bushel: 30,
+      copper_usd: 20,
+      coffee_usd: 500,
     };
     const minVal = MIN_VALUES[pattern.indicator];
     if (minVal !== undefined && value < minVal) continue;
+    const maxVal = MAX_VALUES[pattern.indicator];
+    if (maxVal !== undefined && value > maxVal) continue;
 
     seen.add(pattern.indicator);
     extracted.push({

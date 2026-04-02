@@ -69,6 +69,7 @@ import {
   registerTelegramReportTools,
   registerChangelogTools,
   registerBctcFullTools,
+  registerMarketContextTools,
 } from "./tools/index.js";
 
 /** Options for starting the Bun HTTP server. */
