@@ -9,6 +9,7 @@
  *   marketClose      15:30 weekdays     (task 103) ✓
  *   sscCheck         20:00 daily        (task 104) ✓
  *   eveningSummary   22:00 weekdays     (task 105) ✓
+ *   alertDigest      21:00 weekdays     (task 188) ✓
  */
 
 import cron from 'node-cron'
@@ -17,6 +18,7 @@ import { runMarketScan } from './marketScanJob.js'
 import { runNewsPoller } from './newsPollerJob.js'
 import { runMorningBriefing } from './morningBriefingJob.js'
 import { runEveningSummary } from './eveningSummaryJob.js'
+import { runAlertDigest } from './alertDigestJob.js'
 
 export const CRONS = {
   morningBriefing: Bun.env.CRON_MORNING_BRIEFING ?? '0 8 * * 1-5',
@@ -25,6 +27,7 @@ export const CRONS = {
   marketClose:     Bun.env.CRON_MARKET_CLOSE      ?? '30 15 * * 1-5',
   sscCheck:        Bun.env.CRON_SSC_CHECK         ?? '0 20 * * *',
   eveningSummary:  Bun.env.CRON_EVENING_SUMMARY   ?? '0 22 * * 1-5',
+  alertDigest:     Bun.env.CRON_ALERT_DIGEST      ?? '0 21 * * 1-5',
 }
 
 function log(msg: string) {
@@ -60,6 +63,11 @@ export function startScheduler() {
   // 22:00 — Evening summary (weekdays Mon-Fri only) — task 105
   cron.schedule(CRONS.eveningSummary, async () => {
     await runEveningSummary()
+  }, { timezone: 'Asia/Ho_Chi_Minh' })
+
+  // 21:00 — Alert digest (weekdays Mon-Fri only) — task 188
+  cron.schedule(CRONS.alertDigest, async () => {
+    await runAlertDigest()
   }, { timezone: 'Asia/Ho_Chi_Minh' })
 
   log(`[scheduler] jobs registered — ${Object.keys(CRONS).length} cron jobs active`)
