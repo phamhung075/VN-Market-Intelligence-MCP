@@ -13,6 +13,8 @@ import { computeConviction } from "../../../domain/services/convictionScorer.js"
 import { getSectorPeers, SECTOR_NAME_VI } from "../../../domain/services/sectorPeers.js";
 import { buildPositionLine, buildActionNote } from "../../../domain/services/decisionNoteSynthesizer.js";
 import { listOpenPositions } from "../../../infrastructure/db/positionStore.js";
+import { fetchHosePrices, type MarketPrice } from "../../../infrastructure/fetchers/hose.js";
+import { fetchHnxPrices, fetchUpcomPrices } from "../../../infrastructure/fetchers/hnx.js";
 import { logger } from "../../../infrastructure/logger.js";
 import type { DomainType } from "../../../../bctc-schema";
 
@@ -65,18 +67,57 @@ export function registerPortfolioTools(server: McpServer): void {
           return { content: [{ type: "text" as const, text: "Watchlist trống — thêm cổ phiếu trước." }] };
         }
 
-        // Get latest prices
+        // Fetch LIVE prices grouped by exchange (force: true → works after hours)
         const priceMap = new Map<string, PriceRow>();
-        for (const w of watchlist) {
-          const price = db
-            .query<PriceRow, [string]>(
-              "SELECT code, price, change_pct, volume FROM market_prices WHERE code = ?",
-            )
-            .get(w.code);
-          if (price) priceMap.set(w.code, price);
+        let priceSource = "live";
+        try {
+          const hoseCodes: string[] = [];
+          const hnxCodes: string[] = [];
+          const upcomCodes: string[] = [];
+          for (const w of watchlist) {
+            const ex = (w.exchange || "HOSE").toUpperCase();
+            if (ex === "HNX") hnxCodes.push(w.code);
+            else if (ex === "UPCOM") upcomCodes.push(w.code);
+            else hoseCodes.push(w.code);
+          }
+
+          const [hoseRes, hnxRes, upcomRes] = await Promise.all([
+            hoseCodes.length > 0
+              ? fetchHosePrices(hoseCodes, undefined, { force: true }).catch(() => [] as MarketPrice[])
+              : Promise.resolve([] as MarketPrice[]),
+            hnxCodes.length > 0
+              ? fetchHnxPrices(hnxCodes, undefined, { force: true }).catch(() => [] as MarketPrice[])
+              : Promise.resolve([] as MarketPrice[]),
+            upcomCodes.length > 0
+              ? fetchUpcomPrices(upcomCodes, undefined, { force: true }).catch(() => [] as MarketPrice[])
+              : Promise.resolve([] as MarketPrice[]),
+          ]);
+
+          for (const p of [...hoseRes, ...hnxRes, ...upcomRes]) {
+            priceMap.set(p.code, { code: p.code, price: p.price, change_pct: p.changePct, volume: p.volume });
+          }
+        } catch (err) {
+          logger.warn("[get_portfolio_conviction] Live price fetch failed, falling back to DB", {
+            error: err instanceof Error ? err.message : String(err),
+          });
         }
 
-        // Get sector peer prices for context
+        // Fallback: fill any missing codes from DB (stale but better than nothing)
+        for (const w of watchlist) {
+          if (!priceMap.has(w.code)) {
+            const row = db
+              .query<PriceRow & { updated_at?: string }, [string]>(
+                "SELECT code, price, change_pct, volume, updated_at FROM market_prices WHERE code = ?",
+              )
+              .get(w.code);
+            if (row) {
+              priceMap.set(w.code, row);
+              priceSource = "mixed"; // some from DB
+            }
+          }
+        }
+
+        // Get sector peer prices for context (DB is acceptable here — peers are context, not primary)
         const sectorAvgMap = new Map<string, number>();
         const domains = new Set(watchlist.map((w) => w.domain as DomainType));
         for (const domain of domains) {
@@ -197,6 +238,7 @@ export function registerPortfolioTools(server: McpServer): void {
         const lines: string[] = [
           "=== Portfolio Conviction Dashboard ===",
           `Generated: ${new Date().toISOString()}`,
+          `Price source: ${priceSource === "live" ? "Live API" : "Mixed (some from DB cache)"}`,
           "",
         ];
 
