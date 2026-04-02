@@ -77,6 +77,7 @@
 | # | Title | Branch | Notes |
 |---|-------|--------|-------|
 | DOC-001 | Update CLAUDE.md architecture section | `task/doc-001-claude-md-update` | Ready for QA |
+| 195 | Portfolio rebalancing signals | `task/195-rebalancing-signals` | 17 tests pass, tsc clean, toolCount 16→17 |
 
 ---
 
