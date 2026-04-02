@@ -68,6 +68,7 @@ import {
   registerSentimentTrendTools,
   registerTelegramReportTools,
   registerChangelogTools,
+  registerBctcFullTools,
 } from "./tools/index.js";
 
 /** Options for starting the Bun HTTP server. */
@@ -150,6 +151,7 @@ export async function createBunServer(
     registerSentimentTrendTools(server);
     registerTelegramReportTools(server);
     registerChangelogTools(server);
+    registerBctcFullTools(server);
     return server;
   }
 

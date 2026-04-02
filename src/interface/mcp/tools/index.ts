@@ -43,3 +43,4 @@ export { registerTargetAllocationTools } from "./targetAllocationTools.js";
 export { registerSentimentTrendTools } from "./sentimentTrendTools.js";
 export { registerTelegramReportTools } from "./telegramReportTools.js";
 export { registerChangelogTools } from "./changelogTools.js";
+export { registerBctcFullTools } from "./bctcFullTools.js";

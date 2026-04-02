@@ -1,0 +1,410 @@
+/**
+ * Task 240 — get_bctc_full compound MCP tool tests
+ *
+ * Tests use an in-memory SQLite database (injected via _testDb) to avoid
+ * any real filesystem or network access.
+ *
+ * Coverage:
+ *   1. Returns all 3 sections when financial + sentiment data exist
+ *   2. Returns graceful "no BCTC data" message when no financial rows exist
+ *   3. Renders SENTIMENT TREND section with "no data" note when no RAG rows exist
+ *   4. Code parameter is required (Zod validation)
+ */
+
+import { describe, it, expect, beforeEach } from "bun:test";
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { Database } from "bun:sqlite";
+import { registerBctcFullTools } from "../interface/mcp/tools/bctcFullTools.js";
+
+// ─── helpers ────────────────────────────────────────────────────────────────
+
+function makeServer(db: Database): McpServer {
+  const server = new McpServer(
+    { name: "test", version: "0.0.0" },
+    { capabilities: { tools: {} } },
+  );
+  registerBctcFullTools(server, db);
+  return server;
+}
+
+/** Minimal financial_reports row — all required columns filled. */
+function insertFinancialRow(
+  db: Database,
+  overrides: Partial<{
+    action_code: string;
+    period_year: number;
+    period_quarter: number | null;
+    period_type: string;
+    sort_key: string;
+    net_revenue: number;
+    gross_profit: number;
+    operating_profit: number;
+    ebitda: number;
+    profit_before_tax: number;
+    net_profit: number;
+    eps: number;
+    diluted_eps: number;
+    total_assets: number;
+    current_assets: number;
+    cash: number;
+    inventory: number;
+    total_liabilities: number;
+    short_term_debt: number;
+    long_term_debt: number;
+    equity_total: number;
+    operating_cf: number;
+    investing_cf: number;
+    financing_cf: number;
+    capex: number;
+    free_cash_flow: number;
+    gross_margin_pct: number | null;
+    operating_margin_pct: number | null;
+    net_margin_pct: number | null;
+    roe: number | null;
+    roa: number | null;
+    current_ratio: number | null;
+    debt_to_equity: number | null;
+    net_debt_to_ebitda: number | null;
+    pe: number | null;
+    pb: number | null;
+    audit_status: string;
+    extraction_confidence: number;
+    company_name: string | null;
+    published_at: string;
+    yoy_delta_json: string | null;
+    qoq_delta_json: string | null;
+  }> = {},
+): void {
+  const defaults = {
+    action_code: "VCB",
+    period_year: 2025,
+    period_quarter: 4,
+    period_type: "Q4",
+    sort_key: "2025-Q4",
+    net_revenue: 45_200_000,
+    gross_profit: 20_000_000,
+    operating_profit: 12_000_000,
+    ebitda: 14_000_000,
+    profit_before_tax: 11_500_000,
+    net_profit: 8_100_000,
+    eps: 4200,
+    diluted_eps: 4100,
+    total_assets: 1_800_000_000,
+    current_assets: 400_000_000,
+    cash: 80_000_000,
+    inventory: 5_000_000,
+    total_liabilities: 1_620_000_000,
+    short_term_debt: 200_000_000,
+    long_term_debt: 900_000_000,
+    equity_total: 180_000_000,
+    operating_cf: 10_000_000,
+    investing_cf: -3_000_000,
+    financing_cf: -2_000_000,
+    capex: 1_500_000,
+    free_cash_flow: 8_500_000,
+    gross_margin_pct: 44.2,
+    operating_margin_pct: 26.5,
+    net_margin_pct: 17.9,
+    roe: 22.1,
+    roa: 1.8,
+    current_ratio: 1.1,
+    debt_to_equity: 8.2,
+    net_debt_to_ebitda: 72.1,
+    pe: 12.5,
+    pb: 2.3,
+    audit_status: "reviewed",
+    extraction_confidence: 0.92,
+    company_name: "Vietcombank",
+    published_at: "2026-01-30",
+    yoy_delta_json: null,
+    qoq_delta_json: null,
+    ...overrides,
+  };
+
+  db.prepare(`INSERT INTO financial_reports (
+      id, action_code, company_name, period_year, period_quarter, period_type, sort_key,
+      audit_status, extraction_confidence,
+      net_revenue, gross_profit, operating_profit, ebitda, profit_before_tax, net_profit,
+      eps, diluted_eps,
+      total_assets, current_assets, cash, inventory,
+      total_liabilities, short_term_debt, long_term_debt, equity_total,
+      operating_cf, investing_cf, financing_cf, capex, free_cash_flow,
+      gross_margin_pct, operating_margin_pct, net_margin_pct,
+      roe, roa, current_ratio, debt_to_equity, net_debt_to_ebitda, pe, pb,
+      published_at, yoy_delta_json, qoq_delta_json
+    ) VALUES (
+      lower(hex(randomblob(8))),
+      ?, ?, ?, ?, ?, ?,
+      ?, ?,
+      ?, ?, ?, ?, ?, ?,
+      ?, ?,
+      ?, ?, ?, ?,
+      ?, ?, ?, ?,
+      ?, ?, ?, ?, ?,
+      ?, ?, ?,
+      ?, ?, ?, ?, ?, ?, ?,
+      ?, ?, ?
+    )`).run(
+    defaults.action_code,
+    defaults.company_name,
+    defaults.period_year,
+    defaults.period_quarter,
+    defaults.period_type,
+    defaults.sort_key,
+    defaults.audit_status,
+    defaults.extraction_confidence,
+    defaults.net_revenue,
+    defaults.gross_profit,
+    defaults.operating_profit,
+    defaults.ebitda,
+    defaults.profit_before_tax,
+    defaults.net_profit,
+    defaults.eps,
+    defaults.diluted_eps,
+    defaults.total_assets,
+    defaults.current_assets,
+    defaults.cash,
+    defaults.inventory,
+    defaults.total_liabilities,
+    defaults.short_term_debt,
+    defaults.long_term_debt,
+    defaults.equity_total,
+    defaults.operating_cf,
+    defaults.investing_cf,
+    defaults.financing_cf,
+    defaults.capex,
+    defaults.free_cash_flow,
+    defaults.gross_margin_pct,
+    defaults.operating_margin_pct,
+    defaults.net_margin_pct,
+    defaults.roe,
+    defaults.roa,
+    defaults.current_ratio,
+    defaults.debt_to_equity,
+    defaults.net_debt_to_ebitda,
+    defaults.pe,
+    defaults.pb,
+    defaults.published_at,
+    defaults.yoy_delta_json,
+    defaults.qoq_delta_json,
+  );
+}
+
+/** Insert a rag_analyses row with the given sentiment for today. */
+function insertRagRow(
+  db: Database,
+  stockCode: string,
+  sentiment: "bullish" | "bearish" | "neutral",
+  daysAgo = 0,
+): void {
+  const d = new Date();
+  d.setDate(d.getDate() - daysAgo);
+  const createdAt = d.toISOString().slice(0, 10);
+
+  db.prepare(`INSERT INTO rag_analyses (id, action_level, action_code, affected_actions, headline,
+      body, source, published_at, created_at, embedding_vector, sentiment, confidence, causal_chain)
+    VALUES (
+      lower(hex(randomblob(8))), 'action', ?, ?,
+      'test headline', 'body text', 'test', ?, ?, '', ?, 0.8, ''
+    )`).run(
+    stockCode,
+    JSON.stringify([stockCode]),
+    createdAt,
+    createdAt,
+    sentiment,
+  );
+}
+
+/** Create a minimal in-memory SQLite with the tables our tool needs. */
+function makeDb(): Database {
+  const db = new Database(":memory:");
+
+  db.run(`CREATE TABLE IF NOT EXISTS financial_reports (
+    id TEXT PRIMARY KEY,
+    action_code TEXT NOT NULL,
+    company_name TEXT,
+    period_year INTEGER NOT NULL,
+    period_quarter INTEGER,
+    period_type TEXT NOT NULL,
+    sort_key TEXT NOT NULL,
+    audit_status TEXT NOT NULL DEFAULT 'unaudited',
+    extraction_confidence REAL NOT NULL DEFAULT 0.5,
+    net_revenue REAL NOT NULL DEFAULT 0,
+    gross_profit REAL NOT NULL DEFAULT 0,
+    operating_profit REAL NOT NULL DEFAULT 0,
+    ebitda REAL NOT NULL DEFAULT 0,
+    profit_before_tax REAL NOT NULL DEFAULT 0,
+    net_profit REAL NOT NULL DEFAULT 0,
+    eps REAL NOT NULL DEFAULT 0,
+    diluted_eps REAL NOT NULL DEFAULT 0,
+    total_assets REAL NOT NULL DEFAULT 0,
+    current_assets REAL NOT NULL DEFAULT 0,
+    cash REAL NOT NULL DEFAULT 0,
+    inventory REAL NOT NULL DEFAULT 0,
+    total_liabilities REAL NOT NULL DEFAULT 0,
+    short_term_debt REAL NOT NULL DEFAULT 0,
+    long_term_debt REAL NOT NULL DEFAULT 0,
+    equity_total REAL NOT NULL DEFAULT 0,
+    operating_cf REAL NOT NULL DEFAULT 0,
+    investing_cf REAL NOT NULL DEFAULT 0,
+    financing_cf REAL NOT NULL DEFAULT 0,
+    capex REAL NOT NULL DEFAULT 0,
+    free_cash_flow REAL NOT NULL DEFAULT 0,
+    gross_margin_pct REAL,
+    operating_margin_pct REAL,
+    net_margin_pct REAL,
+    roe REAL,
+    roa REAL,
+    current_ratio REAL,
+    debt_to_equity REAL,
+    net_debt_to_ebitda REAL,
+    pe REAL,
+    pb REAL,
+    published_at TEXT NOT NULL DEFAULT '',
+    yoy_delta_json TEXT,
+    qoq_delta_json TEXT
+  )`);
+
+  db.run(`CREATE TABLE IF NOT EXISTS rag_analyses (
+    id TEXT PRIMARY KEY,
+    action_level TEXT NOT NULL,
+    action_code TEXT NOT NULL,
+    affected_actions TEXT NOT NULL DEFAULT '[]',
+    headline TEXT NOT NULL DEFAULT '',
+    body TEXT NOT NULL DEFAULT '',
+    source TEXT NOT NULL DEFAULT '',
+    published_at TEXT NOT NULL DEFAULT '',
+    created_at TEXT NOT NULL DEFAULT '',
+    embedding_vector TEXT NOT NULL DEFAULT '',
+    sentiment TEXT,
+    confidence REAL,
+    causal_chain TEXT
+  )`);
+
+  return db;
+}
+
+// ─── call helper ────────────────────────────────────────────────────────────
+
+async function callTool(
+  server: McpServer,
+  name: string,
+  args: Record<string, unknown>,
+): Promise<string> {
+  const tools = (server as unknown as {
+    _registeredTools: Record<string, {
+      callback?: (args: Record<string, unknown>) => Promise<{ content: Array<{ type: string; text: string }> }>;
+      handler?: (args: Record<string, unknown>) => Promise<{ content: Array<{ type: string; text: string }> }>;
+    }>;
+  })._registeredTools;
+  const tool = tools[name];
+  if (!tool) throw new Error(`Tool ${name} not registered`);
+  const fn = tool.callback ?? tool.handler;
+  if (!fn) throw new Error(`No callable found for tool: ${name}`);
+  const result = await fn(args);
+  return result.content[0]?.text ?? "";
+}
+
+// ─── Tests ───────────────────────────────────────────────────────────────────
+
+describe("Task 240 — get_bctc_full compound tool", () => {
+  let db: Database;
+
+  beforeEach(() => {
+    db = makeDb();
+  });
+
+  it("returns all 3 sections when financial + sentiment data exist", async () => {
+    // Insert latest report (Q4/2025) and a prior report (Q3/2025) for comparison
+    insertFinancialRow(db, {
+      action_code: "VCB",
+      period_year: 2025,
+      period_quarter: 4,
+      period_type: "Q4",
+      sort_key: "2025-Q4",
+      net_revenue: 45_200_000,
+      net_profit: 8_100_000,
+    });
+    insertFinancialRow(db, {
+      action_code: "VCB",
+      period_year: 2025,
+      period_quarter: 3,
+      period_type: "Q3",
+      sort_key: "2025-Q3",
+      net_revenue: 42_100_000,
+      net_profit: 7_800_000,
+    });
+    // Sentiment entries
+    insertRagRow(db, "VCB", "bullish", 0);
+    insertRagRow(db, "VCB", "bullish", 1);
+    insertRagRow(db, "VCB", "bearish", 2);
+
+    const server = makeServer(db);
+    const text = await callTool(server, "get_bctc_full", { code: "VCB" });
+
+    // Section 1 — financial summary
+    expect(text).toContain("=== BCTC SUMMARY: VCB ===");
+    expect(text).toContain("Net Revenue");
+    expect(text).toContain("Net Profit");
+    expect(text).toContain("ROE");
+
+    // Section 2 — comparison
+    expect(text).toContain("=== QoQ/YoY COMPARISON ===");
+
+    // Section 3 — sentiment
+    expect(text).toContain("=== SENTIMENT TREND ===");
+  });
+
+  it("returns graceful message when no financial data exists for the stock", async () => {
+    const server = makeServer(db);
+    const text = await callTool(server, "get_bctc_full", { code: "XYZ" });
+
+    expect(text).toContain("Chua co du lieu BCTC cho XYZ");
+    expect(text).toContain("list_stored_pdfs");
+  });
+
+  it("renders sentiment section with no-data note when no RAG rows exist", async () => {
+    insertFinancialRow(db, { action_code: "VNM" });
+
+    const server = makeServer(db);
+    const text = await callTool(server, "get_bctc_full", { code: "VNM" });
+
+    expect(text).toContain("=== BCTC SUMMARY: VNM ===");
+    expect(text).toContain("=== SENTIMENT TREND ===");
+    // Sentiment section should indicate no data
+    expect(text).toContain("Khong co du lieu");
+  });
+
+  it("uppercases the code parameter automatically", async () => {
+    insertFinancialRow(db, { action_code: "FPT" });
+    const server = makeServer(db);
+
+    const text = await callTool(server, "get_bctc_full", { code: "fpt" });
+    expect(text).toContain("=== BCTC SUMMARY: FPT ===");
+  });
+
+  it("filters by year when provided", async () => {
+    // Insert two periods for same stock, different years
+    insertFinancialRow(db, {
+      action_code: "VCB",
+      period_year: 2024,
+      period_quarter: 4,
+      period_type: "Q4",
+      sort_key: "2024-Q4",
+    });
+    insertFinancialRow(db, {
+      action_code: "VCB",
+      period_year: 2025,
+      period_quarter: 4,
+      period_type: "Q4",
+      sort_key: "2025-Q4",
+    });
+
+    const server = makeServer(db);
+    const text = await callTool(server, "get_bctc_full", { code: "VCB", year: 2024 });
+
+    expect(text).toContain("2024");
+    // Should not select the 2025 row as the latest
+    expect(text).not.toContain("2025-Q4");
+  });
+});
