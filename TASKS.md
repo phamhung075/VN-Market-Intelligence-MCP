@@ -76,12 +76,7 @@
 
 | # | Title | Branch | Notes |
 |---|-------|--------|-------|
-<<<<<<< HEAD
 | — | — | — | Empty |
-=======
-| DOC-001 | Update CLAUDE.md architecture section | `task/doc-001-claude-md-update` | Ready for QA |
-| 188 | Daily alert digest: `send_alert_digest` MCP tool + scheduler job | `task/188-alert-digest` | 16 tests pass, tsc 0 errors — Ready for QA |
->>>>>>> task/188-alert-digest
 
 ---
 
@@ -355,17 +350,12 @@
 
 | Column | Count | Tasks |
 |--------|-------|-------|
-<<<<<<< HEAD
-| ✅ Done | 44 | 000–105 (sprint 000-006) + Sprint 024: 182, 183, 184, 185 |
-| 🔍 Review | 1 | Sprint 025: 186 |
-=======
-| ✅ Done | 43 | 000, 001, 002, 003, 011, 012, 013, 014, 021, 022, 023, 026, 027, 029, 030, 041, 042, 043, 044, 045, 046, 047, 048, 061, 062, 063, 064, 065, 066, 081, 082, 083, 084, 085, 086, 087, 088, 101, 102, 103, 104, 105 |
-| 🔍 Review | 1 | 187 |
->>>>>>> worktree-agent-a95b37f1
+| ✅ Done | 47+ | Sprints 000-025 complete |
+| 🔍 Review | 0 | — |
 | 🚧 In Progress | 0 | — |
 | 📋 Todo | 0 | — |
-| 🗂 Backlog | 2 | Sprint 025: 187, 188 |
-| **Total** | **47** | |
+| 🗂 Backlog | 0 | — |
+| **Total** | **47+** | |
 
 ---
 
