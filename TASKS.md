@@ -80,23 +80,11 @@
 | # | Title | Branch | Notes |
 |---|-------|--------|-------|
 | DOC-001 | Update CLAUDE.md architecture section | `task/doc-001-claude-md-update` | Ready for QA |
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
 | 195 | Portfolio rebalancing signals: `get_rebalancing_signals` | `task/195-rebalancing-signals` | 17 tests pass, tsc clean, awaiting QA sign-off |
-=======
 | 215 | Telegram webhook registration + security | `task/215-telegram-webhook` | Ready for QA |
->>>>>>> task/215-telegram-webhook
-=======
 | 217 | compare_stocks MCP tool — side-by-side comparison | `worktree-agent-a1f64692` | 20 tests pass, tsc 0 errors |
->>>>>>> worktree-agent-a1f64692
-=======
 | 218 | Weekly portfolio report via Telegram | `worktree-agent-a219df68` | 14 tests pass, tsc clean |
->>>>>>> worktree-agent-a219df68
-=======
 | 219 | Custom alert rules engine | `task/219-custom-alert-rules` | 21 tests pass, tsc clean, 3 MCP tools |
->>>>>>> task/219-custom-alert-rules
 
 ---
 
@@ -137,6 +125,16 @@
 
 ## 📋 TODO
 *(Dependencies cleared — ready to assign)*
+
+### Sprint 033 — Investor UX Hardening (2026-04-01)
+
+| # | Title | Branch | Agent | Priority | Depends on | Status |
+|---|-------|--------|-------|----------|------------|--------|
+| 220 | Watchlist auto-enrichment: sector peer suggestions on `add_to_watchlist` | `task/220-watchlist-peer-suggestions` | BA | P0 | — | Backlog |
+| 222 | Alert snooze/mute: `snooze_alerts` / `unmute_alerts` MCP tools | `task/222-alert-snooze` | BA | P1 | — | Backlog |
+| 223 | Portfolio target allocation: `set_target_allocation` / `get_target_allocation` MCP tools | `task/223-target-allocation` | BA | P2 | 195 (done, soft) | Backlog |
+
+---
 
 ### Sprint 032 — See More, Decide Faster (2026-04-01)
 

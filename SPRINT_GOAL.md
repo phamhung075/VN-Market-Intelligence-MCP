@@ -2,27 +2,26 @@
 
 ## Current Sprint
 
-status: COMPLETE
-sprint_id: 032
+status: PLANNING
+sprint_id: 033
 started: 2026-04-01
-updated: 2026-04-02
-completed: 2026-04-02
+updated: 2026-04-01
 
 ---
 
 ### Theme
 
-**"See More, Decide Faster — Multi-Stock Comparison and Weekly Portfolio Report"**
+**"Investor UX Hardening — Smarter Watchlist, Quieter Alerts, Persistent Targets"**
 
 ---
 
 ### Goal
 
-The investor monitors VNM, FPT, VCB, and VEA but currently has no single view that places
-them side by side. Sprint 032 builds a multi-stock comparison MCP tool so the investor can
-compare 2-5 stocks on financials, current price, and live signal state in one call. It also
-extends the existing Sunday weekly summary job to append a portfolio performance section and
-push it to Telegram — closing the "how did my week go?" loop without opening Claude Desktop.
+The investor's three most common friction points are: (1) manually looking up sector peers
+when adding a new stock to the watchlist, (2) being flooded with expected alerts during
+earnings season when a stock is naturally volatile, and (3) re-entering target portfolio
+weights every time the rebalancing tool is called. Sprint 033 eliminates all three frictions
+with three tightly scoped additions that build exclusively on existing infrastructure.
 
 ---
 
@@ -30,168 +29,175 @@ push it to Telegram — closing the "how did my week go?" loop without opening C
 
 **IN**
 
-1. **Task 217 — Multi-stock comparison tool: `compare_stocks` (P0)**
+1. **Task 220 — Watchlist auto-enrichment: sector peer suggestions on `add_to_watchlist` (P0)**
 
-   New MCP tool `compare_stocks` that accepts a list of 2-5 stock codes and returns a
-   structured side-by-side comparison covering:
-
-   | Dimension | Source |
-   |-----------|--------|
-   | Last price + % change (today) | HOSE/HNX fetcher |
-   | P/E, P/B, ROE, ROA (latest BCTC) | `ratioComputer` via SQLite |
-   | Revenue YoY delta, Net profit YoY delta | `periodDeltaComputer` via SQLite |
-   | Active alerts count (HIGH + CRITICAL) | `alertStore` |
-   | Conviction score (latest) | `convictionScorer` via SQLite |
-   | Sector | `sectorPeers` mapping |
-
-   Output format: plain Vietnamese text table, one row per stock, sortable column headers
-   omitted (plain text, no markdown tables — same style as Telegram messages).
-
-   The tool must handle the case where a stock has no BCTC data in SQLite — show "N/A" for
-   financial columns rather than erroring. Handles 2-5 stocks; rejects fewer than 2 or more
-   than 5 with a clear Vietnamese error message.
-
-   Files:
-   - ADD: `src/application/usecases/compareStocks.ts` — aggregation logic (pure, no I/O)
-   - ADD: `src/interface/mcp/tools/comparisonTools.ts` — MCP tool registration
-   - MODIFY: `src/interface/mcp/server.ts` — register new tool (54 total)
-   - ADD: `src/__tests__/217-compare-stocks.test.ts` — unit + integration tests
-
-2. **Task 218 — Weekly portfolio report via Telegram (P1)**
-
-   Extend the existing Sunday 23:00 weekly summary (`summaryJobs.ts` + `generatePeriodicSummary.ts`)
-   to append a **portfolio performance section** to the weekly Telegram message. The section
-   includes:
-
-   - Each watchlist stock: entry price (from `portfolio_positions` table), current price,
-     unrealised P&L in VND and percent.
-   - Portfolio total: sum of unrealised P&L, best performer, worst performer.
-   - Week-over-week comparison: last Sunday close vs this Sunday close (uses stored price
-     history rows already in SQLite from the intelligence cycle).
-
-   The weekly Telegram push is currently absent — the summary is stored in SQLite but never
-   sent. This task wires the send. The morning briefing Telegram send (already live) is the
-   reference implementation.
-
-   Files:
-   - MODIFY: `src/application/usecases/generatePeriodicSummary.ts` — add portfolio section
-     to weekly summary output string
-   - ADD: `src/application/usecases/getWeeklyPortfolioPerf.ts` — pure function: reads
-     `portfolio_positions` + `price_history`, returns per-stock and totals
-   - MODIFY: `src/scheduler/summaryJobs.ts` — after Sunday weekly summary generated, send
-     to Telegram via existing `sendTelegram()` helper
-   - ADD: `src/__tests__/218-weekly-portfolio-report.test.ts` — unit tests for portfolio
-     performance calculation and summary formatting
-
-3. **Task 219 — Custom alert rules engine: `add_alert_rule` / `list_alert_rules` / `delete_alert_rule` (P2)**
-
-   Let the investor define custom threshold conditions beyond the built-in price drop / volume
-   spike signals. A custom rule is a simple predicate stored in SQLite:
+   When the investor calls `add_to_watchlist` with stock code `VCB`, the response appends a
+   suggestion block listing the top 2-3 sector peers from `sectorPeers.ts` that are not yet
+   on the watchlist. Example response suffix:
 
    ```
-   stock_code  TEXT
-   metric      TEXT   -- "price_above", "price_below", "pe_above", "pe_below",
-                      --  "volume_above", "roe_above"
-   threshold   REAL
-   message     TEXT   -- Vietnamese label shown in the alert
-   enabled     BOOLEAN
+   Da them VCB (banking) vao danh sach theo doi.
+   Goi y them cac co phieu cung nganh: BID, CTG, MBB
+   (Dung add_to_watchlist de them tung ma.)
    ```
 
-   During the intelligence cycle's signal detection pass, custom rules are evaluated after
-   built-in signals. A rule firing emits a new `custom_rule` signal type that goes through the
-   same alert pipeline (dedup, cooldown, severity) as built-in signals.
-
-   Three new MCP tools:
-   - `add_alert_rule` — add a custom rule for a stock
-   - `list_alert_rules` — show all rules (active + disabled)
-   - `delete_alert_rule` — remove a rule by ID
+   The suggestion is informational only — it does not add peers automatically. No new MCP
+   tool is added; the existing `add_to_watchlist` tool response is enriched.
 
    Files:
-   - ADD: `src/infrastructure/db/alertRuleStore.ts` — CRUD for `custom_alert_rules` table
-   - MODIFY: `src/infrastructure/db/schema.ts` — add `custom_alert_rules` table
-   - MODIFY: `src/domain/services/signalDetector.ts` — evaluate custom rules after built-ins
-   - ADD: `src/interface/mcp/tools/alertRuleTools.ts` — 3 new MCP tools
-   - MODIFY: `src/interface/mcp/server.ts` — register 3 new tools (57 total)
-   - ADD: `src/__tests__/219-custom-alert-rules.test.ts` — unit tests
+   - MODIFY: `src/domain/services/sectorPeers.ts` — add `getSectorPeers(stockCode): string[]`
+     helper that returns top peers excluding the stock itself
+   - MODIFY: `src/interface/mcp/tools/watchlist.ts` — after successful add, call
+     `getSectorPeers`, filter against current watchlist, append suggestion text
+   - ADD: `src/__tests__/220-watchlist-peer-suggestions.test.ts` — unit tests for peer
+     suggestion logic and response formatting
+
+2. **Task 222 — Alert snooze/mute: `snooze_alerts` / `unmute_alerts` MCP tools (P1)**
+
+   Let the investor temporarily silence alerts for a stock without removing it from the
+   watchlist. A snooze record is stored in a new `alert_snooze` SQLite table:
+
+   ```
+   stock_code   TEXT
+   snoozed_until  INTEGER  -- Unix timestamp; NULL = muted indefinitely
+   reason       TEXT       -- investor-supplied label ("Q1 earnings volatility")
+   created_at   INTEGER
+   ```
+
+   During `sendAlerts()` in the intelligence cycle, any alert whose stock code has an active
+   snooze record (snoozed_until > now, or NULL) is skipped for Telegram dispatch but still
+   stored in SQLite. Skipped alerts are marked with `notified = -1` (new sentinel for
+   "snoozed") so they are distinguishable from unnotified (`0`) and notified (`1`).
+
+   Two new MCP tools:
+   - `snooze_alerts` — snooze a stock for N hours (or indefinitely). Returns confirmation
+     with snooze expiry in Vietnamese (e.g., "VCB da tam tat thong bao den 15:00 ngay 03/04").
+   - `unmute_alerts` — lift an active snooze immediately.
+
+   `get_alerts` response prepends a warning line when any watchlist stock is currently snoozed:
+   "Luu y: VCB dang tam tat thong bao (den 15:00 03/04)."
+
+   Files:
+   - MODIFY: `src/infrastructure/db/schema.ts` — add `alert_snooze` table
+   - ADD: `src/infrastructure/db/snoozeStore.ts` — CRUD for snooze records
+   - MODIFY: `src/scheduler/intelligenceCycleJob.ts` (or `alertStore.ts` sendAlerts path) —
+     check snooze before dispatching each alert to Telegram
+   - MODIFY: `src/interface/mcp/tools/alerts.ts` — prepend active snooze warnings to
+     `get_alerts` response
+   - ADD: `src/interface/mcp/tools/snoozeTools.ts` — 2 new MCP tools
+   - MODIFY: `src/interface/mcp/server.ts` — register 2 new tools (59 total)
+   - ADD: `src/__tests__/222-alert-snooze.test.ts` — unit tests
+
+3. **Task 223 — Portfolio target allocation: `set_target_allocation` / `get_target_allocation` MCP tools (P2)**
+
+   Store the investor's target portfolio weights in SQLite so that `get_rebalancing_signals`
+   (task 195) and future rebalancing calls do not require the investor to re-specify weights
+   each time. A target allocation record is simple:
+
+   ```
+   stock_code   TEXT PRIMARY KEY
+   target_pct   REAL   -- 0.0–100.0
+   updated_at   INTEGER
+   ```
+
+   Weights are investor-managed; the system does not auto-normalise. If weights sum to != 100,
+   a warning is included in the response ("Tong trong so hien tai: 95%. Kiem tra lai.").
+
+   Two new MCP tools:
+   - `set_target_allocation` — set or update the target weight for one or more stocks.
+     Accepts a list of `{stock_code, target_pct}` pairs.
+   - `get_target_allocation` — return current targets, actual weights (from
+     `portfolio_positions` market value), and deviation from target for each stock.
+
+   `get_rebalancing_signals` is extended to read from `target_allocations` when no explicit
+   targets are supplied in the call — making targets the new default source of truth.
+
+   Files:
+   - MODIFY: `src/infrastructure/db/schema.ts` — add `target_allocations` table
+   - ADD: `src/infrastructure/db/targetAllocationStore.ts` — CRUD
+   - MODIFY: `src/application/usecases/getRebalancingSignals.ts` (task 195) — fall back to
+     `target_allocations` when no explicit targets provided
+   - ADD: `src/interface/mcp/tools/allocationTools.ts` — 2 new MCP tools
+   - MODIFY: `src/interface/mcp/server.ts` — register 2 new tools (61 total)
+   - ADD: `src/__tests__/223-target-allocation.test.ts` — unit tests
 
 **OUT**
 
-- Automated backtesting — requires historical price storage not yet designed; deferred to Sprint 033+
-- Watchlist auto-enrichment (sector peer suggestions) — nice-to-have; deferred to Sprint 033
-- Long-poll Telegram fallback — deferred from Sprint 031; monitor webhook reliability first
-- Inline keyboard / button UX in Telegram — plain text only
-- LLM-generated commentary in comparison output — rule-based formatting only
-- New data sources or fetchers
+- Historical OHLCV chart data endpoint — requires structured price history redesign; Sprint 034+
+- News sentiment trend per stock — valuable but depends on RAG query patterns not yet indexed by stock; Sprint 034+
+- Auto-add peers (only suggest, never add automatically) — avoids watchlist pollution
+- LLM-generated text in any output — rule-based only
+- New external data sources
 
 ---
 
 ### Success Metrics
 
-1. `compare_stocks` called with `["VNM","FPT","VCB","VEA"]` returns a response within 5
-   seconds containing price, P/E, ROE, and alert count for each stock. Stocks without BCTC
-   data show "N/A" — no error thrown.
+1. `add_to_watchlist` with code `VCB` returns a response that includes a suggestion naming
+   at least 2 sector peers (e.g., BID, CTG) that are not already on the watchlist. If all
+   peers are already on the watchlist, no suggestion block appears.
 
-2. Sunday 23:00 cron fires, generates weekly summary with portfolio P&L section, and sends
-   the full message to Telegram. The Telegram message arrives on the investor's phone in
-   France within 30 seconds of the cron tick.
+2. `snooze_alerts VNM 4` silences VNM Telegram alerts for 4 hours. During that window the
+   intelligence cycle stores VNM alerts in SQLite with `notified = -1`. After 4 hours the
+   snooze expires and alerts resume normally. `unmute_alerts VNM` lifts the snooze immediately.
 
-3. `add_alert_rule` for `VCB price_below 85000` stores the rule. Next intelligence cycle
-   where VCB price is below 85000 emits a `custom_rule` alert visible in `get_alerts`.
+3. `set_target_allocation [{VNM: 25}, {FPT: 30}, {VCB: 30}, {VEA: 15}]` stores 4 rows.
+   Subsequent `get_rebalancing_signals` call with no explicit targets reads from
+   `target_allocations` and returns deviation from target for each stock.
 
-4. `bun test` full suite passes: existing 1809 tests + new tests for tasks 217-219, 0
+4. `bun test` full suite passes: existing 1864 tests + new tests for tasks 220/222/223, 0
    failures.
 
 5. `bun tsc --noEmit` → 0 errors.
 
-6. Tool count after Sprint 032: 57 (54 after task 217, +3 from task 219).
+6. Tool count after Sprint 033: 61 (59 after task 222, +2 from task 223). Task 220 adds no
+   new MCP tools.
 
 ---
 
-### Task board (Sprint 032)
+### Task board (Sprint 033)
 
 | # | Title | Priority | Agent | Status | Depends on |
 |---|-------|----------|-------|--------|------------|
-| 217 | Multi-stock comparison tool: `compare_stocks` | P0 | BA → Architect → Dev | Backlog | — |
-| 218 | Weekly portfolio report via Telegram | P1 | BA → Architect → Dev | Backlog | 217 (soft) |
-| 219 | Custom alert rules engine | P2 | BA → Architect → Dev | Backlog | 218 (soft) |
+| 220 | Watchlist auto-enrichment: sector peer suggestions | P0 | BA → Architect → Dev | Backlog | — |
+| 222 | Alert snooze/mute: `snooze_alerts` / `unmute_alerts` | P1 | BA → Architect → Dev | Backlog | — |
+| 223 | Portfolio target allocation: `set_target_allocation` / `get_target_allocation` | P2 | BA → Architect → Dev | Backlog | 195 (soft) |
 
 ---
 
 ### Dependency chain
 
 ```
-217 (compare_stocks — standalone new tool)
-  └─→ 218 (weekly report — reuses getPortfolioPnl patterns, independent of 217 code)
-        └─→ 219 (custom rules — extends signal pipeline; most complex, closes sprint)
+220 (watchlist enrichment — touches sectorPeers + watchlist tool only; standalone)
+222 (snooze — new DB table + intelligence cycle hook; standalone)
+  └─→ 223 (target allocation — new DB table + rebalancing integration; benefits from 222
+            DB migration pattern being established first)
 ```
 
-217 can start immediately. 218 is logically independent of 217 but shares the portfolio data
-layer patterns reviewed in 217. 219 starts after 218 is in Review so the DB schema migration
-pattern is established.
+220 and 222 can proceed in parallel. 223 starts after 222 is in Review so the DB schema
+migration pattern (new table + CRUD store) is established and reviewable before 223 repeats it.
 
 ---
 
 ### Key technical decisions (locked at PO level)
 
-- **compare_stocks is a pure aggregation tool**: it calls existing fetchers and SQLite
-  readers but introduces no new data model. The use case layer (`compareStocks.ts`) holds the
-  aggregation logic; the MCP tool layer holds only input validation and output formatting.
+- **Peer suggestions are response-only**: `getSectorPeers()` is a pure function returning
+  stock codes. No new data is stored. The suggestion is appended to the existing
+  `add_to_watchlist` response string — no schema changes required for task 220.
 
-- **Weekly Telegram send uses existing `sendTelegram()` helper**: no new notifier code.
-  The Sunday summary cron already runs; this sprint adds a single `await sendTelegram(msg)`
-  call after the summary is stored. If Telegram send fails, the summary remains in SQLite —
-  the failure is logged but does not block the cron.
+- **Snooze sentinel `notified = -1`**: the existing `alerts` table already has a `notified`
+  INTEGER column (0/1). Using -1 as a snooze sentinel avoids a schema change to the `alerts`
+  table itself. Only the new `alert_snooze` table and the dispatch check are added.
 
-- **Custom rules are evaluated client-side in the signal detector**: the rule engine is
-  intentionally simple — no scripting language, no expression parser. Only the six metric
-  types listed in scope are supported. The investor can add more metric types in a future
-  sprint once usage patterns are clear.
+- **Target allocation weights are advisory**: the system stores them as supplied. It warns
+  when the sum deviates from 100% but does not block the save. This keeps the tool fast and
+  avoids edge cases where the investor is mid-edit.
 
-- **Tool count target 57**: 53 (current) + 1 (compare_stocks, task 217) + 3 (alert rule
-  tools, task 219) = 57. Task 218 adds no new MCP tools — it extends an existing cron job.
+- **Tool count target 61**: 57 (current after Sprint 032) + 0 (task 220) + 2 (snooze tools,
+  task 222) + 2 (allocation tools, task 223) = 61.
 
-- **No new external data sources**: all data for compare_stocks comes from existing SQLite
-  tables and the existing HOSE/HNX price fetchers already called by the intelligence cycle.
+- **No new external data sources or fetchers**: all three tasks operate on data already
+  present in SQLite or domain services.
 
 ---
 
@@ -231,3 +237,4 @@ pattern is established.
 | 029 | Always-On Investor | 2026-04-02 | 208 (Telegram commands), 209 (P&L snapshot), 210 (source health) |
 | 030 | Quality Before Quantity | 2026-04-02 | 211 (CLAUDE.md sync), 212 (worktree cleanup), 213 (test isolation) |
 | 031 | Telegram Command Interface | 2026-04-02 | 214 (webhook + router), 215 (registration + security), 216 (integration tests) |
+| 032 | See More, Decide Faster | 2026-04-02 | 217 (compare_stocks), 218 (weekly portfolio Telegram), 219 (custom alert rules) |
