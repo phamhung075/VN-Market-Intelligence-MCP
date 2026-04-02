@@ -2,27 +2,26 @@
 
 ## Current Sprint
 
-status: COMPLETE
-sprint_id: 030
+status: PLANNING
+sprint_id: 031
 started: 2026-04-01
-updated: 2026-04-02
-completed: 2026-04-02
+updated: 2026-04-01
 
 ---
 
 ### Theme
 
-**"Quality Before Quantity — Documentation, Disk, and Test Reliability"**
+**"Investor in France, System in Vietnam — Telegram Command Interface"**
 
 ---
 
 ### Goal
 
-Sprint 030 is a consolidation sprint. The system has grown from 0 to 53 MCP tools and 1771
-tests across 29 sprints. The architecture documentation (CLAUDE.md) is 7 sprints behind
-reality. 32 stale worktrees consume disk space and pollute the worktree list. Test isolation
-inconsistencies risk flaky failures under parallel Bun test execution. This sprint makes the
-project trustworthy to its own agents before adding any new features.
+The investor lives in France (GMT+2) and monitors the Vietnamese market (GMT+7). Today the
+only query path is Claude Desktop via MCP — unavailable from a mobile phone or when the
+laptop is closed. Sprint 031 builds a Telegram command interface so the investor can query
+the system's live state — watchlist, prices, alerts, briefing, P&L — by sending a `/command`
+message to the existing Telegram bot, with no Claude Desktop required.
 
 ---
 
@@ -30,229 +29,134 @@ project trustworthy to its own agents before adding any new features.
 
 **IN**
 
-1. **Task 211 — CLAUDE.md sync through Sprint 029 (P0)**
+1. **Task 214 — Webhook endpoint + command router (P0)**
 
-   CLAUDE.md is the single source of truth for every agent in the MAS chain. It is currently
-   accurate through Sprint 026. Sprints 027-029 added the following files that are not yet
-   documented:
+   Add a `/webhook` POST route to the Bun HTTP server that receives Telegram Update objects.
+   Parse the `message.text` field to extract a command and optional argument. Dispatch to the
+   appropriate internal use case. Format the result as plain Vietnamese text and reply via the
+   Telegram Bot `sendMessage` API (same bot used for alerts). Supported commands at launch:
 
-   New domain services (not in CLAUDE.md):
-   - `src/domain/services/portfolioPnlCalculator.ts` — P&L calculation per position
-   - `src/domain/services/portfolioRiskCalculator.ts` — portfolio risk metrics
-   - `src/domain/services/predictionCascadeMapper.ts` — Polymarket event → cascade domain
-   - `src/domain/services/predictionSignalDetector.ts` — Polymarket signal detection
-   - `src/domain/services/priceAlertChecker.ts` — price alert threshold checker
-   - `src/domain/services/rateLimiter.ts` — per-source API rate limiter (token bucket)
-   - `src/domain/services/rebalancingCalculator.ts` — portfolio rebalancing signals
-   - `src/domain/services/sectorRotationDetector.ts` — sector rotation signal detection
-   - `src/domain/services/sparkline.ts` — price sparkline generator
-   - `src/domain/services/stockAliases.ts` — Vietnamese company name → stock code aliases
-   - `src/domain/services/stockSearch.ts` — stock search by name or code
-   - `src/domain/services/sourceHealthTracker.ts` — news source health (ok/degraded/down)
+   | Command | Argument | Action |
+   |---------|----------|--------|
+   | `/watchlist` | — | List all watched stocks with last known price |
+   | `/price` | `VCB` | Fetch current price for one stock |
+   | `/alerts` | — | Last 5 unread alerts (severity + headline) |
+   | `/briefing` | — | Trigger morning briefing assembly and return summary |
+   | `/health` | — | System health: job status, DB size, last cycle time |
+   | `/pnl` | — | Portfolio P&L summary (uses existing getPortfolioPnl use case) |
 
-   New infrastructure files (not in CLAUDE.md):
-   - `src/infrastructure/db/checkpoint.ts` — WAL checkpoint helper for SQLite
-   - `src/infrastructure/db/pnlSnapshotStore.ts` — portfolio P&L snapshot store
-   - `src/infrastructure/db/positionStore.ts` — portfolio position CRUD
-   - `src/infrastructure/db/predictionStore.ts` — Polymarket prediction data store
-   - `src/infrastructure/fetchers/pdfOcrWorker.ts` — OCR fallback for scanned PDF BCTCs
-   - `src/infrastructure/fetchers/polymarket.ts` — Polymarket API fetcher
-   - `src/infrastructure/fetchers/sbv.ts` — State Bank of Vietnam rates fetcher
-   - `src/infrastructure/fetchers/tradingEconomics.ts` — Trading Economics indicators fetcher
-   - `src/infrastructure/fetchers/yahooFinance.ts` — Yahoo Finance commodity price fetcher
-   - `src/infrastructure/notifiers/telegramCommands.ts` — Telegram command handler (long-poll)
-
-   New application use cases (not in CLAUDE.md):
-   - `src/application/usecases/assembleAlertDigest.ts` — daily/weekly alert digest assembly
-   - `src/application/usecases/exportPortfolioSnapshot.ts` — portfolio snapshot export
-   - `src/application/usecases/runPredictionImpactChain.ts` — Polymarket → cascade chain
-   - `src/application/usecases/getPortfolioPnl.ts` — portfolio P&L calculator (Sprint 029)
-
-   New MCP tool files (not in CLAUDE.md):
-   - `src/interface/mcp/tools/alertAccuracy.ts` — alert accuracy scoring tool
-   - `src/interface/mcp/tools/alertCheckTools.ts` — alert threshold check tools
-   - `src/interface/mcp/tools/alertDigestTools.ts` — alert digest MCP tools
-   - `src/interface/mcp/tools/correlationTools.ts` — stock correlation tools
-   - `src/interface/mcp/tools/dataFreshnessTools.ts` — data freshness check tools
-   - `src/interface/mcp/tools/earningsCalendarTools.ts` — earnings calendar tools
-   - `src/interface/mcp/tools/exportTools.ts` — portfolio export tools
-   - `src/interface/mcp/tools/performanceTools.ts` — portfolio performance tools
-   - `src/interface/mcp/tools/portfolioRiskTool.ts` — portfolio risk MCP tool
-   - `src/interface/mcp/tools/positionTools.ts` — position tracking tools
-   - `src/interface/mcp/tools/predictionTools.ts` — Polymarket prediction tools
-   - `src/interface/mcp/tools/priceAlertTools.ts` — price alert management tools
-   - `src/interface/mcp/tools/priceHistoryTools.ts` — price history query tools
-   - `src/interface/mcp/tools/rateLimitTools.ts` — rate limiter status tool
-   - `src/interface/mcp/tools/rebalancingTools.ts` — portfolio rebalancing tools
-   - `src/interface/mcp/tools/searchTools.ts` — stock search tool
-   - `src/interface/mcp/tools/sectorRotationTools.ts` — sector rotation tools
-   - `src/interface/mcp/tools/sourceHealthTools.ts` — source health tools
-   - `src/interface/mcp/tools/registry.ts` — central tool registry (task 193)
-
-   New scheduler jobs (not in CLAUDE.md):
-   - `src/scheduler/alertDigestJob.ts` — daily/weekly alert digest cron
-   - `src/scheduler/dataAuditJob.ts` — nightly data integrity audit cron
-   - `src/scheduler/predictionMarketJob.ts` — Polymarket polling cron
-
-   Tool count update: CLAUDE.md says 20 tools (Sprint 012). Current count: 53 tools.
-
-   Current implementation status section must be updated:
-   - Mark Sprints 013-029 as complete with correct task lists
-   - Remove stale "In Progress" entries (circuit breaker is done as Sprint 015)
-   - Update Scheduled Jobs table to include alertDigestJob, dataAuditJob, predictionMarketJob
-   - Update Data sources table to include Yahoo Finance, SBV, Trading Economics indicators,
-     Polymarket
-   - Update tool count references from 20 → 53
-
-   Acceptance criteria:
-   - Every file that exists in `src/` is mentioned in CLAUDE.md (domain/infra/app/interface).
-   - Sprints 013-029 all appear in the Completed Sprints table.
-   - Tool count says 53.
-   - `bun tsc --noEmit` → 0 errors (CLAUDE.md change is doc-only, no code impact).
-   - No new MCP tools. No new tests. Pure documentation update.
+   Unknown commands return: "Lệnh không hỗ trợ. Gõ /help để xem danh sách."
+   `/help` lists all supported commands in Vietnamese.
 
    Files:
-   - MODIFY: `CLAUDE.md` — comprehensive sync through Sprint 029
+   - ADD: `src/infrastructure/notifiers/telegramCommands.ts` — command parser + dispatcher
+   - MODIFY: `src/index.ts` — register `/webhook` POST route
+   - ADD: `src/__tests__/214-telegram-commands.test.ts` — unit tests for command parser
 
-2. **Task 212 — Stale worktree cleanup (P1)**
+2. **Task 215 — Telegram webhook registration + security (P1)**
 
-   The `.claude/worktrees/` directory contains 34 entries: 32 stale agent-named directories
-   (e.g. `agent-a0511eb6`, `agent-aed24f9a`) plus 2 active ones (`heuristic-payne`,
-   `infallible-blackburn`). The stale entries are not registered as git worktrees — they are
-   leftover directories from agent sub-processes. They pollute `ls` output and consume disk.
-
-   Approach:
-   - Check each `agent-*` directory: if it is NOT a registered git worktree
-     (`git worktree list` does not show its path), delete it.
-   - Keep `heuristic-payne` and `infallible-blackburn` only if they appear in
-     `git worktree list`; otherwise delete them too.
-   - The main worktree (project root) and `task/doc-001-claude-md-update` branch worktree
-     (if registered) must NOT be touched.
-   - After cleanup: `ls .claude/worktrees/` should return 0-2 entries (only active worktrees).
-
-   Acceptance criteria:
-   - All 32 `agent-*` directories removed from `.claude/worktrees/`.
-   - `git worktree list` shows only the main worktree (and any legitimately registered ones).
-   - No test files, source files, or git history are touched.
-   - `bun test` full suite → 0 failures after cleanup (worktrees do not affect test suite).
+   The webhook URL must be registered with the Telegram Bot API via `setWebhook`. The
+   endpoint must reject requests not signed by Telegram (secret token header validation).
+   The bot must not echo commands to the alerts channel — replies go only to the sender.
 
    Files:
-   - DELETE: `.claude/worktrees/agent-*` (32 directories)
-   - DELETE (if unregistered): `.claude/worktrees/heuristic-payne`,
-     `.claude/worktrees/infallible-blackburn`, `.claude/worktrees/jovial-cori`,
-     `.claude/worktrees/zealous-poitras`
+   - ADD: `src/infrastructure/notifiers/telegramWebhookSetup.ts` — `registerWebhook()` helper
+   - MODIFY: `src/index.ts` — call `registerWebhook()` on server startup (only if
+     `TELEGRAM_WEBHOOK_URL` env var is set; no-op if absent so dev mode is unaffected)
+   - MODIFY: `src/infrastructure/notifiers/telegramCommands.ts` — validate
+     `X-Telegram-Bot-Api-Secret-Token` header before processing
+   - ADD: `src/__tests__/215-telegram-webhook.test.ts` — unit tests for security validation
 
-3. **Task 213 — Test isolation audit: standardise :memory: DB pattern (P1)**
+3. **Task 216 — Command integration tests + CLAUDE.md update (P2)**
 
-   The polymarket flaky test was fixed in task 192 by creating a fresh `:memory:` DB per
-   test. However the fix introduced a bespoke pattern. The broader test suite may have other
-   files that share module-level DB singletons and fail intermittently under parallel Bun
-   test execution.
-
-   Audit scope:
-   - Read all `src/__tests__/*.test.ts` files that import from `src/infrastructure/db/`.
-   - For each test file: confirm it creates a fresh `Database(':memory:')` in a `beforeEach`
-     or per-test helper rather than importing the shared module-level DB singleton.
-   - Identify any test that uses the shared singleton (`import { db } from
-     '../../infrastructure/db'` or similar) without resetting state.
-
-   Fix approach:
-   - For each identified non-isolated test: extract a `createTestDb()` helper that returns a
-     fresh `:memory:` DB with `initSchema(db)` applied, and inject it into the unit under test.
-   - Pattern to enforce:
-     ```typescript
-     // In each test file that needs DB
-     import Database from 'better-sqlite3';
-     import { initSchema } from '../../infrastructure/db/schema';
-     function makeDb() { const db = new Database(':memory:'); initSchema(db); return db; }
-     ```
-   - Do NOT change production code DB singletons. Only test files change.
-   - If a test file already has the correct pattern, note it as "already isolated" and skip.
-
-   Acceptance criteria:
-   - Zero test files import the shared `db` singleton without resetting state.
-   - `bun test` run 3 times consecutively → 0 failures each run (stability proof).
-   - No production code changes. Only `src/__tests__/*.test.ts` modifications.
-   - `bun tsc --noEmit` → 0 errors.
-   - Test count stable (no tests added or removed — isolation refactor only).
+   Integration tests covering the full webhook → command → response roundtrip using a mock
+   Telegram server (no real HTTP calls). Update CLAUDE.md to document Sprint 031 files and
+   the webhook route. Update the scheduled jobs table to note the webhook is passive (no cron
+   — event-driven).
 
    Files:
-   - MODIFY: any `src/__tests__/*.test.ts` that uses shared DB singleton without reset
+   - ADD: `src/__tests__/216-telegram-webhook-integration.test.ts` — roundtrip tests
+   - MODIFY: `CLAUDE.md` — add Sprint 031 files to architecture section
 
 **OUT**
 
-- Telegram command interface (already done in Sprint 029 — task 208)
-- New MCP tools of any kind (feature freeze for this sprint)
-- Polymarket API changes (external service — monitor only)
-- LLM-based analysis (permanently out of scope)
-- pdfOcrWorker production wiring (deferred — scanned BCTCs are edge case)
-- Watchlist expansion with HVN, HPG as FX-sensitive stocks (deferred — PO decision pending)
+- Long-poll fallback (polling mode) — webhook is the only delivery mechanism this sprint
+- Inline keyboards / button UX — plain text commands only
+- Multi-turn conversation state — every command is stateless
+- New MCP tools (no additions to the 53-tool set)
+- LLM-based response generation
+- New data sources or fetchers
+- Push notifications triggered by commands (alerts already push autonomously)
 
 ---
 
 ### Success Metrics
 
-1. Every file currently in `src/` is documented in CLAUDE.md. A new agent starting Sprint 031
-   can read CLAUDE.md and understand the full system without inspecting the file tree.
-   Sprints 013-029 appear in the completed sprints table. Tool count reads 53. (Task 211)
+1. Sending `/price VCB` to the Telegram bot returns the current VCB price within 3 seconds
+   (measured from message send to reply receipt on a mobile device in France).
 
-2. `ls .claude/worktrees/` returns 0-2 entries. `git worktree list` is clean. Disk usage
-   from `.claude/worktrees/` drops from 34 directories to at most 2. (Task 212)
+2. Sending `/alerts` returns the last 5 unread alerts formatted in Vietnamese, same style as
+   the autonomous alert messages already live.
 
-3. `bun test` run 3 times consecutively produces 0 failures each run. No test file imports the
-   shared DB singleton without state reset. The pattern is uniform across all test files that
-   touch SQLite. (Task 213)
+3. Sending an unknown command returns the Vietnamese help hint — no crash, no silent failure.
 
-4. `bun tsc --noEmit` → 0 errors. `bun test` full suite → 0 failures. All 1771 existing tests
-   continue to pass after refactor.
+4. `X-Telegram-Bot-Api-Secret-Token` header validation rejects unsigned requests with HTTP
+   401 before any dispatch logic runs.
 
-5. Tool count: 53 (unchanged — no new tools this sprint).
+5. `bun test` full suite passes: existing 1771 tests + new tests for tasks 214-216, 0
+   failures.
+
+6. `bun tsc --noEmit` → 0 errors.
+
+7. Tool count: 53 (unchanged — no new MCP tools this sprint).
 
 ---
 
-### Task board (Sprint 030)
+### Task board (Sprint 031)
 
-| # | Title | Priority | Status | Depends on |
-|---|-------|----------|--------|------------|
-| 211 | CLAUDE.md sync through Sprint 029 | P0 | Backlog | — (doc-only) |
-| 212 | Stale worktree cleanup (.claude/worktrees/) | P1 | Backlog | — (independent) |
-| 213 | Test isolation audit: standardise :memory: DB pattern | P1 | Backlog | — (independent) |
+| # | Title | Priority | Agent | Status | Depends on |
+|---|-------|----------|-------|--------|------------|
+| 214 | Webhook endpoint + command router | P0 | BA → Architect → Dev | Backlog | — |
+| 215 | Webhook registration + security | P1 | BA → Architect → Dev | Backlog | 214 |
+| 216 | Integration tests + CLAUDE.md update | P2 | Dev → QA | Backlog | 214, 215 |
 
 ---
 
 ### Dependency chain
 
 ```
-211 (CLAUDE.md sync)     — P0, no code deps, can start immediately
-212 (worktree cleanup)   — P1, independent, mechanical deletion
-213 (test isolation)     — P1, independent, test-only changes
-
-All three tasks are independent and can run in parallel.
+214 (webhook + router)
+  └─→ 215 (registration + security hardening)
+        └─→ 216 (integration tests + docs)
 ```
+
+214 can start immediately. 215 starts after the webhook route exists. 216 closes the sprint.
 
 ---
 
 ### Key technical decisions (locked at PO level)
 
-- **Task 211 is documentation-only**: no source code changes. If a discrepancy is found
-  between CLAUDE.md and the actual code, CLAUDE.md is updated to match the code — not the
-  other way around. Code is the source of truth.
+- **Webhook-only**: no long-poll mode this sprint. The server already runs on a fixed URL;
+  webhook is the correct production pattern. Long-poll is a fallback for dev environments
+  without a public URL — defer to Sprint 032 if needed.
 
-- **Task 212 deletes only directories not registered in `git worktree list`**: the check
-  against `git worktree list` is mandatory before any deletion. This prevents accidentally
-  removing an active development worktree.
+- **Stateless commands**: each `/command` is fully self-contained. The handler reads from
+  SQLite/LanceDB, formats a response, sends it, and returns. No session state is stored
+  between commands. This keeps the implementation minimal and testable.
 
-- **Task 213 touches only test files**: production singletons (e.g. the module-level `db`
-  export in `src/infrastructure/db/index.ts`) are NOT changed. The fix is test-side injection
-  only. This avoids introducing test-specific branches in production code.
+- **Same bot, different reply path**: the existing Telegram bot token is reused. Autonomous
+  alerts use `sendMessage` to the configured `TELEGRAM_CHAT_ID`. Command replies use
+  `sendMessage` to `update.message.chat.id` (the sender). These are the same chat in the
+  investor's single-user setup, but the code path is separate — alerts are never suppressed
+  by command traffic and vice versa.
 
-- **Task 213 does not add new tests**: it refactors existing tests for isolation. Test count
-  stays at 1771. If a refactor inadvertently removes coverage, it must be restored before QA
-  sign-off.
+- **Secret token header is mandatory in production**: if `TELEGRAM_WEBHOOK_SECRET` env var
+  is absent, the webhook endpoint logs a warning and operates in dev mode (no validation).
+  In production the variable must be set; the CI gate should reject a deploy without it.
 
-- **Sprint 030 is a feature-freeze sprint**: no new MCP tools, no new domain services, no new
-  use cases. The only allowed changes are documentation updates (211), directory deletions
-  (212), and test file refactoring (213).
+- **No new MCP tools**: command dispatch calls existing use cases directly (assembleBriefing,
+  getPortfolioPnl, scanMarket, etc.) — not through the MCP tool layer. This avoids coupling
+  the Telegram interface to MCP protocol semantics.
 
 ---
 
@@ -290,3 +194,4 @@ All three tasks are independent and can run in parallel.
 | 027 | Stability First | 2026-04-02 | 194 (CLAUDE.md sync), 195 (rebalancing, in Review), hotfixes 198-205 |
 | 028 | Structural Integrity and Investor Safety Net | 2026-04-02 | 192, 193, 206, 207 |
 | 029 | Always-On Investor | 2026-04-02 | 208 (Telegram commands), 209 (P&L snapshot), 210 (source health) |
+| 030 | Quality Before Quantity | 2026-04-02 | 211 (CLAUDE.md sync), 212 (worktree cleanup), 213 (test isolation) |
