@@ -582,6 +582,36 @@ const SECTOR_RULES: SectorRule[] = [
     confidence: 0.80,
     title: "Giá thép giảm — tiêu cực cho doanh nghiệp thép",
   },
+  // ── Coal / Mining → oil_gas (energy sector) ─────────────────────────────
+  {
+    keywords: ["kinh doanh than", "coal mining", "than đá", "coal price", "giá than", "khoáng sản", "mineral mining"],
+    domain: "oil_gas",
+    direction: "up",
+    confidence: 0.75,
+    title: "Than/khoáng sản — tích cực cho ngành năng lượng",
+  },
+  {
+    keywords: ["giá than giảm", "coal price drop", "coal price fall", "than đá giảm"],
+    domain: "oil_gas",
+    direction: "down",
+    confidence: 0.70,
+    title: "Giá than giảm — tiêu cực cho doanh nghiệp than/năng lượng",
+  },
+  // ── Large infrastructure projects → aviation + logistics + construction ──
+  {
+    keywords: ["sân bay long thành", "long thanh airport", "siêu dự án", "dự án hạ tầng", "dự án giao thông", "cao tốc", "dự án 200"],
+    domain: "aviation",
+    direction: "up",
+    confidence: 0.80,
+    title: "Dự án hạ tầng lớn — tích cực cho hàng không/logistics",
+  },
+  {
+    keywords: ["sân bay long thành", "long thanh airport", "siêu dự án", "dự án hạ tầng", "dự án giao thông", "cao tốc"],
+    domain: "logistics",
+    direction: "up",
+    confidence: 0.75,
+    title: "Dự án hạ tầng lớn — tích cực cho logistics/vận tải",
+  },
   {
     keywords: ["vn-index tăng", "vn-index tăng điểm", "market rally", "thị trường tăng"],
     domain: "securities",

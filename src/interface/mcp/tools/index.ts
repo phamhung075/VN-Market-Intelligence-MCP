@@ -35,3 +35,4 @@ export { registerPerformanceTools } from "./performanceTools.js";
 export { registerRebalancingTools } from "./rebalancingTools.js";
 export { registerPriceAlertTools } from "./priceAlertTools.js";
 export { registerRateLimitTools } from "./rateLimitTools.js";
+export { registerSourceHealthTools } from "./sourceHealthTools.js";

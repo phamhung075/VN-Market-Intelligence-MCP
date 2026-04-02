@@ -55,6 +55,7 @@ import {
   registerRebalancingTools,
   registerPriceAlertTools,
   registerRateLimitTools,
+  registerSourceHealthTools,
 } from "./tools/index.js";
 
 /** Options for starting the Bun HTTP server. */
@@ -129,6 +130,7 @@ export async function createBunServer(
     registerRebalancingTools(server);
     registerPriceAlertTools(server);
     registerRateLimitTools(server);
+    registerSourceHealthTools(server);
     return server;
   }
 

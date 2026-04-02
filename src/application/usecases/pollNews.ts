@@ -26,6 +26,7 @@ import { generateAlerts } from "../../domain/services/alertGenerator.js";
 import { storeAlerts } from "../../infrastructure/db/alertStore.js";
 import { getDb } from "../../infrastructure/db/schema.js";
 import { logger } from "../../infrastructure/logger.js";
+import { globalSourceTracker } from "../../interface/mcp/tools/sourceHealthTools.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -328,25 +329,40 @@ export async function pollNews(options: PollNewsOptions = {}): Promise<PollNewsR
     tradingeconomics: options.fetchers?.tradingeconomics ?? defaultTradingEconomicsFetcher,
   };
 
-  // ── Step 1: Fetch all 5 sources in parallel ──────────────────────────────
-  const results = await Promise.allSettled([
-    fetchers.cafef(),
-    fetchers.vnexpress(),
-    fetchers.reuters(),
-    fetchers.vneconomy(),
-    fetchers.tradingeconomics(),
-  ]);
+  // ── Step 1: Fetch all 5 sources in parallel with health tracking ────────
+  type SourceResult = { name: string; result: PromiseSettledResult<RssItem[]> };
+
+  const sourceEntries: Array<{ name: string; promise: Promise<RssItem[]> }> = [
+    { name: "CafeF RSS", promise: fetchers.cafef() },
+    { name: "VnExpress RSS", promise: fetchers.vnexpress() },
+    { name: "Reuters RSS", promise: fetchers.reuters() },
+    { name: "VnEconomy RSS", promise: fetchers.vneconomy() },
+    { name: "Trading Economics", promise: fetchers.tradingeconomics() },
+  ];
+
+  const settled = await Promise.allSettled(sourceEntries.map((s) => s.promise));
+
+  const sourceResults: SourceResult[] = sourceEntries.map((s, idx) => ({
+    name: s.name,
+    result: settled[idx] as PromiseSettledResult<RssItem[]>,
+  }));
 
   const allItems: RssItem[] = [];
   let errors = 0;
 
-  for (const res of results) {
-    if (res.status === "fulfilled") {
-      allItems.push(...res.value.slice(0, limit));
+  for (const { name, result } of sourceResults) {
+    if (result.status === "fulfilled") {
+      allItems.push(...result.value.slice(0, limit));
+      globalSourceTracker.recordSuccess(name);
     } else {
       errors++;
+      const errorMsg = result.reason instanceof Error
+        ? result.reason.message
+        : String(result.reason);
+      globalSourceTracker.recordFailure(name, errorMsg);
       logger.error("[pollNews] source fetch failed", {
-        error: res.reason instanceof Error ? res.reason.message : String(res.reason),
+        source: name,
+        error: errorMsg,
       });
     }
   }

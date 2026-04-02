@@ -371,6 +371,14 @@
 
 ---
 
+### 📡 Source Health (210)
+
+| # | Title | Branch | Layer | Status |
+|---|-------|--------|-------|--------|
+| 210 | News source health monitoring | `worktree-agent-a5152c35` | domain + interface | Review 🔍 |
+
+---
+
 ### 🧪 Tests (121–139)
 
 | # | Title | Branch | Layer | Depends on | Acceptance Criteria |
@@ -408,8 +416,13 @@
 
 | Column | Count | Tasks |
 |--------|-------|-------|
+<<<<<<< HEAD
 | ✅ Done | 60+ | Sprints 000-027 (194, hotfixes 198-205 done; 195 in Review) |
 | 🔍 Review | 2 | DOC-001, 195 (rebalancing signals) |
+=======
+| ✅ Done | 43 | 000, 001, 002, 003, 011, 012, 013, 014, 021, 022, 023, 026, 027, 029, 030, 041, 042, 043, 044, 045, 046, 047, 048, 061, 062, 063, 064, 065, 066, 081, 082, 083, 084, 085, 086, 087, 088, 101, 102, 103, 104, 105 |
+| 🔍 Review | 1 | 210 |
+>>>>>>> worktree-agent-a5152c35
 | 🚧 In Progress | 0 | — |
 | 📋 Todo | 0 | — |
 | 🗂 Backlog | 6 | 192, 193, 206, 207 (Sprint 028); 196, 197 (deferred); 125 (long-term deferred) |
