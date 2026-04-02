@@ -2,43 +2,39 @@
 
 ## Current Sprint
 
-status: COMPLETE
-sprint_id: 026
+status: PLANNING
+sprint_id: 027
 started: 2026-04-01
-updated: 2026-04-02
-completed: 2026-04-02
+updated: 2026-04-01
 
 ---
 
 ### Theme
 
-**"Signal Quality and Portfolio Correlation — Know What Moves Together"**
+**"Stability First — Fix the Cracks Before Adding More Floors"**
 
 ---
 
 ### Goal
 
-The system generates many signals and tracks multiple positions, but has no way to tell
-the investor whether those positions are truly diversified or are concentrated bets on the
-same underlying factor. Two stocks in different sectors can still be highly correlated if
-they share export exposure, interest rate sensitivity, or institutional ownership patterns.
+The platform is feature-rich at 46 tools and 1672 tests. Before extending it further, three
+structural cracks must be sealed:
 
-This sprint adds three capabilities that close the gap between raw alerts and actionable
-portfolio intelligence:
+1. A flaky test in the Polymarket fetcher fires randomly in the full suite, eroding CI
+   confidence. Every red run wastes developer investigation time and masks real failures.
 
-1. **Correlation analysis** computes pairwise price correlation across watchlist stocks
-   using existing `market_prices_history` data. The investor immediately sees which holdings
-   move together and can measure true diversification — not just sector labels.
+2. Every worktree merge produces conflicts in `server.ts` and `tools/index.ts` because all
+   27 tool registration calls are hardcoded in a flat list. One developer adds a line; a
+   second developer adds a different line; Git cannot reconcile them. Dynamic auto-discovery
+   eliminates the conflict surface permanently.
 
-2. **Export / backup** gives the investor a single MCP call to dump all positions,
-   analysis entries, and alerts to a portable JSON file. This is the most-requested
-   operational safety net: a way to snapshot the system state before changes, or share it
-   for external analysis.
+3. CLAUDE.md documents the architecture through Sprint 021. Sprints 022-026 added 14 new
+   tools, 4 new domain services, and 3 new use cases. New agents and contributors
+   onboarding after Sprint 021 have an incomplete map of the codebase.
 
-3. **Performance attribution** closes the feedback loop on signals: for each completed
-   position, it attributes P&L contribution to the signal type (news_mention, price_drop,
-   report, cascade) that triggered the entry alert. This answers "which signal type
-   actually makes money" — the core question for tuning the system over time.
+The fourth task adds direct investor value: a rebalancing signal tool that tells the
+investor when any position's weight has drifted more than a configurable threshold from
+its target, and suggests the corrective trade size.
 
 ---
 
@@ -46,309 +42,249 @@ portfolio intelligence:
 
 **IN**
 
-1. **Task 189 — Correlation analysis: `get_correlation_matrix` MCP tool (P0)**
+1. **Task 192 — Fix flaky test: `164-polymarket-fetcher.test.ts` mock timing (P0)**
 
-   New MCP tool `get_correlation_matrix` that reads `market_prices_history` and computes
-   Pearson correlation coefficients for all pairs of watchlist stocks. Uses only data
-   already stored — no new fetches. Returns a ranked list of highly correlated pairs
-   (|r| >= 0.7) and a portfolio diversification score.
+   The test passes in isolation but fails randomly when the full suite runs concurrently.
+   Root cause: the mock for `Bun.fetch` is set up globally and a racing test resets it
+   between the timer fire and the assertion. Fix: scope the mock to the test file only,
+   use `vi.isolateModules` or equivalent Bun test isolation, and add a deterministic timer
+   mock that does not rely on wall-clock timing.
 
-   Computation logic (rule-based, deterministic, no LLM):
-   - For each pair of watchlist stocks, extract their aligned price series from
-     `market_prices_history` (last 30 rows maximum, ordered by stored_at DESC).
-   - Align by position index (assume prices are stored at the same cadence for all stocks).
-   - Compute Pearson r using the standard formula: r = cov(X,Y) / (stdDev(X) * stdDev(Y)).
-   - If either series has fewer than 5 data points, report "(du lieu khong du)" for that
-     pair and exclude from the diversification score.
-   - Classify each pair:
-     - |r| >= 0.85: TUONG QUAN CAO (highly correlated)
-     - |r| >= 0.70: TUONG QUAN VUA (moderately correlated)
-     - |r| < 0.70: IT TUONG QUAN (low correlation)
-   - Diversification score: percentage of pairs with |r| < 0.70. Score 0-100.
-   - Rank pairs by |r| descending in output.
+   Acceptance criteria:
+   - `bun test src/__tests__/164-polymarket-fetcher.test.ts` passes 10/10 consecutive runs.
+   - `bun test` full suite passes 3/3 consecutive runs with no flaky failures in task 164.
+   - No other test files are modified except `src/__tests__/164-polymarket-fetcher.test.ts`
+     and any shared test helper it extracts.
+   - `bun tsc --noEmit` → 0 errors.
+   - >= 1 new test or assertion added that pins the previously-flaky behaviour.
+
+   Files:
+   - MODIFY: `src/__tests__/164-polymarket-fetcher.test.ts`
+   - MODIFY (optional): shared test helper if mock isolation is extracted
+
+2. **Task 193 — Dynamic tool registration: eliminate server.ts merge conflicts (P0)**
+
+   Replace the current flat list of `register*Tools(server, db)` calls in
+   `src/interface/mcp/server.ts` with an auto-discovery pattern. Each tool module exports
+   a `register` function with a consistent signature. `server.ts` iterates an array of
+   modules and calls `register` on each. Adding a new tool requires editing only the new
+   tool file and appending one line to the module array — not modifying the shared
+   `server.ts` body.
+
+   Design constraints (locked at PO level):
+   - The module array lives in `src/interface/mcp/tools/registry.ts` (new file). This is
+     the ONLY file that changes when a new tool module is added.
+   - `server.ts` imports `toolRegistry` from `registry.ts` and calls
+     `toolRegistry.forEach(r => r.register(server, db))`. No other change to `server.ts`.
+   - Each existing tool module (`watchlist.ts`, `alerts.ts`, etc.) gains a named export:
+     `export function register(server: McpServer, db: Database): void` that contains the
+     existing registration logic.
+   - `tools/index.ts` is NOT changed — it continues to re-export the register functions
+     for consumers that import them directly (backward compatible).
+   - Existing tool behaviour does not change — this is purely a structural refactor.
+   - No new MCP tools are added in this task.
+
+   Acceptance criteria:
+   - `src/interface/mcp/tools/registry.ts` exists and exports `toolRegistry` as an array
+     of objects with a `register(server, db)` method.
+   - `src/interface/mcp/server.ts` no longer contains individual `register*Tools(...)` call
+     sites — only the `toolRegistry.forEach(...)` loop.
+   - All 46 existing tools remain registered and functional.
+   - `bun test` full suite → 0 failures.
+   - `bun tsc --noEmit` → 0 errors.
+   - A new tool can be added by editing only its own file + appending one entry to
+     `registry.ts`. Verified by adding a stub tool in the test.
+
+   Files:
+   - CREATE: `src/interface/mcp/tools/registry.ts`
+   - MODIFY: `src/interface/mcp/server.ts` — replace call list with forEach loop
+   - MODIFY: each tool module file — add `export function register(...)` named export
+   - CREATE: `src/__tests__/193-tool-registry.test.ts`
+
+3. **Task 194 — CLAUDE.md sync through Sprint 026 (P1)**
+
+   CLAUDE.md currently documents through Sprint 021. Sprints 022-026 added:
+   - 14 new MCP tools (tools 33-46: stock search, data freshness, portfolio position
+     tracking, P&L, VaR, drawdown, alert accuracy, alert digest, sector rotation, earnings
+     calendar, performance attribution, correlation matrix, export snapshot, rebalancing)
+   - New domain services: `correlationCalculator.ts`, `performanceAttributor.ts`,
+     `sectorRotationDetector.ts`
+   - New use cases: `exportPortfolioSnapshot.ts`
+   - New scheduler job: `alertDigestJob.ts` (from task 188)
+   - Updated test count: 604 (Sprint 021) → 1672 (Sprint 026)
+   - Updated tool count: 32 → 46
+
+   Update sections:
+   - Architecture summary: add all new files to the `src/` tree
+   - Current implementation status: add Sprints 022-026 to the Done list
+   - Scheduled Jobs: add `alertDigestJob` row to the Core cron jobs table
+   - Key data flow: add correlation and performance attribution to the flow diagram
+   - In Progress / Deferred: reflect current state accurately
+
+   Acceptance criteria:
+   - CLAUDE.md `src/` tree lists all files introduced in Sprints 022-026.
+   - "Current implementation status" Done section includes Sprints 022-026 with accurate
+     task lists.
+   - Tool count stated in CLAUDE.md matches actual registered tool count (46).
+   - Test count stated in CLAUDE.md is >= 1672.
+   - `bun tsc --noEmit` → 0 errors (no code change, but verify no regression).
+   - No task reports or sprint reports are modified — CLAUDE.md only.
+
+   Files:
+   - MODIFY: `CLAUDE.md`
+
+4. **Task 195 — Portfolio rebalancing signals: `get_rebalancing_signals` MCP tool (P1)**
+
+   New MCP tool `get_rebalancing_signals` that computes how far each position's current
+   weight has drifted from its target weight and outputs the corrective trade needed to
+   restore balance. Uses `positions` and `market_prices` tables only — no new schema.
+
+   Rebalancing logic (rule-based, deterministic, no LLM):
+   - Load all open positions (closed_at IS NULL) from `positions`.
+   - For each position, compute current market value = `quantity * current_price` where
+     `current_price` comes from `market_prices` (latest row for that stock code).
+   - Compute total portfolio value = SUM of all open position market values.
+   - Compute current weight for each position = market_value / total_portfolio_value.
+   - Compare current weight to `target_weight` column in `positions` (REAL, 0-1). If the
+     column does not exist or is NULL for a position, use equal weight (1 / n_positions).
+   - Drift = current_weight - target_weight.
+   - Flag positions where |drift| >= threshold (default: 0.05 = 5 percentage points).
+     Threshold is an optional MCP tool parameter (0.01 – 0.20, default 0.05).
+   - For each flagged position, compute corrective trade:
+     - If drift > 0 (overweight): sell `(drift * total_value) / current_price` shares.
+     - If drift < 0 (underweight): buy `(|drift| * total_value) / current_price` shares.
+   - Round corrective trade quantities to integers (floor for sells, ceil for buys).
 
    Output (plain text, Vietnamese):
    ```
-   MA TRAN TUONG QUAN — DANH SACH THEO DOI (2026-04-01)
-   ──────────────────────────────────────────────────────
-   Diem da dang hoa: 60/100 (3/5 cap it tuong quan)
+   TIN HIEU TAI CO CAU DANH MUC (2026-04-01)
+   ──────────────────────────────────────────
+   Tong gia tri danh muc: 125,000,000 VND
+   Nguong chenh lech: 5%
 
-   Cap co phieu        |r|    Phan loai
-   VCB — VNM          0.91   TUONG QUAN CAO   ⚠ Kiem tra vi the
-   FPT — VCB          0.74   TUONG QUAN VUA
-   FPT — VNM          0.71   TUONG QUAN VUA
-   VEA — HPG          0.43   IT TUONG QUAN
-   FPT — VEA          0.31   IT TUONG QUAN
-   ──────────────────────────────────────────────────────
-   CANH BAO: VCB va VNM co tuong quan cao (0.91). Co the tap trung rui ro.
+   Co phieu   Ty trong hien tai   Muc tieu   Chenh lech   Hanh dong
+   VCB        42%                 25%        +17%         BAN 210 co phieu
+   FPT        18%                 25%        -7%          MUA 88 co phieu
+   VNM        22%                 25%        -3%          (trong nguong)
+   VEA        18%                 25%        -7%          MUA 142 co phieu
+   ──────────────────────────────────────────
+   Can tai co cau: 3/4 vi the vuot nguong 5%
    ```
 
-   Warning line appears only when a pair with |r| >= 0.85 contains two watchlist stocks
-   that both have open positions (cross-reference `positions` table WHERE closed_at IS NULL).
-
    Graceful degradation:
-   - If fewer than 2 watchlist stocks exist: returns "Can it nhat 2 co phieu trong danh
-     sach theo doi de tinh tuong quan."
-   - If `market_prices_history` has no rows: returns "Chua co du lieu lich su gia."
-   - If a pair has < 5 aligned data points: shown as "(du lieu khong du)" with no r value.
+   - No open positions: returns "Khong co vi the nao dang mo."
+   - `market_prices` has no price for a stock: that position shows "(thieu du lieu gia)"
+     and is excluded from total portfolio value calculation.
+   - All positions within threshold: returns full table with "(trong nguong)" for all rows
+     plus "Danh muc can bang — khong can hanh dong."
+   - Single position: returns full output with diversification note
+     "(chi co 1 vi the — nen xem xet da dang hoa)."
 
    Files:
-   - CREATE: `src/domain/services/correlationCalculator.ts`
-   - CREATE: `src/interface/mcp/tools/correlationTools.ts`
-   - MODIFY: `src/interface/mcp/server.ts` — register `registerCorrelationTools`
-   - MODIFY: `src/interface/mcp/tools/index.ts` — add export
-   - CREATE: `src/__tests__/189-correlation-matrix.test.ts`
+   - CREATE: `src/domain/services/rebalancingCalculator.ts`
+   - CREATE: `src/interface/mcp/tools/rebalancingTools.ts`
+   - MODIFY: `src/interface/mcp/tools/registry.ts` — add rebalancing entry (first use of new
+     dynamic registration from task 193; tasks 193 and 195 must land in this order)
+   - CREATE: `src/__tests__/195-rebalancing-signals.test.ts`
 
    Acceptance criteria:
-   - Two stocks with identical price series produce r = 1.0, classified TUONG QUAN CAO.
-   - Two stocks with anti-correlated series produce r close to -1.0.
-   - Pairs with < 5 data points are shown as "(du lieu khong du)".
-   - Diversification score = 100 when all pairs have |r| < 0.70.
-   - Diversification score = 0 when all pairs have |r| >= 0.85.
-   - Warning line appears only for highly correlated pairs where both stocks have open
-     positions.
-   - When < 2 watchlist stocks exist, output contains "Can it nhat 2 co phieu".
+   - A position at 42% weight with 25% target produces drift = +17%, action = "BAN".
+   - A position at 18% weight with 25% target produces drift = -7%, action = "MUA".
+   - A position with |drift| < threshold produces "(trong nguong)".
+   - Equal-weight fallback: 4 positions with no `target_weight` each get 25% target.
+   - Stock with no `market_prices` row shown as "(thieu du lieu gia)".
+   - No open positions → "Khong co vi the nao dang mo".
+   - Corrective share quantities are integers (sell = floor, buy = ceil).
+   - Threshold parameter 0.10 flags only drifts > 10%.
    - >= 16 tests, 0 failures.
    - `bun tsc --noEmit` → 0 errors.
-   - Tool count increases from 43 to 44.
-
-2. **Task 190 — Data export: `export_portfolio_snapshot` MCP tool (P0)**
-
-   New MCP tool `export_portfolio_snapshot` that dumps all investor data to a timestamped
-   JSON file in the `data/exports/` directory and returns the file path plus a summary of
-   what was exported. No new schema. Reads from existing tables only.
-
-   Export contents (single JSON object):
-   ```json
-   {
-     "exported_at": "2026-04-01T14:00:00+07:00",
-     "schema_version": "1.0",
-     "watchlist": [...],
-     "positions": [...],
-     "alerts": [...],
-     "analysis_entries": [...],
-     "financial_reports": [...],
-     "market_prices": [...],
-     "summary": {
-       "watchlist_count": 4,
-       "open_positions": 2,
-       "total_alerts": 87,
-       "analysis_entries": 312,
-       "financial_reports": 5,
-       "price_snapshots": 48
-     }
-   }
-   ```
-
-   Logic:
-   - Read each table in full using parameterised `SELECT *` queries.
-   - `analysis_entries` uses `rag_analyses` table; include all columns.
-   - Write to `data/exports/snapshot_<YYYYMMDD_HHmmss>.json` using `Bun.write`.
-   - Return a plain-text summary: file path + record counts per table.
-   - `data/exports/` directory is created if it does not exist.
-
-   Output (plain text):
-   ```
-   XUAT DU LIEU — HOAN THANH (2026-04-01 14:00:07)
-   ──────────────────────────────────────────────────
-   File: data/exports/snapshot_20260401_140007.json
-   Kich thuoc: 2.3 MB
-
-   Danh sach theo doi: 4 co phieu
-   Vi the:             2 mo / 3 dong
-   Canh bao:           87 ban ghi
-   Phan tich RAG:      312 ban ghi
-   Bao cao BCTC:       5 ban ghi
-   Gia thi truong:     48 ban ghi
-   ```
-
-   Graceful degradation:
-   - If `data/exports/` cannot be created (permission error), returns the JSON as a string
-     in the tool response instead of writing to disk, with a note "(khong the ghi file)".
-   - If a table has 0 rows, it is exported as an empty array — not omitted.
-   - Export never throws; all DB errors are caught and reported in the summary.
-
-   Files:
-   - CREATE: `src/application/usecases/exportPortfolioSnapshot.ts`
-   - CREATE: `src/interface/mcp/tools/exportTools.ts`
-   - MODIFY: `src/interface/mcp/server.ts` — register `registerExportTools`
-   - MODIFY: `src/interface/mcp/tools/index.ts` — add export
-   - CREATE: `src/__tests__/190-export-snapshot.test.ts`
-
-   Acceptance criteria:
-   - Exported JSON contains all 7 top-level keys including `summary`.
-   - `summary.watchlist_count` matches the actual number of rows in `watchlist` table.
-   - `summary.open_positions` counts only rows in `positions` WHERE closed_at IS NULL.
-   - File is written to `data/exports/snapshot_<timestamp>.json`.
-   - File size reported in MB is correct to 1 decimal place.
-   - When the export directory cannot be written, output contains "(khong the ghi file)".
-   - All tables export as empty arrays when they have 0 rows.
-   - >= 14 tests, 0 failures.
-   - `bun tsc --noEmit` → 0 errors.
-   - Tool count increases from 44 to 45.
-
-3. **Task 191 — Performance attribution: `get_performance_attribution` MCP tool (P1)**
-
-   New MCP tool `get_performance_attribution` that analyses closed positions and attributes
-   P&L to the signal type that triggered the entry alert. No new schema — reads `positions`,
-   `alerts` tables only. Produces a ranked breakdown of which signal types generated the
-   best and worst returns.
-
-   Attribution logic (rule-based, no LLM):
-   - For each closed position (closed_at IS NOT NULL), look up the `entry_alert_id` column
-     in `positions`. If the column does not exist or is NULL, group that position under
-     "signal_unknown".
-   - If `entry_alert_id` is set, join to `alerts` to read the `signal_types` JSON column
-     and extract the primary signal type (first element of the array).
-   - Group closed positions by primary signal type.
-   - For each group, compute:
-     - Count of positions.
-     - Win rate: percentage of positions where `realized_pnl > 0`.
-     - Average P&L (VND): AVG(realized_pnl) across the group.
-     - Total P&L (VND): SUM(realized_pnl) across the group.
-   - Rank groups by total P&L descending.
-   - Signal type labels (Vietnamese):
-     - `price_drop` → "Gia giam dot bien"
-     - `price_surge` → "Gia tang dot bien"
-     - `volume_spike` → "Khoi luong dot bien"
-     - `news_mention` → "Tin tuc"
-     - `report` → "BCTC"
-     - `cascade` → "Phan tich vi mo"
-     - `signal_unknown` → "Khong ro nguon tin hieu"
-
-   Output (plain text, Vietnamese):
-   ```
-   PHAN BO HIEU SUAT THEO TIN HIEU (2026-04-01)
-   ──────────────────────────────────────────────
-   Tong vi the dong: 5  |  Tong P&L: +2,450,000 VND
-
-   #1  Tin tuc (news_mention)       — 2 vi the — Win 100% — TB: +850,000 VND — Tong: +1,700,000 VND
-   #2  Gia giam dot bien (price_drop) — 2 vi the — Win 50%  — TB: +375,000 VND — Tong: +750,000 VND
-   #3  BCTC (report)                — 1 vi the — Win 0%   — TB: 0 VND        — Tong: 0 VND
-   ──────────────────────────────────────────────
-   Tin hieu hieu qua nhat: Tin tuc (news_mention) voi tong +1,700,000 VND
-   Tin hieu kem hieu qua:  BCTC (report) voi win rate 0%
-   ```
-
-   Graceful degradation:
-   - If no closed positions exist: returns "Chua co vi the nao duoc dong. Du lieu hieu
-     suat se co sau khi dong vi the dau tien."
-   - If `entry_alert_id` column does not exist in `positions`, all positions are grouped
-     under "Khong ro nguon tin hieu" and a note is appended: "(Cap nhat co so du lieu de
-     theo doi nguon tin hieu)."
-   - Positions with NULL `realized_pnl` are excluded from averages and win rate but
-     counted in total positions.
-
-   Files:
-   - CREATE: `src/domain/services/performanceAttributor.ts`
-   - CREATE: `src/interface/mcp/tools/performanceTools.ts`
-   - MODIFY: `src/interface/mcp/server.ts` — register `registerPerformanceTools`
-   - MODIFY: `src/interface/mcp/tools/index.ts` — add export
-   - CREATE: `src/__tests__/191-performance-attribution.test.ts`
-
-   Acceptance criteria:
-   - Two closed positions both with signal type `news_mention` and positive P&L produce
-     win rate 100% and correct total P&L sum for that group.
-   - A position with NULL `entry_alert_id` is grouped under "Khong ro nguon tin hieu".
-   - Groups are ranked by total P&L descending.
-   - "Tin hieu hieu qua nhat" names the group with the highest total P&L.
-   - "Tin hieu kem hieu qua" names the group with the lowest win rate (excluding groups
-     with 0 positions).
-   - When no closed positions exist, output contains "Chua co vi the nao duoc dong".
-   - >= 14 tests, 0 failures.
-   - `bun tsc --noEmit` → 0 errors.
-   - Tool count increases from 45 to 46.
+   - Tool count increases from 46 to 47 (first tool registered via dynamic registry).
 
 **OUT**
 
-- Technical debt / worktree cleanup (necessary but not investor-facing; schedule as
-  separate maintenance sprint)
-- Integration / end-to-end tests for the full intelligence cycle (task 125, blocked on
-  completing the E2E test harness design)
-- API documentation for all 43 MCP tools (low urgency; CLAUDE.md serves as the
-  authoritative reference for the dev team)
-- LLM-based analysis or recommendations
+- E2E integration test of the full intelligence cycle (task 125 — blocked on test harness
+  design; remains deferred)
 - New external data sources
+- LLM-based recommendations
+- Watchlist auto-enrichment with sector peers (deferred to Sprint 028)
 - Backtesting / simulation engine
-- Real-time WebSocket price streaming
 
 ---
 
 ### Success Metrics
 
-1. `get_correlation_matrix()` correctly identifies VCB and VNM as highly correlated when
-   their mock price history is identical, and reports a diversification score that reflects
-   the proportion of low-correlation pairs. The investor knows in one call whether the
-   portfolio is concentrated.
+1. `bun test` full suite passes 3/3 consecutive runs with zero flaky failures in any test
+   file. Task 164 flakiness is eliminated permanently.
 
-2. `export_portfolio_snapshot()` writes a valid JSON file containing all 7 required keys.
-   The `summary` counts match the actual DB row counts. The investor can restore or share
-   a full snapshot at any time.
+2. A new MCP tool (task 195 rebalancing) is added by editing only its own file +
+   `registry.ts`. `server.ts` body is not touched. Merge conflicts on `server.ts` become
+   structurally impossible when two tools are added in parallel worktrees.
 
-3. `get_performance_attribution()` correctly groups closed positions by signal type and
-   ranks by total P&L. A portfolio with only `news_mention` wins shows 100% win rate for
-   that group. The investor can see which signals to trust.
+3. CLAUDE.md accurately describes the system as of Sprint 026: 46 tools, 1672+ tests,
+   all new files listed in the architecture tree. A new agent onboarding from CLAUDE.md
+   alone can locate any file without confusion.
 
-4. `bun tsc --noEmit` → 0 errors. All existing tests continue to pass (1617+).
+4. `get_rebalancing_signals()` with a 4-stock watchlist where one position is 17%
+   overweight returns "BAN" for that position and the correct integer share quantity.
+   The investor knows the exact corrective trade in one tool call.
 
-5. Tool count: 43 → 46 (get_correlation_matrix, export_portfolio_snapshot,
-   get_performance_attribution).
+5. `bun tsc --noEmit` → 0 errors. All 1672+ existing tests continue to pass.
+
+6. Tool count: 46 → 47 (one new tool in task 195; task 193 is a refactor, no net new tools).
 
 ---
 
-### Task board (Sprint 026)
+### Task board (Sprint 027)
 
 | # | Title | Priority | Status | Depends on |
 |---|-------|----------|--------|------------|
-| 189 | Correlation analysis: `get_correlation_matrix` MCP tool | P0 | Backlog | — |
-| 190 | Data export: `export_portfolio_snapshot` MCP tool | P0 | Backlog | — |
-| 191 | Performance attribution: `get_performance_attribution` MCP tool | P1 | Backlog | — |
+| 192 | Fix flaky test: `164-polymarket-fetcher.test.ts` mock timing | P0 | Backlog | — |
+| 193 | Dynamic tool registration: eliminate server.ts merge conflicts | P0 | Backlog | — |
+| 194 | CLAUDE.md sync through Sprint 026 | P1 | Backlog | — |
+| 195 | Portfolio rebalancing signals: `get_rebalancing_signals` MCP tool | P1 | Backlog | 193 |
 
 ---
 
 ### Dependency chain
 
 ```
-189 (correlation)         — P0, independent, uses market_prices_history + watchlist + positions
-190 (export snapshot)     — P0, independent, reads all tables, writes to data/exports/
-191 (performance attr.)   — P1, independent, uses positions + alerts
+192 (fix flaky test)      — P0, independent, touches only __tests__/164-*.test.ts
+193 (dynamic registry)    — P0, independent, refactor only, touches all tool files
+194 (CLAUDE.md sync)      — P1, independent, documentation only
+195 (rebalancing signals) — P1, depends on 193 (uses registry.ts as its registration path)
 
-189 + 190 can run in parallel (no shared files, no shared tables written).
-191 can start in parallel — touches different tool files, no merge conflicts.
+192 + 193 + 194 can run in parallel.
+195 must wait for 193 (registry.ts must exist before task 195 appends to it).
 ```
 
 ---
 
 ### Key technical decisions (locked at PO level)
 
-- **Task 189 uses `market_prices_history` as the sole price source**: the table is already
-  populated by the intelligence cycle and market scan jobs. No new fetches at query time —
-  the correlation tool is read-only and offline-capable.
+- **Task 192 uses mock isolation, not wall-clock timers**: the flakiness is a test
+  isolation problem, not a product bug. The fix must not alter production code. Bun's
+  `mock.module` or `vi.isolateModules` scopes the mock to the test file so parallel
+  tests cannot interfere.
 
-- **Task 189 Pearson r is computed in-process (pure TypeScript)**: no external statistics
-  library. The formula is five lines of math. This keeps the domain layer dependency-free
-  and fully unit-testable with synthetic data.
+- **Task 193 places the registry in `tools/registry.ts`, not `server.ts`**: this keeps
+  `server.ts` as a pure wiring file (one loop) and makes the registry the single point
+  of change for tool additions. The existing `tools/index.ts` re-export pattern is
+  preserved for backward compatibility.
 
-- **Task 189 warning requires open positions for both stocks**: correlation alone is not
-  actionable. The warning fires only when the investor has money in both correlated stocks
-  simultaneously. This prevents alert fatigue from theoretical pairs with no exposure.
+- **Task 193 does NOT change tool behaviour**: this is a structural refactor. No tool
+  logic changes. All 46 tools must pass their existing tests unchanged after the refactor.
 
-- **Task 190 exports to `data/exports/` as plain JSON**: no compression, no encryption.
-  The file is for the investor's own use. If they need encryption, they apply it outside
-  the tool. Keeping it plain JSON makes it directly importable into Excel, Python, or any
-  external tool.
+- **Task 194 is documentation-only**: no TypeScript files are modified. The CLAUDE.md
+  update is a PO-level deliverable because it affects all agents' understanding of the
+  system. It is not delegated to BA or Developer.
 
-- **Task 190 uses `Bun.write` directly**: consistent with how other file writes are done
-  in this codebase (briefing files, report files). No new I/O abstraction needed.
+- **Task 195 `target_weight` column**: the column was introduced for Sprint 023 position
+  tracking. If absent (older DB), equal weighting is the safe default. No ALTER TABLE at
+  tool call time. The tool degrades gracefully.
 
-- **Task 191 reads `entry_alert_id` from `positions`**: this column was introduced in
-  Sprint 023 (task 178 — position tracking). If it does not exist (older DB), all
-  positions fall into "Khong ro nguon tin hieu" with a migration hint. No ALTER TABLE at
-  tool call time — attribution degrades gracefully.
-
-- **Task 191 primary signal type = first element of `signal_types` JSON array**: the
-  array is ordered by severity in the alert generator (highest severity first). Taking the
-  first element picks the most important signal without additional ranking logic.
+- **Task 195 registers via the new dynamic registry** (task 193 prerequisite): this is
+  the first real-world validation that the dynamic registry works end-to-end for a new
+  tool. It proves the pattern before the team relies on it for future sprints.
 
 ---
 
@@ -382,3 +318,4 @@ portfolio intelligence:
 | 023 | Close the Investor Loop | 2026-04-01 | 178, 179, 180, 181 |
 | 024 | Reliability Hardening and Investor UX Polish | 2026-04-01 | 182, 183, 184, 185 |
 | 025 | Daily Investor Intelligence | 2026-04-01 | 186, 187, 188 |
+| 026 | Signal Quality and Portfolio Correlation | 2026-04-02 | 189, 190, 191 |

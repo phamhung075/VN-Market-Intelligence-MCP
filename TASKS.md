@@ -365,13 +365,12 @@
 
 | Column | Count | Tasks |
 |--------|-------|-------|
-<<<<<<< HEAD
-| ✅ Done | 47+ | Sprints 000-025 complete |
-| 🔍 Review | 2 | 190, 191 |
+| ✅ Done | 60+ | Sprints 000-026 complete |
+| 🔍 Review | 0 | — |
 | 🚧 In Progress | 0 | — |
 | 📋 Todo | 0 | — |
-| 🗂 Backlog | 1 | 189 |
-| **Total** | **47+** | |
+| 🗂 Backlog | 4 | 192, 193, 194, 195 (Sprint 027) |
+| **Total** | **60+** | |
 
 ---
 
@@ -388,15 +387,16 @@
 
 ---
 
-## Sprint 026 — Backlog
+## Sprint 026 — COMPLETE
 
-> Sprint 026 ACTIVE — 2026-04-01. Theme: Signal Quality and Portfolio Correlation — Know What Moves Together.
+> Sprint 026 DONE — 2026-04-02. Theme: Signal Quality and Portfolio Correlation — Know What Moves Together.
+> PO sign-off: APPROVED 2026-04-02. Tasks 189, 190, 191 merged. Tool count: 43 → 46.
 
 | # | Title | Branch | Agent | Priority | Depends on | Status |
 |---|-------|--------|-------|----------|------------|--------|
-| 189 | Correlation analysis: `get_correlation_matrix` MCP tool | `task/189-correlation-matrix` | BA | P0 | market_prices_history ✅, watchlist ✅, positions ✅ | Backlog |
-| 190 | Data export: `export_portfolio_snapshot` MCP tool | `task/190-export-snapshot` | Developer | P0 | all tables ✅ | Review 🔍 |
-| 191 | Performance attribution: `get_performance_attribution` MCP tool | `task/191-performance-attribution` | Developer | P1 | positions ✅, alerts ✅ | Review 🔍 |
+| 189 | Correlation analysis: `get_correlation_matrix` MCP tool | `task/189-correlation-matrix` | Developer | P0 | market_prices_history ✅, watchlist ✅, positions ✅ | Done ✅ |
+| 190 | Data export: `export_portfolio_snapshot` MCP tool | `task/190-export-snapshot` | Developer | P0 | all tables ✅ | Done ✅ |
+| 191 | Performance attribution: `get_performance_attribution` MCP tool | `task/191-performance-attribution` | Developer | P1 | positions ✅, alerts ✅ | Done ✅ |
 
 ---
 
@@ -539,14 +539,6 @@ Files:
 - MODIFY: `src/interface/mcp/server.ts`
 - MODIFY: `src/interface/mcp/tools/index.ts`
 - CREATE: `src/__tests__/188-alert-digest.test.ts`
-=======
-| ✅ Done | 43 | 000, 001, 002, 003, 011, 012, 013, 014, 021, 022, 023, 026, 027, 029, 030, 041, 042, 043, 044, 045, 046, 047, 048, 061, 062, 063, 064, 065, 066, 081, 082, 083, 084, 085, 086, 087, 088, 101, 102, 103, 104, 105 |
-| 🔍 Review | 1 | 189 |
-| 🚧 In Progress | 0 | — |
-| 📋 Todo | 0 | — (Sprint 006 Wave 2 COMPLETE; Task 123 now unblocked for Wave 3) |
-| 🗂 Backlog | 8 | Deferred: 024, 025, 028, 121-125 |
-| **Total** | **52** | |
->>>>>>> task/189-correlation-matrix
 
 ---
 
@@ -559,6 +551,95 @@ Files:
 | **Application** | 047, 048, 065, 066 | Use case orchestration |
 | **Interface** | 081-105 | MCP tools, Bun server, scheduler |
 | **Test** | 121-125 | Cross-cutting |
+
+---
+
+---
+
+## Sprint 027 — Backlog
+
+> Sprint 027 PLANNING — 2026-04-01. Theme: Stability First — Fix the Cracks Before Adding More Floors.
+
+| # | Title | Branch | Agent | Priority | Depends on | Status |
+|---|-------|--------|-------|----------|------------|--------|
+| 192 | Fix flaky test: `164-polymarket-fetcher.test.ts` mock timing | `task/192-fix-flaky-164` | Developer | P0 | — | Backlog |
+| 193 | Dynamic tool registration: eliminate server.ts merge conflicts | `task/193-dynamic-tool-registry` | Developer | P0 | — | Backlog |
+| 194 | CLAUDE.md sync through Sprint 026 | `task/194-claudemd-sync` | Developer | P1 | — | Backlog |
+| 195 | Portfolio rebalancing signals: `get_rebalancing_signals` MCP tool | `task/195-rebalancing-signals` | Developer | P1 | 193 | Backlog |
+
+---
+
+**Task 192 — Fix Flaky Test: 164-polymarket-fetcher.test.ts**
+
+Acceptance criteria:
+- `bun test src/__tests__/164-polymarket-fetcher.test.ts` passes 10/10 consecutive runs
+- `bun test` full suite passes 3/3 consecutive runs with no flaky failures in task 164
+- No production code files modified — test isolation fix only
+- `bun tsc --noEmit` → 0 errors
+- >= 1 new test or assertion added that pins the previously-flaky behaviour
+
+Files:
+- MODIFY: `src/__tests__/164-polymarket-fetcher.test.ts`
+- MODIFY (optional): shared test helper if mock isolation is extracted
+
+---
+
+**Task 193 — Dynamic Tool Registration**
+
+Acceptance criteria:
+- `src/interface/mcp/tools/registry.ts` exists and exports `toolRegistry` as an array of
+  objects with a `register(server, db)` method
+- `src/interface/mcp/server.ts` contains only a `toolRegistry.forEach(r => r.register(server, db))`
+  loop — no individual `register*Tools(...)` call sites
+- All 46 existing tools remain registered and functional
+- `bun test` full suite → 0 failures
+- `bun tsc --noEmit` → 0 errors
+- A new tool can be added by editing only its own file + appending one entry to `registry.ts`
+- >= 8 tests, 0 failures
+
+Files:
+- CREATE: `src/interface/mcp/tools/registry.ts`
+- MODIFY: `src/interface/mcp/server.ts`
+- MODIFY: each tool module file (add `export function register(server, db)` named export)
+- CREATE: `src/__tests__/193-tool-registry.test.ts`
+
+---
+
+**Task 194 — CLAUDE.md Sync Through Sprint 026**
+
+Acceptance criteria:
+- CLAUDE.md `src/` tree lists all files introduced in Sprints 022-026
+- "Current implementation status" Done section includes Sprints 022-026 with accurate task lists
+- Tool count stated in CLAUDE.md matches actual registered tool count (46)
+- Test count stated in CLAUDE.md is >= 1672
+- `bun tsc --noEmit` → 0 errors (no code change, verify no regression)
+- No task reports or sprint reports modified — CLAUDE.md only
+
+Files:
+- MODIFY: `CLAUDE.md`
+
+---
+
+**Task 195 — Portfolio Rebalancing Signals: `get_rebalancing_signals` MCP tool**
+
+Acceptance criteria:
+- A position at 42% weight with 25% target produces drift = +17%, action = "BAN"
+- A position at 18% weight with 25% target produces drift = -7%, action = "MUA"
+- A position with |drift| < threshold produces "(trong nguong)"
+- Equal-weight fallback: 4 positions with no `target_weight` each get 25% target
+- Stock with no `market_prices` row shown as "(thieu du lieu gia)"
+- No open positions → "Khong co vi the nao dang mo"
+- Corrective share quantities are integers (sell = floor, buy = ceil)
+- Threshold parameter 0.10 flags only drifts > 10%
+- >= 16 tests, 0 failures
+- `bun tsc --noEmit` → 0 errors
+- Tool count 46 → 47 (first tool registered via dynamic registry from task 193)
+
+Files:
+- CREATE: `src/domain/services/rebalancingCalculator.ts`
+- CREATE: `src/interface/mcp/tools/rebalancingTools.ts`
+- MODIFY: `src/interface/mcp/tools/registry.ts`
+- CREATE: `src/__tests__/195-rebalancing-signals.test.ts`
 
 ---
 
