@@ -93,7 +93,8 @@ src/
 │       ├── rateLimiter.ts          ← per-host rate limiter for external fetchers (Sprint 028)
 │       ├── sourceHealthTracker.ts  ← news/data source health: ok/degraded/down classification (Sprint 029)
 │       ├── customAlertEvaluator.ts ← evaluate custom alert rules against live price/signal data (task 219)
-│       └── alertMuteChecker.ts     ← check if a stock/signal is currently muted before firing alert (task 222)
+│       ├── alertMuteChecker.ts     ← check if a stock/signal is currently muted before firing alert (task 222)
+│       └── sentimentTrend.ts       ← OLS slope sentiment trend computation per stock (task 225, Sprint 034)
 ├── infrastructure/
 │   ├── config.ts                   ← Env config (dotenv + mcp.config.json) + PredictionMarketsConfig
 │   ├── logger.ts                   ← Structured logger (log rotation, LanceDB TRACE suppression)
@@ -159,7 +160,7 @@ src/
 │       └── index.ts
 ├── interface/
 │   ├── mcp/
-│   │   ├── server.ts               ← McpServer factory, registers all 61 tools
+│   │   ├── server.ts               ← McpServer factory, registers all 62 tools
 │   │   ├── transport.ts            ← SSEServerTransport setup
 │   │   └── tools/
 │   │       ├── watchlist.ts        ← add/remove/get/update watchlist MCP tools
@@ -195,6 +196,7 @@ src/
 │   │       ├── customAlertTools.ts ← add/list/delete custom alert rules (task 219)
 │   │       ├── alertMuteTools.ts   ← mute_alert, unmute_alert, list_muted_alerts (task 222)
 │   │       ├── targetAllocationTools.ts ← set/get/delete target allocation weights (task 223)
+│   │       ├── sentimentTrendTools.ts  ← get_sentiment_trend: OLS slope + Vietnamese output (task 225, Sprint 034)
 │   │       └── index.ts
 │   └── scheduler/
 │       └── index.ts                ← startScheduler() — registers all cron jobs
@@ -437,7 +439,7 @@ src/
 
 ## Current implementation status
 
-### Done (130+ tasks, Sprint 000-033) ✓
+### Done (130+ tasks, Sprint 000-034) ✓
 
 **Foundation (Sprint 000)**
 - `src/infrastructure/db/schema.ts` — SQLite schema init (all tables)
@@ -679,6 +681,11 @@ src/
 - `src/infrastructure/db/targetAllocationStore.ts` — target portfolio weight CRUD: set/get/delete per-stock allocation targets (task 223)
 - `src/interface/mcp/tools/targetAllocationTools.ts` — `set_target_allocation`, `get_target_allocation`, `delete_target_allocation` MCP tools (task 223)
 - `src/interface/mcp/server.ts` — updated to 61 registered tools
+
+**Sentiment Trend Analysis (Sprint 034)**
+- `src/domain/services/sentimentTrend.ts` — OLS linear regression slope over dated sentiment entries; pure domain service, no I/O (task 225)
+- `src/interface/mcp/tools/sentimentTrendTools.ts` — `get_sentiment_trend` MCP tool: Vietnamese output with trend direction (TANG/GIAM/ON DINH), slope, and r-squared (task 225)
+- `src/interface/mcp/server.ts` — updated to 62 registered tools
 
 ### In Progress
 

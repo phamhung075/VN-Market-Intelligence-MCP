@@ -145,36 +145,6 @@ export async function initDatabase(): Promise<void> {
     CREATE INDEX IF NOT EXISTS idx_alerts_severity  ON alerts(severity);
   `);
 
-  // Alert resolution lifecycle (task 148) + notified_telegram column
-  try {
-    const alertCols = db.query<{ name: string }, []>("PRAGMA table_info(alerts)").all();
-    const colNames = new Set(alertCols.map((c) => c.name));
-    if (!colNames.has("resolved_at")) {
-      db.exec("ALTER TABLE alerts ADD COLUMN resolved_at TEXT");
-    }
-    if (!colNames.has("resolution_notes")) {
-      db.exec("ALTER TABLE alerts ADD COLUMN resolution_notes TEXT");
-    }
-    if (!colNames.has("notified_telegram")) {
-      db.exec("ALTER TABLE alerts ADD COLUMN notified_telegram INTEGER NOT NULL DEFAULT 0");
-      db.exec("CREATE INDEX IF NOT EXISTS idx_alerts_notified ON alerts(notified_telegram)");
-    }
-  } catch { /* columns may already exist */ }
-
-  // Conviction history (task 150)
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS conviction_history (
-      id              INTEGER PRIMARY KEY AUTOINCREMENT,
-      symbol          TEXT NOT NULL,
-      date            TEXT NOT NULL,
-      peak_score      REAL NOT NULL,
-      dominant_signal TEXT,
-      created_at      TEXT NOT NULL
-    );
-    CREATE UNIQUE INDEX IF NOT EXISTS idx_conviction_history_symbol_date
-      ON conviction_history(symbol, date);
-  `);
-
   // ── RAG Analyses ────────────────────────────────────────────────────────────
   db.exec(`
     CREATE TABLE IF NOT EXISTS rag_analyses (
@@ -235,173 +205,6 @@ export async function initDatabase(): Promise<void> {
     );
   `);
 
-  // ── Commodity Prices (Task 025 — Yahoo Finance) ────────────────────────────
-  // commodity_prices: latest snapshot per source (upsert target, PRIMARY KEY = source)
-  // commodity_prices_history: append-only audit log for trend queries
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS commodity_prices (
-      source           TEXT PRIMARY KEY,
-      brent_crude_usd  REAL NOT NULL DEFAULT 0,
-      gold_usd_per_oz  REAL NOT NULL DEFAULT 0,
-      usd_vnd_rate     REAL NOT NULL DEFAULT 0,
-      fetched_at       TEXT NOT NULL
-    );
-
-    CREATE TABLE IF NOT EXISTS commodity_prices_history (
-      id               INTEGER PRIMARY KEY AUTOINCREMENT,
-      source           TEXT NOT NULL,
-      brent_crude_usd  REAL NOT NULL DEFAULT 0,
-      gold_usd_per_oz  REAL NOT NULL DEFAULT 0,
-      usd_vnd_rate     REAL NOT NULL DEFAULT 0,
-      fetched_at       TEXT NOT NULL
-    );
-
-    CREATE INDEX IF NOT EXISTS idx_commodity_history_source_time
-      ON commodity_prices_history(source, fetched_at DESC);
-  `);
-
-  // ── SBV (State Bank of Vietnam) Rates — Task 028 ──────────────────────────
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS sbv_rates (
-      source               TEXT PRIMARY KEY,
-      overnight_rate_pct   REAL NOT NULL DEFAULT 0,
-      refinancing_rate_pct REAL NOT NULL DEFAULT 0,
-      usd_vnd_official     REAL NOT NULL DEFAULT 0,
-      fetched_at           TEXT NOT NULL
-    );
-
-    CREATE TABLE IF NOT EXISTS sbv_rates_history (
-      id                   INTEGER PRIMARY KEY AUTOINCREMENT,
-      source               TEXT NOT NULL,
-      overnight_rate_pct   REAL NOT NULL DEFAULT 0,
-      refinancing_rate_pct REAL NOT NULL DEFAULT 0,
-      usd_vnd_official     REAL NOT NULL DEFAULT 0,
-      fetched_at           TEXT NOT NULL
-    );
-
-    CREATE INDEX IF NOT EXISTS idx_sbv_history_source_time
-      ON sbv_rates_history(source, fetched_at DESC);
-  `);
-
-  // ── Market Prices History (canonical — task 018) ──────────────────────────
-  // Previously created lazily by hose.ts ensureHistoryTable(). Added here to
-  // include it in the canonical schema so initDatabase() guarantees its existence.
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS market_prices_history (
-      code       TEXT NOT NULL,
-      price      REAL NOT NULL,
-      volume     REAL NOT NULL,
-      fetched_at TEXT NOT NULL,
-      PRIMARY KEY (code, fetched_at)
-    );
-    CREATE INDEX IF NOT EXISTS idx_mph_code_fetched
-      ON market_prices_history(code, fetched_at DESC);
-  `);
-
-  // exchange column migration (same pattern as hose.ts inline guard)
-  try {
-    db.exec("ALTER TABLE market_prices_history ADD COLUMN exchange TEXT DEFAULT 'HOSE'");
-  } catch { /* column already exists — safe to ignore */ }
-
-  // ── Market Summaries (Task 130) ────────────────────────────────────────────
-  // Stores periodic intelligence summaries (daily / weekly / monthly / quarterly / yearly).
-  // Upsert target: unique on (period_type, period_start).
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS market_summaries (
-      id                    TEXT PRIMARY KEY,
-      period_type           TEXT NOT NULL,
-      period_start          TEXT NOT NULL,
-      period_end            TEXT NOT NULL,
-      created_at            TEXT NOT NULL DEFAULT (datetime('now')),
-      updated_at            TEXT NOT NULL DEFAULT (datetime('now')),
-      summary_text          TEXT NOT NULL,
-      key_events_json       TEXT,
-      stock_performance_json TEXT,
-      alerts_summary_json   TEXT,
-      macro_context_json    TEXT,
-      recommendation_json   TEXT,
-      news_count            INTEGER DEFAULT 0,
-      alert_count           INTEGER DEFAULT 0,
-      report_count          INTEGER DEFAULT 0,
-      data_sources_json     TEXT,
-      UNIQUE(period_type, period_start)
-    );
-
-    CREATE INDEX IF NOT EXISTS idx_ms_period  ON market_summaries(period_type, period_start);
-    CREATE INDEX IF NOT EXISTS idx_ms_created ON market_summaries(created_at);
-  `);
-
-  // ── Task 137: Alert Telegram notification tracking ────────────────────────
-  // ALTER TABLE is idempotent-safe via try/catch: SQLite throws if column
-  // already exists; we swallow those errors and carry on.
-  try {
-    db.exec(`ALTER TABLE alerts ADD COLUMN notified_telegram INTEGER NOT NULL DEFAULT 0`);
-  } catch (_) { /* column already exists — safe to ignore */ }
-
-  // Index for fast lookup of unnotified HIGH/CRITICAL alerts
-  db.exec(`
-    CREATE INDEX IF NOT EXISTS idx_alerts_notified
-      ON alerts(notified_telegram, severity);
-  `);
-
-  // ── Task 132: BCTC Validator columns ──────────────────────────────────────
-  // ALTER TABLE is idempotent-safe via try/catch: SQLite throws if column
-  // already exists; we swallow those errors and carry on.
-  try {
-    db.exec(`ALTER TABLE financial_reports ADD COLUMN validation_status TEXT DEFAULT 'pending'`);
-  } catch (_) { /* column already exists — safe to ignore */ }
-  try {
-    db.exec(`ALTER TABLE financial_reports ADD COLUMN validation_notes TEXT`);
-  } catch (_) { /* column already exists — safe to ignore */ }
-
-  // ── System Logs (Task 130) ─────────────────────────────────────────────────
-  // Persistent log table for warn/error entries.
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS system_logs (
-      id           INTEGER PRIMARY KEY AUTOINCREMENT,
-      timestamp    TEXT NOT NULL DEFAULT (datetime('now')),
-      level        TEXT NOT NULL,
-      source       TEXT NOT NULL,
-      message      TEXT NOT NULL,
-      details_json TEXT,
-      resolved     INTEGER DEFAULT 0
-    );
-
-    CREATE INDEX IF NOT EXISTS idx_syslog_level  ON system_logs(level, timestamp);
-    CREATE INDEX IF NOT EXISTS idx_syslog_source ON system_logs(source, timestamp);
-  `);
-
-  // ── PDF Extracted Text (OCR cache) ──────────────────────────────────────
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS pdf_extracted_text (
-      id            INTEGER PRIMARY KEY AUTOINCREMENT,
-      filename      TEXT NOT NULL,
-      page_number   INTEGER NOT NULL,
-      text_content  TEXT NOT NULL,
-      confidence    REAL DEFAULT 0,
-      extracted_at  TEXT NOT NULL DEFAULT (datetime('now')),
-      UNIQUE(filename, page_number)
-    );
-    CREATE INDEX IF NOT EXISTS idx_pdf_filename ON pdf_extracted_text(filename);
-  `);
-
-  // ── Migrations (try/catch so re-runs are safe) ─────────────────────────────
-
-  // Task 153: add ssc_doc_id column for SSC scan deduplication.
-  // ALTER TABLE is a no-op if the column already exists (caught and ignored).
-  try {
-    db.exec(
-      `ALTER TABLE financial_reports ADD COLUMN ssc_doc_id TEXT`,
-    );
-  } catch (_) {
-    // Column already exists — safe to ignore
-  }
-
-  // Task 153: partial index on ssc_doc_id for fast duplicate lookups.
-  try {
-    db.exec(`CREATE INDEX IF NOT EXISTS idx_fr_ssc_doc_id ON financial_reports(ssc_doc_id) WHERE ssc_doc_id IS NOT NULL`);
-  } catch { /* partial index may fail on some SQLite builds */ }
-
   // ── Prediction Markets (task 163) ──────────────────────────────────────────
   // `prediction_markets` is an upsert target — one row per market, overwritten
   // each poll cycle via INSERT OR REPLACE.
@@ -409,39 +212,44 @@ export async function initDatabase(): Promise<void> {
   // audit and for the `get_prediction_markets` MCP tool's signals_only filter.
   db.exec(`
     CREATE TABLE IF NOT EXISTS prediction_markets (
-      id               TEXT PRIMARY KEY,
+      id               TEXT PRIMARY KEY,   -- Polymarket condition_id
       question         TEXT NOT NULL,
-      end_date         TEXT NOT NULL,
-      yes_price        REAL NOT NULL,
+      end_date         TEXT NOT NULL,      -- ISO 8601
+      yes_price        REAL NOT NULL,      -- 0.0–1.0
       no_price         REAL NOT NULL,
       volume_24h       REAL NOT NULL DEFAULT 0,
       volume_total     REAL NOT NULL DEFAULT 0,
       liquidity        REAL NOT NULL DEFAULT 0,
       last_trade_price REAL NOT NULL DEFAULT 0,
       unique_wallets   INTEGER NOT NULL DEFAULT 0,
-      tags             TEXT NOT NULL DEFAULT '[]',
+      tags             TEXT NOT NULL DEFAULT '[]',  -- JSON string[]
       fetched_at       TEXT NOT NULL,
       updated_at       TEXT NOT NULL
-    )
-  `);
+    );
 
-  db.exec(`
     CREATE TABLE IF NOT EXISTS prediction_signals (
-      id              TEXT PRIMARY KEY,
-      market_id       TEXT NOT NULL,
-      signal_type     TEXT NOT NULL,
-      severity        TEXT NOT NULL,
-      yes_price_prev  REAL,
+      id              TEXT PRIMARY KEY,         -- UUID
+      market_id       TEXT NOT NULL,            -- FK → prediction_markets.id
+      signal_type     TEXT NOT NULL,            -- volume_spike|probability_shift|insider_timing|sentiment_divergence
+      severity        TEXT NOT NULL,            -- low|medium|high|critical
+      yes_price_prev  REAL,                     -- NULL for volume_spike signals with no prior snapshot
       yes_price_curr  REAL NOT NULL,
       volume_24h      REAL NOT NULL DEFAULT 0,
       unique_wallets  INTEGER NOT NULL DEFAULT 0,
       confidence      REAL NOT NULL,
-      mapped_sectors  TEXT NOT NULL DEFAULT '[]',
-      mapped_stocks   TEXT NOT NULL DEFAULT '[]',
+      mapped_sectors  TEXT NOT NULL DEFAULT '[]',  -- JSON DomainType[]
+      mapped_stocks   TEXT NOT NULL DEFAULT '[]',  -- JSON string[]
       reasoning       TEXT NOT NULL,
       detected_at     TEXT NOT NULL,
       FOREIGN KEY (market_id) REFERENCES prediction_markets(id)
-    )
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_prediction_signals_detected_at
+      ON prediction_signals(detected_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_prediction_signals_market
+      ON prediction_signals(market_id);
+    CREATE INDEX IF NOT EXISTS idx_prediction_signals_severity
+      ON prediction_signals(severity);
   `);
 
   db.exec(`CREATE INDEX IF NOT EXISTS idx_prediction_signals_detected_at ON prediction_signals(detected_at DESC)`);

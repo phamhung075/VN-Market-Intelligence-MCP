@@ -56,6 +56,7 @@
 | 194 | CLAUDE.md sync through Sprint 026 | `main` (7f53108) | 2026-04-02 | — |
 | HOT-01 | fix: source .env in start.sh — Telegram token missing | `main` (c5b925e) | 2026-04-02 | — |
 | HOT-02 | feat: delete_telegram_report MCP tool + auto-cleanup workflow | `main` (c6ea1ce) | 2026-04-02 | — |
+| DOC-001 | Update CLAUDE.md with Sprint 034 architecture additions | `task/doc-001-claude-md-update` | 2026-04-02 | [TASK_REPORT_DOC-001](reports/TASK_REPORT_DOC-001.md) |
 
 > **Sprint 003 COMPLETE** — All 5 tasks merged: 021, 082, 063, 064, 086. PO sign-off: APPROVED 2026-03-27.
 > **Sprint 004 Wave 1** — Tasks 087, 022, 023 merged: 2026-03-27.
@@ -79,7 +80,6 @@
 
 | # | Title | Branch | Notes |
 |---|-------|--------|-------|
-| DOC-001 | Update CLAUDE.md architecture section | `task/doc-001-claude-md-update` | Ready for QA |
 | 195 | Portfolio rebalancing signals: `get_rebalancing_signals` | `task/195-rebalancing-signals` | 17 tests pass, tsc clean, awaiting QA sign-off |
 | 215 | Telegram webhook registration + security | `task/215-telegram-webhook` | Ready for QA |
 | 217 | compare_stocks MCP tool — side-by-side comparison | `worktree-agent-a1f64692` | 20 tests pass, tsc 0 errors |
