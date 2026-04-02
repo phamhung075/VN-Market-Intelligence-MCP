@@ -2,37 +2,42 @@
 
 ## Current Sprint
 
-status: COMPLETE
-sprint_id: 025
+status: ACTIVE
+sprint_id: 026
 started: 2026-04-01
 updated: 2026-04-01
-completed: 2026-04-01
 
 ---
 
 ### Theme
 
-**"Daily Investor Intelligence — Sector Rotation, Earnings Calendar, and Alert Digest"**
+**"Signal Quality and Portfolio Correlation — Know What Moves Together"**
 
 ---
 
 ### Goal
 
-The system alerts the investor on individual stocks but gives no macro-level view of
-where capital is flowing across sectors, no visibility into when the next financial
-report is expected for watchlist stocks, and no daily digest to catch any alerts that
-were missed in real-time.
+The system generates many signals and tracks multiple positions, but has no way to tell
+the investor whether those positions are truly diversified or are concentrated bets on the
+same underlying factor. Two stocks in different sectors can still be highly correlated if
+they share export exposure, interest rate sensitivity, or institutional ownership patterns.
 
-This sprint closes three operational gaps that a real investor hits every single day:
+This sprint adds three capabilities that close the gap between raw alerts and actionable
+portfolio intelligence:
 
-1. Sector rotation detection tells the investor which sectors are gaining and losing
-   relative strength so they can position ahead of institutional flows — not just react
-   to individual stock moves.
-2. Earnings calendar eliminates the risk of being caught off-guard by an upcoming BCTC
-   release. VN BCTC seasons follow predictable quarterly windows; a rule-based calendar
-   requires no external data.
-3. Alert digest delivers a daily Telegram summary of all alerts fired in the past 24
-   hours so the investor never misses a signal, even when not watching the live feed.
+1. **Correlation analysis** computes pairwise price correlation across watchlist stocks
+   using existing `market_prices_history` data. The investor immediately sees which holdings
+   move together and can measure true diversification — not just sector labels.
+
+2. **Export / backup** gives the investor a single MCP call to dump all positions,
+   analysis entries, and alerts to a portable JSON file. This is the most-requested
+   operational safety net: a way to snapshot the system state before changes, or share it
+   for external analysis.
+
+3. **Performance attribution** closes the feedback loop on signals: for each completed
+   position, it attributes P&L contribution to the signal type (news_mention, price_drop,
+   report, cascade) that triggered the entry alert. This answers "which signal type
+   actually makes money" — the core question for tuning the system over time.
 
 ---
 
@@ -40,206 +45,227 @@ This sprint closes three operational gaps that a real investor hits every single
 
 **IN**
 
-1. **Task 186 — Sector rotation detector: `get_sector_rotation` MCP tool (P0)**
+1. **Task 189 — Correlation analysis: `get_correlation_matrix` MCP tool (P0)**
 
-   New MCP tool `get_sector_rotation` that reads `market_prices` + `market_prices_history`
-   to compute per-sector price momentum and flag sectors gaining or losing relative
-   strength over the past 5 trading days. No new schema, no external data.
+   New MCP tool `get_correlation_matrix` that reads `market_prices_history` and computes
+   Pearson correlation coefficients for all pairs of watchlist stocks. Uses only data
+   already stored — no new fetches. Returns a ranked list of highly correlated pairs
+   (|r| >= 0.7) and a portfolio diversification score.
 
-   Computation logic (rule-based, deterministic):
-   - Group all stocks in `market_prices` by their `exchange` + sector mapping from
-     `sectorPeers.ts` (already shipped in Sprint 013).
-   - For each sector with >= 2 stocks, compute:
-     - **Sector 5d return**: average of individual stock returns over the last 5 rows
-       in `market_prices_history` per stock.
-     - **Sector 1d return**: average of current `change_pct` across all stocks in the
-       sector from `market_prices`.
-     - **Rotation signal**: if 5d return > +2% AND 1d return > +0.5% → INFLOW
-       (money flowing in). If 5d return < -2% AND 1d return < -0.5% → OUTFLOW. Else
-       NEUTRAL.
-   - Rank sectors by 5d return descending.
+   Computation logic (rule-based, deterministic, no LLM):
+   - For each pair of watchlist stocks, extract their aligned price series from
+     `market_prices_history` (last 30 rows maximum, ordered by stored_at DESC).
+   - Align by position index (assume prices are stored at the same cadence for all stocks).
+   - Compute Pearson r using the standard formula: r = cov(X,Y) / (stdDev(X) * stdDev(Y)).
+   - If either series has fewer than 5 data points, report "(du lieu khong du)" for that
+     pair and exclude from the diversification score.
+   - Classify each pair:
+     - |r| >= 0.85: TUONG QUAN CAO (highly correlated)
+     - |r| >= 0.70: TUONG QUAN VUA (moderately correlated)
+     - |r| < 0.70: IT TUONG QUAN (low correlation)
+   - Diversification score: percentage of pairs with |r| < 0.70. Score 0-100.
+   - Rank pairs by |r| descending in output.
 
-   Output (Vietnamese, plain text):
+   Output (plain text, Vietnamese):
    ```
-   DONG TIEN NGANH (2026-04-01)
-   ─────────────────────────────
-   #1  banking       +3.2% (5d) | +0.8% (1d) | DONG TIEN VAO  [VCB +2.1%, BID +1.8%, CTG +0.9%]
-   #2  real_estate   +1.8% (5d) | +0.3% (1d) | TRUNG TINH     [VIC +1.2%, VHM +0.9%]
-   #3  technology    -0.5% (5d) | -0.2% (1d) | TRUNG TINH     [FPT -0.5%]
-   #4  steel         -2.8% (5d) | -0.7% (1d) | DONG TIEN RA   [HPG -2.8%]
-   ...
-   CANH BAO: Nhieu dong tien ra khoi steel (HPG) — kiem tra vi the.
+   MA TRAN TUONG QUAN — DANH SACH THEO DOI (2026-04-01)
+   ──────────────────────────────────────────────────────
+   Diem da dang hoa: 60/100 (3/5 cap it tuong quan)
+
+   Cap co phieu        |r|    Phan loai
+   VCB — VNM          0.91   TUONG QUAN CAO   ⚠ Kiem tra vi the
+   FPT — VCB          0.74   TUONG QUAN VUA
+   FPT — VNM          0.71   TUONG QUAN VUA
+   VEA — HPG          0.43   IT TUONG QUAN
+   FPT — VEA          0.31   IT TUONG QUAN
+   ──────────────────────────────────────────────────────
+   CANH BAO: VCB va VNM co tuong quan cao (0.91). Co the tap trung rui ro.
    ```
 
-   Warning line is appended only when OUTFLOW sector contains a watchlist stock.
-   Reads active watchlist from `watchlist` table to determine warning eligibility.
+   Warning line appears only when a pair with |r| >= 0.85 contains two watchlist stocks
+   that both have open positions (cross-reference `positions` table WHERE closed_at IS NULL).
 
    Graceful degradation:
-   - Sectors with < 2 tracked stocks are shown with "(du lieu han che)" and no signal.
-   - If `market_prices` table is empty, returns "Chua co du lieu gia thi truong".
-   - If `market_prices_history` has < 2 rows per stock, 5d return falls back to 1d
-     `change_pct` only and appends "(chi co du lieu 1 ngay)".
+   - If fewer than 2 watchlist stocks exist: returns "Can it nhat 2 co phieu trong danh
+     sach theo doi de tinh tuong quan."
+   - If `market_prices_history` has no rows: returns "Chua co du lieu lich su gia."
+   - If a pair has < 5 aligned data points: shown as "(du lieu khong du)" with no r value.
 
    Files:
-   - CREATE: `src/domain/services/sectorRotationDetector.ts`
-   - CREATE: `src/interface/mcp/tools/sectorRotationTools.ts`
-   - MODIFY: `src/interface/mcp/server.ts` — register `registerSectorRotationTools`
+   - CREATE: `src/domain/services/correlationCalculator.ts`
+   - CREATE: `src/interface/mcp/tools/correlationTools.ts`
+   - MODIFY: `src/interface/mcp/server.ts` — register `registerCorrelationTools`
    - MODIFY: `src/interface/mcp/tools/index.ts` — add export
-   - CREATE: `src/__tests__/186-sector-rotation.test.ts`
+   - CREATE: `src/__tests__/189-correlation-matrix.test.ts`
 
    Acceptance criteria:
-   - A sector where all stocks have 5d return > +2% and 1d return > +0.5% is labelled
-     "DONG TIEN VAO".
-   - A sector where all stocks have 5d return < -2% and 1d return < -0.5% is labelled
-     "DONG TIEN RA".
-   - Sectors are ranked by 5d return descending in output.
-   - When an OUTFLOW sector contains a watchlist stock, the warning line appears.
-   - When `market_prices` is empty, output contains "Chua co du lieu gia thi truong".
-   - When only 1d data is available, output contains "(chi co du lieu 1 ngay)".
+   - Two stocks with identical price series produce r = 1.0, classified TUONG QUAN CAO.
+   - Two stocks with anti-correlated series produce r close to -1.0.
+   - Pairs with < 5 data points are shown as "(du lieu khong du)".
+   - Diversification score = 100 when all pairs have |r| < 0.70.
+   - Diversification score = 0 when all pairs have |r| >= 0.85.
+   - Warning line appears only for highly correlated pairs where both stocks have open
+     positions.
+   - When < 2 watchlist stocks exist, output contains "Can it nhat 2 co phieu".
    - >= 16 tests, 0 failures.
    - `bun tsc --noEmit` → 0 errors.
-   - Tool count increases from 40 to 41.
+   - Tool count increases from 43 to 44.
 
-2. **Task 187 — Earnings calendar: `get_earnings_calendar` MCP tool (P0)**
+2. **Task 190 — Data export: `export_portfolio_snapshot` MCP tool (P0)**
 
-   New MCP tool `get_earnings_calendar` that returns expected BCTC release dates for
-   all watchlist stocks based on VN statutory reporting deadlines. No new schema, no
-   external data. Actual filed dates are pulled from `financial_reports` table where
-   available; upcoming deadlines are estimated from rule-based season windows.
+   New MCP tool `export_portfolio_snapshot` that dumps all investor data to a timestamped
+   JSON file in the `data/exports/` directory and returns the file path plus a summary of
+   what was exported. No new schema. Reads from existing tables only.
 
-   VN BCTC statutory deadlines (rule-based constants, not DB-driven):
-   - **Q1** (period ending 31 March): deadline 30 April (listed) / 45 days for unlisted
-   - **Q2** (period ending 30 June): deadline 31 July
-   - **Q3** (period ending 30 September): deadline 31 October
-   - **Q4** / Annual (period ending 31 December): deadline 31 January (preliminary) +
-     90 days for audited (31 March)
-   - **Midyear audited** (H1): deadline 31 August
+   Export contents (single JSON object):
+   ```json
+   {
+     "exported_at": "2026-04-01T14:00:00+07:00",
+     "schema_version": "1.0",
+     "watchlist": [...],
+     "positions": [...],
+     "alerts": [...],
+     "analysis_entries": [...],
+     "financial_reports": [...],
+     "market_prices": [...],
+     "summary": {
+       "watchlist_count": 4,
+       "open_positions": 2,
+       "total_alerts": 87,
+       "analysis_entries": 312,
+       "financial_reports": 5,
+       "price_snapshots": 48
+     }
+   }
+   ```
 
    Logic:
-   - For each stock in `watchlist`, check `financial_reports` for the most recent
-     actual filing. Compute which quarterly period comes next.
-   - Determine the statutory deadline for that period.
-   - If today is within 14 days before the deadline: status = SẮP ĐẾN (UPCOMING).
-   - If today is past the deadline and no filing found: status = QUÁ HẠN (OVERDUE).
-   - If filing already recorded: status = ĐÃ NỘP (FILED) with actual date.
-   - If next deadline > 14 days away: status = CHỜ (WAITING) with days until deadline.
+   - Read each table in full using parameterised `SELECT *` queries.
+   - `analysis_entries` uses `rag_analyses` table; include all columns.
+   - Write to `data/exports/snapshot_<YYYYMMDD_HHmmss>.json` using `Bun.write`.
+   - Return a plain-text summary: file path + record counts per table.
+   - `data/exports/` directory is created if it does not exist.
 
-   Output:
+   Output (plain text):
    ```
-   LICH BCTC — DANH SACH THEO DOI (2026-04-01)
-   ─────────────────────────────────────────────
-   VNM   Q1/2026  Han nop: 30/04/2026  Con 29 ngay   CHO
-   FPT   Q1/2026  Han nop: 30/04/2026  Con 29 ngay   CHO
-   VCB   Q1/2026  Han nop: 30/04/2026  Con 29 ngay   CHO
-   VEA   Q4/2025  Han nop: 31/03/2026  QUA HAN        [!] Chua thay bao cao
-   ─────────────────────────────────────────────
-   Sap den (< 14 ngay): 0  |  Qua han: 1  |  Cho: 3
+   XUAT DU LIEU — HOAN THANH (2026-04-01 14:00:07)
+   ──────────────────────────────────────────────────
+   File: data/exports/snapshot_20260401_140007.json
+   Kich thuoc: 2.3 MB
+
+   Danh sach theo doi: 4 co phieu
+   Vi the:             2 mo / 3 dong
+   Canh bao:           87 ban ghi
+   Phan tich RAG:      312 ban ghi
+   Bao cao BCTC:       5 ban ghi
+   Gia thi truong:     48 ban ghi
    ```
 
    Graceful degradation:
-   - If `watchlist` table is empty, returns "Danh sach theo doi trong. Them co phieu
-     truoc khi xem lich BCTC."
-   - Stocks not yet in `financial_reports` are still shown with estimated deadlines
-     labelled "(uoc tinh)".
+   - If `data/exports/` cannot be created (permission error), returns the JSON as a string
+     in the tool response instead of writing to disk, with a note "(khong the ghi file)".
+   - If a table has 0 rows, it is exported as an empty array — not omitted.
+   - Export never throws; all DB errors are caught and reported in the summary.
 
    Files:
-   - CREATE: `src/domain/services/earningsCalendar.ts`
-   - CREATE: `src/interface/mcp/tools/earningsCalendarTools.ts`
-   - MODIFY: `src/interface/mcp/server.ts` — register `registerEarningsCalendarTools`
+   - CREATE: `src/application/usecases/exportPortfolioSnapshot.ts`
+   - CREATE: `src/interface/mcp/tools/exportTools.ts`
+   - MODIFY: `src/interface/mcp/server.ts` — register `registerExportTools`
    - MODIFY: `src/interface/mcp/tools/index.ts` — add export
-   - CREATE: `src/__tests__/187-earnings-calendar.test.ts`
+   - CREATE: `src/__tests__/190-export-snapshot.test.ts`
 
    Acceptance criteria:
-   - For a watchlist stock with no filing in `financial_reports`, the next Q1 deadline
-     (30 April) is shown as estimated "(uoc tinh)".
-   - A stock whose filing deadline passed yesterday with no entry in `financial_reports`
-     shows status "QUÁ HẠN".
-   - A stock whose filing is within 14 days shows status "SẮP ĐẾN".
-   - A stock with an actual filing in `financial_reports` shows status "ĐÃ NỘP" with
-     the actual date.
-   - When `watchlist` is empty, output contains "Danh sach theo doi trong".
+   - Exported JSON contains all 7 top-level keys including `summary`.
+   - `summary.watchlist_count` matches the actual number of rows in `watchlist` table.
+   - `summary.open_positions` counts only rows in `positions` WHERE closed_at IS NULL.
+   - File is written to `data/exports/snapshot_<timestamp>.json`.
+   - File size reported in MB is correct to 1 decimal place.
+   - When the export directory cannot be written, output contains "(khong the ghi file)".
+   - All tables export as empty arrays when they have 0 rows.
    - >= 14 tests, 0 failures.
    - `bun tsc --noEmit` → 0 errors.
-   - Tool count increases from 41 to 42.
+   - Tool count increases from 44 to 45.
 
-3. **Task 188 — Daily alert digest: `send_alert_digest` MCP tool + scheduler job (P1)**
+3. **Task 191 — Performance attribution: `get_performance_attribution` MCP tool (P1)**
 
-   New MCP tool `send_alert_digest` that compiles all alerts from the past 24 hours
-   into a single grouped Telegram message and sends it. Also registers a cron job to
-   auto-send the digest at 21:00 GMT+7 on market days (after close, before evening
-   summary). No new schema — reads from `alerts` table, sends via existing
-   `telegram.ts` notifier.
+   New MCP tool `get_performance_attribution` that analyses closed positions and attributes
+   P&L to the signal type that triggered the entry alert. No new schema — reads `positions`,
+   `alerts` tables only. Produces a ranked breakdown of which signal types generated the
+   best and worst returns.
 
-   Digest grouping logic:
-   - Pull all alerts from `alerts` WHERE `created_at >= now - 24h`, ordered by severity
-     DESC then created_at DESC.
-   - Group by affected stock (one block per stock).
-   - Within each stock block, list up to 3 alerts (most recent, highest severity first).
-   - If a stock has > 3 alerts in 24h, append "(va N canh bao khac)".
-   - Prepend a summary header: total alert count, count by severity (CRITICAL/HIGH/MEDIUM).
+   Attribution logic (rule-based, no LLM):
+   - For each closed position (closed_at IS NOT NULL), look up the `entry_alert_id` column
+     in `positions`. If the column does not exist or is NULL, group that position under
+     "signal_unknown".
+   - If `entry_alert_id` is set, join to `alerts` to read the `signal_types` JSON column
+     and extract the primary signal type (first element of the array).
+   - Group closed positions by primary signal type.
+   - For each group, compute:
+     - Count of positions.
+     - Win rate: percentage of positions where `realized_pnl > 0`.
+     - Average P&L (VND): AVG(realized_pnl) across the group.
+     - Total P&L (VND): SUM(realized_pnl) across the group.
+   - Rank groups by total P&L descending.
+   - Signal type labels (Vietnamese):
+     - `price_drop` → "Gia giam dot bien"
+     - `price_surge` → "Gia tang dot bien"
+     - `volume_spike` → "Khoi luong dot bien"
+     - `news_mention` → "Tin tuc"
+     - `report` → "BCTC"
+     - `cascade` → "Phan tich vi mo"
+     - `signal_unknown` → "Khong ro nguon tin hieu"
 
-   Output (Telegram plain text, Vietnamese):
+   Output (plain text, Vietnamese):
    ```
-   TOM TAT CANH BAO — 24H QUA (2026-04-01 21:00)
+   PHAN BO HIEU SUAT THEO TIN HIEU (2026-04-01)
    ──────────────────────────────────────────────
-   Tong: 7 canh bao | NGHIEM TRONG: 1 | QUAN TRONG: 4 | LUU Y: 2
+   Tong vi the dong: 5  |  Tong P&L: +2,450,000 VND
 
-   [VNM] — 3 canh bao
-   • NGHIEM TRONG: Gia giam 5.2% trong 1 phien (15:30)
-   • QUAN TRONG: Khoi luong dot bien +180% so trung binh (14:00)
-   • LUU Y: Tin tuc tieu cuc — BCTC Q4 duoi ky vong (09:30)
-
-   [FPT] — 2 canh bao
-   • QUAN TRONG: Gia tang 3.1% - co the co thong tin noi bo (11:00)
-   • LUU Y: VN-Index giam 1.2%, FPT chiu anh huong (09:00)
-
-   [HPG] — 2 canh bao
-   • QUAN TRONG: Gia thep the gioi giam, HPG co the bi anh huong (10:30)
-   • LUU Y: Khoi ngoai ban rong (09:45)
+   #1  Tin tuc (news_mention)       — 2 vi the — Win 100% — TB: +850,000 VND — Tong: +1,700,000 VND
+   #2  Gia giam dot bien (price_drop) — 2 vi the — Win 50%  — TB: +375,000 VND — Tong: +750,000 VND
+   #3  BCTC (report)                — 1 vi the — Win 0%   — TB: 0 VND        — Tong: 0 VND
+   ──────────────────────────────────────────────
+   Tin hieu hieu qua nhat: Tin tuc (news_mention) voi tong +1,700,000 VND
+   Tin hieu kem hieu qua:  BCTC (report) voi win rate 0%
    ```
-
-   If no alerts in 24h: sends "Khong co canh bao nao trong 24 gio qua."
-
-   Scheduler integration:
-   - Add a new cron job `alertDigestJob` at `0 21 * * 1-5` (21:00 GMT+7, weekdays).
-   - Register in `src/scheduler/jobs.ts` alongside existing jobs.
-   - The MCP tool `send_alert_digest` can also be called manually (e.g., after a
-     volatile session).
 
    Graceful degradation:
-   - If Telegram is not configured (no token/chat ID), the tool returns the digest text
-     without sending and appends "(Telegram chua duoc cau hinh)".
-   - If `alerts` table is empty or has no recent alerts, returns the "no alerts" message
-     without error.
+   - If no closed positions exist: returns "Chua co vi the nao duoc dong. Du lieu hieu
+     suat se co sau khi dong vi the dau tien."
+   - If `entry_alert_id` column does not exist in `positions`, all positions are grouped
+     under "Khong ro nguon tin hieu" and a note is appended: "(Cap nhat co so du lieu de
+     theo doi nguon tin hieu)."
+   - Positions with NULL `realized_pnl` are excluded from averages and win rate but
+     counted in total positions.
 
    Files:
-   - CREATE: `src/application/usecases/assembleAlertDigest.ts`
-   - CREATE: `src/scheduler/alertDigestJob.ts`
-   - CREATE: `src/interface/mcp/tools/alertDigestTools.ts`
-   - MODIFY: `src/scheduler/jobs.ts` — add alertDigest cron entry
-   - MODIFY: `src/interface/mcp/server.ts` — register `registerAlertDigestTools`
+   - CREATE: `src/domain/services/performanceAttributor.ts`
+   - CREATE: `src/interface/mcp/tools/performanceTools.ts`
+   - MODIFY: `src/interface/mcp/server.ts` — register `registerPerformanceTools`
    - MODIFY: `src/interface/mcp/tools/index.ts` — add export
-   - CREATE: `src/__tests__/188-alert-digest.test.ts`
+   - CREATE: `src/__tests__/191-performance-attribution.test.ts`
 
    Acceptance criteria:
-   - With 7 alerts in the DB spanning 3 stocks, digest contains 3 stock blocks with
-     correct alert counts.
-   - Alerts older than 24 hours are excluded from the digest.
-   - A stock with > 3 alerts in 24h shows the top 3 plus "(va N canh bao khac)".
-   - Severity counts in the header match the actual alert severities in the DB.
-   - When `alerts` is empty, output contains "Khong co canh bao".
-   - When Telegram is not configured, output contains "(Telegram chua duoc cau hinh)".
-   - The `alertDigestJob` cron expression is `0 21 * * 1-5`.
-   - >= 16 tests, 0 failures.
+   - Two closed positions both with signal type `news_mention` and positive P&L produce
+     win rate 100% and correct total P&L sum for that group.
+   - A position with NULL `entry_alert_id` is grouped under "Khong ro nguon tin hieu".
+   - Groups are ranked by total P&L descending.
+   - "Tin hieu hieu qua nhat" names the group with the highest total P&L.
+   - "Tin hieu kem hieu qua" names the group with the lowest win rate (excluding groups
+     with 0 positions).
+   - When no closed positions exist, output contains "Chua co vi the nao duoc dong".
+   - >= 14 tests, 0 failures.
    - `bun tsc --noEmit` → 0 errors.
-   - Tool count increases from 42 to 43.
+   - Tool count increases from 45 to 46.
 
 **OUT**
 
-- Correlation analysis / diversification scoring (deferred to Sprint 026 — needs
-  richer price history to be meaningful)
-- Export / backup to JSON (low daily-use value vs features selected)
-- Performance attribution (requires completed positions volume not yet present)
+- Technical debt / worktree cleanup (necessary but not investor-facing; schedule as
+  separate maintenance sprint)
+- Integration / end-to-end tests for the full intelligence cycle (task 125, blocked on
+  completing the E2E test harness design)
+- API documentation for all 43 MCP tools (low urgency; CLAUDE.md serves as the
+  authoritative reference for the dev team)
 - LLM-based analysis or recommendations
 - New external data sources
 - Backtesting / simulation engine
@@ -249,70 +275,79 @@ This sprint closes three operational gaps that a real investor hits every single
 
 ### Success Metrics
 
-1. `get_sector_rotation()` identifies at least one INFLOW and one OUTFLOW sector when
-   the mock price data includes clear sector divergence. The investor sees capital flow
-   direction in one MCP call.
+1. `get_correlation_matrix()` correctly identifies VCB and VNM as highly correlated when
+   their mock price history is identical, and reports a diversification score that reflects
+   the proportion of low-correlation pairs. The investor knows in one call whether the
+   portfolio is concentrated.
 
-2. `get_earnings_calendar()` correctly labels VEA as QUÁ HẠN when Q4 deadline has
-   passed with no filing on record, and labels VNM/FPT/VCB as CHỜ with accurate
-   day-count. The investor is never surprised by an upcoming BCTC.
+2. `export_portfolio_snapshot()` writes a valid JSON file containing all 7 required keys.
+   The `summary` counts match the actual DB row counts. The investor can restore or share
+   a full snapshot at any time.
 
-3. `send_alert_digest()` compiles and formats a 24-hour digest correctly: grouped by
-   stock, sorted by severity, with correct header counts. The investor can review the
-   full day in one Telegram message.
+3. `get_performance_attribution()` correctly groups closed positions by signal type and
+   ranks by total P&L. A portfolio with only `news_mention` wins shows 100% win rate for
+   that group. The investor can see which signals to trust.
 
-4. `bun tsc --noEmit` → 0 errors. All existing tests continue to pass (1556+).
+4. `bun tsc --noEmit` → 0 errors. All existing tests continue to pass (1617+).
 
-5. Tool count: 40 → 43 (get_sector_rotation, get_earnings_calendar, send_alert_digest).
+5. Tool count: 43 → 46 (get_correlation_matrix, export_portfolio_snapshot,
+   get_performance_attribution).
 
 ---
 
-### Task board (Sprint 025)
+### Task board (Sprint 026)
 
 | # | Title | Priority | Status | Depends on |
 |---|-------|----------|--------|------------|
-| 186 | Sector rotation detector: `get_sector_rotation` MCP tool | P0 | Backlog | — |
-| 187 | Earnings calendar: `get_earnings_calendar` MCP tool | P0 | Backlog | — |
-| 188 | Daily alert digest: `send_alert_digest` MCP tool + scheduler job | P1 | Backlog | — |
+| 189 | Correlation analysis: `get_correlation_matrix` MCP tool | P0 | Backlog | — |
+| 190 | Data export: `export_portfolio_snapshot` MCP tool | P0 | Backlog | — |
+| 191 | Performance attribution: `get_performance_attribution` MCP tool | P1 | Backlog | — |
 
 ---
 
 ### Dependency chain
 
 ```
-186 (sector rotation)   — P0, independent, uses market_prices + sectorPeers (both done)
-187 (earnings calendar) — P0, independent, uses watchlist + financial_reports (both done)
-188 (alert digest)      — P1, independent, uses alerts + telegram.ts (both done)
+189 (correlation)         — P0, independent, uses market_prices_history + watchlist + positions
+190 (export snapshot)     — P0, independent, reads all tables, writes to data/exports/
+191 (performance attr.)   — P1, independent, uses positions + alerts
 
-186 + 187 can run in parallel (no shared files).
-188 can start in parallel with 186 + 187.
-All three tasks touch different tool files — no merge conflicts.
+189 + 190 can run in parallel (no shared files, no shared tables written).
+191 can start in parallel — touches different tool files, no merge conflicts.
 ```
 
 ---
 
 ### Key technical decisions (locked at PO level)
 
-- **Task 186 uses `sectorPeers.ts` for sector grouping**: the sector-to-stock mapping
-  already exists in the domain layer (Sprint 013). The rotation detector imports it
-  directly — no new mapping table needed. This keeps the domain layer as the single
-  source of truth for sector definitions.
+- **Task 189 uses `market_prices_history` as the sole price source**: the table is already
+  populated by the intelligence cycle and market scan jobs. No new fetches at query time —
+  the correlation tool is read-only and offline-capable.
 
-- **Task 186 rotation signal thresholds (+/-2% for 5d, +/-0.5% for 1d) are constants
-  in `sectorRotationDetector.ts`**: tied to display logic, not independently tunable.
-  Co-located to avoid config sprawl.
+- **Task 189 Pearson r is computed in-process (pure TypeScript)**: no external statistics
+  library. The formula is five lines of math. This keeps the domain layer dependency-free
+  and fully unit-testable with synthetic data.
 
-- **Task 187 deadline rules are static constants in `earningsCalendar.ts`**: VN statutory
-  BCTC deadlines change only by regulatory amendment (rare). A static TypeScript object
-  mapping quarter → deadline offset is simpler and fully testable without DB.
+- **Task 189 warning requires open positions for both stocks**: correlation alone is not
+  actionable. The warning fires only when the investor has money in both correlated stocks
+  simultaneously. This prevents alert fatigue from theoretical pairs with no exposure.
 
-- **Task 188 digest is send-on-demand + scheduled**: the MCP tool and the cron job share
-  the same `assembleAlertDigest` use case. The scheduler calls the same function the MCP
-  tool exposes — no code duplication.
+- **Task 190 exports to `data/exports/` as plain JSON**: no compression, no encryption.
+  The file is for the investor's own use. If they need encryption, they apply it outside
+  the tool. Keeping it plain JSON makes it directly importable into Excel, Python, or any
+  external tool.
 
-- **Task 188 cron at 21:00 GMT+7**: positioned after market close scan (15:30) and before
-  evening summary (22:00), so the digest captures the full trading day including any
-  close-of-day alerts.
+- **Task 190 uses `Bun.write` directly**: consistent with how other file writes are done
+  in this codebase (briefing files, report files). No new I/O abstraction needed.
+
+- **Task 191 reads `entry_alert_id` from `positions`**: this column was introduced in
+  Sprint 023 (task 178 — position tracking). If it does not exist (older DB), all
+  positions fall into "Khong ro nguon tin hieu" with a migration hint. No ALTER TABLE at
+  tool call time — attribution degrades gracefully.
+
+- **Task 191 primary signal type = first element of `signal_types` JSON array**: the
+  array is ordered by severity in the alert generator (highest severity first). Taking the
+  first element picks the most important signal without additional ranking logic.
 
 ---
 
@@ -345,3 +380,4 @@ All three tasks touch different tool files — no merge conflicts.
 | 022 | House in Order | 2026-04-01 | 174, 175, 176, 177 |
 | 023 | Close the Investor Loop | 2026-04-01 | 178, 179, 180, 181 |
 | 024 | Reliability Hardening and Investor UX Polish | 2026-04-01 | 182, 183, 184, 185 |
+| 025 | Daily Investor Intelligence | 2026-04-01 | 186, 187, 188 |

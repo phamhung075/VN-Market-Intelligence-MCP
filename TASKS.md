@@ -354,27 +354,106 @@
 | 🔍 Review | 0 | — |
 | 🚧 In Progress | 0 | — |
 | 📋 Todo | 0 | — |
-| 🗂 Backlog | 0 | — |
+| 🗂 Backlog | 3 | 189, 190, 191 |
 | **Total** | **47+** | |
 
 ---
 
-## Review
+## Sprint 025 — COMPLETE
 
-| # | Title | Branch | Layer | Depends on | Status |
-|---|-------|--------|-------|------------|--------|
-| 186 | Sector rotation detector: `get_sector_rotation` MCP tool | `task/186-sector-rotation` | domain + interface | sectorPeers ✅, market_prices ✅ | Review |
+> Sprint 025 DONE — 2026-04-01. Theme: Daily Investor Intelligence — Sector Rotation, Earnings Calendar, and Alert Digest.
+> PO sign-off: APPROVED 2026-04-01. Tasks 186, 187, 188 merged. Tool count: 40 → 43.
+
+| # | Title | Branch | Agent | Priority | Status |
+|---|-------|--------|-------|----------|--------|
+| 186 | Sector rotation detector: `get_sector_rotation` MCP tool | `task/186-sector-rotation` | Developer | P0 | Done ✅ |
+| 187 | Earnings calendar: `get_earnings_calendar` MCP tool | `task/187-earnings-calendar` | Developer | P0 | Done ✅ |
+| 188 | Daily alert digest: `send_alert_digest` MCP tool + scheduler job | `task/188-alert-digest` | Developer | P1 | Done ✅ |
 
 ---
 
-## Sprint 025 — Backlog
+## Sprint 026 — Backlog
 
-> Sprint 025 ACTIVE — 2026-04-01. Theme: Daily Investor Intelligence — Sector Rotation, Earnings Calendar, and Alert Digest.
+> Sprint 026 ACTIVE — 2026-04-01. Theme: Signal Quality and Portfolio Correlation — Know What Moves Together.
 
 | # | Title | Branch | Agent | Priority | Depends on | Status |
 |---|-------|--------|-------|----------|------------|--------|
-| 187 | Earnings calendar: `get_earnings_calendar` MCP tool | `task/187-earnings-calendar` | BA | P0 | watchlist ✅, financial_reports ✅ | Backlog |
-| 188 | Daily alert digest: `send_alert_digest` MCP tool + scheduler job | `task/188-alert-digest` | BA | P1 | alerts ✅, telegram.ts ✅ | Backlog |
+| 189 | Correlation analysis: `get_correlation_matrix` MCP tool | `task/189-correlation-matrix` | BA | P0 | market_prices_history ✅, watchlist ✅, positions ✅ | Backlog |
+| 190 | Data export: `export_portfolio_snapshot` MCP tool | `task/190-export-snapshot` | BA | P0 | all tables ✅ | Backlog |
+| 191 | Performance attribution: `get_performance_attribution` MCP tool | `task/191-performance-attribution` | BA | P1 | positions ✅, alerts ✅ | Backlog |
+
+---
+
+**Task 189 — Correlation Matrix**
+
+Acceptance criteria:
+- Two stocks with identical price series produce r = 1.0, classified TUONG QUAN CAO
+- Two stocks with anti-correlated series produce r close to -1.0
+- Pairs with < 5 aligned data points shown as "(du lieu khong du)"
+- Diversification score = 100 when all pairs have |r| < 0.70
+- Diversification score = 0 when all pairs have |r| >= 0.85
+- Warning line appears only for highly correlated pairs where BOTH stocks have open positions
+- When < 2 watchlist stocks, returns "Can it nhat 2 co phieu"
+- When `market_prices_history` empty, returns "Chua co du lieu lich su gia"
+- >= 16 tests, 0 failures
+- `bun tsc --noEmit` → 0 errors
+- Tool count 43 → 44
+
+Files:
+- CREATE: `src/domain/services/correlationCalculator.ts`
+- CREATE: `src/interface/mcp/tools/correlationTools.ts`
+- MODIFY: `src/interface/mcp/server.ts`
+- MODIFY: `src/interface/mcp/tools/index.ts`
+- CREATE: `src/__tests__/189-correlation-matrix.test.ts`
+
+---
+
+**Task 190 — Portfolio Snapshot Export**
+
+Acceptance criteria:
+- Exported JSON contains all 7 top-level keys: exported_at, schema_version, watchlist,
+  positions, alerts, analysis_entries, financial_reports, market_prices, summary
+- `summary.watchlist_count` matches actual row count in `watchlist` table
+- `summary.open_positions` counts only rows WHERE closed_at IS NULL
+- File written to `data/exports/snapshot_<YYYYMMDD_HHmmss>.json`
+- File size reported in MB correct to 1 decimal place
+- When export directory cannot be written, output contains "(khong the ghi file)"
+- All tables export as empty arrays when 0 rows
+- >= 14 tests, 0 failures
+- `bun tsc --noEmit` → 0 errors
+- Tool count 44 → 45
+
+Files:
+- CREATE: `src/application/usecases/exportPortfolioSnapshot.ts`
+- CREATE: `src/interface/mcp/tools/exportTools.ts`
+- MODIFY: `src/interface/mcp/server.ts`
+- MODIFY: `src/interface/mcp/tools/index.ts`
+- CREATE: `src/__tests__/190-export-snapshot.test.ts`
+
+---
+
+**Task 191 — Performance Attribution**
+
+Acceptance criteria:
+- Two closed positions with `news_mention` signal and positive P&L produce win rate 100%
+  and correct total P&L sum for that group
+- Position with NULL `entry_alert_id` grouped under "Khong ro nguon tin hieu"
+- Groups ranked by total P&L descending
+- "Tin hieu hieu qua nhat" names the group with highest total P&L
+- "Tin hieu kem hieu qua" names the group with lowest win rate (excluding 0-position groups)
+- When no closed positions exist, returns "Chua co vi the nao duoc dong"
+- If `entry_alert_id` column missing, all positions in unknown group + migration hint
+- Positions with NULL `realized_pnl` excluded from averages but counted in totals
+- >= 14 tests, 0 failures
+- `bun tsc --noEmit` → 0 errors
+- Tool count 45 → 46
+
+Files:
+- CREATE: `src/domain/services/performanceAttributor.ts`
+- CREATE: `src/interface/mcp/tools/performanceTools.ts`
+- MODIFY: `src/interface/mcp/server.ts`
+- MODIFY: `src/interface/mcp/tools/index.ts`
+- CREATE: `src/__tests__/191-performance-attribution.test.ts`
 
 ---
 
