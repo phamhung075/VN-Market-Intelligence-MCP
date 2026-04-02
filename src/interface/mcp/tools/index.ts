@@ -29,3 +29,5 @@ export { registerDataFreshnessTools } from "./dataFreshnessTools.js";
 export { registerSectorRotationTools } from "./sectorRotationTools.js";
 export { registerEarningsCalendarTools } from "./earningsCalendarTools.js";
 export { registerAlertDigestTools } from "./alertDigestTools.js";
+export { registerExportTools } from "./exportTools.js";
+export { registerPerformanceTools } from "./performanceTools.js";
