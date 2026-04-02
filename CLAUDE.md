@@ -755,13 +755,17 @@ src/
 - `src/interface/mcp/tools/feedbackTools.ts` — removed cross-post of feedback to user Chat Channel (Report Channel only)
 - `start.sh` — enabled `bun --hot` for live code reload without full restart
 
+**Two-Team Autonomy — Code (Sprint 035b)**
+- `src/infrastructure/db/telegramReportStore.ts` — CRUD store: insertReport, listNewReports, markProcessed, getReport (task 226)
+- `src/infrastructure/db/schema.ts` — `telegram_reports` table + indexes (task 226)
+- `src/infrastructure/notifiers/telegram.ts` — wired insertReport after sendTelegramReport (task 226)
+- `src/index.ts` — extended /telegram-webhook: Report Channel branch stores human messages (task 227)
+- `src/interface/mcp/tools/telegramReportTools.ts` — `read_telegram_reports` + `process_telegram_report` MCP tools (tasks 228-229)
+- `src/interface/mcp/server.ts` — updated to 64 registered tools
+
 ### In Progress
 
-**Two-Team Autonomy — Code (Sprint 035b)**
-- `telegram_reports` SQLite table — store sent reports with message_id, text, status
-- Webhook for Report Channel — catch incoming messages from TELEGRAM_REPORT_ID
-- `read_telegram_reports` MCP tool — read unprocessed reports from SQLite
-- `process_telegram_report` MCP tool — mark processed + delete from Telegram
+None.
 
 ### Deferred (Sprint 008+ backlog)
 - E2E test — daily briefing flow (task 125, after 024)
