@@ -22,8 +22,10 @@ import {
   ensureTelegramReportsTable,
   listNewReports,
   listAllReports,
+  listNewReportsUnclaimed,
   getReport,
   markProcessed,
+  claimReport,
   type TelegramReport,
 } from "../../../infrastructure/db/telegramReportStore.js";
 import { deleteTelegramReport } from "../../../infrastructure/notifiers/telegram.js";
@@ -83,8 +85,16 @@ export function registerTelegramReportTools(server: McpServer): void {
         .optional()
         .default(20)
         .describe("So ban ghi toi da tra ve (1-50, mac dinh 20)"),
+      unclaimed_only: z
+        .boolean()
+        .optional()
+        .default(true)
+        .describe(
+          "Chi tra ve bao cao chua duoc claim (mac dinh: true). " +
+            "Dat false de xem tat ca bao cao bao gom ca da claimed.",
+        ),
     },
-    async ({ status, limit }) => {
+    async ({ status, limit, unclaimed_only }) => {
       try {
         await initDatabase();
         const db = getDb();
@@ -92,12 +102,18 @@ export function registerTelegramReportTools(server: McpServer): void {
 
         const resolvedStatus = status ?? "new";
         const resolvedLimit = limit ?? 20;
+        const filterUnclaimed = unclaimed_only ?? true;
 
         let rows: TelegramReport[];
 
         if (resolvedStatus === "new") {
-          const all = listNewReports(db);
-          rows = all.slice(0, resolvedLimit);
+          if (filterUnclaimed) {
+            const all = listNewReportsUnclaimed(db);
+            rows = all.slice(0, resolvedLimit);
+          } else {
+            const all = listNewReports(db);
+            rows = all.slice(0, resolvedLimit);
+          }
         } else if (resolvedStatus === "processed") {
           // Filter processed rows from listAllReports
           const all = listAllReports(db, resolvedLimit * 2);
@@ -217,6 +233,78 @@ export function registerTelegramReportTools(server: McpServer): void {
             {
               type: "text" as const,
               text: `Loi khi xu ly bao cao ${id}: ${err instanceof Error ? err.message : String(err)}`,
+            },
+          ],
+        };
+      }
+    },
+  );
+
+  // ── claim_telegram_report ─────────────────────────────────────────────────
+  server.tool(
+    "claim_telegram_report",
+    "Dat quyen so huu (ownership lock) cho mot bao cao de tranh hai agent xu ly cung luc. " +
+      "Dung truoc khi goi process_telegram_report. " +
+      "Neu da co agent khac claim roi, tra ve thong bao 'Already claimed by {claimant}'.",
+    {
+      id: z
+        .number()
+        .int()
+        .min(1)
+        .describe("Primary key cua ban ghi telegram_reports can claim"),
+      claimant: z
+        .string()
+        .min(1)
+        .describe(
+          "Ten dinh danh cua agent dang claim ban ghi nay (vi du: 'dev-team', 'unified-agent')",
+        ),
+    },
+    async ({ id, claimant }) => {
+      try {
+        await initDatabase();
+        const db = getDb();
+        ensureTelegramReportsTable(db);
+
+        const result = claimReport(db, id, claimant);
+
+        if (result.success) {
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: `Report ${id} successfully claimed by '${claimant}'.`,
+              },
+            ],
+          };
+        }
+
+        if (result.claimedBy) {
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: `Already claimed by ${result.claimedBy}`,
+              },
+            ],
+          };
+        }
+
+        // Row not found
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: `Report ${id} not found.`,
+            },
+          ],
+        };
+      } catch (err) {
+        console.error("[claim_telegram_report] Failed:", err);
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: `Loi khi claim bao cao ${id}: ${err instanceof Error ? err.message : String(err)}`,
             },
           ],
         };

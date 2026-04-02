@@ -370,4 +370,25 @@ export async function initDatabase(): Promise<void> {
   `);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_telegram_reports_status  ON telegram_reports(status)`);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_telegram_reports_created ON telegram_reports(created_at)`);
+
+  // Task 231 — ownership lock columns (idempotent ALTER TABLE for existing DBs)
+  try { db.exec(`ALTER TABLE telegram_reports ADD COLUMN claimed_by TEXT`); } catch (_) { /* already exists */ }
+  try { db.exec(`ALTER TABLE telegram_reports ADD COLUMN claimed_at TEXT`); } catch (_) { /* already exists */ }
+
+  // ── System Changelog (Task 233) ───────────────────────────────────────────
+  // Dev Team logs every fix here so Analysis Team agents can check before
+  // re-reporting an already-fixed issue (Gap 2 communication fix).
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS system_changelog (
+      id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+      fix_type            TEXT    NOT NULL DEFAULT 'bugfix',
+      title               TEXT    NOT NULL,
+      detail              TEXT    NOT NULL DEFAULT '',
+      files               TEXT    NOT NULL DEFAULT '[]',
+      commit_hash         TEXT,
+      fixed_at            TEXT    NOT NULL DEFAULT (datetime('now')),
+      related_feedback_id INTEGER
+    )
+  `);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_changelog_fixed_at ON system_changelog(fixed_at)`);
 }

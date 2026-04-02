@@ -34,6 +34,19 @@ export interface TelegramReport {
   priority: ReportPriority;
   status: ReportStatus;
   created_at: number;
+  claimed_by: string | null;
+  claimed_at: string | null;
+}
+
+/** Result returned by {@link claimReport}. */
+export interface ClaimResult {
+  /** True if this call successfully claimed the report. */
+  success: boolean;
+  /**
+   * The claimant that already holds the lock.
+   * Only populated when `success` is false and the row exists.
+   */
+  claimedBy?: string;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -55,6 +68,10 @@ export function ensureTelegramReportsTable(db: Database): void {
   `);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_telegram_reports_status  ON telegram_reports(status)`);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_telegram_reports_created ON telegram_reports(created_at)`);
+
+  // Task 231 — ownership lock columns (idempotent ALTER TABLE)
+  try { db.exec(`ALTER TABLE telegram_reports ADD COLUMN claimed_by TEXT`); } catch (_) { /* already exists */ }
+  try { db.exec(`ALTER TABLE telegram_reports ADD COLUMN claimed_at TEXT`); } catch (_) { /* already exists */ }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -152,4 +169,71 @@ export function markProcessed(db: Database, id: number): void {
   db.prepare(
     `UPDATE telegram_reports SET status = 'processed' WHERE id = ?`,
   ).run(id);
+}
+
+/**
+ * Atomically claims ownership of a report for a given claimant.
+ *
+ * Uses `WHERE claimed_by IS NULL` so only the first writer wins — SQLite's
+ * serialised write lock guarantees atomicity without an explicit transaction.
+ *
+ * @param db       - SQLite database instance
+ * @param id       - Primary key of the row to claim
+ * @param claimant - Identifier of the agent claiming the report (e.g. "dev-team")
+ * @returns        `{ success: true }` if the claim was granted,
+ *                 `{ success: false, claimedBy: "<existing owner>" }` if already claimed
+ */
+export function claimReport(db: Database, id: number, claimant: string): ClaimResult {
+  ensureTelegramReportsTable(db);
+
+  const stmt = db.prepare(
+    `UPDATE telegram_reports
+     SET claimed_by = ?, claimed_at = datetime('now')
+     WHERE id = ? AND claimed_by IS NULL`,
+  );
+  const result = stmt.run(claimant, id);
+
+  if (result.changes > 0) {
+    return { success: true };
+  }
+
+  // No rows changed — either already claimed or id doesn't exist
+  const existing = db
+    .query<{ claimed_by: string | null }, [number]>(
+      `SELECT claimed_by FROM telegram_reports WHERE id = ?`,
+    )
+    .get(id);
+
+  if (existing === null) {
+    // Row not found
+    return { success: false };
+  }
+
+  const claimedBy = existing.claimed_by;
+  if (claimedBy !== null) {
+    return { success: false, claimedBy };
+  }
+  // Row exists but claimed_by is NULL — this shouldn't happen (UPDATE changed 0 rows
+  // but claimed_by is null), treat as failure without a known claimant.
+  return { success: false };
+}
+
+/**
+ * Returns all reports that are both `status = 'new'` and unclaimed
+ * (`claimed_by IS NULL`), ordered oldest-first.
+ *
+ * Used by agents that want to process only uncontested reports.
+ *
+ * @param db - SQLite database instance
+ */
+export function listNewReportsUnclaimed(db: Database): TelegramReport[] {
+  ensureTelegramReportsTable(db);
+  return db
+    .query<TelegramReport, []>(
+      `SELECT id, message_id, text, from_agent, priority, status, created_at, claimed_by, claimed_at
+       FROM telegram_reports
+       WHERE status = 'new' AND claimed_by IS NULL
+       ORDER BY created_at ASC`,
+    )
+    .all();
 }

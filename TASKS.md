@@ -8,6 +8,21 @@
 
 ---
 
+## 📋 BACKLOG — Sprint 036
+
+| # | Title | Tier | Priority | Depends on |
+|---|-------|------|----------|------------|
+| 230 | Remove 8 dead/forbidden/internal tools from MCP registration | 1 | P0 | — |
+| ~~231~~ | ~~Fix G5: `claim_telegram_report` + `claimed_by`/`claimed_at` columns~~ | 2a | P0 | **Review** |
+| ~~232~~ | ~~Fix G3: `/report` + `/fix` Telegram commands (user → dev team direct)~~ | 2b | P1 | **Review** |
+| ~~233~~ | ~~Fix G2: `system_changelog` table + `log_fix` + `get_recent_fixes` tools~~ | 2c | P1 | **Review** |
+| 234 | Merge M1: system health 4 → 1 (`get_system_status`) | 2d | P1 | 230 |
+| 235 | Merge M2: Telegram send 3 → 1 (`send_telegram`) | 2e | P1 | 230 |
+| 236 | Merge M3: alert mute 2 → 1 (`manage_alert_mute`) | 2f | P2 | 230 |
+| 237 | CLAUDE.md sync + update all agent `.md` files for 53-tool surface | — | P2 | 230–236 |
+
+---
+
 ## ✅ DONE
 
 | # | Title | Branch | Merged | Report |
