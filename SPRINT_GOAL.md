@@ -2,27 +2,26 @@
 
 ## Current Sprint
 
-status: COMPLETE
-sprint_id: 031
+status: PLANNING
+sprint_id: 032
 started: 2026-04-01
-updated: 2026-04-02
-completed: 2026-04-02
+updated: 2026-04-01
 
 ---
 
 ### Theme
 
-**"Investor in France, System in Vietnam — Telegram Command Interface"**
+**"See More, Decide Faster — Multi-Stock Comparison and Weekly Portfolio Report"**
 
 ---
 
 ### Goal
 
-The investor lives in France (GMT+2) and monitors the Vietnamese market (GMT+7). Today the
-only query path is Claude Desktop via MCP — unavailable from a mobile phone or when the
-laptop is closed. Sprint 031 builds a Telegram command interface so the investor can query
-the system's live state — watchlist, prices, alerts, briefing, P&L — by sending a `/command`
-message to the existing Telegram bot, with no Claude Desktop required.
+The investor monitors VNM, FPT, VCB, and VEA but currently has no single view that places
+them side by side. Sprint 032 builds a multi-stock comparison MCP tool so the investor can
+compare 2-5 stocks on financials, current price, and live signal state in one call. It also
+extends the existing Sunday weekly summary job to append a portfolio performance section and
+push it to Telegram — closing the "how did my week go?" loop without opening Claude Desktop.
 
 ---
 
@@ -30,134 +29,168 @@ message to the existing Telegram bot, with no Claude Desktop required.
 
 **IN**
 
-1. **Task 214 — Webhook endpoint + command router (P0)**
+1. **Task 217 — Multi-stock comparison tool: `compare_stocks` (P0)**
 
-   Add a `/webhook` POST route to the Bun HTTP server that receives Telegram Update objects.
-   Parse the `message.text` field to extract a command and optional argument. Dispatch to the
-   appropriate internal use case. Format the result as plain Vietnamese text and reply via the
-   Telegram Bot `sendMessage` API (same bot used for alerts). Supported commands at launch:
+   New MCP tool `compare_stocks` that accepts a list of 2-5 stock codes and returns a
+   structured side-by-side comparison covering:
 
-   | Command | Argument | Action |
-   |---------|----------|--------|
-   | `/watchlist` | — | List all watched stocks with last known price |
-   | `/price` | `VCB` | Fetch current price for one stock |
-   | `/alerts` | — | Last 5 unread alerts (severity + headline) |
-   | `/briefing` | — | Trigger morning briefing assembly and return summary |
-   | `/health` | — | System health: job status, DB size, last cycle time |
-   | `/pnl` | — | Portfolio P&L summary (uses existing getPortfolioPnl use case) |
+   | Dimension | Source |
+   |-----------|--------|
+   | Last price + % change (today) | HOSE/HNX fetcher |
+   | P/E, P/B, ROE, ROA (latest BCTC) | `ratioComputer` via SQLite |
+   | Revenue YoY delta, Net profit YoY delta | `periodDeltaComputer` via SQLite |
+   | Active alerts count (HIGH + CRITICAL) | `alertStore` |
+   | Conviction score (latest) | `convictionScorer` via SQLite |
+   | Sector | `sectorPeers` mapping |
 
-   Unknown commands return: "Lệnh không hỗ trợ. Gõ /help để xem danh sách."
-   `/help` lists all supported commands in Vietnamese.
+   Output format: plain Vietnamese text table, one row per stock, sortable column headers
+   omitted (plain text, no markdown tables — same style as Telegram messages).
 
-   Files:
-   - ADD: `src/infrastructure/notifiers/telegramCommands.ts` — command parser + dispatcher
-   - MODIFY: `src/index.ts` — register `/webhook` POST route
-   - ADD: `src/__tests__/214-telegram-commands.test.ts` — unit tests for command parser
-
-2. **Task 215 — Telegram webhook registration + security (P1)**
-
-   The webhook URL must be registered with the Telegram Bot API via `setWebhook`. The
-   endpoint must reject requests not signed by Telegram (secret token header validation).
-   The bot must not echo commands to the alerts channel — replies go only to the sender.
+   The tool must handle the case where a stock has no BCTC data in SQLite — show "N/A" for
+   financial columns rather than erroring. Handles 2-5 stocks; rejects fewer than 2 or more
+   than 5 with a clear Vietnamese error message.
 
    Files:
-   - ADD: `src/infrastructure/notifiers/telegramWebhookSetup.ts` — `registerWebhook()` helper
-   - MODIFY: `src/index.ts` — call `registerWebhook()` on server startup (only if
-     `TELEGRAM_WEBHOOK_URL` env var is set; no-op if absent so dev mode is unaffected)
-   - MODIFY: `src/infrastructure/notifiers/telegramCommands.ts` — validate
-     `X-Telegram-Bot-Api-Secret-Token` header before processing
-   - ADD: `src/__tests__/215-telegram-webhook.test.ts` — unit tests for security validation
+   - ADD: `src/application/usecases/compareStocks.ts` — aggregation logic (pure, no I/O)
+   - ADD: `src/interface/mcp/tools/comparisonTools.ts` — MCP tool registration
+   - MODIFY: `src/interface/mcp/server.ts` — register new tool (54 total)
+   - ADD: `src/__tests__/217-compare-stocks.test.ts` — unit + integration tests
 
-3. **Task 216 — Command integration tests + CLAUDE.md update (P2)**
+2. **Task 218 — Weekly portfolio report via Telegram (P1)**
 
-   Integration tests covering the full webhook → command → response roundtrip using a mock
-   Telegram server (no real HTTP calls). Update CLAUDE.md to document Sprint 031 files and
-   the webhook route. Update the scheduled jobs table to note the webhook is passive (no cron
-   — event-driven).
+   Extend the existing Sunday 23:00 weekly summary (`summaryJobs.ts` + `generatePeriodicSummary.ts`)
+   to append a **portfolio performance section** to the weekly Telegram message. The section
+   includes:
+
+   - Each watchlist stock: entry price (from `portfolio_positions` table), current price,
+     unrealised P&L in VND and percent.
+   - Portfolio total: sum of unrealised P&L, best performer, worst performer.
+   - Week-over-week comparison: last Sunday close vs this Sunday close (uses stored price
+     history rows already in SQLite from the intelligence cycle).
+
+   The weekly Telegram push is currently absent — the summary is stored in SQLite but never
+   sent. This task wires the send. The morning briefing Telegram send (already live) is the
+   reference implementation.
 
    Files:
-   - ADD: `src/__tests__/216-telegram-webhook-integration.test.ts` — roundtrip tests
-   - MODIFY: `CLAUDE.md` — add Sprint 031 files to architecture section
+   - MODIFY: `src/application/usecases/generatePeriodicSummary.ts` — add portfolio section
+     to weekly summary output string
+   - ADD: `src/application/usecases/getWeeklyPortfolioPerf.ts` — pure function: reads
+     `portfolio_positions` + `price_history`, returns per-stock and totals
+   - MODIFY: `src/scheduler/summaryJobs.ts` — after Sunday weekly summary generated, send
+     to Telegram via existing `sendTelegram()` helper
+   - ADD: `src/__tests__/218-weekly-portfolio-report.test.ts` — unit tests for portfolio
+     performance calculation and summary formatting
+
+3. **Task 219 — Custom alert rules engine: `add_alert_rule` / `list_alert_rules` / `delete_alert_rule` (P2)**
+
+   Let the investor define custom threshold conditions beyond the built-in price drop / volume
+   spike signals. A custom rule is a simple predicate stored in SQLite:
+
+   ```
+   stock_code  TEXT
+   metric      TEXT   -- "price_above", "price_below", "pe_above", "pe_below",
+                      --  "volume_above", "roe_above"
+   threshold   REAL
+   message     TEXT   -- Vietnamese label shown in the alert
+   enabled     BOOLEAN
+   ```
+
+   During the intelligence cycle's signal detection pass, custom rules are evaluated after
+   built-in signals. A rule firing emits a new `custom_rule` signal type that goes through the
+   same alert pipeline (dedup, cooldown, severity) as built-in signals.
+
+   Three new MCP tools:
+   - `add_alert_rule` — add a custom rule for a stock
+   - `list_alert_rules` — show all rules (active + disabled)
+   - `delete_alert_rule` — remove a rule by ID
+
+   Files:
+   - ADD: `src/infrastructure/db/alertRuleStore.ts` — CRUD for `custom_alert_rules` table
+   - MODIFY: `src/infrastructure/db/schema.ts` — add `custom_alert_rules` table
+   - MODIFY: `src/domain/services/signalDetector.ts` — evaluate custom rules after built-ins
+   - ADD: `src/interface/mcp/tools/alertRuleTools.ts` — 3 new MCP tools
+   - MODIFY: `src/interface/mcp/server.ts` — register 3 new tools (57 total)
+   - ADD: `src/__tests__/219-custom-alert-rules.test.ts` — unit tests
 
 **OUT**
 
-- Long-poll fallback (polling mode) — webhook is the only delivery mechanism this sprint
-- Inline keyboards / button UX — plain text commands only
-- Multi-turn conversation state — every command is stateless
-- New MCP tools (no additions to the 53-tool set)
-- LLM-based response generation
+- Automated backtesting — requires historical price storage not yet designed; deferred to Sprint 033+
+- Watchlist auto-enrichment (sector peer suggestions) — nice-to-have; deferred to Sprint 033
+- Long-poll Telegram fallback — deferred from Sprint 031; monitor webhook reliability first
+- Inline keyboard / button UX in Telegram — plain text only
+- LLM-generated commentary in comparison output — rule-based formatting only
 - New data sources or fetchers
-- Push notifications triggered by commands (alerts already push autonomously)
 
 ---
 
 ### Success Metrics
 
-1. Sending `/price VCB` to the Telegram bot returns the current VCB price within 3 seconds
-   (measured from message send to reply receipt on a mobile device in France).
+1. `compare_stocks` called with `["VNM","FPT","VCB","VEA"]` returns a response within 5
+   seconds containing price, P/E, ROE, and alert count for each stock. Stocks without BCTC
+   data show "N/A" — no error thrown.
 
-2. Sending `/alerts` returns the last 5 unread alerts formatted in Vietnamese, same style as
-   the autonomous alert messages already live.
+2. Sunday 23:00 cron fires, generates weekly summary with portfolio P&L section, and sends
+   the full message to Telegram. The Telegram message arrives on the investor's phone in
+   France within 30 seconds of the cron tick.
 
-3. Sending an unknown command returns the Vietnamese help hint — no crash, no silent failure.
+3. `add_alert_rule` for `VCB price_below 85000` stores the rule. Next intelligence cycle
+   where VCB price is below 85000 emits a `custom_rule` alert visible in `get_alerts`.
 
-4. `X-Telegram-Bot-Api-Secret-Token` header validation rejects unsigned requests with HTTP
-   401 before any dispatch logic runs.
-
-5. `bun test` full suite passes: existing 1771 tests + new tests for tasks 214-216, 0
+4. `bun test` full suite passes: existing 1809 tests + new tests for tasks 217-219, 0
    failures.
 
-6. `bun tsc --noEmit` → 0 errors.
+5. `bun tsc --noEmit` → 0 errors.
 
-7. Tool count: 53 (unchanged — no new MCP tools this sprint).
+6. Tool count after Sprint 032: 57 (54 after task 217, +3 from task 219).
 
 ---
 
-### Task board (Sprint 031)
+### Task board (Sprint 032)
 
 | # | Title | Priority | Agent | Status | Depends on |
 |---|-------|----------|-------|--------|------------|
-| 214 | Webhook endpoint + command router | P0 | BA → Architect → Dev | Backlog | — |
-| 215 | Webhook registration + security | P1 | BA → Architect → Dev | Backlog | 214 |
-| 216 | Integration tests + CLAUDE.md update | P2 | Dev → QA | Backlog | 214, 215 |
+| 217 | Multi-stock comparison tool: `compare_stocks` | P0 | BA → Architect → Dev | Backlog | — |
+| 218 | Weekly portfolio report via Telegram | P1 | BA → Architect → Dev | Backlog | 217 (soft) |
+| 219 | Custom alert rules engine | P2 | BA → Architect → Dev | Backlog | 218 (soft) |
 
 ---
 
 ### Dependency chain
 
 ```
-214 (webhook + router)
-  └─→ 215 (registration + security hardening)
-        └─→ 216 (integration tests + docs)
+217 (compare_stocks — standalone new tool)
+  └─→ 218 (weekly report — reuses getPortfolioPnl patterns, independent of 217 code)
+        └─→ 219 (custom rules — extends signal pipeline; most complex, closes sprint)
 ```
 
-214 can start immediately. 215 starts after the webhook route exists. 216 closes the sprint.
+217 can start immediately. 218 is logically independent of 217 but shares the portfolio data
+layer patterns reviewed in 217. 219 starts after 218 is in Review so the DB schema migration
+pattern is established.
 
 ---
 
 ### Key technical decisions (locked at PO level)
 
-- **Webhook-only**: no long-poll mode this sprint. The server already runs on a fixed URL;
-  webhook is the correct production pattern. Long-poll is a fallback for dev environments
-  without a public URL — defer to Sprint 032 if needed.
+- **compare_stocks is a pure aggregation tool**: it calls existing fetchers and SQLite
+  readers but introduces no new data model. The use case layer (`compareStocks.ts`) holds the
+  aggregation logic; the MCP tool layer holds only input validation and output formatting.
 
-- **Stateless commands**: each `/command` is fully self-contained. The handler reads from
-  SQLite/LanceDB, formats a response, sends it, and returns. No session state is stored
-  between commands. This keeps the implementation minimal and testable.
+- **Weekly Telegram send uses existing `sendTelegram()` helper**: no new notifier code.
+  The Sunday summary cron already runs; this sprint adds a single `await sendTelegram(msg)`
+  call after the summary is stored. If Telegram send fails, the summary remains in SQLite —
+  the failure is logged but does not block the cron.
 
-- **Same bot, different reply path**: the existing Telegram bot token is reused. Autonomous
-  alerts use `sendMessage` to the configured `TELEGRAM_CHAT_ID`. Command replies use
-  `sendMessage` to `update.message.chat.id` (the sender). These are the same chat in the
-  investor's single-user setup, but the code path is separate — alerts are never suppressed
-  by command traffic and vice versa.
+- **Custom rules are evaluated client-side in the signal detector**: the rule engine is
+  intentionally simple — no scripting language, no expression parser. Only the six metric
+  types listed in scope are supported. The investor can add more metric types in a future
+  sprint once usage patterns are clear.
 
-- **Secret token header is mandatory in production**: if `TELEGRAM_WEBHOOK_SECRET` env var
-  is absent, the webhook endpoint logs a warning and operates in dev mode (no validation).
-  In production the variable must be set; the CI gate should reject a deploy without it.
+- **Tool count target 57**: 53 (current) + 1 (compare_stocks, task 217) + 3 (alert rule
+  tools, task 219) = 57. Task 218 adds no new MCP tools — it extends an existing cron job.
 
-- **No new MCP tools**: command dispatch calls existing use cases directly (assembleBriefing,
-  getPortfolioPnl, scanMarket, etc.) — not through the MCP tool layer. This avoids coupling
-  the Telegram interface to MCP protocol semantics.
+- **No new external data sources**: all data for compare_stocks comes from existing SQLite
+  tables and the existing HOSE/HNX price fetchers already called by the intelligence cycle.
 
 ---
 
@@ -196,3 +229,4 @@ message to the existing Telegram bot, with no Claude Desktop required.
 | 028 | Structural Integrity and Investor Safety Net | 2026-04-02 | 192, 193, 206, 207 |
 | 029 | Always-On Investor | 2026-04-02 | 208 (Telegram commands), 209 (P&L snapshot), 210 (source health) |
 | 030 | Quality Before Quantity | 2026-04-02 | 211 (CLAUDE.md sync), 212 (worktree cleanup), 213 (test isolation) |
+| 031 | Telegram Command Interface | 2026-04-02 | 214 (webhook + router), 215 (registration + security), 216 (integration tests) |

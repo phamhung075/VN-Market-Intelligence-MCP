@@ -126,6 +126,16 @@
 ## 📋 TODO
 *(Dependencies cleared — ready to assign)*
 
+### Sprint 032 — See More, Decide Faster (2026-04-01)
+
+| # | Title | Branch | Agent | Priority | Depends on | Status |
+|---|-------|--------|-------|----------|------------|--------|
+| 217 | Multi-stock comparison tool: `compare_stocks` | `task/217-compare-stocks` | BA | P0 | — | Backlog |
+| 218 | Weekly portfolio report via Telegram | `task/218-weekly-portfolio-report` | BA | P1 | 217 (soft) | Backlog |
+| 219 | Custom alert rules engine | `task/219-custom-alert-rules` | BA | P2 | 218 (soft) | Backlog |
+
+---
+
 ### Sprint 031 — Telegram Command Interface (2026-04-01)
 
 | # | Title | Branch | Agent | Priority | Depends on | Status |
