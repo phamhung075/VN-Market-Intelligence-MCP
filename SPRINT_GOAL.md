@@ -2,48 +2,35 @@
 
 ## Current Sprint
 
-status: COMPLETE
-sprint_id: 023
+status: ACTIVE
+sprint_id: 024
 started: 2026-04-01
 updated: 2026-04-01
-completed: 2026-04-01
 
 ---
 
 ### Theme
 
-**"Close the Investor Loop — Price History Access, Position Tracking, and Decision Context"**
+**"Reliability Hardening and Investor UX Polish — Risk Metrics, Alert Analytics, and Data Freshness"**
 
 ---
 
 ### Goal
 
-The investor can monitor signals and receive alerts, but cannot close the loop from
-"interesting signal" to "investment decision". Three gaps block this:
+The system generates alerts and conviction scores reliably, but the investor has no
+standard risk measurement tools (VaR, drawdown), no way to evaluate whether past
+alerts predicted correctly, no way to discover new stocks without knowing their exact
+code, and no at-a-glance view of data freshness per source.
 
-1. `market_prices_history` accumulates a 15-min price tick for every watchlist stock,
-   but there is **no MCP tool to query it** — the investor cannot ask Claude "show me
-   VNM's price movement over the past 5 days" without raw SQL access.
+This sprint closes four operational gaps that block professional daily use:
 
-2. There is **no way to record a position** — the investor cannot say "I bought VNM at
-   75,000 on March 15" and get P&L against current price. Without this, every briefing
-   and conviction score is context-free: the system does not know whether a signal means
-   "buy more" or "consider exiting a 15% gain".
-
-3. The morning briefing produces a conviction score per stock but gives **no decision
-   recommendation** — it stops at "high conviction, bullish" without synthesising all
-   signals into a plain-language action note ("consider adding" / "hold — await BCTC Q1"
-   / "reduce — sector headwinds + approaching resistance").
-
-This sprint adds three targeted tools that together complete the investor's daily
-workflow:
-
-```
-Morning briefing
-  → get_price_history("VNM", days=7) — visualise recent trend
-  → get_portfolio_conviction — each stock with P&L context (if position recorded)
-  → decision note: hold / add / reduce (synthesised from price + conviction + alert count)
-```
+1. Portfolio risk metrics (VaR, max drawdown, portfolio heat) give the investor
+   a daily risk posture without external tools.
+2. Alert accuracy tracking answers "is this system actually useful?" — did the
+   signal fired 48 hours ago predict the subsequent price move correctly?
+3. Stock search/discovery removes the friction of needing to know exact ticker codes.
+4. Data freshness dashboard surfaces staleness per source so the investor knows when
+   to distrust a signal.
 
 ---
 
@@ -51,234 +38,287 @@ Morning briefing
 
 **IN**
 
-1. **Task 178 — `get_price_history` MCP tool (P0)**
+1. **Task 182 — Portfolio risk metrics: VaR, max drawdown, heat map (P0)**
 
-   New MCP tool that queries `market_prices_history` for one or all watchlist stocks
-   over a configurable look-back window (1 / 5 / 10 / 20 / 30 trading days).
+   New MCP tool `get_portfolio_risk` that reads `positions` + `market_prices_history`
+   and computes four standard risk metrics — no new schema, no external data.
 
-   Inputs: `{ stock?: string, days?: 1|5|10|20|30 }`
-   Output: per-stock table of (date, price, change_pct, volume) rows + summary stats
-   (min, max, avg, stddev, total_return_pct over window).
+   Metrics computed:
+   - **Value at Risk (95% 1-day VaR)** per stock and portfolio total: historical
+     simulation from daily returns in `market_prices_history` over the last 20 trading
+     days. VaR = 5th-percentile daily return applied to current position value.
+   - **Max drawdown** per stock: peak-to-trough loss over the look-back window
+     (max rolling drawdown from `market_prices_history`).
+   - **Portfolio heat** per stock: unrealised P&L as share of total portfolio cost
+     basis — shows concentration risk.
+   - **Portfolio-level VaR**: sum of per-stock VaR (conservative, non-diversified).
 
-   No new schema. Reads from `market_prices_history` (already populated every 15 min
-   by the intelligence cycle).
-
-   Files:
-   - CREATE: `src/interface/mcp/tools/priceHistoryTools.ts`
-   - MODIFY: `src/interface/mcp/server.ts` — register `registerPriceHistoryTools`
-   - MODIFY: `src/interface/mcp/tools/index.ts` — add export
-   - CREATE: `src/__tests__/178-price-history.test.ts`
-
-   Acceptance criteria:
-   - `get_price_history({ stock: "VNM", days: 5 })` returns rows for VNM with
-     `date`, `price`, `changePct`, `volume` columns.
-   - When `stock` is omitted, returns data for all watchlist stocks (one section each).
-   - `days` defaults to 5; accepts 1, 5, 10, 20, 30.
-   - Returns "no data yet" gracefully when `market_prices_history` is empty.
-   - Summary stats (min, max, avg, totalReturnPct) included per stock.
-   - >= 14 tests, 0 failures.
-   - `bun tsc --noEmit` → 0 errors.
-   - Tool count increases from 32 to 33.
-
-2. **Task 179 — Position tracking: schema + CRUD MCP tools (P0)**
-
-   Add a `positions` table to SQLite and 3 MCP tools:
-   - `set_position(stock, entryPrice, shares, entryDate, notes?)` — upsert one row
-   - `get_positions()` — return all positions with current price + P&L
-   - `close_position(stock, exitPrice, exitDate, notes?)` — mark position closed,
-     record realised P&L
-
-   Schema (`positions` table, added to `schema.ts` via `CREATE TABLE IF NOT EXISTS`):
-   ```sql
-   CREATE TABLE IF NOT EXISTS positions (
-     code          TEXT PRIMARY KEY,
-     entry_price   REAL NOT NULL,
-     shares        REAL NOT NULL,
-     entry_date    TEXT NOT NULL,
-     exit_price    REAL,
-     exit_date     TEXT,
-     realised_pnl  REAL,
-     notes         TEXT,
-     opened_at     TEXT NOT NULL,
-     closed_at     TEXT
-   );
+   Output format (Vietnamese-labelled, plain text):
+   ```
+   DANH MUC — RUI RO (2026-04-01)
+   ──────────────────────────────
+   VNM   Gia tri: 80,000,000 VND | VaR 95%: -1,200,000 VND (-1.5%)
+         Max drawdown 20d: -4.2% | Trong danh muc: 38%
+   FPT   Gia tri: 60,000,000 VND | VaR 95%: -980,000 VND (-1.6%)
+         Max drawdown 20d: -3.8% | Trong danh muc: 29%
+   ...
+   TONG  VaR danh muc: -2,800,000 VND (-1.3%) | Nhiet do: BINH THUONG
    ```
 
-   `get_positions()` joins to `market_prices` for current price and computes:
-   - unrealised P&L: `(current_price - entry_price) * shares`
-   - unrealised P&L %: `(current_price / entry_price - 1) * 100`
-   - cost basis: `entry_price * shares`
-   - current value: `current_price * shares`
+   Portfolio heat levels (rule-based):
+   - BINH THUONG: no single stock > 40% of portfolio AND portfolio VaR < 2%
+   - CANH BAO: any stock > 40% OR portfolio VaR 2-4%
+   - NGUY HIEM: any stock > 60% OR portfolio VaR > 4%
 
-   Output is Vietnamese-formatted, sorted by unrealised P&L % descending.
+   Graceful degradation:
+   - If fewer than 5 price history rows for a stock, shows "(du lieu chua du — can
+     them du lieu lich su)".
+   - If no open positions, returns "Chua co vi the nao duoc ghi nhan".
 
    Files:
-   - MODIFY: `src/infrastructure/db/schema.ts` — add `positions` table DDL
-   - CREATE: `src/interface/mcp/tools/positionTools.ts`
-   - MODIFY: `src/interface/mcp/server.ts` — register `registerPositionTools`
+   - CREATE: `src/interface/mcp/tools/riskTools.ts`
+   - MODIFY: `src/interface/mcp/server.ts` — register `registerRiskTools`
    - MODIFY: `src/interface/mcp/tools/index.ts` — add export
-   - CREATE: `src/__tests__/179-position-tools.test.ts`
+   - CREATE: `src/__tests__/182-portfolio-risk.test.ts`
 
    Acceptance criteria:
-   - `set_position({ stock: "VNM", entryPrice: 75000, shares: 1000, entryDate: "2026-03-15" })`
-     inserts a row and returns confirmation.
-   - `get_positions()` returns VNM with unrealised P&L computed from `market_prices`.
-   - `get_positions()` shows "no price data" gracefully when `market_prices` has no row.
-   - `close_position({ stock: "VNM", exitPrice: 80000, exitDate: "2026-04-01" })`
-     sets `exit_price`, `exit_date`, `realised_pnl`, `closed_at`.
-   - `get_positions()` by default shows only open positions; accepts `includesClosed: true`
-     to show all.
+   - `get_portfolio_risk()` returns VaR, max drawdown, and heat % for each open position.
+   - When fewer than 5 history rows exist for a stock, output contains "du lieu chua du".
+   - Portfolio heat label is "NGUY HIEM" when any stock exceeds 60% of portfolio.
+   - Portfolio-level VaR is the sum of per-stock VaRs.
+   - No crash when `positions` table is empty.
    - >= 16 tests, 0 failures.
    - `bun tsc --noEmit` → 0 errors.
-   - Tool count increases from 33 to 36 (3 new tools).
+   - Tool count increases from 36 to 37.
 
-3. **Task 180 — Decision note synthesis in `get_portfolio_conviction` (P1)**
+2. **Task 183 — Alert accuracy tracker: outcome scoring (P0)**
 
-   Enhance the existing `get_portfolio_conviction` tool (no schema change, no new tool).
+   New MCP tool `get_alert_accuracy` that retrospectively scores past alerts against
+   subsequent price moves. No new schema — reads `alerts` + `market_prices_history`.
 
-   Current output per stock:
+   Scoring logic (rule-based, deterministic):
+   - For each alert older than 24 hours and younger than 7 days, look up the closing
+     price of the affected stock at alert time (T) and 24 hours later (T+24h) using
+     `market_prices_history`.
+   - Score: CORRECT if direction matches (bullish signal + price up, bearish + price
+     down), INCORRECT if direction opposite, NEUTRAL if price moved < 0.5%.
+   - Aggregate: accuracy % = CORRECT / (CORRECT + INCORRECT), total alerts scored,
+     avg absolute price move after signal.
+
+   Output (per stock and aggregate):
    ```
-   VNM — HIGH (0.78)
-     75,200 VND +1.2% | Ngành bán lẻ: -0.3%
-     Tín hiệu mạnh theo hướng tăng
+   HIEU QUA CANH BAO (30 ngay qua)
+   ────────────────────────────────
+   VNM   Dung: 8 | Sai: 3 | Trung tinh: 2 | Chinh xac: 72.7%
+         Bien dong tb sau tin hieu: +/- 1.8%
+   FPT   Dung: 5 | Sai: 5 | Trung tinh: 1 | Chinh xac: 50.0%
+   ...
+   TONG  Chinh xac: 64% (34/53 tin hieu co the danh gia)
    ```
 
-   New output per stock (add 2 extra lines):
-   ```
-   VNM — HIGH (0.78)
-     75,200 VND +1.2% | Ngành bán lẻ: -0.3%
-     Tín hiệu mạnh theo hướng tăng
-     P&L: +6.8% (+5,200 VND/cp) — 1,000 cp | Chi phí: 75,000,000 VND
-     Quyet dinh: THEM VAO — conviction cao + giá tăng vượt ngành
-   ```
-
-   Decision note rules (rule-based, no LLM):
-   - THEM VAO (add): conviction >= 0.65 AND changePct > sectorAvg AND openAlerts == 0
-   - GIU NGUYEN (hold): conviction >= 0.40 AND NOT the THEM VAO condition
-   - XEM XET GIAM (reduce): openAlerts >= 2 OR (changePct < sectorAvg - 2 AND conviction < 0.45)
-   - GIAM BOT (trim): conviction < 0.30 OR (openAlerts >= 3 AND direction == "bearish")
-   - KHONG CO VI THE (no position): show if no `positions` row for this stock
-
-   If no position is recorded for a stock, skip the P&L line and show:
-   `Chua co vi the — dung set_position de theo doi lai/lo`
+   Graceful degradation:
+   - Alerts with no price history at T or T+24h are skipped (counted as "khong du
+     lieu").
+   - If fewer than 3 scoreable alerts exist, returns "Chua du du lieu de danh gia
+     (can it nhat 3 canh bao da 24h)".
 
    Files:
-   - MODIFY: `src/interface/mcp/tools/portfolioTools.ts` — enhance output section only
-   - MODIFY: `src/__tests__/149-portfolio-conviction.test.ts` (or create
-     `src/__tests__/180-portfolio-decision.test.ts` if the old test file does not exist)
+   - CREATE: `src/interface/mcp/tools/alertAccuracyTools.ts`
+   - MODIFY: `src/interface/mcp/server.ts` — register `registerAlertAccuracyTools`
+   - MODIFY: `src/interface/mcp/tools/index.ts` — add export
+   - CREATE: `src/__tests__/183-alert-accuracy.test.ts`
 
    Acceptance criteria:
-   - When a `positions` row exists for a stock, P&L line appears in output.
-   - When conviction >= 0.65 AND changePct > sectorAvg AND openAlerts == 0, decision
-     note reads "THEM VAO" (case-insensitive match in test).
-   - When openAlerts >= 2, decision note reads "XEM XET GIAM".
-   - When no position row exists, output contains "Chua co vi the".
-   - Existing `get_portfolio_conviction` tests continue to pass.
-   - >= 10 new tests for the decision logic, 0 failures.
+   - A bullish alert followed by +1.5% price move scores CORRECT.
+   - A bullish alert followed by -1.5% price move scores INCORRECT.
+   - A signal followed by +0.3% move scores NEUTRAL.
+   - Alerts < 24 hours old are excluded from scoring.
+   - Output contains per-stock accuracy % and aggregate accuracy %.
+   - No crash when `alerts` table is empty.
+   - >= 14 tests, 0 failures.
    - `bun tsc --noEmit` → 0 errors.
+   - Tool count increases from 37 to 38.
 
-4. **Task 181 — Wire `get_price_history` into morning briefing (P2)**
+3. **Task 184 — Stock search / discovery MCP tool (P1)**
 
-   Enhance `src/application/usecases/assembleBriefing.ts` to append a
-   "Price Trends (7 ngay)" section after the existing conviction section.
-   For each watchlist stock: one-line summary showing the 7-day return and a
-   5-character ASCII sparkline derived from daily close prices.
+   New MCP tool `search_stocks` that queries a built-in static lookup table of
+   ~150 major VN stocks (HOSE/HNX/UPCOM) and returns matches by ticker code,
+   company name, or sector keyword. No external API, no new schema.
 
-   Sparkline characters: `_` (< -1%), `-` (-1% to 0%), `.` (~0%), `+` (0 to +1%),
-   `^` (> +1%). Example: `VNM: +3.2% [_-.+^]`
+   The lookup table is a static TypeScript array embedded in the tool file — company
+   name, exchange, sector (DomainType string), market cap tier (LARGE/MID/SMALL). The
+   list covers all current watchlist stocks plus the top 100 by market cap on HOSE and
+   30 on HNX/UPCOM.
 
-   The sparkline is built from `market_prices_history` daily closes (last price of
-   each calendar day). If fewer than 2 data points exist for a stock, show
-   "(data insufficient — accumulating)".
+   Search logic: case-insensitive substring match on code OR company name OR sector.
+   Returns up to 20 results ranked: exact code match first, then prefix match on code,
+   then name/sector contains match.
+
+   Output:
+   ```
+   KET QUA TIM KIEM: "ngan hang" (12 ket qua)
+   ───────────────────────────────────────────
+   VCB   Vietcombank                  HOSE | banking    | LARGE
+   BID   BIDV                         HOSE | banking    | LARGE
+   CTG   VietinBank                   HOSE | banking    | LARGE
+   MBB   Military Bank                HOSE | banking    | MID
+   ...
+   ```
+
+   Each result includes a hint line: "Them vao danh sach: add_to_watchlist({ code:
+   'VCB', exchange: 'HOSE' })".
 
    Files:
-   - MODIFY: `src/application/usecases/assembleBriefing.ts`
-   - CREATE or MODIFY: `src/__tests__/181-briefing-price-trends.test.ts`
+   - CREATE: `src/interface/mcp/tools/stockSearchTools.ts`
+   - MODIFY: `src/interface/mcp/server.ts` — register `registerStockSearchTools`
+   - MODIFY: `src/interface/mcp/tools/index.ts` — add export
+   - CREATE: `src/__tests__/184-stock-search.test.ts`
 
    Acceptance criteria:
-   - When `market_prices_history` has 7+ rows for VNM, the briefing output contains
-     "Price Trends" section with VNM's 7-day return and a 5-char sparkline.
-   - When fewer than 2 rows exist for a stock, output contains "data insufficient".
-   - The morning briefing assembly does not throw when `market_prices_history` is empty.
-   - >= 8 tests, 0 failures.
+   - `search_stocks({ query: "VCB" })` returns Vietcombank as first result.
+   - `search_stocks({ query: "ngan hang" })` returns at least 5 banking stocks.
+   - `search_stocks({ query: "steel" })` returns HPG (Hoa Phat — steel).
+   - `search_stocks({ query: "xyz999" })` returns "Khong tim thay ket qua".
+   - Results capped at 20; if more match, output notes total count.
+   - Each result includes the add_to_watchlist hint.
+   - >= 12 tests, 0 failures.
    - `bun tsc --noEmit` → 0 errors.
+   - Tool count increases from 38 to 39.
+
+4. **Task 185 — Data freshness dashboard: `get_data_freshness` MCP tool (P1)**
+
+   New MCP tool `get_data_freshness` that reports the last-updated timestamp and
+   staleness status for every data source the system uses. No new schema — reads from
+   existing tables.
+
+   Sources tracked and where last-updated is derived:
+
+   | Source | Table / mechanism | Stale threshold |
+   |--------|-------------------|-----------------|
+   | HOSE prices | MAX(updated_at) FROM market_prices | > 30 min during market hours |
+   | HNX prices | MAX(updated_at) FROM market_prices WHERE exchange='HNX' | > 30 min |
+   | News (CafeF/VnExpress/VnEconomy) | MAX(created_at) FROM rag_analyses | > 60 min |
+   | Cascade / analysis | MAX(created_at) FROM rag_analyses WHERE level='action' | > 60 min |
+   | Alerts | MAX(created_at) FROM alerts | > 120 min |
+   | BCTC reports | MAX(created_at) FROM financial_reports | > 24 h |
+   | Macro indicators | MAX(recorded_at) FROM commodity_prices_history | > 120 min |
+   | Summaries | MAX(created_at) FROM periodic_summaries | > 25 h |
+
+   Status labels: OK (within threshold), STALE (exceeded threshold), NO_DATA (table
+   empty or column missing — non-fatal).
+
+   Output:
+   ```
+   DO MOI DU LIEU (2026-04-01 09:15)
+   ──────────────────────────────────
+   Gia HOSE        OK      Cap nhat: 09:00 (15 phut truoc)
+   Gia HNX         OK      Cap nhat: 09:00 (15 phut truoc)
+   Tin tuc         OK      Cap nhat: 08:55 (20 phut truoc)
+   Phan tich       STALE   Cap nhat: 07:30 (105 phut truoc) [!]
+   Canh bao        OK      Cap nhat: 09:00 (15 phut truoc)
+   Bao cao BCTC    OK      Cap nhat: hom qua 20:00
+   Chi so vi mo    STALE   Cap nhat: 06:00 (195 phut truoc) [!]
+   Tom tat         OK      Cap nhat: hom qua 22:30
+   ```
+
+   Files:
+   - CREATE: `src/interface/mcp/tools/freshnessTools.ts`
+   - MODIFY: `src/interface/mcp/server.ts` — register `registerFreshnessTools`
+   - MODIFY: `src/interface/mcp/tools/index.ts` — add export
+   - CREATE: `src/__tests__/185-data-freshness.test.ts`
+
+   Acceptance criteria:
+   - When MAX(updated_at) in `market_prices` is > 30 min ago during market hours,
+     HOSE status is "STALE".
+   - When MAX(updated_at) is within 30 min, status is "OK".
+   - When a table is empty, status is "NO_DATA" and tool does not throw.
+   - Output shows human-readable "X phut truoc" or "hom qua HH:MM" timestamps.
+   - All 8 sources appear in output.
+   - >= 14 tests, 0 failures.
+   - `bun tsc --noEmit` → 0 errors.
+   - Tool count increases from 39 to 40.
 
 **OUT**
 
-- LLM-based decision recommendations (all rules are deterministic)
-- Portfolio-level P&L aggregation / total portfolio value dashboard (a future sprint)
-- Trade history / journal (a future sprint)
-- Chart image generation (no image tooling in stack)
+- LLM-based analysis or recommendations
 - New external data sources
-- Schema changes beyond the `positions` table
-- Backtest / simulation mode
+- Backtesting / simulation engine
+- Real-time WebSocket price streaming
+- Multi-tranche position management (one position per stock, as established in Sprint 023)
+- Chart image rendering
+- Email or Slack notifications (Telegram only)
+- Alert feedback loop writes back to DB (accuracy is read-only scoring)
 
 ---
 
 ### Success Metrics
 
-1. Investor can ask Claude "show me VNM's price over the last 5 days" and receive a
-   readable table with daily prices, change %, and summary stats.
+1. `get_portfolio_risk()` returns VaR, max drawdown, and portfolio heat for all open
+   positions without errors. The investor can see daily risk posture in one MCP call.
 
-2. Investor can record "I bought VNM at 75,000 on March 15 — 1,000 shares" and see
-   P&L in every `get_portfolio_conviction` call going forward.
+2. `get_alert_accuracy()` scores at least the most recent 7 days of alerts and returns
+   aggregate accuracy %. The investor can judge system reliability objectively.
 
-3. `get_portfolio_conviction` shows a decision note (THEM VAO / GIU NGUYEN / XEM XET
-   GIAM / GIAM BOT) for every stock, derived deterministically from conviction + price
-   action + alert count + position context.
+3. `search_stocks({ query: "ngan hang" })` returns at least 5 banking stocks. The
+   investor can discover and add any major VN stock without knowing its exact code.
 
-4. Morning briefing includes a 5-char sparkline per watchlist stock with 7-day return.
+4. `get_data_freshness()` shows STALE status correctly when intelligence cycle has not
+   run for > 30 min. The investor never acts on unknown-age data again.
 
-5. `bun tsc --noEmit` → 0 errors. All existing 1440 tests continue to pass.
+5. `bun tsc --noEmit` → 0 errors. All existing 1489 tests continue to pass.
 
-6. Tool count: 32 → 36 (get_price_history, set_position, get_positions, close_position).
+6. Tool count: 36 → 40 (get_portfolio_risk, get_alert_accuracy, search_stocks,
+   get_data_freshness).
 
 ---
 
-### Task board (Sprint 023)
+### Task board (Sprint 024)
 
 | # | Title | Priority | Status | Depends on |
 |---|-------|----------|--------|------------|
-| 178 | `get_price_history` MCP tool | P0 | Backlog | — |
-| 179 | Position tracking: schema + 3 MCP tools | P0 | Backlog | — |
-| 180 | Decision note synthesis in `get_portfolio_conviction` | P1 | 179 | — |
-| 181 | Wire price trends sparkline into morning briefing | P2 | Backlog | 178 |
+| 182 | Portfolio risk metrics: VaR, max drawdown, heat map | P0 | Backlog | 179 (positions) |
+| 183 | Alert accuracy tracker: outcome scoring | P0 | Backlog | — |
+| 184 | Stock search / discovery MCP tool | P1 | Backlog | — |
+| 185 | Data freshness dashboard MCP tool | P1 | Backlog | — |
 
 ---
 
 ### Dependency chain
 
 ```
-178 (get_price_history)   — P0, independent, start immediately
-179 (position tracking)   — P0, independent, start immediately
-180 (decision notes)      — P1, needs 179 for positions join
-181 (briefing sparkline)  — P2, needs 178 for history query helper
+182 (portfolio risk)    — P0, needs positions table from task 179 (Sprint 023, done)
+183 (alert accuracy)    — P0, independent, start immediately
+184 (stock search)      — P1, independent, start immediately
+185 (data freshness)    — P1, independent, start immediately
 
-178 + 179 can run in parallel (no shared files).
-180 depends on 179 (reads positions table).
-181 depends on 178 (reuses price history query).
+182 + 183 can run in parallel (no shared files).
+184 + 185 can run in parallel with each other and with 182/183.
+All four tasks touch different tool files — no merge conflicts.
 ```
 
 ---
 
 ### Key technical decisions (locked at PO level)
 
-- **Task 178 is read-only**: no schema change. Reads `market_prices_history` directly.
-  The table is already populated every 15 min by `intelligenceCycleJob`. Risk of
-  breaking anything is zero.
+- **Task 182 uses historical simulation VaR, not parametric VaR**: simpler to
+  implement correctly with no additional dependencies. 20-day window is sufficient
+  for an investor watching daily risk. Parametric VaR (normal distribution assumption)
+  is deferred — VN stocks are not normally distributed.
 
-- **Task 179 `positions` table uses `code` as PRIMARY KEY**: one open position per
-  stock. The investor does not manage tranches — they hold one position per ticker.
-  Closing a position records `exit_price` + `realised_pnl` in-place (no separate
-  history table in this sprint — that is a future "trade journal" sprint).
+- **Task 183 scoring is directional only**: the tool does not predict magnitude — it
+  checks whether the bullish/bearish direction was correct. This avoids the complexity
+  of defining "how much move counts as confirmed". The 0.5% neutral band is a
+  configurable constant in the tool file.
 
-- **Task 180 is pure output formatting**: only `portfolioTools.ts` is touched.
-  The `computeConviction` domain service is NOT modified. The decision note is computed
-  in the tool layer from conviction output + a `positions` DB read. DDD layering preserved.
+- **Task 184 stock list is static TypeScript, not a DB table**: the list changes at
+  most quarterly (delistings, IPOs). A static array is simpler to ship and test.
+  No migration needed. If the user adds a stock not in the list, the watchlist tools
+  still work — search is discovery only, not a gate.
 
-- **Task 181 sparkline uses ASCII only**: no Unicode block characters (they render
-  inconsistently in Telegram plain-text). Five characters: `_`, `-`, `.`, `+`, `^`.
-  The sparkline is a 5-element window over the 7-day history (one char per 1.4 days).
+- **Task 185 staleness thresholds are constants in the tool file** (not in
+  mcp.config.json): they are tied to the tool's display logic and are unlikely to
+  change independently of the tool. Keeping them co-located with the logic avoids
+  config sprawl.
 
 ---
 
@@ -309,3 +349,4 @@ Morning briefing
 | 020 | Prediction Market Intelligence | 2026-04-01 | 163, 164, 165, 166 (stub), 167, 168, 169 |
 | 021 | Close the Loop — Prediction Signals Live | 2026-04-01 | 170, 171, 172, 173 |
 | 022 | House in Order | 2026-04-01 | 174, 175, 176, 177 |
+| 023 | Close the Investor Loop | 2026-04-01 | 178, 179, 180, 181 |

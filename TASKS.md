@@ -291,6 +291,17 @@
 ## 🗂 BACKLOG
 *(Ordered by priority — move to Todo when dependencies are Done)*
 
+### Sprint 024 — Reliability Hardening + Investor UX Polish
+
+| # | Title | Branch | Agent | Layer | Depends on | Status |
+|---|-------|--------|-------|-------|------------|--------|
+| 182 | Portfolio risk metrics: VaR, max drawdown, heat map | `task/182-portfolio-risk` | BA | interface | 179 ✅ | Backlog |
+| 183 | Alert accuracy tracker: outcome scoring | `task/183-alert-accuracy` | BA | interface | — | Backlog |
+| 184 | Stock search / discovery MCP tool | `task/184-stock-search` | BA | interface | — | Backlog |
+| 185 | Data freshness dashboard MCP tool | `task/185-data-freshness` | BA | interface | — | Backlog |
+
+---
+
 ### 📡 Infrastructure Fetchers (021–039)
 
 *(022, 023 promoted to Sprint 004; 026 promoted to Sprint 005 Todo)*
