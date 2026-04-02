@@ -26,6 +26,13 @@ if [ -f "$LOG" ]; then
   fi
 fi
 
+# Load environment variables (.env)
+if [ -f .env ]; then
+  set -a
+  source .env
+  set +a
+fi
+
 # Start with suppressed Rust logs
 # Pipe through grep --line-buffered to filter LanceDB TRACE from stderr
 RUST_LOG=error nohup bun run src/index.ts 2>&1 | grep --line-buffered -v "TRACE" > "$LOG" &
