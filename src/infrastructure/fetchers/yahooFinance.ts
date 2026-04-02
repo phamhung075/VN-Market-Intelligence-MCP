@@ -281,10 +281,15 @@ export function storeCommoditySnapshot(
     VALUES (?, ?, ?, ?, ?)
   `);
 
+  // Dedup: only append history if no row exists for the same hour
   const appendHistory = database.prepare(`
     INSERT INTO commodity_prices_history
       (source, brent_crude_usd, gold_usd_per_oz, usd_vnd_rate, fetched_at)
-    VALUES (?, ?, ?, ?, ?)
+    SELECT ?, ?, ?, ?, ?
+    WHERE NOT EXISTS (
+      SELECT 1 FROM commodity_prices_history
+      WHERE source = ? AND strftime('%Y-%m-%d %H', fetched_at) = strftime('%Y-%m-%d %H', ?)
+    )
   `);
 
   const runTransaction = database.transaction(() => {
@@ -300,6 +305,8 @@ export function storeCommoditySnapshot(
       snapshot.brentCrudeUSD,
       snapshot.goldUSDPerOz,
       snapshot.usdVndRate,
+      snapshot.fetchedAt,
+      SOURCE,
       snapshot.fetchedAt,
     );
   });

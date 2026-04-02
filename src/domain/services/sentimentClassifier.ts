@@ -76,6 +76,11 @@ const VN_BEARISH: SentimentKeyword[] = [
   { word: "khó khăn", weight: 1 },
   { word: "bán ròng", weight: 2 },
   { word: "rút vốn", weight: 2 },
+  { word: "thoái vốn", weight: 2 },
+  { word: "thoái sạch", weight: 3 },
+  { word: "bán hết", weight: 2 },
+  { word: "bán sạch", weight: 3 },
+  { word: "từ nhiệm", weight: 1 },
   { word: "nợ xấu", weight: 1 },
   { word: "vỡ nợ", weight: 2 },
   { word: "phá sản", weight: 2 },
@@ -116,6 +121,11 @@ const EN_BEARISH: SentimentKeyword[] = [
   { word: "downgrade", weight: 1 },
   { word: "recession", weight: 2 },
   { word: "risk", weight: 1 },
+  { word: "insider selling", weight: 2 },
+  { word: "divest", weight: 2 },
+  { word: "divestiture", weight: 2 },
+  { word: "sell off", weight: 2 },
+  { word: "dump shares", weight: 2 },
 ];
 
 /** All bullish entries in one list (longest phrases first to avoid substring conflicts). */

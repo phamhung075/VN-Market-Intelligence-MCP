@@ -277,10 +277,15 @@ export function storeSbvSnapshot(
     VALUES (?, ?, ?, ?, ?)
   `);
 
+  // Dedup: only append history if no row exists for the same hour
   const insertHistory = database.prepare(`
     INSERT INTO sbv_rates_history
       (source, overnight_rate_pct, refinancing_rate_pct, usd_vnd_official, fetched_at)
-    VALUES (?, ?, ?, ?, ?)
+    SELECT ?, ?, ?, ?, ?
+    WHERE NOT EXISTS (
+      SELECT 1 FROM sbv_rates_history
+      WHERE source = ? AND strftime('%Y-%m-%d %H', fetched_at) = strftime('%Y-%m-%d %H', ?)
+    )
   `);
 
   const persist = database.transaction(() => {
@@ -296,6 +301,8 @@ export function storeSbvSnapshot(
       snapshot.overnightRatePct,
       snapshot.refinancingRatePct,
       snapshot.usdVndOfficial,
+      snapshot.fetchedAt,
+      source,
       snapshot.fetchedAt,
     );
   });
