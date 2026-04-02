@@ -17,14 +17,16 @@ import { runMarketScan } from './marketScanJob.js'
 import { runNewsPoller } from './newsPollerJob.js'
 import { runMorningBriefing } from './morningBriefingJob.js'
 import { runEveningSummary } from './eveningSummaryJob.js'
+import { runWeeklyPortfolioReport } from './weeklyPortfolioReportJob.js'
 
 export const CRONS = {
-  morningBriefing: Bun.env.CRON_MORNING_BRIEFING ?? '0 8 * * 1-5',
-  marketOpen:      Bun.env.CRON_MARKET_OPEN      ?? '0 9 * * 1-5',
-  newsPoll:        Bun.env.CRON_NEWS_POLL         ?? '*/30 * * * *',
-  marketClose:     Bun.env.CRON_MARKET_CLOSE      ?? '30 15 * * 1-5',
-  sscCheck:        Bun.env.CRON_SSC_CHECK         ?? '0 20 * * *',
-  eveningSummary:  Bun.env.CRON_EVENING_SUMMARY   ?? '0 22 * * 1-5',
+  morningBriefing:        Bun.env.CRON_MORNING_BRIEFING          ?? '0 8 * * 1-5',
+  marketOpen:             Bun.env.CRON_MARKET_OPEN                ?? '0 9 * * 1-5',
+  newsPoll:               Bun.env.CRON_NEWS_POLL                  ?? '*/30 * * * *',
+  marketClose:            Bun.env.CRON_MARKET_CLOSE               ?? '30 15 * * 1-5',
+  sscCheck:               Bun.env.CRON_SSC_CHECK                  ?? '0 20 * * *',
+  eveningSummary:         Bun.env.CRON_EVENING_SUMMARY            ?? '0 22 * * 1-5',
+  weeklyPortfolioReport:  Bun.env.CRON_WEEKLY_PORTFOLIO_REPORT    ?? '0 23 * * 0',
 }
 
 function log(msg: string) {
@@ -60,6 +62,11 @@ export function startScheduler() {
   // 22:00 — Evening summary (weekdays Mon-Fri only) — task 105
   cron.schedule(CRONS.eveningSummary, async () => {
     await runEveningSummary()
+  }, { timezone: 'Asia/Ho_Chi_Minh' })
+
+  // Sunday 23:00 — Weekly portfolio report — task 218
+  cron.schedule(CRONS.weeklyPortfolioReport, async () => {
+    await runWeeklyPortfolioReport()
   }, { timezone: 'Asia/Ho_Chi_Minh' })
 
   log(`[scheduler] jobs registered — ${Object.keys(CRONS).length} cron jobs active`)
