@@ -26,6 +26,9 @@ import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/
 import { loadConfig } from "../../infrastructure/config.js";
 import { createLogger } from "../../infrastructure/logger.js";
 import { SseSessionManager } from "./transport.js";
+import { handleTelegramCommand } from "../../infrastructure/notifiers/telegramCommands.js";
+import { sendTelegramMessage } from "../../infrastructure/notifiers/telegram.js";
+import { getDb } from "../../infrastructure/db/schema.js";
 import {
   registerWatchlistTools,
   registerReportTools,
@@ -254,6 +257,44 @@ export async function createBunServer(
           },
         }),
       );
+      return;
+    }
+
+    // ── POST /webhook — Telegram bot command webhook ──────────────────────
+    if (method === "POST" && pathname === "/webhook") {
+      const chunks: Buffer[] = [];
+      for await (const chunk of req) {
+        chunks.push(typeof chunk === "string" ? Buffer.from(chunk) : chunk);
+      }
+      const raw = Buffer.concat(chunks).toString("utf-8");
+      let body: unknown;
+      try {
+        body = JSON.parse(raw);
+      } catch {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "Invalid JSON body" }));
+        return;
+      }
+
+      try {
+        const result = await handleTelegramCommand(
+          body as Parameters<typeof handleTelegramCommand>[0],
+          getDb(),
+        );
+        if (result) {
+          await sendTelegramMessage(result.text, {
+            parseMode: "",
+            chatId: result.chatId,
+          });
+        }
+      } catch (err) {
+        log.warn("[webhook] command handling failed", {
+          error: err instanceof Error ? err.message : String(err),
+        });
+      }
+
+      res.writeHead(200, { "Content-Type": "text/plain" });
+      res.end("ok");
       return;
     }
 
