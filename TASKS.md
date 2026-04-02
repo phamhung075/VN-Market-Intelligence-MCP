@@ -131,7 +131,7 @@
 | # | Title | Branch | Agent | Priority | Depends on | Status |
 |---|-------|--------|-------|----------|------------|--------|
 | 220 | Watchlist auto-enrichment: sector peer suggestions on `add_to_watchlist` | `task/220-watchlist-peer-suggestions` | BA | P0 | — | Review |
-| 222 | Alert snooze/mute: `snooze_alerts` / `unmute_alerts` MCP tools | `task/222-alert-snooze` | BA | P1 | — | Backlog |
+| 222 | Alert snooze/mute: `snooze_alerts` / `unmute_alerts` MCP tools | `task/222-alert-snooze` | BA | P1 | — | Review |
 | 223 | Portfolio target allocation: `set_target_allocation` / `get_target_allocation` MCP tools | `task/223-target-allocation` | BA | P2 | 195 (done, soft) | Backlog |
 
 ---
