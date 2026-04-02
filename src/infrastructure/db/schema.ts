@@ -353,4 +353,21 @@ export async function initDatabase(): Promise<void> {
     )
   `);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_alert_mutes_until ON alert_mutes(muted_until)`);
+
+  // ── Telegram Reports (Task 226) ───────────────────────────────────────────
+  // Persists all Report Channel messages for the Dev Team autonomous loop.
+  // message_id = 0 means the row was inserted without a Telegram API send.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS telegram_reports (
+      id          INTEGER PRIMARY KEY AUTOINCREMENT,
+      message_id  INTEGER NOT NULL DEFAULT 0,
+      text        TEXT    NOT NULL,
+      from_agent  TEXT    NOT NULL DEFAULT 'unknown',
+      priority    TEXT    NOT NULL DEFAULT 'normal',
+      status      TEXT    NOT NULL DEFAULT 'new',
+      created_at  INTEGER NOT NULL DEFAULT (unixepoch())
+    )
+  `);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_telegram_reports_status  ON telegram_reports(status)`);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_telegram_reports_created ON telegram_reports(created_at)`);
 }

@@ -30,6 +30,7 @@ import { handleTelegramCommand } from "../../infrastructure/notifiers/telegramCo
 import { sendTelegramMessage } from "../../infrastructure/notifiers/telegram.js";
 import { getDb } from "../../infrastructure/db/schema.js";
 import { validateWebhookRequest } from "../../infrastructure/notifiers/telegramWebhookSetup.js";
+import { insertReport } from "../../infrastructure/db/telegramReportStore.js";
 import {
   registerWatchlistTools,
   registerReportTools,
@@ -300,6 +301,31 @@ export async function createBunServer(
         return;
       }
 
+      // ── Report Channel branch ────────────────────────────────────────────
+      // If the message originates from TELEGRAM_REPORT_ID, persist it in the
+      // telegram_reports table and return 200 immediately without dispatching
+      // to the command router.
+      const reportChatId = Bun.env["TELEGRAM_REPORT_ID"] ?? "";
+      const update = body as {
+        message?: { chat?: { id?: number }; text?: string };
+      };
+      const incomingChatId = String(update?.message?.chat?.id ?? "");
+
+      if (reportChatId && incomingChatId === reportChatId) {
+        const text = update?.message?.text ?? "";
+        try {
+          insertReport(getDb(), text, "human", 0, "normal");
+        } catch (err) {
+          log.warn("[webhook] failed to insert report from Report Channel", {
+            error: err instanceof Error ? err.message : String(err),
+          });
+        }
+        res.writeHead(200, { "Content-Type": "text/plain" });
+        res.end("ok");
+        return;
+      }
+
+      // ── Standard command dispatch (Chat Channel) ─────────────────────────
       try {
         const result = await handleTelegramCommand(
           body as Parameters<typeof handleTelegramCommand>[0],
