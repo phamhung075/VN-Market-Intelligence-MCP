@@ -57,9 +57,9 @@ CLOUDFLARE_TUNNEL=vn-market-mcp
 cd /path/to/VN-Market-Intelligence-MCP
 bun run src/index.ts
 ```
-Server auto-seeds watchlist from config, starts OCR for unprocessed PDFs, registers 46 tools.
+Server auto-seeds watchlist from config, starts OCR for unprocessed PDFs, registers 53 tools.
 
-Verify: `curl https://zenmidi.com/health` → `{"status":"ok","toolCount":46}`
+Verify: `curl https://zenmidi.com/health` → `{"status":"ok","toolCount":53}`
 
 ### Step 2: Start Cloudflare Tunnel
 ```bash
@@ -86,20 +86,36 @@ MCP connector URL: `https://zenmidi.com/mcp`
 - Telegram: "✅ System online" at 08:55 Vietnam (03:55 France CET)
 - Health: `curl https://zenmidi.com/health`
 
-## 47 MCP Tools Available (Sprint 027 in progress — 46 on main + 1 in review)
+## 53 MCP Tools Available (Sprint 031)
 
 | Category | Tools |
 |----------|-------|
 | **Watchlist** | add_to_watchlist, remove_from_watchlist, get_watchlist, update_thresholds |
 | **News** | fetch_and_analyze, run_impact_chain, search_similar_context, get_analysis_history |
-| **Market** | get_market_snapshot, get_macro_snapshot, get_patterns |
-| **Reports** | fetch_ssc_reports, get_financial_summary, compare_financials, list_stored_pdfs, read_bctc_pdf |
-| **Alerts** | get_alerts, mark_alert_read, run_daily_briefing |
-| **Portfolio** | get_portfolio_conviction |
+| **Market** | get_market_snapshot, get_macro_snapshot, get_patterns, get_price_history, get_sector_rotation, search_stocks |
+| **Reports** | fetch_ssc_reports, get_financial_summary, compare_financials, list_stored_pdfs, read_bctc_pdf, get_earnings_calendar |
+| **Alerts** | get_alerts, mark_alert_read, run_daily_briefing, trigger_alert_check, set_price_alert, get_price_alerts, delete_price_alert, get_alert_accuracy |
+| **Portfolio** | get_portfolio_conviction, set_position, get_positions, close_position, get_portfolio_risk, get_rebalancing_signals, get_correlation_matrix, get_performance_attribution, export_portfolio_snapshot |
+| **Prediction Markets** | get_prediction_markets |
 | **Summaries** | get_market_summary, generate_market_summary |
-| **Telegram** | send_test_telegram, **send_telegram_report**, **delete_telegram_report** |
-| **Feedback** | **submit_feedback** (→ Telegram channel), **get_feedback** (deprecated — read channel directly) |
+| **Telegram** | send_test_telegram, send_telegram_report, delete_telegram_report, send_alert_digest |
+| **Feedback** | submit_feedback (→ Telegram channel), get_feedback (deprecated — read channel directly) |
+| **Operations** | get_data_freshness, get_source_health, get_rate_limit_status |
 | **System** | get_system_health, get_global_log, get_tool_log, get_error_summary |
+
+## Telegram Bot Commands (via /webhook)
+
+Users can interact directly via the Telegram bot:
+
+| Command | Description |
+|---------|-------------|
+| `/watchlist` | Show current tracked stocks |
+| `/price VCB` | Get live price for a stock |
+| `/alerts` | Show pending HIGH/CRITICAL alerts |
+| `/briefing` | Trigger morning briefing on demand |
+| `/health` | Server health + tool count |
+| `/pnl` | Show portfolio P&L summary |
+| `/help` | List all commands |
 
 ## Vn-market-report Channel (Inter-Agent Communication)
 

@@ -8,9 +8,11 @@ EACH CYCLE:
 1. Call get_error_summary (lines 10) — system health first
 2. Call get_system_health if errors found — check circuit breakers
 3. Call get_alerts limit 20 severity "all" — review pending alerts
-4. Call get_analysis_history limit 10 — check high-impact news
-5. Call get_watchlist to get current tracked stocks
-6. Call get_market_snapshot with stock codes from watchlist — check prices
+4. Call get_price_alerts to check any stop-loss / take-profit triggers that fired
+5. Call get_analysis_history limit 10 — check high-impact news
+6. Call get_watchlist to get current tracked stocks
+7. Call get_market_snapshot with stock codes from watchlist — check prices
+8. Call trigger_alert_check on demand when you suspect a missed signal
 
 DECISION:
 SEND IMMEDIATELY via send_test_telegram:
@@ -38,10 +40,27 @@ IMPORTANT — STOCK CLASSIFICATION:
 - HPG = Hòa Phát = Thép — KHÔNG PHẢI banking!
 - Khi nói về dầu cao: ảnh hưởng hàng không (HVN/VJC), KHÔNG ảnh hưởng VEA trực tiếp
 
+PRICE ALERTS (stop-loss / take-profit):
+- Call get_price_alerts to see all active price levels set via set_price_alert
+- When a price alert fires: send Telegram immediately (CRITICAL priority, never suppress)
+- Format: "{stock} — GIÁ MỤC TIÊU ĐẠT\nStop-loss {price} VND đã chạm → Xem lại vị thế"
+- After firing: call delete_price_alert to clean up the triggered alert
+
+ALERT DIGEST:
+- Daily at 22:00 VN: call send_alert_digest to send structured daily summary
+- Digest includes: HIGH/CRITICAL count, top 3 events, price alert triggers, system status
+- Never duplicate alerts already sent individually during the day
+
+ALERT ACCURACY TRACKING:
+- Call get_alert_accuracy weekly (Sunday)
+- If precision <60% for a signal category → submit_feedback to tune thresholds
+- Track: alerts sent vs subsequent price confirmation within 24h
+
 COOLDOWN:
 - Same stock + same signal type: suppress 60 min
 - Max 3 alerts per stock per day
 - CRITICAL: never suppress
+- Price alerts (stop-loss/take-profit): never suppress regardless of cooldown
 
 After sending: call mark_alert_read to clear processed alerts.
 Morning weekdays 08:55 Vietnam: send "✅ Hệ thống online"
@@ -59,3 +78,4 @@ Example: `submit_feedback(agent="alert-commander", category="alert_quality", tit
 CONFIGURATION:
 - Stock list from get_watchlist — never hardcode stock codes
 - Alert thresholds are managed by the server (mcp.config.json)
+- Price alerts (stop-loss/take-profit) set via set_price_alert persist in DB until triggered or deleted

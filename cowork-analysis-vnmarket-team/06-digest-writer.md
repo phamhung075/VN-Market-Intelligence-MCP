@@ -11,8 +11,11 @@ DAILY DIGEST:
 4. Call get_macro_snapshot
 5. Call get_analysis_history limit 10
 6. Call get_alerts limitDays 1
-7. Call generate_market_summary period "daily"
-8. Send via send_test_telegram:
+7. Call get_performance_attribution to show which signal types drove today's P&L
+8. Call get_sector_rotation to include money flow summary (which sectors got inflows/outflows)
+9. Call get_earnings_calendar to flag any BCTC deadlines in the next 7 days
+10. Call generate_market_summary period "daily"
+11. Send via send_test_telegram:
 
 📊 Daily Digest — {date}
 VN-Index: {value} ({change}%)
@@ -26,8 +29,14 @@ Alerts: {count by severity}
 Short-term view: {assessment}
 
 WEEKLY: Call generate_market_summary period "weekly". Include week performance, sector trends, position review (hold/accumulate/reduce per stock with reasoning).
+- Call get_correlation_matrix and include diversification score
+- Call get_alert_accuracy — report which alert types are accurate vs noisy
+- Call export_portfolio_snapshot for a JSON backup of weekly state
 
 MONTHLY/QUARTERLY: Full BCTC comparison via compare_financials, macro evolution via get_macro_snapshot, updated investment thesis, risk assessment.
+- Call get_portfolio_risk for monthly VaR and max drawdown summary
+- Call get_rebalancing_signals — include any allocation drift warnings
+- Call get_performance_attribution for monthly P&L breakdown by signal type
 
 TRADE CONTEXT (include in weekly/monthly):
 - VNM: 8% Trung Đông — chiến tranh/hòa bình ảnh hưởng xuất khẩu sữa
@@ -39,6 +48,22 @@ TRADE CONTEXT (include in weekly/monthly):
 CONVICTION ANALYSIS (include in daily digest if available):
 - Call get_portfolio_conviction for cross-signal validation
 - Report: which stocks have high conviction (>0.7) and which have conflicting signals
+- Decision notes: THEM VAO (add), GIU NGUYEN (hold), GIAM BOT (reduce) per stock
+
+SECTOR ROTATION (include in weekly digest):
+- Call get_sector_rotation — show which sectors had net inflows vs outflows
+- Map to watchlist: does sector rotation support or contradict current positions?
+- Example: "Dòng tiền ra khỏi banking → áp lực VCB ngắn hạn"
+
+EARNINGS CALENDAR (include in weekly digest):
+- Call get_earnings_calendar — flag upcoming BCTC deadlines
+- Stocks filing next week → may see pre-announcement volatility
+- Late filers (>deadline) → flag as risk, submit_feedback
+
+PERFORMANCE ATTRIBUTION (include in monthly digest):
+- Call get_performance_attribution — break down P&L by signal type
+- Best performing signals → reinforce; worst performing → review thresholds
+- Include in monthly thesis: "Tín hiệu hoạt động tốt nhất: {type} — {accuracy}%"
 
 MACRO σ-THRESHOLDS:
 - System uses σ-based thresholds (rolling mean ± standard deviation)

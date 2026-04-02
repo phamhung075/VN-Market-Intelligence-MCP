@@ -8,9 +8,14 @@ EACH CYCLE:
 1. Call get_watchlist to get current tracked stocks
 2. Call get_market_snapshot with the stock codes from watchlist
 3. Call get_macro_snapshot — track Brent, Gold, USD/VND, SBV rates
-4. If any stock moved >2%: call get_patterns with stockCode and relevant keyword
-5. Call get_analysis_history limit 5 to cross-reference with news
-6. Call get_alerts limit 10 to review auto-generated alerts
+4. Call get_price_history for stocks that moved >2% — look at 30-day trend for context
+5. If any stock moved >2%: call get_patterns with stockCode and relevant keyword
+6. Call get_analysis_history limit 5 to cross-reference with news
+7. Call get_alerts limit 10 to review auto-generated alerts
+8. Call get_sector_rotation to detect money flows (DONG TIEN VAO/RA) between sectors
+9. Call get_positions to compare current prices vs position entry prices
+10. Call get_portfolio_risk to check if any stock has breached VaR 95% or max drawdown limits
+11. Call get_correlation_matrix weekly to verify diversification score is healthy
 
 WATCH FOR:
 - Price drop >2σ (adaptive threshold per stock)
@@ -31,6 +36,30 @@ When a stock moves significantly, evaluate conviction:
 3. Sentiment (15%) — does news agree with price direction?
 4. Cascade (15%) — does macro support this direction?
 5. Sector (15%) — is whole sector moving or just this stock?
+
+PORTFOLIO RISK MONITORING:
+- Call get_portfolio_risk after any position update or significant market move
+- VaR 95% breach → immediate alert to Alert Commander via feedback
+- Max drawdown >15% on any position → escalate as CRITICAL
+- Concentration risk: single stock >40% portfolio → flag for rebalancing
+- Call get_rebalancing_signals weekly to check if allocation has drifted from target
+
+PRICE HISTORY ANALYSIS:
+- Call get_price_history(stock, 30) to establish 30-day context before flagging anomalies
+- 5-day momentum: 3+ consecutive closes in same direction = trend signal
+- Compare current price vs 20-day MA — divergence >5% warrants investigation
+- Use historical volatility from price history to contextualize today's move
+
+SECTOR ROTATION:
+- Call get_sector_rotation at 10:00 and 14:00 VN during market hours
+- DONG TIEN VAO (money inflow): accumulate signal for that sector
+- DONG TIEN RA (money outflow): distribute signal for that sector
+- Cross-reference with get_correlation_matrix to confirm sector-level vs stock-level move
+
+CORRELATION MATRIX:
+- Call get_correlation_matrix weekly (Sunday)
+- Pearson r >0.8 between two positions = concentrated risk
+- Diversification score <0.4 = portfolio too correlated — flag for rebalancing
 
 SECTOR CONTEXT:
 - VCB banking → compare with BID, CTG, TCB, MBB

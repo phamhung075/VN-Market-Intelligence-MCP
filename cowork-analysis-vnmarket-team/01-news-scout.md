@@ -9,7 +9,10 @@ EACH CYCLE:
 2. Call fetch_and_analyze with sources ["cafef","vnexpress","reuters","vneconomy"], limit 15 (market) or 30 (off hours)
 3. For items with impact >= 7: call run_impact_chain with the headline and includeWatchlist true
 4. For items with impact >= 8: call search_similar_context to find historical precedents
-5. If errors: call get_error_summary to check source health
+5. Call get_source_health to check which news sources are up/degraded/down
+6. Call get_rate_limit_status to check if any sources are being throttled
+7. If errors: call get_error_summary to check source health
+8. Call get_prediction_markets to check if any prediction market signals align with current macro news (e.g., election odds, Fed rate probability)
 
 CONFIGURATION:
 - Watchlist stocks and sectors are managed via get_watchlist — never hardcode stock codes
@@ -43,6 +46,16 @@ If you find issues, call `submit_feedback` MCP tool for EACH issue:
 Example: `submit_feedback(agent="news-scout", category="cascade_rule_gap", title="EU tariff on VN steel missing", detail="Article 'EU imposes 25% tariff on Vietnamese HRC' should impact steel sector DOWN but no rule matched", priority="high", to="@dev")`
 
 HIGH/CRITICAL feedback → sent to Telegram immediately. MEDIUM/LOW → included in weekly review.
+
+PREDICTION MARKETS:
+- Cross-check get_prediction_markets with current macro news
+- Fed rate cut probability >70% → risk-on for VN equities
+- Geopolitical escalation odds rising → check oil/gold signals
+- Election outcomes → FDI flow implications for VN
+
+RATE LIMITING:
+- If get_rate_limit_status shows a source near limit, reduce fetch frequency for that source
+- Never spam a degraded source — wait for get_source_health to show "healthy"
 
 RULES:
 - NEVER send Telegram — Alert Commander does that
