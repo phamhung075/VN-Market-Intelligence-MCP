@@ -297,7 +297,7 @@
 |---|-------|--------|-------|-------|------------|--------|
 | 182 | Portfolio risk metrics: VaR, max drawdown, heat map | `task/182-portfolio-risk` | BA | interface | 179 ✅ | Backlog |
 | 183 | Alert accuracy tracker: outcome scoring | `task/183-alert-accuracy` | BA | interface | — | Backlog |
-| 184 | Stock search / discovery MCP tool | `task/184-stock-search` | BA | interface | — | Backlog |
+| 184 | Stock search / discovery MCP tool | `task/184-stock-search` | BA | interface | — | Review |
 | 185 | Data freshness dashboard MCP tool | `task/185-data-freshness` | BA | interface | — | Backlog |
 
 ---

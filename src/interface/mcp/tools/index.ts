@@ -22,3 +22,4 @@ export { registerPredictionTools } from "./predictionTools.js";
 export { registerAlertCheckTools } from "./alertCheckTools.js";
 export { registerPriceHistoryTools } from "./priceHistoryTools.js";
 export { registerPositionTools } from "./positionTools.js";
+export { registerSearchStocksTools } from "./searchTools.js";
