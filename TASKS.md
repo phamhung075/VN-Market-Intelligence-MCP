@@ -88,6 +88,7 @@
 > **Sprint 018 COMPLETE** — All 3 tasks merged: 157, 158, 159. Data audit engine, scheduler wiring, health tool enhancement. 2026-04-01.
 > **Sprint 019 COMPLETE** — All 3 tasks merged: 160, 161, 162. QA approved: 2026-04-01. 69 new tests (160: 34, 161: 19, 162: 16). stockAliases, alias wiring in cascadeEngine + pollNews, market-wide broadcast.
 > **Sprint 020 COMPLETE** — Prediction Market Intelligence pipeline: schema (163), config (169), cascade mapper (165), signal detector stub (166), scheduler job (167), MCP tool (168), Polymarket fetcher (164). NOTE: task 166 is a type-stub only — `detectPredictionSignals` not yet implemented. Sprint 021 completes the loop.
+> **Sprint 021 QA batch** — Tasks 165 + 172 merged: 2026-04-01. Prediction cascade mapper (38 tests), prediction signals in briefings (18 tests). tsc: 0 errors.
 
 ---
 
@@ -95,8 +96,7 @@
 
 | # | Title | Branch | Notes |
 |---|-------|--------|-------|
-| 165 | Prediction cascade mapper | `task/165-prediction-cascade-mapper` | 38 tests pass, tsc 0 errors |
-| 172 | Prediction signals section in morning briefing + evening summary | `task/172-prediction-briefing` | 18 tests pass, tsc 0 errors |
+| — | — | — | Empty |
 
 ---
 
@@ -171,7 +171,7 @@
 |---|-------|--------|-------|-------|----------|------------|--------|
 | 170 | Fix pre-existing test failures — 062 stale assertion | `task/170-fix-test-failures` | Developer | tests | P0 | — | **Backlog** |
 | 171 | Implement `detectPredictionSignals` (full logic, not stub) | `task/171-prediction-signal-impl` | Developer | domain/services | P0 | — | **Backlog** |
-| 172 | Prediction signals section in morning briefing + evening summary | `task/172-prediction-briefing` | Developer | application/usecases + scheduler | P1 | 171 ✓ | **Review** |
+| 172 | Prediction signals section in morning briefing + evening summary | `task/172-prediction-briefing` | Developer | application/usecases + scheduler | P1 | 171 ✓ | **Done** — merged 2026-04-01 |
 | 173 | Prediction market cascade: wire signals into `buildCausalChain` via `runPredictionImpactChain` | `task/173-prediction-cascade-wiring` | Developer | application/usecases + scheduler | P1 | 171 ✓, 165 ✓ | **Backlog** |
 
 ---
