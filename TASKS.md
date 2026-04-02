@@ -77,6 +77,7 @@
 | # | Title | Branch | Notes |
 |---|-------|--------|-------|
 | DOC-001 | Update CLAUDE.md architecture section | `task/doc-001-claude-md-update` | Ready for QA |
+| 176 | trigger_alert_check MCP tool (on-demand signal check) | `task/doc-001-claude-md-update` | 8/8 tests pass, tsc clean, ready for QA |
 
 ---
 
