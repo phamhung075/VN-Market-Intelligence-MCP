@@ -32,3 +32,4 @@ export { registerAlertDigestTools } from "./alertDigestTools.js";
 export { registerCorrelationTools } from "./correlationTools.js";
 export { registerExportTools } from "./exportTools.js";
 export { registerPerformanceTools } from "./performanceTools.js";
+export { registerRebalancingTools } from "./rebalancingTools.js";

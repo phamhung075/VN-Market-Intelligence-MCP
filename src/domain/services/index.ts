@@ -35,6 +35,14 @@ export type {
   TimeHorizon,
 } from "./newsNormalizer.js";
 export { buildCausalChain } from "./cascadeEngine.js";
+export {
+  computeRebalancing,
+  formatRebalancingReport,
+} from "./rebalancingCalculator.js";
+export type {
+  Position as RebalancingPosition,
+  RebalanceAction,
+} from "./rebalancingCalculator.js";
 export type {
   WatchlistEntry,
   CausalChainEntry,

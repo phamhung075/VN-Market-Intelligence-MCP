@@ -52,6 +52,7 @@ import {
   registerCorrelationTools,
   registerExportTools,
   registerPerformanceTools,
+  registerRebalancingTools,
 } from "./tools/index.js";
 
 /** Options for starting the Bun HTTP server. */
@@ -123,6 +124,7 @@ export async function createBunServer(
     registerCorrelationTools(server);
     registerExportTools(server);
     registerPerformanceTools(server);
+    registerRebalancingTools(server);
     return server;
   }
 
