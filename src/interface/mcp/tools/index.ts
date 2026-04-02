@@ -24,3 +24,4 @@ export { registerPriceHistoryTools } from "./priceHistoryTools.js";
 export { registerPositionTools } from "./positionTools.js";
 export { registerPortfolioRiskTool } from "./portfolioRiskTool.js";
 export { registerAlertAccuracyTool } from "./alertAccuracy.js";
+export { registerSearchStocksTools } from "./searchTools.js";

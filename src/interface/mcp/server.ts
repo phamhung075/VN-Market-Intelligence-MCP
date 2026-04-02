@@ -44,6 +44,7 @@ import {
   registerPositionTools,
   registerPortfolioRiskTool,
   registerAlertAccuracyTool,
+  registerSearchStocksTools,
 } from "./tools/index.js";
 
 /** Options for starting the Bun HTTP server. */
@@ -107,6 +108,7 @@ export async function createBunServer(
     registerPositionTools(server);
     registerPortfolioRiskTool(server);
     registerAlertAccuracyTool(server);
+    registerSearchStocksTools(server);
     return server;
   }
 

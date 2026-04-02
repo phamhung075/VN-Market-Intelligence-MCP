@@ -76,7 +76,7 @@
 
 | # | Title | Branch | Notes |
 |---|-------|--------|-------|
-| DOC-001 | Update CLAUDE.md architecture section | `task/doc-001-claude-md-update` | Ready for QA |
+| — | — | — | Empty |
 
 ---
 
@@ -291,6 +291,17 @@
 ## 🗂 BACKLOG
 *(Ordered by priority — move to Todo when dependencies are Done)*
 
+### Sprint 024 — Reliability Hardening + Investor UX Polish
+
+| # | Title | Branch | Agent | Layer | Depends on | Status |
+|---|-------|--------|-------|-------|------------|--------|
+| 182 | Portfolio risk metrics: VaR, max drawdown, heat map | `task/182-portfolio-risk` | BA | interface | 179 ✅ | Backlog |
+| 183 | Alert accuracy tracker: outcome scoring | `task/183-alert-accuracy` | BA | interface | — | Backlog |
+| 184 | Stock search / discovery MCP tool | `task/184-stock-search` | BA | interface | — | Review |
+| 185 | Data freshness dashboard MCP tool | `task/185-data-freshness` | BA | interface | — | Backlog |
+
+---
+
 ### 📡 Infrastructure Fetchers (021–039)
 
 *(022, 023 promoted to Sprint 004; 026 promoted to Sprint 005 Todo)*
@@ -346,16 +357,24 @@
 
 ---
 
+## Sprint 023 — Close the Investor Loop
+
+| # | Title | Branch | Layer | Depends on | Status |
+|---|-------|--------|-------|------------|--------|
+| 181 | Morning briefing ASCII sparkline | `task/181-sparkline` | domain + application | 101 ✅ | **Review** |
+
+---
+
 ## Kanban Summary
 
 | Column | Count | Tasks |
 |--------|-------|-------|
 | ✅ Done | 43 | 000, 001, 002, 003, 011, 012, 013, 014, 021, 022, 023, 026, 027, 029, 030, 041, 042, 043, 044, 045, 046, 047, 048, 061, 062, 063, 064, 065, 066, 081, 082, 083, 084, 085, 086, 087, 088, 101, 102, 103, 104, 105 |
-| 🔍 Review | 1 | 182 |
+| 🔍 Review | 1 | 181 |
 | 🚧 In Progress | 0 | — |
 | 📋 Todo | 0 | — (Sprint 006 Wave 2 COMPLETE; Task 123 now unblocked for Wave 3) |
 | 🗂 Backlog | 8 | Deferred: 024, 025, 028, 121-125 |
-| **Total** | **51** | |
+| **Total** | **52** | |
 
 ---
 
