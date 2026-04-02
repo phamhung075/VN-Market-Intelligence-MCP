@@ -502,6 +502,17 @@ export async function initDatabase(): Promise<void> {
     CREATE INDEX IF NOT EXISTS idx_pnl_snapshots_date ON portfolio_pnl_snapshots(date);
   `);
 
+  // ── Portfolio Target Allocation (Task 223) ────────────────────────────────
+  // Persistent target weights for rebalancing — avoids manual input on each run.
+  // code is PRIMARY KEY so INSERT OR REPLACE is idempotent.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS portfolio_targets (
+      code          TEXT PRIMARY KEY,
+      target_weight REAL NOT NULL,
+      updated_at    TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+  `);
+
   // ── Seed default watchlist from mcp.config.json (skip in tests) ────────────
   const currentDbPath = process.env["DB_PATH"] ?? Bun.env["DB_PATH"] ?? DEFAULT_DB_PATH;
   if (currentDbPath === ":memory:" || Bun.env["BUN_ENV"] === "test" || typeof Bun.env["BUN_TEST"] !== "undefined") return;

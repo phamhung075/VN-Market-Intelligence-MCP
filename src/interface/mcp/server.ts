@@ -63,6 +63,7 @@ import {
   registerCompareTools,
   registerCustomAlertTools,
   registerAlertMuteTools,
+  registerTargetAllocationTools,
 } from "./tools/index.js";
 
 /** Options for starting the Bun HTTP server. */
@@ -141,6 +142,7 @@ export async function createBunServer(
     registerCompareTools(server);
     registerCustomAlertTools(server);
     registerAlertMuteTools(server);
+    registerTargetAllocationTools(server);
     return server;
   }
 

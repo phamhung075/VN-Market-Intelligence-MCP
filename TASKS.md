@@ -85,6 +85,7 @@
 | 217 | compare_stocks MCP tool — side-by-side comparison | `worktree-agent-a1f64692` | 20 tests pass, tsc 0 errors |
 | 218 | Weekly portfolio report via Telegram | `worktree-agent-a219df68` | 14 tests pass, tsc clean |
 | 219 | Custom alert rules engine | `task/219-custom-alert-rules` | 21 tests pass, tsc clean, 3 MCP tools |
+| 223 | Portfolio target allocation: `set_target_allocation` / `get_target_allocation` | `task/223-target-allocation` | 22 tests pass, tsc clean, toolCount 53→55 |
 
 ---
 
@@ -130,9 +131,15 @@
 
 | # | Title | Branch | Agent | Priority | Depends on | Status |
 |---|-------|--------|-------|----------|------------|--------|
+<<<<<<< HEAD
 | 220 | Watchlist auto-enrichment: sector peer suggestions on `add_to_watchlist` | `task/220-watchlist-peer-suggestions` | BA | P0 | — | Review |
 | 222 | Alert snooze/mute: `snooze_alerts` / `unmute_alerts` MCP tools | `task/222-alert-snooze` | BA | P1 | — | Review |
 | 223 | Portfolio target allocation: `set_target_allocation` / `get_target_allocation` MCP tools | `task/223-target-allocation` | BA | P2 | 195 (done, soft) | Backlog |
+=======
+| 220 | Watchlist auto-enrichment: sector peer suggestions on `add_to_watchlist` | `task/220-watchlist-peer-suggestions` | BA | P0 | — | Backlog |
+| 222 | Alert snooze/mute: `snooze_alerts` / `unmute_alerts` MCP tools | `task/222-alert-snooze` | BA | P1 | — | Backlog |
+| 223 | Portfolio target allocation: `set_target_allocation` / `get_target_allocation` MCP tools | `task/223-target-allocation` | BA | P2 | 195 (done, soft) | Review |
+>>>>>>> task/223-target-allocation
 
 ---
 
