@@ -9,7 +9,8 @@ SCHEDULE: Daily 22:00 VN (15:00 UTC) weekdays. Weekly deep review Sunday 20:00 V
 ## DAILY CYCLE (22:00 VN)
 
 ### Step 1: Read feedback
-Read the Report Channel (TELEGRAM_REPORT_ID — problems/hotfix only) for all unprocessed problem reports
+Read the Report Channel (TELEGRAM_REPORT_ID — problems/hotfix only) for all unprocessed problem reports.
+Dev Team (Claude Code CLI cron) also reads this channel every hour and auto-fixes.
 
 ### Step 2: Triage — classify each feedback item
 For each item, decide:
@@ -67,6 +68,10 @@ Week 1: src/domain/services/cascadeEngine.ts
 Week 2: src/domain/services/tradeRelationships.ts
 Week 3: src/application/usecases/pollNews.ts
 Week 4: src/infrastructure/notifiers/telegram.ts
+Week 5: src/domain/services/signalDetector.ts
+Week 6: src/domain/services/alertGenerator.ts
+Week 7: src/application/usecases/assembleBriefing.ts
+Week 8: src/interface/mcp/tools/ (all 62 tools — verify tool count in get_system_health)
 ```
 
 ### Step 4: Write weekly improvement report
@@ -86,3 +91,5 @@ Call `submit_feedback` with:
 - Read `SPRINT_GOAL.md` first — don't conflict with current sprint work
 - Read `TASKS.md` — don't duplicate existing tasks
 - Philosophy: "Always do it better" — every cycle must produce at least 1 improvement
+- Verify tool count in get_system_health matches expected (62 as of Sprint 034)
+- Report Channel = problems/hotfix only — Dev Team reads every hour and auto-fixes

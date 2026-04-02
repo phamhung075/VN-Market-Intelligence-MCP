@@ -72,10 +72,10 @@ Call `submit_feedback` for each quality issue:
 - `performance_issue`: "Circuit breaker cafef opened 3 times — source consistently slow"
 
 Read the Report Channel (TELEGRAM_REPORT_ID) to review what other agents reported today.
-Report Channel = problems/hotfix only. User Chat Channel = alerts + analysis for user.
+Report Channel = problems/hotfix only. Dev Team reads it every hour and auto-fixes.
 
 Example: `submit_feedback(agent="alert-commander", category="alert_quality", title="3 false VEA alerts from currency news", detail="Euro/Rupiah articles triggered VEA HIGH alerts via trade analysis. Trade relevance gate should filter currency-only articles.", priority="high", to="@dev")`
-Note: ALL feedback goes to Report Channel only — never cross-posts to user Chat Channel.
+Note: ALL feedback goes to Report Channel only — NEVER to user Chat Channel.
 
 NEW TOOLS (Sprint 032-034):
 - `add_custom_alert` / `list_custom_alerts` / `delete_custom_alert` — user-defined alert rules

@@ -10,12 +10,66 @@ A MCP (Model Context Protocol) server built in TypeScript running on Bun. It giv
 - Managing a user's stock watchlist and generating multi-signal alerts
 - Running a daily scheduled briefing at market open/close
 
-## Multi-Agent Team (AI Native SDLC)
+## Two-Team Autonomous Architecture (Sprint 035)
 
-This project is built by a **Hierarchical Multi-Agent System (MAS)** inspired by Lê Hoàng Dũng's AI Native SDLC.
-The full workflow is documented in `.claude/WORKFLOW.md`.
+Two autonomous teams work in parallel to serve the user and improve the system:
 
-### Agent Roster
+```
+┌──────────────────────────────────────────────────────────┐
+│  ANALYSIS TEAM (Claude Cowork — 7 agents, cloud)         │
+│  Serves user with investment intelligence                 │
+│  → Chat Channel (TELEGRAM_CHAT_ID) = user-facing          │
+│  → Report Channel (TELEGRAM_REPORT_ID) = problems only    │
+└───────────────────────┬──────────────────────────────────┘
+                        │ Report Channel (problems)
+                        ▼
+┌──────────────────────────────────────────────────────────┐
+│  DEV TEAM (Claude Code CLI — local cron, every 1 hour)   │
+│  Reads problems → auto-fixes → pushes to main            │
+│  → Telegram summary of changes to user                    │
+│  → Updates agent .md files → notifies user                │
+│  → Server auto-reloads via bun --hot                      │
+└──────────────────────────────────────────────────────────┘
+```
+
+### Two Telegram Channels
+
+| Channel | Env Var | Purpose |
+|---------|---------|---------|
+| **Chat** | `TELEGRAM_CHAT_ID` | User-facing: alerts, briefings, analysis, bot commands |
+| **Report** | `TELEGRAM_REPORT_ID` | Problems/hotfix ONLY: dev team reads, auto-fixes, deletes |
+
+### Analysis Team (Claude Cowork — cloud)
+
+7 agents on Claude Cowork. Prompts in `cowork-analysis-vnmarket-team/`.
+
+| # | Agent | File | Role |
+|---|-------|------|------|
+| 0 | Setup | `00-setup-watchlist.md` | One-time: seed watchlist |
+| 1 | News Scout | `01-news-scout.md` | Fetch news, sentiment, impact chains |
+| 2 | BCTC Collector | `02-bctc-collector.md` | Track BCTC report availability |
+| 3 | Report Analyzer | `03-report-analyzer.md` | Analyze financials, validate data |
+| 4 | Market Watcher | `04-market-watcher.md` | Track prices, detect anomalies |
+| 5 | Alert Commander | `05-alert-commander.md` | ONLY agent that sends to Chat Channel |
+| 6 | Digest Writer | `06-digest-writer.md` | Daily/weekly summaries |
+| 7 | System Improver | `07-system-improver.md` | Quality review, report problems |
+
+Coordinator: `unified-agent.md` — analysis coordination only (no dev chain).
+
+### Dev Team (Claude Code CLI — local cron)
+
+Runs every 1 hour. Prompt in `cowork-analysis-vnmarket-team/dev-team-cron.md`.
+
+| Step | Action |
+|------|--------|
+| 0 | Check Report Channel → empty? → exit (low cost) |
+| 1 | Read reports → triage: FIX NOW or SPRINT TASK |
+| 2 | FIX NOW: fix → test → commit → push → Telegram summary |
+| 3 | SPRINT: PO → BA → Architect → PM → Dev → QA chain |
+| 4 | Update docs: CLAUDE.md, TASKS.md, SPRINT_GOAL.md |
+| 5 | If agent .md changed → notify user to refresh Cowork |
+
+### Dev Team Agent Roster (for SPRINT TASK items)
 
 | Agent | File | Role |
 |-------|------|------|
@@ -27,16 +81,6 @@ The full workflow is documented in `.claude/WORKFLOW.md`.
 | QA / CI-CD | `.claude/agents/qa.md` | Test pipeline, merge gate, sprint report |
 | Fixer | `.claude/agents/fixer.md` | Minimum fixes on changes-requested tasks |
 | Market Analyst | `.claude/agents/market-analyst.md` | Investment analysis via MCP tools |
-
-### Auto-Running Chain
-```
-Human idea → PO → BA → ⛔(blockers) → Architect → PM → Developer → QA
-                                                              ↕
-                                                          Fixer (if needed)
-                                                              ↓
-                                              ⛔(smoke test) → PO → merge main
-```
-Only 2 Gatekeeper pauses require human input: blocker answers + smoke test approval.
 
 ### Start a new feature
 ```
@@ -217,6 +261,18 @@ src/
 
 mcp.config.json                     ← Central JSON config: server, data paths, scheduler, alerts, RAG, fetchers, predictionMarkets
 bctc-schema.ts                      ← Complete BCTC data model + SQLite DDL (root level)
+cowork-analysis-vnmarket-team/
+├── README.md                       ← AI team setup guide (62 tools, two channels)
+├── unified-agent.md                ← Analysis team coordinator (no dev chain)
+├── dev-team-cron.md                ← Dev team hourly loop prompt (Claude Code CLI)
+├── 00-setup-watchlist.md           ← One-time watchlist setup
+├── 01-news-scout.md                ← News monitoring agent
+├── 02-bctc-collector.md            ← BCTC report tracking agent
+├── 03-report-analyzer.md           ← Financial analysis agent
+├── 04-market-watcher.md            ← Price tracking agent
+├── 05-alert-commander.md           ← Alert + Telegram sender (ONLY sender)
+├── 06-digest-writer.md             ← Daily/weekly digest agent
+└── 07-system-improver.md           ← Quality review + problem reporter
 ```
 
 ## Key data flow
@@ -333,7 +389,7 @@ Polymarket (every 30 min) → predictionStore → predictionSignalDetector
 ```bash
 bun install           # install dependencies
 bun --watch src/index.ts   # dev with hot reload
-./start.sh            # production (suppresses LanceDB TRACE, rotates logs)
+./start.sh            # production (bun --hot, suppresses LanceDB TRACE, rotates logs)
 
 # Server endpoints
 GET  http://localhost:3000/sse               ← Claude connects here
@@ -380,14 +436,19 @@ Key sections:
 ## Dev Team & Workflow
 
 See `.claude/WORKFLOW.md` for the complete auto-running engine description.
+See `cowork-analysis-vnmarket-team/dev-team-cron.md` for the hourly dev loop.
+See `docs/AI_TEAM_DESIGN.md` for the full two-team architecture.
 
 ### Methodology
+- **Two-Team Autonomy**: Analysis team (Cowork cloud) + Dev team (Claude Code CLI local cron)
 - **AI Native SDLC**: full agent chain (PO → BA → Architect → PM → Developer → QA → Fixer)
 - **Agile/Kanban**: `TASKS.md` is the Kanban board — Backlog → Todo → In Progress → Review → Done
 - **WIP limit**: max 2 tasks In Progress simultaneously
 - **TDD**: every task starts with a failing test in `src/__tests__/NNN-*.test.ts`
 - **DDD**: strict layering — domain never imports infrastructure
 - **Reports**: `reports/TASK_REPORT_NNN.md` generated by QA after every review
+- **Auto-merge**: Dev team auto-merges to main, always commits separately for rollback
+- **Hot reload**: `bun --hot` in production, code changes apply without full restart
 
 ### Start working on a task (Developer)
 
@@ -687,12 +748,27 @@ src/
 - `src/interface/mcp/tools/sentimentTrendTools.ts` — `get_sentiment_trend` MCP tool: Vietnamese output with trend direction (TANG/GIAM/ON DINH), slope, and r-squared (task 225)
 - `src/interface/mcp/server.ts` — updated to 62 registered tools
 
+**Two-Team Autonomy — Docs + Config (Sprint 035a)**
+- `cowork-analysis-vnmarket-team/dev-team-cron.md` — NEW: hourly dev loop prompt for Claude Code CLI
+- `cowork-analysis-vnmarket-team/unified-agent.md` — REWRITTEN: analysis coordinator only (removed dev chain)
+- `cowork-analysis-vnmarket-team/README.md` — updated: 62 tools, two-channel architecture, .env with REPORT_ID
+- `cowork-analysis-vnmarket-team/*.md` — all 8 agent files updated: tool count 62, channel rules, new Sprint 032-034 tools
+- `docs/AI_TEAM_DESIGN.md` — REWRITTEN: complete two-team architecture (Analysis Team + Dev Team)
+- `src/interface/mcp/tools/feedbackTools.ts` — removed cross-post of feedback to user Chat Channel (Report Channel only)
+- `start.sh` — enabled `bun --hot` for live code reload without full restart
+
 ### In Progress
 
-None.
+**Two-Team Autonomy — Code (Sprint 035b)**
+- `telegram_reports` SQLite table — store sent reports with message_id, text, status
+- Webhook for Report Channel — catch incoming messages from TELEGRAM_REPORT_ID
+- `read_telegram_reports` MCP tool — read unprocessed reports from SQLite
+- `process_telegram_report` MCP tool — mark processed + delete from Telegram
 
 ### Deferred (Sprint 008+ backlog)
 - E2E test — daily briefing flow (task 125, after 024)
+- Graceful restart script (future, after bun --hot proves stable)
+- Micro-service MCP gateway architecture (future)
 
 ## Data model references
 
@@ -716,4 +792,13 @@ None.
 | VN-Index | Vietnamese main stock index (HOSE) |
 
 ## dev workflow
-full SDLC — Run the agent chain (PO → BA → Architect → PM → Dev → QA) for a proper spec
+
+### For Analysis Team (Cowork agents)
+Report problems via `submit_feedback` → Report Channel → Dev Team auto-fixes
+
+### For Dev Team (Claude Code CLI cron)
+1. Check Report Channel → triage → FIX NOW or SPRINT TASK
+2. FIX NOW: fix → test → commit → push → Telegram summary
+3. SPRINT TASK: full SDLC — Run the agent chain (PO → BA → Architect → PM → Dev → QA)
+4. Update docs: CLAUDE.md, TASKS.md, SPRINT_GOAL.md, agent .md files
+5. Auto-merge to main, always commit separately for rollback
