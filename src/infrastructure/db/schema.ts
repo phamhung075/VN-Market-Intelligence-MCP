@@ -22,12 +22,30 @@ import { dirname, resolve } from "node:path";
 import { SQLITE_DDL } from "../../../bctc-schema.js";
 
 /**
- * Default DB path — resolved to absolute path at module load time
- * to prevent CWD-dependent resolution on restart.
- * The project root is 3 levels up from this file (src/infrastructure/db/).
+ * Default DB path — resolved to absolute path at module load time.
  */
 const PROJECT_ROOT = resolve(import.meta.dir, "..", "..", "..");
 const DEFAULT_DB_PATH = resolve(PROJECT_ROOT, "data", "market.db");
+
+// ── Custom Alert Rules DDL (Task 219) ────────────────────────────────────────
+const CUSTOM_ALERT_RULES_DDL = `
+  CREATE TABLE IF NOT EXISTS custom_alert_rules (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    code         TEXT NOT NULL,
+    predicate    TEXT NOT NULL,
+    threshold    REAL NOT NULL,
+    status       TEXT NOT NULL DEFAULT 'active',
+    created_at   TEXT NOT NULL DEFAULT (datetime('now')),
+    triggered_at TEXT,
+    notes        TEXT
+  )
+`;
+
+export function ensureCustomAlertRulesTable(db: Database): void {
+  db.exec(CUSTOM_ALERT_RULES_DDL);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_custom_alert_rules_code ON custom_alert_rules(code)`);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_custom_alert_rules_status ON custom_alert_rules(status)`);
+}
 
 let _db: Database | null = null;
 
@@ -503,4 +521,7 @@ export async function initDatabase(): Promise<void> {
       }
     }
   } catch { /* config not available — skip seeding */ }
+
+  // ── Custom Alert Rules (Task 219) ─────────────────────────────────────────
+  ensureCustomAlertRulesTable(db);
 }

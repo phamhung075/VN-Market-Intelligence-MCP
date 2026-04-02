@@ -83,6 +83,7 @@
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 | 195 | Portfolio rebalancing signals: `get_rebalancing_signals` | `task/195-rebalancing-signals` | 17 tests pass, tsc clean, awaiting QA sign-off |
 =======
 | 215 | Telegram webhook registration + security | `task/215-telegram-webhook` | Ready for QA |
@@ -93,6 +94,9 @@
 =======
 | 218 | Weekly portfolio report via Telegram | `worktree-agent-a219df68` | 14 tests pass, tsc clean |
 >>>>>>> worktree-agent-a219df68
+=======
+| 219 | Custom alert rules engine | `task/219-custom-alert-rules` | 21 tests pass, tsc clean, 3 MCP tools |
+>>>>>>> task/219-custom-alert-rules
 
 ---
 

@@ -61,6 +61,7 @@ import {
   registerRateLimitTools,
   registerSourceHealthTools,
   registerCompareTools,
+  registerCustomAlertTools,
 } from "./tools/index.js";
 
 /** Options for starting the Bun HTTP server. */
@@ -137,6 +138,7 @@ export async function createBunServer(
     registerRateLimitTools(server);
     registerSourceHealthTools(server);
     registerCompareTools(server);
+    registerCustomAlertTools(server);
     return server;
   }
 
