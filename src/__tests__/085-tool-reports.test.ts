@@ -417,57 +417,26 @@ describe("Task 085 — SSC Report MCP Tools", () => {
   });
 
   // ── Test 1: tools are registered ───────────────────────────────────────────
-  it("registers all three tools on the McpServer", () => {
+  // fetch_ssc_reports removed in sprint-036 task 230 (automated via sscCheckerJob)
+  it("registers remaining report tools on the McpServer (fetch_ssc_reports removed)", () => {
     const registry = (server as unknown as {
       _registeredTools: Record<string, unknown>;
     })._registeredTools;
 
-    expect("fetch_ssc_reports" in registry).toBe(true);
+    expect("fetch_ssc_reports" in registry).toBe(false); // removed in task 230
     expect("get_financial_summary" in registry).toBe(true);
     expect("compare_financials" in registry).toBe(true);
   });
 
-  // ── Test 2: fetch_ssc_reports with mock pipeline ───────────────────────────
-  it("fetch_ssc_reports returns formatted summary from pipeline", async () => {
-    // The tool calls fetchParseAndStoreBctc internally.
-    // We inject a mock via the pipelineFn option in registerReportTools.
-    // For this test we create a server with a mock pipeline:
-    const mockServer = new McpServer(
-      { name: "mock-server", version: "0.0.1" },
-      { capabilities: { tools: {} } },
-    );
-    registerReportTools(mockServer, async () => FIXTURE_REPORT);
-
-    const result = await callTool(mockServer, "fetch_ssc_reports", {
-      actionCode: "VCB",
-      year: 2024,
-      quarter: "Q1",
-    });
-
-    expect(result.content).toHaveLength(1);
-    expect(result.content[0]!.type).toBe("text");
-    const text = result.content[0]!.text;
-
-    // Should mention the stock code and period
-    expect(text).toContain("VCB");
-    expect(text).toContain("2024");
+  // ── Test 2: fetch_ssc_reports — REMOVED in sprint-036 task 230 ───────────────
+  it.skip("fetch_ssc_reports returns formatted summary from pipeline (tool removed in task 230)", async () => {
+    // fetch_ssc_reports is no longer registered as an MCP tool.
+    // SSC fetching is now automated via sscCheckerJob cron.
   });
 
-  // ── Test 3: fetch_ssc_reports returns error when pipeline returns null ──────
-  it("fetch_ssc_reports handles null result (no docs found) gracefully", async () => {
-    const mockServer = new McpServer(
-      { name: "mock-server-2", version: "0.0.1" },
-      { capabilities: { tools: {} } },
-    );
-    registerReportTools(mockServer, async () => null);
-
-    const result = await callTool(mockServer, "fetch_ssc_reports", {
-      actionCode: "UNKNOWN",
-      year: 2024,
-      quarter: "Q1",
-    });
-
-    expect(result.content[0]!.text).toContain("No report");
+  // ── Test 3: fetch_ssc_reports — REMOVED in sprint-036 task 230 ──────────────
+  it.skip("fetch_ssc_reports handles null result (tool removed in task 230)", async () => {
+    // fetch_ssc_reports is no longer registered as an MCP tool.
   });
 
   // ── Test 4: get_financial_summary returns key metrics ──────────────────────

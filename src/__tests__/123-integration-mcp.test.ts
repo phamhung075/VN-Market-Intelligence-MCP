@@ -618,9 +618,8 @@ describe("RT3 — BCTC summary roundtrip", () => {
     expect(text).toContain("No financial data found");
   });
 
-  it("fetch_ssc_reports with mocked pipeline returns formatted summary", async () => {
-    // Use the pipeline injection — pass a mock pipeline that returns a seeded report's data
-    // by seeding directly and calling get_financial_summary (the pipeline path is covered by task 048)
+  it("get_financial_summary returns formatted summary for seeded report", async () => {
+    // fetch_ssc_reports removed in task 230 — use get_financial_summary directly
     seedFinancialReport({ id: "fr-rt3-hpg", actionCode: "HPG", year: 2025, quarter: "Q1" });
 
     const result = await callTool(server, "get_financial_summary", {
@@ -847,14 +846,14 @@ describe("Cross-chain structural checks", () => {
     expect(toolNames).toContain("remove_from_watchlist");
     expect(toolNames).toContain("get_watchlist");
     expect(toolNames).toContain("update_thresholds");
-    // Report tools (3)
-    expect(toolNames).toContain("fetch_ssc_reports");
+    // Report tools (2 — fetch_ssc_reports removed in task 230)
+    expect(toolNames).not.toContain("fetch_ssc_reports"); // removed in task 230
     expect(toolNames).toContain("get_financial_summary");
     expect(toolNames).toContain("compare_financials");
-    // Alert tools (4)
+    // Alert tools (3 — run_daily_briefing removed in task 230)
     expect(toolNames).toContain("get_alerts");
     expect(toolNames).toContain("mark_alert_read");
-    expect(toolNames).toContain("run_daily_briefing");
+    expect(toolNames).not.toContain("run_daily_briefing"); // removed in task 230
     expect(toolNames).toContain("get_analysis_history");
     // Analysis tools (3)
     expect(toolNames).toContain("fetch_and_analyze");
@@ -879,25 +878,9 @@ describe("Cross-chain structural checks", () => {
     expect(text).toContain("read");
   });
 
-  it("run_daily_briefing includes watchlist and alert sections", async () => {
-    // Seed a watchlist entry and an alert
-    await callTool(server, "add_to_watchlist", {
-      actionCode: "GAS",
-      exchange: "HOSE",
-      domain: "oil_gas",
-    });
-    seedAlert({
-      id: "alert-briefing",
-      severity: "high",
-      affectedCodes: ["GAS"],
-      message: "GAS oil price surge",
-    });
-
-    const result = await callTool(server, "run_daily_briefing", {});
-    const text = getText(result);
-    expect(text).toContain("Watchlist");
-    expect(text).toContain("GAS");
-    expect(text).toContain("Briefing");
+  // run_daily_briefing removed in sprint-036 task 230 — scheduler-driven via Telegram
+  it.skip("run_daily_briefing includes watchlist and alert sections (removed in task 230)", async () => {
+    // run_daily_briefing is no longer registered as an MCP tool.
   });
 
   it("SQLite state is isolated between tests — watchlist is empty at start", async () => {

@@ -219,70 +219,9 @@ export function registerReportTools(
   server: McpServer,
   pipelineFn: PipelineFn = fetchParseAndStoreBctc,
 ): void {
-  // ── 1. fetch_ssc_reports ─────────────────────────────────────────────────
-  server.tool(
-    "fetch_ssc_reports",
-    "Fetch, parse, and store a BCTC (financial report) from the SSC portal for a given stock, year, and quarter. Returns a formatted financial summary on success.",
-    {
-      actionCode: z
-        .string()
-        .min(2)
-        .max(10)
-        .toUpperCase()
-        .describe("Stock ticker code, e.g. VCB, HPG"),
-      year: z
-        .number()
-        .int()
-        .min(2010)
-        .max(2030)
-        .describe("Fiscal year, e.g. 2024"),
-      quarter: QuarterEnum.describe("Quarter: Q1 | Q2 | Q3 | Q4"),
-    },
-    async ({ actionCode, year, quarter }) => {
-      const tag = `[fetch_ssc_reports] ${actionCode} ${year}-${quarter}`;
-      try {
-        await initDatabase();
-        const report = await pipelineFn({
-          actionCode,
-          year,
-          quarter: quarter as QuarterString,
-        });
-
-        if (!report) {
-          return {
-            content: [
-              {
-                type: "text" as const,
-                text: `No report found for ${actionCode} ${year}-${quarter}. ` +
-                  `The SSC portal may not have published this report yet, ` +
-                  `or the stock code may be incorrect.`,
-              },
-            ],
-          };
-        }
-
-        return {
-          content: [
-            {
-              type: "text" as const,
-              text: buildReportSummary(report),
-            },
-          ],
-        };
-      } catch (err) {
-        console.error(`${tag} error:`, err);
-        return {
-          content: [
-            {
-              type: "text" as const,
-              text: `Error fetching report for ${actionCode} ${year}-${quarter}: ` +
-                (err instanceof Error ? err.message : String(err)),
-            },
-          ],
-        };
-      }
-    },
-  );
+  // ── 1. fetch_ssc_reports — REMOVED (sprint-036 task 230)
+  // SSC report fetching is now handled by the automated sscCheckerJob cron.
+  // Use get_financial_summary to read already-stored reports.
 
   // ── 2. get_financial_summary ─────────────────────────────────────────────
   server.tool(

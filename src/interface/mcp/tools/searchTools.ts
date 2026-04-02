@@ -34,58 +34,9 @@ import { logger } from "../../../infrastructure/logger.js";
  *
  * @param server - McpServer instance to register on
  */
-export function registerSearchStocksTools(server: McpServer): void {
-  server.tool(
-    "search_stocks",
-    "Search for Vietnamese stocks by code, company name, or sector keyword",
-    {
-      query: z
-        .string()
-        .describe(
-          "Search term (e.g. 'VCB', 'Vietcombank', 'banking', 'ngan hang', 'thep')",
-        ),
-      limit: z
-        .number()
-        .int()
-        .min(1)
-        .max(50)
-        .optional()
-        .default(10)
-        .describe("Maximum number of results to return (default: 10, max: 50)"),
-    },
-    async ({ query, limit }) => {
-      try {
-        // Initialise DB so we can read the watchlist (idempotent)
-        await initDatabase();
-        const db = getDb();
-
-        // Fetch current watchlist codes
-        const rows = db
-          .prepare("SELECT code FROM watchlist")
-          .all() as { code: string }[];
-        const watchlistCodes = rows.map((r) => r.code);
-
-        // Perform search
-        const results = searchStocks(query, watchlistCodes, limit);
-        const text = formatSearchResults(query, results);
-
-        return {
-          content: [{ type: "text" as const, text }],
-        };
-      } catch (err) {
-        logger.error("[search_stocks] Error", {
-          error: err instanceof Error ? err.message : String(err),
-          query,
-        });
-        return {
-          content: [
-            {
-              type: "text" as const,
-              text: `Loi tim kiem: ${err instanceof Error ? err.message : String(err)}`,
-            },
-          ],
-        };
-      }
-    },
-  );
+// search_stocks — REMOVED from MCP registration (sprint-036 task 230).
+// The domain service (searchStocks / formatSearchResults) is still importable.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export function registerSearchStocksTools(_server: McpServer): void {
+  // No-op: search_stocks is no longer exposed as an MCP tool.
 }

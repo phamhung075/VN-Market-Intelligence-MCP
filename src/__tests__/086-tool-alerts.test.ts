@@ -148,14 +148,15 @@ describe("Task 086 — Alert MCP Tools", () => {
 
   // ── Tool registration ────────────────────────────────────────────────────
 
-  it("registers all 4 tools on the McpServer", () => {
+  // run_daily_briefing removed in sprint-036 task 230 (replaced by scheduled morningBriefingJob)
+  it("registers 3 tools on the McpServer (run_daily_briefing removed)", () => {
     const registry = (server as unknown as {
       _registeredTools: Record<string, unknown>;
     })._registeredTools;
 
     expect(registry["get_alerts"]).toBeDefined();
     expect(registry["mark_alert_read"]).toBeDefined();
-    expect(registry["run_daily_briefing"]).toBeDefined();
+    expect(registry["run_daily_briefing"]).toBeUndefined(); // removed in task 230
     expect(registry["get_analysis_history"]).toBeDefined();
   });
 
@@ -328,9 +329,10 @@ describe("Task 086 — Alert MCP Tools", () => {
 
   });
 
-  // ── run_daily_briefing ───────────────────────────────────────────────────
+  // ── run_daily_briefing — REMOVED in sprint-036 task 230 ─────────────────
+  // Replaced by scheduled morningBriefingJob + Telegram delivery.
 
-  describe("run_daily_briefing", () => {
+  describe.skip("run_daily_briefing (removed in task 230)", () => {
 
     it("returns a structured text response", async () => {
       const result = await callTool(server, "run_daily_briefing", {});

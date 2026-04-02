@@ -93,7 +93,7 @@
 
 | # | Title | Branch | Notes |
 |---|-------|--------|-------|
-| — | — | — | Empty |
+| 230 | Remove 8 dead/forbidden tools from MCP (64→56) | `task/230-remove-dead-tools` | Implementation complete — awaiting QA review |
 
 ---
 

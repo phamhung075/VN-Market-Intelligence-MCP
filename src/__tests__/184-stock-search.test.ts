@@ -123,7 +123,8 @@ describe("Task 184 — searchStocks domain service", () => {
 // 2. MCP tool registration
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe("Task 184 — registerSearchStocksTools MCP registration", () => {
+// search_stocks removed from MCP in sprint-036 task 230
+describe("Task 184 — registerSearchStocksTools MCP registration (tool removed in task 230)", () => {
   let server: McpServer;
 
   beforeAll(() => {
@@ -134,11 +135,11 @@ describe("Task 184 — registerSearchStocksTools MCP registration", () => {
     registerSearchStocksTools(server);
   });
 
-  it("registers the search_stocks tool without throwing", () => {
+  it("search_stocks is no longer registered as an MCP tool (removed in task 230)", () => {
     const tools = (server as unknown as { _registeredTools: Record<string, unknown> })
       ._registeredTools;
     expect(tools).toBeDefined();
-    expect(Object.keys(tools)).toContain("search_stocks");
+    expect(Object.keys(tools)).not.toContain("search_stocks");
   });
 });
 

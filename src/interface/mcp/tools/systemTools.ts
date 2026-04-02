@@ -280,47 +280,11 @@ export function registerSystemTools(server: McpServer): void {
     },
   );
 
-  // ── get_global_log — quick AI scan of recent activity ──────────────────
-  server.tool(
-    "get_global_log",
-    "Read the last N lines from the global log file (data/logs/global.log). " +
-      "Each line is a one-liner summary: [timestamp] [LEVEL] [source] message. " +
-      "Use this for a quick scan of system activity and to spot problems fast.",
-    {
-      lines: z.number().int().min(1).max(500).default(50)
-        .describe("Number of recent log lines to return (default: 50)"),
-    },
-    async ({ lines: n }) => {
-      const content = readGlobalLog(n ?? 50);
-      return { content: [{ type: "text" as const, text: content }] };
-    },
-  );
+  // ── get_global_log — REMOVED (sprint-036 task 230)
+  // Internal log access is forbidden for AI agents; use get_error_summary instead.
 
-  // ── get_tool_log — deep debug for specific tool/module ─────────────────
-  server.tool(
-    "get_tool_log",
-    "Read detailed log entries for a specific tool or module (data/logs/tool-{name}.log). " +
-      "Each line is a full JSON object with timestamp, level, message, and all context fields. " +
-      "Use this to find the root cause of a problem after identifying it in the global log. " +
-      "Call with tool='list' to see all available tool logs.",
-    {
-      tool: z.string().min(1).max(50)
-        .describe("Tool/module name (e.g. 'ssc', 'cafef', 'hose', 'telegram'). Use 'list' to see available logs."),
-      lines: z.number().int().min(1).max(500).default(100)
-        .describe("Number of recent log lines to return (default: 100)"),
-    },
-    async ({ tool: toolName, lines: n }) => {
-      if (toolName === "list") {
-        const tools = listToolLogs();
-        if (tools.length === 0) {
-          return { content: [{ type: "text" as const, text: "No tool logs found yet. Logs are created when tools run." }] };
-        }
-        return { content: [{ type: "text" as const, text: `Available tool logs:\n${tools.map(t => `  - ${t}`).join("\n")}` }] };
-      }
-      const content = readToolLog(toolName, n ?? 100);
-      return { content: [{ type: "text" as const, text: content }] };
-    },
-  );
+  // ── get_tool_log — REMOVED (sprint-036 task 230)
+  // Internal log access is forbidden for AI agents; use get_error_summary instead.
 
   // ── get_error_summary — WARN + ERROR lines only ────────────────────────
   server.tool(

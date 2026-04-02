@@ -115,11 +115,12 @@ beforeEach(() => {
 // Tests
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe("Task 176 — trigger_alert_check MCP Tool", () => {
+// trigger_alert_check removed from MCP in sprint-036 task 230
+describe("Task 176 — trigger_alert_check MCP Tool (tool removed in task 230)", () => {
 
   // ── 1. Registration ────────────────────────────────────────────────────────
 
-  it("registerAlertCheckTools registers trigger_alert_check without throwing", () => {
+  it("registerAlertCheckTools is a no-op — trigger_alert_check NOT registered (removed in task 230)", () => {
     const fresh = new McpServer(
       { name: "fresh-176", version: "0.0.0" },
       { capabilities: { tools: {} } },
@@ -128,12 +129,12 @@ describe("Task 176 — trigger_alert_check MCP Tool", () => {
     const reg = (fresh as unknown as {
       _registeredTools: Record<string, unknown>;
     })._registeredTools;
-    expect("trigger_alert_check" in reg).toBe(true);
+    expect("trigger_alert_check" in reg).toBe(false); // removed in task 230
   });
 
-  // ── 2. Empty watchlist ─────────────────────────────────────────────────────
+  // ── 2-8: Tool removed — skipped (sprint-036 task 230) ─────────────────────
 
-  it("returns safe message when watchlist is empty and no actionCode given", async () => {
+  it.skip("returns safe message when watchlist is empty and no actionCode given", async () => {
     const result = await callTool(server, "trigger_alert_check", {
       _testPrices: [],
     });
@@ -145,7 +146,7 @@ describe("Task 176 — trigger_alert_check MCP Tool", () => {
 
   // ── 3. No signals detected ─────────────────────────────────────────────────
 
-  it("returns 'Không có tín hiệu bất thường' when prices are normal", async () => {
+  it.skip("returns 'Không có tín hiệu bất thường' when prices are normal", async () => {
     const db = getDb();
     db.prepare(`
       INSERT INTO watchlist (code, exchange, domain, added_at, alert_drop_pct, alert_rise_pct, alert_impact_min)
@@ -162,7 +163,7 @@ describe("Task 176 — trigger_alert_check MCP Tool", () => {
 
   // ── 4. Single stock filter (actionCode) ────────────────────────────────────
 
-  it("filters to a single stock when actionCode is provided", async () => {
+  it.skip("filters to a single stock when actionCode is provided", async () => {
     const db = getDb();
     db.prepare(`INSERT INTO watchlist (code, exchange, domain, added_at, alert_drop_pct, alert_rise_pct, alert_impact_min) VALUES (?, ?, ?, ?, ?, ?, ?)`).run("VCB", "HOSE", "banking", new Date().toISOString(), 5, 5, 5);
     db.prepare(`INSERT INTO watchlist (code, exchange, domain, added_at, alert_drop_pct, alert_rise_pct, alert_impact_min) VALUES (?, ?, ?, ?, ?, ?, ?)`).run("FPT", "HOSE", "technology", new Date().toISOString(), 5, 5, 5);
@@ -184,7 +185,7 @@ describe("Task 176 — trigger_alert_check MCP Tool", () => {
 
   // ── 5. HIGH signal — summary mentions severity ─────────────────────────────
 
-  it("mentions HIGH severity label when a large price drop is detected", async () => {
+  it.skip("mentions HIGH severity label when a large price drop is detected", async () => {
     const db = getDb();
     db.prepare(`INSERT INTO watchlist (code, exchange, domain, added_at, alert_drop_pct, alert_rise_pct, alert_impact_min) VALUES (?, ?, ?, ?, ?, ?, ?)`).run("VCB", "HOSE", "banking", new Date().toISOString(), 5, 5, 5);
 
@@ -209,7 +210,7 @@ describe("Task 176 — trigger_alert_check MCP Tool", () => {
 
   // ── 6. READ-ONLY — no rows inserted in alerts table ───────────────────────
 
-  it("does NOT insert rows into the alerts table", async () => {
+  it.skip("does NOT insert rows into the alerts table", async () => {
     const db = getDb();
     db.prepare(`INSERT INTO watchlist (code, exchange, domain, added_at, alert_drop_pct, alert_rise_pct, alert_impact_min) VALUES (?, ?, ?, ?, ?, ?, ?)`).run("VCB", "HOSE", "banking", new Date().toISOString(), 5, 5, 5);
 
@@ -234,7 +235,7 @@ describe("Task 176 — trigger_alert_check MCP Tool", () => {
 
   // ── 7. Telegram graceful no-op when env vars absent ───────────────────────
 
-  it("does not throw when Telegram env vars are absent (graceful no-op)", async () => {
+  it.skip("does not throw when Telegram env vars are absent (graceful no-op)", async () => {
     const db = getDb();
     db.prepare(`INSERT INTO watchlist (code, exchange, domain, added_at, alert_drop_pct, alert_rise_pct, alert_impact_min) VALUES (?, ?, ?, ?, ?, ?, ?)`).run("VCB", "HOSE", "banking", new Date().toISOString(), 5, 5, 5);
 
@@ -264,7 +265,7 @@ describe("Task 176 — trigger_alert_check MCP Tool", () => {
 
   // ── 8. actionCode not in watchlist → safe message ─────────────────────────
 
-  it("returns safe message when actionCode is not in watchlist", async () => {
+  it.skip("returns safe message when actionCode is not in watchlist", async () => {
     // watchlist is empty (cleared in beforeEach)
     const result = await callTool(server, "trigger_alert_check", {
       actionCode: "HPG",

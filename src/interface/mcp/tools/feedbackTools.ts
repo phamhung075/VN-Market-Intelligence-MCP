@@ -97,27 +97,7 @@ export function registerFeedbackTools(server: McpServer): void {
     },
   );
 
-  // ── 2. get_feedback — points to Telegram channel ───────────────────────
-  server.tool(
-    "get_feedback",
-    "Feedback is now managed via the Vn-market-report Telegram channel. " +
-      "Read reports directly from the channel. This tool returns a reminder.",
-    {
-      status: z.enum(["new", "reviewed", "implemented", "all"]).default("new")
-        .describe("Ignored — feedback is on Telegram now"),
-      limit: z.number().int().min(1).max(50).default(20)
-        .describe("Ignored — feedback is on Telegram now"),
-    },
-    async () => {
-      return {
-        content: [{
-          type: "text" as const,
-          text: "Feedback has moved to the Vn-market-report Telegram channel.\n" +
-            "Read reports directly from: https://t.me/+gXd3gCcD5IhmMzY0\n" +
-            "Use send_telegram_report to communicate with the team.\n" +
-            "Use submit_feedback to send new improvement suggestions.",
-        }],
-      };
-    },
-  );
+  // ── 2. get_feedback — REMOVED (sprint-036 task 230)
+  // Feedback is managed via the Report Channel. Use read_telegram_reports instead.
+  // Implementation kept below for reference; not registered as MCP tool.
 }

@@ -334,8 +334,8 @@ describe("Task 190 — Portfolio Snapshot Export", () => {
     expect(s.summary.prediction_markets_count).toBe(s.prediction_markets.length);
   });
 
-  // ── 12: MCP tool is registered on server ─────────────────────────────────
-  it("export_portfolio_snapshot MCP tool is registered on McpServer", () => {
+  // ── 12: MCP tool removed — sprint-036 task 230 ───────────────────────────
+  it("export_portfolio_snapshot is NOT registered as an MCP tool (removed in task 230)", () => {
     const { McpServer } = require("@modelcontextprotocol/sdk/server/mcp.js");
     const { registerExportTools } = require("../interface/mcp/tools/exportTools.js");
 
@@ -349,32 +349,13 @@ describe("Task 190 — Portfolio Snapshot Export", () => {
     const registeredTools = (
       server as unknown as { _registeredTools: Record<string, unknown> }
     )._registeredTools;
-    expect(registeredTools).toHaveProperty("export_portfolio_snapshot");
+    expect(registeredTools).not.toHaveProperty("export_portfolio_snapshot"); // removed in task 230
   });
 
-  // ── 13: MCP tool handler returns text with file path ─────────────────────
-  it("MCP tool handler returns text content including file path or error info", async () => {
-    const { McpServer } = require("@modelcontextprotocol/sdk/server/mcp.js");
-    const { registerExportTools } = require("../interface/mcp/tools/exportTools.js");
-
-    const server = new McpServer(
-      { name: "test-190b", version: "0.0.0" },
-      { capabilities: { tools: {} } },
-    );
-    registerExportTools(server);
-
-    const tool = (
-      server as unknown as { _registeredTools: Record<string, { handler: (args: unknown) => Promise<unknown> }> }
-    )._registeredTools["export_portfolio_snapshot"];
-
-    expect(tool).toBeDefined();
-    const result = await tool!.handler({});
-    expect(result).toHaveProperty("content");
-    const content = (result as { content: Array<{ type: string; text: string }> }).content;
-    expect(Array.isArray(content)).toBe(true);
-    expect(content.length).toBeGreaterThan(0);
-    expect(content[0]!.type).toBe("text");
-    expect(typeof content[0]!.text).toBe("string");
+  // ── 13: MCP tool handler removed — sprint-036 task 230 ───────────────────
+  it.skip("MCP tool handler returns text content (tool removed in task 230)", async () => {
+    // export_portfolio_snapshot is no longer registered as an MCP tool.
+    // The exportPortfolioSnapshot use case is still available internally.
   });
 
   // ── 14: snapshot_<YYYYMMDD_HHmmss>.json filename format ──────────────────
