@@ -11,6 +11,8 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { getDb, initDatabase } from "../../../infrastructure/db/schema.js";
 import { computeConviction } from "../../../domain/services/convictionScorer.js";
 import { getSectorPeers, SECTOR_NAME_VI } from "../../../domain/services/sectorPeers.js";
+import { buildPositionLine, buildActionNote } from "../../../domain/services/decisionNoteSynthesizer.js";
+import { listOpenPositions } from "../../../infrastructure/db/positionStore.js";
 import { logger } from "../../../infrastructure/logger.js";
 import type { DomainType } from "../../../../bctc-schema";
 
@@ -95,6 +97,22 @@ export function registerPortfolioTools(server: McpServer): void {
           }
         }
 
+        // Build index of open positions keyed by stock code
+        let positionMap = new Map<string, { shares: number; avgPrice: number; pnlPct: number; currentPrice: number }>();
+        try {
+          const positions = listOpenPositions(db);
+          for (const pos of positions) {
+            if (pos.currentPrice != null) {
+              positionMap.set(pos.code, {
+                shares: pos.shares,
+                avgPrice: pos.avgPrice,
+                pnlPct: pos.unrealizedPnlPct,
+                currentPrice: pos.currentPrice,
+              });
+            }
+          }
+        } catch { /* positions table may not exist yet */ }
+
         // Build conviction results
         const results: {
           code: string;
@@ -109,6 +127,8 @@ export function registerPortfolioTools(server: McpServer): void {
           sectorName: string;
           openAlerts: number;
           trend: number[];
+          positionLine: string;
+          actionNote: string;
         }[] = [];
 
         for (const w of watchlist) {
@@ -143,6 +163,15 @@ export function registerPortfolioTools(server: McpServer): void {
             trend = rows.reverse().map((r) => r.peak_score);
           } catch { /* table may not exist */ }
 
+          // Position P&L line and action note
+          const pos = positionMap.get(w.code) ?? null;
+          const positionLine = buildPositionLine(pos);
+          const actionNote = buildActionNote({
+            convictionScore: conviction.score,
+            pnlPct: pos ? pos.pnlPct : null,
+            direction: conviction.direction,
+          });
+
           results.push({
             code: w.code,
             domain: w.domain,
@@ -156,6 +185,8 @@ export function registerPortfolioTools(server: McpServer): void {
             sectorName: SECTOR_NAME_VI[w.domain as DomainType] ?? w.domain,
             openAlerts,
             trend,
+            positionLine,
+            actionNote,
           });
         }
 
@@ -179,6 +210,8 @@ export function registerPortfolioTools(server: McpServer): void {
           lines.push(`${r.code} — ${r.level.toUpperCase()} (${r.score.toFixed(2)})`);
           lines.push(`  ${priceStr} ${chgStr} | ${sectorStr}${alertStr}${trendStr}`);
           lines.push(`  ${r.summary}`);
+          lines.push(`  ${r.positionLine}`);
+          lines.push(`  ${r.actionNote}`);
           lines.push("");
         }
 
