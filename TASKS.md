@@ -76,7 +76,12 @@
 
 | # | Title | Branch | Notes |
 |---|-------|--------|-------|
+<<<<<<< HEAD
 | — | — | — | Empty |
+=======
+| DOC-001 | Update CLAUDE.md architecture section | `task/doc-001-claude-md-update` | Ready for QA |
+| 188 | Daily alert digest: `send_alert_digest` MCP tool + scheduler job | `task/188-alert-digest` | 16 tests pass, tsc 0 errors — Ready for QA |
+>>>>>>> task/188-alert-digest
 
 ---
 

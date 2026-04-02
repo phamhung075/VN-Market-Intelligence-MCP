@@ -48,6 +48,7 @@ import {
   registerDataFreshnessTools,
   registerSectorRotationTools,
   registerEarningsCalendarTools,
+  registerAlertDigestTools,
 } from "./tools/index.js";
 
 /** Options for starting the Bun HTTP server. */
@@ -115,6 +116,7 @@ export async function createBunServer(
     registerDataFreshnessTools(server);
     registerSectorRotationTools(server);
     registerEarningsCalendarTools(server);
+    registerAlertDigestTools(server);
     return server;
   }
 

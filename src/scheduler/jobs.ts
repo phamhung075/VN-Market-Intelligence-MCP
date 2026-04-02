@@ -8,6 +8,7 @@
  *   intelligenceCycle     every 15 min         (task 106) ✓
  *   marketClose           15:30 weekdays       (task 103) ✓
  *   sscCheck              20:00 daily          (task 104) ✓
+ *   alertDigest           21:00 weekdays       (task 188) ✓
  *   eveningSummary        22:00 weekdays       (task 105) ✓
  *   dataAuditDaily        23:00 daily          (task 157) ✓
  *   dataAuditWeekly       01:00 Sunday         (task 157) ✓
@@ -25,6 +26,7 @@ import { runWalCheckpoint, registerShutdownHook } from '../infrastructure/db/che
 import { runPatternWatch } from './patternWatchJob.js'
 import { runDailyAudit, runWeeklyAudit } from './dataAuditJob.js'
 import { runPredictionMarketPoll } from './predictionMarketJob.js'
+import { runAlertDigest } from './alertDigestJob.js'
 
 export const CRONS = {
   morningBriefing:      Bun.env.CRON_MORNING_BRIEFING          ?? '0 8 * * 1-5',
@@ -32,6 +34,7 @@ export const CRONS = {
   intelligenceCycle:    Bun.env.CRON_INTELLIGENCE_CYCLE         ?? '*/15 * * * *',
   marketClose:          Bun.env.CRON_MARKET_CLOSE               ?? '30 15 * * 1-5',
   sscCheck:             Bun.env.CRON_SSC_CHECK                  ?? '0 20 * * *',
+  alertDigest:          Bun.env.CRON_ALERT_DIGEST               ?? '0 21 * * 1-5',
   eveningSummary:       Bun.env.CRON_EVENING_SUMMARY            ?? '0 22 * * 1-5',
   dataAuditDaily:       Bun.env.CRON_DATA_AUDIT_DAILY           ?? '0 23 * * *',
   dataAuditWeekly:      Bun.env.CRON_DATA_AUDIT_WEEKLY          ?? '0 1 * * 0',
@@ -76,8 +79,13 @@ export function startScheduler() {
     await runEveningSummary()
   }, { timezone: 'Asia/Ho_Chi_Minh' })
 
+  // 21:00 — Alert digest (weekdays Mon-Fri only) — task 188
+  cron.schedule(CRONS.alertDigest, async () => {
+    await runAlertDigest()
+  }, { timezone: 'Asia/Ho_Chi_Minh' })
+
   // 03:00 GMT+7 — WAL checkpoint (task 140)
-  cron.schedule('0 20 * * *', () => {  // 20:00 UTC = 03:00 GMT+7
+  cron.schedule('0 20 * * *', () => {
     runWalCheckpoint()
   })
 
@@ -86,25 +94,20 @@ export function startScheduler() {
     await runPatternWatch()
   }, { timezone: 'Asia/Ho_Chi_Minh' })
 
-  // Periodic summary jobs (task 130): daily, weekly, monthly, quarterly, yearly
   registerSummaryJobs()
 
-  // 23:00 daily — DB audit (task 157)
   cron.schedule(CRONS.dataAuditDaily, async () => {
     await runDailyAudit()
   }, { timezone: 'Asia/Ho_Chi_Minh' })
 
-  // 01:00 every Sunday — weekly deep audit (task 157)
   cron.schedule(CRONS.dataAuditWeekly, async () => {
     await runWeeklyAudit()
   }, { timezone: 'Asia/Ho_Chi_Minh' })
 
-  // Every 30 min — Prediction market poll — task 167
   cron.schedule(CRONS.predictionMarketPoll, async () => {
     await runPredictionMarketPoll()
   }, { timezone: 'Asia/Ho_Chi_Minh' })
 
-  // Register shutdown hooks for graceful WAL checkpoint on exit
   registerShutdownHook()
 
   log(`[scheduler] jobs registered — ${Object.keys(CRONS).length} core cron jobs + 5 summary jobs + WAL checkpoint active`)
