@@ -62,6 +62,7 @@ import {
   registerSourceHealthTools,
   registerCompareTools,
   registerCustomAlertTools,
+  registerAlertMuteTools,
 } from "./tools/index.js";
 
 /** Options for starting the Bun HTTP server. */
@@ -139,6 +140,7 @@ export async function createBunServer(
     registerSourceHealthTools(server);
     registerCompareTools(server);
     registerCustomAlertTools(server);
+    registerAlertMuteTools(server);
     return server;
   }
 
