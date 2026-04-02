@@ -126,7 +126,7 @@
 
 | # | Title | Branch | Agent | Priority | Depends on | Status |
 |---|-------|--------|-------|----------|------------|--------|
-| 214 | Webhook endpoint + command router | `task/214-telegram-webhook-router` | BA | P0 | — | Backlog |
+| 214 | Webhook endpoint + command router | `task/214-telegram-webhook-router` | BA | P0 | — | Review |
 | 215 | Webhook registration + security | `task/215-telegram-webhook-security` | BA | P1 | 214 | Backlog |
 | 216 | Integration tests + CLAUDE.md update | `task/216-telegram-integration-tests` | Dev | P2 | 214, 215 | Backlog |
 

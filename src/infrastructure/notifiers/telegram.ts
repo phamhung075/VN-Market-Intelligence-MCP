@@ -39,6 +39,11 @@ export interface SendTelegramOptions {
   parseMode?: string;
   /** Injectable fetch function for tests. Default: globalThis.fetch. */
   fetchFn?: FetchFn;
+  /**
+   * Override the target chat ID (e.g. for webhook replies to a specific user).
+   * When omitted, falls back to TELEGRAM_CHAT_ID env var.
+   */
+  chatId?: number;
 }
 
 /**
@@ -111,8 +116,12 @@ export async function sendTelegramMessage(
   text: string,
   options: SendTelegramOptions = {},
 ): Promise<boolean> {
-  const botToken = Bun.env.TELEGRAM_BOT_TOKEN ?? "";
-  const chatId = Bun.env.TELEGRAM_CHAT_ID ?? "";
+  const botToken = Bun.env.TELEGRAM_BOT_TOKEN ?? process.env["TELEGRAM_BOT_TOKEN"] ?? "";
+  // Allow per-message chatId override (e.g. webhook replies to specific users)
+  const chatId =
+    options.chatId != null
+      ? String(options.chatId)
+      : (Bun.env.TELEGRAM_CHAT_ID ?? process.env["TELEGRAM_CHAT_ID"] ?? "");
 
   if (!botToken) {
     log.warn("[telegram] TELEGRAM_BOT_TOKEN is not set — skipping send");
@@ -198,8 +207,8 @@ export async function sendTelegramReport(
   text: string,
   options: SendTelegramOptions = {},
 ): Promise<number> {
-  const botToken = Bun.env.TELEGRAM_BOT_TOKEN ?? "";
-  const reportChatId = Bun.env.TELEGRAM_REPORT_ID ?? "";
+  const botToken = Bun.env.TELEGRAM_BOT_TOKEN ?? process.env["TELEGRAM_BOT_TOKEN"] ?? "";
+  const reportChatId = Bun.env.TELEGRAM_REPORT_ID ?? process.env["TELEGRAM_REPORT_ID"] ?? "";
 
   if (!botToken) {
     log.warn("[telegram] TELEGRAM_BOT_TOKEN is not set — skipping report send");
@@ -279,8 +288,8 @@ export async function deleteTelegramReport(
   messageId: number,
   options: { fetchFn?: FetchFn } = {},
 ): Promise<boolean> {
-  const botToken = Bun.env.TELEGRAM_BOT_TOKEN ?? "";
-  const reportChatId = Bun.env.TELEGRAM_REPORT_ID ?? "";
+  const botToken = Bun.env.TELEGRAM_BOT_TOKEN ?? process.env["TELEGRAM_BOT_TOKEN"] ?? "";
+  const reportChatId = Bun.env.TELEGRAM_REPORT_ID ?? process.env["TELEGRAM_REPORT_ID"] ?? "";
 
   if (!botToken || !reportChatId || messageId <= 0) return false;
 
