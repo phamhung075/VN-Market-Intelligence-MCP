@@ -351,10 +351,10 @@
 | Column | Count | Tasks |
 |--------|-------|-------|
 | ✅ Done | 47+ | Sprints 000-025 complete |
-| 🔍 Review | 1 | 190 |
+| 🔍 Review | 2 | 190, 191 |
 | 🚧 In Progress | 0 | — |
 | 📋 Todo | 0 | — |
-| 🗂 Backlog | 2 | 189, 191 |
+| 🗂 Backlog | 1 | 189 |
 | **Total** | **47+** | |
 
 ---
@@ -380,7 +380,7 @@
 |---|-------|--------|-------|----------|------------|--------|
 | 189 | Correlation analysis: `get_correlation_matrix` MCP tool | `task/189-correlation-matrix` | BA | P0 | market_prices_history ✅, watchlist ✅, positions ✅ | Backlog |
 | 190 | Data export: `export_portfolio_snapshot` MCP tool | `task/190-export-snapshot` | Developer | P0 | all tables ✅ | Review 🔍 |
-| 191 | Performance attribution: `get_performance_attribution` MCP tool | `task/191-performance-attribution` | BA | P1 | positions ✅, alerts ✅ | Backlog |
+| 191 | Performance attribution: `get_performance_attribution` MCP tool | `task/191-performance-attribution` | Developer | P1 | positions ✅, alerts ✅ | Review 🔍 |
 
 ---
 
