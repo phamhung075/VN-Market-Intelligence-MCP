@@ -2,36 +2,36 @@
 
 ## Current Sprint
 
-status: COMPLETE
-sprint_id: 024
+status: ACTIVE
+sprint_id: 025
 started: 2026-04-01
 updated: 2026-04-01
-completed: 2026-04-01
 
 ---
 
 ### Theme
 
-**"Reliability Hardening and Investor UX Polish — Risk Metrics, Alert Analytics, and Data Freshness"**
+**"Daily Investor Intelligence — Sector Rotation, Earnings Calendar, and Alert Digest"**
 
 ---
 
 ### Goal
 
-The system generates alerts and conviction scores reliably, but the investor has no
-standard risk measurement tools (VaR, drawdown), no way to evaluate whether past
-alerts predicted correctly, no way to discover new stocks without knowing their exact
-code, and no at-a-glance view of data freshness per source.
+The system alerts the investor on individual stocks but gives no macro-level view of
+where capital is flowing across sectors, no visibility into when the next financial
+report is expected for watchlist stocks, and no daily digest to catch any alerts that
+were missed in real-time.
 
-This sprint closes four operational gaps that block professional daily use:
+This sprint closes three operational gaps that a real investor hits every single day:
 
-1. Portfolio risk metrics (VaR, max drawdown, portfolio heat) give the investor
-   a daily risk posture without external tools.
-2. Alert accuracy tracking answers "is this system actually useful?" — did the
-   signal fired 48 hours ago predict the subsequent price move correctly?
-3. Stock search/discovery removes the friction of needing to know exact ticker codes.
-4. Data freshness dashboard surfaces staleness per source so the investor knows when
-   to distrust a signal.
+1. Sector rotation detection tells the investor which sectors are gaining and losing
+   relative strength so they can position ahead of institutional flows — not just react
+   to individual stock moves.
+2. Earnings calendar eliminates the risk of being caught off-guard by an upcoming BCTC
+   release. VN BCTC seasons follow predictable quarterly windows; a rule-based calendar
+   requires no external data.
+3. Alert digest delivers a daily Telegram summary of all alerts fired in the past 24
+   hours so the investor never misses a signal, even when not watching the live feed.
 
 ---
 
@@ -39,287 +39,279 @@ This sprint closes four operational gaps that block professional daily use:
 
 **IN**
 
-1. **Task 182 — Portfolio risk metrics: VaR, max drawdown, heat map (P0)**
+1. **Task 186 — Sector rotation detector: `get_sector_rotation` MCP tool (P0)**
 
-   New MCP tool `get_portfolio_risk` that reads `positions` + `market_prices_history`
-   and computes four standard risk metrics — no new schema, no external data.
+   New MCP tool `get_sector_rotation` that reads `market_prices` + `market_prices_history`
+   to compute per-sector price momentum and flag sectors gaining or losing relative
+   strength over the past 5 trading days. No new schema, no external data.
 
-   Metrics computed:
-   - **Value at Risk (95% 1-day VaR)** per stock and portfolio total: historical
-     simulation from daily returns in `market_prices_history` over the last 20 trading
-     days. VaR = 5th-percentile daily return applied to current position value.
-   - **Max drawdown** per stock: peak-to-trough loss over the look-back window
-     (max rolling drawdown from `market_prices_history`).
-   - **Portfolio heat** per stock: unrealised P&L as share of total portfolio cost
-     basis — shows concentration risk.
-   - **Portfolio-level VaR**: sum of per-stock VaR (conservative, non-diversified).
+   Computation logic (rule-based, deterministic):
+   - Group all stocks in `market_prices` by their `exchange` + sector mapping from
+     `sectorPeers.ts` (already shipped in Sprint 013).
+   - For each sector with >= 2 stocks, compute:
+     - **Sector 5d return**: average of individual stock returns over the last 5 rows
+       in `market_prices_history` per stock.
+     - **Sector 1d return**: average of current `change_pct` across all stocks in the
+       sector from `market_prices`.
+     - **Rotation signal**: if 5d return > +2% AND 1d return > +0.5% → INFLOW
+       (money flowing in). If 5d return < -2% AND 1d return < -0.5% → OUTFLOW. Else
+       NEUTRAL.
+   - Rank sectors by 5d return descending.
 
-   Output format (Vietnamese-labelled, plain text):
+   Output (Vietnamese, plain text):
    ```
-   DANH MUC — RUI RO (2026-04-01)
-   ──────────────────────────────
-   VNM   Gia tri: 80,000,000 VND | VaR 95%: -1,200,000 VND (-1.5%)
-         Max drawdown 20d: -4.2% | Trong danh muc: 38%
-   FPT   Gia tri: 60,000,000 VND | VaR 95%: -980,000 VND (-1.6%)
-         Max drawdown 20d: -3.8% | Trong danh muc: 29%
+   DONG TIEN NGANH (2026-04-01)
+   ─────────────────────────────
+   #1  banking       +3.2% (5d) | +0.8% (1d) | DONG TIEN VAO  [VCB +2.1%, BID +1.8%, CTG +0.9%]
+   #2  real_estate   +1.8% (5d) | +0.3% (1d) | TRUNG TINH     [VIC +1.2%, VHM +0.9%]
+   #3  technology    -0.5% (5d) | -0.2% (1d) | TRUNG TINH     [FPT -0.5%]
+   #4  steel         -2.8% (5d) | -0.7% (1d) | DONG TIEN RA   [HPG -2.8%]
    ...
-   TONG  VaR danh muc: -2,800,000 VND (-1.3%) | Nhiet do: BINH THUONG
+   CANH BAO: Nhieu dong tien ra khoi steel (HPG) — kiem tra vi the.
    ```
 
-   Portfolio heat levels (rule-based):
-   - BINH THUONG: no single stock > 40% of portfolio AND portfolio VaR < 2%
-   - CANH BAO: any stock > 40% OR portfolio VaR 2-4%
-   - NGUY HIEM: any stock > 60% OR portfolio VaR > 4%
+   Warning line is appended only when OUTFLOW sector contains a watchlist stock.
+   Reads active watchlist from `watchlist` table to determine warning eligibility.
 
    Graceful degradation:
-   - If fewer than 5 price history rows for a stock, shows "(du lieu chua du — can
-     them du lieu lich su)".
-   - If no open positions, returns "Chua co vi the nao duoc ghi nhan".
+   - Sectors with < 2 tracked stocks are shown with "(du lieu han che)" and no signal.
+   - If `market_prices` table is empty, returns "Chua co du lieu gia thi truong".
+   - If `market_prices_history` has < 2 rows per stock, 5d return falls back to 1d
+     `change_pct` only and appends "(chi co du lieu 1 ngay)".
 
    Files:
-   - CREATE: `src/interface/mcp/tools/riskTools.ts`
-   - MODIFY: `src/interface/mcp/server.ts` — register `registerRiskTools`
+   - CREATE: `src/domain/services/sectorRotationDetector.ts`
+   - CREATE: `src/interface/mcp/tools/sectorRotationTools.ts`
+   - MODIFY: `src/interface/mcp/server.ts` — register `registerSectorRotationTools`
    - MODIFY: `src/interface/mcp/tools/index.ts` — add export
-   - CREATE: `src/__tests__/182-portfolio-risk.test.ts`
+   - CREATE: `src/__tests__/186-sector-rotation.test.ts`
 
    Acceptance criteria:
-   - `get_portfolio_risk()` returns VaR, max drawdown, and heat % for each open position.
-   - When fewer than 5 history rows exist for a stock, output contains "du lieu chua du".
-   - Portfolio heat label is "NGUY HIEM" when any stock exceeds 60% of portfolio.
-   - Portfolio-level VaR is the sum of per-stock VaRs.
-   - No crash when `positions` table is empty.
+   - A sector where all stocks have 5d return > +2% and 1d return > +0.5% is labelled
+     "DONG TIEN VAO".
+   - A sector where all stocks have 5d return < -2% and 1d return < -0.5% is labelled
+     "DONG TIEN RA".
+   - Sectors are ranked by 5d return descending in output.
+   - When an OUTFLOW sector contains a watchlist stock, the warning line appears.
+   - When `market_prices` is empty, output contains "Chua co du lieu gia thi truong".
+   - When only 1d data is available, output contains "(chi co du lieu 1 ngay)".
    - >= 16 tests, 0 failures.
    - `bun tsc --noEmit` → 0 errors.
-   - Tool count increases from 36 to 37.
+   - Tool count increases from 40 to 41.
 
-2. **Task 183 — Alert accuracy tracker: outcome scoring (P0)**
+2. **Task 187 — Earnings calendar: `get_earnings_calendar` MCP tool (P0)**
 
-   New MCP tool `get_alert_accuracy` that retrospectively scores past alerts against
-   subsequent price moves. No new schema — reads `alerts` + `market_prices_history`.
+   New MCP tool `get_earnings_calendar` that returns expected BCTC release dates for
+   all watchlist stocks based on VN statutory reporting deadlines. No new schema, no
+   external data. Actual filed dates are pulled from `financial_reports` table where
+   available; upcoming deadlines are estimated from rule-based season windows.
 
-   Scoring logic (rule-based, deterministic):
-   - For each alert older than 24 hours and younger than 7 days, look up the closing
-     price of the affected stock at alert time (T) and 24 hours later (T+24h) using
-     `market_prices_history`.
-   - Score: CORRECT if direction matches (bullish signal + price up, bearish + price
-     down), INCORRECT if direction opposite, NEUTRAL if price moved < 0.5%.
-   - Aggregate: accuracy % = CORRECT / (CORRECT + INCORRECT), total alerts scored,
-     avg absolute price move after signal.
+   VN BCTC statutory deadlines (rule-based constants, not DB-driven):
+   - **Q1** (period ending 31 March): deadline 30 April (listed) / 45 days for unlisted
+   - **Q2** (period ending 30 June): deadline 31 July
+   - **Q3** (period ending 30 September): deadline 31 October
+   - **Q4** / Annual (period ending 31 December): deadline 31 January (preliminary) +
+     90 days for audited (31 March)
+   - **Midyear audited** (H1): deadline 31 August
 
-   Output (per stock and aggregate):
+   Logic:
+   - For each stock in `watchlist`, check `financial_reports` for the most recent
+     actual filing. Compute which quarterly period comes next.
+   - Determine the statutory deadline for that period.
+   - If today is within 14 days before the deadline: status = SẮP ĐẾN (UPCOMING).
+   - If today is past the deadline and no filing found: status = QUÁ HẠN (OVERDUE).
+   - If filing already recorded: status = ĐÃ NỘP (FILED) with actual date.
+   - If next deadline > 14 days away: status = CHỜ (WAITING) with days until deadline.
+
+   Output:
    ```
-   HIEU QUA CANH BAO (30 ngay qua)
-   ────────────────────────────────
-   VNM   Dung: 8 | Sai: 3 | Trung tinh: 2 | Chinh xac: 72.7%
-         Bien dong tb sau tin hieu: +/- 1.8%
-   FPT   Dung: 5 | Sai: 5 | Trung tinh: 1 | Chinh xac: 50.0%
-   ...
-   TONG  Chinh xac: 64% (34/53 tin hieu co the danh gia)
+   LICH BCTC — DANH SACH THEO DOI (2026-04-01)
+   ─────────────────────────────────────────────
+   VNM   Q1/2026  Han nop: 30/04/2026  Con 29 ngay   CHO
+   FPT   Q1/2026  Han nop: 30/04/2026  Con 29 ngay   CHO
+   VCB   Q1/2026  Han nop: 30/04/2026  Con 29 ngay   CHO
+   VEA   Q4/2025  Han nop: 31/03/2026  QUA HAN        [!] Chua thay bao cao
+   ─────────────────────────────────────────────
+   Sap den (< 14 ngay): 0  |  Qua han: 1  |  Cho: 3
    ```
 
    Graceful degradation:
-   - Alerts with no price history at T or T+24h are skipped (counted as "khong du
-     lieu").
-   - If fewer than 3 scoreable alerts exist, returns "Chua du du lieu de danh gia
-     (can it nhat 3 canh bao da 24h)".
+   - If `watchlist` table is empty, returns "Danh sach theo doi trong. Them co phieu
+     truoc khi xem lich BCTC."
+   - Stocks not yet in `financial_reports` are still shown with estimated deadlines
+     labelled "(uoc tinh)".
 
    Files:
-   - CREATE: `src/interface/mcp/tools/alertAccuracyTools.ts`
-   - MODIFY: `src/interface/mcp/server.ts` — register `registerAlertAccuracyTools`
+   - CREATE: `src/domain/services/earningsCalendar.ts`
+   - CREATE: `src/interface/mcp/tools/earningsCalendarTools.ts`
+   - MODIFY: `src/interface/mcp/server.ts` — register `registerEarningsCalendarTools`
    - MODIFY: `src/interface/mcp/tools/index.ts` — add export
-   - CREATE: `src/__tests__/183-alert-accuracy.test.ts`
+   - CREATE: `src/__tests__/187-earnings-calendar.test.ts`
 
    Acceptance criteria:
-   - A bullish alert followed by +1.5% price move scores CORRECT.
-   - A bullish alert followed by -1.5% price move scores INCORRECT.
-   - A signal followed by +0.3% move scores NEUTRAL.
-   - Alerts < 24 hours old are excluded from scoring.
-   - Output contains per-stock accuracy % and aggregate accuracy %.
-   - No crash when `alerts` table is empty.
+   - For a watchlist stock with no filing in `financial_reports`, the next Q1 deadline
+     (30 April) is shown as estimated "(uoc tinh)".
+   - A stock whose filing deadline passed yesterday with no entry in `financial_reports`
+     shows status "QUÁ HẠN".
+   - A stock whose filing is within 14 days shows status "SẮP ĐẾN".
+   - A stock with an actual filing in `financial_reports` shows status "ĐÃ NỘP" with
+     the actual date.
+   - When `watchlist` is empty, output contains "Danh sach theo doi trong".
    - >= 14 tests, 0 failures.
    - `bun tsc --noEmit` → 0 errors.
-   - Tool count increases from 37 to 38.
+   - Tool count increases from 41 to 42.
 
-3. **Task 184 — Stock search / discovery MCP tool (P1)**
+3. **Task 188 — Daily alert digest: `send_alert_digest` MCP tool + scheduler job (P1)**
 
-   New MCP tool `search_stocks` that queries a built-in static lookup table of
-   ~150 major VN stocks (HOSE/HNX/UPCOM) and returns matches by ticker code,
-   company name, or sector keyword. No external API, no new schema.
+   New MCP tool `send_alert_digest` that compiles all alerts from the past 24 hours
+   into a single grouped Telegram message and sends it. Also registers a cron job to
+   auto-send the digest at 21:00 GMT+7 on market days (after close, before evening
+   summary). No new schema — reads from `alerts` table, sends via existing
+   `telegram.ts` notifier.
 
-   The lookup table is a static TypeScript array embedded in the tool file — company
-   name, exchange, sector (DomainType string), market cap tier (LARGE/MID/SMALL). The
-   list covers all current watchlist stocks plus the top 100 by market cap on HOSE and
-   30 on HNX/UPCOM.
+   Digest grouping logic:
+   - Pull all alerts from `alerts` WHERE `created_at >= now - 24h`, ordered by severity
+     DESC then created_at DESC.
+   - Group by affected stock (one block per stock).
+   - Within each stock block, list up to 3 alerts (most recent, highest severity first).
+   - If a stock has > 3 alerts in 24h, append "(va N canh bao khac)".
+   - Prepend a summary header: total alert count, count by severity (CRITICAL/HIGH/MEDIUM).
 
-   Search logic: case-insensitive substring match on code OR company name OR sector.
-   Returns up to 20 results ranked: exact code match first, then prefix match on code,
-   then name/sector contains match.
-
-   Output:
+   Output (Telegram plain text, Vietnamese):
    ```
-   KET QUA TIM KIEM: "ngan hang" (12 ket qua)
-   ───────────────────────────────────────────
-   VCB   Vietcombank                  HOSE | banking    | LARGE
-   BID   BIDV                         HOSE | banking    | LARGE
-   CTG   VietinBank                   HOSE | banking    | LARGE
-   MBB   Military Bank                HOSE | banking    | MID
-   ...
+   TOM TAT CANH BAO — 24H QUA (2026-04-01 21:00)
+   ──────────────────────────────────────────────
+   Tong: 7 canh bao | NGHIEM TRONG: 1 | QUAN TRONG: 4 | LUU Y: 2
+
+   [VNM] — 3 canh bao
+   • NGHIEM TRONG: Gia giam 5.2% trong 1 phien (15:30)
+   • QUAN TRONG: Khoi luong dot bien +180% so trung binh (14:00)
+   • LUU Y: Tin tuc tieu cuc — BCTC Q4 duoi ky vong (09:30)
+
+   [FPT] — 2 canh bao
+   • QUAN TRONG: Gia tang 3.1% - co the co thong tin noi bo (11:00)
+   • LUU Y: VN-Index giam 1.2%, FPT chiu anh huong (09:00)
+
+   [HPG] — 2 canh bao
+   • QUAN TRONG: Gia thep the gioi giam, HPG co the bi anh huong (10:30)
+   • LUU Y: Khoi ngoai ban rong (09:45)
    ```
 
-   Each result includes a hint line: "Them vao danh sach: add_to_watchlist({ code:
-   'VCB', exchange: 'HOSE' })".
+   If no alerts in 24h: sends "Khong co canh bao nao trong 24 gio qua."
+
+   Scheduler integration:
+   - Add a new cron job `alertDigestJob` at `0 21 * * 1-5` (21:00 GMT+7, weekdays).
+   - Register in `src/scheduler/jobs.ts` alongside existing jobs.
+   - The MCP tool `send_alert_digest` can also be called manually (e.g., after a
+     volatile session).
+
+   Graceful degradation:
+   - If Telegram is not configured (no token/chat ID), the tool returns the digest text
+     without sending and appends "(Telegram chua duoc cau hinh)".
+   - If `alerts` table is empty or has no recent alerts, returns the "no alerts" message
+     without error.
 
    Files:
-   - CREATE: `src/interface/mcp/tools/stockSearchTools.ts`
-   - MODIFY: `src/interface/mcp/server.ts` — register `registerStockSearchTools`
+   - CREATE: `src/application/usecases/assembleAlertDigest.ts`
+   - CREATE: `src/scheduler/alertDigestJob.ts`
+   - CREATE: `src/interface/mcp/tools/alertDigestTools.ts`
+   - MODIFY: `src/scheduler/jobs.ts` — add alertDigest cron entry
+   - MODIFY: `src/interface/mcp/server.ts` — register `registerAlertDigestTools`
    - MODIFY: `src/interface/mcp/tools/index.ts` — add export
-   - CREATE: `src/__tests__/184-stock-search.test.ts`
+   - CREATE: `src/__tests__/188-alert-digest.test.ts`
 
    Acceptance criteria:
-   - `search_stocks({ query: "VCB" })` returns Vietcombank as first result.
-   - `search_stocks({ query: "ngan hang" })` returns at least 5 banking stocks.
-   - `search_stocks({ query: "steel" })` returns HPG (Hoa Phat — steel).
-   - `search_stocks({ query: "xyz999" })` returns "Khong tim thay ket qua".
-   - Results capped at 20; if more match, output notes total count.
-   - Each result includes the add_to_watchlist hint.
-   - >= 12 tests, 0 failures.
+   - With 7 alerts in the DB spanning 3 stocks, digest contains 3 stock blocks with
+     correct alert counts.
+   - Alerts older than 24 hours are excluded from the digest.
+   - A stock with > 3 alerts in 24h shows the top 3 plus "(va N canh bao khac)".
+   - Severity counts in the header match the actual alert severities in the DB.
+   - When `alerts` is empty, output contains "Khong co canh bao".
+   - When Telegram is not configured, output contains "(Telegram chua duoc cau hinh)".
+   - The `alertDigestJob` cron expression is `0 21 * * 1-5`.
+   - >= 16 tests, 0 failures.
    - `bun tsc --noEmit` → 0 errors.
-   - Tool count increases from 38 to 39.
-
-4. **Task 185 — Data freshness dashboard: `get_data_freshness` MCP tool (P1)**
-
-   New MCP tool `get_data_freshness` that reports the last-updated timestamp and
-   staleness status for every data source the system uses. No new schema — reads from
-   existing tables.
-
-   Sources tracked and where last-updated is derived:
-
-   | Source | Table / mechanism | Stale threshold |
-   |--------|-------------------|-----------------|
-   | HOSE prices | MAX(updated_at) FROM market_prices | > 30 min during market hours |
-   | HNX prices | MAX(updated_at) FROM market_prices WHERE exchange='HNX' | > 30 min |
-   | News (CafeF/VnExpress/VnEconomy) | MAX(created_at) FROM rag_analyses | > 60 min |
-   | Cascade / analysis | MAX(created_at) FROM rag_analyses WHERE level='action' | > 60 min |
-   | Alerts | MAX(created_at) FROM alerts | > 120 min |
-   | BCTC reports | MAX(created_at) FROM financial_reports | > 24 h |
-   | Macro indicators | MAX(recorded_at) FROM commodity_prices_history | > 120 min |
-   | Summaries | MAX(created_at) FROM periodic_summaries | > 25 h |
-
-   Status labels: OK (within threshold), STALE (exceeded threshold), NO_DATA (table
-   empty or column missing — non-fatal).
-
-   Output:
-   ```
-   DO MOI DU LIEU (2026-04-01 09:15)
-   ──────────────────────────────────
-   Gia HOSE        OK      Cap nhat: 09:00 (15 phut truoc)
-   Gia HNX         OK      Cap nhat: 09:00 (15 phut truoc)
-   Tin tuc         OK      Cap nhat: 08:55 (20 phut truoc)
-   Phan tich       STALE   Cap nhat: 07:30 (105 phut truoc) [!]
-   Canh bao        OK      Cap nhat: 09:00 (15 phut truoc)
-   Bao cao BCTC    OK      Cap nhat: hom qua 20:00
-   Chi so vi mo    STALE   Cap nhat: 06:00 (195 phut truoc) [!]
-   Tom tat         OK      Cap nhat: hom qua 22:30
-   ```
-
-   Files:
-   - CREATE: `src/interface/mcp/tools/freshnessTools.ts`
-   - MODIFY: `src/interface/mcp/server.ts` — register `registerFreshnessTools`
-   - MODIFY: `src/interface/mcp/tools/index.ts` — add export
-   - CREATE: `src/__tests__/185-data-freshness.test.ts`
-
-   Acceptance criteria:
-   - When MAX(updated_at) in `market_prices` is > 30 min ago during market hours,
-     HOSE status is "STALE".
-   - When MAX(updated_at) is within 30 min, status is "OK".
-   - When a table is empty, status is "NO_DATA" and tool does not throw.
-   - Output shows human-readable "X phut truoc" or "hom qua HH:MM" timestamps.
-   - All 8 sources appear in output.
-   - >= 14 tests, 0 failures.
-   - `bun tsc --noEmit` → 0 errors.
-   - Tool count increases from 39 to 40.
+   - Tool count increases from 42 to 43.
 
 **OUT**
 
+- Correlation analysis / diversification scoring (deferred to Sprint 026 — needs
+  richer price history to be meaningful)
+- Export / backup to JSON (low daily-use value vs features selected)
+- Performance attribution (requires completed positions volume not yet present)
 - LLM-based analysis or recommendations
 - New external data sources
 - Backtesting / simulation engine
 - Real-time WebSocket price streaming
-- Multi-tranche position management (one position per stock, as established in Sprint 023)
-- Chart image rendering
-- Email or Slack notifications (Telegram only)
-- Alert feedback loop writes back to DB (accuracy is read-only scoring)
 
 ---
 
 ### Success Metrics
 
-1. `get_portfolio_risk()` returns VaR, max drawdown, and portfolio heat for all open
-   positions without errors. The investor can see daily risk posture in one MCP call.
+1. `get_sector_rotation()` identifies at least one INFLOW and one OUTFLOW sector when
+   the mock price data includes clear sector divergence. The investor sees capital flow
+   direction in one MCP call.
 
-2. `get_alert_accuracy()` scores at least the most recent 7 days of alerts and returns
-   aggregate accuracy %. The investor can judge system reliability objectively.
+2. `get_earnings_calendar()` correctly labels VEA as QUÁ HẠN when Q4 deadline has
+   passed with no filing on record, and labels VNM/FPT/VCB as CHỜ with accurate
+   day-count. The investor is never surprised by an upcoming BCTC.
 
-3. `search_stocks({ query: "ngan hang" })` returns at least 5 banking stocks. The
-   investor can discover and add any major VN stock without knowing its exact code.
+3. `send_alert_digest()` compiles and formats a 24-hour digest correctly: grouped by
+   stock, sorted by severity, with correct header counts. The investor can review the
+   full day in one Telegram message.
 
-4. `get_data_freshness()` shows STALE status correctly when intelligence cycle has not
-   run for > 30 min. The investor never acts on unknown-age data again.
+4. `bun tsc --noEmit` → 0 errors. All existing tests continue to pass (1556+).
 
-5. `bun tsc --noEmit` → 0 errors. All existing 1489 tests continue to pass.
-
-6. Tool count: 36 → 40 (get_portfolio_risk, get_alert_accuracy, search_stocks,
-   get_data_freshness).
+5. Tool count: 40 → 43 (get_sector_rotation, get_earnings_calendar, send_alert_digest).
 
 ---
 
-### Task board (Sprint 024)
+### Task board (Sprint 025)
 
 | # | Title | Priority | Status | Depends on |
 |---|-------|----------|--------|------------|
-| 182 | Portfolio risk metrics: VaR, max drawdown, heat map | P0 | Backlog | 179 (positions) |
-| 183 | Alert accuracy tracker: outcome scoring | P0 | Backlog | — |
-| 184 | Stock search / discovery MCP tool | P1 | Backlog | — |
-| 185 | Data freshness dashboard MCP tool | P1 | Backlog | — |
+| 186 | Sector rotation detector: `get_sector_rotation` MCP tool | P0 | Backlog | — |
+| 187 | Earnings calendar: `get_earnings_calendar` MCP tool | P0 | Backlog | — |
+| 188 | Daily alert digest: `send_alert_digest` MCP tool + scheduler job | P1 | Backlog | — |
 
 ---
 
 ### Dependency chain
 
 ```
-182 (portfolio risk)    — P0, needs positions table from task 179 (Sprint 023, done)
-183 (alert accuracy)    — P0, independent, start immediately
-184 (stock search)      — P1, independent, start immediately
-185 (data freshness)    — P1, independent, start immediately
+186 (sector rotation)   — P0, independent, uses market_prices + sectorPeers (both done)
+187 (earnings calendar) — P0, independent, uses watchlist + financial_reports (both done)
+188 (alert digest)      — P1, independent, uses alerts + telegram.ts (both done)
 
-182 + 183 can run in parallel (no shared files).
-184 + 185 can run in parallel with each other and with 182/183.
-All four tasks touch different tool files — no merge conflicts.
+186 + 187 can run in parallel (no shared files).
+188 can start in parallel with 186 + 187.
+All three tasks touch different tool files — no merge conflicts.
 ```
 
 ---
 
 ### Key technical decisions (locked at PO level)
 
-- **Task 182 uses historical simulation VaR, not parametric VaR**: simpler to
-  implement correctly with no additional dependencies. 20-day window is sufficient
-  for an investor watching daily risk. Parametric VaR (normal distribution assumption)
-  is deferred — VN stocks are not normally distributed.
+- **Task 186 uses `sectorPeers.ts` for sector grouping**: the sector-to-stock mapping
+  already exists in the domain layer (Sprint 013). The rotation detector imports it
+  directly — no new mapping table needed. This keeps the domain layer as the single
+  source of truth for sector definitions.
 
-- **Task 183 scoring is directional only**: the tool does not predict magnitude — it
-  checks whether the bullish/bearish direction was correct. This avoids the complexity
-  of defining "how much move counts as confirmed". The 0.5% neutral band is a
-  configurable constant in the tool file.
+- **Task 186 rotation signal thresholds (+/-2% for 5d, +/-0.5% for 1d) are constants
+  in `sectorRotationDetector.ts`**: tied to display logic, not independently tunable.
+  Co-located to avoid config sprawl.
 
-- **Task 184 stock list is static TypeScript, not a DB table**: the list changes at
-  most quarterly (delistings, IPOs). A static array is simpler to ship and test.
-  No migration needed. If the user adds a stock not in the list, the watchlist tools
-  still work — search is discovery only, not a gate.
+- **Task 187 deadline rules are static constants in `earningsCalendar.ts`**: VN statutory
+  BCTC deadlines change only by regulatory amendment (rare). A static TypeScript object
+  mapping quarter → deadline offset is simpler and fully testable without DB.
 
-- **Task 185 staleness thresholds are constants in the tool file** (not in
-  mcp.config.json): they are tied to the tool's display logic and are unlikely to
-  change independently of the tool. Keeping them co-located with the logic avoids
-  config sprawl.
+- **Task 188 digest is send-on-demand + scheduled**: the MCP tool and the cron job share
+  the same `assembleAlertDigest` use case. The scheduler calls the same function the MCP
+  tool exposes — no code duplication.
+
+- **Task 188 cron at 21:00 GMT+7**: positioned after market close scan (15:30) and before
+  evening summary (22:00), so the digest captures the full trading day including any
+  close-of-day alerts.
 
 ---
 
@@ -351,3 +343,4 @@ All four tasks touch different tool files — no merge conflicts.
 | 021 | Close the Loop — Prediction Signals Live | 2026-04-01 | 170, 171, 172, 173 |
 | 022 | House in Order | 2026-04-01 | 174, 175, 176, 177 |
 | 023 | Close the Investor Loop | 2026-04-01 | 178, 179, 180, 181 |
+| 024 | Reliability Hardening and Investor UX Polish | 2026-04-01 | 182, 183, 184, 185 |

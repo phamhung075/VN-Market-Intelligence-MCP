@@ -350,12 +350,12 @@
 
 | Column | Count | Tasks |
 |--------|-------|-------|
-| ✅ Done | 43 | 000, 001, 002, 003, 011, 012, 013, 014, 021, 022, 023, 026, 027, 029, 030, 041, 042, 043, 044, 045, 046, 047, 048, 061, 062, 063, 064, 065, 066, 081, 082, 083, 084, 085, 086, 087, 088, 101, 102, 103, 104, 105 |
-| 🔍 Review | 1 | 185 |
+| ✅ Done | 44 | 000–105 (sprint 000-006) + Sprint 024: 182, 183, 184, 185 |
+| 🔍 Review | 0 | — |
 | 🚧 In Progress | 0 | — |
-| 📋 Todo | 0 | — (Sprint 006 Wave 2 COMPLETE; Task 123 now unblocked for Wave 3) |
-| 🗂 Backlog | 8 | Deferred: 024, 025, 028, 121-125 |
-| **Total** | **52** | |
+| 📋 Todo | 0 | — |
+| 🗂 Backlog | 3 | Sprint 025: 186, 187, 188 |
+| **Total** | **47** | |
 
 ---
 
@@ -363,7 +363,88 @@
 
 | # | Title | Branch | Layer | Depends on | Status |
 |---|-------|--------|-------|------------|--------|
-| 185 | Data Freshness MCP tool (`get_data_freshness`) | `task/185-data-freshness` | interface | 002 ✅ | Review |
+| — | — | — | — | — | Empty |
+
+---
+
+## Sprint 025 — Backlog
+
+> Sprint 025 ACTIVE — 2026-04-01. Theme: Daily Investor Intelligence — Sector Rotation, Earnings Calendar, and Alert Digest.
+
+| # | Title | Branch | Agent | Priority | Depends on | Status |
+|---|-------|--------|-------|----------|------------|--------|
+| 186 | Sector rotation detector: `get_sector_rotation` MCP tool | `task/186-sector-rotation` | BA | P0 | sectorPeers ✅, market_prices ✅ | Backlog |
+| 187 | Earnings calendar: `get_earnings_calendar` MCP tool | `task/187-earnings-calendar` | BA | P0 | watchlist ✅, financial_reports ✅ | Backlog |
+| 188 | Daily alert digest: `send_alert_digest` MCP tool + scheduler job | `task/188-alert-digest` | BA | P1 | alerts ✅, telegram.ts ✅ | Backlog |
+
+---
+
+**Task 186 — Sector Rotation Detector**
+
+Acceptance criteria:
+- `get_sector_rotation()` groups stocks by sector using `sectorPeers.ts` mapping
+- A sector where all stocks have 5d return > +2% and 1d > +0.5% is labelled "DONG TIEN VAO"
+- A sector where all stocks have 5d return < -2% and 1d < -0.5% is labelled "DONG TIEN RA"
+- Sectors ranked by 5d return descending in output
+- OUTFLOW sector containing a watchlist stock triggers a warning line
+- When `market_prices` is empty, returns "Chua co du lieu gia thi truong"
+- When only 1d data available, output contains "(chi co du lieu 1 ngay)"
+- >= 16 tests, 0 failures
+- `bun tsc --noEmit` → 0 errors
+- Tool count 40 → 41
+
+Files:
+- CREATE: `src/domain/services/sectorRotationDetector.ts`
+- CREATE: `src/interface/mcp/tools/sectorRotationTools.ts`
+- MODIFY: `src/interface/mcp/server.ts`
+- MODIFY: `src/interface/mcp/tools/index.ts`
+- CREATE: `src/__tests__/186-sector-rotation.test.ts`
+
+---
+
+**Task 187 — Earnings Calendar**
+
+Acceptance criteria:
+- For a watchlist stock with no filing in `financial_reports`, next Q1 deadline (30 April) shown as "(uoc tinh)"
+- Stock whose filing deadline passed yesterday with no entry shows "QUA HAN"
+- Stock within 14 days of deadline shows "SAP DEN"
+- Stock with actual filing in `financial_reports` shows "DA NOP" with actual date
+- When `watchlist` is empty, returns "Danh sach theo doi trong"
+- >= 14 tests, 0 failures
+- `bun tsc --noEmit` → 0 errors
+- Tool count 41 → 42
+
+Files:
+- CREATE: `src/domain/services/earningsCalendar.ts`
+- CREATE: `src/interface/mcp/tools/earningsCalendarTools.ts`
+- MODIFY: `src/interface/mcp/server.ts`
+- MODIFY: `src/interface/mcp/tools/index.ts`
+- CREATE: `src/__tests__/187-earnings-calendar.test.ts`
+
+---
+
+**Task 188 — Daily Alert Digest**
+
+Acceptance criteria:
+- With 7 alerts in DB spanning 3 stocks, digest contains 3 stock blocks with correct counts
+- Alerts older than 24h excluded from digest
+- Stock with > 3 alerts in 24h shows top 3 plus "(va N canh bao khac)"
+- Severity counts in header match actual alert severities in DB
+- When `alerts` empty, output contains "Khong co canh bao"
+- When Telegram not configured, output contains "(Telegram chua duoc cau hinh)"
+- `alertDigestJob` cron expression is `0 21 * * 1-5`
+- >= 16 tests, 0 failures
+- `bun tsc --noEmit` → 0 errors
+- Tool count 42 → 43
+
+Files:
+- CREATE: `src/application/usecases/assembleAlertDigest.ts`
+- CREATE: `src/scheduler/alertDigestJob.ts`
+- CREATE: `src/interface/mcp/tools/alertDigestTools.ts`
+- MODIFY: `src/scheduler/jobs.ts`
+- MODIFY: `src/interface/mcp/server.ts`
+- MODIFY: `src/interface/mcp/tools/index.ts`
+- CREATE: `src/__tests__/188-alert-digest.test.ts`
 
 ---
 
