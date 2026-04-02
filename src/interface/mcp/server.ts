@@ -47,6 +47,7 @@ import {
   registerSearchStocksTools,
   registerDataFreshnessTools,
   registerSectorRotationTools,
+  registerEarningsCalendarTools,
 } from "./tools/index.js";
 
 /** Options for starting the Bun HTTP server. */
@@ -112,7 +113,8 @@ export async function createBunServer(
     registerAlertAccuracyTool(server);
     registerSearchStocksTools(server);
     registerDataFreshnessTools(server);
-    registerSectorRotationTools(server); // task 186: get_sector_rotation
+    registerSectorRotationTools(server);
+    registerEarningsCalendarTools(server);
     return server;
   }
 

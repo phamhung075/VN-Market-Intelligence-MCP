@@ -27,3 +27,4 @@ export { registerAlertAccuracyTool } from "./alertAccuracy.js";
 export { registerSearchStocksTools } from "./searchTools.js";
 export { registerDataFreshnessTools } from "./dataFreshnessTools.js";
 export { registerSectorRotationTools } from "./sectorRotationTools.js";
+export { registerEarningsCalendarTools } from "./earningsCalendarTools.js";
