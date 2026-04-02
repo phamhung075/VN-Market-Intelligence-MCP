@@ -163,17 +163,31 @@
 ## 📋 TODO
 *(Dependencies cleared — ready to assign)*
 
+### Sprint 023 — Close the Investor Loop
+
+> Sprint 023 ACTIVE — 2026-04-01. PO vision set. Tasks 178 + 179 are independent; 180 depends on 179; 181 depends on 178.
+> Design ref: SPRINT_GOAL.md sprint_id: 023.
+
+| # | Title | Branch | Agent | Layer | Priority | Depends on | Status |
+|---|-------|--------|-------|-------|----------|------------|--------|
+| 178 | `get_price_history` MCP tool | `task/178-price-history` | BA→Architect→PM→Dev | interface/mcp + infrastructure/db | P0 | — | **Backlog** |
+| 179 | Position tracking: `positions` schema + `set_position` / `get_positions` / `close_position` MCP tools | `task/179-position-tracking` | BA→Architect→PM→Dev | infrastructure/db + interface/mcp | P0 | — | **Backlog** |
+| 180 | Decision note synthesis in `get_portfolio_conviction` | `task/180-decision-notes` | BA→Architect→PM→Dev | interface/mcp | P1 | 179 | **Backlog** |
+| 181 | Price trend sparkline in morning briefing | `task/181-briefing-sparkline` | BA→Architect→PM→Dev | application/usecases | P2 | 178 | **Backlog** |
+
+---
+
 ### Sprint 022 — House in Order
 
-> Sprint 022 ACTIVE — 2026-04-01. PO vision set. All 4 tasks independent, can run in parallel.
+> Sprint 022 COMPLETE — 2026-04-01. All 4 tasks done.
 > Design ref: SPRINT_GOAL.md sprint_id: 022.
 
 | # | Title | Branch | Agent | Layer | Priority | Depends on | Status |
 |---|-------|--------|-------|-------|----------|------------|--------|
-| 174 | CLAUDE.md full sync — Sprints 014-021 | `task/174-claude-md-sync` | Developer | docs/ | P0 | — | **Backlog** |
-| 175 | Stale branch + worktree cleanup | `task/175-branch-cleanup` | Developer | git | P1 | — | **Backlog** |
-| 176 | `trigger_alert_check` MCP tool | `task/176-trigger-alert-check` | Developer | interface/mcp + application | P1 | — | **Backlog** |
-| 177 | TASKS.md Kanban housekeeping | `task/177-tasks-housekeeping` | Developer | docs/ | P2 | — | **Backlog** |
+| 174 | CLAUDE.md full sync — Sprints 014-021 | `task/174-claude-md-sync` | Developer | docs/ | P0 | — | **Done** |
+| 175 | Stale branch + worktree cleanup | `task/175-branch-cleanup` | Developer | git | P1 | — | **Done** |
+| 176 | `trigger_alert_check` MCP tool | `task/176-trigger-alert-check` | Developer | interface/mcp + application | P1 | — | **Done** |
+| 177 | TASKS.md Kanban housekeeping | `task/177-tasks-housekeeping` | Developer | docs/ | P2 | — | **Done** |
 
 ---
 
