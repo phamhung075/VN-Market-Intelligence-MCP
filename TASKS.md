@@ -111,6 +111,20 @@
 ## 📋 TODO
 *(Dependencies cleared — ready to assign)*
 
+### Sprint 022 — House in Order
+
+> Sprint 022 ACTIVE — 2026-04-01. PO vision set. All 4 tasks independent, can run in parallel.
+> Design ref: SPRINT_GOAL.md sprint_id: 022.
+
+| # | Title | Branch | Agent | Layer | Priority | Depends on | Status |
+|---|-------|--------|-------|-------|----------|------------|--------|
+| 174 | CLAUDE.md full sync — Sprints 014-021 | `task/174-claude-md-sync` | Developer | docs/ | P0 | — | **Backlog** |
+| 175 | Stale branch + worktree cleanup | `task/175-branch-cleanup` | Developer | git | P1 | — | **Backlog** |
+| 176 | `trigger_alert_check` MCP tool | `task/176-trigger-alert-check` | Developer | interface/mcp + application | P1 | — | **Backlog** |
+| 177 | TASKS.md Kanban housekeeping | `task/177-tasks-housekeeping` | Developer | docs/ | P2 | — | **Backlog** |
+
+---
+
 ### Sprint 017 — Production Hardening
 
 > Sprint 017 COMPLETE — 2026-04-01. All 5 tasks done.

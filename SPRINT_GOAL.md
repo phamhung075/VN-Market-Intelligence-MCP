@@ -2,15 +2,248 @@
 
 ## Current Sprint
 
-status: COMPLETE
-sprint_id: 021
+status: ACTIVE
+sprint_id: 022
 started: 2026-04-01
 updated: 2026-04-01
-completed: 2026-04-01
 
 ---
 
 ### Theme
+
+**"House in Order — CLAUDE.md Sync, Repo Hygiene, and Telegram Watchlist Enhancements"**
+
+---
+
+### Goal
+
+The product is functionally complete through Sprint 021 but three areas undermine daily
+operation: (1) CLAUDE.md is 10 sprints out of date, so agent chain context is wrong for
+every new feature; (2) stale local branches and agent worktrees clutter `git branch` output
+and slow down developer orientation; (3) the investor has no way to receive a targeted
+Telegram push for a single stock without waiting for the next 15-min intelligence cycle —
+the `send_test_telegram` tool covers connectivity but not on-demand alert delivery.
+
+This sprint makes the codebase trustworthy for the next 6 months of feature work.
+
+---
+
+### Scope
+
+**IN**
+
+1. **Task 174 — CLAUDE.md full sync (P0)**
+
+   CLAUDE.md currently documents through Sprint 013. Sprints 014-021 (10 sprints, ~50 tasks)
+   are missing from the "Done" section. The "In Progress" section incorrectly lists circuit
+   breaker (task 136) and system health tool as in-progress — both are Done. This misleads
+   every agent in the chain.
+
+   Update `CLAUDE.md`:
+   - Add Sprint 014-021 bullet points to the "Done" section (Trade Relationships, Circuit
+     Breaker, Conviction Scorer, Production Hardening, Data Integrity, Stock Aliases,
+     Prediction Market pipeline, Prediction Signals implementation).
+   - Fix "In Progress" section: circuit breaker is Done; system health tool is Done.
+   - Update MCP tool count: 20 → 31.
+   - Add new files to the architecture tree: `stockAliases.ts`, `predictionCascadeMapper.ts`,
+     `predictionSignalDetector.ts`, `convictionScorer.ts` (already partially listed),
+     `tradeRelationships.ts` (already listed); add `predictionStore.ts` to
+     `infrastructure/db/` tree; add `predictionMarketJob.ts` to `scheduler/` tree; add
+     `portfolioTools.ts`, `feedbackTools.ts`, `predictionTools.ts` to
+     `interface/mcp/tools/` tree.
+   - Update `mcp.config.json` key sections table to mention `predictionMarkets` section.
+   - Update Scheduled Jobs table: add prediction market job (every 30 min).
+   - Update "Current implementation status" count to 80+ tasks, Sprint 000-021.
+
+   Files: `CLAUDE.md`
+
+   Acceptance Criteria:
+   - `grep "In Progress" CLAUDE.md` returns only accurate in-progress items (none for Sprint 022 start).
+   - The architecture tree in CLAUDE.md matches the actual files under `src/`.
+   - Tool count listed as 31.
+   - All Sprints 014-021 appear in the "Done" section.
+
+2. **Task 175 — Stale branch + worktree cleanup (P1)**
+
+   `git branch` shows 30+ local branches for completed tasks. `.claude/worktrees/` contains
+   20+ stale agent worktree directories. These slow down `git branch`, `git status`, and
+   agent orientation.
+
+   Actions:
+   - Delete local branches for all tasks in the DONE column of TASKS.md that have a
+     corresponding remote branch already deleted or that are fully merged into `main`.
+     Keep: `main`, `task/doc-001-claude-md-update` (current working branch).
+   - Remove stale directories from `.claude/worktrees/` — any worktree that has no
+     corresponding live `git worktree list` entry.
+   - Do NOT delete remote branches (they serve as merge history). Only local branches.
+
+   Files: no source changes — git operations only.
+
+   Acceptance Criteria:
+   - `git branch` shows 3 or fewer local branches (main + active task branches).
+   - `ls .claude/worktrees/ | wc -l` shows 2 or fewer entries (only live worktrees).
+   - `bun tsc --noEmit` still passes (no file changes).
+
+3. **Task 176 — On-demand stock alert MCP tool: `trigger_alert_check` (P1)**
+
+   The investor wants to ask Claude: "Check VNM right now and alert me on Telegram if
+   anything is significant." Today they must wait for the next 15-min cycle.
+
+   Add a new MCP tool `trigger_alert_check(stocks: string[])` that:
+   - Accepts 1-5 stock codes (e.g. `["VNM", "FPT"]`).
+   - Resolves aliases (uses `stockAliases.ts`).
+   - Fetches live prices for those stocks via `fetchHosePrices` or `fetchHnxPrices`.
+   - Reads the last 3 news items from `analysis_entries` for each stock.
+   - Runs `detectSignals` on the fetched data.
+   - If any HIGH/CRITICAL signals found: sends a Telegram message immediately.
+   - Returns a JSON summary of signals found (or "no significant signals").
+
+   This is the manual equivalent of one iteration of Steps C+D+E of `intelligenceCycleJob`.
+   It does NOT trigger the full cycle — it is stock-specific and synchronous.
+
+   Tests: `src/__tests__/176-trigger-alert-check.test.ts` — mock fetchers and Telegram
+   notifier; assert that a mocked price drop produces a signal, and Telegram send is called
+   once.
+
+   Files:
+   - CREATE: `src/interface/mcp/tools/alertCheckTools.ts`
+   - MODIFY: `src/interface/mcp/server.ts` — register `registerAlertCheckTools`
+   - MODIFY: `src/interface/mcp/tools/index.ts` — add export
+   - CREATE: `src/__tests__/176-trigger-alert-check.test.ts`
+
+   Acceptance Criteria:
+   - `trigger_alert_check(["VNM"])` returns a result object with `signalsFound: number`.
+   - When a mocked price drop >= threshold exists, Telegram send is invoked.
+   - When no signals, Telegram is NOT called.
+   - >= 12 tests, 0 failures.
+   - `bun tsc --noEmit` → 0 errors.
+   - Tool count increases from 31 to 32.
+
+4. **Task 177 — TASKS.md housekeeping: move completed Sprint 020-021 tasks to Done (P2)**
+
+   Tasks 163, 169, 173 are marked "Todo" or "Done" within sprint tables but are not
+   reflected in the DONE column at the top of TASKS.md. The Kanban board is inconsistent.
+
+   Actions:
+   - Move tasks 163, 169, 170, 171, 173 from Sprint table rows to the main DONE table at
+     the top of TASKS.md (add rows for each with merge date 2026-04-01).
+   - Add sprint completion note for Sprint 021 in the Done section footer.
+   - Update the Sprint 020 table to show all tasks as Done.
+
+   Files: `TASKS.md`
+
+   Acceptance Criteria:
+   - The DONE table in TASKS.md contains rows for tasks 163, 169, 170, 171, 173.
+   - No task from Sprint 020 or 021 remains in a non-Done state in the sprint tables.
+   - The Backlog and Todo sections are empty (Sprint 022 tasks are tracked in SPRINT_GOAL.md).
+
+**OUT**
+
+- New external data sources
+- LLM/AI model integration
+- Schema changes
+- New cron jobs (other than trigger_alert_check which is on-demand, not scheduled)
+- Kalshi or additional prediction market feeds
+- Backtest mode
+- Mobile / web UI
+
+---
+
+### Success Metrics
+
+1. `CLAUDE.md` matches the actual source tree: all 31 MCP tools documented, Sprints 014-021
+   in the Done section, "In Progress" section empty or accurate.
+
+2. `git branch` shows 3 or fewer local branches after cleanup.
+
+3. `trigger_alert_check` MCP tool is registered, callable from Claude Desktop, and produces
+   a Telegram message when a significant signal is detected.
+
+4. `bun tsc --noEmit` → 0 errors. All existing tests continue to pass.
+
+5. TASKS.md Kanban board is consistent: no Sprint 020-021 tasks in limbo.
+
+---
+
+### Task board (Sprint 022)
+
+| # | Title | Priority | Status | Depends on |
+|---|-------|----------|--------|------------|
+| 174 | CLAUDE.md full sync — Sprints 014-021 | P0 | Backlog | — |
+| 175 | Stale branch + worktree cleanup | P1 | Backlog | — |
+| 176 | `trigger_alert_check` MCP tool | P1 | Backlog | — |
+| 177 | TASKS.md Kanban housekeeping | P2 | Backlog | — |
+
+---
+
+### Dependency chain
+
+```
+174 (CLAUDE.md sync)          — P0, independent, start immediately
+175 (branch cleanup)          — P1, independent, start immediately (no code changes)
+176 (trigger_alert_check)     — P1, independent, start immediately
+177 (TASKS.md housekeeping)   — P2, independent, can run in parallel
+
+All 4 tasks are independent — no shared files, no ordering constraint.
+174 + 175 can run in parallel.
+176 + 177 can run in parallel.
+```
+
+---
+
+### Key technical decisions (locked at PO level)
+
+- **Task 174 is docs-only**: no production code changes. CLAUDE.md is the only file touched.
+  Risk of breaking anything is zero.
+
+- **Task 175 is git-only**: only local branch deletes and worktree directory removal. No
+  commits, no source changes. Remote branches are preserved for merge history.
+
+- **`trigger_alert_check` is synchronous**: it is a direct MCP tool call, not a cron job.
+  The investor calls it explicitly; the system responds within the MCP timeout window (< 30s
+  for price fetch + signal detection). No new scheduler entries.
+
+- **`trigger_alert_check` uses existing infrastructure**: it reuses `fetchHosePrices`,
+  `fetchHnxPrices`, `detectSignals`, and `sendTelegram` without modification. It is an
+  orchestration layer (application/use-case boundary) exposed as an MCP tool. DDD layering
+  is preserved.
+
+- **`trigger_alert_check` does NOT write to `alerts` table**: it is a read + notify path
+  only. Persisting signals is the job of the 15-min intelligence cycle. Keeping this tool
+  stateless avoids duplicates in the alerts table and dedup window confusion.
+
+---
+
+## Completed Sprints
+
+| Sprint | Theme | Completed | Tasks |
+|--------|-------|-----------|-------|
+| 000 | Foundation | 2026-03-24 | 000 |
+| 001 | BCTC Pipeline Wave 1 | 2026-03-25 | 001, 002, 003, 011, 012, 041, 042, 014 |
+| 002 | BCTC Pipeline Wave 2 | 2026-03-26 | 043, 044, 013, 045, 046, 047, 029, 030, 048, 085 |
+| 003 | News + Alerts | 2026-03-27 | 021, 082, 063, 064, 086 |
+| 004 | MCP Wiring + Analysis | 2026-03-27 | 087, 022, 023, 061, 062, 083 |
+| 005 | Market Data + Scheduler | 2026-03-28 | 088, 026, 102, 104, 103, 101 |
+| 006 | Analytical Depth | 2026-03-28 | 065, 066, 027, 084, 105, 123 |
+| 007 | Doc + Tests | 2026-03-28 | DOC-001, 081, 122, 124, 125 |
+| 008 | Macro Intelligence | 2026-03-29 | FIX-081, 025, 028, 126, 089 |
+| 009 | SSC Automation + Telegram | 2026-03-29 | 031, 034, 106 |
+| 010 | Security + Alert Quality | 2026-04-01 | SQL-fix, 131, 132 |
+| 011 | Adaptive Signals + Sentiment | 2026-04-01 | 133, 134, 135, 137 |
+| 012 | Periodic Summaries | 2026-04-01 | 130 |
+| 013 | Fetcher Reliability + Sector Context | 2026-04-01 | 035, 024, 035-TE, sectorPeers, macroThresholds, priceNewsValidator, commodityTracker |
+| 014 | Trade Relationships | 2026-04-01 | tradeRelationships, tradeStore |
+| 015 | Circuit Breaker | 2026-04-01 | 136 |
+| 016 | Conviction Scorer + Portfolio Tools | 2026-04-01 | convictionScorer, portfolioTools, feedbackTools |
+| 017 | Production Hardening | 2026-04-01 | 152, 153, 154, 155, 156 |
+| 018 | Data Integrity First | 2026-04-01 | 157, 158, 159 |
+| 019 | Stock Aliases + Market Broadcast | 2026-04-01 | 160, 161, 162 |
+| 020 | Prediction Market Intelligence | 2026-04-01 | 163, 164, 165, 166 (stub), 167, 168, 169 |
+| 021 | Close the Loop — Prediction Signals Live | 2026-04-01 | 170, 171, 172, 173 |
+
+---
+
+### Theme (Sprint 021 — for reference)
 
 **"Close the Loop — Prediction Signals Live and Test Suite Green"**
 
