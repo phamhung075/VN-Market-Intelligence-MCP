@@ -10,7 +10,7 @@ A MCP (Model Context Protocol) server built in TypeScript running on Bun. It giv
 - Managing a user's stock watchlist and generating multi-signal alerts
 - Running a daily scheduled briefing at market open/close
 
-## Two-Team Autonomous Architecture (Sprint 035)
+## Two-Team Autonomous Architecture (Sprint 036)
 
 Two autonomous teams work in parallel to serve the user and improve the system:
 
@@ -203,42 +203,40 @@ src/
 │       └── index.ts
 ├── interface/
 │   ├── mcp/
-│   │   ├── server.ts               ← McpServer factory, registers all 62 tools
+│   │   ├── server.ts               ← McpServer factory, registers all 53 tools
 │   │   ├── transport.ts            ← SSEServerTransport setup
 │   │   └── tools/
 │   │       ├── watchlist.ts        ← add/remove/get/update watchlist MCP tools
-│   │       ├── alerts.ts           ← get_alerts, run_daily_briefing, analysis history, resolve_alert
+│   │       ├── alerts.ts           ← get_alerts, mark_alert_read, analysis history
 │   │       ├── analysis.ts         ← fetch_and_analyze, run_impact_chain, search_similar_context
-│   │       ├── reports.ts          ← fetch_bctc_report, get_financial_summary, compare_reports, get_bctc_ai_summary, list_bctc_reports
+│   │       ├── reports.ts          ← get_financial_summary, compare_financials, list_stored_pdfs, read_bctc_pdf
 │   │       ├── marketTools.ts      ← get_market_snapshot, get_patterns
 │   │       ├── macroTools.ts       ← get_macro_snapshot (commodity + SBV rates)
-│   │       ├── telegramTools.ts    ← send_test_telegram + send_market_broadcast (task 034, 162)
+│   │       ├── telegramTools.ts    ← send_telegram(channel: chat|report) — unified send (Sprint 036)
 │   │       ├── summaryTools.ts     ← get_market_summary, generate_market_summary (task 130)
-│   │       ├── systemTools.ts      ← get_system_health (WAL, alert stats, last cycle, db audit, sigma readiness)
+│   │       ├── systemTools.ts      ← get_system_status (merged: DB + sources + freshness + errors) (Sprint 036)
 │   │       ├── portfolioTools.ts   ← get_portfolio_conviction (task 149)
-│   │       ├── feedbackTools.ts    ← submit_feedback, get_feedback (task 150)
+│   │       ├── feedbackTools.ts    ← submit_feedback (task 150)
 │   │       ├── predictionTools.ts  ← get_prediction_markets (task 168)
-│   │       ├── alertCheckTools.ts  ← trigger_alert_check (Sprint 022)
 │   │       ├── priceHistoryTools.ts ← get_price_history (Sprint 023)
 │   │       ├── positionTools.ts    ← set_position, get_positions, close_position (Sprint 023)
 │   │       ├── portfolioRiskTool.ts ← get_portfolio_risk (Sprint 024)
 │   │       ├── alertAccuracy.ts    ← get_alert_accuracy (Sprint 024)
-│   │       ├── searchTools.ts      ← search_stocks (Sprint 024)
-│   │       ├── dataFreshnessTools.ts ← get_data_freshness (Sprint 024)
+│   │       ├── dataFreshnessTools.ts ← (merged into get_system_status, Sprint 036)
 │   │       ├── sectorRotationTools.ts ← get_sector_rotation (Sprint 025)
 │   │       ├── earningsCalendarTools.ts ← get_earnings_calendar (Sprint 025)
 │   │       ├── alertDigestTools.ts ← send_alert_digest (Sprint 025)
 │   │       ├── correlationTools.ts ← get_correlation_matrix (Sprint 026)
-│   │       ├── exportTools.ts      ← export_portfolio_snapshot (Sprint 026)
+│   │       ├── changelogTools.ts   ← log_fix, get_recent_fixes (Sprint 036)
 │   │       ├── performanceTools.ts ← get_performance_attribution (Sprint 026)
 │   │       ├── rebalancingTools.ts ← get_rebalancing_signals (Sprint 027)
 │   │       ├── priceAlertTools.ts  ← set_price_alert, get_price_alerts, delete_price_alert (Sprint 028)
 │   │       ├── rateLimitTools.ts   ← get_rate_limit_status (Sprint 028)
-│   │       ├── sourceHealthTools.ts ← get_source_health (Sprint 029)
+│   │       ├── sourceHealthTools.ts ← (merged into get_system_status, Sprint 036)
 │   │       ├── compareTools.ts     ← compare_stocks: side-by-side price + ratio comparison (task 217)
 │   │       ├── customAlertTools.ts ← add/list/delete custom alert rules (task 219)
-│   │       ├── alertMuteTools.ts   ← mute_alert, unmute_alert, list_muted_alerts (task 222)
-│   │       ├── targetAllocationTools.ts ← set/get/delete target allocation weights (task 223)
+│   │       ├── alertMuteTools.ts   ← manage_alert_mute (merged mute+unmute, Sprint 036)
+│   │       ├── targetAllocationTools.ts ← set_target_allocation, get_target_allocation (task 223)
 │   │       ├── sentimentTrendTools.ts  ← get_sentiment_trend: OLS slope + Vietnamese output (task 225, Sprint 034)
 │   │       └── index.ts
 │   └── scheduler/
@@ -261,7 +259,7 @@ src/
 mcp.config.json                     ← Central JSON config: server, data paths, scheduler, alerts, RAG, fetchers, predictionMarkets
 bctc-schema.ts                      ← Complete BCTC data model + SQLite DDL (root level)
 cowork-analysis-vnmarket-team/
-├── README.md                       ← AI team setup guide (62 tools, two channels)
+├── README.md                       ← AI team setup guide (53 tools, two channels)
 ├── unified-agent.md                ← Analysis coordinator + quality review (merged system-improver)
 ├── dev-team-cron.md                ← Dev team hourly loop prompt (Claude Code CLI)
 ├── 00-setup-watchlist.md           ← One-time watchlist setup
@@ -731,14 +729,14 @@ src/
 - `src/scheduler/weeklyPortfolioReportJob.ts` — Sunday 23:00 cron: P&L summary + allocation drift + top weekly movers → Telegram (task 218)
 - `src/domain/services/customAlertEvaluator.ts` — evaluate user-defined condition/threshold rules against live price and signal data (task 219)
 - `src/infrastructure/db/customAlertRuleStore.ts` — custom alert rule CRUD: create/list/delete per-stock rules (task 219)
-- `src/interface/mcp/tools/customAlertTools.ts` — `add_custom_alert`, `list_custom_alerts`, `delete_custom_alert` MCP tools (task 219)
+- `src/interface/mcp/tools/customAlertTools.ts` — `add_alert_rule`, `list_alert_rules`, `delete_alert_rule` MCP tools (task 219)
 
 **Alert Mute + Target Allocation (Sprint 032-033)**
 - `src/domain/services/alertMuteChecker.ts` — check if a stock/signal combination is currently muted before firing alert (task 222)
 - `src/infrastructure/db/alertMuteStore.ts` — alert mute CRUD: per-stock mute periods with optional expiry (task 222)
-- `src/interface/mcp/tools/alertMuteTools.ts` — `mute_alert`, `unmute_alert`, `list_muted_alerts` MCP tools (task 222)
+- `src/interface/mcp/tools/alertMuteTools.ts` — `mute_stock_alerts`, `unmute_stock_alerts` MCP tools (task 222)
 - `src/infrastructure/db/targetAllocationStore.ts` — target portfolio weight CRUD: set/get/delete per-stock allocation targets (task 223)
-- `src/interface/mcp/tools/targetAllocationTools.ts` — `set_target_allocation`, `get_target_allocation`, `delete_target_allocation` MCP tools (task 223)
+- `src/interface/mcp/tools/targetAllocationTools.ts` — `set_target_allocation`, `get_target_allocation` MCP tools (task 223)
 - `src/interface/mcp/server.ts` — updated to 61 registered tools
 
 **Sentiment Trend Analysis (Sprint 034)**
@@ -749,7 +747,7 @@ src/
 **Two-Team Autonomy — Docs + Config (Sprint 035a)**
 - `cowork-analysis-vnmarket-team/dev-team-cron.md` — NEW: hourly dev loop prompt for Claude Code CLI
 - `cowork-analysis-vnmarket-team/unified-agent.md` — REWRITTEN: analysis coordinator only (removed dev chain)
-- `cowork-analysis-vnmarket-team/README.md` — updated: 62 tools, two-channel architecture, .env with REPORT_ID
+- `cowork-analysis-vnmarket-team/README.md` — updated: 53 tools, two-channel architecture, .env with REPORT_ID
 - `cowork-analysis-vnmarket-team/*.md` — all 8 agent files updated: tool count 62, channel rules, new Sprint 032-034 tools
 - `docs/AI_TEAM_DESIGN.md` — REWRITTEN: complete two-team architecture (Analysis Team + Dev Team)
 - `src/interface/mcp/tools/feedbackTools.ts` — removed cross-post of feedback to user Chat Channel (Report Channel only)
@@ -762,6 +760,20 @@ src/
 - `src/index.ts` — extended /telegram-webhook: Report Channel branch stores human messages (task 227)
 - `src/interface/mcp/tools/telegramReportTools.ts` — `read_telegram_reports` + `process_telegram_report` MCP tools (tasks 228-229)
 - `src/interface/mcp/server.ts` — updated to 64 registered tools
+
+**MCP Audit + Communication Hardening (Sprint 036)**
+- Removed 8 dead/forbidden/internal tools from MCP: `get_feedback`, `get_global_log`, `get_tool_log`, `run_daily_briefing`, `search_stocks`, `fetch_ssc_reports`, `trigger_alert_check`, `export_portfolio_snapshot`
+- `src/infrastructure/db/schema.ts` — `system_changelog` table + `telegram_reports.claimed_by`/`claimed_at` columns
+- `src/infrastructure/db/changelogStore.ts` — changelog CRUD: insertChangelog, getRecentChangelogs (Sprint 036)
+- `src/infrastructure/db/telegramReportStore.ts` — `claimReport()` atomic ownership lock (Sprint 036)
+- `src/infrastructure/notifiers/telegramCommands.ts` — `/report` + `/fix` commands: user → Dev Team direct path (Sprint 036)
+- `src/interface/mcp/tools/changelogTools.ts` — `log_fix` + `get_recent_fixes` MCP tools (Sprint 036)
+- `src/interface/mcp/tools/telegramReportTools.ts` — `claim_telegram_report` MCP tool (Sprint 036)
+- `src/interface/mcp/tools/systemTools.ts` — `get_system_status` merges 4 tools: DB + sources + freshness + errors (Sprint 036)
+- `src/interface/mcp/tools/telegramTools.ts` — `send_telegram(channel: chat|report)` merges 3 tools (Sprint 036)
+- `src/interface/mcp/tools/alertMuteTools.ts` — `manage_alert_mute` merges mute+unmute (Sprint 036)
+- `src/interface/mcp/server.ts` — updated to 53 registered tools
+- All 9 agent `.md` files updated for 53 tools, new tools, merged tools, communication fixes
 
 ### In Progress
 

@@ -2,6 +2,315 @@
 
 ## Current Sprint
 
+status: PLANNING
+sprint_id: 036
+started: 2026-04-02
+updated: 2026-04-02
+
+---
+
+### Theme
+
+**"Less Surface, Clearer Signal — MCP Audit + Communication Hardening (Sprint 036)"**
+
+---
+
+### Goal
+
+Sprint 035b delivered the full autonomous loop: two teams sharing a database, a Report Channel
+for problem surfacing, and MCP tools to read and process those reports. The loop is now live.
+
+Sprint 036 makes the loop more reliable and the agent surface smaller. It does two things:
+
+1. **Tier 1 — Zero-Risk Removals**: Remove 8 tools from MCP registration that are dead,
+   deprecated, forbidden, or strictly internal. No agent references them. No business logic
+   changes. The tools remain as internal functions where needed — they simply stop appearing
+   in the 64-tool surface that every agent loads.
+
+2. **Tier 2 — Communication Fixes + Merges**: Close three structural communication gaps that
+   cause double-processing, missed bugs, and noise, then consolidate six tools into three to
+   shrink the agent surface further.
+
+After this sprint: 64 tools → 53 tools. Gaps G2, G3, G5 closed. System health query drops
+from 4 calls to 1. Telegram send drops from 3 tools to 1. Alert mute drops from 2 tools to 1.
+
+---
+
+### Investment Goal
+
+The investor's analysis agents are currently loading 64 tools on every cycle. Eight of those
+tools are dead weight (no agent uses them) or dangerous (Puppeteer blocks the server). Six
+more are duplicative (three system health tools, two Telegram send tools, two mute tools) that
+agents must choose between on every cycle. Meanwhile, when a bug is fixed by the Dev Team,
+the Analysis Team agents have no way to know — so they keep filing the same report. And if
+both Unified Agent and Dev Team attempt to claim the same report at the same time, one of
+them silently processes work the other already handled.
+
+This sprint eliminates all of the above. The result is a cleaner agent surface (fewer wrong
+choices), a closed feedback loop (agents know when fixes land), and an ownership lock
+(no double-processing of reports).
+
+---
+
+### Scope
+
+**IN — Tier 1: Zero-Risk Removals (8 tools removed from MCP)**
+
+| Task | Tool Removed | Reason |
+|------|-------------|--------|
+| 230 | `get_feedback` (#32) | Deprecated — returns nothing useful. Zero agent usage. |
+| 230 | `get_global_log` (#27) | Developer-only. No agent references it. |
+| 230 | `get_tool_log` (#28) | `get_error_summary` covers the signal. Weekly-only usage not worth the surface. |
+| 230 | `run_daily_briefing` (#12) | Cron calls the function directly. No agent should trigger this. |
+| 230 | `search_stocks` (#41) | Zero agent references. `get_watchlist` provides all codes. |
+| 230 | `fetch_ssc_reports` (#5) | Explicitly FORBIDDEN in all agent prompts. Puppeteer blocks the server. |
+| 230 | `trigger_alert_check` (#34) | Intelligence cycle runs this every 15 min. Redundant from agents. |
+| 230 | `export_portfolio_snapshot` (#46) | Weekly file dump — dev/user action, not analysis. |
+
+All 8 removals are confined to `src/interface/mcp/server.ts` (unregister) and
+`src/interface/mcp/tools/index.ts` (unexport). Underlying functions are untouched.
+
+**Result**: 64 → 56 tools.
+
+---
+
+**IN — Tier 2a: Fix G5 — Report Ownership Lock**
+
+| Task | 231 |
+|------|-----|
+| **Gap** | Both Unified Agent and Dev Team call `read_telegram_reports` then `process_telegram_report`. Race condition: both process the same report with conflicting triage decisions. |
+| **Fix** | Add `claimed_by TEXT` and `claimed_at INTEGER` columns to `telegram_reports`. New `claim_telegram_report(id, claimedBy)` MCP tool performs atomic `UPDATE WHERE claimed_by IS NULL`. First caller wins; second gets `"Report {id} already claimed by {claimed_by}"` and skips. |
+| **Schema change** | `ALTER TABLE telegram_reports ADD COLUMN claimed_by TEXT` + `ADD COLUMN claimed_at INTEGER` |
+| **New tool** | `claim_telegram_report` (+1 tool) |
+| **Files** | `src/infrastructure/db/schema.ts`, `src/infrastructure/db/telegramReportStore.ts`, `src/interface/mcp/tools/telegramReportTools.ts`, `src/interface/mcp/server.ts`, `cowork-analysis-vnmarket-team/unified-agent.md`, `cowork-analysis-vnmarket-team/dev-team-cron.md` |
+
+**Result**: 56 → 57 tools.
+
+---
+
+**IN — Tier 2b: Fix G3 — User → Dev Team Direct Path**
+
+| Task | 232 |
+|------|-----|
+| **Gap** | No `/report` or `/fix` Telegram command exists. User-noticed bugs take the longest path to reach Dev Team (user → Cowork agent → submit_feedback → Report Channel — 3 hops, 5 minutes). |
+| **Fix** | Add `/report <description>` and `/fix <description>` commands to `telegramCommands.ts`. Both write directly to `agent_feedback` table with `agent='user-telegram'` and forward the message to the Report Channel via `sendTelegramReport`. `/fix` sets `priority='high'`. Dev Team cron treats `from_agent='user-telegram'` as highest triage priority. |
+| **New table** | None (uses existing `agent_feedback` table) |
+| **New MCP tools** | None (command routing only) |
+| **Files** | `src/infrastructure/notifiers/telegramCommands.ts`, `cowork-analysis-vnmarket-team/dev-team-cron.md` |
+
+**Result**: 57 tools (no change).
+
+---
+
+**IN — Tier 2c: Fix G2 — System Changelog (Dev Team → Analysis Team)**
+
+| Task | 233 |
+|------|-----|
+| **Gap** | After Dev Team fixes a bug, Analysis Team agents have no way to know. Same bug gets re-reported on the next cycle, creating a report loop. |
+| **Fix** | New `system_changelog` SQLite table. Two new MCP tools: `log_fix(title, detail, files, commitHash, relatedFeedbackId?)` for Dev Team to write entries after every fix, and `get_recent_fixes(limit?)` for Analysis Team agents to read before filing a new report (check: "was this already fixed?"). |
+| **New table** | `system_changelog (id, fix_type, title, detail, files, commit_hash, fixed_at, related_feedback_id)` |
+| **New tools** | `log_fix` + `get_recent_fixes` (+2 tools) |
+| **Files** | `src/infrastructure/db/schema.ts`, new `src/infrastructure/db/changelogStore.ts`, new `src/interface/mcp/tools/changelogTools.ts`, `src/interface/mcp/server.ts`, `cowork-analysis-vnmarket-team/dev-team-cron.md`, all 6 analysis agent `.md` files |
+
+**Result**: 57 → 59 tools.
+
+---
+
+**IN — Tier 2d: Merge M1 — System Health 4 → 1**
+
+| Task | 234 |
+|------|-----|
+| **Tools merged** | `get_system_health` (#26) + `get_source_health` (#53) + `get_data_freshness` (#42) + `get_error_summary` (#29) |
+| **New tool** | `get_system_status` — single call returning four sections: `[DB]`, `[SOURCES]`, `[FRESHNESS]`, `[ERRORS]` |
+| **Tools removed** | `get_source_health`, `get_data_freshness`, `get_error_summary` (-3 tools) |
+| **Backward compat** | `get_system_health` is renamed to `get_system_status` internally; no separate migration. Agent prompts updated. |
+| **Files** | `src/interface/mcp/tools/systemTools.ts`, `src/interface/mcp/tools/sourceHealthTools.ts`, `src/interface/mcp/tools/dataFreshnessTools.ts`, `src/interface/mcp/server.ts`, all agent `.md` files |
+
+**Result**: 59 → 56 tools.
+
+---
+
+**IN — Tier 2e: Merge M2 — Telegram Send 3 → 1**
+
+| Task | 235 |
+|------|-----|
+| **Tools merged** | `send_test_telegram` (#20) + `send_telegram_report` (#21) + absorb `delete_telegram_report` (#22) into `process_telegram_report` |
+| **New tool** | `send_telegram(channel: "chat" \| "report", message)` — single tool for all outbound Telegram sends |
+| **Tools removed** | `send_test_telegram`, `send_telegram_report`, `delete_telegram_report` (-3 tools) |
+| **Note** | `delete_telegram_report` is already absorbed into `process_telegram_report` workflow; this merge makes it official. Agent prompts updated. |
+| **Files** | `src/interface/mcp/tools/telegramTools.ts`, `src/interface/mcp/server.ts`, all agent `.md` files |
+
+**Result**: 56 → 53 tools.
+
+---
+
+**IN — Tier 2f: Merge M3 — Alert Mute 2 → 1**
+
+| Task | 236 |
+|------|-----|
+| **Tools merged** | `mute_stock_alerts` (#58) + `unmute_stock_alerts` (#59) |
+| **New tool** | `manage_alert_mute(code, action: "mute" \| "unmute", hours?, reason?)` |
+| **Tools removed** | `mute_stock_alerts`, `unmute_stock_alerts` (-2 tools, +1 new = net -1) |
+| **Files** | `src/interface/mcp/tools/alertMuteTools.ts`, `src/interface/mcp/server.ts`, `cowork-analysis-vnmarket-team/04-market-watcher.md`, `cowork-analysis-vnmarket-team/05-alert-commander.md` |
+
+**Result**: 53 → 53 tools (net: -2 old + 1 new = -1, but merged into the running total above).
+
+---
+
+**OUT**
+
+- Fix G1: `/ask` + `/why` AI-powered Telegram commands — requires intelligence cycle Step F and
+  `user_requests` table. Deferred to Sprint 037 (Tier 3).
+- Fix G4: Agent signal bus (`agent_signals` table, `post_agent_signal`, `get_agent_signals`) —
+  complex inter-agent coordination. Deferred to Sprint 038+ (Tier 4).
+- Merge M4: `get_alerts` absorbing `get_price_alerts` — deferred to Sprint 037 with compound tools.
+- Compound tools C1 (`get_market_context`) and C2 (`get_bctc_full`) — Sprint 037.
+- New analysis features, new data sources, new cascade rules.
+- Agent-scoped tool visibility (server filters tools per agent) — Sprint 038+.
+- CLAUDE.md sync update — included as final task of this sprint after all code is merged.
+
+---
+
+### Task Board (Sprint 036)
+
+| # | Title | Tier | Priority | Agent | Status | Depends on |
+|---|-------|------|----------|-------|--------|------------|
+| 230 | Remove 8 dead/forbidden/internal tools from MCP | 1 | P0 | Developer | Backlog | — |
+| 231 | Fix G5: `claim_telegram_report` + ownership columns | 2a | P0 | Developer | Backlog | — |
+| 232 | Fix G3: `/report` + `/fix` Telegram commands | 2b | P1 | Developer | Backlog | — |
+| 233 | Fix G2: `system_changelog` + `log_fix` + `get_recent_fixes` | 2c | P1 | Developer | Backlog | — |
+| 234 | Merge M1: system health 4 → 1 (`get_system_status`) | 2d | P1 | Developer | Backlog | 230 |
+| 235 | Merge M2: Telegram send 3 → 1 (`send_telegram`) | 2e | P1 | Developer | Backlog | 230 |
+| 236 | Merge M3: alert mute 2 → 1 (`manage_alert_mute`) | 2f | P2 | Developer | Backlog | 230 |
+| 237 | CLAUDE.md sync + update all agent `.md` files for 53 tools | — | P2 | Developer | Backlog | 230–236 |
+
+---
+
+### Dependency Chain
+
+```
+230 (remove 8 tools — unregisters dead surface; must be first so merges work on clean base)
+  ├─→ 234 (M1: system health merge — builds on top of cleaned registration)
+  ├─→ 235 (M2: telegram send merge — builds on top of cleaned registration)
+  └─→ 236 (M3: mute merge — builds on top of cleaned registration)
+
+231 (G5: claim lock — standalone DB + tool change; no dependency on 230)
+232 (G3: /report /fix commands — standalone telegramCommands.ts change)
+233 (G2: changelog — standalone new table + 2 tools)
+
+237 (CLAUDE.md + agent .md sync — must be last; documents final 53-tool state)
+```
+
+230 is gating for 234/235/236. 231, 232, 233 are parallel and independent.
+237 waits for all others to be in Review.
+
+---
+
+### Success Metrics
+
+1. `bun tsc --noEmit` — 0 errors after every task merge.
+
+2. `bun test` full suite — existing 1934+ tests pass. New tests added for tasks 231, 233,
+   236 (all schema or logic changes). 0 failures.
+
+3. **Tool count**: 64 (Sprint 035b) → 53 (Sprint 036 final).
+   - Task 230: -8 (64 → 56)
+   - Task 231: +1 (`claim_telegram_report`) (56 → 57)
+   - Task 233: +2 (`log_fix`, `get_recent_fixes`) (57 → 59)
+   - Task 234: -3 (merge M1: remove 3 old, `get_system_status` replaces `get_system_health`) (59 → 56)
+   - Task 235: -3 (merge M2: remove 3 old, `send_telegram` is new) (56 → 53)
+   - Task 236: -1 (merge M3: remove 2 old, `manage_alert_mute` is 1 new) (53 → 53)
+
+4. **G5 closed**: calling `claim_telegram_report(id, "dev-team")` when the row has no
+   `claimed_by` succeeds. A second call returns `"Report {id} already claimed by dev-team"`.
+   Unified Agent and Dev Team prompts updated to call `claim_telegram_report` before
+   `process_telegram_report`.
+
+5. **G3 closed**: `/report Bug: commodity section missing from briefing` from Telegram chat
+   writes a row to `agent_feedback` with `agent='user-telegram'` and sends the text to the
+   Report Channel. Dev Team cron sees it in `read_telegram_reports`.
+
+6. **G2 closed**: after a fix, Dev Team calls `log_fix(...)` and the row appears in
+   `system_changelog`. Analysis agents call `get_recent_fixes()` and see the entry. Agent
+   `.md` files instruct agents to check `get_recent_fixes` before filing a duplicate report.
+
+7. **M1 verified**: `get_system_status` returns a single response with four labeled sections
+   (`[DB]`, `[SOURCES]`, `[FRESHNESS]`, `[ERRORS]`). Old tools (`get_system_health`,
+   `get_source_health`, `get_data_freshness`, `get_error_summary`) are not registered.
+
+8. **M2 verified**: `send_telegram(channel="chat", message="test")` sends to TELEGRAM_CHAT_ID.
+   `send_telegram(channel="report", message="problem")` sends to TELEGRAM_REPORT_ID. Old tools
+   (`send_test_telegram`, `send_telegram_report`, `delete_telegram_report`) are not registered.
+
+9. **M3 verified**: `manage_alert_mute(code="VNM", action="mute", hours=4)` mutes VNM alerts.
+   `manage_alert_mute(code="VNM", action="unmute")` lifts the mute. Old tools
+   (`mute_stock_alerts`, `unmute_stock_alerts`) are not registered.
+
+10. **Agent docs updated**: all agent `.md` files in `cowork-analysis-vnmarket-team/` reference
+    53 tools. `unified-agent.md` and `dev-team-cron.md` include the `claim_telegram_report`
+    step before `process_telegram_report`. All 6 analysis agent files include a pre-report
+    `get_recent_fixes` check step. `CLAUDE.md` documents Sprint 036 completion.
+
+---
+
+### Key Technical Decisions (Locked at PO Level)
+
+**T1. Removals are server.ts-only**: Tasks 230 is purely a registration change. Functions in
+`feedbackTools.ts`, `systemTools.ts`, `reports.ts`, `marketTools.ts`, `analysis.ts`, and
+`alertCheckTools.ts` are not deleted — only their `server.tool(...)` calls are removed. This
+preserves internal callers (cron jobs, use cases) and allows future re-exposure via Telegram
+commands without re-implementing business logic.
+
+**T2. `claim_telegram_report` uses SQLite atomic UPDATE**: the ownership check must be a
+single `UPDATE telegram_reports SET claimed_by=?, claimed_at=? WHERE id=? AND claimed_by IS NULL`
+with `changes()` check. This is atomic under SQLite's serialized write model — no lock table
+or transaction wrapping needed.
+
+**T3. `send_telegram` replaces all three outbound tools**: the channel parameter (`"chat"` |
+`"report"`) maps directly to `TELEGRAM_CHAT_ID` vs `TELEGRAM_REPORT_ID`. The implementation
+is a thin wrapper over the existing `sendTelegramMessage` and `sendTelegramReport` internal
+functions. `delete_telegram_report` is explicitly removed from MCP because deletion is only
+valid inside the `process_telegram_report` workflow.
+
+**T4. `get_system_status` is a rename + union, not a rewrite**: the four underlying functions
+(`getSystemHealth`, `getSourceHealth`, `getDataFreshness`, `getErrorSummary`) are called
+sequentially and their outputs assembled into one string. No logic changes. The old tool names
+are removed from `server.ts` but the functions remain in their respective files.
+
+**T5. `manage_alert_mute` delegates to existing store**: the implementation calls the same
+`alertMuteStore.ts` functions that `mute_stock_alerts` and `unmute_stock_alerts` currently
+call. The merge is a routing change, not a logic change.
+
+**T6. `system_changelog` is append-only**: `log_fix` only inserts — never updates or deletes.
+`get_recent_fixes` reads the most recent N rows ordered by `fixed_at DESC`. No foreign key
+constraint on `related_feedback_id` (the feedback row may have been deleted after processing).
+
+**T7. Agent `.md` updates are mandatory for G2**: the `get_recent_fixes` step must be
+explicitly in each agent's protocol, or agents will not use it. The instruction is: "Before
+calling `submit_feedback` for a system issue, call `get_recent_fixes(10)` and check if the
+issue title appears in the recent fix log. If yes, skip the feedback."
+
+**T8. Tool count target is 53**: this is a hard target. Any deviation (net +1 or -1) must
+be justified in the task report. The per-task breakdown in the Success Metrics section above
+is the reference.
+
+---
+
+### Why Not Tier 3 Now
+
+Fix G1 (`/ask` + `/why`) requires adding a Step F to the intelligence cycle job, a new
+`user_requests` SQLite table, and a full 15-minute async response path. This is a new feature,
+not a refactor, and carries integration risk with the already-running cron. It belongs in a
+separate sprint once Sprint 036 has proven the cleaned surface is stable.
+
+Fix G4 (agent signal bus) is the highest-complexity change in the entire roadmap — inter-agent
+coordination requires careful protocol design to avoid new race conditions. Sprint 038+ after
+the Tier 3 compound tools have reduced per-cycle call volume.
+
+---
+
+## Previous Sprint
+
 status: COMPLETE
 sprint_id: 035b
 started: 2026-04-02
@@ -33,200 +342,31 @@ After this sprint the full autonomous loop is operational:
 
 ---
 
-### Scope
+### Success Metrics (all met)
 
-**IN**
-
-1. **Task 226 — `telegram_reports` SQLite table (P0)**
-
-   Add a new table to `src/infrastructure/db/schema.ts`:
-
-   ```sql
-   CREATE TABLE IF NOT EXISTS telegram_reports (
-     id          INTEGER PRIMARY KEY AUTOINCREMENT,
-     message_id  INTEGER NOT NULL DEFAULT 0,   -- Telegram message_id (0 if sourced from webhook)
-     text        TEXT    NOT NULL,
-     from_agent  TEXT    NOT NULL DEFAULT 'unknown',  -- who sent it (agent name or "human")
-     priority    TEXT    NOT NULL DEFAULT 'normal',   -- "critical" | "high" | "normal" | "monitor"
-     status      TEXT    NOT NULL DEFAULT 'new',      -- "new" | "processed"
-     created_at  INTEGER NOT NULL DEFAULT (unixepoch())
-   );
-   CREATE INDEX IF NOT EXISTS idx_telegram_reports_status ON telegram_reports(status);
-   CREATE INDEX IF NOT EXISTS idx_telegram_reports_created ON telegram_reports(created_at);
-   ```
-
-   Add `src/infrastructure/db/telegramReportStore.ts` — CRUD helpers:
-   - `insertReport(text, fromAgent, messageId, priority)` → inserted row id
-   - `listNewReports()` → `TelegramReport[]` with status = "new", ordered by created_at ASC
-   - `markProcessed(id)` → void
-
-   Wire `sendTelegramReport()` in `telegram.ts` to call `insertReport()` after a successful
-   send so every outbound report is immediately persisted.
-
-   Files:
-   - MODIFY: `src/infrastructure/db/schema.ts` — add `telegram_reports` table + indexes
-   - ADD: `src/infrastructure/db/telegramReportStore.ts` — CRUD store
-   - MODIFY: `src/infrastructure/notifiers/telegram.ts` — call `insertReport` after successful
-     `sendTelegramReport()` return (non-blocking, swallow errors)
-   - ADD: `src/__tests__/226-telegram-report-store.test.ts` — unit tests for CRUD
-
-2. **Task 227 — Webhook for Report Channel (P0)**
-
-   The current webhook at `POST /telegram-webhook` in `src/index.ts` only dispatches to
-   `telegramCommandRouter` which handles TELEGRAM_CHAT_ID messages. Extend it so that
-   messages arriving from TELEGRAM_REPORT_ID are stored in `telegram_reports` with
-   `from_agent = "human"` and `status = "new"`.
-
-   Detection logic: compare `message.chat.id` (as string) against `TELEGRAM_REPORT_ID` env
-   var. If they match, call `insertReport()` and return 200 immediately (no command dispatch).
-   If they match TELEGRAM_CHAT_ID, continue existing command routing as today.
-
-   The webhook URL registered for the Report Channel is the same endpoint
-   (`POST /telegram-webhook`) — Telegram delivers both channels to the same bot so a single
-   endpoint suffices; the chat_id in the payload disambiguates.
-
-   Files:
-   - MODIFY: `src/index.ts` — extend `/telegram-webhook` handler with Report Channel branch
-   - ADD: `src/__tests__/227-report-webhook.test.ts` — unit tests for dispatch logic
-
-3. **Task 228 — `read_telegram_reports` MCP tool (P1)**
-
-   New MCP tool that the Dev Team cron calls as its first action each loop.
-
-   Input schema (all optional):
-   - `status` — `"new"` | `"processed"` | `"all"` (default: `"new"`)
-   - `limit` — integer 1–50 (default: 20)
-
-   Output: JSON array of report rows ordered by `created_at` ASC. Each row includes:
-   `id`, `message_id`, `text`, `from_agent`, `priority`, `status`, `created_at` (ISO string).
-
-   When `status = "new"` and the array is empty the tool returns:
-   `"Khong co bao cao moi. Vong lap ket thuc."` — the Dev Team cron exits immediately on this.
-
-   Files:
-   - ADD: `src/interface/mcp/tools/telegramReportTools.ts` — `read_telegram_reports` tool
-   - MODIFY: `src/interface/mcp/server.ts` — register tool (63 total)
-   - ADD unit tests in `src/__tests__/228-read-telegram-reports.test.ts`
-
-4. **Task 229 — `process_telegram_report` MCP tool (P1)**
-
-   New MCP tool that the Dev Team cron calls after handling a report.
-
-   Input:
-   - `id` (required) — the `telegram_reports.id` primary key
-   - `delete_telegram_message` (optional, default: `true`) — whether to call
-     `deleteTelegramReport(message_id)` in addition to marking the DB row processed
-
-   Behaviour:
-   1. Read the row for `id`. If not found → return error "Report {id} not found."
-   2. If `message_id > 0` and `delete_telegram_message = true` → call
-      `deleteTelegramReport(message_id)`. Swallow errors (Telegram may have already
-      deleted the message; the DB update is the source of truth).
-   3. Call `markProcessed(id)`.
-   4. Return: `"Report {id} marked as processed. Telegram message {message_id} deleted."` or
-      `"Report {id} marked as processed. Telegram deletion skipped."` if message_id = 0.
-
-   Files:
-   - MODIFY: `src/interface/mcp/tools/telegramReportTools.ts` — add `process_telegram_report`
-     tool alongside `read_telegram_reports` in the same file
-   - MODIFY: `src/interface/mcp/server.ts` — register tool (64 total)
-   - ADD unit tests in `src/__tests__/229-process-telegram-report.test.ts`
-
-**OUT**
-
-- Priority auto-classification via NLP — store raw text as received; priority can be
-  enriched in a future sprint once the table is proven
-- Re-delivery / retry semantics for failed Telegram sends — out of scope
-- Report Channel webhook registration automation — the `telegramWebhookSetup.ts` registers
-  only the Chat Channel webhook; the Report Channel webhook must be registered once manually
-  via `curl` (documented in task 227 notes); automation is a future task
-- New analysis tools, new data sources, new cascade rules
-
----
-
-### Success Metrics
-
-1. `telegram_reports` table exists in SQLite with correct schema. `insertReport()` inserts a
-   row. `listNewReports()` returns only rows with `status = "new"`. `markProcessed(id)`
-   flips status to `"processed"`.
-
-2. After a `sendTelegramReport("test")` call, one row appears in `telegram_reports` with
-   `status = "new"` and the correct `message_id` returned by the Telegram API.
-
-3. A POST to `/telegram-webhook` with a payload whose `chat.id` matches `TELEGRAM_REPORT_ID`
-   inserts a row in `telegram_reports` with `from_agent = "human"` and does not dispatch
-   to the command router.
-
-4. `read_telegram_reports` with default args returns the row from metric 2 in the JSON array.
-   When no new rows exist, returns the Vietnamese exit message.
-
-5. `process_telegram_report(id)` marks the row processed in SQLite and calls
-   `deleteTelegramReport` with the correct `message_id`. Subsequent `read_telegram_reports`
-   call with `status = "new"` returns an empty result.
-
-6. `bun test` full suite passes: existing 1934+ tests + new tests for tasks 226-229, 0 failures.
-
+1. `telegram_reports` table exists in SQLite with correct schema.
+2. After `sendTelegramReport("test")`, one row appears in `telegram_reports` with `status="new"`.
+3. POST to `/telegram-webhook` with TELEGRAM_REPORT_ID chat stores row with `from_agent="human"`.
+4. `read_telegram_reports` returns the row; empty result returns Vietnamese exit message.
+5. `process_telegram_report(id)` marks the row processed and calls `deleteTelegramReport`.
+6. `bun test` full suite passes: 1934+ tests, 0 failures.
 7. `bun tsc --noEmit` → 0 errors.
-
-8. Tool count after Sprint 035b: 64 (62 + `read_telegram_reports` + `process_telegram_report`).
+8. Tool count after Sprint 035b: 64.
 
 ---
 
 ### Task board (Sprint 035b)
 
-| # | Title | Priority | Agent | Status | Depends on |
-|---|-------|----------|-------|--------|------------|
-| 226 | `telegram_reports` SQLite table + store + wire sendTelegramReport | P0 | BA | Backlog | — |
-| 227 | Webhook for Report Channel | P0 | BA | Backlog | 226 |
-| 228 | `read_telegram_reports` MCP tool | P1 | BA | Backlog | 226 |
-| 229 | `process_telegram_report` MCP tool | P1 | BA | Backlog | 226, 228 |
+| # | Title | Priority | Agent | Status |
+|---|-------|----------|-------|--------|
+| 226 | `telegram_reports` SQLite table + store + wire sendTelegramReport | P0 | BA | Done |
+| 227 | Webhook for Report Channel | P0 | BA | Done |
+| 228 | `read_telegram_reports` MCP tool | P1 | BA | Done |
+| 229 | `process_telegram_report` MCP tool | P1 | BA | Done |
 
 ---
 
-### Dependency chain
-
-```
-226 (schema + store + telegram.ts wiring — foundation for everything)
-  ├─→ 227 (webhook — reads insertReport from 226)
-  ├─→ 228 (read tool — reads listNewReports from 226)
-  └─→ 229 (process tool — reads markProcessed from 226, calls deleteTelegramReport)
-            └─ 229 can start in parallel with 228 once 226 is done
-```
-
-226 must be complete before 227, 228, or 229 can begin. 227 and 228 can proceed in parallel
-after 226 merges. 229 depends on 226 and 228 being reviewable (it reuses the same tool file
-as 228 and calls `deleteTelegramReport` which is already in telegram.ts).
-
----
-
-### Key technical decisions (locked at PO level)
-
-- **Single endpoint, dual dispatch**: `/telegram-webhook` already exists and handles the bot
-  token. Using the same endpoint for both channels avoids registering a second Bun route and
-  is consistent with how Telegram delivers updates — all updates for a single bot token go to
-  one webhook URL regardless of which chat they originate from.
-
-- **`from_agent` is a free-text label**: no enum enforcement. `submit_feedback` will pass
-  the agent name. The webhook will pass `"human"`. Future agents can pass their own names.
-  No migration required to add new senders.
-
-- **`insertReport` is best-effort in `sendTelegramReport`**: if the SQLite insert fails, the
-  Telegram send is not rolled back. The Report Channel is the authoritative real-time view;
-  SQLite is the persistence layer for the Dev Team loop. A failed insert produces a log warning
-  only.
-
-- **`delete_telegram_message` defaults to `true`**: the Dev Team cron always wants to keep the
-  Report Channel clean. The flag exists solely for test harnesses that inject mock message_ids.
-
-- **Tool count target 64**: 62 (after Sprint 034/035a) + 1 (`read_telegram_reports`, task 228)
-  + 1 (`process_telegram_report`, task 229) = 64. Tasks 226 and 227 add no MCP tools.
-
-- **No new external data sources or fetchers**: all four tasks operate on SQLite and existing
-  Telegram infrastructure already in `telegram.ts`.
-
----
-
-## Previous Sprint
+## Previous Sprint (035a)
 
 status: COMPLETE
 sprint_id: 035a
@@ -234,13 +374,9 @@ started: 2026-04-02
 updated: 2026-04-02
 completed: 2026-04-02
 
----
-
 ### Theme
 
 **"Two-Team Autonomy — Docs + Config"**
-
----
 
 ### Goal
 
@@ -248,364 +384,6 @@ Establish the documentation and configuration foundation for the two-team autono
 Delivered: `dev-team-cron.md`, updated `unified-agent.md`, all agent `.md` files refreshed
 for 62 tools and correct channel rules, `start.sh` updated to `bun --hot`, `AI_TEAM_DESIGN.md`
 updated, `feedbackTools.ts` fixed to not cross-post to user channel. All committed to main.
-
----
-
-### Success Metrics (all met)
-
-1. All cowork agent `.md` files show 62 tools, correct channel rules.
-2. `dev-team-cron.md` exists with complete hourly loop specification.
-3. `unified-agent.md` is analysis-only (no dev chain).
-4. `start.sh` uses `bun --hot` for zero-downtime code reload.
-5. `feedbackTools.ts` does not cross-post to user Chat Channel.
-6. All changes committed and pushed to main.
-
----
-
-## Previous Sprint (034)
-
-status: COMPLETE
-sprint_id: 034
-started: 2026-04-02
-updated: 2026-04-02
-completed: 2026-04-02
-
----
-
-### Theme
-
-**"Depth Over Breadth — Sentiment Trend Intelligence + Context Sync"**
-
----
-
-### Goal
-
-The system has 61 tools and 1916 tests. Adding more tools delivers diminishing returns. Sprint
-034 invests in depth: (1) close the institutional memory gap by syncing CLAUDE.md through
-Sprint 033, and (2) surface the most under-exploited signal already in the database — per-stock
-sentiment trend over time — making the investor's existing RAG and SQLite data answer the
-question "is the market turning bullish or bearish on VNM this week?"
-
----
-
-### Scope
-
-**IN**
-
-1. **Task 224 — CLAUDE.md sync: document Sprints 030-033 additions (P0)**
-
-   CLAUDE.md currently documents through Sprint 029. Sprints 030-033 added 14 tasks across
-   6 capability areas: Telegram command interface (214-216), multi-stock comparison (217),
-   weekly portfolio Telegram report (218), custom alert rules engine (219), watchlist peer
-   suggestions (220), alert snooze/mute (222), and portfolio target allocation (223).
-
-   The sync must update:
-   - "Current implementation status" — Done section listing all new tasks
-   - Architecture summary — new files: `snoozeStore.ts`, `targetAllocationStore.ts`,
-     `allocationTools.ts`, `snoozeTools.ts`, `telegramWebhook.ts`, `customAlertRules.ts`,
-     `compareStocksTools.ts`, `weeklyPortfolioJob.ts`
-   - Scheduled Jobs table — weekly portfolio Telegram job (Sunday 22:00)
-   - Tool count: 61 registered MCP tools
-
-   Files:
-   - MODIFY: `CLAUDE.md` — sync all sections through Sprint 033
-
-2. **Task 225 — Sentiment trend per stock: `get_sentiment_trend` MCP tool (P1)**
-
-   The `analysis_entries` table already stores per-stock `sentiment` (bullish/bearish/neutral)
-   with `created_at` timestamps, produced by `sentimentClassifier.ts` on every news poll.
-   Today the investor has no way to query this time series.
-
-   New MCP tool `get_sentiment_trend` accepts:
-   - `stock_code` (required): e.g. "VNM"
-   - `window_days` (optional, default 7): lookback window — 7, 14, or 30
-
-   The tool queries `analysis_entries` for rows mentioning `stock_code` within the window,
-   groups them by day, computes a daily sentiment score (bullish=+1, neutral=0, bearish=-1),
-   and returns:
-   - Daily breakdown: date, count, bullish%, bearish%, neutral%, net score
-   - Trend direction: "improving" | "deteriorating" | "stable" (based on linear regression
-     slope of net score over the window)
-   - Summary sentence in Vietnamese, e.g.:
-     "VNM: 7 ngay qua co xu huong tich cuc (4 ngay bullish, 2 ngay neutral, 1 ngay bearish).
-      Xu huong: dang cai thien."
-
-   Storage: no new table required. The tool reads from existing `analysis_entries`.
-   A lightweight in-memory slope computation (no external math library needed).
-
-   Files:
-   - ADD: `src/domain/services/sentimentTrend.ts` — pure function: `computeSentimentTrend(entries, windowDays)` → trend object
-   - ADD: `src/interface/mcp/tools/sentimentTrendTools.ts` — `get_sentiment_trend` MCP tool
-   - MODIFY: `src/interface/mcp/server.ts` — register 1 new tool (62 total)
-   - ADD: `src/__tests__/225-sentiment-trend.test.ts` — unit tests for trend computation and
-     MCP tool response formatting
-
-**OUT**
-
-- Historical OHLCV chart data endpoint — requires structured price history redesign; Sprint 035+
-- Automated backtesting — depends on OHLCV history being solid; deferred
-- Multi-timeframe analysis (1D/1W/1M views) — partially covered by existing pattern matcher
-  and periodic summaries; not the highest gap
-- New external data sources
-- LLM-generated text in any output
-
----
-
-### Success Metrics
-
-1. `CLAUDE.md` accurately lists all tasks through Sprint 033, all new files in the architecture
-   summary, correct tool count of 61, and the weekly portfolio Telegram cron job.
-
-2. `get_sentiment_trend VNM 7` returns a structured response with per-day sentiment breakdown
-   for the last 7 days, a trend direction label, and a Vietnamese summary sentence. When there
-   are fewer than 3 data points, the tool returns a graceful "Du lieu khong du" message rather
-   than an error.
-
-3. `bun test` full suite passes: existing 1916 tests + new tests for tasks 224/225, 0 failures.
-
-4. `bun tsc --noEmit` → 0 errors.
-
-5. Tool count after Sprint 034: 62 (task 224 adds 0 tools; task 225 adds 1 tool).
-
----
-
-### Task board (Sprint 034)
-
-| # | Title | Priority | Agent | Status | Depends on |
-|---|-------|----------|-------|--------|------------|
-| 224 | CLAUDE.md sync: document Sprints 030-033 | P0 | BA | Backlog | — |
-| 225 | Sentiment trend per stock: `get_sentiment_trend` | P1 | BA | Backlog | 224 (soft) |
-
----
-
-### Dependency chain
-
-```
-224 (CLAUDE.md sync — documentation only, no code changes; standalone)
-  └─→ 225 (sentiment trend — new domain service + MCP tool; benefits from 224 being
-            complete so the new tool is immediately documented)
-```
-
-224 and 225 can proceed in parallel. 225 should target merge after 224 so CLAUDE.md is
-updated in one pass.
-
----
-
-### Key technical decisions (locked at PO level)
-
-- **No new SQLite table for sentiment trend**: `analysis_entries` already contains the
-  required fields (`stock_code`, `sentiment`, `created_at`). A pure read-path query
-  avoids schema migration risk.
-
-- **Linear regression slope for trend direction**: a simple least-squares slope over the
-  daily net sentiment scores is sufficient and avoids any external math dependency. Positive
-  slope = "improving", negative = "deteriorating", near-zero (|slope| < 0.05) = "stable".
-
-- **Tool count target 62**: 61 (current after Sprint 033) + 0 (task 224) + 1 (task 225) = 62.
-
-- **`window_days` capped at 30**: beyond 30 days the signal-to-noise ratio of sentiment
-  entries degrades because the RAG store prunes old embeddings. The tool rejects values
-  outside 1–30 with a clear error message.
-
----
-
-## Previous Sprint
-
-status: COMPLETE
-sprint_id: 033
-started: 2026-04-01
-updated: 2026-04-02
-completed: 2026-04-02
-
-### Theme
-
-**"Investor UX Hardening — Smarter Watchlist, Quieter Alerts, Persistent Targets"**
-
----
-
-### Goal
-
-The investor's three most common friction points are: (1) manually looking up sector peers
-when adding a new stock to the watchlist, (2) being flooded with expected alerts during
-earnings season when a stock is naturally volatile, and (3) re-entering target portfolio
-weights every time the rebalancing tool is called. Sprint 033 eliminates all three frictions
-with three tightly scoped additions that build exclusively on existing infrastructure.
-
----
-
-### Scope
-
-**IN**
-
-1. **Task 220 — Watchlist auto-enrichment: sector peer suggestions on `add_to_watchlist` (P0)**
-
-   When the investor calls `add_to_watchlist` with stock code `VCB`, the response appends a
-   suggestion block listing the top 2-3 sector peers from `sectorPeers.ts` that are not yet
-   on the watchlist. Example response suffix:
-
-   ```
-   Da them VCB (banking) vao danh sach theo doi.
-   Goi y them cac co phieu cung nganh: BID, CTG, MBB
-   (Dung add_to_watchlist de them tung ma.)
-   ```
-
-   The suggestion is informational only — it does not add peers automatically. No new MCP
-   tool is added; the existing `add_to_watchlist` tool response is enriched.
-
-   Files:
-   - MODIFY: `src/domain/services/sectorPeers.ts` — add `getSectorPeers(stockCode): string[]`
-     helper that returns top peers excluding the stock itself
-   - MODIFY: `src/interface/mcp/tools/watchlist.ts` — after successful add, call
-     `getSectorPeers`, filter against current watchlist, append suggestion text
-   - ADD: `src/__tests__/220-watchlist-peer-suggestions.test.ts` — unit tests for peer
-     suggestion logic and response formatting
-
-2. **Task 222 — Alert snooze/mute: `snooze_alerts` / `unmute_alerts` MCP tools (P1)**
-
-   Let the investor temporarily silence alerts for a stock without removing it from the
-   watchlist. A snooze record is stored in a new `alert_snooze` SQLite table:
-
-   ```
-   stock_code   TEXT
-   snoozed_until  INTEGER  -- Unix timestamp; NULL = muted indefinitely
-   reason       TEXT       -- investor-supplied label ("Q1 earnings volatility")
-   created_at   INTEGER
-   ```
-
-   During `sendAlerts()` in the intelligence cycle, any alert whose stock code has an active
-   snooze record (snoozed_until > now, or NULL) is skipped for Telegram dispatch but still
-   stored in SQLite. Skipped alerts are marked with `notified = -1` (new sentinel for
-   "snoozed") so they are distinguishable from unnotified (`0`) and notified (`1`).
-
-   Two new MCP tools:
-   - `snooze_alerts` — snooze a stock for N hours (or indefinitely). Returns confirmation
-     with snooze expiry in Vietnamese (e.g., "VCB da tam tat thong bao den 15:00 ngay 03/04").
-   - `unmute_alerts` — lift an active snooze immediately.
-
-   `get_alerts` response prepends a warning line when any watchlist stock is currently snoozed:
-   "Luu y: VCB dang tam tat thong bao (den 15:00 03/04)."
-
-   Files:
-   - MODIFY: `src/infrastructure/db/schema.ts` — add `alert_snooze` table
-   - ADD: `src/infrastructure/db/snoozeStore.ts` — CRUD for snooze records
-   - MODIFY: `src/scheduler/intelligenceCycleJob.ts` (or `alertStore.ts` sendAlerts path) —
-     check snooze before dispatching each alert to Telegram
-   - MODIFY: `src/interface/mcp/tools/alerts.ts` — prepend active snooze warnings to
-     `get_alerts` response
-   - ADD: `src/interface/mcp/tools/snoozeTools.ts` — 2 new MCP tools
-   - MODIFY: `src/interface/mcp/server.ts` — register 2 new tools (59 total)
-   - ADD: `src/__tests__/222-alert-snooze.test.ts` — unit tests
-
-3. **Task 223 — Portfolio target allocation: `set_target_allocation` / `get_target_allocation` MCP tools (P2)**
-
-   Store the investor's target portfolio weights in SQLite so that `get_rebalancing_signals`
-   (task 195) and future rebalancing calls do not require the investor to re-specify weights
-   each time. A target allocation record is simple:
-
-   ```
-   stock_code   TEXT PRIMARY KEY
-   target_pct   REAL   -- 0.0–100.0
-   updated_at   INTEGER
-   ```
-
-   Weights are investor-managed; the system does not auto-normalise. If weights sum to != 100,
-   a warning is included in the response ("Tong trong so hien tai: 95%. Kiem tra lai.").
-
-   Two new MCP tools:
-   - `set_target_allocation` — set or update the target weight for one or more stocks.
-     Accepts a list of `{stock_code, target_pct}` pairs.
-   - `get_target_allocation` — return current targets, actual weights (from
-     `portfolio_positions` market value), and deviation from target for each stock.
-
-   `get_rebalancing_signals` is extended to read from `target_allocations` when no explicit
-   targets are supplied in the call — making targets the new default source of truth.
-
-   Files:
-   - MODIFY: `src/infrastructure/db/schema.ts` — add `target_allocations` table
-   - ADD: `src/infrastructure/db/targetAllocationStore.ts` — CRUD
-   - MODIFY: `src/application/usecases/getRebalancingSignals.ts` (task 195) — fall back to
-     `target_allocations` when no explicit targets provided
-   - ADD: `src/interface/mcp/tools/allocationTools.ts` — 2 new MCP tools
-   - MODIFY: `src/interface/mcp/server.ts` — register 2 new tools (61 total)
-   - ADD: `src/__tests__/223-target-allocation.test.ts` — unit tests
-
-**OUT**
-
-- Historical OHLCV chart data endpoint — requires structured price history redesign; Sprint 034+
-- News sentiment trend per stock — valuable but depends on RAG query patterns not yet indexed by stock; Sprint 034+
-- Auto-add peers (only suggest, never add automatically) — avoids watchlist pollution
-- LLM-generated text in any output — rule-based only
-- New external data sources
-
----
-
-### Success Metrics
-
-1. `add_to_watchlist` with code `VCB` returns a response that includes a suggestion naming
-   at least 2 sector peers (e.g., BID, CTG) that are not already on the watchlist. If all
-   peers are already on the watchlist, no suggestion block appears.
-
-2. `snooze_alerts VNM 4` silences VNM Telegram alerts for 4 hours. During that window the
-   intelligence cycle stores VNM alerts in SQLite with `notified = -1`. After 4 hours the
-   snooze expires and alerts resume normally. `unmute_alerts VNM` lifts the snooze immediately.
-
-3. `set_target_allocation [{VNM: 25}, {FPT: 30}, {VCB: 30}, {VEA: 15}]` stores 4 rows.
-   Subsequent `get_rebalancing_signals` call with no explicit targets reads from
-   `target_allocations` and returns deviation from target for each stock.
-
-4. `bun test` full suite passes: existing 1864 tests + new tests for tasks 220/222/223, 0
-   failures.
-
-5. `bun tsc --noEmit` → 0 errors.
-
-6. Tool count after Sprint 033: 61 (59 after task 222, +2 from task 223). Task 220 adds no
-   new MCP tools.
-
----
-
-### Task board (Sprint 033)
-
-| # | Title | Priority | Agent | Status | Depends on |
-|---|-------|----------|-------|--------|------------|
-| 220 | Watchlist auto-enrichment: sector peer suggestions | P0 | BA → Architect → Dev | Backlog | — |
-| 222 | Alert snooze/mute: `snooze_alerts` / `unmute_alerts` | P1 | BA → Architect → Dev | Backlog | — |
-| 223 | Portfolio target allocation: `set_target_allocation` / `get_target_allocation` | P2 | BA → Architect → Dev | Backlog | 195 (soft) |
-
----
-
-### Dependency chain
-
-```
-220 (watchlist enrichment — touches sectorPeers + watchlist tool only; standalone)
-222 (snooze — new DB table + intelligence cycle hook; standalone)
-  └─→ 223 (target allocation — new DB table + rebalancing integration; benefits from 222
-            DB migration pattern being established first)
-```
-
-220 and 222 can proceed in parallel. 223 starts after 222 is in Review so the DB schema
-migration pattern (new table + CRUD store) is established and reviewable before 223 repeats it.
-
----
-
-### Key technical decisions (locked at PO level)
-
-- **Peer suggestions are response-only**: `getSectorPeers()` is a pure function returning
-  stock codes. No new data is stored. The suggestion is appended to the existing
-  `add_to_watchlist` response string — no schema changes required for task 220.
-
-- **Snooze sentinel `notified = -1`**: the existing `alerts` table already has a `notified`
-  INTEGER column (0/1). Using -1 as a snooze sentinel avoids a schema change to the `alerts`
-  table itself. Only the new `alert_snooze` table and the dispatch check are added.
-
-- **Target allocation weights are advisory**: the system stores them as supplied. It warns
-  when the sum deviates from 100% but does not block the save. This keeps the tool fast and
-  avoids edge cases where the investor is mid-edit.
-
-- **Tool count target 61**: 57 (current after Sprint 032) + 0 (task 220) + 2 (snooze tools,
-  task 222) + 2 (allocation tools, task 223) = 61.
-
-- **No new external data sources or fetchers**: all three tasks operate on data already
-  present in SQLite or domain services.
 
 ---
 
@@ -640,12 +418,13 @@ migration pattern (new table + CRUD store) is established and reviewable before 
 | 024 | Reliability Hardening and Investor UX Polish | 2026-04-01 | 182, 183, 184, 185 |
 | 025 | Daily Investor Intelligence | 2026-04-01 | 186, 187, 188 |
 | 026 | Signal Quality and Portfolio Correlation | 2026-04-02 | 189, 190, 191 |
-| 027 | Stability First | 2026-04-02 | 194 (CLAUDE.md sync), 195 (rebalancing, in Review), hotfixes 198-205 |
+| 027 | Stability First | 2026-04-02 | 194, 195, hotfixes 198-205 |
 | 028 | Structural Integrity and Investor Safety Net | 2026-04-02 | 192, 193, 206, 207 |
-| 029 | Always-On Investor | 2026-04-02 | 208 (Telegram commands), 209 (P&L snapshot), 210 (source health) |
-| 030 | Quality Before Quantity | 2026-04-02 | 211 (CLAUDE.md sync), 212 (worktree cleanup), 213 (test isolation) |
-| 031 | Telegram Command Interface | 2026-04-02 | 214 (webhook + router), 215 (registration + security), 216 (integration tests) |
-| 032 | See More, Decide Faster | 2026-04-02 | 217 (compare_stocks), 218 (weekly portfolio Telegram), 219 (custom alert rules) |
-| 033 | Investor UX Hardening | 2026-04-02 | 220 (watchlist peer suggestions), 222 (alert snooze/mute), 223 (target allocation) |
-| 034 | Depth Over Breadth | 2026-04-02 | 224 (CLAUDE.md sync), 225 (sentiment trend) |
+| 029 | Always-On Investor | 2026-04-02 | 208, 209, 210 |
+| 030 | Quality Before Quantity | 2026-04-02 | 211, 212, 213 |
+| 031 | Telegram Command Interface | 2026-04-02 | 214, 215, 216 |
+| 032 | See More, Decide Faster | 2026-04-02 | 217, 218, 219 |
+| 033 | Investor UX Hardening | 2026-04-02 | 220, 222, 223 |
+| 034 | Depth Over Breadth | 2026-04-02 | 224, 225 |
 | 035a | Two-Team Autonomy — Docs + Config | 2026-04-02 | dev-team-cron.md, unified-agent.md, agent files, start.sh, feedbackTools fix |
+| 035b | Two-Team Autonomy — Report Channel Persistence | 2026-04-02 | 226, 227, 228, 229 |
