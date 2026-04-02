@@ -294,64 +294,64 @@ describe("Task 136 — Circuit Breaker", () => {
   });
 
   // ─────────────────────────────────────────────────────────────────────────────
-  // Section 7 — MCP tool: get_system_health
+  // Section 7 — MCP tool: get_system_status (task 234: replaces get_system_health)
   // ─────────────────────────────────────────────────────────────────────────────
 
-  describe("7. MCP tool — get_system_health", () => {
-    it("registerSystemTools registers get_system_health on McpServer", () => {
+  describe("7. MCP tool — get_system_status", () => {
+    it("registerSystemTools registers get_system_status on McpServer", () => {
       const server = new McpServer(
         { name: "test", version: "1.0.0" },
         { capabilities: { tools: {} } },
       );
       registerSystemTools(server);
       const tools = (server as unknown as { _registeredTools: Record<string, unknown> })._registeredTools;
-      expect(tools["get_system_health"]).toBeDefined();
+      expect(tools["get_system_status"]).toBeDefined();
     });
 
-    it("get_system_health returns text content", async () => {
+    it("get_system_status returns text content", async () => {
       resetAllBreakers();
       const server = new McpServer(
         { name: "test", version: "1.0.0" },
         { capabilities: { tools: {} } },
       );
       registerSystemTools(server);
-      const result = await callTool(server, "get_system_health", {});
+      const result = await callTool(server, "get_system_status", { includeErrors: true, errorLines: 5 });
       expect(result.content).toHaveLength(1);
       expect(result.content[0]!.type).toBe("text");
     });
 
-    it("get_system_health output includes circuit breaker section", async () => {
+    it("get_system_status output includes circuit breaker section", async () => {
       resetAllBreakers();
       const server = new McpServer(
         { name: "test", version: "1.0.0" },
         { capabilities: { tools: {} } },
       );
       registerSystemTools(server);
-      const result = await callTool(server, "get_system_health", {});
+      const result = await callTool(server, "get_system_status", { includeErrors: false, errorLines: 5 });
       const text = result.content[0]!.text;
       expect(text).toContain("Circuit Breaker");
     });
 
-    it("get_system_health output includes uptime", async () => {
+    it("get_system_status output includes uptime", async () => {
       resetAllBreakers();
       const server = new McpServer(
         { name: "test", version: "1.0.0" },
         { capabilities: { tools: {} } },
       );
       registerSystemTools(server);
-      const result = await callTool(server, "get_system_health", {});
+      const result = await callTool(server, "get_system_status", { includeErrors: false, errorLines: 5 });
       const text = result.content[0]!.text;
       expect(text).toContain("uptime");
     });
 
-    it("get_system_health shows source names from registry", async () => {
+    it("get_system_status shows source names from registry", async () => {
       resetAllBreakers();
       const server = new McpServer(
         { name: "test", version: "1.0.0" },
         { capabilities: { tools: {} } },
       );
       registerSystemTools(server);
-      const result = await callTool(server, "get_system_health", {});
+      const result = await callTool(server, "get_system_status", { includeErrors: false, errorLines: 5 });
       const text = result.content[0]!.text;
       expect(text).toContain("cafef");
       expect(text).toContain("ssc");

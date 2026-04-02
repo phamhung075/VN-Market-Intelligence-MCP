@@ -104,12 +104,8 @@ describe("Task 230 — Remaining tools still registered", () => {
     expect("submit_feedback" in registry).toBe(true);
   });
 
-  it("get_system_health still registered (systemTools)", () => {
-    expect("get_system_health" in registry).toBe(true);
-  });
-
-  it("get_error_summary still registered (systemTools)", () => {
-    expect("get_error_summary" in registry).toBe(true);
+  it("get_system_status still registered (systemTools — merged from get_system_health + get_error_summary, task 234)", () => {
+    expect("get_system_status" in registry).toBe(true);
   });
 
   it("get_alerts still registered (alerts)", () => {

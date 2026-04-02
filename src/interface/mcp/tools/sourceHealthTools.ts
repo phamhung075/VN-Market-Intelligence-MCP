@@ -13,7 +13,6 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { SourceHealth } from "../../../domain/services/sourceHealthTracker.js";
 import { SourceHealthTracker } from "../../../domain/services/sourceHealthTracker.js";
-import { logger } from "../../../infrastructure/logger.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Singleton tracker — shared across the process lifetime
@@ -127,35 +126,18 @@ function formatRelativeTime(isoString: string | null): string {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Register the `get_source_health` MCP tool on the given server.
+ * Register source health tools.
  *
- * @param server - The McpServer instance to register on.
+ * NOTE (sprint-036 task 234): `get_source_health` has been merged into
+ * `get_system_status`. This function is kept as a no-op so that existing
+ * imports in server.ts continue to compile without modification.
+ *
+ * The underlying logic (`globalSourceTracker`, `formatSourceHealthTable`) is
+ * still exported and used by `systemTools.ts → getSystemStatus()`.
+ *
+ * @param _server - The McpServer instance (unused — no tools registered here).
  */
-export function registerSourceHealthTools(server: McpServer): void {
-  server.tool(
-    "get_source_health",
-    "Show health status of all news and data sources. " +
-      "Displays how recently each source last succeeded, how many consecutive " +
-      "failures have occurred, and whether the source is currently degraded or down.",
-    {},
-    async () => {
-      try {
-        const sources = globalSourceTracker.getAllHealth();
-        const text = formatSourceHealthTable(sources);
-        return { content: [{ type: "text" as const, text }] };
-      } catch (err) {
-        logger.error("[get_source_health] Error", {
-          error: err instanceof Error ? err.message : String(err),
-        });
-        return {
-          content: [
-            {
-              type: "text" as const,
-              text: `Loi khi lay thong tin nguon du lieu: ${(err as Error).message}`,
-            },
-          ],
-        };
-      }
-    },
-  );
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export function registerSourceHealthTools(_server: McpServer): void {
+  // get_source_health removed — merged into get_system_status (task 234)
 }

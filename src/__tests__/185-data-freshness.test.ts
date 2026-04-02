@@ -224,16 +224,17 @@ describe("Task 185 — registerDataFreshnessTools()", () => {
     expect(typeof registerDataFreshnessTools).toBe("function");
   });
 
-  it("registers get_data_freshness on McpServer without throwing", () => {
+  it("registerDataFreshnessTools does not throw (no-op since task 234 merged it into get_system_status)", () => {
     const server = new McpServer(
       { name: "test", version: "1.0.0" },
       { capabilities: { tools: {} } },
     );
     expect(() => registerDataFreshnessTools(server)).not.toThrow();
+    // get_data_freshness is no longer registered as a standalone tool (task 234)
     const tools = (server as unknown as {
       _registeredTools: Record<string, unknown>;
     })._registeredTools;
-    expect(tools["get_data_freshness"]).toBeDefined();
+    expect(tools["get_data_freshness"]).toBeUndefined();
   });
 
   it("barrel index exports registerDataFreshnessTools", async () => {

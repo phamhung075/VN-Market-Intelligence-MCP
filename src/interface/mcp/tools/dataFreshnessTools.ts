@@ -23,9 +23,6 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { Database } from "bun:sqlite";
 
-import { getDb, initDatabase } from "../../../infrastructure/db/schema.js";
-import { logger } from "../../../infrastructure/logger.js";
-
 // ─────────────────────────────────────────────────────────────────────────────
 // Pure helpers (exported for unit testing)
 // ─────────────────────────────────────────────────────────────────────────────
@@ -196,36 +193,18 @@ export async function getDataFreshness(db: Database): Promise<string> {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Register the `get_data_freshness` MCP tool on the given server.
+ * Register data freshness tools.
  *
- * @param server - The McpServer instance to register the tool on.
+ * NOTE (sprint-036 task 234): `get_data_freshness` has been merged into
+ * `get_system_status`. This function is kept as a no-op so that existing
+ * imports in server.ts continue to compile without modification.
+ *
+ * The underlying logic (`getDataFreshness`, `classifyFreshness`, `formatAge`)
+ * is still exported and used by `systemTools.ts → getSystemStatus()`.
+ *
+ * @param _server - The McpServer instance (unused — no tools registered here).
  */
-export function registerDataFreshnessTools(server: McpServer): void {
-  server.tool(
-    "get_data_freshness",
-    "Show data freshness — when each data source (news, prices, commodities, SBV rates, BCTC, system) was last updated. Returns a table with age and freshness status for each source.",
-    {},
-    async () => {
-      try {
-        await initDatabase();
-        const db = getDb();
-        const report = await getDataFreshness(db);
-        return {
-          content: [{ type: "text" as const, text: report }],
-        };
-      } catch (err) {
-        logger.error("[get_data_freshness] Error", {
-          error: err instanceof Error ? err.message : String(err),
-        });
-        return {
-          content: [
-            {
-              type: "text" as const,
-              text: `Loi khi kiem tra do tuoi du lieu: ${err instanceof Error ? err.message : String(err)}`,
-            },
-          ],
-        };
-      }
-    },
-  );
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export function registerDataFreshnessTools(_server: McpServer): void {
+  // get_data_freshness removed — merged into get_system_status (task 234)
 }
