@@ -2,13 +2,157 @@
 
 ## Current Sprint
 
+status: PLANNING
+sprint_id: 034
+started: 2026-04-02
+updated: 2026-04-02
+
+---
+
+### Theme
+
+**"Depth Over Breadth — Sentiment Trend Intelligence + Context Sync"**
+
+---
+
+### Goal
+
+The system has 61 tools and 1916 tests. Adding more tools delivers diminishing returns. Sprint
+034 invests in depth: (1) close the institutional memory gap by syncing CLAUDE.md through
+Sprint 033, and (2) surface the most under-exploited signal already in the database — per-stock
+sentiment trend over time — making the investor's existing RAG and SQLite data answer the
+question "is the market turning bullish or bearish on VNM this week?"
+
+---
+
+### Scope
+
+**IN**
+
+1. **Task 224 — CLAUDE.md sync: document Sprints 030-033 additions (P0)**
+
+   CLAUDE.md currently documents through Sprint 029. Sprints 030-033 added 14 tasks across
+   6 capability areas: Telegram command interface (214-216), multi-stock comparison (217),
+   weekly portfolio Telegram report (218), custom alert rules engine (219), watchlist peer
+   suggestions (220), alert snooze/mute (222), and portfolio target allocation (223).
+
+   The sync must update:
+   - "Current implementation status" — Done section listing all new tasks
+   - Architecture summary — new files: `snoozeStore.ts`, `targetAllocationStore.ts`,
+     `allocationTools.ts`, `snoozeTools.ts`, `telegramWebhook.ts`, `customAlertRules.ts`,
+     `compareStocksTools.ts`, `weeklyPortfolioJob.ts`
+   - Scheduled Jobs table — weekly portfolio Telegram job (Sunday 22:00)
+   - Tool count: 61 registered MCP tools
+
+   Files:
+   - MODIFY: `CLAUDE.md` — sync all sections through Sprint 033
+
+2. **Task 225 — Sentiment trend per stock: `get_sentiment_trend` MCP tool (P1)**
+
+   The `analysis_entries` table already stores per-stock `sentiment` (bullish/bearish/neutral)
+   with `created_at` timestamps, produced by `sentimentClassifier.ts` on every news poll.
+   Today the investor has no way to query this time series.
+
+   New MCP tool `get_sentiment_trend` accepts:
+   - `stock_code` (required): e.g. "VNM"
+   - `window_days` (optional, default 7): lookback window — 7, 14, or 30
+
+   The tool queries `analysis_entries` for rows mentioning `stock_code` within the window,
+   groups them by day, computes a daily sentiment score (bullish=+1, neutral=0, bearish=-1),
+   and returns:
+   - Daily breakdown: date, count, bullish%, bearish%, neutral%, net score
+   - Trend direction: "improving" | "deteriorating" | "stable" (based on linear regression
+     slope of net score over the window)
+   - Summary sentence in Vietnamese, e.g.:
+     "VNM: 7 ngay qua co xu huong tich cuc (4 ngay bullish, 2 ngay neutral, 1 ngay bearish).
+      Xu huong: dang cai thien."
+
+   Storage: no new table required. The tool reads from existing `analysis_entries`.
+   A lightweight in-memory slope computation (no external math library needed).
+
+   Files:
+   - ADD: `src/domain/services/sentimentTrend.ts` — pure function: `computeSentimentTrend(entries, windowDays)` → trend object
+   - ADD: `src/interface/mcp/tools/sentimentTrendTools.ts` — `get_sentiment_trend` MCP tool
+   - MODIFY: `src/interface/mcp/server.ts` — register 1 new tool (62 total)
+   - ADD: `src/__tests__/225-sentiment-trend.test.ts` — unit tests for trend computation and
+     MCP tool response formatting
+
+**OUT**
+
+- Historical OHLCV chart data endpoint — requires structured price history redesign; Sprint 035+
+- Automated backtesting — depends on OHLCV history being solid; deferred
+- Multi-timeframe analysis (1D/1W/1M views) — partially covered by existing pattern matcher
+  and periodic summaries; not the highest gap
+- New external data sources
+- LLM-generated text in any output
+
+---
+
+### Success Metrics
+
+1. `CLAUDE.md` accurately lists all tasks through Sprint 033, all new files in the architecture
+   summary, correct tool count of 61, and the weekly portfolio Telegram cron job.
+
+2. `get_sentiment_trend VNM 7` returns a structured response with per-day sentiment breakdown
+   for the last 7 days, a trend direction label, and a Vietnamese summary sentence. When there
+   are fewer than 3 data points, the tool returns a graceful "Du lieu khong du" message rather
+   than an error.
+
+3. `bun test` full suite passes: existing 1916 tests + new tests for tasks 224/225, 0 failures.
+
+4. `bun tsc --noEmit` → 0 errors.
+
+5. Tool count after Sprint 034: 62 (task 224 adds 0 tools; task 225 adds 1 tool).
+
+---
+
+### Task board (Sprint 034)
+
+| # | Title | Priority | Agent | Status | Depends on |
+|---|-------|----------|-------|--------|------------|
+| 224 | CLAUDE.md sync: document Sprints 030-033 | P0 | BA | Backlog | — |
+| 225 | Sentiment trend per stock: `get_sentiment_trend` | P1 | BA | Backlog | 224 (soft) |
+
+---
+
+### Dependency chain
+
+```
+224 (CLAUDE.md sync — documentation only, no code changes; standalone)
+  └─→ 225 (sentiment trend — new domain service + MCP tool; benefits from 224 being
+            complete so the new tool is immediately documented)
+```
+
+224 and 225 can proceed in parallel. 225 should target merge after 224 so CLAUDE.md is
+updated in one pass.
+
+---
+
+### Key technical decisions (locked at PO level)
+
+- **No new SQLite table for sentiment trend**: `analysis_entries` already contains the
+  required fields (`stock_code`, `sentiment`, `created_at`). A pure read-path query
+  avoids schema migration risk.
+
+- **Linear regression slope for trend direction**: a simple least-squares slope over the
+  daily net sentiment scores is sufficient and avoids any external math dependency. Positive
+  slope = "improving", negative = "deteriorating", near-zero (|slope| < 0.05) = "stable".
+
+- **Tool count target 62**: 61 (current after Sprint 033) + 0 (task 224) + 1 (task 225) = 62.
+
+- **`window_days` capped at 30**: beyond 30 days the signal-to-noise ratio of sentiment
+  entries degrades because the RAG store prunes old embeddings. The tool rejects values
+  outside 1–30 with a clear error message.
+
+---
+
+## Previous Sprint
+
 status: COMPLETE
 sprint_id: 033
 started: 2026-04-01
 updated: 2026-04-02
 completed: 2026-04-02
-
----
 
 ### Theme
 
@@ -239,3 +383,4 @@ migration pattern (new table + CRUD store) is established and reviewable before 
 | 030 | Quality Before Quantity | 2026-04-02 | 211 (CLAUDE.md sync), 212 (worktree cleanup), 213 (test isolation) |
 | 031 | Telegram Command Interface | 2026-04-02 | 214 (webhook + router), 215 (registration + security), 216 (integration tests) |
 | 032 | See More, Decide Faster | 2026-04-02 | 217 (compare_stocks), 218 (weekly portfolio Telegram), 219 (custom alert rules) |
+| 033 | Investor UX Hardening | 2026-04-02 | 220 (watchlist peer suggestions), 222 (alert snooze/mute), 223 (target allocation) |

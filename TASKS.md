@@ -127,19 +127,22 @@
 ## 📋 TODO
 *(Dependencies cleared — ready to assign)*
 
+### Sprint 034 — Depth Over Breadth: Sentiment Trend + Context Sync (2026-04-02)
+
+| # | Title | Branch | Agent | Priority | Depends on | Status |
+|---|-------|--------|-------|----------|------------|--------|
+| 224 | CLAUDE.md sync: document Sprints 030-033 additions | `task/224-claude-md-sync` | BA | P0 | — | Backlog |
+| 225 | Sentiment trend per stock: `get_sentiment_trend` MCP tool | `task/225-sentiment-trend` | BA | P1 | 224 (soft) | Backlog |
+
+---
+
 ### Sprint 033 — Investor UX Hardening (2026-04-01)
 
 | # | Title | Branch | Agent | Priority | Depends on | Status |
 |---|-------|--------|-------|----------|------------|--------|
-<<<<<<< HEAD
 | 220 | Watchlist auto-enrichment: sector peer suggestions on `add_to_watchlist` | `task/220-watchlist-peer-suggestions` | BA | P0 | — | Review |
 | 222 | Alert snooze/mute: `snooze_alerts` / `unmute_alerts` MCP tools | `task/222-alert-snooze` | BA | P1 | — | Review |
-| 223 | Portfolio target allocation: `set_target_allocation` / `get_target_allocation` MCP tools | `task/223-target-allocation` | BA | P2 | 195 (done, soft) | Backlog |
-=======
-| 220 | Watchlist auto-enrichment: sector peer suggestions on `add_to_watchlist` | `task/220-watchlist-peer-suggestions` | BA | P0 | — | Backlog |
-| 222 | Alert snooze/mute: `snooze_alerts` / `unmute_alerts` MCP tools | `task/222-alert-snooze` | BA | P1 | — | Backlog |
 | 223 | Portfolio target allocation: `set_target_allocation` / `get_target_allocation` MCP tools | `task/223-target-allocation` | BA | P2 | 195 (done, soft) | Review |
->>>>>>> task/223-target-allocation
 
 ---
 
@@ -472,13 +475,8 @@
 
 | Column | Count | Tasks |
 |--------|-------|-------|
-<<<<<<< HEAD
-| ✅ Done | 60+ | Sprints 000-027 (194, hotfixes 198-205 done; 195 in Review) |
-| 🔍 Review | 2 | DOC-001, 195 (rebalancing signals) |
-=======
-| ✅ Done | 43 | 000, 001, 002, 003, 011, 012, 013, 014, 021, 022, 023, 026, 027, 029, 030, 041, 042, 043, 044, 045, 046, 047, 048, 061, 062, 063, 064, 065, 066, 081, 082, 083, 084, 085, 086, 087, 088, 101, 102, 103, 104, 105 |
-| 🔍 Review | 1 | 210 |
->>>>>>> worktree-agent-a5152c35
+| ✅ Done | 60+ | Sprints 000-033 complete |
+| 🔍 Review | 7 | DOC-001, 195, 215, 217, 218, 219, 220, 222, 223 |
 | 🚧 In Progress | 0 | — |
 | 📋 Todo | 0 | — |
 | 🗂 Backlog | 6 | 192, 193, 206, 207 (Sprint 028); 196, 197 (deferred); 125 (long-term deferred) |
