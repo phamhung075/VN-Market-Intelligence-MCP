@@ -87,16 +87,16 @@ MCP connector URL: `https://zenmidi.com/mcp`
 - Telegram: "✅ System online" at 08:55 Vietnam (03:55 France CET)
 - Health: `curl https://zenmidi.com/health`
 
-## 53 MCP Tools Available (Sprint 036)
+## 53 MCP Tools Available (Sprint 037-038)
 
 | Category | Tools |
 |----------|-------|
 | **Watchlist** | add_to_watchlist, remove_from_watchlist, get_watchlist, update_thresholds |
 | **News** | fetch_and_analyze, run_impact_chain, search_similar_context, get_analysis_history |
-| **Market** | get_market_snapshot, get_macro_snapshot, get_patterns, get_price_history, get_sector_rotation, compare_stocks, get_sentiment_trend |
-| **Reports** | get_financial_summary, compare_financials, list_stored_pdfs, read_bctc_pdf, get_earnings_calendar |
-| **Alerts** | get_alerts, mark_alert_read, set_price_alert, get_price_alerts, delete_price_alert, get_alert_accuracy, add_alert_rule, list_alert_rules, delete_alert_rule, manage_alert_mute |
-| **Portfolio** | get_portfolio_conviction, set_position, get_positions, close_position, get_portfolio_risk, get_rebalancing_signals, get_correlation_matrix, get_performance_attribution, set_target_allocation, get_target_allocation |
+| **Market** | get_market_context, get_market_snapshot, get_macro_snapshot, get_patterns, get_price_history, get_sector_rotation, compare_stocks, get_sentiment_trend |
+| **Reports** | get_bctc_full, get_financial_summary, compare_financials, list_stored_pdfs, read_bctc_pdf, get_earnings_calendar |
+| **Alerts** | get_alerts (type: "system"\|"price"\|"all"), mark_alert_read, set_price_alert, delete_price_alert, get_alert_accuracy, list_alert_rules, manage_alert_mute |
+| **Portfolio** | get_portfolio_conviction, set_position, get_positions, close_position, get_portfolio_risk, get_rebalancing_signals, get_correlation_matrix, get_performance_attribution, get_target_allocation |
 | **Prediction Markets** | get_prediction_markets |
 | **Summaries** | get_market_summary, generate_market_summary |
 | **Telegram** | send_telegram, send_alert_digest, claim_telegram_report, read_telegram_reports, process_telegram_report |
@@ -104,6 +104,20 @@ MCP connector URL: `https://zenmidi.com/mcp`
 | **Operations** | get_rate_limit_status |
 | **System** | get_system_status |
 | **Dev Team** | log_fix, get_recent_fixes |
+| **Agent Bus** | post_agent_signal, get_agent_signals |
+
+### Tool Changes (Sprint 037-038 vs Sprint 036)
+| Change | Tool | Notes |
+|--------|------|-------|
+| NEW | `get_market_context(hours_back?)` | Compound: watchlist+prices+macro+alerts+analysis in ONE call |
+| NEW | `get_bctc_full(code, year?, quarter?)` | Compound: financial summary + QoQ/YoY + sentiment trend in ONE call |
+| NEW | `post_agent_signal(from_agent, to_agent, signal_type, stock_code?, payload, ttl_minutes?)` | Agent-to-agent signal bus |
+| NEW | `get_agent_signals(agent, status?)` | Read signals addressed to you |
+| ENHANCED | `get_alerts` | Added `type` param: "system"\|"price"\|"all" — use type="price" for stop-loss/take-profit |
+| REMOVED | `get_price_alerts` | Use `get_alerts(type="price")` instead |
+| REMOVED | `add_alert_rule` | User-only — set via Claude Desktop |
+| REMOVED | `delete_alert_rule` | User-only — set via Claude Desktop |
+| REMOVED | `set_target_allocation` | User-only — set via Claude Desktop |
 
 ## Two Separate Telegram Channels
 
@@ -131,8 +145,39 @@ Users can trigger actions directly from Telegram:
 - `/alerts` — show recent HIGH/CRITICAL alerts
 - `/briefing` — trigger morning briefing on demand
 - `/pnl` — show current portfolio P&L
+- `/ask <question>` — ask AI a market question — answered within 15 min via intelligence cycle Step F
+- `/why <stock>` — shorthand for "Why did X move today?" — answered within 15 min
 - `/report <description>` — report a bug to Dev Team (medium priority)
 - `/fix <description>` — report an urgent bug to Dev Team (high priority)
+
+## Agent Signal Bus (Sprint 038)
+
+Agents can send signals to each other via `post_agent_signal` / `get_agent_signals`. Each agent checks for signals at the START of every cycle.
+
+### Signal Types
+
+| signal_type | Sender | Receiver | Meaning |
+|-------------|--------|----------|---------|
+| `urgent_news` | news-scout | market-watcher | High-impact news found — check price action immediately |
+| `price_anomaly` | market-watcher | alert-commander | Confirmed price anomaly — evaluate for alert sending |
+| `cross_validate` | report-analyzer | alert-commander | CRITICAL BCTC finding — needs immediate alert |
+| `cross_validate` | any | any | Request cross-validation of a finding |
+| `suppress` | alert-commander | all | False positive detected — skip alerts for this stock this cycle |
+
+### Pattern (add to top of every agent cycle)
+
+```
+Step 0: Call get_agent_signals(agent="{agent-name}")
+- urgent_news → prioritize those stocks
+- cross_validate → include both news + price context
+- suppress → skip alerts for flagged stocks
+```
+
+### Signal Bus Rules
+- `ttl_minutes` default is 120 min — signals expire automatically
+- `get_agent_signals` marks unread signals as read on retrieval
+- `to_agent="all"` broadcasts to every agent (used for suppress signals)
+- Maximum payload size: keep `detail` under 500 chars
 
 ## Agent Cooperation Flow
 

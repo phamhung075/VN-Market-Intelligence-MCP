@@ -154,14 +154,19 @@ Please refresh these agents in Claude Cowork.
 | `reports/TASK_REPORT_NNN.md` | QA creates after review |
 | `reports/SPRINT_REPORT_NNN.md` | QA creates after sprint |
 
-## CURRENT STATE (Sprint 036 baseline)
+## CURRENT STATE (Sprint 037-038 baseline)
 
-- 53 MCP tools registered (8 removed, 3 merged, 3 added)
+- 53 MCP tools registered (+4 new, -4 removed vs Sprint 036 — net unchanged)
 - 1934+ tests
 - 2 Telegram channels: Chat (user) + Report (problems)
 - Server: Bun with --hot reload
 - Analysis team: 7 Claude Cowork agents (cloud)
 - Dev team: this cron (local Claude Code CLI)
-- New tools: claim_telegram_report, log_fix, get_recent_fixes
-- Merged tools: get_system_status (replaces 4 health tools), send_telegram (replaces 3 telegram tools), manage_alert_mute (replaces 2 mute tools)
-- Removed: get_feedback, get_global_log, get_tool_log, run_daily_briefing, search_stocks, fetch_ssc_reports, trigger_alert_check, export_portfolio_snapshot
+- New tools (Sprint 037): get_market_context (compound: watchlist+prices+macro+alerts+analysis), get_bctc_full (compound: summary+QoQ/YoY+sentiment)
+- New tools (Sprint 038): post_agent_signal, get_agent_signals (agent-to-agent signal bus)
+- Enhanced (Sprint 037): get_alerts now has type param ("system"|"price"|"all") — type="price" replaces removed get_price_alerts
+- Removed (Sprint 037): get_price_alerts (→ get_alerts type="price"), add_alert_rule, delete_alert_rule, set_target_allocation (last 3 are user-only via Claude Desktop)
+- New Telegram commands (Sprint 037): /ask <question>, /why <stock> — answered by intelligence cycle Step F within 15 min via send_telegram(channel="chat")
+- user_requests table exists in SQLite — /ask and /why commands are stored and answered by the server's intelligence cycle
+- Merged tools (Sprint 036): get_system_status (replaces 4 health tools), send_telegram (replaces 3 telegram tools), manage_alert_mute (replaces 2 mute tools)
+- Removed (Sprint 036): get_feedback, get_global_log, get_tool_log, run_daily_briefing, search_stocks, fetch_ssc_reports, trigger_alert_check, export_portfolio_snapshot

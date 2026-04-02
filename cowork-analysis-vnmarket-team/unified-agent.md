@@ -33,18 +33,20 @@ Send via `submit_feedback` or `send_telegram(channel="report", message=...)`:
 
 ## EACH CYCLE (on-demand or scheduled)
 
+### Step 0: Check Agent Signals
+Call `get_agent_signals(agent="unified-agent")`:
+- `urgent_news` signals → prioritize those stocks in Steps 2-3
+- `cross_validate` signals → pull both news + price context for flagged stocks
+- `suppress` signals → skip alerts for flagged stocks this cycle
+
 ### Step 1: System Health Check
 1. Call `get_system_status` — check server status, circuit breakers, source health, data freshness, and recent errors (all in one call)
 2. Call `get_rate_limit_status` — API throttling status
 
 ### Step 2: Market Intelligence
-1. Call `get_watchlist` — current tracked stocks
-2. Call `get_market_snapshot` with watchlist stocks — current prices
-3. Call `get_macro_snapshot` — Brent, Gold, USD/VND, SBV rates
-4. Call `get_alerts` limit 20 — review pending alerts
-5. Call `get_analysis_history` limit 10 — recent news context
-6. Call `get_prediction_markets` — prediction market signals
-7. Call `get_sentiment_trend` for each watchlist stock — sentiment direction
+1. Call `get_market_context(hours_back=24)` — returns watchlist, prices, macro, alerts, and recent analysis in ONE call (replaces the previous 5 separate calls)
+2. Call `get_prediction_markets` — prediction market signals
+3. Call `get_sentiment_trend` for each watchlist stock — sentiment direction
 
 ### Step 3: Portfolio Review
 1. Call `get_positions` — current positions
@@ -122,7 +124,7 @@ Week 4: review ssc-related fixes       — BCTC pipeline
 Week 5: review reuters-related fixes   — international news
 Week 6: review vnexpress-related fixes — VN news source
 Week 7: review vneconomy-related fixes — VN economic news
-Week 8: verify tool count in get_system_status = 53
+Week 8: verify tool count in get_system_status = 53 (Sprint 037-038 baseline)
 ```
 
 ### Step 4: Portfolio risk check
@@ -165,17 +167,18 @@ The Dev Team is NOT part of the analysis team. It runs locally every hour:
 7. See `dev-team-cron.md` for full spec
 
 Note: User `/report` and `/fix` Telegram commands create reports with `agent="user-telegram"` — treat these as HIGH priority in triage.
+Note: User `/ask <question>` and `/why <stock>` Telegram commands request AI analysis — answer within 15 min via `send_telegram(channel="chat", ...)`.
 
-## 53 MCP TOOLS (Sprint 036)
+## 53 MCP TOOLS (Sprint 037-038)
 
 | Category | Tools |
 |----------|-------|
 | **Watchlist** | add_to_watchlist, remove_from_watchlist, get_watchlist, update_thresholds |
 | **News** | fetch_and_analyze, run_impact_chain, search_similar_context, get_analysis_history |
-| **Market** | get_market_snapshot, get_macro_snapshot, get_patterns, get_price_history, get_sector_rotation, compare_stocks, get_sentiment_trend |
-| **Reports** | get_financial_summary, compare_financials, list_stored_pdfs, read_bctc_pdf, get_earnings_calendar |
-| **Alerts** | get_alerts, mark_alert_read, set_price_alert, get_price_alerts, delete_price_alert, get_alert_accuracy, add_alert_rule, list_alert_rules, delete_alert_rule, manage_alert_mute |
-| **Portfolio** | get_portfolio_conviction, set_position, get_positions, close_position, get_portfolio_risk, get_rebalancing_signals, get_correlation_matrix, get_performance_attribution, set_target_allocation, get_target_allocation |
+| **Market** | get_market_context, get_market_snapshot, get_macro_snapshot, get_patterns, get_price_history, get_sector_rotation, compare_stocks, get_sentiment_trend |
+| **Reports** | get_bctc_full, get_financial_summary, compare_financials, list_stored_pdfs, read_bctc_pdf, get_earnings_calendar |
+| **Alerts** | get_alerts (type param: "system"\|"price"\|"all"), mark_alert_read, set_price_alert, delete_price_alert, get_alert_accuracy, list_alert_rules, manage_alert_mute |
+| **Portfolio** | get_portfolio_conviction, set_position, get_positions, close_position, get_portfolio_risk, get_rebalancing_signals, get_correlation_matrix, get_performance_attribution, get_target_allocation |
 | **Prediction** | get_prediction_markets |
 | **Summaries** | get_market_summary, generate_market_summary |
 | **Telegram** | send_telegram, send_alert_digest, claim_telegram_report, read_telegram_reports, process_telegram_report |
@@ -183,6 +186,17 @@ Note: User `/report` and `/fix` Telegram commands create reports with `agent="us
 | **Operations** | get_rate_limit_status |
 | **System** | get_system_status |
 | **Dev Team** | log_fix, get_recent_fixes |
+| **Agent Bus** | post_agent_signal, get_agent_signals |
+
+### Tool Changes (Sprint 037-038)
+- NEW: `get_market_context(hours_back?)` — compound: watchlist+prices+macro+alerts+analysis in one call
+- NEW: `get_bctc_full(code, year?, quarter?)` — compound: financial summary + QoQ/YoY + sentiment trend in one call
+- NEW: `post_agent_signal(from_agent, to_agent, signal_type, stock_code?, payload, ttl_minutes?)` — agent-to-agent signal bus
+- NEW: `get_agent_signals(agent, status?)` — read signals sent to you
+- ENHANCED: `get_alerts` now has `type` param ("system"|"price"|"all") — use `type="price"` instead of old `get_price_alerts`
+- REMOVED: `get_price_alerts` (use `get_alerts(type="price")`)
+- REMOVED: `add_alert_rule`, `delete_alert_rule` (user-only via Claude Desktop)
+- REMOVED: `set_target_allocation` (user-only via Claude Desktop)
 
 ## STOCK CLASSIFICATION
 - VNM = Vinamilk = Retail/Dairy
@@ -197,5 +211,5 @@ Note: User `/report` and `/fix` Telegram commands create reports with `agent="us
 - Only Alert Commander sends alerts to Chat Channel (max 10/day)
 - All agents read watchlist dynamically via `get_watchlist`
 - ALL feedback goes to Report Channel ONLY — never to Chat Channel
-- Verify tool count in get_system_status matches expected (53 as of Sprint 036)
+- Verify tool count in get_system_status matches expected (53 as of Sprint 037-038)
 - Philosophy: "Always do it better" — every cycle must produce at least 1 improvement

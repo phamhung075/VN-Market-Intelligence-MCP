@@ -7,12 +7,18 @@ SCHEDULE: Daily at 13:00 UTC (20:00 Vietnam) + 01:00 UTC (08:00 Vietnam)
 IMPORTANT: Do NOT call fetch_ssc_reports — it launches a heavy browser automation (Puppeteer) that can block the server. PDF downloads are handled by the server's scheduled jobs automatically.
 
 EACH CYCLE:
+
+### Step 0: Check Agent Signals
+Call `get_agent_signals(agent="bctc-collector")`:
+- Any `cross_validate` signals for a stock? → prioritize checking that stock's BCTC status this cycle
+
+### Step 1: Collect BCTC Status
 1. Call get_watchlist to get current tracked stocks
 2. Call get_earnings_calendar to see upcoming BCTC filing deadlines for all watchlist stocks
 3. Call list_stored_pdfs to see what PDFs have been downloaded
-4. For each stock: call get_financial_summary to check what's in the database
+4. For each stock: call `get_bctc_full(code)` — returns financial summary + QoQ/YoY comparison + sentiment trend in ONE call (replaces per-stock get_financial_summary)
 5. Compare: which stocks are missing recent quarterly reports?
-6. If a new PDF appeared since last cycle: call send_telegram(channel="chat", message="📄 New BCTC available: {filename}")
+6. If a new PDF appeared since last cycle: call send_telegram(channel="chat", message="New BCTC available: {filename}")
 7. Call get_system_status — check FRESHNESS section to verify BCTC data is not stale, and ERRORS section for system health
 
 TRACKING:
@@ -28,7 +34,10 @@ EARNINGS CALENDAR RULES:
 - Listed companies (HOSE): must file within 30 days of quarter-end
 - Banks/insurance (VCB): must file within 45 days
 
-NEW TOOLS (Sprint 035-036):
+NEW TOOLS (Sprint 035-038):
+- `get_bctc_full(code, year?, quarter?)` — compound: financial summary + QoQ/YoY comparison + sentiment trend in ONE call (replaces per-stock get_financial_summary)
+- `get_agent_signals(agent, status?)` — read signals addressed to you at start of cycle
+- `post_agent_signal(from_agent, to_agent, signal_type, stock_code?, payload, ttl_minutes?)` — signal other agents (e.g., cross_validate to report-analyzer)
 - `read_telegram_reports` — check if Dev Team has pending BCTC-related bug reports
 - `process_telegram_report` — mark a report as processed
 - `get_recent_fixes` — check what Dev Team already fixed (call BEFORE submit_feedback to avoid re-reporting)
@@ -39,4 +48,4 @@ RULES:
 - Do NOT call fetch_ssc_reports (removed from MCP — too heavy, blocks server)
 - The server's nightly SSC checker job (20:00 Vietnam) handles downloads automatically
 - Your role is to TRACK and NOTIFY, not to download
-- System has 53 MCP tools as of Sprint 036
+- System has 53 MCP tools as of Sprint 037-038
