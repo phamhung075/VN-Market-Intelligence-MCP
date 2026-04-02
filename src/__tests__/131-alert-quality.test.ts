@@ -399,12 +399,12 @@ describe("Task 131 — Config values from mcp.config.json", () => {
     expect(cfg.alertQuality.cooldownMinutes).toBe(30);
   });
 
-  it("alertQuality has maxAlertsPerStockPerDay = 5", async () => {
+  it("alertQuality has maxAlertsPerStockPerDay = 3", async () => {
     const raw = await Bun.file(
       new URL("../../mcp.config.json", import.meta.url).pathname,
     ).text();
     const cfg = JSON.parse(raw) as { alertQuality: { maxAlertsPerStockPerDay: number } };
-    expect(cfg.alertQuality.maxAlertsPerStockPerDay).toBe(5);
+    expect(cfg.alertQuality.maxAlertsPerStockPerDay).toBe(3);
   });
 
   it("alertQuality has neverSuppressSeverity including 'critical'", async () => {

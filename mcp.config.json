@@ -84,12 +84,12 @@
       "maxAgeMinutes": 240,
       "requireNonNeutralSentiment": true,
       "minSentimentConfidence": 0.5,
-      "minCascadeConfidence": 0.7,
+      "minCascadeConfidence": 0.85,
       "highTrustSources": ["cafef", "vnexpress", "vneconomy"]
     },
     "telegramOnSeverity": ["high", "critical"],
     "telegramOnNewDocument": true,
-    "telegramMinCascadeConfidence": 0.7,
+    "telegramMinCascadeConfidence": 0.85,
     "marketWideCascadeMinImpact": 6,
     "domainThresholds": {
       "banking":      { "dropPct": -4, "risePct": 6 },
@@ -170,7 +170,7 @@
 
   "alertQuality": {
     "cooldownMinutes": 30,
-    "maxAlertsPerStockPerDay": 5,
+    "maxAlertsPerStockPerDay": 3,
     "dedupWindowMinutes": 60,
     "groupWindowMinutes": 15,
     "neverSuppressSeverity": ["critical"]

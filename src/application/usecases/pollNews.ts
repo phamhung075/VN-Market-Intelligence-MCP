@@ -408,6 +408,12 @@ export async function pollNews(options: PollNewsOptions = {}): Promise<PollNewsR
     // Collect all signals from all cascade chains
     const allSignals: import("../../domain/services/signalDetector.js").Signal[] = [];
 
+    // Per-stock signal counter — cap news_mention signals per stock per cycle
+    // to prevent a flood of cascade signals for a single stock (especially
+    // problematic when the watchlist has only 1-2 stocks).
+    const stockSignalCount = new Map<string, number>();
+    const MAX_SIGNALS_PER_STOCK_PER_CYCLE = 3;
+
     // Pre-fetch macro data ONCE for the whole batch (avoid 95× HTTP calls)
     let macroStats: import("../../domain/services/macroThresholds.js").MacroStats[] = [];
     let macroContext: import("../../domain/services/cascadeEngine.js").MacroContext | null = null;
@@ -502,6 +508,11 @@ export async function pollNews(options: PollNewsOptions = {}): Promise<PollNewsR
           } else {
             continue; // Not relevant enough for this stock
           }
+
+          // Per-stock signal cap — prevent flood for single-stock watchlists
+          const currentCount = stockSignalCount.get(impact.actionCode) ?? 0;
+          if (!directMention && currentCount >= MAX_SIGNALS_PER_STOCK_PER_CYCLE) continue;
+          stockSignalCount.set(impact.actionCode, currentCount + 1);
 
           allSignals.push({
             type: "news_mention",
