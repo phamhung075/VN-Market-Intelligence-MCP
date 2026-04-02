@@ -19,6 +19,7 @@
 import { logger } from "../logger.js";
 import { getDb } from "../db/schema.js";
 import type { HttpClient } from "./ssc.js";
+import { globalRateLimiter } from "../../domain/services/rateLimiter.js";
 
 // Re-export HttpClient so consumers can import it directly from this module.
 export type { HttpClient } from "./ssc.js";
@@ -674,7 +675,16 @@ export async function fetchHosePrices(
     return [];
   }
 
-  // Guard 2: Exponential backoff after consecutive failures
+  // Guard 2: Rate limit — skip if called too soon (bypassed in test mode via httpClient)
+  if (!httpClient && !globalRateLimiter.canCall("api-finfo.vndirect.com.vn")) {
+    logger.debug("[hose] rate-limited — skipping fetch", {
+      waitMs: globalRateLimiter.getWaitMs("api-finfo.vndirect.com.vn"),
+    });
+    return [];
+  }
+  if (!httpClient) globalRateLimiter.recordCall("api-finfo.vndirect.com.vn");
+
+  // Guard 3: Exponential backoff after consecutive failures
   if (!force && Date.now() < _backoffUntil) {
     const remainingSec = Math.round((_backoffUntil - Date.now()) / 1000);
     logger.debug("[hose] in backoff period — skipping fetch", {
