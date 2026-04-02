@@ -20,6 +20,10 @@ import { join } from "node:path";
 import { logger } from "../../infrastructure/logger.js";
 import type { BriefingPredictionSignal } from "../../infrastructure/db/predictionStore.js";
 import { generateSparkline } from "../../domain/services/sparkline.js";
+import {
+  computePortfolioPnl,
+  type PortfolioPnlResult,
+} from "../../domain/services/portfolioPnlCalculator.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Public types
@@ -109,6 +113,12 @@ export interface DailyBriefing {
   topConviction: { code: string; score: number; direction: string; summary: string } | null;
   /** HIGH/CRITICAL prediction market signals from the last 24h (crowd-sourced early warnings) */
   predictionSignals: BriefingPredictionSignal[];
+  /**
+   * Portfolio P&L snapshot — per-position and aggregate unrealized P&L.
+   * null when the positions table is empty or no open positions exist.
+   * Absent (undefined) on briefings generated before task 209.
+   */
+  portfolioPnl?: PortfolioPnlResult | null;
   /** ISO 8601 timestamp when this briefing was generated */
   generatedAt: string;
 }
@@ -164,6 +174,12 @@ interface FinancialReportRow {
 
 interface PriceHistoryRow {
   price: number;
+}
+
+interface OpenPositionRow {
+  code: string;
+  shares: number;
+  avg_price: number;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -537,6 +553,52 @@ export async function assembleBriefing(
     );
   } catch { /* best-effort */ }
 
+  // ── Step 13a: Portfolio P&L snapshot ─────────────────────────────────────
+  let portfolioPnl: PortfolioPnlResult | null = null;
+  try {
+    const openPositions = db
+      .prepare<OpenPositionRow, []>(
+        `SELECT code, shares, avg_price FROM positions WHERE closed_at IS NULL`,
+      )
+      .all();
+
+    if (openPositions.length > 0) {
+      // Build a price map from market_prices
+      const priceRows = db
+        .prepare<{ code: string; price: number }, []>(
+          `SELECT code, price FROM market_prices WHERE price IS NOT NULL`,
+        )
+        .all();
+      const priceMap = new Map(priceRows.map((r) => [r.code, r.price]));
+
+      const result = computePortfolioPnl(
+        openPositions.map((p) => ({
+          code: p.code,
+          shares: p.shares,
+          avgPrice: p.avg_price,
+        })),
+        priceMap,
+      );
+
+      portfolioPnl = result;
+
+      // Persist snapshot (best-effort)
+      try {
+        const { savePnlSnapshot } = await import("../../infrastructure/db/pnlSnapshotStore.js");
+        const snapshotDate = todayVietnam();
+        savePnlSnapshot(db, snapshotDate, result.items);
+      } catch (snapErr) {
+        logger.warn("[assembleBriefing] savePnlSnapshot failed", {
+          error: snapErr instanceof Error ? snapErr.message : String(snapErr),
+        });
+      }
+    }
+  } catch (pnlErr) {
+    logger.warn("[assembleBriefing] portfolioPnl step failed", {
+      error: pnlErr instanceof Error ? pnlErr.message : String(pnlErr),
+    });
+  }
+
   // ── Step 13: Persist briefing ─────────────────────────────────────────────
   const date = todayVietnam();
   const generatedAt = new Date().toISOString();
@@ -554,6 +616,7 @@ export async function assembleBriefing(
     unresolvedAlerts,
     topConviction,
     predictionSignals,
+    portfolioPnl,
     generatedAt,
   };
 

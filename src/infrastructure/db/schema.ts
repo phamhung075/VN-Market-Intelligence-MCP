@@ -18,11 +18,16 @@
 
 import { Database } from "bun:sqlite";
 import { mkdirSync } from "node:fs";
-import { dirname } from "node:path";
+import { dirname, resolve } from "node:path";
 import { SQLITE_DDL } from "../../../bctc-schema.js";
 
-/** Default DB path — re-read from env on each new connection to support test isolation */
-const DEFAULT_DB_PATH = "./data/market.db";
+/**
+ * Default DB path — resolved to absolute path at module load time
+ * to prevent CWD-dependent resolution on restart.
+ * The project root is 3 levels up from this file (src/infrastructure/db/).
+ */
+const PROJECT_ROOT = resolve(import.meta.dir, "..", "..", "..");
+const DEFAULT_DB_PATH = resolve(PROJECT_ROOT, "data", "market.db");
 
 let _db: Database | null = null;
 
@@ -458,6 +463,25 @@ export async function initDatabase(): Promise<void> {
       UNIQUE(code)
     );
     CREATE INDEX IF NOT EXISTS idx_positions_code ON positions(code);
+  `);
+
+  // ── Portfolio P&L Snapshots (Task 209) ────────────────────────────────────
+  // Daily snapshot of per-position P&L stored after the morning briefing.
+  // UNIQUE(date, code) allows idempotent upserts via INSERT OR REPLACE.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS portfolio_pnl_snapshots (
+      id            INTEGER PRIMARY KEY AUTOINCREMENT,
+      date          TEXT NOT NULL,
+      code          TEXT NOT NULL,
+      shares        INTEGER NOT NULL,
+      avg_price     REAL NOT NULL,
+      current_price REAL,
+      pnl_pct       REAL,
+      pnl_amount    REAL,
+      snapshot_at   TEXT NOT NULL DEFAULT (datetime('now')),
+      UNIQUE(date, code)
+    );
+    CREATE INDEX IF NOT EXISTS idx_pnl_snapshots_date ON portfolio_pnl_snapshots(date);
   `);
 
   // ── Seed default watchlist from mcp.config.json (skip in tests) ────────────
