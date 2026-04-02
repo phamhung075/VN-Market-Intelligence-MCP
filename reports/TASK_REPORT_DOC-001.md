@@ -140,3 +140,12 @@ git merge --no-ff task/doc-001-claude-md-update -m "merge(DOC-001): CLAUDE.md ar
 - CLAUDE.md is now accurate and can be used as reliable context for all agents
 - Task 121 (BCTC edge cases), 122 (domain services coverage), 124 (SSC pipeline mock HTTP) are unblocked and ready for Sprint 007
 - `src/__tests__/124-test-ssc-pipeline.test.ts` was included in this branch — QA notes this test file exists but its task (124) is still in Sprint 007 Todo; the test file arriving early is not a problem (TDD red-phase start)
+
+---
+
+### Fix — 2026-04-02
+- **Issue**: DOC-001-01 through DOC-001-10 (all blocking and non-blocking issues from QA Review 1)
+- **Root cause**: The branch was authored from a stale Sprint 012 context, causing all Sprint 013-033 content to be deleted instead of Sprint 034 content being added. The CLAUDE.md was regressed from ~711 lines to ~487 lines.
+- **Fix**: Reset CLAUDE.md to the main branch version (restoring all 711 lines of Sprint 013-033 content), then applied 5 targeted additions for Sprint 034: (1) added `sentimentTrend.ts` to domain/services/ tree (line 97), (2) added `sentimentTrendTools.ts` to interface/mcp/tools/ tree (line 199), (3) updated server.ts tool count comment from 61 to 62 (line 163), (4) updated Done header from "Sprint 000-033" to "Sprint 000-034" (line 442), (5) added Sprint 034 implementation status block documenting tasks 224/225 (lines 685-688).
+- **Tests added**: None (documentation-only task)
+- **Verified**: `bun tsc --noEmit` PASS
