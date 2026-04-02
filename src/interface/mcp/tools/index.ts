@@ -40,3 +40,4 @@ export { registerCompareTools } from "./compareTools.js";
 export { registerCustomAlertTools } from "./customAlertTools.js";
 export { registerAlertMuteTools } from "./alertMuteTools.js";
 export { registerTargetAllocationTools } from "./targetAllocationTools.js";
+export { registerSentimentTrendTools } from "./sentimentTrendTools.js";

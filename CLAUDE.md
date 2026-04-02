@@ -91,7 +91,9 @@ src/
 │       ├── portfolioPnlCalculator.ts ← per-position P&L + aggregate totals (Sprint 029)
 │       ├── priceAlertChecker.ts    ← stop-loss / take-profit threshold checker (Sprint 028)
 │       ├── rateLimiter.ts          ← per-host rate limiter for external fetchers (Sprint 028)
-│       └── sourceHealthTracker.ts  ← news/data source health: ok/degraded/down classification (Sprint 029)
+│       ├── sourceHealthTracker.ts  ← news/data source health: ok/degraded/down classification (Sprint 029)
+│       ├── customAlertEvaluator.ts ← evaluate custom alert rules against live price/signal data (task 219)
+│       └── alertMuteChecker.ts     ← check if a stock/signal is currently muted before firing alert (task 222)
 ├── infrastructure/
 │   ├── config.ts                   ← Env config (dotenv + mcp.config.json) + PredictionMarketsConfig
 │   ├── logger.ts                   ← Structured logger (log rotation, LanceDB TRACE suppression)
@@ -106,6 +108,9 @@ src/
 │   │   ├── predictionStore.ts     ← prediction_markets + prediction_signals table helpers (task 172)
 │   │   ├── positionStore.ts       ← position CRUD helpers: set/get/close positions (Sprint 023)
 │   │   ├── pnlSnapshotStore.ts    ← portfolio_pnl_snapshots CRUD: daily per-position P&L (Sprint 029)
+│   │   ├── customAlertRuleStore.ts ← custom alert rule CRUD: per-stock condition/threshold rules (task 219)
+│   │   ├── alertMuteStore.ts      ← alert mute/unmute CRUD: per-stock mute periods (task 222)
+│   │   ├── targetAllocationStore.ts ← target portfolio weights CRUD (task 223)
 │   │   ├── checkpoint.ts          ← SQLite WAL checkpoint helper (task 140)
 │   │   └── index.ts
 │   ├── fetchers/
@@ -127,6 +132,8 @@ src/
 │   │   └── index.ts
 │   ├── notifiers/
 │   │   ├── telegram.ts             ← Telegram Bot API notifier — Vietnamese format, plain text, auto-retry (task 034)
+│   │   ├── telegramCommands.ts     ← Telegram command router: /watchlist, /alerts, /briefing (task 214)
+│   │   ├── telegramWebhookSetup.ts ← Webhook registration + setWebhook call on startup (task 215)
 │   │   └── index.ts
 │   └── rag/
 │       ├── embeddings.ts           ← HuggingFace multilingual-MiniLM (local ONNX)
@@ -152,7 +159,7 @@ src/
 │       └── index.ts
 ├── interface/
 │   ├── mcp/
-│   │   ├── server.ts               ← McpServer factory, registers all 53 tools
+│   │   ├── server.ts               ← McpServer factory, registers all 61 tools
 │   │   ├── transport.ts            ← SSEServerTransport setup
 │   │   └── tools/
 │   │       ├── watchlist.ts        ← add/remove/get/update watchlist MCP tools
@@ -184,6 +191,10 @@ src/
 │   │       ├── priceAlertTools.ts  ← set_price_alert, get_price_alerts, delete_price_alert (Sprint 028)
 │   │       ├── rateLimitTools.ts   ← get_rate_limit_status (Sprint 028)
 │   │       ├── sourceHealthTools.ts ← get_source_health (Sprint 029)
+│   │       ├── compareTools.ts     ← compare_stocks: side-by-side price + ratio comparison (task 217)
+│   │       ├── customAlertTools.ts ← add/list/delete custom alert rules (task 219)
+│   │       ├── alertMuteTools.ts   ← mute_alert, unmute_alert, list_muted_alerts (task 222)
+│   │       ├── targetAllocationTools.ts ← set/get/delete target allocation weights (task 223)
 │   │       └── index.ts
 │   └── scheduler/
 │       └── index.ts                ← startScheduler() — registers all cron jobs
@@ -199,6 +210,7 @@ src/
     ├── predictionMarketJob.ts     ← Every 30 min: fetch Polymarket → store → detect signals → Telegram (task 167)
     ├── dataAuditJob.ts            ← Daily/weekly data integrity audit: orphan vectors, stale entries (task 157)
     ├── alertDigestJob.ts          ← 21:00 weekdays: assemble + send nightly alert digest via Telegram (Sprint 025)
+    ├── weeklyPortfolioReportJob.ts ← Sunday 23:00: portfolio P&L + allocation drift + top movers → Telegram (task 218)
     └── summaryJobs.ts              ← Daily/weekly/monthly/quarterly/yearly summary triggers (task 130)
 
 mcp.config.json                     ← Central JSON config: server, data paths, scheduler, alerts, RAG, fetchers, predictionMarkets
@@ -269,6 +281,7 @@ Polymarket (every 30 min) → predictionStore → predictionSignalDetector
 | 21:00 M–F | `alertDigest` | `0 21 * * 1-5` | Assemble nightly alert digest + send via Telegram (Sprint 025) |
 | 22:00 M–F | `eveningSummary` | `0 22 * * 1-5` | Generate evening market summary |
 | 22:30 Sunday | `patternWatch` | `30 22 * * 0` | Weekly pattern watch → Telegram push |
+| 23:00 Sunday | `weeklyPortfolioReport` | `0 23 * * 0` | Weekly portfolio report: P&L summary + allocation drift + top movers → Telegram (task 218) |
 | 23:00 daily | `dataAuditDaily` | `0 23 * * *` | Data integrity audit: orphan vectors, stale analysis entries, DB row counts |
 | 01:00 Sunday | `dataAuditWeekly` | `0 1 * * 0` | Deep weekly audit: LanceDB vs SQLite consistency, signal coverage gaps |
 
@@ -311,6 +324,7 @@ Polymarket (every 30 min) → predictionStore → predictionSignalDetector
 | **TE News Stream** | `tradingeconomics.com/ws/stream.ashx` JSON | — | — | ✅ Global macro news (country, category, importance 1-3) |
 | **SSC portal** | Puppeteer automation | — | — | ✅ BCTC PDFs |
 | **Polymarket** | `gamma-api.polymarket.com` REST | — | — | ✅ Prediction markets (task 164) |
+| **Telegram webhook** | `POST /telegram-webhook` on this server | — | — | ✅ Inbound commands: /watchlist, /alerts, /briefing (task 215) |
 
 ## Development
 
@@ -423,7 +437,7 @@ src/
 
 ## Current implementation status
 
-### Done (110+ tasks, Sprint 000-029) ✓
+### Done (130+ tasks, Sprint 000-033) ✓
 
 **Foundation (Sprint 000)**
 - `src/infrastructure/db/schema.ts` — SQLite schema init (all tables)
@@ -645,6 +659,26 @@ src/
 - `src/interface/mcp/tools/sourceHealthTools.ts` — `get_source_health` MCP tool + `globalSourceTracker` singleton (task 210)
 - `src/application/usecases/pollNews.ts` — `globalSourceTracker.recordSuccess/recordFailure` wired around each fetcher call (task 210)
 - `src/interface/mcp/server.ts` — updated to 53 registered tools
+
+**Telegram Two-Way + Stock Comparison + Custom Alerts (Sprint 030)**
+- `src/infrastructure/notifiers/telegramCommands.ts` — Telegram command router: /watchlist, /alerts, /briefing parsed and dispatched (task 214)
+- `src/infrastructure/notifiers/telegramWebhookSetup.ts` — webhook registration via Telegram `setWebhook` API on server startup (task 215)
+- `src/index.ts` — `POST /telegram-webhook` endpoint wired to command router (task 215)
+- `src/interface/mcp/tools/compareTools.ts` — `compare_stocks` MCP tool: side-by-side price, ratio, and signal comparison (task 217)
+
+**Weekly Portfolio Report + Custom Alert Rules (Sprint 031)**
+- `src/scheduler/weeklyPortfolioReportJob.ts` — Sunday 23:00 cron: P&L summary + allocation drift + top weekly movers → Telegram (task 218)
+- `src/domain/services/customAlertEvaluator.ts` — evaluate user-defined condition/threshold rules against live price and signal data (task 219)
+- `src/infrastructure/db/customAlertRuleStore.ts` — custom alert rule CRUD: create/list/delete per-stock rules (task 219)
+- `src/interface/mcp/tools/customAlertTools.ts` — `add_custom_alert`, `list_custom_alerts`, `delete_custom_alert` MCP tools (task 219)
+
+**Alert Mute + Target Allocation (Sprint 032-033)**
+- `src/domain/services/alertMuteChecker.ts` — check if a stock/signal combination is currently muted before firing alert (task 222)
+- `src/infrastructure/db/alertMuteStore.ts` — alert mute CRUD: per-stock mute periods with optional expiry (task 222)
+- `src/interface/mcp/tools/alertMuteTools.ts` — `mute_alert`, `unmute_alert`, `list_muted_alerts` MCP tools (task 222)
+- `src/infrastructure/db/targetAllocationStore.ts` — target portfolio weight CRUD: set/get/delete per-stock allocation targets (task 223)
+- `src/interface/mcp/tools/targetAllocationTools.ts` — `set_target_allocation`, `get_target_allocation`, `delete_target_allocation` MCP tools (task 223)
+- `src/interface/mcp/server.ts` — updated to 61 registered tools
 
 ### In Progress
 
