@@ -1,26 +1,25 @@
 /**
  * Task 219 — Custom Alert Rules MCP Tools
+ * Task 241 — add_alert_rule and delete_alert_rule removed (user-only mutation tools)
  *
- * Interface layer: registers three MCP tools on a McpServer instance.
+ * Interface layer: registers one MCP tool on a McpServer instance.
  *
  * Tools registered:
- *   1. add_alert_rule    — Create a custom alert rule for a stock
- *   2. list_alert_rules  — List all rules with status
- *   3. delete_alert_rule — Delete a rule by ID
+ *   1. list_alert_rules  — List all rules with status
+ *
+ * Tools removed (task 241):
+ *   - add_alert_rule    — use TASKS.md / analyst workflow instead
+ *   - delete_alert_rule — use TASKS.md / analyst workflow instead
  *
  * @module interface/mcp/tools/customAlertTools
  */
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { z } from "zod";
 
-import { getDb, initDatabase, ensureCustomAlertRulesTable } from "../../../infrastructure/db/schema.js";
+import { getDb, ensureCustomAlertRulesTable } from "../../../infrastructure/db/schema.js";
 import {
-  insertCustomAlertRule,
   listCustomAlertRules,
-  deleteCustomAlertRule,
 } from "../../../infrastructure/db/customAlertRuleStore.js";
-import { ALERT_PREDICATES } from "../../../domain/services/customAlertEvaluator.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Formatting helpers
@@ -131,73 +130,10 @@ function buildRuleListText(
  */
 export function registerCustomAlertTools(server: McpServer): void {
 
-  // ── 1. add_alert_rule ───────────────────────────────────────────────────────
-  server.tool(
-    "add_alert_rule",
-    "Create a custom alert rule for a stock. " +
-    "Supported predicates: price_above, price_below, volume_above, pe_above, pe_below, roe_above. " +
-    "The rule will be evaluated during every intelligence cycle.",
-    {
-      actionCode: z
-        .string()
-        .min(1)
-        .max(10)
-        .describe("Vietnamese stock ticker code (e.g. VCB, FPT, HPG)"),
-      predicate: z
-        .enum(ALERT_PREDICATES as [string, ...string[]])
-        .describe(
-          "Condition type: price_above | price_below | volume_above | pe_above | pe_below | roe_above",
-        ),
-      threshold: z
-        .number()
-        .describe(
-          "Numeric threshold. Prices in VND (e.g. 90000). Volume as unit count. P/E and ROE as decimal (e.g. 15.0).",
-        ),
-      notes: z
-        .string()
-        .optional()
-        .describe("Optional notes for this rule"),
-    },
-    async ({ actionCode, predicate, threshold, notes }) => {
-      try {
-        const db = getDb();
-        ensureCustomAlertRulesTable(db);
+  // ── add_alert_rule REMOVED (task 241) ─────────────────────────────────────
+  // User-only mutation tool. Manage rules through analyst workflow instead.
 
-        const payload =
-          notes !== undefined
-            ? { code: actionCode, predicate, threshold, notes }
-            : { code: actionCode, predicate, threshold };
-
-        const id = insertCustomAlertRule(payload, db);
-
-        const result = {
-          id,
-          code: actionCode.toUpperCase(),
-          predicate,
-          threshold,
-          notes: notes ?? null,
-          status: "active",
-          message: `Quy tac canh bao da duoc tao (ID: ${id}).`,
-        };
-
-        return {
-          content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }],
-        };
-      } catch (err) {
-        console.error("[add_alert_rule] Failed:", err);
-        return {
-          content: [
-            {
-              type: "text" as const,
-              text: `Loi khi tao quy tac: ${err instanceof Error ? err.message : String(err)}`,
-            },
-          ],
-        };
-      }
-    },
-  );
-
-  // ── 2. list_alert_rules ─────────────────────────────────────────────────────
+  // ── 1. list_alert_rules ─────────────────────────────────────────────────────
   server.tool(
     "list_alert_rules",
     "List all custom alert rules with their current status. " +
@@ -228,54 +164,6 @@ export function registerCustomAlertTools(server: McpServer): void {
     },
   );
 
-  // ── 3. delete_alert_rule ────────────────────────────────────────────────────
-  server.tool(
-    "delete_alert_rule",
-    "Delete a custom alert rule by its ID. Use list_alert_rules to find the ID.",
-    {
-      id: z
-        .number()
-        .int()
-        .positive()
-        .describe("The numeric ID of the rule to delete"),
-    },
-    async ({ id }) => {
-      try {
-        const db = getDb();
-        ensureCustomAlertRulesTable(db);
-
-        const deleted = deleteCustomAlertRule(id, db);
-
-        if (!deleted) {
-          return {
-            content: [
-              {
-                type: "text" as const,
-                text: `Khong tim thay quy tac co ID ${id}.`,
-              },
-            ],
-          };
-        }
-
-        return {
-          content: [
-            {
-              type: "text" as const,
-              text: `Quy tac ID ${id} da duoc xoa thanh cong.`,
-            },
-          ],
-        };
-      } catch (err) {
-        console.error("[delete_alert_rule] Failed:", err);
-        return {
-          content: [
-            {
-              type: "text" as const,
-              text: `Loi khi xoa quy tac: ${err instanceof Error ? err.message : String(err)}`,
-            },
-          ],
-        };
-      }
-    },
-  );
+  // ── delete_alert_rule REMOVED (task 241) ─────────────────────────────────
+  // User-only mutation tool. Manage rules through analyst workflow instead.
 }

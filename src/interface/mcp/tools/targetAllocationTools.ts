@@ -1,11 +1,14 @@
 /**
  * Task 223 — Portfolio Target Allocation MCP Tools
+ * Task 241 — set_target_allocation removed (user-only mutation tool)
  *
- * Registers two MCP tools:
+ * Registers one MCP tool:
  *
- *   1. `set_target_allocation` — store/replace target weights in `portfolio_targets`
- *   2. `get_target_allocation` — display current targets vs actual portfolio weights
+ *   1. `get_target_allocation` — display current targets vs actual portfolio weights
  *                                with drift column (thua/thieu)
+ *
+ * Tools removed (task 241):
+ *   - `set_target_allocation` — user-only mutation; manage via analyst workflow instead
  *
  * Output format for get_target_allocation (Vietnamese, plain text):
  *
@@ -22,11 +25,9 @@
  */
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { z } from "zod";
 
 import { getDb, initDatabase } from "../../../infrastructure/db/schema.js";
 import {
-  setTargetWeights,
   getTargetWeights,
 } from "../../../infrastructure/db/targetAllocationStore.js";
 import { logger } from "../../../infrastructure/logger.js";
@@ -68,89 +69,17 @@ function pad(s: string, width: number): string {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Register set_target_allocation and get_target_allocation MCP tools.
+ * Register target allocation MCP tools on the given McpServer instance.
+ * Registers: get_target_allocation.
+ * NOTE: set_target_allocation was removed (task 241). Manage via analyst workflow instead.
  *
  * @param server - McpServer instance to attach the tools to.
  */
 export function registerTargetAllocationTools(server: McpServer): void {
-  // ── 1. set_target_allocation ───────────────────────────────────────────────
-  server.tool(
-    "set_target_allocation",
-    "Store target portfolio weights so get_rebalancing_signals can auto-load them. " +
-      "Weights must sum to ~100 (99–101 allowed for rounding). " +
-      'Example: {"VCB": 40, "FPT": 30, "HPG": 30}',
-    {
-      targets: z
-        .record(z.number().min(0).max(100))
-        .describe(
-          "Map of stock code → target weight percentage. Must sum to ~100.",
-        ),
-    },
-    async ({ targets }) => {
-      try {
-        await initDatabase();
+  // ── set_target_allocation REMOVED (task 241) ───────────────────────────────
+  // User-only mutation tool. Manage allocations through analyst workflow instead.
 
-        // ── Validate weight sum ──────────────────────────────────────────────
-        const weightSum = Object.values(targets).reduce((s, w) => s + w, 0);
-        if (Math.abs(weightSum - 100) > 1) {
-          return {
-            content: [
-              {
-                type: "text" as const,
-                text:
-                  `Loi: Tong trong so = ${weightSum.toFixed(2)}% (yeu cau 99–101%).\n` +
-                  `Vui long dieu chinh de tong bang 100%.`,
-              },
-            ],
-          };
-        }
-
-        // ── Persist to DB ────────────────────────────────────────────────────
-        await setTargetWeights(targets);
-
-        // ── Build confirmation table ─────────────────────────────────────────
-        const lines: string[] = [
-          "Da luu muc tieu phan bo:",
-          "",
-          pad("Ma", 8) + pad("Muc tieu", 12) + "Cap nhat luc",
-          "-".repeat(40),
-        ];
-        const sortedEntries = Object.entries(targets).sort(([a], [b]) =>
-          a.localeCompare(b),
-        );
-        for (const [code, weight] of sortedEntries) {
-          lines.push(
-            pad(code.toUpperCase(), 8) +
-              pad(`${weight}%`, 12) +
-              new Date().toLocaleTimeString("vi-VN"),
-          );
-        }
-        lines.push("");
-        lines.push(`Tong: ${weightSum.toFixed(2)}%`);
-        lines.push(
-          "Goi get_target_allocation de xem so sanh voi danh muc hien tai.",
-        );
-
-        return {
-          content: [{ type: "text" as const, text: lines.join("\n") }],
-        };
-      } catch (err) {
-        logger.error("[set_target_allocation] Error", {
-          error: err instanceof Error ? err.message : String(err),
-        });
-        return {
-          content: [
-            {
-              type: "text" as const,
-              text: `Loi khi luu muc tieu: ${(err as Error).message}`,
-            },
-          ],
-        };
-      }
-    },
-  );
-
-  // ── 2. get_target_allocation ───────────────────────────────────────────────
+  // ── 1. get_target_allocation ───────────────────────────────────────────────
   server.tool(
     "get_target_allocation",
     "Show current portfolio target weights vs actual allocation with drift column. " +
