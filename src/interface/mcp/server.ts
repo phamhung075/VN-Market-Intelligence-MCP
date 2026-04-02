@@ -67,6 +67,7 @@ import {
   registerTargetAllocationTools,
   registerSentimentTrendTools,
   registerTelegramReportTools,
+  registerChangelogTools,
 } from "./tools/index.js";
 
 /** Options for starting the Bun HTTP server. */
@@ -148,6 +149,7 @@ export async function createBunServer(
     registerTargetAllocationTools(server);
     registerSentimentTrendTools(server);
     registerTelegramReportTools(server);
+    registerChangelogTools(server);
     return server;
   }
 
