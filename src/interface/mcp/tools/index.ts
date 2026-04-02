@@ -38,3 +38,4 @@ export { registerRateLimitTools } from "./rateLimitTools.js";
 export { registerSourceHealthTools } from "./sourceHealthTools.js";
 export { registerCompareTools } from "./compareTools.js";
 export { registerCustomAlertTools } from "./customAlertTools.js";
+export { registerTargetAllocationTools } from "./targetAllocationTools.js";

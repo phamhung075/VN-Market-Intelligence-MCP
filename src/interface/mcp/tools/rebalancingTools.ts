@@ -24,6 +24,7 @@ import {
   formatRebalancingReport,
   type Position,
 } from "../../../domain/services/rebalancingCalculator.js";
+import { getTargetWeights } from "../../../infrastructure/db/targetAllocationStore.js";
 import { logger } from "../../../infrastructure/logger.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -59,9 +60,11 @@ export function registerRebalancingTools(server: McpServer): void {
     {
       targets: z
         .record(z.number().min(0).max(100))
+        .optional()
         .describe(
           'Target weights by stock code (must sum to 100). ' +
-          'Example: {"VCB": 40, "FPT": 30, "HPG": 30}',
+          'Example: {"VCB": 40, "FPT": 30, "HPG": 30}. ' +
+          'Omit to auto-load saved targets from portfolio_targets (set via set_target_allocation).',
         ),
     },
     async ({ targets }) => {
@@ -69,25 +72,46 @@ export function registerRebalancingTools(server: McpServer): void {
         await initDatabase();
         const db = getDb();
 
+        // ── 0. Auto-load targets from DB if not provided ──────────────────────
+        let resolvedTargets: Record<string, number>;
+        if (targets == null || Object.keys(targets).length === 0) {
+          const savedRows = await getTargetWeights();
+          if (savedRows.length === 0) {
+            return {
+              content: [
+                {
+                  type: "text" as const,
+                  text:
+                    "Khong co muc tieu phan bo.\n" +
+                    "Vui long cung cap tham so targets hoac dat muc tieu truoc bang set_target_allocation.",
+                },
+              ],
+            };
+          }
+          resolvedTargets = Object.fromEntries(
+            savedRows.map((r) => [r.code, r.target_weight]),
+          );
+        } else {
+          resolvedTargets = targets as Record<string, number>;
+        }
+
         // ── 1. Load current positions ────────────────────────────────────────
         let positionRows: PositionRow[] = [];
         try {
           positionRows = db
             .query<PositionRow, []>(
-              "SELECT code, shares, avg_cost_vnd FROM portfolio_positions WHERE shares > 0",
+              "SELECT code, shares, avg_price AS avg_cost_vnd FROM positions WHERE closed_at IS NULL",
             )
             .all();
         } catch {
-          // portfolio_positions table may not exist (task 179 not yet deployed)
-          // Return a helpful message rather than crashing
+          // positions table may not exist yet
           return {
             content: [
               {
                 type: "text" as const,
                 text:
-                  "Khong tim thay bang portfolio_positions. " +
-                  "Vui long them vi tri (task 179) truoc khi su dung cong cu nay.\n\n" +
-                  "Tip: dung add_position de them co phieu vao danh muc.",
+                  "Khong tim thay vi tri nao trong danh muc.\n" +
+                  "Vui long them vi tri bang set_position truoc khi su dung cong cu nay.",
               },
             ],
           };
@@ -138,14 +162,14 @@ export function registerRebalancingTools(server: McpServer): void {
 
         // ── 5. Build target weights map ───────────────────────────────────────
         const targetWeights = new Map<string, number>(
-          Object.entries(targets).map(([code, weight]) => [
+          Object.entries(resolvedTargets).map(([code, weight]) => [
             code.toUpperCase(),
             weight,
           ]),
         );
 
         // ── 6. Validate weights sum to ~100 ───────────────────────────────────
-        const weightSum = Object.values(targets).reduce((s, w) => s + w, 0);
+        const weightSum = Object.values(resolvedTargets).reduce((s, w) => s + w, 0);
         const weightWarning =
           Math.abs(weightSum - 100) > 1
             ? `\nCANH BAO: Tong trong so = ${weightSum.toFixed(2)}% (nen bang 100%)\n`
