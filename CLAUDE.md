@@ -75,16 +75,21 @@ src/
 │       ├── macroThresholds.ts     ← σ-based macro thresholds (replaces hardcoded $100/bbl, $4000/oz)
 │       ├── priceNewsValidator.ts  ← Price-news divergence detection + sensitive dates + historical parallels
 │       ├── convictionScorer.ts   ← 5-dimension cross-signal validation (price, volume, sentiment, cascade, sector)
-│       └── tradeRelationships.ts ← Stock-level trade map: export destinations, import sources, JV partners, revenue %
+│       ├── tradeRelationships.ts ← Stock-level trade map: export destinations, import sources, JV partners, revenue %
+│       ├── stockAliases.ts        ← Company name alias dictionary (task 160)
+│       ├── predictionCascadeMapper.ts ← Map Polymarket markets to VN stock sectors/codes (task 165)
+│       └── predictionSignalDetector.ts ← volume_spike + probability_shift detection from prediction markets (task 171)
 ├── infrastructure/
-│   ├── config.ts                   ← Env config (dotenv + mcp.config.json)
-│   ├── logger.ts                   ← Structured logger
+│   ├── config.ts                   ← Env config (dotenv + mcp.config.json) + PredictionMarketsConfig
+│   ├── logger.ts                   ← Structured logger (log rotation, LanceDB TRACE suppression)
 │   ├── db/
 │   │   ├── schema.ts               ← SQLite init (all tables + indexes)
-│   │   ├── alertStore.ts           ← Alert read/write helpers
+│   │   ├── alertStore.ts           ← Alert read/write helpers + notified_telegram flag
 │   │   ├── macroStatsStore.ts      ← Rolling mean/σ from commodity_prices_history + sbv_rates_history
 │   │   ├── commodityTracker.ts     ← Auto-extract & store commodity prices from news text (tracked_indicators table)
 │   │   ├── tradeStore.ts          ← Trade exposure SQLite CRUD + auto-learn from news
+│   │   ├── predictionStore.ts     ← prediction_markets + prediction_signals table helpers (task 172)
+│   │   ├── checkpoint.ts          ← SQLite WAL checkpoint helper (task 140)
 │   │   └── index.ts
 │   ├── fetchers/
 │   │   ├── rss.ts                  ← RSS base fetcher
@@ -93,10 +98,15 @@ src/
 │   │   ├── vneconomy.ts            ← VnEconomy stocks + finance RSS feeds (task 035)
 │   │   ├── reuters.ts              ← Reuters / AP News RSS (Google News)
 │   │   ├── tradingEconomicsStream.ts ← TE global macro news stream (Level 1-2 cascade input)
+│   │   ├── tradingEconomics.ts    ← Trading Economics Vietnam indicators scraper (CPI/GDP)
 │   │   ├── hose.ts                 ← HOSE prices (3-tier: VnDirect legacy → stock_prices → CafeF) + fetchVnIndex()
 │   │   ├── hnx.ts                  ← HNX + UPCOM prices (HNX API → VnDirect stock_prices fallback)
 │   │   ├── ssc.ts                  ← SSC portal scraper — Puppeteer automation (task 031)
 │   │   ├── pdf.ts                  ← PDF downloader + pdf-parse text extractor
+│   │   ├── pdfOcrWorker.ts        ← OCR worker for scanned BCTC PDFs
+│   │   ├── polymarket.ts          ← Polymarket REST fetcher (task 164)
+│   │   ├── sbv.ts                 ← SBV (State Bank of Vietnam) rates fetcher
+│   │   ├── yahooFinance.ts        ← Yahoo Finance commodity + index prices
 │   │   └── index.ts
 │   ├── notifiers/
 │   │   ├── telegram.ts             ← Telegram Bot API notifier — Vietnamese format, plain text, auto-retry (task 034)
@@ -108,46 +118,53 @@ src/
 │       └── index.ts
 ├── application/
 │   └── usecases/
-│       ├── assembleBriefing.ts     ← Morning briefing + macro dashboard + sensitive dates + commodity tracker
+│       ├── assembleBriefing.ts     ← Morning briefing + macro dashboard + sensitive dates + commodity tracker + prediction signals
 │       ├── assembleEveningSummary.ts ← Evening summary assembly
-│       ├── checkSscReports.ts      ← SSC nightly BCTC document check
+│       ├── checkSscReports.ts      ← SSC nightly BCTC document check (with dedup)
 │       ├── fetchParseAndStoreBctc.ts ← SSC fetch → parse → store pipeline
 │       ├── generateAiSummary.ts    ← Rule-based plain-language BCTC summary
 │       ├── generatePeriodicSummary.ts ← Daily/weekly/monthly/quarterly/yearly summaries (task 130)
 │       ├── getPatternSummary.ts    ← Historical pattern detection
 │       ├── parseBctcReport.ts      ← BCTC PDF text → FinancialReport
-│       ├── pollNews.ts             ← 5-source poll (RSS + TE stream) → embed → alert
+│       ├── pollNews.ts             ← 5-source poll (RSS + TE stream) → embed → alert + alias resolution
 │       ├── runImpactChain.ts       ← Causal chain orchestrator
+│       ├── runPredictionImpactChain.ts ← Wire prediction signals into buildCausalChain (task 173)
 │       ├── scanMarket.ts           ← Market scan + sector context comparison (toàn ngành vs riêng lẻ)
 │       └── index.ts
 ├── interface/
 │   ├── mcp/
-│   │   ├── server.ts               ← McpServer factory, registers all 20 tools
+│   │   ├── server.ts               ← McpServer factory, registers all 31 tools
 │   │   ├── transport.ts            ← SSEServerTransport setup
 │   │   └── tools/
 │   │       ├── watchlist.ts        ← add/remove/get/update watchlist MCP tools
-│   │       ├── alerts.ts           ← get_alerts, run_daily_briefing, analysis history
+│   │       ├── alerts.ts           ← get_alerts, run_daily_briefing, analysis history, resolve_alert
 │   │       ├── analysis.ts         ← fetch_and_analyze, run_impact_chain, search_similar_context
-│   │       ├── reports.ts          ← fetch_bctc_report, get_financial_summary, compare_reports
+│   │       ├── reports.ts          ← fetch_bctc_report, get_financial_summary, compare_reports, get_bctc_ai_summary, list_bctc_reports
 │   │       ├── marketTools.ts      ← get_market_snapshot, get_patterns
 │   │       ├── macroTools.ts       ← get_macro_snapshot (commodity + SBV rates)
-│   │       ├── telegramTools.ts    ← send_test_telegram connectivity check (task 034)
+│   │       ├── telegramTools.ts    ← send_test_telegram + send_market_broadcast (task 034, 162)
 │   │       ├── summaryTools.ts     ← get_market_summary, generate_market_summary (task 130)
+│   │       ├── systemTools.ts      ← get_system_health (WAL, alert stats, last cycle, db audit, sigma readiness)
+│   │       ├── portfolioTools.ts   ← get_portfolio_conviction (task 149)
+│   │       ├── feedbackTools.ts    ← submit_feedback, get_feedback (task 150)
+│   │       ├── predictionTools.ts  ← get_prediction_markets (task 168)
 │   │       └── index.ts
 │   └── scheduler/
 │       └── index.ts                ← startScheduler() — registers all cron jobs
 └── scheduler/
     ├── jobs.ts                     ← Cron job definitions (GMT+7)
-    ├── morningBriefingJob.ts       ← 08:00 daily briefing (macro dashboard + conviction + unresolved alerts)
-    ├── patternWatchJob.ts         ← Sunday 22:30 weekly pattern watch → Telegram
+    ├── morningBriefingJob.ts       ← 08:00 daily briefing (macro dashboard + conviction + unresolved alerts + prediction signals)
+    ├── patternWatchJob.ts         ← Sunday 22:30 weekly pattern watch → Telegram (task 146)
     ├── newsPollerJob.ts            ← Legacy 30-min news poll (superseded by intelligenceCycleJob)
     ├── marketScanJob.ts            ← 09:00 + 15:30 market open/close scan
     ├── sscCheckerJob.ts            ← 20:00 SSC nightly BCTC check
     ├── eveningSummaryJob.ts        ← 22:00 evening summary
     ├── intelligenceCycleJob.ts     ← Every 15 min unified cycle: poll → SSC → prices → chain → Telegram (task 106)
+    ├── predictionMarketJob.ts     ← Every 30 min: fetch Polymarket → store → detect signals → Telegram (task 167)
+    ├── dataAuditJob.ts            ← Daily/weekly data integrity audit: orphan vectors, stale entries (task 157)
     └── summaryJobs.ts              ← Daily/weekly/monthly/quarterly/yearly summary triggers (task 130)
 
-mcp.config.json                     ← Central JSON config: server, data paths, scheduler, alerts, RAG, fetchers
+mcp.config.json                     ← Central JSON config: server, data paths, scheduler, alerts, RAG, fetchers, predictionMarkets
 bctc-schema.ts                      ← Complete BCTC data model + SQLite DDL (root level)
 ```
 
@@ -202,11 +219,15 @@ News (5 sources) + SSC PDF → Fetcher → Parser → AnalysisEntry/FinancialRep
 | Time | Job | Cron | What it does |
 |------|-----|------|-------------|
 | **Every 15 min** | `intelligenceCycle` | `*/15 * * * *` | **Main engine.** Market hours (09:00–15:30 M–F): full 5-step cycle (A→E). Off-hours: news poll only (step A). Concurrency guard with 14-min stale auto-release + 2-min per-step timeout. |
-| 08:00 M–F | `morningBriefing` | `0 8 * * 1-5` | Morning briefing: VN-Index + top stories + alerts + **macro dashboard (σ)** + **sensitive dates** + **tracked commodities** |
+| **Every 30 min** | `predictionMarket` | `*/30 * * * *` | Fetch Polymarket markets → store → detect signals (volume spike, probability shift) → Telegram if HIGH |
+| 08:00 M–F | `morningBriefing` | `0 8 * * 1-5` | Morning briefing: VN-Index + top stories + alerts + **macro dashboard (σ)** + **sensitive dates** + **tracked commodities** + **top 3 prediction signals** |
 | 09:00 M–F | `marketOpen` | `0 9 * * 1-5` | Scan prices + **sector context** + **price-news divergence** + **volume anomaly detection** |
 | 15:30 M–F | `marketClose` | `30 15 * * 1-5` | Same as open scan — close-of-day snapshot |
 | 20:00 daily | `sscCheck` | `0 20 * * *` | Check SSC portal for new BCTC filings |
 | 22:00 M–F | `eveningSummary` | `0 22 * * 1-5` | Generate evening market summary |
+| 22:30 Sunday | `patternWatch` | `30 22 * * 0` | Weekly pattern watch → Telegram push |
+| 03:00 daily | `dataAuditDaily` | `0 3 * * *` | Data integrity audit: orphan vectors, stale analysis entries, DB row counts |
+| 03:30 Sunday | `dataAuditWeekly` | `30 3 * * 0` | Deep weekly audit: LanceDB vs SQLite consistency, signal coverage gaps |
 
 ### Intelligence cycle steps (15-min tick)
 
@@ -246,6 +267,7 @@ News (5 sources) + SSC PDF → Fetcher → Parser → AnalysisEntry/FinancialRep
 | **TE Indicators** | `tradingeconomics.com/vietnam/indicators` scrape | — | — | ✅ CPI/GDP |
 | **TE News Stream** | `tradingeconomics.com/ws/stream.ashx` JSON | — | — | ✅ Global macro news (country, category, importance 1-3) |
 | **SSC portal** | Puppeteer automation | — | — | ✅ BCTC PDFs |
+| **Polymarket** | `gamma-api.polymarket.com` REST | — | — | ✅ Prediction markets (task 164) |
 
 ## Development
 
@@ -294,6 +316,7 @@ Key sections:
 | `fetchers` | Per-source URLs, Puppeteer paths, timeouts |
 | `fetchLimits` | News-per-source caps for market-hours / off-hours / manual runs |
 | `cycle` | Intelligence cycle warn threshold, off-hours interval, max concurrent |
+| `predictionMarkets` | Polymarket API URL, volume threshold, probability shift %, min unique wallets |
 
 ## Dev Team & Workflow
 
@@ -357,7 +380,7 @@ src/
 
 ## Current implementation status
 
-### Done (60+ tasks, Sprint 000-012) ✓
+### Done (80+ tasks, Sprint 000-021) ✓
 
 **Foundation (Sprint 000)**
 - `src/infrastructure/db/schema.ts` — SQLite schema init (all tables)
@@ -456,9 +479,67 @@ src/
 - `src/application/usecases/runImpactChain.ts` — wired σ-based macro stats into cascade engine
 - `src/application/usecases/assembleBriefing.ts` — enhanced with macro dashboard (σ status), sensitive date warnings, auto-tracked commodities list
 
+**Trade Relationships (Sprint 014)**
+- `src/domain/services/tradeRelationships.ts` — stock-level trade map: export destinations, import sources, JV partners, revenue exposure %
+- `src/infrastructure/db/tradeStore.ts` — trade exposure SQLite CRUD + auto-learn from news text
+
+**Alert Pipeline Fix + VN-Index Feed + WAL + Circuit Breaker + System Health (Sprint 014)**
+- `src/scheduler/intelligenceCycleJob.ts` — Step E now reads DB alerts with `notified_telegram = 0` and marks them after send (task 137)
+- `src/application/usecases/runImpactChain.ts` — Step D now calls real `runImpactChain` instead of placeholder (task 138)
+- `src/infrastructure/fetchers/hose.ts` — `fetchVnIndex()` via CafeF index endpoint (task 139)
+- `src/infrastructure/db/checkpoint.ts` — SQLite WAL checkpoint helper; daily cron + SIGTERM hook (task 140)
+- `src/infrastructure/fetchers/hose.ts`, `ssc.ts` — wired circuit breaker pattern to prevent cascade failures on source outages (task 136)
+- `src/interface/mcp/tools/systemTools.ts` — `get_system_health` enhanced with WAL size, alert stats, last cycle result (task 141)
+
+**Conviction Scorer (Sprint 015)**
+- `src/domain/services/convictionScorer.ts` — 5-dimension cross-signal conviction score (price, volume, sentiment, cascade, sector) (task 142)
+- `src/infrastructure/notifiers/telegram.ts` — sector peer context + conviction score wired into alert body (task 143)
+- `src/application/usecases/assembleBriefing.ts` — historical parallel context in Telegram alert body (task 144)
+- `src/scheduler/morningBriefingJob.ts` — upgraded with conviction scores + unresolved alerts section (task 145)
+- `src/scheduler/patternWatchJob.ts` — Sunday 22:30 proactive weekly pattern watch → Telegram push (task 146)
+
+**The Analyst's Dashboard (Sprint 016)**
+- `src/scheduler/morningBriefingJob.ts` — Telegram delivery of morning briefing (task 147)
+- `src/infrastructure/db/alertStore.ts` — alert resolution lifecycle; `resolve_alert` added to `alerts.ts` (task 148)
+- `src/interface/mcp/tools/portfolioTools.ts` — `get_portfolio_conviction` MCP tool (task 149)
+- `src/interface/mcp/tools/feedbackTools.ts` — `submit_feedback`, `get_feedback` MCP tools + conviction_history table (task 150)
+- `src/interface/mcp/tools/systemTools.ts` — sigma data sufficiency health check section (task 151)
+- `src/interface/mcp/server.ts` — updated to 31 registered tools
+
+**Production Hardening (Sprint 017)**
+- `src/domain/services/signalDetector.ts` — news-mention alert noise filter (min headline count threshold) (task 152)
+- `src/application/usecases/checkSscReports.ts` — SSC scan deduplication: skip already-processed document IDs (task 153)
+- `src/infrastructure/logger.ts` — LanceDB TRACE log suppression + size-based log file rotation (tasks 154, 155)
+- `src/scheduler/intelligenceCycleJob.ts` — off-hours cycle interval increased to 60 min to reduce noise (task 156)
+
+**Data Integrity First (Sprint 018)**
+- `src/scheduler/dataAuditJob.ts` — daily/weekly data audit: orphan vectors, stale analysis entries, DB/RAG row counts (task 157)
+- `src/scheduler/jobs.ts` — `CRONS.dataAuditDaily` + `CRONS.dataAuditWeekly` registered (task 158)
+- `src/interface/mcp/tools/systemTools.ts` — `get_system_health` db_audit section: `audit_state` reads + live `agent_feedback` counts (task 159)
+
+**Stock Aliases + Market Broadcast (Sprint 019)**
+- `src/domain/services/stockAliases.ts` — company name alias dictionary (34 tests) (task 160)
+- `src/domain/services/cascadeEngine.ts` + `src/application/usecases/pollNews.ts` — alias wiring: resolve company names to stock codes in Gate 3 (task 161)
+- `src/interface/mcp/tools/telegramTools.ts` — `send_market_broadcast` MCP tool: market-wide pattern cascade to all watchlist stocks (task 162)
+
+**Prediction Market Intelligence (Sprint 020)**
+- `src/infrastructure/db/schema.ts` — `prediction_markets` + `prediction_signals` SQLite tables (task 163)
+- `src/infrastructure/fetchers/polymarket.ts` — Polymarket REST fetcher with circuit breaker (task 164)
+- `src/domain/services/predictionCascadeMapper.ts` — map Polymarket markets to VN stock sectors/codes (38 tests) (task 165)
+- `src/domain/services/predictionSignalDetector.ts` — type definitions + `PredictionSignalConfig` interface (task 166 stub)
+- `src/scheduler/predictionMarketJob.ts` — every 30 min: fetch → store → detect → Telegram if HIGH (task 167)
+- `src/interface/mcp/tools/predictionTools.ts` — `get_prediction_markets` MCP tool (task 168)
+- `src/infrastructure/config.ts` — `PredictionMarketsConfig` interface + `mcp.config.json` predictionMarkets section (task 169)
+
+**Close the Loop — Prediction Signals Live (Sprint 021)**
+- `src/domain/services/predictionSignalDetector.ts` — full `detectPredictionSignals` implementation: volume_spike + probability_shift (20+ tests) (task 171)
+- `src/infrastructure/db/predictionStore.ts` — prediction_markets + prediction_signals table helpers (task 172)
+- `src/application/usecases/assembleBriefing.ts` — top 3 HIGH/CRITICAL prediction signals section in morning briefing (task 172)
+- `src/application/usecases/runPredictionImpactChain.ts` — wire prediction signals into `buildCausalChain` cascade (task 173)
+
 ### In Progress
-- Circuit breaker pattern for fetchers — prevents cascade failures on source outages (task 136)
-- System health MCP tool — `get_system_health` exposing job status, DB size, RAG size (planned: `src/interface/mcp/tools/systemTools.ts`)
+
+None — all Sprint 022 tasks are in Backlog/Todo (see SPRINT_GOAL.md).
 
 ### Deferred (Sprint 008+ backlog)
 - E2E test — daily briefing flow (task 125, after 024)
