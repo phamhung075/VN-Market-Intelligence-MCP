@@ -107,11 +107,15 @@
 | 203 | Investigate Vinamilk → VNM alias | ✅ Investigated | Code correct — "vinamilk" in dictionary. Likely VNM not in watchlist at runtime |
 | 204 | Investigate VCB price mismatch | ✅ Investigated | Data source inconsistency between VnDirect legacy (VND) and stock_prices (×1000). Not a code bug |
 | 205 | Sector-wide decline alert | ✅ Done | Emits price_drop signal when ≥3 stocks in same sector decline ≥0.5%. Shows sector avg + top decliners |
+| 206 | Coal/mining cascade rules | ✅ Done | Added "than đá"/"coal"/"khoáng sản" → oil_gas domain. ALV-type companies now cascade correctly |
+| 207 | Infrastructure capex boost rule | ✅ Done | "sân bay Long Thành", "siêu dự án", "cao tốc" → aviation +0.80, logistics +0.75. Macro cap prevents crush |
+| 208 | Fix DB path CWD-dependent resolution | ✅ Done | DEFAULT_DB_PATH now absolute via import.meta.dir. Prevents "no such table" after restart from different CWD |
 
 **Remaining (deferred / PO decision needed):**
 - Reuters RSS failing — external service issue, monitor only
 - USD/VND watchlist expansion — PO decision: add VEA, HVN, HPG as FX-sensitive stocks
-- DB schema "no such table" on restart — needs runtime investigation (tables ARE defined with IF NOT EXISTS)
+- VCB BCTC Q1/2025 PDF empty — scanned image, needs OCR worker (pdfOcrWorker.ts)
+- Polymarket API timeout — external service issue, increase timeout config
 
 ---
 
