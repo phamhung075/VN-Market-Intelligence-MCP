@@ -53,6 +53,9 @@
 | 065 | Historical pattern matcher | `task/065-pattern-matcher` | 2026-03-28 | [TASK_REPORT_065](reports/TASK_REPORT_065.md) |
 | 084 | Market MCP tools (get_market_snapshot, get_patterns) | `task/084-tool-market` | 2026-03-28 | [TASK_REPORT_084](reports/TASK_REPORT_084.md) |
 | 123 | Integration tests — MCP tools with real SQLite | `task/123-test-integration-mcp` | 2026-03-28 | [TASK_REPORT_123](reports/TASK_REPORT_123.md) |
+| 194 | CLAUDE.md sync through Sprint 026 | `main` (7f53108) | 2026-04-02 | — |
+| HOT-01 | fix: source .env in start.sh — Telegram token missing | `main` (c5b925e) | 2026-04-02 | — |
+| HOT-02 | feat: delete_telegram_report MCP tool + auto-cleanup workflow | `main` (c6ea1ce) | 2026-04-02 | — |
 
 > **Sprint 003 COMPLETE** — All 5 tasks merged: 021, 082, 063, 064, 086. PO sign-off: APPROVED 2026-03-27.
 > **Sprint 004 Wave 1** — Tasks 087, 022, 023 merged: 2026-03-27.
@@ -76,7 +79,7 @@
 
 | # | Title | Branch | Notes |
 |---|-------|--------|-------|
-| — | — | — | Empty |
+| 195 | Portfolio rebalancing signals: `get_rebalancing_signals` | `task/195-rebalancing-signals` | Awaiting QA sign-off; depends on 193 (dynamic registry) for clean registration path |
 
 ---
 
@@ -346,18 +349,24 @@
 
 ---
 
-### 🔍 Review (189)
+### 🔍 Review (195)
 
 | # | Title | Branch | Layer | Depends on | Status |
 |---|-------|--------|-------|------------|--------|
-| 189 | Pearson correlation matrix MCP tool | `task/189-correlation-matrix` | domain + interface | — | Review |
+| 195 | Portfolio rebalancing signals: `get_rebalancing_signals` MCP tool | `task/195-rebalancing-signals` | domain + interface | 193 (partial — registered directly pending registry) | Review |
 
-**Task 189 — Acceptance Criteria**
-- `pearsonCorrelation(xs, ys)` returns r ∈ [-1,1]; NaN on zero-variance; throws on empty/mismatched arrays
-- `computeCorrelationMatrix(Map)` returns C(n,2) pairs, skips NaN, sorted lexicographically
-- `diversificationScore([])` returns 1.0; score = 1 - mean(|r|)
-- MCP tool `get_correlation_matrix` registered and returns Vietnamese formatted output
-- 22 tests pass, `tsc --noEmit` clean
+**Task 195 — Acceptance Criteria**
+- A position at 42% weight with 25% target produces drift = +17%, action = "BAN"
+- A position at 18% weight with 25% target produces drift = -7%, action = "MUA"
+- A position with |drift| < threshold produces "(trong nguong)"
+- Equal-weight fallback: 4 positions with no `target_weight` each get 25% target
+- Stock with no `market_prices` row shown as "(thieu du lieu gia)"
+- No open positions returns "Khong co vi the nao dang mo"
+- Corrective share quantities are integers (sell = floor, buy = ceil)
+- Threshold parameter 0.10 flags only drifts > 10%
+- >= 16 tests, 0 failures
+- `bun tsc --noEmit` → 0 errors
+- Tool count increases from 46 to 47
 
 ---
 
@@ -365,12 +374,53 @@
 
 | Column | Count | Tasks |
 |--------|-------|-------|
-| ✅ Done | 60+ | Sprints 000-026 complete |
-| 🔍 Review | 0 | — |
+| ✅ Done | 60+ | Sprints 000-027 partial (194 done) |
+| 🔍 Review | 1 | 195 (rebalancing signals) |
 | 🚧 In Progress | 0 | — |
 | 📋 Todo | 0 | — |
-| 🗂 Backlog | 4 | 192, 193, 194, 195 (Sprint 027) |
+| 🗂 Backlog | 5 | 192, 193, 196, 197 (Sprint 027); 125 deferred |
 | **Total** | **60+** | |
+
+---
+
+## Sprint 027 — ACTIVE
+
+> Sprint 027 STARTED — 2026-04-02. Theme: Stability First — Fix the Cracks Before Adding More Floors.
+> PO sign-off: APPROVED 2026-04-02. Tasks 192, 193, 194, 195, 196, 197 in scope.
+
+| # | Title | Branch | Priority | Status |
+|---|-------|--------|----------|--------|
+| 192 | Fix flaky test: polymarket-fetcher mock timing | `task/192-fix-polymarket-flaky` | P0 | Backlog |
+| 193 | Dynamic tool registration: eliminate server.ts merge conflicts | `task/193-dynamic-tool-registry` | P0 | Backlog |
+| 194 | CLAUDE.md sync through Sprint 026 | `main` (7f53108) | P1 | Done |
+| 195 | Portfolio rebalancing signals: `get_rebalancing_signals` MCP tool | `task/195-rebalancing-signals` | P1 | Review |
+| 196 | Stale worktree cleanup + hotfix task tracking | `task/196-worktree-cleanup` | P0 | Backlog |
+| 197 | Reuters RSS investigation + delete_telegram_report test coverage | `task/197-reuters-fix-telegram-tests` | P1 | Backlog |
+
+**Task 196 — Acceptance Criteria**
+- All stale agent-* worktrees under `.claude/worktrees/` removed (`git worktree prune`)
+- Commits c5b925e (start.sh .env fix) and c6ea1ce (delete_telegram_report) tracked in TASKS.md Done section
+- `delete_telegram_report` added to CLAUDE.md tool list and README.md tool table
+- `bun tsc --noEmit` → 0 errors
+- No worktrees left with branches that are already merged to main
+
+Files:
+- `TASKS.md` — add hotfix entries to Done section
+- `CLAUDE.md` — add delete_telegram_report to tool list
+- `cowork-analysis-vnmarket-team/README.md` — update tool count + add delete_telegram_report row
+- Shell: `git worktree prune` + remove stale `.claude/worktrees/` directories
+
+**Task 197 — Acceptance Criteria**
+- Root cause of Reuters RSS failures documented (log analysis)
+- If fixable: fix applied + test added; if not: alternative source identified (AP News direct, Bloomberg RSS)
+- `sendTelegramReport()` return type change (boolean → message_id number) reflected in all tests
+- `bun test` full suite → 0 failures
+- `bun tsc --noEmit` → 0 errors
+
+Files:
+- INVESTIGATE: `src/infrastructure/fetchers/reuters.ts`
+- MODIFY (if needed): test files referencing `sendTelegramReport` return value
+- MODIFY (if needed): `src/infrastructure/notifiers/telegram.ts`
 
 ---
 
@@ -556,16 +606,18 @@ Files:
 
 ---
 
-## Sprint 027 — Backlog
+## Sprint 027 — Active
 
-> Sprint 027 PLANNING — 2026-04-01. Theme: Stability First — Fix the Cracks Before Adding More Floors.
+> Sprint 027 ACTIVE — 2026-04-02. Theme: Stability First — Fix the Cracks Before Adding More Floors.
 
 | # | Title | Branch | Agent | Priority | Depends on | Status |
 |---|-------|--------|-------|----------|------------|--------|
-| 192 | Fix flaky test: `164-polymarket-fetcher.test.ts` mock timing | `task/192-fix-flaky-164` | Developer | P0 | — | Backlog |
+| 192 | Fix flaky test: `164-polymarket-fetcher.test.ts` mock timing | `task/192-fix-polymarket-flaky` | Developer | P0 | — | Review |
 | 193 | Dynamic tool registration: eliminate server.ts merge conflicts | `task/193-dynamic-tool-registry` | Developer | P0 | — | Backlog |
-| 194 | CLAUDE.md sync through Sprint 026 | `task/194-claudemd-sync` | Developer | P1 | — | Backlog |
-| 195 | Portfolio rebalancing signals: `get_rebalancing_signals` MCP tool | `task/195-rebalancing-signals` | Developer | P1 | 193 | Backlog |
+| 194 | CLAUDE.md sync through Sprint 026 | `main` (7f53108) | — | P1 | — | Done |
+| 195 | Portfolio rebalancing signals: `get_rebalancing_signals` MCP tool | `task/195-rebalancing-signals` | Developer | P1 | 193 | Review |
+| 196 | Stale worktree cleanup + hotfix task tracking | `task/196-worktree-cleanup` | Developer | P0 | — | Backlog |
+| 197 | Reuters RSS investigation + delete_telegram_report test coverage | `task/197-reuters-fix-telegram-tests` | Developer | P1 | — | Backlog |
 
 ---
 
@@ -605,18 +657,9 @@ Files:
 
 ---
 
-**Task 194 — CLAUDE.md Sync Through Sprint 026**
+**Task 194 — DONE (committed 7f53108, 2026-04-02)**
 
-Acceptance criteria:
-- CLAUDE.md `src/` tree lists all files introduced in Sprints 022-026
-- "Current implementation status" Done section includes Sprints 022-026 with accurate task lists
-- Tool count stated in CLAUDE.md matches actual registered tool count (46)
-- Test count stated in CLAUDE.md is >= 1672
-- `bun tsc --noEmit` → 0 errors (no code change, verify no regression)
-- No task reports or sprint reports modified — CLAUDE.md only
-
-Files:
-- MODIFY: `CLAUDE.md`
+CLAUDE.md synced through Sprint 026 — all files, tool count (46), test count (1672+) updated.
 
 ---
 

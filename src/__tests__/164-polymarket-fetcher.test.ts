@@ -7,6 +7,9 @@
  * DB tests use an in-memory SQLite via DB_PATH=:memory:.
  */
 
+// Must be set BEFORE importing schema module so the module-level DB_PATH picks it up.
+process.env["DB_PATH"] = ":memory:";
+
 import { describe, it, expect, beforeAll, afterAll } from "bun:test";
 import {
   fetchPolymarkets,
@@ -117,7 +120,8 @@ function failingFetch(): PolyFetchFn {
 // ---------------------------------------------------------------------------
 
 beforeAll(async () => {
-  process.env["DB_PATH"] = ":memory:";
+  // Reset any previous singleton (e.g. from another test file in the same process)
+  closeDb();
   await initDatabase();
 });
 
