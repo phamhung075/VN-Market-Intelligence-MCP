@@ -78,7 +78,15 @@ src/
 │       ├── tradeRelationships.ts ← Stock-level trade map: export destinations, import sources, JV partners, revenue %
 │       ├── stockAliases.ts        ← Company name alias dictionary (task 160)
 │       ├── predictionCascadeMapper.ts ← Map Polymarket markets to VN stock sectors/codes (task 165)
-│       └── predictionSignalDetector.ts ← volume_spike + probability_shift detection from prediction markets (task 171)
+│       ├── predictionSignalDetector.ts ← volume_spike + probability_shift detection from prediction markets (task 171)
+│       ├── decisionNoteSynthesizer.ts ← action notes: entry/exit/hold rationale (Sprint 023)
+│       ├── sparkline.ts            ← ASCII sparkline renderer for price history (Sprint 023)
+│       ├── portfolioRiskCalculator.ts ← VaR / max-drawdown calculation (Sprint 024)
+│       ├── stockSearch.ts          ← 50-stock catalogue with fuzzy search (Sprint 024)
+│       ├── sectorRotationDetector.ts ← sector rotation logic: momentum + relative strength (Sprint 025)
+│       ├── earningsCalendar.ts     ← BCTC deadline calendar: Q1-Q4 filing dates (Sprint 025)
+│       ├── correlationCalculator.ts ← Pearson correlation matrix across watchlist (Sprint 026)
+│       └── performanceAttribution.ts ← signal P&L attribution per alert type (Sprint 026)
 ├── infrastructure/
 │   ├── config.ts                   ← Env config (dotenv + mcp.config.json) + PredictionMarketsConfig
 │   ├── logger.ts                   ← Structured logger (log rotation, LanceDB TRACE suppression)
@@ -89,6 +97,7 @@ src/
 │   │   ├── commodityTracker.ts     ← Auto-extract & store commodity prices from news text (tracked_indicators table)
 │   │   ├── tradeStore.ts          ← Trade exposure SQLite CRUD + auto-learn from news
 │   │   ├── predictionStore.ts     ← prediction_markets + prediction_signals table helpers (task 172)
+│   │   ├── positionStore.ts       ← position CRUD helpers: set/get/close positions (Sprint 023)
 │   │   ├── checkpoint.ts          ← SQLite WAL checkpoint helper (task 140)
 │   │   └── index.ts
 │   ├── fetchers/
@@ -129,11 +138,13 @@ src/
 │       ├── pollNews.ts             ← 5-source poll (RSS + TE stream) → embed → alert + alias resolution
 │       ├── runImpactChain.ts       ← Causal chain orchestrator
 │       ├── runPredictionImpactChain.ts ← Wire prediction signals into buildCausalChain (task 173)
+│       ├── assembleAlertDigest.ts  ← Assemble nightly alert digest with grouping (Sprint 025)
+│       ├── exportPortfolioSnapshot.ts ← JSON export of portfolio positions + P&L (Sprint 026)
 │       ├── scanMarket.ts           ← Market scan + sector context comparison (toàn ngành vs riêng lẻ)
 │       └── index.ts
 ├── interface/
 │   ├── mcp/
-│   │   ├── server.ts               ← McpServer factory, registers all 31 tools
+│   │   ├── server.ts               ← McpServer factory, registers all 46 tools
 │   │   ├── transport.ts            ← SSEServerTransport setup
 │   │   └── tools/
 │   │       ├── watchlist.ts        ← add/remove/get/update watchlist MCP tools
@@ -148,6 +159,19 @@ src/
 │   │       ├── portfolioTools.ts   ← get_portfolio_conviction (task 149)
 │   │       ├── feedbackTools.ts    ← submit_feedback, get_feedback (task 150)
 │   │       ├── predictionTools.ts  ← get_prediction_markets (task 168)
+│   │       ├── alertCheckTools.ts  ← trigger_alert_check (Sprint 022)
+│   │       ├── priceHistoryTools.ts ← get_price_history (Sprint 023)
+│   │       ├── positionTools.ts    ← set_position, get_positions, close_position (Sprint 023)
+│   │       ├── portfolioRiskTool.ts ← get_portfolio_risk (Sprint 024)
+│   │       ├── alertAccuracy.ts    ← get_alert_accuracy (Sprint 024)
+│   │       ├── searchTools.ts      ← search_stocks (Sprint 024)
+│   │       ├── dataFreshnessTools.ts ← get_data_freshness (Sprint 024)
+│   │       ├── sectorRotationTools.ts ← get_sector_rotation (Sprint 025)
+│   │       ├── earningsCalendarTools.ts ← get_earnings_calendar (Sprint 025)
+│   │       ├── alertDigestTools.ts ← send_alert_digest (Sprint 025)
+│   │       ├── correlationTools.ts ← get_correlation_matrix (Sprint 026)
+│   │       ├── exportTools.ts      ← export_portfolio_snapshot (Sprint 026)
+│   │       ├── performanceTools.ts ← get_performance_attribution (Sprint 026)
 │   │       └── index.ts
 │   └── scheduler/
 │       └── index.ts                ← startScheduler() — registers all cron jobs
@@ -162,6 +186,7 @@ src/
     ├── intelligenceCycleJob.ts     ← Every 15 min unified cycle: poll → SSC → prices → chain → Telegram (task 106)
     ├── predictionMarketJob.ts     ← Every 30 min: fetch Polymarket → store → detect signals → Telegram (task 167)
     ├── dataAuditJob.ts            ← Daily/weekly data integrity audit: orphan vectors, stale entries (task 157)
+    ├── alertDigestJob.ts          ← 21:00 weekdays: assemble + send nightly alert digest via Telegram (Sprint 025)
     └── summaryJobs.ts              ← Daily/weekly/monthly/quarterly/yearly summary triggers (task 130)
 
 mcp.config.json                     ← Central JSON config: server, data paths, scheduler, alerts, RAG, fetchers, predictionMarkets
@@ -224,6 +249,7 @@ News (5 sources) + SSC PDF → Fetcher → Parser → AnalysisEntry/FinancialRep
 | 09:00 M–F | `marketOpen` | `0 9 * * 1-5` | Scan prices + **sector context** + **price-news divergence** + **volume anomaly detection** |
 | 15:30 M–F | `marketClose` | `30 15 * * 1-5` | Same as open scan — close-of-day snapshot |
 | 20:00 daily | `sscCheck` | `0 20 * * *` | Check SSC portal for new BCTC filings |
+| 21:00 M–F | `alertDigest` | `0 21 * * 1-5` | Assemble nightly alert digest + send via Telegram (Sprint 025) |
 | 22:00 M–F | `eveningSummary` | `0 22 * * 1-5` | Generate evening market summary |
 | 22:30 Sunday | `patternWatch` | `30 22 * * 0` | Weekly pattern watch → Telegram push |
 | 03:00 daily | `dataAuditDaily` | `0 3 * * *` | Data integrity audit: orphan vectors, stale analysis entries, DB row counts |
@@ -380,7 +406,7 @@ src/
 
 ## Current implementation status
 
-### Done (80+ tasks, Sprint 000-021) ✓
+### Done (95+ tasks, Sprint 000-026) ✓
 
 **Foundation (Sprint 000)**
 - `src/infrastructure/db/schema.ts` — SQLite schema init (all tables)
@@ -537,9 +563,45 @@ src/
 - `src/application/usecases/assembleBriefing.ts` — top 3 HIGH/CRITICAL prediction signals section in morning briefing (task 172)
 - `src/application/usecases/runPredictionImpactChain.ts` — wire prediction signals into `buildCausalChain` cascade (task 173)
 
+**Alert Check Trigger (Sprint 022)**
+- `src/interface/mcp/tools/alertCheckTools.ts` — `trigger_alert_check` MCP tool: on-demand signal re-evaluation for watchlist
+
+**Position Tracking + Price History (Sprint 023)**
+- `src/infrastructure/db/positionStore.ts` — position CRUD: set/get/close positions with entry price, size, notes
+- `src/domain/services/decisionNoteSynthesizer.ts` — synthesizes entry/exit/hold action notes from signals
+- `src/domain/services/sparkline.ts` — ASCII sparkline renderer for price history charts
+- `src/interface/mcp/tools/priceHistoryTools.ts` — `get_price_history` MCP tool with sparkline output
+- `src/interface/mcp/tools/positionTools.ts` — `set_position`, `get_positions`, `close_position` MCP tools
+
+**Portfolio Risk + Alert Accuracy + Stock Search + Data Freshness (Sprint 024)**
+- `src/domain/services/portfolioRiskCalculator.ts` — VaR (95%/99%) + max-drawdown per position and portfolio
+- `src/interface/mcp/tools/portfolioRiskTool.ts` — `get_portfolio_risk` MCP tool
+- `src/interface/mcp/tools/alertAccuracy.ts` — `get_alert_accuracy`: retrospective signal vs price outcome
+- `src/domain/services/stockSearch.ts` — 50-stock catalogue with fuzzy name + code search
+- `src/interface/mcp/tools/searchTools.ts` — `search_stocks` MCP tool
+- `src/interface/mcp/tools/dataFreshnessTools.ts` — `get_data_freshness`: per-source staleness report
+
+**Sector Rotation + Earnings Calendar + Alert Digest (Sprint 025)**
+- `src/domain/services/sectorRotationDetector.ts` — sector rotation: momentum + relative strength vs VN-Index
+- `src/interface/mcp/tools/sectorRotationTools.ts` — `get_sector_rotation` MCP tool
+- `src/domain/services/earningsCalendar.ts` — BCTC deadline calendar: Q1-Q4 Vietnamese filing deadlines
+- `src/interface/mcp/tools/earningsCalendarTools.ts` — `get_earnings_calendar` MCP tool
+- `src/application/usecases/assembleAlertDigest.ts` — nightly digest assembly with alert grouping by sector
+- `src/scheduler/alertDigestJob.ts` — 21:00 weekdays cron: assemble + send alert digest via Telegram
+- `src/interface/mcp/tools/alertDigestTools.ts` — `send_alert_digest` MCP tool for on-demand digest
+
+**Correlation + Export + Performance Attribution (Sprint 026)**
+- `src/domain/services/correlationCalculator.ts` — Pearson correlation matrix across watchlist price history
+- `src/interface/mcp/tools/correlationTools.ts` — `get_correlation_matrix` MCP tool
+- `src/application/usecases/exportPortfolioSnapshot.ts` — JSON export: positions + P&L + signals + risk metrics
+- `src/interface/mcp/tools/exportTools.ts` — `export_portfolio_snapshot` MCP tool
+- `src/domain/services/performanceAttribution.ts` — signal P&L attribution: which alert types generated gains
+- `src/interface/mcp/tools/performanceTools.ts` — `get_performance_attribution` MCP tool
+- `src/interface/mcp/server.ts` — updated to 46 registered tools
+
 ### In Progress
 
-None — all Sprint 022 tasks are in Backlog/Todo (see SPRINT_GOAL.md).
+None.
 
 ### Deferred (Sprint 008+ backlog)
 - E2E test — daily briefing flow (task 125, after 024)
