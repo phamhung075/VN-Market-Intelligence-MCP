@@ -118,6 +118,16 @@
 ## 📋 TODO
 *(Dependencies cleared — ready to assign)*
 
+### Sprint 029 — Always-On Investor (2026-04-01)
+
+| # | Title | Branch | Agent | Priority | Depends on | Status |
+|---|-------|--------|-------|----------|------------|--------|
+| 208 | Telegram command interface: query system via Telegram messages | `task/208-telegram-commands` | BA | P0 | 034 (done) | Backlog |
+| 209 | Daily P&L snapshot in morning briefing | `task/209-portfolio-pnl` | BA | P1 | 190 (done) | Backlog |
+| 210 | News source health monitoring + get_source_health MCP tool | `task/210-source-health` | BA | P1 | 193 (soft) | Backlog |
+
+---
+
 ### Sprint 005
 <!-- Execution waves per TECH_005.md:
   Wave 1 — 088 (independent cleanup, no deps beyond already-done 087)

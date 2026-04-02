@@ -2,27 +2,26 @@
 
 ## Current Sprint
 
-status: COMPLETE
-sprint_id: 028
+status: ACTIVE
+sprint_id: 029
 started: 2026-04-01
-updated: 2026-04-02
-completed: 2026-04-02
+updated: 2026-04-01
 
 ---
 
 ### Theme
 
-**"Structural Integrity and Investor Safety Net"**
+**"Always-On Investor — Query Anywhere, Trust Everything"**
 
 ---
 
 ### Goal
 
-Two structural debts from Sprint 027 (dynamic registry, flaky test) are resolved first so
-the codebase is clean before new investor-facing features land. Then two production-grade
-investor tools are added: stop-loss/take-profit threshold alerts so positions have a safety
-net, and per-source API rate limiting so the 15-min intelligence cycle cannot be throttled
-or banned by external services.
+The investor is in France watching a Vietnamese market 6 hours ahead. Sprint 029 closes three
+daily-use gaps: a Telegram command interface so the investor can query the system without
+opening Claude Desktop; a P&L snapshot baked into the morning briefing so portfolio
+performance is visible at 08:00 every day; and a news source health monitor so the investor
+knows immediately when an intelligence source goes silent and cannot trust the cascade engine.
 
 ---
 
@@ -30,282 +29,264 @@ or banned by external services.
 
 **IN**
 
-1. **Task 192 — Fix flaky test: `164-polymarket-fetcher.test.ts` mock timing (P0, carry-over)**
+1. **Task 208 — Telegram command interface: query system via Telegram messages (P0)**
 
-   The polymarket fetcher test fires randomly in the full suite due to a shared Bun.fetch
-   mock being reset by a racing test between the timer fire and the assertion. The fix scopes
-   the mock to the test file only and replaces wall-clock timer reliance with a deterministic
-   fake timer so concurrent tests cannot interfere.
+   The investor sends a message to the Telegram bot and receives a structured reply. The bot
+   polls for incoming messages using `getUpdates` (long polling, no webhook required). Commands
+   are processed synchronously and replies are sent back to the same chat.
 
-   Acceptance criteria:
-   - `bun test src/__tests__/164-polymarket-fetcher.test.ts` passes 10/10 consecutive runs.
-   - `bun test` full suite passes 3/3 consecutive runs with zero flaky failures in task 164.
-   - No production files modified — only `src/__tests__/164-polymarket-fetcher.test.ts` and
-     any extracted shared test helper.
-   - >= 1 new assertion pins the previously-flaky timing behaviour.
-   - `bun tsc --noEmit` → 0 errors.
+   Supported commands (MVP):
+   - `/watchlist` — list current watchlist stocks with latest prices
+   - `/alerts` — last 5 unresolved HIGH/CRITICAL alerts
+   - `/briefing` — trigger the morning briefing summary on demand
+   - `/price VCB` — current price for one stock (any stock code)
+   - `/health` — system health: last cycle time, DB size, active sources
 
-   Files:
-   - MODIFY: `src/__tests__/164-polymarket-fetcher.test.ts`
-   - MODIFY (optional): shared mock helper if extracted
-
-2. **Task 193 — Dynamic tool registration: eliminate server.ts merge conflicts (P0, carry-over)**
-
-   Replace the flat list of `register*Tools(server, db)` calls in
-   `src/interface/mcp/server.ts` with an auto-discovery registry. Each tool module exports
-   a `register(server, db)` function. `server.ts` iterates `toolRegistry` from
-   `src/interface/mcp/tools/registry.ts` and calls `r.register(server, db)` for each entry.
-
-   Design constraints (locked at PO level):
-   - The module array lives exclusively in `src/interface/mcp/tools/registry.ts`.
-   - `server.ts` imports `toolRegistry` and runs one `forEach` loop — nothing else changes.
-   - Each existing tool module gains `export function register(server, db)` containing the
-     existing registration logic verbatim.
-   - `tools/index.ts` is NOT changed — backward-compatible re-exports remain.
-   - No tool behaviour changes. All 48 existing tools must pass their existing tests.
-
-   Acceptance criteria:
-   - `src/interface/mcp/tools/registry.ts` exists and exports `toolRegistry` as an array of
-     objects with a `register(server: McpServer, db: Database): void` method.
-   - `src/interface/mcp/server.ts` body contains only the `toolRegistry.forEach(...)` loop —
-     no individual `register*Tools(...)` call sites remain.
-   - All 48 tools remain registered and functional after refactor.
-   - `bun test` full suite → 0 failures, `bun tsc --noEmit` → 0 errors.
-   - A stub tool added only to `registry.ts` and its own file is sufficient to register it.
-     Verified by a test in `src/__tests__/193-tool-registry.test.ts`.
-
-   Files:
-   - CREATE: `src/interface/mcp/tools/registry.ts`
-   - MODIFY: `src/interface/mcp/server.ts` — replace call list with forEach loop
-   - MODIFY: every tool module file — add `export function register(...)` named export
-   - CREATE: `src/__tests__/193-tool-registry.test.ts`
-
-3. **Task 206 — Stop-loss / take-profit threshold alerts (P1)**
-
-   New MCP tool `set_price_alert` lets the investor define a stop-loss or take-profit price
-   level for any stock. The intelligence cycle checks these thresholds on every price fetch
-   and emits a HIGH severity alert (→ Telegram) when a threshold is breached.
-
-   Data model: new table `price_alerts` in SQLite:
-   ```sql
-   CREATE TABLE IF NOT EXISTS price_alerts (
-     id          INTEGER PRIMARY KEY AUTOINCREMENT,
-     stock_code  TEXT NOT NULL,
-     alert_type  TEXT NOT NULL CHECK(alert_type IN ('stop_loss','take_profit')),
-     threshold   REAL NOT NULL,
-     note        TEXT,
-     triggered   INTEGER NOT NULL DEFAULT 0,   -- 0 = pending, 1 = triggered
-     triggered_at TEXT,
-     created_at  TEXT NOT NULL DEFAULT (datetime('now'))
-   );
-   CREATE INDEX IF NOT EXISTS idx_price_alerts_stock ON price_alerts(stock_code, triggered);
-   ```
-
-   MCP tools (new file `src/interface/mcp/tools/priceAlertTools.ts`):
-   - `set_price_alert(stock_code, alert_type, threshold, note?)` — inserts a pending alert.
-   - `get_price_alerts(stock_code?)` — lists pending (and optionally triggered) alerts.
-   - `delete_price_alert(id)` — removes an alert row.
-
-   Intelligence cycle integration:
-   - After `fetchHosePrices()` / `fetchHnxPrices()` in the intelligence cycle, call
-     `checkPriceAlerts(prices)` from `src/application/usecases/checkPriceAlerts.ts`.
-   - For each pending `price_alerts` row where the current price has crossed the threshold:
-     - stop_loss: current_price <= threshold → breach.
-     - take_profit: current_price >= threshold → breach.
-   - On breach: emit an Alert with severity HIGH, stock_code, message in Vietnamese:
-     `"[VCB] STOP-LOSS kích hoạt: giá 87,500 ≤ ngưỡng 88,000. Xem xét cắt lỗ ngay."` or
-     `"[FPT] TAKE-PROFIT kích hoạt: giá 123,000 ≥ ngưỡng 120,000. Chốt lời?"`.
-   - Mark `triggered = 1`, `triggered_at = now()` — one-shot, does not re-fire.
-   - Store alert in `alerts` table via existing `alertStore`. Let the normal Telegram
-     dispatch path send it (no new notification code needed).
+   Architecture:
+   - New file `src/infrastructure/notifiers/telegramCommands.ts` — `TelegramCommandHandler`
+     class with `poll()` method. Runs a `setInterval` every 5 seconds inside the scheduler.
+   - Scheduler integration: `src/scheduler/jobs.ts` starts the command handler alongside
+     existing cron jobs. No new cron expression — uses `setInterval(poll, 5000)`.
+   - Command routing: simple `if/else` on `text.trim().toLowerCase()`. No external NLP.
+   - Reply format: plain text Vietnamese, same style as existing Telegram notifier.
+   - `getUpdates` uses `offset` param to avoid re-processing old messages. Offset stored in
+     memory (resets on restart — acceptable for MVP).
+   - On unknown command: reply "Lenh khong hop le. Cac lenh: /watchlist /alerts /briefing
+     /price [MA_CP] /health"
+   - Bot token and chat ID reuse `infrastructure/config.ts` Telegram config. If Telegram is
+     disabled (`telegram.enabled = false`), command handler does not start.
 
    Graceful degradation:
-   - No price data for a stock: threshold check is skipped silently.
-   - Duplicate set for same stock/type/threshold: allowed (investor may want two levels).
-   - `get_price_alerts` with no rows: returns "Khong co nguong gia nao duoc cai dat."
+   - `getUpdates` timeout or network error: log at WARN, skip cycle, retry next 5 s.
+   - Individual command handler throws: reply "Loi xu ly lenh. Vui long thu lai." — never
+     crash the poller.
+   - If `TELEGRAM_BOT_TOKEN` not set: handler does not start, logs INFO "Telegram commands
+     disabled — no token".
 
    Acceptance criteria:
-   - `set_price_alert('VCB', 'stop_loss', 88000)` inserts a row with `triggered = 0`.
-   - When price 87,500 is processed: row is marked `triggered = 1` and HIGH alert inserted.
-   - When price 90,000 is processed for the same triggered row: alert does NOT fire again.
-   - `set_price_alert('FPT', 'take_profit', 120000)` + price 123,000 → take-profit alert.
-   - `get_price_alerts()` returns all pending alerts in Vietnamese table format.
-   - `delete_price_alert(id)` removes the row; subsequent `get_price_alerts` does not show it.
-   - `checkPriceAlerts([])` (empty prices array) → no crash, returns 0 breaches.
-   - >= 18 tests, 0 failures. `bun tsc --noEmit` → 0 errors.
-   - Tool count increases from 48 to 51 (3 new tools).
+   - `TelegramCommandHandler.poll()` called with mock returning `/watchlist` message → calls
+     watchlist DB query and sends reply via `sendTelegramMessage`.
+   - `poll()` with `/price VCB` → fetches price and sends "VCB: 89,500 VND" reply.
+   - `poll()` with `/alerts` → returns last 5 HIGH/CRITICAL alerts formatted in Vietnamese.
+   - `poll()` with `/briefing` → triggers `assembleBriefing()` and sends truncated output.
+   - `poll()` with unknown command → sends the help text.
+   - `poll()` when `getUpdates` throws → logs WARN, does not throw, does not crash.
+   - Offset advances after each processed update so messages are not re-processed on next poll.
+   - `telegram.enabled = false` → handler never calls `getUpdates`.
+   - >= 16 tests, 0 failures. `bun tsc --noEmit` → 0 errors.
+   - No new MCP tools (Telegram interface, not MCP). Tool count unchanged.
 
    Files:
-   - MODIFY: `src/infrastructure/db/schema.ts` — add `price_alerts` table + index
-   - CREATE: `src/application/usecases/checkPriceAlerts.ts`
-   - CREATE: `src/interface/mcp/tools/priceAlertTools.ts`
-   - MODIFY: `src/interface/mcp/tools/registry.ts` — add priceAlertTools entry (requires 193)
-   - MODIFY: `src/scheduler/intelligenceCycleJob.ts` — wire `checkPriceAlerts` after price fetch
-   - CREATE: `src/__tests__/206-price-alert-tools.test.ts`
+   - CREATE: `src/infrastructure/notifiers/telegramCommands.ts`
+   - MODIFY: `src/scheduler/jobs.ts` — start command handler on scheduler init
+   - MODIFY: `src/infrastructure/config.ts` — expose `telegram.enabled` flag if not already
+   - CREATE: `src/__tests__/208-telegram-commands.test.ts`
 
-   Dependency: task 193 must land first (registry.ts must exist).
+2. **Task 209 — Daily P&L snapshot in morning briefing (P1)**
 
-4. **Task 207 — Per-source API rate limiting for external fetchers (P1)**
+   Every morning at 08:00 the briefing fires. It already shows VN-Index, macro dashboard,
+   alerts. Add a "DANH MUC" section showing each portfolio position with:
+   - Current price (from last prices fetch)
+   - Entry price (from `portfolio_positions` table, `buy_price` column)
+   - P&L in VND and % since entry
+   - Total portfolio P&L across all open positions
 
-   The 5 news fetchers + 2 price fetchers make outbound HTTP calls every 15 minutes with no
-   rate-limit protection. A burst during a catch-up (e.g., server restart after 2 h downtime)
-   or concurrent MCP tool calls can send dozens of requests to the same host in seconds,
-   triggering 429 responses or IP bans from CafeF, VnDirect, and HNX.
+   New use case `src/application/usecases/getPortfolioPnl.ts`:
+   - Reads all open positions (`status = 'open'`) from `portfolio_positions`.
+   - Reads latest prices from `stock_prices` table (most recent row per stock_code).
+   - Computes: `pnl_vnd = (current_price - buy_price) * quantity`,
+     `pnl_pct = (current_price - buy_price) / buy_price * 100`.
+   - Returns array of `PositionSnapshot` + `totalPnlVnd` + `totalPnlPct` (weighted avg).
+   - If no price found for a stock: include row with `current_price = null`, `pnl = null`,
+     note "Chua co gia".
 
-   New domain service `src/domain/services/rateLimiter.ts`:
-   - In-memory map: `host → { lastCallMs: number, minIntervalMs: number }`.
-   - `RateLimiter.canCall(host: string): boolean` — returns true if
-     `Date.now() - lastCallMs >= minIntervalMs`.
-   - `RateLimiter.record(host: string): void` — updates `lastCallMs = Date.now()`.
-   - Default per-host intervals (configurable via `mcp.config.json` `fetchers.rateLimits`):
-     - `cafef.vn`: 8 000 ms (8 s)
-     - `vnexpress.net`: 8 000 ms
-     - `vneconomy.vn`: 8 000 ms
-     - `news.google.com`: 5 000 ms
-     - `tradingeconomics.com`: 10 000 ms
-     - `api-finfo.vndirect.com.vn`: 5 000 ms
-     - `api.hnx.vn`: 5 000 ms
-     - `query1.finance.yahoo.com`: 5 000 ms
-     - `portal.vietcombank.com.vn`: 10 000 ms
-     - default (any other host): 3 000 ms
-   - `RateLimiter` is a singleton exported from the module.
+   `assembleBriefing.ts` integration:
+   - Call `getPortfolioPnl()` after existing sections.
+   - Append "--- DANH MUC ---" section to briefing text if at least 1 open position exists.
+   - Format: one line per position: `VCB: mua 88,000 | hien 92,300 | +4,300 (+4.9%)` followed
+     by total line: `Tong P&L: +12,450,000 VND (+3.2%)`.
+   - If no open positions: section is omitted entirely.
 
-   Integration: each fetcher (`cafef.ts`, `vnexpress.ts`, `vneconomy.ts`, `reuters.ts`,
-   `tradingEconomicsStream.ts`, `hose.ts`, `hnx.ts`) wraps its primary HTTP call:
-   ```typescript
-   if (!rateLimiter.canCall(host)) {
-     logger.debug(`Rate limited: ${host}, skipping`);
-     return [];   // or cached value / empty result
-   }
-   rateLimiter.record(host);
-   // ... existing fetch logic
-   ```
-   - On rate-limit skip: return the same empty/null value the fetcher already returns on
-     error — no new error types, no throws.
-   - The rate limiter is in-process only (resets on server restart) — no persistence needed.
+   SQLite snapshot storage:
+   - New table `portfolio_pnl_snapshots`:
+     ```sql
+     CREATE TABLE IF NOT EXISTS portfolio_pnl_snapshots (
+       id           INTEGER PRIMARY KEY AUTOINCREMENT,
+       snapshot_at  TEXT NOT NULL DEFAULT (datetime('now')),
+       stock_code   TEXT NOT NULL,
+       buy_price    REAL NOT NULL,
+       current_price REAL,
+       quantity     REAL NOT NULL,
+       pnl_vnd      REAL,
+       pnl_pct      REAL
+     );
+     CREATE INDEX IF NOT EXISTS idx_pnl_snapshots_date
+       ON portfolio_pnl_snapshots(snapshot_at);
+     ```
+   - `getPortfolioPnl()` writes a row per position to this table on every call. This gives a
+     P&L history the investor can query later.
+
+   Acceptance criteria:
+   - `getPortfolioPnl()` with 2 open positions and matching prices → returns correct pnl_vnd
+     and pnl_pct for each, plus correct total.
+   - Position with no matching price → `current_price = null`, `pnl_vnd = null`, no crash.
+   - No open positions → returns empty array, `totalPnlVnd = 0`.
+   - `assembleBriefing()` output contains "DANH MUC" section when positions exist.
+   - `assembleBriefing()` output does NOT contain "DANH MUC" when no positions exist.
+   - Snapshot rows written to `portfolio_pnl_snapshots` after each call.
+   - >= 14 tests, 0 failures. `bun tsc --noEmit` → 0 errors.
+   - No new MCP tools. Tool count unchanged.
+
+   Files:
+   - MODIFY: `src/infrastructure/db/schema.ts` — add `portfolio_pnl_snapshots` table + index
+   - CREATE: `src/application/usecases/getPortfolioPnl.ts`
+   - MODIFY: `src/application/usecases/assembleBriefing.ts` — add DANH MUC section
+   - CREATE: `src/__tests__/209-portfolio-pnl.test.ts`
+
+3. **Task 210 — News source health monitoring (P1)**
+
+   The investor relies on 5 news sources for the cascade engine. When one goes silent (0
+   articles returned for N consecutive cycles) the cascade analysis degrades silently. The
+   investor has no way to know that FX macro news is missing because VnEconomy has been
+   blocking requests for 3 hours.
+
+   New domain service `src/domain/services/sourceHealthTracker.ts`:
+   - In-memory map: `source_name → { lastSuccessAt: number, consecutiveFailures: number,
+     articlesLastCycle: number }`.
+   - `recordFetch(source: string, articleCount: number): void` — updates the map. If
+     `articleCount === 0`, increments `consecutiveFailures`; else resets to 0 and sets
+     `lastSuccessAt = Date.now()`.
+   - `getHealthReport(): SourceHealth[]` — returns one row per source with fields:
+     `source`, `status` ('ok' | 'degraded' | 'down'), `consecutiveFailures`,
+     `lastSuccessAt`, `minutesSinceSuccess`.
+   - Status thresholds (configurable in `mcp.config.json` `sourceHealth`):
+     - `ok`: consecutiveFailures < 2
+     - `degraded`: 2 <= consecutiveFailures < 5
+     - `down`: consecutiveFailures >= 5
+   - Singleton exported from module. Resets on server restart.
+
+   Integration in `pollNews.ts`:
+   - After each fetcher call, call `sourceHealthTracker.recordFetch(sourceName, items.length)`.
+   - 5 sources: 'cafef', 'vnexpress', 'vneconomy', 'reuters', 'tradingeconomics'.
+
+   Telegram alert on source going `down`:
+   - In `pollNews.ts`, after recording fetches: check `getHealthReport()`. For any source
+     that just transitioned to `down` (consecutiveFailures === 5 exactly), send a Telegram
+     message: "CANH BAO: Nguon tin [cafef] ngung hoat dong (5 chu ky lien tiep khong co du
+     lieu). Kiem tra ket noi."
+   - Transition detection: compare before/after `recordFetch` — only alert on the cycle where
+     `consecutiveFailures` hits exactly 5, not on every subsequent cycle.
+
+   New MCP tool `get_source_health` in `src/interface/mcp/tools/systemTools.ts`:
+   - Returns `getHealthReport()` formatted as a Vietnamese table.
+   - Registered via `registry.ts` (requires task 193 complete; if 193 not done, register
+     directly in `server.ts` as a fallback — use same pattern as other tools).
 
    `mcp.config.json` addition:
    ```json
-   "rateLimits": {
-     "cafef.vn": 8000,
-     "vnexpress.net": 8000,
-     "vneconomy.vn": 8000,
-     "news.google.com": 5000,
-     "tradingeconomics.com": 10000,
-     "api-finfo.vndirect.com.vn": 5000,
-     "api.hnx.vn": 5000,
-     "query1.finance.yahoo.com": 5000,
-     "portal.vietcombank.com.vn": 10000,
-     "default": 3000
+   "sourceHealth": {
+     "degradedThreshold": 2,
+     "downThreshold": 5
    }
    ```
 
    Acceptance criteria:
-   - `canCall('cafef.vn')` returns `true` before first call, `false` immediately after
-     `record('cafef.vn')`, `true` again after 8 s (mocked timer).
-   - Two rapid calls to the same host: second is skipped (logged at DEBUG level).
-   - Different hosts: independent counters — one being rate-limited does not block others.
-   - All 7 modified fetchers return `[]` / `null` gracefully when rate-limited (no throws).
-   - `mcp.config.json` `fetchers.rateLimits` section parsed and applied at startup.
-   - `rateLimiter.ts` is in `src/domain/services/` (pure logic, no I/O).
-   - >= 14 tests, 0 failures. `bun tsc --noEmit` → 0 errors.
-   - No new MCP tools (this is infrastructure only). Tool count unchanged.
+   - `recordFetch('cafef', 0)` 5 times → status 'down', `consecutiveFailures = 5`.
+   - `recordFetch('cafef', 3)` after 5 failures → status 'ok', `consecutiveFailures = 0`.
+   - `recordFetch('vnexpress', 5)` → status 'ok'.
+   - Different sources are independent (cafef down does not affect vnexpress counter).
+   - Telegram message sent exactly once when source hits 5 consecutive failures (not on 6th).
+   - `get_source_health` MCP tool returns all 5 sources with correct status.
+   - `mcp.config.json` thresholds respected at runtime.
+   - >= 16 tests, 0 failures. `bun tsc --noEmit` → 0 errors.
+   - Tool count increases by 1 (get_source_health). 52 → 53.
 
    Files:
-   - CREATE: `src/domain/services/rateLimiter.ts`
-   - MODIFY: `src/infrastructure/fetchers/cafef.ts`
-   - MODIFY: `src/infrastructure/fetchers/vnexpress.ts`
-   - MODIFY: `src/infrastructure/fetchers/vneconomy.ts`
-   - MODIFY: `src/infrastructure/fetchers/reuters.ts`
-   - MODIFY: `src/infrastructure/fetchers/tradingEconomicsStream.ts`
-   - MODIFY: `src/infrastructure/fetchers/hose.ts`
-   - MODIFY: `src/infrastructure/fetchers/hnx.ts`
-   - MODIFY: `mcp.config.json` — add `fetchers.rateLimits` section
-   - CREATE: `src/__tests__/207-rate-limiter.test.ts`
+   - CREATE: `src/domain/services/sourceHealthTracker.ts`
+   - MODIFY: `src/application/usecases/pollNews.ts` — wire recordFetch + down-alert
+   - MODIFY: `src/interface/mcp/tools/systemTools.ts` — add `get_source_health` tool
+   - MODIFY: `src/interface/mcp/tools/registry.ts` — register systemTools (if 193 done)
+   - MODIFY: `mcp.config.json` — add `sourceHealth` section
+   - CREATE: `src/__tests__/210-source-health.test.ts`
 
 **OUT**
 
-- End-to-end integration test of the full intelligence cycle (task 125 — blocked on test
-  harness design; remains deferred)
-- Watchlist auto-enrichment with sector peers (deferred to Sprint 029)
-- Historical analysis replay / backtesting engine (deferred — high complexity, low urgency)
+- Watchlist auto-enrichment with sector peers (deferred — investor has 4 stocks, sector
+  context already in place via sectorPeers.ts)
+- Historical analysis replay / backtesting engine (high complexity, no daily urgency)
+- Circuit breaker improvements (already functional from Sprint 015; tuning deferred)
 - LLM-based recommendations (out of scope permanently — rule-based only)
-- Tasks 196 (worktree cleanup) and 197 (Reuters RSS + delete_telegram_report test) from
-  Sprint 027: rolled into Sprint 028 backlog but not scheduled for this sprint iteration —
-  Reuters is an external service issue; worktree cleanup is housekeeping without code value.
+- Tasks 196 (worktree cleanup) and 197 (Reuters RSS) remain deferred
 
 ---
 
 ### Success Metrics
 
-1. `bun test` full suite passes 3/3 consecutive runs with zero flaky failures in any test
-   file. Task 164 polymarket timing flakiness is eliminated permanently. (Task 192)
+1. The investor sends `/briefing` to the Telegram bot from France at any hour and receives
+   a full market summary within 10 seconds. No Claude Desktop required. (Task 208)
 
-2. `src/interface/mcp/server.ts` body contains only one `toolRegistry.forEach(...)` loop.
-   Adding a new tool in a future sprint requires editing only the tool file + one line in
-   `registry.ts`. Merge conflicts on `server.ts` become structurally impossible. (Task 193)
+2. The 08:00 morning briefing contains a "DANH MUC" section showing P&L for all open
+   positions. The investor reads their portfolio performance before market open every day.
+   Historical P&L rows accumulate in `portfolio_pnl_snapshots` for future trend analysis.
+   (Task 209)
 
-3. An investor can call `set_price_alert('VCB', 'stop_loss', 88000)` and receive a
-   Telegram notification the moment VCB trades at or below 88,000 VND — with the exact
-   price and a Vietnamese-language action prompt. One-shot, no re-fire. (Task 206)
+3. When CafeF blocks requests for 3 consecutive intelligence cycles, a Telegram warning fires
+   exactly once. `get_source_health` MCP tool shows which sources are ok/degraded/down at any
+   time. The investor can trust the cascade engine or know when to be cautious. (Task 210)
 
-4. No fetcher can fire more than once per configured interval per host. A server restart
-   after 2 h downtime does not send a burst of simultaneous requests to CafeF or VnDirect.
-   All 7 fetchers degrade gracefully (return `[]`) when rate-limited. (Task 207)
+4. `bun tsc --noEmit` → 0 errors. `bun test` full suite → 0 failures. All 1731 existing
+   tests continue to pass.
 
-5. `bun tsc --noEmit` → 0 errors. All 1688 existing tests continue to pass.
-
-6. Tool count: 48 → 51 (3 new tools from task 206; tasks 192, 193, 207 add no net tools).
+5. Tool count: 52 → 53 (1 new tool: `get_source_health` from task 210).
 
 ---
 
-### Task board (Sprint 028)
+### Task board (Sprint 029)
 
 | # | Title | Priority | Status | Depends on |
 |---|-------|----------|--------|------------|
-| 192 | Fix flaky test: `164-polymarket-fetcher.test.ts` mock timing | P0 | Backlog | — |
-| 193 | Dynamic tool registration: eliminate server.ts merge conflicts | P0 | Backlog | — |
-| 206 | Stop-loss / take-profit threshold alerts | P1 | Backlog | 193 |
-| 207 | Per-source API rate limiting for external fetchers | P1 | Backlog | — |
+| 208 | Telegram command interface: query system via Telegram messages | P0 | Backlog | 034 (done) |
+| 209 | Daily P&L snapshot in morning briefing | P1 | Backlog | 190 (done) |
+| 210 | News source health monitoring + get_source_health MCP tool | P1 | Backlog | 193 (partial — fallback allowed) |
 
 ---
 
 ### Dependency chain
 
 ```
-192 (fix flaky test)       — P0, independent, touches only __tests__/164-*.test.ts
-193 (dynamic registry)     — P0, independent, refactor only
-207 (rate limiter)         — P1, independent, new domain service + 7 fetchers
-206 (stop-loss/TP alerts)  — P1, depends on 193 (registry.ts must exist)
+208 (Telegram commands)  — P0, depends on 034 (Telegram notifier, done)
+209 (P&L snapshot)       — P1, depends on portfolio_positions table (task 190, done)
+210 (source health)      — P1, optional soft dep on 193 for registry; fallback registration allowed
 
-192 + 193 + 207 can run in parallel.
-206 must wait for 193 (registry.ts must exist before task 206 appends to it).
+All three tasks can run in parallel.
 ```
 
 ---
 
 ### Key technical decisions (locked at PO level)
 
-- **Task 192 uses mock isolation, not wall-clock timers**: fix is test-layer only. Production
-  code is not touched.
+- **Task 208 uses long-polling (`getUpdates`), not webhooks**: no public URL required. The
+  server is running locally in production; a webhook would need ngrok or a public endpoint.
+  Long polling with a 5 s interval is sufficient for investor command latency.
 
-- **Task 193 registry in `tools/registry.ts`**: `server.ts` becomes a pure wiring file (one
-  loop). The existing `tools/index.ts` re-export pattern is preserved for backward compat.
+- **Task 208 command set is fixed at 5 commands**: no dynamic command registration for MVP.
+  Adding new commands in a future sprint requires editing `telegramCommands.ts` only.
 
-- **Task 206 threshold alerts are one-shot**: once `triggered = 1`, the row is never
-  re-evaluated. The investor must call `set_price_alert` again to re-arm. This prevents
-  alert storms on volatile days.
+- **Task 209 snapshots are append-only**: `portfolio_pnl_snapshots` is an audit log. No
+  updates, no deletes. This gives the investor a complete P&L history from day one.
 
-- **Task 206 uses the existing alert pipeline**: no new Telegram code. The HIGH severity
-  alert inserted into `alerts` table is picked up by the existing dispatch path in
-  `intelligenceCycleJob.ts` step E (`sendAlerts()`).
+- **Task 209 uses `stock_prices` table for current price**: this is the same table populated
+  by the intelligence cycle price fetchers. No new HTTP calls in `getPortfolioPnl()` — pure
+  SQLite reads. If the cycle has not run since server start, prices may be stale; the briefing
+  will show the last known price with its timestamp.
 
-- **Task 207 rate limiter is in `domain/services/`**: it is pure logic (no I/O, no imports
-  from infrastructure). Intervals are injected from `mcp.config.json` at startup so they
-  are tunable without code changes.
+- **Task 210 sourceHealthTracker is in `domain/services/`**: pure logic, no I/O. The Telegram
+  alert side-effect lives in `pollNews.ts` (application layer), which is the correct place for
+  cross-cutting notification concerns.
 
-- **Task 207 degrades to `[]` on rate limit**: this matches the existing behaviour of every
-  fetcher on network failure. No new error types introduced.
+- **Task 210 alert fires exactly once at consecutiveFailures === 5**: not on 4, not on 6+.
+  This prevents alert fatigue if a source stays down for hours. A recovery alert (back to ok)
+  is out of scope for MVP.
 
 ---
 
@@ -341,3 +322,4 @@ or banned by external services.
 | 025 | Daily Investor Intelligence | 2026-04-01 | 186, 187, 188 |
 | 026 | Signal Quality and Portfolio Correlation | 2026-04-02 | 189, 190, 191 |
 | 027 | Stability First | 2026-04-02 | 194 (CLAUDE.md sync), 195 (rebalancing, in Review), hotfixes 198-205 |
+| 028 | Structural Integrity and Investor Safety Net | 2026-04-02 | 192, 193, 206, 207 |
