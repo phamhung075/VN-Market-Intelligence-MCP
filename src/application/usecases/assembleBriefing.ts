@@ -18,6 +18,7 @@ import type { Database } from "bun:sqlite";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { logger } from "../../infrastructure/logger.js";
+import { generateSparkline } from "../../domain/services/sparkline.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Public types
@@ -47,6 +48,12 @@ export interface WatchlistEntry {
   price?: number;
   /** Percentage change from previous close, if available */
   changePct?: number;
+  /**
+   * 5-character ASCII sparkline of the last 5 trading days.
+   * Uses Unicode block characters ▁▂▃▄▅▆▇█ (low → high).
+   * "—" when fewer than 2 historical data points are available.
+   */
+  sparkline?: string;
 }
 
 /** One new financial report since midnight. */
@@ -131,6 +138,10 @@ interface FinancialReportRow {
   action_code: string;
   period_type: string | null;
   period_year: number | null;
+}
+
+interface PriceHistoryRow {
+  price: number;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -328,6 +339,45 @@ export async function assembleBriefing(
     `)
     .all();
 
+  // Check whether the history table exists before querying it
+  const historyTableExists = (() => {
+    try {
+      const row = db
+        .query<{ name: string }, [string]>(
+          "SELECT name FROM sqlite_master WHERE type='table' AND name=?",
+        )
+        .get("market_prices_history");
+      return row !== null;
+    } catch {
+      return false;
+    }
+  })();
+
+  // Pre-fetch 5-day price history for every watchlist stock (oldest first).
+  // The result is a Map<code, number[]> for efficient lookup below.
+  const historyMap = new Map<string, number[]>();
+  if (historyTableExists) {
+    const histStmt = db.prepare<PriceHistoryRow, [string]>(`
+      SELECT price
+      FROM (
+        SELECT price, fetched_at
+        FROM market_prices_history
+        WHERE code = ?
+        ORDER BY fetched_at DESC
+        LIMIT 5
+      )
+      ORDER BY fetched_at ASC
+    `);
+    for (const row of watchlistRows) {
+      try {
+        const rows = histStmt.all(row.code);
+        historyMap.set(row.code, rows.map((r) => r.price));
+      } catch {
+        // history table may exist without required columns — skip silently
+      }
+    }
+  }
+
   const watchlistSummary: WatchlistEntry[] = watchlistRows.map((row) => {
     const entry: WatchlistEntry = {
       code: row.code,
@@ -335,6 +385,10 @@ export async function assembleBriefing(
     };
     if (row.price != null) entry.price = row.price;
     if (row.change_pct != null) entry.changePct = row.change_pct;
+
+    const history = historyMap.get(row.code) ?? [];
+    entry.sparkline = generateSparkline(history, 5);
+
     return entry;
   });
 
