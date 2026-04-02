@@ -18,6 +18,8 @@ import type { Alert } from "../../domain/services/alertGenerator.js";
 import { detectSensitiveDates } from "../../domain/services/priceNewsValidator.js";
 import { createLogger } from "../logger.js";
 import { getPatternSummary } from "../../application/usecases/getPatternSummary.js";
+import { getDb } from "../db/index.js";
+import { insertReport } from "../db/telegramReportStore.js";
 
 const log = createLogger("info");
 
@@ -257,6 +259,7 @@ export async function sendTelegramReport(
         const json = await response.json() as { result?: { message_id?: number } };
         lastMessageId = json.result?.message_id ?? 0;
       } catch { /* continue */ }
+
     } catch (err) {
       log.warn("[telegram] sendReport network error", {
         error: err instanceof Error ? err.message : String(err),
@@ -270,6 +273,19 @@ export async function sendTelegramReport(
     // Small delay between chunks
     if (chunks.length > 1) {
       await new Promise((r) => setTimeout(r, 300));
+    }
+  }
+
+  // Persist the sent report to SQLite for the Dev Team autonomous loop.
+  // Best-effort: a failed insert does not affect the Telegram send result.
+  if (lastMessageId > 0) {
+    try {
+      const db = getDb();
+      insertReport(db, text, "analysis-agent", lastMessageId, "normal");
+    } catch (err) {
+      log.warn("[telegram] insertReport failed — report was sent but not persisted", {
+        error: err instanceof Error ? err.message : String(err),
+      });
     }
   }
 
