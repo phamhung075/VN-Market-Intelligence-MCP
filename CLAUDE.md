@@ -86,10 +86,17 @@ src/
 │       ├── sectorRotationDetector.ts ← sector rotation logic: momentum + relative strength (Sprint 025)
 │       ├── earningsCalendar.ts     ← BCTC deadline calendar: Q1-Q4 filing dates (Sprint 025)
 │       ├── correlationCalculator.ts ← Pearson correlation matrix across watchlist (Sprint 026)
-│       └── performanceAttribution.ts ← signal P&L attribution per alert type (Sprint 026)
+│       ├── performanceAttribution.ts ← signal P&L attribution per alert type (Sprint 026)
+│       ├── rebalancingCalculator.ts ← target-weight drift → BAN/MUA/GIU signals (Sprint 027)
+│       ├── portfolioPnlCalculator.ts ← per-position P&L + aggregate totals (Sprint 029)
+│       ├── priceAlertChecker.ts    ← stop-loss / take-profit threshold checker (Sprint 028)
+│       ├── rateLimiter.ts          ← per-host rate limiter for external fetchers (Sprint 028)
+│       └── sourceHealthTracker.ts  ← news/data source health: ok/degraded/down classification (Sprint 029)
 ├── infrastructure/
 │   ├── config.ts                   ← Env config (dotenv + mcp.config.json) + PredictionMarketsConfig
 │   ├── logger.ts                   ← Structured logger (log rotation, LanceDB TRACE suppression)
+│   ├── circuitBreaker.ts           ← Circuit breaker implementation (task 136)
+│   ├── circuitBreakerRegistry.ts   ← Per-host circuit breaker registry singleton (task 136)
 │   ├── db/
 │   │   ├── schema.ts               ← SQLite init (all tables + indexes)
 │   │   ├── alertStore.ts           ← Alert read/write helpers + notified_telegram flag
@@ -98,18 +105,19 @@ src/
 │   │   ├── tradeStore.ts          ← Trade exposure SQLite CRUD + auto-learn from news
 │   │   ├── predictionStore.ts     ← prediction_markets + prediction_signals table helpers (task 172)
 │   │   ├── positionStore.ts       ← position CRUD helpers: set/get/close positions (Sprint 023)
+│   │   ├── pnlSnapshotStore.ts    ← portfolio_pnl_snapshots CRUD: daily per-position P&L (Sprint 029)
 │   │   ├── checkpoint.ts          ← SQLite WAL checkpoint helper (task 140)
 │   │   └── index.ts
 │   ├── fetchers/
 │   │   ├── rss.ts                  ← RSS base fetcher
-│   │   ├── cafef.ts                ← CafeF news (Vietnamese)
-│   │   ├── vnexpress.ts            ← VnExpress Finance RSS
-│   │   ├── vneconomy.ts            ← VnEconomy stocks + finance RSS feeds (task 035)
-│   │   ├── reuters.ts              ← Reuters / AP News RSS (Google News)
-│   │   ├── tradingEconomicsStream.ts ← TE global macro news stream (Level 1-2 cascade input)
+│   │   ├── cafef.ts                ← CafeF news (Vietnamese) + rate limiter wiring (Sprint 028)
+│   │   ├── vnexpress.ts            ← VnExpress Finance RSS + rate limiter wiring (Sprint 028)
+│   │   ├── vneconomy.ts            ← VnEconomy stocks + finance RSS feeds (task 035) + rate limiter
+│   │   ├── reuters.ts              ← Reuters / AP News RSS (Google News) + rate limiter
+│   │   ├── tradingEconomicsStream.ts ← TE global macro news stream (Level 1-2 cascade input) + rate limiter
 │   │   ├── tradingEconomics.ts    ← Trading Economics Vietnam indicators scraper (CPI/GDP)
-│   │   ├── hose.ts                 ← HOSE prices (3-tier: VnDirect legacy → stock_prices → CafeF) + fetchVnIndex()
-│   │   ├── hnx.ts                  ← HNX + UPCOM prices (HNX API → VnDirect stock_prices fallback)
+│   │   ├── hose.ts                 ← HOSE prices (3-tier: VnDirect legacy → stock_prices → CafeF) + fetchVnIndex() + rate limiter
+│   │   ├── hnx.ts                  ← HNX + UPCOM prices (HNX API → VnDirect stock_prices fallback) + rate limiter
 │   │   ├── ssc.ts                  ← SSC portal scraper — Puppeteer automation (task 031)
 │   │   ├── pdf.ts                  ← PDF downloader + pdf-parse text extractor
 │   │   ├── pdfOcrWorker.ts        ← OCR worker for scanned BCTC PDFs
@@ -127,7 +135,7 @@ src/
 │       └── index.ts
 ├── application/
 │   └── usecases/
-│       ├── assembleBriefing.ts     ← Morning briefing + macro dashboard + sensitive dates + commodity tracker + prediction signals
+│       ├── assembleBriefing.ts     ← Morning briefing + macro dashboard + sensitive dates + commodity tracker + prediction signals + P&L snapshot (Sprint 029)
 │       ├── assembleEveningSummary.ts ← Evening summary assembly
 │       ├── checkSscReports.ts      ← SSC nightly BCTC document check (with dedup)
 │       ├── fetchParseAndStoreBctc.ts ← SSC fetch → parse → store pipeline
@@ -135,16 +143,16 @@ src/
 │       ├── generatePeriodicSummary.ts ← Daily/weekly/monthly/quarterly/yearly summaries (task 130)
 │       ├── getPatternSummary.ts    ← Historical pattern detection
 │       ├── parseBctcReport.ts      ← BCTC PDF text → FinancialReport
-│       ├── pollNews.ts             ← 5-source poll (RSS + TE stream) → embed → alert + alias resolution
+│       ├── pollNews.ts             ← 5-source poll (RSS + TE stream) → embed → alert + alias resolution + source health tracking (Sprint 029)
 │       ├── runImpactChain.ts       ← Causal chain orchestrator
 │       ├── runPredictionImpactChain.ts ← Wire prediction signals into buildCausalChain (task 173)
 │       ├── assembleAlertDigest.ts  ← Assemble nightly alert digest with grouping (Sprint 025)
 │       ├── exportPortfolioSnapshot.ts ← JSON export of portfolio positions + P&L (Sprint 026)
-│       ├── scanMarket.ts           ← Market scan + sector context comparison (toàn ngành vs riêng lẻ)
+│       ├── scanMarket.ts           ← Market scan + sector context comparison (toàn ngành vs riêng lẻ) + price alert check wiring (Sprint 028)
 │       └── index.ts
 ├── interface/
 │   ├── mcp/
-│   │   ├── server.ts               ← McpServer factory, registers all 46 tools
+│   │   ├── server.ts               ← McpServer factory, registers all 53 tools
 │   │   ├── transport.ts            ← SSEServerTransport setup
 │   │   └── tools/
 │   │       ├── watchlist.ts        ← add/remove/get/update watchlist MCP tools
@@ -172,15 +180,19 @@ src/
 │   │       ├── correlationTools.ts ← get_correlation_matrix (Sprint 026)
 │   │       ├── exportTools.ts      ← export_portfolio_snapshot (Sprint 026)
 │   │       ├── performanceTools.ts ← get_performance_attribution (Sprint 026)
+│   │       ├── rebalancingTools.ts ← get_rebalancing_signals (Sprint 027)
+│   │       ├── priceAlertTools.ts  ← set_price_alert, get_price_alerts, delete_price_alert (Sprint 028)
+│   │       ├── rateLimitTools.ts   ← get_rate_limit_status (Sprint 028)
+│   │       ├── sourceHealthTools.ts ← get_source_health (Sprint 029)
 │   │       └── index.ts
 │   └── scheduler/
 │       └── index.ts                ← startScheduler() — registers all cron jobs
 └── scheduler/
-    ├── jobs.ts                     ← Cron job definitions (GMT+7)
-    ├── morningBriefingJob.ts       ← 08:00 daily briefing (macro dashboard + conviction + unresolved alerts + prediction signals)
+    ├── jobs.ts                     ← Cron job definitions (GMT+7) — 10 core cron jobs
+    ├── morningBriefingJob.ts       ← 08:00 daily briefing (macro dashboard + conviction + unresolved alerts + prediction signals + P&L)
     ├── patternWatchJob.ts         ← Sunday 22:30 weekly pattern watch → Telegram (task 146)
     ├── newsPollerJob.ts            ← Legacy 30-min news poll (superseded by intelligenceCycleJob)
-    ├── marketScanJob.ts            ← 09:00 + 15:30 market open/close scan
+    ├── marketScanJob.ts            ← 09:00 + 15:30 market open/close scan + price alert check
     ├── sscCheckerJob.ts            ← 20:00 SSC nightly BCTC check
     ├── eveningSummaryJob.ts        ← 22:00 evening summary
     ├── intelligenceCycleJob.ts     ← Every 15 min unified cycle: poll → SSC → prices → chain → Telegram (task 106)
@@ -196,29 +208,34 @@ bctc-schema.ts                      ← Complete BCTC data model + SQLite DDL (r
 ## Key data flow
 
 ```
-News (5 sources) + SSC PDF → Fetcher → Parser → AnalysisEntry/FinancialReport
-         ↓                                              ↓
-  commodityTracker                        bctcValidator (accounting identity)
-  (auto-extract prices                              ↓
-   wheat/oil/gold/coffee              Embedding (multilingual-MiniLM)
-   → tracked_indicators)                            ↓
-         ↓                     LanceDB (vectors, temporal decay) + SQLite
-         ↓                                          ↓
-  macroStatsStore              RAG retrieval → sentimentClassifier → cascadeEngine
-  (rolling mean/σ                                   ↓
-   from history)           cascadeEngine + σ-based macro adjustments (50+ rules)
-         ↓                                          ↓
-         └──────────→  volatilityCalculator → adaptive thresholds → signalDetector
-                                                    ↓
-                  alertDedup / alertCooldown / alertGrouper → Alert if watchlist
-                                                    ↓
-                  tradeRelationships: "Middle East peace" → VNM 8% Iraq export
-                  priceNewsValidator: tin bullish + giá giảm → ⚠️ thận trọng
-                  sectorPeers: context prices → toàn ngành vs riêng lẻ
-                                                    ↓
-              HIGH/CRITICAL → Telegram (Vietnamese) + 📅 sensitive dates
-                                                    ↓
-              Morning briefing: macro dashboard + tracked commodities + warnings
+News (5 sources) + SSC PDF → Fetcher (rate limiter) → Parser → AnalysisEntry/FinancialReport
+         ↓                         ↓                                    ↓
+  sourceHealthTracker        commodityTracker              bctcValidator (accounting identity)
+  (ok/degraded/down          (auto-extract prices                    ↓
+   per source)                wheat/oil/gold/coffee    Embedding (multilingual-MiniLM)
+         ↓                     → tracked_indicators)                  ↓
+         ↓                              ↓          LanceDB (vectors, temporal decay) + SQLite
+         ↓                     macroStatsStore              ↓
+         ↓                     (rolling mean/σ   RAG retrieval → sentimentClassifier → cascadeEngine
+         ↓                      from history)                         ↓
+         └──────────────────────────────→  volatilityCalculator → adaptive thresholds → signalDetector
+                                                                      ↓
+                       alertDedup / alertCooldown / alertGrouper → Alert if watchlist
+                                                                      ↓
+                       tradeRelationships: "Middle East peace" → VNM 8% Iraq export
+                       priceNewsValidator: tin bullish + giá giảm → thận trọng
+                       sectorPeers: context prices → toàn ngành vs riêng lẻ
+                       priceAlertChecker: stop-loss / take-profit threshold breaches
+                                                                      ↓
+                   HIGH/CRITICAL → Telegram (Vietnamese) + sensitive dates
+                                                                      ↓
+                   Morning briefing: macro dashboard + tracked commodities + P&L snapshot
+
+Polymarket (every 30 min) → predictionStore → predictionSignalDetector
+                                                      ↓
+                             predictionCascadeMapper → VN sector/stock cascade
+                                                      ↓
+                             HIGH prediction signals → morning briefing top-3 section
 ```
 
 ## Tech stack
@@ -244,16 +261,16 @@ News (5 sources) + SSC PDF → Fetcher → Parser → AnalysisEntry/FinancialRep
 | Time | Job | Cron | What it does |
 |------|-----|------|-------------|
 | **Every 15 min** | `intelligenceCycle` | `*/15 * * * *` | **Main engine.** Market hours (09:00–15:30 M–F): full 5-step cycle (A→E). Off-hours: news poll only (step A). Concurrency guard with 14-min stale auto-release + 2-min per-step timeout. |
-| **Every 30 min** | `predictionMarket` | `*/30 * * * *` | Fetch Polymarket markets → store → detect signals (volume spike, probability shift) → Telegram if HIGH |
-| 08:00 M–F | `morningBriefing` | `0 8 * * 1-5` | Morning briefing: VN-Index + top stories + alerts + **macro dashboard (σ)** + **sensitive dates** + **tracked commodities** + **top 3 prediction signals** |
-| 09:00 M–F | `marketOpen` | `0 9 * * 1-5` | Scan prices + **sector context** + **price-news divergence** + **volume anomaly detection** |
+| **Every 30 min** | `predictionMarketPoll` | `*/30 * * * *` | Fetch Polymarket markets → store → detect signals (volume spike, probability shift) → Telegram if HIGH |
+| 08:00 M–F | `morningBriefing` | `0 8 * * 1-5` | Morning briefing: VN-Index + top stories + alerts + **macro dashboard (σ)** + **sensitive dates** + **tracked commodities** + **top 3 prediction signals** + **P&L snapshot** |
+| 09:00 M–F | `marketOpen` | `0 9 * * 1-5` | Scan prices + **sector context** + **price-news divergence** + **volume anomaly detection** + **price alert check** |
 | 15:30 M–F | `marketClose` | `30 15 * * 1-5` | Same as open scan — close-of-day snapshot |
 | 20:00 daily | `sscCheck` | `0 20 * * *` | Check SSC portal for new BCTC filings |
 | 21:00 M–F | `alertDigest` | `0 21 * * 1-5` | Assemble nightly alert digest + send via Telegram (Sprint 025) |
 | 22:00 M–F | `eveningSummary` | `0 22 * * 1-5` | Generate evening market summary |
 | 22:30 Sunday | `patternWatch` | `30 22 * * 0` | Weekly pattern watch → Telegram push |
-| 03:00 daily | `dataAuditDaily` | `0 3 * * *` | Data integrity audit: orphan vectors, stale analysis entries, DB row counts |
-| 03:30 Sunday | `dataAuditWeekly` | `30 3 * * 0` | Deep weekly audit: LanceDB vs SQLite consistency, signal coverage gaps |
+| 23:00 daily | `dataAuditDaily` | `0 23 * * *` | Data integrity audit: orphan vectors, stale analysis entries, DB row counts |
+| 01:00 Sunday | `dataAuditWeekly` | `0 1 * * 0` | Deep weekly audit: LanceDB vs SQLite consistency, signal coverage gaps |
 
 ### Intelligence cycle steps (15-min tick)
 
@@ -406,7 +423,7 @@ src/
 
 ## Current implementation status
 
-### Done (95+ tasks, Sprint 000-026) ✓
+### Done (110+ tasks, Sprint 000-029) ✓
 
 **Foundation (Sprint 000)**
 - `src/infrastructure/db/schema.ts` — SQLite schema init (all tables)
@@ -598,6 +615,36 @@ src/
 - `src/domain/services/performanceAttribution.ts` — signal P&L attribution: which alert types generated gains
 - `src/interface/mcp/tools/performanceTools.ts` — `get_performance_attribution` MCP tool
 - `src/interface/mcp/server.ts` — updated to 46 registered tools
+
+**Portfolio Rebalancing + Production Hotfixes (Sprint 027)**
+- `src/domain/services/rebalancingCalculator.ts` — target-weight drift calculation → BAN/MUA/GIU signals with corrective share quantities (task 195)
+- `src/interface/mcp/tools/rebalancingTools.ts` — `get_rebalancing_signals` MCP tool (task 195)
+- `src/domain/services/cascadeEngine.ts` — added VN-Index → banking/real_estate cascade rules (198) + macro pressure dual alert rules (200) + macro cap MAX_MACRO_NEGATIVE_DELTA (201)
+- `src/domain/services/sentimentClassifier.ts` — insider-selling keywords: "muốn thoái sạch vốn", "thoái sạch vốn", "lãnh đạo bán" (task 199)
+- `src/domain/services/signalDetector.ts` — direct-mention filter for market-wide cascade impacts (task 202)
+- `src/application/usecases/scanMarket.ts` — sector-wide decline alert: fires price_drop when ≥3 stocks in same sector decline ≥0.5% (task 205)
+- `src/domain/services/cascadeEngine.ts` — coal/mining rules ("than đá"/"coal" → oil_gas) + infrastructure capex boost ("sân bay Long Thành", "cao tốc") (tasks 206, 207)
+- `src/infrastructure/db/schema.ts` — absolute DB path via import.meta.dir — eliminates CWD-dependent path resolution (task 208)
+
+**Stop-Loss / Take-Profit Alerts + Rate Limiting (Sprint 028)**
+- `src/infrastructure/db/schema.ts` — `price_alerts` table + indexes (task 206)
+- `src/domain/services/priceAlertChecker.ts` — stop-loss / take-profit threshold evaluation; one-shot fire semantics (task 206)
+- `src/interface/mcp/tools/priceAlertTools.ts` — `set_price_alert`, `get_price_alerts`, `delete_price_alert` MCP tools (task 206)
+- `src/scheduler/intelligenceCycleJob.ts` — `checkPriceAlerts` wired after price fetch step C (task 206)
+- `src/domain/services/rateLimiter.ts` — pure per-host token-bucket rate limiter; independent counters per host (task 207)
+- `src/interface/mcp/tools/rateLimitTools.ts` — `get_rate_limit_status` MCP tool (task 207)
+- `src/infrastructure/fetchers/cafef.ts`, `vnexpress.ts`, `vneconomy.ts`, `reuters.ts`, `tradingEconomicsStream.ts`, `hose.ts`, `hnx.ts` — rate limiter wired with graceful `[]`/`null` returns when rate-limited (task 207)
+- `mcp.config.json` — `fetchers.rateLimits` section added
+
+**Always-On Investor: P&L + Source Health (Sprint 029)**
+- `src/domain/services/portfolioPnlCalculator.ts` — per-position P&L (amount VND + pct) + aggregate totals + `formatPnlSection()` for Vietnamese morning briefing (task 209)
+- `src/infrastructure/db/pnlSnapshotStore.ts` — `portfolio_pnl_snapshots` SQLite CRUD; UNIQUE(date, code) upsert semantics (task 209)
+- `src/infrastructure/db/schema.ts` — `portfolio_pnl_snapshots` table + index (task 209)
+- `src/application/usecases/assembleBriefing.ts` — P&L snapshot section wired into morning briefing output (task 209)
+- `src/domain/services/sourceHealthTracker.ts` — in-memory source health registry: ok / degraded (1–4 fails) / down (5+ fails) (task 210)
+- `src/interface/mcp/tools/sourceHealthTools.ts` — `get_source_health` MCP tool + `globalSourceTracker` singleton (task 210)
+- `src/application/usecases/pollNews.ts` — `globalSourceTracker.recordSuccess/recordFailure` wired around each fetcher call (task 210)
+- `src/interface/mcp/server.ts` — updated to 53 registered tools
 
 ### In Progress
 
