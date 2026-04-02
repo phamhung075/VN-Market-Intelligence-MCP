@@ -53,69 +53,6 @@
 | 065 | Historical pattern matcher | `task/065-pattern-matcher` | 2026-03-28 | [TASK_REPORT_065](reports/TASK_REPORT_065.md) |
 | 084 | Market MCP tools (get_market_snapshot, get_patterns) | `task/084-tool-market` | 2026-03-28 | [TASK_REPORT_084](reports/TASK_REPORT_084.md) |
 | 123 | Integration tests — MCP tools with real SQLite | `task/123-test-integration-mcp` | 2026-03-28 | [TASK_REPORT_123](reports/TASK_REPORT_123.md) |
-| DOC-001 | Update CLAUDE.md architecture section | `task/doc-001-claude-md-update` | 2026-03-28 | [TASK_REPORT_DOC-001](reports/TASK_REPORT_DOC-001.md) |
-| 024 | Trading Economics macro indicator scraper | `task/024-scraper-trading-economics` | 2026-03-28 | [TASK_REPORT_024](reports/TASK_REPORT_024.md) |
-| 122 | Unit tests — domain services branch coverage | `task/122-domain-services` | 2026-03-28 | [TASK_REPORT_122](reports/TASK_REPORT_122.md) |
-| 124 | Integration tests — SSC pipeline mock HTTP | `task/124-test-ssc-pipeline` | 2026-03-28 | [TASK_REPORT_124](reports/TASK_REPORT_124.md) |
-| 125 | E2E test — daily briefing flow | `task/125-test-e2e-briefing` | 2026-03-28 | [TASK_REPORT_125](reports/TASK_REPORT_125.md) |
-| 025 | Yahoo Finance commodity fetcher | `task/025-yahoo-finance` | 2026-03-29 | [TASK_REPORT_025](reports/TASK_REPORT_025.md) |
-| 028 | SBV (State Bank Vietnam) macro fetcher | `task/028-sbv-macro` | 2026-03-29 | [TASK_REPORT_028](reports/TASK_REPORT_028.md) |
-| FIX-081 | Fix SSE test timeout flakiness | `task/fix-081-sse-timeout` | 2026-03-29 | [TASK_REPORT_FIX-081](reports/TASK_REPORT_FIX-081.md) |
-| 126 | Macro cascade integration | `task/126-macro-cascade` | 2026-03-29 | — |
-| 089 | `get_macro_snapshot` MCP tool | `task/089-tool-macro` | 2026-03-29 | — |
-| 134 | Sentiment classifier + cascade directional signals | `task/134-sentiment-classifier` | 2026-03-29 | — |
-| 027 | HNX + UPCOM market data fetcher | `task/027-hnx-prices` | 2026-03-28 | [TASK_REPORT_027](reports/TASK_REPORT_027.md) |
-| 105 | Evening summary job (22:00 GMT+7) | `task/105-job-evening-summary` | 2026-03-28 | [TASK_REPORT_105](reports/TASK_REPORT_105.md) |
-| 121 | Unit tests — BCTC parser (Vietnamese edge cases) | `task/121-test-bctc-edge-cases` | 2026-03-28 | [TASK_REPORT_121](reports/TASK_REPORT_121.md) |
-| 127 | Unit + integration tests — Puppeteer SSC fetcher | `task/127-test-ssc-puppeteer` | 2026-03-29 | — |
-| 031 | Puppeteer-based SSC browser fetcher | `task/031-ssc-puppeteer` | 2026-03-29 | — |
-| 032 | SSC multi-category document listing + dedup | `task/032-ssc-multi-category` | 2026-03-29 | — |
-| 033 | Wire Puppeteer fetcher into sscCheckerJob | `task/033-ssc-checker-wiring` | 2026-03-29 | — |
-| 128 | Unit tests — Telegram notifier (mock API) | `task/128-test-telegram` | 2026-03-29 | — |
-| 034 | Telegram notifier + alert hook + send_test_telegram MCP tool | `task/034-telegram-notifier` | 2026-03-29 | — |
-| 129 | Unit tests — 15-min intelligence cycle | `task/129-test-intelligence-cycle` | 2026-03-29 | — |
-| 106 | 15-min intelligence cycle job | `task/106-job-intelligence-cycle` | 2026-03-29 | — |
-| 035 | VnEconomy stocks + finance RSS fetcher | `task/035-vneconomy-fetcher` | 2026-03-29 | — |
-| 131 | Alert cooldown + dedup + grouper | `task/131-alert-quality` | 2026-04-01 | [TASK_REPORT_131](reports/TASK_REPORT_131.md) |
-| 132 | BCTC validator (accounting identity + magnitude) | `task/132-bctc-validator` | 2026-04-01 | [TASK_REPORT_132](reports/TASK_REPORT_132.md) |
-| 133 | Volatility calculator + adaptive thresholds | `task/133-volatility-calculator` | 2026-04-01 | [TASK_REPORT_133](reports/TASK_REPORT_133.md) |
-| 135 | RAG temporal decay retriever | `task/135-rag-temporal-decay` | 2026-03-29 | — |
-| 130 | Periodic summary generator (daily/weekly/monthly/quarterly/yearly) | `task/130-periodic-summaries` | 2026-03-29 | — |
-| 136 | Wire circuit breaker into hose.ts + ssc.ts | `task/136-circuit-breaker` | 2026-03-29 | — |
-| 137 | Fix alert pipeline — Step E reads DB alerts | `task/137-fix-alert-pipeline` | 2026-04-01 | [TASK_REPORT_137](reports/TASK_REPORT_137.md) |
-| 138 | Fix impact chain — real runImpactChain in Step D | `task/138-fix-impact-chain` | 2026-03-29 | — |
-| 139 | VN-Index live feed via CafeF index endpoint | `task/139-vnindex-cafef` | 2026-03-29 | — |
-| 140 | SQLite WAL checkpoint — daily cron + SIGTERM hook | `task/140-wal-checkpoint` | 2026-03-29 | — |
-| 141 | Enhance get_system_health — WAL size, alert stats, last cycle | `task/141-system-health-tool` | 2026-03-29 | — |
-| 142 | Cross-signal conviction scorer | `task/142-conviction-scorer` | 2026-03-30 | — |
-| 143 | Sector peer wiring into Telegram alert body | `task/143-sector-peer-alerts` | 2026-03-30 | — |
-| 144 | Historical parallel in Telegram alert body | `task/144-historical-parallel-alert` | 2026-03-30 | — |
-| 145 | Morning briefing upgrade — conviction + unresolved alerts | `task/145-briefing-upgrade` | 2026-03-30 | — |
-| 146 | Proactive weekly pattern watch (Sunday 22:30 Telegram) | `task/146-weekly-pattern-watch` | 2026-03-30 | — |
-| 147 | Morning briefing Telegram delivery | `task/147-briefing-telegram` | 2026-03-30 | — |
-| 148 | Alert resolution lifecycle + resolve_alert MCP tool | `task/148-alert-resolution` | 2026-03-30 | — |
-| 149 | get_portfolio_conviction MCP tool | `task/149-portfolio-conviction` | 2026-03-30 | — |
-| 150 | Conviction score history (conviction_history table) | `task/150-conviction-history` | 2026-03-30 | — |
-| 151 | Sigma data sufficiency health check | `task/151-sigma-readiness` | 2026-03-30 | — |
-| 152 | News-mention alert noise filter | `task/152-news-alert-filter` | 2026-04-01 | — |
-| 153 | SSC scan deduplication | `task/153-ssc-scan-dedup` | 2026-04-01 | — |
-| 154 | Silence LanceDB TRACE logging | `task/154-lancedb-log-silence` | 2026-04-01 | — |
-| 155 | Log file rotation (size-based, 3 rolling files) | `task/155-log-rotation` | 2026-04-01 | — |
-| 156 | Off-hours cycle interval increase (15 min → 60 min) | `task/156-offhours-interval` | 2026-04-01 | — |
-| 157 | Data audit engine: dataAuditJob.ts + schema migration | `task/157-data-audit-job` | 2026-04-01 | [TASK_REPORT_157](reports/TASK_REPORT_157.md) |
-| 158 | Scheduler wiring: CRONS.dataAuditDaily + dataAuditWeekly | `task/158-audit-scheduler-wiring` | 2026-04-01 | [TASK_REPORT_158](reports/TASK_REPORT_158.md) |
-| 159 | get_system_health db_audit section | `task/159-health-db-audit` | 2026-04-01 | [TASK_REPORT_159](reports/TASK_REPORT_159.md) |
-| 160 | Company name alias dictionary (stockAliases.ts) | `task/160-stock-aliases` | 2026-04-01 | [TASK_REPORT_160](reports/TASK_REPORT_160.md) |
-| 161 | Wire aliases into cascade engine + pollNews | `task/161-alias-wiring` | 2026-04-01 | — |
-| 162 | Market-wide pattern cascade to all watchlist stocks | `task/162-market-wide-broadcast` | 2026-04-01 | — |
-| 163 | SQLite schema: prediction_markets + prediction_signals tables | `task/163-prediction-schema` | 2026-04-01 | — |
-| 169 | mcp.config.json predictionMarkets section + config.ts type extension | `task/169-prediction-config` | 2026-04-01 | — |
-| 165 | Prediction cascade mapper (predictionCascadeMapper.ts) | `task/165-prediction-cascade-mapper` | 2026-04-01 | [TASK_REPORT_165](reports/TASK_REPORT_165.md) |
-| 164 | Polymarket REST fetcher (polymarket.ts) | `task/164-polymarket-fetcher` | 2026-04-01 | — |
-| 166 | Prediction signal detector (type stub) | `task/166-prediction-signal-detector` | 2026-04-01 | — |
-| 167 | Prediction market scheduler job + cron wiring | `task/167-prediction-market-job` | 2026-04-01 | — |
-| 168 | get_prediction_markets MCP tool | `task/168-prediction-mcp-tool` | 2026-04-01 | — |
-| 172 | Prediction signals section in morning briefing + evening summary | `task/172-prediction-briefing` | 2026-04-01 | [TASK_REPORT_172](reports/TASK_REPORT_172.md) |
 
 > **Sprint 003 COMPLETE** — All 5 tasks merged: 021, 082, 063, 064, 086. PO sign-off: APPROVED 2026-03-27.
 > **Sprint 004 Wave 1** — Tasks 087, 022, 023 merged: 2026-03-27.
@@ -132,15 +69,6 @@
 > **Sprint 006 Wave 1** — Task 065 completed: 2026-03-28. Historical pattern matcher, 15 tests pass.
 > **Sprint 006 Wave 2** — Task 084 merged: 2026-03-28. Market MCP tools (get_market_snapshot, get_patterns), 14/14 tests pass, toolCount 14→16. Task 123 now unblocked (Wave 3).
 > **Sprint 006 COMPLETE** — All 6 tasks merged: 065, 066, 027, 105, 084, 123. QA approved: 2026-03-28. 28-test integration harness covers all 16 MCP tools across 5 end-to-end roundtrip chains with real SQLite.
-> **Sprint 008 Wave 1** — All 3 tasks merged: FIX-081, 025, 028. QA approved: 2026-03-29. Full suite: 842 pass, 0 fail. Yahoo Finance commodity fetcher (13 tests), SBV macro fetcher (14 tests), SSE timeout fix (8 tests hardened).
-> **Sprint 008 Wave 2** — All 2 tasks merged: 126, 089. QA approved: 2026-03-29. Macro cascade integration (15 tests), get_macro_snapshot MCP tool (16 tests). toolCount 16 → 17.
-> **Sprint 008 COMPLETE** — All 5 tasks merged: FIX-081, 025, 028, 126, 089. Sprint 008 delivers the macro intelligence layer: commodity prices, SBV central bank rates, causal chain macro adjustments, and get_macro_snapshot MCP tool. 66 new tests added.
-> **Sprint 010-011 QA batch** — Tasks 131, 132, 133, 137 merged: 2026-04-01. Alert quality (35 tests), BCTC validator (26 tests), adaptive thresholds (25 tests), Step E fix (18 tests). tsc: 0 errors.
-> **Sprint 017 COMPLETE** — All 5 tasks merged: 152, 153, 154, 155, 156. Production Hardening: noise filter, SSC dedup, LanceDB silence, log rotation, off-hours interval. 16 new tests.
-> **Sprint 018 COMPLETE** — All 3 tasks merged: 157, 158, 159. Data audit engine, scheduler wiring, health tool enhancement. 2026-04-01.
-> **Sprint 019 COMPLETE** — All 3 tasks merged: 160, 161, 162. QA approved: 2026-04-01. 69 new tests (160: 34, 161: 19, 162: 16). stockAliases, alias wiring in cascadeEngine + pollNews, market-wide broadcast.
-> **Sprint 020 COMPLETE** — Prediction Market Intelligence pipeline: schema (163), config (169), cascade mapper (165), signal detector stub (166), scheduler job (167), MCP tool (168), Polymarket fetcher (164). NOTE: task 166 is a type-stub only — `detectPredictionSignals` not yet implemented. Sprint 021 completes the loop.
-> **Sprint 021 QA batch** — Tasks 165 + 172 merged: 2026-04-01. Prediction cascade mapper (38 tests), prediction signals in briefings (18 tests). tsc: 0 errors.
 
 ---
 
@@ -148,7 +76,7 @@
 
 | # | Title | Branch | Notes |
 |---|-------|--------|-------|
-| — | — | — | Empty |
+| DOC-001 | Update CLAUDE.md architecture section | `task/doc-001-claude-md-update` | Ready for QA |
 
 ---
 
@@ -163,183 +91,166 @@
 ## 📋 TODO
 *(Dependencies cleared — ready to assign)*
 
-### Sprint 023 — Close the Investor Loop
+### Sprint 005
+<!-- Execution waves per TECH_005.md:
+  Wave 1 — 088 (independent cleanup, no deps beyond already-done 087)
+  Wave 2 — 026 + 102 + 104 in parallel (all independent of each other)
+  Wave 3 — 103 (after 026 done)
+  Wave 4 — 101 (after 102 done)
+-->
 
-> Sprint 023 ACTIVE — 2026-04-01. PO vision set. Tasks 178 + 179 are independent; 180 depends on 179; 181 depends on 178.
-> Design ref: SPRINT_GOAL.md sprint_id: 023.
+> REQ-005 written — TECH-005 approved by Architect. See docs/TECH_005.md. Status: ACTIVE.
 
-| # | Title | Branch | Agent | Layer | Priority | Depends on | Status |
-|---|-------|--------|-------|-------|----------|------------|--------|
-| 178 | `get_price_history` MCP tool | `task/178-price-history` | BA→Architect→PM→Dev | interface/mcp + infrastructure/db | P0 | — | **Review** |
-| 179 | Position tracking: `positions` schema + `set_position` / `get_positions` / `close_position` MCP tools | `task/179-position-tracking` | BA→Architect→PM→Dev | infrastructure/db + interface/mcp | P0 | — | **Review** |
-| 180 | Decision note synthesis in `get_portfolio_conviction` | `task/180-decision-notes` | BA→Architect→PM→Dev | interface/mcp | P1 | 179 | **Review** |
-| 181 | Price trend sparkline in morning briefing | `task/181-briefing-sparkline` | BA→Architect→PM→Dev | application/usecases | P2 | 178 | **Backlog** |
+#### Wave 1 — COMPLETE
 
----
+| # | Title | Branch | Agent | Layer | Depends on | Status |
+|---|-------|--------|-------|-------|------------|--------|
+| 088 | Legacy cleanup — delete src/server.ts + src/tools/ stubs | `task/088-legacy-cleanup` | Developer | interface | 087 ✅ | Done ✅ |
 
-### Sprint 022 — House in Order
+**Task 088 — Acceptance Criteria**
 
-> Sprint 022 COMPLETE — 2026-04-01. All 4 tasks done.
-> Design ref: SPRINT_GOAL.md sprint_id: 022.
+**Given** `src/server.ts` and `src/tools/` exist as dead stubs (no live imports confirmed by Architect)
+**When** task 088 is implemented and merged
+**Then**
+- `src/server.ts` file does not exist on disk
+- `src/tools/` directory does not exist on disk
+- `grep -r "from.*src/server" src/` returns zero matches in production code
+- `bun tsc --noEmit` reports 0 errors
+- `bun test` full suite passes with 0 failures
 
-| # | Title | Branch | Agent | Layer | Priority | Depends on | Status |
-|---|-------|--------|-------|-------|----------|------------|--------|
-| 174 | CLAUDE.md full sync — Sprints 014-021 | `task/174-claude-md-sync` | Developer | docs/ | P0 | — | **Done** |
-| 175 | Stale branch + worktree cleanup | `task/175-branch-cleanup` | Developer | git | P1 | — | **Done** |
-| 176 | `trigger_alert_check` MCP tool | `task/176-trigger-alert-check` | Developer | interface/mcp + application | P1 | — | **Done** |
-| 177 | TASKS.md Kanban housekeeping | `task/177-tasks-housekeeping` | Developer | docs/ | P2 | — | **Done** |
-
----
-
-### Sprint 017 — Production Hardening
-
-> Sprint 017 COMPLETE — 2026-04-01. All 5 tasks done.
-> Tasks 152, 154, 156 merged in earlier sessions. Tasks 153, 155 merged 2026-04-01.
-
-| # | Title | Priority | Status |
-|---|-------|----------|--------|
-| 152 | News-mention alert noise filter | P0 | Done |
-| 153 | SSC scan deduplication | P0 | Done — merged 2026-04-01 |
-| 154 | Silence LanceDB TRACE logging | P1 | Done |
-| 155 | Log file rotation | P1 | Done — merged 2026-04-01 |
-| 156 | Off-hours cycle interval increase | P2 | Done |
-
-### Sprint 018 — Data Integrity First
-
-> Sprint 018 COMPLETE — 2026-04-01. All 3 tasks merged: 157 (data audit engine), 158 (scheduler wiring), 159 (get_system_health db_audit section).
-> Design refs: docs/REQ_018.md (BA) + docs/TECH_018.md (Architect).
-> Full suite at merge: 1171 pass, 3 fail (all pre-existing), 0 TypeScript errors.
+**Files to delete**: `src/server.ts`, `src/tools/watchlist.ts`, `src/tools/analysis.ts`, `src/tools/reports.ts`, `src/tools/alerts.ts`
+**Pre-deletion check**: `grep -r "from.*['\"].*src/server\|from.*['\"]../tools/\|from.*['\"]./tools/" src/` must return empty before deleting
+**Note**: `src/db/schema.ts` (legacy, different path) — do NOT delete; check if test files import it first.
 
 ---
 
-### Sprint 020 — Prediction Market Intelligence
+#### Wave 2 — Run in parallel after Wave 1 (all three are independent of each other)
 
-> Sprint 020 COMPLETE — 2026-04-01. All 7 tasks done.
-> Tasks 163, 164, 165, 166, 167, 168, 169 merged. Note: task 166 is a type stub only — full impl in task 171.
-> Design refs: docs/REQ_020.md (BA) + docs/TECH_020.md (Architect — APPROVED).
+| # | Title | Branch | Agent | Layer | Depends on | Status |
+|---|-------|--------|-------|-------|------------|--------|
+| 026 | HOSE market data fetcher (VnDirect primary, CafeF fallback) | `task/026-hose-prices` | Developer | infrastructure | 003 ✅ | Todo |
+| 102 | News polling job (every 30 min) | `task/102-job-news-poll` | Developer | interface/scheduler | 061 ✅, 062 ✅, 064 ✅ | Done ✅ |
+| 104 | SSC nightly report check (20:00 GMT+7) | `task/104-job-ssc-check` | Developer | interface/scheduler | 048 ✅, 086 ✅ | Done ✅ |
 
----
+**Task 026 — Acceptance Criteria**
 
-### Sprint 021 — Close the Loop
+**Given** a list of HOSE ticker codes e.g. `["VCB", "HPG"]`
+**When** `fetchHosePrices(codes)` is called
+**Then**
+- Returns `MarketPrice[]` with `code`, `price`, `previousPrice`, `changeAmt`, `changePct`, `volume`, `updatedAt`
+- Primary source: VnDirect JSON API (`https://finfo-api.vndirect.com.vn/v4/stocks?q=code:...`)
+- Fallback to CafeF HTML scraper if VnDirect returns 0 rows or HTTP error
+- Returns `[]` (never throws) on total failure; logs warning
+- `storePrices(prices)` upserts into `market_prices` (INSERT OR REPLACE) and appends to `market_prices_history`
+- `fetchVnIndex()` returns `VnIndexSnapshot | null`
+- Schema: `market_prices` gains `previous_price REAL` column; `market_prices_history` table created
+- `bun test src/__tests__/026-*.test.ts` passes with mocked HTTP (no real network calls)
+- `bun tsc --noEmit` 0 errors
 
-> Sprint 021 PARTIAL — Tasks 165 + 172 merged: 2026-04-01. Tasks 170, 171, 173 remain in backlog.
-> Design refs: SPRINT_GOAL.md sprint_id: 021.
-
-| # | Title | Branch | Agent | Layer | Priority | Depends on | Status |
-|---|-------|--------|-------|-------|----------|------------|--------|
-| 170 | Fix pre-existing test failures — 062 stale assertion | `task/170-fix-test-failures` | Developer | tests | P0 | — | **Backlog** |
-| 171 | Implement `detectPredictionSignals` (full logic, not stub) | `task/171-prediction-signal-impl` | Developer | domain/services | P0 | — | **Backlog** |
-| 173 | Prediction market cascade: wire signals into `buildCausalChain` via `runPredictionImpactChain` | `task/173-prediction-cascade-wiring` | Developer | application/usecases + scheduler | P1 | 171 ✓, 165 ✓ | **Backlog** |
-
----
-
-#### Task 170 — Fix pre-existing test failures
-
-**Branch**: `task/170-fix-test-failures`
-**Layer**: tests only
-**Priority**: P0
-**Depends on**: nothing
-**Estimated effort**: 30 minutes
-
-**Context**: `062-cascade-engine.test.ts` line 221 asserts `bankImpacts.length === 0` for an
-oil-price news entry. Sprint 013 added macro rules that correctly trigger banking domain via
-oil sector NPL risk. The production rule is correct; the test expectation is stale.
-
-**Files to read first**:
-- `src/__tests__/062-cascade-engine.test.ts` lines 203-222 — the failing test
-- `src/domain/services/cascadeEngine.ts` — search for `banking` and `oil` rules to confirm
-  current behaviour
-
-**Files to modify**:
-- MODIFY: `src/__tests__/062-cascade-engine.test.ts` — update the assertion at line 221 from
-  `expect(bankImpacts.length).toBe(0)` to reflect that banking IS triggered by oil-price
-  shocks via the macro NPL risk rule. Either: (a) assert `>= 0` (accept any), or (b) assert
-  the specific count if deterministic, or (c) restructure the test to assert only that
-  oil_gas/aviation are triggered (which was the original intent) without asserting banking is
-  NOT triggered.
-
-**Acceptance Criteria**:
-- `bun test src/__tests__/062-cascade-engine.test.ts` → 0 failures
-- `bun tsc --noEmit` → 0 errors
-- No production code changes
+**Files to create/modify**:
+- CREATE: `src/infrastructure/fetchers/hose.ts`
+- MODIFY: `src/infrastructure/db/schema.ts` (add `previous_price` column to `market_prices`; add `market_prices_history` table + index)
 
 ---
 
-#### Task 171 — Implement `detectPredictionSignals`
+**Task 102 — Acceptance Criteria**
 
-**Branch**: `task/171-prediction-signal-impl`
-**Layer**: domain/services
-**Priority**: P0
-**Depends on**: nothing (parallel with task 170)
-**Estimated effort**: 2 hours
+**Given** RSS sources (CafeF, VnExpress, Reuters) have articles not yet in `rag_analyses`
+**When** `pollNews()` is called
+**Then**
+- Returns `PollNewsResult` with `fetched`, `inserted`, `duplicates`, `alerts`, `errors` counts
+- New articles stored via `INSERT OR IGNORE INTO rag_analyses` using UNIQUE index on `source_url`
+- Second call with same articles increments `duplicates`, does NOT create duplicate rows
+- Each source failure increments `errors` but does not abort remaining sources
+- Impact chain (`runImpactChain`) runs on each new entry; resulting alerts stored via `INSERT OR IGNORE INTO alerts`
+- Schema: `CREATE UNIQUE INDEX IF NOT EXISTS idx_rag_source_url ON rag_analyses(source_url) WHERE source_url IS NOT NULL AND source_url != ''` added in `initDatabase()`
+- `runNewsPoller()` in `newsPollerJob.ts` has concurrency guard (skips if previous cycle still running)
+- `bun test src/__tests__/102-*.test.ts` passes with mocked fetchers
+- `bun tsc --noEmit` 0 errors
 
-**Files to read first**:
-- `src/domain/services/predictionSignalDetector.ts` — current type stubs
-- `src/__tests__/166-prediction-signal-detector.test.ts` — existing (failing) test file
-- `docs/TECH_020.md` — Section 4 "Signal detector design"
-- `src/scheduler/predictionMarketJob.ts` lines 355-400 — dynamic import + usage of `detectPredictionSignals`
-
-**Files to modify**:
-- MODIFY: `src/domain/services/predictionSignalDetector.ts` — add `PredictionSignalConfig` interface + `detectPredictionSignals` function (pure domain, zero I/O)
-- MODIFY: `src/__tests__/166-prediction-signal-detector.test.ts` — update test cases to match the real function signature (currently fail due to missing export)
-
-**Acceptance Criteria**:
-- `bun test src/__tests__/166-prediction-signal-detector.test.ts` → 0 failures, >= 20 tests
-- `detectPredictionSignals([], [], config)` returns `[]`
-- A market with `volume24h >= volumeSpikeThresholdUsd` produces a `volume_spike` signal
-- A market with yesPrice change >= `probabilityShiftPct / 100` produces a `probability_shift` signal
-- Markets with no matching previous snapshot do not throw
-- `bun tsc --noEmit` → 0 errors
+**Files to create/modify**:
+- CREATE: `src/application/usecases/pollNews.ts`
+- CREATE: `src/scheduler/newsPollerJob.ts`
+- MODIFY: `src/infrastructure/db/schema.ts` (add UNIQUE index on `rag_analyses.source_url`)
 
 ---
 
-#### Task 173 — Prediction market cascade wiring
+**Task 104 — Acceptance Criteria**
 
-**Branch**: `task/173-prediction-cascade-wiring`
-**Layer**: application/usecases + scheduler
-**Priority**: P1
-**Depends on**: 171 ✓, 165 ✓ (predictionCascadeMapper already merged)
-**Estimated effort**: 2 hours
-
-**Files to read first**:
-- `src/application/usecases/runImpactChain.ts` — existing `runImpactChain` function; add sibling export
-- `src/domain/services/predictionCascadeMapper.ts` — `mapPredictionToSignals` function signature
-- `src/scheduler/predictionMarketJob.ts` — where to call `runPredictionImpactChain`
-- `src/infrastructure/db/alertStore.ts` — `insertAlert` helper
-
-**Files to modify**:
-- MODIFY: `src/application/usecases/runImpactChain.ts` — add `runPredictionImpactChain(signals, watchlist, db): Promise<Alert[]>`
-- MODIFY: `src/scheduler/predictionMarketJob.ts` — after `detectPredictionSignals`, call `runPredictionImpactChain` for high/critical signals; store resulting alerts
+**Given** watchlist stocks exist in SQLite and SSC portal is reachable
+**When** `runSscCheck()` is called
+**Then**
+- Queries SSC for new BCTC documents for each watchlist stock
+- Skips documents whose `source_url` already exists in `financial_reports`
+- Calls `fetchParseAndStoreBctc({ url, actionCode })` for each new document
+- 2-second delay between documents per stock to avoid rate-limiting
+- 3-retry exponential backoff (2 s → 4 s → 8 s) on SSC HTTP errors
+- If `financial_reports` lacks `source_url` column, adds it via `ALTER TABLE`
+- No crash on empty watchlist or SSC unreachable (logs warning, returns gracefully)
+- `bun test src/__tests__/104-*.test.ts` passes with mocked HTTP
+- `bun tsc --noEmit` 0 errors
 
 **Files to create**:
-- CREATE: `src/__tests__/173-prediction-impact-chain.test.ts`
-
-**Acceptance Criteria**:
-- A `probability_shift` signal with severity `high` produces >= 1 alert for matching watchlist stocks
-- `runPredictionImpactChain([], watchlist, db)` returns `[]` without error
-- Alerts are persisted in `alerts` table and retrievable via `get_alerts`
-- `bun test src/__tests__/173-prediction-impact-chain.test.ts` → 0 failures, >= 12 tests
-
----
-### Sprint 019 — Know What You're Watching
-
-> Sprint 019 COMPLETE — 2026-04-01. All 3 tasks merged. 69 new tests (160: 34, 161: 19, 162: 16).
-> Design refs: docs/REQ_019.md (BA) + docs/TECH_019.md (Architect — approved).
-> Full suite: 1256 pass, 3 fail (pre-existing locale), tsc 0 errors.
-
-| # | Title | Branch | Agent | Layer | Priority | Depends on | Status |
-|---|-------|--------|-------|-------|----------|------------|--------|
-| REQ-019 | BA: Requirement Spec for Sprint 019 | `task/doc-001-claude-md-update` | BA | docs/ | P0 | — | Done — docs/REQ_019.md |
-| TECH-019 | Architect: Technical Design for Sprint 019 | `task/doc-001-claude-md-update` | Architect | docs/ | P0 | REQ-019 | Done — docs/TECH_019.md |
-| 160 | Company name alias dictionary (`stockAliases.ts`) | `task/160-stock-aliases` | Developer | domain/services | P0 | TECH-019 | Done — merged 2026-04-01 |
-| 161 | Wire aliases into cascade engine + pollNews Gate 3 | `task/161-alias-wiring` | Developer | domain/services + application/usecases | P0 | 160 ✓ | Done — merged 2026-04-01 |
-| 162 | Market-wide pattern cascade to all watchlist stocks | `task/162-market-wide-broadcast` | Developer | domain/services + application/usecases + mcp.config.json | P1 | 160 ✓ | Done — merged 2026-04-01 |
+- CREATE: `src/scheduler/sscCheckerJob.ts`
 
 ---
 
-### Sprint 005 — Scheduler Foundation
+#### Wave 3 — After task 026 is merged
 
-> Sprint 005 COMPLETE — 2026-03-28. All 6 tasks merged: 088, 026, 102, 104, 103, 101. QA approved.
+| # | Title | Branch | Agent | Layer | Depends on | Status |
+|---|-------|--------|-------|-------|------------|--------|
+| 103 | Market open/close scan (09:00 + 15:30 GMT+7) | `task/103-job-market-scan` | Developer | interface/scheduler | 026, 063 ✅, 064 ✅ | In Progress (changes requested) |
+
+**Task 103 — Acceptance Criteria**
+
+**Given** watchlist stocks have HOSE price data and `market_prices_history` table exists
+**When** `runMarketScan("open")` or `runMarketScan("close")` is called
+**Then**
+- Calls `fetchHosePrices` for all watchlist stock codes
+- Inserts fetched prices into `market_prices_history` (in addition to upsert in `market_prices`)
+- Assembles `MarketSnapshot` per stock: `{ actionCode, price, previousPrice, volume, avgVolume }`
+- `avgVolume` = AVG of last 20 rows in `market_prices_history`; if < 5 rows exist, returns `0` (suppresses `volume_spike`)
+- Passes snapshots through `detectSignals` filtering for `price_drop`, `price_surge`, `volume_spike` only
+- Calls `generateAlerts` and stores resulting alerts via `INSERT OR IGNORE INTO alerts`
+- No crash on empty watchlist or HOSE fetch failure
+- `bun test src/__tests__/103-*.test.ts` passes with mocked fetcher
+- `bun tsc --noEmit` 0 errors
+
+**Files to create**:
+- CREATE: `src/scheduler/marketScanJob.ts`
+
+---
+
+#### Wave 4 — After task 102 is merged
+
+| # | Title | Branch | Agent | Layer | Depends on | Status |
+|---|-------|--------|-------|-------|------------|--------|
+| 101 | Morning briefing job (08:00 GMT+7) | `task/101-job-morning-briefing` | Developer | interface/scheduler | 102 ✅, 086 ✅ | Done ✅ |
+
+**Task 101 — Acceptance Criteria**
+
+**Given** SQLite contains recent `rag_analyses`, `alerts`, `watchlist`, `market_prices`, and `financial_reports` rows
+**When** `runMorningBriefing()` is called (or cron fires at 08:00 Asia/Ho_Chi_Minh)
+**Then**
+- Runs `pollNews()` as best-effort pre-fetch (failure does not abort briefing)
+- Fetches VnIndex via `fetchVnIndex()` (best-effort; null on failure)
+- `assembleBriefing(vnIndex)` returns `DailyBriefing` with:
+  - `topStories`: up to 5 `rag_analyses` rows since midnight Vietnam time, sorted by `impact_score DESC`
+  - `alerts`: unread alerts from last 12 hours
+  - `watchlistSummary`: one entry per watchlist stock with price + changePct from `market_prices`
+  - `newReports`: stock codes with new `financial_reports` since midnight Vietnam time
+- `persistBriefing(briefing)` writes to `./data/briefings/YYYY-MM-DD.json` (creates dir if absent, overwrites if re-run)
+- `jobs.ts` updated: imports all four job modules; `eveningSummary` cron entry removed
+- `src/index.ts` updated: calls `startScheduler()` as step 3 of bootstrap
+- `bun run src/index.ts` logs `[scheduler] jobs registered` at startup (manual verify)
+- `bun test src/__tests__/101-*.test.ts` passes with mocked DB + file system
+- `bun tsc --noEmit` 0 errors
+
+**Files to create/modify**:
+- CREATE: `src/application/usecases/assembleBriefing.ts`
+- CREATE: `src/scheduler/morningBriefingJob.ts`
+- MODIFY: `src/scheduler/jobs.ts` (import + wire all 4 job modules; remove `eveningSummary` cron entry)
+- MODIFY: `src/index.ts` (add `startScheduler()` call as step 3 of bootstrap)
 
 ---
 
@@ -359,11 +270,11 @@ oil sector NPL risk. The production rule is correct; the test expectation is sta
 
 | # | Title | Branch | Layer | Depends on |
 |---|-------|--------|-------|------------|
-| ~~024~~ | ~~Trading Economics scraper~~ | ~~`task/024-scraper-trading-economics`~~ | ~~infra~~ | ~~003 ✅~~ |
-| ~~025~~ | ~~Yahoo Finance commodity fetcher~~ | ~~`task/025-yahoo-finance`~~ | ~~infra~~ | ~~003 ✅~~ |
+| 024 | Trading Economics scraper | `task/024-scraper-trading-economics` | infra | 003 ✅ |
+| 025 | Yahoo Finance commodity fetcher | `task/025-yahoo-finance` | infra | 003 ✅ |
 | ~~026~~ | ~~HOSE market data fetcher~~ | ~~`task/026-hose-prices`~~ | ~~infra~~ | ~~003 ✅~~ |
 | ~~027~~ | ~~HNX + UPCOM market data fetcher~~ | ~~`task/027-hnx-prices`~~ | ~~infra~~ | ~~003 ✅~~ |
-| ~~028~~ | ~~SBV (State Bank Vietnam) macro fetcher~~ | ~~`task/028-sbv-macro`~~ | ~~infra~~ | ~~003 ✅~~ |
+| 028 | SBV (State Bank Vietnam) macro fetcher | `task/028-sbv-macro` | infra | 003 ✅ |
 
 ### Sprint 004 — DONE (historical)
 
@@ -386,9 +297,9 @@ oil sector NPL risk. The production rule is correct; the test expectation is sta
 
 | # | Title | Branch | Layer | Depends on | Acceptance Criteria |
 |---|-------|--------|-------|------------|---------------------|
-| ~~024~~ | ~~Trading Economics scraper~~ | ~~`task/024-scraper-trading-economics`~~ | ~~infra~~ | ~~003 ✅~~ | ~~Done — merged 2026-03-28~~ |
-| ~~025~~ | ~~Yahoo Finance commodity fetcher~~ | ~~`task/025-yahoo-finance`~~ | ~~infra~~ | ~~003 ✅~~ | ~~Done — ready for review 2026-03-28~~ |
-| ~~028~~ | ~~SBV (State Bank Vietnam) macro fetcher~~ | ~~`task/028-sbv-macro`~~ | ~~infra~~ | ~~003 ✅~~ | ~~Done — merged 2026-03-29~~ |
+| 024 | Trading Economics scraper | `task/024-scraper-trading-economics` | infra | 003 ✅ | Returns macro indicators (CPI, GDP, interest rate) as structured JSON; deferred Sprint 006 |
+| 025 | Yahoo Finance commodity fetcher | `task/025-yahoo-finance` | infra | 003 ✅ | Returns Brent crude, gold, USD/VND prices; deferred Sprint 006 |
+| 028 | SBV (State Bank Vietnam) macro fetcher | `task/028-sbv-macro` | infra | 003 ✅ | Returns SBV interest rate, FX rate; deferred Sprint 006 |
 
 ---
 
@@ -419,7 +330,7 @@ oil sector NPL risk. The production rule is correct; the test expectation is sta
 
 | # | Title | Branch | Layer | Depends on | Acceptance Criteria |
 |---|-------|--------|-------|------------|---------------------|
-| ~~105~~ | ~~Evening summary job (22:00)~~ | ~~`task/105-job-evening-summary`~~ | ~~interface~~ | ~~086 ✅~~ | ~~Done — merged to main 2026-03-28; 14 tests pass, tsc 0 errors~~ |
+| 105 | Evening summary job (22:00) | `task/105-job-evening-summary` | interface | 086 ✅ | **Done** — merged to main 2026-03-28; 14 tests pass, tsc 0 errors |
 
 ---
 
@@ -427,17 +338,19 @@ oil sector NPL risk. The production rule is correct; the test expectation is sta
 
 | # | Title | Branch | Layer | Depends on | Acceptance Criteria |
 |---|-------|--------|-------|------------|---------------------|
-| ~~121~~ | ~~Unit tests — BCTC parser (Vietnamese edge cases)~~ | ~~`task/121-test-bctc-edge-cases`~~ | ~~test~~ | ~~042-047~~ | ~~Done — merged to main 2026-03-28; 36 tests pass, tsc 0 errors~~ |
-| ~~122~~ | ~~Unit tests — domain services~~ | ~~`task/122-test-domain-services`~~ | ~~test~~ | ~~061-066~~ | ~~Done — 78 tests, 4 services ≥90% branch coverage; merged 2026-03-28~~ |
-| ~~123~~ | ~~Integration tests — MCP tools with real SQLite~~ | ~~`task/123-test-integration-mcp`~~ | ~~test~~ | ~~082-086, 084 ✅~~ | ~~Done — merged 2026-03-28~~ |
-| ~~124~~ | ~~Integration tests — SSC pipeline (mock HTTP)~~ | ~~`task/124-test-ssc-pipeline`~~ | ~~test~~ | ~~048~~ | ~~Done — 17 tests pass; merged 2026-03-28~~ |
-| ~~125~~ | ~~E2E test — daily briefing flow~~ | ~~`task/125-test-e2e-briefing`~~ | ~~test~~ | ~~101-105~~ | ~~Done — 39 tests pass; merged 2026-03-28~~ |
+| 121 | Unit tests — BCTC parser (Vietnamese edge cases) | `task/121-test-bctc-edge-cases` | test | 042-047 | 20+ edge cases: parentheses negatives, missing fields, image-only PDF, corrupt PDF |
+| 122 | Unit tests — domain services | `task/122-test-domain-services` | test | 061-066 | Cascade engine, signal detector, alert generator all have ≥90% branch coverage |
+| 123 | Integration tests — MCP tools with real SQLite | `task/123-test-integration-mcp` | test | 082-086, 084 ✅ | Full tool call roundtrip: add watchlist → fetch news → generate alert → get alert. **UNBLOCKED — ready for Wave 3** |
+| 124 | Integration tests — SSC pipeline (mock HTTP) | `task/124-test-ssc-pipeline` | test | 048 | Mock SSC HTML + PDF; verify full parse → store → embed pipeline |
+| 125 | E2E test — daily briefing flow | `task/125-test-e2e-briefing` | test | 101-105 | Full daily briefing: trigger → fetch → analyze → alert → report; assert final output structure |
 
 ---
 
-## Sprint 009 — SSC Puppeteer + Telegram + Intelligence Cycle
+## Sprint 023 — Close the Investor Loop
 
-> Sprint 009 COMPLETE — 2026-03-29. All 8 tasks merged: 127, 031, 032, 033, 128, 034, 129, 106.
+| # | Title | Branch | Layer | Depends on | Status |
+|---|-------|--------|-------|------------|--------|
+| 181 | Morning briefing ASCII sparkline | `task/181-sparkline` | domain + application | 101 ✅ | **Review** |
 
 ---
 
@@ -445,12 +358,12 @@ oil sector NPL risk. The production rule is correct; the test expectation is sta
 
 | Column | Count | Tasks |
 |--------|-------|-------|
-| ✅ Done | 120+ | Sprints 000-021 (see Done table above) |
-| 🔍 Review | 0 | — |
+| ✅ Done | 43 | 000, 001, 002, 003, 011, 012, 013, 014, 021, 022, 023, 026, 027, 029, 030, 041, 042, 043, 044, 045, 046, 047, 048, 061, 062, 063, 064, 065, 066, 081, 082, 083, 084, 085, 086, 087, 088, 101, 102, 103, 104, 105 |
+| 🔍 Review | 1 | 181 |
 | 🚧 In Progress | 0 | — |
-| 📋 Todo | 4 | 174, 175, 176, 177 (Sprint 022) |
-| 🗂 Backlog | 3 | 170, 171, 173 (Sprint 021 remainder) |
-| **Total** | **127+** | |
+| 📋 Todo | 0 | — (Sprint 006 Wave 2 COMPLETE; Task 123 now unblocked for Wave 3) |
+| 🗂 Backlog | 8 | Deferred: 024, 025, 028, 121-125 |
+| **Total** | **52** | |
 
 ---
 
