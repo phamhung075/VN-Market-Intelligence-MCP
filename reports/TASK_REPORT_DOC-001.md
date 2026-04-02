@@ -2,7 +2,8 @@
 
 > **Branch**: `task/doc-001-claude-md-update`
 > **Date started**: 2026-03-28
-> **Date merged**: 2026-03-28
+> **Date re-reviewed**: 2026-04-02
+> **Date merged**: 2026-04-02
 > **Final status**: APPROVED
 > **DDD layer**: documentation (no source code changes)
 
@@ -149,3 +150,12 @@ git merge --no-ff task/doc-001-claude-md-update -m "merge(DOC-001): CLAUDE.md ar
 - **Fix**: Reset CLAUDE.md to the main branch version (restoring all 711 lines of Sprint 013-033 content), then applied 5 targeted additions for Sprint 034: (1) added `sentimentTrend.ts` to domain/services/ tree (line 97), (2) added `sentimentTrendTools.ts` to interface/mcp/tools/ tree (line 199), (3) updated server.ts tool count comment from 61 to 62 (line 163), (4) updated Done header from "Sprint 000-033" to "Sprint 000-034" (line 442), (5) added Sprint 034 implementation status block documenting tasks 224/225 (lines 685-688).
 - **Tests added**: None (documentation-only task)
 - **Verified**: `bun tsc --noEmit` PASS
+
+### QA Re-Review — 2026-04-02
+- **Outcome**: APPROVED
+- **Branch line count**: 718 (main: 711, net +7 — correct for 5 additions + 2 marker line changes)
+- **Sprint 013-033 content**: INTACT — all sprint headers confirmed present (grep verified)
+- **Sprint 034 additions**: ALL PRESENT — sentimentTrend.ts in tree, sentimentTrendTools.ts in tree, tool count 62, Sprint 000-034 header, Sprint 034 status block
+- **bun tsc --noEmit**: 0 errors
+- **DDD compliance scan**: PASS (no domain→infra imports)
+- **Merge**: Completed with no-ff merge commit `a98be92` on main. Merge conflicts resolved (CLAUDE.md, TASKS.md, schema.ts — all kept main's content plus Sprint 034 additions from branch)
