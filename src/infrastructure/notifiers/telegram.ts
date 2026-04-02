@@ -74,6 +74,39 @@ export interface TelegramNotifier {
  * @param options - Optional parse mode and injectable fetch function.
  * @returns true on HTTP 200, false on any failure.
  */
+/** Telegram API message length limit */
+const TELEGRAM_MAX_LENGTH = 4096;
+
+/**
+ * Splits a long message into chunks that fit within Telegram's 4096-char limit.
+ * Splits on newlines when possible to preserve formatting.
+ */
+function splitMessage(text: string, maxLen: number = TELEGRAM_MAX_LENGTH): string[] {
+  if (text.length <= maxLen) return [text];
+
+  const chunks: string[] = [];
+  let remaining = text;
+
+  while (remaining.length > 0) {
+    if (remaining.length <= maxLen) {
+      chunks.push(remaining);
+      break;
+    }
+
+    // Find the last newline within the limit
+    let splitIdx = remaining.lastIndexOf("\n", maxLen);
+    if (splitIdx <= 0) {
+      // No newline found — hard split at limit
+      splitIdx = maxLen;
+    }
+
+    chunks.push(remaining.slice(0, splitIdx));
+    remaining = remaining.slice(splitIdx).replace(/^\n/, ""); // trim leading newline
+  }
+
+  return chunks;
+}
+
 export async function sendTelegramMessage(
   text: string,
   options: SendTelegramOptions = {},
@@ -94,48 +127,58 @@ export async function sendTelegramMessage(
   const parseMode = options.parseMode ?? "Markdown";
   const fetchFn = options.fetchFn ?? (globalThis.fetch as FetchFn);
 
-  const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
-  const body = JSON.stringify({
-    chat_id: chatId,
-    text,
-    parse_mode: parseMode,
-    // Disable link previews to reduce payload and avoid preview-fetch timeouts
-    disable_web_page_preview: true,
-  });
+  // Split long messages to stay within Telegram's 4096-char limit
+  const chunks = splitMessage(text);
 
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 30_000);
-
-  try {
-    const response = await fetchFn(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body,
-      signal: controller.signal,
+  for (const chunk of chunks) {
+    const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
+    const body = JSON.stringify({
+      chat_id: chatId,
+      text: chunk,
+      parse_mode: parseMode,
+      // Disable link previews to reduce payload and avoid preview-fetch timeouts
+      disable_web_page_preview: true,
     });
 
-    if (!response.ok) {
-      // If Markdown parse failed (400), retry as plain text
-      const status = response.status;
-      if (status === 400 && parseMode !== "") {
-        log.warn("[telegram] Markdown parse failed — retrying as plain text", { chatId });
-        clearTimeout(timeoutId);
-        return sendTelegramMessage(text, { ...options, parseMode: "" });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30_000);
+
+    try {
+      const response = await fetchFn(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body,
+        signal: controller.signal,
+      });
+
+      if (!response.ok) {
+        // If Markdown parse failed (400), retry as plain text
+        const status = response.status;
+        if (status === 400 && parseMode !== "") {
+          log.warn("[telegram] Markdown parse failed — retrying as plain text", { chatId });
+          clearTimeout(timeoutId);
+          return sendTelegramMessage(text, { ...options, parseMode: "" });
+        }
+        log.warn("[telegram] sendMessage failed", { status, chatId });
+        return false;
       }
-      log.warn("[telegram] sendMessage failed", { status, chatId });
+    } catch (err) {
+      log.warn("[telegram] sendMessage network error", {
+        error: err instanceof Error ? err.message : String(err),
+        chatId,
+      });
       return false;
+    } finally {
+      clearTimeout(timeoutId);
     }
 
-    return true;
-  } catch (err) {
-    log.warn("[telegram] sendMessage network error", {
-      error: err instanceof Error ? err.message : String(err),
-      chatId,
-    });
-    return false;
-  } finally {
-    clearTimeout(timeoutId);
+    // Small delay between chunks to avoid rate limiting
+    if (chunks.length > 1) {
+      await new Promise((r) => setTimeout(r, 300));
+    }
   }
+
+  return true;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -171,46 +214,57 @@ export async function sendTelegramReport(
   const parseMode = options.parseMode ?? "";
   const fetchFn = options.fetchFn ?? (globalThis.fetch as FetchFn);
 
-  const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
-  const body = JSON.stringify({
-    chat_id: reportChatId,
-    text,
-    parse_mode: parseMode || undefined,
-    disable_web_page_preview: true,
-  });
+  // Split long messages to stay within Telegram's 4096-char limit
+  const chunks = splitMessage(text);
+  let lastMessageId = 0;
 
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 30_000);
-
-  try {
-    const response = await fetchFn(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body,
-      signal: controller.signal,
+  for (const chunk of chunks) {
+    const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
+    const body = JSON.stringify({
+      chat_id: reportChatId,
+      text: chunk,
+      parse_mode: parseMode || undefined,
+      disable_web_page_preview: true,
     });
 
-    if (!response.ok) {
-      log.warn("[telegram] sendReport failed", { status: response.status, chatId: reportChatId });
-      return 0;
-    }
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30_000);
 
-    // Extract message_id for later deletion
     try {
-      const json = await response.json() as { result?: { message_id?: number } };
-      return json.result?.message_id ?? 0;
-    } catch {
+      const response = await fetchFn(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body,
+        signal: controller.signal,
+      });
+
+      if (!response.ok) {
+        log.warn("[telegram] sendReport failed", { status: response.status, chatId: reportChatId });
+        return 0;
+      }
+
+      // Extract message_id for later deletion (use last chunk's ID)
+      try {
+        const json = await response.json() as { result?: { message_id?: number } };
+        lastMessageId = json.result?.message_id ?? 0;
+      } catch { /* continue */ }
+    } catch (err) {
+      log.warn("[telegram] sendReport network error", {
+        error: err instanceof Error ? err.message : String(err),
+        chatId: reportChatId,
+      });
       return 0;
+    } finally {
+      clearTimeout(timeoutId);
     }
-  } catch (err) {
-    log.warn("[telegram] sendReport network error", {
-      error: err instanceof Error ? err.message : String(err),
-      chatId: reportChatId,
-    });
-    return 0;
-  } finally {
-    clearTimeout(timeoutId);
+
+    // Small delay between chunks
+    if (chunks.length > 1) {
+      await new Promise((r) => setTimeout(r, 300));
+    }
   }
+
+  return lastMessageId;
 }
 
 /**

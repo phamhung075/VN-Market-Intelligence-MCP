@@ -122,13 +122,23 @@
 ## 📋 TODO
 *(Dependencies cleared — ready to assign)*
 
-### Sprint 029 — Always-On Investor (2026-04-01)
+### Sprint 030 — Quality Before Quantity (2026-04-01)
 
 | # | Title | Branch | Agent | Priority | Depends on | Status |
 |---|-------|--------|-------|----------|------------|--------|
-| 208 | Telegram command interface: query system via Telegram messages | `task/208-telegram-commands` | BA | P0 | 034 (done) | Backlog |
-| 209 | Daily P&L snapshot in morning briefing | `task/209-portfolio-pnl` | BA | P1 | 190 (done) | Review |
-| 210 | News source health monitoring + get_source_health MCP tool | `task/210-source-health` | BA | P1 | 193 (soft) | Backlog |
+| 211 | CLAUDE.md sync through Sprint 029 | `task/211-claude-md-sync` | BA | P0 | — | Backlog |
+| 212 | Stale worktree cleanup (.claude/worktrees/) | `task/212-worktree-cleanup` | Developer | P1 | — | Backlog |
+| 213 | Test isolation audit: standardise :memory: DB pattern | `task/213-test-isolation` | Developer | P1 | — | Backlog |
+
+---
+
+### Sprint 029 — Always-On Investor (2026-04-01) — COMPLETE
+
+| # | Title | Branch | Agent | Priority | Depends on | Status |
+|---|-------|--------|-------|----------|------------|--------|
+| 208 | Telegram command interface: query system via Telegram messages | `task/208-telegram-commands` | BA | P0 | 034 (done) | Done |
+| 209 | Daily P&L snapshot in morning briefing | `task/209-portfolio-pnl` | BA | P1 | 190 (done) | Done |
+| 210 | News source health monitoring + get_source_health MCP tool | `task/210-source-health` | BA | P1 | 193 (soft) | Done |
 
 ---
 

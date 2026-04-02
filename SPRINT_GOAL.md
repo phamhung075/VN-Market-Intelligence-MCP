@@ -2,27 +2,26 @@
 
 ## Current Sprint
 
-status: COMPLETE
-sprint_id: 029
+status: PLANNING
+sprint_id: 030
 started: 2026-04-01
-updated: 2026-04-02
-completed: 2026-04-02
+updated: 2026-04-01
 
 ---
 
 ### Theme
 
-**"Always-On Investor — Query Anywhere, Trust Everything"**
+**"Quality Before Quantity — Documentation, Disk, and Test Reliability"**
 
 ---
 
 ### Goal
 
-The investor is in France watching a Vietnamese market 6 hours ahead. Sprint 029 closes three
-daily-use gaps: a Telegram command interface so the investor can query the system without
-opening Claude Desktop; a P&L snapshot baked into the morning briefing so portfolio
-performance is visible at 08:00 every day; and a news source health monitor so the investor
-knows immediately when an intelligence source goes silent and cannot trust the cascade engine.
+Sprint 030 is a consolidation sprint. The system has grown from 0 to 53 MCP tools and 1771
+tests across 29 sprints. The architecture documentation (CLAUDE.md) is 7 sprints behind
+reality. 32 stale worktrees consume disk space and pollute the worktree list. Test isolation
+inconsistencies risk flaky failures under parallel Bun test execution. This sprint makes the
+project trustworthy to its own agents before adding any new features.
 
 ---
 
@@ -30,264 +29,229 @@ knows immediately when an intelligence source goes silent and cannot trust the c
 
 **IN**
 
-1. **Task 208 — Telegram command interface: query system via Telegram messages (P0)**
+1. **Task 211 — CLAUDE.md sync through Sprint 029 (P0)**
 
-   The investor sends a message to the Telegram bot and receives a structured reply. The bot
-   polls for incoming messages using `getUpdates` (long polling, no webhook required). Commands
-   are processed synchronously and replies are sent back to the same chat.
+   CLAUDE.md is the single source of truth for every agent in the MAS chain. It is currently
+   accurate through Sprint 026. Sprints 027-029 added the following files that are not yet
+   documented:
 
-   Supported commands (MVP):
-   - `/watchlist` — list current watchlist stocks with latest prices
-   - `/alerts` — last 5 unresolved HIGH/CRITICAL alerts
-   - `/briefing` — trigger the morning briefing summary on demand
-   - `/price VCB` — current price for one stock (any stock code)
-   - `/health` — system health: last cycle time, DB size, active sources
+   New domain services (not in CLAUDE.md):
+   - `src/domain/services/portfolioPnlCalculator.ts` — P&L calculation per position
+   - `src/domain/services/portfolioRiskCalculator.ts` — portfolio risk metrics
+   - `src/domain/services/predictionCascadeMapper.ts` — Polymarket event → cascade domain
+   - `src/domain/services/predictionSignalDetector.ts` — Polymarket signal detection
+   - `src/domain/services/priceAlertChecker.ts` — price alert threshold checker
+   - `src/domain/services/rateLimiter.ts` — per-source API rate limiter (token bucket)
+   - `src/domain/services/rebalancingCalculator.ts` — portfolio rebalancing signals
+   - `src/domain/services/sectorRotationDetector.ts` — sector rotation signal detection
+   - `src/domain/services/sparkline.ts` — price sparkline generator
+   - `src/domain/services/stockAliases.ts` — Vietnamese company name → stock code aliases
+   - `src/domain/services/stockSearch.ts` — stock search by name or code
+   - `src/domain/services/sourceHealthTracker.ts` — news source health (ok/degraded/down)
 
-   Architecture:
-   - New file `src/infrastructure/notifiers/telegramCommands.ts` — `TelegramCommandHandler`
-     class with `poll()` method. Runs a `setInterval` every 5 seconds inside the scheduler.
-   - Scheduler integration: `src/scheduler/jobs.ts` starts the command handler alongside
-     existing cron jobs. No new cron expression — uses `setInterval(poll, 5000)`.
-   - Command routing: simple `if/else` on `text.trim().toLowerCase()`. No external NLP.
-   - Reply format: plain text Vietnamese, same style as existing Telegram notifier.
-   - `getUpdates` uses `offset` param to avoid re-processing old messages. Offset stored in
-     memory (resets on restart — acceptable for MVP).
-   - On unknown command: reply "Lenh khong hop le. Cac lenh: /watchlist /alerts /briefing
-     /price [MA_CP] /health"
-   - Bot token and chat ID reuse `infrastructure/config.ts` Telegram config. If Telegram is
-     disabled (`telegram.enabled = false`), command handler does not start.
+   New infrastructure files (not in CLAUDE.md):
+   - `src/infrastructure/db/checkpoint.ts` — WAL checkpoint helper for SQLite
+   - `src/infrastructure/db/pnlSnapshotStore.ts` — portfolio P&L snapshot store
+   - `src/infrastructure/db/positionStore.ts` — portfolio position CRUD
+   - `src/infrastructure/db/predictionStore.ts` — Polymarket prediction data store
+   - `src/infrastructure/fetchers/pdfOcrWorker.ts` — OCR fallback for scanned PDF BCTCs
+   - `src/infrastructure/fetchers/polymarket.ts` — Polymarket API fetcher
+   - `src/infrastructure/fetchers/sbv.ts` — State Bank of Vietnam rates fetcher
+   - `src/infrastructure/fetchers/tradingEconomics.ts` — Trading Economics indicators fetcher
+   - `src/infrastructure/fetchers/yahooFinance.ts` — Yahoo Finance commodity price fetcher
+   - `src/infrastructure/notifiers/telegramCommands.ts` — Telegram command handler (long-poll)
 
-   Graceful degradation:
-   - `getUpdates` timeout or network error: log at WARN, skip cycle, retry next 5 s.
-   - Individual command handler throws: reply "Loi xu ly lenh. Vui long thu lai." — never
-     crash the poller.
-   - If `TELEGRAM_BOT_TOKEN` not set: handler does not start, logs INFO "Telegram commands
-     disabled — no token".
+   New application use cases (not in CLAUDE.md):
+   - `src/application/usecases/assembleAlertDigest.ts` — daily/weekly alert digest assembly
+   - `src/application/usecases/exportPortfolioSnapshot.ts` — portfolio snapshot export
+   - `src/application/usecases/runPredictionImpactChain.ts` — Polymarket → cascade chain
+   - `src/application/usecases/getPortfolioPnl.ts` — portfolio P&L calculator (Sprint 029)
+
+   New MCP tool files (not in CLAUDE.md):
+   - `src/interface/mcp/tools/alertAccuracy.ts` — alert accuracy scoring tool
+   - `src/interface/mcp/tools/alertCheckTools.ts` — alert threshold check tools
+   - `src/interface/mcp/tools/alertDigestTools.ts` — alert digest MCP tools
+   - `src/interface/mcp/tools/correlationTools.ts` — stock correlation tools
+   - `src/interface/mcp/tools/dataFreshnessTools.ts` — data freshness check tools
+   - `src/interface/mcp/tools/earningsCalendarTools.ts` — earnings calendar tools
+   - `src/interface/mcp/tools/exportTools.ts` — portfolio export tools
+   - `src/interface/mcp/tools/performanceTools.ts` — portfolio performance tools
+   - `src/interface/mcp/tools/portfolioRiskTool.ts` — portfolio risk MCP tool
+   - `src/interface/mcp/tools/positionTools.ts` — position tracking tools
+   - `src/interface/mcp/tools/predictionTools.ts` — Polymarket prediction tools
+   - `src/interface/mcp/tools/priceAlertTools.ts` — price alert management tools
+   - `src/interface/mcp/tools/priceHistoryTools.ts` — price history query tools
+   - `src/interface/mcp/tools/rateLimitTools.ts` — rate limiter status tool
+   - `src/interface/mcp/tools/rebalancingTools.ts` — portfolio rebalancing tools
+   - `src/interface/mcp/tools/searchTools.ts` — stock search tool
+   - `src/interface/mcp/tools/sectorRotationTools.ts` — sector rotation tools
+   - `src/interface/mcp/tools/sourceHealthTools.ts` — source health tools
+   - `src/interface/mcp/tools/registry.ts` — central tool registry (task 193)
+
+   New scheduler jobs (not in CLAUDE.md):
+   - `src/scheduler/alertDigestJob.ts` — daily/weekly alert digest cron
+   - `src/scheduler/dataAuditJob.ts` — nightly data integrity audit cron
+   - `src/scheduler/predictionMarketJob.ts` — Polymarket polling cron
+
+   Tool count update: CLAUDE.md says 20 tools (Sprint 012). Current count: 53 tools.
+
+   Current implementation status section must be updated:
+   - Mark Sprints 013-029 as complete with correct task lists
+   - Remove stale "In Progress" entries (circuit breaker is done as Sprint 015)
+   - Update Scheduled Jobs table to include alertDigestJob, dataAuditJob, predictionMarketJob
+   - Update Data sources table to include Yahoo Finance, SBV, Trading Economics indicators,
+     Polymarket
+   - Update tool count references from 20 → 53
 
    Acceptance criteria:
-   - `TelegramCommandHandler.poll()` called with mock returning `/watchlist` message → calls
-     watchlist DB query and sends reply via `sendTelegramMessage`.
-   - `poll()` with `/price VCB` → fetches price and sends "VCB: 89,500 VND" reply.
-   - `poll()` with `/alerts` → returns last 5 HIGH/CRITICAL alerts formatted in Vietnamese.
-   - `poll()` with `/briefing` → triggers `assembleBriefing()` and sends truncated output.
-   - `poll()` with unknown command → sends the help text.
-   - `poll()` when `getUpdates` throws → logs WARN, does not throw, does not crash.
-   - Offset advances after each processed update so messages are not re-processed on next poll.
-   - `telegram.enabled = false` → handler never calls `getUpdates`.
-   - >= 16 tests, 0 failures. `bun tsc --noEmit` → 0 errors.
-   - No new MCP tools (Telegram interface, not MCP). Tool count unchanged.
+   - Every file that exists in `src/` is mentioned in CLAUDE.md (domain/infra/app/interface).
+   - Sprints 013-029 all appear in the Completed Sprints table.
+   - Tool count says 53.
+   - `bun tsc --noEmit` → 0 errors (CLAUDE.md change is doc-only, no code impact).
+   - No new MCP tools. No new tests. Pure documentation update.
 
    Files:
-   - CREATE: `src/infrastructure/notifiers/telegramCommands.ts`
-   - MODIFY: `src/scheduler/jobs.ts` — start command handler on scheduler init
-   - MODIFY: `src/infrastructure/config.ts` — expose `telegram.enabled` flag if not already
-   - CREATE: `src/__tests__/208-telegram-commands.test.ts`
+   - MODIFY: `CLAUDE.md` — comprehensive sync through Sprint 029
 
-2. **Task 209 — Daily P&L snapshot in morning briefing (P1)**
+2. **Task 212 — Stale worktree cleanup (P1)**
 
-   Every morning at 08:00 the briefing fires. It already shows VN-Index, macro dashboard,
-   alerts. Add a "DANH MUC" section showing each portfolio position with:
-   - Current price (from last prices fetch)
-   - Entry price (from `portfolio_positions` table, `buy_price` column)
-   - P&L in VND and % since entry
-   - Total portfolio P&L across all open positions
+   The `.claude/worktrees/` directory contains 34 entries: 32 stale agent-named directories
+   (e.g. `agent-a0511eb6`, `agent-aed24f9a`) plus 2 active ones (`heuristic-payne`,
+   `infallible-blackburn`). The stale entries are not registered as git worktrees — they are
+   leftover directories from agent sub-processes. They pollute `ls` output and consume disk.
 
-   New use case `src/application/usecases/getPortfolioPnl.ts`:
-   - Reads all open positions (`status = 'open'`) from `portfolio_positions`.
-   - Reads latest prices from `stock_prices` table (most recent row per stock_code).
-   - Computes: `pnl_vnd = (current_price - buy_price) * quantity`,
-     `pnl_pct = (current_price - buy_price) / buy_price * 100`.
-   - Returns array of `PositionSnapshot` + `totalPnlVnd` + `totalPnlPct` (weighted avg).
-   - If no price found for a stock: include row with `current_price = null`, `pnl = null`,
-     note "Chua co gia".
+   Approach:
+   - Check each `agent-*` directory: if it is NOT a registered git worktree
+     (`git worktree list` does not show its path), delete it.
+   - Keep `heuristic-payne` and `infallible-blackburn` only if they appear in
+     `git worktree list`; otherwise delete them too.
+   - The main worktree (project root) and `task/doc-001-claude-md-update` branch worktree
+     (if registered) must NOT be touched.
+   - After cleanup: `ls .claude/worktrees/` should return 0-2 entries (only active worktrees).
 
-   `assembleBriefing.ts` integration:
-   - Call `getPortfolioPnl()` after existing sections.
-   - Append "--- DANH MUC ---" section to briefing text if at least 1 open position exists.
-   - Format: one line per position: `VCB: mua 88,000 | hien 92,300 | +4,300 (+4.9%)` followed
-     by total line: `Tong P&L: +12,450,000 VND (+3.2%)`.
-   - If no open positions: section is omitted entirely.
+   Acceptance criteria:
+   - All 32 `agent-*` directories removed from `.claude/worktrees/`.
+   - `git worktree list` shows only the main worktree (and any legitimately registered ones).
+   - No test files, source files, or git history are touched.
+   - `bun test` full suite → 0 failures after cleanup (worktrees do not affect test suite).
 
-   SQLite snapshot storage:
-   - New table `portfolio_pnl_snapshots`:
-     ```sql
-     CREATE TABLE IF NOT EXISTS portfolio_pnl_snapshots (
-       id           INTEGER PRIMARY KEY AUTOINCREMENT,
-       snapshot_at  TEXT NOT NULL DEFAULT (datetime('now')),
-       stock_code   TEXT NOT NULL,
-       buy_price    REAL NOT NULL,
-       current_price REAL,
-       quantity     REAL NOT NULL,
-       pnl_vnd      REAL,
-       pnl_pct      REAL
-     );
-     CREATE INDEX IF NOT EXISTS idx_pnl_snapshots_date
-       ON portfolio_pnl_snapshots(snapshot_at);
+   Files:
+   - DELETE: `.claude/worktrees/agent-*` (32 directories)
+   - DELETE (if unregistered): `.claude/worktrees/heuristic-payne`,
+     `.claude/worktrees/infallible-blackburn`, `.claude/worktrees/jovial-cori`,
+     `.claude/worktrees/zealous-poitras`
+
+3. **Task 213 — Test isolation audit: standardise :memory: DB pattern (P1)**
+
+   The polymarket flaky test was fixed in task 192 by creating a fresh `:memory:` DB per
+   test. However the fix introduced a bespoke pattern. The broader test suite may have other
+   files that share module-level DB singletons and fail intermittently under parallel Bun
+   test execution.
+
+   Audit scope:
+   - Read all `src/__tests__/*.test.ts` files that import from `src/infrastructure/db/`.
+   - For each test file: confirm it creates a fresh `Database(':memory:')` in a `beforeEach`
+     or per-test helper rather than importing the shared module-level DB singleton.
+   - Identify any test that uses the shared singleton (`import { db } from
+     '../../infrastructure/db'` or similar) without resetting state.
+
+   Fix approach:
+   - For each identified non-isolated test: extract a `createTestDb()` helper that returns a
+     fresh `:memory:` DB with `initSchema(db)` applied, and inject it into the unit under test.
+   - Pattern to enforce:
+     ```typescript
+     // In each test file that needs DB
+     import Database from 'better-sqlite3';
+     import { initSchema } from '../../infrastructure/db/schema';
+     function makeDb() { const db = new Database(':memory:'); initSchema(db); return db; }
      ```
-   - `getPortfolioPnl()` writes a row per position to this table on every call. This gives a
-     P&L history the investor can query later.
+   - Do NOT change production code DB singletons. Only test files change.
+   - If a test file already has the correct pattern, note it as "already isolated" and skip.
 
    Acceptance criteria:
-   - `getPortfolioPnl()` with 2 open positions and matching prices → returns correct pnl_vnd
-     and pnl_pct for each, plus correct total.
-   - Position with no matching price → `current_price = null`, `pnl_vnd = null`, no crash.
-   - No open positions → returns empty array, `totalPnlVnd = 0`.
-   - `assembleBriefing()` output contains "DANH MUC" section when positions exist.
-   - `assembleBriefing()` output does NOT contain "DANH MUC" when no positions exist.
-   - Snapshot rows written to `portfolio_pnl_snapshots` after each call.
-   - >= 14 tests, 0 failures. `bun tsc --noEmit` → 0 errors.
-   - No new MCP tools. Tool count unchanged.
+   - Zero test files import the shared `db` singleton without resetting state.
+   - `bun test` run 3 times consecutively → 0 failures each run (stability proof).
+   - No production code changes. Only `src/__tests__/*.test.ts` modifications.
+   - `bun tsc --noEmit` → 0 errors.
+   - Test count stable (no tests added or removed — isolation refactor only).
 
    Files:
-   - MODIFY: `src/infrastructure/db/schema.ts` — add `portfolio_pnl_snapshots` table + index
-   - CREATE: `src/application/usecases/getPortfolioPnl.ts`
-   - MODIFY: `src/application/usecases/assembleBriefing.ts` — add DANH MUC section
-   - CREATE: `src/__tests__/209-portfolio-pnl.test.ts`
-
-3. **Task 210 — News source health monitoring (P1)**
-
-   The investor relies on 5 news sources for the cascade engine. When one goes silent (0
-   articles returned for N consecutive cycles) the cascade analysis degrades silently. The
-   investor has no way to know that FX macro news is missing because VnEconomy has been
-   blocking requests for 3 hours.
-
-   New domain service `src/domain/services/sourceHealthTracker.ts`:
-   - In-memory map: `source_name → { lastSuccessAt: number, consecutiveFailures: number,
-     articlesLastCycle: number }`.
-   - `recordFetch(source: string, articleCount: number): void` — updates the map. If
-     `articleCount === 0`, increments `consecutiveFailures`; else resets to 0 and sets
-     `lastSuccessAt = Date.now()`.
-   - `getHealthReport(): SourceHealth[]` — returns one row per source with fields:
-     `source`, `status` ('ok' | 'degraded' | 'down'), `consecutiveFailures`,
-     `lastSuccessAt`, `minutesSinceSuccess`.
-   - Status thresholds (configurable in `mcp.config.json` `sourceHealth`):
-     - `ok`: consecutiveFailures < 2
-     - `degraded`: 2 <= consecutiveFailures < 5
-     - `down`: consecutiveFailures >= 5
-   - Singleton exported from module. Resets on server restart.
-
-   Integration in `pollNews.ts`:
-   - After each fetcher call, call `sourceHealthTracker.recordFetch(sourceName, items.length)`.
-   - 5 sources: 'cafef', 'vnexpress', 'vneconomy', 'reuters', 'tradingeconomics'.
-
-   Telegram alert on source going `down`:
-   - In `pollNews.ts`, after recording fetches: check `getHealthReport()`. For any source
-     that just transitioned to `down` (consecutiveFailures === 5 exactly), send a Telegram
-     message: "CANH BAO: Nguon tin [cafef] ngung hoat dong (5 chu ky lien tiep khong co du
-     lieu). Kiem tra ket noi."
-   - Transition detection: compare before/after `recordFetch` — only alert on the cycle where
-     `consecutiveFailures` hits exactly 5, not on every subsequent cycle.
-
-   New MCP tool `get_source_health` in `src/interface/mcp/tools/systemTools.ts`:
-   - Returns `getHealthReport()` formatted as a Vietnamese table.
-   - Registered via `registry.ts` (requires task 193 complete; if 193 not done, register
-     directly in `server.ts` as a fallback — use same pattern as other tools).
-
-   `mcp.config.json` addition:
-   ```json
-   "sourceHealth": {
-     "degradedThreshold": 2,
-     "downThreshold": 5
-   }
-   ```
-
-   Acceptance criteria:
-   - `recordFetch('cafef', 0)` 5 times → status 'down', `consecutiveFailures = 5`.
-   - `recordFetch('cafef', 3)` after 5 failures → status 'ok', `consecutiveFailures = 0`.
-   - `recordFetch('vnexpress', 5)` → status 'ok'.
-   - Different sources are independent (cafef down does not affect vnexpress counter).
-   - Telegram message sent exactly once when source hits 5 consecutive failures (not on 6th).
-   - `get_source_health` MCP tool returns all 5 sources with correct status.
-   - `mcp.config.json` thresholds respected at runtime.
-   - >= 16 tests, 0 failures. `bun tsc --noEmit` → 0 errors.
-   - Tool count increases by 1 (get_source_health). 52 → 53.
-
-   Files:
-   - CREATE: `src/domain/services/sourceHealthTracker.ts`
-   - MODIFY: `src/application/usecases/pollNews.ts` — wire recordFetch + down-alert
-   - MODIFY: `src/interface/mcp/tools/systemTools.ts` — add `get_source_health` tool
-   - MODIFY: `src/interface/mcp/tools/registry.ts` — register systemTools (if 193 done)
-   - MODIFY: `mcp.config.json` — add `sourceHealth` section
-   - CREATE: `src/__tests__/210-source-health.test.ts`
+   - MODIFY: any `src/__tests__/*.test.ts` that uses shared DB singleton without reset
 
 **OUT**
 
-- Watchlist auto-enrichment with sector peers (deferred — investor has 4 stocks, sector
-  context already in place via sectorPeers.ts)
-- Historical analysis replay / backtesting engine (high complexity, no daily urgency)
-- Circuit breaker improvements (already functional from Sprint 015; tuning deferred)
-- LLM-based recommendations (out of scope permanently — rule-based only)
-- Tasks 196 (worktree cleanup) and 197 (Reuters RSS) remain deferred
+- Telegram command interface (already done in Sprint 029 — task 208)
+- New MCP tools of any kind (feature freeze for this sprint)
+- Polymarket API changes (external service — monitor only)
+- LLM-based analysis (permanently out of scope)
+- pdfOcrWorker production wiring (deferred — scanned BCTCs are edge case)
+- Watchlist expansion with HVN, HPG as FX-sensitive stocks (deferred — PO decision pending)
 
 ---
 
 ### Success Metrics
 
-1. The investor sends `/briefing` to the Telegram bot from France at any hour and receives
-   a full market summary within 10 seconds. No Claude Desktop required. (Task 208)
+1. Every file currently in `src/` is documented in CLAUDE.md. A new agent starting Sprint 031
+   can read CLAUDE.md and understand the full system without inspecting the file tree.
+   Sprints 013-029 appear in the completed sprints table. Tool count reads 53. (Task 211)
 
-2. The 08:00 morning briefing contains a "DANH MUC" section showing P&L for all open
-   positions. The investor reads their portfolio performance before market open every day.
-   Historical P&L rows accumulate in `portfolio_pnl_snapshots` for future trend analysis.
-   (Task 209)
+2. `ls .claude/worktrees/` returns 0-2 entries. `git worktree list` is clean. Disk usage
+   from `.claude/worktrees/` drops from 34 directories to at most 2. (Task 212)
 
-3. When CafeF blocks requests for 3 consecutive intelligence cycles, a Telegram warning fires
-   exactly once. `get_source_health` MCP tool shows which sources are ok/degraded/down at any
-   time. The investor can trust the cascade engine or know when to be cautious. (Task 210)
+3. `bun test` run 3 times consecutively produces 0 failures each run. No test file imports the
+   shared DB singleton without state reset. The pattern is uniform across all test files that
+   touch SQLite. (Task 213)
 
-4. `bun tsc --noEmit` → 0 errors. `bun test` full suite → 0 failures. All 1731 existing
-   tests continue to pass.
+4. `bun tsc --noEmit` → 0 errors. `bun test` full suite → 0 failures. All 1771 existing tests
+   continue to pass after refactor.
 
-5. Tool count: 52 → 53 (1 new tool: `get_source_health` from task 210).
+5. Tool count: 53 (unchanged — no new tools this sprint).
 
 ---
 
-### Task board (Sprint 029)
+### Task board (Sprint 030)
 
 | # | Title | Priority | Status | Depends on |
 |---|-------|----------|--------|------------|
-| 208 | Telegram command interface: query system via Telegram messages | P0 | Backlog | 034 (done) |
-| 209 | Daily P&L snapshot in morning briefing | P1 | Backlog | 190 (done) |
-| 210 | News source health monitoring + get_source_health MCP tool | P1 | Backlog | 193 (partial — fallback allowed) |
+| 211 | CLAUDE.md sync through Sprint 029 | P0 | Backlog | — (doc-only) |
+| 212 | Stale worktree cleanup (.claude/worktrees/) | P1 | Backlog | — (independent) |
+| 213 | Test isolation audit: standardise :memory: DB pattern | P1 | Backlog | — (independent) |
 
 ---
 
 ### Dependency chain
 
 ```
-208 (Telegram commands)  — P0, depends on 034 (Telegram notifier, done)
-209 (P&L snapshot)       — P1, depends on portfolio_positions table (task 190, done)
-210 (source health)      — P1, optional soft dep on 193 for registry; fallback registration allowed
+211 (CLAUDE.md sync)     — P0, no code deps, can start immediately
+212 (worktree cleanup)   — P1, independent, mechanical deletion
+213 (test isolation)     — P1, independent, test-only changes
 
-All three tasks can run in parallel.
+All three tasks are independent and can run in parallel.
 ```
 
 ---
 
 ### Key technical decisions (locked at PO level)
 
-- **Task 208 uses long-polling (`getUpdates`), not webhooks**: no public URL required. The
-  server is running locally in production; a webhook would need ngrok or a public endpoint.
-  Long polling with a 5 s interval is sufficient for investor command latency.
+- **Task 211 is documentation-only**: no source code changes. If a discrepancy is found
+  between CLAUDE.md and the actual code, CLAUDE.md is updated to match the code — not the
+  other way around. Code is the source of truth.
 
-- **Task 208 command set is fixed at 5 commands**: no dynamic command registration for MVP.
-  Adding new commands in a future sprint requires editing `telegramCommands.ts` only.
+- **Task 212 deletes only directories not registered in `git worktree list`**: the check
+  against `git worktree list` is mandatory before any deletion. This prevents accidentally
+  removing an active development worktree.
 
-- **Task 209 snapshots are append-only**: `portfolio_pnl_snapshots` is an audit log. No
-  updates, no deletes. This gives the investor a complete P&L history from day one.
+- **Task 213 touches only test files**: production singletons (e.g. the module-level `db`
+  export in `src/infrastructure/db/index.ts`) are NOT changed. The fix is test-side injection
+  only. This avoids introducing test-specific branches in production code.
 
-- **Task 209 uses `stock_prices` table for current price**: this is the same table populated
-  by the intelligence cycle price fetchers. No new HTTP calls in `getPortfolioPnl()` — pure
-  SQLite reads. If the cycle has not run since server start, prices may be stale; the briefing
-  will show the last known price with its timestamp.
+- **Task 213 does not add new tests**: it refactors existing tests for isolation. Test count
+  stays at 1771. If a refactor inadvertently removes coverage, it must be restored before QA
+  sign-off.
 
-- **Task 210 sourceHealthTracker is in `domain/services/`**: pure logic, no I/O. The Telegram
-  alert side-effect lives in `pollNews.ts` (application layer), which is the correct place for
-  cross-cutting notification concerns.
-
-- **Task 210 alert fires exactly once at consecutiveFailures === 5**: not on 4, not on 6+.
-  This prevents alert fatigue if a source stays down for hours. A recovery alert (back to ok)
-  is out of scope for MVP.
+- **Sprint 030 is a feature-freeze sprint**: no new MCP tools, no new domain services, no new
+  use cases. The only allowed changes are documentation updates (211), directory deletions
+  (212), and test file refactoring (213).
 
 ---
 
@@ -324,3 +288,4 @@ All three tasks can run in parallel.
 | 026 | Signal Quality and Portfolio Correlation | 2026-04-02 | 189, 190, 191 |
 | 027 | Stability First | 2026-04-02 | 194 (CLAUDE.md sync), 195 (rebalancing, in Review), hotfixes 198-205 |
 | 028 | Structural Integrity and Investor Safety Net | 2026-04-02 | 192, 193, 206, 207 |
+| 029 | Always-On Investor | 2026-04-02 | 208 (Telegram commands), 209 (P&L snapshot), 210 (source health) |
