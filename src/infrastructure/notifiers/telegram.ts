@@ -149,23 +149,23 @@ export async function sendTelegramMessage(
  *
  * @param text    - The message text.
  * @param options - Optional parse mode and injectable fetch.
- * @returns true on success, false on failure.
+ * @returns message_id on success (for later deletion), 0 on failure.
  */
 export async function sendTelegramReport(
   text: string,
   options: SendTelegramOptions = {},
-): Promise<boolean> {
+): Promise<number> {
   const botToken = Bun.env.TELEGRAM_BOT_TOKEN ?? "";
   const reportChatId = Bun.env.TELEGRAM_REPORT_ID ?? "";
 
   if (!botToken) {
     log.warn("[telegram] TELEGRAM_BOT_TOKEN is not set — skipping report send");
-    return false;
+    return 0;
   }
 
   if (!reportChatId) {
     log.warn("[telegram] TELEGRAM_REPORT_ID is not set — skipping report send");
-    return false;
+    return 0;
   }
 
   const parseMode = options.parseMode ?? "";
@@ -192,18 +192,57 @@ export async function sendTelegramReport(
 
     if (!response.ok) {
       log.warn("[telegram] sendReport failed", { status: response.status, chatId: reportChatId });
-      return false;
+      return 0;
     }
 
-    return true;
+    // Extract message_id for later deletion
+    try {
+      const json = await response.json() as { result?: { message_id?: number } };
+      return json.result?.message_id ?? 0;
+    } catch {
+      return 0;
+    }
   } catch (err) {
     log.warn("[telegram] sendReport network error", {
       error: err instanceof Error ? err.message : String(err),
       chatId: reportChatId,
     });
-    return false;
+    return 0;
   } finally {
     clearTimeout(timeoutId);
+  }
+}
+
+/**
+ * Deletes a message from the REPORT channel by message_id.
+ * Used to clean up resolved reports — keeps the channel showing only open issues.
+ *
+ * @param messageId - The Telegram message_id to delete.
+ * @param options   - Injectable fetch for tests.
+ * @returns true if deleted, false on failure.
+ */
+export async function deleteTelegramReport(
+  messageId: number,
+  options: { fetchFn?: FetchFn } = {},
+): Promise<boolean> {
+  const botToken = Bun.env.TELEGRAM_BOT_TOKEN ?? "";
+  const reportChatId = Bun.env.TELEGRAM_REPORT_ID ?? "";
+
+  if (!botToken || !reportChatId || messageId <= 0) return false;
+
+  const fetchFn = options.fetchFn ?? (globalThis.fetch as FetchFn);
+  const url = `https://api.telegram.org/bot${botToken}/deleteMessage`;
+  const body = JSON.stringify({ chat_id: reportChatId, message_id: messageId });
+
+  try {
+    const response = await fetchFn(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body,
+    });
+    return response.ok;
+  } catch {
+    return false;
   }
 }
 

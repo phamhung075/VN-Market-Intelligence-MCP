@@ -12,7 +12,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 
-import { sendTelegramMessage, sendTelegramReport } from "../../../infrastructure/notifiers/telegram.js";
+import { sendTelegramMessage, sendTelegramReport, deleteTelegramReport } from "../../../infrastructure/notifiers/telegram.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tool registration
@@ -118,14 +118,46 @@ export function registerTelegramTools(server: McpServer): void {
       try {
         const recipient = to.startsWith("@") ? to : `@${to}`;
         const fullMsg = `${recipient}\nFrom: ${from}\n\n${message}`;
-        const success = await sendTelegramReport(fullMsg);
+        const msgId = await sendTelegramReport(fullMsg);
 
         return {
           content: [{
             type: "text" as const,
-            text: success
-              ? `Report sent to Vn-market-report channel. To: ${recipient}`
+            text: msgId > 0
+              ? `Report sent to Vn-market-report channel. To: ${recipient}\nmessage_id: ${msgId} (save this to delete later when resolved)`
               : "Failed — check TELEGRAM_BOT_TOKEN / TELEGRAM_REPORT_ID env vars",
+          }],
+        };
+      } catch (err) {
+        return {
+          content: [{
+            type: "text" as const,
+            text: `Error: ${(err as Error).message}`,
+          }],
+        };
+      }
+    },
+  );
+
+  // ── 3. delete_telegram_report — clean up resolved reports ──────────────
+  server.tool(
+    "delete_telegram_report",
+    "Delete a resolved report from the Vn-market-report Telegram channel. " +
+      "Use this after fixing an issue to keep the channel clean — only open issues remain. " +
+      "Requires the message_id returned by send_telegram_report or submit_feedback.",
+    {
+      message_id: z.number().int().min(1)
+        .describe("The Telegram message_id to delete (returned by send_telegram_report)"),
+    },
+    async ({ message_id }) => {
+      try {
+        const deleted = await deleteTelegramReport(message_id);
+        return {
+          content: [{
+            type: "text" as const,
+            text: deleted
+              ? `Report message ${message_id} deleted from Vn-market-report channel.`
+              : `Failed to delete message ${message_id} — may already be deleted or invalid ID.`,
           }],
         };
       } catch (err) {

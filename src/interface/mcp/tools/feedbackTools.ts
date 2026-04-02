@@ -58,7 +58,7 @@ export function registerFeedbackTools(server: McpServer): void {
         const now = new Date().toISOString();
 
         // Send to REPORT channel (TELEGRAM_REPORT_ID) — single source of truth
-        let reportSent = false;
+        let msgId = 0;
         try {
           const { sendTelegramReport } = await import("../../../infrastructure/notifiers/telegram.js");
           const emoji = priority === "critical" ? "🚨" : priority === "high" ? "🔴" : priority === "medium" ? "🟡" : "🟢";
@@ -73,7 +73,7 @@ export function registerFeedbackTools(server: McpServer): void {
             ``,
             `🕐 ${now.slice(0, 16).replace("T", " ")} UTC`,
           ].filter(Boolean).join("\n");
-          reportSent = await sendTelegramReport(msg);
+          msgId = await sendTelegramReport(msg);
         } catch { /* best-effort */ }
 
         // Also send HIGH/CRITICAL to the user alert channel
@@ -86,14 +86,15 @@ export function registerFeedbackTools(server: McpServer): void {
           } catch { /* best-effort */ }
         }
 
-        logger.info("[feedback] submitted via Telegram", { agent, category, title, priority, to, reportSent });
+        logger.info("[feedback] submitted via Telegram", { agent, category, title, priority, to, msgId });
 
         return {
           content: [{
             type: "text" as const,
             text: `Feedback submitted: [${priority.toUpperCase()}] ${title}\n` +
               `Recipient: ${to}\n` +
-              `Report channel: ${reportSent ? "sent" : "failed (check TELEGRAM_REPORT_ID)"}`,
+              `Report channel: ${msgId > 0 ? "sent" : "failed (check TELEGRAM_REPORT_ID)"}\n` +
+              `message_id: ${msgId} (use delete_telegram_report to remove when resolved)`,
           }],
         };
       } catch (err) {
