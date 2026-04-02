@@ -12,13 +12,15 @@
  *   - Returns null when the update has no actionable text
  *
  * Supported commands:
- *   /watchlist  — list watchlist stocks with current prices
- *   /price VCB  — price snapshot for a single stock
- *   /alerts     — last 5 alerts
- *   /briefing   — condensed morning briefing from DB
- *   /health     — system health (uptime, DB size, watchlist count)
- *   /pnl        — portfolio P&L from positions + market_prices
- *   /help       — list all commands
+ *   /watchlist        — list watchlist stocks with current prices
+ *   /price VCB        — price snapshot for a single stock
+ *   /alerts           — last 5 alerts
+ *   /briefing         — condensed morning briefing from DB
+ *   /health           — system health (uptime, DB size, watchlist count)
+ *   /pnl              — portfolio P&L from positions + market_prices
+ *   /report <mota>    — report a bug/issue to Dev Team (priority=medium)
+ *   /fix <mota>       — report an urgent bug to Dev Team (priority=high)
+ *   /help             — list all commands
  *
  * @module infrastructure/notifiers/telegramCommands
  */
@@ -57,6 +59,8 @@ const HELP_TEXT = `Cac lenh ho tro:
 /briefing - Tom tat thi truong
 /health - Trang thai he thong
 /pnl - Lai/Lo danh muc (P&L)
+/report <mota> - Bao loi cho Dev Team
+/fix <mota> - Bao loi khan cap
 /help - Danh sach lenh nay`;
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -414,6 +418,69 @@ function handleBriefing(db: Database): string {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// /report and /fix handlers (Task 232)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Ensure the agent_feedback table exists (idempotent — matches DDL in
+ * dataAuditJob.ts and feedbackTools.ts).
+ */
+function ensureAgentFeedbackTable(db: Database): void {
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS agent_feedback (
+      id         INTEGER PRIMARY KEY AUTOINCREMENT,
+      agent      TEXT NOT NULL,
+      category   TEXT NOT NULL,
+      title      TEXT NOT NULL,
+      detail     TEXT NOT NULL DEFAULT '',
+      priority   TEXT NOT NULL DEFAULT 'medium',
+      status     TEXT NOT NULL DEFAULT 'new',
+      created_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_feedback_status ON agent_feedback(status);
+    CREATE INDEX IF NOT EXISTS idx_feedback_agent  ON agent_feedback(agent);
+  `);
+}
+
+/**
+ * /report <description> — write a medium-priority issue to agent_feedback.
+ * /fix   <description> — same but priority='high'.
+ *
+ * @param db       - Active bun:sqlite Database connection.
+ * @param args     - Words after the command token.
+ * @param priority - 'medium' for /report, 'high' for /fix.
+ * @returns Plain-text Vietnamese response.
+ */
+function handleReport(
+  db: Database,
+  args: string[],
+  priority: "medium" | "high",
+): string {
+  const text = args.join(" ").trim();
+
+  if (!text) {
+    const cmd = priority === "high" ? "fix" : "report";
+    return `Su dung: /${cmd} <mo ta loi>\nVi du: /${cmd} Price fetch bi loi cho ma VCB`;
+  }
+
+  ensureAgentFeedbackTable(db);
+
+  const title = text.slice(0, 100);
+  const now = new Date().toISOString().replace("T", " ").slice(0, 19);
+
+  db.prepare(
+    `INSERT INTO agent_feedback
+       (agent, category, title, detail, priority, status, created_at)
+     VALUES (?, ?, ?, ?, ?, 'new', ?)`,
+  ).run("user-telegram", "user_report", title, text, priority, now);
+
+  if (priority === "high") {
+    return "Da gui bao cao KHAN CAP den Dev Team. Se xu ly ngay.";
+  }
+  return "Da gui bao cao den Dev Team. Se xu ly trong gio toi.";
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Main router
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -473,6 +540,14 @@ export async function handleTelegramCommand(
 
       case "/briefing":
         responseText = handleBriefing(db);
+        break;
+
+      case "/report":
+        responseText = handleReport(db, args, "medium");
+        break;
+
+      case "/fix":
+        responseText = handleReport(db, args, "high");
         break;
 
       default:
