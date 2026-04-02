@@ -351,10 +351,10 @@
 | Column | Count | Tasks |
 |--------|-------|-------|
 | ✅ Done | 44 | 000–105 (sprint 000-006) + Sprint 024: 182, 183, 184, 185 |
-| 🔍 Review | 0 | — |
+| 🔍 Review | 1 | Sprint 025: 186 |
 | 🚧 In Progress | 0 | — |
 | 📋 Todo | 0 | — |
-| 🗂 Backlog | 3 | Sprint 025: 186, 187, 188 |
+| 🗂 Backlog | 2 | Sprint 025: 187, 188 |
 | **Total** | **47** | |
 
 ---
@@ -363,7 +363,7 @@
 
 | # | Title | Branch | Layer | Depends on | Status |
 |---|-------|--------|-------|------------|--------|
-| — | — | — | — | — | Empty |
+| 186 | Sector rotation detector: `get_sector_rotation` MCP tool | `task/186-sector-rotation` | domain + interface | sectorPeers ✅, market_prices ✅ | Review |
 
 ---
 
@@ -373,7 +373,6 @@
 
 | # | Title | Branch | Agent | Priority | Depends on | Status |
 |---|-------|--------|-------|----------|------------|--------|
-| 186 | Sector rotation detector: `get_sector_rotation` MCP tool | `task/186-sector-rotation` | BA | P0 | sectorPeers ✅, market_prices ✅ | Backlog |
 | 187 | Earnings calendar: `get_earnings_calendar` MCP tool | `task/187-earnings-calendar` | BA | P0 | watchlist ✅, financial_reports ✅ | Backlog |
 | 188 | Daily alert digest: `send_alert_digest` MCP tool + scheduler job | `task/188-alert-digest` | BA | P1 | alerts ✅, telegram.ts ✅ | Backlog |
 
