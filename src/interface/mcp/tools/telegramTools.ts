@@ -1,10 +1,19 @@
 /**
- * Task 034 — Telegram MCP Tool
+ * Task 235 — Unified Telegram send tool
  *
- * Interface layer: registers the send_test_telegram MCP tool.
+ * Interface layer: registers the send_telegram MCP tool.
  *
  * Tool registered:
- *   1. send_test_telegram — sends a test message to verify Telegram connectivity
+ *   1. send_telegram — sends a message to either the Chat Channel or the Report Channel
+ *                      via a single `channel` parameter ("chat" | "report").
+ *
+ * Replaces (removed):
+ *   - send_test_telegram (previously sent to Chat Channel)
+ *   - send_telegram_report (previously sent to Report Channel)
+ *   - delete_telegram_report (functionality absorbed into process_telegram_report)
+ *
+ * Note: send_alert_digest is registered separately in alertDigestTools.ts
+ * because it has distinct orchestration logic (assembles a digest, not just relays a message).
  *
  * @module interface/mcp/tools/telegramTools
  */
@@ -12,160 +21,76 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 
-import { sendTelegramMessage, sendTelegramReport, deleteTelegramReport } from "../../../infrastructure/notifiers/telegram.js";
+import { sendTelegramMessage, sendTelegramReport } from "../../../infrastructure/notifiers/telegram.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tool registration
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Registers the send_test_telegram MCP tool on the given McpServer instance.
+ * Registers the send_telegram MCP tool on the given McpServer instance.
  *
- * Tool: send_test_telegram
- *   Input:  { message?: string }
+ * Tool: send_telegram
+ *   Input:  { channel: "chat" | "report", message: string }
  *   Output: { content: [{ type: "text", text: "..." }] }
  *
  * @param server - The McpServer instance to register tools on.
  */
 export function registerTelegramTools(server: McpServer): void {
   server.tool(
-    "send_test_telegram",
-    "Sends a test message to the configured Telegram chat to verify connectivity.",
+    "send_telegram",
+    "Send a message to a Telegram channel. " +
+      "Use channel='chat' to send to the user-facing Chat Channel (alerts, briefings, analysis). " +
+      "Use channel='report' to send to the Report Channel for inter-agent communication " +
+      "(report problems, request dev team action). " +
+      "channel='report' messages are stored in the telegram_reports table for the Dev Team to process.",
     {
+      channel: z
+        .enum(["chat", "report"])
+        .describe("Target channel: 'chat' = user Chat Channel (TELEGRAM_CHAT_ID), 'report' = Report Channel (TELEGRAM_REPORT_ID)"),
       message: z
         .string()
-        .optional()
-        .default("Test from VN Market Intelligence MCP"),
+        .min(1)
+        .max(4000)
+        .describe("The message text to send. Plain text recommended (no Markdown) to avoid parse errors."),
     },
-    async ({ message }) => {
+    async ({ channel, message }) => {
       try {
-        const success = await sendTelegramMessage(message, {
-          parseMode: "Markdown",
-        });
-
-        if (success) {
+        if (channel === "chat") {
+          const success = await sendTelegramMessage(message, { parseMode: "" });
           return {
             content: [
               {
                 type: "text" as const,
-                text: JSON.stringify(
-                  {
-                    success: true,
-                    message: "Telegram message sent",
-                  },
-                  null,
-                  2,
-                ),
+                text: success
+                  ? "Message sent to Chat Channel."
+                  : "Failed — check TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID env vars",
               },
             ],
           };
         } else {
+          // channel === "report"
+          const msgId = await sendTelegramReport(message, { parseMode: "" });
           return {
             content: [
               {
                 type: "text" as const,
-                text: JSON.stringify(
-                  {
-                    success: false,
-                    message:
-                      "Failed — check TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID env vars",
-                  },
-                  null,
-                  2,
-                ),
+                text: msgId > 0
+                  ? `Message sent to Report Channel. message_id: ${msgId}`
+                  : "Failed — check TELEGRAM_BOT_TOKEN / TELEGRAM_REPORT_ID env vars",
               },
             ],
           };
         }
       } catch (err) {
-        const errorMsg =
-          err instanceof Error ? err.message : "Unknown error";
+        const errorMsg = err instanceof Error ? err.message : "Unknown error";
         return {
           content: [
             {
               type: "text" as const,
-              text: JSON.stringify(
-                {
-                  success: false,
-                  message: `Error: ${errorMsg}`,
-                },
-                null,
-                2,
-              ),
+              text: `Error: ${errorMsg}`,
             },
           ],
-        };
-      }
-    },
-  );
-
-  // ── 2. send_telegram_report — inter-agent communication channel ────────
-  server.tool(
-    "send_telegram_report",
-    "Send a message to the Vn-market-report Telegram channel for inter-agent communication. " +
-      "Use this channel to: send analysis reports, request dev team action, " +
-      "share improvement ideas between cowork agents and dev team. " +
-      "Tag recipient: @team, @po, @dev, @qa, @ba, @architect, @market-analyst.",
-    {
-      message: z.string().min(5).max(4000)
-        .describe("The report message to send to the team channel"),
-      to: z.string().max(30).default("@team")
-        .describe("Recipient tag: @team (all), @po (Product Owner), @dev, @qa, etc."),
-      from: z.string().max(30).default("unified-agent")
-        .describe("Your agent name (sender)"),
-    },
-    async ({ message, to, from }) => {
-      try {
-        const recipient = to.startsWith("@") ? to : `@${to}`;
-        const fullMsg = `${recipient}\nFrom: ${from}\n\n${message}`;
-        const msgId = await sendTelegramReport(fullMsg);
-
-        return {
-          content: [{
-            type: "text" as const,
-            text: msgId > 0
-              ? `Report sent to Vn-market-report channel. To: ${recipient}\nmessage_id: ${msgId} (save this to delete later when resolved)`
-              : "Failed — check TELEGRAM_BOT_TOKEN / TELEGRAM_REPORT_ID env vars",
-          }],
-        };
-      } catch (err) {
-        return {
-          content: [{
-            type: "text" as const,
-            text: `Error: ${(err as Error).message}`,
-          }],
-        };
-      }
-    },
-  );
-
-  // ── 3. delete_telegram_report — clean up resolved reports ──────────────
-  server.tool(
-    "delete_telegram_report",
-    "Delete a resolved report from the Vn-market-report Telegram channel. " +
-      "Use this after fixing an issue to keep the channel clean — only open issues remain. " +
-      "Requires the message_id returned by send_telegram_report or submit_feedback.",
-    {
-      message_id: z.number().int().min(1)
-        .describe("The Telegram message_id to delete (returned by send_telegram_report)"),
-    },
-    async ({ message_id }) => {
-      try {
-        const deleted = await deleteTelegramReport(message_id);
-        return {
-          content: [{
-            type: "text" as const,
-            text: deleted
-              ? `Report message ${message_id} deleted from Vn-market-report channel.`
-              : `Failed to delete message ${message_id} — may already be deleted or invalid ID.`,
-          }],
-        };
-      } catch (err) {
-        return {
-          content: [{
-            type: "text" as const,
-            text: `Error: ${(err as Error).message}`,
-          }],
         };
       }
     },

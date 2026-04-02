@@ -17,8 +17,8 @@
 | ~~232~~ | ~~Fix G3: `/report` + `/fix` Telegram commands (user → dev team direct)~~ | 2b | P1 | **Review** |
 | ~~233~~ | ~~Fix G2: `system_changelog` table + `log_fix` + `get_recent_fixes` tools~~ | 2c | P1 | **Review** |
 | 234 | Merge M1: system health 4 → 1 (`get_system_status`) | 2d | P1 | 230 |
-| 235 | Merge M2: Telegram send 3 → 1 (`send_telegram`) | 2e | P1 | 230 |
-| 236 | Merge M3: alert mute 2 → 1 (`manage_alert_mute`) | 2f | P2 | 230 |
+| ~~235~~ | ~~Merge M2: Telegram send 3 → 1 (`send_telegram`)~~ | 2e | P1 | **Review** |
+| ~~236~~ | ~~Merge M3: alert mute 2 → 1 (`manage_alert_mute`)~~ | 2f | P2 | **Review** |
 | 237 | CLAUDE.md sync + update all agent `.md` files for 53-tool surface | — | P2 | 230–236 |
 
 ---

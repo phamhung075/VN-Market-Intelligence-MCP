@@ -184,7 +184,9 @@ describe("Task 222 — generateAlerts with mutes", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("Task 222 — registerAlertMuteTools", () => {
-  it("registers exactly 2 tools on the MCP server", () => {
+  // Updated in task 236: mute_stock_alerts + unmute_stock_alerts merged into
+  // a single manage_alert_mute tool to reduce MCP surface area.
+  it("registers exactly 1 unified manage_alert_mute tool on the MCP server", () => {
     const server = new McpServer(
       { name: "test", version: "0.0.0" },
       { capabilities: { tools: {} } },
@@ -192,8 +194,9 @@ describe("Task 222 — registerAlertMuteTools", () => {
     registerAlertMuteTools(server);
     const tools = (server as unknown as { _registeredTools: Record<string, unknown> })._registeredTools;
     const names = Object.keys(tools);
-    expect(names).toContain("mute_stock_alerts");
-    expect(names).toContain("unmute_stock_alerts");
-    expect(names).toHaveLength(2);
+    expect(names).toContain("manage_alert_mute");
+    expect(names).not.toContain("mute_stock_alerts");
+    expect(names).not.toContain("unmute_stock_alerts");
+    expect(names).toHaveLength(1);
   });
 });

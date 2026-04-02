@@ -1,14 +1,19 @@
 /**
  * Task 222 — Alert Snooze/Mute MCP Tools
+ * Task 236 — Merge 2→1: manage_alert_mute
  *
- * Interface layer: registers two MCP tools on a McpServer instance.
+ * Interface layer: registers one unified MCP tool on a McpServer instance.
  *
- * Tools registered:
- *   1. mute_stock_alerts   — Mute alerts for a stock for N hours
- *   2. unmute_stock_alerts — Remove a mute for a stock
+ * Tool registered:
+ *   manage_alert_mute — Mute or unmute alerts for a stock (action: "mute" | "unmute")
+ *
+ * Replaces the two previous tools:
+ *   - mute_stock_alerts   (removed in task 236)
+ *   - unmute_stock_alerts (removed in task 236)
  *
  * Output format (Vietnamese):
  *   VCB da duoc tat tieng trong 24 gio (den 02/04 15:30)
+ *   VCB da duoc bat lai canh bao.
  *
  * @module interface/mcp/tools/alertMuteTools
  */
@@ -44,22 +49,28 @@ function formatViDate(date: Date): string {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Register the mute_stock_alerts and unmute_stock_alerts MCP tools.
+ * Register the unified manage_alert_mute MCP tool.
  *
- * @param server - McpServer instance to register tools on
+ * Replaces the previous mute_stock_alerts and unmute_stock_alerts tools
+ * (merged in task 236 as part of Sprint 036 tool surface reduction).
+ *
+ * @param server - McpServer instance to register the tool on
  */
 export function registerAlertMuteTools(server: McpServer): void {
-  // ── mute_stock_alerts ────────────────────────────────────────────────────
   server.tool(
-    "mute_stock_alerts",
-    "Tat tieng canh bao cho mot ma co phieu trong N gio (mac dinh 24 gio). " +
-      "Dung khi nhieu nhieu trong mua bao cao ket qua kinh doanh.",
+    "manage_alert_mute",
+    "Tat tieng (mute) hoac bat lai (unmute) canh bao cho mot ma co phieu. " +
+      "Dung action='mute' de tat tieng trong N gio (mac dinh 24). " +
+      "Dung action='unmute' de bat lai canh bao ngay lap tuc.",
     {
-      actionCode: z
+      code: z
         .string()
         .min(1)
         .max(10)
         .describe("Ma co phieu (vi du: VCB, FPT, VNM)"),
+      action: z
+        .enum(["mute", "unmute"])
+        .describe("'mute' de tat tieng, 'unmute' de bat lai"),
       hours: z
         .number()
         .int()
@@ -67,82 +78,58 @@ export function registerAlertMuteTools(server: McpServer): void {
         .max(720)
         .optional()
         .default(24)
-        .describe("So gio tat tieng (mac dinh 24, toi da 720 = 30 ngay)"),
+        .describe(
+          "So gio tat tieng — chi dung khi action='mute' (mac dinh 24, toi da 720 = 30 ngay)",
+        ),
       reason: z
         .string()
         .max(200)
         .optional()
-        .describe("Ly do tat tieng (tuy chon)"),
+        .describe("Ly do tat tieng — chi dung khi action='mute' (tuy chon)"),
     },
-    async ({ actionCode, hours, reason }) => {
+    async ({ code, action, hours, reason }) => {
       try {
         await initDatabase();
         const db = getDb();
         ensureAlertMutesTable(db);
 
-        const resolvedHours = hours ?? 24;
-        muteStock(db, actionCode, resolvedHours, reason);
+        // ── action = "mute" ────────────────────────────────────────────────
+        if (action === "mute") {
+          const resolvedHours = hours ?? 24;
+          muteStock(db, code, resolvedHours, reason);
 
-        const until = new Date(Date.now() + resolvedHours * 3_600_000);
-        const untilStr = formatViDate(until);
+          const until = new Date(Date.now() + resolvedHours * 3_600_000);
+          const untilStr = formatViDate(until);
 
-        const lines: string[] = [
-          `${actionCode} da duoc tat tieng trong ${resolvedHours} gio (den ${untilStr})`,
-        ];
-        if (reason) {
-          lines.push(`Ly do: ${reason}`);
+          const lines: string[] = [
+            `${code} da duoc tat tieng trong ${resolvedHours} gio (den ${untilStr})`,
+          ];
+          if (reason) {
+            lines.push(`Ly do: ${reason}`);
+          }
+          lines.push("");
+          lines.push(
+            "De bat lai canh bao, goi manage_alert_mute voi action='unmute'.",
+          );
+
+          return {
+            content: [{ type: "text" as const, text: lines.join("\n") }],
+          };
         }
-        lines.push("");
-        lines.push(
-          "De bat lai canh bao, dung lenh unmute_stock_alerts.",
-        );
 
-        return {
-          content: [{ type: "text" as const, text: lines.join("\n") }],
-        };
-      } catch (err) {
-        console.error("[mute_stock_alerts] Failed:", err);
-        return {
-          content: [
-            {
-              type: "text" as const,
-              text: `Loi khi tat tieng canh bao cho ${actionCode}: ${err instanceof Error ? err.message : String(err)}`,
-            },
-          ],
-        };
-      }
-    },
-  );
-
-  // ── unmute_stock_alerts ──────────────────────────────────────────────────
-  server.tool(
-    "unmute_stock_alerts",
-    "Bat lai canh bao cho mot ma co phieu da bi tat tieng truoc do.",
-    {
-      actionCode: z
-        .string()
-        .min(1)
-        .max(10)
-        .describe("Ma co phieu can bat lai canh bao"),
-    },
-    async ({ actionCode }) => {
-      try {
-        await initDatabase();
-        const db = getDb();
-        ensureAlertMutesTable(db);
-
-        // Check if it was actually muted before removing
+        // ── action = "unmute" ──────────────────────────────────────────────
+        // Check if the stock was actually muted before removing
         const mutes = listMutes(db);
-        const existing = mutes.find((m) => m.code === actionCode);
+        const existing = mutes.find((m) => m.code === code);
 
-        unmuteStock(db, actionCode);
+        unmuteStock(db, code);
 
         if (!existing) {
           return {
             content: [
               {
                 type: "text" as const,
-                text: `${actionCode} hien khong bi tat tieng canh bao.`,
+                text: `${code} hien khong bi tat tieng canh bao.`,
               },
             ],
           };
@@ -154,11 +141,11 @@ export function registerAlertMuteTools(server: McpServer): void {
         const lines: string[] = [];
         if (isExpired) {
           lines.push(
-            `${actionCode}: lenh tat tieng da het han (${formatViDate(wasUntil)}). Canh bao da duoc bat lai.`,
+            `${code}: lenh tat tieng da het han (${formatViDate(wasUntil)}). Canh bao da duoc bat lai.`,
           );
         } else {
           lines.push(
-            `${actionCode} da duoc bat lai canh bao (truoc khi het han ${formatViDate(wasUntil)}).`,
+            `${code} da duoc bat lai canh bao (truoc khi het han ${formatViDate(wasUntil)}).`,
           );
         }
 
@@ -166,12 +153,12 @@ export function registerAlertMuteTools(server: McpServer): void {
           content: [{ type: "text" as const, text: lines.join("\n") }],
         };
       } catch (err) {
-        console.error("[unmute_stock_alerts] Failed:", err);
+        console.error("[manage_alert_mute] Failed:", err);
         return {
           content: [
             {
               type: "text" as const,
-              text: `Loi khi bat lai canh bao cho ${actionCode}: ${err instanceof Error ? err.message : String(err)}`,
+              text: `Loi khi ${action === "mute" ? "tat tieng" : "bat lai"} canh bao cho ${code}: ${err instanceof Error ? err.message : String(err)}`,
             },
           ],
         };
