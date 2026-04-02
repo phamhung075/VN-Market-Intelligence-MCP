@@ -399,13 +399,44 @@ export async function runPredictionMarketPoll(
     // ── Step 7: store signals ─────────────────────────────────────────────
     storePredictionSignals(signals, db);
 
-    // ── Step 8: send Telegram for high/critical signals ───────────────────
+    // ── Step 8: send Telegram for high/critical signals (with 2h dedup) ──
     const notifySignals = signals.filter(
       (s) => s.severity === "high" || s.severity === "critical",
     );
 
     if (notifySignals.length > 0) {
+      // Dedup: check which market+signalType combos were already sent in last 2h
+      const recentlySent = new Set<string>();
+      try {
+        const rows = db
+          .prepare(
+            `SELECT market_id, signal_type FROM prediction_signals
+             WHERE detected_at > datetime('now', '-2 hours')
+               AND severity IN ('high', 'critical')
+               AND id NOT IN (${signals.map(() => "?").join(",")})`,
+          )
+          .all(
+            ...signals.map((s) => {
+              const minuteBucket = s.detectedAt.slice(0, 16);
+              const rawId = `${s.marketId}|${s.signalType}|${minuteBucket}`;
+              return btoa(rawId).replace(/[+/=]/g, "").slice(0, 40);
+            }),
+          ) as Array<{ market_id: string; signal_type: string }>;
+        for (const r of rows) {
+          recentlySent.add(`${r.market_id}|${r.signal_type}`);
+        }
+      } catch { /* best-effort — send all if query fails */ }
+
       for (const sig of notifySignals) {
+        const dedupKey = `${sig.marketId}|${sig.signalType}`;
+        if (recentlySent.has(dedupKey)) {
+          logger.debug("[prediction-market-job] Telegram dedup — skipping", {
+            marketId: sig.marketId,
+            signalType: sig.signalType,
+          });
+          continue;
+        }
+
         try {
           const msg = buildTelegramMessage(sig);
           if (opts.telegramFn) {

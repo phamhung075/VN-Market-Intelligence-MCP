@@ -56,34 +56,6 @@ interface WatchlistRow {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Telegram helper
-// ─────────────────────────────────────────────────────────────────────────────
-
-/**
- * Attempt to send a message to Telegram.
- * Returns silently if the bot token or chat ID env vars are absent.
- * Never throws — errors are logged to stderr only.
- *
- * @param text - Plain text message (no Markdown, avoids parse errors).
- */
-async function tryTelegram(text: string): Promise<void> {
-  const token = Bun.env["TELEGRAM_BOT_TOKEN"];
-  const chatId = Bun.env["TELEGRAM_CHAT_ID"];
-  if (!token || !chatId) return; // graceful no-op
-
-  try {
-    const url = `https://api.telegram.org/bot${token}/sendMessage`;
-    await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ chat_id: chatId, text, parse_mode: undefined }),
-    });
-  } catch (err) {
-    console.error("[trigger_alert_check] Telegram send failed:", err);
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
 // Severity labels (Vietnamese)
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -263,18 +235,9 @@ export function registerAlertCheckTools(server: McpServer): void {
 
         const summaryText = lines.join("\n");
 
-        // ── 6. Telegram — HIGH/CRITICAL only ─────────────────────────────
-        if (highCritical.length > 0) {
-          const tgLines: string[] = [
-            "KIEM TRA TIN HIEU TUC THOI (MCP)",
-            `${now}`,
-            "",
-          ];
-          for (const alert of highCritical) {
-            tgLines.push(formatAlertVi(alert));
-          }
-          await tryTelegram(tgLines.join("\n"));
-        }
+        // No Telegram send — results are returned in the MCP response.
+        // Telegram notifications come only from the background intelligence cycle
+        // to avoid duplicate messages on every manual trigger.
 
         return {
           content: [{ type: "text" as const, text: summaryText }],

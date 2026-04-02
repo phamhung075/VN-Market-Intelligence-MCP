@@ -104,8 +104,9 @@ Continue reading new reports, fixing bugs, improving the system.
 ## COMMUNICATION — Vn-market-report Telegram Channel
 
 All communication goes through the report channel:
-- `send_telegram_report` — send reports, requests, completion notices
-- `submit_feedback` — submit improvement suggestions (sent to Vn-market-report channel only)
+- `send_telegram_report` — send reports, requests, completion notices (returns message_id)
+- `submit_feedback` — submit improvement suggestions (sent to Vn-market-report channel only, returns message_id)
+- `delete_telegram_report` — delete a resolved report by message_id to keep the channel clean
 
 Tag recipients:
 - `@team` — all agents (status updates, completion reports)

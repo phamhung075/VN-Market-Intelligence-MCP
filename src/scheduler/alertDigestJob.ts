@@ -24,6 +24,8 @@ import { logger } from "../infrastructure/logger.js";
 // ─────────────────────────────────────────────────────────────────────────────
 
 let _running = false;
+/** Date string of last digest sent — prevents duplicates on restart/re-trigger. */
+let _lastDigestSentDate = "";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Public API
@@ -69,6 +71,18 @@ export async function runAlertDigest(
         `stocks: ${digest.stockBlocks.length}`,
     );
 
+    // Skip sending when there are no alerts — no noise on Telegram
+    if (digest.totalCount === 0) {
+      logger.info("[alertDigestJob] no alerts today — skipping Telegram send");
+      return;
+    }
+
+    // Daily dedup: don't send the same date's digest twice
+    if (_lastDigestSentDate === digest.date) {
+      logger.debug("[alertDigestJob] digest already sent today — skipping");
+      return;
+    }
+
     // Attempt to send via Telegram if configured
     try {
       const { sendTelegram } = await import(
@@ -81,6 +95,7 @@ export async function runAlertDigest(
           "[alertDigestJob] (Telegram chua duoc cau hinh) — digest not sent",
         );
       } else {
+        _lastDigestSentDate = digest.date;
         logger.info("[alertDigestJob] digest sent via Telegram");
       }
     } catch (telegramErr) {

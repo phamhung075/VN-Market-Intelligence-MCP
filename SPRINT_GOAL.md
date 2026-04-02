@@ -2,10 +2,10 @@
 
 ## Current Sprint
 
-status: PLANNING
+status: ACTIVE
 sprint_id: 027
 started: 2026-04-01
-updated: 2026-04-01
+updated: 2026-04-02
 
 ---
 
@@ -240,8 +240,10 @@ its target, and suggests the corrective trade size.
 |---|-------|----------|--------|------------|
 | 192 | Fix flaky test: `164-polymarket-fetcher.test.ts` mock timing | P0 | Backlog | — |
 | 193 | Dynamic tool registration: eliminate server.ts merge conflicts | P0 | Backlog | — |
-| 194 | CLAUDE.md sync through Sprint 026 | P1 | Backlog | — |
-| 195 | Portfolio rebalancing signals: `get_rebalancing_signals` MCP tool | P1 | Backlog | 193 |
+| 194 | CLAUDE.md sync through Sprint 026 | P1 | Done (merged 7f53108) | — |
+| 195 | Portfolio rebalancing signals: `get_rebalancing_signals` MCP tool | P1 | Review (branch task/195-rebalancing-signals) | 193 |
+| 196 | Stale worktree cleanup + task tracking for hotfixes | P0 | Backlog | — |
+| 197 | Reuters RSS investigation + delete_telegram_report test coverage | P1 | Backlog | — |
 
 ---
 
@@ -250,11 +252,14 @@ its target, and suggests the corrective trade size.
 ```
 192 (fix flaky test)      — P0, independent, touches only __tests__/164-*.test.ts
 193 (dynamic registry)    — P0, independent, refactor only, touches all tool files
-194 (CLAUDE.md sync)      — P1, independent, documentation only
-195 (rebalancing signals) — P1, depends on 193 (uses registry.ts as its registration path)
+194 (CLAUDE.md sync)      — P1, DONE, merged 7f53108 on 2026-04-02
+195 (rebalancing signals) — P1, in Review (branch task/195-rebalancing-signals); depends on 193
+196 (worktree cleanup)    — P0, independent, no code change
+197 (Reuters + test fix)  — P1, independent, infra + test
 
-192 + 193 + 194 can run in parallel.
+192 + 193 + 196 + 197 can run in parallel.
 195 must wait for 193 (registry.ts must exist before task 195 appends to it).
+194 COMPLETE — no action needed.
 ```
 
 ---
