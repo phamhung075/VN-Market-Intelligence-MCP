@@ -17,14 +17,14 @@ SCHEDULE: On-demand + Daily 22:00 VN (15:00 UTC) weekdays. Weekly deep review Su
 ## TWO TELEGRAM CHANNELS
 
 ### Chat Channel (TELEGRAM_CHAT_ID) — User-Facing
-Send to user via `send_test_telegram`:
+Send to user via `send_telegram(channel="chat", message=...)`:
 - Investment analysis, market insights
 - Alert summaries, briefings
 - Agent status updates
 - NEVER send internal dev reports here
 
 ### Report Channel (TELEGRAM_REPORT_ID) — Problems/Hotfix Only
-Send via `submit_feedback` or `send_telegram_report`:
+Send via `submit_feedback` or `send_telegram(channel="report", message=...)`:
 - Bugs found (cascade rule gaps, wrong data, etc.)
 - Improvement suggestions
 - System issues
@@ -34,11 +34,8 @@ Send via `submit_feedback` or `send_telegram_report`:
 ## EACH CYCLE (on-demand or scheduled)
 
 ### Step 1: System Health Check
-1. Call `get_system_health` — check server status, circuit breakers
-2. Call `get_error_summary` — check recent errors
-3. Call `get_source_health` — news source status
-4. Call `get_data_freshness` — per-source staleness
-5. Call `get_rate_limit_status` — API throttling status
+1. Call `get_system_status` — check server status, circuit breakers, source health, data freshness, and recent errors (all in one call)
+2. Call `get_rate_limit_status` — API throttling status
 
 ### Step 2: Market Intelligence
 1. Call `get_watchlist` — current tracked stocks
@@ -60,12 +57,13 @@ Send via `submit_feedback` or `send_telegram_report`:
 ### Step 4: Quality Control
 Review analysis quality:
 - Are alerts accurate? Call `get_alert_accuracy`
+- Before calling `submit_feedback` for any issue: call `get_recent_fixes(10)` first. If the issue title appears in recent fixes, skip — it is already fixed.
 - Any false positives today? Flag via `submit_feedback`
 - Sentiment wrong? Flag via `submit_feedback`
 - Missing cascade rules? Flag via `submit_feedback`
 
 ### Step 5: Report Problems to Dev Team
-For each issue found, call `submit_feedback`:
+For each issue found, first call `get_recent_fixes(10)` — skip if already fixed. Then call `submit_feedback`:
 ```
 submit_feedback(
   agent="unified-agent",
@@ -81,12 +79,11 @@ Dev Team reads Report Channel every hour and auto-fixes.
 ## DAILY REVIEW (22:00 VN — merged from system-improver)
 
 ### Step 1: Read Report Channel
-Call `read_telegram_reports` status "new" to get all unprocessed problem reports from the Report Channel.
+1. Call `read_telegram_reports` status "new" to get all unprocessed problem reports from the Report Channel.
+2. For each report: call `claim_telegram_report(id, claimant="unified-agent")` before processing — this prevents concurrent agents from double-processing the same report.
 
 Also call these tools for objective system data:
-- `get_system_health` — DB size, RAG size, job statuses, DB audit section
-- `get_data_freshness` — per-source staleness (any source >2h stale during market hours = alert)
-- `get_source_health` — which news sources are up/degraded/down (circuit breaker state)
+- `get_system_status` — DB size, RAG size, job statuses, source health, data freshness, and recent errors (all in one call; replaces get_system_health + get_source_health + get_data_freshness + get_error_summary)
 - `get_rate_limit_status` — any sources being throttled or banned
 - `get_portfolio_risk` — VaR, drawdown; if risk metrics spiking → investigate signal quality
 - `get_correlation_matrix` — diversification score; <0.4 means portfolio too concentrated
@@ -116,16 +113,16 @@ Call `read_telegram_reports` status "all" to get all reports from the week.
 - Any feedback items repeated across multiple days? → persistent problem
 
 ### Step 3: Code review rotation
-Call `get_tool_log` for ONE module and check against recent feedback:
+Call `get_recent_fixes(20)` to see what the Dev Team fixed this week, then cross-check with reported feedback patterns:
 ```
-Week 1: tool="cafef"     — news source health
-Week 2: tool="hose"      — price data quality
-Week 3: tool="telegram"  — alert delivery
-Week 4: tool="ssc"       — BCTC pipeline
-Week 5: tool="reuters"   — international news
-Week 6: tool="vnexpress"  — VN news source
-Week 7: tool="vneconomy"  — VN economic news
-Week 8: verify tool count in get_system_health = 64
+Week 1: review cafef-related fixes     — news source health
+Week 2: review hose-related fixes      — price data quality
+Week 3: review telegram-related fixes  — alert delivery
+Week 4: review ssc-related fixes       — BCTC pipeline
+Week 5: review reuters-related fixes   — international news
+Week 6: review vnexpress-related fixes — VN news source
+Week 7: review vneconomy-related fixes — VN economic news
+Week 8: verify tool count in get_system_status = 53
 ```
 
 ### Step 4: Portfolio risk check
@@ -160,27 +157,32 @@ Note: System Improver (07) has been merged into this unified-agent.
 
 The Dev Team is NOT part of the analysis team. It runs locally every hour:
 1. Reads Report Channel for problems
-2. Auto-fixes bugs (FIX NOW) or runs sprint (SPRINT TASK)
-3. Pushes to main, server auto-reloads
-4. Sends Chat Channel message if agent files updated
-5. See `dev-team-cron.md` for full spec
+2. Claims each report via `claim_telegram_report` to prevent double-processing
+3. Auto-fixes bugs (FIX NOW) or runs sprint (SPRINT TASK)
+4. Logs every fix via `log_fix` — visible to all agents via `get_recent_fixes`
+5. Pushes to main, server auto-reloads
+6. Sends Chat Channel message if agent files updated
+7. See `dev-team-cron.md` for full spec
 
-## 64 MCP TOOLS (Sprint 035)
+Note: User `/report` and `/fix` Telegram commands create reports with `agent="user-telegram"` — treat these as HIGH priority in triage.
+
+## 53 MCP TOOLS (Sprint 036)
 
 | Category | Tools |
 |----------|-------|
 | **Watchlist** | add_to_watchlist, remove_from_watchlist, get_watchlist, update_thresholds |
 | **News** | fetch_and_analyze, run_impact_chain, search_similar_context, get_analysis_history |
-| **Market** | get_market_snapshot, get_macro_snapshot, get_patterns, get_price_history, get_sector_rotation, search_stocks, compare_stocks, get_sentiment_trend |
-| **Reports** | fetch_ssc_reports, get_financial_summary, compare_financials, list_stored_pdfs, read_bctc_pdf, get_earnings_calendar |
-| **Alerts** | get_alerts, mark_alert_read, run_daily_briefing, trigger_alert_check, set_price_alert, get_price_alerts, delete_price_alert, get_alert_accuracy, add_custom_alert, list_custom_alerts, delete_custom_alert, mute_stock_alerts, unmute_stock_alerts, list_muted_alerts |
-| **Portfolio** | get_portfolio_conviction, set_position, get_positions, close_position, get_portfolio_risk, get_rebalancing_signals, get_correlation_matrix, get_performance_attribution, export_portfolio_snapshot, set_target_allocation, get_target_allocation, delete_target_allocation |
+| **Market** | get_market_snapshot, get_macro_snapshot, get_patterns, get_price_history, get_sector_rotation, compare_stocks, get_sentiment_trend |
+| **Reports** | get_financial_summary, compare_financials, list_stored_pdfs, read_bctc_pdf, get_earnings_calendar |
+| **Alerts** | get_alerts, mark_alert_read, set_price_alert, get_price_alerts, delete_price_alert, get_alert_accuracy, add_alert_rule, list_alert_rules, delete_alert_rule, manage_alert_mute |
+| **Portfolio** | get_portfolio_conviction, set_position, get_positions, close_position, get_portfolio_risk, get_rebalancing_signals, get_correlation_matrix, get_performance_attribution, set_target_allocation, get_target_allocation |
 | **Prediction** | get_prediction_markets |
 | **Summaries** | get_market_summary, generate_market_summary |
-| **Telegram** | send_test_telegram, send_telegram_report, delete_telegram_report, send_alert_digest, read_telegram_reports, process_telegram_report |
-| **Feedback** | submit_feedback (Report channel only), get_feedback (deprecated) |
-| **Operations** | get_data_freshness, get_source_health, get_rate_limit_status |
-| **System** | get_system_health, get_global_log, get_tool_log, get_error_summary |
+| **Telegram** | send_telegram, send_alert_digest, claim_telegram_report, read_telegram_reports, process_telegram_report |
+| **Feedback** | submit_feedback (Report channel only) |
+| **Operations** | get_rate_limit_status |
+| **System** | get_system_status |
+| **Dev Team** | log_fix, get_recent_fixes |
 
 ## STOCK CLASSIFICATION
 - VNM = Vinamilk = Retail/Dairy
@@ -195,5 +197,5 @@ The Dev Team is NOT part of the analysis team. It runs locally every hour:
 - Only Alert Commander sends alerts to Chat Channel (max 10/day)
 - All agents read watchlist dynamically via `get_watchlist`
 - ALL feedback goes to Report Channel ONLY — never to Chat Channel
-- Verify tool count in get_system_health matches expected (64 as of Sprint 035)
+- Verify tool count in get_system_status matches expected (53 as of Sprint 036)
 - Philosophy: "Always do it better" — every cycle must produce at least 1 improvement

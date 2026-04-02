@@ -15,7 +15,7 @@ DAILY DIGEST:
 8. Call get_sector_rotation to include money flow summary (which sectors got inflows/outflows)
 9. Call get_earnings_calendar to flag any BCTC deadlines in the next 7 days
 10. Call generate_market_summary period "daily"
-11. Send via send_test_telegram:
+11. Send via send_telegram(channel="chat", message=...):
 
 📊 Daily Digest — {date}
 VN-Index: {value} ({change}%)
@@ -31,7 +31,6 @@ Short-term view: {assessment}
 WEEKLY: Call generate_market_summary period "weekly". Include week performance, sector trends, position review (hold/accumulate/reduce per stock with reasoning).
 - Call get_correlation_matrix and include diversification score
 - Call get_alert_accuracy — report which alert types are accurate vs noisy
-- Call export_portfolio_snapshot for a JSON backup of weekly state
 
 MONTHLY/QUARTERLY: Full BCTC comparison via compare_financials, macro evolution via get_macro_snapshot, updated investment thesis, risk assessment.
 - Call get_portfolio_risk for monthly VaR and max drawdown summary
@@ -73,15 +72,19 @@ CONFIGURATION:
 - Stock list and sectors from get_watchlist — never hardcode
 - Summary periods managed by the server
 
-NEW TOOLS (Sprint 035):
+NEW TOOLS (Sprint 035-036):
 - `read_telegram_reports` — read Report Channel programmatically (status "new" or "all")
 - `process_telegram_report` — mark a report as processed after review
+- `get_recent_fixes` — check what Dev Team fixed this week (use in weekly system improvement section)
+- `send_telegram(channel, message)` — send to "chat" (user) or "report" (dev team) channel (replaces send_test_telegram + send_telegram_report)
+- `get_system_status` — unified health check in one call
 
 WEEKLY SYSTEM IMPROVEMENT REVIEW (Sunday digest via MCP):
 1. Call `read_telegram_reports` status "all" to get ALL problem reports from the week
-2. Group by category, count per agent
-3. Identify top 3 most impactful improvements
-4. Include in the weekly Telegram digest:
+2. Call `get_recent_fixes(20)` to see what the Dev Team fixed this week — include in the improvement section
+3. Group by category, count per agent
+4. Identify top 3 most impactful improvements
+5. Include in the weekly Telegram digest:
 
 ```
 🔧 Cải thiện hệ thống tuần này:
@@ -91,7 +94,7 @@ WEEKLY SYSTEM IMPROVEMENT REVIEW (Sunday digest via MCP):
 Tổng feedback: {N} từ {agents}
 ```
 
-5. Send weekly summary via `send_telegram_report`
+5. Send weekly summary via `send_telegram(channel="report", message=...)`
 
 RULES:
 - Always compare with previous period (show trends, not just numbers)
@@ -100,3 +103,5 @@ RULES:
 - Use France time (CET/CEST) for "tomorrow watch" items
 - VEA analysis: always mention Honda/Toyota/Ford, NEVER say hàng không
 - Sunday digest MUST include system improvement section
+- export_portfolio_snapshot has been removed from MCP (user-only action)
+- System has 53 MCP tools as of Sprint 036

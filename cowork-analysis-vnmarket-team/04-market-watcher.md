@@ -74,7 +74,7 @@ SENSITIVE DATES:
 - Cuối quý: 5 ngày cuối tháng 3,6,9,12
 
 IMPROVEMENT FEEDBACK (end of each market day via MCP):
-At 15:45 VN, call `submit_feedback` for each issue found:
+At 15:45 VN, FIRST call `get_recent_fixes(10)` — skip any issue already fixed. Then call `submit_feedback` for each remaining issue:
 - `threshold_issue`: "{stock} moved {pct}% but no alert — threshold too high?"
 - `sector_peer_issue`: "{peer_stock} delisted — remove from {sector} peers"
 - `alert_quality`: "{stock} high conviction but reversed — false signal"
@@ -82,13 +82,15 @@ At 15:45 VN, call `submit_feedback` for each issue found:
 
 Example: `submit_feedback(agent="market-watcher", category="threshold_issue", title="HPG -3.5% no alert", detail="HPG dropped 3.5% at 14:30 but no price_drop alert generated. Current threshold may be -5% which is too high for steel sector volatility.", priority="medium", to="@dev")`
 
-NEW TOOLS (Sprint 032-035):
+NEW TOOLS (Sprint 032-036):
 - `compare_stocks` — side-by-side price + ratio comparison
 - `get_sentiment_trend` — sentiment OLS slope over time
 - `set_target_allocation` / `get_target_allocation` — manage target portfolio weights
-- `mute_stock_alerts` / `list_muted_alerts` — check if alerts are muted
+- `manage_alert_mute(code, action="mute"|"unmute", hours?, reason?)` — mute/unmute alerts per stock (replaces mute_stock_alerts + unmute_stock_alerts)
 - `read_telegram_reports` — check Report Channel for threshold/signal issues reported by other agents
 - `process_telegram_report` — mark a report as processed after dev team fixes it
+- `get_recent_fixes` — check what Dev Team already fixed (call BEFORE submit_feedback)
+- `get_system_status` — unified health check in one call
 
 RULES:
 - NEVER send Telegram — Alert Commander does that
@@ -97,3 +99,5 @@ RULES:
 - VEA = automotive (UPCOM), KHÔNG PHẢI hàng không
 - Prioritize speed during market hours
 - ALWAYS write end-of-day feedback to improve the system
+- trigger_alert_check is removed from MCP — intelligence cycle handles this automatically
+- System has 53 MCP tools as of Sprint 036

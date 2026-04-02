@@ -58,9 +58,9 @@ CLOUDFLARE_TUNNEL=vn-market-mcp
 cd /path/to/VN-Market-Intelligence-MCP
 bun run src/index.ts
 ```
-Server auto-seeds watchlist from config, starts OCR for unprocessed PDFs, registers 64 tools.
+Server auto-seeds watchlist from config, starts OCR for unprocessed PDFs, registers 53 tools.
 
-Verify: `curl https://zenmidi.com/health` → `{"status":"ok","toolCount":64}`
+Verify: `curl https://zenmidi.com/health` → `{"status":"ok","toolCount":53}`
 
 ### Step 2: Start Cloudflare Tunnel
 ```bash
@@ -87,22 +87,23 @@ MCP connector URL: `https://zenmidi.com/mcp`
 - Telegram: "✅ System online" at 08:55 Vietnam (03:55 France CET)
 - Health: `curl https://zenmidi.com/health`
 
-## 64 MCP Tools Available (Sprint 035)
+## 53 MCP Tools Available (Sprint 036)
 
 | Category | Tools |
 |----------|-------|
 | **Watchlist** | add_to_watchlist, remove_from_watchlist, get_watchlist, update_thresholds |
 | **News** | fetch_and_analyze, run_impact_chain, search_similar_context, get_analysis_history |
-| **Market** | get_market_snapshot, get_macro_snapshot, get_patterns, get_price_history, get_sector_rotation, search_stocks, compare_stocks, get_sentiment_trend |
-| **Reports** | fetch_ssc_reports, get_financial_summary, compare_financials, list_stored_pdfs, read_bctc_pdf, get_earnings_calendar |
-| **Alerts** | get_alerts, mark_alert_read, run_daily_briefing, trigger_alert_check, set_price_alert, get_price_alerts, delete_price_alert, get_alert_accuracy, add_custom_alert, list_custom_alerts, delete_custom_alert, mute_stock_alerts, unmute_stock_alerts, list_muted_alerts |
-| **Portfolio** | get_portfolio_conviction, set_position, get_positions, close_position, get_portfolio_risk, get_rebalancing_signals, get_correlation_matrix, get_performance_attribution, export_portfolio_snapshot, set_target_allocation, get_target_allocation, delete_target_allocation |
+| **Market** | get_market_snapshot, get_macro_snapshot, get_patterns, get_price_history, get_sector_rotation, compare_stocks, get_sentiment_trend |
+| **Reports** | get_financial_summary, compare_financials, list_stored_pdfs, read_bctc_pdf, get_earnings_calendar |
+| **Alerts** | get_alerts, mark_alert_read, set_price_alert, get_price_alerts, delete_price_alert, get_alert_accuracy, add_alert_rule, list_alert_rules, delete_alert_rule, manage_alert_mute |
+| **Portfolio** | get_portfolio_conviction, set_position, get_positions, close_position, get_portfolio_risk, get_rebalancing_signals, get_correlation_matrix, get_performance_attribution, set_target_allocation, get_target_allocation |
 | **Prediction Markets** | get_prediction_markets |
 | **Summaries** | get_market_summary, generate_market_summary |
-| **Telegram** | send_test_telegram, send_telegram_report, delete_telegram_report, send_alert_digest, read_telegram_reports, process_telegram_report |
-| **Feedback** | submit_feedback (→ Report channel only), get_feedback (deprecated — read channel directly) |
-| **Operations** | get_data_freshness, get_source_health, get_rate_limit_status |
-| **System** | get_system_health, get_global_log, get_tool_log, get_error_summary |
+| **Telegram** | send_telegram, send_alert_digest, claim_telegram_report, read_telegram_reports, process_telegram_report |
+| **Feedback** | submit_feedback (→ Report channel only) |
+| **Operations** | get_rate_limit_status |
+| **System** | get_system_status |
+| **Dev Team** | log_fix, get_recent_fixes |
 
 ## Two Separate Telegram Channels
 
@@ -116,13 +117,22 @@ For communicating with the user and sending analysis:
 
 ### Report Channel (TELEGRAM_REPORT_ID) — Problems/Hotfix Only
 For dev team and analysis team problem reports:
-- `send_telegram_report` — report problems, request hotfix, flag bugs
+- `send_telegram(channel="report", message=...)` — report problems, request hotfix, flag bugs
 - `submit_feedback` — submit improvement suggestions (report channel ONLY, never cross-posts to user)
 - Tag recipients: `@team`, `@po`, `@dev`, `@qa`, `@ba`, `@architect`, `@market-analyst`
 - Dev team reads the channel and acts on reports
 - Used for hotfix sprint runs (System Improver → FIX NOW or SPRINT TASK)
 - Review agent deletes reports when issues are fixed
 - **NOT for user communication — problems and hotfix only**
+
+### Telegram Bot Commands (User → Chat Channel)
+Users can trigger actions directly from Telegram:
+- `/watchlist` — list current tracked stocks
+- `/alerts` — show recent HIGH/CRITICAL alerts
+- `/briefing` — trigger morning briefing on demand
+- `/pnl` — show current portfolio P&L
+- `/report <description>` — report a bug to Dev Team (medium priority)
+- `/fix <description>` — report an urgent bug to Dev Team (high priority)
 
 ## Agent Cooperation Flow
 
@@ -194,5 +204,5 @@ Sunday ~17:00  📊 Weekly Digest
 | Telegram fails | Check `.env` has TELEGRAM_BOT_TOKEN + TELEGRAM_CHAT_ID + TELEGRAM_REPORT_ID |
 | SSC timeout | Normal — portal is slow. Nightly job retries automatically |
 | OCR not working | Install: `brew install tesseract tesseract-lang poppler` |
-| Errors in log | Clear: run `get_system_health` tool, errors auto-resolve |
+| Errors in log | Run `get_system_status` tool — shows DB, SOURCES, FRESHNESS, ERRORS sections |
 | Tunnel down | Restart: `cloudflared tunnel run --token $CLOUDFLARE_TOKEN` |

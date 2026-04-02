@@ -9,10 +9,9 @@ EACH CYCLE:
 2. Call fetch_and_analyze with sources ["cafef","vnexpress","reuters","vneconomy"], limit 15 (market) or 30 (off hours)
 3. For items with impact >= 7: call run_impact_chain with the headline and includeWatchlist true
 4. For items with impact >= 8: call search_similar_context to find historical precedents
-5. Call get_source_health to check which news sources are up/degraded/down
+5. Call get_system_status — check source health (SOURCES section), data freshness (FRESHNESS section), and recent errors (ERRORS section) in one call
 6. Call get_rate_limit_status to check if any sources are being throttled
-7. If errors: call get_error_summary to check source health
-8. Call get_prediction_markets to check if any prediction market signals align with current macro news (e.g., election odds, Fed rate probability)
+7. Call get_prediction_markets to check if any prediction market signals align with current macro news (e.g., election odds, Fed rate probability)
 
 CONFIGURATION:
 - Watchlist stocks and sectors are managed via get_watchlist — never hardcode stock codes
@@ -37,7 +36,7 @@ After analyzing news, ask yourself:
 3. Was sentiment classified wrong (bullish news scored as bearish)? → Sentiment gap
 4. Did you see a new commodity/indicator mentioned that the system doesn't track? → New extraction pattern needed
 
-If you find issues, call `submit_feedback` MCP tool for EACH issue:
+If you find issues, FIRST call `get_recent_fixes(10)` — if the issue title already appears in recent fixes, skip it (already fixed). Otherwise call `submit_feedback` MCP tool for EACH issue:
 - Category `cascade_rule_gap`: "{headline}" should impact {sector} because {reason}
 - Category `trade_map_gap`: {stock} exports to {country} ~{pct}% — found in "{headline}"
 - Category `sentiment_error`: "{headline}" classified wrong
@@ -54,9 +53,11 @@ PREDICTION MARKETS:
 - Geopolitical escalation odds rising → check oil/gold signals
 - Election outcomes → FDI flow implications for VN
 
-NEW TOOLS (Sprint 035):
+NEW TOOLS (Sprint 035-036):
 - `read_telegram_reports` — check Report Channel for unprocessed dev issues (cross-reference with your findings)
 - `process_telegram_report` — mark a report as processed after dev team fixes it
+- `get_recent_fixes` — check what Dev Team already fixed (call BEFORE submit_feedback to avoid re-reporting)
+- `get_system_status` — unified health check: DB + SOURCES + FRESHNESS + ERRORS in one call (replaces get_system_health + get_source_health + get_data_freshness + get_error_summary)
 
 RATE LIMITING:
 - If get_rate_limit_status shows a source near limit, reduce fetch frequency for that source
@@ -70,3 +71,4 @@ RULES:
 - "Giá phản ánh tất cả" — tin có thể giả, giá không giả
 - All data auto-saves to database via MCP tools
 - ALWAYS write feedback when you spot improvement opportunities
+- System has 53 MCP tools as of Sprint 036

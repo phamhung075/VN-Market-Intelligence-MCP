@@ -9,7 +9,10 @@ You run every 1 hour via Claude Code CLI cron. Your job: read problem reports fr
 ### Step 0: Check for Work
 1. Call `read_telegram_reports` (status="new")
 2. IF empty → exit immediately (save tokens, wait for next loop)
-3. IF messages found → continue to Step 1
+3. IF messages found → for each report, call `claim_telegram_report(id, claimant="dev-team-cron")` before processing to prevent concurrent loops from double-processing
+4. Continue to Step 1 for claimed reports
+
+Note: Reports with `agent="user-telegram"` come from user `/report` and `/fix` Telegram commands. Treat these as HIGH priority — the user reported it directly.
 
 ### Step 1: Triage Each Report
 For each unprocessed report, classify:
@@ -30,7 +33,7 @@ For each unprocessed report, classify:
 - Log to TASKS.md backlog for later review
 
 ### Step 2: Process Reports
-For each report:
+For each claimed report:
 1. Call `process_telegram_report(id)` → marks processed + deletes from Telegram
 2. If FIX NOW → go to Step 3
 3. If SPRINT TASK → go to Step 4
@@ -43,15 +46,16 @@ For each report:
 4. Run `bun test` for affected test file — must pass
 5. Git commit: `fix: [feedback] {title}`
 6. Git push to main
-7. Call `send_test_telegram` with fix summary:
+7. Call `log_fix(title, detail, fix_type, files, commit_hash)` — logs the fix for all agents to see via `get_recent_fixes`
+8. Call `send_telegram(channel="chat", message=...)` with fix summary:
    ```
-   🔧 Fix applied
+   Fix applied
    {title}
    File: {path}
    Commit: {hash}
    Tests: PASS
    ```
-8. Server auto-reloads via bun --hot
+9. Server auto-reloads via bun --hot
 
 ### Step 4: SPRINT TASK
 Run the FULL agent chain:
@@ -73,15 +77,16 @@ Use the agents defined in `.claude/agents/`:
 After QA approves:
 1. Merge to main
 2. Git commit + push
-3. Call `send_test_telegram` with sprint summary:
+3. Call `log_fix(title, detail, fix_type="sprint", files, commit_hash)` — logs the sprint completion for all agents to see
+4. Call `send_telegram(channel="chat", message=...)` with sprint summary:
    ```
-   🏗 Sprint {N} complete
+   Sprint {N} complete
    {title}
    Tasks: {done}/{total}
    New tools: {list if any}
    Tests: {count} pass
    ```
-4. Server auto-reloads via bun --hot
+5. Server auto-reloads via bun --hot
 
 ### Step 5: Update Docs (EVERY run that changes code)
 After any fix or sprint:
@@ -96,17 +101,16 @@ After any fix or sprint:
 ### Step 6: Notify User About Agent Updates
 If any agent .md file was modified:
 ```
-Call send_test_telegram:
-📋 Agent files updated:
+Call send_telegram(channel="chat", message=...):
+Agent files updated:
 - {filename1}: {what changed}
 - {filename2}: {what changed}
 Please refresh these agents in Claude Cowork.
 ```
 
 ### Step 7: Final Health Check
-1. Call `get_system_health` — verify server is healthy after changes
-2. Call `get_error_summary` — no new errors introduced
-3. If issues found → create FIX NOW task for next loop
+1. Call `get_system_status` — verify server is healthy after changes (covers DB, SOURCES, FRESHNESS, ERRORS in one call)
+2. If issues found → create FIX NOW task for next loop
 
 ## RULES
 
@@ -125,9 +129,10 @@ Please refresh these agents in Claude Cowork.
 - Never add features beyond what was reported
 
 ### Channel Rules
-- Chat Channel (TELEGRAM_CHAT_ID) = send fix/sprint summaries to USER
+- Chat Channel (TELEGRAM_CHAT_ID) = send fix/sprint summaries to USER via `send_telegram(channel="chat", ...)`
 - Report Channel (TELEGRAM_REPORT_ID) = read problem reports, delete after processing
 - NEVER send internal dev noise to Chat Channel — only summaries of completed work
+- User `/report <description>` and `/fix <description>` Telegram commands create reports with `agent="user-telegram"` — these are HIGH priority, same as agent reports
 
 ### Cost Rules
 - Exit immediately if no new reports (Step 0)
@@ -149,11 +154,14 @@ Please refresh these agents in Claude Cowork.
 | `reports/TASK_REPORT_NNN.md` | QA creates after review |
 | `reports/SPRINT_REPORT_NNN.md` | QA creates after sprint |
 
-## CURRENT STATE (Sprint 035 baseline)
+## CURRENT STATE (Sprint 036 baseline)
 
-- 64 MCP tools registered
+- 53 MCP tools registered (8 removed, 3 merged, 3 added)
 - 1934+ tests
 - 2 Telegram channels: Chat (user) + Report (problems)
 - Server: Bun with --hot reload
 - Analysis team: 7 Claude Cowork agents (cloud)
 - Dev team: this cron (local Claude Code CLI)
+- New tools: claim_telegram_report, log_fix, get_recent_fixes
+- Merged tools: get_system_status (replaces 4 health tools), send_telegram (replaces 3 telegram tools), manage_alert_mute (replaces 2 mute tools)
+- Removed: get_feedback, get_global_log, get_tool_log, run_daily_briefing, search_stocks, fetch_ssc_reports, trigger_alert_check, export_portfolio_snapshot
