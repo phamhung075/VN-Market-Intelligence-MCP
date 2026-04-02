@@ -82,6 +82,7 @@
 | DOC-001 | Update CLAUDE.md architecture section | `task/doc-001-claude-md-update` | Ready for QA |
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 | 195 | Portfolio rebalancing signals: `get_rebalancing_signals` | `task/195-rebalancing-signals` | 17 tests pass, tsc clean, awaiting QA sign-off |
 =======
 | 215 | Telegram webhook registration + security | `task/215-telegram-webhook` | Ready for QA |
@@ -89,6 +90,9 @@
 =======
 | 217 | compare_stocks MCP tool — side-by-side comparison | `worktree-agent-a1f64692` | 20 tests pass, tsc 0 errors |
 >>>>>>> worktree-agent-a1f64692
+=======
+| 218 | Weekly portfolio report via Telegram | `worktree-agent-a219df68` | 14 tests pass, tsc clean |
+>>>>>>> worktree-agent-a219df68
 
 ---
 

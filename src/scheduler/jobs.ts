@@ -27,18 +27,20 @@ import { runPatternWatch } from './patternWatchJob.js'
 import { runDailyAudit, runWeeklyAudit } from './dataAuditJob.js'
 import { runPredictionMarketPoll } from './predictionMarketJob.js'
 import { runAlertDigest } from './alertDigestJob.js'
+import { runWeeklyPortfolioReport } from './weeklyPortfolioReportJob.js'
 
 export const CRONS = {
-  morningBriefing:      Bun.env.CRON_MORNING_BRIEFING          ?? '0 8 * * 1-5',
-  marketOpen:           Bun.env.CRON_MARKET_OPEN               ?? '0 9 * * 1-5',
-  intelligenceCycle:    Bun.env.CRON_INTELLIGENCE_CYCLE         ?? '*/15 * * * *',
-  marketClose:          Bun.env.CRON_MARKET_CLOSE               ?? '30 15 * * 1-5',
-  sscCheck:             Bun.env.CRON_SSC_CHECK                  ?? '0 20 * * *',
-  alertDigest:          Bun.env.CRON_ALERT_DIGEST               ?? '0 21 * * 1-5',
-  eveningSummary:       Bun.env.CRON_EVENING_SUMMARY            ?? '0 22 * * 1-5',
-  dataAuditDaily:       Bun.env.CRON_DATA_AUDIT_DAILY           ?? '0 23 * * *',
-  dataAuditWeekly:      Bun.env.CRON_DATA_AUDIT_WEEKLY          ?? '0 1 * * 0',
-  predictionMarketPoll: Bun.env.CRON_PREDICTION_MARKET_POLL     ?? '*/30 * * * *',
+  morningBriefing:        Bun.env.CRON_MORNING_BRIEFING          ?? '0 8 * * 1-5',
+  marketOpen:             Bun.env.CRON_MARKET_OPEN               ?? '0 9 * * 1-5',
+  intelligenceCycle:      Bun.env.CRON_INTELLIGENCE_CYCLE         ?? '*/15 * * * *',
+  marketClose:            Bun.env.CRON_MARKET_CLOSE               ?? '30 15 * * 1-5',
+  sscCheck:               Bun.env.CRON_SSC_CHECK                  ?? '0 20 * * *',
+  alertDigest:            Bun.env.CRON_ALERT_DIGEST               ?? '0 21 * * 1-5',
+  eveningSummary:         Bun.env.CRON_EVENING_SUMMARY            ?? '0 22 * * 1-5',
+  dataAuditDaily:         Bun.env.CRON_DATA_AUDIT_DAILY           ?? '0 23 * * *',
+  weeklyPortfolioReport:  Bun.env.CRON_WEEKLY_PORTFOLIO_REPORT    ?? '0 23 * * 0',
+  dataAuditWeekly:        Bun.env.CRON_DATA_AUDIT_WEEKLY          ?? '0 1 * * 0',
+  predictionMarketPoll:   Bun.env.CRON_PREDICTION_MARKET_POLL     ?? '*/30 * * * *',
 }
 
 function log(msg: string) {
@@ -109,6 +111,11 @@ export function startScheduler() {
   }, { timezone: 'Asia/Ho_Chi_Minh' })
 
   registerShutdownHook()
+
+  // Sunday 23:00 — Weekly portfolio report — task 218
+  cron.schedule(CRONS.weeklyPortfolioReport, async () => {
+    await runWeeklyPortfolioReport()
+  }, { timezone: 'Asia/Ho_Chi_Minh' })
 
   log(`[scheduler] jobs registered — ${Object.keys(CRONS).length} core cron jobs + 5 summary jobs + WAL checkpoint active`)
 }
