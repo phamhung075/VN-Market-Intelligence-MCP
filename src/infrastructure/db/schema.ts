@@ -425,6 +425,23 @@ export async function initDatabase(): Promise<void> {
   db.exec(`CREATE INDEX IF NOT EXISTS idx_prediction_signals_market ON prediction_signals(market_id)`);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_prediction_signals_severity ON prediction_signals(severity)`);
 
+  // ── Positions (Task 179) ───────────────────────────────────────────────────
+  // One open position per stock (UNIQUE on code).
+  // closed_at IS NULL = open; closed_at IS NOT NULL = closed.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS positions (
+      id          INTEGER PRIMARY KEY AUTOINCREMENT,
+      code        TEXT NOT NULL,
+      shares      INTEGER NOT NULL,
+      avg_price   REAL NOT NULL,
+      opened_at   TEXT NOT NULL DEFAULT (datetime('now')),
+      closed_at   TEXT,
+      notes       TEXT,
+      UNIQUE(code)
+    );
+    CREATE INDEX IF NOT EXISTS idx_positions_code ON positions(code);
+  `);
+
   // ── Seed default watchlist from mcp.config.json (skip in tests) ────────────
   const currentDbPath = process.env["DB_PATH"] ?? Bun.env["DB_PATH"] ?? DEFAULT_DB_PATH;
   if (currentDbPath === ":memory:" || Bun.env["BUN_ENV"] === "test" || typeof Bun.env["BUN_TEST"] !== "undefined") return;

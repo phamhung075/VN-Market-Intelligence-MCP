@@ -40,6 +40,8 @@ import {
   registerFeedbackTools,
   registerPredictionTools,
   registerAlertCheckTools,
+  registerPriceHistoryTools,
+  registerPositionTools,
 } from "./tools/index.js";
 
 /** Options for starting the Bun HTTP server. */
@@ -99,6 +101,8 @@ export async function createBunServer(
     registerFeedbackTools(server);
     registerPredictionTools(server);
     registerAlertCheckTools(server);
+    registerPriceHistoryTools(server);
+    registerPositionTools(server);
     return server;
   }
 
