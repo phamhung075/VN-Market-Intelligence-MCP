@@ -77,6 +77,7 @@
 | # | Title | Branch | Notes |
 |---|-------|--------|-------|
 | DOC-001 | Update CLAUDE.md architecture section | `task/doc-001-claude-md-update` | Ready for QA |
+| 219 | Custom alert rules engine | `task/219-custom-alert-rules` | 21 tests pass, tsc clean, 3 MCP tools |
 
 ---
 
