@@ -41,8 +41,9 @@ export TELEGRAM_CHAT_ID="${TELEGRAM_CHAT_ID:-}"
 export TELEGRAM_REPORT_ID="${TELEGRAM_REPORT_ID:-}"
 export TELEGRAM_ENABLED="${TELEGRAM_ENABLED:-true}"
 
+# Use --hot for live code reload without full restart
 # Pipe through grep --line-buffered to filter LanceDB TRACE from stderr
-nohup bun run src/index.ts 2>&1 | grep --line-buffered -v "TRACE" > "$LOG" &
+nohup bun --hot run src/index.ts 2>&1 | grep --line-buffered -v "TRACE" > "$LOG" &
 
 echo "Server started (PID: $!)"
 echo "Log: /tmp/vn-market-mcp.log"

@@ -8,16 +8,8 @@ SCHEDULE: Daily 22:00 VN (15:00 UTC) weekdays. Weekly deep review Sunday 20:00 V
 
 ## DAILY CYCLE (22:00 VN)
 
-### Step 1: Read feedback and system state
-Read the Vn-market-report Telegram channel (https://t.me/+gXd3gCcD5IhmMzY0) for all unprocessed feedback.
-
-Also call these tools to get objective system data:
-- `get_system_health` — DB size, RAG size, job statuses, DB audit section
-- `get_data_freshness` — per-source staleness (any source >2h stale during market hours = alert)
-- `get_source_health` — which news sources are up/degraded/down (circuit breaker state)
-- `get_rate_limit_status` — any sources being throttled or banned
-- `get_portfolio_risk` — VaR, drawdown; if risk metrics spiking → investigate signal quality
-- `get_correlation_matrix` — diversification score; <0.4 means portfolio too concentrated → rebalancing may be needed
+### Step 1: Read feedback
+Read the Report Channel (TELEGRAM_REPORT_ID — problems/hotfix only) for all unprocessed problem reports
 
 ### Step 2: Triage — classify each feedback item
 For each item, decide:
@@ -61,7 +53,7 @@ For each processed item, update its status (future: mark_feedback_reviewed tool)
 ## WEEKLY DEEP REVIEW (Sunday 20:00 VN)
 
 ### Step 1: Read ALL feedback from the week
-Read the Vn-market-report Telegram channel (https://t.me/+gXd3gCcD5IhmMzY0) — scroll back through the week's reports
+Read the Report Channel (TELEGRAM_REPORT_ID) — scroll back through the week's problem reports
 
 ### Step 2: Pattern analysis
 - Which category has the most feedback? → systemic issue
@@ -75,10 +67,6 @@ Week 1: src/domain/services/cascadeEngine.ts
 Week 2: src/domain/services/tradeRelationships.ts
 Week 3: src/application/usecases/pollNews.ts
 Week 4: src/infrastructure/notifiers/telegram.ts
-Week 5: src/domain/services/volatilityCalculator.ts (adaptive thresholds)
-Week 6: src/infrastructure/fetchers/hose.ts (data freshness, fallback chain)
-Week 7: src/application/usecases/scanMarket.ts (sector context, price-news divergence)
-Week 8: src/interface/mcp/tools/ (all 53 tools — verify tool count in get_system_health)
 ```
 
 ### Step 4: Write weekly improvement report
@@ -89,33 +77,6 @@ Call `submit_feedback` with:
 - detail: summary of actions taken, patterns found, recommendations
 - priority: "medium"
 
-## DATA FRESHNESS MONITORING
-
-Call `get_data_freshness` daily. Flag immediately if:
-- Any price source >30 min stale during market hours (09:00-15:30 VN)
-- Any news source >2h stale during market hours
-- BCTC data >48h stale during earnings season (Jan/Apr/Jul/Oct)
-
-Call `get_source_health` to confirm circuit breaker state:
-- "healthy" = normal
-- "degraded" = partial failures, reduce fetch frequency
-- "down" = circuit open, fallback active — submit_feedback to @dev
-
-Call `get_rate_limit_status` — if any source near limit:
-- Throttle that source's fetch frequency
-- Alert @dev if rate-limited during market hours
-
-## PORTFOLIO RISK MONITORING
-
-Call `get_portfolio_risk` weekly:
-- VaR 95% >5% daily = high risk environment — tighten thresholds
-- Max drawdown >20% = review position sizing
-- Report to Digest Writer via send_telegram_report
-
-Call `get_correlation_matrix` weekly:
-- Pearson r >0.8 between any two positions = risk concentration
-- Diversification score <0.4 = suggest rebalancing via get_rebalancing_signals
-
 ## RULES
 - Follow the WORKFLOW: PO → BA → Architect → PM → Developer → QA
 - NEVER skip the chain for SPRINT TASK items — even if the fix seems obvious
@@ -124,5 +85,4 @@ Call `get_correlation_matrix` weekly:
 - When in doubt, create a SPRINT TASK (safer than a bad FIX NOW)
 - Read `SPRINT_GOAL.md` first — don't conflict with current sprint work
 - Read `TASKS.md` — don't duplicate existing tasks
-- Verify tool count in get_system_health matches expected (53 as of Sprint 031)
 - Philosophy: "Always do it better" — every cycle must produce at least 1 improvement

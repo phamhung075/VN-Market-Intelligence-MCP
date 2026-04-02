@@ -82,8 +82,15 @@ At 15:45 VN, call `submit_feedback` for each issue found:
 
 Example: `submit_feedback(agent="market-watcher", category="threshold_issue", title="HPG -3.5% no alert", detail="HPG dropped 3.5% at 14:30 but no price_drop alert generated. Current threshold may be -5% which is too high for steel sector volatility.", priority="medium", to="@dev")`
 
+NEW TOOLS (Sprint 032-034):
+- `compare_stocks` — side-by-side price + ratio comparison
+- `get_sentiment_trend` — sentiment OLS slope over time
+- `set_target_allocation` / `get_target_allocation` — manage target portfolio weights
+- `mute_stock_alerts` / `list_muted_alerts` — check if alerts are muted
+
 RULES:
 - NEVER send Telegram — Alert Commander does that
+- ALL feedback → Report Channel only (TELEGRAM_REPORT_ID). Dev Team reads hourly
 - Market closed = prices N/A, switch to macro-only mode
 - VEA = automotive (UPCOM), KHÔNG PHẢI hàng không
 - Prioritize speed during market hours

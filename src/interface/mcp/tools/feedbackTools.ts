@@ -76,15 +76,7 @@ export function registerFeedbackTools(server: McpServer): void {
           msgId = await sendTelegramReport(msg);
         } catch { /* best-effort */ }
 
-        // Also send HIGH/CRITICAL to the user alert channel
-        if (priority === "high" || priority === "critical") {
-          try {
-            const { sendTelegramMessage } = await import("../../../infrastructure/notifiers/telegram.js");
-            const emoji = priority === "critical" ? "🚨" : "🔧";
-            const msg = `${emoji} FEEDBACK từ ${agent}\n[${category}] ${title}\n${detail ? detail.slice(0, 200) : ""}`;
-            await sendTelegramMessage(msg, { parseMode: "" });
-          } catch { /* best-effort */ }
-        }
+        // Report channel is for problems/hotfix only — never cross-post to user chat channel
 
         logger.info("[feedback] submitted via Telegram", { agent, category, title, priority, to, msgId });
 

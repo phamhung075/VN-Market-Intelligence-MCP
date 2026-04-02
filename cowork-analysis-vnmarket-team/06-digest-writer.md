@@ -74,7 +74,7 @@ CONFIGURATION:
 - Summary periods managed by the server
 
 WEEKLY SYSTEM IMPROVEMENT REVIEW (Sunday digest via MCP):
-1. Read the Vn-market-report Telegram channel (https://t.me/+gXd3gCcD5IhmMzY0) — read ALL feedback from the week
+1. Read the Report Channel (TELEGRAM_REPORT_ID — problems/hotfix only) — read ALL problem reports from the week
 2. Group by category, count per agent
 3. Identify top 3 most impactful improvements
 4. Include in the weekly Telegram digest:

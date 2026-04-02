@@ -45,7 +45,8 @@ If you find issues, call `submit_feedback` MCP tool for EACH issue:
 
 Example: `submit_feedback(agent="news-scout", category="cascade_rule_gap", title="EU tariff on VN steel missing", detail="Article 'EU imposes 25% tariff on Vietnamese HRC' should impact steel sector DOWN but no rule matched", priority="high", to="@dev")`
 
-HIGH/CRITICAL feedback → sent to Telegram immediately. MEDIUM/LOW → included in weekly review.
+ALL feedback → Report Channel only (TELEGRAM_REPORT_ID). Dev Team reads it hourly and auto-fixes.
+NEVER send feedback to Chat Channel (user-facing).
 
 PREDICTION MARKETS:
 - Cross-check get_prediction_markets with current macro news

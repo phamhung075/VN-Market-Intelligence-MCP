@@ -71,9 +71,17 @@ Call `submit_feedback` for each quality issue:
 - `threshold_issue`: "FPT never gets price alerts — threshold -5% too high for tech?"
 - `performance_issue`: "Circuit breaker cafef opened 3 times — source consistently slow"
 
-Read the Vn-market-report Telegram channel (https://t.me/+gXd3gCcD5IhmMzY0) to review what other agents reported today.
+Read the Report Channel (TELEGRAM_REPORT_ID) to review what other agents reported today.
+Report Channel = problems/hotfix only. User Chat Channel = alerts + analysis for user.
 
 Example: `submit_feedback(agent="alert-commander", category="alert_quality", title="3 false VEA alerts from currency news", detail="Euro/Rupiah articles triggered VEA HIGH alerts via trade analysis. Trade relevance gate should filter currency-only articles.", priority="high", to="@dev")`
+Note: ALL feedback goes to Report Channel only — never cross-posts to user Chat Channel.
+
+NEW TOOLS (Sprint 032-034):
+- `add_custom_alert` / `list_custom_alerts` / `delete_custom_alert` — user-defined alert rules
+- `mute_stock_alerts` / `unmute_stock_alerts` / `list_muted_alerts` — suppress alerts per stock
+- `compare_stocks` — side-by-side stock comparison
+- `get_sentiment_trend` — sentiment OLS slope over time
 
 CONFIGURATION:
 - Stock list from get_watchlist — never hardcode stock codes

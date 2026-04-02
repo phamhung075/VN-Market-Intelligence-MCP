@@ -44,7 +44,8 @@ This auto-seeds the database on every server restart (only if watchlist table is
 ### .env (secrets only)
 ```
 TELEGRAM_BOT_TOKEN=your_token
-TELEGRAM_CHAT_ID=your_chat_id
+TELEGRAM_CHAT_ID=your_chat_id        # User-facing: alerts, briefings, analysis
+TELEGRAM_REPORT_ID=your_report_id    # Problems/hotfix only: dev team reports
 TELEGRAM_ENABLED=true
 CLOUDFLARE_TOKEN=your_tunnel_token
 CLOUDFLARE_TUNNEL=vn-market-mcp
@@ -57,9 +58,9 @@ CLOUDFLARE_TUNNEL=vn-market-mcp
 cd /path/to/VN-Market-Intelligence-MCP
 bun run src/index.ts
 ```
-Server auto-seeds watchlist from config, starts OCR for unprocessed PDFs, registers 53 tools.
+Server auto-seeds watchlist from config, starts OCR for unprocessed PDFs, registers 62 tools.
 
-Verify: `curl https://zenmidi.com/health` → `{"status":"ok","toolCount":53}`
+Verify: `curl https://zenmidi.com/health` → `{"status":"ok","toolCount":62}`
 
 ### Step 2: Start Cloudflare Tunnel
 ```bash
@@ -86,46 +87,42 @@ MCP connector URL: `https://zenmidi.com/mcp`
 - Telegram: "✅ System online" at 08:55 Vietnam (03:55 France CET)
 - Health: `curl https://zenmidi.com/health`
 
-## 53 MCP Tools Available (Sprint 031)
+## 62 MCP Tools Available (Sprint 034)
 
 | Category | Tools |
 |----------|-------|
 | **Watchlist** | add_to_watchlist, remove_from_watchlist, get_watchlist, update_thresholds |
 | **News** | fetch_and_analyze, run_impact_chain, search_similar_context, get_analysis_history |
-| **Market** | get_market_snapshot, get_macro_snapshot, get_patterns, get_price_history, get_sector_rotation, search_stocks |
+| **Market** | get_market_snapshot, get_macro_snapshot, get_patterns, get_price_history, get_sector_rotation, search_stocks, compare_stocks, get_sentiment_trend |
 | **Reports** | fetch_ssc_reports, get_financial_summary, compare_financials, list_stored_pdfs, read_bctc_pdf, get_earnings_calendar |
-| **Alerts** | get_alerts, mark_alert_read, run_daily_briefing, trigger_alert_check, set_price_alert, get_price_alerts, delete_price_alert, get_alert_accuracy |
-| **Portfolio** | get_portfolio_conviction, set_position, get_positions, close_position, get_portfolio_risk, get_rebalancing_signals, get_correlation_matrix, get_performance_attribution, export_portfolio_snapshot |
+| **Alerts** | get_alerts, mark_alert_read, run_daily_briefing, trigger_alert_check, set_price_alert, get_price_alerts, delete_price_alert, get_alert_accuracy, add_custom_alert, list_custom_alerts, delete_custom_alert, mute_stock_alerts, unmute_stock_alerts, list_muted_alerts |
+| **Portfolio** | get_portfolio_conviction, set_position, get_positions, close_position, get_portfolio_risk, get_rebalancing_signals, get_correlation_matrix, get_performance_attribution, export_portfolio_snapshot, set_target_allocation, get_target_allocation, delete_target_allocation |
 | **Prediction Markets** | get_prediction_markets |
 | **Summaries** | get_market_summary, generate_market_summary |
 | **Telegram** | send_test_telegram, send_telegram_report, delete_telegram_report, send_alert_digest |
-| **Feedback** | submit_feedback (→ Telegram channel), get_feedback (deprecated — read channel directly) |
+| **Feedback** | submit_feedback (→ Report channel only), get_feedback (deprecated — read channel directly) |
 | **Operations** | get_data_freshness, get_source_health, get_rate_limit_status |
 | **System** | get_system_health, get_global_log, get_tool_log, get_error_summary |
 
-## Telegram Bot Commands (via /webhook)
+## Two Separate Telegram Channels
 
-Users can interact directly via the Telegram bot:
+### Chat Channel (TELEGRAM_CHAT_ID) — User-Facing
+For communicating with the user and sending analysis:
+- HIGH/CRITICAL price alerts (from intelligence cycle)
+- Morning briefing, evening summary, daily digest
+- BCTC filing notifications
+- Webhook bot command responses (/watchlist, /alerts, /briefing, /pnl)
+- **NEVER send internal agent feedback or dev reports here**
 
-| Command | Description |
-|---------|-------------|
-| `/watchlist` | Show current tracked stocks |
-| `/price VCB` | Get live price for a stock |
-| `/alerts` | Show pending HIGH/CRITICAL alerts |
-| `/briefing` | Trigger morning briefing on demand |
-| `/health` | Server health + tool count |
-| `/pnl` | Show portfolio P&L summary |
-| `/help` | List all commands |
-
-## Vn-market-report Channel (Inter-Agent Communication)
-
-All agents communicate via the **Vn-market-report** Telegram channel instead of database-only feedback.
-
-- `send_telegram_report` — send reports, requests, analysis to the team
-- `submit_feedback` — submit improvement suggestions (sent to Vn-market-report channel only)
+### Report Channel (TELEGRAM_REPORT_ID) — Problems/Hotfix Only
+For dev team and analysis team problem reports:
+- `send_telegram_report` — report problems, request hotfix, flag bugs
+- `submit_feedback` — submit improvement suggestions (report channel ONLY, never cross-posts to user)
 - Tag recipients: `@team`, `@po`, `@dev`, `@qa`, `@ba`, `@architect`, `@market-analyst`
 - Dev team reads the channel and acts on reports
+- Used for hotfix sprint runs (System Improver → FIX NOW or SPRINT TASK)
 - Review agent deletes reports when issues are fixed
+- **NOT for user communication — problems and hotfix only**
 
 ## Agent Cooperation Flow
 
@@ -143,12 +140,12 @@ All agents communicate via the **Vn-market-report** Telegram channel instead of 
 22:30 VN  Digest Writer sends daily summary + weekly review (Sunday)
 ```
 
-## Agent Feedback Loop (via Vn-market-report Telegram channel)
+## Agent Feedback Loop (via Report Channel — Problems/Hotfix Only)
 
 ```
-Analysis team finds gaps → submit_feedback / send_telegram_report
+Analysis team finds problems → submit_feedback / send_telegram_report
                                           ↓
-                          Vn-market-report Telegram channel (@po, @dev, @team)
+                          Report Channel (TELEGRAM_REPORT_ID) — @po, @dev, @team
                                           ↓
                     ┌── @dev reads → FIX NOW (<20 lines): implement + test + push
                     │
@@ -159,12 +156,14 @@ Analysis team finds gaps → submit_feedback / send_telegram_report
                               Review agent deletes resolved reports
 ```
 
+**Important**: Feedback NEVER goes to the Chat Channel (user-facing). Only problems/hotfix reports go to the Report Channel.
+
 Agents submit feedback via `submit_feedback` MCP tool:
 - **News Scout**: cascade_rule_gap, trade_map_gap, sentiment_error, new_indicator
 - **Market Watcher**: threshold_issue, sector_peer_issue, alert_quality
 - **Alert Commander**: alert_quality, performance_issue
 - **Report Analyzer**: data_extraction_error, trade_map_gap from BCTC
-- **Digest Writer**: compiles weekly review from Vn-market-report Telegram channel
+- **Digest Writer**: compiles weekly review from Report Channel problem reports
 - **System Improver**: triages feedback → FIX NOW or SPRINT TASK → triggers dev team chain
 
 ## Key Architecture Rules
@@ -192,7 +191,7 @@ Sunday ~17:00  📊 Weekly Digest
 |---------|-----|
 | Server timeout | Kill zombie Chrome: `pkill -9 -f "Google Chrome.*no-sandbox"` then restart |
 | Watchlist empty | Auto-seeds on restart from mcp.config.json. Check `market.watchlist` |
-| Telegram fails | Check `.env` has TELEGRAM_BOT_TOKEN + TELEGRAM_CHAT_ID |
+| Telegram fails | Check `.env` has TELEGRAM_BOT_TOKEN + TELEGRAM_CHAT_ID + TELEGRAM_REPORT_ID |
 | SSC timeout | Normal — portal is slow. Nightly job retries automatically |
 | OCR not working | Install: `brew install tesseract tesseract-lang poppler` |
 | Errors in log | Clear: run `get_system_health` tool, errors auto-resolve |

@@ -2,6 +2,72 @@
 
 ## Current Sprint
 
+status: IN PROGRESS
+sprint_id: 035
+started: 2026-04-02
+updated: 2026-04-02
+
+---
+
+### Theme
+
+**"Two-Team Autonomy — Analysis Team + Dev Team Self-Improving Loop"**
+
+---
+
+### Goal
+
+Establish two autonomous teams that continuously improve the system:
+1. **Analysis Team** (7 Claude Cowork agents, cloud) — serves the user with investment intelligence
+2. **Dev Team** (Claude Code CLI cron, local) — reads problem reports, auto-fixes bugs, runs sprints
+
+The two teams communicate via two separate Telegram channels:
+- Chat Channel (TELEGRAM_CHAT_ID) — user-facing: alerts, briefings, analysis
+- Report Channel (TELEGRAM_REPORT_ID) — problems/hotfix only: dev team reads, auto-fixes
+
+---
+
+### Scope
+
+**IN**
+
+1. **Docs + Config (Quick Wins — Sprint 035a)**
+   - Create `dev-team-cron.md` — hourly dev loop prompt for Claude Code CLI
+   - Rewrite `unified-agent.md` — analysis coordinator only (remove dev chain)
+   - Update all agent `.md` files — tool count 62, channel rules, new tools
+   - Update `start.sh` — enable `bun --hot` for live code reload
+   - Update `AI_TEAM_DESIGN.md` — two-team architecture
+   - Fix `feedbackTools.ts` — remove cross-post to user channel
+   - Commit all changes immediately (prevent linter reverts)
+
+2. **Code Sprint (Sprint 035b — separate session)**
+   - `telegram_reports` SQLite table — store sent reports with status
+   - Webhook for Report Channel — catch incoming messages
+   - `read_telegram_reports` MCP tool — read unprocessed reports
+   - `process_telegram_report` MCP tool — mark processed + delete from Telegram
+   - CronCreate schedule — register hourly dev cron
+
+**OUT**
+
+- Micro-service gateway architecture (future)
+- Graceful restart script (future, after --hot proves stable)
+- New analysis tools or data sources
+
+---
+
+### Success Metrics
+
+1. All cowork agent `.md` files show 62 tools, correct channel rules
+2. `dev-team-cron.md` exists with complete hourly loop specification
+3. `unified-agent.md` is analysis-only (no dev chain)
+4. `start.sh` uses `bun --hot` for zero-downtime code reload
+5. `feedbackTools.ts` does not cross-post to user Chat Channel
+6. All changes committed and pushed to main
+
+---
+
+## Previous Sprint
+
 status: COMPLETE
 sprint_id: 034
 started: 2026-04-02
