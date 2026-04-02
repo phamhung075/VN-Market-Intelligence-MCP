@@ -284,6 +284,39 @@ const MACRO_ADJUSTMENTS: MacroRule[] = [
     domain: "real_estate",
     delta: -0.08,
   },
+  // Macro dual pressure: Brent >100 AND USD/VND >25500 → severe cost + currency squeeze
+  {
+    label: "macroDualPressure(brent+usd)",
+    condition: (ctx) =>
+      ctx.brentCrudeUSD !== null && ctx.brentCrudeUSD > 100 &&
+      ctx.usdVndMarket !== null && ctx.usdVndMarket > 25500,
+    domain: "aviation",
+    delta: -0.15,
+  },
+  {
+    label: "macroDualPressure(brent+usd)",
+    condition: (ctx) =>
+      ctx.brentCrudeUSD !== null && ctx.brentCrudeUSD > 100 &&
+      ctx.usdVndMarket !== null && ctx.usdVndMarket > 25500,
+    domain: "logistics",
+    delta: -0.12,
+  },
+  {
+    label: "macroDualPressure(brent+usd)",
+    condition: (ctx) =>
+      ctx.brentCrudeUSD !== null && ctx.brentCrudeUSD > 100 &&
+      ctx.usdVndMarket !== null && ctx.usdVndMarket > 25500,
+    domain: "retail",
+    delta: -0.08,
+  },
+  {
+    label: "macroDualPressure(brent+usd)",
+    condition: (ctx) =>
+      ctx.brentCrudeUSD !== null && ctx.brentCrudeUSD > 100 &&
+      ctx.usdVndMarket !== null && ctx.usdVndMarket > 25500,
+    domain: "automotive",
+    delta: -0.10,
+  },
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -414,10 +447,20 @@ export function applyDynamicMacroAdjustments(
  * @param entries      - All chain entries (only "domain" level are modified)
  * @param macroContext - Live macro indicators
  */
+/**
+ * Maximum cumulative negative delta from macro adjustments per entry.
+ * Prevents macro penalties from crushing confidence below useful levels
+ * for infrastructure/sector news that has direct impact.
+ */
+const MAX_MACRO_NEGATIVE_DELTA = -0.25;
+
 export function applyMacroAdjustments(
   entries: CausalChainEntry[],
   macroContext: MacroContext,
 ): void {
+  // Track cumulative delta per entry to cap negative adjustments
+  const cumulativeDelta = new Map<CausalChainEntry, number>();
+
   for (const rule of MACRO_ADJUSTMENTS) {
     if (!rule.condition(macroContext)) continue;
 
@@ -428,12 +471,23 @@ export function applyMacroAdjustments(
       if (entry.level !== "domain") continue;
       if (!entry.affectedDomains.includes(rule.domain)) continue;
 
+      const currentDelta = cumulativeDelta.get(entry) ?? 0;
+      let effectiveDelta = rule.delta;
+
+      // Cap cumulative negative delta to prevent over-penalisation
+      if (effectiveDelta < 0) {
+        const remaining = MAX_MACRO_NEGATIVE_DELTA - currentDelta;
+        if (remaining >= 0) continue; // already at max negative cap
+        effectiveDelta = Math.max(effectiveDelta, remaining);
+      }
+
       // Apply delta
-      const newConf = Math.min(0.99, Math.max(0.05, entry.confidence + rule.delta));
-      const deltaStr = rule.delta >= 0 ? `+${rule.delta.toFixed(2)}` : rule.delta.toFixed(2);
+      const newConf = Math.min(0.99, Math.max(0.05, entry.confidence + effectiveDelta));
+      const deltaStr = effectiveDelta >= 0 ? `+${effectiveDelta.toFixed(2)}` : effectiveDelta.toFixed(2);
       entry.reasoning +=
         ` [Macro: ${rule.label}=${displayValue} → ${deltaStr} ${rule.domain}]`;
       entry.confidence = newConf;
+      cumulativeDelta.set(entry, currentDelta + effectiveDelta);
     }
   }
 }
@@ -541,6 +595,36 @@ const SECTOR_RULES: SectorRule[] = [
     direction: "down",
     confidence: 0.85,
     title: "VN-Index giảm — tiêu cực trực tiếp cho chứng khoán",
+  },
+  // VN-Index → banking (blue-chip constituent, largest sector weight)
+  {
+    keywords: ["vn-index giảm", "vn-index giảm điểm", "market decline", "thị trường giảm", "mất điểm tháng", "giảm liên tiếp"],
+    domain: "banking",
+    direction: "down",
+    confidence: 0.70,
+    title: "VN-Index giảm — tiêu cực cho nhóm ngân hàng blue-chip",
+  },
+  {
+    keywords: ["vn-index tăng", "vn-index tăng điểm", "market rally", "thị trường tăng"],
+    domain: "banking",
+    direction: "up",
+    confidence: 0.70,
+    title: "VN-Index tăng — tích cực cho nhóm ngân hàng",
+  },
+  // VN-Index → real_estate (index-sensitive sector)
+  {
+    keywords: ["vn-index giảm", "vn-index giảm điểm", "market decline", "thị trường giảm", "mất điểm tháng"],
+    domain: "real_estate",
+    direction: "down",
+    confidence: 0.65,
+    title: "VN-Index giảm — tiêu cực cho bất động sản",
+  },
+  {
+    keywords: ["vn-index tăng", "vn-index tăng điểm", "market rally", "thị trường tăng"],
+    domain: "real_estate",
+    direction: "up",
+    confidence: 0.65,
+    title: "VN-Index tăng — tích cực cho bất động sản",
   },
   {
     keywords: ["lạm phát cao", "high inflation", "lạm phát tăng"],

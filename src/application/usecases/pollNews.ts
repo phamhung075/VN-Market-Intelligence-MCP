@@ -473,8 +473,14 @@ export async function pollNews(options: PollNewsOptions = {}): Promise<PollNewsR
             ? false // short-circuit: ticker already matched, skip alias scan
             : detectStocksInText(titleAndSummary, [impact.actionCode]).length > 0;
           const directMention = tickerMatch || aliasMatch;
+          // Gate 3b: Market-wide cascade noise filter — cascade-only impacts
+          // from "ảnh hưởng toàn thị trường" are low-signal for individual stocks.
+          // Require direct mention for market-wide cascade impacts.
+          const isMarketWideCascade = impact.reasoning.includes("market-wide cascade");
           if (directMention) {
             // Always pass — article explicitly mentions this stock
+          } else if (isMarketWideCascade) {
+            continue; // Market-wide cascade without direct mention — skip (noise)
           } else if (sourceTrusted && sentiment.direction !== "neutral" && sentiment.confidence >= nmCfg.minSentimentConfidence && impact.confidence >= nmCfg.minCascadeConfidence) {
             // Trusted source + strong directional sentiment + high cascade confidence — pass
           } else {

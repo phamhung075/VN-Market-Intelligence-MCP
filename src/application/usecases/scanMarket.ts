@@ -301,6 +301,46 @@ export async function scanMarket(
     result.scanned++;
   }
 
+  // ── Step 5a: Sector-wide decline detection ─────────────────────────────
+  // When ≥3 stocks in the same sector all decline, emit a sector_decline signal
+  // for each watchlist stock in that sector.
+  const SECTOR_DECLINE_MIN_STOCKS = 3;
+  const SECTOR_DECLINE_THRESHOLD = -0.5; // each stock must be down at least 0.5%
+
+  for (const [domain, domainPrices] of pricesByDomain) {
+    const declining = domainPrices.filter((p) => p.changePct <= SECTOR_DECLINE_THRESHOLD);
+    if (declining.length < SECTOR_DECLINE_MIN_STOCKS) continue;
+
+    const sectorName = SECTOR_NAME_VI[domain] ?? domain;
+    const avgDrop = declining.reduce((sum, p) => sum + p.changePct, 0) / declining.length;
+    const topDecliners = declining
+      .sort((a, b) => a.changePct - b.changePct)
+      .slice(0, 5)
+      .map((p) => `${p.code} ${p.changePct >= 0 ? "+" : ""}${p.changePct.toFixed(2)}%`)
+      .join(", ");
+
+    // Emit a signal for each watchlist stock in this declining sector
+    for (const price of prices) {
+      const stockDomain = codeToDomain.get(price.code);
+      if (stockDomain !== domain) continue;
+
+      allSignals.push({
+        type: "price_drop",
+        severity: avgDrop <= -1.5 ? "high" : "medium",
+        actionCode: price.code,
+        message: `⚠️ Ngành ${sectorName} giảm đồng loạt (${declining.length} mã, TB ${avgDrop.toFixed(2)}%): ${topDecliners}`,
+        confidence: Math.min(0.9, declining.length / 5),
+        detectedAt: new Date().toISOString(),
+      });
+    }
+
+    logger.info("[scanMarket] sector-wide decline detected", {
+      domain,
+      decliningCount: declining.length,
+      avgDrop: avgDrop.toFixed(2),
+    });
+  }
+
   // ── Step 5b: Price-news divergence validation ──────────────────────────
   // Cross-validate news sentiment against actual price action.
   // "Tin tức có thể giả nhưng giá phản ánh tất cả"

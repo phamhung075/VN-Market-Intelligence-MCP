@@ -79,12 +79,8 @@
 
 | # | Title | Branch | Notes |
 |---|-------|--------|-------|
-<<<<<<< HEAD
-| 195 | Portfolio rebalancing signals: `get_rebalancing_signals` | `task/195-rebalancing-signals` | Awaiting QA sign-off; depends on 193 (dynamic registry) for clean registration path |
-=======
 | DOC-001 | Update CLAUDE.md architecture section | `task/doc-001-claude-md-update` | Ready for QA |
-| 195 | Portfolio rebalancing signals | `task/195-rebalancing-signals` | 17 tests pass, tsc clean, toolCount 16→17 |
->>>>>>> task/195-rebalancing-signals
+| 195 | Portfolio rebalancing signals: `get_rebalancing_signals` | `task/195-rebalancing-signals` | 17 tests pass, tsc clean, awaiting QA sign-off |
 
 ---
 
@@ -93,6 +89,29 @@
 | # | Title | Branch | Notes |
 |---|-------|--------|-------|
 | — | — | — | Empty |
+
+---
+
+### Sprint 028 — Bug Fixes & Alert Quality (2026-04-02)
+
+> Triggered by: production monitoring reports (news-scout, alert-commander, market-watcher)
+> All fixes applied directly on main — hotfix batch
+
+| # | Title | Status | Notes |
+|---|-------|--------|-------|
+| 198 | VN-Index → banking/real_estate cascade rules | ✅ Done | Added 4 rules (up/down × banking/real_estate) + "mất điểm tháng" keyword |
+| 199 | Sentiment classifier: insider selling from leaders | ✅ Done | Added "muốn thoái sạch vốn" (w5), "thoái sạch vốn" (w4), "lãnh đạo bán" (w3), increased insider selling weights |
+| 200 | Macro pressure dual alert (Brent+USD/VND) | ✅ Done | Added 4 combined rules: aviation -0.15, logistics -0.12, retail -0.08, automotive -0.10 |
+| 201 | Cap macro penalty per entry | ✅ Done | MAX_MACRO_NEGATIVE_DELTA = -0.25 prevents over-penalisation of infrastructure news |
+| 202 | VCB news_mention noise filter | ✅ Done | Market-wide cascade impacts now require direct mention to trigger news_mention alerts |
+| 203 | Investigate Vinamilk → VNM alias | ✅ Investigated | Code correct — "vinamilk" in dictionary. Likely VNM not in watchlist at runtime |
+| 204 | Investigate VCB price mismatch | ✅ Investigated | Data source inconsistency between VnDirect legacy (VND) and stock_prices (×1000). Not a code bug |
+| 205 | Sector-wide decline alert | ✅ Done | Emits price_drop signal when ≥3 stocks in same sector decline ≥0.5%. Shows sector avg + top decliners |
+
+**Remaining (deferred / PO decision needed):**
+- Reuters RSS failing — external service issue, monitor only
+- USD/VND watchlist expansion — PO decision: add VEA, HVN, HPG as FX-sensitive stocks
+- DB schema "no such table" on restart — needs runtime investigation (tables ARE defined with IF NOT EXISTS)
 
 ---
 
@@ -379,19 +398,77 @@
 
 | Column | Count | Tasks |
 |--------|-------|-------|
-| ✅ Done | 60+ | Sprints 000-027 partial (194 done) |
-| 🔍 Review | 1 | 195 (rebalancing signals) |
+| ✅ Done | 60+ | Sprints 000-027 (194, hotfixes 198-205 done; 195 in Review) |
+| 🔍 Review | 2 | DOC-001, 195 (rebalancing signals) |
 | 🚧 In Progress | 0 | — |
 | 📋 Todo | 0 | — |
-| 🗂 Backlog | 5 | 192, 193, 196, 197 (Sprint 027); 125 deferred |
+| 🗂 Backlog | 6 | 192, 193, 206, 207 (Sprint 028); 196, 197 (deferred); 125 (long-term deferred) |
 | **Total** | **60+** | |
 
 ---
 
-## Sprint 027 — ACTIVE
+## Sprint 028 — ACTIVE
 
-> Sprint 027 STARTED — 2026-04-02. Theme: Stability First — Fix the Cracks Before Adding More Floors.
+> Sprint 028 STARTED — 2026-04-01. Theme: Structural Integrity and Investor Safety Net.
+> PO sign-off: APPROVED 2026-04-01. Tasks 192, 193, 206, 207 in scope.
+
+| # | Title | Branch | Priority | Status |
+|---|-------|--------|----------|--------|
+| 192 | Fix flaky test: polymarket-fetcher mock timing | `task/192-fix-polymarket-flaky` | P0 | Backlog |
+| 193 | Dynamic tool registration: eliminate server.ts merge conflicts | `task/193-dynamic-tool-registry` | P0 | Backlog |
+| 206 | Stop-loss / take-profit threshold alerts | `task/206-price-alert-tools` | P1 | Backlog |
+| 207 | Per-source API rate limiting for external fetchers | `task/207-rate-limiter` | P1 | Backlog |
+
+**Task 206 — Acceptance Criteria**
+- `set_price_alert('VCB', 'stop_loss', 88000)` inserts a row with `triggered = 0`.
+- Price 87,500 processed → row marked `triggered = 1` and HIGH alert inserted into `alerts`.
+- Triggered row does NOT re-fire on subsequent price checks.
+- `set_price_alert('FPT', 'take_profit', 120000)` + price 123,000 → take-profit alert fires.
+- `get_price_alerts()` returns all pending alerts in Vietnamese table format.
+- `delete_price_alert(id)` removes the row; no longer shown in `get_price_alerts`.
+- `checkPriceAlerts([])` (empty prices) → no crash, returns 0 breaches.
+- `price_alerts` table + index created in `schema.ts` with `IF NOT EXISTS`.
+- >= 18 tests, 0 failures. `bun tsc --noEmit` → 0 errors. Tool count 48 → 51.
+
+Files:
+- MODIFY: `src/infrastructure/db/schema.ts` — add `price_alerts` table + index
+- CREATE: `src/application/usecases/checkPriceAlerts.ts`
+- CREATE: `src/interface/mcp/tools/priceAlertTools.ts`
+- MODIFY: `src/interface/mcp/tools/registry.ts` — add priceAlertTools entry (requires 193)
+- MODIFY: `src/scheduler/intelligenceCycleJob.ts` — wire `checkPriceAlerts` after price fetch
+- CREATE: `src/__tests__/206-price-alert-tools.test.ts`
+
+Dependency: task 193 (registry.ts must exist before task 206 appends to it).
+
+**Task 207 — Acceptance Criteria**
+- `canCall('cafef.vn')` → `true` before first call, `false` immediately after `record()`,
+  `true` again after 8 s (mocked timer).
+- Two rapid calls to same host: second skipped, logged at DEBUG.
+- Different hosts: independent counters — one rate-limited does not block others.
+- All 7 modified fetchers return `[]` / `null` gracefully when rate-limited (no throws).
+- `mcp.config.json` `fetchers.rateLimits` section parsed and applied at startup.
+- `rateLimiter.ts` lives in `src/domain/services/` (pure logic, no I/O imports).
+- >= 14 tests, 0 failures. `bun tsc --noEmit` → 0 errors. Tool count unchanged.
+
+Files:
+- CREATE: `src/domain/services/rateLimiter.ts`
+- MODIFY: `src/infrastructure/fetchers/cafef.ts`
+- MODIFY: `src/infrastructure/fetchers/vnexpress.ts`
+- MODIFY: `src/infrastructure/fetchers/vneconomy.ts`
+- MODIFY: `src/infrastructure/fetchers/reuters.ts`
+- MODIFY: `src/infrastructure/fetchers/tradingEconomicsStream.ts`
+- MODIFY: `src/infrastructure/fetchers/hose.ts`
+- MODIFY: `src/infrastructure/fetchers/hnx.ts`
+- MODIFY: `mcp.config.json` — add `fetchers.rateLimits` section
+- CREATE: `src/__tests__/207-rate-limiter.test.ts`
+
+---
+
+## Sprint 027 — COMPLETE
+
+> Sprint 027 DONE — 2026-04-02. Theme: Stability First — Fix the Cracks Before Adding More Floors.
 > PO sign-off: APPROVED 2026-04-02. Tasks 192, 193, 194, 195, 196, 197 in scope.
+> Delivered: 194 (CLAUDE.md sync), hotfixes 198-205 (production monitoring fixes). Tasks 192, 193, 195, 196, 197 carried to Sprint 028.
 
 | # | Title | Branch | Priority | Status |
 |---|-------|--------|----------|--------|

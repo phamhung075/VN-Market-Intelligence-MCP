@@ -2,40 +2,26 @@
 
 ## Current Sprint
 
-status: COMPLETE
-sprint_id: 027
+status: ACTIVE
+sprint_id: 028
 started: 2026-04-01
-updated: 2026-04-02
-completed: 2026-04-02
+updated: 2026-04-01
 
 ---
 
 ### Theme
 
-**"Stability First — Fix the Cracks Before Adding More Floors"**
+**"Structural Integrity and Investor Safety Net"**
 
 ---
 
 ### Goal
 
-The platform is feature-rich at 46 tools and 1672 tests. Before extending it further, three
-structural cracks must be sealed:
-
-1. A flaky test in the Polymarket fetcher fires randomly in the full suite, eroding CI
-   confidence. Every red run wastes developer investigation time and masks real failures.
-
-2. Every worktree merge produces conflicts in `server.ts` and `tools/index.ts` because all
-   27 tool registration calls are hardcoded in a flat list. One developer adds a line; a
-   second developer adds a different line; Git cannot reconcile them. Dynamic auto-discovery
-   eliminates the conflict surface permanently.
-
-3. CLAUDE.md documents the architecture through Sprint 021. Sprints 022-026 added 14 new
-   tools, 4 new domain services, and 3 new use cases. New agents and contributors
-   onboarding after Sprint 021 have an incomplete map of the codebase.
-
-The fourth task adds direct investor value: a rebalancing signal tool that tells the
-investor when any position's weight has drifted more than a configurable threshold from
-its target, and suggests the corrective trade size.
+Two structural debts from Sprint 027 (dynamic registry, flaky test) are resolved first so
+the codebase is clean before new investor-facing features land. Then two production-grade
+investor tools are added: stop-loss/take-profit threshold alerts so positions have a safety
+net, and per-source API rate limiting so the 15-min intelligence cycle cannot be throttled
+or banned by external services.
 
 ---
 
@@ -43,254 +29,282 @@ its target, and suggests the corrective trade size.
 
 **IN**
 
-1. **Task 192 — Fix flaky test: `164-polymarket-fetcher.test.ts` mock timing (P0)**
+1. **Task 192 — Fix flaky test: `164-polymarket-fetcher.test.ts` mock timing (P0, carry-over)**
 
-   The test passes in isolation but fails randomly when the full suite runs concurrently.
-   Root cause: the mock for `Bun.fetch` is set up globally and a racing test resets it
-   between the timer fire and the assertion. Fix: scope the mock to the test file only,
-   use `vi.isolateModules` or equivalent Bun test isolation, and add a deterministic timer
-   mock that does not rely on wall-clock timing.
+   The polymarket fetcher test fires randomly in the full suite due to a shared Bun.fetch
+   mock being reset by a racing test between the timer fire and the assertion. The fix scopes
+   the mock to the test file only and replaces wall-clock timer reliance with a deterministic
+   fake timer so concurrent tests cannot interfere.
 
    Acceptance criteria:
    - `bun test src/__tests__/164-polymarket-fetcher.test.ts` passes 10/10 consecutive runs.
-   - `bun test` full suite passes 3/3 consecutive runs with no flaky failures in task 164.
-   - No other test files are modified except `src/__tests__/164-polymarket-fetcher.test.ts`
-     and any shared test helper it extracts.
+   - `bun test` full suite passes 3/3 consecutive runs with zero flaky failures in task 164.
+   - No production files modified — only `src/__tests__/164-polymarket-fetcher.test.ts` and
+     any extracted shared test helper.
+   - >= 1 new assertion pins the previously-flaky timing behaviour.
    - `bun tsc --noEmit` → 0 errors.
-   - >= 1 new test or assertion added that pins the previously-flaky behaviour.
 
    Files:
    - MODIFY: `src/__tests__/164-polymarket-fetcher.test.ts`
-   - MODIFY (optional): shared test helper if mock isolation is extracted
+   - MODIFY (optional): shared mock helper if extracted
 
-2. **Task 193 — Dynamic tool registration: eliminate server.ts merge conflicts (P0)**
+2. **Task 193 — Dynamic tool registration: eliminate server.ts merge conflicts (P0, carry-over)**
 
-   Replace the current flat list of `register*Tools(server, db)` calls in
-   `src/interface/mcp/server.ts` with an auto-discovery pattern. Each tool module exports
-   a `register` function with a consistent signature. `server.ts` iterates an array of
-   modules and calls `register` on each. Adding a new tool requires editing only the new
-   tool file and appending one line to the module array — not modifying the shared
-   `server.ts` body.
+   Replace the flat list of `register*Tools(server, db)` calls in
+   `src/interface/mcp/server.ts` with an auto-discovery registry. Each tool module exports
+   a `register(server, db)` function. `server.ts` iterates `toolRegistry` from
+   `src/interface/mcp/tools/registry.ts` and calls `r.register(server, db)` for each entry.
 
    Design constraints (locked at PO level):
-   - The module array lives in `src/interface/mcp/tools/registry.ts` (new file). This is
-     the ONLY file that changes when a new tool module is added.
-   - `server.ts` imports `toolRegistry` from `registry.ts` and calls
-     `toolRegistry.forEach(r => r.register(server, db))`. No other change to `server.ts`.
-   - Each existing tool module (`watchlist.ts`, `alerts.ts`, etc.) gains a named export:
-     `export function register(server: McpServer, db: Database): void` that contains the
-     existing registration logic.
-   - `tools/index.ts` is NOT changed — it continues to re-export the register functions
-     for consumers that import them directly (backward compatible).
-   - Existing tool behaviour does not change — this is purely a structural refactor.
-   - No new MCP tools are added in this task.
+   - The module array lives exclusively in `src/interface/mcp/tools/registry.ts`.
+   - `server.ts` imports `toolRegistry` and runs one `forEach` loop — nothing else changes.
+   - Each existing tool module gains `export function register(server, db)` containing the
+     existing registration logic verbatim.
+   - `tools/index.ts` is NOT changed — backward-compatible re-exports remain.
+   - No tool behaviour changes. All 48 existing tools must pass their existing tests.
 
    Acceptance criteria:
-   - `src/interface/mcp/tools/registry.ts` exists and exports `toolRegistry` as an array
-     of objects with a `register(server, db)` method.
-   - `src/interface/mcp/server.ts` no longer contains individual `register*Tools(...)` call
-     sites — only the `toolRegistry.forEach(...)` loop.
-   - All 46 existing tools remain registered and functional.
-   - `bun test` full suite → 0 failures.
-   - `bun tsc --noEmit` → 0 errors.
-   - A new tool can be added by editing only its own file + appending one entry to
-     `registry.ts`. Verified by adding a stub tool in the test.
+   - `src/interface/mcp/tools/registry.ts` exists and exports `toolRegistry` as an array of
+     objects with a `register(server: McpServer, db: Database): void` method.
+   - `src/interface/mcp/server.ts` body contains only the `toolRegistry.forEach(...)` loop —
+     no individual `register*Tools(...)` call sites remain.
+   - All 48 tools remain registered and functional after refactor.
+   - `bun test` full suite → 0 failures, `bun tsc --noEmit` → 0 errors.
+   - A stub tool added only to `registry.ts` and its own file is sufficient to register it.
+     Verified by a test in `src/__tests__/193-tool-registry.test.ts`.
 
    Files:
    - CREATE: `src/interface/mcp/tools/registry.ts`
    - MODIFY: `src/interface/mcp/server.ts` — replace call list with forEach loop
-   - MODIFY: each tool module file — add `export function register(...)` named export
+   - MODIFY: every tool module file — add `export function register(...)` named export
    - CREATE: `src/__tests__/193-tool-registry.test.ts`
 
-3. **Task 194 — CLAUDE.md sync through Sprint 026 (P1)**
+3. **Task 206 — Stop-loss / take-profit threshold alerts (P1)**
 
-   CLAUDE.md currently documents through Sprint 021. Sprints 022-026 added:
-   - 14 new MCP tools (tools 33-46: stock search, data freshness, portfolio position
-     tracking, P&L, VaR, drawdown, alert accuracy, alert digest, sector rotation, earnings
-     calendar, performance attribution, correlation matrix, export snapshot, rebalancing)
-   - New domain services: `correlationCalculator.ts`, `performanceAttributor.ts`,
-     `sectorRotationDetector.ts`
-   - New use cases: `exportPortfolioSnapshot.ts`
-   - New scheduler job: `alertDigestJob.ts` (from task 188)
-   - Updated test count: 604 (Sprint 021) → 1672 (Sprint 026)
-   - Updated tool count: 32 → 46
+   New MCP tool `set_price_alert` lets the investor define a stop-loss or take-profit price
+   level for any stock. The intelligence cycle checks these thresholds on every price fetch
+   and emits a HIGH severity alert (→ Telegram) when a threshold is breached.
 
-   Update sections:
-   - Architecture summary: add all new files to the `src/` tree
-   - Current implementation status: add Sprints 022-026 to the Done list
-   - Scheduled Jobs: add `alertDigestJob` row to the Core cron jobs table
-   - Key data flow: add correlation and performance attribution to the flow diagram
-   - In Progress / Deferred: reflect current state accurately
-
-   Acceptance criteria:
-   - CLAUDE.md `src/` tree lists all files introduced in Sprints 022-026.
-   - "Current implementation status" Done section includes Sprints 022-026 with accurate
-     task lists.
-   - Tool count stated in CLAUDE.md matches actual registered tool count (46).
-   - Test count stated in CLAUDE.md is >= 1672.
-   - `bun tsc --noEmit` → 0 errors (no code change, but verify no regression).
-   - No task reports or sprint reports are modified — CLAUDE.md only.
-
-   Files:
-   - MODIFY: `CLAUDE.md`
-
-4. **Task 195 — Portfolio rebalancing signals: `get_rebalancing_signals` MCP tool (P1)**
-
-   New MCP tool `get_rebalancing_signals` that computes how far each position's current
-   weight has drifted from its target weight and outputs the corrective trade needed to
-   restore balance. Uses `positions` and `market_prices` tables only — no new schema.
-
-   Rebalancing logic (rule-based, deterministic, no LLM):
-   - Load all open positions (closed_at IS NULL) from `positions`.
-   - For each position, compute current market value = `quantity * current_price` where
-     `current_price` comes from `market_prices` (latest row for that stock code).
-   - Compute total portfolio value = SUM of all open position market values.
-   - Compute current weight for each position = market_value / total_portfolio_value.
-   - Compare current weight to `target_weight` column in `positions` (REAL, 0-1). If the
-     column does not exist or is NULL for a position, use equal weight (1 / n_positions).
-   - Drift = current_weight - target_weight.
-   - Flag positions where |drift| >= threshold (default: 0.05 = 5 percentage points).
-     Threshold is an optional MCP tool parameter (0.01 – 0.20, default 0.05).
-   - For each flagged position, compute corrective trade:
-     - If drift > 0 (overweight): sell `(drift * total_value) / current_price` shares.
-     - If drift < 0 (underweight): buy `(|drift| * total_value) / current_price` shares.
-   - Round corrective trade quantities to integers (floor for sells, ceil for buys).
-
-   Output (plain text, Vietnamese):
+   Data model: new table `price_alerts` in SQLite:
+   ```sql
+   CREATE TABLE IF NOT EXISTS price_alerts (
+     id          INTEGER PRIMARY KEY AUTOINCREMENT,
+     stock_code  TEXT NOT NULL,
+     alert_type  TEXT NOT NULL CHECK(alert_type IN ('stop_loss','take_profit')),
+     threshold   REAL NOT NULL,
+     note        TEXT,
+     triggered   INTEGER NOT NULL DEFAULT 0,   -- 0 = pending, 1 = triggered
+     triggered_at TEXT,
+     created_at  TEXT NOT NULL DEFAULT (datetime('now'))
+   );
+   CREATE INDEX IF NOT EXISTS idx_price_alerts_stock ON price_alerts(stock_code, triggered);
    ```
-   TIN HIEU TAI CO CAU DANH MUC (2026-04-01)
-   ──────────────────────────────────────────
-   Tong gia tri danh muc: 125,000,000 VND
-   Nguong chenh lech: 5%
 
-   Co phieu   Ty trong hien tai   Muc tieu   Chenh lech   Hanh dong
-   VCB        42%                 25%        +17%         BAN 210 co phieu
-   FPT        18%                 25%        -7%          MUA 88 co phieu
-   VNM        22%                 25%        -3%          (trong nguong)
-   VEA        18%                 25%        -7%          MUA 142 co phieu
-   ──────────────────────────────────────────
-   Can tai co cau: 3/4 vi the vuot nguong 5%
-   ```
+   MCP tools (new file `src/interface/mcp/tools/priceAlertTools.ts`):
+   - `set_price_alert(stock_code, alert_type, threshold, note?)` — inserts a pending alert.
+   - `get_price_alerts(stock_code?)` — lists pending (and optionally triggered) alerts.
+   - `delete_price_alert(id)` — removes an alert row.
+
+   Intelligence cycle integration:
+   - After `fetchHosePrices()` / `fetchHnxPrices()` in the intelligence cycle, call
+     `checkPriceAlerts(prices)` from `src/application/usecases/checkPriceAlerts.ts`.
+   - For each pending `price_alerts` row where the current price has crossed the threshold:
+     - stop_loss: current_price <= threshold → breach.
+     - take_profit: current_price >= threshold → breach.
+   - On breach: emit an Alert with severity HIGH, stock_code, message in Vietnamese:
+     `"[VCB] STOP-LOSS kích hoạt: giá 87,500 ≤ ngưỡng 88,000. Xem xét cắt lỗ ngay."` or
+     `"[FPT] TAKE-PROFIT kích hoạt: giá 123,000 ≥ ngưỡng 120,000. Chốt lời?"`.
+   - Mark `triggered = 1`, `triggered_at = now()` — one-shot, does not re-fire.
+   - Store alert in `alerts` table via existing `alertStore`. Let the normal Telegram
+     dispatch path send it (no new notification code needed).
 
    Graceful degradation:
-   - No open positions: returns "Khong co vi the nao dang mo."
-   - `market_prices` has no price for a stock: that position shows "(thieu du lieu gia)"
-     and is excluded from total portfolio value calculation.
-   - All positions within threshold: returns full table with "(trong nguong)" for all rows
-     plus "Danh muc can bang — khong can hanh dong."
-   - Single position: returns full output with diversification note
-     "(chi co 1 vi the — nen xem xet da dang hoa)."
-
-   Files:
-   - CREATE: `src/domain/services/rebalancingCalculator.ts`
-   - CREATE: `src/interface/mcp/tools/rebalancingTools.ts`
-   - MODIFY: `src/interface/mcp/tools/registry.ts` — add rebalancing entry (first use of new
-     dynamic registration from task 193; tasks 193 and 195 must land in this order)
-   - CREATE: `src/__tests__/195-rebalancing-signals.test.ts`
+   - No price data for a stock: threshold check is skipped silently.
+   - Duplicate set for same stock/type/threshold: allowed (investor may want two levels).
+   - `get_price_alerts` with no rows: returns "Khong co nguong gia nao duoc cai dat."
 
    Acceptance criteria:
-   - A position at 42% weight with 25% target produces drift = +17%, action = "BAN".
-   - A position at 18% weight with 25% target produces drift = -7%, action = "MUA".
-   - A position with |drift| < threshold produces "(trong nguong)".
-   - Equal-weight fallback: 4 positions with no `target_weight` each get 25% target.
-   - Stock with no `market_prices` row shown as "(thieu du lieu gia)".
-   - No open positions → "Khong co vi the nao dang mo".
-   - Corrective share quantities are integers (sell = floor, buy = ceil).
-   - Threshold parameter 0.10 flags only drifts > 10%.
-   - >= 16 tests, 0 failures.
-   - `bun tsc --noEmit` → 0 errors.
-   - Tool count increases from 46 to 47 (first tool registered via dynamic registry).
+   - `set_price_alert('VCB', 'stop_loss', 88000)` inserts a row with `triggered = 0`.
+   - When price 87,500 is processed: row is marked `triggered = 1` and HIGH alert inserted.
+   - When price 90,000 is processed for the same triggered row: alert does NOT fire again.
+   - `set_price_alert('FPT', 'take_profit', 120000)` + price 123,000 → take-profit alert.
+   - `get_price_alerts()` returns all pending alerts in Vietnamese table format.
+   - `delete_price_alert(id)` removes the row; subsequent `get_price_alerts` does not show it.
+   - `checkPriceAlerts([])` (empty prices array) → no crash, returns 0 breaches.
+   - >= 18 tests, 0 failures. `bun tsc --noEmit` → 0 errors.
+   - Tool count increases from 48 to 51 (3 new tools).
+
+   Files:
+   - MODIFY: `src/infrastructure/db/schema.ts` — add `price_alerts` table + index
+   - CREATE: `src/application/usecases/checkPriceAlerts.ts`
+   - CREATE: `src/interface/mcp/tools/priceAlertTools.ts`
+   - MODIFY: `src/interface/mcp/tools/registry.ts` — add priceAlertTools entry (requires 193)
+   - MODIFY: `src/scheduler/intelligenceCycleJob.ts` — wire `checkPriceAlerts` after price fetch
+   - CREATE: `src/__tests__/206-price-alert-tools.test.ts`
+
+   Dependency: task 193 must land first (registry.ts must exist).
+
+4. **Task 207 — Per-source API rate limiting for external fetchers (P1)**
+
+   The 5 news fetchers + 2 price fetchers make outbound HTTP calls every 15 minutes with no
+   rate-limit protection. A burst during a catch-up (e.g., server restart after 2 h downtime)
+   or concurrent MCP tool calls can send dozens of requests to the same host in seconds,
+   triggering 429 responses or IP bans from CafeF, VnDirect, and HNX.
+
+   New domain service `src/domain/services/rateLimiter.ts`:
+   - In-memory map: `host → { lastCallMs: number, minIntervalMs: number }`.
+   - `RateLimiter.canCall(host: string): boolean` — returns true if
+     `Date.now() - lastCallMs >= minIntervalMs`.
+   - `RateLimiter.record(host: string): void` — updates `lastCallMs = Date.now()`.
+   - Default per-host intervals (configurable via `mcp.config.json` `fetchers.rateLimits`):
+     - `cafef.vn`: 8 000 ms (8 s)
+     - `vnexpress.net`: 8 000 ms
+     - `vneconomy.vn`: 8 000 ms
+     - `news.google.com`: 5 000 ms
+     - `tradingeconomics.com`: 10 000 ms
+     - `api-finfo.vndirect.com.vn`: 5 000 ms
+     - `api.hnx.vn`: 5 000 ms
+     - `query1.finance.yahoo.com`: 5 000 ms
+     - `portal.vietcombank.com.vn`: 10 000 ms
+     - default (any other host): 3 000 ms
+   - `RateLimiter` is a singleton exported from the module.
+
+   Integration: each fetcher (`cafef.ts`, `vnexpress.ts`, `vneconomy.ts`, `reuters.ts`,
+   `tradingEconomicsStream.ts`, `hose.ts`, `hnx.ts`) wraps its primary HTTP call:
+   ```typescript
+   if (!rateLimiter.canCall(host)) {
+     logger.debug(`Rate limited: ${host}, skipping`);
+     return [];   // or cached value / empty result
+   }
+   rateLimiter.record(host);
+   // ... existing fetch logic
+   ```
+   - On rate-limit skip: return the same empty/null value the fetcher already returns on
+     error — no new error types, no throws.
+   - The rate limiter is in-process only (resets on server restart) — no persistence needed.
+
+   `mcp.config.json` addition:
+   ```json
+   "rateLimits": {
+     "cafef.vn": 8000,
+     "vnexpress.net": 8000,
+     "vneconomy.vn": 8000,
+     "news.google.com": 5000,
+     "tradingeconomics.com": 10000,
+     "api-finfo.vndirect.com.vn": 5000,
+     "api.hnx.vn": 5000,
+     "query1.finance.yahoo.com": 5000,
+     "portal.vietcombank.com.vn": 10000,
+     "default": 3000
+   }
+   ```
+
+   Acceptance criteria:
+   - `canCall('cafef.vn')` returns `true` before first call, `false` immediately after
+     `record('cafef.vn')`, `true` again after 8 s (mocked timer).
+   - Two rapid calls to the same host: second is skipped (logged at DEBUG level).
+   - Different hosts: independent counters — one being rate-limited does not block others.
+   - All 7 modified fetchers return `[]` / `null` gracefully when rate-limited (no throws).
+   - `mcp.config.json` `fetchers.rateLimits` section parsed and applied at startup.
+   - `rateLimiter.ts` is in `src/domain/services/` (pure logic, no I/O).
+   - >= 14 tests, 0 failures. `bun tsc --noEmit` → 0 errors.
+   - No new MCP tools (this is infrastructure only). Tool count unchanged.
+
+   Files:
+   - CREATE: `src/domain/services/rateLimiter.ts`
+   - MODIFY: `src/infrastructure/fetchers/cafef.ts`
+   - MODIFY: `src/infrastructure/fetchers/vnexpress.ts`
+   - MODIFY: `src/infrastructure/fetchers/vneconomy.ts`
+   - MODIFY: `src/infrastructure/fetchers/reuters.ts`
+   - MODIFY: `src/infrastructure/fetchers/tradingEconomicsStream.ts`
+   - MODIFY: `src/infrastructure/fetchers/hose.ts`
+   - MODIFY: `src/infrastructure/fetchers/hnx.ts`
+   - MODIFY: `mcp.config.json` — add `fetchers.rateLimits` section
+   - CREATE: `src/__tests__/207-rate-limiter.test.ts`
 
 **OUT**
 
-- E2E integration test of the full intelligence cycle (task 125 — blocked on test harness
-  design; remains deferred)
-- New external data sources
-- LLM-based recommendations
-- Watchlist auto-enrichment with sector peers (deferred to Sprint 028)
-- Backtesting / simulation engine
+- End-to-end integration test of the full intelligence cycle (task 125 — blocked on test
+  harness design; remains deferred)
+- Watchlist auto-enrichment with sector peers (deferred to Sprint 029)
+- Historical analysis replay / backtesting engine (deferred — high complexity, low urgency)
+- LLM-based recommendations (out of scope permanently — rule-based only)
+- Tasks 196 (worktree cleanup) and 197 (Reuters RSS + delete_telegram_report test) from
+  Sprint 027: rolled into Sprint 028 backlog but not scheduled for this sprint iteration —
+  Reuters is an external service issue; worktree cleanup is housekeeping without code value.
 
 ---
 
 ### Success Metrics
 
 1. `bun test` full suite passes 3/3 consecutive runs with zero flaky failures in any test
-   file. Task 164 flakiness is eliminated permanently.
+   file. Task 164 polymarket timing flakiness is eliminated permanently. (Task 192)
 
-2. A new MCP tool (task 195 rebalancing) is added by editing only its own file +
-   `registry.ts`. `server.ts` body is not touched. Merge conflicts on `server.ts` become
-   structurally impossible when two tools are added in parallel worktrees.
+2. `src/interface/mcp/server.ts` body contains only one `toolRegistry.forEach(...)` loop.
+   Adding a new tool in a future sprint requires editing only the tool file + one line in
+   `registry.ts`. Merge conflicts on `server.ts` become structurally impossible. (Task 193)
 
-3. CLAUDE.md accurately describes the system as of Sprint 026: 46 tools, 1672+ tests,
-   all new files listed in the architecture tree. A new agent onboarding from CLAUDE.md
-   alone can locate any file without confusion.
+3. An investor can call `set_price_alert('VCB', 'stop_loss', 88000)` and receive a
+   Telegram notification the moment VCB trades at or below 88,000 VND — with the exact
+   price and a Vietnamese-language action prompt. One-shot, no re-fire. (Task 206)
 
-4. `get_rebalancing_signals()` with a 4-stock watchlist where one position is 17%
-   overweight returns "BAN" for that position and the correct integer share quantity.
-   The investor knows the exact corrective trade in one tool call.
+4. No fetcher can fire more than once per configured interval per host. A server restart
+   after 2 h downtime does not send a burst of simultaneous requests to CafeF or VnDirect.
+   All 7 fetchers degrade gracefully (return `[]`) when rate-limited. (Task 207)
 
-5. `bun tsc --noEmit` → 0 errors. All 1672+ existing tests continue to pass.
+5. `bun tsc --noEmit` → 0 errors. All 1688 existing tests continue to pass.
 
-6. Tool count: 46 → 47 (one new tool in task 195; task 193 is a refactor, no net new tools).
+6. Tool count: 48 → 51 (3 new tools from task 206; tasks 192, 193, 207 add no net tools).
 
 ---
 
-### Task board (Sprint 027)
+### Task board (Sprint 028)
 
 | # | Title | Priority | Status | Depends on |
 |---|-------|----------|--------|------------|
 | 192 | Fix flaky test: `164-polymarket-fetcher.test.ts` mock timing | P0 | Backlog | — |
 | 193 | Dynamic tool registration: eliminate server.ts merge conflicts | P0 | Backlog | — |
-| 194 | CLAUDE.md sync through Sprint 026 | P1 | Done (merged 7f53108) | — |
-| 195 | Portfolio rebalancing signals: `get_rebalancing_signals` MCP tool | P1 | Review (branch task/195-rebalancing-signals) | 193 |
-| 196 | Stale worktree cleanup + task tracking for hotfixes | P0 | Backlog | — |
-| 197 | Reuters RSS investigation + delete_telegram_report test coverage | P1 | Backlog | — |
+| 206 | Stop-loss / take-profit threshold alerts | P1 | Backlog | 193 |
+| 207 | Per-source API rate limiting for external fetchers | P1 | Backlog | — |
 
 ---
 
 ### Dependency chain
 
 ```
-192 (fix flaky test)      — P0, independent, touches only __tests__/164-*.test.ts
-193 (dynamic registry)    — P0, independent, refactor only, touches all tool files
-194 (CLAUDE.md sync)      — P1, DONE, merged 7f53108 on 2026-04-02
-195 (rebalancing signals) — P1, in Review (branch task/195-rebalancing-signals); depends on 193
-196 (worktree cleanup)    — P0, independent, no code change
-197 (Reuters + test fix)  — P1, independent, infra + test
+192 (fix flaky test)       — P0, independent, touches only __tests__/164-*.test.ts
+193 (dynamic registry)     — P0, independent, refactor only
+207 (rate limiter)         — P1, independent, new domain service + 7 fetchers
+206 (stop-loss/TP alerts)  — P1, depends on 193 (registry.ts must exist)
 
-192 + 193 + 196 + 197 can run in parallel.
-195 must wait for 193 (registry.ts must exist before task 195 appends to it).
-194 COMPLETE — no action needed.
+192 + 193 + 207 can run in parallel.
+206 must wait for 193 (registry.ts must exist before task 206 appends to it).
 ```
 
 ---
 
 ### Key technical decisions (locked at PO level)
 
-- **Task 192 uses mock isolation, not wall-clock timers**: the flakiness is a test
-  isolation problem, not a product bug. The fix must not alter production code. Bun's
-  `mock.module` or `vi.isolateModules` scopes the mock to the test file so parallel
-  tests cannot interfere.
+- **Task 192 uses mock isolation, not wall-clock timers**: fix is test-layer only. Production
+  code is not touched.
 
-- **Task 193 places the registry in `tools/registry.ts`, not `server.ts`**: this keeps
-  `server.ts` as a pure wiring file (one loop) and makes the registry the single point
-  of change for tool additions. The existing `tools/index.ts` re-export pattern is
-  preserved for backward compatibility.
+- **Task 193 registry in `tools/registry.ts`**: `server.ts` becomes a pure wiring file (one
+  loop). The existing `tools/index.ts` re-export pattern is preserved for backward compat.
 
-- **Task 193 does NOT change tool behaviour**: this is a structural refactor. No tool
-  logic changes. All 46 tools must pass their existing tests unchanged after the refactor.
+- **Task 206 threshold alerts are one-shot**: once `triggered = 1`, the row is never
+  re-evaluated. The investor must call `set_price_alert` again to re-arm. This prevents
+  alert storms on volatile days.
 
-- **Task 194 is documentation-only**: no TypeScript files are modified. The CLAUDE.md
-  update is a PO-level deliverable because it affects all agents' understanding of the
-  system. It is not delegated to BA or Developer.
+- **Task 206 uses the existing alert pipeline**: no new Telegram code. The HIGH severity
+  alert inserted into `alerts` table is picked up by the existing dispatch path in
+  `intelligenceCycleJob.ts` step E (`sendAlerts()`).
 
-- **Task 195 `target_weight` column**: the column was introduced for Sprint 023 position
-  tracking. If absent (older DB), equal weighting is the safe default. No ALTER TABLE at
-  tool call time. The tool degrades gracefully.
+- **Task 207 rate limiter is in `domain/services/`**: it is pure logic (no I/O, no imports
+  from infrastructure). Intervals are injected from `mcp.config.json` at startup so they
+  are tunable without code changes.
 
-- **Task 195 registers via the new dynamic registry** (task 193 prerequisite): this is
-  the first real-world validation that the dynamic registry works end-to-end for a new
-  tool. It proves the pattern before the team relies on it for future sprints.
+- **Task 207 degrades to `[]` on rate limit**: this matches the existing behaviour of every
+  fetcher on network failure. No new error types introduced.
 
 ---
 
@@ -325,3 +339,4 @@ its target, and suggests the corrective trade size.
 | 024 | Reliability Hardening and Investor UX Polish | 2026-04-01 | 182, 183, 184, 185 |
 | 025 | Daily Investor Intelligence | 2026-04-01 | 186, 187, 188 |
 | 026 | Signal Quality and Portfolio Correlation | 2026-04-02 | 189, 190, 191 |
+| 027 | Stability First | 2026-04-02 | 194 (CLAUDE.md sync), 195 (rebalancing, in Review), hotfixes 198-205 |
