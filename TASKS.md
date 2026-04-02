@@ -346,10 +346,26 @@
 
 ---
 
+### 🔍 Review (189)
+
+| # | Title | Branch | Layer | Depends on | Status |
+|---|-------|--------|-------|------------|--------|
+| 189 | Pearson correlation matrix MCP tool | `task/189-correlation-matrix` | domain + interface | — | Review |
+
+**Task 189 — Acceptance Criteria**
+- `pearsonCorrelation(xs, ys)` returns r ∈ [-1,1]; NaN on zero-variance; throws on empty/mismatched arrays
+- `computeCorrelationMatrix(Map)` returns C(n,2) pairs, skips NaN, sorted lexicographically
+- `diversificationScore([])` returns 1.0; score = 1 - mean(|r|)
+- MCP tool `get_correlation_matrix` registered and returns Vietnamese formatted output
+- 22 tests pass, `tsc --noEmit` clean
+
+---
+
 ## Kanban Summary
 
 | Column | Count | Tasks |
 |--------|-------|-------|
+<<<<<<< HEAD
 | ✅ Done | 47+ | Sprints 000-025 complete |
 | 🔍 Review | 0 | — |
 | 🚧 In Progress | 0 | — |
@@ -523,6 +539,14 @@ Files:
 - MODIFY: `src/interface/mcp/server.ts`
 - MODIFY: `src/interface/mcp/tools/index.ts`
 - CREATE: `src/__tests__/188-alert-digest.test.ts`
+=======
+| ✅ Done | 43 | 000, 001, 002, 003, 011, 012, 013, 014, 021, 022, 023, 026, 027, 029, 030, 041, 042, 043, 044, 045, 046, 047, 048, 061, 062, 063, 064, 065, 066, 081, 082, 083, 084, 085, 086, 087, 088, 101, 102, 103, 104, 105 |
+| 🔍 Review | 1 | 189 |
+| 🚧 In Progress | 0 | — |
+| 📋 Todo | 0 | — (Sprint 006 Wave 2 COMPLETE; Task 123 now unblocked for Wave 3) |
+| 🗂 Backlog | 8 | Deferred: 024, 025, 028, 121-125 |
+| **Total** | **52** | |
+>>>>>>> task/189-correlation-matrix
 
 ---
 
