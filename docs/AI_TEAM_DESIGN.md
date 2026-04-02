@@ -38,20 +38,20 @@ Two autonomous teams work in parallel to continuously improve the system:
 
 ## Analysis Team (Claude Cowork)
 
-7 agents running on Claude Cowork cloud. Each connects to MCP server via `https://zenmidi.com/mcp`.
+7 agents running on Claude Cowork cloud (6 specialists + 1 coordinator). Each connects to MCP server via `https://zenmidi.com/mcp`.
 
 | # | Agent | Schedule | Role | File |
 |---|-------|----------|------|------|
 | 0 | Setup | Once | Seed watchlist | `00-setup-watchlist.md` |
+| — | **Unified Coordinator** | On-demand + Daily 22:00 VN + Sunday | Coordinate team + quality review + report problems | `unified-agent.md` |
 | 1 | News Scout | Hourly | Fetch news, sentiment, impact chains | `01-news-scout.md` |
 | 2 | BCTC Collector | Daily 20:00+08:00 VN | Track BCTC report availability | `02-bctc-collector.md` |
 | 3 | Report Analyzer | Daily 21:00+09:00 VN | Analyze financials, validate data | `03-report-analyzer.md` |
 | 4 | Market Watcher | Hourly (market hours) | Track prices, detect anomalies | `04-market-watcher.md` |
 | 5 | Alert Commander | Hourly | ONLY agent that sends to Chat Channel | `05-alert-commander.md` |
 | 6 | Digest Writer | Daily 22:30 + Sunday | Daily/weekly summaries | `06-digest-writer.md` |
-| 7 | System Improver | Daily 22:00 VN + Sunday | Quality review, report problems | `07-system-improver.md` |
 
-**Coordinator**: `unified-agent.md` — analysis coordination only, no dev chain.
+Note: System Improver (07) has been merged into the Unified Coordinator.
 
 ### Data Flow
 

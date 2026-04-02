@@ -69,19 +69,19 @@ cloudflared tunnel --no-autoupdate run --token "$CLOUDFLARE_TOKEN"
 ```
 Permanent URL: `https://zenmidi.com/mcp`
 
-### Step 3: Create 6 Agents in Claude Cowork
+### Step 3: Create 7 Agents in Claude Cowork
 
 MCP connector URL: `https://zenmidi.com/mcp`
 
 | Order | Agent | Schedule | File | Role |
 |-------|-------|----------|------|------|
+| 0 | **Unified Coordinator** | On-demand + Daily 22:00 VN + Sunday | `unified-agent.md` | Coordinate team + quality review + report problems |
 | 1 | **News Scout** | Every hour | `01-news-scout.md` | Fetch news + submit feedback on gaps |
 | 2 | **BCTC Collector** | Daily 20:00 + 08:00 VN | `02-bctc-collector.md` | Track BCTC reports |
 | 3 | **Report Analyzer** | Daily 21:00 + 09:00 VN | `03-report-analyzer.md` | Analyze financials + feedback |
 | 4 | **Market Watcher** | Hourly market hours | `04-market-watcher.md` | Track prices + feedback on thresholds |
 | 5 | **Alert Commander** | Every hour | `05-alert-commander.md` | ONLY Telegram sender + alert quality feedback |
 | 6 | **Digest Writer** | Daily 22:30 + Sunday | `06-digest-writer.md` | Compile summaries + weekly review |
-| 7 | **System Improver** | Daily 22:00 VN + Sunday | `07-system-improver.md` | Read feedback → FIX NOW or trigger PO→BA→...→QA chain |
 
 ### Step 4: Verify
 - Telegram: "✅ System online" at 08:55 Vietnam (03:55 France CET)
@@ -136,7 +136,7 @@ For dev team and analysis team problem reports:
 20:00 VN  Server's SSC nightly job downloads new BCTC PDFs
 20:00 VN  BCTC Collector checks what's available
 21:00 VN  Report Analyzer reads financial data + submits BCTC feedback
-22:00 VN  ⭐ System Improver reads ALL feedback → FIX NOW or → PO→BA→Arch→PM→Dev→QA
+22:00 VN  ⭐ Unified Coordinator daily review → triage + report to Dev Team
 22:30 VN  Digest Writer sends daily summary + weekly review (Sunday)
 ```
 
@@ -164,7 +164,7 @@ Agents submit feedback via `submit_feedback` MCP tool:
 - **Alert Commander**: alert_quality, performance_issue
 - **Report Analyzer**: data_extraction_error, trade_map_gap from BCTC
 - **Digest Writer**: compiles weekly review from Report Channel problem reports
-- **System Improver**: triages feedback → FIX NOW or SPRINT TASK → triggers dev team chain
+- **Unified Coordinator**: daily/weekly quality review → triage + report to Dev Team via Report Channel
 
 ## Key Architecture Rules
 

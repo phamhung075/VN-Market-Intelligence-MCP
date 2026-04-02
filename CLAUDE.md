@@ -52,9 +52,8 @@ Two autonomous teams work in parallel to serve the user and improve the system:
 | 4 | Market Watcher | `04-market-watcher.md` | Track prices, detect anomalies |
 | 5 | Alert Commander | `05-alert-commander.md` | ONLY agent that sends to Chat Channel |
 | 6 | Digest Writer | `06-digest-writer.md` | Daily/weekly summaries |
-| 7 | System Improver | `07-system-improver.md` | Quality review, report problems |
 
-Coordinator: `unified-agent.md` — analysis coordination only (no dev chain).
+Coordinator: `unified-agent.md` — analysis coordination + quality review (merged system-improver).
 
 ### Dev Team (Claude Code CLI — local cron)
 
@@ -263,7 +262,7 @@ mcp.config.json                     ← Central JSON config: server, data paths,
 bctc-schema.ts                      ← Complete BCTC data model + SQLite DDL (root level)
 cowork-analysis-vnmarket-team/
 ├── README.md                       ← AI team setup guide (62 tools, two channels)
-├── unified-agent.md                ← Analysis team coordinator (no dev chain)
+├── unified-agent.md                ← Analysis coordinator + quality review (merged system-improver)
 ├── dev-team-cron.md                ← Dev team hourly loop prompt (Claude Code CLI)
 ├── 00-setup-watchlist.md           ← One-time watchlist setup
 ├── 01-news-scout.md                ← News monitoring agent
@@ -271,8 +270,7 @@ cowork-analysis-vnmarket-team/
 ├── 03-report-analyzer.md           ← Financial analysis agent
 ├── 04-market-watcher.md            ← Price tracking agent
 ├── 05-alert-commander.md           ← Alert + Telegram sender (ONLY sender)
-├── 06-digest-writer.md             ← Daily/weekly digest agent
-└── 07-system-improver.md           ← Quality review + problem reporter
+└── 06-digest-writer.md             ← Daily/weekly digest agent
 ```
 
 ## Key data flow
