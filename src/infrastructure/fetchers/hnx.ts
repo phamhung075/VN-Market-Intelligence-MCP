@@ -17,6 +17,7 @@ import { logger } from "../logger.js";
 import { getDb } from "../db/schema.js";
 import type { HttpClient } from "./ssc.js";
 import { isTradingSession, fetchFromVnDirectStockPrices } from "./hose.js";
+import { globalRateLimiter } from "../../domain/services/rateLimiter.js";
 
 // Re-export for callers who only import from hnx.ts
 export type { MarketPrice } from "./hose.js";
@@ -297,6 +298,15 @@ export async function fetchHnxPrices(
     logger.debug("[hnx] market closed — skipping HNX fetch", { codes });
     return [];
   }
+
+  // Rate limit guard — skip if called too soon (bypassed in test mode via httpClient)
+  if (!httpClient && !globalRateLimiter.canCall("api.hnx.vn")) {
+    logger.debug("[hnx] rate-limited — skipping fetch", {
+      waitMs: globalRateLimiter.getWaitMs("api.hnx.vn"),
+    });
+    return [];
+  }
+  if (!httpClient) globalRateLimiter.recordCall("api.hnx.vn");
 
   const fetchedAt = new Date().toISOString();
 

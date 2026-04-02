@@ -15,6 +15,7 @@
 
 import type { RssItem } from "./rss.js";
 import { logger } from "../logger.js";
+import { globalRateLimiter } from "../../domain/services/rateLimiter.js";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -66,6 +67,16 @@ interface TEStreamItem {
 export async function fetchTradingEconomicsStream(
   limit = DEFAULT_LIMIT,
 ): Promise<RssItem[]> {
+  // Rate limit guard — skip if called too soon
+  if (!globalRateLimiter.canCall("tradingeconomics.com")) {
+    logger.debug("[te-stream] rate-limited — skipping fetch", {
+      waitMs: globalRateLimiter.getWaitMs("tradingeconomics.com"),
+    });
+    return [];
+  }
+
+  globalRateLimiter.recordCall("tradingeconomics.com");
+
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
 

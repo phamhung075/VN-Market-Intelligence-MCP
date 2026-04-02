@@ -425,6 +425,24 @@ export async function initDatabase(): Promise<void> {
   db.exec(`CREATE INDEX IF NOT EXISTS idx_prediction_signals_market ON prediction_signals(market_id)`);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_prediction_signals_severity ON prediction_signals(severity)`);
 
+  // ── Price Alerts (Task 206) ────────────────────────────────────────────────
+  // Stores user-defined stop-loss / take-profit price thresholds.
+  // status: 'active' | 'triggered' | 'cancelled'
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS price_alerts (
+      id           INTEGER PRIMARY KEY AUTOINCREMENT,
+      code         TEXT NOT NULL,
+      alert_type   TEXT NOT NULL,
+      threshold    REAL NOT NULL,
+      status       TEXT NOT NULL DEFAULT 'active',
+      created_at   TEXT NOT NULL DEFAULT (datetime('now')),
+      triggered_at TEXT,
+      notes        TEXT
+    );
+    CREATE INDEX IF NOT EXISTS idx_price_alerts_code   ON price_alerts(code);
+    CREATE INDEX IF NOT EXISTS idx_price_alerts_status ON price_alerts(status);
+  `);
+
   // ── Positions (Task 179) ───────────────────────────────────────────────────
   // One open position per stock (UNIQUE on code).
   // closed_at IS NULL = open; closed_at IS NOT NULL = closed.

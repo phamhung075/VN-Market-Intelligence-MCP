@@ -10,6 +10,7 @@
 import { parseRssFeed, type RssItem } from "./rss.js";
 import type { HttpClient } from "./ssc.js";
 import { logger } from "../logger.js";
+import { globalRateLimiter } from "../../domain/services/rateLimiter.js";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -63,7 +64,17 @@ async function makeDefaultHttpClient(): Promise<HttpClient> {
  * @returns Promise resolving to an array of RssItem (empty on error).
  */
 export async function fetchVnExpress(httpClient?: HttpClient): Promise<RssItem[]> {
+  // Rate limit guard — skip if called too soon (test mode bypasses via injected httpClient)
+  if (!httpClient && !globalRateLimiter.canCall("vnexpress.net")) {
+    logger.debug("[vnexpress] rate-limited — skipping fetch", {
+      waitMs: globalRateLimiter.getWaitMs("vnexpress.net"),
+    });
+    return [];
+  }
+
   const client = httpClient ?? (await makeDefaultHttpClient());
+
+  if (!httpClient) globalRateLimiter.recordCall("vnexpress.net");
 
   logger.debug("[vnexpress] fetching RSS feed", { url: VNEXPRESS_RSS_URL });
 

@@ -146,6 +146,19 @@
       "vcbRatesUrl": "https://portal.vietcombank.com.vn/Usercontrols/TVPortal.TyGia/pXML.aspx?b=68",
       "fallbackOvernightRate": 3.0,
       "fallbackRefinancingRate": 4.5
+    },
+    "rateLimits": {
+      "cafef.vn": 8000,
+      "vnexpress.net": 8000,
+      "vneconomy.vn": 8000,
+      "news.google.com": 8000,
+      "api-finfo.vndirect.com.vn": 5000,
+      "api.hnx.vn": 5000,
+      "query1.finance.yahoo.com": 5000,
+      "tradingeconomics.com": 10000,
+      "portal.vietcombank.com.vn": 10000,
+      "clob.polymarket.com": 10000,
+      "gamma-api.polymarket.com": 10000
     }
   },
 

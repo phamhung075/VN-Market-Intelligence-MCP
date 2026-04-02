@@ -21,6 +21,7 @@
 import { parseRssFeed, type RssItem } from "./rss.js";
 import type { HttpClient } from "./ssc.js";
 import { logger } from "../logger.js";
+import { globalRateLimiter } from "../../domain/services/rateLimiter.js";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -140,7 +141,17 @@ async function tryFetchFeed(
  * @returns Promise resolving to an array of RssItem (empty on total failure).
  */
 export async function fetchReuters(httpClient?: HttpClient): Promise<RssItem[]> {
+  // Rate limit guard — skip if called too soon (test mode bypasses via injected httpClient)
+  if (!httpClient && !globalRateLimiter.canCall("news.google.com")) {
+    logger.debug("[reuters] rate-limited — skipping fetch", {
+      waitMs: globalRateLimiter.getWaitMs("news.google.com"),
+    });
+    return [];
+  }
+
   const client = httpClient ?? (await makeDefaultHttpClient());
+
+  if (!httpClient) globalRateLimiter.recordCall("news.google.com");
 
   // Step 1: Primary Google News feed (Vietnam economy / stocks)
   const primaryItems = await tryFetchFeed(

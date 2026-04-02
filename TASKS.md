@@ -416,8 +416,8 @@
 |---|-------|--------|----------|--------|
 | 192 | Fix flaky test: polymarket-fetcher mock timing | `task/192-fix-polymarket-flaky` | P0 | Backlog |
 | 193 | Dynamic tool registration: eliminate server.ts merge conflicts | `task/193-dynamic-tool-registry` | P0 | Backlog |
-| 206 | Stop-loss / take-profit threshold alerts | `task/206-price-alert-tools` | P1 | Backlog |
-| 207 | Per-source API rate limiting for external fetchers | `task/207-rate-limiter` | P1 | Backlog |
+| 206 | Stop-loss / take-profit threshold alerts | `task/206-price-alert-tools` | P1 | Review |
+| 207 | Per-source API rate limiting for external fetchers | `task/207-rate-limiter` | P1 | Review |
 
 **Task 206 — Acceptance Criteria**
 - `set_price_alert('VCB', 'stop_loss', 88000)` inserts a row with `triggered = 0`.
