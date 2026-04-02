@@ -34,8 +34,15 @@ if [ -f .env ]; then
 fi
 
 # Start with suppressed Rust logs
+# Export all .env vars explicitly so nohup subprocess inherits them
+export RUST_LOG=error
+export TELEGRAM_BOT_TOKEN="${TELEGRAM_BOT_TOKEN:-}"
+export TELEGRAM_CHAT_ID="${TELEGRAM_CHAT_ID:-}"
+export TELEGRAM_REPORT_ID="${TELEGRAM_REPORT_ID:-}"
+export TELEGRAM_ENABLED="${TELEGRAM_ENABLED:-true}"
+
 # Pipe through grep --line-buffered to filter LanceDB TRACE from stderr
-RUST_LOG=error nohup bun run src/index.ts 2>&1 | grep --line-buffered -v "TRACE" > "$LOG" &
+nohup bun run src/index.ts 2>&1 | grep --line-buffered -v "TRACE" > "$LOG" &
 
 echo "Server started (PID: $!)"
 echo "Log: /tmp/vn-market-mcp.log"

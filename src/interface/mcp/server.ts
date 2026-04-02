@@ -29,6 +29,7 @@ import { SseSessionManager } from "./transport.js";
 import { handleTelegramCommand } from "../../infrastructure/notifiers/telegramCommands.js";
 import { sendTelegramMessage } from "../../infrastructure/notifiers/telegram.js";
 import { getDb } from "../../infrastructure/db/schema.js";
+import { validateWebhookRequest } from "../../infrastructure/notifiers/telegramWebhookSetup.js";
 import {
   registerWatchlistTools,
   registerReportTools,
@@ -262,6 +263,19 @@ export async function createBunServer(
 
     // ── POST /webhook — Telegram bot command webhook ──────────────────────
     if (method === "POST" && pathname === "/webhook") {
+      // Validate webhook secret (skip if not configured — dev mode)
+      const webhookSecret = Bun.env["TELEGRAM_WEBHOOK_SECRET"] ?? "";
+      const reqHeaders = new Headers();
+      for (const [name, value] of Object.entries(req.headers)) {
+        if (typeof value === "string") reqHeaders.set(name, value);
+        else if (Array.isArray(value)) reqHeaders.set(name, value.join(", "));
+      }
+      if (!validateWebhookRequest(reqHeaders, webhookSecret)) {
+        res.writeHead(403, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "Forbidden" }));
+        return;
+      }
+
       const chunks: Buffer[] = [];
       for await (const chunk of req) {
         chunks.push(typeof chunk === "string" ? Buffer.from(chunk) : chunk);
