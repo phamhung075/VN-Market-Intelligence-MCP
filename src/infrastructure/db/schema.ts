@@ -524,4 +524,14 @@ export async function initDatabase(): Promise<void> {
 
   // ── Custom Alert Rules (Task 219) ─────────────────────────────────────────
   ensureCustomAlertRulesTable(db);
+
+  // ── Alert Mutes (Task 222) ────────────────────────────────────────────────
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS alert_mutes (
+      code        TEXT PRIMARY KEY,
+      muted_until TEXT NOT NULL,
+      reason      TEXT
+    )
+  `);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_alert_mutes_until ON alert_mutes(muted_until)`);
 }

@@ -19,6 +19,7 @@
  */
 
 import type { Signal, Severity } from "./signalDetector.js";
+import { isStockMuted } from "./alertMuteChecker.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Public types
@@ -120,24 +121,28 @@ function generateId(): string {
  *
  * Only produces alerts for stocks present in `watchlist`.
  * Signals are grouped by `actionCode`; each group becomes one Alert.
+ * Stocks with an active mute in `mutes` are silently skipped.
  *
  * @param signals   - Detected signals (from `detectSignals`)
  * @param watchlist - User's watchlist (only `actionCode` is required)
- * @returns         - One Alert per watchlisted stock that has at least one signal
+ * @param mutes     - Optional map of stock code → mute expiry Date (task 222)
+ * @returns         - One Alert per watchlisted, non-muted stock that has signals
  */
 export function generateAlerts(
   signals: Signal[],
   watchlist: { actionCode: string }[],
+  mutes: Map<string, Date> = new Map(),
 ): Alert[] {
   if (signals.length === 0) return [];
 
   // Build a set of watchlisted codes for O(1) lookup
   const watchlistSet = new Set(watchlist.map((w) => w.actionCode));
 
-  // Group signals by actionCode (watchlisted only)
+  // Group signals by actionCode (watchlisted only, muted stocks skipped)
   const grouped = new Map<string, Signal[]>();
   for (const signal of signals) {
     if (!watchlistSet.has(signal.actionCode)) continue;
+    if (isStockMuted(signal.actionCode, mutes)) continue;
     const existing = grouped.get(signal.actionCode);
     if (existing) {
       existing.push(signal);
