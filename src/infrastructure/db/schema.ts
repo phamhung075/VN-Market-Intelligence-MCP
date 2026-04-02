@@ -21,6 +21,39 @@ import { mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 import { SQLITE_DDL } from "../../../bctc-schema.js";
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Custom Alert Rules DDL (Task 219)
+// ─────────────────────────────────────────────────────────────────────────────
+
+const CUSTOM_ALERT_RULES_DDL = `
+  CREATE TABLE IF NOT EXISTS custom_alert_rules (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    code         TEXT NOT NULL,
+    predicate    TEXT NOT NULL,
+    threshold    REAL NOT NULL,
+    status       TEXT NOT NULL DEFAULT 'active',
+    created_at   TEXT NOT NULL DEFAULT (datetime('now')),
+    triggered_at TEXT,
+    notes        TEXT
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_custom_alert_rules_code   ON custom_alert_rules(code);
+  CREATE INDEX IF NOT EXISTS idx_custom_alert_rules_status ON custom_alert_rules(status);
+`;
+
+/**
+ * Create the `custom_alert_rules` table in the given database instance.
+ * Idempotent — safe to call multiple times.
+ *
+ * Used both by `initDatabase()` (at startup) and directly in tests to
+ * initialise an in-memory database without running the full init chain.
+ *
+ * @param db - An open bun:sqlite Database connection
+ */
+export function ensureCustomAlertRulesTable(db: Database): void {
+  db.exec(CUSTOM_ALERT_RULES_DDL);
+}
+
 /** Resolved DB path — can be overridden via DB_PATH env var (useful in tests) */
 const DB_PATH: string = Bun.env["DB_PATH"] ?? "./data/market.db";
 
@@ -162,4 +195,7 @@ export async function initDatabase(): Promise<void> {
   // all scalar columns, JSON blobs, indexes, v_chart_timeseries and
   // v_yoy_comparison views.
   db.exec(SQLITE_DDL);
+
+  // ── Custom Alert Rules (Task 219) ─────────────────────────────────────────
+  ensureCustomAlertRulesTable(db);
 }
