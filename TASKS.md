@@ -8,18 +8,9 @@
 
 ---
 
-## 📋 BACKLOG — Sprint 036
+## 📋 BACKLOG — Sprint 037+
 
-| # | Title | Tier | Priority | Depends on |
-|---|-------|------|----------|------------|
-| 230 | Remove 8 dead/forbidden/internal tools from MCP registration | 1 | P0 | — |
-| ~~231~~ | ~~Fix G5: `claim_telegram_report` + `claimed_by`/`claimed_at` columns~~ | 2a | P0 | **Review** |
-| ~~232~~ | ~~Fix G3: `/report` + `/fix` Telegram commands (user → dev team direct)~~ | 2b | P1 | **Review** |
-| ~~233~~ | ~~Fix G2: `system_changelog` table + `log_fix` + `get_recent_fixes` tools~~ | 2c | P1 | **Review** |
-| 234 | Merge M1: system health 4 → 1 (`get_system_status`) | 2d | P1 | 230 |
-| ~~235~~ | ~~Merge M2: Telegram send 3 → 1 (`send_telegram`)~~ | 2e | P1 | **Review** |
-| ~~236~~ | ~~Merge M3: alert mute 2 → 1 (`manage_alert_mute`)~~ | 2f | P2 | **Review** |
-| 237 | CLAUDE.md sync + update all agent `.md` files for 53-tool surface | — | P2 | 230–236 |
+(See SPRINT_GOAL.md for Tier 3-4 backlog: `/ask` command, agent signal bus, compound tools)
 
 ---
 
@@ -28,6 +19,14 @@
 | # | Title | Branch | Merged | Report |
 |---|-------|--------|--------|--------|
 | 000 | Initial project structure | `main` | 2026-03-24 | — |
+| 230 | Remove 8 dead/forbidden/internal tools from MCP (64→56) | `task/230-remove-dead-tools` | 2026-04-02 | — |
+| 231 | Fix G5: `claim_telegram_report` ownership lock | `task/231-claim-telegram-report` | 2026-04-02 | — |
+| 232 | Fix G3: `/report` + `/fix` Telegram commands | `main` | 2026-04-02 | — |
+| 233 | Fix G2: `system_changelog` + `log_fix` + `get_recent_fixes` | `main` | 2026-04-02 | — |
+| 234 | Merge M1: system health 4→1 `get_system_status` | `main` | 2026-04-02 | — |
+| 235 | Merge M2: Telegram send 3→1 `send_telegram` | `main` | 2026-04-02 | — |
+| 236 | Merge M3: alert mute 2→1 `manage_alert_mute` | `main` | 2026-04-02 | — |
+| 237 | CLAUDE.md + all 9 agent `.md` files updated for 53 tools | `main` | 2026-04-02 | — |
 | 001 | Project setup & DDD folder structure | `task/001-project-setup` | 2026-03-25 | [TASK_REPORT_001](reports/TASK_REPORT_001.md) |
 | 002 | SQLite schema + migrations | `task/002-db-schema` | 2026-03-25 | [TASK_REPORT_002](reports/TASK_REPORT_002.md) |
 | 003 | Env config + structured logging | `task/003-env-config` | 2026-03-25 | [TASK_REPORT_003](reports/TASK_REPORT_003.md) |
