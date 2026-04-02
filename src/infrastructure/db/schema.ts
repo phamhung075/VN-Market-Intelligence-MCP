@@ -184,6 +184,24 @@ export async function initDatabase(): Promise<void> {
       WHERE source_url IS NOT NULL AND source_url != '';
   `);
 
+  // ── Agent Signal Bus (Task 242) ────────────────────────────────────────────
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS agent_signals (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      from_agent TEXT NOT NULL,
+      to_agent TEXT NOT NULL,
+      signal_type TEXT NOT NULL,
+      stock_code TEXT,
+      payload TEXT NOT NULL DEFAULT '{}',
+      status TEXT NOT NULL DEFAULT 'unread',
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      expires_at TEXT NOT NULL
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_agent_signals_to ON agent_signals(to_agent, status);
+    CREATE INDEX IF NOT EXISTS idx_agent_signals_expires ON agent_signals(expires_at);
+  `);
+
   // ── Financial Reports (BCTC) ───────────────────────────────────────────────
   // DDL imported from bctc-schema.ts — includes financial_reports table,
   // all scalar columns, JSON blobs, indexes, v_chart_timeseries and

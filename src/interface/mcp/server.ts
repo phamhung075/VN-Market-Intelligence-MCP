@@ -70,6 +70,7 @@ import {
   registerChangelogTools,
   registerBctcFullTools,
   registerMarketContextTools,
+  registerAgentSignalTools,
 } from "./tools/index.js";
 
 /** Options for starting the Bun HTTP server. */
@@ -153,6 +154,8 @@ export async function createBunServer(
     registerTelegramReportTools(server);
     registerChangelogTools(server);
     registerBctcFullTools(server);
+    registerMarketContextTools(server);
+    registerAgentSignalTools(server);
     return server;
   }
 

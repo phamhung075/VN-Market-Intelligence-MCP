@@ -872,6 +872,15 @@ export async function runDailyAudit(
   upsertAuditState(database, "daily", findings);
   await maybeSendTelegram("daily", findings, database, telegram);
 
+  // Clean expired agent signals (Sprint 038)
+  try {
+    const { cleanExpired } = await import("../infrastructure/db/agentSignalStore.js");
+    const removed = cleanExpired(database);
+    if (removed > 0) {
+      findings.push({ table: "agent_signals", check: "expired_cleanup", severity: "info", rowsAffected: removed, action: "auto_cleaned", detail: `Removed ${removed} expired signals` });
+    }
+  } catch { /* agent_signals table may not exist yet */ }
+
   return findings;
 }
 
