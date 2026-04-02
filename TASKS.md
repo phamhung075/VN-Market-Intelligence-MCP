@@ -367,10 +367,10 @@
 |--------|-------|-------|
 <<<<<<< HEAD
 | ✅ Done | 47+ | Sprints 000-025 complete |
-| 🔍 Review | 0 | — |
+| 🔍 Review | 2 | 190, 191 |
 | 🚧 In Progress | 0 | — |
 | 📋 Todo | 0 | — |
-| 🗂 Backlog | 3 | 189, 190, 191 |
+| 🗂 Backlog | 1 | 189 |
 | **Total** | **47+** | |
 
 ---
@@ -395,8 +395,8 @@
 | # | Title | Branch | Agent | Priority | Depends on | Status |
 |---|-------|--------|-------|----------|------------|--------|
 | 189 | Correlation analysis: `get_correlation_matrix` MCP tool | `task/189-correlation-matrix` | BA | P0 | market_prices_history ✅, watchlist ✅, positions ✅ | Backlog |
-| 190 | Data export: `export_portfolio_snapshot` MCP tool | `task/190-export-snapshot` | BA | P0 | all tables ✅ | Backlog |
-| 191 | Performance attribution: `get_performance_attribution` MCP tool | `task/191-performance-attribution` | BA | P1 | positions ✅, alerts ✅ | Backlog |
+| 190 | Data export: `export_portfolio_snapshot` MCP tool | `task/190-export-snapshot` | Developer | P0 | all tables ✅ | Review 🔍 |
+| 191 | Performance attribution: `get_performance_attribution` MCP tool | `task/191-performance-attribution` | Developer | P1 | positions ✅, alerts ✅ | Review 🔍 |
 
 ---
 
