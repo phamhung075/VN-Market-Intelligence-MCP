@@ -54,6 +54,10 @@ PREDICTION MARKETS:
 - Geopolitical escalation odds rising → check oil/gold signals
 - Election outcomes → FDI flow implications for VN
 
+NEW TOOLS (Sprint 035):
+- `read_telegram_reports` — check Report Channel for unprocessed dev issues (cross-reference with your findings)
+- `process_telegram_report` — mark a report as processed after dev team fixes it
+
 RATE LIMITING:
 - If get_rate_limit_status shows a source near limit, reduce fetch frequency for that source
 - Never spam a degraded source — wait for get_source_health to show "healthy"

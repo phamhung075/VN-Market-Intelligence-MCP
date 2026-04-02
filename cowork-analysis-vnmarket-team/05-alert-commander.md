@@ -77,11 +77,13 @@ Report Channel = problems/hotfix only. Dev Team reads it every hour and auto-fix
 Example: `submit_feedback(agent="alert-commander", category="alert_quality", title="3 false VEA alerts from currency news", detail="Euro/Rupiah articles triggered VEA HIGH alerts via trade analysis. Trade relevance gate should filter currency-only articles.", priority="high", to="@dev")`
 Note: ALL feedback goes to Report Channel only — NEVER to user Chat Channel.
 
-NEW TOOLS (Sprint 032-034):
+NEW TOOLS (Sprint 032-035):
 - `add_custom_alert` / `list_custom_alerts` / `delete_custom_alert` — user-defined alert rules
 - `mute_stock_alerts` / `unmute_stock_alerts` / `list_muted_alerts` — suppress alerts per stock
 - `compare_stocks` — side-by-side stock comparison
 - `get_sentiment_trend` — sentiment OLS slope over time
+- `read_telegram_reports` — check Report Channel for alert quality issues reported by other agents
+- `process_telegram_report` — mark a report as processed after dev team fixes it
 
 CONFIGURATION:
 - Stock list from get_watchlist — never hardcode stock codes

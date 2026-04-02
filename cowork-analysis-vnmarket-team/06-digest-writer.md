@@ -73,8 +73,12 @@ CONFIGURATION:
 - Stock list and sectors from get_watchlist — never hardcode
 - Summary periods managed by the server
 
+NEW TOOLS (Sprint 035):
+- `read_telegram_reports` — read Report Channel programmatically (status "new" or "all")
+- `process_telegram_report` — mark a report as processed after review
+
 WEEKLY SYSTEM IMPROVEMENT REVIEW (Sunday digest via MCP):
-1. Read the Report Channel (TELEGRAM_REPORT_ID — problems/hotfix only) — read ALL problem reports from the week
+1. Call `read_telegram_reports` status "all" to get ALL problem reports from the week
 2. Group by category, count per agent
 3. Identify top 3 most impactful improvements
 4. Include in the weekly Telegram digest:

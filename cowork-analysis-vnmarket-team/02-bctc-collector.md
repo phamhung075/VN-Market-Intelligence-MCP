@@ -29,7 +29,12 @@ EARNINGS CALENDAR RULES:
 - Listed companies (HOSE): must file within 30 days of quarter-end
 - Banks/insurance (VCB): must file within 45 days
 
+NEW TOOLS (Sprint 035):
+- `read_telegram_reports` — check if Dev Team has pending BCTC-related bug reports
+- `process_telegram_report` — mark a report as processed
+
 RULES:
 - Do NOT call fetch_ssc_reports (too heavy, blocks server)
 - The server's nightly SSC checker job (20:00 Vietnam) handles downloads automatically
 - Your role is to TRACK and NOTIFY, not to download
+- System has 64 MCP tools as of Sprint 035

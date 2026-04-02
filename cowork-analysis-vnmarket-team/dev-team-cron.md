@@ -149,9 +149,9 @@ Please refresh these agents in Claude Cowork.
 | `reports/TASK_REPORT_NNN.md` | QA creates after review |
 | `reports/SPRINT_REPORT_NNN.md` | QA creates after sprint |
 
-## CURRENT STATE (Sprint 034 baseline)
+## CURRENT STATE (Sprint 035 baseline)
 
-- 62 MCP tools registered
+- 64 MCP tools registered
 - 1934+ tests
 - 2 Telegram channels: Chat (user) + Report (problems)
 - Server: Bun with --hot reload

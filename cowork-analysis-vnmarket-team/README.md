@@ -58,9 +58,9 @@ CLOUDFLARE_TUNNEL=vn-market-mcp
 cd /path/to/VN-Market-Intelligence-MCP
 bun run src/index.ts
 ```
-Server auto-seeds watchlist from config, starts OCR for unprocessed PDFs, registers 62 tools.
+Server auto-seeds watchlist from config, starts OCR for unprocessed PDFs, registers 64 tools.
 
-Verify: `curl https://zenmidi.com/health` → `{"status":"ok","toolCount":62}`
+Verify: `curl https://zenmidi.com/health` → `{"status":"ok","toolCount":64}`
 
 ### Step 2: Start Cloudflare Tunnel
 ```bash
@@ -87,7 +87,7 @@ MCP connector URL: `https://zenmidi.com/mcp`
 - Telegram: "✅ System online" at 08:55 Vietnam (03:55 France CET)
 - Health: `curl https://zenmidi.com/health`
 
-## 62 MCP Tools Available (Sprint 034)
+## 64 MCP Tools Available (Sprint 035)
 
 | Category | Tools |
 |----------|-------|
@@ -99,7 +99,7 @@ MCP connector URL: `https://zenmidi.com/mcp`
 | **Portfolio** | get_portfolio_conviction, set_position, get_positions, close_position, get_portfolio_risk, get_rebalancing_signals, get_correlation_matrix, get_performance_attribution, export_portfolio_snapshot, set_target_allocation, get_target_allocation, delete_target_allocation |
 | **Prediction Markets** | get_prediction_markets |
 | **Summaries** | get_market_summary, generate_market_summary |
-| **Telegram** | send_test_telegram, send_telegram_report, delete_telegram_report, send_alert_digest |
+| **Telegram** | send_test_telegram, send_telegram_report, delete_telegram_report, send_alert_digest, read_telegram_reports, process_telegram_report |
 | **Feedback** | submit_feedback (→ Report channel only), get_feedback (deprecated — read channel directly) |
 | **Operations** | get_data_freshness, get_source_health, get_rate_limit_status |
 | **System** | get_system_health, get_global_log, get_tool_log, get_error_summary |

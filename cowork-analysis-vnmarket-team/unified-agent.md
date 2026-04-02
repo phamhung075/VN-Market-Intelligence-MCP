@@ -81,7 +81,7 @@ Dev Team reads Report Channel every hour and auto-fixes.
 ## DAILY REVIEW (22:00 VN — merged from system-improver)
 
 ### Step 1: Read Report Channel
-Read the Report Channel (TELEGRAM_REPORT_ID) for all unprocessed problem reports.
+Call `read_telegram_reports` status "new" to get all unprocessed problem reports from the Report Channel.
 
 Also call these tools for objective system data:
 - `get_system_health` — DB size, RAG size, job statuses, DB audit section
@@ -108,7 +108,7 @@ Flag immediately if:
 ## WEEKLY DEEP REVIEW (Sunday 20:00 VN)
 
 ### Step 1: Read ALL reports from the week
-Read the Report Channel (TELEGRAM_REPORT_ID) — scroll back through the week's problem reports.
+Call `read_telegram_reports` status "all" to get all reports from the week.
 
 ### Step 2: Pattern analysis
 - Which category has the most feedback? → systemic issue
@@ -125,7 +125,7 @@ Week 4: tool="ssc"       — BCTC pipeline
 Week 5: tool="reuters"   — international news
 Week 6: tool="vnexpress"  — VN news source
 Week 7: tool="vneconomy"  — VN economic news
-Week 8: verify tool count in get_system_health = 62
+Week 8: verify tool count in get_system_health = 64
 ```
 
 ### Step 4: Portfolio risk check
@@ -165,7 +165,7 @@ The Dev Team is NOT part of the analysis team. It runs locally every hour:
 4. Sends Chat Channel message if agent files updated
 5. See `dev-team-cron.md` for full spec
 
-## 62 MCP TOOLS (Sprint 034)
+## 64 MCP TOOLS (Sprint 035)
 
 | Category | Tools |
 |----------|-------|
@@ -177,7 +177,7 @@ The Dev Team is NOT part of the analysis team. It runs locally every hour:
 | **Portfolio** | get_portfolio_conviction, set_position, get_positions, close_position, get_portfolio_risk, get_rebalancing_signals, get_correlation_matrix, get_performance_attribution, export_portfolio_snapshot, set_target_allocation, get_target_allocation, delete_target_allocation |
 | **Prediction** | get_prediction_markets |
 | **Summaries** | get_market_summary, generate_market_summary |
-| **Telegram** | send_test_telegram, send_telegram_report, delete_telegram_report, send_alert_digest |
+| **Telegram** | send_test_telegram, send_telegram_report, delete_telegram_report, send_alert_digest, read_telegram_reports, process_telegram_report |
 | **Feedback** | submit_feedback (Report channel only), get_feedback (deprecated) |
 | **Operations** | get_data_freshness, get_source_health, get_rate_limit_status |
 | **System** | get_system_health, get_global_log, get_tool_log, get_error_summary |
@@ -195,5 +195,5 @@ The Dev Team is NOT part of the analysis team. It runs locally every hour:
 - Only Alert Commander sends alerts to Chat Channel (max 10/day)
 - All agents read watchlist dynamically via `get_watchlist`
 - ALL feedback goes to Report Channel ONLY — never to Chat Channel
-- Verify tool count in get_system_health matches expected (62 as of Sprint 034)
+- Verify tool count in get_system_health matches expected (64 as of Sprint 035)
 - Philosophy: "Always do it better" — every cycle must produce at least 1 improvement
