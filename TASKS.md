@@ -132,7 +132,7 @@
 | # | Title | Branch | Agent | Priority | Depends on | Status |
 |---|-------|--------|-------|----------|------------|--------|
 | 224 | CLAUDE.md sync: document Sprints 030-033 additions | `task/224-claude-md-sync` | BA | P0 | — | Backlog |
-| 225 | Sentiment trend per stock: `get_sentiment_trend` MCP tool | `task/225-sentiment-trend` | BA | P1 | 224 (soft) | Backlog |
+| 225 | Sentiment trend per stock: `get_sentiment_trend` MCP tool | `task/225-sentiment-trend` | BA | P1 | 224 (soft) | Review |
 
 ---
 
