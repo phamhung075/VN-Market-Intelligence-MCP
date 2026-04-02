@@ -59,6 +59,8 @@ const HELP_TEXT = `Cac lenh ho tro:
 /briefing - Tom tat thi truong
 /health - Trang thai he thong
 /pnl - Lai/Lo danh muc (P&L)
+/ask <cau hoi> - Hoi AI phan tich (vd: /ask VCB giam vi sao?)
+/why <MA> - Tai sao co phieu nay bien dong? (vd: /why VCB)
 /report <mota> - Bao loi cho Dev Team
 /fix <mota> - Bao loi khan cap
 /help - Danh sach lenh nay`;
@@ -418,6 +420,75 @@ function handleBriefing(db: Database): string {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// /ask and /why handlers (Task 238)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Ensure `user_requests` table exists (idempotent DDL).
+ * Inline to keep telegramCommands self-contained — avoids an async import.
+ */
+function ensureUserRequestsTableInline(db: Database): void {
+  try {
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS user_requests (
+        id          INTEGER PRIMARY KEY AUTOINCREMENT,
+        command     TEXT NOT NULL,
+        payload     TEXT NOT NULL,
+        status      TEXT NOT NULL DEFAULT 'pending',
+        response    TEXT,
+        created_at  TEXT NOT NULL DEFAULT (datetime('now')),
+        answered_at TEXT
+      )
+    `);
+    db.exec(
+      `CREATE INDEX IF NOT EXISTS idx_user_requests_status ON user_requests(status)`,
+    );
+  } catch { /* table already exists */ }
+}
+
+/**
+ * Insert a pending user request row and return its auto-increment ID.
+ */
+function insertUserRequestInline(
+  db: Database,
+  command: string,
+  payload: string,
+): number {
+  const result = db
+    .prepare(
+      `INSERT INTO user_requests (command, payload, status, created_at)
+       VALUES (?, ?, 'pending', datetime('now'))`,
+    )
+    .run(command, payload);
+  return result.lastInsertRowid as number;
+}
+
+/**
+ * /ask <question> — queue an async AI analysis request.
+ * /why <TICKER>   — queue "Why did <TICKER> move today?" as an ask request.
+ *
+ * Inserts a row into `user_requests` with status='pending'.
+ * The intelligence cycle step F picks up pending rows, runs RAG search,
+ * and sends the answer back via Telegram Chat Channel within ~15 minutes.
+ *
+ * @param db   - Active bun:sqlite Database connection.
+ * @param text - The question text (already extracted by the caller).
+ * @returns Plain-text Vietnamese response.
+ */
+function handleAsk(db: Database, text: string): string {
+  const trimmed = text.trim();
+
+  if (!trimmed) {
+    return "Su dung: /ask <cau hoi>\nVi du: /ask VCB giam vi sao?";
+  }
+
+  ensureUserRequestsTableInline(db);
+  const id = insertUserRequestInline(db, "ask", trimmed);
+
+  return `Dang phan tich... Ket qua se gui trong vong 15 phut.\nID: ${id}`;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // /report and /fix handlers (Task 232)
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -540,6 +611,19 @@ export async function handleTelegramCommand(
 
       case "/briefing":
         responseText = handleBriefing(db);
+        break;
+
+      case "/ask":
+        // /ask Why did VCB drop today?
+        responseText = handleAsk(db, args.join(" "));
+        break;
+
+      case "/why":
+        // /why VCB → "Why did VCB move today?"
+        responseText = handleAsk(
+          db,
+          args.length > 0 ? `Why did ${args[0]} move today?` : "",
+        );
         break;
 
       case "/report":

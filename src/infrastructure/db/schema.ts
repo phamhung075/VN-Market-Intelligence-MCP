@@ -391,4 +391,20 @@ export async function initDatabase(): Promise<void> {
     )
   `);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_changelog_fixed_at ON system_changelog(fixed_at)`);
+
+  // ── User Requests (Task 238) ──────────────────────────────────────────────
+  // Async question queue: /ask and /why Telegram commands insert pending rows.
+  // Intelligence cycle step F processes them and sends answers back via Telegram.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS user_requests (
+      id          INTEGER PRIMARY KEY AUTOINCREMENT,
+      command     TEXT NOT NULL,
+      payload     TEXT NOT NULL,
+      status      TEXT NOT NULL DEFAULT 'pending',
+      response    TEXT,
+      created_at  TEXT NOT NULL DEFAULT (datetime('now')),
+      answered_at TEXT
+    )
+  `);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_user_requests_status ON user_requests(status)`);
 }
