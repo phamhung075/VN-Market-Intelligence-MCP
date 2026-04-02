@@ -170,7 +170,7 @@
 
 | # | Title | Branch | Agent | Layer | Priority | Depends on | Status |
 |---|-------|--------|-------|-------|----------|------------|--------|
-| 178 | `get_price_history` MCP tool | `task/178-price-history` | BA→Architect→PM→Dev | interface/mcp + infrastructure/db | P0 | — | **Backlog** |
+| 178 | `get_price_history` MCP tool | `task/178-price-history` | BA→Architect→PM→Dev | interface/mcp + infrastructure/db | P0 | — | **Review** |
 | 179 | Position tracking: `positions` schema + `set_position` / `get_positions` / `close_position` MCP tools | `task/179-position-tracking` | BA→Architect→PM→Dev | infrastructure/db + interface/mcp | P0 | — | **Review** |
 | 180 | Decision note synthesis in `get_portfolio_conviction` | `task/180-decision-notes` | BA→Architect→PM→Dev | interface/mcp | P1 | 179 | **Backlog** |
 | 181 | Price trend sparkline in morning briefing | `task/181-briefing-sparkline` | BA→Architect→PM→Dev | application/usecases | P2 | 178 | **Backlog** |
