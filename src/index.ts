@@ -26,6 +26,7 @@ import { createLogger } from "./infrastructure/logger.js";
 import { initDatabase } from "./infrastructure/db/index.js";
 import { createBunServer } from "./interface/mcp/server.js";
 import { startScheduler } from "./scheduler/jobs.js";
+import { registerWebhook } from "./infrastructure/notifiers/telegramWebhookSetup.js";
 
 const cfg = loadConfig();
 const log = createLogger(cfg.logLevel);
@@ -44,11 +45,19 @@ log.info("[bootstrap] Endpoints", {
   health: `http://127.0.0.1:${srv.port}/health`,
 });
 
-// ── 3. Cron scheduler ─────────────────────────────────────────────────────
+// ── 3. Telegram webhook registration (if env vars set) ───────────────────
+const webhookRegistered = await registerWebhook();
+if (webhookRegistered) {
+  log.info("[bootstrap] Telegram webhook registered");
+} else {
+  log.info("[bootstrap] Telegram webhook skipped (TELEGRAM_WEBHOOK_URL not set or no token)");
+}
+
+// ── 4. Cron scheduler ─────────────────────────────────────────────────────
 startScheduler();
 log.info("[bootstrap] Scheduler started — cron jobs active");
 
-// ── 4. Graceful shutdown ───────────────────────────────────────────────────
+// ── 5. Graceful shutdown ───────────────────────────────────────────────────
 async function shutdown(signal: string) {
   log.info(`[bootstrap] Received ${signal} — shutting down...`);
   await srv.close();

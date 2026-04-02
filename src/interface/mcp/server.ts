@@ -25,6 +25,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { loadConfig } from "../../infrastructure/config.js";
 import { createLogger } from "../../infrastructure/logger.js";
 import { SseSessionManager } from "./transport.js";
+import { validateWebhookRequest } from "../../infrastructure/notifiers/telegramWebhookSetup.js";
 import {
   registerWatchlistTools,
   registerReportTools,
@@ -168,6 +169,28 @@ export async function createBunServer(
           },
         }),
       );
+      return;
+    }
+
+    // ── POST /webhook — Telegram incoming updates ─────────────────────────
+    if (method === "POST" && pathname === "/webhook") {
+      const webhookSecret = Bun.env.TELEGRAM_WEBHOOK_SECRET ?? "";
+      const reqHeaders = new Headers();
+      for (const [name, value] of Object.entries(req.headers)) {
+        if (typeof value === "string") reqHeaders.set(name, value);
+        else if (Array.isArray(value)) reqHeaders.set(name, value.join(", "));
+      }
+
+      if (!validateWebhookRequest(reqHeaders, webhookSecret)) {
+        log.warn("[createBunServer] Webhook request rejected — invalid secret token");
+        res.writeHead(403, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "Forbidden" }));
+        return;
+      }
+
+      // Consume and ignore the body — webhook processing can be extended here
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ ok: true }));
       return;
     }
 

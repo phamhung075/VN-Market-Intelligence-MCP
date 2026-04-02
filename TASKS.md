@@ -77,6 +77,7 @@
 | # | Title | Branch | Notes |
 |---|-------|--------|-------|
 | DOC-001 | Update CLAUDE.md architecture section | `task/doc-001-claude-md-update` | Ready for QA |
+| 215 | Telegram webhook registration + security | `task/215-telegram-webhook` | Ready for QA |
 
 ---
 
