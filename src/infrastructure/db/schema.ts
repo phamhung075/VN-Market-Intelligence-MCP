@@ -157,6 +157,37 @@ export async function initDatabase(): Promise<void> {
       WHERE source_url IS NOT NULL AND source_url != '';
   `);
 
+  // ── Mention Velocity (Task 265) ───────────────────────────────────────────
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS mention_velocity (
+      code           TEXT    NOT NULL,
+      hour           TEXT    NOT NULL,
+      mention_count  INTEGER NOT NULL DEFAULT 0,
+      negative_count INTEGER NOT NULL DEFAULT 0,
+      source_count   INTEGER NOT NULL DEFAULT 0,
+      PRIMARY KEY (code, hour)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_mv_code ON mention_velocity(code);
+    CREATE INDEX IF NOT EXISTS idx_mv_hour ON mention_velocity(hour);
+  `);
+
+  // ── Reputation Scores (Task 265) ───────────────────────────────────────────
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS reputation_scores (
+      code        TEXT NOT NULL,
+      date        TEXT NOT NULL,
+      score       REAL NOT NULL,
+      trend       TEXT NOT NULL DEFAULT 'stable',
+      risk_level  TEXT NOT NULL DEFAULT 'safe',
+      computed_at TEXT NOT NULL,
+      PRIMARY KEY (code, date)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_rep_code ON reputation_scores(code);
+    CREATE INDEX IF NOT EXISTS idx_rep_date ON reputation_scores(date);
+  `);
+
   // ── Financial Reports (BCTC) ───────────────────────────────────────────────
   // DDL imported from bctc-schema.ts — includes financial_reports table,
   // all scalar columns, JSON blobs, indexes, v_chart_timeseries and
