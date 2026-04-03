@@ -162,4 +162,44 @@ export async function initDatabase(): Promise<void> {
   // all scalar columns, JSON blobs, indexes, v_chart_timeseries and
   // v_yoy_comparison views.
   db.exec(SQLITE_DDL);
+
+  // ── Agent Signals (multi-agent coordination bus) ──────────────────────────
+  // Stores signals posted between agents (news-scout, market-watcher, etc.)
+  // The enrichment chain columns (cycle_id, finding_data, causal_ref,
+  // chain_depth) extend the base signal with sequential reasoning support.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS agent_signals (
+      id           INTEGER PRIMARY KEY AUTOINCREMENT,
+      from_agent   TEXT NOT NULL,
+      to_agent     TEXT NOT NULL,
+      signal_type  TEXT NOT NULL,
+      stock_code   TEXT,
+      payload_json TEXT NOT NULL DEFAULT '{}',
+      created_at   TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')),
+      expires_at   TEXT,
+      processed    INTEGER NOT NULL DEFAULT 0,
+      outcome      TEXT,
+      outcome_at   TEXT,
+      cycle_id     TEXT,
+      finding_data TEXT NOT NULL DEFAULT '{}',
+      causal_ref   INTEGER,
+      chain_depth  INTEGER NOT NULL DEFAULT 0
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_agent_signals_to_agent  ON agent_signals(to_agent, processed);
+    CREATE INDEX IF NOT EXISTS idx_agent_signals_stock     ON agent_signals(stock_code, created_at);
+    CREATE INDEX IF NOT EXISTS idx_agent_signals_cycle     ON agent_signals(cycle_id);
+    CREATE INDEX IF NOT EXISTS idx_agent_signals_chain     ON agent_signals(causal_ref);
+  `);
+
+  // ── Enrichment Chain Columns — idempotent ALTER for existing DBs ──────────
+  // These try-catch blocks are safe to run repeatedly — SQLite raises an error
+  // if the column already exists (which we silently ignore).
+  try { db.exec(`ALTER TABLE agent_signals ADD COLUMN cycle_id TEXT`); } catch {}
+  try { db.exec(`ALTER TABLE agent_signals ADD COLUMN finding_data TEXT DEFAULT '{}'`); } catch {}
+  try { db.exec(`ALTER TABLE agent_signals ADD COLUMN causal_ref INTEGER`); } catch {}
+  try { db.exec(`ALTER TABLE agent_signals ADD COLUMN chain_depth INTEGER DEFAULT 0`); } catch {}
+
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_agent_signals_cycle ON agent_signals(cycle_id)`);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_agent_signals_chain ON agent_signals(causal_ref)`);
 }
