@@ -543,7 +543,11 @@ export function getOpenChainFindings(
   db: Database,
   minutesBack: number = 30,
 ): ChainFinding[] {
-  const cutoff = new Date(Date.now() - minutesBack * 60_000).toISOString();
+  // Use SQLite-compatible format to match datetime('now') DEFAULT in schema
+  const cutoff = new Date(Date.now() - minutesBack * 60_000)
+    .toISOString()
+    .replace("T", " ")
+    .replace(/\.\d{3}Z$/, "");
 
   // Check if 'processed' column exists; fall back to status-based filter
   let useProcessed = true;
