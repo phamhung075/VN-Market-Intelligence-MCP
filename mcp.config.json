@@ -45,7 +45,7 @@
   "predictionMarkets": {
     "enabled": true,
     "pollingIntervalMinutes": 30,
-    "clobApiUrl": "https://clob-api.polymarket.com",
+    "clobApiUrl": "https://clob.polymarket.com",
     "gammaApiUrl": "https://gamma-api.polymarket.com",
     "probabilityShiftPct": 5,
     "volumeSpikeThresholdUsd": 50000,
