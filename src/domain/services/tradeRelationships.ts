@@ -280,3 +280,68 @@ export function analyzeTradeImpact(
 
   return impacts.sort((a, b) => b.revenuePct - a.revenuePct);
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Dynamic Exposure Updates (Sprint 041 — Task 255)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Data extracted from a BCTC report for updating trade exposure weights.
+ */
+export interface BctcExposureData {
+  /** % of revenue from exports */
+  exportRevenuePct?: number;
+  /** % of costs from imports */
+  importCostPct?: number;
+  /** Primary export/import market (country key) */
+  primaryMarket?: string;
+  /** Source of update: "bctc" | "news" | "manual" */
+  source?: string;
+}
+
+/**
+ * In-memory cache of dynamic exposure updates.
+ * SQLite persistence is handled by tradeStore.ts (infrastructure layer).
+ * This in-memory cache is queried by getDynamicExposure() for hot reads.
+ */
+const _dynamicExposureCache = new Map<string, BctcExposureData & { updatedAt: string }>();
+
+/**
+ * Updates trade exposure weights for a stock based on BCTC data.
+ *
+ * This is a pure domain operation — it updates the in-memory cache.
+ * Infrastructure persistence (SQLite) is handled separately by tradeStore.ts.
+ *
+ * Called after parseBctcReport() when geographic revenue breakdown is available.
+ *
+ * @param code - Stock ticker (e.g. "HPG", "VNM")
+ * @param data - Extracted exposure data from BCTC or news
+ */
+export function updateExposureFromBctc(
+  code: string,
+  data: BctcExposureData,
+): void {
+  _dynamicExposureCache.set(code, {
+    ...data,
+    updatedAt: new Date().toISOString(),
+  });
+}
+
+/**
+ * Returns the latest dynamic exposure update for a stock, or null if not updated.
+ *
+ * @param code - Stock ticker
+ */
+export function getDynamicExposure(
+  code: string,
+): (BctcExposureData & { updatedAt: string }) | null {
+  return _dynamicExposureCache.get(code) ?? null;
+}
+
+/**
+ * Clears all dynamic exposure cache entries.
+ * Used in tests to reset state.
+ */
+export function clearDynamicExposureCache(): void {
+  _dynamicExposureCache.clear();
+}
