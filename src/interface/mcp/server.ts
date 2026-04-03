@@ -78,6 +78,9 @@ import {
   registerBondMaturityTools,
   registerClimateTools,
   registerEnergyTools,
+  registerPublicInvestmentTools,
+  registerCreditFlowTools,
+  registerLeadershipTools,
 } from "./tools/index.js";
 
 /** Options for starting the Bun HTTP server. */
@@ -170,6 +173,9 @@ export async function createBunServer(
     registerBondMaturityTools(server);
     registerClimateTools(server);
     registerEnergyTools(server);
+    registerPublicInvestmentTools(server);
+    registerCreditFlowTools(server);
+    registerLeadershipTools(server);
     return server;
   }
 

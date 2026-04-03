@@ -52,6 +52,36 @@ describe("Task 250 — Signal Integration", () => {
     expect(type).toBe("insider_trading");
   });
 
+  it("SignalType includes supply_chain", () => {
+    const type: SignalType = "supply_chain";
+    expect(type).toBe("supply_chain");
+  });
+
+  it("SignalType includes legal_risk", () => {
+    const type: SignalType = "legal_risk";
+    expect(type).toBe("legal_risk");
+  });
+
+  it("SignalType includes policy_change", () => {
+    const type: SignalType = "policy_change";
+    expect(type).toBe("policy_change");
+  });
+
+  it("SignalType includes bond_maturity", () => {
+    const type: SignalType = "bond_maturity";
+    expect(type).toBe("bond_maturity");
+  });
+
+  it("SignalType includes climate_event", () => {
+    const type: SignalType = "climate_event";
+    expect(type).toBe("climate_event");
+  });
+
+  it("SignalType includes energy_grid", () => {
+    const type: SignalType = "energy_grid";
+    expect(type).toBe("energy_grid");
+  });
+
   // ── 2. CAPEX rules in cascade engine ─────────────────────────────────
 
   it("cascade: đầu tư công keyword → steel/real_estate domain", () => {
@@ -179,11 +209,15 @@ describe("Task 250 — Signal Integration", () => {
     expect(chain.watchlistImpacts).toHaveLength(0);
   });
 
-  // ── 10. Public investment signal type is in SignalType union ──────────
+  // ── 10. All new SignalType values are valid string literals ──────────
 
-  it("all 3 new SignalType values are valid string literals", () => {
-    const types: SignalType[] = ["public_contract", "credit_flow", "insider_trading"];
-    expect(types).toHaveLength(3);
+  it("all new SignalType values are valid string literals", () => {
+    const types: SignalType[] = [
+      "public_contract", "credit_flow", "insider_trading",
+      "supply_chain", "legal_risk", "policy_change",
+      "bond_maturity", "climate_event", "energy_grid",
+    ];
+    expect(types).toHaveLength(9);
     for (const t of types) {
       expect(typeof t).toBe("string");
     }

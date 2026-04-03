@@ -39,6 +39,8 @@ export type DomainType =
   | 'logistics'     // GMD, STG, VTP
   | 'gold_mining'   // PNJ, SJC-related
   | 'automotive'    // VEA (VEAM — Honda/Toyota/Ford JV), SVC, HHS
+  | 'construction'  // HHV, CTD, VCG, HBC — infrastructure CAPEX (task 250)
+  | 'energy'        // GEG, REE, PC1 — renewable energy projects (task 250)
   | 'other'
 
 // ═══════════════════════════════════════════════════════════════════════════

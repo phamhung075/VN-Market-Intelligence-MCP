@@ -1,0 +1,158 @@
+/**
+ * Leadership Signal MCP Tools — Task 251
+ *
+ * MCP tool: get_insider_signals
+ *   Analyzes insider transactions for a stock and returns classified
+ *   leadership signals (buy/sell patterns, mass insider activity).
+ *
+ * Layer: interface/mcp/tools — wraps domain service leadershipSignal
+ */
+
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { z } from "zod";
+import {
+  classifyInsiderTransaction,
+  detectMassInsiderBuy,
+  type InsiderTransaction,
+  type InsiderPosition,
+  type LeadershipSignal,
+} from "../../../domain/services/leadershipSignal.js";
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Handler (exported for direct testing)
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface GetInsiderSignalsInput {
+  /** Stock code to analyze, e.g. "VCB" */
+  code: string;
+  /** Outstanding shares (used to compute % of outstanding) */
+  outstandingShares: number;
+  /** Test-only: inject transactions directly */
+  _testData?: InsiderTransaction[] | undefined;
+  /** Window in days for mass insider buy detection (default: 30) */
+  windowDays?: number | undefined;
+}
+
+/**
+ * Core handler logic — separated from MCP registration for testability.
+ */
+export async function getInsiderSignalsHandler(
+  input: GetInsiderSignalsInput,
+): Promise<{ content: Array<{ type: "text"; text: string }> }> {
+  // In real usage, transactions would be loaded from the insiderStore DB.
+  // For MCP calls without _testData, we use an empty list as a safe fallback.
+  const transactions: InsiderTransaction[] = input._testData ?? [];
+
+  const windowDays = input.windowDays ?? 30;
+  const signals: LeadershipSignal[] = [];
+
+  // Classify individual transactions
+  for (const tx of transactions) {
+    if (tx.code !== input.code) continue;
+    const signal = classifyInsiderTransaction(tx, input.outstandingShares);
+    if (signal) signals.push(signal);
+  }
+
+  // Detect mass insider buy
+  const codeTransactions = transactions.filter((t) => t.code === input.code);
+  const massSignal = detectMassInsiderBuy(codeTransactions, windowDays);
+  if (massSignal) signals.push(massSignal);
+
+  if (signals.length === 0) {
+    return {
+      content: [
+        {
+          type: "text" as const,
+          text: `Khong co tin hieu giao dich noi bo dang ke cho ${input.code} trong thoi gian gan day.`,
+        },
+      ],
+    };
+  }
+
+  const severityLabel: Record<string, string> = {
+    critical: "NGHIEM TRONG",
+    high: "QUAN TRONG",
+    medium: "LUU Y",
+    low: "THONG TIN",
+  };
+
+  const lines: string[] = [
+    `TIN HIEU LANH DAO / GIAO DICH NOI BO — ${input.code}`,
+    `Tong so tin hieu: ${signals.length}`,
+    "",
+  ];
+
+  for (const s of signals) {
+    lines.push(`[${severityLabel[s.severity] ?? s.severity}] ${s.type.toUpperCase()}`);
+    lines.push(`  Lanh dao: ${s.insiderName} (${s.position})`);
+    lines.push(`  Xu huong: ${s.direction === "up" ? "TANG" : s.direction === "down" ? "GIAM" : "TRUNG TINH"}`);
+    lines.push(`  Do tin cay: ${(s.confidence * 100).toFixed(0)}%`);
+    lines.push(`  Ly do: ${s.reasoning}`);
+    lines.push("");
+  }
+
+  return {
+    content: [{ type: "text" as const, text: lines.join("\n") }],
+  };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MCP Registration
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Register the get_insider_signals MCP tool on the server.
+ */
+export function registerLeadershipTools(server: McpServer): void {
+  server.tool(
+    "get_insider_signals",
+    "Phan tich giao dich noi bo cua lanh dao cong ty va tao tin hieu mua/ban/mass-buy cho co phieu.",
+    {
+      code: z.string().describe("Ma co phieu, vi du VCB, HPG"),
+      outstandingShares: z
+        .number()
+        .describe("So co phieu dang luu hanh (shares)"),
+      windowDays: z
+        .number()
+        .optional()
+        .describe("Cua so thoi gian cho mass insider buy (default: 30 ngay)"),
+      transactions: z
+        .array(
+          z.object({
+            insiderName: z.string(),
+            position: z
+              .enum(["CEO", "CFO", "Chairman", "Board", "Other"])
+              .default("Other"),
+            type: z.enum(["buy", "sell"]),
+            volume: z.number(),
+            registeredVolume: z.number(),
+            price: z.number(),
+            date: z.string(),
+          }),
+        )
+        .optional()
+        .describe("Danh sach giao dich can phan tich (neu co)"),
+    },
+    async (input) => {
+      const txs: InsiderTransaction[] | undefined = input.transactions?.map(
+        (t) => ({
+          code: input.code,
+          insiderName: t.insiderName,
+          position: t.position as InsiderPosition,
+          type: t.type,
+          volume: t.volume,
+          registeredVolume: t.registeredVolume,
+          price: t.price,
+          date: t.date,
+        }),
+      );
+
+      return getInsiderSignalsHandler({
+        code: input.code,
+        outstandingShares: input.outstandingShares,
+        windowDays: input.windowDays,
+        _testData: txs,
+      });
+    },
+  );
+}

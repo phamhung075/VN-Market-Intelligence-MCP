@@ -71,6 +71,12 @@
 | HOT-01 | fix: source .env in start.sh — Telegram token missing | `main` (c5b925e) | 2026-04-02 | — |
 | HOT-02 | feat: delete_telegram_report MCP tool + auto-cleanup workflow | `main` (c6ea1ce) | 2026-04-02 | — |
 | DOC-001 | Update CLAUDE.md with Sprint 034 architecture additions | `task/doc-001-claude-md-update` | 2026-04-02 | [TASK_REPORT_DOC-001](reports/TASK_REPORT_DOC-001.md) |
+| 246 | Credit Flow Analyzer (domain service) | `worktree-agent-ad862eb2` | 2026-04-03 | — |
+| 247 | Leadership Signal Detector (domain service) | `worktree-agent-ad862eb2` | 2026-04-03 | — |
+| 248 | Muasamcong public procurement fetcher | `worktree-agent-ad862eb2` | 2026-04-03 | — |
+| 249 | SSC Insider fetcher + InsiderStore | `worktree-agent-ad862eb2` | 2026-04-03 | — |
+| 250 | Signal Integration — SignalType + CAPEX/CREDIT cascade + insiderCheckJob | `worktree-agent-ad862eb2` | 2026-04-03 | — |
+| 251 | MCP Tools — get_public_contracts, get_credit_flow_signal, get_insider_signals | `worktree-agent-ad862eb2` | 2026-04-03 | — |
 
 > **Sprint 003 COMPLETE** — All 5 tasks merged: 021, 082, 063, 064, 086. PO sign-off: APPROVED 2026-03-27.
 > **Sprint 004 Wave 1** — Tasks 087, 022, 023 merged: 2026-03-27.
@@ -100,6 +106,8 @@
 | 218 | Weekly portfolio report via Telegram | `worktree-agent-a219df68` | 14 tests pass, tsc clean |
 | 219 | Custom alert rules engine | `task/219-custom-alert-rules` | 21 tests pass, tsc clean, 3 MCP tools |
 | 223 | Portfolio target allocation: `set_target_allocation` / `get_target_allocation` | `task/223-target-allocation` | 22 tests pass, tsc clean, toolCount 53→55 |
+| DOC-001 | Update CLAUDE.md architecture section | `task/doc-001-claude-md-update` | Ready for QA |
+| Sprint 040 | Macro Catalyst — Credit Flow + Insider Trading + Public Investment (tasks 246-251) | `worktree-agent-ad862eb2` | Ready for QA review |
 
 ---
 

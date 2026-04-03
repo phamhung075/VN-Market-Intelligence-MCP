@@ -53,3 +53,7 @@ export { registerPolicyTools } from "./policyTools.js";
 export { registerBondMaturityTools } from "./bondMaturityTools.js";
 export { registerClimateTools } from "./climateTools.js";
 export { registerEnergyTools } from "./energyTools.js";
+// Sprint 040 — Macro Catalyst tools (task 251)
+export { registerPublicInvestmentTools } from "./publicInvestmentTools.js";
+export { registerCreditFlowTools } from "./creditFlowTools.js";
+export { registerLeadershipTools } from "./leadershipTools.js";

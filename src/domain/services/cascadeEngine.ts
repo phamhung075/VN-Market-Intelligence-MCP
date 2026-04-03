@@ -1187,6 +1187,61 @@ const SECTOR_RULES: SectorRule[] = [
     title: "La Niña — gia tăng mưa lũ → rủi ro bồi thường bảo hiểm",
   },
 
+
+  // ── CAPEX / Public Investment rules (task 250) ───────────────────────────
+  {
+    keywords: [
+      "cao tốc", "đầu tư công", "giải ngân đầu tư", "hạ tầng giao thông",
+      "sân bay long thành", "đường sắt", "cầu", "cảng biển", "capex",
+      "public investment", "infrastructure investment",
+    ],
+    domain: "construction",
+    direction: "up",
+    confidence: 0.80,
+    title: "Đầu tư công tăng — tích cực cho ngành xây dựng hạ tầng",
+  },
+  {
+    keywords: [
+      "năng lượng tái tạo", "điện mặt trời", "điện gió", "renewable energy",
+      "solar farm", "wind power", "hệ thống điện", "nhà máy điện",
+    ],
+    domain: "energy",
+    direction: "up",
+    confidence: 0.75,
+    title: "Đầu tư năng lượng tái tạo tăng — tích cực cho cổ phiếu điện",
+  },
+
+  // ── CREDIT / NHNN rules (task 250) ───────────────────────────────────────
+  {
+    keywords: [
+      "nới room tín dụng bất động sản", "tín dụng bất động sản tăng",
+      "room tín dụng bđs", "tín dụng bds tăng",
+    ],
+    domain: "real_estate",
+    direction: "up",
+    confidence: 0.80,
+    title: "Nới room tín dụng BĐS — tích cực cho bất động sản",
+  },
+  {
+    keywords: [
+      "siết tín dụng bất động sản", "giảm room tín dụng bđs",
+      "hạn chế tín dụng bất động sản", "siết tín dụng bds",
+    ],
+    domain: "real_estate",
+    direction: "down",
+    confidence: 0.80,
+    title: "Siết tín dụng BĐS — tiêu cực cho bất động sản",
+  },
+  {
+    keywords: [
+      "tăng room tín dụng cho ngân hàng", "nới room tín dụng ngân hàng",
+      "room tín dụng tăng", "tín dụng ngân hàng tăng trưởng",
+    ],
+    domain: "banking",
+    direction: "up",
+    confidence: 0.70,
+    title: "Nới room tín dụng ngân hàng — hỗ trợ tăng trưởng cho vay",
+  },
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════
