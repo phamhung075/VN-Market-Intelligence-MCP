@@ -100,6 +100,7 @@
 
 | # | Title | Branch | Notes |
 |---|-------|--------|-------|
+| 280 | Foreign flow delta + corporate events calendar | `task/280-foreign-flow-catalyst-calendar` | 32 tests pass, tsc clean — Gap 3+4 |
 | 195 | Portfolio rebalancing signals: `get_rebalancing_signals` | `task/195-rebalancing-signals` | 17 tests pass, tsc clean, awaiting QA sign-off |
 | 215 | Telegram webhook registration + security | `task/215-telegram-webhook` | Ready for QA |
 | 217 | compare_stocks MCP tool — side-by-side comparison | `worktree-agent-a1f64692` | 20 tests pass, tsc 0 errors |
