@@ -463,12 +463,18 @@
 
 ---
 
-### 🔍 Review (195, 220)
+### 🔍 Review (195, 220, Sprint 042)
 
 | # | Title | Branch | Layer | Depends on | Status |
 |---|-------|--------|-------|------------|--------|
 | 195 | Portfolio rebalancing signals: `get_rebalancing_signals` MCP tool | `task/195-rebalancing-signals` | domain + interface | 193 (partial — registered directly pending registry) | Review |
 | 220 | Watchlist auto-enrichment: sector peer suggestions on `add_to_watchlist` | `task/220-watchlist-peer-suggestions` | interface | — | Review |
+| 257 | Weather VN Fetcher — NCHMF + NOAA ENSO | `task/262-mcp-tools-042` | infrastructure | — | Review |
+| 258 | Hydrological Data Fetcher — reservoir levels | `task/262-mcp-tools-042` | infrastructure | — | Review |
+| 259 | Climate Impact Mapper — weather event → stock signals | `task/262-mcp-tools-042` | domain | — | Review |
+| 260 | Energy Market Analyzer — power grid signals | `task/262-mcp-tools-042` | domain | — | Review |
+| 261 | Signal Integration — climate_event + energy_grid + CLIMATE_RULES + weatherCheckJob | `task/262-mcp-tools-042` | domain + scheduler | 257-260 | Review |
+| 262 | MCP Tools — get_climate_risk_signals + get_energy_grid_signals | `task/262-mcp-tools-042` | interface | 257-261 | Review |
 
 **Task 195 — Acceptance Criteria**
 - A position at 42% weight with 25% target produces drift = +17%, action = "BAN"
@@ -490,7 +496,7 @@
 | Column | Count | Tasks |
 |--------|-------|-------|
 | ✅ Done | 60+ | Sprints 000-033 complete |
-| 🔍 Review | 7 | DOC-001, 195, 215, 217, 218, 219, 220, 222, 223 |
+| 🔍 Review | 13 | DOC-001, 195, 215, 217, 218, 219, 220, 222, 223, 257-262 (Sprint 042) |
 | 🚧 In Progress | 0 | — |
 | 📋 Todo | 0 | — |
 | 🗂 Backlog | 6 | 192, 193, 206, 207 (Sprint 028); 196, 197 (deferred); 125 (long-term deferred) |
