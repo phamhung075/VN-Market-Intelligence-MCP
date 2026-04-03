@@ -143,6 +143,19 @@ const SECTOR_PEERS: Record<DomainType, { code: string; exchange: string }[]> = {
     { code: "TMT", exchange: "HOSE" },  // Ô tô TMT — sản xuất xe tải
     { code: "SMA", exchange: "HOSE" },  // Phụ tùng Sài Gòn — linh kiện ô tô
   ],
+  construction: [
+    { code: "HHV", exchange: "HOSE" },
+    { code: "CTD", exchange: "HOSE" },
+    { code: "VCG", exchange: "HOSE" },
+    { code: "HBC", exchange: "HOSE" },
+    { code: "FCN", exchange: "HOSE" },
+  ],
+  energy: [
+    { code: "GEG", exchange: "HOSE" },
+    { code: "REE", exchange: "HOSE" },
+    { code: "PC1", exchange: "HOSE" },
+    { code: "BCG", exchange: "HOSE" },
+  ],
   other: [],
 };
 
@@ -163,6 +176,8 @@ export const SECTOR_NAME_VI: Record<DomainType, string> = {
   logistics: "Logistics & Vận tải",
   gold_mining: "Vàng & Kim loại quý",
   automotive: "Ô tô & Cơ khí",
+  construction: "Xây dựng & Hạ tầng",
+  energy: "Năng lượng tái tạo",
   other: "Khác",
 };
 

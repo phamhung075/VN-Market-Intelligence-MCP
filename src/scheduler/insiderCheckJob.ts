@@ -10,7 +10,9 @@
 
 import { logger } from "../infrastructure/logger.js";
 import { fetchInsiderTransactions } from "../infrastructure/fetchers/sscInsider.js";
-import { createInsiderStore } from "../infrastructure/db/insiderStore.js";
+import type { RawInsiderRow } from "../infrastructure/fetchers/sscInsider.js";
+import { insertInsiderTransaction, hasInsiderTransaction } from "../infrastructure/db/insiderStore.js";
+import type { InsiderRow } from "../infrastructure/db/insiderStore.js";
 import { getDb } from "../infrastructure/db/schema.js";
 import {
   classifyInsiderTransaction,
@@ -25,6 +27,23 @@ import { sendTelegramMessage } from "../infrastructure/notifiers/telegram.js";
 
 /** Default outstanding shares when per-stock data is not available. */
 const DEFAULT_OUTSTANDING = 1_000_000_000; // 1 billion — conservative estimate
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Helpers
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Generate a stable unique ID for an insider transaction row.
+ * Format: {code}-{insiderName-slug}-{fromDate}
+ */
+function makeRowId(raw: RawInsiderRow): string {
+  const namePart = raw.insiderName
+    .toLowerCase()
+    .replace(/\s+/g, "-")
+    .replace(/[^a-z0-9-]/g, "")
+    .slice(0, 20);
+  return `${raw.code}-${namePart}-${raw.fromDate}`;
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Public API
@@ -59,11 +78,27 @@ export async function runInsiderCheck(): Promise<void> {
 
     // ── Step 2: Store ──────────────────────────────────────────────────────
     const db = getDb();
-    const store = createInsiderStore(db);
+    const fetchedAt = new Date().toISOString();
 
     for (const tx of scraped) {
       try {
-        store.insert(tx);
+        const id = makeRowId(tx);
+        if (hasInsiderTransaction(db, id)) continue;
+
+        const row: InsiderRow = {
+          id,
+          code: tx.code,
+          insiderName: tx.insiderName,
+          position: tx.position,
+          type: tx.type,
+          registeredVolume: tx.registeredVolume,
+          executedVolume: tx.executedVolume,
+          price: tx.price,
+          fromDate: tx.fromDate,
+          toDate: tx.toDate,
+          fetchedAt,
+        };
+        insertInsiderTransaction(db, row);
       } catch (err) {
         // Duplicate or constraint error — skip silently
         logger.debug("[insiderCheckJob] insert skipped", {
@@ -76,17 +111,19 @@ export async function runInsiderCheck(): Promise<void> {
     // ── Step 3: Classify individual signals ───────────────────────────────
     const allAlerts: string[] = [];
 
-    // Map scraped tx to domain InsiderTransaction type
-    const domainTxs: InsiderTransaction[] = scraped.map((t) => ({
-      code: t.code,
-      insiderName: t.insiderName,
-      position: t.position as InsiderTransaction["position"],
-      type: t.type,
-      volume: t.volume,
-      registeredVolume: t.registeredVolume,
-      price: t.price,
-      date: t.transactionDate,
-    }));
+    // Map scraped tx to domain InsiderTransaction type (skip "other" type)
+    const domainTxs: InsiderTransaction[] = scraped
+      .filter((t): t is RawInsiderRow & { type: "buy" | "sell" } => t.type === "buy" || t.type === "sell")
+      .map((t) => ({
+        code: t.code,
+        insiderName: t.insiderName,
+        position: t.position as InsiderTransaction["position"],
+        type: t.type,
+        volume: t.executedVolume,
+        registeredVolume: t.registeredVolume,
+        price: t.price,
+        date: t.fromDate,
+      }));
 
     for (const tx of domainTxs) {
       const signal = classifyInsiderTransaction(tx, DEFAULT_OUTSTANDING);
