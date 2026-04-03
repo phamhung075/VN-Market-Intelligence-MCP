@@ -2,11 +2,12 @@
  * Infrastructure — vnstock Data Store
  *
  * SQLite storage for all vnstock data: financials, trading stats,
- * officers, shareholders. Lazy-fetched and cached locally.
+ * officers, shareholders, events, balance sheet, cash flow.
+ * Lazy-fetched and cached locally.
  *
  * Rate limit strategy: vnstock free = 60 req/min.
- * Each stock needs ~5 requests for full snapshot.
- * With 4 stocks in watchlist = 20 requests = well within limit.
+ * Each stock needs ~9 requests for full snapshot.
+ * With 4 stocks in watchlist = 36 requests = well within limit.
  * Lazy fetch: only refresh if data is older than staleness threshold.
  *
  * Layer: infrastructure/db
@@ -20,6 +21,8 @@ import type {
   VnstockOfficer,
   VnstockShareholder,
   VnstockEvent,
+  VnstockBalanceSheet,
+  VnstockCashFlow,
 } from "../fetchers/vnstockBridge.js";
 import type { DailyForeignFlow } from "../../domain/services/foreignFlowAnalyzer.js";
 
@@ -119,6 +122,40 @@ export function initVnstockTables(): void {
       fetched_at TEXT NOT NULL DEFAULT (datetime('now')),
       UNIQUE(code, data_type)
     );
+
+    CREATE TABLE IF NOT EXISTS vnstock_balance_sheet (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      code TEXT NOT NULL,
+      year_report INTEGER NOT NULL,
+      quarter INTEGER NOT NULL,
+      total_assets_bn REAL,
+      total_liabilities_bn REAL,
+      total_equity_bn REAL,
+      cash_bn REAL,
+      short_term_debt_bn REAL,
+      long_term_debt_bn REAL,
+      receivables_bn REAL,
+      inventory_bn REAL,
+      source TEXT NOT NULL DEFAULT 'vnstock',
+      fetched_at TEXT NOT NULL,
+      UNIQUE(code, year_report, quarter, source)
+    );
+    CREATE INDEX IF NOT EXISTS idx_vnbs_code ON vnstock_balance_sheet(code);
+
+    CREATE TABLE IF NOT EXISTS vnstock_cash_flow (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      code TEXT NOT NULL,
+      year_report INTEGER NOT NULL,
+      quarter INTEGER NOT NULL,
+      operating_cf_bn REAL,
+      investing_cf_bn REAL,
+      financing_cf_bn REAL,
+      net_cf_bn REAL,
+      source TEXT NOT NULL DEFAULT 'vnstock',
+      fetched_at TEXT NOT NULL,
+      UNIQUE(code, year_report, quarter, source)
+    );
+    CREATE INDEX IF NOT EXISTS idx_vncf_code ON vnstock_cash_flow(code);
   `);
 }
 
@@ -129,7 +166,7 @@ export function initVnstockTables(): void {
 /**
  * Check if data for a given code+type was fetched recently.
  * @param code - Stock code
- * @param dataType - "financials" | "trading_stats" | "officers" | "shareholders"
+ * @param dataType - "financials" | "trading_stats" | "officers" | "shareholders" | "events" | "balance_sheet" | "cash_flow"
  * @param maxAgeMinutes - Max age before considered stale (default: 360 = 6 hours)
  */
 export function isStale(code: string, dataType: string, maxAgeMinutes = 360): boolean {
@@ -350,4 +387,107 @@ export function getEvents(code: string): VnstockEvent[] {
     eventType: row.event_type,
     description: row.description ?? "",
   }));
+}
+
+// ---------------------------------------------------------------------------
+// Balance Sheet store/read
+// ---------------------------------------------------------------------------
+
+/**
+ * Store a balance sheet row. Uses INSERT OR REPLACE (UPSERT on unique key).
+ */
+export function storeBalanceSheet(bs: VnstockBalanceSheet): void {
+  const db = getDb();
+  db.prepare(
+    `INSERT OR REPLACE INTO vnstock_balance_sheet
+     (code, year_report, quarter, total_assets_bn, total_liabilities_bn, total_equity_bn,
+      cash_bn, short_term_debt_bn, long_term_debt_bn, receivables_bn, inventory_bn,
+      source, fetched_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+  ).run(
+    bs.code, bs.yearReport, bs.quarter,
+    bs.totalAssets, bs.totalLiabilities, bs.totalEquity,
+    bs.cash, bs.shortTermDebt, bs.longTermDebt, bs.receivables, bs.inventory,
+    bs.source, bs.fetchedAt,
+  );
+  markFetched(bs.code, "balance_sheet");
+}
+
+/**
+ * Retrieve the most recent balance sheet for a stock (by year_report DESC, quarter DESC).
+ */
+export function getLatestBalanceSheet(code: string): VnstockBalanceSheet | null {
+  const db = getDb();
+  const row = db
+    .prepare<any, [string]>(
+      `SELECT * FROM vnstock_balance_sheet
+       WHERE code = ?
+       ORDER BY year_report DESC, quarter DESC LIMIT 1`,
+    )
+    .get(code);
+  if (!row) return null;
+  return {
+    code: row.code,
+    yearReport: row.year_report,
+    quarter: row.quarter,
+    totalAssets: row.total_assets_bn,
+    totalLiabilities: row.total_liabilities_bn,
+    totalEquity: row.total_equity_bn,
+    cash: row.cash_bn,
+    shortTermDebt: row.short_term_debt_bn,
+    longTermDebt: row.long_term_debt_bn,
+    receivables: row.receivables_bn,
+    inventory: row.inventory_bn,
+    source: row.source,
+    fetchedAt: row.fetched_at,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Cash Flow store/read
+// ---------------------------------------------------------------------------
+
+/**
+ * Store a cash flow row. Uses INSERT OR REPLACE (UPSERT on unique key).
+ */
+export function storeCashFlow(cf: VnstockCashFlow): void {
+  const db = getDb();
+  db.prepare(
+    `INSERT OR REPLACE INTO vnstock_cash_flow
+     (code, year_report, quarter, operating_cf_bn, investing_cf_bn,
+      financing_cf_bn, net_cf_bn, source, fetched_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+  ).run(
+    cf.code, cf.yearReport, cf.quarter,
+    cf.operatingCashFlow, cf.investingCashFlow,
+    cf.financingCashFlow, cf.netCashFlow,
+    cf.source, cf.fetchedAt,
+  );
+  markFetched(cf.code, "cash_flow");
+}
+
+/**
+ * Retrieve the most recent cash flow for a stock (by year_report DESC, quarter DESC).
+ */
+export function getLatestCashFlow(code: string): VnstockCashFlow | null {
+  const db = getDb();
+  const row = db
+    .prepare<any, [string]>(
+      `SELECT * FROM vnstock_cash_flow
+       WHERE code = ?
+       ORDER BY year_report DESC, quarter DESC LIMIT 1`,
+    )
+    .get(code);
+  if (!row) return null;
+  return {
+    code: row.code,
+    yearReport: row.year_report,
+    quarter: row.quarter,
+    operatingCashFlow: row.operating_cf_bn,
+    investingCashFlow: row.investing_cf_bn,
+    financingCashFlow: row.financing_cf_bn,
+    netCashFlow: row.net_cf_bn,
+    source: row.source,
+    fetchedAt: row.fetched_at,
+  };
 }

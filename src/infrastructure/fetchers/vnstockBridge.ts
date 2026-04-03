@@ -120,6 +120,53 @@ export interface VnstockOrderBook {
   fetchedAt: string;
 }
 
+export interface VnstockBalanceSheet {
+  code: string;
+  yearReport: number;
+  quarter: number;
+  totalAssets: number;        // billion VND
+  totalLiabilities: number;
+  totalEquity: number;
+  cash: number;               // cash and equivalents
+  shortTermDebt: number;
+  longTermDebt: number;
+  receivables: number;
+  inventory: number;
+  source: "vnstock";
+  fetchedAt: string;
+}
+
+export interface VnstockCashFlow {
+  code: string;
+  yearReport: number;
+  quarter: number;
+  operatingCashFlow: number;  // billion VND
+  investingCashFlow: number;
+  financingCashFlow: number;
+  netCashFlow: number;
+  source: "vnstock";
+  fetchedAt: string;
+}
+
+export interface VnstockNewsItem {
+  code: string;
+  title: string;
+  /** ISO date string, e.g. "2026-04-03" */
+  date: string;
+  source: string;
+  url: string;
+}
+
+export interface VnstockRatioSummary {
+  code: string;
+  pe: number;
+  pb: number;
+  roe: number;
+  eps: number;
+  marketCap: number;  // billion VND
+  fetchedAt: string;
+}
+
 // ---------------------------------------------------------------------------
 // Python helper: run script and parse JSON
 // ---------------------------------------------------------------------------
@@ -522,7 +569,201 @@ export async function fetchVnstockEvents(code: string): Promise<VnstockEvent[]> 
 }
 
 // ---------------------------------------------------------------------------
-// 9. Batch: all data for one stock (for morning briefing / on-demand)
+// 9. Balance Sheet (Gap 5)
+// ---------------------------------------------------------------------------
+
+/**
+ * Balance sheet extraction script.
+ * Column names discovered empirically for VCI source:
+ *   - Non-bank (FPT):  'TOTAL ASSETS (Bn. VND)', 'LIABILITIES (Bn. VND)', "OWNER'S EQUITY(Bn.VND)",
+ *                      'Cash and cash equivalents (Bn. VND)', 'Short-term borrowings (Bn. VND)',
+ *                      'Long-term borrowings (Bn. VND)', 'Accounts receivable (Bn. VND)',
+ *                      'Net Inventories' or 'Inventories, Net (Bn. VND)'
+ *   - Bank (VCB):      Same 'TOTAL ASSETS' key; equity = "OWNER'S EQUITY(Bn.VND)";
+ *                      short debt = deposits; long debt = 'Convertible bonds/CDs and other valuable papers issued'
+ *
+ * Values are in raw VND in the DataFrame — we divide by 1e9 to get billion VND.
+ */
+const BALANCE_SHEET_SCRIPT = (symbol: string) => `
+import json, sys
+try:
+    from vnstock import Vnstock
+    stock = Vnstock().stock(symbol='${symbol}', source='VCI')
+    df = stock.finance.balance_sheet(period='quarter')
+    if df is None or len(df) == 0:
+        print('null')
+        sys.exit(0)
+    last = df.iloc[0]
+    def g(key, default=0):
+        v = last.get(key, default)
+        return float(v or 0)
+    # Total assets / liabilities / equity (common to both bank and non-bank)
+    total_assets = g('TOTAL ASSETS (Bn. VND)') / 1e9
+    total_liab = g('LIABILITIES (Bn. VND)') / 1e9
+    total_equity = g("OWNER'S EQUITY(Bn.VND)") / 1e9
+    cash = g('Cash and cash equivalents (Bn. VND)') / 1e9
+    # Debt: non-bank has explicit short/long; bank approximated from bonds
+    short_debt = g('Short-term borrowings (Bn. VND)') / 1e9
+    long_debt = g('Long-term borrowings (Bn. VND)') / 1e9
+    if short_debt == 0 and long_debt == 0:
+        # Bank: use convertible bonds/CDs as long debt proxy
+        long_debt = g('Convertible bonds/CDs and other valuable papers issued') / 1e9
+    # Receivables
+    receivables = g('Accounts receivable (Bn. VND)') / 1e9
+    # Inventory (non-bank)
+    inventory = g('Net Inventories') / 1e9
+    if inventory == 0:
+        inventory = g('Inventories, Net (Bn. VND)') / 1e9
+    result = {
+        'code': '${symbol}',
+        'yearReport': int(last.get('yearReport', 0)),
+        'quarter': int(last.get('lengthReport', 0)),
+        'totalAssets': round(total_assets, 2),
+        'totalLiabilities': round(total_liab, 2),
+        'totalEquity': round(total_equity, 2),
+        'cash': round(cash, 2),
+        'shortTermDebt': round(short_debt, 2),
+        'longTermDebt': round(long_debt, 2),
+        'receivables': round(receivables, 2),
+        'inventory': round(inventory, 2),
+        'source': 'vnstock',
+        'fetchedAt': __import__('datetime').datetime.now().isoformat()
+    }
+    print(json.dumps(result))
+except Exception as e:
+    sys.stderr.write(f'vnstock balance_sheet error: {e}\\n')
+    print('null')
+`;
+
+export async function fetchVnstockBalanceSheet(code: string): Promise<VnstockBalanceSheet | null> {
+  const result = await runPython<VnstockBalanceSheet>(BALANCE_SHEET_SCRIPT(code), `balance_sheet:${code}`);
+  if (result) {
+    logger.info("[vnstock] fetched balance sheet", {
+      code, year: result.yearReport, quarter: result.quarter,
+      totalAssets: result.totalAssets, totalEquity: result.totalEquity,
+    });
+  }
+  return result;
+}
+
+// ---------------------------------------------------------------------------
+// 10. Cash Flow (Gap 5)
+// ---------------------------------------------------------------------------
+
+/**
+ * Cash flow extraction script.
+ * Column names discovered empirically for VCI source:
+ *   'Net cash inflows/outflows from operating activities'  (both bank and non-bank)
+ *   'Net Cash Flows from Investing Activities'
+ *   'Cash flows from financial activities'
+ *   'Net increase/decrease in cash and cash equivalents'
+ *
+ * Values are in raw VND — divide by 1e9 to get billion VND.
+ */
+const CASH_FLOW_SCRIPT = (symbol: string) => `
+import json, sys
+try:
+    from vnstock import Vnstock
+    stock = Vnstock().stock(symbol='${symbol}', source='VCI')
+    df = stock.finance.cash_flow(period='quarter')
+    if df is None or len(df) == 0:
+        print('null')
+        sys.exit(0)
+    last = df.iloc[0]
+    def g(key, default=0):
+        v = last.get(key, default)
+        return float(v or 0)
+    operating = g('Net cash inflows/outflows from operating activities') / 1e9
+    investing = g('Net Cash Flows from Investing Activities') / 1e9
+    financing = g('Cash flows from financial activities') / 1e9
+    net = g('Net increase/decrease in cash and cash equivalents') / 1e9
+    result = {
+        'code': '${symbol}',
+        'yearReport': int(last.get('yearReport', 0)),
+        'quarter': int(last.get('lengthReport', 0)),
+        'operatingCashFlow': round(operating, 2),
+        'investingCashFlow': round(investing, 2),
+        'financingCashFlow': round(financing, 2),
+        'netCashFlow': round(net, 2),
+        'source': 'vnstock',
+        'fetchedAt': __import__('datetime').datetime.now().isoformat()
+    }
+    print(json.dumps(result))
+except Exception as e:
+    sys.stderr.write(f'vnstock cash_flow error: {e}\\n')
+    print('null')
+`;
+
+export async function fetchVnstockCashFlow(code: string): Promise<VnstockCashFlow | null> {
+  const result = await runPython<VnstockCashFlow>(CASH_FLOW_SCRIPT(code), `cash_flow:${code}`);
+  if (result) {
+    logger.info("[vnstock] fetched cash flow", {
+      code, year: result.yearReport, quarter: result.quarter,
+      operatingCF: result.operatingCashFlow, netCF: result.netCashFlow,
+    });
+  }
+  return result;
+}
+
+// ---------------------------------------------------------------------------
+// 11. Company News (Gap 6) — 6th news source
+// ---------------------------------------------------------------------------
+
+/**
+ * Company news from vnstock VCI backend.
+ * Column names discovered empirically:
+ *   'news_title', 'news_source_link', 'public_date' (epoch ms), 'lang_code'
+ */
+const NEWS_SCRIPT = (symbol: string, limit: number) => `
+import json, sys
+try:
+    from vnstock import Vnstock
+    stock = Vnstock().stock(symbol='${symbol}', source='VCI')
+    df = stock.company.news()
+    if df is None or len(df) == 0:
+        print('[]')
+        sys.exit(0)
+    df = df.head(${limit})
+    results = []
+    for _, r in df.iterrows():
+        pub = r.get('public_date', None)
+        if pub:
+            try:
+                from datetime import datetime, timezone
+                ts = int(pub) / 1000
+                date_str = datetime.fromtimestamp(ts, tz=timezone.utc).strftime('%Y-%m-%d')
+            except:
+                date_str = str(pub)[:10]
+        else:
+            date_str = ''
+        results.append({
+            'code': '${symbol}',
+            'title': str(r.get('news_title', '')),
+            'date': date_str,
+            'source': str(r.get('lang_code', 'vi')),
+            'url': str(r.get('news_source_link', ''))
+        })
+    print(json.dumps(results))
+except Exception as e:
+    sys.stderr.write(f'vnstock news error: {e}\\n')
+    print('[]')
+`;
+
+/**
+ * Fetch recent company news items from vnstock.
+ * @param code - Stock ticker symbol
+ * @param limit - Maximum number of news items to return (default 20)
+ */
+export async function fetchVnstockNews(code: string, limit = 20): Promise<VnstockNewsItem[]> {
+  const result = await runPython<VnstockNewsItem[]>(NEWS_SCRIPT(code, limit), `news:${code}`);
+  if (result && result.length > 0) {
+    logger.info("[vnstock] fetched company news", { code, count: result.length });
+  }
+  return result ?? [];
+}
+
+// ---------------------------------------------------------------------------
+// 12. Batch: all data for one stock (for morning briefing / on-demand)
 // ---------------------------------------------------------------------------
 
 export interface VnstockFullSnapshot {
@@ -531,16 +772,21 @@ export interface VnstockFullSnapshot {
   tradingStats: VnstockTradingStats | null;
   officers: VnstockOfficer[];
   shareholders: VnstockShareholder[];
+  balanceSheet: VnstockBalanceSheet | null;
+  cashFlow: VnstockCashFlow | null;
 }
 
 export async function fetchVnstockSnapshot(code: string): Promise<VnstockFullSnapshot> {
-  const [prices, financials, tradingStats, officers, shareholders] = await Promise.all([
-    fetchVnstockPrices([code]),
-    fetchVnstockFinancials(code),
-    fetchVnstockTradingStats(code),
-    fetchVnstockOfficers(code),
-    fetchVnstockShareholders(code),
-  ]);
+  const [prices, financials, tradingStats, officers, shareholders, balanceSheet, cashFlow] =
+    await Promise.all([
+      fetchVnstockPrices([code]),
+      fetchVnstockFinancials(code),
+      fetchVnstockTradingStats(code),
+      fetchVnstockOfficers(code),
+      fetchVnstockShareholders(code),
+      fetchVnstockBalanceSheet(code),
+      fetchVnstockCashFlow(code),
+    ]);
 
   return {
     price: prices[0] ?? null,
@@ -548,5 +794,7 @@ export async function fetchVnstockSnapshot(code: string): Promise<VnstockFullSna
     tradingStats,
     officers,
     shareholders,
+    balanceSheet,
+    cashFlow,
   };
 }

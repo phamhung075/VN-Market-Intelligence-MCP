@@ -5,15 +5,19 @@
  * but ONLY if the local cache is stale. Respects rate limits.
  *
  * Rate limit: vnstock free = 60 req/min
- * Each stock = ~5 requests (price, financials, stats, officers, shareholders)
- * 4 stocks × 5 = 20 requests = safe within 60/min
+ * Each stock = ~9 requests (price, financials, stats, officers, shareholders,
+ *                            balance_sheet, cash_flow, events)
+ * 4 stocks × 9 = 36 requests = safe within 60/min
  *
  * Staleness thresholds:
  *   - prices:        30 min (refreshed by intelligence cycle)
  *   - financials:    6 hours (BCTC data changes quarterly)
+ *   - balance_sheet: 6 hours (same cadence as income statement)
+ *   - cash_flow:     6 hours (same cadence as income statement)
  *   - trading_stats: 2 hours (changes during trading day)
  *   - officers:      24 hours (rarely changes)
  *   - shareholders:  24 hours (rarely changes)
+ *   - events:        7 days (rarely changes)
  *
  * Layer: application/usecases
  */
@@ -25,6 +29,8 @@ import {
   fetchVnstockOfficers,
   fetchVnstockShareholders,
   fetchVnstockEvents,
+  fetchVnstockBalanceSheet,
+  fetchVnstockCashFlow,
 } from "../../infrastructure/fetchers/vnstockBridge.js";
 import {
   initVnstockTables,
@@ -34,6 +40,8 @@ import {
   storeOfficers,
   storeShareholders,
   storeEvents,
+  storeBalanceSheet,
+  storeCashFlow,
 } from "../../infrastructure/db/vnstockStore.js";
 
 // Inter-request delay to stay well within 60 req/min
@@ -50,10 +58,26 @@ function sleep(ms: number): Promise<void> {
 async function syncStock(code: string): Promise<number> {
   let calls = 0;
 
-  // Financials (6h staleness)
+  // Financials / income statement (6h staleness)
   if (isStale(code, "financials", 360)) {
     const fin = await fetchVnstockFinancials(code);
     if (fin) storeFinancials(fin);
+    calls++;
+    await sleep(DELAY_MS);
+  }
+
+  // Balance sheet (6h staleness — same cadence as income statement)
+  if (isStale(code, "balance_sheet", 360)) {
+    const bs = await fetchVnstockBalanceSheet(code);
+    if (bs) storeBalanceSheet(bs);
+    calls++;
+    await sleep(DELAY_MS);
+  }
+
+  // Cash flow (6h staleness — same cadence as income statement)
+  if (isStale(code, "cash_flow", 360)) {
+    const cf = await fetchVnstockCashFlow(code);
+    if (cf) storeCashFlow(cf);
     calls++;
     await sleep(DELAY_MS);
   }
