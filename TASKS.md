@@ -53,6 +53,12 @@
 | 065 | Historical pattern matcher | `task/065-pattern-matcher` | 2026-03-28 | [TASK_REPORT_065](reports/TASK_REPORT_065.md) |
 | 084 | Market MCP tools (get_market_snapshot, get_patterns) | `task/084-tool-market` | 2026-03-28 | [TASK_REPORT_084](reports/TASK_REPORT_084.md) |
 | 123 | Integration tests — MCP tools with real SQLite | `task/123-test-integration-mcp` | 2026-03-28 | [TASK_REPORT_123](reports/TASK_REPORT_123.md) |
+| 246 | Credit Flow Analyzer (domain service) | `worktree-agent-ad862eb2` | 2026-04-03 | — |
+| 247 | Leadership Signal Detector (domain service) | `worktree-agent-ad862eb2` | 2026-04-03 | — |
+| 248 | Muasamcong public procurement fetcher | `worktree-agent-ad862eb2` | 2026-04-03 | — |
+| 249 | SSC Insider fetcher + InsiderStore | `worktree-agent-ad862eb2` | 2026-04-03 | — |
+| 250 | Signal Integration — SignalType + CAPEX/CREDIT cascade + insiderCheckJob | `worktree-agent-ad862eb2` | 2026-04-03 | — |
+| 251 | MCP Tools — get_public_contracts, get_credit_flow_signal, get_insider_signals | `worktree-agent-ad862eb2` | 2026-04-03 | — |
 
 > **Sprint 003 COMPLETE** — All 5 tasks merged: 021, 082, 063, 064, 086. PO sign-off: APPROVED 2026-03-27.
 > **Sprint 004 Wave 1** — Tasks 087, 022, 023 merged: 2026-03-27.
@@ -77,6 +83,7 @@
 | # | Title | Branch | Notes |
 |---|-------|--------|-------|
 | DOC-001 | Update CLAUDE.md architecture section | `task/doc-001-claude-md-update` | Ready for QA |
+| Sprint 040 | Macro Catalyst — Credit Flow + Insider Trading + Public Investment (tasks 246-251) | `worktree-agent-ad862eb2` | Ready for QA review |
 
 ---
 
