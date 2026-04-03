@@ -289,6 +289,23 @@ const DOMAIN_KEYWORD_MAP: Record<DomainType, string[]> = {
     "healthcare",
     "vaccine",
   ],
+  pharmaceutical: [
+    "dược phẩm",
+    "pharmaceutical",
+    "dược hậu giang",
+    "imexpharm",
+    "bidiphar",
+    "pymepharco",
+    "traphaco",
+    "opc pharma",
+    "thuốc điều trị",
+    "đăng ký lưu hành",
+    "cục quản lý dược",
+    "dav",
+    "bệnh viện công",
+    "đấu thầu thuốc",
+    "vaccine distributor",
+  ],
   other: [],
 };
 

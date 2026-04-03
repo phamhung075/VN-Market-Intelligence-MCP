@@ -112,7 +112,7 @@ describe("Task 269 — DAV Pharmacy Fetcher", () => {
     };
     const result = await fetchDavPharmacy(mockClient);
     if (result.length > 0) {
-      const first = result[0];
+      const first = result[0]!;
       expect(typeof first.drugName).toBe("string");
       expect(typeof first.manufacturer).toBe("string");
       expect(Array.isArray(first.relatedStocks)).toBe(true);
@@ -170,8 +170,8 @@ describe("Task 269 — Pharma Store", () => {
     insertPharmaEvent(db, event);
     const rows = getPharmaEvents(db);
     expect(rows.length).toBe(1);
-    expect(rows[0].drug_name).toBe("Amoxicillin 500mg");
-    expect(rows[0].stock_code).toBe("DHG");
+    expect(rows[0]!.drug_name).toBe("Amoxicillin 500mg");
+    expect(rows[0]!.stock_code).toBe("DHG");
   });
 
   it("filters by stock_code", () => {
@@ -196,11 +196,11 @@ describe("Task 269 — Pharma Store", () => {
 
     const dhgRows = getPharmaEvents(db, { stockCode: "DHG" });
     expect(dhgRows.length).toBe(1);
-    expect(dhgRows[0].stock_code).toBe("DHG");
+    expect(dhgRows[0]!.stock_code).toBe("DHG");
 
     const impRows = getPharmaEvents(db, { stockCode: "IMP" });
     expect(impRows.length).toBe(1);
-    expect(impRows[0].stock_code).toBe("IMP");
+    expect(impRows[0]!.stock_code).toBe("IMP");
   });
 
   it("filters by days lookback", () => {

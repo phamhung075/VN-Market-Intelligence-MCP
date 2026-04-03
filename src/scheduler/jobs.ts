@@ -17,6 +17,7 @@ import { runMarketScan } from './marketScanJob.js'
 import { runNewsPoller } from './newsPollerJob.js'
 import { runMorningBriefing } from './morningBriefingJob.js'
 import { runEveningSummary } from './eveningSummaryJob.js'
+import { runDavPharmacyCheck } from './davPharmacyJob.js'
 
 export const CRONS = {
   morningBriefing: Bun.env.CRON_MORNING_BRIEFING ?? '0 8 * * 1-5',
@@ -25,6 +26,8 @@ export const CRONS = {
   marketClose:     Bun.env.CRON_MARKET_CLOSE      ?? '30 15 * * 1-5',
   sscCheck:        Bun.env.CRON_SSC_CHECK         ?? '0 20 * * *',
   eveningSummary:  Bun.env.CRON_EVENING_SUMMARY   ?? '0 22 * * 1-5',
+  // DAV drug approval check: 1st of each month at 06:00 GMT+7 (Sprint 044)
+  davPharmacyCheck: Bun.env.CRON_DAV_CHECK        ?? '0 6 1 * *',
 }
 
 function log(msg: string) {
@@ -60,6 +63,11 @@ export function startScheduler() {
   // 22:00 — Evening summary (weekdays Mon-Fri only) — task 105
   cron.schedule(CRONS.eveningSummary, async () => {
     await runEveningSummary()
+  }, { timezone: 'Asia/Ho_Chi_Minh' })
+
+  // 1st of month 06:00 — DAV drug approval check (Sprint 044)
+  cron.schedule(CRONS.davPharmacyCheck, async () => {
+    await runDavPharmacyCheck()
   }, { timezone: 'Asia/Ho_Chi_Minh' })
 
   log(`[scheduler] jobs registered — ${Object.keys(CRONS).length} cron jobs active`)
