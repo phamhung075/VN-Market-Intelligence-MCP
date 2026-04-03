@@ -16,6 +16,7 @@ import { z } from "zod";
 
 import { getDb, initDatabase } from "../../../infrastructure/db/schema.js";
 import { mapPredictionToVn } from "../../../domain/services/predictionCascadeMapper.js";
+import { computePredictionAccuracy } from "../../../scheduler/predictionOutcomeJob.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SQLite row types
@@ -104,6 +105,99 @@ function buildMarketOutput(row: PredictionMarketRow): Record<string, unknown> {
  * @param server - The McpServer instance to register tools on.
  */
 export function registerPredictionTools(server: McpServer): void {
+
+  // ── get_prediction_accuracy ──────────────────────────────────────────────
+  server.tool(
+    "get_prediction_accuracy",
+    "Returns retrospective accuracy metrics for Polymarket prediction signals — " +
+      "how often volume_spike or probability_shift signals actually predicted VN stock moves. " +
+      "Precision = confirmed / (confirmed + false_positive). " +
+      "Outcomes are validated weekly by comparing signal direction against ±2% price moves in the 48h window.",
+    {
+      days: z
+        .number()
+        .int()
+        .min(1)
+        .max(365)
+        .optional()
+        .default(30)
+        .describe("Rolling lookback window in days (default: 30, max: 365)"),
+    },
+    async ({ days: daysRaw }) => {
+      const days = daysRaw ?? 30;
+
+      try {
+        await initDatabase();
+        const db = getDb();
+
+        const rows = computePredictionAccuracy(db, days);
+
+        if (rows.length === 0) {
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: `Khong co du lieu ket qua tin hieu du bao trong ${days} ngay qua.\n` +
+                      `(Viec xac thuc ket qua duoc chay hang tuan — hay thu lai sau.)\n` +
+                      `Goi lenh run_prediction_outcome_check de chay thu cong.`,
+              },
+            ],
+          };
+        }
+
+        // Format as Vietnamese table
+        const header = `Do chinh xac tin hieu Polymarket (${days} ngay qua)\n` +
+                       `${"─".repeat(60)}\n`;
+
+        const lines = rows.map((r) => {
+          const pctStr = (r.precision * 100).toFixed(1);
+          return (
+            `Loai: ${r.signalType}\n` +
+            `  Tong so: ${r.total}  |  Xac nhan: ${r.confirmed}  |  Sai: ${r.falsePositive}  |  Trung tinh: ${r.neutral}\n` +
+            `  Do chinh xac: ${pctStr}%`
+          );
+        });
+
+        const overall = rows.reduce(
+          (acc, r) => {
+            acc.total += r.total;
+            acc.confirmed += r.confirmed;
+            acc.falsePositive += r.falsePositive;
+            return acc;
+          },
+          { total: 0, confirmed: 0, falsePositive: 0 },
+        );
+        const overallDecided = overall.confirmed + overall.falsePositive;
+        const overallPrecision =
+          overallDecided > 0
+            ? ((overall.confirmed / overallDecided) * 100).toFixed(1)
+            : "N/A";
+
+        const footer =
+          `${"─".repeat(60)}\n` +
+          `Tong hop: ${overall.total} ket qua | ` +
+          `Xac nhan: ${overall.confirmed} | ` +
+          `Sai: ${overall.falsePositive} | ` +
+          `Do chinh xac tong: ${overallPrecision}%`;
+
+        const text = header + lines.join("\n\n") + "\n\n" + footer;
+
+        return {
+          content: [{ type: "text" as const, text }],
+        };
+      } catch (err) {
+        console.error("[get_prediction_accuracy] Error:", err);
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: `Loi khi tinh do chinh xac: ${(err as Error).message}`,
+            },
+          ],
+        };
+      }
+    },
+  );
 
   // ── get_prediction_markets ───────────────────────────────────────────────
   server.tool(

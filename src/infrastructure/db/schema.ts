@@ -202,6 +202,11 @@ export async function initDatabase(): Promise<void> {
     CREATE INDEX IF NOT EXISTS idx_agent_signals_expires ON agent_signals(expires_at);
   `);
 
+  // ── Agent Signal Outcome Columns (Task 244) — idempotent ALTER ────────────
+  try { db.exec(`ALTER TABLE agent_signals ADD COLUMN outcome TEXT`); } catch {}
+  try { db.exec(`ALTER TABLE agent_signals ADD COLUMN outcome_at TEXT`); } catch {}
+  try { db.exec(`ALTER TABLE agent_signals ADD COLUMN outcome_detail TEXT`); } catch {}
+
   // ── Financial Reports (BCTC) ───────────────────────────────────────────────
   // DDL imported from bctc-schema.ts — includes financial_reports table,
   // all scalar columns, JSON blobs, indexes, v_chart_timeseries and
@@ -321,6 +326,10 @@ export async function initDatabase(): Promise<void> {
   db.exec(`CREATE INDEX IF NOT EXISTS idx_prediction_signals_detected_at ON prediction_signals(detected_at DESC)`);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_prediction_signals_market ON prediction_signals(market_id)`);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_prediction_signals_severity ON prediction_signals(severity)`);
+
+  // ── Prediction Signal Outcome Columns (Task 248) — idempotent ALTER ───────
+  try { db.exec(`ALTER TABLE prediction_signals ADD COLUMN outcome TEXT`); } catch {}
+  try { db.exec(`ALTER TABLE prediction_signals ADD COLUMN outcome_price_change REAL`); } catch {}
 
   // ── Price Alerts (Task 206) ────────────────────────────────────────────────
   // Stores user-defined stop-loss / take-profit price thresholds.

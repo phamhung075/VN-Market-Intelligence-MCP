@@ -13,6 +13,8 @@
  *   dataAuditDaily        23:00 daily          (task 157) ✓
  *   dataAuditWeekly       01:00 Sunday         (task 157) ✓
  *   predictionMarketPoll  every 30 min         (task 167) ✓
+ *   userRequestCheck      every 15 min         (task 246) ✓
+ *   predictionOutcomeCheck Sunday 08:00 UTC    (task 248) ✓
  */
 
 import cron from 'node-cron'
@@ -28,6 +30,8 @@ import { runDailyAudit, runWeeklyAudit } from './dataAuditJob.js'
 import { runPredictionMarketPoll } from './predictionMarketJob.js'
 import { runAlertDigest } from './alertDigestJob.js'
 import { runWeeklyPortfolioReport } from './weeklyPortfolioReportJob.js'
+import { runUserRequestCheck } from './userRequestCheckJob.js'
+import { runPredictionOutcomeCheck } from './predictionOutcomeJob.js'
 
 export const CRONS = {
   morningBriefing:        Bun.env.CRON_MORNING_BRIEFING          ?? '0 8 * * 1-5',
@@ -41,6 +45,7 @@ export const CRONS = {
   weeklyPortfolioReport:  Bun.env.CRON_WEEKLY_PORTFOLIO_REPORT    ?? '0 23 * * 0',
   dataAuditWeekly:        Bun.env.CRON_DATA_AUDIT_WEEKLY          ?? '0 1 * * 0',
   predictionMarketPoll:   Bun.env.CRON_PREDICTION_MARKET_POLL     ?? '*/30 * * * *',
+  userRequestCheck:       Bun.env.CRON_USER_REQUEST_CHECK          ?? '*/15 * * * *',
 }
 
 function log(msg: string) {
@@ -116,6 +121,19 @@ export function startScheduler() {
   cron.schedule(CRONS.weeklyPortfolioReport, async () => {
     await runWeeklyPortfolioReport()
   }, { timezone: 'Asia/Ho_Chi_Minh' })
+
+  // Every 15 min — Fast-track user request check — task 246
+  // Guarantees /ask responses within 15 min regardless of market hours.
+  // Uses CAS claim to avoid double-processing with intelligence cycle step F.
+  cron.schedule(CRONS.userRequestCheck, async () => {
+    await runUserRequestCheck()
+  }, { timezone: 'UTC' })
+
+  // Sunday 08:00 UTC — Prediction market outcome validation — task 248
+  // Validates last 7 days of prediction signals: confirmed / false_positive / neutral
+  cron.schedule("0 8 * * 0", async () => {
+    await runPredictionOutcomeCheck()
+  }, { timezone: "UTC" })
 
   log(`[scheduler] jobs registered — ${Object.keys(CRONS).length} core cron jobs + 5 summary jobs + WAL checkpoint active`)
 }
