@@ -22,6 +22,7 @@ import { logger } from "../logger.js";
 import { getDb } from "../db/schema.js";
 import type { PredictionMarketsConfig } from "../config.js";
 import type { PredictionMarket } from "../../domain/services/predictionSignalDetector.js";
+import { breakers } from "../circuitBreakerRegistry.js";
 
 // ---------------------------------------------------------------------------
 // Public types
@@ -156,19 +157,26 @@ export async function fetchPolymarkets(
 ): Promise<PredictionMarket[]> {
   const fetchedAt = new Date().toISOString();
 
-  // Step 1 — fetch CLOB
+  // Step 1 — fetch CLOB (wrapped in circuit breaker)
   let clobMarkets: ClobMarket[];
   try {
-    const clobUrl = `${config.clobApiUrl}/markets?closed=false&limit=${config.maxMarketsPerPoll}`;
-    const raw = await fetchFn(clobUrl);
-    const parsed: unknown = JSON.parse(raw);
-    if (!Array.isArray(parsed)) {
-      logger.warn("[polymarket] CLOB response is not an array", {});
-      return [];
-    }
-    clobMarkets = parsed as ClobMarket[];
+    clobMarkets = await breakers.polymarket.execute(async () => {
+      const clobUrl = `${config.clobApiUrl}/markets?closed=false&limit=${config.maxMarketsPerPoll}`;
+      const raw = await fetchFn(clobUrl);
+      const parsed: unknown = JSON.parse(raw);
+      if (!Array.isArray(parsed)) {
+        throw new Error("CLOB response is not an array");
+      }
+      return parsed as ClobMarket[];
+    });
   } catch (err) {
-    logger.error("[polymarket] CLOB fetch failed", { error: String(err) });
+    const msg = err instanceof Error ? err.message : String(err);
+    // CircuitOpenError → debug level (expected), others → error level
+    if (msg.includes("OPEN")) {
+      logger.debug("[polymarket] circuit breaker OPEN — skipping fetch", {});
+    } else {
+      logger.error("[polymarket] CLOB fetch failed", { error: msg });
+    }
     return [];
   }
 

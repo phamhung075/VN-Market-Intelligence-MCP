@@ -32,6 +32,11 @@ export const breakers = {
   tradingEconomics: new CircuitBreaker("tradingEconomics"),
   yahooFinance: new CircuitBreaker("yahooFinance"),
   sbv: new CircuitBreaker("sbv"),
+  /** Polymarket CLOB — back off after 5 failures, wait 10 min before retry */
+  polymarket: new CircuitBreaker("polymarket", {
+    failureThreshold: 5,
+    resetTimeoutMs: 600_000, // 10 minutes
+  }),
 } as const;
 
 export type BreakerName = keyof typeof breakers;

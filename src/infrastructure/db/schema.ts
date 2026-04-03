@@ -223,6 +223,54 @@ export async function initDatabase(): Promise<void> {
     );
   `);
 
+  // ── Commodity Prices (tasks 025, 028) ─────────────────────────────────────
+  // `commodity_prices` — latest snapshot per source (upsert via INSERT OR REPLACE).
+  // `commodity_prices_history` — append-only time series for σ-based macro thresholds.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS commodity_prices (
+      source          TEXT PRIMARY KEY,
+      brent_crude_usd REAL NOT NULL DEFAULT 0,
+      gold_usd_per_oz REAL NOT NULL DEFAULT 0,
+      usd_vnd_rate    REAL NOT NULL DEFAULT 0,
+      fetched_at      TEXT NOT NULL
+    )
+  `);
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS commodity_prices_history (
+      id              INTEGER PRIMARY KEY AUTOINCREMENT,
+      source          TEXT NOT NULL,
+      brent_crude_usd REAL NOT NULL DEFAULT 0,
+      gold_usd_per_oz REAL NOT NULL DEFAULT 0,
+      usd_vnd_rate    REAL NOT NULL DEFAULT 0,
+      fetched_at      TEXT NOT NULL
+    )
+  `);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_cph_source_fetched ON commodity_prices_history(source, fetched_at DESC)`);
+
+  // ── SBV Rates (task 028) ──────────────────────────────────────────────────
+  // `sbv_rates` — latest snapshot per source (upsert via INSERT OR REPLACE).
+  // `sbv_rates_history` — append-only time series for macro σ analysis.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS sbv_rates (
+      source               TEXT PRIMARY KEY,
+      overnight_rate_pct   REAL NOT NULL DEFAULT 0,
+      refinancing_rate_pct REAL NOT NULL DEFAULT 0,
+      usd_vnd_official     REAL NOT NULL DEFAULT 0,
+      fetched_at           TEXT NOT NULL
+    )
+  `);
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS sbv_rates_history (
+      id                   INTEGER PRIMARY KEY AUTOINCREMENT,
+      source               TEXT NOT NULL,
+      overnight_rate_pct   REAL NOT NULL DEFAULT 0,
+      refinancing_rate_pct REAL NOT NULL DEFAULT 0,
+      usd_vnd_official     REAL NOT NULL DEFAULT 0,
+      fetched_at           TEXT NOT NULL
+    )
+  `);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_srh_source_fetched ON sbv_rates_history(source, fetched_at DESC)`);
+
   // ── Prediction Markets (task 163) ──────────────────────────────────────────
   // `prediction_markets` is an upsert target — one row per market, overwritten
   // each poll cycle via INSERT OR REPLACE.
