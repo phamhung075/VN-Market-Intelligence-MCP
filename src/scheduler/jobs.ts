@@ -17,6 +17,7 @@ import { runMarketScan } from './marketScanJob.js'
 import { runNewsPoller } from './newsPollerJob.js'
 import { runMorningBriefing } from './morningBriefingJob.js'
 import { runEveningSummary } from './eveningSummaryJob.js'
+import { runFranceSummary } from './franceSummaryJob.js'
 
 export const CRONS = {
   morningBriefing: Bun.env.CRON_MORNING_BRIEFING ?? '0 8 * * 1-5',
@@ -25,6 +26,7 @@ export const CRONS = {
   marketClose:     Bun.env.CRON_MARKET_CLOSE      ?? '30 15 * * 1-5',
   sscCheck:        Bun.env.CRON_SSC_CHECK         ?? '0 20 * * *',
   eveningSummary:  Bun.env.CRON_EVENING_SUMMARY   ?? '0 22 * * 1-5',
+  franceSummary:   Bun.env.CRON_FRANCE_SUMMARY    ?? '0 6 * * 1-5',
 }
 
 function log(msg: string) {
@@ -61,6 +63,12 @@ export function startScheduler() {
   cron.schedule(CRONS.eveningSummary, async () => {
     await runEveningSummary()
   }, { timezone: 'Asia/Ho_Chi_Minh' })
+
+  // 06:00 UTC (07:00 CET) — France wake-up summary (weekdays Mon-Fri) — task 243
+  // Vietnam market is 4 hours in by this time (09:00–13:00 VN), giving a live mid-session view.
+  cron.schedule(CRONS.franceSummary, async () => {
+    await runFranceSummary()
+  }, { timezone: 'UTC' })
 
   log(`[scheduler] jobs registered — ${Object.keys(CRONS).length} cron jobs active`)
 }
