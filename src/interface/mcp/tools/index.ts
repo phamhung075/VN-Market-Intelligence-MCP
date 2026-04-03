@@ -57,3 +57,5 @@ export { registerEnergyTools } from "./energyTools.js";
 export { registerPublicInvestmentTools } from "./publicInvestmentTools.js";
 export { registerCreditFlowTools } from "./creditFlowTools.js";
 export { registerLeadershipTools } from "./leadershipTools.js";
+// Sprint 043 — Crisis Detection tools (task 267)
+export { registerCrisisTools } from "./crisisTools.js";
