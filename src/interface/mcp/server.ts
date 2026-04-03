@@ -32,6 +32,7 @@ import {
   registerAnalysisTools,
   registerMarketTools,
 } from "./tools/index.js";
+import { registerPharmaTools } from "./tools/pharmaTools.js";
 
 /** Options for starting the Bun HTTP server. */
 export interface BunServerOptions {
@@ -83,6 +84,7 @@ export async function createBunServer(
   registerAlertTools(mcpServer);
   registerAnalysisTools(mcpServer);
   registerMarketTools(mcpServer); // task 084: get_market_snapshot, get_patterns
+  registerPharmaTools(mcpServer);  // Sprint 044: get_pharma_signals
 
   // Count registered tools via the SDK's internal registry
   const registeredToolsMap = (
