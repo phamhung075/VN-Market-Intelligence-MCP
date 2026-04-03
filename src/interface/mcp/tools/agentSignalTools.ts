@@ -17,6 +17,8 @@ import { getDb, initDatabase } from "../../../infrastructure/db/schema.js";
 import {
   postSignal,
   getSignals,
+  recordOutcome,
+  getSignalEffectiveness,
 } from "../../../infrastructure/db/agentSignalStore.js";
 
 // ── Zod schemas ─────────────────────────────────────────────────────────────
@@ -26,6 +28,13 @@ const SignalTypeEnum = z.enum([
   "price_anomaly",
   "cross_validate",
   "suppress",
+]);
+
+const OutcomeEnum = z.enum([
+  "fired",
+  "suppressed",
+  "confirmed",
+  "false_positive",
 ]);
 
 const PayloadSchema = z.object({
@@ -176,6 +185,137 @@ export function registerAgentSignalTools(server: McpServer): void {
         };
       } catch (err) {
         console.error("[get_agent_signals] Failed:", err);
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: `Error: ${err instanceof Error ? err.message : String(err)}`,
+            },
+          ],
+        };
+      }
+    },
+  );
+
+  // ── record_signal_outcome ──────────────────────────────────────────────────
+  server.tool(
+    "record_signal_outcome",
+    "Record the processing outcome for an agent signal. " +
+      "Use this after a signal has been acted upon to feed the effectiveness tracker.",
+    {
+      signal_id: z
+        .number()
+        .int()
+        .positive()
+        .describe("The numeric id of the agent_signals row to update"),
+      outcome: OutcomeEnum.describe(
+        "Outcome: fired | suppressed | confirmed | false_positive",
+      ),
+      detail: z
+        .string()
+        .optional()
+        .describe("Optional free-text explanation stored in outcome_detail"),
+    },
+    async (args) => {
+      try {
+        await initDatabase();
+        const db = getDb();
+
+        recordOutcome(db, args.signal_id, args.outcome, args.detail);
+
+        const text =
+          `Outcome recorded: signal_id=${args.signal_id} outcome=${args.outcome}` +
+          (args.detail ? ` (${args.detail})` : "");
+
+        return { content: [{ type: "text" as const, text }] };
+      } catch (err) {
+        console.error("[record_signal_outcome] Failed:", err);
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: `Error: ${err instanceof Error ? err.message : String(err)}`,
+            },
+          ],
+        };
+      }
+    },
+  );
+
+  // ── get_signal_effectiveness ───────────────────────────────────────────────
+  server.tool(
+    "get_signal_effectiveness",
+    "Retrieve aggregated signal effectiveness metrics grouped by agent and signal type. " +
+      "Shows total signals, confirmed hits, false positives, and precision percentage.",
+    {
+      from_agent: z
+        .string()
+        .optional()
+        .describe("Filter to a specific sending agent (optional)"),
+      signal_type: z
+        .string()
+        .optional()
+        .describe(
+          "Filter to a specific signal type: urgent_news | price_anomaly | cross_validate | suppress (optional)",
+        ),
+      days: z
+        .number()
+        .int()
+        .positive()
+        .default(7)
+        .describe("Look-back window in days (default 7)"),
+    },
+    async (args) => {
+      try {
+        await initDatabase();
+        const db = getDb();
+
+        const effectivenessOpts: import("../../../infrastructure/db/agentSignalStore.js").GetEffectivenessOptions =
+          { days: args.days };
+        if (args.from_agent !== undefined) effectivenessOpts.fromAgent = args.from_agent;
+        if (args.signal_type !== undefined) effectivenessOpts.signalType = args.signal_type;
+
+        const rows = getSignalEffectiveness(db, effectivenessOpts);
+
+        if (rows.length === 0) {
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: `Chua co du lieu hieu qua tin hieu trong ${args.days} ngay qua.`,
+              },
+            ],
+          };
+        }
+
+        const header = `Agent                | Signal type      | Total | Fired | Confirmed | False+ | Precision`;
+        const sep = `---------------------|------------------|-------|-------|-----------|--------|----------`;
+
+        const tableRows = rows.map((r) => {
+          const precStr =
+            r.precision === null ? "  N/A" : `${(r.precision * 100).toFixed(1)}%`;
+          return [
+            r.fromAgent.padEnd(20),
+            r.signalType.padEnd(16),
+            String(r.total).padStart(5),
+            String(r.fired).padStart(5),
+            String(r.confirmed).padStart(9),
+            String(r.false_positive).padStart(6),
+            precStr.padStart(9),
+          ].join(" | ");
+        });
+
+        const text = [
+          `Hieu qua tin hieu (${args.days} ngay qua):`,
+          "",
+          header,
+          sep,
+          ...tableRows,
+        ].join("\n");
+
+        return { content: [{ type: "text" as const, text }] };
+      } catch (err) {
+        console.error("[get_signal_effectiveness] Failed:", err);
         return {
           content: [
             {

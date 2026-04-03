@@ -17,6 +17,21 @@ import type { Database } from "bun:sqlite";
 /** Valid signal types that agents can exchange. */
 export type SignalType = "urgent_news" | "price_anomaly" | "cross_validate" | "suppress";
 
+/** Outcome values for a signal once it has been processed. */
+export type SignalOutcome = "fired" | "suppressed" | "confirmed" | "false_positive";
+
+/** Per-group effectiveness metrics returned by getSignalEffectiveness. */
+export interface SignalEffectiveness {
+  fromAgent: string;
+  signalType: string;
+  total: number;
+  fired: number;
+  confirmed: number;
+  false_positive: number;
+  /** confirmed / (confirmed + false_positive), or null when denominator is 0. */
+  precision: number | null;
+}
+
 /** Payload carried by an agent signal. */
 export interface SignalPayload {
   title: string;
@@ -161,6 +176,111 @@ export function getSignals(
     createdAt: r.created_at,
     expiresAt: r.expires_at,
   }));
+}
+
+// ── recordOutcome ───────────────────────────────────────────────────────────
+
+/**
+ * Record the processing outcome for a signal row.
+ *
+ * Sets `outcome`, `outcome_at` (UTC now), and optionally `outcome_detail`
+ * on the row identified by `signalId`.
+ *
+ * @param db       - Active bun:sqlite Database connection
+ * @param signalId - Primary key of the target agent_signals row
+ * @param outcome  - One of: fired | suppressed | confirmed | false_positive
+ * @param detail   - Optional free-text explanation stored in outcome_detail
+ */
+export function recordOutcome(
+  db: Database,
+  signalId: number,
+  outcome: SignalOutcome,
+  detail?: string,
+): void {
+  db.prepare(
+    `UPDATE agent_signals
+        SET outcome        = ?,
+            outcome_at     = datetime('now'),
+            outcome_detail = ?
+      WHERE id = ?`,
+  ).run(outcome, detail ?? null, signalId);
+}
+
+// ── getSignalEffectiveness ──────────────────────────────────────────────────
+
+/** Options for filtering getSignalEffectiveness results. */
+export interface GetEffectivenessOptions {
+  /** Only include signals from this agent. */
+  fromAgent?: string;
+  /** Only include signals of this type. */
+  signalType?: string;
+  /** Look-back window in days from now (default 7). */
+  days?: number;
+}
+
+/**
+ * Aggregate signal effectiveness metrics grouped by (from_agent, signal_type).
+ *
+ * Only rows with a non-null `outcome` within the look-back window are counted.
+ *
+ * @param db   - Active bun:sqlite Database connection
+ * @param opts - Optional filters (fromAgent, signalType, days)
+ * @returns    Array of SignalEffectiveness records, one per group
+ */
+export function getSignalEffectiveness(
+  db: Database,
+  opts: GetEffectivenessOptions = {},
+): SignalEffectiveness[] {
+  const days = opts.days ?? 7;
+
+  const conditions: string[] = [
+    "outcome IS NOT NULL",
+    `created_at >= datetime('now', '-${days} days')`,
+  ];
+
+  if (opts.fromAgent) conditions.push(`from_agent = '${opts.fromAgent.replace(/'/g, "''")}'`);
+  if (opts.signalType) conditions.push(`signal_type = '${opts.signalType.replace(/'/g, "''")}'`);
+
+  const where = conditions.join(" AND ");
+
+  type Row = {
+    from_agent: string;
+    signal_type: string;
+    total: number;
+    fired: number;
+    confirmed: number;
+    false_positive: number;
+  };
+
+  const rows = db
+    .query<Row, []>(
+      `SELECT
+         from_agent,
+         signal_type,
+         COUNT(*)                                              AS total,
+         SUM(CASE WHEN outcome = 'fired'         THEN 1 ELSE 0 END) AS fired,
+         SUM(CASE WHEN outcome = 'confirmed'     THEN 1 ELSE 0 END) AS confirmed,
+         SUM(CASE WHEN outcome = 'false_positive'THEN 1 ELSE 0 END) AS false_positive
+       FROM agent_signals
+       WHERE ${where}
+       GROUP BY from_agent, signal_type
+       ORDER BY from_agent, signal_type`,
+    )
+    .all();
+
+  return rows.map((r) => {
+    const denom = r.confirmed + r.false_positive;
+    const precision = denom > 0 ? r.confirmed / denom : null;
+    return {
+      fromAgent: r.from_agent,
+      signalType: r.signal_type,
+      total: r.total,
+      fired: r.fired,
+      confirmed: r.confirmed,
+      false_positive: r.false_positive,
+      precision,
+    };
+  });
 }
 
 // ── cleanExpired ────────────────────────────────────────────────────────────
