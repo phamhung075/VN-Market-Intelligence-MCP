@@ -164,7 +164,7 @@ export async function runWeatherCheck(opts: WeatherCheckOptions = {}): Promise<v
           msg += "\n";
         }
 
-        await sendTelegramMessage(cfg.telegramChatId, msg);
+        await sendTelegramMessage(msg, { chatId: Number(cfg.telegramChatId) });
       } catch (err) {
         logger.warn("[weatherCheckJob] Telegram send failed", {
           error: err instanceof Error ? err.message : String(err),

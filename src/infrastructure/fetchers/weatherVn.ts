@@ -290,7 +290,7 @@ export function detectEnsoFromText(text: string): WeatherEvent | null {
     if (pattern.test(text)) {
       // Extract SST anomaly for severity
       const sstMatch = text.match(/\+([\d.]+)°?C/i);
-      const sst = sstMatch ? parseFloat(sstMatch[1]) : 0;
+      const sst = sstMatch?.[1] != null ? parseFloat(sstMatch[1]) : 0;
       const severity: WeatherSeverity = sst >= 2.0 ? "critical" : sst >= 1.5 ? "high" : sst >= 1.0 ? "medium" : "low";
       return {
         type: "el_nino",
@@ -313,7 +313,7 @@ export function detectEnsoFromText(text: string): WeatherEvent | null {
   for (const pattern of laNinaPatterns) {
     if (pattern.test(text)) {
       const sstMatch = text.match(/-([\d.]+)°?C/i);
-      const sst = sstMatch ? parseFloat(sstMatch[1]) : 0;
+      const sst = sstMatch?.[1] != null ? parseFloat(sstMatch[1]) : 0;
       const severity: WeatherSeverity = sst >= 1.5 ? "high" : sst >= 1.0 ? "medium" : "low";
       return {
         type: "la_nina",

@@ -36,8 +36,8 @@ const baseEntry: AnalysisEntry = {
   affectedDomains: [],
   affectedActions: [],
   parentIds: [],
-  embedding: [],
   tags: [],
+  createdAt: new Date().toISOString(),
 };
 
 const watchlist: WatchlistEntry[] = [
@@ -45,7 +45,7 @@ const watchlist: WatchlistEntry[] = [
   { actionCode: "GEG", domain: "utilities", exchange: "HOSE" },
   { actionCode: "BVH", domain: "insurance", exchange: "HOSE" },
   { actionCode: "IDC", domain: "real_estate", exchange: "HOSE" },  // industrial park → real_estate
-  { actionCode: "MPC", domain: "agriculture", exchange: "HOSE" },  // seafood → agriculture
+  { actionCode: "MPC", domain: "agriculture" as const, exchange: "HOSE" },  // seafood → agriculture
 ];
 
 // ---------------------------------------------------------------------------
@@ -122,7 +122,7 @@ describe("Task 261 — Signal Integration", () => {
       sourceTitle: "Hạn hán nghiêm trọng tại ĐBSCL — thiệt hại nuôi trồng thủy sản",
       summary: "Hạn hán nghiêm trọng thiếu nước ao nuôi — thiệt hại thủy sản (MPC, ANV) drought vietnam",
       tags: ["hạn hán", "thủy sản"],
-      affectedDomains: ["seafood"],
+      affectedDomains: ["agriculture"],
     };
     const chain = buildCausalChain(entry, watchlist);
     const mpcImpact = chain.watchlistImpacts.find(

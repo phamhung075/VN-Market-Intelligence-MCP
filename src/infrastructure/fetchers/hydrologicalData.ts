@@ -166,7 +166,7 @@ export function extractReservoirLevelsFromText(text: string): ReservoirLevel[] {
 
     for (const pattern of [p1, p2, p3]) {
       const m = text.match(pattern);
-      if (m) {
+      if (m?.[1] != null) {
         const pct = parseInt(m[1], 10);
         if (pct >= 0 && pct <= 100) {
           capacityPct = pct;
