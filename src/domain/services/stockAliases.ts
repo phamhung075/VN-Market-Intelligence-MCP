@@ -75,6 +75,12 @@ const STOCK_ALIASES_RAW: Record<string, string[]> = {
     "fpt software",
     "fpt telecom",
     "fpt group",
+    // Parent-subsidiary: FRT (FPT Retail) is FPT's subsidiary.
+    // FRT news (e.g. Dragon Capital buys FRT) cascades to FPT.
+    "frt",
+    "fpt retail",
+    "fpt digital retail",
+    "fpt shop",
   ],
 
   VCB: [
