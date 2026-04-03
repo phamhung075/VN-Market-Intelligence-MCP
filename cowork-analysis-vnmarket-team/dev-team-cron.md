@@ -8,8 +8,8 @@ You run every 1 hour via Claude Code CLI cron. Your job: read problem reports fr
 
 ### Step 0: Check for Work
 1. Call `read_telegram_reports` (status="new")
-2. IF empty → exit immediately (save tokens, wait for next loop)
-3. IF messages found → for each report, call `claim_telegram_report(id, claimant="dev-team-cron")` before processing to prevent concurrent loops from double-processing
+2. IF empty -> exit immediately (save tokens, wait for next loop)
+3. IF messages found -> for each report, call `claim_telegram_report(id, claimant="dev-team-cron")` before processing to prevent concurrent loops from double-processing
 4. Continue to Step 1 for claimed reports
 
 Note: Reports with `agent="user-telegram"` come from user `/report` and `/fix` Telegram commands. Treat these as HIGH priority — the user reported it directly.
@@ -34,10 +34,10 @@ For each unprocessed report, classify:
 
 ### Step 2: Process Reports
 For each claimed report:
-1. Call `process_telegram_report(id)` → marks processed + deletes from Telegram
-2. If FIX NOW → go to Step 3
-3. If SPRINT TASK → go to Step 4
-4. If MONITOR → add to TASKS.md backlog, continue
+1. Call `process_telegram_report(id)` -> marks processed + deletes from Telegram
+2. If FIX NOW -> go to Step 3
+3. If SPRINT TASK -> go to Step 4
+4. If MONITOR -> add to TASKS.md backlog, continue
 
 ### Step 3: FIX NOW
 1. Read the relevant source file(s)
@@ -61,8 +61,8 @@ For each claimed report:
 Run the FULL agent chain:
 
 ```
-PO → BA → Architect → PM → Developer → QA
-                                  ↕
+PO -> BA -> Architect -> PM -> Developer -> QA
+                                  |
                               Fixer (if needed)
 ```
 
@@ -110,7 +110,7 @@ Please refresh these agents in Claude Cowork.
 
 ### Step 7: Final Health Check
 1. Call `get_system_status` — verify server is healthy after changes (covers DB, SOURCES, FRESHNESS, ERRORS in one call)
-2. If issues found → create FIX NOW task for next loop
+2. If issues found -> create FIX NOW task for next loop
 
 ## RULES
 
@@ -154,22 +154,19 @@ Please refresh these agents in Claude Cowork.
 | `reports/TASK_REPORT_NNN.md` | QA creates after review |
 | `reports/SPRINT_REPORT_NNN.md` | QA creates after sprint |
 
-## CURRENT STATE (Sprint 039 baseline)
+## CURRENT STATE (Sprint 044 baseline)
 
-- 57 MCP tools registered (+4 new vs Sprint 038)
-- 1934+ tests
+- 68 MCP tools registered (+11 new vs Sprint 038)
 - 2 Telegram channels: Chat (user) + Report (problems)
 - Server: Bun with --hot reload
 - Analysis team: 7 Claude Cowork agents (cloud)
 - Dev team: this cron (local Claude Code CLI)
-- New tools (Sprint 039): record_signal_outcome, get_signal_effectiveness, get_cascade_metrics, get_prediction_accuracy (observability layer)
-- New cron jobs (Sprint 039): franceSummaryJob (06:00 UTC weekdays), devTeamHeartbeatJob (07:00 UTC Sunday), userRequestCheckJob (*/15 * * * *), predictionOutcomeJob (08:00 UTC Sunday)
-- New files (Sprint 039): src/scheduler/franceSummaryJob.ts, src/scheduler/devTeamHeartbeatJob.ts, src/scheduler/userRequestCheckJob.ts, src/scheduler/predictionOutcomeJob.ts, src/infrastructure/db/cascadeHitStore.ts, src/interface/mcp/tools/cascadeMetricsTools.ts
-- France wake-up fast track: /ask and /why commands answered within 15 min via userRequestCheckJob (*/15 cron)
-- New tools (Sprint 037): get_market_context (compound: watchlist+prices+macro+alerts+analysis), get_bctc_full (compound: summary+QoQ/YoY+sentiment)
-- New tools (Sprint 038): post_agent_signal, get_agent_signals (agent-to-agent signal bus)
-- Enhanced (Sprint 037): get_alerts now has type param ("system"|"price"|"all") — type="price" replaces removed get_price_alerts
-- Removed (Sprint 037): get_price_alerts (→ get_alerts type="price"), add_alert_rule, delete_alert_rule, set_target_allocation (last 3 are user-only via Claude Desktop)
-- New Telegram commands (Sprint 037): /ask <question>, /why <stock> — answered within 15 min via intelligence cycle Step F
-- Merged tools (Sprint 036): get_system_status (replaces 4 health tools), send_telegram (replaces 3 telegram tools), manage_alert_mute (replaces 2 mute tools)
-- Removed (Sprint 036): get_feedback, get_global_log, get_tool_log, run_daily_briefing, search_stocks, fetch_ssc_reports, trigger_alert_check, export_portfolio_snapshot
+- 19 cron jobs including weatherCheck (*/6h) and davPharmacyCheck (1st monthly)
+- New tools (Sprint 039): get_legal_risk_signals, get_policy_signals, get_bond_maturity_calendar
+- New tools (Sprint 040): get_public_contracts, get_credit_flow_signal, get_insider_signals
+- New tools (Sprint 041): get_supply_chain_exposure
+- New tools (Sprint 042): get_climate_risk_signals, get_energy_grid_signals
+- New tools (Sprint 043): get_crisis_early_warning
+- New tools (Sprint 044): get_pharma_signals
+- Observability tools: record_signal_outcome, get_signal_effectiveness, get_cascade_metrics, get_prediction_accuracy
+- New cron jobs: franceSummaryJob, devTeamHeartbeatJob, userRequestCheckJob, predictionOutcomeJob, weatherCheck, davPharmacyCheck

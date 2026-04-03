@@ -94,9 +94,11 @@ Call record_signal_outcome(signal_id, "fired"|"suppressed"|"confirmed"|"false_po
 | Signal | From | To | When |
 |--------|------|----|------|
 | `urgent_news` | News Scout | Market Watcher | Impact >= 8 news |
-| `price_anomaly` | Market Watcher | Alert Commander | >2σ move detected |
+| `price_anomaly` | Market Watcher | Alert Commander | >2sigma move detected |
 | `cross_validate` | Report Analyzer | Alert Commander | CRITICAL BCTC finding |
 | `suppress` | Alert Commander | All | False positive detected |
+| `legal_risk` | News Scout | Alert Commander | Prosecution/tax penalty detected |
+| `crisis_velocity` | News Scout | Alert Commander | 5x mention spike for a stock |
 
 ### Tool Naming Rules (CRITICAL)
 
@@ -121,12 +123,93 @@ These tools were REMOVED from MCP entirely:
 `export_portfolio_snapshot`, `add_alert_rule`, `delete_alert_rule`,
 `set_target_allocation`
 
+### Complete 68 MCP Tool List (Sprint 044)
+
+#### Watchlist (4)
+add_to_watchlist, remove_from_watchlist, get_watchlist, update_thresholds
+
+#### Financial Reports (4)
+get_financial_summary, compare_financials, list_stored_pdfs, read_bctc_pdf
+
+#### Alerts (4)
+get_alerts (type: system|price|all), mark_alert_read, get_analysis_history, get_alert_accuracy
+
+#### Analysis (3)
+fetch_and_analyze, run_impact_chain, search_similar_context
+
+#### Market (2)
+get_market_snapshot, get_patterns
+
+#### Macro (1)
+get_macro_snapshot
+
+#### Compound (2)
+get_market_context, get_bctc_full
+
+#### Portfolio (7)
+get_portfolio_conviction, set_position, get_positions, close_position, get_portfolio_risk, get_rebalancing_signals, get_target_allocation
+
+#### Price (3)
+get_price_history, set_price_alert, delete_price_alert
+
+#### Comparison & Sector (4)
+compare_stocks, get_correlation_matrix, get_sector_rotation, get_sentiment_trend
+
+#### Prediction Markets (2)
+get_prediction_markets, get_prediction_accuracy
+
+#### Earnings (1)
+get_earnings_calendar
+
+#### Summaries (2)
+get_market_summary, generate_market_summary
+
+#### Performance (1)
+get_performance_attribution
+
+#### Telegram (2)
+send_telegram (channel: chat|report), send_alert_digest
+
+#### System & Ops (3)
+get_system_status, get_rate_limit_status, submit_feedback
+
+#### Agent Communication (4)
+post_agent_signal, get_agent_signals, record_signal_outcome, get_signal_effectiveness
+
+#### Dev Team (4)
+claim_telegram_report, read_telegram_reports, process_telegram_report, log_fix
+
+#### Observability (2)
+get_recent_fixes, get_cascade_metrics
+
+#### Alert Management (2)
+list_alert_rules, manage_alert_mute
+
+#### Sprint 039 — Capital Protection (3)
+get_legal_risk_signals, get_policy_signals, get_bond_maturity_calendar
+
+#### Sprint 040 — Macro Catalyst (3)
+get_public_contracts, get_credit_flow_signal, get_insider_signals
+
+#### Sprint 041 — Supply Chain (1)
+get_supply_chain_exposure
+
+#### Sprint 042 — Climate + Energy (2)
+get_climate_risk_signals, get_energy_grid_signals
+
+#### Sprint 043 — Crisis Radar (1)
+get_crisis_early_warning
+
+#### Sprint 044 — Pharma Radar (1)
+get_pharma_signals
+
 ### Which Tools Each Agent Should Use
 
 #### News Scout (01)
 get_agent_signals, get_market_context, fetch_and_analyze, run_impact_chain,
 search_similar_context, get_prediction_markets, get_rate_limit_status,
-post_agent_signal, get_recent_fixes, submit_feedback
+post_agent_signal, get_recent_fixes, submit_feedback,
+get_legal_risk_signals, get_crisis_early_warning
 
 #### BCTC Collector (02)
 get_agent_signals, get_market_context, get_earnings_calendar, get_bctc_full,
@@ -135,19 +218,21 @@ list_stored_pdfs, send_telegram, get_recent_fixes, submit_feedback
 #### Report Analyzer (03)
 get_agent_signals, get_market_context, get_bctc_full, compare_stocks,
 get_sentiment_trend, post_agent_signal, get_recent_fixes, submit_feedback,
-generate_market_summary
+generate_market_summary, get_legal_risk_signals, get_insider_signals
 
 #### Market Watcher (04)
 get_agent_signals, get_market_context, get_price_history, get_patterns,
 get_sector_rotation, get_supply_chain_exposure, get_alerts(type="price"),
 get_positions, get_portfolio_risk, compare_stocks, get_sentiment_trend,
-post_agent_signal, manage_alert_mute, get_recent_fixes, submit_feedback
+post_agent_signal, manage_alert_mute, get_recent_fixes, submit_feedback,
+get_energy_grid_signals, get_climate_risk_signals, get_crisis_early_warning
 
 #### Alert Commander (05) — ONLY sender to Chat Channel
 get_agent_signals, get_system_status, get_market_context, get_alerts(type="all"),
 mark_alert_read, send_telegram(channel="chat"), send_alert_digest,
 record_signal_outcome, get_alert_accuracy, manage_alert_mute, list_alert_rules,
-post_agent_signal, get_recent_fixes, submit_feedback, delete_price_alert
+post_agent_signal, get_recent_fixes, submit_feedback, delete_price_alert,
+get_legal_risk_signals, get_crisis_early_warning
 
 #### Digest Writer (06)
 get_agent_signals, get_market_context, get_market_summary, generate_market_summary,
@@ -156,7 +241,11 @@ get_correlation_matrix, get_alert_accuracy, get_performance_attribution,
 get_portfolio_risk, get_rebalancing_signals, get_sector_rotation,
 get_earnings_calendar, get_signal_effectiveness, get_cascade_metrics,
 get_prediction_accuracy, get_supply_chain_exposure, send_telegram(channel="chat"),
-get_recent_fixes, submit_feedback
+get_recent_fixes, submit_feedback,
+get_legal_risk_signals, get_policy_signals, get_bond_maturity_calendar,
+get_public_contracts, get_credit_flow_signal, get_insider_signals,
+get_climate_risk_signals, get_energy_grid_signals,
+get_crisis_early_warning, get_pharma_signals
 
 #### Unified Coordinator
 get_agent_signals, get_system_status, get_market_context, get_macro_snapshot,
@@ -165,11 +254,42 @@ get_portfolio_conviction, get_portfolio_risk, get_correlation_matrix,
 get_rebalancing_signals, get_performance_attribution, get_alert_accuracy,
 get_signal_effectiveness, get_cascade_metrics, get_prediction_accuracy,
 get_supply_chain_exposure, claim_telegram_report, read_telegram_reports,
-process_telegram_report, submit_feedback, get_recent_fixes, send_telegram
+process_telegram_report, submit_feedback, get_recent_fixes, send_telegram,
+get_legal_risk_signals, get_policy_signals, get_bond_maturity_calendar,
+get_public_contracts, get_credit_flow_signal, get_insider_signals,
+get_climate_risk_signals, get_energy_grid_signals,
+get_crisis_early_warning, get_pharma_signals
 
 #### Dev Team Cron
 read_telegram_reports, claim_telegram_report, process_telegram_report,
 log_fix, get_recent_fixes, send_telegram(channel="chat"), get_system_status
+
+### 19 Cron Jobs
+
+| Time | Job | Description |
+|------|-----|-------------|
+| */15 min | intelligenceCycle | Main engine: news + prices + chain + alerts |
+| */15 min | userRequestCheck | Answer /ask + /why Telegram commands |
+| */30 min | predictionMarketPoll | Polymarket fetch + signal detection |
+| */6h | weatherCheck | Typhoon season climate check |
+| 06:00 UTC M-F | franceSummary | France wake-up digest (07:00 CET) |
+| 08:00 VN M-F | morningBriefing | Daily briefing with macro + conviction |
+| 09:00 VN M-F | marketOpen | Market open scan + price alerts |
+| 15:30 VN M-F | marketClose | Market close scan |
+| 20:00 VN daily | sscCheck | SSC nightly BCTC check |
+| 21:00 VN M-F | alertDigest | Nightly alert digest |
+| 22:00 VN M-F | eveningSummary | Evening market summary |
+| 22:30 VN daily | dailySummary | Daily summary generation |
+| 22:30 VN Sunday | patternWatch | Weekly pattern watch |
+| 23:00 VN daily | dataAuditDaily | Data integrity audit |
+| 23:00 VN Sunday | weeklyPortfolioReport + weeklySummary | Portfolio + weekly summary |
+| 01:00 VN Sunday | dataAuditWeekly | Deep weekly audit |
+| 07:00 UTC Sunday | devTeamHeartbeat | Dev Team health + observability |
+| 08:00 UTC Sunday | predictionOutcome | Prediction signal evaluation |
+| 1st monthly 06:00 VN | davPharmacyCheck | DAV drug approval check |
+
+### 11 Telegram Bot Commands
+/watchlist, /price, /alerts, /briefing, /health, /pnl, /ask, /why, /report, /fix, /help
 
 ### Stock Classification (must be in every agent)
 - VNM = Vinamilk = Retail/Dairy
@@ -181,9 +301,9 @@ log_fix, get_recent_fixes, send_telegram(channel="chat"), get_system_status
 ### Key Vietnamese Financial Terms
 | Vietnamese | English |
 |-----------|---------|
-| Báo cáo tài chính (BCTC) | Financial report |
-| Doanh thu thuần | Net revenue |
-| Lợi nhuận sau thuế (LNST) | Net profit after tax |
+| Bao cao tai chinh (BCTC) | Financial report |
+| Doanh thu thuan | Net revenue |
+| Loi nhuan sau thue (LNST) | Net profit after tax |
 | VN-Index | Main stock index (HOSE) |
 
 ## Rewrite Process
@@ -265,66 +385,3 @@ When the system changes (new tools, removed tools, new crons), update this agent
 4. Then rewrite the agent files
 
 This ensures this agent is always the source of truth.
-
-# Persistent Agent Memory
-
-You have a persistent, file-based memory system at `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/.claude/agent-memory/cowork-refactory-expert/`. This directory already exists — write to it directly with the Write tool (do not run mkdir or check for its existence).
-
-You should build up this memory system over time so that future conversations can have a complete picture of who the user is, how they'd like to collaborate with you, what behaviors to avoid or repeat, and the context behind the work the user gives you.
-
-If the user explicitly asks you to remember something, save it immediately as whichever type fits best. If they ask you to forget something, find and remove the relevant entry.
-
-## Types of memory
-
-There are several discrete types of memory that you can store in your memory system:
-
-<types>
-<type>
-    <name>user</name>
-    <description>Contain information about the user's role, goals, responsibilities, and knowledge.</description>
-    <when_to_save>When you learn any details about the user's role, preferences, responsibilities, or knowledge</when_to_save>
-    <how_to_use>Tailor your output to the user's perspective and preferences.</how_to_use>
-</type>
-<type>
-    <name>feedback</name>
-    <description>Guidance the user has given you about how to approach work.</description>
-    <when_to_save>Any time the user corrects your approach or confirms a non-obvious approach worked.</when_to_save>
-    <how_to_use>Let these memories guide your behavior so the user doesn't repeat themselves.</how_to_use>
-    <body_structure>Lead with the rule, then **Why:** and **How to apply:**</body_structure>
-</type>
-<type>
-    <name>project</name>
-    <description>Information about ongoing work, goals, initiatives not derivable from code.</description>
-    <when_to_save>When you learn who is doing what, why, or by when.</when_to_save>
-    <how_to_use>Understand broader context behind user requests.</how_to_use>
-    <body_structure>Lead with fact, then **Why:** and **How to apply:**</body_structure>
-</type>
-<type>
-    <name>reference</name>
-    <description>Pointers to where information can be found in external systems.</description>
-    <when_to_save>When you learn about resources in external systems.</when_to_save>
-    <how_to_use>When user references an external system.</how_to_use>
-</type>
-</types>
-
-## How to save memories
-
-**Step 1** — write the memory to its own file using this frontmatter format:
-
-```markdown
----
-name: {{memory name}}
-description: {{one-line description}}
-type: {{user, feedback, project, reference}}
----
-
-{{memory content}}
-```
-
-**Step 2** — add a pointer to `MEMORY.md` (one line per entry, under 150 chars).
-
-- Since this memory is project-scope and shared with your team via version control, tailor your memories to this project
-
-## MEMORY.md
-
-Your MEMORY.md is currently empty. When you save new memories, they will appear here.

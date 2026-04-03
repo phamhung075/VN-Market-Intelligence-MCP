@@ -2,7 +2,7 @@
 
 ## Prerequisites
 1. MCP server running: `bun run src/index.ts`
-2. Telegram configured in `.env` (bot token + chat ID)
+2. Telegram configured in `.env` (bot token + chat ID + report ID)
 3. Cloudflare tunnel running: `cloudflared tunnel run --token $CLOUDFLARE_TOKEN`
 4. Claude Cowork / Claude Schedule account
 
@@ -35,7 +35,7 @@ All settings are in `mcp.config.json` at project root. Key sections:
 This auto-seeds the database on every server restart (only if watchlist table is empty).
 
 **To change stocks**:
-- Edit `mcp.config.json` → `market.watchlist` for permanent changes
+- Edit `mcp.config.json` for permanent changes
 - Or use MCP tools at runtime: `add_to_watchlist` / `remove_from_watchlist`
 - Runtime changes persist in SQLite — they won't be overwritten by config
 
@@ -58,9 +58,9 @@ CLOUDFLARE_TUNNEL=vn-market-mcp
 cd /path/to/VN-Market-Intelligence-MCP
 bun run src/index.ts
 ```
-Server auto-seeds watchlist from config, starts OCR for unprocessed PDFs, registers 57 tools.
+Server auto-seeds watchlist from config, starts OCR for unprocessed PDFs, registers 68 tools.
 
-Verify: `curl https://zenmidi.com/health` → `{"status":"ok","toolCount":57}`
+Verify: `curl https://zenmidi.com/health` — `{"status":"ok","toolCount":68}`
 
 ### Step 2: Start Cloudflare Tunnel
 ```bash
@@ -76,18 +76,18 @@ MCP connector URL: `https://zenmidi.com/mcp`
 | Order | Agent | Schedule | File | Role |
 |-------|-------|----------|------|------|
 | 0 | **Unified Coordinator** | On-demand + Daily 22:00 VN + Sunday | `unified-agent.md` | Coordinate team + quality review + report problems |
-| 1 | **News Scout** | Every hour | `01-news-scout.md` | Fetch news + submit feedback on gaps |
+| 1 | **News Scout** | Every hour | `01-news-scout.md` | Fetch news + legal/crisis detection + submit feedback on gaps |
 | 2 | **BCTC Collector** | Daily 20:00 + 08:00 VN | `02-bctc-collector.md` | Track BCTC reports |
-| 3 | **Report Analyzer** | Daily 21:00 + 09:00 VN | `03-report-analyzer.md` | Analyze financials + feedback |
-| 4 | **Market Watcher** | Hourly market hours | `04-market-watcher.md` | Track prices + feedback on thresholds |
-| 5 | **Alert Commander** | Every hour | `05-alert-commander.md` | ONLY Telegram sender + alert quality feedback |
-| 6 | **Digest Writer** | Daily 22:30 + Sunday | `06-digest-writer.md` | Compile summaries + weekly review |
+| 3 | **Report Analyzer** | Daily 21:00 + 09:00 VN | `03-report-analyzer.md` | Analyze financials + insider signals + feedback |
+| 4 | **Market Watcher** | Hourly market hours | `04-market-watcher.md` | Track prices + supply chain + climate/energy + feedback |
+| 5 | **Alert Commander** | Every hour | `05-alert-commander.md` | ONLY Telegram sender + alert quality + crisis/legal escalation |
+| 6 | **Digest Writer** | Daily 22:30 + Sunday | `06-digest-writer.md` | Compile summaries + all 11 new domain tools for deep review |
 
 ### Step 4: Verify
-- Telegram: "✅ System online" at 08:55 Vietnam (03:55 France CET)
+- Telegram: "System online" at 08:55 Vietnam (03:55 France CET)
 - Health: `curl https://zenmidi.com/health`
 
-## 57 MCP Tools Available (Sprint 039)
+## 68 MCP Tools Available (Sprint 044)
 
 | Category | Tools |
 |----------|-------|
@@ -97,36 +97,37 @@ MCP connector URL: `https://zenmidi.com/mcp`
 | **Reports** | get_bctc_full, get_financial_summary, compare_financials, list_stored_pdfs, read_bctc_pdf, get_earnings_calendar |
 | **Alerts** | get_alerts (type: "system"\|"price"\|"all"), mark_alert_read, set_price_alert, delete_price_alert, get_alert_accuracy, list_alert_rules, manage_alert_mute |
 | **Portfolio** | get_portfolio_conviction, set_position, get_positions, close_position, get_portfolio_risk, get_rebalancing_signals, get_correlation_matrix, get_performance_attribution, get_target_allocation |
-| **Prediction Markets** | get_prediction_markets |
+| **Prediction** | get_prediction_markets, get_prediction_accuracy |
 | **Summaries** | get_market_summary, generate_market_summary |
 | **Telegram** | send_telegram, send_alert_digest, claim_telegram_report, read_telegram_reports, process_telegram_report |
-| **Feedback** | submit_feedback (→ Report channel only) |
+| **Feedback** | submit_feedback (Report channel only) |
 | **Operations** | get_rate_limit_status |
 | **System** | get_system_status |
 | **Dev Team** | log_fix, get_recent_fixes |
 | **Agent Bus** | post_agent_signal, get_agent_signals |
-| **Observability** | record_signal_outcome, get_signal_effectiveness, get_cascade_metrics, get_prediction_accuracy |
+| **Observability** | record_signal_outcome, get_signal_effectiveness, get_cascade_metrics |
+| **Capital Protection (Sprint 039)** | get_legal_risk_signals, get_policy_signals, get_bond_maturity_calendar |
+| **Macro Catalyst (Sprint 040)** | get_public_contracts, get_credit_flow_signal, get_insider_signals |
+| **Supply Chain (Sprint 041)** | get_supply_chain_exposure |
+| **Climate + Energy (Sprint 042)** | get_climate_risk_signals, get_energy_grid_signals |
+| **Crisis Radar (Sprint 043)** | get_crisis_early_warning |
+| **Pharma Radar (Sprint 044)** | get_pharma_signals |
 
-### Tool Changes (Sprint 039 vs Sprint 038)
-| Change | Tool | Notes |
-|--------|------|-------|
-| NEW | `record_signal_outcome(signal_id, outcome, detail?)` | Record fired/suppressed/confirmed/false_positive for each signal acted on |
-| NEW | `get_signal_effectiveness(from_agent?, signal_type?, days?)` | Precision per signal type; weekly review by unified-agent + digest-writer |
-| NEW | `get_cascade_metrics(days?)` | Rule hit counts + dead rules (0 hits in N days) |
-| NEW | `get_prediction_accuracy(days?)` | Prediction signal precision by sector; monthly review |
+### New Tools (Sprint 039-044 vs Sprint 038)
 
-### Tool Changes (Sprint 036-039)
-| Change | Tool | Notes |
-|--------|------|-------|
-| NEW | `get_market_context(hours_back?)` | Compound: watchlist+prices+macro+alerts+analysis in ONE call |
-| NEW | `get_bctc_full(code, year?, quarter?)` | Compound: financial summary + QoQ/YoY + sentiment trend in ONE call |
-| NEW | `post_agent_signal(from_agent, to_agent, signal_type, stock_code?, payload, ttl_minutes?)` | Agent-to-agent signal bus |
-| NEW | `get_agent_signals(agent, status?)` | Read signals addressed to you |
-| ENHANCED | `get_alerts` | Added `type` param: "system"\|"price"\|"all" — use type="price" for stop-loss/take-profit |
-| REMOVED | `get_price_alerts` | Use `get_alerts(type="price")` instead |
-| REMOVED | `add_alert_rule` | User-only — set via Claude Desktop |
-| REMOVED | `delete_alert_rule` | User-only — set via Claude Desktop |
-| REMOVED | `set_target_allocation` | User-only — set via Claude Desktop |
+| Sprint | Tool | Description |
+|--------|------|-------------|
+| 039 | `get_legal_risk_signals` | Detect prosecution, tax penalties, court orders affecting stocks |
+| 039 | `get_policy_signals` | Government policy changes (Cong Bao) affecting sectors |
+| 039 | `get_bond_maturity_calendar` | Corporate bond (TPDN) maturity calendar — default risk |
+| 040 | `get_public_contracts` | Government contracts from muasamcong.mof.gov.vn — CapEx signals |
+| 040 | `get_credit_flow_signal` | Banking credit flow to real estate and sectors |
+| 040 | `get_insider_signals` | SSC insider trading data (leadership buy/sell) |
+| 041 | `get_supply_chain_exposure` | Baltic Dry Index, container rates, HPG/VNM/GMD impact |
+| 042 | `get_climate_risk_signals` | NCHMF typhoon/El Nino affecting REE/GEG/IDC/BVH |
+| 042 | `get_energy_grid_signals` | Reservoir levels, power shortage affecting energy stocks |
+| 043 | `get_crisis_early_warning` | Velocity-based crisis detection (5x mention spike) + reputation |
+| 044 | `get_pharma_signals` | DAV drug approvals + outbreak detection affecting DHG/IMP/DBD |
 
 ## Two Separate Telegram Channels
 
@@ -144,22 +145,48 @@ For dev team and analysis team problem reports:
 - `submit_feedback` — submit improvement suggestions (report channel ONLY, never cross-posts to user)
 - Tag recipients: `@team`, `@po`, `@dev`, `@qa`, `@ba`, `@architect`, `@market-analyst`
 - Dev team reads the channel and acts on reports
-- Used for hotfix sprint runs (System Improver → FIX NOW or SPRINT TASK)
+- Used for hotfix sprint runs (System Improver -> FIX NOW or SPRINT TASK)
 - Review agent deletes reports when issues are fixed
 - **NOT for user communication — problems and hotfix only**
 
-### Telegram Bot Commands (User → Chat Channel)
-Users can trigger actions directly from Telegram:
+### 11 Telegram Bot Commands (User -> Chat Channel)
 - `/watchlist` — list current tracked stocks
+- `/price` — show current prices for watchlist
 - `/alerts` — show recent HIGH/CRITICAL alerts
 - `/briefing` — trigger morning briefing on demand
+- `/health` — system health status
 - `/pnl` — show current portfolio P&L
-- `/ask <question>` — ask AI a market question — answered within 15 min via intelligence cycle Step F
+- `/ask <question>` — ask AI a market question — answered within 15 min
 - `/why <stock>` — shorthand for "Why did X move today?" — answered within 15 min
 - `/report <description>` — report a bug to Dev Team (medium priority)
 - `/fix <description>` — report an urgent bug to Dev Team (high priority)
+- `/help` — list all available commands
 
-## Agent Signal Bus (Sprint 038)
+## 19 Cron Jobs
+
+| Time | Job | Description |
+|------|-----|-------------|
+| */15 min | intelligenceCycle | Main engine: news + prices + chain + alerts |
+| */15 min | userRequestCheck | Answer /ask + /why Telegram commands |
+| */30 min | predictionMarketPoll | Polymarket fetch + signal detection |
+| */6h | weatherCheck | Typhoon season climate check |
+| 06:00 UTC M-F | franceSummary | France wake-up digest (07:00 CET / 13:00 VN) |
+| 08:00 VN M-F | morningBriefing | Daily briefing: macro + conviction + P&L |
+| 09:00 VN M-F | marketOpen | Market open scan + price alerts |
+| 15:30 VN M-F | marketClose | Market close scan |
+| 20:00 VN daily | sscCheck | SSC nightly BCTC check |
+| 21:00 VN M-F | alertDigest | Nightly alert digest |
+| 22:00 VN M-F | eveningSummary | Evening market summary |
+| 22:30 VN daily | dailySummary | Daily summary generation |
+| 22:30 VN Sunday | patternWatch | Weekly pattern watch |
+| 23:00 VN daily | dataAuditDaily | Data integrity audit |
+| 23:00 VN Sunday | weeklyPortfolioReport + weeklySummary | Portfolio + weekly summary |
+| 01:00 VN Sunday | dataAuditWeekly | Deep weekly audit |
+| 07:00 UTC Sunday | devTeamHeartbeat | Dev Team health + observability |
+| 08:00 UTC Sunday | predictionOutcome | Prediction signal evaluation |
+| 1st monthly 06:00 VN | davPharmacyCheck | DAV drug approval check |
+
+## Agent Signal Bus
 
 Agents can send signals to each other via `post_agent_signal` / `get_agent_signals`. Each agent checks for signals at the START of every cycle.
 
@@ -172,15 +199,8 @@ Agents can send signals to each other via `post_agent_signal` / `get_agent_signa
 | `cross_validate` | report-analyzer | alert-commander | CRITICAL BCTC finding — needs immediate alert |
 | `cross_validate` | any | any | Request cross-validation of a finding |
 | `suppress` | alert-commander | all | False positive detected — skip alerts for this stock this cycle |
-
-### Pattern (add to top of every agent cycle)
-
-```
-Step 0: Call get_agent_signals(agent="{agent-name}")
-- urgent_news → prioritize those stocks
-- cross_validate → include both news + price context
-- suppress → skip alerts for flagged stocks
-```
+| `legal_risk` | news-scout | alert-commander | Prosecution/tax penalty detected for a stock |
+| `crisis_velocity` | news-scout | alert-commander | 5x mention spike = potential crisis |
 
 ### Signal Bus Rules
 - `ttl_minutes` default is 120 min — signals expire automatically
@@ -191,48 +211,40 @@ Step 0: Call get_agent_signals(agent="{agent-name}")
 ## Agent Cooperation Flow
 
 ```
-06:00 UTC  Server: France wake-up summary → Chat Channel (franceSummaryJob) — 13:00 VN
-07:00 UTC  Server: Dev Team heartbeat check → Sunday only (devTeamHeartbeatJob)
-07:00 VN   News Scout monitors pre-market news + submits feedback
-*/15 UTC   Server: user_requests check → answer /ask + /why within 15 min (userRequestCheckJob)
-08:00 UTC  Server: prediction outcome evaluation → Sunday only (predictionOutcomeJob)
-08:55 VN   Alert Commander sends "✅ Hệ thống online"
-09:00 VN   Market Watcher starts hourly price tracking + submits feedback
+06:00 UTC  Server: France wake-up summary -> Chat Channel (franceSummaryJob) — 13:00 VN
+07:00 UTC  Server: Dev Team heartbeat check -> Sunday only (devTeamHeartbeatJob)
+07:00 VN   News Scout monitors pre-market news + legal/crisis signals + feedback
+*/15 UTC   Server: user_requests check -> answer /ask + /why within 15 min
+08:00 UTC  Server: prediction outcome evaluation -> Sunday only
+08:55 VN   Alert Commander sends "He thong online"
+09:00 VN   Market Watcher starts hourly price + supply chain + climate tracking
 09:00-15:30  All agents at full frequency
-15:30 VN   Market closes → Market Watcher slows
+15:30 VN   Market closes -> Market Watcher slows
 15:45 VN   Alert Commander sends end-of-day summary + alert quality feedback
 20:00 VN   Server's SSC nightly job downloads new BCTC PDFs
 20:00 VN   BCTC Collector checks what's available
-21:00 VN   Report Analyzer reads financial data + submits BCTC feedback
-22:00 VN   ⭐ Unified Coordinator daily review → triage + report to Dev Team
+21:00 VN   Report Analyzer reads financial data + insider signals + feedback
+22:00 VN   Unified Coordinator daily review -> triage + report to Dev Team
 22:30 VN   Digest Writer sends daily summary + weekly review (Sunday)
 ```
 
 ## Agent Feedback Loop (via Report Channel — Problems/Hotfix Only)
 
 ```
-Analysis team finds problems → submit_feedback / send_telegram(channel="report")
-                                          ↓
+Analysis team finds problems -> submit_feedback / send_telegram(channel="report")
+                                          |
                           Report Channel (TELEGRAM_REPORT_ID) — @po, @dev, @team
-                                          ↓
-                    ┌── @dev reads → FIX NOW (<20 lines): implement + test + push
-                    │
-                    └── @po reads → SPRINT TASK: PO → BA → Architect → PM → Dev → QA
-                                          ↓
+                                          |
+                    +-- @dev reads -> FIX NOW (<20 lines): implement + test + push
+                    |
+                    +-- @po reads -> SPRINT TASK: PO -> BA -> Architect -> PM -> Dev -> QA
+                                          |
                                     Merged to main
-                                          ↓
+                                          |
                               Review agent deletes resolved reports
 ```
 
 **Important**: Feedback NEVER goes to the Chat Channel (user-facing). Only problems/hotfix reports go to the Report Channel.
-
-Agents submit feedback via `submit_feedback` MCP tool:
-- **News Scout**: cascade_rule_gap, trade_map_gap, sentiment_error, new_indicator
-- **Market Watcher**: threshold_issue, sector_peer_issue, alert_quality
-- **Alert Commander**: alert_quality, performance_issue
-- **Report Analyzer**: data_extraction_error, trade_map_gap from BCTC
-- **Digest Writer**: compiles weekly review from Report Channel problem reports
-- **Unified Coordinator**: daily/weekly quality review → triage + report to Dev Team via Report Channel
 
 ## Key Architecture Rules
 
@@ -243,15 +255,12 @@ Agents submit feedback via `submit_feedback` MCP tool:
 5. **Only Alert Commander sends Telegram** — max 10 messages/day
 6. **OCR runs in background** on server startup — processes unextracted PDFs automatically
 
-## Telegram Output (France time)
-
-```
-~03:55 CET  ✅ System online
-~04:00-10:30  Price alerts (only significant moves)
-~10:45  📊 Market close summary
-~15:30  📊 Daily Digest
-Sunday ~17:00  📊 Weekly Digest
-```
+## Stock Classification
+- VNM = Vinamilk = Retail/Dairy
+- FPT = FPT Corp = Tech/IT outsourcing
+- VCB = Vietcombank = Banking
+- HPG = Hoa Phat = Steel (NOT banking!)
+- VEA = VEAM = Automotive: Honda/Toyota/Ford JV (NOT aviation!)
 
 ## Troubleshooting
 
