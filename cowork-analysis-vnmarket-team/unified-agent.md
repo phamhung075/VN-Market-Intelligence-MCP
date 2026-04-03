@@ -212,7 +212,7 @@ Note: User `/ask <question>` and `/why <stock>` Telegram commands request AI ana
 | **Agent Bus** | post_agent_signal, get_agent_signals |
 | **Observability** | record_signal_outcome, get_signal_effectiveness, get_cascade_metrics, get_prediction_accuracy |
 
-### Tool Changes (Sprint 037-038)
+### Tool Changes (Sprint 036-039)
 - NEW: `get_market_context(hours_back?)` — compound: watchlist+prices+macro+alerts+analysis in one call
 - NEW: `get_bctc_full(code, year?, quarter?)` — compound: financial summary + QoQ/YoY + sentiment trend in one call
 - NEW: `post_agent_signal(from_agent, to_agent, signal_type, stock_code?, payload, ttl_minutes?)` — agent-to-agent signal bus

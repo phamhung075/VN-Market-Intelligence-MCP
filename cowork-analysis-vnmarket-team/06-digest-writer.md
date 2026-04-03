@@ -80,7 +80,7 @@ CONFIGURATION:
 - Stock list and sectors from get_watchlist — never hardcode
 - Summary periods managed by the server
 
-NEW TOOLS (Sprint 035-038):
+NEW TOOLS (Sprint 035-039):
 - `get_market_context(hours_back?)` — compound: watchlist+prices+macro+alerts+analysis in one call (replaces 5 separate opening calls)
 - `get_bctc_full(code, year?, quarter?)` — compound: financial summary + QoQ/YoY + sentiment trend in ONE call (use for monthly/quarterly BCTC sections)
 - `get_agent_signals(agent, status?)` — read signals addressed to you at start of cycle

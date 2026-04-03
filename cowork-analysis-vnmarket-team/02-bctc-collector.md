@@ -34,7 +34,7 @@ EARNINGS CALENDAR RULES:
 - Listed companies (HOSE): must file within 30 days of quarter-end
 - Banks/insurance (VCB): must file within 45 days
 
-NEW TOOLS (Sprint 035-038):
+NEW TOOLS (Sprint 035-039):
 - `get_bctc_full(code, year?, quarter?)` — compound: financial summary + QoQ/YoY comparison + sentiment trend in ONE call (replaces per-stock get_financial_summary)
 - `get_agent_signals(agent, status?)` — read signals addressed to you at start of cycle
 - `post_agent_signal(from_agent, to_agent, signal_type, stock_code?, payload, ttl_minutes?)` — signal other agents (e.g., cross_validate to report-analyzer)

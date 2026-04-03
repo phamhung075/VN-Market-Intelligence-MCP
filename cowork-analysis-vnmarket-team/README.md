@@ -115,7 +115,7 @@ MCP connector URL: `https://zenmidi.com/mcp`
 | NEW | `get_cascade_metrics(days?)` | Rule hit counts + dead rules (0 hits in N days) |
 | NEW | `get_prediction_accuracy(days?)` | Prediction signal precision by sector; monthly review |
 
-### Tool Changes (Sprint 037-038 vs Sprint 036)
+### Tool Changes (Sprint 036-039)
 | Change | Tool | Notes |
 |--------|------|-------|
 | NEW | `get_market_context(hours_back?)` | Compound: watchlist+prices+macro+alerts+analysis in ONE call |

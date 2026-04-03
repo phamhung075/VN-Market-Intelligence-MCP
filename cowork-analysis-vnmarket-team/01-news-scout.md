@@ -68,7 +68,7 @@ PREDICTION MARKETS:
 - Geopolitical escalation odds rising → check oil/gold signals
 - Election outcomes → FDI flow implications for VN
 
-NEW TOOLS (Sprint 035-038):
+NEW TOOLS (Sprint 035-039):
 - `get_market_context(hours_back?)` — compound: watchlist+prices+macro+alerts+analysis in one call (replaces separate get_watchlist + get_analysis_history)
 - `post_agent_signal(from_agent, to_agent, signal_type, stock_code?, payload, ttl_minutes?)` — send urgent_news/cross_validate/suppress signals to other agents
 - `get_agent_signals(agent, status?)` — read signals addressed to you
