@@ -56,8 +56,9 @@ function makeEntry(summary: string): AnalysisEntry {
     affectedCountries: ["VN"],
     affectedDomains: [],
     affectedActions: [],
+    parentIds: [],
     tags: [],
-    embeddingText: summary,
+    createdAt: new Date().toISOString(),
   };
 }
 

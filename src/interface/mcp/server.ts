@@ -31,6 +31,9 @@ import {
   registerAlertTools,
   registerAnalysisTools,
   registerMarketTools,
+  registerPublicInvestmentTools,
+  registerCreditFlowTools,
+  registerLeadershipTools,
 } from "./tools/index.js";
 
 /** Options for starting the Bun HTTP server. */
@@ -83,6 +86,10 @@ export async function createBunServer(
   registerAlertTools(mcpServer);
   registerAnalysisTools(mcpServer);
   registerMarketTools(mcpServer); // task 084: get_market_snapshot, get_patterns
+  // Sprint 040 — Macro Catalyst tools (task 251)
+  registerPublicInvestmentTools(mcpServer); // get_public_contracts
+  registerCreditFlowTools(mcpServer);       // get_credit_flow_signal
+  registerLeadershipTools(mcpServer);       // get_insider_signals
 
   // Count registered tools via the SDK's internal registry
   const registeredToolsMap = (
