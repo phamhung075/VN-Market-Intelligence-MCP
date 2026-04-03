@@ -764,11 +764,52 @@ export async function fetchHosePrices(
     }
   }
 
-  // All 3 sources failed
+  // Source 4: vnstock Python bridge (last resort — slowest but most reliable)
+  if (!httpClient) {
+    try {
+      const { fetchVnstockPrices } = await import("./vnstockBridge.js");
+      const vnPrices = await fetchVnstockPrices(codes);
+      if (vnPrices.length > 0) {
+        // Resolve exchange from watchlist DB if available
+        const exchangeMap = new Map<string, string>();
+        try {
+          const rows = getDb()
+            .prepare<{ code: string; exchange: string }, []>(
+              "SELECT code, exchange FROM watchlist",
+            )
+            .all();
+          for (const r of rows) exchangeMap.set(r.code, r.exchange);
+        } catch { /* best-effort */ }
+
+        const prices: MarketPrice[] = vnPrices.map((p) => ({
+          code: p.code,
+          price: p.close,
+          previousPrice: p.open,
+          changePct: p.changePct,
+          volume: p.volume,
+          avgVolume: 0,
+          exchange: exchangeMap.get(p.code) ?? "HOSE",
+          fetchedAt,
+        }));
+        logger.info("[hose] fetched from vnstock bridge (tier 4)", {
+          requested: codes.length,
+          received: prices.length,
+        });
+        recordSuccess();
+        return prices;
+      }
+    } catch (err) {
+      logger.warn("[hose] vnstock bridge also failed", {
+        error: err instanceof Error ? err.message : String(err),
+      });
+    }
+  }
+
+  // All 4 sources failed
   const onlyIndex = codes.every((c) => c.toUpperCase().includes("INDEX"));
   if (!onlyIndex) {
     recordFailure();
-    logger.error("[hose] all 3 price sources failed", {
+    logger.error("[hose] all 4 price sources failed", {
       codes,
       consecutiveFailures: _consecutiveFailures,
     });

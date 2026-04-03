@@ -352,6 +352,22 @@ async function _runCycle(deps: CycleDeps = {}): Promise<CycleResult> {
     })(), "step A2 macroFetch");
   } catch { /* non-fatal */ }
 
+  // Step A3: vnstock lazy sync (background — respects rate limits + staleness cache)
+  // Runs for all watchlist stocks, skips if data is still fresh.
+  try {
+    await withTimeout((async () => {
+      const { syncVnstockData } = await import("../application/usecases/syncVnstockData.js");
+      const { getDb: getDatabase } = await import("../infrastructure/db/schema.js");
+      const watchlistRows = getDatabase()
+        .prepare("SELECT code FROM watchlist")
+        .all() as Array<{ code: string }>;
+      const codes = watchlistRows.map((r: { code: string }) => r.code);
+      if (codes.length > 0) {
+        await syncVnstockData(codes);
+      }
+    })(), "step A3 vnstockSync");
+  } catch { /* non-fatal — vnstock is best-effort */ }
+
   if (marketHours) {
     // Step B: List SSC documents — skip if already scanned today (task 153)
     // SSC docs don't change intraday, so scan once per day max.

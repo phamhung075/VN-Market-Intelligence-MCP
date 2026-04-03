@@ -52,18 +52,19 @@ export interface CommandResult {
 // Help text
 // ─────────────────────────────────────────────────────────────────────────────
 
-const HELP_TEXT = `Cac lenh ho tro:
-/watchlist - Danh muc theo doi
-/price <MA> - Gia co phieu (vd: /price VCB)
-/alerts - 5 canh bao gan nhat
-/briefing - Tom tat thi truong
-/health - Trang thai he thong
-/pnl - Lai/Lo danh muc (P&L)
-/ask <cau hoi> - Hoi AI phan tich (vd: /ask VCB giam vi sao?)
-/why <MA> - Tai sao co phieu nay bien dong? (vd: /why VCB)
-/report <mota> - Bao loi cho Dev Team
-/fix <mota> - Bao loi khan cap
-/help - Danh sach lenh nay`;
+const HELP_TEXT = `VN Market Bot
+
+/watchlist  Danh mục theo dõi
+/price VCB  Giá cổ phiếu
+/alerts     Cảnh báo gần nhất
+/briefing   Tóm tắt thị trường
+/pnl        Lãi/Lỗ danh mục
+/health     Trạng thái hệ thống
+/ask ...    Hỏi AI phân tích
+/why VCB    Tại sao biến động?
+/report ... Báo lỗi
+/fix ...    Báo lỗi khẩn cấp
+/help       Trợ giúp`;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Number formatter
@@ -111,27 +112,28 @@ function handleWatchlist(db: Database): string {
     .all();
 
   if (rows.length === 0) {
-    return "Danh muc theo doi trong (chua co co phieu nao).";
+    return "Danh mục trống. Chưa có cổ phiếu nào.";
   }
 
-  const header = `Danh muc theo doi (${rows.length} co phieu):`;
+  const header = `Danh mục (${rows.length} mã):`;
   const lines = rows.map((r) => {
-    const name = r.company_name ? ` — ${r.company_name}` : "";
-    const priceStr =
-      r.price != null
-        ? `  ${fmtNum(r.price)} VND ${r.change_pct != null ? fmtPct(r.change_pct) : ""}`
-        : "  (chua co gia)";
-    return `• ${r.code} [${r.exchange}]${name}${priceStr}`;
+    const name = r.company_name ? ` ${r.company_name}` : "";
+    if (r.price == null) {
+      return `${r.code}${name}\n   Chưa có giá`;
+    }
+    const arrow = r.change_pct != null ? (r.change_pct >= 0 ? "+" : "") : "";
+    const changePart = r.change_pct != null ? `  ${arrow}${r.change_pct.toFixed(2)}%` : "";
+    return `${r.code}${name}\n   ${fmtNum(r.price)} VND${changePart}`;
   });
 
-  return [header, ...lines].join("\n");
+  return [header, "", ...lines].join("\n");
 }
 
 /** /price <CODE> — query market_prices for a single stock */
 function handlePrice(db: Database, args: string[]): string {
   const rawCode = args[0];
   if (!rawCode) {
-    return "Su dung: /price <MA_CO_PHIEU>\nVi du: /price VCB";
+    return "Cách dùng: /price VCB";
   }
 
   const code = rawCode.toUpperCase().trim();
@@ -153,20 +155,21 @@ function handlePrice(db: Database, args: string[]): string {
     .get(code);
 
   if (!row || row.price == null) {
-    return `Khong tim thay du lieu gia cho ma: ${code}`;
+    return `Không tìm thấy giá cho mã: ${code}`;
   }
 
+  const arrow = row.change_pct != null ? (row.change_pct >= 0 ? "+" : "") : "";
   const changeStr =
-    row.change_amt != null && row.change_pct != null
-      ? `  Thay doi: ${fmtNum(row.change_amt)} VND (${fmtPct(row.change_pct)})`
+    row.change_pct != null
+      ? `Thay đổi: ${arrow}${row.change_pct.toFixed(2)}%`
       : "";
   const volumeStr =
-    row.volume != null ? `  KL: ${fmtNum(row.volume)}` : "";
+    row.volume != null ? `Khối lượng: ${fmtNum(row.volume)}` : "";
   const updatedStr =
-    row.updated_at ? `  Cap nhat: ${row.updated_at}` : "";
+    row.updated_at ? `Cập nhật: ${row.updated_at.slice(0, 16)}` : "";
 
   return [
-    `Gia ${code}: ${fmtNum(row.price)} VND`,
+    `${code}: ${fmtNum(row.price)} VND`,
     changeStr,
     volumeStr,
     updatedStr,
@@ -194,27 +197,27 @@ function handleAlerts(db: Database): string {
     .all();
 
   if (rows.length === 0) {
-    return "Khong co canh bao nao gan day.";
+    return "Không có cảnh báo nào gần đây.";
   }
 
-  const SEVERITY_VI: Record<string, string> = {
-    critical: "NGHIEM TRONG",
-    high: "QUAN TRONG",
-    medium: "LUU Y",
-    low: "THONG TIN",
-    info: "THONG TIN",
-    warning: "LUU Y",
+  const SEV_ICON: Record<string, string> = {
+    critical: "!!",
+    high: "! ",
+    medium: "- ",
+    low: "  ",
+    info: "  ",
+    warning: "- ",
   };
 
-  const header = `5 canh bao gan nhat:`;
+  const header = `Cảnh báo gần nhất:`;
   const lines = rows.map((r, i) => {
-    const sevLabel = SEVERITY_VI[r.severity.toLowerCase()] ?? r.severity.toUpperCase();
-    const msg = r.message ? ` — ${r.message.slice(0, 60)}` : "";
-    const date = r.triggered_at.slice(0, 16);
-    return `${i + 1}. [${sevLabel}] ${date}${msg}`;
+    const icon = SEV_ICON[r.severity.toLowerCase()] ?? "  ";
+    const msg = r.message ? r.message.slice(0, 80) : "(không có nội dung)";
+    const date = r.triggered_at.slice(5, 16);
+    return `${icon}${date}\n   ${msg}`;
   });
 
-  return [header, ...lines].join("\n");
+  return [header, "", ...lines].join("\n");
 }
 
 /** /health — system health: uptime, DB size, watchlist count */
@@ -255,11 +258,11 @@ function handleHealth(db: Database): string {
   } catch { /* table may not exist */ }
 
   return [
-    "Trang thai he thong: OK",
+    "Hệ thống: OK",
     `Uptime: ${uptimeStr}`,
-    `Watchlist: ${watchlistCount} co phieu`,
-    `Gia thi truong: ${priceCount} ma`,
-    `Canh bao trong DB: ${alertCount}`,
+    `Danh mục: ${watchlistCount} mã`,
+    `Giá: ${priceCount} mã`,
+    `Cảnh báo: ${alertCount}`,
   ].join("\n");
 }
 
@@ -285,11 +288,11 @@ function handlePnl(db: Database): string {
       )
       .all();
   } catch {
-    return "Khong the doc du lieu vi the. Vui long kiem tra lai.";
+    return "Không thể đọc dữ liệu vị thế.";
   }
 
   if (rows.length === 0) {
-    return "Chua co vi the nao dang mo.";
+    return "Chưa có vị thế nào đang mở.";
   }
 
   let totalCost = 0;
@@ -301,7 +304,7 @@ function handlePnl(db: Database): string {
     totalCost += cost;
 
     if (r.current_price == null) {
-      return `• ${r.code}: ${r.shares} cp @ ${fmtNum(r.avg_price)} — Gia: N/A`;
+      return `${r.code}  ${r.shares} cp @ ${fmtNum(r.avg_price)}\n   Giá: chưa có`;
     }
 
     const pnl = (r.current_price - r.avg_price) * r.shares;
@@ -309,21 +312,17 @@ function handlePnl(db: Database): string {
     totalPnl += pnl;
     hasPnl = true;
 
-    const pnlStr = pnl >= 0
-      ? `+${fmtNum(pnl)} VND (${fmtPct(pnlPct)})`
-      : `${fmtNum(pnl)} VND (${fmtPct(pnlPct)})`;
-
-    return `• ${r.code}: ${r.shares} cp @ ${fmtNum(r.avg_price)} -> ${fmtNum(r.current_price)} = ${pnlStr}`;
+    const sign = pnl >= 0 ? "+" : "";
+    return `${r.code}  ${fmtNum(r.current_price)} VND\n   ${r.shares} cp  ${sign}${fmtNum(pnl)} (${sign}${pnlPct.toFixed(1)}%)`;
   });
 
-  const header = `Lai/Lo danh muc (${rows.length} vi the):`;
+  const header = `Lãi/Lỗ (${rows.length} vị thế):`;
+  const totalSign = totalPnl >= 0 ? "+" : "";
   const totalLine = hasPnl
-    ? `Tong L/L: ${totalPnl >= 0 ? "+" : ""}${fmtNum(totalPnl)} VND (${
-        totalCost > 0 ? fmtPct((totalPnl / totalCost) * 100) : "N/A"
-      })`
-    : "Tong L/L: N/A (chua co gia)";
+    ? `TỔNG: ${totalSign}${fmtNum(totalPnl)} VND (${totalCost > 0 ? `${totalSign}${((totalPnl / totalCost) * 100).toFixed(1)}%` : "N/A"})`
+    : "TỔNG: chưa có giá";
 
-  return [header, ...lines, "", totalLine].join("\n");
+  return [header, "", ...lines, "", totalLine].join("\n");
 }
 
 /** /briefing — condensed market briefing from DB */
@@ -360,11 +359,11 @@ function handleBriefing(db: Database): string {
       .all();
 
     if (stories.length > 0) {
-      parts.push("Tin noi bat (24h qua):");
+      parts.push("Tin nổi bật (24h):");
       stories.forEach((s, i) => {
-        const title = s.source_title ?? "(khong co tieu de)";
-        const sentiment = s.sentiment ?? "neutral";
-        parts.push(`${i + 1}. [${sentiment}] ${title.slice(0, 70)}`);
+        const title = s.source_title ?? "(không có tiêu đề)";
+        const sent = s.sentiment === "bullish" ? "+" : s.sentiment === "bearish" ? "-" : " ";
+        parts.push(`${sent} ${title.slice(0, 80)}`);
       });
     }
   } catch { /* skip section on error */ }
@@ -381,12 +380,15 @@ function handleBriefing(db: Database): string {
       .all();
 
     if (prices.length > 0) {
-      parts.push("\nGia danh muc:");
+      parts.push("\nGiá danh mục:");
       prices.forEach((p) => {
-        const priceStr = p.price != null
-          ? `${fmtNum(p.price)} VND ${p.change_pct != null ? fmtPct(p.change_pct) : ""}`
-          : "N/A";
-        parts.push(`• ${p.code}: ${priceStr}`);
+        if (p.price == null) {
+          parts.push(`${p.code}: chưa có giá`);
+          return;
+        }
+        const arrow = p.change_pct != null ? (p.change_pct >= 0 ? "+" : "") : "";
+        const changePart = p.change_pct != null ? `  ${arrow}${p.change_pct.toFixed(2)}%` : "";
+        parts.push(`${p.code}: ${fmtNum(p.price)}${changePart}`);
       });
     }
   } catch { /* skip section on error */ }
@@ -404,16 +406,16 @@ function handleBriefing(db: Database): string {
       .all();
 
     if (alerts.length > 0) {
-      parts.push("\nCanh bao gan day:");
+      parts.push("\nCảnh báo:");
       alerts.forEach((a) => {
-        const msg = a.message ? a.message.slice(0, 50) : "(khong co noi dung)";
-        parts.push(`• [${a.severity.toUpperCase()}] ${msg}`);
+        const msg = a.message ? a.message.slice(0, 80) : "";
+        parts.push(`${msg}`);
       });
     }
   } catch { /* skip section on error */ }
 
   if (parts.length === 0) {
-    return "Tom tat thi truong: Chua co du lieu. Vui long cho he thong thu thap tin tuc.";
+    return "Chưa có dữ liệu. Hệ thống đang thu thập tin tức.";
   }
 
   return parts.join("\n");
@@ -479,13 +481,13 @@ function handleAsk(db: Database, text: string): string {
   const trimmed = text.trim();
 
   if (!trimmed) {
-    return "Su dung: /ask <cau hoi>\nVi du: /ask VCB giam vi sao?";
+    return "Cách dùng: /ask VCB giảm vì sao?";
   }
 
   ensureUserRequestsTableInline(db);
   const id = insertUserRequestInline(db, "ask", trimmed);
 
-  return `Dang phan tich... Ket qua se gui trong vong 15 phut.\nID: ${id}`;
+  return `Đang phân tích... Kết quả sẽ gửi trong 15 phút.\nID: ${id}`;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -531,7 +533,7 @@ function handleReport(
 
   if (!text) {
     const cmd = priority === "high" ? "fix" : "report";
-    return `Su dung: /${cmd} <mo ta loi>\nVi du: /${cmd} Price fetch bi loi cho ma VCB`;
+    return `Cách dùng: /${cmd} mô tả lỗi`;
   }
 
   ensureAgentFeedbackTable(db);
@@ -546,9 +548,9 @@ function handleReport(
   ).run("user-telegram", "user_report", title, text, priority, now);
 
   if (priority === "high") {
-    return "Da gui bao cao KHAN CAP den Dev Team. Se xu ly ngay.";
+    return "Đã gửi báo cáo KHẨN CẤP. Sẽ xử lý ngay.";
   }
-  return "Da gui bao cao den Dev Team. Se xu ly trong gio toi.";
+  return "Đã gửi báo cáo. Sẽ xử lý trong giờ tới.";
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -636,7 +638,7 @@ export async function handleTelegramCommand(
 
       default:
         // Unknown command or plain text — show help
-        responseText = `Lenh khong hop le: "${rawCmd ?? text}"\n\n${HELP_TEXT}`;
+        responseText = `Lệnh không hợp lệ: "${rawCmd ?? text}"\n\n${HELP_TEXT}`;
         break;
     }
 
@@ -644,7 +646,7 @@ export async function handleTelegramCommand(
   } catch (err) {
     const errMsg = err instanceof Error ? err.message : String(err);
     return {
-      text: `Loi xu ly lenh "${rawCmd ?? text}": ${errMsg.slice(0, 100)}`,
+      text: `Lỗi xử lý lệnh "${rawCmd ?? text}": ${errMsg.slice(0, 100)}`,
       chatId,
     };
   }
