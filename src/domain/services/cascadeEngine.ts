@@ -1033,6 +1033,82 @@ const SECTOR_RULES: SectorRule[] = [
     title: "Chuyển đổi năng lượng — tích cực cho REE, PC1, GEG (năng lượng sạch)",
   },
 
+  // ═══════════════════════════════════════════════════════════════════════════
+  // SUPPLY_CHAIN_RULES (Sprint 041 — Task 255)
+  // Shipping cost surges / port disruptions → logistics + steel + exporters
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // ── Shipping cost surge → logistics (direct: GMD revenue up) ─────────────
+  {
+    keywords: ["shipping cost surge", "cước vận tải tăng", "bdi surge", "baltic dry", "freight cost rise", "shipping cost rise"],
+    domain: "logistics",
+    direction: "up",
+    confidence: 0.78,
+    title: "Cước vận tải tăng — tích cực cho logistics (GMD, PHP doanh thu tăng)",
+  },
+  // ── Shipping cost surge → steel (inverse: HPG import cost up) ────────────
+  {
+    keywords: ["shipping cost surge", "cước vận tải tăng", "bdi surge", "freight cost rise", "shipping cost rise"],
+    domain: "steel",
+    direction: "down",
+    confidence: 0.75,
+    title: "Cước vận tải tăng — tăng chi phí nhập phế liệu thép (HPG bị ảnh hưởng)",
+  },
+  // ── Shipping cost surge → consumer goods (inverse: export margins fall) ──
+  {
+    keywords: ["shipping cost surge", "cước vận tải tăng", "freight cost rise", "container rate surge"],
+    domain: "consumer_goods",
+    direction: "down",
+    confidence: 0.68,
+    title: "Cước vận tải tăng — giảm biên lợi nhuận xuất khẩu hàng tiêu dùng (VNM)",
+  },
+  // ── Port disruption → logistics (negative: congestion hurts efficiency) ──
+  {
+    keywords: ["port congestion", "tắc nghẽn cảng", "dock strike", "đình công cảng", "cảng tắc nghẽn"],
+    domain: "logistics",
+    direction: "down",
+    confidence: 0.80,
+    title: "Tắc nghẽn cảng — gián đoạn hoạt động logistics/vận tải (GMD, PHP)",
+  },
+  // ── Canal blockage → all export sectors ─────────────────────────────────
+  {
+    keywords: ["suez canal", "panama canal", "kênh suez", "kênh panama", "canal blockage"],
+    domain: "steel",
+    direction: "down",
+    confidence: 0.82,
+    title: "Tắc kênh đào — gián đoạn xuất nhập khẩu thép (HPG bị ảnh hưởng)",
+  },
+  {
+    keywords: ["suez canal", "panama canal", "kênh suez", "kênh panama", "canal blockage"],
+    domain: "agriculture",
+    direction: "down",
+    confidence: 0.78,
+    title: "Tắc kênh đào — tăng chi phí/thời gian xuất khẩu nông sản (GVR, VNM)",
+  },
+  // ── Container shortage → exporters ───────────────────────────────────────
+  {
+    keywords: ["container shortage", "thiếu container", "container scarcity"],
+    domain: "consumer_goods",
+    direction: "down",
+    confidence: 0.72,
+    title: "Thiếu container — cản trở xuất khẩu hàng tiêu dùng (VNM xuất sữa)",
+  },
+  // ── Supply chain disruption — broad negative for import-dependent ─────────
+  {
+    keywords: ["supply chain disruption", "gián đoạn chuỗi cung ứng", "supply chain crisis"],
+    domain: "steel",
+    direction: "down",
+    confidence: 0.70,
+    title: "Gián đoạn chuỗi cung ứng — ảnh hưởng đến nguồn nguyên liệu nhập khẩu",
+  },
+  {
+    keywords: ["supply chain disruption", "gián đoạn chuỗi cung ứng", "supply chain crisis"],
+    domain: "logistics",
+    direction: "neutral",
+    confidence: 0.65,
+    title: "Gián đoạn chuỗi cung ứng — tác động hỗn hợp cho logistics",
+  },
+
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════
