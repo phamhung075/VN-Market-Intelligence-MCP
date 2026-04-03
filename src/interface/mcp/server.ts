@@ -83,6 +83,7 @@ import {
   registerLeadershipTools,
   registerCrisisTools,
 } from "./tools/index.js";
+import { registerPharmaTools } from "./tools/pharmaTools.js";
 
 /** Options for starting the Bun HTTP server. */
 export interface BunServerOptions {
@@ -180,6 +181,8 @@ export async function createBunServer(
     registerCrisisTools(server);
     return server;
   }
+
+  registerPharmaTools(server);  // Sprint 044: get_pharma_signals
 
   // Count tools from a probe instance (not connected to any transport)
   const probeServer = createMcpServerInstance();

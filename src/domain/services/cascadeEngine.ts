@@ -1242,6 +1242,61 @@ const SECTOR_RULES: SectorRule[] = [
     confidence: 0.70,
     title: "Nới room tín dụng ngân hàng — hỗ trợ tăng trưởng cho vay",
   },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // PHARMA_RULES (Sprint 044)
+  // Pharmaceutical sector cascade rules
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // ── Epidemic / outbreak → pharma demand surge ─────────────────────────────
+  {
+    keywords: [
+      "dịch sốt xuất huyết",
+      "dịch cúm",
+      "cúm a",
+      "bùng phát dịch",
+      "dịch bệnh lây lan",
+      "epidemic",
+      "pandemic",
+      "outbreak",
+      "vaccine distribution demand",
+      "nhu cầu thuốc",
+      "nhu cầu vaccine",
+    ],
+    domain: "pharmaceutical",
+    direction: "up",
+    confidence: 0.75,
+    title: "Dịch bệnh bùng phát — tích cực cho ngành dược phẩm",
+  },
+  // ── Drug price ceiling → pharma margin pressure ───────────────────────────
+  {
+    keywords: [
+      "giá trần thuốc",
+      "trần giá thuốc",
+      "điều chỉnh trần giá thuốc",
+      "price cap drug",
+      "drug price ceiling",
+      "drug price regulation",
+    ],
+    domain: "pharmaceutical",
+    direction: "down",
+    confidence: 0.80,
+    title: "Quy định giá trần thuốc — tiêu cực cho biên lợi nhuận dược phẩm",
+  },
+  // ── Health budget increase → pharma revenue boost ─────────────────────────
+  {
+    keywords: [
+      "tăng ngân sách mua thuốc",
+      "tăng ngân sách y tế",
+      "hospital budget increase",
+      "tăng chi tiêu y tế",
+      "health spending increase",
+    ],
+    domain: "pharmaceutical",
+    direction: "up",
+    confidence: 0.70,
+    title: "Tăng ngân sách y tế — tích cực cho ngành dược phẩm và thiết bị y tế",
+  },
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════

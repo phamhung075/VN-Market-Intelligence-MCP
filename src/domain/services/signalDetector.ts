@@ -50,7 +50,8 @@ export type SignalType =
   | "climate_event"
   /** Power grid / energy market signal (Task 261) */
   | "energy_grid"
-  | "crisis_event";
+  | "crisis_event"
+  | "pharma_event";
 
 export type Severity = "low" | "medium" | "high" | "critical";
 

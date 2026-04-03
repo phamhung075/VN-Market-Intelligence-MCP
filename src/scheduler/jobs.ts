@@ -38,6 +38,7 @@ import { runPredictionOutcomeCheck } from './predictionOutcomeJob.js'
 import { runFranceSummary } from './franceSummaryJob.js'
 import { runDevTeamHeartbeat } from './devTeamHeartbeatJob.js'
 import { runWeatherCheck } from './weatherCheckJob.js'
+import { runDavPharmacyCheck } from './davPharmacyJob.js'
 
 export const CRONS = {
   morningBriefing:        Bun.env.CRON_MORNING_BRIEFING          ?? '0 8 * * 1-5',
@@ -54,6 +55,8 @@ export const CRONS = {
   userRequestCheck:       Bun.env.CRON_USER_REQUEST_CHECK          ?? '*/15 * * * *',
   /** Typhoon season (Jun-Nov): every 6h. Off-season: every 12h. task 261 */
   weatherCheck:           Bun.env.CRON_WEATHER_CHECK              ?? '0 */6 * * *',
+  /** DAV drug approval check: 1st of each month at 06:00 GMT+7 (Sprint 044) */
+  davPharmacyCheck:       Bun.env.CRON_DAV_CHECK                  ?? '0 6 1 * *',
 }
 
 function log(msg: string) {
@@ -157,6 +160,11 @@ export function startScheduler() {
   // Typhoon season (Jun-Nov): every 6h. Off-season: every 12h.
   cron.schedule(CRONS.weatherCheck, async () => {
     await runWeatherCheck()
+  }, { timezone: 'Asia/Ho_Chi_Minh' })
+
+  // 1st of month 06:00 — DAV drug approval check (Sprint 044)
+  cron.schedule(CRONS.davPharmacyCheck, async () => {
+    await runDavPharmacyCheck()
   }, { timezone: 'Asia/Ho_Chi_Minh' })
 
   log(`[scheduler] jobs registered — ${Object.keys(CRONS).length} core cron jobs + 5 summary jobs + WAL checkpoint active`)

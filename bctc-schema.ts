@@ -24,23 +24,24 @@ export type PeriodType   = 'Q1' | 'Q2' | 'Q3' | 'Q4' | 'H1' | 'H2' | 'ANNUAL'
 export type Outlook      = 'positive' | 'neutral' | 'negative' | 'mixed'
 
 export type DomainType =
-  | 'oil_gas'       // GAS, PVD, PVS, OIL
-  | 'banking'       // VCB, BID, CTG, TCB, VPB
-  | 'real_estate'   // VIC, NVL, PDR, KDH
-  | 'steel'         // HPG, HSG, NKG
-  | 'aviation'      // HVN, VJC
-  | 'retail'        // MWG, FRT, DGW
-  | 'tech'          // FPT, CMG
-  | 'utilities'     // REE, PC1, POW
-  | 'agriculture'   // HAG, VHC, ANV
-  | 'insurance'     // BVH, PVI
-  | 'securities'    // SSI, VND, HCM
-  | 'pharma'        // DHG, IMP, DMC
-  | 'logistics'     // GMD, STG, VTP
-  | 'gold_mining'   // PNJ, SJC-related
-  | 'automotive'    // VEA (VEAM — Honda/Toyota/Ford JV), SVC, HHS
-  | 'construction'  // HHV, CTD, VCG, HBC — infrastructure CAPEX (task 250)
-  | 'energy'        // GEG, REE, PC1 — renewable energy projects (task 250)
+  | 'oil_gas'          // GAS, PVD, PVS, OIL
+  | 'banking'          // VCB, BID, CTG, TCB, VPB
+  | 'real_estate'      // VIC, NVL, PDR, KDH
+  | 'steel'            // HPG, HSG, NKG
+  | 'aviation'         // HVN, VJC
+  | 'retail'           // MWG, FRT, DGW
+  | 'tech'             // FPT, CMG
+  | 'utilities'        // REE, PC1, POW
+  | 'agriculture'      // HAG, VHC, ANV
+  | 'insurance'        // BVH, PVI
+  | 'securities'       // SSI, VND, HCM
+  | 'pharma'           // DHG, IMP, DMC (legacy alias)
+  | 'pharmaceutical'   // DHG, IMP, DBD, PME, TRA, OPC (Sprint 044)
+  | 'logistics'        // GMD, STG, VTP
+  | 'gold_mining'      // PNJ, SJC-related
+  | 'automotive'       // VEA (VEAM — Honda/Toyota/Ford JV), SVC, HHS
+  | 'construction'     // HHV, CTD, VCG, HBC — infrastructure CAPEX (task 250)
+  | 'energy'           // GEG, REE, PC1 — renewable energy projects (task 250)
   | 'other'
 
 // ═══════════════════════════════════════════════════════════════════════════
