@@ -198,7 +198,7 @@ Step 0: Call get_agent_signals(agent="{agent-name}")
 ## Agent Feedback Loop (via Report Channel — Problems/Hotfix Only)
 
 ```
-Analysis team finds problems → submit_feedback / send_telegram_report
+Analysis team finds problems → submit_feedback / send_telegram(channel="report")
                                           ↓
                           Report Channel (TELEGRAM_REPORT_ID) — @po, @dev, @team
                                           ↓

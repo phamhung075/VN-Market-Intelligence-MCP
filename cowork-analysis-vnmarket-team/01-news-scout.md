@@ -79,7 +79,7 @@ NEW TOOLS (Sprint 035-038):
 
 RATE LIMITING:
 - If get_rate_limit_status shows a source near limit, reduce fetch frequency for that source
-- Never spam a degraded source — wait for get_source_health to show "healthy"
+- Never spam a degraded source — wait for get_system_status SOURCES section to show "ok"
 
 RULES:
 - NEVER send Telegram — Alert Commander does that

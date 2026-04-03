@@ -15,6 +15,8 @@
  *   predictionMarketPoll  every 30 min         (task 167) ✓
  *   userRequestCheck      every 15 min         (task 246) ✓
  *   predictionOutcomeCheck Sunday 08:00 UTC    (task 248) ✓
+ *   franceSummary          06:00 UTC weekdays  (task 243) ✓
+ *   devTeamHeartbeat       07:00 UTC Sunday    (task 245) ✓
  */
 
 import cron from 'node-cron'
@@ -32,6 +34,8 @@ import { runAlertDigest } from './alertDigestJob.js'
 import { runWeeklyPortfolioReport } from './weeklyPortfolioReportJob.js'
 import { runUserRequestCheck } from './userRequestCheckJob.js'
 import { runPredictionOutcomeCheck } from './predictionOutcomeJob.js'
+import { runFranceSummary } from './franceSummaryJob.js'
+import { runDevTeamHeartbeat } from './devTeamHeartbeatJob.js'
 
 export const CRONS = {
   morningBriefing:        Bun.env.CRON_MORNING_BRIEFING          ?? '0 8 * * 1-5',
@@ -128,6 +132,16 @@ export function startScheduler() {
   cron.schedule(CRONS.userRequestCheck, async () => {
     await runUserRequestCheck()
   }, { timezone: 'UTC' })
+
+  // Weekdays 06:00 UTC (07:00 CET) — France wake-up summary — task 243
+  cron.schedule("0 6 * * 1-5", async () => {
+    await runFranceSummary()
+  }, { timezone: "UTC" })
+
+  // Sunday 07:00 UTC (08:00 CET) — Dev Team weekly heartbeat — task 245
+  cron.schedule("0 7 * * 0", async () => {
+    await runDevTeamHeartbeat()
+  }, { timezone: "UTC" })
 
   // Sunday 08:00 UTC — Prediction market outcome validation — task 248
   // Validates last 7 days of prediction signals: confirmed / false_positive / neutral

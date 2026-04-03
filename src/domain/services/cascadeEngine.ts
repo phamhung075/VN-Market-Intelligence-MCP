@@ -53,12 +53,20 @@ export interface WatchlistImpact {
   reasoning: string;
 }
 
+/** A single cascade rule that fired during chain building (Task 247). */
+export interface MatchedRule {
+  key: string;
+  matchedKeyword: string;
+  sector: string;
+}
+
 export interface CausalChain {
   id: string;
   seedTitle: string;
   createdAt: string;
   entries: CausalChainEntry[];
   watchlistImpacts: WatchlistImpact[];
+  matchedRules: MatchedRule[];
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -1400,11 +1408,27 @@ export function buildCausalChain(
     };
   });
 
+  // ── Step 6: Collect matched rules for instrumentation (Task 247) ──────
+  const matchedRules: MatchedRule[] = [];
+  for (const entry of entries) {
+    if (entry.level === "domain" && entry.affectedDomains.length > 0) {
+      const direction = entry.sentiment === "bullish" ? "up" : entry.sentiment === "bearish" ? "down" : "neutral";
+      for (const domain of entry.affectedDomains) {
+        matchedRules.push({
+          key: `${domain}_${direction}`,
+          matchedKeyword: entry.title.slice(0, 80),
+          sector: domain,
+        });
+      }
+    }
+  }
+
   return {
     id: chainId,
     seedTitle: seedEntry.sourceTitle,
     createdAt: new Date().toISOString(),
     entries,
     watchlistImpacts,
+    matchedRules,
   };
 }

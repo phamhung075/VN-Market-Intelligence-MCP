@@ -46,3 +46,4 @@ export { registerChangelogTools } from "./changelogTools.js";
 export { registerBctcFullTools } from "./bctcFullTools.js";
 export { registerMarketContextTools } from "./marketContextTools.js";
 export { registerAgentSignalTools } from "./agentSignalTools.js";
+export { registerCascadeMetricsTools } from "./cascadeMetricsTools.js";

@@ -191,7 +191,22 @@ export async function runImpactChain(input: RunCascadeInput): Promise<CausalChai
     broadcastMinImpact = cfg.alerts?.marketWideCascadeMinImpact ?? 6;
   } catch { /* use default */ }
 
-  return buildCausalChain(seedEntry, input.watchlist, ragResults, macroContext, macroStats, broadcastMinImpact);
+  const chain = buildCausalChain(seedEntry, input.watchlist, ragResults, macroContext, macroStats, broadcastMinImpact);
+
+  // Record cascade rule hits for instrumentation (Task 247)
+  if (chain.matchedRules.length > 0) {
+    try {
+      const { getDb } = await import("../../infrastructure/db/schema.js");
+      const { recordHit, ensureCascadeHitsTable } = await import("../../infrastructure/db/cascadeHitStore.js");
+      const db = getDb();
+      ensureCascadeHitsTable(db);
+      for (const rule of chain.matchedRules) {
+        recordHit(db, rule.key, rule.matchedKeyword, rule.sector);
+      }
+    } catch { /* best-effort — don't break cascade on hit recording failure */ }
+  }
+
+  return chain;
 }
 
 // ── Default RAG retriever (real implementation, loaded lazily) ───────────────

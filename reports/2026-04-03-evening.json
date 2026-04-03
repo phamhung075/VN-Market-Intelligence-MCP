@@ -1,0 +1,82 @@
+{
+  "date": "2026-04-03",
+  "topAlerts": [
+    {
+      "severity": "medium",
+      "message": "VNM alert: report_new — VNM: 7 new BCTC report(s) found on SSC portal",
+      "stocks": [
+        "VNM"
+      ]
+    },
+    {
+      "severity": "medium",
+      "message": "VEA alert: report_new — VEA: 9 new BCTC report(s) found on SSC portal",
+      "stocks": [
+        "VEA"
+      ]
+    },
+    {
+      "severity": "medium",
+      "message": "VCB alert: report_new — VCB: 9 new BCTC report(s) found on SSC portal",
+      "stocks": [
+        "VCB"
+      ]
+    },
+    {
+      "severity": "medium",
+      "message": "FPT alert: report_new — FPT: 10 new BCTC report(s) found on SSC portal",
+      "stocks": [
+        "FPT"
+      ]
+    },
+    {
+      "severity": "high",
+      "message": "VCB alert [HIGH]: price_drop, volume_spike — VCB volume_spike signal",
+      "stocks": [
+        "VCB"
+      ]
+    }
+  ],
+  "topStories": [
+    {
+      "title": "Crypto Updates: Binance Depreciates by 4.96%",
+      "level": "domain",
+      "sentiment": "bullish",
+      "impactScore": 10
+    },
+    {
+      "title": "Agricultural Commodities Updates: Wool Rises by 3.60%",
+      "level": "domain",
+      "sentiment": "bullish",
+      "impactScore": 10
+    },
+    {
+      "title": "Ibovespa Inches Higher",
+      "level": "global",
+      "sentiment": "bullish",
+      "impactScore": 10
+    },
+    {
+      "title": "Canadian Stocks Inch Higher",
+      "level": "global",
+      "sentiment": "bearish",
+      "impactScore": 10
+    },
+    {
+      "title": "Trump Unveils Up to 100% Tariff on Some Pharmaceuticals, Adjusts Metals",
+      "level": "domain",
+      "sentiment": "bearish",
+      "impactScore": 10
+    }
+  ],
+  "watchlistMovers": [
+    {
+      "code": "VNM",
+      "changePct": -1.32,
+      "price": 60000,
+      "exchange": "HOSE"
+    }
+  ],
+  "predictionSignals": [],
+  "generatedAt": "2026-04-03T15:00:00.377Z"
+}
