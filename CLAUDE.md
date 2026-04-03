@@ -80,6 +80,8 @@ Runs every 1 hour. Prompt in `cowork-analysis-vnmarket-team/dev-team-cron.md`.
 | QA / CI-CD | `.claude/agents/qa.md` | Test pipeline, merge gate, sprint report |
 | Fixer | `.claude/agents/fixer.md` | Minimum fixes on changes-requested tasks |
 | Market Analyst | `.claude/agents/market-analyst.md` | Investment analysis via MCP tools |
+| Idea Forge | `.claude/agents/idea-forge.md` | Brainstorm, refine, expand ideas |
+| Cowork Refactory Expert | `.claude/agents/cowork-refactory-expert.md` | Rewrite/update all Cowork agent .md files — source of truth for 58 tools, 19 crons, patterns |
 
 ### Start a new feature
 ```

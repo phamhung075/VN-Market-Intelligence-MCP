@@ -72,7 +72,18 @@ import {
   registerMarketContextTools,
   registerAgentSignalTools,
   registerCascadeMetricsTools,
+  registerSupplyChainTools,
+  registerLegalRiskTools,
+  registerPolicyTools,
+  registerBondMaturityTools,
+  registerClimateTools,
+  registerEnergyTools,
+  registerPublicInvestmentTools,
+  registerCreditFlowTools,
+  registerLeadershipTools,
+  registerCrisisTools,
 } from "./tools/index.js";
+import { registerPharmaTools } from "./tools/pharmaTools.js";
 
 /** Options for starting the Bun HTTP server. */
 export interface BunServerOptions {
@@ -158,6 +169,17 @@ export async function createBunServer(
     registerMarketContextTools(server);
     registerAgentSignalTools(server);
     registerCascadeMetricsTools(server);
+    registerSupplyChainTools(server);
+    registerLegalRiskTools(server);
+    registerPolicyTools(server);
+    registerBondMaturityTools(server);
+    registerClimateTools(server);
+    registerEnergyTools(server);
+    registerPublicInvestmentTools(server);
+    registerCreditFlowTools(server);
+    registerLeadershipTools(server);
+    registerCrisisTools(server);
+    registerPharmaTools(server);  // Sprint 044: get_pharma_signals
     return server;
   }
 

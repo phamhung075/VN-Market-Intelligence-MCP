@@ -21,9 +21,9 @@ import type { WatchlistEntry } from "../domain/services/cascadeEngine.js";
 const WATCHLIST: WatchlistEntry[] = [
   { actionCode: "HPG", domain: "steel", exchange: "HOSE" },
   { actionCode: "GMD", domain: "logistics", exchange: "HOSE" },
-  { actionCode: "VNM", domain: "consumer_goods", exchange: "HOSE" },
+  { actionCode: "VNM", domain: "retail", exchange: "HOSE" },
   { actionCode: "GVR", domain: "agriculture", exchange: "HOSE" },
-  { actionCode: "FPT", domain: "technology", exchange: "HOSE" },
+  { actionCode: "FPT", domain: "tech", exchange: "HOSE" },
   { actionCode: "VCB", domain: "banking", exchange: "HOSE" },
 ];
 
@@ -112,9 +112,10 @@ describe("Task 253 — Supply Chain Analyzer", () => {
     const stats = [makeBdiStats(2000, 1500, 250)];
     const signals = analyzeSupplyChainImpact(indices, stats, WATCHLIST);
     if (signals.length > 0) {
-      expect(signals[0].index).toBeDefined();
-      expect(signals[0].deviation).toBeDefined();
-      expect(signals[0].deviation.zScore).toBeDefined();
+      const sig = signals[0]!;
+      expect(sig.index).toBeDefined();
+      expect(sig.deviation).toBeDefined();
+      expect(sig.deviation.zScore).toBeDefined();
     }
   });
 
@@ -130,7 +131,7 @@ describe("Task 253 — Supply Chain Analyzer", () => {
     const stats = [makeBdiStats(2000, 1500, 250)]; // z = +2.0
     const signals = analyzeSupplyChainImpact(indices, stats, WATCHLIST);
     if (signals.length > 0) {
-      expect(["medium", "high", "critical"]).toContain(signals[0].severity);
+      expect(["medium", "high", "critical"]).toContain(signals[0]!.severity);
     }
   });
 
@@ -139,7 +140,7 @@ describe("Task 253 — Supply Chain Analyzer", () => {
     const stats = [makeBdiStats(2500, 1500, 250)]; // z = +4.0
     const signals = analyzeSupplyChainImpact(indices, stats, WATCHLIST);
     if (signals.length > 0) {
-      expect(signals[0].severity).toBe("critical");
+      expect(signals[0]!.severity).toBe("critical");
     }
   });
 

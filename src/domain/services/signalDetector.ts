@@ -43,7 +43,15 @@ export type SignalType =
   | "supply_chain"
   | "legal_risk"
   | "policy_change"
-  | "bond_maturity";
+  | "bond_maturity"
+  | "public_contract"
+  | "credit_flow"
+  | "insider_trading"
+  | "climate_event"
+  /** Power grid / energy market signal (Task 261) */
+  | "energy_grid"
+  | "crisis_event"
+  | "pharma_event";
 
 export type Severity = "low" | "medium" | "high" | "critical";
 
@@ -62,6 +70,18 @@ export interface MarketSnapshot {
   previousPrice: number;
   volume: number;
   avgVolume: number;
+}
+
+/**
+ * Crisis event context for crisis_event signal injection.
+ * Produced by crisisPatternDetector.detectCrisisPatterns().
+ */
+export interface CrisisEventContext {
+  detected: boolean;
+  severity: "low" | "medium" | "high" | "critical";
+  crisisType: string;
+  matchedPatterns: string[];
+  velocityRatio: number;
 }
 
 /**
@@ -91,6 +111,8 @@ export interface SignalContext {
    * replace the fixed defaults (unless watchlistThresholds also provided).
    */
   volatility?: StockVolatility;
+  /** Crisis event detected by crisisPatternDetector (Task 263) */
+  crisisEvent?: CrisisEventContext;
 }
 
 /**
@@ -251,6 +273,19 @@ export function detectSignals(
       actionCode,
       message: `${actionCode} mentioned in ${count} recent article(s) — latest: "${sample.title}" (${sample.source})`,
       confidence: 0.75,
+      detectedAt: now,
+    });
+  }
+
+  // ── 5. Crisis event (Task 266) ───────────────────────────────────────────
+  if (context?.crisisEvent?.detected) {
+    const crisis = context.crisisEvent;
+    signals.push({
+      type: "crisis_event",
+      severity: crisis.severity,
+      actionCode,
+      message: `${actionCode} crisis detected: ${crisis.crisisType} — patterns: ${crisis.matchedPatterns.join(", ")} (velocity ${crisis.velocityRatio.toFixed(1)}×)`,
+      confidence: 0.9,
       detectedAt: now,
     });
   }

@@ -1057,7 +1057,7 @@ const SECTOR_RULES: SectorRule[] = [
   // ── Shipping cost surge → consumer goods (inverse: export margins fall) ──
   {
     keywords: ["shipping cost surge", "cước vận tải tăng", "freight cost rise", "container rate surge"],
-    domain: "consumer_goods",
+    domain: "retail",
     direction: "down",
     confidence: 0.68,
     title: "Cước vận tải tăng — giảm biên lợi nhuận xuất khẩu hàng tiêu dùng (VNM)",
@@ -1088,7 +1088,7 @@ const SECTOR_RULES: SectorRule[] = [
   // ── Container shortage → exporters ───────────────────────────────────────
   {
     keywords: ["container shortage", "thiếu container", "container scarcity"],
-    domain: "consumer_goods",
+    domain: "retail",
     direction: "down",
     confidence: 0.72,
     title: "Thiếu container — cản trở xuất khẩu hàng tiêu dùng (VNM xuất sữa)",
@@ -1109,6 +1109,194 @@ const SECTOR_RULES: SectorRule[] = [
     title: "Gián đoạn chuỗi cung ứng — tác động hỗn hợp cho logistics",
   },
 
+  // ═══════════════════════════════════════════════════════════════════════════
+  // CLIMATE_RULES (Sprint 042 — Task 261)
+  // Weather events → sector/stock cascades
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // ── Typhoon / Bão ─────────────────────────────────────────────────────────
+  {
+    keywords: ["bão số", "typhoon vietnam", "áp thấp nhiệt đới", "cơn bão mạnh", "bão đổ bộ"],
+    domain: "insurance",
+    direction: "down",
+    confidence: 0.80,
+    title: "Bão — tăng chi trả bồi thường bảo hiểm (BVH, PVI)",
+  },
+  {
+    keywords: ["bão số", "typhoon vietnam", "bão đổ bộ", "bão lớn"],
+    domain: "agriculture",
+    direction: "down",
+    confidence: 0.75,
+    title: "Bão — thiệt hại ao nuôi tôm/cá và nông sản (MPC, ANV, VNM)",
+  },
+
+  // ── Drought / Hạn hán ─────────────────────────────────────────────────────
+  {
+    keywords: ["hạn hán nghiêm trọng", "thiếu nước hồ thủy điện", "mùa khô thiếu nước", "drought vietnam"],
+    domain: "utilities",
+    direction: "up",
+    confidence: 0.75,
+    title: "Hạn hán — thủy điện thiếu nước → nhu cầu solar/wind thay thế tăng (REE, GEG)",
+  },
+  {
+    keywords: ["hạn hán nghiêm trọng", "hạn hán kéo dài", "thiếu nước ao nuôi", "drought vietnam"],
+    domain: "agriculture",
+    direction: "down",
+    confidence: 0.70,
+    title: "Hạn hán — thiếu nước ao nuôi, thiệt hại thủy sản và nông nghiệp (MPC, ANV)",
+  },
+
+  // ── Power shortage / Thiếu điện ───────────────────────────────────────────
+  {
+    keywords: ["thiếu điện nghiêm trọng", "cắt điện luân phiên", "power shortage vietnam"],
+    domain: "real_estate",  // industrial parks (IDC, KBC) classified under real_estate
+    direction: "down",
+    confidence: 0.82,
+    title: "Thiếu điện — khu công nghiệp bị cắt điện luân phiên, FDI lo ngại (IDC, KBC)",
+  },
+  {
+    keywords: ["thiếu điện nghiêm trọng", "cắt điện luân phiên", "power shortage vietnam"],
+    domain: "utilities",
+    direction: "up",
+    confidence: 0.78,
+    title: "Thiếu điện — chính phủ đẩy mạnh năng lượng tái tạo khẩn cấp (REE, GEG)",
+  },
+
+  // ── Flood / Lũ lụt ───────────────────────────────────────────────────────
+  {
+    keywords: ["lũ lụt nghiêm trọng", "lũ lớn kéo dài", "flood vietnam"],
+    domain: "insurance",
+    direction: "down",
+    confidence: 0.75,
+    title: "Lũ lụt — tăng bồi thường bảo hiểm tài sản (BVH, PVI)",
+  },
+
+  // ── El Niño / La Niña ─────────────────────────────────────────────────────
+  {
+    keywords: ["el niño", "el nino", "hiện tượng el niño"],
+    domain: "utilities",
+    direction: "up",
+    confidence: 0.72,
+    title: "El Niño — hạn hán dài hạn, thủy điện giảm → cơ hội NLTT (REE, GEG)",
+  },
+  {
+    keywords: ["la niña", "la nina", "hiện tượng la niña"],
+    domain: "insurance",
+    direction: "down",
+    confidence: 0.68,
+    title: "La Niña — gia tăng mưa lũ → rủi ro bồi thường bảo hiểm",
+  },
+
+
+  // ── CAPEX / Public Investment rules (task 250) ───────────────────────────
+  {
+    keywords: [
+      "cao tốc", "đầu tư công", "giải ngân đầu tư", "hạ tầng giao thông",
+      "sân bay long thành", "đường sắt", "cầu", "cảng biển", "capex",
+      "public investment", "infrastructure investment",
+    ],
+    domain: "construction",
+    direction: "up",
+    confidence: 0.80,
+    title: "Đầu tư công tăng — tích cực cho ngành xây dựng hạ tầng",
+  },
+  {
+    keywords: [
+      "năng lượng tái tạo", "điện mặt trời", "điện gió", "renewable energy",
+      "solar farm", "wind power", "hệ thống điện", "nhà máy điện",
+    ],
+    domain: "energy",
+    direction: "up",
+    confidence: 0.75,
+    title: "Đầu tư năng lượng tái tạo tăng — tích cực cho cổ phiếu điện",
+  },
+
+  // ── CREDIT / NHNN rules (task 250) ───────────────────────────────────────
+  {
+    keywords: [
+      "nới room tín dụng bất động sản", "tín dụng bất động sản tăng",
+      "room tín dụng bđs", "tín dụng bds tăng",
+    ],
+    domain: "real_estate",
+    direction: "up",
+    confidence: 0.80,
+    title: "Nới room tín dụng BĐS — tích cực cho bất động sản",
+  },
+  {
+    keywords: [
+      "siết tín dụng bất động sản", "giảm room tín dụng bđs",
+      "hạn chế tín dụng bất động sản", "siết tín dụng bds",
+    ],
+    domain: "real_estate",
+    direction: "down",
+    confidence: 0.80,
+    title: "Siết tín dụng BĐS — tiêu cực cho bất động sản",
+  },
+  {
+    keywords: [
+      "tăng room tín dụng cho ngân hàng", "nới room tín dụng ngân hàng",
+      "room tín dụng tăng", "tín dụng ngân hàng tăng trưởng",
+    ],
+    domain: "banking",
+    direction: "up",
+    confidence: 0.70,
+    title: "Nới room tín dụng ngân hàng — hỗ trợ tăng trưởng cho vay",
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // PHARMA_RULES (Sprint 044)
+  // Pharmaceutical sector cascade rules
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // ── Epidemic / outbreak → pharma demand surge ─────────────────────────────
+  {
+    keywords: [
+      "dịch sốt xuất huyết",
+      "dịch cúm",
+      "cúm a",
+      "bùng phát dịch",
+      "dịch bệnh lây lan",
+      "epidemic",
+      "pandemic",
+      "outbreak",
+      "vaccine distribution demand",
+      "nhu cầu thuốc",
+      "nhu cầu vaccine",
+    ],
+    domain: "pharmaceutical",
+    direction: "up",
+    confidence: 0.75,
+    title: "Dịch bệnh bùng phát — tích cực cho ngành dược phẩm",
+  },
+  // ── Drug price ceiling → pharma margin pressure ───────────────────────────
+  {
+    keywords: [
+      "giá trần thuốc",
+      "trần giá thuốc",
+      "điều chỉnh trần giá thuốc",
+      "price cap drug",
+      "drug price ceiling",
+      "drug price regulation",
+    ],
+    domain: "pharmaceutical",
+    direction: "down",
+    confidence: 0.80,
+    title: "Quy định giá trần thuốc — tiêu cực cho biên lợi nhuận dược phẩm",
+  },
+  // ── Health budget increase → pharma revenue boost ─────────────────────────
+  {
+    keywords: [
+      "tăng ngân sách mua thuốc",
+      "tăng ngân sách y tế",
+      "hospital budget increase",
+      "tăng chi tiêu y tế",
+      "health spending increase",
+    ],
+    domain: "pharmaceutical",
+    direction: "up",
+    confidence: 0.70,
+    title: "Tăng ngân sách y tế — tích cực cho ngành dược phẩm và thiết bị y tế",
+  },
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -1193,6 +1381,53 @@ function isMarketWide(
 
   return false;
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Legal Risk + Policy cascade rules (Task 244)
+// ═══════════════════════════════════════════════════════════════════════════
+
+/** Simplified cascade rule for legal risk and policy events. */
+export interface CascadeKeywordRule {
+  /** Machine-readable rule identifier */
+  key: string;
+  /** Vietnamese keyword that triggers this rule */
+  keyword: string;
+  /** Affected sector (DomainType as string) */
+  sector: string;
+}
+
+/**
+ * Legal risk cascade rules: news with these keywords → sector-level impact.
+ */
+export const LEGAL_RISK_RULES: CascadeKeywordRule[] = [
+  { key: "prosecution_banking", keyword: "khởi tố", sector: "banking" },
+  { key: "prosecution_realestate", keyword: "khởi tố", sector: "real_estate" },
+  { key: "asset_freeze_realestate", keyword: "phong tỏa tài sản", sector: "real_estate" },
+  { key: "asset_freeze_banking", keyword: "kê biên", sector: "banking" },
+  { key: "tax_penalty_all", keyword: "truy thu thuế", sector: "other" },
+  { key: "license_revocation_realestate", keyword: "thu hồi giấy phép", sector: "real_estate" },
+  { key: "anti_dumping_steel", keyword: "chống bán phá giá", sector: "steel" },
+  { key: "anti_dumping_agriculture", keyword: "anti-dumping", sector: "agriculture" },
+  { key: "investigation_securities", keyword: "điều tra", sector: "securities" },
+  { key: "administrative_penalty", keyword: "xử phạt hành chính", sector: "other" },
+];
+
+/**
+ * Policy cascade rules: government policy keywords → sector-level impact.
+ */
+export const POLICY_RULES: CascadeKeywordRule[] = [
+  { key: "credit_room_banking", keyword: "room tín dụng", sector: "banking" },
+  { key: "interest_rate_banking", keyword: "lãi suất điều hành", sector: "banking" },
+  { key: "tax_ttdb_automotive", keyword: "thuế TTĐB", sector: "automotive" },
+  { key: "industrial_zone_dev", keyword: "khu công nghiệp", sector: "other" },
+  { key: "energy_policy_utilities", keyword: "quy hoạch điện", sector: "utilities" },
+  { key: "fit_utilities", keyword: "FIT", sector: "utilities" },
+  { key: "realestate_credit_tighten", keyword: "siết tín dụng BĐS", sector: "real_estate" },
+  { key: "land_law_realestate", keyword: "luật đất đai", sector: "real_estate" },
+  { key: "fta_steel", keyword: "FTA", sector: "steel" },
+  { key: "exchange_rate_banking", keyword: "tỷ giá", sector: "banking" },
+  { key: "monetary_policy_banking", keyword: "dự trữ bắt buộc", sector: "banking" },
+];
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Main exported function

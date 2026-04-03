@@ -45,12 +45,18 @@ describe("Task 255 — Signal Integration", () => {
       sentiment: "bearish" as const,
       impactScore: 7,
       confidence: 0.75,
-      affectedDomains: [],
+      affectedDomains: [] as import("../domain/services/newsNormalizer.js").AnalysisEntry["affectedDomains"],
       affectedActions: [],
       reasoning: "BDI spike",
       tags: ["shipping", "logistics"],
       sourceUrl: "https://example.com/bdi",
+      sourceType: "news" as const,
       publishedAt: "2026-04-03T08:00:00Z",
+      createdAt: "2026-04-03T08:00:00Z",
+      impactDirection: "down" as const,
+      timeHorizon: "short" as const,
+      affectedCountries: ["global"],
+      parentIds: [],
     };
 
     const watchlist = [

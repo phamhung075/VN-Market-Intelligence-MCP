@@ -71,6 +71,12 @@
 | HOT-01 | fix: source .env in start.sh — Telegram token missing | `main` (c5b925e) | 2026-04-02 | — |
 | HOT-02 | feat: delete_telegram_report MCP tool + auto-cleanup workflow | `main` (c6ea1ce) | 2026-04-02 | — |
 | DOC-001 | Update CLAUDE.md with Sprint 034 architecture additions | `task/doc-001-claude-md-update` | 2026-04-02 | [TASK_REPORT_DOC-001](reports/TASK_REPORT_DOC-001.md) |
+| 246 | Credit Flow Analyzer (domain service) | `worktree-agent-ad862eb2` | 2026-04-03 | — |
+| 247 | Leadership Signal Detector (domain service) | `worktree-agent-ad862eb2` | 2026-04-03 | — |
+| 248 | Muasamcong public procurement fetcher | `worktree-agent-ad862eb2` | 2026-04-03 | — |
+| 249 | SSC Insider fetcher + InsiderStore | `worktree-agent-ad862eb2` | 2026-04-03 | — |
+| 250 | Signal Integration — SignalType + CAPEX/CREDIT cascade + insiderCheckJob | `worktree-agent-ad862eb2` | 2026-04-03 | — |
+| 251 | MCP Tools — get_public_contracts, get_credit_flow_signal, get_insider_signals | `worktree-agent-ad862eb2` | 2026-04-03 | — |
 
 > **Sprint 003 COMPLETE** — All 5 tasks merged: 021, 082, 063, 064, 086. PO sign-off: APPROVED 2026-03-27.
 > **Sprint 004 Wave 1** — Tasks 087, 022, 023 merged: 2026-03-27.
@@ -100,6 +106,8 @@
 | 218 | Weekly portfolio report via Telegram | `worktree-agent-a219df68` | 14 tests pass, tsc clean |
 | 219 | Custom alert rules engine | `task/219-custom-alert-rules` | 21 tests pass, tsc clean, 3 MCP tools |
 | 223 | Portfolio target allocation: `set_target_allocation` / `get_target_allocation` | `task/223-target-allocation` | 22 tests pass, tsc clean, toolCount 53→55 |
+| DOC-001 | Update CLAUDE.md architecture section | `task/doc-001-claude-md-update` | Ready for QA |
+| Sprint 040 | Macro Catalyst — Credit Flow + Insider Trading + Public Investment (tasks 246-251) | `worktree-agent-ad862eb2` | Ready for QA review |
 
 ---
 
@@ -463,12 +471,18 @@
 
 ---
 
-### 🔍 Review (195, 220)
+### 🔍 Review (195, 220, Sprint 042)
 
 | # | Title | Branch | Layer | Depends on | Status |
 |---|-------|--------|-------|------------|--------|
 | 195 | Portfolio rebalancing signals: `get_rebalancing_signals` MCP tool | `task/195-rebalancing-signals` | domain + interface | 193 (partial — registered directly pending registry) | Review |
 | 220 | Watchlist auto-enrichment: sector peer suggestions on `add_to_watchlist` | `task/220-watchlist-peer-suggestions` | interface | — | Review |
+| 257 | Weather VN Fetcher — NCHMF + NOAA ENSO | `task/262-mcp-tools-042` | infrastructure | — | Review |
+| 258 | Hydrological Data Fetcher — reservoir levels | `task/262-mcp-tools-042` | infrastructure | — | Review |
+| 259 | Climate Impact Mapper — weather event → stock signals | `task/262-mcp-tools-042` | domain | — | Review |
+| 260 | Energy Market Analyzer — power grid signals | `task/262-mcp-tools-042` | domain | — | Review |
+| 261 | Signal Integration — climate_event + energy_grid + CLIMATE_RULES + weatherCheckJob | `task/262-mcp-tools-042` | domain + scheduler | 257-260 | Review |
+| 262 | MCP Tools — get_climate_risk_signals + get_energy_grid_signals | `task/262-mcp-tools-042` | interface | 257-261 | Review |
 
 **Task 195 — Acceptance Criteria**
 - A position at 42% weight with 25% target produces drift = +17%, action = "BAN"
@@ -490,7 +504,7 @@
 | Column | Count | Tasks |
 |--------|-------|-------|
 | ✅ Done | 60+ | Sprints 000-033 complete |
-| 🔍 Review | 7 | DOC-001, 195, 215, 217, 218, 219, 220, 222, 223 |
+| 🔍 Review | 13 | DOC-001, 195, 215, 217, 218, 219, 220, 222, 223, 257-262 (Sprint 042) |
 | 🚧 In Progress | 0 | — |
 | 📋 Todo | 0 | — |
 | 🗂 Backlog | 6 | 192, 193, 206, 207 (Sprint 028); 196, 197 (deferred); 125 (long-term deferred) |
