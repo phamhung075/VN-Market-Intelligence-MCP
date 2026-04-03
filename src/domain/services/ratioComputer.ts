@@ -65,32 +65,51 @@ export function computeFinancialRatios(params: ComputeRatiosParams): FinancialRa
   const totalDebt = bs.currentLiabilities.shortTermDebt + bs.longTermLiabilities.longTermDebt;
   const netDebt = totalDebt - bs.currentAssets.cash;
 
-  // ── Profitability ──
-  const grossMarginPct = safeDivide(inc.grossProfit, inc.netRevenue) !== null
-    ? safeDivide(inc.grossProfit, inc.netRevenue)! * 100
-    : null;
-  const operatingMarginPct = safeDivide(inc.operatingProfit, inc.netRevenue) !== null
-    ? safeDivide(inc.operatingProfit, inc.netRevenue)! * 100
-    : null;
-  const netMarginPct = safeDivide(inc.netProfit, inc.netRevenue) !== null
-    ? safeDivide(inc.netProfit, inc.netRevenue)! * 100
-    : null;
-  const ebitdaMarginPct = safeDivide(inc.ebitda, inc.netRevenue) !== null
-    ? safeDivide(inc.ebitda, inc.netRevenue)! * 100
-    : null;
+  // ── Guard: detect broken income statement (all key fields zero) ──
+  // When PDF extraction fails to match patterns, all income fields default to 0.
+  // Computing ratios from zeros produces garbage (e.g. ROE = 85 billion %).
+  const incomeKeyFields = [inc.netRevenue, inc.grossProfit, inc.operatingProfit, inc.cogs];
+  const incomeBroken = incomeKeyFields.every((v) => v === 0);
 
-  const roe = safeDivide(inc.netProfit, avgEquity) !== null
-    ? safeDivide(inc.netProfit, avgEquity)! * 100
-    : null;
-  const roa = safeDivide(inc.netProfit, avgAssets) !== null
-    ? safeDivide(inc.netProfit, avgAssets)! * 100
-    : null;
+  // ── Profitability ──
+  // When income statement extraction failed, all profitability ratios are meaningless
+  const grossMarginPct = incomeBroken ? null : (
+    safeDivide(inc.grossProfit, inc.netRevenue) !== null
+      ? safeDivide(inc.grossProfit, inc.netRevenue)! * 100
+      : null
+  );
+  const operatingMarginPct = incomeBroken ? null : (
+    safeDivide(inc.operatingProfit, inc.netRevenue) !== null
+      ? safeDivide(inc.operatingProfit, inc.netRevenue)! * 100
+      : null
+  );
+  const netMarginPct = incomeBroken ? null : (
+    safeDivide(inc.netProfit, inc.netRevenue) !== null
+      ? safeDivide(inc.netProfit, inc.netRevenue)! * 100
+      : null
+  );
+  const ebitdaMarginPct = incomeBroken ? null : (
+    safeDivide(inc.ebitda, inc.netRevenue) !== null
+      ? safeDivide(inc.ebitda, inc.netRevenue)! * 100
+      : null
+  );
+
+  const roe = incomeBroken ? null : (
+    safeDivide(inc.netProfit, avgEquity) !== null
+      ? safeDivide(inc.netProfit, avgEquity)! * 100
+      : null
+  );
+  const roa = incomeBroken ? null : (
+    safeDivide(inc.netProfit, avgAssets) !== null
+      ? safeDivide(inc.netProfit, avgAssets)! * 100
+      : null
+  );
 
   // ROIC = NOPAT / Invested Capital
   // NOPAT = Operating Profit × (1 - effective tax rate)
   // Invested Capital = Equity + Net Debt
-  // Guard: return null when operatingProfit is zero (no meaningful ROIC without operating income)
-  const effectiveTaxRate = safeDivide(inc.totalIncomeTax, inc.profitBeforeTax);
+  // Guard: return null when operatingProfit is zero or income is broken
+  const effectiveTaxRate = incomeBroken ? null : safeDivide(inc.totalIncomeTax, inc.profitBeforeTax);
   const nopat = effectiveTaxRate !== null && inc.operatingProfit !== 0
     ? inc.operatingProfit * (1 - effectiveTaxRate)
     : null;
