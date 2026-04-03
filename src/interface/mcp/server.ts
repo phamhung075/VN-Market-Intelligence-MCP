@@ -73,6 +73,11 @@ import {
   registerAgentSignalTools,
   registerCascadeMetricsTools,
   registerSupplyChainTools,
+  registerLegalRiskTools,
+  registerPolicyTools,
+  registerBondMaturityTools,
+  registerClimateTools,
+  registerEnergyTools,
 } from "./tools/index.js";
 
 /** Options for starting the Bun HTTP server. */
@@ -160,6 +165,11 @@ export async function createBunServer(
     registerAgentSignalTools(server);
     registerCascadeMetricsTools(server);
     registerSupplyChainTools(server);
+    registerLegalRiskTools(server);
+    registerPolicyTools(server);
+    registerBondMaturityTools(server);
+    registerClimateTools(server);
+    registerEnergyTools(server);
     return server;
   }
 

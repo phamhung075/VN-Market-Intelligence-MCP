@@ -48,3 +48,8 @@ export { registerMarketContextTools } from "./marketContextTools.js";
 export { registerAgentSignalTools } from "./agentSignalTools.js";
 export { registerCascadeMetricsTools } from "./cascadeMetricsTools.js";
 export { registerSupplyChainTools } from "./supplyChainTools.js";
+export { registerLegalRiskTools } from "./legalRiskTools.js";
+export { registerPolicyTools } from "./policyTools.js";
+export { registerBondMaturityTools } from "./bondMaturityTools.js";
+export { registerClimateTools } from "./climateTools.js";
+export { registerEnergyTools } from "./energyTools.js";

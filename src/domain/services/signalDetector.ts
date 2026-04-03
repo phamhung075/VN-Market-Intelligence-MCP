@@ -43,7 +43,13 @@ export type SignalType =
   | "supply_chain"
   | "legal_risk"
   | "policy_change"
-  | "bond_maturity";
+  | "bond_maturity"
+  | "public_contract"
+  | "credit_flow"
+  | "insider_trading"
+  | "climate_event"
+  /** Power grid / energy market signal (Task 261) */
+  | "energy_grid";
 
 export type Severity = "low" | "medium" | "high" | "critical";
 

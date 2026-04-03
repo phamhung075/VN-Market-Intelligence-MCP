@@ -1057,7 +1057,7 @@ const SECTOR_RULES: SectorRule[] = [
   // ── Shipping cost surge → consumer goods (inverse: export margins fall) ──
   {
     keywords: ["shipping cost surge", "cước vận tải tăng", "freight cost rise", "container rate surge"],
-    domain: "consumer_goods",
+    domain: "retail",
     direction: "down",
     confidence: 0.68,
     title: "Cước vận tải tăng — giảm biên lợi nhuận xuất khẩu hàng tiêu dùng (VNM)",
@@ -1088,7 +1088,7 @@ const SECTOR_RULES: SectorRule[] = [
   // ── Container shortage → exporters ───────────────────────────────────────
   {
     keywords: ["container shortage", "thiếu container", "container scarcity"],
-    domain: "consumer_goods",
+    domain: "retail",
     direction: "down",
     confidence: 0.72,
     title: "Thiếu container — cản trở xuất khẩu hàng tiêu dùng (VNM xuất sữa)",
