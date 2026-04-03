@@ -13,6 +13,12 @@ Call `get_agent_signals(agent="alert-commander")`:
 - `suppress` signals → skip alert sending for flagged stocks this cycle (false positive suppression)
 - `cross_validate` from Report Analyzer → CRITICAL BCTC finding needs immediate alert
 
+After acting on each signal, call `record_signal_outcome(signal_id, outcome, detail?)`:
+- Alert sent successfully → `outcome="fired"`
+- Alert suppressed (cooldown/false positive) → `outcome="suppressed"`
+- Price moved as predicted within 24h → `outcome="confirmed"` (check next cycle)
+- Price did NOT move as predicted → `outcome="false_positive"` (check next cycle)
+
 ### Step 1: Review Alerts and Prices
 1. Call get_system_status — check DB, SOURCES, FRESHNESS, and ERRORS in one call (replaces get_error_summary + get_system_health)
 2. Call get_market_context(hours_back=6) — returns watchlist, prices, macro, alerts, and recent news in ONE call (replaces separate get_watchlist + get_market_snapshot + get_analysis_history + get_alerts calls)
@@ -102,7 +108,11 @@ NEW TOOLS (Sprint 032-038):
 Note: `trigger_alert_check` has been removed from MCP — the intelligence cycle handles this automatically.
 Note: `get_price_alerts` has been removed — use `get_alerts(type="price")` instead.
 Note: `add_alert_rule` and `delete_alert_rule` removed from MCP — user-only via Claude Desktop.
-Note: System has 53 MCP tools as of Sprint 037-038.
+NEW TOOLS (Sprint 039):
+- `record_signal_outcome(signal_id, outcome: fired|suppressed|confirmed|false_positive, detail?)` — call after every signal action (see Step 0 above)
+- `get_signal_effectiveness(from_agent?, signal_type?, days?)` — weekly: check precision per signal type; if <60% → submit_feedback
+
+Note: System has 57 MCP tools as of Sprint 039.
 
 CONFIGURATION:
 - Stock list from get_watchlist — never hardcode stock codes

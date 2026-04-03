@@ -48,4 +48,4 @@ RULES:
 - Do NOT call fetch_ssc_reports (removed from MCP — too heavy, blocks server)
 - The server's nightly SSC checker job (20:00 Vietnam) handles downloads automatically
 - Your role is to TRACK and NOTIFY, not to download
-- System has 53 MCP tools as of Sprint 037-038
+- System has 57 MCP tools as of Sprint 039

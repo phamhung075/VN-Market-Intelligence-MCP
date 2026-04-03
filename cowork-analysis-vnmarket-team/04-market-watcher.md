@@ -117,4 +117,4 @@ RULES:
 - Prioritize speed during market hours
 - ALWAYS write end-of-day feedback to improve the system
 - trigger_alert_check is removed from MCP — intelligence cycle handles this automatically
-- System has 53 MCP tools as of Sprint 037-038
+- System has 57 MCP tools as of Sprint 039

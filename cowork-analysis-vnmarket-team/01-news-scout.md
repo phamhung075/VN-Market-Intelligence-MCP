@@ -89,4 +89,4 @@ RULES:
 - "Giá phản ánh tất cả" — tin có thể giả, giá không giả
 - All data auto-saves to database via MCP tools
 - ALWAYS write feedback when you spot improvement opportunities
-- System has 53 MCP tools as of Sprint 037-038
+- System has 57 MCP tools as of Sprint 039

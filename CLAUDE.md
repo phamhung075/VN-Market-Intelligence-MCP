@@ -10,7 +10,7 @@ A MCP (Model Context Protocol) server built in TypeScript running on Bun. It giv
 - Managing a user's stock watchlist and generating multi-signal alerts
 - Running a daily scheduled briefing at market open/close
 
-## Two-Team Autonomous Architecture (Sprint 036)
+## Two-Team Autonomous Architecture (Sprint 039)
 
 Two autonomous teams work in parallel to serve the user and improve the system:
 
@@ -203,7 +203,7 @@ src/
 │       └── index.ts
 ├── interface/
 │   ├── mcp/
-│   │   ├── server.ts               ← McpServer factory, registers all 53 tools
+│   │   ├── server.ts               ← McpServer factory, registers all 57 tools
 │   │   ├── transport.ts            ← SSEServerTransport setup
 │   │   └── tools/
 │   │       ├── watchlist.ts        ← add/remove/get/update watchlist MCP tools
@@ -238,11 +238,12 @@ src/
 │   │       ├── alertMuteTools.ts   ← manage_alert_mute (merged mute+unmute, Sprint 036)
 │   │       ├── targetAllocationTools.ts ← set_target_allocation, get_target_allocation (task 223)
 │   │       ├── sentimentTrendTools.ts  ← get_sentiment_trend: OLS slope + Vietnamese output (task 225, Sprint 034)
+│   │       ├── cascadeMetricsTools.ts  ← record_signal_outcome, get_signal_effectiveness, get_cascade_metrics, get_prediction_accuracy (Sprint 039)
 │   │       └── index.ts
 │   └── scheduler/
 │       └── index.ts                ← startScheduler() — registers all cron jobs
 └── scheduler/
-    ├── jobs.ts                     ← Cron job definitions (GMT+7) — 10 core cron jobs
+    ├── jobs.ts                     ← Cron job definitions (GMT+7) — 14 core cron jobs
     ├── morningBriefingJob.ts       ← 08:00 daily briefing (macro dashboard + conviction + unresolved alerts + prediction signals + P&L)
     ├── patternWatchJob.ts         ← Sunday 22:30 weekly pattern watch → Telegram (task 146)
     ├── newsPollerJob.ts            ← Legacy 30-min news poll (superseded by intelligenceCycleJob)
@@ -254,12 +255,16 @@ src/
     ├── dataAuditJob.ts            ← Daily/weekly data integrity audit: orphan vectors, stale entries (task 157)
     ├── alertDigestJob.ts          ← 21:00 weekdays: assemble + send nightly alert digest via Telegram (Sprint 025)
     ├── weeklyPortfolioReportJob.ts ← Sunday 23:00: portfolio P&L + allocation drift + top movers → Telegram (task 218)
+    ├── franceSummaryJob.ts        ← 06:00 UTC weekdays (13:00 VN): France wake-up summary → Chat Channel (Sprint 039)
+    ├── devTeamHeartbeatJob.ts     ← 07:00 UTC Sunday: Dev Team heartbeat + weekly observability report (Sprint 039)
+    ├── userRequestCheckJob.ts     ← */15 * * * *: check user_requests → answer /ask + /why within 15 min (Sprint 039)
+    ├── predictionOutcomeJob.ts    ← 08:00 UTC Sunday: evaluate prediction signal outcomes → update accuracy store (Sprint 039)
     └── summaryJobs.ts              ← Daily/weekly/monthly/quarterly/yearly summary triggers (task 130)
 
 mcp.config.json                     ← Central JSON config: server, data paths, scheduler, alerts, RAG, fetchers, predictionMarkets
 bctc-schema.ts                      ← Complete BCTC data model + SQLite DDL (root level)
 cowork-analysis-vnmarket-team/
-├── README.md                       ← AI team setup guide (53 tools, two channels)
+├── README.md                       ← AI team setup guide (57 tools, two channels)
 ├── unified-agent.md                ← Analysis coordinator + quality review (merged system-improver)
 ├── dev-team-cron.md                ← Dev team hourly loop prompt (Claude Code CLI)
 ├── 00-setup-watchlist.md           ← One-time watchlist setup
@@ -338,6 +343,10 @@ Polymarket (every 30 min) → predictionStore → predictionSignalDetector
 | 23:00 Sunday | `weeklyPortfolioReport` | `0 23 * * 0` | Weekly portfolio report: P&L summary + allocation drift + top movers → Telegram (task 218) |
 | 23:00 daily | `dataAuditDaily` | `0 23 * * *` | Data integrity audit: orphan vectors, stale analysis entries, DB row counts |
 | 01:00 Sunday | `dataAuditWeekly` | `0 1 * * 0` | Deep weekly audit: LanceDB vs SQLite consistency, signal coverage gaps |
+| 06:00 UTC M–F | `franceSummary` | `0 6 * * 1-5` | France wake-up summary (13:00 VN): market context digest → Chat Channel (Sprint 039) |
+| 07:00 UTC Sunday | `devTeamHeartbeat` | `0 7 * * 0` | Dev Team heartbeat: system health + weekly observability report (Sprint 039) |
+| **Every 15 min** | `userRequestCheck` | `*/15 * * * *` | Check user_requests table → answer /ask + /why Telegram commands within 15 min (Sprint 039) |
+| 08:00 UTC Sunday | `predictionOutcome` | `0 8 * * 0` | Evaluate last week's prediction signals vs actual outcomes → update accuracy store (Sprint 039) |
 
 ### Intelligence cycle steps (15-min tick)
 
@@ -774,6 +783,16 @@ src/
 - `src/interface/mcp/tools/alertMuteTools.ts` — `manage_alert_mute` merges mute+unmute (Sprint 036)
 - `src/interface/mcp/server.ts` — updated to 53 registered tools
 - All 9 agent `.md` files updated for 53 tools, new tools, merged tools, communication fixes
+
+**Observability Layer — Signal + Cascade + Prediction Metrics (Sprint 039)**
+- `src/infrastructure/db/cascadeHitStore.ts` — SQLite CRUD for signal_outcomes, cascade_hits, prediction_outcomes tables (Sprint 039)
+- `src/interface/mcp/tools/cascadeMetricsTools.ts` — `record_signal_outcome`, `get_signal_effectiveness`, `get_cascade_metrics`, `get_prediction_accuracy` MCP tools (Sprint 039)
+- `src/scheduler/franceSummaryJob.ts` — 06:00 UTC weekdays: France wake-up market context digest → Chat Channel (Sprint 039)
+- `src/scheduler/devTeamHeartbeatJob.ts` — 07:00 UTC Sunday: Dev Team heartbeat + weekly observability report (Sprint 039)
+- `src/scheduler/userRequestCheckJob.ts` — */15 cron: answers /ask + /why Telegram commands within 15 min (Sprint 039)
+- `src/scheduler/predictionOutcomeJob.ts` — 08:00 UTC Sunday: evaluate prediction signal outcomes → cascadeHitStore (Sprint 039)
+- `src/interface/mcp/server.ts` — updated to 57 registered tools
+- All agent `.md` files updated: tool count 57, new observability tools, 4 new cron jobs documented
 
 ### In Progress
 

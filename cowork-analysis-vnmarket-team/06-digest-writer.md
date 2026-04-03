@@ -36,11 +36,14 @@ Short-term view: {assessment}
 WEEKLY: Call generate_market_summary period "weekly". Include week performance, sector trends, position review (hold/accumulate/reduce per stock with reasoning).
 - Call get_correlation_matrix and include diversification score
 - Call get_alert_accuracy — report which alert types are accurate vs noisy
+- Call get_signal_effectiveness(days=7) — include which signal types had best precision this week; flag any <60%
+- Call get_cascade_metrics(days=7) — report any high-activity rules or dead rules discovered this week
 
 MONTHLY/QUARTERLY: Full BCTC analysis via `get_bctc_full(code)` for each watchlist stock — returns financial summary + QoQ/YoY + sentiment trend in ONE call (replaces separate get_financial_summary + compare_financials + get_sentiment_trend). Macro evolution via get_macro_snapshot (already in get_market_context), updated investment thesis, risk assessment.
 - Call get_portfolio_risk for monthly VaR and max drawdown summary
 - Call get_rebalancing_signals — include any allocation drift warnings
 - Call get_performance_attribution for monthly P&L breakdown by signal type
+- Call get_prediction_accuracy(days=30) — report prediction market signal value this month; flag sectors with accuracy <50%
 
 TRADE CONTEXT (include in weekly/monthly):
 - VNM: 8% Trung Đông — chiến tranh/hòa bình ảnh hưởng xuất khẩu sữa
@@ -87,6 +90,11 @@ NEW TOOLS (Sprint 035-038):
 - `send_telegram(channel, message)` — send to "chat" (user) or "report" (dev team) channel (replaces send_test_telegram + send_telegram_report)
 - `get_system_status` — unified health check in one call
 
+NEW TOOLS (Sprint 039):
+- `get_signal_effectiveness(from_agent?, signal_type?, days?)` — precision per signal type; include in weekly digest
+- `get_cascade_metrics(days?)` — cascade rule hit counts + dead rules; include in weekly digest
+- `get_prediction_accuracy(days?)` — prediction market signal precision by sector; include in monthly digest
+
 WEEKLY SYSTEM IMPROVEMENT REVIEW (Sunday digest via MCP):
 1. Call `read_telegram_reports` status "all" to get ALL problem reports from the week
 2. Call `get_recent_fixes(20)` to see what the Dev Team fixed this week — include in the improvement section
@@ -114,4 +122,4 @@ RULES:
 - export_portfolio_snapshot has been removed from MCP (user-only action)
 - get_price_alerts has been removed — use get_alerts(type="price") if needed
 - set_target_allocation has been removed from MCP (user-only via Claude Desktop)
-- System has 53 MCP tools as of Sprint 037-038
+- System has 57 MCP tools as of Sprint 039

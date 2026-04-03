@@ -61,4 +61,4 @@ RULES:
 - Only use read_bctc_pdf for NEW files not yet in the financial database
 - Save ALL findings via generate_market_summary
 - Update trade map when BCTC reveals new geographic revenue breakdown
-- System has 53 MCP tools as of Sprint 037-038
+- System has 57 MCP tools as of Sprint 039

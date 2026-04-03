@@ -58,9 +58,9 @@ CLOUDFLARE_TUNNEL=vn-market-mcp
 cd /path/to/VN-Market-Intelligence-MCP
 bun run src/index.ts
 ```
-Server auto-seeds watchlist from config, starts OCR for unprocessed PDFs, registers 53 tools.
+Server auto-seeds watchlist from config, starts OCR for unprocessed PDFs, registers 57 tools.
 
-Verify: `curl https://zenmidi.com/health` → `{"status":"ok","toolCount":53}`
+Verify: `curl https://zenmidi.com/health` → `{"status":"ok","toolCount":57}`
 
 ### Step 2: Start Cloudflare Tunnel
 ```bash
@@ -87,7 +87,7 @@ MCP connector URL: `https://zenmidi.com/mcp`
 - Telegram: "✅ System online" at 08:55 Vietnam (03:55 France CET)
 - Health: `curl https://zenmidi.com/health`
 
-## 53 MCP Tools Available (Sprint 037-038)
+## 57 MCP Tools Available (Sprint 039)
 
 | Category | Tools |
 |----------|-------|
@@ -105,6 +105,15 @@ MCP connector URL: `https://zenmidi.com/mcp`
 | **System** | get_system_status |
 | **Dev Team** | log_fix, get_recent_fixes |
 | **Agent Bus** | post_agent_signal, get_agent_signals |
+| **Observability** | record_signal_outcome, get_signal_effectiveness, get_cascade_metrics, get_prediction_accuracy |
+
+### Tool Changes (Sprint 039 vs Sprint 038)
+| Change | Tool | Notes |
+|--------|------|-------|
+| NEW | `record_signal_outcome(signal_id, outcome, detail?)` | Record fired/suppressed/confirmed/false_positive for each signal acted on |
+| NEW | `get_signal_effectiveness(from_agent?, signal_type?, days?)` | Precision per signal type; weekly review by unified-agent + digest-writer |
+| NEW | `get_cascade_metrics(days?)` | Rule hit counts + dead rules (0 hits in N days) |
+| NEW | `get_prediction_accuracy(days?)` | Prediction signal precision by sector; monthly review |
 
 ### Tool Changes (Sprint 037-038 vs Sprint 036)
 | Change | Tool | Notes |
@@ -182,17 +191,21 @@ Step 0: Call get_agent_signals(agent="{agent-name}")
 ## Agent Cooperation Flow
 
 ```
-07:00 VN  News Scout monitors pre-market news + submits feedback
-08:55 VN  Alert Commander sends "✅ Hệ thống online"
-09:00 VN  Market Watcher starts hourly price tracking + submits feedback
+06:00 UTC  Server: France wake-up summary → Chat Channel (franceSummaryJob) — 13:00 VN
+07:00 UTC  Server: Dev Team heartbeat check → Sunday only (devTeamHeartbeatJob)
+07:00 VN   News Scout monitors pre-market news + submits feedback
+*/15 UTC   Server: user_requests check → answer /ask + /why within 15 min (userRequestCheckJob)
+08:00 UTC  Server: prediction outcome evaluation → Sunday only (predictionOutcomeJob)
+08:55 VN   Alert Commander sends "✅ Hệ thống online"
+09:00 VN   Market Watcher starts hourly price tracking + submits feedback
 09:00-15:30  All agents at full frequency
-15:30 VN  Market closes → Market Watcher slows
-15:45 VN  Alert Commander sends end-of-day summary + alert quality feedback
-20:00 VN  Server's SSC nightly job downloads new BCTC PDFs
-20:00 VN  BCTC Collector checks what's available
-21:00 VN  Report Analyzer reads financial data + submits BCTC feedback
-22:00 VN  ⭐ Unified Coordinator daily review → triage + report to Dev Team
-22:30 VN  Digest Writer sends daily summary + weekly review (Sunday)
+15:30 VN   Market closes → Market Watcher slows
+15:45 VN   Alert Commander sends end-of-day summary + alert quality feedback
+20:00 VN   Server's SSC nightly job downloads new BCTC PDFs
+20:00 VN   BCTC Collector checks what's available
+21:00 VN   Report Analyzer reads financial data + submits BCTC feedback
+22:00 VN   ⭐ Unified Coordinator daily review → triage + report to Dev Team
+22:30 VN   Digest Writer sends daily summary + weekly review (Sunday)
 ```
 
 ## Agent Feedback Loop (via Report Channel — Problems/Hotfix Only)

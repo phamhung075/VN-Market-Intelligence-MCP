@@ -124,8 +124,31 @@ Week 4: review ssc-related fixes       — BCTC pipeline
 Week 5: review reuters-related fixes   — international news
 Week 6: review vnexpress-related fixes — VN news source
 Week 7: review vneconomy-related fixes — VN economic news
-Week 8: verify tool count in get_system_status = 53 (Sprint 037-038 baseline)
+Week 8: verify tool count in get_system_status = 57 (Sprint 039 baseline)
 ```
+
+### NEW TOOLS (Sprint 039)
+- `record_signal_outcome(signal_id, outcome, detail?)` — record whether a signal fired, was suppressed, confirmed, or was a false positive. Call after acting on any signal from `get_agent_signals`.
+- `get_signal_effectiveness(from_agent?, signal_type?, days?)` — precision per signal type; use in weekly review Step 3b.
+- `get_cascade_metrics(days?)` — rule hit counts + dead rules (0 hits in N days); use in weekly review Step 3b.
+- `get_prediction_accuracy(days?)` — prediction signal precision by sector; use in weekly review Step 3b.
+
+```
+```
+
+### Step 3b: Observability metrics review (Sprint 039)
+Call `get_signal_effectiveness(days=7)` — measure which signal types have highest precision per agent:
+- Precision <60% for a signal type → `submit_feedback` to tune thresholds
+- New false positive patterns → report to `@dev`
+- Use `from_agent?` param to drill into a specific agent's signal history
+
+Call `get_cascade_metrics(days=30)` — find dead cascade rules (0 hits in 30 days):
+- Dead rules waste CPU on every chain build → report to `@dev` for removal or update
+- High-hit rules with low signal conversion → may need threshold adjustment
+
+Call `get_prediction_accuracy(days=30)` — validate prediction market signal value:
+- Accuracy <50% → prediction signals are noise, reduce weight in briefing
+- High accuracy sectors → increase prediction signal weight in cascade
 
 ### Step 4: Portfolio risk check
 - Call `get_portfolio_risk` — VaR 95% >5% = high risk environment
@@ -169,7 +192,7 @@ The Dev Team is NOT part of the analysis team. It runs locally every hour:
 Note: User `/report` and `/fix` Telegram commands create reports with `agent="user-telegram"` — treat these as HIGH priority in triage.
 Note: User `/ask <question>` and `/why <stock>` Telegram commands request AI analysis — answer within 15 min via `send_telegram(channel="chat", ...)`.
 
-## 53 MCP TOOLS (Sprint 037-038)
+## 57 MCP TOOLS (Sprint 039)
 
 | Category | Tools |
 |----------|-------|
@@ -187,6 +210,7 @@ Note: User `/ask <question>` and `/why <stock>` Telegram commands request AI ana
 | **System** | get_system_status |
 | **Dev Team** | log_fix, get_recent_fixes |
 | **Agent Bus** | post_agent_signal, get_agent_signals |
+| **Observability** | record_signal_outcome, get_signal_effectiveness, get_cascade_metrics, get_prediction_accuracy |
 
 ### Tool Changes (Sprint 037-038)
 - NEW: `get_market_context(hours_back?)` — compound: watchlist+prices+macro+alerts+analysis in one call
@@ -211,5 +235,5 @@ Note: User `/ask <question>` and `/why <stock>` Telegram commands request AI ana
 - Only Alert Commander sends alerts to Chat Channel (max 10/day)
 - All agents read watchlist dynamically via `get_watchlist`
 - ALL feedback goes to Report Channel ONLY — never to Chat Channel
-- Verify tool count in get_system_status matches expected (53 as of Sprint 037-038)
+- Verify tool count in get_system_status matches expected (57 as of Sprint 039)
 - Philosophy: "Always do it better" — every cycle must produce at least 1 improvement
