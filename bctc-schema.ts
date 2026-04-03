@@ -36,6 +36,8 @@ export type DomainType =
   | 'insurance'     // BVH, PVI
   | 'securities'    // SSI, VND, HCM
   | 'pharma'        // DHG, IMP, DMC
+  | 'construction'  // HHV, CTD, VCG, HBC — infrastructure CAPEX (task 250)
+  | 'energy'        // GEG, REE, PC1 — renewable energy projects (task 250)
   | 'other'
 
 // ═══════════════════════════════════════════════════════════════════════════

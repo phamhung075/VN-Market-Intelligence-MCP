@@ -24,7 +24,10 @@ export type SignalType =
   | "price_surge"
   | "volume_spike"
   | "report_new"
-  | "news_mention";
+  | "news_mention"
+  | "public_contract"
+  | "credit_flow"
+  | "insider_trading";
 
 export type Severity = "low" | "medium" | "high" | "critical";
 
