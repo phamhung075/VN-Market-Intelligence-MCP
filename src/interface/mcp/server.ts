@@ -179,10 +179,9 @@ export async function createBunServer(
     registerCreditFlowTools(server);
     registerLeadershipTools(server);
     registerCrisisTools(server);
+    registerPharmaTools(server);  // Sprint 044: get_pharma_signals
     return server;
   }
-
-  registerPharmaTools(server);  // Sprint 044: get_pharma_signals
 
   // Count tools from a probe instance (not connected to any transport)
   const probeServer = createMcpServerInstance();
