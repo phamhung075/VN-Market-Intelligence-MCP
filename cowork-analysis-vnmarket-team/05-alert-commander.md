@@ -8,6 +8,13 @@ EACH CYCLE:
 
 ### Step 0: Check Agent Signals (PRIORITY — do this FIRST)
 Call `get_agent_signals(agent="alert-commander")`:
+
+**HIGHEST PRIORITY — Verified Chains (Enrichment Chain system):**
+- `verified_chain` signals → MULTI-AGENT CONFIRMED signal. The server has already synthesized findings from 2-3 agents (News Scout catalyst + Report Analyzer BCTC validation + Market Watcher price confirmation). The finding_data contains: conviction score, action (BUY/SELL/WATCH), full Vietnamese narrative with per-agent attribution. Send with the FULL narrative — this is the highest quality signal the system produces.
+  - conviction >= 0.8 → send as HIGH/CRITICAL
+  - conviction >= 0.6 → send as MEDIUM (include in digest)
+
+**Standard signals:**
 - `urgent_news` signals -> treat those stocks as priority for alert evaluation this cycle
 - `price_anomaly` signals from Market Watcher -> cross-reference with get_alerts to determine if alert should fire
 - `suppress` signals -> skip alert sending for flagged stocks this cycle (false positive suppression)

@@ -30,6 +30,20 @@ Call `get_market_context(hours_back=24)` — returns watchlist, prices, macro, a
 For CRITICAL insider or legal findings:
 Call `post_agent_signal(from_agent="report-analyzer", to_agent="alert-commander", signal_type="cross_validate", stock_code=<code>, payload={ title: "BCTC/Insider CRITICAL: {issue}", detail: <detail>, impact_score: 9 }, ttl_minutes=120)`
 
+### Step 3.5: Enrich Open Chain Findings (Enrichment Chain — sequential reasoning)
+Call `get_open_chain_findings(minutes_back=30)` to see what News Scout found recently.
+
+For each open finding about a stock you have BCTC data for:
+- Does the financial data CONFIRM or CONTRADICT the news catalyst?
+- Example: News says "room tín dụng tăng" → check VCB's loan-to-deposit ratio, NIM trend, provision coverage
+- Example: News says "HPG hưởng lợi thép" → check HPG revenue growth, inventory days, operating margin
+
+Post your fundamental validation as a chain enrichment:
+
+Call `post_agent_signal(from_agent="report-analyzer", to_agent="all", signal_type="fundamental_validation", stock_code=<code>, payload={ title: "<stock> fundamentals <confirm|contradict> catalyst", detail: "<BCTC analysis>" }, finding_data={ "validates": <true|false|null>, "key_metrics": { "revenue_yoy": <pct>, "net_profit_yoy": <pct>, "pe": <number>, "debt_equity": <number> }, "confidence": <0.0-1.0>, "data_source": "<Q4-2025-vnstock|Q3-2025-PDF>" }, causal_ref=<finding_id>, chain_depth=1, ttl_minutes=30)`
+
+The server will synthesize your validation with News Scout's catalyst and Market Watcher's price confirmation into a verified chain.
+
 ### Step 4: Escalate Critical BCTC Findings
 If analysis reveals CRITICAL issues (net loss, current ratio <1.0, accounting identity fail):
 Call `post_agent_signal(from_agent="report-analyzer", to_agent="alert-commander", signal_type="cross_validate", stock_code=<code>, payload={ title: "BCTC CRITICAL: {issue}", detail: <detail>, impact_score: 9 }, ttl_minutes=120)`

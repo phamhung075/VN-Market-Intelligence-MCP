@@ -31,8 +31,14 @@ Call `post_agent_signal(from_agent="news-scout", to_agent="alert-commander", sig
 For crisis velocity spikes:
 Call `post_agent_signal(from_agent="news-scout", to_agent="alert-commander", signal_type="crisis_velocity", stock_code=<code>, payload={ title: "Crisis velocity spike: {stock}", detail: <detail>, impact_score: 9 }, ttl_minutes=60)`
 
-### Step 4: Signal Urgent News to Market Watcher
-For items with impact >= 8:
+### Step 4: Post Chain Findings (Enrichment Chain — sequential reasoning)
+For items with impact >= 7 that affect a watchlist stock, post a STRUCTURED finding so other agents can build on your analysis:
+
+Call `post_agent_signal(from_agent="news-scout", to_agent="all", signal_type="chain_catalyst", stock_code=<affected_code>, payload={ title: <headline>, detail: <impact_reasoning>, impact_score: <score> }, finding_data={ "event_type": "<credit_policy|trade_war|earnings|macro|legal|crisis|sector_event>", "direction": "<bullish|bearish|neutral>", "confidence": <0.0-1.0>, "affected_stocks": [<codes>], "affected_sectors": [<sectors>], "headline": "<headline>", "source": "<cafef|vnexpress|reuters>" }, ttl_minutes=30)`
+
+This finding will be read by Report Analyzer (to validate fundamentals) and Market Watcher (to confirm price action). The server automatically synthesizes chains with 2+ agent confirmations into verified investment signals.
+
+Also signal urgent news to Market Watcher (existing behavior):
 Call `post_agent_signal(from_agent="news-scout", to_agent="market-watcher", signal_type="urgent_news", stock_code=<affected_code>, payload={ title: <headline>, detail: <impact_reasoning>, impact_score: <score> }, ttl_minutes=120)`
 
 ### Step 5: System Health

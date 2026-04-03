@@ -37,6 +37,18 @@ Call `get_market_context(hours_back=24)` — returns watchlist, prices, macro, a
 4. Call `get_crisis_early_warning` — velocity-based mention spike detection
    - 5x normal mention rate = potential crisis developing
 
+### Step 3.5: Enrich Open Chain Findings (Enrichment Chain — sequential reasoning)
+Call `get_open_chain_findings(minutes_back=15)` to see what News Scout or Report Analyzer found this cycle.
+
+For each open finding about a stock you can check:
+- Check current price action: did price confirm the finding's direction?
+- Check volume: is volume above average (confirms institutional interest)?
+- Post your price confirmation as a chain enrichment:
+
+Call `post_agent_signal(from_agent="market-watcher", to_agent="all", signal_type="price_confirmation", stock_code=<code>, payload={ title: "<stock> price <confirms|contradicts> news catalyst", detail: "<price and volume details>" }, finding_data={ "price_change_pct": <number>, "volume_ratio": <volume/avgVolume>, "confirms_direction": <true|false>, "fully_priced": <true|false>, "confidence": <0.0-1.0> }, causal_ref=<finding_id>, chain_depth=2, ttl_minutes=30)`
+
+The server will automatically synthesize your confirmation with the original catalyst into a verified chain with conviction score.
+
 ### Step 4: Signal Price Anomalies to Alert Commander
 When finding a confirmed price anomaly (>2sigma move, volume spike, or VaR breach):
 Call `post_agent_signal(from_agent="market-watcher", to_agent="alert-commander", signal_type="price_anomaly", stock_code=<code>, payload={ title: "<stock> anomaly detected", detail: "<price/volume details>", impact_score: <score> }, ttl_minutes=60)`
