@@ -59,6 +59,12 @@ interface ExtractionPattern {
   indicator: string;
   /** Unit label. */
   unit: string;
+  /**
+   * If true, this indicator is country-specific (CPI, GDP, interest rate).
+   * Only extract from VN news sources or when text mentions Vietnam context.
+   * Prevents "US inflation 4.3%" from being stored as VN inflation.
+   */
+  countrySpecific?: boolean;
 }
 
 /**
@@ -96,14 +102,14 @@ const EXTRACTION_PATTERNS: ExtractionPattern[] = [
   // Rubber (Vietnam top 3)
   { regex: /(?:rubber|cao su)[\s\S]{0,20}?([\d,.]+)\s*(?:\/kg|per kg|yen|JPY)/i, indicator: "rubber_price", unit: "unit" },
 
-  // Inflation / CPI
-  { regex: /(?:cpi|inflation rate|lạm phát)[\s\S]{0,30}?([\d.]+)\s*%/i, indicator: "inflation_pct", unit: "%" },
+  // Inflation / CPI — country-specific: only extract from VN sources or VN-context text
+  { regex: /(?:cpi|inflation rate|lạm phát)[\s\S]{0,30}?([\d.]+)\s*%/i, indicator: "inflation_pct", unit: "%", countrySpecific: true },
 
-  // GDP
-  { regex: /gdp[\s\S]{0,20}?([\d.]+)\s*%/i, indicator: "gdp_growth_pct", unit: "%" },
+  // GDP — country-specific
+  { regex: /gdp[\s\S]{0,20}?([\d.]+)\s*%/i, indicator: "gdp_growth_pct", unit: "%", countrySpecific: true },
 
-  // Interest rate
-  { regex: /(?:interest rate|lãi suất|fed funds rate|policy rate)[\s\S]{0,20}?([\d.]+)\s*%/i, indicator: "interest_rate_pct", unit: "%" },
+  // Interest rate — country-specific
+  { regex: /(?:interest rate|lãi suất|fed funds rate|policy rate)[\s\S]{0,20}?([\d.]+)\s*%/i, indicator: "interest_rate_pct", unit: "%", countrySpecific: true },
 
   // Stock indices — must match 4+ digit numbers (indices are 1000+), skip percentages
   { regex: /s&p\s*500[\s\S]{0,40}?(?:to|at|hit|near)\s+([\d,]{4,}(?:\.\d+)?)/i, indicator: "sp500", unit: "points" },
@@ -130,6 +136,12 @@ export interface ExtractedIndicator {
  * @param source - Source identifier (e.g. "tradingeconomics", "cafef")
  * @returns Array of extracted indicators
  */
+/** Vietnamese news sources — country-specific indicators are safe to extract from these. */
+const VN_SOURCES = new Set(["cafef", "vnexpress", "vneconomy"]);
+
+/** Keywords that indicate the text is about Vietnam (case-insensitive check). */
+const VN_CONTEXT_RE = /\b(?:vi[eệ]t\s*nam|vn-index|vnindex|hose|hnx|upcom|sbv|ngân hàng nhà nước|bộ tài chính|tổng cục thống kê)\b/i;
+
 export function extractAndStoreIndicators(
   text: string,
   source: string,
@@ -137,7 +149,14 @@ export function extractAndStoreIndicators(
   const extracted: ExtractedIndicator[] = [];
   const seen = new Set<string>();
 
+  // Pre-compute VN context check once per text
+  const isVnSource = VN_SOURCES.has(source);
+  const hasVnContext = isVnSource || VN_CONTEXT_RE.test(text);
+
   for (const pattern of EXTRACTION_PATTERNS) {
+    // Country-specific indicators: skip if text is not about Vietnam
+    if (pattern.countrySpecific && !hasVnContext) continue;
+
     const match = text.match(pattern.regex);
     if (!match || !match[1]) continue;
     if (seen.has(pattern.indicator)) continue; // one per indicator per text
