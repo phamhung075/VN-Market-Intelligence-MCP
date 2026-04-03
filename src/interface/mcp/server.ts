@@ -72,6 +72,7 @@ import {
   registerMarketContextTools,
   registerAgentSignalTools,
   registerCascadeMetricsTools,
+  registerSupplyChainTools,
 } from "./tools/index.js";
 
 /** Options for starting the Bun HTTP server. */
@@ -158,6 +159,7 @@ export async function createBunServer(
     registerMarketContextTools(server);
     registerAgentSignalTools(server);
     registerCascadeMetricsTools(server);
+    registerSupplyChainTools(server);
     return server;
   }
 

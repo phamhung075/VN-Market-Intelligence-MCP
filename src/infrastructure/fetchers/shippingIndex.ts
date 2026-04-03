@@ -175,7 +175,9 @@ export async function fetchShippingIndices(
 
   for (let i = 0; i < results.length; i++) {
     const result = results[i];
-    const { name } = SHIPPING_SYMBOLS[i];
+    const symbolEntry = SHIPPING_SYMBOLS[i];
+    if (!result || !symbolEntry) continue;
+    const { name } = symbolEntry;
 
     if (result.status !== "fulfilled" || result.value === null) {
       logger.debug("[shippingIndex] symbol returned no data", { name });
