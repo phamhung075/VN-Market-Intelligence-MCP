@@ -513,4 +513,17 @@ export async function initDatabase(): Promise<void> {
     )
   `);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_user_requests_status ON user_requests(status)`);
+
+  // ── Enrichment Chain Columns — idempotent ALTER for existing agent_signals ──
+  // These try-catch blocks are safe to run repeatedly — SQLite raises an error
+  // if the column already exists (which we silently ignore).
+  try { db.exec(`ALTER TABLE agent_signals ADD COLUMN cycle_id TEXT`); } catch {}
+  try { db.exec(`ALTER TABLE agent_signals ADD COLUMN finding_data TEXT DEFAULT '{}'`); } catch {}
+  try { db.exec(`ALTER TABLE agent_signals ADD COLUMN causal_ref INTEGER`); } catch {}
+  try { db.exec(`ALTER TABLE agent_signals ADD COLUMN chain_depth INTEGER DEFAULT 0`); } catch {}
+  try { db.exec(`ALTER TABLE agent_signals ADD COLUMN processed INTEGER DEFAULT 0`); } catch {}
+
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_agent_signals_cycle ON agent_signals(cycle_id)`);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_agent_signals_chain ON agent_signals(causal_ref)`);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_agent_signals_stock ON agent_signals(stock_code, created_at)`)
 }

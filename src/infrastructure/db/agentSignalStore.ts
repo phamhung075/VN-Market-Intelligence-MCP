@@ -1,10 +1,24 @@
 /**
- * Agent Signal Store — Task 242
+ * Agent Signal Store — Task 242 + Enrichment Chain Extension
  *
  * SQLite CRUD helpers for the `agent_signals` table.
  *
  * The agent signal bus lets analysis agents communicate with each other
  * by posting typed, TTL-bound messages into a shared SQLite table.
+ *
+ * Provides:
+ *   - postSignal()           — insert a new signal into agent_signals
+ *   - getSignals()           — retrieve pending signals for an agent
+ *   - recordOutcome()        — record processing outcome for a signal
+ *   - getSignalEffectiveness() — aggregate effectiveness metrics
+ *   - cleanExpired()         — delete expired signals
+ *   - computeCycleId()       — generate a 15-min window cycle ID
+ *   - getChainFindings()     — get all findings in a cycle window
+ *   - getChainFromRoot()     — follow causal_ref links from a root finding
+ *   - getOpenChainFindings() — get unsynthesized findings for agent enrichment
+ *
+ * Signal types include enrichment chain types:
+ *   chain_catalyst, fundamental_validation, price_confirmation, verified_chain
  *
  * All times are stored as UTC ISO-8601 strings (SQLite datetime format).
  * Numbers are in plain integers — no million-VND convention needed here.
@@ -14,8 +28,16 @@ import type { Database } from "bun:sqlite";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
-/** Valid signal types that agents can exchange. */
-export type SignalType = "urgent_news" | "price_anomaly" | "cross_validate" | "suppress";
+/** Valid signal types that agents can exchange (includes enrichment chain types). */
+export type SignalType =
+  | "urgent_news"
+  | "price_anomaly"
+  | "cross_validate"
+  | "suppress"
+  | "chain_catalyst"
+  | "fundamental_validation"
+  | "price_confirmation"
+  | "verified_chain";
 
 /** Outcome values for a signal once it has been processed. */
 export type SignalOutcome = "fired" | "suppressed" | "confirmed" | "false_positive";
@@ -34,9 +56,10 @@ export interface SignalEffectiveness {
 
 /** Payload carried by an agent signal. */
 export interface SignalPayload {
-  title: string;
-  detail: string;
+  title?: string;
+  detail?: string;
   impact_score?: number;
+  [key: string]: unknown;
 }
 
 /** A fully hydrated agent signal row returned by getSignals. */
@@ -52,15 +75,58 @@ export interface AgentSignal {
   expiresAt: string;
 }
 
-/** Input for posting a new signal. */
+/** Input for posting a new signal (extended with enrichment chain fields). */
 export interface PostSignalInput {
   fromAgent: string;
   toAgent: string;
-  signalType: SignalType;
-  stockCode?: string;
-  payload: SignalPayload;
+  signalType: SignalType | string;
+  stockCode?: string | null;
+  payload: SignalPayload | Record<string, unknown>;
   /** Time-to-live in minutes from now. */
-  ttlMinutes: number;
+  ttlMinutes?: number;
+  /** 15-min cycle window identifier, e.g. "20260404-0900". Auto-computed if omitted. */
+  cycleId?: string;
+  /** Structured finding metrics validated by the agent */
+  findingData?: Record<string, unknown>;
+  /** FK to parent signal ID (for chain traversal) */
+  causalRef?: number;
+  /** 0=catalyst, 1=validation, 2=confirmation, 3=synthesis */
+  chainDepth?: number;
+}
+
+/** Deserialized chain finding row. */
+export interface ChainFinding {
+  id: number;
+  fromAgent: string;
+  signalType: SignalType | string;
+  stockCode: string | null;
+  payload: SignalPayload;
+  findingData: Record<string, unknown>;
+  causalRef: number | null;
+  chainDepth: number;
+  createdAt: string;
+}
+
+// ── computeCycleId ────────────────────────────────────────────────────────────
+
+/**
+ * Generates a 15-min cycle window identifier from a Date.
+ *
+ * Format: "YYYYMMDD-HHMM" where MM is rounded down to 0, 15, 30, or 45.
+ *
+ * @param date - Defaults to `new Date()` if omitted.
+ * @example computeCycleId(new Date("2026-04-04T09:17:00Z")) // "20260404-0915"
+ */
+export function computeCycleId(date?: Date): string {
+  const d = date ?? new Date();
+  const yyyy = String(d.getUTCFullYear());
+  const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const dd = String(d.getUTCDate()).padStart(2, "0");
+  const hh = String(d.getUTCHours()).padStart(2, "0");
+  const rawMin = d.getUTCMinutes();
+  const min = Math.floor(rawMin / 15) * 15;
+  const minStr = String(min).padStart(2, "0");
+  return `${yyyy}${mm}${dd}-${hh}${minStr}`;
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -75,16 +141,111 @@ function expiresAt(ttlMinutes: number): string {
   return new Date(ms).toISOString().replace("T", " ").replace(/\.\d{3}Z$/, "");
 }
 
+// ── Row deserialization helper ────────────────────────────────────────────────
+
+interface RawChainRow {
+  id: number;
+  from_agent: string;
+  signal_type: string;
+  stock_code: string | null;
+  payload_json?: string;
+  payload?: string;
+  finding_data: string | null;
+  causal_ref: number | null;
+  chain_depth: number;
+  created_at: string;
+}
+
+function deserializeChainRow(row: RawChainRow): ChainFinding {
+  let payload: SignalPayload = {};
+  let findingData: Record<string, unknown> = {};
+
+  const rawPayload = row.payload_json ?? row.payload ?? "{}";
+  try { payload = JSON.parse(rawPayload) as SignalPayload; } catch {}
+  try { findingData = JSON.parse(row.finding_data ?? "{}") as Record<string, unknown>; } catch {}
+
+  return {
+    id: row.id,
+    fromAgent: row.from_agent,
+    signalType: row.signal_type as SignalType,
+    stockCode: row.stock_code,
+    payload,
+    findingData,
+    causalRef: row.causal_ref,
+    chainDepth: row.chain_depth ?? 0,
+    createdAt: row.created_at,
+  };
+}
+
 // ── postSignal ──────────────────────────────────────────────────────────────
 
 /**
  * Insert a new agent signal and return its auto-increment ID.
+ *
+ * Supports both the original signal bus fields and the enrichment chain
+ * extension fields (cycleId, findingData, causalRef, chainDepth).
  *
  * @param db    - Active bun:sqlite Database connection
  * @param input - Signal parameters including TTL
  * @returns     The newly created row ID (positive integer)
  */
 export function postSignal(db: Database, input: PostSignalInput): number {
+  const {
+    fromAgent,
+    toAgent,
+    signalType,
+    stockCode = null,
+    payload,
+    ttlMinutes,
+    cycleId,
+    findingData = {},
+    causalRef = null,
+    chainDepth = 0,
+  } = input;
+
+  // Check if the enrichment chain columns exist by trying to use them.
+  // If they don't exist (old schema), fall back to the base insert.
+  const hasChainColumns = (() => {
+    try {
+      db.prepare("SELECT cycle_id FROM agent_signals LIMIT 0").all();
+      return true;
+    } catch {
+      return false;
+    }
+  })();
+
+  if (hasChainColumns) {
+    const now = new Date().toISOString().replace("T", " ").replace(/\.\d{3}Z$/, "");
+    const expires =
+      ttlMinutes != null
+        ? expiresAt(ttlMinutes)
+        : null;
+
+    const stmt = db.prepare(`
+      INSERT INTO agent_signals
+        (from_agent, to_agent, signal_type, stock_code, payload, status,
+         created_at, expires_at, cycle_id, finding_data, causal_ref, chain_depth)
+      VALUES (?, ?, ?, ?, ?, 'unread', ?, ?, ?, ?, ?, ?)
+    `);
+
+    const result = stmt.run(
+      fromAgent,
+      toAgent,
+      signalType,
+      stockCode,
+      JSON.stringify(payload),
+      now,
+      expires ?? expiresAt(ttlMinutes ?? 120),
+      cycleId ?? null,
+      JSON.stringify(findingData),
+      causalRef,
+      chainDepth,
+    );
+
+    return Number(result.lastInsertRowid);
+  }
+
+  // Fallback: base schema without chain columns
   const stmt = db.prepare(`
     INSERT INTO agent_signals
       (from_agent, to_agent, signal_type, stock_code, payload, status, expires_at)
@@ -93,12 +254,12 @@ export function postSignal(db: Database, input: PostSignalInput): number {
   `);
 
   const result = stmt.run(
-    input.fromAgent,
-    input.toAgent,
-    input.signalType,
-    input.stockCode ?? null,
-    JSON.stringify(input.payload),
-    expiresAt(input.ttlMinutes),
+    fromAgent,
+    toAgent,
+    signalType,
+    stockCode,
+    JSON.stringify(payload),
+    expiresAt(ttlMinutes ?? 120),
   );
 
   return Number(result.lastInsertRowid);
@@ -299,4 +460,113 @@ export function cleanExpired(db: Database): number {
     .prepare("DELETE FROM agent_signals WHERE expires_at < datetime('now')")
     .run();
   return result.changes;
+}
+
+// ── getChainFindings ──────────────────────────────────────────────────────────
+
+/**
+ * Get all findings in a specific cycle window.
+ *
+ * Use this to collect all agent findings within a 15-min cycle so the
+ * chain synthesizer can group them by stock_code.
+ *
+ * @param db      - Active bun:sqlite Database connection
+ * @param cycleId - 15-min window identifier, e.g. "20260404-0900"
+ */
+export function getChainFindings(
+  db: Database,
+  cycleId: string,
+): ChainFinding[] {
+  const stmt = db.prepare(`
+    SELECT id, from_agent, signal_type, stock_code, payload AS payload_json,
+           finding_data, causal_ref, chain_depth, created_at
+    FROM agent_signals
+    WHERE cycle_id = ?
+    ORDER BY chain_depth ASC, id ASC
+  `);
+  const rows = stmt.all(cycleId) as RawChainRow[];
+  return rows.map(deserializeChainRow);
+}
+
+// ── getChainFromRoot ──────────────────────────────────────────────────────────
+
+/**
+ * Get a complete chain by following causal_ref links from a root finding.
+ *
+ * Returns the root signal first, then all signals that directly reference it
+ * via causal_ref. Note: only follows one level of the chain (direct children)
+ * because the depth structure provides ordering.
+ *
+ * @param db     - Active bun:sqlite Database connection
+ * @param rootId - ID of the root (depth=0) signal
+ */
+export function getChainFromRoot(
+  db: Database,
+  rootId: number,
+): ChainFinding[] {
+  // Get root
+  const rootStmt = db.prepare(`
+    SELECT id, from_agent, signal_type, stock_code, payload AS payload_json,
+           finding_data, causal_ref, chain_depth, created_at
+    FROM agent_signals
+    WHERE id = ?
+  `);
+  const root = rootStmt.get(rootId) as RawChainRow | null;
+  if (!root) return [];
+
+  // Get all children (direct references to root)
+  const childStmt = db.prepare(`
+    SELECT id, from_agent, signal_type, stock_code, payload AS payload_json,
+           finding_data, causal_ref, chain_depth, created_at
+    FROM agent_signals
+    WHERE causal_ref = ?
+    ORDER BY chain_depth ASC, id ASC
+  `);
+  const children = childStmt.all(rootId) as RawChainRow[];
+
+  return [root, ...children].map(deserializeChainRow);
+}
+
+// ── getOpenChainFindings ──────────────────────────────────────────────────────
+
+/**
+ * Get open chain findings (not yet synthesized) for agents to enrich.
+ *
+ * Returns signals with enrichment chain columns (cycle_id IS NOT NULL)
+ * created within the last `minutesBack` minutes and not yet marked as
+ * processed (i.e., not yet synthesized into a verified_chain).
+ *
+ * @param db          - Active bun:sqlite Database connection
+ * @param minutesBack - Lookback window in minutes (default 30)
+ */
+export function getOpenChainFindings(
+  db: Database,
+  minutesBack: number = 30,
+): ChainFinding[] {
+  const cutoff = new Date(Date.now() - minutesBack * 60_000).toISOString();
+
+  // Check if 'processed' column exists; fall back to status-based filter
+  let useProcessed = true;
+  try {
+    db.prepare("SELECT processed FROM agent_signals LIMIT 0").all();
+  } catch {
+    useProcessed = false;
+  }
+
+  const processedClause = useProcessed
+    ? "AND processed = 0"
+    : "AND status = 'unread'";
+
+  const stmt = db.prepare(`
+    SELECT id, from_agent, signal_type, stock_code, payload AS payload_json,
+           finding_data, causal_ref, chain_depth, created_at
+    FROM agent_signals
+    WHERE cycle_id IS NOT NULL
+      AND created_at >= ?
+      ${processedClause}
+      AND signal_type != 'verified_chain'
+    ORDER BY chain_depth ASC, id ASC
+  `);
+  const rows = stmt.all(cutoff) as RawChainRow[];
+  return rows.map(deserializeChainRow);
 }

@@ -3,7 +3,7 @@
  *
  * Unified 15-minute intelligence cycle that replaces the standalone 30-min
  * news-poll cron. During market hours (09:00–15:30 GMT+7, Mon–Fri) it runs
- * the full 5-step cycle; outside market hours it runs the reduced news-only
+ * the full 7-step cycle; outside market hours it runs the reduced news-only
  * cycle (step A only, typically called every 60 min via the same 15-min cron).
  *
  * Cycle steps:
@@ -12,6 +12,8 @@
  *   C. fetchHosePrices()     — market hours only
  *   D. runImpactChain()      — market hours only (new news entries from A)
  *   E. sendAlerts()          — market hours only (HIGH/CRITICAL → Telegram)
+ *   F. answerUserRequests()  — always (not gated on market hours)
+ *   G. chainSynthesis()      — always (server-side, zero Claude API tokens)
  *
  * A module-level concurrency guard prevents overlapping runs.
  * A duration warning is logged when the cycle exceeds 12 minutes.
@@ -566,6 +568,20 @@ async function _runCycle(deps: CycleDeps = {}): Promise<CycleResult> {
     });
   }
 
+  // Step G: Chain synthesis (server-side, zero Claude API tokens)
+  // Groups agent_signals by stock within the current 15-min cycle window.
+  // When 2+ agents have posted findings for the same stock, the chain synthesizer
+  // produces a SynthesizedChain. High-conviction chains (>= 0.7) are posted back
+  // as verified_chain signals for the Alert Commander.
+  try {
+    await withTimeout(runChainSynthesis(), "step G chainSynthesis");
+  } catch (err) {
+    // Non-fatal — chain synthesis failure should not block the cycle
+    logger.warn("[intelligence-cycle] step G failed (non-fatal) — chainSynthesis", {
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
+
   // Compute duration
   const actualDurationMs = Date.now() - startTime;
   const durationMs = deps.fakeDurationMs ?? actualDurationMs;
@@ -654,5 +670,99 @@ export async function runIntelligenceCycle(
   } finally {
     cycleRunning = false;
     cycleStartedAt = 0;
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Step G: Chain Synthesis (enrichment chain extension)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Server-side chain synthesis.
+ *
+ * Groups all agent_signals in the current 15-min cycle window by stock_code.
+ * For any stock with 2+ independent agent findings, runs synthesizeChain().
+ * High-conviction chains (>= 0.7) are posted as verified_chain signals for
+ * the Alert Commander.
+ *
+ * This runs with zero Claude API tokens — purely rule-based domain logic.
+ */
+export async function runChainSynthesis(): Promise<void> {
+  const { getDb } = await import("../infrastructure/db/schema.js");
+  const {
+    getChainFindings,
+    postSignal,
+    computeCycleId,
+  } = await import("../infrastructure/db/agentSignalStore.js");
+  const { synthesizeChain } = await import("../domain/services/chainSynthesizer.js");
+
+  const db = getDb();
+  const cycleId = computeCycleId();
+
+  const findings = getChainFindings(db, cycleId);
+  if (findings.length === 0) return;
+
+  // Group by stock_code (skip null)
+  const byStock = new Map<string, typeof findings>();
+  for (const f of findings) {
+    if (!f.stockCode) continue;
+    const arr = byStock.get(f.stockCode) ?? [];
+    arr.push(f);
+    byStock.set(f.stockCode, arr);
+  }
+
+  let synthesized = 0;
+
+  for (const [stock, links] of byStock) {
+    if (links.length < 2) continue;
+
+    const chain = synthesizeChain(
+      links.map(f => ({
+        id: f.id,
+        agent: f.fromAgent,
+        signalType: f.signalType,
+        stockCode: f.stockCode,
+        findingData: f.findingData,
+        depth: f.chainDepth,
+        createdAt: f.createdAt,
+      })),
+    );
+
+    if (!chain) continue;
+
+    if (chain.conviction >= 0.7) {
+      postSignal(db, {
+        fromAgent: "chain-synthesizer",
+        toAgent: "alert-commander",
+        signalType: "verified_chain",
+        stockCode: stock,
+        payload: {
+          title: chain.narrative.slice(0, 100),
+          detail: chain.narrative,
+        },
+        findingData: chain as unknown as Record<string, unknown>,
+        cycleId,
+        chainDepth: 3,
+        ttlMinutes: 60,
+      });
+      synthesized++;
+
+      logger.info("[chainSynthesis] verified_chain posted", {
+        stock,
+        conviction: chain.conviction,
+        action: chain.action,
+        chainLength: chain.chainLength,
+        agents: chain.agents,
+      });
+    }
+  }
+
+  if (synthesized > 0) {
+    logger.info("[chainSynthesis] cycle complete", {
+      cycleId,
+      totalFindings: findings.length,
+      stocksWithChains: byStock.size,
+      synthesized,
+    });
   }
 }
