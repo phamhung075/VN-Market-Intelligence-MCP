@@ -1109,6 +1109,84 @@ const SECTOR_RULES: SectorRule[] = [
     title: "Gián đoạn chuỗi cung ứng — tác động hỗn hợp cho logistics",
   },
 
+  // ═══════════════════════════════════════════════════════════════════════════
+  // CLIMATE_RULES (Sprint 042 — Task 261)
+  // Weather events → sector/stock cascades
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // ── Typhoon / Bão ─────────────────────────────────────────────────────────
+  {
+    keywords: ["bão số", "typhoon vietnam", "áp thấp nhiệt đới", "cơn bão mạnh", "bão đổ bộ"],
+    domain: "insurance",
+    direction: "down",
+    confidence: 0.80,
+    title: "Bão — tăng chi trả bồi thường bảo hiểm (BVH, PVI)",
+  },
+  {
+    keywords: ["bão số", "typhoon vietnam", "bão đổ bộ", "bão lớn"],
+    domain: "agriculture",
+    direction: "down",
+    confidence: 0.75,
+    title: "Bão — thiệt hại ao nuôi tôm/cá và nông sản (MPC, ANV, VNM)",
+  },
+
+  // ── Drought / Hạn hán ─────────────────────────────────────────────────────
+  {
+    keywords: ["hạn hán nghiêm trọng", "thiếu nước hồ thủy điện", "mùa khô thiếu nước", "drought vietnam"],
+    domain: "utilities",
+    direction: "up",
+    confidence: 0.75,
+    title: "Hạn hán — thủy điện thiếu nước → nhu cầu solar/wind thay thế tăng (REE, GEG)",
+  },
+  {
+    keywords: ["hạn hán nghiêm trọng", "hạn hán kéo dài", "thiếu nước ao nuôi", "drought vietnam"],
+    domain: "agriculture",
+    direction: "down",
+    confidence: 0.70,
+    title: "Hạn hán — thiếu nước ao nuôi, thiệt hại thủy sản và nông nghiệp (MPC, ANV)",
+  },
+
+  // ── Power shortage / Thiếu điện ───────────────────────────────────────────
+  {
+    keywords: ["thiếu điện nghiêm trọng", "cắt điện luân phiên", "power shortage vietnam"],
+    domain: "real_estate",  // industrial parks (IDC, KBC) classified under real_estate
+    direction: "down",
+    confidence: 0.82,
+    title: "Thiếu điện — khu công nghiệp bị cắt điện luân phiên, FDI lo ngại (IDC, KBC)",
+  },
+  {
+    keywords: ["thiếu điện nghiêm trọng", "cắt điện luân phiên", "power shortage vietnam"],
+    domain: "utilities",
+    direction: "up",
+    confidence: 0.78,
+    title: "Thiếu điện — chính phủ đẩy mạnh năng lượng tái tạo khẩn cấp (REE, GEG)",
+  },
+
+  // ── Flood / Lũ lụt ───────────────────────────────────────────────────────
+  {
+    keywords: ["lũ lụt nghiêm trọng", "lũ lớn kéo dài", "flood vietnam"],
+    domain: "insurance",
+    direction: "down",
+    confidence: 0.75,
+    title: "Lũ lụt — tăng bồi thường bảo hiểm tài sản (BVH, PVI)",
+  },
+
+  // ── El Niño / La Niña ─────────────────────────────────────────────────────
+  {
+    keywords: ["el niño", "el nino", "hiện tượng el niño"],
+    domain: "utilities",
+    direction: "up",
+    confidence: 0.72,
+    title: "El Niño — hạn hán dài hạn, thủy điện giảm → cơ hội NLTT (REE, GEG)",
+  },
+  {
+    keywords: ["la niña", "la nina", "hiện tượng la niña"],
+    domain: "insurance",
+    direction: "down",
+    confidence: 0.68,
+    title: "La Niña — gia tăng mưa lũ → rủi ro bồi thường bảo hiểm",
+  },
+
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -1193,6 +1271,53 @@ function isMarketWide(
 
   return false;
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Legal Risk + Policy cascade rules (Task 244)
+// ═══════════════════════════════════════════════════════════════════════════
+
+/** Simplified cascade rule for legal risk and policy events. */
+export interface CascadeKeywordRule {
+  /** Machine-readable rule identifier */
+  key: string;
+  /** Vietnamese keyword that triggers this rule */
+  keyword: string;
+  /** Affected sector (DomainType as string) */
+  sector: string;
+}
+
+/**
+ * Legal risk cascade rules: news with these keywords → sector-level impact.
+ */
+export const LEGAL_RISK_RULES: CascadeKeywordRule[] = [
+  { key: "prosecution_banking", keyword: "khởi tố", sector: "banking" },
+  { key: "prosecution_realestate", keyword: "khởi tố", sector: "real_estate" },
+  { key: "asset_freeze_realestate", keyword: "phong tỏa tài sản", sector: "real_estate" },
+  { key: "asset_freeze_banking", keyword: "kê biên", sector: "banking" },
+  { key: "tax_penalty_all", keyword: "truy thu thuế", sector: "other" },
+  { key: "license_revocation_realestate", keyword: "thu hồi giấy phép", sector: "real_estate" },
+  { key: "anti_dumping_steel", keyword: "chống bán phá giá", sector: "steel" },
+  { key: "anti_dumping_agriculture", keyword: "anti-dumping", sector: "agriculture" },
+  { key: "investigation_securities", keyword: "điều tra", sector: "securities" },
+  { key: "administrative_penalty", keyword: "xử phạt hành chính", sector: "other" },
+];
+
+/**
+ * Policy cascade rules: government policy keywords → sector-level impact.
+ */
+export const POLICY_RULES: CascadeKeywordRule[] = [
+  { key: "credit_room_banking", keyword: "room tín dụng", sector: "banking" },
+  { key: "interest_rate_banking", keyword: "lãi suất điều hành", sector: "banking" },
+  { key: "tax_ttdb_automotive", keyword: "thuế TTĐB", sector: "automotive" },
+  { key: "industrial_zone_dev", keyword: "khu công nghiệp", sector: "other" },
+  { key: "energy_policy_utilities", keyword: "quy hoạch điện", sector: "utilities" },
+  { key: "fit_utilities", keyword: "FIT", sector: "utilities" },
+  { key: "realestate_credit_tighten", keyword: "siết tín dụng BĐS", sector: "real_estate" },
+  { key: "land_law_realestate", keyword: "luật đất đai", sector: "real_estate" },
+  { key: "fta_steel", keyword: "FTA", sector: "steel" },
+  { key: "exchange_rate_banking", keyword: "tỷ giá", sector: "banking" },
+  { key: "monetary_policy_banking", keyword: "dự trữ bắt buộc", sector: "banking" },
+];
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Main exported function

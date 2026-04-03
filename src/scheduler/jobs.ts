@@ -17,6 +17,7 @@
  *   predictionOutcomeCheck Sunday 08:00 UTC    (task 248) ✓
  *   franceSummary          06:00 UTC weekdays  (task 243) ✓
  *   devTeamHeartbeat       07:00 UTC Sunday    (task 245) ✓
+ *   weatherCheck          every 6h (typhoon season) / 12h off-season  (task 261) ✓
  */
 
 import cron from 'node-cron'
@@ -36,6 +37,7 @@ import { runUserRequestCheck } from './userRequestCheckJob.js'
 import { runPredictionOutcomeCheck } from './predictionOutcomeJob.js'
 import { runFranceSummary } from './franceSummaryJob.js'
 import { runDevTeamHeartbeat } from './devTeamHeartbeatJob.js'
+import { runWeatherCheck } from './weatherCheckJob.js'
 
 export const CRONS = {
   morningBriefing:        Bun.env.CRON_MORNING_BRIEFING          ?? '0 8 * * 1-5',
@@ -50,6 +52,8 @@ export const CRONS = {
   dataAuditWeekly:        Bun.env.CRON_DATA_AUDIT_WEEKLY          ?? '0 1 * * 0',
   predictionMarketPoll:   Bun.env.CRON_PREDICTION_MARKET_POLL     ?? '*/30 * * * *',
   userRequestCheck:       Bun.env.CRON_USER_REQUEST_CHECK          ?? '*/15 * * * *',
+  /** Typhoon season (Jun-Nov): every 6h. Off-season: every 12h. task 261 */
+  weatherCheck:           Bun.env.CRON_WEATHER_CHECK              ?? '0 */6 * * *',
 }
 
 function log(msg: string) {
@@ -148,6 +152,12 @@ export function startScheduler() {
   cron.schedule("0 8 * * 0", async () => {
     await runPredictionOutcomeCheck()
   }, { timezone: "UTC" })
+
+  // Every 6h — Weather check + climate signals — task 261
+  // Typhoon season (Jun-Nov): every 6h. Off-season: every 12h.
+  cron.schedule(CRONS.weatherCheck, async () => {
+    await runWeatherCheck()
+  }, { timezone: 'Asia/Ho_Chi_Minh' })
 
   log(`[scheduler] jobs registered — ${Object.keys(CRONS).length} core cron jobs + 5 summary jobs + WAL checkpoint active`)
 }
