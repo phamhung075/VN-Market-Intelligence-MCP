@@ -24,7 +24,8 @@ export type SignalType =
   | "price_surge"
   | "volume_spike"
   | "report_new"
-  | "news_mention";
+  | "news_mention"
+  | "crisis_event";
 
 export type Severity = "low" | "medium" | "high" | "critical";
 
@@ -46,6 +47,18 @@ export interface MarketSnapshot {
 }
 
 /**
+ * Crisis event context for crisis_event signal injection.
+ * Produced by crisisPatternDetector.detectCrisisPatterns().
+ */
+export interface CrisisEventContext {
+  detected: boolean;
+  severity: "low" | "medium" | "high" | "critical";
+  crisisType: string;
+  matchedPatterns: string[];
+  velocityRatio: number;
+}
+
+/**
  * Optional context that enriches signal detection with news, reports,
  * and per-stock configurable thresholds.
  */
@@ -63,6 +76,8 @@ export interface SignalContext {
     /** Minimum impact score for news/macro signals (0-10) */
     impactScore: number;
   };
+  /** Crisis event detected by crisisPatternDetector (Task 263) */
+  crisisEvent?: CrisisEventContext;
 }
 
 /**
@@ -210,6 +225,19 @@ export function detectSignals(
       actionCode,
       message: `${actionCode} mentioned in ${count} recent article(s) — latest: "${sample.title}" (${sample.source})`,
       confidence: 0.75,
+      detectedAt: now,
+    });
+  }
+
+  // ── 5. Crisis event (Task 266) ───────────────────────────────────────────
+  if (context?.crisisEvent?.detected) {
+    const crisis = context.crisisEvent;
+    signals.push({
+      type: "crisis_event",
+      severity: crisis.severity,
+      actionCode,
+      message: `${actionCode} crisis detected: ${crisis.crisisType} — patterns: ${crisis.matchedPatterns.join(", ")} (velocity ${crisis.velocityRatio.toFixed(1)}×)`,
+      confidence: 0.9,
       detectedAt: now,
     });
   }

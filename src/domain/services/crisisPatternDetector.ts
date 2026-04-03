@@ -24,6 +24,16 @@
  */
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Constants
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Shortened cooldown for crisis_event signals (vs default alert cooldown).
+ * Crisis signals suppress duplicate alerts within this window.
+ */
+export const CRISIS_COOLDOWN_MINUTES = 30;
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Types
 // ─────────────────────────────────────────────────────────────────────────────
 
