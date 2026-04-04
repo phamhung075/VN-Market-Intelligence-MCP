@@ -250,12 +250,17 @@ export async function checkSscReports(
       // ── 2c. Run pipeline for each new document (serial, 2 s delay) ───────
       for (const doc of newDocs) {
         try {
-          await pipelineFn({
+          const result = await pipelineFn({
             actionCode: code,
             pdfUrl: doc.url,
             publishedAt: doc.publishedAt,
           });
-          stockNewReports++;
+          // Only count as successful if pipeline returned usable data (not null)
+          if (result !== null && result !== undefined) {
+            stockNewReports++;
+          } else {
+            logger.warn(`[checkSscReports] ${code} pipeline returned null for ${doc.url} — extraction failed, suppressing report_new alert`);
+          }
         } catch (pipelineErr) {
           logger.error(`[checkSscReports] ${code} pipeline failed for ${doc.url}`, {
             error:

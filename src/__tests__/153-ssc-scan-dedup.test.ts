@@ -146,7 +146,8 @@ describe("Task 153 — SSC scan deduplication", () => {
       storeAlertsFn: () => {},
     });
 
-    expect(result.newReports).toBe(1);
+    // Pipeline was called but returned null (extraction failed) → newReports = 0
+    expect(result.newReports).toBe(0);
     expect(pipelineCalls.length).toBe(1);
     expect(pipelineCalls[0]).toBe("https://ssc.gov.vn/fpt-q1-2025.pdf");
   });
