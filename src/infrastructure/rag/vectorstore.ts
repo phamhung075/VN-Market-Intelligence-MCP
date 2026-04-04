@@ -257,6 +257,47 @@ export async function getCount(): Promise<number> {
 }
 
 /**
+ * Compact and optimize the LanceDB table.
+ * Merges small data files, removes old versions, reduces disk footprint.
+ * Safe to run while the server is live — LanceDB handles concurrent access.
+ *
+ * @returns Object with before/after stats, or null if table doesn't exist.
+ */
+export async function compactVectorStore(): Promise<{
+  beforeFiles: number;
+  afterFiles: number;
+  rowCount: number;
+} | null> {
+  try {
+    const table = await getTable();
+    const rowCount = await table.countRows();
+
+    // Count data files before
+    const { readdirSync } = await import("node:fs");
+    const { resolve } = await import("node:path");
+    const dbPath = Bun.env.LANCEDB_PATH ?? "./data/lancedb";
+    const dataDir = resolve(dbPath, TABLE_NAME + ".lance", "data");
+    let beforeFiles = 0;
+    try { beforeFiles = readdirSync(dataDir).length; } catch { /* dir may not exist */ }
+
+    // Compact: merge small fragments into larger files
+    await (table as unknown as { optimize: (opts?: unknown) => Promise<unknown> }).optimize?.();
+
+    // Cleanup old versions (keep last 2)
+    await (table as unknown as { cleanupOldVersions: (olderThan?: number, deleteUnverified?: boolean) => Promise<unknown> })
+      .cleanupOldVersions?.(2, true);
+
+    let afterFiles = 0;
+    try { afterFiles = readdirSync(dataDir).length; } catch { /* dir may not exist */ }
+
+    return { beforeFiles, afterFiles, rowCount };
+  } catch (err) {
+    console.warn("[vectorstore] compaction failed:", err instanceof Error ? err.message : String(err));
+    return null;
+  }
+}
+
+/**
  * Close the vector store connection and release resources.
  */
 export async function closeVectorStore(): Promise<void> {

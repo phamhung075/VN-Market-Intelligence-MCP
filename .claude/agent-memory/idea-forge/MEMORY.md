@@ -1,0 +1,1 @@
+- [VNStock Unused API Gap Analysis](project_vnstock_gaps.md) — 7 unused vnstock methods ranked by alpha potential, intraday+order book are Critical

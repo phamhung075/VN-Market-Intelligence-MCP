@@ -43,7 +43,7 @@ export interface ToolLogger extends Logger {
 
 /** Options for the rotating file sink. */
 export interface RotatingSinkOptions {
-  /** Maximum file size in megabytes before rotation is triggered. Default: 50. */
+  /** Maximum file size in megabytes before rotation is triggered. Default: 5. */
   maxFileSizeMb?: number;
   /** How often (ms) to check the file size. Default: 60_000. Pass 0 to disable. */
   checkIntervalMs?: number;
@@ -83,7 +83,7 @@ export function createRotatingFileSink(
   logFilePath: string,
   opts: RotatingSinkOptions = {},
 ): RotatingFileSink {
-  const maxBytes = (opts.maxFileSizeMb ?? 50) * 1024 * 1024;
+  const maxBytes = (opts.maxFileSizeMb ?? 5) * 1024 * 1024;
   const intervalMs = opts.checkIntervalMs ?? 60_000;
 
   const dir = dirname(logFilePath);

@@ -911,6 +911,22 @@ export async function runWeeklyAudit(
 
   const allFindings = [...dailyFindings, ...weeklyFindings];
 
+  // LanceDB compaction — reduce fragmentation (6000+ files → fewer, larger files)
+  try {
+    const { compactVectorStore } = await import("../infrastructure/rag/vectorstore.js");
+    const result = await compactVectorStore();
+    if (result) {
+      allFindings.push({
+        table: "lancedb",
+        check: "compaction",
+        severity: "info",
+        rowsAffected: result.rowCount,
+        action: "auto_cleaned",
+        detail: `Compacted: ${result.beforeFiles} → ${result.afterFiles} data files, ${result.rowCount} vectors`,
+      });
+    }
+  } catch { /* best-effort — don't block audit on compaction failure */ }
+
   writeSystemLog(database, "weekly", allFindings);
   upsertAuditState(database, "weekly", allFindings);
   await maybeSendTelegram("weekly", allFindings, database, telegram);
