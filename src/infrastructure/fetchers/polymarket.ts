@@ -164,10 +164,16 @@ export async function fetchPolymarkets(
       const clobUrl = `${config.clobApiUrl}/markets?closed=false&limit=${config.maxMarketsPerPoll}`;
       const raw = await fetchFn(clobUrl);
       const parsed: unknown = JSON.parse(raw);
-      if (!Array.isArray(parsed)) {
-        throw new Error("CLOB response is not an array");
+      // CLOB API may return a bare array or { data: [...] } envelope
+      const arr = Array.isArray(parsed)
+        ? parsed
+        : (parsed && typeof parsed === "object" && "data" in parsed && Array.isArray((parsed as Record<string, unknown>).data))
+          ? (parsed as Record<string, unknown>).data as unknown[]
+          : null;
+      if (!arr) {
+        throw new Error("CLOB response is not an array or {data:[]}");
       }
-      return parsed as ClobMarket[];
+      return arr as ClobMarket[];
     });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
@@ -191,8 +197,14 @@ export async function fetchPolymarkets(
     const gammaUrl = `${config.gammaApiUrl}/markets?closed=false&limit=${config.maxMarketsPerPoll}`;
     const raw = await fetchFn(gammaUrl);
     const parsed: unknown = JSON.parse(raw);
-    if (Array.isArray(parsed)) {
-      for (const g of parsed as GammaMarket[]) {
+    // Gamma API may return a bare array or { data: [...] } envelope
+    const gammaArr = Array.isArray(parsed)
+      ? parsed
+      : (parsed && typeof parsed === "object" && "data" in parsed && Array.isArray((parsed as Record<string, unknown>).data))
+        ? (parsed as Record<string, unknown>).data as unknown[]
+        : null;
+    if (gammaArr) {
+      for (const g of gammaArr as GammaMarket[]) {
         if (g.id) gammaMap.set(g.id, g);
         if (g.conditionId && g.conditionId !== g.id) gammaMap.set(g.conditionId, g);
       }
