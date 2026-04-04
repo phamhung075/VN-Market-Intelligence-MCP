@@ -61,6 +61,9 @@ const LEGAL_PATTERNS: PatternEntry[] = [
   // prosecution (CRITICAL)
   { pattern: /khởi tố/i, riskType: "prosecution", severity: "critical" },
   { pattern: /bắt (tạm )?giam/i, riskType: "prosecution", severity: "critical" },
+  { pattern: /vướng lao lý/i, riskType: "prosecution", severity: "critical" },
+  { pattern: /lãnh đạo bị bắt/i, riskType: "prosecution", severity: "critical" },
+  { pattern: /bị truy tố/i, riskType: "prosecution", severity: "critical" },
 
   // asset_freeze (CRITICAL)
   { pattern: /phong tỏa tài sản/i, riskType: "asset_freeze", severity: "critical" },

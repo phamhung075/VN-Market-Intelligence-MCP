@@ -1243,6 +1243,20 @@ const SECTOR_RULES: SectorRule[] = [
     title: "Nới room tín dụng ngân hàng — hỗ trợ tăng trưởng cho vay",
   },
 
+  // ── Cross-sector: aviation debt default → banking systemic risk ──────────
+  {
+    keywords: [
+      "hàng không nợ", "nợ hàng không", "thu giữ tài sản", "tịch thu tài sản",
+      "collateral seizure", "debt default airline", "airline debt",
+      "bamboo airways nợ", "vietjet nợ", "seizing land", "thu hồi sổ đỏ",
+      "nợ xấu hàng không", "bad debt airline", "airline collateral",
+    ],
+    domain: "banking",
+    direction: "down",
+    confidence: 0.72,
+    title: "Nợ xấu hàng không → rủi ro hệ thống ngân hàng (tài sản thế chấp giảm giá trị)",
+  },
+
   // ═══════════════════════════════════════════════════════════════════════════
   // PHARMA_RULES (Sprint 044)
   // Pharmaceutical sector cascade rules
