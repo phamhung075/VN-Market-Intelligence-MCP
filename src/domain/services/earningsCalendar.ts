@@ -57,6 +57,12 @@ const SAP_DEN_WINDOW_DAYS = 14;
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
+/**
+ * Domains that have a 45-day filing deadline instead of the standard 30 days.
+ * Per Vietnamese regulations, banks and insurance companies file within 45 days.
+ */
+const EXTENDED_DEADLINE_DOMAINS = new Set(["banking", "insurance"]);
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Core functions
 // ─────────────────────────────────────────────────────────────────────────────
@@ -64,22 +70,34 @@ const MS_PER_DAY = 24 * 60 * 60 * 1000;
 /**
  * Return the statutory BCTC filing deadline for a given fiscal quarter.
  *
+ * Standard deadline: 30 days after quarter end.
+ * Banking/Insurance: 45 days after quarter end (Vietnamese regulation).
+ *
  * @param year    - Fiscal year of the quarter (e.g. 2024)
  * @param quarter - Quarter number: 1, 2, 3, or 4
+ * @param domain  - Optional sector domain; banking/insurance get 45-day deadline
  * @returns Date object set to midnight UTC of the deadline day
  */
-export function getDeadlineForQuarter(year: number, quarter: 1 | 2 | 3 | 4): Date {
-  switch (quarter) {
-    case 1:
-      return new Date(`${year}-04-30`);
-    case 2:
-      return new Date(`${year}-07-30`);
-    case 3:
-      return new Date(`${year}-10-30`);
-    case 4:
-      // Annual deadline falls in March of the following year
-      return new Date(`${year + 1}-03-30`);
+export function getDeadlineForQuarter(year: number, quarter: 1 | 2 | 3 | 4, domain?: string): Date {
+  const extended = domain ? EXTENDED_DEADLINE_DOMAINS.has(domain) : false;
+
+  // Q4 = annual report: 90 days after fiscal year end (standard) / 105 days (banking/insurance)
+  // Q1-Q3 = quarterly report: 30 days (standard) / 45 days (banking/insurance)
+  if (quarter === 4) {
+    // Annual: Dec 31 + 90 days = Mar 31 next year (standard), +105 days = Apr 15 (extended)
+    const qEnd = new Date(`${year}-12-31`);
+    qEnd.setDate(qEnd.getDate() + (extended ? 105 : 90));
+    return qEnd;
   }
+
+  const quarterEndDates: Record<number, string> = {
+    1: `${year}-03-31`,
+    2: `${year}-06-30`,
+    3: `${year}-09-30`,
+  };
+  const qEnd = new Date(quarterEndDates[quarter]!);
+  qEnd.setDate(qEnd.getDate() + (extended ? 45 : 30));
+  return qEnd;
 }
 
 /**
@@ -91,8 +109,8 @@ export function getDeadlineForQuarter(year: number, quarter: 1 | 2 | 3 | 4): Dat
  * @param today - Reference date (usually current date)
  * @returns DeadlineInfo for the next upcoming filing deadline
  */
-export function getNextDeadline(today: Date): DeadlineInfo {
-  const candidates = _buildCandidates(today);
+export function getNextDeadline(today: Date, domain?: string): DeadlineInfo {
+  const candidates = _buildCandidates(today, domain);
 
   // Return the first deadline that is strictly after today
   for (const candidate of candidates) {
@@ -106,7 +124,7 @@ export function getNextDeadline(today: Date): DeadlineInfo {
   return {
     quarter: 2,
     year: year + 1,
-    deadline: getDeadlineForQuarter(year + 1, 2),
+    deadline: getDeadlineForQuarter(year + 1, 2, domain),
   };
 }
 
@@ -122,8 +140,8 @@ export function getNextDeadline(today: Date): DeadlineInfo {
  * @param today - Reference date (usually current date)
  * @returns DeadlineInfo for the most recently relevant filing deadline
  */
-export function getCurrentDeadline(today: Date): DeadlineInfo {
-  const candidates = _buildCandidates(today);
+export function getCurrentDeadline(today: Date, domain?: string): DeadlineInfo {
+  const candidates = _buildCandidates(today, domain);
   const todayMs = today.getTime();
 
   // Find the last candidate whose deadline <= today
@@ -136,7 +154,7 @@ export function getCurrentDeadline(today: Date): DeadlineInfo {
 
   // If no deadline has passed yet, return the first upcoming
   if (!last) {
-    return candidates[0] ?? getNextDeadline(today);
+    return candidates[0] ?? getNextDeadline(today, domain);
   }
 
   return last;
@@ -146,18 +164,18 @@ export function getCurrentDeadline(today: Date): DeadlineInfo {
  * Build the ordered chronological list of deadline candidates around `today`.
  * Internal helper used by getNextDeadline and getCurrentDeadline.
  */
-function _buildCandidates(today: Date): DeadlineInfo[] {
+function _buildCandidates(today: Date, domain?: string): DeadlineInfo[] {
   const year = today.getFullYear();
   return [
-    // Previous year Q4 (deadline in current year March)
-    { quarter: 4 as const, year: year - 1, deadline: getDeadlineForQuarter(year - 1, 4) },
+    // Previous year Q4 (deadline in current year)
+    { quarter: 4 as const, year: year - 1, deadline: getDeadlineForQuarter(year - 1, 4, domain) },
     // Current year quarters
-    { quarter: 1 as const, year, deadline: getDeadlineForQuarter(year, 1) },
-    { quarter: 2 as const, year, deadline: getDeadlineForQuarter(year, 2) },
-    { quarter: 3 as const, year, deadline: getDeadlineForQuarter(year, 3) },
-    { quarter: 4 as const, year, deadline: getDeadlineForQuarter(year, 4) },
-    // Next year Q1 (deadline in next year April)
-    { quarter: 1 as const, year: year + 1, deadline: getDeadlineForQuarter(year + 1, 1) },
+    { quarter: 1 as const, year, deadline: getDeadlineForQuarter(year, 1, domain) },
+    { quarter: 2 as const, year, deadline: getDeadlineForQuarter(year, 2, domain) },
+    { quarter: 3 as const, year, deadline: getDeadlineForQuarter(year, 3, domain) },
+    { quarter: 4 as const, year, deadline: getDeadlineForQuarter(year, 4, domain) },
+    // Next year Q1
+    { quarter: 1 as const, year: year + 1, deadline: getDeadlineForQuarter(year + 1, 1, domain) },
   ];
 }
 

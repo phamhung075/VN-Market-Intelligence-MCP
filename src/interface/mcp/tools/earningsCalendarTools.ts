@@ -38,6 +38,7 @@ import {
 interface WatchlistRow {
   code: string;
   exchange: string;
+  domain: string;
 }
 
 interface FilingRow {
@@ -84,7 +85,7 @@ function isoDateOnly(iso: string): string {
 function loadWatchlist(db: Database): WatchlistRow[] {
   try {
     return db
-      .query<WatchlistRow, []>("SELECT code, exchange FROM watchlist ORDER BY code")
+      .query<WatchlistRow, []>("SELECT code, exchange, domain FROM watchlist ORDER BY code")
       .all();
   } catch (err) {
     logger.warn("[get_earnings_calendar] Could not load watchlist", {
@@ -195,10 +196,11 @@ export function registerEarningsCalendarTools(
         ];
 
         for (const stock of watchlist) {
-          const { code } = stock;
+          const { code, domain } = stock;
 
           // Determine the most relevant (current) deadline for this stock
-          const nextDeadline = getCurrentDeadline(today);
+          // Banking/insurance get 45-day deadline per Vietnamese regulation
+          const nextDeadline = getCurrentDeadline(today, domain);
           const { quarter, year, deadline } = nextDeadline;
 
           // Look for an existing filing for this quarter

@@ -48,9 +48,9 @@ describe("Task 187 — getDeadlineForQuarter", () => {
     expect(d).toEqual(new Date("2024-10-30"));
   });
 
-  it("returns March 30 of the NEXT year for Q4", () => {
+  it("returns March 31 of the NEXT year for Q4 (90 days after Dec 31)", () => {
     const d = getDeadlineForQuarter(2024, 4);
-    expect(d).toEqual(new Date("2025-03-30"));
+    expect(d).toEqual(new Date("2025-03-31"));
   });
 });
 
@@ -60,9 +60,9 @@ describe("Task 187 — getDeadlineForQuarter", () => {
 
 describe("Task 187 — getNextDeadline", () => {
   it("returns Q1 deadline when current date is in January", () => {
-    // Jan 15 2025 → next deadline is Q4-2024: Mar 30 2025
+    // Jan 15 2025 → next deadline is Q4-2024: Mar 31 2025 (90 days after Dec 31)
     const result = getNextDeadline(new Date("2025-01-15"));
-    expect(result.deadline).toEqual(new Date("2025-03-30"));
+    expect(result.deadline).toEqual(new Date("2025-03-31"));
     expect(result.quarter).toBe(4);
     expect(result.year).toBe(2024);
   });
@@ -92,7 +92,7 @@ describe("Task 187 — getNextDeadline", () => {
 
   it("returns Q4 deadline (next year) when current date is November 1", () => {
     const result = getNextDeadline(new Date("2025-11-01"));
-    expect(result.deadline).toEqual(new Date("2026-03-30"));
+    expect(result.deadline).toEqual(new Date("2026-03-31"));
     expect(result.quarter).toBe(4);
     expect(result.year).toBe(2025);
   });
