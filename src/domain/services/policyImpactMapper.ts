@@ -85,7 +85,7 @@ const POLICY_RULES: PolicyRule[] = [
   },
   {
     policyType: "energy_policy",
-    keywords: ["quy hoạch điện", "FIT", "năng lượng tái tạo", "điện mặt trời", "điện gió"],
+    keywords: ["quy hoạch điện", "giá FIT", "biểu giá FIT", "cơ chế FIT", "năng lượng tái tạo", "điện mặt trời", "điện gió"],
     sectors: ["utilities", "oil_gas"],
     stocks: ["GEG", "REE", "PC1"],
     defaultDirection: "neutral",
@@ -127,8 +127,25 @@ function normalizeForMatch(s: string): string {
   return s.toLowerCase().trim();
 }
 
+function escapeRegex(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/**
+ * Check if text contains any of the given keywords.
+ * Short keywords (≤4 chars) use word-boundary matching to avoid
+ * false positives (e.g. "FIT" matching inside "profit").
+ */
 function hasKeyword(normText: string, keywords: string[]): boolean {
-  return keywords.some((kw) => normText.includes(normalizeForMatch(kw)));
+  return keywords.some((kw) => {
+    const normKw = normalizeForMatch(kw);
+    if (normKw.length <= 4) {
+      // Word-boundary match for short keywords to avoid substring false positives
+      const re = new RegExp(`(?:^|[\\s,;.()\\[\\]"'])${escapeRegex(normKw)}(?:$|[\\s,;.()\\[\\]"'])`, "u");
+      return re.test(normText);
+    }
+    return normText.includes(normKw);
+  });
 }
 
 function resolveDirection(normText: string, rule: PolicyRule): ImpactDirection {
