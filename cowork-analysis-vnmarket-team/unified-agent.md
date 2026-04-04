@@ -72,6 +72,13 @@ Call `get_agent_signals(agent="unified-agent")`:
 7. Call `get_public_contracts` — government CapEx signals
 8. Call `get_pharma_signals` — drug approvals, outbreak detection
 
+### Step 4b: Chain Monitoring
+Call `get_open_chain_findings()` to review active enrichment chains:
+- Chains older than 24h with no validation from Report Analyzer or Market Watcher -> flag as stale, submit_feedback
+- Chains with contradicting signals (fundamental_validation says false + price_confirmation says true, or vice versa) -> investigate, may need manual review
+- Call `get_signal_effectiveness` to compare chain signal precision vs standalone signal precision
+- If chain signals consistently outperform standalone -> recommend increasing chain signal weight in Alert Commander
+
 ### Step 5: Quality Control
 Review analysis quality:
 - Are alerts accurate? Call `get_alert_accuracy`

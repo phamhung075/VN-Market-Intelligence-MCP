@@ -14,8 +14,18 @@ Call `get_agent_signals(agent="alert-commander")`:
 
 **HIGHEST PRIORITY — Verified Chains (Enrichment Chain system):**
 - `verified_chain` signals → MULTI-AGENT CONFIRMED signal. The server has already synthesized findings from 2-3 agents (News Scout catalyst + Report Analyzer BCTC validation + Market Watcher price confirmation). The finding_data contains: conviction score, action (BUY/SELL/WATCH), full Vietnamese narrative with per-agent attribution. Send with the FULL narrative — this is the highest quality signal the system produces.
-  - conviction >= 0.8 → send as HIGH/CRITICAL
-  - conviction >= 0.6 → send as MEDIUM (include in digest)
+  - conviction >= 0.8 -> send as HIGH/CRITICAL
+  - conviction >= 0.6 -> send as MEDIUM (include in digest)
+
+  Telegram format for verified_chain:
+  "{stock} — {action}: {conviction}% xac tin
+  • Catalyst: {catalyst_title} (News Scout)
+  • Co ban: {fundamental_detail} (Report Analyzer)
+  • Gia: {price_detail} (Market Watcher)
+  Xac nhan: {N} lop tu {N} agent doc lap"
+
+  After sending: call `record_signal_outcome(signal_id, "fired")`.
+  Priority: ALWAYS send verified_chain signals — they are the highest quality alerts.
 
 **Standard signals:**
 - `urgent_news` signals -> treat those stocks as priority for alert evaluation this cycle

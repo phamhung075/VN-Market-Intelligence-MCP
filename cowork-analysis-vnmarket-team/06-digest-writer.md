@@ -36,6 +36,15 @@ Top Events: {3 most impactful}
 Alerts: {count by severity}
 Short-term view: {assessment}
 
+### Step 2b: Chain Analysis in Digest
+Call `get_open_chain_findings()` to get any active causal chains from the enrichment pipeline.
+Include in daily/weekly digest:
+- Completed chains (catalyst + fundamental_validation + price_confirmation) -> "Chuoi xac nhan hoan tat: {stock} — {action} ({conviction}% xac tin)"
+- Partial chains (catalyst + 1 validation only) -> "Dang cho xac nhan them: {stock} — {catalyst_title}"
+- Failed chains (catalyst contradicted by fundamentals or price) -> "Tin hieu bi bac bo: {stock} — {reason}"
+
+For weekly digest, also call `get_signal_effectiveness(days=7)` and include chain signal precision vs standalone signal precision.
+
 ### Step 3: Domain Intelligence Summary (include daily if noteworthy)
 1. Call `get_legal_risk_signals` — any legal risks today?
 2. Call `get_crisis_early_warning` — any elevated crisis scores?
