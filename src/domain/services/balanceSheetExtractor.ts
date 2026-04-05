@@ -188,7 +188,7 @@ const P_GOODWILL = /l[ợo]i\s+th[ếe]\s+th[ưu][ơo]ng\s+m[ạa]i/i;
 const P_OTHER_LONG_TERM_ASSETS = /t[àa]i\s+s[ảa]n\s+d[àa]i\s+h[ạa]n\s+kh[áa]c/i;
 
 // Total assets
-const P_TOTAL_ASSETS = /t[ổo]ng\s+c[ộo]ng\s+t[àa]i\s+s[ảa]n/i;
+const P_TOTAL_ASSETS = /t[ổo]ng\s+(?:c[ộo]ng\s+)?t[àa]i\s+s[ảa]n/i;
 
 // Liabilities
 const P_TOTAL_LIABILITIES = /n[ợo]\s+ph[ảa]i\s+tr[ảa]/i;
@@ -215,7 +215,7 @@ const P_OTHER_EQUITY_FUNDS = /qu[ỹy]\s+kh[áa]c\s+thu[ộo]c\s+.*v[ốo]n\s+ch
 const P_MINORITY_INTEREST = /l[ợo]i\s+[ía]ch\s+c[ổo]\s+[đd][ôo]ng\s+kh[ôo]ng\s+ki[ểe]m\s+so[áa]t/i;
 
 // Grand total liabilities + equity
-const P_TOTAL_LIABILITIES_AND_EQUITY = /t[ổo]ng\s+c[ộo]ng\s+ngu[ồo]n\s+v[ốo]n/i;
+const P_TOTAL_LIABILITIES_AND_EQUITY = /t[ổo]ng\s+(?:c[ộo]ng\s+)?ngu[ồo]n\s+v[ốo]n/i;
 
 // ---------------------------------------------------------------------------
 // Main extractor
