@@ -1,6 +1,5 @@
 /**
  * Task 104 — SSC Nightly Report Check
- * Task 153 — SSC Scan Deduplication
  *
  * Application use case: checks all watchlist stocks for new BCTC reports on
  * the SSC disclosure portal.  For each new report found (not yet in the
@@ -8,24 +7,17 @@
  * generates an alert if the watchlist entry has `alert_report_new = 1`.
  *
  * All external dependencies are injectable for unit testing:
- *   - `getWatchlistFn`    — read watchlist rows from DB (or any source in tests)
- *   - `listDocsFn`        — list SSC portal documents for a stock code
- *   - `pipelineFn`        — run the BCTC fetch-parse-store pipeline for one doc
- *   - `isNewReportFn`     — legacy dedup check via financial_reports.ssc_url
- *   - `isDocProcessedFn`  — fast dedup check via financial_reports.ssc_doc_id (task 153)
- *   - `storeAlertsFn`     — persist generated alerts (defaults to SQLite alertStore)
- *
- * Deduplication strategy (task 153):
- *   When `isDocProcessedFn` is provided, it is checked FIRST using the document
- *   URL as the doc ID (stable, unique per SSC document).  Only if that returns
- *   false does the legacy `isNewReportFn` check run.  This allows a sub-1 ms
- *   skip for already-processed documents, avoiding full pipeline re-runs.
+ *   - `getWatchlistFn`  — read watchlist rows from DB (or any source in tests)
+ *   - `listDocsFn`      — list SSC portal documents for a stock code
+ *   - `pipelineFn`      — run the BCTC fetch-parse-store pipeline for one doc
+ *   - `isNewReportFn`   — dedup check (defaults to querying financial_reports.ssc_url)
+ *   - `storeAlertsFn`   — persist generated alerts (defaults to SQLite alertStore)
  *
  * Layer: application/usecases — may import from domain/ and infrastructure/.
  */
 
 import { getDb } from "../../infrastructure/db/schema.js";
-import { storeAlerts, isDocAlreadyProcessed } from "../../infrastructure/db/alertStore.js";
+import { storeAlerts } from "../../infrastructure/db/alertStore.js";
 import { generateAlerts } from "../../domain/services/alertGenerator.js";
 import type { Alert } from "../../domain/services/alertGenerator.js";
 import type { SscDocument } from "../../infrastructure/fetchers/ssc.js";
@@ -89,24 +81,79 @@ export interface CheckSscReportsOptions {
    */
   pipelineFn?: (params: PipelineParams) => Promise<unknown>;
   /**
-   * Override for the legacy dedup check.
+   * Override for the dedup check.
    * Returns `true` when the document has NOT yet been stored.
    * Defaults to querying `financial_reports.ssc_url` via `getDb()`.
    */
   isNewReportFn?: (code: string, pdfUrl: string) => boolean;
   /**
-   * Fast dedup guard added by task 153.
-   * Called with the document URL as the `ssc_doc_id`.
-   * Returns `true` when the document is ALREADY processed — the pipeline
-   * should be skipped.
-   * Defaults to `isDocAlreadyProcessed(docUrl, getDb())`.
-   */
-  isDocProcessedFn?: (docId: string) => boolean;
-  /**
    * Override for storing generated alerts.
    * Defaults to `storeAlerts` writing to the `alerts` SQLite table.
    */
   storeAlertsFn?: (alerts: Alert[]) => void;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Quarter derivation helper
+// ─────────────────────────────────────────────────────────────────────────────
+
+import type { QuarterString } from "./fetchParseAndStoreBctc.js";
+
+/**
+ * Derive the fiscal quarter and year from a publication date string using the
+ * Vietnamese reporting calendar:
+ *
+ * | Publish month | Fiscal quarter | Year offset      |
+ * |---------------|----------------|-----------------|
+ * | Jan – Apr     | Q4             | prior year (−1)  |
+ * | May – Jul     | Q1             | same year        |
+ * | Aug – Oct     | Q2             | same year        |
+ * | Nov – Dec     | Q3             | same year        |
+ *
+ * Accepts both "DD/MM/YYYY" (SSC portal format) and ISO 8601 strings.
+ * Falls back to Q1 of the current year on any parse failure.
+ *
+ * @param publishedAt - Date string from the SSC portal or ISO 8601.
+ * @returns `{ quarter, year }` derived from the reporting calendar.
+ */
+export function deriveQuarterFromPublishedAt(
+  publishedAt: string,
+): { quarter: QuarterString; year: number } {
+  const fallback = { quarter: "Q1" as QuarterString, year: new Date().getFullYear() };
+
+  if (!publishedAt || publishedAt.trim().length === 0) {
+    return fallback;
+  }
+
+  let date: Date | null = null;
+
+  // Try "DD/MM/YYYY" format first (SSC portal)
+  const ddmmyyyy = publishedAt.trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (ddmmyyyy) {
+    const [, dd, mm, yyyy] = ddmmyyyy;
+    date = new Date(`${yyyy}-${mm!.padStart(2, "0")}-${dd!.padStart(2, "0")}`);
+  } else {
+    // Try ISO 8601 / any other parseable format
+    date = new Date(publishedAt);
+  }
+
+  if (!date || isNaN(date.getTime())) {
+    return fallback;
+  }
+
+  const month = date.getMonth() + 1; // 1-indexed
+  const year = date.getFullYear();
+
+  if (month >= 1 && month <= 4) {
+    return { quarter: "Q4", year: year - 1 };
+  } else if (month >= 5 && month <= 7) {
+    return { quarter: "Q1", year };
+  } else if (month >= 8 && month <= 10) {
+    return { quarter: "Q2", year };
+  } else {
+    // Nov–Dec
+    return { quarter: "Q3", year };
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -163,21 +210,20 @@ async function defaultListDocs(code: string): Promise<SscDocument[]> {
 /**
  * Default pipeline runner — delegates to `fetchParseAndStoreBctc`.
  *
- * Builds a minimal SSC HTML mock so `listSscDocuments` can pick up the
- * pre-discovered document URL without making another network request.
+ * Passes the pre-discovered `pdfUrl` directly (bypassing Step 1 SSC listing),
+ * and derives the fiscal quarter + year from the document's `publishedAt` date
+ * using the Vietnamese reporting calendar.
  */
 async function defaultPipeline(params: PipelineParams): Promise<unknown> {
   const { fetchParseAndStoreBctc } = await import("./fetchParseAndStoreBctc.js");
 
-  const year = new Date().getFullYear();
-
-  // Inject a mock browser factory that returns the pre-found document directly
-  const mockBrowserFactory = undefined; // Use default Puppeteer browser
+  const { quarter, year } = deriveQuarterFromPublishedAt(params.publishedAt);
 
   return fetchParseAndStoreBctc({
     actionCode: params.actionCode,
     year,
-    quarter: "Q1",
+    quarter,
+    pdfUrl: params.pdfUrl,
   });
 }
 
@@ -207,9 +253,6 @@ export async function checkSscReports(
   const listDocsFn = options.listDocsFn ?? defaultListDocs;
   const pipelineFn = options.pipelineFn ?? defaultPipeline;
   const isNewReportFn = options.isNewReportFn ?? isNewReport;
-  const isDocProcessedFn =
-    options.isDocProcessedFn ??
-    ((docId: string) => isDocAlreadyProcessed(docId, getDb()));
   const storeAlertsFn = options.storeAlertsFn ?? ((alerts) => storeAlerts(alerts, getDb()));
 
   // ── 1. Load watchlist ───────────────────────────────────────────────────────
@@ -234,11 +277,7 @@ export async function checkSscReports(
       const docs = await listDocsFn(code);
 
       // ── 2b. Filter for new reports (not yet in financial_reports) ────────
-      // Task 153: check ssc_doc_id guard first (fast index lookup).
-      // Falls back to legacy ssc_url check only when doc is not already seen.
-      const newDocs = docs.filter(
-        (doc) => !isDocProcessedFn(doc.url) && isNewReportFn(code, doc.url),
-      );
+      const newDocs = docs.filter((doc) => isNewReportFn(code, doc.url));
 
       if (newDocs.length === 0) {
         logger.debug(`[checkSscReports] ${code} — no new documents`);
@@ -250,17 +289,12 @@ export async function checkSscReports(
       // ── 2c. Run pipeline for each new document (serial, 2 s delay) ───────
       for (const doc of newDocs) {
         try {
-          const result = await pipelineFn({
+          await pipelineFn({
             actionCode: code,
             pdfUrl: doc.url,
             publishedAt: doc.publishedAt,
           });
-          // Only count as successful if pipeline returned usable data (not null)
-          if (result !== null && result !== undefined) {
-            stockNewReports++;
-          } else {
-            logger.warn(`[checkSscReports] ${code} pipeline returned null for ${doc.url} — extraction failed, suppressing report_new alert`);
-          }
+          stockNewReports++;
         } catch (pipelineErr) {
           logger.error(`[checkSscReports] ${code} pipeline failed for ${doc.url}`, {
             error:
