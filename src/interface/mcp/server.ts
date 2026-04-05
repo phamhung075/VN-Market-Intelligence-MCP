@@ -434,7 +434,7 @@ export async function createBunServer(
           count++;
         }
 
-        // Also store in history for avg volume calculation
+        // Store 1-min ticks (today only — for intraday review)
         const histInsert = db.prepare(`
           INSERT OR IGNORE INTO market_prices_history (code, price, volume, fetched_at)
           VALUES (?, ?, ?, ?)
@@ -444,7 +444,36 @@ export async function createBunServer(
           histInsert.run(p.code, p.price * 1000, p.volume ?? 0, p.fetched_at ?? now);
         }
 
-        log.info("[push-prices] updated market_prices + history", { count, source: "vps-proxy" });
+        // Update daily OHLCV (kept 2+ years for volatility analysis)
+        const vnDate = new Date(Date.now() + 7 * 3600_000).toISOString().slice(0, 10);
+        const ohlcvUpsert = db.prepare(`
+          INSERT INTO daily_ohlcv (code, date, open, high, low, close, volume, updated_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+          ON CONFLICT(code, date) DO UPDATE SET
+            high = MAX(daily_ohlcv.high, excluded.high),
+            low = MIN(daily_ohlcv.low, excluded.low),
+            close = excluded.close,
+            volume = excluded.volume,
+            updated_at = excluded.updated_at
+        `);
+        for (const p of prices) {
+          if (!p.code || p.price == null) continue;
+          const priceVnd = p.price * 1000;
+          const high = p.high ? parseFloat(p.high) * 1000 : priceVnd;
+          const low = p.low ? parseFloat(p.low) * 1000 : priceVnd;
+          ohlcvUpsert.run(p.code, vnDate, priceVnd, high, low, priceVnd, p.volume ?? 0, now);
+        }
+
+        // Consolidate: keep only today's ticks, delete older ones
+        // (daily OHLCV already preserves the day summary for 2+ years)
+        try {
+          const todayStart = vnDate + "T00:00:00Z";
+          db.prepare(`
+            DELETE FROM market_prices_history WHERE fetched_at < ?
+          `).run(todayStart);
+        } catch { /* best effort */ }
+
+        log.info("[push-prices] updated prices + OHLCV + ticks", { count, source: "vps-proxy" });
         res.writeHead(200, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ ok: true, updated: count }));
 
