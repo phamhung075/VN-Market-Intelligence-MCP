@@ -19,4 +19,4 @@ Run these steps ONCE on first deploy:
 
 NOTE: User can change the watchlist anytime via add_to_watchlist and remove_from_watchlist.
 All agents read the watchlist dynamically — no hardcoded stock codes.
-System has 68 MCP tools as of Sprint 044.
+System has 74 MCP tools as of Sprint 046.

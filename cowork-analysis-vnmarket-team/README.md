@@ -265,6 +265,35 @@ Analysis team finds problems -> submit_feedback / send_telegram(channel="report"
 
 **Important**: Feedback NEVER goes to the Chat Channel (user-facing). Only problems/hotfix reports go to the Report Channel.
 
+## Known Issues — DO NOT RE-REPORT
+
+Before submitting feedback or a report, check this list. If the issue is listed here, DO NOT report it again. The Dev Team is already aware.
+
+| # | Issue | Status | Notes |
+|---|-------|--------|-------|
+| 270 | SSC pipeline not downloading PDFs for VCB/VEA/FPT | BACKLOG | fetchParseAndStoreBctc needs pdfUrl passthrough — SPRINT needed |
+| 271 | incomeStatementExtractor: all income fields = 0 for VNM/FPT | BACKLOG | Regex patterns don't match real BCTC PDF formats — SPRINT needed |
+| 272 | balanceSheetExtractor: Total Assets off by 10^7 | BACKLOG | triệu đồng not converted to tỷ — SPRINT needed |
+| 273 | SSC Puppeteer crash loop / selector changed | BACKLOG | Needs mutex + updated selectors — SPRINT needed |
+| 274 | Price data stale from France server | FIXED | VPS Singapore proxy deployed (commit c4ae88a). 48 stocks + 3 VN indices + 11 global indices every 1 min |
+| 275 | Telegram env vars "not set" warning | FIXED | Works via MCP. Old server instance logs still visible to agents. Ignore "TELEGRAM_BOT_TOKEN not set" warnings — they are stale |
+| 276 | Polymarket CLOB 403 | MONITOR | Geo-blocked from France. Circuit breaker handles it. Not fixable by code |
+| 277 | weatherVn NCHMF 404 | MONITOR | External URL changed/down. Not blocking core analysis |
+| 278 | Kinh Dịch identical readings for all stocks | BACKLOG | Missing price data causes same default hào encoding — needs per-stock differentiation |
+| 279 | LanceDB unavailable after restart | FIXED | Transient startup issue, resolves within 2-3 min. Ignore if uptime > 5 min |
+| 280 | VCB -8% false alert (53,100 VND) | FIXED | Was test data from dev team. Real price 57,700 VND. Alert already overwritten |
+| 281 | scanMarket 0 prices pre-market | NOT A BUG | 0 prices before 09:00 VN (02:00 UTC) is expected — market is closed |
+| 282 | get_sector_comparison "no such column: date" | FIXED | SQL query fixed (commit af09eb8) |
+| 283 | get_portfolio_conviction timeout | BACKLOG | Needs query optimization or caching for large stock lists |
+
+**Rules for agents:**
+- **FIXED** → issue is resolved, stop reporting it
+- **BACKLOG** → Dev Team knows, waiting for SPRINT. Only report if behavior CHANGED (new symptoms)
+- **MONITOR** → external/infra issue, not fixable by code. Never report
+- **NOT A BUG** → expected behavior, never report
+
+**How to check before reporting:** Call `get_recent_fixes` to see what the Dev Team has already fixed. If your issue matches a recent fix, do NOT report it.
+
 ## Key Architecture Rules
 
 1. **Watchlist is dynamic** — all agents call `get_watchlist`, never hardcode stocks
