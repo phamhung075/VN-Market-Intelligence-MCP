@@ -224,11 +224,13 @@ function buildMacroSection(db: ReturnType<typeof getDb>): string {
   try {
     const tracked = db
       .prepare(
-        `SELECT indicator_name AS code, value AS price, NULL AS change_pct, updated_at
+        `SELECT indicator AS code, value AS price, NULL AS change_pct, extracted_at AS updated_at
          FROM tracked_indicators
-         WHERE updated_at >= datetime('now', '-48 hours')
-         ORDER BY updated_at DESC
-         LIMIT 10`,
+         WHERE extracted_at >= datetime('now', '-48 hours')
+         GROUP BY indicator
+         HAVING extracted_at = MAX(extracted_at)
+         ORDER BY indicator
+         LIMIT 20`,
       )
       .all() as MacroRow[];
 
