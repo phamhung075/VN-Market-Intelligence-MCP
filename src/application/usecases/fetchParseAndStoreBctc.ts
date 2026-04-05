@@ -1,11 +1,18 @@
 /**
  * Task 048 — SSC Fetch → Parse → Store Pipeline
+ * Task 293 — OCR cache fallback wiring
  *
  * Application use case: orchestrates the full BCTC fetch-parse-store pipeline.
  *
  * Pipeline:
  *   1. listSscDocuments  — scrape SSC portal to find PDF URL for the given stock/period
  *   2. downloadAndExtractPdf — download PDF and extract raw text
+ *      (2b) If rawText < 100 chars: check OCR cache via getCachedPdfText
+ *           - confidence >= 0.5 → use cached text (info log)
+ *           - confidence 0.3–0.49 → use cached text with warning log
+ *           - confidence < 0.3 → return null
+ *           - no cache + isOcrAvailable() → download to disk and run OCR extraction
+ *           - no cache + OCR unavailable → fall through to empty-text guard
  *   3. parseBctcReport  — parse text into FinancialReport (balance sheet, income, cash flow, ratios)
  *   4. insertAnalysis   — embed summary into LanceDB for RAG retrieval
  *   5. Return the FinancialReport
@@ -16,13 +23,20 @@
  */
 
 import { randomUUID } from "node:crypto";
+import { writeFileSync, mkdirSync } from "node:fs";
+import { basename, join } from "node:path";
 
 import { listSscDocuments } from "../../infrastructure/fetchers/ssc.js";
 import { downloadAndExtractPdf } from "../../infrastructure/fetchers/pdf.js";
+import {
+  getCachedPdfText,
+  extractAndStorePdfPages,
+  isOcrAvailable,
+} from "../../infrastructure/fetchers/pdfOcrWorker.js";
 import { parseBctcReport } from "./parseBctcReport.js";
 import { logger } from "../../infrastructure/logger.js";
 
-import type { HttpClient, SscDocument } from "../../infrastructure/fetchers/ssc.js";
+import type { HttpClient } from "../../infrastructure/fetchers/ssc.js";
 import type { AnalysisInput } from "../../infrastructure/rag/retriever.js";
 import type { FinancialReport, FiscalPeriod } from "../../../bctc-schema.js";
 
@@ -47,13 +61,6 @@ export interface FetchParseAndStoreBctcParams {
   /** Quarter string e.g. "Q1", "Q2", "Q3", "Q4" */
   quarter: QuarterString;
   /**
-   * Optional direct PDF URL.
-   * When provided, Step 1 (listSscDocuments) is skipped entirely and this URL
-   * is used as the document source. Useful when the caller already knows the
-   * exact PDF location (e.g. from a previously scraped link).
-   */
-  pdfUrl?: string;
-  /**
    * Optional HTTP client used by listSscDocuments when fetching the SSC portal.
    * Inject a mock in tests to avoid real network calls.
    */
@@ -67,7 +74,6 @@ export interface FetchParseAndStoreBctcParams {
    * Optional override for extracted PDF text.
    * When provided the PDF download + extraction step is bypassed and this text
    * is used directly. Useful in tests to decouple from pdf-parse.
-   * Takes priority over pdfUrl in Step 2.
    */
   pdfTextOverride?: string;
   /**
@@ -132,7 +138,6 @@ export async function fetchParseAndStoreBctc(
     actionCode,
     year,
     quarter,
-    pdfUrl,
     sscHttpClient,
     pdfHttpClient,
     pdfTextOverride,
@@ -141,32 +146,24 @@ export async function fetchParseAndStoreBctc(
 
   const tag = `[fetchParseAndStoreBctc] ${actionCode} ${year}-${quarter}`;
 
-  // ── Step 1: List SSC documents (skipped when pdfUrl is provided) ───────────
-  let doc: SscDocument;
+  // ── Step 1: List SSC documents ─────────────────────────────────────────────
+  logger.info(`${tag} step 1: listing SSC documents`);
 
-  if (pdfUrl) {
-    // FR-4: caller already knows the PDF URL — bypass SSC portal scrape
-    logger.info(`${tag} using provided pdfUrl — skipping SSC listing`);
-    doc = { url: pdfUrl, publishedAt: "", title: "", reportType: "quarterly" };
-  } else {
-    logger.info(`${tag} step 1: listing SSC documents`);
+  const docs = await listSscDocuments(
+    actionCode,
+    "quarterly",
+    year,
+    sscHttpClient,
+  );
 
-    const docs = await listSscDocuments(
-      actionCode,
-      "quarterly",
-      year,
-      sscHttpClient,
-    );
-
-    if (docs.length === 0) {
-      logger.warn(`${tag} no documents found — aborting`);
-      return null;
-    }
-
-    // Use the first (most recent) matching document
-    doc = docs[0]!;
-    logger.info(`${tag} using document`, { url: doc.url, publishedAt: doc.publishedAt });
+  if (docs.length === 0) {
+    logger.warn(`${tag} no documents found — aborting`);
+    return null;
   }
+
+  // Use the first (most recent) matching document
+  const doc = docs[0]!;
+  logger.info(`${tag} using document`, { url: doc.url, publishedAt: doc.publishedAt });
 
   // ── Step 2: Download & extract PDF text ────────────────────────────────────
   logger.info(`${tag} step 2: extracting PDF text`);
@@ -174,11 +171,85 @@ export async function fetchParseAndStoreBctc(
   let rawText: string;
 
   if (pdfTextOverride !== undefined) {
-    // Test shortcut — bypass real PDF extraction
+    // Test shortcut — bypass real PDF extraction and OCR fallback
     rawText = pdfTextOverride;
   } else {
     const extraction = await downloadAndExtractPdf(doc.url, pdfHttpClient);
     rawText = extraction.text;
+
+    // ── Task 293: OCR fallback when pdf-parse returns < 100 chars ─────────────
+    // Scanned / image-based PDFs produce very little or no text via pdf-parse.
+    // In that case consult the OCR cache built by pdfOcrWorker.ts, and if not
+    // yet cached + OCR tools are available, run the extraction now.
+    if (rawText.trim().length < 100) {
+      // Derive the filename from the URL path (basename strips any directory)
+      let filename: string;
+      try {
+        filename = basename(decodeURIComponent(new URL(doc.url, "https://example.com").pathname));
+      } catch {
+        filename = basename(doc.url);
+      }
+      if (!filename) {
+        filename = `${actionCode}_${year}_${quarter}.pdf`;
+      }
+
+      logger.info(`${tag} pdf-parse returned < 100 chars — checking OCR cache`, { filename });
+
+      let cached = getCachedPdfText(filename);
+
+      if (cached === null && isOcrAvailable() && !pdfHttpClient) {
+        // Cache miss and OCR tools present — download PDF to disk and run OCR.
+        // Guard: when pdfHttpClient is injected (test mode) skip real-network download.
+        logger.info(`${tag} OCR cache miss — downloading and extracting`, { filename });
+        try {
+          const { default: axios } = await import("axios");
+
+          const pdfDir = join(process.cwd(), "data", "pdfs");
+          mkdirSync(pdfDir, { recursive: true });
+          const pdfPath = join(pdfDir, filename);
+
+          const resp = await axios.get<ArrayBuffer>(doc.url, {
+            responseType: "arraybuffer",
+            timeout: 60_000,
+            headers: {
+              "User-Agent":
+                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+            },
+          });
+          writeFileSync(pdfPath, Buffer.from(resp.data));
+          await extractAndStorePdfPages(pdfPath, filename);
+          cached = getCachedPdfText(filename);
+        } catch (err) {
+          logger.warn(`${tag} OCR extraction failed`, {
+            filename,
+            error: err instanceof Error ? err.message : String(err),
+          });
+        }
+      }
+
+      if (cached !== null && cached.confidence >= 0.3) {
+        if (cached.confidence < 0.5) {
+          logger.warn(`${tag} using OCR cache with low confidence`, {
+            filename,
+            confidence: cached.confidence,
+          });
+        } else {
+          logger.info(`${tag} using OCR cache`, {
+            filename,
+            confidence: cached.confidence,
+            pages: cached.pages,
+          });
+        }
+        rawText = cached.text;
+      } else if (cached !== null && cached.confidence < 0.3) {
+        logger.warn(`${tag} OCR confidence too low — aborting`, {
+          filename,
+          confidence: cached.confidence,
+        });
+        return null;
+      }
+      // else: no cache and OCR not available — fall through to empty-text guard
+    }
   }
 
   if (!rawText || rawText.trim().length === 0) {
