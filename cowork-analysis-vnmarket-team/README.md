@@ -58,7 +58,7 @@ CLOUDFLARE_TUNNEL=vn-market-mcp
 cd /path/to/VN-Market-Intelligence-MCP
 bun run src/index.ts
 ```
-Server auto-seeds watchlist from config, starts OCR for unprocessed PDFs, registers 68 tools.
+Server auto-seeds watchlist from config, starts OCR for unprocessed PDFs, registers 75 tools.
 
 Verify: `curl https://zenmidi.com/health` — `{"status":"ok","toolCount":68}`
 
@@ -87,13 +87,13 @@ MCP connector URL: `https://zenmidi.com/mcp`
 - Telegram: "System online" at 08:55 Vietnam (03:55 France CET)
 - Health: `curl https://zenmidi.com/health`
 
-## 68 MCP Tools Available (Sprint 044)
+## 74 MCP Tools Available (Sprint 046)
 
 | Category | Tools |
 |----------|-------|
 | **Watchlist** | add_to_watchlist, remove_from_watchlist, get_watchlist, update_thresholds |
-| **News** | fetch_and_analyze, run_impact_chain, search_similar_context, get_analysis_history |
-| **Market** | get_market_context, get_market_snapshot, get_macro_snapshot, get_patterns, get_price_history, get_sector_rotation, compare_stocks, get_sentiment_trend |
+| **News** | fetch_and_analyze, run_impact_chain, search_similar_context |
+| **Market** | get_market_context, get_macro_snapshot, get_patterns, get_price_history, get_sector_rotation, compare_stocks, get_sentiment_trend |
 | **Reports** | get_bctc_full, get_financial_summary, compare_financials, list_stored_pdfs, read_bctc_pdf, get_earnings_calendar |
 | **Alerts** | get_alerts (type: "system"\|"price"\|"all"), mark_alert_read, set_price_alert, delete_price_alert, get_alert_accuracy, list_alert_rules, manage_alert_mute |
 | **Portfolio** | get_portfolio_conviction, set_position, get_positions, close_position, get_portfolio_risk, get_rebalancing_signals, get_correlation_matrix, get_performance_attribution, get_target_allocation |
@@ -148,6 +148,25 @@ For dev team and analysis team problem reports:
 - Used for hotfix sprint runs (System Improver -> FIX NOW or SPRINT TASK)
 - Review agent deletes reports when issues are fixed
 - **NOT for user communication — problems and hotfix only**
+
+### Vietnamese Language Rules (ALL Telegram messages)
+
+**CRITICAL**: All messages sent via `send_telegram(channel="chat")` MUST use proper Vietnamese with full diacritics (dấu). The user reads Vietnamese — never send without diacritics.
+
+| Wrong (no diacritics) | Correct (with diacritics) |
+|----------------------|--------------------------|
+| Canh bao gia | Cảnh báo giá |
+| Bien dong manh | Biến động mạnh |
+| Tin quan trong | Tin quan trọng |
+| Tom tat buoi toi | Tóm tắt buổi tối |
+| Co phieu tang/giam | Cổ phiếu tăng/giảm |
+| Nganh ngan hang | Ngành ngân hàng |
+| Bat dong san | Bất động sản |
+| Gia dau tang | Giá dầu tăng |
+| Khoi luong giao dich | Khối lượng giao dịch |
+| Doanh thu thuan | Doanh thu thuần |
+
+**Report Channel** (`channel="report"`): English is OK for dev team reports (technical content).
 
 ### 11 Telegram Bot Commands (User -> Chat Channel)
 - `/watchlist` — list current tracked stocks
