@@ -39,7 +39,36 @@
     "openTime": "09:00",
     "closeTime": "15:30",
     "tradingDays": [1, 2, 3, 4, 5],
-    "watchlist": ["VNM", "FPT", "VCB", "VEA"]
+    "watchlist": ["VNM", "FPT", "VCB", "VEA"],
+    "referenceStocks": {
+      "banking":    ["VCB", "BID", "CTG", "TCB", "MBB", "VPB", "ACB", "HDB", "STB", "TPB"],
+      "real_estate":["VIC", "VHM", "NVL", "KDH", "DXG"],
+      "steel":      ["HPG", "HSG", "NKG", "POM"],
+      "oil_gas":    ["GAS", "PLX", "PVD", "PVS"],
+      "retail":     ["VNM", "MWG", "MSN", "PNJ", "SAB"],
+      "tech":       ["FPT", "CMG"],
+      "aviation":   ["HVN", "VJC", "ACV"],
+      "securities": ["SSI", "VND", "HCM"],
+      "utilities":  ["REE", "POW", "PC1"],
+      "pharma":     ["DHG", "IMP"],
+      "agriculture":["VHC", "HAG", "GVR"],
+      "logistics":  ["GMD", "VTP"],
+      "insurance":  ["BVH"],
+      "automotive": ["VEA"]
+    },
+    "globalIndices": {
+      "SP500":      "^GSPC",
+      "DJIA":       "^DJI",
+      "NASDAQ":     "^IXIC",
+      "NIKKEI":     "^N225",
+      "SHANGHAI":   "000001.SS",
+      "HANGSENG":   "^HSI",
+      "KOSPI":      "^KS11",
+      "FTSE100":    "^FTSE",
+      "DAX":        "^GDAXI",
+      "CAC40":      "^FCHI",
+      "ASX200":     "^AXJO"
+    }
   },
 
   "predictionMarkets": {

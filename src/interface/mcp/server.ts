@@ -409,6 +409,7 @@ export async function createBunServer(
           volume?: number;
           change_pct?: string;
           fetched_at?: string;
+          type?: "stock" | "index" | "global_index";
         }> = JSON.parse(body);
 
         if (!Array.isArray(prices) || prices.length === 0) {
@@ -427,10 +428,12 @@ export async function createBunServer(
         let count = 0;
         for (const p of prices) {
           if (!p.code || p.price == null) continue;
-          // VPS API returns price in thousands (57.7 = 57,700 VND)
-          const priceVnd = p.price * 1000;
+          // VN stocks: VPS API returns price in thousands (57.7 = 57,700 VND)
+          // Indices + global: price is already in correct unit
+          const isStock = !p.type || p.type === "stock";
+          const priceVal = isStock ? p.price * 1000 : p.price;
           const changePct = p.change_pct ? parseFloat(p.change_pct) : null;
-          upsert.run(p.code, priceVnd, changePct, p.volume ?? 0, p.fetched_at ?? now);
+          upsert.run(p.code, priceVal, changePct, p.volume ?? 0, p.fetched_at ?? now);
           count++;
         }
 
@@ -441,7 +444,9 @@ export async function createBunServer(
         `);
         for (const p of prices) {
           if (!p.code || p.price == null) continue;
-          histInsert.run(p.code, p.price * 1000, p.volume ?? 0, p.fetched_at ?? now);
+          const isStock = !p.type || p.type === "stock";
+          const pv = isStock ? p.price * 1000 : p.price;
+          histInsert.run(p.code, pv, p.volume ?? 0, p.fetched_at ?? now);
         }
 
         // Update daily OHLCV (kept 2+ years for volatility analysis)
@@ -458,10 +463,11 @@ export async function createBunServer(
         `);
         for (const p of prices) {
           if (!p.code || p.price == null) continue;
-          const priceVnd = p.price * 1000;
-          const high = p.high ? parseFloat(p.high) * 1000 : priceVnd;
-          const low = p.low ? parseFloat(p.low) * 1000 : priceVnd;
-          ohlcvUpsert.run(p.code, vnDate, priceVnd, high, low, priceVnd, p.volume ?? 0, now);
+          const isStock = !p.type || p.type === "stock";
+          const pv = isStock ? p.price * 1000 : p.price;
+          const high = p.high ? parseFloat(p.high) * (isStock ? 1000 : 1) : pv;
+          const low = p.low ? parseFloat(p.low) * (isStock ? 1000 : 1) : pv;
+          ohlcvUpsert.run(p.code, vnDate, pv, high, low, pv, p.volume ?? 0, now);
         }
 
         // Consolidate: keep only today's ticks, delete older ones
@@ -504,9 +510,11 @@ export async function createBunServer(
               } catch { /* best effort */ }
             }
 
-            // Detect signals for each stock
+            // Detect signals for each stock (skip indices)
             for (const p of prices) {
               if (!p.code || p.price == null) continue;
+              const isStock = !p.type || p.type === "stock";
+              if (!isStock) continue; // signals only for stocks, not indices
               const priceVnd = p.price * 1000;
               priceMap.set(p.code, priceVnd);
               const changePct = p.change_pct ? parseFloat(p.change_pct) : 0;
@@ -608,7 +616,7 @@ export async function createBunServer(
       return;
     }
 
-    // ── Get Watchlist codes (for VPS proxy) ────────────────────────────────
+    // ── Get all stock codes for VPS proxy (watchlist + reference stocks) ────
     if (method === "GET" && pathname === "/api/watchlist") {
       const apiKey = process.env.VPS_PUSH_API_KEY;
       const authHeader = req.headers["x-api-key"] || req.headers["authorization"]?.replace("Bearer ", "");
@@ -619,10 +627,31 @@ export async function createBunServer(
       }
       try {
         const db = getDb();
+        // Watchlist stocks (user's portfolio)
         const rows = db.prepare("SELECT code FROM watchlist ORDER BY code").all() as { code: string }[];
-        const codes = rows.map((r) => r.code);
+        const watchlistCodes = rows.map((r) => r.code);
+
+        // Reference stocks + global indices from mcp.config.json
+        const { readFileSync } = await import("node:fs");
+        const { resolve } = await import("node:path");
+        let refCodes: string[] = [];
+        let globalIndices: Record<string, string> = {};
+        try {
+          const cfgRaw = JSON.parse(readFileSync(resolve(process.cwd(), "mcp.config.json"), "utf-8"));
+          const refStocks: Record<string, string[]> = cfgRaw?.market?.referenceStocks ?? {};
+          refCodes = Object.values(refStocks).flat();
+          globalIndices = cfgRaw?.market?.globalIndices ?? {};
+        } catch { /* config read failed — use watchlist only */ }
+
+        // Deduplicate: watchlist + all reference codes
+        const allCodes = [...new Set([...watchlistCodes, ...refCodes])].sort();
+
         res.writeHead(200, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ codes }));
+        res.end(JSON.stringify({
+          codes: allCodes,
+          watchlist: watchlistCodes,
+          globalIndices,
+        }));
       } catch (err) {
         res.writeHead(500, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ error: "DB error" }));

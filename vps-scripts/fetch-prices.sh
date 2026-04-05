@@ -1,75 +1,120 @@
 #!/bin/bash
-# VN Market Price Proxy — auto-deployed by deploy-vps-proxy.sh
-# Fetches watchlist from MCP, gets prices from VPS Securities, pushes back.
+# VN Market Price Proxy — auto-deployed
+# Fetches: VN stocks (batch) + VN indices (CafeF) + global indices (Yahoo Finance)
+# All pushed to MCP server in 1 call
 
 API_URL="__MCP_BASE__/api/push-prices"
 WATCHLIST_URL="__MCP_BASE__/api/watchlist"
 API_KEY="__API_KEY__"
 LOG="/var/log/vn-price-fetch.log"
 
-# Rotate log if > 10MB
 LOG_SIZE=$(stat -c%s "$LOG" 2>/dev/null || echo 0)
 if [ "$LOG_SIZE" -gt 10485760 ]; then mv "$LOG" "$LOG.old"; fi
 
 echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) === START ===" >> "$LOG"
 
-# Step 1: Get watchlist codes from MCP server
-WATCHLIST=$(curl -s --connect-timeout 10 --max-time 15 \
-  "$WATCHLIST_URL" \
-  -H "X-API-Key: $API_KEY" \
-  -H "User-Agent: VN-Market-VPS-Proxy/1.0")
+# Step 1: Get config from MCP server
+CONFIG=$(curl -s --connect-timeout 10 --max-time 15 \
+  "$WATCHLIST_URL" -H "X-API-Key: $API_KEY" -H "User-Agent: VN-Market-VPS-Proxy/1.0")
 
-if [ -z "$WATCHLIST" ]; then
+if [ -z "$CONFIG" ]; then
   echo "$(date -u) FAIL: cannot reach MCP server" >> "$LOG"
   exit 1
 fi
 
-CODES=$(echo "$WATCHLIST" | jq -r '.codes[]' 2>/dev/null)
-if [ -z "$CODES" ]; then
-  echo "$(date -u) FAIL: empty watchlist: $WATCHLIST" >> "$LOG"
+CODES=$(echo "$CONFIG" | jq -r '.codes | join(",")')
+if [ -z "$CODES" ] || [ "$CODES" = "null" ]; then
+  echo "$(date -u) FAIL: empty codes" >> "$LOG"
   exit 1
 fi
 
-echo "$(date -u) Watchlist: $(echo $CODES | tr '\n' ' ')" >> "$LOG"
+COUNT=$(echo "$CONFIG" | jq '.codes | length')
+echo "$(date -u) Config: $COUNT VN stocks" >> "$LOG"
 
-# Step 2: Fetch prices from VPS Securities API
-JSON="["
-FIRST=1
-for CODE in $CODES; do
-  DATA=$(curl -s --connect-timeout 10 --max-time 15 \
-    "https://bgapidatafeed.vps.com.vn/getliststockdata/$CODE" \
-    -H "User-Agent: Mozilla/5.0")
+# Step 2: Fetch VN stocks (1 batch API call)
+VN_DATA=$(curl -s --connect-timeout 10 --max-time 20 \
+  "https://bgapidatafeed.vps.com.vn/getliststockdata/$CODES" \
+  -H "User-Agent: Mozilla/5.0")
 
-  if [ -n "$DATA" ] && [ "$DATA" != "[]" ] && [ "$DATA" != "null" ]; then
-    PRICE=$(echo "$DATA" | jq -r '.[0].lastPrice // empty')
-    if [ -n "$PRICE" ]; then
-      VOL=$(echo "$DATA" | jq -r '.[0].lot // 0')
-      CHG=$(echo "$DATA" | jq -r '.[0].changePc // "0"')
-      HIGH=$(echo "$DATA" | jq -r '.[0].highPrice // "0"')
-      LOW=$(echo "$DATA" | jq -r '.[0].lowPrice // "0"')
-      if [ $FIRST -eq 0 ]; then JSON="$JSON,"; fi
-      JSON="${JSON}{\"code\":\"$CODE\",\"price\":$PRICE,\"volume\":$VOL,\"change_pct\":\"$CHG\",\"high\":\"$HIGH\",\"low\":\"$LOW\"}"
-      FIRST=0
-      echo "$(date -u) OK: $CODE=$PRICE vol=$VOL chg=$CHG%" >> "$LOG"
-    else
-      echo "$(date -u) SKIP: $CODE no price" >> "$LOG"
-    fi
-  else
-    echo "$(date -u) FAIL: $CODE empty response" >> "$LOG"
-  fi
-done
-JSON="$JSON]"
-
-# Step 3: Push to MCP server
-if [ "$JSON" != "[]" ]; then
-  RESP=$(curl -s --connect-timeout 10 --max-time 15 \
-    -X POST "$API_URL" \
-    -H "Content-Type: application/json" \
-    -H "X-API-Key: $API_KEY" \
-    -d "$JSON")
-  echo "$(date -u) PUSH: $RESP" >> "$LOG"
+VN_JSON="[]"
+if [ -n "$VN_DATA" ] && [ "$VN_DATA" != "[]" ]; then
+  VN_JSON=$(echo "$VN_DATA" | jq '[.[] | select(.lastPrice != null and .lastPrice > 0) | {
+    code: .sym,
+    price: .lastPrice,
+    volume: .lot,
+    change_pct: .changePc,
+    high: .highPrice,
+    low: .lowPrice,
+    type: "stock"
+  }]')
+  VN_COUNT=$(echo "$VN_JSON" | jq 'length')
+  echo "$(date -u) VN stocks: $VN_COUNT fetched" >> "$LOG"
 else
-  echo "$(date -u) SKIP: no prices to push" >> "$LOG"
+  echo "$(date -u) WARN: VN stocks empty response" >> "$LOG"
 fi
 
-echo "$(date -u) === END ===" >> "$LOG"
+# Step 3: Fetch VN indices (CafeF — VNINDEX + HNXINDEX)
+IDX_DATA=$(curl -s --connect-timeout 10 --max-time 10 \
+  "https://banggia.cafef.vn/stockhandler.ashx?index=true" \
+  -H "User-Agent: Mozilla/5.0")
+
+IDX_JSON="[]"
+if [ -n "$IDX_DATA" ] && [ "$IDX_DATA" != "[]" ]; then
+  IDX_JSON=$(echo "$IDX_DATA" | jq '[.[] | select(.name == "VNINDEX" or .name == "HNXINDEX" or .name == "VN30" or .name == "UPINDEX") | {
+    code: .name,
+    price: (.index | gsub(","; "") | tonumber),
+    volume: (.volume | gsub(","; "") | tonumber),
+    change_pct: .percent,
+    type: "index"
+  }]' 2>/dev/null)
+  IDX_COUNT=$(echo "$IDX_JSON" | jq 'length')
+  echo "$(date -u) VN indices: $IDX_COUNT fetched" >> "$LOG"
+else
+  echo "$(date -u) WARN: VN indices empty" >> "$LOG"
+fi
+
+# Step 4: Fetch global indices (Yahoo Finance v8 chart — 1 call per index)
+GLOBAL_JSON="["
+GL_FIRST=1
+GL_COUNT=0
+GLOBAL_INDICES=$(echo "$CONFIG" | jq -r '.globalIndices | to_entries[] | "\(.key)=\(.value)"' 2>/dev/null)
+if [ -n "$GLOBAL_INDICES" ]; then
+  for ENTRY in $GLOBAL_INDICES; do
+    NAME=$(echo "$ENTRY" | cut -d= -f1)
+    SYMBOL=$(echo "$ENTRY" | cut -d= -f2)
+    ENCODED=$(echo "$SYMBOL" | sed 's/\^/%5E/g')
+    YF=$(curl -s --connect-timeout 5 --max-time 8 \
+      "https://query1.finance.yahoo.com/v8/finance/chart/${ENCODED}?interval=1d&range=1d" \
+      -H "User-Agent: Mozilla/5.0")
+    PRICE=$(echo "$YF" | jq -r '.chart.result[0].meta.regularMarketPrice // empty' 2>/dev/null)
+    if [ -n "$PRICE" ] && [ "$PRICE" != "null" ]; then
+      PREV=$(echo "$YF" | jq -r '.chart.result[0].meta.chartPreviousClose // 0' 2>/dev/null)
+      CHG_PCT="0"
+      if [ "$PREV" != "0" ] && [ "$PREV" != "null" ]; then
+        CHG_PCT=$(echo "scale=2; ($PRICE - $PREV) / $PREV * 100" | bc 2>/dev/null || echo "0")
+      fi
+      if [ $GL_FIRST -eq 0 ]; then GLOBAL_JSON="$GLOBAL_JSON,"; fi
+      GLOBAL_JSON="${GLOBAL_JSON}{\"code\":\"$SYMBOL\",\"price\":$PRICE,\"volume\":0,\"change_pct\":\"$CHG_PCT\",\"type\":\"global_index\"}"
+      GL_FIRST=0
+      GL_COUNT=$((GL_COUNT + 1))
+    fi
+  done
+fi
+GLOBAL_JSON="$GLOBAL_JSON]"
+echo "$(date -u) Global indices: $GL_COUNT fetched" >> "$LOG"
+
+# Step 5: Merge all and push
+ALL_JSON=$(echo "$VN_JSON $IDX_JSON $GLOBAL_JSON" | jq -s 'add | [.[] | select(. != null)]')
+TOTAL=$(echo "$ALL_JSON" | jq 'length')
+
+if [ "$TOTAL" = "0" ]; then
+  echo "$(date -u) SKIP: nothing to push" >> "$LOG"
+  exit 0
+fi
+
+RESP=$(curl -s --connect-timeout 10 --max-time 15 \
+  -X POST "$API_URL" \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: $API_KEY" \
+  -d "$ALL_JSON")
+echo "$(date -u) PUSH: $TOTAL items → $RESP" >> "$LOG"
