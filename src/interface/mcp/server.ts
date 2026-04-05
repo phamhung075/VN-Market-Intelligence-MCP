@@ -434,9 +434,143 @@ export async function createBunServer(
           count++;
         }
 
-        log.info("[push-prices] updated market_prices", { count, source: "vps-proxy" });
+        // Also store in history for avg volume calculation
+        const histInsert = db.prepare(`
+          INSERT OR IGNORE INTO market_prices_history (code, price, volume, fetched_at)
+          VALUES (?, ?, ?, ?)
+        `);
+        for (const p of prices) {
+          if (!p.code || p.price == null) continue;
+          histInsert.run(p.code, p.price * 1000, p.volume ?? 0, p.fetched_at ?? now);
+        }
+
+        log.info("[push-prices] updated market_prices + history", { count, source: "vps-proxy" });
         res.writeHead(200, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ ok: true, updated: count }));
+
+        // ── Async: run signal detection + price alerts after response ────
+        // Fire-and-forget — don't block the HTTP response
+        setImmediate(async () => {
+          try {
+            const { detectSignals } = await import("../../domain/services/signalDetector.js");
+            const { generateAlerts } = await import("../../domain/services/alertGenerator.js");
+            const { storeAlerts } = await import("../../infrastructure/db/alertStore.js");
+            const { checkPriceAlerts } = await import("../../domain/services/priceAlertChecker.js");
+
+            const signals: Array<import("../../domain/services/signalDetector.js").Signal> = [];
+            const priceMap = new Map<string, number>();
+
+            // Compute avg volume from last 20 entries in market_prices_history
+            const avgVolMap = new Map<string, number>();
+            for (const p of prices) {
+              if (!p.code) continue;
+              try {
+                const row = db.prepare(`
+                  SELECT AVG(volume) as avg_vol FROM (
+                    SELECT volume FROM market_prices_history
+                    WHERE code = ? ORDER BY fetched_at DESC LIMIT 20
+                  )
+                `).get(p.code) as { avg_vol: number | null } | undefined;
+                if (row?.avg_vol) avgVolMap.set(p.code, row.avg_vol);
+              } catch { /* best effort */ }
+            }
+
+            // Detect signals for each stock
+            for (const p of prices) {
+              if (!p.code || p.price == null) continue;
+              const priceVnd = p.price * 1000;
+              priceMap.set(p.code, priceVnd);
+              const changePct = p.change_pct ? parseFloat(p.change_pct) : 0;
+
+              // Use change_pct from VPS API to compute previous price
+              const previousPrice = changePct !== 0 ? priceVnd / (1 + changePct / 100) : priceVnd;
+              const avgVolume = avgVolMap.get(p.code) ?? (p.volume ? p.volume * 0.7 : 0);
+
+              const stockSignals = detectSignals({
+                actionCode: p.code,
+                price: priceVnd,
+                previousPrice,
+                volume: p.volume ?? 0,
+                avgVolume,
+              });
+
+              if (stockSignals.length > 0) {
+                signals.push(...stockSignals);
+                log.info("[push-prices] signals detected", {
+                  code: p.code,
+                  signals: stockSignals.map(s => `${s.type}(${s.severity})`).join(", "),
+                });
+              }
+            }
+
+            // Generate and store alerts from signals
+            if (signals.length > 0) {
+              const watchlistRows = db.prepare("SELECT code FROM watchlist").all() as { code: string }[];
+              const watchlistEntries = watchlistRows.map(r => ({ actionCode: r.code }));
+              const alerts = generateAlerts(signals, watchlistEntries);
+
+              if (alerts.length > 0) {
+                storeAlerts(alerts, db);
+                log.info("[push-prices] alerts stored", { count: alerts.length });
+
+                // Send HIGH/CRITICAL alerts to Telegram immediately
+                for (const alert of alerts) {
+                  if (alert.severity === "high" || alert.severity === "critical") {
+                    try {
+                      const sevLabel = alert.severity === "critical" ? "NGHIEM TRONG" : "QUAN TRONG";
+                      const msg = `[${sevLabel}] ${alert.message}`;
+                      await sendTelegramMessage(msg);
+                      // Mark as notified
+                      db.prepare("UPDATE alerts SET notified_telegram = 1 WHERE id = ?").run(alert.id);
+                      log.info("[push-prices] Telegram alert sent", { id: alert.id, severity: alert.severity });
+                    } catch (tgErr) {
+                      log.warn("[push-prices] Telegram send failed", {
+                        error: tgErr instanceof Error ? tgErr.message : String(tgErr),
+                      });
+                    }
+                  }
+                }
+              }
+            }
+
+            // Check user-defined price alerts (stop-loss / take-profit)
+            try {
+              const priceAlertRows = db.prepare(`
+                SELECT id, code, alert_type, threshold FROM price_alerts WHERE status = 'active'
+              `).all() as { id: number; code: string; alert_type: string; threshold: number }[];
+
+              if (priceAlertRows.length > 0) {
+                const triggered = checkPriceAlerts(
+                  priceAlertRows.map(r => ({
+                    id: r.id,
+                    code: r.code,
+                    alertType: r.alert_type,
+                    threshold: r.threshold,
+                  })),
+                  priceMap,
+                );
+
+                for (const t of triggered) {
+                  db.prepare("UPDATE price_alerts SET status = 'triggered', triggered_at = ? WHERE id = ?")
+                    .run(new Date().toISOString(), t.alertId);
+
+                  const typeLabel = t.alertType === "stop_loss" ? "STOP-LOSS" : "TAKE-PROFIT";
+                  const msg = `[${typeLabel}] ${t.code} dat nguong ${t.threshold.toLocaleString()} VND (hien tai: ${t.currentPrice.toLocaleString()} VND)`;
+                  await sendTelegramMessage(msg);
+                  log.info("[push-prices] price alert fired", { code: t.code, type: t.alertType, threshold: t.threshold });
+                }
+              }
+            } catch (paErr) {
+              log.warn("[push-prices] price alert check failed", {
+                error: paErr instanceof Error ? paErr.message : String(paErr),
+              });
+            }
+          } catch (alertErr) {
+            log.warn("[push-prices] post-push alert check failed", {
+              error: alertErr instanceof Error ? alertErr.message : String(alertErr),
+            });
+          }
+        });
       } catch (err) {
         log.error("[push-prices] parse error", { error: err instanceof Error ? err.message : String(err) });
         res.writeHead(400, { "Content-Type": "application/json" });
