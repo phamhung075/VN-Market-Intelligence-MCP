@@ -48,16 +48,15 @@ export interface PdfExtractionResult {
 }
 
 // ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-// ---------------------------------------------------------------------------
 // OCR fallback (Tesseract via pdftoppm + stdin pipe)
 // ---------------------------------------------------------------------------
 
 /**
  * OCR a scanned PDF buffer using pdftoppm + tesseract (Vietnamese + English).
  * Uses stdin piping to work around a known leptonica file-reading bug on macOS.
+ *
+ * Task 292 / FR-2: DPI raised from 150 to 200 for better OCR accuracy
+ * on dense Vietnamese number tables.
  *
  * @param buffer - Raw PDF bytes
  * @param totalPages - Total number of pages in the PDF
@@ -89,10 +88,11 @@ async function ocrPdfBuffer(buffer: Buffer, totalPages: number): Promise<string>
     for (let page = 1; page <= maxPages; page++) {
       try {
         // Async pipe: pdftoppm stdout → tesseract stdin
+        // DPI 200 (Task 292 / FR-2 — was 150)
         const pageText = await new Promise<string>((resolve) => {
           const ppm = spawn("nice", [
             "-n", "19", "pdftoppm",
-            "-f", String(page), "-l", String(page), "-r", "150", tmpPdf,
+            "-f", String(page), "-l", String(page), "-r", "200", tmpPdf,
           ]);
           const tess = spawn("nice", [
             "-n", "19", "tesseract", "stdin", "stdout", "-l", "vie+eng",
@@ -133,7 +133,6 @@ async function ocrPdfBuffer(buffer: Buffer, totalPages: number): Promise<string>
         // Skip pages that fail OCR
       }
 
-      // Yield to event loop between pages
       // Yield 2 seconds between pages to keep server responsive
       await new Promise(r => setTimeout(r, 2000));
     }
@@ -152,6 +151,10 @@ async function ocrPdfBuffer(buffer: Buffer, totalPages: number): Promise<string>
     return "";
   }
 }
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
 
 /**
  * Computes a confidence score based on how much text was extracted.
@@ -197,24 +200,8 @@ export async function extractPdfText(
     // environments that don't need it.
     const pdfParse = (await import("pdf-parse")).default;
     const data = await pdfParse(buffer);
-    let text = data.text ?? "";
-    let confidence = computeConfidence(text);
-
-    // If pdf-parse returned minimal text, try OCR fallback (scanned PDF)
-    if (text.trim().length < PDF_CONFIDENCE_HIGH_THRESHOLD) {
-      logger.info("[pdf] low text extraction — attempting OCR fallback", {
-        pdfParseChars: text.length,
-      });
-      const ocrText = await ocrPdfBuffer(buffer, data.numpages ?? 0);
-      if (ocrText.length > text.length) {
-        text = ocrText;
-        confidence = computeConfidence(text);
-        logger.info("[pdf] OCR extraction succeeded", {
-          chars: text.length,
-          confidence,
-        });
-      }
-    }
+    const text = data.text ?? "";
+    const confidence = computeConfidence(text);
 
     logger.debug("[pdf] extracted text", {
       chars: text.length,

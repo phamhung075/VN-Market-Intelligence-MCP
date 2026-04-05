@@ -6,6 +6,12 @@
  * in the pdf_extracted_text SQLite table.
  *
  * The read_bctc_pdf MCP tool reads from this table — instant response.
+ *
+ * Task 292 fixes applied:
+ *   - FR-2: DPI raised from 150 → 200 (denser number tables)
+ *   - FR-3: Pages < 10 chars are silently skipped — no row inserted
+ *   - FR-3: Completeness threshold changed to 50%/3 (was 80%/5)
+ *   - FR-4: isOcrAvailable() result cached at module level
  */
 
 import { execFile, execSync, spawn } from "node:child_process";
@@ -17,28 +23,38 @@ import { getDb } from "../db/schema.js";
 
 const execFileAsync = promisify(execFile);
 
+// ── isOcrAvailable with module-level cache (FR-4) ─────────────────────────────
+// The first call runs two synchronous `execSync("which ...")` probes.
+// All subsequent calls return the cached boolean — no repeated execSync.
+let _ocrAvailableCache: boolean | null = null;
+
 export function isOcrAvailable(): boolean {
+  if (_ocrAvailableCache !== null) return _ocrAvailableCache;
   try {
-    // Synchronous availability check — called once at startup, acceptable cost
+    // Synchronous availability check — cached after first call
     execSync("which pdftoppm", { stdio: "ignore" });
     execSync("which tesseract", { stdio: "ignore" });
-    return true;
+    _ocrAvailableCache = true;
   } catch {
-    return false;
+    _ocrAvailableCache = false;
   }
+  return _ocrAvailableCache;
 }
 
 /**
  * Run pdftoppm for a single page and pipe output to tesseract.
  * Returns the OCR text for that page, or empty string on failure.
  * Fully async — never blocks the event loop.
+ *
+ * Task 292 / FR-2: DPI raised from 150 to 200 for better OCR accuracy
+ * on dense Vietnamese number tables.
  */
 async function ocrOnePage(tmpPdf: string, page: number): Promise<string> {
   return new Promise((resolve) => {
-    // Spawn pdftoppm at low priority (nice 19) and reduced DPI for speed
+    // Spawn pdftoppm at low priority (nice 19) — DPI 200 (was 150, Task 292 FR-2)
     const ppm = spawn("nice", [
       "-n", "19", "pdftoppm",
-      "-f", String(page), "-l", String(page), "-r", "150", tmpPdf,
+      "-f", String(page), "-l", String(page), "-r", "200", tmpPdf,
     ]);
 
     // Spawn tesseract at low priority
@@ -101,8 +117,13 @@ async function ocrOnePage(tmpPdf: string, page: number): Promise<string> {
 
 /**
  * Extract text from PDF page-by-page via OCR and store in SQLite.
- * Skips if already extracted.
+ * Skips if already extracted (completeness guard: 50%/3 threshold).
  * Async — never blocks the event loop.
+ *
+ * Task 292 / FR-3 fixes:
+ *   - Pages < 10 chars are silently skipped (no row inserted)
+ *   - Completeness threshold is Math.max(expectedPages * 0.5, 3)
+ *   - No duplicate insert in catch block
  */
 export async function extractAndStorePdfPages(
   pdfPath: string,
@@ -120,7 +141,8 @@ export async function extractAndStorePdfPages(
       expectedPages = parseInt(stdout.replace(/[^0-9]/g, ""), 10) || 0;
     } catch { /* can't verify — assume complete */ }
 
-    const threshold = Math.max(expectedPages * 0.8, 5); // Allow 80% extracted = complete enough
+    // Task 292 / FR-3: threshold changed from Math.max(expectedPages * 0.8, 5) to Math.max(expectedPages * 0.5, 3)
+    const threshold = Math.max(expectedPages * 0.5, 3);
     if (expectedPages === 0 || existing.c >= threshold) {
       logger.info("[pdfOcr] already extracted", { filename, pages: existing.c, expected: expectedPages });
       return { pages: existing.c, totalChars: 0 };
@@ -162,25 +184,24 @@ export async function extractAndStorePdfPages(
   for (let page = 1; page <= maxPages; page++) {
     try {
       const pageText = await ocrOnePage(tmpPdf, page);
-      const confidence = pageText.length > 50 ? 0.8 : pageText.length > 10 ? 0.5 : 0.1;
-
-      insert.run(filename, page, pageText, confidence);
-      if (pageText.length > 0) {
+      // Task 292 / FR-3: only insert rows for pages with >= 10 chars
+      // Pages with < 10 chars are silently skipped — no row inserted.
+      if (pageText.length >= 10) {
+        const confidence = pageText.length > 50 ? 0.8 : 0.5;
+        insert.run(filename, page, pageText, confidence);
         extractedPages++;
         totalChars += pageText.length;
-      } else {
-        insert.run(filename, page, "", 0);
       }
+      // else: sparse or blank page — skip silently
 
       if (page % 10 === 0) {
         logger.info("[pdfOcr] progress", { filename, page, of: maxPages, chars: totalChars });
       }
     } catch {
-      insert.run(filename, page, "", 0);
+      // Error on a page: skip silently. Do NOT insert an empty row.
     }
 
-    // Yield to the event loop between pages
-    // Yield 2 seconds between pages to keep server responsive
+    // Yield to the event loop between pages to keep server responsive
     await new Promise(r => setTimeout(r, 2000));
   }
 
