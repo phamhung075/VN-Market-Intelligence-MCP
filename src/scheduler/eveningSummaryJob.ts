@@ -80,11 +80,11 @@ export async function runEveningSummary(
           "../infrastructure/notifiers/telegram.js"
         );
 
-        const lines: string[] = [`TOM TAT BUOI TOI ${summary.date}`];
+        const lines: string[] = [`TÓM TẮT BUỔI TỐI ${summary.date}`];
 
         if (summary.topAlerts.length > 0) {
           lines.push("");
-          lines.push(`Canh bao (${summary.topAlerts.length}):`);
+          lines.push(`Cảnh báo (${summary.topAlerts.length}):`);
           for (const a of summary.topAlerts.slice(0, 5)) {
             lines.push(`  [${a.severity.toUpperCase()}] ${a.message.slice(0, 80)}`);
           }
@@ -92,7 +92,7 @@ export async function runEveningSummary(
 
         if (summary.topStories.length > 0) {
           lines.push("");
-          lines.push(`Tin quan trong (${summary.topStories.length}):`);
+          lines.push(`Tin quan trọng (${summary.topStories.length}):`);
           for (const s of summary.topStories.slice(0, 5)) {
             lines.push(`  - ${s.title.slice(0, 80)}`);
           }
@@ -100,7 +100,7 @@ export async function runEveningSummary(
 
         if (summary.watchlistMovers.length > 0) {
           lines.push("");
-          lines.push("Bien dong gia:");
+          lines.push("Biến động giá:");
           for (const m of summary.watchlistMovers.slice(0, 5)) {
             const sign = m.changePct >= 0 ? "+" : "";
             lines.push(`  ${m.code}: ${sign}${m.changePct.toFixed(2)}%`);
@@ -109,7 +109,7 @@ export async function runEveningSummary(
 
         if (summary.predictionSignals.length > 0) {
           lines.push("");
-          lines.push(`Tin hieu du doan (${summary.predictionSignals.length}):`);
+          lines.push(`Tín hiệu dự đoán (${summary.predictionSignals.length}):`);
           for (const p of summary.predictionSignals.slice(0, 3)) {
             lines.push(`  ${p.question.slice(0, 70)}`);
           }

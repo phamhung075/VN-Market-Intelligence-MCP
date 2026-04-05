@@ -44,23 +44,18 @@ import {
   registerPortfolioTools,
   registerFeedbackTools,
   registerPredictionTools,
-  registerAlertCheckTools,
   registerPriceHistoryTools,
   registerPositionTools,
   registerPortfolioRiskTool,
   registerAlertAccuracyTool,
-  registerSearchStocksTools,
-  registerDataFreshnessTools,
   registerSectorRotationTools,
   registerEarningsCalendarTools,
   registerAlertDigestTools,
   registerCorrelationTools,
-  registerExportTools,
   registerPerformanceTools,
   registerRebalancingTools,
   registerPriceAlertTools,
   registerRateLimitTools,
-  registerSourceHealthTools,
   registerCompareTools,
   registerCustomAlertTools,
   registerAlertMuteTools,
@@ -143,23 +138,18 @@ export async function createBunServer(
     registerPortfolioTools(server);
     registerFeedbackTools(server);
     registerPredictionTools(server);
-    registerAlertCheckTools(server);
     registerPriceHistoryTools(server);
     registerPositionTools(server);
     registerPortfolioRiskTool(server);
     registerAlertAccuracyTool(server);
-    registerSearchStocksTools(server);
-    registerDataFreshnessTools(server);
     registerSectorRotationTools(server);
     registerEarningsCalendarTools(server);
     registerAlertDigestTools(server);
     registerCorrelationTools(server);
-    registerExportTools(server);
     registerPerformanceTools(server);
     registerRebalancingTools(server);
     registerPriceAlertTools(server);
     registerRateLimitTools(server);
-    registerSourceHealthTools(server);
     registerCompareTools(server);
     registerCustomAlertTools(server);
     registerAlertMuteTools(server);
@@ -554,7 +544,7 @@ export async function createBunServer(
                 for (const alert of alerts) {
                   if (alert.severity === "high" || alert.severity === "critical") {
                     try {
-                      const sevLabel = alert.severity === "critical" ? "NGHIEM TRONG" : "QUAN TRONG";
+                      const sevLabel = alert.severity === "critical" ? "NGHIÊM TRỌNG" : "QUAN TRỌNG";
                       const msg = `[${sevLabel}] ${alert.message}`;
                       await sendTelegramMessage(msg);
                       // Mark as notified
@@ -591,8 +581,8 @@ export async function createBunServer(
                   db.prepare("UPDATE price_alerts SET status = 'triggered', triggered_at = ? WHERE id = ?")
                     .run(new Date().toISOString(), t.alertId);
 
-                  const typeLabel = t.alertType === "stop_loss" ? "STOP-LOSS" : "TAKE-PROFIT";
-                  const msg = `[${typeLabel}] ${t.code} dat nguong ${t.threshold.toLocaleString()} VND (hien tai: ${t.currentPrice.toLocaleString()} VND)`;
+                  const typeLabel = t.alertType === "stop_loss" ? "CẮT LỖ" : "CHỐT LỜI";
+                  const msg = `[${typeLabel}] ${t.code} đạt ngưỡng ${t.threshold.toLocaleString()} VND (hiện tại: ${t.currentPrice.toLocaleString()} VND)`;
                   await sendTelegramMessage(msg);
                   log.info("[push-prices] price alert fired", { code: t.code, type: t.alertType, threshold: t.threshold });
                 }
