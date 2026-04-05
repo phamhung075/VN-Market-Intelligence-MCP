@@ -217,8 +217,19 @@ export async function fetchPolymarkets(
   // Step 4 — merge and filter
   const results: PredictionMarket[] = [];
 
+  const now = new Date();
+
   for (const clob of clobMarkets) {
     if (!isRelevant(clob, config)) continue;
+
+    // Skip expired markets (endDate in the past)
+    if (clob.end_date_iso) {
+      const endDate = new Date(clob.end_date_iso);
+      if (endDate.getTime() < now.getTime()) continue;
+    }
+
+    // Skip zero-volume markets (no activity = stale/dead)
+    if ((clob.volume_24h ?? 0) === 0 && (clob.volume ?? 0) === 0) continue;
 
     const { yesPrice, noPrice } = extractPrices(clob.tokens);
     const gamma = gammaMap.get(clob.condition_id);
