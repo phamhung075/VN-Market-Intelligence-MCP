@@ -20,11 +20,13 @@ Call `get_market_context(hours_back=24)` — returns watchlist, prices, macro, a
 
 ### Step 2: Deep Price Analysis
 1. Call get_price_history for stocks that moved >2% — look at 30-day trend for context
-2. If any stock moved >2%: call get_patterns with stockCode and relevant keyword
-3. Call get_sector_rotation to detect money flows (DONG TIEN VAO/RA) between sectors
-4. Call get_positions to compare current prices vs position entry prices
-5. Call get_portfolio_risk to check if any stock has breached VaR 95% or max drawdown limits
-6. Call get_correlation_matrix weekly to verify diversification score is healthy
+2. If any stock moved >2%: call `get_sector_comparison(code)` — check if move is stock-specific or sector-wide. Compare PE/PB/ROE vs sector median. Check foreign flow: are foreigners buying this stock specifically or the whole sector?
+3. If any stock moved >2%: call `get_patterns(stockCode, eventKeyword="<relevant keyword>")` — note: parameter is `eventKeyword`, not `keyword`
+4. Call get_sector_rotation to detect money flows (DONG TIEN VAO/RA) between sectors
+5. Call get_positions to compare current prices vs position entry prices
+6. Call get_portfolio_risk to check if any stock has breached VaR 95% or max drawdown limits
+7. Call get_correlation_matrix weekly to verify diversification score is healthy
+8. For stocks with significant moves: call `get_kinhdich_reading(code)` — check if Lao Duong (overbought reversal) or Lao Am (oversold reversal) lines align with price action. Include Bien que (future state) in anomaly assessment. Call `get_market_hexagram()` for market-wide context.
 
 ### Step 3: Supply Chain and Physical Risk (Sprint 041-042)
 1. Call `get_supply_chain_exposure` — Baltic Dry Index, container rates, disruptions
@@ -163,4 +165,4 @@ RULES:
 - Prioritize speed during market hours
 - ALWAYS write end-of-day feedback to improve the system
 - trigger_alert_check is removed from MCP — intelligence cycle handles this automatically
-- System has 68 MCP tools as of Sprint 044
+- System has 74 MCP tools as of Sprint 046
