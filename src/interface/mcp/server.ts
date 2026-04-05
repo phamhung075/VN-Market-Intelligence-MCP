@@ -82,6 +82,8 @@ import {
   registerCreditFlowTools,
   registerLeadershipTools,
   registerCrisisTools,
+  registerSectorComparisonTools,
+  registerKinhDichTools,
 } from "./tools/index.js";
 import { registerPharmaTools } from "./tools/pharmaTools.js";
 
@@ -180,6 +182,8 @@ export async function createBunServer(
     registerLeadershipTools(server);
     registerCrisisTools(server);
     registerPharmaTools(server);  // Sprint 044: get_pharma_signals
+    registerSectorComparisonTools(server);  // Sprint 045: get_sector_comparison
+    registerKinhDichTools(server);  // Task 285: 6 Kinh Dich tools
     return server;
   }
 
@@ -379,6 +383,87 @@ export async function createBunServer(
 
       res.writeHead(200, { "Content-Type": "text/plain" });
       res.end("ok");
+      return;
+    }
+
+    // ── Push Prices from VPS proxy ────────────────────────────────────────
+    if (method === "POST" && pathname === "/api/push-prices") {
+      const apiKey = process.env.VPS_PUSH_API_KEY;
+      const authHeader = req.headers["x-api-key"] || req.headers["authorization"]?.replace("Bearer ", "");
+      if (!apiKey || authHeader !== apiKey) {
+        res.writeHead(401, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "Unauthorized" }));
+        return;
+      }
+
+      let body = "";
+      for await (const chunk of req) body += chunk;
+      try {
+        const prices: Array<{
+          code: string;
+          price: number;
+          high?: string;
+          low?: string;
+          open?: string;
+          close?: string;
+          volume?: number;
+          change_pct?: string;
+          fetched_at?: string;
+        }> = JSON.parse(body);
+
+        if (!Array.isArray(prices) || prices.length === 0) {
+          res.writeHead(400, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ error: "Expected non-empty array" }));
+          return;
+        }
+
+        const db = getDb();
+        const upsert = db.prepare(`
+          INSERT OR REPLACE INTO market_prices (code, price, change_pct, volume, updated_at)
+          VALUES (?, ?, ?, ?, ?)
+        `);
+
+        const now = new Date().toISOString();
+        let count = 0;
+        for (const p of prices) {
+          if (!p.code || p.price == null) continue;
+          // VPS API returns price in thousands (57.7 = 57,700 VND)
+          const priceVnd = p.price * 1000;
+          const changePct = p.change_pct ? parseFloat(p.change_pct) : null;
+          upsert.run(p.code, priceVnd, changePct, p.volume ?? 0, p.fetched_at ?? now);
+          count++;
+        }
+
+        log.info("[push-prices] updated market_prices", { count, source: "vps-proxy" });
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: true, updated: count }));
+      } catch (err) {
+        log.error("[push-prices] parse error", { error: err instanceof Error ? err.message : String(err) });
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "Invalid JSON" }));
+      }
+      return;
+    }
+
+    // ── Get Watchlist codes (for VPS proxy) ────────────────────────────────
+    if (method === "GET" && pathname === "/api/watchlist") {
+      const apiKey = process.env.VPS_PUSH_API_KEY;
+      const authHeader = req.headers["x-api-key"] || req.headers["authorization"]?.replace("Bearer ", "");
+      if (!apiKey || authHeader !== apiKey) {
+        res.writeHead(401, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "Unauthorized" }));
+        return;
+      }
+      try {
+        const db = getDb();
+        const rows = db.prepare("SELECT code FROM watchlist ORDER BY code").all() as { code: string }[];
+        const codes = rows.map((r) => r.code);
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ codes }));
+      } catch (err) {
+        res.writeHead(500, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "DB error" }));
+      }
       return;
     }
 
