@@ -1,7 +1,13 @@
 /**
- * Balance Sheet Extractor — Task 042
+ * Balance Sheet Extractor — Task 042 (extended by Task 287)
  *
  * Parses raw Vietnamese BCTC text and returns a typed BalanceSheet object.
+ *
+ * Task 287 additions:
+ *   - NFC normalization before line splitting (FR-3 partial)
+ *   - detectUnitMultiplier: detects "Triệu đồng" vs "Tỷ đồng" header (FR-1)
+ *   - applyMultiplier: scales all monetary fields by detected multiplier (FR-1)
+ *   - Row-code guard in findValue: skips multiples-of-10 in [10, 990] (FR-2)
  *
  * Domain layer — pure function, zero I/O.
  * Depends only on parseVnNumber (domain/services).
@@ -45,15 +51,119 @@ function lineMatches(line: string, pattern: RegExp): boolean {
 /**
  * Find the first line matching a pattern and extract its number.
  * Returns 0 if not found (missing fields default to 0).
+ *
+ * Task 287 — FR-2: Row-code guard.
+ * If the extracted value is a whole integer multiple of 10 in [10, 990],
+ * it is treated as a BCTC row-code artifact (e.g. 100, 110, 270) and the
+ * scan continues to the next matching line.
  */
 function findValue(lines: string[], pattern: RegExp): number {
   for (const line of lines) {
     if (lineMatches(line, pattern)) {
       const val = extractNumber(line);
-      if (val !== null) return val;
+      if (val === null) continue;
+      // Guard: skip row-code artifacts (multiples of 10 in [10, 990])
+      if (Number.isInteger(val) && val >= 10 && val <= 990 && val % 10 === 0) continue;
+      return val;
     }
   }
   return 0;
+}
+
+// ---------------------------------------------------------------------------
+// Task 287 — FR-1: Unit header detection
+// ---------------------------------------------------------------------------
+
+/**
+ * Scan PDF lines for a unit-declaration header and return the appropriate
+ * multiplier to convert reported values to triệu đồng (million VND).
+ *
+ * - "Đơn vị tính: Triệu đồng" → multiplier = 1  (already in triệu)
+ * - "Đơn vị tính: Tỷ đồng"    → multiplier = 1000 (1 tỷ = 1000 triệu)
+ * - Not found                  → multiplier = 1  (default; caller logs warning)
+ *
+ * @param lines - Array of lines from the NFC-normalized rawText.
+ * @returns Numeric multiplier (1 or 1000).
+ */
+function detectUnitMultiplier(lines: string[]): number {
+  const P_UNIT_TRIEU =
+    /[đd][oơ]n\s+v[iị]\s+(t[íi]nh|:)\s*:?\s*(tri[eệ]u|trieu)/i;
+  const P_UNIT_TY =
+    /[đd][oơ]n\s+v[iị]\s+(t[íi]nh|:)\s*:?\s*t[yỷ]/i;
+
+  for (const line of lines) {
+    if (P_UNIT_TRIEU.test(line)) return 1;
+    if (P_UNIT_TY.test(line)) return 1000;
+  }
+
+  // No header found — default to 1 (assume triệu đồng)
+  console.warn("[balanceSheetExtractor] No unit header found; defaulting multiplier to 1.");
+  return 1;
+}
+
+// ---------------------------------------------------------------------------
+// Task 287 — FR-1: Apply multiplier to all monetary fields
+// ---------------------------------------------------------------------------
+
+/**
+ * Multiply every monetary leaf field in a BalanceSheet by the given multiplier.
+ * When multiplier === 1, returns the same object unchanged (no allocation).
+ *
+ * NOTE: BalanceSheet has no EPS field, so no field needs to be skipped.
+ *
+ * @param bs - The extracted BalanceSheet (values in the declared unit).
+ * @param m  - Multiplier from detectUnitMultiplier (1 or 1000).
+ * @returns BalanceSheet with all values in triệu đồng.
+ */
+function applyMultiplier(bs: BalanceSheet, m: number): BalanceSheet {
+  if (m === 1) return bs;
+
+  return {
+    currentAssets: {
+      cash: bs.currentAssets.cash * m,
+      shortTermInvestments: bs.currentAssets.shortTermInvestments * m,
+      accountsReceivable: bs.currentAssets.accountsReceivable * m,
+      inventory: bs.currentAssets.inventory * m,
+      otherCurrentAssets: bs.currentAssets.otherCurrentAssets * m,
+      total: bs.currentAssets.total * m,
+    },
+    nonCurrentAssets: {
+      longTermReceivables: bs.nonCurrentAssets.longTermReceivables * m,
+      fixedAssets: bs.nonCurrentAssets.fixedAssets * m,
+      investmentProperty: bs.nonCurrentAssets.investmentProperty * m,
+      longTermInvestments: bs.nonCurrentAssets.longTermInvestments * m,
+      goodwill: bs.nonCurrentAssets.goodwill * m,
+      otherLongTermAssets: bs.nonCurrentAssets.otherLongTermAssets * m,
+      total: bs.nonCurrentAssets.total * m,
+    },
+    totalAssets: bs.totalAssets * m,
+    currentLiabilities: {
+      shortTermDebt: bs.currentLiabilities.shortTermDebt * m,
+      accountsPayable: bs.currentLiabilities.accountsPayable * m,
+      advancesFromCustomers: bs.currentLiabilities.advancesFromCustomers * m,
+      taxPayable: bs.currentLiabilities.taxPayable * m,
+      payablesToEmployees: bs.currentLiabilities.payablesToEmployees * m,
+      otherCurrentLiabilities: bs.currentLiabilities.otherCurrentLiabilities * m,
+      total: bs.currentLiabilities.total * m,
+    },
+    longTermLiabilities: {
+      longTermDebt: bs.longTermLiabilities.longTermDebt * m,
+      deferredTaxLiabilities: bs.longTermLiabilities.deferredTaxLiabilities * m,
+      otherLongTermLiabilities: bs.longTermLiabilities.otherLongTermLiabilities * m,
+      total: bs.longTermLiabilities.total * m,
+    },
+    totalLiabilities: bs.totalLiabilities * m,
+    equity: {
+      shareCapital: bs.equity.shareCapital * m,
+      sharePremium: bs.equity.sharePremium * m,
+      treasuryShares: bs.equity.treasuryShares * m,
+      retainedEarnings: bs.equity.retainedEarnings * m,
+      otherEquityFunds: bs.equity.otherEquityFunds * m,
+      minorityInterest: bs.equity.minorityInterest * m,
+      total: bs.equity.total * m,
+    },
+    totalLiabilitiesAndEquity: bs.totalLiabilitiesAndEquity * m,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -114,11 +224,19 @@ const P_TOTAL_LIABILITIES_AND_EQUITY = /t[ổo]ng\s+c[ộo]ng\s+ngu[ồo]n\s+v[�
 /**
  * Extract a BalanceSheet from raw Vietnamese financial report text.
  *
- * Numbers should be in triệu đồng (million VND).
+ * Numbers are returned in triệu đồng (million VND). The function
+ * automatically detects the declared unit in the PDF header and converts
+ * tỷ đồng values to triệu đồng before returning (Task 287 — FR-1).
+ *
  * Missing line items default to 0.
  */
 export function extractBalanceSheet(rawText: string): BalanceSheet {
-  const lines = rawText.split("\n");
+  // Task 287 — FR-3 partial: NFC normalization (resolves NFD decomposition artifacts)
+  const normalized = rawText.normalize("NFC");
+  const lines = normalized.split("\n");
+
+  // Task 287 — FR-1: detect unit multiplier BEFORE any findValue calls
+  const multiplier = detectUnitMultiplier(lines);
 
   // --- Current assets ---
   const currentAssets: CurrentAssets = {
@@ -189,7 +307,7 @@ export function extractBalanceSheet(rawText: string): BalanceSheet {
   // --- Grand total ---
   const totalLiabilitiesAndEquity = findValue(lines, P_TOTAL_LIABILITIES_AND_EQUITY);
 
-  return {
+  const raw: BalanceSheet = {
     currentAssets,
     nonCurrentAssets,
     totalAssets,
@@ -199,4 +317,7 @@ export function extractBalanceSheet(rawText: string): BalanceSheet {
     equity,
     totalLiabilitiesAndEquity,
   };
+
+  // Task 287 — FR-1: apply unit multiplier (converts tỷ → triệu when needed)
+  return applyMultiplier(raw, multiplier);
 }
