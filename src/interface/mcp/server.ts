@@ -31,56 +31,7 @@ import { sendTelegramMessage } from "../../infrastructure/notifiers/telegram.js"
 import { getDb } from "../../infrastructure/db/schema.js";
 import { validateWebhookRequest } from "../../infrastructure/notifiers/telegramWebhookSetup.js";
 import { insertReport } from "../../infrastructure/db/telegramReportStore.js";
-import {
-  registerWatchlistTools,
-  registerReportTools,
-  registerAlertTools,
-  registerAnalysisTools,
-  registerMarketTools,
-  registerMacroTools,
-  registerTelegramTools,
-  registerSummaryTools,
-  registerSystemTools,
-  registerPortfolioTools,
-  registerFeedbackTools,
-  registerPredictionTools,
-  registerPriceHistoryTools,
-  registerPositionTools,
-  registerPortfolioRiskTool,
-  registerAlertAccuracyTool,
-  registerSectorRotationTools,
-  registerEarningsCalendarTools,
-  registerAlertDigestTools,
-  registerCorrelationTools,
-  registerPerformanceTools,
-  registerRebalancingTools,
-  registerPriceAlertTools,
-  registerRateLimitTools,
-  registerCompareTools,
-  registerCustomAlertTools,
-  registerAlertMuteTools,
-  registerTargetAllocationTools,
-  registerSentimentTrendTools,
-  registerTelegramReportTools,
-  registerChangelogTools,
-  registerBctcFullTools,
-  registerMarketContextTools,
-  registerAgentSignalTools,
-  registerCascadeMetricsTools,
-  registerSupplyChainTools,
-  registerLegalRiskTools,
-  registerPolicyTools,
-  registerBondMaturityTools,
-  registerClimateTools,
-  registerEnergyTools,
-  registerPublicInvestmentTools,
-  registerCreditFlowTools,
-  registerLeadershipTools,
-  registerCrisisTools,
-  registerSectorComparisonTools,
-  registerKinhDichTools,
-} from "./tools/index.js";
-import { registerPharmaTools } from "./tools/pharmaTools.js";
+import { toolRegistry } from "./tools/registry.js";
 
 /** Options for starting the Bun HTTP server. */
 export interface BunServerOptions {
@@ -126,54 +77,7 @@ export async function createBunServer(
       { name: "vn-market-intelligence", version: "1.0.0" },
       { capabilities: { tools: {} } },
     );
-    registerWatchlistTools(server);
-    registerReportTools(server);
-    registerAlertTools(server);
-    registerAnalysisTools(server);
-    registerMarketTools(server);
-    registerMacroTools(server);
-    registerTelegramTools(server);
-    registerSummaryTools(server);
-    registerSystemTools(server);
-    registerPortfolioTools(server);
-    registerFeedbackTools(server);
-    registerPredictionTools(server);
-    registerPriceHistoryTools(server);
-    registerPositionTools(server);
-    registerPortfolioRiskTool(server);
-    registerAlertAccuracyTool(server);
-    registerSectorRotationTools(server);
-    registerEarningsCalendarTools(server);
-    registerAlertDigestTools(server);
-    registerCorrelationTools(server);
-    registerPerformanceTools(server);
-    registerRebalancingTools(server);
-    registerPriceAlertTools(server);
-    registerRateLimitTools(server);
-    registerCompareTools(server);
-    registerCustomAlertTools(server);
-    registerAlertMuteTools(server);
-    registerTargetAllocationTools(server);
-    registerSentimentTrendTools(server);
-    registerTelegramReportTools(server);
-    registerChangelogTools(server);
-    registerBctcFullTools(server);
-    registerMarketContextTools(server);
-    registerAgentSignalTools(server);
-    registerCascadeMetricsTools(server);
-    registerSupplyChainTools(server);
-    registerLegalRiskTools(server);
-    registerPolicyTools(server);
-    registerBondMaturityTools(server);
-    registerClimateTools(server);
-    registerEnergyTools(server);
-    registerPublicInvestmentTools(server);
-    registerCreditFlowTools(server);
-    registerLeadershipTools(server);
-    registerCrisisTools(server);
-    registerPharmaTools(server);  // Sprint 044: get_pharma_signals
-    registerSectorComparisonTools(server);  // Sprint 045: get_sector_comparison
-    registerKinhDichTools(server);  // Task 285: 6 Kinh Dich tools
+    toolRegistry.forEach((fn) => fn(server));
     return server;
   }
 
