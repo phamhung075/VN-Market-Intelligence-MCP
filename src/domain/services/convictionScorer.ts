@@ -3,7 +3,7 @@
  *
  * Core philosophy: "Tin tức có thể giả nhưng giá phản ánh tất cả"
  *
- * Cross-validates 5 independent signal dimensions to produce a conviction
+ * Cross-validates 6 independent signal dimensions to produce a conviction
  * score [0, 1]. When multiple independent signals agree, conviction is high.
  * When they disagree, conviction is low — suggesting manipulation or noise.
  *
@@ -13,6 +13,7 @@
  *   3. Sentiment     — what does the news say? (bullish/bearish/neutral)
  *   4. Cascade       — does the macro cascade support this direction?
  *   5. Sector        — is the whole sector moving or just this stock?
+ *   6. Kinh Dich     — what does the hexagram reading indicate? (Task 304)
  *
  * Conviction levels:
  *   >= 0.8  CONVICTION  — all signals align, very high confidence
@@ -58,6 +59,15 @@ export interface ConvictionInput {
   // Dimension 5: Sector context
   /** Sector average change % */
   sectorAvgPct?: number;
+
+  // Dimension 6: Kinh Dich hexagram signal (Task 304)
+  /**
+   * Derived Kinh Dich score in [-1, +1].
+   * Computed by the caller from `hexagramStore.getLatestReading()` via
+   * `deriveKinhDichScore(tradingSignal, confidence)` in portfolioTools.ts.
+   * undefined -> neutral (no reading available, maps to 0.5).
+   */
+  kinhDichScore?: number;
 }
 
 /** Result of conviction scoring. */
@@ -76,6 +86,8 @@ export interface ConvictionResult {
     sentiment: number;
     cascade: number;
     sectorAlignment: number;
+    /** Kinh Dich hexagram dimension score [0, 1]. 0.5 = neutral/no reading. */
+    kinhDich: number;
   };
   /** Vietnamese summary */
   summary: string;
@@ -85,13 +97,26 @@ export interface ConvictionResult {
 // Dimension weights (must sum to 1.0)
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** Price is the most important — "giá phản ánh tất cả" */
-const WEIGHTS = {
-  priceAction: 0.30,
-  volumeConfirmation: 0.25,
-  sentiment: 0.15,
-  cascade: 0.15,
-  sectorAlignment: 0.15,
+/**
+ * Dimension weights (must sum to 1.0).
+ *
+ * Task 304: 6th dimension (kinhDich) added at 0.15.
+ * Original 5 weights each scaled by 0.85 proportionally:
+ *   priceAction:        0.30 x 0.85 = 0.2550
+ *   volumeConfirmation: 0.25 x 0.85 = 0.2125
+ *   sentiment:          0.15 x 0.85 = 0.1275
+ *   cascade:            0.15 x 0.85 = 0.1275
+ *   sectorAlignment:    0.15 x 0.85 = 0.1275
+ *   kinhDich:           0.15 (fixed)
+ *   Sum:                              1.0000
+ */
+export const WEIGHTS = {
+  priceAction: 0.2550,
+  volumeConfirmation: 0.2125,
+  sentiment: 0.1275,
+  cascade: 0.1275,
+  sectorAlignment: 0.1275,
+  kinhDich: 0.1500,
 } as const;
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -99,10 +124,10 @@ const WEIGHTS = {
 // ─────────────────────────────────────────────────────────────────────────────
 
 const LEVEL_VI: Record<ConvictionLevel, string> = {
-  conviction: "XÁC TÍN CAO",
-  strong: "Khá chắc chắn",
-  moderate: "Hỗn hợp",
-  weak: "Tín hiệu yếu/mâu thuẫn",
+  conviction: "XAC TIN CAO",
+  strong: "Kha chac chan",
+  moderate: "Hon hop",
+  weak: "Tin hieu yeu/mau thuan",
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -113,7 +138,7 @@ function scorePriceAction(changePct: number | undefined): { score: number; direc
   if (changePct == null || Math.abs(changePct) < 0.5) {
     return { score: 0.5, direction: "neutral" }; // flat = neutral
   }
-  // Larger moves = stronger signal (capped at 1.0 for ±10%)
+  // Larger moves = stronger signal (capped at 1.0 for +/-10%)
   const magnitude = Math.min(Math.abs(changePct) / 10, 1.0);
   const direction = changePct > 0 ? "bullish" as const : "bearish" as const;
   return { score: 0.5 + magnitude * 0.5, direction };
@@ -124,7 +149,7 @@ function scoreVolume(volume: number | undefined, avgVolume: number | undefined):
   const ratio = volume / avgVolume;
   if (ratio < 0.5) return 0.3; // very low volume = suspicious, weakens conviction
   if (ratio < 1.0) return 0.5; // normal
-  // Higher volume = stronger confirmation (capped at 1.0 for 5× avg)
+  // Higher volume = stronger confirmation (capped at 1.0 for 5x avg)
   return Math.min(0.5 + (ratio - 1) / 8, 1.0);
 }
 
@@ -137,7 +162,7 @@ function scoreSentiment(
   // Does sentiment agree with price direction?
   if (direction === priceDirection) return 0.5 + confidence * 0.5; // agrees
   if (priceDirection === "neutral") return 0.5;
-  return 0.5 - confidence * 0.4; // disagrees — lower score
+  return 0.5 - confidence * 0.4; // disagrees - lower score
 }
 
 function scoreCascade(
@@ -174,14 +199,77 @@ function scoreSectorAlignment(
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Kinh Dich helpers (Task 304)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Maps a kinhDichScore [-1, +1] to a dimension score [0, 1].
+ * undefined/null -> 0.5 (neutral, no reading available).
+ * Formula: 0.5 + score * 0.5, clamped to [0, 1].
+ */
+export function scoreKinhDich(score: number | undefined): number {
+  if (score == null) return 0.5;
+  return Math.max(0, Math.min(1, 0.5 + score * 0.5));
+}
+
+/**
+ * Derives a kinhDichScore in [-1, +1] from raw `trading_signal` text and
+ * `confidence` stored in `kinhdich_readings`.
+ *
+ * Formula (B3 resolution - verb-primary with suffix magnitude gate):
+ *   - MUA | CHO           -> verbPolarity = +1
+ *   - BAN | THAN TRONG    -> verbPolarity = -1
+ *   - GIU                 -> verbPolarity =  0
+ *   - suffix "tieu cuc"   -> suffixMultiplier = 0.7
+ *   - otherwise           -> suffixMultiplier = 1.0
+ *   - result = verbPolarity x confidence x suffixMultiplier
+ *
+ * Returns 0 when either argument is null/undefined.
+ *
+ * Examples:
+ *   MUA (tich cuc)  conf=0.72  -> +1 * 0.72 * 1.0 = +0.72 -> scoreKinhDich = 0.86
+ *   BAN (tieu cuc)  conf=0.80  -> -1 * 0.80 * 0.7 = -0.56
+ *   GIU (tich cuc)  conf=0.60  ->  0 * 0.60 * 1.0 =  0.00 -> neutral
+ *   BAN (tich cuc)  conf=0.60  -> -1 * 0.60 * 1.0 = -0.60 (verb-primary: BAN stays bearish)
+ *
+ * This function lives in the domain layer so it can be tested independently
+ * of any DB access. The caller (portfolioTools.ts) provides the raw strings
+ * from `getLatestReading()`.
+ */
+export function deriveKinhDichScore(
+  tradingSignal: string | null | undefined,
+  confidence: number | null | undefined,
+): number {
+  if (!tradingSignal || confidence == null) return 0;
+  const sig = tradingSignal.toUpperCase();
+  const conf = Math.max(0, Math.min(1, confidence));
+
+  let verbPolarity: number;
+  if (sig.includes("MUA") || sig.includes("CHO")) {
+    verbPolarity = 1;
+  } else if (sig.includes("BAN") || sig.includes("THAN TRONG")) {
+    verbPolarity = -1;
+  } else {
+    verbPolarity = 0; // GIU
+  }
+
+  const suffixMultiplier = sig.includes("TIEU CUC") ? 0.7 : 1.0;
+
+  return verbPolarity * conf * suffixMultiplier;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Public API
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Computes a conviction score from 5 independent signal dimensions.
+ * Computes a conviction score from 6 independent signal dimensions.
  *
- * @param input - Signal dimensions (all optional — missing = neutral)
+ * @param input - Signal dimensions (all optional - missing = neutral)
  * @returns ConvictionResult with score, level, direction, per-dimension breakdown
+ *
+ * Backward compatible: callers that do not pass `kinhDichScore` receive the same
+ * result as passing `kinhDichScore: undefined` (maps to neutral 0.5).
  */
 export function computeConviction(input: ConvictionInput): ConvictionResult {
   // Dimension 1: Price action
@@ -208,13 +296,17 @@ export function computeConviction(input: ConvictionInput): ConvictionResult {
   // Dimension 5: Sector alignment
   const sect = scoreSectorAlignment(input.changePct, input.sectorAvgPct);
 
-  // Weighted average
+  // Dimension 6: Kinh Dich hexagram (Task 304)
+  const kd = scoreKinhDich(input.kinhDichScore);
+
+  // Weighted average (6 dimensions summing to 1.0)
   const score = Math.round((
     price.score * WEIGHTS.priceAction +
     vol * WEIGHTS.volumeConfirmation +
     sent * WEIGHTS.sentiment +
     casc * WEIGHTS.cascade +
-    sect * WEIGHTS.sectorAlignment
+    sect * WEIGHTS.sectorAlignment +
+    kd * WEIGHTS.kinhDich
   ) * 100) / 100;
 
   // Classification
@@ -224,25 +316,26 @@ export function computeConviction(input: ConvictionInput): ConvictionResult {
     score >= 0.4 ? "moderate" :
     "weak";
 
-  // Overall direction (from price — "giá phản ánh tất cả")
+  // Overall direction (from price — "gia phan anh tat ca")
   const direction = priceDirection;
 
-  // Vietnamese summary
+  // Vietnamese summary - count signals > 0.6 across all 6 dimensions
   const levelVi = LEVEL_VI[level];
-  const dirVi = direction === "bullish" ? "TĂNG" : direction === "bearish" ? "GIẢM" : "TRUNG TÍNH";
+  const dirVi = direction === "bullish" ? "TANG" : direction === "bearish" ? "GIAM" : "TRUNG TINH";
   const dims = [];
-  if (price.score > 0.6) dims.push("giá");
+  if (price.score > 0.6) dims.push("gia");
   if (vol > 0.6) dims.push("KL");
   if (sent > 0.6) dims.push("tin");
-  if (casc > 0.6) dims.push("vĩ mô");
-  if (sect > 0.6) dims.push("ngành");
+  if (casc > 0.6) dims.push("vi mo");
+  if (sect > 0.6) dims.push("nganh");
+  if (kd > 0.6) dims.push("kinh dich");
 
   const agreeing = dims.length;
-  const summary = agreeing >= 4
-    ? `💎 ${input.code} ${dirVi}: ${levelVi} — ${agreeing}/5 tín hiệu đồng thuận (${dims.join(", ")})`
+  const summary = agreeing >= 5
+    ? `${input.code} ${dirVi}: ${levelVi} - ${agreeing}/6 tin hieu dong thuan (${dims.join(", ")})`
     : agreeing >= 2
-      ? `📊 ${input.code} ${dirVi}: ${levelVi} — ${dims.join(", ")} xác nhận`
-      : `⚠️ ${input.code}: ${levelVi} — tín hiệu mâu thuẫn, thận trọng`;
+      ? `${input.code} ${dirVi}: ${levelVi} - ${dims.join(", ")} xac nhan`
+      : `${input.code}: ${levelVi} - tin hieu mau thuan, than trong`;
 
   return {
     code: input.code,
@@ -255,6 +348,7 @@ export function computeConviction(input: ConvictionInput): ConvictionResult {
       sentiment: Math.round(sent * 100) / 100,
       cascade: Math.round(casc * 100) / 100,
       sectorAlignment: Math.round(sect * 100) / 100,
+      kinhDich: Math.round(kd * 100) / 100,
     },
     summary,
   };

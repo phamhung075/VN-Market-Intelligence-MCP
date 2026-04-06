@@ -620,13 +620,17 @@ export async function handleTelegramCommand(
         responseText = handleAsk(db, args.join(" "));
         break;
 
-      case "/why":
-        // /why VCB → "Why did VCB move today?"
-        responseText = handleAsk(
-          db,
-          args.length > 0 ? `Why did ${args[0]} move today?` : "",
-        );
+      case "/why": {
+        // /why VCB → stores payload as "why:VCB" (Task 307)
+        const ticker = args[0]?.trim() ?? "";
+        if (!ticker) {
+          responseText =
+            "Vui lòng cung cấp mã chứng khoán, ví dụ: /why VCB";
+        } else {
+          responseText = handleAsk(db, `why:${ticker.toUpperCase()}`);
+        }
         break;
+      }
 
       case "/report":
         responseText = handleReport(db, args, "medium");
