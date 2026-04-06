@@ -23,7 +23,7 @@
 | 305 | user_requests MCP tools: log_user_request + get_pending_user_requests              | P0       | Developer | interface/mcp/tools      | —          | task/305-user-request-tools         | Todo   |
 | 306 | Step F enrichment: buildEnrichedAnswer in checkJob + Vietnamese + why: prefix      | P1       | Developer | scheduler                | 303 ✓, 305 ✓ | task/306-step-f-enrichment       | Todo   |
 | 307 | /ask + /why: store why:TICKER payload, guard no-arg /why                           | P1       | Developer | infrastructure/notifiers | 305 ✓      | task/307-telegram-why-command       | Todo   |
-| 308 | Dynamic tool registry (registry.ts) — deferred task 193                            | P2       | Developer | interface                | —          | task/308-tool-registry              | Todo   |
+| 308 | Dynamic tool registry (registry.ts) — deferred task 193                            | P2       | Developer | interface                | —          | task/308-tool-registry              | Review |
 
 ---
 
