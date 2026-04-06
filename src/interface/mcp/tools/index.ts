@@ -59,3 +59,9 @@ export { registerCreditFlowTools } from "./creditFlowTools.js";
 export { registerLeadershipTools } from "./leadershipTools.js";
 // Sprint 043 — Crisis Detection tools (task 267)
 export { registerCrisisTools } from "./crisisTools.js";
+// Sprint 044 — Pharma tools
+export { registerPharmaTools } from "./pharmaTools.js";
+// Sprint 045 — Sector Comparison tools
+export { registerSectorComparisonTools } from "./sectorComparisonTools.js";
+// Sprint 046 — Kinh Dịch tools
+export { registerKinhDichTools } from "./kinhDichTools.js";
