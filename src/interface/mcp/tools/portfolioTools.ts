@@ -9,13 +9,14 @@
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { getDb, initDatabase } from "../../../infrastructure/db/schema.js";
-import { computeConviction } from "../../../domain/services/convictionScorer.js";
+import { computeConviction, deriveKinhDichScore } from "../../../domain/services/convictionScorer.js";
 import { getSectorPeers, SECTOR_NAME_VI } from "../../../domain/services/sectorPeers.js";
 import { buildPositionLine, buildActionNote } from "../../../domain/services/decisionNoteSynthesizer.js";
 import { listOpenPositions } from "../../../infrastructure/db/positionStore.js";
 import { fetchHosePrices, type MarketPrice } from "../../../infrastructure/fetchers/hose.js";
 import { fetchHnxPrices, fetchUpcomPrices } from "../../../infrastructure/fetchers/hnx.js";
 import { logger } from "../../../infrastructure/logger.js";
+import { getLatestReading } from "../../../infrastructure/db/hexagramStore.js";
 import type { DomainType } from "../../../../bctc-schema";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -64,10 +65,10 @@ export function registerPortfolioTools(server: McpServer): void {
           .all();
 
         if (watchlist.length === 0) {
-          return { content: [{ type: "text" as const, text: "Watchlist trống — thêm cổ phiếu trước." }] };
+          return { content: [{ type: "text" as const, text: "Watchlist trong - them co phieu truoc." }] };
         }
 
-        // Fetch LIVE prices grouped by exchange (force: true → works after hours)
+        // Fetch LIVE prices grouped by exchange (force: true -> works after hours)
         const priceMap = new Map<string, PriceRow>();
         let priceSource = "live";
         try {
@@ -190,6 +191,21 @@ export function registerPortfolioTools(server: McpServer): void {
           if (price?.change_pct != null) input.changePct = price.change_pct;
           if (price?.volume != null) input.volume = price.volume;
           if (sectorAvg != null) input.sectorAvgPct = sectorAvg;
+
+          // Dimension 6: Kinh Dich (Task 304)
+          // Load most recent hexagram reading for this stock; undefined = neutral (0.5)
+          try {
+            const kdRow = getLatestReading(w.code);
+            if (kdRow) {
+              input.kinhDichScore = deriveKinhDichScore(
+                kdRow.tradingSignal,
+                kdRow.confidence,
+              );
+            }
+          } catch {
+            // hexagram tables may not exist yet - leave kinhDichScore undefined (neutral)
+          }
+
           const conviction = computeConviction(input);
 
           // Open alerts count
@@ -255,11 +271,11 @@ export function registerPortfolioTools(server: McpServer): void {
         for (const r of results) {
           const priceStr = r.price ? `${r.price.toLocaleString("en-US")} VND` : "N/A";
           const chgStr = r.changePct != null ? `${r.changePct >= 0 ? "+" : ""}${r.changePct.toFixed(2)}%` : "";
-          const sectorStr = r.sectorAvg != null ? `Ngành ${r.sectorName}: ${r.sectorAvg >= 0 ? "+" : ""}${r.sectorAvg}%` : "";
-          const alertStr = r.openAlerts > 0 ? ` | ⚠️ ${r.openAlerts} alert` : "";
+          const sectorStr = r.sectorAvg != null ? `Nganh ${r.sectorName}: ${r.sectorAvg >= 0 ? "+" : ""}${r.sectorAvg}%` : "";
+          const alertStr = r.openAlerts > 0 ? ` | ${r.openAlerts} alert` : "";
           const trendStr = r.trend.length >= 2 ? ` | trend: [${r.trend.map((t) => t.toFixed(2)).join(",")}]` : "";
 
-          lines.push(`${r.code} — ${r.level.toUpperCase()} (${r.score.toFixed(2)})`);
+          lines.push(`${r.code} - ${r.level.toUpperCase()} (${r.score.toFixed(2)})`);
           lines.push(`  ${priceStr} ${chgStr} | ${sectorStr}${alertStr}${trendStr}`);
           lines.push(`  ${r.summary}`);
           lines.push(`  ${r.positionLine}`);

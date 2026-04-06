@@ -23,7 +23,7 @@
 | ID  | Title                                                                              | Priority | Agent     | Layer                    | Depends On | Branch                              | Status |
 |-----|------------------------------------------------------------------------------------|----------|-----------|--------------------------|------------|-------------------------------------|--------|
 | 303 | Cycle Step A4: auto-compute hexagram per watchlist stock every cycle               | P0       | Developer | scheduler                | —          | task/303-cycle-step-a4-hexagram     | Done   |
-| 304 | Conviction scorer 6th dimension: kinhDichScore at 15%                              | P1       | Developer | domain                   | 303 ✓      | task/304-conviction-kinhdich        | Todo   |
+| 304 | Conviction scorer 6th dimension: kinhDichScore at 15%                              | P1       | Developer | domain                   | 303 ✓      | task/304-conviction-kinhdich        | Review |
 | 305 | user_requests MCP tools: log_user_request + get_pending_user_requests              | P0       | Developer | interface/mcp/tools      | —          | task/305-user-requests-mcp-tools    | Done   |
 | 306 | Step F enrichment: buildEnrichedAnswer in checkJob + Vietnamese + why: prefix      | P1       | Developer | scheduler                | 303 ✓, 305 ✓ | task/306-step-f-enrichment       | Todo   |
 | 307 | /ask + /why: store why:TICKER payload, guard no-arg /why                           | P1       | Developer | infrastructure/notifiers | 305 ✓      | task/307-telegram-why-command       | Todo   |
