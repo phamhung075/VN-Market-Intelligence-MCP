@@ -855,7 +855,7 @@ describe("296 OCR pipeline e2e smoke test", () => {
 
 | # | Title | Branch | Agent | Priority | Depends on | Status |
 |---|-------|--------|-------|----------|------------|--------|
-| 306 | sentiment_entries table: wire pollNews sentiment classifier to per-stock rows so get_sentiment_trend has data | `task/306-sentiment-per-stock-store` | Developer | P1 | — | Backlog |
+| 306 | sentiment_entries table: wire pollNews sentiment classifier to per-stock rows so get_sentiment_trend has data | `task/306-sentiment-per-stock-store` | Developer | P1 | — | Done (slice 1: pollNews writes real sentiment to rag_analyses, a49d8ed) |
 | 307 | Scheduled job: walk alerts older than 24h, compute outcome vs market_prices_history, call recordSignalOutcome | `task/307-signal-outcome-tracker` | Developer | P1 | — | Done (alt: relaxed lookforward) |
 | 308 | market_prices_history coverage: ensure VPS price proxy writes every 15-min tick so get_correlation_matrix has >=2 days data | `task/308-price-history-coverage` | Developer | P2 | — | Done |
 | 309 | Stranded BCTC PDF retry: scan data/pdfs/, infer stock from filename, re-parse anything not in financial_reports table | `task/309-pdf-retry-orchestrator` | Developer | P1 | — | Done (detector slice) |
