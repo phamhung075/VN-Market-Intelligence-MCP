@@ -20,11 +20,11 @@
 
 | ID  | Title                                                                                               | Priority | Agent     | Layer                    | Depends On   | Branch                                  | Status |
 |-----|-----------------------------------------------------------------------------------------------------|----------|-----------|--------------------------|--------------|-----------------------------------------|--------|
-| 297 | Fix computeForeignFlowScore: sort by fetched_at, replace total_volume with avg_volume_2w            | P0       | Developer | interface/mcp/tools      | —            | task/297-kinhdich-sql-fixes             | Review |
-| 298 | Fix computeMacroScore: use indicator column, derive rolling sigma from history window               | P0       | Developer | interface/mcp/tools      | —            | task/297-kinhdich-sql-fixes             | Review |
-| 299 | Fix computeSectorScore: widen peer pool from watchlist to all stocks in market_prices by domain     | P0       | Developer | interface/mcp/tools      | —            | task/297-kinhdich-sql-fixes             | Review |
-| 300 | Fix computeMacroIndicatorScore: remove sigma column ref, derive z-score from recent history         | P1       | Developer | interface/mcp/tools      | 298          | task/297-kinhdich-sql-fixes             | Review |
-| 301 | Rebuild hexagramLibrary.ts QUE_DATA: port all 64 markdown que files with full hao + bien que data  | P1       | Developer | domain/services/kinhDich | —            | task/301-hexagram-library-rebuild       | Review |
+| 297 | Fix computeForeignFlowScore: sort by fetched_at, replace total_volume with avg_volume_2w            | P0       | Developer | interface/mcp/tools      | —            | task/297-kinhdich-sql-fixes             | Done   |
+| 298 | Fix computeMacroScore: use indicator column, derive rolling sigma from history window               | P0       | Developer | interface/mcp/tools      | —            | task/297-kinhdich-sql-fixes             | Done   |
+| 299 | Fix computeSectorScore: widen peer pool from watchlist to all stocks in market_prices by domain     | P0       | Developer | interface/mcp/tools      | —            | task/297-kinhdich-sql-fixes             | Done   |
+| 300 | Fix computeMacroIndicatorScore: remove sigma column ref, derive z-score from recent history         | P1       | Developer | interface/mcp/tools      | 298          | task/297-kinhdich-sql-fixes             | Done   |
+| 301 | Rebuild hexagramLibrary.ts QUE_DATA: port all 64 markdown que files with full hao + bien que data  | P1       | Developer | domain/services/kinhDich | —            | task/301-hexagram-library-rebuild       | Done   |
 | 302 | Smoke test: seed DB, assert VNM/FPT/VCB/VEA produce 4 different hexagrams, >=3 non-zero hao scores | P1       | Developer | test                     | 297, 298, 299| task/302-kinhdich-differentiation-test  | Done   |
 
 ---
@@ -325,11 +325,11 @@ Key constraints:
 
 | ID  | Title                                                                                 | Priority | Agent     | Layer          | Depends On  | Branch                          | Status |
 |-----|---------------------------------------------------------------------------------------|----------|-----------|----------------|-------------|----------------------------------|--------|
-| 292 | OCR audit: pdf_extracted_text DDL, DPI 150→200, confidence guard, isOcrAvailable cache | P0     | Developer | infrastructure | —           | task/292-ocr-audit               | Todo   |
-| 293 | Pipeline fallback: fetchParseAndStoreBctc reads OCR cache when pdf-parse < 100 chars  | P0      | Developer | application    | 292         | task/293-ocr-fallback-pipeline   | Todo   |
-| 294 | SSC Puppeteer semaphore: withBrowserLock(1) around defaultBrowserFactory              | P1      | Developer | infrastructure | —           | task/294-ssc-browser-mutex       | Todo   |
-| 295 | SSC selector probe: verify live portal DOM, update selectors if drifted               | P1      | Developer | infrastructure | 294         | task/295-ssc-selector-probe      | Todo   |
-| 296 | e2e smoke test: OCR VNM PDF → extractors → assertions on totalAssets + netRevenue     | P1      | Developer | test           | 292, 293    | task/296-ocr-e2e-smoke-test      | Todo   |
+| 292 | OCR audit: pdf_extracted_text DDL, DPI 150→200, confidence guard, isOcrAvailable cache | P0     | Developer | infrastructure | —           | task/292-ocr-audit               | Done   |
+| 293 | Pipeline fallback: fetchParseAndStoreBctc reads OCR cache when pdf-parse < 100 chars  | P0      | Developer | application    | 292         | task/293-ocr-fallback-pipeline   | Done   |
+| 294 | SSC Puppeteer semaphore: withBrowserLock(1) around defaultBrowserFactory              | P1      | Developer | infrastructure | —           | task/294-ssc-browser-mutex       | Done   |
+| 295 | SSC selector probe: verify live portal DOM, update selectors if drifted               | P1      | Developer | infrastructure | 294         | task/295-ssc-selector-probe      | Deferred   |
+| 296 | e2e smoke test: OCR VNM PDF → extractors → assertions on totalAssets + netRevenue     | P1      | Developer | test           | 292, 293    | task/296-ocr-e2e-smoke-test      | Deferred   |
 
 ---
 
