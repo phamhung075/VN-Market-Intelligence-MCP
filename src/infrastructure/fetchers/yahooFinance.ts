@@ -94,7 +94,7 @@ async function makeDefaultHttpClient(): Promise<HttpClient> {
             "Mozilla/5.0 (compatible; VN-Market-Intelligence/1.0; +https://github.com/vn-market)",
           Accept: "application/json",
         },
-        timeout: 15_000,
+        timeout: 30_000,
         responseType: "text",
       });
       return response.data;
