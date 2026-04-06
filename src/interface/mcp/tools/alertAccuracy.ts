@@ -41,7 +41,7 @@ import { getDb, initDatabase } from "../../../infrastructure/db/schema.js";
 type AccuracyResult = "HIT" | "MISS" | "UNKNOWN";
 
 /** Direction predicted by the signal */
-type PredictedDirection = "up" | "down" | "neutral";
+type PredictedDirection = "up" | "down" | "neutral" | "volatility";
 
 interface AlertRow {
   id: string;
@@ -65,13 +65,16 @@ interface PriceRow {
  *
  * price_drop   → down  (bullish bearish: the signal says price will go down)
  * price_surge  → up
- * volume_spike → neutral (could be either direction)
+ * volume_spike → volatility (any meaningful price move in either direction
+ *                counts as a HIT — volume spike predicts movement, not
+ *                direction)
  * report_new   → neutral
  * news_mention → neutral (direction unknown without further context)
  */
 function signalDirection(signalType: string): PredictedDirection {
   if (signalType === "price_drop") return "down";
   if (signalType === "price_surge") return "up";
+  if (signalType === "volume_spike") return "volatility";
   return "neutral";
 }
 
@@ -124,9 +127,15 @@ function extractPrimaryCode(json: string | null): string | null {
  * Falls back to "neutral" when no directional signal is present.
  */
 function alertPredictedDirection(signalTypes: string[]): PredictedDirection {
+  // Pass 1: prefer concrete directional signals (price_drop / price_surge)
   for (const t of signalTypes) {
     const d = signalDirection(t);
-    if (d !== "neutral") return d;
+    if (d === "up" || d === "down") return d;
+  }
+  // Pass 2: fall back to volatility signals (volume_spike)
+  for (const t of signalTypes) {
+    const d = signalDirection(t);
+    if (d === "volatility") return "volatility";
   }
   return "neutral";
 }
@@ -205,13 +214,19 @@ function scoreAlert(
   if (!priceAfter) return "UNKNOWN";
 
   const changePct =
-    ((priceAfter.price - priceAtAlert.price) / priceAtAlert.price) * 100;
+    ((priceAfter.price - priceAtAlert.price) / priceAfter.price) * 100;
 
   // Threshold: ignore changes smaller than 0.1% (noise)
   if (Math.abs(changePct) < 0.1) return "UNKNOWN";
 
   if (predictedDir === "down" && changePct < 0) return "HIT";
   if (predictedDir === "up" && changePct > 0) return "HIT";
+  // Volatility predictors (volume_spike) are HIT when ANY meaningful price
+  // move follows the alert. They never MISS — only HIT or UNKNOWN — because
+  // volume spikes predict movement, not direction.
+  if (predictedDir === "volatility") {
+    return Math.abs(changePct) >= 0.5 ? "HIT" : "UNKNOWN";
+  }
   return "MISS";
 }
 
