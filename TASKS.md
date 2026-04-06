@@ -859,7 +859,7 @@ describe("296 OCR pipeline e2e smoke test", () => {
 | 307 | Scheduled job: walk alerts older than 24h, compute outcome vs market_prices_history, call recordSignalOutcome | `task/307-signal-outcome-tracker` | Developer | P1 | — | Done (alt: relaxed lookforward) |
 | 308 | market_prices_history coverage: ensure VPS price proxy writes every 15-min tick so get_correlation_matrix has >=2 days data | `task/308-price-history-coverage` | Developer | P2 | — | Done |
 | 309 | Stranded BCTC PDF retry: scan data/pdfs/, infer stock from filename, re-parse anything not in financial_reports table | `task/309-pdf-retry-orchestrator` | Developer | P1 | — | Backlog |
-| 310 | SSC nightly: detect overdue Q4 filings (e.g. FPT/VEA past 30/03 deadline) and surface as actionable agent_feedback | `task/310-ssc-overdue-detector` | Developer | P1 | — | Backlog |
+| 310 | SSC nightly: detect overdue Q4 filings (e.g. FPT/VEA past 30/03 deadline) and surface as actionable agent_feedback | `task/310-ssc-overdue-detector` | Developer | P1 | — | Done |
 
 > Root causes of analysis-agent reports that need design work:
 > - **#675**: sentiment classifier runs in pollNews but results are written to rag_analyses only, not linked to a per-stock sentiment_entries table that sentimentTrend.ts reads.
