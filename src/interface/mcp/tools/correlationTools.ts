@@ -110,18 +110,39 @@ function loadPriceHistory(
 
   // Group by code → deduplicate to one price per calendar day (last record)
   const grouped = new Map<string, Map<string, number>>();
+  const rawByCode = new Map<string, number[]>();
   for (const row of rows) {
     const day = row.fetched_at.slice(0, 10);
     if (!grouped.has(row.code)) grouped.set(row.code, new Map());
     grouped.get(row.code)!.set(day, row.price); // last record for that day wins
+    if (!rawByCode.has(row.code)) rawByCode.set(row.code, []);
+    rawByCode.get(row.code)!.push(row.price);
   }
 
-  // Convert to ordered price arrays
+  // Convert to ordered price arrays.
+  // Preferred path: one sample per calendar day (for proper daily returns).
+  // Fallback path (task 308): when only intraday data exists for a single day
+  // (first day of deployment, or tight time window), fall back to the raw
+  // intraday series downsampled to ≤30 evenly-spaced points. Without this,
+  // get_correlation_matrix returns empty every time the watchlist has <2
+  // calendar days of history — producing the '0 stocks analysed' complaint.
   const result = new Map<string, number[]>();
   for (const [code, dayMap] of grouped) {
-    const prices = Array.from(dayMap.values());
-    if (prices.length >= 2) {
-      result.set(code, prices);
+    const daily = Array.from(dayMap.values());
+    if (daily.length >= 2) {
+      result.set(code, daily);
+      continue;
+    }
+    const raw = rawByCode.get(code) ?? [];
+    if (raw.length >= 10) {
+      // Downsample to at most 30 points preserving order
+      const stride = Math.max(1, Math.floor(raw.length / 30));
+      const sampled: number[] = [];
+      for (let i = 0; i < raw.length; i += stride) {
+        const v = raw[i];
+        if (v !== undefined) sampled.push(v);
+      }
+      if (sampled.length >= 2) result.set(code, sampled);
     }
   }
 
