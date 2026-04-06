@@ -166,6 +166,9 @@ At the very end of every cron invocation, regardless of what ran:
 4. For any `.claude/worktrees/agent-*` left over: `git worktree remove --force <path>` then `git branch -D worktree-agent-*`.
 5. `git stash list` — drop any stash whose source branch is now merged.
 
+### Step 9: Auto-Compact Context
+At the very end of every cron invocation, after Step 8 hygiene passes, run `/compact` to compress the conversation context. This keeps the next loop starting with a lean context window and prevents unbounded token growth across back-to-back loops. If `/compact` is unavailable in the current harness, fall back to summarizing the loop outcome in one paragraph and discarding intermediate scratch work before exiting.
+
 ## RULES
 
 ### Git Rules
