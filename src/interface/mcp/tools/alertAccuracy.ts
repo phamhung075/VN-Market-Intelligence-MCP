@@ -214,7 +214,7 @@ function scoreAlert(
   if (!priceAfter) return "UNKNOWN";
 
   const changePct =
-    ((priceAfter.price - priceAtAlert.price) / priceAfter.price) * 100;
+    ((priceAfter.price - priceAtAlert.price) / priceAtAlert.price) * 100;
 
   // Threshold: ignore changes smaller than 0.1% (noise)
   if (Math.abs(changePct) < 0.1) return "UNKNOWN";
