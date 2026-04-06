@@ -91,6 +91,12 @@ export interface CheckSscReportsOptions {
    * Defaults to `storeAlerts` writing to the `alerts` SQLite table.
    */
   storeAlertsFn?: (alerts: Alert[]) => void;
+  /**
+   * Legacy alias for `isNewReportFn` (task 153 test harness).
+   * Returns `true` when the document has already been processed.
+   * Accepted for back-compat with older test fixtures.
+   */
+  isDocProcessedFn?: (code: string, pdfUrl: string) => boolean;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
