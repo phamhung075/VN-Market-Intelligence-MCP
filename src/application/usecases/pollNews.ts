@@ -360,10 +360,19 @@ export async function pollNews(options: PollNewsOptions = {}): Promise<PollNewsR
         ? result.reason.message
         : String(result.reason);
       globalSourceTracker.recordFailure(name, errorMsg);
-      logger.error("[pollNews] source fetch failed", {
+      logger.error(`[pollNews] ${name} fetch failed: ${errorMsg.slice(0, 120)}`, {
         source: name,
         error: errorMsg,
       });
+    }
+  }
+
+  // Surface fulfilled-but-empty sources so the Dev Team can see when a fetcher
+  // silently returns [] (rate-limited, circuit-broken, parse-empty). Without this,
+  // sourceHealthTracker reports "OK" while rag_analyses receives zero inserts.
+  for (const { name, result } of sourceResults) {
+    if (result.status === "fulfilled" && result.value.length === 0) {
+      logger.warn(`[pollNews] ${name} returned 0 items`, { source: name });
     }
   }
 
