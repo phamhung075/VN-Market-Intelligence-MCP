@@ -99,12 +99,15 @@ export async function runVpsProxyWatchdog(
 ): Promise<string> {
   const now = options.now ?? new Date();
 
-  if (!isVnMarketHoursUtc(now)) {
-    return "off-hours";
-  }
-
   const latest = readLatestPriceTimestamp();
   const ageMs = latest ? now.getTime() - latest.getTime() : Number.POSITIVE_INFINITY;
+
+  // "Never populated" (latest === null) is a permanent deploy/config problem,
+  // not a transient market-hours gap — alert regardless of the hour so a dead
+  // proxy at restart is caught immediately rather than at next market open.
+  if (latest !== null && !isVnMarketHoursUtc(now)) {
+    return "off-hours";
+  }
 
   if (ageMs < STALE_THRESHOLD_MS) {
     return "ok";

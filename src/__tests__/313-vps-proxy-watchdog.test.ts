@@ -42,7 +42,7 @@ describe("VPS proxy freshness watchdog", () => {
   });
 
   describe("runVpsProxyWatchdog", () => {
-    it("returns 'off-hours' without notifying outside VN market hours", async () => {
+    it("off-hours empty-table still alerts (never-populated is not a market-hours problem)", async () => {
       const calls: string[] = [];
       const status = await runVpsProxyWatchdog({
         now: new Date("2026-04-06T15:00:00Z"), // 22:00 VN
@@ -51,8 +51,8 @@ describe("VPS proxy freshness watchdog", () => {
           return true;
         },
       });
-      expect(status).toBe("off-hours");
-      expect(calls.length).toBe(0);
+      expect(status).toBe("alert-sent");
+      expect(calls.length).toBe(1);
     });
 
     it("sends alert when market_prices is stale (empty table → infinite age)", async () => {
@@ -90,6 +90,20 @@ describe("VPS proxy freshness watchdog", () => {
       expect(first).toBe("alert-sent");
       expect(second).toBe("cooldown");
       expect(calls.length).toBe(1);
+    });
+
+    it("alerts off-hours when market_prices is never populated (empty table)", async () => {
+      const calls: string[] = [];
+      const status = await runVpsProxyWatchdog({
+        now: new Date("2026-04-06T15:00:00Z"), // 22:00 VN — off-hours
+        notify: async (m) => {
+          calls.push(m);
+          return true;
+        },
+      });
+      expect(status).toBe("alert-sent");
+      expect(calls.length).toBe(1);
+      expect(calls[0]).toContain("Vultr price pushes stopped");
     });
 
     it("returns 'notify-failed' when the notifier returns false", async () => {
