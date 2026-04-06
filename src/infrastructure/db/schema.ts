@@ -261,6 +261,28 @@ export async function initDatabase(): Promise<void> {
   // v_yoy_comparison views.
   db.exec(SQLITE_DDL);
 
+  // ── Migration: add validation_status/validation_notes if missing ───────────
+  // Production DBs created before task 132 lack these columns because
+  // CREATE TABLE IF NOT EXISTS never re-evaluates a pre-existing table. Probe
+  // table_info and ALTER on demand so parseBctcReport can persist reports.
+  try {
+    const cols = db
+      .query<{ name: string }, []>("PRAGMA table_info(financial_reports)")
+      .all();
+    const colNames = new Set(cols.map((c) => c.name));
+    if (!colNames.has("validation_status")) {
+      db.exec(
+        "ALTER TABLE financial_reports ADD COLUMN validation_status TEXT DEFAULT 'pending'",
+      );
+    }
+    if (!colNames.has("validation_notes")) {
+      db.exec("ALTER TABLE financial_reports ADD COLUMN validation_notes TEXT");
+    }
+  } catch {
+    // If financial_reports doesn't exist yet (very fresh DB), the CREATE
+    // TABLE above already added the columns — nothing to migrate.
+  }
+
   // ── Macro Indicators (Task 024) ────────────────────────────────────────────
   // Stores macro economic data fetched from Trading Economics.
   // UNIQUE(country) enforces upsert semantics via INSERT OR REPLACE.
