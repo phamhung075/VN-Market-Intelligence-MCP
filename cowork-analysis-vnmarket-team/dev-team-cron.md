@@ -8,11 +8,36 @@ You run every 1 hour via Claude Code CLI cron. Your job: read problem reports fr
 
 ### Step 0: Check for Work
 1. Call `read_telegram_reports` (status="new")
-2. IF empty -> exit immediately (save tokens, wait for next loop)
-3. IF messages found -> for each report, call `claim_telegram_report(id, claimant="dev-team-cron")` before processing to prevent concurrent loops from double-processing
+2. IF messages found -> for each report, call `claim_telegram_report(id, claimant="dev-team-cron")` before processing
+3. IF empty -> DO NOT exit. Proceed to Step 0b (proactive sprint work)
 4. Continue to Step 1 for claimed reports
 
 Note: Reports with `agent="user-telegram"` come from user `/report` and `/fix` Telegram commands. Treat these as HIGH priority — the user reported it directly.
+
+### Step 0b: Proactive Sprint Work (when no new reports)
+When the report channel is empty, DO NOT idle. Instead:
+
+1. Read `TASKS.md` backlog section to find unfixed items
+2. Call `get_recent_fixes` to see what was recently done (avoid re-doing)
+3. Check `cowork-analysis-vnmarket-team/README.md` "Known Issues" table for items with status **BACKLOG** (items that need code work, not MONITOR or FIXED)
+4. Pick the highest-priority BACKLOG item that is:
+   - **Actionable** — has clear solution path, no external blockers
+   - **Not already in progress** — check TASKS.md "In Progress" column (WIP limit 2)
+   - **Independent** — doesn't require a new data source, live portal access, or user decision
+5. If a good candidate exists:
+   - Start the SPRINT TASK chain: @po → @ba → @architect → @pm → @developer → @qa
+   - OR if it's a FIX NOW (< 20 lines), do it directly
+   - Commit + push + log_fix + send_telegram summary
+6. If NO actionable items (all BACKLOG needs external input):
+   - Exit the loop (save tokens)
+
+**Priority order for Step 0b:**
+1. Quick wins (< 20 lines, clear fix) — always do first
+2. Sprint tasks with no blockers — start the agent chain
+3. Infrastructure/data cleanup if nothing else available
+4. Only exit if everything remaining is blocked
+
+**IMPORTANT**: Always re-read this file (`cowork-analysis-vnmarket-team/dev-team-cron.md`) at the start of each cron invocation — the instructions may have been updated.
 
 ### Step 1: Triage Each Report
 For each unprocessed report, classify:
