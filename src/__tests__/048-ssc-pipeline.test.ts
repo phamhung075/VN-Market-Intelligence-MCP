@@ -1,23 +1,18 @@
 /**
- * Task 048 — SSC Fetch → Parse → Store Pipeline
+ * Task 048 / 304 — SSC Fetch → Parse → Store Pipeline (HttpClient rewrite)
  *
- * Tests the fetchParseAndStoreBctc use case which orchestrates:
+ * Tests fetchParseAndStoreBctc which orchestrates:
  *   listSscDocuments → downloadAndExtractPdf → parseBctcReport → insertAnalysis
  *
- * All external dependencies (SSC browser, PDF HTTP, LanceDB) are mocked so no
- * real network or filesystem access is needed.
- *
- * NOTE: sscHttpClient is now BrowserFactory (Puppeteer-based scraper).
- *       The old HttpClient-based SSC mock has been replaced with a BrowserFactory mock.
+ * External dependencies (SSC HTTP, PDF HTTP, LanceDB) are mocked. The Puppeteer
+ * BrowserFactory harness has been removed — the SSC fetcher now uses an
+ * HttpClient returning HTML. Most tests use the pdfUrl bypass (task 289) so
+ * SSC listing is skipped entirely.
  */
 
 import { describe, it, expect, beforeAll, afterAll } from "bun:test";
 import { initDatabase, getDb, closeDb } from "../infrastructure/db/schema.js";
-import type {
-  BrowserFactory,
-  SscBrowser,
-  SscBrowserPage,
-} from "../infrastructure/fetchers/ssc.js";
+import type { HttpClient } from "../infrastructure/fetchers/ssc.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Fixtures
@@ -57,85 +52,33 @@ Tiền và tương đương tiền đầu kỳ                      4.000.000
 Tiền và tương đương tiền cuối kỳ                     7.880.000
 `;
 
-/**
- * The downloadId used in the default VCB mock row.
- * listSscDocuments maps downloadId → "ssc-adf://<downloadId>" for the url field.
- */
-const VCB_DOWNLOAD_ID = "vcb-q1-2025-download-link";
-const FAKE_DOC_URL = `ssc-download://VCB/0/${VCB_DOWNLOAD_ID}`;
-
-/** Fake PDF binary string (treated as binary by downloadAndExtractPdf) */
+const VCB_PDF_URL = "https://congbothongtin.ssc.gov.vn/bctc/vcb-q1-2025.pdf";
 const FAKE_PDF_BINARY = Buffer.from("FAKE_PDF_CONTENT").toString("binary");
 
 // ─────────────────────────────────────────────────────────────────────────────
-// BrowserFactory mock helpers
+// Mock helpers
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** Raw row shape that page.evaluate() returns in the real scraper. */
-interface RawSscRow {
-  code: string;
-  exchange: string;
-  title: string;
-  company: string;
-  description: string;
-  date: string;
-  downloadId: string;
-}
-
-/**
- * Creates a BrowserFactory mock whose page.evaluate() returns the given rows,
- * filtered by stock code (mirrors real Puppeteer scraper behaviour).
- */
-function makeBrowserFactory(rows: RawSscRow[]): BrowserFactory {
-  return async (): Promise<SscBrowser> => {
-    const page: SscBrowserPage = {
-      async goto() { return null; },
-      async waitForSelector() { return null; },
-      async click() {},
-      async type() {},
-      async evaluate<T>(fn: (...args: unknown[]) => T, ...args: unknown[]): Promise<T> {
-        const targetCode = args[0] as string | undefined;
-        if (targetCode !== undefined) {
-          const filtered = rows.filter((r) => r.code === targetCode);
-          return filtered as unknown as T;
-        }
-        return undefined as unknown as T;
-      },
-      keyboard: { async press(_key: string) {} },
-      on(_event: string, _handler: (...args: unknown[]) => void) {},
-      async close() {},
-    };
-    return {
-      async newPage() { return page; },
-      async close() {},
-    };
+/** Builds an HttpClient returning the minimal .tbl-data HTML for SSC listing. */
+function makeMockSscHttpClient(
+  rows: { title: string; href: string; date: string }[],
+): HttpClient {
+  const trs = rows
+    .map(
+      (r) =>
+        `<tr><td><a href="${r.href}">${r.title}</a></td><td>${r.date}</td></tr>`,
+    )
+    .join("");
+  const html = `<html><body><table class="tbl-data"><tbody>${trs}</tbody></table></body></html>`;
+  return {
+    async get(_url: string): Promise<string> {
+      return html;
+    },
   };
 }
 
-/** Default row for VCB quarterly requests */
-const DEFAULT_VCB_ROW: RawSscRow = {
-  code: "VCB",
-  exchange: "HOSE",
-  title: "Báo cáo tài chính quý 1 năm 2025 - VCB",
-  company: "Vietcombank",
-  description: "BCTC quý 1",
-  date: "15/04/2025",
-  downloadId: VCB_DOWNLOAD_ID,
-};
-
-/**
- * Returns a mock BrowserFactory for SSC requests.
- * Returns a single quarterly document for VCB.
- */
-function makeMockSscBrowserFactory(): BrowserFactory {
-  return makeBrowserFactory([DEFAULT_VCB_ROW]);
-}
-
-/**
- * Returns a mock HttpClient for PDF binary requests.
- * Returns FAKE_PDF_BINARY on any GET so downloadAndExtractPdf can buffer it.
- */
-function makeMockPdfHttpClient(): { get: (url: string) => Promise<string> } {
+/** HttpClient returning raw fake PDF binary for pdf extraction path. */
+function makeMockPdfHttpClient(): HttpClient {
   return {
     async get(_url: string): Promise<string> {
       return FAKE_PDF_BINARY;
@@ -143,9 +86,7 @@ function makeMockPdfHttpClient(): { get: (url: string) => Promise<string> } {
   };
 }
 
-/**
- * Returns a mock insertAnalysis function that records calls.
- */
+/** Recording insertAnalysis mock. */
 function makeMockInsertAnalysis(): {
   fn: (entry: unknown) => Promise<void>;
   calls: unknown[];
@@ -158,7 +99,6 @@ function makeMockInsertAnalysis(): {
     calls,
   };
 }
-
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Database setup
@@ -177,27 +117,18 @@ afterAll(() => {
 // Tests
 // ─────────────────────────────────────────────────────────────────────────────
 
-/**
- * Per-test timeout in ms.
- * listSscDocuments has ~5.8 s of hardcoded setTimeout delays (500 + 300 + 5000 ms)
- * for the ADF form interaction, even when a mock browser is used.
- */
-const TEST_TIMEOUT = 15_000;
-
-describe("Task 048 — SSC fetch → parse → store pipeline", () => {
-  // ── 1. Happy path: full pipeline returns a FinancialReport ─────────────────
-  it("returns a FinancialReport for VCB Q1 2025 with mocked SSC browser + PDF", async () => {
+describe("Task 048 / 304 — SSC fetch → parse → store pipeline", () => {
+  it("returns a FinancialReport for VCB Q1 2025 via pdfUrl bypass", async () => {
     const { fetchParseAndStoreBctc } = await import(
       "../application/usecases/fetchParseAndStoreBctc.js"
     );
-
     const mockInsert = makeMockInsertAnalysis();
 
     const report = await fetchParseAndStoreBctc({
       actionCode: "VCB",
       year: 2025,
       quarter: "Q1",
-      sscHttpClient: makeMockSscBrowserFactory(),
+      pdfUrl: VCB_PDF_URL,
       pdfHttpClient: makeMockPdfHttpClient(),
       pdfTextOverride: MINIMAL_BCTC_TEXT,
       insertAnalysisFn: mockInsert.fn,
@@ -205,65 +136,57 @@ describe("Task 048 — SSC fetch → parse → store pipeline", () => {
 
     expect(report).not.toBeNull();
     expect(report).toBeDefined();
-  }, TEST_TIMEOUT);
+  });
 
-  // ── 2. actionCode is set correctly on the returned report ──────────────────
   it("sets actionCode correctly on the returned report", async () => {
     const { fetchParseAndStoreBctc } = await import(
       "../application/usecases/fetchParseAndStoreBctc.js"
     );
-
     const mockInsert = makeMockInsertAnalysis();
 
     const report = await fetchParseAndStoreBctc({
       actionCode: "VCB",
       year: 2025,
       quarter: "Q1",
-      sscHttpClient: makeMockSscBrowserFactory(),
+      pdfUrl: VCB_PDF_URL,
       pdfHttpClient: makeMockPdfHttpClient(),
       pdfTextOverride: MINIMAL_BCTC_TEXT,
       insertAnalysisFn: mockInsert.fn,
     });
 
     expect(report!.actionCode).toBe("VCB");
-  }, TEST_TIMEOUT);
+  });
 
-  // ── 3. Ratios are computed on the returned report ──────────────────────────
   it("returns a report with ratios computed (grossMarginPct is a number)", async () => {
     const { fetchParseAndStoreBctc } = await import(
       "../application/usecases/fetchParseAndStoreBctc.js"
     );
-
     const mockInsert = makeMockInsertAnalysis();
 
     const report = await fetchParseAndStoreBctc({
       actionCode: "VCB",
       year: 2025,
       quarter: "Q1",
-      sscHttpClient: makeMockSscBrowserFactory(),
+      pdfUrl: VCB_PDF_URL,
       pdfHttpClient: makeMockPdfHttpClient(),
       pdfTextOverride: MINIMAL_BCTC_TEXT,
       insertAnalysisFn: mockInsert.fn,
     });
 
     expect(typeof report!.ratios.grossMarginPct).toBe("number");
-  }, TEST_TIMEOUT);
+  });
 
-  // ── 4. Report is stored in SQLite ─────────────────────────────────────────
   it("persists the report in the financial_reports SQLite table", async () => {
     const { fetchParseAndStoreBctc } = await import(
       "../application/usecases/fetchParseAndStoreBctc.js"
     );
-
     const mockInsert = makeMockInsertAnalysis();
-
-    const tcbRow: RawSscRow = { ...DEFAULT_VCB_ROW, code: "TCB" };
 
     const report = await fetchParseAndStoreBctc({
       actionCode: "TCB",
       year: 2025,
       quarter: "Q1",
-      sscHttpClient: makeBrowserFactory([tcbRow]),
+      pdfUrl: "https://congbothongtin.ssc.gov.vn/bctc/tcb-q1-2025.pdf",
       pdfHttpClient: makeMockPdfHttpClient(),
       pdfTextOverride: MINIMAL_BCTC_TEXT,
       insertAnalysisFn: mockInsert.fn,
@@ -276,54 +199,38 @@ describe("Task 048 — SSC fetch → parse → store pipeline", () => {
 
     expect(row).toBeDefined();
     expect(row!.action_code).toBe("TCB");
-  }, TEST_TIMEOUT);
+  });
 
-  // ── 5. insertAnalysis is called once (LanceDB) ─────────────────────────────
   it("calls insertAnalysis exactly once so the entry lands in LanceDB", async () => {
     const { fetchParseAndStoreBctc } = await import(
       "../application/usecases/fetchParseAndStoreBctc.js"
     );
-
     const mockInsert = makeMockInsertAnalysis();
-
-    const hpgRow: RawSscRow = {
-      ...DEFAULT_VCB_ROW,
-      code: "HPG",
-      title: "Báo cáo tài chính quý 1 năm 2025 - HPG",
-    };
 
     await fetchParseAndStoreBctc({
       actionCode: "HPG",
       year: 2025,
       quarter: "Q1",
-      sscHttpClient: makeBrowserFactory([hpgRow]),
+      pdfUrl: "https://congbothongtin.ssc.gov.vn/bctc/hpg-q1-2025.pdf",
       pdfHttpClient: makeMockPdfHttpClient(),
       pdfTextOverride: MINIMAL_BCTC_TEXT,
       insertAnalysisFn: mockInsert.fn,
     });
 
     expect(mockInsert.calls.length).toBe(1);
-  }, TEST_TIMEOUT);
+  });
 
-  // ── 6. insertAnalysis receives correct actionCode and level ────────────────
   it("passes correct actionCode and level='action' to insertAnalysis", async () => {
     const { fetchParseAndStoreBctc } = await import(
       "../application/usecases/fetchParseAndStoreBctc.js"
     );
-
     const mockInsert = makeMockInsertAnalysis();
-
-    const mbbRow: RawSscRow = {
-      ...DEFAULT_VCB_ROW,
-      code: "MBB",
-      title: "Báo cáo tài chính quý 1 năm 2025 - MBB",
-    };
 
     await fetchParseAndStoreBctc({
       actionCode: "MBB",
       year: 2025,
       quarter: "Q1",
-      sscHttpClient: makeBrowserFactory([mbbRow]),
+      pdfUrl: "https://congbothongtin.ssc.gov.vn/bctc/mbb-q1-2025.pdf",
       pdfHttpClient: makeMockPdfHttpClient(),
       pdfTextOverride: MINIMAL_BCTC_TEXT,
       insertAnalysisFn: mockInsert.fn,
@@ -332,21 +239,19 @@ describe("Task 048 — SSC fetch → parse → store pipeline", () => {
     const entry = mockInsert.calls[0] as Record<string, unknown>;
     expect(entry.actionCode).toBe("MBB");
     expect(entry.level).toBe("action");
-  }, TEST_TIMEOUT);
+  });
 
-  // ── 7. Returns null when no SSC documents found ───────────────────────────
-  it("returns null gracefully when listSscDocuments returns no documents", async () => {
+  it("returns null when SSC listing finds no documents (no pdfUrl)", async () => {
     const { fetchParseAndStoreBctc } = await import(
       "../application/usecases/fetchParseAndStoreBctc.js"
     );
-
     const mockInsert = makeMockInsertAnalysis();
 
     const result = await fetchParseAndStoreBctc({
       actionCode: "UNKNOWN",
       year: 2025,
       quarter: "Q1",
-      sscHttpClient: makeBrowserFactory([]), // empty — no rows
+      sscHttpClient: makeMockSscHttpClient([]), // empty table
       pdfHttpClient: makeMockPdfHttpClient(),
       pdfTextOverride: MINIMAL_BCTC_TEXT,
       insertAnalysisFn: mockInsert.fn,
@@ -354,63 +259,57 @@ describe("Task 048 — SSC fetch → parse → store pipeline", () => {
 
     expect(result).toBeNull();
     expect(mockInsert.calls.length).toBe(0);
-  }, TEST_TIMEOUT);
+  });
 
-  // ── 8. Returns null gracefully when PDF extraction yields no text ──────────
-  it("returns null gracefully when PDF extraction fails (empty text)", async () => {
+  it("returns null gracefully when PDF extraction yields empty text", async () => {
     const { fetchParseAndStoreBctc } = await import(
       "../application/usecases/fetchParseAndStoreBctc.js"
     );
-
     const mockInsert = makeMockInsertAnalysis();
 
     const result = await fetchParseAndStoreBctc({
       actionCode: "VCB",
       year: 2025,
       quarter: "Q1",
-      sscHttpClient: makeMockSscBrowserFactory(),
+      pdfUrl: VCB_PDF_URL,
       pdfHttpClient: makeMockPdfHttpClient(),
       pdfTextOverride: "",
       insertAnalysisFn: mockInsert.fn,
     });
 
     expect(result).toBeNull();
-  }, TEST_TIMEOUT);
+  });
 
-  // ── 9. sscUrl is set on the returned report's source ─────────────────────
-  it("sets sscUrl to the document URL found on SSC portal", async () => {
+  it("sets sscUrl to the pdfUrl that was passed in", async () => {
     const { fetchParseAndStoreBctc } = await import(
       "../application/usecases/fetchParseAndStoreBctc.js"
     );
-
     const mockInsert = makeMockInsertAnalysis();
 
     const report = await fetchParseAndStoreBctc({
       actionCode: "VCB",
       year: 2025,
       quarter: "Q1",
-      sscHttpClient: makeMockSscBrowserFactory(),
+      pdfUrl: VCB_PDF_URL,
       pdfHttpClient: makeMockPdfHttpClient(),
       pdfTextOverride: MINIMAL_BCTC_TEXT,
       insertAnalysisFn: mockInsert.fn,
     });
 
-    expect(report!.source.sscUrl).toBe(FAKE_DOC_URL);
-  }, TEST_TIMEOUT);
+    expect(report!.source.sscUrl).toBe(VCB_PDF_URL);
+  });
 
-  // ── 10. period.year and period.quarter match the params ────────────────────
-  it("sets period.year and period.quarter from params", async () => {
+  it("sets period.year, period.quarter, and sortKey from params", async () => {
     const { fetchParseAndStoreBctc } = await import(
       "../application/usecases/fetchParseAndStoreBctc.js"
     );
-
     const mockInsert = makeMockInsertAnalysis();
 
     const report = await fetchParseAndStoreBctc({
       actionCode: "VCB",
       year: 2025,
       quarter: "Q1",
-      sscHttpClient: makeMockSscBrowserFactory(),
+      pdfUrl: VCB_PDF_URL,
       pdfHttpClient: makeMockPdfHttpClient(),
       pdfTextOverride: MINIMAL_BCTC_TEXT,
       insertAnalysisFn: mockInsert.fn,
@@ -419,5 +318,5 @@ describe("Task 048 — SSC fetch → parse → store pipeline", () => {
     expect(report!.period.year).toBe(2025);
     expect(report!.period.quarter).toBe(1);
     expect(report!.period.sortKey).toBe("2025-Q1");
-  }, TEST_TIMEOUT);
+  });
 });
