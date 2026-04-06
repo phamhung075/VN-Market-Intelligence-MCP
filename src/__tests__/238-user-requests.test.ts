@@ -270,25 +270,25 @@ describe("Task 238 — /why Telegram command", () => {
     db = makeDb();
   });
 
-  it("/why VCB creates 'Why did VCB move today?' payload", async () => {
+  it("/why VCB creates 'why:VCB' payload (Task 307: structured prefix)", async () => {
     const result = await handleTelegramCommand(makeUpdate("/why VCB"), db);
 
     expect(result).not.toBeNull();
-    expect(result!.text).toContain("Dang phan tich");
+    expect(result!.text).toContain("ID:");
 
     const rows = db
       .prepare<UserRequest, []>("SELECT * FROM user_requests")
       .all();
     expect(rows.length).toBe(1);
-    expect(rows[0]!.payload).toBe("Why did VCB move today?");
+    expect(rows[0]!.payload).toBe("why:VCB");
     expect(rows[0]!.command).toBe("ask");
   });
 
-  it("/why without ticker returns usage hint", async () => {
+  it("/why without ticker returns usage hint (Task 307: no-arg guard)", async () => {
     const result = await handleTelegramCommand(makeUpdate("/why"), db);
 
     expect(result).not.toBeNull();
-    expect(result!.text).toContain("Su dung");
+    expect(result!.text).toContain("/why VCB");
 
     // No row inserted
     const count = db
@@ -299,13 +299,13 @@ describe("Task 238 — /why Telegram command", () => {
     expect(count).toBe(0);
   });
 
-  it("/why FPT creates correct payload", async () => {
+  it("/why FPT creates correct payload (Task 307: structured prefix)", async () => {
     await handleTelegramCommand(makeUpdate("/why FPT"), db);
 
     const rows = db
       .prepare<UserRequest, []>("SELECT * FROM user_requests")
       .all();
-    expect(rows[0]!.payload).toBe("Why did FPT move today?");
+    expect(rows[0]!.payload).toBe("why:FPT");
   });
 });
 
