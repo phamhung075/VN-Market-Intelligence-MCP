@@ -151,15 +151,18 @@ function ensureAuditDependencies(db: Database): void {
 function insertFeedbackIfNew(db: Database, finding: AuditFinding): void {
   const title = `[AUDIT] ${finding.check} — ${finding.table} (${finding.rowsAffected} rows)`;
 
-  // Dedup guard: same title today?
+  // Dedup guard: skip if the same finding is either (a) already inserted
+  // today, or (b) still open from any prior day (status='new'). Without the
+  // status check the audit spams a fresh row every day for the same
+  // long-standing issue until a human acknowledges it.
   const existing = db.prepare(`
     SELECT COUNT(*) as cnt FROM agent_feedback
     WHERE agent = 'data-auditor'
       AND title = ?
-      AND created_at >= date('now')
+      AND (created_at >= date('now') OR status = 'new')
   `).get(title) as { cnt: number };
 
-  if (existing.cnt > 0) return; // already inserted today
+  if (existing.cnt > 0) return; // already inserted today, or still open
 
   const category = checkToCategory(finding.check);
   const priority = severityToPriority(finding.severity);
