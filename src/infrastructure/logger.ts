@@ -248,15 +248,20 @@ export function createLogger(
       // Ignore sink errors
     }
 
+    // Test isolation: when DB_PATH is ':memory:' we are in a unit test.
+    // Skip all shared-file and shared-DB sinks so test fixtures never leak
+    // into the production error log / system_logs table.
+    const isTestMode = process.env["DB_PATH"] === ":memory:";
+
     // Tier 1: Global log (one-liner) — always for warn/error, info for key events
-    if (LEVEL_WEIGHT[level] >= LEVEL_WEIGHT["warn"] || LEVEL_WEIGHT[level] >= LEVEL_WEIGHT["info"]) {
+    if (!isTestMode && (LEVEL_WEIGHT[level] >= LEVEL_WEIGHT["warn"] || LEVEL_WEIGHT[level] >= LEVEL_WEIGHT["info"])) {
       const source = extractSource(message);
       const errSummary = extractErrorSummary(context);
       appendToFile(GLOBAL_LOG, formatGlobalLine(level, source, message, errSummary));
     }
 
     // Tier 2: Auto-detect tool from source tag and write to tool log
-    if (LEVEL_WEIGHT[level] >= LEVEL_WEIGHT["info"]) {
+    if (!isTestMode && LEVEL_WEIGHT[level] >= LEVEL_WEIGHT["info"]) {
       const source = extractSource(message);
       if (source !== "system") {
         const toolPath = getToolLogPath(source);
@@ -265,7 +270,7 @@ export function createLogger(
     }
 
     // Persist warn/error to SQLite (async, fire-and-forget)
-    if (LEVEL_WEIGHT[level] >= LEVEL_WEIGHT["warn"]) {
+    if (!isTestMode && LEVEL_WEIGHT[level] >= LEVEL_WEIGHT["warn"]) {
       const source = extractSource(message);
       persistLog(level, source, message, context).catch(() => {});
     }
@@ -277,12 +282,16 @@ export function createLogger(
     message: string,
     context?: Record<string, unknown>,
   ): void {
-    // Always write to tool-specific log regardless of minLevel
-    const toolPath = getToolLogPath(tool);
-    appendToFile(toolPath, formatToolLine(level, tool, message, context));
+    const isTestMode = process.env["DB_PATH"] === ":memory:";
+
+    // Always write to tool-specific log regardless of minLevel (skipped in tests)
+    if (!isTestMode) {
+      const toolPath = getToolLogPath(tool);
+      appendToFile(toolPath, formatToolLine(level, tool, message, context));
+    }
 
     // Also write to global log if warn/error
-    if (LEVEL_WEIGHT[level] >= LEVEL_WEIGHT["warn"]) {
+    if (!isTestMode && LEVEL_WEIGHT[level] >= LEVEL_WEIGHT["warn"]) {
       const errSummary = extractErrorSummary(context);
       appendToFile(GLOBAL_LOG, formatGlobalLine(level, tool, message, errSummary));
       persistLog(level, tool, message, context).catch(() => {});
