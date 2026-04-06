@@ -50,10 +50,39 @@ interface ClobMarket {
 interface GammaMarket {
   id: string;
   conditionId?: string;
+  question?: string;
+  endDate?: string;
+  active?: boolean;
+  closed?: boolean;
+  liquidity?: number | string;
+  volume?: number | string;
+  volume24hr?: number | string;
+  lastTradePrice?: number;
+  outcomePrices?: string[] | string;
   uniqueWalletsCount?: number;
   tags?: Array<{ id: number; label: string }> | string[];
-  liquidity?: number;
-  lastTradePrice?: number;
+}
+
+/** Parse a numeric-ish field from Gamma (may be stringified). */
+function gammaNum(v: unknown): number {
+  if (typeof v === "number") return v;
+  if (typeof v === "string") {
+    const n = parseFloat(v);
+    return Number.isFinite(n) ? n : 0;
+  }
+  return 0;
+}
+
+/** Parse the Gamma outcomePrices field (may be JSON-encoded string). */
+function parseOutcomePrices(v: unknown): { yes: number; no: number } {
+  let arr: unknown = v;
+  if (typeof v === "string") {
+    try { arr = JSON.parse(v); } catch { return { yes: 0.5, no: 0.5 }; }
+  }
+  if (Array.isArray(arr) && arr.length >= 2) {
+    return { yes: gammaNum(arr[0]), no: gammaNum(arr[1]) };
+  }
+  return { yes: 0.5, no: 0.5 };
 }
 
 // ---------------------------------------------------------------------------
@@ -194,7 +223,7 @@ export async function fetchPolymarkets(
   // Step 3 — fetch Gamma for enrichment
   let gammaMap = new Map<string, GammaMarket>();
   try {
-    const gammaUrl = `${config.gammaApiUrl}/markets?closed=false&limit=${config.maxMarketsPerPoll}`;
+    const gammaUrl = `${config.gammaApiUrl}/markets?closed=false&active=true&limit=${config.maxMarketsPerPoll}`;
     const raw = await fetchFn(gammaUrl);
     const parsed: unknown = JSON.parse(raw);
     // Gamma API may return a bare array or { data: [...] } envelope
@@ -214,7 +243,7 @@ export async function fetchPolymarkets(
     logger.warn("[polymarket] Gamma fetch failed (continuing with defaults)", { error: String(err) });
   }
 
-  // Step 4 — merge and filter
+  // Step 4 — merge and filter CLOB primary path
   const results: PredictionMarket[] = [];
 
   const now = new Date();
@@ -242,12 +271,67 @@ export async function fetchPolymarkets(
       noPrice,
       volume24h: clob.volume_24h ?? 0,
       volumeTotal: clob.volume ?? 0,
-      liquidity: gamma?.liquidity ?? 0,
+      liquidity: gamma ? gammaNum(gamma.liquidity) : 0,
       lastTradePrice: gamma?.lastTradePrice ?? yesPrice,
       uniqueWalletsCount: gamma?.uniqueWalletsCount ?? 0,
       tags: normaliseTags(gamma?.tags),
       fetchedAt,
     });
+  }
+
+  // Step 5 — Gamma-primary fallback
+  // CLOB endpoint has drifted and now returns thousands of closed 2022-2023
+  // sports markets, so CLOB-primary filtering yields zero matches despite
+  // plenty of active markets on the platform. When CLOB yields nothing,
+  // build results directly from the Gamma market list — it has question,
+  // endDate, outcomePrices, liquidity, volume and volume24hr on every row.
+  if (results.length === 0) {
+    let gammaActive = 0;
+    for (const g of gammaMap.values()) {
+      if (!g.question) continue;
+      if (g.closed === true || g.active === false) continue;
+
+      // Keyword/curated relevance on the Gamma shape
+      const q = g.question.toLowerCase();
+      const isCurated = config.curatedMarketIds.includes(g.conditionId ?? "");
+      const matches = isCurated ||
+        config.relevantKeywords.some((kw) => q.includes(kw.toLowerCase()));
+      if (!matches) continue;
+
+      // Expiry check
+      if (g.endDate) {
+        const endDate = new Date(g.endDate);
+        if (endDate.getTime() < now.getTime()) continue;
+      }
+
+      // Zero-volume filter
+      const vol24 = gammaNum(g.volume24hr);
+      const volTotal = gammaNum(g.volume);
+      if (vol24 === 0 && volTotal === 0) continue;
+
+      const { yes, no } = parseOutcomePrices(g.outcomePrices);
+
+      results.push({
+        id: g.conditionId ?? g.id,
+        question: g.question,
+        endDate: g.endDate ?? "",
+        yesPrice: yes,
+        noPrice: no,
+        volume24h: vol24,
+        volumeTotal: volTotal,
+        liquidity: gammaNum(g.liquidity),
+        lastTradePrice: g.lastTradePrice ?? yes,
+        uniqueWalletsCount: g.uniqueWalletsCount ?? 0,
+        tags: normaliseTags(g.tags),
+        fetchedAt,
+      });
+      gammaActive++;
+    }
+    if (gammaActive > 0) {
+      logger.info("[polymarket] using Gamma-primary fallback path", {
+        gammaRelevant: gammaActive,
+      });
+    }
   }
 
   return results;
