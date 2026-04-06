@@ -81,15 +81,25 @@ export function registerPortfolioTools(server: McpServer): void {
             else hoseCodes.push(w.code);
           }
 
+          // Hard 8s cap on the whole live-price fan-out (#706: tool was
+          // timing out at 60s when one fetcher stalled). DB fallback below
+          // fills any missing codes — better stale than no answer.
+          const withDeadline = <T,>(p: Promise<T>, ms: number, fallback: T): Promise<T> =>
+            new Promise((resolve) => {
+              const t = setTimeout(() => resolve(fallback), ms);
+              p.then((v) => { clearTimeout(t); resolve(v); })
+                .catch(() => { clearTimeout(t); resolve(fallback); });
+            });
+
           const [hoseRes, hnxRes, upcomRes] = await Promise.all([
             hoseCodes.length > 0
-              ? fetchHosePrices(hoseCodes, undefined, { force: true }).catch(() => [] as MarketPrice[])
+              ? withDeadline(fetchHosePrices(hoseCodes, undefined, { force: true }), 8_000, [] as MarketPrice[])
               : Promise.resolve([] as MarketPrice[]),
             hnxCodes.length > 0
-              ? fetchHnxPrices(hnxCodes, undefined, { force: true }).catch(() => [] as MarketPrice[])
+              ? withDeadline(fetchHnxPrices(hnxCodes, undefined, { force: true }), 8_000, [] as MarketPrice[])
               : Promise.resolve([] as MarketPrice[]),
             upcomCodes.length > 0
-              ? fetchUpcomPrices(upcomCodes, undefined, { force: true }).catch(() => [] as MarketPrice[])
+              ? withDeadline(fetchUpcomPrices(upcomCodes, undefined, { force: true }), 8_000, [] as MarketPrice[])
               : Promise.resolve([] as MarketPrice[]),
           ]);
 
