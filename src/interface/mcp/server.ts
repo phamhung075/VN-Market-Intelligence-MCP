@@ -79,6 +79,7 @@ import {
   registerCrisisTools,
   registerSectorComparisonTools,
   registerKinhDichTools,
+  registerUserRequestTools,
 } from "./tools/index.js";
 import { registerPharmaTools } from "./tools/pharmaTools.js";
 
@@ -174,6 +175,7 @@ export async function createBunServer(
     registerPharmaTools(server);  // Sprint 044: get_pharma_signals
     registerSectorComparisonTools(server);  // Sprint 045: get_sector_comparison
     registerKinhDichTools(server);  // Task 285: 6 Kinh Dich tools
+    registerUserRequestTools(server);  // Task 305: log_user_request + get_pending_user_requests
     return server;
   }
 
