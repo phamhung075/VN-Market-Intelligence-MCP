@@ -118,6 +118,44 @@ async function syncStock(code: string): Promise<number> {
 }
 
 /**
+ * Lightweight sync for sector peer stocks — only the 3 data types that
+ * matter for relative-strength comparison, with relaxed staleness windows
+ * to avoid burning rate limit on peer refreshes.
+ *
+ * Synced types (relaxed windows): trading_stats (6h), financials (24h),
+ * balance_sheet (24h).
+ *
+ * @param code - Stock code to sync
+ * @returns Number of API calls made
+ */
+export async function syncStockLight(code: string): Promise<number> {
+  let calls = 0;
+
+  if (isStale(code, "trading_stats", 360)) {
+    const stats = await fetchVnstockTradingStats(code);
+    if (stats) storeTradingStats(stats);
+    calls++;
+    await sleep(DELAY_MS);
+  }
+
+  if (isStale(code, "financials", 1440)) {
+    const fin = await fetchVnstockFinancials(code);
+    if (fin) storeFinancials(fin);
+    calls++;
+    await sleep(DELAY_MS);
+  }
+
+  if (isStale(code, "balance_sheet", 1440)) {
+    const bs = await fetchVnstockBalanceSheet(code);
+    if (bs) storeBalanceSheet(bs);
+    calls++;
+    await sleep(DELAY_MS);
+  }
+
+  return calls;
+}
+
+/**
  * Sync vnstock data for all watchlist stocks.
  * Lazy: only fetches stale data. Safe for rate limits.
  *
