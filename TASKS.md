@@ -841,6 +841,16 @@ describe("296 OCR pipeline e2e smoke test", () => {
 ## 📋 TODO
 *(Dependencies cleared — ready to assign)*
 
+### Technical debt — stale test fixtures (2026-04-06)
+
+| # | Title | Branch | Agent | Priority | Depends on | Status |
+|---|-------|--------|-------|----------|------------|--------|
+| 303 | Rewrite 029-ssc-scraper.test.ts — drop Puppeteer BrowserFactory, use HttpClient mock | `task/303-ssc-scraper-test-rewrite` | Developer | P2 | — | Backlog |
+| 304 | Rewrite 048-ssc-pipeline.test.ts — drop Puppeteer types, use axios+cheerio mocks | `task/304-ssc-pipeline-test-rewrite` | Developer | P2 | — | Backlog |
+| 305 | Rewrite 124-test-ssc-pipeline.test.ts — 14 BrowserFactory→HttpClient assignments | `task/305-ssc-pipeline-124-rewrite` | Developer | P2 | — | Backlog |
+
+> Deprecation shims in `ssc.ts` keep these tests type-checking but they still reference the removed Puppeteer layer. Full rewrite or deletion needed.
+
 ### Sprint 034 — Depth Over Breadth: Sentiment Trend + Context Sync (2026-04-02)
 
 | # | Title | Branch | Agent | Priority | Depends on | Status |
