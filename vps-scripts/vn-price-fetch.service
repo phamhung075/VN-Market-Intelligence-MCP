@@ -1,0 +1,20 @@
+[Unit]
+Description=VN Market price proxy — push VN stocks + indices to zenmidi MCP
+Documentation=https://github.com/phamhung075/VN-Market-Intelligence-MCP
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/root/fetch-prices-loop.sh
+Restart=always
+RestartSec=5
+StandardOutput=append:/var/log/vn-price-fetch.log
+StandardError=append:/var/log/vn-price-fetch.log
+# Resource safety — the loop script is trivial; these caps just stop a
+# runaway from hurting the host.
+MemoryMax=128M
+TasksMax=32
+
+[Install]
+WantedBy=multi-user.target

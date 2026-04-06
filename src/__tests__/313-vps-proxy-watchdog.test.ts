@@ -1,120 +1,103 @@
 /**
- * Task 312 — VPS Price Proxy Watchdog
+ * Task — VPS Price Proxy Freshness Watchdog (observe-only alert).
  *
- * Self-heal scheduler that detects stale market_prices and re-installs the
- * Vultr crontab over SSH. See src/scheduler/vpsProxyWatchdogJob.ts.
+ * Covers:
+ *   - isVnMarketHoursUtc: weekday / weekend / hour edges
+ *   - Off-hours short-circuit never sends a notification
+ *   - Stale prices trigger a single alert with operator instructions
+ *   - Cooldown deduplicates back-to-back runs during the same outage
  */
 
-// Test isolation: logger must not hit production DB.
+// Test isolation: logger must not hit the production DB.
 process.env["DB_PATH"] = ":memory:";
 
 import { describe, it, expect, beforeEach } from "bun:test";
 import {
   isVnMarketHoursUtc,
   runVpsProxyWatchdog,
+  _resetWatchdogCooldown,
 } from "../scheduler/vpsProxyWatchdogJob.js";
 
-describe("Task 312 — VPS proxy watchdog", () => {
+describe("VPS proxy freshness watchdog", () => {
   beforeEach(() => {
-    process.env["VULTR_IP"] = "10.0.0.1";
-    process.env["VULTR_PASSWORD"] = "secret";
-    process.env["VULTR_USERNAME"] = "root";
+    _resetWatchdogCooldown();
   });
 
   describe("isVnMarketHoursUtc", () => {
-    it("returns true on Monday 03:00 UTC (10:00 VN)", () => {
-      // 2026-04-06 is a Monday
+    it("true on Monday 03:00 UTC (10:00 VN)", () => {
       expect(isVnMarketHoursUtc(new Date("2026-04-06T03:00:00Z"))).toBe(true);
     });
 
-    it("returns false on Saturday 03:00 UTC", () => {
+    it("false on Saturday 03:00 UTC", () => {
       expect(isVnMarketHoursUtc(new Date("2026-04-11T03:00:00Z"))).toBe(false);
     });
 
-    it("returns false on Monday 15:00 UTC (22:00 VN, off-hours)", () => {
+    it("false on Monday 15:00 UTC (22:00 VN)", () => {
       expect(isVnMarketHoursUtc(new Date("2026-04-06T15:00:00Z"))).toBe(false);
     });
 
-    it("returns true on Monday 08:30 UTC (15:30 VN — market close edge)", () => {
+    it("true on Monday 08:30 UTC (15:30 VN — market-close edge)", () => {
       expect(isVnMarketHoursUtc(new Date("2026-04-06T08:30:00Z"))).toBe(true);
     });
   });
 
   describe("runVpsProxyWatchdog", () => {
-    it("returns 'off-hours' outside VN market hours without touching SSH", async () => {
-      let sshCalls = 0;
+    it("returns 'off-hours' without notifying outside VN market hours", async () => {
+      const calls: string[] = [];
       const status = await runVpsProxyWatchdog({
         now: new Date("2026-04-06T15:00:00Z"), // 22:00 VN
-        sshExec: async () => {
-          sshCalls++;
-          return "";
+        notify: async (m) => {
+          calls.push(m);
+          return true;
         },
-        notify: async () => true,
       });
       expect(status).toBe("off-hours");
-      expect(sshCalls).toBe(0);
+      expect(calls.length).toBe(0);
     });
 
-    it("returns 'missing-credentials' when env vars are absent", async () => {
-      delete process.env["VULTR_IP"];
-      delete process.env["VULTR_PASSWORD"];
-
-      // Force "stale" by using far-future now — readLatestPriceTimestamp()
-      // hits an in-memory DB that has no market_prices rows → infinity age.
+    it("sends alert when market_prices is stale (empty table → infinite age)", async () => {
+      const calls: string[] = [];
       const status = await runVpsProxyWatchdog({
         now: new Date("2026-04-06T03:00:00Z"),
-        sshExec: async () => "",
-        notify: async () => true,
-      });
-      expect(status).toBe("missing-credentials");
-    });
-
-    it("heals by calling ssh + notify when prices are stale", async () => {
-      const sshCalls: string[] = [];
-      const notifyCalls: string[] = [];
-
-      const status = await runVpsProxyWatchdog({
-        now: new Date("2026-04-13T03:00:00Z"), // fresh cooldown (new week)
-        sshExec: async (cmd: string) => {
-          sshCalls.push(cmd);
-          if (cmd.includes("test -x")) return "present\n";
-          if (cmd.includes("crontab")) return "* 2-8 * * 1-5 /root/fetch-prices.sh\n";
-          if (cmd.includes("fetch-prices.sh")) return "PUSH: 61 items\n";
-          return "";
-        },
-        notify: async (msg: string) => {
-          notifyCalls.push(msg);
+        notify: async (m) => {
+          calls.push(m);
           return true;
         },
       });
-
-      expect(status).toBe("healed");
-      // Script presence probe + crontab reinstall + immediate test run = 3 ssh calls.
-      expect(sshCalls.length).toBeGreaterThanOrEqual(3);
-      expect(sshCalls.some((c) => c.includes("test -x"))).toBe(true);
-      expect(sshCalls.some((c) => c.includes("crontab"))).toBe(true);
-      expect(notifyCalls.length).toBe(1);
-      expect(notifyCalls[0]).toContain("restored");
+      expect(status).toBe("alert-sent");
+      expect(calls.length).toBe(1);
+      expect(calls[0]).toContain("Vultr price pushes stopped");
+      expect(calls[0]).toContain("systemctl status vn-price-fetch");
+      expect(calls[0]).toContain("deploy-vps-proxy.sh");
     });
 
-    it("returns 'script-missing' and notifies when fetch-prices.sh is absent", async () => {
-      const notifyCalls: string[] = [];
+    it("dedups a second stale call within the cooldown window", async () => {
+      const calls: string[] = [];
+      const notify = async (m: string) => {
+        calls.push(m);
+        return true;
+      };
 
-      const status = await runVpsProxyWatchdog({
-        now: new Date("2026-04-20T03:00:00Z"), // different week → past cooldown
-        sshExec: async (cmd: string) => {
-          if (cmd.includes("test -x")) return "missing\n";
-          return "";
-        },
-        notify: async (msg: string) => {
-          notifyCalls.push(msg);
-          return true;
-        },
+      const first = await runVpsProxyWatchdog({
+        now: new Date("2026-04-06T03:00:00Z"),
+        notify,
+      });
+      const second = await runVpsProxyWatchdog({
+        now: new Date("2026-04-06T03:10:00Z"), // 10 min later
+        notify,
       });
 
-      expect(status).toBe("script-missing");
-      expect(notifyCalls.length).toBe(1);
-      expect(notifyCalls[0]).toContain("not found");
+      expect(first).toBe("alert-sent");
+      expect(second).toBe("cooldown");
+      expect(calls.length).toBe(1);
+    });
+
+    it("returns 'notify-failed' when the notifier returns false", async () => {
+      const status = await runVpsProxyWatchdog({
+        now: new Date("2026-04-06T03:00:00Z"),
+        notify: async () => false,
+      });
+      expect(status).toBe("notify-failed");
     });
   });
 });
