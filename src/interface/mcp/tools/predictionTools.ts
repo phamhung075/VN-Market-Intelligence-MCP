@@ -270,13 +270,27 @@ export function registerPredictionTools(server: McpServer): void {
 
         const signalCount = signalCountRow?.cnt ?? 0;
 
-        // Last poll timestamp from the most recent market row
-        const lastPollAt =
-          rows.length > 0
-            ? rows.reduce((latest, r) =>
-                r.fetched_at > latest.fetched_at ? r : latest,
-              ).fetched_at
-            : null;
+        // Last poll timestamp from the most recent market row.
+        // When the row set is empty (e.g. signals_only filter with no fresh
+        // signals), still surface MAX(fetched_at) from prediction_markets so
+        // users can see the poller is alive — analysis-agent report #686
+        // mistook a quiet signal window for a regression because lastPollAt
+        // was null even though the fetcher was healthy.
+        let lastPollAt: string | null = null;
+        if (rows.length > 0) {
+          lastPollAt = rows.reduce((latest, r) =>
+            r.fetched_at > latest.fetched_at ? r : latest,
+          ).fetched_at;
+        } else {
+          try {
+            const fallback = db
+              .prepare("SELECT MAX(fetched_at) AS ts FROM prediction_markets")
+              .get() as { ts: string | null } | undefined;
+            lastPollAt = fallback?.ts ?? null;
+          } catch {
+            lastPollAt = null;
+          }
+        }
 
         const markets = rows.map(buildMarketOutput);
 
