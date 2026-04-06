@@ -48,17 +48,65 @@ cp .env.example .env
 ### Step 3: Start the MCP Server
 
 ```bash
-# Development (hot reload)
+# Development (hot reload, foreground)
 bun --watch src/index.ts
 
-# Production (bun --hot, log rotation, LanceDB TRACE suppressed)
+# Production one-shot (bun --hot, log rotation, LanceDB TRACE suppressed)
 ./start.sh
 ```
 
 Verify:
 ```bash
 curl http://localhost:3000/health
-# {"status":"ok","toolCount":62}
+# {"status":"ok","toolCount":76}
+```
+
+#### Step 3b: Install the macOS launchd agent (recommended for production)
+
+`start.sh` runs the server under the current shell and will NOT survive a
+Mac reboot. For reboot-safe, crash-restarting supervision install the
+launchd agent that lives under `launchd/`:
+
+```bash
+./launchd/install.sh
+```
+
+First-time only — macOS Full Disk Access grant: because the project lives
+under `~/Documents/`, the LaunchAgent-spawned bash is blocked by macOS
+TCC unless you explicitly allow it. Open
+**System Settings → Privacy & Security → Full Disk Access**, click `+`,
+press `Cmd+Shift+G`, paste each of the following, and toggle on:
+
+- `/bin/bash`
+- `/Users/<you>/.bun/bin/bun`
+
+Then re-run `./launchd/install.sh`.
+
+What the agent provides:
+
+| Event | Behavior |
+|---|---|
+| Mac reboot / re-login | auto-starts via `RunAtLoad=true` |
+| Bun process crash | auto-restarts within `ThrottleInterval=10s` |
+| Source edits | `bun --hot` reloads in place (no restart needed) |
+| `launchctl kickstart -k gui/$(id -u)/com.vn-market.mcp` | clean manual restart |
+
+After install, stop using `./start.sh` directly — it would fight the
+supervised instance. Use `launchctl kickstart -k` to bounce, or
+`launchctl unload -w ~/Library/LaunchAgents/com.vn-market.mcp.plist`
+for maintenance downtime.
+
+```bash
+# Status
+launchctl list | grep com.vn-market.mcp
+tail -f /tmp/vn-market-mcp.log
+
+# Restart
+launchctl kickstart -k gui/$(id -u)/com.vn-market.mcp
+
+# Stop / start
+launchctl unload -w ~/Library/LaunchAgents/com.vn-market.mcp.plist
+launchctl load   -w ~/Library/LaunchAgents/com.vn-market.mcp.plist
 ```
 
 ### Step 4: Start Cloudflare Tunnel
@@ -125,13 +173,15 @@ You don't need to do anything daily. The system runs autonomously:
 
 | Situation | What to Do |
 |-----------|-----------|
-| **Server down** | `./start.sh` |
+| **Server down (launchd-supervised)** | `launchctl kickstart -k gui/$(id -u)/com.vn-market.mcp` |
+| **Server down (no launchd)** | `./start.sh` — or install launchd once: `./launchd/install.sh` |
+| **Server flapping after deploy** | `tail -50 /tmp/vn-market-mcp.log` to see the crash, fix, then kickstart |
 | **Tunnel down** | `cloudflared tunnel run --token ...` |
 | **Agent file updated by Dev Team** | You'll get a Chat Channel message. Copy new `.md` content into Cowork. |
 | **Want to ask a question** | Use Claude Desktop (connected to MCP server) |
 | **Want to add a stock** | Tell Claude Desktop: "Add HPG to watchlist" |
 | **Want to change watchlist** | Edit `mcp.config.json` -> `market.watchlist`, restart server |
-| **Bad fix by Dev Team** | `git log --oneline -5` then `git revert <commit>` then `./start.sh` |
+| **Bad fix by Dev Team** | `git log --oneline -5` then `git revert <commit>` then kickstart the launchd agent |
 
 ## 62 MCP Tools (Sprint 034)
 

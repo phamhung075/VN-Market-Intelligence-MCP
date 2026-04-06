@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.vn-market.mcp</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/bash</string>
+        <string>/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/launchd/mcp-launch.sh</string>
+    </array>
+
+    <key>WorkingDirectory</key>
+    <string>/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP</string>
+
+    <!-- Start when the user logs in and keep alive across crashes. -->
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <dict>
+        <key>SuccessfulExit</key>
+        <false/>
+        <key>Crashed</key>
+        <true/>
+    </dict>
+
+    <!-- Back off a little after repeated crashes so a broken deploy
+         doesn't flap launchd. -->
+    <key>ThrottleInterval</key>
+    <integer>10</integer>
+
+    <!-- Log everything into the same file start.sh already uses so the
+         manual and supervised invocations share a single log history. -->
+    <key>StandardOutPath</key>
+    <string>/tmp/vn-market-mcp.log</string>
+    <key>StandardErrorPath</key>
+    <string>/tmp/vn-market-mcp.log</string>
+
+    <!-- Ensure /usr/local/bin (brew) and the bun shim are on PATH for any
+         child processes spawned by the scheduler (e.g. sshpass). -->
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/Users/admin/.bun/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+    </dict>
+</dict>
+</plist>
