@@ -8,6 +8,697 @@
 
 ---
 
+## Todo — Sprint 049
+
+### Sprint 049 — Kinh Dich Differentiation
+> Tech design: [docs/TECH_049.md](docs/TECH_049.md) — APPROVED_BY_ARCHITECT
+> Req spec: [docs/REQ_049.md](docs/REQ_049.md)
+> Dependency chain: 297 + 298 + 299 + 301 (all parallel) → 300 (after 298) → 302 (after 297+298+299)
+> WIP slots at sprint start: 2 (297 + 301 can start in parallel immediately)
+> Key finding: sector_peers DB table does not exist — Task 299 uses getSectorPeers() domain service + market_prices intersection
+> Key finding: export score helpers from kinhDichTools.ts before writing Task 302 test
+
+| ID  | Title                                                                                               | Priority | Agent     | Layer                    | Depends On   | Branch                                  | Status |
+|-----|-----------------------------------------------------------------------------------------------------|----------|-----------|--------------------------|--------------|-----------------------------------------|--------|
+| 297 | Fix computeForeignFlowScore: sort by fetched_at, replace total_volume with avg_volume_2w            | P0       | Developer | interface/mcp/tools      | —            | task/297-foreign-flow-fix               | Todo   |
+| 298 | Fix computeMacroScore: use indicator column, derive rolling sigma from history window               | P0       | Developer | interface/mcp/tools      | —            | task/298-macro-score-fix                | Todo   |
+| 299 | Fix computeSectorScore: widen peer pool from watchlist to all stocks in market_prices by domain     | P0       | Developer | interface/mcp/tools      | —            | task/299-sector-score-fix               | Todo   |
+| 300 | Fix computeMacroIndicatorScore: remove sigma column ref, derive z-score from recent history         | P1       | Developer | interface/mcp/tools      | 298          | task/300-macro-indicator-sigma-fix      | Todo   |
+| 301 | Rebuild hexagramLibrary.ts QUE_DATA: port all 64 markdown que files with full hao + bien que data  | P1       | Developer | domain/services/kinhDich | —            | task/301-hexagram-library-rebuild       | Review |
+| 302 | Smoke test: seed DB, assert VNM/FPT/VCB/VEA produce 4 different hexagrams, >=3 non-zero hao scores | P1       | Developer | test                     | 297, 298, 299| task/302-kinhdich-differentiation-test  | Todo   |
+
+---
+
+### Task 297 — Fix computeForeignFlowScore
+
+**Branch**: `task/297-foreign-flow-fix`
+**Layer**: interface/mcp/tools
+**Depends on**: none — start immediately
+**Priority**: P0 (VEA and VCB always return 0 because of wrong column names)
+**TDD test**: `src/__tests__/297-foreign-flow-fix.test.ts`
+
+#### Root cause
+
+`kinhDichTools.ts` `computeForeignFlowScore()` queries:
+```sql
+SELECT foreign_volume, total_volume FROM vnstock_trading_stats
+WHERE code = ? ORDER BY date DESC LIMIT 1
+```
+`vnstock_trading_stats` (defined in `src/infrastructure/db/vnstockStore.ts` line 63) has no
+`total_volume` column and no `date` column. Actual columns: `foreign_volume`, `avg_volume_2w`,
+`fetched_at`.
+
+#### Fix
+
+Replace the query body:
+```typescript
+const row = db.query<
+  { foreign_volume: number | null; avg_volume_2w: number | null },
+  [string]
+>(
+  `SELECT foreign_volume, avg_volume_2w FROM vnstock_trading_stats
+   WHERE code = ? ORDER BY fetched_at DESC LIMIT 1`,
+).get(code);
+
+if (!row?.foreign_volume || !row?.avg_volume_2w || row.avg_volume_2w === 0) {
+  return 0.0;
+}
+return Math.max(-1, Math.min(1, row.foreign_volume / row.avg_volume_2w));
+```
+
+#### Files to modify
+- MODIFY: `src/interface/mcp/tools/kinhDichTools.ts` — `computeForeignFlowScore()` function
+
+---
+
+### Task 298 — Fix computeMacroScore
+
+**Branch**: `task/298-macro-score-fix`
+**Layer**: interface/mcp/tools
+**Depends on**: none — start immediately (also gates Task 300)
+**Priority**: P0 (macro hao always returns 0 for all stocks)
+**TDD test**: `src/__tests__/298-macro-score-fix.test.ts`
+
+#### Root cause
+
+`kinhDichTools.ts` `computeMacroScore()` queries:
+```sql
+SELECT name, value, sigma FROM tracked_indicators
+WHERE name IN ('oil', 'gold', 'usd_vnd', 'brent')
+ORDER BY updated_at DESC LIMIT 10
+```
+`tracked_indicators` (defined in `src/infrastructure/db/commodityTracker.ts` line 36) has
+columns: `indicator`, `value`, `unit`, `source`, `extracted_at`. No `name`, no `sigma`,
+no `updated_at`.
+
+#### Fix
+
+Replace query to fetch recent history per indicator and derive sigma inline:
+```typescript
+const indicators = ['oil', 'gold', 'usd_vnd', 'brent'];
+const placeholders = indicators.map(() => '?').join(', ');
+const rows = db.query<
+  { indicator: string; value: number; extracted_at: string },
+  string[]
+>(
+  `SELECT indicator, value, extracted_at FROM tracked_indicators
+   WHERE indicator IN (${placeholders})
+   ORDER BY extracted_at DESC LIMIT 80`,
+).all(...indicators);
+
+if (rows.length === 0) return 0.0;
+
+// Group by indicator, compute z-score of latest vs recent window
+const byIndicator = new Map<string, number[]>();
+for (const r of rows) {
+  const arr = byIndicator.get(r.indicator) ?? [];
+  arr.push(r.value);
+  byIndicator.set(r.indicator, arr);
+}
+
+const zScores: number[] = [];
+for (const [, values] of byIndicator) {
+  if (values.length < 3) continue;
+  const latest = values[0]!;
+  const window = values.slice(1);
+  const mean = window.reduce((s, v) => s + v, 0) / window.length;
+  const std = Math.sqrt(window.reduce((s, v) => s + (v - mean) ** 2, 0) / window.length);
+  if (std === 0) continue;
+  zScores.push((latest - mean) / std);
+}
+
+if (zScores.length === 0) return 0.0;
+const avgZ = zScores.reduce((s, v) => s + v, 0) / zScores.length;
+// High macro stress (positive sigma) = negative for stocks
+return Math.max(-1, Math.min(1, -avgZ / 2.0));
+```
+
+#### Files to modify
+- MODIFY: `src/interface/mcp/tools/kinhDichTools.ts` — `computeMacroScore()` function
+
+---
+
+### Task 299 — Fix computeSectorScore
+
+**Branch**: `task/299-sector-score-fix`
+**Layer**: interface/mcp/tools
+**Depends on**: none — start immediately
+**Priority**: P0 (sector hao always returns 0 — watchlist has only 1 stock per domain)
+**TDD test**: `src/__tests__/299-sector-score-fix.test.ts`
+
+#### Root cause
+
+`kinhDichTools.ts` `computeSectorScore()` queries `watchlist WHERE domain = ?` to find peers.
+Watchlist has 4 stocks across 4 distinct domains — zero peers per stock. The `sector_peers`
+table (populated by syncSectorPeers) or `market_prices` (populated for 48 stocks by VPS proxy)
+are the correct data sources.
+
+#### Fix strategy
+
+Query `market_prices` for all codes that appear alongside the target stock in the same sector
+using the static domain-to-codes mapping from `sectorPeers.ts`, then compute relative strength:
+
+```typescript
+// 1. Get the domain for this stock
+const watchlistRow = db.query<{ domain: string }, [string]>(
+  "SELECT domain FROM watchlist WHERE code = ?",
+).get(code);
+if (!watchlistRow) return 0.0;
+
+// 2. Get peer codes from sector_peers table (populated during intelligence cycle)
+const sectorPeerRows = db.query<{ peer_code: string }, [string]>(
+  `SELECT DISTINCT peer_code FROM sector_peers
+   WHERE watchlist_code IN (SELECT code FROM watchlist WHERE domain = ?)
+   AND peer_code != ?`,
+).all(watchlistRow.domain, code);
+
+// Fallback: if sector_peers empty, use all market_prices codes except target
+const peerCodes = sectorPeerRows.length > 0
+  ? sectorPeerRows.map(r => r.peer_code)
+  : db.query<{ code: string }, [string]>(
+      "SELECT DISTINCT code FROM market_prices WHERE code != ? LIMIT 20",
+    ).all(code).map(r => r.code);
+
+if (peerCodes.length === 0) return 0.0;
+
+// 3. Compute sector average and relative strength
+const placeholders = peerCodes.map(() => "?").join(", ");
+const peerPrices = db.query<{ change_pct: number | null }, string[]>(
+  `SELECT change_pct FROM market_prices WHERE code IN (${placeholders})
+   ORDER BY rowid DESC`,
+).all(...peerCodes);
+
+const validChanges = peerPrices.map(r => r.change_pct ?? 0).filter(v => v !== 0);
+if (validChanges.length === 0) return 0.0;
+
+const sectorAvg = validChanges.reduce((s, v) => s + v, 0) / validChanges.length;
+const myRow = db.query<{ change_pct: number | null }, [string]>(
+  "SELECT change_pct FROM market_prices WHERE code = ? ORDER BY rowid DESC LIMIT 1",
+).get(code);
+const myChange = myRow?.change_pct ?? 0;
+return Math.max(-1, Math.min(1, (myChange - sectorAvg) / 3.0));
+```
+
+#### Files to modify
+- MODIFY: `src/interface/mcp/tools/kinhDichTools.ts` — `computeSectorScore()` function
+
+---
+
+### Task 300 — Fix computeMacroIndicatorScore (derived sigma)
+
+**Branch**: `task/300-macro-indicator-sigma-fix`
+**Layer**: interface/mcp/tools
+**Depends on**: 298 (same pattern: derive sigma from history instead of reading missing column)
+**Priority**: P1 (affects `get_market_hexagram` tool — stock readings unaffected)
+**TDD test**: covered in `src/__tests__/298-macro-score-fix.test.ts` (extend existing file)
+
+#### Root cause
+
+`kinhDichTools.ts` line 381:
+```sql
+SELECT sigma FROM tracked_indicators WHERE name = ? ORDER BY updated_at DESC LIMIT 1
+```
+Same wrong column names as Task 298: `name` → `indicator`, `sigma` does not exist,
+`updated_at` → `extracted_at`.
+
+#### Fix
+
+Derive sigma the same way as Task 298 but for a single named indicator:
+```typescript
+function computeMacroIndicatorScore(name: string): number {
+  try {
+    const db = getDb();
+    const rows = db.query<{ value: number }, [string]>(
+      `SELECT value FROM tracked_indicators
+       WHERE indicator = ? ORDER BY extracted_at DESC LIMIT 21`,
+    ).all(name);
+    if (rows.length < 3) return 0.0;
+    const latest = rows[0]!.value;
+    const window = rows.slice(1).map(r => r.value);
+    const mean = window.reduce((s, v) => s + v, 0) / window.length;
+    const std = Math.sqrt(window.reduce((s, v) => s + (v - mean) ** 2, 0) / window.length);
+    if (std === 0) return 0.0;
+    const z = (latest - mean) / std;
+    return Math.max(-1, Math.min(1, z / 2.0));
+  } catch {
+    return 0.0;
+  }
+}
+```
+
+#### Files to modify
+- MODIFY: `src/interface/mcp/tools/kinhDichTools.ts` — `computeMacroIndicatorScore()` function
+
+---
+
+### Task 301 — Rebuild hexagramLibrary.ts QUE_DATA (64 full entries)
+
+**Branch**: `task/301-hexagram-library-rebuild`
+**Layer**: domain/services/kinhDich
+**Depends on**: none — pure data work, start immediately
+**Priority**: P1 (unblocks rich `explain_hexagram` and `formatReading` output)
+**TDD test**: `src/__tests__/301-hexagram-library-rebuild.test.ts`
+
+#### Source data
+
+64 markdown files at `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/kinhdich_logic/que_convert/`
+named `01_kien.md` through `64_vi_te.md`. Each file follows a consistent structure:
+- Section "Phán Đoán": kinh van + vietnamese + luan giai → `judgment`
+- Section "Đại Tượng": tuong + hanh dong → `image`
+- Table "Phân Tích Trạng Thái": xu huong, nghe nghiep, canh bao → `state`
+- Section "Sáu Hào": 6 entries each with loai, kinh van, dich nghia, ket qua, hanh dong, luan giai → `lines`
+
+#### Approach
+
+Read each markdown file, parse the structured sections, and generate the TypeScript record
+entry for `QUE_DATA[N]`. The hexagramLibrary.ts interface `QueData` already defines the exact
+shape needed. The developer should write a small parser script (or do it inline during the
+task) and produce the complete 64-entry `QUE_DATA` record.
+
+Key constraints:
+- Preserve diacritics in all Vietnamese text (copy verbatim from markdown)
+- `state.trend` must include "THUẬN LỢI" or "BẤT LỢI" or "TRUNG BÌNH" (used by formatter)
+- `lines` array must have exactly 6 entries per hexagram, positions 1-6
+- `coreMeaning` = first blockquote line in the markdown file (the italic intro)
+
+#### Files to modify
+- REWRITE: `src/domain/services/kinhDich/hexagramLibrary.ts` — QUE_DATA section only
+  (keep TRIGRAMS, TRIGRAM_LINES, QUE_META, all interfaces unchanged)
+
+---
+
+### Task 302 — Integration smoke test: differentiated hexagrams
+
+**Branch**: `task/302-kinhdich-differentiation-test`
+**Layer**: test
+**Depends on**: 297, 298, 299 (all three score fixes must be merged)
+**Priority**: P1
+**TDD test**: `src/__tests__/302-kinhdich-differentiation-smoke.test.ts`
+
+#### What to test
+
+1. Seed SQLite in-memory DB with minimal but realistic data:
+   - `watchlist`: VNM (Dairy), FPT (Tech), VCB (Banking), VEA (Auto)
+   - `market_prices`: 8+ rows with distinct `change_pct` values per stock
+   - `vnstock_trading_stats`: 1 row per stock with `foreign_volume` and `avg_volume_2w`
+   - `tracked_indicators`: 20 rows of 'oil' prices with a realistic trend (rising)
+   - `sector_peers`: at least 5 peer codes per watchlist domain
+
+2. Call `computeHaoScores(code)` for each of the 4 watchlist stocks.
+
+3. Assert:
+   - At least 3 of 6 scores are non-zero for VCB
+   - At least 3 of 6 scores are non-zero for FPT
+   - The 4 hexagram numbers (derived from calling `computeReading`) are not all equal
+   - `computeForeignFlowScore` and `computeSectorScore` and `computeMacroScore` each
+     return a value != 0.0 when seeded data is present
+
+---
+
+## Todo — Sprint 048
+
+### Sprint 048 — OCR + PDF Pipeline Fix
+> Tech design: [docs/TECH_048.md](docs/TECH_048.md)
+> Req spec: [docs/REQ_048.md](docs/REQ_048.md)
+> Dependency chain: 292 → 293 → 296 | 294 → 295 (independent track)
+> WIP slots at sprint start: 2 (292 + 294 can start in parallel immediately)
+
+| ID  | Title                                                                                 | Priority | Agent     | Layer          | Depends On  | Branch                          | Status |
+|-----|---------------------------------------------------------------------------------------|----------|-----------|----------------|-------------|----------------------------------|--------|
+| 292 | OCR audit: pdf_extracted_text DDL, DPI 150→200, confidence guard, isOcrAvailable cache | P0     | Developer | infrastructure | —           | task/292-ocr-audit               | Todo   |
+| 293 | Pipeline fallback: fetchParseAndStoreBctc reads OCR cache when pdf-parse < 100 chars  | P0      | Developer | application    | 292         | task/293-ocr-fallback-pipeline   | Todo   |
+| 294 | SSC Puppeteer semaphore: withBrowserLock(1) around defaultBrowserFactory              | P1      | Developer | infrastructure | —           | task/294-ssc-browser-mutex       | Todo   |
+| 295 | SSC selector probe: verify live portal DOM, update selectors if drifted               | P1      | Developer | infrastructure | 294         | task/295-ssc-selector-probe      | Todo   |
+| 296 | e2e smoke test: OCR VNM PDF → extractors → assertions on totalAssets + netRevenue     | P1      | Developer | test           | 292, 293    | task/296-ocr-e2e-smoke-test      | Todo   |
+
+---
+
+### Task 292 — OCR audit: schema DDL, DPI 200, confidence guard, isOcrAvailable cache
+
+**Branch**: `task/292-ocr-audit`
+**Layer**: infrastructure
+**Depends on**: none — start immediately
+**Priority**: P0 (gating — Tasks 293 and 296 cannot start until 292 is merged)
+**TDD test**: `src/__tests__/292-ocr-audit.test.ts`
+
+#### Files to read first
+
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/infrastructure/db/schema.ts` (lines 430-460 — find the `portfolio_targets` block and the watchlist-seed guard)
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/infrastructure/fetchers/pdfOcrWorker.ts` (full file — isOcrAvailable, ocrOnePage, extractAndStorePdfPages)
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/infrastructure/fetchers/pdf.ts` (find ocrPdfBuffer — the inline OCR path with `-r 150`)
+
+#### Files to modify
+
+- MODIFY: `src/infrastructure/db/schema.ts` — insert `pdf_extracted_text` DDL block
+- MODIFY: `src/infrastructure/fetchers/pdfOcrWorker.ts` — four sub-fixes (B, C, D, E below)
+- MODIFY: `src/infrastructure/fetchers/pdf.ts` — fix F: DPI 150 → 200 in ocrPdfBuffer
+
+#### Sub-fixes (all in one task, ~2 h total)
+
+**292-A: schema.ts — add pdf_extracted_text DDL**
+Insert after the `portfolio_targets` block and before the watchlist-seed guard:
+```typescript
+// -- PDF OCR Cache (Task 292 / FR-1) --
+db.exec(`
+  CREATE TABLE IF NOT EXISTS pdf_extracted_text (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    filename     TEXT    NOT NULL,
+    page_number  INTEGER NOT NULL,
+    text_content TEXT    NOT NULL DEFAULT '',
+    confidence   REAL    NOT NULL DEFAULT 0,
+    extracted_at TEXT    NOT NULL DEFAULT (datetime('now')),
+    UNIQUE(filename, page_number)
+  )
+`);
+db.exec(`CREATE INDEX IF NOT EXISTS idx_pet_filename ON pdf_extracted_text(filename, page_number)`);
+```
+
+**292-B: pdfOcrWorker.ts — cache isOcrAvailable**
+Add module-level `let _ocrAvailableCache: boolean | null = null;` and return cached value on subsequent calls.
+
+**292-C: pdfOcrWorker.ts — DPI 150 → 200 in ocrOnePage**
+Change the `"-r", "150"` argument in the pdftoppm spawn to `"-r", "200"`.
+
+**292-D: pdfOcrWorker.ts — skip pages < 10 chars, remove double-insert**
+In the `extractAndStorePdfPages` inner loop: only call `insert.run()` when `pageText.length >= 10`. Remove the second `insert.run(filename, page, "", 0)` in both the else branch and the catch block.
+
+**292-E: pdfOcrWorker.ts — completeness guard threshold**
+Change `Math.max(expectedPages * 0.8, 5)` to `Math.max(expectedPages * 0.5, 3)`.
+
+**292-F: pdf.ts — DPI 150 → 200 in ocrPdfBuffer**
+Change the `"-r", "150"` argument in the pdftoppm spawn to `"-r", "200"`.
+
+#### Acceptance Criteria
+
+**Given** a fresh in-memory database (`:memory:`)
+**When** `initDatabase()` is called
+**Then**
+- `SELECT COUNT(*) FROM pdf_extracted_text` executes without error and returns 0.
+- Table columns: `id`, `filename`, `page_number`, `text_content`, `confidence`, `extracted_at`.
+
+**Given** any call to `ocrOnePage()` in `pdfOcrWorker.ts`
+**When** the pdftoppm subprocess is spawned
+**Then**
+- The arguments array contains `"-r", "200"` (not `"-r", "150"`).
+
+**Given** any call to `ocrPdfBuffer()` in `pdf.ts`
+**When** the pdftoppm subprocess is spawned
+**Then**
+- The arguments array contains `"-r", "200"` (not `"-r", "150"`).
+
+**Given** a PDF where every page produces fewer than 10 chars from Tesseract
+**When** `extractAndStorePdfPages(pdfPath, filename)` completes
+**Then**
+- `SELECT COUNT(*) FROM pdf_extracted_text WHERE filename = ?` returns 0.
+- A second call to `extractAndStorePdfPages` does NOT return early (0 rows does not trigger the guard).
+
+**Given** `isOcrAvailable()` has been called once in the process
+**When** `isOcrAvailable()` is called a second time
+**Then**
+- `execSync("which pdftoppm")` is NOT called again (cache hit).
+
+**Then** `bun test src/__tests__/292-ocr-audit.test.ts` passes with 0 failures.
+**Then** `bun tsc --noEmit` shows 0 errors.
+
+---
+
+### Task 293 — Pipeline fallback: fetchParseAndStoreBctc OCR cache wiring
+
+**Branch**: `task/293-ocr-fallback-pipeline`
+**Layer**: application
+**Depends on**: 292 (merged and verified — `pdf_extracted_text` table exists, DPI and guard fixed)
+**Priority**: P0
+**TDD test**: `src/__tests__/293-ocr-fallback-pipeline.test.ts`
+
+#### Files to read first
+
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/application/usecases/fetchParseAndStoreBctc.ts` (full file — find Step 2, pdfTextOverride, rawText guards)
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/infrastructure/fetchers/pdfOcrWorker.ts` (exports: `getCachedPdfText`, `extractAndStorePdfPages`, `isOcrAvailable`)
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/infrastructure/fetchers/pdf.ts` (signature of `downloadAndExtractPdf` — verify return type includes `.text`)
+
+#### Files to modify
+
+- MODIFY: `src/application/usecases/fetchParseAndStoreBctc.ts` — add OCR fallback branch in Step 2
+
+#### Implementation
+
+Add imports at top of `fetchParseAndStoreBctc.ts`:
+```typescript
+import {
+  getCachedPdfText,
+  extractAndStorePdfPages,
+  isOcrAvailable,
+} from "../../infrastructure/fetchers/pdfOcrWorker.js";
+import { writeFileSync, mkdirSync } from "node:fs";
+import { join, basename } from "node:path";
+```
+
+In Step 2, after `downloadAndExtractPdf` returns, when `rawText.trim().length < 100`:
+1. Derive `filename` from `doc.pdfFilename` or `decodeURIComponent(basename(URL.pathname))`.
+2. Call `getCachedPdfText(filename)`.
+3. If `cached === null && isOcrAvailable()`: re-download PDF to `data/pdfs/<filename>`, call `extractAndStorePdfPages`, then `getCachedPdfText` again.
+4. If `cached.confidence >= 0.5`: use `cached.text` as `rawText`, log at `info` level.
+5. If `cached.confidence` in [0.3, 0.5): use `cached.text`, log `warn` with confidence value.
+6. If `cached.confidence < 0.3` or `cached === null`: log `warn` and return `null`.
+
+Full implementation pattern is in `docs/TECH_048.md` under "Task 293 — OCR fallback" section.
+
+#### Acceptance Criteria
+
+**Given** `fetchParseAndStoreBctc` is called with a PDF URL for an image-based (scanned) PDF
+**AND** `getCachedPdfText(filename)` returns `{ text: "...(5000+ chars)...", confidence: 0.7, pages: 12 }`
+**When** `downloadAndExtractPdf` returns fewer than 100 chars
+**Then**
+- The pipeline does NOT return null at the empty-text guard.
+- `parseBctcReport` is called with the OCR text (not the empty pdf-parse result).
+- A log line `[fetchParseAndStoreBctc] using OCR cache for <filename>` is emitted at `info` level.
+
+**Given** `getCachedPdfText` returns `null` and `isOcrAvailable()` returns false
+**When** `downloadAndExtractPdf` returns fewer than 100 chars
+**Then**
+- The pipeline returns `null` (graceful failure, no throw).
+- A `warn` log is emitted.
+
+**Given** `getCachedPdfText` returns `{ confidence: 0.2, ... }` (below 0.3)
+**When** the OCR fallback is evaluated
+**Then**
+- The pipeline returns `null`.
+- A `warn` log is emitted with the confidence value.
+
+**Then** `bun test src/__tests__/293-ocr-fallback-pipeline.test.ts` passes with 0 failures.
+**Then** `bun tsc --noEmit` shows 0 errors.
+
+---
+
+### Task 294 — SSC Puppeteer semaphore: withBrowserLock(1) around defaultBrowserFactory
+
+**Branch**: `task/294-ssc-browser-mutex`
+**Layer**: infrastructure
+**Depends on**: none — start immediately (independent of 292/293 track)
+**Priority**: P1
+**TDD test**: `src/__tests__/294-ssc-browser-mutex.test.ts`
+
+#### Files to read first
+
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/infrastructure/fetchers/ssc.ts` (full file — find `_activeBrowsers`, `listSscDocuments`, `downloadSscDocument`, `defaultBrowserFactory`)
+
+#### Files to modify
+
+- MODIFY: `src/infrastructure/fetchers/ssc.ts` — add `withBrowserLock` semaphore, wrap both browser-launching functions
+
+#### Implementation
+
+Insert module-level semaphore immediately after the `_activeBrowsers` Set and `cleanupBrowsers()` export:
+```typescript
+// -- Browser concurrency lock (capacity = 1) --
+let _browserLock: Promise<void> = Promise.resolve();
+
+async function withBrowserLock<T>(fn: () => Promise<T>): Promise<T> {
+  let release!: () => void;
+  const next = new Promise<void>((r) => { release = r; });
+  const prev = _browserLock;
+  _browserLock = next;
+  await prev;
+  try {
+    return await fn();
+  } finally {
+    release();
+  }
+}
+```
+
+Wrap the body of `listSscDocuments` and `downloadSscDocument` each with `return withBrowserLock(async () => { ... })`. The entire try/catch/finally block (including `browser.close()`) must be inside the lock callback.
+
+#### Acceptance Criteria
+
+**Given** two concurrent calls to `listSscDocuments("VCB")` with a spy on `defaultBrowserFactory`
+**When** both are awaited via `Promise.all([...])`
+**Then**
+- `defaultBrowserFactory` is called at most once at a time (calls are serialised).
+- The second call starts only after the first browser is closed.
+- No uncaught exceptions are thrown.
+
+**Given** three queued calls to `listSscDocuments`
+**When** they complete in sequence
+**Then**
+- All three return (even if the result is an empty array due to mock).
+- The `_browserLock` promise chain drains — subsequent calls are not permanently blocked.
+
+**Then** `bun test src/__tests__/294-ssc-browser-mutex.test.ts` passes with 0 failures.
+**Then** `bun tsc --noEmit` shows 0 errors.
+
+---
+
+### Task 295 — SSC selector probe: verify live portal DOM, update selectors if drifted
+
+**Branch**: `task/295-ssc-selector-probe`
+**Layer**: infrastructure
+**Depends on**: 294 (merged — stable single-browser semaphore must be in place before live probe)
+**Priority**: P1
+**TDD test**: none (live network task — result is either a working scraper or a BLOCKED note)
+
+#### Files to read first
+
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/infrastructure/fetchers/ssc.ts` (find selector constants: `input[id$="it8112::content"]`, `tr[_afrRK]`, and the search button click logic)
+
+#### Files to modify
+
+- MODIFY: `src/infrastructure/fetchers/ssc.ts` — update selector strings if drifted (no change if selectors still match)
+
+#### Developer instructions
+
+1. Run `listSscDocuments("VNM", "all")` via a Bun REPL or a throwaway test script against the live `https://congbothongtin.ssc.gov.vn/faces/NewsSearch` portal.
+2. If it returns >= 1 document: selectors are valid — no code change needed. Document as PASSED in the task report.
+3. If it returns 0 documents: add a temporary `page.evaluate(() => document.documentElement.outerHTML)` call after the 5-second post-load wait to capture the live DOM snapshot.
+4. Search the DOM for the stock code search input and result table rows. Identify replacement selectors.
+5. Update the selector string constants in `ssc.ts`.
+6. If the portal is unreachable (timeout or 5xx): log the error, mark FR-7 as BLOCKED in the task report, defer to Sprint 049.
+
+#### Acceptance Criteria
+
+**Given** the SSC portal is reachable
+**When** `listSscDocuments("VNM", "quarterly")` is called
+**Then**
+- Returns an array with length >= 1.
+- Each document has a non-empty `title` and `publishedAt`.
+
+**Given** the SSC portal is unreachable
+**When** `listSscDocuments` is called
+**Then**
+- Returns an empty array (no crash, no throw).
+- Error is logged at `warn` level.
+
+**Then** `bun tsc --noEmit` shows 0 errors.
+
+---
+
+### Task 296 — e2e smoke test: OCR VNM PDF → extractors → assertions
+
+**Branch**: `task/296-ocr-e2e-smoke-test`
+**Layer**: test
+**Depends on**: 292 (schema DDL + DPI + confidence guard), 293 (OCR fallback wiring) — both merged
+**Priority**: P1
+**TDD test**: `src/__tests__/296-ocr-pipeline-e2e.test.ts` (this IS the task deliverable)
+
+#### Files to read first
+
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/__tests__/291-bctc-smoke-vnm.test.ts` (structural reference — same pattern for in-memory DB setup and skip guard)
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/infrastructure/fetchers/pdfOcrWorker.ts` (exports: `isOcrAvailable`, `extractAndStorePdfPages`, `getCachedPdfText`)
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/infrastructure/db/schema.ts` (verify `initDatabase` is exported and `closeDb` exists for reset)
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/domain/services/` (find `extractBalanceSheet` and `extractIncomeStatement` exports)
+
+#### Files to create
+
+- CREATE: `src/__tests__/296-ocr-pipeline-e2e.test.ts`
+
+#### Test structure
+
+```typescript
+// src/__tests__/296-ocr-pipeline-e2e.test.ts
+// Step 1: Set in-memory DB before any import triggers getDb()
+process.env["DB_PATH"] = ":memory:";
+
+import { describe, it, expect, beforeAll, afterAll } from "bun:test";
+import { closeDb, initDatabase } from "../infrastructure/db/schema.js";
+import { isOcrAvailable, extractAndStorePdfPages, getCachedPdfText } from "../infrastructure/fetchers/pdfOcrWorker.js";
+import { extractBalanceSheet } from "../domain/services/balanceSheetExtractor.js";
+import { extractIncomeStatement } from "../domain/services/incomeStatementExtractor.js";
+import { readdirSync } from "node:fs";
+import { join } from "node:path";
+
+describe("296 OCR pipeline e2e smoke test", () => {
+  it("extracts VNM PDF via OCR and asserts financial ranges", async () => {
+    // Guard: skip on CI without tesseract
+    if (!isOcrAvailable()) {
+      console.log("skip: OCR not available (pdftoppm or tesseract missing)");
+      return;
+    }
+
+    // Fresh in-memory DB
+    closeDb();
+    initDatabase();
+
+    // Locate VNM PDF in data/pdfs/
+    const pdfDir = join(process.cwd(), "data", "pdfs");
+    let pdfFile: string | undefined;
+    try {
+      pdfFile = readdirSync(pdfDir).find(f => /vnm/i.test(f) && f.endsWith(".pdf"));
+    } catch { /* data/pdfs/ does not exist */ }
+
+    if (!pdfFile) {
+      console.log("skip: no VNM PDF found in data/pdfs/");
+      return;
+    }
+
+    const pdfPath = join(pdfDir, pdfFile);
+    const filename = pdfFile;
+
+    // Run OCR extraction
+    const result = await extractAndStorePdfPages(pdfPath, filename);
+    expect(result.totalChars).toBeGreaterThanOrEqual(5000);
+
+    // Retrieve cached text
+    const cached = getCachedPdfText(filename);
+    expect(cached).not.toBeNull();
+    expect(cached!.confidence).toBeGreaterThanOrEqual(0.5);
+
+    // Assert balance sheet range (50M – 100M trieu VND)
+    const bs = extractBalanceSheet(cached!.text);
+    expect(bs.totalAssets).toBeGreaterThanOrEqual(50_000_000);
+    expect(bs.totalAssets).toBeLessThanOrEqual(100_000_000);
+
+    // Assert income statement
+    const is_ = extractIncomeStatement(cached!.text);
+    expect(is_.netRevenue).toBeGreaterThan(0);
+  }, 300_000); // 5-minute timeout for OCR
+});
+```
+
+#### Acceptance Criteria
+
+**Given** `data/pdfs/` contains a VNM BCTC PDF and `tesseract` + `pdftoppm` are installed
+**When** `bun test src/__tests__/296-ocr-pipeline-e2e.test.ts` is run
+**Then**
+- `extractAndStorePdfPages` returns `totalChars >= 5000`.
+- `getCachedPdfText(filename)` returns `confidence >= 0.5`.
+- `extractBalanceSheet(text).totalAssets` is in range [50,000,000 – 100,000,000] trieu VND.
+- `extractIncomeStatement(text).netRevenue > 0`.
+- Test passes with 0 failures.
+
+**Given** `isOcrAvailable()` returns false (CI environment without tesseract)
+**When** the test runs
+**Then**
+- Test is skipped cleanly (logs "skip: OCR not available") with 0 failures.
+
+**Given** `data/pdfs/` has no VNM PDF
+**When** the test runs
+**Then**
+- Test is skipped cleanly (logs "skip: no VNM PDF found") with 0 failures.
+
+**Then** `bun tsc --noEmit` shows 0 errors.
+
+---
+
 ## 📋 BACKLOG — Sprint 037+
 
 (See SPRINT_GOAL.md for Tier 3-4 backlog: `/ask` command, agent signal bus, compound tools)
