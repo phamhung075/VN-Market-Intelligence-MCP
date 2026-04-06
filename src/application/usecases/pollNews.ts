@@ -381,13 +381,23 @@ export async function pollNews(options: PollNewsOptions = {}): Promise<PollNewsR
     // Best-effort — table may not exist yet
   }
 
-  // ── Step 2–3: Normalize and dedup ────────────────────────────────────────
+  // ── Step 2–3: Normalize, classify sentiment, and dedup ──────────────────
+  // Task 306 slice 1: run sentiment classifier per article BEFORE insertion
+  // so the rag_analyses.sentiment column has real bullish/bearish/neutral
+  // values (not the normalizer default). This makes get_sentiment_trend
+  // queryable per-stock via affected_actions LIKE '%CODE%' + sentiment.
   let inserted = 0;
   let duplicates = 0;
   const newEntries: ReturnType<typeof normalizeNews>[] = [];
 
+  const { classifySentiment: classifySentimentForInsert } = await import(
+    "../../domain/services/sentimentClassifier.js"
+  );
+
   for (const item of allItems) {
     const entry = normalizeNews(item);
+    const cls = classifySentimentForInsert(`${entry.sourceTitle} ${entry.summary}`);
+    entry.sentiment = cls.direction; // bullish | bearish | neutral
     const wasInserted = tryInsertEntry(db, entry);
 
     if (wasInserted) {
