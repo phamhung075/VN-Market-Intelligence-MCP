@@ -8,6 +8,353 @@
 
 ---
 
+## Todo — Sprint 050
+
+### Sprint 050 — Close the Cycle: Kinh Dich Goes Live + /ask Command
+> Req spec: [docs/REQ_050.md](docs/REQ_050.md) — READY_FOR_ARCHITECT
+> Tech design: [docs/TECH_050.md](docs/TECH_050.md) — APPROVED_BY_ARCHITECT
+> Dependency chain: 303 (standalone) → 304 | 305 (standalone) → 306 + 307 | 308 (parallel)
+> WIP slots at sprint start: 2 (303 + 305 can start in parallel immediately)
+> B1 resolved: Step F delegates to runUserRequestCheck(); no more inline pending-request loop
+> B2 resolved: inline try/catch ALTER TABLE in initHexagramTables() — consistent with existing pattern
+> B3 resolved: verb-primary polarity formula — MUA/CHO=+1, BAN/THAN TRONG=-1, GIU=0; tieu cuc multiplier 0.7
+> Scope note: Task 306 enrichment moves to userRequestCheckJob.ts (buildEnrichedAnswer); Step F simplified
+
+| ID  | Title                                                                              | Priority | Agent     | Layer                    | Depends On | Branch                              | Status |
+|-----|------------------------------------------------------------------------------------|----------|-----------|--------------------------|------------|-------------------------------------|--------|
+| 303 | Cycle Step A4: auto-compute hexagram per watchlist stock every cycle               | P0       | Developer | scheduler                | —          | task/303-cycle-step-a4-hexagram     | Review |
+| 304 | Conviction scorer 6th dimension: kinhDichScore at 15%                              | P1       | Developer | domain                   | 303 ✓      | task/304-conviction-kinhdich        | Todo   |
+| 305 | user_requests MCP tools: log_user_request + get_pending_user_requests              | P0       | Developer | interface/mcp/tools      | —          | task/305-user-request-tools         | Todo   |
+| 306 | Step F enrichment: buildEnrichedAnswer in checkJob + Vietnamese + why: prefix      | P1       | Developer | scheduler                | 303 ✓, 305 ✓ | task/306-step-f-enrichment       | Todo   |
+| 307 | /ask + /why: store why:TICKER payload, guard no-arg /why                           | P1       | Developer | infrastructure/notifiers | 305 ✓      | task/307-telegram-why-command       | Todo   |
+| 308 | Dynamic tool registry (registry.ts) — deferred task 193                            | P2       | Developer | interface                | —          | task/308-tool-registry              | Todo   |
+
+---
+
+### Task 303 — Cycle Step A4: auto-compute hexagram per watchlist stock every cycle
+
+**Branch**: `task/303-cycle-hexagram-batch`
+**Layer**: scheduler + infrastructure/db
+**Depends on**: none — start immediately (Wave 1)
+**Priority**: P0
+**TDD test**: `src/__tests__/311-cycle-hexagram-batch.test.ts`
+
+#### Files to read first
+
+- `src/scheduler/intelligenceCycleJob.ts` — locate Step A3 insertion point, `CycleResult`, `CycleDeps` interfaces
+- `src/infrastructure/db/hexagramStore.ts` — `initHexagramTables`, `storeReading`, `getLatestReading`, `recordTransition`
+- `src/interface/mcp/tools/kinhDichTools.ts` — `computeHaoScores`, `computeReading`, `getMarkovData` exports
+- `src/__tests__/280-hexagram-library.test.ts` — reference test style for hexagram domain
+
+#### Files to create/modify
+
+- MODIFY: `src/infrastructure/db/hexagramStore.ts` — add `try { db.exec("ALTER TABLE kinhdich_readings ADD COLUMN source TEXT DEFAULT 'manual'") } catch {}` inside `initHexagramTables()`; extend `storeReading` to accept optional `source?: 'manual' | 'cycle'`; extend `getLatestReading` return type to include `tradingSignal: string | null` and `confidence: number | null`
+- MODIFY: `src/scheduler/intelligenceCycleJob.ts` — add `hexagramsComputed: number` to `CycleResult`; add `computeHexagramsFn?: (codes: string[]) => Promise<number>` to `CycleDeps`; insert Step A4 block after Step A3 inside `_runCycle`; replace Step F inline pending-request loop with `await runUserRequestCheck(db)`
+- CREATE: `src/__tests__/311-cycle-hexagram-batch.test.ts`
+
+#### Step A4 exact pattern (from TECH_050 impl notes)
+
+```typescript
+// Step A4 — runs unconditionally, after Step A3
+const codesToProcess = watchlistCodes.length > 0
+  ? watchlistCodes
+  : (await defaultGetWatchlistCodes());
+
+for (const code of codesToProcess) {
+  try {
+    const previousReading = getLatestReading(code);
+    const scores = computeHaoScores(code);
+    const prelimReading = computeReading(code, scores, null);
+    const markovData = getMarkovData(code, prelimReading.queChiNh.number);
+    const reading = computeReading(code, scores, markovData);
+    storeReading({ ..., source: 'cycle' });
+    if (previousReading) {
+      recordTransition(previousReading.hexagramNumber, reading.queChiNh.number, code);
+    }
+    hexagramsComputed++;
+  } catch (err) {
+    log.warn(`Step A4 failed for ${code}: ${err}`);
+    errors++;
+  }
+}
+```
+
+Wrap entire batch in `withTimeout(..., 'step A4 hexagramBatch', STEP_TIMEOUT_MS)`.
+When `deps.computeHexagramsFn` is injected, it replaces the batch (test hook).
+
+#### Acceptance Criteria
+
+**Given** a watchlist with codes VNM, FPT, VCB, VEA
+**When** `runIntelligenceCycle()` completes one run
+**Then**
+
+- `kinhdich_readings` contains exactly 4 new rows with `source='cycle'` and timestamp within the last 16 minutes
+- Each row has a non-null `hexagram_number` between 1 and 64 inclusive
+- `CycleResult.hexagramsComputed` equals 4
+- If the watchlist is empty, `hexagramsComputed` is 0 and no rows are inserted
+- If one stock's score computation throws (mocked), the other 3 rows are still inserted and `errors` is incremented by 1
+- `bun test src/__tests__/311-cycle-hexagram-batch.test.ts` passes with 0 failures
+- `bun tsc --noEmit` reports 0 errors
+
+---
+
+### Task 304 — Conviction scorer 6th dimension: kinhDichScore at 15%
+
+**Branch**: `task/304-conviction-kinhdich`
+**Layer**: domain + interface/mcp/tools
+**Depends on**: 303 ✓ (needs `source` column and extended `getLatestReading` in DB)
+**Priority**: P1
+**TDD test**: `src/__tests__/312-conviction-kinhdich.test.ts`
+
+#### Files to read first
+
+- `src/domain/services/convictionScorer.ts` — current `WEIGHTS`, `ConvictionInput`, `ConvictionResult`, `computeConviction`
+- `src/interface/mcp/tools/portfolioTools.ts` — `get_portfolio_conviction` tool, how it calls `computeConviction`
+- `src/infrastructure/db/hexagramStore.ts` — `getLatestReading` return type (after Task 303)
+
+#### Files to create/modify
+
+- MODIFY: `src/domain/services/convictionScorer.ts`
+  - Add `kinhDichScore?: number` to `ConvictionInput`
+  - Update `WEIGHTS` to 6 dimensions (priceAction: 0.2550, volumeConfirmation: 0.2125, sentiment: 0.1275, cascade: 0.1275, sectorAlignment: 0.1275, kinhDich: 0.1500)
+  - Add `scoreKinhDich(score: number | undefined): number` — undefined → 0.5; else clamp(0.5 + score * 0.5, 0, 1)
+  - Add `kinhDich` field to `ConvictionResult.dimensions`
+  - Update `summary` string to reflect 6 dimensions
+- MODIFY: `src/interface/mcp/tools/portfolioTools.ts`
+  - For each watchlist stock, call `getLatestReading(code)` and run `deriveKinhDichScore(row.trading_signal, row.confidence)` before calling `computeConviction`
+  - Add `deriveKinhDichScore` inline helper using B3 formula (verb-primary, tieu cuc multiplier 0.7)
+- CREATE: `src/__tests__/312-conviction-kinhdich.test.ts`
+
+#### deriveKinhDichScore formula (B3 resolution from TECH_050)
+
+```typescript
+function deriveKinhDichScore(tradingSignal: string | null, confidence: number | null): number {
+  if (!tradingSignal || confidence == null) return 0;
+  const sig = tradingSignal.toUpperCase();
+  const conf = Math.max(0, Math.min(1, confidence));
+  let verbPolarity: number;
+  if (sig.includes("MUA") || sig.includes("CHO")) verbPolarity = +1;
+  else if (sig.includes("BAN") || sig.includes("THAN TRONG")) verbPolarity = -1;
+  else verbPolarity = 0; // GIU
+  const suffixMultiplier = sig.includes("TIEU CUC") ? 0.7 : 1.0;
+  return verbPolarity * conf * suffixMultiplier;
+}
+```
+
+#### Acceptance Criteria
+
+**Given** a `kinhdich_readings` row for VNM with `confidence=0.72` and `trading_signal='MUA (tich cuc)'`
+**When** `get_portfolio_conviction` is called
+**Then**
+
+- VNM conviction object has `dimensions.kinhDich` approximately 0.86 (scoreKinhDich(+0.72) = 0.5 + 0.72*0.5 = 0.86)
+- `dimensions` contains exactly 6 keys: priceAction, volumeConfirmation, sentiment, cascade, sectorAlignment, kinhDich
+- `Object.values(WEIGHTS).reduce((s,v) => s+v, 0)` equals 1.0 (verified with `toBeCloseTo(1.0, 10)`)
+- When no `kinhdich_readings` row exists for a stock, `dimensions.kinhDich` equals 0.5
+- `computeConviction()` called without `kinhDichScore` field produces identical composite score to a call with `kinhDichScore: undefined`
+- `bun test src/__tests__/312-conviction-kinhdich.test.ts` passes with 0 failures
+- `bun tsc --noEmit` reports 0 errors
+
+---
+
+### Task 305 — user_requests MCP tools: log_user_request + get_pending_user_requests
+
+**Branch**: `task/305-user-request-tools`
+**Layer**: interface/mcp/tools
+**Depends on**: none — start immediately (Wave 1)
+**Priority**: P0
+**TDD test**: `src/__tests__/313-user-request-tools.test.ts`
+
+#### Files to read first
+
+- `src/infrastructure/db/userRequestStore.ts` — existing `insertUserRequestInline`, `getPendingRequests`, table schema (columns: id, command, payload, status, response, created_at, answered_at)
+- `src/interface/mcp/tools/index.ts` — barrel export pattern for tools
+- Any existing `register*Tools` file (e.g., `watchlistTools.ts`) — registration boilerplate pattern
+
+#### Files to create/modify
+
+- CREATE: `src/interface/mcp/tools/userRequestTools.ts` — export `registerUserRequestTools(server: McpServer): void` registering:
+  - `log_user_request(question: string, source: string)` — inserts row with `command='ask'`, `payload=question`, `status='pending'`; returns `{id: number, status: 'pending'}`
+  - `get_pending_user_requests(limit?: number)` — reads up to `limit` (default 5) pending rows ordered by `created_at ASC`; returns array
+- MODIFY: `src/interface/mcp/tools/index.ts` — add barrel export for `userRequestTools`
+- CREATE: `src/__tests__/313-user-request-tools.test.ts`
+
+#### Acceptance Criteria
+
+**Given** the MCP server is running
+**When** `log_user_request("Cho toi biet VNM hom nay?", "user")` is called
+**Then**
+
+- A row appears in `user_requests` with `command='ask'`, `payload='Cho toi biet VNM hom nay?'`, `status='pending'`
+- The tool returns `{id: <integer>, status: 'pending'}`
+
+**When** `get_pending_user_requests()` is called after the insert
+**Then**
+
+- The response includes the newly inserted row
+- After a row is marked `status='done'`, `get_pending_user_requests()` no longer returns it
+
+**Additionally**
+- `bun test src/__tests__/313-user-request-tools.test.ts` passes with 0 failures
+- `bun tsc --noEmit` reports 0 errors
+
+---
+
+### Task 306 — Step F enrichment: buildEnrichedAnswer in checkJob + Vietnamese + why: prefix
+
+**Branch**: `task/306-step-f-enrichment`
+**Layer**: scheduler (userRequestCheckJob.ts)
+**Depends on**: 303 ✓ (kinhdich_readings data present), 305 ✓ (user_requests MCP tools registered)
+**Priority**: P1
+**TDD test**: `src/__tests__/314-step-f-enrichment.test.ts`
+
+#### Files to read first
+
+- `src/scheduler/userRequestCheckJob.ts` — existing `runUserRequestCheck`, CAS pattern, RAG answer formatter
+- `src/infrastructure/db/hexagramStore.ts` — `getLatestReading` (after Task 303: returns `tradingSignal`, `confidence`)
+- `src/infrastructure/db/alertStore.ts` — query for most recent alert per stock
+- `src/infrastructure/db/schema.ts` — `market_prices` columns (code, price, change_pct, fetched_at)
+- `src/scheduler/intelligenceCycleJob.ts` — Step F location; confirm `runUserRequestCheck` import/call site
+
+#### Files to create/modify
+
+- MODIFY: `src/scheduler/userRequestCheckJob.ts` — add internal `buildEnrichedAnswer(db, payload, ragResults): Promise<string>` helper; integrate it into the answer-building path inside `runUserRequestCheck`; handle `why:TICKER` prefix (strip prefix before RAG query, use ticker for enrichment)
+- MODIFY: `src/scheduler/intelligenceCycleJob.ts` — confirm Step F is replaced with `await runUserRequestCheck(db)` (if not done by Task 303 already)
+- CREATE: `src/__tests__/314-step-f-enrichment.test.ts`
+
+#### buildEnrichedAnswer logic
+
+```
+1. Extract uppercase 2-4 letter codes from payload via /\b([A-Z]{2,4})\b/g applied to payload.toUpperCase()
+2. Filter against watchlist table; limit to first 3 codes
+3. For why:VCB payloads: strip "why:" prefix before extraction
+4. For each code: query getLatestReading(code), market_prices (latest price + change_pct), alerts (most recent)
+5. Build Vietnamese answer block; omit any section where the sub-query returns null
+6. If no watchlist code found in payload: return pure RAG answer (no enrichment block)
+7. Fallback text: "Chua co du lieu Kinh Dich cho ma nay" when getLatestReading returns null
+```
+
+#### Acceptance Criteria
+
+**Given** a pending `user_requests` row with `payload='VNM hom nay the nao?'` and a `kinhdich_readings` row for VNM
+**When** the intelligence cycle runs Step F (via `runUserRequestCheck(db)`)
+**Then**
+
+- A Telegram message is sent to Chat Channel (TELEGRAM_CHAT_ID) within the cycle run
+- The message text is in Vietnamese and references VNM
+- The message includes hexagram information for VNM (hexagram name or number)
+- The `user_requests` row is updated to `status='done'` with a non-null `answered_at`
+- If `sendTelegramMessage` throws, the row remains `status='pending'`
+
+**Given** a `why:VCB` payload
+**Then**
+
+- The enriched answer includes VCB hexagram + price + alert data
+- The `why:` prefix is stripped before RAG search query
+
+**Additionally**
+- `bun test src/__tests__/314-step-f-enrichment.test.ts` passes with 0 failures
+- `bun tsc --noEmit` reports 0 errors
+
+---
+
+### Task 307 — /ask + /why: store why:TICKER payload, guard no-arg /why
+
+**Branch**: `task/307-telegram-why-command`
+**Layer**: infrastructure/notifiers
+**Depends on**: 305 ✓ (user_requests table + tools confirmed working)
+**Priority**: P1
+**TDD test**: `src/__tests__/315-telegram-why-command.test.ts`
+
+#### Files to read first
+
+- `src/infrastructure/notifiers/telegramCommands.ts` — `handleWhy`, `handleAsk` functions; current payload construction for `/why VCB`; current receipt message strings; webhook channel routing
+
+#### Files to create/modify
+
+- MODIFY: `src/infrastructure/notifiers/telegramCommands.ts`
+  - Change `/why VCB` handler to store `payload = 'why:VCB'` (not the English sentence `"Why did VCB move today?"`)
+  - Add no-arg guard: if `/why` with no argument, return `"Cach dung: /why VCB"` without inserting a `user_requests` row
+  - Verify receipt message goes to Chat Channel via `chatId` from update (no Report Channel)
+- CREATE: `src/__tests__/315-telegram-why-command.test.ts`
+
+#### Acceptance Criteria
+
+**Given** a Telegram webhook POST with `/ask Que hom nay cua VNM la gi?`
+**When** the webhook handler processes it
+**Then**
+
+- A `user_requests` row is inserted with `payload='Que hom nay cua VNM la gi?'`, `status='pending'`
+- A Vietnamese receipt message is returned within 3 seconds
+- The receipt contains no English text
+
+**Given** a Telegram webhook POST with `/why VNM`
+**When** the webhook handler processes it
+**Then**
+
+- A `user_requests` row is inserted with `payload='why:VNM'` (not an English sentence)
+- A Vietnamese receipt is returned
+
+**Given** a Telegram webhook POST with `/why` (no argument)
+**When** the webhook handler processes it
+**Then**
+
+- No `user_requests` row is inserted
+- The response is `"Cach dung: /why VCB"`
+
+**Additionally**
+- `bun test src/__tests__/315-telegram-why-command.test.ts` passes with 0 failures
+- `bun tsc --noEmit` reports 0 errors
+
+---
+
+### Task 308 — Dynamic tool registry (registry.ts)
+
+**Branch**: `task/308-tool-registry`
+**Layer**: interface/mcp
+**Depends on**: none — start in parallel (Wave 1 or Wave 2 independent slot)
+**Priority**: P2
+**TDD test**: `src/__tests__/316-tool-registry.test.ts`
+
+#### Files to read first
+
+- `src/interface/mcp/server.ts` — count all `register*Tools(server)` call sites; identify all imported register functions
+- `src/interface/mcp/tools/index.ts` — barrel export list
+- Any existing test that imports `server.ts` directly — check for breakage risk
+
+#### Files to create/modify
+
+- CREATE: `src/interface/mcp/tools/registry.ts` — export `toolRegistry: Array<(server: McpServer) => void>` as a flat array literal of all `register*Tools` functions (37 entries including `registerUserRequestTools` from Task 305)
+- MODIFY: `src/interface/mcp/server.ts` — replace all individual `register*Tools(server)` call sites with `toolRegistry.forEach(fn => fn(server))`; add import for `toolRegistry` from `./tools/registry.js`
+- CREATE: `src/__tests__/316-tool-registry.test.ts`
+
+#### Acceptance Criteria
+
+**Given** `src/interface/mcp/tools/registry.ts` exists
+**When** it is inspected
+**Then**
+
+- It exports `toolRegistry: Array<(server: McpServer) => void>`
+- It contains exactly one entry per `register*Tools` function previously called individually in `server.ts`
+- `toolRegistry.length` matches the count of `register*Tools` calls removed from `server.ts`
+
+**When** `server.ts` is inspected
+**Then**
+
+- It contains no individual `register*Tools(server)` call sites
+- It contains exactly one `toolRegistry.forEach(fn => fn(server))` loop
+
+**Given** a new tool file is created and one line is added to `registry.ts`
+**Then**
+
+- All existing tests pass with 0 regressions
+- `bun tsc --noEmit` reports 0 errors
+
+**Additionally**
+- `bun test src/__tests__/316-tool-registry.test.ts` passes with 0 failures
+
+---
+
 ## Todo — Sprint 049
 
 ### Sprint 049 — Kinh Dich Differentiation
@@ -709,6 +1056,12 @@ describe("296 OCR pipeline e2e smoke test", () => {
 
 | # | Title | Branch | Merged | Report |
 |---|-------|--------|--------|--------|
+| 280 | Foreign flow delta + corporate events calendar | `task/280-foreign-flow-catalyst-calendar` | 2026-04-06 | [TASK_REPORT_280](reports/TASK_REPORT_280.md) |
+| 195 | Portfolio rebalancing signals: `get_rebalancing_signals` | `task/195-rebalancing-signals` | 2026-04-06 | [TASK_REPORT_195](reports/TASK_REPORT_195.md) |
+| 215 | Telegram webhook registration + security | `task/215-telegram-webhook` | 2026-04-06 | [TASK_REPORT_215](reports/TASK_REPORT_215.md) |
+| 217 | compare_stocks MCP tool — side-by-side comparison | `worktree-agent-a1f64692` | 2026-04-06 | [TASK_REPORT_217](reports/TASK_REPORT_217.md) |
+| 218 | Weekly portfolio report via Telegram | `worktree-agent-a219df68` | 2026-04-06 | [TASK_REPORT_218](reports/TASK_REPORT_218.md) |
+| 219 | Custom alert rules engine | `task/219-custom-alert-rules` | 2026-04-06 | [TASK_REPORT_219](reports/TASK_REPORT_219.md) |
 | 000 | Initial project structure | `main` | 2026-03-24 | — |
 | 230 | Remove 8 dead/forbidden/internal tools from MCP (64→56) | `task/230-remove-dead-tools` | 2026-04-02 | — |
 | 231 | Fix G5: `claim_telegram_report` ownership lock | `task/231-claim-telegram-report` | 2026-04-02 | — |
@@ -784,6 +1137,7 @@ describe("296 OCR pipeline e2e smoke test", () => {
 > **Sprint 006 Wave 1** — Task 065 completed: 2026-03-28. Historical pattern matcher, 15 tests pass.
 > **Sprint 006 Wave 2** — Task 084 merged: 2026-03-28. Market MCP tools (get_market_snapshot, get_patterns), 14/14 tests pass, toolCount 14→16. Task 123 now unblocked (Wave 3).
 > **Sprint 006 COMPLETE** — All 6 tasks merged: 065, 066, 027, 105, 084, 123. QA approved: 2026-03-28. 28-test integration harness covers all 16 MCP tools across 5 end-to-end roundtrip chains with real SQLite.
+> **Sprint 049 QA SIGN-OFF** — 2026-04-06. Tasks 280, 195, 215, 217, 218, 219 reviewed and approved. All 6 passed unit tests (32+17+12+20+14+21), full suite 3015 pass, tsc 0 errors, DDD PASS, Security PASS. Moved to Done.
 
 ---
 
@@ -791,12 +1145,6 @@ describe("296 OCR pipeline e2e smoke test", () => {
 
 | # | Title | Branch | Notes |
 |---|-------|--------|-------|
-| 280 | Foreign flow delta + corporate events calendar | `task/280-foreign-flow-catalyst-calendar` | 32 tests pass, tsc clean — Gap 3+4 |
-| 195 | Portfolio rebalancing signals: `get_rebalancing_signals` | `task/195-rebalancing-signals` | 17 tests pass, tsc clean, awaiting QA sign-off |
-| 215 | Telegram webhook registration + security | `task/215-telegram-webhook` | Ready for QA |
-| 217 | compare_stocks MCP tool — side-by-side comparison | `worktree-agent-a1f64692` | 20 tests pass, tsc 0 errors |
-| 218 | Weekly portfolio report via Telegram | `worktree-agent-a219df68` | 14 tests pass, tsc clean |
-| 219 | Custom alert rules engine | `task/219-custom-alert-rules` | 21 tests pass, tsc clean, 3 MCP tools |
 | 223 | Portfolio target allocation: `set_target_allocation` / `get_target_allocation` | `task/223-target-allocation` | 22 tests pass, tsc clean, toolCount 53→55 |
 | DOC-001 | Update CLAUDE.md architecture section | `task/doc-001-claude-md-update` | Ready for QA |
 | Sprint 040 | Macro Catalyst — Credit Flow + Insider Trading + Public Investment (tasks 246-251) | `worktree-agent-ad862eb2` | Ready for QA review |
@@ -1188,10 +1536,11 @@ describe("296 OCR pipeline e2e smoke test", () => {
 
 ---
 
-### 🔍 Review (195, 220, Sprint 042)
+### 🔍 Review (303, 195, 220, Sprint 042)
 
 | # | Title | Branch | Layer | Depends on | Status |
 |---|-------|--------|-------|------------|--------|
+| 303 | Cycle Step A4: auto-compute hexagram per watchlist stock every cycle | `task/303-cycle-step-a4-hexagram` | scheduler + infrastructure/db | — | Review |
 | 195 | Portfolio rebalancing signals: `get_rebalancing_signals` MCP tool | `task/195-rebalancing-signals` | domain + interface | 193 (partial — registered directly pending registry) | Review |
 | 220 | Watchlist auto-enrichment: sector peer suggestions on `add_to_watchlist` | `task/220-watchlist-peer-suggestions` | interface | — | Review |
 | 257 | Weather VN Fetcher — NCHMF + NOAA ENSO | `task/262-mcp-tools-042` | infrastructure | — | Review |

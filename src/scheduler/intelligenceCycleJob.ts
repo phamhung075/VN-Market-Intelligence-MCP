@@ -41,6 +41,7 @@ import type { Alert } from "../domain/services/alertGenerator.js";
  * @property pricesFetched       - Number of price records fetched from HOSE
  * @property impactEventsRan     - Number of impact chain events processed
  * @property telegramAlertsSent  - Number of HIGH/CRITICAL alerts sent to Telegram
+ * @property hexagramsComputed   - Number of Kinh Dich readings stored in Step A4 (Task 303)
  * @property errors              - Number of sub-step failures (non-fatal)
  */
 export interface CycleResult {
@@ -51,6 +52,8 @@ export interface CycleResult {
   pricesFetched: number;
   impactEventsRan: number;
   telegramAlertsSent: number;
+  /** Count of hexagram readings auto-computed and stored in this cycle (Step A4). */
+  hexagramsComputed: number;
   errors: number;
 }
 
@@ -97,6 +100,14 @@ export interface CycleDeps {
   syncSectorPeersFn?: (
     entries: { actionCode: string; domain: string }[],
   ) => Promise<{ synced: number; skipped: number; apiCalls: number }>;
+  /**
+   * Task 303 — Step A4: injectable hexagram batch function.
+   * Receives the list of watchlist codes to process; returns the count of
+   * readings successfully stored. When not injected, runs the production
+   * implementation (computeHaoScores → computeReading → storeReading).
+   * Inject in tests to avoid real SQLite + domain side effects.
+   */
+  computeHexagramsFn?: (codes: string[]) => Promise<number>;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -271,6 +282,115 @@ async function defaultMarkAlertNotified(alertId: string): Promise<void> {
   markAlertNotified(alertId);
 }
 
+/**
+ * Task 303 — Step A4 production implementation.
+ *
+ * For each watchlist code:
+ *   1. Load the previous reading (for Markov transition recording)
+ *   2. Compute 6 hao scores from local SQLite (no HTTP)
+ *   3. Compute a preliminary reading to get the current hexagram number
+ *   4. Fetch Markov transition data for the current hexagram
+ *   5. Compute the final reading with Markov context
+ *   6. Store the reading with source='cycle'
+ *   7. Record the hexagram transition (if a previous reading exists)
+ *
+ * Per-stock errors are caught and logged at WARN level; the loop continues
+ * for remaining codes. The returned count reflects only successful stores.
+ *
+ * Mirrors the pattern used in the `get_kinhdich_reading` MCP tool.
+ */
+async function defaultComputeHexagrams(codes: string[]): Promise<number> {
+  const { computeHaoScores } = await import(
+    "../interface/mcp/tools/kinhDichTools.js"
+  );
+  const { computeReading } = await import(
+    "../domain/services/kinhDich/kinhDichReading.js"
+  );
+  const { getTopTransitions } = await import(
+    "../infrastructure/db/hexagramStore.js"
+  );
+  const { QUE_META } = await import(
+    "../domain/services/kinhDich/hexagramLibrary.js"
+  );
+  const {
+    initHexagramTables,
+    getLatestReading,
+    storeReading,
+    recordTransition,
+  } = await import("../infrastructure/db/hexagramStore.js");
+
+  // Ensure schema (source column migration) is applied
+  initHexagramTables();
+
+  let computed = 0;
+
+  for (const code of codes) {
+    try {
+      // 1. Previous reading (for Markov)
+      const previousReading = getLatestReading(code);
+
+      // 2. Compute 6 hao scores from local SQLite
+      const scores = computeHaoScores(code);
+
+      // 3. Preliminary reading to get current hexagram number
+      const prelimReading = computeReading(code, scores, null);
+      const currentHexagram = prelimReading.queChiNh.number;
+
+      // 4. Markov transition data
+      let markovData = null;
+      try {
+        const tops = getTopTransitions(currentHexagram, code, 1);
+        if (tops.length > 0 && tops[0]!.probability > 0) {
+          const meta = QUE_META.find((q) => q.id === tops[0]!.toHexagram);
+          markovData = {
+            nextMostLikely: tops[0]!.toHexagram,
+            nextName: meta?.name ?? `Que ${tops[0]!.toHexagram}`,
+            probability: tops[0]!.probability,
+          };
+        }
+      } catch { /* best-effort — no Markov data on first run */ }
+
+      // 5. Final reading with Markov context
+      const reading = computeReading(code, scores, markovData);
+
+      // 6. Store with source='cycle'
+      storeReading({
+        stockCode: code,
+        hexagramNumber: reading.queChiNh.number,
+        hoQueNumber: reading.hoQue.number,
+        bienQueNumber: reading.bienQue.number,
+        haoStates: JSON.stringify(reading.haos.map((h) => h.state)),
+        rawScores: JSON.stringify(scores),
+        nguHanhDynamic: reading.nguHanh.dynamic,
+        tradingSignal: reading.queChiNh.tradingSignal,
+        confidence: reading.queChiNh.confidence,
+        actionNote: reading.actionNote,
+        source: 'cycle',
+      });
+
+      // 7. Record transition if previous reading exists
+      if (previousReading) {
+        recordTransition(
+          previousReading.hexagramNumber,
+          reading.queChiNh.number,
+          code,
+        );
+      }
+
+      computed++;
+    } catch (err) {
+      logger.warn("[intelligence-cycle] step A4 — failed for stock", {
+        code,
+        error: err instanceof Error ? err.message : String(err),
+      });
+      // Do NOT increment outer `errors` here — each per-stock error is
+      // non-fatal within the batch; only a batch-level failure increments errors.
+    }
+  }
+
+  return computed;
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Per-step timeout helper
 // ─────────────────────────────────────────────────────────────────────────────
@@ -317,6 +437,7 @@ async function _runCycle(deps: CycleDeps = {}): Promise<CycleResult> {
   let pricesFetched = 0;
   let impactEventsRan = 0;
   let telegramAlertsSent = 0;
+  let hexagramsComputed = 0;
 
   // Step 0: Load watchlist codes (needed for SSC list + price fetch)
   if (marketHours) {
@@ -378,6 +499,37 @@ async function _runCycle(deps: CycleDeps = {}): Promise<CycleResult> {
       }
     })(), "step A3 vnstockSync");
   } catch { /* non-fatal — vnstock is best-effort */ }
+
+  // Step A4: Auto-compute Kinh Dich hexagram reading per watchlist stock (Task 303).
+  // Runs unconditionally (market hours + off-hours). Off-hours: watchlistCodes may be
+  // empty (Step 0 only runs during market hours) so we re-query the watchlist from DB.
+  try {
+    const getWatchlistCodesFn = deps.getWatchlistCodesFn ?? defaultGetWatchlistCodes;
+    const codesToProcess =
+      watchlistCodes.length > 0 ? watchlistCodes : await getWatchlistCodesFn();
+
+    if (codesToProcess.length === 0) {
+      logger.debug("[intelligence-cycle] step A4 — watchlist empty, skipping hexagram batch");
+    } else {
+      const computeHexagramsFn =
+        deps.computeHexagramsFn ?? defaultComputeHexagrams;
+      hexagramsComputed = await withTimeout(
+        computeHexagramsFn(codesToProcess),
+        "step A4 hexagramBatch",
+        STEP_TIMEOUT_MS,
+      );
+      logger.debug("[intelligence-cycle] step A4 complete — hexagrams computed", {
+        hexagramsComputed,
+        codes: codesToProcess,
+      });
+    }
+  } catch (err) {
+    errors++;
+    hexagramsComputed = 0;
+    logger.warn("[intelligence-cycle] step A4 failed — hexagram batch error", {
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
 
   if (marketHours) {
     // Step B: List SSC documents — skip if already scanned today (task 153)
@@ -654,6 +806,7 @@ async function _runCycle(deps: CycleDeps = {}): Promise<CycleResult> {
     pricesFetched,
     impactEventsRan,
     telegramAlertsSent,
+    hexagramsComputed,
     errors,
   };
 
