@@ -364,13 +364,18 @@ export async function createBunServer(
           ohlcvUpsert.run(p.code, vnDate, pv, high, low, pv, p.volume ?? 0, now);
         }
 
-        // Consolidate: keep only today's ticks, delete older ones
+        // Consolidate: keep only the last 24 h of ticks, delete older ones.
         // (daily OHLCV already preserves the day summary for 2+ years)
+        // NOTE: must be a rolling 24 h window — an earlier version used
+        // `vnDate + "T00:00:00Z"` which is VN midnight expressed as a UTC
+        // string. During VN morning hours (UTC previous day) that threshold
+        // is in the FUTURE relative to the just-written rows, so every push
+        // self-destructed and market_prices_history stayed permanently empty.
         try {
-          const todayStart = vnDate + "T00:00:00Z";
+          const cutoff = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
           db.prepare(`
             DELETE FROM market_prices_history WHERE fetched_at < ?
-          `).run(todayStart);
+          `).run(cutoff);
         } catch { /* best effort */ }
 
         log.info("[push-prices] updated prices + OHLCV + ticks", { count, source: "vps-proxy" });
