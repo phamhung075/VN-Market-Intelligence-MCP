@@ -144,6 +144,13 @@ const EN_BEARISH: SentimentKeyword[] = [
   { word: "divest", weight: 2 },
   { word: "divestiture", weight: 2 },
   { word: "sell off", weight: 2 },
+  { word: "sell record", weight: 4 },
+  { word: "funds sell", weight: 4 },
+  { word: "record selling", weight: 4 },
+  { word: "foreign sell", weight: 3 },
+  { word: "net sell", weight: 3 },
+  { word: "outflow", weight: 2 },
+  { word: "capital flight", weight: 3 },
   { word: "dump shares", weight: 3 },
   { word: "offload shares", weight: 2 },
 ];
