@@ -1,170 +1,120 @@
 /**
- * Task 029 — SSC Portal Scraper
+ * Task 029 / 303 — SSC Portal Scraper (axios+cheerio rewrite)
  *
- * Tests for listSscDocuments() in src/infrastructure/fetchers/ssc.ts
- * All browser interactions are mocked — no real Puppeteer or network traffic.
+ * Tests listSscDocuments() in src/infrastructure/fetchers/ssc.ts. The fetcher
+ * uses an injectable HttpClient returning raw HTML — tests mock that client
+ * and verify parseSscHtml-backed extraction + report-type filtering.
  *
- * The new implementation uses a BrowserFactory (4th arg) instead of HttpClient.
- * page.evaluate() must return rows in the format:
- *   { code, exchange, title, company, description, date, downloadId }
- * where downloadId becomes the document URL (prefixed with "ssc-adf://").
- *
- * For tests that need an https:// URL we set downloadId to a full https:// URL.
+ * This file replaces the Puppeteer-era BrowserFactory mock harness used by
+ * the original task 029 test.
  */
 
 import { describe, it, expect } from "bun:test";
 import {
   listSscDocuments,
+  type HttpClient,
   type SscDocument,
-  type BrowserFactory,
-  type SscBrowser,
-  type SscBrowserPage,
 } from "../infrastructure/fetchers/ssc.js";
 
 // ---------------------------------------------------------------------------
-// Mock helpers
+// HTML helpers — build the minimal .tbl-data markup parseSscHtml expects.
 // ---------------------------------------------------------------------------
 
-/** Raw row shape that page.evaluate() returns in the real implementation. */
-interface RawSscRow {
-  code: string;
-  exchange: string;
+interface SscRow {
   title: string;
-  company: string;
-  description: string;
-  date: string;
-  downloadId: string;
+  href: string;
+  date: string; // DD/MM/YYYY as shown on the portal
 }
 
-/**
- * Builds a BrowserFactory mock whose page.evaluate() returns the given rows
- * filtered by the code argument (matches real implementation behaviour).
- */
-function makeBrowserFactory(rows: RawSscRow[]): BrowserFactory {
-  return async (): Promise<SscBrowser> => {
-    const page: SscBrowserPage = {
-      async goto() { return null; },
-      async waitForSelector() { return null; },
-      async click() {},
-      async type() {},
-      async evaluate<T>(fn: (...args: unknown[]) => T, ...args: unknown[]): Promise<T> {
-        // The real code passes (targetCode) as the argument; return matching rows.
-        const targetCode = args[0] as string | undefined;
-        if (targetCode !== undefined) {
-          // Called to extract rows — filter by code like the real DOM scraper does.
-          const filtered = rows.filter((r) => r.code === targetCode);
-          return filtered as unknown as T;
-        }
-        // Called for search-button click or other side-effects — no return value needed.
-        return undefined as unknown as T;
-      },
-      keyboard: {
-        async press(_key: string): Promise<void> {},
-      },
-      on(_event: string, _handler: (...args: unknown[]) => void) {},
-      async close() {},
-    };
+function buildHtml(rows: SscRow[]): string {
+  const trs = rows
+    .map(
+      (r) => `
+        <tr>
+          <td><a href="${r.href}">${r.title}</a></td>
+          <td>${r.date}</td>
+        </tr>`,
+    )
+    .join("");
+  return `
+    <html><body>
+      <table class="tbl-data">
+        <tbody>${trs}</tbody>
+      </table>
+    </body></html>`;
+}
 
-    return {
-      async newPage(): Promise<SscBrowserPage> {
-        return page;
-      },
-      async close() {},
-    };
+function mockClient(html: string): HttpClient {
+  return {
+    async get(_url: string): Promise<string> {
+      return html;
+    },
   };
 }
 
-/** A BrowserFactory that always throws (simulates launch failure). */
-function failingBrowserFactory(): BrowserFactory {
-  return async (): Promise<SscBrowser> => {
-    throw new Error("Network timeout");
+function failingClient(): HttpClient {
+  return {
+    async get(): Promise<string> {
+      throw new Error("Network timeout");
+    },
   };
 }
 
 // ---------------------------------------------------------------------------
-// Test data — rows as returned by page.evaluate in the real scraper.
-// downloadId is set to an https:// URL so URL-absolute assertions pass.
+// Test fixtures
 // ---------------------------------------------------------------------------
 
-const QUARTERLY_ROWS: RawSscRow[] = [
+const QUARTERLY_ROWS: SscRow[] = [
   {
-    code: "VCB",
-    exchange: "HOSE",
     title: "Báo cáo tài chính quý 1/2025 — VCB",
-    company: "Ngân hàng TMCP Ngoại thương Việt Nam",
-    description: "BCTC quý 1/2025",
+    href: "https://congbothongtin.ssc.gov.vn/bctc/vcb-q1-2025.pdf",
     date: "15/04/2025",
-    downloadId: "https://congbothongtin.ssc.gov.vn/bctc/vcb-q1-2025.pdf",
   },
   {
-    code: "VCB",
-    exchange: "HOSE",
     title: "Báo cáo tài chính quý 2/2025 — VCB",
-    company: "Ngân hàng TMCP Ngoại thương Việt Nam",
-    description: "BCTC quý 2/2025",
+    href: "https://congbothongtin.ssc.gov.vn/bctc/vcb-q2-2025.pdf",
     date: "15/07/2025",
-    downloadId: "https://congbothongtin.ssc.gov.vn/bctc/vcb-q2-2025.pdf",
   },
   {
-    code: "VCB",
-    exchange: "HOSE",
     title: "Báo cáo tài chính quý 3/2025 — VCB",
-    company: "Ngân hàng TMCP Ngoại thương Việt Nam",
-    description: "BCTC quý 3/2025",
+    href: "https://congbothongtin.ssc.gov.vn/bctc/vcb-q3-2025.pdf",
     date: "14/10/2025",
-    downloadId: "https://congbothongtin.ssc.gov.vn/bctc/vcb-q3-2025.pdf",
   },
 ];
 
-const ANNUAL_ROWS: RawSscRow[] = [
+const ANNUAL_ROWS: SscRow[] = [
   {
-    code: "VCB",
-    exchange: "HOSE",
     title: "Báo cáo tài chính năm 2024 — VCB (kiểm toán)",
-    company: "Ngân hàng TMCP Ngoại thương Việt Nam",
-    description: "BCTC năm 2024",
+    href: "https://congbothongtin.ssc.gov.vn/bctc/vcb-annual-2024.pdf",
     date: "28/03/2025",
-    downloadId: "https://congbothongtin.ssc.gov.vn/bctc/vcb-annual-2024.pdf",
   },
 ];
 
-const MIXED_ROWS: RawSscRow[] = [...QUARTERLY_ROWS, ...ANNUAL_ROWS];
+const MIXED_ROWS: SscRow[] = [...QUARTERLY_ROWS, ...ANNUAL_ROWS];
 
 // ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
 
-/**
- * Per-test timeout in ms.
- * listSscDocuments has ~5.8 s of hardcoded setTimeout delays (500 + 300 + 5000 ms)
- * for the ADF form interaction, even when a mock browser is used.
- */
-const TEST_TIMEOUT = 15_000;
-
-describe("Task 029 — SSC Portal Scraper", () => {
-  // ── 1. Returns correct document list ──────────────────────────────────────
-  it("returns correct documents from mock browser (quarterly)", async () => {
+describe("Task 029 / 303 — SSC Portal Scraper (HttpClient rewrite)", () => {
+  it("returns documents parsed from mocked HTML (quarterly)", async () => {
     const docs = await listSscDocuments(
       "VCB",
       "quarterly",
       2025,
-      makeBrowserFactory(QUARTERLY_ROWS),
+      mockClient(buildHtml(QUARTERLY_ROWS)),
     );
-
     expect(docs).toBeArray();
-    expect(docs.length).toBeGreaterThanOrEqual(1);
-  }, TEST_TIMEOUT);
+    expect(docs.length).toBe(3);
+  });
 
-  // ── 2. Document shape ─────────────────────────────────────────────────────
   it("each document has title, url, publishedAt, and reportType fields", async () => {
     const docs = await listSscDocuments(
       "VCB",
       "quarterly",
       2025,
-      makeBrowserFactory(QUARTERLY_ROWS),
+      mockClient(buildHtml(QUARTERLY_ROWS)),
     );
-
-    expect(docs.length).toBeGreaterThan(0);
     const doc = docs[0] as SscDocument;
     expect(doc).toHaveProperty("title");
     expect(doc).toHaveProperty("url");
@@ -173,144 +123,122 @@ describe("Task 029 — SSC Portal Scraper", () => {
     expect(typeof doc.title).toBe("string");
     expect(typeof doc.url).toBe("string");
     expect(typeof doc.publishedAt).toBe("string");
-    expect(typeof doc.reportType).toBe("string");
     expect(doc.title.length).toBeGreaterThan(0);
     expect(doc.url.length).toBeGreaterThan(0);
-  }, TEST_TIMEOUT);
+  });
 
-  // ── 3. URL is non-empty ───────────────────────────────────────────────────
-  it("document URL is a non-empty string", async () => {
+  it("preserves the absolute href from the anchor tag", async () => {
     const docs = await listSscDocuments(
       "VCB",
       "quarterly",
       2025,
-      makeBrowserFactory(QUARTERLY_ROWS),
+      mockClient(buildHtml(QUARTERLY_ROWS)),
     );
-
     for (const doc of docs) {
-      expect(doc.url.length).toBeGreaterThan(0);
+      expect(doc.url.startsWith("https://")).toBe(true);
     }
-  }, TEST_TIMEOUT);
+  });
 
-  // ── 4. Empty result when no rows match ────────────────────────────────────
-  it("returns empty array when browser returns no rows for the stock code", async () => {
-    // Rows belong to a different code — nothing matches "VCB"
-    const otherRows: RawSscRow[] = QUARTERLY_ROWS.map((r) => ({
-      ...r,
-      code: "OTHER",
-    }));
+  it("returns empty array when no rows match the report type", async () => {
+    // Feed only annual rows but request quarterly — expect zero matches.
     const docs = await listSscDocuments(
       "VCB",
       "quarterly",
       2025,
-      makeBrowserFactory(otherRows),
+      mockClient(buildHtml(ANNUAL_ROWS)),
     );
-
     expect(docs).toBeArray();
     expect(docs.length).toBe(0);
-  }, TEST_TIMEOUT);
+  });
 
-  // ── 5. Browser launch error returns empty array (graceful degradation) ────
-  it("returns empty array and does not throw on browser launch failure", async () => {
+  it("returns empty array and does not throw on HTTP failure", async () => {
     const docs = await listSscDocuments(
       "VCB",
       "quarterly",
       2025,
-      failingBrowserFactory(),
+      failingClient(),
     );
-
     expect(docs).toBeArray();
     expect(docs.length).toBe(0);
-  }, TEST_TIMEOUT);
+  });
 
-  // ── 6. Filters by report type — quarterly keyword match ──────────────────
-  it("filters rows that do not match the quarterly report type keyword", async () => {
-    // Mixed rows: some quarterly, one annual
+  it("filters by quarterly keyword — drops annual rows in mixed set", async () => {
     const docs = await listSscDocuments(
       "VCB",
       "quarterly",
       2025,
-      makeBrowserFactory(MIXED_ROWS),
+      mockClient(buildHtml(MIXED_ROWS)),
     );
-
-    // Every returned doc should match quarterly keywords (quý / Q[1-4])
+    // All three quarterly rows present, annual dropped.
+    expect(docs.length).toBe(3);
     for (const doc of docs) {
       const titleLower = doc.title.toLowerCase();
       const isQuarterly =
-        titleLower.includes("quý") ||
-        /\bq[1-4]\b/i.test(doc.title);
+        titleLower.includes("quý") || /\bq[1-4]\b/i.test(doc.title);
       expect(isQuarterly).toBe(true);
     }
-
-    // Annual doc must not appear
-    const annualAppears = docs.some((d) => d.title.toLowerCase().includes("năm"));
+    const annualAppears = docs.some((d) =>
+      d.title.toLowerCase().includes("năm"),
+    );
     expect(annualAppears).toBe(false);
-  }, TEST_TIMEOUT);
+  });
 
-  // ── 7. Filters by report type — annual keyword match ─────────────────────
-  it("filters rows that do not match the annual report type keyword", async () => {
+  it("filters by annual keyword — drops quarterly rows in mixed set", async () => {
     const docs = await listSscDocuments(
       "VCB",
       "annual",
       2025,
-      makeBrowserFactory(MIXED_ROWS),
+      mockClient(buildHtml(MIXED_ROWS)),
     );
-
+    expect(docs.length).toBe(1);
     for (const doc of docs) {
       const titleLower = doc.title.toLowerCase();
       const isAnnual =
-        titleLower.includes("năm") ||
-        titleLower.includes("annual") ||
-        titleLower.includes("niên độ");
+        titleLower.includes("năm") || titleLower.includes("niên độ");
       expect(isAnnual).toBe(true);
     }
-
     const quarterlyAppears = docs.some((d) =>
       d.title.toLowerCase().includes("quý"),
     );
     expect(quarterlyAppears).toBe(false);
-  }, TEST_TIMEOUT);
+  });
 
-  // ── 8. reportType field set correctly ────────────────────────────────────
-  it("sets reportType to 'quarterly' on returned documents when requested", async () => {
+  it("tags quarterly documents with reportType='quarterly'", async () => {
     const docs = await listSscDocuments(
       "VCB",
       "quarterly",
       2025,
-      makeBrowserFactory(QUARTERLY_ROWS),
+      mockClient(buildHtml(QUARTERLY_ROWS)),
     );
-
     for (const doc of docs) {
       expect(doc.reportType).toBe("quarterly");
     }
-  }, TEST_TIMEOUT);
+  });
 
-  // ── 9. reportType field set correctly for annual ──────────────────────────
-  it("sets reportType to 'annual' on returned documents when requested", async () => {
+  it("tags annual documents with reportType='annual'", async () => {
     const docs = await listSscDocuments(
       "VCB",
       "annual",
       2025,
-      makeBrowserFactory(ANNUAL_ROWS),
+      mockClient(buildHtml(ANNUAL_ROWS)),
     );
-
     for (const doc of docs) {
       expect(doc.reportType).toBe("annual");
     }
-  }, TEST_TIMEOUT);
+  });
 
-  // ── 10. publishedAt is non-empty string ──────────────────────────────────
   it("parses publishedAt as a non-empty string from the date cell", async () => {
     const docs = await listSscDocuments(
       "VCB",
       "quarterly",
       2025,
-      makeBrowserFactory(QUARTERLY_ROWS),
+      mockClient(buildHtml(QUARTERLY_ROWS)),
     );
-
     expect(docs.length).toBeGreaterThan(0);
     for (const doc of docs) {
       expect(doc.publishedAt.trim().length).toBeGreaterThan(0);
     }
-  }, TEST_TIMEOUT);
+    // First row date should round-trip through the parser unchanged.
+    expect(docs[0]!.publishedAt).toBe("15/04/2025");
+  });
 });
