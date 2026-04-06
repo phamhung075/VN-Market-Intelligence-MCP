@@ -30,6 +30,17 @@ import { SourceHealthTracker } from "../../../domain/services/sourceHealthTracke
  */
 export const globalSourceTracker = new SourceHealthTracker();
 
+// Pre-seed the 5 known news sources so get_system_status / get_source_health
+// return rows immediately on a fresh process — before the first pollNews
+// tick has fired. The names match what pollNews uses in its sourceEntries.
+globalSourceTracker.seedKnownSources([
+  "CafeF RSS",
+  "VnExpress RSS",
+  "VnEconomy RSS",
+  "Reuters RSS",
+  "Trading Economics",
+]);
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Vietnamese status labels
 // ─────────────────────────────────────────────────────────────────────────────

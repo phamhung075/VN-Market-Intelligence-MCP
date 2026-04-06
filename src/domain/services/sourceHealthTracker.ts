@@ -107,6 +107,26 @@ export class SourceHealthTracker {
   // ── Public API ─────────────────────────────────────────────────────────────
 
   /**
+   * Pre-populate the registry with a list of known source names so that
+   * getAllHealth() returns rows immediately on a fresh process — before the
+   * first recordSuccess/recordFailure has fired. Each seeded source starts
+   * in default 'ok' state with lastSuccessAt=null. Subsequent recordSuccess/
+   * recordFailure calls overwrite the entry as usual.
+   *
+   * Idempotent: re-seeding an already-tracked source is a no-op (existing
+   * health state is preserved).
+   *
+   * @param sources - Array of source identifiers to register.
+   */
+  seedKnownSources(sources: string[]): void {
+    for (const source of sources) {
+      if (!this.registry.has(source)) {
+        this.registry.set(source, this.defaultRecord(source));
+      }
+    }
+  }
+
+  /**
    * Record a successful fetch for a source.
    *
    * Resets `consecutiveFailures` to 0, updates `lastSuccessAt` to now,
