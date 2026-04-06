@@ -15,27 +15,45 @@ You run every 1 hour via Claude Code CLI cron. Your job: read problem reports fr
 Note: Reports with `agent="user-telegram"` come from user `/report` and `/fix` Telegram commands. Treat these as HIGH priority — the user reported it directly.
 
 ### Step 0b: Proactive Sprint Work (when no new reports)
-When the report channel is empty, DO NOT idle. Instead:
+When the report channel is empty, DO NOT idle and DO NOT exit early. Keep working
+until either (a) you genuinely run out of unblocked items, or (b) wall-clock ≥ 45 min
+in this loop. Large tasks are NOT a reason to skip — split them into separate jobs
+and tackle the first slice now.
 
-1. Read `TASKS.md` backlog section to find unfixed items
-2. Call `get_recent_fixes` to see what was recently done (avoid re-doing)
-3. Check `cowork-analysis-vnmarket-team/README.md` "Known Issues" table for items with status **BACKLOG** (items that need code work, not MONITOR or FIXED)
-4. Pick the highest-priority BACKLOG item that is:
-   - **Actionable** — has clear solution path, no external blockers
-   - **Not already in progress** — check TASKS.md "In Progress" column (WIP limit 2)
-   - **Independent** — doesn't require a new data source, live portal access, or user decision
-5. If a good candidate exists:
-   - Start the SPRINT TASK chain: @po → @ba → @architect → @pm → @developer → @qa
-   - OR if it's a FIX NOW (< 20 lines), do it directly
-   - Commit + push + log_fix + send_telegram summary
-6. If NO actionable items (all BACKLOG needs external input):
-   - Exit the loop (save tokens)
+1. Build a **candidate pool** — scan all of these in one pass:
+   - `TASKS.md` — Backlog, Todo, stale Review/In Progress rows
+   - `cowork-analysis-vnmarket-team/README.md` — "Known Issues" with status BACKLOG
+   - `get_recent_fixes` — to avoid re-doing just-finished work
+   - `get_system_status` — surface degraded sources, stale data, error spikes
+   - Working tree — uncommitted docs, orphan branches, stale `Review` rows that
+     are actually done (status sync is a valid quick win)
+2. **Classify every candidate** into one of four buckets:
+   - **QUICK WIN** (<20 LOC or docs-only) — do immediately
+   - **SLICE-ABLE SPRINT** — too big as one unit? Split it. Pick the smallest
+     independently-shippable slice (1 file, 1 test, 1 migration, 1 doc) and ship
+     THAT now. Log the remaining slices as new TASKS.md rows with explicit
+     `Depends On` links so a future loop can pick them up.
+   - **FULL SPRINT** — fits in one loop end-to-end (agent chain → merge)
+   - **BLOCKED** — genuinely needs external input (live portal, user decision,
+     new API key). Log to Backlog with the blocker named, skip.
+3. **Execute in priority order, looping back to step 1 after each ship:**
+   1. Stale-state sync (TASKS.md/docs out of step with reality) — always first, cheap
+   2. QUICK WINS — ship them all, one commit each
+   3. SLICE-ABLE SPRINT slices — ship the first slice, queue the rest
+   4. FULL SPRINTS — run the agent chain
+   5. Infrastructure cleanup (orphan branches, stale worktrees, log rotation)
+4. **Never block on size.** If a task feels too large:
+   - Write a 5-line plan: "Slice 1 = X file, Slice 2 = Y test, Slice 3 = Z wire-up"
+   - Create TASKS.md rows for slices 2+, commit slice 1, move on
+   - Do NOT defer the whole thing back to the backlog
+5. **Only exit** when: no quick wins left AND no slice-able work AND no stale
+   state to sync AND no infra cleanup possible. Log the exit reason via
+   `send_telegram(channel="chat", ...)` so the user knows the loop ran but found
+   nothing actionable.
 
-**Priority order for Step 0b:**
-1. Quick wins (< 20 lines, clear fix) — always do first
-2. Sprint tasks with no blockers — start the agent chain
-3. Infrastructure/data cleanup if nothing else available
-4. Only exit if everything remaining is blocked
+**Multi-ship rule:** a single cron invocation may ship multiple quick wins and/or
+multiple sprint slices back-to-back. Commit + push + log_fix after EACH one so
+rollback stays atomic. Only the agent chain (PO→BA→…→QA) is gated at one per loop.
 
 **IMPORTANT**: Always re-read this file (`cowork-analysis-vnmarket-team/dev-team-cron.md`) at the start of each cron invocation — the instructions may have been updated.
 
@@ -160,10 +178,13 @@ Please refresh these agents in Claude Cowork.
 - User `/report <description>` and `/fix <description>` Telegram commands create reports with `agent="user-telegram"` — these are HIGH priority, same as agent reports
 
 ### Cost Rules
-- Exit immediately if no new reports (Step 0)
-- FIX NOW before SPRINT TASK (faster, cheaper)
-- One sprint per loop maximum (avoid token explosion)
-- If multiple sprint tasks: do the highest priority one, queue the rest
+- DO NOT exit immediately when the report channel is empty — always run Step 0b
+- FIX NOW / QUICK WIN before full SPRINT TASK (faster, cheaper, ship more per loop)
+- **One full agent-chain sprint per loop maximum** (PO→BA→…→QA is expensive)
+- **Unlimited quick wins + sprint slices per loop** — large work must be split,
+  not skipped. Ship what you can, queue the rest as new TASKS.md rows.
+- If multiple full sprints are candidates: do the highest priority one, slice
+  the others into shippable pieces and do at least one slice of each before exit
 
 ## FILES TO MAINTAIN
 
