@@ -472,7 +472,10 @@ async function _runCycle(deps: CycleDeps = {}): Promise<CycleResult> {
         }));
       } catch { /* best-effort */ }
 
-      // Send each alert individually with cooldown check
+      // Send each alert individually with cooldown check.
+      // The history snapshot is mutated after each send so back-to-back
+      // alerts in the same cycle can see siblings that were just sent —
+      // prevents the "10 volume_spike alerts in 5 min for FPT/VCB/VNM" burst.
       for (const alert of unnotifiedAlerts) {
         // Check cooldown — same stock + same signal type within 60 min → skip
         const suppress = shouldSuppressAlert(
@@ -500,6 +503,13 @@ async function _runCycle(deps: CycleDeps = {}): Promise<CycleResult> {
               error: markErr instanceof Error ? markErr.message : String(markErr),
             });
           }
+          // Prepend the just-sent alert into the in-memory cooldown snapshot
+          // so subsequent alerts in this same loop iteration see it.
+          recentAlertHistory.push({
+            stocks: alert.actionCode,
+            signalTypes: alert.signals.map((s) => s.type).join(","),
+            triggeredAt: new Date().toISOString(),
+          });
         }
       }
 
