@@ -98,7 +98,10 @@ For each claimed report:
    Commit: {hash}
    Tests: PASS
    ```
-9. Server auto-reloads via bun --hot
+9. **Reload strategy:**
+   - **Default:** `bun --hot` reloads the changed module in-place — no action needed.
+   - **Full restart required ONLY when:** schema migration with DROP/ALTER, new scheduler job registration, new package install (`bun install`), `.env` change, or anything that touches module-level DB/LanceDB initializers.
+   - **Full restart command:** `launchctl kickstart -k gui/$(id -u)/com.vn-market.mcp` — this is launchd-supervised, so the new process auto-spawns within ~2-3s. Never run `./start.sh` directly (it would fight the launchd instance).
 
 ### Step 4: SPRINT TASK
 Run the FULL agent chain:
@@ -129,7 +132,7 @@ After QA approves:
    New tools: {list if any}
    Tests: {count} pass
    ```
-5. Server auto-reloads via bun --hot
+5. **Reload strategy:** same as FIX NOW Step 9 above. Sprints often add new scheduler jobs, MCP tool registrations, or schema changes — in those cases a full restart is REQUIRED, so run `launchctl kickstart -k gui/$(id -u)/com.vn-market.mcp` as the final step. Verify with `curl -s http://127.0.0.1:3000/health` before moving on.
 
 ### Step 5: Update Docs (EVERY run that changes code)
 After any fix or sprint:
