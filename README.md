@@ -31,7 +31,12 @@ YOU (investor in France)
 
 ```bash
 bun install
+./scripts/git-hooks/install.sh   # one-time: pre-push runs `bun tsc --noEmit`
 ```
+
+The pre-push hook blocks pushes whose tracked code fails type-checking — most
+often because tracked code imports a file the developer forgot to `git add`
+(the bug class that broke main in Loop #20 Slice 1).
 
 ### Step 2: Configure Environment
 
