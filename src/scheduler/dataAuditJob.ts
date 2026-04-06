@@ -18,6 +18,8 @@
  */
 
 import { Database } from "bun:sqlite";
+import { existsSync, readdirSync } from "node:fs";
+import { join } from "node:path";
 import { getCurrentDeadline } from "../domain/services/earningsCalendar.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -484,6 +486,68 @@ function runDailyChecks(db: Database): AuditFinding[] {
     findings.push({
       table: "financial_reports",
       check: "bctc_filing_overdue",
+      severity: "warning",
+      rowsAffected: 0,
+      action: "none",
+      detail: `Check failed: ${(err as Error).message}`.slice(0, 200),
+    });
+  }
+
+  // D-7c: Detect stranded BCTC PDFs (task 309 / report #690)
+  // Walks data/pdfs/, infers stock code from filename via watchlist regex,
+  // and flags any PDF that has no matching financial_reports row. Surfaces
+  // as agent_feedback so a future cron loop or human can re-parse.
+  try {
+    const pdfDir = join(process.cwd(), "data", "pdfs");
+    if (existsSync(pdfDir)) {
+      const files = readdirSync(pdfDir).filter((f) => f.toLowerCase().endsWith(".pdf"));
+      const watchlistCodes = db
+        .query<{ code: string }, []>("SELECT code FROM watchlist")
+        .all()
+        .map((r) => r.code);
+
+      const stranded: string[] = [];
+      for (const filename of files) {
+        // Try to extract a watchlist code from the filename (case-insensitive,
+        // word-boundary). Files with no recognisable code are skipped — they
+        // need manual classification.
+        const upper = filename.toUpperCase();
+        const matched = watchlistCodes.find((c) => {
+          const re = new RegExp(`(^|[^A-Z])${c}([^A-Z]|$)`);
+          return re.test(upper);
+        });
+        if (!matched) continue;
+
+        const filed = db
+          .query<{ cnt: number }, [string, string, string]>(
+            `SELECT COUNT(*) AS cnt FROM financial_reports
+             WHERE action_code = ? AND
+                   (pdf_path LIKE ? OR ssc_url LIKE ?)`,
+          )
+          .get(matched, `%${filename}%`, `%${filename}%`);
+        if ((filed?.cnt ?? 0) === 0) {
+          stranded.push(`${matched}:${filename.slice(0, 50)}`);
+        }
+      }
+
+      const finding: AuditFinding = {
+        table: "financial_reports",
+        check: "stranded_bctc_pdf",
+        severity: stranded.length > 0 ? "warning" : "info",
+        rowsAffected: stranded.length,
+        action: stranded.length > 0 ? "flagged" : "none",
+        detail:
+          stranded.length > 0
+            ? `Stranded PDFs (need re-parse): ${stranded.join(", ")}`.slice(0, 480)
+            : "No stranded BCTC PDFs",
+      };
+      findings.push(finding);
+      if (stranded.length > 0) insertFeedbackIfNew(db, finding);
+    }
+  } catch (err) {
+    findings.push({
+      table: "financial_reports",
+      check: "stranded_bctc_pdf",
       severity: "warning",
       rowsAffected: 0,
       action: "none",
