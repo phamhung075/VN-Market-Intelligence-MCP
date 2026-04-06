@@ -89,6 +89,14 @@ export interface CycleDeps {
   markAlertNotifiedFn?: (alertId: string) => Promise<void>;
   /** For testing only: override the measured durationMs (triggers warning if > 12 min) */
   fakeDurationMs?: number;
+  /**
+   * Optional sector peer sync hook (Task 278).
+   * Called with watchlist entries after price fetch to refresh peer data.
+   * Defaults to the real syncSectorPeers use case when not injected.
+   */
+  syncSectorPeersFn?: (
+    entries: { actionCode: string; domain: string }[],
+  ) => Promise<{ synced: number; skipped: number; apiCalls: number }>;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -171,7 +179,8 @@ async function defaultPollNews(): Promise<PollNewsResult> {
 
 async function defaultListSscDocs(code: string): Promise<SscDocument[]> {
   const { listSscDocuments } = await import("../infrastructure/fetchers/ssc.js");
-  return listSscDocuments(code, "all");
+  const year = new Date().getFullYear();
+  return listSscDocuments(code, "quarterly", year);
 }
 
 async function defaultFetchPrices(codes: string[]): Promise<number> {
