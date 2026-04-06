@@ -108,9 +108,6 @@ setTimeout(async () => {
 // ── 5. Graceful shutdown ───────────────────────────────────────────────────
 async function shutdown(signal: string) {
   log.info(`[bootstrap] Received ${signal} — shutting down...`);
-  // Clean up Chrome browser instances first to prevent zombie processes
-  const { cleanupBrowsers } = await import("./infrastructure/fetchers/ssc.js");
-  await Promise.resolve(cleanupBrowsers());
   // Close LanceDB vector store
   const { closeVectorStore } = await import("./infrastructure/rag/vectorstore.js");
   await closeVectorStore().catch(() => {});

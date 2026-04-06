@@ -55,6 +55,30 @@ export interface HttpClient {
 }
 
 // ---------------------------------------------------------------------------
+// Deprecated Puppeteer-era types (kept for test back-compat only)
+// ---------------------------------------------------------------------------
+// The SSC fetcher was rewritten from Puppeteer (task 031) to axios+cheerio.
+// Older tests (029, 048, 124) still reference these types when building
+// mock factories. They are no longer used by production code — the stubs
+// below exist solely so those tests keep compiling until they are rewritten.
+
+/** @deprecated Puppeteer Page abstraction — no longer used in production. */
+export interface SscBrowserPage {
+  goto?: (url: string) => Promise<unknown>;
+  evaluate?: (fn: (...args: unknown[]) => unknown) => Promise<unknown>;
+  close?: () => Promise<void>;
+}
+
+/** @deprecated Puppeteer Browser abstraction — no longer used in production. */
+export interface SscBrowser {
+  newPage?: () => Promise<SscBrowserPage>;
+  close?: () => Promise<void>;
+}
+
+/** @deprecated Puppeteer factory — no longer used in production. */
+export type BrowserFactory = () => Promise<SscBrowser>;
+
+// ---------------------------------------------------------------------------
 // Default HTTP client (axios)
 // ---------------------------------------------------------------------------
 
