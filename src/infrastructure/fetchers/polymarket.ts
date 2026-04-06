@@ -186,33 +186,34 @@ export async function fetchPolymarkets(
 ): Promise<PredictionMarket[]> {
   const fetchedAt = new Date().toISOString();
 
-  // Step 1 — fetch CLOB (wrapped in circuit breaker)
-  let clobMarkets: ClobMarket[];
+  // Step 1 — fetch CLOB (best-effort).
+  // CLOB endpoint started returning HTTP 403 (geo/IP block) and only ever
+  // serves stale 2022-2023 sports markets even when it does respond — see
+  // reports #674/#686/#694/#696. We treat CLOB as optional now: catch any
+  // failure (including 403), demote to debug, and continue to the Gamma
+  // path which is the real source of truth. The circuit breaker is no
+  // longer wrapped around CLOB so it can't trip on the known-bad endpoint
+  // and block the rest of the pipeline.
+  let clobMarkets: ClobMarket[] = [];
   try {
-    clobMarkets = await breakers.polymarket.execute(async () => {
-      const clobUrl = `${config.clobApiUrl}/markets?closed=false&limit=${config.maxMarketsPerPoll}`;
-      const raw = await fetchFn(clobUrl);
-      const parsed: unknown = JSON.parse(raw);
-      // CLOB API may return a bare array or { data: [...] } envelope
-      const arr = Array.isArray(parsed)
-        ? parsed
-        : (parsed && typeof parsed === "object" && "data" in parsed && Array.isArray((parsed as Record<string, unknown>).data))
-          ? (parsed as Record<string, unknown>).data as unknown[]
-          : null;
-      if (!arr) {
-        throw new Error("CLOB response is not an array or {data:[]}");
-      }
-      return arr as ClobMarket[];
-    });
+    const clobUrl = `${config.clobApiUrl}/markets?closed=false&limit=${config.maxMarketsPerPoll}`;
+    const raw = await fetchFn(clobUrl);
+    const parsed: unknown = JSON.parse(raw);
+    const arr = Array.isArray(parsed)
+      ? parsed
+      : (parsed && typeof parsed === "object" && "data" in parsed && Array.isArray((parsed as Record<string, unknown>).data))
+        ? (parsed as Record<string, unknown>).data as unknown[]
+        : null;
+    if (arr) {
+      clobMarkets = arr as ClobMarket[];
+    }
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    // CircuitOpenError → debug level (expected), others → error level
-    if (msg.includes("OPEN")) {
-      logger.debug("[polymarket] circuit breaker OPEN — skipping fetch", {});
-    } else {
-      logger.error("[polymarket] CLOB fetch failed", { error: msg });
-    }
-    return [];
+    // 403 / network errors are expected on the deprecated CLOB endpoint.
+    // Demote to debug so they don't spam the production error log.
+    logger.debug("[polymarket] CLOB unavailable, falling back to Gamma", {
+      error: msg.slice(0, 120),
+    });
   }
 
   // Step 2 — rate-limit delay
