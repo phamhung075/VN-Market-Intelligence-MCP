@@ -367,9 +367,17 @@ export async function fetchWeatherWarnings(
     const nchmfEvents = await parseWeatherEventsFromText(html);
     events.push(...nchmfEvents);
   } catch (err) {
-    logger.warn("[weatherVn] NCHMF fetch failed", {
-      error: err instanceof Error ? err.message : String(err),
-    });
+    const msg = err instanceof Error ? err.message : String(err);
+    // NCHMF URL path frequently 404s — the portal restructures pages often.
+    // Demote 404 to debug so it doesn't spam the warning log every 15 min.
+    const is404 = /status code 404|404/i.test(msg);
+    if (is404) {
+      logger.debug("[weatherVn] NCHMF URL 404 (known fragile endpoint)", {
+        url: NCHMF_WARNING_URL,
+      });
+    } else {
+      logger.warn("[weatherVn] NCHMF fetch failed", { error: msg });
+    }
   }
 
   // ── Source 2: NOAA ENSO status ────────────────────────────────────────────
