@@ -174,7 +174,7 @@ function scoreAlert(
   const minLookForward = new Date(alertTs + 1 * 86_400_000).toISOString();
   const maxLookForward = new Date(alertTs + 3 * 86_400_000).toISOString();
 
-  const priceAfter = db
+  let priceAfter = db
     .prepare<PriceRow, [string, string, string]>(`
       SELECT price, fetched_at
       FROM market_prices_history
@@ -183,6 +183,24 @@ function scoreAlert(
       LIMIT 1
     `)
     .get(code, minLookForward, maxLookForward) as PriceRow | undefined;
+
+  // Intraday fallback (task 307 / report #673): when the strict 1-3 day
+  // window has no data yet (early-stage deployment, very recent alert),
+  // try a 1-12h forward window instead. Trades temporal precision for
+  // coverage so accuracy stops being '100% UNKNOWN' on day 1.
+  if (!priceAfter) {
+    const intradayMin = new Date(alertTs + 1 * 3_600_000).toISOString();
+    const intradayMax = new Date(alertTs + 12 * 3_600_000).toISOString();
+    priceAfter = db
+      .prepare<PriceRow, [string, string, string]>(`
+        SELECT price, fetched_at
+        FROM market_prices_history
+        WHERE code = ? AND fetched_at >= ? AND fetched_at <= ?
+        ORDER BY fetched_at ASC
+        LIMIT 1
+      `)
+      .get(code, intradayMin, intradayMax) as PriceRow | undefined;
+  }
 
   if (!priceAfter) return "UNKNOWN";
 
