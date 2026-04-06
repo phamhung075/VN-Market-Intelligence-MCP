@@ -25,7 +25,7 @@
 | 299 | Fix computeSectorScore: widen peer pool from watchlist to all stocks in market_prices by domain     | P0       | Developer | interface/mcp/tools      | —            | task/297-kinhdich-sql-fixes             | Review |
 | 300 | Fix computeMacroIndicatorScore: remove sigma column ref, derive z-score from recent history         | P1       | Developer | interface/mcp/tools      | 298          | task/297-kinhdich-sql-fixes             | Review |
 | 301 | Rebuild hexagramLibrary.ts QUE_DATA: port all 64 markdown que files with full hao + bien que data  | P1       | Developer | domain/services/kinhDich | —            | task/301-hexagram-library-rebuild       | Review |
-| 302 | Smoke test: seed DB, assert VNM/FPT/VCB/VEA produce 4 different hexagrams, >=3 non-zero hao scores | P1       | Developer | test                     | 297, 298, 299| task/302-kinhdich-differentiation-test  | Todo   |
+| 302 | Smoke test: seed DB, assert VNM/FPT/VCB/VEA produce 4 different hexagrams, >=3 non-zero hao scores | P1       | Developer | test                     | 297, 298, 299| task/302-kinhdich-differentiation-test  | Done   |
 
 ---
 
