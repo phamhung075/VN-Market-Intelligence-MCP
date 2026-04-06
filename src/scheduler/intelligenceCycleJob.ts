@@ -430,6 +430,40 @@ async function _runCycle(deps: CycleDeps = {}): Promise<CycleResult> {
       });
     }
 
+    // Step C2 (task 701): Sync sector peer financials so get_sector_comparison
+    // can show real PE/PB/ROE for benchmark stocks instead of N/A. Best-effort
+    // — failure here never aborts the cycle. Reads watchlist domains, picks
+    // up to 5 peers per domain via syncSectorPeers, calls syncStockLight for
+    // each (trading_stats + financials + balance_sheet, relaxed staleness).
+    try {
+      const syncFn = deps.syncSectorPeersFn ?? (async (entries) => {
+        const { syncSectorPeers } = await import("../application/usecases/syncSectorPeers.js");
+        // syncSectorPeers expects DomainType — we pass watchlist domain strings as-is
+        return syncSectorPeers(entries as { actionCode: string; domain: import("../../bctc-schema.js").DomainType }[]);
+      });
+
+      const { getDb: getCycleDb } = await import("../infrastructure/db/schema.js");
+      const cycleDb = getCycleDb();
+      const watchlistRows = cycleDb
+        .prepare("SELECT code, domain FROM watchlist")
+        .all() as Array<{ code: string; domain: string }>;
+      const entries = watchlistRows.map((r) => ({
+        actionCode: r.code,
+        domain: r.domain,
+      }));
+
+      if (entries.length > 0) {
+        const result = await withTimeout(syncFn(entries), "step C2 syncPeers");
+        logger.debug("[intelligence-cycle] step C2 complete — sector peer sync", result);
+      }
+    } catch (err) {
+      // Non-fatal — peer sync is best-effort, but count errors for visibility
+      errors++;
+      logger.warn("[intelligence-cycle] step C2 sector peer sync failed (non-fatal)", {
+        error: err instanceof Error ? err.message : String(err),
+      });
+    }
+
     // Step D: Run impact chain on new news entries
     try {
       impactEventsRan = await withTimeout(runImpactChainFn(), "step D impactChain");
