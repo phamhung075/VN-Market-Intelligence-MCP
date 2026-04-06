@@ -81,6 +81,13 @@ export interface FetchParseAndStoreBctcParams {
    * Defaults to the real LanceDB-backed implementation from retriever.ts.
    */
   insertAnalysisFn?: InsertAnalysisFn;
+  /**
+   * Optional pre-discovered PDF URL (Task 289).
+   * When provided the Step 1 SSC portal listing is bypassed and this URL is
+   * used directly for download + extraction. Used by checkSscReports when
+   * the SSC document was already resolved.
+   */
+  pdfUrl?: string;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -142,28 +149,35 @@ export async function fetchParseAndStoreBctc(
     pdfHttpClient,
     pdfTextOverride,
     insertAnalysisFn,
+    pdfUrl,
   } = params;
 
   const tag = `[fetchParseAndStoreBctc] ${actionCode} ${year}-${quarter}`;
 
-  // ── Step 1: List SSC documents ─────────────────────────────────────────────
-  logger.info(`${tag} step 1: listing SSC documents`);
-
-  const docs = await listSscDocuments(
-    actionCode,
-    "quarterly",
-    year,
-    sscHttpClient,
-  );
-
-  if (docs.length === 0) {
-    logger.warn(`${tag} no documents found — aborting`);
-    return null;
+  // ── Step 1: Resolve SSC document URL ───────────────────────────────────────
+  // Task 289: if caller supplied pdfUrl, skip the listing step entirely.
+  let doc: { url: string; publishedAt?: string };
+  if (pdfUrl) {
+    logger.info(`${tag} step 1: using supplied pdfUrl (bypass SSC listing)`);
+    doc = { url: pdfUrl };
+  } else {
+    logger.info(`${tag} step 1: listing SSC documents`);
+    const docs = await listSscDocuments(
+      actionCode,
+      "quarterly",
+      year,
+      sscHttpClient,
+    );
+    if (docs.length === 0) {
+      logger.warn(`${tag} no documents found — aborting`);
+      return null;
+    }
+    doc = docs[0]!;
+    logger.info(`${tag} using document`, {
+      url: doc.url,
+      publishedAt: doc.publishedAt,
+    });
   }
-
-  // Use the first (most recent) matching document
-  const doc = docs[0]!;
-  logger.info(`${tag} using document`, { url: doc.url, publishedAt: doc.publishedAt });
 
   // ── Step 2: Download & extract PDF text ────────────────────────────────────
   logger.info(`${tag} step 2: extracting PDF text`);
