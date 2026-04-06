@@ -851,6 +851,19 @@ describe("296 OCR pipeline e2e smoke test", () => {
 
 > Deprecation shims in `ssc.ts` keep these tests type-checking but they still reference the removed Puppeteer layer. Full rewrite or deletion needed.
 
+### Observability gaps (2026-04-06 — from analysis-team reports #673, #675, #680)
+
+| # | Title | Branch | Agent | Priority | Depends on | Status |
+|---|-------|--------|-------|----------|------------|--------|
+| 306 | sentiment_entries table: wire pollNews sentiment classifier to per-stock rows so get_sentiment_trend has data | `task/306-sentiment-per-stock-store` | Developer | P1 | — | Backlog |
+| 307 | Scheduled job: walk alerts older than 24h, compute outcome vs market_prices_history, call recordSignalOutcome | `task/307-signal-outcome-tracker` | Developer | P1 | — | Backlog |
+| 308 | market_prices_history coverage: ensure VPS price proxy writes every 15-min tick so get_correlation_matrix has >=2 days data | `task/308-price-history-coverage` | Developer | P2 | — | Backlog |
+
+> Root causes of analysis-agent reports that need design work:
+> - **#675**: sentiment classifier runs in pollNews but results are written to rag_analyses only, not linked to a per-stock sentiment_entries table that sentimentTrend.ts reads.
+> - **#673**: record_signal_outcome (Sprint 039) is defined but has no scheduled caller — retrospective accuracy loop is open.
+> - **#680** (partially): get_correlation_matrix returns 0 stocks — market_prices_history has <2 days data despite VPS proxy running.
+
 ### Sprint 034 — Depth Over Breadth: Sentiment Trend + Context Sync (2026-04-02)
 
 | # | Title | Branch | Agent | Priority | Depends on | Status |
