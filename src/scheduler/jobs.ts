@@ -64,6 +64,20 @@ function log(msg: string) {
 }
 
 export function startScheduler() {
+  // Idempotency guard — survives bun --hot module reloads.
+  // Without this, every hot reload re-runs startScheduler() and stacks a
+  // fresh copy of every cron callback on top of the previous ones. After N
+  // reloads the '15:30 market close' cron (and every other job) fires N
+  // times back-to-back, producing bursts like "22 identical scanMarket
+  // WARN lines in one second". globalThis state persists across HMR so the
+  // second call short-circuits.
+  const g = globalThis as unknown as { __vnMarketSchedulerStarted?: boolean };
+  if (g.__vnMarketSchedulerStarted) {
+    log("startScheduler called again — already running, skipping re-registration");
+    return;
+  }
+  g.__vnMarketSchedulerStarted = true;
+
   // 08:00 — Morning briefing (weekdays Mon-Fri only) — task 101
   cron.schedule(CRONS.morningBriefing, async () => {
     await runMorningBriefing()
