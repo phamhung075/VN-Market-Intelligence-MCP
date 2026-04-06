@@ -39,6 +39,7 @@ import { runFranceSummary } from './franceSummaryJob.js'
 import { runDevTeamHeartbeat } from './devTeamHeartbeatJob.js'
 import { runWeatherCheck } from './weatherCheckJob.js'
 import { runDavPharmacyCheck } from './davPharmacyJob.js'
+import { runVpsProxyWatchdog } from './vpsProxyWatchdogJob.js'
 
 export const CRONS = {
   morningBriefing:        Bun.env.CRON_MORNING_BRIEFING          ?? '0 8 * * 1-5',
@@ -181,5 +182,21 @@ export function startScheduler() {
     await runDavPharmacyCheck()
   }, { timezone: 'Asia/Ho_Chi_Minh' })
 
-  log(`[scheduler] jobs registered — ${Object.keys(CRONS).length} core cron jobs + 5 summary jobs + WAL checkpoint active`)
+  // Every 10 min during VN market hours — VPS price-proxy watchdog.
+  // Detects stale market_prices and SSH-heals the Vultr crontab in-process.
+  // Uses `*/10 2-8 * * 1-5` so it only runs inside the window the VPS itself
+  // is expected to push during; off-hours runs short-circuit via
+  // isVnMarketHoursUtc() anyway, but a tighter cron avoids extra wakeups.
+  cron.schedule("*/10 2-8 * * 1-5", async () => {
+    try {
+      const status = await runVpsProxyWatchdog()
+      if (status !== "ok" && status !== "off-hours" && status !== "cooldown") {
+        log(`[vps-watchdog] ${status}`)
+      }
+    } catch (err) {
+      log(`[vps-watchdog] uncaught: ${err instanceof Error ? err.message : String(err)}`)
+    }
+  }, { timezone: 'UTC' })
+
+  log(`[scheduler] jobs registered — ${Object.keys(CRONS).length} core cron jobs + 5 summary jobs + vps-watchdog + WAL checkpoint active`)
 }
