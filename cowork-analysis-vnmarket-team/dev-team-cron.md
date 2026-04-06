@@ -155,6 +155,14 @@ Please refresh these agents in Claude Cowork.
 1. Call `get_system_status` — verify server is healthy after changes (covers DB, SOURCES, FRESHNESS, ERRORS in one call)
 2. If issues found -> create FIX NOW task for next loop
 
+### Step 8: Return to main
+At the very end of every cron invocation, regardless of what ran:
+1. `git checkout main` — the production Bun process on zenmidi runs from `main` via `--hot`. Never leave the repo on a feature branch between loops.
+2. `git status --short` — must be empty (no uncommitted changes).
+3. For any task branch merged this loop: delete local + remote (`git branch -d` + `git push origin --delete`). Verify with `git cherry main origin/<branch>` = zero `^+` lines before deleting.
+4. For any `.claude/worktrees/agent-*` left over: `git worktree remove --force <path>` then `git branch -D worktree-agent-*`.
+5. `git stash list` — drop any stash whose source branch is now merged.
+
 ## RULES
 
 ### Git Rules

@@ -178,3 +178,43 @@ Constraints: [budget, timeline, scope exclusions if any]."
 
 The PO agent will kick off the full chain automatically.
 You will only be interrupted at the two Gatekeeper checkpoints.
+
+---
+
+## Branch hygiene checklist
+
+The production MCP server runs from the `main` branch via `bun --hot` on the zenmidi host. Any session that leaves the repo on a non-main branch risks the next hot-reload picking up the wrong working tree.
+
+### Rules (enforced by Developer and QA after every merge)
+
+1. **Return to main**: every task ends with `git checkout main` and a clean working tree.
+   ```bash
+   git checkout main
+   git status --short   # must be empty
+   ```
+
+2. **Delete merged branches**: both local and remote, verified with `git cherry`.
+   ```bash
+   git cherry main origin/<branch>   # must show zero "^+" lines
+   git branch -d <branch>
+   git push origin --delete <branch>
+   ```
+
+3. **Remove worktrees**: any `.claude/worktrees/agent-*` path left after task completion.
+   ```bash
+   git worktree remove --force .claude/worktrees/<name>
+   git branch -D worktree-agent-<name>          # orphan branch if any
+   ```
+
+4. **Drop stale stashes**: stashes whose source branch is merged must be dropped.
+   ```bash
+   git stash list                               # review
+   git stash drop stash@{N}                     # drop stash from merged branch
+   ```
+
+5. **No overnight feature branches**: if work is incomplete at session end, push WIP to the remote branch so the local copy can be deleted and main remains the live tree.
+   ```bash
+   git push origin task/NNN-branch-name         # push WIP
+   git checkout main                            # return to main
+   git branch -d task/NNN-branch-name           # safe to delete locally
+   ```

@@ -116,10 +116,19 @@ grep -rn "any" src/                               # zero 'any' types
 
 ## Merge Procedure (approved only)
 
+Before approving merge, verify the PR branch has no unique commits that are not included in the PR:
+
+```bash
+git cherry main origin/task/NNN-branch-name   # must show zero "^+" lines
+```
+
+If any `^+` lines appear, the branch contains unpublished commits — resolve before merging.
+
 ```bash
 git checkout main
 git merge --no-ff task/NNN-branch-name -m "merge(NNN): [task title]"
 git branch -d task/NNN-branch-name
+git push origin --delete task/NNN-branch-name
 
 # Verify merge
 bun test
@@ -128,6 +137,7 @@ bun tsc --noEmit
 
 Then update `TASKS.md`: move task from **Review** → **Done**.
 Notify PM: "Task NNN merged. Checking WIP for next task."
+Instruct Developer to run the branch hygiene cleanup step (step 6 in the Developer agent closing checklist).
 
 ---
 

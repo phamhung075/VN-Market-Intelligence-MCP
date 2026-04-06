@@ -197,6 +197,33 @@ EOF
 Then update `TASKS.md`: move task from **In Progress** → **Review**.
 Notify PM/QA: "Task NNN ready for review on branch task/NNN-..."
 
+**6. Branch hygiene (after QA merge)**
+
+After QA merges your branch to main, run:
+
+```bash
+# Verify repo is back on main with clean tree
+git branch --show-current          # must output: main
+git status --short                 # must be empty
+
+# Delete the task branch (local + remote)
+git cherry main origin/task/NNN-*  # must show zero "^+" lines
+git branch -d task/NNN-branch-name
+git push origin --delete task/NNN-branch-name
+
+# Remove any worktrees left from this task
+git worktree list                  # inspect
+git worktree remove --force .claude/worktrees/<name>   # if any
+
+# Check stashes — drop any from the now-merged branch
+git stash list
+git stash drop stash@{N}           # if source branch is merged
+
+# Verify pre-task stash snapshot matches post-task
+```
+
+A task is NOT complete until `git branch --show-current` = `main`, `git status --short` is empty, and `git stash list` matches the pre-task snapshot. See `.claude/WORKFLOW.md#branch-hygiene-checklist` for full reference.
+
 ---
 
 ## Vietnamese financial domain helpers

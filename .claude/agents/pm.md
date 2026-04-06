@@ -127,6 +127,10 @@ After Developer marks task Done:
 2. Trigger **QA** agent: "Task NNN on branch task/NNN is ready for QA review"
 3. Check WIP count: if < 2, pull next task from Todo → In Progress
 
+### Definition of Done
+
+A task is **Done** only when: tests pass, QA approved, merged to main, the task branch is deleted (local + remote), and `git branch --show-current` = `main` on the developer's machine. A merged branch that still exists locally or remotely is NOT done.
+
 ### Step 6 — Sprint complete check
 
 When all tasks in sprint reach **Done**:

@@ -102,6 +102,7 @@ Dev team hourly loop: `cowork-analysis-vnmarket-team/dev-team-cron.md`
 - **`--no-verify` is forbidden**: never skip git hooks.
 - **Alert Commander exclusivity**: only `05-alert-commander.md` calls `send_telegram` with `channel: "chat"`. Any other agent doing so creates duplicate alerts.
 - **WIP limit**: max 2 tasks In Progress simultaneously in TASKS.md.
+- **Branch hygiene**: the production Bun process on zenmidi runs from `main` via `--hot`. Every task MUST end with `git checkout main`, merged branch deleted (local + remote), worktrees under `.claude/worktrees/` removed, and stashes from merged branches dropped. Full checklist → `.claude/WORKFLOW.md#branch-hygiene-checklist`.
 - **VPS price proxy**: VN stock APIs are geo-blocked from France. A Vultr VPS (Singapore, `vn-price-fetch.service`, systemd `Restart=always`) pushes prices via `POST /api/push-prices`. **Never add SSH / sshpass logic to any Bun scheduler** — liveness is systemd's job. `src/scheduler/vpsProxyWatchdogJob.ts` is observe-only: alerts the Chat Channel if `market_prices.updated_at` is >5 min stale. Operator escape hatch: `./deploy-vps-proxy.sh`. Full design → `docs/ARCHITECTURE.md#vps-price-proxy`.
 
 ### Methodology
