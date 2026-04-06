@@ -111,6 +111,27 @@ export function registerAgentSignalTools(server: McpServer): void {
         await initDatabase();
         const db = getDb();
 
+        // Task 693: cross_validate signals MUST carry direction + confidence
+        // + summary inside finding_data so downstream consumers (Alert
+        // Commander, report-analyzer) can act on them. Reject empty
+        // placeholders early instead of letting null fields propagate
+        // through the chain. Other signal types stay permissive.
+        if (args.signal_type === "cross_validate") {
+          const fd = (args.finding_data ?? {}) as Record<string, unknown>;
+          const missing: string[] = [];
+          if (fd["direction"] == null || fd["direction"] === "") missing.push("direction");
+          if (fd["confidence"] == null) missing.push("confidence");
+          if (fd["summary"] == null || fd["summary"] === "") missing.push("summary");
+          if (missing.length > 0) {
+            return {
+              content: [{
+                type: "text" as const,
+                text: `Error: cross_validate signals require finding_data.{${missing.join(", ")}}. Empty placeholders are rejected — see report #693.`,
+              }],
+            };
+          }
+        }
+
         const cycleId = args.cycle_id ?? computeCycleId();
 
         const signalInput: import("../../../infrastructure/db/agentSignalStore.js").PostSignalInput =
