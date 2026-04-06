@@ -59,6 +59,17 @@ const VN_BULLISH: SentimentKeyword[] = [
   { word: "thu hút fdi", weight: 2 },
   { word: "giải ngân", weight: 1 },
   { word: "tăng", weight: 1 },
+  // Task 716: government market-support measures are bullish reversal catalysts
+  { word: "chính phủ hỗ trợ thị trường", weight: 4 },
+  { word: "biện pháp hỗ trợ thị trường", weight: 4 },
+  { word: "hỗ trợ thị trường chứng khoán", weight: 4 },
+  { word: "quỹ bình ổn", weight: 3 },
+  { word: "nới room ngoại", weight: 3 },
+  { word: "nới room khối ngoại", weight: 3 },
+  { word: "giảm thuế giao dịch", weight: 3 },
+  { word: "miễn thuế giao dịch", weight: 3 },
+  { word: "gói kích thích", weight: 3 },
+  { word: "gói hỗ trợ", weight: 2 },
 ];
 
 /** Vietnamese bearish keywords */
@@ -119,6 +130,12 @@ const EN_BULLISH: SentimentKeyword[] = [
   { word: "rise", weight: 1 },
   { word: "rose", weight: 1 },
   { word: "rising", weight: 1 },
+  // Task 716: stock-market support measures are bullish reversal catalysts
+  { word: "stock market support measures", weight: 4 },
+  { word: "market support measures", weight: 3 },
+  { word: "government support package", weight: 3 },
+  { word: "stimulus package", weight: 3 },
+  { word: "stabilization fund", weight: 3 },
 ];
 
 /** English bearish keywords */
