@@ -812,6 +812,10 @@ CREATE TABLE IF NOT EXISTS financial_reports (
   -- Notes
   notes_raw_text          TEXT,
 
+  -- BCTC validator (task 132): accounting identity / magnitude / confidence
+  validation_status       TEXT DEFAULT 'pending',   -- pending | passed | failed
+  validation_notes        TEXT,                      -- human-readable validator output
+
   UNIQUE(action_code, sort_key)
 );
 
