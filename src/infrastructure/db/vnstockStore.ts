@@ -216,18 +216,49 @@ export function storeFinancials(f: VnstockFinancials): void {
   markFetched(f.code, "financials");
 }
 
+// Cached column-presence flag — production DBs predate the `date` column
+// (commit af09eb8 dropped date partitioning in favour of UNIQUE(code)).
+// Tests build their own schemas with date, so we detect at runtime instead
+// of forcing a single schema everywhere.
+let _tradingStatsHasDateColumn: boolean | null = null;
+function tradingStatsHasDate(db: ReturnType<typeof getDb>): boolean {
+  if (_tradingStatsHasDateColumn !== null) return _tradingStatsHasDateColumn;
+  try {
+    const cols = db
+      .query<{ name: string }, []>("PRAGMA table_info(vnstock_trading_stats)")
+      .all();
+    _tradingStatsHasDateColumn = cols.some((c) => c.name === "date");
+  } catch {
+    _tradingStatsHasDateColumn = false;
+  }
+  return _tradingStatsHasDateColumn;
+}
+
 export function storeTradingStats(s: VnstockTradingStats, date?: string): void {
   const db = getDb();
-  const today = date ?? new Date().toISOString().slice(0, 10);
-  db.prepare(
-    `INSERT OR REPLACE INTO vnstock_trading_stats
-     (code, date, foreign_room, foreign_volume, current_holding_ratio, max_holding_ratio,
-      avg_volume_2w, high_52w, low_52w, pct_from_high_52w, pct_from_low_52w, fetched_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-  ).run(
-    s.code, today, s.foreignRoom, s.foreignVolume, s.currentHoldingRatio, s.maxHoldingRatio,
-    s.avgVolume2w, s.high52w, s.low52w, s.pctFromHigh52w, s.pctFromLow52w, s.fetchedAt,
-  );
+  if (tradingStatsHasDate(db)) {
+    const today = date ?? new Date().toISOString().slice(0, 10);
+    db.prepare(
+      `INSERT OR REPLACE INTO vnstock_trading_stats
+       (code, date, foreign_room, foreign_volume, current_holding_ratio, max_holding_ratio,
+        avg_volume_2w, high_52w, low_52w, pct_from_high_52w, pct_from_low_52w, fetched_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    ).run(
+      s.code, today, s.foreignRoom, s.foreignVolume, s.currentHoldingRatio, s.maxHoldingRatio,
+      s.avgVolume2w, s.high52w, s.low52w, s.pctFromHigh52w, s.pctFromLow52w, s.fetchedAt,
+    );
+  } else {
+    // Production schema without `date` column — UNIQUE(code) replaces UNIQUE(code, date)
+    db.prepare(
+      `INSERT OR REPLACE INTO vnstock_trading_stats
+       (code, foreign_room, foreign_volume, current_holding_ratio, max_holding_ratio,
+        avg_volume_2w, high_52w, low_52w, pct_from_high_52w, pct_from_low_52w, fetched_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    ).run(
+      s.code, s.foreignRoom, s.foreignVolume, s.currentHoldingRatio, s.maxHoldingRatio,
+      s.avgVolume2w, s.high52w, s.low52w, s.pctFromHigh52w, s.pctFromLow52w, s.fetchedAt,
+    );
+  }
   markFetched(s.code, "trading_stats");
 }
 
@@ -299,9 +330,11 @@ export function getLatestFinancials(code: string): VnstockFinancials | null {
 
 export function getTradingStats(code: string): VnstockTradingStats | null {
   const db = getDb();
+  // Use fetched_at — production tables predate the `date` column (commit
+  // af09eb8 removed the date partition; UNIQUE(code) is the active key).
   const row = db
     .prepare<any, [string]>(
-      `SELECT * FROM vnstock_trading_stats WHERE code = ? ORDER BY date DESC LIMIT 1`,
+      `SELECT * FROM vnstock_trading_stats WHERE code = ? ORDER BY fetched_at DESC LIMIT 1`,
     )
     .get(code);
   if (!row) return null;
@@ -329,12 +362,17 @@ export function getTradingStats(code: string): VnstockTradingStats | null {
  */
 export function getForeignFlowHistory(code: string, days = 10): DailyForeignFlow[] {
   const db = getDb();
+  // Use fetched_at — the production schema lacks the `date` column.
+  // Project fetched_at AS date so the DailyForeignFlow consumers see the
+  // same shape they did before the column rename.
   const rows = db
     .prepare<any, [string, number]>(
-      `SELECT code, date, foreign_volume, foreign_room, current_holding_ratio
+      `SELECT code,
+              substr(fetched_at, 1, 10) AS date,
+              foreign_volume, foreign_room, current_holding_ratio
        FROM vnstock_trading_stats
        WHERE code = ?
-       ORDER BY date DESC
+       ORDER BY fetched_at DESC
        LIMIT ?`,
     )
     .all(code, days);
