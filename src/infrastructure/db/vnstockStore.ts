@@ -157,6 +157,32 @@ export function initVnstockTables(): void {
     );
     CREATE INDEX IF NOT EXISTS idx_vncf_code ON vnstock_cash_flow(code);
   `);
+
+  // Migration: old production DBs created vnstock_trading_stats without the
+  // `date` column (pre-af09eb8 schema). CREATE TABLE IF NOT EXISTS is a no-op
+  // on those, so the modern SQL that references `date` fails with
+  // "no such column: date". Detect and ALTER TABLE ADD COLUMN idempotently.
+  try {
+    const cols = db
+      .query<{ name: string }, []>("PRAGMA table_info(vnstock_trading_stats)")
+      .all();
+    const hasDate = cols.some((c) => c.name === "date");
+    if (!hasDate && cols.length > 0) {
+      db.exec(
+        `ALTER TABLE vnstock_trading_stats ADD COLUMN date TEXT NOT NULL DEFAULT '1970-01-01'`,
+      );
+      db.exec(
+        `CREATE INDEX IF NOT EXISTS idx_vnstats_code_date ON vnstock_trading_stats(code, date)`,
+      );
+      logger.info("[vnstock-store] migrated vnstock_trading_stats: added date column");
+      // Invalidate cached column-presence flag so subsequent reads re-check.
+      _tradingStatsHasDateColumn = null;
+    }
+  } catch (err) {
+    logger.warn("[vnstock-store] trading_stats date-column migration skipped", {
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
 }
 
 // ---------------------------------------------------------------------------
