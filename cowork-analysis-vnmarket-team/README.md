@@ -181,10 +181,11 @@ For dev team and analysis team problem reports:
 - `/fix <description>` — report an urgent bug to Dev Team (high priority)
 - `/help` — list all available commands
 
-## 19 Cron Jobs
+## 20 Cron Jobs
 
 | Time | Job | Description |
 |------|-----|-------------|
+| */10 min (02:00-08:59 UTC M-F) | vpsProxyWatchdog | Observe market_prices freshness; alert Chat if >5 min stale (30-min cooldown, no SSH) |
 | */15 min | intelligenceCycle | Main engine: news + prices + chain + alerts |
 | */15 min | userRequestCheck | Answer /ask + /why Telegram commands |
 | */30 min | predictionMarketPoll | Polymarket fetch + signal detection |
@@ -275,7 +276,7 @@ Before submitting feedback or a report, check this list. If the issue is listed 
 | 271 | incomeStatementExtractor: all income fields = 0 for VNM/FPT | BACKLOG | Regex patterns don't match real BCTC PDF formats — SPRINT needed |
 | 272 | balanceSheetExtractor: Total Assets off by 10^7 | BACKLOG | triệu đồng not converted to tỷ — SPRINT needed |
 | 273 | SSC Puppeteer crash loop / selector changed | BACKLOG | Needs mutex + updated selectors — SPRINT needed |
-| 274 | Price data stale from France server | FIXED | VPS Singapore proxy deployed (commit c4ae88a). 48 stocks + 3 VN indices + 11 global indices every 1 min |
+| 274 | Price data stale from France server | FIXED | VPS Singapore proxy rebuilt with systemd (`vn-price-fetch.service`, `Restart=always`) — commit c84a329. VPS cron removed; schedule lives inside `fetch-prices-loop.sh`. MCP watchdog (`vpsProxyWatchdogJob`) alerts Chat Channel if `market_prices` is >5 min stale. |
 | 275 | Telegram env vars "not set" warning | FIXED | Works via MCP. Old server instance logs still visible to agents. Ignore "TELEGRAM_BOT_TOKEN not set" warnings — they are stale |
 | 276 | Polymarket CLOB 403 | MONITOR | Geo-blocked from France. Circuit breaker handles it. Not fixable by code |
 | 277 | weatherVn NCHMF 404 | MONITOR | External URL changed/down. Not blocking core analysis |
