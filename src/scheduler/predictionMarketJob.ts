@@ -22,6 +22,7 @@
  */
 
 import { logger } from "../infrastructure/logger.js";
+import { getDb, initDatabase } from "../infrastructure/db/schema.js";
 import type { Database } from "bun:sqlite";
 import type {
   PredictionMarket,
@@ -307,11 +308,17 @@ export async function runPredictionMarketPoll(
     }
 
     // ── Step 2: resolve DB ────────────────────────────────────────────────
+    // Sprint 053 / report 1023: scheduler can fire on the exact :30 boundary
+    // moments after launchd spawns the server, racing ahead of bootstrap's
+    // own initDatabase() call. Running initDatabase() here (idempotent —
+    // every statement is CREATE TABLE IF NOT EXISTS) guarantees the schema
+    // is in place before the first snapshot read. Tests that inject opts.db
+    // are unaffected because they bypass this branch entirely.
     let db: Database;
     if (opts.db) {
       db = opts.db;
     } else {
-      const { getDb } = await import("../infrastructure/db/schema.js");
+      await initDatabase();
       db = getDb();
     }
 

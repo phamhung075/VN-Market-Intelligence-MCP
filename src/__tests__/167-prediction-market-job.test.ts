@@ -444,4 +444,56 @@ describe("Task 167 — Prediction Market Scheduler Job", () => {
       expect((cronExpr ?? "").length).toBeGreaterThan(0);
     });
   });
+
+  // ── 9. Startup race: job runs before bootstrap initDatabase ────────────────
+  describe("Sprint 053 / report 1023 — startup race regression", () => {
+    it(
+      "self-heals missing prediction_markets table by calling initDatabase() when opts.db is not injected",
+      async () => {
+        // Simulate the launchd race: a fresh on-disk DB file with NO tables,
+        // then run the cron path that resolves via the getDb() singleton.
+        const tmpPath = `/tmp/vn-market-test-race-${Date.now()}.db`;
+        process.env["DB_PATH"] = tmpPath;
+
+        // Reset the schema.js singleton so the next getDb() opens tmpPath.
+        const schemaMod = await import("../infrastructure/db/schema.js");
+        schemaMod.closeDb();
+
+        // Sanity: confirm the fresh DB really has no tables yet.
+        const probe = new Database(tmpPath);
+        const before = probe
+          .query<{ name: string }, []>(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='prediction_markets'",
+          )
+          .get();
+        expect(before).toBeNull();
+        probe.close();
+
+        const { runPredictionMarketPoll } = await import(
+          "../scheduler/predictionMarketJob.js"
+        );
+
+        // No opts.db → job must call initDatabase() internally.
+        await expect(
+          runPredictionMarketPoll({
+            enabled: true,
+            fetchFn: async () => [],
+          }),
+        ).resolves.toBeUndefined();
+
+        // Table should now exist on the shared singleton.
+        const after = schemaMod
+          .getDb()
+          .query<{ name: string }, []>(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='prediction_markets'",
+          )
+          .get();
+        expect(after?.name).toBe("prediction_markets");
+
+        // Cleanup
+        schemaMod.closeDb();
+        delete process.env["DB_PATH"];
+      },
+    );
+  });
 });
