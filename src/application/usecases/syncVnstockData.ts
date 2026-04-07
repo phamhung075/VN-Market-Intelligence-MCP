@@ -63,7 +63,7 @@ async function syncStock(code: string): Promise<number> {
   if (isStale(code, "financials", 360)) {
     const fin = await fetchVnstockFinancials(code);
     if (fin) storeFinancials(fin);
-    else markFetched(code, "financials"); // back off even on empty/timeout
+    else markFetched(code, "financials", 30); // empty/timeout: retry in 30min, not 6h
     calls++;
     await sleep(DELAY_MS);
   }
@@ -72,7 +72,7 @@ async function syncStock(code: string): Promise<number> {
   if (isStale(code, "balance_sheet", 360)) {
     const bs = await fetchVnstockBalanceSheet(code);
     if (bs) storeBalanceSheet(bs);
-    else markFetched(code, "balance_sheet");
+    else markFetched(code, "balance_sheet", 30); // empty/timeout: retry in 30min
     calls++;
     await sleep(DELAY_MS);
   }
@@ -81,7 +81,7 @@ async function syncStock(code: string): Promise<number> {
   if (isStale(code, "cash_flow", 360)) {
     const cf = await fetchVnstockCashFlow(code);
     if (cf) storeCashFlow(cf);
-    else markFetched(code, "cash_flow");
+    else markFetched(code, "cash_flow", 30); // empty/timeout: retry in 30min
     calls++;
     await sleep(DELAY_MS);
   }
