@@ -221,7 +221,10 @@ export function detectCountries(text: string): string[] {
  * matching (e.g., "fixed" contains "xe", "affordable" contains "ford").
  * Use word-boundary-safe terms or multi-word phrases instead. */
 const STOCK_RELEVANCE_KEYWORDS: Record<string, string[]> = {
-  VNM: ["dairy", "milk", "sữa", "vinamilk", "thực phẩm", "food", "tiêu dùng", "consumer"],
+  // VNM: dairy/milk-specific only. "consumer", "food", "tiêu dùng" were too generic
+  // (CPI articles, retail/consumer-confidence reports were bridging into Middle East
+  //  cascades via the body text). See reports 982/983/988 — Loop #32 false positives.
+  VNM: ["dairy", "milk", "sữa", "vinamilk", "vinamil", "infant formula", "yogurt", "sữa chua"],
   FPT: ["technology", "outsourcing", "software", "cloud", "digital", "công nghệ", "phần mềm", "fpt"],
   VCB: ["bank", "ngân hàng", "credit", "tín dụng", "lending", "interest rate", "lãi suất", "forex", "ngoại hối"],
   HPG: ["steel", "thép", "iron ore", "quặng", "xây dựng", "hrc", "hòa phát"],
