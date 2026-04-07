@@ -484,6 +484,56 @@ async function _runCycle(deps: CycleDeps = {}): Promise<CycleResult> {
     })(), "step A2 macroFetch");
   } catch { /* non-fatal */ }
 
+  // Step A2.5: Macro deviation alerts (Backlog 765 fix — Loop #29)
+  // Classify rolling-stats deviations; persist synthetic HIGH/CRITICAL alerts for
+  // high/extreme breaches so the alert-trigger pipeline (Step E) actually fires.
+  // Deterministic id = date + indicator + level → INSERT OR IGNORE dedups one
+  // alert per indicator per level per UTC day (natural cooldown).
+  try {
+    await withTimeout((async () => {
+    const { getAllMacroStats } = await import("../infrastructure/db/macroStatsStore.js");
+    const { classifyDeviation } = await import("../domain/services/macroThresholds.js");
+    const { storeAlerts } = await import("../infrastructure/db/alertStore.js");
+    const stats = getAllMacroStats();
+    const today = new Date().toISOString().slice(0, 10);
+    const nowIso = new Date().toISOString();
+    const macroAlerts: Alert[] = [];
+    for (const s of stats) {
+      const dev = classifyDeviation(s);
+      if (dev.level !== "high" && dev.level !== "extreme") continue;
+      const severity = dev.level === "extreme" ? "critical" : "high";
+      macroAlerts.push({
+        id: `macro-${today}-${dev.name}-${dev.level}`,
+        actionCode: "MACRO",
+        signals: [{
+          actionCode: "MACRO",
+          type: "macro_deviation",
+          severity,
+          message: dev.summary,
+          timestamp: nowIso,
+        // biome-ignore lint/suspicious/noExplicitAny: Signal type cross-imported
+        } as any],
+        severity,
+        message: `Macro alert [${dev.level.toUpperCase()}]: ${dev.summary}`,
+        isRead: false,
+        createdAt: nowIso,
+      });
+    }
+    if (macroAlerts.length > 0) {
+      const { getDb: getDatabase } = await import("../infrastructure/db/schema.js");
+      storeAlerts(macroAlerts, getDatabase());
+      logger.info("[intelligence-cycle] step A2.5 — macro alerts persisted", {
+        count: macroAlerts.length,
+        ids: macroAlerts.map((a) => a.id),
+      });
+    }
+    })(), "step A2.5 macroAlerts");
+  } catch (err) {
+    logger.warn("[intelligence-cycle] step A2.5 macro alert generation failed", {
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
+
   // Step A3: vnstock lazy sync (background — respects rate limits + staleness cache)
   // Runs for all watchlist stocks, skips if data is still fresh.
   try {
