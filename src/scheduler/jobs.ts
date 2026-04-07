@@ -67,6 +67,8 @@ export const CRONS = {
   bctcReparseJob:         Bun.env.CRON_BCTC_REPARSE_JOB           ?? '30 9 * * *',
   /** France wake-up summary: weekdays 06:00 UTC (07:00 CET) — task 243 */
   franceSummary:          Bun.env.CRON_FRANCE_SUMMARY             ?? '0 6 * * 1-5',
+  /** SQLite WAL checkpoint: daily 03:00 GMT+7 = 20:00 UTC (task 140) */
+  walCheckpoint:          Bun.env.CRON_WAL_CHECKPOINT             ?? '0 20 * * *',
 }
 
 function log(msg: string) {
@@ -126,8 +128,9 @@ export function startScheduler() {
     await runAlertDigest()
   }, { timezone: 'Asia/Ho_Chi_Minh' })
 
-  // 03:00 GMT+7 — WAL checkpoint (task 140)
-  cron.schedule('0 20 * * *', () => {
+  // 03:00 GMT+7 (20:00 UTC) — WAL checkpoint (task 140)
+  // Note: 20:00 UTC = 03:00 GMT+7 (ICT). Overridable via CRON_WAL_CHECKPOINT env var.
+  cron.schedule(CRONS.walCheckpoint, () => {
     runWalCheckpoint()
   })
 
@@ -234,5 +237,5 @@ export function startScheduler() {
     }
   }, { timezone: 'UTC' })
 
-  log(`[scheduler] jobs registered — ${Object.keys(CRONS).length} core cron jobs + 5 summary jobs + vps-watchdog + WAL checkpoint active`)
+  log(`[scheduler] jobs registered — ${Object.keys(CRONS).length} core cron jobs (incl. WAL checkpoint) + 5 summary jobs + vps-watchdog active`)
 }
