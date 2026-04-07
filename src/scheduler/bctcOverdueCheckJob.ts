@@ -7,9 +7,12 @@
  *   - the deadline was crossed more than `overdueDaysThreshold` days ago
  *     (default 3).
  *
- * Slice 1 deliberately does NOT:
- *   - send Telegram (Slice 2 will wire into Alert Commander dedup)
- *   - register a cron entry  (Slice 3 will register in jobs.ts)
+ * Slice 2 (this revision): the inserted alert row uses severity = "high" so
+ * it is automatically picked up by `readUnnotifiedAlerts()` and dispatched to
+ * the user Chat Channel by the existing Alert Commander pipeline (no new
+ * Telegram code is added — the deterministic id provides cooldown/dedup).
+ *
+ * Slice 3 will register a daily cron entry in `src/scheduler/jobs.ts`.
  *
  * Idempotency:
  *   The alert id is deterministic — `bctc-overdue:<CODE>:<YEAR>:<Q>:<UTC-DAY>`
@@ -142,7 +145,7 @@ export async function runBctcOverdueCheck(opts: RunOptions = {}): Promise<RunRes
       const info = insertAlert.run(
         alertId,
         triggeredAt,
-        "warning",
+        "high",
         JSON.stringify(["bctc_overdue"]),
         JSON.stringify([{ code, expectedImpact: "down", confidence: 0.6 }]),
         message,

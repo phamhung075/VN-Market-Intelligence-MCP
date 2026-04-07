@@ -13,6 +13,7 @@ import { describe, it, expect, beforeEach } from "bun:test";
 import { Database } from "bun:sqlite";
 
 import { runBctcOverdueCheck } from "../scheduler/bctcOverdueCheckJob.js";
+import { readUnnotifiedAlerts } from "../infrastructure/db/alertStore.js";
 
 function buildDb(): Database {
   const db = new Database(":memory:");
@@ -38,7 +39,8 @@ function buildDb(): Database {
       analysis_ids_json     TEXT,
       message               TEXT,
       read                  INTEGER NOT NULL DEFAULT 0,
-      user_note             TEXT
+      user_note             TEXT,
+      notified_telegram     INTEGER NOT NULL DEFAULT 0
     );
   `);
   return db;
@@ -67,8 +69,27 @@ describe("runBctcOverdueCheck (Task 1018 slice 1)", () => {
       )
       .all();
     expect(rows.length).toBe(1);
+    expect(rows[0]!.severity).toBe("high");
     expect(rows[0]!.message).toContain("FPT");
     expect(rows[0]!.message).toContain("Q4-2025");
+  });
+
+  it("slice 2 wire-up: inserted alert flows through readUnnotifiedAlerts", async () => {
+    db.run("INSERT INTO watchlist (code, domain) VALUES ('FPT', 'general')");
+
+    await runBctcOverdueCheck({
+      db,
+      now: new Date("2026-04-05T03:00:00Z"),
+    });
+
+    // readUnnotifiedAlerts only returns severity IN ('high','critical') AND
+    // notified_telegram = 0. The bctc-overdue alert MUST satisfy both so it
+    // is dispatched by the existing Alert Commander pipeline.
+    // Use a generous window — fixture date may be far in the past relative to
+    // wall-clock now; wire-up correctness is what we're proving here.
+    const unnotified = readUnnotifiedAlerts(60 * 24 * 365 * 100, db);
+    expect(unnotified.length).toBe(1);
+    expect(unnotified[0]!.id).toMatch(/^bctc-overdue:FPT:2025:Q4:/);
   });
 
   it("does NOT alert when overdue by less than the threshold (default 3 days)", async () => {
