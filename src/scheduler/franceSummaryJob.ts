@@ -29,7 +29,7 @@ export interface FranceSummaryOptions {
   db?: Database;
   /**
    * Telegram send function.
-   * Defaults to the real sendTelegramMessage in production.
+   * Defaults to the real sendTelegramMarket in production.
    * Inject a no-op or capture fn in tests.
    */
   sendFn?: (message: string) => Promise<void>;
@@ -127,8 +127,8 @@ export async function assembleFranceSummary(
       // Dynamic import — module may not exist in all versions of the codebase.
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const mod = await import("../infrastructure/notifiers/telegram.js" as string).catch(() => null) as any;
-      if (mod?.sendTelegramMessage) {
-        await mod.sendTelegramMessage(msg);
+      if (mod?.sendTelegramMarket) {
+        await mod.sendTelegramMarket(msg);
       }
     });
 

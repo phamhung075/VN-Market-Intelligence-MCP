@@ -237,7 +237,7 @@ export function formatHeartbeatMessage(data: HeartbeatData): string {
  * Chat Channel.
  *
  * @param db     - SQLite database instance (defaults to production getDb())
- * @param sendFn - Telegram send function (defaults to sendTelegramMessage)
+ * @param sendFn - Telegram send function (defaults to sendTelegramWork)
  */
 export async function runDevTeamHeartbeat(
   db?: Database,
@@ -257,10 +257,10 @@ export async function runDevTeamHeartbeat(
   if (sendFn) {
     resolvedSend = sendFn;
   } else {
-    const { sendTelegramMessage } = await import(
+    const { sendTelegramWork } = await import(
       "../infrastructure/notifiers/telegram.js"
     );
-    resolvedSend = (text: string) => sendTelegramMessage(text, { parseMode: "" });
+    resolvedSend = (text: string) => sendTelegramWork(text, { parseMode: "" });
   }
 
   try {

@@ -21,7 +21,7 @@ import { logger } from "../infrastructure/logger.js";
 export async function runPatternWatch(): Promise<void> {
   try {
     const { getDb } = await import("../infrastructure/db/schema.js");
-    const { sendTelegramMessage } = await import("../infrastructure/notifiers/telegram.js");
+    const { sendTelegramMarket } = await import("../infrastructure/notifiers/telegram.js");
     const db = getDb();
 
     // Get watchlist codes
@@ -110,7 +110,7 @@ export async function runPatternWatch(): Promise<void> {
         "⚠️ Pattern matching chỉ mang tính tham khảo, không phải khuyến nghị đầu tư",
       ].join("\n");
 
-      await sendTelegramMessage(message, { parseMode: "" });
+      await sendTelegramMarket(message, { parseMode: "" });
       logger.info("[patternWatch] sent weekly pattern alert", {
         matches: warnings.length,
       });

@@ -72,8 +72,8 @@ async function defaultSearchContext(query: string): Promise<SearchResult[]> {
 }
 
 async function defaultSendTelegram(message: string): Promise<boolean> {
-  const { sendTelegramMessage } = await import("../infrastructure/notifiers/telegram.js");
-  return sendTelegramMessage(message);
+  const { sendTelegramMarket } = await import("../infrastructure/notifiers/telegram.js");
+  return sendTelegramMarket(message);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -425,7 +425,7 @@ export async function runUserRequestCheck(
       });
     } catch (reqErr) {
       // Per-request error: reset row to 'pending' so the next cycle retries.
-      // AC-306: "If sendTelegramMessage throws, the row remains status='pending'."
+      // AC-306: "If sendTelegramMarket throws, the row remains status='pending'."
       errors++;
       const errMsg = reqErr instanceof Error ? reqErr.message : String(reqErr);
 

@@ -793,8 +793,8 @@ async function _runCycle(deps: CycleDeps = {}): Promise<CycleResult> {
           const response = `Tra loi cho: "${req.payload}"\n\n${answer}`;
 
           // Send to Chat Channel
-          const { sendTelegramMessage } = await import("../infrastructure/notifiers/telegram.js");
-          await sendTelegramMessage(response);
+          const { sendTelegramMarket } = await import("../infrastructure/notifiers/telegram.js");
+          await sendTelegramMarket(response);
 
           markAnswered(requestDb, req.id, response);
 

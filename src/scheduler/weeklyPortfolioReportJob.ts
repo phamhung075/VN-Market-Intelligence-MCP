@@ -9,7 +9,7 @@
  *   2. Join with `market_prices` to get current prices
  *   3. Query `portfolio_pnl_snapshots` from last 7 days to compute week-over-week change
  *   4. Format Vietnamese report with per-stock row + total P&L summary
- *   5. Send via Telegram (using Bun.env.TELEGRAM_BOT_TOKEN + TELEGRAM_CHAT_ID)
+ *   5. Send via Telegram MARKET channel (sendTelegramMarket)
  *
  * DDD Layer: interface/scheduler — may import from infrastructure only (no domain).
  *
@@ -277,37 +277,17 @@ export function formatWeeklyReport(
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Sends plain text to Telegram using Bot API.
- * Uses Bun.env.TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID.
+ * Sends plain text to the MARKET Telegram channel via the unified notifier.
  * Never throws — logs errors instead.
  */
 async function sendTelegram(text: string): Promise<void> {
-  const token = Bun.env["TELEGRAM_BOT_TOKEN"];
-  const chatId = Bun.env["TELEGRAM_CHAT_ID"];
-
-  if (!token || !chatId) {
-    logger.warn("[weeklyPortfolioReport] Telegram not configured — TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID missing");
-    return;
-  }
-
   try {
-    const url = `https://api.telegram.org/bot${token}/sendMessage`;
-    const response = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        chat_id: chatId,
-        text,
-        parse_mode: undefined,  // plain text only, no Markdown
-      }),
-    });
-
-    if (!response.ok) {
-      const body = await response.text();
-      logger.error("[weeklyPortfolioReport] Telegram API error", {
-        status: response.status,
-        body,
-      });
+    const { sendTelegramMarket } = await import(
+      "../infrastructure/notifiers/telegram.js"
+    );
+    const ok = await sendTelegramMarket(text, { parseMode: "" });
+    if (!ok) {
+      logger.warn("[weeklyPortfolioReport] sendTelegramMarket returned false — check TELEGRAM_BOT_TOKEN / TELEGRAM_INFO_MARKET_GROUP_ID");
     }
   } catch (err) {
     logger.error("[weeklyPortfolioReport] Telegram send failed", {

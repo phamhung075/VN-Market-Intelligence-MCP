@@ -245,8 +245,8 @@ async function defaultSendTelegram(text: string): Promise<void> {
   try {
     const { mcpConfig } = await import("../infrastructure/config.js");
     if (!mcpConfig.telegram?.enabled) return;
-    const { sendTelegramMessage } = await import("../infrastructure/notifiers/telegram.js");
-    await sendTelegramMessage(text, { parseMode: "" });
+    const { sendTelegramWork } = await import("../infrastructure/notifiers/telegram.js");
+    await sendTelegramWork(text, { parseMode: "" });
   } catch { /* best-effort */ }
 }
 

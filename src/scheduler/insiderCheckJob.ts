@@ -19,7 +19,7 @@ import {
   detectMassInsiderBuy,
   type InsiderTransaction,
 } from "../domain/services/leadershipSignal.js";
-import { sendTelegramMessage } from "../infrastructure/notifiers/telegram.js";
+import { sendTelegramMarket } from "../infrastructure/notifiers/telegram.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Constants
@@ -163,7 +163,7 @@ export async function runInsiderCheck(): Promise<void> {
       const msg =
         `SSC Giao Dich Noi Bo — ${new Date().toLocaleDateString("vi-VN")}\n\n` +
         allAlerts.join("\n\n");
-      await sendTelegramMessage(msg);
+      await sendTelegramMarket(msg);
       logger.info("[insiderCheckJob] Telegram alert sent", {
         alertCount: allAlerts.length,
       });

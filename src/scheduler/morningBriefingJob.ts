@@ -104,7 +104,7 @@ export async function runMorningBriefing(
       logger.debug("[morning-briefing] Telegram already sent for today — skipping");
     } else {
     try {
-      const { sendTelegramMessage } = await import(
+      const { sendTelegramMarket } = await import(
         "../infrastructure/notifiers/telegram.js"
       );
 
@@ -198,10 +198,10 @@ export async function runMorningBriefing(
       // Telegram limit: 4096 chars per message. Split if needed.
       const MAX_CHUNK = 4000;
       if (text.length <= MAX_CHUNK) {
-        await sendTelegramMessage(text, { parseMode: "" });
+        await sendTelegramMarket(text, { parseMode: "" });
       } else {
         for (let i = 0; i < text.length; i += MAX_CHUNK) {
-          await sendTelegramMessage(text.slice(i, i + MAX_CHUNK), { parseMode: "" });
+          await sendTelegramMarket(text.slice(i, i + MAX_CHUNK), { parseMode: "" });
         }
       }
 

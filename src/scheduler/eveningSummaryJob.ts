@@ -76,7 +76,7 @@ export async function runEveningSummary(
 
     if (hasContent) {
       try {
-        const { sendTelegramMessage } = await import(
+        const { sendTelegramMarket } = await import(
           "../infrastructure/notifiers/telegram.js"
         );
 
@@ -115,7 +115,7 @@ export async function runEveningSummary(
           }
         }
 
-        await sendTelegramMessage(lines.join("\n"));
+        await sendTelegramMarket(lines.join("\n"));
         logger.info("[eveningSummaryJob] Telegram sent");
       } catch (tgErr) {
         logger.warn("[eveningSummaryJob] Telegram send failed", {

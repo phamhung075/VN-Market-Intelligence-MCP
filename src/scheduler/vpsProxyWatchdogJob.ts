@@ -32,7 +32,7 @@
  */
 
 import { getDb } from "../infrastructure/db/schema.js";
-import { sendTelegramMessage } from "../infrastructure/notifiers/telegram.js";
+import { sendTelegramMarket } from "../infrastructure/notifiers/telegram.js";
 import { logger } from "../infrastructure/logger.js";
 
 /** If the newest market_prices row is older than this, raise an alert. */
@@ -139,7 +139,7 @@ export async function runVpsProxyWatchdog(
 
   const notify =
     options.notify ??
-    ((msg: string) => sendTelegramMessage(msg, { parseMode: "" }));
+    ((msg: string) => sendTelegramMarket(msg, { parseMode: "" }));
 
   try {
     const ok = await notify(message);
