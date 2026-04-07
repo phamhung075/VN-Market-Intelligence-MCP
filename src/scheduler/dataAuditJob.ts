@@ -262,10 +262,17 @@ async function defaultGetCount(): Promise<number> {
 function runDailyChecks(db: Database): AuditFinding[] {
   const findings: AuditFinding[] = [];
 
-  // D-1: Delete zero-price rows
+  // D-1: Delete STALE zero-price rows only (>1 day old).
+  //
+  // Task 314 — the VPS proxy legitimately pushes price=0 for halted or
+  // illiquid tickers during a trading session. A blanket DELETE wiped the
+  // entire market_prices snapshot every time the audit ran after market
+  // close, leaving get_watchlist / /price showing N/A until the next day.
+  // Only purge zero-price rows that have NOT been overwritten by a fresh
+  // push in the last 24 h — those are true stragglers.
   try {
     const result = db.prepare(
-      "DELETE FROM market_prices WHERE price = 0 OR price IS NULL"
+      "DELETE FROM market_prices WHERE (price = 0 OR price IS NULL) AND updated_at < datetime('now','-1 day')"
     ).run();
     findings.push({
       table: "market_prices",
