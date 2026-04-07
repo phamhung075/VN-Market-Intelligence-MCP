@@ -41,7 +41,8 @@
     "openTime": "09:00",
     "closeTime": "15:30",
     "tradingDays": [1, 2, 3, 4, 5],
-    "watchlist": ["VNM", "FPT", "VCB", "VEA"],
+    "watchlist": ["VNM", "FPT", "VCB", "VEA", "HPG", "SSI", "MWG",
+		"MSN"],
     "referenceStocks": {
       "banking":    ["VCB", "BID", "CTG", "TCB", "MBB", "VPB", "ACB", "HDB", "STB", "TPB"],
       "real_estate":["VIC", "VHM", "NVL", "KDH", "DXG"],

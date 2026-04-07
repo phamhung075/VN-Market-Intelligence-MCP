@@ -12,6 +12,7 @@
 | 08:00 M–F | `morningBriefing` | `0 8 * * 1-5` | VN-Index + stories + macro σ + sensitive dates + commodities + prediction + P&L |
 | 09:00 M–F | `marketOpen` | `0 9 * * 1-5` | Prices + sector context + price-news divergence + volume + price alerts |
 | 15:30 M–F | `marketClose` | `30 15 * * 1-5` | Close-of-day snapshot |
+| 09:00 daily | `bctcOverdueCheck` | `0 9 * * *` | BCTC overdue alert — insert alert rows for overdue filings (task 1018) |
 | 20:00 daily | `sscCheck` | `0 20 * * *` | SSC portal BCTC filing check |
 | 21:00 M–F | `alertDigest` | `0 21 * * 1-5` | Nightly alert digest via Telegram |
 | 22:00 M–F | `eveningSummary` | `0 22 * * 1-5` | Evening market summary |
@@ -19,7 +20,7 @@
 | 23:00 Sunday | `weeklyPortfolioReport` | `0 23 * * 0` | P&L + allocation drift + top movers → Telegram |
 | 23:00 daily | `dataAuditDaily` | `0 23 * * *` | Orphan vectors, stale entries, DB row counts |
 | 01:00 Sunday | `dataAuditWeekly` | `0 1 * * 0` | LanceDB vs SQLite consistency, signal coverage gaps |
-| 06:00 UTC M–F | `franceSummary` | `0 6 * * 1-5` | France wake-up digest (13:00 VN) → Chat Channel |
+| 06:00 UTC M–F | `franceSummary` | `0 6 * * 1-5` | France wake-up digest (13:00 VN) → MARKET channel |
 | 07:00 UTC Sunday | `devTeamHeartbeat` | `0 7 * * 0` | System health + weekly observability report |
 | 08:00 UTC Sunday | `predictionOutcome` | `0 8 * * 0` | Evaluate prediction signals vs actual outcomes |
 

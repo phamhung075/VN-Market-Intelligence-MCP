@@ -15,10 +15,20 @@ You run every 1 hour via Claude Code CLI cron. Your job: read problem reports fr
 Note: Reports with `agent="user-telegram"` come from user `/report` and `/fix` Telegram commands. Treat these as HIGH priority — the user reported it directly.
 
 ### Step 0b: Proactive Sprint Work (when no new reports)
-When the report channel is empty, DO NOT idle and DO NOT exit early. Keep working
-until either (a) you genuinely run out of unblocked items, or (b) wall-clock ≥ 45 min
-in this loop. Large tasks are NOT a reason to skip — split them into separate jobs
-and tackle the first slice now.
+
+**Prime directive: Ship tasks to completion, not slices for momentum's sake.**
+
+When the report channel is empty, DO NOT idle and DO NOT exit early. Pick ONE
+high-priority unblocked task and drive it all the way through: implementation +
+tests + tsc + commit + push + log_fix + launchctl kickstart (when required) +
+WORK channel notification. That task is DONE only when it is merged to main,
+tests are green, and the server has restarted cleanly.
+
+**NON-GOAL — this does NOT count as shipping:**
+- Committing TASKS.md edits, acceptance criteria, or planning docs as the loop's
+  only output. Backlog priming without implementation is not progress.
+- Shipping slice 1 of a task and deferring slices 2-N back to the backlog just
+  to claim a commit. A task is done when ALL its acceptance criteria pass.
 
 1. Build a **candidate pool** — scan all of these in one pass:
    - `TASKS.md` — Backlog, Todo, stale Review/In Progress rows
@@ -27,33 +37,42 @@ and tackle the first slice now.
    - `get_system_status` — surface degraded sources, stale data, error spikes
    - Working tree — uncommitted docs, orphan branches, stale `Review` rows that
      are actually done (status sync is a valid quick win)
-2. **Classify every candidate** into one of four buckets:
-   - **QUICK WIN** (<20 LOC or docs-only) — do immediately
-   - **SLICE-ABLE SPRINT** — too big as one unit? Split it. Pick the smallest
-     independently-shippable slice (1 file, 1 test, 1 migration, 1 doc) and ship
-     THAT now. Log the remaining slices as new TASKS.md rows with explicit
-     `Depends On` links so a future loop can pick them up.
-   - **FULL SPRINT** — fits in one loop end-to-end (agent chain → merge)
+   Priority candidates: Sprint 053 backlog items 1019/1020/914/915 and any newer
+   rows added since.
+
+2. **Classify every candidate** into one of three buckets:
+   - **FULL SPRINT** — run the full agent chain (PO→BA→Architect→PM→Developer→QA)
+     from start to merge. This is the default path for backlog tasks.
+   - **SLICE-ABLE SPRINT** — task is genuinely too large for one loop (>200 LOC
+     across multiple layers). In this case: design ALL slices up front, implement
+     ALL slices in sequence within this same loop. Only exit to the backlog if the
+     45-minute wall-clock cap is hit mid-implementation (see rule below).
    - **BLOCKED** — genuinely needs external input (live portal, user decision,
-     new API key). Log to Backlog with the blocker named, skip.
-3. **Execute in priority order, looping back to step 1 after each ship:**
-   1. Stale-state sync (TASKS.md/docs out of step with reality) — always first, cheap
-   2. QUICK WINS — ship them all, one commit each
-   3. SLICE-ABLE SPRINT slices — ship the first slice, queue the rest
-   4. FULL SPRINTS — run the agent chain
-   5. Infrastructure cleanup (orphan branches, stale worktrees, log rotation)
-4. **Never block on size.** If a task feels too large:
-   - Write a 5-line plan: "Slice 1 = X file, Slice 2 = Y test, Slice 3 = Z wire-up"
-   - Create TASKS.md rows for slices 2+, commit slice 1, move on
-   - Do NOT defer the whole thing back to the backlog
-5. **Only exit** when: no quick wins left AND no slice-able work AND no stale
-   state to sync AND no infra cleanup possible. Log the exit reason via
+     new API key). Log to Backlog with the blocker named. Skip.
+
+3. **Execute — pick ONE task, finish it:**
+   1. Resolve any stale-state sync first (TASKS.md/docs out of step with reality)
+      — this is cheap and must be accurate before you start real work.
+   2. Pick the highest-priority unblocked task from the candidate pool.
+   3. Run it end-to-end: agent chain → TDD implementation → `bun tsc --noEmit`
+      → `bun test` → commit → push → log_fix → launchctl kickstart (if needed)
+      → WORK channel notification.
+   4. Only after that task is fully done: scan for the next task and repeat.
+   5. Infrastructure cleanup (orphan branches, stale worktrees, log rotation) is
+      done at Step 8, not here.
+
+4. **45-minute wall-clock cap — safety valve, NOT an exit trigger:**
+   - If the cap is reached while a task is IN PROGRESS: finish what is started.
+     Do not commit a half-implemented task. Complete the current acceptance
+     criterion, ensure tests pass, then commit and exit.
+   - If the cap is reached before starting a new task: exit cleanly and log
+     the exit reason via `send_telegram(channel="work", ...)`.
+   - The cap is a guard against runaway loops, not a license to defer work.
+
+5. **Only exit** when: the current task is fully done AND no further unblocked
+   tasks remain AND no stale state to sync. Log the exit reason via
    `send_telegram(channel="work", ...)` so the user knows the loop ran but found
    nothing actionable.
-
-**Multi-ship rule:** a single cron invocation may ship multiple quick wins and/or
-multiple sprint slices back-to-back. Commit + push + log_fix after EACH one so
-rollback stays atomic. Only the agent chain (PO→BA→…→QA) is gated at one per loop.
 
 **IMPORTANT**: Always re-read this file (`cowork-analysis-vnmarket-team/dev-team-cron.md`) at the start of each cron invocation — the instructions may have been updated.
 
@@ -192,13 +211,20 @@ At the very end of every cron invocation, after Step 8 hygiene passes, run `/com
 - User `/report <description>` and `/fix <description>` Telegram commands create reports with `agent="user-telegram"` — these are HIGH priority, same as agent reports
 
 ### Cost Rules
-- DO NOT exit immediately when the report channel is empty — always run Step 0b
-- FIX NOW / QUICK WIN before full SPRINT TASK (faster, cheaper, ship more per loop)
-- **One full agent-chain sprint per loop maximum** (PO→BA→…→QA is expensive)
-- **Unlimited quick wins + sprint slices per loop** — large work must be split,
-  not skipped. Ship what you can, queue the rest as new TASKS.md rows.
-- If multiple full sprints are candidates: do the highest priority one, slice
-  the others into shippable pieces and do at least one slice of each before exit
+- DO NOT exit immediately when the report channel is empty — always run Step 0b.
+- **Finish what you start.** A loop that ships one complete, well-tested task is
+  better than a loop that ships five slices none of which fix anything end-to-end.
+  Quality over velocity.
+- FIX NOW reports are handled first (they are urgent user-reported breakage).
+  Then pick the highest-priority backlog task and drive it to done.
+- There is no "one sprint per loop" cap. Run as many full sprints as the
+  wall-clock and context allow, as long as each one ships completely.
+- If multiple full sprints are candidates: complete the highest-priority one
+  fully before starting the next. Do NOT start sprint N+1 while sprint N is
+  still mid-implementation.
+- **Backlog priming (writing acceptance criteria for future work without
+  implementing) does NOT count as shipping. Do not commit TASKS.md edits as
+  the loop's only output.**
 
 ## FILES TO MAINTAIN
 

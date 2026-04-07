@@ -21,7 +21,7 @@ A MCP (Model Context Protocol) server built in TypeScript running on Bun. It giv
 - Managing a user's stock watchlist and generating multi-signal alerts
 - Running a daily scheduled briefing at market open/close
 
-**Current state (Sprint 050):** 76 MCP tools, 21 scheduler files, 200+ tasks done.
+**Current state (Sprint 052):** 76 MCP tools, 22 scheduler files, 200+ tasks done.
 
 ---
 
