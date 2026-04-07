@@ -148,19 +148,43 @@ export async function initDatabase(): Promise<void> {
     CREATE TABLE IF NOT EXISTS alerts (
       id                    TEXT PRIMARY KEY,
       triggered_at          TEXT NOT NULL,
-      severity              TEXT NOT NULL,   -- info | warning | critical
+      severity              TEXT NOT NULL,   -- info | warning | critical | high
       signals_json          TEXT,            -- JSON string[]
       affected_actions_json TEXT,            -- JSON {code, expectedImpact, confidence}[]
       analysis_ids_json     TEXT,            -- JSON string[]
       message               TEXT,
       read                  INTEGER NOT NULL DEFAULT 0,
-      user_note             TEXT
+      user_note             TEXT,
+      notified_telegram     INTEGER NOT NULL DEFAULT 0,   -- 0=pending, 1=sent (task 137)
+      resolved_at           TEXT,                          -- ISO 8601 when auto-resolved or acknowledged
+      resolution_notes      TEXT                           -- free-form resolution memo
     );
 
     CREATE INDEX IF NOT EXISTS idx_alerts_triggered ON alerts(triggered_at);
     CREATE INDEX IF NOT EXISTS idx_alerts_read      ON alerts(read);
     CREATE INDEX IF NOT EXISTS idx_alerts_severity  ON alerts(severity);
+    CREATE INDEX IF NOT EXISTS idx_alerts_notified  ON alerts(notified_telegram, severity);
   `);
+
+  // Idempotent migration for existing DB files created before task 137 /
+  // sprint 053 fix: the three columns above were only present as a legacy
+  // hand-applied ALTER on prod. A fresh test DB missed them entirely and
+  // broke the 137-fix-alert-pipeline schema test. Adding them as optional
+  // ALTERs here means both fresh and legacy databases converge to the same
+  // shape.
+  for (const [col, ddl] of [
+    ["notified_telegram", "INTEGER NOT NULL DEFAULT 0"],
+    ["resolved_at",       "TEXT"],
+    ["resolution_notes",  "TEXT"],
+  ] as const) {
+    try {
+      db.exec(`ALTER TABLE alerts ADD COLUMN ${col} ${ddl}`);
+    } catch {
+      // Column already exists — CREATE TABLE branch above handled it on a
+      // fresh DB, or a previous run already applied the ALTER. Either way,
+      // no-op.
+    }
+  }
 
   // ── RAG Analyses ────────────────────────────────────────────────────────────
   db.exec(`
