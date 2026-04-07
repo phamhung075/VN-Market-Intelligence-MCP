@@ -3,19 +3,21 @@
 ## Current Sprint
 
 status: ACTIVE
-sprint_id: 052
+sprint_id: 054
 started: 2026-04-07
 updated: 2026-04-07
-theme: Single Source of Truth — reconcile contradictory data tools
+theme: Code Janitor + Test Isolation + Signal Quality
 
 scope:
-  - 916: Sector rotation vs comparison agree on the same 1d %
-  - 921: Brent crude — yahooFinance is sole upstream, news mining removed
-  - Stale-state sweep: SPRINT_GOAL + TASKS REVIEW columns
-  - Test flake: 157-data-audit lancedb timeout bumped to 60s
+  - 1006: MAX_PEER_SYNCS_PER_CYCLE 5->30 (automotive peers now synced) DONE
+  - 1021: Delete legacy src/db/schema.ts DONE
+  - 1022: agent_feedback DDL canonical in initDatabase() DONE
+  - report-1032: pollNews false alarm investigation (off-hours throttle, not a bug) DONE
+  - 106 test isolation: NO_NET_MARKET_DEPS fixture (25/25 pass) DONE
+  - 1007/1020: Kinh Dich convergence — tickerJitter prevents identical hexagrams DONE
 
-next_candidates: 914 (HPG / steel watchlist gap, @po), 915 (analyst credibility discount, @architect),
-  stranded BCTC PDF auto-reparse (slice-able sprint)
+next_candidates: 1003 (SSC overdue FPT/VEA investigation), 1004 (cascade policy gap),
+  1023 (SUMMARY_CRONS move), 915 (analyst credibility discount, @architect)
 
 ## Sprint 036 — Historical (kept below for context)
 
