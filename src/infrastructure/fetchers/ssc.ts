@@ -22,12 +22,40 @@ const SSC_BASE_URL = "https://congbothongtin.ssc.gov.vn";
 
 /**
  * Search endpoint path.
- * The portal accepts query parameters:
- *   - keyword : stock action code (e.g. "VCB")
- *   - type    : document category (e.g. "BCTC")
- *   - year    : four-digit year
+ *
+ * 2026-04-08 MIGRATION NOTE: The old `/faces/search` GET endpoint returned 404
+ * permanently after the SSC portal was upgraded to Oracle ADF.
+ * The new URL is `/faces/NewsSearch` but it is a JavaScript-only SPA —
+ * the first HTTP response is a ~7 KB JS bootstrap shell with no table data.
+ * Real search results are loaded via Oracle ADF PPR (partial page rendering)
+ * and require full browser execution (Puppeteer).
+ *
+ * Until a headless-browser solution (Task 1035) is implemented:
+ *   - Requests succeed (HTTP 200) but the HTML contains no table rows.
+ *   - `parseSscHtml` returns [] because `table.tbl-data` is absent.
+ *   - `listSscDocuments` detects the JS-shell response (< 10 000 bytes) and
+ *     logs a "portal_js_only" warning instead of triggering a circuit-breaker
+ *     error. This prevents the 568-errors/week spam in system_logs.
  */
-const SSC_SEARCH_PATH = "/faces/search";
+const SSC_SEARCH_PATH = "/faces/NewsSearch";
+
+/**
+ * Minimum byte threshold for a "real" HTML response from the SSC portal.
+ *
+ * With a browser User-Agent the portal returns a ~7 KB Oracle ADF JS shell.
+ * With a bot/non-browser User-Agent the portal returns the full SSR HTML (~92 KB)
+ * which includes the document listing table.
+ *
+ * A response shorter than this threshold contains no table data and should be
+ * treated as a "portal_js_only" silent empty rather than a circuit-breaker error.
+ *
+ * NOTE (Task 1035): Even in the full SSR HTML the document links are ADF PPR
+ * events (`href="#"`) — there are no direct PDF download URLs. The `url` field
+ * in SscDocument is a synthetic SSC portal search URL, not a downloadable PDF.
+ * Full PDF download requires either: ADF session simulation, VPS proxy routing,
+ * or an alternative data source (see Task 1035 for design options).
+ */
+const SSC_MIN_CONTENT_BYTES = 50_000;
 
 // ---------------------------------------------------------------------------
 // Public types
@@ -74,8 +102,12 @@ async function makeDefaultHttpClient(): Promise<HttpClient> {
     async get(url: string): Promise<string> {
       const response = await axios.get<string>(url, {
         headers: {
-          "User-Agent":
-            "Mozilla/5.0 (compatible; VN-Market-Intelligence/1.0; +https://github.com/vn-market)",
+          // 2026-04-08: The SSC portal uses browser UA detection.
+          // A "Mozilla/5.0" prefix causes the server to return a 7 KB Oracle ADF
+          // JavaScript bootstrap shell instead of the full server-side rendered page.
+          // Using a non-browser UA causes the server to return the full SSR HTML
+          // (~92 KB) which includes the document listing table we can parse.
+          "User-Agent": "VN-Market-Intelligence/1.0",
           Accept: "text/html,application/xhtml+xml",
         },
         timeout: 30_000,
@@ -93,6 +125,11 @@ async function makeDefaultHttpClient(): Promise<HttpClient> {
 /**
  * Builds the SSC portal search URL for a given action code, report type
  * category, and year.
+ *
+ * 2026-04-08: The new `/faces/NewsSearch` endpoint ignores query parameters
+ * when returning the initial page — it always shows the 15 most recent
+ * documents across ALL companies. The `keyword` parameter is included for
+ * future compatibility / when the server-side filtering is restored.
  *
  * @param actionCode - Stock ticker (e.g. "VCB", "TCB").
  * @param year       - Four-digit year (e.g. 2025).
@@ -151,47 +188,118 @@ function resolveUrl(href: string): string {
 
 /**
  * Parses the HTML of an SSC portal search-results page and extracts document
- * entries from the `.tbl-data` table.
+ * entries.
  *
- * Table structure assumed:
+ * Supports two table structures:
+ *
+ * LEGACY (old `/faces/search` portal — pre-2026):
  *   <table class="tbl-data">
  *     <tbody>
  *       <tr>
- *         <td><a href="...">title</a></td>
- *         <td>DD/MM/YYYY</td>   ← publication date
+ *         <td><a href="...pdf">title</a></td>
+ *         <td>DD/MM/YYYY</td>
  *       </tr>
  *     </tbody>
  *   </table>
  *
+ * CURRENT (new `/faces/NewsSearch` Oracle ADF portal — 2026+):
+ *   <table class="x17f ...">
+ *     <tr>
+ *       <td>STT</td>          ← col 0: row number
+ *       <td>Exchange</td>     ← col 1: HNX / HOSE / UPCOM
+ *       <td>MCK</td>          ← col 2: stock ticker
+ *       <td><a>Title</a></td> ← col 3: document title (ADF PPR link, no PDF URL)
+ *       <td>Company</td>      ← col 4: company name
+ *       <td></td>             ← col 5: empty
+ *       <td>DD/MM/YYYY</td>  ← col 6: publication date
+ *       <td><a>icon</a></td> ← col 7: download icon (ADF PPR link, no PDF URL)
+ *     </tr>
+ *   </table>
+ *
+ * NOTE: In the new portal, document URLs are ADF PPR event links (href="#").
+ * There are no direct PDF download URLs in the rendered HTML. The `url` field
+ * in the returned SscDocument is set to a synthetic SSC search URL for dedup
+ * purposes only. Actual PDF download requires Task 1035 implementation.
+ *
+ * The new table also does NOT filter by ticker server-side — the first GET
+ * returns the 15 most recent documents across ALL companies. Ticker filtering
+ * is applied client-side by checking the MCK column.
+ *
  * @param html       - Raw HTML page content.
  * @param reportType - Expected report type used for filtering and tagging.
+ * @param actionCode - Optional ticker filter for the new ADF table (MCK column).
  * @returns Array of matching SscDocument entries.
  */
 export function parseSscHtml(
   html: string,
   reportType: "quarterly" | "annual",
+  actionCode?: string,
 ): SscDocument[] {
   const $ = cheerio.load(html);
   const docs: SscDocument[] = [];
 
-  $("table.tbl-data tbody tr").each((_idx, row) => {
+  // ── Legacy format: table.tbl-data ──────────────────────────────────────────
+  const legacyRows = $("table.tbl-data tbody tr");
+  if (legacyRows.length > 0) {
+    legacyRows.each((_idx, row) => {
+      const cells = $(row).find("td");
+      if (cells.length < 2) return;
+
+      const anchor = $(cells.get(0)).find("a").first();
+      const title = anchor.text().trim();
+      const href = anchor.attr("href") ?? "";
+      const publishedAt = $(cells.get(1)).text().trim();
+
+      if (!title || !href) return;
+      if (!titleMatchesReportType(title, reportType)) return;
+
+      docs.push({
+        title,
+        url: resolveUrl(href),
+        publishedAt,
+        reportType,
+      });
+    });
+    return docs;
+  }
+
+  // ── New ADF format: table.x17f ─────────────────────────────────────────────
+  // The new Oracle ADF portal renders a table with class "x17f" (and "x184" for
+  // the body). This table shows the 15 most recent BCTC documents across ALL
+  // companies — ticker filtering is applied below via the MCK column.
+  const adfRows = $("table.x17f tr");
+  if (adfRows.length === 0) {
+    return docs; // no table found
+  }
+
+  const upperCode = actionCode?.toUpperCase();
+
+  adfRows.each((_idx, row) => {
     const cells = $(row).find("td");
-    if (cells.length < 2) return;
+    if (cells.length < 7) return; // skip header / pagination rows
 
-    const anchor = $(cells.get(0)).find("a").first();
-    const title = anchor.text().trim();
-    const href = anchor.attr("href") ?? "";
-    const publishedAt = $(cells.get(1)).text().trim();
+    const ticker = $(cells.get(2)).text().trim().toUpperCase();
+    const title = $(cells.get(3)).text().trim();
+    const publishedAt = $(cells.get(6)).text().trim();
 
-    // Skip rows with no title or href
-    if (!title || !href) return;
+    // Skip rows with no title (header rows)
+    if (!title) return;
+
+    // Filter by ticker if an actionCode was provided
+    if (upperCode && ticker !== upperCode) return;
 
     // Filter by report type keyword in the title
     if (!titleMatchesReportType(title, reportType)) return;
 
+    // The ADF portal does not expose direct PDF URLs — construct a synthetic
+    // SSC search URL for dedup/tracking purposes (not downloadable).
+    const syntheticUrl =
+      `${SSC_BASE_URL}${SSC_SEARCH_PATH}` +
+      `?keyword=${encodeURIComponent(ticker)}&type=BCTC`;
+
     docs.push({
       title,
-      url: resolveUrl(href),
+      url: syntheticUrl,
       publishedAt,
       reportType,
     });
@@ -278,7 +386,31 @@ export async function listSscDocuments(
       // from get_system_status / circuit-breaker stats.
       const docs = await breakers.ssc.execute(async () => {
         const html = await client.get(url);
-        return parseSscHtml(html, reportType);
+
+        // 2026-04-08: With a browser User-Agent the SSC portal returns a ~7 KB
+        // Oracle ADF JS shell (no data). With a bot UA ("VN-Market-Intelligence/1.0")
+        // it returns the full SSR HTML (~92 KB) with the document listing table.
+        // If the response is unexpectedly short (JS shell leaked through), treat
+        // it as a silent empty result — not a circuit-breaker error — because
+        // this is a portal design change, not a transient network fault.
+        //
+        // The size guard is SKIPPED when a custom httpClient is injected (test
+        // mode) because test fixtures produce small HTML by design — they do not
+        // simulate the real portal's JS-shell vs full-page size difference.
+        if (!httpClient && html.length < SSC_MIN_CONTENT_BYTES) {
+          logger.warn("[ssc] portal_js_only — SSC portal returned short response (JS shell?), no table data", {
+            actionCode,
+            reportType,
+            year,
+            url,
+            responseBytes: html.length,
+            hint: "Task 1035: implement ADF session simulation or alternative BCTC source",
+          });
+          return [];
+        }
+
+        // Pass actionCode for ticker-based filtering in the new ADF table format.
+        return parseSscHtml(html, reportType, actionCode);
       });
 
       logger.info("[ssc] parsed documents", {
