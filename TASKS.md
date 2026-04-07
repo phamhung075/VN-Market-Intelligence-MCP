@@ -212,7 +212,7 @@ Files:
 
 ---
 
-## In Progress — Sprint 050
+## Done — Sprint 050 (all tasks merged 2026-04-07, see git log)
 
 ### Sprint 050 — Close the Cycle: Kinh Dich Goes Live + /ask Command
 > Req spec: [docs/REQ_050.md](docs/REQ_050.md) — READY_FOR_ARCHITECT
