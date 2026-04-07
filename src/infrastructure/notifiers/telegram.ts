@@ -135,7 +135,11 @@ export async function sendTelegramMessage(
     return false;
   }
 
-  const parseMode = options.parseMode ?? "Markdown";
+  // Default to plain text. Analysis-team messages often contain Vietnamese
+  // diacritics, parens, hyphens and dollar signs that Telegram's Markdown
+  // parser rejects, causing 9+ warnings/hour and forcing a retry round-trip
+  // for every send. Callers that need formatting must opt in explicitly.
+  const parseMode = options.parseMode ?? "";
   const fetchFn = options.fetchFn ?? (globalThis.fetch as FetchFn);
 
   // Split long messages to stay within Telegram's 4096-char limit
