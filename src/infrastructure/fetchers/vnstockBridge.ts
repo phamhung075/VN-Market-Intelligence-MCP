@@ -171,6 +171,9 @@ export interface VnstockRatioSummary {
 // Python helper: run script and parse JSON
 // ---------------------------------------------------------------------------
 
+/** Default per-call wall-clock budget for any python subprocess. */
+const PYTHON_TIMEOUT_MS = 45_000;
+
 async function runPython<T>(script: string, label: string): Promise<T | null> {
   try {
     const proc = Bun.spawn(["python3", "-c", script], {
@@ -178,20 +181,36 @@ async function runPython<T>(script: string, label: string): Promise<T | null> {
       stderr: "pipe",
     });
 
+    // Local hard timeout: vnstock occasionally hangs on slow VCI responses.
+    // We want a clean SIGTERM with a clear log line instead of letting an
+    // outer step-timeout kill us with no attribution (the source of the
+    // mysterious "exit code 143" reports — Loop #29).
+    let timedOut = false;
+    const timer = setTimeout(() => {
+      timedOut = true;
+      try { proc.kill(); } catch { /* already exited */ }
+    }, PYTHON_TIMEOUT_MS);
+
     const stdout = await new Response(proc.stdout).text();
     const stderr = await new Response(proc.stderr).text();
     const exitCode = await proc.exited;
+    clearTimeout(timer);
 
     // Python libs (vnstock, pandas, urllib) routinely emit DeprecationWarnings
     // and progress bars to stderr even on successful runs. Only surface stderr
     // as a warning when the process actually failed — otherwise demote to debug
     // to keep RECENT ERRORS actionable.
     if (stderr.trim()) {
-      if (exitCode !== 0) {
+      if (exitCode !== 0 && !timedOut) {
         logger.warn(`[vnstock:${label}] stderr`, { stderr: stderr.slice(0, 300) });
       } else {
         logger.debug(`[vnstock:${label}] stderr (non-fatal)`, { stderr: stderr.slice(0, 300) });
       }
+    }
+
+    if (timedOut) {
+      logger.warn(`[vnstock:${label}] timeout after ${PYTHON_TIMEOUT_MS}ms — killed (SIGTERM)`);
+      return null;
     }
 
     if (exitCode !== 0) {
