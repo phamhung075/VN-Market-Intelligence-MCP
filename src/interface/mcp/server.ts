@@ -394,18 +394,30 @@ export async function createBunServer(
             const signals: Array<import("../../domain/services/signalDetector.js").Signal> = [];
             const priceMap = new Map<string, number>();
 
-            // Compute avg volume from last 20 entries in market_prices_history
+            // Compute avg DAILY volume from market_prices_history.
+            // NOTE: market_prices_history is appended every VPS push (intraday ticks),
+            // and `volume` is the cumulative daily session volume. Averaging raw rows
+            // would compare current cumulative vs an intraday running average, which
+            // drifts upward identically for ALL stocks across the session and produces
+            // bogus uniform "5.3× spikes" (backlog 878 / Loop #34 manifest).
+            // Fix: take the MAX(volume) per trading day (= end-of-day cumulative),
+            // exclude today, average the last 20 closed days.
             const avgVolMap = new Map<string, number>();
+            const todayUtc = new Date().toISOString().slice(0, 10);
             for (const p of prices) {
               if (!p.code) continue;
               try {
                 const row = db.prepare(`
-                  SELECT AVG(volume) as avg_vol FROM (
-                    SELECT volume FROM market_prices_history
-                    WHERE code = ? ORDER BY fetched_at DESC LIMIT 20
+                  SELECT AVG(day_vol) as avg_vol FROM (
+                    SELECT MAX(volume) as day_vol
+                    FROM market_prices_history
+                    WHERE code = ? AND substr(fetched_at, 1, 10) < ?
+                    GROUP BY substr(fetched_at, 1, 10)
+                    ORDER BY substr(fetched_at, 1, 10) DESC
+                    LIMIT 20
                   )
-                `).get(p.code) as { avg_vol: number | null } | undefined;
-                if (row?.avg_vol) avgVolMap.set(p.code, row.avg_vol);
+                `).get(p.code, todayUtc) as { avg_vol: number | null } | undefined;
+                if (row?.avg_vol && row.avg_vol > 0) avgVolMap.set(p.code, row.avg_vol);
               } catch { /* best effort */ }
             }
 
@@ -420,7 +432,9 @@ export async function createBunServer(
 
               // Use change_pct from VPS API to compute previous price
               const previousPrice = changePct !== 0 ? priceVnd / (1 + changePct / 100) : priceVnd;
-              const avgVolume = avgVolMap.get(p.code) ?? (p.volume ? p.volume * 0.7 : 0);
+              // No fallback: if we lack ≥1 closed-day baseline, set avgVolume=0 so
+              // signalDetector suppresses volume_spike entirely (see SD-02).
+              const avgVolume = avgVolMap.get(p.code) ?? 0;
 
               const stockSignals = detectSignals({
                 actionCode: p.code,
