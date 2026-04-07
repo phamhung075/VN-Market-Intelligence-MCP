@@ -10,6 +10,8 @@
 
 import * as cheerio from "cheerio";
 import { logger } from "../logger.js";
+import { breakers } from "../circuitBreakerRegistry.js";
+import { CircuitOpenError } from "../circuitBreaker.js";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -269,8 +271,15 @@ export async function listSscDocuments(
     logger.debug("[ssc] fetching SSC portal", { actionCode, reportType, year, url });
 
     try {
-      const html = await client.get(url);
-      const docs = parseSscHtml(html, reportType);
+      // Wrap the actual network/parse work in the circuit breaker so repeated
+      // SSC failures (network timeouts, 5xx, parse errors) trip the breaker
+      // and back off automatically. Without this wrap the catch below
+      // swallowed errors before the breaker ever saw them — hiding outages
+      // from get_system_status / circuit-breaker stats.
+      const docs = await breakers.ssc.execute(async () => {
+        const html = await client.get(url);
+        return parseSscHtml(html, reportType);
+      });
 
       logger.info("[ssc] parsed documents", {
         actionCode,
@@ -281,13 +290,22 @@ export async function listSscDocuments(
 
       return docs;
     } catch (err) {
-      logger.error("[ssc] failed to fetch/parse SSC portal", {
-        actionCode,
-        reportType,
-        year,
-        url,
-        error: err instanceof Error ? err.message : String(err),
-      });
+      // CircuitOpenError = breaker already tripped; demote to debug to avoid
+      // log spam while the cooldown elapses. Real fetch failures still log
+      // as error so they show up in get_system_status RECENT ERRORS.
+      if (err instanceof CircuitOpenError) {
+        logger.debug("[ssc] circuit open — skipping SSC fetch", {
+          actionCode, reportType, year,
+        });
+      } else {
+        logger.error("[ssc] failed to fetch/parse SSC portal", {
+          actionCode,
+          reportType,
+          year,
+          url,
+          error: err instanceof Error ? err.message : String(err),
+        });
+      }
       return [];
     }
   });
