@@ -1261,7 +1261,24 @@ describe("296 OCR pipeline e2e smoke test", () => {
 
 ---
 
-## 📋 BACKLOG — Sprint 053 Candidates (primed 2026-04-07)
+## 📋 BACKLOG — Sprint 053 Shipped + Sprint 054 Candidates
+
+### ✅ Sprint 053 — Shipped 2026-04-07
+
+- **137 flake** `8b954cc` — schema.ts alerts table was missing notified_telegram/resolved_at/resolution_notes; added to CREATE TABLE + idempotent ALTER for legacy DBs. 19/19 pass.
+- **1023 prediction_markets startup race** `fcbc382` — predictionMarketJob now calls `await initDatabase()` before getDb() when opts.db is not injected. TDD regression test.
+- **1024 alert retry window** `56ad52c` — `ALERT_WINDOW_MS` 16m → 24h so unnotified HIGH/CRITICAL alerts are retried for a full day. TDD regression test.
+- **1019 BCTC stranded-PDF reparse (all 3 slices)** `c528efa` — per-file structured findings + new `bctcReparseJob.ts` (daily 09:30) + `reparse_attempts` column with escalation at 3 / alert at 5. 13/13 new tests.
+- **1020 full-suite bun test crash** `pending` — root cause = Bun napi teardown panic on `@xenova/transformers` + `@lancedb/lancedb` modules. Mitigation: per-file `scripts/test-all.sh` + `bun run test:all`. See `docs/TEST_OOM_INVESTIGATION.md`.
+
+### [1021 / @dev] 20 pre-existing per-file test flakes (Sprint 054)
+
+Surfaced by the new `scripts/test-all.sh` per-file runner. Each file passes when run in tight scope but fails in per-file isolation. Full list in `docs/TEST_OOM_INVESTIGATION.md#follow-up-pre-existing-flakes`. Triage plan:
+
+1. Group by common culprit (DB_PATH leaks, global singletons, timer-dependent tests, OCR-binary-dependent tests).
+2. Fix the shared infrastructure issues first (test DB factory, env reset helper).
+3. Per-file fixes for the rest.
+4. Goal: `bun run test:all` exits green end-to-end.
 
 ### [1019 / @dev HIGH] Stranded BCTC PDF auto-reparse pipeline (slice-able)
 
