@@ -70,7 +70,7 @@ export function readLatestPriceTimestamp(): Date | null {
     const db = getDb();
     const row = db
       .query<{ ts: string | null }, []>(
-        "SELECT MAX(updated_at) AS ts FROM market_prices",
+        "SELECT MAX(updated_at) AS ts FROM market_prices WHERE code NOT IN ('TEST','PROBE')",
       )
       .get();
     if (!row?.ts) return null;

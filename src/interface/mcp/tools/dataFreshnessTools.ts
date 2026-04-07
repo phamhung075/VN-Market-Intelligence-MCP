@@ -93,7 +93,7 @@ const DATA_SOURCES: DataSourceDef[] = [
   },
   {
     label: "Gia co phieu",
-    query: "SELECT MAX(updated_at) AS ts FROM market_prices",
+    query: "SELECT MAX(updated_at) AS ts FROM market_prices WHERE code NOT IN ('TEST','PROBE')",
   },
   {
     label: "Hang hoa",
