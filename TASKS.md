@@ -8,6 +8,168 @@
 
 ---
 
+## Backlog — Sprint 051: 3-Channel Telegram Migration (hard cutover)
+
+> Sprint 051 Theme: Hard-cutover migration from 2-channel to 3-channel Telegram routing.
+> NO LEGACY ALIASES — old env vars and channel literals must be fully deleted.
+> Dependency chain: 311 (infra) → 312 (call sites) | 313 (docs/agents, parallel to 312 after 311)
+
+| # | Title | Branch | Agent | Priority | Depends on | Status |
+|---|-------|--------|-------|----------|------------|--------|
+| 311 | Telegram infra: 3-channel config + send_telegram enum | `task/311-telegram-3channel-infra` | Developer | P0 | — | Done |
+| 312 | Reclassify all src/ call sites to market/work/bug | `task/312-telegram-callsite-reclassify` | Developer | P0 | 311 | Done |
+| 313 | Agent .md + docs + mcp.config.json: 3-channel rewrite | `task/313-telegram-agent-docs-rewrite` | Cowork Refactory Expert | P0 | 311 | Done |
+
+---
+
+**Task 311 — Telegram Infra: 3-Channel Config + send_telegram Enum**
+
+Branch: `task/311-telegram-3channel-infra`
+Layer: `infrastructure/config.ts`, `src/infrastructure/notifiers/telegram.ts`, `src/interface/mcp/tools/telegramTools.ts`, `src/interface/mcp/server.ts`
+Priority: P0 — blocks 312 and 313
+Depends on: none
+
+Acceptance criteria:
+- `TELEGRAM_CHAT_ID` and `TELEGRAM_REPORT_ID` are deleted from `src/infrastructure/config.ts` (interface `TelegramConfig`, `str()` calls, `telegramChatId` derived field). Zero references remain in config.ts.
+- Three new env vars added to config.ts and `TelegramConfig` interface:
+  - `TELEGRAM_INFO_MARKET_GROUP_ID` → `marketGroupId` (ID: -1003813192664)
+  - `TELEGRAM_INFO_WORK_CHANNEL_ID` → `workChannelId` (ID: -1003733983137)
+  - `TELEGRAM_REPORT_BUG_CHANNEL_ID` → `bugChannelId` (ID: -1003853842961)
+- `mcp.config.json` telegram section updated: replace `chatId` with `marketGroupId`, `workChannelId`, `bugChannelId` fields. Old `chatId` key removed.
+- `src/infrastructure/notifiers/telegram.ts`:
+  - `sendTelegramMessage` reads `TELEGRAM_INFO_MARKET_GROUP_ID` (not `TELEGRAM_CHAT_ID`). Function renamed `sendTelegramMarket` (or signature updated to clarify destination). Old `TELEGRAM_CHAT_ID` reference deleted.
+  - `sendTelegramReport` reads `TELEGRAM_REPORT_BUG_CHANNEL_ID` (not `TELEGRAM_REPORT_ID`). Function renamed `sendTelegramBug`. Old `TELEGRAM_REPORT_ID` reference deleted.
+  - New function `sendTelegramWork(text, opts?)` added — reads `TELEGRAM_INFO_WORK_CHANNEL_ID`.
+  - `deleteTelegramReport` reads `TELEGRAM_REPORT_BUG_CHANNEL_ID`.
+  - All three functions exported.
+- `src/interface/mcp/tools/telegramTools.ts`:
+  - Zod enum updated to `z.enum(["market", "work", "bug"])` — old `"chat"` and `"report"` values deleted (no aliases).
+  - Tool description updated to name the three destinations.
+  - Dispatch: `"market"` → `sendTelegramMarket`, `"work"` → `sendTelegramWork`, `"bug"` → `sendTelegramBug`.
+  - Error messages updated to reference new env var names.
+- `src/interface/mcp/server.ts` webhook:
+  - Polling routing reads `TELEGRAM_REPORT_BUG_CHANNEL_ID` (not `TELEGRAM_REPORT_ID`) to identify incoming bug-channel messages.
+- No string `"chat"` or `"report"` remains in any modified file as a channel value.
+- Tests:
+  - `src/__tests__/235-telegram-send-merge.test.ts` fully rewritten: channel `"market"` routes to MARKET env var, `"work"` routes to WORK env var, `"bug"` routes to BUG env var. Old `"chat"` / `"report"` tests removed.
+  - `src/__tests__/227-report-webhook.test.ts` rewritten: routing uses `TELEGRAM_REPORT_BUG_CHANNEL_ID`.
+  - `src/__tests__/034-telegram-notifier.test.ts` rewritten: `TELEGRAM_INFO_MARKET_GROUP_ID` replaces `TELEGRAM_CHAT_ID` throughout.
+  - `src/__tests__/176-trigger-alert-check.test.ts:253` updated: `TELEGRAM_INFO_MARKET_GROUP_ID`.
+  - >= 20 tests covering all 3 channels, 0 failures.
+  - `bun tsc --noEmit` → 0 errors.
+
+Files:
+- MODIFY: `src/infrastructure/config.ts`
+- MODIFY: `src/infrastructure/notifiers/telegram.ts`
+- MODIFY: `src/infrastructure/notifiers/index.ts` (re-export renamed functions)
+- MODIFY: `src/interface/mcp/tools/telegramTools.ts`
+- MODIFY: `src/interface/mcp/server.ts`
+- MODIFY: `mcp.config.json` (telegram section)
+- MODIFY: `src/__tests__/235-telegram-send-merge.test.ts`
+- MODIFY: `src/__tests__/227-report-webhook.test.ts`
+- MODIFY: `src/__tests__/034-telegram-notifier.test.ts`
+- MODIFY: `src/__tests__/176-trigger-alert-check.test.ts`
+- MODIFY: `src/__tests__/306-enriched-answer.test.ts` (comment + describe label only)
+
+---
+
+**Task 312 — Reclassify All src/ Call Sites**
+
+Branch: `task/312-telegram-callsite-reclassify`
+Layer: all schedulers + interface + tools that call sendTelegramMessage/sendTelegramReport
+Priority: P0 — produces zero `"chat"` / `"report"` / `TELEGRAM_CHAT_ID` / `TELEGRAM_REPORT_ID` literals in src/
+Depends on: 311 ✓ (renamed functions must exist before call sites are updated)
+
+Acceptance criteria:
+- Zero occurrences of `TELEGRAM_CHAT_ID` or `TELEGRAM_REPORT_ID` remain anywhere in `src/` (grep must return empty).
+- Zero occurrences of `channel: "chat"` or `channel: "report"` (as string literals) remain in `src/`.
+- Each call site is routed per the reclassification table (see sprint notes below):
+  - `sendTelegramMessage` calls that produce user-facing output → replaced with `sendTelegramMarket`.
+  - `sendTelegramMessage` calls that produce dev/ops status → replaced with `sendTelegramWork`.
+  - `sendTelegramReport` calls → replaced with `sendTelegramBug`.
+- Specific reclassifications:
+  - `src/scheduler/weeklyPortfolioReportJob.ts` — weekly digest → `sendTelegramMarket`
+  - `src/scheduler/weatherCheckJob.ts` — weather alert → `sendTelegramMarket`
+  - `src/scheduler/franceSummaryJob.ts` — France summary → `sendTelegramMarket`
+  - `src/scheduler/eveningSummaryJob.ts` — evening briefing → `sendTelegramMarket`
+  - `src/scheduler/dataAuditJob.ts` — data audit report → `sendTelegramWork`
+  - `src/scheduler/patternWatchJob.ts` — pattern alert → `sendTelegramMarket`
+  - `src/scheduler/userRequestCheckJob.ts` — /ask response → `sendTelegramMarket`
+  - `src/scheduler/intelligenceCycleJob.ts` — enriched /ask answer → `sendTelegramMarket`
+  - `src/scheduler/vpsProxyWatchdogJob.ts` — stale price alert → `sendTelegramMarket`
+  - `src/scheduler/devTeamHeartbeatJob.ts` — heartbeat stats → `sendTelegramWork`
+  - `src/scheduler/morningBriefingJob.ts` — morning briefing → `sendTelegramMarket`
+  - `src/scheduler/insiderCheckJob.ts` — insider alert → `sendTelegramMarket`
+  - `src/interface/mcp/tools/feedbackTools.ts` — bug report → `sendTelegramBug`
+  - `src/interface/mcp/server.ts` lines 267, 472, 509 — user-facing responses/alerts → `sendTelegramMarket`
+- `bun test` full suite → 0 failures.
+- `bun tsc --noEmit` → 0 errors.
+
+Files:
+- MODIFY: `src/scheduler/weeklyPortfolioReportJob.ts`
+- MODIFY: `src/scheduler/weatherCheckJob.ts`
+- MODIFY: `src/scheduler/franceSummaryJob.ts`
+- MODIFY: `src/scheduler/eveningSummaryJob.ts`
+- MODIFY: `src/scheduler/dataAuditJob.ts`
+- MODIFY: `src/scheduler/patternWatchJob.ts`
+- MODIFY: `src/scheduler/userRequestCheckJob.ts`
+- MODIFY: `src/scheduler/intelligenceCycleJob.ts`
+- MODIFY: `src/scheduler/vpsProxyWatchdogJob.ts`
+- MODIFY: `src/scheduler/devTeamHeartbeatJob.ts`
+- MODIFY: `src/scheduler/morningBriefingJob.ts`
+- MODIFY: `src/scheduler/insiderCheckJob.ts`
+- MODIFY: `src/interface/mcp/tools/feedbackTools.ts`
+- MODIFY: `src/interface/mcp/server.ts`
+
+---
+
+**Task 313 — Agent .md + Docs + mcp.config.json: 3-Channel Rewrite**
+
+Branch: `task/313-telegram-agent-docs-rewrite`
+Layer: markdown files only — no src/ changes
+Priority: P0 — agents must reference new channel names before they run
+Depends on: 311 ✓ (env vars must exist in code before agents are told to use them); can run parallel to 312
+Agent: Cowork Refactory Expert
+
+Acceptance criteria:
+- Every occurrence of `TELEGRAM_CHAT_ID`, `TELEGRAM_REPORT_ID`, `channel="chat"`, `channel="report"` is replaced in all agent .md files.
+- Routing rules applied per agent:
+  - `cowork-analysis-vnmarket-team/00-setup-watchlist.md` — setup completion notice → `channel="market"`
+  - `cowork-analysis-vnmarket-team/01-news-scout.md` — feedback → `channel="bug"`
+  - `cowork-analysis-vnmarket-team/02-bctc-collector.md` — new BCTC notification → `channel="market"`; feedback → `channel="bug"`
+  - `cowork-analysis-vnmarket-team/03-report-analyzer.md` — feedback → `channel="bug"`
+  - `cowork-analysis-vnmarket-team/04-market-watcher.md` — feedback → `channel="bug"`
+  - `cowork-analysis-vnmarket-team/05-alert-commander.md` — all user alerts → `channel="market"` (ONLY sender here)
+  - `cowork-analysis-vnmarket-team/06-digest-writer.md` — digests → `channel="market"`; weekly summary (was "report") → `channel="work"` (dev/ops status)
+  - `cowork-analysis-vnmarket-team/unified-agent.md` — user-facing → `channel="market"`; coordination notes → `channel="work"`; bug reports → `channel="bug"`
+  - `cowork-analysis-vnmarket-team/dev-team-cron.md` — fix summaries → `channel="work"` (not "chat"); sprint summaries → `channel="work"`; reading Bug Channel → `channel="bug"`
+  - `cowork-analysis-vnmarket-team/README.md` — env var table + channel descriptions updated
+  - `.claude/agents/cowork-refactory-expert.md` — channel table, send_telegram examples updated
+  - `.claude/agents/system-auditor.md` — `channel: "report"` → `channel: "bug"`; "Report Channel" → "Bug Channel"
+- `docs/ARCHITECTURE.md` updated: telegram channel table, env var names, two-team diagram if present.
+- `README.md` updated: env var table (lines 25-26, 47-48), channel descriptions in schedule table (lines 168-175), troubleshooting table (line 320).
+- After all edits, send ONE `send_telegram(channel="work", message=...)` listing every modified agent file with one-line summary — this is the "please refresh Cowork" notice to the user.
+- No test changes (markdown only).
+- Human verification: grep for `TELEGRAM_CHAT_ID\|TELEGRAM_REPORT_ID\|channel="chat"\|channel="report"` across all .md files must return zero results.
+
+Files:
+- MODIFY: `cowork-analysis-vnmarket-team/00-setup-watchlist.md`
+- MODIFY: `cowork-analysis-vnmarket-team/01-news-scout.md`
+- MODIFY: `cowork-analysis-vnmarket-team/02-bctc-collector.md`
+- MODIFY: `cowork-analysis-vnmarket-team/03-report-analyzer.md`
+- MODIFY: `cowork-analysis-vnmarket-team/04-market-watcher.md`
+- MODIFY: `cowork-analysis-vnmarket-team/05-alert-commander.md`
+- MODIFY: `cowork-analysis-vnmarket-team/06-digest-writer.md`
+- MODIFY: `cowork-analysis-vnmarket-team/unified-agent.md`
+- MODIFY: `cowork-analysis-vnmarket-team/dev-team-cron.md`
+- MODIFY: `cowork-analysis-vnmarket-team/README.md`
+- MODIFY: `.claude/agents/cowork-refactory-expert.md`
+- MODIFY: `.claude/agents/system-auditor.md`
+- MODIFY: `docs/ARCHITECTURE.md`
+- MODIFY: `README.md`
+
+---
+
 ## In Progress — Sprint 050
 
 ### Sprint 050 — Close the Cycle: Kinh Dich Goes Live + /ask Command
