@@ -21,6 +21,13 @@ import { SourceHealthTracker } from "../../../domain/services/sourceHealthTracke
 /**
  * Global singleton instance of SourceHealthTracker.
  *
+ * Stashed on `globalThis` so that `bun --hot` module reloads do NOT wipe
+ * the in-memory health state. Without this, every hot-reload of pollNews.ts
+ * (or any module that transitively re-imports sourceHealthTools.ts) creates
+ * a fresh tracker with `lastSuccessAt = null` for all sources, causing the
+ * SOURCE HEALTH table to show "Chua bao gio" even though fetchers are running
+ * successfully (regression reported in Loop #36, report 1003).
+ *
  * Application-layer modules (e.g. pollNews.ts) import and use this directly:
  *
  * ```typescript
@@ -28,7 +35,13 @@ import { SourceHealthTracker } from "../../../domain/services/sourceHealthTracke
  * globalSourceTracker.recordSuccess("CafeF RSS");
  * ```
  */
-export const globalSourceTracker = new SourceHealthTracker();
+const GLOBAL_TRACKER_KEY = "__vnMarketSourceHealthTracker__";
+type GlobalWithTracker = typeof globalThis & {
+  [GLOBAL_TRACKER_KEY]?: SourceHealthTracker;
+};
+const _g = globalThis as GlobalWithTracker;
+export const globalSourceTracker: SourceHealthTracker =
+  _g[GLOBAL_TRACKER_KEY] ?? (_g[GLOBAL_TRACKER_KEY] = new SourceHealthTracker());
 
 // Pre-seed the 5 known news sources so get_system_status / get_source_health
 // return rows immediately on a fresh process — before the first pollNews
