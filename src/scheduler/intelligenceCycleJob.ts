@@ -268,8 +268,22 @@ async function defaultGetWatchlistCodes(): Promise<string[]> {
   return rows.map((r) => r.code);
 }
 
-/** 16 minutes in milliseconds — Step E look-back window (15-min cycle + 1-min overlap) */
-const ALERT_WINDOW_MS = 16 * 60 * 1000;
+/**
+ * Step E look-back window for unnotified HIGH/CRITICAL alerts.
+ *
+ * Sprint 053 / report 1024: the previous 16-minute window ("15-min cycle + 1
+ * overlap") was too tight. Any alert whose first send failed (token miss,
+ * network blip, Telegram 429, post-restart race) was orphaned after the
+ * second cycle — the window moved forward and the alert was no longer
+ * included in subsequent `readUnnotifiedAlerts` reads. User-visible impact:
+ * VEA news_mention alert stuck `notified_telegram=0` for 1h+ while the
+ * ticker kept moving.
+ *
+ * New policy: retry any unnotified HIGH/CRITICAL alert up to 24h old. The
+ * dedup guard on the downstream `sendAlert` path already prevents
+ * double-notify if a prior attempt actually succeeded.
+ */
+const ALERT_WINDOW_MS = 24 * 60 * 60 * 1000;
 
 async function defaultReadUnnotifiedAlerts(windowMs: number): Promise<Alert[]> {
   const { readUnnotifiedAlerts } = await import("../infrastructure/db/alertStore.js");

@@ -158,6 +158,22 @@ describe("Task 137 — readUnnotifiedAlerts()", () => {
     expect(results.length).toBe(0);
   });
 
+  // Sprint 053 / report 1024: with the 24h window a HIGH alert whose first
+  // send failed must still be picked up by the next cycle hours later.
+  it("retries HIGH alerts still within the 24h retry window", async () => {
+    const { readUnnotifiedAlerts } = await import("../infrastructure/db/alertStore.js");
+    const db = createTestDb();
+
+    insertAlert(db, "retry-1h", "high", minutesAgo(60));      // 1h old
+    insertAlert(db, "retry-12h", "critical", minutesAgo(720)); // 12h old
+    insertAlert(db, "expired", "high", minutesAgo(60 * 25));   // 25h — too old
+
+    const WINDOW_MINUTES = 24 * 60;
+    const results = readUnnotifiedAlerts(WINDOW_MINUTES, db);
+    const ids = results.map((r) => r.id).sort();
+    expect(ids).toEqual(["retry-12h", "retry-1h"]);
+  });
+
   it("excludes INFO and WARNING severity alerts", async () => {
     const { readUnnotifiedAlerts } = await import("../infrastructure/db/alertStore.js");
     const db = createTestDb();
