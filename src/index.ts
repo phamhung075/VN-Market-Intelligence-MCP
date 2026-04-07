@@ -40,6 +40,11 @@ log.info("[bootstrap] Starting VN Market Intelligence MCP...");
 
 // ── 1. SQLite tables ───────────────────────────────────────────────────────
 await initDatabase();
+// Vnstock tables + idempotent migrations (e.g. trading_stats date column,
+// added in Loop #20). Previously only ran when syncSectorPeers fired during
+// the intelligence cycle, leaving the migration dormant on pre-market boots.
+const { initVnstockTables } = await import("./infrastructure/db/vnstockStore.js");
+initVnstockTables();
 log.info("[bootstrap] Database ready");
 
 // ── 1b. Seed trade relationship profiles (first run only) ────────────────
