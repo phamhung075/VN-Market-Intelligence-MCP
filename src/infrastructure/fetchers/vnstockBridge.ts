@@ -180,12 +180,20 @@ async function runPython<T>(script: string, label: string): Promise<T | null> {
 
     const stdout = await new Response(proc.stdout).text();
     const stderr = await new Response(proc.stderr).text();
+    const exitCode = await proc.exited;
 
+    // Python libs (vnstock, pandas, urllib) routinely emit DeprecationWarnings
+    // and progress bars to stderr even on successful runs. Only surface stderr
+    // as a warning when the process actually failed — otherwise demote to debug
+    // to keep RECENT ERRORS actionable.
     if (stderr.trim()) {
-      logger.warn(`[vnstock:${label}] stderr`, { stderr: stderr.slice(0, 300) });
+      if (exitCode !== 0) {
+        logger.warn(`[vnstock:${label}] stderr`, { stderr: stderr.slice(0, 300) });
+      } else {
+        logger.debug(`[vnstock:${label}] stderr (non-fatal)`, { stderr: stderr.slice(0, 300) });
+      }
     }
 
-    const exitCode = await proc.exited;
     if (exitCode !== 0) {
       logger.warn(`[vnstock:${label}] exit code ${exitCode}`);
       return null;
