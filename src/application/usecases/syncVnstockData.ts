@@ -42,6 +42,7 @@ import {
   storeEvents,
   storeBalanceSheet,
   storeCashFlow,
+  markFetched,
 } from "../../infrastructure/db/vnstockStore.js";
 
 // Inter-request delay to stay well within 60 req/min
@@ -62,6 +63,7 @@ async function syncStock(code: string): Promise<number> {
   if (isStale(code, "financials", 360)) {
     const fin = await fetchVnstockFinancials(code);
     if (fin) storeFinancials(fin);
+    else markFetched(code, "financials"); // back off even on empty/timeout
     calls++;
     await sleep(DELAY_MS);
   }
@@ -70,6 +72,7 @@ async function syncStock(code: string): Promise<number> {
   if (isStale(code, "balance_sheet", 360)) {
     const bs = await fetchVnstockBalanceSheet(code);
     if (bs) storeBalanceSheet(bs);
+    else markFetched(code, "balance_sheet");
     calls++;
     await sleep(DELAY_MS);
   }
@@ -78,6 +81,7 @@ async function syncStock(code: string): Promise<number> {
   if (isStale(code, "cash_flow", 360)) {
     const cf = await fetchVnstockCashFlow(code);
     if (cf) storeCashFlow(cf);
+    else markFetched(code, "cash_flow");
     calls++;
     await sleep(DELAY_MS);
   }
@@ -86,6 +90,7 @@ async function syncStock(code: string): Promise<number> {
   if (isStale(code, "trading_stats", 120)) {
     const stats = await fetchVnstockTradingStats(code);
     if (stats) storeTradingStats(stats);
+    else markFetched(code, "trading_stats");
     calls++;
     await sleep(DELAY_MS);
   }
@@ -94,6 +99,7 @@ async function syncStock(code: string): Promise<number> {
   if (isStale(code, "officers", 1440)) {
     const officers = await fetchVnstockOfficers(code);
     if (officers.length > 0) storeOfficers(code, officers);
+    else markFetched(code, "officers"); // back off even on empty/timeout
     calls++;
     await sleep(DELAY_MS);
   }
@@ -102,14 +108,18 @@ async function syncStock(code: string): Promise<number> {
   if (isStale(code, "shareholders", 1440)) {
     const holders = await fetchVnstockShareholders(code);
     if (holders.length > 0) storeShareholders(code, holders);
+    else markFetched(code, "shareholders"); // back off even on empty/timeout
     calls++;
     await sleep(DELAY_MS);
   }
 
   // Corporate events (7-day staleness — events don't change often)
+  // Always mark fetched even on empty/timeout result, otherwise the retry
+  // storm will hit every cycle (vnstock events frequently SIGTERMs at 45s).
   if (isStale(code, "events", 10_080)) {
     const events = await fetchVnstockEvents(code);
     if (events.length > 0) storeEvents(code, events);
+    else markFetched(code, "events"); // back off 7d even on empty/timeout
     calls++;
     await sleep(DELAY_MS);
   }
@@ -134,6 +144,7 @@ export async function syncStockLight(code: string): Promise<number> {
   if (isStale(code, "trading_stats", 360)) {
     const stats = await fetchVnstockTradingStats(code);
     if (stats) storeTradingStats(stats);
+    else markFetched(code, "trading_stats");
     calls++;
     await sleep(DELAY_MS);
   }
@@ -141,6 +152,7 @@ export async function syncStockLight(code: string): Promise<number> {
   if (isStale(code, "financials", 1440)) {
     const fin = await fetchVnstockFinancials(code);
     if (fin) storeFinancials(fin);
+    else markFetched(code, "financials");
     calls++;
     await sleep(DELAY_MS);
   }
@@ -148,6 +160,7 @@ export async function syncStockLight(code: string): Promise<number> {
   if (isStale(code, "balance_sheet", 1440)) {
     const bs = await fetchVnstockBalanceSheet(code);
     if (bs) storeBalanceSheet(bs);
+    else markFetched(code, "balance_sheet");
     calls++;
     await sleep(DELAY_MS);
   }

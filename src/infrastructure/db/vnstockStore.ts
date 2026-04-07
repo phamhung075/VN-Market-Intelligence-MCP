@@ -215,7 +215,7 @@ export function isStale(code: string, dataType: string, maxAgeMinutes = 360): bo
   }
 }
 
-function markFetched(code: string, dataType: string): void {
+export function markFetched(code: string, dataType: string): void {
   const db = getDb();
   db.prepare(
     `INSERT OR REPLACE INTO vnstock_fetch_log (code, data_type, fetched_at)
