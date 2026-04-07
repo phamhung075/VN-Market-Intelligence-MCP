@@ -59,7 +59,7 @@ This job is in `src/scheduler/vpsProxyWatchdogJob.ts` (154 lines). Registered in
 
 ## Notes
 
-- Total scheduler files: **21** (`jobs.ts` + `summaryJobs.ts` + 19 job handlers including `vpsProxyWatchdogJob.ts`).
+- Total scheduler files: **22** (`jobs.ts` + `summaryJobs.ts` + 20 job handlers including `vpsProxyWatchdogJob.ts` and `userRequestCheckJob.ts`).
 - `insiderCheckJob.ts` exists in `src/scheduler/` but is **not registered** in `jobs.ts` (orphan — Sprint 039-040 era, pending wiring).
 - `newsPollerJob.ts` is legacy (superseded by `intelligenceCycleJob`); kept for fallback testing only.
 - VPS cron has been removed. The fetch schedule now lives inside `vps-scripts/fetch-prices-loop.sh` controlled by systemd on the Vultr host.

@@ -131,12 +131,12 @@ src/
 │       └── index.ts
 ├── interface/
 │   ├── mcp/
-│   │   ├── server.ts               ← McpServer factory, registers 76 tools
+│   │   ├── server.ts               ← McpServer factory, registers tools via registry.ts
 │   │   ├── transport.ts            ← SSEServerTransport setup
-│   │   └── tools/                  ← 76 MCP tool definitions (see README)
+│   │   └── tools/                  ← 76 registered MCP tools (via registry.ts) + userRequestTools (pending registration)
 │   └── scheduler/
 │       └── index.ts                ← startScheduler()
-└── scheduler/                      ← 20 files: jobs.ts + summaryJobs.ts + 18 job handlers (see docs/CRON_JOBS.md)
+└── scheduler/                      ← 22 files: jobs.ts + summaryJobs.ts + 20 job handlers (see docs/CRON_JOBS.md)
 ```
 
 ## Key Data Flow
@@ -213,3 +213,24 @@ Commit `c151376` (reverted same day) shipped an SSH-self-heal variant that reins
 - **FinancialReport** (BCTC): full Vietnamese BCTC — see `bctc-schema.ts`
 - **WatchlistAction**: stock code, exchange, domain, configurable alert thresholds
 - **Alert**: multi-signal trigger, severity, affected stocks with direction + confidence
+
+## mcp.config.json — Central Configuration
+
+`mcp.config.json` (root level) is the single source of truth for all tuneable parameters. Environment variables in `.env` override individual fields at runtime.
+
+| Section | Purpose |
+|---------|---------|
+| `server` | Port, host, log level |
+| `data` | Paths for SQLite, LanceDB, briefings, reports |
+| `embedding` | Model name, cache dir, vector dimensions |
+| `telegram` | Bot token, chat ID, parse mode, enabled flag |
+| `market` | Timezone, open/close times, default watchlist |
+| `scheduler` | Cron expressions for all jobs |
+| `alerts` | Default thresholds, severity escalation, Telegram trigger levels |
+| `alertQuality` | Cooldown minutes, max alerts/day, dedup window, group window |
+| `adaptiveThresholds` | Enabled flag, rolling window days, sigma multipliers, min/max clamps |
+| `rag` | Temporal decay half-life, max vector distance |
+| `fetchers` | Per-source URLs, Puppeteer paths, timeouts, rateLimits |
+| `fetchLimits` | News-per-source caps for market-hours / off-hours / manual runs |
+| `cycle` | Intelligence cycle warn threshold, off-hours interval, max concurrent |
+| `predictionMarkets` | Polymarket API URL, volume threshold, probability shift %, min unique wallets |

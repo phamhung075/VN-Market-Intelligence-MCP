@@ -2,7 +2,7 @@
 
 > Extracted from CLAUDE.md for readability. This is the detailed sprint-by-sprint changelog.
 
-## Done (130+ tasks, Sprint 000-046)
+## Done (200+ tasks, Sprint 000-050)
 
 ### Foundation (Sprint 000)
 - `src/infrastructure/db/schema.ts` — SQLite schema init (all tables)
@@ -199,9 +199,25 @@
 
 **Architectural invariant recorded**: VPS liveness is owned by systemd on the Vultr host. The MCP server only observes `market_prices.updated_at` freshness. Nothing on the MCP side ever SSHes into the VPS at runtime. `deploy-vps-proxy.sh` is the operator-only escape hatch.
 
+### Kinh Dich Differentiation (Sprint 049, QA sign-off 2026-04-06)
+
+- `src/domain/services/kinhDich/hexagramLibrary.ts` — rebuilt with all 64 hexagrams, full hao + bien que data (task 301)
+- `src/application/usecases/kinhDich/` — fixed computeForeignFlowScore (sort by fetched_at, avg_volume_2w), computeMacroScore (indicator column, rolling sigma), computeSectorScore (all market_prices stocks, not just watchlist), computeMacroIndicatorScore (z-score from history, no sigma column) (tasks 297-300)
+- `src/__tests__/302-kinhdich-differentiation.test.ts` — smoke test: VNM/FPT/VCB/VEA produce 4 different hexagrams, >=3 non-zero hao scores (task 302)
+- QA sign-off: tasks 280, 195, 215, 217, 218, 219, 297-302 reviewed. 3015 tests pass, tsc 0 errors, DDD PASS.
+
+### Close the Cycle: Kinh Dich Goes Live + /ask Command (Sprint 050, tasks all Done 2026-04-06)
+
+- `src/scheduler/intelligenceCycleJob.ts` — Step A4: auto-compute hexagram per watchlist stock every 15-min cycle (task 303)
+- `src/domain/services/kinhDich/convictionScorer.ts` — 6th dimension: kinhDichScore at 15% weight (task 304)
+- `src/interface/mcp/tools/userRequestTools.ts` — `log_user_request` + `get_pending_user_requests` MCP tools (task 305, pending registry registration)
+- `src/scheduler/userRequestCheckJob.ts` — Step F enrichment: `buildEnrichedAnswer` in check job, Vietnamese format, `why:` prefix (task 306)
+- `src/infrastructure/notifiers/telegramCommands.ts` — `/ask` command + `/why` command: store `why:TICKER` payload, guard no-arg `/why` (task 307)
+- `src/interface/mcp/tools/registry.ts` — dynamic tool registry: flat array of all `register*Tools` functions, server.ts no longer needs editing to add tools (task 308)
+
 ## In Progress
 
-None.
+None — Sprint 050 tasks all Done; QA sign-off pending.
 
 ## Deferred
 - E2E test — daily briefing flow (task 125)
