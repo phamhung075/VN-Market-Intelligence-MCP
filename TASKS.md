@@ -1256,8 +1256,62 @@ describe("296 OCR pipeline e2e smoke test", () => {
 
 - **[backlog 914 / @po]** Steel sector watchlist gap — HPG missing. cafef reported steel maker 70% profit growth + 125M share issuance (impact 9, bullish), but impact_chain returned "no watchlist stocks affected" because watchlist (VNM/VCB/FPT/VEA) has zero steel exposure. Decision needed: add HPG to default watchlist OR document that steel coverage is intentionally out-of-scope. (from report 914)
 - **[backlog 915 / @architect]** Analyst-credibility discount rule — when broker is under regulatory sanction, downweight their forecasts. Concrete case: TVS issued bullish Q1 sector forecast same day as cafef "Vì sao Chứng khoán Tân Việt bị xử phạt?" article. Need: cross-reference broker name in legal_risk_signals when computing forecast confidence. (from report 915)
-- **[backlog 916 / @dev HIGH]** sector_rotation vs sector_comparison contradiction — get_sector_rotation reported Banking -0.46% 1d while get_sector_comparison(VCB) showed peer avg ~+0.575% same session. Root cause unknown: different stock universes, timing diff, or aggregation bug. Need to align both tools on the same source-of-truth or document the difference. (from report 916)
-- **[backlog 921 / @dev]** Brent crude price source discrepancy — market-watcher signal #509 reported $111.70 vs auto-tracked tracked_indicators.brent_crude_usd = 108 (~$3.7 gap, 38 data points). Investigate: spot vs futures, stale cache, or different upstream source. Pick one source-of-truth. (from report 921)
+- **[backlog 916 / @dev HIGH]** ✅ DONE — fixed in sprint 052 (3818d59): sector rotation now prefers change_pct, agrees with sector_comparison.
+- **[backlog 921 / @dev]** ✅ DONE — fixed in sprint 052 (a205679): yahooFinance is single source of truth for brent, mirrors into market_prices, news regex removed.
+
+---
+
+## 📋 BACKLOG — Sprint 053 Candidates (primed 2026-04-07)
+
+### [1019 / @dev HIGH] Stranded BCTC PDF auto-reparse pipeline (slice-able)
+
+**Why**: `dataAuditJob` D-7c already DETECTS stranded PDFs (PDFs in `data/pdfs/` with no matching `financial_reports` row) and writes them to `agent_feedback`. But there is no recovery path — a human has to notice and re-run the BCTC orchestrator. At present there is 1 stranded VNM Q4-2025 PDF waiting (feedback id 9).
+
+**Slice 1 — Structured detail** (1 file, ~15 lines):
+- Change D-7c to emit one AuditFinding per stranded file instead of one aggregated finding.
+- Add `{ ticker, filename, filePath }` as JSON in `detail` so slice 2 can parse cleanly.
+- Test: extend `157-data-audit-job.test.ts` with a 3-file stranded-dir fixture, assert 3 findings.
+- Acceptance: 3 findings + 3 `agent_feedback` rows (dedup guard per-file).
+
+**Slice 2 — Reparse trigger job** (new scheduler file + wiring, ~60 lines):
+- New `bctcReparseJob.ts` — reads `agent_feedback` rows where `category='stranded_bctc_pdf' AND status='new'`, calls `fetchParseAndStoreBctc(filePath)`, marks feedback resolved on success.
+- Register in scheduler: daily 10:00 GMT+7 (after BCTC overdue check).
+- Test: mock orchestrator, assert feedback row transitions new → resolved.
+
+**Slice 3 — Retry cap + alert** (~30 lines):
+- Add `reparse_attempts` column to `agent_feedback` (migration).
+- Job increments on each failure, escalates priority → high after 3 attempts.
+- On 5 attempts: emit MARKET alert via alert commander path.
+
+### [1020 / @dev] Full-suite `bun test` OOM investigation
+
+**Why**: `bun test` (no filter) crashes with `A C++ exception occurred` + `RSS: 0.82GB | Peak: 1.42GB` on this machine. Targeted runs (4 files) work fine. Blocks QA merge gate from running a clean full suite pre-push.
+
+**Investigation-only tasks** (no fix, document findings):
+- Bisect: binary-search which test file triggers the panic. Start with `bun test src/__tests__/0*.test.ts` vs `src/__tests__/1*.test.ts` vs `src/__tests__/2*.test.ts` vs `src/__tests__/3*.test.ts`.
+- Check for LanceDB leaks: does a test that opens LanceDB fail to close it?
+- Check fixture size: any test that loads a huge PDF / JSON fixture into memory and never frees it?
+- Output: `docs/TEST_OOM_INVESTIGATION.md` with the culprit file(s) + proposed fix.
+- Acceptance: `bun test` runs to completion locally (may still be slow) OR a split-scope wrapper script that runs in 3–4 batches.
+
+### [914 / @po] Steel sector watchlist gap — HPG
+
+**Decision needed from PO**:
+1. Add HPG to default watchlist → steel coverage becomes automatic, impact_chain catches steel news.
+2. Document steel as intentionally out-of-scope → no change, future steel reports get "no watchlist stocks affected".
+3. Make watchlist sector-balanced via `defaultSectors = ["banking", "consumer", "tech", "industrial", "steel"]` and auto-pick one ticker per sector.
+
+Minimum-diff for option 1: add `"HPG"` to `mcp.config.json → market.defaultWatchlist`, restart server. The bctcOverdueCheck + overdue alert + impact_chain all use this list.
+
+### [915 / @architect] Analyst-credibility discount on sanctioned brokers
+
+**Why**: On 2026-04-06 TVS (Chứng khoán Tân Việt) issued a bullish Q1 sector forecast the same day cafef ran "Vì sao Chứng khoán Tân Việt bị xử phạt?" (TVS was fined by SSC). The forecast was fed into cascade analysis at full weight. Broker credibility should be discounted when the broker is currently under SSC sanction.
+
+**Design sketch (needs architect approval)**:
+- Add `broker_sanctions` table: `(broker_name, sanction_start, sanction_end, severity)`.
+- Populate from `get_legal_risk_signals` output filtered by `entity_type='broker'`.
+- In `forecastConfidenceScore()`, multiply by `1.0 - sanction_discount` where discount = 0.5 for active warning, 0.8 for suspension.
+- Touch points: domain `forecastConfidenceScore.ts` (new), cascade engine wire-in, 1 new migration.
 
 
 ---
