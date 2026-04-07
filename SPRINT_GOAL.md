@@ -2,10 +2,22 @@
 
 ## Current Sprint
 
-status: PLANNING
-sprint_id: 036
-started: 2026-04-02
-updated: 2026-04-02
+status: ACTIVE
+sprint_id: 052
+started: 2026-04-07
+updated: 2026-04-07
+theme: Single Source of Truth — reconcile contradictory data tools
+
+scope:
+  - 916: Sector rotation vs comparison agree on the same 1d %
+  - 921: Brent crude — yahooFinance is sole upstream, news mining removed
+  - Stale-state sweep: SPRINT_GOAL + TASKS REVIEW columns
+  - Test flake: 157-data-audit lancedb timeout bumped to 60s
+
+next_candidates: 914 (HPG / steel watchlist gap, @po), 915 (analyst credibility discount, @architect),
+  stranded BCTC PDF auto-reparse (slice-able sprint)
+
+## Sprint 036 — Historical (kept below for context)
 
 ---
 

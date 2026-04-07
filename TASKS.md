@@ -1353,11 +1353,7 @@ describe("296 OCR pipeline e2e smoke test", () => {
 
 ## 🔍 REVIEW
 
-| # | Title | Branch | Notes |
-|---|-------|--------|-------|
-| 223 | Portfolio target allocation: `set_target_allocation` / `get_target_allocation` | `task/223-target-allocation` | 22 tests pass, tsc clean, toolCount 53→55 |
-| DOC-001 | Update CLAUDE.md architecture section | `task/doc-001-claude-md-update` | Ready for QA |
-| Sprint 040 | Macro Catalyst — Credit Flow + Insider Trading + Public Investment (tasks 246-251) | `worktree-agent-ad862eb2` | Ready for QA review |
+(empty — Sprint 052 stale state sweep moved 223 / DOC-001 / Sprint 040 to Done; all branches merged days ago, see git log)
 
 ---
 

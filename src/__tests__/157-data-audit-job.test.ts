@@ -144,6 +144,13 @@ let telegramCalls: string[] = [];
 // Tests
 // ─────────────────────────────────────────────────────────────────────────────
 
+// Several tests in this file invoke runWeeklyAudit, which exercises the
+// LanceDB optimize-indices path. On cold cache that step routinely takes
+// 10–30s on this developer hardware, well past Bun's 5s default. Bumping
+// the per-test timeout instead of mocking LanceDB keeps the audit logic
+// itself in the test path.
+const AUDIT_TEST_TIMEOUT_MS = 60_000;
+
 describe("Task 157 — Data Audit Job", () => {
   let db: Database;
 
@@ -282,7 +289,7 @@ describe("Task 157 — Data Audit Job", () => {
     ).get();
     expect(feedbackRow).toBeDefined();
     expect(feedbackRow!.priority).toBe("critical");
-  });
+  }, AUDIT_TEST_TIMEOUT_MS);
 
   // ── AC-5: Old commodity history rows pruned ───────────────────────────────
   it("AC-5: prunes commodity_prices_history rows older than 180 days", async () => {
@@ -306,7 +313,7 @@ describe("Task 157 — Data Audit Job", () => {
     expect(f).toBeDefined();
     expect(f!.action).toBe("auto_cleaned");
     expect(f!.rowsAffected).toBeGreaterThanOrEqual(1);
-  });
+  }, AUDIT_TEST_TIMEOUT_MS);
 
   // ── AC-6: Telegram silent on clean DB ─────────────────────────────────────
   it("AC-6: does not send Telegram when DB is clean", async () => {
@@ -346,7 +353,7 @@ describe("Task 157 — Data Audit Job", () => {
     expect(f!.severity).toBe("warning");
     expect(f!.action).toBe("none");
     expect(f!.detail).toContain("LanceDB");
-  });
+  }, AUDIT_TEST_TIMEOUT_MS);
 
   // ── AC-8: audit_state updated after run ───────────────────────────────────
   it("AC-8: upserts audit_state singleton row after daily audit", async () => {
@@ -373,7 +380,7 @@ describe("Task 157 — Data Audit Job", () => {
     }, []>("SELECT last_daily_audit_at, last_weekly_audit_at FROM audit_state WHERE id = 1").get();
     expect(row).toBeDefined();
     expect(row!.last_weekly_audit_at).not.toBeNull();
-  });
+  }, AUDIT_TEST_TIMEOUT_MS);
 
   // ── AC-9: Dedup guard — same finding not re-inserted within 24h ───────────
   it("AC-9: dedup guard prevents same agent_feedback title from being inserted twice on same day", async () => {
@@ -510,7 +517,7 @@ describe("Task 157 — Data Audit Job", () => {
     const f = findings.find((x) => x.check === "duplicate_price_history");
     expect(f).toBeDefined();
     expect(f!.action).toBe("auto_cleaned");
-  });
+  }, AUDIT_TEST_TIMEOUT_MS);
 
   // ── Extra: W-6 orphan alerts detection ────────────────────────────────────
   it("W-6: detects orphan alerts with analysis IDs not in rag_analyses", async () => {
@@ -526,7 +533,7 @@ describe("Task 157 — Data Audit Job", () => {
     expect(f).toBeDefined();
     expect(f!.action).toBe("flagged");
     expect(f!.rowsAffected).toBeGreaterThan(0);
-  });
+  }, AUDIT_TEST_TIMEOUT_MS);
 
   // ── Extra: Telegram sent when issues exist ────────────────────────────────
   it("AC-7 (Telegram): sends one message when zero-price rows exist", async () => {
