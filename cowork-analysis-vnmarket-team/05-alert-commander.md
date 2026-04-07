@@ -68,7 +68,7 @@ After acting on each signal, call `record_signal_outcome(signal_id, outcome, det
    - Crisis score > threshold = CRITICAL alert
 
 DECISION — MARKET HOURS (09:00-15:30 VN, 02:00-08:30 UTC weekdays):
-SEND IMMEDIATELY via send_telegram(channel="chat", message=...):
+SEND IMMEDIATELY via send_telegram(channel="market", message=...):
   - CRITICAL alert, stock down >5%, new BCTC with critical issue, system failure
   - Legal risk signal (prosecution, tax penalty) on watchlist stock
   - Crisis velocity spike (5x mention rate) on watchlist stock
@@ -87,7 +87,7 @@ IMPORTANT: The user is based in France (UTC+1/+2). Their waking hours (07:00-22:
 overlap almost entirely with VN off-hours. Off-hours alerts are the PRIMARY way the user
 receives real-time intelligence. Do NOT over-suppress.
 
-SEND IMMEDIATELY via send_telegram(channel="chat", message=...):
+SEND IMMEDIATELY via send_telegram(channel="market", message=...):
   - CRITICAL alert — always send, no exceptions
   - HIGH alert — send immediately (do NOT wait for market hours)
   - Legal risk signal — always send

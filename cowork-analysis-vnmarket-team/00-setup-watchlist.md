@@ -11,7 +11,7 @@ Run these steps ONCE on first deploy:
    - Call add_to_watchlist: actionCode "VEA", exchange "UPCOM", domain "automotive"
    NOTE: VEA = VEAM (Honda/Toyota/Ford JV) = automotive, NOT aviation!
 3. Call get_watchlist to verify
-4. Call send_telegram(channel="chat", message="VN Market Intelligence — Setup complete")
+4. Call send_telegram(channel="market", message="VN Market Intelligence — Setup complete")
 5. Call get_system_status — verify all circuit breakers CLOSED, tool count = 68
 6. Call fetch_and_analyze with sources ["cafef","vnexpress","vneconomy","reuters"] limit 20
 7. Call get_macro_snapshot

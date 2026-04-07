@@ -118,7 +118,7 @@ submit_feedback(
 )
 ```
 
-ALL feedback -> Report Channel only (TELEGRAM_REPORT_ID). Dev Team reads it hourly and auto-fixes.
+ALL feedback -> BUG channel only (TELEGRAM_REPORT_BUG_CHANNEL_ID). Dev Team reads it hourly and auto-fixes.
 NEVER send feedback to Chat Channel (user-facing).
 The Report Channel is how the system improves. Without your reports, bugs persist forever.
 

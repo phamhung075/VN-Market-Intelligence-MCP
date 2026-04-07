@@ -12,18 +12,19 @@ YOU (investor in France)
  |
  |-- ANALYSIS TEAM (7 Claude Cowork agents -- cloud)
  |   Runs on schedule, sends analysis to Chat Channel
- |   Reports problems to Report Channel
+ |   Reports bugs to BUG Channel
  |
  +-- DEV TEAM (Claude Code CLI -- local cron, every 1 hour)
-     Reads Report Channel, auto-fixes, pushes to main
+     Reads BUG Channel, auto-fixes, pushes to main, posts WORK status
 ```
 
-### Two Telegram Channels
+### Three Telegram Channels (Sprint 051 hard cutover)
 
 | Channel | Env Var | Purpose |
 |---------|---------|---------|
-| **Chat** | `TELEGRAM_CHAT_ID` | User-facing: alerts, briefings, analysis, bot commands |
-| **Report** | `TELEGRAM_REPORT_ID` | Problems/hotfix ONLY: dev team reads, auto-fixes, deletes |
+| **MARKET** | `TELEGRAM_INFO_MARKET_GROUP_ID` | User-facing: alerts, briefings, analysis, bot replies |
+| **WORK** | `TELEGRAM_INFO_WORK_CHANNEL_ID` | Dev/analysis status, fix-shipped notices, agent refresh asks |
+| **BUG** | `TELEGRAM_REPORT_BUG_CHANNEL_ID` | Analysis → dev bug reports (dev team reads, auto-fixes, deletes) |
 
 ## Quick Start
 
@@ -44,8 +45,9 @@ often because tracked code imports a file the developer forgot to `git add`
 cp .env.example .env
 # Edit .env with your values:
 #   TELEGRAM_BOT_TOKEN=your_bot_token
-#   TELEGRAM_CHAT_ID=your_chat_channel_id       # User-facing
-#   TELEGRAM_REPORT_ID=your_report_channel_id   # Problems/hotfix only
+#   TELEGRAM_INFO_MARKET_GROUP_ID=-100xxxxxxxxxx   # User-facing market alerts/briefings
+#   TELEGRAM_INFO_WORK_CHANNEL_ID=-100xxxxxxxxxx   # Dev/analysis status, refresh asks
+#   TELEGRAM_REPORT_BUG_CHANNEL_ID=-100xxxxxxxxxx  # Analysis -> dev bug reports
 #   TELEGRAM_ENABLED=true
 #   CLOUDFLARE_TOKEN=your_tunnel_token
 ```

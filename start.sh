@@ -37,8 +37,9 @@ fi
 # Export all .env vars explicitly so nohup subprocess inherits them
 export RUST_LOG=error
 export TELEGRAM_BOT_TOKEN="${TELEGRAM_BOT_TOKEN:-}"
-export TELEGRAM_CHAT_ID="${TELEGRAM_CHAT_ID:-}"
-export TELEGRAM_REPORT_ID="${TELEGRAM_REPORT_ID:-}"
+export TELEGRAM_INFO_MARKET_GROUP_ID="${TELEGRAM_INFO_MARKET_GROUP_ID:-}"
+export TELEGRAM_INFO_WORK_CHANNEL_ID="${TELEGRAM_INFO_WORK_CHANNEL_ID:-}"
+export TELEGRAM_REPORT_BUG_CHANNEL_ID="${TELEGRAM_REPORT_BUG_CHANNEL_ID:-}"
 export TELEGRAM_ENABLED="${TELEGRAM_ENABLED:-true}"
 
 # Use --hot for live code reload without full restart

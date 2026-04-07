@@ -44,8 +44,8 @@ This auto-seeds the database on every server restart (only if watchlist table is
 ### .env (secrets only)
 ```
 TELEGRAM_BOT_TOKEN=your_token
-TELEGRAM_CHAT_ID=your_chat_id        # User-facing: alerts, briefings, analysis
-TELEGRAM_REPORT_ID=your_report_id    # Problems/hotfix only: dev team reports
+TELEGRAM_INFO_MARKET_GROUP_ID=your_chat_id        # User-facing: alerts, briefings, analysis
+TELEGRAM_REPORT_BUG_CHANNEL_ID=your_report_id    # Problems/hotfix only: dev team reports
 TELEGRAM_ENABLED=true
 CLOUDFLARE_TOKEN=your_tunnel_token
 CLOUDFLARE_TUNNEL=vn-market-mcp
@@ -131,7 +131,7 @@ MCP connector URL: `https://zenmidi.com/mcp`
 
 ## Two Separate Telegram Channels
 
-### Chat Channel (TELEGRAM_CHAT_ID) — User-Facing
+### MARKET Channel (TELEGRAM_INFO_MARKET_GROUP_ID) — User-Facing
 For communicating with the user and sending analysis:
 - HIGH/CRITICAL price alerts (from intelligence cycle)
 - Morning briefing, evening summary, daily digest
@@ -139,9 +139,9 @@ For communicating with the user and sending analysis:
 - Webhook bot command responses (/watchlist, /alerts, /briefing, /pnl)
 - **NEVER send internal agent feedback or dev reports here**
 
-### Report Channel (TELEGRAM_REPORT_ID) — Problems/Hotfix Only
+### BUG Channel (TELEGRAM_REPORT_BUG_CHANNEL_ID) — Problems/Hotfix Only
 For dev team and analysis team problem reports:
-- `send_telegram(channel="report", message=...)` — report problems, request hotfix, flag bugs
+- `send_telegram(channel="bug", message=...)` — report problems, request hotfix, flag bugs
 - `submit_feedback` — submit improvement suggestions (report channel ONLY, never cross-posts to user)
 - Tag recipients: `@team`, `@po`, `@dev`, `@qa`, `@ba`, `@architect`, `@market-analyst`
 - Dev team reads the channel and acts on reports
@@ -151,7 +151,7 @@ For dev team and analysis team problem reports:
 
 ### Vietnamese Language Rules (ALL Telegram messages)
 
-**CRITICAL**: All messages sent via `send_telegram(channel="chat")` MUST use proper Vietnamese with full diacritics (dấu). The user reads Vietnamese — never send without diacritics.
+**CRITICAL**: All messages sent via `send_telegram(channel="market")` MUST use proper Vietnamese with full diacritics (dấu). The user reads Vietnamese — never send without diacritics.
 
 | Wrong (no diacritics) | Correct (with diacritics) |
 |----------------------|--------------------------|
@@ -166,7 +166,7 @@ For dev team and analysis team problem reports:
 | Khoi luong giao dich | Khối lượng giao dịch |
 | Doanh thu thuan | Doanh thu thuần |
 
-**Report Channel** (`channel="report"`): English is OK for dev team reports (technical content).
+**BUG Channel** (`channel="bug"`): English is OK for dev team reports (technical content).
 
 ### 11 Telegram Bot Commands (User -> Chat Channel)
 - `/watchlist` — list current tracked stocks
@@ -248,12 +248,12 @@ Agents can send signals to each other via `post_agent_signal` / `get_agent_signa
 22:30 VN   Digest Writer sends daily summary + weekly review (Sunday)
 ```
 
-## Agent Feedback Loop (via Report Channel — Problems/Hotfix Only)
+## Agent Feedback Loop (via BUG Channel — Problems/Hotfix Only)
 
 ```
-Analysis team finds problems -> submit_feedback / send_telegram(channel="report")
+Analysis team finds problems -> submit_feedback / send_telegram(channel="bug")
                                           |
-                          Report Channel (TELEGRAM_REPORT_ID) — @po, @dev, @team
+                          BUG Channel (TELEGRAM_REPORT_BUG_CHANNEL_ID) — @po, @dev, @team
                                           |
                     +-- @dev reads -> FIX NOW (<20 lines): implement + test + push
                     |
@@ -264,7 +264,7 @@ Analysis team finds problems -> submit_feedback / send_telegram(channel="report"
                               Review agent deletes resolved reports
 ```
 
-**Important**: Feedback NEVER goes to the Chat Channel (user-facing). Only problems/hotfix reports go to the Report Channel.
+**Important**: Feedback NEVER goes to the Chat Channel (user-facing). Only problems/hotfix reports go to the BUG Channel.
 
 ## Known Issues — DO NOT RE-REPORT
 
@@ -317,7 +317,7 @@ Before submitting feedback or a report, check this list. If the issue is listed 
 |---------|-----|
 | Server timeout | Kill zombie Chrome: `pkill -9 -f "Google Chrome.*no-sandbox"` then restart |
 | Watchlist empty | Auto-seeds on restart from mcp.config.json. Check `market.watchlist` |
-| Telegram fails | Check `.env` has TELEGRAM_BOT_TOKEN + TELEGRAM_CHAT_ID + TELEGRAM_REPORT_ID |
+| Telegram fails | Check `.env` has TELEGRAM_BOT_TOKEN + TELEGRAM_INFO_MARKET_GROUP_ID + TELEGRAM_REPORT_BUG_CHANNEL_ID |
 | SSC timeout | Normal — portal is slow. Nightly job retries automatically |
 | OCR not working | Install: `brew install tesseract tesseract-lang poppler` |
 | Errors in log | Run `get_system_status` tool — shows DB, SOURCES, FRESHNESS, ERRORS sections |

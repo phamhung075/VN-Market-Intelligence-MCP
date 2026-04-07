@@ -45,8 +45,8 @@ Step 6: Read the AGENT_REWRITE_SPEC
 
 ```
 ANALYSIS TEAM (Claude Cowork — 7 agents, cloud)
-  → Chat Channel (TELEGRAM_CHAT_ID) = user-facing
-  → Report Channel (TELEGRAM_REPORT_ID) = problems only
+  → MARKET Channel (TELEGRAM_INFO_MARKET_GROUP_ID) = user-facing
+  → BUG Channel (TELEGRAM_REPORT_BUG_CHANNEL_ID) = problems only
 
 DEV TEAM (Claude Code CLI — local cron, every 1 hour)
   → Reads Report Channel → auto-fixes → pushes to main
@@ -110,8 +110,8 @@ These tools were RENAMED or MERGED. The old names DO NOT EXIST:
 | `get_source_health` | `get_system_status` (merged) |
 | `get_data_freshness` | `get_system_status` (merged) |
 | `get_error_summary` | `get_system_status` (merged) |
-| `send_test_telegram` | `send_telegram(channel="chat")` |
-| `send_telegram_report` | `send_telegram(channel="report")` |
+| `send_test_telegram` | `send_telegram(channel="market")` |
+| `send_telegram_report` | `send_telegram(channel="bug")` |
 | `delete_telegram_report` | absorbed into `process_telegram_report` |
 | `mute_stock_alerts` | `manage_alert_mute(action="mute")` |
 | `unmute_stock_alerts` | `manage_alert_mute(action="unmute")` |
@@ -229,7 +229,7 @@ get_energy_grid_signals, get_climate_risk_signals, get_crisis_early_warning
 
 #### Alert Commander (05) — ONLY sender to Chat Channel
 get_agent_signals, get_system_status, get_market_context, get_alerts(type="all"),
-mark_alert_read, send_telegram(channel="chat"), send_alert_digest,
+mark_alert_read, send_telegram(channel="market"), send_alert_digest,
 record_signal_outcome, get_alert_accuracy, manage_alert_mute, list_alert_rules,
 post_agent_signal, get_recent_fixes, submit_feedback, delete_price_alert,
 get_legal_risk_signals, get_crisis_early_warning
@@ -240,7 +240,7 @@ get_bctc_full, compare_financials, get_macro_snapshot, get_portfolio_conviction,
 get_correlation_matrix, get_alert_accuracy, get_performance_attribution,
 get_portfolio_risk, get_rebalancing_signals, get_sector_rotation,
 get_earnings_calendar, get_signal_effectiveness, get_cascade_metrics,
-get_prediction_accuracy, get_supply_chain_exposure, send_telegram(channel="chat"),
+get_prediction_accuracy, get_supply_chain_exposure, send_telegram(channel="market"),
 get_recent_fixes, submit_feedback,
 get_legal_risk_signals, get_policy_signals, get_bond_maturity_calendar,
 get_public_contracts, get_credit_flow_signal, get_insider_signals,
@@ -262,7 +262,7 @@ get_crisis_early_warning, get_pharma_signals
 
 #### Dev Team Cron
 read_telegram_reports, claim_telegram_report, process_telegram_report,
-log_fix, get_recent_fixes, send_telegram(channel="chat"), get_system_status
+log_fix, get_recent_fixes, send_telegram(channel="market"), get_system_status
 
 ### 19 Cron Jobs
 

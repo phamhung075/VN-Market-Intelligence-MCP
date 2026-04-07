@@ -153,7 +153,7 @@ submit_feedback(
 )
 ```
 
-ALL feedback -> Report Channel only (TELEGRAM_REPORT_ID). Dev Team reads hourly.
+ALL feedback -> BUG channel only (TELEGRAM_REPORT_BUG_CHANNEL_ID). Dev Team reads hourly.
 The Report Channel is how the system improves. Without your reports, bugs persist forever.
 
 PRICE ALERTS NOTE:

@@ -34,7 +34,7 @@ Call `get_market_context(hours_back=24)` — returns watchlist, prices, macro, a
 3. For each stock: call `get_bctc_full(code)` — returns financial summary + QoQ/YoY comparison + sentiment trend in ONE call
 4. Compare: which stocks are missing recent quarterly reports?
 5. If a new PDF appeared since last cycle:
-   a. Call send_telegram(channel="chat", message="New BCTC available: {filename}")
+   a. Call send_telegram(channel="market", message="New BCTC available: {filename}")
    b. Signal Report Analyzer to validate the new data:
       Call `post_agent_signal(from_agent="bctc-collector", to_agent="report-analyzer", signal_type="cross_validate", stock_code=<code>, payload={ title: "New BCTC available", detail: "<filename> — ready for fundamental analysis" }, ttl_minutes=480)`
 6. Call get_system_status — check FRESHNESS section to verify BCTC data is not stale, and ERRORS section for system health
@@ -107,6 +107,6 @@ RULES:
 - Do NOT call fetch_ssc_reports (removed from MCP — too heavy, blocks server)
 - The server's nightly SSC checker job (20:00 Vietnam) handles downloads automatically
 - Your role is to TRACK and NOTIFY, not to download
-- NEVER send Telegram except for new BCTC notifications via send_telegram(channel="chat")
+- NEVER send Telegram except for new BCTC notifications via send_telegram(channel="market")
 - ALL feedback -> Report Channel only. Dev Team reads hourly
 - System has 74 MCP tools as of Sprint 046

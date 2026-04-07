@@ -48,7 +48,7 @@ and tackle the first slice now.
    - Do NOT defer the whole thing back to the backlog
 5. **Only exit** when: no quick wins left AND no slice-able work AND no stale
    state to sync AND no infra cleanup possible. Log the exit reason via
-   `send_telegram(channel="chat", ...)` so the user knows the loop ran but found
+   `send_telegram(channel="work", ...)` so the user knows the loop ran but found
    nothing actionable.
 
 **Multi-ship rule:** a single cron invocation may ship multiple quick wins and/or
@@ -90,7 +90,7 @@ For each claimed report:
 5. Git commit: `fix: [feedback] {title}`
 6. Git push to main
 7. Call `log_fix(title, detail, fix_type, files, commit_hash)` — logs the fix for all agents to see via `get_recent_fixes`
-8. Call `send_telegram(channel="chat", message=...)` with fix summary:
+8. Call `send_telegram(channel="work", message=...)` with fix summary:
    ```
    Fix applied
    {title}
@@ -124,7 +124,7 @@ After QA approves:
 1. Merge to main
 2. Git commit + push
 3. Call `log_fix(title, detail, fix_type="sprint", files, commit_hash)` — logs the sprint completion for all agents to see
-4. Call `send_telegram(channel="chat", message=...)` with sprint summary:
+4. Call `send_telegram(channel="work", message=...)` with sprint summary:
    ```
    Sprint {N} complete
    {title}
@@ -147,7 +147,7 @@ After any fix or sprint:
 ### Step 6: Notify User About Agent Updates
 If any agent .md file was modified:
 ```
-Call send_telegram(channel="chat", message=...):
+Call send_telegram(channel="work", message=...):
 Agent files updated:
 - {filename1}: {what changed}
 - {filename2}: {what changed}
@@ -186,8 +186,8 @@ At the very end of every cron invocation, after Step 8 hygiene passes, run `/com
 - Never add features beyond what was reported
 
 ### Channel Rules
-- Chat Channel (TELEGRAM_CHAT_ID) = send fix/sprint summaries to USER via `send_telegram(channel="chat", ...)`
-- Report Channel (TELEGRAM_REPORT_ID) = read problem reports, delete after processing
+- WORK Channel (TELEGRAM_INFO_WORK_CHANNEL_ID) = send fix/sprint summaries to USER via `send_telegram(channel="work", ...)`
+- BUG Channel (TELEGRAM_REPORT_BUG_CHANNEL_ID) = read problem reports, delete after processing
 - NEVER send internal dev noise to Chat Channel — only summaries of completed work
 - User `/report <description>` and `/fix <description>` Telegram commands create reports with `agent="user-telegram"` — these are HIGH priority, same as agent reports
 
