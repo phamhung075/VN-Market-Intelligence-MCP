@@ -1005,6 +1005,33 @@ export async function runDailyAudit(
 }
 
 /**
+ * Startup catch-up: run runDailyAudit() only if last_daily_audit_at is missing
+ * or older than `maxAgeHours` (default 24h). Prevents audit gaps after server
+ * restarts that straddle the scheduled 23:00 GMT+7 cron firing window.
+ * Reported via dev-team-cron Loop after report 994 (audit missed 2026-04-06).
+ */
+export async function runDailyAuditIfStale(maxAgeHours = 24): Promise<boolean> {
+  try {
+    const database = await defaultGetDb();
+    ensureAuditDependencies(database);
+    const row = database
+      .query<{ last_daily_audit_at: string | null }, []>(
+        "SELECT last_daily_audit_at FROM audit_state WHERE id = 1",
+      )
+      .get();
+    const last = row?.last_daily_audit_at ? new Date(row.last_daily_audit_at).getTime() : 0;
+    const ageH = (Date.now() - last) / 3_600_000;
+    if (last && ageH < maxAgeHours) return false;
+    console.log(`[dataAuditJob] startup catch-up: last_daily_audit ${ageH.toFixed(1)}h old, running now`);
+    await runDailyAudit(database);
+    return true;
+  } catch (err) {
+    console.warn(`[dataAuditJob] startup catch-up failed: ${(err as Error).message}`);
+    return false;
+  }
+}
+
+/**
  * Run the weekly deep audit (daily checks + W-1 through W-7).
  *
  * @param db          - Optional injected Database (for testing). Defaults to getDb() singleton.

@@ -29,7 +29,7 @@ import { runIntelligenceCycle } from './intelligenceCycleJob.js'
 import { registerSummaryJobs } from './summaryJobs.js'
 import { runWalCheckpoint, registerShutdownHook } from '../infrastructure/db/checkpoint.js'
 import { runPatternWatch } from './patternWatchJob.js'
-import { runDailyAudit, runWeeklyAudit } from './dataAuditJob.js'
+import { runDailyAudit, runWeeklyAudit, runDailyAuditIfStale } from './dataAuditJob.js'
 import { runPredictionMarketPoll } from './predictionMarketJob.js'
 import { runAlertDigest } from './alertDigestJob.js'
 import { runWeeklyPortfolioReport } from './weeklyPortfolioReportJob.js'
@@ -136,6 +136,13 @@ export function startScheduler() {
   cron.schedule(CRONS.dataAuditWeekly, async () => {
     await runWeeklyAudit()
   }, { timezone: 'Asia/Ho_Chi_Minh' })
+
+  // Startup catch-up: if a server restart straddled the 23:00 daily cron,
+  // last_daily_audit can drift >24h causing WAL bloat risk. Fire-and-forget.
+  // Triggered by report 994 (missed 2026-04-06 audit).
+  void runDailyAuditIfStale().then((ran) => {
+    if (ran) log("daily audit catch-up ran on startup")
+  })
 
   cron.schedule(CRONS.predictionMarketPoll, async () => {
     await runPredictionMarketPoll()
