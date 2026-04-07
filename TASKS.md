@@ -1050,6 +1050,12 @@ describe("296 OCR pipeline e2e smoke test", () => {
 
 (See SPRINT_GOAL.md for Tier 3-4 backlog: `/ask` command, agent signal bus, compound tools)
 
+- **[backlog 914 / @po]** Steel sector watchlist gap — HPG missing. cafef reported steel maker 70% profit growth + 125M share issuance (impact 9, bullish), but impact_chain returned "no watchlist stocks affected" because watchlist (VNM/VCB/FPT/VEA) has zero steel exposure. Decision needed: add HPG to default watchlist OR document that steel coverage is intentionally out-of-scope. (from report 914)
+- **[backlog 915 / @architect]** Analyst-credibility discount rule — when broker is under regulatory sanction, downweight their forecasts. Concrete case: TVS issued bullish Q1 sector forecast same day as cafef "Vì sao Chứng khoán Tân Việt bị xử phạt?" article. Need: cross-reference broker name in legal_risk_signals when computing forecast confidence. (from report 915)
+- **[backlog 916 / @dev HIGH]** sector_rotation vs sector_comparison contradiction — get_sector_rotation reported Banking -0.46% 1d while get_sector_comparison(VCB) showed peer avg ~+0.575% same session. Root cause unknown: different stock universes, timing diff, or aggregation bug. Need to align both tools on the same source-of-truth or document the difference. (from report 916)
+- **[backlog 921 / @dev]** Brent crude price source discrepancy — market-watcher signal #509 reported $111.70 vs auto-tracked tracked_indicators.brent_crude_usd = 108 (~$3.7 gap, 38 data points). Investigate: spot vs futures, stale cache, or different upstream source. Pick one source-of-truth. (from report 921)
+
+
 ---
 
 ## ✅ DONE
