@@ -16,6 +16,7 @@
  */
 
 import { SECTOR_NAME_VI, getStockProfile } from "./sectorPeers.js";
+import { STOCK_CATALOG } from "./stockAliases.js";
 import type { DomainType } from "../../../bctc-schema.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -40,10 +41,13 @@ export interface StockSearchResult {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Stock catalogue
-// Unique data per code = { companyName, aliases }. sector + exchange are
-// derived from SECTOR_PEERS via getStockProfile() — single source of truth.
-// To add a new ticker: (1) append to SECTOR_PEERS in sectorPeers.ts for
-// classification, (2) add its display name + aliases to STOCK_ALIASES below.
+// Unique data per code ({ companyName, aliases }) lives in stockAliases.ts
+// under STOCK_CATALOG — single source of truth shared with the news-text
+// detector. Sector + exchange are derived from SECTOR_PEERS via
+// getStockProfile(). Three files total to add a new ticker end-to-end:
+//   1. SECTOR_PEERS  (sectorPeers.ts)   — classification + exchange
+//   2. STOCK_CATALOG (stockAliases.ts)  — display name + aliases
+//   3. market.watchlist (mcp.config.json) if it should be a default.
 // ─────────────────────────────────────────────────────────────────────────────
 
 interface CatalogueEntry {
@@ -64,98 +68,13 @@ function normalize(s: string): string {
 }
 
 /**
- * Display names + searchable aliases. Only the unique-to-search data lives
- * here — exchange and sector come from SECTOR_PEERS so there is no chance
- * of them drifting out of sync.
+ * Build the full catalogue at module load by merging STOCK_CATALOG (canonical
+ * ticker → {companyName, aliases}, owned by stockAliases.ts) with
+ * SECTOR_PEERS-derived sector + exchange (via getStockProfile). Any catalog
+ * entry whose code has no SECTOR_PEERS profile is dropped with a warning so
+ * the type contract stays honest.
  */
-const STOCK_ALIASES: Record<string, { companyName: string; aliases: string[] }> = {
-  // Watchlist defaults
-  VNM: { companyName: "Vinamilk",              aliases: ["vinamilk", "sua viet nam", "viet nam dairy", "vietnam dairy products", "sua vinamilk"] },
-  FPT: { companyName: "FPT Corporation",       aliases: ["fpt", "fpt corporation", "tap doan fpt", "fpt software", "fpt telecom", "fpt group"] },
-  VCB: { companyName: "Vietcombank",           aliases: ["vietcombank", "ngan hang vietcombank", "bank for foreign trade", "ngan hang ngoai thuong"] },
-  VEA: { companyName: "VEAM",                  aliases: ["veam", "vietnam engine", "may dong luc viet nam", "vietnam engine and agricultural machinery"] },
-
-  // Banking
-  BID: { companyName: "BIDV",                  aliases: ["bidv", "ngan hang bidv", "bank for investment and development", "ngan hang dau tu va phat trien"] },
-  CTG: { companyName: "VietinBank",            aliases: ["vietinbank", "ngan hang vietinbank", "ngan hang cong thuong", "vietin bank"] },
-  TCB: { companyName: "Techcombank",           aliases: ["techcombank", "ngan hang techcombank", "ngan hang ky thuong"] },
-  MBB: { companyName: "MB Bank",               aliases: ["mb bank", "ngan hang mb", "military commercial bank", "ngan hang quan doi"] },
-  VPB: { companyName: "VPBank",                aliases: ["vpbank", "ngan hang vpbank", "vietnam prosperity bank", "vp bank"] },
-  ACB: { companyName: "Asia Commercial Bank",  aliases: ["ngan hang a chau", "asia commercial bank", "ngan hang acb", "a chau bank"] },
-  HDB: { companyName: "HDBank",                aliases: ["hdbank", "ngan hang hdbank", "ho chi minh city development bank", "hd bank"] },
-  STB: { companyName: "Sacombank",             aliases: ["sacombank", "ngan hang sacombank", "sai gon thuong tin"] },
-  TPB: { companyName: "TPBank",                aliases: ["tpbank", "tien phong bank", "ngan hang tien phong", "tp bank"] },
-
-  // Tech
-  CMG: { companyName: "CMC Corporation",       aliases: ["cmc", "cmc corporation", "tap doan cmc", "cong nghe cmc"] },
-  ELC: { companyName: "Electricsun",           aliases: ["elcom", "electricsun", "dien tu vien thong"] },
-  SAM: { companyName: "SAM Holdings",          aliases: ["sam holdings", "sam cables", "cap quang sam"] },
-
-  // Real estate
-  VIC: { companyName: "Vingroup",              aliases: ["vingroup", "tap doan vingroup", "vin group"] },
-  VHM: { companyName: "Vinhomes",              aliases: ["vinhomes", "vinhomes bat dong san", "vin homes"] },
-  NVL: { companyName: "Novaland",              aliases: ["novaland", "nova land", "dia oc nova"] },
-  KDH: { companyName: "Khang Dien",            aliases: ["khang dien", "nha khang dien", "khang dien house"] },
-  DXG: { companyName: "Dat Xanh Group",        aliases: ["dat xanh", "dat xanh group", "dia oc dat xanh"] },
-
-  // Steel
-  HPG: { companyName: "Hoa Phat Group",        aliases: ["hoa phat", "tap doan hoa phat", "hoa phat steel", "thep hoa phat"] },
-  HSG: { companyName: "Hoa Sen Group",         aliases: ["hoa sen", "tap doan hoa sen", "ton hoa sen"] },
-  NKG: { companyName: "Nam Kim Steel",         aliases: ["nam kim", "thep nam kim", "nam kim steel"] },
-  TIS: { companyName: "Thai Nguyen Iron & Steel", aliases: ["tisco", "thai nguyen steel", "thep thai nguyen"] },
-  POM: { companyName: "Pomina Steel",          aliases: ["pomina", "thep pomina"] },
-
-  // Oil & Gas
-  GAS: { companyName: "PV Gas",                aliases: ["pv gas", "pvgas", "petrovietnam gas", "khi viet nam"] },
-  PLX: { companyName: "Petrolimex",            aliases: ["petrolimex", "xang dau viet nam", "vietnam petroleum", "petrolimex group"] },
-  PVD: { companyName: "PetroVietnam Drilling", aliases: ["pvd", "khoan dau khi", "petrovietnam drilling"] },
-  PVS: { companyName: "PetroVietnam Technical Services", aliases: ["pvs", "dich vu ky thuat dau khi", "petrovietnam technical"] },
-
-  // Aviation
-  HVN: { companyName: "Vietnam Airlines",      aliases: ["vietnam airlines", "hang khong viet nam", "hang hang khong quoc gia"] },
-  VJC: { companyName: "VietJet Air",           aliases: ["vietjet", "vietjet air", "hang khong vietjet"] },
-  ACV: { companyName: "Airports Corporation of Vietnam", aliases: ["acv", "cang hang khong viet nam", "airports corporation"] },
-
-  // Retail
-  MWG: { companyName: "The Gioi Di Dong (Mobile World)", aliases: ["the gioi di dong", "mobile world", "dien may xanh", "bach hoa xanh"] },
-  MSN: { companyName: "Masan Group",           aliases: ["masan", "tap doan masan", "masan group", "masan consumer"] },
-  PNJ: { companyName: "Phu Nhuan Jewelry",     aliases: ["pnj", "vang bac phu nhuan", "phu nhuan jewelry"] },
-
-  // Securities
-  SSI: { companyName: "SSI Securities",        aliases: ["ssi securities", "chung khoan ssi", "saigon securities"] },
-  VND: { companyName: "VNDirect Securities",   aliases: ["vndirect", "chung khoan vndirect"] },
-  HCM: { companyName: "HCM Securities",        aliases: ["chung khoan ho chi minh", "hcm securities"] },
-
-  // Utilities
-  REE: { companyName: "REE Corporation",       aliases: ["ree", "co dien lanh ree", "ree corporation", "ree refrigeration"] },
-  POW: { companyName: "PetroVietnam Power",    aliases: ["petrovietnam power", "dien luc dau khi", "pv power"] },
-
-  // Agriculture
-  VHC: { companyName: "Vinh Hoan Corporation", aliases: ["vinh hoan", "ca tra vinh hoan", "pangasius vinh hoan"] },
-  HAG: { companyName: "Hoang Anh Gia Lai",     aliases: ["hoang anh gia lai", "hagl", "gia lai"] },
-
-  // Insurance
-  BVH: { companyName: "Bao Viet Holdings",     aliases: ["bao viet", "bao viet holdings", "bao hiem bao viet"] },
-
-  // Pharma
-  DHG: { companyName: "Hau Giang Pharmaceutical", aliases: ["duoc hau giang", "hau giang pharmaceutical", "duoc pham hau giang"] },
-  IMP: { companyName: "Imexpharm",             aliases: ["imexpharm", "duoc pham imexpharm"] },
-
-  // Logistics
-  GMD: { companyName: "Gemadept",              aliases: ["gemadept", "cang bien gemadept", "logistics gemadept"] },
-  VTP: { companyName: "Viettel Post",          aliases: ["viettel post", "chuyen phat nhanh viettel", "buu chinh viettel"] },
-
-  // Automotive
-  HAX: { companyName: "Hang Xanh Auto",        aliases: ["hang xanh", "hang xanh auto", "dai ly oto hang xanh"] },
-};
-
-/**
- * Build the full catalogue at module load by merging STOCK_ALIASES with
- * SECTOR_PEERS-derived sector + exchange. Any alias entry whose code has
- * no SECTOR_PEERS profile is dropped with a warning so the type contract
- * stays honest.
- */
-const CATALOGUE: CatalogueEntry[] = Object.entries(STOCK_ALIASES)
+const CATALOGUE: CatalogueEntry[] = Object.entries(STOCK_CATALOG)
   .map(([code, meta]): CatalogueEntry | null => {
     const profile = getStockProfile(code);
     if (!profile) {
@@ -164,7 +83,7 @@ const CATALOGUE: CatalogueEntry[] = Object.entries(STOCK_ALIASES)
       // file is in the domain layer and cannot depend on infrastructure.
       // eslint-disable-next-line no-console
       console.warn(
-        `[stockSearch] ${code} in STOCK_ALIASES but not in SECTOR_PEERS — dropping from search catalogue.`,
+        `[stockSearch] ${code} in STOCK_CATALOG but not in SECTOR_PEERS — dropping from search catalogue.`,
       );
       return null;
     }

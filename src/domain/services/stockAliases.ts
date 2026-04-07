@@ -1,22 +1,31 @@
 /**
- * Stock Aliases — Domain Service
+ * Stock Catalog — Domain Service
  *
- * Maps Vietnamese stock tickers to their known Vietnamese trade names,
- * abbreviations, and brand names. Provides two pure functions for lookup
- * and alias-based detection in free text.
+ * CANONICAL source of truth for Vietnamese stock ticker metadata:
+ *   - Display name (companyName)
+ *   - Searchable aliases (Vietnamese + English, with and without diacritics)
+ *
+ * Consumed by:
+ *   - `stockSearch.ts`   — builds the user-facing MCP search catalogue by
+ *                          merging STOCK_CATALOG with sector/exchange from
+ *                          SECTOR_PEERS via getStockProfile().
+ *   - `pollNews.ts`, `cascadeEngine.ts`, `legalRiskDetector.ts` — use
+ *                          detectStocksInText() to spot ticker mentions in
+ *                          free-text news articles.
  *
  * Design rules:
- * - Zero imports from infrastructure or application layers (DDD: domain-only)
- * - No runtime I/O, no side effects, no mutation
- * - All alias values are pre-normalised at module load via normalizeText()
- *   so call-time normalisation only applies to the incoming text
+ * - Zero imports from infrastructure or application layers (DDD: domain-only).
+ * - No runtime I/O, no side effects, no mutation.
+ * - ONE place to add a ticker. To register a new stock end-to-end you need:
+ *     1. `SECTOR_PEERS` in sectorPeers.ts   — classification + exchange
+ *     2. `STOCK_CATALOG` in this file       — display name + aliases
+ *     3. `mcp.config.json` market.watchlist — if it should be a default
  *
- * Usage:
- *   import { getAliasesForCode, detectStocksInText } from "./stockAliases.js";
+ * @module domain/services/stockAliases
  */
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Private helper
+// Private helpers
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
@@ -24,8 +33,6 @@
  *   1. Unicode NFD decomposition (separates base chars from combining marks)
  *   2. Strip all Unicode combining marks (diacritics) via regex category \p{M}
  *   3. Lowercase
- *
- * Private — not exported.
  *
  * @example
  *   normalizeText("Hòa Phát")  // → "hoa phat"
@@ -39,296 +46,414 @@ function normalizeText(s: string): string {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Static alias dictionary
-// Each value array uses UN-normalised strings — they are passed through
-// normalizeText() at module load time (see NORMALISED_ALIASES below).
-//
-// Rule: minimum 3 aliases per stock, covering:
-//   (a) Full Vietnamese company name
-//   (b) Short trade name / brand
-//   (c) English name or accent-free variant
+// STOCK_CATALOG — canonical ticker → { companyName, aliases }
 // ─────────────────────────────────────────────────────────────────────────────
 
-const STOCK_ALIASES_RAW: Record<string, string[]> = {
+/**
+ * A single entry in the stock catalog.
+ *
+ * `aliases` must include at minimum:
+ *   (a) Full Vietnamese company name (with diacritics)
+ *   (b) Short trade name / brand
+ *   (c) English name or accent-free variant
+ *
+ * Both diacritic and ascii-free variants should be present where possible —
+ * callers normalise at comparison time via normalizeText().
+ */
+export interface StockCatalogEntry {
+  companyName: string;
+  aliases: string[];
+}
+
+export const STOCK_CATALOG: Record<string, StockCatalogEntry> = {
   // ─── Watchlist defaults ────────────────────────────────────────────────────
+  VNM: {
+    companyName: "Vinamilk",
+    aliases: [
+      "vinamilk", "sữa vinamilk", "sua vinamilk",
+      "công ty cổ phần sữa việt nam", "cong ty co phan sua viet nam",
+      "viet nam dairy", "vietnam dairy products", "vietnam dairy",
+      "sua viet nam",
+    ],
+  },
+  FPT: {
+    companyName: "FPT Corporation",
+    aliases: [
+      "fpt", "fpt corporation", "tập đoàn fpt", "tap doan fpt",
+      "công ty fpt", "cong ty fpt",
+      "fpt software", "fpt telecom", "fpt group",
+      // Parent-subsidiary: FRT (FPT Retail) is FPT's subsidiary.
+      "frt", "fpt retail", "fpt digital retail", "fpt shop",
+    ],
+  },
+  VCB: {
+    companyName: "Vietcombank",
+    aliases: [
+      "vietcombank", "ngân hàng vietcombank", "ngan hang vietcombank",
+      "bank for foreign trade of vietnam", "bank for foreign trade",
+      "ngân hàng ngoại thương việt nam", "ngan hang ngoai thuong viet nam",
+      "ngan hang ngoai thuong",
+      "vietcombank bank",
+    ],
+  },
+  VEA: {
+    companyName: "VEAM",
+    aliases: [
+      "veam",
+      "tổng công ty máy động lực và nông nghiệp việt nam",
+      "tong cong ty may dong luc va nong nghiep viet nam",
+      "vietnam engine and agricultural machinery",
+      "vietnam engine",
+      "may dong luc viet nam",
+    ],
+  },
 
-  VNM: [
-    "vinamilk",
-    "sữa vinamilk",
-    "công ty cổ phần sữa việt nam",
-    "cong ty co phan sua viet nam",
-    "viet nam dairy",
-    "vietnam dairy products",
-    "vietnam dairy",
-    "sua viet nam",
-  ],
+  // ─── Banking ───────────────────────────────────────────────────────────────
+  BID: {
+    companyName: "BIDV",
+    aliases: [
+      "bidv", "ngân hàng bidv", "ngan hang bidv",
+      "bank for investment and development of vietnam",
+      "bank for investment and development",
+      "ngân hàng đầu tư và phát triển việt nam",
+      "ngan hang dau tu va phat trien viet nam",
+      "ngan hang dau tu va phat trien",
+    ],
+  },
+  CTG: {
+    companyName: "VietinBank",
+    aliases: [
+      "vietinbank", "ngân hàng vietinbank", "ngan hang vietinbank",
+      "vietnam joint stock commercial bank for industry and trade",
+      "ngân hàng công thương việt nam",
+      "ngan hang cong thuong viet nam",
+      "ngan hang cong thuong",
+      "vietin bank",
+    ],
+  },
+  TCB: {
+    companyName: "Techcombank",
+    aliases: [
+      "techcombank", "ngân hàng techcombank", "ngan hang techcombank",
+      "technological commercial bank",
+      "ngân hàng kỹ thương việt nam", "ngan hang ky thuong viet nam",
+      "ngan hang ky thuong",
+    ],
+  },
+  MBB: {
+    companyName: "MB Bank",
+    aliases: [
+      "mb bank", "ngân hàng mb", "ngan hang mb",
+      "military commercial bank",
+      "ngân hàng quân đội", "ngan hang quan doi",
+      "mb bank viet nam",
+    ],
+  },
+  VPB: {
+    companyName: "VPBank",
+    aliases: [
+      "vpbank", "ngân hàng vpbank", "ngan hang vpbank",
+      "vietnam prosperity bank",
+      "ngân hàng việt nam thịnh vượng", "ngan hang viet nam thinh vuong",
+      "vp bank",
+    ],
+  },
+  ACB: {
+    companyName: "Asia Commercial Bank",
+    aliases: [
+      "ngân hàng á châu", "ngan hang a chau",
+      "asia commercial bank", "asia commercial bank of vietnam",
+      "ngân hàng acb", "ngan hang acb",
+      "a chau bank",
+    ],
+  },
+  HDB: {
+    companyName: "HDBank",
+    aliases: [
+      "hdbank", "ngân hàng hdbank", "ngan hang hdbank",
+      "ho chi minh city development bank",
+      "ngân hàng phát triển thành phố hồ chí minh",
+      "ngan hang phat trien thanh pho ho chi minh",
+      "hd bank",
+    ],
+  },
+  STB: {
+    companyName: "Sacombank",
+    aliases: [
+      "sacombank", "ngân hàng sacombank", "ngan hang sacombank",
+      "sài gòn thương tín", "sai gon thuong tin",
+      "sai gon thuong tin commercial bank",
+      "sacombank bank",
+    ],
+  },
+  TPB: {
+    companyName: "TPBank",
+    aliases: [
+      "tpbank", "tien phong bank", "ngan hang tien phong", "tp bank",
+    ],
+  },
 
-  FPT: [
-    // "fpt" is both the brand name and the ticker — include as short alias
-    // because the company is universally known by the three-letter acronym
-    "fpt",
-    "fpt corporation",
-    "tập đoàn fpt",
-    "tap doan fpt",
-    "công ty fpt",
-    "cong ty fpt",
-    "fpt software",
-    "fpt telecom",
-    "fpt group",
-    // Parent-subsidiary: FRT (FPT Retail) is FPT's subsidiary.
-    // FRT news (e.g. Dragon Capital buys FRT) cascades to FPT.
-    "frt",
-    "fpt retail",
-    "fpt digital retail",
-    "fpt shop",
-  ],
+  // ─── Tech ──────────────────────────────────────────────────────────────────
+  CMG: {
+    companyName: "CMC Corporation",
+    aliases: ["cmc", "cmc corporation", "tap doan cmc", "cong nghe cmc"],
+  },
+  ELC: {
+    companyName: "Electricsun",
+    aliases: ["elcom", "electricsun", "dien tu vien thong"],
+  },
+  SAM: {
+    companyName: "SAM Holdings",
+    aliases: ["sam holdings", "sam cables", "cap quang sam"],
+  },
 
-  VCB: [
-    "vietcombank",
-    "ngân hàng vietcombank",
-    "ngan hang vietcombank",
-    "bank for foreign trade of vietnam",
-    "ngân hàng ngoại thương việt nam",
-    "ngan hang ngoai thuong viet nam",
-    "vietcombank bank",
-  ],
+  // ─── Real estate ───────────────────────────────────────────────────────────
+  VIC: {
+    companyName: "Vingroup",
+    aliases: [
+      "vingroup", "tập đoàn vingroup", "tap doan vingroup",
+      "vingroup corporation",
+      "công ty vingroup", "cong ty vingroup",
+      "vin group",
+    ],
+  },
+  VHM: {
+    companyName: "Vinhomes",
+    aliases: [
+      "vinhomes",
+      "công ty cổ phần vinhomes", "cong ty cp vinhomes",
+      "vinhomes corporation",
+      "vinhomes bất động sản", "vinhomes bat dong san",
+      "vin homes",
+    ],
+  },
+  NVL: {
+    companyName: "Novaland",
+    aliases: ["novaland", "nova land", "dia oc nova"],
+  },
+  KDH: {
+    companyName: "Khang Dien",
+    aliases: ["khang dien", "nha khang dien", "khang dien house"],
+  },
+  DXG: {
+    companyName: "Dat Xanh Group",
+    aliases: ["dat xanh", "dat xanh group", "dia oc dat xanh"],
+  },
 
-  VEA: [
-    "veam",
-    "tổng công ty máy động lực và nông nghiệp việt nam",
-    "tong cong ty may dong luc va nong nghiep viet nam",
-    "vietnam engine and agricultural machinery",
-    "vietnam engine",
-    "may dong luc viet nam",
-  ],
+  // ─── Steel ─────────────────────────────────────────────────────────────────
+  HPG: {
+    companyName: "Hoa Phat Group",
+    aliases: [
+      "hòa phát", "hoa phat",
+      "tập đoàn hòa phát", "tap doan hoa phat",
+      "hòa phát group", "hoa phat group",
+      "hoa phat steel",
+      "thép hòa phát", "thep hoa phat",
+    ],
+  },
+  HSG: {
+    companyName: "Hoa Sen Group",
+    aliases: ["hoa sen", "tap doan hoa sen", "ton hoa sen"],
+  },
+  NKG: {
+    companyName: "Nam Kim Steel",
+    aliases: ["nam kim", "thep nam kim", "nam kim steel"],
+  },
+  TIS: {
+    companyName: "Thai Nguyen Iron & Steel",
+    aliases: ["tisco", "thai nguyen steel", "thep thai nguyen"],
+  },
+  POM: {
+    companyName: "Pomina Steel",
+    aliases: ["pomina", "thep pomina"],
+  },
 
-  // ─── Top 20 HOSE stocks ────────────────────────────────────────────────────
+  // ─── Oil & Gas ─────────────────────────────────────────────────────────────
+  GAS: {
+    companyName: "PV Gas",
+    aliases: [
+      "pv gas", "pvgas", "petrovietnam gas",
+      "tổng công ty khí việt nam", "tong cong ty khi viet nam",
+      "pv gas corporation",
+      "vietnam gas", "khi viet nam",
+    ],
+  },
+  PLX: {
+    companyName: "Petrolimex",
+    aliases: [
+      "petrolimex", "petrolimex group",
+      "tập đoàn xăng dầu việt nam", "tap doan xang dau viet nam",
+      "vietnam national petroleum group",
+      "xang dau viet nam", "vietnam petroleum",
+    ],
+  },
+  PVD: {
+    companyName: "PetroVietnam Drilling",
+    aliases: ["pvd", "khoan dau khi", "petrovietnam drilling"],
+  },
+  PVS: {
+    companyName: "PetroVietnam Technical Services",
+    aliases: ["pvs", "dich vu ky thuat dau khi", "petrovietnam technical"],
+  },
 
-  HPG: [
-    "hòa phát",
-    "hoa phat",
-    "tập đoàn hòa phát",
-    "tap doan hoa phat",
-    "hòa phát group",
-    "hoa phat group",
-    "hoa phat steel",
-    "thép hòa phát",
-    "thep hoa phat",
-  ],
+  // ─── Aviation ──────────────────────────────────────────────────────────────
+  HVN: {
+    companyName: "Vietnam Airlines",
+    aliases: [
+      "vietnam airlines",
+      "hãng hàng không quốc gia việt nam",
+      "hang hang khong quoc gia viet nam",
+      "vietnam national airline",
+      "hang khong viet nam",
+      "hàng không việt nam",
+    ],
+  },
+  VJC: {
+    companyName: "VietJet Air",
+    aliases: [
+      "vietjet", "vietjet air", "vietjet aviation",
+      "công ty cổ phần hàng không vietjet",
+      "cong ty cp hang khong vietjet",
+      "hang khong vietjet", "hàng không vietjet",
+    ],
+  },
+  ACV: {
+    companyName: "Airports Corporation of Vietnam",
+    aliases: ["acv", "cang hang khong viet nam", "airports corporation"],
+  },
 
-  VIC: [
-    "vingroup",
-    "tập đoàn vingroup",
-    "tap doan vingroup",
-    "vingroup corporation",
-    "công ty vingroup",
-    "cong ty vingroup",
-    "vin group",
-  ],
+  // ─── Retail / Consumer ────────────────────────────────────────────────────
+  MWG: {
+    companyName: "The Gioi Di Dong (Mobile World)",
+    aliases: [
+      "thế giới di động", "the gioi di dong",
+      "mobile world",
+      "công ty cổ phần đầu tư thế giới di động",
+      "cong ty cp dau tu the gioi di dong",
+      "điện máy xanh", "dien may xanh",
+      "bach hoa xanh", "bách hóa xanh",
+    ],
+  },
+  MSN: {
+    companyName: "Masan Group",
+    aliases: [
+      "masan", "tập đoàn masan", "tap doan masan",
+      "masan group", "masan consumer",
+      "công ty masan", "cong ty masan",
+    ],
+  },
+  PNJ: {
+    companyName: "Phu Nhuan Jewelry",
+    aliases: [
+      "pnj",
+      "công ty cổ phần vàng bạc đá quý phú nhuận",
+      "cong ty cp vang bac da quy phu nhuan",
+      "phu nhuan jewelry", "phú nhuận jewelry",
+      "vàng bạc phú nhuận", "vang bac phu nhuan",
+    ],
+  },
+  SAB: {
+    companyName: "Sabeco",
+    aliases: [
+      "sabeco",
+      "tổng công ty cổ phần bia rượu nước giải khát sài gòn",
+      "tong cong ty cp bia ruou nuoc giai khat sai gon",
+      "saigon beer", "saigon beer alcohol beverage",
+      "bia saigon", "bia sài gòn",
+    ],
+  },
 
-  VHM: [
-    "vinhomes",
-    "công ty cổ phần vinhomes",
-    "cong ty cp vinhomes",
-    "vinhomes corporation",
-    "vinhomes bất động sản",
-    "vinhomes bat dong san",
-    "vin homes",
-  ],
+  // ─── Securities ────────────────────────────────────────────────────────────
+  SSI: {
+    companyName: "SSI Securities",
+    aliases: [
+      "ssi securities",
+      "công ty chứng khoán ssi", "cong ty chung khoan ssi",
+      "sai gon securities", "saigon securities",
+      "chứng khoán ssi", "chung khoan ssi",
+    ],
+  },
+  VND: {
+    companyName: "VNDirect Securities",
+    aliases: ["vndirect", "chung khoan vndirect"],
+  },
+  HCM: {
+    companyName: "HCM Securities",
+    aliases: ["chung khoan ho chi minh", "hcm securities"],
+  },
 
-  MSN: [
-    "masan",
-    "tập đoàn masan",
-    "tap doan masan",
-    "masan group",
-    "công ty masan",
-    "cong ty masan",
-    "masan consumer",
-  ],
+  // ─── Utilities ─────────────────────────────────────────────────────────────
+  REE: {
+    companyName: "REE Corporation",
+    aliases: [
+      "ree", "ree corporation",
+      "công ty cổ phần cơ điện lạnh ree",
+      "cong ty co phan co dien lanh ree",
+      "ree co dien lanh",
+      "cơ điện lạnh ree", "co dien lanh ree",
+      "ree refrigeration", "ree refrigeration engineering",
+    ],
+  },
+  POW: {
+    companyName: "PetroVietnam Power",
+    aliases: ["petrovietnam power", "dien luc dau khi", "pv power"],
+  },
 
-  MWG: [
-    "thế giới di động",
-    "the gioi di dong",
-    "mobile world",
-    "công ty cổ phần đầu tư thế giới di động",
-    "cong ty cp dau tu the gioi di dong",
-    "điện máy xanh",
-    "dien may xanh",
-    "bach hoa xanh",
-    "bách hóa xanh",
-  ],
+  // ─── Agriculture ───────────────────────────────────────────────────────────
+  VHC: {
+    companyName: "Vinh Hoan Corporation",
+    aliases: ["vinh hoan", "ca tra vinh hoan", "pangasius vinh hoan"],
+  },
+  HAG: {
+    companyName: "Hoang Anh Gia Lai",
+    aliases: ["hoang anh gia lai", "hagl", "gia lai"],
+  },
 
-  TCB: [
-    "techcombank",
-    "ngân hàng techcombank",
-    "ngan hang techcombank",
-    "technological commercial bank",
-    "ngân hàng kỹ thương việt nam",
-    "ngan hang ky thuong viet nam",
-  ],
+  // ─── Insurance ─────────────────────────────────────────────────────────────
+  BVH: {
+    companyName: "Bao Viet Holdings",
+    aliases: ["bao viet", "bao viet holdings", "bao hiem bao viet"],
+  },
 
-  BID: [
-    "bidv",
-    "ngân hàng bidv",
-    "ngan hang bidv",
-    "bank for investment and development of vietnam",
-    "ngân hàng đầu tư và phát triển việt nam",
-    "ngan hang dau tu va phat trien viet nam",
-  ],
+  // ─── Pharma ────────────────────────────────────────────────────────────────
+  DHG: {
+    companyName: "Hau Giang Pharmaceutical",
+    aliases: [
+      "dược hậu giang", "duoc hau giang",
+      "công ty cổ phần dược hậu giang",
+      "cong ty co phan duoc hau giang",
+      "hau giang pharmaceutical",
+      "dược phẩm hậu giang", "duoc pham hau giang",
+    ],
+  },
+  IMP: {
+    companyName: "Imexpharm",
+    aliases: ["imexpharm", "duoc pham imexpharm"],
+  },
 
-  CTG: [
-    "vietinbank",
-    "ngân hàng vietinbank",
-    "ngan hang vietinbank",
-    "vietnam joint stock commercial bank for industry and trade",
-    "ngân hàng công thương việt nam",
-    "ngan hang cong thuong viet nam",
-    "vietin bank",
-  ],
+  // ─── Logistics ─────────────────────────────────────────────────────────────
+  GMD: {
+    companyName: "Gemadept",
+    aliases: ["gemadept", "cang bien gemadept", "logistics gemadept"],
+  },
+  VTP: {
+    companyName: "Viettel Post",
+    aliases: [
+      "viettel post",
+      "chuyen phat nhanh viettel",
+      "buu chinh viettel",
+    ],
+  },
 
-  ACB: [
-    "ngân hàng á châu",
-    "ngan hang a chau",
-    "asia commercial bank",
-    "ngân hàng acb",
-    "ngan hang acb",
-    "a chau bank",
-    "asia commercial bank of vietnam",
-  ],
-
-  VPB: [
-    "vpbank",
-    "ngân hàng vpbank",
-    "ngan hang vpbank",
-    "vietnam prosperity bank",
-    "ngân hàng việt nam thịnh vượng",
-    "ngan hang viet nam thinh vuong",
-    "vp bank",
-  ],
-
-  HDB: [
-    "hdbank",
-    "ngân hàng hdbank",
-    "ngan hang hdbank",
-    "ho chi minh city development bank",
-    "ngân hàng phát triển thành phố hồ chí minh",
-    "ngan hang phat trien thanh pho ho chi minh",
-    "hd bank",
-  ],
-
-  STB: [
-    "sacombank",
-    "ngân hàng sacombank",
-    "ngan hang sacombank",
-    "sài gòn thương tín",
-    "sai gon thuong tin",
-    "sai gon thuong tin commercial bank",
-    "sacombank bank",
-  ],
-
-  GAS: [
-    "pv gas",
-    "pvgas",
-    "petrovietnam gas",
-    "tổng công ty khí việt nam",
-    "tong cong ty khi viet nam",
-    "pv gas corporation",
-    "vietnam gas",
-  ],
-
-  PLX: [
-    "petrolimex",
-    "tập đoàn xăng dầu việt nam",
-    "tap doan xang dau viet nam",
-    "vietnam national petroleum group",
-    "xang dau viet nam",
-    "petrolimex group",
-  ],
-
-  SAB: [
-    "sabeco",
-    "tổng công ty cổ phần bia rượu nước giải khát sài gòn",
-    "tong cong ty cp bia ruou nuoc giai khat sai gon",
-    "saigon beer",
-    "bia saigon",
-    "bia sài gòn",
-    "saigon beer alcohol beverage",
-  ],
-
-  REE: [
-    "ree corporation",
-    "công ty cổ phần cơ điện lạnh ree",
-    "cong ty co phan co dien lanh ree",
-    "ree co dien lanh",
-    "cơ điện lạnh ree",
-    "co dien lanh ree",
-    "ree refrigeration engineering",
-  ],
-
-  PNJ: [
-    "pnj",
-    "công ty cổ phần vàng bạc đá quý phú nhuận",
-    "cong ty cp vang bac da quy phu nhuan",
-    "phu nhuan jewelry",
-    "phú nhuận jewelry",
-    "vàng bạc phú nhuận",
-    "vang bac phu nhuan",
-  ],
-
-  DHG: [
-    "dược hậu giang",
-    "duoc hau giang",
-    "công ty cổ phần dược hậu giang",
-    "cong ty co phan duoc hau giang",
-    "hau giang pharmaceutical",
-    "dược phẩm hậu giang",
-    "duoc pham hau giang",
-  ],
-
-  // ─── Additional common stocks ──────────────────────────────────────────────
-
-  SSI: [
-    "ssi securities",
-    "công ty chứng khoán ssi",
-    "cong ty chung khoan ssi",
-    "sai gon securities",
-    "saigon securities",
-    "chứng khoán ssi",
-    "chung khoan ssi",
-  ],
-
-  MBB: [
-    "mb bank",
-    "ngân hàng mb",
-    "ngan hang mb",
-    "military commercial bank",
-    "ngân hàng quân đội",
-    "ngan hang quan doi",
-    "mb bank viet nam",
-  ],
-
-  VJC: [
-    "vietjet",
-    "vietjet air",
-    "vietjet aviation",
-    "công ty cổ phần hàng không vietjet",
-    "cong ty cp hang khong vietjet",
-    "hang khong vietjet",
-    "hàng không vietjet",
-  ],
-
-  HVN: [
-    "vietnam airlines",
-    "hãng hàng không quốc gia việt nam",
-    "hang hang khong quoc gia viet nam",
-    "vietnam national airline",
-    "hang khong viet nam",
-    "hàng không việt nam",
-  ],
+  // ─── Automotive ────────────────────────────────────────────────────────────
+  HAX: {
+    companyName: "Hang Xanh Auto",
+    aliases: ["hang xanh", "hang xanh auto", "dai ly oto hang xanh"],
+  },
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Pre-normalise the alias map at module load time
+// Pre-normalised alias lookup (built once at module load)
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
@@ -338,14 +463,14 @@ const STOCK_ALIASES_RAW: Record<string, string[]> = {
  */
 const NORMALISED_ALIASES: Record<string, string[]> = (() => {
   const result: Record<string, string[]> = {};
-  for (const [code, aliases] of Object.entries(STOCK_ALIASES_RAW)) {
-    result[code.toUpperCase()] = aliases.map(normalizeText);
+  for (const [code, entry] of Object.entries(STOCK_CATALOG)) {
+    result[code.toUpperCase()] = entry.aliases.map(normalizeText);
   }
   return result;
 })();
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Public exports
+// Public API
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
@@ -360,6 +485,15 @@ export function getAliasesForCode(code: string): string[] {
 }
 
 /**
+ * Return the display name for a ticker, or null if unknown.
+ *
+ * @param code - Stock ticker, case-insensitive.
+ */
+export function getCompanyName(code: string): string | null {
+  return STOCK_CATALOG[code.toUpperCase()]?.companyName ?? null;
+}
+
+/**
  * Detect which watchlistCodes have an alias appearing in text.
  *
  * Alias detection is purely substring-based (consistent with the
@@ -370,8 +504,8 @@ export function getAliasesForCode(code: string): string[] {
  * Returns [] for empty text, empty watchlist, or no match. Never throws.
  *
  * Performance note: the alias map is a static pre-built object (no I/O).
- * At 20 watchlist codes × ~7 aliases = ~140 substring checks per call.
- * For 500-char text this completes in < 1 ms.
+ * At 50 watchlist codes × ~7 aliases = ~350 substring checks per call.
+ * For 500-char text this completes in < 2 ms.
  *
  * @param text           - Article title + summary concatenated
  * @param watchlistCodes - Ticker codes to check, e.g. ["VNM", "FPT"]

@@ -377,7 +377,7 @@ export function loadMcpConfig(): McpConfig {
       openTime: str(f, "market.openTime", "MARKET_OPEN_TIME", "09:00"),
       closeTime: str(f, "market.closeTime", "MARKET_CLOSE_TIME", "15:30"),
       tradingDays: numArr(f, "market.tradingDays", [1, 2, 3, 4, 5]),
-      watchlist: strArr(f, "market.watchlist", "WATCHLIST", ["VNM", "FPT", "VCB", "VEA"]),
+      watchlist: strArr(f, "market.watchlist", "WATCHLIST", ["VNM", "FPT", "VCB", "VEA", "HPG", "SSI", "MWG", "MSN"]),
     },
     scheduler: {
       intelligenceCycle: str(f, "scheduler.intelligenceCycle", "CRON_INTELLIGENCE_CYCLE", "*/15 * * * *"),

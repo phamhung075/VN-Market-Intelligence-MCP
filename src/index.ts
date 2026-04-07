@@ -26,7 +26,7 @@
 if (!process.env.RUST_LOG) process.env.RUST_LOG = "error";
 if (!process.env.LANCEDB_LOG_LEVEL) process.env.LANCEDB_LOG_LEVEL = "warn";
 
-import { loadConfig } from "./infrastructure/config.js";
+import { loadConfig, loadMcpConfig } from "./infrastructure/config.js";
 import { createLogger } from "./infrastructure/logger.js";
 import { initDatabase } from "./infrastructure/db/index.js";
 import { createBunServer } from "./interface/mcp/server.js";
@@ -48,12 +48,16 @@ initVnstockTables();
 log.info("[bootstrap] Database ready");
 
 // ── 1b. Seed trade relationship profiles (first run only) ────────────────
+// Sprint 053: ticker list now comes from mcp.config.json market.watchlist
+// (single source of truth) instead of the old hard-coded
+// ["VNM","FPT","VCB","HPG","VEA"]. Any code in the watchlist that has no
+// tradeRelationships profile is silently skipped by the filter below.
 try {
   const { seedTradeProfiles } = await import("./infrastructure/db/tradeStore.js");
-  // Import seed data from domain — only inserts if table is empty
   const profiles = await import("./domain/services/tradeRelationships.js");
-  const allProfiles = ["VNM", "FPT", "VCB", "HPG", "VEA"]
-    .map((code) => profiles.getTradeProfile(code))
+  const mcp = loadMcpConfig();
+  const allProfiles = mcp.market.watchlist
+    .map((code: string) => profiles.getTradeProfile(code))
     .filter((p): p is NonNullable<typeof p> => p !== null);
   seedTradeProfiles(allProfiles);
 } catch { /* best-effort — trade analysis will work without seed data */ }

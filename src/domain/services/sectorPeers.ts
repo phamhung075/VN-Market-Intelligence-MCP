@@ -88,6 +88,7 @@ const SECTOR_PEERS: Record<DomainType, { code: string; exchange: string }[]> = {
     { code: "PNJ", exchange: "HOSE" },
     { code: "VNM", exchange: "HOSE" },
     { code: "MSN", exchange: "HOSE" },
+    { code: "SAB", exchange: "HOSE" },
   ],
   securities: [
     { code: "SSI", exchange: "HOSE" },
