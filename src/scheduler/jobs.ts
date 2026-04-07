@@ -42,6 +42,7 @@ import { runWeatherCheck } from './weatherCheckJob.js'
 import { runDavPharmacyCheck } from './davPharmacyJob.js'
 import { runVpsProxyWatchdog } from './vpsProxyWatchdogJob.js'
 import { runBctcOverdueCheck } from './bctcOverdueCheckJob.js'
+import { runBctcReparseJob } from './bctcReparseJob.js'
 
 export const CRONS = {
   morningBriefing:        Bun.env.CRON_MORNING_BRIEFING          ?? '0 8 * * 1-5',
@@ -62,6 +63,8 @@ export const CRONS = {
   davPharmacyCheck:       Bun.env.CRON_DAV_CHECK                  ?? '0 6 1 * *',
   /** BCTC overdue check: daily 09:00 GMT+7 (task 1018 slice 3) */
   bctcOverdueCheck:       Bun.env.CRON_BCTC_OVERDUE_CHECK         ?? '0 9 * * *',
+  /** BCTC stranded-PDF auto-reparse: daily 09:30 GMT+7 (task 1019 slice 2) */
+  bctcReparseJob:         Bun.env.CRON_BCTC_REPARSE_JOB           ?? '30 9 * * *',
 }
 
 function log(msg: string) {
@@ -150,6 +153,11 @@ export function startScheduler() {
 
   cron.schedule(CRONS.predictionMarketPoll, async () => {
     await runPredictionMarketPoll()
+  }, { timezone: 'Asia/Ho_Chi_Minh' })
+
+  // 09:30 GMT+7 daily — BCTC stranded-PDF auto-reparse — task 1019
+  cron.schedule(CRONS.bctcReparseJob, async () => {
+    await runBctcReparseJob()
   }, { timezone: 'Asia/Ho_Chi_Minh' })
 
   registerShutdownHook()

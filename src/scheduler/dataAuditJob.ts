@@ -118,18 +118,29 @@ function ensureAuditDependencies(db: Database): void {
   // agent_feedback table (also created by feedbackTools.ts — this is idempotent)
   db.exec(`
     CREATE TABLE IF NOT EXISTS agent_feedback (
-      id          INTEGER PRIMARY KEY AUTOINCREMENT,
-      agent       TEXT NOT NULL,
-      category    TEXT NOT NULL,
-      title       TEXT NOT NULL,
-      detail      TEXT NOT NULL DEFAULT '',
-      priority    TEXT NOT NULL DEFAULT 'medium',
-      status      TEXT NOT NULL DEFAULT 'new',
-      created_at  TEXT NOT NULL
+      id                INTEGER PRIMARY KEY AUTOINCREMENT,
+      agent             TEXT NOT NULL,
+      category          TEXT NOT NULL,
+      title             TEXT NOT NULL,
+      detail            TEXT NOT NULL DEFAULT '',
+      priority          TEXT NOT NULL DEFAULT 'medium',
+      status            TEXT NOT NULL DEFAULT 'new',
+      created_at        TEXT NOT NULL,
+      reparse_attempts  INTEGER NOT NULL DEFAULT 0   -- task 1019 slice 3
     );
     CREATE INDEX IF NOT EXISTS idx_feedback_status ON agent_feedback(status);
     CREATE INDEX IF NOT EXISTS idx_feedback_agent  ON agent_feedback(agent);
   `);
+
+  // Sprint 053 / task 1019 slice 3: legacy DBs created before reparse_attempts
+  // need an idempotent migration. CREATE TABLE above handles fresh DBs.
+  try {
+    db.exec(
+      "ALTER TABLE agent_feedback ADD COLUMN reparse_attempts INTEGER NOT NULL DEFAULT 0",
+    );
+  } catch {
+    // Column already exists — ignore.
+  }
 
   // audit_state: singleton row (id=1 enforced by CHECK constraint)
   db.exec(`
@@ -513,11 +524,15 @@ function runDailyChecks(db: Database): AuditFinding[] {
         .all()
         .map((r) => r.code);
 
-      const stranded: string[] = [];
+      // Sprint 053 / task 1019 slice 1: emit ONE finding per stranded file
+      // with a structured JSON body. The dedicated bctcReparseJob (slice 2)
+      // reads agent_feedback rows tagged with check="stranded_bctc_pdf",
+      // parses the filePath/ticker out of the detail and feeds the local
+      // file into the re-parse pipeline. Per-file findings also mean the
+      // feedback dedup guard tracks each file individually, so removing one
+      // stranded PDF actually clears its feedback row.
+      let strandedCount = 0;
       for (const filename of files) {
-        // Try to extract a watchlist code from the filename (case-insensitive,
-        // word-boundary). Files with no recognisable code are skipped — they
-        // need manual classification.
         const upper = filename.toUpperCase();
         const matched = watchlistCodes.find((c) => {
           const re = new RegExp(`(^|[^A-Z])${c}([^A-Z]|$)`);
@@ -532,24 +547,41 @@ function runDailyChecks(db: Database): AuditFinding[] {
                    (pdf_path LIKE ? OR ssc_url LIKE ?)`,
           )
           .get(matched, `%${filename}%`, `%${filename}%`);
-        if ((filed?.cnt ?? 0) === 0) {
-          stranded.push(`${matched}:${filename.slice(0, 50)}`);
-        }
+        if ((filed?.cnt ?? 0) > 0) continue;
+
+        strandedCount++;
+        const filePath = join(pdfDir, filename);
+        const payload = {
+          ticker: matched,
+          filename,
+          filePath,
+        };
+
+        const perFileFinding: AuditFinding = {
+          table: "financial_reports",
+          check: "stranded_bctc_pdf",
+          severity: "warning",
+          rowsAffected: 1,
+          action: "flagged",
+          // Prefix the JSON with the classic "ticker:filename" header so the
+          // old dedup key (agent_feedback.title) still hashes uniquely per
+          // file, and slice 2 can JSON.parse the tail.
+          detail: `${matched}:${filename.slice(0, 50)} ${JSON.stringify(payload)}`.slice(0, 480),
+        };
+        findings.push(perFileFinding);
+        insertFeedbackIfNew(db, perFileFinding);
       }
 
-      const finding: AuditFinding = {
-        table: "financial_reports",
-        check: "stranded_bctc_pdf",
-        severity: stranded.length > 0 ? "warning" : "info",
-        rowsAffected: stranded.length,
-        action: stranded.length > 0 ? "flagged" : "none",
-        detail:
-          stranded.length > 0
-            ? `Stranded PDFs (need re-parse): ${stranded.join(", ")}`.slice(0, 480)
-            : "No stranded BCTC PDFs",
-      };
-      findings.push(finding);
-      if (stranded.length > 0) insertFeedbackIfNew(db, finding);
+      if (strandedCount === 0) {
+        findings.push({
+          table: "financial_reports",
+          check: "stranded_bctc_pdf",
+          severity: "info",
+          rowsAffected: 0,
+          action: "none",
+          detail: "No stranded BCTC PDFs",
+        });
+      }
     }
   } catch (err) {
     findings.push({
