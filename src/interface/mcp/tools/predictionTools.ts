@@ -237,6 +237,11 @@ export function registerPredictionTools(server: McpServer): void {
             ? "HAVING active_signal_types IS NOT NULL"
             : "";
 
+        // Report 984: filter out expired markets (NBA/NHL/old Fed from 2022-2023)
+        // that have end_date in the past. They have zero volume/liquidity, slow
+        // analysis, and incorrectly map sports markets to VN sectors.
+        const nowIso = new Date().toISOString();
+
         // Use ISO 8601 cutoff (with T separator) to match JS Date.toISOString() format.
         // SQLite datetime('now') uses a space separator; strftime with 'T' ensures
         // consistent lexicographic ordering against stored ISO strings.
@@ -252,12 +257,13 @@ export function registerPredictionTools(server: McpServer): void {
              LEFT JOIN prediction_signals ps
                ON ps.market_id = pm.id
                AND ps.detected_at >= $cutoff
+             WHERE (pm.end_date IS NULL OR pm.end_date = '' OR pm.end_date >= $now)
              GROUP BY pm.id
              ${havingClause}
              ORDER BY pm.fetched_at DESC
              LIMIT $limit`,
           )
-          .all({ $cutoff: cutoff, $limit: limit }) as PredictionMarketRow[];
+          .all({ $cutoff: cutoff, $now: nowIso, $limit: limit }) as PredictionMarketRow[];
 
         // Count total signal rows within the last hour (for the signalCount meta-field)
         const signalCountRow = db
