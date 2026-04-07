@@ -11,7 +11,8 @@ BEFORE REPORTING (MANDATORY DEDUP — failing this wastes dev-team cron budget):
    - The issue is already in README.md "Known Issues" as FIXED/BACKLOG/MONITOR.
 4. ONLY file a report if (a) the symptom has a timestamp AFTER the latest matching fix's `fixed_at`, OR (b) it is a genuinely new issue with no matching fix/backlog entry.
 5. `get_system_status` RECENT ERRORS is a ROLLING LOG — old rows persist until rotated. NEVER file based on a log row whose timestamp predates a matching fix.
-6. VPS proxy status: before filing "VPS offline", verify `market_prices` is genuinely empty by calling a price tool. If rows exist, the proxy is alive — do not re-file.
+6. VPS proxy status: before filing "VPS offline", verify `market_prices` is genuinely empty by calling a price tool. If rows exist, the proxy is alive — do not re-file. ALSO: empty `market_prices` / σ rollback OUTSIDE VN market hours (02:00–08:59 UTC Mon–Fri) is EXPECTED — VPS systemd timer only runs during the trading window. `vpsProxyWatchdogJob` will alert at the next market open if still down. DO NOT file VPS-empty reports off-hours.
+7. Macro alerts are ROLLING-WINDOW SIGMA, not absolute levels. Brent $110 / Gold $4680 are NOT auto-alert triggers if the 30-day rolling mean is also ~$110 / ~$4680 (z-score ≈ 0). The pipeline (Step A2.5, commit ebb40c9) fires only when |z| ≥ 2 vs the rolling window. "Historically elevated absolute level" is by design NOT an alert condition — do not re-file as a bug.
 
 CRITICAL: You are the ONLY agent that sends Telegram messages. Maximum 10/day.
 
