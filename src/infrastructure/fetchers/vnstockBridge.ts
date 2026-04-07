@@ -200,8 +200,12 @@ async function runPython<T>(script: string, label: string): Promise<T | null> {
     // and progress bars to stderr even on successful runs. Only surface stderr
     // as a warning when the process actually failed — otherwise demote to debug
     // to keep RECENT ERRORS actionable.
+    // exit code 143 = SIGTERM (killed by our local timer or an outer step
+    // timeout). Always benign — demote to debug so RECENT ERRORS stays clean.
+    const killedBySignal = exitCode === 143 || timedOut;
+
     if (stderr.trim()) {
-      if (exitCode !== 0 && !timedOut) {
+      if (exitCode !== 0 && !killedBySignal) {
         logger.warn(`[vnstock:${label}] stderr`, { stderr: stderr.slice(0, 300) });
       } else {
         logger.debug(`[vnstock:${label}] stderr (non-fatal)`, { stderr: stderr.slice(0, 300) });
@@ -209,12 +213,16 @@ async function runPython<T>(script: string, label: string): Promise<T | null> {
     }
 
     if (timedOut) {
-      logger.warn(`[vnstock:${label}] timeout after ${PYTHON_TIMEOUT_MS}ms — killed (SIGTERM)`);
+      logger.debug(`[vnstock:${label}] timeout after ${PYTHON_TIMEOUT_MS}ms — killed (SIGTERM)`);
       return null;
     }
 
     if (exitCode !== 0) {
-      logger.warn(`[vnstock:${label}] exit code ${exitCode}`);
+      if (killedBySignal) {
+        logger.debug(`[vnstock:${label}] exit code ${exitCode} (SIGTERM, benign)`);
+      } else {
+        logger.warn(`[vnstock:${label}] exit code ${exitCode}`);
+      }
       return null;
     }
 

@@ -908,9 +908,11 @@ function writeSystemLog(
   findings: AuditFinding[],
 ): void {
   try {
+    // Routine audit completion is INFO. Warning-severity findings are
+    // recorded inside details_json — they are not system-level warnings and
+    // should not pollute the RECENT ERRORS panel. Only criticals escalate.
     const hasCritical = findings.some((f) => f.severity === "critical");
-    const hasWarning = findings.some((f) => f.severity === "warning");
-    const level = hasCritical ? "error" : hasWarning ? "warn" : "info";
+    const level = hasCritical ? "error" : "info";
 
     const cleaned = findings.filter((f) => f.action === "auto_cleaned").reduce((s, f) => s + f.rowsAffected, 0);
     const warnings = findings.filter((f) => (f.action === "flagged" || f.action === "escalated") && f.severity === "warning").length;
