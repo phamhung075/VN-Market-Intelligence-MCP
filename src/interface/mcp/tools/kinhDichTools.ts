@@ -360,16 +360,64 @@ export function computeMacroScore(): number {
 }
 
 /**
+ * Deterministic per-ticker jitter to prevent convergence when real data is absent.
+ *
+ * When BCTC is missing, VPS is offline, or no rag_analyses exist, all 6 hao
+ * scores default to 0.0 and multiple stocks collapse to the same hexagram.
+ * This jitter adds a tiny but unique perturbation to Hao 5 (sector) for each
+ * stock code so the final hexagram differs even when all real signals are flat.
+ *
+ * Properties:
+ *   - Deterministic: same code → same jitter (stable across cycles)
+ *   - Small: |jitter| ≤ 0.09 → real scores always dominate
+ *   - Non-zero: |jitter| ≥ 0.05 → large enough to move across the 0.10
+ *     THIEU_DUONG / THIEU_AM threshold when the base score is exactly 0.0
+ *   - Positive or negative: derived from odd/even sum to spread across ±
+ *   - Case-insensitive: normalised to uppercase before hashing
+ *
+ * Task 1007 / Report 1007 + 1020.
+ *
+ * @param code - Stock ticker, e.g. "VCB". Case-insensitive.
+ * @returns A value in (-0.09, -0.05] ∪ [+0.05, +0.09), or 0 for empty input.
+ */
+export function tickerJitter(code: string): number {
+  if (!code) return 0;
+  const upper = code.toUpperCase();
+  // Polynomial hash: each char contributes code × (position+1) × 31^position
+  let h = 0;
+  for (let i = 0; i < upper.length; i++) {
+    h = (h * 31 + upper.charCodeAt(i)) >>> 0; // unsigned 32-bit
+  }
+  // Map to [0, 40] → [0.05, 0.09] range (40 steps of 0.001)
+  const magnitude = 0.05 + (h % 41) * 0.001; // 0.050 … 0.090
+  // Sign: odd sum of char codes → positive, even → negative
+  const charSum = upper.split("").reduce((s, c) => s + c.charCodeAt(0), 0);
+  return charSum % 2 === 1 ? magnitude : -magnitude;
+}
+
+/**
  * Compute all 6 hao scores for a stock code.
  * Each score defaults to 0.0 on any error.
+ *
+ * Hao 5 (sector) receives a deterministic per-ticker jitter (|jitter| ≤ 0.09)
+ * when the raw sector score is 0.0. This prevents multiple stocks from
+ * collapsing to the same hexagram when all real-data sources are unavailable
+ * (VPS offline, BCTC absent, no rag_analyses). Task 1007.
  */
 export function computeHaoScores(code: string): number[] {
+  const rawSector = computeSectorScore(code);
+  // Apply jitter to hao 5 only when the raw sector score is exactly 0.0
+  // (data absent). Non-zero real signals dominate and are never perturbed.
+  const sectorWithJitter = rawSector === 0.0
+    ? Math.max(-1, Math.min(1, tickerJitter(code)))
+    : rawSector;
+
   return [
     computeSentimentScore(code),
     computeFundamentalsScore(code),
     computePriceScore(code),
     computeForeignFlowScore(code),
-    computeSectorScore(code),
+    sectorWithJitter,
     computeMacroScore(),
   ];
 }
