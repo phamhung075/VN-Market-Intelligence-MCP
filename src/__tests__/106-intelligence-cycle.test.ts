@@ -84,6 +84,29 @@ describe("Task 106 — isMarketHours()", () => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Shared no-network deps for market-hours tests.
+//
+// Steps A3 (vnstockSync), A4 (hexagram), C2 (syncSectorPeers), E (alertStore),
+// F (userRequests), and G (chainSynthesis) all hit SQLite or external HTTP when
+// their injectable counterparts are absent. We provide no-op stubs here to
+// prevent 5-second Bun test timeouts caused by real I/O.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const NO_NET_MARKET_DEPS = {
+  isMarketHoursFn: () => true as boolean,
+  listSscDocsFn: async () => [] as import("../infrastructure/fetchers/ssc.js").SscDocument[],
+  fetchPricesFn: async () => 0,
+  runImpactChainFn: async () => 0,
+  sendAlertsFn: async () => 0,
+  getWatchlistCodesFn: async () => [] as string[],
+  computeHexagramsFn: async () => 0,
+  syncSectorPeersFn: async () => ({ synced: 0, skipped: 0, apiCalls: 0 }),
+  readUnnotifiedAlertsFn: async () => [] as import("../domain/services/alertGenerator.js").Alert[],
+  markAlertNotifiedFn: async () => {},
+  pollNewsFn: async () => ({ fetched: 0, inserted: 0, duplicates: 0, alerts: 0, errors: 0 }),
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
 // runIntelligenceCycle() — market hours (full cycle)
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -95,15 +118,12 @@ describe("Task 106 — runIntelligenceCycle() during market hours", () => {
     let pollCalled = false;
 
     const result = await runIntelligenceCycle({
-      isMarketHoursFn: () => true,
+      ...NO_NET_MARKET_DEPS,
       pollNewsFn: async () => {
         pollCalled = true;
         return { fetched: 5, inserted: 3, duplicates: 2, alerts: 0, errors: 0 };
       },
-      listSscDocsFn: async () => [],
       fetchPricesFn: async () => 4,
-      runImpactChainFn: async () => 0,
-      sendAlertsFn: async () => 0,
       getWatchlistCodesFn: async () => ["VCB", "HPG"],
     });
 
@@ -119,15 +139,12 @@ describe("Task 106 — runIntelligenceCycle() during market hours", () => {
     const sscCodes: string[] = [];
 
     await runIntelligenceCycle({
-      isMarketHoursFn: () => true,
-      pollNewsFn: async () => ({ fetched: 0, inserted: 0, duplicates: 0, alerts: 0, errors: 0 }),
+      ...NO_NET_MARKET_DEPS,
       listSscDocsFn: async (code) => {
         sscCodes.push(code);
         return [];
       },
       fetchPricesFn: async () => 2,
-      runImpactChainFn: async () => 0,
-      sendAlertsFn: async () => 0,
       getWatchlistCodesFn: async () => ["VCB", "HPG"],
     });
 
@@ -142,15 +159,11 @@ describe("Task 106 — runIntelligenceCycle() during market hours", () => {
     let fetchPricesCalled = false;
 
     const result = await runIntelligenceCycle({
-      isMarketHoursFn: () => true,
-      pollNewsFn: async () => ({ fetched: 0, inserted: 0, duplicates: 0, alerts: 0, errors: 0 }),
-      listSscDocsFn: async () => [],
+      ...NO_NET_MARKET_DEPS,
       fetchPricesFn: async () => {
         fetchPricesCalled = true;
         return 10;
       },
-      runImpactChainFn: async () => 0,
-      sendAlertsFn: async () => 0,
       getWatchlistCodesFn: async () => ["VCB"],
     });
 
@@ -165,15 +178,12 @@ describe("Task 106 — runIntelligenceCycle() during market hours", () => {
     let impactCalled = false;
 
     const result = await runIntelligenceCycle({
-      isMarketHoursFn: () => true,
+      ...NO_NET_MARKET_DEPS,
       pollNewsFn: async () => ({ fetched: 2, inserted: 2, duplicates: 0, alerts: 0, errors: 0 }),
-      listSscDocsFn: async () => [],
-      fetchPricesFn: async () => 0,
       runImpactChainFn: async () => {
         impactCalled = true;
         return 2;
       },
-      sendAlertsFn: async () => 0,
       getWatchlistCodesFn: async () => ["VCB"],
     });
 
@@ -188,11 +198,8 @@ describe("Task 106 — runIntelligenceCycle() during market hours", () => {
     let alertsSent = 0;
 
     const result = await runIntelligenceCycle({
-      isMarketHoursFn: () => true,
+      ...NO_NET_MARKET_DEPS,
       pollNewsFn: async () => ({ fetched: 1, inserted: 1, duplicates: 0, alerts: 2, errors: 0 }),
-      listSscDocsFn: async () => [],
-      fetchPricesFn: async () => 0,
-      runImpactChainFn: async () => 0,
       sendAlertsFn: async (alerts) => {
         alertsSent = alerts.length;
         return alertsSent;
@@ -208,12 +215,11 @@ describe("Task 106 — runIntelligenceCycle() during market hours", () => {
     resetCycleGuard();
 
     const result = await runIntelligenceCycle({
-      isMarketHoursFn: () => true,
+      ...NO_NET_MARKET_DEPS,
       pollNewsFn: async () => ({ fetched: 3, inserted: 2, duplicates: 1, alerts: 0, errors: 0 }),
       listSscDocsFn: async () => [{ title: "Doc1", url: "ssc-adf://dl-001", publishedAt: "2026-03-29", reportType: "quarterly" as const, actionCode: "VCB" }],
       fetchPricesFn: async () => 5,
       runImpactChainFn: async () => 1,
-      sendAlertsFn: async () => 0,
       getWatchlistCodesFn: async () => ["VCB"],
     });
 
@@ -438,15 +444,12 @@ describe("Task 106 — graceful degradation", () => {
     let fetchPricesCalled = false;
 
     const result = await runIntelligenceCycle({
-      isMarketHoursFn: () => true,
+      ...NO_NET_MARKET_DEPS,
       pollNewsFn: async () => { throw new Error("RSS timeout"); },
-      listSscDocsFn: async () => [],
       fetchPricesFn: async () => {
         fetchPricesCalled = true;
         return 3;
       },
-      runImpactChainFn: async () => 0,
-      sendAlertsFn: async () => 0,
       getWatchlistCodesFn: async () => ["VCB"],
     });
 
@@ -462,15 +465,13 @@ describe("Task 106 — graceful degradation", () => {
     let fetchPricesCalled = false;
 
     const result = await runIntelligenceCycle({
-      isMarketHoursFn: () => true,
+      ...NO_NET_MARKET_DEPS,
       pollNewsFn: async () => ({ fetched: 1, inserted: 1, duplicates: 0, alerts: 0, errors: 0 }),
       listSscDocsFn: async () => { throw new Error("SSC portal down"); },
       fetchPricesFn: async () => {
         fetchPricesCalled = true;
         return 2;
       },
-      runImpactChainFn: async () => 0,
-      sendAlertsFn: async () => 0,
       getWatchlistCodesFn: async () => ["VCB"],
     });
 
@@ -486,15 +487,13 @@ describe("Task 106 — graceful degradation", () => {
     let impactCalled = false;
 
     const result = await runIntelligenceCycle({
-      isMarketHoursFn: () => true,
+      ...NO_NET_MARKET_DEPS,
       pollNewsFn: async () => ({ fetched: 1, inserted: 1, duplicates: 0, alerts: 0, errors: 0 }),
-      listSscDocsFn: async () => [],
       fetchPricesFn: async () => { throw new Error("VnDirect API down"); },
       runImpactChainFn: async () => {
         impactCalled = true;
         return 1;
       },
-      sendAlertsFn: async () => 0,
       getWatchlistCodesFn: async () => ["VCB"],
     });
 
@@ -508,12 +507,11 @@ describe("Task 106 — graceful degradation", () => {
     resetCycleGuard();
 
     const result = await runIntelligenceCycle({
-      isMarketHoursFn: () => true,
+      ...NO_NET_MARKET_DEPS,
       pollNewsFn: async () => { throw new Error("fail 1"); },
       listSscDocsFn: async () => { throw new Error("fail 2"); },
       fetchPricesFn: async () => { throw new Error("fail 3"); },
       runImpactChainFn: async () => { throw new Error("fail 4"); },
-      sendAlertsFn: async () => 0,
       getWatchlistCodesFn: async () => ["VCB"],
     });
 
@@ -527,12 +525,7 @@ describe("Task 106 — graceful degradation", () => {
     resetCycleGuard();
 
     const result = await runIntelligenceCycle({
-      isMarketHoursFn: () => true,
-      pollNewsFn: async () => ({ fetched: 0, inserted: 0, duplicates: 0, alerts: 0, errors: 0 }),
-      listSscDocsFn: async () => [],
-      fetchPricesFn: async () => 0,
-      runImpactChainFn: async () => 0,
-      sendAlertsFn: async () => 0,
+      ...NO_NET_MARKET_DEPS,
       getWatchlistCodesFn: async () => { throw new Error("DB down"); },
     });
 
