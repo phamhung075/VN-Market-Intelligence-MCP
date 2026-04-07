@@ -527,12 +527,21 @@ export async function initDatabase(): Promise<void> {
       if (defaultStocks.length > 0) {
         const existing = db.query("SELECT COUNT(*) as c FROM watchlist").get() as { c: number };
         if (existing.c === 0) {
-          const domainMap: Record<string, string> = { VNM: "retail", FPT: "tech", VCB: "banking", VEA: "automotive" };
+          // Sprint 053 — single source of truth for ticker → { domain, exchange }:
+          // derive from SECTOR_PEERS via getStockProfile() instead of a
+          // hand-maintained domainMap. Adding a new ticker now only requires
+          // updating SECTOR_PEERS in domain/services/sectorPeers.ts.
+          const { getStockProfile } = await import("../../domain/services/sectorPeers.js");
           const ins = db.prepare(
-            "INSERT OR IGNORE INTO watchlist (code, exchange, domain, added_at, alert_drop_pct, alert_rise_pct, alert_impact_min, alert_report_new) VALUES (?, 'HOSE', ?, datetime('now'), -3, 5, 7, 1)"
+            "INSERT OR IGNORE INTO watchlist (code, exchange, domain, added_at, alert_drop_pct, alert_rise_pct, alert_impact_min, alert_report_new) VALUES (?, ?, ?, datetime('now'), -3, 5, 7, 1)"
           );
           for (const code of defaultStocks) {
-            ins.run(code, domainMap[code] ?? "other");
+            const profile = getStockProfile(code);
+            ins.run(
+              code,
+              profile?.exchange ?? "HOSE",
+              profile?.domain ?? "other",
+            );
           }
         }
       }

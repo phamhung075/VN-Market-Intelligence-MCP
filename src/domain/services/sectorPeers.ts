@@ -213,6 +213,45 @@ export function getSectorPeers(
     .slice(0, maxPeers);
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Reverse index — ticker → { domain, exchange }
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Lazily-built reverse index from SECTOR_PEERS so every caller that needs
+ * "what sector does this ticker belong to?" hits ONE source of truth. Built
+ * on first access and cached for the rest of the process.
+ */
+let _stockProfileCache: Map<string, { domain: DomainType; exchange: string }> | null = null;
+
+function getStockProfileMap(): Map<string, { domain: DomainType; exchange: string }> {
+  if (_stockProfileCache !== null) return _stockProfileCache;
+  const map = new Map<string, { domain: DomainType; exchange: string }>();
+  for (const domain of Object.keys(SECTOR_PEERS) as DomainType[]) {
+    for (const entry of SECTOR_PEERS[domain] ?? []) {
+      // First domain wins if a code appears in multiple sector lists (it shouldn't,
+      // but SECTOR_PEERS is manually maintained).
+      if (!map.has(entry.code)) {
+        map.set(entry.code, { domain, exchange: entry.exchange });
+      }
+    }
+  }
+  _stockProfileCache = map;
+  return map;
+}
+
+/**
+ * Look up the canonical domain + exchange for a ticker code. Returns null
+ * when the code is not in any SECTOR_PEERS list — callers should fall back
+ * to a safe default (e.g. `domain="other", exchange="HOSE"`) and consider
+ * adding the ticker to SECTOR_PEERS if it is expected to be classified.
+ */
+export function getStockProfile(
+  code: string,
+): { domain: DomainType; exchange: string } | null {
+  return getStockProfileMap().get(code.toUpperCase()) ?? null;
+}
+
 /**
  * Given a list of watchlist entries, returns all unique context peer codes
  * that should be fetched for sector comparison.
