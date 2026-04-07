@@ -246,14 +246,14 @@ export function registerAlertTools(server: McpServer): void {
         .string()
         .optional()
         .describe("Filter alerts affecting a specific stock code, e.g. VCB"),
-      limitDays: z
+      limitDays: z.coerce
         .number()
         .int()
         .min(1)
         .max(90)
         .default(7)
         .describe("Return system alerts from the last N days (default: 7, max: 90)"),
-      limit: z
+      limit: z.coerce
         .number()
         .int()
         .min(1)
@@ -491,7 +491,7 @@ export function registerAlertTools(server: McpServer): void {
         .string()
         .optional()
         .describe("End of date range (ISO 8601), e.g. 2026-12-31"),
-      limit: z
+      limit: z.coerce
         .number()
         .int()
         .min(1)

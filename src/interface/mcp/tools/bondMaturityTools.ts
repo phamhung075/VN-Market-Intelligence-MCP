@@ -77,7 +77,7 @@ export function registerBondMaturityTools(
     "get_bond_maturity_calendar",
     "Get upcoming corporate bond (TPDN BĐS) maturity calendar for real estate developers. Includes risk alerts for maturities within 7/14/30 days. Returns Vietnamese plain-text report.",
     {
-      months: z.number().int().min(1).max(24).optional().default(6).describe("Look-ahead window in months (default: 6, max: 24)"),
+      months: z.coerce.number().int().min(1).max(24).optional().default(6).describe("Look-ahead window in months (default: 6, max: 24)"),
     },
     async ({ months = 6 }) => {
       const db = _testDb ?? getDb();

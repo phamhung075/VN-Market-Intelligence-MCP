@@ -344,7 +344,7 @@ export function registerBctcFullTools(
         .min(2)
         .max(10)
         .describe("Stock ticker code, e.g. VCB"),
-      year: z
+      year: z.coerce
         .number()
         .int()
         .min(2010)

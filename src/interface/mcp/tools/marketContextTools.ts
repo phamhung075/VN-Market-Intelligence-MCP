@@ -451,7 +451,7 @@ export function registerMarketContextTools(server: McpServer): void {
       "Use this at the start of every agent session instead of calling " +
       "get_watchlist + get_market_snapshot + get_macro_snapshot + get_alerts + get_analysis_history separately.",
     {
-      hours_back: z
+      hours_back: z.coerce
         .number()
         .int()
         .min(1)

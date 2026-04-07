@@ -619,7 +619,7 @@ export function registerKinhDichTools(server: McpServer): void {
         .min(1)
         .max(10)
         .describe("Stock ticker code (e.g. \"VCB\")"),
-      days: z
+      days: z.coerce
         .number()
         .int()
         .min(1)
@@ -693,7 +693,7 @@ export function registerKinhDichTools(server: McpServer): void {
     "get_transition_probabilities",
     "Get the Markov transition probabilities for a hexagram: which hexagrams are most likely to follow, based on historical observations. Requires prior readings stored in DB.",
     {
-      hexagram_number: z
+      hexagram_number: z.coerce
         .number()
         .int()
         .min(1)
@@ -785,7 +785,7 @@ export function registerKinhDichTools(server: McpServer): void {
         .max(10)
         .optional()
         .describe("Stock code to backtest (optional, default VNINDEX)"),
-      days: z
+      days: z.coerce
         .number()
         .int()
         .min(7)
@@ -905,7 +905,7 @@ export function registerKinhDichTools(server: McpServer): void {
     "explain_hexagram",
     "Get the full Vietnamese explanation for a hexagram (1-64): name, Chinese character, judgment, image, 6 hao lines, and trading implications.",
     {
-      number: z
+      number: z.coerce
         .number()
         .int()
         .min(1)

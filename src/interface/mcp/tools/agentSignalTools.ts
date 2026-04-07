@@ -52,7 +52,7 @@ const OutcomeEnum = z.enum([
 const PayloadSchema = z.object({
   title: z.string().optional().describe("Short headline for the signal"),
   detail: z.string().optional().describe("Full detail / reasoning"),
-  impact_score: z
+  impact_score: z.coerce
     .number()
     .min(0)
     .max(10)
@@ -95,7 +95,7 @@ export function registerAgentSignalTools(server: McpServer): void {
       payload: PayloadSchema.describe(
         "Signal payload: title, detail, and optional impact_score",
       ),
-      ttl_minutes: z
+      ttl_minutes: z.coerce
         .number()
         .int()
         .positive()
@@ -103,8 +103,8 @@ export function registerAgentSignalTools(server: McpServer): void {
         .describe("Time-to-live in minutes (default 120)"),
       cycle_id: z.string().optional().describe("15-min cycle ID (auto-computed if omitted), format YYYYMMDD-HHMM"),
       finding_data: z.record(z.unknown()).optional().describe("Structured finding metrics: { confidence, direction, event_type, validates, confirms_direction, volume_above_average, summary, ... }"),
-      causal_ref: z.number().int().optional().describe("ID of parent signal this finding builds on"),
-      chain_depth: z.number().int().min(0).max(3).optional().default(0).describe("Chain depth: 0=catalyst, 1=validation, 2=confirmation, 3=synthesis"),
+      causal_ref: z.coerce.number().int().optional().describe("ID of parent signal this finding builds on"),
+      chain_depth: z.coerce.number().int().min(0).max(3).optional().default(0).describe("Chain depth: 0=catalyst, 1=validation, 2=confirmation, 3=synthesis"),
     },
     async (args) => {
       try {
@@ -252,7 +252,7 @@ export function registerAgentSignalTools(server: McpServer): void {
     "Record the processing outcome for an agent signal. " +
       "Use this after a signal has been acted upon to feed the effectiveness tracker.",
     {
-      signal_id: z
+      signal_id: z.coerce
         .number()
         .int()
         .positive()
@@ -307,7 +307,7 @@ export function registerAgentSignalTools(server: McpServer): void {
         .describe(
           "Filter to a specific signal type (optional)",
         ),
-      days: z
+      days: z.coerce
         .number()
         .int()
         .positive()
@@ -382,7 +382,7 @@ export function registerAgentSignalTools(server: McpServer): void {
     "get_open_chain_findings",
     "Get open chain findings from the coordination bus — signals posted with a cycle_id that have not yet been synthesized. Agents use this to see what other agents have found, so they can post enrichment findings that build on the catalyst. Optionally filter by stock_code.",
     {
-      minutes_back: z.number().int().min(1).max(120).optional().default(30).describe("Lookback window in minutes (default 30)"),
+      minutes_back: z.coerce.number().int().min(1).max(120).optional().default(30).describe("Lookback window in minutes (default 30)"),
       stock_code: z.string().optional().describe("Filter by stock code, e.g. 'VNM'"),
     },
     async (input) => {

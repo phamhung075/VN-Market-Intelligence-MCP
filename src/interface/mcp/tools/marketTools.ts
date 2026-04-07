@@ -271,7 +271,7 @@ export function registerMarketTools(server: McpServer): void {
         .min(1)
         .max(100)
         .describe("Event keyword to match in past analysis headlines/summaries, e.g. \"oil price\""),
-      lookbackHours: z
+      lookbackHours: z.coerce
         .number()
         .int()
         .min(1)

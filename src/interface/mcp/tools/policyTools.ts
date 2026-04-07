@@ -99,7 +99,7 @@ export function registerPolicyTools(
     "Get recent government policy signals (Nghị định, Thông tư, Quyết định) and their sector impact. Returns Vietnamese plain-text analysis.",
     {
       sector: z.string().optional().describe("Filter by sector (e.g. 'banking', 'real_estate'). Omit for all sectors."),
-      days: z.number().int().min(1).max(90).optional().default(30).describe("Look-back window in days (default: 30)"),
+      days: z.coerce.number().int().min(1).max(90).optional().default(30).describe("Look-back window in days (default: 30)"),
     },
     async ({ sector, days = 30 }) => {
       const db = _testDb ?? getDb();

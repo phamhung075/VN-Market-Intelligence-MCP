@@ -82,7 +82,7 @@ export function registerCascadeMetricsTools(server: McpServer): void {
     "get_cascade_metrics",
     "Get cascade rule hit metrics: which sector rules fired and which are dead (never triggered). Useful for tuning the cascade engine.",
     {
-      days: z
+      days: z.coerce
         .number()
         .int()
         .min(1)

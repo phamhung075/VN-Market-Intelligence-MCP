@@ -176,7 +176,7 @@ export function registerPriceHistoryTools(
       actionCode: z
         .string()
         .describe("Stock ticker code (e.g. 'VCB', 'FPT', 'VNM')"),
-      days: z
+      days: z.coerce
         .number()
         .optional()
         .default(7)

@@ -70,7 +70,7 @@ export function registerPortfolioRiskTool(server: McpServer): void {
     "Portfolio risk metrics: VaR 95%, max drawdown, and per-stock heat map. " +
       "Uses historical price simulation over the specified lookback period.",
     {
-      days: z
+      days: z.coerce
         .number()
         .int()
         .min(1)

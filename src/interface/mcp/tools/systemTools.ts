@@ -344,7 +344,7 @@ export function registerSystemTools(server: McpServer): void {
     {
       includeErrors: z.boolean().default(true)
         .describe("Include recent WARN/ERROR log lines section (default: true)"),
-      errorLines: z.number().int().min(1).max(200).default(10)
+      errorLines: z.coerce.number().int().min(1).max(200).default(10)
         .describe("Number of WARN/ERROR log lines to include when includeErrors=true (default: 10)"),
     },
     async ({ includeErrors, errorLines }) => {

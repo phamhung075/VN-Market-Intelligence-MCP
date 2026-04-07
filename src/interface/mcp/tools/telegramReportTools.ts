@@ -77,7 +77,7 @@ export function registerTelegramReportTools(server: McpServer): void {
         .optional()
         .default("new")
         .describe("Trang thai bao cao can lay: 'new' (mac dinh), 'processed', hoac 'all'"),
-      limit: z
+      limit: z.coerce
         .number()
         .int()
         .min(1)
@@ -164,7 +164,7 @@ export function registerTelegramReportTools(server: McpServer): void {
     "Danh dau mot bao cao la da xu ly va tuy chon xoa tin nhan Telegram tuong ung " +
       "khoi kenh Report Channel de giu kenh sach se.",
     {
-      id: z
+      id: z.coerce
         .number()
         .int()
         .min(1)
@@ -247,7 +247,7 @@ export function registerTelegramReportTools(server: McpServer): void {
       "Dung truoc khi goi process_telegram_report. " +
       "Neu da co agent khac claim roi, tra ve thong bao 'Already claimed by {claimant}'.",
     {
-      id: z
+      id: z.coerce
         .number()
         .int()
         .min(1)

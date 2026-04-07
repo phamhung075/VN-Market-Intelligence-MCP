@@ -71,7 +71,7 @@ export function registerAlertMuteTools(server: McpServer): void {
       action: z
         .enum(["mute", "unmute"])
         .describe("'mute' de tat tieng, 'unmute' de bat lai"),
-      hours: z
+      hours: z.coerce
         .number()
         .int()
         .min(1)

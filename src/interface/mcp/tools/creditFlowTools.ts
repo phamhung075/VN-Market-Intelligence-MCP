@@ -106,23 +106,23 @@ export function registerCreditFlowTools(server: McpServer): void {
     "get_credit_flow_signal",
     "Phan tich thay doi tin dung bat dong san cua NHNN va tao tin hieu thi truong cho co phieu ngan hang va BDS.",
     {
-      currentReCreditTrillion: z
+      currentReCreditTrillion: z.coerce
         .number()
         .describe("Du no tin dung BDS thang hien tai (nghin ty VND)"),
-      previousReCreditTrillion: z
+      previousReCreditTrillion: z.coerce
         .number()
         .describe("Du no tin dung BDS thang truoc (nghin ty VND)"),
-      currentMortgageRatePct: z
+      currentMortgageRatePct: z.coerce
         .number()
         .describe("Lai suat vay mua nha trung binh thang hien tai (%)"),
-      previousMortgageRatePct: z
+      previousMortgageRatePct: z.coerce
         .number()
         .describe("Lai suat vay mua nha trung binh thang truoc (%)"),
-      currentYoyGrowthPct: z
+      currentYoyGrowthPct: z.coerce
         .number()
         .optional()
         .describe("Tang truong tin dung YoY thang hien tai (%)"),
-      previousYoyGrowthPct: z
+      previousYoyGrowthPct: z.coerce
         .number()
         .optional()
         .describe("Tang truong tin dung YoY thang truoc (%)"),

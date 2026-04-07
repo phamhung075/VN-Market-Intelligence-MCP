@@ -162,7 +162,7 @@ export function registerSentimentTrendTools(
     "Show sentiment trend for a stock over N days based on past analyses",
     {
       stock_code: z.string().describe("Stock code (e.g. 'VNM')"),
-      window_days: z
+      window_days: z.coerce
         .number()
         .min(1)
         .max(30)

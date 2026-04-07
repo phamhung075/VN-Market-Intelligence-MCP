@@ -83,7 +83,7 @@ export function registerPriceAlertTools(server: McpServer): void {
         .enum(["stop_loss", "take_profit"])
         .describe("'stop_loss' fires when price drops to/below threshold. " +
           "'take_profit' fires when price rises to/above threshold."),
-      threshold: z
+      threshold: z.coerce
         .number()
         .positive()
         .describe("Price level in VND that triggers the alert, e.g. 80000 for 80,000 VND."),
@@ -171,7 +171,7 @@ export function registerPriceAlertTools(server: McpServer): void {
       "The alert is marked as 'cancelled' (soft delete) so audit history is preserved. " +
       "Use get_alerts with type='price' to find the ID of the alert you want to remove.",
     {
-      alertId: z
+      alertId: z.coerce
         .number()
         .int()
         .positive()

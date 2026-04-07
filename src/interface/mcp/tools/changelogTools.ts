@@ -92,7 +92,7 @@ export function registerChangelogTools(server: McpServer): void {
         .string()
         .optional()
         .describe("Git commit hash tuong ung (tuy chon)"),
-      related_feedback_id: z
+      related_feedback_id: z.coerce
         .number()
         .int()
         .optional()
@@ -143,7 +143,7 @@ export function registerChangelogTools(server: McpServer): void {
       "Analysis Team nen goi tool nay truoc khi bao cao van de de tranh bao cao trung lap. " +
       "Tra ve cac sua loi moi nhat truoc (DESC).",
     {
-      limit: z
+      limit: z.coerce
         .number()
         .int()
         .min(1)

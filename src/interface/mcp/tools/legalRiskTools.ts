@@ -115,7 +115,7 @@ export function registerLegalRiskTools(
     "Get recent legal risk signals (khởi tố, phong tỏa tài sản, truy thu thuế, etc.) for watchlist stocks. Returns Vietnamese plain-text summary.",
     {
       stock: z.string().optional().describe("Stock ticker code to filter by (e.g. 'VCB'). Omit for all stocks."),
-      days: z.number().int().min(1).max(90).optional().default(30).describe("Look-back window in days (default: 30, max: 90)"),
+      days: z.coerce.number().int().min(1).max(90).optional().default(30).describe("Look-back window in days (default: 30, max: 90)"),
     },
     async ({ stock, days = 30 }) => {
       const db = _testDb ?? getDb();

@@ -204,7 +204,7 @@ export function registerPerformanceTools(server: McpServer): void {
       "neutral signals (news_mention) are counted but not scored. " +
       "Output is a Vietnamese formatted attribution table.",
     {
-      days: z
+      days: z.coerce
         .number()
         .optional()
         .default(30)

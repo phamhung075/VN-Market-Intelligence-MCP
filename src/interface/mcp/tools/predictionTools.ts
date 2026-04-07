@@ -114,7 +114,7 @@ export function registerPredictionTools(server: McpServer): void {
       "Precision = confirmed / (confirmed + false_positive). " +
       "Outcomes are validated weekly by comparing signal direction against ±2% price moves in the 48h window.",
     {
-      days: z
+      days: z.coerce
         .number()
         .int()
         .min(1)
@@ -214,7 +214,7 @@ export function registerPredictionTools(server: McpServer): void {
           "Filter mode: 'all' returns every stored market; " +
             "'signals_only' returns only markets with signals detected in the last hour.",
         ),
-      limit: z
+      limit: z.coerce
         .number()
         .int()
         .min(1)

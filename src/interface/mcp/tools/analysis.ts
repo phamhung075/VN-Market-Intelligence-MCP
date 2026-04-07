@@ -90,7 +90,7 @@ export function registerAnalysisTools(server: McpServer): void {
         .array(z.enum(["cafef", "vnexpress", "reuters", "vneconomy"]))
         .default(["cafef", "vnexpress", "reuters", "vneconomy"])
         .describe("Which RSS sources to fetch from (default: all four)"),
-      limit: z
+      limit: z.coerce
         .number()
         .int()
         .min(1)
@@ -351,7 +351,7 @@ export function registerAnalysisTools(server: McpServer): void {
         .regex(/^[A-Z0-9]{1,10}$/, "actionCode must be 1–10 uppercase letters/digits (e.g. VCB)")
         .optional()
         .describe("Filter results to entries for a specific stock code, e.g. VCB"),
-      k: z
+      k: z.coerce
         .number()
         .int()
         .min(1)

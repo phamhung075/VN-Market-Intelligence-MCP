@@ -336,7 +336,7 @@ export function registerAlertAccuracyTool(server: McpServer): void {
       "or UNKNOWN (no price data). " +
       "Shows breakdown by signal type and worst-performing stocks.",
     {
-      days: z
+      days: z.coerce
         .number()
         .optional()
         .default(30)

@@ -83,7 +83,7 @@ export function registerPharmaTools(server: McpServer, dbOverride?: Database): v
         .describe(
           "Filter by stock code (e.g. 'DHG', 'IMP', 'DBD'). Omit for all pharma stocks.",
         ),
-      days: z
+      days: z.coerce
         .number()
         .int()
         .positive()

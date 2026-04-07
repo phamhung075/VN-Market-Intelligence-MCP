@@ -278,7 +278,7 @@ export function registerCorrelationTools(server: McpServer): void {
       "va diem da dang hoa danh muc (0-1). " +
       "Compute Pearson correlation matrix for all watchlist stock pairs using price history.",
     {
-      days: z
+      days: z.coerce
         .number()
         .int()
         .min(5)

@@ -130,7 +130,7 @@ export function registerUserRequestTools(server: McpServer): void {
       "Use this to find questions that the intelligence cycle has not yet answered. " +
       "Returns an array of rows with id, command, payload, status, created_at.",
     {
-      limit: z.number().int().min(1).max(50).optional().default(5)
+      limit: z.coerce.number().int().min(1).max(50).optional().default(5)
         .describe("Maximum number of pending requests to return (default 5, max 50)"),
     },
     async ({ limit }) => {

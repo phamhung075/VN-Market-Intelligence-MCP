@@ -48,7 +48,7 @@ export type PipelineFn = (
 const QuarterEnum = z.enum(["Q1", "Q2", "Q3", "Q4"]);
 
 const PeriodSchema = z.object({
-  year: z.number().int().min(2010).max(2030),
+  year: z.coerce.number().int().min(2010).max(2030),
   quarter: QuarterEnum,
 });
 
@@ -236,7 +236,7 @@ export function registerReportTools(
         .max(10)
         .toUpperCase()
         .describe("Stock ticker code, e.g. VCB"),
-      year: z
+      year: z.coerce
         .number()
         .int()
         .min(2010)
@@ -558,7 +558,7 @@ export function registerReportTools(
         .string()
         .min(1)
         .describe("PDF filename from list_stored_pdfs (e.g. 'BCTC VNM 31.12.2025 - HOP NHAT - VN.pdf')"),
-      maxChars: z
+      maxChars: z.coerce
         .number()
         .int()
         .min(1000)
