@@ -44,6 +44,14 @@ export interface SectorPriceData {
   price1dAgo: number | null;
   /** Price 5 trading days ago, or null if unavailable. */
   price5dAgo: number | null;
+  /**
+   * Pre-computed 1d % change from `market_prices.change_pct`. When present,
+   * this is preferred over `(priceNow - price1dAgo) / price1dAgo` so that
+   * `get_sector_rotation` and `get_sector_comparison` agree on the same
+   * authoritative number (sprint 052 / backlog 916). Optional — historical
+   * fallback still applies when null.
+   */
+  changePct?: number | null;
 }
 
 /** Classification outcome for a single sector. */
@@ -273,8 +281,14 @@ export function detectSectorRotation(
     const returns5d = sectorStocks
       .map((s) => computeReturn(s.priceNow, s.price5dAgo))
       .filter((r): r is number => r !== null);
+    // Sprint 052 / 916: prefer pre-computed change_pct (same field
+    // get_sector_comparison reads) so the two tools cannot disagree on the
+    // 1d number. Fall back to historical computation only when change_pct
+    // is missing.
     const returns1d = sectorStocks
-      .map((s) => computeReturn(s.priceNow, s.price1dAgo))
+      .map((s) =>
+        s.changePct != null ? s.changePct : computeReturn(s.priceNow, s.price1dAgo),
+      )
       .filter((r): r is number => r !== null);
 
     const avg5dReturn =

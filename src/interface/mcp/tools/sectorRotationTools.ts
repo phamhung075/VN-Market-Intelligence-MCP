@@ -37,6 +37,7 @@ import type { DomainType } from "../../../../bctc-schema.js";
 interface MarketPriceRow {
   code: string;
   price: number;
+  change_pct: number | null;
   updated_at: string;
 }
 
@@ -98,7 +99,7 @@ export async function getSectorRotationReport(db: Database): Promise<string> {
   try {
     currentPrices = db
       .query<MarketPriceRow, []>(
-        "SELECT code, price, updated_at FROM market_prices WHERE price IS NOT NULL",
+        "SELECT code, price, change_pct, updated_at FROM market_prices WHERE price IS NOT NULL",
       )
       .all();
   } catch {
@@ -175,6 +176,7 @@ export async function getSectorRotationReport(db: Database): Promise<string> {
       priceNow: row.price,
       price1dAgo: findHistoricalPrice(row.code, oneDayAgo),
       price5dAgo: findHistoricalPrice(row.code, fiveDaysAgo),
+      changePct: row.change_pct,
     };
   }
 
