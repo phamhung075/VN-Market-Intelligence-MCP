@@ -1,19 +1,16 @@
 /**
- * Task 235 — Unified Telegram send tool
+ * Sprint 051 — Three-channel send_telegram tool
  *
- * Interface layer: registers the send_telegram MCP tool.
+ * Interface layer: registers the unified send_telegram MCP tool with a
+ * mandatory `channel` discriminator: "market" | "work" | "bug".
  *
- * Tool registered:
- *   1. send_telegram — sends a message to either the Chat Channel or the Report Channel
- *                      via a single `channel` parameter ("chat" | "report").
+ * Channels:
+ *   - market: TELEGRAM_INFO_MARKET_GROUP_ID — user-facing market alerts/briefings
+ *   - work:   TELEGRAM_INFO_WORK_CHANNEL_ID — dev/analysis status, refresh asks
+ *   - bug:    TELEGRAM_REPORT_BUG_CHANNEL_ID — analysis → dev bug reports
  *
- * Replaces (removed):
- *   - send_test_telegram (previously sent to Chat Channel)
- *   - send_telegram_report (previously sent to Report Channel)
- *   - delete_telegram_report (functionality absorbed into process_telegram_report)
- *
- * Note: send_alert_digest is registered separately in alertDigestTools.ts
- * because it has distinct orchestration logic (assembles a digest, not just relays a message).
+ * Bug messages are also persisted in the telegram_reports table for the Dev
+ * Team autonomous loop.
  *
  * @module interface/mcp/tools/telegramTools
  */
@@ -21,33 +18,28 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 
-import { sendTelegramMessage, sendTelegramReport } from "../../../infrastructure/notifiers/telegram.js";
+import {
+  sendTelegramMarket,
+  sendTelegramWork,
+  sendTelegramBug,
+} from "../../../infrastructure/notifiers/telegram.js";
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Tool registration
-// ─────────────────────────────────────────────────────────────────────────────
-
-/**
- * Registers the send_telegram MCP tool on the given McpServer instance.
- *
- * Tool: send_telegram
- *   Input:  { channel: "chat" | "report", message: string }
- *   Output: { content: [{ type: "text", text: "..." }] }
- *
- * @param server - The McpServer instance to register tools on.
- */
 export function registerTelegramTools(server: McpServer): void {
   server.tool(
     "send_telegram",
-    "Send a message to a Telegram channel. " +
-      "Use channel='chat' to send to the user-facing Chat Channel (alerts, briefings, analysis). " +
-      "Use channel='report' to send to the Report Channel for inter-agent communication " +
-      "(report problems, request dev team action). " +
-      "channel='report' messages are stored in the telegram_reports table for the Dev Team to process.",
+    "Send a message to one of the three Telegram channels. " +
+      "channel='market' → user-facing market alerts/briefings (TELEGRAM_INFO_MARKET_GROUP_ID). " +
+      "channel='work' → dev/analysis status, fix-shipped, agent refresh asks (TELEGRAM_INFO_WORK_CHANNEL_ID). " +
+      "channel='bug' → analysis → dev bug reports (TELEGRAM_REPORT_BUG_CHANNEL_ID); " +
+      "bug messages are persisted in telegram_reports for the Dev Team to process.",
     {
       channel: z
-        .enum(["chat", "report"])
-        .describe("Target channel: 'chat' = user Chat Channel (TELEGRAM_CHAT_ID), 'report' = Report Channel (TELEGRAM_REPORT_ID)"),
+        .enum(["market", "work", "bug"])
+        .describe(
+          "Target channel: 'market' (TELEGRAM_INFO_MARKET_GROUP_ID), " +
+            "'work' (TELEGRAM_INFO_WORK_CHANNEL_ID), " +
+            "'bug' (TELEGRAM_REPORT_BUG_CHANNEL_ID).",
+        ),
       message: z
         .string()
         .min(1)
@@ -56,28 +48,40 @@ export function registerTelegramTools(server: McpServer): void {
     },
     async ({ channel, message }) => {
       try {
-        if (channel === "chat") {
-          const success = await sendTelegramMessage(message, { parseMode: "" });
+        if (channel === "market") {
+          const success = await sendTelegramMarket(message, { parseMode: "" });
           return {
             content: [
               {
                 type: "text" as const,
                 text: success
-                  ? "Message sent to Chat Channel."
-                  : "Failed — check TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID env vars",
+                  ? "Message sent to MARKET channel."
+                  : "Failed — check TELEGRAM_BOT_TOKEN / TELEGRAM_INFO_MARKET_GROUP_ID env vars",
+              },
+            ],
+          };
+        } else if (channel === "work") {
+          const success = await sendTelegramWork(message, { parseMode: "" });
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: success
+                  ? "Message sent to WORK channel."
+                  : "Failed — check TELEGRAM_BOT_TOKEN / TELEGRAM_INFO_WORK_CHANNEL_ID env vars",
               },
             ],
           };
         } else {
-          // channel === "report"
-          const msgId = await sendTelegramReport(message, { parseMode: "" });
+          // channel === "bug"
+          const msgId = await sendTelegramBug(message, { parseMode: "" });
           return {
             content: [
               {
                 type: "text" as const,
                 text: msgId > 0
-                  ? `Message sent to Report Channel. message_id: ${msgId}`
-                  : "Failed — check TELEGRAM_BOT_TOKEN / TELEGRAM_REPORT_ID env vars",
+                  ? `Message sent to BUG channel. message_id: ${msgId}`
+                  : "Failed — check TELEGRAM_BOT_TOKEN / TELEGRAM_REPORT_BUG_CHANNEL_ID env vars",
               },
             ],
           };

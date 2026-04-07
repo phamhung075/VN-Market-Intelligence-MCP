@@ -1,15 +1,19 @@
 /**
  * Barrel — Infrastructure Notifiers
  *
- * Re-exports all notifier functions and types.
+ * Re-exports the three-channel Telegram notifier API.
  */
 
 export {
-  sendTelegramMessage,
+  sendTelegramMarket,
+  sendTelegramWork,
+  sendTelegramBug,
+  deleteTelegramBug,
   notifyTelegramAlert,
   notifyTelegramDocument,
   type FetchFn,
   type SendTelegramOptions,
   type NotifyOptions,
   type TelegramNotifier,
+  type TelegramChannel,
 } from "./telegram.js";

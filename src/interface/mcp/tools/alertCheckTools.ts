@@ -11,7 +11,7 @@
  *   2. Fetch latest prices for those stocks via injected or real fetcher.
  *   3. Run `detectSignals` + `generateAlerts` (pure domain functions).
  *   4. For HIGH/CRITICAL alerts: attempt Telegram notification (graceful no-op
- *      when TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID env vars are absent).
+ *      when TELEGRAM_BOT_TOKEN / TELEGRAM_INFO_MARKET_GROUP_ID env vars are absent).
  *   5. Return a formatted Vietnamese text summary.
  *
  * READ-ONLY: does NOT persist alerts to the database (avoids dedup collisions

@@ -329,7 +329,7 @@ describe("Task 306 — buildEnrichedAnswer: send failure keeps row pending", () 
       .get(reqId) as { status: string } | null;
 
     // When send fails, row should NOT be 'done' — it should remain pending or be reset
-    // Per AC-306: "If sendTelegramMessage throws, the row remains status='pending'"
+    // Per AC-306: "If sendTelegramMarket throws, the row remains status='pending'"
     expect(row).not.toBeNull();
     expect(row!.status).toBe("pending");
   });

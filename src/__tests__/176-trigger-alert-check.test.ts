@@ -250,7 +250,7 @@ describe("Task 176 — trigger_alert_check MCP Tool (tool removed in task 230)",
 
     // Ensure Telegram env vars are absent
     delete process.env["TELEGRAM_BOT_TOKEN"];
-    delete process.env["TELEGRAM_CHAT_ID"];
+    delete process.env["TELEGRAM_INFO_MARKET_GROUP_ID"];
 
     let threw = false;
     try {

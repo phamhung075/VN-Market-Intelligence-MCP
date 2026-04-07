@@ -5,7 +5,7 @@
  * All tests mock fetch() to avoid real Telegram API calls.
  *
  * Coverage:
- *   - sendTelegramMessage: happy path, missing env vars, HTTP errors, network errors
+ *   - sendTelegramMarket: happy path, missing env vars, HTTP errors, network errors
  *   - notifyTelegramAlert: severity filtering, message formatting
  *   - notifyTelegramDocument: new SSC document notification
  *   - send_test_telegram MCP tool: success + failure
@@ -65,7 +65,7 @@ describe("Task 034 — Telegram Bot Notifier", () => {
     // Snapshot env vars before each test
     originalEnv = {
       TELEGRAM_BOT_TOKEN: Bun.env.TELEGRAM_BOT_TOKEN,
-      TELEGRAM_CHAT_ID: Bun.env.TELEGRAM_CHAT_ID,
+      TELEGRAM_INFO_MARKET_GROUP_ID: Bun.env.TELEGRAM_INFO_MARKET_GROUP_ID,
     };
   });
 
@@ -76,120 +76,120 @@ describe("Task 034 — Telegram Bot Notifier", () => {
     } else {
       Bun.env.TELEGRAM_BOT_TOKEN = originalEnv.TELEGRAM_BOT_TOKEN;
     }
-    if (originalEnv.TELEGRAM_CHAT_ID === undefined) {
-      delete (Bun.env as Record<string, string | undefined>).TELEGRAM_CHAT_ID;
+    if (originalEnv.TELEGRAM_INFO_MARKET_GROUP_ID === undefined) {
+      delete (Bun.env as Record<string, string | undefined>).TELEGRAM_INFO_MARKET_GROUP_ID;
     } else {
-      Bun.env.TELEGRAM_CHAT_ID = originalEnv.TELEGRAM_CHAT_ID;
+      Bun.env.TELEGRAM_INFO_MARKET_GROUP_ID = originalEnv.TELEGRAM_INFO_MARKET_GROUP_ID;
     }
   });
 
   // ───────────────────────────────────────────────────────────────────────────
-  // sendTelegramMessage tests
+  // sendTelegramMarket tests
   // ───────────────────────────────────────────────────────────────────────────
 
-  it("TC-01: sendTelegramMessage returns true on HTTP 200", async () => {
+  it("TC-01: sendTelegramMarket returns true on HTTP 200", async () => {
     Bun.env.TELEGRAM_BOT_TOKEN = "test-token";
-    Bun.env.TELEGRAM_CHAT_ID = "12345";
+    Bun.env.TELEGRAM_INFO_MARKET_GROUP_ID = "12345";
 
     const mockFetch = mock(async () => makeResponse(200, { ok: true, result: {} }));
 
-    const { sendTelegramMessage } = await import(
+    const { sendTelegramMarket } = await import(
       "../infrastructure/notifiers/telegram.js"
     );
 
-    const result = await sendTelegramMessage("Hello", { fetchFn: mockFetch as unknown as typeof fetch });
+    const result = await sendTelegramMarket("Hello", { fetchFn: mockFetch as unknown as typeof fetch });
     expect(result).toBe(true);
     expect(mockFetch).toHaveBeenCalledTimes(1);
   });
 
-  it("TC-02: sendTelegramMessage returns false when TELEGRAM_BOT_TOKEN is missing", async () => {
+  it("TC-02: sendTelegramMarket returns false when TELEGRAM_BOT_TOKEN is missing", async () => {
     delete (Bun.env as Record<string, string | undefined>).TELEGRAM_BOT_TOKEN;
-    Bun.env.TELEGRAM_CHAT_ID = "12345";
+    Bun.env.TELEGRAM_INFO_MARKET_GROUP_ID = "12345";
 
     const mockFetch = mock(async () => makeResponse(200));
 
-    const { sendTelegramMessage } = await import(
+    const { sendTelegramMarket } = await import(
       "../infrastructure/notifiers/telegram.js"
     );
 
-    const result = await sendTelegramMessage("Hello", { fetchFn: mockFetch as unknown as typeof fetch });
+    const result = await sendTelegramMarket("Hello", { fetchFn: mockFetch as unknown as typeof fetch });
     expect(result).toBe(false);
     expect(mockFetch).not.toHaveBeenCalled();
   });
 
-  it("TC-03: sendTelegramMessage returns false when TELEGRAM_CHAT_ID is missing", async () => {
+  it("TC-03: sendTelegramMarket returns false when TELEGRAM_INFO_MARKET_GROUP_ID is missing", async () => {
     Bun.env.TELEGRAM_BOT_TOKEN = "test-token";
-    delete (Bun.env as Record<string, string | undefined>).TELEGRAM_CHAT_ID;
+    delete (Bun.env as Record<string, string | undefined>).TELEGRAM_INFO_MARKET_GROUP_ID;
 
     const mockFetch = mock(async () => makeResponse(200));
 
-    const { sendTelegramMessage } = await import(
+    const { sendTelegramMarket } = await import(
       "../infrastructure/notifiers/telegram.js"
     );
 
-    const result = await sendTelegramMessage("Hello", { fetchFn: mockFetch as unknown as typeof fetch });
+    const result = await sendTelegramMarket("Hello", { fetchFn: mockFetch as unknown as typeof fetch });
     expect(result).toBe(false);
     expect(mockFetch).not.toHaveBeenCalled();
   });
 
-  it("TC-04: sendTelegramMessage returns false on HTTP 4xx (bad token)", async () => {
+  it("TC-04: sendTelegramMarket returns false on HTTP 4xx (bad token)", async () => {
     Bun.env.TELEGRAM_BOT_TOKEN = "bad-token";
-    Bun.env.TELEGRAM_CHAT_ID = "12345";
+    Bun.env.TELEGRAM_INFO_MARKET_GROUP_ID = "12345";
 
     const mockFetch = mock(async () => makeResponse(401, { ok: false, description: "Unauthorized" }));
 
-    const { sendTelegramMessage } = await import(
+    const { sendTelegramMarket } = await import(
       "../infrastructure/notifiers/telegram.js"
     );
 
-    const result = await sendTelegramMessage("Hello", { fetchFn: mockFetch as unknown as typeof fetch });
+    const result = await sendTelegramMarket("Hello", { fetchFn: mockFetch as unknown as typeof fetch });
     expect(result).toBe(false);
   });
 
-  it("TC-05: sendTelegramMessage returns false on HTTP 5xx", async () => {
+  it("TC-05: sendTelegramMarket returns false on HTTP 5xx", async () => {
     Bun.env.TELEGRAM_BOT_TOKEN = "test-token";
-    Bun.env.TELEGRAM_CHAT_ID = "12345";
+    Bun.env.TELEGRAM_INFO_MARKET_GROUP_ID = "12345";
 
     const mockFetch = mock(async () => makeResponse(500, { ok: false }));
 
-    const { sendTelegramMessage } = await import(
+    const { sendTelegramMarket } = await import(
       "../infrastructure/notifiers/telegram.js"
     );
 
-    const result = await sendTelegramMessage("Hello", { fetchFn: mockFetch as unknown as typeof fetch });
+    const result = await sendTelegramMarket("Hello", { fetchFn: mockFetch as unknown as typeof fetch });
     expect(result).toBe(false);
   });
 
-  it("TC-06: sendTelegramMessage returns false on network error (fetch rejects)", async () => {
+  it("TC-06: sendTelegramMarket returns false on network error (fetch rejects)", async () => {
     Bun.env.TELEGRAM_BOT_TOKEN = "test-token";
-    Bun.env.TELEGRAM_CHAT_ID = "12345";
+    Bun.env.TELEGRAM_INFO_MARKET_GROUP_ID = "12345";
 
     const mockFetch = mock(async () => { throw new Error("ECONNREFUSED"); });
 
-    const { sendTelegramMessage } = await import(
+    const { sendTelegramMarket } = await import(
       "../infrastructure/notifiers/telegram.js"
     );
 
-    const result = await sendTelegramMessage("Hello", { fetchFn: mockFetch as unknown as typeof fetch });
+    const result = await sendTelegramMarket("Hello", { fetchFn: mockFetch as unknown as typeof fetch });
     expect(result).toBe(false);
   });
 
-  it("TC-07: sendTelegramMessage never throws — always returns boolean", async () => {
+  it("TC-07: sendTelegramMarket never throws — always returns boolean", async () => {
     Bun.env.TELEGRAM_BOT_TOKEN = "test-token";
-    Bun.env.TELEGRAM_CHAT_ID = "12345";
+    Bun.env.TELEGRAM_INFO_MARKET_GROUP_ID = "12345";
 
     const mockFetch = mock(async () => { throw new Error("Catastrophic failure"); });
 
-    const { sendTelegramMessage } = await import(
+    const { sendTelegramMarket } = await import(
       "../infrastructure/notifiers/telegram.js"
     );
 
-    await expect(sendTelegramMessage("Hello", { fetchFn: mockFetch as unknown as typeof fetch })).resolves.toBe(false);
+    await expect(sendTelegramMarket("Hello", { fetchFn: mockFetch as unknown as typeof fetch })).resolves.toBe(false);
   });
 
-  it("TC-08: sendTelegramMessage POSTs to the correct Telegram Bot API endpoint", async () => {
+  it("TC-08: sendTelegramMarket POSTs to the correct Telegram Bot API endpoint", async () => {
     Bun.env.TELEGRAM_BOT_TOKEN = "my-bot-token";
-    Bun.env.TELEGRAM_CHAT_ID = "99999";
+    Bun.env.TELEGRAM_INFO_MARKET_GROUP_ID = "99999";
 
     let capturedUrl = "";
     const mockFetch = mock(async (url: string) => {
@@ -197,19 +197,19 @@ describe("Task 034 — Telegram Bot Notifier", () => {
       return makeResponse(200);
     });
 
-    const { sendTelegramMessage } = await import(
+    const { sendTelegramMarket } = await import(
       "../infrastructure/notifiers/telegram.js"
     );
 
-    await sendTelegramMessage("Test message", { fetchFn: mockFetch as unknown as typeof fetch });
+    await sendTelegramMarket("Test message", { fetchFn: mockFetch as unknown as typeof fetch });
     expect(capturedUrl).toContain("api.telegram.org");
     expect(capturedUrl).toContain("my-bot-token");
     expect(capturedUrl).toContain("sendMessage");
   });
 
-  it("TC-09: sendTelegramMessage includes chat_id and text in POST body", async () => {
+  it("TC-09: sendTelegramMarket includes chat_id and text in POST body", async () => {
     Bun.env.TELEGRAM_BOT_TOKEN = "my-bot-token";
-    Bun.env.TELEGRAM_CHAT_ID = "99999";
+    Bun.env.TELEGRAM_INFO_MARKET_GROUP_ID = "99999";
 
     let capturedBody: Record<string, unknown> = {};
     const mockFetch = mock(async (_url: string, init: RequestInit) => {
@@ -217,11 +217,11 @@ describe("Task 034 — Telegram Bot Notifier", () => {
       return makeResponse(200);
     });
 
-    const { sendTelegramMessage } = await import(
+    const { sendTelegramMarket } = await import(
       "../infrastructure/notifiers/telegram.js"
     );
 
-    await sendTelegramMessage("Hello Telegram", { fetchFn: mockFetch as unknown as typeof fetch });
+    await sendTelegramMarket("Hello Telegram", { fetchFn: mockFetch as unknown as typeof fetch });
     expect(capturedBody.chat_id).toBe("99999");
     expect(capturedBody.text).toBe("Hello Telegram");
   });
@@ -232,7 +232,7 @@ describe("Task 034 — Telegram Bot Notifier", () => {
 
   it("TC-10: notifyTelegramAlert sends for HIGH severity", async () => {
     Bun.env.TELEGRAM_BOT_TOKEN = "test-token";
-    Bun.env.TELEGRAM_CHAT_ID = "12345";
+    Bun.env.TELEGRAM_INFO_MARKET_GROUP_ID = "12345";
 
     const mockFetch = mock(async () => makeResponse(200));
 
@@ -248,7 +248,7 @@ describe("Task 034 — Telegram Bot Notifier", () => {
 
   it("TC-11: notifyTelegramAlert sends for CRITICAL severity", async () => {
     Bun.env.TELEGRAM_BOT_TOKEN = "test-token";
-    Bun.env.TELEGRAM_CHAT_ID = "12345";
+    Bun.env.TELEGRAM_INFO_MARKET_GROUP_ID = "12345";
 
     const mockFetch = mock(async () => makeResponse(200));
 
@@ -264,7 +264,7 @@ describe("Task 034 — Telegram Bot Notifier", () => {
 
   it("TC-12: notifyTelegramAlert skips LOW severity — no HTTP call made", async () => {
     Bun.env.TELEGRAM_BOT_TOKEN = "test-token";
-    Bun.env.TELEGRAM_CHAT_ID = "12345";
+    Bun.env.TELEGRAM_INFO_MARKET_GROUP_ID = "12345";
 
     const mockFetch = mock(async () => makeResponse(200));
 
@@ -280,7 +280,7 @@ describe("Task 034 — Telegram Bot Notifier", () => {
 
   it("TC-13: notifyTelegramAlert skips MEDIUM severity — no HTTP call made", async () => {
     Bun.env.TELEGRAM_BOT_TOKEN = "test-token";
-    Bun.env.TELEGRAM_CHAT_ID = "12345";
+    Bun.env.TELEGRAM_INFO_MARKET_GROUP_ID = "12345";
 
     const mockFetch = mock(async () => makeResponse(200));
 
@@ -296,7 +296,7 @@ describe("Task 034 — Telegram Bot Notifier", () => {
 
   it("TC-14: notifyTelegramAlert message includes severity, stock code, and timestamp", async () => {
     Bun.env.TELEGRAM_BOT_TOKEN = "test-token";
-    Bun.env.TELEGRAM_CHAT_ID = "12345";
+    Bun.env.TELEGRAM_INFO_MARKET_GROUP_ID = "12345";
 
     let capturedBody: Record<string, unknown> = {};
     const mockFetch = mock(async (_url: string, init: RequestInit) => {
@@ -324,7 +324,7 @@ describe("Task 034 — Telegram Bot Notifier", () => {
 
   it("TC-15: notifyTelegramDocument sends notification for new SSC document", async () => {
     Bun.env.TELEGRAM_BOT_TOKEN = "test-token";
-    Bun.env.TELEGRAM_CHAT_ID = "12345";
+    Bun.env.TELEGRAM_INFO_MARKET_GROUP_ID = "12345";
 
     let capturedBody: Record<string, unknown> = {};
     const mockFetch = mock(async (_url: string, init: RequestInit) => {
@@ -353,7 +353,7 @@ describe("Task 034 — Telegram Bot Notifier", () => {
 
   it("TC-16: notifyTelegramDocument returns false when env vars missing", async () => {
     delete (Bun.env as Record<string, string | undefined>).TELEGRAM_BOT_TOKEN;
-    delete (Bun.env as Record<string, string | undefined>).TELEGRAM_CHAT_ID;
+    delete (Bun.env as Record<string, string | undefined>).TELEGRAM_INFO_MARKET_GROUP_ID;
 
     const mockFetch = mock(async () => makeResponse(200));
 
@@ -369,9 +369,9 @@ describe("Task 034 — Telegram Bot Notifier", () => {
     expect(mockFetch).not.toHaveBeenCalled();
   });
 
-  it("TC-17: sendTelegramMessage uses Markdown parse_mode", async () => {
+  it("TC-17: sendTelegramMarket uses Markdown parse_mode", async () => {
     Bun.env.TELEGRAM_BOT_TOKEN = "test-token";
-    Bun.env.TELEGRAM_CHAT_ID = "12345";
+    Bun.env.TELEGRAM_INFO_MARKET_GROUP_ID = "12345";
 
     let capturedBody: Record<string, unknown> = {};
     const mockFetch = mock(async (_url: string, init: RequestInit) => {
@@ -379,11 +379,11 @@ describe("Task 034 — Telegram Bot Notifier", () => {
       return makeResponse(200);
     });
 
-    const { sendTelegramMessage } = await import(
+    const { sendTelegramMarket } = await import(
       "../infrastructure/notifiers/telegram.js"
     );
 
-    await sendTelegramMessage("*bold text*", {
+    await sendTelegramMarket("*bold text*", {
       parseMode: "Markdown",
       fetchFn: mockFetch as unknown as typeof fetch,
     });
@@ -394,7 +394,7 @@ describe("Task 034 — Telegram Bot Notifier", () => {
   it("TC-18: TelegramNotifier type is exported (interface check via typeof)", async () => {
     const mod = await import("../infrastructure/notifiers/telegram.js");
     // The module must export the functions (duck-typing check)
-    expect(typeof mod.sendTelegramMessage).toBe("function");
+    expect(typeof mod.sendTelegramMarket).toBe("function");
     expect(typeof mod.notifyTelegramAlert).toBe("function");
     expect(typeof mod.notifyTelegramDocument).toBe("function");
   });
@@ -410,7 +410,7 @@ describe("Task 034 — send_test_telegram MCP tool", () => {
   beforeEach(() => {
     originalEnv = {
       TELEGRAM_BOT_TOKEN: Bun.env.TELEGRAM_BOT_TOKEN,
-      TELEGRAM_CHAT_ID: Bun.env.TELEGRAM_CHAT_ID,
+      TELEGRAM_INFO_MARKET_GROUP_ID: Bun.env.TELEGRAM_INFO_MARKET_GROUP_ID,
     };
   });
 
@@ -420,10 +420,10 @@ describe("Task 034 — send_test_telegram MCP tool", () => {
     } else {
       Bun.env.TELEGRAM_BOT_TOKEN = originalEnv.TELEGRAM_BOT_TOKEN;
     }
-    if (originalEnv.TELEGRAM_CHAT_ID === undefined) {
-      delete (Bun.env as Record<string, string | undefined>).TELEGRAM_CHAT_ID;
+    if (originalEnv.TELEGRAM_INFO_MARKET_GROUP_ID === undefined) {
+      delete (Bun.env as Record<string, string | undefined>).TELEGRAM_INFO_MARKET_GROUP_ID;
     } else {
-      Bun.env.TELEGRAM_CHAT_ID = originalEnv.TELEGRAM_CHAT_ID;
+      Bun.env.TELEGRAM_INFO_MARKET_GROUP_ID = originalEnv.TELEGRAM_INFO_MARKET_GROUP_ID;
     }
   });
 
@@ -434,7 +434,7 @@ describe("Task 034 — send_test_telegram MCP tool", () => {
 
   it("TC-20: send_test_telegram tool returns success text when message is sent", async () => {
     Bun.env.TELEGRAM_BOT_TOKEN = "test-token";
-    Bun.env.TELEGRAM_CHAT_ID = "12345";
+    Bun.env.TELEGRAM_INFO_MARKET_GROUP_ID = "12345";
 
     // Mock fetch on globalThis for this test
     const originalFetch = globalThis.fetch;
@@ -461,7 +461,7 @@ describe("Task 034 — send_test_telegram MCP tool", () => {
 
       // Verify the tool is registered
       const tools = (server as unknown as { _registeredTools: Record<string, unknown> })._registeredTools;
-      expect("send_test_telegram" in tools).toBe(true);
+      expect("send_telegram" in tools).toBe(true);
     } finally {
       globalThis.fetch = originalFetch;
     }

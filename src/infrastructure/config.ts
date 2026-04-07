@@ -40,7 +40,12 @@ export interface EmbeddingConfig {
 
 export interface TelegramConfig {
   botToken: string;
-  chatId: string;
+  /** TELEGRAM_INFO_MARKET_GROUP_ID — user-facing market alerts/briefings. */
+  marketGroupId: string;
+  /** TELEGRAM_INFO_WORK_CHANNEL_ID — dev/analysis status, refresh asks. */
+  workChannelId: string;
+  /** TELEGRAM_REPORT_BUG_CHANNEL_ID — analysis → dev bug reports. */
+  bugChannelId: string;
   parseMode: string;
   enabled: boolean;
 }
@@ -188,7 +193,12 @@ export interface AppConfig {
   dbPath: string;
   logLevel: LogLevel;
   telegramBotToken: string;
-  telegramChatId: string;
+  /** TELEGRAM_INFO_MARKET_GROUP_ID — user-facing market alerts/briefings. */
+  telegramMarketGroupId: string;
+  /** TELEGRAM_INFO_WORK_CHANNEL_ID — dev/analysis status, refresh asks. */
+  telegramWorkChannelId: string;
+  /** TELEGRAM_REPORT_BUG_CHANNEL_ID — analysis → dev bug reports. */
+  telegramBugChannelId: string;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -355,7 +365,9 @@ export function loadMcpConfig(): McpConfig {
     },
     telegram: {
       botToken: str(f, "telegram.botToken", "TELEGRAM_BOT_TOKEN", ""),
-      chatId: str(f, "telegram.chatId", "TELEGRAM_CHAT_ID", ""),
+      marketGroupId: str(f, "telegram.marketGroupId", "TELEGRAM_INFO_MARKET_GROUP_ID", ""),
+      workChannelId: str(f, "telegram.workChannelId", "TELEGRAM_INFO_WORK_CHANNEL_ID", ""),
+      bugChannelId: str(f, "telegram.bugChannelId", "TELEGRAM_REPORT_BUG_CHANNEL_ID", ""),
       parseMode: str(f, "telegram.parseMode", null, "Markdown"),
       enabled: bool(f, "telegram.enabled", "TELEGRAM_ENABLED", false),
     },
@@ -536,7 +548,9 @@ export function loadConfig(): AppConfig {
     dbPath: fresh.data.dbPath,
     logLevel: fresh.server.logLevel,
     telegramBotToken: fresh.telegram.botToken,
-    telegramChatId: fresh.telegram.chatId,
+    telegramMarketGroupId: fresh.telegram.marketGroupId,
+    telegramWorkChannelId: fresh.telegram.workChannelId,
+    telegramBugChannelId: fresh.telegram.bugChannelId,
   };
 }
 

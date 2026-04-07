@@ -28,7 +28,9 @@
 
   "telegram": {
     "botToken": "",
-    "chatId": "",
+    "marketGroupId": "",
+    "workChannelId": "",
+    "bugChannelId": "",
     "parseMode": "Markdown",
     "enabled": false
   },

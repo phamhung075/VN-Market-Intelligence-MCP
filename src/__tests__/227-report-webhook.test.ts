@@ -2,9 +2,9 @@
  * Task 227 — Webhook for Report Channel
  *
  * Tests the dispatch logic added to the POST /webhook handler:
- *   - Messages from TELEGRAM_REPORT_ID are stored in telegram_reports and
+ *   - Messages from TELEGRAM_REPORT_BUG_CHANNEL_ID are stored in telegram_reports and
  *     the handler returns 200 without calling the command router.
- *   - Messages from TELEGRAM_CHAT_ID (or any other chat) continue to be
+ *   - Messages from TELEGRAM_INFO_MARKET_GROUP_ID (or any other chat) continue to be
  *     routed to the existing command dispatcher.
  *
  * Strategy: unit-test the store + dispatch logic directly against an
@@ -77,7 +77,7 @@ describe("Task 227 — Webhook Report Channel dispatch", () => {
 
   // ── Routing decisions ────────────────────────────────────────────────────
 
-  it("routes to report branch when chat.id matches TELEGRAM_REPORT_ID", () => {
+  it("routes to report branch when chat.id matches TELEGRAM_REPORT_BUG_CHANNEL_ID", () => {
     const update: FakeTelegramUpdate = {
       message: { chat: { id: 99999 }, text: "VCB tests are failing" },
     };
@@ -85,7 +85,7 @@ describe("Task 227 — Webhook Report Channel dispatch", () => {
     expect(result).toBe("report");
   });
 
-  it("routes to command branch when chat.id matches TELEGRAM_CHAT_ID", () => {
+  it("routes to command branch when chat.id matches TELEGRAM_INFO_MARKET_GROUP_ID", () => {
     const update: FakeTelegramUpdate = {
       message: { chat: { id: 11111 }, text: "/alerts" },
     };
@@ -107,7 +107,7 @@ describe("Task 227 — Webhook Report Channel dispatch", () => {
     expect(result).toBe("no-message");
   });
 
-  it("routes to command branch when TELEGRAM_REPORT_ID is empty string (not configured)", () => {
+  it("routes to command branch when TELEGRAM_REPORT_BUG_CHANNEL_ID is empty string (not configured)", () => {
     const update: FakeTelegramUpdate = {
       message: { chat: { id: 99999 }, text: "some text" },
     };
@@ -217,8 +217,8 @@ describe("Task 227 — Webhook Report Channel dispatch", () => {
 
   // ── String vs number chat ID comparison ──────────────────────────────────
 
-  it("correctly compares numeric chat.id to string TELEGRAM_REPORT_ID", () => {
-    // TELEGRAM_REPORT_ID env var is always a string; chat.id from Telegram is a number
+  it("correctly compares numeric chat.id to string TELEGRAM_REPORT_BUG_CHANNEL_ID", () => {
+    // TELEGRAM_REPORT_BUG_CHANNEL_ID env var is always a string; chat.id from Telegram is a number
     const update: FakeTelegramUpdate = {
       message: { chat: { id: 99999 }, text: "numeric id test" },
     };
@@ -227,7 +227,7 @@ describe("Task 227 — Webhook Report Channel dispatch", () => {
     expect(result).toBe("report");
   });
 
-  it("does not match when TELEGRAM_REPORT_ID has leading/trailing spaces (strict equality)", () => {
+  it("does not match when TELEGRAM_REPORT_BUG_CHANNEL_ID has leading/trailing spaces (strict equality)", () => {
     const update: FakeTelegramUpdate = {
       message: { chat: { id: 99999 }, text: "test" },
     };

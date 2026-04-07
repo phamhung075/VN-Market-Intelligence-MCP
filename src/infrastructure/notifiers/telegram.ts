@@ -1,16 +1,20 @@
 /**
- * Infrastructure — Telegram Bot Notifier
+ * Infrastructure — Telegram Bot Notifier (three-channel hard cutover, Sprint 051)
  *
- * Sends notifications to a Telegram chat via the Telegram Bot API.
- * Uses plain fetch() (Bun native) — no third-party Telegram SDK required.
+ * Sends notifications to one of THREE Telegram destinations:
+ *
+ *   - MARKET (TELEGRAM_INFO_MARKET_GROUP_ID): user-facing market alerts/briefings
+ *   - WORK   (TELEGRAM_INFO_WORK_CHANNEL_ID): dev/analysis status, refresh asks
+ *   - BUG    (TELEGRAM_REPORT_BUG_CHANNEL_ID): analysis → dev bug reports
+ *
+ * The legacy single-chat / report-channel split is GONE. There are no aliases.
  *
  * DDD layer: infrastructure/notifiers
  *
  * Design rules:
- *   - Never throws — all errors are caught and returned as false / logged as warnings
- *   - Returns true on HTTP 200, false on any failure
- *   - Reads TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID from Bun.env
- *   - Both env vars are optional — missing config silently returns false
+ *   - Never throws — all errors are caught and returned as false / 0
+ *   - Reads TELEGRAM_BOT_TOKEN + the three destination IDs from Bun.env
+ *   - All env vars are optional — missing config silently no-ops
  *   - TELEGRAM_BOT_TOKEN is NEVER logged (security)
  */
 
@@ -34,16 +38,16 @@ const log = createLogger("info");
 export type FetchFn = (url: string, init: RequestInit) => Promise<Response>;
 
 /**
- * Options for sendTelegramMessage.
+ * Options for the channel send functions.
  */
 export interface SendTelegramOptions {
-  /** Telegram parse mode. Default: "Markdown". */
+  /** Telegram parse mode. Default: "" (plain text). */
   parseMode?: string;
   /** Injectable fetch function for tests. Default: globalThis.fetch. */
   fetchFn?: FetchFn;
   /**
-   * Override the target chat ID (e.g. for webhook replies to a specific user).
-   * When omitted, falls back to TELEGRAM_CHAT_ID env var.
+   * Override the destination chat ID (e.g. for webhook replies to a specific user).
+   * When omitted, falls back to the channel-specific env var.
    */
   chatId?: number;
 }
@@ -58,10 +62,11 @@ export interface NotifyOptions {
 
 /**
  * TelegramNotifier — interface for dependency injection.
- * Implementations can be swapped in tests.
  */
 export interface TelegramNotifier {
-  sendTelegramMessage(text: string, options?: SendTelegramOptions): Promise<boolean>;
+  sendTelegramMarket(text: string, options?: SendTelegramOptions): Promise<boolean>;
+  sendTelegramWork(text: string, options?: SendTelegramOptions): Promise<boolean>;
+  sendTelegramBug(text: string, options?: SendTelegramOptions): Promise<number>;
   notifyTelegramAlert(alert: Alert, options?: NotifyOptions): Promise<boolean>;
   notifyTelegramDocument(
     doc: { actionCode: string; title: string; publishedAt: string },
@@ -70,17 +75,30 @@ export interface TelegramNotifier {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Core send function
+// Channel resolution
 // ─────────────────────────────────────────────────────────────────────────────
 
-/**
- * Sends a text message to the configured Telegram chat.
- * Never throws — returns false on any error and logs a warning.
- *
- * @param text    - The message text to send.
- * @param options - Optional parse mode and injectable fetch function.
- * @returns true on HTTP 200, false on any failure.
- */
+/** Three-channel destination identifier. */
+export type TelegramChannel = "market" | "work" | "bug";
+
+const ENV_VAR_BY_CHANNEL: Record<TelegramChannel, string> = {
+  market: "TELEGRAM_INFO_MARKET_GROUP_ID",
+  work: "TELEGRAM_INFO_WORK_CHANNEL_ID",
+  bug: "TELEGRAM_REPORT_BUG_CHANNEL_ID",
+};
+
+function readEnv(name: string): string {
+  return Bun.env[name] ?? process.env[name] ?? "";
+}
+
+function resolveChatId(channel: TelegramChannel): string {
+  return readEnv(ENV_VAR_BY_CHANNEL[channel]);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Core send (internal)
+// ─────────────────────────────────────────────────────────────────────────────
+
 /** Telegram API message length limit */
 const TELEGRAM_MAX_LENGTH = 4096;
 
@@ -99,144 +117,48 @@ function splitMessage(text: string, maxLen: number = TELEGRAM_MAX_LENGTH): strin
       chunks.push(remaining);
       break;
     }
-
-    // Find the last newline within the limit
     let splitIdx = remaining.lastIndexOf("\n", maxLen);
-    if (splitIdx <= 0) {
-      // No newline found — hard split at limit
-      splitIdx = maxLen;
-    }
-
+    if (splitIdx <= 0) splitIdx = maxLen;
     chunks.push(remaining.slice(0, splitIdx));
-    remaining = remaining.slice(splitIdx).replace(/^\n/, ""); // trim leading newline
+    remaining = remaining.slice(splitIdx).replace(/^\n/, "");
   }
 
   return chunks;
 }
 
-export async function sendTelegramMessage(
-  text: string,
-  options: SendTelegramOptions = {},
-): Promise<boolean> {
-  const botToken = Bun.env.TELEGRAM_BOT_TOKEN ?? process.env["TELEGRAM_BOT_TOKEN"] ?? "";
-  // Allow per-message chatId override (e.g. webhook replies to specific users)
-  const chatId =
-    options.chatId != null
-      ? String(options.chatId)
-      : (Bun.env.TELEGRAM_CHAT_ID ?? process.env["TELEGRAM_CHAT_ID"] ?? "");
-
-  if (!botToken) {
-    log.warn("[telegram] TELEGRAM_BOT_TOKEN is not set — skipping send");
-    return false;
-  }
-
-  if (!chatId) {
-    log.warn("[telegram] TELEGRAM_CHAT_ID is not set — skipping send");
-    return false;
-  }
-
-  // Default to plain text. Analysis-team messages often contain Vietnamese
-  // diacritics, parens, hyphens and dollar signs that Telegram's Markdown
-  // parser rejects, causing 9+ warnings/hour and forcing a retry round-trip
-  // for every send. Callers that need formatting must opt in explicitly.
-  const parseMode = options.parseMode ?? "";
-  const fetchFn = options.fetchFn ?? (globalThis.fetch as FetchFn);
-
-  // Split long messages to stay within Telegram's 4096-char limit
-  const chunks = splitMessage(text);
-
-  for (const chunk of chunks) {
-    const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
-    const body = JSON.stringify({
-      chat_id: chatId,
-      text: chunk,
-      parse_mode: parseMode,
-      // Disable link previews to reduce payload and avoid preview-fetch timeouts
-      disable_web_page_preview: true,
-    });
-
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30_000);
-
-    try {
-      const response = await fetchFn(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body,
-        signal: controller.signal,
-      });
-
-      if (!response.ok) {
-        // If Markdown parse failed (400), retry as plain text
-        const status = response.status;
-        if (status === 400 && parseMode !== "") {
-          log.warn("[telegram] Markdown parse failed — retrying as plain text", { chatId });
-          clearTimeout(timeoutId);
-          return sendTelegramMessage(text, { ...options, parseMode: "" });
-        }
-        log.warn("[telegram] sendMessage failed", { status, chatId });
-        return false;
-      }
-    } catch (err) {
-      log.warn("[telegram] sendMessage network error", {
-        error: err instanceof Error ? err.message : String(err),
-        chatId,
-      });
-      return false;
-    } finally {
-      clearTimeout(timeoutId);
-    }
-
-    // Small delay between chunks to avoid rate limiting
-    if (chunks.length > 1) {
-      await new Promise((r) => setTimeout(r, 300));
-    }
-  }
-
-  return true;
+interface CoreSendResult {
+  ok: boolean;
+  /** Last chunk's message_id, or 0 on failure / no parse. */
+  messageId: number;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Report channel — inter-agent communication (TELEGRAM_REPORT_ID)
-// ─────────────────────────────────────────────────────────────────────────────
-
-/**
- * Sends a message to the REPORT channel (TELEGRAM_REPORT_ID).
- * Used for inter-agent communication: feedback, improvement reports, dev requests.
- * Separate from the user alert channel (TELEGRAM_CHAT_ID).
- *
- * @param text    - The message text.
- * @param options - Optional parse mode and injectable fetch.
- * @returns message_id on success (for later deletion), 0 on failure.
- */
-export async function sendTelegramReport(
+async function coreSend(
+  channel: TelegramChannel,
   text: string,
-  options: SendTelegramOptions = {},
-): Promise<number> {
-  const botToken = Bun.env.TELEGRAM_BOT_TOKEN ?? process.env["TELEGRAM_BOT_TOKEN"] ?? "";
-  const reportChatId = Bun.env.TELEGRAM_REPORT_ID ?? process.env["TELEGRAM_REPORT_ID"] ?? "";
+  options: SendTelegramOptions,
+): Promise<CoreSendResult> {
+  const botToken = readEnv("TELEGRAM_BOT_TOKEN");
+  const chatId =
+    options.chatId != null ? String(options.chatId) : resolveChatId(channel);
 
   if (!botToken) {
-    log.warn("[telegram] TELEGRAM_BOT_TOKEN is not set — skipping report send");
-    return 0;
+    log.warn("[telegram] TELEGRAM_BOT_TOKEN is not set — skipping send", { channel });
+    return { ok: false, messageId: 0 };
   }
-
-  if (!reportChatId) {
-    log.warn("[telegram] TELEGRAM_REPORT_ID is not set — skipping report send");
-    return 0;
+  if (!chatId) {
+    log.warn(`[telegram] ${ENV_VAR_BY_CHANNEL[channel]} is not set — skipping send`, { channel });
+    return { ok: false, messageId: 0 };
   }
 
   const parseMode = options.parseMode ?? "";
   const fetchFn = options.fetchFn ?? (globalThis.fetch as FetchFn);
-
-  // Split long messages to stay within Telegram's 4096-char limit
   const chunks = splitMessage(text);
   let lastMessageId = 0;
 
   for (const chunk of chunks) {
     const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
     const body = JSON.stringify({
-      chat_id: reportChatId,
+      chat_id: chatId,
       text: chunk,
       parse_mode: parseMode || undefined,
       disable_web_page_preview: true,
@@ -254,68 +176,116 @@ export async function sendTelegramReport(
       });
 
       if (!response.ok) {
-        log.warn("[telegram] sendReport failed", { status: response.status, chatId: reportChatId });
-        return 0;
+        const status = response.status;
+        if (status === 400 && parseMode !== "") {
+          log.warn("[telegram] Markdown parse failed — retrying as plain text", { channel, chatId });
+          clearTimeout(timeoutId);
+          return coreSend(channel, text, { ...options, parseMode: "" });
+        }
+        log.warn("[telegram] sendMessage failed", { status, channel, chatId });
+        return { ok: false, messageId: 0 };
       }
 
-      // Extract message_id for later deletion (use last chunk's ID)
       try {
-        const json = await response.json() as { result?: { message_id?: number } };
-        lastMessageId = json.result?.message_id ?? 0;
-      } catch { /* continue */ }
-
+        const json = (await response.json()) as { result?: { message_id?: number } };
+        lastMessageId = json.result?.message_id ?? lastMessageId;
+      } catch { /* ignore */ }
     } catch (err) {
-      log.warn("[telegram] sendReport network error", {
+      log.warn("[telegram] sendMessage network error", {
         error: err instanceof Error ? err.message : String(err),
-        chatId: reportChatId,
+        channel,
+        chatId,
       });
-      return 0;
+      return { ok: false, messageId: 0 };
     } finally {
       clearTimeout(timeoutId);
     }
 
-    // Small delay between chunks
     if (chunks.length > 1) {
       await new Promise((r) => setTimeout(r, 300));
     }
   }
 
-  // Persist the sent report to SQLite for the Dev Team autonomous loop.
-  // Best-effort: a failed insert does not affect the Telegram send result.
-  if (lastMessageId > 0) {
-    try {
-      const db = getDb();
-      insertReport(db, text, "analysis-agent", lastMessageId, "normal");
-    } catch (err) {
-      log.warn("[telegram] insertReport failed — report was sent but not persisted", {
-        error: err instanceof Error ? err.message : String(err),
-      });
-    }
-  }
+  return { ok: true, messageId: lastMessageId };
+}
 
-  return lastMessageId;
+// ─────────────────────────────────────────────────────────────────────────────
+// Public per-channel send functions
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Sends a text message to the MARKET channel (TELEGRAM_INFO_MARKET_GROUP_ID).
+ * User-facing market alerts, briefings and analysis.
+ *
+ * @returns true on success, false on any failure.
+ */
+export async function sendTelegramMarket(
+  text: string,
+  options: SendTelegramOptions = {},
+): Promise<boolean> {
+  const result = await coreSend("market", text, options);
+  return result.ok;
 }
 
 /**
- * Deletes a message from the REPORT channel by message_id.
- * Used to clean up resolved reports — keeps the channel showing only open issues.
+ * Sends a text message to the WORK channel (TELEGRAM_INFO_WORK_CHANNEL_ID).
+ * Dev/analysis status, fix-shipped notices, agent refresh asks.
  *
- * @param messageId - The Telegram message_id to delete.
- * @param options   - Injectable fetch for tests.
+ * @returns true on success, false on any failure.
+ */
+export async function sendTelegramWork(
+  text: string,
+  options: SendTelegramOptions = {},
+): Promise<boolean> {
+  const result = await coreSend("work", text, options);
+  return result.ok;
+}
+
+/**
+ * Sends a text message to the BUG channel (TELEGRAM_REPORT_BUG_CHANNEL_ID).
+ * Analysis → dev bug reports. Persists the message in the telegram_reports
+ * table so the Dev Team autonomous loop can pick it up.
+ *
+ * @returns the Telegram message_id on success (for later deletion), 0 on failure.
+ */
+export async function sendTelegramBug(
+  text: string,
+  options: SendTelegramOptions = {},
+): Promise<number> {
+  const result = await coreSend("bug", text, options);
+  if (!result.ok || result.messageId <= 0) return 0;
+
+  // Persist for the Dev Team autonomous loop. Best-effort.
+  try {
+    const db = getDb();
+    insertReport(db, text, "analysis-agent", result.messageId, "normal");
+  } catch (err) {
+    log.warn("[telegram] insertReport failed — bug was sent but not persisted", {
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
+
+  return result.messageId;
+}
+
+/**
+ * Deletes a message from the BUG channel by message_id.
+ * Used to clean up resolved bug reports.
+ *
  * @returns true if deleted, false on failure.
  */
-export async function deleteTelegramReport(
+export async function deleteTelegramBug(
   messageId: number,
   options: { fetchFn?: FetchFn } = {},
 ): Promise<boolean> {
-  const botToken = Bun.env.TELEGRAM_BOT_TOKEN ?? process.env["TELEGRAM_BOT_TOKEN"] ?? "";
-  const reportChatId = Bun.env.TELEGRAM_REPORT_ID ?? process.env["TELEGRAM_REPORT_ID"] ?? "";
+  const botToken = readEnv("TELEGRAM_BOT_TOKEN");
+  const bugChatId = resolveChatId("bug");
 
-  if (!botToken || !reportChatId || messageId <= 0) return false;
+  if (!botToken || !bugChatId || messageId <= 0) return false;
 
   const fetchFn = options.fetchFn ?? (globalThis.fetch as FetchFn);
   const url = `https://api.telegram.org/bot${botToken}/deleteMessage`;
-  const body = JSON.stringify({ chat_id: reportChatId, message_id: messageId });
+  const body = JSON.stringify({ chat_id: bugChatId, message_id: messageId });
 
   try {
     const response = await fetchFn(url, {
@@ -350,41 +320,31 @@ const SIGNAL_TYPE_VI: Record<string, string> = {
   news_mention: "Tin liên quan",
 };
 
-/**
- * Formats a single signal's message into a concise Vietnamese bullet.
- * Extracts numbers from the English signal message and reformats.
- */
 function formatSignalVi(sig: { type: string; message: string }): string {
   const label = SIGNAL_TYPE_VI[sig.type] ?? sig.type;
   const msg = sig.message;
 
-  // Extract useful data from signal message patterns
-  // price_drop/surge: "VCB dropped 5.23% (88,000 → 83,400 VND)"
   const pricePctMatch = msg.match(/([\d.]+)%.*?([\d,.]+)\s*→\s*([\d,.]+)\s*VND/);
   if (pricePctMatch && (sig.type === "price_drop" || sig.type === "price_surge")) {
     const dir = sig.type === "price_drop" ? "↓" : "↑";
     return `${label} ${dir}${pricePctMatch[1]}% (${pricePctMatch[2]} → ${pricePctMatch[3]} VND)`;
   }
 
-  // volume_spike: "VCB volume spike: 3.5× average (5,200,000 vs avg 1,500,000)"
   const volMatch = msg.match(/([\d.]+)×.*?\(([\d,]+)\s*vs\s*avg\s*([\d,]+)\)/);
   if (volMatch && sig.type === "volume_spike") {
     return `${label} ${volMatch[1]}× TB (${volMatch[2]} / TB ${volMatch[3]})`;
   }
 
-  // report_new: "VCB published a new BCTC report (2026-03-31)"
   if (sig.type === "report_new") {
     return `${label} — vừa công bố`;
   }
 
-  // news_mention: "FPT mentioned in 5 articles — headline1 | headline2"
   const newsMatch = msg.match(/mentioned in (\d+) article/);
   if (newsMatch) {
     const headlinePart = msg.split(" — ").slice(1).join(" — ").slice(0, 80);
     return `${label} (${newsMatch[1]} bài) — ${headlinePart || "xem chi tiết"}`;
   }
 
-  // Trade-based: "Article Title — VEA có 25% doanh thu từ us (Ford VN...)"
   const tradeMatch = msg.match(/^(.{10,60})\s*—\s*(\w{2,4})\s+có\s+(\d+)%\s+doanh thu từ\s+(\w+)\s*\((.{5,40})/);
   if (tradeMatch) {
     const headline = tradeMatch[1]!.trim().slice(0, 40);
@@ -394,14 +354,11 @@ function formatSignalVi(sig: { type: string; message: string }): string {
     return `${label} — ${headline}\n    → ${pct}% doanh thu từ ${market} (${detail})`;
   }
 
-  // Conviction-enriched: contains "💎" or "📊" or "⚠️" conviction summary
   if (msg.includes("💎") || msg.includes("📊") || msg.includes("⚠️")) {
-    // Extract just the conviction part
     const convPart = msg.split(" | ").find((p) => p.includes("💎") || p.includes("📊") || p.includes("⚠️"));
     if (convPart) return convPart.trim().slice(0, 80);
   }
 
-  // Fallback: extract the most readable part after " — "
   const parts = msg.split(" — ");
   if (parts.length >= 2) {
     return `${label} — ${parts[parts.length - 1]!.slice(0, 70)}`;
@@ -409,26 +366,11 @@ function formatSignalVi(sig: { type: string; message: string }): string {
   return `${label} — ${msg.slice(0, 80)}`;
 }
 
-/**
- * Formats an Alert into a compact Vietnamese Telegram message.
- *
- * Single signal example:
- *   🔴 VCB — QUAN TRỌNG
- *   Giá giảm ↓5.23% (88,000 → 83,400 VND)
- *   🕐 31/03/2026 13:14
- *
- * Multi-signal example:
- *   🚨 MWG — NGHIÊM TRỌNG
- *   • Giá tăng ↑7.2% (45,000 → 48,240 VND)
- *   • KL bất thường 3.5× TB (5.2M / TB 1.5M)
- *   🕐 31/03/2026 13:14
- */
 function formatAlertMessage(alert: Alert): string {
   const severity = alert.severity.toLowerCase();
   const { emoji, label } = SEVERITY_LABEL[severity] ?? { emoji: "🔔", label: severity.toUpperCase() };
   const stockCode = alert.actionCode;
 
-  // Timestamp in VN time (GMT+7)
   const now = new Date(alert.createdAt);
   const gmt7 = new Date(now.getTime() + 7 * 60 * 60 * 1000);
   const dd = String(gmt7.getUTCDate()).padStart(2, "0");
@@ -437,10 +379,7 @@ function formatAlertMessage(alert: Alert): string {
   const min = String(gmt7.getUTCMinutes()).padStart(2, "0");
   const timestamp = `${dd}/${mm} ${hh}:${min}`;
 
-  // Format signal details
   const signalLines = alert.signals.map((s) => formatSignalVi(s));
-
-  // Build message — no Markdown to avoid parse errors
   const header = `${emoji} ${stockCode} — ${label}`;
 
   let body: string;
@@ -450,26 +389,19 @@ function formatAlertMessage(alert: Alert): string {
     body = signalLines.map((l) => `• ${l}`).join("\n");
   }
 
-  // Add sensitive date warnings (e.g. derivative expiry, BCTC season)
   const sensitiveWarnings = detectSensitiveDates();
-  const warningLine = sensitiveWarnings.length > 0
-    ? `\n${sensitiveWarnings[0]}`  // show first warning only (keep compact)
-    : "";
+  const warningLine = sensitiveWarnings.length > 0 ? `\n${sensitiveWarnings[0]}` : "";
 
   return `${header}\n${body}${warningLine}\n🕐 ${timestamp}`;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// High-level notifiers
+// High-level notifiers (always route to MARKET — user-facing)
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Sends a Telegram notification for a HIGH or CRITICAL alert.
+ * Sends a Telegram notification to the MARKET channel for a HIGH or CRITICAL alert.
  * Silently skips LOW and MEDIUM severity alerts.
- *
- * @param alert   - The Alert to notify about.
- * @param options - Injectable fetch function for tests.
- * @returns true if message was sent, false if skipped or failed.
  */
 export async function notifyTelegramAlert(
   alert: Alert,
@@ -482,10 +414,10 @@ export async function notifyTelegramAlert(
 
   let text = formatAlertMessage(alert);
 
-  // Append historical parallel (best-effort, async)
   try {
     const signalType = alert.signals[0]?.type ?? "";
-    const keyword = signalType === "price_drop" ? "giảm giá"
+    const keyword =
+      signalType === "price_drop" ? "giảm giá"
       : signalType === "price_surge" ? "tăng giá"
       : signalType === "volume_spike" ? "khối lượng"
       : alert.actionCode;
@@ -494,28 +426,18 @@ export async function notifyTelegramAlert(
       const p = pattern.precedents[0]!;
       const dir = p.impactDirection === "up" ? "↑" : p.impactDirection === "down" ? "↓" : "→";
       const date = p.date.slice(0, 10);
-      // Insert before the timestamp line
       text = text.replace(/\n🕐/, `\n📜 Tiền lệ ${date}: ${dir} score ${p.impactScore}/10\n🕐`);
     }
-  } catch { /* silent — no history data */ }
+  } catch { /* silent */ }
 
-  // Use plain text (no Markdown) to avoid parse errors from special chars
   const sendOpts: SendTelegramOptions = { parseMode: "" };
   if (options.fetchFn !== undefined) sendOpts.fetchFn = options.fetchFn;
-  return sendTelegramMessage(text, sendOpts);
+  return sendTelegramMarket(text, sendOpts);
 }
 
 /**
- * Sends a Telegram notification when a new SSC document is discovered.
- *
- * Template:
- *   *New BCTC Filing: STOCK_CODE*
- *   Title: DOCUMENT_TITLE
- *   Published: PUBLISHED_AT
- *
- * @param doc     - The new SSC document metadata.
- * @param options - Injectable fetch function for tests.
- * @returns true if message was sent, false on any failure.
+ * Sends a Telegram notification to the MARKET channel when a new SSC document
+ * is discovered.
  */
 export async function notifyTelegramDocument(
   doc: { actionCode: string; title: string; publishedAt: string },
@@ -524,10 +446,10 @@ export async function notifyTelegramDocument(
   const text = `*New BCTC Filing: ${doc.actionCode}*\nTitle: ${doc.title}\nPublished: ${doc.publishedAt}`;
   const sendOpts: SendTelegramOptions = { parseMode: "Markdown" };
   if (options.fetchFn !== undefined) sendOpts.fetchFn = options.fetchFn;
-  return sendTelegramMessage(text, sendOpts);
+  return sendTelegramMarket(text, sendOpts);
 }
 
-/** Convenience alias used by alertDigestJob (task 188) */
+/** Convenience alias used by alertDigestJob — routes digests to MARKET. */
 export async function sendTelegram(text: string): Promise<boolean> {
-  return sendTelegramMessage(text);
+  return sendTelegramMarket(text);
 }

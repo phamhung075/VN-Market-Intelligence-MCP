@@ -3,8 +3,8 @@
  *
  * Verifies:
  *   1. send_telegram is registered (replaces send_test_telegram, send_telegram_report, delete_telegram_report)
- *   2. send_telegram with channel="chat" routes to sendTelegramMessage (TELEGRAM_CHAT_ID)
- *   3. send_telegram with channel="report" routes to sendTelegramReport (TELEGRAM_REPORT_ID)
+ *   2. send_telegram with channel="market" routes to sendTelegramMarket (TELEGRAM_INFO_MARKET_GROUP_ID)
+ *   3. send_telegram with channel="bug" routes to sendTelegramBug (TELEGRAM_REPORT_BUG_CHANNEL_ID)
  *   4. send_test_telegram is NOT registered (removed)
  *   5. send_telegram_report is NOT registered (removed)
  *   6. delete_telegram_report is NOT registered (removed — functionality in process_telegram_report)
@@ -74,12 +74,12 @@ describe("Task 235 — removed tools absent from MCP registry", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("Task 235 — send_telegram channel routing", () => {
-  it("channel='chat' sends to Chat channel and returns success", async () => {
+  it("channel='market' sends to MARKET channel and returns success", async () => {
     // Set up env
     const origToken = process.env["TELEGRAM_BOT_TOKEN"];
-    const origChatId = process.env["TELEGRAM_CHAT_ID"];
+    const origChatId = process.env["TELEGRAM_INFO_MARKET_GROUP_ID"];
     process.env["TELEGRAM_BOT_TOKEN"] = "dummy-token";
-    process.env["TELEGRAM_CHAT_ID"] = "111";
+    process.env["TELEGRAM_INFO_MARKET_GROUP_ID"] = "111";
 
     // Mock fetch to simulate Telegram success
     const capturedUrls: string[] = [];
@@ -89,11 +89,11 @@ describe("Task 235 — send_telegram channel routing", () => {
     });
 
     // Import the notifier to test the underlying call indirectly
-    const { sendTelegramMessage } = await import(
+    const { sendTelegramMarket } = await import(
       "../infrastructure/notifiers/telegram.js"
     );
 
-    const result = await sendTelegramMessage("hello chat", {
+    const result = await sendTelegramMarket("hello chat", {
       fetchFn: mockFetch as unknown as (url: string, init: RequestInit) => Promise<Response>,
     });
 
@@ -102,14 +102,14 @@ describe("Task 235 — send_telegram channel routing", () => {
     expect(capturedUrls[0]).toContain("sendMessage");
 
     process.env["TELEGRAM_BOT_TOKEN"] = origToken;
-    process.env["TELEGRAM_CHAT_ID"] = origChatId;
+    process.env["TELEGRAM_INFO_MARKET_GROUP_ID"] = origChatId;
   });
 
-  it("channel='report' sends to Report channel and returns success", async () => {
+  it("channel='bug' sends to BUG channel and returns success", async () => {
     const origToken = process.env["TELEGRAM_BOT_TOKEN"];
-    const origReportId = process.env["TELEGRAM_REPORT_ID"];
+    const origReportId = process.env["TELEGRAM_REPORT_BUG_CHANNEL_ID"];
     process.env["TELEGRAM_BOT_TOKEN"] = "dummy-token";
-    process.env["TELEGRAM_REPORT_ID"] = "222";
+    process.env["TELEGRAM_REPORT_BUG_CHANNEL_ID"] = "222";
 
     const capturedChatIds: string[] = [];
     const mockFetch = mock(async (_url: string, init: RequestInit) => {
@@ -121,11 +121,11 @@ describe("Task 235 — send_telegram channel routing", () => {
       );
     });
 
-    const { sendTelegramReport } = await import(
+    const { sendTelegramBug } = await import(
       "../infrastructure/notifiers/telegram.js"
     );
 
-    const msgId = await sendTelegramReport("report message", {
+    const msgId = await sendTelegramBug("report message", {
       fetchFn: mockFetch as unknown as (url: string, init: RequestInit) => Promise<Response>,
     });
 
@@ -134,18 +134,18 @@ describe("Task 235 — send_telegram channel routing", () => {
     expect(capturedChatIds[0]).toBe("222");
 
     process.env["TELEGRAM_BOT_TOKEN"] = origToken;
-    process.env["TELEGRAM_REPORT_ID"] = origReportId;
+    process.env["TELEGRAM_REPORT_BUG_CHANNEL_ID"] = origReportId;
   });
 
-  it("channel='chat' with no token returns failure gracefully", async () => {
+  it("channel='market' with no token returns failure gracefully", async () => {
     const origToken = process.env["TELEGRAM_BOT_TOKEN"];
     delete process.env["TELEGRAM_BOT_TOKEN"];
 
-    const { sendTelegramMessage } = await import(
+    const { sendTelegramMarket } = await import(
       "../infrastructure/notifiers/telegram.js"
     );
 
-    const result = await sendTelegramMessage("should fail silently");
+    const result = await sendTelegramMarket("should fail silently");
     expect(result).toBe(false);
 
     process.env["TELEGRAM_BOT_TOKEN"] = origToken;

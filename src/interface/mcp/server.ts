@@ -27,7 +27,7 @@ import { loadConfig } from "../../infrastructure/config.js";
 import { createLogger } from "../../infrastructure/logger.js";
 import { SseSessionManager } from "./transport.js";
 import { handleTelegramCommand } from "../../infrastructure/notifiers/telegramCommands.js";
-import { sendTelegramMessage } from "../../infrastructure/notifiers/telegram.js";
+import { sendTelegramMarket } from "../../infrastructure/notifiers/telegram.js";
 import { getDb } from "../../infrastructure/db/schema.js";
 import { validateWebhookRequest } from "../../infrastructure/notifiers/telegramWebhookSetup.js";
 import { insertReport } from "../../infrastructure/db/telegramReportStore.js";
@@ -233,22 +233,22 @@ export async function createBunServer(
         return;
       }
 
-      // ── Report Channel branch ────────────────────────────────────────────
-      // If the message originates from TELEGRAM_REPORT_ID, persist it in the
-      // telegram_reports table and return 200 immediately without dispatching
-      // to the command router.
-      const reportChatId = Bun.env["TELEGRAM_REPORT_ID"] ?? "";
+      // ── BUG Channel branch ───────────────────────────────────────────────
+      // If the message originates from TELEGRAM_REPORT_BUG_CHANNEL_ID (the BUG channel),
+      // persist it in the telegram_reports table and return 200 immediately
+      // without dispatching to the command router.
+      const bugChatId = Bun.env["TELEGRAM_REPORT_BUG_CHANNEL_ID"] ?? "";
       const update = body as {
         message?: { chat?: { id?: number }; text?: string };
       };
       const incomingChatId = String(update?.message?.chat?.id ?? "");
 
-      if (reportChatId && incomingChatId === reportChatId) {
+      if (bugChatId && incomingChatId === bugChatId) {
         const text = update?.message?.text ?? "";
         try {
           insertReport(getDb(), text, "human", 0, "normal");
         } catch (err) {
-          log.warn("[webhook] failed to insert report from Report Channel", {
+          log.warn("[webhook] failed to insert report from BUG Channel", {
             error: err instanceof Error ? err.message : String(err),
           });
         }
@@ -257,14 +257,14 @@ export async function createBunServer(
         return;
       }
 
-      // ── Standard command dispatch (Chat Channel) ─────────────────────────
+      // ── Standard command dispatch (MARKET channel — user replies) ────────
       try {
         const result = await handleTelegramCommand(
           body as Parameters<typeof handleTelegramCommand>[0],
           getDb(),
         );
         if (result) {
-          await sendTelegramMessage(result.text, {
+          await sendTelegramMarket(result.text, {
             parseMode: "",
             chatId: result.chatId,
           });
@@ -469,7 +469,7 @@ export async function createBunServer(
                     try {
                       const sevLabel = alert.severity === "critical" ? "NGHIÊM TRỌNG" : "QUAN TRỌNG";
                       const msg = `[${sevLabel}] ${alert.message}`;
-                      await sendTelegramMessage(msg);
+                      await sendTelegramMarket(msg);
                       // Mark as notified
                       db.prepare("UPDATE alerts SET notified_telegram = 1 WHERE id = ?").run(alert.id);
                       log.info("[push-prices] Telegram alert sent", { id: alert.id, severity: alert.severity });
@@ -506,7 +506,7 @@ export async function createBunServer(
 
                   const typeLabel = t.alertType === "stop_loss" ? "CẮT LỖ" : "CHỐT LỜI";
                   const msg = `[${typeLabel}] ${t.code} đạt ngưỡng ${t.threshold.toLocaleString()} VND (hiện tại: ${t.currentPrice.toLocaleString()} VND)`;
-                  await sendTelegramMessage(msg);
+                  await sendTelegramMarket(msg);
                   log.info("[push-prices] price alert fired", { code: t.code, type: t.alertType, threshold: t.threshold });
                 }
               }

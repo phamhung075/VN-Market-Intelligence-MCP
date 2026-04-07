@@ -28,7 +28,7 @@ import {
   claimReport,
   type TelegramReport,
 } from "../../../infrastructure/db/telegramReportStore.js";
-import { deleteTelegramReport } from "../../../infrastructure/notifiers/telegram.js";
+import { deleteTelegramBug } from "../../../infrastructure/notifiers/telegram.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -202,7 +202,7 @@ export function registerTelegramReportTools(server: McpServer): void {
         let telegramDeleted = false;
         if (row.message_id > 0 && shouldDelete) {
           try {
-            telegramDeleted = await deleteTelegramReport(row.message_id);
+            telegramDeleted = await deleteTelegramBug(row.message_id);
           } catch {
             // Swallow — Telegram may have already deleted the message
             telegramDeleted = false;

@@ -6,7 +6,7 @@
  *   2. Marks the row as processed in SQLite
  *   3. Returns confirmation with Telegram deletion message when message_id > 0
  *   4. Returns "deletion skipped" when message_id = 0
- *   5. Calls deleteTelegramReport with the correct message_id
+ *   5. Calls deleteTelegramBug with the correct message_id
  *   6. Swallows Telegram deletion errors — DB row is still marked processed
  *   7. delete_telegram_message=false skips Telegram deletion
  *   8. Idempotent — calling process twice does not throw
@@ -161,7 +161,7 @@ describe("Task 229 — process_telegram_report: confirmation message (message_id
     expect(getReport(db, id)!.status).toBe("processed");
   });
 
-  it("swallows thrown errors from deleteTelegramReport", async () => {
+  it("swallows thrown errors from deleteTelegramBug", async () => {
     const id = insertReport(db, "Error during delete", "agent", 55, "normal");
     const result = await simulateProcessTool(db, id, true, async () => {
       throw new Error("Network timeout");
@@ -222,7 +222,7 @@ describe("Task 229 — process_telegram_report: delete_telegram_message=false", 
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 6. deleteTelegramReport called with correct message_id
+// 6. deleteTelegramBug called with correct message_id
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("Task 229 — process_telegram_report: correct message_id forwarded", () => {
