@@ -18,6 +18,7 @@
  *   franceSummary          06:00 UTC weekdays  (task 243) ✓
  *   devTeamHeartbeat       07:00 UTC Sunday    (task 245) ✓
  *   weatherCheck          every 6h (typhoon season) / 12h off-season  (task 261) ✓
+ *   bctcOverdueCheck      09:00 daily          (task 1018 slice 3) ✓
  */
 
 import cron from 'node-cron'
@@ -40,6 +41,7 @@ import { runDevTeamHeartbeat } from './devTeamHeartbeatJob.js'
 import { runWeatherCheck } from './weatherCheckJob.js'
 import { runDavPharmacyCheck } from './davPharmacyJob.js'
 import { runVpsProxyWatchdog } from './vpsProxyWatchdogJob.js'
+import { runBctcOverdueCheck } from './bctcOverdueCheckJob.js'
 
 export const CRONS = {
   morningBriefing:        Bun.env.CRON_MORNING_BRIEFING          ?? '0 8 * * 1-5',
@@ -58,6 +60,8 @@ export const CRONS = {
   weatherCheck:           Bun.env.CRON_WEATHER_CHECK              ?? '0 */6 * * *',
   /** DAV drug approval check: 1st of each month at 06:00 GMT+7 (Sprint 044) */
   davPharmacyCheck:       Bun.env.CRON_DAV_CHECK                  ?? '0 6 1 * *',
+  /** BCTC overdue check: daily 09:00 GMT+7 (task 1018 slice 3) */
+  bctcOverdueCheck:       Bun.env.CRON_BCTC_OVERDUE_CHECK         ?? '0 9 * * *',
 }
 
 function log(msg: string) {
@@ -187,6 +191,21 @@ export function startScheduler() {
   // 1st of month 06:00 — DAV drug approval check (Sprint 044)
   cron.schedule(CRONS.davPharmacyCheck, async () => {
     await runDavPharmacyCheck()
+  }, { timezone: 'Asia/Ho_Chi_Minh' })
+
+  // Daily 09:00 GMT+7 — BCTC overdue check (task 1018 slice 3).
+  // Inserted alerts (severity=high) flow through readUnnotifiedAlerts ->
+  // existing Alert Commander Telegram dispatch. Deterministic per-day id
+  // keeps cooldown/dedup intact.
+  cron.schedule(CRONS.bctcOverdueCheck, async () => {
+    try {
+      const r = await runBctcOverdueCheck()
+      if (r.alertsInserted > 0) {
+        log(`[bctc-overdue] inserted=${r.alertsInserted} overdue=${r.overdueFound} checked=${r.stocksChecked}`)
+      }
+    } catch (err) {
+      log(`[bctc-overdue] uncaught: ${err instanceof Error ? err.message : String(err)}`)
+    }
   }, { timezone: 'Asia/Ho_Chi_Minh' })
 
   // Every 10 min during VN market hours — VPS price-proxy watchdog.
