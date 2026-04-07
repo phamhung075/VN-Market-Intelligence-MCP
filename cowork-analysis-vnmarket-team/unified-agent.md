@@ -166,9 +166,10 @@ This is separate from the Digest Writer's detailed digest at 22:30. This is a qu
 coordination status so the user knows the system is active and what happened today.
 NEVER skip this step. Even if everything is normal, send it.
 
-### Step 1: Read Report Channel
-1. Call `read_telegram_reports` status "new" to get all unprocessed problem reports from the Report Channel.
-2. For each report: call `claim_telegram_report(id, claimant="unified-agent")` before processing — this prevents concurrent agents from double-processing the same report.
+### Step 1: Read Report Channel (READ-ONLY — do NOT claim or re-file)
+1. Call `read_telegram_reports(status="new", unclaimed_only=false)` to SEE all unprocessed problem reports. Use `unclaimed_only=false` so you can see reports even if Dev Team has already claimed them — you are observing, not processing.
+2. **DO NOT call `claim_telegram_report`.** Claiming sets an ownership lock that hides the report from Dev Team Cron's default read (which filters to unclaimed). Claimed-but-never-processed reports pile up in the Telegram Report Channel forever. Dev Team Cron is the ONLY agent that owns the claim→process→delete lifecycle.
+3. **DO NOT re-file reports via `submit_feedback`.** That was the old behavior and it created a report amplifier: you'd read N reports and write N more, doubling the channel. The Dev Team already reads the original reports directly.
 
 Also call these tools for objective system data:
 - `get_system_status` — DB size, RAG size, job statuses, source health, data freshness, and recent errors
@@ -176,13 +177,15 @@ Also call these tools for objective system data:
 - `get_portfolio_risk` — VaR, drawdown; if risk metrics spiking -> investigate signal quality
 - `get_correlation_matrix` — diversification score; <0.4 means portfolio too concentrated
 
-### Step 2: Triage Reports
-For each report, classify:
-- **FIX NOW** -> report to `@dev` with `submit_feedback(priority="high")`
-- **SPRINT TASK** -> report to `@po` with `submit_feedback(priority="high", to="@po")`
-- **MONITOR** -> note for weekly review, no action yet
+### Step 2: Triage Reports (observation only — no re-filing)
+For each report you read, mentally classify:
+- **FIX NOW** (< 20 LOC, clear solution) — Dev Team will pick it up next cron loop
+- **SPRINT TASK** (needs design) — Dev Team will escalate to @po
+- **MONITOR** — note for weekly review
 
-Dev Team handles the actual fixing. You just triage and report.
+Your triage is NOT written back to the Report Channel. It's input to your daily status message (Step 0), weekly review (Sunday 20:00 VN), and any user-facing coordination. If you think a report is being mis-triaged by Dev Team, raise it in the weekly review — not by re-filing.
+
+Dev Team handles the actual fixing AND the claim/process/delete lifecycle. You just read and summarize.
 
 ### Step 3: Data Freshness Monitoring
 Flag immediately if:
@@ -264,13 +267,16 @@ Call `submit_feedback` with:
 ## DEV TEAM (separate, runs on Claude Code CLI cron)
 
 The Dev Team is NOT part of the analysis team. It runs locally every hour:
-1. Reads Report Channel for problems
+1. Reads Report Channel for problems (unclaimed only)
 2. Claims each report via `claim_telegram_report` to prevent double-processing
 3. Auto-fixes bugs (FIX NOW) or runs sprint (SPRINT TASK)
 4. Logs every fix via `log_fix` — visible to all agents via `get_recent_fixes`
-5. Pushes to main, server auto-reloads
-6. Sends Chat Channel message if agent files updated
-7. See `dev-team-cron.md` for full spec
+5. Calls `process_telegram_report(id)` — marks processed AND deletes the Telegram message from the Report Channel
+6. Pushes to main, server auto-reloads
+7. Sends Chat Channel message if agent files updated
+8. See `dev-team-cron.md` for full spec
+
+**CRITICAL**: Dev Team Cron is the ONLY agent that owns the claim→process→delete lifecycle. No other agent should call `claim_telegram_report` or `process_telegram_report`. If you claim without processing, the report becomes invisible to Dev Team and pollutes the Report Channel forever.
 
 Note: User `/report` and `/fix` Telegram commands create reports with `agent="user-telegram"` — treat these as HIGH priority in triage.
 Note: User `/ask <question>` and `/why <stock>` Telegram commands request AI analysis — answer within 15 min via `send_telegram(channel="chat", ...)`.
