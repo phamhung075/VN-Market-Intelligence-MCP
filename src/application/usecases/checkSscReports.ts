@@ -258,7 +258,16 @@ export async function checkSscReports(
   const getWatchlistFn = options.getWatchlistFn ?? (async () => defaultGetWatchlist());
   const listDocsFn = options.listDocsFn ?? defaultListDocs;
   const pipelineFn = options.pipelineFn ?? defaultPipeline;
-  const isNewReportFn = options.isNewReportFn ?? isNewReport;
+  // Sprint 053 / 1021: wire the legacy isDocProcessedFn alias. Semantic
+  // inversion: isDocProcessedFn returning `true` means "already processed"
+  // (skip), while isNewReportFn returning `true` means "is new" (keep).
+  // Test 153 calls isDocProcessedFn with the docId (pdfUrl) only — keep
+  // that single-arg shape.
+  const isNewReportFn =
+    options.isNewReportFn ??
+    (options.isDocProcessedFn
+      ? (_code: string, pdfUrl: string) => !options.isDocProcessedFn!(pdfUrl, "")
+      : isNewReport);
   const storeAlertsFn = options.storeAlertsFn ?? ((alerts) => storeAlerts(alerts, getDb()));
 
   // ── 1. Load watchlist ───────────────────────────────────────────────────────
@@ -300,6 +309,9 @@ export async function checkSscReports(
             pdfUrl: doc.url,
             publishedAt: doc.publishedAt,
           });
+          // Count any successful pipeline invocation as a new report — even
+          // when the pipeline returned null (extraction failed) the scan
+          // genuinely discovered a new doc that needs visibility.
           stockNewReports++;
         } catch (pipelineErr) {
           logger.error(`[checkSscReports] ${code} pipeline failed for ${doc.url}`, {

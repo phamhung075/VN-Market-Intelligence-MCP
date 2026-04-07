@@ -222,36 +222,18 @@ function makeServer(): McpServer {
 // Section 4: MCP tool — set_target_allocation (integration with in-memory DB)
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe("Task 223 — set_target_allocation MCP tool", () => {
-  beforeEach(async () => {
-    await freshDb();
-  });
-
-  afterEach(() => {
-    closeDb();
-  });
-
-  it("persists targets to DB and returns success text", async () => {
+describe("Task 223 — set_target_allocation MCP tool (removed in task 241)", () => {
+  // set_target_allocation was removed as a user-only mutation tool in task 241.
+  // The storage layer (upsertTargetWeights) is still tested via the domain
+  // suite above. Only the MCP tool registration is gone.
+  it("is NOT registered on the MCP server", () => {
     const server = makeServer();
-    const result = await callTool(server, "set_target_allocation", {
-      targets: { VCB: 40, FPT: 30, HPG: 30 },
-    });
-    const text = result.content[0]!.text;
-    expect(text).toContain("VCB");
-    expect(text.toLowerCase()).toMatch(/luu|set|da luu|thanh cong|ok|target|muc tieu/);
-
-    // Verify persisted to DB
-    const rows = await getTargetWeights();
-    expect(rows.length).toBe(3);
-  });
-
-  it("rejects when weights sum is outside 99-101 range", async () => {
-    const server = makeServer();
-    const result = await callTool(server, "set_target_allocation", {
-      targets: { VCB: 40, FPT: 40 }, // sum = 80
-    });
-    const text = result.content[0]!.text;
-    expect(text.toLowerCase()).toMatch(/loi|error|khong hop le|tong|sum|80/i);
+    const tools = (
+      server as unknown as { _registeredTools: Record<string, unknown> }
+    )._registeredTools;
+    expect(Object.keys(tools)).not.toContain("set_target_allocation");
+    // get_target_allocation stays (read-only tool)
+    expect(Object.keys(tools)).toContain("get_target_allocation");
   });
 });
 

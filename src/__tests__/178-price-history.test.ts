@@ -84,10 +84,15 @@ describe("Task 178 — get_price_history MCP tool", () => {
   });
 
   it("returns a formatted table with price rows for a known stock", async () => {
+    // Sprint 053 / 1021: use dates relative to `now` so the 7-day window
+    // always covers them regardless of when the test runs. Hard-coded
+    // 2026-04-01 dates drifted outside the window as the clock moved on.
+    const iso = (daysAgo: number) =>
+      new Date(Date.now() - daysAgo * 24 * 3600 * 1000).toISOString();
     seedHistory(db, "VCB", [
-      { price: 85000, volume: 1200000, fetched_at: "2026-04-01T10:00:00.000Z" },
-      { price: 84000, volume: 900000,  fetched_at: "2026-03-31T10:00:00.000Z" },
-      { price: 83500, volume: 800000,  fetched_at: "2026-03-30T10:00:00.000Z" },
+      { price: 85000, volume: 1200000, fetched_at: iso(1) },
+      { price: 84000, volume: 900000,  fetched_at: iso(2) },
+      { price: 83500, volume: 800000,  fetched_at: iso(3) },
     ]);
 
     const result = await callTool(server, "get_price_history", {
@@ -110,10 +115,12 @@ describe("Task 178 — get_price_history MCP tool", () => {
   });
 
   it("computes correct period return % between first and last entry", async () => {
+    const iso = (daysAgo: number) =>
+      new Date(Date.now() - daysAgo * 24 * 3600 * 1000).toISOString();
     // oldest price 80000, newest price 84000 → return +5.00%
     seedHistory(db, "VNM", [
-      { price: 84000, volume: 500000, fetched_at: "2026-04-01T08:00:00.000Z" },
-      { price: 80000, volume: 400000, fetched_at: "2026-03-25T08:00:00.000Z" },
+      { price: 84000, volume: 500000, fetched_at: iso(1) },
+      { price: 80000, volume: 400000, fetched_at: iso(8) },
     ]);
 
     const result = await callTool(server, "get_price_history", {
@@ -177,9 +184,11 @@ describe("Task 178 — get_price_history MCP tool", () => {
   });
 
   it("shows negative period return correctly", async () => {
+    const iso = (daysAgo: number) =>
+      new Date(Date.now() - daysAgo * 24 * 3600 * 1000).toISOString();
     seedHistory(db, "HPG", [
-      { price: 28000, volume: 2000000, fetched_at: "2026-04-01T08:00:00.000Z" },
-      { price: 30000, volume: 1500000, fetched_at: "2026-03-28T08:00:00.000Z" },
+      { price: 28000, volume: 2000000, fetched_at: iso(1) },
+      { price: 30000, volume: 1500000, fetched_at: iso(5) },
     ]);
 
     const result = await callTool(server, "get_price_history", {

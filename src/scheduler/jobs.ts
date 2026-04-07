@@ -65,6 +65,8 @@ export const CRONS = {
   bctcOverdueCheck:       Bun.env.CRON_BCTC_OVERDUE_CHECK         ?? '0 9 * * *',
   /** BCTC stranded-PDF auto-reparse: daily 09:30 GMT+7 (task 1019 slice 2) */
   bctcReparseJob:         Bun.env.CRON_BCTC_REPARSE_JOB           ?? '30 9 * * *',
+  /** France wake-up summary: weekdays 06:00 UTC (07:00 CET) — task 243 */
+  franceSummary:          Bun.env.CRON_FRANCE_SUMMARY             ?? '0 6 * * 1-5',
 }
 
 function log(msg: string) {
@@ -175,7 +177,7 @@ export function startScheduler() {
   }, { timezone: 'UTC' })
 
   // Weekdays 06:00 UTC (07:00 CET) — France wake-up summary — task 243
-  cron.schedule("0 6 * * 1-5", async () => {
+  cron.schedule(CRONS.franceSummary, async () => {
     await runFranceSummary()
   }, { timezone: "UTC" })
 

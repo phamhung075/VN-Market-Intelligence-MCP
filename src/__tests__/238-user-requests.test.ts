@@ -211,8 +211,9 @@ describe("Task 238 — /ask Telegram command", () => {
     );
 
     expect(result).not.toBeNull();
-    expect(result!.text).toContain("Dang phan tich");
-    expect(result!.text).toContain("15 phut");
+    // Handler returns Vietnamese with diacritics
+    expect(result!.text).toContain("phân tích");
+    expect(result!.text).toContain("15 phút");
     expect(result!.text).toContain("ID:");
 
     // Verify row inserted
@@ -229,7 +230,7 @@ describe("Task 238 — /ask Telegram command", () => {
     const result = await handleTelegramCommand(makeUpdate("/ask"), db);
 
     expect(result).not.toBeNull();
-    expect(result!.text).toContain("Su dung");
+    expect(result!.text).toContain("Cách dùng");
     expect(result!.text).toContain("/ask");
 
     // No row should be inserted
@@ -245,7 +246,7 @@ describe("Task 238 — /ask Telegram command", () => {
     const result = await handleTelegramCommand(makeUpdate("/ask   "), db);
 
     expect(result).not.toBeNull();
-    expect(result!.text).toContain("Su dung");
+    expect(result!.text).toContain("Cách dùng");
   });
 
   it("response contains the inserted row ID", async () => {

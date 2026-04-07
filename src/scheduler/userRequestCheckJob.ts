@@ -399,8 +399,30 @@ export async function runUserRequestCheck(
         ? `Tai sao ${req.payload.replace(/^why:/i, "").trim().toUpperCase()} bien dong hom nay?`
         : req.payload;
 
-      // RAG search for relevant context
-      const ragResults = await searchContextFn(ragQuery);
+      // Sprint 053 / task 1021: differentiate RAG failures from Telegram
+      // failures. RAG errors are terminal for this request (retrying the
+      // same broken query won't help) so mark 'done' with a Vietnamese
+      // error message. Telegram failures stay 'pending' to retry next cycle.
+      let ragResults: SearchResult[];
+      try {
+        ragResults = await searchContextFn(ragQuery);
+      } catch (ragErr) {
+        const msg = ragErr instanceof Error ? ragErr.message : String(ragErr);
+        const errAnswer = `Loi truy van RAG: ${msg}`.slice(0, 400);
+        database
+          .prepare(
+            `UPDATE user_requests
+             SET status = 'done', response = ?, answered_at = datetime('now')
+             WHERE id = ?`,
+          )
+          .run(errAnswer, req.id);
+        errors++;
+        logger.warn("[user-request-check] RAG failed — marked done with error", {
+          requestId: req.id,
+          error: msg,
+        });
+        continue;
+      }
 
       // Build enriched Vietnamese answer (Task 306)
       const answer = await buildEnrichedAnswer(database, req.payload, ragResults);

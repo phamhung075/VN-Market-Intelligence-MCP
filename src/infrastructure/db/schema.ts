@@ -122,8 +122,26 @@ export async function initDatabase(): Promise<void> {
       change_amt  REAL,
       change_pct  REAL,
       volume      REAL,
-      updated_at  TEXT
+      updated_at  TEXT,
+      exchange    TEXT DEFAULT 'HOSE'
     );
+  `);
+  try { db.exec(`ALTER TABLE market_prices ADD COLUMN exchange TEXT DEFAULT 'HOSE'`); } catch {}
+
+  // Sprint 053 / 1021: market_prices_history was created lazily elsewhere
+  // (and by hand on prod). Several tests assume it exists right after
+  // initDatabase() — canonicalise here so fresh DBs get it.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS market_prices_history (
+      code       TEXT NOT NULL,
+      price      REAL NOT NULL,
+      volume     REAL NOT NULL,
+      fetched_at TEXT NOT NULL,
+      exchange   TEXT DEFAULT 'HOSE',
+      PRIMARY KEY (code, fetched_at)
+    );
+    CREATE INDEX IF NOT EXISTS idx_mph_code_fetched
+      ON market_prices_history(code, fetched_at DESC);
   `);
 
   // ── Daily OHLCV — 2+ year price history for volatility analysis ────────────
@@ -491,24 +509,35 @@ export async function initDatabase(): Promise<void> {
   `);
 
   // ── Seed default watchlist from mcp.config.json (skip in tests) ────────────
+  // Sprint 053 / backlog 1021: the previous version used `return` to skip the
+  // seed block in test mode. That also skipped EVERY table defined after this
+  // point (alert_mutes, telegram_reports, system_changelog, user_requests,
+  // pdf_extracted_text, daily_ohlcv, market_summaries, …), which caused ~10
+  // of the 20 pre-existing per-file flakes. Now we only guard the seed logic
+  // itself and continue creating schema after.
   const currentDbPath = process.env["DB_PATH"] ?? Bun.env["DB_PATH"] ?? DEFAULT_DB_PATH;
-  if (currentDbPath === ":memory:" || Bun.env["BUN_ENV"] === "test" || typeof Bun.env["BUN_TEST"] !== "undefined") return;
-  try {
-    const { mcpConfig } = await import("../config.js");
-    const defaultStocks = mcpConfig.market.watchlist;
-    if (defaultStocks.length > 0) {
-      const existing = db.query("SELECT COUNT(*) as c FROM watchlist").get() as { c: number };
-      if (existing.c === 0) {
-        const domainMap: Record<string, string> = { VNM: "retail", FPT: "tech", VCB: "banking", VEA: "automotive" };
-        const ins = db.prepare(
-          "INSERT OR IGNORE INTO watchlist (code, exchange, domain, added_at, alert_drop_pct, alert_rise_pct, alert_impact_min, alert_report_new) VALUES (?, 'HOSE', ?, datetime('now'), -3, 5, 7, 1)"
-        );
-        for (const code of defaultStocks) {
-          ins.run(code, domainMap[code] ?? "other");
+  const isTestEnv =
+    currentDbPath === ":memory:" ||
+    Bun.env["BUN_ENV"] === "test" ||
+    typeof Bun.env["BUN_TEST"] !== "undefined";
+  if (!isTestEnv) {
+    try {
+      const { mcpConfig } = await import("../config.js");
+      const defaultStocks = mcpConfig.market.watchlist;
+      if (defaultStocks.length > 0) {
+        const existing = db.query("SELECT COUNT(*) as c FROM watchlist").get() as { c: number };
+        if (existing.c === 0) {
+          const domainMap: Record<string, string> = { VNM: "retail", FPT: "tech", VCB: "banking", VEA: "automotive" };
+          const ins = db.prepare(
+            "INSERT OR IGNORE INTO watchlist (code, exchange, domain, added_at, alert_drop_pct, alert_rise_pct, alert_impact_min, alert_report_new) VALUES (?, 'HOSE', ?, datetime('now'), -3, 5, 7, 1)"
+          );
+          for (const code of defaultStocks) {
+            ins.run(code, domainMap[code] ?? "other");
+          }
         }
       }
-    }
-  } catch { /* config not available — skip seeding */ }
+    } catch { /* config not available — skip seeding */ }
+  }
 
   // ── Custom Alert Rules (Task 219) ─────────────────────────────────────────
   ensureCustomAlertRulesTable(db);
@@ -589,6 +618,81 @@ export async function initDatabase(): Promise<void> {
   db.exec(`CREATE INDEX IF NOT EXISTS idx_agent_signals_cycle ON agent_signals(cycle_id)`);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_agent_signals_chain ON agent_signals(causal_ref)`);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_agent_signals_stock ON agent_signals(stock_code, created_at)`);
+
+  // ── System logs (created-lazily elsewhere, canonical here for tests) ─────
+  // Sprint 053 / 1021: several modules create this lazily (dataAuditJob,
+  // persistLog helper). Tests running against a fresh :memory: DB need it
+  // present after initDatabase() so the tests for persistLog / data audit
+  // do not need to duplicate the DDL.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS system_logs (
+      id           INTEGER PRIMARY KEY AUTOINCREMENT,
+      timestamp    TEXT NOT NULL DEFAULT (datetime('now')),
+      level        TEXT NOT NULL,
+      source       TEXT NOT NULL,
+      message      TEXT NOT NULL,
+      details_json TEXT,
+      resolved     INTEGER DEFAULT 0
+    );
+    CREATE INDEX IF NOT EXISTS idx_system_logs_ts       ON system_logs(timestamp DESC);
+    CREATE INDEX IF NOT EXISTS idx_system_logs_level    ON system_logs(level);
+    CREATE INDEX IF NOT EXISTS idx_system_logs_resolved ON system_logs(resolved);
+  `);
+
+  // ── Tracked indicators (created lazily by commodityTracker, canonical here) ─
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS tracked_indicators (
+      id           INTEGER PRIMARY KEY AUTOINCREMENT,
+      indicator    TEXT NOT NULL,
+      value        REAL NOT NULL,
+      unit         TEXT NOT NULL DEFAULT '',
+      source       TEXT NOT NULL DEFAULT '',
+      extracted_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_tracked_ind_name_time
+      ON tracked_indicators(indicator, extracted_at DESC);
+  `);
+
+  // ── Mention velocity (Sprint 031 / 265) ────────────────────────────────
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS mention_velocity (
+      code           TEXT    NOT NULL,
+      hour           TEXT    NOT NULL,
+      mention_count  INTEGER NOT NULL DEFAULT 0,
+      negative_count INTEGER NOT NULL DEFAULT 0,
+      source_count   INTEGER NOT NULL DEFAULT 0,
+      PRIMARY KEY (code, hour)
+    );
+    CREATE INDEX IF NOT EXISTS idx_mv_code ON mention_velocity(code);
+    CREATE INDEX IF NOT EXISTS idx_mv_hour ON mention_velocity(hour);
+  `);
+
+  // ── Market summaries (periodic briefings — Sprint 034 / task 130) ─────────
+  // No module owns the DDL — prod DB was created by-hand. Canonicalising here
+  // so fresh test DBs pick it up via initDatabase().
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS market_summaries (
+      id                     TEXT PRIMARY KEY,
+      period_type            TEXT NOT NULL,
+      period_start           TEXT NOT NULL,
+      period_end             TEXT NOT NULL,
+      created_at             TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at             TEXT NOT NULL DEFAULT (datetime('now')),
+      summary_text           TEXT NOT NULL,
+      key_events_json        TEXT,
+      stock_performance_json TEXT,
+      alerts_summary_json    TEXT,
+      macro_context_json     TEXT,
+      recommendation_json    TEXT,
+      news_count             INTEGER DEFAULT 0,
+      alert_count            INTEGER DEFAULT 0,
+      report_count           INTEGER DEFAULT 0,
+      data_sources_json      TEXT,
+      UNIQUE(period_type, period_start)
+    );
+    CREATE INDEX IF NOT EXISTS idx_ms_period  ON market_summaries(period_type, period_start);
+    CREATE INDEX IF NOT EXISTS idx_ms_created ON market_summaries(created_at);
+  `);
 
   // ── PDF OCR Cache (Sprint 048 / Task 292) ──────────────────────────────
   db.exec(`

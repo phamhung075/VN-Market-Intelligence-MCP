@@ -46,7 +46,7 @@ describe("Task 169 — predictionMarkets config section", () => {
   it("predictionMarkets.clobApiUrl has correct default", async () => {
     const { loadMcpConfig } = await import("../infrastructure/config.js");
     const cfg = loadMcpConfig();
-    expect(cfg.predictionMarkets.clobApiUrl).toBe("https://clob-api.polymarket.com");
+    expect(cfg.predictionMarkets.clobApiUrl).toBe("https://clob.polymarket.com");
   });
 
   it("predictionMarkets.gammaApiUrl has correct default", async () => {
@@ -144,7 +144,7 @@ describe("Task 169 — predictionMarkets config section", () => {
     const raw = readFileSync(MCP_CONFIG_PATH, "utf-8");
     const json = JSON.parse(raw) as Record<string, unknown>;
     const pm = json["predictionMarkets"] as Record<string, unknown>;
-    expect(pm["clobApiUrl"]).toBe("https://clob-api.polymarket.com");
+    expect(pm["clobApiUrl"]).toBe("https://clob.polymarket.com");
   });
 
   it("mcp.config.json predictionMarkets has gammaApiUrl field", () => {

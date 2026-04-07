@@ -236,6 +236,15 @@ describe("Task 025 — Yahoo Finance Commodity Fetcher", () => {
         usd_vnd_rate REAL NOT NULL DEFAULT 0,
         fetched_at TEXT NOT NULL
       );
+      -- Sprint 052 (backlog 921): storeCommoditySnapshot now mirrors brent/gold into market_prices
+      CREATE TABLE market_prices (
+        code        TEXT PRIMARY KEY,
+        price       REAL,
+        change_amt  REAL,
+        change_pct  REAL,
+        volume      REAL,
+        updated_at  TEXT
+      );
     `);
 
     const snap1: CommoditySnapshot = {
@@ -290,6 +299,15 @@ describe("Task 025 — Yahoo Finance Commodity Fetcher", () => {
         gold_usd_per_oz REAL NOT NULL DEFAULT 0,
         usd_vnd_rate REAL NOT NULL DEFAULT 0,
         fetched_at TEXT NOT NULL
+      );
+      -- Sprint 052 (backlog 921): storeCommoditySnapshot now mirrors brent/gold into market_prices
+      CREATE TABLE market_prices (
+        code        TEXT PRIMARY KEY,
+        price       REAL,
+        change_amt  REAL,
+        change_pct  REAL,
+        volume      REAL,
+        updated_at  TEXT
       );
     `);
 

@@ -136,7 +136,7 @@ describe("Task 206 — MCP tool registration", () => {
     expect(typeof mod.registerPriceAlertTools).toBe("function");
   });
 
-  it("registers 3 tools: set_price_alert, get_price_alerts, delete_price_alert", async () => {
+  it("registers 2 tools: set_price_alert, delete_price_alert (get_price_alerts merged into get_alerts per task 241)", async () => {
     const { registerPriceAlertTools } = await import(
       "../interface/mcp/tools/priceAlertTools.js"
     );
@@ -150,8 +150,9 @@ describe("Task 206 — MCP tool registration", () => {
       server as unknown as { _registeredTools: Record<string, unknown> }
     )._registeredTools;
     expect(Object.keys(tools)).toContain("set_price_alert");
-    expect(Object.keys(tools)).toContain("get_price_alerts");
     expect(Object.keys(tools)).toContain("delete_price_alert");
+    // get_price_alerts was merged into get_alerts in task 241 — no longer registered here
+    expect(Object.keys(tools)).not.toContain("get_price_alerts");
   });
 });
 

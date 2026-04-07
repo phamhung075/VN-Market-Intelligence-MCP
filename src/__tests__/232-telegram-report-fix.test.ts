@@ -124,7 +124,8 @@ describe("Task 232 — /report command", () => {
     );
 
     expect(result).not.toBeNull();
-    expect(result!.text).toContain("Dev Team");
+    // Handler now returns Vietnamese confirmation (with diacritics)
+    expect(result!.text).toContain("báo cáo");
 
     const rows = db
       .prepare<FeedbackRow, []>("SELECT * FROM agent_feedback")
@@ -164,7 +165,8 @@ describe("Task 232 — /report command", () => {
     const result = await handleTelegramCommand(makeUpdate("/report"), db);
 
     expect(result).not.toBeNull();
-    expect(result!.text.toLowerCase()).toMatch(/su dung|usage|mo ta/i);
+    // Vietnamese usage hint: "Cách dùng: /report mô tả lỗi"
+    expect(result!.text.toLowerCase()).toMatch(/cách dùng|usage|mô tả|su dung|mo ta/i);
 
     // No row should be inserted
     const count = db
@@ -201,7 +203,8 @@ describe("Task 232 — /fix command", () => {
     );
 
     expect(result).not.toBeNull();
-    expect(result!.text).toContain("KHAN CAP");
+    // Handler returns "Đã gửi báo cáo KHẨN CẤP..." (Vietnamese with diacritics)
+    expect(result!.text).toContain("KHẨN CẤP");
 
     const rows = db
       .prepare<FeedbackRow, []>("SELECT * FROM agent_feedback")
@@ -226,7 +229,7 @@ describe("Task 232 — /fix command", () => {
     const result = await handleTelegramCommand(makeUpdate("/fix"), db);
 
     expect(result).not.toBeNull();
-    expect(result!.text.toLowerCase()).toMatch(/su dung|usage|mo ta/i);
+    expect(result!.text.toLowerCase()).toMatch(/cách dùng|usage|mô tả|su dung|mo ta/i);
 
     const count = db
       .prepare<{ c: number }, []>("SELECT COUNT(*) as c FROM agent_feedback")

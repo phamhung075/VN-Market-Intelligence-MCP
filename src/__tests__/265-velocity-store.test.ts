@@ -67,9 +67,10 @@ describe("Task 265 — Mention Velocity Store", () => {
   });
 
   it("getBaseline returns average across recent windows", () => {
-    // Insert 3 hours of data
+    // Sprint 053 / 1021: use hours relative to `now` so the 24h window
+    // covers them. Hard-coded 2026-04-03 drifted outside the window.
     for (let i = 0; i < 3; i++) {
-      const hour = `2026-04-03T${String(i + 7).padStart(2, "0")}:00:00.000Z`;
+      const hour = new Date(Date.now() - (i + 1) * 60 * 60 * 1000).toISOString();
       recordMention(db, { code: "VNM", hour, mentionCount: i + 2, negativeCount: 0, sourceCount: 1 });
     }
     // Baseline should be avg of 2, 3, 4 = 3

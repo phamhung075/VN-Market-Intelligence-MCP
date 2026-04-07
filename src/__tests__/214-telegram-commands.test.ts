@@ -360,7 +360,7 @@ describe("Task 214 — /pnl command", () => {
     const result = await handleTelegramCommand(makeUpdate("/pnl"), db);
     expect(result).not.toBeNull();
     expect(result!.text).toContain("VNM");
-    expect(result!.text.toLowerCase()).toMatch(/n\/a|unknown|no price|chua co gia/i);
+    expect(result!.text.toLowerCase()).toMatch(/n\/a|unknown|no price|chua co gia|chưa có/i);
   });
 });
 
