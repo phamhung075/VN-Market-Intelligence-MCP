@@ -171,27 +171,33 @@ export function registerAnalysisTools(server: McpServer): void {
           }
         }
 
-        // ── Step 4: Insert into vector store (best-effort) ───────────────────
-        for (const entry of entries) {
-          try {
-            await insertAnalysis({
-              id: entry.id,
-              level: entry.level,
-              title: entry.sourceTitle,
-              summary: entry.summary,
-              tags: entry.tags,
-              ...(entry.affectedActions.length > 0
-                ? { actionCode: entry.affectedActions[0] }
-                : {}),
-            });
-          } catch (ragErr) {
-            logger.warn("[fetch_and_analyze] RAG insert failed for entry", {
-              id: entry.id,
-              error: ragErr instanceof Error ? ragErr.message : String(ragErr),
-            });
-            // Continue — SQLite row was already committed
-          }
-        }
+        // ── Step 4: Insert into vector store (best-effort, parallel) ─────────
+        // Sprint 053 / report 1026: serial inserts of 30 items at ~2s each
+        // (embedding + LanceDB write) blew the MCP 60s timeout. Run them in
+        // parallel — the embedding model + LanceDB tolerate concurrent calls
+        // and the wall-clock collapses to roughly the slowest single insert.
+        await Promise.all(
+          entries.map(async (entry) => {
+            try {
+              await insertAnalysis({
+                id: entry.id,
+                level: entry.level,
+                title: entry.sourceTitle,
+                summary: entry.summary,
+                tags: entry.tags,
+                ...(entry.affectedActions.length > 0
+                  ? { actionCode: entry.affectedActions[0] }
+                  : {}),
+              });
+            } catch (ragErr) {
+              logger.warn("[fetch_and_analyze] RAG insert failed for entry", {
+                id: entry.id,
+                error: ragErr instanceof Error ? ragErr.message : String(ragErr),
+              });
+              // Continue — SQLite row was already committed
+            }
+          }),
+        );
 
         // ── Step 5: Format output ─────────────────────────────────────────────
         const header = `Analysis — ${entries.length} item${entries.length !== 1 ? "s" : ""} fetched and analyzed`;

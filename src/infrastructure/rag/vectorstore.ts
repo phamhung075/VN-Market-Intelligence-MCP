@@ -217,18 +217,36 @@ export async function searchSimilar(
     query = query.where(clauses.join(" AND "));
   }
 
-  const rows = (await query.toArray()) as unknown as (StoredRow & { _distance: number })[];
+  // Sprint 053 / report 1027: the same news article gets re-indexed across
+  // multiple fetch cycles with different ids, so a vector search for "PVOIL
+  // niêm yết" can return 5 identical rows. Pull a wider window from LanceDB
+  // (up to 4× requested k, capped at 50) and dedupe by (title, summary)
+  // before returning the top-k unique results. The dedup key uses raw
+  // strings rather than a hash so it stays cheap.
+  const wideLimit = Math.min(50, Math.max(k * 4, k));
+  const rawRows = (await query.limit(wideLimit).toArray()) as unknown as (StoredRow & {
+    _distance: number;
+  })[];
 
-  return rows.map((r) => ({
-    id: r.id,
-    level: r.level,
-    title: r.title,
-    summary: r.summary,
-    tags: safeParseTags(r.tags),
-    actionCode: r.action_code,
-    createdAt: r.created_at,
-    distance: r._distance ?? 0,
-  }));
+  const seen = new Set<string>();
+  const deduped: SearchResult[] = [];
+  for (const r of rawRows) {
+    const key = `${r.title}\u0000${r.summary}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    deduped.push({
+      id: r.id,
+      level: r.level,
+      title: r.title,
+      summary: r.summary,
+      tags: safeParseTags(r.tags),
+      actionCode: r.action_code,
+      createdAt: r.created_at,
+      distance: r._distance ?? 0,
+    });
+    if (deduped.length >= k) break;
+  }
+  return deduped;
 }
 
 function safeParseTags(raw: string | string[]): string[] {

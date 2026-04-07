@@ -278,7 +278,11 @@ export async function runPredictionMarketPoll(
 ): Promise<void> {
   // ── Concurrency guard ──────────────────────────────────────────────────────
   if (_isRunning) {
-    logger.warn(
+    // Sprint 053 / report 1028: routine cycle-overlap, not a bug. The
+    // 30-min cron + Polymarket fetch latency means an occasional skip is
+    // normal. Demoted from warn to debug so it stops cluttering
+    // RECENT ERRORS during upstream slowness.
+    logger.debug(
       "[prediction-market-job] previous cycle still running — skipped",
     );
     return;

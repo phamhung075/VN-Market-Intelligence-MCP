@@ -94,24 +94,30 @@ function parseOutcomePrices(v: unknown): { yes: number; no: number } {
  * Times out after 15 seconds.
  */
 const defaultFetchFn: PolyFetchFn = async (url: string): Promise<string> => {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 15_000);
-  try {
-    const response = await fetch(url, {
-      signal: controller.signal,
-      headers: {
-        "User-Agent":
-          "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
-        Accept: "application/json",
-      },
-    });
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status} from ${url}`);
+  // Sprint 053 / report 1028: route through the polymarket circuit breaker
+  // so consecutive timeouts open the circuit and stop the cycle-overlap
+  // floods. The CB was registered in circuitBreakerRegistry but never
+  // wired into the actual fetch path.
+  return breakers.polymarket.execute(async () => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15_000);
+    try {
+      const response = await fetch(url, {
+        signal: controller.signal,
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+          Accept: "application/json",
+        },
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status} from ${url}`);
+      }
+      return await response.text();
+    } finally {
+      clearTimeout(timeoutId);
     }
-    return await response.text();
-  } finally {
-    clearTimeout(timeoutId);
-  }
+  });
 };
 
 // ---------------------------------------------------------------------------
