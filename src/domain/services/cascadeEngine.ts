@@ -527,6 +527,78 @@ interface SectorRule {
 }
 
 const SECTOR_RULES: SectorRule[] = [
+  // ── VN POLICY INTERVENTION OVERRIDE (must be FIRST — wins over war/recession bear rules) ──
+  // Reports 920/922: when Vietnam government announces stabilization fund / market support
+  // measures, the bullish policy RESPONSE must override bearish triggering-event keywords
+  // ("war", "tariff", "decline") that may co-occur in the same article. First-match-wins
+  // per domain (see line ~1503), so these rules MUST appear before the bearish rules below.
+  {
+    keywords: [
+      "stabilization fund",
+      "stock market support measures",
+      "market support measures",
+      "government-backed",
+      "government support package",
+      "stimulus package",
+      "quỹ bình ổn",
+      "bình ổn thị trường",
+      "chính phủ hỗ trợ thị trường",
+      "biện pháp hỗ trợ thị trường",
+      "hỗ trợ thị trường chứng khoán",
+      "gói kích thích",
+      "gói hỗ trợ",
+      "nới room ngoại",
+      "nới room khối ngoại",
+    ],
+    domain: "securities",
+    direction: "up",
+    confidence: 0.82,
+    title: "Chính phủ can thiệp hỗ trợ thị trường — bullish reversal catalyst (CTCK hưởng lợi trực tiếp)",
+  },
+  {
+    keywords: [
+      "stabilization fund",
+      "market support measures",
+      "quỹ bình ổn",
+      "bình ổn thị trường",
+      "chính phủ hỗ trợ thị trường",
+      "gói kích thích",
+      "gói hỗ trợ",
+    ],
+    domain: "banking",
+    direction: "up",
+    confidence: 0.75,
+    title: "Gói hỗ trợ thị trường — thanh khoản hệ thống cải thiện, tích cực cho ngân hàng",
+  },
+  {
+    keywords: [
+      "stabilization fund",
+      "market support measures",
+      "quỹ bình ổn",
+      "bình ổn thị trường",
+      "gói kích thích",
+      "gói hỗ trợ",
+    ],
+    domain: "real_estate",
+    direction: "up",
+    confidence: 0.70,
+    title: "Gói hỗ trợ — kỳ vọng dòng tiền chảy lại BĐS",
+  },
+  {
+    keywords: [
+      "stabilization fund",
+      "market support measures",
+      "quỹ bình ổn",
+      "bình ổn thị trường",
+      "gói kích thích",
+      "gói hỗ trợ",
+    ],
+    domain: "retail",
+    direction: "up",
+    confidence: 0.65,
+    title: "Gói hỗ trợ — tâm lý tiêu dùng cải thiện, tích cực bán lẻ",
+  },
+
   {
     keywords: ["giá dầu tăng", "oil price rise", "crude oil up", "giá dầu tăng mạnh", "opec"],
     domain: "oil_gas",
