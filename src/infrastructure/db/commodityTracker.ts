@@ -72,9 +72,12 @@ interface ExtractionPattern {
  * Ordered by specificity (most specific first).
  */
 const EXTRACTION_PATTERNS: ExtractionPattern[] = [
-  // Oil — flexible pattern: any context mentioning brent/crude + $NUMBER + /bbl or barrel
-  { regex: /(?:brent|crude oil?)[\s\S]{0,40}?\$\s*([\d,.]+)\s*(?:\/bbl|per barrel|a barrel)/i, indicator: "brent_crude_usd", unit: "$/bbl" },
-  { regex: /(?:brent|crude oil?)[\s\S]{0,40}?([\d,.]+)\s*(?:dollars?\s+(?:per|a)\s+barrel)/i, indicator: "brent_crude_usd", unit: "$/bbl" },
+  // Sprint 052 / backlog 921: Brent extraction from news is REMOVED.
+  // yahooFinance.ts now mirrors snapshot.brentCrudeUSD into market_prices('BRENT')
+  // and is the single source of truth. News-mined brent values were drifting
+  // $3+ above the live yahoo price (signal #509 case) because they captured
+  // article-quoted spot prices, not the current futures bid.
+  // WTI is still extracted from news because no live fetcher covers it.
   { regex: /(?:wti|us crude)[\s\S]{0,30}?\$\s*([\d,.]+)\s*(?:\/bbl|per barrel)/i, indicator: "wti_crude_usd", unit: "$/bbl" },
 
   // Gold — flexible: gold + $NUMBER + /oz or ounce

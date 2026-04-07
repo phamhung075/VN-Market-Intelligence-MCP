@@ -281,6 +281,19 @@ export function storeCommoditySnapshot(
     VALUES (?, ?, ?, ?, ?)
   `);
 
+  // Sprint 052 / backlog 921: yahooFinance is the single source of truth for
+  // commodity prices. Mirror brent + gold into market_prices so the existing
+  // get_market_context macro query finds them and consumers no longer fall
+  // back to news-mined values in tracked_indicators (which were producing
+  // a $3+ gap vs the live yahoo number — see report 921, signal #509).
+  const upsertMacroPrice = database.prepare(`
+    INSERT INTO market_prices (code, price, change_amt, change_pct, volume, updated_at)
+    VALUES (?, ?, 0, 0, 0, ?)
+    ON CONFLICT(code) DO UPDATE SET
+      price      = excluded.price,
+      updated_at = excluded.updated_at
+  `);
+
   // Dedup: only append history if no row exists for the same hour
   const appendHistory = database.prepare(`
     INSERT INTO commodity_prices_history
@@ -309,6 +322,12 @@ export function storeCommoditySnapshot(
       SOURCE,
       snapshot.fetchedAt,
     );
+    if (snapshot.brentCrudeUSD != null) {
+      upsertMacroPrice.run("BRENT", snapshot.brentCrudeUSD, snapshot.fetchedAt);
+    }
+    if (snapshot.goldUSDPerOz != null) {
+      upsertMacroPrice.run("GOLD", snapshot.goldUSDPerOz, snapshot.fetchedAt);
+    }
   });
 
   try {
