@@ -215,9 +215,23 @@
 - `src/infrastructure/notifiers/telegramCommands.ts` — `/ask` command + `/why` command: store `why:TICKER` payload, guard no-arg `/why` (task 307)
 - `src/interface/mcp/tools/registry.ts` — dynamic tool registry: flat array of all `register*Tools` functions, server.ts no longer needs editing to add tools (task 308)
 
+### Three-Channel Telegram Migration (Sprint 051, tasks 311-313 Done 2026-04-07)
+
+- `src/infrastructure/config.ts` + `src/infrastructure/telegram.ts` — three-channel Zod enum (`market | work | bug`), env vars renamed (task 311)
+- `src/scheduler/*.ts` — all call sites reclassified to correct channel (task 312)
+- `cowork-analysis-vnmarket-team/*.md` + `.claude/agents/*.md` + `docs/ARCHITECTURE.md` — agent .md three-channel rewrite (task 313)
+- `src/scheduler/dataAuditJob.ts` — preserve recent zero-price rows, fixes false-positive purge (task 314)
+
+### BCTC Overdue Alert + Single Source of Truth (Sprint 052, tasks Done 2026-04-07)
+
+- `src/scheduler/bctcOverdueCheckJob.ts` — daily 09:00: detect overdue BCTC filings, insert alert rows (task 1018 slices 1-3)
+- `src/scheduler/sectorRotationJob.ts` — 1d return prefers `change_pct` column (task 916 fix)
+- `src/scheduler/macroStatsJob.ts` — Brent crude uses yahooFinance exclusively; news-mining removed (task 921 fix)
+- `src/__tests__/157-data-audit-job.test.ts` — LanceDB timeout bumped to 60s, flake resolved
+
 ## In Progress
 
-None — Sprint 050 tasks all Done; QA sign-off pending.
+None — Sprint 052 tasks all Done.
 
 ## Deferred
 - E2E test — daily briefing flow (task 125)
