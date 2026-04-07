@@ -615,6 +615,27 @@ export async function initDatabase(): Promise<void> {
   `);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_user_requests_status ON user_requests(status)`);
 
+  // ── Agent Feedback (Task 1022 / canonical — was inline in telegramCommands + dataAuditJob) ──
+  // Problem reports submitted via /report and /fix Telegram commands; also written
+  // by analysis agents via submit_feedback; read by dev-team-cron for triage.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS agent_feedback (
+      id                INTEGER PRIMARY KEY AUTOINCREMENT,
+      agent             TEXT NOT NULL,
+      category          TEXT NOT NULL,
+      title             TEXT NOT NULL,
+      detail            TEXT NOT NULL DEFAULT '',
+      priority          TEXT NOT NULL DEFAULT 'medium',
+      status            TEXT NOT NULL DEFAULT 'new',
+      created_at        TEXT NOT NULL,
+      reparse_attempts  INTEGER NOT NULL DEFAULT 0
+    )
+  `);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_feedback_status ON agent_feedback(status)`);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_feedback_agent  ON agent_feedback(agent)`);
+  // Idempotent migration for legacy DBs created before reparse_attempts column
+  try { db.exec(`ALTER TABLE agent_feedback ADD COLUMN reparse_attempts INTEGER NOT NULL DEFAULT 0`); } catch {}
+
   // ── Enrichment Chain Columns — idempotent ALTER for existing agent_signals ──
   // These try-catch blocks are safe to run repeatedly — SQLite raises an error
   // if the column already exists (which we silently ignore).

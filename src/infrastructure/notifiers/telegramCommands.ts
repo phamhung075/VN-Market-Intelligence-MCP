@@ -494,26 +494,8 @@ function handleAsk(db: Database, text: string): string {
 // /report and /fix handlers (Task 232)
 // ─────────────────────────────────────────────────────────────────────────────
 
-/**
- * Ensure the agent_feedback table exists (idempotent — matches DDL in
- * dataAuditJob.ts and feedbackTools.ts).
- */
-function ensureAgentFeedbackTable(db: Database): void {
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS agent_feedback (
-      id         INTEGER PRIMARY KEY AUTOINCREMENT,
-      agent      TEXT NOT NULL,
-      category   TEXT NOT NULL,
-      title      TEXT NOT NULL,
-      detail     TEXT NOT NULL DEFAULT '',
-      priority   TEXT NOT NULL DEFAULT 'medium',
-      status     TEXT NOT NULL DEFAULT 'new',
-      created_at TEXT NOT NULL
-    );
-    CREATE INDEX IF NOT EXISTS idx_feedback_status ON agent_feedback(status);
-    CREATE INDEX IF NOT EXISTS idx_feedback_agent  ON agent_feedback(agent);
-  `);
-}
+// agent_feedback DDL is now canonical in src/infrastructure/db/schema.ts (task 1022).
+// No inline guard needed here — initDatabase() creates the table on server start.
 
 /**
  * /report <description> — write a medium-priority issue to agent_feedback.
@@ -536,8 +518,7 @@ function handleReport(
     return `Cách dùng: /${cmd} mô tả lỗi`;
   }
 
-  ensureAgentFeedbackTable(db);
-
+  // agent_feedback table guaranteed by initDatabase() in schema.ts (task 1022)
   const title = text.slice(0, 100);
   const now = new Date().toISOString().replace("T", " ").slice(0, 19);
 

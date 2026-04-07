@@ -28,8 +28,21 @@ import type { DomainType } from "../../../bctc-schema.js";
 // Constants
 // ---------------------------------------------------------------------------
 
-/** Maximum peer stocks to sync per intelligence cycle (rate limit guard). */
-export const MAX_PEER_SYNCS_PER_CYCLE = 5;
+/**
+ * Maximum peer stocks to sync per intelligence cycle (rate limit guard).
+ *
+ * Raised from 5 → 30 (task 1006): with 8 watchlist stocks across 6+ sectors,
+ * the context stock pool can reach 29+ codes. At cap=5 only the first 5 were
+ * ever synced — automotive peers (HAX/CTF/TMT/SMA at positions 13-16) were
+ * permanently skipped and their PE/PB/ROE showed as N/A.
+ *
+ * syncStockLight is fully lazy: it checks staleness before any API call and
+ * returns 0 immediately when data is fresh. So raising the cap to 30 costs
+ * zero extra API calls for already-synced peers — only truly stale data is
+ * fetched. Rate budget: 4 watchlist × 7 types (28) + up to 30 peers × 0 avg
+ * (most fresh) + occasional stale = well within 60 req/min free tier.
+ */
+export const MAX_PEER_SYNCS_PER_CYCLE = 30;
 
 // ---------------------------------------------------------------------------
 // Public API

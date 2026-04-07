@@ -115,32 +115,9 @@ function severityToPriority(severity: "info" | "warning" | "critical"): string {
 // ─────────────────────────────────────────────────────────────────────────────
 
 function ensureAuditDependencies(db: Database): void {
-  // agent_feedback table (also created by feedbackTools.ts — this is idempotent)
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS agent_feedback (
-      id                INTEGER PRIMARY KEY AUTOINCREMENT,
-      agent             TEXT NOT NULL,
-      category          TEXT NOT NULL,
-      title             TEXT NOT NULL,
-      detail            TEXT NOT NULL DEFAULT '',
-      priority          TEXT NOT NULL DEFAULT 'medium',
-      status            TEXT NOT NULL DEFAULT 'new',
-      created_at        TEXT NOT NULL,
-      reparse_attempts  INTEGER NOT NULL DEFAULT 0   -- task 1019 slice 3
-    );
-    CREATE INDEX IF NOT EXISTS idx_feedback_status ON agent_feedback(status);
-    CREATE INDEX IF NOT EXISTS idx_feedback_agent  ON agent_feedback(agent);
-  `);
-
-  // Sprint 053 / task 1019 slice 3: legacy DBs created before reparse_attempts
-  // need an idempotent migration. CREATE TABLE above handles fresh DBs.
-  try {
-    db.exec(
-      "ALTER TABLE agent_feedback ADD COLUMN reparse_attempts INTEGER NOT NULL DEFAULT 0",
-    );
-  } catch {
-    // Column already exists — ignore.
-  }
+  // agent_feedback DDL is now canonical in src/infrastructure/db/schema.ts (task 1022).
+  // The inline CREATE TABLE + ALTER TABLE were removed — initDatabase() handles it.
+  // We keep this function to create audit_state (which IS audit-local).
 
   // audit_state: singleton row (id=1 enforced by CHECK constraint)
   db.exec(`

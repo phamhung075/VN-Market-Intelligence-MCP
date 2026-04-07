@@ -509,7 +509,9 @@ describe("Task 276 — syncSectorPeers integration with real sectorPeers", () =>
     expect(uniqueCodes.size).toBe(codes.length); // no duplicates
   });
 
-  it("caps peer sync at 5 even when banking sector has many peers", async () => {
+  it("makeSyncSectorPeers respects whatever cap is supplied (test-local cap = 5)", async () => {
+    // Note: real MAX_PEER_SYNCS_PER_CYCLE is now 30 (task 1006 fix).
+    // This test verifies the factory function respects the injected cap.
     const { getContextStocksForWatchlist } = await import(
       "../domain/services/sectorPeers.js"
     );
@@ -522,7 +524,7 @@ describe("Task 276 — syncSectorPeers integration with real sectorPeers", () =>
 
     const syncPeers = makeSyncSectorPeers(syncLight, getContextStocksForWatchlist);
 
-    // Banking has 10 peers; only 5 should be processed per cycle
+    // Banking has 10 peers; the test-local cap of 5 applies here
     const result = await syncPeers([{ actionCode: "VCB", domain: "banking" }]);
 
     expect(syncedCodes).toHaveLength(MAX_PEER_SYNCS_PER_CYCLE);
