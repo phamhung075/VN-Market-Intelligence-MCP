@@ -245,6 +245,26 @@ function buildMacroSection(db: ReturnType<typeof getDb>): string {
     // tracked_indicators table doesn't exist in this schema version — skip
   }
 
+  // USD/VND from sbv_rates — the macro analysts keep asking "why is USD/VND
+  // missing from context" because it's never in market_prices or
+  // tracked_indicators, but it IS stored in sbv_rates.usd_vnd_official. Wire
+  // it in as a macro line so market-watcher can threshold-check it directly.
+  try {
+    const sbvRow = db
+      .prepare(
+        `SELECT usd_vnd_official AS rate, fetched_at
+         FROM sbv_rates
+         ORDER BY fetched_at DESC
+         LIMIT 1`,
+      )
+      .get() as { rate: number | null; fetched_at: string } | undefined;
+    if (sbvRow?.rate && sbvRow.rate > 0) {
+      found.push(`${"USD_VND".padEnd(12)} ${sbvRow.rate}`);
+    }
+  } catch {
+    // sbv_rates table may not exist in older schemas — skip
+  }
+
   if (found.length === 0) {
     lines.push("No macro data available. Run fetch_macro or wait for the next intelligence cycle.");
   } else {
