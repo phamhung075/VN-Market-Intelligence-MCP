@@ -161,7 +161,8 @@ export function registerSentimentTrendTools(
     "get_sentiment_trend",
     "Show sentiment trend for a stock over N days based on past analyses",
     {
-      stock_code: z.string().describe("Stock code (e.g. 'VNM')"),
+      stock_code: z.string().optional().describe("Stock code (e.g. 'VNM'). Alias: 'symbol'."),
+      symbol: z.string().optional().describe("Stock code alias for stock_code (cross-tool consistency)."),
       window_days: z.coerce
         .number()
         .min(1)
@@ -170,10 +171,16 @@ export function registerSentimentTrendTools(
         .default(7)
         .describe("Rolling window in calendar days (1–30, default 7)"),
     },
-    async ({ stock_code, window_days }) => {
+    async ({ stock_code, symbol, window_days }) => {
       const db = _testDb ?? getDb();
       const windowDays = window_days ?? 7;
-      const code = stock_code.toUpperCase().trim();
+      const raw = stock_code ?? symbol;
+      if (!raw) {
+        return {
+          content: [{ type: "text" as const, text: "Error: stock_code (or symbol) is required" }],
+        };
+      }
+      const code = raw.toUpperCase().trim();
 
       try {
         const entries = fetchSentimentEntries(db, code, windowDays);
