@@ -19,6 +19,48 @@
 | 311 | Telegram infra: 3-channel config + send_telegram enum | `task/311-telegram-3channel-infra` | Developer | P0 | — | Done |
 | 312 | Reclassify all src/ call sites to market/work/bug | `task/312-telegram-callsite-reclassify` | Developer | P0 | 311 | Done |
 | 313 | Agent .md + docs + mcp.config.json: 3-channel rewrite | `task/313-telegram-agent-docs-rewrite` | Cowork Refactory Expert | P0 | 311 | Done |
+| 314 | Fix dataAuditJob wiping market_prices snapshot | `task/314-dataaudit-market-prices-wipe` | Developer | P1 | — | Done |
+
+---
+
+**Task 314 — Fix dataAuditJob wiping `market_prices` snapshot**
+
+Branch: `task/314-dataaudit-market-prices-wipe`
+Layer: `src/scheduler/dataAuditJob.ts`
+Priority: P1 — user-visible (`get_watchlist` shows Giá: N/A outside market hours)
+Depends on: none
+
+**Symptom (observed 2026-04-07 ~16:35 UTC):**
+After VN market close, `market_prices` table is empty (0 rows) even though
+2,712 successful `/api/push-prices` writes were logged during the session and
+`daily_ohlcv` retains all 123 codes for the same day. `get_watchlist` and
+`/price` show `N/A` for every stock until market re-opens. Manual `INSERT`
+into `market_prices` persists fine — nothing actively re-deletes — so the
+wipe happens once, after the last push.
+
+**Suspect:** `dataAuditJob.ts:268` `DELETE FROM market_prices WHERE price = 0
+OR price IS NULL` — the VPS proxy likely sends `price=0` for halted/illiquid
+tickers, and the audit deletes the entire snapshot. The "0 cleaned" line in
+the audit summary may be misleading because the daily job runs both D-1 and
+D-2 deletes and only one finding is surfaced.
+
+**Acceptance Criteria:**
+1. Failing test in `src/__tests__/314-dataaudit-market-prices-wipe.test.ts`
+   that seeds market_prices with a mix of price=0 and price>0 rows, runs the
+   audit, and asserts price>0 rows survive.
+2. Audit query tightened so legitimate snapshot rows are never deleted —
+   either drop the D-1 zero-price delete entirely (let push-prices overwrite)
+   or scope it to rows older than N hours.
+3. Audit `findings[]` correctly reports `rowsAffected` for BOTH D-1 and D-2
+   so future regressions are visible in the daily warning line.
+4. After fix, `get_watchlist` shows last-close prices outside market hours.
+
+**Investigation notes:**
+- Server uptime at observation: ~15 min (restarted ~16:24 UTC).
+- Last successful push: 2026-04-07 15:59:19 ICT (08:59 UTC).
+- Audit ran at 09:00 UTC (1 min after last push) and reported "0 cleaned, 2 warnings".
+- daily_ohlcv (same handler, same `db`) preserved all 123 codes — proves the
+  push handler did write the data; only `market_prices` was wiped.
 
 ---
 

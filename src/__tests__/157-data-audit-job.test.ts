@@ -13,7 +13,7 @@
  *   AC-9: Dedup guard — same finding not re-inserted within 24h
  *
  * Uses :memory: SQLite (process.env.DB_PATH = ":memory:") and
- * mocks sendTelegramMessage to capture calls without network I/O.
+ * mocks sendTelegramWork to capture calls without network I/O.
  */
 
 import { describe, it, expect, beforeEach, afterEach, mock } from "bun:test";
@@ -156,25 +156,32 @@ describe("Task 157 — Data Audit Job", () => {
     db.close();
   });
 
-  // ── AC-1: Zero-price rows deleted ──────────────────────────────────────────
-  it("AC-1: deletes zero-price rows from market_prices", async () => {
+  // ── AC-1: STALE zero-price rows deleted, RECENT zero-price rows preserved ─
+  // Task 314: VPS proxy may legitimately push price=0 for halted/illiquid
+  // tickers. The audit must NOT wipe those mid-session — only delete rows that
+  // have been zero for >1 day (never-overwritten stragglers).
+  it("AC-1: deletes only STALE zero-price rows, preserves recent ones", async () => {
+    // Recent zero-price rows (should survive — next VPS push will overwrite)
     db.prepare("INSERT INTO market_prices (code, price, updated_at) VALUES (?, ?, datetime('now'))").run("VNM", 0);
     db.prepare("INSERT INTO market_prices (code, price, updated_at) VALUES (?, ?, datetime('now'))").run("FPT", null);
+    // Stale zero-price row (>1 day old, should be deleted)
+    db.prepare("INSERT INTO market_prices (code, price, updated_at) VALUES (?, ?, datetime('now','-2 days'))").run("OLD", 0);
+    // Valid row
     db.prepare("INSERT INTO market_prices (code, price, updated_at) VALUES (?, ?, datetime('now'))").run("VCB", 85000);
 
     const { runDailyAudit } = await import("../scheduler/dataAuditJob.js");
     const findings = await runDailyAudit(db, async () => { /* no-op telegram */ });
 
-    // Verify rows deleted
-    const remaining = db.query<{ code: string }, []>("SELECT code FROM market_prices").all();
-    expect(remaining.map((r) => r.code)).toEqual(["VCB"]);
+    // Recent zero-price rows survive; stale zero-price row deleted
+    const remaining = db.query<{ code: string }, []>("SELECT code FROM market_prices ORDER BY code").all();
+    expect(remaining.map((r) => r.code)).toEqual(["FPT", "VCB", "VNM"]);
 
-    // Verify finding
+    // Verify finding reports the single stale deletion
     const f = findings.find((x) => x.check === "zero_price_rows");
     expect(f).toBeDefined();
     expect(f!.table).toBe("market_prices");
     expect(f!.action).toBe("auto_cleaned");
-    expect(f!.rowsAffected).toBe(2);
+    expect(f!.rowsAffected).toBe(1);
 
     // Verify system_logs entry
     const logRow = db.query<{ source: string }, []>("SELECT source FROM system_logs WHERE source = 'data-auditor'").get();
@@ -523,7 +530,8 @@ describe("Task 157 — Data Audit Job", () => {
 
   // ── Extra: Telegram sent when issues exist ────────────────────────────────
   it("AC-7 (Telegram): sends one message when zero-price rows exist", async () => {
-    db.prepare("INSERT INTO market_prices (code, price, updated_at) VALUES (?, ?, datetime('now'))").run("VNM", 0);
+    // Stale zero-price row (>1 day) so the audit actually cleans something
+    db.prepare("INSERT INTO market_prices (code, price, updated_at) VALUES (?, ?, datetime('now','-2 days'))").run("VNM", 0);
 
     const sentMessages: string[] = [];
     const mockTelegram = async (text: string) => { sentMessages.push(text); };
