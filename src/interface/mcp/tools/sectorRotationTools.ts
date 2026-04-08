@@ -29,6 +29,9 @@ import {
   type SectorRotationEntry,
 } from "../../../domain/services/sectorRotationDetector.js";
 import type { DomainType } from "../../../../bctc-schema.js";
+import { fetchHosePrices, type MarketPrice } from "../../../infrastructure/fetchers/hose.js";
+import { fetchHnxPrices, fetchUpcomPrices } from "../../../infrastructure/fetchers/hnx.js";
+import { tradingWindowLabel } from "../../../domain/services/tradingWindow.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Internal types
@@ -50,6 +53,7 @@ interface PriceHistoryRow {
 interface WatchlistRow {
   code: string;
   domain: string;
+  exchange?: string;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -94,7 +98,32 @@ function formatSectorLine(entry: SectorRotationEntry): string {
 export async function getSectorRotationReport(db: Database): Promise<string> {
   const now = new Date();
 
-  // ── 1. Read current prices ────────────────────────────────────────────────
+  // ── 1a. Read watchlist FIRST (report 1059) ────────────────────────────────
+  // We need watchlist codes both to drive the live price fan-out and to
+  // override sector assignment for tickers not in the static SECTOR_PEERS map.
+  let watchlistRows: WatchlistRow[] = [];
+  try {
+    watchlistRows = db
+      .query<WatchlistRow, []>(
+        "SELECT code, domain, exchange FROM watchlist",
+      )
+      .all();
+  } catch {
+    // Watchlist table may not exist
+  }
+
+  const watchlistByCode = new Map<
+    string,
+    { domain: string; exchange: string }
+  >();
+  for (const w of watchlistRows) {
+    watchlistByCode.set(w.code.toUpperCase(), {
+      domain: w.domain,
+      exchange: (w.exchange || "HOSE").toUpperCase(),
+    });
+  }
+
+  // ── 1b. Read current prices from DB (stored snapshot) ────────────────────
   let currentPrices: MarketPriceRow[] = [];
   try {
     currentPrices = db
@@ -106,8 +135,93 @@ export async function getSectorRotationReport(db: Database): Promise<string> {
     // Table may not exist yet
   }
 
+  // ── 1c. Live fetch for any watchlist code missing from the DB snapshot ──
+  // Report 1059 root cause: outside the VN trading window, `market_prices`
+  // can be empty or contain only indices while watchlist tickers have no
+  // row. `get_portfolio_conviction` already solves this by force-fetching
+  // live from vnstock/VPS API — we mirror the same fan-out here so sector
+  // rotation agrees with conviction. Live fetchers also append to
+  // `market_prices_history`, which feeds the 5d baseline on future runs.
+  let priceSource: "stored" | "live" | "mixed" = "stored";
+  const haveCodes = new Set(currentPrices.map((r) => r.code.toUpperCase()));
+  const missingWatchlist = watchlistRows.filter(
+    (w) => !haveCodes.has(w.code.toUpperCase()),
+  );
+
+  if (missingWatchlist.length > 0) {
+    try {
+      const hoseCodes: string[] = [];
+      const hnxCodes: string[] = [];
+      const upcomCodes: string[] = [];
+      for (const w of missingWatchlist) {
+        const ex = (w.exchange || "HOSE").toUpperCase();
+        if (ex === "HNX") hnxCodes.push(w.code);
+        else if (ex === "UPCOM") upcomCodes.push(w.code);
+        else hoseCodes.push(w.code);
+      }
+
+      const withDeadline = <T,>(p: Promise<T>, ms: number, fallback: T): Promise<T> =>
+        new Promise((resolve) => {
+          const t = setTimeout(() => resolve(fallback), ms);
+          p.then((v) => { clearTimeout(t); resolve(v); })
+            .catch(() => { clearTimeout(t); resolve(fallback); });
+        });
+
+      const [hoseRes, hnxRes, upcomRes] = await Promise.all([
+        hoseCodes.length > 0
+          ? withDeadline(
+              fetchHosePrices(hoseCodes, undefined, { force: true }),
+              8_000,
+              [] as MarketPrice[],
+            )
+          : Promise.resolve([] as MarketPrice[]),
+        hnxCodes.length > 0
+          ? withDeadline(
+              fetchHnxPrices(hnxCodes, undefined, { force: true }),
+              8_000,
+              [] as MarketPrice[],
+            )
+          : Promise.resolve([] as MarketPrice[]),
+        upcomCodes.length > 0
+          ? withDeadline(
+              fetchUpcomPrices(upcomCodes, undefined, { force: true }),
+              8_000,
+              [] as MarketPrice[],
+            )
+          : Promise.resolve([] as MarketPrice[]),
+      ]);
+
+      const liveRows: MarketPriceRow[] = [];
+      for (const p of [...hoseRes, ...hnxRes, ...upcomRes]) {
+        if (haveCodes.has(p.code.toUpperCase())) continue;
+        liveRows.push({
+          code: p.code,
+          price: p.price,
+          change_pct: p.changePct,
+          updated_at: p.fetchedAt,
+        });
+        haveCodes.add(p.code.toUpperCase());
+      }
+      if (liveRows.length > 0) {
+        currentPrices = [...currentPrices, ...liveRows];
+        priceSource = currentPrices.length === liveRows.length ? "live" : "mixed";
+      }
+    } catch (err) {
+      logger.warn("[get_sector_rotation] Live price fallback failed", {
+        error: err instanceof Error ? err.message : String(err),
+      });
+    }
+  }
+
   if (currentPrices.length === 0) {
-    return "Chua co du lieu gia thi truong";
+    // Outside trading window with no stored snapshot is expected — make it
+    // observable instead of a bare error (mirrors report 1057 banner work).
+    return [
+      "=== PHAN TICH DONG TIEN THEO NGANH ===",
+      `Trading window: ${tradingWindowLabel(now)}`,
+      "",
+      "Chua co du lieu gia thi truong",
+    ].join("\n");
   }
 
   // ── 2. Read historical prices (1d and 5d ago) ─────────────────────────────
@@ -180,25 +294,26 @@ export async function getSectorRotationReport(db: Database): Promise<string> {
     };
   }
 
-  // ── 4. Read watchlist ─────────────────────────────────────────────────────
-  let watchlistRows: WatchlistRow[] = [];
-  try {
-    watchlistRows = db
-      .query<WatchlistRow, []>("SELECT code, domain FROM watchlist")
-      .all();
-  } catch {
-    // Watchlist table may not exist
-  }
-
+  // ── 4. Watchlist already loaded in step 1a ────────────────────────────────
   const watchlistCodes = watchlistRows.map((r) => r.code);
+
+  // Build sector override map from watchlist.domain so that tickers not
+  // listed in SECTOR_PEERS still get classified (report 1059).
+  const codeSectorOverride: Record<string, DomainType> = {};
+  for (const w of watchlistRows) {
+    if (w.domain && w.domain !== "other") {
+      codeSectorOverride[w.code.toUpperCase()] = w.domain as DomainType;
+    }
+  }
 
   // Determine which sectors are represented in the data
   const representedSectors = new Set<DomainType>();
+  const { getSectorForCode } = await import(
+    "../../../domain/services/sectorRotationDetector.js"
+  );
   for (const code of Object.keys(priceMap)) {
-    const { getSectorForCode } = await import(
-      "../../../domain/services/sectorRotationDetector.js"
-    );
-    const sector = getSectorForCode(code);
+    const sector =
+      codeSectorOverride[code.toUpperCase()] ?? getSectorForCode(code);
     if (sector && sector !== "other") representedSectors.add(sector);
   }
 
@@ -214,11 +329,16 @@ export async function getSectorRotationReport(db: Database): Promise<string> {
     priceMap,
     Array.from(representedSectors),
     watchlistCodes,
+    codeSectorOverride,
   );
 
   // ── 6. Format output ──────────────────────────────────────────────────────
   const lines: string[] = [];
   lines.push("=== PHAN TICH DONG TIEN THEO NGANH ===");
+  lines.push(`Trading window: ${tradingWindowLabel(now)}`);
+  lines.push(
+    `Nguon gia: ${priceSource === "live" ? "live API (force)" : priceSource === "mixed" ? "mixed (stored + live fallback)" : "stored snapshot (market_prices)"}`,
+  );
   lines.push(`Cap nhat: ${now.toISOString().slice(0, 16).replace("T", " ")} (GMT)`);
 
   if (result.only1dAvailable) {

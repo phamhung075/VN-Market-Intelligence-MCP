@@ -246,13 +246,28 @@ import { getSectorPeers } from "./sectorPeers.js";
  * @param sectors        - List of sector domain keys to analyse. If empty,
  *                         all sectors that have data in priceMap are used.
  * @param watchlistCodes - Stock codes the user is watching (for outflow warnings).
+ * @param codeSectorOverride - Optional map from UPPERCASE stock code → DomainType
+ *                         that takes precedence over the static SECTOR_PEERS
+ *                         lookup. Used when callers (e.g. the MCP tool) know a
+ *                         ticker's sector from the watchlist `domain` column
+ *                         but that ticker is not listed in SECTOR_PEERS.
+ *                         Report 1059 fix: without this, watchlist codes that
+ *                         weren't seed sector leaders were dropped entirely.
  * @returns SectorRotationResult with classified sectors sorted by 5d return.
  */
 export function detectSectorRotation(
   priceMap: Record<string, SectorPriceData>,
   sectors: DomainType[],
   watchlistCodes: string[],
+  codeSectorOverride?: Record<string, DomainType>,
 ): SectorRotationResult {
+  const resolveSector = (code: string): DomainType | null => {
+    if (codeSectorOverride) {
+      const ovr = codeSectorOverride[code.toUpperCase()];
+      if (ovr) return ovr;
+    }
+    return getSectorForCode(code);
+  };
   const watchlistSet = new Set(watchlistCodes.map((c) => c.toUpperCase()));
   const allCodes = Object.keys(priceMap);
   const hasData = allCodes.length > 0;
@@ -271,7 +286,7 @@ export function detectSectorRotation(
   for (const sector of sectorsToAnalyse) {
     // Find stocks in priceMap that belong to this sector
     const sectorStocks = allCodes
-      .filter((code) => getSectorForCode(code) === sector)
+      .filter((code) => resolveSector(code) === sector)
       .map((code) => priceMap[code]!)
       .filter(Boolean);
 
