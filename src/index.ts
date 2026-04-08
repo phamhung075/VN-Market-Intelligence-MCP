@@ -32,11 +32,15 @@ import { initDatabase } from "./infrastructure/db/index.js";
 import { createBunServer } from "./interface/mcp/server.js";
 import { startScheduler } from "./scheduler/jobs.js";
 import { registerWebhook } from "./infrastructure/notifiers/telegramWebhookSetup.js";
+import { runEnvCheck } from "./infrastructure/envCheck.js";
 
 const cfg = loadConfig();
 const log = createLogger(cfg.logLevel);
 
 log.info("[bootstrap] Starting VN Market Intelligence MCP...");
+
+// ── 0. Env self-check (task 1026) — logs ERROR + WORK alert if vars missing ──
+await runEnvCheck(log);
 
 // ── 1. SQLite tables ───────────────────────────────────────────────────────
 await initDatabase();
