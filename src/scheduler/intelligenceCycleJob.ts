@@ -490,8 +490,20 @@ async function _runCycle(deps: CycleDeps = {}): Promise<CycleResult> {
     });
   } catch (err) {
     errors++;
+    // Surface FULL exception context so operators can diagnose without guessing.
+    // Reports 1065/1066 (2026-04-08) both cited opaque "pollNews error" with no
+    // root cause — this block previously swallowed stack + cause. Keep the
+    // message prefix stable for log-grep but enrich the context payload.
+    const errName = err instanceof Error ? err.name : typeof err;
+    const errMsg = err instanceof Error ? err.message : String(err);
+    const errStack = err instanceof Error ? err.stack : undefined;
+    const errCause = err instanceof Error && "cause" in err ? String((err as { cause?: unknown }).cause) : undefined;
     logger.error("[intelligence-cycle] step A failed — pollNews error", {
-      error: err instanceof Error ? err.message : String(err),
+      step: "A.pollNews",
+      errName,
+      error: errMsg,
+      stack: errStack,
+      cause: errCause,
     });
   }
 

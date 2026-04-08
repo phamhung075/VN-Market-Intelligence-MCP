@@ -401,6 +401,32 @@ describe("Task 102 — News Polling Job", () => {
       expect(callCount).toBe(1);
     });
 
+    it("error path surfaces stack + name + cause (reports 1065/1066)", async () => {
+      const jobModule = await import("../scheduler/newsPollerJob.js");
+      const loggerMod = await import("../infrastructure/logger.js");
+      const calls: Array<{ msg: string; ctx?: Record<string, unknown> }> = [];
+      const originalError = loggerMod.logger.error.bind(loggerMod.logger);
+      (loggerMod.logger as { error: typeof loggerMod.logger.error }).error = (msg, ctx) => {
+        calls.push({ msg, ctx: ctx as Record<string, unknown> });
+      };
+      try {
+        const boom = new Error("boom-downstream");
+        (boom as Error & { cause?: unknown }).cause = "rag_persist_failed";
+        const failing = async () => { throw boom; };
+        await jobModule.runNewsPoller(failing);
+      } finally {
+        (loggerMod.logger as { error: typeof loggerMod.logger.error }).error = originalError;
+      }
+      const errLog = calls.find((c) => c.msg.includes("unhandled error"));
+      expect(errLog).toBeDefined();
+      expect(errLog!.ctx).toBeDefined();
+      expect(errLog!.ctx!.error).toBe("boom-downstream");
+      expect(typeof errLog!.ctx!.stack).toBe("string");
+      expect((errLog!.ctx!.stack as string).length).toBeGreaterThan(10);
+      expect(errLog!.ctx!.errName).toBe("Error");
+      expect(errLog!.ctx!.cause).toBe("rag_persist_failed");
+    });
+
     it("allows subsequent poll after first finishes", async () => {
       const jobModule = await import("../scheduler/newsPollerJob.js");
 

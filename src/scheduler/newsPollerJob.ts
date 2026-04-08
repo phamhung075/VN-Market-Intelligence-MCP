@@ -59,8 +59,15 @@ export async function runNewsPoller(
       `alerts: ${result.alerts}, errors: ${result.errors}`,
     );
   } catch (err) {
+    // Reports 1065/1066 — surface full exception context (stack + cause + name)
+    // so operators can diagnose failures without guessing at which downstream
+    // step threw. Keeps the message prefix stable for log-grep compatibility.
     logger.error("[news-poll] unhandled error in poll cycle", {
+      step: "news-poll",
+      errName: err instanceof Error ? err.name : typeof err,
       error: err instanceof Error ? err.message : String(err),
+      stack: err instanceof Error ? err.stack : undefined,
+      cause: err instanceof Error && "cause" in err ? String((err as { cause?: unknown }).cause) : undefined,
     });
   } finally {
     isRunning = false;
