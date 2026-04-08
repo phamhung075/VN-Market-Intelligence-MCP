@@ -24,17 +24,22 @@ import { logger } from "../infrastructure/logger.js";
 // Cron expressions (GMT+7 via node-cron timezone option)
 // ─────────────────────────────────────────────────────────────────────────────
 
+/**
+ * Summary cron expressions — single source of truth via env vars.
+ * Mirrors the CRONS.summary* keys in jobs.ts so both read from the same
+ * CRON_SUMMARY_* env vars and always agree. (task 1023)
+ */
 export const SUMMARY_CRONS = {
-  /** Daily summary: 22:30 every day */
-  daily: "30 22 * * *",
-  /** Weekly summary: 23:00 every Sunday */
-  weekly: "0 23 * * 0",
-  /** Monthly summary: 00:30 on the 1st of each month */
-  monthly: "30 0 1 * *",
-  /** Quarterly summary: 01:00 on Jan 1, Apr 1, Jul 1, Oct 1 */
-  quarterly: "0 1 1 1,4,7,10 *",
-  /** Yearly summary: 02:00 on Jan 2 */
-  yearly: "0 2 2 1 *",
+  /** Daily summary: 22:30 every day (CRON_SUMMARY_DAILY) */
+  daily: Bun.env.CRON_SUMMARY_DAILY ?? "30 22 * * *",
+  /** Weekly summary: 23:00 every Sunday (CRON_SUMMARY_WEEKLY) */
+  weekly: Bun.env.CRON_SUMMARY_WEEKLY ?? "0 23 * * 0",
+  /** Monthly summary: 00:30 on the 1st of each month (CRON_SUMMARY_MONTHLY) */
+  monthly: Bun.env.CRON_SUMMARY_MONTHLY ?? "30 0 1 * *",
+  /** Quarterly summary: 01:00 on Jan 1, Apr 1, Jul 1, Oct 1 (CRON_SUMMARY_QUARTERLY) */
+  quarterly: Bun.env.CRON_SUMMARY_QUARTERLY ?? "0 1 1 1,4,7,10 *",
+  /** Yearly summary: 02:00 on Jan 2 (CRON_SUMMARY_YEARLY) */
+  yearly: Bun.env.CRON_SUMMARY_YEARLY ?? "0 2 2 1 *",
 };
 
 // ─────────────────────────────────────────────────────────────────────────────

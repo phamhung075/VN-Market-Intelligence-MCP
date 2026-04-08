@@ -69,6 +69,16 @@ export const CRONS = {
   franceSummary:          Bun.env.CRON_FRANCE_SUMMARY             ?? '0 6 * * 1-5',
   /** SQLite WAL checkpoint: daily 03:00 GMT+7 = 20:00 UTC (task 140) */
   walCheckpoint:          Bun.env.CRON_WAL_CHECKPOINT             ?? '0 20 * * *',
+  /** Periodic summary — daily: 22:30 every day (task 1023) */
+  summaryDaily:           Bun.env.CRON_SUMMARY_DAILY              ?? '30 22 * * *',
+  /** Periodic summary — weekly: 23:00 every Sunday (task 1023) */
+  summaryWeekly:          Bun.env.CRON_SUMMARY_WEEKLY             ?? '0 23 * * 0',
+  /** Periodic summary — monthly: 00:30 on the 1st (task 1023) */
+  summaryMonthly:         Bun.env.CRON_SUMMARY_MONTHLY            ?? '30 0 1 * *',
+  /** Periodic summary — quarterly: 01:00 on Jan/Apr/Jul/Oct 1st (task 1023) */
+  summaryQuarterly:       Bun.env.CRON_SUMMARY_QUARTERLY          ?? '0 1 1 1,4,7,10 *',
+  /** Periodic summary — yearly: 02:00 on Jan 2nd (task 1023) */
+  summaryYearly:          Bun.env.CRON_SUMMARY_YEARLY             ?? '0 2 2 1 *',
 }
 
 function log(msg: string) {
@@ -237,5 +247,5 @@ export function startScheduler() {
     }
   }, { timezone: 'UTC' })
 
-  log(`[scheduler] jobs registered — ${Object.keys(CRONS).length} core cron jobs (incl. WAL checkpoint) + 5 summary jobs + vps-watchdog active`)
+  log(`[scheduler] jobs registered — ${Object.keys(CRONS).length} cron keys in CRONS map (incl. WAL checkpoint + 5 summary) + vps-watchdog active`)
 }
