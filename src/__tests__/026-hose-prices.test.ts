@@ -229,20 +229,9 @@ describe("Task 026 — HOSE Market Data Fetcher", () => {
     beforeAll(async () => {
       // Use isolated test DB
       process.env["DB_PATH"] = ":memory:";
+      // initDatabase() creates market_prices_history (with exchange column)
+      // via canonical schema.ts — no separate inline DDL needed.
       await initDatabase();
-      // Trigger table creation for the history table
-      const db = getDb();
-      db.exec(`
-        CREATE TABLE IF NOT EXISTS market_prices_history (
-          code       TEXT NOT NULL,
-          price      REAL NOT NULL,
-          volume     REAL NOT NULL,
-          fetched_at TEXT NOT NULL,
-          PRIMARY KEY (code, fetched_at)
-        );
-        CREATE INDEX IF NOT EXISTS idx_mph_code_fetched
-          ON market_prices_history(code, fetched_at DESC);
-      `);
     });
 
     afterAll(() => {
