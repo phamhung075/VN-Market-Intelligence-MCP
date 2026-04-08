@@ -413,6 +413,19 @@ async function defaultComputeHexagrams(codes: string[]): Promise<number> {
 const STEP_TIMEOUT_MS = 2 * 60 * 1000;
 
 /**
+ * 5 minutes — max allowed runtime for step A (pollNews). pollNews does far
+ * more work than other steps: 5 RSS fetches + normalize + sentiment classify
+ * + per-entry cascade + trade-relationship analysis + per-entry RAG retrieval
+ * + alert generation + persistence. Empirically the 95th percentile sits
+ * around 10–15 s, but a slow upstream (CafeF rate-limit, Reuters hang) combined
+ * with a batch of 100 first-run inserts can push past 120 s. Report 1062 (2026-04-08)
+ * captured one such timeout at 06:47 UTC. Bumping to 5 min gives pollNews
+ * headroom without letting a truly hung run block later cycles (outer 14-min
+ * cycle guard still protects against permanent hangs).
+ */
+const POLL_NEWS_TIMEOUT_MS = 5 * 60 * 1000;
+
+/**
  * Runs a promise with a timeout. If the promise doesn't resolve within
  * `timeoutMs`, rejects with a timeout error and the step is skipped.
  */
@@ -468,7 +481,7 @@ async function _runCycle(deps: CycleDeps = {}): Promise<CycleResult> {
 
   // Step A: Poll news (always, both market and off-hours)
   try {
-    const pollResult = await withTimeout(pollNewsFn(), "step A pollNews");
+    const pollResult = await withTimeout(pollNewsFn(), "step A pollNews", POLL_NEWS_TIMEOUT_MS);
     newsFetched = pollResult.fetched;
     logger.debug("[intelligence-cycle] step A complete — news polled", {
       fetched: pollResult.fetched,
