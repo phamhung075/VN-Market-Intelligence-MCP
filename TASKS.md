@@ -1277,8 +1277,8 @@ describe("296 OCR pipeline e2e smoke test", () => {
 | 1072 | ask_queue DDL + askQueueStore CRUD helpers | `task/1072-ask-queue-store` | infrastructure | — | M | `src/__tests__/1072-ask-queue-store.test.ts` | Done |
 | 1073 | Telegram /ask handler | `task/1073-telegram-ask-command` | interface | 1072 | S | `src/__tests__/1073-telegram-ask-command.test.ts` | Todo P0 |
 | 1074 | askQueueCheckJob scheduler + cron registration | `task/1074-ask-queue-check-job` | scheduler | 1072 | S | `src/__tests__/1074-ask-queue-check-job.test.ts` | Todo P0 |
-| 1075 | alertPolicyChecker + stopLossComputer + mcp.config.json alertPolicy | `task/1075-alert-policy-checker` | domain | — | M | `src/__tests__/1075-alert-policy-checker.test.ts` | Backlog |
-| 1076 | marketScanJob noise retirement (remove direct MARKET sends) | `task/1076-market-scan-noise-retirement` | scheduler | 1075 | S | `src/__tests__/1076-market-scan-noise-retirement.test.ts` | Backlog |
+| 1075 | alertPolicyChecker + stopLossComputer + mcp.config.json alertPolicy | `task/1075-alert-policy-checker` | domain | — | M | `src/__tests__/1075-alert-policy.test.ts` | Done |
+| 1076 | marketScanJob noise retirement (remove direct MARKET sends) | `task/1076-market-scan-noise-retirement` | scheduler | 1075 | S | `src/__tests__/1076-market-scan-noise-retirement.test.ts` | Todo P0 |
 | 1077 | kinhDichWrapper + wire appendKinhDich into analysis/market/portfolio tools | `task/1077-kinh-dich-wrapper` | domain/interface | — | M | `src/__tests__/1077-kinh-dich-wrapper.test.ts` | Backlog |
 | 1078 | askQueueTools: get_pending_ask_questions + answer_ask_question MCP tools | `task/1078-ask-queue-tools` | interface | 1072 | S | `src/__tests__/1078-ask-queue-tools.test.ts` | Todo P0 |
 | 1079 | positionTools: get_user_positions_for_analysis MCP tool | `task/1079-position-for-analysis-tool` | interface | 1070 | S | `src/__tests__/1079-position-for-analysis-tool.test.ts` | Backlog |
