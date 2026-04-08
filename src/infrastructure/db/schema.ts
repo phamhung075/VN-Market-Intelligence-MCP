@@ -770,6 +770,29 @@ export async function initDatabase(): Promise<void> {
   `);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_pet_filename ON pdf_extracted_text(filename, page_number)`);
 
+  // ── Audit state: singleton row for dataAuditJob (Task 1041) ─────────────
+  // Previously created inline in src/scheduler/dataAuditJob.ts:ensureAuditDependencies().
+  // Moved here so fresh test DBs and new deployments get the table from initDatabase().
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS audit_state (
+      id                    INTEGER PRIMARY KEY CHECK (id = 1),
+      last_daily_audit_at   TEXT,
+      last_weekly_audit_at  TEXT,
+      last_daily_findings   TEXT,
+      last_weekly_findings  TEXT
+    )
+  `);
+
+  // ── Briefing log: dedup guard for morningBriefingJob (Task 1040) ─────────
+  // Previously created inline in src/scheduler/morningBriefingJob.ts.
+  // Moved here so fresh test DBs and new deployments get the table from initDatabase().
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS briefing_log (
+      date    TEXT PRIMARY KEY,
+      sent_at TEXT NOT NULL
+    )
+  `);
+
   // ── Daily OHLCV (2+ year retention for volatility analysis) ────────────
   db.exec(`
     CREATE TABLE IF NOT EXISTS daily_ohlcv (

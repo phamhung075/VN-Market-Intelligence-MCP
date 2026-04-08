@@ -77,11 +77,9 @@ export async function runMorningBriefing(
     let alreadySent = _lastBriefingSentDate === briefing.date;
     if (!alreadySent) {
       try {
+        // briefing_log DDL is now canonical in initDatabase() (task 1040)
         const { getDb } = await import("../infrastructure/db/schema.js");
         const db = getDb();
-        db.exec(`CREATE TABLE IF NOT EXISTS briefing_log (
-          date TEXT PRIMARY KEY, sent_at TEXT NOT NULL
-        )`);
         const row = db.query<{ date: string }, [string]>(
           "SELECT date FROM briefing_log WHERE date = ?",
         ).get(briefing.date);

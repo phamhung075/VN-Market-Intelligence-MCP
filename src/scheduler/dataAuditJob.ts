@@ -114,21 +114,10 @@ function severityToPriority(severity: "info" | "warning" | "critical"): string {
 // Schema helpers (inline DDL — no interface-layer import)
 // ─────────────────────────────────────────────────────────────────────────────
 
-function ensureAuditDependencies(db: Database): void {
+function ensureAuditDependencies(_db: Database): void {
   // agent_feedback DDL is now canonical in src/infrastructure/db/schema.ts (task 1022).
-  // The inline CREATE TABLE + ALTER TABLE were removed — initDatabase() handles it.
-  // We keep this function to create audit_state (which IS audit-local).
-
-  // audit_state: singleton row (id=1 enforced by CHECK constraint)
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS audit_state (
-      id                    INTEGER PRIMARY KEY CHECK (id = 1),
-      last_daily_audit_at   TEXT,
-      last_weekly_audit_at  TEXT,
-      last_daily_findings   TEXT,
-      last_weekly_findings  TEXT
-    );
-  `);
+  // audit_state DDL is now canonical in src/infrastructure/db/schema.ts (task 1041).
+  // Both tables are created by initDatabase() — no inline DDL needed here.
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
