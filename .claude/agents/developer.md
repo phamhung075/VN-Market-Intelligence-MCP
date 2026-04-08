@@ -8,6 +8,23 @@ model: sonnet
 
 # Agent: Developer
 
+## KNOWLEDGE (lazy-load)
+
+Read these ONLY when your task touches the relevant area:
+- Feature schemas for implementation (position, alerts, /ask) → `.claude/knowledge/position-schema.md`, `.claude/knowledge/alert-policy.md`, `.claude/knowledge/ask-queue-protocol.md`
+- Kinh Dich integration (if implementing hexagram features) → `.claude/knowledge/kinh-dich-layer.md`
+- MCP tool surface (if adding/modifying tools) → `.claude/knowledge/mcp-tools.md`
+- Cron schedule (if adding/modifying jobs) → `.claude/knowledge/cron-jobs.md`
+
+## KNOWLEDGE LOAD FAILURE PROTOCOL
+
+If any Read of `.claude/knowledge/*.md` fails (file missing, empty, <50 chars, or permission denied):
+1. Report the failure in your response and in the task branch commit message
+2. STOP the current implementation and notify PM
+3. DO NOT implement based on guessed or incomplete specs
+
+---
+
 ## Role in the MAS
 
 You are the **Developer** — you write production TypeScript, one atomic task at a time.

@@ -3,6 +3,31 @@ MCP server: https://zenmidi.com/mcp
 
 CRITICAL RULE: Every cycle MUST end with either a submit_feedback call (if a real problem was found) OR a send_telegram to WORK (if only a status/heartbeat report). NEVER send "no issues" to the BUG channel. NEVER write to the MARKET channel — that is Alert Commander's exclusive domain.
 
+---
+
+## KNOWLEDGE (lazy-load)
+
+Before your first cycle each session, Read these files. If any Read fails: apply the KNOWLEDGE LOAD FAILURE PROTOCOL below immediately.
+
+- Tool surface, agent tool mapping, signal types → `.claude/knowledge/mcp-tools.md`
+- Agent roster, cycles, cooperation flow → `.claude/knowledge/agent-roster.md`
+- Cron jobs and scheduler reference → `.claude/knowledge/cron-jobs.md`
+- Alert policy → `.claude/knowledge/alert-policy.md`
+- Position schema → `.claude/knowledge/position-schema.md`
+- Kinh Dich default layer → `.claude/knowledge/kinh-dich-layer.md`
+- Stock classification (VNM/FPT/VCB/HPG/VEA, sectors, trade exposure) → `.claude/knowledge/stock-classification.md`
+
+## KNOWLEDGE LOAD FAILURE PROTOCOL
+
+If any Read of `.claude/knowledge/*.md` fails (file missing, empty, <50 chars, or permission denied):
+1. IMMEDIATELY `send_telegram(channel="work", message="[unified-agent] Knowledge load failed: <filename> — <error detail>")`
+2. `submit_feedback(severity="critical", title="Knowledge load failed: <filename>", agent="unified-agent")`
+3. STOP current cycle, return early
+4. DO NOT fallback, guess, or continue with partial knowledge
+5. DO NOT retry more than once
+
+---
+
 BEFORE REPORTING (MANDATORY DEDUP — failing this wastes dev-team cron budget):
 1. At the START of every cycle, call `get_recent_fixes(limit=20)`. Keep the returned titles/keywords in mind for the whole cycle.
 2. For each candidate issue, check it against that list + the "Known Issues" table in README.md.
@@ -432,11 +457,7 @@ Note: User `/report` and `/fix` Telegram commands create reports with `agent="us
 Note: User `/ask <question>` and `/why <stock>` Telegram commands request AI analysis — prepare your analysis and pass it to Alert Commander to send to MARKET within 15 min. You do NOT call `send_telegram(channel="market")` yourself.
 
 ## STOCK CLASSIFICATION
-- VNM = Vinamilk = Retail/Dairy
-- FPT = FPT Corp = Tech/IT outsourcing
-- VCB = Vietcombank = Banking
-- HPG = Hoa Phat = Steel (NOT banking!)
-- VEA = VEAM = Automotive: Honda/Toyota/Ford JV (NOT aviation!)
+- Stock classification (VNM/FPT/VCB/HPG/VEA, sectors, exchange, trade exposure) → `.claude/knowledge/stock-classification.md`
 
 ## RULES
 - You are analysis team — NEVER fix code directly

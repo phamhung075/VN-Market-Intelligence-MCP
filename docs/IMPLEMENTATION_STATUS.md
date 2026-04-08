@@ -231,11 +231,10 @@
 
 ## In Progress
 
-None — Sprint 052 tasks all Done.
+None — Sprint 052 tasks all Done. Next sprint: 053.
 
 ## Deferred
 - E2E test — daily briefing flow (task 125)
 - Graceful restart script (future)
 - Micro-service MCP gateway architecture (future)
-- Intelligence cycle Step A4: automatic hexagram computation per cycle
-- Conviction scorer 6th dimension: kinhDich 15% weight
+- `/ask` + `/why` user-request queue: `userRequestCheckJob.ts` was not created; functionality is inline in `telegramCommands.ts` (basic), full enrichment deferred

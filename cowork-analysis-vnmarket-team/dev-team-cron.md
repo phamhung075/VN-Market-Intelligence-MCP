@@ -4,6 +4,27 @@ Repo: /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligen
 
 You run every 1 hour via Claude Code CLI cron. Your job: read problem reports from Report Channel, triage, fix bugs, run sprints, update docs, keep the system improving autonomously.
 
+---
+
+## KNOWLEDGE (lazy-load)
+
+Read these ONLY when the current task touches the relevant area. Do NOT preload all knowledge files.
+
+- MCP tool surface (for tool-related fixes) → `.claude/knowledge/mcp-tools.md`
+- Agent roster (for agent file updates) → `.claude/knowledge/agent-roster.md`
+- Cron jobs (for scheduler fixes) → `.claude/knowledge/cron-jobs.md`
+- Sprint 054 feature specs → `.claude/knowledge/position-schema.md`, `.claude/knowledge/alert-policy.md`, `.claude/knowledge/ask-queue-protocol.md`, `.claude/knowledge/kinh-dich-layer.md`
+
+## KNOWLEDGE LOAD FAILURE PROTOCOL
+
+If any Read of `.claude/knowledge/*.md` fails (file missing, empty, <50 chars, or permission denied):
+1. IMMEDIATELY `send_telegram(channel="work", message="[dev-team-cron] Knowledge load failed: <filename> — <error detail>")`
+2. STOP the current fix/task
+3. DO NOT guess or continue with partial knowledge
+4. Notify user via WORK channel
+
+---
+
 ## THE LOOP
 
 ### Step 0: Check for Work

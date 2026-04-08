@@ -6,13 +6,28 @@
 |-----------|---------|
 | Báo cáo tài chính (BCTC) | Financial report |
 | Bảng cân đối kế toán | Balance sheet |
-| Báo cáo KQHĐKD | Income statement |
+| Báo cáo KQHĐKD | Income statement (Báo cáo kết quả hoạt động kinh doanh) |
 | Báo cáo lưu chuyển tiền | Cash flow statement |
 | Doanh thu thuần | Net revenue |
-| Lợi nhuận sau thuế | Net profit after tax |
+| Lợi nhuận sau thuế (LNST) | Net profit after tax |
 | Vốn chủ sở hữu | Equity |
 | Quý (Q1/Q2/Q3/Q4) | Quarter |
 | VN-Index | Vietnamese main stock index (HOSE) |
+
+## BCTC Number Formatting Rules
+
+- Numbers are in **triệu đồng** (million VND) unless stated otherwise
+- Negative values appear as **(1.234.567)** with parentheses
+- Thousands separator = dot `.`, decimal separator = comma `,`
+
+## Data Sources
+
+| Source | What it covers |
+|--------|---------------|
+| `https://congbothongtin.ssc.gov.vn/` | Official BCTC PDFs (SSC portal) |
+| CafeF | Vietnamese financial news + stock prices |
+| VnExpress Kinh doanh | Macro news |
+| Reuters / Bloomberg | Global macro triggers |
 | MUA | Buy signal |
 | BAN | Sell signal |
 | GIU | Hold signal |

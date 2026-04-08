@@ -15,10 +15,10 @@ import {
   getBaseline,
 } from "../infrastructure/db/mentionVelocityStore.js";
 import {
-  initReputationTable,
   saveReputation,
   getReputation,
 } from "../infrastructure/db/reputationStore.js";
+import { ensureReputationScoresTable } from "./helpers/reputationScoresTestDdl.js";
 import type { ReputationScore } from "../domain/services/reputationScorer.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -31,7 +31,7 @@ beforeEach(() => {
   db = new Database(":memory:");
   db.exec("PRAGMA journal_mode = WAL");
   initMentionVelocityTable(db);
-  initReputationTable(db);
+  ensureReputationScoresTable(db);
 });
 
 afterEach(() => {
