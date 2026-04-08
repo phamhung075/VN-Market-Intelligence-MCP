@@ -10,13 +10,15 @@
  *   - Plain text only (no Markdown to avoid parse errors)
  *   - Returns null when the update has no actionable text
  *
- * Supported commands (task 1063 reduced set):
- *   /watchlist        — list watchlist stocks with current prices
- *   /price VCB        — price snapshot for a single stock
- *   /health           — system health (uptime, DB size, watchlist count)
- *   /report <mota>    — report a bug/issue to Dev Team (priority=medium)
- *   /fix   <mota>     — report an urgent bug to Dev Team (priority=high)
- *   /help             — list all commands
+ * Supported commands (task 1063 reduced set, task 1071 additions):
+ *   /watchlist                  — list watchlist stocks with current prices
+ *   /price VCB                  — price snapshot for a single stock
+ *   /health                     — system health (uptime, DB size, watchlist count)
+ *   /set_position VCB 75000 1000 — buy/sell/clear a position
+ *   /check_position             — list all open positions with P/L, stop-loss, TP ladder
+ *   /report <mota>              — report a bug/issue to Dev Team (priority=medium)
+ *   /fix   <mota>               — report an urgent bug to Dev Team (priority=high)
+ *   /help                       — list all commands
  *
  * Removed in task 1063: /alerts, /briefing, /pnl, /ask, /why
  * (fake-AI or low-value commands superseded by scheduler-driven channels).
@@ -25,6 +27,10 @@
  */
 
 import type { Database } from "bun:sqlite";
+import {
+  applyPositionCommand,
+  listOpenPositions,
+} from "../db/positionStore.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Public types
@@ -53,12 +59,14 @@ export interface CommandResult {
 
 const HELP_TEXT = `VN Market Bot
 
-/watchlist  Danh mục theo dõi
-/price VCB  Giá cổ phiếu
-/health     Trạng thái hệ thống
-/report ... Báo lỗi
-/fix ...    Báo lỗi khẩn cấp
-/help       Trợ giúp`;
+/watchlist              Danh mục theo dõi
+/price VCB              Giá cổ phiếu
+/health                 Trạng thái hệ thống
+/set_position VCB 75000 1000  Thêm/bán/xóa vị thế (qty>0 mua, qty<0 bán, 0 0 xóa)
+/check_position         Xem vị thế + P/L + stop-loss + TP
+/report ...             Báo lỗi
+/fix ...                Báo lỗi khẩn cấp
+/help                   Trợ giúp`;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Number formatter
@@ -251,6 +259,123 @@ function handleReport(
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// /set_position and /check_position handlers (Task 1071)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Validate that a string is a pure-alpha ticker (2–10 uppercase letters only).
+ * Rejects strings with digits or special characters.
+ */
+function isValidTicker(s: string): boolean {
+  return /^[A-Za-z]{2,10}$/.test(s);
+}
+
+/**
+ * /set_position TICKER PRICE QTY
+ *
+ * Parses and validates the three arguments, then dispatches via
+ * `applyPositionCommand`.  Returns a Vietnamese explanation on success,
+ * or a usage hint / error on invalid input.
+ *
+ * Routing (matches applyPositionCommand semantics):
+ *   qty > 0             → buy
+ *   qty < 0             → sell (abs clamped to holdings)
+ *   price == 0 qty == 0 → clear
+ *   qty == 0 price > 0  → error (invalid)
+ */
+function handleSetPosition(db: Database, args: string[]): string {
+  if (args.length < 3) {
+    return (
+      "Cách dùng: /set_position VCB 75000 1000\n" +
+      "  qty > 0 = mua, qty < 0 = bán, 0 0 = xóa vị thế"
+    );
+  }
+
+  const [rawTicker, rawPrice, rawQty] = args;
+
+  // Validate ticker
+  if (!isValidTicker(rawTicker!)) {
+    return `Lỗi: ticker không hợp lệ "${rawTicker}" — chỉ dùng chữ cái (VD: VCB, FPT).`;
+  }
+
+  // Validate price
+  const price = Number(rawPrice);
+  if (!Number.isFinite(price) || isNaN(price)) {
+    return `Lỗi: price không hợp lệ "${rawPrice}" — phải là số (VD: 75000).`;
+  }
+
+  // Validate qty
+  const qty = Number(rawQty);
+  if (!Number.isFinite(qty) || isNaN(qty)) {
+    return `Lỗi: qty không hợp lệ "${rawQty}" — phải là số nguyên (VD: 1000 hoặc -500).`;
+  }
+
+  const ticker = rawTicker!.toUpperCase();
+  const result = applyPositionCommand(db, { ticker, price, qty });
+
+  if (!result.ok) {
+    return `Lỗi: ${result.message}`;
+  }
+
+  return result.message;
+}
+
+/**
+ * /check_position — list all open positions with:
+ *   - Current price and P/L percentage
+ *   - Stop-loss floor (avgCost * 0.93)
+ *   - TP ladder: TP1 (+10%), TP2 (+20%), TP3 (+30%)
+ *
+ * Shows "Chưa có giá" when no market price is available for a position.
+ */
+function handleCheckPosition(db: Database): string {
+  const positions = listOpenPositions(db);
+
+  if (positions.length === 0) {
+    return "Bạn chưa có vị thế nào.";
+  }
+
+  const lines: string[] = [`Vị thế (${positions.length} mã):\n`];
+
+  for (const pos of positions) {
+    const stopFloor = Math.round(pos.avgPrice * 0.93);
+    const tp1 = Math.round(pos.avgPrice * 1.10);
+    const tp2 = Math.round(pos.avgPrice * 1.20);
+    const tp3 = Math.round(pos.avgPrice * 1.30);
+
+    const avgPriceStr = fmtNum(pos.avgPrice);
+    const stopStr = fmtNum(stopFloor);
+    const tp1Str = fmtNum(tp1);
+    const tp2Str = fmtNum(tp2);
+    const tp3Str = fmtNum(tp3);
+
+    let pnlLine: string;
+    if (pos.currentPrice == null) {
+      pnlLine = "Chưa có giá";
+    } else {
+      const sign = pos.unrealizedPnlPct >= 0 ? "+" : "";
+      // Use vi-VN locale so decimal separator is comma (6,67%)
+      const pctStr = pos.unrealizedPnlPct.toLocaleString("vi-VN", {
+        minimumFractionDigits: 1,
+        maximumFractionDigits: 1,
+      });
+      const currentStr = fmtNum(pos.currentPrice);
+      pnlLine = `Giá hiện tại: ${currentStr} VND  P/L: ${sign}${pctStr}%`;
+    }
+
+    lines.push(
+      `${pos.code} — ${fmtNum(pos.shares)} CP @ ${avgPriceStr} VND`,
+      `  ${pnlLine}`,
+      `  Stop-loss sàn: ${stopStr} VND`,
+      `  TP: +10% ${tp1Str}  +20% ${tp2Str}  +30% ${tp3Str}`,
+      "",
+    );
+  }
+
+  return lines.join("\n").trimEnd();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Main router
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -294,6 +419,14 @@ export async function handleTelegramCommand(
 
       case "/health":
         responseText = handleHealth(db);
+        break;
+
+      case "/set_position":
+        responseText = handleSetPosition(db, args);
+        break;
+
+      case "/check_position":
+        responseText = handleCheckPosition(db);
         break;
 
       case "/report":
