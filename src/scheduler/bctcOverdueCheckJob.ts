@@ -63,12 +63,81 @@ interface FilingRow {
 const DEFAULT_OVERDUE_THRESHOLD_DAYS = 3;
 
 /**
+ * One-shot migration: fix existing bctc-overdue alerts that stored
+ * signals_json as ["bctc_overdue"] (string array) instead of a proper
+ * Signal object array.  The broken format caused formatSignalVi(s) to call
+ * undefined.match() inside the dispatch pipeline, silently crashing the
+ * send and leaving the alert stuck with notified_telegram = 0.
+ *
+ * Safe to call on every run — the WHERE clause is a no-op once all rows
+ * are patched.
+ */
+function patchBrokenSignalsJson(db: Database): void {
+  try {
+    const rows = db
+      .prepare(
+        `SELECT id, message, affected_actions_json, triggered_at
+         FROM alerts
+         WHERE id LIKE 'bctc-overdue:%'
+           AND signals_json NOT LIKE '%"type"%'`,
+      )
+      .all() as Array<{
+        id: string;
+        message: string;
+        affected_actions_json: string;
+        triggered_at: string;
+      }>;
+
+    if (rows.length === 0) return;
+
+    const update = db.prepare(
+      `UPDATE alerts SET signals_json = ? WHERE id = ?`,
+    );
+    const patch = db.transaction(() => {
+      for (const row of rows) {
+        let code = "UNKNOWN";
+        try {
+          const parsed = JSON.parse(row.affected_actions_json) as Array<{
+            code: string;
+          }>;
+          code = parsed[0]?.code ?? code;
+        } catch { /* best-effort */ }
+
+        const fixedSignals = JSON.stringify([
+          {
+            type: "bctc_overdue",
+            severity: "high",
+            actionCode: code,
+            message: row.message,
+            confidence: 0.6,
+            detectedAt: row.triggered_at,
+          },
+        ]);
+        update.run(fixedSignals, row.id);
+      }
+    });
+    patch();
+    logger.info("[bctcOverdueCheck] patched broken signals_json rows", {
+      count: rows.length,
+    });
+  } catch (err) {
+    // Non-fatal migration — log and continue
+    logger.warn("[bctcOverdueCheck] patchBrokenSignalsJson failed", {
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
+}
+
+/**
  * Run a single pass of the BCTC overdue check.
  */
 export async function runBctcOverdueCheck(opts: RunOptions = {}): Promise<RunResult> {
   const db = opts.db ?? getDb();
   const now = opts.now ?? new Date();
   const threshold = opts.overdueDaysThreshold ?? DEFAULT_OVERDUE_THRESHOLD_DAYS;
+
+  // Migrate any existing broken alerts from the string-array format
+  patchBrokenSignalsJson(db);
 
   let watchlist: WatchlistRow[] = [];
   try {
@@ -141,12 +210,28 @@ export async function runBctcOverdueCheck(opts: RunOptions = {}): Promise<RunRes
       `${code} BCTC overdue: Q${quarter}-${year} report is ${daysOverdue} days past the statutory deadline ` +
       `(${deadline.toISOString().slice(0, 10)}). No filing found in financial_reports.`;
 
+    // signals_json must be a proper Signal object array so that the dispatch
+    // pipeline's formatSignalVi(s) can access s.type and s.message without
+    // crashing.  Storing ["bctc_overdue"] (string array) caused msg.match()
+    // to throw inside formatSignalVi → notifyTelegramAlert caught the error
+    // → returned false → alert stuck unnotified forever.
+    const signalsJson = JSON.stringify([
+      {
+        type: "bctc_overdue",
+        severity: "high",
+        actionCode: code,
+        message,
+        confidence: 0.6,
+        detectedAt: triggeredAt,
+      },
+    ]);
+
     try {
       const info = insertAlert.run(
         alertId,
         triggeredAt,
         "high",
-        JSON.stringify(["bctc_overdue"]),
+        signalsJson,
         JSON.stringify([{ code, expectedImpact: "down", confidence: 0.6 }]),
         message,
       );
