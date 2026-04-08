@@ -23,6 +23,7 @@ import { fetchHnxPrices, fetchUpcomPrices } from "../../../infrastructure/fetche
 import { getPatternSummary } from "../../../application/usecases/getPatternSummary.js";
 import { logger } from "../../../infrastructure/logger.js";
 import type { HttpClient } from "../../../infrastructure/fetchers/ssc.js";
+import { appendKinhDich } from "../../../domain/services/kinhDichWrapper.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Internal types
@@ -234,8 +235,26 @@ export function registerMarketTools(server: McpServer): void {
         lines.push("");
         lines.push(`Generated: ${generatedAt}`);
 
+        // ── Append Kinh Dich: MARKET-wide hexagram ───────────────────────────────
+        // Append the VN-Index / market aggregate hexagram to the full snapshot.
+        // Per-stock hexagram readings are appended as a Kinh Dich section block.
+        let text = lines.join("\n");
+        text = await appendKinhDich("MARKET", text, db);
+
+        // Per-stock hexagram readings for all requested codes (best-effort)
+        if (codesProvided.length > 0) {
+          for (const code of codesProvided) {
+            const stockSummary = `${code}`;
+            const withHex = await appendKinhDich(code, stockSummary, db);
+            // Only append if there is actual hexagram data (not just fallback repeated)
+            if (withHex !== stockSummary) {
+              text = text + "\n" + withHex.slice(stockSummary.length);
+            }
+          }
+        }
+
         return {
-          content: [{ type: "text" as const, text: lines.join("\n") }],
+          content: [{ type: "text" as const, text }],
         };
       } catch (err) {
         logger.error("[get_market_snapshot] Error", {
