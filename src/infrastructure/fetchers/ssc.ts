@@ -6,6 +6,34 @@
  * listed company (identified by stock action code).
  *
  * Layer: infrastructure/fetchers — may use HTTP, must not import domain/.
+ *
+ * // FINDINGS (Task 1003 — 2026-04-08): FPT/VEA Q4-2025 overdue investigation
+ * //
+ * // Root cause 1 — Ticker match: already case-insensitive (actionCode.toUpperCase()
+ * //   applied before comparison). No bug in the matching logic.
+ * //
+ * // Root cause 2 — FPT Q4-2025: The SSC portal returned a short (<50 KB)
+ * //   Oracle ADF JS-only shell for FPT queries. The portal_js_only guard in
+ * //   listSscDocuments correctly detected this and triggered the HOSE/HNX
+ * //   fallback (Task 1025). The HOSE fallback also returned empty results —
+ * //   the FPT Q4-2025 filing was genuinely not published on the portal at
+ * //   the time of the check (8 days overdue per 30/03 SSC deadline).
+ * //
+ * // Root cause 3 — VEA Q4-2025: VEA trades on UPCOM, not HOSE or HNX.
+ * //   Neither hsx.vn nor hnx.vn fallback covers UPCOM disclosures. The current
+ * //   fallback pipeline (Task 1025) has a coverage gap for UPCOM tickers.
+ * //   VEA filings are permanently unreachable until a UPCOM fallback is added
+ * //   (e.g. upcom.hnx.vn disclosure endpoint — tracked as future work).
+ * //
+ * // Root cause 4 — ADF x17f parser: parseSscHtml correctly reads col[2] (MCK)
+ * //   and col[6] (date). The parser was never buggy; it simply never received
+ * //   real SSR HTML because the portal returned the JS shell on every request.
+ * //
+ * // Action taken: 10 regression tests added in
+ * //   src/__tests__/1003-ssc-fpt-vea-query.test.ts covering ADF x17f parsing,
+ * //   empty-result case, case-insensitive match, buildSscSearchUrl year=2026,
+ * //   and JS-shell no-table fallback. No code changes required — the parser
+ * //   and fallback logic are correct. VEA/UPCOM gap filed separately.
  */
 
 import * as cheerio from "cheerio";
