@@ -20,6 +20,7 @@ import { getDb, initDatabase } from "../../../infrastructure/db/schema.js";
 import { logger, getErrorSummary } from "../../../infrastructure/logger.js";
 import { globalSourceTracker, formatSourceHealthTable } from "./sourceHealthTools.js";
 import { getDataFreshness } from "./dataFreshnessTools.js";
+import { tradingWindowLabel } from "../../../domain/services/tradingWindow.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SQLite row type
@@ -98,6 +99,11 @@ export interface SystemStatusOptions {
  */
 export async function getSystemStatus(opts: SystemStatusOptions): Promise<string> {
   const sections: string[] = [];
+
+  // ── Section 0: VN TRADING WINDOW banner ──────────────────────────────────
+  // Analysis agents must distinguish "outside trading window (expected empty)"
+  // from "inside trading window (data feed broken)" when reading freshness.
+  sections.push(`=== VN TRADING WINDOW ===\n${tradingWindowLabel()}`);
 
   // ── Section 1: DB STATUS ──────────────────────────────────────────────────
   sections.push("=== DB STATUS ===");

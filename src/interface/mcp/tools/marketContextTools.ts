@@ -20,6 +20,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 
 import { getDb, initDatabase } from "../../../infrastructure/db/schema.js";
+import { tradingWindowLabel } from "../../../domain/services/tradingWindow.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SQLite row types
@@ -155,7 +156,10 @@ function formatPriceChange(price: number | null, changePct: number | null): stri
  * Joins watchlist with market_prices for the latest price snapshot.
  */
 function buildWatchlistSection(db: ReturnType<typeof getDb>): string {
-  const lines: string[] = ["=== WATCHLIST & PRICES ==="];
+  const lines: string[] = [
+    "=== WATCHLIST & PRICES ===",
+    `Trading window: ${tradingWindowLabel()}`,
+  ];
 
   let rows: WatchlistWithPrice[];
   try {

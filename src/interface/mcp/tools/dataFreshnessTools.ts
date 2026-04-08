@@ -23,6 +23,8 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { Database } from "bun:sqlite";
 
+import { tradingWindowLabel } from "../../../domain/services/tradingWindow.js";
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Pure helpers (exported for unit testing)
 // ─────────────────────────────────────────────────────────────────────────────
@@ -132,6 +134,7 @@ export async function getDataFreshness(db: Database): Promise<string> {
 
   const lines: string[] = [
     "Do tuoi du lieu",
+    `Trading window: ${tradingWindowLabel()}`,
     "=".repeat(COL_SOURCE + COL_UPDATED + COL_AGE + COL_STATUS + 9),
     [
       "Nguon".padEnd(COL_SOURCE),

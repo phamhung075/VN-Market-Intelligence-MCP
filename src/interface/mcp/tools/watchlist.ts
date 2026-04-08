@@ -21,6 +21,7 @@ import { z } from "zod";
 
 import { getDb, initDatabase } from "../../../infrastructure/db/schema.js";
 import { getSectorPeers, SECTOR_NAME_VI } from "../../../domain/services/sectorPeers.js";
+import { tradingWindowLabel } from "../../../domain/services/tradingWindow.js";
 import type { DomainType } from "../../../../bctc-schema.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -386,6 +387,7 @@ export function registerWatchlistTools(server: McpServer): void {
 
         const lines: string[] = [
           `Watchlist — ${rows.length} cổ phiếu`,
+          `Trading window: ${tradingWindowLabel()}`,
           "",
           ...rows.map((r) => {
             const priceStr =
