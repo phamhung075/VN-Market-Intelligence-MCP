@@ -6,7 +6,7 @@ Two autonomous teams work in parallel to continuously improve the system:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│  ANALYSIS TEAM (Claude Cowork — 7 agents, cloud)            │
+│  ANALYSIS TEAM (Claude Cowork — 8 agents, cloud)            │
 │  Serves the user with investment intelligence               │
 │                                                              │
 │  → Chat Channel (TELEGRAM_CHAT_ID) = user-facing            │
@@ -38,7 +38,7 @@ Two autonomous teams work in parallel to continuously improve the system:
 
 ## Analysis Team (Claude Cowork)
 
-7 agents running on Claude Cowork cloud (6 specialists + 1 coordinator). Each connects to MCP server via `https://zenmidi.com/mcp`.
+8 agents running on Claude Cowork cloud (6 specialists + 1 coordinator + 1 Q&A responder). Each connects to MCP server via `https://zenmidi.com/mcp`.
 
 | # | Agent | Schedule | Role | File |
 |---|-------|----------|------|------|

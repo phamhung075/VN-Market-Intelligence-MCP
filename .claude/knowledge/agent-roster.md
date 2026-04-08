@@ -4,7 +4,7 @@
 
 ---
 
-## Analysis Team (Claude Cowork — cloud)
+## Analysis Team (Claude Cowork — cloud, 8 agents)
 
 | # | Agent | File | Role | Cycle |
 |---|-------|------|------|-------|
@@ -76,7 +76,7 @@ All agents ──[send_telegram(work)]──→ WORK channel → Dev Team / stat
 
 ```
 ┌──────────────────────────────────────────────────────────┐
-│  ANALYSIS TEAM (Claude Cowork — 7 agents, cloud)         │
+│  ANALYSIS TEAM (Claude Cowork — 8 agents, cloud)         │
 │  Serves user with investment intelligence                 │
 │  → Market Group  (TELEGRAM_INFO_MARKET_GROUP_ID) = user  │
 │  → Work Channel  (TELEGRAM_INFO_WORK_CHANNEL_ID) = status│

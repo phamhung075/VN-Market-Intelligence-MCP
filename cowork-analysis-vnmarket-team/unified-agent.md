@@ -117,6 +117,25 @@ Call `get_agent_signals(agent="unified-agent")`:
 1. Call `get_system_status` — check server status, circuit breakers, source health, data freshness, and recent errors (all in one call)
 2. Call `get_rate_limit_status` — API throttling status
 
+## POSITION-AWARE ANALYSIS (mandatory for every stock you review)
+
+Before producing any stock-level coordination note or quality-review output:
+1. Call `get_user_positions_for_analysis({ ticker })` — returns enriched position (qty, avg_cost, current_price, pl_abs, pl_pct, stop_loss_floor, tp_ladder) or empty.
+2. If position exists → append a "POSITION INSIGHT" block to your review:
+   - P/L hiện tại (absolute + percent)
+   - Stop-loss floor đề xuất (from tool)
+   - TP ladder (from tool) — scale-out 30/30/20/20 guidance
+   - Action 24h tới (Hold / Trim / Exit)
+   - Kinh Dịch signal — call `get_kinhdich_reading(ticker)` (mandatory default layer)
+3. If no position → standard review (unchanged behavior).
+4. Knowledge: `.claude/knowledge/position-schema.md`.
+
+Never skip the position check. If `get_user_positions_for_analysis` fails → KNOWLEDGE LOAD FAILURE PROTOCOL above (fail-loud, do not guess).
+
+## /ASK QUEUE FALLBACK
+
+The `07-qa-responder` agent is the primary handler for the /ask FIFO queue (triggered every 12 min by `askQueueCheck` cron via the `pending_questions` signal). If that agent is down or signals remain unacknowledged > 30 min, you are the fallback: call `get_pending_ask_questions`, process FIFO one at a time, reply via `send_telegram(channel="market", ...)`, then `answer_ask_question(id, answer_text, status="answered")`. Escalate > 10 min reasoning with status="escalated". Protocol: `.claude/knowledge/ask-queue-protocol.md`.
+
 ### Step 2: Market Intelligence
 1. Call `get_market_context(hours_back=24)` — returns watchlist, prices, macro, alerts, and recent analysis in ONE call
 2. Call `get_prediction_markets` — prediction market signals

@@ -49,6 +49,21 @@ Call `get_agent_signals(agent="report-analyzer")`:
 ### Step 1: Get Market Context
 Call `get_market_context(hours_back=24)`.
 
+## POSITION-AWARE ANALYSIS (mandatory for every stock analyzed)
+
+Before producing any stock-level output:
+1. Call `get_user_positions_for_analysis({ ticker })` — returns enriched position (qty, avg_cost, current_price, pl_abs, pl_pct, stop_loss_floor, tp_ladder) or empty.
+2. If position exists → append a "POSITION INSIGHT" block to your output:
+   - P/L hiện tại (absolute + percent)
+   - Stop-loss floor đề xuất (from tool)
+   - TP ladder (from tool) — scale-out 30/30/20/20 guidance
+   - Action 24h tới (Hold / Trim / Exit) based on your analysis
+   - Kinh Dịch signal — call `get_kinhdich_reading(ticker)` (mandatory default layer)
+3. If no position → standard analysis (unchanged behavior).
+4. Knowledge: `.claude/knowledge/position-schema.md` (lazy-load only when handling this block).
+
+Never skip the position check. If `get_user_positions_for_analysis` fails → KNOWLEDGE LOAD FAILURE PROTOCOL above (fail-loud, do not guess).
+
 ### Step 2: Analyze Reports
 1. For each watchlist stock: call `get_bctc_full(code)` — financial summary + QoQ/YoY comparison + sentiment trend
 2. For each watchlist stock: call `get_sector_comparison(code)` — PE/PB/ROE vs sector peer median, foreign flow comparison, valuation tier (PREMIUM/DISCOUNT/NGANG BANG)

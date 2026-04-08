@@ -1,40 +1,42 @@
 # /ask Queue Protocol — User Question FIFO
 
-**When to read this file:** When implementing or reviewing the /ask queue, QA Responder agent (07), `askQueueCheck` cron job, or `user_requests` DB table. Load only when your task touches user question handling, async answers, or the FIFO queue flow.
+**When to read this file:** When implementing or reviewing the /ask queue, the `07-qa-responder` Cowork agent, the `askQueueCheck` cron job, or the `ask_queue` DB table. Load only when your task touches user question handling, async answers, or the FIFO queue flow.
 
 ---
 
 ## Flow Overview
 
 ```
-User sends /ask <question> or /why <TICKER>
+User sends /ask <question>  (Telegram bot command)
         ↓
-Server inserts row into user_requests table (status="pending")
+Server inserts row into ask_queue table (status="pending")
         ↓
-askQueueCheck cron (every 12 min)
+askQueueCheck cron (every 12 min)  — src/scheduler/askQueueCheckJob.ts
         ↓
-QA Responder agent (07) calls get_user_requests(status="pending")
+post_agent_signal(to="07-qa-responder", signal_type="pending_questions")
+        ↓
+07-qa-responder wakes → get_pending_ask_questions()
         ↓
 Process FIFO — one question at a time
         ↓
-Answer posted to MARKET channel as reply
+send_telegram(channel="market", message=<answer>)
         ↓
-mark_user_request_answered(id)
+answer_ask_question(id, answer_text, status="answered" | "escalated" | "failed")
 ```
 
 ---
 
-## DB Table: user_requests
+## DB Table: ask_queue
 
-| Column | Type | Description |
-|--------|------|-------------|
-| id | INTEGER | Primary key |
-| question | TEXT | Full user message after /ask or /why |
-| ticker | TEXT | Extracted ticker if /why command, else NULL |
-| status | TEXT | "pending" / "answered" / "deferred" |
-| created_at | DATETIME | When question was received |
-| answered_at | DATETIME | When answer was sent |
-| answer_preview | TEXT | First 200 chars of answer (for audit) |
+| Column        | Type     | Description                                        |
+|---------------|----------|----------------------------------------------------|
+| id            | INTEGER  | Primary key                                        |
+| question      | TEXT     | Full user message after /ask                       |
+| ticker        | TEXT     | Extracted ticker if detected, else NULL            |
+| status        | TEXT     | "pending" / "processing" / "answered" / "escalated" / "failed" |
+| created_at    | DATETIME | When question was received                         |
+| answered_at   | DATETIME | When terminal status was set                       |
+| answer_text   | TEXT     | Full answer body (or escalation prompt / failure reason) |
 
 ---
 
@@ -43,29 +45,33 @@ mark_user_request_answered(id)
 - Schedule: every 12 minutes (`*/12 * * * *`)
 - File: `src/scheduler/askQueueCheckJob.ts`
 - Registered in: `src/scheduler/jobs.ts`
-- What it does: calls `get_user_requests(status="pending")` → if any → triggers QA Responder agent
+- Behaviour: if `get_pending_ask_questions()` returns a non-empty list → `post_agent_signal(to_agent="07-qa-responder", signal_type="pending_questions")`.
 
 ---
 
-## QA Responder Agent (07) Processing Rules
+## 07-qa-responder Processing Rules
 
-1. **FIFO**: process oldest pending question first
-2. **Tools available**: any MCP tool needed for the answer (see `.claude/knowledge/mcp-tools.md` for QA Responder tool list)
-3. **Answer format**: plain Vietnamese text, clear and actionable
-4. **Reply in MARKET channel**: `send_telegram(channel="market", message=...)`
-5. **Mark done**: call `mark_user_request_answered(id)` immediately after sending answer
-6. **Never re-answer**: once answered, skip in all future cycles
-7. **One question per cycle**: do not batch-answer; process one per cron tick
+1. **FIFO**: oldest `pending` row first.
+2. **One at a time**: never batch-answer. One question per iteration.
+3. **Kinh Dịch mandatory** for stock-specific questions — always call `get_kinhdich_reading(ticker)`.
+4. **Tools**: any MCP tool relevant to the question (`get_market_context`, `fetch_and_analyze`, `get_bctc_full`, etc.) plus `WebSearch` for live/foreign context.
+5. **Answer format**: concise Vietnamese, max ~400 words, actionable, with citations (MCP tool name or URL).
+6. **Send**: `send_telegram(channel="market", message=<answer>)` — this is the DOCUMENTED EXCEPTION to Alert Commander's MARKET exclusivity.
+7. **Mark done**: `answer_ask_question(id, answer_text=<full>, status="answered")` immediately after sending.
+8. **Never re-answer** a row once its status is terminal.
 
 ---
 
-## Long-Running Question Protocol
+## Long-Running Question Protocol ( > 10 min reasoning )
 
-If a question requires >10 min of reasoning (complex multi-stock analysis, full BCTC deep-dive, prediction scenario modeling):
+If a question clearly requires > 10 minutes of reasoning (deep multi-stock analysis, full BCTC deep-dive, scenario modelling):
 
-1. Mark question as "deferred" via `mark_user_request_answered(id, status="deferred")`
-2. Send paste-ready prompt to MARKET channel:
+1. Do NOT block the queue.
+2. Compose a paste-ready prompt the user can run in a fresh session.
+3. `answer_ask_question(id, answer_text=<paste_ready_prompt>, status="escalated")`.
+4. `send_telegram(channel="market", message=...)` with a short Vietnamese explanation of why it was escalated and the paste-ready prompt inline.
 
+Template:
 ```
 Câu hỏi "{question_preview}" cần phân tích sâu hơn 10 phút.
 Để nhận phân tích đầy đủ, hãy mở một session mới với prompt sau:
@@ -83,26 +89,35 @@ Yêu cầu: phân tích đầy đủ, không giới hạn thời gian.
 
 ---
 
-## MCP Tools for Queue
+## Failure Protocol
 
-| Tool | Used by |
-|------|---------|
-| `get_user_requests(status)` | askQueueCheckJob, QA Responder |
-| `mark_user_request_answered(id, status?)` | QA Responder |
+If processing cannot complete (MCP unreachable, tool error, irrecoverable parse failure):
+1. `answer_ask_question(id, answer_text=<failure_reason>, status="failed")`.
+2. `submit_feedback(severity="high", title="/ask processing failed", detail=..., agent="07-qa-responder")` → BUG channel.
+3. Do NOT guess an answer. Do NOT post a partial answer to MARKET.
 
 ---
 
-## Answer Storage for Audit
+## MCP Tools for the Queue
 
-`answer_preview` column stores first 200 chars of every answer sent.
-Full answers are in Telegram message history (MARKET channel).
-Dev Team can query answered questions via `get_user_requests(status="answered")`.
+| Tool                          | Used by                           |
+|-------------------------------|-----------------------------------|
+| `get_pending_ask_questions`   | askQueueCheckJob, 07-qa-responder |
+| `answer_ask_question`         | 07-qa-responder                   |
+
+Terminal `status` values accepted by `answer_ask_question`: `"answered"`, `"escalated"`, `"failed"`.
 
 ---
 
 ## Channel Routing
 
-- User question received: MARKET channel
-- Answer sent: MARKET channel (same thread as original message if possible)
-- QA Responder does NOT send to WORK or BUG
-- If QA Responder hits an error answering: file via `submit_feedback` to BUG channel
+- User question received: MARKET channel (via Telegram bot `/ask` handler).
+- Answer sent: MARKET channel (documented exception to Alert Commander exclusivity).
+- 07-qa-responder never posts to WORK except for fail-loud knowledge-load notices.
+- Errors and bug reports: BUG channel via `submit_feedback`.
+
+---
+
+## Fallback
+
+If 07-qa-responder is down or `pending_questions` signals remain unacknowledged > 30 min, `unified-agent.md` is the fallback handler and follows the same protocol.

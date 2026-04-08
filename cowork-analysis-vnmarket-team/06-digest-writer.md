@@ -50,6 +50,21 @@ Call `get_agent_signals(agent="digest-writer")`:
 ### Step 1: Get Market Context
 Call `get_market_context(hours_back=24)`.
 
+## POSITION-AWARE ANALYSIS (mandatory for every stock analyzed in digest)
+
+Before producing any stock-level line in the digest:
+1. Call `get_user_positions_for_analysis({ ticker })` — returns enriched position (qty, avg_cost, current_price, pl_abs, pl_pct, stop_loss_floor, tp_ladder) or empty.
+2. If position exists → append a "POSITION INSIGHT" block to the digest entry:
+   - P/L hiện tại (absolute + percent)
+   - Stop-loss floor đề xuất (from tool)
+   - TP ladder (from tool) — scale-out 30/30/20/20 guidance
+   - Action 24h tới (Hold / Trim / Exit)
+   - Kinh Dịch signal — call `get_kinhdich_reading(ticker)` (mandatory default layer)
+3. If no position → standard digest entry (unchanged behavior).
+4. Knowledge: `.claude/knowledge/position-schema.md`.
+
+Never skip the position check. If `get_user_positions_for_analysis` fails → KNOWLEDGE LOAD FAILURE PROTOCOL above (fail-loud, do not guess).
+
 ### Step 2: Compile Digest
 1. Call get_market_summary period "daily"
 2. Call get_performance_attribution to show which signal types drove today's P&L
