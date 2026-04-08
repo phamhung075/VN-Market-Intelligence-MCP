@@ -41,6 +41,7 @@ import { runDavPharmacyCheck } from './davPharmacyJob.js'
 import { runVpsProxyWatchdog } from './vpsProxyWatchdogJob.js'
 import { runBctcOverdueCheck } from './bctcOverdueCheckJob.js'
 import { runBctcReparseJob } from './bctcReparseJob.js'
+import { runAskQueueCheck } from './askQueueCheckJob.js'
 
 export const CRONS = {
   morningBriefing:        Bun.env.CRON_MORNING_BRIEFING          ?? '0 8 * * 1-5',
@@ -62,6 +63,8 @@ export const CRONS = {
   bctcOverdueCheck:       Bun.env.CRON_BCTC_OVERDUE_CHECK         ?? '0 9 * * *',
   /** BCTC stranded-PDF auto-reparse: daily 09:30 GMT+7 (task 1019 slice 2) */
   bctcReparseJob:         Bun.env.CRON_BCTC_REPARSE_JOB           ?? '30 9 * * *',
+  /** /ask queue check: every 12 min — signal 07-qa-responder when pending (task 1074) */
+  askQueueCheck:          Bun.env.CRON_ASK_QUEUE_CHECK             ?? '*/12 * * * *',
   /** France wake-up summary: weekdays 06:00 UTC (07:00 CET) — task 243 */
   franceSummary:          Bun.env.CRON_FRANCE_SUMMARY             ?? '0 6 * * 1-5',
   /** SQLite WAL checkpoint: daily 03:00 GMT+7 = 20:00 UTC (task 140) */
@@ -179,6 +182,20 @@ export function startScheduler() {
   cron.schedule(CRONS.bctcReparseJob, async () => {
     await runBctcReparseJob()
   }, { timezone: 'Asia/Ho_Chi_Minh' })
+
+  // Every 12 min — /ask queue check (task 1074).
+  // Signals 07-qa-responder when pending questions are found in ask_queue.
+  // The server never answers the question — the cowork agent does the work.
+  cron.schedule(CRONS.askQueueCheck, () => {
+    try {
+      const result = runAskQueueCheck()
+      if (result.signaled) {
+        log(`[ask-queue-check] signaled 07-qa-responder: count=${result.count}`)
+      }
+    } catch (err) {
+      log(`[ask-queue-check] uncaught: ${err instanceof Error ? err.message : String(err)}`)
+    }
+  })
 
   registerShutdownHook()
 

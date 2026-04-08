@@ -63,7 +63,7 @@
 
 ## Scheduler File Count
 
-**22 scheduler files** (`jobs.ts` + `summaryJobs.ts` + 20 job handlers).
+**23 scheduler files** (`jobs.ts` + `summaryJobs.ts` + 21 job handlers, includes `askQueueCheckJob.ts` added in task 1074).
 
 Notes:
 - `insiderCheckJob.ts` exists but is NOT registered in `jobs.ts` (orphan)
