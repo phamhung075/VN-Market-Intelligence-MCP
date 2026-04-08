@@ -27,9 +27,20 @@ import type {
 import type { DailyForeignFlow } from "../../domain/services/foreignFlowAnalyzer.js";
 
 // ---------------------------------------------------------------------------
-// DDL — create tables if not exist
+// DDL — canonical SSOT is now initDatabase() in schema.ts (Task 1042)
 // ---------------------------------------------------------------------------
 
+/**
+ * initVnstockTables — retained for backward compatibility with call sites and tests.
+ *
+ * The canonical DDL for all 8 vnstock tables is now in initDatabase() (schema.ts).
+ * This function keeps the CREATE TABLE IF NOT EXISTS statements so test files that
+ * call only initVnstockTables() (without calling initDatabase() first) continue to
+ * work. All statements are idempotent — calling this after initDatabase() is safe.
+ *
+ * Also runs the ALTER TABLE migration for old production DBs that were created
+ * before the `date` column was added to vnstock_trading_stats.
+ */
 export function initVnstockTables(): void {
   const db = getDb();
 
@@ -59,11 +70,13 @@ export function initVnstockTables(): void {
     );
     CREATE INDEX IF NOT EXISTS idx_vnfin_code ON vnstock_financials(code);
     CREATE INDEX IF NOT EXISTS idx_vnfin_period ON vnstock_financials(year_report, quarter);
+  `);
 
+  db.exec(`
     CREATE TABLE IF NOT EXISTS vnstock_trading_stats (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       code TEXT NOT NULL,
-      date TEXT NOT NULL,
+      date TEXT NOT NULL DEFAULT '1970-01-01',
       foreign_room INTEGER,
       foreign_volume INTEGER,
       current_holding_ratio REAL,
