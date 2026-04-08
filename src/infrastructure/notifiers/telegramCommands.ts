@@ -10,18 +10,20 @@
  *   - Plain text only (no Markdown to avoid parse errors)
  *   - Returns null when the update has no actionable text
  *
- * Supported commands (task 1063 reduced set, task 1071 additions):
+ * Supported commands (task 1063 reduced set, task 1071 additions, task 1073 /ask):
  *   /watchlist                  — list watchlist stocks with current prices
  *   /price VCB                  — price snapshot for a single stock
  *   /health                     — system health (uptime, DB size, watchlist count)
  *   /set_position VCB 75000 1000 — buy/sell/clear a position
  *   /check_position             — list all open positions with P/L, stop-loss, TP ladder
+ *   /ask <question>             — enqueue a free-form question for the QA Responder agent
  *   /report <mota>              — report a bug/issue to Dev Team (priority=medium)
  *   /fix   <mota>               — report an urgent bug to Dev Team (priority=high)
  *   /help                       — list all commands
  *
- * Removed in task 1063: /alerts, /briefing, /pnl, /ask, /why
+ * Removed in task 1063: /alerts, /briefing, /pnl, /why
  * (fake-AI or low-value commands superseded by scheduler-driven channels).
+ * /ask re-added in task 1073 with real queue backend (ask_queue table, task 1072).
  *
  * @module infrastructure/notifiers/telegramCommands
  */
@@ -31,6 +33,7 @@ import {
   applyPositionCommand,
   listOpenPositions,
 } from "../db/positionStore.js";
+import { insertAskQuestion } from "../db/askQueueStore.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Public types
@@ -41,7 +44,7 @@ export interface TelegramUpdate {
   message?: {
     chat: { id: number };
     text?: string;
-    from?: { first_name?: string };
+    from?: { first_name?: string; id?: number };
   };
 }
 
@@ -64,6 +67,7 @@ const HELP_TEXT = `VN Market Bot
 /health                 Trạng thái hệ thống
 /set_position VCB 75000 1000  Thêm/bán/xóa vị thế (qty>0 mua, qty<0 bán, 0 0 xóa)
 /check_position         Xem vị thế + P/L + stop-loss + TP
+/ask <câu hỏi>          Đặt câu hỏi phân tích (trả lời trong 12 phút)
 /report ...             Báo lỗi
 /fix ...                Báo lỗi khẩn cấp
 /help                   Trợ giúp`;
@@ -259,6 +263,36 @@ function handleReport(
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// /ask handler (Task 1073)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * /ask <question> — enqueue a free-form question to ask_queue.
+ *
+ * The server does NOT answer the question here. The question is stored
+ * with status='pending' and handled asynchronously by the 07-qa-responder
+ * Cowork agent which polls via askQueueCheckJob (task 1074).
+ *
+ * @param db      Database connection
+ * @param args    Remaining tokens after /ask
+ * @param userId  Telegram user ID (string form for storage; defaults to 'default')
+ * @returns       Vietnamese confirmation or usage hint
+ */
+function handleAsk(db: Database, args: string[], userId: string): string {
+  const question = args.join(" ").trim();
+
+  if (!question) {
+    return (
+      "Vui lòng cung cấp câu hỏi sau /ask\n" +
+      "Ví dụ: /ask VCB có nên giữ không?"
+    );
+  }
+
+  const id = insertAskQuestion(db, question, userId);
+  return `Câu hỏi đã ghi nhận (#${id}). Sẽ trả lời trong 12 phút.`;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // /set_position and /check_position handlers (Task 1071)
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -401,6 +435,9 @@ export async function handleTelegramCommand(
   const [rawCmd, ...args] = text.split(/\s+/);
   const cmd = (rawCmd ?? "").toLowerCase();
 
+  // Telegram user id — stringify for DB storage (ask_queue.user_id is TEXT)
+  const userId = message.from?.id != null ? String(message.from.id) : "default";
+
   try {
     let responseText: string;
 
@@ -427,6 +464,10 @@ export async function handleTelegramCommand(
 
       case "/check_position":
         responseText = handleCheckPosition(db);
+        break;
+
+      case "/ask":
+        responseText = handleAsk(db, args, userId);
         break;
 
       case "/report":
