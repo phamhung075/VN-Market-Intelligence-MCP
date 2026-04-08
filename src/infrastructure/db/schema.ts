@@ -770,6 +770,45 @@ export async function initDatabase(): Promise<void> {
   `);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_pet_filename ON pdf_extracted_text(filename, page_number)`);
 
+  // ── Bond maturity calendar (Task 1045) ───────────────────────────────────
+  // Previously created via ensureBondMaturityTable() called from bondMaturityTools.ts.
+  // Moved here so fresh DBs have the table before any tool handler runs.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS bond_maturity (
+      id               INTEGER PRIMARY KEY AUTOINCREMENT,
+      issuer           TEXT NOT NULL,
+      issuer_code      TEXT NOT NULL UNIQUE,
+      amount_billion   REAL NOT NULL,
+      maturity_date    TEXT NOT NULL,
+      coupon_rate      REAL,
+      status           TEXT NOT NULL DEFAULT 'upcoming',
+      created_at       TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at       TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+  `);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_bond_maturity_date ON bond_maturity(maturity_date)`);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_bond_maturity_code ON bond_maturity(issuer_code)`);
+
+  // ── Pharma events (Task 1046) ─────────────────────────────────────────────
+  // Previously created via initPharmaStore() called from pharmaTools.ts + davPharmacyJob.ts.
+  // Moved here so fresh DBs have the table on startup.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS pharma_events (
+      id            INTEGER PRIMARY KEY AUTOINCREMENT,
+      event_type    TEXT NOT NULL,
+      drug_name     TEXT,
+      manufacturer  TEXT,
+      stock_code    TEXT,
+      approval_date TEXT,
+      description   TEXT NOT NULL,
+      severity      TEXT NOT NULL,
+      created_at    TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+  `);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_pharma_code ON pharma_events(stock_code)`);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_pharma_date ON pharma_events(created_at)`);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_pharma_type ON pharma_events(event_type)`);
+
   // ── Trade exposures (Task 1043) ───────────────────────────────────────────
   // Previously created lazily via _tableCreated guard in tradeStore.ts:ensureTable().
   // Moved here so fresh DBs have the table before any tradeStore function is called.
