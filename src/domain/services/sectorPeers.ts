@@ -40,6 +40,8 @@ const SECTOR_PEERS: Record<DomainType, { code: string; exchange: string }[]> = {
     { code: "MBB", exchange: "HOSE" },
     { code: "VPB", exchange: "HOSE" },
     { code: "ACB", exchange: "HOSE" },
+    { code: "SHB", exchange: "HOSE" },
+    { code: "EIB", exchange: "HOSE" },
     { code: "STB", exchange: "HOSE" },
     { code: "HDB", exchange: "HOSE" },
     { code: "TPB", exchange: "HOSE" },
@@ -53,11 +55,15 @@ const SECTOR_PEERS: Record<DomainType, { code: string; exchange: string }[]> = {
   real_estate: [
     { code: "VIC", exchange: "HOSE" },
     { code: "VHM", exchange: "HOSE" },
+    { code: "VRE", exchange: "HOSE" },
     { code: "NVL", exchange: "HOSE" },
     { code: "KDH", exchange: "HOSE" },
     { code: "DXG", exchange: "HOSE" },
     { code: "NLG", exchange: "HOSE" },
     { code: "PDR", exchange: "HOSE" },
+    { code: "KBC", exchange: "HOSE" },
+    { code: "DIG", exchange: "HOSE" },
+    { code: "HUT", exchange: "HNX" },
     { code: "HDG", exchange: "HOSE" },
   ],
   steel: [
@@ -70,9 +76,9 @@ const SECTOR_PEERS: Record<DomainType, { code: string; exchange: string }[]> = {
   oil_gas: [
     { code: "GAS", exchange: "HOSE" },
     { code: "PLX", exchange: "HOSE" },
+    { code: "BSR", exchange: "UPCOM" },
     { code: "PVD", exchange: "HOSE" },
     { code: "PVS", exchange: "HNX" },
-    { code: "BSR", exchange: "HOSE" },
     { code: "OIL", exchange: "HOSE" },
   ],
   aviation: [
@@ -83,22 +89,24 @@ const SECTOR_PEERS: Record<DomainType, { code: string; exchange: string }[]> = {
   ],
   retail: [
     { code: "MWG", exchange: "HOSE" },
+    { code: "MSN", exchange: "HOSE" },
     { code: "FRT", exchange: "HOSE" },
+    { code: "KDC", exchange: "HOSE" },
     { code: "DGW", exchange: "HOSE" },
     { code: "PNJ", exchange: "HOSE" },
-    { code: "VNM", exchange: "HOSE" },
-    { code: "MSN", exchange: "HOSE" },
     { code: "SAB", exchange: "HOSE" },
   ],
   securities: [
     { code: "SSI", exchange: "HOSE" },
     { code: "VND", exchange: "HOSE" },
-    { code: "HCM", exchange: "HOSE" },
+    { code: "VIX", exchange: "HOSE" },
     { code: "VCI", exchange: "HOSE" },
+    { code: "HCM", exchange: "HOSE" },
     { code: "SHS", exchange: "HNX" },
     { code: "MBS", exchange: "HNX" },
   ],
   utilities: [
+    { code: "GEX", exchange: "HOSE" },
     { code: "REE", exchange: "HOSE" },
     { code: "PC1", exchange: "HOSE" },
     { code: "POW", exchange: "HOSE" },
@@ -107,6 +115,8 @@ const SECTOR_PEERS: Record<DomainType, { code: string; exchange: string }[]> = {
     { code: "NT2", exchange: "HOSE" },
   ],
   agriculture: [
+    { code: "VNM", exchange: "HOSE" },
+    { code: "DPM", exchange: "HOSE" },
     { code: "VHC", exchange: "HOSE" },
     { code: "ANV", exchange: "HOSE" },
     { code: "HAG", exchange: "HOSE" },
@@ -165,7 +175,9 @@ const SECTOR_PEERS: Record<DomainType, { code: string; exchange: string }[]> = {
     { code: "TRA", exchange: "HOSE" },
     { code: "OPC", exchange: "HOSE" },
   ],
-  other: [],
+  other: [
+    { code: "DGC", exchange: "HOSE" },  // Duc Giang Chemicals — no chemicals DomainType
+  ],
 };
 
 /** Vietnamese sector names for display in alerts. */

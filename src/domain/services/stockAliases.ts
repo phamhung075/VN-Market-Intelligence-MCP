@@ -82,8 +82,6 @@ export const STOCK_CATALOG: Record<string, StockCatalogEntry> = {
       "fpt", "fpt corporation", "tập đoàn fpt", "tap doan fpt",
       "công ty fpt", "cong ty fpt",
       "fpt software", "fpt telecom", "fpt group",
-      // Parent-subsidiary: FRT (FPT Retail) is FPT's subsidiary.
-      "frt", "fpt retail", "fpt digital retail", "fpt shop",
     ],
   },
   VCB: {
@@ -186,6 +184,24 @@ export const STOCK_CATALOG: Record<string, StockCatalogEntry> = {
       "sacombank bank",
     ],
   },
+  SHB: {
+    companyName: "Saigon-Hanoi Bank",
+    aliases: [
+      "shb", "ngân hàng shb", "ngan hang shb",
+      "saigon hanoi bank", "ngan hang sai gon ha noi",
+      "ngân hàng sài gòn hà nội", "shb bank",
+    ],
+  },
+  EIB: {
+    companyName: "Eximbank",
+    aliases: [
+      "eximbank", "ngân hàng eximbank", "ngan hang eximbank",
+      "vietnam export import bank",
+      "ngân hàng xuất nhập khẩu việt nam",
+      "ngan hang xuat nhap khau viet nam",
+      "ngan hang xuat nhap khau",
+    ],
+  },
   TPB: {
     companyName: "TPBank",
     aliases: [
@@ -238,6 +254,47 @@ export const STOCK_CATALOG: Record<string, StockCatalogEntry> = {
   DXG: {
     companyName: "Dat Xanh Group",
     aliases: ["dat xanh", "dat xanh group", "dia oc dat xanh"],
+  },
+  KBC: {
+    companyName: "Kinh Bac City Development",
+    aliases: [
+      "kinh bac", "khu cong nghiep kinh bac",
+      "kinh bac city", "bat dong san kinh bac",
+      "kinh bac development",
+    ],
+  },
+  HUT: {
+    companyName: "Tasco JSC",
+    aliases: [
+      "tasco", "thu phi duong bo tasco",
+      "tasco jsc", "hut tasco",
+      "cong ty tasco",
+    ],
+  },
+  DIG: {
+    companyName: "DIC Corp",
+    aliases: [
+      "dic corp", "dia oc dic",
+      "cong ty co phan dia oc dic",
+      "dic corporation", "dic group",
+    ],
+  },
+  PDR: {
+    companyName: "Phat Dat Real Estate",
+    aliases: [
+      "phat dat", "bat dong san phat dat",
+      "phat dat real estate", "phat dat corporation",
+      "cong ty phat dat",
+    ],
+  },
+  VRE: {
+    companyName: "Vincom Retail",
+    aliases: [
+      "vincom retail", "vincom",
+      "cong ty co phan vincom retail",
+      "trung tam thuong mai vincom",
+      "vincom center", "vincom plaza",
+    ],
   },
 
   // ─── Steel ─────────────────────────────────────────────────────────────────
@@ -294,6 +351,14 @@ export const STOCK_CATALOG: Record<string, StockCatalogEntry> = {
   PVS: {
     companyName: "PetroVietnam Technical Services",
     aliases: ["pvs", "dich vu ky thuat dau khi", "petrovietnam technical"],
+  },
+  BSR: {
+    companyName: "Binh Son Refining and Petrochemical",
+    aliases: [
+      "binh son", "loc dau binh son",
+      "binh son refining", "binh son petrochemical",
+      "loc hoa dau binh son", "bsr refinery",
+    ],
   },
 
   // ─── Aviation ──────────────────────────────────────────────────────────────
@@ -352,6 +417,22 @@ export const STOCK_CATALOG: Record<string, StockCatalogEntry> = {
       "vàng bạc phú nhuận", "vang bac phu nhuan",
     ],
   },
+  FRT: {
+    companyName: "FPT Retail",
+    aliases: [
+      "fpt retail", "fpt shop", "fpt digital retail",
+      "chuoi ban le fpt", "cong ty ban le fpt",
+      "frt retail", "fpt retail jsc",
+    ],
+  },
+  KDC: {
+    companyName: "Kinh Do Corporation",
+    aliases: [
+      "kinh do", "kinh đô", "banh keo kinh do",
+      "kinh do corporation", "mondelez kinh do",
+      "cong ty cp kinh do", "thuc pham kinh do",
+    ],
+  },
   SAB: {
     companyName: "Sabeco",
     aliases: [
@@ -377,12 +458,35 @@ export const STOCK_CATALOG: Record<string, StockCatalogEntry> = {
     companyName: "VNDirect Securities",
     aliases: ["vndirect", "chung khoan vndirect"],
   },
+  VIX: {
+    companyName: "VIX Securities",
+    aliases: [
+      "vix securities", "chung khoan vix",
+      "cong ty chung khoan vix", "vix chung khoan",
+    ],
+  },
+  VCI: {
+    companyName: "Viet Capital Securities",
+    aliases: [
+      "viet capital", "viet capital securities",
+      "chung khoan ban viet", "ban viet securities",
+      "cong ty chung khoan ban viet",
+    ],
+  },
   HCM: {
     companyName: "HCM Securities",
     aliases: ["chung khoan ho chi minh", "hcm securities"],
   },
 
   // ─── Utilities ─────────────────────────────────────────────────────────────
+  GEX: {
+    companyName: "Gelex Electric",
+    aliases: [
+      "gelex", "gelex electric", "cong ty gelex",
+      "tap doan gelex", "dien co gelex",
+      "gelex group",
+    ],
+  },
   REE: {
     companyName: "REE Corporation",
     aliases: [
@@ -400,6 +504,15 @@ export const STOCK_CATALOG: Record<string, StockCatalogEntry> = {
   },
 
   // ─── Agriculture ───────────────────────────────────────────────────────────
+  DPM: {
+    companyName: "Phu My Fertilizer",
+    aliases: [
+      "phu my", "phan bon phu my", "dam phu my",
+      "petrovietnam fertilizer", "pvfcco",
+      "cong ty phan bon va hoa chat dau khi",
+      "fertilizer and chemicals phu my",
+    ],
+  },
   VHC: {
     companyName: "Vinh Hoan Corporation",
     aliases: ["vinh hoan", "ca tra vinh hoan", "pangasius vinh hoan"],
@@ -449,6 +562,16 @@ export const STOCK_CATALOG: Record<string, StockCatalogEntry> = {
   HAX: {
     companyName: "Hang Xanh Auto",
     aliases: ["hang xanh", "hang xanh auto", "dai ly oto hang xanh"],
+  },
+
+  // ─── Chemicals / Other ─────────────────────────────────────────────────────
+  DGC: {
+    companyName: "Duc Giang Chemicals",
+    aliases: [
+      "duc giang", "hoa chat duc giang",
+      "duc giang chemicals", "cong ty hoa chat duc giang",
+      "duc giang group",
+    ],
   },
 };
 
