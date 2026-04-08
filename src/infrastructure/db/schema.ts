@@ -770,6 +770,41 @@ export async function initDatabase(): Promise<void> {
   `);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_pet_filename ON pdf_extracted_text(filename, page_number)`);
 
+  // ── Trade exposures (Task 1043) ───────────────────────────────────────────
+  // Previously created lazily via _tableCreated guard in tradeStore.ts:ensureTable().
+  // Moved here so fresh DBs have the table before any tradeStore function is called.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS trade_exposures (
+      id           INTEGER PRIMARY KEY AUTOINCREMENT,
+      code         TEXT NOT NULL,
+      market       TEXT NOT NULL,
+      revenue_pct  REAL NOT NULL DEFAULT 0,
+      type         TEXT NOT NULL DEFAULT 'export',
+      products     TEXT NOT NULL DEFAULT '',
+      source       TEXT NOT NULL DEFAULT 'seed',
+      updated_at   TEXT NOT NULL,
+      UNIQUE(code, market)
+    )
+  `);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_trade_code   ON trade_exposures(code)`);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_trade_market ON trade_exposures(market)`);
+
+  // ── Cascade rule hits (Task 1044) ─────────────────────────────────────────
+  // Previously created via ensureCascadeHitsTable() called lazily from runImpactChain.ts.
+  // Moved here so the table is always present after initDatabase().
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS cascade_rule_hits (
+      id               INTEGER PRIMARY KEY AUTOINCREMENT,
+      rule_key         TEXT NOT NULL,
+      matched_text     TEXT NOT NULL DEFAULT '',
+      affected_sector  TEXT,
+      affected_stocks  TEXT,
+      hit_at           TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+  `);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_cascade_hits_rule ON cascade_rule_hits(rule_key)`);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_cascade_hits_at   ON cascade_rule_hits(hit_at)`);
+
   // ── Audit state: singleton row for dataAuditJob (Task 1041) ─────────────
   // Previously created inline in src/scheduler/dataAuditJob.ts:ensureAuditDependencies().
   // Moved here so fresh test DBs and new deployments get the table from initDatabase().

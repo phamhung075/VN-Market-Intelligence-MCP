@@ -23,27 +23,10 @@ import type { TradeExposure, StockTradeProfile } from "../../domain/services/tra
 // Schema
 // ─────────────────────────────────────────────────────────────────────────────
 
-let _tableCreated = false;
-
+// trade_exposures DDL is now canonical in src/infrastructure/db/schema.ts (task 1043).
+// ensureTable() is a no-op retained for call-site backward compat.
 function ensureTable(): void {
-  if (_tableCreated) return;
-  const db = getDb();
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS trade_exposures (
-      id           INTEGER PRIMARY KEY AUTOINCREMENT,
-      code         TEXT NOT NULL,
-      market       TEXT NOT NULL,
-      revenue_pct  REAL NOT NULL DEFAULT 0,
-      type         TEXT NOT NULL DEFAULT 'export',
-      products     TEXT NOT NULL DEFAULT '',
-      source       TEXT NOT NULL DEFAULT 'seed',
-      updated_at   TEXT NOT NULL,
-      UNIQUE(code, market)
-    );
-    CREATE INDEX IF NOT EXISTS idx_trade_code ON trade_exposures(code);
-    CREATE INDEX IF NOT EXISTS idx_trade_market ON trade_exposures(market);
-  `);
-  _tableCreated = true;
+  // DDL created by initDatabase() — nothing to do here.
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
