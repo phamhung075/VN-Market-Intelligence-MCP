@@ -11,6 +11,8 @@
 
 import type { HttpClient } from "./ssc.js";
 import { logger } from "../logger.js";
+import type { CircuitBreaker } from "../circuitBreaker.js";
+import { CircuitOpenError } from "../circuitBreaker.js";
 
 // ---------------------------------------------------------------------------
 // Public constants
@@ -265,12 +267,20 @@ async function makeDefaultHttpClient(): Promise<HttpClient> {
 export async function downloadAndExtractPdf(
   url: string,
   httpClient?: HttpClient,
+  breaker?: CircuitBreaker,
 ): Promise<PdfExtractionResult> {
   logger.debug("[pdf] downloading PDF", { url });
 
   try {
     const client = httpClient ?? (await makeDefaultHttpClient());
-    const binaryString = await client.get(url);
+
+    // Task 1019: route the HTTP download through the circuit breaker (when
+    // provided) so network-level failures are actually recorded against the
+    // source breaker. Without this wrap the outer catch below swallowed
+    // timeouts before breakers.ssc ever saw them.
+    const binaryString = breaker
+      ? await breaker.execute(() => client.get(url))
+      : await client.get(url);
     // Convert the binary string back to a Buffer for pdf-parse
     const buffer = Buffer.from(binaryString, "binary");
 
@@ -284,10 +294,14 @@ export async function downloadAndExtractPdf(
 
     return result;
   } catch (err) {
-    logger.error("[pdf] failed to download or extract PDF", {
-      url,
-      error: err instanceof Error ? err.message : String(err),
-    });
+    if (err instanceof CircuitOpenError) {
+      logger.debug("[pdf] circuit open — skipping PDF download", { url });
+    } else {
+      logger.error("[pdf] failed to download or extract PDF", {
+        url,
+        error: err instanceof Error ? err.message : String(err),
+      });
+    }
     return { text: "", confidence: 0 };
   }
 }
