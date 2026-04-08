@@ -19,7 +19,7 @@
 | 311 | Telegram infra: 3-channel config + send_telegram enum | `task/311-telegram-3channel-infra` | Developer | P0 | — | Done |
 | 312 | Reclassify all src/ call sites to market/work/bug | `task/312-telegram-callsite-reclassify` | Developer | P0 | 311 | Done |
 | 313 | Agent .md + docs + mcp.config.json: 3-channel rewrite | `task/313-telegram-agent-docs-rewrite` | Cowork Refactory Expert | P0 | 311 | Done |
-| 314 | Fix dataAuditJob wiping market_prices snapshot | `task/314-dataaudit-market-prices-wipe` | Developer | P1 | — | Done |
+| 314 | Fix dataAuditJob wiping market_prices snapshot | `task/314-dataaudit-market-prices-wipe` | Developer | P1 | — | Done (regression test shipped 2026-04-08) |
 
 ---
 
