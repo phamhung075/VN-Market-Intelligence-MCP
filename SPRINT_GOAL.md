@@ -4,8 +4,93 @@
 
 status: ACTIVE
 sprint_id: 054
+started: 2026-04-08
+updated: 2026-04-08
+theme: Position-Aware Analysis + /ask Queue + Alert Narrowing + Kinh Dich Default Layer
+
+---
+
+### Goal
+
+Sprint 054 closes four investor experience gaps that have been deferred since Sprint 036:
+
+1. **Position Ledger (E1+E2)**: The user can manage positions via Telegram (`/set_position`, `/check_position`) with automatic stop-loss floor and TP ladder computation. Analysis agents can read positions via `get_user_positions_for_analysis`.
+
+2. **/ask Queue (E3+E4+tools)**: The user can ask investment questions via `/ask`. Questions are queued in a new `ask_queue` table. Every 12 minutes `askQueueCheckJob` posts a signal to `agent_signals` for the `07-qa-responder` Cowork agent, which processes FIFO and answers via `answer_ask_question`.
+
+3. **Alert Narrowing (E5)**: `checkPositionDanger` and `checkWatchlistOpportunity` gate MARKET alerts behind a 3-AND and 4-AND policy respectively. Direct Telegram sends for medium-move / heartbeat / volume-spike noise are removed from `marketScanJob`. DB insert paths are preserved (zero data loss).
+
+4. **Kinh Dich Default Layer (E6)**: `appendKinhDich` wraps every `analyze_stock`, `get_market_snapshot`, and `get_portfolio_conviction` response with hexagram context. Graceful fallback when no data is available. Exception swallowing — never propagates to caller.
+
+### Scope
+
+IN:
+- Task 1070: positionStore — buyPosition + sellPosition + applyPositionCommand
+- Task 1071: telegramCommands — /set_position + /check_position handlers
+- Task 1072: schema.ts DDL + askQueueStore CRUD helpers
+- Task 1073: telegramCommands — /ask handler
+- Task 1074: askQueueCheckJob scheduler + cron registration (*/12 * * * *)
+- Task 1075: alertPolicyChecker.ts + stopLossComputer.ts + mcp.config.json alertPolicy section
+- Task 1076: marketScanJob noise retirement (remove direct MARKET sends, keep DB inserts)
+- Task 1077: kinhDichWrapper.ts + wire appendKinhDich into analysis/market/portfolio tools
+- Task 1078: askQueueTools — get_pending_ask_questions + answer_ask_question MCP tools (+2 tools)
+- Task 1079: positionTools — get_user_positions_for_analysis MCP tool (+1 tool)
+- Task 1081: Sprint 054 integration smoke test (all-mocked end-to-end)
+
+OUT (delegated to cowork-refactory-expert, Phase 6):
+- E7: Cowork position-aware agent prompts (05-alert-commander.md, 04-market-watcher.md)
+- E8: 07-qa-responder agent creation / rewrite
+- Any agent .md file changes — NOT developer tasks
+
+### Exclusions
+
+- Hot reload / start.sh — all restarts via `launchctl kickstart -k gui/$(id -u)/com.vn-market.mcp`
+- `user_requests` table — ask_queue is a NEW table, do NOT reuse user_requests schema
+- E7/E8 cowork agent rewrites — delegated to cowork-refactory-expert after code tasks Done
+
+### Success Criteria
+
+1. `bun test src/__tests__/107*.test.ts src/__tests__/1081-sprint054-smoke.test.ts` → all pass
+2. `bun tsc --noEmit` → 0 errors after every task merge
+3. Tool count increments by exactly +3 (tasks 1078: +2, 1079: +1)
+4. `launchctl list | grep com.vn-market.mcp` → PID non-zero after restart
+5. `curl -s http://127.0.0.1:3000/health` → `{"status":"ok","toolCount":N}` where N = prev + 3
+6. `marketScanJob.ts` contains 0 direct `sendTelegramMarket` calls for noise alert types
+7. `kinhDichWrapper.ts` contains 0 imports from `infrastructure/`
+8. `/ask FPT có nên mua?` via Telegram → DB row inserted, reply confirms queue ID
+9. Integration smoke test (task 1081) passes: 7-step cycle completes, 0 MARKET sends
+
+### Dependency Map
+
+```
+Batch A (start immediately, no deps):
+  1070 (positionStore)
+  1072 (askQueueStore)
+  1075 (alertPolicyChecker)
+  1077 (kinhDichWrapper)
+
+Batch B (start after respective Batch A dep is Done):
+  1071 ← 1070
+  1073 ← 1072
+  1074 ← 1072
+  1076 ← 1075
+  1078 ← 1072
+  1079 ← 1070
+
+Batch C (start after ALL Batch A+B Done):
+  1081 ← 1070, 1071, 1072, 1073, 1074, 1075, 1076, 1077, 1078, 1079
+```
+
+WIP limit: max 2 In Progress simultaneously. First 2 slots: 1070 + 1072.
+
+---
+
+## Previous Sprint
+
+status: COMPLETE
+sprint_id: 053
 started: 2026-04-07
-updated: 2026-04-07
+completed: 2026-04-07
 theme: Code Janitor + Test Isolation + Signal Quality
 
 scope:
@@ -15,9 +100,6 @@ scope:
   - report-1032: pollNews false alarm investigation (off-hours throttle, not a bug) DONE
   - 106 test isolation: NO_NET_MARKET_DEPS fixture (25/25 pass) DONE
   - 1007/1020: Kinh Dich convergence — tickerJitter prevents identical hexagrams DONE
-
-next_candidates: 1003 (SSC overdue FPT/VEA investigation), 1004 (cascade policy gap),
-  1023 (SUMMARY_CRONS move), 915 (analyst credibility discount, @architect)
 
 ## Sprint 036 — Historical (kept below for context)
 
