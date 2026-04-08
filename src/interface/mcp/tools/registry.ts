@@ -58,6 +58,7 @@ import { registerCrisisTools } from "./crisisTools.js";
 import { registerPharmaTools } from "./pharmaTools.js";
 import { registerSectorComparisonTools } from "./sectorComparisonTools.js";
 import { registerKinhDichTools } from "./kinhDichTools.js";
+import { registerBrokerCredibilityTools } from "./brokerCredibilityTools.js";
 
 /**
  * Flat array of all MCP tool registration functions.
@@ -116,5 +117,6 @@ export const toolRegistry: Array<(server: McpServer) => void> = [
   registerPharmaTools,         // Sprint 044: get_pharma_signals
   registerSectorComparisonTools, // Sprint 045: get_sector_comparison
   registerKinhDichTools,       // Task 285: 6 Kinh Dich tools
+  registerBrokerCredibilityTools, // Task 915: get_broker_credibility
   // registerUserRequestTools — will be added when Task 305 merges to main
 ];
