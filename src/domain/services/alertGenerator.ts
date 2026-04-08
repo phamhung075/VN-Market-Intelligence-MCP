@@ -103,13 +103,69 @@ function buildMessage(actionCode: string, signals: Signal[], severity: Severity)
 }
 
 /**
+ * Signal types that benefit from a deterministic per-hour bucket ID.
+ *
+ * For these market-price signals the same condition can persist across many
+ * 15-minute cycles (e.g. SSI stays +5% for 2 hours), generating dozens of
+ * duplicate rows with random IDs.  A bucket ID keyed on ticker + type + UTC
+ * hour collapses all same-condition alerts within one hour into a single row
+ * that INSERT OR IGNORE silently deduplicates.
+ *
+ * News and other event-driven signal types keep random IDs because each
+ * article / event is genuinely distinct.
+ */
+const PRICE_SIGNAL_TYPES: ReadonlySet<string> = new Set([
+  "price_surge",
+  "price_drop",
+  "volume_spike",
+]);
+
+/**
+ * Generate a deterministic alert ID for price-movement signals.
+ *
+ * The key is `alert-{ticker}-{signalType}-{YYYY-MM-DDTHH}` (UTC hour slot).
+ * This ensures the same ticker + same signal type within the same clock-hour
+ * maps to one row that INSERT OR IGNORE collapses.
+ *
+ * @param actionCode - Ticker (e.g. "SSI")
+ * @param signalType - Primary signal type driving the alert
+ * @param detectedAt - ISO 8601 timestamp of the first signal in the group
+ */
+function deterministicPriceId(
+  actionCode: string,
+  signalType: string,
+  detectedAt: string,
+): string {
+  const hourSlot = detectedAt.slice(0, 13); // "2026-04-08T04"
+  return `alert-${actionCode}-${signalType}-${hourSlot}`;
+}
+
+/**
  * Generate a short unique ID using timestamp + random hex suffix.
- * Avoids a dependency on the `crypto` module inside domain layer.
+ * Used for event-driven signals (news_mention, report_new, etc.) where each
+ * event is genuinely distinct and should not be deduplicated by ID.
  */
 function generateId(): string {
   const ts = Date.now().toString(36);
   const rnd = Math.random().toString(36).slice(2, 10);
   return `alert-${ts}-${rnd}`;
+}
+
+/**
+ * Choose an appropriate ID for an alert group.
+ *
+ * - If all signals are of a single price-movement type → deterministic bucket ID
+ *   (collapses same condition within same UTC hour via INSERT OR IGNORE)
+ * - Otherwise → random ID (news events, mixed groups, etc.)
+ */
+function chooseAlertId(actionCode: string, signals: Signal[]): string {
+  const types = [...new Set(signals.map((s) => s.type))];
+  if (types.length === 1 && PRICE_SIGNAL_TYPES.has(types[0]!)) {
+    // Use the detectedAt of the first signal as the hour anchor
+    const detectedAt = signals[0]!.detectedAt;
+    return deterministicPriceId(actionCode, types[0]!, detectedAt);
+  }
+  return generateId();
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -158,7 +214,7 @@ export function generateAlerts(
   for (const [actionCode, groupSignals] of grouped) {
     const severity = escalateSeverity(groupSignals);
     alerts.push({
-      id: generateId(),
+      id: chooseAlertId(actionCode, groupSignals),
       actionCode,
       signals: groupSignals,
       severity,
