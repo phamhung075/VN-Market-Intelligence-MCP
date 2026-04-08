@@ -139,8 +139,30 @@ function ensureAuditDependencies(db: Database): void {
  * Insert a finding into agent_feedback.
  * Skips insertion if the same (agent='data-auditor', title) was already inserted today.
  */
+/**
+ * Build the dedup title for an audit finding.
+ *
+ * Report 1055: stranded_bctc_pdf emits ONE finding per file. If all per-file
+ * findings share the same dedup title they collapse to a single row and only
+ * the first PDF gets reparsed. We append a short filename tag parsed out of
+ * the detail prefix (format: "TICKER:filename..." — see D-7c in
+ * runDailyChecks) so each stranded file is tracked independently.
+ *
+ * Exported for unit testing (see 1055-bctc-stranded-dedup.test.ts).
+ */
+export function buildFindingTitle(finding: AuditFinding): string {
+  let titleSuffix = "";
+  if (finding.check === "stranded_bctc_pdf" && finding.rowsAffected === 1) {
+    const m = finding.detail.match(/^[A-Z]{2,5}:(.*?\.pdf)/i);
+    if (m) {
+      titleSuffix = ` [${m[1]!.slice(0, 60)}]`;
+    }
+  }
+  return `[AUDIT] ${finding.check} — ${finding.table} (${finding.rowsAffected} rows)${titleSuffix}`;
+}
+
 function insertFeedbackIfNew(db: Database, finding: AuditFinding): void {
-  const title = `[AUDIT] ${finding.check} — ${finding.table} (${finding.rowsAffected} rows)`;
+  const title = buildFindingTitle(finding);
 
   // Dedup guard: skip if the same finding is either (a) already inserted
   // today, or (b) still open from any prior day (status='new'). Without the

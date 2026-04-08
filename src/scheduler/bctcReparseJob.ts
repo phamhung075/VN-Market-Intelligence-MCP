@@ -18,7 +18,7 @@
  */
 
 import { readFileSync, existsSync } from "node:fs";
-import { basename } from "node:path";
+import { basename, join } from "node:path";
 import { logger } from "../infrastructure/logger.js";
 import { getDb } from "../infrastructure/db/schema.js";
 import { extractPdfText } from "../infrastructure/fetchers/pdf.js";
@@ -79,18 +79,33 @@ const ALERT_AT_ATTEMPTS = 5;
  */
 export function parseStrandedDetail(detail: string): StrandedPayload | null {
   const braceIdx = detail.indexOf("{");
-  if (braceIdx < 0) return null;
-  try {
-    const parsed = JSON.parse(detail.slice(braceIdx)) as Partial<StrandedPayload>;
-    if (!parsed.ticker || !parsed.filename || !parsed.filePath) return null;
-    return {
-      ticker: parsed.ticker,
-      filename: parsed.filename,
-      filePath: parsed.filePath,
-    };
-  } catch {
-    return null;
+  if (braceIdx >= 0) {
+    try {
+      const parsed = JSON.parse(detail.slice(braceIdx)) as Partial<StrandedPayload>;
+      if (parsed.ticker && parsed.filename && parsed.filePath) {
+        return {
+          ticker: parsed.ticker,
+          filename: parsed.filename,
+          filePath: parsed.filePath,
+        };
+      }
+    } catch {
+      // fall through to legacy parser
+    }
   }
+
+  // Legacy format (report 1055): details look like
+  //   "Stranded PDFs (need re-parse): VNM:BCTC VNM 31.12.2025 - HOP NHAT - VN.pdf"
+  // Reconstruct the payload by finding TICKER:filename.pdf and defaulting
+  // filePath to the on-disk data/pdfs/ location.
+  const legacy = detail.match(/([A-Z]{2,5}):([^\s].*?\.pdf)/);
+  if (legacy) {
+    const ticker = legacy[1]!;
+    const filename = legacy[2]!.trim();
+    const filePath = join(process.cwd(), "data", "pdfs", filename);
+    return { ticker, filename, filePath };
+  }
+  return null;
 }
 
 /**

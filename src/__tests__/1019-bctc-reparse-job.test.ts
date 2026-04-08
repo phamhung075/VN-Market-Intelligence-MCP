@@ -76,12 +76,24 @@ describe("Task 1019 — parseStrandedDetail()", () => {
     expect(parsed!.filePath).toBe("/tmp/foo.pdf");
   });
 
-  it("returns null when the detail has no JSON body (legacy format)", () => {
-    expect(parseStrandedDetail("Stranded PDFs: VNM:old-format.pdf")).toBeNull();
-  });
-
   it("returns null when the JSON lacks required fields", () => {
     expect(parseStrandedDetail('VNM {"ticker":"VNM"}')).toBeNull();
+  });
+
+  // Report 1055 regression: legacy feedback rows created before task 1019
+  // slice 1 have no JSON payload and look like
+  //   "Stranded PDFs (need re-parse): VNM:BCTC VNM 31.12.2025 - HOP NHAT - VN.pdf"
+  // The reparse job must reconstruct the payload and default filePath to
+  // data/pdfs/<filename> so these stuck rows can be drained on the next run.
+  it("parses the legacy TICKER:filename format and defaults filePath to data/pdfs/", () => {
+    const detail =
+      "Stranded PDFs (need re-parse): VNM:BCTC VNM 31.12.2025 - HOP NHAT - VN.pdf";
+    const parsed = parseStrandedDetail(detail);
+    expect(parsed).not.toBeNull();
+    expect(parsed!.ticker).toBe("VNM");
+    expect(parsed!.filename).toBe("BCTC VNM 31.12.2025 - HOP NHAT - VN.pdf");
+    expect(parsed!.filePath).toContain("data/pdfs/");
+    expect(parsed!.filePath).toContain("BCTC VNM 31.12.2025 - HOP NHAT - VN.pdf");
   });
 });
 
