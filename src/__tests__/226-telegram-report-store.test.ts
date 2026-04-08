@@ -11,12 +11,12 @@
 import { describe, it, expect, beforeEach, afterEach } from "bun:test";
 import { Database } from "bun:sqlite";
 import {
-  ensureTelegramReportsTable,
   insertReport,
   listNewReports,
   markProcessed,
   getReport as getReportById,
 } from "../infrastructure/db/telegramReportStore.js";
+import { ensureTelegramReportsTable } from "./helpers/telegramReportsTestDdl.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers

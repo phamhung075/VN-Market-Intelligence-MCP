@@ -19,7 +19,6 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { getDb, initDatabase } from "../../../infrastructure/db/schema.js";
 import {
-  ensureTelegramReportsTable,
   listNewReports,
   listAllReports,
   listNewReportsUnclaimed,
@@ -98,7 +97,6 @@ export function registerTelegramReportTools(server: McpServer): void {
       try {
         await initDatabase();
         const db = getDb();
-        ensureTelegramReportsTable(db);
 
         const resolvedStatus = status ?? "new";
         const resolvedLimit = limit ?? 20;
@@ -181,7 +179,6 @@ export function registerTelegramReportTools(server: McpServer): void {
       try {
         await initDatabase();
         const db = getDb();
-        ensureTelegramReportsTable(db);
 
         const shouldDelete = delete_telegram_message ?? true;
 
@@ -263,7 +260,6 @@ export function registerTelegramReportTools(server: McpServer): void {
       try {
         await initDatabase();
         const db = getDb();
-        ensureTelegramReportsTable(db);
 
         const result = claimReport(db, id, claimant);
 

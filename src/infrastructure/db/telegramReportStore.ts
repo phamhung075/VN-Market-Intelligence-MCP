@@ -50,30 +50,16 @@ export interface ClaimResult {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// DDL
+// DDL note (Task 1035)
 // ─────────────────────────────────────────────────────────────────────────────
-
-/** Creates the `telegram_reports` table + indexes if they do not exist. */
-export function ensureTelegramReportsTable(db: Database): void {
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS telegram_reports (
-      id          INTEGER PRIMARY KEY AUTOINCREMENT,
-      message_id  INTEGER NOT NULL DEFAULT 0,
-      text        TEXT    NOT NULL,
-      from_agent  TEXT    NOT NULL DEFAULT 'unknown',
-      priority    TEXT    NOT NULL DEFAULT 'normal',
-      status      TEXT    NOT NULL DEFAULT 'new',
-      created_at  INTEGER NOT NULL DEFAULT (unixepoch())
-    )
-  `);
-  db.exec(`CREATE INDEX IF NOT EXISTS idx_telegram_reports_status  ON telegram_reports(status)`);
-  db.exec(`CREATE INDEX IF NOT EXISTS idx_telegram_reports_created ON telegram_reports(created_at)`);
-
-  // Task 231 — ownership lock columns (idempotent ALTER TABLE)
-  try { db.exec(`ALTER TABLE telegram_reports ADD COLUMN claimed_by TEXT`); } catch (_) { /* already exists */ }
-  try { db.exec(`ALTER TABLE telegram_reports ADD COLUMN claimed_at TEXT`); } catch (_) { /* already exists */ }
-}
-
+//
+// The `telegram_reports` table (plus its indexes and the Task 231 claimed_by /
+// claimed_at columns) is created exclusively by `initDatabase()` in
+// `src/infrastructure/db/schema.ts:587`. The previous local helper
+// `ensureTelegramReportsTable()` was removed because it duplicated that DDL
+// and drifted from the canonical schema. Callers must ensure `initDatabase()`
+// has run before invoking the CRUD helpers below.
+//
 // ─────────────────────────────────────────────────────────────────────────────
 // CRUD
 // ─────────────────────────────────────────────────────────────────────────────
@@ -95,7 +81,6 @@ export function insertReport(
   messageId: number = 0,
   priority: ReportPriority = "normal",
 ): number {
-  ensureTelegramReportsTable(db);
   const stmt = db.prepare(
     `INSERT INTO telegram_reports (text, from_agent, message_id, priority)
      VALUES (?, ?, ?, ?)`,
@@ -110,7 +95,6 @@ export function insertReport(
  * @param db - SQLite database instance
  */
 export function listNewReports(db: Database): TelegramReport[] {
-  ensureTelegramReportsTable(db);
   return db
     .query<TelegramReport, []>(
       `SELECT id, message_id, text, from_agent, priority, status, created_at
@@ -128,7 +112,6 @@ export function listNewReports(db: Database): TelegramReport[] {
  * @param limit - Max rows to return (default 50)
  */
 export function listAllReports(db: Database, limit = 50): TelegramReport[] {
-  ensureTelegramReportsTable(db);
   return db
     .query<TelegramReport, [number]>(
       `SELECT id, message_id, text, from_agent, priority, status, created_at
@@ -147,7 +130,6 @@ export function listAllReports(db: Database, limit = 50): TelegramReport[] {
  * @returns The report row, or null if not found
  */
 export function getReport(db: Database, id: number): TelegramReport | null {
-  ensureTelegramReportsTable(db);
   return (
     db
       .query<TelegramReport, [number]>(
@@ -165,7 +147,6 @@ export function getReport(db: Database, id: number): TelegramReport | null {
  * @param id - Primary key of the row to mark
  */
 export function markProcessed(db: Database, id: number): void {
-  ensureTelegramReportsTable(db);
   db.prepare(
     `UPDATE telegram_reports SET status = 'processed' WHERE id = ?`,
   ).run(id);
@@ -184,7 +165,6 @@ export function markProcessed(db: Database, id: number): void {
  *                 `{ success: false, claimedBy: "<existing owner>" }` if already claimed
  */
 export function claimReport(db: Database, id: number, claimant: string): ClaimResult {
-  ensureTelegramReportsTable(db);
 
   const stmt = db.prepare(
     `UPDATE telegram_reports
@@ -227,7 +207,6 @@ export function claimReport(db: Database, id: number, claimant: string): ClaimRe
  * @param db - SQLite database instance
  */
 export function listNewReportsUnclaimed(db: Database): TelegramReport[] {
-  ensureTelegramReportsTable(db);
   return db
     .query<TelegramReport, []>(
       `SELECT id, message_id, text, from_agent, priority, status, created_at, claimed_by, claimed_at

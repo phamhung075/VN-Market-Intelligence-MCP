@@ -16,9 +16,9 @@ import { Database } from "bun:sqlite";
 import {
   insertReport,
   listNewReports,
-  ensureTelegramReportsTable,
   type TelegramReport,
 } from "../infrastructure/db/telegramReportStore.js";
+import { ensureTelegramReportsTable } from "./helpers/telegramReportsTestDdl.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers — simulate the webhook dispatch logic in isolation
