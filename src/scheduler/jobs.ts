@@ -79,6 +79,14 @@ export const CRONS = {
   summaryQuarterly:       Bun.env.CRON_SUMMARY_QUARTERLY          ?? '0 1 1 1,4,7,10 *',
   /** Periodic summary — yearly: 02:00 on Jan 2nd (task 1023) */
   summaryYearly:          Bun.env.CRON_SUMMARY_YEARLY             ?? '0 2 2 1 *',
+  /** Weekly pattern watch: Sunday 22:30 GMT+7 (task 146) */
+  patternWatch:           Bun.env.CRON_PATTERN_WATCH              ?? '30 22 * * 0',
+  /** Dev team weekly heartbeat: Sunday 07:00 UTC (task 245) */
+  devTeamHeartbeat:       Bun.env.CRON_DEV_TEAM_HEARTBEAT         ?? '0 7 * * 0',
+  /** Prediction market outcome validation: Sunday 08:00 UTC (task 248) */
+  predictionOutcome:      Bun.env.CRON_PREDICTION_OUTCOME         ?? '0 8 * * 0',
+  /** VPS proxy watchdog: every 10 min during VN market hours (Mon-Fri 02:00-08:59 UTC) */
+  vpsProxyWatchdog:       Bun.env.CRON_VPS_PROXY_WATCHDOG         ?? '*/10 2-8 * * 1-5',
 }
 
 function log(msg: string) {
@@ -145,7 +153,7 @@ export function startScheduler() {
   })
 
   // Sunday 22:30 GMT+7 — Weekly pattern watch (task 146)
-  cron.schedule('30 22 * * 0', async () => {
+  cron.schedule(CRONS.patternWatch, async () => {
     await runPatternWatch()
   }, { timezone: 'Asia/Ho_Chi_Minh' })
 
@@ -195,13 +203,13 @@ export function startScheduler() {
   }, { timezone: "UTC" })
 
   // Sunday 07:00 UTC (08:00 CET) — Dev Team weekly heartbeat — task 245
-  cron.schedule("0 7 * * 0", async () => {
+  cron.schedule(CRONS.devTeamHeartbeat, async () => {
     await runDevTeamHeartbeat()
   }, { timezone: "UTC" })
 
   // Sunday 08:00 UTC — Prediction market outcome validation — task 248
   // Validates last 7 days of prediction signals: confirmed / false_positive / neutral
-  cron.schedule("0 8 * * 0", async () => {
+  cron.schedule(CRONS.predictionOutcome, async () => {
     await runPredictionOutcomeCheck()
   }, { timezone: "UTC" })
 
@@ -236,7 +244,7 @@ export function startScheduler() {
   // Uses `*/10 2-8 * * 1-5` so it only runs inside the window the VPS itself
   // is expected to push during; off-hours runs short-circuit via
   // isVnMarketHoursUtc() anyway, but a tighter cron avoids extra wakeups.
-  cron.schedule("*/10 2-8 * * 1-5", async () => {
+  cron.schedule(CRONS.vpsProxyWatchdog, async () => {
     try {
       const status = await runVpsProxyWatchdog()
       if (status !== "ok" && status !== "off-hours" && status !== "cooldown") {

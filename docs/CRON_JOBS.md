@@ -16,13 +16,13 @@
 | 20:00 daily | `sscCheck` | `0 20 * * *` | SSC portal BCTC filing check |
 | 21:00 M–F | `alertDigest` | `0 21 * * 1-5` | Nightly alert digest via Telegram |
 | 22:00 M–F | `eveningSummary` | `0 22 * * 1-5` | Evening market summary |
-| 22:30 Sunday | `patternWatch` | `30 22 * * 0` | Weekly pattern watch → Telegram |
+| 22:30 Sunday | `patternWatch` | `30 22 * * 0` (`CRON_PATTERN_WATCH`) | Weekly pattern watch → Telegram |
 | 23:00 Sunday | `weeklyPortfolioReport` | `0 23 * * 0` | P&L + allocation drift + top movers → Telegram |
 | 23:00 daily | `dataAuditDaily` | `0 23 * * *` | Orphan vectors, stale entries, DB row counts |
 | 01:00 Sunday | `dataAuditWeekly` | `0 1 * * 0` | LanceDB vs SQLite consistency, signal coverage gaps |
-| 06:00 UTC M–F | `franceSummary` | `0 6 * * 1-5` | France wake-up digest (13:00 VN) → MARKET channel |
-| 07:00 UTC Sunday | `devTeamHeartbeat` | `0 7 * * 0` | System health + weekly observability report |
-| 08:00 UTC Sunday | `predictionOutcome` | `0 8 * * 0` | Evaluate prediction signals vs actual outcomes |
+| 06:00 UTC M–F | `franceSummary` | `0 6 * * 1-5` (`CRON_FRANCE_SUMMARY`) | France wake-up digest (13:00 VN) → MARKET channel |
+| 07:00 UTC Sunday | `devTeamHeartbeat` | `0 7 * * 0` (`CRON_DEV_TEAM_HEARTBEAT`) | System health + weekly observability report |
+| 08:00 UTC Sunday | `predictionOutcome` | `0 8 * * 0` (`CRON_PREDICTION_OUTCOME`) | Evaluate prediction signals vs actual outcomes |
 
 ## Intelligence Cycle Steps (15-min tick)
 
@@ -54,7 +54,7 @@ All summary crons are in `CRONS` map (overridable via env vars `CRON_SUMMARY_*`)
 
 | Time | Job | Cron | What it does |
 |------|-----|------|-------------|
-| ***/10 min (market hours only)** | `vpsProxyWatchdog` | `*/10 2-8 * * 1-5` (UTC) | Reads `MAX(market_prices.updated_at)`. If >5 min stale during VN market hours (Mon-Fri 02:00-08:59 UTC), sends one Telegram Chat alert. 30-min cooldown prevents flood. No SSH — observe only. Alert embeds operator commands: `systemctl status vn-price-fetch`, `journalctl -u vn-price-fetch -n 50`, `./deploy-vps-proxy.sh`. |
+| ***/10 min (market hours only)** | `vpsProxyWatchdog` | `*/10 2-8 * * 1-5` UTC (`CRON_VPS_PROXY_WATCHDOG`) | Reads `MAX(market_prices.updated_at)`. If >5 min stale during VN market hours (Mon-Fri 02:00-08:59 UTC), sends one Telegram Chat alert. 30-min cooldown prevents flood. No SSH — observe only. Alert embeds operator commands: `systemctl status vn-price-fetch`, `journalctl -u vn-price-fetch -n 50`, `./deploy-vps-proxy.sh`. |
 
 This job is in `src/scheduler/vpsProxyWatchdogJob.ts` (154 lines). Registered in `src/scheduler/jobs.ts`.
 
