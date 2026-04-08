@@ -634,6 +634,29 @@ export async function initDatabase(): Promise<void> {
   `);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_user_requests_status ON user_requests(status)`);
 
+  // ── Ask Queue (Task 1072) ─────────────────────────────────────────────────
+  // Dedicated FIFO question queue for the /ask Telegram command.
+  // Separate from user_requests — different schema and purpose.
+  // See TECH_054 section 4.2 for rationale.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS ask_queue (
+      id                     INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id                TEXT    NOT NULL DEFAULT 'default',
+      message                TEXT    NOT NULL,
+      received_at            TEXT    NOT NULL DEFAULT (datetime('now')),
+      status                 TEXT    NOT NULL DEFAULT 'pending',
+      answered_at            TEXT,
+      answer_text            TEXT,
+      processing_started_at  TEXT
+    )
+  `);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_ask_queue_status   ON ask_queue(status)`);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_ask_queue_received ON ask_queue(received_at)`);
+  db.exec(
+    `CREATE INDEX IF NOT EXISTS idx_ask_queue_proc_started ON ask_queue(processing_started_at)
+       WHERE status = 'processing'`,
+  );
+
   // ── Agent Feedback (Task 1022 / canonical — was inline in telegramCommands + dataAuditJob) ──
   // Problem reports submitted via /report and /fix Telegram commands; also written
   // by analysis agents via submit_feedback; read by dev-team-cron for triage.
