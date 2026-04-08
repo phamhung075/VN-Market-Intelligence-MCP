@@ -67,3 +67,5 @@ export { registerSectorComparisonTools } from "./sectorComparisonTools.js";
 export { registerKinhDichTools } from "./kinhDichTools.js";
 // Sprint 054 — Broker Credibility (Task 915)
 export { registerBrokerCredibilityTools } from "./brokerCredibilityTools.js";
+// Sprint 054 — Ask Queue tools (Task 1078)
+export { registerAskQueueTools } from "./askQueueTools.js";

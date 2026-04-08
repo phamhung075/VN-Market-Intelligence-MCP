@@ -6,7 +6,7 @@
 
 ## Current Tool Count
 
-76 MCP tools as of Sprint 053. Verify live: `curl -s http://127.0.0.1:3000/health | jq .toolCount`
+78 MCP tools as of Sprint 054 (Task 1078). Verify live: `curl -s http://127.0.0.1:3000/health | jq .toolCount`
 
 ---
 
@@ -98,6 +98,9 @@
 
 ### User Requests (2)
 `get_user_requests`, `mark_user_request_answered`
+
+### Ask Queue (2)
+`get_pending_ask_questions`, `answer_ask_question`
 
 ---
 
@@ -194,6 +197,7 @@ Removed entirely:
 `log_fix`, `get_recent_fixes`, `send_telegram(channel="work")`, `get_system_status`
 
 ### QA Responder (07)
+`get_pending_ask_questions`, `answer_ask_question`,
 `get_user_requests`, `mark_user_request_answered`, `fetch_and_analyze`,
 `get_market_context`, `get_positions`, `get_kinhdich_reading`, `get_market_hexagram`,
 `get_bctc_full`, `get_sentiment_trend`, `get_legal_risk_signals`,
