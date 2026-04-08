@@ -38,13 +38,15 @@
 
 ## Periodic Summary Jobs
 
-| Schedule | Job | Cron |
-|----------|-----|------|
-| 22:30 daily | Daily summary | `30 22 * * *` |
-| 23:00 Sunday | Weekly summary | `0 23 * * 0` |
-| 00:30 1st of month | Monthly summary | `30 0 1 * *` |
-| 01:00 Jan/Apr/Jul/Oct 1st | Quarterly summary | `0 1 1 1,4,7,10 *` |
-| 02:00 Jan 2nd | Yearly summary | `0 2 2 1 *` |
+All summary crons are in `CRONS` map (overridable via env vars `CRON_SUMMARY_*`). (task 1023)
+
+| Schedule | Job | Cron | Env Override |
+|----------|-----|------|--------------|
+| 22:30 daily | Daily summary | `30 22 * * *` | `CRON_SUMMARY_DAILY` |
+| 23:00 Sunday | Weekly summary | `0 23 * * 0` | `CRON_SUMMARY_WEEKLY` |
+| 00:30 1st of month | Monthly summary | `30 0 1 * *` | `CRON_SUMMARY_MONTHLY` |
+| 01:00 Jan/Apr/Jul/Oct 1st | Quarterly summary | `0 1 1 1,4,7,10 *` | `CRON_SUMMARY_QUARTERLY` |
+| 02:00 Jan 2nd | Yearly summary | `0 2 2 1 *` | `CRON_SUMMARY_YEARLY` |
 | 1st monthly 06:00 | DAV pharmacy check | `0 6 1 * *` |
 | */6h | Weather check | `0 */6 * * *` | Typhoon/climate signals → Telegram if impact HIGH |
 
