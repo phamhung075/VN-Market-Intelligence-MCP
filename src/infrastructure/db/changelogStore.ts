@@ -56,28 +56,15 @@ export interface InsertChangelogInput {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// DDL
+// DDL note (Task 1034)
 // ─────────────────────────────────────────────────────────────────────────────
-
-/** Creates the `system_changelog` table + indexes if they do not exist. */
-export function ensureChangelogTable(db: Database): void {
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS system_changelog (
-      id                  INTEGER PRIMARY KEY AUTOINCREMENT,
-      fix_type            TEXT    NOT NULL DEFAULT 'bugfix',
-      title               TEXT    NOT NULL,
-      detail              TEXT    NOT NULL DEFAULT '',
-      files               TEXT    NOT NULL DEFAULT '[]',
-      commit_hash         TEXT,
-      fixed_at            TEXT    NOT NULL DEFAULT (datetime('now')),
-      related_feedback_id INTEGER
-    )
-  `);
-  db.exec(
-    `CREATE INDEX IF NOT EXISTS idx_changelog_fixed_at ON system_changelog(fixed_at)`,
-  );
-}
-
+//
+// The `system_changelog` table is created exclusively by `initDatabase()` in
+// `src/infrastructure/db/schema.ts:608`. The previous local helper
+// `ensureChangelogTable()` was removed because it duplicated that DDL and
+// drifted from the canonical schema. Callers must ensure `initDatabase()` has
+// run before invoking the CRUD helpers below.
+//
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
 // ─────────────────────────────────────────────────────────────────────────────
@@ -108,7 +95,6 @@ export function insertChangelog(
   db: Database,
   input: InsertChangelogInput,
 ): number {
-  ensureChangelogTable(db);
   const stmt = db.prepare(`
     INSERT INTO system_changelog
       (fix_type, title, detail, files, commit_hash, related_feedback_id)
@@ -136,7 +122,6 @@ export function getRecentChangelogs(
   db: Database,
   limit = 10,
 ): ChangelogEntry[] {
-  ensureChangelogTable(db);
   const rows = db
     .query<ChangelogRow, [number]>(
       `SELECT id, fix_type, title, detail, files, commit_hash, fixed_at, related_feedback_id
