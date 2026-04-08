@@ -19,12 +19,30 @@ import {
   type BrokerSanction,
 } from "../domain/services/forecastConfidenceScore.js";
 import {
-  initBrokerSanctionTable,
   insertBrokerSanction,
   listBrokerSanctions,
   listActiveBrokerSanctions,
 } from "../infrastructure/db/brokerSanctionStore.js";
 import { registerBrokerCredibilityTools } from "../interface/mcp/tools/brokerCredibilityTools.js";
+
+// Task 1038: broker_sanctions DDL lives in schema.ts:initDatabase() for
+// production. Tests using :memory: databases create the table inline here to
+// avoid duplicating the schema in src/infrastructure/db/brokerSanctionStore.ts.
+function createBrokerSanctionsSchema(database: Database): void {
+  database.exec(`
+    CREATE TABLE IF NOT EXISTS broker_sanctions (
+      id             INTEGER PRIMARY KEY AUTOINCREMENT,
+      broker_name    TEXT NOT NULL,
+      sanction_start TEXT NOT NULL,
+      sanction_end   TEXT,
+      severity       TEXT NOT NULL CHECK (severity IN ('warning','suspension')),
+      source         TEXT,
+      created_at     TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_broker_sanctions_name ON broker_sanctions(broker_name);
+    CREATE INDEX IF NOT EXISTS idx_broker_sanctions_start ON broker_sanctions(sanction_start);
+  `);
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Domain: forecastConfidenceScore
@@ -150,12 +168,12 @@ describe("brokerSanctionStore (infrastructure)", () => {
 
   beforeEach(() => {
     db = new Database(":memory:");
-    initBrokerSanctionTable(db);
+    createBrokerSanctionsSchema(db);
   });
 
-  it("initBrokerSanctionTable is idempotent", () => {
-    expect(() => initBrokerSanctionTable(db)).not.toThrow();
-    expect(() => initBrokerSanctionTable(db)).not.toThrow();
+  it("createBrokerSanctionsSchema is idempotent", () => {
+    expect(() => createBrokerSanctionsSchema(db)).not.toThrow();
+    expect(() => createBrokerSanctionsSchema(db)).not.toThrow();
   });
 
   it("insert + list by broker name", () => {
@@ -224,7 +242,7 @@ describe("brokerSanctionStore (infrastructure)", () => {
 describe("registerBrokerCredibilityTools (interface)", () => {
   it("registers without throwing", () => {
     const db = new Database(":memory:");
-    initBrokerSanctionTable(db);
+    createBrokerSanctionsSchema(db);
     const server = new McpServer(
       { name: "test-915", version: "0.0.0" },
       { capabilities: { tools: {} } },

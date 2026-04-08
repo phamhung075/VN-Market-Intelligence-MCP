@@ -24,23 +24,11 @@ import type {
 // ─────────────────────────────────────────────────────────────────────────────
 // Table init
 // ─────────────────────────────────────────────────────────────────────────────
-
-export function initBrokerSanctionTable(db: Database): void {
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS broker_sanctions (
-      id             INTEGER PRIMARY KEY AUTOINCREMENT,
-      broker_name    TEXT NOT NULL,
-      sanction_start TEXT NOT NULL,
-      sanction_end   TEXT,
-      severity       TEXT NOT NULL CHECK (severity IN ('warning','suspension')),
-      source         TEXT,
-      created_at     TEXT NOT NULL
-    );
-
-    CREATE INDEX IF NOT EXISTS idx_broker_sanctions_name ON broker_sanctions(broker_name);
-    CREATE INDEX IF NOT EXISTS idx_broker_sanctions_start ON broker_sanctions(sanction_start);
-  `);
-}
+//
+// Task 1038 (janitor dedup): the broker_sanctions DDL lives exclusively in
+// `schema.ts:initDatabase()`. The former `initBrokerSanctionTable()` helper was
+// removed because it duplicated the schema. Tests using :memory: databases
+// create the table inline (see src/__tests__/915-broker-credibility.test.ts).
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CRUD
