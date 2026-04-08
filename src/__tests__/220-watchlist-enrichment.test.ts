@@ -48,9 +48,9 @@ describe("Task 220 — Watchlist auto-enrichment: sector peer suggestions", () =
 
   // ── 5. Returns empty string when all peers already in watchlist ────────────
   it("returns empty string when all banking peers are already in the watchlist", () => {
-    // banking peers: VCB BID CTG TCB MBB VPB ACB STB HDB TPB
+    // banking peers: VCB BID CTG TCB MBB VPB ACB SHB EIB STB HDB TPB
     // VCB added, all others in existing watchlist
-    const existing = new Set(["BID", "CTG", "TCB", "MBB", "VPB", "ACB", "STB", "HDB", "TPB"]);
+    const existing = new Set(["BID", "CTG", "TCB", "MBB", "VPB", "ACB", "SHB", "EIB", "STB", "HDB", "TPB"]);
     const result = buildPeerSuggestionText("VCB", "banking", existing);
     expect(result).toBe("");
   });
@@ -101,15 +101,16 @@ describe("Task 220 — Watchlist auto-enrichment: sector peer suggestions", () =
 
   // ── 12. Partial watchlist exclusion limits suggestions ────────────────────
   it("returns reduced suggestion list when many peers are already watched", () => {
-    // With only 2 remaining peers after exclusion, result must have exactly 2 suggestion lines
+    // banking peers (excl. VCB): BID CTG TCB MBB VPB ACB SHB EIB STB HDB TPB
+    // exclude 9 of those, leaving SHB, EIB, HDB, TPB → capped at 5, result has 4 lines
     const existing = new Set(["BID", "CTG", "TCB", "MBB", "VPB", "ACB", "STB"]);
     const result = buildPeerSuggestionText("VCB", "banking", existing);
 
     const countLines = (s: string) =>
       s.split("\n").filter((l) => /^\s+[A-Z]{2,6}/.test(l)).length;
 
-    // Remaining banking peers after excluding VCB + 7 = HDB, TPB → 2 lines
-    expect(countLines(result)).toBe(2);
+    // Remaining banking peers after excluding VCB + 7 = SHB, EIB, HDB, TPB → 4 lines
+    expect(countLines(result)).toBe(4);
   });
 
   // ── 13. Sector name appears in Vietnamese without diacritics ─────────────

@@ -165,7 +165,8 @@ describe("Task 214 — /help command", () => {
     expect(text).not.toContain("/alerts");
     expect(text).not.toContain("/briefing");
     expect(text).not.toContain("/pnl");
-    expect(text).not.toContain("/ask");
+    // /ask was re-added in task 1073 with ask_queue backend — it IS in help text
+    // /why remains removed
     expect(text).not.toContain("/why");
   });
 });
@@ -175,7 +176,8 @@ describe("Task 1063 — removed commands return invalid", () => {
   beforeEach(() => { db = makeDb(); });
   afterEach(() => { db.close(); });
 
-  for (const cmd of ["/alerts", "/briefing", "/pnl", "/ask hello", "/why VCB"]) {
+  // Note: /ask was re-added in task 1073 with ask_queue backend — it is valid
+  for (const cmd of ["/alerts", "/briefing", "/pnl", "/why VCB"]) {
     it(`${cmd} → invalid command`, async () => {
       const result = await handleTelegramCommand(makeUpdate(cmd), db);
       expect(result).not.toBeNull();

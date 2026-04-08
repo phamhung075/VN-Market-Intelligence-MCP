@@ -688,10 +688,13 @@ async function _runCycle(deps: CycleDeps = {}): Promise<CycleResult> {
       const watchlistRows = cycleDb
         .prepare("SELECT code, domain FROM watchlist")
         .all() as Array<{ code: string; domain: string }>;
-      const entries = watchlistRows.map((r) => ({
-        actionCode: r.code,
-        domain: r.domain,
-      }));
+      // If DB returns rows, use them (includes domain). Otherwise fall back to
+      // the already-loaded watchlistCodes (step 0) so injected getWatchlistCodesFn
+      // in tests is honoured and syncSectorPeersFn gets called.
+      const entries: Array<{ actionCode: string; domain: string }> =
+        watchlistRows.length > 0
+          ? watchlistRows.map((r) => ({ actionCode: r.code, domain: r.domain }))
+          : watchlistCodes.map((c) => ({ actionCode: c, domain: "" }));
 
       if (entries.length > 0) {
         const result = await withTimeout(syncFn(entries), "step C2 syncPeers");

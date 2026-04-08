@@ -60,9 +60,9 @@ function makeSyncSectorPeers(
 
 describe("Task 1006 — sector peer financials coverage", () => {
 
-  it("MAX_PEER_SYNCS_PER_CYCLE is >= 30 in real syncSectorPeers module", async () => {
+  it("MAX_PEER_SYNCS_PER_CYCLE is >= 40 in real syncSectorPeers module", async () => {
     const mod = await import("../application/usecases/syncSectorPeers.js");
-    expect(mod.MAX_PEER_SYNCS_PER_CYCLE).toBeGreaterThanOrEqual(30);
+    expect(mod.MAX_PEER_SYNCS_PER_CYCLE).toBeGreaterThanOrEqual(40);
   });
 
   it("automotive peers (HAX/CTF/TMT/SMA) are reached with 8-stock watchlist at cap=30", async () => {
@@ -131,7 +131,7 @@ describe("Task 1006 — sector peer financials coverage", () => {
     expect(syncedCodes).not.toContain("SMA");
   });
 
-  it("with cap=30, all 29 context stocks from 8-stock watchlist are reached", async () => {
+  it("with cap=40, all context stocks from 8-stock watchlist are reached", async () => {
     const { getContextStocksForWatchlist } = await import(
       "../domain/services/sectorPeers.js"
     );
@@ -154,10 +154,11 @@ describe("Task 1006 — sector peer financials coverage", () => {
     ];
 
     const contextStocks = getContextStocksForWatchlist(watchlist);
-    const syncPeers = makeSyncSectorPeers(syncLight, getContextStocksForWatchlist, 30);
+    // cap=40 ensures all context stocks (currently 32) are reached
+    const syncPeers = makeSyncSectorPeers(syncLight, getContextStocksForWatchlist, 40);
     await syncPeers(watchlist);
 
-    // All context stocks reached (cap 30 >= 29 total)
+    // All context stocks reached (cap 40 >= current count)
     expect(syncedCodes).toHaveLength(contextStocks.length);
   });
 

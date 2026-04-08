@@ -42,7 +42,7 @@ import type { DomainType } from "../../../bctc-schema.js";
  * fetched. Rate budget: 4 watchlist × 7 types (28) + up to 30 peers × 0 avg
  * (most fresh) + occasional stale = well within 60 req/min free tier.
  */
-export const MAX_PEER_SYNCS_PER_CYCLE = 30;
+export const MAX_PEER_SYNCS_PER_CYCLE = 40;
 
 // ---------------------------------------------------------------------------
 // Public API
