@@ -24,6 +24,7 @@ import {
   getRecentChangelogs,
   type ChangelogEntry,
 } from "../../../infrastructure/db/changelogStore.js";
+import { markAlertsSuperseded } from "../../../infrastructure/db/alertsSupersedeStore.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -97,8 +98,15 @@ export function registerChangelogTools(server: McpServer): void {
         .int()
         .optional()
         .describe("ID cua bao cao telegram_reports lien quan (tuy chon)"),
+      supersedes_alert_ids: z
+        .array(z.string())
+        .optional()
+        .describe(
+          "Task 1005 — danh sach id alerts cu da bi sua loi nay vo hieu hoa. " +
+            "Moi alert trong danh sach se duoc danh dau 'Superseded by fix' trong resolution_notes.",
+        ),
     },
-    async ({ title, detail, fix_type, files, commit_hash, related_feedback_id }) => {
+    async ({ title, detail, fix_type, files, commit_hash, related_feedback_id, supersedes_alert_ids }) => {
       try {
         await initDatabase();
         const db = getDb();
@@ -114,11 +122,32 @@ export function registerChangelogTools(server: McpServer): void {
         if (related_feedback_id !== undefined) input.relatedFeedbackId = related_feedback_id;
         const id = insertChangelog(db, input);
 
+        // Task 1005 — if caller supplied alert ids that this fix invalidates,
+        // mark them superseded so get_alerts / report-analyzer can visually
+        // discount them rather than surface them as live CRITICAL.
+        let supersededCount = 0;
+        if (supersedes_alert_ids && supersedes_alert_ids.length > 0) {
+          try {
+            supersededCount = markAlertsSuperseded(db, {
+              alertIds: supersedes_alert_ids,
+              fixTitle: title,
+              commitHash: commit_hash,
+            });
+          } catch (err) {
+            // Never fail the log_fix call because of a supersede side-effect.
+            console.error("[log_fix] markAlertsSuperseded failed:", err);
+          }
+        }
+
+        const supersedeMsg =
+          supersededCount > 0
+            ? ` (superseded ${supersededCount}/${supersedes_alert_ids?.length ?? 0} alerts)`
+            : "";
         return {
           content: [
             {
               type: "text" as const,
-              text: `Fix logged successfully (id=${id}): ${title}`,
+              text: `Fix logged successfully (id=${id}): ${title}${supersedeMsg}`,
             },
           ],
         };
