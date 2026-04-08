@@ -20,33 +20,14 @@ import { getDb } from "./schema.js";
 import { logger } from "../logger.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Schema
+// Schema note (Task 1039)
 // ─────────────────────────────────────────────────────────────────────────────
-
-/**
- * Ensures the `tracked_indicators` table exists.
- * Called lazily on first use.
- */
-let _tableCreated = false;
-
-function ensureTable(): void {
-  if (_tableCreated) return;
-  const db = getDb();
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS tracked_indicators (
-      id           INTEGER PRIMARY KEY AUTOINCREMENT,
-      indicator    TEXT NOT NULL,
-      value        REAL NOT NULL,
-      unit         TEXT NOT NULL DEFAULT '',
-      source       TEXT NOT NULL DEFAULT '',
-      extracted_at TEXT NOT NULL
-    );
-
-    CREATE INDEX IF NOT EXISTS idx_tracked_ind_name_time
-      ON tracked_indicators(indicator, extracted_at DESC);
-  `);
-  _tableCreated = true;
-}
+// The `tracked_indicators` table DDL lives canonically in
+// src/infrastructure/db/schema.ts:initDatabase() (Task 1039 dedup, code-janitor
+// finding 2026-04-08). The local lazy `ensureTable()` helper that used to live
+// here was removed because it duplicated the schema and risked drift on column
+// changes. initDatabase() runs at process boot before any commodityTracker call,
+// so the table is guaranteed to exist by the time we read or write here.
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Price extraction patterns
@@ -215,7 +196,6 @@ export function extractAndStoreIndicators(
   // Store to DB
   if (extracted.length > 0) {
     try {
-      ensureTable();
       const db = getDb();
       const now = new Date().toISOString();
       const stmt = db.prepare(
@@ -256,7 +236,6 @@ export function getIndicatorHistory(
   limit = 30,
 ): { value: number; extractedAt: string }[] {
   try {
-    ensureTable();
     const db = getDb();
     return db
       .query<{ value: number; extracted_at: string }, [string, number]>(
@@ -286,7 +265,6 @@ export function listTrackedIndicators(): {
   dataPoints: number;
 }[] {
   try {
-    ensureTable();
     const db = getDb();
     return db
       .query<
