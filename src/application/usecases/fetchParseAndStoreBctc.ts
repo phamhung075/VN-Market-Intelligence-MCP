@@ -28,6 +28,8 @@ import { basename, join } from "node:path";
 
 import { listSscDocuments } from "../../infrastructure/fetchers/ssc.js";
 import { downloadAndExtractPdf } from "../../infrastructure/fetchers/pdf.js";
+import { breakers } from "../../infrastructure/circuitBreakerRegistry.js";
+import { CircuitOpenError } from "../../infrastructure/circuitBreaker.js";
 import {
   getCachedPdfText,
   extractAndStorePdfPages,
@@ -188,7 +190,14 @@ export async function fetchParseAndStoreBctc(
     // Test shortcut — bypass real PDF extraction and OCR fallback
     rawText = pdfTextOverride;
   } else {
-    const extraction = await downloadAndExtractPdf(doc.url, pdfHttpClient);
+    // Task 1019: route SSC PDF downloads through breakers.ssc so network
+    // timeouts on PDF fetch actually trip the shared SSC breaker. In test mode
+    // (pdfHttpClient injected) skip the breaker so tests stay deterministic.
+    const extraction = await downloadAndExtractPdf(
+      doc.url,
+      pdfHttpClient,
+      pdfHttpClient ? undefined : breakers.ssc,
+    );
     rawText = extraction.text;
 
     // ── Task 293: OCR fallback when pdf-parse returns < 100 chars ─────────────
@@ -222,22 +231,31 @@ export async function fetchParseAndStoreBctc(
           mkdirSync(pdfDir, { recursive: true });
           const pdfPath = join(pdfDir, filename);
 
-          const resp = await axios.get<ArrayBuffer>(doc.url, {
-            responseType: "arraybuffer",
-            timeout: 60_000,
-            headers: {
-              "User-Agent":
-                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
-            },
-          });
+          // Task 1019: wrap the OCR fallback download in breakers.ssc too, so
+          // network failures on the secondary fetch path also count against
+          // the breaker instead of silently degrading BCTC freshness.
+          const resp = await breakers.ssc.execute(() =>
+            axios.get<ArrayBuffer>(doc.url, {
+              responseType: "arraybuffer",
+              timeout: 60_000,
+              headers: {
+                "User-Agent":
+                  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+              },
+            }),
+          );
           writeFileSync(pdfPath, Buffer.from(resp.data));
           await extractAndStorePdfPages(pdfPath, filename);
           cached = getCachedPdfText(filename);
         } catch (err) {
-          logger.warn(`${tag} OCR extraction failed`, {
-            filename,
-            error: err instanceof Error ? err.message : String(err),
-          });
+          if (err instanceof CircuitOpenError) {
+            logger.debug(`${tag} circuit open — skipping OCR fallback download`, { filename });
+          } else {
+            logger.warn(`${tag} OCR extraction failed`, {
+              filename,
+              error: err instanceof Error ? err.message : String(err),
+            });
+          }
         }
       }
 
