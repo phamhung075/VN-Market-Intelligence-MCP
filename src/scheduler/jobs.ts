@@ -13,7 +13,6 @@
  *   dataAuditDaily        23:00 daily          (task 157) ✓
  *   dataAuditWeekly       01:00 Sunday         (task 157) ✓
  *   predictionMarketPoll  every 30 min         (task 167) ✓
- *   userRequestCheck      every 15 min         (task 246) ✓
  *   predictionOutcomeCheck Sunday 08:00 UTC    (task 248) ✓
  *   franceSummary          06:00 UTC weekdays  (task 243) ✓
  *   devTeamHeartbeat       07:00 UTC Sunday    (task 245) ✓
@@ -34,7 +33,6 @@ import { runDailyAudit, runWeeklyAudit, runDailyAuditIfStale } from './dataAudit
 import { runPredictionMarketPoll } from './predictionMarketJob.js'
 import { runAlertDigest } from './alertDigestJob.js'
 import { runWeeklyPortfolioReport } from './weeklyPortfolioReportJob.js'
-import { runUserRequestCheck } from './userRequestCheckJob.js'
 import { runPredictionOutcomeCheck } from './predictionOutcomeJob.js'
 import { runFranceSummary } from './franceSummaryJob.js'
 import { runDevTeamHeartbeat } from './devTeamHeartbeatJob.js'
@@ -56,7 +54,6 @@ export const CRONS = {
   weeklyPortfolioReport:  Bun.env.CRON_WEEKLY_PORTFOLIO_REPORT    ?? '0 23 * * 0',
   dataAuditWeekly:        Bun.env.CRON_DATA_AUDIT_WEEKLY          ?? '0 1 * * 0',
   predictionMarketPoll:   Bun.env.CRON_PREDICTION_MARKET_POLL     ?? '*/30 * * * *',
-  userRequestCheck:       Bun.env.CRON_USER_REQUEST_CHECK          ?? '*/15 * * * *',
   /** Typhoon season (Jun-Nov): every 6h. Off-season: every 12h. task 261 */
   weatherCheck:           Bun.env.CRON_WEATHER_CHECK              ?? '0 */6 * * *',
   /** DAV drug approval check: 1st of each month at 06:00 GMT+7 (Sprint 044) */
@@ -189,13 +186,6 @@ export function startScheduler() {
   cron.schedule(CRONS.weeklyPortfolioReport, async () => {
     await runWeeklyPortfolioReport()
   }, { timezone: 'Asia/Ho_Chi_Minh' })
-
-  // Every 15 min — Fast-track user request check — task 246
-  // Guarantees /ask responses within 15 min regardless of market hours.
-  // Uses CAS claim to avoid double-processing with intelligence cycle step F.
-  cron.schedule(CRONS.userRequestCheck, async () => {
-    await runUserRequestCheck()
-  }, { timezone: 'UTC' })
 
   // Weekdays 06:00 UTC (07:00 CET) — France wake-up summary — task 243
   cron.schedule(CRONS.franceSummary, async () => {

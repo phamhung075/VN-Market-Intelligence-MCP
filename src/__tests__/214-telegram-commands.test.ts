@@ -153,12 +153,35 @@ describe("Task 214 — /help command", () => {
     const text = result!.text;
     expect(text).toContain("/watchlist");
     expect(text).toContain("/price");
-    expect(text).toContain("/alerts");
-    expect(text).toContain("/briefing");
     expect(text).toContain("/health");
-    expect(text).toContain("/pnl");
+    expect(text).toContain("/report");
+    expect(text).toContain("/fix");
     expect(text).toContain("/help");
   });
+
+  it("does NOT advertise removed commands (task 1063)", async () => {
+    const result = await handleTelegramCommand(makeUpdate("/help"), db);
+    const text = result!.text;
+    expect(text).not.toContain("/alerts");
+    expect(text).not.toContain("/briefing");
+    expect(text).not.toContain("/pnl");
+    expect(text).not.toContain("/ask");
+    expect(text).not.toContain("/why");
+  });
+});
+
+describe("Task 1063 — removed commands return invalid", () => {
+  let db: Database;
+  beforeEach(() => { db = makeDb(); });
+  afterEach(() => { db.close(); });
+
+  for (const cmd of ["/alerts", "/briefing", "/pnl", "/ask hello", "/why VCB"]) {
+    it(`${cmd} → invalid command`, async () => {
+      const result = await handleTelegramCommand(makeUpdate(cmd), db);
+      expect(result).not.toBeNull();
+      expect(result!.text).toContain("không hợp lệ");
+    });
+  }
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -256,47 +279,6 @@ describe("Task 214 — /price command", () => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 5. /alerts
-// ─────────────────────────────────────────────────────────────────────────────
-
-describe("Task 214 — /alerts command", () => {
-  let db: Database;
-
-  beforeEach(() => { db = makeDb(); });
-  afterEach(() => { db.close(); });
-
-  it("returns empty message when no alerts exist", async () => {
-    const result = await handleTelegramCommand(makeUpdate("/alerts"), db);
-    expect(result).not.toBeNull();
-    expect(result!.text.length).toBeGreaterThan(0);
-  });
-
-  it("returns last 5 alerts when data exists", async () => {
-    for (let i = 1; i <= 7; i++) {
-      db.prepare(
-        `INSERT INTO alerts (id, triggered_at, severity, message)
-         VALUES ('alert-${i}', datetime('now', '+${i} seconds'), 'high', 'Alert ${i}')`,
-      ).run();
-    }
-
-    const result = await handleTelegramCommand(makeUpdate("/alerts"), db);
-    expect(result).not.toBeNull();
-    // Should show at most 5 alerts — text should contain "alert" keyword
-    expect(result!.text.toLowerCase()).toMatch(/alert|canh bao|quan trong/i);
-  });
-
-  it("shows severity in the response", async () => {
-    db.prepare(
-      `INSERT INTO alerts (id, triggered_at, severity, message)
-       VALUES ('a1', datetime('now'), 'critical', 'Critical test alert')`,
-    ).run();
-
-    const result = await handleTelegramCommand(makeUpdate("/alerts"), db);
-    expect(result!.text.toLowerCase()).toMatch(/critical|nghiem trong/i);
-  });
-});
-
-// ─────────────────────────────────────────────────────────────────────────────
 // 6. /health
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -316,74 +298,6 @@ describe("Task 214 — /health command", () => {
   it("health response includes DB info", async () => {
     const result = await handleTelegramCommand(makeUpdate("/health"), db);
     expect(result!.text.toLowerCase()).toMatch(/db|database|sqlite|uptime|health|ok/i);
-  });
-});
-
-// ─────────────────────────────────────────────────────────────────────────────
-// 7. /pnl
-// ─────────────────────────────────────────────────────────────────────────────
-
-describe("Task 214 — /pnl command", () => {
-  let db: Database;
-
-  beforeEach(() => { db = makeDb(); });
-  afterEach(() => { db.close(); });
-
-  it("returns message when no positions exist", async () => {
-    const result = await handleTelegramCommand(makeUpdate("/pnl"), db);
-    expect(result).not.toBeNull();
-    expect(result!.text.length).toBeGreaterThan(0);
-  });
-
-  it("computes P&L when positions and prices exist", async () => {
-    db.prepare(
-      `INSERT INTO positions (code, shares, avg_price, opened_at) VALUES ('VCB', 1000, 75000, datetime('now'))`,
-    ).run();
-    db.prepare(
-      `INSERT INTO market_prices (code, price, change_amt, change_pct, volume, updated_at)
-       VALUES ('VCB', 85000, 10000, 13.33, 500000, datetime('now'))`,
-    ).run();
-
-    const result = await handleTelegramCommand(makeUpdate("/pnl"), db);
-    expect(result).not.toBeNull();
-    expect(result!.text).toContain("VCB");
-    // +10,000,000 VND gain
-    expect(result!.text).toMatch(/10.000.000|10,000,000|\+10/i);
-  });
-
-  it("shows N/A when position has no current price", async () => {
-    db.prepare(
-      `INSERT INTO positions (code, shares, avg_price, opened_at) VALUES ('VNM', 200, 80000, datetime('now'))`,
-    ).run();
-    // No market_prices entry for VNM
-
-    const result = await handleTelegramCommand(makeUpdate("/pnl"), db);
-    expect(result).not.toBeNull();
-    expect(result!.text).toContain("VNM");
-    expect(result!.text.toLowerCase()).toMatch(/n\/a|unknown|no price|chua co gia|chưa có/i);
-  });
-});
-
-// ─────────────────────────────────────────────────────────────────────────────
-// 8. /briefing
-// ─────────────────────────────────────────────────────────────────────────────
-
-describe("Task 214 — /briefing command", () => {
-  let db: Database;
-
-  beforeEach(() => { db = makeDb(); });
-  afterEach(() => { db.close(); });
-
-  it("returns a briefing summary text", async () => {
-    const result = await handleTelegramCommand(makeUpdate("/briefing"), db);
-    expect(result).not.toBeNull();
-    expect(result!.text.length).toBeGreaterThan(10);
-  });
-
-  it("briefing text is in Vietnamese or contains known Vietnamese patterns", async () => {
-    const result = await handleTelegramCommand(makeUpdate("/briefing"), db);
-    // Should contain Vietnamese keywords like "thi truong", "bao cao", or stock names
-    expect(result!.text.length).toBeGreaterThan(10);
   });
 });
 

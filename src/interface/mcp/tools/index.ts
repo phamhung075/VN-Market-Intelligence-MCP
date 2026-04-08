@@ -65,7 +65,5 @@ export { registerPharmaTools } from "./pharmaTools.js";
 export { registerSectorComparisonTools } from "./sectorComparisonTools.js";
 // Sprint 046 — Kinh Dịch tools
 export { registerKinhDichTools } from "./kinhDichTools.js";
-// Sprint 050 — User Request tools (Task 305)
-export { registerUserRequestTools } from "./userRequestTools.js";
 // Sprint 054 — Broker Credibility (Task 915)
 export { registerBrokerCredibilityTools } from "./brokerCredibilityTools.js";

@@ -775,67 +775,7 @@ async function _runCycle(deps: CycleDeps = {}): Promise<CycleResult> {
     }
   }
 
-  // Step F: Answer pending user requests (always — not gated on market hours)
-  // Processes up to 3 pending /ask or /why requests per cycle via RAG search.
-  try {
-    const { getPendingRequests, markAnswered } = await import("../infrastructure/db/userRequestStore.js");
-    const { getDb: getRequestDb } = await import("../infrastructure/db/schema.js");
-    const requestDb = getRequestDb();
-    const pending = getPendingRequests(requestDb, 3);
-
-    if (pending.length > 0) {
-      logger.debug("[intelligence-cycle] step F — processing user requests", {
-        count: pending.length,
-      });
-
-      for (const req of pending) {
-        try {
-          // Use RAG retrieval to find relevant analysis entries
-          const { searchContext } = await import("../infrastructure/rag/retriever.js");
-          const results = await searchContext(req.payload, { k: 5 });
-
-          // Build a concise answer from RAG results
-          const answer = results.length > 0
-            ? results
-                .map(
-                  (r, i) =>
-                    `${i + 1}. [${r.level}] ${r.title} — ${r.summary.slice(0, 100)}`,
-                )
-                .join("\n")
-            : "Khong tim thay du lieu lien quan. Thu lai voi cau hoi cu the hon.";
-
-          const response = `Tra loi cho: "${req.payload}"\n\n${answer}`;
-
-          // Send to Chat Channel
-          const { sendTelegramMarket } = await import("../infrastructure/notifiers/telegram.js");
-          await sendTelegramMarket(response);
-
-          markAnswered(requestDb, req.id, response);
-
-          logger.debug("[intelligence-cycle] step F — answered request", {
-            requestId: req.id,
-            ragResults: results.length,
-          });
-        } catch (reqErr) {
-          const errMsg = reqErr instanceof Error ? reqErr.message : String(reqErr);
-          try {
-            const { markAnswered: markFailed } = await import("../infrastructure/db/userRequestStore.js");
-            const { getDb: getErrDb } = await import("../infrastructure/db/schema.js");
-            markFailed(getErrDb(), req.id, `Loi: ${errMsg}`);
-          } catch { /* best-effort */ }
-          logger.warn("[intelligence-cycle] step F — failed to answer request", {
-            requestId: req.id,
-            error: errMsg,
-          });
-        }
-      }
-    }
-  } catch (err) {
-    // Step F is best-effort — log but do not increment errors counter
-    logger.warn("[intelligence-cycle] step F — user request processing error", {
-      error: err instanceof Error ? err.message : String(err),
-    });
-  }
+  // Step F removed (task 1063) — /ask and /why commands deleted.
 
   // Step G: Chain synthesis (server-side, zero Claude API tokens)
   // Groups agent_signals by stock within the current 15-min cycle window.

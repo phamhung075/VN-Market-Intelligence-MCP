@@ -1,5 +1,5 @@
 /**
- * Infrastructure — Telegram Command Router (Task 214)
+ * Infrastructure — Telegram Command Router (Task 214, Task 1063)
  *
  * Processes incoming Telegram bot commands from webhook updates.
  * Each handler queries SQLite directly (no MCP layer) and returns
@@ -8,19 +8,18 @@
  * Design rules:
  *   - Never throws — all errors wrapped in user-friendly message
  *   - Plain text only (no Markdown to avoid parse errors)
- *   - All financial values in VND (positions) or million VND (BCTC)
  *   - Returns null when the update has no actionable text
  *
- * Supported commands:
+ * Supported commands (task 1063 reduced set):
  *   /watchlist        — list watchlist stocks with current prices
  *   /price VCB        — price snapshot for a single stock
- *   /alerts           — last 5 alerts
- *   /briefing         — condensed morning briefing from DB
  *   /health           — system health (uptime, DB size, watchlist count)
- *   /pnl              — portfolio P&L from positions + market_prices
  *   /report <mota>    — report a bug/issue to Dev Team (priority=medium)
- *   /fix <mota>       — report an urgent bug to Dev Team (priority=high)
+ *   /fix   <mota>     — report an urgent bug to Dev Team (priority=high)
  *   /help             — list all commands
+ *
+ * Removed in task 1063: /alerts, /briefing, /pnl, /ask, /why
+ * (fake-AI or low-value commands superseded by scheduler-driven channels).
  *
  * @module infrastructure/notifiers/telegramCommands
  */
@@ -56,12 +55,7 @@ const HELP_TEXT = `VN Market Bot
 
 /watchlist  Danh mục theo dõi
 /price VCB  Giá cổ phiếu
-/alerts     Cảnh báo gần nhất
-/briefing   Tóm tắt thị trường
-/pnl        Lãi/Lỗ danh mục
 /health     Trạng thái hệ thống
-/ask ...    Hỏi AI phân tích
-/why VCB    Tại sao biến động?
 /report ... Báo lỗi
 /fix ...    Báo lỗi khẩn cấp
 /help       Trợ giúp`;
@@ -73,12 +67,6 @@ const HELP_TEXT = `VN Market Bot
 /** Format a number with thousands separator (period-separated, Vietnamese style). */
 function fmtNum(n: number): string {
   return Math.round(n).toLocaleString("vi-VN");
-}
-
-/** Format a percentage with 2 decimal places and a leading sign. */
-function fmtPct(pct: number): string {
-  const sign = pct >= 0 ? "+" : "";
-  return `${sign}${pct.toFixed(2)}%`;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -178,48 +166,6 @@ function handlePrice(db: Database, args: string[]): string {
     .join("\n");
 }
 
-/** /alerts — last 5 alerts from alerts table */
-function handleAlerts(db: Database): string {
-  interface AlertRow {
-    id: string;
-    triggered_at: string;
-    severity: string;
-    message: string | null;
-  }
-
-  const rows = db
-    .prepare<AlertRow, []>(
-      `SELECT id, triggered_at, severity, message
-       FROM alerts
-       ORDER BY triggered_at DESC
-       LIMIT 5`,
-    )
-    .all();
-
-  if (rows.length === 0) {
-    return "Không có cảnh báo nào gần đây.";
-  }
-
-  const SEV_ICON: Record<string, string> = {
-    critical: "!!",
-    high: "! ",
-    medium: "- ",
-    low: "  ",
-    info: "  ",
-    warning: "- ",
-  };
-
-  const header = `Cảnh báo gần nhất:`;
-  const lines = rows.map((r, i) => {
-    const icon = SEV_ICON[r.severity.toLowerCase()] ?? "  ";
-    const msg = r.message ? r.message.slice(0, 80) : "(không có nội dung)";
-    const date = r.triggered_at.slice(5, 16);
-    return `${icon}${date}\n   ${msg}`;
-  });
-
-  return [header, "", ...lines].join("\n");
-}
-
 /** /health — system health: uptime, DB size, watchlist count */
 function handleHealth(db: Database): string {
   const uptimeSec = process.uptime();
@@ -266,230 +212,6 @@ function handleHealth(db: Database): string {
   ].join("\n");
 }
 
-/** /pnl — compute P&L from positions + market_prices */
-function handlePnl(db: Database): string {
-  interface PositionRow {
-    code: string;
-    shares: number;
-    avg_price: number;
-    current_price: number | null;
-  }
-
-  let rows: PositionRow[] = [];
-  try {
-    rows = db
-      .prepare<PositionRow, []>(
-        `SELECT p.code, p.shares, p.avg_price,
-                mp.price AS current_price
-         FROM positions p
-         LEFT JOIN market_prices mp ON mp.code = p.code
-         WHERE p.closed_at IS NULL
-         ORDER BY p.code ASC`,
-      )
-      .all();
-  } catch {
-    return "Không thể đọc dữ liệu vị thế.";
-  }
-
-  if (rows.length === 0) {
-    return "Chưa có vị thế nào đang mở.";
-  }
-
-  let totalCost = 0;
-  let totalPnl = 0;
-  let hasPnl = false;
-
-  const lines = rows.map((r) => {
-    const cost = r.shares * r.avg_price;
-    totalCost += cost;
-
-    if (r.current_price == null) {
-      return `${r.code}  ${r.shares} cp @ ${fmtNum(r.avg_price)}\n   Giá: chưa có`;
-    }
-
-    const pnl = (r.current_price - r.avg_price) * r.shares;
-    const pnlPct = cost > 0 ? (pnl / cost) * 100 : 0;
-    totalPnl += pnl;
-    hasPnl = true;
-
-    const sign = pnl >= 0 ? "+" : "";
-    return `${r.code}  ${fmtNum(r.current_price)} VND\n   ${r.shares} cp  ${sign}${fmtNum(pnl)} (${sign}${pnlPct.toFixed(1)}%)`;
-  });
-
-  const header = `Lãi/Lỗ (${rows.length} vị thế):`;
-  const totalSign = totalPnl >= 0 ? "+" : "";
-  const totalLine = hasPnl
-    ? `TỔNG: ${totalSign}${fmtNum(totalPnl)} VND (${totalCost > 0 ? `${totalSign}${((totalPnl / totalCost) * 100).toFixed(1)}%` : "N/A"})`
-    : "TỔNG: chưa có giá";
-
-  return [header, "", ...lines, "", totalLine].join("\n");
-}
-
-/** /briefing — condensed market briefing from DB */
-function handleBriefing(db: Database): string {
-  interface StoryRow {
-    source_title: string | null;
-    sentiment: string | null;
-    impact_score: number | null;
-    level: string;
-  }
-  interface AlertRow {
-    severity: string;
-    message: string | null;
-    triggered_at: string;
-  }
-  interface PriceRow {
-    code: string;
-    price: number | null;
-    change_pct: number | null;
-  }
-
-  const parts: string[] = [];
-
-  // ── Top stories from rag_analyses ────────────────────────────────────────
-  try {
-    const stories = db
-      .prepare<StoryRow, []>(
-        `SELECT source_title, sentiment, impact_score, level
-         FROM rag_analyses
-         WHERE created_at > datetime('now', '-24 hours')
-         ORDER BY impact_score DESC
-         LIMIT 3`,
-      )
-      .all();
-
-    if (stories.length > 0) {
-      parts.push("Tin nổi bật (24h):");
-      stories.forEach((s, i) => {
-        const title = s.source_title ?? "(không có tiêu đề)";
-        const sent = s.sentiment === "bullish" ? "+" : s.sentiment === "bearish" ? "-" : " ";
-        parts.push(`${sent} ${title.slice(0, 80)}`);
-      });
-    }
-  } catch { /* skip section on error */ }
-
-  // ── Watchlist prices ──────────────────────────────────────────────────────
-  try {
-    const prices = db
-      .prepare<PriceRow, []>(
-        `SELECT w.code, mp.price, mp.change_pct
-         FROM watchlist w
-         LEFT JOIN market_prices mp ON mp.code = w.code
-         ORDER BY w.code ASC`,
-      )
-      .all();
-
-    if (prices.length > 0) {
-      parts.push("\nGiá danh mục:");
-      prices.forEach((p) => {
-        if (p.price == null) {
-          parts.push(`${p.code}: chưa có giá`);
-          return;
-        }
-        const arrow = p.change_pct != null ? (p.change_pct >= 0 ? "+" : "") : "";
-        const changePart = p.change_pct != null ? `  ${arrow}${p.change_pct.toFixed(2)}%` : "";
-        parts.push(`${p.code}: ${fmtNum(p.price)}${changePart}`);
-      });
-    }
-  } catch { /* skip section on error */ }
-
-  // ── Recent alerts ─────────────────────────────────────────────────────────
-  try {
-    const alerts = db
-      .prepare<AlertRow, []>(
-        `SELECT severity, message, triggered_at
-         FROM alerts
-         WHERE triggered_at > datetime('now', '-12 hours')
-         ORDER BY triggered_at DESC
-         LIMIT 3`,
-      )
-      .all();
-
-    if (alerts.length > 0) {
-      parts.push("\nCảnh báo:");
-      alerts.forEach((a) => {
-        const msg = a.message ? a.message.slice(0, 80) : "";
-        parts.push(`${msg}`);
-      });
-    }
-  } catch { /* skip section on error */ }
-
-  if (parts.length === 0) {
-    return "Chưa có dữ liệu. Hệ thống đang thu thập tin tức.";
-  }
-
-  return parts.join("\n");
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// /ask and /why handlers (Task 238)
-// ─────────────────────────────────────────────────────────────────────────────
-
-/**
- * Ensure `user_requests` table exists (idempotent DDL).
- * Inline to keep telegramCommands self-contained — avoids an async import.
- */
-function ensureUserRequestsTableInline(db: Database): void {
-  try {
-    db.exec(`
-      CREATE TABLE IF NOT EXISTS user_requests (
-        id          INTEGER PRIMARY KEY AUTOINCREMENT,
-        command     TEXT NOT NULL,
-        payload     TEXT NOT NULL,
-        status      TEXT NOT NULL DEFAULT 'pending',
-        response    TEXT,
-        created_at  TEXT NOT NULL DEFAULT (datetime('now')),
-        answered_at TEXT
-      )
-    `);
-    db.exec(
-      `CREATE INDEX IF NOT EXISTS idx_user_requests_status ON user_requests(status)`,
-    );
-  } catch { /* table already exists */ }
-}
-
-/**
- * Insert a pending user request row and return its auto-increment ID.
- */
-function insertUserRequestInline(
-  db: Database,
-  command: string,
-  payload: string,
-): number {
-  const result = db
-    .prepare(
-      `INSERT INTO user_requests (command, payload, status, created_at)
-       VALUES (?, ?, 'pending', datetime('now'))`,
-    )
-    .run(command, payload);
-  return result.lastInsertRowid as number;
-}
-
-/**
- * /ask <question> — queue an async AI analysis request.
- * /why <TICKER>   — queue "Why did <TICKER> move today?" as an ask request.
- *
- * Inserts a row into `user_requests` with status='pending'.
- * The intelligence cycle step F picks up pending rows, runs RAG search,
- * and sends the answer back via Telegram Chat Channel within ~15 minutes.
- *
- * @param db   - Active bun:sqlite Database connection.
- * @param text - The question text (already extracted by the caller).
- * @returns Plain-text Vietnamese response.
- */
-function handleAsk(db: Database, text: string): string {
-  const trimmed = text.trim();
-
-  if (!trimmed) {
-    return "Cách dùng: /ask VCB giảm vì sao?";
-  }
-
-  ensureUserRequestsTableInline(db);
-  const id = insertUserRequestInline(db, "ask", trimmed);
-
-  return `Đang phân tích... Kết quả sẽ gửi trong 15 phút.\nID: ${id}`;
-}
-
 // ─────────────────────────────────────────────────────────────────────────────
 // /report and /fix handlers (Task 232)
 // ─────────────────────────────────────────────────────────────────────────────
@@ -500,11 +222,6 @@ function handleAsk(db: Database, text: string): string {
 /**
  * /report <description> — write a medium-priority issue to agent_feedback.
  * /fix   <description> — same but priority='high'.
- *
- * @param db       - Active bun:sqlite Database connection.
- * @param args     - Words after the command token.
- * @param priority - 'medium' for /report, 'high' for /fix.
- * @returns Plain-text Vietnamese response.
  */
 function handleReport(
   db: Database,
@@ -518,7 +235,6 @@ function handleReport(
     return `Cách dùng: /${cmd} mô tả lỗi`;
   }
 
-  // agent_feedback table guaranteed by initDatabase() in schema.ts (task 1022)
   const title = text.slice(0, 100);
   const now = new Date().toISOString().replace("T", " ").slice(0, 19);
 
@@ -543,10 +259,6 @@ function handleReport(
  *
  * Returns null when the update has no actionable message (no text, no message).
  * Never throws — errors are caught and wrapped in a user-friendly Vietnamese message.
- *
- * @param update - The parsed Telegram Update object.
- * @param db     - Active bun:sqlite Database connection (injected by caller).
- * @returns CommandResult with text + chatId, or null if nothing to do.
  */
 export async function handleTelegramCommand(
   update: TelegramUpdate,
@@ -580,38 +292,9 @@ export async function handleTelegramCommand(
         responseText = handlePrice(db, args);
         break;
 
-      case "/alerts":
-        responseText = handleAlerts(db);
-        break;
-
       case "/health":
         responseText = handleHealth(db);
         break;
-
-      case "/pnl":
-        responseText = handlePnl(db);
-        break;
-
-      case "/briefing":
-        responseText = handleBriefing(db);
-        break;
-
-      case "/ask":
-        // /ask Why did VCB drop today?
-        responseText = handleAsk(db, args.join(" "));
-        break;
-
-      case "/why": {
-        // /why VCB → stores payload as "why:VCB" (Task 307)
-        const ticker = args[0]?.trim() ?? "";
-        if (!ticker) {
-          responseText =
-            "Vui lòng cung cấp mã chứng khoán, ví dụ: /why VCB";
-        } else {
-          responseText = handleAsk(db, `why:${ticker.toUpperCase()}`);
-        }
-        break;
-      }
 
       case "/report":
         responseText = handleReport(db, args, "medium");

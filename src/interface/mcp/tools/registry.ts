@@ -118,5 +118,4 @@ export const toolRegistry: Array<(server: McpServer) => void> = [
   registerSectorComparisonTools, // Sprint 045: get_sector_comparison
   registerKinhDichTools,       // Task 285: 6 Kinh Dich tools
   registerBrokerCredibilityTools, // Task 915: get_broker_credibility
-  // registerUserRequestTools — will be added when Task 305 merges to main
 ];
