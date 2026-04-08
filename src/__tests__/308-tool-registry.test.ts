@@ -45,14 +45,10 @@ describe("Task 308 — Dynamic Tool Registry", () => {
 
   // ── 2. registry contains all 37 register*Tools entries ───────────────────
 
-  it("toolRegistry contains exactly 48 entries (all register*Tools from server.ts)", async () => {
+  it("toolRegistry contains exactly 49 entries (all register*Tools from server.ts)", async () => {
     const { toolRegistry } = await import("../interface/mcp/tools/registry.js");
-    // 48 = all register*Tools functions that were individually called in server.ts:
-    //   35 from index.ts barrel (sprints 01-043) + registerPharmaTools (sprint 044)
-    //   + registerSectorComparisonTools (sprint 045) + registerKinhDichTools (task 285)
-    //   + 9 more from the full index.ts barrel (alertCheckTools, searchTools,
-    //     dataFreshnessTools, sourceHealthTools, exportTools, etc.)
-    expect(toolRegistry.length).toBe(48);
+    // 49 = 48 historical entries + registerBrokerCredibilityTools (task 915)
+    expect(toolRegistry.length).toBe(49);
   });
 
   // ── 3. applying registry to McpServer succeeds (no throws) ───────────────

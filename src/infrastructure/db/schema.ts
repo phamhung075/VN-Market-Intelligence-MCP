@@ -297,6 +297,25 @@ export async function initDatabase(): Promise<void> {
     CREATE INDEX IF NOT EXISTS idx_rep_date ON reputation_scores(date);
   `);
 
+  // ── Broker Sanctions (Task 915) ────────────────────────────────────────────
+  // SSC sanctions against securities brokers. Used by
+  // `forecastConfidenceScore` to discount bullish forecasts from sanctioned
+  // brokers before they reach the cascade engine.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS broker_sanctions (
+      id             INTEGER PRIMARY KEY AUTOINCREMENT,
+      broker_name    TEXT NOT NULL,
+      sanction_start TEXT NOT NULL,
+      sanction_end   TEXT,
+      severity       TEXT NOT NULL CHECK (severity IN ('warning','suspension')),
+      source         TEXT,
+      created_at     TEXT NOT NULL
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_broker_sanctions_name ON broker_sanctions(broker_name);
+    CREATE INDEX IF NOT EXISTS idx_broker_sanctions_start ON broker_sanctions(sanction_start);
+  `);
+
   // ── Financial Reports (BCTC) ───────────────────────────────────────────────
   // DDL imported from bctc-schema.ts — includes financial_reports table,
   // all scalar columns, JSON blobs, indexes, v_chart_timeseries and

@@ -1320,7 +1320,17 @@ Surfaced by the new `scripts/test-all.sh` per-file runner. Each file passes when
 
 Minimum-diff for option 1: add `"HPG"` to `mcp.config.json → market.defaultWatchlist`, restart server. The bctcOverdueCheck + overdue alert + impact_chain all use this list.
 
-### [915 / @architect] Analyst-credibility discount on sanctioned brokers
+### [915 / @dev] Analyst-credibility discount on sanctioned brokers — ✅ Shipped 2026-04-08 (task/915)
+
+**Delivered**: new `broker_sanctions` table + `forecastConfidenceScore()` domain
+service + `get_broker_credibility` MCP tool (registry entry 49). Severity
+multipliers: warning=0.5, suspension=0.2. Case-insensitive broker name match,
+strictest-active-sanction wins. 22 new tests in
+`src/__tests__/915-broker-credibility.test.ts`, 308-tool-registry count bumped
+48→49. Cascade engine wire-in intentionally deferred — downstream consumers
+call the domain function directly once they need it.
+
+### [915 ORIGINAL SCOPE — for reference]
 
 **Why**: On 2026-04-06 TVS (Chứng khoán Tân Việt) issued a bullish Q1 sector forecast the same day cafef ran "Vì sao Chứng khoán Tân Việt bị xử phạt?" (TVS was fined by SSC). The forecast was fed into cascade analysis at full weight. Broker credibility should be discounted when the broker is currently under SSC sanction.
 
