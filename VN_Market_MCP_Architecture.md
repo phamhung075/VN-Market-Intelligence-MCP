@@ -110,11 +110,13 @@ Claude Desktop ──GET /sse─────────────────
 # Installation
 bun install
 
-# Développement (hot reload)
-bun --watch src/index.ts
+# Développement (itération — hot reload INTERDIT, utiliser launchctl kickstart)
+# Editer le code, puis:
+launchctl kickstart -k gui/$(id -u)/com.vn-market.mcp
 
-# Production
-bun run src/index.ts
+# Production — via launchd (seule méthode autorisée)
+# ./launchd/install.sh  (une seule fois)
+# Restart: launchctl kickstart -k gui/$(id -u)/com.vn-market.mcp
 ```
 
 ### Configuration Claude Desktop

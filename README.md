@@ -54,13 +54,17 @@ cp .env.example .env
 
 ### Step 3: Start the MCP Server
 
-```bash
-# Development (hot reload, foreground)
-bun --watch src/index.ts
+**Hot reload is forbidden in this project. The only allowed restart command is:**
 
-# Production one-shot (bun --hot, log rotation, LanceDB TRACE suppressed)
-./start.sh
+```bash
+launchctl kickstart -k gui/$(id -u)/com.vn-market.mcp
 ```
+
+Install the launchd agent first (see Step 3b below), then use that command exclusively. Do NOT use `./start.sh`, `bun --hot`, `bun --watch`, `nodemon`, `pm2`, or any other live-reload mechanism.
+
+For development iteration, edit code, then run `launchctl kickstart -k gui/$(id -u)/com.vn-market.mcp` to apply changes with a clean restart.
+
+`./start.sh` — DEPRECATED. Use launchctl kickstart instead. Do not run directly against a launchd-supervised instance.
 
 Verify:
 ```bash
@@ -68,11 +72,9 @@ curl http://localhost:3000/health
 # {"status":"ok","toolCount":76}
 ```
 
-#### Step 3b: Install the macOS launchd agent (recommended for production)
+#### Step 3b: Install the macOS launchd agent (required for production)
 
-`start.sh` runs the server under the current shell and will NOT survive a
-Mac reboot. For reboot-safe, crash-restarting supervision install the
-launchd agent that lives under `launchd/`:
+Install the launchd agent that lives under `launchd/` before running the server:
 
 ```bash
 ./launchd/install.sh
@@ -95,13 +97,9 @@ What the agent provides:
 |---|---|
 | Mac reboot / re-login | auto-starts via `RunAtLoad=true` |
 | Bun process crash | auto-restarts within `ThrottleInterval=10s` |
-| Source edits | `bun --hot` reloads in place (no restart needed) |
-| `launchctl kickstart -k gui/$(id -u)/com.vn-market.mcp` | clean manual restart |
+| `launchctl kickstart -k gui/$(id -u)/com.vn-market.mcp` | the ONLY allowed restart method |
 
-After install, stop using `./start.sh` directly — it would fight the
-supervised instance. Use `launchctl kickstart -k` to bounce, or
-`launchctl unload -w ~/Library/LaunchAgents/com.vn-market.mcp.plist`
-for maintenance downtime.
+**Hot reload is forbidden.** `bun --hot`, `bun --watch`, `./start.sh`, `nodemon`, `pm2`, and all other live-reload mechanisms are banned. Always use `launchctl kickstart -k` to restart. For maintenance downtime use `launchctl unload -w ~/Library/LaunchAgents/com.vn-market.mcp.plist`.
 
 ```bash
 # Status
@@ -181,7 +179,7 @@ You don't need to do anything daily. The system runs autonomously:
 | Situation | What to Do |
 |-----------|-----------|
 | **Server down (launchd-supervised)** | `launchctl kickstart -k gui/$(id -u)/com.vn-market.mcp` |
-| **Server down (no launchd)** | `./start.sh` — or install launchd once: `./launchd/install.sh` |
+| **Server down (no launchd installed yet)** | Install launchd first: `./launchd/install.sh`, then use kickstart |
 | **Server flapping after deploy** | `tail -50 /tmp/vn-market-mcp.log` to see the crash, fix, then kickstart |
 | **Tunnel down** | `cloudflared tunnel run --token ...` |
 | **Agent file updated by Dev Team** | You'll get a Chat Channel message. Copy new `.md` content into Cowork. |

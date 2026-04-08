@@ -88,6 +88,6 @@ All agents ──[send_telegram(work)]──→ WORK channel → Dev Team / stat
 │  DEV TEAM (Claude Code CLI — local cron, every 1 hour)   │
 │  Reads Bug Channel → auto-fixes → pushes to main         │
 │  → Work Channel: fix-shipped notices, sprint summaries   │
-│  → Server auto-reloads via bun --hot                     │
+│  → Server restarts via launchctl kickstart (no hot reload) │
 └──────────────────────────────────────────────────────────┘
 ```

@@ -29,7 +29,7 @@ tmux session: "vn-market"
 │   ├── pane 0: QA pipeline
 │   └── pane 1: Fixer (if needed)
 └── window 5: "logs"        ← Server logs + git log --oneline --graph
-    ├── pane 0: bun --watch src/index.ts
+    ├── pane 0: tail -f /tmp/vn-market-mcp.log  (hot reload FORBIDDEN — restart: launchctl kickstart -k gui/$(id -u)/com.vn-market.mcp)
     └── pane 1: git log --oneline --graph -20
 ```
 

@@ -183,7 +183,7 @@ You will only be interrupted at the two Gatekeeper checkpoints.
 
 ## Branch hygiene checklist
 
-The production MCP server runs from the `main` branch via `bun --hot` on the zenmidi host. Any session that leaves the repo on a non-main branch risks the next hot-reload picking up the wrong working tree.
+The production MCP server runs from the `main` branch under launchd supervision on the zenmidi host. **Hot reload is forbidden in this project. Restart = full launchctl kickstart** (`launchctl kickstart -k gui/$(id -u)/com.vn-market.mcp`). Any session that leaves the repo on a non-main branch risks the next restart picking up the wrong working tree.
 
 ### Rules (enforced by Developer and QA after every merge)
 

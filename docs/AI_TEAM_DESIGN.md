@@ -74,7 +74,7 @@ When any analysis agent finds an issue:
 2. Message goes to Report Channel (TELEGRAM_REPORT_ID) ONLY
 3. Dev Team reads it within 1 hour
 4. Dev Team fixes → commits → pushes → deletes the report
-5. Server auto-reloads via `bun --hot`
+5. Server restarts via `launchctl kickstart -k gui/$(id -u)/com.vn-market.mcp` (hot reload is forbidden)
 
 ## Dev Team (Claude Code CLI Cron)
 
@@ -90,7 +90,7 @@ Runs locally every 1 hour via Claude Code CLI. See `dev-team-cron.md` for full s
 5. SPRINT TASK: PO → BA → Architect → PM → Dev → QA chain
 6. Update docs: CLAUDE.md, TASKS.md, SPRINT_GOAL.md, agent .md files
 7. If agent files changed → notify user to refresh Cowork
-8. Server auto-reloads via bun --hot
+8. Server restarts via launchctl kickstart (hot reload is forbidden)
 ```
 
 ### Git Rules
@@ -107,7 +107,7 @@ Runs locally every 1 hour via Claude Code CLI. See `dev-team-cron.md` for full s
 ## MCP Server
 
 - 62 tools (Sprint 034)
-- Bun with `--hot` flag for live code reload
+- Bun, supervised by launchd — restart via `launchctl kickstart -k gui/$(id -u)/com.vn-market.mcp` (hot reload is forbidden)
 - SQLite + LanceDB for data
 - Telegram Bot API for notifications
 - Cloudflare tunnel for public access

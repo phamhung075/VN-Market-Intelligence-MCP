@@ -139,9 +139,8 @@ For each claimed report:
    Tests: PASS
    ```
 9. **Reload strategy:**
-   - **Default:** `bun --hot` reloads the changed module in-place — no action needed.
-   - **Full restart required ONLY when:** schema migration with DROP/ALTER, new scheduler job registration, new package install (`bun install`), `.env` change, or anything that touches module-level DB/LanceDB initializers.
-   - **Full restart command:** `launchctl kickstart -k gui/$(id -u)/com.vn-market.mcp` — this is launchd-supervised, so the new process auto-spawns within ~2-3s. Never run `./start.sh` directly (it would fight the launchd instance).
+   - **Hot reload is forbidden in this project. Restart = full launchctl kickstart.**
+   - **Always restart after any code change:** `launchctl kickstart -k gui/$(id -u)/com.vn-market.mcp` — this is launchd-supervised, so the new process auto-spawns within ~2-3s. Never run `./start.sh` directly (it would fight the launchd instance). Never use `bun --hot`, `bun --watch`, or any live-reload mechanism.
 
 ### Step 4: SPRINT TASK
 Run the FULL agent chain:
@@ -172,7 +171,7 @@ After QA approves:
    New tools: {list if any}
    Tests: {count} pass
    ```
-5. **Reload strategy:** same as FIX NOW Step 9 above. Sprints often add new scheduler jobs, MCP tool registrations, or schema changes — in those cases a full restart is REQUIRED, so run `launchctl kickstart -k gui/$(id -u)/com.vn-market.mcp` as the final step. Verify with `curl -s http://127.0.0.1:3000/health` before moving on.
+5. **Reload strategy:** same as FIX NOW Step 9 above. Hot reload is forbidden in this project. After any sprint, always restart: `launchctl kickstart -k gui/$(id -u)/com.vn-market.mcp`. Verify with `curl -s http://127.0.0.1:3000/health` before moving on.
 
 ### Step 5: Update Docs (EVERY run that changes code)
 After any fix or sprint:
@@ -200,7 +199,7 @@ Please refresh these agents in Claude Cowork.
 
 ### Step 8: Return to main
 At the very end of every cron invocation, regardless of what ran:
-1. `git checkout main` — the production Bun process on zenmidi runs from `main` via `--hot`. Never leave the repo on a feature branch between loops.
+1. `git checkout main` — the production Bun process on zenmidi runs from `main` via launchd supervision. Never leave the repo on a feature branch between loops.
 2. `git status --short` — must be empty (no uncommitted changes).
 3. For any task branch merged this loop: delete local + remote (`git branch -d` + `git push origin --delete`). Verify with `git cherry main origin/<branch>` = zero `^+` lines before deleting.
 4. For any `.claude/worktrees/agent-*` left over: `git worktree remove --force <path>` then `git branch -D worktree-agent-*`.
@@ -265,7 +264,7 @@ At the very end of every cron invocation, after Step 8 hygiene passes, run `/com
 
 - 68 MCP tools registered (+11 new vs Sprint 038)
 - 2 Telegram channels: Chat (user) + Report (problems)
-- Server: Bun with --hot reload
+- Server: Bun, supervised by launchd (launchctl kickstart restart — hot reload is forbidden)
 - Analysis team: 7 Claude Cowork agents (cloud)
 - Dev team: this cron (local Claude Code CLI)
 - 19 cron jobs including weatherCheck (*/6h) and davPharmacyCheck (1st monthly)
