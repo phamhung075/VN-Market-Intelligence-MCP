@@ -17,32 +17,9 @@
 import type { Database } from "bun:sqlite";
 import type { ReputationScore, RiskLevel } from "../../domain/services/reputationScorer.js";
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Table init
-// ─────────────────────────────────────────────────────────────────────────────
-
-/**
- * Create the reputation_scores table and indexes.
- * Idempotent — safe to call multiple times.
- *
- * @param db - Active bun:sqlite Database instance
- */
-export function initReputationTable(db: Database): void {
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS reputation_scores (
-      code        TEXT NOT NULL,
-      date        TEXT NOT NULL,
-      score       REAL NOT NULL,
-      trend       TEXT NOT NULL DEFAULT 'stable',
-      risk_level  TEXT NOT NULL DEFAULT 'safe',
-      computed_at TEXT NOT NULL,
-      PRIMARY KEY (code, date)
-    );
-
-    CREATE INDEX IF NOT EXISTS idx_rep_code ON reputation_scores(code);
-    CREATE INDEX IF NOT EXISTS idx_rep_date ON reputation_scores(date);
-  `);
-}
+// Task 1037 — `initReputationTable()` was removed; the canonical DDL lives
+// in `src/infrastructure/db/schema.ts:initDatabase()` and runs at server
+// startup. Tests use `src/__tests__/helpers/reputationScoresTestDdl.ts`.
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Store operations
