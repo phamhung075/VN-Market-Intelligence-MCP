@@ -210,17 +210,7 @@ For dev team and analysis team problem reports:
 
 Agents can send signals to each other via `post_agent_signal` / `get_agent_signals`. Each agent checks for signals at the START of every cycle.
 
-### Signal Types
-
-| signal_type | Sender | Receiver | Meaning |
-|-------------|--------|----------|---------|
-| `urgent_news` | news-scout | market-watcher | High-impact news found — check price action immediately |
-| `price_anomaly` | market-watcher | alert-commander | Confirmed price anomaly — evaluate for alert sending |
-| `cross_validate` | report-analyzer | alert-commander | CRITICAL BCTC finding — needs immediate alert |
-| `cross_validate` | any | any | Request cross-validation of a finding |
-| `suppress` | alert-commander | all | False positive detected — skip alerts for this stock this cycle |
-| `legal_risk` | news-scout | alert-commander | Prosecution/tax penalty detected for a stock |
-| `crisis_velocity` | news-scout | alert-commander | 5x mention spike = potential crisis |
+- Complete signal type table (urgent_news, price_anomaly, cross_validate, suppress, legal_risk, crisis_velocity, and more) → `.claude/knowledge/mcp-tools.md#inter-agent-signal-types`
 
 ### Signal Bus Rules
 - `ttl_minutes` default is 120 min — signals expire automatically
@@ -305,11 +295,7 @@ Before submitting feedback or a report, check this list. If the issue is listed 
 6. **OCR runs in background** on server startup — processes unextracted PDFs automatically
 
 ## Stock Classification
-- VNM = Vinamilk = Retail/Dairy
-- FPT = FPT Corp = Tech/IT outsourcing
-- VCB = Vietcombank = Banking
-- HPG = Hoa Phat = Steel (NOT banking!)
-- VEA = VEAM = Automotive: Honda/Toyota/Ford JV (NOT aviation!)
+- Stock classification (VNM/FPT/VCB/HPG/VEA, sectors, trade exposure, sector peers) → `.claude/knowledge/stock-classification.md`
 
 ## Troubleshooting
 

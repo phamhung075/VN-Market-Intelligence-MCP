@@ -7,7 +7,7 @@
 | Time | Job | Cron | What it does |
 |------|-----|------|-------------|
 | ***/15 min** | `intelligenceCycle` | `*/15 * * * *` | Main engine. Market hours: full 5-step cycle (A→E). Off-hours: news poll only (step A). 14-min stale guard + 2-min per-step timeout. |
-| ***/15 min** | `userRequestCheck` | `*/15 * * * *` | Answer /ask + /why Telegram commands within 15 min |
+| 09:30 daily | `bctcReparseJob` | `30 9 * * *` | Re-parse recently added BCTC PDFs that failed initial extraction |
 | ***/30 min** | `predictionMarketPoll` | `*/30 * * * *` | Polymarket fetch → store → detect signals → Telegram if HIGH |
 | 08:00 M–F | `morningBriefing` | `0 8 * * 1-5` | VN-Index + stories + macro σ + sensitive dates + commodities + prediction + P&L |
 | 09:00 M–F | `marketOpen` | `0 9 * * 1-5` | Prices + sector context + price-news divergence + volume + price alerts |
@@ -62,7 +62,8 @@ This job is in `src/scheduler/vpsProxyWatchdogJob.ts` (154 lines). Registered in
 
 ## Notes
 
-- Total scheduler files: **22** (`jobs.ts` + `summaryJobs.ts` + 20 job handlers including `vpsProxyWatchdogJob.ts` and `userRequestCheckJob.ts`).
+- Total scheduler files: **22** (`jobs.ts` + `summaryJobs.ts` + 20 job handlers including `vpsProxyWatchdogJob.ts` and `bctcReparseJob.ts`).
 - `insiderCheckJob.ts` exists in `src/scheduler/` but is **not registered** in `jobs.ts` (orphan — Sprint 039-040 era, pending wiring).
 - `newsPollerJob.ts` is legacy (superseded by `intelligenceCycleJob`); kept for fallback testing only.
+- `userRequestCheckJob.ts` was referenced in Sprint 050 design but was **not created** — `/ask` + `/why` handling is done inline in `intelligenceCycleJob.ts` or `telegramCommands.ts`.
 - VPS cron has been removed. The fetch schedule now lives inside `vps-scripts/fetch-prices-loop.sh` controlled by systemd on the Vultr host.
