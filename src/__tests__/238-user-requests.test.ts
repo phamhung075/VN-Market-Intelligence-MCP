@@ -16,9 +16,9 @@ import {
   insertUserRequest,
   getPendingRequests,
   markAnswered,
-  ensureUserRequestsTable,
   type UserRequest,
 } from "../infrastructure/db/userRequestStore.js";
+import { ensureUserRequestsTable } from "./helpers/userRequestsTestDdl.js";
 import { handleTelegramCommand } from "../infrastructure/notifiers/telegramCommands.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
