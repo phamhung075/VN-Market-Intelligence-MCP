@@ -11,6 +11,10 @@
  *   to `priority='high'` after 3 attempts and a WORK-channel alert fires
  *   after 5.
  *
+ * Bug 1068 fix: reparseSingle() now falls back to getCachedPdfText() when
+ *   extractPdfText (pdf-parse) yields < 100 chars or confidence < 0.3.
+ *   Scanned/image PDFs that OCR already processed are correctly re-ingested.
+ *
  * Runs daily at 09:30 GMT+7 (right after `bctcOverdueCheck` at 09:00).
  *
  * Layer: interface/scheduler — depends on infrastructure (DB, logger,
@@ -22,6 +26,7 @@ import { basename, join } from "node:path";
 import { logger } from "../infrastructure/logger.js";
 import { getDb } from "../infrastructure/db/schema.js";
 import { extractPdfText } from "../infrastructure/fetchers/pdf.js";
+import { getCachedPdfText } from "../infrastructure/fetchers/pdfOcrWorker.js";
 import { sendTelegramWork } from "../infrastructure/notifiers/telegram.js";
 import type { Database } from "bun:sqlite";
 
@@ -149,14 +154,48 @@ export function parseYearQuarterFromFilename(
   return null;
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Injectable deps for reparseSingleWithOcrFallback (enables unit testing
+// without real files, OCR tools, or SQLite).
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface ReparseDeps {
+  /** Extract text from a PDF buffer (pdf-parse path). */
+  extractText: (buf: Buffer) => Promise<{ text: string; confidence: number }>;
+  /** Read OCR cache for a given filename. Returns null on cache miss. */
+  getOcrCache: (filename: string) => { text: string; pages: number; confidence: number } | null;
+  /** Run the full BCTC parse+store pipeline. Returns null on failure. */
+  pipeline: (params: {
+    actionCode: string;
+    year: number;
+    quarter: "Q1" | "Q2" | "Q3" | "Q4";
+    pdfTextOverride: string;
+    pdfUrl: string;
+  }) => Promise<{ id: string } | null>;
+  /** Check if a file exists on disk. */
+  fileExists: (path: string) => boolean;
+  /** Read a file from disk. */
+  readFile: (path: string) => Buffer;
+}
+
 /**
- * Attempt to re-parse a single stranded PDF by extracting text locally and
- * calling the full `fetchParseAndStoreBctc` pipeline with `pdfTextOverride`.
+ * Attempt to re-parse a single stranded PDF.
+ *
+ * Bug 1068 fix — two-tier text extraction:
+ *   Tier 1: pdf-parse via extractText (fast, works for text-native PDFs)
+ *   Tier 2: OCR cache via getOcrCache (for scanned/image PDFs already processed
+ *            by pdfOcrWorker — same fallback pattern as fetchParseAndStoreBctc)
  *
  * Returns true iff the pipeline produced a persisted FinancialReport.
+ *
+ * All I/O is injected via `deps` so this function can be tested without real
+ * files, real OCR tools, or a live SQLite database.
  */
-async function reparseSingle(payload: StrandedPayload): Promise<boolean> {
-  if (!existsSync(payload.filePath)) {
+export async function reparseSingleWithOcrFallback(
+  payload: StrandedPayload,
+  deps: ReparseDeps,
+): Promise<boolean> {
+  if (!deps.fileExists(payload.filePath)) {
     logger.warn("[bctc-reparse-job] file disappeared before reparse", {
       filePath: payload.filePath,
     });
@@ -171,38 +210,60 @@ async function reparseSingle(payload: StrandedPayload): Promise<boolean> {
     return false;
   }
 
-  let buffer: Buffer;
+  let rawText: string | null = null;
+
+  // ── Tier 1: pdf-parse ──────────────────────────────────────────────────────
   try {
-    buffer = readFileSync(payload.filePath);
+    const buf = deps.readFile(payload.filePath);
+    const { text, confidence } = await deps.extractText(buf);
+    if (text && text.trim().length >= 100 && confidence >= 0.3) {
+      rawText = text;
+      logger.info("[bctc-reparse-job] pdf-parse succeeded", {
+        filename: payload.filename,
+        chars: text.length,
+        confidence,
+      });
+    } else {
+      logger.info("[bctc-reparse-job] pdf-parse yielded too little text — trying OCR cache", {
+        filename: payload.filename,
+        chars: text?.trim().length ?? 0,
+        confidence,
+      });
+    }
   } catch (err) {
-    logger.warn("[bctc-reparse-job] read file failed", {
-      filePath: payload.filePath,
+    logger.warn("[bctc-reparse-job] pdf-parse threw — trying OCR cache", {
+      filename: payload.filename,
       error: err instanceof Error ? err.message : String(err),
     });
-    return false;
   }
 
-  const { text, confidence } = await extractPdfText(buffer);
-  if (!text || text.trim().length < 100 || confidence < 0.3) {
-    logger.warn("[bctc-reparse-job] local extraction yielded too little text", {
-      filename: payload.filename,
-      chars: text?.length ?? 0,
-      confidence,
-    });
-    return false;
+  // ── Tier 2: OCR cache fallback (Bug 1068) ──────────────────────────────────
+  if (rawText === null) {
+    const cached = deps.getOcrCache(payload.filename);
+    if (cached !== null && cached.confidence >= 0.3 && cached.text.trim().length >= 100) {
+      rawText = cached.text;
+      logger.info("[bctc-reparse-job] using OCR cache", {
+        filename: payload.filename,
+        pages: cached.pages,
+        confidence: cached.confidence,
+        chars: cached.text.length,
+      });
+    } else {
+      logger.warn("[bctc-reparse-job] OCR cache miss or too low confidence", {
+        filename: payload.filename,
+        cached: cached ? { pages: cached.pages, confidence: cached.confidence } : null,
+      });
+      return false;
+    }
   }
 
-  const { fetchParseAndStoreBctc } = await import(
-    "../application/usecases/fetchParseAndStoreBctc.js"
-  );
-
+  // ── Run the parse+store pipeline ──────────────────────────────────────────
   try {
-    const result = await fetchParseAndStoreBctc({
+    const result = await deps.pipeline({
       actionCode: payload.ticker,
       year: yq.year,
       quarter: yq.quarter,
-      pdfTextOverride: text,
-      // Supply a fake pdfUrl so the upstream SSC listing step is skipped.
+      pdfTextOverride: rawText,
       pdfUrl: `file://${payload.filePath}`,
     });
     return result !== null;
@@ -213,6 +274,32 @@ async function reparseSingle(payload: StrandedPayload): Promise<boolean> {
     });
     return false;
   }
+}
+
+/**
+ * Production deps wired to real infrastructure.
+ * Lazy-imported inside reparseSingle to avoid loading LanceDB at module init.
+ */
+async function makeProductionDeps(): Promise<ReparseDeps> {
+  const { fetchParseAndStoreBctc } = await import(
+    "../application/usecases/fetchParseAndStoreBctc.js"
+  );
+  return {
+    extractText: async (buf: Buffer) => extractPdfText(buf),
+    getOcrCache: (filename: string) => getCachedPdfText(filename),
+    pipeline: async (params) => fetchParseAndStoreBctc(params),
+    fileExists: (path: string) => existsSync(path),
+    readFile: (path: string) => readFileSync(path),
+  };
+}
+
+/**
+ * Attempt to re-parse a single stranded PDF (production entry point).
+ * Delegates to reparseSingleWithOcrFallback with real infrastructure deps.
+ */
+async function reparseSingle(payload: StrandedPayload): Promise<boolean> {
+  const deps = await makeProductionDeps();
+  return reparseSingleWithOcrFallback(payload, deps);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
