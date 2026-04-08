@@ -71,20 +71,8 @@ function loadPriceHistory(
 ): Map<string, number[]> {
   if (codes.length === 0) return new Map();
 
-  // Ensure the table exists (it may not in tests with a fresh :memory: DB)
-  try {
-    db.exec(`
-      CREATE TABLE IF NOT EXISTS market_prices_history (
-        code       TEXT NOT NULL,
-        price      REAL NOT NULL,
-        volume     REAL NOT NULL DEFAULT 0,
-        fetched_at TEXT NOT NULL,
-        PRIMARY KEY (code, fetched_at)
-      )
-    `);
-  } catch {
-    // Table already exists — ignore
-  }
+  // market_prices_history (with exchange column) is created by initDatabase()
+  // in src/infrastructure/db/schema.ts — no inline DDL needed here.
 
   const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000)
     .toISOString()

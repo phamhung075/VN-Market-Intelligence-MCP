@@ -64,44 +64,8 @@ const WINDOW_SECONDS = 7 * 24 * 3600;
 // Internal helpers
 // ─────────────────────────────────────────────────────────────────────────────
 
-/**
- * Ensures the `telegram_reports` table exists (idempotent).
- * Matches the DDL from telegramReportStore — safe to call on an existing table.
- */
-function ensureReportsTable(db: Database): void {
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS telegram_reports (
-      id          INTEGER PRIMARY KEY AUTOINCREMENT,
-      message_id  INTEGER NOT NULL DEFAULT 0,
-      text        TEXT    NOT NULL,
-      from_agent  TEXT    NOT NULL DEFAULT 'unknown',
-      priority    TEXT    NOT NULL DEFAULT 'normal',
-      status      TEXT    NOT NULL DEFAULT 'new',
-      created_at  INTEGER NOT NULL DEFAULT (unixepoch()),
-      claimed_by  TEXT,
-      claimed_at  TEXT
-    )
-  `);
-}
-
-/**
- * Ensures the `system_changelog` table exists (idempotent).
- * Matches the DDL from changelogStore — safe to call on an existing table.
- */
-function ensureChangelogTable(db: Database): void {
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS system_changelog (
-      id                  INTEGER PRIMARY KEY AUTOINCREMENT,
-      fix_type            TEXT    NOT NULL DEFAULT 'bugfix',
-      title               TEXT    NOT NULL,
-      detail              TEXT    NOT NULL DEFAULT '',
-      files               TEXT    NOT NULL DEFAULT '[]',
-      commit_hash         TEXT,
-      fixed_at            TEXT    NOT NULL DEFAULT (datetime('now')),
-      related_feedback_id INTEGER
-    )
-  `);
-}
+// telegram_reports and system_changelog are created by initDatabase()
+// in src/infrastructure/db/schema.ts (task 1029) — no inline DDL needed here.
 
 /**
  * Computes the heartbeat status from the age of the oldest unprocessed report.
@@ -142,9 +106,6 @@ function formatAge(ageH: number): string {
  * @returns HeartbeatData with counts, oldest-age, and status
  */
 export function gatherHeartbeatData(db: Database): HeartbeatData {
-  ensureReportsTable(db);
-  ensureChangelogTable(db);
-
   const nowSec = Math.floor(Date.now() / 1000);
   const windowStart = nowSec - WINDOW_SECONDS;
 

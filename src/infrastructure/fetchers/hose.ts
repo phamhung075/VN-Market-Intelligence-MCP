@@ -274,67 +274,21 @@ function recordToMarketPrice(
 // ---------------------------------------------------------------------------
 
 /**
- * Ensures the `market_prices_history` table exists in the database.
- * Called lazily before any history read/write operation.
- *
- * Schema:
- *   code       TEXT    — stock ticker
- *   price      REAL    — closing price in VND
- *   volume     REAL    — traded volume (shares)
- *   fetched_at TEXT    — ISO 8601 timestamp
- *
- * Primary key: (code, fetched_at) — prevents duplicate entries.
- */
-function ensureHistoryTable(): void {
-  const db = getDb();
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS market_prices_history (
-      code       TEXT NOT NULL,
-      price      REAL NOT NULL,
-      volume     REAL NOT NULL,
-      fetched_at TEXT NOT NULL,
-      PRIMARY KEY (code, fetched_at)
-    );
-
-    CREATE INDEX IF NOT EXISTS idx_mph_code_fetched
-      ON market_prices_history(code, fetched_at DESC);
-  `);
-}
-
-/**
  * Persists an array of MarketPrice snapshots into the `market_prices_history`
  * table. Uses INSERT OR REPLACE to handle duplicate (code, fetched_at) pairs
  * gracefully.
  *
  * Also updates the `market_prices` snapshot table (latest price per stock).
  *
+ * Note: `market_prices_history` (with exchange column) is created by
+ * initDatabase() in src/infrastructure/db/schema.ts — no inline DDL needed.
+ *
  * @param prices - Array of MarketPrice snapshots to persist.
  */
 export async function storeMarketPrices(prices: MarketPrice[]): Promise<void> {
   if (prices.length === 0) return;
 
-  ensureHistoryTable();
-
-  // Ensure the exchange column exists before preparing statements that use it.
-  // This guard runs inline so that HOSE prices also carry the exchange value
-  // even when hnx.ts has not been imported in the current process.
   const db = getDb();
-  const cols = db
-    .query<{ name: string }, []>("PRAGMA table_info(market_prices)")
-    .all();
-  if (!cols.some((c) => c.name === "exchange")) {
-    db.exec(
-      "ALTER TABLE market_prices ADD COLUMN exchange TEXT DEFAULT 'HOSE'",
-    );
-  }
-  const histCols = db
-    .query<{ name: string }, []>("PRAGMA table_info(market_prices_history)")
-    .all();
-  if (!histCols.some((c) => c.name === "exchange")) {
-    db.exec(
-      "ALTER TABLE market_prices_history ADD COLUMN exchange TEXT DEFAULT 'HOSE'",
-    );
-  }
 
   const insertHistory = db.prepare(`
     INSERT OR REPLACE INTO market_prices_history (code, price, volume, exchange, fetched_at)
@@ -370,7 +324,6 @@ export async function storeMarketPrices(prices: MarketPrice[]): Promise<void> {
  * @returns Average volume over the last `days` entries, or 0 if no data.
  */
 export async function getAvgVolume(code: string, days = 20): Promise<number> {
-  ensureHistoryTable();
   const db = getDb();
 
   const row = db
