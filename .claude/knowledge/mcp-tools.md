@@ -6,7 +6,7 @@
 
 ## Current Tool Count
 
-78 MCP tools as of Sprint 054 (Task 1078). Verify live: `curl -s http://127.0.0.1:3000/health | jq .toolCount`
+79 MCP tools as of Sprint 054 (Task 1079). Verify live: `curl -s http://127.0.0.1:3000/health | jq .toolCount`
 
 ---
 
@@ -34,7 +34,7 @@
 `get_market_context`, `get_bctc_full`
 
 ### Portfolio (7)
-`get_portfolio_conviction`, `set_position`, `get_positions`, `close_position`, `get_portfolio_risk`, `get_rebalancing_signals`, `get_target_allocation`
+`get_portfolio_conviction`, `set_position`, `get_positions`, `close_position`, `get_user_positions_for_analysis`, `get_portfolio_risk`, `get_rebalancing_signals`, `get_target_allocation`
 
 ### Price (3)
 `get_price_history`, `set_price_alert`, `delete_price_alert`

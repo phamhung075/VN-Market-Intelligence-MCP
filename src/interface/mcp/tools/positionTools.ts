@@ -1,12 +1,14 @@
 /**
  * Task 179 — Position Tracking MCP Tools
+ * Task 1079 — get_user_positions_for_analysis (enriched analysis tool)
  *
- * Interface layer: registers three MCP tools for investor position management.
+ * Interface layer: registers four MCP tools for investor position management.
  *
  * Tools registered:
- *   1. set_position   — Record or update a stock position (upsert)
- *   2. get_positions  — List all open positions with live P&L in Vietnamese format
- *   3. close_position — Mark a position as closed
+ *   1. set_position                   — Record or update a stock position (upsert)
+ *   2. get_positions                  — List all open positions with live P&L in Vietnamese format
+ *   3. close_position                 — Mark a position as closed
+ *   4. get_user_positions_for_analysis — Enriched positions with stop-loss floor + TP ladder for agents
  *
  * All prices are in VND (Vietnamese Dong), not million VND.
  *
@@ -14,6 +16,7 @@
  */
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { Database } from "bun:sqlite";
 import { z } from "zod";
 
 import { getDb, initDatabase } from "../../../infrastructure/db/schema.js";
@@ -116,12 +119,70 @@ function buildPortfolioText(positions: PositionWithPnl[]): string {
 // Tool registration
 // ─────────────────────────────────────────────────────────────────────────────
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Enriched position type (Task 1079)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Output shape for get_user_positions_for_analysis — one item per open position. */
+export interface PositionForAnalysis {
+  code: string;
+  shares: number;
+  /** Average purchase price in VND. */
+  avgPrice: number;
+  /** Live price from market_prices, or null if unavailable. */
+  currentPrice: number | null;
+  /** Total cost basis = shares × avgPrice. */
+  costBasis: number;
+  /** Current market value = shares × currentPrice, or null if no price. */
+  currentValue: number | null;
+  /** Absolute unrealized P&L in VND, or null if no current price. */
+  unrealizedPnl: number | null;
+  /** Unrealized P&L as % of costBasis, or null if no current price. */
+  unrealizedPnlPct: number | null;
+  /** Simple stop-loss floor = Math.round(avgPrice * 0.93). */
+  stopLossFloor: number;
+  /** Take-profit +10% level = Math.round(avgPrice * 1.10). */
+  tp1: number;
+  /** Take-profit +20% level = Math.round(avgPrice * 1.20). */
+  tp2: number;
+  /** Take-profit +30% level = Math.round(avgPrice * 1.30). */
+  tp3: number;
+}
+
 /**
- * Register the three position tracking tools on an McpServer instance.
+ * Enrich a PositionWithPnl with stop-loss floor and TP ladder.
  *
- * @param server - The McpServer instance to register tools on.
+ * @param p - Raw position with live P&L from listOpenPositions.
+ * @returns PositionForAnalysis with computed analysis fields.
  */
-export function registerPositionTools(server: McpServer): void {
+function enrichPosition(p: PositionWithPnl): PositionForAnalysis {
+  return {
+    code: p.code,
+    shares: p.shares,
+    avgPrice: p.avgPrice,
+    currentPrice: p.currentPrice,
+    costBasis: p.costBasis,
+    currentValue: p.currentPrice != null ? p.currentValue : null,
+    unrealizedPnl: p.currentPrice != null ? p.unrealizedPnl : null,
+    unrealizedPnlPct: p.currentPrice != null ? p.unrealizedPnlPct : null,
+    stopLossFloor: Math.round(p.avgPrice * 0.93),
+    tp1: Math.round(p.avgPrice * 1.10),
+    tp2: Math.round(p.avgPrice * 1.20),
+    tp3: Math.round(p.avgPrice * 1.30),
+  };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Tool registration
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Register all four position tracking tools on an McpServer instance.
+ *
+ * @param server  - The McpServer instance to register tools on.
+ * @param _testDb - Optional test database (injected in tests). In production, uses getDb().
+ */
+export function registerPositionTools(server: McpServer, _testDb?: Database): void {
 
   // ── 1. set_position ──────────────────────────────────────────────────────
   server.tool(
@@ -251,6 +312,62 @@ export function registerPositionTools(server: McpServer): void {
         };
       } catch (err) {
         console.error("[close_position] Error:", err);
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: `Error: ${(err as Error).message}`,
+            },
+          ],
+        };
+      }
+    },
+  );
+
+  // ── 4. get_user_positions_for_analysis ────────────────────────────────────
+  server.tool(
+    "get_user_positions_for_analysis",
+    "Return enriched position data for Cowork analysis agents. " +
+      "Each position includes: qty, avg_cost, current price (from market_prices), " +
+      "absolute and percentage P&L (null if no live price), " +
+      "stop-loss floor (avg_cost × 0.93), and TP ladder (+10%/+20%/+30%). " +
+      "Optional ticker filter narrows results to a single stock. " +
+      "Returns an empty JSON array when the portfolio has no open positions.",
+    {
+      ticker: z
+        .string()
+        .min(2)
+        .max(10)
+        .toUpperCase()
+        .optional()
+        .describe(
+          "Optional stock ticker to filter results (e.g. 'VCB'). " +
+            "Omit to return all open positions.",
+        ),
+    },
+    async ({ ticker }) => {
+      try {
+        if (!_testDb) await initDatabase();
+        const db = _testDb ?? getDb();
+
+        const all = listOpenPositions(db);
+        const filtered =
+          ticker != null
+            ? all.filter((p) => p.code === ticker.toUpperCase())
+            : all;
+
+        const result: PositionForAnalysis[] = filtered.map(enrichPosition);
+
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: JSON.stringify(result, null, 2),
+            },
+          ],
+        };
+      } catch (err) {
+        console.error("[get_user_positions_for_analysis] Error:", err);
         return {
           content: [
             {
