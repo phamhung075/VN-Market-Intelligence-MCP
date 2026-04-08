@@ -683,19 +683,9 @@ export async function initDatabase(): Promise<void> {
       ON tracked_indicators(indicator, extracted_at DESC);
   `);
 
-  // ── Mention velocity (Sprint 031 / 265) ────────────────────────────────
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS mention_velocity (
-      code           TEXT    NOT NULL,
-      hour           TEXT    NOT NULL,
-      mention_count  INTEGER NOT NULL DEFAULT 0,
-      negative_count INTEGER NOT NULL DEFAULT 0,
-      source_count   INTEGER NOT NULL DEFAULT 0,
-      PRIMARY KEY (code, hour)
-    );
-    CREATE INDEX IF NOT EXISTS idx_mv_code ON mention_velocity(code);
-    CREATE INDEX IF NOT EXISTS idx_mv_hour ON mention_velocity(hour);
-  `);
+  // ── Mention velocity: canonical DDL lives above (Task 265, ~line 271).
+  // Duplicate block removed Task 1033 — keep a single source of truth so
+  // future column changes only need to be made in one place.
 
   // ── Market summaries (periodic briefings — Sprint 034 / task 130) ─────────
   // No module owns the DDL — prod DB was created by-hand. Canonicalising here
