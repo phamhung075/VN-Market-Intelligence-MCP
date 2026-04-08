@@ -9,6 +9,7 @@
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { getDb, initDatabase } from "../../../infrastructure/db/schema.js";
+import { appendKinhDich } from "../../../domain/services/kinhDichWrapper.js";
 import { computeConviction, deriveKinhDichScore } from "../../../domain/services/convictionScorer.js";
 import { getSectorPeers, SECTOR_NAME_VI } from "../../../domain/services/sectorPeers.js";
 import { buildPositionLine, buildActionNote } from "../../../domain/services/decisionNoteSynthesizer.js";
@@ -275,11 +276,17 @@ export function registerPortfolioTools(server: McpServer): void {
           const alertStr = r.openAlerts > 0 ? ` | ${r.openAlerts} alert` : "";
           const trendStr = r.trend.length >= 2 ? ` | trend: [${r.trend.map((t) => t.toFixed(2)).join(",")}]` : "";
 
-          lines.push(`${r.code} - ${r.level.toUpperCase()} (${r.score.toFixed(2)})`);
-          lines.push(`  ${priceStr} ${chgStr} | ${sectorStr}${alertStr}${trendStr}`);
-          lines.push(`  ${r.summary}`);
-          lines.push(`  ${r.positionLine}`);
-          lines.push(`  ${r.actionNote}`);
+          // Build per-position block then append Kinh Dich hexagram reading (best-effort)
+          let positionBlock = [
+            `${r.code} - ${r.level.toUpperCase()} (${r.score.toFixed(2)})`,
+            `  ${priceStr} ${chgStr} | ${sectorStr}${alertStr}${trendStr}`,
+            `  ${r.summary}`,
+            `  ${r.positionLine}`,
+            `  ${r.actionNote}`,
+          ].join("\n");
+
+          positionBlock = await appendKinhDich(r.code, positionBlock, db);
+          lines.push(positionBlock);
           lines.push("");
         }
 

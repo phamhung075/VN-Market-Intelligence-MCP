@@ -18,6 +18,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 
 import { getDb, initDatabase } from "../../../infrastructure/db/schema.js";
+import { appendKinhDich } from "../../../domain/services/kinhDichWrapper.js";
 import { fetchCafeF } from "../../../infrastructure/fetchers/cafef.js";
 import { fetchVnExpress } from "../../../infrastructure/fetchers/vnexpress.js";
 import { fetchReuters } from "../../../infrastructure/fetchers/reuters.js";
@@ -305,11 +306,13 @@ export function registerAnalysisTools(server: McpServer): void {
               neutral: "[NEUTRAL]",
             };
             const icon = directionIcon[impact.impactDirection] ?? "[?]";
-            lines.push(
+            let stockSummary =
               `${impact.actionCode.padEnd(6)} [${impact.domain}] ${icon} ` +
-              `Confidence: ${(impact.confidence * 100).toFixed(0)}%`,
-            );
-            lines.push(`  ${impact.reasoning.slice(0, 160)}`);
+              `Confidence: ${(impact.confidence * 100).toFixed(0)}%\n` +
+              `  ${impact.reasoning.slice(0, 160)}`;
+            // Append Kinh Dich hexagram reading for this stock (best-effort, never throws)
+            stockSummary = await appendKinhDich(impact.actionCode, stockSummary, db);
+            lines.push(stockSummary);
           }
           lines.push("");
         } else {
