@@ -151,3 +151,195 @@ export function closePosition(db: Database, code: string): boolean {
 
   return result.changes > 0;
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Task 1070 — Position Ledger Commands
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Input for the unified position command dispatcher.
+ *
+ * - `qty > 0`  → buy
+ * - `qty < 0`  → sell (clamped to holdings)
+ * - `price == 0 && qty == 0` → clear
+ */
+export interface PositionCommandInput {
+  /** Ticker symbol, e.g. "VCB". Case-insensitive — normalised to uppercase internally. */
+  ticker: string;
+  /** Price in raw VND (>= 0). */
+  price: number;
+  /** Share count. Positive = buy, negative = sell, 0 = clear (when price also 0). */
+  qty: number;
+}
+
+/**
+ * Result returned by all position command functions.
+ * `message` is a Vietnamese explanation of what happened.
+ */
+export interface PositionCommandResult {
+  ok: boolean;
+  message: string;
+  /** Present and `true` when a sell was clamped to current holdings. */
+  clamped?: boolean;
+}
+
+/**
+ * Buy shares — computes weighted-average cost and upserts the position.
+ *
+ * Formula: `avg_price = Math.round((old_shares * old_avg + qty * price) / (old_shares + qty))`
+ *
+ * If no open position exists the price becomes the initial avg cost.
+ *
+ * @param db    Database connection
+ * @param code  Ticker symbol (case-insensitive)
+ * @param price Purchase price in raw VND
+ * @param qty   Number of shares to buy (must be > 0)
+ */
+export function buyPosition(
+  db: Database,
+  code: string,
+  price: number,
+  qty: number,
+): PositionCommandResult {
+  const upper = code.toUpperCase();
+
+  // Read existing open position (if any)
+  const existing = db
+    .prepare<Pick<PositionRow, "shares" | "avg_price">, [string]>(
+      `SELECT shares, avg_price FROM positions WHERE code = ? AND closed_at IS NULL`,
+    )
+    .get(upper);
+
+  let newShares: number;
+  let newAvg: number;
+  let message: string;
+
+  if (existing == null || existing.shares === 0) {
+    // First buy — use purchase price as avg cost
+    newShares = qty;
+    newAvg = price;
+    message = `Mua ${qty} CP @ ${price} VND → vị thế mới tạo, avg cost: ${price} VND`;
+  } else {
+    newShares = existing.shares + qty;
+    newAvg = Math.round((existing.shares * existing.avg_price + qty * price) / newShares);
+    message = `Mua thêm ${qty} @ ${price} VND → avg cost mới: ${newAvg} VND (tổng ${newShares} CP)`;
+  }
+
+  upsertPosition(db, { code: upper, shares: newShares, avgPrice: newAvg });
+
+  return { ok: true, message };
+}
+
+/**
+ * Sell shares — reduces holdings (clamped to current shares).
+ *
+ * - `avg_price` is **not** changed on partial sells.
+ * - If resulting shares == 0, `closePosition` is called.
+ *
+ * @param db    Database connection
+ * @param code  Ticker symbol (case-insensitive)
+ * @param price Sale price in raw VND
+ * @param qty   Number of shares to sell (must be > 0; supply the absolute value)
+ */
+export function sellPosition(
+  db: Database,
+  code: string,
+  price: number,
+  qty: number,
+): PositionCommandResult {
+  const upper = code.toUpperCase();
+  const sellQty = Math.abs(qty); // normalise in case caller passes negative
+
+  // Read existing open position
+  const existing = db
+    .prepare<Pick<PositionRow, "shares" | "avg_price">, [string]>(
+      `SELECT shares, avg_price FROM positions WHERE code = ? AND closed_at IS NULL`,
+    )
+    .get(upper);
+
+  const currentShares = existing?.shares ?? 0;
+
+  if (sellQty > currentShares) {
+    // Clamped: trying to sell MORE than current holdings
+    closePosition(db, upper);
+    return {
+      ok: true,
+      clamped: true,
+      message: `Chỉ bán được ${currentShares} CP (không đủ số lượng) → đã thanh lý toàn bộ vị thế`,
+    };
+  }
+
+  if (sellQty === currentShares) {
+    // Exact liquidation: sell precisely the full position
+    closePosition(db, upper);
+    return {
+      ok: true,
+      message: `Bán ${sellQty} CP @ ${price} VND → đã thanh lý toàn bộ vị thế`,
+    };
+  }
+
+  // Partial sell: update shares, avg_price stays the same
+  const remaining = currentShares - sellQty;
+  const avgPrice = existing!.avg_price;
+
+  upsertPosition(db, { code: upper, shares: remaining, avgPrice });
+
+  return {
+    ok: true,
+    message: `Bán ${sellQty} CP @ ${price} VND → còn lại ${remaining} CP @ ${avgPrice} VND`,
+  };
+}
+
+/**
+ * Clear a position — marks it closed regardless of shares held.
+ *
+ * @param db    Database connection
+ * @param code  Ticker symbol (case-insensitive)
+ */
+export function clearPosition(
+  db: Database,
+  code: string,
+): PositionCommandResult {
+  const upper = code.toUpperCase();
+  closePosition(db, upper);
+  return { ok: true, message: `Đã xóa toàn bộ vị thế ${upper}` };
+}
+
+/**
+ * Unified dispatcher — routes to buyPosition / sellPosition / clearPosition
+ * based on the sign of `qty` and whether `price` is zero.
+ *
+ * Routing:
+ * - `qty > 0`                    → buyPosition
+ * - `qty < 0`                    → sellPosition (abs qty)
+ * - `price == 0 && qty == 0`     → clearPosition
+ * - `qty == 0 && price > 0`      → error (invalid input)
+ *
+ * @param db    Database connection
+ * @param input `{ ticker, price, qty }`
+ */
+export function applyPositionCommand(
+  db: Database,
+  input: PositionCommandInput,
+): PositionCommandResult {
+  const { ticker, price, qty } = input;
+
+  if (qty > 0) {
+    return buyPosition(db, ticker, price, qty);
+  }
+
+  if (qty < 0) {
+    return sellPosition(db, ticker, price, Math.abs(qty));
+  }
+
+  // qty === 0
+  if (price === 0) {
+    return clearPosition(db, ticker);
+  }
+
+  // qty === 0 && price > 0 — invalid
+  return {
+    ok: false,
+    message: `Không hợp lệ: qty=0 khi price > 0. Để xóa vị thế dùng price=0 qty=0.`,
+  };
+}
