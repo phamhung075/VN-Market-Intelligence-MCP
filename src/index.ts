@@ -74,6 +74,30 @@ log.info("[bootstrap] Endpoints", {
   health: `http://127.0.0.1:${srv.port}/health`,
 });
 
+// ── 3. Telegram env liveness check — fail loudly, never silently ─────────
+// A prior regression silently skipped all Telegram sends when env vars were
+// missing, producing false-positive "Telegram broken" reports. Log loudly at
+// bootstrap so any future env regression is immediately visible in the log.
+{
+  const telegramEnabled = (process.env.TELEGRAM_ENABLED ?? "true").toLowerCase() !== "false";
+  const tokenSet = ((process.env.TELEGRAM_BOT_TOKEN ?? "").length > 0);
+  const marketSet = ((process.env.TELEGRAM_INFO_MARKET_GROUP_ID ?? "").length > 0);
+  const workSet = ((process.env.TELEGRAM_INFO_WORK_CHANNEL_ID ?? "").length > 0);
+  const bugSet = ((process.env.TELEGRAM_REPORT_BUG_CHANNEL_ID ?? "").length > 0);
+  if (telegramEnabled && (!tokenSet || !marketSet || !workSet || !bugSet)) {
+    log.warn("[bootstrap] Telegram env incomplete — sends will be skipped", {
+      TELEGRAM_BOT_TOKEN: tokenSet ? "set" : "MISSING",
+      TELEGRAM_INFO_MARKET_GROUP_ID: marketSet ? "set" : "MISSING",
+      TELEGRAM_INFO_WORK_CHANNEL_ID: workSet ? "set" : "MISSING",
+      TELEGRAM_REPORT_BUG_CHANNEL_ID: bugSet ? "set" : "MISSING",
+    });
+  } else if (telegramEnabled) {
+    log.info("[bootstrap] Telegram env OK (token + market + work + bug all set)");
+  } else {
+    log.info("[bootstrap] Telegram disabled via TELEGRAM_ENABLED=false");
+  }
+}
+
 // ── 3. Telegram webhook registration (if env vars set) ───────────────────
 const webhookRegistered = await registerWebhook();
 if (webhookRegistered) {

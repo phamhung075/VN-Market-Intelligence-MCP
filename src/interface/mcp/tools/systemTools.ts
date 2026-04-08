@@ -184,9 +184,26 @@ export async function getSystemStatus(opts: SystemStatusOptions): Promise<string
       dbLines.push(`  Total (24h):        ${totalAlerts?.cnt ?? 0}`);
       dbLines.push(`  HIGH/CRITICAL (24h): ${highCritical?.cnt ?? 0}`);
       dbLines.push(`  Unnotified:         ${unnotified?.cnt ?? 0}`);
-      dbLines.push(`  Last Telegram sent: ${lastTelegram?.triggered_at ?? "never"}`);
+      // NOTE: this only tracks alerts-table notifications (price/volume alerts).
+      // Briefings, digests, feedback, WORK/BUG messages do NOT update this row.
+      // "never" here means "no HIGH/CRITICAL alert has been Telegram-notified",
+      // NOT "Telegram is broken". See telegramEnvStatus below for liveness.
+      dbLines.push(`  Last alert→Telegram: ${lastTelegram?.triggered_at ?? "never (no alert notified yet)"}`);
     } catch {
       dbLines.push("  (alerts table not ready)");
+    }
+    dbLines.push("");
+
+    // Telegram env (liveness) — reads env at call-time, no secrets printed.
+    dbLines.push("--- Telegram Env (live) ---");
+    const telegramEnv = {
+      TELEGRAM_BOT_TOKEN: (process.env.TELEGRAM_BOT_TOKEN ?? Bun.env.TELEGRAM_BOT_TOKEN ?? "").length > 0,
+      TELEGRAM_INFO_MARKET_GROUP_ID: (process.env.TELEGRAM_INFO_MARKET_GROUP_ID ?? Bun.env.TELEGRAM_INFO_MARKET_GROUP_ID ?? "").length > 0,
+      TELEGRAM_INFO_WORK_CHANNEL_ID: (process.env.TELEGRAM_INFO_WORK_CHANNEL_ID ?? Bun.env.TELEGRAM_INFO_WORK_CHANNEL_ID ?? "").length > 0,
+      TELEGRAM_REPORT_BUG_CHANNEL_ID: (process.env.TELEGRAM_REPORT_BUG_CHANNEL_ID ?? Bun.env.TELEGRAM_REPORT_BUG_CHANNEL_ID ?? "").length > 0,
+    };
+    for (const [k, v] of Object.entries(telegramEnv)) {
+      dbLines.push(`  ${k}: ${v ? "SET" : "MISSING"}`);
     }
     dbLines.push("");
 
