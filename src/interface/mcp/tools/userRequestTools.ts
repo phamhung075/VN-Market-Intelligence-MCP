@@ -18,7 +18,6 @@ import { z } from "zod";
 import type { Database } from "bun:sqlite";
 
 import {
-  ensureUserRequestsTable,
   insertUserRequest,
   getPendingRequests,
   type UserRequest,
@@ -46,7 +45,6 @@ export function logUserRequest(
   question: string,
   source: string,
 ): { id: number; status: "pending" } {
-  ensureUserRequestsTable(db);
   const id = insertUserRequest(db, "ask", question);
   logger.debug(`[log_user_request] Inserted id=${id} source=${source} payload="${question.slice(0, 60)}"`);
   return { id, status: "pending" };
@@ -63,7 +61,6 @@ export function getPendingUserRequests(
   db: Database,
   limit: number = 5,
 ): UserRequest[] {
-  ensureUserRequestsTable(db);
   return getPendingRequests(db, limit);
 }
 

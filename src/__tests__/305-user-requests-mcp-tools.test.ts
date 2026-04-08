@@ -15,12 +15,12 @@ import { describe, it, expect, beforeEach } from "bun:test";
 import { Database } from "bun:sqlite";
 
 import {
-  ensureUserRequestsTable,
   insertUserRequest,
   getPendingRequests,
   markAnswered,
   type UserRequest,
 } from "../infrastructure/db/userRequestStore.js";
+import { ensureUserRequestsTable } from "./helpers/userRequestsTestDdl.js";
 
 import {
   logUserRequest,

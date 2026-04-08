@@ -13,7 +13,8 @@
 
 import { describe, it, expect } from "bun:test";
 import { Database } from "bun:sqlite";
-import { ensureUserRequestsTable, insertUserRequest } from "../infrastructure/db/userRequestStore.js";
+import { insertUserRequest } from "../infrastructure/db/userRequestStore.js";
+import { ensureUserRequestsTable } from "./helpers/userRequestsTestDdl.js";
 import { runUserRequestCheck, type UserRequestCheckDeps } from "../scheduler/userRequestCheckJob.js";
 
 // ─────────────────────────────────────────────────────────────────────────────

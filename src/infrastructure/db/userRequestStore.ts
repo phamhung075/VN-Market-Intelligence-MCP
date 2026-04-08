@@ -30,31 +30,14 @@ import type { Database } from "bun:sqlite";
 // ─────────────────────────────────────────────────────────────────────────────
 // DDL
 // ─────────────────────────────────────────────────────────────────────────────
-
-const USER_REQUESTS_DDL = `
-  CREATE TABLE IF NOT EXISTS user_requests (
-    id          INTEGER PRIMARY KEY AUTOINCREMENT,
-    command     TEXT NOT NULL,
-    payload     TEXT NOT NULL,
-    status      TEXT NOT NULL DEFAULT 'pending',
-    response    TEXT,
-    created_at  TEXT NOT NULL DEFAULT (datetime('now')),
-    answered_at TEXT
-  )
-`;
-
-/**
- * Ensure the `user_requests` table and index exist.
- * Idempotent — safe to call multiple times.
- *
- * @param db - SQLite database instance
- */
-export function ensureUserRequestsTable(db: Database): void {
-  db.exec(USER_REQUESTS_DDL);
-  db.exec(
-    `CREATE INDEX IF NOT EXISTS idx_user_requests_status ON user_requests(status)`,
-  );
-}
+//
+// Task 1036 — the local `ensureUserRequestsTable()` DDL helper has been removed.
+// The canonical `user_requests` table is created by `initDatabase()` in
+// `src/infrastructure/db/schema.ts` (~line 625) at server startup, before any
+// scheduler/MCP tool that touches this store can run.
+//
+// Tests that need an in-memory `user_requests` table should import the
+// dedicated helper at `src/__tests__/helpers/userRequestsTestDdl.ts`.
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types

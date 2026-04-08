@@ -11,10 +11,8 @@
 
 import { describe, it, expect, beforeEach } from "bun:test";
 import { Database } from "bun:sqlite";
-import {
-  ensureUserRequestsTable,
-  type UserRequest,
-} from "../infrastructure/db/userRequestStore.js";
+import { type UserRequest } from "../infrastructure/db/userRequestStore.js";
+import { ensureUserRequestsTable } from "./helpers/userRequestsTestDdl.js";
 import { handleTelegramCommand } from "../infrastructure/notifiers/telegramCommands.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
