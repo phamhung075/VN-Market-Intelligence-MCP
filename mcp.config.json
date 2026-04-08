@@ -267,5 +267,20 @@
     "failureThreshold": 5,
     "resetTimeoutMs": 60000,
     "halfOpenMaxAttempts": 2
+  },
+
+  "alertPolicy": {
+    "positionDanger": {
+      "singleDayDropPct": 5,
+      "newsSentimentBelow": -0.5,
+      "requireAllConditions": true
+    },
+    "watchlistOpportunity": {
+      "kinhDichConfidenceMin": 70,
+      "kinhDichSignalMustBe": "BUY",
+      "newsSentimentMin": 0.3,
+      "agentSignalsMajority": "BUY"
+    },
+    "alertCooldownMinutes": 0
   }
 }

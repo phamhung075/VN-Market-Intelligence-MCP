@@ -169,6 +169,34 @@ export interface FetchLimitsConfig {
   manual: FetchLimitProfile;
 }
 
+export interface AlertPolicyPositionDangerConfig {
+  /** Minimum single-session price drop (%) required for the danger gate. Default: 5 */
+  singleDayDropPct: number;
+  /** News sentiment must be at or below this value (inclusive). Default: -0.5 */
+  newsSentimentBelow: number;
+  /** Whether all conditions are required simultaneously (always true). Default: true */
+  requireAllConditions: boolean;
+}
+
+export interface AlertPolicyWatchlistOpportunityConfig {
+  /** Minimum Kinh Dich confidence percentage. Default: 70 */
+  kinhDichConfidenceMin: number;
+  /** Kinh Dich signal must equal this value. Default: "BUY" */
+  kinhDichSignalMustBe: string;
+  /** News sentiment must be at or above this value (inclusive). Default: 0.3 */
+  newsSentimentMin: number;
+  /** Agent signals majority must equal this value. Default: "BUY" */
+  agentSignalsMajority: string;
+}
+
+/** Alert policy thresholds for the two narrowed alert types (Sprint 054). */
+export interface AlertPolicyConfig {
+  positionDanger: AlertPolicyPositionDangerConfig;
+  watchlistOpportunity: AlertPolicyWatchlistOpportunityConfig;
+  /** Cooldown between repeated alerts for the same ticker (minutes). Default: 0 (no cooldown). */
+  alertCooldownMinutes: number;
+}
+
 export interface McpConfig {
   server: ServerConfig;
   data: DataConfig;
@@ -182,6 +210,8 @@ export interface McpConfig {
   fetchLimits: FetchLimitsConfig;
   /** Prediction market intelligence configuration. */
   predictionMarkets: PredictionMarketsConfig;
+  /** Narrowed alert policy thresholds for Sprint 054 position-danger + watchlist-opportunity. */
+  alertPolicy: AlertPolicyConfig;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -510,6 +540,25 @@ export function loadMcpConfig(): McpConfig {
         relevantKeywords: arrVal(pm, "relevantKeywords", DEFAULT_PREDICTION_KEYWORDS),
         curatedMarketIds: arrVal(pm, "curatedMarketIds", []),
       };
+    })(),
+    alertPolicy: (() => {
+      const ap = (get(f, "alertPolicy") ?? {}) as Record<string, unknown>;
+      const pd = (ap["positionDanger"] ?? {}) as Record<string, unknown>;
+      const wo = (ap["watchlistOpportunity"] ?? {}) as Record<string, unknown>;
+      return {
+        positionDanger: {
+          singleDayDropPct: numVal(pd, "singleDayDropPct", 5),
+          newsSentimentBelow: numVal(pd, "newsSentimentBelow", -0.5),
+          requireAllConditions: boolVal(pd, "requireAllConditions", true),
+        },
+        watchlistOpportunity: {
+          kinhDichConfidenceMin: numVal(wo, "kinhDichConfidenceMin", 70),
+          kinhDichSignalMustBe: typeof wo["kinhDichSignalMustBe"] === "string" ? wo["kinhDichSignalMustBe"] : "BUY",
+          newsSentimentMin: numVal(wo, "newsSentimentMin", 0.3),
+          agentSignalsMajority: typeof wo["agentSignalsMajority"] === "string" ? wo["agentSignalsMajority"] : "BUY",
+        },
+        alertCooldownMinutes: numVal(ap, "alertCooldownMinutes", 0),
+      } satisfies AlertPolicyConfig;
     })(),
   };
 }
