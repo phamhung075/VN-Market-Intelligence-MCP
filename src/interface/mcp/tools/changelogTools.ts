@@ -19,7 +19,6 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { getDb, initDatabase } from "../../../infrastructure/db/schema.js";
 import {
-  ensureChangelogTable,
   insertChangelog,
   getRecentChangelogs,
   type ChangelogEntry,
@@ -110,7 +109,6 @@ export function registerChangelogTools(server: McpServer): void {
       try {
         await initDatabase();
         const db = getDb();
-        ensureChangelogTable(db);
 
         const input: Parameters<typeof insertChangelog>[1] = {
           fixType: fix_type ?? "bugfix",
@@ -185,7 +183,6 @@ export function registerChangelogTools(server: McpServer): void {
       try {
         await initDatabase();
         const db = getDb();
-        ensureChangelogTable(db);
 
         const resolvedLimit = limit ?? 10;
         const entries = getRecentChangelogs(db, resolvedLimit);

@@ -12,7 +12,6 @@
 import { describe, it, expect, beforeEach, afterEach } from "bun:test";
 import { Database } from "bun:sqlite";
 import {
-  ensureChangelogTable,
   insertChangelog,
   getRecentChangelogs,
   type ChangelogEntry,
@@ -21,6 +20,30 @@ import {
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
 // ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Task 1034 — `ensureChangelogTable` was removed from changelogStore.ts because
+ * its DDL duplicated `schema.ts:initDatabase()`. Tests use this local helper
+ * (mirroring the canonical DDL) so they remain isolated from the production
+ * initDatabase() side effects.
+ */
+function ensureChangelogTable(db: Database): void {
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS system_changelog (
+      id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+      fix_type            TEXT    NOT NULL DEFAULT 'bugfix',
+      title               TEXT    NOT NULL,
+      detail              TEXT    NOT NULL DEFAULT '',
+      files               TEXT    NOT NULL DEFAULT '[]',
+      commit_hash         TEXT,
+      fixed_at            TEXT    NOT NULL DEFAULT (datetime('now')),
+      related_feedback_id INTEGER
+    )
+  `);
+  db.exec(
+    `CREATE INDEX IF NOT EXISTS idx_changelog_fixed_at ON system_changelog(fixed_at)`,
+  );
+}
 
 function makeDb(): Database {
   const db = new Database(":memory:");
