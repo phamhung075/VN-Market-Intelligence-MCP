@@ -223,19 +223,7 @@ export function storeShippingIndices(indices: ShippingIndex[]): void {
     const { getDb } = require("../db/schema.js");
     const db = getDb();
 
-    // Ensure tracked_indicators table exists (same as commodityTracker)
-    db.exec(`
-      CREATE TABLE IF NOT EXISTS tracked_indicators (
-        id           INTEGER PRIMARY KEY AUTOINCREMENT,
-        indicator    TEXT NOT NULL,
-        value        REAL NOT NULL,
-        unit         TEXT NOT NULL DEFAULT '',
-        source       TEXT NOT NULL DEFAULT '',
-        extracted_at TEXT NOT NULL
-      );
-      CREATE INDEX IF NOT EXISTS idx_tracked_ind_name_time
-        ON tracked_indicators(indicator, extracted_at DESC);
-    `);
+    // tracked_indicators is created by initDatabase() in schema.ts (task 1030).
 
     const now = new Date().toISOString();
     const stmt = db.prepare(
