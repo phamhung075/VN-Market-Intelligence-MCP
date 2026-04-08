@@ -35,6 +35,9 @@ interface AlertRow {
   message: string | null;
   read: number;
   user_note: string | null;
+  // Task 1005 — pre-fix phantom alert marker
+  resolved_at?: string | null;
+  resolution_notes?: string | null;
 }
 
 interface WatchlistRow {
@@ -178,8 +181,8 @@ function formatPriceAlertsSection(
   return lines.join("\n");
 }
 
-/** Format a single AlertRow for display. */
-function formatAlertRow(row: AlertRow): string {
+/** Format a single AlertRow for display. Exported for Task 1005 unit tests. */
+export function formatAlertRow(row: AlertRow): string {
   const severityIcon: Record<string, string> = {
     low: "[LOW]",
     medium: "[MEDIUM]",
@@ -193,13 +196,25 @@ function formatAlertRow(row: AlertRow): string {
   const signalTypes = parseSignalTypes(row.signals_json).join(", ") || "—";
   const ts = row.triggered_at.slice(0, 16);
 
+  // Task 1005 — pre-fix phantom alert marker. An alert whose resolution_notes
+  // starts with "Superseded by fix" has been invalidated by a later dev-team
+  // fix; surface the [SUPERSEDED] tag so report-analyzer + human readers can
+  // visually discount it rather than treat it as live.
+  const isSuperseded =
+    typeof row.resolution_notes === "string" &&
+    row.resolution_notes.startsWith("Superseded by fix");
+  const supersededTag = isSuperseded ? " [SUPERSEDED]" : "";
+
   const lines = [
-    `${readMark} ${icon} ${ts}`,
+    `${readMark} ${icon}${supersededTag} ${ts}`,
     `  Stocks  : ${codes}`,
     `  Signals : ${signalTypes}`,
     `  Message : ${row.message ?? "—"}`,
   ];
 
+  if (isSuperseded && row.resolution_notes) {
+    lines.push(`  Resolved: ${row.resolution_notes}`);
+  }
   if (row.user_note) {
     lines.push(`  Note    : ${row.user_note}`);
   }
