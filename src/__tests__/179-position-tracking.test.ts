@@ -92,6 +92,17 @@ describe("Task 179 — upsertPosition", () => {
   it("requires avgPrice > 0", () => {
     expect(() => upsertPosition(db, { code: "VCB", shares: 100, avgPrice: -1 })).toThrow();
   });
+
+  it("rejects implausibly small avgPrice (unit mismatch guard — report #1069)", () => {
+    // 80.3 almost certainly means "80.3 thousand VND" → caller forgot the
+    // unit conversion. VN stocks trade in raw VND, lowest ~1,000.
+    expect(() => upsertPosition(db, { code: "FPT", shares: 5000, avgPrice: 80.3 })).toThrow(
+      /implausibly small/,
+    );
+    // 999 still rejected, 1000 accepted.
+    expect(() => upsertPosition(db, { code: "FPT", shares: 5000, avgPrice: 999 })).toThrow();
+    expect(() => upsertPosition(db, { code: "FPT", shares: 5000, avgPrice: 1000 })).not.toThrow();
+  });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────

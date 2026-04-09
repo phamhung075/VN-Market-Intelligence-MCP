@@ -72,6 +72,16 @@ export function upsertPosition(
   if (avgPrice <= 0) {
     throw new Error(`[upsertPosition] avgPrice must be > 0, got ${avgPrice}`);
   }
+  // Unit-sanity guard: VN stocks trade in raw VND (>= 1,000). A value
+  // below this almost always means the caller passed "thousands VND"
+  // (e.g. 80.3 instead of 80300) — reject loudly rather than silently
+  // produce absurd P&L like +97,409% (report #1069).
+  if (avgPrice < 1000) {
+    throw new Error(
+      `[upsertPosition] avgPrice ${avgPrice} is implausibly small for a VN stock — ` +
+        `prices are in raw VND (e.g. 80300, not 80.3). Reject to prevent unit mismatch.`,
+    );
+  }
 
   db.prepare(
     `INSERT INTO positions (code, shares, avg_price, opened_at, notes)
