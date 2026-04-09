@@ -672,6 +672,14 @@ Status: Backlog
 
 ---
 
+### [1082 / @dev P2] Macro snapshot Brent crude duplicate/conflicting values (report #1070)
+
+digest-writer reported two different Brent values in the same macro snapshot (96.44 vs 116 USD). Current `get_macro_snapshot` shows only 96.51, so the 116 USD field is most likely a stale fallback or a second commodity source leaking into Brent. Reproduce by logging raw sources inside `macroSnapshotAssembler`, identify which fetcher returns 116, and either drop the stale path or reconcile with a canonical source. MONITOR status — single occurrence, needs evidence before a code change.
+
+Status: Backlog (monitor)
+
+---
+
 ### [914 / @po] Steel sector watchlist gap — HPG
 
 **Decision needed from PO**:
