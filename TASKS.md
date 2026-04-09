@@ -674,9 +674,13 @@ Status: Backlog
 
 ### [1082 / @dev P2] Macro snapshot Brent crude duplicate/conflicting values (report #1070)
 
-digest-writer reported two different Brent values in the same macro snapshot (96.44 vs 116 USD). Current `get_macro_snapshot` shows only 96.51, so the 116 USD field is most likely a stale fallback or a second commodity source leaking into Brent. Reproduce by logging raw sources inside `macroSnapshotAssembler`, identify which fetcher returns 116, and either drop the stale path or reconcile with a canonical source. MONITOR status — single occurrence, needs evidence before a code change.
+digest-writer reported two different Brent values in the same macro snapshot (96.44 vs 116 USD). Root cause located via `get_system_status` 2026-04-09: two independent writers populate Brent with different scales —
+- `Commodity Prices` panel (macroSnapshotAssembler live fetch): Brent ≈ 96.51 USD/bbl ✅ current
+- `Auto-tracked Indicators` table: `brent_crude_usd` row stuck at 116 with 42 data points (stale writer)
 
-Status: Backlog (monitor)
+Fix: reconcile the auto-tracked indicator writer so it mirrors the live commodity fetcher (or retire whichever is wrong). Candidate files: grep for `brent_crude_usd` in `src/infrastructure/db/` + `src/scheduler/` to find the writer inserting 116. Add a unit sanity guard (Brent plausible band 20-200 USD) once the correct source is confirmed.
+
+Status: Backlog (reproducible, lead identified)
 
 ---
 
