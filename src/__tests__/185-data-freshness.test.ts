@@ -141,7 +141,7 @@ describe("Task 185 — getDataFreshness() output format", () => {
       CREATE TABLE IF NOT EXISTS financial_reports (
         id TEXT PRIMARY KEY,
         stock_code TEXT,
-        created_at TEXT NOT NULL
+        parsed_at TEXT NOT NULL
       );
       CREATE TABLE IF NOT EXISTS alerts (
         id TEXT PRIMARY KEY,
@@ -203,7 +203,7 @@ describe("Task 185 — getDataFreshness() output format", () => {
 
   it("shows 'Rat cu' for financial_reports updated 3 days ago", async () => {
     const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString();
-    db.exec(`INSERT INTO financial_reports (id, stock_code, created_at) VALUES ('f1', 'VCB', '${threeDaysAgo}')`);
+    db.exec(`INSERT INTO financial_reports (id, stock_code, parsed_at) VALUES ('f1', 'VCB', '${threeDaysAgo}')`);
 
     const result = await getDataFreshness(db);
     expect(result).toContain("Rat cu");
@@ -235,6 +235,33 @@ describe("Task 185 — registerDataFreshnessTools()", () => {
       _registeredTools: Record<string, unknown>;
     })._registeredTools;
     expect(tools["get_data_freshness"]).toBeUndefined();
+  });
+
+  it("BCTC freshness query matches the real financial_reports schema (report #1071)", async () => {
+    // Regression guard: the production query referenced `created_at`, which
+    // does not exist on financial_reports — the try/catch silently swallowed
+    // the SQLite error and always reported 'Chua co du lieu'. Rebuild the
+    // real table shape (only the columns needed by the query) and verify the
+    // BCTC row shows a concrete status, not the null-data sentinel.
+    const db = new Database(":memory:");
+    db.exec(`
+      CREATE TABLE financial_reports (
+        id TEXT PRIMARY KEY,
+        action_code TEXT NOT NULL,
+        parsed_at TEXT NOT NULL
+      );
+    `);
+    const tenMinsAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+    db.exec(
+      `INSERT INTO financial_reports (id, action_code, parsed_at) VALUES ('r1', 'VNM', '${tenMinsAgo}')`,
+    );
+
+    const report = await getDataFreshness(db);
+    const bctcLine = report.split("\n").find((l) => l.includes("BCTC"));
+    expect(bctcLine).toBeDefined();
+    expect(bctcLine).not.toContain("Chua co du lieu");
+    expect(bctcLine).toContain("Tot");
+    db.close();
   });
 
   it("barrel index exports registerDataFreshnessTools", async () => {

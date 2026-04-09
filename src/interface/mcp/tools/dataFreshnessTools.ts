@@ -111,7 +111,11 @@ const DATA_SOURCES: DataSourceDef[] = [
   },
   {
     label: "BCTC",
-    query: "SELECT MAX(created_at) AS ts FROM financial_reports",
+    // financial_reports has no `created_at`; `parsed_at` is NOT NULL and
+    // records when each report was ingested. Report #1071: old query
+    // threw inside the try/catch → silent "Chua co du lieu" even when
+    // the table had rows.
+    query: "SELECT MAX(parsed_at) AS ts FROM financial_reports",
   },
   {
     label: "System",
