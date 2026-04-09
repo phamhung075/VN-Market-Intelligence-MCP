@@ -537,6 +537,22 @@ Status: Backlog
 
 ---
 
+### [1083 / @dev P3] [janitor] Remove inline DDL from hexagramStore.ts — tables canonical in initDatabase()
+
+code-janitor auto-detected: `src/infrastructure/db/hexagramStore.ts:initHexagramTables()` still declares live CREATE TABLE IF NOT EXISTS for kinhdich_readings and hexagram_transitions. The canonical DDL is now in schema.ts:779-813 via initDatabase(). Call sites in kinhDichTools.ts (5 handlers) and intelligenceCycleJob.ts still invoke initHexagramTables() unnecessarily. Fix: make initHexagramTables() a true no-op (remove DDL body), remove call sites. Test 1047 covers the schema path.
+
+Status: Backlog
+
+---
+
+### [1082 / @dev P3] [janitor] Remove inline DDL from cascadeHitStore.ts — cascade_rule_hits canonical in initDatabase()
+
+code-janitor auto-detected: `src/infrastructure/db/cascadeHitStore.ts:ensureCascadeHitsTable()` still declares live CREATE TABLE IF NOT EXISTS cascade_rule_hits. Canonical DDL is schema.ts:872 via initDatabase(). Production call site remains in runImpactChain.ts:202. Fix: make ensureCascadeHitsTable() a no-op, remove the call from runImpactChain.ts. Test 1043 covers the schema path.
+
+Status: Backlog
+
+---
+
 ### [1048 / @dev P3] Consolidate scheduler cron defaults — config.ts duplicates CRONS fallbacks from jobs.ts
 
 code-janitor auto-detected: `src/infrastructure/config.ts:scheduler` section defines 7 cron default strings (sscCheck, morningBriefing, marketOpen, marketClose, intelligenceCycle, eveningSummary, predictionMarketPoll) that duplicate the fallback defaults already in CRONS (jobs.ts). Any cron default change requires two edits. config.ts should import and derive from CRONS rather than redeclaring literals.
@@ -672,7 +688,30 @@ Status: Backlog
 
 ---
 
-### [1082 / @dev P2] Macro snapshot Brent crude duplicate/conflicting values (report #1070)
+### [1085 / @architect P1] SSC portal JS-shell: BCTC ingestion stalled 11 days (report #1071)
+
+SSC portal now returns a short JS-only shell on fetch (`[ssc] portal_js_only — short response (JS shell?)`), so `fetchParseAndStoreBctc` falls through to HOSE/HNX. Impact: 26 watchlist tickers QUA HAN Q4-2025 (deadline 2026-03-30), 4 banks (BID/EIB/SHB/VCB) SAP DEN 2026-04-14. `list_stored_pdfs` shows only VEA+VNM PDFs dated 2026-03-29 — no new ingests in 11 days.
+
+Needs architecture decision:
+1. Headless browser (puppeteer/playwright) for SSC portal JS render — heaviest, most reliable.
+2. Strengthen HOSE/HNX fallback to be primary for Q4-2025 season — lower confidence, risks UPCOM coverage.
+3. Manual PDF seeding from a mirror + disable SSC polling until portal stabilises.
+
+Current live errors (2026-04-09 22:24Z) confirm the shell issue is recurring. Circuit breaker still OK because the fallback path returns gracefully.
+
+Status: Backlog (P1 — blocking BCTC ingestion)
+
+---
+
+### [1086 / @dev P1] financial_reports table empty despite fix 1068 claiming VNM/VEA rows (report #1071)
+
+Fix 1068 (commit 6d46ffb) reported "VNM Q4-2025 financial_reports row created (conf 0.3125), VEA Q4-2025 row created (conf 0.8125)". Live `sqlite3 data/market.db 'SELECT COUNT(*) FROM financial_reports'` returns 0 on 2026-04-09. Possible causes: rows inserted against a test/override DB path, later migration wiped the table, or `reparseSingleWithOcrFallback` never persists in production. Investigate: (a) grep for INSERT INTO financial_reports, (b) check if bctcReparseJob.ts uses an injected DB distinct from getDb(), (c) check recent migrations for DROP/TRUNCATE. Rerun reparse with production DB_PATH and verify count increments. This bug is what made the freshness fix (1071) visible in the first place.
+
+Status: Backlog (P1)
+
+---
+
+### [1087 / @dev P2] Macro snapshot Brent crude duplicate/conflicting values (report #1070)
 
 digest-writer reported two different Brent values in the same macro snapshot (96.44 vs 116 USD). Root cause located via `get_system_status` 2026-04-09: two independent writers populate Brent with different scales —
 - `Commodity Prices` panel (macroSnapshotAssembler live fetch): Brent ≈ 96.51 USD/bbl ✅ current
