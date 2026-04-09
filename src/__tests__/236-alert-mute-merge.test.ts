@@ -15,7 +15,6 @@ import { describe, it, expect, beforeEach, afterEach } from "bun:test";
 import { Database } from "bun:sqlite";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import {
-  ensureAlertMutesTable,
   muteStock,
   listMutes,
 } from "../infrastructure/db/alertMuteStore.js";
@@ -28,7 +27,16 @@ import { registerAlertMuteTools } from "../interface/mcp/tools/alertMuteTools.js
 function makeDb(): Database {
   const db = new Database(":memory:");
   db.exec("PRAGMA journal_mode = WAL");
-  ensureAlertMutesTable(db);
+  // Mirror schema.ts alert_mutes DDL (canonical in initDatabase); task 1049
+  // removed the per-store ensure helper.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS alert_mutes (
+      code        TEXT PRIMARY KEY,
+      muted_until TEXT NOT NULL,
+      reason      TEXT
+    )
+  `);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_alert_mutes_until ON alert_mutes(muted_until)`);
   return db;
 }
 

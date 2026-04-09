@@ -22,7 +22,6 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { getDb, initDatabase } from "../../../infrastructure/db/schema.js";
 import {
-  ensureAlertMutesTable,
   muteStock,
   unmuteStock,
   listMutes,
@@ -91,7 +90,6 @@ export function registerAlertMuteTools(server: McpServer): void {
       try {
         await initDatabase();
         const db = getDb();
-        ensureAlertMutesTable(db);
 
         // ── action = "mute" ────────────────────────────────────────────────
         if (action === "mute") {

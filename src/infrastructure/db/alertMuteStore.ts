@@ -18,26 +18,9 @@
 
 import type { Database } from "bun:sqlite";
 
-// ─────────────────────────────────────────────────────────────────────────────
-// DDL
-// ─────────────────────────────────────────────────────────────────────────────
-
-const ALERT_MUTES_DDL = `
-  CREATE TABLE IF NOT EXISTS alert_mutes (
-    code        TEXT PRIMARY KEY,
-    muted_until TEXT NOT NULL,
-    reason      TEXT
-  )
-`;
-
-/**
- * Ensure the `alert_mutes` table exists.
- * Idempotent — safe to call multiple times.
- */
-export function ensureAlertMutesTable(db: Database): void {
-  db.exec(ALERT_MUTES_DDL);
-  db.exec(`CREATE INDEX IF NOT EXISTS idx_alert_mutes_until ON alert_mutes(muted_until)`);
-}
+// DDL is canonical in `src/infrastructure/db/schema.ts` (initDatabase).
+// Do not re-declare `alert_mutes` CREATE TABLE here — runtime double-DDL
+// execution was removed in task 1049.
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
