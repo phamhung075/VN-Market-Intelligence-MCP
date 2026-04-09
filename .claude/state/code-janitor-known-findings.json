@@ -1,88 +1,18 @@
 {
   "findings": [
     {
-      "fingerprint": "cron_duplication:src/scheduler/summaryJobs.ts:SUMMARY_CRONS",
-      "first_seen": "2026-04-07",
-      "last_reported": "2026-04-09",
-      "task": 1023,
-      "note": "SUMMARY_CRONS map reads env vars independently of CRONS in jobs.ts; not imported from canonical source. Task 1023 queued."
-    },
-    {
-      "fingerprint": "schema_duplication:src/infrastructure/db/alertMuteStore.ts:ALERT_MUTES_DDL",
-      "first_seen": "2026-04-07",
-      "last_reported": "2026-04-09",
-      "task": 1031,
-      "note": "alert_mutes DDL in alertMuteStore.ts duplicates schema.ts:556; schema.ts does not call ensureAlertMutesTable()."
-    },
-    {
       "fingerprint": "schema_duplication:src/infrastructure/db/mentionVelocityStore.ts:initMentionVelocityTable",
       "first_seen": "2026-04-07",
-      "last_reported": "2026-04-09",
-      "task": 1032,
-      "note": "mention_velocity DDL in mentionVelocityStore.ts duplicates schema.ts:271; task 1033 removed the second block from schema.ts itself."
-    },
-    {
-      "fingerprint": "schema_duplication:src/scheduler/morningBriefingJob.ts:briefing_log_inline_ddl",
-      "first_seen": "2026-04-07",
-      "last_reported": "2026-04-09",
-      "task": 1040,
-      "note": "briefing_log table created inline in morningBriefingJob.ts:82; not in initDatabase(). Task 1040 queued."
-    },
-    {
-      "fingerprint": "schema_duplication:src/scheduler/dataAuditJob.ts:audit_state_inline_ddl",
-      "first_seen": "2026-04-07",
-      "last_reported": "2026-04-09",
-      "task": 1041,
-      "note": "audit_state table created inline in dataAuditJob.ts:124; not in initDatabase(). Task 1041 queued."
-    },
-    {
-      "fingerprint": "schema_duplication:src/infrastructure/db/vnstockStore.ts:ensureVnstockTables",
-      "first_seen": "2026-04-07",
-      "last_reported": "2026-04-09",
-      "task": 1042,
-      "note": "8 vnstock tables defined inline in vnstockStore.ts (vnstock_financials, vnstock_trading_stats, vnstock_events, vnstock_officers, vnstock_shareholders, vnstock_fetch_log, vnstock_balance_sheet, vnstock_cash_flow); none are in initDatabase(). Task 1042 queued."
-    },
-    {
-      "fingerprint": "schema_duplication:src/infrastructure/db/tradeStore.ts:trade_exposures_inline_ddl",
-      "first_seen": "2026-04-07",
-      "last_reported": "2026-04-09",
-      "task": 1043,
-      "note": "trade_exposures table defined inline in tradeStore.ts; not in initDatabase(). Task 1043 queued."
-    },
-    {
-      "fingerprint": "schema_duplication:src/infrastructure/db/cascadeHitStore.ts:cascade_rule_hits_inline_ddl",
-      "first_seen": "2026-04-07",
-      "last_reported": "2026-04-09",
-      "task": 1044,
-      "note": "cascade_rule_hits table defined inline in cascadeHitStore.ts; not in initDatabase(). Task 1044 queued."
-    },
-    {
-      "fingerprint": "schema_duplication:src/infrastructure/db/bondMaturityStore.ts:bond_maturity_inline_ddl",
-      "first_seen": "2026-04-07",
-      "last_reported": "2026-04-09",
-      "task": 1045,
-      "note": "bond_maturity table defined inline in bondMaturityStore.ts; not in initDatabase(). Task 1045 queued."
-    },
-    {
-      "fingerprint": "schema_duplication:src/infrastructure/db/pharmaStore.ts:pharma_events_inline_ddl",
-      "first_seen": "2026-04-07",
-      "last_reported": "2026-04-09",
-      "task": 1046,
-      "note": "pharma_events table defined inline in pharmaStore.ts; not in initDatabase(). Task 1046 queued."
-    },
-    {
-      "fingerprint": "schema_duplication:src/infrastructure/db/hexagramStore.ts:hexagram_tables_inline_ddl",
-      "first_seen": "2026-04-07",
-      "last_reported": "2026-04-09",
-      "task": 1047,
-      "note": "kinhdich_readings and hexagram_transitions tables defined inline in hexagramStore.ts; neither is in initDatabase(). Task 1047 queued."
+      "last_reported": "2026-04-08",
+      "task": 1050,
+      "note": "mention_velocity DDL still inline in mentionVelocityStore.ts; canonical DDL is schema.ts:271. initMentionVelocityTable() not called from production but remains a maintenance risk. Task 1050 queued."
     },
     {
       "fingerprint": "cron_duplication:src/infrastructure/config.ts:scheduler_cron_defaults",
       "first_seen": "2026-04-07",
-      "last_reported": "2026-04-09",
+      "last_reported": "2026-04-08",
       "task": 1048,
-      "note": "config.ts:scheduler section declares 7 cron default strings duplicating CRONS fallback defaults in jobs.ts. Task 1048 queued."
+      "note": "config.ts:scheduler section declares 7 cron default strings duplicating CRONS fallback defaults in jobs.ts. Task 1048 queued (Backlog)."
     }
   ]
 }

@@ -5,6 +5,14 @@ Active board lives in `TASKS.md`.
 
 ---
 
+### [1049 / @dev P3] Remove ensureAlertMutesTable() inline DDL from alertMuteStore.ts — Done 2026-04-09
+
+code-janitor auto-detected: `src/infrastructure/db/alertMuteStore.ts` defined and exported `ensureAlertMutesTable()` with a live CREATE TABLE IF NOT EXISTS alert_mutes; this same DDL is canonical in schema.ts via initDatabase(). `alertMuteTools.ts` was calling `ensureAlertMutesTable()` at MCP tool time, causing double DDL execution.
+
+Shipped: removed inline CREATE TABLE + helper from alertMuteStore.ts, removed the call + import from alertMuteTools.ts, moved the DDL inline into the `makeDb` test helpers in `222-alert-mute.test.ts` and `236-alert-mute-merge.test.ts` (same shape as schema.ts). Commit `5764d1b`. Tests 25/25 pass, tsc clean.
+
+---
+
 ## Sprint 005 — COMPLETE (historical)
 
 ### Sprint 005 Wave 1

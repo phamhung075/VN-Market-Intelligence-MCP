@@ -529,14 +529,6 @@ Acceptance Criteria:
 
 ## Backlog — Active (genuinely unblocked or pending decision)
 
-### [1049 / @dev P3] Remove ensureAlertMutesTable() inline DDL from alertMuteStore.ts
-
-code-janitor auto-detected: `src/infrastructure/db/alertMuteStore.ts` defines and exports `ensureAlertMutesTable()` with a live CREATE TABLE IF NOT EXISTS alert_mutes; this same DDL is now canonical in schema.ts:575 via initDatabase(). `alertMuteTools.ts:94` still calls `ensureAlertMutesTable()` at MCP tool time, causing double DDL execution. Remove inline CREATE TABLE from alertMuteStore.ts and remove the `ensureAlertMutesTable()` call from alertMuteTools.ts.
-
-Status: Backlog
-
----
-
 ### [1050 / @dev P3] Remove initMentionVelocityTable() inline DDL from mentionVelocityStore.ts
 
 code-janitor auto-detected: `src/infrastructure/db/mentionVelocityStore.ts` exports `initMentionVelocityTable()` with a live CREATE TABLE IF NOT EXISTS mention_velocity; this same DDL is now canonical in schema.ts:271 via initDatabase(). Remove the inline CREATE TABLE block from mentionVelocityStore.ts.
