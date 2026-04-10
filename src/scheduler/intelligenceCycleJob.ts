@@ -436,6 +436,16 @@ const POLL_NEWS_TIMEOUT_MS = 5 * 60 * 1000;
 const SYNC_PEERS_TIMEOUT_MS = 5 * 60 * 1000;
 
 /**
+ * 3 minutes — max allowed runtime for each individual step B SSC fetch.
+ * The SSC portal (congbothongtin.ssc.gov.vn) is slow under concurrent load:
+ * when 10+ watchlist tickers fire Promise.all simultaneously, each individual
+ * fetch can exceed the generic 120 s cap. Report 1076 (2026-04-10 04:49 UTC)
+ * captured 10 tickers all timing out at 120 s. 3 min per ticker is generous
+ * for a single listing page without blocking the outer cycle guard.
+ */
+const STEP_B_SSC_TIMEOUT_MS = 3 * 60 * 1000;
+
+/**
  * Runs a promise with a timeout. If the promise doesn't resolve within
  * `timeoutMs`, rejects with a timeout error and the step is skipped.
  */
@@ -640,7 +650,7 @@ async function _runCycle(deps: CycleDeps = {}): Promise<CycleResult> {
     try {
       const sscPromises = watchlistCodes.map(async (code) => {
         try {
-          const docs = await withTimeout(listSscDocsFn(code), `step B SSC ${code}`);
+          const docs = await withTimeout(listSscDocsFn(code), `step B SSC ${code}`, STEP_B_SSC_TIMEOUT_MS);
           return docs.length;
         } catch (err) {
           errors++;
