@@ -45,8 +45,8 @@
 ### Sector Context (2)
 `get_sector_comparison`, `get_open_chain_findings`
 
-### Kinh Dich (4)
-`get_kinhdich_reading`, `get_market_hexagram`, `run_hexagram_backtest`, `get_transition_probabilities`
+### Kinh Dich (6)
+`get_kinhdich_reading`, `get_market_hexagram`, `run_hexagram_backtest`, `get_transition_probabilities`, `explain_hexagram`, `get_hexagram_history`
 
 ### Prediction Markets (2)
 `get_prediction_markets`, `get_prediction_accuracy`
@@ -95,9 +95,6 @@
 
 ### Pharma Radar (1)
 `get_pharma_signals`
-
-### User Requests (2)
-`get_user_requests`, `mark_user_request_answered`
 
 ### Ask Queue (2)
 `get_pending_ask_questions`, `answer_ask_question`

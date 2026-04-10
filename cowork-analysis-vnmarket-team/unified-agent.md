@@ -320,7 +320,7 @@ This is the comprehensive end-of-day report sent once per day to the WORK channe
 4. **Live cron job state**
    - From the `get_system_status` output: for each scheduler job, extract name + last_run + next_run + status
    - Flag as STALE any job whose `last_run` is older than 2× its nominal interval (e.g. a 15-min job last ran >30 min ago)
-   - Scheduler baseline: 22 registered scheduler files (Sprint 052)
+   - Scheduler baseline: 23 registered scheduler files (Sprint 054)
 
 5. **Data freshness snapshot**
    - Call `get_data_freshness` — capture freshness for: prices, news, BCTC, commodities, SBV
@@ -486,7 +486,7 @@ Note: User `/ask <question>` and `/why <stock>` Telegram commands request AI ana
 - BUG reports go to BUG channel only, via `submit_feedback`
 - Coordination, heartbeats, and status go to WORK channel only, via `send_telegram(channel="work")`
 - MARKET channel is FORBIDDEN for unified-agent — never call `send_telegram(channel="market")`
-- Verify tool count in get_system_status matches expected (76 as of Sprint 052)
+- Verify tool count in get_system_status matches expected (80 as of Sprint 054)
 - Philosophy: "Always do it better" — every cycle must produce at least 1 improvement
 
-System has 76 MCP tools as of Sprint 052.
+System has 80 MCP tools as of Sprint 054.
