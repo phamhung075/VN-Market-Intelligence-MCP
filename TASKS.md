@@ -529,23 +529,6 @@ Acceptance Criteria:
 
 ## Backlog — Active (genuinely unblocked or pending decision)
 
-### [1048 / @dev P3] Consolidate scheduler cron defaults — config.ts duplicates CRONS fallbacks from jobs.ts
-
-code-janitor auto-detected: `src/infrastructure/config.ts:scheduler` section defines 7 cron default strings (sscCheck, morningBriefing, marketOpen, marketClose, intelligenceCycle, eveningSummary, predictionMarketPoll) that duplicate the fallback defaults already in CRONS (jobs.ts). Any cron default change requires two edits. config.ts should import and derive from CRONS rather than redeclaring literals.
-
-**BLOCKED**: config.ts↔jobs.ts circular-dep risk — needs architect design review before implementation.
-
-Status: Backlog (Blocked)
-
----
-
-### [1091 / @dev P3] [janitor] Remove inline DDL from vnstockStore.ts — 8 vnstock tables canonical in initDatabase()
-
-code-janitor auto-detected: `src/infrastructure/db/vnstockStore.ts:initVnstockTables()` still declares 8 live `CREATE TABLE IF NOT EXISTS` blocks for vnstock_financials, vnstock_trading_stats, vnstock_events, vnstock_officers, vnstock_shareholders, vnstock_fetch_log, vnstock_balance_sheet, vnstock_cash_flow. The canonical DDL is now in schema.ts:928+ via initDatabase(). Production call sites: index.ts:51, syncSectorPeers.ts:67, syncVnstockData.ts:181. The function retains an ALTER TABLE migration for old DBs — that migration must be preserved, but the CREATE TABLE blocks can be removed. Fix: strip CREATE TABLE blocks from initVnstockTables() body, keep only the ALTER TABLE migration. Tests: src/__tests__/1042-vnstock-ddl-schema.test.ts covers the canonical schema path.
-
-Status: Backlog
-
----
 
 ### [1092 / @dev P3] [janitor] Consolidate SUMMARY_CRONS — summaryJobs.ts duplicates CRONS env-var reads from jobs.ts
 
@@ -643,13 +626,6 @@ Status: Deferred (pending OCR tooling available on dev machine)
 
 ---
 
-### [1001 / @architect P1] BCTC ingest regression: VNM PDF on disk 9 days, get_bctc_full returns "Chua co du lieu"
-
-Tasks 309/310 marked Done but pipeline not populating financial_reports table. Verify fetchParseAndStoreBctc actually called for stranded PDFs; check filename matcher (`BCTC VNM 31.12.2025 - HOP NHAT - VN.pdf`). Reports 996/997/998.
-
-Status: Backlog
-
----
 
 ### [1002 / @architect P1] Anonymous SSC PDF attribution: filenames like `000000015802468_Bao_cao_tai_chinh_Rieng_nam_2025.pdf` carry no stock code
 

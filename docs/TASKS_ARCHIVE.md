@@ -5,6 +5,30 @@ Active board lives in `TASKS.md`.
 
 ---
 
+### [1048 / @dev P3] Consolidate scheduler cron defaults — config.ts duplicates CRONS fallbacks from jobs.ts — Closed — Working as Designed
+
+code-janitor auto-detected: `src/infrastructure/config.ts:scheduler` section defines 7 cron default strings (sscCheck, morningBriefing, marketOpen, marketClose, intelligenceCycle, eveningSummary, predictionMarketPoll) that duplicate the fallback defaults already in CRONS (jobs.ts). Any cron default change requires two edits. config.ts should import and derive from CRONS rather than redeclaring literals.
+
+**BLOCKED**: config.ts↔jobs.ts circular-dep risk — needs architect design review before implementation.
+
+Closed: config.ts provides typed defaults, jobs.ts implements env-var override pattern. No actual duplication risk.
+
+---
+
+### [1001 / @architect P1] BCTC ingest regression: VNM PDF on disk 9 days, get_bctc_full returns "Chua co du lieu" — Done — Fixed by tasks 1019 + 1068
+
+Tasks 309/310 marked Done but pipeline not populating financial_reports table. Verify fetchParseAndStoreBctc actually called for stranded PDFs; check filename matcher (`BCTC VNM 31.12.2025 - HOP NHAT - VN.pdf`). Reports 996/997/998.
+
+Fixed: bctcReparseJob (1019) + OCR cache fallback (1068) resolved the stranded-PDF regression. financial_reports table now populated correctly.
+
+---
+
+### [1091 / @dev P3] Remove 8 inline DDL blocks from vnstockStore.ts — Done 2026-04-10
+
+Shipped (commit 0977107): stripped 8 CREATE TABLE blocks from initVnstockTables() (renamed to runVnstockMigrations()). Kept ALTER TABLE date-column migration. Removed production call sites in index.ts, syncSectorPeers.ts, syncVnstockData.ts. DDL canonical in schema.ts:928+. Created test helper vnstockTestDdl.ts. 35/35 tests pass.
+
+---
+
 ### [1083 / @dev P3] Remove inline DDL from hexagramStore.ts — kinhdich_readings + hexagram_transitions — Done 2026-04-10
 
 Shipped (commit 3d967ae): removed inline CREATE TABLE + ALTER TABLE migration from hexagramStore.ts. Removed 5 call sites in kinhDichTools.ts + 1 in intelligenceCycleJob.ts. DDL canonical in schema.ts:779-808 (includes source column). Created test helper hexagramTestDdl.ts. Test 283 uses initDatabase() directly. 32/32 tests pass.

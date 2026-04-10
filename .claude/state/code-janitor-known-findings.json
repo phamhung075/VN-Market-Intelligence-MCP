@@ -8,13 +8,6 @@
       "note": "config.ts:scheduler section declares 7 cron default strings duplicating CRONS fallback defaults in jobs.ts. Task 1048 queued (Backlog). BLOCKED: circular-dep risk."
     },
     {
-      "fingerprint": "schema_duplication:src/infrastructure/db/vnstockStore.ts:initVnstockTables",
-      "first_seen": "2026-04-08",
-      "last_reported": "2026-04-08",
-      "task": 1091,
-      "note": "vnstockStore.ts:initVnstockTables() still has 8 live CREATE TABLE blocks. Canonical DDL is schema.ts:928+ (Task 1042). Called from index.ts:51, syncSectorPeers.ts:67, syncVnstockData.ts:181. ALTER TABLE migration must be preserved. Task 1091 queued."
-    },
-    {
       "fingerprint": "cron_duplication:src/scheduler/summaryJobs.ts:SUMMARY_CRONS",
       "first_seen": "2026-04-08",
       "last_reported": "2026-04-08",
