@@ -104,9 +104,12 @@ function handleWatchlist(db: Database): string {
   const rows = db
     .prepare<WatchlistRow, []>(
       `SELECT w.code, w.company_name, w.exchange, w.domain,
-              mp.price, mp.change_pct
+              COALESCE(
+                (SELECT mp.price FROM market_prices mp WHERE mp.code = w.code AND mp.price IS NOT NULL AND mp.price > 0),
+                (SELECT d.close FROM daily_ohlcv d WHERE d.code = w.code ORDER BY d.date DESC LIMIT 1)
+              ) AS price,
+              (SELECT mp2.change_pct FROM market_prices mp2 WHERE mp2.code = w.code AND mp2.price IS NOT NULL AND mp2.price > 0) AS change_pct
        FROM watchlist w
-       LEFT JOIN market_prices mp ON mp.code = w.code
        ORDER BY w.code ASC`,
     )
     .all();
@@ -147,12 +150,25 @@ function handlePrice(db: Database, args: string[]): string {
     updated_at: string | null;
   }
 
-  const row = db
+  // Try market_prices first, then fall back to daily_ohlcv
+  let row = db
     .prepare<PriceRow, [string]>(
       `SELECT code, price, change_amt, change_pct, volume, updated_at
-       FROM market_prices WHERE code = ?`,
+       FROM market_prices WHERE code = ? AND price IS NOT NULL AND price > 0`,
     )
     .get(code);
+
+  if (!row || row.price == null) {
+    // Fallback to daily_ohlcv latest close
+    const ohlcv = db
+      .prepare<{ code: string; close: number; volume: number; updated_at: string }, [string]>(
+        `SELECT code, close, volume, updated_at FROM daily_ohlcv WHERE code = ? ORDER BY date DESC LIMIT 1`,
+      )
+      .get(code);
+    if (ohlcv) {
+      row = { code: ohlcv.code, price: ohlcv.close, change_amt: null, change_pct: null, volume: ohlcv.volume, updated_at: ohlcv.updated_at };
+    }
+  }
 
   if (!row || row.price == null) {
     return `Không tìm thấy giá cho mã: ${code}`;

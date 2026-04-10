@@ -47,6 +47,17 @@ function makeDb(): Database {
       volume      REAL,
       updated_at  TEXT
     );
+    CREATE TABLE IF NOT EXISTS daily_ohlcv (
+      code       TEXT NOT NULL,
+      date       TEXT NOT NULL,
+      open       REAL NOT NULL,
+      high       REAL NOT NULL,
+      low        REAL NOT NULL,
+      close      REAL NOT NULL,
+      volume     REAL NOT NULL DEFAULT 0,
+      updated_at TEXT NOT NULL,
+      PRIMARY KEY (code, date)
+    );
     CREATE TABLE IF NOT EXISTS alerts (
       id                    TEXT PRIMARY KEY,
       triggered_at          TEXT NOT NULL,

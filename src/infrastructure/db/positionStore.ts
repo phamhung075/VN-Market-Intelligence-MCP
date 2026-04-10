@@ -108,9 +108,12 @@ export function upsertPosition(
 export function listOpenPositions(db: Database): PositionWithPnl[] {
   const rows = db
     .prepare<PositionRow & { current_price: number | null }, []>(
-      `SELECT p.*, mp.price AS current_price
+      `SELECT p.*,
+              COALESCE(
+                (SELECT mp.price FROM market_prices mp WHERE mp.code = p.code AND mp.price IS NOT NULL AND mp.price > 0),
+                (SELECT d.close FROM daily_ohlcv d WHERE d.code = p.code ORDER BY d.date DESC LIMIT 1)
+              ) AS current_price
        FROM positions p
-       LEFT JOIN market_prices mp ON mp.code = p.code
        WHERE p.closed_at IS NULL
        ORDER BY p.opened_at ASC`,
     )
