@@ -50,14 +50,21 @@ export function runWalCheckpoint(): { walSize: number; checkpointed: number } {
 }
 
 /**
- * Registers SIGTERM and SIGINT handlers that run a WAL checkpoint
+ * Registers SIGTERM and SIGINT handlers that run a TRUNCATE checkpoint
  * before the process exits. Ensures data integrity on graceful shutdown.
+ *
+ * Uses TRUNCATE mode (not PASSIVE) to guarantee ALL WAL frames are
+ * flushed to the main DB file and the WAL is reset to zero. This
+ * prevents data loss when `launchctl kickstart -k` replaces the process
+ * (report #1086/#1088: financial_reports rows vanished after restarts).
  */
 export function registerShutdownHook(): void {
   const shutdown = (signal: string) => {
-    logger.info(`[checkpoint] ${signal} received — running WAL checkpoint before exit`);
+    logger.info(`[checkpoint] ${signal} received — running TRUNCATE checkpoint before exit`);
     try {
-      runWalCheckpoint();
+      const db = getDb();
+      db.exec("PRAGMA wal_checkpoint(TRUNCATE)");
+      logger.info("[checkpoint] TRUNCATE checkpoint complete — WAL flushed");
     } catch { /* best-effort */ }
     process.exit(0);
   };

@@ -49,6 +49,14 @@ await initDatabase();
 // the intelligence cycle, leaving the migration dormant on pre-market boots.
 const { runVnstockMigrations } = await import("./infrastructure/db/vnstockStore.js");
 runVnstockMigrations();
+// Replay any leftover WAL from a previous crash — ensures no committed
+// transactions are lost when the prior process was killed mid-write
+// (reports #1086/#1088: financial_reports rows vanished after restarts).
+try {
+  const { getDb } = await import("./infrastructure/db/schema.js");
+  getDb().exec("PRAGMA wal_checkpoint(TRUNCATE)");
+  log.info("[bootstrap] WAL checkpoint (startup replay) complete");
+} catch { /* best-effort */ }
 log.info("[bootstrap] Database ready");
 
 // ── 1b. Seed trade relationship profiles (first run only) ────────────────
