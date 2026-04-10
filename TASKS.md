@@ -587,10 +587,10 @@ After manual reparse 2026-04-10, VNM 2025-Q4 row stored with garbage scalars: Ne
 
 Slices:
 - ✅ (b) **SHIPPED 2026-04-10 (commit 007bf99)** — validation guard rejects report when totalAssets+totalLiabilities+equityTotal all zero. Stale VNM row retro-flagged validation_status='failed'. See task 1088a / fix log id=113.
-- ⏳ (a) Unit-header fallback that scans first ~500 chars for any "đồng" occurrence + infers multiplier from magnitude of largest numeric. Needs investigation in `src/domain/services/balanceSheetExtractor.ts`.
-- ⏳ (c) Regression test fixture using real VNM Q4-2025 OCR text — depends on (a).
+- ✅ (a) **SHIPPED 2026-04-10 (commit b90422b)** — enhanced detectUnitMultiplier with loose OCR patterns + post-extraction magnitude inference (totalAssets > 1B → raw đồng → ÷1M). 4 new tests.
+- ⏳ (c) Regression test fixture using real VNM Q4-2025 OCR text — can now validate that (a)+(b) produce correct numbers on real data.
 
-Status: Backlog ((b) done, (a)+(c) remain — no longer P1 since the false-positive 'passed' is gone; downgrade to P2)
+Status: Backlog ((a)+(b) done, (c) remains — P3)
 
 ---
 
