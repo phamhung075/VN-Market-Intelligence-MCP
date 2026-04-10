@@ -1,13 +1,6 @@
 {
   "findings": [
     {
-      "fingerprint": "schema_duplication:src/infrastructure/db/mentionVelocityStore.ts:initMentionVelocityTable",
-      "first_seen": "2026-04-07",
-      "last_reported": "2026-04-08",
-      "task": 1050,
-      "note": "mention_velocity DDL still inline in mentionVelocityStore.ts; canonical DDL is schema.ts:271. initMentionVelocityTable() not called from production but remains a maintenance risk. Task 1050 queued."
-    },
-    {
       "fingerprint": "cron_duplication:src/infrastructure/config.ts:scheduler_cron_defaults",
       "first_seen": "2026-04-07",
       "last_reported": "2026-04-08",
@@ -20,20 +13,6 @@
       "last_reported": "2026-04-08",
       "task": 1083,
       "note": "hexagramStore.ts:initHexagramTables() still has live CREATE TABLE DDL for kinhdich_readings + hexagram_transitions. Canonical DDL is schema.ts:779-813. Still called from kinhDichTools.ts (5 sites) + intelligenceCycleJob.ts. Task 1083 queued."
-    },
-    {
-      "fingerprint": "schema_duplication:src/infrastructure/db/cascadeHitStore.ts:ensureCascadeHitsTable",
-      "first_seen": "2026-04-08",
-      "last_reported": "2026-04-08",
-      "task": 1082,
-      "note": "cascadeHitStore.ts:ensureCascadeHitsTable() still has live CREATE TABLE DDL for cascade_rule_hits. Canonical DDL is schema.ts:872. Still called from runImpactChain.ts:202. Task 1082 queued."
-    },
-    {
-      "fingerprint": "schema_duplication:src/infrastructure/db/bondMaturityStore.ts:ensureBondMaturityTable",
-      "first_seen": "2026-04-08",
-      "last_reported": "2026-04-08",
-      "task": 1089,
-      "note": "bondMaturityStore.ts:ensureBondMaturityTable() still has live CREATE TABLE DDL for bond_maturity. Canonical DDL is schema.ts:814 (Task 1045). Still called from bondMaturityTools.ts:89. Task 1089 queued."
     },
     {
       "fingerprint": "schema_duplication:src/infrastructure/db/pharmaStore.ts:initPharmaStore",

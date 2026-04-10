@@ -5,6 +5,36 @@ Active board lives in `TASKS.md`.
 
 ---
 
+### [1050 / @dev P3] Remove initMentionVelocityTable() inline DDL from mentionVelocityStore.ts — Done 2026-04-10
+
+Shipped (commit ab4d20c): removed inline CREATE TABLE from mentionVelocityStore.ts. DDL canonical in schema.ts:271. Created test helper mentionVelocityTestDdl.ts. 24/24 tests pass.
+
+---
+
+### [1082 / @dev P3] Remove inline DDL from cascadeHitStore.ts — cascade_rule_hits — Done 2026-04-10
+
+Shipped (commit ab4d20c): removed inline CREATE TABLE from cascadeHitStore.ts + removed production call in runImpactChain.ts:202. DDL canonical in schema.ts:872. Created test helper cascadeHitsTestDdl.ts. 14/14 tests pass.
+
+---
+
+### [1089 / @dev P3] Remove inline DDL from bondMaturityStore.ts — bond_maturity — Done 2026-04-10
+
+Shipped (commit ab4d20c): removed inline CREATE TABLE from bondMaturityStore.ts + removed production call in bondMaturityTools.ts:89. DDL canonical in schema.ts:814. Created test helper bondMaturityTestDdl.ts. 11/11 tests pass.
+
+---
+
+### [1087 / @dev P2] Macro snapshot Brent crude duplicate/conflicting values — Done 2026-04-10
+
+Fixed (commit 8d3d997): Yahoo Finance storeCommoditySnapshot now mirrors Brent+Gold into tracked_indicators (source='yahoo'). Stale brent_crude_usd=116 superseded by live Yahoo value. σ-threshold + Kinh Dich macro score now use fresh data. 14/14 tests pass.
+
+---
+
+### [915 / @dev] Analyst-credibility discount on sanctioned brokers — Done 2026-04-08
+
+Delivered: new `broker_sanctions` table + `forecastConfidenceScore()` domain service + `get_broker_credibility` MCP tool (registry entry 49). Severity multipliers: warning=0.5, suspension=0.2. 22 new tests in `src/__tests__/915-broker-credibility.test.ts`.
+
+---
+
 ### [1049 / @dev P3] Remove ensureAlertMutesTable() inline DDL from alertMuteStore.ts — Done 2026-04-09
 
 code-janitor auto-detected: `src/infrastructure/db/alertMuteStore.ts` defined and exported `ensureAlertMutesTable()` with a live CREATE TABLE IF NOT EXISTS alert_mutes; this same DDL is canonical in schema.ts via initDatabase(). `alertMuteTools.ts` was calling `ensureAlertMutesTable()` at MCP tool time, causing double DDL execution.

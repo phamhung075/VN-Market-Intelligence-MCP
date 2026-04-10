@@ -529,25 +529,9 @@ Acceptance Criteria:
 
 ## Backlog — Active (genuinely unblocked or pending decision)
 
-### [1050 / @dev P3] Remove initMentionVelocityTable() inline DDL from mentionVelocityStore.ts
-
-code-janitor auto-detected: `src/infrastructure/db/mentionVelocityStore.ts` exports `initMentionVelocityTable()` with a live CREATE TABLE IF NOT EXISTS mention_velocity; this same DDL is now canonical in schema.ts:271 via initDatabase(). Remove the inline CREATE TABLE block from mentionVelocityStore.ts.
-
-Status: Backlog
-
----
-
 ### [1083 / @dev P3] [janitor] Remove inline DDL from hexagramStore.ts — tables canonical in initDatabase()
 
 code-janitor auto-detected: `src/infrastructure/db/hexagramStore.ts:initHexagramTables()` still declares live CREATE TABLE IF NOT EXISTS for kinhdich_readings and hexagram_transitions. The canonical DDL is now in schema.ts:779-813 via initDatabase(). Call sites in kinhDichTools.ts (5 handlers) and intelligenceCycleJob.ts still invoke initHexagramTables() unnecessarily. Fix: make initHexagramTables() a true no-op (remove DDL body), remove call sites. Test 1047 covers the schema path.
-
-Status: Backlog
-
----
-
-### [1082 / @dev P3] [janitor] Remove inline DDL from cascadeHitStore.ts — cascade_rule_hits canonical in initDatabase()
-
-code-janitor auto-detected: `src/infrastructure/db/cascadeHitStore.ts:ensureCascadeHitsTable()` still declares live CREATE TABLE IF NOT EXISTS cascade_rule_hits. Canonical DDL is schema.ts:872 via initDatabase(). Production call site remains in runImpactChain.ts:202. Fix: make ensureCascadeHitsTable() a no-op, remove the call from runImpactChain.ts. Test 1043 covers the schema path.
 
 Status: Backlog
 
@@ -560,14 +544,6 @@ code-janitor auto-detected: `src/infrastructure/config.ts:scheduler` section def
 **BLOCKED**: config.ts↔jobs.ts circular-dep risk — needs architect design review before implementation.
 
 Status: Backlog (Blocked)
-
----
-
-### [1089 / @dev P3] [janitor] Remove inline DDL from bondMaturityStore.ts — bond_maturity canonical in initDatabase()
-
-code-janitor auto-detected: `src/infrastructure/db/bondMaturityStore.ts:ensureBondMaturityTable()` still declares live `CREATE TABLE IF NOT EXISTS bond_maturity`. The canonical DDL is now in schema.ts:814 via initDatabase() (added in Task 1045). Production call site in bondMaturityTools.ts:89 still calls ensureBondMaturityTable() unnecessarily. Fix: make ensureBondMaturityTable() a true no-op (remove DDL body), remove or guard the call site in bondMaturityTools.ts. Test 1045 (src/__tests__/1045-schema-ddl-consolidation-3.test.ts) covers the schema path.
-
-Status: Backlog
 
 ---
 
@@ -756,18 +732,6 @@ Status: Backlog ((b) done, (a)+(c) remain — no longer P1 since the false-posit
 
 ---
 
-### [1087 / @dev P2] Macro snapshot Brent crude duplicate/conflicting values (report #1070)
-
-digest-writer reported two different Brent values in the same macro snapshot (96.44 vs 116 USD). Root cause located via `get_system_status` 2026-04-09: two independent writers populate Brent with different scales —
-- `Commodity Prices` panel (macroSnapshotAssembler live fetch): Brent ≈ 96.51 USD/bbl ✅ current
-- `Auto-tracked Indicators` table: `brent_crude_usd` row stuck at 116 with 42 data points (stale writer)
-
-Fix: reconcile the auto-tracked indicator writer so it mirrors the live commodity fetcher (or retire whichever is wrong). Candidate files: grep for `brent_crude_usd` in `src/infrastructure/db/` + `src/scheduler/` to find the writer inserting 116. Add a unit sanity guard (Brent plausible band 20-200 USD) once the correct source is confirmed.
-
-Status: Backlog (reproducible, lead identified)
-
----
-
 ### [914 / @po] Steel sector watchlist gap — HPG
 
 **Decision needed from PO**:
@@ -778,12 +742,6 @@ Status: Backlog (reproducible, lead identified)
 Minimum-diff for option 1: add `"HPG"` to `mcp.config.json → market.defaultWatchlist`, restart server.
 
 Status: Backlog (awaiting PO decision)
-
----
-
-### [915 SHIPPED] Analyst-credibility discount on sanctioned brokers — Done 2026-04-08
-
-Delivered: new `broker_sanctions` table + `forecastConfidenceScore()` domain service + `get_broker_credibility` MCP tool (registry entry 49). Severity multipliers: warning=0.5, suspension=0.2. 22 new tests in `src/__tests__/915-broker-credibility.test.ts`. Cascade engine wire-in intentionally deferred — downstream consumers call the domain function directly once they need it.
 
 ---
 
