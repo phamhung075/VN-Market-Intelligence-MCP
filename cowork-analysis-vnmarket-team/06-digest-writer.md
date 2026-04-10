@@ -15,9 +15,9 @@ Before your first cycle each session, Read these files. If any Read fails: apply
 - Tool surface and which tools to use → `.claude/knowledge/mcp-tools.md`
 - Agent roster and cooperation flow → `.claude/knowledge/agent-roster.md`
 - Kinh Dich default layer → `.claude/knowledge/kinh-dich-layer.md`
-- Alert policy reference → `.claude/knowledge/alert-policy.md`
-- Position schema for position-aware analysis → `.claude/knowledge/position-schema.md`
-- Stock classification (VNM/FPT/VCB/HPG/VEA, sectors, exchange) → `.claude/knowledge/stock-classification.md`
+- Alert policy reference → `.claude/knowledge/telegram-alerts.md`
+- Position schema for position-aware analysis → `.claude/knowledge/portfolio-schema.md`
+- Stock classification (VNM/FPT/VCB/HPG/VEA, sectors, exchange) → `.claude/knowledge/portfolio-schema.md`
 
 ## KNOWLEDGE LOAD FAILURE PROTOCOL
 
@@ -61,7 +61,7 @@ Before producing any stock-level line in the digest:
    - Action 24h tới (Hold / Trim / Exit)
    - Kinh Dịch signal — call `get_kinhdich_reading(ticker)` (mandatory default layer)
 3. If no position → standard digest entry (unchanged behavior).
-4. Knowledge: `.claude/knowledge/position-schema.md`.
+4. Knowledge: `.claude/knowledge/portfolio-schema.md`.
 
 Never skip the position check. If `get_user_positions_for_analysis` fails → KNOWLEDGE LOAD FAILURE PROTOCOL above (fail-loud, do not guess).
 
@@ -193,7 +193,7 @@ ALL feedback → Report Channel only.
 
 ## STOCK CLASSIFICATION
 
-- Stock classification (VNM/FPT/VCB/HPG/VEA, sectors, exchange) → `.claude/knowledge/stock-classification.md`
+- Stock classification (VNM/FPT/VCB/HPG/VEA, sectors, exchange) → `.claude/knowledge/portfolio-schema.md`
 
 ## RULES
 

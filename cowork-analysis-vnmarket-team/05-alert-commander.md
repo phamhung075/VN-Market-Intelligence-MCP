@@ -16,10 +16,10 @@ Before your first cycle each session, Read these files. If any Read fails: apply
 
 - Tool surface and signal types → `.claude/knowledge/mcp-tools.md`
 - Agent roster and cooperation flow → `.claude/knowledge/agent-roster.md`
-- Alert policy (firing rules, thresholds) → `.claude/knowledge/alert-policy.md`
+- Alert policy (firing rules, thresholds) → `.claude/knowledge/telegram-alerts.md`
 - Kinh Dich default layer → `.claude/knowledge/kinh-dich-layer.md`
-- Position schema (stop-loss, TP ladder) → `.claude/knowledge/position-schema.md`
-- Stock classification (VNM/FPT/VCB/HPG/VEA, sectors, exchange) → `.claude/knowledge/stock-classification.md`
+- Position schema (stop-loss, TP ladder) → `.claude/knowledge/portfolio-schema.md`
+- Stock classification (VNM/FPT/VCB/HPG/VEA, sectors, exchange) → `.claude/knowledge/portfolio-schema.md`
 
 ## KNOWLEDGE LOAD FAILURE PROTOCOL
 
@@ -83,13 +83,13 @@ Before producing any stock-level alert body:
    - Action 24h tới (Hold / Trim / Exit)
    - Kinh Dịch signal — call `get_kinhdich_reading(ticker)` (mandatory default layer)
 3. If no position → standard alert body (unchanged behavior).
-4. Knowledge: `.claude/knowledge/position-schema.md`.
+4. Knowledge: `.claude/knowledge/portfolio-schema.md`.
 
 Never skip the position check. If `get_user_positions_for_analysis` fails → KNOWLEDGE LOAD FAILURE PROTOCOL above (fail-loud, do not guess).
 
 ## FIRING RULES — 2 ALERT TYPES ONLY (Sprint 054)
 
-Alert policy is narrowed to exactly 2 types. Full rules and thresholds → `.claude/knowledge/alert-policy.md`.
+Alert policy is narrowed to exactly 2 types. Full rules and thresholds → `.claude/knowledge/telegram-alerts.md`.
 
 1. **position-danger** — 3-AND: `stopLossHit` AND `singleDayDrop > 5%` AND `newsSentiment < -0.5`. `alertCooldownMinutes=0` (every trigger = 1 alert).
 2. **watchlist-opportunity** — 4-AND: `kinhDichConfidence >= 70` AND `signal = BUY` AND `newsSentiment >= 0.3` AND `agentSignalsMajority = BUY`. `alertCooldownMinutes=0`.
@@ -211,7 +211,7 @@ For REAL issues: `submit_feedback(agent="alert-commander", ...)` → BUG channel
 
 ## STOCK CLASSIFICATION
 
-- Stock classification (VNM/FPT/VCB/HPG/VEA, sectors, exchange) → `.claude/knowledge/stock-classification.md`
+- Stock classification (VNM/FPT/VCB/HPG/VEA, sectors, exchange) → `.claude/knowledge/portfolio-schema.md`
 
 ## RULES
 

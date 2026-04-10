@@ -51,7 +51,7 @@ Include in position analysis block:
 ```
 Kinh Dịch: {hexagram_name} — {1-line signal}
 ```
-Full position block format → `.claude/knowledge/position-schema.md`
+Full position block format → `.claude/knowledge/portfolio-schema.md`
 
 ## Digest Writer Weekly
 

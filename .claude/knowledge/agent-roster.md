@@ -40,7 +40,7 @@ Dev team loop: `cowork-analysis-vnmarket-team/dev-team-cron.md`
 
 ## Stock Classification
 
-Full table → `.claude/knowledge/stock-classification.md`
+Full table → `.claude/knowledge/portfolio-schema.md`
 
 ## Agent Cooperation Flow
 

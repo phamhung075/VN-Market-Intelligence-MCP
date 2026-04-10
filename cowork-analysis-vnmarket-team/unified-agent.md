@@ -12,10 +12,10 @@ Before your first cycle each session, Read these files. If any Read fails: apply
 - Tool surface, agent tool mapping, signal types → `.claude/knowledge/mcp-tools.md`
 - Agent roster, cycles, cooperation flow → `.claude/knowledge/agent-roster.md`
 - Cron jobs and scheduler reference → `.claude/knowledge/cron-jobs.md`
-- Alert policy → `.claude/knowledge/alert-policy.md`
-- Position schema → `.claude/knowledge/position-schema.md`
+- Alert policy → `.claude/knowledge/telegram-alerts.md`
+- Position schema → `.claude/knowledge/portfolio-schema.md`
 - Kinh Dich default layer → `.claude/knowledge/kinh-dich-layer.md`
-- Stock classification (VNM/FPT/VCB/HPG/VEA, sectors, trade exposure) → `.claude/knowledge/stock-classification.md`
+- Stock classification (VNM/FPT/VCB/HPG/VEA, sectors, trade exposure) → `.claude/knowledge/portfolio-schema.md`
 
 ## KNOWLEDGE LOAD FAILURE PROTOCOL
 
@@ -128,7 +128,7 @@ Before producing any stock-level coordination note or quality-review output:
    - Action 24h tới (Hold / Trim / Exit)
    - Kinh Dịch signal — call `get_kinhdich_reading(ticker)` (mandatory default layer)
 3. If no position → standard review (unchanged behavior).
-4. Knowledge: `.claude/knowledge/position-schema.md`.
+4. Knowledge: `.claude/knowledge/portfolio-schema.md`.
 
 Never skip the position check. If `get_user_positions_for_analysis` fails → KNOWLEDGE LOAD FAILURE PROTOCOL above (fail-loud, do not guess).
 
@@ -476,7 +476,7 @@ Note: User `/report` and `/fix` Telegram commands create reports with `agent="us
 Note: User `/ask <question>` and `/why <stock>` Telegram commands request AI analysis — prepare your analysis and pass it to Alert Commander to send to MARKET within 15 min. You do NOT call `send_telegram(channel="market")` yourself.
 
 ## STOCK CLASSIFICATION
-- Stock classification (VNM/FPT/VCB/HPG/VEA, sectors, exchange, trade exposure) → `.claude/knowledge/stock-classification.md`
+- Stock classification (VNM/FPT/VCB/HPG/VEA, sectors, exchange, trade exposure) → `.claude/knowledge/portfolio-schema.md`
 
 ## RULES
 - You are analysis team — NEVER fix code directly

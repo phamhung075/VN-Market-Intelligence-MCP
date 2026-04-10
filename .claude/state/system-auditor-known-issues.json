@@ -13,9 +13,10 @@
     { "fingerprint": "doc_synced:TASKS.md", "first_seen": "2026-04-07", "last_reported": "2026-04-07" },
     { "fingerprint": "log_schema_missing_table:prediction_markets", "first_seen": "2026-04-08", "last_reported": "2026-04-08" },
     { "fingerprint": "doc_synced:CRON_JOBS.md", "first_seen": "2026-04-08", "last_reported": "2026-04-08" },
-    { "fingerprint": "doc_synced:IMPLEMENTATION_STATUS.md", "first_seen": "2026-04-08", "last_reported": "2026-04-08" },
+    { "fingerprint": "doc_synced:IMPLEMENTATION_STATUS.md", "first_seen": "2026-04-08", "last_reported": "2026-04-09" },
     { "fingerprint": "doc_synced:mcp-tools.md", "first_seen": "2026-04-10", "last_reported": "2026-04-10" },
     { "fingerprint": "doc_synced:unified-agent.md", "first_seen": "2026-04-10", "last_reported": "2026-04-10" },
-    { "fingerprint": "log_warn:assemblebriefing_positions_missing", "first_seen": "2026-04-10", "last_reported": "2026-04-10" }
+    { "fingerprint": "log_warn:assemblebriefing_positions_missing", "first_seen": "2026-04-10", "last_reported": "2026-04-10" },
+    { "fingerprint": "memory_stale:user_watchlist_vea", "first_seen": "2026-04-09", "last_reported": "2026-04-09" }
   ]
 }

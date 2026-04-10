@@ -12,10 +12,10 @@ model: sonnet
 
 Read these ONLY when your task touches the relevant area:
 - MCP tool surface (80 tools, per-agent mapping, signal types) → `.claude/knowledge/mcp-tools.md`
-- Position schema (set_position, avg cost, stop-loss, TP ladder) → `.claude/knowledge/position-schema.md`
-- Alert policy (firing rules, cooldowns, thresholds) → `.claude/knowledge/alert-policy.md`
+- Position schema (set_position, avg cost, stop-loss, TP ladder) → `.claude/knowledge/portfolio-schema.md`
+- Alert policy (firing rules, cooldowns, thresholds) → `.claude/knowledge/telegram-alerts.md`
 - Kinh Dich layer (default layer rule, hexagram integration) → `.claude/knowledge/kinh-dich-layer.md`
-- Stock classification (VNM/FPT/VCB/HPG/VEA, sectors, trade exposure) → `.claude/knowledge/stock-classification.md`
+- Stock classification (VNM/FPT/VCB/HPG/VEA, sectors, trade exposure) → `.claude/knowledge/portfolio-schema.md`
 - Vietnamese financial terms → `docs/GLOSSARY_VI.md`
 
 **Failure protocol** → `.claude/knowledge/fail-loud-protocol.md`

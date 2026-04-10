@@ -14,11 +14,11 @@ Load only the files relevant to the question at hand. Always load the first four
 
 - MCP tool surface → `.claude/knowledge/mcp-tools.md`
 - /ask queue protocol + FIFO rules → `.claude/knowledge/ask-queue-protocol.md`
-- Telegram channels + MARKET routing → `.claude/knowledge/telegram-commands.md`
+- Telegram channels + MARKET routing → `.claude/knowledge/telegram-alerts.md`
 - Fail-loud protocol → `.claude/knowledge/fail-loud-protocol.md`
-- Stock classification → `.claude/knowledge/stock-classification.md` (load if question is stock-related)
+- Stock classification → `.claude/knowledge/portfolio-schema.md` (load if question is stock-related)
 - Kinh Dịch default layer → `.claude/knowledge/kinh-dich-layer.md` (mandatory if question concerns a specific stock)
-- Position schema → `.claude/knowledge/position-schema.md` (load if question touches positions/stop-loss/TP)
+- Position schema → `.claude/knowledge/portfolio-schema.md` (load if question touches positions/stop-loss/TP)
 - Restart policy → `.claude/knowledge/restart-policy.md` (load if question is deploy-related)
 
 ## KNOWLEDGE LOAD FAILURE PROTOCOL
@@ -35,7 +35,7 @@ Standard 5-step fail-loud — see `.claude/knowledge/fail-loud-protocol.md`. Sho
    b. For each question, process ONE AT A TIME:
       i.   Read the question + any ticker context.
       ii.  Decide the answer path:
-           - **Stock-specific** → load stock-classification.md + kinh-dich-layer.md; use MCP tools such as `get_market_context`, `fetch_and_analyze`, `get_kinhdich_reading`, `get_financial_summary`, `get_bctc_full`, `get_sector_comparison`, `get_user_positions_for_analysis`, `get_price_history`, `get_sentiment_trend`.
+           - **Stock-specific** → load portfolio-schema.md + kinh-dich-layer.md; use MCP tools such as `get_market_context`, `fetch_and_analyze`, `get_kinhdich_reading`, `get_financial_summary`, `get_bctc_full`, `get_sector_comparison`, `get_user_positions_for_analysis`, `get_price_history`, `get_sentiment_trend`.
            - **General knowledge / macro / live news** → use `WebSearch` + relevant MCP tools (`get_macro_snapshot`, `get_prediction_markets`, `get_crisis_early_warning`, `get_legal_risk_signals`, etc.).
            - **Reasoning clearly > 10 minutes** → do NOT block the queue. Compose a paste-ready prompt the user can run in a separate session, then call `answer_ask_question(id, answer_text=<paste_ready_prompt>, status="escalated")` and post a short Telegram explanation via `send_telegram(channel="market", ...)`. Move on to the next question.
       iii. Compose a concise Vietnamese answer, max ~400 words, actionable. Cite sources explicitly (MCP tool name or web URL). If the question is about a specific stock, ALWAYS include the Kinh Dịch signal from `get_kinhdich_reading`.

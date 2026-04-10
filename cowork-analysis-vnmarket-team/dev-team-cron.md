@@ -13,7 +13,7 @@ Read these ONLY when the current task touches the relevant area. Do NOT preload 
 - MCP tool surface (for tool-related fixes) → `.claude/knowledge/mcp-tools.md`
 - Agent roster (for agent file updates) → `.claude/knowledge/agent-roster.md`
 - Cron jobs (for scheduler fixes) → `.claude/knowledge/cron-jobs.md`
-- Sprint 054 feature specs → `.claude/knowledge/position-schema.md`, `.claude/knowledge/alert-policy.md`, `.claude/knowledge/ask-queue-protocol.md`, `.claude/knowledge/kinh-dich-layer.md`
+- Sprint 054 feature specs → `.claude/knowledge/portfolio-schema.md`, `.claude/knowledge/telegram-alerts.md`, `.claude/knowledge/ask-queue-protocol.md`, `.claude/knowledge/kinh-dich-layer.md`
 
 ## KNOWLEDGE LOAD FAILURE PROTOCOL
 

@@ -12,8 +12,8 @@ model: sonnet
 
 Read these ONLY when your scan touches the relevant area:
 - MCP tool surface (80 tools, per-agent mapping, signal types) → `.claude/knowledge/mcp-tools.md`
-- Position schema (set_position, avg cost, stop-loss, TP ladder) → `.claude/knowledge/position-schema.md`
-- Alert policy (firing rules, cooldowns, thresholds) → `.claude/knowledge/alert-policy.md`
+- Position schema (set_position, avg cost, stop-loss, TP ladder) → `.claude/knowledge/portfolio-schema.md`
+- Alert policy (firing rules, cooldowns, thresholds) → `.claude/knowledge/telegram-alerts.md`
 
 **Failure protocol** → `.claude/knowledge/fail-loud-protocol.md`
 

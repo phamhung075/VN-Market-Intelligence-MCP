@@ -84,8 +84,16 @@ If the task is:
 After any refactor:
 1. Read `memory/MEMORY.md`.
 2. For each entry, verify it is still accurate against the current repo (file paths, sprint number, tool count).
-3. Update stale entries in place. Delete entries that are now documented in `CLAUDE.md`/`docs/` (memory must not duplicate docs).
+3. Update stale entries in place. Delete entries that are now documented in `CLAUDE.md`/`docs/`/`.claude/knowledge/` (memory must not duplicate docs or knowledge).
 4. Never add memory for anything derivable from the code.
+5. If content exists in both memory and docs/knowledge — **keep memory, delete from docs**. Docs is for project work artifacts (REQ, TECH, reports). System knowledge belongs in memory or `.claude/knowledge/`.
+
+## Dedup hygiene
+
+After any refactor, also check:
+1. **Agent boilerplate** — Grep `.claude/agents/*.md` for repeated blocks (>3 lines) appearing in 3+ files. Extract to `.claude/knowledge/` and replace with 1-line pointer.
+2. **Knowledge file merging** — If 2 small files (<60 lines each) are always read together by the same agents, merge into 1 file to save tool call overhead.
+3. **Knowledge pointer descriptions** — Every pointer in agent KNOWLEDGE sections must have a parenthetical summary so agent can decide skip/load without opening the file. Example: `- Alert policy (firing rules, cooldowns, thresholds) → \`.claude/knowledge/telegram-alerts.md\``
 
 ## Workflow when invoked
 

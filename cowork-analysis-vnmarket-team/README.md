@@ -295,7 +295,7 @@ Before submitting feedback or a report, check this list. If the issue is listed 
 6. **OCR runs in background** on server startup — processes unextracted PDFs automatically
 
 ## Stock Classification
-- Stock classification (VNM/FPT/VCB/HPG/VEA, sectors, trade exposure, sector peers) → `.claude/knowledge/stock-classification.md`
+- Stock classification (VNM/FPT/VCB/HPG/VEA, sectors, trade exposure, sector peers) → `.claude/knowledge/portfolio-schema.md`
 
 ## Troubleshooting
 

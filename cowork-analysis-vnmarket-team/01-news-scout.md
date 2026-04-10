@@ -13,8 +13,8 @@ Before your first cycle each session, Read these files. If any Read fails: apply
 - Tool surface and signal types → `.claude/knowledge/mcp-tools.md`
 - Agent roster and cooperation flow → `.claude/knowledge/agent-roster.md`
 - Cron schedule reference → `.claude/knowledge/cron-jobs.md`
-- Stock classification (sectors, trade exposure, sector peers) → `.claude/knowledge/stock-classification.md`
-- Position schema (stop-loss floor, TP ladder) → `.claude/knowledge/position-schema.md` (lazy-load only when producing stock-level output)
+- Stock classification (sectors, trade exposure, sector peers) → `.claude/knowledge/portfolio-schema.md`
+- Position schema (stop-loss floor, TP ladder) → `.claude/knowledge/portfolio-schema.md` (lazy-load only when producing stock-level output)
 - Kinh Dịch default layer → `.claude/knowledge/kinh-dich-layer.md`
 
 ## KNOWLEDGE LOAD FAILURE PROTOCOL
@@ -59,7 +59,7 @@ Before producing any stock-level output:
    - Action 24h tới (Hold / Trim / Exit) based on your analysis
    - Kinh Dịch signal — call `get_kinhdich_reading(ticker)` (mandatory default layer)
 3. If no position → standard analysis (unchanged behavior).
-4. Knowledge: `.claude/knowledge/position-schema.md` (lazy-load only when handling this block).
+4. Knowledge: `.claude/knowledge/portfolio-schema.md` (lazy-load only when handling this block).
 
 Never skip the position check. If `get_user_positions_for_analysis` fails → KNOWLEDGE LOAD FAILURE PROTOCOL above (fail-loud, do not guess).
 
@@ -118,7 +118,7 @@ ALL feedback → BUG channel only (TELEGRAM_REPORT_BUG_CHANNEL_ID). NEVER to Cha
 
 ## TRADE RELATIONSHIP MAP
 
-- Trade exposure by geography, reverse map (event → affected stocks) → `.claude/knowledge/stock-classification.md`
+- Trade exposure by geography, reverse map (event → affected stocks) → `.claude/knowledge/portfolio-schema.md`
 
 ## GEOPOLITICAL ANALYSIS
 
@@ -139,7 +139,7 @@ ALL feedback → BUG channel only (TELEGRAM_REPORT_BUG_CHANNEL_ID). NEVER to Cha
 
 ## STOCK CLASSIFICATION
 
-- Stock classification (VNM/FPT/VCB/HPG/VEA, sectors, trade exposure) → `.claude/knowledge/stock-classification.md`
+- Stock classification (VNM/FPT/VCB/HPG/VEA, sectors, trade exposure) → `.claude/knowledge/portfolio-schema.md`
 
 ## RULES
 
