@@ -1,485 +1,183 @@
 # Sprint Goal
 
-## Current Sprint
+## Current Sprint — 054 (ACTIVE)
 
-status: ACTIVE
-sprint_id: 054
-started: 2026-04-08
-updated: 2026-04-08
-theme: Position-Aware Analysis + /ask Queue + Alert Narrowing + Kinh Dich Default Layer
-
----
+started: 2026-04-08 | theme: Position-Aware Analysis + /ask Queue + Alert Narrowing + Kinh Dich Default Layer
 
 ### Goal
 
-Sprint 054 closes four investor experience gaps that have been deferred since Sprint 036:
+Four investor experience gaps closed (deferred since Sprint 036):
 
-1. **Position Ledger (E1+E2)**: The user can manage positions via Telegram (`/set_position`, `/check_position`) with automatic stop-loss floor and TP ladder computation. Analysis agents can read positions via `get_user_positions_for_analysis`.
-
-2. **/ask Queue (E3+E4+tools)**: The user can ask investment questions via `/ask`. Questions are queued in a new `ask_queue` table. Every 12 minutes `askQueueCheckJob` posts a signal to `agent_signals` for the `07-qa-responder` Cowork agent, which processes FIFO and answers via `answer_ask_question`.
-
-3. **Alert Narrowing (E5)**: `checkPositionDanger` and `checkWatchlistOpportunity` gate MARKET alerts behind a 3-AND and 4-AND policy respectively. Direct Telegram sends for medium-move / heartbeat / volume-spike noise are removed from `marketScanJob`. DB insert paths are preserved (zero data loss).
-
-4. **Kinh Dich Default Layer (E6)**: `appendKinhDich` wraps every `analyze_stock`, `get_market_snapshot`, and `get_portfolio_conviction` response with hexagram context. Graceful fallback when no data is available. Exception swallowing — never propagates to caller.
+1. **Position Ledger (E1+E2)**: `/set_position`, `/check_position` via Telegram with auto stop-loss floor + TP ladder. `get_user_positions_for_analysis` for analysis agents.
+2. **/ask Queue (E3+E4+tools)**: `/ask` queues questions in `ask_queue` table. Every 12 min `askQueueCheckJob` posts signal to `agent_signals` for `07-qa-responder`. FIFO processing via `answer_ask_question`.
+3. **Alert Narrowing (E5)**: `checkPositionDanger` (3-AND) + `checkWatchlistOpportunity` (4-AND) gate MARKET alerts. Direct Telegram sends for medium-move/heartbeat/volume-spike removed from `marketScanJob`. DB insert paths preserved (zero data loss).
+4. **Kinh Dich Default Layer (E6)**: `appendKinhDich` wraps `analyze_stock`, `get_market_snapshot`, `get_portfolio_conviction`. Graceful fallback + exception swallowing.
 
 ### Scope
 
-IN:
-- Task 1070: positionStore — buyPosition + sellPosition + applyPositionCommand
-- Task 1071: telegramCommands — /set_position + /check_position handlers
-- Task 1072: schema.ts DDL + askQueueStore CRUD helpers
-- Task 1073: telegramCommands — /ask handler
-- Task 1074: askQueueCheckJob scheduler + cron registration (*/12 * * * *)
-- Task 1075: alertPolicyChecker.ts + stopLossComputer.ts + mcp.config.json alertPolicy section
-- Task 1076: marketScanJob noise retirement (remove direct MARKET sends, keep DB inserts)
-- Task 1077: kinhDichWrapper.ts + wire appendKinhDich into analysis/market/portfolio tools
-- Task 1078: askQueueTools — get_pending_ask_questions + answer_ask_question MCP tools (+2 tools)
-- Task 1079: positionTools — get_user_positions_for_analysis MCP tool (+1 tool)
-- Task 1081: Sprint 054 integration smoke test (all-mocked end-to-end)
+| Task | Description | In/Out |
+|------|-------------|--------|
+| 1070 | positionStore — buyPosition + sellPosition + applyPositionCommand | IN |
+| 1071 | telegramCommands — /set_position + /check_position handlers | IN |
+| 1072 | schema.ts DDL + askQueueStore CRUD helpers | IN |
+| 1073 | telegramCommands — /ask handler | IN |
+| 1074 | askQueueCheckJob scheduler + cron registration (*/12 * * * *) | IN |
+| 1075 | alertPolicyChecker.ts + stopLossComputer.ts + mcp.config.json alertPolicy | IN |
+| 1076 | marketScanJob noise retirement (remove direct MARKET sends, keep DB inserts) | IN |
+| 1077 | kinhDichWrapper.ts + wire appendKinhDich into analysis/market/portfolio tools | IN |
+| 1078 | askQueueTools — get_pending_ask_questions + answer_ask_question (+2 tools) | IN |
+| 1079 | positionTools — get_user_positions_for_analysis (+1 tool) | IN |
+| 1081 | Sprint 054 integration smoke test (all-mocked end-to-end) | IN |
+| E7 | Cowork position-aware agent prompts (05-alert-commander.md, 04-market-watcher.md) | OUT → cowork-refactory-expert Phase 6 |
+| E8 | 07-qa-responder agent creation/rewrite | OUT → cowork-refactory-expert Phase 6 |
 
-OUT (delegated to cowork-refactory-expert, Phase 6):
-- E7: Cowork position-aware agent prompts (05-alert-commander.md, 04-market-watcher.md)
-- E8: 07-qa-responder agent creation / rewrite
-- Any agent .md file changes — NOT developer tasks
-
-### Exclusions
-
-- Hot reload / start.sh — all restarts via `launchctl kickstart -k gui/$(id -u)/com.vn-market.mcp`
-- `user_requests` table — ask_queue is a NEW table, do NOT reuse user_requests schema
-- E7/E8 cowork agent rewrites — delegated to cowork-refactory-expert after code tasks Done
+Exclusions: hot reload/start.sh | `user_requests` table reuse (ask_queue is NEW) | E7/E8 cowork agent rewrites
 
 ### Success Criteria
 
-1. `bun test src/__tests__/107*.test.ts src/__tests__/1081-sprint054-smoke.test.ts` → all pass
-2. `bun tsc --noEmit` → 0 errors after every task merge
-3. Tool count increments by exactly +3 (tasks 1078: +2, 1079: +1)
-4. `launchctl list | grep com.vn-market.mcp` → PID non-zero after restart
-5. `curl -s http://127.0.0.1:3000/health` → `{"status":"ok","toolCount":N}` where N = prev + 3
-6. `marketScanJob.ts` contains 0 direct `sendTelegramMarket` calls for noise alert types
-7. `kinhDichWrapper.ts` contains 0 imports from `infrastructure/`
-8. `/ask FPT có nên mua?` via Telegram → DB row inserted, reply confirms queue ID
-9. Integration smoke test (task 1081) passes: 7-step cycle completes, 0 MARKET sends
+| # | Check |
+|---|-------|
+| 1 | `bun test src/__tests__/107*.test.ts src/__tests__/1081-sprint054-smoke.test.ts` → all pass |
+| 2 | `bun tsc --noEmit` → 0 errors after every merge |
+| 3 | Tool count increments by exactly +3 (1078: +2, 1079: +1) |
+| 4 | `launchctl list | grep com.vn-market.mcp` → PID non-zero after restart |
+| 5 | `curl -s http://127.0.0.1:3000/health` → `{"status":"ok","toolCount":N}` where N = prev + 3 |
+| 6 | `marketScanJob.ts` contains 0 direct `sendTelegramMarket` calls for noise alert types |
+| 7 | `kinhDichWrapper.ts` contains 0 imports from `infrastructure/` |
+| 8 | `/ask FPT có nên mua?` via Telegram → DB row inserted, reply confirms queue ID |
+| 9 | Smoke test (1081) passes: 7-step cycle, 0 MARKET sends |
 
 ### Dependency Map
 
 ```
-Batch A (start immediately, no deps):
-  1070 (positionStore)
-  1072 (askQueueStore)
-  1075 (alertPolicyChecker)
-  1077 (kinhDichWrapper)
-
-Batch B (start after respective Batch A dep is Done):
-  1071 ← 1070
-  1073 ← 1072
-  1074 ← 1072
-  1076 ← 1075
-  1078 ← 1072
-  1079 ← 1070
-
-Batch C (start after ALL Batch A+B Done):
-  1081 ← 1070, 1071, 1072, 1073, 1074, 1075, 1076, 1077, 1078, 1079
+Batch A (no deps):     1070  1072  1075  1077
+Batch B (after A dep): 1071←1070  1073←1072  1074←1072  1076←1075  1078←1072  1079←1070
+Batch C (all A+B done): 1081←1070–1079
 ```
 
-WIP limit: max 2 In Progress simultaneously. First 2 slots: 1070 + 1072.
+WIP limit: max 2 In Progress. First 2 slots: 1070 + 1072.
 
 ---
 
-## Previous Sprint
+## Previous Sprint — 053 (COMPLETE)
 
-status: COMPLETE
-sprint_id: 053
-started: 2026-04-07
-completed: 2026-04-07
-theme: Code Janitor + Test Isolation + Signal Quality
+started: 2026-04-07 | completed: 2026-04-07 | theme: Code Janitor + Test Isolation + Signal Quality
 
-scope:
-  - 1006: MAX_PEER_SYNCS_PER_CYCLE 5->30 (automotive peers now synced) DONE
-  - 1021: Delete legacy src/db/schema.ts DONE
-  - 1022: agent_feedback DDL canonical in initDatabase() DONE
-  - report-1032: pollNews false alarm investigation (off-hours throttle, not a bug) DONE
-  - 106 test isolation: NO_NET_MARKET_DEPS fixture (25/25 pass) DONE
-  - 1007/1020: Kinh Dich convergence — tickerJitter prevents identical hexagrams DONE
-
-## Sprint 036 — Historical (kept below for context)
+| Task | Description | Status |
+|------|-------------|--------|
+| 1006 | MAX_PEER_SYNCS_PER_CYCLE 5→30 (automotive peers now synced) | Done |
+| 1021 | Delete legacy src/db/schema.ts | Done |
+| 1022 | agent_feedback DDL canonical in initDatabase() | Done |
+| report-1032 | pollNews false alarm investigation (off-hours throttle, not a bug) | Done |
+| 106 | Test isolation: NO_NET_MARKET_DEPS fixture (25/25 pass) | Done |
+| 1007/1020 | Kinh Dich convergence — tickerJitter prevents identical hexagrams | Done |
 
 ---
 
-### Theme
+## Previous Sprint — 036 (COMPLETE)
 
-**"Less Surface, Clearer Signal — MCP Audit + Communication Hardening (Sprint 036)"**
-
----
+theme: Less Surface, Clearer Signal — MCP Audit + Communication Hardening
 
 ### Goal
 
-Sprint 035b delivered the full autonomous loop: two teams sharing a database, a Report Channel
-for problem surfacing, and MCP tools to read and process those reports. The loop is now live.
-
-Sprint 036 makes the loop more reliable and the agent surface smaller. It does two things:
-
-1. **Tier 1 — Zero-Risk Removals**: Remove 8 tools from MCP registration that are dead,
-   deprecated, forbidden, or strictly internal. No agent references them. No business logic
-   changes. The tools remain as internal functions where needed — they simply stop appearing
-   in the 64-tool surface that every agent loads.
-
-2. **Tier 2 — Communication Fixes + Merges**: Close three structural communication gaps that
-   cause double-processing, missed bugs, and noise, then consolidate six tools into three to
-   shrink the agent surface further.
-
-After this sprint: 64 tools → 53 tools. Gaps G2, G3, G5 closed. System health query drops
-from 4 calls to 1. Telegram send drops from 3 tools to 1. Alert mute drops from 2 tools to 1.
-
----
-
-### Investment Goal
-
-The investor's analysis agents are currently loading 64 tools on every cycle. Eight of those
-tools are dead weight (no agent uses them) or dangerous (Puppeteer blocks the server). Six
-more are duplicative (three system health tools, two Telegram send tools, two mute tools) that
-agents must choose between on every cycle. Meanwhile, when a bug is fixed by the Dev Team,
-the Analysis Team agents have no way to know — so they keep filing the same report. And if
-both Unified Agent and Dev Team attempt to claim the same report at the same time, one of
-them silently processes work the other already handled.
-
-This sprint eliminates all of the above. The result is a cleaner agent surface (fewer wrong
-choices), a closed feedback loop (agents know when fixes land), and an ownership lock
-(no double-processing of reports).
-
----
+64 tools → 53 tools. Gaps G2, G3, G5 closed. System health 4 calls → 1. Telegram send 3 tools → 1. Alert mute 2 tools → 1.
 
 ### Scope
 
-**IN — Tier 1: Zero-Risk Removals (8 tools removed from MCP)**
+**Tier 1 — Zero-Risk Removals (Task 230, -8 tools: 64→56)**
 
-| Task | Tool Removed | Reason |
-|------|-------------|--------|
-| 230 | `get_feedback` (#32) | Deprecated — returns nothing useful. Zero agent usage. |
-| 230 | `get_global_log` (#27) | Developer-only. No agent references it. |
-| 230 | `get_tool_log` (#28) | `get_error_summary` covers the signal. Weekly-only usage not worth the surface. |
-| 230 | `run_daily_briefing` (#12) | Cron calls the function directly. No agent should trigger this. |
-| 230 | `search_stocks` (#41) | Zero agent references. `get_watchlist` provides all codes. |
-| 230 | `fetch_ssc_reports` (#5) | Explicitly FORBIDDEN in all agent prompts. Puppeteer blocks the server. |
-| 230 | `trigger_alert_check` (#34) | Intelligence cycle runs this every 15 min. Redundant from agents. |
-| 230 | `export_portfolio_snapshot` (#46) | Weekly file dump — dev/user action, not analysis. |
+| Tool Removed | Reason |
+|-------------|--------|
+| get_feedback (#32) | Deprecated, zero agent usage |
+| get_global_log (#27) | Developer-only, no agent references |
+| get_tool_log (#28) | get_error_summary covers the signal |
+| run_daily_briefing (#12) | Cron calls directly, no agent trigger needed |
+| search_stocks (#41) | Zero agent references, get_watchlist covers all codes |
+| fetch_ssc_reports (#5) | FORBIDDEN in all agent prompts — Puppeteer blocks server |
+| trigger_alert_check (#34) | Intelligence cycle runs every 15 min, redundant from agents |
+| export_portfolio_snapshot (#46) | Weekly file dump — dev/user action, not analysis |
 
-All 8 removals are confined to `src/interface/mcp/server.ts` (unregister) and
-`src/interface/mcp/tools/index.ts` (unexport). Underlying functions are untouched.
+Removals confined to `src/interface/mcp/server.ts` (unregister) + `src/interface/mcp/tools/index.ts` (unexport). Underlying functions untouched.
 
-**Result**: 64 → 56 tools.
+**Tier 2 — Communication Fixes + Merges**
 
----
+| Task | Fix | Net Tools |
+|------|-----|-----------|
+| 231 — Fix G5 | Report ownership lock: `claimed_by`+`claimed_at` columns on telegram_reports. New `claim_telegram_report(id, claimedBy)` tool — atomic UPDATE WHERE claimed_by IS NULL. | 56→57 |
+| 232 — Fix G3 | `/report` + `/fix` Telegram commands → write to agent_feedback with agent='user-telegram', forward to Report Channel. `/fix` sets priority='high'. No new MCP tools. | 57 |
+| 233 — Fix G2 | `system_changelog` table + `log_fix` (Dev Team writes after fix) + `get_recent_fixes(limit?)` (Analysis Team reads before filing report). Schema: id, fix_type, title, detail, files, commit_hash, fixed_at, related_feedback_id. | 57→59 |
+| 234 — Merge M1 | 4 system health tools → `get_system_status` (returns [DB][SOURCES][FRESHNESS][ERRORS]). Removes get_source_health, get_data_freshness, get_error_summary. | 59→56 |
+| 235 — Merge M2 | 3 Telegram send tools → `send_telegram(channel:"chat"|"report", message)`. Removes send_test_telegram, send_telegram_report, delete_telegram_report. | 56→53 |
+| 236 — Merge M3 | 2 mute tools → `manage_alert_mute(code, action:"mute"|"unmute", hours?, reason?)`. | 53 |
+| 237 | CLAUDE.md sync + update all agent .md files for 53 tools | — |
 
-**IN — Tier 2a: Fix G5 — Report Ownership Lock**
-
-| Task | 231 |
-|------|-----|
-| **Gap** | Both Unified Agent and Dev Team call `read_telegram_reports` then `process_telegram_report`. Race condition: both process the same report with conflicting triage decisions. |
-| **Fix** | Add `claimed_by TEXT` and `claimed_at INTEGER` columns to `telegram_reports`. New `claim_telegram_report(id, claimedBy)` MCP tool performs atomic `UPDATE WHERE claimed_by IS NULL`. First caller wins; second gets `"Report {id} already claimed by {claimed_by}"` and skips. |
-| **Schema change** | `ALTER TABLE telegram_reports ADD COLUMN claimed_by TEXT` + `ADD COLUMN claimed_at INTEGER` |
-| **New tool** | `claim_telegram_report` (+1 tool) |
-| **Files** | `src/infrastructure/db/schema.ts`, `src/infrastructure/db/telegramReportStore.ts`, `src/interface/mcp/tools/telegramReportTools.ts`, `src/interface/mcp/server.ts`, `cowork-analysis-vnmarket-team/unified-agent.md`, `cowork-analysis-vnmarket-team/dev-team-cron.md` |
-
-**Result**: 56 → 57 tools.
-
----
-
-**IN — Tier 2b: Fix G3 — User → Dev Team Direct Path**
-
-| Task | 232 |
-|------|-----|
-| **Gap** | No `/report` or `/fix` Telegram command exists. User-noticed bugs take the longest path to reach Dev Team (user → Cowork agent → submit_feedback → Report Channel — 3 hops, 5 minutes). |
-| **Fix** | Add `/report <description>` and `/fix <description>` commands to `telegramCommands.ts`. Both write directly to `agent_feedback` table with `agent='user-telegram'` and forward the message to the Report Channel via `sendTelegramReport`. `/fix` sets `priority='high'`. Dev Team cron treats `from_agent='user-telegram'` as highest triage priority. |
-| **New table** | None (uses existing `agent_feedback` table) |
-| **New MCP tools** | None (command routing only) |
-| **Files** | `src/infrastructure/notifiers/telegramCommands.ts`, `cowork-analysis-vnmarket-team/dev-team-cron.md` |
-
-**Result**: 57 tools (no change).
-
----
-
-**IN — Tier 2c: Fix G2 — System Changelog (Dev Team → Analysis Team)**
-
-| Task | 233 |
-|------|-----|
-| **Gap** | After Dev Team fixes a bug, Analysis Team agents have no way to know. Same bug gets re-reported on the next cycle, creating a report loop. |
-| **Fix** | New `system_changelog` SQLite table. Two new MCP tools: `log_fix(title, detail, files, commitHash, relatedFeedbackId?)` for Dev Team to write entries after every fix, and `get_recent_fixes(limit?)` for Analysis Team agents to read before filing a new report (check: "was this already fixed?"). |
-| **New table** | `system_changelog (id, fix_type, title, detail, files, commit_hash, fixed_at, related_feedback_id)` |
-| **New tools** | `log_fix` + `get_recent_fixes` (+2 tools) |
-| **Files** | `src/infrastructure/db/schema.ts`, new `src/infrastructure/db/changelogStore.ts`, new `src/interface/mcp/tools/changelogTools.ts`, `src/interface/mcp/server.ts`, `cowork-analysis-vnmarket-team/dev-team-cron.md`, all 6 analysis agent `.md` files |
-
-**Result**: 57 → 59 tools.
-
----
-
-**IN — Tier 2d: Merge M1 — System Health 4 → 1**
-
-| Task | 234 |
-|------|-----|
-| **Tools merged** | `get_system_health` (#26) + `get_source_health` (#53) + `get_data_freshness` (#42) + `get_error_summary` (#29) |
-| **New tool** | `get_system_status` — single call returning four sections: `[DB]`, `[SOURCES]`, `[FRESHNESS]`, `[ERRORS]` |
-| **Tools removed** | `get_source_health`, `get_data_freshness`, `get_error_summary` (-3 tools) |
-| **Backward compat** | `get_system_health` is renamed to `get_system_status` internally; no separate migration. Agent prompts updated. |
-| **Files** | `src/interface/mcp/tools/systemTools.ts`, `src/interface/mcp/tools/sourceHealthTools.ts`, `src/interface/mcp/tools/dataFreshnessTools.ts`, `src/interface/mcp/server.ts`, all agent `.md` files |
-
-**Result**: 59 → 56 tools.
-
----
-
-**IN — Tier 2e: Merge M2 — Telegram Send 3 → 1**
-
-| Task | 235 |
-|------|-----|
-| **Tools merged** | `send_test_telegram` (#20) + `send_telegram_report` (#21) + absorb `delete_telegram_report` (#22) into `process_telegram_report` |
-| **New tool** | `send_telegram(channel: "chat" \| "report", message)` — single tool for all outbound Telegram sends |
-| **Tools removed** | `send_test_telegram`, `send_telegram_report`, `delete_telegram_report` (-3 tools) |
-| **Note** | `delete_telegram_report` is already absorbed into `process_telegram_report` workflow; this merge makes it official. Agent prompts updated. |
-| **Files** | `src/interface/mcp/tools/telegramTools.ts`, `src/interface/mcp/server.ts`, all agent `.md` files |
-
-**Result**: 56 → 53 tools.
-
----
-
-**IN — Tier 2f: Merge M3 — Alert Mute 2 → 1**
-
-| Task | 236 |
-|------|-----|
-| **Tools merged** | `mute_stock_alerts` (#58) + `unmute_stock_alerts` (#59) |
-| **New tool** | `manage_alert_mute(code, action: "mute" \| "unmute", hours?, reason?)` |
-| **Tools removed** | `mute_stock_alerts`, `unmute_stock_alerts` (-2 tools, +1 new = net -1) |
-| **Files** | `src/interface/mcp/tools/alertMuteTools.ts`, `src/interface/mcp/server.ts`, `cowork-analysis-vnmarket-team/04-market-watcher.md`, `cowork-analysis-vnmarket-team/05-alert-commander.md` |
-
-**Result**: 53 → 53 tools (net: -2 old + 1 new = -1, but merged into the running total above).
-
----
-
-**OUT**
-
-- Fix G1: `/ask` + `/why` AI-powered Telegram commands — requires intelligence cycle Step F and
-  `user_requests` table. Deferred to Sprint 037 (Tier 3).
-- Fix G4: Agent signal bus (`agent_signals` table, `post_agent_signal`, `get_agent_signals`) —
-  complex inter-agent coordination. Deferred to Sprint 038+ (Tier 4).
-- Merge M4: `get_alerts` absorbing `get_price_alerts` — deferred to Sprint 037 with compound tools.
-- Compound tools C1 (`get_market_context`) and C2 (`get_bctc_full`) — Sprint 037.
-- New analysis features, new data sources, new cascade rules.
-- Agent-scoped tool visibility (server filters tools per agent) — Sprint 038+.
-- CLAUDE.md sync update — included as final task of this sprint after all code is merged.
-
----
+OUT: Fix G1 (/ask + /why, deferred Sprint 037) | Fix G4 (agent signal bus, deferred Sprint 038+) | Merge M4 (get_alerts absorb) | Compound tools C1/C2 | Agent-scoped tool visibility
 
 ### Task Board (Sprint 036)
 
-| # | Title | Tier | Priority | Agent | Status | Depends on |
-|---|-------|------|----------|-------|--------|------------|
-| 230 | Remove 8 dead/forbidden/internal tools from MCP | 1 | P0 | Developer | Backlog | — |
-| 231 | Fix G5: `claim_telegram_report` + ownership columns | 2a | P0 | Developer | Backlog | — |
-| 232 | Fix G3: `/report` + `/fix` Telegram commands | 2b | P1 | Developer | Backlog | — |
-| 233 | Fix G2: `system_changelog` + `log_fix` + `get_recent_fixes` | 2c | P1 | Developer | Backlog | — |
-| 234 | Merge M1: system health 4 → 1 (`get_system_status`) | 2d | P1 | Developer | Backlog | 230 |
-| 235 | Merge M2: Telegram send 3 → 1 (`send_telegram`) | 2e | P1 | Developer | Backlog | 230 |
-| 236 | Merge M3: alert mute 2 → 1 (`manage_alert_mute`) | 2f | P2 | Developer | Backlog | 230 |
-| 237 | CLAUDE.md sync + update all agent `.md` files for 53 tools | — | P2 | Developer | Backlog | 230–236 |
+| # | Title | Tier | Priority | Status | Depends on |
+|---|-------|------|----------|--------|------------|
+| 230 | Remove 8 dead/forbidden/internal tools from MCP | 1 | P0 | Backlog | — |
+| 231 | Fix G5: claim_telegram_report + ownership columns | 2a | P0 | Backlog | — |
+| 232 | Fix G3: /report + /fix Telegram commands | 2b | P1 | Backlog | — |
+| 233 | Fix G2: system_changelog + log_fix + get_recent_fixes | 2c | P1 | Backlog | — |
+| 234 | Merge M1: system health 4→1 (get_system_status) | 2d | P1 | Backlog | 230 |
+| 235 | Merge M2: Telegram send 3→1 (send_telegram) | 2e | P1 | Backlog | 230 |
+| 236 | Merge M3: alert mute 2→1 (manage_alert_mute) | 2f | P2 | Backlog | 230 |
+| 237 | CLAUDE.md sync + update all agent .md files for 53 tools | — | P2 | Backlog | 230–236 |
+
+Dependency chain: 230 gates 234/235/236. 231, 232, 233 parallel + independent. 237 waits for all in Review.
+
+### Key Technical Decisions (Locked)
+
+| # | Decision |
+|---|----------|
+| T1 | Removals are server.ts-only. Underlying functions untouched — preserves internal callers (cron, use cases). |
+| T2 | claim_telegram_report uses single atomic `UPDATE ... WHERE claimed_by IS NULL` + changes() check. SQLite serialized writes — no lock table needed. |
+| T3 | send_telegram channel param maps "chat"→TELEGRAM_CHAT_ID / "report"→TELEGRAM_REPORT_ID. Thin wrapper over existing internal functions. delete_telegram_report removed from MCP (only valid inside process_telegram_report workflow). |
+| T4 | get_system_status is rename + union of 4 existing functions. No logic changes. Old tool names removed from server.ts, functions remain. |
+| T5 | manage_alert_mute delegates to existing alertMuteStore.ts. Routing change, not logic change. |
+| T6 | system_changelog is append-only. log_fix inserts only. get_recent_fixes returns N rows by fixed_at DESC. No FK on related_feedback_id. |
+| T7 | get_recent_fixes must be explicit in each agent's protocol: "Before submit_feedback for system issue, call get_recent_fixes(10). If title matches, skip feedback." |
+| T8 | Tool count target 53 is hard. Any deviation requires justification in task report. |
+
+### Success Metrics (Sprint 036)
+
+1. `bun tsc --noEmit` → 0 errors after every merge
+2. `bun test` full suite → 1934+ tests pass, 0 failures
+3. Tool count: 64→53 (230: -8 | 231: +1 | 233: +2 | 234: -3 | 235: -3 | 236: -1)
+4. G5 closed: second claim_telegram_report call returns "Report {id} already claimed by dev-team"
+5. G3 closed: /report from Telegram → agent_feedback row + Report Channel message visible via read_telegram_reports
+6. G2 closed: log_fix entry visible to Analysis agents via get_recent_fixes
+7. M1: get_system_status returns [DB][SOURCES][FRESHNESS][ERRORS]; old 4 tools not registered
+8. M2: send_telegram routes correctly; send_test_telegram/send_telegram_report/delete_telegram_report not registered
+9. M3: manage_alert_mute mutes/unmutes; old 2 tools not registered
+10. All agent .md files reference 53 tools; unified-agent.md + dev-team-cron.md include claim step; 6 analysis agents include pre-report get_recent_fixes check
 
 ---
 
-### Dependency Chain
+## Previous Sprint — 035b (COMPLETE)
 
-```
-230 (remove 8 tools — unregisters dead surface; must be first so merges work on clean base)
-  ├─→ 234 (M1: system health merge — builds on top of cleaned registration)
-  ├─→ 235 (M2: telegram send merge — builds on top of cleaned registration)
-  └─→ 236 (M3: mute merge — builds on top of cleaned registration)
+started: 2026-04-02 | completed: 2026-04-02 | theme: Two-Team Autonomy — Report Channel Persistence
 
-231 (G5: claim lock — standalone DB + tool change; no dependency on 230)
-232 (G3: /report /fix commands — standalone telegramCommands.ts change)
-233 (G2: changelog — standalone new table + 2 tools)
+Full autonomous loop operational: Analysis Team submit_feedback → telegram_reports SQLite + Report Channel → Dev Team read_telegram_reports → process_telegram_report → row marked, message deleted.
 
-237 (CLAUDE.md + agent .md sync — must be last; documents final 53-tool state)
-```
+| # | Title | Status |
+|---|-------|--------|
+| 226 | telegram_reports SQLite table + store + wire sendTelegramReport | Done |
+| 227 | Webhook for Report Channel | Done |
+| 228 | read_telegram_reports MCP tool | Done |
+| 229 | process_telegram_report MCP tool | Done |
 
-230 is gating for 234/235/236. 231, 232, 233 are parallel and independent.
-237 waits for all others to be in Review.
+Success metrics met: correct schema, status="new" on insert, webhook stores from_agent="human", read returns rows, process marks + deletes, 1934+ tests pass, 0 errors, toolCount=64.
 
 ---
 
-### Success Metrics
+## Previous Sprint — 035a (COMPLETE)
 
-1. `bun tsc --noEmit` — 0 errors after every task merge.
+started: 2026-04-02 | completed: 2026-04-02 | theme: Two-Team Autonomy — Docs + Config
 
-2. `bun test` full suite — existing 1934+ tests pass. New tests added for tasks 231, 233,
-   236 (all schema or logic changes). 0 failures.
-
-3. **Tool count**: 64 (Sprint 035b) → 53 (Sprint 036 final).
-   - Task 230: -8 (64 → 56)
-   - Task 231: +1 (`claim_telegram_report`) (56 → 57)
-   - Task 233: +2 (`log_fix`, `get_recent_fixes`) (57 → 59)
-   - Task 234: -3 (merge M1: remove 3 old, `get_system_status` replaces `get_system_health`) (59 → 56)
-   - Task 235: -3 (merge M2: remove 3 old, `send_telegram` is new) (56 → 53)
-   - Task 236: -1 (merge M3: remove 2 old, `manage_alert_mute` is 1 new) (53 → 53)
-
-4. **G5 closed**: calling `claim_telegram_report(id, "dev-team")` when the row has no
-   `claimed_by` succeeds. A second call returns `"Report {id} already claimed by dev-team"`.
-   Unified Agent and Dev Team prompts updated to call `claim_telegram_report` before
-   `process_telegram_report`.
-
-5. **G3 closed**: `/report Bug: commodity section missing from briefing` from Telegram chat
-   writes a row to `agent_feedback` with `agent='user-telegram'` and sends the text to the
-   Report Channel. Dev Team cron sees it in `read_telegram_reports`.
-
-6. **G2 closed**: after a fix, Dev Team calls `log_fix(...)` and the row appears in
-   `system_changelog`. Analysis agents call `get_recent_fixes()` and see the entry. Agent
-   `.md` files instruct agents to check `get_recent_fixes` before filing a duplicate report.
-
-7. **M1 verified**: `get_system_status` returns a single response with four labeled sections
-   (`[DB]`, `[SOURCES]`, `[FRESHNESS]`, `[ERRORS]`). Old tools (`get_system_health`,
-   `get_source_health`, `get_data_freshness`, `get_error_summary`) are not registered.
-
-8. **M2 verified**: `send_telegram(channel="chat", message="test")` sends to TELEGRAM_CHAT_ID.
-   `send_telegram(channel="report", message="problem")` sends to TELEGRAM_REPORT_ID. Old tools
-   (`send_test_telegram`, `send_telegram_report`, `delete_telegram_report`) are not registered.
-
-9. **M3 verified**: `manage_alert_mute(code="VNM", action="mute", hours=4)` mutes VNM alerts.
-   `manage_alert_mute(code="VNM", action="unmute")` lifts the mute. Old tools
-   (`mute_stock_alerts`, `unmute_stock_alerts`) are not registered.
-
-10. **Agent docs updated**: all agent `.md` files in `cowork-analysis-vnmarket-team/` reference
-    53 tools. `unified-agent.md` and `dev-team-cron.md` include the `claim_telegram_report`
-    step before `process_telegram_report`. All 6 analysis agent files include a pre-report
-    `get_recent_fixes` check step. `CLAUDE.md` documents Sprint 036 completion.
-
----
-
-### Key Technical Decisions (Locked at PO Level)
-
-**T1. Removals are server.ts-only**: Tasks 230 is purely a registration change. Functions in
-`feedbackTools.ts`, `systemTools.ts`, `reports.ts`, `marketTools.ts`, `analysis.ts`, and
-`alertCheckTools.ts` are not deleted — only their `server.tool(...)` calls are removed. This
-preserves internal callers (cron jobs, use cases) and allows future re-exposure via Telegram
-commands without re-implementing business logic.
-
-**T2. `claim_telegram_report` uses SQLite atomic UPDATE**: the ownership check must be a
-single `UPDATE telegram_reports SET claimed_by=?, claimed_at=? WHERE id=? AND claimed_by IS NULL`
-with `changes()` check. This is atomic under SQLite's serialized write model — no lock table
-or transaction wrapping needed.
-
-**T3. `send_telegram` replaces all three outbound tools**: the channel parameter (`"chat"` |
-`"report"`) maps directly to `TELEGRAM_CHAT_ID` vs `TELEGRAM_REPORT_ID`. The implementation
-is a thin wrapper over the existing `sendTelegramMessage` and `sendTelegramReport` internal
-functions. `delete_telegram_report` is explicitly removed from MCP because deletion is only
-valid inside the `process_telegram_report` workflow.
-
-**T4. `get_system_status` is a rename + union, not a rewrite**: the four underlying functions
-(`getSystemHealth`, `getSourceHealth`, `getDataFreshness`, `getErrorSummary`) are called
-sequentially and their outputs assembled into one string. No logic changes. The old tool names
-are removed from `server.ts` but the functions remain in their respective files.
-
-**T5. `manage_alert_mute` delegates to existing store**: the implementation calls the same
-`alertMuteStore.ts` functions that `mute_stock_alerts` and `unmute_stock_alerts` currently
-call. The merge is a routing change, not a logic change.
-
-**T6. `system_changelog` is append-only**: `log_fix` only inserts — never updates or deletes.
-`get_recent_fixes` reads the most recent N rows ordered by `fixed_at DESC`. No foreign key
-constraint on `related_feedback_id` (the feedback row may have been deleted after processing).
-
-**T7. Agent `.md` updates are mandatory for G2**: the `get_recent_fixes` step must be
-explicitly in each agent's protocol, or agents will not use it. The instruction is: "Before
-calling `submit_feedback` for a system issue, call `get_recent_fixes(10)` and check if the
-issue title appears in the recent fix log. If yes, skip the feedback."
-
-**T8. Tool count target is 53**: this is a hard target. Any deviation (net +1 or -1) must
-be justified in the task report. The per-task breakdown in the Success Metrics section above
-is the reference.
-
----
-
-### Why Not Tier 3 Now
-
-Fix G1 (`/ask` + `/why`) requires adding a Step F to the intelligence cycle job, a new
-`user_requests` SQLite table, and a full 15-minute async response path. This is a new feature,
-not a refactor, and carries integration risk with the already-running cron. It belongs in a
-separate sprint once Sprint 036 has proven the cleaned surface is stable.
-
-Fix G4 (agent signal bus) is the highest-complexity change in the entire roadmap — inter-agent
-coordination requires careful protocol design to avoid new race conditions. Sprint 038+ after
-the Tier 3 compound tools have reduced per-cycle call volume.
-
----
-
-## Previous Sprint
-
-status: COMPLETE
-sprint_id: 035b
-started: 2026-04-02
-updated: 2026-04-02
-completed: 2026-04-02
-
----
-
-### Theme
-
-**"Two-Team Autonomy — Report Channel Persistence (Sprint 035b)"**
-
----
-
-### Goal
-
-Sprint 035a delivered the docs and config that define how the Dev Team loop works. Sprint 035b
-delivers the four code changes that make it actually run: a SQLite persistence layer for
-Report Channel messages, an extended webhook that captures inbound messages from that channel,
-and two new MCP tools so the Dev Team cron can read and process reports programmatically.
-
-After this sprint the full autonomous loop is operational:
-- Analysis Team agent sends a problem report via `submit_feedback` or `send_test_telegram`
-  → message stored in `telegram_reports` SQLite + posted to Report Channel
-- Dev Team cron calls `read_telegram_reports` → sees the unprocessed row
-- Dev Team fixes the issue, calls `process_telegram_report(id)` → row marked processed +
-  Telegram message deleted from Report Channel
-- Report Channel stays clean; SQLite has full audit trail
-
----
-
-### Success Metrics (all met)
-
-1. `telegram_reports` table exists in SQLite with correct schema.
-2. After `sendTelegramReport("test")`, one row appears in `telegram_reports` with `status="new"`.
-3. POST to `/telegram-webhook` with TELEGRAM_REPORT_ID chat stores row with `from_agent="human"`.
-4. `read_telegram_reports` returns the row; empty result returns Vietnamese exit message.
-5. `process_telegram_report(id)` marks the row processed and calls `deleteTelegramReport`.
-6. `bun test` full suite passes: 1934+ tests, 0 failures.
-7. `bun tsc --noEmit` → 0 errors.
-8. Tool count after Sprint 035b: 64.
-
----
-
-### Task board (Sprint 035b)
-
-| # | Title | Priority | Agent | Status |
-|---|-------|----------|-------|--------|
-| 226 | `telegram_reports` SQLite table + store + wire sendTelegramReport | P0 | BA | Done |
-| 227 | Webhook for Report Channel | P0 | BA | Done |
-| 228 | `read_telegram_reports` MCP tool | P1 | BA | Done |
-| 229 | `process_telegram_report` MCP tool | P1 | BA | Done |
-
----
-
-## Previous Sprint (035a)
-
-status: COMPLETE
-sprint_id: 035a
-started: 2026-04-02
-updated: 2026-04-02
-completed: 2026-04-02
-
-### Theme
-
-**"Two-Team Autonomy — Docs + Config"**
-
-### Goal
-
-Establish the documentation and configuration foundation for the two-team autonomous loop.
-Delivered: `dev-team-cron.md`, updated `unified-agent.md`, all agent `.md` files refreshed
-for 62 tools and correct channel rules, `start.sh` updated to `bun --hot`, `AI_TEAM_DESIGN.md`
-updated, `feedbackTools.ts` fixed to not cross-post to user channel. All committed to main.
+Delivered: dev-team-cron.md, updated unified-agent.md, all agent .md files refreshed for 62 tools + correct channel rules, AI_TEAM_DESIGN.md updated, feedbackTools.ts fixed (no cross-post to user channel).
 
 ---
 
@@ -522,5 +220,5 @@ updated, `feedbackTools.ts` fixed to not cross-post to user channel. All committ
 | 032 | See More, Decide Faster | 2026-04-02 | 217, 218, 219 |
 | 033 | Investor UX Hardening | 2026-04-02 | 220, 222, 223 |
 | 034 | Depth Over Breadth | 2026-04-02 | 224, 225 |
-| 035a | Two-Team Autonomy — Docs + Config | 2026-04-02 | dev-team-cron.md, unified-agent.md, agent files, start.sh, feedbackTools fix |
+| 035a | Two-Team Autonomy — Docs + Config | 2026-04-02 | dev-team-cron.md, unified-agent.md, agent files, feedbackTools fix |
 | 035b | Two-Team Autonomy — Report Channel Persistence | 2026-04-02 | 226, 227, 228, 229 |

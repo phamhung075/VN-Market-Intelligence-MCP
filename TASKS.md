@@ -1,22 +1,13 @@
 # TASKS — VN Market Intelligence MCP
-# Kanban Board | Agile/Kanban | DDD + TDD | Bun + TypeScript
 
-> **Historical/Done tasks live in `docs/TASKS_ARCHIVE.md` — read ONLY when you need past context.**
-> Read this file for active work only. Open `docs/TASKS_ARCHIVE.md` only when investigating a past sprint or closed task.
-
-> **WIP Limit**: max 2 tasks In Progress simultaneously
-> **Workflow**: Backlog → Todo → In Progress → Review → Done
-> **Branch**: `task/NNN-kebab-name`
-> **Report**: `reports/TASK_REPORT_NNN.md` generated after every Review
+> Done/historical tasks: `docs/TASKS_ARCHIVE.md` | WIP limit: max 2 In Progress | Workflow: Backlog → Todo → In Progress → Review → Done | Branch: `task/NNN-kebab-name` | Report: `reports/TASK_REPORT_NNN.md`
 
 ---
 
 ## Sprint 054 — Position-Aware Analysis, /ask Queue, Alert Narrowing, Kinh Dich Default Layer
 
-> Sprint 054 Theme: Position-Aware Analysis + /ask Queue + Narrowed Alert Policy + Kinh Dich Default Layer
-> WIP limit: max 2 In Progress simultaneously
-> All restarts via `launchctl kickstart -k gui/$(id -u)/com.vn-market.mcp` ONLY — no hot reload, no start.sh
-> Parallel Batch A (no deps): 1070, 1072, 1075, 1077 | Batch B (after A): 1071, 1073, 1074, 1076, 1078, 1079 | Batch C: 1081
+Restart: `launchctl kickstart -k gui/$(id -u)/com.vn-market.mcp` ONLY.
+Batch A (no deps): 1070, 1072, 1075, 1077 | Batch B (after A): 1071, 1073, 1074, 1076, 1078, 1079 | Batch C: 1081
 
 ### Kanban
 
@@ -32,577 +23,260 @@
 | 1077 | kinhDichWrapper + wire appendKinhDich into analysis/market/portfolio tools | `task/1077-kinh-dich-wrapper` | domain/interface | — | M | `src/__tests__/1077-kinh-dich-wrapper.test.ts` | Done |
 | 1078 | askQueueTools: get_pending_ask_questions + answer_ask_question MCP tools | `task/1078-ask-queue-tools` | interface | 1072 | S | `src/__tests__/1078-ask-queue-mcp-tools.test.ts` | Done |
 | 1079 | positionTools: get_user_positions_for_analysis MCP tool | `task/1079-position-for-analysis-tool` | interface | 1070 | S | `src/__tests__/1079-position-for-analysis-tool.test.ts` | Done |
-| 1081 | Sprint 054 smoke test: /set_position → /check_position → /ask → signal → answer | `task/1081-sprint054-smoke-test` | test | 1070, 1071, 1072, 1073, 1074, 1075, 1076, 1077, 1078, 1079 | S | `src/__tests__/1081-sprint054-smoke.test.ts` | Done |
+| 1081 | Sprint 054 smoke test: /set_position → /check_position → /ask → signal → answer | `task/1081-sprint054-smoke-test` | test | 1070–1079 | S | `src/__tests__/1081-sprint054-smoke.test.ts` | Done |
 
 ---
 
 ### Task Detail Sheets
 
----
-
 **Task 1070 — Position Ledger: buyPosition + sellPosition + applyPositionCommand**
 
-Branch: `task/1070-position-ledger`
-Layer: domain/infrastructure (`src/infrastructure/db/positionStore.ts`)
-Priority: P0
-Depends on: none
-Size: M (1 file modified, ~80 lines production code)
+Branch: `task/1070-position-ledger` | Layer: domain/infrastructure | Priority: P0 | Depends on: none | Size: M (~80 lines)
 
-Files to read first:
-- `src/infrastructure/db/positionStore.ts` (current upsertPosition, closePosition, listOpenPositions)
-- `docs/TECH_054.md` sections E1 + AC-E1
-
-Files to create/modify:
-- MODIFY: `src/infrastructure/db/positionStore.ts`
-- CREATE: `src/__tests__/1070-position-ledger.test.ts`
+Files to read: `src/infrastructure/db/positionStore.ts` | `docs/TECH_054.md` §E1+AC-E1
+Files to modify: `src/infrastructure/db/positionStore.ts` | `src/__tests__/1070-position-ledger.test.ts` (CREATE)
 
 Acceptance Criteria:
 
-**Given** VCB 1000 shares @ 75000 already in positions table
-**When** `buyPosition(db, "VCB", 80000, 500)` is called
-**Then**
-- `avg_price = Math.round((75000*1000 + 80000*500) / 1500)` = 76667
-- `shares = 1500`
-- `PositionCommandResult.ok = true`
-- Message contains "Mua thêm 500" and avg cost in Vietnamese format
+**Given** VCB 1000 shares @ 75000 | **When** `buyPosition(db, "VCB", 80000, 500)` | **Then** avg_price=76667, shares=1500, ok=true, message contains "Mua thêm 500"
 
-**Given** FPT 200 shares in positions table
-**When** `sellPosition(db, "FPT", 90000, 500)` (qty exceeds shares)
-**Then**
-- Clamped to 200, `shares = 0`, `closePosition` called
-- Message contains "Chỉ bán được 200 CP"
+**Given** FPT 200 shares | **When** `sellPosition(db, "FPT", 90000, 500)` (qty exceeds shares) | **Then** clamped to 200, shares=0, closePosition called, message contains "Chỉ bán được 200 CP"
 
-**Given** HPG 3000 shares in positions table
-**When** `applyPositionCommand(db, { ticker: "HPG", price: 0, qty: 0 })`
-**Then**
-- `closed_at IS NOT NULL` in DB
-- Message = "Đã xóa toàn bộ vị thế HPG"
+**Given** HPG 3000 shares | **When** `applyPositionCommand(db, {ticker:"HPG", price:0, qty:0})` | **Then** closed_at IS NOT NULL, message="Đã xóa toàn bộ vị thế HPG"
 
-**Given** no position for VHM
-**When** `buyPosition(db, "VHM", 45000, 1000)`
-**Then**
-- New row: shares=1000, avg_price=45000
+**Given** no position for VHM | **When** `buyPosition(db, "VHM", 45000, 1000)` | **Then** new row: shares=1000, avg_price=45000
 
-Additional:
-- `bun test src/__tests__/1070-position-ledger.test.ts` → all pass
-- `bun tsc --noEmit` → 0 errors
+`bun test src/__tests__/1070-position-ledger.test.ts` → all pass | `bun tsc --noEmit` → 0 errors
 
 ---
 
 **Task 1071 — Telegram /set_position + /check_position Handlers**
 
-Branch: `task/1071-telegram-position-commands`
-Layer: interface (`src/infrastructure/notifiers/telegramCommands.ts`)
-Priority: P0 (first slot after 1070 completes)
-Depends on: 1070
-Size: M (1 file modified, ~60 lines + HELP_TEXT)
+Branch: `task/1071-telegram-position-commands` | Layer: interface | Priority: P0 | Depends on: 1070 | Size: M (~60 lines + HELP_TEXT)
 
-Files to read first:
-- `src/infrastructure/db/positionStore.ts` (after 1070 merge: applyPositionCommand, listOpenPositions)
-- `src/infrastructure/notifiers/telegramCommands.ts` (current switch at line 282, HELP_TEXT lines 54–61)
-- `docs/TECH_054.md` section E2 + AC-E2
-
-Files to create/modify:
-- MODIFY: `src/infrastructure/notifiers/telegramCommands.ts`
-- CREATE: `src/__tests__/1071-telegram-position-commands.test.ts`
+Files to read: `src/infrastructure/db/positionStore.ts` (post-1070: applyPositionCommand, listOpenPositions) | `src/infrastructure/notifiers/telegramCommands.ts` (switch line 282, HELP_TEXT lines 54–61) | `docs/TECH_054.md` §E2+AC-E2
+Files to modify: `src/infrastructure/notifiers/telegramCommands.ts` | `src/__tests__/1071-telegram-position-commands.test.ts` (CREATE)
 
 Acceptance Criteria:
 
-**Given** Telegram message `text: "/set_position FPT 80300 5100"`
-**When** `handleTelegramCommand(db, msg)` is called
-**Then**
-- Reply contains "Mua thêm 5100" and computed avg cost in Vietnamese format
+**Given** `/set_position FPT 80300 5100` | **When** `handleTelegramCommand(db, msg)` | **Then** reply contains "Mua thêm 5100" and avg cost
 
-**Given** `text: "/set_position VCB 0 0"`
-**When** handler processes
-**Then**
-- Reply contains "Đã xóa toàn bộ vị thế VCB"
+**Given** `/set_position VCB 0 0` | **Then** reply contains "Đã xóa toàn bộ vị thế VCB"
 
-**Given** `text: "/set_position"` (no args)
-**When** handler processes
-**Then**
-- Reply contains usage hint with example (e.g. "/set_position VCB 75000 1000")
+**Given** `/set_position` (no args) | **Then** reply contains usage hint with example "/set_position VCB 75000 1000"
 
-**Given** VCB position: 1000 shares @ 75000, market price 80000 in `market_prices`
-**Given** `text: "/check_position"`
-**When** handler processes
-**Then**
-- Reply contains "VCB"
-- Reply contains "75.000" (avg price formatted)
-- Reply contains "+6,7%" (gain %)
-- Reply contains stop-loss floor 69750 (= round(75000 * 0.93))
-- Reply contains TP1 82500 (= round(75000 * 1.10))
+**Given** VCB 1000 shares @ 75000, market price 80000 | **When** `/check_position` | **Then** reply contains "VCB", "75.000", "+6,7%", stop-loss 69750 (=round(75000*0.93)), TP1 82500 (=round(75000*1.10))
 
-Additional:
-- `bun tsc --noEmit` → 0 errors
-- HELP_TEXT updated to list /set_position and /check_position
+`bun tsc --noEmit` → 0 errors | HELP_TEXT updated to list /set_position and /check_position
 
 ---
 
 **Task 1072 — ask_queue DDL + askQueueStore CRUD Helpers**
 
-Branch: `task/1072-ask-queue-store`
-Layer: infrastructure
-Priority: P0
-Depends on: none
-Size: M (1 schema DDL addition, 1 new store file, ~90 lines)
+Branch: `task/1072-ask-queue-store` | Layer: infrastructure | Priority: P0 | Depends on: none | Size: M (1 DDL addition, 1 new store, ~90 lines)
 
-Files to read first:
-- `src/infrastructure/db/schema.ts` (find initDatabase(), understand DDL pattern)
-- `docs/TECH_054.md` sections E3 + AC-E3-1, AC-E3-2
-- `docs/TECH_054.md` section 5 (ask_queue schema definition)
-
-Files to create/modify:
-- MODIFY: `src/infrastructure/db/schema.ts` (add ask_queue DDL inside initDatabase())
-- CREATE: `src/infrastructure/db/askQueueStore.ts`
-- CREATE: `src/__tests__/1072-ask-queue-store.test.ts`
+Files to read: `src/infrastructure/db/schema.ts` (initDatabase() pattern) | `docs/TECH_054.md` §E3+AC-E3-1/E3-2 + §5 (ask_queue schema)
+Files to create/modify: `src/infrastructure/db/schema.ts` (add ask_queue DDL) | `src/infrastructure/db/askQueueStore.ts` (CREATE) | `src/__tests__/1072-ask-queue-store.test.ts` (CREATE)
 
 Acceptance Criteria:
 
-**Given** `initDatabase()` runs on a fresh DB
-**When** checking `sqlite_master`
-**Then**
-- `ask_queue` table exists with columns: id, question_text, received_at, status, processing_since, answered_at, answer_text, ticker_context
+**Given** fresh DB after `initDatabase()` | **Then** ask_queue table exists with columns: id, question_text, received_at, status, processing_since, answered_at, answer_text, ticker_context
 
-**Given** three `/ask` calls inserted at t+0s, t+1s, t+2s
-**When** `getPendingAskQuestions(db)` is called
-**Then**
-- Returns all three in `received_at ASC` order
+**Given** 3 /ask calls at t+0/1/2s | **When** `getPendingAskQuestions(db)` | **Then** returns all 3 in received_at ASC order
 
-**Given** a pending row with id=5
-**When** `markAskProcessing(db, 5)` then `answerAskQuestion(db, 5, "Phân tích...", "answered")`
-**Then**
-- Row has `status='answered'` and `answered_at IS NOT NULL`
+**Given** row id=5 pending | **When** `markAskProcessing(db, 5)` then `answerAskQuestion(db, 5, "Phân tích...", "answered")` | **Then** status='answered', answered_at IS NOT NULL
 
-**Given** a row with `status='processing'` and `processing_since` 25 minutes ago
-**When** `recoverStaleAskProcessing(db)` is called
-**Then**
-- Row reverts to `status='pending'`
+**Given** row status='processing', processing_since 25min ago | **When** `recoverStaleAskProcessing(db)` | **Then** row reverts to status='pending'
 
-**Given** `markAskProcessing(db, id)` called twice concurrently on same row
-**When** second call runs (status already 'processing')
-**Then**
-- Second call returns `changes == 0` (row-level optimistic lock)
+**Given** `markAskProcessing(db, id)` called twice concurrently | **Then** second call returns changes==0 (optimistic lock)
 
-Additional:
-- `bun tsc --noEmit` → 0 errors
+`bun tsc --noEmit` → 0 errors
 
 ---
 
 **Task 1073 — Telegram /ask Handler**
 
-Branch: `task/1073-telegram-ask-command`
-Layer: interface
-Priority: — (unblocks after 1072)
-Depends on: 1072
-Size: S (1 file modified, ~25 lines)
+Branch: `task/1073-telegram-ask-command` | Layer: interface | Depends on: 1072 | Size: S (~25 lines)
 
-Files to read first:
-- `src/infrastructure/db/askQueueStore.ts` (after 1072 merge: insertAskQuestion)
-- `src/infrastructure/notifiers/telegramCommands.ts` (switch statement, HELP_TEXT)
-- `docs/TECH_054.md` section E3 + AC-E3-3, AC-E3-4
-
-Files to create/modify:
-- MODIFY: `src/infrastructure/notifiers/telegramCommands.ts`
-- CREATE: `src/__tests__/1073-telegram-ask-command.test.ts`
+Files to read: `src/infrastructure/db/askQueueStore.ts` (post-1072: insertAskQuestion) | `src/infrastructure/notifiers/telegramCommands.ts` | `docs/TECH_054.md` §E3+AC-E3-3/E3-4
+Files to modify: `src/infrastructure/notifiers/telegramCommands.ts` | `src/__tests__/1073-telegram-ask-command.test.ts` (CREATE)
 
 Acceptance Criteria:
 
-**Given** `text: "/ask FPT có nên mua không?"`
-**When** `handleTelegramCommand(db, msg)` is called
-**Then**
-- DB row inserted in `ask_queue` with `status='pending'`
-- Reply matches regex `Câu hỏi đã ghi nhận \(#[0-9]+\)`
+**Given** `/ask FPT có nên mua không?` | **When** `handleTelegramCommand(db, msg)` | **Then** DB row inserted with status='pending', reply matches `Câu hỏi đã ghi nhận \(#[0-9]+\)`
 
-**Given** `text: "/ask"` (empty body)
-**When** handler processes
-**Then**
-- Reply contains usage hint (e.g. "/ask VCB có nên giữ không?")
-- No row inserted in `ask_queue`
+**Given** `/ask` (empty body) | **Then** reply contains usage hint "/ask VCB có nên giữ không?", no row inserted
 
-Additional:
-- `bun tsc --noEmit` → 0 errors
-- HELP_TEXT updated to list /ask
+`bun tsc --noEmit` → 0 errors | HELP_TEXT updated to list /ask
 
 ---
 
 **Task 1074 — askQueueCheckJob Scheduler + Cron Registration**
 
-Branch: `task/1074-ask-queue-check-job`
-Layer: scheduler
-Priority: — (unblocks after 1072)
-Depends on: 1072
-Size: S (1 new scheduler file, 1 jobs.ts modification)
+Branch: `task/1074-ask-queue-check-job` | Layer: scheduler | Depends on: 1072 | Size: S (1 new scheduler, 1 jobs.ts modification)
 
-Files to read first:
-- `src/infrastructure/db/askQueueStore.ts` (after 1072: getPendingAskQuestions)
-- `src/scheduler/jobs.ts` (CRONS map pattern, how other jobs register)
-- `docs/TECH_054.md` section E4 + AC-E4
-
-Files to create/modify:
-- CREATE: `src/scheduler/askQueueCheckJob.ts`
-- MODIFY: `src/scheduler/jobs.ts`
-- CREATE: `src/__tests__/1074-ask-queue-check-job.test.ts`
+Files to read: `src/infrastructure/db/askQueueStore.ts` (post-1072: getPendingAskQuestions) | `src/scheduler/jobs.ts` (CRONS map pattern) | `docs/TECH_054.md` §E4+AC-E4
+Files to create/modify: `src/scheduler/askQueueCheckJob.ts` (CREATE) | `src/scheduler/jobs.ts` | `src/__tests__/1074-ask-queue-check-job.test.ts` (CREATE)
 
 Acceptance Criteria:
 
-**Given** `src/scheduler/jobs.ts` after merge
-**When** inspecting CRONS map
-**Then**
-- Key `"askQueueCheck"` exists with default `"*/12 * * * *"`
+**Given** jobs.ts after merge | **Then** CRONS map key "askQueueCheck" exists with default "*/12 * * * *"
 
-**Given** 2 pending rows in `ask_queue` (status='pending')
-**When** `runAskQueueCheck(db)` is called
-**Then**
-- Exactly 1 new row in `agent_signals` with `to_agent='07-qa-responder'`, `signal_type='pending_questions'`
-- Payload JSON contains `count: 2`
+**Given** 2 pending rows (status='pending') | **When** `runAskQueueCheck(db)` | **Then** exactly 1 new agent_signals row with to_agent='07-qa-responder', signal_type='pending_questions', payload.count=2
 
-**Given** 0 pending rows in `ask_queue`
-**When** `runAskQueueCheck(db)` is called
-**Then**
-- No new row inserted in `agent_signals`
+**Given** 0 pending rows | **When** `runAskQueueCheck(db)` | **Then** no new agent_signals row inserted
 
-Additional:
-- `bun tsc --noEmit` → 0 errors
+`bun tsc --noEmit` → 0 errors
 
 ---
 
 **Task 1075 — alertPolicyChecker + stopLossComputer + mcp.config.json alertPolicy**
 
-Branch: `task/1075-alert-policy-checker`
-Layer: domain
-Priority: — (unblocks Batch B: 1076)
-Depends on: none
-Size: M (2 new domain files + 1 config change)
+Branch: `task/1075-alert-policy-checker` | Layer: domain | Depends on: none | Size: M (2 new domain files + 1 config change)
 
-Files to read first:
-- `docs/TECH_054.md` section E5 + AC-E5 (all 6 criteria)
-- `mcp.config.json` (current structure — find where to add `alertPolicy`)
-- `docs/TECH_054.md` section 7 (alertPolicy schema)
-
-Files to create/modify:
-- CREATE: `src/domain/services/alertPolicyChecker.ts`
-- CREATE: `src/domain/services/stopLossComputer.ts`
-- MODIFY: `mcp.config.json` (add `alertPolicy` top-level section)
-- CREATE: `src/__tests__/1075-alert-policy-checker.test.ts`
+Files to read: `docs/TECH_054.md` §E5+AC-E5 (all 6 criteria) | `mcp.config.json` | `docs/TECH_054.md` §7 (alertPolicy schema)
+Files to create/modify: `src/domain/services/alertPolicyChecker.ts` (CREATE) | `src/domain/services/stopLossComputer.ts` (CREATE) | `mcp.config.json` (add alertPolicy) | `src/__tests__/1075-alert-policy-checker.test.ts` (CREATE)
 
 Acceptance Criteria:
 
-**Given** `{ stopLossHit: true, singleDayDropPct: 3.0, newsSentiment: -0.8 }`
-**When** `checkPositionDanger(input)` is called
-**Then** returns `false` (drop < 5.0 threshold)
+**Given** `{stopLossHit:true, singleDayDropPct:3.0, newsSentiment:-0.8}` | **When** `checkPositionDanger(input)` | **Then** false (drop < 5.0 threshold)
 
-**Given** `{ stopLossHit: true, singleDayDropPct: 6.0, newsSentiment: -0.7 }`
-**When** `checkPositionDanger(input)` is called
-**Then** returns `true` (all 3 conditions met)
+**Given** `{stopLossHit:true, singleDayDropPct:6.0, newsSentiment:-0.7}` | **When** `checkPositionDanger(input)` | **Then** true (all 3 conditions met)
 
-**Given** `{ kinhDichConfidence: 80, kinhDichSignal: "BUY", newsSentiment: 0.2, agentSignalsMajority: "BUY" }`
-**When** `checkWatchlistOpportunity(input)` is called
-**Then** returns `false` (sentiment 0.2 < threshold 0.3)
+**Given** `{kinhDichConfidence:80, kinhDichSignal:"BUY", newsSentiment:0.2, agentSignalsMajority:"BUY"}` | **When** `checkWatchlistOpportunity(input)` | **Then** false (sentiment 0.2 < threshold 0.3)
 
-**Given** all four inputs exactly at threshold
-**When** `checkWatchlistOpportunity(input)` is called
-**Then** returns `true`
+**Given** all four inputs exactly at threshold | **When** `checkWatchlistOpportunity(input)` | **Then** true
 
-**Given** `computeStopLoss(75000, 1500, 72000)` (avgPrice=75000, atr14Derived=1500, recentLow=72000)
-**When** called
-**Then** returns `max(72000, 72000, 69750)` = 72000
+**Given** `computeStopLoss(75000, 1500, 72000)` | **Then** max(72000, 72000, 69750) = 72000
 
-**Given** `computeStopLoss(75000, -500, 72000)` (atr14 <= 0)
-**When** called
-**Then** treats atr14 as unavailable, uses floor from avgPrice*0.93 only
+**Given** `computeStopLoss(75000, -500, 72000)` (atr14 <= 0) | **Then** treats atr14 as unavailable, uses avgPrice*0.93 floor only
 
-**Given** `mcp.config.json` after merge
-**When** checking for `alertPolicy` key
-**Then** section exists with at minimum: `positionDanger.minDayDropPct`, `positionDanger.minNewsSentiment`, `watchlistOpportunity.minKinhDichConfidence`, `watchlistOpportunity.minNewsSentiment`
+**Given** mcp.config.json after merge | **Then** alertPolicy section exists with at minimum: positionDanger.minDayDropPct, positionDanger.minNewsSentiment, watchlistOpportunity.minKinhDichConfidence, watchlistOpportunity.minNewsSentiment
 
-Additional:
-- Domain files contain zero imports from `infrastructure/`
-- `bun tsc --noEmit` → 0 errors
+Domain files contain zero imports from infrastructure/ | `bun tsc --noEmit` → 0 errors
 
 ---
 
 **Task 1076 — marketScanJob Noise Retirement**
 
-Branch: `task/1076-market-scan-noise-retirement`
-Layer: scheduler
-Priority: — (unblocks after 1075)
-Depends on: 1075
-Size: S (1 file modified — remove 3 sendTelegramMarket call sites)
+Branch: `task/1076-market-scan-noise-retirement` | Layer: scheduler | Depends on: 1075 | Size: S (1 file — remove 3 sendTelegramMarket call sites)
 
-Files to read first:
-- `src/scheduler/marketScanJob.ts` (find all sendTelegramMarket calls for medium-move, heartbeat, volume-spike alert types)
-- `docs/TECH_054.md` section E5 alert narrowing design + AC-E5-6
-
-Files to create/modify:
-- MODIFY: `src/scheduler/marketScanJob.ts`
-- CREATE: `src/__tests__/1076-market-scan-noise-retirement.test.ts`
+Files to read: `src/scheduler/marketScanJob.ts` (all sendTelegramMarket calls for medium-move/heartbeat/volume-spike) | `docs/TECH_054.md` §E5 alert narrowing + AC-E5-6
+Files to modify: `src/scheduler/marketScanJob.ts` | `src/__tests__/1076-market-scan-noise-retirement.test.ts` (CREATE)
 
 Acceptance Criteria:
 
-**Given** `scanMarket()` runs with a 3% price drop detected
-**When** execution completes
-**Then**
-- An `alerts` row is inserted (DB insert path preserved)
-- NO call to `sendTelegramMarket` / `sendTelegramWork` / `sendTelegramBug` occurs for that alert
-- i.e., direct Telegram send from marketScanJob for medium-move, heartbeat, and volume-spike types is removed
+**Given** `scanMarket()` with 3% price drop | **When** complete | **Then** alerts row inserted (DB preserved), NO sendTelegramMarket/sendTelegramWork call for that alert
 
-**Given** `src/scheduler/marketScanJob.ts` after merge
-**When** grepping for `sendTelegramMarket` / `sendTelegramWork`
-**Then**
-- 0 occurrences for noise alert types (medium-move, heartbeat, volume-spike)
-- DB insert path (`insertAlert` or equivalent) still present
+**Given** marketScanJob.ts after merge | **When** grep for sendTelegramMarket/sendTelegramWork | **Then** 0 occurrences for noise types (medium-move, heartbeat, volume-spike), insertAlert still present
 
-Additional:
-- `bun tsc --noEmit` → 0 errors
-- No data loss: `alerts` table rows still written
+`bun tsc --noEmit` → 0 errors | No data loss: alerts table rows still written
 
 ---
 
 **Task 1077 — kinhDichWrapper + Wire appendKinhDich**
 
-Branch: `task/1077-kinh-dich-wrapper`
-Layer: domain/interface
-Priority: — (can start immediately, no deps)
-Depends on: none
-Size: M (1 new domain file + 3 interface files modified)
+Branch: `task/1077-kinh-dich-wrapper` | Layer: domain/interface | Depends on: none | Size: M (1 new domain file + 3 interface files)
 
-Files to read first:
-- `src/domain/services/kinhDich/kinhDichReading.ts` (computeReading, formatReading signatures)
-- `src/interface/mcp/tools/analysis.ts` (analyze_stock handler)
-- `src/interface/mcp/tools/marketTools.ts` (get_market_snapshot handler)
-- `src/interface/mcp/tools/portfolioTools.ts` (get_portfolio_conviction handler)
-- `docs/TECH_054.md` section E6 + AC-E6 + Risk note on kinhDichWrapper infra import
-
-Files to create/modify:
-- CREATE: `src/domain/services/kinhDichWrapper.ts`
-- MODIFY: `src/interface/mcp/tools/analysis.ts`
-- MODIFY: `src/interface/mcp/tools/marketTools.ts`
-- MODIFY: `src/interface/mcp/tools/portfolioTools.ts`
-- CREATE: `src/__tests__/1077-kinh-dich-wrapper.test.ts`
+Files to read: `src/domain/services/kinhDich/kinhDichReading.ts` (computeReading, formatReading) | `src/interface/mcp/tools/analysis.ts` | `src/interface/mcp/tools/marketTools.ts` | `src/interface/mcp/tools/portfolioTools.ts` | `docs/TECH_054.md` §E6+AC-E6 + Risk note on infra import
+Files to create/modify: `src/domain/services/kinhDichWrapper.ts` (CREATE) | `src/interface/mcp/tools/analysis.ts` | `src/interface/mcp/tools/marketTools.ts` | `src/interface/mcp/tools/portfolioTools.ts` | `src/__tests__/1077-kinh-dich-wrapper.test.ts` (CREATE)
 
 Acceptance Criteria:
 
-**Given** `analyze_stock({code: "VCB"})` called with `kinhdich_readings` data in DB
-**When** handler returns
-**Then**
-- Returned text contains "Kinh Dịch:" and "Biến quẻ:"
+**Given** `analyze_stock({code:"VCB"})` with kinhdich_readings in DB | **Then** response contains "Kinh Dịch:" and "Biến quẻ:"
 
-**Given** `appendKinhDich("XYZ", "base output", db)` with no hexagram data for XYZ
-**When** called
-**Then**
-- Returns `"base output\n---\nKinh Dịch: Chưa đủ dữ liệu để tính quẻ."`
+**Given** `appendKinhDich("XYZ", "base output", db)` with no hexagram data | **Then** returns `"base output\n---\nKinh Dịch: Chưa đủ dữ liệu để tính quẻ."`
 
-**Given** `computeReading` throws an exception inside `appendKinhDich`
-**When** called
-**Then**
-- No exception propagated to caller
-- Fallback text returned (exception swallowed)
+**Given** `computeReading` throws inside `appendKinhDich` | **Then** no exception propagated, fallback text returned
 
-**Given** `src/domain/services/kinhDichWrapper.ts` after merge
-**When** `grep -n "infrastructure" src/domain/services/kinhDichWrapper.ts`
-**Then**
-- 0 matches (wrapper must not import from infrastructure/)
+**Given** kinhDichWrapper.ts after merge | **When** `grep -n "infrastructure" src/domain/services/kinhDichWrapper.ts` | **Then** 0 matches
 
-Additional:
-- `bun tsc --noEmit` → 0 errors
+`bun tsc --noEmit` → 0 errors
 
 ---
 
 **Task 1078 — askQueueTools: get_pending_ask_questions + answer_ask_question**
 
-Branch: `task/1078-ask-queue-tools`
-Layer: interface
-Priority: — (unblocks after 1072)
-Depends on: 1072
-Size: S (1 new tools file + registration)
+Branch: `task/1078-ask-queue-tools` | Layer: interface | Depends on: 1072 | Size: S (1 new tools file + registration)
 
-Files to read first:
-- `src/infrastructure/db/askQueueStore.ts` (after 1072: getPendingAskQuestions, answerAskQuestion)
-- Any existing tools file for registration pattern (e.g. `src/interface/mcp/tools/positionTools.ts`)
-- `docs/TECH_054.md` section "TOOLS" + smoke test step 5–6
-
-Files to create/modify:
-- CREATE: `src/interface/mcp/tools/askQueueTools.ts`
-- MODIFY: `src/interface/mcp/server.ts` (register tool) OR appropriate registry file
-- CREATE: `src/__tests__/1078-ask-queue-tools.test.ts`
+Files to read: `src/infrastructure/db/askQueueStore.ts` (post-1072: getPendingAskQuestions, answerAskQuestion) | any existing tools file for registration pattern | `docs/TECH_054.md` §TOOLS + smoke test steps 5–6
+Files to create/modify: `src/interface/mcp/tools/askQueueTools.ts` (CREATE) | `src/interface/mcp/server.ts` (register tools) | `src/__tests__/1078-ask-queue-tools.test.ts` (CREATE)
 
 Acceptance Criteria:
 
-**Given** 3 pending rows in `ask_queue`
-**When** `get_pending_ask_questions()` tool called (no args)
-**Then**
-- Returns all 3 rows in `received_at ASC` order
-- Each row shows id, question_text, ticker_context, received_at
+**Given** 3 pending rows | **When** `get_pending_ask_questions()` | **Then** returns all 3 in received_at ASC order with id, question_text, ticker_context, received_at
 
-**Given** pending row id=7
-**When** `answer_ask_question(7, "Phân tích cho thấy...", "answered")` tool called
-**Then**
-- Row `ask_queue` has `status='answered'`, `answer_text` set, `answered_at IS NOT NULL`
+**Given** row id=7 pending | **When** `answer_ask_question(7, "Phân tích cho thấy...", "answered")` | **Then** status='answered', answer_text set, answered_at IS NOT NULL
 
-**Given** `src/interface/mcp/server.ts` (or registry) after merge
-**When** checking tool registrations
-**Then**
-- `toolCount` increments by 2 vs. pre-1078 baseline (verified via `/health` endpoint)
+**Given** server.ts after merge | **Then** toolCount increments by 2 vs pre-1078 baseline (verified via /health)
 
-Additional:
-- `bun tsc --noEmit` → 0 errors
+`bun tsc --noEmit` → 0 errors
 
 ---
 
 **Task 1079 — positionTools: get_user_positions_for_analysis**
 
-Branch: `task/1079-position-for-analysis-tool`
-Layer: interface
-Priority: — (unblocks after 1070)
-Depends on: 1070
-Size: S (1 file modified — add 1 tool to existing positionTools.ts)
+Branch: `task/1079-position-for-analysis-tool` | Layer: interface | Depends on: 1070 | Size: S (1 tool added to positionTools.ts)
 
-Files to read first:
-- `src/interface/mcp/tools/positionTools.ts` (existing tools — set_position, get_positions, close_position)
-- `src/infrastructure/db/positionStore.ts` (after 1070: listOpenPositions)
-- `docs/TECH_054.md` section TOOLS + AC for get_user_positions_for_analysis + smoke test step 5
-
-Files to create/modify:
-- MODIFY: `src/interface/mcp/tools/positionTools.ts`
-- CREATE: `src/__tests__/1079-position-for-analysis-tool.test.ts`
+Files to read: `src/interface/mcp/tools/positionTools.ts` (existing: set_position, get_positions, close_position) | `src/infrastructure/db/positionStore.ts` (post-1070: listOpenPositions) | `docs/TECH_054.md` §TOOLS + AC + smoke step 5
+Files to modify: `src/interface/mcp/tools/positionTools.ts` | `src/__tests__/1079-position-for-analysis-tool.test.ts` (CREATE)
 
 Acceptance Criteria:
 
-**Given** 3 open positions in `positions` table
-**When** `get_user_positions_for_analysis()` tool called (no args)
-**Then**
-- Returns all 3 positions with computed fields: `stopLossFloor = Math.round(avgPrice * 0.93)`, `tp1 = Math.round(avgPrice * 1.10)`, `tp2 = Math.round(avgPrice * 1.20)`, `tp3 = Math.round(avgPrice * 1.30)`
+**Given** 3 open positions | **When** `get_user_positions_for_analysis()` | **Then** returns all 3 with stopLossFloor=Math.round(avgPrice*0.93), tp1=Math.round(avgPrice*1.10), tp2=Math.round(avgPrice*1.20), tp3=Math.round(avgPrice*1.30)
 
-**Given** positions for VCB and FPT in table
-**When** `get_user_positions_for_analysis({ticker: "VCB"})` called
-**Then**
-- Returns only VCB row (filter works correctly)
+**Given** VCB + FPT in table | **When** `get_user_positions_for_analysis({ticker:"VCB"})` | **Then** returns only VCB row
 
-**Given** VCB with `avg_price=75000`
-**When** tool called
-**Then**
-- `stopLossFloor = Math.round(75000 * 0.93)` = 69750
+**Given** VCB avg_price=75000 | **Then** stopLossFloor=69750
 
-**Given** `src/interface/mcp/server.ts` after merge
-**When** checking tool registrations
-**Then**
-- `toolCount` increments by 1 vs. pre-1079 baseline
+**Given** server.ts after merge | **Then** toolCount increments by 1 vs pre-1079 baseline
 
-Additional:
-- `bun tsc --noEmit` → 0 errors
+`bun tsc --noEmit` → 0 errors
 
 ---
 
 **Task 1081 — Sprint 054 Smoke Test (Integration)**
 
-Branch: `task/1081-sprint054-smoke-test`
-Layer: test
-Priority: P1 (run only after all 1070–1079 merged to main)
-Depends on: 1070, 1071, 1072, 1073, 1074, 1075, 1076, 1077, 1078, 1079
-Size: S (1 new test file, all mocked)
+Branch: `task/1081-sprint054-smoke-test` | Layer: test | Priority: P1 | Depends on: 1070–1079 | Size: S (1 new test file, all mocked)
 
-Files to read first:
-- All new files from tasks 1070–1079 (production code)
-- `docs/TECH_054.md` section "Smoke test" (lines 906–916)
-
-Files to create/modify:
-- CREATE: `src/__tests__/1081-sprint054-smoke.test.ts`
+Files to read: all new files from tasks 1070–1079 | `docs/TECH_054.md` §"Smoke test" (lines 906–916)
+Files to create: `src/__tests__/1081-sprint054-smoke.test.ts`
 
 Acceptance Criteria:
 
-**Given** fresh in-memory SQLite DB with all Sprint 054 tables initialized
-**When** running the full smoke test sequence (all Telegram/DB mocked):
-1. `applyPositionCommand(db, {ticker: "VCB", price: 75000, qty: 1000})` → position created
+**Given** fresh in-memory SQLite with all Sprint 054 tables | **When** running full 7-step smoke (all Telegram/DB mocked):
+1. `applyPositionCommand(db, {ticker:"VCB", price:75000, qty:1000})` → position created
 2. `handleCheckPosition(db)` → reply contains "VCB", stop-loss 69750
-3. `insertAskQuestion(db, "VCB có nên tiếp tục giữ không?")` → returns id=1
-4. `runAskQueueCheck(db)` → 1 signal posted to `agent_signals` for `07-qa-responder`
-5. `get_pending_ask_questions()` tool → returns the question row
-6. `answer_ask_question(1, "Phân tích...", "answered")` tool → status set to "answered"
-7. `getPendingAskQuestions(db)` → returns empty list
-**Then**
-- All 7 steps succeed with 0 failures
-- No Telegram sends to MARKET channel occur (smoke uses mock transport)
-- `bun tsc --noEmit` → 0 errors
+3. `insertAskQuestion(db, "VCB có nên tiếp tục giữ không?")` → id=1
+4. `runAskQueueCheck(db)` → 1 signal in agent_signals for 07-qa-responder
+5. `get_pending_ask_questions()` → returns the question row
+6. `answer_ask_question(1, "Phân tích...", "answered")` → status="answered"
+7. `getPendingAskQuestions(db)` → empty list
+
+**Then** all 7 steps succeed, 0 MARKET channel sends, `bun tsc --noEmit` → 0 errors
 
 ---
 
-## Backlog — Active (genuinely unblocked or pending decision)
+## Backlog
 
-### [1002 / @architect P1] Anonymous SSC PDF attribution: filenames like `000000015802468_Bao_cao_tai_chinh_Rieng_nam_2025.pdf` carry no stock code
-
-Add download-time normalisation that records stock_code from SSC portal metadata, OR extract from PDF first page on ingest. Report 997.
-
-Status: Backlog
-
----
-
-### [1004 / @architect P2] Cascade gap: VN-market policy/macro news scoring at base 10.0
-
-Missing cascade rules for govt-stabilization signals. Add cascade rules + raise base score for systemic-stress + policy-intervention combos. Report 1001.
-
-Status: Backlog
+| ID | Owner | Priority | Title | Status |
+|----|-------|----------|-------|--------|
+| 1002 | @architect | P1 | Anonymous SSC PDF attribution: filenames carry no stock code — add download-time normalisation from portal metadata or PDF first page on ingest. (Report 997) | Backlog |
+| 1004 | @architect | P2 | Cascade gap: VN-market policy/macro news scoring at base 10.0. Missing rules for govt-stabilization signals. Add cascade rules + raise base score for systemic-stress + policy-intervention combos. (Report 1001) | Backlog |
+| 1085 | @architect | P1 | SSC portal JS-shell: BCTC ingestion stalled 11 days. Portal returns short JS-only shell so fetchParseAndStoreBctc falls through to HOSE/HNX. 26 watchlist tickers QUA HAN Q4-2025, 4 banks (BID/EIB/SHB/VCB) deadline 2026-04-14. Options: (1) headless browser for SSC JS render, (2) strengthen HOSE/HNX fallback as primary, (3) manual PDF seeding + disable SSC polling. (Report 1071) | Backlog (P1 — blocking BCTC ingestion) |
+| 1086 | @dev | P2 | financial_reports row vanished 2026-04-08→09 (reports #1071/#1072). Row re-created manually 2026-04-10 00:24Z. No production DELETE path found — likely manual sqlite3 cleanup or WAL corruption during triage. Add scheduled `SELECT COUNT(*) FROM financial_reports` trend log so future disappearances detected within one cycle. | Backlog (P2 — observed once, state healthy) |
+| 1088 | @architect | P1→P3 | BCTC OCR parser garbage numbers on VNM Q4-2025 (follow-up to #1072). Slices: (a) SHIPPED 2026-04-10 commit b90422b — enhanced detectUnitMultiplier + magnitude inference. (b) SHIPPED 2026-04-10 commit 007bf99 — validation guard rejects zero totalAssets/liabilities/equity; stale row flagged validation_status='failed'. (c) PENDING — regression test fixture using real VNM Q4-2025 OCR text. | Backlog ((a)+(b) done, (c) P3) |
+| 914 | @po | — | Steel sector watchlist gap — HPG. Decision needed: (1) add HPG to defaultWatchlist, (2) document steel as out-of-scope, (3) sector-balanced watchlist via defaultSectors. Min-diff for option 1: add "HPG" to mcp.config.json market.defaultWatchlist + restart. | Backlog (awaiting PO decision) |
 
 ---
 
-### [1085 / @architect P1] SSC portal JS-shell: BCTC ingestion stalled 11 days (report #1071)
+## In Progress
 
-SSC portal now returns a short JS-only shell on fetch (`[ssc] portal_js_only — short response (JS shell?)`), so `fetchParseAndStoreBctc` falls through to HOSE/HNX. Impact: 26 watchlist tickers QUA HAN Q4-2025 (deadline 2026-03-30), 4 banks (BID/EIB/SHB/VCB) SAP DEN 2026-04-14. `list_stored_pdfs` shows only VEA+VNM PDFs dated 2026-03-29 — no new ingests in 11 days.
-
-Needs architecture decision:
-1. Headless browser (puppeteer/playwright) for SSC portal JS render — heaviest, most reliable.
-2. Strengthen HOSE/HNX fallback to be primary for Q4-2025 season — lower confidence, risks UPCOM coverage.
-3. Manual PDF seeding from a mirror + disable SSC polling until portal stabilises.
-
-Current live errors (2026-04-09 22:24Z) confirm the shell issue is recurring. Circuit breaker still OK because the fallback path returns gracefully.
-
-Status: Backlog (P1 — blocking BCTC ingestion)
+(empty — WIP 0/2)
 
 ---
 
-### [1086 / @dev P2] Investigate: financial_reports row vanished between 2026-04-08 and 2026-04-09 (reports #1071, #1072)
-
-Fix 1068 resolved stranded_bctc_pdf feedback id=14 (2026-04-08 23:27) by writing a VNM Q4-2025 row. By 2026-04-09 16:00 the row was gone and data-auditor created a fresh stranded feedback id=15. Manually re-ran runBctcReparseJob on 2026-04-10 00:24Z — id=15 resolved, row present again (validated via `SELECT COUNT(*) FROM financial_reports` and get_bctc_full(VNM)). Grep confirms **no production code path deletes financial_reports** — only tests (all use :memory:). Likely causes: (a) manual sqlite3 cleanup during triage, (b) DB restored from a backup, (c) a launchctl kickstart that hit a corrupted WAL. Add a pre-commit audit row and/or a scheduled `SELECT COUNT(*) FROM financial_reports` trend log so future disappearances are detected within one cycle. Low urgency now that data is present — downgrade P1 → P2.
-
-Status: Backlog (P2 — observed once, current state healthy)
-
----
-
-### [1088 / @architect P1] BCTC OCR parser produces garbage numbers on VNM Q4-2025 (follow-up to #1072)
-
-After manual reparse 2026-04-10, VNM 2025-Q4 row stored with garbage scalars: Net Revenue 63,645,886,756.2 "tỷ VND" (≈ sextillion), Total Assets 0, Equity 0, EPS 0, ROE N/A, gross margin 100%. Log: `[balanceSheetExtractor] No unit header found; defaulting multiplier to 1.` OCR text (116k chars, 61 pages, conf 0.80) lacks the "Đơn vị tính: triệu đồng" header.
-
-Slices:
-- ✅ (b) **SHIPPED 2026-04-10 (commit 007bf99)** — validation guard rejects report when totalAssets+totalLiabilities+equityTotal all zero. Stale VNM row retro-flagged validation_status='failed'. See task 1088a / fix log id=113.
-- ✅ (a) **SHIPPED 2026-04-10 (commit b90422b)** — enhanced detectUnitMultiplier with loose OCR patterns + post-extraction magnitude inference (totalAssets > 1B → raw đồng → ÷1M). 4 new tests.
-- ⏳ (c) Regression test fixture using real VNM Q4-2025 OCR text — can now validate that (a)+(b) produce correct numbers on real data.
-
-Status: Backlog ((a)+(b) done, (c) remains — P3)
-
----
-
-### [914 / @po] Steel sector watchlist gap — HPG
-
-**Decision needed from PO**:
-1. Add HPG to default watchlist → steel coverage becomes automatic, impact_chain catches steel news.
-2. Document steel as intentionally out-of-scope → no change, future steel reports get "no watchlist stocks affected".
-3. Make watchlist sector-balanced via `defaultSectors = ["banking", "consumer", "tech", "industrial", "steel"]` and auto-pick one ticker per sector.
-
-Minimum-diff for option 1: add `"HPG"` to `mcp.config.json → market.defaultWatchlist`, restart server.
-
-Status: Backlog (awaiting PO decision)
-
----
-
-## 🚧 IN PROGRESS
-
-| # | Title | Branch | Notes |
-|---|-------|--------|-------|
-| (empty) | — | — | — |
-
----
-
-## 🔍 REVIEW
+## Review
 
 (empty)
 
@@ -612,24 +286,21 @@ Status: Backlog (awaiting PO decision)
 
 | Layer | Tasks | Description |
 |-------|-------|-------------|
-| **Domain** | 041-048, 061-066, 014 | Pure business logic, no I/O |
-| **Infrastructure** | 002, 003, 011-013, 021-030 | SQLite, LanceDB, HTTP, scrapers |
-| **Application** | 047, 048, 065, 066 | Use case orchestration |
-| **Interface** | 081-105 | MCP tools, Bun server, scheduler |
-| **Test** | 121-125 | Cross-cutting |
+| Domain | 041-048, 061-066, 014 | Pure business logic, no I/O |
+| Infrastructure | 002, 003, 011-013, 021-030 | SQLite, LanceDB, HTTP, scrapers |
+| Application | 047, 048, 065, 066 | Use case orchestration |
+| Interface | 081-105 | MCP tools, Bun server, scheduler |
+| Test | 121-125 | Cross-cutting |
 
 ---
 
-## Definition of Done (DoD)
+## Definition of Done
 
-A task is **Done** when ALL of the following are true:
-
-- [ ] Code is on `task/NNN` branch
+- [ ] Code on `task/NNN` branch
 - [ ] `bun test src/__tests__/NNN-*.test.ts` → all pass
 - [ ] `bun tsc --noEmit` → 0 errors
-- [ ] QA checklist: 100% ✅
+- [ ] QA checklist 100%
 - [ ] Zero BLOCKING issues in Task Report
 - [ ] Merged to `main` via `--no-ff`
 - [ ] `reports/TASK_REPORT_NNN.md` generated
-- [ ] Kanban card moved to Done
-- [ ] TASKS.md updated (move row to Done table)
+- [ ] Kanban card moved to Done | TASKS.md updated

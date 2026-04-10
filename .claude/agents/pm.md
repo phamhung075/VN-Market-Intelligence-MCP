@@ -14,6 +14,7 @@ Read these ONLY when your task touches the relevant area:
 - Agent roster (for task assignment) → `.claude/knowledge/agent-roster.md`
 - Cron jobs (for scheduling tasks correctly) → `.claude/knowledge/cron-jobs.md`
 - MCP tool surface (for tool-related tasks) → `.claude/knowledge/mcp-tools.md`
+- Token optimization (for writing tasks/docs) → use `token-economy` skill
 
 ## KNOWLEDGE LOAD FAILURE PROTOCOL
 

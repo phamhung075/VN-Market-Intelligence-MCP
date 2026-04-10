@@ -1,89 +1,59 @@
 # Server Restart Policy
 
-**When to read this file:** Any task involving deploy, restart, hot reload, scheduler changes, code deploys, or post-merge verification.
+**Load when:** deploy, restart, hot reload, scheduler changes, code deploy, post-merge verification.
 
----
-
-## The Only Allowed Restart Command
+## Only Allowed Restart Command
 
 ```bash
 launchctl kickstart -k gui/$(id -u)/com.vn-market.mcp
 ```
 
-This is the single, non-negotiable way to restart the production server. There are no exceptions.
+No exceptions.
 
----
+## Banned Mechanisms
 
-## Banned Mechanisms — ALL Forbidden
+`./start.sh` | `bun --hot` | `bun --watch` | `nodemon` | `pm2` | `forever` | `node --watch` | any hot/live/fast reload — ALL FORBIDDEN.
 
-The following are permanently banned in this project:
+`./start.sh` is deprecated — still exists but must not run against a launchd-supervised instance (would spawn a second process fighting the supervised one).
 
-| Mechanism | Status |
-|-----------|--------|
-| `./start.sh` | FORBIDDEN |
-| `bun --hot` | FORBIDDEN |
-| `bun --watch` | FORBIDDEN |
-| `nodemon` | FORBIDDEN |
-| `pm2` | FORBIDDEN |
-| `forever` | FORBIDDEN |
-| `node --watch` | FORBIDDEN |
-| Any other hot/live/fast reload tool | FORBIDDEN |
+## Why launchctl Only
 
-`./start.sh` is DEPRECATED. The file still exists but must not be executed against a launchd-supervised instance — it would spawn a second process fighting the supervised one.
-
----
-
-## Rationale
-
-1. **Deterministic state** — a full launchctl kickstart gives the server a clean process with no half-loaded modules, stale closures, or partially applied hot patches.
-2. **Clean SQLite state** — the circuit breaker registry and SQLite WAL checkpoint are initialized at process startup. Hot reload skips this initialization path and can leave DB handles in inconsistent state.
-3. **Clean circuit-breaker reset** — circuit breakers initialize at boot. Hot reload can preserve tripped state across code changes, masking fixes.
-4. **launchd supervision** — the server runs under `launchd/com.vn-market.mcp.plist` with `KeepAlive` + `RunAtLoad`. The supervised process auto-respawns within ~2-3s after kickstart. No manual `./start.sh` needed.
-
----
+1. Deterministic state — clean process, no half-loaded modules, no stale closures
+2. Clean SQLite state — circuit breaker registry + WAL checkpoint initialized at startup; hot reload skips this
+3. Clean circuit-breaker reset — tripped state not preserved across code changes
+4. launchd supervision — `KeepAlive` + `RunAtLoad` auto-respawns within ~2-3s after kickstart
 
 ## How to Apply a Code Change
 
-1. Edit the code.
-2. Run `bun tsc --noEmit` — must pass.
-3. Run `bun test` (affected test file) — must pass.
-4. Commit and push to main.
-5. Restart: `launchctl kickstart -k gui/$(id -u)/com.vn-market.mcp`
-6. Verify: `curl -s http://127.0.0.1:3000/health` — must return `{"status":"ok",...}`.
+1. Edit code
+2. `bun tsc --noEmit` — must pass
+3. `bun test` (affected file) — must pass
+4. Commit + push to main
+5. `launchctl kickstart -k gui/$(id -u)/com.vn-market.mcp`
+6. `curl -s http://127.0.0.1:3000/health` — must return `{"status":"ok",...}`
 
----
+## QA Validation After Sprint Merge
 
-## How QA Validates Restart
+1. `launchctl list | grep com.vn-market.mcp` — non-zero PID = running
+2. `curl -s http://127.0.0.1:3000/health` — returns `{"status":"ok","toolCount":N}`
+3. `tail -20 /tmp/vn-market-mcp.log` — no crash loop, no startup errors
 
-After every sprint merge, QA must confirm:
+If `toolCount` drops or health errors → diagnose from logs before marking sprint done.
 
-1. `launchctl list | grep com.vn-market.mcp` — shows the PID (non-zero means running).
-2. `curl -s http://127.0.0.1:3000/health` — returns `{"status":"ok","toolCount":N}`.
-3. `tail -20 /tmp/vn-market-mcp.log` — no crash loop, no startup errors.
+## If launchctl Fails
 
-If `toolCount` drops or health returns an error, diagnose from logs before declaring the sprint done.
+1. Check loaded: `launchctl list | grep com.vn-market.mcp`
+2. Not loaded → `launchctl load -w ~/Library/LaunchAgents/com.vn-market.mcp.plist` then retry
+3. Plist missing → `./launchd/install.sh` (one-time, requires Full Disk Access for `/bin/bash` + `~/.bun/bin/bun`)
+4. Check logs: `tail -50 /tmp/vn-market-mcp.log`
+5. Do NOT fall back to `./start.sh` or `bun --hot` — fix launchd instead
+6. If blocked → report to WORK channel, await operator. Do not leave server under forbidden mechanism.
 
----
+## Reference
 
-## What to Do If launchctl Fails
-
-If `launchctl kickstart -k gui/$(id -u)/com.vn-market.mcp` returns an error:
-
-1. Check if the plist is loaded: `launchctl list | grep com.vn-market.mcp`
-2. If NOT loaded: `launchctl load -w ~/Library/LaunchAgents/com.vn-market.mcp.plist` then retry kickstart.
-3. If plist is missing: run `./launchd/install.sh` (one-time installer, requires Full Disk Access for `/bin/bash` and `~/.bun/bin/bun`).
-4. Check logs: `tail -50 /tmp/vn-market-mcp.log` for crash reason.
-5. Do NOT fall back to `./start.sh` or `bun --hot`. Fix the launchd setup instead.
-6. If blocked on launchd setup: report to WORK channel and await operator intervention. Do not leave the server running under a forbidden mechanism.
-
----
-
-## Installer Reference
-
-```bash
-./launchd/install.sh   # one-time, requires Full Disk Access grant in macOS System Settings
-```
-
-launchd label: `com.vn-market.mcp`
-plist path: `~/Library/LaunchAgents/com.vn-market.mcp.plist`
-Log file: `/tmp/vn-market-mcp.log`
+| Item | Value |
+|------|-------|
+| launchd label | `com.vn-market.mcp` |
+| plist path | `~/Library/LaunchAgents/com.vn-market.mcp.plist` |
+| Log file | `/tmp/vn-market-mcp.log` |
+| Installer | `./launchd/install.sh` |

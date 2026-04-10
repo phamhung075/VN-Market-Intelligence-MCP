@@ -1,17 +1,15 @@
 # Fail-Loud Lazy-Load Protocol
 
-**When to read this file:** When you are an analysis agent (cowork team) and need the full knowledge-load failure procedure. Also read by any agent that embeds the KNOWLEDGE LOAD FAILURE PROTOCOL block in its own file.
-
----
+**Load when:** analysis agent needs the full knowledge-load failure procedure.
 
 ## Rule
 
-When an agent needs knowledge, Read the relevant `.claude/knowledge/<file>.md`. If Read fails (ENOENT, empty, <50 chars, permission denied), follow this protocol immediately — do NOT proceed with partial knowledge.
+Read `.claude/knowledge/<file>.md` when knowledge is needed. If Read fails (ENOENT, empty, <50 chars, permission denied) → follow these 5 steps immediately. Do NOT proceed with partial knowledge.
 
 ## The 5 Steps
 
 ```
-1. IMMEDIATELY send_telegram(channel="work", message="[{agent-name}] Knowledge load failed: <filename> — <error detail>")
+1. send_telegram(channel="work", message="[{agent-name}] Knowledge load failed: <filename> — <error detail>")
 2. submit_feedback(severity="critical", title="Knowledge load failed: <filename>", agent="{agent-name}")
 3. STOP current cycle, return early
 4. DO NOT fallback, guess, or continue with partial knowledge
@@ -20,15 +18,13 @@ When an agent needs knowledge, Read the relevant `.claude/knowledge/<file>.md`. 
 
 User must manually fix the config before the next cycle.
 
-## Why these rules exist
+## Why
 
-- Agents operating on stale or missing knowledge produce hallucinated analyses, wrong sector classifications, and misfired alerts.
-- Fail-loud ensures the Dev Team is notified immediately via the BUG channel and can fix the root cause before damage accumulates.
-- Silent fallback is worse than no output — a missing file is a deployment/config problem, not a transient network error.
+Agents on stale/missing knowledge produce hallucinated analyses, wrong sector classifications, misfired alerts. Silent fallback is worse than no output — a missing file is a deployment/config problem, not a transient network error.
 
-## Application
+## Inline Block for Agent Files
 
-Every analysis agent (`01` through `06`, `unified-agent`, `dev-team-cron`) embeds a shortened version of this protocol under its `## KNOWLEDGE LOAD FAILURE PROTOCOL` header. That section should read:
+Every analysis agent (`01`–`06`, `unified-agent`, `dev-team-cron`) embeds this under `## KNOWLEDGE LOAD FAILURE PROTOCOL`. The inline block is intentional — agents must be self-contained and cannot lazy-load the failure protocol itself.
 
 ```markdown
 ## KNOWLEDGE LOAD FAILURE PROTOCOL
@@ -40,5 +36,3 @@ If any Read of `.claude/knowledge/*.md` fails (file missing, empty, <50 chars, o
 4. DO NOT fallback, guess, or continue with partial knowledge
 5. DO NOT retry more than once
 ```
-
-The inline block in each agent file is intentional (agents must be self-contained; they cannot lazy-load the failure protocol itself).

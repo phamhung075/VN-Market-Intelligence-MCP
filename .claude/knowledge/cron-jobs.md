@@ -1,20 +1,20 @@
 # Cron Jobs — Complete Schedule
 
-**When to read this file:** When you need to know job schedules, cron expressions, step details, or scheduler file counts. Load only when your task touches scheduling, job registration, or timing of automated cycles.
+**Load when:** scheduling, job registration, or timing of automated cycles.
 
----
+## All Jobs (23 scheduler files — Sprint 054)
 
-## All Cron Jobs (Sprint 053)
-
-| Time (VN GMT+7 unless noted) | Job | Description |
-|------|-----|-------------|
-| */15 min | `intelligenceCycle` | Main engine: news + prices + cascade + alerts. 14-min stale guard, 2-min per-step timeout |
-| */30 min | `predictionMarketPoll` | Polymarket fetch + signal detection |
-| */6h | `weatherCheck` | Typhoon season climate check |
-| 06:00 UTC M-F | `franceSummary` | France wake-up digest (13:00 VN) → MARKET channel |
-| 08:00 VN M-F | `morningBriefing` | Daily briefing with macro + conviction |
+| Schedule (VN GMT+7 unless noted) | Job | Description |
+|----------------------------------|-----|-------------|
+| `*/15 min` | `intelligenceCycle` | Main engine: news+prices+cascade+alerts. 14-min stale guard, 2-min/step timeout |
+| `*/30 min` | `predictionMarketPoll` | Polymarket fetch + signal detection |
+| `*/6h` | `weatherCheck` | Typhoon season climate check |
+| `*/12 min` | `askQueueCheck` | /ask FIFO queue → QA Responder (Sprint 054) |
+| `*/10 min` (market hours) | `vpsProxyWatchdog` | VPS proxy liveness — observe only |
+| 06:00 UTC M-F | `franceSummary` | France wake-up digest (13:00 VN) → MARKET |
+| 08:00 VN M-F | `morningBriefing` | Daily briefing: macro + conviction |
 | 09:00 VN M-F | `marketOpen` | Market open scan + price alerts |
-| 09:00 VN daily | `bctcOverdueCheck` | BCTC overdue alert — insert alert rows |
+| 09:00 VN daily | `bctcOverdueCheck` | BCTC overdue alert → insert alert rows |
 | 09:30 VN daily | `bctcReparseJob` | Re-parse recently added BCTC PDFs |
 | 15:30 VN M-F | `marketClose` | Market close snapshot |
 | 20:00 VN daily | `sscCheck` | SSC nightly BCTC check |
@@ -28,28 +28,22 @@
 | 07:00 UTC Sunday | `devTeamHeartbeat` | System health + observability report |
 | 08:00 UTC Sunday | `predictionOutcome` | Prediction signal evaluation |
 | 1st monthly 06:00 VN | `davPharmacyCheck` | DAV drug approval check |
-| */10 min (market hours) | `vpsProxyWatchdog` | VPS proxy liveness check — observe only |
 
-### askQueueCheck (Sprint 054 — new)
-| */12 min | `askQueueCheck` | Process /ask FIFO queue → QA Responder agent |
-
----
+**Orphan** (not registered): `insiderCheckJob.ts` | **Legacy** (fallback test only): `newsPollerJob.ts`
 
 ## Intelligence Cycle Steps (15-min tick)
 
-| Step | What | When | Timeout |
-|------|------|------|---------|
+| Step | What | Hours | Timeout |
+|------|------|-------|---------|
 | A | `pollNews()` — 5 sources + commodity prices | Always | 2 min |
 | A2 | `fetchMacro()` — Yahoo Finance + SBV σ history | Always (24/7) | 2 min |
-| A3b | `syncSectorPeers()` — vnstock sector sync | Market hours | 2 min |
-| B | `listSscDocuments()` — SSC check per stock | Market hours | 2 min |
-| C | `fetchHosePrices()` — prices + sector context | Market hours | 2 min |
-| D | `runImpactChain()` — cascade + σ adjustments | Market hours | 2 min |
-| E | `sendAlerts()` — unnotified HIGH/CRITICAL → Telegram | Market hours | 2 min |
+| A3b | `syncSectorPeers()` — vnstock sector sync | Market | 2 min |
+| B | `listSscDocuments()` — SSC check per stock | Market | 2 min |
+| C | `fetchHosePrices()` — prices + sector context | Market | 2 min |
+| D | `runImpactChain()` — cascade + σ adjustments | Market | 2 min |
+| E | `sendAlerts()` — unnotified HIGH/CRITICAL → Telegram | Market | 2 min |
 
----
-
-## Periodic Summary Jobs (overridable via env)
+## Periodic Summary Jobs (env-overridable)
 
 | Schedule | Job | Env Override |
 |----------|-----|--------------|
@@ -59,27 +53,8 @@
 | 01:00 Jan/Apr/Jul/Oct 1st | Quarterly summary | `CRON_SUMMARY_QUARTERLY` |
 | 02:00 Jan 2nd | Yearly summary | `CRON_SUMMARY_YEARLY` |
 
----
-
-## Scheduler File Count
-
-**23 scheduler files** (`jobs.ts` + `summaryJobs.ts` + 21 job handlers, includes `askQueueCheckJob.ts` added in task 1074).
-
-Notes:
-- `insiderCheckJob.ts` exists but is NOT registered in `jobs.ts` (orphan)
-- `newsPollerJob.ts` is legacy — kept for fallback testing only
-- `userRequestCheckJob.ts` was NOT created — handled inline; Sprint 054 adds a new `askQueueCheckJob.ts`
-
----
-
 ## VPS Proxy Watchdog
 
-Job: `vpsProxyWatchdogJob.ts`. Runs `*/10 2-8 * * 1-5` UTC (market hours only).
-Reads `MAX(market_prices.updated_at)`. If >5 min stale → one Telegram alert to MARKET channel (30-min cooldown).
+`vpsProxyWatchdogJob.ts` — runs `*/10 2-8 * * 1-5` UTC (market hours).
+Reads `MAX(market_prices.updated_at)`. If >5 min stale → one Telegram MARKET alert (30-min cooldown).
 **NEVER SSHes into VPS.** VPS liveness owned by systemd (`vn-price-fetch.service`, `Restart=always`).
-
----
-
-## Telegram Bot Commands (11)
-
-`/watchlist`, `/price`, `/alerts`, `/briefing`, `/health`, `/pnl`, `/ask`, `/why`, `/report`, `/fix`, `/help`
