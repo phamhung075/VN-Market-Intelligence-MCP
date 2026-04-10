@@ -262,6 +262,10 @@ describe("Task 137 — markAlertNotified()", () => {
 // runIntelligenceCycle() — Step E integration
 // ─────────────────────────────────────────────────────────────────────────────
 
+// Step E tests call runIntelligenceCycle which has multiple async steps
+// with internal 2-min timeouts. Default 5s Bun test timeout is too short.
+const CYCLE_TIMEOUT = 30_000;
+
 describe("Task 137 — Step E: alerts flow through to sendAlertsFn", () => {
   it("passes DB alerts to sendAlertsFn and returns correct count (AC-1)", async () => {
     const { runIntelligenceCycle, resetCycleGuard } = await import(
@@ -297,7 +301,7 @@ describe("Task 137 — Step E: alerts flow through to sendAlertsFn", () => {
     expect(result!.telegramAlertsSent).toBe(2);
     expect(receivedAlerts).toContain("e1");
     expect(receivedAlerts).toContain("e2");
-  });
+  }, CYCLE_TIMEOUT);
 
   it("marks alerts as notified_telegram = 1 after successful send (AC-1)", async () => {
     const { runIntelligenceCycle, resetCycleGuard } = await import(
@@ -330,7 +334,7 @@ describe("Task 137 — Step E: alerts flow through to sendAlertsFn", () => {
       .prepare("SELECT notified_telegram FROM alerts WHERE id = 'mark1'")
       .get() as { notified_telegram: number } | undefined;
     expect(row?.notified_telegram).toBe(1);
-  });
+  }, CYCLE_TIMEOUT);
 
   it("second cycle sends 0 alerts after first marks them notified (AC-1 idempotency)", async () => {
     const { runIntelligenceCycle, resetCycleGuard } = await import(
@@ -365,7 +369,7 @@ describe("Task 137 — Step E: alerts flow through to sendAlertsFn", () => {
     resetCycleGuard();
     const r2 = await runIntelligenceCycle(deps);
     expect(r2!.telegramAlertsSent).toBe(0);
-  });
+  }, CYCLE_TIMEOUT);
 
   it("does not mark alert when sendAlertsFn returns 0 (AC-2)", async () => {
     const { runIntelligenceCycle, resetCycleGuard } = await import(
@@ -400,7 +404,7 @@ describe("Task 137 — Step E: alerts flow through to sendAlertsFn", () => {
       .get() as { notified_telegram: number } | undefined;
     // Flag must still be 0 — failed send should not mark as notified
     expect(row?.notified_telegram).toBe(0);
-  });
+  }, CYCLE_TIMEOUT);
 
   it("telegramAlertsSent = 0 when no unnotified HIGH/CRITICAL alerts exist", async () => {
     const { runIntelligenceCycle, resetCycleGuard } = await import(
@@ -421,7 +425,7 @@ describe("Task 137 — Step E: alerts flow through to sendAlertsFn", () => {
 
     expect(result).not.toBeNull();
     expect(result!.telegramAlertsSent).toBe(0);
-  });
+  }, CYCLE_TIMEOUT);
 
   it("Step E is skipped outside market hours", async () => {
     const { runIntelligenceCycle, resetCycleGuard } = await import(
@@ -448,5 +452,5 @@ describe("Task 137 — Step E: alerts flow through to sendAlertsFn", () => {
     expect(result).not.toBeNull();
     expect(readCalled).toBe(false);
     expect(result!.telegramAlertsSent).toBe(0);
-  });
+  }, CYCLE_TIMEOUT);
 });
