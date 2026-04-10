@@ -32,11 +32,13 @@
  */
 
 import { getDb } from "../infrastructure/db/schema.js";
-import { sendTelegramMarket } from "../infrastructure/notifiers/telegram.js";
+import { sendTelegramWork } from "../infrastructure/notifiers/telegram.js";
 import { logger } from "../infrastructure/logger.js";
 
-/** If the newest market_prices row is older than this, raise an alert. */
-const STALE_THRESHOLD_MS = 5 * 60 * 1000; // 5 minutes
+/** If the newest market_prices row is older than this, raise an alert.
+ * VPS pushes every ~5-10 min. 15 min allows 2-3 missed pushes before
+ * alerting (was 5 min — too aggressive, caused false alarms). */
+const STALE_THRESHOLD_MS = 15 * 60 * 1000; // 15 minutes
 
 /** Minimum wait between two stale-alerts during the same outage. */
 const ALERT_COOLDOWN_MS = 30 * 60 * 1000; // 30 minutes
@@ -102,10 +104,12 @@ export async function runVpsProxyWatchdog(
   const latest = readLatestPriceTimestamp();
   const ageMs = latest ? now.getTime() - latest.getTime() : Number.POSITIVE_INFINITY;
 
-  // "Never populated" (latest === null) is a permanent deploy/config problem,
-  // not a transient market-hours gap — alert regardless of the hour so a dead
-  // proxy at restart is caught immediately rather than at next market open.
-  if (latest !== null && !isVnMarketHoursUtc(now)) {
+  // Outside VN market hours (Mon-Fri 02:00-08:59 UTC), the VPS does not
+  // push prices and stale data is expected — skip unconditionally. The old
+  // code bypassed this check when latest===null ("never populated = deploy
+  // problem") but that caused false alarms at server restart during off-hours
+  // (user feedback 2026-04-10: alert at 01:30 UTC when market opens at 02:00).
+  if (!isVnMarketHoursUtc(now)) {
     return "off-hours";
   }
 
@@ -139,7 +143,7 @@ export async function runVpsProxyWatchdog(
 
   const notify =
     options.notify ??
-    ((msg: string) => sendTelegramMarket(msg, { parseMode: "" }));
+    ((msg: string) => sendTelegramWork(msg, { parseMode: "" }));
 
   try {
     const ok = await notify(message);
