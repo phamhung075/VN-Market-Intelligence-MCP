@@ -703,11 +703,19 @@ Status: Backlog (P1 — blocking BCTC ingestion)
 
 ---
 
-### [1086 / @dev P1] financial_reports table empty despite fix 1068 claiming VNM/VEA rows (report #1071)
+### [1086 / @dev P2] Investigate: financial_reports row vanished between 2026-04-08 and 2026-04-09 (reports #1071, #1072)
 
-Fix 1068 (commit 6d46ffb) reported "VNM Q4-2025 financial_reports row created (conf 0.3125), VEA Q4-2025 row created (conf 0.8125)". Live `sqlite3 data/market.db 'SELECT COUNT(*) FROM financial_reports'` returns 0 on 2026-04-09. Possible causes: rows inserted against a test/override DB path, later migration wiped the table, or `reparseSingleWithOcrFallback` never persists in production. Investigate: (a) grep for INSERT INTO financial_reports, (b) check if bctcReparseJob.ts uses an injected DB distinct from getDb(), (c) check recent migrations for DROP/TRUNCATE. Rerun reparse with production DB_PATH and verify count increments. This bug is what made the freshness fix (1071) visible in the first place.
+Fix 1068 resolved stranded_bctc_pdf feedback id=14 (2026-04-08 23:27) by writing a VNM Q4-2025 row. By 2026-04-09 16:00 the row was gone and data-auditor created a fresh stranded feedback id=15. Manually re-ran runBctcReparseJob on 2026-04-10 00:24Z — id=15 resolved, row present again (validated via `SELECT COUNT(*) FROM financial_reports` and get_bctc_full(VNM)). Grep confirms **no production code path deletes financial_reports** — only tests (all use :memory:). Likely causes: (a) manual sqlite3 cleanup during triage, (b) DB restored from a backup, (c) a launchctl kickstart that hit a corrupted WAL. Add a pre-commit audit row and/or a scheduled `SELECT COUNT(*) FROM financial_reports` trend log so future disappearances are detected within one cycle. Low urgency now that data is present — downgrade P1 → P2.
 
-Status: Backlog (P1)
+Status: Backlog (P2 — observed once, current state healthy)
+
+---
+
+### [1088 / @architect P1] BCTC OCR parser produces garbage numbers on VNM Q4-2025 (follow-up to #1072)
+
+After manual reparse 2026-04-10, VNM 2025-Q4 row stored with validation='passed' but the scalars are clearly wrong: Net Revenue 63,645,886,756.2 "tỷ VND" (≈ sextillion), Total Assets 0, Equity 0, EPS 0, ROE N/A, gross margin 100%. Log line during parse: `[balanceSheetExtractor] No unit header found; defaulting multiplier to 1.` — the OCR text (116k chars, 61 pages, confidence 0.80) lacks the header "Đơn vị tính: triệu đồng" that the extractor keys on, so the multiplier defaults to 1 instead of 1e6 and the balance sheet parser gives up entirely. Needs: (a) unit-header fallback that scans the first 500 chars for any "đồng" occurrence and infers the multiplier from magnitude of the largest numeric, (b) validation guard that rejects "passed" when total_assets=0 and total_liabilities=0 simultaneously (impossible for a non-shell company), (c) regression test fixture using the real VNM Q4-2025 OCR text.
+
+Status: Backlog (P1 — false-positive 'passed' validation is worse than a failure)
 
 ---
 
