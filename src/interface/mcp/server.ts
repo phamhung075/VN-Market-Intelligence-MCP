@@ -302,6 +302,7 @@ export async function createBunServer(
           close?: string;
           volume?: number;
           change_pct?: string;
+          ref_price?: string;
           fetched_at?: string;
           type?: "stock" | "index" | "global_index";
         }> = JSON.parse(body);
@@ -319,6 +320,7 @@ export async function createBunServer(
         `);
 
         const now = new Date().toISOString();
+        const vnDate = new Date(Date.now() + 7 * 3600_000).toISOString().slice(0, 10);
         let count = 0;
         for (const p of prices) {
           if (!p.code || p.price == null) continue;
@@ -326,7 +328,32 @@ export async function createBunServer(
           // Indices + global: price is already in correct unit
           const isStock = !p.type || p.type === "stock";
           const priceVal = isStock ? p.price * 1000 : p.price;
-          const changePct = p.change_pct ? parseFloat(p.change_pct) : null;
+          // Prefer computing change_pct from ref_price (exchange reference/previous
+          // close) — VPS API .changePc may have wrong sign (report #1078: FPT
+          // showed +0.64% instead of -0.64%). ref_price is .r from VPS API.
+          // Fallback chain: ref_price → yesterday's OHLCV close → raw VPS change_pct.
+          let changePct: number | null = null;
+          const refPrice = p.ref_price ? parseFloat(p.ref_price) : 0;
+          if (isStock && refPrice > 0) {
+            const refPriceVnd = refPrice * 1000;
+            changePct = Math.round(((priceVal - refPriceVnd) / refPriceVnd) * 10000) / 100;
+          } else if (isStock) {
+            // Before VPS redeploy: compute from yesterday's close in daily_ohlcv
+            try {
+              const prevRow = db.prepare<{ close: number }, [string, string]>(
+                `SELECT close FROM daily_ohlcv WHERE code = ? AND date < ? ORDER BY date DESC LIMIT 1`,
+              ).get(p.code, vnDate);
+              if (prevRow && prevRow.close > 0) {
+                changePct = Math.round(((priceVal - prevRow.close) / prevRow.close) * 10000) / 100;
+              } else {
+                changePct = p.change_pct ? parseFloat(p.change_pct) : null;
+              }
+            } catch {
+              changePct = p.change_pct ? parseFloat(p.change_pct) : null;
+            }
+          } else {
+            changePct = p.change_pct ? parseFloat(p.change_pct) : null;
+          }
           upsert.run(p.code, priceVal, changePct, p.volume ?? 0, p.fetched_at ?? now);
           count++;
         }
@@ -344,7 +371,6 @@ export async function createBunServer(
         }
 
         // Update daily OHLCV (kept 2+ years for volatility analysis)
-        const vnDate = new Date(Date.now() + 7 * 3600_000).toISOString().slice(0, 10);
         const ohlcvUpsert = db.prepare(`
           INSERT INTO daily_ohlcv (code, date, open, high, low, close, volume, updated_at)
           VALUES (?, ?, ?, ?, ?, ?, ?, ?)
@@ -428,10 +454,16 @@ export async function createBunServer(
               if (!isStock) continue; // signals only for stocks, not indices
               const priceVnd = p.price * 1000;
               priceMap.set(p.code, priceVnd);
-              const changePct = p.change_pct ? parseFloat(p.change_pct) : 0;
-
-              // Use change_pct from VPS API to compute previous price
-              const previousPrice = changePct !== 0 ? priceVnd / (1 + changePct / 100) : priceVnd;
+              // Compute previous price from ref_price (exchange reference) if available,
+              // otherwise fall back to VPS change_pct (may have wrong sign — report #1078)
+              const refP = p.ref_price ? parseFloat(p.ref_price) : 0;
+              let previousPrice: number;
+              if (refP > 0) {
+                previousPrice = refP * 1000; // ref_price is in thousands like price
+              } else {
+                const pctFallback = p.change_pct ? parseFloat(p.change_pct) : 0;
+                previousPrice = pctFallback !== 0 ? priceVnd / (1 + pctFallback / 100) : priceVnd;
+              }
               // No fallback: if we lack ≥1 closed-day baseline, set avgVolume=0 so
               // signalDetector suppresses volume_spike entirely (see SD-02).
               const avgVolume = avgVolMap.get(p.code) ?? 0;

@@ -43,6 +43,7 @@ if [ -n "$VN_DATA" ] && [ "$VN_DATA" != "[]" ]; then
     price: .lastPrice,
     volume: .lot,
     change_pct: .changePc,
+    ref_price: (if .r != null and .r != "" then (.r | tostring) else null end),
     high: .highPrice,
     low: .lowPrice,
     type: "stock"
