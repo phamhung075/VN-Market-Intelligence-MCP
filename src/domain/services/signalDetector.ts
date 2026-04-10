@@ -236,7 +236,15 @@ export function detectSignals(
   }
 
   // ── 2. Volume spike ──────────────────────────────────────────────────────
-  if (avgVolume > 0 && volume >= avgVolume * volumeMultiplier) {
+  // Suppress during VN ATC closing auction (14:30-15:00 VN = 07:30-08:00 UTC).
+  // ATC concentrates end-of-day orders into a single batch, producing uniform
+  // ~5.3× spikes across ALL stocks — pure false positives (report #1083).
+  const utcNow = new Date();
+  const utcH = utcNow.getUTCHours();
+  const utcM = utcNow.getUTCMinutes();
+  const isAtcWindow = (utcH === 7 && utcM >= 30) || (utcH === 8 && utcM <= 5);
+
+  if (!isAtcWindow && avgVolume > 0 && volume >= avgVolume * volumeMultiplier) {
     const multiplier = volume / avgVolume;
     signals.push({
       type: "volume_spike",

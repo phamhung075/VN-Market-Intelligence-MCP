@@ -435,11 +435,11 @@ const SYNC_PEERS_TIMEOUT_MS = 5 * 60 * 1000;
  * 3 minutes — max allowed runtime for each individual step B SSC fetch.
  * The SSC portal (congbothongtin.ssc.gov.vn) is slow under concurrent load:
  * when 10+ watchlist tickers fire Promise.all simultaneously, each individual
- * fetch can exceed the generic 120 s cap. Report 1076 (2026-04-10 04:49 UTC)
- * captured 10 tickers all timing out at 120 s. 3 min per ticker is generous
- * for a single listing page without blocking the outer cycle guard.
+ * fetch can exceed the generic 120 s cap. Report 1076 raised to 3 min, but
+ * report 1082 (2026-04-10 08:35 UTC) showed 10 tickers still timing out at
+ * 180 s during post-market-open cycle. Raised to 5 min to match syncPeers.
  */
-const STEP_B_SSC_TIMEOUT_MS = 3 * 60 * 1000;
+const STEP_B_SSC_TIMEOUT_MS = 5 * 60 * 1000;
 
 /**
  * Runs a promise with a timeout. If the promise doesn't resolve within
