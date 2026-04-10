@@ -231,6 +231,54 @@ describe("Task 021 — parseRssFeed (base RSS parser)", () => {
     // parseRssFeed itself sets source to empty string
     expect(items[0]!.source).toBe("");
   });
+
+  // ── Report #1074: HTML entity decode regression ──────────────────────────
+
+  it("decodes full HTML numeric entities (&#NNN;) in title and content", () => {
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0"><channel>
+  <item>
+    <title>Gi&#225; v&#224;ng t&#259;ng khi USD ti&#7871;p t&#7909;c suy y&#7871;u</title>
+    <link>https://example.com/gold</link>
+    <pubDate>Thu, 10 Apr 2026 08:00:00 +0700</pubDate>
+    <description>Nhi&#234;n li&#7879;u &#273;&#7855;t</description>
+  </item>
+</channel></rss>`;
+    const items = parseRssFeed(xml);
+    expect(items[0]!.title).toBe("Giá vàng tăng khi USD tiếp tục suy yếu");
+    expect(items[0]!.content).toBe("Nhiên liệu đắt");
+  });
+
+  it("decodes orphan #NNN; entities (ampersand stripped by XML parser — report #1074)", () => {
+    // Simulates the case where cheerio's XML parser strips the `&` from
+    // `&#234;`, leaving orphan `#234;` fragments in the text.
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0"><channel>
+  <item>
+    <title><![CDATA[nhi#234;n li#7879;u #273;#7855;t]]></title>
+    <link>https://example.com/fuel</link>
+    <pubDate>Thu, 10 Apr 2026 08:00:00 +0700</pubDate>
+    <description><![CDATA[gi#225; v#224;ng]]></description>
+  </item>
+</channel></rss>`;
+    const items = parseRssFeed(xml);
+    expect(items[0]!.title).toBe("nhiên liệu đắt");
+    expect(items[0]!.content).toBe("giá vàng");
+  });
+
+  it("decodes hex entities (&#xNN;)", () => {
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0"><channel>
+  <item>
+    <title>caf&#xe9; &#x110;&#x1ed3;ng</title>
+    <link>https://example.com/cafe</link>
+    <pubDate>Thu, 10 Apr 2026 08:00:00 +0700</pubDate>
+    <description>ok</description>
+  </item>
+</channel></rss>`;
+    const items = parseRssFeed(xml);
+    expect(items[0]!.title).toBe("café Đồng");
+  });
 });
 
 // ---------------------------------------------------------------------------
