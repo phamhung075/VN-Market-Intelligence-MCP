@@ -12,37 +12,8 @@
 import { Database } from "bun:sqlite";
 import type { BondMaturityEvent } from "../../domain/services/bondMaturityTracker.js";
 
-// ─────────────────────────────────────────────────────────────────────────────
-// DDL
-// ─────────────────────────────────────────────────────────────────────────────
-
-const BOND_MATURITY_DDL = `
-  CREATE TABLE IF NOT EXISTS bond_maturity (
-    id               INTEGER PRIMARY KEY AUTOINCREMENT,
-    issuer           TEXT NOT NULL,
-    issuer_code      TEXT NOT NULL UNIQUE,
-    amount_billion   REAL NOT NULL,
-    maturity_date    TEXT NOT NULL,
-    coupon_rate      REAL,
-    status           TEXT NOT NULL DEFAULT 'upcoming',
-    created_at       TEXT NOT NULL DEFAULT (datetime('now')),
-    updated_at       TEXT NOT NULL DEFAULT (datetime('now'))
-  )
-`;
-
-/**
- * Create the bond_maturity table and indexes if they don't exist.
- * Idempotent — safe to call multiple times.
- */
-export function ensureBondMaturityTable(db: Database): void {
-  db.exec(BOND_MATURITY_DDL);
-  db.exec(
-    `CREATE INDEX IF NOT EXISTS idx_bond_maturity_date ON bond_maturity(maturity_date)`,
-  );
-  db.exec(
-    `CREATE INDEX IF NOT EXISTS idx_bond_maturity_code ON bond_maturity(issuer_code)`,
-  );
-}
+// DDL is canonical in schema.ts:814 via initDatabase(). Tests use
+// src/__tests__/helpers/bondMaturityTestDdl.ts for in-memory setup.
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Raw row type

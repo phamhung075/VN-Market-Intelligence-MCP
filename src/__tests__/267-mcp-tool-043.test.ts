@@ -12,7 +12,8 @@
 import { describe, it, expect, beforeEach, afterEach } from "bun:test";
 import { Database } from "bun:sqlite";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { initMentionVelocityTable, recordMention } from "../infrastructure/db/mentionVelocityStore.js";
+import { recordMention } from "../infrastructure/db/mentionVelocityStore.js";
+import { ensureMentionVelocityTable } from "./helpers/mentionVelocityTestDdl.js";
 import { saveReputation } from "../infrastructure/db/reputationStore.js";
 import { ensureReputationScoresTable } from "./helpers/reputationScoresTestDdl.js";
 import { registerCrisisTools } from "../interface/mcp/tools/crisisTools.js";
@@ -32,7 +33,7 @@ function makeDb(): Database {
       alert_impact_min REAL NOT NULL DEFAULT 7, alert_report_new INTEGER NOT NULL DEFAULT 1
     );
   `);
-  initMentionVelocityTable(db);
+  ensureMentionVelocityTable(db);
   ensureReputationScoresTable(db);
   return db;
 }

@@ -13,7 +13,7 @@ import { Database } from "bun:sqlite";
 import { getDb } from "../../../infrastructure/db/schema.js";
 import { logger } from "../../../infrastructure/logger.js";
 import { getUpcomingMaturities, checkMaturityAlerts, type BondMaturityEvent } from "../../../domain/services/bondMaturityTracker.js";
-import { ensureBondMaturityTable, listUpcomingBonds } from "../../../infrastructure/db/bondMaturityStore.js";
+import { listUpcomingBonds } from "../../../infrastructure/db/bondMaturityStore.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -86,7 +86,6 @@ export function registerBondMaturityTools(
         // Try DB first (has more up-to-date data), fall back to seed data
         let events: BondMaturityEvent[];
         try {
-          ensureBondMaturityTable(db);
           const dbEvents = listUpcomingBonds(db, months);
           // If DB has data, use it; otherwise use seed data
           events = dbEvents.length > 0 ? dbEvents : getUpcomingMaturities(months);

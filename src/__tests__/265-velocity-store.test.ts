@@ -9,11 +9,11 @@
 import { describe, it, expect, beforeEach, afterEach } from "bun:test";
 import { Database } from "bun:sqlite";
 import {
-  initMentionVelocityTable,
   recordMention,
   getVelocity,
   getBaseline,
 } from "../infrastructure/db/mentionVelocityStore.js";
+import { ensureMentionVelocityTable } from "./helpers/mentionVelocityTestDdl.js";
 import {
   saveReputation,
   getReputation,
@@ -30,7 +30,7 @@ let db: Database;
 beforeEach(() => {
   db = new Database(":memory:");
   db.exec("PRAGMA journal_mode = WAL");
-  initMentionVelocityTable(db);
+  ensureMentionVelocityTable(db);
   ensureReputationScoresTable(db);
 });
 

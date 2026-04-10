@@ -197,9 +197,8 @@ export async function runImpactChain(input: RunCascadeInput): Promise<CausalChai
   if (chain.matchedRules.length > 0) {
     try {
       const { getDb } = await import("../../infrastructure/db/schema.js");
-      const { recordHit, ensureCascadeHitsTable } = await import("../../infrastructure/db/cascadeHitStore.js");
+      const { recordHit } = await import("../../infrastructure/db/cascadeHitStore.js");
       const db = getDb();
-      ensureCascadeHitsTable(db);
       for (const rule of chain.matchedRules) {
         recordHit(db, rule.key, rule.matchedKeyword, rule.sector);
       }

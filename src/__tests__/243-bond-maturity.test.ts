@@ -12,11 +12,11 @@ import {
   type BondMaturityEvent,
 } from "../domain/services/bondMaturityTracker.js";
 import {
-  ensureBondMaturityTable,
   upsertBond,
   listUpcomingBonds,
   updateBondStatus,
 } from "../infrastructure/db/bondMaturityStore.js";
+import { ensureBondMaturityTable } from "./helpers/bondMaturityTestDdl.js";
 
 function makeTestDb(): Database {
   const db = new Database(":memory:");

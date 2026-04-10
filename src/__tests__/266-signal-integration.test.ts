@@ -12,7 +12,7 @@ import { describe, it, expect } from "bun:test";
 import { Database } from "bun:sqlite";
 import { detectSignals } from "../domain/services/signalDetector.js";
 import type { SignalType } from "../domain/services/signalDetector.js";
-import { initMentionVelocityTable } from "../infrastructure/db/mentionVelocityStore.js";
+import { ensureMentionVelocityTable } from "./helpers/mentionVelocityTestDdl.js";
 import { saveReputation, getReputation } from "../infrastructure/db/reputationStore.js";
 import { ensureReputationScoresTable } from "./helpers/reputationScoresTestDdl.js";
 import { CRISIS_COOLDOWN_MINUTES } from "../domain/services/crisisPatternDetector.js";
@@ -25,7 +25,7 @@ import { getReputationWarnings } from "../application/usecases/getReputationWarn
 function makeDb() {
   const db = new Database(":memory:");
   db.exec("PRAGMA journal_mode = WAL");
-  initMentionVelocityTable(db);
+  ensureMentionVelocityTable(db);
   ensureReputationScoresTable(db);
   return db;
 }

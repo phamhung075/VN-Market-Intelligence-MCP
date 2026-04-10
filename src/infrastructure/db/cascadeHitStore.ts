@@ -23,28 +23,8 @@ export interface CascadeRuleMetric {
   lastHit: string;
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// DDL helper
-// ═══════════════════════════════════════════════════════════════════════════
-
-/**
- * Ensure the cascade_rule_hits table and indexes exist (idempotent).
- * Called by initDatabase(); exposed here for test setup.
- */
-export function ensureCascadeHitsTable(db: Database): void {
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS cascade_rule_hits (
-      id               INTEGER PRIMARY KEY AUTOINCREMENT,
-      rule_key         TEXT NOT NULL,
-      matched_text     TEXT NOT NULL DEFAULT '',
-      affected_sector  TEXT,
-      affected_stocks  TEXT,
-      hit_at           TEXT NOT NULL DEFAULT (datetime('now'))
-    );
-    CREATE INDEX IF NOT EXISTS idx_cascade_hits_rule ON cascade_rule_hits(rule_key);
-    CREATE INDEX IF NOT EXISTS idx_cascade_hits_at   ON cascade_rule_hits(hit_at);
-  `);
-}
+// DDL is canonical in schema.ts:872 via initDatabase(). Tests use
+// src/__tests__/helpers/cascadeHitsTestDdl.ts for in-memory setup.
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Write helpers

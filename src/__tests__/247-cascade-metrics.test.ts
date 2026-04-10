@@ -10,11 +10,11 @@
 import { describe, it, expect, beforeEach, afterEach } from "bun:test";
 import { Database } from "bun:sqlite";
 import {
-  ensureCascadeHitsTable,
   recordHit,
   getHitMetrics,
   getDeadRules,
 } from "../infrastructure/db/cascadeHitStore.js";
+import { ensureCascadeHitsTable } from "./helpers/cascadeHitsTestDdl.js";
 import { buildCausalChain } from "../domain/services/cascadeEngine.js";
 import type { WatchlistEntry } from "../domain/services/cascadeEngine.js";
 import type { AnalysisEntry } from "../domain/services/newsNormalizer.js";

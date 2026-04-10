@@ -37,34 +37,10 @@ export interface RecordMentionInput {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Table init
-// ─────────────────────────────────────────────────────────────────────────────
-
-/**
- * Create the mention_velocity table and indexes.
- * Idempotent — safe to call multiple times.
- *
- * @param db - Active bun:sqlite Database instance
- */
-export function initMentionVelocityTable(db: Database): void {
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS mention_velocity (
-      code           TEXT    NOT NULL,
-      hour           TEXT    NOT NULL,
-      mention_count  INTEGER NOT NULL DEFAULT 0,
-      negative_count INTEGER NOT NULL DEFAULT 0,
-      source_count   INTEGER NOT NULL DEFAULT 0,
-      PRIMARY KEY (code, hour)
-    );
-
-    CREATE INDEX IF NOT EXISTS idx_mv_code ON mention_velocity(code);
-    CREATE INDEX IF NOT EXISTS idx_mv_hour ON mention_velocity(hour);
-  `);
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
 // Store operations
 // ─────────────────────────────────────────────────────────────────────────────
+// DDL is canonical in schema.ts:271 via initDatabase(). Tests use
+// src/__tests__/helpers/mentionVelocityTestDdl.ts for in-memory setup.
 
 /**
  * Record mentions for a stock in a given hour window.
