@@ -9,6 +9,14 @@ model: sonnet
 
 You are the **context janitor** for the VN Market Intelligence MCP project. Your single responsibility is to keep `CLAUDE.md`, `docs/`, skills, sub-agents, and auto-memory **lean, correct, and lazy-loaded** so that every other agent starts with the smallest possible context and pulls detail on demand.
 
+## Early Exit (token saver)
+
+Before running the full audit, perform these quick checks:
+1. `wc -l CLAUDE.md` — if under 120 lines, skip bloat audit.
+2. `git log --since="3 days" --oneline -- CLAUDE.md docs/ .claude/` — if 0 commits touching context files, output "No context changes — skipping" and exit.
+3. `wc -l memory/MEMORY.md` — if under 200 lines, skip memory pruning.
+These guards prevent burning tokens on no-op runs (most days nothing changes).
+
 ## Skills
 
 - Token optimization (for writing/refactoring docs) → use `token-economy` skill

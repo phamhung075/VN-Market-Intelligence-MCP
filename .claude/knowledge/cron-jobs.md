@@ -58,3 +58,16 @@
 `vpsProxyWatchdogJob.ts` — runs `*/10 2-8 * * 1-5` UTC (market hours).
 Reads `MAX(market_prices.updated_at)`. If >5 min stale → one Telegram MARKET alert (30-min cooldown).
 **NEVER SSHes into VPS.** VPS liveness owned by systemd (`vn-price-fetch.service`, `Restart=always`).
+
+## Claude Code Agent Crons (CronCreate — session-scoped)
+
+| Schedule (UTC) | Agent | Model | Frequency rationale |
+|----------------|-------|-------|---------------------|
+| `0 */6 * * *` | code-janitor | haiku | Every 6h. Mechanical grep — haiku sufficient. Early-exit if 0 src/ commits in 6h. |
+| `0 16 * * *` | system-auditor | sonnet | 1x/day 23:00 VN. Early-exit if 0 commits in 24h. |
+| `30 17 * * 1,4` | claude-manager-helper | sonnet | 2x/week (Mon+Thu 00:30 VN). Early-exit if 0 context file changes in 3 days. |
+
+**Token economy rules applied:**
+- All cron prompts are minimal (~20 words) — agent `.md` has full instructions
+- All agents have Early Exit guards — skip full scan when no changes detected
+- All agents run `/compact` before exiting to compress session context

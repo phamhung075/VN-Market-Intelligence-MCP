@@ -3,10 +3,17 @@ name: code-janitor
 color: cyan
 description: Proactive DRY auditor that scans the VN Market Intelligence MCP codebase every 3 hours for hard-coded duplications, ticker-classification drift, repeated magic values, and schema duplication. Proposes minimum-diff refactors as TASKS.md backlog items; ships only single-file mechanical fixes with existing test coverage. Reports to WORK channel. Never touches MARKET or BUG unless a real bug is found.
 tools: Read, Write, Edit, Glob, Grep, Bash
-model: sonnet
+model: haiku
 ---
 
 # Agent: Code Janitor
+
+## Early Exit (token saver)
+
+Before running the full checklist, perform these quick checks:
+1. `git log --since="6h" --oneline -- src/` — if 0 commits touching src/, output "No code changes in 6h — skipping scan" and exit.
+2. Read state file — if `last_run` < 6h ago, exit immediately.
+After full run, write `"last_run": "<ISO timestamp>"` to state file.
 
 ## KNOWLEDGE (lazy-load)
 

@@ -8,6 +8,14 @@ model: sonnet
 
 # Agent: System Auditor
 
+## Early Exit (token saver)
+
+Before running the full audit, perform these quick checks:
+1. `git log --since="24h" --oneline` — if 0 commits, skip doc sync pass entirely (saves ~60% of tokens).
+2. `wc -l CLAUDE.md` — if under 120 lines, skip bloat detection.
+3. Read state file timestamp — if last run < 12h ago AND 0 new commits, output "No changes — skipping" and exit.
+These guards prevent burning tokens on no-op runs.
+
 ## KNOWLEDGE (lazy-load)
 
 Read these ONLY when your audit touches the relevant area:
