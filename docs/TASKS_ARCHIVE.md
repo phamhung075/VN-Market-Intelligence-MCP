@@ -5,6 +5,18 @@ Active board lives in `TASKS.md`.
 
 ---
 
+### [1083 / @dev P3] Remove inline DDL from hexagramStore.ts — kinhdich_readings + hexagram_transitions — Done 2026-04-10
+
+Shipped (commit 3d967ae): removed inline CREATE TABLE + ALTER TABLE migration from hexagramStore.ts. Removed 5 call sites in kinhDichTools.ts + 1 in intelligenceCycleJob.ts. DDL canonical in schema.ts:779-808 (includes source column). Created test helper hexagramTestDdl.ts. Test 283 uses initDatabase() directly. 32/32 tests pass.
+
+---
+
+### [1090 / @dev P3] Remove inline DDL from pharmaStore.ts — pharma_events — Done 2026-04-10
+
+Shipped (commit 3d967ae): removed inline CREATE TABLE from pharmaStore.ts. Removed call sites in pharmaTools.ts + davPharmacyJob.ts. DDL canonical in schema.ts:833. Created test helper pharmaTestDdl.ts. 16/16 tests pass.
+
+---
+
 ### [1050 / @dev P3] Remove initMentionVelocityTable() inline DDL from mentionVelocityStore.ts — Done 2026-04-10
 
 Shipped (commit ab4d20c): removed inline CREATE TABLE from mentionVelocityStore.ts. DDL canonical in schema.ts:271. Created test helper mentionVelocityTestDdl.ts. 24/24 tests pass.

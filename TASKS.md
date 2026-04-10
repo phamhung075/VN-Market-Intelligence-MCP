@@ -529,14 +529,6 @@ Acceptance Criteria:
 
 ## Backlog — Active (genuinely unblocked or pending decision)
 
-### [1083 / @dev P3] [janitor] Remove inline DDL from hexagramStore.ts — tables canonical in initDatabase()
-
-code-janitor auto-detected: `src/infrastructure/db/hexagramStore.ts:initHexagramTables()` still declares live CREATE TABLE IF NOT EXISTS for kinhdich_readings and hexagram_transitions. The canonical DDL is now in schema.ts:779-813 via initDatabase(). Call sites in kinhDichTools.ts (5 handlers) and intelligenceCycleJob.ts still invoke initHexagramTables() unnecessarily. Fix: make initHexagramTables() a true no-op (remove DDL body), remove call sites. Test 1047 covers the schema path.
-
-Status: Backlog
-
----
-
 ### [1048 / @dev P3] Consolidate scheduler cron defaults — config.ts duplicates CRONS fallbacks from jobs.ts
 
 code-janitor auto-detected: `src/infrastructure/config.ts:scheduler` section defines 7 cron default strings (sscCheck, morningBriefing, marketOpen, marketClose, intelligenceCycle, eveningSummary, predictionMarketPoll) that duplicate the fallback defaults already in CRONS (jobs.ts). Any cron default change requires two edits. config.ts should import and derive from CRONS rather than redeclaring literals.
@@ -544,14 +536,6 @@ code-janitor auto-detected: `src/infrastructure/config.ts:scheduler` section def
 **BLOCKED**: config.ts↔jobs.ts circular-dep risk — needs architect design review before implementation.
 
 Status: Backlog (Blocked)
-
----
-
-### [1090 / @dev P3] [janitor] Remove inline DDL from pharmaStore.ts — pharma_events canonical in initDatabase()
-
-code-janitor auto-detected: `src/infrastructure/db/pharmaStore.ts:initPharmaStore()` still declares live `CREATE TABLE IF NOT EXISTS pharma_events`. The canonical DDL is now in schema.ts:833 via initDatabase() (added in Task 1046). Production call sites in pharmaTools.ts:99 and davPharmacyJob.ts:30 still invoke initPharmaStore() unnecessarily. Fix: make initPharmaStore() a true no-op (remove DDL body), remove call sites in both pharmaTools.ts and davPharmacyJob.ts. Test 1045 covers the schema path.
-
-Status: Backlog
 
 ---
 

@@ -8,20 +8,6 @@
       "note": "config.ts:scheduler section declares 7 cron default strings duplicating CRONS fallback defaults in jobs.ts. Task 1048 queued (Backlog). BLOCKED: circular-dep risk."
     },
     {
-      "fingerprint": "schema_duplication:src/infrastructure/db/hexagramStore.ts:initHexagramTables",
-      "first_seen": "2026-04-08",
-      "last_reported": "2026-04-08",
-      "task": 1083,
-      "note": "hexagramStore.ts:initHexagramTables() still has live CREATE TABLE DDL for kinhdich_readings + hexagram_transitions. Canonical DDL is schema.ts:779-813. Still called from kinhDichTools.ts (5 sites) + intelligenceCycleJob.ts. Task 1083 queued."
-    },
-    {
-      "fingerprint": "schema_duplication:src/infrastructure/db/pharmaStore.ts:initPharmaStore",
-      "first_seen": "2026-04-08",
-      "last_reported": "2026-04-08",
-      "task": 1090,
-      "note": "pharmaStore.ts:initPharmaStore() still has live CREATE TABLE DDL for pharma_events. Canonical DDL is schema.ts:833 (Task 1046). Still called from pharmaTools.ts:99 + davPharmacyJob.ts:30. Task 1090 queued."
-    },
-    {
       "fingerprint": "schema_duplication:src/infrastructure/db/vnstockStore.ts:initVnstockTables",
       "first_seen": "2026-04-08",
       "last_reported": "2026-04-08",
