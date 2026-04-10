@@ -252,4 +252,59 @@ TỔNG CỘNG NGUỒN VỐN        1.000
       expect(bsNfd.totalAssets).toBe(1_500_000);
     });
   });
+
+  // ── Task 1088a: magnitude inference when unit header missing ────────────
+  describe("Task 1088a: magnitude inference fallback", () => {
+    it("infers raw VND when bare 'đồng' header and large numbers", () => {
+      const text = `
+BÁO CÁO TÀI CHÍNH
+Đơn vị: đồng
+
+A. TÀI SẢN NGẮN HẠN                             35.000.000.000.000
+I. Tiền và các khoản tương đương tiền              8.000.000.000.000
+TỔNG CỘNG TÀI SẢN                                56.000.000.000.000
+TỔNG CỘNG NGUỒN VỐN                              56.000.000.000.000
+`;
+      const bs = extractBalanceSheet(text);
+      // 56 trillion đồng ÷ 1,000,000 = 56,000,000 triệu
+      expect(bs.totalAssets).toBe(56_000_000);
+    });
+
+    it("infers raw VND from magnitude alone (no unit header at all)", () => {
+      const text = `
+BÁO CÁO TÀI CHÍNH
+
+A. TÀI SẢN NGẮN HẠN                             35.000.000.000.000
+TỔNG CỘNG TÀI SẢN                                56.000.000.000.000
+TỔNG CỘNG NGUỒN VỐN                              56.000.000.000.000
+`;
+      const bs = extractBalanceSheet(text);
+      // Default multiplier 1, but totalAssets > 1 billion → infer raw VND
+      expect(bs.totalAssets).toBe(56_000_000);
+    });
+
+    it("does NOT infer when triệu header is present (even with large numbers)", () => {
+      const text = `
+Đơn vị tính: Triệu đồng
+TỔNG CỘNG TÀI SẢN                                56.000.000
+TỔNG CỘNG NGUỒN VỐN                              56.000.000
+`;
+      const bs = extractBalanceSheet(text);
+      // Explicit triệu header → no inference, values are triệu
+      expect(bs.totalAssets).toBe(56_000_000);
+    });
+
+    it("handles loose 'trieu dong' without diacritics in OCR text", () => {
+      const text = `
+Don vi tinh: trieu dong
+
+Tai san ngan han                                   35.000.000
+TỔNG CỘNG TÀI SẢN                                56.000.000
+TỔNG CỘNG NGUỒN VỐN                              56.000.000
+`;
+      const bs = extractBalanceSheet(text);
+      // Loose match picks up "trieu dong" → multiplier = 1
+      expect(bs.totalAssets).toBe(56_000_000);
+    });
+  });
 });

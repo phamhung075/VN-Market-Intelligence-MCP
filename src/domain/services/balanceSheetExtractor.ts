@@ -96,7 +96,30 @@ function detectUnitMultiplier(lines: string[]): number {
     if (P_UNIT_TY.test(line)) return 1000;
   }
 
-  // No header found — default to 1 (assume triệu đồng)
+  // Fallback: OCR text may garble diacritics or lack the formal "Đơn vị tính"
+  // prefix. Scan first ~50 lines for any unit hint (report #1088 slice a).
+  const head = lines.slice(0, 50);
+  const P_TRIEU_LOOSE = /tri[eệ]u\s*[đd][oồ]ng|trieu\s*dong/i;
+  const P_TY_LOOSE = /t[yỷ]\s*[đd][oồ]ng|ty\s*dong/i;
+  const P_NGHIN_LOOSE = /ngh?[iì]n\s*[đd][oồ]ng|nghin\s*dong|1[.,]?000\s*[đd][oồ]ng/i;
+  const P_DONG_ONLY = /[đd][oồ]ng|VND/i;
+
+  for (const line of head) {
+    if (P_TRIEU_LOOSE.test(line)) return 1;
+    if (P_TY_LOOSE.test(line)) return 1000;
+    if (P_NGHIN_LOOSE.test(line)) return 0.001; // nghìn đồng → /1000 to get triệu
+  }
+
+  // Last resort: bare "đồng" or "VND" without qualifier → raw VND.
+  // Return a sentinel (-1) so the caller can apply magnitude-based inference
+  // after extraction, when we know the actual numbers.
+  for (const line of head) {
+    if (P_DONG_ONLY.test(line)) {
+      console.warn("[balanceSheetExtractor] Found bare 'đồng/VND' without triệu/tỷ prefix; will infer from magnitude.");
+      return -1; // sentinel: magnitude inference needed
+    }
+  }
+
   console.warn("[balanceSheetExtractor] No unit header found; defaulting multiplier to 1.");
   return 1;
 }
@@ -319,5 +342,23 @@ export function extractBalanceSheet(rawText: string): BalanceSheet {
   };
 
   // Task 287 — FR-1: apply unit multiplier (converts tỷ → triệu when needed)
-  return applyMultiplier(raw, multiplier);
+  // Task 1088a — magnitude inference when unit header missing or bare "đồng".
+  // Sentinel -1 means "bare đồng found, infer from numbers".
+  // Default 1 with very large totalAssets also triggers inference.
+  let effectiveMultiplier = multiplier;
+  if (multiplier === -1 || (multiplier === 1 && totalAssets > 1_000_000_000)) {
+    // Values are likely in raw VND (đồng). VN listed companies have
+    // totalAssets in triệu from ~100,000 to ~100,000,000. If raw totalAssets
+    // exceeds 1 billion, it's almost certainly in đồng.
+    // 1 triệu = 1,000,000 đồng → divide by 1,000,000.
+    if (totalAssets > 1_000_000_000) {
+      effectiveMultiplier = 0.000001;
+      console.warn("[balanceSheetExtractor] Inferred raw VND (đồng) from magnitude; applying ÷1,000,000.");
+    } else if (multiplier === -1) {
+      // Bare "đồng" header but small numbers — might be triệu already
+      effectiveMultiplier = 1;
+    }
+  }
+
+  return applyMultiplier(raw, effectiveMultiplier);
 }
