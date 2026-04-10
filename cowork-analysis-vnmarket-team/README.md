@@ -197,7 +197,7 @@ Before submitting feedback or a report, check this list. If the issue is listed 
 | 275 | Telegram env vars "not set" warning | FIXED | Stale logs from old instance — ignore |
 | 276 | Polymarket CLOB 403 | MONITOR | Geo-blocked from France, circuit breaker handles it |
 | 277 | weatherVn NCHMF 404 | MONITOR | External URL changed/down, not blocking core analysis |
-| 278 | Kinh Dịch identical readings for all stocks | BACKLOG | Missing price data → same default hào encoding |
+| 278 | Kinh Dịch identical readings for all stocks | FIXED | All 6 haos jittered per-ticker — commit 067cb2f |
 | 279 | LanceDB unavailable after restart | FIXED | Transient startup issue, resolves in 2-3 min |
 | 280 | VCB -8% false alert (53,100 VND) | FIXED | Was test data, real price 57,700 VND |
 | 281 | scanMarket 0 prices pre-market | NOT A BUG | Expected before 09:00 VN — market closed |
