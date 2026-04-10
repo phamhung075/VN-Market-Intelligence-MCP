@@ -713,9 +713,14 @@ Status: Backlog (P2 — observed once, current state healthy)
 
 ### [1088 / @architect P1] BCTC OCR parser produces garbage numbers on VNM Q4-2025 (follow-up to #1072)
 
-After manual reparse 2026-04-10, VNM 2025-Q4 row stored with validation='passed' but the scalars are clearly wrong: Net Revenue 63,645,886,756.2 "tỷ VND" (≈ sextillion), Total Assets 0, Equity 0, EPS 0, ROE N/A, gross margin 100%. Log line during parse: `[balanceSheetExtractor] No unit header found; defaulting multiplier to 1.` — the OCR text (116k chars, 61 pages, confidence 0.80) lacks the header "Đơn vị tính: triệu đồng" that the extractor keys on, so the multiplier defaults to 1 instead of 1e6 and the balance sheet parser gives up entirely. Needs: (a) unit-header fallback that scans the first 500 chars for any "đồng" occurrence and infers the multiplier from magnitude of the largest numeric, (b) validation guard that rejects "passed" when total_assets=0 and total_liabilities=0 simultaneously (impossible for a non-shell company), (c) regression test fixture using the real VNM Q4-2025 OCR text.
+After manual reparse 2026-04-10, VNM 2025-Q4 row stored with garbage scalars: Net Revenue 63,645,886,756.2 "tỷ VND" (≈ sextillion), Total Assets 0, Equity 0, EPS 0, ROE N/A, gross margin 100%. Log: `[balanceSheetExtractor] No unit header found; defaulting multiplier to 1.` OCR text (116k chars, 61 pages, conf 0.80) lacks the "Đơn vị tính: triệu đồng" header.
 
-Status: Backlog (P1 — false-positive 'passed' validation is worse than a failure)
+Slices:
+- ✅ (b) **SHIPPED 2026-04-10 (commit 007bf99)** — validation guard rejects report when totalAssets+totalLiabilities+equityTotal all zero. Stale VNM row retro-flagged validation_status='failed'. See task 1088a / fix log id=113.
+- ⏳ (a) Unit-header fallback that scans first ~500 chars for any "đồng" occurrence + infers multiplier from magnitude of largest numeric. Needs investigation in `src/domain/services/balanceSheetExtractor.ts`.
+- ⏳ (c) Regression test fixture using real VNM Q4-2025 OCR text — depends on (a).
+
+Status: Backlog ((b) done, (a)+(c) remain — no longer P1 since the false-positive 'passed' is gone; downgrade to P2)
 
 ---
 
