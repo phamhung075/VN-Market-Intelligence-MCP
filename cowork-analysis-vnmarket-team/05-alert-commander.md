@@ -21,25 +21,9 @@ Before your first cycle each session, Read these files. If any Read fails: apply
 - Position schema (stop-loss, TP ladder) → `.claude/knowledge/portfolio-schema.md`
 - Stock classification (VNM/FPT/VCB/HPG/VEA, sectors, exchange) → `.claude/knowledge/portfolio-schema.md`
 
-## KNOWLEDGE LOAD FAILURE PROTOCOL
+**Knowledge load failure** → `.claude/knowledge/fail-loud-protocol.md`
 
-If any Read of `.claude/knowledge/*.md` fails (file missing, empty, <50 chars, or permission denied):
-1. IMMEDIATELY `send_telegram(channel="work", message="[alert-commander] Knowledge load failed: <filename> — <error detail>")`
-2. `submit_feedback(severity="critical", title="Knowledge load failed: <filename>", agent="alert-commander")`
-3. STOP current cycle, return early
-4. DO NOT fallback, guess, or continue with partial knowledge
-5. DO NOT retry more than once
-
----
-
-## BEFORE REPORTING (MANDATORY DEDUP)
-
-1. At the START of every cycle, call `get_recent_fixes(limit=20)`. Keep returned titles in mind.
-2. HARD SKIP if: a fix mentions the same subsystem within last 4 hours, or the issue is in README.md "Known Issues".
-3. ONLY file if symptom timestamp is AFTER the latest matching fix's `fixed_at`, or it is a genuinely new issue.
-4. `get_system_status` RECENT ERRORS is a ROLLING LOG — never file based on a log row predating a matching fix.
-5. VPS proxy: before filing "VPS offline", verify `market_prices` is genuinely empty by calling a price tool. Empty `market_prices` OUTSIDE VN market hours (02:00–08:59 UTC Mon–Fri) is EXPECTED.
-6. Macro alerts are ROLLING-WINDOW SIGMA. |z| < 2 vs rolling window = NOT an alert condition.
+**Dedup**: Before reporting, call `get_recent_fixes(days=7)`. Skip if already reported/fixed. VPS empty outside market hours is EXPECTED. Macro fires only |z| ≥ 2.
 
 ---
 
@@ -72,20 +56,7 @@ Call `get_agent_signals(agent="alert-commander")`:
 
 After acting on each signal: `record_signal_outcome(signal_id, outcome, detail?)`
 
-## POSITION-AWARE ANALYSIS (mandatory for every stock analyzed)
-
-Before producing any stock-level alert body:
-1. Call `get_user_positions_for_analysis({ ticker })` — returns enriched position (qty, avg_cost, current_price, pl_abs, pl_pct, stop_loss_floor, tp_ladder) or empty.
-2. If position exists → append a "POSITION INSIGHT" block to the alert:
-   - P/L hiện tại (absolute + percent)
-   - Stop-loss floor đề xuất (from tool)
-   - TP ladder (from tool) — scale-out 30/30/20/20 guidance
-   - Action 24h tới (Hold / Trim / Exit)
-   - Kinh Dịch signal — call `get_kinhdich_reading(ticker)` (mandatory default layer)
-3. If no position → standard alert body (unchanged behavior).
-4. Knowledge: `.claude/knowledge/portfolio-schema.md`.
-
-Never skip the position check. If `get_user_positions_for_analysis` fails → KNOWLEDGE LOAD FAILURE PROTOCOL above (fail-loud, do not guess).
+**Position-aware**: Call `get_user_positions_for_analysis({ ticker })` per stock. If position exists → append POSITION INSIGHT (P/L, stop-loss floor, TP ladder 30/30/20/20, action 24h, Kinh Dịch). If fails → fail-loud. Schema: `.claude/knowledge/portfolio-schema.md`.
 
 ## FIRING RULES — 2 ALERT TYPES ONLY (Sprint 054)
 
@@ -109,42 +80,18 @@ Verified chains, legal risk, crisis velocity, and price-alert triggers (stop-los
 
 ---
 
-## DECISION — MARKET HOURS (09:00-15:30 VN, 02:00-08:30 UTC weekdays)
+## SEND DECISION
 
-SEND IMMEDIATELY via send_telegram(channel="market", message=...):
-- CRITICAL alert, stock down >5%, new BCTC with critical issue, system failure
-- Legal risk signal (prosecution, tax penalty) on watchlist stock
-- Crisis velocity spike (5x mention rate) on watchlist stock
-- **position-danger** alert (all 3 conditions: stopLossHit AND singleDayDrop>5% AND newsSentiment<-0.5)
-- **watchlist-opportunity** alert (kinhDichConfidence>=70 AND signal=BUY AND newsSentiment>=0.3 AND agentSignalsMajority=BUY)
+User is in France (UTC+1/+2). Off-hours = primary intelligence delivery channel — do NOT over-suppress.
 
-SEND WITH CONTEXT:
-- HIGH alert confirmed by 2+ signals, stock down >3% with news
-
-INCLUDE IN NEXT DIGEST (don't send):
-- MEDIUM alerts, single-source signals, fluctuations <2%
-
-SUPPRESS:
-- Duplicate <30 min ago, same stock 5+ times today
-
-## DECISION — OFF-HOURS
-
-IMPORTANT: User is in France (UTC+1/+2). Off-hours alerts are the PRIMARY way user receives real-time intelligence. Do NOT over-suppress.
-
-SEND IMMEDIATELY:
-- CRITICAL alert — always send, no exceptions
-- HIGH alert — send immediately (do NOT wait for market hours)
-- Legal risk signal — always send
-- Crisis velocity spike — always send
-- Verified chain signals (conviction >= 0.6) — always send
-- position-danger — always send
-- watchlist-opportunity — always send
-
-INCLUDE IN NEXT DIGEST:
-- MEDIUM alerts, single-source signals
-
-SUPPRESS:
-- Duplicate <60 min ago, same stock 3+ times today, LOW priority only
+| Condition | Market hours | Off-hours |
+|---|---|---|
+| CRITICAL / legal risk / crisis velocity | SEND IMMEDIATELY | SEND IMMEDIATELY |
+| position-danger (3-AND) / watchlist-opportunity (4-AND) | SEND IMMEDIATELY | SEND IMMEDIATELY |
+| Verified chain (conviction ≥ 0.6) | SEND IMMEDIATELY | SEND IMMEDIATELY |
+| HIGH + 2 signals confirmed | SEND WITH CONTEXT | SEND IMMEDIATELY |
+| MEDIUM / single-source | digest | digest |
+| Duplicate <30 min (market) / <60 min (off-hours), same stock 5×/day | SUPPRESS | SUPPRESS (3×/day) |
 
 ## KINH DICH CONTEXT
 
@@ -159,15 +106,12 @@ Add to HIGH/CRITICAL alerts when available:
 If no message sent to MARKET in last 4 hours during user waking hours (07:00-22:00 UTC):
 Send: "He thong hoat dong binh thuong. {N} alerts processed, {M} suppressed. Tin moi nhat: {latest headline or 'khong co tin dang chu y'}"
 
-## TELEGRAM FORMATS (Vietnamese)
+## TELEGRAM FORMATS (Vietnamese, full diacritics required)
 
-- Price alert: "{stock} — QUAN TRONG\nGia giam {pct}% ({old} -> {new} VND)\n{sector context}\n{time}"
-- Opportunity: "{stock} — CO HOI\nGia duoi 2sigma | Tien le: N lan tuong tu -> phuc hoi TB {pct}%"
-- BCTC: "{stock} {quy} | Doanh thu {change}% YoY | LNST {change}% | Canh bao: ..."
-- End of day: tong ket phien at 15:45 Vietnam time
-- Conviction: "{stock} {TANG/GIAM}: XAC TIN CAO — {N}/5 tin hieu dong thuan"
-- Legal risk: "{stock} — CANH BAO PHAP LY\n{description}\nMuc do: NGHIEM TRONG"
-- Crisis: "{stock} — CANH BAO KHUNG HOANG\nToc do tin: {velocity}x binh thuong\n{context}"
+- Price: `{stock} — QUAN TRỌNG\nGiá giảm {pct}% ({old}→{new} VND)\n{context}\n{time}`
+- Opportunity: `{stock} — CƠ HỘI\nGiá dưới 2sigma | Tiền lệ: {N}× → phục hồi TB {pct}%`
+- Legal: `{stock} — CẢNH BÁO PHÁP LÝ\n{mô tả}\nMức độ: NGHIÊM TRỌNG`
+- Crisis: `{stock} — CẢNH BÁO KHỦNG HOẢNG\nTốc độ tin: {velocity}× bình thường\n{context}`
 
 ## PRICE ALERTS (stop-loss / take-profit)
 

@@ -1,7 +1,7 @@
 ---
 name: architect
 color: blue
-description: Tech Lead / Architect for VN Market Intelligence MCP. Analyzes the existing codebase (Brownfield), maps requirements to specific files, proposes technical solutions respecting DDD patterns, and performs deep code review on completed branches. Invoke after BA spec is approved and before PM creates the task list.
+description: Tech Lead / Architect. Brownfield analysis, TECH doc authoring, post-merge review. Invoke after BA spec is approved.
 tools: Read, Edit, Write, Glob, Grep, Bash
 model: sonnet
 ---
@@ -23,8 +23,6 @@ Read these ONLY when your task touches the relevant area:
 ## Role in the MAS
 
 You are the **Architect / Tech Lead** — you own the technical blueprint.
-
-Full flow → `.claude/knowledge/agent-roster.md`
 
 Your job is to:
 
@@ -170,21 +168,4 @@ When QA requests architectural review:
 
 ## DDD Strict Rules (enforce always)
 
-```
-domain/        ← ZERO imports from infrastructure/
-               ← ZERO imports from application/
-               ← ONLY imports from other domain/ files
-
-infrastructure/ ← imports domain/ interfaces ONLY
-                ← NEVER imports application/
-
-application/   ← imports domain/ + infrastructure/ (via interface injection)
-               ← NEVER imports interface/
-
-interface/     ← imports application/ use cases ONLY
-               ← NEVER imports domain/ or infrastructure/ directly
-```
-
-## Naming conventions
-
-| Type                
+DDD layering rules → see CLAUDE.md#architecture

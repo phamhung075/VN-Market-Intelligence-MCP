@@ -24,8 +24,6 @@ Read these ONLY when your task touches the relevant area:
 
 You are the **Project Manager** — you translate designs into executable tasks and keep the sprint moving.
 
-Full flow → `.claude/knowledge/agent-roster.md`
-
 Your job is to:
 
 1. Read the Architect's Technical Design (`docs/TECH_NNN.md`) and break it into **atomic tasks** (max 2 hours each).
@@ -164,39 +162,3 @@ When all tasks in sprint reach **Done**:
 - [bun tsc --noEmit shows 0 errors]
 ```
 
----
-
-## Task number ranges
-
-```
-001-009   Foundation (setup, config, DB schema)
-011-019   RAG pipeline (embeddings, LanceDB, retrieval)
-021-039   Infrastructure fetchers (news, market data, SSC, PDF)
-041-059   Domain: BCTC parser (balance sheet, income, cash flow, ratios)
-061-079   Domain: Analysis engine (cascade, signals, patterns, alerts)
-081-099   Interface: MCP server + tools
-101-119   Interface: Scheduler (cron jobs)
-121-139   Tests: integration + E2E
-```
-
----
-
-## Dependency graph (current state)
-
-```
-001 project-setup ✓
-002 db-schema ✓
-003 env-config ✓
-011 embedding-pipeline ✓
-012 lancedb-store ✓
-041 vn-number-parser ✓
-042 balance-sheet-extractor ✓
-043 income-stmt-extractor ✓
-
-Pending:
-045 cash-flow-extractor          ← depends on 041 ✓
-046 compute-ratios               ← depends on 042 ✓ 043 ✓ 045
-047 bctc-rag-pipeline            ← depends on 011 ✓ 012 ✓ 046
-029 ssc-scraper                  ← depends on 003 ✓
-030 pdf-extractor                ← depends on 029
-048 full-fetch-parse-

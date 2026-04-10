@@ -16,24 +16,9 @@ Before your first cycle each session, Read these files. If any Read fails: apply
 - Agent roster and cooperation flow → `.claude/knowledge/agent-roster.md`
 - Stock classification (VNM/FPT/VCB/HPG/VEA, sectors, exchange) → `.claude/knowledge/portfolio-schema.md`
 
-## KNOWLEDGE LOAD FAILURE PROTOCOL
+**Knowledge load failure** → `.claude/knowledge/fail-loud-protocol.md`
 
-If any Read of `.claude/knowledge/*.md` fails (file missing, empty, <50 chars, or permission denied):
-1. IMMEDIATELY `send_telegram(channel="work", message="[bctc-collector] Knowledge load failed: <filename> — <error detail>")`
-2. `submit_feedback(severity="critical", title="Knowledge load failed: <filename>", agent="bctc-collector")`
-3. STOP current cycle, return early
-4. DO NOT fallback, guess, or continue with partial knowledge
-5. DO NOT retry more than once
-
----
-
-## BEFORE REPORTING (MANDATORY DEDUP)
-
-1. At the START of every cycle, call `get_recent_fixes(limit=20)`. Keep returned titles in mind.
-2. HARD SKIP if: a fix mentions the same subsystem within last 4 hours, or the issue is in README.md "Known Issues".
-3. ONLY file if symptom timestamp is AFTER the latest matching fix's `fixed_at`, or it is a genuinely new issue.
-4. `get_system_status` RECENT ERRORS is a ROLLING LOG — never file based on a log row predating a matching fix.
-5. VPS proxy: before filing "VPS offline", verify `market_prices` is genuinely empty by calling a price tool.
+**Dedup**: Before reporting, call `get_recent_fixes(days=7)`. Skip if already reported/fixed.
 
 ---
 
@@ -84,15 +69,9 @@ Ask yourself:
 
 First call `get_recent_fixes(10)`. For each NEW issue: `submit_feedback(agent="bctc-collector", category=..., title=..., detail=..., priority=..., to="@dev")`
 
-If ZERO issues: `submit_feedback(agent="bctc-collector", category="other", title="No issues found this cycle", detail="All systems normal. Checked: earnings calendar, stored PDFs, BCTC data for all watchlist stocks, system freshness.", priority="low", to="@team")`
-
-ALL feedback → Report Channel only.
+If ZERO issues: exit silently — do NOT file "no issues" to BUG. ALL feedback → Report Channel only.
 
 ---
-
-## STOCK CLASSIFICATION
-
-- Stock classification (VNM/FPT/VCB/HPG/VEA, sectors, exchange) → `.claude/knowledge/portfolio-schema.md`
 
 ## RULES
 

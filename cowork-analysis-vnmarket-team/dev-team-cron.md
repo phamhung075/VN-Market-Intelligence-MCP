@@ -15,13 +15,7 @@ Read these ONLY when the current task touches the relevant area. Do NOT preload 
 - Cron jobs (for scheduler fixes) → `.claude/knowledge/cron-jobs.md`
 - Sprint 054 feature specs → `.claude/knowledge/portfolio-schema.md`, `.claude/knowledge/telegram-alerts.md`, `.claude/knowledge/ask-queue-protocol.md`, `.claude/knowledge/kinh-dich-layer.md`
 
-## KNOWLEDGE LOAD FAILURE PROTOCOL
-
-If any Read of `.claude/knowledge/*.md` fails (file missing, empty, <50 chars, or permission denied):
-1. IMMEDIATELY `send_telegram(channel="work", message="[dev-team-cron] Knowledge load failed: <filename> — <error detail>")`
-2. STOP the current fix/task
-3. DO NOT guess or continue with partial knowledge
-4. Notify user via WORK channel
+**Knowledge load failure** → `.claude/knowledge/fail-loud-protocol.md`
 
 ---
 
@@ -37,19 +31,7 @@ Note: Reports with `agent="user-telegram"` come from user `/report` and `/fix` T
 
 ### Step 0b: Proactive Sprint Work (when no new reports)
 
-**Prime directive: Ship tasks to completion, not slices for momentum's sake.**
-
-When the report channel is empty, DO NOT idle and DO NOT exit early. Pick ONE
-high-priority unblocked task and drive it all the way through: implementation +
-tests + tsc + commit + push + log_fix + launchctl kickstart (when required) +
-WORK channel notification. That task is DONE only when it is merged to main,
-tests are green, and the server has restarted cleanly.
-
-**NON-GOAL — this does NOT count as shipping:**
-- Committing TASKS.md edits, acceptance criteria, or planning docs as the loop's
-  only output. Backlog priming without implementation is not progress.
-- Shipping slice 1 of a task and deferring slices 2-N back to the backlog just
-  to claim a commit. A task is done when ALL its acceptance criteria pass.
+When the report channel is empty, pick ONE high-priority unblocked task and drive it to completion (impl + tests + tsc + commit + push + log_fix + launchctl kickstart + WORK notification). DONE = merged to main, tests green, server restarted cleanly. Committing only TASKS.md/planning docs does NOT count as shipping.
 
 1. Build a **candidate pool** — scan all of these in one pass:
    - `TASKS.md` — Backlog, Todo, stale Review/In Progress rows
@@ -171,7 +153,7 @@ After QA approves:
    New tools: {list if any}
    Tests: {count} pass
    ```
-5. **Reload strategy:** same as FIX NOW Step 9 above. Hot reload is forbidden in this project. After any sprint, always restart: `launchctl kickstart -k gui/$(id -u)/com.vn-market.mcp`. Verify with `curl -s http://127.0.0.1:3000/health` before moving on.
+5. **Reload strategy:** same as FIX NOW Step 9 above (launchctl kickstart, verify with `curl -s http://127.0.0.1:3000/health`).
 
 ### Step 5: Update Docs (EVERY run that changes code)
 After any fix or sprint:
@@ -260,19 +242,9 @@ At the very end of every cron invocation, after Step 8 hygiene passes, run `/com
 | `reports/TASK_REPORT_NNN.md` | QA creates after review |
 | `reports/SPRINT_REPORT_NNN.md` | QA creates after sprint |
 
-## CURRENT STATE (Sprint 044 baseline)
+## CURRENT STATE
 
-- 68 MCP tools registered (+11 new vs Sprint 038)
-- 2 Telegram channels: Chat (user) + Report (problems)
-- Server: Bun, supervised by launchd (launchctl kickstart restart — hot reload is forbidden)
-- Analysis team: 7 Claude Cowork agents (cloud)
-- Dev team: this cron (local Claude Code CLI)
-- 19 cron jobs including weatherCheck (*/6h) and davPharmacyCheck (1st monthly)
-- New tools (Sprint 039): get_legal_risk_signals, get_policy_signals, get_bond_maturity_calendar
-- New tools (Sprint 040): get_public_contracts, get_credit_flow_signal, get_insider_signals
-- New tools (Sprint 041): get_supply_chain_exposure
-- New tools (Sprint 042): get_climate_risk_signals, get_energy_grid_signals
-- New tools (Sprint 043): get_crisis_early_warning
-- New tools (Sprint 044): get_pharma_signals
-- Observability tools: record_signal_outcome, get_signal_effectiveness, get_cascade_metrics, get_prediction_accuracy
-- New cron jobs: franceSummaryJob, devTeamHeartbeatJob, userRequestCheckJob, predictionOutcomeJob, weatherCheck, davPharmacyCheck
+- 80 MCP tools | 23 scheduler files | Sprint 054 in progress
+- Server: Bun, launchd-supervised (launchctl kickstart only — hot reload forbidden)
+- 3 Telegram channels: MARKET (user-facing) + WORK (dev status) + BUG (actionable problems)
+- Full tool list → `.claude/knowledge/mcp-tools.md` | Cron jobs → `.claude/knowledge/cron-jobs.md`

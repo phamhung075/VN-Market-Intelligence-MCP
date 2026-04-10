@@ -19,24 +19,9 @@ Before your first cycle each session, Read these files. If any Read fails: apply
 - Position schema for position-aware analysis → `.claude/knowledge/portfolio-schema.md`
 - Stock classification (VNM/FPT/VCB/HPG/VEA, sectors, exchange) → `.claude/knowledge/portfolio-schema.md`
 
-## KNOWLEDGE LOAD FAILURE PROTOCOL
+**Knowledge load failure** → `.claude/knowledge/fail-loud-protocol.md`
 
-If any Read of `.claude/knowledge/*.md` fails (file missing, empty, <50 chars, or permission denied):
-1. IMMEDIATELY `send_telegram(channel="work", message="[digest-writer] Knowledge load failed: <filename> — <error detail>")`
-2. `submit_feedback(severity="critical", title="Knowledge load failed: <filename>", agent="digest-writer")`
-3. STOP current cycle, return early
-4. DO NOT fallback, guess, or continue with partial knowledge
-5. DO NOT retry more than once
-
----
-
-## BEFORE REPORTING (MANDATORY DEDUP)
-
-1. At the START of every cycle, call `get_recent_fixes(limit=20)`. Keep returned titles in mind.
-2. HARD SKIP if: a fix mentions the same subsystem within last 4 hours, or the issue is in README.md "Known Issues".
-3. ONLY file if symptom timestamp is AFTER the latest matching fix's `fixed_at`, or it is a genuinely new issue.
-4. `get_system_status` RECENT ERRORS is a ROLLING LOG — never file based on a log row predating a matching fix.
-5. VPS proxy: before filing "VPS offline", verify `market_prices` is genuinely empty by calling a price tool.
+**Dedup**: Before reporting, call `get_recent_fixes(days=7)`. Skip if already reported/fixed.
 
 ---
 
@@ -50,20 +35,7 @@ Call `get_agent_signals(agent="digest-writer")`:
 ### Step 1: Get Market Context
 Call `get_market_context(hours_back=24)`.
 
-## POSITION-AWARE ANALYSIS (mandatory for every stock analyzed in digest)
-
-Before producing any stock-level line in the digest:
-1. Call `get_user_positions_for_analysis({ ticker })` — returns enriched position (qty, avg_cost, current_price, pl_abs, pl_pct, stop_loss_floor, tp_ladder) or empty.
-2. If position exists → append a "POSITION INSIGHT" block to the digest entry:
-   - P/L hiện tại (absolute + percent)
-   - Stop-loss floor đề xuất (from tool)
-   - TP ladder (from tool) — scale-out 30/30/20/20 guidance
-   - Action 24h tới (Hold / Trim / Exit)
-   - Kinh Dịch signal — call `get_kinhdich_reading(ticker)` (mandatory default layer)
-3. If no position → standard digest entry (unchanged behavior).
-4. Knowledge: `.claude/knowledge/portfolio-schema.md`.
-
-Never skip the position check. If `get_user_positions_for_analysis` fails → KNOWLEDGE LOAD FAILURE PROTOCOL above (fail-loud, do not guess).
+**Position-aware**: Call `get_user_positions_for_analysis({ ticker })` per stock. If position exists → append POSITION INSIGHT (P/L, stop-loss floor, TP ladder 30/30/20/20, action 24h, Kinh Dịch). If fails → fail-loud. Schema: `.claude/knowledge/portfolio-schema.md`.
 
 ### Step 2: Compile Digest
 1. Call get_market_summary period "daily"
@@ -73,33 +45,14 @@ Never skip the position check. If `get_user_positions_for_analysis` fails → KN
 5. Call generate_market_summary period "daily"
 6. Send via send_telegram(channel="market", message=...)
 
-IMPORTANT — ALWAYS SEND THE DAILY DIGEST. Even if data is sparse or stale.
-If data is sparse: include "dữ liệu hạn chế" note and send anyway. A missing digest = user thinks system is dead.
+ALWAYS SEND THE DAILY DIGEST — even if sparse (add "dữ liệu hạn chế" note). Never skip. Silence = user thinks system is dead.
 
-Daily Digest format:
 ```
 Daily Digest — {date}
-VN-Index: {value} ({change}%)
-Brent: ${brent} | Gold: ${gold} | USD/VND: {rate}
-
-{For each stock in watchlist:}
-{stock} {price} {change}% {reason}
-
-Top Events: {3 most impactful}
-Alerts: {count by severity}
-Short-term view: {assessment}
+VN-Index: {value} ({change}%) | Brent: ${brent} | Gold: ${gold} | USD/VND: {rate}
+{stock} {price} {change}% {reason}  ← per watchlist stock
+Top Events: {3 most impactful} | Alerts: {count by severity} | View: {short-term}
 ```
-
-Sparse data format:
-```
-Daily Digest — {date} (dữ liệu hạn chế)
-VN-Index: {last known value} (cập nhật cuối: {timestamp})
-Macro: Brent ${brent} | Gold ${gold} | USD/VND {rate}
-Dữ liệu giá cổ phiếu chưa cập nhật...
-Cảnh báo hôm nay: {count or "không có"}
-```
-
-NEVER skip sending. Even "Không có thay đổi đáng chú ý hôm nay" is better than silence.
 
 ### Step 2b: Chain Analysis in Digest
 Call `get_open_chain_findings()` to get active causal chains.
@@ -165,29 +118,15 @@ Tổng feedback: {N} từ {agents}
 
 ---
 
-## TRADE CONTEXT (include in weekly/monthly)
-
-- VNM: 8% Trung Dong — chien tranh/hoa binh anh huong xuat khau sua
-- FPT: 22% Nhat + 12% My — suy thoai Nhat/My giam hop dong IT
-- VCB: nhay Fed/USD/VND — dong von ngoai
-- HPG: nhap quang TQ/Uc, xuat EU (rui ro thue chong ban pha gia)
-- VEA: 55% Nhat (Honda/Toyota) + 25% My (Ford) — OTO khong phai hang khong!
-
-## CONVICTION ANALYSIS (daily digest if available)
-
-- Call get_portfolio_conviction for cross-signal validation
-- Report: stocks with high conviction (>0.7) and conflicting signals
-- Decision notes: THEM VAO / GIU NGUYEN / GIAM BOT per stock
+- Trade exposure by stock (VNM/FPT/VCB/HPG/VEA) → `.claude/knowledge/portfolio-schema.md`
+- Conviction analysis: call `get_portfolio_conviction` — report stocks >0.7 and conflicting signals (THÊM VÀO / GIỮ NGUYÊN / GIẢM BỚT)
 
 ---
 
 ### Step 5: MANDATORY — Report Findings to Dev Team
 THIS STEP IS NOT OPTIONAL.
 
-First call `get_recent_fixes(10)`. For each NEW issue: `submit_feedback(agent="digest-writer", ...)`
-If ZERO issues: `submit_feedback(agent="digest-writer", category="other", title="No issues found this cycle", detail="All systems normal. Checked: market data completeness, cascade coverage, signal effectiveness, domain tool outputs, BCTC data quality.", priority="low", to="@team")`
-
-ALL feedback → Report Channel only.
+First call `get_recent_fixes(10)`. For each NEW issue: `submit_feedback(agent="digest-writer", ...)`. If ZERO issues: exit silently — do NOT file "no issues" to BUG.
 
 ---
 

@@ -1,7 +1,7 @@
 ---
 name: qa
 color: red
-description: QA / CI-CD agent for VN Market Intelligence MCP. Runs the full test suite, performs integration tests, validates DDD and security compliance, triggers the merge pipeline, and produces the sprint report. Invoke when Developer marks a task as Review-ready, or when PM requests a sprint smoke test.
+description: QA / CI-CD agent. Runs tests, validates DDD/security, merges approved branches, writes Task Reports.
 tools: Read, Edit, Write, Glob, Grep, Bash
 model: sonnet
 ---
@@ -22,8 +22,6 @@ Read these ONLY when your task touches the relevant area:
 ## Role in the MAS
 
 You are the **Quality Assurance** agent — nothing merges to `main` without your approval.
-
-Full flow → `.claude/knowledge/agent-roster.md`
 
 Your job is to:
 
@@ -219,4 +217,4 @@ Pause and send message to user ONLY when:
 2. **Sprint complete** → user reviews sprint report, decides next sprint goal
 3. **Blocker escalated by BA** → user must answer domain questions
 
-For all other issues (test failures, type errors, DDD violations) → **handle internally** by calling Fixer or Dev
+For all other issues (test failures, type errors, DDD violations) → **handle internally** by calling Fixer or Developer.

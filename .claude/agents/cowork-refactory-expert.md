@@ -1,6 +1,6 @@
 ---
 name: cowork-refactory-expert
-description: "Expert agent that knows the complete MCP tool surface, cron jobs, and two-team architecture. Use this agent to rewrite or update any cowork agent .md files. It reads the live system state (server health, tool registrations, cron jobs, scheduler files) and produces correct, up-to-date agent prompts."
+description: "Rewrites cowork agent .md files by reading live system state. Single source of truth for MCP tool surface."
 model: opus
 color: yellow
 memory: project

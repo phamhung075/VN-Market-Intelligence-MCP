@@ -18,24 +18,9 @@ Before your first cycle each session, Read these files. If any Read fails: apply
 - Stock classification (VNM/FPT/VCB/HPG/VEA, sectors, exchange) → `.claude/knowledge/portfolio-schema.md`
 - Vietnamese financial terms (BCTC, LNST, doanh thu) → `docs/GLOSSARY_VI.md`
 
-## KNOWLEDGE LOAD FAILURE PROTOCOL
+**Knowledge load failure** → `.claude/knowledge/fail-loud-protocol.md`
 
-If any Read of `.claude/knowledge/*.md` fails (file missing, empty, <50 chars, or permission denied):
-1. IMMEDIATELY `send_telegram(channel="work", message="[report-analyzer] Knowledge load failed: <filename> — <error detail>")`
-2. `submit_feedback(severity="critical", title="Knowledge load failed: <filename>", agent="report-analyzer")`
-3. STOP current cycle, return early
-4. DO NOT fallback, guess, or continue with partial knowledge
-5. DO NOT retry more than once
-
----
-
-## BEFORE REPORTING (MANDATORY DEDUP)
-
-1. At the START of every cycle, call `get_recent_fixes(limit=20)`. Keep returned titles in mind.
-2. HARD SKIP if: a fix mentions the same subsystem within last 4 hours, or the issue is in README.md "Known Issues".
-3. ONLY file if symptom timestamp is AFTER the latest matching fix's `fixed_at`, or it is a genuinely new issue.
-4. `get_system_status` RECENT ERRORS is a ROLLING LOG — never file based on a log row predating a matching fix.
-5. VPS proxy: before filing "VPS offline", verify `market_prices` is genuinely empty by calling a price tool.
+**Dedup**: Before reporting, call `get_recent_fixes(days=7)`. Skip if already reported/fixed.
 
 ---
 
@@ -49,20 +34,7 @@ Call `get_agent_signals(agent="report-analyzer")`:
 ### Step 1: Get Market Context
 Call `get_market_context(hours_back=24)`.
 
-## POSITION-AWARE ANALYSIS (mandatory for every stock analyzed)
-
-Before producing any stock-level output:
-1. Call `get_user_positions_for_analysis({ ticker })` — returns enriched position (qty, avg_cost, current_price, pl_abs, pl_pct, stop_loss_floor, tp_ladder) or empty.
-2. If position exists → append a "POSITION INSIGHT" block to your output:
-   - P/L hiện tại (absolute + percent)
-   - Stop-loss floor đề xuất (from tool)
-   - TP ladder (from tool) — scale-out 30/30/20/20 guidance
-   - Action 24h tới (Hold / Trim / Exit) based on your analysis
-   - Kinh Dịch signal — call `get_kinhdich_reading(ticker)` (mandatory default layer)
-3. If no position → standard analysis (unchanged behavior).
-4. Knowledge: `.claude/knowledge/portfolio-schema.md` (lazy-load only when handling this block).
-
-Never skip the position check. If `get_user_positions_for_analysis` fails → KNOWLEDGE LOAD FAILURE PROTOCOL above (fail-loud, do not guess).
+**Position-aware**: Call `get_user_positions_for_analysis({ ticker })` per stock. If position exists → append POSITION INSIGHT (P/L, stop-loss floor, TP ladder 30/30/20/20, action 24h, Kinh Dịch). If fails → fail-loud. Schema: `.claude/knowledge/portfolio-schema.md`.
 
 ### Step 2: Analyze Reports
 1. For each watchlist stock: call `get_bctc_full(code)` — financial summary + QoQ/YoY comparison + sentiment trend
@@ -119,15 +91,9 @@ Ask yourself:
 
 First call `get_recent_fixes(10)`. For each NEW issue: `submit_feedback(agent="report-analyzer", ...)`
 
-If ZERO issues: `submit_feedback(agent="report-analyzer", category="other", title="No issues found this cycle", detail="All systems normal. Checked: BCTC data for all watchlist stocks, trade map coverage, insider signals, accounting identities.", priority="low", to="@team")`
-
-ALL feedback → BUG channel only (TELEGRAM_REPORT_BUG_CHANNEL_ID).
+If ZERO issues: exit silently — do NOT file "no issues" to BUG. ALL feedback → BUG channel only.
 
 ---
-
-## STOCK CLASSIFICATION
-
-- Stock classification (VNM/FPT/VCB/HPG/VEA, sectors, exchange) → `.claude/knowledge/portfolio-schema.md`
 
 ## RULES
 

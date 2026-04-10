@@ -87,47 +87,9 @@ MCP connector URL: `https://zenmidi.com/mcp`
 - Telegram: "System online" at 08:55 Vietnam (03:55 France CET)
 - Health: `curl https://zenmidi.com/health`
 
-## 74 MCP Tools Available (Sprint 046)
+## MCP Tools
 
-| Category | Tools |
-|----------|-------|
-| **Watchlist** | add_to_watchlist, remove_from_watchlist, get_watchlist, update_thresholds |
-| **News** | fetch_and_analyze, run_impact_chain, search_similar_context |
-| **Market** | get_market_context, get_macro_snapshot, get_patterns, get_price_history, get_sector_rotation, compare_stocks, get_sentiment_trend |
-| **Reports** | get_bctc_full, get_financial_summary, compare_financials, list_stored_pdfs, read_bctc_pdf, get_earnings_calendar |
-| **Alerts** | get_alerts (type: "system"\|"price"\|"all"), mark_alert_read, set_price_alert, delete_price_alert, get_alert_accuracy, list_alert_rules, manage_alert_mute |
-| **Portfolio** | get_portfolio_conviction, set_position, get_positions, close_position, get_portfolio_risk, get_rebalancing_signals, get_correlation_matrix, get_performance_attribution, get_target_allocation |
-| **Prediction** | get_prediction_markets, get_prediction_accuracy |
-| **Summaries** | get_market_summary, generate_market_summary |
-| **Telegram** | send_telegram, send_alert_digest, claim_telegram_report, read_telegram_reports, process_telegram_report |
-| **Feedback** | submit_feedback (Report channel only) |
-| **Operations** | get_rate_limit_status |
-| **System** | get_system_status |
-| **Dev Team** | log_fix, get_recent_fixes |
-| **Agent Bus** | post_agent_signal, get_agent_signals |
-| **Observability** | record_signal_outcome, get_signal_effectiveness, get_cascade_metrics |
-| **Capital Protection (Sprint 039)** | get_legal_risk_signals, get_policy_signals, get_bond_maturity_calendar |
-| **Macro Catalyst (Sprint 040)** | get_public_contracts, get_credit_flow_signal, get_insider_signals |
-| **Supply Chain (Sprint 041)** | get_supply_chain_exposure |
-| **Climate + Energy (Sprint 042)** | get_climate_risk_signals, get_energy_grid_signals |
-| **Crisis Radar (Sprint 043)** | get_crisis_early_warning |
-| **Pharma Radar (Sprint 044)** | get_pharma_signals |
-
-### New Tools (Sprint 039-044 vs Sprint 038)
-
-| Sprint | Tool | Description |
-|--------|------|-------------|
-| 039 | `get_legal_risk_signals` | Detect prosecution, tax penalties, court orders affecting stocks |
-| 039 | `get_policy_signals` | Government policy changes (Cong Bao) affecting sectors |
-| 039 | `get_bond_maturity_calendar` | Corporate bond (TPDN) maturity calendar — default risk |
-| 040 | `get_public_contracts` | Government contracts from muasamcong.mof.gov.vn — CapEx signals |
-| 040 | `get_credit_flow_signal` | Banking credit flow to real estate and sectors |
-| 040 | `get_insider_signals` | SSC insider trading data (leadership buy/sell) |
-| 041 | `get_supply_chain_exposure` | Baltic Dry Index, container rates, HPG/VNM/GMD impact |
-| 042 | `get_climate_risk_signals` | NCHMF typhoon/El Nino affecting REE/GEG/IDC/BVH |
-| 042 | `get_energy_grid_signals` | Reservoir levels, power shortage affecting energy stocks |
-| 043 | `get_crisis_early_warning` | Velocity-based crisis detection (5x mention spike) + reputation |
-| 044 | `get_pharma_signals` | DAV drug approvals + outbreak detection affecting DHG/IMP/DBD |
+80 MCP tools as of Sprint 054. Full list → `.claude/knowledge/mcp-tools.md` or call `get_system_status` (reports live tool count).
 
 ## Two Separate Telegram Channels
 
@@ -149,24 +111,10 @@ For dev team and analysis team problem reports:
 - Review agent deletes reports when issues are fixed
 - **NOT for user communication — problems and hotfix only**
 
-### Vietnamese Language Rules (ALL Telegram messages)
+### Vietnamese Language Rules
 
-**CRITICAL**: All messages sent via `send_telegram(channel="market")` MUST use proper Vietnamese with full diacritics (dấu). The user reads Vietnamese — never send without diacritics.
-
-| Wrong (no diacritics) | Correct (with diacritics) |
-|----------------------|--------------------------|
-| Canh bao gia | Cảnh báo giá |
-| Bien dong manh | Biến động mạnh |
-| Tin quan trong | Tin quan trọng |
-| Tom tat buoi toi | Tóm tắt buổi tối |
-| Co phieu tang/giam | Cổ phiếu tăng/giảm |
-| Nganh ngan hang | Ngành ngân hàng |
-| Bat dong san | Bất động sản |
-| Gia dau tang | Giá dầu tăng |
-| Khoi luong giao dich | Khối lượng giao dịch |
-| Doanh thu thuan | Doanh thu thuần |
-
-**BUG Channel** (`channel="bug"`): English is OK for dev team reports (technical content).
+**CRITICAL**: All `send_telegram(channel="market")` messages MUST use proper Vietnamese with full diacritics (dấu). Never send without diacritics. Examples: "Cảnh báo giá", "Biến động mạnh", "Cổ phiếu tăng/giảm", "Ngành ngân hàng".
+**BUG Channel** (`channel="bug"`): English OK for dev team reports.
 
 ### 11 Telegram Bot Commands (User -> Chat Channel)
 - `/watchlist` — list current tracked stocks
@@ -181,30 +129,9 @@ For dev team and analysis team problem reports:
 - `/fix <description>` — report an urgent bug to Dev Team (high priority)
 - `/help` — list all available commands
 
-## 20 Cron Jobs
+## Cron Jobs
 
-| Time | Job | Description |
-|------|-----|-------------|
-| */10 min (02:00-08:59 UTC M-F) | vpsProxyWatchdog | Observe market_prices freshness; alert Chat if >5 min stale (30-min cooldown, no SSH) |
-| */15 min | intelligenceCycle | Main engine: news + prices + chain + alerts |
-| */15 min | userRequestCheck | Answer /ask + /why Telegram commands |
-| */30 min | predictionMarketPoll | Polymarket fetch + signal detection |
-| */6h | weatherCheck | Typhoon season climate check |
-| 06:00 UTC M-F | franceSummary | France wake-up digest (07:00 CET / 13:00 VN) |
-| 08:00 VN M-F | morningBriefing | Daily briefing: macro + conviction + P&L |
-| 09:00 VN M-F | marketOpen | Market open scan + price alerts |
-| 15:30 VN M-F | marketClose | Market close scan |
-| 20:00 VN daily | sscCheck | SSC nightly BCTC check |
-| 21:00 VN M-F | alertDigest | Nightly alert digest |
-| 22:00 VN M-F | eveningSummary | Evening market summary |
-| 22:30 VN daily | dailySummary | Daily summary generation |
-| 22:30 VN Sunday | patternWatch | Weekly pattern watch |
-| 23:00 VN daily | dataAuditDaily | Data integrity audit |
-| 23:00 VN Sunday | weeklyPortfolioReport + weeklySummary | Portfolio + weekly summary |
-| 01:00 VN Sunday | dataAuditWeekly | Deep weekly audit |
-| 07:00 UTC Sunday | devTeamHeartbeat | Dev Team health + observability |
-| 08:00 UTC Sunday | predictionOutcome | Prediction signal evaluation |
-| 1st monthly 06:00 VN | davPharmacyCheck | DAV drug approval check |
+23 scheduler files as of Sprint 054. Full schedule → `.claude/knowledge/cron-jobs.md`.
 
 ## Agent Signal Bus
 
@@ -262,20 +189,20 @@ Before submitting feedback or a report, check this list. If the issue is listed 
 
 | # | Issue | Status | Notes |
 |---|-------|--------|-------|
-| 270 | SSC pipeline not downloading PDFs for VCB/VEA/FPT | BACKLOG | fetchParseAndStoreBctc needs pdfUrl passthrough — SPRINT needed |
-| 271 | incomeStatementExtractor: all income fields = 0 for VNM/FPT | BACKLOG | Regex patterns don't match real BCTC PDF formats — SPRINT needed |
-| 272 | balanceSheetExtractor: Total Assets off by 10^7 | BACKLOG | triệu đồng not converted to tỷ — SPRINT needed |
-| 273 | SSC Puppeteer crash loop / selector changed | BACKLOG | Needs mutex + updated selectors — SPRINT needed |
-| 274 | Price data stale from France server | FIXED | VPS Singapore proxy rebuilt with systemd (`vn-price-fetch.service`, `Restart=always`) — commit c84a329. VPS cron removed; schedule lives inside `fetch-prices-loop.sh`. MCP watchdog (`vpsProxyWatchdogJob`) alerts Chat Channel if `market_prices` is >5 min stale. |
-| 275 | Telegram env vars "not set" warning | FIXED | Works via MCP. Old server instance logs still visible to agents. Ignore "TELEGRAM_BOT_TOKEN not set" warnings — they are stale |
-| 276 | Polymarket CLOB 403 | MONITOR | Geo-blocked from France. Circuit breaker handles it. Not fixable by code |
-| 277 | weatherVn NCHMF 404 | MONITOR | External URL changed/down. Not blocking core analysis |
-| 278 | Kinh Dịch identical readings for all stocks | BACKLOG | Missing price data causes same default hào encoding — needs per-stock differentiation |
-| 279 | LanceDB unavailable after restart | FIXED | Transient startup issue, resolves within 2-3 min. Ignore if uptime > 5 min |
-| 280 | VCB -8% false alert (53,100 VND) | FIXED | Was test data from dev team. Real price 57,700 VND. Alert already overwritten |
-| 281 | scanMarket 0 prices pre-market | NOT A BUG | 0 prices before 09:00 VN (02:00 UTC) is expected — market is closed |
-| 282 | get_sector_comparison "no such column: date" | FIXED | SQL query fixed (commit af09eb8) |
-| 283 | get_portfolio_conviction timeout | BACKLOG | Needs query optimization or caching for large stock lists |
+| 270 | SSC pipeline not downloading PDFs for VCB/VEA/FPT | BACKLOG | fetchParseAndStoreBctc needs pdfUrl passthrough |
+| 271 | incomeStatementExtractor: all income fields = 0 for VNM/FPT | BACKLOG | Regex doesn't match real BCTC PDF formats |
+| 272 | balanceSheetExtractor: Total Assets off by 10^7 | BACKLOG | triệu đồng not converted to tỷ |
+| 273 | SSC Puppeteer crash loop / selector changed | BACKLOG | Needs mutex + updated selectors |
+| 274 | Price data stale from France server | FIXED | VPS Singapore proxy (systemd `Restart=always`) — commit c84a329 |
+| 275 | Telegram env vars "not set" warning | FIXED | Stale logs from old instance — ignore |
+| 276 | Polymarket CLOB 403 | MONITOR | Geo-blocked from France, circuit breaker handles it |
+| 277 | weatherVn NCHMF 404 | MONITOR | External URL changed/down, not blocking core analysis |
+| 278 | Kinh Dịch identical readings for all stocks | BACKLOG | Missing price data → same default hào encoding |
+| 279 | LanceDB unavailable after restart | FIXED | Transient startup issue, resolves in 2-3 min |
+| 280 | VCB -8% false alert (53,100 VND) | FIXED | Was test data, real price 57,700 VND |
+| 281 | scanMarket 0 prices pre-market | NOT A BUG | Expected before 09:00 VN — market closed |
+| 282 | get_sector_comparison "no such column: date" | FIXED | SQL fixed — commit af09eb8 |
+| 283 | get_portfolio_conviction timeout | FIXED | Batch queries replace N+1 — commit 812e8fa |
 
 **Rules for agents:**
 - **FIXED** → issue is resolved, stop reporting it

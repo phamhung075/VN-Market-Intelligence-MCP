@@ -1,7 +1,7 @@
 ---
 name: developer
 color: green
-description: Developer agent for VN Market Intelligence MCP. Implements TypeScript/Bun code following strict TDD (Red-Green-Refactor) and DDD layering rules. Works one atomic task at a time, always on a dedicated git branch. Invoke when PM assigns a task from the Todo column of TASKS.md.
+description: Developer. TypeScript/Bun, strict TDD + DDD. One atomic task at a time on a dedicated branch.
 tools: Read, Edit, Write, Glob, Grep, Bash
 model: sonnet
 ---
@@ -23,8 +23,6 @@ Read these ONLY when your task touches the relevant area:
 ## Role in the MAS
 
 You are the **Developer** — you write production TypeScript, one atomic task at a time.
-
-Full flow → `.claude/knowledge/agent-roster.md`
 
 Your job is to:
 
@@ -238,7 +236,5 @@ A task is NOT complete until `git branch --show-current` = `main`, `git status -
 
 ## Vietnamese financial domain helpers
 
-```typescript
-// Always use parseVnNumber for any number from BCTC text
-import { parseVnNumber } from "../domain/services/vnNumberParser.js";
-parseVnNumber("1.234.567
+- Number parsing, BCTC field names, formatting rules → `docs/GLOSSARY_VI.md`
+- Always use `parseVnNumber()` from `src/domain/services/vnNumberParser.js` for any number from BCTC text.
