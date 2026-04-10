@@ -563,6 +563,38 @@ Status: Backlog (Blocked)
 
 ---
 
+### [1089 / @dev P3] [janitor] Remove inline DDL from bondMaturityStore.ts — bond_maturity canonical in initDatabase()
+
+code-janitor auto-detected: `src/infrastructure/db/bondMaturityStore.ts:ensureBondMaturityTable()` still declares live `CREATE TABLE IF NOT EXISTS bond_maturity`. The canonical DDL is now in schema.ts:814 via initDatabase() (added in Task 1045). Production call site in bondMaturityTools.ts:89 still calls ensureBondMaturityTable() unnecessarily. Fix: make ensureBondMaturityTable() a true no-op (remove DDL body), remove or guard the call site in bondMaturityTools.ts. Test 1045 (src/__tests__/1045-schema-ddl-consolidation-3.test.ts) covers the schema path.
+
+Status: Backlog
+
+---
+
+### [1090 / @dev P3] [janitor] Remove inline DDL from pharmaStore.ts — pharma_events canonical in initDatabase()
+
+code-janitor auto-detected: `src/infrastructure/db/pharmaStore.ts:initPharmaStore()` still declares live `CREATE TABLE IF NOT EXISTS pharma_events`. The canonical DDL is now in schema.ts:833 via initDatabase() (added in Task 1046). Production call sites in pharmaTools.ts:99 and davPharmacyJob.ts:30 still invoke initPharmaStore() unnecessarily. Fix: make initPharmaStore() a true no-op (remove DDL body), remove call sites in both pharmaTools.ts and davPharmacyJob.ts. Test 1045 covers the schema path.
+
+Status: Backlog
+
+---
+
+### [1091 / @dev P3] [janitor] Remove inline DDL from vnstockStore.ts — 8 vnstock tables canonical in initDatabase()
+
+code-janitor auto-detected: `src/infrastructure/db/vnstockStore.ts:initVnstockTables()` still declares 8 live `CREATE TABLE IF NOT EXISTS` blocks for vnstock_financials, vnstock_trading_stats, vnstock_events, vnstock_officers, vnstock_shareholders, vnstock_fetch_log, vnstock_balance_sheet, vnstock_cash_flow. The canonical DDL is now in schema.ts:928+ via initDatabase(). Production call sites: index.ts:51, syncSectorPeers.ts:67, syncVnstockData.ts:181. The function retains an ALTER TABLE migration for old DBs — that migration must be preserved, but the CREATE TABLE blocks can be removed. Fix: strip CREATE TABLE blocks from initVnstockTables() body, keep only the ALTER TABLE migration. Tests: src/__tests__/1042-vnstock-ddl-schema.test.ts covers the canonical schema path.
+
+Status: Backlog
+
+---
+
+### [1092 / @dev P3] [janitor] Consolidate SUMMARY_CRONS — summaryJobs.ts duplicates CRONS env-var reads from jobs.ts
+
+code-janitor auto-detected: `src/scheduler/summaryJobs.ts:SUMMARY_CRONS` re-reads 5 CRON_SUMMARY_* env vars (DAILY/WEEKLY/MONTHLY/QUARTERLY/YEARLY) independently, duplicating the same reads in CRONS in jobs.ts. A future env-var rename would require editing both files. The right fix is for summaryJobs.ts to import CRONS from jobs.ts and derive SUMMARY_CRONS values. CAUTION: jobs.ts imports summaryJobs.ts (via registerSummaryJobs), so this creates a circular dependency — requires a shared constants extraction or lazy import pattern. Architect review recommended before implementation. Test 1023 (src/__tests__/1023-summary-crons-into-crons-map.test.ts) verifies both maps agree on values.
+
+Status: Backlog
+
+---
+
 ### [296 / @dev P1] e2e smoke test: OCR pipeline — reparseSingleWithOcrFallback
 
 **Branch**: `task/296-ocr-e2e-smoke-test`
