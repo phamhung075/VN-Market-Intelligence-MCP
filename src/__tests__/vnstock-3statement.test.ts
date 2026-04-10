@@ -15,12 +15,13 @@ const testDbPath = join(tmpdir(), `vnstock-3stmt-test-${Date.now()}.db`);
 Bun.env["DB_PATH"] = testDbPath;
 
 // Import after setting env
-const { initVnstockTables, storeBalanceSheet, getLatestBalanceSheet, storeCashFlow, getLatestCashFlow } =
+const { initDatabase } = await import("../infrastructure/db/schema.js");
+const { storeBalanceSheet, getLatestBalanceSheet, storeCashFlow, getLatestCashFlow } =
   await import("../infrastructure/db/vnstockStore.js");
 
 describe("vnstock balance sheet store", () => {
-  beforeEach(() => {
-    initVnstockTables();
+  beforeEach(async () => {
+    await initDatabase();
   });
 
   it("stores and retrieves balance sheet for a stock", () => {
@@ -51,13 +52,11 @@ describe("vnstock balance sheet store", () => {
   });
 
   it("returns null for unknown stock", () => {
-    initVnstockTables();
     const result = getLatestBalanceSheet("UNKNOWN_XYZ");
     expect(result).toBeNull();
   });
 
   it("upserts on duplicate code+year+quarter", () => {
-    initVnstockTables();
     const bs1 = {
       code: "VCB",
       yearReport: 2025,
@@ -83,7 +82,6 @@ describe("vnstock balance sheet store", () => {
   });
 
   it("retrieves most recent quarter when multiple quarters stored", () => {
-    initVnstockTables();
     const base = {
       code: "VNM",
       totalAssets: 30000,
@@ -108,7 +106,6 @@ describe("vnstock balance sheet store", () => {
   });
 
   it("stores source and fetchedAt correctly", () => {
-    initVnstockTables();
     const bs = {
       code: "VEA",
       yearReport: 2025,
@@ -132,8 +129,8 @@ describe("vnstock balance sheet store", () => {
 });
 
 describe("vnstock cash flow store", () => {
-  beforeEach(() => {
-    initVnstockTables();
+  beforeEach(async () => {
+    await initDatabase();
   });
 
   it("stores and retrieves cash flow for a stock", () => {
@@ -159,13 +156,11 @@ describe("vnstock cash flow store", () => {
   });
 
   it("returns null for unknown stock", () => {
-    initVnstockTables();
     const result = getLatestCashFlow("UNKNOWN_XYZ");
     expect(result).toBeNull();
   });
 
   it("upserts on duplicate code+year+quarter", () => {
-    initVnstockTables();
     const cf1 = {
       code: "VCB",
       yearReport: 2025,
@@ -186,7 +181,6 @@ describe("vnstock cash flow store", () => {
   });
 
   it("retrieves most recent quarter when multiple stored", () => {
-    initVnstockTables();
     const base = {
       code: "VNM",
       operatingCashFlow: 1000,
@@ -207,7 +201,6 @@ describe("vnstock cash flow store", () => {
   });
 
   it("stores financing cash flow correctly (negative values)", () => {
-    initVnstockTables();
     const cf = {
       code: "VEA",
       yearReport: 2025,

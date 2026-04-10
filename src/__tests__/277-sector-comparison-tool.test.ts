@@ -18,7 +18,6 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from "bun:test";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { initDatabase, getDb, closeDb } from "../infrastructure/db/schema.js";
-import { initVnstockTables } from "../infrastructure/db/vnstockStore.js";
 import { registerSectorComparisonTools } from "../interface/mcp/tools/sectorComparisonTools.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -123,7 +122,6 @@ beforeAll(async () => {
   process.env["DB_PATH"] = `:memory:`;
   closeDb(); // ensure fresh DB when running in parallel with other test files
   await initDatabase();
-  initVnstockTables();
   server = new McpServer(
     { name: "test-sector-comparison", version: "0.0.1" },
     { capabilities: { tools: {} } },

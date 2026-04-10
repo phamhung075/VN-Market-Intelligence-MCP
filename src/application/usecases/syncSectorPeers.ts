@@ -20,7 +20,6 @@
 
 import { logger } from "../../infrastructure/logger.js";
 import { getContextStocksForWatchlist } from "../../domain/services/sectorPeers.js";
-import { initVnstockTables } from "../../infrastructure/db/vnstockStore.js";
 import { syncStockLight } from "./syncVnstockData.js";
 import type { DomainType } from "../../../bctc-schema.js";
 
@@ -63,8 +62,6 @@ export async function syncSectorPeers(
   if (watchlistEntries.length === 0) {
     return { synced: 0, skipped: 0, apiCalls: 0 };
   }
-
-  initVnstockTables();
 
   const contextStocks = getContextStocksForWatchlist(watchlistEntries);
   const peers = contextStocks.slice(0, MAX_PEER_SYNCS_PER_CYCLE);

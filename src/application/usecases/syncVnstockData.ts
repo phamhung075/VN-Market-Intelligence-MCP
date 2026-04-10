@@ -33,7 +33,6 @@ import {
   fetchVnstockCashFlow,
 } from "../../infrastructure/fetchers/vnstockBridge.js";
 import {
-  initVnstockTables,
   isStale,
   storeFinancials,
   storeTradingStats,
@@ -177,8 +176,6 @@ export async function syncStockLight(code: string): Promise<number> {
  */
 export async function syncVnstockData(codes: string[]): Promise<number> {
   if (codes.length === 0) return 0;
-
-  initVnstockTables();
 
   let totalCalls = 0;
 

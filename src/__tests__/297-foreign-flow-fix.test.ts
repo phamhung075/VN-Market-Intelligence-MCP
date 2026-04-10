@@ -8,7 +8,6 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from "bun:test";
 import { computeForeignFlowScore } from "../interface/mcp/tools/kinhDichTools.js";
 import { getDb, closeDb, initDatabase } from "../infrastructure/db/schema.js";
-import { initVnstockTables } from "../infrastructure/db/vnstockStore.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Setup: in-memory SQLite with required tables
@@ -17,7 +16,6 @@ import { initVnstockTables } from "../infrastructure/db/vnstockStore.js";
 beforeAll(async () => {
   process.env["DB_PATH"] = ":memory:";
   await initDatabase();
-  initVnstockTables();
 });
 
 afterAll(() => {
