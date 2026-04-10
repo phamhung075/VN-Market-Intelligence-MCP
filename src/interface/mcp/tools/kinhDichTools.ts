@@ -28,7 +28,6 @@ import {
 import { formatReading } from "../../../domain/services/kinhDich/kinhDichFormatter.js";
 import { QUE_META, QUE_DATA } from "../../../domain/services/kinhDich/hexagramLibrary.js";
 import {
-  initHexagramTables,
   storeReading,
   getLatestReading,
   recordTransition,
@@ -525,7 +524,7 @@ export function registerKinhDichTools(server: McpServer): void {
       const code = rawCode.toUpperCase().trim();
       try {
         await initDatabase();
-        initHexagramTables();
+
 
         // Verify stock is on watchlist
         const db = getDb();
@@ -610,7 +609,7 @@ export function registerKinhDichTools(server: McpServer): void {
     async () => {
       try {
         await initDatabase();
-        initHexagramTables();
+
 
         const scores = [
           computeVnIndexScore(5),   // Hao 1: 5-day momentum
@@ -679,7 +678,7 @@ export function registerKinhDichTools(server: McpServer): void {
       const code = rawCode.toUpperCase().trim();
       try {
         await initDatabase();
-        initHexagramTables();
+
 
         const readings = getReadingsForBacktest(code, days);
 
@@ -758,7 +757,7 @@ export function registerKinhDichTools(server: McpServer): void {
       const code = rawCode?.toUpperCase().trim() ?? "VNINDEX";
       try {
         await initDatabase();
-        initHexagramTables();
+
 
         const meta = QUE_META.find((q) => q.id === hexagram_number);
         const fromName = meta?.name ?? `Que ${hexagram_number}`;
@@ -845,7 +844,7 @@ export function registerKinhDichTools(server: McpServer): void {
       const code = rawCode?.toUpperCase().trim() ?? "VNINDEX";
       try {
         await initDatabase();
-        initHexagramTables();
+
 
         const readings = getReadingsForBacktest(code, days);
 

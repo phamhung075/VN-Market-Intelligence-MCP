@@ -49,29 +49,8 @@ export interface GetPharmaEventsOptions {
 // Schema init
 // ─────────────────────────────────────────────────────────────────────────────
 
-/**
- * Create the pharma_events table and indexes (idempotent).
- *
- * @param db - SQLite database instance to initialise the table in.
- */
-export function initPharmaStore(db: Database): void {
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS pharma_events (
-      id            INTEGER PRIMARY KEY AUTOINCREMENT,
-      event_type    TEXT NOT NULL,
-      drug_name     TEXT,
-      manufacturer  TEXT,
-      stock_code    TEXT,
-      approval_date TEXT,
-      description   TEXT NOT NULL,
-      severity      TEXT NOT NULL,
-      created_at    TEXT NOT NULL DEFAULT (datetime('now'))
-    );
-    CREATE INDEX IF NOT EXISTS idx_pharma_code ON pharma_events(stock_code);
-    CREATE INDEX IF NOT EXISTS idx_pharma_date ON pharma_events(created_at);
-    CREATE INDEX IF NOT EXISTS idx_pharma_type ON pharma_events(event_type);
-  `);
-}
+// DDL is canonical in schema.ts:833 via initDatabase(). Tests use
+// src/__tests__/helpers/pharmaTestDdl.ts for in-memory setup.
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Write

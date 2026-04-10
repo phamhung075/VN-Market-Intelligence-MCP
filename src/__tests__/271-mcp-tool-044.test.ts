@@ -8,7 +8,8 @@ import { describe, it, expect } from "bun:test";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { registerPharmaTools } from "../interface/mcp/tools/pharmaTools.js";
 import { Database } from "bun:sqlite";
-import { initPharmaStore, insertPharmaEvent } from "../infrastructure/db/pharmaStore.js";
+import { insertPharmaEvent } from "../infrastructure/db/pharmaStore.js";
+import { initPharmaStore } from "./helpers/pharmaTestDdl.js";
 
 /** Create a McpServer instance and extract its registered tool names. */
 function getRegisteredTools(server: McpServer): string[] {

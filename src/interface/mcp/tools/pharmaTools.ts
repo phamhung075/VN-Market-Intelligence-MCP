@@ -14,7 +14,6 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import type { Database } from "bun:sqlite";
 import {
-  initPharmaStore,
   getPharmaEvents,
   type PharmaEventRecord,
 } from "../../../infrastructure/db/pharmaStore.js";
@@ -94,9 +93,6 @@ export function registerPharmaTools(server: McpServer, dbOverride?: Database): v
     async (args) => {
       try {
         const db = dbOverride ?? getDb();
-
-        // Ensure table exists (idempotent)
-        initPharmaStore(db);
 
         const lookbackDays = Math.min(args.days ?? 30, 365);
         const rows = getPharmaEvents(db, {

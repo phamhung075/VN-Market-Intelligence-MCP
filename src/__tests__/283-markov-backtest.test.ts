@@ -19,9 +19,8 @@ import { describe, it, expect, beforeEach, afterEach } from "bun:test";
 // Force in-memory SQLite before any module that calls getDb() is loaded.
 process.env["DB_PATH"] = ":memory:";
 
-import { closeDb } from "../infrastructure/db/schema.js";
+import { closeDb, initDatabase } from "../infrastructure/db/schema.js";
 import {
-  initHexagramTables,
   storeReading,
   getLatestReading,
   recordTransition,
@@ -45,7 +44,7 @@ beforeEach(() => {
   // Fresh in-memory DB for every test
   closeDb();
   process.env["DB_PATH"] = ":memory:";
-  initHexagramTables();
+  initDatabase();
 });
 
 afterEach(() => {
@@ -56,7 +55,7 @@ afterEach(() => {
 // Store tests
 // ---------------------------------------------------------------------------
 
-describe("Task 283 — initHexagramTables", () => {
+describe("Task 283 — initDatabase creates hexagram tables", () => {
   it("creates kinhdich_readings table", () => {
     // If the table were missing, storeReading would throw.
     expect(() =>
@@ -76,8 +75,8 @@ describe("Task 283 — initHexagramTables", () => {
     expect(() => recordTransition(1, 2, "VCB")).not.toThrow();
   });
 
-  it("is idempotent — calling twice does not throw", () => {
-    expect(() => initHexagramTables()).not.toThrow();
+  it("initDatabase is idempotent — calling twice does not throw", () => {
+    expect(() => initDatabase()).not.toThrow();
   });
 });
 

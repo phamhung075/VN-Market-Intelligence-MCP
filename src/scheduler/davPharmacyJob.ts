@@ -14,7 +14,7 @@
 import { logger } from "../infrastructure/logger.js";
 import { fetchDavPharmacy } from "../infrastructure/fetchers/davPharmacy.js";
 import { getDb, initDatabase } from "../infrastructure/db/schema.js";
-import { initPharmaStore, insertPharmaEvent } from "../infrastructure/db/pharmaStore.js";
+import { insertPharmaEvent } from "../infrastructure/db/pharmaStore.js";
 
 /**
  * Run the monthly DAV drug approval check.
@@ -27,7 +27,6 @@ export async function runDavPharmacyCheck(): Promise<void> {
   try {
     await initDatabase();
     const db = getDb();
-    initPharmaStore(db);
 
     const approvals = await fetchDavPharmacy();
 

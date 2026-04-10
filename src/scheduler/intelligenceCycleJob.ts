@@ -327,14 +327,10 @@ async function defaultComputeHexagrams(codes: string[]): Promise<number> {
     "../domain/services/kinhDich/hexagramLibrary.js"
   );
   const {
-    initHexagramTables,
     getLatestReading,
     storeReading,
     recordTransition,
   } = await import("../infrastructure/db/hexagramStore.js");
-
-  // Ensure schema (source column migration) is applied
-  initHexagramTables();
 
   let computed = 0;
 

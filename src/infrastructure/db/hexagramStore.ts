@@ -12,51 +12,8 @@
 
 import { getDb } from "./schema.js";
 
-// ---------------------------------------------------------------------------
-// DDL
-// ---------------------------------------------------------------------------
-
-export function initHexagramTables(): void {
-  const db = getDb();
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS kinhdich_readings (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      stock_code TEXT NOT NULL,
-      timestamp TEXT NOT NULL DEFAULT (datetime('now')),
-      hexagram_number INTEGER NOT NULL,
-      ho_que_number INTEGER NOT NULL,
-      bien_que_number INTEGER NOT NULL,
-      hao_states TEXT NOT NULL,
-      raw_scores TEXT NOT NULL,
-      ngu_hanh_dynamic TEXT,
-      trading_signal TEXT,
-      confidence REAL,
-      action_note TEXT
-    );
-  `);
-  db.exec(`CREATE INDEX IF NOT EXISTS idx_kd_readings_code_ts ON kinhdich_readings(stock_code, timestamp);`);
-
-  // B2 migration: add `source` column idempotently (try/catch = project-wide pattern).
-  // Existing rows receive DEFAULT 'manual' retroactively via SQLite column default.
-  try {
-    db.exec(`ALTER TABLE kinhdich_readings ADD COLUMN source TEXT DEFAULT 'manual'`);
-  } catch {
-    // Column already exists — safe to ignore
-  }
-
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS hexagram_transitions (
-      from_hexagram INTEGER NOT NULL,
-      to_hexagram INTEGER NOT NULL,
-      stock_code TEXT NOT NULL,
-      count INTEGER DEFAULT 1,
-      total_price_change_5d REAL DEFAULT 0,
-      win_count INTEGER DEFAULT 0,
-      last_seen TEXT DEFAULT (datetime('now')),
-      PRIMARY KEY (from_hexagram, to_hexagram, stock_code)
-    );
-  `);
-}
+// DDL is canonical in schema.ts:779-808 via initDatabase(). Tests use
+// src/__tests__/helpers/hexagramTestDdl.ts for in-memory setup.
 
 // ---------------------------------------------------------------------------
 // Reading CRUD

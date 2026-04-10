@@ -9,11 +9,11 @@
 import { describe, it, expect, beforeEach, afterEach } from "bun:test";
 import { fetchDavPharmacy, type DrugApproval } from "../infrastructure/fetchers/davPharmacy.js";
 import {
-  initPharmaStore,
   insertPharmaEvent,
   getPharmaEvents,
   type PharmaEventRow,
 } from "../infrastructure/db/pharmaStore.js";
+import { initPharmaStore } from "./helpers/pharmaTestDdl.js";
 import { Database } from "bun:sqlite";
 
 // ─────────────────────────────────────────────────────────────────────────────
