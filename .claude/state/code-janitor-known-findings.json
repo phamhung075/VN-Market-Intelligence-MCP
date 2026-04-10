@@ -6,13 +6,6 @@
       "last_reported": "2026-04-08",
       "task": 1048,
       "note": "config.ts:scheduler section declares 7 cron default strings duplicating CRONS fallback defaults in jobs.ts. Task 1048 queued (Backlog). BLOCKED: circular-dep risk."
-    },
-    {
-      "fingerprint": "cron_duplication:src/scheduler/summaryJobs.ts:SUMMARY_CRONS",
-      "first_seen": "2026-04-08",
-      "last_reported": "2026-04-08",
-      "task": 1092,
-      "note": "summaryJobs.ts:SUMMARY_CRONS re-reads 5 CRON_SUMMARY_* env vars independently, duplicating CRONS in jobs.ts. Circular dep prevents simple fix. Task 1092 queued (Backlog)."
     }
   ]
 }

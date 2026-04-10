@@ -6,7 +6,7 @@
 
 ## Current Tool Count
 
-79 MCP tools as of Sprint 054 (Task 1079). Verify live: `curl -s http://127.0.0.1:3000/health | jq .toolCount`
+80 MCP tools as of Sprint 054 (Task 1079+). Verify live: `curl -s http://127.0.0.1:3000/health | jq .toolCount`
 
 ---
 
@@ -33,7 +33,7 @@
 ### Compound (2)
 `get_market_context`, `get_bctc_full`
 
-### Portfolio (7)
+### Portfolio (8)
 `get_portfolio_conviction`, `set_position`, `get_positions`, `close_position`, `get_user_positions_for_analysis`, `get_portfolio_risk`, `get_rebalancing_signals`, `get_target_allocation`
 
 ### Price (3)
@@ -45,7 +45,7 @@
 ### Sector Context (2)
 `get_sector_comparison`, `get_open_chain_findings`
 
-### Kinh Dich (3)
+### Kinh Dich (4)
 `get_kinhdich_reading`, `get_market_hexagram`, `run_hexagram_backtest`, `get_transition_probabilities`
 
 ### Prediction Markets (2)
