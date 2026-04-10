@@ -136,6 +136,21 @@ export function validateFinancialReport(report: ValidatableReport): ValidationRe
     nonCurrentAssets === 0
   ) {
     errors.push("Empty balance sheet — all key fields are zero");
+  } else if (
+    totalAssets === 0 &&
+    totalLiabilities === 0 &&
+    equityTotal === 0
+  ) {
+    // Task 1088 / report #1072 — VNM Q4-2025 OCR-parse failure mode:
+    // totals come back zero (unit-header missed → multiplier=1) while
+    // currentAssets/nonCurrentAssets carry partial garbage. The full
+    // 'all five fields zero' guard above does not fire, so the report
+    // would otherwise be stored as validation_status='passed'. Reject
+    // any report whose three balance-sheet TOTALS are simultaneously
+    // zero — a real, non-shell company cannot have all three at zero.
+    errors.push(
+      "Zero balance-sheet totals — totalAssets, totalLiabilities and equityTotal are all 0 (impossible for an active company)",
+    );
   }
 
   // Negative total assets

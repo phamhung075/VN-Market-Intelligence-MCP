@@ -306,4 +306,36 @@ describe("Task 132 — BCTC Validator", () => {
     expect(result.isValid).toBe(false);
     expect(result.errors.some((e) => /unrealistic magnitude.*netRevenue/i.test(e))).toBe(true);
   });
+
+  // ── 13. Zero balance-sheet totals guard (task 1088 / report #1072) ───────
+
+  it("rejects report when totalAssets, totalLiabilities and equityTotal are all zero (false-positive 'passed' guard)", () => {
+    // Reproduces the VNM Q4-2025 OCR-parse failure mode: balance sheet totals
+    // come back zero because the unit-header detector defaulted multiplier to
+    // 1, but currentAssets/nonCurrentAssets were nonzero so the existing
+    // 'all five fields zero' guard did not fire. Result: validation_status
+    // wrongly stored as 'passed' and downstream tools displayed garbage.
+    const report = validReport();
+    report.balanceSheet.totalAssets = 0;
+    report.balanceSheet.totalLiabilities = 0;
+    report.balanceSheet.equityTotal = 0;
+    // Leave currentAssets/nonCurrentAssets nonzero — this is what made the
+    // bug slip past the existing empty-balance-sheet check.
+    const result = validateFinancialReport(report);
+    expect(result.isValid).toBe(false);
+    expect(
+      result.errors.some((e) => /zero balance.sheet totals/i.test(e)),
+    ).toBe(true);
+  });
+
+  it("still passes when totals are nonzero even if currentAssets is zero", () => {
+    const report = validReport();
+    report.balanceSheet.currentAssets = 0;
+    report.balanceSheet.nonCurrentAssets = 100_000; // keep totalAssets identity intact
+    const result = validateFinancialReport(report);
+    // No 'zero totals' error — totals are still 100k/60k/40k
+    expect(
+      result.errors.some((e) => /zero balance.sheet totals/i.test(e)),
+    ).toBe(false);
+  });
 });
