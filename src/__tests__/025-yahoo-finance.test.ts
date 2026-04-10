@@ -245,6 +245,15 @@ describe("Task 025 — Yahoo Finance Commodity Fetcher", () => {
         volume      REAL,
         updated_at  TEXT
       );
+      -- Task 1087: mirror into tracked_indicators for σ-threshold + Kinh Dich
+      CREATE TABLE tracked_indicators (
+        id           INTEGER PRIMARY KEY AUTOINCREMENT,
+        indicator    TEXT NOT NULL,
+        value        REAL NOT NULL,
+        unit         TEXT NOT NULL DEFAULT '',
+        source       TEXT NOT NULL DEFAULT '',
+        extracted_at TEXT NOT NULL DEFAULT (datetime('now'))
+      );
     `);
 
     const snap1: CommoditySnapshot = {
@@ -309,6 +318,15 @@ describe("Task 025 — Yahoo Finance Commodity Fetcher", () => {
         volume      REAL,
         updated_at  TEXT
       );
+      -- Task 1087: mirror into tracked_indicators
+      CREATE TABLE tracked_indicators (
+        id           INTEGER PRIMARY KEY AUTOINCREMENT,
+        indicator    TEXT NOT NULL,
+        value        REAL NOT NULL,
+        unit         TEXT NOT NULL DEFAULT '',
+        source       TEXT NOT NULL DEFAULT '',
+        extracted_at TEXT NOT NULL DEFAULT (datetime('now'))
+      );
     `);
 
     const snap1: CommoditySnapshot = {
@@ -344,6 +362,64 @@ describe("Task 025 — Yahoo Finance Commodity Fetcher", () => {
     const barrel = await import("../infrastructure/fetchers/index.js");
     expect(typeof barrel.fetchYahooFinancePrices).toBe("function");
     expect(typeof barrel.storeCommoditySnapshot).toBe("function");
+  });
+
+  // ── YF-12a: storeCommoditySnapshot mirrors Brent + Gold into tracked_indicators (task 1087 / report #1070)
+  it("YF-12a: storeCommoditySnapshot mirrors brent + gold into tracked_indicators", () => {
+    const db = new Database(":memory:");
+    db.exec(`
+      CREATE TABLE commodity_prices (
+        source TEXT PRIMARY KEY, brent_crude_usd REAL NOT NULL DEFAULT 0,
+        gold_usd_per_oz REAL NOT NULL DEFAULT 0, usd_vnd_rate REAL NOT NULL DEFAULT 0, fetched_at TEXT NOT NULL
+      );
+      CREATE TABLE commodity_prices_history (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, source TEXT NOT NULL,
+        brent_crude_usd REAL NOT NULL DEFAULT 0, gold_usd_per_oz REAL NOT NULL DEFAULT 0,
+        usd_vnd_rate REAL NOT NULL DEFAULT 0, fetched_at TEXT NOT NULL
+      );
+      CREATE TABLE market_prices (
+        code TEXT PRIMARY KEY, price REAL, change_amt REAL, change_pct REAL, volume REAL, updated_at TEXT
+      );
+      CREATE TABLE tracked_indicators (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, indicator TEXT NOT NULL,
+        value REAL NOT NULL, unit TEXT NOT NULL DEFAULT '', source TEXT NOT NULL DEFAULT '',
+        extracted_at TEXT NOT NULL DEFAULT (datetime('now'))
+      );
+    `);
+
+    // Seed a stale news-mined brent value (the bug scenario from report #1070)
+    db.exec(`INSERT INTO tracked_indicators (indicator, value, unit, source, extracted_at)
+             VALUES ('brent_crude_usd', 116.0, '$/bbl', 'tradingeconomics', '2026-04-01T10:00:00Z')`);
+
+    storeCommoditySnapshot({
+      brentCrudeUSD: 96.51,
+      goldUSDPerOz: 4793.5,
+      usdVndRate: 26320.0,
+      fetchedAt: "2026-04-10T08:00:00.000Z",
+    }, db);
+
+    // The latest brent row should now be the yahoo-sourced 96.51, not the stale 116
+    const latestBrent = db.query<{ value: number; source: string }, []>(
+      "SELECT value, source FROM tracked_indicators WHERE indicator = 'brent_crude_usd' ORDER BY extracted_at DESC LIMIT 1",
+    ).get();
+    expect(latestBrent).not.toBeNull();
+    expect(latestBrent!.value).toBeCloseTo(96.51, 1);
+    expect(latestBrent!.source).toBe("yahoo");
+
+    // Gold too
+    const latestGold = db.query<{ value: number }, []>(
+      "SELECT value FROM tracked_indicators WHERE indicator = 'gold_usd_oz' ORDER BY extracted_at DESC LIMIT 1",
+    ).get();
+    expect(latestGold).not.toBeNull();
+    expect(latestGold!.value).toBeCloseTo(4793.5, 0);
+
+    // Total tracked_indicators rows: 1 stale brent + 1 yahoo brent + 1 yahoo gold = 3
+    const total = db.query<{ cnt: number }, []>(
+      "SELECT COUNT(*) as cnt FROM tracked_indicators",
+    ).get();
+    expect(total!.cnt).toBe(3);
+
+    db.close();
   });
 
   // ── YF-12: fetchedAt is ISO 8601 ────────────────────────────────────────

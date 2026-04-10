@@ -328,6 +328,24 @@ export function storeCommoditySnapshot(
     if (snapshot.goldUSDPerOz != null) {
       upsertMacroPrice.run("GOLD", snapshot.goldUSDPerOz, snapshot.fetchedAt);
     }
+
+    // Task 1087 / report #1070: mirror Brent + Gold into tracked_indicators
+    // so the σ-threshold system and Kinh Dich macro score (computeMacroScore)
+    // use fresh Yahoo-sourced values. Sprint 052 removed Brent from news
+    // extraction patterns (backlog 921) but did not wire Yahoo into
+    // tracked_indicators — the stale news-mined values stayed as the latest
+    // rows (e.g. brent_crude_usd=116 vs live 96.51), causing a dual-source
+    // conflict visible to digest-writer and analysis agents.
+    const upsertTrackedIndicator = database.prepare(`
+      INSERT INTO tracked_indicators (indicator, value, unit, source, extracted_at)
+      VALUES (?, ?, ?, 'yahoo', ?)
+    `);
+    if (snapshot.brentCrudeUSD != null && snapshot.brentCrudeUSD > 0) {
+      upsertTrackedIndicator.run("brent_crude_usd", snapshot.brentCrudeUSD, "$/bbl", snapshot.fetchedAt);
+    }
+    if (snapshot.goldUSDPerOz != null && snapshot.goldUSDPerOz > 0) {
+      upsertTrackedIndicator.run("gold_usd_oz", snapshot.goldUSDPerOz, "$/oz", snapshot.fetchedAt);
+    }
   });
 
   try {
