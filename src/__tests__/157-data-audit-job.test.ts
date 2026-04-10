@@ -125,6 +125,14 @@ function makeDb(): Database {
     );
     CREATE INDEX IF NOT EXISTS idx_mph_code_fetched
       ON market_prices_history(code, fetched_at DESC);
+
+    CREATE TABLE IF NOT EXISTS audit_state (
+      id                    INTEGER PRIMARY KEY CHECK (id = 1),
+      last_daily_audit_at   TEXT,
+      last_weekly_audit_at  TEXT,
+      last_daily_findings   TEXT,
+      last_weekly_findings  TEXT
+    );
   `);
 
   return db;

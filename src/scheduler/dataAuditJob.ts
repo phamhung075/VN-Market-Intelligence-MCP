@@ -111,6 +111,35 @@ function severityToPriority(severity: "info" | "warning" | "critical"): string {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Row count trend detection (task 1086)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Read previous D-10 row_count_snapshot findings from audit_state.last_daily_findings.
+ * Returns a Map<tableName, rowCount> for each SNAPSHOT_TABLE that had a previous reading.
+ * Returns an empty map on any error (first run, missing table, corrupt JSON, etc.).
+ */
+function getPreviousRowCounts(db: Database): Map<string, number> {
+  const result = new Map<string, number>();
+  try {
+    const row = db.query<{ last_daily_findings: string | null }, []>(
+      "SELECT last_daily_findings FROM audit_state WHERE id = 1",
+    ).get();
+    if (!row?.last_daily_findings) return result;
+
+    const findings: AuditFinding[] = JSON.parse(row.last_daily_findings);
+    for (const f of findings) {
+      if (f.check === "row_count_snapshot" && typeof f.rowsAffected === "number") {
+        result.set(f.table, f.rowsAffected);
+      }
+    }
+  } catch {
+    // First audit, missing table, corrupt JSON — all fine, return empty map
+  }
+  return result;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Schema helpers (inline DDL — no interface-layer import)
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -636,7 +665,13 @@ function runDailyChecks(db: Database): AuditFinding[] {
     });
   }
 
-  // D-10: Row count snapshot (7 major tables)
+  // D-10: Row count snapshot (7 major tables) + row count drop detection (task 1086)
+  //
+  // Read previous audit's row counts from audit_state so we can detect drops.
+  // A row count decrease in financial_reports (or any major table) may indicate
+  // WAL corruption, accidental DELETE, or manual sqlite3 cleanup.
+  const previousCounts = getPreviousRowCounts(db);
+
   for (const tableName of SNAPSHOT_TABLES) {
     try {
       const row = db.query<{ cnt: number }, []>(`SELECT COUNT(*) as cnt FROM ${tableName}`).get();
@@ -649,6 +684,20 @@ function runDailyChecks(db: Database): AuditFinding[] {
         action: "none",
         detail: `${tableName} has ${cnt.toLocaleString("vi-VN")} rows`,
       });
+
+      // D-10b (task 1086): detect row count drop vs previous audit
+      const prevCount = previousCounts.get(tableName);
+      if (prevCount !== undefined && cnt < prevCount) {
+        const dropped = prevCount - cnt;
+        findings.push({
+          table: tableName,
+          check: "row_count_drop",
+          severity: "warning",
+          rowsAffected: dropped,
+          action: "escalated",
+          detail: `${tableName} row count dropped: ${prevCount} -> ${cnt} (-${dropped})`,
+        });
+      }
     } catch (err) {
       findings.push({
         table: tableName,
