@@ -368,29 +368,34 @@ export function computeMacroScore(): number {
  *
  * Properties:
  *   - Deterministic: same code → same jitter (stable across cycles)
- *   - Small: |jitter| ≤ 0.09 → real scores always dominate
- *   - Non-zero: |jitter| ≥ 0.05 → large enough to move across the 0.10
- *     THIEU_DUONG / THIEU_AM threshold when the base score is exactly 0.0
+ *   - Small: |jitter| ≤ 0.15 → real scores (typically 0.2–1.0) always dominate
+ *   - Non-zero: |jitter| ≥ 0.05 → large enough to differentiate
+ *   - Straddles the 0.10 THIEU_DUONG/THIEU_AM threshold so different tickers
+ *     land on opposite sides → different binary signals → different hexagrams
  *   - Positive or negative: derived from odd/even sum to spread across ±
  *   - Case-insensitive: normalised to uppercase before hashing
  *
- * Task 1007 / Report 1007 + 1020.
+ * Task 1007 / Report 1007 + 1020. Extended to all haos in KI-278 fix.
  *
  * @param code - Stock ticker, e.g. "VCB". Case-insensitive.
- * @returns A value in (-0.09, -0.05] ∪ [+0.05, +0.09), or 0 for empty input.
+ * @param seed - Optional seed to produce different jitter per hao (default 0).
+ * @returns A value in (-0.15, -0.05] ∪ [+0.05, +0.15), or 0 for empty input.
  */
-export function tickerJitter(code: string): number {
+export function tickerJitter(code: string, seed: number = 0): number {
   if (!code) return 0;
   const upper = code.toUpperCase();
   // Polynomial hash: each char contributes code × (position+1) × 31^position
-  let h = 0;
+  // Seed mixed in to produce different values per hao dimension.
+  let h = seed >>> 0;
   for (let i = 0; i < upper.length; i++) {
     h = (h * 31 + upper.charCodeAt(i)) >>> 0; // unsigned 32-bit
   }
-  // Map to [0, 40] → [0.05, 0.09] range (40 steps of 0.001)
-  const magnitude = 0.05 + (h % 41) * 0.001; // 0.050 … 0.090
-  // Sign: odd sum of char codes → positive, even → negative
-  const charSum = upper.split("").reduce((s, c) => s + c.charCodeAt(0), 0);
+  // Map to [0, 100] → [0.05, 0.15] range (100 steps of 0.001)
+  // This straddles the 0.10 THIEU_DUONG/THIEU_AM threshold so different
+  // ticker+seed combos produce different hao binary classifications.
+  const magnitude = 0.05 + (h % 101) * 0.001; // 0.050 … 0.150
+  // Sign: mix seed into char sum for per-hao sign variation
+  const charSum = upper.split("").reduce((s, c) => s + c.charCodeAt(0), 0) + seed;
   return charSum % 2 === 1 ? magnitude : -magnitude;
 }
 
@@ -398,27 +403,28 @@ export function tickerJitter(code: string): number {
  * Compute all 6 hao scores for a stock code.
  * Each score defaults to 0.0 on any error.
  *
- * Hao 5 (sector) receives a deterministic per-ticker jitter (|jitter| ≤ 0.09)
- * when the raw sector score is 0.0. This prevents multiple stocks from
- * collapsing to the same hexagram when all real-data sources are unavailable
- * (VPS offline, BCTC absent, no rag_analyses). Task 1007.
+ * ALL haos receive a deterministic per-ticker jitter (|jitter| ≤ 0.09)
+ * when their raw score is 0.0 (data absent). Each hao uses a different seed
+ * so stocks differentiate across multiple dimensions, not just hao 5.
+ * Non-zero real signals are never perturbed. Task 1007 + KI-278.
  */
 export function computeHaoScores(code: string): number[] {
-  const rawSector = computeSectorScore(code);
-  // Apply jitter to hao 5 only when the raw sector score is exactly 0.0
-  // (data absent). Non-zero real signals dominate and are never perturbed.
-  const sectorWithJitter = rawSector === 0.0
-    ? Math.max(-1, Math.min(1, tickerJitter(code)))
-    : rawSector;
-
-  return [
-    computeSentimentScore(code),
-    computeFundamentalsScore(code),
-    computePriceScore(code),
-    computeForeignFlowScore(code),
-    sectorWithJitter,
-    computeMacroScore(),
+  const raw = [
+    computeSentimentScore(code),      // hao 1, seed 1
+    computeFundamentalsScore(code),   // hao 2, seed 2
+    computePriceScore(code),          // hao 3, seed 3
+    computeForeignFlowScore(code),    // hao 4, seed 4
+    computeSectorScore(code),         // hao 5, seed 5
+    computeMacroScore(),              // hao 6, seed 6
   ];
+
+  // Apply per-hao jitter only when the raw score is exactly 0.0 (data absent).
+  // Different seed per hao ensures maximum differentiation across stocks.
+  return raw.map((score, i) =>
+    score === 0.0
+      ? Math.max(-1, Math.min(1, tickerJitter(code, i + 1)))
+      : score,
+  );
 }
 
 /**
