@@ -4,12 +4,16 @@
  * Tools registered:
  *   1. get_portfolio_conviction — ranked watchlist by conviction score
  *
+ * Optimization (Task 283): all DB reads are batched BEFORE the result-building
+ * loop. The loop itself contains zero db.query() / db.prepare() calls.
+ * appendKinhDich is eliminated; hexagram formatting is inlined using
+ * pre-fetched data and QUE_META from hexagramLibrary.
+ *
  * @module interface/mcp/tools/portfolioTools
  */
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { getDb, initDatabase } from "../../../infrastructure/db/schema.js";
-import { appendKinhDich } from "../../../domain/services/kinhDichWrapper.js";
 import { computeConviction, deriveKinhDichScore } from "../../../domain/services/convictionScorer.js";
 import { getSectorPeers, SECTOR_NAME_VI } from "../../../domain/services/sectorPeers.js";
 import { buildPositionLine, buildActionNote } from "../../../domain/services/decisionNoteSynthesizer.js";
@@ -17,7 +21,7 @@ import { listOpenPositions } from "../../../infrastructure/db/positionStore.js";
 import { fetchHosePrices, type MarketPrice } from "../../../infrastructure/fetchers/hose.js";
 import { fetchHnxPrices, fetchUpcomPrices } from "../../../infrastructure/fetchers/hnx.js";
 import { logger } from "../../../infrastructure/logger.js";
-import { getLatestReading } from "../../../infrastructure/db/hexagramStore.js";
+import { QUE_META } from "../../../domain/services/kinhDich/hexagramLibrary.js";
 import type { DomainType } from "../../../../bctc-schema";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -38,8 +42,56 @@ interface PriceRow {
 }
 
 interface ConvictionHistoryRow {
+  symbol: string;
   peak_score: number;
   date: string;
+}
+
+interface HexagramBatchRow {
+  stock_code: string;
+  hexagram_number: number;
+  bien_que_number: number;
+  trading_signal: string | null;
+  confidence: number | null;
+  rn: number;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Pure helpers (no DB access)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Resolve hexagram name from QUE_META by number (1-64). Returns fallback if not found. */
+function getQueName(number: number): string {
+  const meta = QUE_META.find((q) => q.id === number);
+  return meta ? meta.name : `Que ${number}`;
+}
+
+/**
+ * Inline hexagram block formatter — replaces appendKinhDich call.
+ * Uses pre-fetched hexagram row; no DB access.
+ *
+ * @returns A "\n---\nKinh Dịch: ..." block or a fallback string.
+ */
+function formatHexagramBlock(
+  row: { hexagram_number: number; bien_que_number: number; trading_signal: string | null; confidence: number | null } | undefined,
+): string {
+  if (!row) {
+    return "\n---\nKinh Dịch: Chưa đủ dữ liệu để tính quẻ.";
+  }
+
+  const hexName = getQueName(row.hexagram_number);
+  const bienName = getQueName(row.bien_que_number);
+  const signal = row.trading_signal ?? "N/A";
+  const confStr =
+    row.confidence != null ? `${Math.round(row.confidence * 100)}%` : "";
+
+  const lines = [
+    `\n---`,
+    `Kinh Dịch: ${hexName} (${row.hexagram_number}) — ${signal}`,
+    `Biến quẻ: ${bienName} → ${bienName}`,
+    ...(confStr ? [`Độ tin cậy: ${confStr}`] : []),
+  ];
+  return lines.join("\n");
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -69,7 +121,9 @@ export function registerPortfolioTools(server: McpServer): void {
           return { content: [{ type: "text" as const, text: "Watchlist trong - them co phieu truoc." }] };
         }
 
-        // Fetch LIVE prices grouped by exchange (force: true -> works after hours)
+        const codes = watchlist.map((w) => w.code);
+
+        // ── 1. Fetch LIVE prices grouped by exchange (force: true -> works after hours) ──
         const priceMap = new Map<string, PriceRow>();
         let priceSource = "live";
         try {
@@ -115,42 +169,66 @@ export function registerPortfolioTools(server: McpServer): void {
         }
 
         // Fallback: fill any missing codes from DB (stale but better than nothing)
-        for (const w of watchlist) {
-          if (!priceMap.has(w.code)) {
-            const row = db
-              .query<PriceRow & { updated_at?: string }, [string]>(
-                "SELECT code, price, change_pct, volume, updated_at FROM market_prices WHERE code = ?",
+        const missingCodes = codes.filter((c) => !priceMap.has(c));
+        if (missingCodes.length > 0) {
+          const placeholders = missingCodes.map(() => "?").join(", ");
+          try {
+            const dbRows = db
+              .query<PriceRow & { updated_at?: string }, string[]>(
+                `SELECT code, price, change_pct, volume, updated_at FROM market_prices WHERE code IN (${placeholders})`,
               )
-              .get(w.code);
-            if (row) {
-              priceMap.set(w.code, row);
-              priceSource = "mixed"; // some from DB
+              .all(...missingCodes);
+            for (const row of dbRows) {
+              priceMap.set(row.code, row);
+              priceSource = "mixed";
             }
-          }
+          } catch { /* market_prices may not exist */ }
         }
 
-        // Get sector peer prices for context (DB is acceptable here — peers are context, not primary)
+        // ── 2. Batch: sector peer prices — single query for ALL peer codes ──
         const sectorAvgMap = new Map<string, number>();
         const domains = new Set(watchlist.map((w) => w.domain as DomainType));
+
+        // Collect all unique peer codes across all domains
+        const allPeerCodes = new Set<string>();
+        const domainPeerMap = new Map<string, string[]>();
         for (const domain of domains) {
           if (domain === "other") continue;
           const peers = getSectorPeers(domain as DomainType);
-          const peerPrices: number[] = [];
-          for (const peer of peers) {
-            const p = db
-              .query<{ change_pct: number }, [string]>(
-                "SELECT change_pct FROM market_prices WHERE code = ?",
-              )
-              .get(peer.code);
-            if (p?.change_pct != null) peerPrices.push(p.change_pct);
-          }
-          if (peerPrices.length > 0) {
-            const avg = peerPrices.reduce((s, v) => s + v, 0) / peerPrices.length;
-            sectorAvgMap.set(domain, Math.round(avg * 100) / 100);
-          }
+          const peerCodes = peers.map((p) => p.code);
+          domainPeerMap.set(domain, peerCodes);
+          for (const code of peerCodes) allPeerCodes.add(code);
         }
 
-        // Build index of open positions keyed by stock code
+        if (allPeerCodes.size > 0) {
+          const peerCodeList = Array.from(allPeerCodes);
+          const placeholders = peerCodeList.map(() => "?").join(", ");
+          try {
+            const peerRows = db
+              .query<{ code: string; change_pct: number }, string[]>(
+                `SELECT code, change_pct FROM market_prices WHERE code IN (${placeholders})`,
+              )
+              .all(...peerCodeList);
+
+            const peerPriceMap = new Map<string, number>();
+            for (const row of peerRows) {
+              if (row.change_pct != null) peerPriceMap.set(row.code, row.change_pct);
+            }
+
+            // Compute sector averages from the pre-fetched map
+            for (const [domain, peerCodes] of domainPeerMap) {
+              const values = peerCodes
+                .map((c) => peerPriceMap.get(c))
+                .filter((v): v is number => v != null);
+              if (values.length > 0) {
+                const avg = values.reduce((s, v) => s + v, 0) / values.length;
+                sectorAvgMap.set(domain, Math.round(avg * 100) / 100);
+              }
+            }
+          } catch { /* market_prices may not exist */ }
+        }
+
+        // ── 3. Build open positions index ──
         let positionMap = new Map<string, { shares: number; avgPrice: number; pnlPct: number; currentPrice: number }>();
         try {
           const positions = listOpenPositions(db);
@@ -166,7 +244,74 @@ export function registerPortfolioTools(server: McpServer): void {
           }
         } catch { /* positions table may not exist yet */ }
 
-        // Build conviction results
+        // ── 4. Batch: open alert counts — single query, group in JS ──
+        const alertJsonsPerCode = new Map<string, number>();
+        try {
+          const alertRows = db
+            .query<{ affected_actions_json: string }, []>(
+              "SELECT DISTINCT affected_actions_json FROM alerts WHERE resolved_at IS NULL",
+            )
+            .all();
+          // Count how many distinct alert rows reference each code
+          for (const code of codes) {
+            const count = alertRows.filter((r) =>
+              (r.affected_actions_json ?? "").includes(code),
+            ).length;
+            alertJsonsPerCode.set(code, count);
+          }
+        } catch { /* alerts table may not exist */ }
+
+        // ── 5. Batch: conviction history — single query for all codes ──
+        const convictionTrendMap = new Map<string, number[]>();
+        if (codes.length > 0) {
+          const placeholders = codes.map(() => "?").join(", ");
+          try {
+            const histRows = db
+              .query<ConvictionHistoryRow, string[]>(
+                `SELECT symbol, peak_score, date FROM conviction_history
+                 WHERE symbol IN (${placeholders})
+                 ORDER BY symbol, date DESC`,
+              )
+              .all(...codes);
+
+            // Group by symbol (already DESC per symbol), take first 7, then reverse to ASC
+            const tempMap = new Map<string, number[]>();
+            for (const row of histRows) {
+              const existing = tempMap.get(row.symbol) ?? [];
+              if (existing.length < 7) {
+                existing.push(row.peak_score);
+              }
+              tempMap.set(row.symbol, existing);
+            }
+            for (const [sym, arr] of tempMap) {
+              convictionTrendMap.set(sym, arr.reverse());
+            }
+          } catch { /* conviction_history may not exist */ }
+        }
+
+        // ── 6. Batch: hexagram readings — single query for all codes ──
+        const hexagramMap = new Map<string, HexagramBatchRow>();
+        if (codes.length > 0) {
+          const placeholders = codes.map(() => "?").join(", ");
+          try {
+            const hexRows = db
+              .query<HexagramBatchRow, string[]>(
+                `SELECT stock_code, hexagram_number, bien_que_number, trading_signal, confidence,
+                        ROW_NUMBER() OVER (PARTITION BY stock_code ORDER BY timestamp DESC) as rn
+                 FROM kinhdich_readings
+                 WHERE stock_code IN (${placeholders})`,
+              )
+              .all(...codes);
+
+            for (const row of hexRows) {
+              if (row.rn === 1) {
+                hexagramMap.set(row.stock_code, row);
+              }
+            }
+          } catch { /* kinhdich_readings may not exist */ }
+        }
+
+        // ── 7. Build conviction results — ZERO db.query() calls inside this loop ──
         const results: {
           code: string;
           domain: string;
@@ -182,6 +327,7 @@ export function registerPortfolioTools(server: McpServer): void {
           trend: number[];
           positionLine: string;
           actionNote: string;
+          hexagramBlock: string;
         }[] = [];
 
         for (const w of watchlist) {
@@ -193,43 +339,22 @@ export function registerPortfolioTools(server: McpServer): void {
           if (price?.volume != null) input.volume = price.volume;
           if (sectorAvg != null) input.sectorAvgPct = sectorAvg;
 
-          // Dimension 6: Kinh Dich (Task 304)
-          // Load most recent hexagram reading for this stock; undefined = neutral (0.5)
-          try {
-            const kdRow = getLatestReading(w.code);
-            if (kdRow) {
-              input.kinhDichScore = deriveKinhDichScore(
-                kdRow.tradingSignal,
-                kdRow.confidence,
-              );
-            }
-          } catch {
-            // hexagram tables may not exist yet - leave kinhDichScore undefined (neutral)
+          // Dimension 6: Kinh Dich — use pre-fetched hexagram data
+          const kdRow = hexagramMap.get(w.code);
+          if (kdRow?.trading_signal != null) {
+            input.kinhDichScore = deriveKinhDichScore(
+              kdRow.trading_signal,
+              kdRow.confidence ?? undefined,
+            );
           }
 
           const conviction = computeConviction(input);
 
-          // Open alerts count
-          let openAlerts = 0;
-          try {
-            const row = db
-              .query<{ cnt: number }, [string]>(
-                "SELECT COUNT(*) as cnt FROM alerts WHERE affected_actions_json LIKE '%' || ? || '%' AND resolved_at IS NULL",
-              )
-              .get(w.code);
-            openAlerts = row?.cnt ?? 0;
-          } catch { /* resolved_at may not exist */ }
+          // Use pre-fetched alert count
+          const openAlerts = alertJsonsPerCode.get(w.code) ?? 0;
 
-          // 7-day conviction trend
-          let trend: number[] = [];
-          try {
-            const rows = db
-              .query<ConvictionHistoryRow, [string]>(
-                "SELECT peak_score, date FROM conviction_history WHERE symbol = ? ORDER BY date DESC LIMIT 7",
-              )
-              .all(w.code);
-            trend = rows.reverse().map((r) => r.peak_score);
-          } catch { /* table may not exist */ }
+          // Use pre-fetched conviction trend
+          const trend = convictionTrendMap.get(w.code) ?? [];
 
           // Position P&L line and action note
           const pos = positionMap.get(w.code) ?? null;
@@ -239,6 +364,9 @@ export function registerPortfolioTools(server: McpServer): void {
             pnlPct: pos ? pos.pnlPct : null,
             direction: conviction.direction,
           });
+
+          // Inline hexagram block (replaces appendKinhDich call — no DB hit)
+          const hexagramBlock = formatHexagramBlock(kdRow);
 
           results.push({
             code: w.code,
@@ -255,6 +383,7 @@ export function registerPortfolioTools(server: McpServer): void {
             trend,
             positionLine,
             actionNote,
+            hexagramBlock,
           });
         }
 
@@ -276,16 +405,14 @@ export function registerPortfolioTools(server: McpServer): void {
           const alertStr = r.openAlerts > 0 ? ` | ${r.openAlerts} alert` : "";
           const trendStr = r.trend.length >= 2 ? ` | trend: [${r.trend.map((t) => t.toFixed(2)).join(",")}]` : "";
 
-          // Build per-position block then append Kinh Dich hexagram reading (best-effort)
-          let positionBlock = [
+          const positionBlock = [
             `${r.code} - ${r.level.toUpperCase()} (${r.score.toFixed(2)})`,
             `  ${priceStr} ${chgStr} | ${sectorStr}${alertStr}${trendStr}`,
             `  ${r.summary}`,
             `  ${r.positionLine}`,
             `  ${r.actionNote}`,
-          ].join("\n");
+          ].join("\n") + r.hexagramBlock;
 
-          positionBlock = await appendKinhDich(r.code, positionBlock, db);
           lines.push(positionBlock);
           lines.push("");
         }
