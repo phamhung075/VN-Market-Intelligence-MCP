@@ -35,6 +35,12 @@ Created src/__tests__/296-ocr-pipeline-e2e.test.ts. 4 tests: (1) full OCR extrac
 
 ---
 
+### [1021 / @dev] 20 pre-existing per-file test flakes — Done 2026-04-10
+
+All 20 flaky tests resolved: 17 self-healed via janitor DDL dedup + code improvements. 1 fixed (137-fix-alert-pipeline Step E timeout 5s→30s). 2 test files removed in earlier sprints. Commit 8841439.
+
+---
+
 ### [1091 / @dev P3] Remove 8 inline DDL blocks from vnstockStore.ts — Done 2026-04-10
 
 Shipped (commit 0977107): stripped 8 CREATE TABLE blocks from initVnstockTables() (renamed to runVnstockMigrations()). Kept ALTER TABLE date-column migration. Removed production call sites in index.ts, syncSectorPeers.ts, syncVnstockData.ts. DDL canonical in schema.ts:928+. Created test helper vnstockTestDdl.ts. 35/35 tests pass.

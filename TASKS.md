@@ -545,19 +545,6 @@ Status: Backlog
 
 ---
 
-### [1021 / @dev] 20 pre-existing per-file test flakes (Sprint 054)
-
-Surfaced by the new `scripts/test-all.sh` per-file runner. Each file passes when run in tight scope but fails in per-file isolation. Full list in `docs/TEST_OOM_INVESTIGATION.md#follow-up-pre-existing-flakes`. Triage plan:
-
-1. Group by common culprit (DB_PATH leaks, global singletons, timer-dependent tests, OCR-binary-dependent tests).
-2. Fix the shared infrastructure issues first (test DB factory, env reset helper).
-3. Per-file fixes for the rest.
-4. Goal: `bun run test:all` exits green end-to-end.
-
-Status: Backlog
-
----
-
 ### [1085 / @architect P1] SSC portal JS-shell: BCTC ingestion stalled 11 days (report #1071)
 
 SSC portal now returns a short JS-only shell on fetch (`[ssc] portal_js_only — short response (JS shell?)`), so `fetchParseAndStoreBctc` falls through to HOSE/HNX. Impact: 26 watchlist tickers QUA HAN Q4-2025 (deadline 2026-03-30), 4 banks (BID/EIB/SHB/VCB) SAP DEN 2026-04-14. `list_stored_pdfs` shows only VEA+VNM PDFs dated 2026-03-29 — no new ingests in 11 days.
