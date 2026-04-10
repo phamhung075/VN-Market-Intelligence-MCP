@@ -23,6 +23,18 @@ Fixed: bctcReparseJob (1019) + OCR cache fallback (1068) resolved the stranded-P
 
 ---
 
+### [1092 / @dev P3] Consolidate SUMMARY_CRONS — Done 2026-04-10
+
+Removed SUMMARY_CRONS export from summaryJobs.ts. Added SummaryCronConfig interface. registerSummaryJobs() now accepts cron config as parameter. jobs.ts passes CRONS values — single source of truth for all CRON_SUMMARY_* env vars. 8/8 tests pass, 0 type errors.
+
+---
+
+### [296 / @dev P1] OCR pipeline e2e smoke test — Done 2026-04-10
+
+Created src/__tests__/296-ocr-pipeline-e2e.test.ts. 4 tests: (1) full OCR extraction on VNM PDF with financial range assertions (skips gracefully if OCR unavailable or no PDF), (2) reparseSingleWithOcrFallback stub test — OCR cache fallback path, (3) both-paths-empty returns false, (4) PDF accessibility diagnostic. 4/4 pass, 0 type errors. Timeout 600s for full OCR test (61-page VNM PDF).
+
+---
+
 ### [1091 / @dev P3] Remove 8 inline DDL blocks from vnstockStore.ts — Done 2026-04-10
 
 Shipped (commit 0977107): stripped 8 CREATE TABLE blocks from initVnstockTables() (renamed to runVnstockMigrations()). Kept ALTER TABLE date-column migration. Removed production call sites in index.ts, syncSectorPeers.ts, syncVnstockData.ts. DDL canonical in schema.ts:928+. Created test helper vnstockTestDdl.ts. 35/35 tests pass.

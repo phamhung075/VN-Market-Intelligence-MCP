@@ -157,7 +157,13 @@ export function startScheduler() {
     await runPatternWatch()
   }, { timezone: 'Asia/Ho_Chi_Minh' })
 
-  registerSummaryJobs()
+  registerSummaryJobs({
+    daily:     CRONS.summaryDaily,
+    weekly:    CRONS.summaryWeekly,
+    monthly:   CRONS.summaryMonthly,
+    quarterly: CRONS.summaryQuarterly,
+    yearly:    CRONS.summaryYearly,
+  })
 
   cron.schedule(CRONS.dataAuditDaily, async () => {
     await runDailyAudit()

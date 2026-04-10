@@ -529,104 +529,6 @@ Acceptance Criteria:
 
 ## Backlog — Active (genuinely unblocked or pending decision)
 
-
-### [1092 / @dev P3] [janitor] Consolidate SUMMARY_CRONS — summaryJobs.ts duplicates CRONS env-var reads from jobs.ts
-
-code-janitor auto-detected: `src/scheduler/summaryJobs.ts:SUMMARY_CRONS` re-reads 5 CRON_SUMMARY_* env vars (DAILY/WEEKLY/MONTHLY/QUARTERLY/YEARLY) independently, duplicating the same reads in CRONS in jobs.ts. A future env-var rename would require editing both files. The right fix is for summaryJobs.ts to import CRONS from jobs.ts and derive SUMMARY_CRONS values. CAUTION: jobs.ts imports summaryJobs.ts (via registerSummaryJobs), so this creates a circular dependency — requires a shared constants extraction or lazy import pattern. Architect review recommended before implementation. Test 1023 (src/__tests__/1023-summary-crons-into-crons-map.test.ts) verifies both maps agree on values.
-
-Status: Backlog
-
----
-
-### [296 / @dev P1] e2e smoke test: OCR pipeline — reparseSingleWithOcrFallback
-
-**Branch**: `task/296-ocr-e2e-smoke-test`
-**Layer**: test
-**Depends on**: 292 (schema DDL + DPI + confidence guard), 293 (OCR fallback wiring) — both merged
-**Priority**: P1
-**TDD test**: `src/__tests__/296-ocr-pipeline-e2e.test.ts`
-
-**Rescoped (2026-04-09):** Original scope tested `extractAndStorePdfPages` directly. Extend to also cover `reparseSingleWithOcrFallback` introduced in fix 1068. Add one test case that calls `reparseSingleWithOcrFallback(filename, db)` with a known-scanned VNM PDF and asserts the BCTC financial_reports row is populated with non-null totalAssets.
-
-#### Files to read first
-
-- `src/__tests__/291-bctc-smoke-vnm.test.ts` (structural reference)
-- `src/infrastructure/fetchers/pdfOcrWorker.ts` (exports: `isOcrAvailable`, `extractAndStorePdfPages`, `getCachedPdfText`)
-- `src/infrastructure/db/schema.ts` (verify `initDatabase` exported and `closeDb` exists)
-- `src/domain/services/` (find `extractBalanceSheet` and `extractIncomeStatement` exports)
-
-#### Files to create
-
-- CREATE: `src/__tests__/296-ocr-pipeline-e2e.test.ts`
-
-#### Test structure
-
-```typescript
-// src/__tests__/296-ocr-pipeline-e2e.test.ts
-process.env["DB_PATH"] = ":memory:";
-
-import { describe, it, expect, beforeAll, afterAll } from "bun:test";
-import { closeDb, initDatabase } from "../infrastructure/db/schema.js";
-import { isOcrAvailable, extractAndStorePdfPages, getCachedPdfText } from "../infrastructure/fetchers/pdfOcrWorker.js";
-import { extractBalanceSheet } from "../domain/services/balanceSheetExtractor.js";
-import { extractIncomeStatement } from "../domain/services/incomeStatementExtractor.js";
-import { readdirSync } from "node:fs";
-import { join } from "node:path";
-
-describe("296 OCR pipeline e2e smoke test", () => {
-  it("extracts VNM PDF via OCR and asserts financial ranges", async () => {
-    if (!isOcrAvailable()) { console.log("skip: OCR not available"); return; }
-    closeDb(); initDatabase();
-    const pdfDir = join(process.cwd(), "data", "pdfs");
-    let pdfFile: string | undefined;
-    try { pdfFile = readdirSync(pdfDir).find(f => /vnm/i.test(f) && f.endsWith(".pdf")); } catch {}
-    if (!pdfFile) { console.log("skip: no VNM PDF found in data/pdfs/"); return; }
-    const pdfPath = join(pdfDir, pdfFile);
-    const result = await extractAndStorePdfPages(pdfPath, pdfFile);
-    expect(result.totalChars).toBeGreaterThanOrEqual(5000);
-    const cached = getCachedPdfText(pdfFile);
-    expect(cached).not.toBeNull();
-    expect(cached!.confidence).toBeGreaterThanOrEqual(0.5);
-    const bs = extractBalanceSheet(cached!.text);
-    expect(bs.totalAssets).toBeGreaterThanOrEqual(50_000_000);
-    expect(bs.totalAssets).toBeLessThanOrEqual(100_000_000);
-    const is_ = extractIncomeStatement(cached!.text);
-    expect(is_.netRevenue).toBeGreaterThan(0);
-  }, 300_000);
-
-  it("reparseSingleWithOcrFallback populates financial_reports for scanned PDF", async () => {
-    if (!isOcrAvailable()) { console.log("skip: OCR not available"); return; }
-    // Additional test case added for fix 1068 coverage
-    // Call reparseSingleWithOcrFallback(filename, db) and assert financial_reports row populated
-  }, 300_000);
-});
-```
-
-#### Acceptance Criteria
-
-**Given** `data/pdfs/` contains a VNM BCTC PDF and `tesseract` + `pdftoppm` are installed
-**When** `bun test src/__tests__/296-ocr-pipeline-e2e.test.ts` is run
-**Then**
-- `extractAndStorePdfPages` returns `totalChars >= 5000`
-- `getCachedPdfText(filename)` returns `confidence >= 0.5`
-- `extractBalanceSheet(text).totalAssets` is in range [50,000,000 – 100,000,000] trieu VND
-- `extractIncomeStatement(text).netRevenue > 0`
-- `reparseSingleWithOcrFallback` test case populates financial_reports row with non-null totalAssets
-- Test passes with 0 failures
-
-**Given** `isOcrAvailable()` returns false
-**When** the test runs
-**Then** — Test is skipped cleanly with 0 failures.
-
-**Given** `data/pdfs/` has no VNM PDF
-**When** the test runs
-**Then** — Test is skipped cleanly with 0 failures.
-
-Status: Deferred (pending OCR tooling available on dev machine)
-
----
-
-
 ### [1002 / @architect P1] Anonymous SSC PDF attribution: filenames like `000000015802468_Bao_cao_tai_chinh_Rieng_nam_2025.pdf` carry no stock code
 
 Add download-time normalisation that records stock_code from SSC portal metadata, OR extract from PDF first page on ingest. Report 997.
@@ -702,12 +604,6 @@ Status: Backlog ((b) done, (a)+(c) remain — no longer P1 since the false-posit
 Minimum-diff for option 1: add `"HPG"` to `mcp.config.json → market.defaultWatchlist`, restart server.
 
 Status: Backlog (awaiting PO decision)
-
----
-
-### [1019 / @dev HIGH] Stranded BCTC PDF auto-reparse pipeline — Done (all 3 slices)
-
-**Why**: `dataAuditJob` D-7c already DETECTS stranded PDFs and writes them to `agent_feedback`. The recovery path (all 3 slices) was shipped in Sprint 053 (`c528efa`): per-file structured findings + `bctcReparseJob.ts` (daily 09:30) + `reparse_attempts` column with escalation at 3 / alert at 5. 13/13 new tests.
 
 ---
 
