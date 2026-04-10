@@ -99,9 +99,7 @@ export function registerAnalysisTools(server: McpServer): void {
         .default(20)
         .describe("Maximum total number of news items to analyze (default: 20)"),
     },
-    async ({ sources: sourcesRaw, limit: limitRaw }) => {
-      const sources = sourcesRaw ?? ["cafef", "vnexpress", "reuters", "vneconomy"];
-      const limit = limitRaw ?? 20;
+    async ({ sources, limit }) => {
 
       try {
         await initDatabase();
