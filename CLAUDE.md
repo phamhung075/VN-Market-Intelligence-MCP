@@ -10,12 +10,11 @@
 - MCP tool surface, tool-per-agent mapping → `.claude/knowledge/mcp-tools.md`
 - Cron jobs, scheduler files, intelligence cycle → `.claude/knowledge/cron-jobs.md`
 - Telegram bot commands, /ask queue → `.claude/knowledge/telegram-commands.md`
+- Alert policy, firing rules, cooldowns, 3-channel routing → `.claude/knowledge/telegram-alerts.md`
 - Agent roster, cooperation flow, two-team design → `.claude/knowledge/agent-roster.md`
-- Position schema, stop-loss, TP ladder → `.claude/knowledge/position-schema.md`
-- Alert policy, firing rules, cooldowns → `.claude/knowledge/alert-policy.md`
+- Portfolio: stock classification, position schema, stop-loss, TP ladder → `.claude/knowledge/portfolio-schema.md`
 - Kinh Dich default layer, hexagram integration → `.claude/knowledge/kinh-dich-layer.md`
 - /ask FIFO queue, QA Responder protocol → `.claude/knowledge/ask-queue-protocol.md`
-- Stock classification (VNM/FPT/VCB/HPG/VEA, trade exposure, sector peers) → `.claude/knowledge/stock-classification.md`
 - Fail-loud knowledge-load failure protocol (full 5 steps) → `.claude/knowledge/fail-loud-protocol.md`
 - Server restart policy (ban list, only allowed command, QA validation, launchctl failure recovery) → `.claude/knowledge/restart-policy.md`
 - Historical / Done tasks (archive) → `docs/TASKS_ARCHIVE.md` (read ONLY when you need past task context)
