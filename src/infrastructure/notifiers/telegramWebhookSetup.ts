@@ -88,6 +88,27 @@ export async function registerWebhook(
   }
 
   const fetchFn: WebhookFetchFn = options.fetchFn ?? globalThis.fetch;
+
+  // Pre-check: if webhook is already set to the correct URL, skip re-registration.
+  // This avoids WARN-level log noise on every server restart (report #1080).
+  try {
+    const infoResp = await fetchFn(
+      `https://api.telegram.org/bot${botToken}/getWebhookInfo`,
+      { method: "GET" },
+    );
+    if (infoResp.ok) {
+      const infoBody = (await infoResp.json()) as { result?: { url?: string } };
+      if (infoBody.result?.url === webhookUrl) {
+        log.info("[telegramWebhook] Webhook already set — skipping re-registration", {
+          webhookUrl,
+        });
+        return true;
+      }
+    }
+  } catch {
+    // getWebhookInfo failed — proceed with setWebhook attempt
+  }
+
   const url = `https://api.telegram.org/bot${botToken}/setWebhook`;
 
   const payload: Record<string, unknown> = {
@@ -107,7 +128,9 @@ export async function registerWebhook(
     });
 
     if (!response.ok) {
-      log.warn("[telegramWebhook] setWebhook failed", {
+      // Downgraded from warn → info: setWebhook failure is non-blocking
+      // when Telegram delivery works via direct API sends (report #1080).
+      log.info("[telegramWebhook] setWebhook failed (non-blocking)", {
         status: response.status,
         webhookUrl,
       });
@@ -117,7 +140,7 @@ export async function registerWebhook(
     log.info("[telegramWebhook] Webhook registered successfully", { webhookUrl });
     return true;
   } catch (err) {
-    log.warn("[telegramWebhook] setWebhook network error", {
+    log.info("[telegramWebhook] setWebhook network error (non-blocking)", {
       error: err instanceof Error ? err.message : String(err),
     });
     return false;
