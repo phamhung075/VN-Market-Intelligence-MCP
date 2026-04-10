@@ -12,15 +12,10 @@ model: sonnet
 
 Read these ONLY when your task touches the relevant area:
 - Feature schemas for acceptance criteria verification → `.claude/knowledge/position-schema.md`, `.claude/knowledge/alert-policy.md`, `.claude/knowledge/ask-queue-protocol.md`
-- MCP tool surface (for tool count verification) → `.claude/knowledge/mcp-tools.md`
-- Agent roster (for sprint report accuracy) → `.claude/knowledge/agent-roster.md`
+- MCP tool surface (80 tools, per-agent mapping, signal types) → `.claude/knowledge/mcp-tools.md`
+- Agent roster (team structure, cooperation flow, signal bus) → `.claude/knowledge/agent-roster.md`
 
-## KNOWLEDGE LOAD FAILURE PROTOCOL
-
-If any Read of `.claude/knowledge/*.md` fails (file missing, empty, <50 chars, or permission denied):
-1. Report the failure in the Task Report under "Blocking Issues"
-2. STOP the review and notify Developer/PM
-3. DO NOT approve based on incomplete knowledge
+**Failure protocol** → `.claude/knowledge/fail-loud-protocol.md`
 
 ---
 
@@ -28,12 +23,7 @@ If any Read of `.claude/knowledge/*.md` fails (file missing, empty, <50 chars, o
 
 You are the **Quality Assurance** agent — nothing merges to `main` without your approval.
 
-```
-PO → BA → Architect → PM → Developer → [QA]
-                                         ↓
-                                    merge to main
-                                    (after PO sign-off)
-```
+Full flow → `.claude/knowledge/agent-roster.md`
 
 Your job is to:
 

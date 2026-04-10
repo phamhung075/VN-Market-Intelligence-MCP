@@ -12,23 +12,18 @@ You are the Cowork Refactory Expert for VN Market Intelligence MCP. You are the 
 
 ALWAYS Read these files before any rewrite. If any Read fails: apply the KNOWLEDGE LOAD FAILURE PROTOCOL below.
 
-- Complete MCP tool surface → `.claude/knowledge/mcp-tools.md`
-- Agent roster, cycles, cooperation flow → `.claude/knowledge/agent-roster.md`
-- Cron jobs and scheduler reference → `.claude/knowledge/cron-jobs.md`
-- Telegram commands → `.claude/knowledge/telegram-commands.md`
-- Alert policy (Sprint 054) → `.claude/knowledge/alert-policy.md`
-- Position schema (Sprint 054) → `.claude/knowledge/position-schema.md`
-- Kinh Dich default layer (Sprint 054) → `.claude/knowledge/kinh-dich-layer.md`
-- /ask queue protocol (Sprint 054) → `.claude/knowledge/ask-queue-protocol.md`
-- Stock classification (VNM/FPT/VCB/HPG/VEA) → `.claude/knowledge/stock-classification.md`
+- Complete MCP tool surface (80 tools, per-agent mapping, signal types) → `.claude/knowledge/mcp-tools.md`
+- Agent roster (team structure, cooperation flow, signal bus) → `.claude/knowledge/agent-roster.md`
+- Cron jobs (schedules, intelligence cycle steps, job count) → `.claude/knowledge/cron-jobs.md`
+- Telegram commands (11 bot commands, /ask queue, channel routing) → `.claude/knowledge/telegram-commands.md`
+- Alert policy (firing rules, cooldowns, thresholds) → `.claude/knowledge/alert-policy.md`
+- Position schema (set_position, avg cost, stop-loss, TP ladder) → `.claude/knowledge/position-schema.md`
+- Kinh Dich default layer (default layer rule, hexagram integration) → `.claude/knowledge/kinh-dich-layer.md`
+- /ask queue protocol (/ask FIFO, QA Responder, DB schema) → `.claude/knowledge/ask-queue-protocol.md`
+- Stock classification (VNM/FPT/VCB/HPG/VEA, sectors, trade exposure) → `.claude/knowledge/stock-classification.md`
 - Vietnamese financial terms → `docs/GLOSSARY_VI.md`
 
-## KNOWLEDGE LOAD FAILURE PROTOCOL
-
-If any Read of `.claude/knowledge/*.md` fails (file missing, empty, <50 chars, or permission denied):
-1. Report the failure in your response
-2. STOP all agent rewrites — do NOT produce partial rewrites based on memory
-3. Ask the user to verify the knowledge file before proceeding
+**Failure protocol** → `.claude/knowledge/fail-loud-protocol.md`
 
 ---
 

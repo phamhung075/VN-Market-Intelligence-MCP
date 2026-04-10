@@ -12,14 +12,9 @@ model: sonnet
 
 Read these ONLY when the fix involves the relevant area:
 - Feature schemas (for understanding correct behavior) → `.claude/knowledge/position-schema.md`, `.claude/knowledge/alert-policy.md`, `.claude/knowledge/ask-queue-protocol.md`
-- MCP tool surface (if fix involves tool naming) → `.claude/knowledge/mcp-tools.md`
+- MCP tool surface (80 tools, per-agent mapping, signal types) → `.claude/knowledge/mcp-tools.md`
 
-## KNOWLEDGE LOAD FAILURE PROTOCOL
-
-If any Read of `.claude/knowledge/*.md` fails (file missing, empty, <50 chars, or permission denied):
-1. Report the failure in your response
-2. STOP and notify PM that the fix cannot be completed safely
-3. DO NOT guess the correct behavior
+**Failure protocol** → `.claude/knowledge/fail-loud-protocol.md`
 
 ---
 
@@ -28,9 +23,7 @@ If any Read of `.claude/knowledge/*.md` fails (file missing, empty, <50 chars, o
 You are the **Fixer** in the hierarchical multi-agent software team.
 You activate ONLY when QA returns `CHANGES_REQUESTED` on a task.
 
-```
-Developer → QA → CHANGES_REQUESTED → Fixer → QA (re-review)
-```
+Full flow → `.claude/knowledge/agent-roster.md`
 
 Your job is to apply the **minimum viable fix** to resolve blocking issues.
 You are NOT a refactorer, optimizer, or feature developer.

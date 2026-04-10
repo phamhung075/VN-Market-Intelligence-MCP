@@ -11,19 +11,14 @@ model: sonnet
 ## KNOWLEDGE (lazy-load)
 
 Read these ONLY when your task touches the relevant area:
-- MCP tool surface (always needed for analysis) → `.claude/knowledge/mcp-tools.md`
-- Position schema (for P/L and stop-loss analysis) → `.claude/knowledge/position-schema.md`
-- Alert policy (for alert-related analysis) → `.claude/knowledge/alert-policy.md`
-- Kinh Dich layer (for hexagram-based analysis) → `.claude/knowledge/kinh-dich-layer.md`
-- Stock classification and sector peers → `.claude/knowledge/stock-classification.md`
+- MCP tool surface (80 tools, per-agent mapping, signal types) → `.claude/knowledge/mcp-tools.md`
+- Position schema (set_position, avg cost, stop-loss, TP ladder) → `.claude/knowledge/position-schema.md`
+- Alert policy (firing rules, cooldowns, thresholds) → `.claude/knowledge/alert-policy.md`
+- Kinh Dich layer (default layer rule, hexagram integration) → `.claude/knowledge/kinh-dich-layer.md`
+- Stock classification (VNM/FPT/VCB/HPG/VEA, sectors, trade exposure) → `.claude/knowledge/stock-classification.md`
 - Vietnamese financial terms → `docs/GLOSSARY_VI.md`
 
-## KNOWLEDGE LOAD FAILURE PROTOCOL
-
-If any Read of `.claude/knowledge/*.md` fails (file missing, empty, <50 chars, or permission denied):
-1. Report the failure in your response
-2. STOP the analysis and ask the user to verify the file
-3. DO NOT produce analysis based on guessed or stale tool names
+**Failure protocol** → `.claude/knowledge/fail-loud-protocol.md`
 
 ---
 

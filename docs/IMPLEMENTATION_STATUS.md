@@ -95,18 +95,37 @@
 - `macroStatsJob.ts`: Brent crude via yahooFinance only, news-mining removed (task 921 fix)
 - `157-data-audit-job.test.ts`: LanceDB timeout 60s, flake resolved
 
-## Done — Sprint 053-054 (current)
+## Done — Sprint 053-054 (2026-04-08 to 2026-04-09)
 
 - Sprint 054 Phase 1: `.claude/knowledge/` factory created (2026-04-08): 10 knowledge files, fail-loud lazy-load protocol in CLAUDE.md + all agents
 - Phase 1.5 SSOT dedup: stock-classification.md, fail-loud-protocol.md, signal bus SSOT in mcp-tools.md, GLOSSARY_VI.md. `cowork-refactory-expert.md` 409→156 lines
 - restart-policy.md created (2026-04-08)
+- Janitor DDL dedup (tasks 1033-1047, 1049-1050): 15 inline DDL blocks removed from stores, moved to `initDatabase()` in schema.ts
 - Task 1021: 20 test flakes resolved (5s→30s timeout for Step E)
+- Task 1063: Removed fake-AI and low-value Telegram commands
+- Task 1070: Position ledger — buyPosition/sellPosition/applyPositionCommand + weighted avg cost
+- Task 1071: Telegram /set_position + /check_position handlers
+- Task 1072: ask_queue DDL + askQueueStore CRUD helpers
+- Task 1073: Telegram /ask handler
+- Task 1074: askQueueCheckJob scheduler (*/12 * * * *)
+- Task 1075: alertPolicyChecker + stopLossComputer + mcp.config.json alertPolicy
+- Task 1076: marketScanJob noise retirement — direct MARKET sends removed, DB inserts preserved
+- Task 1077: kinhDichWrapper + appendKinhDich wired into analysis/market/portfolio tools
+- Task 1078: MCP tools get_pending_ask_questions + answer_ask_question (+2 tools → 80 total)
+- Task 1079: MCP tool get_user_positions_for_analysis (+1 tool)
+- Task 1081: Sprint 054 smoke test (7-step end-to-end, all mocked)
+- Task 1082: SSC timeout raised 3→5 min; volume_spike suppressed during ATC window
 - Task 1086: WAL checkpoint PASSIVE→TRUNCATE on shutdown + startup replay
-- Task 1088: slice (a) shipped
+- Task 1088a: Enhanced detectUnitMultiplier + magnitude inference in balanceSheetExtractor; zero-totals validator rejects garbage BCTC rows
+- Task 1091: vnstockStore.ts 8 inline DDL blocks removed
+- Task 1042: 8 vnstock table DDLs moved to initDatabase() in schema.ts
+- Task 1068: bctcReparseJob — OCR cache fallback for scanned PDFs (commit 6d46ffb)
+- Sprint 054 Phase 6: Cowork E7 position-aware agents + E8 07-qa-responder created
+- Watchlist expanded to 30 tickers (from 8)
 
 ## In Progress
 
-Sprint 054 in progress. See TASKS.md.
+Sprint 054 complete. Backlog items in TASKS.md.
 
 ## Deferred
 

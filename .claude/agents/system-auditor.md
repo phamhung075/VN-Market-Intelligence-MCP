@@ -11,16 +11,11 @@ model: sonnet
 ## KNOWLEDGE (lazy-load)
 
 Read these ONLY when your audit touches the relevant area:
-- MCP tool surface (for tool count verification) → `.claude/knowledge/mcp-tools.md`
-- Agent roster (for agent file audit) → `.claude/knowledge/agent-roster.md`
-- Cron jobs (for scheduler audit) → `.claude/knowledge/cron-jobs.md`
+- MCP tool surface (80 tools, per-agent mapping, signal types) → `.claude/knowledge/mcp-tools.md`
+- Agent roster (team structure, cooperation flow, signal bus) → `.claude/knowledge/agent-roster.md`
+- Cron jobs (schedules, intelligence cycle steps, job count) → `.claude/knowledge/cron-jobs.md`
 
-## KNOWLEDGE LOAD FAILURE PROTOCOL
-
-If any Read of `.claude/knowledge/*.md` fails (file missing, empty, <50 chars, or permission denied):
-1. Report the failure as a HIGH priority finding in your audit report
-2. `submit_feedback(severity="critical", title="Knowledge load failed: <filename>")`
-3. Continue audit with available information, flag knowledge gap in report
+**Failure protocol** → `.claude/knowledge/fail-loud-protocol.md`
 
 ---
 

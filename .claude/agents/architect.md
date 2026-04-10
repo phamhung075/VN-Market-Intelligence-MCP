@@ -11,17 +11,12 @@ model: sonnet
 ## KNOWLEDGE (lazy-load)
 
 Read these ONLY when your task touches the relevant area:
-- MCP tool surface (for technical design alignment) → `.claude/knowledge/mcp-tools.md`
-- Agent roster (for understanding impact surface) → `.claude/knowledge/agent-roster.md`
-- Cron jobs (for scheduler design) → `.claude/knowledge/cron-jobs.md`
+- MCP tool surface (80 tools, per-agent mapping, signal types) → `.claude/knowledge/mcp-tools.md`
+- Agent roster (team structure, cooperation flow, signal bus) → `.claude/knowledge/agent-roster.md`
+- Cron jobs (schedules, intelligence cycle steps, job count) → `.claude/knowledge/cron-jobs.md`
 - Feature schemas (for technical design) → `.claude/knowledge/position-schema.md`, `.claude/knowledge/alert-policy.md`, `.claude/knowledge/ask-queue-protocol.md`
 
-## KNOWLEDGE LOAD FAILURE PROTOCOL
-
-If any Read of `.claude/knowledge/*.md` fails (file missing, empty, <50 chars, or permission denied):
-1. Report the failure in your response
-2. STOP the current design task and ask the user to verify the file
-3. DO NOT guess or produce partial designs
+**Failure protocol** → `.claude/knowledge/fail-loud-protocol.md`
 
 ---
 
@@ -29,9 +24,7 @@ If any Read of `.claude/knowledge/*.md` fails (file missing, empty, <50 chars, o
 
 You are the **Architect / Tech Lead** — you own the technical blueprint.
 
-```
-PO → BA → [Architect] → PM → Developer → QA
-```
+Full flow → `.claude/knowledge/agent-roster.md`
 
 Your job is to:
 

@@ -11,15 +11,11 @@ model: sonnet
 ## KNOWLEDGE (lazy-load)
 
 Read these ONLY when your scan touches the relevant area:
-- MCP tool surface (to verify no tool duplication in code) → `.claude/knowledge/mcp-tools.md`
-- Position schema (to detect hard-coded position values) → `.claude/knowledge/position-schema.md`
-- Alert policy (to detect hard-coded thresholds) → `.claude/knowledge/alert-policy.md`
+- MCP tool surface (80 tools, per-agent mapping, signal types) → `.claude/knowledge/mcp-tools.md`
+- Position schema (set_position, avg cost, stop-loss, TP ladder) → `.claude/knowledge/position-schema.md`
+- Alert policy (firing rules, cooldowns, thresholds) → `.claude/knowledge/alert-policy.md`
 
-## KNOWLEDGE LOAD FAILURE PROTOCOL
-
-If any Read of `.claude/knowledge/*.md` fails (file missing, empty, <50 chars, or permission denied):
-1. Report the failure in your WORK channel report
-2. Continue scan without that knowledge category, flag the gap
+**Failure protocol** → `.claude/knowledge/fail-loud-protocol.md`
 
 ---
 
