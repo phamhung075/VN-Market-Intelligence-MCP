@@ -426,6 +426,16 @@ const STEP_TIMEOUT_MS = 2 * 60 * 1000;
 const POLL_NEWS_TIMEOUT_MS = 5 * 60 * 1000;
 
 /**
+ * 5 minutes — max allowed runtime for step C2 (syncSectorPeers). Task 1006
+ * raised MAX_PEER_SYNCS_PER_CYCLE to 40, so on the first intelligence cycle
+ * of a market-open day the peer fan-out (price + financials per peer across
+ * banking/real-estate/steel/consumer) regularly exceeds the generic 120 s
+ * step cap. Report 1073 (2026-04-10 09:06 VN) captured one such timeout on
+ * the first post-open cycle. Mirrors fix 1062's pollNews treatment.
+ */
+const SYNC_PEERS_TIMEOUT_MS = 5 * 60 * 1000;
+
+/**
  * Runs a promise with a timeout. If the promise doesn't resolve within
  * `timeoutMs`, rejects with a timeout error and the step is skipped.
  */
@@ -697,7 +707,7 @@ async function _runCycle(deps: CycleDeps = {}): Promise<CycleResult> {
           : watchlistCodes.map((c) => ({ actionCode: c, domain: "" }));
 
       if (entries.length > 0) {
-        const result = await withTimeout(syncFn(entries), "step C2 syncPeers");
+        const result = await withTimeout(syncFn(entries), "step C2 syncPeers", SYNC_PEERS_TIMEOUT_MS);
         logger.debug("[intelligence-cycle] step C2 complete — sector peer sync", result);
       }
     } catch (err) {
