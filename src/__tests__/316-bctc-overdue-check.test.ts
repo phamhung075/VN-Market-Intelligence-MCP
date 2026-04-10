@@ -72,6 +72,8 @@ describe("runBctcOverdueCheck (Task 1018 slice 1)", () => {
     expect(rows[0]!.severity).toBe("high");
     expect(rows[0]!.message).toContain("FPT");
     expect(rows[0]!.message).toContain("Q4-2025");
+    // Batch alert — single id for all overdue tickers
+    expect(rows[0]!.id).toMatch(/^bctc-overdue:batch:2025:Q4:/);
   });
 
   it("slice 2 wire-up: inserted alert flows through readUnnotifiedAlerts", async () => {
@@ -89,7 +91,7 @@ describe("runBctcOverdueCheck (Task 1018 slice 1)", () => {
     // wall-clock now; wire-up correctness is what we're proving here.
     const unnotified = readUnnotifiedAlerts(60 * 24 * 365 * 100, db);
     expect(unnotified.length).toBe(1);
-    expect(unnotified[0]!.id).toMatch(/^bctc-overdue:FPT:2025:Q4:/);
+    expect(unnotified[0]!.id).toMatch(/^bctc-overdue:batch:2025:Q4:/);
   });
 
   it("does NOT alert when overdue by less than the threshold (default 3 days)", async () => {
@@ -131,6 +133,40 @@ describe("runBctcOverdueCheck (Task 1018 slice 1)", () => {
     expect(
       (db.query<{ c: number }, []>("SELECT COUNT(*) AS c FROM alerts").get())!.c,
     ).toBe(1);
+  });
+
+  it("batches multiple overdue tickers into ONE alert (anti-spam — user feedback 2026-04-10)", async () => {
+    // Add 5 stocks to the watchlist, all general domain
+    for (const code of ["FPT", "VCB", "HPG", "VNM", "SSI"]) {
+      db.run(`INSERT INTO watchlist (code, domain) VALUES ('${code}', 'general')`);
+    }
+    // VNM has a filing → not overdue. Others do not.
+    db.run(
+      "INSERT INTO financial_reports (action_code, period_year, period_quarter, published_at) VALUES ('VNM', 2025, 4, '2026-03-15T00:00:00Z')",
+    );
+
+    const result = await runBctcOverdueCheck({
+      db,
+      now: new Date("2026-04-05T03:00:00Z"),
+    });
+
+    // 4 overdue (VNM has filing), but only 1 batch alert
+    expect(result.overdueFound).toBe(4);
+    expect(result.alertsInserted).toBe(1);
+
+    const rows = db.query<{ id: string; message: string; affected_actions_json: string }, []>(
+      "SELECT id, message, affected_actions_json FROM alerts",
+    ).all();
+    expect(rows.length).toBe(1);
+    expect(rows[0]!.id).toMatch(/^bctc-overdue:batch:/);
+    // Message should mention all 4 tickers
+    expect(rows[0]!.message).toContain("4 stocks");
+    for (const code of ["FPT", "HPG", "SSI"]) {
+      expect(rows[0]!.message).toContain(code);
+    }
+    // affected_actions_json should have all 4
+    const affected = JSON.parse(rows[0]!.affected_actions_json) as Array<{ code: string }>;
+    expect(affected.length).toBe(4);
   });
 
   it("respects a custom overdueDaysThreshold", async () => {

@@ -171,6 +171,17 @@ export async function runBctcOverdueCheck(opts: RunOptions = {}): Promise<RunRes
   let alertsInserted = 0;
   let overdueFound = 0;
 
+  // Collect all overdue tickers first so we can batch into one alert
+  // instead of spamming 25+ individual alerts (user feedback 2026-04-10).
+  interface OverdueTicker {
+    code: string;
+    daysOverdue: number;
+    year: number;
+    quarter: number;
+    deadline: Date;
+  }
+  const overdueTickers: OverdueTicker[] = [];
+
   for (const { code, domain } of watchlist) {
     const { quarter, year, deadline } = getCurrentDeadline(now, domain);
 
@@ -204,27 +215,39 @@ export async function runBctcOverdueCheck(opts: RunOptions = {}): Promise<RunRes
     if (daysOverdue < threshold) continue;
 
     overdueFound += 1;
+    overdueTickers.push({ code, daysOverdue, year, quarter, deadline });
+  }
 
-    const alertId = `bctc-overdue:${code}:${year}:Q${quarter}:${utcDay}`;
+  // ── Batch alert: one summary instead of N per-ticker alerts ────────────
+  // User feedback: 25 identical bctc_overdue alerts is spam. Batch into
+  // one alert that lists all overdue tickers. Dedup: one per UTC day.
+  if (overdueTickers.length > 0) {
+    // Use the first ticker's year/quarter for the batch id (all same period)
+    const { year, quarter } = overdueTickers[0]!;
+    const alertId = `bctc-overdue:batch:${year}:Q${quarter}:${utcDay}`;
+
+    const tickerList = overdueTickers
+      .map((t) => `${t.code} (${t.daysOverdue}d)`)
+      .join(", ");
     const message =
-      `${code} BCTC overdue: Q${quarter}-${year} report is ${daysOverdue} days past the statutory deadline ` +
-      `(${deadline.toISOString().slice(0, 10)}). No filing found in financial_reports.`;
+      `BCTC overdue Q${quarter}-${year}: ${overdueTickers.length} stocks past statutory deadline — ${tickerList}`;
 
-    // signals_json must be a proper Signal object array so that the dispatch
-    // pipeline's formatSignalVi(s) can access s.type and s.message without
-    // crashing.  Storing ["bctc_overdue"] (string array) caused msg.match()
-    // to throw inside formatSignalVi → notifyTelegramAlert caught the error
-    // → returned false → alert stuck unnotified forever.
     const signalsJson = JSON.stringify([
       {
         type: "bctc_overdue",
         severity: "high",
-        actionCode: code,
+        actionCode: overdueTickers.map((t) => t.code).join(","),
         message,
         confidence: 0.6,
         detectedAt: triggeredAt,
       },
     ]);
+
+    const affectedActions = overdueTickers.map((t) => ({
+      code: t.code,
+      expectedImpact: "down",
+      confidence: 0.6,
+    }));
 
     try {
       const info = insertAlert.run(
@@ -232,20 +255,19 @@ export async function runBctcOverdueCheck(opts: RunOptions = {}): Promise<RunRes
         triggeredAt,
         "high",
         signalsJson,
-        JSON.stringify([{ code, expectedImpact: "down", confidence: 0.6 }]),
+        JSON.stringify(affectedActions),
         message,
       );
       if ((info.changes ?? 0) > 0) alertsInserted += 1;
     } catch (err) {
-      logger.warn("[bctcOverdueCheck] alert insert failed", {
-        code,
+      logger.warn("[bctcOverdueCheck] batch alert insert failed", {
         error: err instanceof Error ? err.message : String(err),
       });
     }
   }
 
   if (alertsInserted > 0) {
-    logger.info("[bctcOverdueCheck] inserted overdue alerts", {
+    logger.info("[bctcOverdueCheck] inserted batch overdue alert", {
       alertsInserted,
       overdueFound,
       stocksChecked: watchlist.length,
