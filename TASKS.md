@@ -384,13 +384,7 @@ Sprint 056 merged to main 2026-04-11. Task 1111: 9 tests pass, bun tsc --noEmit 
 |----|-------|----------|-------|--------|
 | 1002 | @architect | P1 | Anonymous SSC PDF attribution: filenames carry no stock code — add download-time normalisation from portal metadata or PDF first page on ingest. (Report 997) | Backlog |
 | 1004 | @architect | P2 | Cascade gap: VN-market policy/macro news scoring at base 10.0. Missing rules for govt-stabilization signals. Add cascade rules + raise base score for systemic-stress + policy-intervention combos. (Report 1001) | Backlog |
-| 1085 | @dev | P1 | SSC portal JS-shell: BCTC ingestion stalled. PO Decision 2026-04-10: OPTION 2 — strengthen HOSE/HNX/UPCOM fallback as primary BCTC source; disable SSC polling via config flag. Implemented by task 1111. | Done — commit task/1111 |
-| 1086 | @dev | P2 | financial_reports row count drop detection in daily audit D-10b. Compares current vs previous audit_state snapshot; emits WARNING/escalated if count drops. | Done — commit 0c23a2b |
-| 283 | @dev | P1 | Batch queries in get_portfolio_conviction to fix timeout — N+1 patterns eliminated, appendKinhDich removed, hexagram formatting inlined | Done — commit 812e8fa |
-| 1088 | @architect | P1→P3 | BCTC OCR parser garbage numbers on VNM Q4-2025 (follow-up to #1072). Slices: (a) SHIPPED 2026-04-10 commit b90422b — enhanced detectUnitMultiplier + magnitude inference. (b) SHIPPED 2026-04-10 commit 007bf99 — validation guard rejects zero totalAssets/liabilities/equity; stale row flagged validation_status='failed'. (c) PENDING — regression test fixture using real VNM Q4-2025 OCR text. | Backlog ((a)+(b) done, (c) P3) |
-| 914 | @po | — | Steel sector watchlist gap — HPG. PO Decision 2026-04-10: NO-OP. HPG is already in mcp.config.json market.watchlist (confirmed line 47) and in referenceStocks.steel. Task 914 is closed — no code change needed. | Done (no-op — HPG already present) |
-| 1089 | Done | [janitor] Remove dead sourcesRaw fallback in analysis.ts | DONE — commit 067fb8c. Removed dead ?? fallback; Zod .default() handles it. |
-| 1093 | Done | [janitor] Remove orphaned cron defaults from config.ts scheduler section | DONE — commit 8411424. Removed SchedulerConfig interface + 7 cron defaults + scheduler property from McpConfig. |
+| 1088 | @architect | P3 | BCTC OCR parser regression test fixture using real VNM Q4-2025 OCR text. (a)+(b) shipped, (c) pending. | Backlog |
 
 ---
 
@@ -402,7 +396,7 @@ Sprint 056 merged to main 2026-04-11. Task 1111: 9 tests pass, bun tsc --noEmit 
 
 ## Review
 
-(see Sprint 055 kanban above — 5 tasks pending QA sign-off)
+(empty — Sprint 055 fully verified 2026-04-11)
 
 ---
 

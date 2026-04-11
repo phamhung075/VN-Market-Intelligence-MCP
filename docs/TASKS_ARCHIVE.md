@@ -5,6 +5,42 @@ Active board lives in `TASKS.md`.
 
 ---
 
+### [1085 / @dev P1] SSC portal JS-shell: BCTC ingestion stalled — Done 2026-04-11
+
+PO Decision: OPTION 2 — strengthen HOSE/HNX/UPCOM fallback as primary BCTC source; disable SSC polling via config flag. Implemented by task 1111 (Sprint 056). Commit 00d0e60.
+
+---
+
+### [1086 / @dev P2] financial_reports row count drop detection — Done 2026-04-10
+
+D-10b in dataAuditJob.ts compares current row counts vs previous audit_state snapshot. Emits WARNING/escalated finding if count drops. 4 new tests pass. Commit 0c23a2b.
+
+---
+
+### [283 / @dev P1] Batch queries in get_portfolio_conviction — Done 2026-04-10
+
+N+1 query patterns eliminated, appendKinhDich removed, hexagram formatting inlined. 5 batch optimizations, 11 new tests. Commit 812e8fa.
+
+---
+
+### [914 / @po] Steel sector watchlist gap — HPG — Closed (no-op) 2026-04-10
+
+HPG already in mcp.config.json market.watchlist and referenceStocks.steel. No code change needed.
+
+---
+
+### [1089 / janitor] Remove dead sourcesRaw fallback in analysis.ts — Done 2026-04-10
+
+Zod .default() handles it. Removed 3 dead lines. Commit 067fb8c.
+
+---
+
+### [1093 / janitor] Remove orphaned cron defaults from config.ts — Done 2026-04-11
+
+Removed SchedulerConfig interface + 7 cron defaults + scheduler property from McpConfig. 18/18 tests pass. Commit 8411424.
+
+---
+
 ### [1048 / @dev P3] Consolidate scheduler cron defaults — config.ts duplicates CRONS fallbacks from jobs.ts — Closed — Working as Designed
 
 code-janitor auto-detected: `src/infrastructure/config.ts:scheduler` section defines 7 cron default strings (sscCheck, morningBriefing, marketOpen, marketClose, intelligenceCycle, eveningSummary, predictionMarketPoll) that duplicate the fallback defaults already in CRONS (jobs.ts). Any cron default change requires two edits. config.ts should import and derive from CRONS rather than redeclaring literals.
