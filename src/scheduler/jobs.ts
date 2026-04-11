@@ -42,6 +42,7 @@ import { runVpsProxyWatchdog } from './vpsProxyWatchdogJob.js'
 import { runBctcOverdueCheck } from './bctcOverdueCheckJob.js'
 import { runBctcReparseJob } from './bctcReparseJob.js'
 import { runAskQueueCheck } from './askQueueCheckJob.js'
+import { runCronHealthAlert } from './cronHealthAlertJob.js'
 
 export const CRONS = {
   morningBriefing:        Bun.env.CRON_MORNING_BRIEFING          ?? '0 8 * * 1-5',
@@ -87,6 +88,8 @@ export const CRONS = {
   predictionOutcome:      Bun.env.CRON_PREDICTION_OUTCOME         ?? '0 8 * * 0',
   /** VPS proxy watchdog: every 10 min during VN market hours (Mon-Fri 02:00-08:59 UTC) */
   vpsProxyWatchdog:       Bun.env.CRON_VPS_PROXY_WATCHDOG         ?? '*/10 2-8 * * 1-5',
+  /** Cron health alert: daily 00:00 UTC (07:00 GMT+7) — task 1103 */
+  cronHealthAlert:        Bun.env.CRON_HEALTH_ALERT                ?? '0 0 * * *',
 }
 
 function log(msg: string) {
@@ -265,6 +268,20 @@ export function startScheduler() {
       }
     } catch (err) {
       log(`[vps-watchdog] uncaught: ${err instanceof Error ? err.message : String(err)}`)
+    }
+  }, { timezone: 'UTC' })
+
+  // Daily 00:00 UTC (07:00 GMT+7) — Cron health alert (task 1103).
+  // Sends ONE message to WORK channel if any job has < 80% success rate in last 24h.
+  // Silent when all jobs are healthy (no heartbeat on all-green).
+  cron.schedule(CRONS.cronHealthAlert, async () => {
+    try {
+      const r = await runCronHealthAlert()
+      if (r.alertsSent > 0) {
+        log(`[cron-health-alert] degraded=${r.alertsSent}`)
+      }
+    } catch (err) {
+      log(`[cron-health-alert] uncaught: ${err instanceof Error ? err.message : String(err)}`)
     }
   }, { timezone: 'UTC' })
 
