@@ -12,12 +12,24 @@ You run every 1 hour via Claude Code CLI cron. Your job: read problem reports, t
 
 ## KNOWLEDGE (lazy-load)
 
-Read these ONLY when the current task touches the relevant area. Do NOT preload all knowledge files.
+Read ONLY when the current task touches the relevant area. Do NOT preload.
 
-- MCP tool surface (for tool-related fixes) → `.claude/knowledge/mcp-tools.md`
-- Agent roster (for agent file updates) → `.claude/knowledge/agent-roster.md`
-- Cron jobs (for scheduler fixes) → `.claude/knowledge/cron-jobs.md`
-- Sprint 054 feature specs → `.claude/knowledge/portfolio-schema.md`, `.claude/knowledge/telegram-alerts.md`, `.claude/knowledge/ask-queue-protocol.md`, `.claude/knowledge/kinh-dich-layer.md`
+| Area | Pointer |
+|------|---------|
+| MCP tools (80+), tool-per-agent mapping | `.claude/knowledge/mcp-tools.md` |
+| Agent roster, 2-team architecture, signal bus | `.claude/knowledge/agent-roster.md` |
+| Cron jobs, scheduler files, intelligence cycle | `.claude/knowledge/cron-jobs.md` |
+| Telegram bot commands, /ask queue | `.claude/knowledge/telegram-commands.md` |
+| Alert policy, firing rules, 3-channel routing | `.claude/knowledge/telegram-alerts.md` |
+| Portfolio schema, stop-loss, TP ladder | `.claude/knowledge/portfolio-schema.md` |
+| Stock classification, sector peers | `.claude/knowledge/stock-classification.md` |
+| Kinh Dich hexagram integration | `.claude/knowledge/kinh-dich-layer.md` |
+| /ask FIFO queue, QA Responder protocol | `.claude/knowledge/ask-queue-protocol.md` |
+| Server restart (launchctl only, ban list) | `.claude/knowledge/restart-policy.md` |
+| Architecture, data flow, DDD layers | `docs/ARCHITECTURE.md` |
+| Vietnamese financial terms glossary | `docs/GLOSSARY_VI.md` |
+| Sprint history | `docs/IMPLEMENTATION_STATUS.md` |
+| Watchlist, sector peers, config | `mcp.config.json` |
 
 **Knowledge load failure** → `.claude/knowledge/fail-loud-protocol.md`
 
@@ -279,10 +291,26 @@ At the very end of every cron invocation, after Step 8 hygiene passes, run `/com
 | `reports/TASK_REPORT_NNN.md` | QA creates after review |
 | `reports/SPRINT_REPORT_NNN.md` | QA creates after sprint |
 
-## CURRENT STATE
+## CURRENT STATE (always resolve live — never hardcode)
 
-- 80 MCP tools | 28 cron jobs | Sprint 055 in progress
-- Server: Bun, launchd-supervised (launchctl kickstart only — hot reload forbidden)
-- 3 Telegram channels: MARKET (user-facing) + WORK (dev status) + BUG (actionable problems)
-- Full tool list → `.claude/knowledge/mcp-tools.md` | Cron jobs → `.claude/knowledge/cron-jobs.md`
-- User is in France (CET), monitors Vietnam market (GMT+7). Telegram MARKET channel is the primary user communication path.
+Do NOT rely on numbers below. Always call `get_system_status` or read the canonical file for current values.
+
+| What | How to check |
+|------|-------------|
+| Tool count, uptime, circuits | `get_system_status` or `curl http://127.0.0.1:3000/health` |
+| Active sprint, task board | `TASKS.md` + `SPRINT_GOAL.md` |
+| MCP tool list | `.claude/knowledge/mcp-tools.md` |
+| Cron schedule (canonical) | `src/scheduler/jobs.ts` → `CRONS` map |
+| Cron documentation | `.claude/knowledge/cron-jobs.md` |
+| Watchlist stocks | `mcp.config.json` → `market.watchlist` |
+| Sector peer groups | `mcp.config.json` → `referenceStocks.*` |
+| CLI agents (dev team) | `.claude/agents/*.md` (13 files) |
+| Cowork agents (analysis team) | `cowork-analysis-vnmarket-team/*.md` (7 production + unified + dev-cron) |
+| Known issues | `cowork-analysis-vnmarket-team/README.md` → "Known Issues" table |
+| Alert policy + channel rules | `.claude/knowledge/telegram-alerts.md` |
+| Server restart method | `.claude/knowledge/restart-policy.md` (launchctl ONLY) |
+
+**Invariants** (these rarely change — verify only if something seems wrong):
+- Server: Bun, launchd-supervised. Hot reload forbidden.
+- 3 Telegram channels: MARKET (user) + WORK (dev) + BUG (reports).
+- User is in France (CET), monitors Vietnam market (GMT+7).
