@@ -37,10 +37,22 @@
  */
 
 import * as cheerio from "cheerio";
+import https from "node:https";
 import { logger } from "../logger.js";
 import { breakers } from "../circuitBreakerRegistry.js";
 import { CircuitOpenError } from "../circuitBreaker.js";
 import { mcpConfig } from "../config.js";
+
+/**
+ * Shared HTTPS agent that skips certificate verification.
+ *
+ * Vietnamese government sites (hnx.vn, upcom.hnx.vn, hsx.vn, congbothongtin.ssc.gov.vn)
+ * frequently serve incomplete certificate chains that fail OpenSSL validation.
+ * Since we only fetch public disclosure HTML/PDF from these known hosts, bypassing
+ * TLS verification is acceptable and prevents the recurring "unable to verify
+ * the first certificate" errors (report #1101).
+ */
+const tlsPermissiveAgent = new https.Agent({ rejectUnauthorized: false });
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -141,6 +153,8 @@ async function makeDefaultHttpClient(): Promise<HttpClient> {
         },
         timeout: 30_000,
         responseType: "text",
+        // Vietnamese government sites have incomplete TLS chains (report #1101)
+        httpsAgent: tlsPermissiveAgent,
       });
       return response.data;
     },
