@@ -599,6 +599,177 @@ const SECTOR_RULES: SectorRule[] = [
     title: "Gói hỗ trợ — tâm lý tiêu dùng cải thiện, tích cực bán lẻ",
   },
 
+  // ── Task 1004: SBV / NHNN rate cut — direct monetary easing ──────────────
+  // Must appear BEFORE generic "lãi suất giảm" rule so specific SBV
+  // stabilization wins first-match-wins per domain for banking + securities.
+  {
+    keywords: [
+      "nhnn hạ lãi suất", "ngân hàng nhà nước hạ lãi suất", "sbv rate cut",
+      "hạ lãi suất điều hành", "giảm lãi suất điều hành", "cắt giảm lãi suất điều hành",
+      "sbv cuts rate", "nhnn cắt giảm lãi suất", "hạ lãi suất tái cấp vốn",
+      "giảm lãi suất tái chiết khấu", "nới lỏng tiền tệ", "monetary easing vietnam",
+    ],
+    domain: "banking",
+    direction: "up",
+    confidence: 0.87,
+    title: "NHNN hạ lãi suất điều hành — NIM ngắn hạn điều chỉnh, thanh khoản hệ thống cải thiện",
+  },
+  {
+    keywords: [
+      "nhnn hạ lãi suất", "hạ lãi suất điều hành", "giảm lãi suất điều hành",
+      "sbv rate cut", "nhnn cắt giảm lãi suất", "nới lỏng tiền tệ",
+    ],
+    domain: "securities",
+    direction: "up",
+    confidence: 0.85,
+    title: "NHNN hạ lãi suất — chi phí vốn giảm, P/E thị trường mở rộng (CTCK hưởng lợi)",
+  },
+  {
+    keywords: [
+      "nhnn hạ lãi suất", "hạ lãi suất điều hành", "giảm lãi suất điều hành",
+      "sbv rate cut", "nới lỏng tiền tệ",
+    ],
+    domain: "real_estate",
+    direction: "up",
+    confidence: 0.82,
+    title: "NHNN hạ lãi suất — lãi vay mua nhà giảm, tích cực cho bất động sản trung dài hạn",
+  },
+
+  // ── Task 1004: Fiscal stimulus / Bơm tiền ngân sách ─────────────────────
+  {
+    keywords: [
+      "bộ tài chính bơm tiền", "ngân sách nhà nước bơm tiền", "fiscal stimulus vietnam",
+      "gói kích thích tài khóa", "tăng đầu tư công khẩn cấp", "bơm vốn vào thị trường",
+      "government cash injection", "giải ngân đầu tư công khẩn cấp",
+      "thúc đẩy giải ngân vốn đầu tư công", "gói phục hồi kinh tế",
+      "chương trình phục hồi kinh tế", "economic recovery package vietnam",
+    ],
+    domain: "securities",
+    direction: "up",
+    confidence: 0.88,
+    title: "Bơm tiền tài khóa — thanh khoản thị trường cải thiện mạnh, CTCK hưởng lợi trực tiếp",
+  },
+  {
+    keywords: [
+      "bộ tài chính bơm tiền", "gói kích thích tài khóa", "tăng đầu tư công khẩn cấp",
+      "bơm vốn vào thị trường", "gói phục hồi kinh tế", "giải ngân đầu tư công khẩn cấp",
+      "chương trình phục hồi kinh tế",
+    ],
+    domain: "banking",
+    direction: "up",
+    confidence: 0.80,
+    title: "Gói kích thích tài khóa — thanh khoản hệ thống ngân hàng tăng, nợ xấu áp lực giảm",
+  },
+  {
+    keywords: [
+      "bộ tài chính bơm tiền", "gói kích thích tài khóa", "tăng đầu tư công khẩn cấp",
+      "giải ngân đầu tư công khẩn cấp", "chương trình phục hồi kinh tế",
+      "economic recovery package vietnam",
+    ],
+    domain: "construction",
+    direction: "up",
+    confidence: 0.78,
+    title: "Giải ngân đầu tư công khẩn cấp — tích cực cho xây dựng và vật liệu",
+  },
+  {
+    keywords: [
+      "gói phục hồi kinh tế", "gói kích thích tài khóa",
+      "chương trình phục hồi kinh tế", "economic recovery package vietnam",
+    ],
+    domain: "retail",
+    direction: "up",
+    confidence: 0.72,
+    title: "Gói phục hồi kinh tế — cải thiện sức mua tiêu dùng (VNM, MWG)",
+  },
+
+  // ── Task 1004: Market Stabilization Fund — SCIC/Treasury intervention ────
+  {
+    keywords: [
+      "scic mua vào cổ phiếu", "nhà nước mua vào cổ phiếu",
+      "tổng công ty đầu tư vốn nhà nước", "scic intervenes",
+      "state capital investment corporation", "chính phủ mua lại trái phiếu",
+      "mua lại trái phiếu chính phủ", "treasury bond buyback",
+      "nhnn mua trái phiếu chính phủ", "sbv bond purchase",
+      "open market operations vietnam", "nghiệp vụ thị trường mở",
+    ],
+    domain: "securities",
+    direction: "up",
+    confidence: 0.90,
+    title: "SCIC/NHNN can thiệp mua vào — tín hiệu chính phủ bảo vệ thị trường (bullish reversal mạnh)",
+  },
+  {
+    keywords: [
+      "scic mua vào cổ phiếu", "nhà nước mua vào cổ phiếu",
+      "chính phủ mua lại trái phiếu", "nhnn mua trái phiếu chính phủ",
+      "nghiệp vụ thị trường mở",
+    ],
+    domain: "banking",
+    direction: "up",
+    confidence: 0.82,
+    title: "Nghiệp vụ thị trường mở — bơm thanh khoản hệ thống ngân hàng",
+  },
+
+  // ── Task 1004: Systemic stress — banking / liquidity crisis ──────────────
+  {
+    keywords: [
+      "nợ xấu hệ thống vượt", "nợ xấu ngân hàng tăng mạnh", "banking system npl",
+      "non-performing loan surge", "khủng hoảng thanh khoản ngân hàng",
+      "bank liquidity crisis", "ngân hàng thiếu thanh khoản",
+      "lãi suất liên ngân hàng tăng đột biến", "interbank rate spike",
+      "overnight rate surge", "hệ thống ngân hàng căng thẳng thanh khoản",
+      "bank run vietnam", "rút tiền hàng loạt", "bank stress vietnam",
+    ],
+    domain: "banking",
+    direction: "down",
+    confidence: 0.90,
+    title: "Căng thẳng hệ thống ngân hàng — nợ xấu / thanh khoản hệ thống (rủi ro hệ thống cao)",
+  },
+  {
+    keywords: [
+      "nợ xấu hệ thống vượt", "khủng hoảng thanh khoản ngân hàng",
+      "bank liquidity crisis", "bank run vietnam", "rút tiền hàng loạt",
+      "bank stress vietnam", "banking system npl",
+    ],
+    domain: "securities",
+    direction: "down",
+    confidence: 0.85,
+    title: "Khủng hoảng hệ thống ngân hàng — tâm lý sụp đổ, VN-Index rủi ro giảm mạnh",
+  },
+  {
+    keywords: [
+      "nợ xấu hệ thống vượt", "khủng hoảng thanh khoản ngân hàng",
+      "bank run vietnam", "bank stress vietnam",
+    ],
+    domain: "real_estate",
+    direction: "down",
+    confidence: 0.80,
+    title: "Khủng hoảng ngân hàng — tín dụng BĐS đóng băng (VHM, NVL rủi ro cao)",
+  },
+
+  // ── Task 1004: SOE restructuring / equitisation ──────────────────────────
+  {
+    keywords: [
+      "cổ phần hóa doanh nghiệp nhà nước", "equitisation vietnam",
+      "thoái vốn nhà nước", "nhà nước thoái vốn", "scic thoái vốn",
+      "privatisation vietnam", "bán vốn nhà nước", "ipo doanh nghiệp nhà nước",
+      "state divestment", "soe restructuring vietnam",
+    ],
+    domain: "securities",
+    direction: "up",
+    confidence: 0.75,
+    title: "Cổ phần hóa/thoái vốn DNNN — cung cổ phiếu mới, cơ hội đầu tư dài hạn (CTCK hưởng lợi phí)",
+  },
+  {
+    keywords: [
+      "cổ phần hóa doanh nghiệp nhà nước", "thoái vốn nhà nước",
+      "scic thoái vốn", "privatisation vietnam", "state divestment",
+    ],
+    domain: "real_estate",
+    direction: "up",
+    confidence: 0.68,
+    title: "Thoái vốn DNNN — giải phóng quỹ đất và tài sản BĐS (cơ hội M&A)",
+  },
+
   {
     keywords: ["giá dầu tăng", "oil price rise", "crude oil up", "giá dầu tăng mạnh", "opec"],
     domain: "oil_gas",
@@ -1513,7 +1684,90 @@ export const POLICY_RULES: CascadeKeywordRule[] = [
   { key: "fta_steel", keyword: "FTA", sector: "steel" },
   { key: "exchange_rate_banking", keyword: "tỷ giá", sector: "banking" },
   { key: "monetary_policy_banking", keyword: "dự trữ bắt buộc", sector: "banking" },
+  // Task 1004 — VN stabilization + systemic stress additions
+  { key: "sbv_rate_cut_banking", keyword: "hạ lãi suất điều hành", sector: "banking" },
+  { key: "sbv_rate_cut_securities", keyword: "nhnn hạ lãi suất", sector: "securities" },
+  { key: "fiscal_stimulus_securities", keyword: "gói kích thích tài khóa", sector: "securities" },
+  { key: "scic_intervention", keyword: "scic mua vào cổ phiếu", sector: "securities" },
+  { key: "systemic_npl_banking", keyword: "nợ xấu hệ thống vượt", sector: "banking" },
+  { key: "bank_liquidity_crisis", keyword: "khủng hoảng thanh khoản ngân hàng", sector: "banking" },
+  { key: "interbank_rate_spike", keyword: "lãi suất liên ngân hàng tăng đột biến", sector: "banking" },
+  { key: "soe_equitisation", keyword: "cổ phần hóa doanh nghiệp nhà nước", sector: "securities" },
+  { key: "open_market_operations", keyword: "nghiệp vụ thị trường mở", sector: "banking" },
+  { key: "fiscal_capex_emergency", keyword: "tăng đầu tư công khẩn cấp", sector: "construction" },
 ];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Task 1004 — Policy intervention combo detection
+// ─────────────────────────────────────────────────────────────────────────────
+
+const POLICY_INTERVENTION_CATEGORIES: Array<{ key: string; keywords: string[] }> = [
+  {
+    key: "sbv_rate",
+    keywords: [
+      "nhnn hạ lãi suất", "hạ lãi suất điều hành", "giảm lãi suất điều hành",
+      "sbv rate cut", "cắt giảm lãi suất điều hành",
+    ],
+  },
+  {
+    key: "fiscal_stimulus",
+    keywords: [
+      "gói kích thích tài khóa", "bộ tài chính bơm tiền", "gói phục hồi kinh tế",
+      "giải ngân đầu tư công khẩn cấp", "fiscal stimulus vietnam",
+    ],
+  },
+  {
+    key: "credit_room_expansion",
+    keywords: [
+      "nới room tín dụng", "tăng room tín dụng cho ngân hàng",
+      "tín dụng ngân hàng tăng trưởng", "room tín dụng tăng",
+    ],
+  },
+  {
+    key: "market_stabilization",
+    keywords: [
+      "quỹ bình ổn", "bình ổn thị trường", "scic mua vào cổ phiếu",
+      "stabilization fund", "nhnn mua trái phiếu chính phủ",
+      "nghiệp vụ thị trường mở", "chính phủ hỗ trợ thị trường",
+    ],
+  },
+  {
+    key: "forex_intervention",
+    keywords: [
+      "nhnn bán ngoại tệ", "sbv fx intervention", "bán ngoại tệ bình ổn tỷ giá",
+      "can thiệp tỷ giá",
+    ],
+  },
+];
+
+/**
+ * Count how many distinct policy-intervention categories are present in the
+ * seed text. Returns a confidence boost multiplier:
+ *
+ *   0–1 category  → 1.00 (no combo boost)
+ *   2 categories  → 1.10 (+10% confidence on banking/securities domain entries)
+ *   3+ categories → 1.18 (+18% — systemic policy response, rare event)
+ *
+ * Pure function: no I/O, no side effects.
+ */
+export function detectPolicyInterventionCombo(textLower: string): {
+  matchedCategories: string[];
+  multiplier: number;
+} {
+  const matched: string[] = [];
+
+  for (const cat of POLICY_INTERVENTION_CATEGORIES) {
+    if (cat.keywords.some((kw) => textLower.includes(kw))) {
+      matched.push(cat.key);
+    }
+  }
+
+  let multiplier = 1.0;
+  if (matched.length >= 3) multiplier = 1.18;
+  else if (matched.length === 2) multiplier = 1.10;
+
+  return { matchedCategories: matched, multiplier };
+}
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Main exported function
@@ -1673,6 +1927,21 @@ export function buildCausalChain(
   // ── Step 2c: Apply σ-based dynamic adjustments (when stats available) ──
   if (macroStats && macroStats.length > 0) {
     applyDynamicMacroAdjustments(entries, macroStats);
+  }
+
+  // ── Step 2d: Policy-intervention combo boost (Task 1004) ──────────────
+  // Only applies when ≥ 2 independent government policy categories co-occur.
+  // Targets banking + securities (most direct beneficiaries of VN policy combos).
+  const comboResult = detectPolicyInterventionCombo(summaryLower);
+  if (comboResult.multiplier > 1.0) {
+    const comboTargets: DomainType[] = ["banking", "securities"];
+    for (const [domain, domainEntry] of domainEntryMap) {
+      if (!comboTargets.includes(domain)) continue;
+      const boosted = Math.min(0.99, domainEntry.confidence * comboResult.multiplier);
+      domainEntry.confidence = boosted;
+      domainEntry.reasoning +=
+        ` [PolicyCombo: ${comboResult.matchedCategories.join("+")} → ×${comboResult.multiplier.toFixed(2)} ${domain}]`;
+    }
   }
 
   // ── Step 3: Action entries from watchlist ─────────────────────────────
