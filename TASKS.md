@@ -16,6 +16,7 @@
 | 1107 | Signal Fix C: recency_weight in search_similar_context | `task/1107-rag-recency-weight` | domain/interface | Review |
 | 1110 | sent_by column on alerts table + Alert Commander filter | `task/1110-alert-sent-by-column` | infrastructure/db + interface/mcp | Review |
 | 1102 | get_cron_health MCP tool (+1 tool, total ~83) | `task/1102-get-cron-health-tool` | interface | Review |
+| 1103 | cronHealthAlertJob — daily WORK-channel alert if success_rate < 80% | `task/1103-cron-health-alert-job` | scheduler | Review |
 
 PO note (2026-04-10): All 5 Review tasks are pre-approved for merge once QA produces TASK_REPORT_NNN.md with zero blocking issues and `bun tsc --noEmit` + test suite pass confirmed. QA should process in dependency order: 1100 → 1101 (depends on 1100), then 1105 / 1107 / 1110 in parallel.
 
