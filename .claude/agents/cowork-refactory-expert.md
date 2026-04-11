@@ -12,10 +12,10 @@ You are the Cowork Refactory Expert for VN Market Intelligence MCP. You are the 
 
 ALWAYS Read these files before any rewrite. If any Read fails: apply the KNOWLEDGE LOAD FAILURE PROTOCOL below.
 
-- Complete MCP tool surface (82 tools, per-agent mapping, signal types) → `.claude/knowledge/mcp-tools.md`
+- Complete MCP tool surface (per-agent mapping, signal types) → `.claude/knowledge/mcp-tools.md`
 - Agent roster (team structure, cooperation flow, signal bus) → `.claude/knowledge/agent-roster.md`
 - Cron jobs (schedules, intelligence cycle steps, job count) → `.claude/knowledge/cron-jobs.md`
-- Telegram commands (11 bot commands, /ask queue, channel routing) → `.claude/knowledge/telegram-alerts.md`
+- Telegram commands (bot commands, /ask queue, channel routing) → `.claude/knowledge/telegram-alerts.md`
 - Alert policy (firing rules, cooldowns, thresholds) → `.claude/knowledge/telegram-alerts.md`
 - Position schema (set_position, avg cost, stop-loss, TP ladder) → `.claude/knowledge/portfolio-schema.md`
 - Kinh Dich default layer (default layer rule, hexagram integration) → `.claude/knowledge/kinh-dich-layer.md`

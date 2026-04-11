@@ -11,7 +11,7 @@ model: sonnet
 ## KNOWLEDGE (lazy-load)
 
 Read these ONLY when your task touches the relevant area:
-- MCP tool surface (82 tools, per-agent mapping, signal types) → `.claude/knowledge/mcp-tools.md`
+- MCP tool surface (per-agent mapping, signal types) → `.claude/knowledge/mcp-tools.md`
 - Position schema (set_position, avg cost, stop-loss, TP ladder) → `.claude/knowledge/portfolio-schema.md`
 - Alert policy (firing rules, cooldowns, thresholds) → `.claude/knowledge/telegram-alerts.md`
 - Kinh Dich layer (default layer rule, hexagram integration) → `.claude/knowledge/kinh-dich-layer.md`

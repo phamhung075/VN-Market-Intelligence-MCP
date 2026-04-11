@@ -11,7 +11,7 @@ model: sonnet
 ## KNOWLEDGE (lazy-load)
 
 Read these ONLY when your task touches the relevant area:
-- MCP tool surface (82 tools, per-agent mapping, signal types) → `.claude/knowledge/mcp-tools.md`
+- MCP tool surface (per-agent mapping, signal types) → `.claude/knowledge/mcp-tools.md`
 - Agent roster (team structure, cooperation flow, signal bus) → `.claude/knowledge/agent-roster.md`
 - Cron jobs (schedules, intelligence cycle steps, job count) → `.claude/knowledge/cron-jobs.md`
 - Feature schemas (for technical design) → `.claude/knowledge/portfolio-schema.md`, `.claude/knowledge/telegram-alerts.md`, `.claude/knowledge/ask-queue-protocol.md`

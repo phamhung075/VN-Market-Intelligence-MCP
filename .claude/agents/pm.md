@@ -13,7 +13,7 @@ model: sonnet
 Read these ONLY when your task touches the relevant area:
 - Agent roster (team structure, cooperation flow, signal bus) → `.claude/knowledge/agent-roster.md`
 - Cron jobs (schedules, intelligence cycle steps, job count) → `.claude/knowledge/cron-jobs.md`
-- MCP tool surface (82 tools, per-agent mapping, signal types) → `.claude/knowledge/mcp-tools.md`
+- MCP tool surface (per-agent mapping, signal types) → `.claude/knowledge/mcp-tools.md`
 - Token optimization (for writing tasks/docs) → use `token-economy` skill
 
 **Failure protocol** → `.claude/knowledge/fail-loud-protocol.md`

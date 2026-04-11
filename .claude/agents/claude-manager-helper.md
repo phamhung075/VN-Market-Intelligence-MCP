@@ -148,6 +148,7 @@ When auditing agent `.md` and `.claude/commands/cron-*.md`, enforce:
 - **Never delete information** — only relocate. If unsure where it belongs, put it in `docs/MISC.md` rather than drop it.
 - **Never touch code** — only `*.md` and `memory/*`.
 - **Never remove a warning or invariant from CLAUDE.md** — warnings stay inline even if long.
+- **Never hardcode volatile stats** (tool count, scheduler count, task count, sprint number) in CLAUDE.md — replace with a pointer to the SSOT file (e.g., `docs/IMPLEMENTATION_STATUS.md`).
 - **Never create docs for hypothetical future content** — only move what exists.
 - **Preserve frontmatter** on agent and skill files.
 - **One commit per logical move** if the user asks you to commit; otherwise leave staging to them.

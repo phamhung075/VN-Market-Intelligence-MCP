@@ -10,7 +10,7 @@ Next sprint to be defined. Sprint 055 tasks shipped 2026-04-11. Backlog items 10
 
 started: 2026-04-10 | completed: 2026-04-11 | theme: Observability + Signal Quality + Alert Attribution
 
-Tasks shipped: 1100 (cron_job_runs DDL) + 1101 (recordJobRun wrapper) + 1102 (get_cron_health tool) + 1103 (cronHealthAlertJob) + 1105 (causal_root_id) + 1107 (recency_weight) + 1110 (sent_by column). All merged to main. 53+34+8 tests passing. 0 TypeScript errors.
+All 11 tasks shipped: 1100 (cron_job_runs DDL) + 1101 (recordJobRun wrapper) + 1102 (get_cron_health tool) + 1103 (cronHealthAlertJob) + 1104 (smoke test) + 1105 (causal_root_id) + 1106 (signal_class weighting) + 1107 (recency_weight) + 1108 (agent_work_log store) + 1109 (agent_work_log tools) + 1110 (sent_by column). 156/156 tests pass. Net +3 tools → ~83 total.
 
 ---
 
