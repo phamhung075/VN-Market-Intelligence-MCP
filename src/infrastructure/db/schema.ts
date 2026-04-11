@@ -816,6 +816,14 @@ export async function initDatabase(): Promise<void> {
   `);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_pet_filename ON pdf_extracted_text(filename, page_number)`);
 
+  // Task 1002 — action_code column for ticker attribution on cached OCR text
+  try {
+    db.exec(`ALTER TABLE pdf_extracted_text ADD COLUMN action_code TEXT NOT NULL DEFAULT ''`);
+    db.exec(`CREATE INDEX IF NOT EXISTS idx_pet_action_code ON pdf_extracted_text(action_code)`);
+  } catch {
+    // Column already exists — safe to ignore
+  }
+
   // ── Kinh Dich tables (Task 1047) ──────────────────────────────────────────
   // Previously created via initHexagramTables() called lazily from kinhDichTools.ts
   // and intelligenceCycleJob.ts. Moved here so fresh DBs have both tables on startup.

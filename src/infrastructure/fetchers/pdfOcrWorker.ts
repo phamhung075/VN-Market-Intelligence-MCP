@@ -128,6 +128,7 @@ async function ocrOnePage(tmpPdf: string, page: number): Promise<string> {
 export async function extractAndStorePdfPages(
   pdfPath: string,
   filename: string,
+  actionCode?: string,
 ): Promise<{ pages: number; totalChars: number }> {
   const db = getDb();
 
@@ -174,8 +175,9 @@ export async function extractAndStorePdfPages(
   writeFileSync(tmpPdf, readFileSync(pdfPath));
 
   const insert = db.prepare(
-    "INSERT OR REPLACE INTO pdf_extracted_text (filename, page_number, text_content, confidence) VALUES (?, ?, ?, ?)"
+    "INSERT OR REPLACE INTO pdf_extracted_text (filename, page_number, text_content, confidence, action_code) VALUES (?, ?, ?, ?, ?)"
   );
+  const ac = actionCode?.toUpperCase() ?? "";
 
   let extractedPages = 0;
   let totalChars = 0;
@@ -188,7 +190,7 @@ export async function extractAndStorePdfPages(
       // Pages with < 10 chars are silently skipped — no row inserted.
       if (pageText.length >= 10) {
         const confidence = pageText.length > 50 ? 0.8 : 0.5;
-        insert.run(filename, page, pageText, confidence);
+        insert.run(filename, page, pageText, confidence, ac);
         extractedPages++;
         totalChars += pageText.length;
       }

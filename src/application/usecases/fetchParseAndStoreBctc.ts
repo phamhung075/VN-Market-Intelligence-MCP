@@ -50,6 +50,30 @@ import type { FinancialReport, FiscalPeriod } from "../../../bctc-schema.js";
 export type QuarterString = "Q1" | "Q2" | "Q3" | "Q4";
 
 /**
+ * Task 1002 — Normalise PDF filename to always include the ticker.
+ * Anonymous filenames (e.g. "document.pdf", GUIDs) are replaced with
+ * `{ACTIONCODE}_{year}_{quarter}.pdf`. Filenames that already contain the
+ * ticker are returned unchanged.
+ */
+export function normaliseFilename(
+  url: string,
+  actionCode: string,
+  year: number,
+  quarter: QuarterString,
+): string {
+  const canonical = `${actionCode.toUpperCase()}_${year}_${quarter}.pdf`;
+  try {
+    const raw = basename(decodeURIComponent(new URL(url, "https://example.com").pathname));
+    if (raw && raw.toLowerCase().endsWith(".pdf") && raw.toUpperCase().includes(actionCode.toUpperCase())) {
+      return raw; // already attributed
+    }
+  } catch {
+    // URL parse failure — use canonical
+  }
+  return canonical;
+}
+
+/**
  * Injectable function signature for inserting an analysis entry into LanceDB.
  * Defaults to the real `insertAnalysis` from the retriever when not provided.
  */
@@ -205,16 +229,8 @@ export async function fetchParseAndStoreBctc(
     // In that case consult the OCR cache built by pdfOcrWorker.ts, and if not
     // yet cached + OCR tools are available, run the extraction now.
     if (rawText.trim().length < 100) {
-      // Derive the filename from the URL path (basename strips any directory)
-      let filename: string;
-      try {
-        filename = basename(decodeURIComponent(new URL(doc.url, "https://example.com").pathname));
-      } catch {
-        filename = basename(doc.url);
-      }
-      if (!filename) {
-        filename = `${actionCode}_${year}_${quarter}.pdf`;
-      }
+      // Task 1002: normalise filename to always include the ticker
+      const filename = normaliseFilename(doc.url, actionCode, year, quarter);
 
       logger.info(`${tag} pdf-parse returned < 100 chars — checking OCR cache`, { filename });
 
@@ -245,7 +261,7 @@ export async function fetchParseAndStoreBctc(
             }),
           );
           writeFileSync(pdfPath, Buffer.from(resp.data));
-          await extractAndStorePdfPages(pdfPath, filename);
+          await extractAndStorePdfPages(pdfPath, filename, actionCode);
           cached = getCachedPdfText(filename);
         } catch (err) {
           if (err instanceof CircuitOpenError) {
@@ -308,9 +324,11 @@ export async function fetchParseAndStoreBctc(
     return null;
   }
 
-  // Patch source URL from SSC portal
+  // Patch source URL from SSC portal + local PDF path (Task 1002)
   report.source.sscUrl = doc.url;
   report.source.publishedAt = doc.publishedAt || report.source.parsedAt;
+  const normFilename = normaliseFilename(doc.url, actionCode, year, quarter);
+  report.source.pdfPath = join(process.cwd(), "data", "pdfs", normFilename);
 
   // ── Step 4: Embed into LanceDB ────────────────────────────────────────────
   logger.info(`${tag} step 4: inserting analysis into LanceDB`);

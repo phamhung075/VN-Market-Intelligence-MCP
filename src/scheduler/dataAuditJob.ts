@@ -552,10 +552,19 @@ function runDailyChecks(db: Database): AuditFinding[] {
       let strandedCount = 0;
       for (const filename of files) {
         const upper = filename.toUpperCase();
-        const matched = watchlistCodes.find((c) => {
+        let matched = watchlistCodes.find((c) => {
           const re = new RegExp(`(^|[^A-Z])${c}([^A-Z]|$)`);
           return re.test(upper);
         });
+        // Task 1002: fallback to pdf_extracted_text.action_code for anonymous filenames
+        if (!matched) {
+          const row = db
+            .query<{ action_code: string }, [string]>(
+              `SELECT action_code FROM pdf_extracted_text WHERE filename = ? AND action_code != '' LIMIT 1`,
+            )
+            .get(filename);
+          matched = row?.action_code ?? undefined;
+        }
         if (!matched) continue;
 
         const filed = db
