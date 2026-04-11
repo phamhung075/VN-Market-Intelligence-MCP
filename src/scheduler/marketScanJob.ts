@@ -13,6 +13,8 @@
 import { scanMarket } from "../application/usecases/scanMarket.js";
 import { logger } from "../infrastructure/logger.js";
 import { isTradingSession } from "../infrastructure/fetchers/hose.js";
+import { getDb } from "../infrastructure/db/schema.js";
+import { recordJobRun } from "../infrastructure/db/cronJobRunStore.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Concurrency guard
@@ -48,13 +50,18 @@ export async function runMarketScan(label: "open" | "close"): Promise<void> {
   isRunning = true;
 
   try {
-    const result = await scanMarket();
-    logger.info(
-      `[market-scan:${label}] complete — ` +
-        `scanned: ${result.scanned}, ` +
-        `signals: ${result.signals}, ` +
-        `alerts: ${result.alerts}`,
-    );
+    const db = getDb();
+    // recordJobRun never re-throws — errors are captured in cron_job_runs.error_msg
+    await recordJobRun(db, `marketScanJob:${label}`, async () => {
+      const result = await scanMarket();
+      logger.info(
+        `[market-scan:${label}] complete — ` +
+          `scanned: ${result.scanned}, ` +
+          `signals: ${result.signals}, ` +
+          `alerts: ${result.alerts}`,
+      );
+      return { rowsWritten: result.signals };
+    });
   } catch (err) {
     logger.error(`[market-scan:${label}] unhandled error`, {
       error: err instanceof Error ? err.message : String(err),

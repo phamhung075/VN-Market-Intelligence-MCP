@@ -146,6 +146,49 @@ export function purgeOldCronJobRuns(
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// recordJobRun
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * High-level wrapper that records a cron job invocation: inserts a start row,
+ * awaits the job function, then updates the row with the outcome.
+ *
+ * Contract:
+ *   - NEVER re-throws — errors are captured in `error_msg` so the caller's
+ *     cron callback cannot crash the scheduler.
+ *   - Returns `undefined` in all cases (success and error).
+ *   - When `fn` returns `{ rowsWritten }`, the value is stored; otherwise NULL.
+ *
+ * @param db      Database connection for CRUD operations
+ * @param jobName Canonical scheduler job name (e.g. 'pollNewsJob')
+ * @param fn      Async job body — may return `{ rowsWritten?: number }` or void
+ */
+export async function recordJobRun(
+  db: Database,
+  jobName: string,
+  fn: () => Promise<{ rowsWritten?: number } | void>,
+): Promise<void> {
+  const id = insertCronJobRunStart(db, jobName);
+  const startTime = Date.now();
+  try {
+    const result = await fn();
+    const durationMs = Date.now() - startTime;
+    const rowsWritten =
+      result != null &&
+      typeof (result as { rowsWritten?: number }).rowsWritten === "number"
+        ? (result as { rowsWritten: number }).rowsWritten
+        : null;
+    updateCronJobRunEnd(db, id, "success", rowsWritten, null, durationMs);
+  } catch (err: unknown) {
+    const durationMs = Date.now() - startTime;
+    const errorMsg = err instanceof Error ? err.message : String(err);
+    updateCronJobRunEnd(db, id, "error", null, errorMsg, durationMs);
+    // Intentionally NOT re-throwing — recordJobRun swallows errors to prevent
+    // a job exception from crashing the node-cron scheduler loop.
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // getCronJobHealthSummary
 // ─────────────────────────────────────────────────────────────────────────────
 

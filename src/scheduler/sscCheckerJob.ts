@@ -13,6 +13,8 @@
 
 import { checkSscReports } from "../application/usecases/checkSscReports.js";
 import { logger } from "../infrastructure/logger.js";
+import { getDb } from "../infrastructure/db/schema.js";
+import { recordJobRun } from "../infrastructure/db/cronJobRunStore.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Concurrency guard
@@ -40,14 +42,19 @@ export async function runSscCheck(): Promise<void> {
   isRunning = true;
 
   try {
-    const result = await checkSscReports();
-    logger.info(
-      `[ssc-check] cycle complete — ` +
-        `checked: ${result.checked}, ` +
-        `newReports: ${result.newReports}, ` +
-        `alerts: ${result.alerts}, ` +
-        `errors: ${result.errors}`,
-    );
+    const db = getDb();
+    // recordJobRun never re-throws — errors are captured in cron_job_runs.error_msg
+    await recordJobRun(db, "sscCheckerJob", async () => {
+      const result = await checkSscReports();
+      logger.info(
+        `[ssc-check] cycle complete — ` +
+          `checked: ${result.checked}, ` +
+          `newReports: ${result.newReports}, ` +
+          `alerts: ${result.alerts}, ` +
+          `errors: ${result.errors}`,
+      );
+      return { rowsWritten: result.newReports };
+    });
   } catch (err) {
     logger.error("[ssc-check] unhandled error", {
       error: err instanceof Error ? err.message : String(err),

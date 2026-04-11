@@ -10,6 +10,8 @@
 
 import type { PollNewsResult } from "../application/usecases/pollNews.js";
 import { logger } from "../infrastructure/logger.js";
+import { getDb } from "../infrastructure/db/schema.js";
+import { recordJobRun } from "../infrastructure/db/cronJobRunStore.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Concurrency guard
@@ -45,19 +47,25 @@ export async function runNewsPoller(
   isRunning = true;
 
   try {
-    // Resolve poll function: injected override or real pollNews
-    const fn = pollFn ?? (async () => {
-      const { pollNews } = await import("../application/usecases/pollNews.js");
-      return pollNews();
+    const db = getDb();
+    // recordJobRun never re-throws — errors are captured in cron_job_runs.error_msg
+    await recordJobRun(db, "pollNewsJob", async () => {
+      // Resolve poll function: injected override or real pollNews
+      const fn = pollFn ?? (async () => {
+        const { pollNews } = await import("../application/usecases/pollNews.js");
+        return pollNews();
+      });
+
+      const result = await fn();
+
+      logger.info(
+        `[news-poll] cycle complete — fetched: ${result.fetched}, ` +
+        `new: ${result.inserted}, duplicates: ${result.duplicates}, ` +
+        `alerts: ${result.alerts}, errors: ${result.errors}`,
+      );
+
+      return { rowsWritten: result.inserted };
     });
-
-    const result = await fn();
-
-    logger.info(
-      `[news-poll] cycle complete — fetched: ${result.fetched}, ` +
-      `new: ${result.inserted}, duplicates: ${result.duplicates}, ` +
-      `alerts: ${result.alerts}, errors: ${result.errors}`,
-    );
   } catch (err) {
     // Reports 1065/1066 — surface full exception context (stack + cause + name)
     // so operators can diagnose failures without guessing at which downstream
