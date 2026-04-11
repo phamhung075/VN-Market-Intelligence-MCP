@@ -70,7 +70,7 @@ Cost optimization: exit immediately if no reports | FIX NOW before SPRINT TASK |
 
 ## MCP Server
 
-80 tools (Sprint 054). Bun, supervised by launchd. SQLite + LanceDB. Telegram Bot API. Cloudflare tunnel for public access.
+Tool count → `docs/data/tool-registry.json`. Bun, supervised by launchd. SQLite + LanceDB. Telegram Bot API. Cloudflare tunnel for public access.
 
 Scheduled jobs → `.claude/knowledge/cron-jobs.md`
 Tool list → `.claude/knowledge/mcp-tools.md`

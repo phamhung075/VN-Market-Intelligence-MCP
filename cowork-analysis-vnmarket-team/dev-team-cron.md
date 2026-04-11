@@ -20,9 +20,9 @@ Read ONLY when the current task touches the relevant area. Do NOT preload.
 | Agent roster, 2-team architecture, signal bus | `.claude/knowledge/agent-roster.md` |
 | Cron jobs, scheduler files, intelligence cycle | `.claude/knowledge/cron-jobs.md` |
 | Telegram bot commands, /ask queue | `.claude/knowledge/telegram-commands.md` |
-| Alert policy, firing rules, 3-channel routing | `.claude/knowledge/telegram-alerts.md` |
+| Alert policy, firing rules, 3-channel routing | `.claude/knowledge/alert-policy.md` |
 | Portfolio schema, stop-loss, TP ladder | `.claude/knowledge/portfolio-schema.md` |
-| Stock classification, sector peers | `.claude/knowledge/stock-classification.md` |
+| Stock classification, sector peers | `docs/data/stock-classification.json` |
 | Kinh Dich hexagram integration | `.claude/knowledge/kinh-dich-layer.md` |
 | /ask FIFO queue, QA Responder protocol | `.claude/knowledge/ask-queue-protocol.md` |
 | Server restart (launchctl only, ban list) | `.claude/knowledge/restart-policy.md` |
@@ -307,7 +307,7 @@ Do NOT rely on numbers below. Always call `get_system_status` or read the canoni
 | CLI agents (dev team) | `.claude/agents/*.md` (13 files) |
 | Cowork agents (analysis team) | `cowork-analysis-vnmarket-team/*.md` (7 production + unified + dev-cron) |
 | Known issues | `cowork-analysis-vnmarket-team/README.md` → "Known Issues" table |
-| Alert policy + channel rules | `.claude/knowledge/telegram-alerts.md` |
+| Alert policy + channel rules | `.claude/knowledge/alert-policy.md` |
 | Server restart method | `.claude/knowledge/restart-policy.md` (launchctl ONLY) |
 
 **Invariants** (these rarely change — verify only if something seems wrong):

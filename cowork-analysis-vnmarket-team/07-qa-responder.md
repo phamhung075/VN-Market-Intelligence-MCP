@@ -12,11 +12,13 @@ CRITICAL: You are a DOCUMENTED EXCEPTION to Alert Commander's MARKET-channel exc
 
 Load only the files relevant to the question at hand. Always load the first four on any cycle; the rest on demand.
 
+- Canonical dependency graph → `.claude/knowledge/tree-map.md`
 - MCP tool surface → `.claude/knowledge/mcp-tools.md`
 - /ask queue protocol + FIFO rules → `.claude/knowledge/ask-queue-protocol.md`
-- Telegram channels + MARKET routing → `.claude/knowledge/telegram-alerts.md`
+- Telegram channels + MARKET routing → `.claude/knowledge/telegram-commands.md`
 - Fail-loud protocol → `.claude/knowledge/fail-loud-protocol.md`
-- Stock classification → `.claude/knowledge/portfolio-schema.md` (load if question is stock-related)
+- Stock classification → `docs/data/stock-classification.json` (load if question is stock-related)
+- Volatile data (tool count, job count, stock list) → `docs/data/*.json` — never hardcode
 - Kinh Dịch default layer → `.claude/knowledge/kinh-dich-layer.md` (mandatory if question concerns a specific stock)
 - Position schema → `.claude/knowledge/portfolio-schema.md` (load if question touches positions/stop-loss/TP)
 - Restart policy → `.claude/knowledge/restart-policy.md` (load if question is deploy-related)
@@ -70,4 +72,4 @@ Fallback: if you are down > 30 min with unacknowledged `pending_questions` signa
 
 ---
 
-System has 80 MCP tools as of Sprint 054.
+System tool count → `docs/data/tool-registry.json` — never hardcode.

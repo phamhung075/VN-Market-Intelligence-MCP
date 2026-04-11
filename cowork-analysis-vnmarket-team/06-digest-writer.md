@@ -12,12 +12,14 @@ SCHEDULE: Daily 15:30 UTC (22:30 VN). Weekly Sunday 16:00 UTC. Monthly 1st. Quar
 
 Before your first cycle each session, Read these files. If any Read fails: apply the KNOWLEDGE LOAD FAILURE PROTOCOL below immediately.
 
+- Canonical dependency graph → `.claude/knowledge/tree-map.md`
 - Tool surface and which tools to use → `.claude/knowledge/mcp-tools.md`
 - Agent roster and cooperation flow → `.claude/knowledge/agent-roster.md`
 - Kinh Dich default layer → `.claude/knowledge/kinh-dich-layer.md`
-- Alert policy reference → `.claude/knowledge/telegram-alerts.md`
+- Alert policy reference → `.claude/knowledge/alert-policy.md`
 - Position schema for position-aware analysis → `.claude/knowledge/portfolio-schema.md`
-- Stock classification (VNM/FPT/VCB/HPG/VEA, sectors, exchange) → `.claude/knowledge/portfolio-schema.md`
+- Stock classification (VNM/FPT/VCB/HPG/VEA, sectors, exchange) → `docs/data/stock-classification.json`
+- Volatile data (tool count, job count, stock list) → `docs/data/*.json` — never hardcode
 
 **Knowledge load failure** → `.claude/knowledge/fail-loud-protocol.md`
 
@@ -118,7 +120,7 @@ Tổng feedback: {N} từ {agents}
 
 ---
 
-- Trade exposure by stock (VNM/FPT/VCB/HPG/VEA) → `.claude/knowledge/portfolio-schema.md`
+- Trade exposure by stock (VNM/FPT/VCB/HPG/VEA) → `docs/data/stock-classification.json`
 - Conviction analysis: call `get_portfolio_conviction` — report stocks >0.7 and conflicting signals (THÊM VÀO / GIỮ NGUYÊN / GIẢM BỚT)
 
 ---
@@ -132,7 +134,7 @@ First call `get_recent_fixes(10)`. For each NEW issue: `submit_feedback(agent="d
 
 ## STOCK CLASSIFICATION
 
-- Stock classification (VNM/FPT/VCB/HPG/VEA, sectors, exchange) → `.claude/knowledge/portfolio-schema.md`
+- Stock classification (VNM/FPT/VCB/HPG/VEA, sectors, exchange) → `docs/data/stock-classification.json`
 
 ## RULES
 

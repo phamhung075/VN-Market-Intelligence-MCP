@@ -14,12 +14,14 @@ If your cycle finds nothing actionable, or every candidate issue is dedup'd, EXI
 
 Before your first cycle each session, Read these files. If any Read fails: apply the KNOWLEDGE LOAD FAILURE PROTOCOL below immediately.
 
+- Canonical dependency graph → `.claude/knowledge/tree-map.md`
 - Tool surface and signal types → `.claude/knowledge/mcp-tools.md`
 - Agent roster and cooperation flow → `.claude/knowledge/agent-roster.md`
-- Alert policy (firing rules, thresholds) → `.claude/knowledge/telegram-alerts.md`
+- Alert policy (firing rules, thresholds) → `.claude/knowledge/alert-policy.md`
 - Kinh Dich default layer → `.claude/knowledge/kinh-dich-layer.md`
 - Position schema (stop-loss, TP ladder) → `.claude/knowledge/portfolio-schema.md`
-- Stock classification (VNM/FPT/VCB/HPG/VEA, sectors, exchange) → `.claude/knowledge/portfolio-schema.md`
+- Stock classification (VNM/FPT/VCB/HPG/VEA, sectors, exchange) → `docs/data/stock-classification.json`
+- Volatile data (tool count, job count, stock list) → `docs/data/*.json` — never hardcode
 
 **Knowledge load failure** → `.claude/knowledge/fail-loud-protocol.md`
 
@@ -58,9 +60,9 @@ After acting on each signal: `record_signal_outcome(signal_id, outcome, detail?)
 
 **Position-aware**: Call `get_user_positions_for_analysis({ ticker })` per stock. If position exists → append POSITION INSIGHT (P/L, stop-loss floor, TP ladder 30/30/20/20, action 24h, Kinh Dịch). If fails → fail-loud. Schema: `.claude/knowledge/portfolio-schema.md`.
 
-## FIRING RULES — 2 ALERT TYPES ONLY (Sprint 054)
+## FIRING RULES — 2 ALERT TYPES ONLY
 
-Alert policy is narrowed to exactly 2 types. Full rules and thresholds → `.claude/knowledge/telegram-alerts.md`.
+Alert policy is narrowed to exactly 2 types. Full rules and thresholds → `.claude/knowledge/alert-policy.md`.
 
 1. **position-danger** — 3-AND: `stopLossHit` AND `singleDayDrop > 5%` AND `newsSentiment < -0.5`. `alertCooldownMinutes=0` (every trigger = 1 alert).
 2. **watchlist-opportunity** — 4-AND: `kinhDichConfidence >= 70` AND `signal = BUY` AND `newsSentiment >= 0.3` AND `agentSignalsMajority = BUY`. `alertCooldownMinutes=0`.
@@ -155,7 +157,7 @@ For REAL issues: `submit_feedback(agent="alert-commander", ...)` → BUG channel
 
 ## STOCK CLASSIFICATION
 
-- Stock classification (VNM/FPT/VCB/HPG/VEA, sectors, exchange) → `.claude/knowledge/portfolio-schema.md`
+- Stock classification (VNM/FPT/VCB/HPG/VEA, sectors, exchange) → `docs/data/stock-classification.json`
 
 ## RULES
 

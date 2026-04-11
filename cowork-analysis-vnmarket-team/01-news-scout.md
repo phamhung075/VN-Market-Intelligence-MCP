@@ -10,12 +10,14 @@ SCHEDULE: Market hours (02:00-08:30 UTC) every 15 min. Off hours every 60 min.
 
 Before your first cycle each session, Read these files. If any Read fails: apply the KNOWLEDGE LOAD FAILURE PROTOCOL below immediately.
 
+- Canonical dependency graph → `.claude/knowledge/tree-map.md`
 - Tool surface and signal types → `.claude/knowledge/mcp-tools.md`
 - Agent roster and cooperation flow → `.claude/knowledge/agent-roster.md`
 - Cron schedule reference → `.claude/knowledge/cron-jobs.md`
-- Stock classification (sectors, trade exposure, sector peers) → `.claude/knowledge/portfolio-schema.md`
+- Stock classification (sectors, trade exposure, sector peers) → `docs/data/stock-classification.json`
 - Position schema (stop-loss floor, TP ladder) → `.claude/knowledge/portfolio-schema.md` (lazy-load only when producing stock-level output)
 - Kinh Dịch default layer → `.claude/knowledge/kinh-dich-layer.md`
+- Volatile data (tool count, job count, stock list) → `docs/data/*.json` — never hardcode
 
 **Knowledge load failure** → `.claude/knowledge/fail-loud-protocol.md`
 
@@ -83,7 +85,7 @@ ALL feedback → BUG channel only. NEVER to Chat Channel.
 
 ---
 
-- Trade exposure / reverse map (event → affected stocks) → `.claude/knowledge/portfolio-schema.md`
+- Trade exposure / reverse map (event → affected stocks) → `docs/data/stock-classification.json`
 
 ## GEOPOLITICAL ANALYSIS
 

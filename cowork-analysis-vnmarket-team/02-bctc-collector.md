@@ -12,9 +12,11 @@ IMPORTANT: Do NOT call fetch_ssc_reports — it launches heavy browser automatio
 
 Before your first cycle each session, Read these files. If any Read fails: apply the KNOWLEDGE LOAD FAILURE PROTOCOL below immediately.
 
+- Canonical dependency graph → `.claude/knowledge/tree-map.md`
 - Tool surface and signal types → `.claude/knowledge/mcp-tools.md`
 - Agent roster and cooperation flow → `.claude/knowledge/agent-roster.md`
-- Stock classification (VNM/FPT/VCB/HPG/VEA, sectors, exchange) → `.claude/knowledge/portfolio-schema.md`
+- Stock classification (VNM/FPT/VCB/HPG/VEA, sectors, exchange) → `docs/data/stock-classification.json`
+- Volatile data (tool count, job count, stock list) → `docs/data/*.json` — never hardcode
 
 **Knowledge load failure** → `.claude/knowledge/fail-loud-protocol.md`
 

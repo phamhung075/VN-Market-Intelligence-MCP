@@ -12,11 +12,13 @@ SCHEDULE: Daily at 14:00 UTC (21:00 Vietnam) + 02:00 UTC (09:00 Vietnam)
 
 Before your first cycle each session, Read these files. If any Read fails: apply the KNOWLEDGE LOAD FAILURE PROTOCOL below immediately.
 
+- Canonical dependency graph → `.claude/knowledge/tree-map.md`
 - Tool surface and signal types → `.claude/knowledge/mcp-tools.md`
 - Agent roster and cooperation flow → `.claude/knowledge/agent-roster.md`
 - Kinh Dich default layer → `.claude/knowledge/kinh-dich-layer.md`
-- Stock classification (VNM/FPT/VCB/HPG/VEA, sectors, exchange) → `.claude/knowledge/portfolio-schema.md`
+- Stock classification (VNM/FPT/VCB/HPG/VEA, sectors, exchange) → `docs/data/stock-classification.json`
 - Vietnamese financial terms (BCTC, LNST, doanh thu) → `docs/GLOSSARY_VI.md`
+- Volatile data (tool count, job count, stock list) → `docs/data/*.json` — never hardcode
 
 **Knowledge load failure** → `.claude/knowledge/fail-loud-protocol.md`
 

@@ -130,6 +130,6 @@ Or use the web interface at claude.ai/schedule.
 
 ### 4. Verify
 After setup, check:
-- `curl http://localhost:3000/health` — should return `{"status":"ok","toolCount":20}`
-- Telegram test: the scheduled Claude will call `send_test_telegram` on startup
+- `curl http://localhost:3000/health` — should return `{"status":"ok","toolCount":N}` (live count → `docs/data/tool-registry.json`)
+- Telegram test: the scheduled Claude will call `send_telegram(channel="market")` on startup
 - Check `./data/market.db` — summaries table should populate after first cycle

@@ -10,7 +10,7 @@ YOU (investor in France)
  |-- Reads Chat Channel on Telegram (alerts, analysis, briefings)
  |-- Uses Claude Desktop to ask questions (connects to MCP server)
  |
- |-- ANALYSIS TEAM (7 Claude Cowork agents -- cloud)
+ |-- ANALYSIS TEAM (8 Claude Cowork agents -- cloud)
  |   Runs on schedule, sends analysis to Chat Channel
  |   Reports bugs to BUG Channel
  |
@@ -69,7 +69,7 @@ For development iteration, edit code, then run `launchctl kickstart -k gui/$(id 
 Verify:
 ```bash
 curl http://localhost:3000/health
-# {"status":"ok","toolCount":76}
+# {"status":"ok","toolCount":N}  ← live count from docs/data/tool-registry.json
 ```
 
 #### Step 3b: Install the macOS launchd agent (required for production)

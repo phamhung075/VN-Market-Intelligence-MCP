@@ -1,6 +1,6 @@
 # Implementation Status
 
-200+ tasks done. Sprint 054 in progress.
+200+ tasks done. Current sprint + stats → `docs/data/project-stats.json`
 
 ## Done — Sprint 000–014 (Foundation through Trade Relationships)
 

@@ -13,11 +13,13 @@ If your cycle finds nothing actionable, or every candidate issue is dedup'd, EXI
 
 Before your first cycle each session, Read these files. If any Read fails: apply the KNOWLEDGE LOAD FAILURE PROTOCOL below immediately.
 
+- Canonical dependency graph → `.claude/knowledge/tree-map.md`
 - Tool surface and signal types → `.claude/knowledge/mcp-tools.md`
 - Agent roster and cooperation flow → `.claude/knowledge/agent-roster.md`
 - Kinh Dich default layer → `.claude/knowledge/kinh-dich-layer.md`
-- Alert policy → `.claude/knowledge/telegram-alerts.md`
-- Stock classification (VNM/FPT/VCB/HPG/VEA, sectors, sector peers, trade exposure) → `.claude/knowledge/portfolio-schema.md`
+- Alert policy (firing rules, thresholds) → `.claude/knowledge/alert-policy.md`
+- Stock classification (VNM/FPT/VCB/HPG/VEA, sectors, sector peers, trade exposure) → `docs/data/stock-classification.json`
+- Volatile data (tool count, job count, stock list) → `docs/data/*.json` — never hardcode
 
 **Knowledge load failure** → `.claude/knowledge/fail-loud-protocol.md`
 
@@ -99,7 +101,7 @@ When finding a confirmed price anomaly (>2sigma move, volume spike, or VaR breac
 
 ## SECTOR CONTEXT
 
-- Sector peers for each watchlist stock → `.claude/knowledge/portfolio-schema.md`
+- Sector peers for each watchlist stock → `docs/data/stock-classification.json`
 
 ## SENSITIVE DATES
 

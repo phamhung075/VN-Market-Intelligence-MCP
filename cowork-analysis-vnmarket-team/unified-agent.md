@@ -12,10 +12,12 @@ Before your first cycle each session, Read these files. If any Read fails: apply
 - Tool surface, agent tool mapping, signal types → `.claude/knowledge/mcp-tools.md`
 - Agent roster, cycles, cooperation flow → `.claude/knowledge/agent-roster.md`
 - Cron jobs and scheduler reference → `.claude/knowledge/cron-jobs.md`
-- Alert policy → `.claude/knowledge/telegram-alerts.md`
+- Canonical dependency graph → `.claude/knowledge/tree-map.md`
+- Alert policy → `.claude/knowledge/alert-policy.md`
 - Position schema → `.claude/knowledge/portfolio-schema.md`
 - Kinh Dich default layer → `.claude/knowledge/kinh-dich-layer.md`
-- Stock classification (VNM/FPT/VCB/HPG/VEA, sectors, trade exposure) → `.claude/knowledge/portfolio-schema.md`
+- Stock classification (VNM/FPT/VCB/HPG/VEA, sectors, trade exposure) → `docs/data/stock-classification.json`
+- Volatile data (tool count, job count, stock list) → `docs/data/*.json` — never hardcode
 
 **Knowledge load failure** → `.claude/knowledge/fail-loud-protocol.md`
 
@@ -297,7 +299,7 @@ This is the comprehensive end-of-day report sent once per day to the WORK channe
 4. **Live cron job state**
    - From the `get_system_status` output: for each scheduler job, extract name + last_run + next_run + status
    - Flag as STALE any job whose `last_run` is older than 2× its nominal interval (e.g. a 15-min job last ran >30 min ago)
-   - Scheduler baseline: 23 registered scheduler files (Sprint 054)
+   - Scheduler baseline → `docs/data/cron-registry.json` (schedulerFileCount)
 
 5. **Data freshness snapshot**
    - Call `get_data_freshness` — capture freshness for: prices, news, BCTC, commodities, SBV
@@ -355,7 +357,7 @@ Week 4: review ssc-related fixes       — BCTC pipeline
 Week 5: review reuters-related fixes   — international news
 Week 6: review vnexpress-related fixes — VN news source
 Week 7: review vneconomy-related fixes — VN economic news
-Week 8: verify tool count in get_system_status = 76 (Sprint 052 baseline)
+Week 8: verify tool count in get_system_status matches docs/data/tool-registry.json
 ```
 
 ### Step 3b: Observability metrics review
@@ -372,7 +374,7 @@ Call `get_prediction_accuracy(days=30)` — validate prediction market signal va
 - Accuracy <50% -> prediction signals are noise, reduce weight in briefing
 - High accuracy sectors -> increase prediction signal weight in cascade
 
-### Step 3c: Domain signal review (Sprint 039-044)
+### Step 3c: Domain signal review
 - Call `get_legal_risk_signals` — any new legal risks this week?
 - Call `get_bond_maturity_calendar` — any bonds maturing in next 30 days?
 - Call `get_insider_signals` — unusual insider activity?
@@ -401,7 +403,7 @@ If the weekly review surfaces a DISCRETE actionable bug (e.g. a specific cascade
 ## REFERENCES
 
 - Agent roster (6 Cowork agents + Dev Team roles) → `.claude/knowledge/agent-roster.md`
-- Stock classification (VNM/FPT/VCB/HPG/VEA, sectors, trade exposure) → `.claude/knowledge/portfolio-schema.md`
+- Stock classification (VNM/FPT/VCB/HPG/VEA, sectors, trade exposure) → `docs/data/stock-classification.json`
 - Dev Team claim→process→delete lifecycle → `dev-team-cron.md` (ONLY Dev Team calls `claim_telegram_report` / `process_telegram_report`)
 
 ## RULES
@@ -409,4 +411,4 @@ If the weekly review surfaces a DISCRETE actionable bug (e.g. a specific cascade
 - NEVER call `send_telegram(channel="market")` — forbidden for unified-agent
 - NEVER call `claim_telegram_report` or `process_telegram_report`
 - All agents read watchlist via `get_watchlist` — never hardcode stocks
-- Tool count in `get_system_status` must match 80 (Sprint 054)
+- Tool count in `get_system_status` must match `docs/data/tool-registry.json` — never hardcode

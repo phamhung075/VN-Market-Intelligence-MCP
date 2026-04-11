@@ -58,9 +58,9 @@ CLOUDFLARE_TUNNEL=vn-market-mcp
 cd /path/to/VN-Market-Intelligence-MCP
 bun run src/index.ts
 ```
-Server auto-seeds watchlist from config, starts OCR for unprocessed PDFs, registers 75 tools.
+Server auto-seeds watchlist from config, starts OCR for unprocessed PDFs. Tool count → `docs/data/tool-registry.json`.
 
-Verify: `curl https://zenmidi.com/health` — `{"status":"ok","toolCount":68}`
+Verify: `curl https://zenmidi.com/health` — `{"status":"ok","toolCount":N}`
 
 ### Step 2: Start Cloudflare Tunnel
 ```bash
@@ -69,7 +69,7 @@ cloudflared tunnel --no-autoupdate run --token "$CLOUDFLARE_TOKEN"
 ```
 Permanent URL: `https://zenmidi.com/mcp`
 
-### Step 3: Create 7 Agents in Claude Cowork
+### Step 3: Create 8 Agents in Claude Cowork
 
 MCP connector URL: `https://zenmidi.com/mcp`
 
@@ -81,7 +81,8 @@ MCP connector URL: `https://zenmidi.com/mcp`
 | 3 | **Report Analyzer** | Daily 21:00 + 09:00 VN | `03-report-analyzer.md` | Analyze financials + insider signals + feedback |
 | 4 | **Market Watcher** | Hourly market hours | `04-market-watcher.md` | Track prices + supply chain + climate/energy + feedback |
 | 5 | **Alert Commander** | Every hour | `05-alert-commander.md` | ONLY Telegram sender + alert quality + crisis/legal escalation |
-| 6 | **Digest Writer** | Daily 22:30 + Sunday | `06-digest-writer.md` | Compile summaries + all 11 new domain tools for deep review |
+| 6 | **Digest Writer** | Daily 22:30 + Sunday | `06-digest-writer.md` | Compile summaries + all domain tools for deep review |
+| 7 | **QA Responder** | Every 12 min (reactive) | `07-qa-responder.md` | Answer /ask queue FIFO → MARKET channel |
 
 ### Step 4: Verify
 - Telegram: "System online" at 08:55 Vietnam (03:55 France CET)
@@ -89,7 +90,7 @@ MCP connector URL: `https://zenmidi.com/mcp`
 
 ## MCP Tools
 
-80 MCP tools as of Sprint 054. Full list → `.claude/knowledge/mcp-tools.md` or call `get_system_status` (reports live tool count).
+MCP tool count → `docs/data/tool-registry.json`. Full list → `.claude/knowledge/mcp-tools.md` or call `get_system_status` (reports live tool count).
 
 ## Two Separate Telegram Channels
 
@@ -131,7 +132,7 @@ For dev team and analysis team problem reports:
 
 ## Cron Jobs
 
-23 scheduler files as of Sprint 054. Full schedule → `.claude/knowledge/cron-jobs.md`.
+Scheduler file count → `docs/data/cron-registry.json`. Full schedule → `.claude/knowledge/cron-jobs.md`.
 
 ## Agent Signal Bus
 

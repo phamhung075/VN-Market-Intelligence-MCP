@@ -19,4 +19,4 @@ Run these steps ONCE on first deploy:
 
 NOTE: User can change the watchlist anytime via add_to_watchlist and remove_from_watchlist.
 All agents read the watchlist dynamically — no hardcoded stock codes.
-System has 74 MCP tools as of Sprint 046.
+MCP tool count → `docs/data/tool-registry.json`. Live check: `curl -s http://127.0.0.1:3000/health | jq .toolCount`
