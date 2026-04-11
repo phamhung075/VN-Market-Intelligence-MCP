@@ -383,6 +383,7 @@ Sprint 056 merged to main 2026-04-11. Task 1111: 9 tests pass, bun tsc --noEmit 
 | ID | Owner | Priority | Title | Status |
 |----|-------|----------|-------|--------|
 | 1004 | @developer | P2 | Cascade gap: VN-market policy/macro news scoring. 18 SECTOR_RULES + 10 POLICY_RULES + detectPolicyInterventionCombo. TECH_1004.md. 15 tests. Commit 09f0cef | Done |
+| 1112 | @developer | P1 | BCTC VPS proxy: extend VPS Singapore push pattern to fetch BCTC PDFs bypassing France geo-block. Design: `docs/TECH_1112.md` | Todo |
 | 1088 | @architect | P3 | BCTC OCR parser regression test fixture using real VNM Q4-2025 OCR text. (a)+(b) shipped, (c) pending. | Backlog |
 
 ---
