@@ -373,6 +373,8 @@ Formula: `recency_weight = max(0.1, 1.0 - (age_days / recency_days) * 0.9)`, `fi
 | 1105 | Signal Fix A: causal_root_id migration + Alert Commander grouping | `task/1105-causal-root-tagging` | infrastructure | Review |
 | 1106 | Signal Fix B: signal_class migration + conviction score weighting | `task/1106-signal-class-field` | infrastructure/domain | Review |
 | 1107 | Signal Fix C: recency_weight in search_similar_context | `task/1107-rag-recency-weight` | domain/interface | Review |
+| 1108 | agent_work_log DDL + store (logAgentWorkStart / End / get / purge) | `task/1108-agent-work-log-store` | infrastructure | Done |
+| 1109 | log_agent_work + get_agent_work_log MCP tools | `task/1109-agent-work-log-tools` | interface | Review |
 | 1110 | sent_by column on alerts table + Alert Commander filter | `task/1110-alert-sent-by-column` | infrastructure/db + interface/mcp | Review |
 
 ---
