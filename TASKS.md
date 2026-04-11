@@ -290,6 +290,32 @@ Acceptance Criteria:
 
 ---
 
+**Task 1106 — Signal Fix B: signal_class migration + conviction score weighting**
+
+Branch: `task/1106-signal-class-field` | Layer: infrastructure/domain | Priority: P1 | Sprint: 055 | Depends on: none | Size: S
+
+Files created/modified:
+- `src/infrastructure/db/schema.ts` (idempotent ALTER TABLE adds signal_class TEXT to agent_signals)
+- `src/infrastructure/db/agentSignalStore.ts` (signalClass added to PostSignalInput + postSignal() branch)
+- `src/domain/services/signalClassWeighter.ts` (CREATE — SIGNAL_CLASS_WEIGHTS + computeWeightedConvictionScore())
+- `src/__tests__/1106-signal-class-weighting.test.ts` (CREATE — 20 tests, all pass)
+
+Acceptance Criteria:
+
+**Given** fresh DB after `initDatabase()` | **Then** agent_signals has signal_class column
+
+**Given** `postSignal({..., signalClass:'structural_factor'})` | **Then** row inserted, signal_class='structural_factor'
+
+**Given** 2 signals: structural_factor score=0.6, one_time_catalyst score=0.9 | **Then** weighted avg = (0.6*1.5 + 0.9*0.7)/(1.5+0.7) = 1.53/2.2 ≈ 0.695 (not 0.75)
+
+**Given** all signals NULL signal_class | **Then** conviction score equals simple average (no regression)
+
+**Given** existing rows (pre-migration) | **Then** signal_class=NULL, no data loss
+
+`bun test src/__tests__/1106-signal-class-weighting.test.ts` → 20 pass | `bun tsc --noEmit` → 0 new errors
+
+---
+
 **Task 1107 — Signal Fix C: recency_weight in search_similar_context**
 
 Branch: `task/1107-rag-recency-weight` | Layer: domain/interface | Priority: P1 | Sprint: 055 | Depends on: none | Size: S
@@ -345,6 +371,7 @@ Formula: `recency_weight = max(0.1, 1.0 - (age_days / recency_days) * 0.9)`, `fi
 |----|-------|--------|-------|--------|
 | 1100 | cron_job_runs DDL + cronJobRunStore CRUD | `task/1100-cron-job-run-store` | infrastructure | Review |
 | 1105 | Signal Fix A: causal_root_id migration + Alert Commander grouping | `task/1105-causal-root-tagging` | infrastructure | Review |
+| 1106 | Signal Fix B: signal_class migration + conviction score weighting | `task/1106-signal-class-field` | infrastructure/domain | Review |
 | 1107 | Signal Fix C: recency_weight in search_similar_context | `task/1107-rag-recency-weight` | domain/interface | Review |
 | 1110 | sent_by column on alerts table + Alert Commander filter | `task/1110-alert-sent-by-column` | infrastructure/db + interface/mcp | Review |
 
