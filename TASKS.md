@@ -382,7 +382,7 @@ Sprint 056 merged to main 2026-04-11. Task 1111: 9 tests pass, bun tsc --noEmit 
 
 | ID | Owner | Priority | Title | Status |
 |----|-------|----------|-------|--------|
-| 1004 | @developer | P2 | Cascade gap: VN-market policy/macro news scoring at base 10.0. Missing rules for govt-stabilization signals. Add cascade rules + raise base score for systemic-stress + policy-intervention combos. Design: `docs/TECH_1004.md` | Todo |
+| 1004 | @developer | P2 | Cascade gap: VN-market policy/macro news scoring. 18 SECTOR_RULES + 10 POLICY_RULES + detectPolicyInterventionCombo. TECH_1004.md. 15 tests. Commit 09f0cef | Done |
 | 1088 | @architect | P3 | BCTC OCR parser regression test fixture using real VNM Q4-2025 OCR text. (a)+(b) shipped, (c) pending. | Backlog |
 
 ---
