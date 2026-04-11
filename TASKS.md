@@ -290,6 +290,33 @@ Acceptance Criteria:
 
 ---
 
+**Task 1101 — recordJobRun wrapper + apply to 5 existing jobs**
+
+Branch: `task/1101-record-job-run-wrapper` | Layer: infrastructure/scheduler | Priority: P0 | Sprint: 055 | Depends on: 1100 | Size: S
+
+Files created/modified:
+- `src/infrastructure/db/cronJobRunStore.ts` (ADD recordJobRun export)
+- `src/scheduler/newsPollerJob.ts` (wrap with recordJobRun)
+- `src/scheduler/sscCheckerJob.ts` (wrap with recordJobRun)
+- `src/scheduler/marketScanJob.ts` (wrap with recordJobRun)
+- `src/scheduler/askQueueCheckJob.ts` (wrap with fire-and-forget recordJobRun, sync preserved)
+- `src/scheduler/dataAuditJob.ts` (wrap runDailyAudit with recordJobRun)
+- `src/__tests__/1101-record-job-run-wrapper.test.ts` (CREATE — 20 tests)
+
+Acceptance Criteria:
+
+**Given** `recordJobRun(db, 'job', async () => ({ rowsWritten: 5 }))` | **Then** row status='success', rows_written=5, duration_ms>=0, finished_at set
+
+**Given** `recordJobRun(db, 'job', async () => { throw new Error('fail') })` | **Then** row status='error', error_msg='fail', no unhandled exception
+
+**Given** `recordJobRun(db, 'job', async () => { /* void */ })` | **Then** row rows_written=NULL, status='success'
+
+**Given** each of the 5 scheduler files after merge | **When** `grep "recordJobRun"` | **Then** match found in each file
+
+`bun test src/__tests__/1101-record-job-run-wrapper.test.ts` → 20 pass | `bun tsc --noEmit` → 0 errors
+
+---
+
 **Task 1107 — Signal Fix C: recency_weight in search_similar_context**
 
 Branch: `task/1107-rag-recency-weight` | Layer: domain/interface | Priority: P1 | Sprint: 055 | Depends on: none | Size: S
@@ -344,6 +371,7 @@ Formula: `recency_weight = max(0.1, 1.0 - (age_days / recency_days) * 0.9)`, `fi
 | ID | Title | Branch | Layer | Status |
 |----|-------|--------|-------|--------|
 | 1100 | cron_job_runs DDL + cronJobRunStore CRUD | `task/1100-cron-job-run-store` | infrastructure | Review |
+| 1101 | recordJobRun wrapper + apply to 5 existing jobs | `task/1101-record-job-run-wrapper` | infrastructure/scheduler | Review |
 | 1105 | Signal Fix A: causal_root_id migration + Alert Commander grouping | `task/1105-causal-root-tagging` | infrastructure | Review |
 | 1107 | Signal Fix C: recency_weight in search_similar_context | `task/1107-rag-recency-weight` | domain/interface | Review |
 | 1110 | sent_by column on alerts table + Alert Commander filter | `task/1110-alert-sent-by-column` | infrastructure/db + interface/mcp | Review |
