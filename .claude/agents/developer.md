@@ -13,7 +13,7 @@ model: sonnet
 Read these ONLY when your task touches the relevant area:
 - Feature schemas for implementation → `.claude/knowledge/portfolio-schema.md`, `.claude/knowledge/telegram-alerts.md`, `.claude/knowledge/ask-queue-protocol.md`
 - Kinh Dich integration (default layer rule, hexagram integration) → `.claude/knowledge/kinh-dich-layer.md`
-- MCP tool surface (80 tools, per-agent mapping, signal types) → `.claude/knowledge/mcp-tools.md`
+- MCP tool surface (82 tools, per-agent mapping, signal types) → `.claude/knowledge/mcp-tools.md`
 - Cron schedule (schedules, intelligence cycle steps, job count) → `.claude/knowledge/cron-jobs.md`
 
 **Failure protocol** → `.claude/knowledge/fail-loud-protocol.md`

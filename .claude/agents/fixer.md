@@ -12,7 +12,7 @@ model: sonnet
 
 Read these ONLY when the fix involves the relevant area:
 - Feature schemas (for understanding correct behavior) → `.claude/knowledge/portfolio-schema.md`, `.claude/knowledge/telegram-alerts.md`, `.claude/knowledge/ask-queue-protocol.md`
-- MCP tool surface (80 tools, per-agent mapping, signal types) → `.claude/knowledge/mcp-tools.md`
+- MCP tool surface (82 tools, per-agent mapping, signal types) → `.claude/knowledge/mcp-tools.md`
 
 **Failure protocol** → `.claude/knowledge/fail-loud-protocol.md`
 

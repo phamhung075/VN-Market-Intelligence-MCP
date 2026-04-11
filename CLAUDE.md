@@ -30,7 +30,7 @@ MCP server (TypeScript, Bun) giving Claude real-time VN stock market intelligenc
 - Watchlist management + multi-signal alerts
 - Daily scheduled briefings at market open/close
 
-**Sprint 054 in progress:** 80 MCP tools | 23 scheduler files | 200+ tasks done
+**Sprint 055 in progress:** 82 MCP tools | 24 scheduler files | 200+ tasks done
 
 ---
 

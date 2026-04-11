@@ -2,7 +2,7 @@
 
 **Load when:** scheduling, job registration, or timing of automated cycles.
 
-## All Jobs (23 scheduler files — Sprint 054)
+## All Jobs (24 scheduler files — Sprint 055)
 
 | Schedule (VN GMT+7 unless noted) | Job | Description |
 |----------------------------------|-----|-------------|
@@ -26,6 +26,7 @@
 | 23:00 VN Sunday | `weeklyPortfolioReport` + `weeklySummary` | Portfolio + weekly summary |
 | 01:00 VN Sunday | `dataAuditWeekly` | Deep weekly audit |
 | 07:00 UTC Sunday | `devTeamHeartbeat` | System health + observability report |
+| daily (configurable) | `cronHealthAlert` | Alert WORK channel when any job success_rate < 80% (Task 1103) |
 | 08:00 UTC Sunday | `predictionOutcome` | Prediction signal evaluation |
 | 1st monthly 06:00 VN | `davPharmacyCheck` | DAV drug approval check |
 

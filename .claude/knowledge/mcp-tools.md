@@ -4,7 +4,7 @@
 
 ## Tool Count
 
-**80 tools** as of Sprint 054 (Task 1079+). Live check: `curl -s http://127.0.0.1:3000/health | jq .toolCount`
+**82 tools** as of Sprint 055 (Task 1103+). Live check: `curl -s http://127.0.0.1:3000/health | jq .toolCount`
 
 ## Complete Tool List
 
@@ -28,6 +28,8 @@
 | Performance | 1 | `get_performance_attribution` |
 | Telegram | 2 | `send_telegram` (channel: market\|work\|bug), `send_alert_digest` |
 | System & Ops | 3 | `get_system_status`, `get_rate_limit_status`, `submit_feedback` |
+| Cron Health | 1 | `get_cron_health` |
+| Broker Intel | 1 | `get_broker_credibility` |
 | Agent Communication | 4 | `post_agent_signal`, `get_agent_signals`, `record_signal_outcome`, `get_signal_effectiveness` |
 | Dev Team | 4 | `claim_telegram_report`, `read_telegram_reports`, `process_telegram_report`, `log_fix` |
 | Observability | 2 | `get_recent_fixes`, `get_cascade_metrics` |
