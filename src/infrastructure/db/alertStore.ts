@@ -49,6 +49,9 @@ export function isDocAlreadyProcessed(docId: string, db: Database): boolean {
  * Uses INSERT OR IGNORE so calling this multiple times with the same Alert
  * objects is idempotent — duplicate IDs are silently skipped.
  *
+ * Sets `sent_by = 'server'` to indicate the alert originated from the server
+ * scheduler (Step E rule-based alerts).
+ *
  * @param alerts - Array of Alert objects returned by `generateAlerts`
  * @param db     - Active bun:sqlite Database connection (injected by caller)
  */
@@ -58,9 +61,48 @@ export function storeAlerts(alerts: Alert[], db: Database): void {
   const insert = db.prepare(`
     INSERT OR IGNORE INTO alerts
       (id, triggered_at, severity, signals_json, affected_actions_json,
-       analysis_ids_json, message, read, user_note)
+       analysis_ids_json, message, read, user_note, sent_by)
     VALUES
-      (?, ?, ?, ?, ?, NULL, ?, 0, NULL)
+      (?, ?, ?, ?, ?, NULL, ?, 0, NULL, 'server')
+  `);
+
+  const insertMany = db.transaction((rows: Alert[]) => {
+    for (const alert of rows) {
+      insert.run(
+        alert.id,
+        alert.createdAt,
+        alert.severity,
+        JSON.stringify(alert.signals),
+        JSON.stringify([{ code: alert.actionCode }]),
+        alert.message,
+      );
+    }
+  });
+
+  insertMany(alerts);
+}
+
+/**
+ * Persist alert records originated from the Alert Commander Cowork agent.
+ *
+ * Identical to `storeAlerts` but sets `sent_by = 'alert-commander'`, which
+ * allows the `get_alerts` tool and scheduler to distinguish reasoning-based
+ * alerts (Commander) from rule-based alerts (server Step E).
+ *
+ * Uses INSERT OR IGNORE so the function is idempotent.
+ *
+ * @param alerts - Array of Alert objects produced by the Alert Commander
+ * @param db     - Active bun:sqlite Database connection (injected by caller)
+ */
+export function storeAlertsFromCommander(alerts: Alert[], db: Database): void {
+  if (alerts.length === 0) return;
+
+  const insert = db.prepare(`
+    INSERT OR IGNORE INTO alerts
+      (id, triggered_at, severity, signals_json, affected_actions_json,
+       analysis_ids_json, message, read, user_note, sent_by)
+    VALUES
+      (?, ?, ?, ?, ?, NULL, ?, 0, NULL, 'alert-commander')
   `);
 
   const insertMany = db.transaction((rows: Alert[]) => {

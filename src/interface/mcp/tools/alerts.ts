@@ -38,6 +38,8 @@ interface AlertRow {
   // Task 1005 — pre-fix phantom alert marker
   resolved_at?: string | null;
   resolution_notes?: string | null;
+  // Task 1110 — alert source discrimination
+  sent_by?: string | null;
 }
 
 interface WatchlistRow {
@@ -206,7 +208,7 @@ export function formatAlertRow(row: AlertRow): string {
   const supersededTag = isSuperseded ? " [SUPERSEDED]" : "";
 
   const lines = [
-    `${readMark} ${icon}${supersededTag} ${ts}`,
+    `${readMark} ${icon}${supersededTag} ${ts} [id:${row.id}]`,
     `  Stocks  : ${codes}`,
     `  Signals : ${signalTypes}`,
     `  Message : ${row.message ?? "—"}`,
@@ -282,6 +284,24 @@ export function registerAlertTools(server: McpServer): void {
           "Filter price alerts by status. Default: 'active' (only live threshold alerts). " +
           "Applies to price alerts only.",
         ),
+      sentBy: z
+        .enum(["server", "alert-commander"])
+        .optional()
+        .describe(
+          "Task 1110 — filter by alert source. " +
+          "'server' = rule-based alerts from Step E scheduler. " +
+          "'alert-commander' = reasoning-based alerts from the Cowork Alert Commander. " +
+          "Omit to return alerts from all sources (default, backward compatible).",
+        ),
+      notifiedTelegramFilter: z
+        .enum(["all", "pending", "sent"])
+        .optional()
+        .describe(
+          "Task 1110 — filter by Telegram notification status. " +
+          "'pending' = notified_telegram=0 (Alert Commander uses this to find unprocessed alerts). " +
+          "'sent' = notified_telegram=1. " +
+          "Omit (default) to return all alerts regardless of notification state.",
+        ),
     },
     async ({
       type: typeRaw,
@@ -291,6 +311,8 @@ export function registerAlertTools(server: McpServer): void {
       limitDays: limitDaysRaw,
       limit: limitRaw,
       priceStatusFilter: priceStatusFilterRaw,
+      sentBy,
+      notifiedTelegramFilter,
     }) => {
       // Apply defaults manually — Zod defaults only apply through MCP SDK's Zod parsing,
       // not when tools are called directly in tests.
@@ -324,6 +346,17 @@ export function registerAlertTools(server: McpServer): void {
           if (actionCode) {
             conditions.push("affected_actions_json LIKE $actionCode");
             params["$actionCode"] = `%${actionCode}%`;
+          }
+          // Task 1110 — filter by alert source (server vs alert-commander)
+          if (sentBy) {
+            conditions.push("sent_by = $sentBy");
+            params["$sentBy"] = sentBy;
+          }
+          // Task 1110 — filter by Telegram notification state (for Alert Commander)
+          if (notifiedTelegramFilter === "pending") {
+            conditions.push("notified_telegram = 0");
+          } else if (notifiedTelegramFilter === "sent") {
+            conditions.push("notified_telegram = 1");
           }
 
           params["$limit"] = limit;

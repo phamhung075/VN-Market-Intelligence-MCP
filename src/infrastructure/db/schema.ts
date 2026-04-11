@@ -205,6 +205,16 @@ export async function initDatabase(): Promise<void> {
     }
   }
 
+  // Task 1110 — sent_by column: identifies whether the alert was inserted by
+  // the server scheduler ('server') or by the Alert Commander Cowork agent
+  // ('alert-commander'). Existing rows receive 'server' as the column default.
+  try {
+    db.exec(`ALTER TABLE alerts ADD COLUMN sent_by TEXT NOT NULL DEFAULT 'server'`);
+  } catch {
+    // Column already exists on fresh DBs (CREATE TABLE DDL) or a previous
+    // migration run. No-op.
+  }
+
   // ── RAG Analyses ────────────────────────────────────────────────────────────
   db.exec(`
     CREATE TABLE IF NOT EXISTS rag_analyses (
@@ -708,6 +718,13 @@ export async function initDatabase(): Promise<void> {
   try { db.exec(`ALTER TABLE agent_signals ADD COLUMN causal_ref INTEGER`); } catch {}
   try { db.exec(`ALTER TABLE agent_signals ADD COLUMN chain_depth INTEGER DEFAULT 0`); } catch {}
   try { db.exec(`ALTER TABLE agent_signals ADD COLUMN processed INTEGER DEFAULT 0`); } catch {}
+
+  // ── Task 1105: Causal Root Columns — idempotent ALTER for existing agent_signals ──
+  // Allows Alert Commander to group signals that share a common macro root cause
+  // (e.g. all signals triggered by the same Fed rate decision or tariff event).
+  // NULL = standalone signal (backward compatible with pre-1105 rows).
+  try { db.exec(`ALTER TABLE agent_signals ADD COLUMN causal_root_id TEXT`); } catch {}
+  try { db.exec(`ALTER TABLE agent_signals ADD COLUMN causal_root_label TEXT`); } catch {}
 
   db.exec(`CREATE INDEX IF NOT EXISTS idx_agent_signals_cycle ON agent_signals(cycle_id)`);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_agent_signals_chain ON agent_signals(causal_ref)`);
