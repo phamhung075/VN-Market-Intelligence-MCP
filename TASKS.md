@@ -281,7 +281,9 @@ Acceptance Criteria:
 
 ## Review
 
-(empty)
+| ID | Owner | P | Description | Status |
+|----|-------|---|-------------|--------|
+| 1108 | @developer | P2 | agent_work_log DDL + store: table, logAgentWorkStart, logAgentWorkEnd, getAgentWorkLog, purgeOldAgentWorkLogs | Review |
 
 ---
 
