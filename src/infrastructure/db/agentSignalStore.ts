@@ -92,6 +92,39 @@ export interface PostSignalInput {
   causalRef?: number;
   /** 0=catalyst, 1=validation, 2=confirmation, 3=synthesis */
   chainDepth?: number;
+  /**
+   * Task 1105 — Stable identifier for the shared macro root cause.
+   * E.g. "FED_2026-04-10" for all signals triggered by a Fed rate decision.
+   * NULL = standalone signal (backward compatible with pre-1105 rows).
+   */
+  causalRootId?: string | null;
+  /**
+   * Task 1105 — Human-readable label for the causal root.
+   * E.g. "Fed rate cut 2026-04-10". Used by Alert Commander for grouping headers.
+   * NULL when causalRootId is not set.
+   */
+  causalRootLabel?: string | null;
+}
+
+/**
+ * Task 1105 — One group in the Alert Commander consolidated view.
+ *
+ * Signals sharing the same causal_root_id are consolidated into a single
+ * group (isConsolidated=true). Signals with NULL causal_root_id each appear
+ * as their own individual group (isConsolidated=false, signalCount=1).
+ */
+export interface CausalRootGroup {
+  causalRootId: string | null;
+  causalRootLabel: string | null;
+  signalCount: number;
+  isConsolidated: boolean;
+  signals: AgentSignal[];
+}
+
+/** Options for getSignalsGroupedByCausalRoot. */
+export interface GetGroupedSignalsOptions {
+  toAgent?: string;
+  status?: "unread" | "all";
 }
 
 /** Deserialized chain finding row. */
@@ -201,10 +234,12 @@ export function postSignal(db: Database, input: PostSignalInput): number {
     findingData = {},
     causalRef = null,
     chainDepth = 0,
+    causalRootId = null,
+    causalRootLabel = null,
   } = input;
 
-  // Check if the enrichment chain columns exist by trying to use them.
-  // If they don't exist (old schema), fall back to the base insert.
+  // Check which optional column groups exist. Fresh DBs (with all columns)
+  // always hit the full path; legacy DBs with only the base schema still work.
   const hasChainColumns = (() => {
     try {
       db.prepare("SELECT cycle_id FROM agent_signals LIMIT 0").all();
@@ -214,20 +249,52 @@ export function postSignal(db: Database, input: PostSignalInput): number {
     }
   })();
 
+  const hasCausalRootColumns = (() => {
+    try {
+      db.prepare("SELECT causal_root_id FROM agent_signals LIMIT 0").all();
+      return true;
+    } catch {
+      return false;
+    }
+  })();
+
   if (hasChainColumns) {
     const now = new Date().toISOString().replace("T", " ").replace(/\.\d{3}Z$/, "");
-    const expires =
-      ttlMinutes != null
-        ? expiresAt(ttlMinutes)
-        : null;
+    const expires = ttlMinutes != null ? expiresAt(ttlMinutes) : null;
 
+    if (hasCausalRootColumns) {
+      const stmt = db.prepare(`
+        INSERT INTO agent_signals
+          (from_agent, to_agent, signal_type, stock_code, payload, status,
+           created_at, expires_at, cycle_id, finding_data, causal_ref, chain_depth,
+           causal_root_id, causal_root_label)
+        VALUES (?, ?, ?, ?, ?, 'unread', ?, ?, ?, ?, ?, ?, ?, ?)
+      `);
+      const result = stmt.run(
+        fromAgent,
+        toAgent,
+        signalType,
+        stockCode,
+        JSON.stringify(payload),
+        now,
+        expires ?? expiresAt(ttlMinutes ?? 120),
+        cycleId ?? null,
+        JSON.stringify(findingData),
+        causalRef,
+        chainDepth,
+        causalRootId,
+        causalRootLabel,
+      );
+      return Number(result.lastInsertRowid);
+    }
+
+    // Chain columns present but causal_root columns not yet migrated
     const stmt = db.prepare(`
       INSERT INTO agent_signals
         (from_agent, to_agent, signal_type, stock_code, payload, status,
          created_at, expires_at, cycle_id, finding_data, causal_ref, chain_depth)
       VALUES (?, ?, ?, ?, ?, 'unread', ?, ?, ?, ?, ?, ?)
     `);
-
     const result = stmt.run(
       fromAgent,
       toAgent,
@@ -241,7 +308,6 @@ export function postSignal(db: Database, input: PostSignalInput): number {
       causalRef,
       chainDepth,
     );
-
     return Number(result.lastInsertRowid);
   }
 
@@ -252,7 +318,6 @@ export function postSignal(db: Database, input: PostSignalInput): number {
     VALUES
       (?, ?, ?, ?, ?, 'unread', ?)
   `);
-
   const result = stmt.run(
     fromAgent,
     toAgent,
@@ -261,7 +326,6 @@ export function postSignal(db: Database, input: PostSignalInput): number {
     JSON.stringify(payload),
     expiresAt(ttlMinutes ?? 120),
   );
-
   return Number(result.lastInsertRowid);
 }
 
@@ -525,6 +589,117 @@ export function getChainFromRoot(
   const children = childStmt.all(rootId) as RawChainRow[];
 
   return [root, ...children].map(deserializeChainRow);
+}
+
+// ── getSignalsGroupedByCausalRoot ─────────────────────────────────────────────
+
+/**
+ * Task 1105 — Retrieve signals grouped by causal_root_id for Alert Commander.
+ *
+ * Grouping rules:
+ *   - Signals sharing the same non-NULL causal_root_id → 1 consolidated group
+ *     (isConsolidated=true, signalCount >= 2).
+ *   - Signals with NULL causal_root_id → each appears as its own individual group
+ *     (isConsolidated=false, signalCount=1).
+ *
+ * This lets Alert Commander send 1 Telegram message per macro event instead of
+ * one per signal.
+ *
+ * @param db   - Active bun:sqlite Database connection
+ * @param opts - Optional filters (toAgent, status)
+ * @returns    Array of CausalRootGroup
+ */
+export function getSignalsGroupedByCausalRoot(
+  db: Database,
+  opts: GetGroupedSignalsOptions = {},
+): CausalRootGroup[] {
+  const { toAgent, status = "unread" } = opts;
+
+  const agentClause = toAgent ? "AND (s.to_agent = ? OR s.to_agent = 'all')" : "";
+  const statusClause = status === "unread" ? "AND s.status = 'unread'" : "";
+
+  const params: (string | number)[] = [];
+  if (toAgent) params.push(toAgent);
+
+  type RawRow = {
+    id: number;
+    from_agent: string;
+    to_agent: string;
+    signal_type: string;
+    stock_code: string | null;
+    payload: string;
+    status: string;
+    created_at: string;
+    expires_at: string;
+    causal_root_id: string | null;
+    causal_root_label: string | null;
+  };
+
+  const rows = db
+    .prepare<RawRow, (string | number)[]>(
+      `SELECT id, from_agent, to_agent, signal_type, stock_code, payload,
+              status, created_at, expires_at, causal_root_id, causal_root_label
+       FROM agent_signals s
+       WHERE s.expires_at > datetime('now')
+         ${agentClause}
+         ${statusClause}
+       ORDER BY causal_root_id ASC NULLS LAST, s.id ASC`,
+    )
+    .all(...params) as RawRow[];
+
+  if (rows.length === 0) return [];
+
+  const consolidatedMap = new Map<string, CausalRootGroup>();
+  const individualGroups: CausalRootGroup[] = [];
+
+  for (const row of rows) {
+    let payloadParsed: SignalPayload = {};
+    try { payloadParsed = JSON.parse(row.payload) as SignalPayload; } catch {}
+
+    const signal: AgentSignal = {
+      id: row.id,
+      fromAgent: row.from_agent,
+      toAgent: row.to_agent,
+      signalType: row.signal_type as SignalType,
+      stockCode: row.stock_code,
+      payload: payloadParsed,
+      status: row.status as "unread" | "read",
+      createdAt: row.created_at,
+      expiresAt: row.expires_at,
+    };
+
+    if (row.causal_root_id !== null) {
+      const key = row.causal_root_id;
+      const existing = consolidatedMap.get(key);
+      if (existing) {
+        existing.signals.push(signal);
+        existing.signalCount = existing.signals.length;
+        existing.isConsolidated = existing.signalCount >= 2;
+      } else {
+        consolidatedMap.set(key, {
+          causalRootId: row.causal_root_id,
+          causalRootLabel: row.causal_root_label,
+          signalCount: 1,
+          isConsolidated: false,
+          signals: [signal],
+        });
+      }
+    } else {
+      individualGroups.push({
+        causalRootId: null,
+        causalRootLabel: null,
+        signalCount: 1,
+        isConsolidated: false,
+        signals: [signal],
+      });
+    }
+  }
+
+  for (const group of consolidatedMap.values()) {
+    group.isConsolidated = group.signalCount >= 2;
+  }
+
+  return [...individualGroups, ...consolidatedMap.values()];
 }
 
 // ── getOpenChainFindings ──────────────────────────────────────────────────────
