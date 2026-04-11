@@ -89,8 +89,10 @@ const EXTRACTION_PATTERNS: ExtractionPattern[] = [
   // Inflation / CPI — country-specific: only extract from VN sources or VN-context text
   { regex: /(?:cpi|inflation rate|lạm phát)[\s\S]{0,30}?([\d.]+)\s*%/i, indicator: "inflation_pct", unit: "%", countrySpecific: true },
 
-  // GDP — country-specific
-  { regex: /gdp[\s\S]{0,20}?([\d.]+)\s*%/i, indicator: "gdp_growth_pct", unit: "%", countrySpecific: true },
+  // GDP — country-specific, tightened to require Vietnamese context near "GDP"
+  // to prevent extracting foreign GDP values (e.g. "GDP Mỹ 2%") from
+  // articles that discuss both VN and global economies. Fix for report 1095.
+  { regex: /(?:gdp\s+(?:việt|vn|tăng|quý|năm|quốc\s*nội)|tăng\s+trưởng\s+gdp|gdp\s+growth\s+rate)[\s\S]{0,30}?([\d.]+)\s*%/i, indicator: "gdp_growth_pct", unit: "%", countrySpecific: true },
 
   // Interest rate — country-specific
   { regex: /(?:interest rate|lãi suất|fed funds rate|policy rate)[\s\S]{0,20}?([\d.]+)\s*%/i, indicator: "interest_rate_pct", unit: "%", countrySpecific: true },
