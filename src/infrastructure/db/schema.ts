@@ -1062,4 +1062,26 @@ export async function initDatabase(): Promise<void> {
     )
   `);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_vncf_code ON vnstock_cash_flow(code)`);
+
+  // ── Agent Work Log (Task 1108) ─────────────────────────────────────────────
+  // Records agent session lifecycle: start time, end time, summary, findings,
+  // and actions taken. Used by the Dev Team cron to audit agent activity and
+  // surface patterns (e.g., repeated errors, slow cycles).
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS agent_work_log (
+      id           INTEGER PRIMARY KEY AUTOINCREMENT,
+      agent_name   TEXT NOT NULL,
+      session_id   TEXT,
+      started_at   TEXT NOT NULL DEFAULT (datetime('now')),
+      finished_at  TEXT,
+      summary      TEXT,
+      findings     TEXT,
+      actions_json TEXT,
+      status       TEXT NOT NULL DEFAULT 'running'
+                   CHECK(status IN ('running','completed','error'))
+    )
+  `);
+  db.exec(
+    `CREATE INDEX IF NOT EXISTS idx_agent_work_log_agent_started ON agent_work_log(agent_name, started_at DESC)`,
+  );
 }
