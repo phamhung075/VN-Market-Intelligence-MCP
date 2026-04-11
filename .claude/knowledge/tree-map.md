@@ -55,7 +55,11 @@ CLAUDE.md (root — always loaded)
 │
 ├── docs/GLOSSARY_VI.md (Vietnamese financial terms)
 │
-└── docs/data/project-stats.json (sprint number, counts — volatile, root-level stats)
+├── docs/data/project-stats.json (sprint number, counts — volatile, root-level stats)
+│
+├── docs/data/system-auditor-known-issues.json (dedup state: fingerprints of reported issues — volatile)
+│
+└── docs/data/code-janitor-known-findings.json (dedup state: fingerprints of known code findings — volatile)
 ```
 
 ## Deleted Files (merged into parents)
@@ -74,6 +78,8 @@ CLAUDE.md (root — always loaded)
 | `docs/data/cron-registry.json` | Developer | After adding/removing scheduler |
 | `docs/data/stock-classification.json` | Market-Analyst / PO | Watchlist change, sector update |
 | `docs/data/project-stats.json` | PM / System-Auditor | Sprint start/end, count change |
+| `docs/data/system-auditor-known-issues.json` | System-Auditor | Each audit run |
+| `docs/data/code-janitor-known-findings.json` | Code-Janitor | Each janitor run |
 | `mcp.config.json` | Developer | Threshold tuning |
 | `.claude/knowledge/*.md` | Architect / claude-manager-helper | Logic or rule change |
 

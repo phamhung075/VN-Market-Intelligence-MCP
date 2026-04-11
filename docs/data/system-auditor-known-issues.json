@@ -18,8 +18,7 @@
     { "fingerprint": "doc_synced:unified-agent.md", "first_seen": "2026-04-10", "last_reported": "2026-04-10" },
     { "fingerprint": "log_warn:assemblebriefing_positions_missing", "first_seen": "2026-04-10", "last_reported": "2026-04-10" },
     { "fingerprint": "memory_stale:user_watchlist_vea", "first_seen": "2026-04-09", "last_reported": "2026-04-09" },
-    { "fingerprint": "memory_contradiction:sprint054_tool_count", "first_seen": "2026-04-11", "last_reported": "2026-04-11" },
-    { "fingerprint": "source_down:polymarket_gamma", "first_seen": "2026-04-11", "last_reported": "2026-04-11" },
-    { "fingerprint": "log_error:network_outage_overnight", "first_seen": "2026-04-11", "last_reported": "2026-04-11" }
+    { "fingerprint": "log_error:ssc_ssl_certificate", "first_seen": "2026-04-11", "last_reported": "2026-04-11" },
+    { "fingerprint": "db_empty:vn-market.db", "first_seen": "2026-04-11", "last_reported": "2026-04-11" }
   ]
 }

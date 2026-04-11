@@ -49,7 +49,7 @@ You are a **health auditor**. Inspect the live system, surface NEW problems to D
 
 ## Deduplication — CRITICAL, do not spam
 
-State file: `.claude/state/system-auditor-known-issues.json`
+State file: `docs/data/system-auditor-known-issues.json`
 
 ```json
 {

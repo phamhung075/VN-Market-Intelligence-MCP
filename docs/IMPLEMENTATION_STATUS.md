@@ -123,9 +123,29 @@
 - Sprint 054 Phase 6: Cowork E7 position-aware agents + E8 07-qa-responder created
 - Watchlist expanded to 30 tickers (from 8)
 
+## Done — Sprint 055 (2026-04-10 to 2026-04-11)
+
+- Task 1100: `cron_job_runs` DDL + `cronJobRunStore` CRUD (4 functions, 24 tests)
+- Task 1101: `recordJobRun` wrapper + applied to 5 scheduler jobs (newsPoller, sscChecker, marketScan, askQueueCheck, dataAudit)
+- Task 1102: `get_cron_health` MCP tool (+1 tool)
+- Task 1103: `cronHealthAlertJob` — daily WORK alert when any job success_rate < 80%
+- Task 1104: Sprint 055 cron smoke test (14 tests)
+- Task 1105: Signal Fix A — `causal_root_id` migration + signal grouping
+- Task 1106: Signal Fix B — `signal_class` field + conviction weighting
+- Task 1107: Signal Fix C — `recency_weight` in `search_similar_context` (recencyWeighter.ts, floor 0.1)
+- Task 1108: `agent_work_log` DDL + `agentWorkLogStore` (17 tests)
+- Task 1109: `log_agent_work` + `get_agent_work_log` MCP tools (+2 tools)
+- Task 1110: `sent_by` column on alerts table + Alert Commander filter
+- Net: +3 tools → ~83 total. 156/156 tests pass. bun tsc --noEmit clean.
+
+## Done — Sprint 056 (2026-04-11)
+
+- Task 1111: BCTC fallback hardening — `disableSscPolling` config flag, HOSE/HNX/UPCOM queried in parallel, `listSscDocumentsWithFlag` wrapper. Closes P1 deadline gap (bank BCTC 2026-04-14). 9/9 tests pass.
+- TECH_1002: Anonymous SSC PDF attribution — `normaliseFilename` + `action_code` on `pdf_extracted_text` + D-7c fallback. 11 tests. (commit 60482d1)
+
 ## In Progress
 
-Sprint 054 complete. Backlog items in TASKS.md.
+Sprint 056 complete. Backlog items in TASKS.md. Sprint 057 planning pending.
 
 ## Deferred
 

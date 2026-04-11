@@ -266,7 +266,7 @@ At the end of every run, regardless of whether fixes were shipped:
 
 ## State file
 
-`.claude/state/code-janitor-known-findings.json`
+`docs/data/code-janitor-known-findings.json`
 
 ```json
 {
@@ -290,7 +290,7 @@ Rules:
 ## Run procedure (step-by-step)
 
 1. Re-read this file (`code-janitor.md`) — instructions may have been updated since the last run.
-2. Read state file `.claude/state/code-janitor-known-findings.json` (create empty `{ "findings": [] }` if missing).
+2. Read state file `docs/data/code-janitor-known-findings.json` (create empty `{ "findings": [] }` if missing).
 3. Run Checks 1–5 in order. Collect raw findings.
 4. For each raw finding:
    a. Compute fingerprint.

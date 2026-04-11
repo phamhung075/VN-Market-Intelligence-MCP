@@ -20,6 +20,7 @@
 | 23:00 Sunday | `weeklyPortfolioReport` | `0 23 * * 0` | P&L + allocation drift + top movers → Telegram |
 | 23:00 daily | `dataAuditDaily` | `0 23 * * *` | Orphan vectors, stale entries, DB row counts |
 | 01:00 Sunday | `dataAuditWeekly` | `0 1 * * 0` | LanceDB vs SQLite consistency, signal coverage gaps |
+| daily (configurable) | `cronHealthAlert` | `CRON_HEALTH_ALERT` | Check all cron job success_rate (7d window); alert WORK channel if any job < 80% (task 1103) |
 | 06:00 UTC M–F | `franceSummary` | `0 6 * * 1-5` (`CRON_FRANCE_SUMMARY`) | France wake-up digest (13:00 VN) → MARKET channel |
 | 07:00 UTC Sunday | `devTeamHeartbeat` | `0 7 * * 0` (`CRON_DEV_TEAM_HEARTBEAT`) | System health + weekly observability report |
 | 08:00 UTC Sunday | `predictionOutcome` | `0 8 * * 0` (`CRON_PREDICTION_OUTCOME`) | Evaluate prediction signals vs actual outcomes |
@@ -62,7 +63,7 @@ This job is in `src/scheduler/vpsProxyWatchdogJob.ts` (154 lines). Registered in
 
 ## Notes
 
-- Total scheduler files: **22** (`jobs.ts` + `summaryJobs.ts` + 20 job handlers including `vpsProxyWatchdogJob.ts` and `bctcReparseJob.ts`).
+- Total scheduler files: **24** (`jobs.ts` + `summaryJobs.ts` + 22 job handlers including `cronHealthAlertJob.ts`, `vpsProxyWatchdogJob.ts`, `bctcReparseJob.ts`).
 - `insiderCheckJob.ts` exists in `src/scheduler/` but is **not registered** in `jobs.ts` (orphan — Sprint 039-040 era, pending wiring).
 - `newsPollerJob.ts` is legacy (superseded by `intelligenceCycleJob`); kept for fallback testing only.
 - `userRequestCheckJob.ts` was referenced in Sprint 050 design but was **not created** — `/ask` + `/why` handling is done inline in `intelligenceCycleJob.ts` or `telegramCommands.ts`.
