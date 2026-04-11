@@ -117,27 +117,12 @@ describe("Task 169 — predictionMarkets config section", () => {
     expect(cfg.predictionMarkets.curatedMarketIds).toHaveLength(0);
   });
 
-  // ── Scheduler field ───────────────────────────────────────────────────────
-
-  it("scheduler.predictionMarketPoll has correct default cron", async () => {
-    const { loadMcpConfig } = await import("../infrastructure/config.js");
-    const cfg = loadMcpConfig();
-    expect(cfg.scheduler.predictionMarketPoll).toBe("*/30 * * * *");
-  });
-
   // ── mcp.config.json file contains the section ─────────────────────────────
 
   it("mcp.config.json file has predictionMarkets section", () => {
     const raw = readFileSync(MCP_CONFIG_PATH, "utf-8");
     const json = JSON.parse(raw) as Record<string, unknown>;
     expect(json["predictionMarkets"]).toBeDefined();
-  });
-
-  it("mcp.config.json scheduler has predictionMarketPoll field", () => {
-    const raw = readFileSync(MCP_CONFIG_PATH, "utf-8");
-    const json = JSON.parse(raw) as Record<string, unknown>;
-    const scheduler = json["scheduler"] as Record<string, unknown>;
-    expect(scheduler["predictionMarketPoll"]).toBe("*/30 * * * *");
   });
 
   it("mcp.config.json predictionMarkets has clobApiUrl field", () => {

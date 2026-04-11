@@ -59,17 +59,6 @@ export interface MarketConfig {
   watchlist: string[];
 }
 
-export interface SchedulerConfig {
-  intelligenceCycle: string;
-  morningBriefing: string;
-  marketOpen: string;
-  marketClose: string;
-  sscCheck: string;
-  eveningSummary: string;
-  /** Cron for prediction market polling. Default: every 30 minutes. */
-  predictionMarketPoll: string;
-}
-
 /** Flat prediction markets configuration block (TECH-020, Section 5). */
 export interface PredictionMarketsConfig {
   /** Whether prediction market polling is active. Default: true */
@@ -203,7 +192,6 @@ export interface McpConfig {
   embedding: EmbeddingConfig;
   telegram: TelegramConfig;
   market: MarketConfig;
-  scheduler: SchedulerConfig;
   alerts: AlertConfig;
   fetchers: FetchersConfig;
   cycle: CycleConfig;
@@ -421,15 +409,6 @@ export function loadMcpConfig(): McpConfig {
         "GEX",
         "BSR",
       ]),
-    },
-    scheduler: {
-      intelligenceCycle: str(f, "scheduler.intelligenceCycle", "CRON_INTELLIGENCE_CYCLE", "*/15 * * * *"),
-      morningBriefing: str(f, "scheduler.morningBriefing", "CRON_MORNING_BRIEFING", "0 8 * * 1-5"),
-      marketOpen: str(f, "scheduler.marketOpen", "CRON_MARKET_OPEN", "0 9 * * 1-5"),
-      marketClose: str(f, "scheduler.marketClose", "CRON_MARKET_CLOSE", "30 15 * * 1-5"),
-      sscCheck: str(f, "scheduler.sscCheck", "CRON_SSC_CHECK", "0 20 * * *"),
-      eveningSummary: str(f, "scheduler.eveningSummary", "CRON_EVENING_SUMMARY", "0 22 * * 1-5"),
-      predictionMarketPoll: str(f, "scheduler.predictionMarketPoll", "CRON_PREDICTION_MARKET_POLL", "*/30 * * * *"),
     },
     alerts: {
       defaultDropPct: num(f, "alerts.defaultDropPct", "DEFAULT_ALERT_DROP_PCT", -3),
