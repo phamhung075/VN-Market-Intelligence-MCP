@@ -74,10 +74,41 @@ echo "=== Last 10 log lines ==="
 tail -10 /var/log/vn-price-fetch.log 2>/dev/null || echo "(log not yet written)"
 EOF
 
+# ── BCTC PDF Proxy deploy (Task 1112) ────────────────────────────────────
+echo ""
+echo "Deploying BCTC PDF proxy scripts..."
+
+TMP_BCTC=$(mktemp)
+sed -e "s|__MCP_BASE__|${MCP_BASE}|g" \
+    -e "s|__API_KEY__|${VPS_PUSH_API_KEY}|g" \
+    vps-scripts/fetch-bctc.sh > "$TMP_BCTC"
+
+$SCP "$TMP_BCTC"                    ${VULTR_USER}@${VULTR_IP}:/root/fetch-bctc.sh
+$SCP vps-scripts/fetch-bctc-loop.sh ${VULTR_USER}@${VULTR_IP}:/root/fetch-bctc-loop.sh
+$SCP vps-scripts/vn-bctc-fetch.service \
+     ${VULTR_USER}@${VULTR_IP}:/etc/systemd/system/vn-bctc-fetch.service
+rm "$TMP_BCTC"
+
+$SSH << 'BCTCEOF'
+set -e
+chmod +x /root/fetch-bctc.sh /root/fetch-bctc-loop.sh
+systemctl daemon-reload
+systemctl enable vn-bctc-fetch.service
+systemctl restart vn-bctc-fetch.service
+sleep 2
+echo "=== BCTC unit status ==="
+systemctl --no-pager -l status vn-bctc-fetch.service | head -15
+BCTCEOF
+
 echo ""
 echo "══════════════════════════════════════════"
-echo " Deploy complete — systemd owns the fetcher"
-echo " Status: ssh root@${VULTR_IP} systemctl status vn-price-fetch"
-echo " Logs:   ssh root@${VULTR_IP} tail -f /var/log/vn-price-fetch.log"
-echo " Journal: ssh root@${VULTR_IP} journalctl -u vn-price-fetch -f"
+echo " Deploy complete — systemd owns both fetchers"
+echo ""
+echo " Price proxy:"
+echo "   Status: ssh root@${VULTR_IP} systemctl status vn-price-fetch"
+echo "   Logs:   ssh root@${VULTR_IP} tail -f /var/log/vn-price-fetch.log"
+echo ""
+echo " BCTC proxy:"
+echo "   Status: ssh root@${VULTR_IP} systemctl status vn-bctc-fetch"
+echo "   Logs:   ssh root@${VULTR_IP} tail -f /var/log/vn-bctc-fetch.log"
 echo "══════════════════════════════════════════"

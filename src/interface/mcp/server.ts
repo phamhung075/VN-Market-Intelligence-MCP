@@ -33,6 +33,54 @@ import { validateWebhookRequest } from "../../infrastructure/notifiers/telegramW
 import { insertReport } from "../../infrastructure/db/telegramReportStore.js";
 import { toolRegistry } from "./tools/registry.js";
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Task 1112 — Minimal multipart/form-data parser for push-bctc-pdf
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Parse multipart/form-data body into a Map of field name → value.
+ * Text fields return string values; file fields return Buffer values.
+ */
+function parseMultipartFields(body: Buffer, boundary: string): Map<string, string | Buffer> {
+  const fields = new Map<string, string | Buffer>();
+  const sep = Buffer.from(`--${boundary}`);
+
+  // Split body by boundary
+  let start = 0;
+  const parts: Buffer[] = [];
+  while (true) {
+    const idx = body.indexOf(sep, start);
+    if (idx === -1) break;
+    if (start > 0) {
+      // Remove trailing \r\n before boundary
+      const end = idx - 2 >= start ? idx - 2 : idx;
+      parts.push(body.subarray(start, end));
+    }
+    start = idx + sep.length;
+    // Skip \r\n after boundary
+    if (body[start] === 0x0d && body[start + 1] === 0x0a) start += 2;
+    // Check for closing --
+    if (body[start] === 0x2d && body[start + 1] === 0x2d) break;
+  }
+
+  for (const part of parts) {
+    // Find double CRLF separating headers from body
+    const headerEnd = part.indexOf("\r\n\r\n");
+    if (headerEnd === -1) continue;
+    const headerStr = part.subarray(0, headerEnd).toString("utf-8");
+    const bodyContent = part.subarray(headerEnd + 4);
+
+    const nameMatch = headerStr.match(/name="([^"]+)"/);
+    if (!nameMatch?.[1]) continue;
+    const name = nameMatch[1];
+
+    const isFile = headerStr.includes("filename=");
+    fields.set(name, isFile ? Buffer.from(bodyContent) : bodyContent.toString("utf-8"));
+  }
+
+  return fields;
+}
+
 /** Options for starting the Bun HTTP server. */
 export interface BunServerOptions {
   /** TCP port to listen on. Falls back to PORT env var, then 3000. */
@@ -600,6 +648,219 @@ export async function createBunServer(
       } catch (err) {
         res.writeHead(500, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ error: "DB error" }));
+      }
+      return;
+    }
+
+    // ── Task 1112: BCTC VPS proxy — fetch queue ────────────────────────────
+    if (method === "GET" && pathname === "/api/bctc-fetch-queue") {
+      const apiKey = process.env.VPS_PUSH_API_KEY;
+      const authHeader = req.headers["x-api-key"] || req.headers["authorization"]?.replace("Bearer ", "");
+      if (!apiKey || authHeader !== apiKey) {
+        res.writeHead(401, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "Unauthorized" }));
+        return;
+      }
+      try {
+        const db = getDb();
+
+        // Get current reporting period (most recent quarter)
+        const now = new Date();
+        const currentYear = now.getFullYear();
+        const currentMonth = now.getMonth() + 1; // 1-indexed
+        // Determine which quarter's BCTC we're looking for (previous quarter)
+        let targetYear = currentYear;
+        let targetQuarter: string;
+        if (currentMonth <= 3) { targetYear = currentYear - 1; targetQuarter = "Q4"; }
+        else if (currentMonth <= 6) { targetQuarter = "Q1"; }
+        else if (currentMonth <= 9) { targetQuarter = "Q2"; }
+        else { targetQuarter = "Q3"; }
+
+        // Get watchlist tickers
+        const watchlistRows = db.prepare("SELECT code FROM watchlist ORDER BY code").all() as { code: string }[];
+        const watchlistCodes = watchlistRows.map((r) => r.code);
+
+        // Find tickers missing from financial_reports for the target period
+        const existingRows = db.prepare(
+          `SELECT action_code FROM financial_reports WHERE period_year = ? AND period_type = ?`,
+        ).all(targetYear, targetQuarter) as { action_code: string }[];
+        const existing = new Set(existingRows.map((r) => r.action_code));
+
+        const missing = watchlistCodes.filter((c) => !existing.has(c));
+
+        // Upsert queue rows for missing tickers
+        const insertStmt = db.prepare(
+          `INSERT OR IGNORE INTO bctc_vps_queue (action_code, period_year, period_quarter) VALUES (?, ?, ?)`,
+        );
+        for (const code of missing) {
+          insertStmt.run(code, targetYear, targetQuarter);
+        }
+
+        // Return pending queue items (max 10)
+        const pendingRows = db.prepare(
+          `SELECT action_code, period_year, period_quarter FROM bctc_vps_queue
+           WHERE status = 'pending' AND attempts < 5
+           ORDER BY created_at ASC LIMIT 10`,
+        ).all() as { action_code: string; period_year: number; period_quarter: string }[];
+
+        const queue = pendingRows.map((r) => ({
+          action_code: r.action_code,
+          period_year: r.period_year,
+          period_quarter: r.period_quarter,
+          source_hints: [
+            `https://congbothongtin.ssc.gov.vn/faces/NewsSearch`,
+            `https://www.hsx.vn/Modules/Listed/Web/StockDisclosure/${r.action_code}`,
+            `https://hnx.vn/cong-bo-thong-tin/cong-ty-co-phan.html?StockCode=${r.action_code}`,
+            `https://upcom.hnx.vn/cong-bo-thong-tin/cong-ty-co-phan.html?StockCode=${r.action_code}`,
+          ],
+        }));
+
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ queue, total: queue.length }));
+      } catch (err) {
+        log.error("[bctc-fetch-queue] error", { error: err instanceof Error ? err.message : String(err) });
+        res.writeHead(500, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "Server error" }));
+      }
+      return;
+    }
+
+    // ── Task 1112: BCTC VPS proxy — push PDF ─────────────────────────────────
+    if (method === "POST" && pathname === "/api/push-bctc-pdf") {
+      const apiKey = process.env.VPS_PUSH_API_KEY;
+      const authHeader = req.headers["x-api-key"] || req.headers["authorization"]?.replace("Bearer ", "");
+      if (!apiKey || authHeader !== apiKey) {
+        res.writeHead(401, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "Unauthorized" }));
+        return;
+      }
+
+      // Size limit: 52 MB
+      const contentLength = parseInt(req.headers["content-length"] ?? "0", 10);
+      if (contentLength > 52_428_800) {
+        res.writeHead(413, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "PDF too large (max 50 MB)" }));
+        return;
+      }
+
+      try {
+        // Read raw body
+        const chunks: Buffer[] = [];
+        let totalBytes = 0;
+        for await (const chunk of req) {
+          totalBytes += chunk.length;
+          if (totalBytes > 52_428_800) {
+            res.writeHead(413, { "Content-Type": "application/json" });
+            res.end(JSON.stringify({ error: "PDF too large (max 50 MB)" }));
+            return;
+          }
+          chunks.push(typeof chunk === "string" ? Buffer.from(chunk) : chunk);
+        }
+        const body = Buffer.concat(chunks);
+
+        // Parse multipart/form-data
+        const contentType = req.headers["content-type"] ?? "";
+        const boundaryMatch = contentType.match(/boundary=(.+?)(?:;|$)/);
+        if (!boundaryMatch) {
+          res.writeHead(400, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ error: "Missing multipart boundary" }));
+          return;
+        }
+
+        const boundary = boundaryMatch[1]!;
+        const fields = parseMultipartFields(body, boundary);
+
+        const actionCode = fields.get("action_code")?.toString().toUpperCase().trim();
+        const periodYear = parseInt(fields.get("period_year")?.toString() ?? "", 10);
+        const periodQuarter = fields.get("period_quarter")?.toString().toUpperCase().trim();
+        const sourceUrl = fields.get("source_url")?.toString() ?? "";
+        const pdfBuffer = fields.get("pdf");
+
+        // Validate required fields
+        if (!actionCode || !/^[A-Z0-9]{2,10}$/.test(actionCode)) {
+          res.writeHead(400, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ error: "Invalid action_code" }));
+          return;
+        }
+        if (isNaN(periodYear) || periodYear < 2000 || periodYear > 2099) {
+          res.writeHead(400, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ error: "Invalid period_year" }));
+          return;
+        }
+        if (!periodQuarter || !["Q1", "Q2", "Q3", "Q4"].includes(periodQuarter)) {
+          res.writeHead(400, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ error: "Invalid period_quarter" }));
+          return;
+        }
+        if (!pdfBuffer || !(pdfBuffer instanceof Buffer) || pdfBuffer.length < 100) {
+          res.writeHead(400, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ error: "Missing or empty pdf file" }));
+          return;
+        }
+
+        const db = getDb();
+
+        // Check if already done
+        const existingRow = db.prepare(
+          `SELECT status FROM bctc_vps_queue WHERE action_code = ? AND period_year = ? AND period_quarter = ?`,
+        ).get(actionCode, periodYear, periodQuarter) as { status: string } | null;
+        if (existingRow?.status === "done") {
+          res.writeHead(200, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ ok: true, skipped: true }));
+          return;
+        }
+
+        // Write PDF to disk
+        const { normaliseFilename } = await import("../../application/usecases/fetchParseAndStoreBctc.js");
+        const filename = normaliseFilename(sourceUrl || `${actionCode}.pdf`, actionCode, periodYear, periodQuarter as any);
+        const { resolve } = await import("node:path");
+        const { mkdirSync, writeFileSync } = await import("node:fs");
+        const pdfDir = resolve(process.cwd(), "data", "pdfs");
+        mkdirSync(pdfDir, { recursive: true });
+        const pdfPath = resolve(pdfDir, filename);
+        writeFileSync(pdfPath, pdfBuffer);
+
+        log.info("[push-bctc-pdf] PDF saved", { actionCode, periodYear, periodQuarter, filename, bytes: pdfBuffer.length });
+
+        // Update queue status
+        db.prepare(
+          `INSERT INTO bctc_vps_queue (action_code, period_year, period_quarter, status, source_url, attempts, last_attempt)
+           VALUES (?, ?, ?, 'fetching', ?, 1, datetime('now'))
+           ON CONFLICT(action_code, period_year, period_quarter)
+           DO UPDATE SET status = 'fetching', source_url = ?, attempts = attempts + 1, last_attempt = datetime('now')`,
+        ).run(actionCode, periodYear, periodQuarter, sourceUrl, sourceUrl);
+
+        // Fire-and-forget: trigger BCTC parse pipeline
+        setImmediate(async () => {
+          try {
+            const { fetchParseAndStoreBctc } = await import("../../application/usecases/fetchParseAndStoreBctc.js");
+            await fetchParseAndStoreBctc({
+              actionCode,
+              year: periodYear,
+              quarter: periodQuarter as any,
+              pdfUrl: sourceUrl || `file://${pdfPath}`,
+            });
+            db.prepare(
+              `UPDATE bctc_vps_queue SET status = 'done' WHERE action_code = ? AND period_year = ? AND period_quarter = ?`,
+            ).run(actionCode, periodYear, periodQuarter);
+            log.info("[push-bctc-pdf] pipeline complete", { actionCode, periodYear, periodQuarter });
+          } catch (err) {
+            db.prepare(
+              `UPDATE bctc_vps_queue SET status = 'failed' WHERE action_code = ? AND period_year = ? AND period_quarter = ?`,
+            ).run(actionCode, periodYear, periodQuarter);
+            log.error("[push-bctc-pdf] pipeline failed", {
+              actionCode,
+              error: err instanceof Error ? err.message : String(err),
+            });
+          }
+        });
+
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: true, queued: `${actionCode}-${periodYear}-${periodQuarter}` }));
+      } catch (err) {
+        log.error("[push-bctc-pdf] error", { error: err instanceof Error ? err.message : String(err) });
+        res.writeHead(500, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "Server error" }));
       }
       return;
     }

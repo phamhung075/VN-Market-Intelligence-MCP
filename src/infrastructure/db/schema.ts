@@ -824,6 +824,24 @@ export async function initDatabase(): Promise<void> {
     // Column already exists — safe to ignore
   }
 
+  // ── Task 1112: BCTC VPS proxy queue ──────────────────────────────────────
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS bctc_vps_queue (
+      id              INTEGER PRIMARY KEY AUTOINCREMENT,
+      action_code     TEXT    NOT NULL,
+      period_year     INTEGER NOT NULL,
+      period_quarter  TEXT    NOT NULL,
+      status          TEXT    NOT NULL DEFAULT 'pending',
+      source_url      TEXT,
+      attempts        INTEGER NOT NULL DEFAULT 0,
+      last_attempt    TEXT,
+      created_at      TEXT    NOT NULL DEFAULT (datetime('now')),
+      UNIQUE(action_code, period_year, period_quarter)
+    )
+  `);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_bvq_status ON bctc_vps_queue(status)`);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_bvq_code   ON bctc_vps_queue(action_code)`);
+
   // ── Kinh Dich tables (Task 1047) ──────────────────────────────────────────
   // Previously created via initHexagramTables() called lazily from kinhDichTools.ts
   // and intelligenceCycleJob.ts. Moved here so fresh DBs have both tables on startup.
