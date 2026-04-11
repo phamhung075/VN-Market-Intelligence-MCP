@@ -38,6 +38,19 @@ function makeDb(): Database {
       updated_at TEXT    NOT NULL DEFAULT (datetime('now'))
     )
   `);
+  db.run(`
+    CREATE TABLE daily_ohlcv (
+      id    INTEGER PRIMARY KEY AUTOINCREMENT,
+      code  TEXT NOT NULL,
+      date  TEXT NOT NULL,
+      open  REAL,
+      high  REAL,
+      low   REAL,
+      close REAL,
+      volume INTEGER,
+      UNIQUE(code, date)
+    )
+  `);
   return db;
 }
 

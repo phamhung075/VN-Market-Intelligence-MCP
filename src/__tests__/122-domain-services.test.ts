@@ -160,9 +160,10 @@ describe("Task 122 — Signal Detector branch coverage", () => {
   });
 
   // SD-07: exact volume boundary 2.0x → must trigger volume_spike
+  // _now set to 06:00 UTC to avoid ATC window (07:30-08:05 UTC) suppression
   it("SD-07: volume exactly 2.0x avgVolume triggers volume_spike", () => {
     const snapshot = makeSnapshot({ volume: 2_000_000, avgVolume: 1_000_000 });
-    const signals = detectSignals(snapshot);
+    const signals = detectSignals(snapshot, { _now: new Date("2026-01-01T06:00:00Z") });
     expect(signals.map((s) => s.type)).toContain("volume_spike");
   });
 
@@ -197,6 +198,7 @@ describe("Task 122 — Signal Detector branch coverage", () => {
     const context: SignalContext = {
       latestReportDate: new Date().toISOString(),       // → report_new
       recentNews: [{ title: "Breaking news VCB", source: "cafef" }], // → news_mention
+      _now: new Date("2026-01-01T06:00:00Z"), // avoid ATC window suppression
     };
     const signals = detectSignals(snapshot, context);
     const types = signals.map((s) => s.type);
@@ -263,9 +265,10 @@ describe("Task 122 — Signal Detector branch coverage", () => {
   });
 
   // SD-17: volume_spike severity branches — multiplier < 3 → medium
+  // _now set outside ATC window to avoid false suppression
   it("SD-17: volume_spike severity medium when multiplier is 2x-2.9x", () => {
     const snapshot = makeSnapshot({ volume: 2_500_000, avgVolume: 1_000_000 });
-    const signals = detectSignals(snapshot);
+    const signals = detectSignals(snapshot, { _now: new Date("2026-01-01T06:00:00Z") });
     const spike = signals.find((s) => s.type === "volume_spike");
     expect(spike).toBeDefined();
     expect(spike!.severity).toBe("medium");
@@ -274,7 +277,7 @@ describe("Task 122 — Signal Detector branch coverage", () => {
   // SD-18: volume_spike severity — multiplier 3–4.9x → high
   it("SD-18: volume_spike severity high when multiplier is 3x-4.9x", () => {
     const snapshot = makeSnapshot({ volume: 4_000_000, avgVolume: 1_000_000 });
-    const signals = detectSignals(snapshot);
+    const signals = detectSignals(snapshot, { _now: new Date("2026-01-01T06:00:00Z") });
     const spike = signals.find((s) => s.type === "volume_spike");
     expect(spike).toBeDefined();
     expect(spike!.severity).toBe("high");
@@ -283,7 +286,7 @@ describe("Task 122 — Signal Detector branch coverage", () => {
   // SD-19: volume_spike severity — multiplier ≥5x → critical
   it("SD-19: volume_spike severity critical when multiplier is >=5x", () => {
     const snapshot = makeSnapshot({ volume: 6_000_000, avgVolume: 1_000_000 });
-    const signals = detectSignals(snapshot);
+    const signals = detectSignals(snapshot, { _now: new Date("2026-01-01T06:00:00Z") });
     const spike = signals.find((s) => s.type === "volume_spike");
     expect(spike).toBeDefined();
     expect(spike!.severity).toBe("critical");

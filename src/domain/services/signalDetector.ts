@@ -113,6 +113,8 @@ export interface SignalContext {
   volatility?: StockVolatility;
   /** Crisis event detected by crisisPatternDetector (Task 263) */
   crisisEvent?: CrisisEventContext;
+  /** Override current time for testing (avoids ATC window flakes). */
+  _now?: Date;
 }
 
 /**
@@ -239,7 +241,7 @@ export function detectSignals(
   // Suppress during VN ATC closing auction (14:30-15:00 VN = 07:30-08:00 UTC).
   // ATC concentrates end-of-day orders into a single batch, producing uniform
   // ~5.3× spikes across ALL stocks — pure false positives (report #1083).
-  const utcNow = new Date();
+  const utcNow = context?._now ?? new Date();
   const utcH = utcNow.getUTCHours();
   const utcM = utcNow.getUTCMinutes();
   const isAtcWindow = (utcH === 7 && utcM >= 30) || (utcH === 8 && utcM <= 5);

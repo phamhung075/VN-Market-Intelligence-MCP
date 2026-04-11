@@ -64,13 +64,15 @@ function setupTestDb(): Database {
       analysis_ids_json     TEXT,
       message               TEXT,
       read                  INTEGER NOT NULL DEFAULT 0,
-      user_note             TEXT
+      user_note             TEXT,
+      sent_by               TEXT NOT NULL DEFAULT 'server'
     );
     CREATE TABLE IF NOT EXISTS market_prices_history (
       code       TEXT NOT NULL,
       price      REAL NOT NULL,
       volume     REAL NOT NULL,
       fetched_at TEXT NOT NULL,
+      exchange   TEXT DEFAULT 'HOSE',
       PRIMARY KEY (code, fetched_at)
     );
     CREATE INDEX IF NOT EXISTS idx_mph_code_fetched
