@@ -1,0 +1,136 @@
+{
+  "date": "2026-04-10",
+  "topAlerts": [
+    {
+      "severity": "critical",
+      "message": "BSR alert [CRITICAL]: price_surge, volume_spike — ⚠️ BSR: KL giao dịch gấp 5.3× TB nhưng không có tin — có thể có thông tin nội bộ chưa công bố | BSR TANG: Kha chac chan - gia, KL, nganh xac nhan",
+      "stocks": [
+        "BSR"
+      ]
+    },
+    {
+      "severity": "critical",
+      "message": "VCI alert [CRITICAL]: volume_spike, price_drop — ⚠️ Ngành Chứng khoán giảm đồng loạt (4 mã, TB -0.66%): MBS -0.95%, VND -0.59%, SHS -0.56%, SSI -0.52% | VCI TRUNG TINH: Kha chac chan - KL, nganh xac nhan",
+      "stocks": [
+        "VCI"
+      ]
+    },
+    {
+      "severity": "critical",
+      "message": "VND alert [CRITICAL]: volume_spike, price_drop — ⚠️ Ngành Chứng khoán giảm đồng loạt (4 mã, TB -0.66%): MBS -0.95%, VND -0.59%, SHS -0.56%, SSI -0.52% | VND GIAM: Kha chac chan - KL, nganh xac nhan",
+      "stocks": [
+        "VND"
+      ]
+    },
+    {
+      "severity": "critical",
+      "message": "KDH alert [CRITICAL]: volume_spike, price_drop — ⚠️ Ngành Bất động sản giảm đồng loạt (5 mã, TB -1.20%): PDR -1.80%, HUT -1.73%, HDG -1.06%, VHM -0.74%, NLG -0.68%",
+      "stocks": [
+        "KDH"
+      ]
+    },
+    {
+      "severity": "critical",
+      "message": "DXG alert [CRITICAL]: volume_spike, price_drop — ⚠️ Ngành Bất động sản giảm đồng loạt (5 mã, TB -1.20%): PDR -1.80%, HUT -1.73%, HDG -1.06%, VHM -0.74%, NLG -0.68%",
+      "stocks": [
+        "DXG"
+      ]
+    }
+  ],
+  "topStories": [
+    {
+      "title": "PAN Group lên kế hoạch lợi nhuận tăng 53%, mở rộng kinh doanh bất động sản",
+      "level": "country",
+      "sentiment": "bullish",
+      "impactScore": 10
+    },
+    {
+      "title": "Số cổ đông FPT tăng gấp đôi từ khi ông Trương Gia Bình hát \"Tái sinh\", SVĐ Trống Đồng của Vingroup mới đủ sức chứa",
+      "level": "action",
+      "sentiment": "bullish",
+      "impactScore": 10
+    },
+    {
+      "title": "Các ngân hàng cam kết giảm lãi suất",
+      "level": "country",
+      "sentiment": "bearish",
+      "impactScore": 10
+    },
+    {
+      "title": "Doanh thu dầu khí Nga tăng gấp đôi",
+      "level": "country",
+      "sentiment": "bullish",
+      "impactScore": 10
+    },
+    {
+      "title": "Đại biểu Quốc hội: 'Muốn tăng trưởng hai con số phải gắn với phát triển năng lượng'",
+      "level": "country",
+      "sentiment": "bullish",
+      "impactScore": 10
+    }
+  ],
+  "watchlistMovers": [
+    {
+      "code": "BSR",
+      "changePct": 7,
+      "price": 26750,
+      "exchange": "HOSE"
+    },
+    {
+      "code": "EIB",
+      "changePct": 2.21,
+      "price": 23100,
+      "exchange": "HOSE"
+    },
+    {
+      "code": "DPM",
+      "changePct": 2.11,
+      "price": 29100,
+      "exchange": "HOSE"
+    },
+    {
+      "code": "PDR",
+      "changePct": -1.8,
+      "price": 16400,
+      "exchange": "HOSE"
+    },
+    {
+      "code": "HUT",
+      "changePct": -1.73,
+      "price": 17000,
+      "exchange": "HOSE"
+    },
+    {
+      "code": "DGC",
+      "changePct": 1.69,
+      "price": 54000,
+      "exchange": "HOSE"
+    },
+    {
+      "code": "VIC",
+      "changePct": 1.68,
+      "price": 151700,
+      "exchange": "HOSE"
+    },
+    {
+      "code": "VNM",
+      "changePct": 1.62,
+      "price": 62800,
+      "exchange": "HOSE"
+    },
+    {
+      "code": "SAB",
+      "changePct": 1.55,
+      "price": 45800,
+      "exchange": "HOSE"
+    },
+    {
+      "code": "FRT",
+      "changePct": 1.33,
+      "price": 152000,
+      "exchange": "HOSE"
+    }
+  ],
+  "predictionSignals": [],
+  "generatedAt": "2026-04-10T15:00:00.824Z"
+}
