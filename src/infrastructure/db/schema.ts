@@ -726,6 +726,13 @@ export async function initDatabase(): Promise<void> {
   try { db.exec(`ALTER TABLE agent_signals ADD COLUMN causal_root_id TEXT`); } catch {}
   try { db.exec(`ALTER TABLE agent_signals ADD COLUMN causal_root_label TEXT`); } catch {}
 
+  // ── Task 1106: Signal Class Column — idempotent ALTER for existing agent_signals ──
+  // Enables Fix B (REQ_056): chain synthesizer applies class-based weight multipliers
+  // before averaging conviction scores. Valid values:
+  //   'structural_factor' | 'cyclical' | 'technical_signal' | 'one_time_catalyst' | 'sentiment'
+  // NULL = unclassified (backward compatible with pre-1106 rows, treated as weight 1.0).
+  try { db.exec(`ALTER TABLE agent_signals ADD COLUMN signal_class TEXT`); } catch {}
+
   db.exec(`CREATE INDEX IF NOT EXISTS idx_agent_signals_cycle ON agent_signals(cycle_id)`);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_agent_signals_chain ON agent_signals(causal_ref)`);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_agent_signals_stock ON agent_signals(stock_code, created_at)`);

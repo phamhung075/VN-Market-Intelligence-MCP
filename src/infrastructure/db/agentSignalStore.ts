@@ -104,6 +104,13 @@ export interface PostSignalInput {
    * NULL when causalRootId is not set.
    */
   causalRootLabel?: string | null;
+  /**
+   * Task 1106 — Signal class for conviction score weighting (Fix B from REQ_056).
+   * Valid values: 'structural_factor' | 'cyclical' | 'technical_signal' |
+   *               'one_time_catalyst' | 'sentiment'
+   * NULL / undefined = unclassified, treated as weight 1.0 (backward compatible).
+   */
+  signalClass?: "structural_factor" | "cyclical" | "technical_signal" | "one_time_catalyst" | "sentiment" | null;
 }
 
 /**
@@ -236,6 +243,7 @@ export function postSignal(db: Database, input: PostSignalInput): number {
     chainDepth = 0,
     causalRootId = null,
     causalRootLabel = null,
+    signalClass = null,
   } = input;
 
   // Check which optional column groups exist. Fresh DBs (with all columns)
@@ -258,11 +266,47 @@ export function postSignal(db: Database, input: PostSignalInput): number {
     }
   })();
 
+  const hasSignalClassColumn = (() => {
+    try {
+      db.prepare("SELECT signal_class FROM agent_signals LIMIT 0").all();
+      return true;
+    } catch {
+      return false;
+    }
+  })();
+
   if (hasChainColumns) {
     const now = new Date().toISOString().replace("T", " ").replace(/\.\d{3}Z$/, "");
     const expires = ttlMinutes != null ? expiresAt(ttlMinutes) : null;
 
     if (hasCausalRootColumns) {
+      if (hasSignalClassColumn) {
+        const stmt = db.prepare(`
+          INSERT INTO agent_signals
+            (from_agent, to_agent, signal_type, stock_code, payload, status,
+             created_at, expires_at, cycle_id, finding_data, causal_ref, chain_depth,
+             causal_root_id, causal_root_label, signal_class)
+          VALUES (?, ?, ?, ?, ?, 'unread', ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `);
+        const result = stmt.run(
+          fromAgent,
+          toAgent,
+          signalType,
+          stockCode,
+          JSON.stringify(payload),
+          now,
+          expires ?? expiresAt(ttlMinutes ?? 120),
+          cycleId ?? null,
+          JSON.stringify(findingData),
+          causalRef,
+          chainDepth,
+          causalRootId,
+          causalRootLabel,
+          signalClass,
+        );
+        return Number(result.lastInsertRowid);
+      }
+
       const stmt = db.prepare(`
         INSERT INTO agent_signals
           (from_agent, to_agent, signal_type, stock_code, payload, status,
