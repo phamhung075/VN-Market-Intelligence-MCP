@@ -269,6 +269,7 @@ Acceptance Criteria:
 | 1088 | @architect | P1→P3 | BCTC OCR parser garbage numbers on VNM Q4-2025 (follow-up to #1072). Slices: (a) SHIPPED 2026-04-10 commit b90422b — enhanced detectUnitMultiplier + magnitude inference. (b) SHIPPED 2026-04-10 commit 007bf99 — validation guard rejects zero totalAssets/liabilities/equity; stale row flagged validation_status='failed'. (c) PENDING — regression test fixture using real VNM Q4-2025 OCR text. | Backlog ((a)+(b) done, (c) P3) |
 | 914 | @po | — | Steel sector watchlist gap — HPG. Decision needed: (1) add HPG to defaultWatchlist, (2) document steel as out-of-scope, (3) sector-balanced watchlist via defaultSectors. Min-diff for option 1: add "HPG" to mcp.config.json market.defaultWatchlist + restart. | Backlog (awaiting PO decision) |
 | 1089 | Done | [janitor] Remove dead sourcesRaw fallback in analysis.ts | DONE — commit 067fb8c. Removed dead ?? fallback; Zod .default() handles it. |
+| 1093 | Done | [janitor] Remove orphaned cron defaults from config.ts scheduler section | DONE — commit 8411424. Removed SchedulerConfig interface + 7 cron defaults + scheduler property from McpConfig. |
 
 ---
 
