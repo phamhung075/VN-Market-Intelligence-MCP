@@ -10,15 +10,15 @@
 
 | ID | Title | Branch | Layer | Status |
 |----|-------|--------|-------|--------|
-| 1100 | cron_job_runs DDL + cronJobRunStore CRUD | `task/1100-cron-job-run-store` | infrastructure | Review |
-| 1101 | recordJobRun wrapper + apply to 5 existing jobs | `task/1101-record-job-run-wrapper` | infrastructure/scheduler | Review |
-| 1105 | Signal Fix A: causal_root_id migration + Alert Commander grouping | `task/1105-causal-root-tagging` | infrastructure | Review |
-| 1107 | Signal Fix C: recency_weight in search_similar_context | `task/1107-rag-recency-weight` | domain/interface | Review |
-| 1110 | sent_by column on alerts table + Alert Commander filter | `task/1110-alert-sent-by-column` | infrastructure/db + interface/mcp | Review |
-| 1102 | get_cron_health MCP tool (+1 tool, total ~83) | `task/1102-get-cron-health-tool` | interface | Review |
-| 1103 | cronHealthAlertJob — daily WORK-channel alert if success_rate < 80% | `task/1103-cron-health-alert-job` | scheduler | Review |
+| 1100 | cron_job_runs DDL + cronJobRunStore CRUD | `task/1100-cron-job-run-store` | infrastructure | Done |
+| 1101 | recordJobRun wrapper + apply to 5 existing jobs | `task/1101-record-job-run-wrapper` | infrastructure/scheduler | Done |
+| 1102 | get_cron_health MCP tool (+1 tool) | `task/1102-get-cron-health-tool` | interface | Done |
+| 1103 | cronHealthAlertJob — daily WORK-channel alert if success_rate < 80% | `task/1103-cron-health-alert-job` | scheduler | Done |
+| 1105 | Signal Fix A: causal_root_id migration + Alert Commander grouping | `task/1105-causal-root-tagging` | infrastructure | Done |
+| 1107 | Signal Fix C: recency_weight in search_similar_context | `task/1107-rag-recency-weight` | domain/interface | Done |
+| 1110 | sent_by column on alerts table + Alert Commander filter | `task/1110-alert-sent-by-column` | infrastructure/db + interface/mcp | Done |
 
-PO note (2026-04-10): All 5 Review tasks are pre-approved for merge once QA produces TASK_REPORT_NNN.md with zero blocking issues and `bun tsc --noEmit` + test suite pass confirmed. QA should process in dependency order: 1100 → 1101 (depends on 1100), then 1105 / 1107 / 1110 in parallel.
+Sprint 055 merged to main 2026-04-11. All 7 tasks verified: bun tsc --noEmit clean, test suites pass (53+34+8 tests). QA state sync done 2026-04-11.
 
 ---
 

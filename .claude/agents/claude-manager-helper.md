@@ -109,11 +109,20 @@ After any refactor, also check:
    - Read target doc if it exists; Edit to append. Else Write new doc.
    - Preserve content verbatim; do not summarize away facts.
    - Edit CLAUDE.md to replace section with one-line pointer.
-4. **Skills pass** — Grep agent files for duplicated procedures; extract skills.
-5. **Agent pass** — Identify recurring loops without a dedicated agent; create one.
-6. **Memory pass** — Update `memory/MEMORY.md` and linked files.
-7. **Verify** — `wc -l CLAUDE.md` before/after. Run `bun tsc --noEmit` is NOT your job; you only touch markdown.
-8. **Report** — Short summary: lines removed, files created, skills extracted, agents created, memory updated. Include a paste-ready Cowork refresh prompt if any agent `.md` changed (per the `feedback_cowork_prompt` memory rule).
+4. **Hard-facts audit (pass 1)** — For each `.claude/agents/*.md`, grep for hard-coded values that should live in an authoritative source:
+   - Ticker lists, tool counts, sprint numbers, channel IDs, cron schedules, file paths to code.
+   - Compare each found value against `docs/`, `.claude/knowledge/`, `package.json`, `mcp.config.json`.
+   - If value exists in an authoritative source → replace inline text with a lazy-load pointer.
+   - If no authoritative source exists yet → create one in `.claude/knowledge/` or `docs/`.
+5. **Hard-facts audit (pass 2 — verify)** — Re-read every agent file touched in pass 1. Confirm:
+   - No stale hard-coded values remain (tool counts, ticker lists, sprint numbers).
+   - Every pointer resolves (target file exists and contains the fact).
+   - No circular pointers (A→B→A).
+6. **Skills pass** — Grep agent files for duplicated procedures; extract skills.
+7. **Agent pass** — Identify recurring loops without a dedicated agent; create one.
+8. **Memory pass** — Update `memory/MEMORY.md` and linked files.
+9. **Verify** — `wc -l CLAUDE.md` before/after. Run `bun tsc --noEmit` is NOT your job; you only touch markdown.
+10. **Report** — Short summary: lines removed, files created, skills extracted, agents created, memory updated, hard-facts replaced. Include a paste-ready Cowork refresh prompt if any agent `.md` changed (per the `feedback_cowork_prompt` memory rule).
 
 ## Token optimization principles
 
