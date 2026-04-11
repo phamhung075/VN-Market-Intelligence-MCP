@@ -290,6 +290,33 @@ Acceptance Criteria:
 
 ---
 
+**Task 1107 — Signal Fix C: recency_weight in search_similar_context**
+
+Branch: `task/1107-rag-recency-weight` | Layer: domain/interface | Priority: P1 | Sprint: 055 | Depends on: none | Size: S
+
+Files created/modified:
+- `src/domain/services/recencyWeighter.ts` (CREATE — pure domain service, 0 infra imports)
+- `src/interface/mcp/tools/analysis.ts` (add `recency_days` param + wire `applyRecencyWeighting`)
+- `src/__tests__/1107-rag-recency-weight.test.ts` (CREATE — 13 tests, 100% coverage)
+
+Acceptance Criteria:
+
+**Given** result A (similarity=0.9, age=200d, recency_days=90) and B (similarity=0.7, age=5d) | **Then** B ranks above A after recency weighting
+
+**Given** `search_similar_context(query)` called without recency_days | **Then** behaves identically to recency_days=90
+
+**Given** all results age=0 | **Then** recency_weight=1.0 for all, ranking unchanged from cosine-only
+
+**Given** age >> recency_days | **Then** recency_weight=0.1 (floor)
+
+**Given** existing callers without recency_days param | **Then** no changes required (parameter optional, default=90)
+
+Formula: `recency_weight = max(0.1, 1.0 - (age_days / recency_days) * 0.9)`, `final_score = cosine_similarity * recency_weight`
+
+`bun test src/__tests__/1107-rag-recency-weight.test.ts` → 13 pass, 100% coverage | `bun tsc --noEmit` → 0 errors in task files
+
+---
+
 ## Backlog
 
 | ID | Owner | Priority | Title | Status |
@@ -317,6 +344,7 @@ Acceptance Criteria:
 | ID | Title | Branch | Layer | Status |
 |----|-------|--------|-------|--------|
 | 1100 | cron_job_runs DDL + cronJobRunStore CRUD | `task/1100-cron-job-run-store` | infrastructure | Review |
+| 1107 | Signal Fix C: recency_weight in search_similar_context | `task/1107-rag-recency-weight` | domain/interface | Review |
 
 ---
 

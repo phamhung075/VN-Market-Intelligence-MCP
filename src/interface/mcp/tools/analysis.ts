@@ -7,6 +7,7 @@
  *   1. fetch_and_analyze       — fetch RSS from all sources, normalize, store in SQLite + RAG
  *   2. run_impact_chain        — run causal cascade engine on a news headline
  *   3. search_similar_context  — RAG semantic search for similar past analyses
+ *                                (Task 1107: recency_days parameter, recency_weight re-ranking)
  *
  * All tools call `initDatabase()` lazily on first use so the module can be
  * imported without side effects.
@@ -27,6 +28,7 @@ import { normalizeNews } from "../../../domain/services/newsNormalizer.js";
 import { runImpactChain } from "../../../application/usecases/runImpactChain.js";
 import { searchContext, insertAnalysis } from "../../../infrastructure/rag/retriever.js";
 import type { SearchResult } from "../../../infrastructure/rag/retriever.js";
+import { applyRecencyWeighting } from "../../../domain/services/recencyWeighter.js";
 import type { WatchlistEntry } from "../../../domain/services/cascadeEngine.js";
 import type { DomainType } from "../../../../bctc-schema.js";
 import { logger } from "../../../infrastructure/logger.js";
@@ -342,7 +344,9 @@ export function registerAnalysisTools(server: McpServer): void {
     "Semantically search the RAG memory for past analyses similar to a query. " +
       "Useful for finding historical precedents and building context around an event. " +
       "Supports filtering by analysis level (global/country/domain/action) " +
-      "or specific stock code.",
+      "or specific stock code. Results are re-ranked by recency-weighted score " +
+      "(REQ_056 Fix C): final_score = cosine_similarity * recency_weight, where " +
+      "recency_weight = max(0.1, 1.0 - (age_days / recency_days) * 0.9).",
     {
       query: z
         .string()
@@ -365,19 +369,35 @@ export function registerAnalysisTools(server: McpServer): void {
         .max(20)
         .default(5)
         .describe("Maximum number of results to return (default: 5)"),
+      recency_days: z.coerce
+        .number()
+        .int()
+        .min(1)
+        .max(3650)
+        .default(90)
+        .describe(
+          "Recency window in days for decay scoring (default: 90). " +
+            "Results older than this window are progressively down-ranked. " +
+            "Formula: recency_weight = max(0.1, 1.0 - (age_days / recency_days) * 0.9). " +
+            "final_score = cosine_similarity * recency_weight.",
+        ),
     },
-    async ({ query, level, actionCode, k: kRaw }) => {
+    async ({ query, level, actionCode, k: kRaw, recency_days: recencyDaysRaw }) => {
       const k = kRaw ?? 5;
+      const recencyDays = recencyDaysRaw ?? 90;
 
       try {
         // ── Search vector store ───────────────────────────────────────────────
+        // Fetch up to k*3 (capped at 20) raw results so that recency re-ranking
+        // has a larger pool to choose from before trimming to the final k.
         // Build options object without undefined keys (exactOptionalPropertyTypes)
-        const searchOptions: import("../../../infrastructure/rag/retriever.js").SearchOptions = { k };
+        const rawK = Math.min(k * 3, 20);
+        const searchOptions: import("../../../infrastructure/rag/retriever.js").SearchOptions = { k: rawK };
         if (level !== undefined) searchOptions.level = level;
         if (actionCode !== undefined) searchOptions.actionCode = actionCode;
-        const results: SearchResult[] = await searchContext(query, searchOptions);
+        const rawResults: SearchResult[] = await searchContext(query, searchOptions);
 
-        if (results.length === 0) {
+        if (rawResults.length === 0) {
           return {
             content: [
               {
@@ -388,18 +408,28 @@ export function registerAnalysisTools(server: McpServer): void {
           };
         }
 
+        // ── Apply recency weighting and trim to k ─────────────────────────────
+        const scored = applyRecencyWeighting(rawResults, recencyDays);
+        const results = scored.slice(0, k);
+
         // ── Format results ────────────────────────────────────────────────────
-        const header = `Similar Context — ${results.length} result${results.length !== 1 ? "s" : ""} for: "${query.slice(0, 60)}${query.length > 60 ? "…" : ""}"`;
+        const header =
+          `Similar Context — ${results.length} result${results.length !== 1 ? "s" : ""} ` +
+          `for: "${query.slice(0, 60)}${query.length > 60 ? "…" : ""}" (recency_days=${recencyDays})`;
         const lines = [header, ""];
 
         for (const result of results) {
-          const distStr = result.distance.toFixed(3);
+          const scoreStr = result.finalScore.toFixed(3);
+          const weightStr = result.recencyWeight.toFixed(2);
+          const simStr = result.similarity.toFixed(3);
           const summary = (result.summary ?? "").slice(0, 120);
           lines.push(
-            `[${result.level.toUpperCase()}] distance: ${distStr} | ${summary}${(result.summary ?? "").length > 120 ? "…" : ""}`,
+            `[${result.level.toUpperCase()}] score: ${scoreStr} (sim=${simStr}, recency_weight=${weightStr}) | ` +
+              `${summary}${(result.summary ?? "").length > 120 ? "…" : ""}`,
           );
           lines.push(`  ${result.title}`);
           if (result.actionCode) lines.push(`  Stock: ${result.actionCode}`);
+          lines.push(`  Created: ${result.createdAt.slice(0, 10)}`);
           lines.push("");
         }
 
