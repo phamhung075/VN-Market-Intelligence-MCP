@@ -61,6 +61,7 @@ import { registerKinhDichTools } from "./kinhDichTools.js";
 import { registerBrokerCredibilityTools } from "./brokerCredibilityTools.js";
 import { registerAskQueueTools } from "./askQueueTools.js";
 import { registerAgentWorkLogTools } from "./agentWorkLogTools.js";
+import { registerCronHealthTools } from "./cronHealthTools.js";
 
 /**
  * Flat array of all MCP tool registration functions.
@@ -122,4 +123,5 @@ export const toolRegistry: Array<(server: McpServer) => void> = [
   registerBrokerCredibilityTools, // Task 915: get_broker_credibility
   registerAskQueueTools,          // Task 1078: get_pending_ask_questions + answer_ask_question
   registerAgentWorkLogTools,     // Task 1109: log_agent_work + get_agent_work_log
+  registerCronHealthTools,       // Task 1102: get_cron_health
 ];
