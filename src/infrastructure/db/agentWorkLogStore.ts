@@ -150,7 +150,7 @@ export function getAgentWorkLog(
            summary, findings, actions_json, status
     FROM agent_work_log
     ${where}
-    ORDER BY started_at DESC
+    ORDER BY started_at DESC, id DESC
     LIMIT ?
   `;
   params.push(limit);

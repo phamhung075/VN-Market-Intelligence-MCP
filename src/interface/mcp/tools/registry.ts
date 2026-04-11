@@ -60,6 +60,7 @@ import { registerSectorComparisonTools } from "./sectorComparisonTools.js";
 import { registerKinhDichTools } from "./kinhDichTools.js";
 import { registerBrokerCredibilityTools } from "./brokerCredibilityTools.js";
 import { registerAskQueueTools } from "./askQueueTools.js";
+import { registerAgentWorkLogTools } from "./agentWorkLogTools.js";
 
 /**
  * Flat array of all MCP tool registration functions.
@@ -120,4 +121,5 @@ export const toolRegistry: Array<(server: McpServer) => void> = [
   registerKinhDichTools,       // Task 285: 6 Kinh Dich tools
   registerBrokerCredibilityTools, // Task 915: get_broker_credibility
   registerAskQueueTools,          // Task 1078: get_pending_ask_questions + answer_ask_question
+  registerAgentWorkLogTools,     // Task 1109: log_agent_work + get_agent_work_log
 ];
