@@ -4,6 +4,23 @@
 
 ---
 
+## Sprint 055 — Observability + Signal Quality + Alert Attribution
+
+### Kanban
+
+| ID | Title | Branch | Layer | Status |
+|----|-------|--------|-------|--------|
+| 1100 | cron_job_runs DDL + cronJobRunStore CRUD | `task/1100-cron-job-run-store` | infrastructure | Review |
+| 1101 | recordJobRun wrapper + apply to 5 existing jobs | `task/1101-record-job-run-wrapper` | infrastructure/scheduler | Review |
+| 1105 | Signal Fix A: causal_root_id migration + Alert Commander grouping | `task/1105-causal-root-tagging` | infrastructure | Review |
+| 1107 | Signal Fix C: recency_weight in search_similar_context | `task/1107-rag-recency-weight` | domain/interface | Review |
+| 1110 | sent_by column on alerts table + Alert Commander filter | `task/1110-alert-sent-by-column` | infrastructure/db + interface/mcp | Review |
+| 1102 | get_cron_health MCP tool (+1 tool, total ~83) | `task/1102-get-cron-health-tool` | interface | Review |
+
+PO note (2026-04-10): All 5 Review tasks are pre-approved for merge once QA produces TASK_REPORT_NNN.md with zero blocking issues and `bun tsc --noEmit` + test suite pass confirmed. QA should process in dependency order: 1100 → 1101 (depends on 1100), then 1105 / 1107 / 1110 in parallel.
+
+---
+
 ## Sprint 054 — Position-Aware Analysis, /ask Queue, Alert Narrowing, Kinh Dich Default Layer
 
 Restart: `launchctl kickstart -k gui/$(id -u)/com.vn-market.mcp` ONLY.
@@ -350,11 +367,11 @@ Formula: `recency_weight = max(0.1, 1.0 - (age_days / recency_days) * 0.9)`, `fi
 |----|-------|----------|-------|--------|
 | 1002 | @architect | P1 | Anonymous SSC PDF attribution: filenames carry no stock code — add download-time normalisation from portal metadata or PDF first page on ingest. (Report 997) | Backlog |
 | 1004 | @architect | P2 | Cascade gap: VN-market policy/macro news scoring at base 10.0. Missing rules for govt-stabilization signals. Add cascade rules + raise base score for systemic-stress + policy-intervention combos. (Report 1001) | Backlog |
-| 1085 | @architect | P1 | SSC portal JS-shell: BCTC ingestion stalled 11 days. Portal returns short JS-only shell so fetchParseAndStoreBctc falls through to HOSE/HNX. 26 watchlist tickers QUA HAN Q4-2025, 4 banks (BID/EIB/SHB/VCB) deadline 2026-04-14. Options: (1) headless browser for SSC JS render, (2) strengthen HOSE/HNX fallback as primary, (3) manual PDF seeding + disable SSC polling. (Report 1071) | Backlog (P1 — blocking BCTC ingestion) |
+| 1085 | @architect | P1 | SSC portal JS-shell: BCTC ingestion stalled 11 days. Portal returns short JS-only shell so fetchParseAndStoreBctc falls through to HOSE/HNX. 26 watchlist tickers QUA HAN Q4-2025, 4 banks (BID/EIB/SHB/VCB) deadline 2026-04-14. PO Decision 2026-04-10: OPTION 2 selected — strengthen HOSE/HNX fallback as primary BCTC source; disable SSC polling until a non-Puppeteer solution exists. Rationale: Option 1 (headless browser in-process) violates Puppeteer server-blocking invariant from Sprint 036; Option 3 (manual PDF) is not maintainable at 26+ tickers. Architect to design: (a) HOSE/HNX BCTC API integration for financial report data, (b) config flag to disable SSC poller, (c) alert if fallback also fails (escalate to BUG channel). (Report 1071) | Backlog (P1 — architect design required, option 2 approved) |
 | 1086 | @dev | P2 | financial_reports row count drop detection in daily audit D-10b. Compares current vs previous audit_state snapshot; emits WARNING/escalated if count drops. | Done — commit 0c23a2b |
 | 283 | @dev | P1 | Batch queries in get_portfolio_conviction to fix timeout — N+1 patterns eliminated, appendKinhDich removed, hexagram formatting inlined | Done — commit 812e8fa |
 | 1088 | @architect | P1→P3 | BCTC OCR parser garbage numbers on VNM Q4-2025 (follow-up to #1072). Slices: (a) SHIPPED 2026-04-10 commit b90422b — enhanced detectUnitMultiplier + magnitude inference. (b) SHIPPED 2026-04-10 commit 007bf99 — validation guard rejects zero totalAssets/liabilities/equity; stale row flagged validation_status='failed'. (c) PENDING — regression test fixture using real VNM Q4-2025 OCR text. | Backlog ((a)+(b) done, (c) P3) |
-| 914 | @po | — | Steel sector watchlist gap — HPG. Decision needed: (1) add HPG to defaultWatchlist, (2) document steel as out-of-scope, (3) sector-balanced watchlist via defaultSectors. Min-diff for option 1: add "HPG" to mcp.config.json market.defaultWatchlist + restart. | Backlog (awaiting PO decision) |
+| 914 | @po | — | Steel sector watchlist gap — HPG. PO Decision 2026-04-10: NO-OP. HPG is already in mcp.config.json market.watchlist (confirmed line 47) and in referenceStocks.steel. Task 914 is closed — no code change needed. | Done (no-op — HPG already present) |
 | 1089 | Done | [janitor] Remove dead sourcesRaw fallback in analysis.ts | DONE — commit 067fb8c. Removed dead ?? fallback; Zod .default() handles it. |
 | 1093 | Done | [janitor] Remove orphaned cron defaults from config.ts scheduler section | DONE — commit 8411424. Removed SchedulerConfig interface + 7 cron defaults + scheduler property from McpConfig. |
 
@@ -368,13 +385,7 @@ Formula: `recency_weight = max(0.1, 1.0 - (age_days / recency_days) * 0.9)`, `fi
 
 ## Review
 
-| ID | Title | Branch | Layer | Status |
-|----|-------|--------|-------|--------|
-| 1100 | cron_job_runs DDL + cronJobRunStore CRUD | `task/1100-cron-job-run-store` | infrastructure | Review |
-| 1101 | recordJobRun wrapper + apply to 5 existing jobs | `task/1101-record-job-run-wrapper` | infrastructure/scheduler | Review |
-| 1105 | Signal Fix A: causal_root_id migration + Alert Commander grouping | `task/1105-causal-root-tagging` | infrastructure | Review |
-| 1107 | Signal Fix C: recency_weight in search_similar_context | `task/1107-rag-recency-weight` | domain/interface | Review |
-| 1110 | sent_by column on alerts table + Alert Commander filter | `task/1110-alert-sent-by-column` | infrastructure/db + interface/mcp | Review |
+(see Sprint 055 kanban above — 5 tasks pending QA sign-off)
 
 ---
 
