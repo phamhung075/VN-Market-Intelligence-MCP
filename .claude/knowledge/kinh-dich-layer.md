@@ -4,7 +4,7 @@
 
 ## Rule
 
-Kinh Dich is the **DEFAULT layer for every stock analysis** (Sprint 054+).
+Kinh Dich is the **DEFAULT layer for every stock analysis**.
 - Server: analysis tools auto-append hexagram reading to output
 - Agent: every Cowork agent MUST call `get_kinhdich_reading(ticker)` when analyzing a stock
 
@@ -28,7 +28,7 @@ Kinh Dich is the **DEFAULT layer for every stock analysis** (Sprint 054+).
 
 Priority lines: **Hào 3** = current price action | **Hào 5** = medium-term trend | **Biến quẻ** = future state
 
-`kinhDichConfidence` = 0–100. Required >= 70 for `watchlist-opportunity` alert.
+`kinhDichConfidence` = 0–100. Threshold for `watchlist-opportunity` alert → `.claude/knowledge/alert-policy.md`
 
 ## Agent Integration Pattern
 

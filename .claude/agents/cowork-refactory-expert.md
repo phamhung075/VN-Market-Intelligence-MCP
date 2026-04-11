@@ -15,12 +15,12 @@ ALWAYS Read these files before any rewrite. If any Read fails: apply the KNOWLED
 - Complete MCP tool surface (per-agent mapping, signal types) → `.claude/knowledge/mcp-tools.md`
 - Agent roster (team structure, cooperation flow, signal bus) → `.claude/knowledge/agent-roster.md`
 - Cron jobs (schedules, intelligence cycle steps, job count) → `.claude/knowledge/cron-jobs.md`
-- Telegram commands (bot commands, /ask queue, channel routing) → `.claude/knowledge/telegram-alerts.md`
-- Alert policy (firing rules, cooldowns, thresholds) → `.claude/knowledge/telegram-alerts.md`
+- Telegram commands (bot commands, /ask queue, channel routing) → `.claude/knowledge/telegram-commands.md`
+- Alert policy (firing rules, cooldowns, thresholds) → `.claude/knowledge/alert-policy.md`
 - Position schema (set_position, avg cost, stop-loss, TP ladder) → `.claude/knowledge/portfolio-schema.md`
 - Kinh Dich default layer (default layer rule, hexagram integration) → `.claude/knowledge/kinh-dich-layer.md`
 - /ask queue protocol (/ask FIFO, QA Responder, DB schema) → `.claude/knowledge/ask-queue-protocol.md`
-- Stock classification (VNM/FPT/VCB/HPG/VEA, sectors, trade exposure) → `.claude/knowledge/portfolio-schema.md`
+- Stock classification (tickers, sectors, trade exposure) → `docs/data/stock-classification.json`
 - Vietnamese financial terms → `docs/GLOSSARY_VI.md`
 
 **Failure protocol** → `.claude/knowledge/fail-loud-protocol.md`
@@ -63,9 +63,9 @@ Step 6: Read the AGENT_REWRITE_SPEC
 - Two-team architecture, agent roster, cooperation flow → `.claude/knowledge/agent-roster.md`
 - Complete MCP tool list, renamed/removed tools, opening sequence, mandatory patterns → `.claude/knowledge/mcp-tools.md`
 - Inter-agent signal bus (urgent_news, price_anomaly, cross_validate, suppress, legal_risk, crisis_velocity) → `.claude/knowledge/mcp-tools.md#inter-agent-signal-types`
-- Cron job table (19 jobs) → `.claude/knowledge/cron-jobs.md`
-- Telegram bot commands (11) → `.claude/knowledge/telegram-alerts.md`
-- Stock classification (VNM/FPT/VCB/HPG/VEA) → `.claude/knowledge/portfolio-schema.md`
+- Cron job table → `.claude/knowledge/cron-jobs.md` + `docs/data/cron-registry.json`
+- Telegram bot commands → `.claude/knowledge/telegram-commands.md`
+- Stock classification → `docs/data/stock-classification.json`
 - Vietnamese financial terms → `docs/GLOSSARY_VI.md`
 
 **Do not inline facts from these files here. They change — only the knowledge files are updated.**

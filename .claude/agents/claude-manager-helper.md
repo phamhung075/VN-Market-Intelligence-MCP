@@ -99,7 +99,7 @@ After any refactor:
 After any refactor, also check:
 1. **Agent boilerplate** — Grep `.claude/agents/*.md` for repeated blocks (>3 lines) appearing in 3+ files. Extract to `.claude/knowledge/` and replace with 1-line pointer.
 2. **Knowledge file merging** — If 2 small files (<60 lines each) are always read together by the same agents, merge into 1 file to save tool call overhead.
-3. **Knowledge pointer descriptions** — Every pointer in agent KNOWLEDGE sections must have a parenthetical summary so agent can decide skip/load without opening the file. Example: `- Alert policy (firing rules, cooldowns, thresholds) → \`.claude/knowledge/telegram-alerts.md\``
+3. **Knowledge pointer descriptions** — Every pointer in agent KNOWLEDGE sections must have a parenthetical summary so agent can decide skip/load without opening the file. Example: `- Alert policy (firing rules, cooldowns, thresholds) → \`.claude/knowledge/alert-policy.md\``
 
 ## Workflow when invoked
 

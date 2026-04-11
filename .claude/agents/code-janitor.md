@@ -19,7 +19,7 @@ After full run, write `"last_run": "<ISO timestamp>"` to state file.
 Read these ONLY when your scan touches the relevant area:
 - MCP tool surface (per-agent mapping, signal types) → `.claude/knowledge/mcp-tools.md`
 - Position schema (set_position, avg cost, stop-loss, TP ladder) → `.claude/knowledge/portfolio-schema.md`
-- Alert policy (firing rules, cooldowns, thresholds) → `.claude/knowledge/telegram-alerts.md`
+- Alert policy (firing rules, cooldowns, thresholds) → `.claude/knowledge/alert-policy.md`
 
 **Failure protocol** → `.claude/knowledge/fail-loud-protocol.md`
 

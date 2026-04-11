@@ -1,34 +1,10 @@
-# Cron Jobs — Complete Schedule
+# Cron Jobs — Scheduling Logic
 
 **Load when:** scheduling, job registration, or timing of automated cycles.
 
-## All Jobs (24 scheduler files — Sprint 055)
+## Job List & Count
 
-| Schedule (VN GMT+7 unless noted) | Job | Description |
-|----------------------------------|-----|-------------|
-| `*/15 min` | `intelligenceCycle` | Main engine: news+prices+cascade+alerts. 14-min stale guard, 2-min/step timeout |
-| `*/30 min` | `predictionMarketPoll` | Polymarket fetch + signal detection |
-| `*/6h` | `weatherCheck` | Typhoon season climate check |
-| `*/12 min` | `askQueueCheck` | /ask FIFO queue → QA Responder (Sprint 054) |
-| `*/10 min` (market hours) | `vpsProxyWatchdog` | VPS proxy liveness — observe only |
-| 06:00 UTC M-F | `franceSummary` | France wake-up digest (13:00 VN) → MARKET |
-| 08:00 VN M-F | `morningBriefing` | Daily briefing: macro + conviction |
-| 09:00 VN M-F | `marketOpen` | Market open scan + price alerts |
-| 09:00 VN daily | `bctcOverdueCheck` | BCTC overdue alert → insert alert rows |
-| 09:30 VN daily | `bctcReparseJob` | Re-parse recently added BCTC PDFs |
-| 15:30 VN M-F | `marketClose` | Market close snapshot |
-| 20:00 VN daily | `sscCheck` | SSC nightly BCTC check |
-| 21:00 VN M-F | `alertDigest` | Nightly alert digest |
-| 22:00 VN M-F | `eveningSummary` | Evening market summary |
-| 22:30 VN daily | `dailySummary` | Daily summary generation |
-| 22:30 VN Sunday | `patternWatch` | Weekly pattern watch |
-| 23:00 VN daily | `dataAuditDaily` | Data integrity audit |
-| 23:00 VN Sunday | `weeklyPortfolioReport` + `weeklySummary` | Portfolio + weekly summary |
-| 01:00 VN Sunday | `dataAuditWeekly` | Deep weekly audit |
-| 07:00 UTC Sunday | `devTeamHeartbeat` | System health + observability report |
-| daily (configurable) | `cronHealthAlert` | Alert WORK channel when any job success_rate < 80% (Task 1103) |
-| 08:00 UTC Sunday | `predictionOutcome` | Prediction signal evaluation |
-| 1st monthly 06:00 VN | `davPharmacyCheck` | DAV drug approval check |
+Live data → `docs/data/cron-registry.json`
 
 **Orphan** (not registered): `insiderCheckJob.ts` | **Legacy** (fallback test only): `newsPollerJob.ts`
 

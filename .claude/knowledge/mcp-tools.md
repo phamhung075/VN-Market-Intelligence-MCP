@@ -1,46 +1,11 @@
-# MCP Tools — Complete Surface
+# MCP Tools — Logic & Mapping
 
 **Load when:** tool selection, agent rewriting, or system capability review.
 
-## Tool Count
+## Tool Count & List
 
-**82 tools** as of Sprint 055 (Task 1103+). Live check: `curl -s http://127.0.0.1:3000/health | jq .toolCount`
-
-## Complete Tool List
-
-| Category | Count | Tools |
-|----------|-------|-------|
-| Watchlist | 4 | `add_to_watchlist`, `remove_from_watchlist`, `get_watchlist`, `update_thresholds` |
-| Financial Reports | 4 | `get_financial_summary`, `compare_financials`, `list_stored_pdfs`, `read_bctc_pdf` |
-| Alerts | 4 | `get_alerts` (type: system\|price\|all), `mark_alert_read`, `get_analysis_history`, `get_alert_accuracy` |
-| Analysis | 3 | `fetch_and_analyze`, `run_impact_chain`, `search_similar_context` |
-| Market | 2 | `get_market_snapshot`, `get_patterns` |
-| Macro | 1 | `get_macro_snapshot` |
-| Compound | 2 | `get_market_context`, `get_bctc_full` |
-| Portfolio | 8 | `get_portfolio_conviction`, `set_position`, `get_positions`, `close_position`, `get_user_positions_for_analysis`, `get_portfolio_risk`, `get_rebalancing_signals`, `get_target_allocation` |
-| Price | 3 | `get_price_history`, `set_price_alert`, `delete_price_alert` |
-| Comparison & Sector | 4 | `compare_stocks`, `get_correlation_matrix`, `get_sector_rotation`, `get_sentiment_trend` |
-| Sector Context | 2 | `get_sector_comparison`, `get_open_chain_findings` |
-| Kinh Dich | 6 | `get_kinhdich_reading`, `get_market_hexagram`, `run_hexagram_backtest`, `get_transition_probabilities`, `explain_hexagram`, `get_hexagram_history` |
-| Prediction Markets | 2 | `get_prediction_markets`, `get_prediction_accuracy` |
-| Earnings | 1 | `get_earnings_calendar` |
-| Summaries | 2 | `get_market_summary`, `generate_market_summary` |
-| Performance | 1 | `get_performance_attribution` |
-| Telegram | 2 | `send_telegram` (channel: market\|work\|bug), `send_alert_digest` |
-| System & Ops | 3 | `get_system_status`, `get_rate_limit_status`, `submit_feedback` |
-| Cron Health | 1 | `get_cron_health` |
-| Broker Intel | 1 | `get_broker_credibility` |
-| Agent Communication | 4 | `post_agent_signal`, `get_agent_signals`, `record_signal_outcome`, `get_signal_effectiveness` |
-| Dev Team | 4 | `claim_telegram_report`, `read_telegram_reports`, `process_telegram_report`, `log_fix` |
-| Observability | 2 | `get_recent_fixes`, `get_cascade_metrics` |
-| Alert Management | 2 | `list_alert_rules`, `manage_alert_mute` |
-| Capital Protection | 3 | `get_legal_risk_signals`, `get_policy_signals`, `get_bond_maturity_calendar` |
-| Macro Catalyst | 3 | `get_public_contracts`, `get_credit_flow_signal`, `get_insider_signals` |
-| Supply Chain | 1 | `get_supply_chain_exposure` |
-| Climate + Energy | 2 | `get_climate_risk_signals`, `get_energy_grid_signals` |
-| Crisis Radar | 1 | `get_crisis_early_warning` |
-| Pharma Radar | 1 | `get_pharma_signals` |
-| Ask Queue | 2 | `get_pending_ask_questions`, `answer_ask_question` |
+Live data → `docs/data/tool-registry.json`
+Live check: `curl -s http://127.0.0.1:3000/health | jq .toolCount`
 
 ## Renamed/Removed Tools — CRITICAL
 
@@ -57,7 +22,7 @@
 | `unmute_stock_alerts` | `manage_alert_mute(action="unmute")` |
 | `get_price_alerts` | `get_alerts(type="price")` |
 
-Removed entirely: `get_feedback`, `get_global_log`, `get_tool_log`, `run_daily_briefing`, `search_stocks`, `fetch_ssc_reports`, `trigger_alert_check`, `export_portfolio_snapshot`, `add_alert_rule`, `delete_alert_rule`, `set_target_allocation`
+Full removed list → `docs/data/tool-registry.json` → `removed`
 
 ## Tools Per Agent
 

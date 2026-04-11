@@ -1,23 +1,33 @@
 # VN Market Intelligence MCP — Claude Project Context
 
-> **How to use:** Read pointer lines relevant to your task. Open linked doc ONLY when task touches that area. Do not preload.
+> **How to use:** Read pointer lines relevant to your task. Open linked doc ONLY when task touches that area. Do not preload. Full dependency graph → `.claude/knowledge/tree-map.md`
 
-- Architecture, folder tree, data flow, data sources, mcp.config.json → `docs/ARCHITECTURE.md`
-- Sprint-by-sprint implementation history → `docs/IMPLEMENTATION_STATUS.md`
-- Full two-team AI architecture design → `docs/AI_TEAM_DESIGN.md`
-- Dev workflow + branch hygiene checklist → `.claude/WORKFLOW.md`
-- Vietnamese financial terms glossary → `docs/GLOSSARY_VI.md`
-- MCP tool surface, tool-per-agent mapping → `.claude/knowledge/mcp-tools.md`
-- Cron jobs, scheduler files, intelligence cycle → `.claude/knowledge/cron-jobs.md`
-- Telegram bot commands, /ask queue → `.claude/knowledge/telegram-commands.md`
-- Alert policy, firing rules, cooldowns, 3-channel routing → `.claude/knowledge/telegram-alerts.md`
+### Knowledge (`.claude/knowledge/*.md` = logic/rules, stable)
+- **Tree map** (canonical file DAG, write ownership, dependency rules) → `.claude/knowledge/tree-map.md`
+- MCP tool logic, per-agent mapping, signal types → `.claude/knowledge/mcp-tools.md`
+- Cron scheduling logic, intelligence cycle → `.claude/knowledge/cron-jobs.md`
+- Telegram bot commands, /ask /why routing → `.claude/knowledge/telegram-commands.md`
+- Alert firing rules, Commander exclusivity, cooldowns → `.claude/knowledge/alert-policy.md`
 - Agent roster, cooperation flow, two-team design → `.claude/knowledge/agent-roster.md`
-- Portfolio: stock classification, position schema, stop-loss, TP ladder → `.claude/knowledge/portfolio-schema.md`
+- Portfolio: position ledger rules, stop-loss formula, TP ladder → `.claude/knowledge/portfolio-schema.md`
 - Kinh Dich default layer, hexagram integration → `.claude/knowledge/kinh-dich-layer.md`
 - /ask FIFO queue, QA Responder protocol → `.claude/knowledge/ask-queue-protocol.md`
-- Fail-loud knowledge-load failure protocol (full 5 steps) → `.claude/knowledge/fail-loud-protocol.md`
-- Server restart policy (ban list, only allowed command, QA validation, launchctl failure recovery) → `.claude/knowledge/restart-policy.md`
-- Historical / Done tasks (archive) → `docs/TASKS_ARCHIVE.md` (read ONLY when you need past task context)
+- Fail-loud knowledge-load failure protocol (5 steps) → `.claude/knowledge/fail-loud-protocol.md`
+- Server restart policy (launchctl only, banned mechanisms) → `.claude/knowledge/restart-policy.md`
+
+### Volatile Data (`docs/data/*.json` = counts/lists, agents update during work)
+- Tool registry (tool list + count) → `docs/data/tool-registry.json`
+- Cron registry (job list + count) → `docs/data/cron-registry.json`
+- Stock classification (tickers, sectors, trade exposure, peers) → `docs/data/stock-classification.json`
+- Project stats (sprint number, counts) → `docs/data/project-stats.json`
+
+### Docs (reference, rarely changes)
+- Architecture, folder tree, data flow → `docs/ARCHITECTURE.md`
+- Sprint-by-sprint implementation history → `docs/IMPLEMENTATION_STATUS.md`
+- Two-team AI architecture design → `docs/AI_TEAM_DESIGN.md`
+- Dev workflow + branch hygiene → `.claude/WORKFLOW.md`
+- Vietnamese financial terms → `docs/GLOSSARY_VI.md`
+- Historical / Done tasks → `docs/TASKS_ARCHIVE.md`
 
 ---
 
@@ -30,7 +40,7 @@ MCP server (TypeScript, Bun) giving Claude real-time VN stock market intelligenc
 - Watchlist management + multi-signal alerts
 - Daily scheduled briefings at market open/close
 
-**Current sprint + stats** → `docs/IMPLEMENTATION_STATUS.md` (tool count, scheduler count, task count)
+**Current sprint + stats** → `docs/data/project-stats.json`
 
 ---
 

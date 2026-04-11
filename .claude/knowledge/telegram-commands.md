@@ -2,7 +2,7 @@
 
 **Load when:** command routing, user-facing Telegram interactions.
 
-## Commands (11)
+## Commands
 
 | Command | What |
 |---------|------|
@@ -18,7 +18,7 @@
 | `/fix <description>` | HIGH priority bug report |
 | `/help` | Show command list |
 
-## /ask and /why Behavior (Sprint 054)
+## /ask and /why Behavior
 
 - User sends in MARKET channel → server inserts into `ask_queue` (status="pending")
 - `askQueueCheck` cron (*/12 min) → `get_pending_ask_questions()`

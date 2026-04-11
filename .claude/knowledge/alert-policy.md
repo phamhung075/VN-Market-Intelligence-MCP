@@ -2,7 +2,7 @@
 
 **Load when:** implementing alert logic, tuning thresholds, verifying MARKET channel trigger conditions.
 
-## Two Active Alert Types (Sprint 054+)
+## Two Active Alert Types
 
 ### position-danger — ALL THREE required
 | Condition | Threshold |
@@ -19,25 +19,15 @@
 | `newsSentiment` | >= 0.3 |
 | `agentSignalsMajority` | BUY |
 
-## Config (`mcp.config.json` → `alertPolicy`)
+## Config
 
-```json
-{
-  "alertPolicy": {
-    "positionDanger":      { "singleDayDropPct": 5.0, "newsSentimentThreshold": -0.5 },
-    "watchlistOpportunity":{ "kinhDichConfidenceMin": 70, "newsSentimentMin": 0.3 },
-    "alertCooldownMinutes": 0
-  }
-}
-```
+Threshold values → `mcp.config.json` → `alertPolicy` (volatile, shared child)
 
 `alertCooldownMinutes: 0` — every trigger fires exactly 1 alert, no suppression.
 
-## Stop-Loss Computation (server-side, never stored)
+## Stop-Loss Computation
 
-```
-stop_loss = max(entry_price - 2*ATR14,  nearest_support,  avg_cost * 0.93)
-```
+Formula → `.claude/knowledge/portfolio-schema.md` (SSOT for position logic)
 
 ## Alert Commander Exclusivity
 
