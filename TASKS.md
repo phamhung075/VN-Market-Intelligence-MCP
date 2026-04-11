@@ -290,29 +290,30 @@ Acceptance Criteria:
 
 ---
 
-**Task 1106 — Signal Fix B: signal_class migration + conviction score weighting**
+**Task 1101 — recordJobRun wrapper + apply to 5 existing jobs**
 
-Branch: `task/1106-signal-class-field` | Layer: infrastructure/domain | Priority: P1 | Sprint: 055 | Depends on: none | Size: S
+Branch: `task/1101-record-job-run-wrapper` | Layer: infrastructure/scheduler | Priority: P0 | Sprint: 055 | Depends on: 1100 | Size: S
 
 Files created/modified:
-- `src/infrastructure/db/schema.ts` (idempotent ALTER TABLE adds signal_class TEXT to agent_signals)
-- `src/infrastructure/db/agentSignalStore.ts` (signalClass added to PostSignalInput + postSignal() branch)
-- `src/domain/services/signalClassWeighter.ts` (CREATE — SIGNAL_CLASS_WEIGHTS + computeWeightedConvictionScore())
-- `src/__tests__/1106-signal-class-weighting.test.ts` (CREATE — 20 tests, all pass)
+- `src/infrastructure/db/cronJobRunStore.ts` (ADD recordJobRun export)
+- `src/scheduler/newsPollerJob.ts` (wrap with recordJobRun)
+- `src/scheduler/sscCheckerJob.ts` (wrap with recordJobRun)
+- `src/scheduler/marketScanJob.ts` (wrap with recordJobRun)
+- `src/scheduler/askQueueCheckJob.ts` (wrap with fire-and-forget recordJobRun, sync preserved)
+- `src/scheduler/dataAuditJob.ts` (wrap runDailyAudit with recordJobRun)
+- `src/__tests__/1101-record-job-run-wrapper.test.ts` (CREATE — 20 tests)
 
 Acceptance Criteria:
 
-**Given** fresh DB after `initDatabase()` | **Then** agent_signals has signal_class column
+**Given** `recordJobRun(db, 'job', async () => ({ rowsWritten: 5 }))` | **Then** row status='success', rows_written=5, duration_ms>=0, finished_at set
 
-**Given** `postSignal({..., signalClass:'structural_factor'})` | **Then** row inserted, signal_class='structural_factor'
+**Given** `recordJobRun(db, 'job', async () => { throw new Error('fail') })` | **Then** row status='error', error_msg='fail', no unhandled exception
 
-**Given** 2 signals: structural_factor score=0.6, one_time_catalyst score=0.9 | **Then** weighted avg = (0.6*1.5 + 0.9*0.7)/(1.5+0.7) = 1.53/2.2 ≈ 0.695 (not 0.75)
+**Given** `recordJobRun(db, 'job', async () => { /* void */ })` | **Then** row rows_written=NULL, status='success'
 
-**Given** all signals NULL signal_class | **Then** conviction score equals simple average (no regression)
+**Given** each of the 5 scheduler files after merge | **When** `grep "recordJobRun"` | **Then** match found in each file
 
-**Given** existing rows (pre-migration) | **Then** signal_class=NULL, no data loss
-
-`bun test src/__tests__/1106-signal-class-weighting.test.ts` → 20 pass | `bun tsc --noEmit` → 0 new errors
+`bun test src/__tests__/1101-record-job-run-wrapper.test.ts` → 20 pass | `bun tsc --noEmit` → 0 errors
 
 ---
 
@@ -370,11 +371,9 @@ Formula: `recency_weight = max(0.1, 1.0 - (age_days / recency_days) * 0.9)`, `fi
 | ID | Title | Branch | Layer | Status |
 |----|-------|--------|-------|--------|
 | 1100 | cron_job_runs DDL + cronJobRunStore CRUD | `task/1100-cron-job-run-store` | infrastructure | Review |
+| 1101 | recordJobRun wrapper + apply to 5 existing jobs | `task/1101-record-job-run-wrapper` | infrastructure/scheduler | Review |
 | 1105 | Signal Fix A: causal_root_id migration + Alert Commander grouping | `task/1105-causal-root-tagging` | infrastructure | Review |
-| 1106 | Signal Fix B: signal_class migration + conviction score weighting | `task/1106-signal-class-field` | infrastructure/domain | Review |
 | 1107 | Signal Fix C: recency_weight in search_similar_context | `task/1107-rag-recency-weight` | domain/interface | Review |
-| 1108 | agent_work_log DDL + store (logAgentWorkStart / End / get / purge) | `task/1108-agent-work-log-store` | infrastructure | Done |
-| 1109 | log_agent_work + get_agent_work_log MCP tools | `task/1109-agent-work-log-tools` | interface | Review |
 | 1110 | sent_by column on alerts table + Alert Commander filter | `task/1110-alert-sent-by-column` | infrastructure/db + interface/mcp | Review |
 
 ---

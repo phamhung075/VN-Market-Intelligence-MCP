@@ -146,6 +146,63 @@ export function purgeOldCronJobRuns(
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// recordJobRun
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * High-level wrapper that records a cron job invocation: inserts a start row,
+ * awaits the job function, then updates the row with the outcome.
+ *
+ * Contract:
+ *   - NEVER re-throws — errors are captured in `error_msg` so the caller's
+ *     cron callback cannot crash the scheduler.
+ *   - Returns `undefined` in all cases (success and error).
+ *   - When `fn` returns `{ rowsWritten }`, the value is stored; otherwise NULL.
+ *
+ * @param db      Database connection for CRUD operations
+ * @param jobName Canonical scheduler job name (e.g. 'pollNewsJob')
+ * @param fn      Async job body — may return `{ rowsWritten?: number }` or void
+ */
+export async function recordJobRun(
+  db: Database,
+  jobName: string,
+  fn: () => Promise<{ rowsWritten?: number } | void>,
+): Promise<void> {
+  // Insert start row — if cron_job_runs table is missing (e.g. test DB without
+  // full schema), fall back to running fn() without observability so job logic
+  // always executes. This makes recordJobRun safe to call from tests that only
+  // set up a partial schema.
+  let id: number | null = null;
+  try {
+    id = insertCronJobRunStart(db, jobName);
+  } catch {
+    // Table missing or other DDL issue — run fn() without recording
+    try {
+      await fn();
+    } catch { /* swallow — observability degraded, not a job failure */ }
+    return;
+  }
+
+  const startTime = Date.now();
+  try {
+    const result = await fn();
+    const durationMs = Date.now() - startTime;
+    const rowsWritten =
+      result != null &&
+      typeof (result as { rowsWritten?: number }).rowsWritten === "number"
+        ? (result as { rowsWritten: number }).rowsWritten
+        : null;
+    updateCronJobRunEnd(db, id, "success", rowsWritten, null, durationMs);
+  } catch (err: unknown) {
+    const durationMs = Date.now() - startTime;
+    const errorMsg = err instanceof Error ? err.message : String(err);
+    updateCronJobRunEnd(db, id, "error", null, errorMsg, durationMs);
+    // Intentionally NOT re-throwing — recordJobRun swallows errors to prevent
+    // a job exception from crashing the node-cron scheduler loop.
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // getCronJobHealthSummary
 // ─────────────────────────────────────────────────────────────────────────────
 

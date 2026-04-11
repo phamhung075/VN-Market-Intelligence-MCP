@@ -19,6 +19,7 @@ import type { Database } from "bun:sqlite";
 import { getDb } from "../infrastructure/db/schema.js";
 import { getPendingAskQuestions } from "../infrastructure/db/askQueueStore.js";
 import { postSignal } from "../infrastructure/db/agentSignalStore.js";
+import { recordJobRun } from "../infrastructure/db/cronJobRunStore.js";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -39,25 +40,48 @@ export interface AskQueueCheckResult {
  *   with signal_type='pending_questions' and payload `{ count }`, then returns
  *   `{ signaled: true, count }`.
  *
+ * Observability: fires a `recordJobRun` write as a detached promise so this
+ * function stays synchronous (backward compatible with the jobs.ts call site).
+ *
  * @param db - Optional Database connection (defaults to singleton). Inject in tests.
  */
 export function runAskQueueCheck(db?: Database): AskQueueCheckResult {
   const conn = db ?? getDb();
-  const pending = getPendingAskQuestions(conn);
 
-  if (pending.length === 0) {
-    return { signaled: false, count: 0 };
+  // Core logic — synchronous, result captured for both return value and observability
+  let result: AskQueueCheckResult;
+
+  try {
+    const pending = getPendingAskQuestions(conn);
+
+    if (pending.length === 0) {
+      result = { signaled: false, count: 0 };
+    } else {
+      const count = pending.length;
+      postSignal(conn, {
+        fromAgent: "askQueueCheck",
+        toAgent: "07-qa-responder",
+        signalType: "pending_questions",
+        payload: { count },
+        ttlMinutes: 15,
+      });
+      result = { signaled: true, count };
+    }
+
+    // Observability: fire-and-forget — does not block the sync return.
+    // recordJobRun never re-throws so this detached promise is safe to ignore.
+    void recordJobRun(conn, "askQueueCheckJob", async () => {
+      return { rowsWritten: result.count };
+    });
+
+    return result;
+  } catch (err) {
+    // Observability: record error row detached, then re-throw so jobs.ts can log it.
+    void Promise.resolve().then(() =>
+      recordJobRun(conn, "askQueueCheckJob", async () => {
+        throw err;
+      })
+    );
+    throw err;
   }
-
-  const count = pending.length;
-
-  postSignal(conn, {
-    fromAgent: "askQueueCheck",
-    toAgent: "07-qa-responder",
-    signalType: "pending_questions",
-    payload: { count },
-    ttlMinutes: 15,
-  });
-
-  return { signaled: true, count };
 }

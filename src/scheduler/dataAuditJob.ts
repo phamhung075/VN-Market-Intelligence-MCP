@@ -21,6 +21,7 @@ import { Database } from "bun:sqlite";
 import { existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { getCurrentDeadline } from "../domain/services/earningsCalendar.js";
+import { recordJobRun } from "../infrastructure/db/cronJobRunStore.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -1062,22 +1063,29 @@ export async function runDailyAudit(
   const database = db ?? await defaultGetDb();
   const telegram = telegramFn ?? defaultSendTelegram;
 
-  ensureAuditDependencies(database);
+  let findings: AuditFinding[] = [];
 
-  const findings = runDailyChecks(database);
+  // recordJobRun never re-throws — errors are captured in cron_job_runs.error_msg
+  await recordJobRun(database, "dataAuditJob:daily", async () => {
+    ensureAuditDependencies(database);
 
-  writeSystemLog(database, "daily", findings);
-  upsertAuditState(database, "daily", findings);
-  await maybeSendTelegram("daily", findings, database, telegram);
+    findings = runDailyChecks(database);
 
-  // Clean expired agent signals (Sprint 038)
-  try {
-    const { cleanExpired } = await import("../infrastructure/db/agentSignalStore.js");
-    const removed = cleanExpired(database);
-    if (removed > 0) {
-      findings.push({ table: "agent_signals", check: "expired_cleanup", severity: "info", rowsAffected: removed, action: "auto_cleaned", detail: `Removed ${removed} expired signals` });
-    }
-  } catch { /* agent_signals table may not exist yet */ }
+    writeSystemLog(database, "daily", findings);
+    upsertAuditState(database, "daily", findings);
+    await maybeSendTelegram("daily", findings, database, telegram);
+
+    // Clean expired agent signals (Sprint 038)
+    try {
+      const { cleanExpired } = await import("../infrastructure/db/agentSignalStore.js");
+      const removed = cleanExpired(database);
+      if (removed > 0) {
+        findings.push({ table: "agent_signals", check: "expired_cleanup", severity: "info", rowsAffected: removed, action: "auto_cleaned", detail: `Removed ${removed} expired signals` });
+      }
+    } catch { /* agent_signals table may not exist yet */ }
+
+    return { rowsWritten: findings.length };
+  });
 
   return findings;
 }
