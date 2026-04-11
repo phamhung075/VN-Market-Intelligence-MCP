@@ -282,5 +282,9 @@
       "agentSignalsMajority": "BUY"
     },
     "alertCooldownMinutes": 0
+  },
+
+  "features": {
+    "disableSscPolling": true
   }
 }

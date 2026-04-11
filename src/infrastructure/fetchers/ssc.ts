@@ -40,6 +40,7 @@ import * as cheerio from "cheerio";
 import { logger } from "../logger.js";
 import { breakers } from "../circuitBreakerRegistry.js";
 import { CircuitOpenError } from "../circuitBreaker.js";
+import { mcpConfig } from "../config.js";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -684,7 +685,12 @@ export async function withBrowserLock<T>(fn: () => Promise<T>): Promise<T> {
  *                     Inject a mock in tests to avoid real network calls.
  * @returns Promise resolving to an array of SscDocument (empty on error).
  */
-export async function listSscDocuments(
+/**
+ * Private implementation: run the SSC-first BCTC document listing path.
+ * Serialises concurrent callers through withBrowserLock. Exported for use
+ * in listSscDocumentsWithFlag (disableSscPolling=false path).
+ */
+async function _runSscPath(
   actionCode: string,
   reportType: "quarterly" | "annual",
   year: number,
@@ -789,4 +795,221 @@ export async function listSscDocuments(
       return [];
     }
   });
+}
+
+export async function listSscDocuments(
+  actionCode: string,
+  reportType: "quarterly" | "annual",
+  year: number,
+  httpClient?: HttpClient,
+): Promise<SscDocument[]> {
+  // Task 1111 (Sprint 056): when SSC polling is disabled, skip the SSC step
+  // entirely and go directly to HOSE/HNX/UPCOM exchange portals.
+  // The flag defaults to true because the SSC portal returns a JS-only shell.
+  if (mcpConfig.features.disableSscPolling) {
+    return listSscDocumentsWithFlag(actionCode, reportType, year, true, httpClient);
+  }
+
+  return _runSscPath(actionCode, reportType, year, httpClient);
+}
+
+// ---------------------------------------------------------------------------
+// UPCOM Disclosure Fetcher (Task 1111 — Sprint 056)
+// ---------------------------------------------------------------------------
+
+/**
+ * Base URL for the UPCOM exchange disclosure portal (hosted on HNX subdomain).
+ * UPCOM tickers (e.g. VEA) are not listed on HOSE or HNX proper.
+ */
+const UPCOM_DISCLOSURE_BASE = "https://upcom.hnx.vn";
+
+/**
+ * Path for UPCOM issuer disclosure listing (query: StockCode=VEA).
+ * Same structure as HNX portal, different subdomain.
+ */
+const UPCOM_DISCLOSURE_PATH = "/cong-bo-thong-tin/cong-ty-co-phan.html";
+
+/**
+ * Parses UPCOM disclosure page HTML to extract SscDocument entries.
+ *
+ * The UPCOM portal uses the same table structure as HNX:
+ *   <table class="table-data">
+ *     <tr><td><a href="...pdf">Title</a></td><td>date</td></tr>
+ *   </table>
+ *
+ * @param html       - Raw HTML from the UPCOM disclosure page.
+ * @param reportType - "quarterly" or "annual".
+ * @returns Array of SscDocument entries.
+ */
+export function parseUpcomDisclosureHtml(
+  html: string,
+  reportType: "quarterly" | "annual",
+): SscDocument[] {
+  // Re-use the HNX parser logic — same DOM structure, different subdomain.
+  // We resolve relative URLs against the UPCOM base.
+  if (!html || html.trim().length === 0) return [];
+
+  const $ = cheerio.load(html);
+  const docs: SscDocument[] = [];
+
+  $("table.table-data tr, table tr").each((_, row) => {
+    const cells = $(row).find("td");
+    if (cells.length < 1) return;
+
+    const anchor = $(cells[0]).find("a");
+    if (!anchor.length) return;
+
+    const href = anchor.attr("href") ?? "";
+    if (!href.toLowerCase().endsWith(".pdf")) return;
+
+    const titleRaw = anchor.text().trim();
+    const titleLower = titleRaw.toLowerCase();
+    if (reportType === "quarterly" && !titleLower.includes("quý") && !titleLower.includes("q")) return;
+    if (reportType === "annual" && !titleLower.includes("năm") && !titleLower.includes("annual")) return;
+
+    const rawDate = $(cells[cells.length - 1]).text().trim();
+    const url = href.startsWith("http") ? href : `${UPCOM_DISCLOSURE_BASE}${href.startsWith("/") ? "" : "/"}${href}`;
+
+    docs.push({ title: titleRaw, url, publishedAt: rawDate, reportType });
+  });
+
+  return docs;
+}
+
+/**
+ * Fetches BCTC PDF disclosure links for a given ticker from the UPCOM portal.
+ *
+ * Used as a fallback for UPCOM-listed tickers (e.g. VEA) that are not covered
+ * by the HOSE or HNX disclosure portals.
+ *
+ * @param ticker     - Stock ticker (e.g. "VEA").
+ * @param year       - Year filter (applied via title keyword matching).
+ * @param reportType - "quarterly" or "annual".
+ * @param httpClient - Optional injected client; defaults to axios-backed client.
+ * @returns Array of SscDocument entries with real PDF URLs from UPCOM portal.
+ */
+export async function fetchUpcomDisclosures(
+  ticker: string,
+  year: number,
+  reportType: "quarterly" | "annual",
+  httpClient?: HttpClient,
+): Promise<SscDocument[]> {
+  const client = httpClient ?? (await makeDefaultHttpClient());
+  const params = new URLSearchParams({
+    StockCode: ticker.toUpperCase(),
+    year: String(year),
+  });
+  const url = `${UPCOM_DISCLOSURE_BASE}${UPCOM_DISCLOSURE_PATH}?${params.toString()}`;
+
+  logger.debug("[ssc] fetchUpcomDisclosures fallback", { ticker, year, reportType, url });
+
+  try {
+    const html = await client.get(url);
+    const docs = parseUpcomDisclosureHtml(html, reportType);
+
+    logger.info("[ssc] UPCOM fallback — parsed documents", {
+      ticker,
+      reportType,
+      year,
+      count: docs.length,
+    });
+
+    return docs;
+  } catch (err) {
+    logger.error("[ssc] UPCOM fallback fetch failed", {
+      ticker,
+      year,
+      reportType,
+      url,
+      error: err instanceof Error ? err.message : String(err),
+    });
+    return [];
+  }
+}
+
+// ---------------------------------------------------------------------------
+// listSscDocumentsWithFlag — testable variant with explicit disableSscPolling
+// (Task 1111 — Sprint 056)
+// ---------------------------------------------------------------------------
+
+/**
+ * Lists BCTC documents for a ticker, with an explicit `disableSscPolling` flag.
+ *
+ * This is the core implementation and testable entry point. Both `listSscDocuments`
+ * (production, reads flag from mcpConfig) and unit tests (inject flag explicitly)
+ * route through this function.
+ *
+ * When `disableSscPolling = true`:
+ *   - SSC portal is bypassed entirely (no network call to congbothongtin.ssc.gov.vn)
+ *   - HOSE, HNX, and UPCOM are queried in parallel
+ *   - Priority: HOSE → HNX → UPCOM; [] returned if all three are empty
+ *
+ * When `disableSscPolling = false`:
+ *   - Runs the original SSC-first path inline (no delegation to listSscDocuments
+ *     to avoid circular calls; same logic inlined below)
+ *
+ * @param actionCode         - Stock ticker (e.g. "VCB", "VEA").
+ * @param reportType         - "quarterly" | "annual".
+ * @param year               - Four-digit year.
+ * @param disableSscPolling  - When true, skip SSC and use exchange portals directly.
+ * @param httpClient         - Optional injected HTTP client (tests only).
+ * @returns Array of SscDocument entries (empty on all-miss).
+ */
+export async function listSscDocumentsWithFlag(
+  actionCode: string,
+  reportType: "quarterly" | "annual",
+  year: number,
+  disableSscPolling: boolean,
+  httpClient?: HttpClient,
+): Promise<SscDocument[]> {
+  if (!disableSscPolling) {
+    // Backward-compat: use the original SSC-first path directly.
+    // Calls _runSscPath to avoid going through the mcpConfig guard in listSscDocuments
+    // (which would re-route back to the disableSscPolling=true path if the flag is set).
+    return _runSscPath(actionCode, reportType, year, httpClient);
+  }
+
+  // SSC disabled — go directly to HOSE + HNX + UPCOM in parallel
+  logger.debug("[ssc] disableSscPolling=true — querying HOSE/HNX/UPCOM directly", {
+    actionCode,
+    reportType,
+    year,
+  });
+
+  const [hoseResult, hnxResult, upcomResult] = await Promise.allSettled([
+    fetchHoseDisclosures(actionCode, year, reportType, httpClient).catch(() => [] as SscDocument[]),
+    fetchHnxDisclosures(actionCode, year, reportType, httpClient).catch(() => [] as SscDocument[]),
+    fetchUpcomDisclosures(actionCode, year, reportType, httpClient).catch(() => [] as SscDocument[]),
+  ]);
+
+  const hoseDocs  = hoseResult.status  === "fulfilled" ? hoseResult.value  : [];
+  const hnxDocs   = hnxResult.status   === "fulfilled" ? hnxResult.value   : [];
+  const upcomDocs = upcomResult.status === "fulfilled" ? upcomResult.value  : [];
+
+  // Priority: HOSE → HNX → UPCOM
+  if (hoseDocs.length > 0) {
+    logger.info("[ssc] disableSscPolling — HOSE returned documents", {
+      actionCode, year, count: hoseDocs.length,
+    });
+    return hoseDocs;
+  }
+  if (hnxDocs.length > 0) {
+    logger.info("[ssc] disableSscPolling — HNX returned documents", {
+      actionCode, year, count: hnxDocs.length,
+    });
+    return hnxDocs;
+  }
+  if (upcomDocs.length > 0) {
+    logger.info("[ssc] disableSscPolling — UPCOM returned documents", {
+      actionCode, year, count: upcomDocs.length,
+    });
+    return upcomDocs;
+  }
+
+  logger.warn("[ssc] disableSscPolling — no documents from HOSE/HNX/UPCOM", {
+    actionCode, reportType, year,
+    hint: "Exchange portals may not have published the report yet, or ticker is unlisted",
+  });
+
+  return [];
 }

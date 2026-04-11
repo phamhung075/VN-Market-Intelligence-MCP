@@ -178,6 +178,19 @@ export interface AlertPolicyWatchlistOpportunityConfig {
   agentSignalsMajority: string;
 }
 
+/**
+ * Feature flags for toggling infrastructure behaviour without code changes.
+ * Sprint 056 — Task 1111: BCTC fallback hardening.
+ */
+export interface FeaturesConfig {
+  /**
+   * When true, skip the SSC portal entirely in listSscDocuments and go directly
+   * to HOSE/HNX/UPCOM fallbacks.  Default: true (SSC returns JS-only shell).
+   * Set to false to re-enable SSC polling once the portal is fixed.
+   */
+  disableSscPolling: boolean;
+}
+
 /** Alert policy thresholds for the two narrowed alert types (Sprint 054). */
 export interface AlertPolicyConfig {
   positionDanger: AlertPolicyPositionDangerConfig;
@@ -200,6 +213,8 @@ export interface McpConfig {
   predictionMarkets: PredictionMarketsConfig;
   /** Narrowed alert policy thresholds for Sprint 054 position-danger + watchlist-opportunity. */
   alertPolicy: AlertPolicyConfig;
+  /** Feature flags for toggling infrastructure behaviour. Sprint 056. */
+  features: FeaturesConfig;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -538,6 +553,12 @@ export function loadMcpConfig(): McpConfig {
         },
         alertCooldownMinutes: numVal(ap, "alertCooldownMinutes", 0),
       } satisfies AlertPolicyConfig;
+    })(),
+    features: (() => {
+      const ft = (get(f, "features") ?? {}) as Record<string, unknown>;
+      return {
+        disableSscPolling: boolVal(ft, "disableSscPolling", true),
+      } satisfies FeaturesConfig;
     })(),
   };
 }

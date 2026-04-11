@@ -1,8 +1,16 @@
 # Sprint Goal
 
-## Current Sprint — 056 (PLANNING)
+## Current Sprint — 057 (PLANNING)
 
-Next sprint to be defined. Sprint 055 tasks shipped 2026-04-11. Backlog items 1002, 1004, 1085 awaiting architect design.
+Next sprint to be defined. Sprint 056 shipped 2026-04-11 (task 1111 — BCTC fallback). Backlog items 1002, 1004, REQ_057 (Prediction Engine Phase A) pending BA/Architect review.
+
+---
+
+## Previous Sprint — 056 (COMPLETE)
+
+started: 2026-04-11 | completed: 2026-04-11 | theme: BCTC Fallback Hardening (P1 deadline fix)
+
+Task shipped: 1111 (disableSscPolling config flag + UPCOM fetcher + listSscDocumentsWithFlag). 9/9 tests pass. bun tsc --noEmit clean. Closes task 1085 (P1 — bank BCTC deadline 2026-04-14). TECH_056.md approved.
 
 ---
 
