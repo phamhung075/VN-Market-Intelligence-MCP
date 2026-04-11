@@ -257,6 +257,39 @@ Acceptance Criteria:
 
 ---
 
+---
+
+**Task 1100 — cron_job_runs DDL + cronJobRunStore CRUD**
+
+Branch: `task/1100-cron-job-run-store` | Layer: infrastructure | Priority: P0 | Sprint: 055 | Depends on: none | Size: M
+
+Files created/modified:
+- `src/infrastructure/db/schema.ts` (added `cron_job_runs` DDL + index in `initDatabase()`)
+- `src/infrastructure/db/cronJobRunStore.ts` (CREATE — 4 exported functions)
+- `src/__tests__/1100-cron-job-run-store.test.ts` (CREATE — 24 tests, 100% coverage)
+
+Acceptance Criteria:
+
+**Given** fresh DB after `initDatabase()` | **Then** `cron_job_runs` table and `idx_cron_job_runs_job_started` index exist
+
+**Given** `insertCronJobRunStart(db, "pollNewsJob")` | **Then** returns positive id, row has status='running', nullable fields NULL
+
+**Given** `updateCronJobRunEnd(db, id, 'success', 42, null, 1234)` | **Then** status='success', rows_written=42, duration_ms=1234, finished_at set
+
+**Given** `updateCronJobRunEnd(db, id, 'error', null, 'Timeout', 30000)` | **Then** status='error', error_msg='Timeout'
+
+**Given** rows older than retentionDays | **When** `purgeOldCronJobRuns(db, 'job', 30)` | **Then** old rows deleted, recent rows kept, count returned
+
+**Given** 3 success + 1 error runs in 7d window | **When** `getCronJobHealthSummary(db, 7)` | **Then** success_rate_7d=0.75, avg_duration_ms correct, sorted by job_name ASC
+
+**Given** `getCronJobHealthSummary(db, 7, 'specificJob')` | **Then** only rows for that job returned
+
+**Given** empty table | **When** `getCronJobHealthSummary(db, 7)` | **Then** returns []
+
+`bun test src/__tests__/1100-cron-job-run-store.test.ts` → 24 pass | `bun tsc --noEmit` → 0 errors
+
+---
+
 ## Backlog
 
 | ID | Owner | Priority | Title | Status |
@@ -281,7 +314,9 @@ Acceptance Criteria:
 
 ## Review
 
-(empty)
+| ID | Title | Branch | Layer | Status |
+|----|-------|--------|-------|--------|
+| 1100 | cron_job_runs DDL + cronJobRunStore CRUD | `task/1100-cron-job-run-store` | infrastructure | Review |
 
 ---
 

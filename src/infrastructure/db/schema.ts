@@ -9,6 +9,7 @@
  *   - alerts           — triggered alert records
  *   - rag_analyses     — structured RAG memory entries (vector stored in LanceDB)
  *   - financial_reports — BCTC financial report data (see bctc-schema.ts for DDL)
+ *   - cron_job_runs     — scheduler job observability (Task 1100)
  *
  * `initDatabase()` is idempotent: uses CREATE TABLE IF NOT EXISTS and
  * CREATE INDEX IF NOT EXISTS throughout, so calling it multiple times is safe.
@@ -633,6 +634,27 @@ export async function initDatabase(): Promise<void> {
     )
   `);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_user_requests_status ON user_requests(status)`);
+
+  // ── Cron Job Runs (Task 1100) ─────────────────────────────────────────────
+  // Observability table: one row per scheduler job invocation.
+  // Row lifecycle: insert on start (status='running') → update on end (status='success'|'error').
+  // Purge policy: rows older than 30 days deleted by cronHealthAlertJob.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS cron_job_runs (
+      id           INTEGER PRIMARY KEY AUTOINCREMENT,
+      job_name     TEXT NOT NULL,
+      started_at   TEXT NOT NULL,
+      finished_at  TEXT,
+      status       TEXT NOT NULL CHECK(status IN ('running','success','error')),
+      rows_written  INTEGER,
+      error_msg    TEXT,
+      duration_ms  INTEGER
+    )
+  `);
+  db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_cron_job_runs_job_started
+      ON cron_job_runs(job_name, started_at DESC)
+  `);
 
   // ── Ask Queue (Task 1072) ─────────────────────────────────────────────────
   // Dedicated FIFO question queue for the /ask Telegram command.
