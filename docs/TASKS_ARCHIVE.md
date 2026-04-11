@@ -5,6 +5,12 @@ Active board lives in `TASKS.md`.
 
 ---
 
+### [1002 / @dev P1] Anonymous SSC PDF attribution — Done 2026-04-11
+
+normaliseFilename + action_code on pdf_extracted_text + D-7c fallback. TECH_1002.md. 11 tests. Commit 60482d1.
+
+---
+
 ### [1085 / @dev P1] SSC portal JS-shell: BCTC ingestion stalled — Done 2026-04-11
 
 PO Decision: OPTION 2 — strengthen HOSE/HNX/UPCOM fallback as primary BCTC source; disable SSC polling via config flag. Implemented by task 1111 (Sprint 056). Commit 00d0e60.
