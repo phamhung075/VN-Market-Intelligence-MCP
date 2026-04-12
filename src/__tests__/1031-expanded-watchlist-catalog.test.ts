@@ -47,7 +47,7 @@ const WATCHLIST: { code: string; domain: DomainType; exchange: string }[] = [
   // Tech
   { code: "FPT", domain: "tech",        exchange: "HOSE" },
   // Agriculture
-  { code: "VNM", domain: "agriculture", exchange: "HOSE" },
+  { code: "VNM", domain: "retail", exchange: "HOSE" },
   { code: "DPM", domain: "agriculture", exchange: "HOSE" },
   // Securities
   { code: "SSI", domain: "securities",  exchange: "HOSE" },

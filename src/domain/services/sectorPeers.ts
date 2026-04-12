@@ -89,6 +89,7 @@ const SECTOR_PEERS: Record<DomainType, { code: string; exchange: string }[]> = {
   ],
   retail: [
     { code: "MWG", exchange: "HOSE" },
+    { code: "VNM", exchange: "HOSE" },  // Vinamilk — dairy FMCG, not agriculture
     { code: "MSN", exchange: "HOSE" },
     { code: "FRT", exchange: "HOSE" },
     { code: "KDC", exchange: "HOSE" },
@@ -115,7 +116,6 @@ const SECTOR_PEERS: Record<DomainType, { code: string; exchange: string }[]> = {
     { code: "NT2", exchange: "HOSE" },
   ],
   agriculture: [
-    { code: "VNM", exchange: "HOSE" },
     { code: "DPM", exchange: "HOSE" },
     { code: "VHC", exchange: "HOSE" },
     { code: "ANV", exchange: "HOSE" },
