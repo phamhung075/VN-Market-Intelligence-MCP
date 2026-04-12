@@ -152,6 +152,14 @@
 
 Sprint 056 complete. Backlog items in TASKS.md. Sprint 057 planning pending.
 
+## Done — Sprint 057 (2026-04-12)
+
+- Fix 1115: `deterministicNewsId()` in alertGenerator — news_mention alerts now use day-bucket IDs to prevent duplicates after server restart when RSS URLs change (7 new tests)
+- Task 1116: `evidence_fragments` + `evidence_scores` DDL in schema.ts + `evidenceFragmentStore.ts` CRUD (18 tests)
+- Task 1117: `record_evidence_fragment` MCP tool (+1 tool → 85 total) in `evidenceTools.ts`
+- Task 1118: `evidenceAccumulatorJob.ts` — nightly 23:00 VN, purge + weighted score accumulation per stock; CRONS map key `evidenceAccumulator` (7 tests)
+- Net: +1 tool, +1 cron, 31/31 new tests pass. bun tsc --noEmit clean.
+
 ## Deferred
 
 - E2E test: daily briefing flow (task 125)

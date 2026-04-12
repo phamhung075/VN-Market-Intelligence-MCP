@@ -378,6 +378,91 @@ Sprint 056 merged to main 2026-04-11. Task 1111: 9 tests pass, bun tsc --noEmit 
 
 ---
 
+## Sprint 057 — Prediction Engine Phase A: Evidence Accumulation Store
+
+### Kanban
+
+| ID | Title | Branch | Layer | Tests | Status |
+|----|-------|--------|-------|-------|--------|
+| 1116 | evidence_fragments DDL + evidenceFragmentStore CRUD | `main` | infrastructure/db | 18 pass | Done |
+| 1117 | record_evidence_fragment MCP tool (+1 tool) | `main` | interface/mcp | 6 pass | Done |
+| 1118 | evidenceAccumulatorJob + evidence_scores table | `main` | scheduler | 7 pass | Done |
+
+Sprint started: 2026-04-12. Sprint COMPLETE 2026-04-12. 31/31 tests pass. bun tsc --noEmit clean. Net +1 tool (record_evidence_fragment) → 85 total. +1 cron (evidenceAccumulator). Foreign flow deferred pending Architect VPS feasibility review.
+
+---
+
+### Task Detail Sheets
+
+**Task 1116 — evidence_fragments DDL + evidenceFragmentStore CRUD**
+
+Branch: `task/1116-evidence-fragment-store` | Layer: infrastructure/db | Priority: P2 | Depends on: none | Size: M
+
+Files to create/modify:
+- `src/infrastructure/db/schema.ts` (add evidence_fragments + evidence_scores DDL to initDatabase())
+- `src/infrastructure/db/evidenceFragmentStore.ts` (CREATE)
+- `src/__tests__/1116-evidence-fragment-store.test.ts` (CREATE)
+
+Acceptance Criteria:
+
+**Given** fresh DB after `initDatabase()` | **Then** `evidence_fragments` and `evidence_scores` tables exist with all columns from TECH_057.md
+
+**Given** `insertEvidenceFragment(db, { stock:"VCB", evidence_type:"news_sentiment_stock", direction:"bullish", magnitude:0.7, confidence:0.8, source_agent:"04-market-watcher" })` | **Then** row inserted, `expires_at = timestamp + 30 days`, returns numeric id
+
+**Given** 3 fragments for VCB (1 bullish, 1 bearish, 1 bullish) at t-5d, t-10d, t-35d | **When** `getEvidenceFragments(db, "VCB", { days: 30 })` | **Then** returns 2 rows (t-35d excluded), newest first
+
+**Given** 2 fragments: 1 expired (expires_at < now) + 1 active | **When** `purgeExpiredFragments(db)` | **Then** 1 row deleted, returns 1; active row untouched
+
+**Given** `upsertEvidenceScore(db, "VCB", "2026-04-12", { bullish: 0.56, bearish: 0.12, neutral: 0.0, fragmentCount: 4 })` called twice | **Then** second call replaces, only 1 row for (VCB, 2026-04-12)
+
+`bun test src/__tests__/1116-evidence-fragment-store.test.ts` → all pass | `bun tsc --noEmit` → 0 errors
+
+---
+
+**Task 1117 — record_evidence_fragment MCP Tool**
+
+Branch: `task/1117-evidence-fragment-tool` | Layer: interface/mcp | Priority: P2 | Depends on: 1116 | Size: S
+
+Files to create/modify:
+- `src/interface/mcp/tools/evidenceTools.ts` (CREATE)
+- `src/interface/mcp/server.ts` (register evidenceTools)
+- `src/__tests__/1117-evidence-tools.test.ts` (CREATE)
+
+Acceptance Criteria:
+
+**Given** `record_evidence_fragment({ stock:"VCB", evidence_type:"news_sentiment_stock", direction:"bullish", magnitude:0.7, confidence:0.8, source_agent:"04-market-watcher" })` | **Then** row inserted in evidence_fragments, response contains "Fragment recorded" + id
+
+**Given** `record_evidence_fragment({ ..., magnitude: 1.5 })` (out of range) | **Then** Zod validation error, no row inserted
+
+**Given** server.ts after merge | **Then** toolCount increments by 1 (84 → 85)
+
+`bun test src/__tests__/1117-evidence-tools.test.ts` → all pass | `bun tsc --noEmit` → 0 errors
+
+---
+
+**Task 1118 — evidenceAccumulatorJob + evidence_scores table**
+
+Branch: `task/1118-evidence-accumulator-job` | Layer: scheduler | Priority: P2 | Depends on: 1116 | Size: M
+
+Files to create/modify:
+- `src/scheduler/evidenceAccumulatorJob.ts` (CREATE)
+- `src/scheduler/jobs.ts` (add "evidenceAccumulator" to CRONS map)
+- `src/__tests__/1118-evidence-accumulator-job.test.ts` (CREATE)
+
+Acceptance Criteria:
+
+**Given** 3 bullish (mag=0.8,conf=0.9) + 1 bearish (mag=0.6,conf=0.7) + 1 neutral (mag=0.4,conf=0.5) fragments for "VCB" | **When** `runEvidenceAccumulator(db)` | **Then** evidence_scores row for VCB today: bullish_score=(0.8*0.9+0.8*0.9+0.8*0.9)/3=0.72, bearish_score=0.6*0.7/1=0.42, neutral_score=0.4*0.5/1=0.2, fragment_count=5
+
+**Given** 1 expired fragment (expires_at past) + 1 active | **When** `runEvidenceAccumulator(db)` | **Then** purged=1 returned, expired row deleted, score computed from 1 active fragment
+
+**Given** 0 fragments | **When** `runEvidenceAccumulator(db)` | **Then** returns { stocks: 0, purged: 0 }, no evidence_scores rows inserted
+
+**Given** jobs.ts after merge | **Then** CRONS map key "evidenceAccumulator" exists with default `"0 16 * * *"`
+
+`bun test src/__tests__/1118-evidence-accumulator-job.test.ts` → all pass | `bun tsc --noEmit` → 0 errors
+
+---
+
 ## Backlog
 
 | ID | Owner | Priority | Title | Status |

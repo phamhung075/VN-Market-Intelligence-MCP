@@ -1,8 +1,29 @@
 # Sprint Goal
 
-## Current Sprint — 057 (PLANNING)
+## Current Sprint — 057 (COMPLETE)
 
-Next sprint to be defined. Sprint 056 shipped 2026-04-11 (task 1111 — BCTC fallback). Backlog items 1002, 1004, REQ_057 (Prediction Engine Phase A) pending BA/Architect review.
+started: 2026-04-12 | completed: 2026-04-12 | theme: Prediction Engine — Phase A (Evidence Accumulation Store)
+
+### Goal
+Ship the evidence accumulation foundation that all later prediction engine phases depend on: persistent evidence fragments per stock, a nightly accumulator computing weighted evidence scores, and a new MCP tool for agents to write fragments.
+
+### Scope
+
+| Task | Description | Status |
+|------|-------------|--------|
+| 1116 | evidence_fragments DDL + evidenceFragmentStore CRUD | Done — 18/18 tests |
+| 1117 | record_evidence_fragment MCP tool (+1 tool) | Done — 6/6 tests |
+| 1118 | evidenceAccumulatorJob + evidence_scores table | Done — 7/7 tests |
+
+OUT: foreign_flow_snapshots (task deferred — Architect must confirm VPS feasibility first)
+OUT: Phase B (base rates), Phase C (prediction claims), Phase D (calibration) — depend on shipped Phase A data
+
+### Results
+- `evidence_fragments` table + TTL expiry: shipped
+- `evidence_scores` table + nightly accumulator: shipped
+- `record_evidence_fragment` MCP tool: shipped (+1 tool → 85 total)
+- 31/31 tests pass, bun tsc --noEmit clean
+- Fix 1115 also shipped this loop: news_mention alert dedup after restart
 
 ---
 

@@ -206,6 +206,7 @@ Before submitting feedback or a report, check this list. If the issue is listed 
 | 283 | get_portfolio_conviction timeout | FIXED | Batch queries replace N+1 — commit 812e8fa |
 | 284 | HNX/UPCOM TLS cert errors from VPS fetcher | FIXED | TLS cert bypass applied to VPS fetch-bctc.sh — commit e4c5383 |
 | 285 | vn-price-fetch.service stale (price data 15 days old) | FIXED | Service restarted 2026-04-11 — both VPS services now active |
+| 286 | Duplicate alerts after server restart (same article, new random IDs) | FIXED | news_mention alerts now use deterministic day-bucket IDs — commit b67c482 (task 1115) |
 
 **Rules for agents:**
 - **FIXED** → issue is resolved, stop reporting it
