@@ -100,15 +100,66 @@ echo "=== BCTC unit status ==="
 systemctl --no-pager -l status vn-bctc-fetch.service | head -15
 BCTCEOF
 
+# ── VN News RSS Proxy deploy ──────────────────────────────────────────────
+echo ""
+echo "Deploying VN News RSS proxy scripts..."
+
+TMP_NEWS=$(mktemp)
+sed -e "s|__MCP_BASE__|${MCP_BASE}|g" \
+    -e "s|__API_KEY__|${VPS_PUSH_API_KEY}|g" \
+    vps-scripts/fetch-vn-news.sh > "$TMP_NEWS"
+
+$SCP "$TMP_NEWS"                       ${VULTR_USER}@${VULTR_IP}:/root/fetch-vn-news.sh
+$SCP vps-scripts/fetch-vn-news-loop.sh ${VULTR_USER}@${VULTR_IP}:/root/fetch-vn-news-loop.sh
+$SCP vps-scripts/vn-news-fetch.service \
+     ${VULTR_USER}@${VULTR_IP}:/etc/systemd/system/vn-news-fetch.service
+rm "$TMP_NEWS"
+
+$SSH << 'NEWSEOF'
+set -e
+chmod +x /root/fetch-vn-news.sh /root/fetch-vn-news-loop.sh
+systemctl daemon-reload
+systemctl enable vn-news-fetch.service
+systemctl restart vn-news-fetch.service
+sleep 2
+echo "=== News RSS unit status ==="
+systemctl --no-pager -l status vn-news-fetch.service | head -15
+NEWSEOF
+
+# ── SBV / VCB FX Rate Proxy deploy ───────────────────────────────────────
+echo ""
+echo "Deploying SBV/VCB FX rate proxy scripts..."
+
+TMP_SBV=$(mktemp)
+sed -e "s|__MCP_BASE__|${MCP_BASE}|g" \
+    -e "s|__API_KEY__|${VPS_PUSH_API_KEY}|g" \
+    vps-scripts/fetch-sbv.sh > "$TMP_SBV"
+
+$SCP "$TMP_SBV"                    ${VULTR_USER}@${VULTR_IP}:/root/fetch-sbv.sh
+$SCP vps-scripts/fetch-sbv-loop.sh ${VULTR_USER}@${VULTR_IP}:/root/fetch-sbv-loop.sh
+$SCP vps-scripts/vn-sbv-fetch.service \
+     ${VULTR_USER}@${VULTR_IP}:/etc/systemd/system/vn-sbv-fetch.service
+rm "$TMP_SBV"
+
+$SSH << 'SBVEOF'
+set -e
+chmod +x /root/fetch-sbv.sh /root/fetch-sbv-loop.sh
+systemctl daemon-reload
+systemctl enable vn-sbv-fetch.service
+systemctl restart vn-sbv-fetch.service
+sleep 2
+echo "=== SBV/VCB unit status ==="
+systemctl --no-pager -l status vn-sbv-fetch.service | head -15
+SBVEOF
+
 echo ""
 echo "══════════════════════════════════════════"
-echo " Deploy complete — systemd owns both fetchers"
+echo " Deploy complete — systemd owns all 4 VPS services"
 echo ""
-echo " Price proxy:"
-echo "   Status: ssh root@${VULTR_IP} systemctl status vn-price-fetch"
-echo "   Logs:   ssh root@${VULTR_IP} tail -f /var/log/vn-price-fetch.log"
+echo " Price proxy:    systemctl status vn-price-fetch"
+echo " BCTC proxy:     systemctl status vn-bctc-fetch"
+echo " News RSS proxy: systemctl status vn-news-fetch"
+echo " SBV/FX proxy:   systemctl status vn-sbv-fetch"
 echo ""
-echo " BCTC proxy:"
-echo "   Status: ssh root@${VULTR_IP} systemctl status vn-bctc-fetch"
-echo "   Logs:   ssh root@${VULTR_IP} tail -f /var/log/vn-bctc-fetch.log"
+echo " Logs: /var/log/vn-{price,bctc,news,sbv}-fetch.log"
 echo "══════════════════════════════════════════"

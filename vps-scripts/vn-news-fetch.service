@@ -1,0 +1,18 @@
+[Unit]
+Description=VN Market news RSS proxy — push CafeF/VnExpress/VnEconomy to zenmidi MCP
+Documentation=https://github.com/phamhung075/VN-Market-Intelligence-MCP
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/root/fetch-vn-news-loop.sh
+Restart=always
+RestartSec=10
+StandardOutput=append:/var/log/vn-news-fetch.log
+StandardError=append:/var/log/vn-news-fetch.log
+MemoryMax=128M
+TasksMax=32
+
+[Install]
+WantedBy=multi-user.target

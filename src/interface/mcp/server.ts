@@ -652,6 +652,132 @@ export async function createBunServer(
       return;
     }
 
+    // ── VPS push: VN news (CafeF, VnExpress, VnEconomy RSS) ────────────────
+    if (method === "POST" && pathname === "/api/push-news") {
+      const apiKey = process.env.VPS_PUSH_API_KEY;
+      const authHeader = req.headers["x-api-key"] || req.headers["authorization"]?.replace("Bearer ", "");
+      if (!apiKey || authHeader !== apiKey) {
+        res.writeHead(401, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "Unauthorized" }));
+        return;
+      }
+
+      let body = "";
+      for await (const chunk of req) body += chunk;
+      try {
+        const items: Array<{
+          title: string;
+          url: string;
+          publishedAt: string;
+          content: string;
+          source: string;
+        }> = JSON.parse(body);
+
+        if (!Array.isArray(items) || items.length === 0) {
+          res.writeHead(400, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ error: "Expected non-empty JSON array of RssItem" }));
+          return;
+        }
+
+        // Group items by source for injection into pollNews
+        const bySource: Record<string, typeof items> = {};
+        for (const item of items) {
+          const src = (item.source || "vps").toLowerCase();
+          (bySource[src] ??= []).push(item);
+        }
+
+        log.info("[push-news] received VN news from VPS", {
+          total: items.length,
+          sources: Object.keys(bySource).map((s) => `${s}:${bySource[s]!.length}`),
+        });
+
+        // Fire-and-forget: run pollNews with VPS items injected as fetchers
+        setImmediate(async () => {
+          try {
+            const { pollNews } = await import("../../application/usecases/pollNews.js");
+            const result = await pollNews({
+              fetchers: {
+                cafef: async () => bySource["cafef"] ?? [],
+                vnexpress: async () => bySource["vnexpress"] ?? [],
+                vneconomy: async () => bySource["vneconomy"] ?? [],
+                reuters: async () => [],   // Reuters/Google not VN-sourced
+                tradingeconomics: async () => [], // TE not VN-sourced
+              },
+            });
+            log.info("[push-news] pipeline complete", {
+              fetched: result.fetched,
+              inserted: result.inserted,
+              duplicates: result.duplicates,
+              alerts: result.alerts,
+            });
+          } catch (err) {
+            log.error("[push-news] pipeline failed", {
+              error: err instanceof Error ? err.message : String(err),
+            });
+          }
+        });
+
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: true, received: items.length }));
+      } catch (err) {
+        log.error("[push-news] parse error", { error: err instanceof Error ? err.message : String(err) });
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "Invalid JSON" }));
+      }
+      return;
+    }
+
+    // ── VPS push: SBV / VCB FX rates ────────────────────────────────────────
+    if (method === "POST" && pathname === "/api/push-sbv-rates") {
+      const apiKey = process.env.VPS_PUSH_API_KEY;
+      const authHeader = req.headers["x-api-key"] || req.headers["authorization"]?.replace("Bearer ", "");
+      if (!apiKey || authHeader !== apiKey) {
+        res.writeHead(401, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "Unauthorized" }));
+        return;
+      }
+
+      let body = "";
+      for await (const chunk of req) body += chunk;
+      try {
+        const snapshot: {
+          overnightRatePct?: number;
+          refinancingRatePct?: number;
+          usdVndOfficial: number;
+          fetchedAt?: string;
+        } = JSON.parse(body);
+
+        if (typeof snapshot.usdVndOfficial !== "number" || snapshot.usdVndOfficial <= 0) {
+          res.writeHead(400, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ error: "Invalid usdVndOfficial (positive number required)" }));
+          return;
+        }
+
+        const { storeSbvSnapshot } = await import("../../infrastructure/fetchers/sbv.js");
+        const finalSnapshot = {
+          overnightRatePct: snapshot.overnightRatePct ?? 0,
+          refinancingRatePct: snapshot.refinancingRatePct ?? 0,
+          usdVndOfficial: snapshot.usdVndOfficial,
+          fetchedAt: snapshot.fetchedAt ?? new Date().toISOString(),
+        };
+
+        storeSbvSnapshot(finalSnapshot);
+
+        log.info("[push-sbv-rates] stored VCB FX rate from VPS", {
+          usdVnd: finalSnapshot.usdVndOfficial,
+          fetchedAt: finalSnapshot.fetchedAt,
+        });
+
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: true, usdVnd: finalSnapshot.usdVndOfficial }));
+      } catch (err) {
+        log.error("[push-sbv-rates] error", { error: err instanceof Error ? err.message : String(err) });
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "Invalid JSON" }));
+      }
+      return;
+    }
+
     // ── Task 1112: BCTC VPS proxy — fetch queue ────────────────────────────
     if (method === "GET" && pathname === "/api/bctc-fetch-queue") {
       const apiKey = process.env.VPS_PUSH_API_KEY;
