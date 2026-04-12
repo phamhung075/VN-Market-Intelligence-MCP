@@ -1254,4 +1254,31 @@ export async function initDatabase(): Promise<void> {
   db.exec(`CREATE INDEX IF NOT EXISTS idx_pc_resolution    ON prediction_claims(resolution_date)`);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_pc_outcome       ON prediction_claims(resolution_outcome)`);
 
+  // ── Calibration Snapshots (Task 1127, Sprint 060 Phase D) ─────────────────
+  // Materialised weekly calibration statistics over resolved prediction_claims.
+  // Written by calibrationReportJob every Sunday 13:00 UTC (20:00 VN).
+  // Re-runs on the same Sunday produce a second row — the query layer always
+  // uses ORDER BY id DESC LIMIT 1 so no UNIQUE constraint on snapshot_date.
+  // JSON columns: avg_brier_by_agent, avg_brier_by_stock, avg_brier_by_direction,
+  //               calibration_curve, top_predictions, worst_predictions.
+  // avg_brier_score is NULL when total_resolved = 0 or all brier_score rows are NULL.
+  // trend_delta is NULL on the first run (no previous snapshot to compare).
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS calibration_snapshots (
+      id                     INTEGER PRIMARY KEY AUTOINCREMENT,
+      snapshot_date          TEXT NOT NULL,
+      total_resolved         INTEGER NOT NULL,
+      avg_brier_score        REAL,
+      avg_brier_by_agent     TEXT NOT NULL,
+      avg_brier_by_stock     TEXT NOT NULL,
+      avg_brier_by_direction TEXT NOT NULL,
+      calibration_curve      TEXT NOT NULL,
+      trend_delta            REAL,
+      top_predictions        TEXT NOT NULL,
+      worst_predictions      TEXT NOT NULL,
+      computed_at            TEXT NOT NULL
+    )
+  `);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_cs_snapshot_date ON calibration_snapshots(snapshot_date DESC)`);
+
 }
