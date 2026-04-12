@@ -191,8 +191,8 @@ Before submitting feedback or a report, check this list. If the issue is listed 
 | # | Issue | Status | Notes |
 |---|-------|--------|-------|
 | 270 | SSC pipeline not downloading PDFs for VCB/VEA/FPT | FIXED | VPS BCTC proxy (task 1112): VPS pulls queue via `GET /api/bctc-fetch-queue`, downloads from SSC/HOSE/HNX/UPCOM, pushes via `POST /api/push-bctc-pdf` — commit 0ecca9b |
-| 271 | incomeStatementExtractor: all income fields = 0 for VNM/FPT | BACKLOG | Regex doesn't match real BCTC PDF formats |
-| 272 | balanceSheetExtractor: Total Assets off by 10^7 | BACKLOG | triệu đồng not converted to tỷ |
+| 271 | incomeStatementExtractor: all income fields = 0 for VNM/FPT | FIXED | OCR look-ahead + first-large-number extraction + unit detection — commit c81a4d0 |
+| 272 | balanceSheetExtractor: Total Assets off by 10^3 | FIXED | Multi-number extraction + look-ahead for OCR text — commit c81a4d0 |
 | 273 | SSC Puppeteer crash loop / selector changed | FIXED | `disableSscPolling` flag added (task 1111); VPS proxy bypasses Puppeteer entirely |
 | 274 | Price data stale from France server | FIXED | VPS Singapore proxy (systemd `Restart=always`) — commit c84a329 |
 | 275 | Telegram env vars "not set" warning | FIXED | Stale logs from old instance — ignore |
