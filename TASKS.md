@@ -17,8 +17,8 @@ Task 1126: authored by Cowork Refactory Expert — not Developer.
 | TECH-059 | Architect: review REQ_059, produce TECH_059.md | — | — | Architect | — | Done |
 | 1121 | evidence_likelihood_ratios DDL + likelihoodRatioStore CRUD | `task/1121-likelihood-ratio-store` | infrastructure | Developer | — | Review |
 | 1123 | prediction_claims DDL + predictionClaimStore CRUD | `task/1123-prediction-claim-store` | infrastructure | Developer | — | Todo |
-| 1122 | baseRateComputer domain service + baseRateComputationJob (Sun 02:00 VN) | `task/1122-base-rate-computation` | domain + scheduler | Developer | 1121 | Backlog |
-| 1124 | get_evidence_summary + create_prediction_claim MCP tools (+2 tools) | `task/1124-evidence-prediction-tools` | interface | Developer | 1121, 1123 | Backlog |
+| 1122 | baseRateComputer domain service + baseRateComputationJob (Sun 02:00 VN) | `feat/sprint-059-task-1122` | domain + scheduler | Developer | 1121 | Review |
+| 1124 | get_evidence_summary + create_prediction_claim MCP tools (+2 tools) | `feat/sprint-059-task-1124` | interface | Developer | 1121, 1123 | Review |
 | 1125 | predictionResolutionJob — nightly Brier score resolver (23:30 VN) | `task/1125-prediction-resolution-job` | scheduler | Developer | 1123 | Backlog |
 | 1126 | 08-prediction-synthesizer.md Cowork agent + agent-roster.md update | `task/1126-prediction-synthesizer-agent` | interface/Cowork | Cowork Refactory Expert | 1124 | Backlog |
 
