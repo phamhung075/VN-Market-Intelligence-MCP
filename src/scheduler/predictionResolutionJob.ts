@@ -25,12 +25,9 @@ import { logger } from "../infrastructure/logger.js";
 import { getDb } from "../infrastructure/db/schema.js";
 import { recordJobRun } from "../infrastructure/db/cronJobRunStore.js";
 import {
-  getPendingClaimsForResolution,
   resolveClaim,
-  markClaimUnresolvable,
   type PredictionClaimRow,
 } from "../infrastructure/db/predictionClaimStore.js";
-import { computeBrierScore } from "../domain/services/baseRateComputer.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -53,30 +50,54 @@ export interface PredictionResolutionResult {
 const RETRY_WINDOW_DAYS = 5;
 
 /**
- * Evaluates whether an actual price satisfies the claim's condition.
- *
- * @param actualPrice - Actual closing price
- * @param operator    - Comparison operator: ">" | ">=" | "<" | "<="
- * @param targetPrice - The target price to compare against
- * @returns             1 if condition is true, 0 if false
+ * Evaluates whether actual price confirms the claim's direction.
+ * - bullish: actual >= target → correct
+ * - bearish: actual <= target → correct
+ * - neutral / no target: skip (return null)
  */
-function evaluateOperator(
+function evaluateOutcome(
   actualPrice: number,
-  operator: string,
-  targetPrice: number,
-): 0 | 1 {
-  switch (operator) {
-    case ">":
-      return actualPrice > targetPrice ? 1 : 0;
-    case ">=":
+  direction: string,
+  targetPrice: number | null,
+): 0 | 1 | null {
+  if (targetPrice == null) return null;
+  switch (direction) {
+    case "bullish":
       return actualPrice >= targetPrice ? 1 : 0;
-    case "<":
-      return actualPrice < targetPrice ? 1 : 0;
-    case "<=":
+    case "bearish":
       return actualPrice <= targetPrice ? 1 : 0;
     default:
-      return 0;
+      return null;
   }
+}
+
+/**
+ * Fetches claims due for resolution: resolution_date <= today AND unresolved.
+ */
+function getClaimsDueForResolution(
+  db: Database,
+  today: string,
+): PredictionClaimRow[] {
+  const rows = db
+    .prepare(
+      `SELECT * FROM prediction_claims
+       WHERE resolution_outcome IS NULL
+         AND resolution_date <= ?
+       ORDER BY resolution_date ASC`,
+    )
+    .all(today) as PredictionClaimRow[];
+  return rows;
+}
+
+/**
+ * Marks a claim as unresolvable (no price data within retry window).
+ */
+function markClaimUnresolvable(db: Database, id: number): void {
+  db.prepare(
+    `UPDATE prediction_claims
+     SET resolved_at = ?
+     WHERE id = ?`,
+  ).run(new Date().toISOString(), id);
 }
 
 /**
@@ -134,7 +155,7 @@ export async function runPredictionResolution(
 
   let claims: PredictionClaimRow[];
   try {
-    claims = getPendingClaimsForResolution(database, today);
+    claims = getClaimsDueForResolution(database, today);
   } catch (err) {
     logger.error("[prediction-resolution] failed to fetch pending claims", {
       error: err instanceof Error ? err.message : String(err),
@@ -155,7 +176,7 @@ export async function runPredictionResolution(
     try {
       const closePrice = getClosePrice(
         database,
-        claim.stock_code,
+        claim.stock,
         claim.resolution_date,
       );
 
@@ -168,31 +189,36 @@ export async function runPredictionResolution(
           markClaimUnresolvable(database, claim.id);
           result.unresolvable++;
           logger.info(
-            `[prediction-resolution] unresolvable claim id=${claim.id} stock=${claim.stock_code} date=${claim.resolution_date} daysOverdue=${daysOverdue}`,
+            `[prediction-resolution] unresolvable claim id=${claim.id} stock=${claim.stock} date=${claim.resolution_date} daysOverdue=${daysOverdue}`,
           );
         } else {
           // Within retry window — skip for now
           result.skipped++;
           logger.debug(
-            `[prediction-resolution] skipping claim id=${claim.id} stock=${claim.stock_code} — no OHLCV yet (daysOverdue=${daysOverdue})`,
+            `[prediction-resolution] skipping claim id=${claim.id} stock=${claim.stock} — no OHLCV yet (daysOverdue=${daysOverdue})`,
           );
         }
         continue;
       }
 
-      // Evaluate the claim condition
-      const outcome = evaluateOperator(
+      // Evaluate the claim direction against actual price
+      const outcome = evaluateOutcome(
         closePrice,
-        claim.operator,
-        claim.target_price,
+        claim.direction,
+        claim.target_price ?? null,
       );
-      const brierScore = computeBrierScore(outcome, claim.confidence);
 
-      resolveClaim(database, claim.id, outcome, closePrice, brierScore);
+      if (outcome === null) {
+        // Cannot evaluate (neutral direction or no target_price) — skip
+        result.skipped++;
+        continue;
+      }
+
+      resolveClaim(database, claim.id, outcome, closePrice);
       result.resolved++;
 
       logger.info(
-        `[prediction-resolution] resolved claim id=${claim.id} stock=${claim.stock_code} operator=${claim.operator} target=${claim.target_price} actual=${closePrice} outcome=${outcome} brier=${brierScore.toFixed(4)}`,
+        `[prediction-resolution] resolved claim id=${claim.id} stock=${claim.stock} direction=${claim.direction} target=${claim.target_price} actual=${closePrice} outcome=${outcome}`,
       );
     } catch (err) {
       logger.error(
