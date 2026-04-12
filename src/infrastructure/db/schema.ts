@@ -1205,4 +1205,22 @@ export async function initDatabase(): Promise<void> {
     )
   `);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_es_stock ON evidence_scores(stock, score_date DESC)`);
+
+  // ── Evidence Likelihood Ratios (Task 1121, Sprint 059 Phase B) ───────────────
+  // Per-(evidence_type, direction, horizon_days) likelihood ratios computed by
+  // baseRateComputationJob (weekly). UNIQUE constraint allows idempotent upserts.
+  // Business rule: likelihood_ratio = 1.0 for rows with sample_size < 10.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS evidence_likelihood_ratios (
+      id               INTEGER PRIMARY KEY AUTOINCREMENT,
+      evidence_type    TEXT NOT NULL,
+      direction        TEXT NOT NULL CHECK(direction IN ('bullish','bearish','neutral')),
+      horizon_days     INTEGER NOT NULL CHECK(horizon_days IN (5, 10, 20)),
+      likelihood_ratio REAL NOT NULL DEFAULT 1.0,
+      sample_size      INTEGER NOT NULL DEFAULT 0,
+      last_updated     TEXT NOT NULL,
+      UNIQUE(evidence_type, direction, horizon_days)
+    )
+  `);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_elr_type_dir ON evidence_likelihood_ratios(evidence_type, direction)`);
 }
