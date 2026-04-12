@@ -46,6 +46,7 @@ import { runCronHealthAlert } from './cronHealthAlertJob.js'
 import { runEvidenceAccumulatorJob } from './evidenceAccumulatorJob.js'
 import { runBaseRateComputationJob } from './baseRateComputationJob.js'
 import { runPredictionResolutionJob } from './predictionResolutionJob.js'
+import { runCalibrationReportJob } from './calibrationReportJob.js'
 
 export const CRONS = {
   morningBriefing:        Bun.env.CRON_MORNING_BRIEFING          ?? '0 8 * * 1-5',
@@ -99,6 +100,8 @@ export const CRONS = {
   baseRateComputation:    Bun.env.CRON_BASE_RATE_COMPUTATION       ?? '0 19 * * 0',
   /** Prediction resolution: daily 16:30 UTC (after VN market close 15:30 VN) — task 1125, Sprint 059 */
   predictionResolution:   Bun.env.CRON_PREDICTION_RESOLUTION       ?? '30 16 * * *',
+  /** Calibration report: Sunday 13:00 UTC (20:00 VN) — task 1128, Sprint 060 */
+  calibrationReport:      Bun.env.CRON_CALIBRATION_REPORT          ?? '0 13 * * 0',
 }
 
 function log(msg: string) {
@@ -323,6 +326,13 @@ export function startScheduler() {
   // price-push service time to deliver daily_ohlcv rows before resolution runs.
   cron.schedule(CRONS.predictionResolution, async () => {
     await runPredictionResolutionJob()
+  }, { timezone: 'UTC' })
+
+  // Sunday 13:00 UTC (20:00 VN) — Calibration report — task 1128, Sprint 060
+  // Weekly materialised Brier score aggregation over 90-day prediction_claims window.
+  // Sends digest to WORK (always) and MARKET (when total_resolved >= 1).
+  cron.schedule(CRONS.calibrationReport, async () => {
+    await runCalibrationReportJob()
   }, { timezone: 'UTC' })
 
   log(`[scheduler] jobs registered — ${Object.keys(CRONS).length} cron keys in CRONS map (incl. WAL checkpoint + 5 summary) + vps-watchdog active`)
