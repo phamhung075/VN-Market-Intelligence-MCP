@@ -1205,4 +1205,31 @@ export async function initDatabase(): Promise<void> {
     )
   `);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_es_stock ON evidence_scores(stock, score_date DESC)`);
+
+  // ── Prediction Claims (Task 1125, Sprint 059) ─────────────────────────────
+  // Stores agent price-target predictions for resolution after VN market close.
+  // resolution_outcome: 1=true, 0=false, -1=unresolvable, NULL=pending.
+  // brier_score: (outcome - confidence)^2 — NULL when unresolvable.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS prediction_claims (
+      id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+      stock_code          TEXT    NOT NULL,
+      claim_text          TEXT    NOT NULL,
+      target_price        REAL    NOT NULL,
+      operator            TEXT    NOT NULL CHECK(operator IN ('>','>=','<','<=')),
+      confidence          REAL    NOT NULL CHECK(confidence BETWEEN 0.0 AND 1.0),
+      resolution_date     TEXT    NOT NULL,
+      resolution_outcome  INTEGER,
+      actual_price        REAL,
+      brier_score         REAL,
+      created_at          TEXT    NOT NULL DEFAULT (datetime('now')),
+      resolved_at         TEXT,
+      source_agent        TEXT    NOT NULL DEFAULT 'unknown'
+    )
+  `);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_pc_stock ON prediction_claims(stock_code)`);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_pc_resolution ON prediction_claims(resolution_date)`);
+  db.exec(
+    `CREATE INDEX IF NOT EXISTS idx_pc_pending ON prediction_claims(resolution_date, resolution_outcome)`,
+  );
 }

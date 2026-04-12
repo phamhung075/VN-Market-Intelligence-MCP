@@ -44,6 +44,7 @@ import { runBctcReparseJob } from './bctcReparseJob.js'
 import { runAskQueueCheck } from './askQueueCheckJob.js'
 import { runCronHealthAlert } from './cronHealthAlertJob.js'
 import { runEvidenceAccumulatorJob } from './evidenceAccumulatorJob.js'
+import { runPredictionResolutionJob } from './predictionResolutionJob.js'
 
 export const CRONS = {
   morningBriefing:        Bun.env.CRON_MORNING_BRIEFING          ?? '0 8 * * 1-5',
@@ -93,6 +94,8 @@ export const CRONS = {
   cronHealthAlert:        Bun.env.CRON_HEALTH_ALERT                ?? '0 0 * * *',
   /** Evidence accumulator: daily 23:00 VN = 16:00 UTC — task 1118, Sprint 057 Phase A */
   evidenceAccumulator:    Bun.env.CRON_EVIDENCE_ACCUMULATOR        ?? '0 16 * * *',
+  /** Prediction resolution: daily 16:30 UTC (after VN market close 15:30 VN) — task 1125, Sprint 059 */
+  predictionResolution:   Bun.env.CRON_PREDICTION_RESOLUTION       ?? '30 16 * * *',
 }
 
 function log(msg: string) {
@@ -305,6 +308,13 @@ export function startScheduler() {
   // Daily 23:00 VN (16:00 UTC) — Evidence accumulator — task 1118
   cron.schedule(CRONS.evidenceAccumulator, async () => {
     await runEvidenceAccumulatorJob()
+  }, { timezone: 'UTC' })
+
+  // Daily 16:30 UTC (23:30 VN) — Prediction resolution — task 1125
+  // Fires after VN market close (15:30 VN = 08:30 UTC) giving the VPS
+  // price-push service time to deliver daily_ohlcv rows before resolution runs.
+  cron.schedule(CRONS.predictionResolution, async () => {
+    await runPredictionResolutionJob()
   }, { timezone: 'UTC' })
 
   log(`[scheduler] jobs registered — ${Object.keys(CRONS).length} cron keys in CRONS map (incl. WAL checkpoint + 5 summary) + vps-watchdog active`)

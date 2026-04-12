@@ -476,6 +476,53 @@ Sprint 058 COMPLETE 2026-04-12. VNM income: revenue 1→63.6T, COGS 10→37.4T. 
 
 ---
 
+## Sprint 059 — Prediction Engine Phase B: Claim Resolution
+
+### Kanban
+
+| ID | Title | Branch | Layer | Tests | Status |
+|----|-------|--------|-------|-------|--------|
+| 1125 | Prediction resolution scheduler job | `feat/sprint-059-task-1125` | scheduler/domain/infrastructure | 20 pass | Review |
+
+### Task Detail Sheets
+
+**Task 1125 — Prediction Resolution Scheduler Job**
+
+Branch: `feat/sprint-059-task-1125` | Layer: scheduler/domain/infrastructure | Priority: P1 | Depends on: none | Size: M
+
+Files created:
+- `src/__tests__/1125-prediction-resolution-job.test.ts` (CREATE — 20 tests)
+- `src/domain/services/baseRateComputer.ts` (CREATE — computeBrierScore pure function)
+- `src/infrastructure/db/predictionClaimStore.ts` (CREATE — prediction_claims DDL + CRUD)
+- `src/scheduler/predictionResolutionJob.ts` (CREATE — runPredictionResolution + runPredictionResolutionJob)
+- `docs/data/cron-registry.json` (CREATE — +2 entries: evidenceAccumulator + predictionResolution, count 26)
+
+Files modified:
+- `src/infrastructure/db/schema.ts` (add prediction_claims DDL to initDatabase())
+- `src/scheduler/jobs.ts` (register predictionResolution cron at "30 16 * * *")
+
+Acceptance Criteria:
+
+**Given** claim with resolution_date=yesterday, operator=">", actual_price=105, target=100 | **When** `runPredictionResolution(db)` | **Then** resolution_outcome=1, actual_price=105, brier_score=(1-confidence)^2
+
+**Given** operator ">=" and actual=80 vs target=80 | **Then** outcome=1 (boundary condition satisfied)
+
+**Given** operator "<" and actual=45 vs target=50 | **Then** outcome=1
+
+**Given** claim with resolution_date 3 days ago, no OHLCV | **Then** skipped (within 5-day retry window), no outcome set
+
+**Given** claim with resolution_date 6 days ago, no OHLCV | **Then** marked unresolvable, brier_score=NULL, resolved_at set
+
+**Given** claim with resolution_date in future | **Then** not processed
+
+**Given** `computeBrierScore(1, 0.8)` | **Then** returns 0.04 (=(1-0.8)^2)
+
+**Given** jobs.ts after merge | **Then** CRONS.predictionResolution = "30 16 * * *"
+
+`bun test src/__tests__/1125-prediction-resolution-job.test.ts` → 20 pass | `bun tsc --noEmit` → 0 errors
+
+---
+
 ## Backlog
 
 | ID | Owner | Priority | Title | Status |
