@@ -20,14 +20,38 @@ import type { IncomeStatement } from "../../../bctc-schema";
 // Helpers
 // ---------------------------------------------------------------------------
 
-/** Extract the last number on a line using parseVnNumber. */
+/**
+ * Extract all number tokens from a line and return the first "large" one
+ * (skipping BCTC item codes which are small integers like 01, 10, 20).
+ * Falls back to the last number on the line if no large number found.
+ *
+ * Task 1114: OCR PDFs often have multi-column layouts where the current
+ * period value is NOT the last number. Extracting the first large number
+ * gets the "current period" column in most Vietnamese BCTC formats.
+ */
 function extractNumber(line: string): number | null {
   const trimmed = line.trim();
   if (!trimmed) return null;
 
-  const match = trimmed.match(/(\(?\-?[\d.,]+\)?)[\s]*$/);
-  if (!match || !match[1]) return null;
-  return parseVnNumber(match[1]);
+  // Find all number-like tokens on the line
+  const tokens = trimmed.match(/\(?\-?[\d.,]+\)?/g);
+  if (!tokens || tokens.length === 0) return null;
+
+  // Try to find the first large number (skip item codes)
+  for (const token of tokens) {
+    const val = parseVnNumber(token);
+    if (val === null) continue;
+    // Skip small integers that are likely BCTC item codes (01, 02, 10, 20, etc.)
+    if (Number.isInteger(val) && val >= 0 && val <= 999) continue;
+    return val;
+  }
+
+  // Fallback: return the last parseable number (even if small)
+  for (let i = tokens.length - 1; i >= 0; i--) {
+    const val = parseVnNumber(tokens[i]!);
+    if (val !== null) return val;
+  }
+  return null;
 }
 
 /**
@@ -45,12 +69,18 @@ function stripDiacritics(text: string): string {
  * Find the first line matching a primary pattern; if no match, try the ASCII
  * fallback pattern on diacritic-stripped lines.
  *
+ * Task 1114: When a pattern matches a line but no number is found on it,
+ * look ahead up to LOOKAHEAD_LINES following lines for a number. OCR text
+ * from scanned PDFs often puts labels and values on separate lines.
+ *
  * @param primaryLines  - NFC-normalized lines (original)
  * @param fallbackLines - NFC-normalized + diacritic-stripped lines
  * @param primary       - Regex pattern for Vietnamese text (with diacritics)
  * @param fallback      - Regex pattern for ASCII text (diacritics removed)
  * @returns Extracted number, or 0 if not found.
  */
+const LOOKAHEAD_LINES = 3;
+
 function findValue(
   primaryLines: string[],
   fallbackLines: string[],
@@ -58,17 +88,26 @@ function findValue(
   fallback: RegExp,
 ): number {
   // 1. Try primary pattern on NFC-normalized lines
-  for (const line of primaryLines) {
-    if (primary.test(line)) {
-      const val = extractNumber(line);
+  for (let i = 0; i < primaryLines.length; i++) {
+    if (primary.test(primaryLines[i]!)) {
+      const val = extractNumber(primaryLines[i]!);
       if (val !== null) return val;
+      // Look-ahead: OCR may have numbers on next lines
+      for (let j = 1; j <= LOOKAHEAD_LINES && i + j < primaryLines.length; j++) {
+        const ahead = extractNumber(primaryLines[i + j]!);
+        if (ahead !== null) return ahead;
+      }
     }
   }
   // 2. Try ASCII fallback pattern on diacritic-stripped lines
-  for (const line of fallbackLines) {
-    if (fallback.test(line)) {
-      const val = extractNumber(line);
+  for (let i = 0; i < fallbackLines.length; i++) {
+    if (fallback.test(fallbackLines[i]!)) {
+      const val = extractNumber(fallbackLines[i]!);
       if (val !== null) return val;
+      for (let j = 1; j <= LOOKAHEAD_LINES && i + j < fallbackLines.length; j++) {
+        const ahead = extractNumber(fallbackLines[i + j]!);
+        if (ahead !== null) return ahead;
+      }
     }
   }
   return 0;
@@ -170,19 +209,48 @@ const P_EPS = /l[ãa]i\s+c[ơo]\s+b[ảa]n\s+tr[êe]n\s+c[ổo]\s+phi[ếe]u/i;
 const F_EPS = /lai\s+co\s+ban\s+tren\s+co\s+phieu/i;
 
 // ---------------------------------------------------------------------------
+// Task 1114 — Unit detection (ported from balanceSheetExtractor)
+// ---------------------------------------------------------------------------
+
+/**
+ * Detect unit multiplier from PDF header. Same logic as balanceSheetExtractor
+ * so both statements in the same report use consistent units.
+ */
+function detectUnitMultiplier(lines: string[]): number {
+  const P_UNIT_TRIEU = /[đd][oơ]n\s+v[iị]\s+(t[íi]nh|:)\s*:?\s*(tri[eệ]u|trieu)/i;
+  const P_UNIT_TY = /[đd][oơ]n\s+v[iị]\s+(t[íi]nh|:)\s*:?\s*t[yỷ]/i;
+
+  for (const line of lines) {
+    if (P_UNIT_TRIEU.test(line)) return 1;
+    if (P_UNIT_TY.test(line)) return 1000;
+  }
+
+  // Loose fallback on first ~50 lines
+  const head = lines.slice(0, 50);
+  const P_TRIEU_LOOSE = /tri[eệ]u\s*[đd][oồ]ng|trieu\s*dong/i;
+  const P_TY_LOOSE = /t[yỷ]\s*[đd][oồ]ng|ty\s*dong/i;
+
+  for (const line of head) {
+    if (P_TRIEU_LOOSE.test(line)) return 1;
+    if (P_TY_LOOSE.test(line)) return 1000;
+  }
+
+  return 1; // default: assume triệu
+}
+
+// ---------------------------------------------------------------------------
 // Main extractor
 // ---------------------------------------------------------------------------
 
 /**
  * Extract an IncomeStatement from raw Vietnamese financial report text.
  *
- * Numbers should be in triệu đồng (million VND), except EPS which is in VND.
+ * Numbers are returned in triệu đồng (million VND), except EPS which is in VND.
  * Missing line items default to 0.
  *
- * FR-3: The input is NFC-normalized first. For each field, the primary
- * Vietnamese-diacritics pattern is tried; if it finds nothing, the ASCII
- * fallback pattern is tried on diacritic-stripped lines (handles corrupted
- * pdf-parse output where diacritics are lost).
+ * Task 1114: Added unit detection (tỷ → triệu conversion), look-ahead for
+ * OCR text where numbers appear on lines after their labels, and multi-number
+ * extraction to handle current-period column in multi-column layouts.
  */
 export function extractIncomeStatement(rawText: string): IncomeStatement {
   // NFC normalization (FR-3): ensures precomposed Unicode characters match patterns
@@ -256,39 +324,43 @@ export function extractIncomeStatement(rawText: string): IncomeStatement {
   const ebit = operatingProfit; // Approximation per bctc-schema.ts
   const ebitda = 0; // Cannot compute without depreciation (from cash flow statement)
 
+  // Task 1114: unit conversion (tỷ → triệu). EPS stays in VND (not scaled).
+  const multiplier = detectUnitMultiplier(primaryLines);
+  const m = multiplier;
+
   return {
-    grossRevenue,
-    revenueDeductions,
-    netRevenue,
-    cogs,
-    grossProfit,
+    grossRevenue: grossRevenue * m,
+    revenueDeductions: revenueDeductions * m,
+    netRevenue: netRevenue * m,
+    cogs: cogs * m,
+    grossProfit: grossProfit * m,
 
-    financialIncome,
-    financialExpenses,
-    interestExpenses,
-    shareOfAssociates,
+    financialIncome: financialIncome * m,
+    financialExpenses: financialExpenses * m,
+    interestExpenses: interestExpenses * m,
+    shareOfAssociates: shareOfAssociates * m,
 
-    sellingExpenses,
-    adminExpenses,
+    sellingExpenses: sellingExpenses * m,
+    adminExpenses: adminExpenses * m,
 
-    operatingProfit,
-    otherIncome,
-    otherExpenses,
-    otherProfit,
+    operatingProfit: operatingProfit * m,
+    otherIncome: otherIncome * m,
+    otherExpenses: otherExpenses * m,
+    otherProfit: otherProfit * m,
 
-    profitBeforeTax,
-    incomeTaxCurrent,
-    incomeTaxDeferred,
-    totalIncomeTax,
+    profitBeforeTax: profitBeforeTax * m,
+    incomeTaxCurrent: incomeTaxCurrent * m,
+    incomeTaxDeferred: incomeTaxDeferred * m,
+    totalIncomeTax: totalIncomeTax * m,
 
-    netProfit,
-    minorityInterest,
-    netProfitParent,
+    netProfit: netProfit * m,
+    minorityInterest: minorityInterest * m,
+    netProfitParent: netProfitParent * m,
 
-    eps,
-    dilutedEps,
+    eps,          // EPS is in VND per share, NOT scaled
+    dilutedEps,   // EPS is in VND per share, NOT scaled
 
-    ebitda,
-    ebit,
+    ebitda: ebitda * m,
+    ebit: ebit * m,
   };
 }

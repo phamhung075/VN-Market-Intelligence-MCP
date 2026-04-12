@@ -27,17 +27,35 @@ import type {
 // Helpers
 // ---------------------------------------------------------------------------
 
-/** Extract the last number on a line using parseVnNumber. */
+/**
+ * Extract all number tokens from a line and return the first "large" one
+ * (skipping BCTC item codes which are small integers like 01, 10, 20).
+ * Falls back to the last number on the line if no large number found.
+ *
+ * Task 1114: OCR PDFs often have multi-column layouts where the current
+ * period value is NOT the last number.
+ */
 function extractNumber(line: string): number | null {
-  // Grab the last whitespace-delimited token(s) that look numeric.
-  // Financial lines typically end with the amount, possibly with parentheses.
   const trimmed = line.trim();
   if (!trimmed) return null;
 
-  // Try matching a trailing number token: handles 1.234.567 | (100.000) | 2,500,000 etc.
-  const match = trimmed.match(/(\(?\-?[\d.,]+\)?)[\s]*$/);
-  if (!match || !match[1]) return null;
-  return parseVnNumber(match[1]);
+  const tokens = trimmed.match(/\(?\-?[\d.,]+\)?/g);
+  if (!tokens || tokens.length === 0) return null;
+
+  // Try to find the first large number (skip item codes)
+  for (const token of tokens) {
+    const val = parseVnNumber(token);
+    if (val === null) continue;
+    if (Number.isInteger(val) && val >= 0 && val <= 999) continue;
+    return val;
+  }
+
+  // Fallback: return the last parseable number (even if small)
+  for (let i = tokens.length - 1; i >= 0; i--) {
+    const val = parseVnNumber(tokens[i]!);
+    if (val !== null) return val;
+  }
+  return null;
 }
 
 /**
@@ -56,15 +74,27 @@ function lineMatches(line: string, pattern: RegExp): boolean {
  * If the extracted value is a whole integer multiple of 10 in [10, 990],
  * it is treated as a BCTC row-code artifact (e.g. 100, 110, 270) and the
  * scan continues to the next matching line.
+ *
+ * Task 1114: Look-ahead for OCR text where numbers appear on separate lines.
  */
+const LOOKAHEAD_LINES = 3;
+
 function findValue(lines: string[], pattern: RegExp): number {
-  for (const line of lines) {
-    if (lineMatches(line, pattern)) {
-      const val = extractNumber(line);
-      if (val === null) continue;
-      // Guard: skip row-code artifacts (multiples of 10 in [10, 990])
-      if (Number.isInteger(val) && val >= 10 && val <= 990 && val % 10 === 0) continue;
-      return val;
+  for (let i = 0; i < lines.length; i++) {
+    if (lineMatches(lines[i]!, pattern)) {
+      const val = extractNumber(lines[i]!);
+      if (val !== null) {
+        // Guard: skip row-code artifacts (multiples of 10 in [10, 990])
+        if (Number.isInteger(val) && val >= 10 && val <= 990 && val % 10 === 0) continue;
+        return val;
+      }
+      // Look-ahead: OCR may have numbers on next lines
+      for (let j = 1; j <= LOOKAHEAD_LINES && i + j < lines.length; j++) {
+        const ahead = extractNumber(lines[i + j]!);
+        if (ahead === null) continue;
+        if (Number.isInteger(ahead) && ahead >= 10 && ahead <= 990 && ahead % 10 === 0) continue;
+        return ahead;
+      }
     }
   }
   return 0;
