@@ -43,6 +43,7 @@ import { runBctcOverdueCheck } from './bctcOverdueCheckJob.js'
 import { runBctcReparseJob } from './bctcReparseJob.js'
 import { runAskQueueCheck } from './askQueueCheckJob.js'
 import { runCronHealthAlert } from './cronHealthAlertJob.js'
+import { runEvidenceAccumulatorJob } from './evidenceAccumulatorJob.js'
 
 export const CRONS = {
   morningBriefing:        Bun.env.CRON_MORNING_BRIEFING          ?? '0 8 * * 1-5',
@@ -90,6 +91,8 @@ export const CRONS = {
   vpsProxyWatchdog:       Bun.env.CRON_VPS_PROXY_WATCHDOG         ?? '*/10 2-8 * * 1-5',
   /** Cron health alert: daily 00:00 UTC (07:00 GMT+7) — task 1103 */
   cronHealthAlert:        Bun.env.CRON_HEALTH_ALERT                ?? '0 0 * * *',
+  /** Evidence accumulator: daily 23:00 VN = 16:00 UTC — task 1118, Sprint 057 Phase A */
+  evidenceAccumulator:    Bun.env.CRON_EVIDENCE_ACCUMULATOR        ?? '0 16 * * *',
 }
 
 function log(msg: string) {
@@ -297,6 +300,11 @@ export function startScheduler() {
     } catch (err) {
       log(`[cron-health-alert] uncaught: ${err instanceof Error ? err.message : String(err)}`)
     }
+  }, { timezone: 'UTC' })
+
+  // Daily 23:00 VN (16:00 UTC) — Evidence accumulator — task 1118
+  cron.schedule(CRONS.evidenceAccumulator, async () => {
+    await runEvidenceAccumulatorJob()
   }, { timezone: 'UTC' })
 
   log(`[scheduler] jobs registered — ${Object.keys(CRONS).length} cron keys in CRONS map (incl. WAL checkpoint + 5 summary) + vps-watchdog active`)
