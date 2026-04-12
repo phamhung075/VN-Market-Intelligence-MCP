@@ -63,6 +63,25 @@ export interface AnalysisEntry {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
+// HTML entity decoding — shared normalisation for ALL news paths
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * Decode HTML numeric entities (&#NNN;, &#xHH;) and orphan fragments (#NNN;)
+ * left by cheerio XML-mode or VPS proxy scripts that skip entity decoding.
+ * Also decodes the 5 named XML entities (&amp; &lt; &gt; &quot; &apos;).
+ *
+ * Safe to call on already-decoded text — decoded characters won't match.
+ */
+export function decodeHtmlEntities(s: string): string {
+  return s
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => String.fromCharCode(parseInt(hex as string, 16)))
+    .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(parseInt(n as string)))
+    .replace(/(?<![&])#(\d+);/g, (_, n) => String.fromCharCode(parseInt(n as string)))
+    .replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&apos;/g, "'");
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
 // Internal constants
 // ═══════════════════════════════════════════════════════════════════════════
 
@@ -687,8 +706,8 @@ function computeConfidence(level: AnalysisLevel, keywordCount: number): number {
  * @returns    - Fully populated AnalysisEntry ready for the cascade engine
  */
 export function normalizeNews(item: RssItem): AnalysisEntry {
-  const title = item.title?.trim() ?? "";
-  const content = item.content?.trim() ?? "";
+  const title = decodeHtmlEntities(item.title?.trim() ?? "");
+  const content = decodeHtmlEntities(item.content?.trim() ?? "");
   const source = item.source?.toLowerCase() ?? "";
 
   // Combined lowercase text for keyword scanning

@@ -8,6 +8,7 @@
  */
 
 import * as cheerio from "cheerio";
+import { decodeHtmlEntities } from "../../domain/services/newsNormalizer.js";
 import { logger } from "../logger.js";
 
 // ---------------------------------------------------------------------------
@@ -72,23 +73,11 @@ export function parseRssFeed(xml: string): RssItem[] {
         return;
       }
 
-      // Decode HTML entities. Some RSS feeds double-encode, and cheerio's
-      // XML-mode parser sometimes strips the leading `&` from `&#NNN;`,
-      // leaving orphan `#NNN;` fragments (report #1074: "nhi#234;n" instead
-      // of "nhiên"). We handle both the full form `&#NNN;` and the orphan
-      // `#NNN;` to cover both code paths, plus hex entities `&#xHH;`.
-      const decodeEntities = (s: string) =>
-        s
-          .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => String.fromCharCode(parseInt(hex as string, 16)))
-          .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(parseInt(n as string)))
-          .replace(/(?<![&])#(\d+);/g, (_, n) => String.fromCharCode(parseInt(n as string)))
-          .replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&apos;/g, "'");
-
       items.push({
-        title: decodeEntities(title),
+        title: decodeHtmlEntities(title),
         url,
         publishedAt,
-        content: decodeEntities(content),
+        content: decodeHtmlEntities(content),
         source: "", // caller sets the source (e.g. 'cafef')
       });
     });
