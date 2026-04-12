@@ -5,6 +5,24 @@ Active board lives in `TASKS.md`.
 
 ---
 
+### [1004 / @dev P2] Cascade gap: VN-market policy/macro news scoring — Done 2026-04-11
+
+18 SECTOR_RULES + 10 POLICY_RULES + detectPolicyInterventionCombo. TECH_1004.md. 15 tests. Commit 09f0cef.
+
+---
+
+### [1112 / @dev P1] BCTC VPS proxy: push pattern for geo-blocked PDFs — Done (code) 2026-04-11
+
+Extended VPS Singapore push pattern for BCTC PDFs. GET /api/bctc-fetch-queue + POST /api/push-bctc-pdf. TECH_1112.md. 10 tests. Commit 0ecca9b. Deploy pending: operator runs ./deploy-vps-proxy.sh.
+
+---
+
+### [1113 / @dev P2] VPS proxy observability — push log + get_vps_proxy_health — Done 2026-04-12
+
+vps_push_log table, 4 push endpoints log success/error, get_vps_proxy_health MCP tool. 8 tests. Commit 594dc67.
+
+---
+
 ### [1002 / @dev P1] Anonymous SSC PDF attribution — Done 2026-04-11
 
 normaliseFilename + action_code on pdf_extracted_text + D-7c fallback. TECH_1002.md. 11 tests. Commit 60482d1.
