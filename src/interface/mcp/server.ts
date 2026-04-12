@@ -342,6 +342,12 @@ export async function createBunServer(
       let body = "";
       for await (const chunk of req) body += chunk;
       try {
+        if (!body.trim()) {
+          logVpsPush({ service: "prices", itemsCount: 0, status: "error", errorMsg: "Empty request body" });
+          res.writeHead(400, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ error: "Empty request body" }));
+          return;
+        }
         const prices: Array<{
           code: string;
           price: number;
@@ -668,6 +674,12 @@ export async function createBunServer(
       let body = "";
       for await (const chunk of req) body += chunk;
       try {
+        if (!body.trim()) {
+          logVpsPush({ service: "news", itemsCount: 0, status: "error", errorMsg: "Empty request body" });
+          res.writeHead(400, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ error: "Empty request body" }));
+          return;
+        }
         const items: Array<{
           title: string;
           url: string;
@@ -745,6 +757,12 @@ export async function createBunServer(
       let body = "";
       for await (const chunk of req) body += chunk;
       try {
+        if (!body.trim()) {
+          logVpsPush({ service: "sbv", itemsCount: 0, status: "error", errorMsg: "Empty request body" });
+          res.writeHead(400, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ error: "Empty request body" }));
+          return;
+        }
         const snapshot: {
           overnightRatePct?: number;
           refinancingRatePct?: number;
