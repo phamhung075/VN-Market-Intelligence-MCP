@@ -145,6 +145,7 @@
 - Task 1112: BCTC VPS proxy — `bctc_vps_queue` table, `GET /api/bctc-fetch-queue`, `POST /api/push-bctc-pdf`, `vps-scripts/fetch-bctc.sh` + `fetch-bctc-loop.sh` + `vn-bctc-fetch.service`. VPS deployed, both services active. (commit 0ecca9b)
 - Hotfix e4c5383: VEA added to watchlist (30 tickers), TLS cert bypass for HNX/UPCOM in VPS fetcher, GDP regex tightened, BCTC re-extracted from cached OCR.
 - Hotfix 09f0cef: Task 1004 — 18 new cascade `SECTOR_RULES` for govt stabilization + systemic stress + policy combos, `detectPolicyInterventionCombo()`.
+- Task 1113: VPS proxy observability — push log endpoint (`POST /api/log-push`), `get_vps_proxy_health` MCP tool (+1 tool → 84 total). (commit 594dc67)
 - VPS maintenance: `vn-price-fetch.service` restarted (was stale 15 days), `vn-bctc-fetch.service` first-ever deploy — both now active on Vultr Singapore.
 
 ## In Progress

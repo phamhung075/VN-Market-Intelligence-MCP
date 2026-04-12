@@ -12,13 +12,19 @@
     { "fingerprint": "code_bug:userrequest_tools_not_registered", "first_seen": "2026-04-07", "last_reported": "2026-04-07" },
     { "fingerprint": "doc_synced:TASKS.md", "first_seen": "2026-04-07", "last_reported": "2026-04-07" },
     { "fingerprint": "log_schema_missing_table:prediction_markets", "first_seen": "2026-04-08", "last_reported": "2026-04-08" },
-    { "fingerprint": "doc_synced:CRON_JOBS.md", "first_seen": "2026-04-08", "last_reported": "2026-04-11" },
-    { "fingerprint": "doc_synced:IMPLEMENTATION_STATUS.md", "first_seen": "2026-04-08", "last_reported": "2026-04-11" },
+    { "fingerprint": "doc_synced:CRON_JOBS.md", "first_seen": "2026-04-08", "last_reported": "2026-04-12" },
+    { "fingerprint": "doc_synced:IMPLEMENTATION_STATUS.md", "first_seen": "2026-04-08", "last_reported": "2026-04-12" },
     { "fingerprint": "doc_synced:mcp-tools.md", "first_seen": "2026-04-10", "last_reported": "2026-04-10" },
     { "fingerprint": "doc_synced:unified-agent.md", "first_seen": "2026-04-10", "last_reported": "2026-04-10" },
     { "fingerprint": "log_warn:assemblebriefing_positions_missing", "first_seen": "2026-04-10", "last_reported": "2026-04-10" },
     { "fingerprint": "memory_stale:user_watchlist_vea", "first_seen": "2026-04-09", "last_reported": "2026-04-09" },
     { "fingerprint": "log_error:ssc_ssl_certificate", "first_seen": "2026-04-11", "last_reported": "2026-04-11" },
-    { "fingerprint": "db_empty:vn-market.db", "first_seen": "2026-04-11", "last_reported": "2026-04-11" }
+    { "fingerprint": "db_empty:vn-market.db", "first_seen": "2026-04-11", "last_reported": "2026-04-11" },
+    { "fingerprint": "doc_stale:IMPLEMENTATION_STATUS_missing_task1113", "first_seen": "2026-04-12", "last_reported": "2026-04-12" },
+    { "fingerprint": "doc_stale:CRON_JOBS_missing_askQueueCheck", "first_seen": "2026-04-12", "last_reported": "2026-04-12" },
+    { "fingerprint": "doc_stale:cowork_00_setup_hardcoded_toolcount", "first_seen": "2026-04-12", "last_reported": "2026-04-12" },
+    { "fingerprint": "log_warn:reuters_trading_economics_zero_items", "first_seen": "2026-04-12", "last_reported": "2026-04-12" },
+    { "fingerprint": "doc_synced:project_stats_sprint_number", "first_seen": "2026-04-12", "last_reported": "2026-04-12" },
+    { "fingerprint": "doc_synced:00_setup_watchlist_tool_count", "first_seen": "2026-04-12", "last_reported": "2026-04-12" }
   ]
 }

@@ -36,7 +36,9 @@ Coordinator: `cowork-analysis-vnmarket-team/unified-agent.md`
 | Claude Manager Helper | `claude-manager-helper.md` | Context janitor: CLAUDE.md slim, docs sync, memory hygiene |
 | Code Janitor | `code-janitor.md` | DRY auditor cron (every 3h): duplicate ticker maps, hard-coded arrays, magic numbers, schema duplication |
 
-Dev team loop: `cowork-analysis-vnmarket-team/dev-team-cron.md`
+| **Dev Team Orchestrator** | `dev-team.md` | **Orchestrator**: triages reports, calls PO/BA/Architect/PM/Developer/QA/Fixer subagents, health checks, branch hygiene |
+
+Dev team cron: launches `dev-team` subagent hourly → orchestrator calls other subagents as needed
 
 ## Stock Classification
 

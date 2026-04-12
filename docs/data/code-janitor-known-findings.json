@@ -3,9 +3,13 @@
     {
       "fingerprint": "cron_duplication:src/infrastructure/config.ts:scheduler_cron_defaults",
       "first_seen": "2026-04-07",
-      "last_reported": "2026-04-08",
+      "last_reported": "2026-04-12",
       "task": 1048,
       "note": "config.ts:scheduler section declares 7 cron default strings duplicating CRONS fallback defaults in jobs.ts. Task 1048 queued (Backlog). BLOCKED: circular-dep risk."
     }
-  ]
+  ],
+  "last_run": "2026-04-12T18:30:00Z",
+  "checks_run": 5,
+  "findings_count": 0,
+  "clean": true
 }

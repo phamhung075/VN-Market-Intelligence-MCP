@@ -24,6 +24,7 @@
 | 06:00 UTC M–F | `franceSummary` | `0 6 * * 1-5` (`CRON_FRANCE_SUMMARY`) | France wake-up digest (13:00 VN) → MARKET channel |
 | 07:00 UTC Sunday | `devTeamHeartbeat` | `0 7 * * 0` (`CRON_DEV_TEAM_HEARTBEAT`) | System health + weekly observability report |
 | 08:00 UTC Sunday | `predictionOutcome` | `0 8 * * 0` (`CRON_PREDICTION_OUTCOME`) | Evaluate prediction signals vs actual outcomes |
+| ***/12 min** | `askQueueCheck` | `*/12 * * * *` | Check ask_queue for pending /ask questions; post signal to agent_signals for 07-qa-responder if count > 0 (task 1074) |
 
 ## Intelligence Cycle Steps (15-min tick)
 
