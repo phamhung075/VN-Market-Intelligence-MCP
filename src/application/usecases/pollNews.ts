@@ -367,12 +367,12 @@ export async function pollNews(options: PollNewsOptions = {}): Promise<PollNewsR
     }
   }
 
-  // Surface fulfilled-but-empty sources so the Dev Team can see when a fetcher
-  // silently returns [] (rate-limited, circuit-broken, parse-empty). Without this,
-  // sourceHealthTracker reports "OK" while rag_analyses receives zero inserts.
+  // Surface fulfilled-but-empty sources at DEBUG level. Circuit breaker +
+  // sourceHealthTracker already handle real failures; 0 items is common on
+  // weekends / off-hours and was drowning real WARNs in the error log.
   for (const { name, result } of sourceResults) {
     if (result.status === "fulfilled" && result.value.length === 0) {
-      logger.warn(`[pollNews] ${name} returned 0 items`, { source: name });
+      logger.debug(`[pollNews] ${name} returned 0 items`, { source: name });
     }
   }
 

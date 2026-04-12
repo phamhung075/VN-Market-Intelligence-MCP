@@ -133,6 +133,19 @@ VPS creds in `.env` only: `VULTR_IP`, `VULTR_PASSWORD`, `VULTR_USERNAME` — nev
 
 **Dead-end**: commit `c151376` (reverted) used SSH-self-heal + sshpass inside Bun. Discarded — root creds in Bun process + cron as primitive. VPS crontab replaced by loop scripts + systemd.
 
+### VPS Migration Status
+
+All Vietnamese data sources should route through VPS Singapore (push pattern). MCP server in France should NEVER directly fetch from Vietnamese domains.
+
+| Source | Status | VPS Service |
+|--------|--------|-------------|
+| Stock prices | Done | `vn-price-fetch.service` |
+| BCTC PDFs | Done | `vn-bctc-fetch.service` |
+| CafeF RSS | TODO | — |
+| VnExpress RSS | TODO | — |
+| VnEconomy RSS | TODO | — |
+| SBV rates | TODO | — |
+
 ## Data Sources & Fallback Chain
 
 | Source | Primary | Fallback(s) |
