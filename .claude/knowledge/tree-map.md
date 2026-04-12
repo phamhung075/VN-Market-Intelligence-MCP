@@ -47,7 +47,7 @@ CLAUDE.md (root — always loaded)
 │
 ├── .claude/WORKFLOW.md (dev workflow: branch hygiene, merge checklist)
 │
-├── docs/ARCHITECTURE.md (system design: folder tree, data flow, VPS proxy)
+├── docs/ARCHITECTURE.md (system design: folder tree, data flow, VPS price proxy + BCTC PDF proxy)
 │
 ├── docs/IMPLEMENTATION_STATUS.md (sprint history — reference only, not for volatile stats)
 │

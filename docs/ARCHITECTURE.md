@@ -77,7 +77,7 @@ src/
 │   ├── mcp/
 │   │   ├── server.ts                ← McpServer factory, registers tools via registry.ts
 │   │   ├── transport.ts             ← SSEServerTransport setup
-│   │   └── tools/                   ← 80 registered MCP tools (via registry.ts)
+│   │   └── tools/                   ← 83 registered MCP tools (via registry.ts)
 │   └── scheduler/index.ts           ← startScheduler()
 └── scheduler/                       ← 23 files: jobs.ts + summaryJobs.ts + 21 job handlers
 ```
@@ -85,7 +85,7 @@ src/
 ## Key Data Flow
 
 ```
-News (5 sources) + SSC PDF
+News (5 sources) + BCTC PDF (via VPS proxy → POST /api/push-bctc-pdf)
   → Fetcher (rate limiter + circuit breaker)
   → Parser (newsNormalizer / parseBctcReport)
   → AnalysisEntry / FinancialReport
@@ -100,11 +100,13 @@ Polymarket (30 min) → predictionStore → signalDetector → cascade → brief
 Kinh Dich: 6 signals → hexagram → reading + Markov transition → prediction
 ```
 
-## VPS Price Proxy (geo-block workaround)
+## VPS Proxy (geo-block workaround)
 
-MCP server in France is geo-blocked from VN stock APIs. Vultr VPS in Singapore bridges the gap.
+MCP server in France is geo-blocked from VN stock APIs and SSC BCTC portal. Vultr VPS in Singapore bridges the gap for both price data and BCTC PDFs.
 
-**Invariant: VPS liveness is owned by systemd on the Vultr host. MCP only observes `market_prices.updated_at`. Nothing on the MCP side ever SSHes into VPS at runtime.**
+**Invariant: VPS liveness is owned by systemd on the Vultr host. MCP only observes DB staleness. Nothing on the MCP side ever SSHes into VPS at runtime.**
+
+### Price Proxy (`vn-price-fetch.service`)
 
 | Component | Location | Role |
 |-----------|----------|------|
@@ -115,9 +117,21 @@ MCP server in France is geo-blocked from VN stock APIs. Vultr VPS in Singapore b
 
 Pipeline: `GET /api/watchlist` (VPS pulls codes) | `POST /api/push-prices` (VPS pushes ~60 items/min)
 Market hours: Mon-Fri 02:00-08:59 UTC = 09:00-15:59 VN
+
+### BCTC PDF Proxy (`vn-bctc-fetch.service`) — Task 1112
+
+| Component | Location | Role |
+|-----------|----------|------|
+| `vps-scripts/fetch-bctc-loop.sh` | Vultr VPS | Forever driver: runs fetch every 6 hours (no market-hours window — BCTC filings published any time) |
+| `vps-scripts/fetch-bctc.sh` | Vultr VPS | Worker: pulls queue from MCP, downloads PDFs from SSC/HOSE/HNX/UPCOM (TLS bypass for HNX/UPCOM), pushes each to MCP |
+| `vps-scripts/vn-bctc-fetch.service` | Vultr VPS | systemd: `Type=simple`, `Restart=always`, `RestartSec=10`, `MemoryMax=256M` |
+
+Pipeline: `GET /api/bctc-fetch-queue` (VPS pulls pending items from `bctc_vps_queue` table) | `POST /api/push-bctc-pdf` (VPS pushes downloaded PDF as multipart; MCP parses + stores + runs pipeline)
+Max PDF size: 50 MB. On successful push, `bctc_vps_queue` row → `status='done'`.
+
 VPS creds in `.env` only: `VULTR_IP`, `VULTR_PASSWORD`, `VULTR_USERNAME` — never in Bun process memory.
 
-**Dead-end**: commit `c151376` (reverted) used SSH-self-heal + sshpass inside Bun. Discarded — root creds in Bun process + cron as primitive. VPS crontab replaced by `fetch-prices-loop.sh` + systemd.
+**Dead-end**: commit `c151376` (reverted) used SSH-self-heal + sshpass inside Bun. Discarded — root creds in Bun process + cron as primitive. VPS crontab replaced by loop scripts + systemd.
 
 ## Data Sources & Fallback Chain
 
@@ -131,7 +145,7 @@ VPS creds in `.env` only: `VULTR_IP`, `VULTR_PASSWORD`, `VULTR_USERNAME` — nev
 | Commodities | Yahoo Finance | — |
 | FX rates | Vietcombank XML | — |
 | Macro indicators | Trading Economics scrape | — |
-| BCTC | SSC portal (Puppeteer) | — |
+| BCTC PDFs (geo-blocked) | Vultr VPS Singapore → `POST /api/push-bctc-pdf` | SSC portal (Puppeteer) direct — disabled via `disableSscPolling` flag |
 | Predictions | Polymarket REST | — |
 
 ## mcp.config.json Sections

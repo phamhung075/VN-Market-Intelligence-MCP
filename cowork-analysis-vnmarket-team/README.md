@@ -190,10 +190,10 @@ Before submitting feedback or a report, check this list. If the issue is listed 
 
 | # | Issue | Status | Notes |
 |---|-------|--------|-------|
-| 270 | SSC pipeline not downloading PDFs for VCB/VEA/FPT | BACKLOG | fetchParseAndStoreBctc needs pdfUrl passthrough |
+| 270 | SSC pipeline not downloading PDFs for VCB/VEA/FPT | FIXED | VPS BCTC proxy (task 1112): VPS pulls queue via `GET /api/bctc-fetch-queue`, downloads from SSC/HOSE/HNX/UPCOM, pushes via `POST /api/push-bctc-pdf` — commit 0ecca9b |
 | 271 | incomeStatementExtractor: all income fields = 0 for VNM/FPT | BACKLOG | Regex doesn't match real BCTC PDF formats |
 | 272 | balanceSheetExtractor: Total Assets off by 10^7 | BACKLOG | triệu đồng not converted to tỷ |
-| 273 | SSC Puppeteer crash loop / selector changed | BACKLOG | Needs mutex + updated selectors |
+| 273 | SSC Puppeteer crash loop / selector changed | FIXED | `disableSscPolling` flag added (task 1111); VPS proxy bypasses Puppeteer entirely |
 | 274 | Price data stale from France server | FIXED | VPS Singapore proxy (systemd `Restart=always`) — commit c84a329 |
 | 275 | Telegram env vars "not set" warning | FIXED | Stale logs from old instance — ignore |
 | 276 | Polymarket CLOB 403 | MONITOR | Geo-blocked from France, circuit breaker handles it |
@@ -204,6 +204,8 @@ Before submitting feedback or a report, check this list. If the issue is listed 
 | 281 | scanMarket 0 prices pre-market | NOT A BUG | Expected before 09:00 VN — market closed |
 | 282 | get_sector_comparison "no such column: date" | FIXED | SQL fixed — commit af09eb8 |
 | 283 | get_portfolio_conviction timeout | FIXED | Batch queries replace N+1 — commit 812e8fa |
+| 284 | HNX/UPCOM TLS cert errors from VPS fetcher | FIXED | TLS cert bypass applied to VPS fetch-bctc.sh — commit e4c5383 |
+| 285 | vn-price-fetch.service stale (price data 15 days old) | FIXED | Service restarted 2026-04-11 — both VPS services now active |
 
 **Rules for agents:**
 - **FIXED** → issue is resolved, stop reporting it

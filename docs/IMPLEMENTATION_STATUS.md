@@ -142,6 +142,10 @@
 
 - Task 1111: BCTC fallback hardening — `disableSscPolling` config flag, HOSE/HNX/UPCOM queried in parallel, `listSscDocumentsWithFlag` wrapper. Closes P1 deadline gap (bank BCTC 2026-04-14). 9/9 tests pass.
 - TECH_1002: Anonymous SSC PDF attribution — `normaliseFilename` + `action_code` on `pdf_extracted_text` + D-7c fallback. 11 tests. (commit 60482d1)
+- Task 1112: BCTC VPS proxy — `bctc_vps_queue` table, `GET /api/bctc-fetch-queue`, `POST /api/push-bctc-pdf`, `vps-scripts/fetch-bctc.sh` + `fetch-bctc-loop.sh` + `vn-bctc-fetch.service`. VPS deployed, both services active. (commit 0ecca9b)
+- Hotfix e4c5383: VEA added to watchlist (30 tickers), TLS cert bypass for HNX/UPCOM in VPS fetcher, GDP regex tightened, BCTC re-extracted from cached OCR.
+- Hotfix 09f0cef: Task 1004 — 18 new cascade `SECTOR_RULES` for govt stabilization + systemic stress + policy combos, `detectPolicyInterventionCombo()`.
+- VPS maintenance: `vn-price-fetch.service` restarted (was stale 15 days), `vn-bctc-fetch.service` first-ever deploy — both now active on Vultr Singapore.
 
 ## In Progress
 

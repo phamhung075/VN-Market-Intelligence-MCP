@@ -73,7 +73,7 @@ If a knowledge file Read fails: `send_telegram(channel="work")` + `submit_feedba
 - **WIP limit**: max 2 tasks In Progress in TASKS.md.
 - **Branch hygiene**: every task ends with `git checkout main`, merged branch deleted (local+remote), worktrees under `.claude/worktrees/` removed, stashes dropped. Full checklist → `.claude/WORKFLOW.md#branch-hygiene-checklist`.
 - **Server restart — launchctl ONLY**: `launchctl kickstart -k gui/$(id -u)/com.vn-market.mcp`. NEVER `./start.sh`, `bun --hot`, `bun --watch`, `nodemon`, `pm2`, `forever`, or any hot-reload tool. Non-negotiable — deterministic state reset, no half-loaded modules, no zombie watchers. Full guide → `.claude/knowledge/restart-policy.md`.
-- **VPS price proxy**: VN stock APIs geo-blocked from France. Vultr VPS Singapore (`vn-price-fetch.service`, systemd `Restart=always`) pushes via `POST /api/push-prices`. Never add SSH logic to Bun schedulers. `vpsProxyWatchdogJob.ts` observe-only. Design → `docs/ARCHITECTURE.md#vps-price-proxy`.
+- **VPS proxies (two services)**: VN stock APIs and SSC BCTC portal are geo-blocked from France. Vultr VPS Singapore runs two systemd services (`vn-price-fetch.service` pushes prices via `POST /api/push-prices`; `vn-bctc-fetch.service` pushes BCTC PDFs via `GET /api/bctc-fetch-queue` + `POST /api/push-bctc-pdf`). Never add SSH logic to Bun schedulers. `vpsProxyWatchdogJob.ts` observe-only. Full design → `docs/ARCHITECTURE.md#vps-proxy-geo-block-workaround`.
 
 ### Methodology
 - **Kanban**: `TASKS.md` = active work only (Backlog/Todo/In Progress/Review). Done tasks → `docs/TASKS_ARCHIVE.md`. Never re-add archived tasks to TASKS.md.

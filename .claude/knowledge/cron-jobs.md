@@ -30,11 +30,20 @@ Live data → `docs/data/cron-registry.json`
 | 01:00 Jan/Apr/Jul/Oct 1st | Quarterly summary | `CRON_SUMMARY_QUARTERLY` |
 | 02:00 Jan 2nd | Yearly summary | `CRON_SUMMARY_YEARLY` |
 
-## VPS Proxy Watchdog
+## VPS Proxy Watchdog (price)
 
 `vpsProxyWatchdogJob.ts` — runs `*/10 2-8 * * 1-5` UTC (market hours).
 Reads `MAX(market_prices.updated_at)`. If >5 min stale → one Telegram MARKET alert (30-min cooldown).
 **NEVER SSHes into VPS.** VPS liveness owned by systemd (`vn-price-fetch.service`, `Restart=always`).
+
+## VPS BCTC PDF Proxy (VPS-side only, task 1112)
+
+NOT a Bun scheduler. Two systemd units on Vultr VPS Singapore:
+- `vn-bctc-fetch.service` (`Restart=always`, `RestartSec=10`) → `fetch-bctc-loop.sh` → `fetch-bctc.sh`
+- Cadence: every 6 hours (no market-hours window — BCTC filings published any time)
+- Queue: `GET /api/bctc-fetch-queue` (pulls `bctc_vps_queue` pending rows)
+- Push: `POST /api/push-bctc-pdf` (multipart PDF → MCP parses + stores)
+Full design → `docs/ARCHITECTURE.md#bctc-pdf-proxy-vn-bctc-fetchservice----task-1112`
 
 ## Claude Code Agent Crons (CronCreate — session-scoped)
 
