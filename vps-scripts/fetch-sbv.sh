@@ -42,7 +42,7 @@ try:
     print(0)
 except:
     print(0)
-" 2>/dev/null)
+" 2>/dev/null | head -1)
 
 if [ -z "$USD_RATE" ] || [ "$USD_RATE" = "0" ]; then
   echo "$(date -u) FAIL: could not extract USD/VND rate" >> "$LOG"
