@@ -71,3 +71,5 @@ export { registerBrokerCredibilityTools } from "./brokerCredibilityTools.js";
 export { registerAskQueueTools } from "./askQueueTools.js";
 // VPS Proxy Health (observability for all 4 VPS services)
 export { registerVpsProxyTools } from "./vpsProxyTools.js";
+// Sprint 060 — Calibration Report tool (Task 1129)
+export { registerCalibrationTools } from "./calibrationTools.js";
