@@ -5,6 +5,21 @@ Active board lives in `TASKS.md`.
 
 ---
 
+### Sprint 059 — Prediction Engine Phase B+C — Done 2026-04-12
+
+6 tasks shipped. +2 MCP tools (get_evidence_summary, create_prediction_claim). +2 scheduler files (baseRateComputationJob, predictionResolutionJob). +1 Cowork agent (08-prediction-synthesizer.md). Tool count 86 → 88. Scheduler count 24 → 26. Analysis agents 8 → 9.
+
+| ID | Title | Commit |
+|----|-------|--------|
+| 1121 | evidence_likelihood_ratios DDL + likelihoodRatioStore CRUD | 3e337ee |
+| 1122 | baseRateComputer domain service + baseRateComputationJob weekly | 90e004c |
+| 1123 | prediction_claims DDL + predictionClaimStore CRUD | 3e337ee |
+| 1124 | get_evidence_summary + create_prediction_claim MCP tools (+2) | 1018913 |
+| 1125 | predictionResolutionJob nightly Brier score resolver | c53d0ff (+ fix 81d4c1d) |
+| 1126 | 08-prediction-synthesizer.md Cowork agent + roster update | f15333c |
+
+---
+
 ### [1004 / @dev P2] Cascade gap: VN-market policy/macro news scoring — Done 2026-04-11
 
 18 SECTOR_RULES + 10 POLICY_RULES + detectPolicyInterventionCombo. TECH_1004.md. 15 tests. Commit 09f0cef.

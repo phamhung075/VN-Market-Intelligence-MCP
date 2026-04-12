@@ -31,7 +31,22 @@ Before running the protocol, verify evidence exists:
 
 ---
 
-## PROTOCOL (7 steps)
+## PROTOCOL (8 steps)
+
+### Step 0: Self-Assessment (calibration check)
+
+Before generating any new claims, check the latest calibration snapshot.
+
+1. Call `get_calibration_report()` with no arguments (latest snapshot).
+2. Parse the response:
+   - **No calibration data available:** If response contains "No calibration data available yet" — proceed to Step 1 normally. No adjustment needed.
+   - **Degrading accuracy (trend_delta > 0.05):** If the response contains "degrading" AND the visible trend_delta exceeds +0.05 (i.e., the text shows `+0.05x` or higher): **apply 10% confidence dampening to ALL claims generated in this run.** Formula for every claim in Step 4:
+     ```
+     final_confidence = min(0.95, max(0.05, computed_confidence * 0.90))
+     ```
+     Set a flag `DAMPENING_ACTIVE = true` for use in Step 7.
+   - **Improving, stable, or any other case:** Proceed to Step 1 normally. No adjustment needed.
+3. Call `log_agent_work(agent_name="08-prediction-synthesizer", summary="Self-assessment: {trend status from report}. Dampening: {yes/no}.")`.
 
 ### Step 1: Get Watchlist
 Call `get_watchlist()` — retrieve all monitored tickers.
@@ -118,6 +133,11 @@ Message format:
 [08-prediction-synthesizer] Weekly claims created: {N}
 {For each claim:}
 - {TICKER}: {claim_text} (p={probability}, {horizon_days}d)
+```
+
+If `DAMPENING_ACTIVE = true` (set in Step 0), append this line to the message:
+```
+Self-correction applied: confidence reduced 10% due to degrading calibration (trend_delta > 0.05).
 ```
 
 ---

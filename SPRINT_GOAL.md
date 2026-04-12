@@ -2,11 +2,25 @@
 
 ## Current Sprint — 060 (PLANNING)
 
-started: 2026-04-12 | theme: TBD — next planning cycle
+started: 2026-04-12 | theme: Prediction Engine Phase D — Calibration Report + Telegram Digest
 
 ### Goal
 
-To be determined. PO initiating next planning cycle.
+Close the prediction engine feedback loop by shipping the calibration report job and a Telegram digest so the user can actually see how well the system's probability estimates perform over time. Without this, the prediction engine is a black box — claims are made and resolved but the user has no visibility into accuracy trends or Brier score progression.
+
+### Scope
+
+| Area | In/Out |
+|------|--------|
+| calibrationReportJob (weekly Sunday, Brier score aggregate per evidence type) | IN |
+| get_calibration_report MCP tool (+1 tool) | IN |
+| Telegram digest: weekly prediction accuracy summary to WORK channel | IN |
+| prediction_claims Telegram digest: top resolved claims this week to MARKET channel | IN |
+| foreign_flow_snapshots (VPS extension) | OUT — Architect decision still pending |
+
+### Success Metric
+
+`get_calibration_report` returns Brier score breakdown by evidence type. `calibrationReportJob` runs Sunday and writes to a `calibration_snapshots` table. Weekly digest fires on Sunday and posts a summary to WORK channel. bun tsc --noEmit clean. All new tests pass.
 
 ---
 
