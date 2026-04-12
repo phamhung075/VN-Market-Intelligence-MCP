@@ -45,6 +45,7 @@ import { runAskQueueCheck } from './askQueueCheckJob.js'
 import { runCronHealthAlert } from './cronHealthAlertJob.js'
 import { runEvidenceAccumulatorJob } from './evidenceAccumulatorJob.js'
 import { runBaseRateComputationJob } from './baseRateComputationJob.js'
+import { runPredictionResolutionJob } from './predictionResolutionJob.js'
 
 export const CRONS = {
   morningBriefing:        Bun.env.CRON_MORNING_BRIEFING          ?? '0 8 * * 1-5',
@@ -96,6 +97,8 @@ export const CRONS = {
   evidenceAccumulator:    Bun.env.CRON_EVIDENCE_ACCUMULATOR        ?? '0 16 * * *',
   /** Base rate recomputation: weekly Sunday 19:00 UTC = 02:00 VN Monday — task 1122, Sprint 059 */
   baseRateComputation:    Bun.env.CRON_BASE_RATE_COMPUTATION       ?? '0 19 * * 0',
+  /** Prediction resolution: daily 16:30 UTC (after VN market close 15:30 VN) — task 1125, Sprint 059 */
+  predictionResolution:   Bun.env.CRON_PREDICTION_RESOLUTION       ?? '30 16 * * *',
 }
 
 function log(msg: string) {
@@ -313,6 +316,13 @@ export function startScheduler() {
   // Sunday 19:00 UTC (02:00 VN Monday) — Base rate computation — task 1122, Sprint 059
   cron.schedule(CRONS.baseRateComputation, async () => {
     await runBaseRateComputationJob()
+  }, { timezone: 'UTC' })
+
+  // Daily 16:30 UTC (23:30 VN) — Prediction resolution — task 1125
+  // Fires after VN market close (15:30 VN = 08:30 UTC) giving the VPS
+  // price-push service time to deliver daily_ohlcv rows before resolution runs.
+  cron.schedule(CRONS.predictionResolution, async () => {
+    await runPredictionResolutionJob()
   }, { timezone: 'UTC' })
 
   log(`[scheduler] jobs registered — ${Object.keys(CRONS).length} cron keys in CRONS map (incl. WAL checkpoint + 5 summary) + vps-watchdog active`)
