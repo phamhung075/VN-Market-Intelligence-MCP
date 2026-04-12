@@ -463,11 +463,25 @@ Acceptance Criteria:
 
 ---
 
+## Sprint 058 — BCTC Split-Block OCR Fix (P1 — VNM data quality)
+
+### Kanban
+
+| ID | Title | Branch | Layer | Tests | Status |
+|----|-------|--------|-------|-------|--------|
+| 1119 | Split-block OCR extraction + magnitude inference for income statement | `main` (hot-fix) | domain | 8 pass | Done |
+| 1120 | Split-block fallback for balanceSheetExtractor (VNM totalAssets=0) | Backlog | domain | — | Backlog |
+
+Sprint 058 started: 2026-04-12. Task 1119 shipped. VNM income statement: net_revenue now 63,645,887 million VND (was 1). VEA income statement: magnitude inference now divides by 1M correctly. Balance sheet for VNM consolidated still TODO (task 1120).
+
+---
+
 ## Backlog
 
 | ID | Owner | Priority | Title | Status |
 |----|-------|----------|-------|--------|
-| 1088 | @architect | P3 | BCTC OCR parser regression test fixture using real VNM Q4-2025 OCR text. (a)+(b) shipped, (c) pending. | Backlog |
+| 1088 | @developer | P3 | BCTC OCR regression test: add balance sheet fixture for VNM consolidated format. (a)+(b) shipped, (c) partially done in 1119. | Backlog |
+| 1120 | @developer | P2 | Split-block fallback for balanceSheetExtractor — VNM consolidated PDF has totalAssets=0 (same root cause as 1119, needs BS extractor fix). | Backlog |
 | 1114 | @developer | P2 | BCTC extractor unit conversion: detect đồng vs triệu đồng in OCR text. Known Issues #271/#272. | Done |
 
 ---

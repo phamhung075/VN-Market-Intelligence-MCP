@@ -207,6 +207,8 @@ Before submitting feedback or a report, check this list. If the issue is listed 
 | 284 | HNX/UPCOM TLS cert errors from VPS fetcher | FIXED | TLS cert bypass applied to VPS fetch-bctc.sh — commit e4c5383 |
 | 285 | vn-price-fetch.service stale (price data 15 days old) | FIXED | Service restarted 2026-04-11 — both VPS services now active |
 | 286 | Duplicate alerts after server restart (same article, new random IDs) | FIXED | news_mention alerts now use deterministic day-bucket IDs — commit b67c482 (task 1115) |
+| 287 | VNM income statement zeros (net_revenue=1, cogs=10 — consolidated OCR split-block) | FIXED | Split-block fallback + magnitude inference — commit bcedf52 (task 1119) |
+| 288 | VNM balance sheet totalAssets=0 (consolidated PDF split-block, same root cause as 287) | BACKLOG | Task 1120 — do NOT report, Dev Team knows |
 
 **Rules for agents:**
 - **FIXED** → issue is resolved, stop reporting it

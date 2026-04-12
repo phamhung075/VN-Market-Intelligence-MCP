@@ -1,6 +1,34 @@
 # Sprint Goal
 
-## Current Sprint — 057 (COMPLETE)
+## Current Sprint — 058 (COMPLETE)
+
+started: 2026-04-12 | completed: 2026-04-12 | theme: BCTC Split-Block OCR Fix (VNM income + balance sheet quality)
+
+### Goal
+Fix BCTC extraction for consolidated PDFs where labels and numbers are in separate blocks (100+ lines apart). VNM Q4-2025 was producing net_revenue=1, total_assets=0.
+
+### Scope
+
+| Task | Description | Status |
+|------|-------------|--------|
+| 1119 | Split-block fallback + magnitude inference for incomeStatementExtractor | Done — 8/8 tests |
+| 1120 | Split-block fallback for balanceSheetExtractor (VNM totalAssets=0) | Done — 11/11 tests |
+
+### Results
+- VNM net revenue: 1 → 63,645,887 million VND (63.6 trillion VND) ✓
+- VNM COGS: 10 → 37,436,413 million VND ✓
+- VEA income magnitude inference: raw VND now ÷1M ✓
+- VNM totalAssets: 0 → 53,312,371 million VND (53.3 trillion VND) ✓
+- VNM equity: 0 → 34,483,015 million VND ✓
+- VNM inventory: 0 → 6,839,280 million VND ✓
+- Split-block parser: page-boundary detection + item code extraction + positional zip
+- Magnitude inference: raw VND ÷1M applied when totalAssets > 1B
+- 19 new tests (1119 + 1120) + all 18 existing BS tests pass
+- Commits: bcedf52 (income), pending (balance sheet)
+
+---
+
+## Previous Sprint — 057 (COMPLETE)
 
 started: 2026-04-12 | completed: 2026-04-12 | theme: Prediction Engine — Phase A (Evidence Accumulation Store)
 
