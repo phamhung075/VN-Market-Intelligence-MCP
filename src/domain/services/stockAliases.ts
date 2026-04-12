@@ -648,7 +648,7 @@ export function detectStocksInText(
     if (!aliases || aliases.length === 0) continue;
 
     for (const alias of aliases) {
-      if (normText.includes(alias)) {
+      if (isWordBoundaryMatch(normText, alias)) {
         matched.add(upperCode);
         break; // one alias match is enough for this code
       }
@@ -656,4 +656,36 @@ export function detectStocksInText(
   }
 
   return Array.from(matched);
+}
+
+/**
+ * Check if `alias` appears in `text` as a whole-word match.
+ * A match is valid only if the characters immediately before and after
+ * the alias are non-alphanumeric (or start/end of string).
+ *
+ * This prevents "kinh do" from matching inside "kinh doanh" (business),
+ * which caused KDC false positives on every article mentioning commerce.
+ */
+function isWordBoundaryMatch(text: string, alias: string): boolean {
+  let startIdx = 0;
+  while (true) {
+    const idx = text.indexOf(alias, startIdx);
+    if (idx === -1) return false;
+
+    const beforeOk = idx === 0 || !isAlphanumeric(text[idx - 1]!);
+    const afterIdx = idx + alias.length;
+    const afterOk = afterIdx >= text.length || !isAlphanumeric(text[afterIdx]!);
+
+    if (beforeOk && afterOk) return true;
+    startIdx = idx + 1;
+  }
+}
+
+function isAlphanumeric(ch: string): boolean {
+  const code = ch.charCodeAt(0);
+  return (
+    (code >= 48 && code <= 57) ||  // 0-9
+    (code >= 65 && code <= 90) ||  // A-Z
+    (code >= 97 && code <= 122)    // a-z
+  );
 }
