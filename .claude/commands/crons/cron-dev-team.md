@@ -226,7 +226,17 @@ Please refresh these agents in Claude Cowork.
 
 ### Step 7: Final Health Check
 1. Call `get_system_status` — verify server is healthy after changes (covers DB, SOURCES, FRESHNESS, ERRORS in one call)
-2. If issues found -> create FIX NOW task for next loop
+2. Call `get_vps_proxy_health` — verify all 4 VPS proxy services on Vultr Singapore are healthy:
+   | Service | Push endpoint | Expected interval |
+   |---------|--------------|-------------------|
+   | vn-price-fetch | POST /api/push-prices | 60s |
+   | vn-news-fetch | POST /api/push-news | 5min |
+   | vn-sbv-fetch | POST /api/push-sbv-rates | 30min |
+   | vn-bctc-fetch | POST /api/push-bctc-pdf | 6h |
+3. For each VPS service: if `lastPushAge` exceeds 3× its expected interval OR error rate > 10%:
+   - Create a FIX NOW task: `"VPS proxy stale: <service-name> last push <age>"`
+   - Call `send_telegram(channel="work", message="VPS proxy alert: <service-name> stale <age>. Checking...")`
+4. If all services healthy — no action needed.
 
 ### Step 8: Return to main
 At the very end of every cron invocation, regardless of what ran:
