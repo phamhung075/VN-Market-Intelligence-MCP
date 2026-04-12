@@ -33,6 +33,7 @@ import { validateWebhookRequest } from "../../infrastructure/notifiers/telegramW
 import { insertReport } from "../../infrastructure/db/telegramReportStore.js";
 import { toolRegistry } from "./tools/registry.js";
 import { logVpsPush } from "../../infrastructure/db/vpsPushLogStore.js";
+import { upsertForeignFlow, type ForeignFlowUpsertItem } from "../../infrastructure/db/vnstockStore.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Task 1112 — Minimal multipart/form-data parser for push-bctc-pdf
@@ -618,6 +619,49 @@ export async function createBunServer(
       return;
     }
 
+    // ── Push Foreign Flow from VPS proxy ────────────────────────────────────
+    if (method === "POST" && pathname === "/api/push-foreign-flow") {
+      const apiKey = process.env.VPS_PUSH_API_KEY;
+      const authHeader = req.headers["x-api-key"] || req.headers["authorization"]?.replace("Bearer ", "");
+      if (!apiKey || authHeader !== apiKey) {
+        res.writeHead(401, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "Unauthorized" }));
+        return;
+      }
+
+      let body = "";
+      for await (const chunk of req) body += chunk;
+      try {
+        if (!body.trim()) {
+          logVpsPush({ service: "foreign-flow", itemsCount: 0, status: "error", errorMsg: "Empty request body" });
+          res.writeHead(400, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ error: "Empty request body" }));
+          return;
+        }
+
+        const items: ForeignFlowUpsertItem[] = JSON.parse(body);
+
+        if (!Array.isArray(items) || items.length === 0) {
+          logVpsPush({ service: "foreign-flow", itemsCount: 0, status: "error", errorMsg: "Expected non-empty array" });
+          res.writeHead(400, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ error: "Expected non-empty array" }));
+          return;
+        }
+
+        const upserted = upsertForeignFlow(items);
+        log.info("[push-foreign-flow] upserted rows", { count: upserted, source: "vps-proxy" });
+        logVpsPush({ service: "foreign-flow", itemsCount: upserted, status: "ok" });
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: true, upserted }));
+      } catch (err) {
+        log.error("[push-foreign-flow] parse error", { error: err instanceof Error ? err.message : String(err) });
+        logVpsPush({ service: "foreign-flow", itemsCount: 0, status: "error", errorMsg: err instanceof Error ? err.message : String(err) });
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "Invalid JSON" }));
+      }
+      return;
+    }
+
     // ── Get all stock codes for VPS proxy (watchlist + reference stocks) ────
     if (method === "GET" && pathname === "/api/watchlist") {
       const apiKey = process.env.VPS_PUSH_API_KEY;
@@ -1039,14 +1083,21 @@ export async function createBunServer(
   await new Promise<void>((resolve, reject) => {
     httpServer.on("error", reject);
     httpServer.listen(port, host, () => {
-      log.info("[createBunServer] MCP server ready", { port, host });
+      // When port 0 was requested the OS assigns an ephemeral port; read it back.
+      const addr = httpServer.address();
+      const boundPort = addr && typeof addr === "object" ? addr.port : port;
+      log.info("[createBunServer] MCP server ready", { port: boundPort, host });
       resolve();
     });
   });
 
+  // Read the actual bound port (may differ from requested port when port=0)
+  const addr = httpServer.address();
+  const boundPort = addr && typeof addr === "object" ? addr.port : port;
+
   // ── Return the instance handle ──────────────────────────────────────────
   return {
-    port,
+    port: boundPort,
     toolCount,
     close(): Promise<void> {
       return new Promise<void>((resolve, reject) => {

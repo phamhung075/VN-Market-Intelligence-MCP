@@ -10,7 +10,7 @@
 import { getDb } from "./schema.js";
 import type { Database } from "bun:sqlite";
 
-export type VpsService = "prices" | "news" | "sbv" | "bctc";
+export type VpsService = "prices" | "news" | "sbv" | "bctc" | "foreign-flow";
 
 export interface VpsPushLogEntry {
   service: VpsService;
