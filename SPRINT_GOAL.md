@@ -1,8 +1,35 @@
 # Sprint Goal
 
-## Current Sprint — 060 (PLANNING)
+## Current Sprint — 061 (PLANNING)
 
-started: 2026-04-12 | theme: Prediction Engine Phase D — Calibration Report + Telegram Digest
+started: 2026-04-12 | theme: Foreign Flow VPS Pipeline — Activate Smart-Money Signals
+
+### Goal
+
+Foreign buying and selling by institutions is the single most reliable leading indicator in VN markets. The domain logic (`foreignFlowAnalyzer.ts`), DB schema (`vnstock_trading_stats.foreign_volume/foreign_room/holding_ratio`), and Kinh Dich Hao 4 scoring are all implemented and waiting for data. The VPS price script pushes 30 watchlist prices every 5 minutes but silently skips foreign flow — these columns are always zero. This sprint closes that gap: extend the VPS fetch script to pull daily foreign trading totals from the VPS API endpoint, push them to the MCP server via a new `/api/push-foreign-flow` endpoint, and wire a daily alert when smart-money accumulation or exit patterns are detected.
+
+### Scope
+
+| Area | In/Out |
+|------|--------|
+| VPS script extension: `fetch-prices.sh` polls `bgapidatafeed.vps.com.vn` for foreign volume/room/holding ratio per stock | IN |
+| New MCP push endpoint `POST /api/push-foreign-flow` — receives array, upserts `vnstock_trading_stats` rows | IN |
+| `foreignFlowAlertJob.ts` — daily 16:30 VN scan: HIGH-severity signals → insert alert row + WORK digest | IN |
+| `get_foreign_flow` MCP tool — returns latest foreign flow signal per stock (+1 tool) | IN |
+| Evidence fragment integration: HIGH-severity foreign flow events trigger `record_evidence_fragment` | IN |
+| VPS deployment: updated `fetch-prices-loop.sh` loop runs foreign flow poll after each price fetch | IN |
+| Foreign flow data from vnstock Python bridge (France-side) | OUT — geo-blocked, VPS only |
+| Historical backfill | OUT — forward from deploy date only |
+
+### Success Metric
+
+`get_foreign_flow("VNM")` returns a `ForeignFlowSignal` with non-zero `foreignVolume`. `foreignFlowAlertJob` fires at 16:30 VN and inserts at least one alert row on a day when any watchlist stock has a 2+ day streak. `bun tsc --noEmit` clean. All new tests pass.
+
+---
+
+## Previous Sprint — 060 (COMPLETE)
+
+started: 2026-04-12 | completed: 2026-04-12 | theme: Prediction Engine Phase D — Calibration Report + Telegram Digest
 
 ### Goal
 
