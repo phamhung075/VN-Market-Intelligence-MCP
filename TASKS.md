@@ -4,10 +4,303 @@
 
 ---
 
-## Sprint 060 — Prediction Engine Phase D — Calibration Report + Telegram Digest (IN PROGRESS)
+## Sprint 061 — Foreign Flow VPS Pipeline (IN PROGRESS)
+
+Vision: `SPRINT_GOAL.md` | Spec: `docs/REQ_061.md` | Design: `docs/TECH_061.md` (APPROVED_BY_ARCHITECT)
+
+### Kanban
+
+| ID | Title | Agent | Layer | Depends On | Branch | Status |
+|----|-------|-------|-------|------------|--------|--------|
+| REQ-061 | BA: write REQ_061.md for foreign flow VPS pipeline | BA | — | — | — | Done |
+| TECH-061 | Architect: review REQ_061, produce TECH_061.md | Architect | — | — | — | Done |
+| PM-061 | PM: sprint planning — break TECH_061 into tasks 1131–1135, assign batches | PM | — | — | — | Done |
+| 1131 | `upsertForeignFlow` in `vnstockStore.ts` — targeted ON CONFLICT DO UPDATE SET, holding_ratio normalisation, legacy-schema fallback | Developer | infrastructure | — | task/1131-upsert-foreign-flow | Review |
+| 1132 | `POST /api/push-foreign-flow` in `server.ts` — auth + validation + upsertForeignFlow + logVpsPush | Developer | interface | 1131 | task/1132-push-foreign-flow-endpoint | Todo |
+| 1133 | `foreignFlowAlertJob.ts` — daily 16:30 VN scan, alert rows, evidence fragments, WORK digest, recordJobRun | Developer | scheduler | 1131 | task/1133-foreign-flow-alert-job | Todo |
+| 1134 | `foreignFlowTools.ts` + registry entry — `get_foreign_flow` MCP tool, zero-detection, format helper (+1 tool → 90) | Developer | interface | 1131 | task/1134-get-foreign-flow-tool | Todo |
+| 1135 | VPS script extension — poll foreign flow per stock, parse fBuy/fSell/foreignPercent fields, POST to `/api/push-foreign-flow` | Developer | infrastructure (VPS) | 1132 + B1 | task/1135-vps-foreign-flow-script | Blocked |
+
+**WIP state:** 1 task In Progress (limit: 2). 1132, 1133, 1134 unblock in parallel once 1131 merges.
+**Blocker B1 (Task 1135):** VPS API field names unconfirmed. Developer must run `curl -s "https://bgapidatafeed.vps.com.vn/getliststockdata/VNM" | python3 -m json.tool | grep -i "foreign\|fBuy\|fSell\|fRoom"` from Singapore VPS before 1135 starts.
+
+---
+
+### Task 1131 — `upsertForeignFlow` in `vnstockStore.ts`
+
+**Branch**: `task/1131-upsert-foreign-flow`
+**Layer**: infrastructure
+**Depends on**: none (Batch A — start immediately)
+**Test file**: `src/__tests__/1131-upsert-foreign-flow.test.ts`
+
+#### Files to read first
+
+- `src/infrastructure/db/vnstockStore.ts` — locate `storeTradingStats`, `tradingStatsHasDate()`, `getForeignFlowHistory`; add `upsertForeignFlow` after them
+- `src/infrastructure/db/schema.ts` — lines around `vnstock_trading_stats` DDL (line ~1057) to confirm `UNIQUE(code, date)` constraint exists
+
+#### Files to create / modify
+
+- MODIFY: `src/infrastructure/db/vnstockStore.ts` — add `ForeignFlowUpsertItem` interface + `upsertForeignFlow` function
+- CREATE: `src/__tests__/1131-upsert-foreign-flow.test.ts`
+
+#### Interface contract
+
+```typescript
+export interface ForeignFlowUpsertItem {
+  code: string;
+  date: string;           // "YYYY-MM-DD"
+  foreign_volume: number;
+  foreign_room: number | null;
+  holding_ratio: number | null;
+  fetched_at: string | null; // ISO 8601 UTC; null → server uses datetime('now')
+}
+
+export function upsertForeignFlow(
+  items: ForeignFlowUpsertItem[],
+  db?: Database,
+): number
+```
+
+#### SQL shape (primary path — `date` column present)
+
+```sql
+INSERT INTO vnstock_trading_stats
+  (code, date, foreign_volume, foreign_room, current_holding_ratio, fetched_at)
+VALUES (?, ?, ?, ?, ?, COALESCE(?, datetime('now')))
+ON CONFLICT(code, date) DO UPDATE SET
+  foreign_volume         = excluded.foreign_volume,
+  foreign_room           = excluded.foreign_room,
+  current_holding_ratio  = excluded.current_holding_ratio,
+  fetched_at             = excluded.fetched_at
+```
+
+Legacy-schema fallback (when `tradingStatsHasDate()` returns false): use `ON CONFLICT(code)` variant omitting the `date` column.
+
+`holding_ratio` normalisation: `if (item.holding_ratio != null && item.holding_ratio > 1.0) item.holding_ratio /= 100` before binding. Run all items in a single transaction with a prepared statement.
+
+#### Acceptance Criteria
+
+**Given** an in-memory SQLite database initialised with `initDatabase()` containing a `vnstock_trading_stats` row for `("VNM", "2026-04-12")` with `avg_volume_2w=500000`, `high_52w=98000`, `low_52w=72000`
+**When** `upsertForeignFlow([{ code: "VNM", date: "2026-04-12", foreign_volume: 1500000, foreign_room: 50000000, holding_ratio: 0.4887, fetched_at: null }])` is called
+**Then**
+- Returns `1` (one row affected)
+- `SELECT foreign_volume, foreign_room, current_holding_ratio FROM vnstock_trading_stats WHERE code='VNM'` returns `1500000, 50000000, 0.4887`
+- `avg_volume_2w`, `high_52w`, `low_52w` columns are UNCHANGED (not zeroed) — critical invariant
+- When called again with the same `(code, date)` and updated values, the row is updated (not duplicated)
+- When `holding_ratio = 48.87` (> 1.0), the stored value is `0.4887` (divided by 100)
+- When `fetched_at = null`, the stored `fetched_at` is a non-null UTC datetime string (server-generated)
+- When `tradingStatsHasDate()` returns false, the legacy ON CONFLICT(code) path executes without error
+- `bun test src/__tests__/1131-upsert-foreign-flow.test.ts` passes with 0 failures
+- `bun tsc --noEmit` shows 0 errors
+
+---
+
+### Task 1132 — `POST /api/push-foreign-flow` endpoint in `server.ts`
+
+**Branch**: `task/1132-push-foreign-flow-endpoint`
+**Layer**: interface
+**Depends on**: 1131 merged to main
+**Test file**: `src/__tests__/1132-push-foreign-flow-endpoint.test.ts`
+
+#### Files to read first
+
+- `src/interface/mcp/server.ts` — locate `POST /api/push-prices` block (around line 619); the new block goes immediately after it
+- `src/infrastructure/db/vnstockStore.ts` — confirm `upsertForeignFlow` export signature (Task 1131 output)
+
+#### Files to create / modify
+
+- MODIFY: `src/interface/mcp/server.ts` — add `POST /api/push-foreign-flow` block + import
+- CREATE: `src/__tests__/1132-push-foreign-flow-endpoint.test.ts`
+
+#### Endpoint logic
+
+```
+if (method === "POST" && pathname === "/api/push-foreign-flow") {
+  1. Auth: x-api-key or Authorization: Bearer — check against VPS_PUSH_API_KEY → 401 if mismatch
+  2. Read body chunks into string
+  3. If body empty → 400 { error: "Empty request body" }
+  4. JSON.parse(body) → items[]
+  5. If !Array.isArray(items) || items.length === 0 → 400 { error: "Expected non-empty array" }
+  6. upsertForeignFlow(items.map(i => ({ code, date, foreign_volume, foreign_room: i.foreign_room ?? null,
+       holding_ratio: i.holding_ratio ?? null, fetched_at: i.fetched_at ?? null })), db)
+  7. logVpsPush({ service: "foreign-flow", itemsCount: count, status: "ok" })
+  8. → 200 { ok: true, upserted: count }
+  On JSON parse error: logVpsPush(...status: "error"...) → 400 { error: "Invalid JSON" }
+}
+```
+
+Import to add at top of server.ts:
+```typescript
+import { upsertForeignFlow } from "../../infrastructure/db/vnstockStore.js";
+```
+
+#### Acceptance Criteria
+
+**Given** a running test server with `VPS_PUSH_API_KEY=test-key` and the Sprint 061 schema
+**When** `POST /api/push-foreign-flow` is called with a valid array payload and correct API key
+**Then**
+- Returns HTTP 200 `{ ok: true, upserted: 1 }` (or count matching input array length)
+- The `vnstock_trading_stats` row for the pushed code contains the correct `foreign_volume` value
+- Non-foreign columns (`avg_volume_2w`, `high_52w`, etc.) on the same row are not zeroed out
+- Missing API key returns HTTP 401
+- Wrong API key returns HTTP 401
+- Empty body returns HTTP 400 `{ error: "Empty request body" }`
+- Non-array JSON body returns HTTP 400 `{ error: "Expected non-empty array" }`
+- Malformed JSON returns HTTP 400 `{ error: "Invalid JSON" }`
+- `bun test src/__tests__/1132-push-foreign-flow-endpoint.test.ts` passes with 0 failures
+- `bun tsc --noEmit` shows 0 errors
+
+---
+
+### Task 1133 — `foreignFlowAlertJob.ts` — daily 16:30 VN scan
+
+**Branch**: `task/1133-foreign-flow-alert-job`
+**Layer**: scheduler
+**Depends on**: 1131 merged to main
+**Test file**: `src/__tests__/1133-foreign-flow-alert-job.test.ts`
+
+#### Files to read first
+
+- `src/infrastructure/db/vnstockStore.ts` — `getForeignFlowHistory` signature
+- `src/domain/services/foreignFlowAnalyzer.ts` — `analyzeForeignFlow` return type (`ForeignFlowSignal`)
+- `src/infrastructure/db/evidenceFragmentStore.ts` — `insertEvidenceFragment` signature
+- `src/scheduler/calibrationReportJob.ts` — `sendTelegramWork` dynamic import pattern + `recordJobRun` wrapper pattern
+
+#### Files to create / modify
+
+- CREATE: `src/scheduler/foreignFlowAlertJob.ts`
+- MODIFY: `src/scheduler/jobs.ts` — add `CRONS.foreignFlowAlert` entry, import, cron registration block
+- CREATE: `src/__tests__/1133-foreign-flow-alert-job.test.ts`
+- MODIFY: `docs/data/cron-registry.json` — add `foreignFlowAlertJob` entry, update `cronCount` 26 → 27
+- MODIFY: `docs/data/project-stats.json` — `schedulerFileCount` 26 → 27
+
+#### Key implementation contracts
+
+```typescript
+export interface ForeignFlowAlertResult {
+  stocksScanned: number;
+  stocksSkipped: number;   // insufficient history (< 2 rows)
+  highSignals: number;
+  alertsInserted: number;
+  evidenceFragmentsWritten: number;
+}
+
+export async function runForeignFlowAlertJob(db?: Database): Promise<ForeignFlowAlertResult>
+```
+
+Alert row `id` = `foreign-flow-${code}-${utcDay}` (deduped by PRIMARY KEY via `INSERT OR IGNORE`).
+Evidence fragment only written when `signal.netFlowDirection !== "neutral"`.
+`sendTelegramWork` via dynamic import — never `sendTelegramMarket`.
+Cron expression: `CRONS.foreignFlowAlert = Bun.env.CRON_FOREIGN_FLOW_ALERT ?? '30 9 * * 1-5'` (09:30 UTC = 16:30 GMT+7, weekdays).
+
+#### Acceptance Criteria
+
+**Given** a test database with watchlist rows for "VNM" and "FPT", where VNM has 5 days of foreign flow history showing net_buy direction (HIGH severity) and FPT has 1 row only
+**When** `runForeignFlowAlertJob(db)` is called
+**Then**
+- Returns `{ stocksScanned: 2, stocksSkipped: 1, highSignals: 1, alertsInserted: 1, evidenceFragmentsWritten: 1 }`
+- An alert row exists with `id = "foreign-flow-VNM-<today>"`, `severity = "high"`, `sent_by = "server"`
+- An evidence fragment row exists for `stock = "VNM"`, `evidence_type = "foreign_flow_institutional"`, `direction = "bullish"`
+- Calling `runForeignFlowAlertJob` a second time for the same day returns `alertsInserted: 0` (INSERT OR IGNORE dedup)
+- When all `foreignVolume` values for a stock are 0, that stock is skipped (not counted as a HIGH signal)
+- `sendTelegramWork` is called exactly once (with the WORK digest)
+- `sendTelegramMarket` is never called
+- `jobs.ts` includes `CRONS.foreignFlowAlert = Bun.env.CRON_FOREIGN_FLOW_ALERT ?? '30 9 * * 1-5'`
+- `bun test src/__tests__/1133-foreign-flow-alert-job.test.ts` passes with 0 failures
+- `bun tsc --noEmit` shows 0 errors
+
+---
+
+### Task 1134 — `foreignFlowTools.ts` + registry entry — `get_foreign_flow` MCP tool
+
+**Branch**: `task/1134-get-foreign-flow-tool`
+**Layer**: interface
+**Depends on**: 1131 merged to main
+**Test file**: `src/__tests__/1134-get-foreign-flow-tool.test.ts`
+
+#### Files to read first
+
+- `src/interface/mcp/tools/registry.ts` — add import + `registerForeignFlowTools` entry after `registerCalibrationTools`
+- `src/interface/mcp/tools/calibrationTools.ts` — pattern reference for MCP tool structure with Zod schema
+- `src/domain/services/foreignFlowAnalyzer.ts` — `ForeignFlowSignal` type fields
+
+#### Files to create / modify
+
+- CREATE: `src/interface/mcp/tools/foreignFlowTools.ts`
+- MODIFY: `src/interface/mcp/tools/registry.ts` — import + register `registerForeignFlowTools`
+- CREATE: `src/__tests__/1134-get-foreign-flow-tool.test.ts`
+- MODIFY: `docs/data/tool-registry.json` — add `get_foreign_flow` entry, update `toolCount` 89 → 90
+- MODIFY: `docs/data/project-stats.json` — `toolCount` 89 → 90
+
+#### Key implementation contracts
+
+Tool name: `get_foreign_flow`
+Parameters: `code: z.string()` (required), `days: z.number().int().min(2).max(30).optional().default(10)`
+Zero-detection: if `history.every(r => r.foreignVolume === 0)` → return no-data message, do NOT call `analyzeForeignFlow`
+Output via `formatForeignFlowOutput(code, signal, history)` helper in same file — emits direction, severity, consecutiveDays, netVol3d/5d, holdingRatioChange5d, reasoning, daily history table.
+
+#### Acceptance Criteria
+
+**Given** a test database with 5 days of non-zero foreign flow history for "VNM" showing a HIGH buy signal
+**When** the `get_foreign_flow` tool is called with `{ code: "VNM", days: 5 }`
+**Then**
+- Returns a text block containing `"Direction: net_buy"`, `"Severity: HIGH"`, `"Consecutive days: 3"` (or matching signal values)
+- Contains the "Daily history" section with 5 rows
+
+**When** called with a code that has fewer than 2 rows
+**Then** returns message containing `"Insufficient foreign flow data"`
+
+**When** called with a code whose all `foreignVolume` values are 0
+**Then** returns message containing `"no data available"` and does NOT call `analyzeForeignFlow`
+
+**When** called with `{ code: "VNM", days: 35 }` (exceeds max)
+**Then** returns a Zod validation error (days max is 30)
+
+**Always**
+- `registerForeignFlowTools` is listed in `src/interface/mcp/tools/registry.ts`
+- `docs/data/tool-registry.json` shows `toolCount: 90`
+- `bun test src/__tests__/1134-get-foreign-flow-tool.test.ts` passes with 0 failures
+- `bun tsc --noEmit` shows 0 errors
+
+---
+
+### Task 1135 — VPS script extension (BLOCKED on B1)
+
+**Branch**: `task/1135-vps-foreign-flow-script`
+**Layer**: infrastructure (VPS — off-repo)
+**Depends on**: 1132 deployed to France server + Blocker B1 resolved
+**Status**: BLOCKED
+
+**Blocker B1:** Confirm VPS API foreign flow field names by running from Singapore VPS:
+```bash
+curl -s "https://bgapidatafeed.vps.com.vn/getliststockdata/VNM" | python3 -m json.tool | grep -i "foreign\|fBuy\|fSell\|fRoom\|fCurrent\|totalRoom"
+```
+Fields expected: `fRoom`, `fBuy`, `fSell`, `foreignPercent`. Confirm or correct before writing the script.
+
+**Files to create / modify (on VPS, not in repo):**
+
+- MODIFY: `/opt/vn-price-fetch/fetch-prices.sh` (or `fetch-prices-loop.sh`) — add `fetch_foreign_flow()` function called after each price-fetch loop iteration
+- CREATE: `/opt/vn-price-fetch/parse_foreign_flow.py` — Python helper to translate VPS JSON to `ForeignFlowPushItem[]` schema
+
+**Error handling invariant:** `fetch_foreign_flow` must always `return 0`. Any failure (timeout, parse error, HTTP error) logs to stderr and does NOT abort the price-fetch loop.
+
+#### Acceptance Criteria
+
+**Given** Task 1132 is live on the France MCP server and B1 field names are confirmed
+**When** the updated VPS script runs one full loop iteration during VN market hours (09:00–15:30 GMT+7)
+**Then**
+- `POST /api/push-foreign-flow` is called with a non-empty JSON array conforming to `ForeignFlowPushItem[]`
+- France server responds `{ ok: true, upserted: N }` where N matches watchlist size
+- `getForeignFlowHistory("VNM", 10)` on the France DB returns at least 1 non-zero row
+- If VPS API times out, the price-fetch loop continues without interruption
+- `sudo systemctl status vn-price-fetch.service` shows `active (running)` after restart
+
+---
+
+## Sprint 060 — Prediction Engine Phase D — Calibration Report + Telegram Digest (COMPLETE)
 
 Spec: `docs/REQ_060.md` | Design: `docs/TECH_060.md` (APPROVED_BY_ARCHITECT)
-Batch A (no deps): 1127 | Batch B (after 1127): 1128, 1129 | Batch C (after 1129 deployed): 1130
+Completed: 2026-04-12
 
 ### Kanban
 
@@ -16,10 +309,10 @@ Batch A (no deps): 1127 | Batch B (after 1127): 1128, 1129 | Batch C (after 1129
 | REQ-060 | BA: write REQ_060.md for calibration report + digest | BA | — | — | — | Done |
 | TECH-060 | Architect: review REQ_060, produce TECH_060.md | Architect | — | — | — | Done |
 | PM-060 | PM: sprint planning — break TECH_060 into tasks, assign batches | PM | — | — | — | Done |
-| 1127 | `calibration_snapshots` DDL + `calibrationSnapshotStore.ts` CRUD | Developer | infrastructure | — | `feat/sprint-060-task-1127` | Review |
-| 1128 | `calibrationReportJob.ts` weekly computation + Telegram digest + `jobs.ts` registration | Developer | scheduler | 1127 | `task/1128-calibration-report-job` | Review |
-| 1129 | `get_calibration_report` MCP tool + `registry.ts` registration (+1 tool → 89) | Developer | interface | 1127 | `feat/sprint-060-task-1129` | Review |
-| 1130 | `08-prediction-synthesizer.md` self-assessment Step 0 | Cowork Refactory Expert | interface/Cowork | 1129 | — | Backlog |
+| 1127 | `calibration_snapshots` DDL + `calibrationSnapshotStore.ts` CRUD | Developer | infrastructure | — | merged to main | Done |
+| 1128 | `calibrationReportJob.ts` weekly computation + Telegram digest + `jobs.ts` registration | Developer | scheduler | 1127 | merged to main | Done |
+| 1129 | `get_calibration_report` MCP tool + `registry.ts` registration (+1 tool → 89) | Developer | interface | 1127 | merged to main | Done |
+| 1130 | `08-prediction-synthesizer.md` self-assessment Step 0 | Cowork Refactory Expert | interface/Cowork | 1129 | merged to main | Done |
 
 ---
 
