@@ -4,31 +4,31 @@
 
 ---
 
-## Sprint 059 — Prediction Engine Phase B+C — Base Rates + Prediction Claims
+## Sprint 060 — TBD (PLANNING)
+
+Planning in progress. See `SPRINT_GOAL.md` for current goal.
+
+---
+
+## Sprint 059 — Prediction Engine Phase B+C — COMPLETE (2026-04-12)
 
 Design: `docs/TECH_059.md` | Spec: `docs/REQ_059.md`
-Batch A (parallel, no deps): 1121, 1123 | Batch B (after A): 1122 (needs 1121), 1124 (needs 1121+1123), 1125 (needs 1123) | Batch C (after B): 1126 (needs 1124)
-Task 1126: authored by Cowork Refactory Expert — not Developer.
+
+| ID | Title | Status |
+|----|-------|--------|
+| TECH-059 | Architect: review REQ_059, produce TECH_059.md | Done |
+| 1121 | evidence_likelihood_ratios DDL + likelihoodRatioStore CRUD | Done |
+| 1123 | prediction_claims DDL + predictionClaimStore CRUD | Done |
+| 1122 | baseRateComputer domain service + baseRateComputationJob (Sun 02:00 VN) | Done |
+| 1124 | get_evidence_summary + create_prediction_claim MCP tools (+2 tools) | Done |
+| 1125 | predictionResolutionJob — nightly Brier score resolver (23:30 VN) | Done |
+| 1126 | 08-prediction-synthesizer.md Cowork agent + agent-roster.md update | Done |
+
+---
+
+## Sprint 055 — Observability + Signal Quality + Alert Attribution
 
 ### Kanban
-
-| ID | Title | Branch | Layer | Agent | Depends On | Status |
-|----|-------|--------|-------|-------|------------|--------|
-| TECH-059 | Architect: review REQ_059, produce TECH_059.md | — | — | Architect | — | Done |
-| 1121 | evidence_likelihood_ratios DDL + likelihoodRatioStore CRUD | `task/1121-likelihood-ratio-store` | infrastructure | Developer | — | Review |
-| 1123 | prediction_claims DDL + predictionClaimStore CRUD | `task/1123-prediction-claim-store` | infrastructure | Developer | — | Todo |
-| 1122 | baseRateComputer domain service + baseRateComputationJob (Sun 02:00 VN) | `feat/sprint-059-task-1122` | domain + scheduler | Developer | 1121 | Review |
-| 1124 | get_evidence_summary + create_prediction_claim MCP tools (+2 tools) | `feat/sprint-059-task-1124` | interface | Developer | 1121, 1123 | Review |
-| 1125 | predictionResolutionJob — nightly Brier score resolver (23:30 VN) | `task/1125-prediction-resolution-job` | scheduler | Developer | 1123 | Backlog |
-| 1126 | 08-prediction-synthesizer.md Cowork agent + agent-roster.md update | `task/1126-prediction-synthesizer-agent` | interface/Cowork | Cowork Refactory Expert | 1124 | Backlog |
-
----
-
-### Task Detail Sheets
-
----
-
-**Task 1121 — evidence_likelihood_ratios DDL + likelihoodRatioStore CRUD**
 
 Branch: `task/1121-likelihood-ratio-store` | Layer: infrastructure | Agent: Developer | Priority: P0 | Depends on: none | Size: S | Batch: A
 

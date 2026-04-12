@@ -1,2 +1,2 @@
-- [System baseline](project_system_baseline.md) — 68 tools, 19 crons, Sprint 044 state as of 2026-04-03
+- [System baseline](project_system_baseline.md) — ~86 tools, ~31 crons, Sprint 059 state as of 2026-04-12
 - [Spec location](reference_spec_location.md) — AGENT_REWRITE_SPEC.md is the ground truth for tool lists

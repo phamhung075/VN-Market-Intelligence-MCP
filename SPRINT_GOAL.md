@@ -1,8 +1,18 @@
 # Sprint Goal
 
-## Current Sprint — 059 (PLANNING)
+## Current Sprint — 060 (PLANNING)
 
-started: 2026-04-12 | theme: Prediction Engine Phase B+C — Base Rates + Prediction Claims
+started: 2026-04-12 | theme: TBD — next planning cycle
+
+### Goal
+
+To be determined. PO initiating next planning cycle.
+
+---
+
+## Previous Sprint — 059 (COMPLETE)
+
+started: 2026-04-12 | completed: 2026-04-12 | theme: Prediction Engine Phase B+C — Base Rates + Prediction Claims
 
 ### Goal
 
@@ -10,21 +20,29 @@ Activate the evidence fragments accumulated since Sprint 057 by shipping the bas
 
 ### Scope
 
-| Area | In |
-|------|----|
-| Phase B: evidence_likelihood_ratios DDL + store | IN |
-| Phase B: baseRateComputationJob (Sunday 02:00 VN) | IN |
-| Phase B: per-stock rolling base rate from price history | IN |
-| Phase C: prediction_claims DDL + store | IN |
-| Phase C: get_evidence_summary + create_prediction_claim MCP tools (+2) | IN |
-| Phase C: predictionResolutionJob (nightly 23:30 VN, Brier score) | IN |
-| Phase C: 08-prediction-synthesizer.md Cowork agent | IN |
+| Area | Status |
+|------|--------|
+| Phase B: evidence_likelihood_ratios DDL + likelihoodRatioStore CRUD (1121) | Done |
+| Phase B: baseRateComputer domain service + baseRateComputationJob weekly (1122) | Done |
+| Phase C: prediction_claims DDL + predictionClaimStore CRUD (1123) | Done |
+| Phase C: get_evidence_summary + create_prediction_claim MCP tools +2 (1124) | Done |
+| Phase C: predictionResolutionJob nightly Brier score resolver (1125) | Done |
+| Phase C: 08-prediction-synthesizer.md Cowork agent (1126) | Done |
 | Phase D: calibrationReportJob | OUT — Sprint 060 |
 | foreign_flow_snapshots (VPS extension) | OUT — Architect decision pending |
 
-### Success Metric
+### Results
 
-`get_evidence_summary("VNM")` returns non-empty evidence score with contributing fragments. `create_prediction_claim` inserts a row. `predictionResolutionJob` resolves expired claims with Brier scores. `08-prediction-synthesizer.md` agent exists in `.claude/agents/`. bun tsc --noEmit clean. All new tests pass.
+- `evidence_likelihood_ratios` table + `likelihoodRatioStore`: shipped
+- `baseRateComputer` domain service (computeRollingBaseRate, computeBrierScore, clampLikelihoodRatio): shipped
+- `baseRateComputationJob` weekly scheduler (Sunday 02:00 VN / 19:00 UTC Sunday): shipped
+- `prediction_claims` table + `predictionClaimStore` (INSERT OR IGNORE dedup): shipped
+- `get_evidence_summary` MCP tool: shipped
+- `create_prediction_claim` MCP tool: shipped (+2 tools → 88 total)
+- `predictionResolutionJob` nightly (23:30 VN / 16:30 UTC): direction-based resolution + Brier scoring: shipped
+- `08-prediction-synthesizer.md` Cowork agent + agent-roster.md updated: shipped
+- bun tsc --noEmit clean. All new tests pass.
+- Commits: 8455be2, c156d5f, 3e337ee, a015f35, d949ffb, 6b5640d, 1018913, 90e004c, c53d0ff, 81d4c1d, f15333c
 
 ---
 
