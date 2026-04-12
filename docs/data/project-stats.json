@@ -5,7 +5,7 @@
   "currentSprint": 61,
   "previousSprint": { "number": 60, "status": "COMPLETE", "completedDate": "2026-04-12" },
   "toolCount": 89,
-  "schedulerFileCount": 26,
+  "schedulerFileCount": 27,
   "knowledgeFileCount": 13,
   "devAgentCount": 13,
   "analysisAgentCount": 9,

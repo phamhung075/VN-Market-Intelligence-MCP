@@ -47,6 +47,7 @@ import { runEvidenceAccumulatorJob } from './evidenceAccumulatorJob.js'
 import { runBaseRateComputationJob } from './baseRateComputationJob.js'
 import { runPredictionResolutionJob } from './predictionResolutionJob.js'
 import { runCalibrationReportJob } from './calibrationReportJob.js'
+import { runForeignFlowAlertJobCron } from './foreignFlowAlertJob.js'
 
 export const CRONS = {
   morningBriefing:        Bun.env.CRON_MORNING_BRIEFING          ?? '0 8 * * 1-5',
@@ -102,6 +103,8 @@ export const CRONS = {
   predictionResolution:   Bun.env.CRON_PREDICTION_RESOLUTION       ?? '30 16 * * *',
   /** Calibration report: Sunday 13:00 UTC (20:00 VN) — task 1128, Sprint 060 */
   calibrationReport:      Bun.env.CRON_CALIBRATION_REPORT          ?? '0 13 * * 0',
+  /** Foreign flow alert: daily 09:30 UTC (16:30 VN) weekdays — task 1133, Sprint 061 */
+  foreignFlowAlert:       Bun.env.CRON_FOREIGN_FLOW_ALERT          ?? '30 9 * * 1-5',
 }
 
 function log(msg: string) {
@@ -333,6 +336,19 @@ export function startScheduler() {
   // Sends digest to WORK (always) and MARKET (when total_resolved >= 1).
   cron.schedule(CRONS.calibrationReport, async () => {
     await runCalibrationReportJob()
+  }, { timezone: 'UTC' })
+
+  // Weekdays 09:30 UTC (16:30 VN) — Foreign flow alert scan — task 1133, Sprint 061
+  // Scans watchlist for HIGH-severity smart-money foreign flow signals.
+  // Inserts alert rows + evidence fragments. Digest sent to WORK only.
+  // Alert Commander handles MARKET escalation via readUnnotifiedAlerts pipeline.
+  cron.schedule(CRONS.foreignFlowAlert, async () => {
+    try {
+      await runForeignFlowAlertJobCron()
+      log(`[foreign-flow-alert] completed`)
+    } catch (err) {
+      log(`[foreign-flow-alert] uncaught: ${err instanceof Error ? err.message : String(err)}`)
+    }
   }, { timezone: 'UTC' })
 
   log(`[scheduler] jobs registered — ${Object.keys(CRONS).length} cron keys in CRONS map (incl. WAL checkpoint + 5 summary) + vps-watchdog active`)
