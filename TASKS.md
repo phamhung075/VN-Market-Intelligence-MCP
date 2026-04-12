@@ -17,8 +17,8 @@ Vision: `SPRINT_GOAL.md` | Spec: `docs/REQ_061.md` | Design: `docs/TECH_061.md` 
 | PM-061 | PM: sprint planning — break TECH_061 into tasks 1131–1135, assign batches | PM | — | — | — | Done |
 | 1131 | `upsertForeignFlow` in `vnstockStore.ts` — targeted ON CONFLICT DO UPDATE SET, holding_ratio normalisation, legacy-schema fallback | Developer | infrastructure | — | task/1131-upsert-foreign-flow | Review |
 | 1132 | `POST /api/push-foreign-flow` in `server.ts` — auth + validation + upsertForeignFlow + logVpsPush | Developer | interface | 1131 | task/1132-push-foreign-flow-endpoint | Todo |
-| 1133 | `foreignFlowAlertJob.ts` — daily 16:30 VN scan, alert rows, evidence fragments, WORK digest, recordJobRun | Developer | scheduler | 1131 | task/1133-foreign-flow-alert-job | Review |
-| 1134 | `foreignFlowTools.ts` + registry entry — `get_foreign_flow` MCP tool, zero-detection, format helper (+1 tool → 90) | Developer | interface | 1131 | task/1134-get-foreign-flow-tool | Todo |
+| 1133 | `foreignFlowAlertJob.ts` — daily 16:30 VN scan, alert rows, evidence fragments, WORK digest, recordJobRun | Developer | scheduler | 1131 | task/1133-foreign-flow-alert-job | Todo |
+| 1134 | `foreignFlowTools.ts` + registry entry — `get_foreign_flow` MCP tool, zero-detection, format helper (+1 tool → 90) | Developer | interface | 1131 | feat/sprint-061-task-1134 | Review |
 | 1135 | VPS script extension — poll foreign flow per stock, parse fBuy/fSell/foreignPercent fields, POST to `/api/push-foreign-flow` | Developer | infrastructure (VPS) | 1132 + B1 | task/1135-vps-foreign-flow-script | Blocked |
 
 **WIP state:** 1 task In Progress (limit: 2). 1132, 1133, 1134 unblock in parallel once 1131 merges.

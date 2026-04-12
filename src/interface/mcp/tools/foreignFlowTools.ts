@@ -1,0 +1,237 @@
+/**
+ * Task 1134 — get_foreign_flow MCP Tool
+ *
+ * Provides the `get_foreign_flow` tool for reading daily foreign investor
+ * flow history for a stock and returning an analyzed signal.
+ *
+ * Zero-detection guard: if all foreignVolume values are 0, returns a
+ * no-data message without calling analyzeForeignFlow.
+ *
+ * DDD layer: interface/mcp/tools — may import infrastructure and domain.
+ *
+ * @module interface/mcp/tools/foreignFlowTools
+ */
+
+import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { Database } from "bun:sqlite";
+import { z } from "zod";
+import {
+  analyzeForeignFlow,
+  type DailyForeignFlow,
+  type ForeignFlowSignal,
+} from "../../../domain/services/foreignFlowAnalyzer.js";
+import { getForeignFlowHistory } from "../../../infrastructure/db/vnstockStore.js";
+import { getDb } from "../../../infrastructure/db/schema.js";
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Formatting helpers
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Format volume as human-readable string.
+ * @param vol - Volume in shares
+ */
+function fmtVol(vol: number): string {
+  if (vol >= 1_000_000) return `${(vol / 1_000_000).toFixed(2)}M`;
+  if (vol >= 1_000) return `${(vol / 1_000).toFixed(1)}k`;
+  return String(Math.round(vol));
+}
+
+/**
+ * Format holding ratio as percentage string.
+ * @param ratio - Decimal ratio, e.g. 0.30 → "30.00%"
+ */
+function fmtRatio(ratio: number): string {
+  return `${(ratio * 100).toFixed(2)}%`;
+}
+
+/**
+ * Format the full foreign flow analysis output text block.
+ *
+ * @param code    - Stock ticker
+ * @param signal  - Result from analyzeForeignFlow
+ * @param history - Raw daily history rows (sorted DESC)
+ */
+export function formatForeignFlowOutput(
+  code: string,
+  signal: ForeignFlowSignal,
+  history: DailyForeignFlow[],
+): string {
+  const lines: string[] = [];
+
+  lines.push(`Foreign Flow Analysis — ${code}`);
+  lines.push("");
+
+  // Signal summary
+  lines.push("Signal");
+  lines.push(`  Direction: ${signal.netFlowDirection}`);
+  lines.push(`  Severity: ${signal.severity.toUpperCase()}`);
+  lines.push(`  Consecutive days: ${signal.consecutiveDays}`);
+  lines.push(`  Net volume 3d: ${signal.totalNetVolume3d >= 0 ? "+" : ""}${fmtVol(signal.totalNetVolume3d)} shares`);
+  lines.push(`  Net volume 5d: ${signal.totalNetVolume5d >= 0 ? "+" : ""}${fmtVol(signal.totalNetVolume5d)} shares`);
+
+  const ratioChange = signal.holdingRatioChange5d;
+  const ratioSign = ratioChange >= 0 ? "+" : "";
+  lines.push(`  Holding ratio change (5d): ${ratioSign}${(ratioChange * 100).toFixed(3)}%`);
+  lines.push("");
+
+  // Reasoning
+  lines.push("Reasoning");
+  lines.push(`  ${signal.reasoning}`);
+  lines.push("");
+
+  // Daily history table
+  lines.push("Daily history");
+  lines.push("  Date        | Foreign Volume | Foreign Room  | Holding Ratio");
+  lines.push("  ------------|----------------|---------------|---------------");
+  for (const row of history) {
+    const date = row.date.slice(0, 10).padEnd(12);
+    const vol = fmtVol(row.foreignVolume).padStart(14);
+    const room = fmtVol(row.foreignRoom).padStart(13);
+    const ratio = fmtRatio(row.holdingRatio).padStart(15);
+    lines.push(`  ${date}|${vol} |${room} |${ratio}`);
+  }
+
+  return lines.join("\n");
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Tool registration
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Register the get_foreign_flow tool on an McpServer instance.
+ *
+ * @param server - The McpServer instance to register tools on.
+ * @param db     - Optional database injection (defaults to getDb() for production).
+ */
+export function registerForeignFlowTools(
+  server: McpServer,
+  db?: Database,
+): void {
+  server.tool(
+    "get_foreign_flow",
+    "Retrieve and analyze foreign investor flow history for a VN stock. " +
+      "Returns direction (net_buy / net_sell / neutral), severity (LOW/MEDIUM/HIGH), " +
+      "consecutive streak days, net volume over 3d and 5d windows, holding ratio change, " +
+      "and a daily history table. " +
+      "Severity HIGH = 3+ consecutive days in same direction AND total net volume > 100k shares. " +
+      "If foreign flow data has not been collected yet (all volumes are 0), returns a clear no-data message. " +
+      "Data freshness depends on the VPS push-foreign-flow pipeline (Task 1132/1135).",
+    {
+      code: z
+        .string()
+        .min(1)
+        .describe("Stock ticker, e.g. 'VNM', 'VCB', 'HPG'"),
+      days: z
+        .number()
+        .int()
+        .min(2)
+        .max(30)
+        .optional()
+        .default(10)
+        .describe("Number of calendar days of history to fetch (2–30, default 10)"),
+    },
+    async ({ code, days }) => {
+      try {
+        // Resolve DB — injected in tests, real getDb() in production
+        const resolvedDb = db ?? getDb();
+
+        // Fetch history from store using the injected db context.
+        // getForeignFlowHistory uses getDb() internally, so for test injection
+        // we call the query directly on the injected db.
+        let history: DailyForeignFlow[];
+        if (db) {
+          // Test path: query the injected in-memory db directly
+          const rows = resolvedDb
+            .prepare<any, [string, number]>(
+              `SELECT code,
+                      substr(fetched_at, 1, 10) AS date,
+                      foreign_volume, foreign_room, current_holding_ratio
+               FROM vnstock_trading_stats
+               WHERE code = ?
+               ORDER BY fetched_at DESC
+               LIMIT ?`,
+            )
+            .all(code, days);
+
+          history = rows.map((row: any) => ({
+            code: row.code,
+            date: row.date,
+            foreignVolume: row.foreign_volume ?? 0,
+            foreignRoom: row.foreign_room ?? 0,
+            holdingRatio: row.current_holding_ratio ?? 0,
+          }));
+        } else {
+          // Production path: use the shared store function
+          history = getForeignFlowHistory(code, days);
+        }
+
+        // ── Zero-detection guard ──────────────────────────────────────────────
+        // Return no-data message without calling analyzeForeignFlow if:
+        //  (a) no rows at all, or
+        //  (b) all foreignVolume values are 0
+        if (history.length === 0 || history.every((r) => r.foreignVolume === 0)) {
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text:
+                  `No data available for ${code}: foreign investor volume has not been collected yet. ` +
+                  "Data is populated by the VPS push-foreign-flow pipeline (Task 1132/1135). " +
+                  "Check back after the pipeline has run at least one day.",
+              },
+            ],
+          };
+        }
+
+        // ── Insufficient data guard ───────────────────────────────────────────
+        if (history.length < 2) {
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text:
+                  `Insufficient foreign flow data for ${code}: only ${history.length} row(s) found. ` +
+                  "At least 2 days of history are required to compute flow deltas. " +
+                  "Data is populated by the VPS push-foreign-flow pipeline.",
+              },
+            ],
+          };
+        }
+
+        // ── Analyze ───────────────────────────────────────────────────────────
+        const signal = analyzeForeignFlow(history);
+        if (signal === null) {
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text:
+                  `Insufficient foreign flow data for ${code}: analysis returned null. ` +
+                  "At least 2 days of history with non-zero volume are required.",
+              },
+            ],
+          };
+        }
+
+        // ── Format and return ─────────────────────────────────────────────────
+        const text = formatForeignFlowOutput(code, signal, history);
+        return {
+          content: [{ type: "text" as const, text }],
+        };
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        console.error(`[get_foreign_flow] Error for ${code}:`, msg);
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: `Error retrieving foreign flow data for ${code}: ${msg}`,
+            },
+          ],
+        };
+      }
+    },
+  );
+}
