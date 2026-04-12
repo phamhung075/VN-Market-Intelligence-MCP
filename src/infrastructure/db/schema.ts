@@ -1223,4 +1223,35 @@ export async function initDatabase(): Promise<void> {
     )
   `);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_elr_type_dir ON evidence_likelihood_ratios(evidence_type, direction)`);
+
+  // ── Prediction Claims (Task 1123, Sprint 059) ─────────────────────────────
+  // Stores agent-generated price/direction claims for forward accountability.
+  // resolution_outcome: NULL=pending, 1=correct, 0=incorrect.
+  // brier_score: (outcome - confidence)^2 — computed at resolution time.
+  // UNIQUE(stock, claim_text, resolution_date) enforces INSERT OR IGNORE dedup.
+  // Note: CHECK(resolution_outcome IN (NULL, 0, 1)) is intentional — SQLite
+  // evaluates NULL IN (...) as NULL which does NOT violate the constraint.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS prediction_claims (
+      id                 INTEGER PRIMARY KEY AUTOINCREMENT,
+      stock              TEXT    NOT NULL,
+      agent_id           TEXT    NOT NULL,
+      claim_text         TEXT    NOT NULL,
+      direction          TEXT    NOT NULL CHECK(direction IN ('bullish','bearish','neutral')),
+      target_price       REAL,
+      resolution_date    TEXT    NOT NULL,
+      confidence         REAL    NOT NULL CHECK(confidence BETWEEN 0.0 AND 1.0),
+      resolution_outcome INTEGER CHECK(resolution_outcome IN (NULL, 0, 1)),
+      actual_price       REAL,
+      brier_score        REAL,
+      created_at         TEXT    NOT NULL DEFAULT (datetime('now')),
+      resolved_at        TEXT,
+      UNIQUE(stock, claim_text, resolution_date)
+    )
+  `);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_pc_stock         ON prediction_claims(stock)`);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_pc_agent         ON prediction_claims(agent_id)`);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_pc_resolution    ON prediction_claims(resolution_date)`);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_pc_outcome       ON prediction_claims(resolution_outcome)`);
+
 }
