@@ -110,9 +110,6 @@ function buildMessage(actionCode: string, signals: Signal[], severity: Severity)
  * duplicate rows with random IDs.  A bucket ID keyed on ticker + type + UTC
  * hour collapses all same-condition alerts within one hour into a single row
  * that INSERT OR IGNORE silently deduplicates.
- *
- * News and other event-driven signal types keep random IDs because each
- * article / event is genuinely distinct.
  */
 const PRICE_SIGNAL_TYPES: ReadonlySet<string> = new Set([
   "price_surge",
@@ -141,9 +138,45 @@ function deterministicPriceId(
 }
 
 /**
+ * Generate a deterministic alert ID for news_mention signals.
+ *
+ * News alerts generated from the same article + same stock within the same
+ * UTC day must collapse into a single row, even when the server restarts or
+ * the RSS feed returns the same article with a different URL (Google News
+ * tracking params change between fetches).
+ *
+ * Key: `alert-news-{ticker}-{daySlot}-{titleFp}`
+ *   - daySlot = first 10 chars of detectedAt ("2026-04-08")
+ *   - titleFp = first 32 chars of message, lowercased, whitespace-collapsed,
+ *               non-alphanumeric stripped — a stable title fingerprint
+ *
+ * This prevents duplicate alerts after server restart when the same article
+ * is re-processed with a new URL (report #1114).
+ *
+ * @param actionCode - Ticker (e.g. "VCB")
+ * @param message    - Signal message (starts with the article title)
+ * @param detectedAt - ISO 8601 timestamp of the signal
+ */
+function deterministicNewsId(
+  actionCode: string,
+  message: string,
+  detectedAt: string,
+): string {
+  const daySlot = detectedAt.slice(0, 10); // "2026-04-08"
+  // Stable fingerprint: lowercase, collapse whitespace, keep alphanumeric only, take first 32 chars
+  const titleFp = message
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .replace(/[^a-z0-9 ]/g, "")
+    .trim()
+    .slice(0, 32)
+    .replace(/\s/g, "-");
+  return `alert-news-${actionCode}-${daySlot}-${titleFp}`;
+}
+
+/**
  * Generate a short unique ID using timestamp + random hex suffix.
- * Used for event-driven signals (news_mention, report_new, etc.) where each
- * event is genuinely distinct and should not be deduplicated by ID.
+ * Used for event-driven signals that are genuinely distinct (report_new, etc.).
  */
 function generateId(): string {
   const ts = Date.now().toString(36);
@@ -154,9 +187,10 @@ function generateId(): string {
 /**
  * Choose an appropriate ID for an alert group.
  *
- * - If all signals are of a single price-movement type → deterministic bucket ID
- *   (collapses same condition within same UTC hour via INSERT OR IGNORE)
- * - Otherwise → random ID (news events, mixed groups, etc.)
+ * - Single price-movement type → deterministic hour-bucket ID
+ * - Single news_mention type → deterministic day-bucket ID keyed on title fingerprint
+ *   (prevents duplicate alerts after server restart when same article re-processed)
+ * - Otherwise → random ID
  */
 function chooseAlertId(actionCode: string, signals: Signal[]): string {
   const types = [...new Set(signals.map((s) => s.type))];
@@ -164,6 +198,11 @@ function chooseAlertId(actionCode: string, signals: Signal[]): string {
     // Use the detectedAt of the first signal as the hour anchor
     const detectedAt = signals[0]!.detectedAt;
     return deterministicPriceId(actionCode, types[0]!, detectedAt);
+  }
+  if (types.length === 1 && types[0] === "news_mention") {
+    // Use the highest-confidence signal's message as the title fingerprint anchor
+    const best = signals.slice().sort((a, b) => b.confidence - a.confidence)[0]!;
+    return deterministicNewsId(actionCode, best.message, best.detectedAt);
   }
   return generateId();
 }
