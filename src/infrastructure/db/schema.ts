@@ -1170,4 +1170,39 @@ export async function initDatabase(): Promise<void> {
   db.exec(
     `CREATE INDEX IF NOT EXISTS idx_agent_work_log_agent_started ON agent_work_log(agent_name, started_at DESC)`,
   );
+
+  // ── Evidence Fragments + Evidence Scores (Task 1116, Sprint 057 Phase A) ──────
+  // Prediction Engine Phase A: accumulate directional evidence per stock from
+  // analysis agents. evidenceAccumulatorJob aggregates into evidence_scores nightly.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS evidence_fragments (
+      id             INTEGER PRIMARY KEY AUTOINCREMENT,
+      stock          TEXT NOT NULL,
+      evidence_type  TEXT NOT NULL,
+      direction      TEXT NOT NULL CHECK(direction IN ('bullish','bearish','neutral')),
+      magnitude      REAL NOT NULL CHECK(magnitude BETWEEN 0.0 AND 1.0),
+      confidence     REAL NOT NULL CHECK(confidence BETWEEN 0.0 AND 1.0),
+      timestamp      TEXT NOT NULL,
+      source_agent   TEXT NOT NULL,
+      ttl_days       INTEGER NOT NULL DEFAULT 30,
+      expires_at     TEXT NOT NULL
+    )
+  `);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_ef_stock_ts ON evidence_fragments(stock, timestamp DESC)`);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_ef_expires  ON evidence_fragments(expires_at)`);
+
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS evidence_scores (
+      id             INTEGER PRIMARY KEY AUTOINCREMENT,
+      stock          TEXT NOT NULL,
+      score_date     TEXT NOT NULL,
+      bullish_score  REAL NOT NULL DEFAULT 0.0,
+      bearish_score  REAL NOT NULL DEFAULT 0.0,
+      neutral_score  REAL NOT NULL DEFAULT 0.0,
+      fragment_count INTEGER NOT NULL DEFAULT 0,
+      computed_at    TEXT NOT NULL,
+      UNIQUE(stock, score_date)
+    )
+  `);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_es_stock ON evidence_scores(stock, score_date DESC)`);
 }
