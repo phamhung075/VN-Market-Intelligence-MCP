@@ -64,6 +64,7 @@ import { registerAgentWorkLogTools } from "./agentWorkLogTools.js";
 import { registerCronHealthTools } from "./cronHealthTools.js";
 import { registerVpsProxyTools } from "./vpsProxyTools.js";
 import { registerEvidenceTools } from "./evidenceTools.js";
+import { registerCalibrationTools } from "./calibrationTools.js";
 
 /**
  * Flat array of all MCP tool registration functions.
@@ -128,4 +129,5 @@ export const toolRegistry: Array<(server: McpServer) => void> = [
   registerCronHealthTools,       // Task 1102: get_cron_health
   registerVpsProxyTools,         // VPS proxy: get_vps_proxy_health
   registerEvidenceTools,         // Task 1117: record_evidence_fragment (+1 tool → 85)
+  registerCalibrationTools,     // Task 1129: get_calibration_report (+1 tool → 89)
 ];
