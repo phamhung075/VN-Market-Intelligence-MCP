@@ -6,7 +6,7 @@ To restart the hourly unified-agent cycle (after closing terminal / new session)
 
 ```
 CronCreate schedule "7 * * * *" recurring true run_now true prompt:
-Read cowork-analysis-vnmarket-team/unified-agent.md for your complete instructions. Determine current Vietnam time (UTC+7) and execute the appropriate tasks for this hour. Use ALL MCP tools from vn-market-mcp server. Always submit feedback via submit_feedback when you find improvement opportunities. At the very end of the loop, run `/compact` to compress context before exiting.
+Read cowork-analysis-vnmarket-team/unified-agent.md for your complete instructions. Determine current Vietnam time (UTC+7) and execute the appropriate tasks for this hour. Use ALL MCP tools from vn-market-mcp server. Always submit feedback via submit_feedback when you find improvement opportunities.
 ```
 
 ## Details
