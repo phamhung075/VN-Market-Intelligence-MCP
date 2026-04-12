@@ -192,6 +192,20 @@ export function startScheduler() {
     await runBctcReparseJob()
   }, { timezone: 'Asia/Ho_Chi_Minh' })
 
+  // Startup catch-up: if server restarts after 09:30 GMT+7, stranded PDFs
+  // won't be reparsed until tomorrow. Fire-and-forget 30s after boot.
+  // Triggered by report 1108 (VNM/VEA PDFs on disk but financial_reports empty).
+  setTimeout(async () => {
+    try {
+      const r = await runBctcReparseJob()
+      if (r.resolved > 0) {
+        log(`[bctc-reparse] startup catch-up: resolved=${r.resolved} examined=${r.examined}`)
+      }
+    } catch (err) {
+      log(`[bctc-reparse] startup catch-up failed: ${err instanceof Error ? err.message : String(err)}`)
+    }
+  }, 30_000)
+
   // Every 12 min — /ask queue check (task 1074).
   // Signals 07-qa-responder when pending questions are found in ask_queue.
   // The server never answers the question — the cowork agent does the work.

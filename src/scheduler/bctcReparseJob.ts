@@ -25,6 +25,7 @@ import { readFileSync, existsSync } from "node:fs";
 import { basename, join } from "node:path";
 import { logger } from "../infrastructure/logger.js";
 import { getDb } from "../infrastructure/db/schema.js";
+import { recordJobRun } from "../infrastructure/db/cronJobRunStore.js";
 import { extractPdfText } from "../infrastructure/fetchers/pdf.js";
 import { getCachedPdfText } from "../infrastructure/fetchers/pdfOcrWorker.js";
 import { sendTelegramWork } from "../infrastructure/notifiers/telegram.js";
@@ -421,5 +422,13 @@ export async function runBctcReparseJob(
     escalated: result.escalated,
     alerted: result.alerted,
   });
+
+  // Observability: record this run in cron_job_runs (fire-and-forget for test-injected DBs)
+  if (!options.db) {
+    void recordJobRun(db, "bctcReparseJob", async () => {
+      // Already ran above — just record the outcome
+    }).catch(() => {});
+  }
+
   return result;
 }
