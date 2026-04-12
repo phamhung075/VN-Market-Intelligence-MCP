@@ -4,6 +4,26 @@
 
 ---
 
+## Sprint 059 — Prediction Engine Phase B: Claims + Resolution
+
+### Kanban
+
+| ID | Title | Branch | Layer | Tests | Status |
+|----|-------|--------|-------|-------|--------|
+| 1123 | prediction_claims DDL + store functions | `feat/sprint-059-task-1123` | infrastructure/db | 14 pass | Review |
+
+### Task Detail Sheets
+
+**Task 1123 — prediction_claims DDL + store functions**
+
+Branch: `feat/sprint-059-task-1123` | Layer: infrastructure/db | Priority: P0 | Depends on: none | Size: M
+
+Files modified: `src/infrastructure/db/schema.ts` (DDL added) | `src/infrastructure/db/predictionClaimStore.ts` (CREATE) | `src/__tests__/1123-prediction-claim-store.test.ts` (CREATE)
+
+Acceptance Criteria: All met. 14 tests pass, 0 fail. `bun tsc --noEmit` clean. 100% coverage on store file.
+
+---
+
 ## Sprint 055 — Observability + Signal Quality + Alert Attribution
 
 ### Kanban
