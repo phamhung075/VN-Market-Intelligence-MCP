@@ -1,8 +1,10 @@
 # Sprint Goal
 
-## Current Sprint — 061 (PLANNING)
+## Current Sprint — 061 (PARTIAL COMPLETE — 4/5, Task 1135 Blocked)
 
 started: 2026-04-12 | theme: Foreign Flow VPS Pipeline — Activate Smart-Money Signals
+
+**Status as of 2026-04-12:** Tasks 1131–1134 merged to main and verified. 46/46 tests pass. `bun tsc --noEmit` clean. Task 1135 (VPS script extension) remains Blocked on B1 (VPS API foreign flow field names unconfirmed).
 
 ### Goal
 

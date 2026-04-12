@@ -4,7 +4,7 @@
 
 ---
 
-## Sprint 061 — Foreign Flow VPS Pipeline (IN PROGRESS)
+## Sprint 061 — Foreign Flow VPS Pipeline (PARTIAL COMPLETE — 4/5)
 
 Vision: `SPRINT_GOAL.md` | Spec: `docs/REQ_061.md` | Design: `docs/TECH_061.md` (APPROVED_BY_ARCHITECT)
 
@@ -15,13 +15,13 @@ Vision: `SPRINT_GOAL.md` | Spec: `docs/REQ_061.md` | Design: `docs/TECH_061.md` 
 | REQ-061 | BA: write REQ_061.md for foreign flow VPS pipeline | BA | — | — | — | Done |
 | TECH-061 | Architect: review REQ_061, produce TECH_061.md | Architect | — | — | — | Done |
 | PM-061 | PM: sprint planning — break TECH_061 into tasks 1131–1135, assign batches | PM | — | — | — | Done |
-| 1131 | `upsertForeignFlow` in `vnstockStore.ts` — targeted ON CONFLICT DO UPDATE SET, holding_ratio normalisation, legacy-schema fallback | Developer | infrastructure | — | task/1131-upsert-foreign-flow | Review |
-| 1132 | `POST /api/push-foreign-flow` in `server.ts` — auth + validation + upsertForeignFlow + logVpsPush | Developer | interface | 1131 | task/1132-push-foreign-flow-endpoint | Todo |
-| 1133 | `foreignFlowAlertJob.ts` — daily 16:30 VN scan, alert rows, evidence fragments, WORK digest, recordJobRun | Developer | scheduler | 1131 | task/1133-foreign-flow-alert-job | Todo |
-| 1134 | `foreignFlowTools.ts` + registry entry — `get_foreign_flow` MCP tool, zero-detection, format helper (+1 tool → 90) | Developer | interface | 1131 | feat/sprint-061-task-1134 | Review |
+| 1131 | `upsertForeignFlow` in `vnstockStore.ts` — targeted ON CONFLICT DO UPDATE SET, holding_ratio normalisation, legacy-schema fallback | Developer | infrastructure | — | task/1131-upsert-foreign-flow | Done |
+| 1132 | `POST /api/push-foreign-flow` in `server.ts` — auth + validation + upsertForeignFlow + logVpsPush | Developer | interface | 1131 | task/1132-push-foreign-flow-endpoint | Done |
+| 1133 | `foreignFlowAlertJob.ts` — daily 16:30 VN scan, alert rows, evidence fragments, WORK digest, recordJobRun | Developer | scheduler | 1131 | task/1133-foreign-flow-alert-job | Done |
+| 1134 | `foreignFlowTools.ts` + registry entry — `get_foreign_flow` MCP tool, zero-detection, format helper (+1 tool → 90) | Developer | interface | 1131 | feat/sprint-061-task-1134 | Done |
 | 1135 | VPS script extension — poll foreign flow per stock, parse fBuy/fSell/foreignPercent fields, POST to `/api/push-foreign-flow` | Developer | infrastructure (VPS) | 1132 + B1 | task/1135-vps-foreign-flow-script | Blocked |
 
-**WIP state:** 1 task In Progress (limit: 2). 1132, 1133, 1134 unblock in parallel once 1131 merges.
+**WIP state:** 0 tasks In Progress (limit: 2). Tasks 1131–1134 merged to main 2026-04-12, all 46 tests pass.
 **Blocker B1 (Task 1135):** VPS API field names unconfirmed. Developer must run `curl -s "https://bgapidatafeed.vps.com.vn/getliststockdata/VNM" | python3 -m json.tool | grep -i "foreign\|fBuy\|fSell\|fRoom"` from Singapore VPS before 1135 starts.
 
 ---
