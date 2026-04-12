@@ -778,7 +778,7 @@ const SECTOR_RULES: SectorRule[] = [
     title: "Giá dầu tăng — tích cực cho ngành dầu khí",
   },
   {
-    keywords: ["giá dầu giảm", "oil price fall", "crude oil down"],
+    keywords: ["giá dầu giảm", "oil price fall", "crude oil down", "oil crash", "oil slump", "oil plunge", "oil drop", "oil decline", "dầu thô giảm", "dầu lao dốc", "worst week", "oil tumble", "crude oil decline", "opec cut", "demand destruction"],
     domain: "oil_gas",
     direction: "down",
     confidence: 0.85,
@@ -827,7 +827,7 @@ const SECTOR_RULES: SectorRule[] = [
     title: "Giá thép tăng — tích cực cho doanh nghiệp thép",
   },
   {
-    keywords: ["giá thép giảm", "steel price fall", "steel price down"],
+    keywords: ["giá thép giảm", "steel price fall", "steel price down", "steel slump", "steel crash", "steel decline", "thép giảm giá", "steel overcapacity", "dư thừa thép", "steel dumping", "thép Trung Quốc", "china steel flood", "steel oversupply"],
     domain: "steel",
     direction: "down",
     confidence: 0.80,
