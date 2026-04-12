@@ -2,7 +2,7 @@
 
 **Load when:** agent coordination, rewriting agent files, understanding team structure.
 
-## Analysis Team (Claude Cowork — 8 agents)
+## Analysis Team (Claude Cowork — 9 agents)
 
 | # | Agent | File | Role | Cycle |
 |---|-------|------|------|-------|
@@ -15,6 +15,7 @@
 | 5 | Alert Commander | `05-alert-commander.md` | ONLY agent → MARKET channel | 10 min (market) / 30 min (off) |
 | 6 | Digest Writer | `06-digest-writer.md` | Daily/weekly/monthly summaries | Daily 22:30 VN / Weekly Sunday / Monthly 1st |
 | 7 | QA Responder | `07-qa-responder.md` | Answer /ask queue FIFO → MARKET | Every 12 min via askQueueCheck |
+| 8 | Prediction Synthesizer | `08-prediction-synthesizer.md` | Generate prediction claims pre-market | Monday 07:30 VN |
 
 Coordinator: `cowork-analysis-vnmarket-team/unified-agent.md`
 
@@ -60,7 +61,7 @@ Full table → `.claude/knowledge/portfolio-schema.md`
 ## Two-Team Architecture
 
 ```
-ANALYSIS TEAM (Cowork, 8 agents, cloud)
+ANALYSIS TEAM (Cowork, 9 agents, cloud)
   → MARKET (TELEGRAM_INFO_MARKET_GROUP_ID)  = user alerts/answers
   → WORK   (TELEGRAM_INFO_WORK_CHANNEL_ID)  = status
   → BUG    (TELEGRAM_REPORT_BUG_CHANNEL_ID) = bugs
