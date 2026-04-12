@@ -1020,7 +1020,7 @@ export async function listSscDocumentsWithFlag(
     return upcomDocs;
   }
 
-  logger.warn("[ssc] disableSscPolling — no documents from HOSE/HNX/UPCOM", {
+  logger.debug("[ssc] disableSscPolling — no documents from HOSE/HNX/UPCOM", {
     actionCode, reportType, year,
     hint: "Exchange portals may not have published the report yet, or ticker is unlisted",
   });
