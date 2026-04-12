@@ -824,6 +824,20 @@ export async function initDatabase(): Promise<void> {
     // Column already exists — safe to ignore
   }
 
+  // ── VPS push log (observability for all VPS proxy services) ──────────────
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS vps_push_log (
+      id           INTEGER PRIMARY KEY AUTOINCREMENT,
+      service      TEXT    NOT NULL,
+      items_count  INTEGER NOT NULL DEFAULT 0,
+      status       TEXT    NOT NULL DEFAULT 'ok',
+      error_msg    TEXT,
+      duration_ms  INTEGER,
+      pushed_at    TEXT    NOT NULL DEFAULT (datetime('now'))
+    )
+  `);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_vpl_service_ts ON vps_push_log(service, pushed_at)`);
+
   // ── Task 1112: BCTC VPS proxy queue ──────────────────────────────────────
   db.exec(`
     CREATE TABLE IF NOT EXISTS bctc_vps_queue (

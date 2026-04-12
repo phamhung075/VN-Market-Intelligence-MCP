@@ -62,6 +62,7 @@ import { registerBrokerCredibilityTools } from "./brokerCredibilityTools.js";
 import { registerAskQueueTools } from "./askQueueTools.js";
 import { registerAgentWorkLogTools } from "./agentWorkLogTools.js";
 import { registerCronHealthTools } from "./cronHealthTools.js";
+import { registerVpsProxyTools } from "./vpsProxyTools.js";
 
 /**
  * Flat array of all MCP tool registration functions.
@@ -124,4 +125,5 @@ export const toolRegistry: Array<(server: McpServer) => void> = [
   registerAskQueueTools,          // Task 1078: get_pending_ask_questions + answer_ask_question
   registerAgentWorkLogTools,     // Task 1109: log_agent_work + get_agent_work_log
   registerCronHealthTools,       // Task 1102: get_cron_health
+  registerVpsProxyTools,         // VPS proxy: get_vps_proxy_health
 ];

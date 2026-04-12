@@ -69,3 +69,5 @@ export { registerKinhDichTools } from "./kinhDichTools.js";
 export { registerBrokerCredibilityTools } from "./brokerCredibilityTools.js";
 // Sprint 054 — Ask Queue tools (Task 1078)
 export { registerAskQueueTools } from "./askQueueTools.js";
+// VPS Proxy Health (observability for all 4 VPS services)
+export { registerVpsProxyTools } from "./vpsProxyTools.js";

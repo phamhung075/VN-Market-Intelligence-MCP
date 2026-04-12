@@ -32,6 +32,7 @@ import { getDb } from "../../infrastructure/db/schema.js";
 import { validateWebhookRequest } from "../../infrastructure/notifiers/telegramWebhookSetup.js";
 import { insertReport } from "../../infrastructure/db/telegramReportStore.js";
 import { toolRegistry } from "./tools/registry.js";
+import { logVpsPush } from "../../infrastructure/db/vpsPushLogStore.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Task 1112 — Minimal multipart/form-data parser for push-bctc-pdf
@@ -453,6 +454,7 @@ export async function createBunServer(
         } catch { /* best effort */ }
 
         log.info("[push-prices] updated prices + OHLCV + ticks", { count, source: "vps-proxy" });
+        logVpsPush({ service: "prices", itemsCount: count, status: "ok" });
         res.writeHead(200, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ ok: true, updated: count }));
 
@@ -603,6 +605,7 @@ export async function createBunServer(
         });
       } catch (err) {
         log.error("[push-prices] parse error", { error: err instanceof Error ? err.message : String(err) });
+        logVpsPush({ service: "prices", itemsCount: 0, status: "error", errorMsg: err instanceof Error ? err.message : String(err) });
         res.writeHead(400, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ error: "Invalid JSON" }));
       }
@@ -717,10 +720,12 @@ export async function createBunServer(
           }
         });
 
+        logVpsPush({ service: "news", itemsCount: items.length, status: "ok" });
         res.writeHead(200, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ ok: true, received: items.length }));
       } catch (err) {
         log.error("[push-news] parse error", { error: err instanceof Error ? err.message : String(err) });
+        logVpsPush({ service: "news", itemsCount: 0, status: "error", errorMsg: err instanceof Error ? err.message : String(err) });
         res.writeHead(400, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ error: "Invalid JSON" }));
       }
@@ -767,11 +772,13 @@ export async function createBunServer(
           usdVnd: finalSnapshot.usdVndOfficial,
           fetchedAt: finalSnapshot.fetchedAt,
         });
+        logVpsPush({ service: "sbv", itemsCount: 1, status: "ok" });
 
         res.writeHead(200, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ ok: true, usdVnd: finalSnapshot.usdVndOfficial }));
       } catch (err) {
         log.error("[push-sbv-rates] error", { error: err instanceof Error ? err.message : String(err) });
+        logVpsPush({ service: "sbv", itemsCount: 0, status: "error", errorMsg: err instanceof Error ? err.message : String(err) });
         res.writeHead(400, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ error: "Invalid JSON" }));
       }
@@ -947,6 +954,7 @@ export async function createBunServer(
         writeFileSync(pdfPath, pdfBuffer);
 
         log.info("[push-bctc-pdf] PDF saved", { actionCode, periodYear, periodQuarter, filename, bytes: pdfBuffer.length });
+        logVpsPush({ service: "bctc", itemsCount: 1, status: "ok" });
 
         // Update queue status
         db.prepare(
