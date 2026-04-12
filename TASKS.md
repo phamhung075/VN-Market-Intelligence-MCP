@@ -4,23 +4,310 @@
 
 ---
 
-## Sprint 059 — Prediction Engine Phase B: Claims + Resolution
+## Sprint 059 — Prediction Engine Phase B+C — Base Rates + Prediction Claims
+
+Design: `docs/TECH_059.md` | Spec: `docs/REQ_059.md`
+Batch A (parallel, no deps): 1121, 1123 | Batch B (after A): 1122 (needs 1121), 1124 (needs 1121+1123), 1125 (needs 1123) | Batch C (after B): 1126 (needs 1124)
+Task 1126: authored by Cowork Refactory Expert — not Developer.
 
 ### Kanban
 
-| ID | Title | Branch | Layer | Tests | Status |
-|----|-------|--------|-------|-------|--------|
-| 1123 | prediction_claims DDL + store functions | `feat/sprint-059-task-1123` | infrastructure/db | 14 pass | Review |
+| ID | Title | Branch | Layer | Agent | Depends On | Status |
+|----|-------|--------|-------|-------|------------|--------|
+| TECH-059 | Architect: review REQ_059, produce TECH_059.md | — | — | Architect | — | Done |
+| 1121 | evidence_likelihood_ratios DDL + likelihoodRatioStore CRUD | `task/1121-likelihood-ratio-store` | infrastructure | Developer | — | Review |
+| 1123 | prediction_claims DDL + predictionClaimStore CRUD | `task/1123-prediction-claim-store` | infrastructure | Developer | — | Todo |
+| 1122 | baseRateComputer domain service + baseRateComputationJob (Sun 02:00 VN) | `task/1122-base-rate-computation` | domain + scheduler | Developer | 1121 | Backlog |
+| 1124 | get_evidence_summary + create_prediction_claim MCP tools (+2 tools) | `task/1124-evidence-prediction-tools` | interface | Developer | 1121, 1123 | Backlog |
+| 1125 | predictionResolutionJob — nightly Brier score resolver (23:30 VN) | `task/1125-prediction-resolution-job` | scheduler | Developer | 1123 | Backlog |
+| 1126 | 08-prediction-synthesizer.md Cowork agent + agent-roster.md update | `task/1126-prediction-synthesizer-agent` | interface/Cowork | Cowork Refactory Expert | 1124 | Backlog |
+
+---
 
 ### Task Detail Sheets
 
-**Task 1123 — prediction_claims DDL + store functions**
+---
 
-Branch: `feat/sprint-059-task-1123` | Layer: infrastructure/db | Priority: P0 | Depends on: none | Size: M
+**Task 1121 — evidence_likelihood_ratios DDL + likelihoodRatioStore CRUD**
 
-Files modified: `src/infrastructure/db/schema.ts` (DDL added) | `src/infrastructure/db/predictionClaimStore.ts` (CREATE) | `src/__tests__/1123-prediction-claim-store.test.ts` (CREATE)
+Branch: `task/1121-likelihood-ratio-store` | Layer: infrastructure | Agent: Developer | Priority: P0 | Depends on: none | Size: S | Batch: A
 
-Acceptance Criteria: All met. 14 tests pass, 0 fail. `bun tsc --noEmit` clean. 100% coverage on store file.
+Files to read first:
+- `src/infrastructure/db/schema.ts` (find `evidence_scores` DDL block — append after it)
+- `docs/TECH_059.md` §1 (DDL) + §3 (store interface)
+
+Files to create/modify:
+- MODIFY: `src/infrastructure/db/schema.ts` — append `evidence_likelihood_ratios` DDL after `evidence_scores` block
+- CREATE: `src/infrastructure/db/likelihoodRatioStore.ts`
+- CREATE: `src/__tests__/1121-likelihood-ratio-store.test.ts`
+
+DDL to insert into `initDatabase()` (after `evidence_scores` block):
+```sql
+CREATE TABLE IF NOT EXISTS evidence_likelihood_ratios (
+  id               INTEGER PRIMARY KEY AUTOINCREMENT,
+  evidence_type    TEXT NOT NULL,
+  direction        TEXT NOT NULL CHECK(direction IN ('bullish','bearish','neutral')),
+  horizon_days     INTEGER NOT NULL CHECK(horizon_days IN (5, 10, 20)),
+  likelihood_ratio REAL NOT NULL DEFAULT 1.0,
+  sample_size      INTEGER NOT NULL DEFAULT 0,
+  last_updated     TEXT NOT NULL,
+  UNIQUE(evidence_type, direction, horizon_days)
+);
+CREATE INDEX IF NOT EXISTS idx_elr_type_dir ON evidence_likelihood_ratios(evidence_type, direction);
+```
+
+Store exports required: `upsertLikelihoodRatio`, `getLikelihoodRatios`, `getLikelihoodRatio`, `getAllEvidenceTypePairs`.
+Business rule: if `sample_size < 10`, store `likelihood_ratio = 1.0` with actual `sample_size`. `getLikelihoodRatio` returns 1.0 for missing rows — never throws.
+
+Acceptance Criteria:
+
+**Given** fresh in-memory DB after `initDatabase()` | **When** `upsertLikelihoodRatio(db, { evidence_type: 'news', direction: 'bullish', horizon_days: 10, likelihood_ratio: 2.5, sample_size: 25 })` is called twice | **Then** second call is idempotent — only one row exists, `likelihood_ratio = 2.5`
+
+**Given** `sample_size = 5` (below threshold) | **When** `upsertLikelihoodRatio` is called | **Then** stored `likelihood_ratio = 1.0`, `sample_size = 5`
+
+**Given** no row for `('macro', 'bearish', 20)` | **When** `getLikelihoodRatio(db, 'macro', 'bearish', 20)` | **Then** returns `1.0` without throwing
+
+**Given** a row with `sample_size = 8` | **When** `getLikelihoodRatio` | **Then** returns `1.0` (insufficient sample floor)
+
+**Given** two `(evidence_type, direction)` pairs exist | **When** `getAllEvidenceTypePairs(db)` | **Then** returns both distinct pairs as `{ evidence_type, direction }` objects
+
+`bun test src/__tests__/1121-likelihood-ratio-store.test.ts` → all pass | `bun tsc --noEmit` → 0 errors
+
+---
+
+**Task 1123 — prediction_claims DDL + predictionClaimStore CRUD**
+
+Branch: `task/1123-prediction-claim-store` | Layer: infrastructure | Agent: Developer | Priority: P0 | Depends on: none | Size: S | Batch: A (parallel with 1121)
+
+Files to read first:
+- `src/infrastructure/db/schema.ts` (find insertion point — append after `evidence_likelihood_ratios` block once 1121 lands, or directly after `evidence_scores` if running in parallel)
+- `docs/TECH_059.md` §2 (DDL) + §4 (store interface)
+
+Files to create/modify:
+- MODIFY: `src/infrastructure/db/schema.ts` — append `prediction_claims` DDL (after `evidence_likelihood_ratios` block)
+- CREATE: `src/infrastructure/db/predictionClaimStore.ts`
+- CREATE: `src/__tests__/1123-prediction-claim-store.test.ts`
+
+DDL to insert into `initDatabase()`:
+```sql
+CREATE TABLE IF NOT EXISTS prediction_claims (
+  id                   INTEGER PRIMARY KEY AUTOINCREMENT,
+  stock                TEXT NOT NULL,
+  claim_text           TEXT NOT NULL,
+  probability          REAL NOT NULL CHECK(probability BETWEEN 0.0 AND 1.0),
+  horizon_days         INTEGER NOT NULL CHECK(horizon_days IN (5, 10, 20)),
+  resolution_date      TEXT NOT NULL,
+  resolution_criteria  TEXT NOT NULL,
+  resolved             INTEGER NOT NULL DEFAULT 0,
+  resolution_outcome   INTEGER CHECK(resolution_outcome IN (NULL, 0, 1)),
+  brier_score          REAL CHECK(brier_score BETWEEN 0.0 AND 1.0),
+  created_at           TEXT NOT NULL,
+  resolved_at          TEXT,
+  synthesizer_version  TEXT NOT NULL DEFAULT '08-prediction-synthesizer'
+);
+CREATE INDEX IF NOT EXISTS idx_pc_stock_resolved ON prediction_claims(stock, resolved);
+CREATE INDEX IF NOT EXISTS idx_pc_resolution_date ON prediction_claims(resolution_date);
+```
+
+Note: `CHECK(resolution_outcome IN (NULL, 0, 1))` — SQLite evaluates `NULL IN (...)` as NULL (not a violation). NULL accepted correctly without workaround.
+
+Store exports required: `insertPredictionClaim`, `getUnresolvedExpiredClaims`, `resolveClaimById`, `getPredictionClaims`.
+`insertPredictionClaim` uses `INSERT OR IGNORE` on `(stock, claim_text, resolution_date)` — returns `{ id, duplicate: boolean }`.
+
+Acceptance Criteria:
+
+**Given** a new `PredictionClaimInput` for VCB | **When** `insertPredictionClaim(db, input)` | **Then** returns `{ id: 1, duplicate: false }`, row exists in DB
+
+**Given** same `(stock, claim_text, resolution_date)` inserted twice | **When** second `insertPredictionClaim` | **Then** returns `{ id: 0, duplicate: true }`, still only 1 row in DB
+
+**Given** 3 claims: 2 unresolved with `resolution_date <= today`, 1 resolved | **When** `getUnresolvedExpiredClaims(db, today)` | **Then** returns exactly the 2 unresolved expired rows
+
+**Given** an unresolved claim id=1 | **When** `resolveClaimById(db, 1, 1, 0.09)` | **Then** row has `resolved=1`, `resolution_outcome=1`, `brier_score=0.09`, `resolved_at IS NOT NULL`
+
+**Given** unresolvable claim | **When** `resolveClaimById(db, id, null, null)` | **Then** `resolved=1`, `resolution_outcome=null`, `brier_score=null`
+
+**Given** 3 claims for VNM (2 unresolved, 1 resolved) | **When** `getPredictionClaims(db, 'VNM', 0)` | **Then** returns only the 2 unresolved rows
+
+`bun test src/__tests__/1123-prediction-claim-store.test.ts` → all pass | `bun tsc --noEmit` → 0 errors
+
+---
+
+**Task 1122 — baseRateComputer domain service + baseRateComputationJob weekly scheduler**
+
+Branch: `task/1122-base-rate-computation` | Layer: domain + scheduler | Agent: Developer | Priority: P0 | Depends on: 1121 | Size: M | Batch: B
+
+Files to read first:
+- `src/domain/services/baseRateComputer.ts` (does not exist yet — see TECH_059 §5 for full interface)
+- `src/infrastructure/db/likelihoodRatioStore.ts` (post-1121)
+- `src/scheduler/jobs.ts` (CRONS constant + recordJobRun pattern)
+- `docs/TECH_059.md` §5 (domain service), §6 (job algorithm), §`jobs.ts` registration section
+
+Files to create/modify:
+- CREATE: `src/domain/services/baseRateComputer.ts`
+- CREATE: `src/scheduler/baseRateComputationJob.ts`
+- MODIFY: `src/scheduler/jobs.ts` — add `CRONS.baseRateComputation` key + schedule callback
+- CREATE: `src/__tests__/1122-base-rate-computation-job.test.ts`
+
+Sub-steps:
+1. Write `baseRateComputer.ts` with three exports: `computeRollingBaseRate`, `computeBrierScore`, `clampLikelihoodRatio`. Domain layer — imports only `bun:sqlite` (type-only). No infrastructure imports.
+2. Write `baseRateComputationJob.ts` importing both domain (`baseRateComputer.ts`) and infrastructure (`likelihoodRatioStore.ts`). Export `runBaseRateComputation(db?)` and `runBaseRateComputationJob()`.
+3. Register in `jobs.ts`: add `baseRateComputation: Bun.env.CRON_BASE_RATE_COMPUTATION ?? '0 19 * * 0'` to CRONS, add `cron.schedule(CRONS.baseRateComputation, async () => { await runBaseRateComputationJob() }, { timezone: 'UTC' })`.
+
+DDD invariant: `baseRateComputer.ts` MUST NOT import from `src/infrastructure/`. Receives `db: Database` as parameter. Violation breaks the test suite.
+
+`computeRollingBaseRate` algorithm: query `SELECT date, close FROM daily_ohlcv WHERE code = ? ORDER BY date ASC`, build rolling windows of `horizonDays` rows, compute `abs((close[i+h] - close[i]) / close[i]) * 100`, count windows where result > 3.0. Return `hits / total_windows`. If fewer than 10 windows → return `0.5`.
+
+Acceptance Criteria:
+
+**Given** synthetic `daily_ohlcv` with fewer than 10 horizon-day windows | **When** `computeRollingBaseRate('VCB', 10, db)` | **Then** returns `0.5`
+
+**Given** 30 rows where exactly 12 windows exceed 3% | **When** `computeRollingBaseRate('VCB', 10, db)` | **Then** returns `12 / 20 = 0.6` (within floating-point tolerance)
+
+**When** `computeBrierScore(0.7, 1)` | **Then** returns `0.09` (within ±0.001)
+
+**When** `computeBrierScore(0.7, 0)` | **Then** returns `0.49` (within ±0.001)
+
+**When** `clampLikelihoodRatio(0.05)` | **Then** returns `0.1` | **When** `clampLikelihoodRatio(7.0)` | **Then** returns `5.0` | **When** `clampLikelihoodRatio(2.3)` | **Then** returns `2.3`
+
+**Given** evidence_fragments with < 10 samples for a triple | **When** `runBaseRateComputation(db)` | **Then** upserted row has `likelihood_ratio = 1.0` with actual `sample_size`
+
+**When** `runBaseRateComputationJob()` is called | **Then** `recordJobRun` wrapper is invoked (observability confirmed by spy or log check)
+
+`bun test src/__tests__/1122-base-rate-computation-job.test.ts` → all pass | `bun tsc --noEmit` → 0 errors | `Object.keys(CRONS).length` increments by 1
+
+---
+
+**Task 1124 — get_evidence_summary + create_prediction_claim MCP tools (+2 tools)**
+
+Branch: `task/1124-evidence-prediction-tools` | Layer: interface | Agent: Developer | Priority: P0 | Depends on: 1121, 1123 | Size: M | Batch: B
+
+Files to read first:
+- `src/interface/mcp/tools/evidenceTools.ts` (existing `registerEvidenceTools` — extend, do not replace)
+- `src/infrastructure/db/likelihoodRatioStore.ts` (post-1121: `getLikelihoodRatio`, `getLikelihoodRatios`)
+- `src/infrastructure/db/predictionClaimStore.ts` (post-1123: `insertPredictionClaim`)
+- `docs/TECH_059.md` §8 (get_evidence_summary logic) + §9 (create_prediction_claim logic)
+- `docs/data/tool-registry.json` + `docs/data/project-stats.json` (update tool count 84 → 86)
+
+Files to modify:
+- MODIFY: `src/interface/mcp/tools/evidenceTools.ts` — add two tools inside `registerEvidenceTools`
+- MODIFY: `docs/data/tool-registry.json` — add 2 new tool entries
+- MODIFY: `docs/data/project-stats.json` — toolCount 84 → 86
+- CREATE: `src/__tests__/1124-evidence-tools-phase-bc.test.ts`
+
+`get_evidence_summary` logic:
+1. `getLatestEvidenceScore(db, stock)` — if null, return `"No evidence accumulated yet for {STOCK}"`.
+2. Query top 5 fragments: `SELECT * FROM evidence_fragments WHERE stock = ? ORDER BY (magnitude * confidence) DESC LIMIT 5`.
+3. For each fragment call `getLikelihoodRatio(db, evidence_type, 'bullish', 10)`.
+4. Display TRUSTED label if `sample_size >= 10`, UNTRUSTED otherwise.
+
+`create_prediction_claim` logic:
+1. `JSON.parse(resolution_criteria)` — on failure return error string (no throw, no insert).
+2. `resolution_date = addCalendarDays(today, horizon_days)` as `YYYY-MM-DD`.
+3. `insertPredictionClaim(db, { stock: stock.toUpperCase().trim(), claim_text, probability, horizon_days, resolution_date, resolution_criteria, created_at: now.toISOString() })`.
+4. If `duplicate: true` → `"Duplicate claim skipped: identical claim already exists for {STOCK} resolving on {date}"`.
+5. Otherwise return confirmation string with `id` and `resolution_date`.
+
+Acceptance Criteria:
+
+**Given** no `evidence_scores` row for XYZ | **When** `get_evidence_summary({ stock: 'XYZ' })` | **Then** returns `"No evidence accumulated yet for XYZ"`
+
+**Given** an `evidence_scores` row for VNM with bullish/bearish/neutral values | **When** `get_evidence_summary({ stock: 'VNM' })` | **Then** response contains those values + top 5 fragments section
+
+**Given** top fragment with a likelihood ratio row where `sample_size = 5` | **When** `get_evidence_summary` | **Then** response contains `UNTRUSTED` label for that ratio
+
+**When** `create_prediction_claim({ stock: 'VCB', claim_text: 'test', probability: 0.75, horizon_days: 10, resolution_criteria: '{invalid' })` | **Then** returns error string, no row inserted
+
+**Given** valid inputs | **When** `create_prediction_claim(...)` | **Then** returns confirmation with `id` and correct `resolution_date`
+
+**Given** same claim submitted twice | **When** second `create_prediction_claim` | **Then** returns `"Duplicate claim skipped..."`, only 1 row in DB
+
+`bun test src/__tests__/1124-evidence-tools-phase-bc.test.ts` → all pass | `bun tsc --noEmit` → 0 errors | tool count in `project-stats.json` = 86
+
+---
+
+**Task 1125 — predictionResolutionJob nightly Brier score resolver (23:30 VN)**
+
+Branch: `task/1125-prediction-resolution-job` | Layer: scheduler | Agent: Developer | Priority: P0 | Depends on: 1123 | Size: M | Batch: B
+
+Files to read first:
+- `src/infrastructure/db/predictionClaimStore.ts` (post-1123: `getUnresolvedExpiredClaims`, `resolveClaimById`)
+- `src/domain/services/baseRateComputer.ts` (post-1122: `computeBrierScore`)
+- `src/scheduler/jobs.ts` (CRONS constant + recordJobRun pattern)
+- `docs/TECH_059.md` §7 (resolution algorithm) + `jobs.ts` registration section
+- `docs/data/cron-registry.json` (add 2 new entries after this task + 1122 both register)
+
+Files to create/modify:
+- CREATE: `src/scheduler/predictionResolutionJob.ts`
+- MODIFY: `src/scheduler/jobs.ts` — add `CRONS.predictionResolution` key + schedule callback
+- MODIFY: `docs/data/cron-registry.json` — add both `baseRateComputation` and `predictionResolution` entries
+- MODIFY: `docs/data/project-stats.json` — schedulerFileCount 24 → 26 (after both 1122 + 1125 complete)
+- CREATE: `src/__tests__/1125-prediction-resolution-job.test.ts`
+
+Sub-steps:
+1. Write `predictionResolutionJob.ts` importing `predictionClaimStore.ts` and `baseRateComputer.ts` (for `computeBrierScore`). Export `runPredictionResolution(db?)` and `runPredictionResolutionJob()`.
+2. Register in `jobs.ts`: add `predictionResolution: Bun.env.CRON_PREDICTION_RESOLUTION ?? '30 16 * * *'` to CRONS, add cron callback.
+
+Resolution algorithm:
+1. `getUnresolvedExpiredClaims(db, today_date)`.
+2. For each claim: parse `resolution_criteria` JSON. Look up `daily_ohlcv WHERE code = ? AND date <= ? ORDER BY date DESC LIMIT 1`.
+3. No price found + within 5-day retry window → skip (leave `resolved=0`). No price + past retry window → `resolveClaimById(db, id, null, null)`.
+4. Price found → evaluate `operator` against `value`. `outcome = criteria_met ? 1 : 0`. `brierScore = computeBrierScore(claim.probability, outcome)`. `resolveClaimById(db, id, outcome, brierScore)`.
+
+Acceptance Criteria:
+
+**Given** a claim for VCB with `operator: '>'`, `value: 80000`, and `daily_ohlcv` close = 82000 on resolution_date | **When** `runPredictionResolution(db)` | **Then** claim is `resolved=1`, `resolution_outcome=1`, `brier_score` = `(probability - 1)^2`
+
+**Given** a claim whose resolution_date is today and no price data in `daily_ohlcv` | **When** `runPredictionResolution(db)` and today is within the 5-day retry window | **Then** claim remains `resolved=0`
+
+**Given** same claim and today is 6+ days past `resolution_date` | **When** `runPredictionResolution(db)` | **Then** claim is `resolved=1`, `resolution_outcome=null`, `brier_score=null`
+
+**Given** a claim with `operator: '<'`, `value: 70000`, and close = 68000 | **When** `runPredictionResolution` | **Then** `resolution_outcome=1`
+
+**When** `runPredictionResolutionJob()` is called | **Then** `recordJobRun` wrapper invoked
+
+`bun test src/__tests__/1125-prediction-resolution-job.test.ts` → all pass | `bun tsc --noEmit` → 0 errors | `Object.keys(CRONS).length` = 31 after both 1122 + 1125 registrations
+
+---
+
+**Task 1126 — 08-prediction-synthesizer.md Cowork agent + agent-roster.md update**
+
+Branch: `task/1126-prediction-synthesizer-agent` | Layer: interface/Cowork | Agent: Cowork Refactory Expert (NOT Developer) | Priority: P0 | Depends on: 1124 | Size: M | Batch: C
+
+IMPORTANT: Developer does not touch `.claude/agents/`. This task is authored entirely by Cowork Refactory Expert.
+
+Files to read first:
+- `.claude/agents/` directory — examine existing agent files for format reference (e.g. `07-qa-responder.md`)
+- `.claude/knowledge/agent-roster.md` — Analysis Team table (add row for agent 08)
+- `docs/TECH_059.md` §`08-prediction-synthesizer.md` agent design section (full 7-step protocol)
+- `docs/REQ_059.md` FR-7 (agent behavior spec)
+
+Files to create/modify:
+- CREATE: `.claude/agents/08-prediction-synthesizer.md`
+- MODIFY: `.claude/knowledge/agent-roster.md` — add agent 08 row to Analysis Team table
+
+Agent file must include:
+1. Role: Pre-market prediction synthesizer. Monday 07:30 VN (00:30 UTC). Scheduled only — not triggered reactively.
+2. Prerequisite check: verify `get_evidence_summary` returns data for at least one stock before proceeding; if zero, `send_telegram(channel="work")` and exit.
+3. 7-step protocol: `get_watchlist()` → `get_evidence_summary` per ticker → identify high-conviction stocks (score > 0.6) → `get_bctc_full` + `get_market_snapshot` for those → `create_prediction_claim` with probability formula → cap at 5 claims (select by largest `|bullish_score - bearish_score|` delta) → `log_agent_work` → `send_telegram(channel="work")`.
+4. Probability formula: `min(0.95, max(0.05, bullish_score * top_likelihood_ratio))` using TRUSTED ratio; if all UNTRUSTED, use 1.0.
+5. horizon_days heuristic: delta >= 0.5 → 5, delta >= 0.3 → 10, delta < 0.3 → 20.
+6. VND formatting rule: `80,000 VND` (comma thousand separator, no dots).
+7. All `claim_text` in Vietnamese.
+
+agent-roster.md row to add:
+```
+| 8 | Prediction Synthesizer | `08-prediction-synthesizer.md` | Generate prediction claims pre-market | Monday 07:30 VN |
+```
+
+Acceptance Criteria:
+
+**Given** `.claude/agents/08-prediction-synthesizer.md` does not exist | **When** task is complete | **Then** file exists and contains all 7 protocol steps, probability formula, horizon heuristic, VND format rule, and Vietnamese claim_text requirement
+
+**Given** `.claude/knowledge/agent-roster.md` | **When** task is complete | **Then** Analysis Team table contains a row for agent 08 with correct name, file path, purpose, and schedule
+
+**Given** the agent file | **When** read as instructions | **Then** no references to SQL, `db`, or Brier score math — those live in scheduler/domain layer only
+
+`bun tsc --noEmit` → 0 errors (agent .md file has no TypeScript impact, but verify no regressions)
 
 ---
 
@@ -496,10 +783,13 @@ Sprint 058 COMPLETE 2026-04-12. VNM income: revenue 1→63.6T, COGS 10→37.4T. 
 
 ---
 
-## Backlog
+## Sprint 059 — Prediction Engine Phase B+C (Base Rates + Prediction Claims)
+
+### Backlog
 
 | ID | Owner | Priority | Title | Status |
 |----|-------|----------|-------|--------|
+| REQ-059 | @BA | P0 | Write REQ_059.md + TECH_059.md: Phase B (evidence_likelihood_ratios DDL, baseRateComputationJob, per-stock rolling base rate) + Phase C (prediction_claims DDL, get_evidence_summary, create_prediction_claim, predictionResolutionJob, 08-prediction-synthesizer.md). Reference: REQ_057.md Phase B+C sections. Confirm open questions (evidence_type enum, resolution criteria format, min sample size). | Backlog |
 | 1088 | @developer | P3 | BCTC OCR regression test: add balance sheet fixture for VNM consolidated format. (a)+(b) shipped, (c) done in 1120. | Done |
 
 ---

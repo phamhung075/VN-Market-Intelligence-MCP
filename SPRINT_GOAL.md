@@ -1,6 +1,34 @@
 # Sprint Goal
 
-## Current Sprint — 058 (COMPLETE)
+## Current Sprint — 059 (PLANNING)
+
+started: 2026-04-12 | theme: Prediction Engine Phase B+C — Base Rates + Prediction Claims
+
+### Goal
+
+Activate the evidence fragments accumulated since Sprint 057 by shipping the base rate computation engine and structured prediction claim generation. The system will compute historical likelihood ratios per evidence type, generate falsifiable probability claims for watchlist stocks, and resolve them nightly using price history.
+
+### Scope
+
+| Area | In |
+|------|----|
+| Phase B: evidence_likelihood_ratios DDL + store | IN |
+| Phase B: baseRateComputationJob (Sunday 02:00 VN) | IN |
+| Phase B: per-stock rolling base rate from price history | IN |
+| Phase C: prediction_claims DDL + store | IN |
+| Phase C: get_evidence_summary + create_prediction_claim MCP tools (+2) | IN |
+| Phase C: predictionResolutionJob (nightly 23:30 VN, Brier score) | IN |
+| Phase C: 08-prediction-synthesizer.md Cowork agent | IN |
+| Phase D: calibrationReportJob | OUT — Sprint 060 |
+| foreign_flow_snapshots (VPS extension) | OUT — Architect decision pending |
+
+### Success Metric
+
+`get_evidence_summary("VNM")` returns non-empty evidence score with contributing fragments. `create_prediction_claim` inserts a row. `predictionResolutionJob` resolves expired claims with Brier scores. `08-prediction-synthesizer.md` agent exists in `.claude/agents/`. bun tsc --noEmit clean. All new tests pass.
+
+---
+
+## Previous Sprint — 058 (COMPLETE)
 
 started: 2026-04-12 | completed: 2026-04-12 | theme: BCTC Split-Block OCR Fix (VNM income + balance sheet quality)
 
