@@ -44,6 +44,7 @@ import { runBctcReparseJob } from './bctcReparseJob.js'
 import { runAskQueueCheck } from './askQueueCheckJob.js'
 import { runCronHealthAlert } from './cronHealthAlertJob.js'
 import { runEvidenceAccumulatorJob } from './evidenceAccumulatorJob.js'
+import { runBaseRateComputationJob } from './baseRateComputationJob.js'
 
 export const CRONS = {
   morningBriefing:        Bun.env.CRON_MORNING_BRIEFING          ?? '0 8 * * 1-5',
@@ -93,6 +94,8 @@ export const CRONS = {
   cronHealthAlert:        Bun.env.CRON_HEALTH_ALERT                ?? '0 0 * * *',
   /** Evidence accumulator: daily 23:00 VN = 16:00 UTC — task 1118, Sprint 057 Phase A */
   evidenceAccumulator:    Bun.env.CRON_EVIDENCE_ACCUMULATOR        ?? '0 16 * * *',
+  /** Base rate recomputation: weekly Sunday 19:00 UTC = 02:00 VN Monday — task 1122, Sprint 059 */
+  baseRateComputation:    Bun.env.CRON_BASE_RATE_COMPUTATION       ?? '0 19 * * 0',
 }
 
 function log(msg: string) {
@@ -305,6 +308,11 @@ export function startScheduler() {
   // Daily 23:00 VN (16:00 UTC) — Evidence accumulator — task 1118
   cron.schedule(CRONS.evidenceAccumulator, async () => {
     await runEvidenceAccumulatorJob()
+  }, { timezone: 'UTC' })
+
+  // Sunday 19:00 UTC (02:00 VN Monday) — Base rate computation — task 1122, Sprint 059
+  cron.schedule(CRONS.baseRateComputation, async () => {
+    await runBaseRateComputationJob()
   }, { timezone: 'UTC' })
 
   log(`[scheduler] jobs registered — ${Object.keys(CRONS).length} cron keys in CRONS map (incl. WAL checkpoint + 5 summary) + vps-watchdog active`)
