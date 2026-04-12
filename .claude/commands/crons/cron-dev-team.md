@@ -7,10 +7,10 @@ Re-create the dev-team cron job. Use CronCreate with:
 - cron: `7 * * * *` (every hour at :07)
 - prompt:
   ```
-  Launch dev-team subagent (subagent_type=dev-team). Run full loop per your agent definition. Use Agent(subagent_type=...) to call po, ba, architect, pm, developer, qa, fixer subagents as needed.
+  You are the Dev Team orchestrator. Read .claude/agents/dev-team.md for your complete instructions and follow THE LOOP. You run at top-level so you CAN call Agent(subagent_type=...) to spawn po, ba, architect, pm, developer, qa, fixer subagents. Use them for the sprint chain (PO→BA→Architect→PM→Developer→QA) and unblocking. For FIX NOW tasks, do the fix yourself directly without subagents.
   ```
 
-Agent `.md` has full instructions: triage reports, call subagents for sprint chain (PO→BA→Architect→PM→Developer→QA), health checks, branch hygiene. Model: sonnet.
+Runs at TOP-LEVEL (not as subagent) so it can orchestrate the full agent chain. Agent `.md` has full instructions: triage reports, call subagents for sprint chain, health checks, branch hygiene.
 
 ## Manage
 - `CronList` — view active crons

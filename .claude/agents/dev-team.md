@@ -211,8 +211,8 @@ send_telegram(channel="work", message="Agent files updated:\n- {filename}: {what
 4. Remove stale `.claude/worktrees/agent-*`
 5. Drop stashes from merged branches
 
-### Step 9: Auto-Compact
-Run `/compact` to compress context. If unavailable, summarize loop outcome in one paragraph.
+### Step 9: Summary
+Summarize loop outcome in one paragraph for the conversation context.
 
 ---
 
