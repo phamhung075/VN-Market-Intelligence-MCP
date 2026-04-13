@@ -1,13 +1,17 @@
 /**
- * Insider Check Job — Task 250
+ * Insider Check Job — Task 250 / refactored Task 1143
  *
- * Daily 19:00 GMT+7 (Mon-Fri): Fetch SSC insider transaction disclosures,
- * store new records, run leadership signal detection, send Telegram alerts
- * for HIGH/CRITICAL insider signals.
+ * Daily 01:00 UTC (08:00 VN) Mon-Sun: Fetch SSC insider transaction disclosures,
+ * store new records, run streak detection, insert alert rows + evidence fragments.
+ *
+ * Alert Commander exclusivity: this job NEVER calls sendTelegramMarket.
+ * Alert rows are written to the `alerts` table (INSERT OR IGNORE for same-day dedup).
+ * Alert Commander reads unnotified alerts and dispatches to the MARKET channel.
  *
  * Layer: interface/scheduler
  */
 
+import type { Database } from "bun:sqlite";
 import { logger } from "../infrastructure/logger.js";
 import { fetchInsiderTransactions } from "../infrastructure/fetchers/sscInsider.js";
 import type { RawInsiderRow } from "../infrastructure/fetchers/sscInsider.js";
@@ -16,10 +20,10 @@ import type { InsiderRow } from "../infrastructure/db/insiderStore.js";
 import { getDb } from "../infrastructure/db/schema.js";
 import {
   classifyInsiderTransaction,
-  detectMassInsiderBuy,
   type InsiderTransaction,
 } from "../domain/services/leadershipSignal.js";
-import { sendTelegramMarket } from "../infrastructure/notifiers/telegram.js";
+import { insertEvidenceFragment } from "../infrastructure/db/evidenceFragmentStore.js";
+import { recordJobRun } from "../infrastructure/db/cronJobRunStore.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Constants
@@ -27,6 +31,16 @@ import { sendTelegramMarket } from "../infrastructure/notifiers/telegram.js";
 
 /** Default outstanding shares when per-stock data is not available. */
 const DEFAULT_OUTSTANDING = 1_000_000_000; // 1 billion — conservative estimate
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Types
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Injectable Telegram overrides for testing (avoids real HTTP calls) */
+export interface InsiderCheckOverrides {
+  /** Present only for interface symmetry — NEVER called by this job */
+  sendMarket?: (msg: string) => Promise<boolean>;
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -46,6 +60,53 @@ function makeRowId(raw: RawInsiderRow): string {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Streak detection (pure data grouping — requires DB I/O so stays in scheduler)
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface AccumulationStreak {
+  code: string;
+  position: string;          // normalised to lowercase
+  buyDays: number;           // count of distinct from_date values
+  totalExecutedVolume: number;
+}
+
+/**
+ * Query insider_transactions for buy streaks within the last `windowDays` days.
+ * A streak is defined as >= 3 distinct from_date values with executed_volume > 0.
+ * Position is normalised to lower(trim(position)) to merge capitalisation variants.
+ */
+function detectAccumulationStreaks(
+  db: Database,
+  windowDays: number,
+): AccumulationStreak[] {
+  const cutoff = new Date(Date.now() - windowDays * 86_400_000)
+    .toISOString()
+    .slice(0, 10);
+
+  type Row = { code: string; position: string; buy_days: number; total_vol: number };
+  const rows = db.prepare<Row, [string]>(`
+    SELECT
+      code,
+      lower(trim(position)) AS position,
+      COUNT(DISTINCT from_date) AS buy_days,
+      SUM(executed_volume)     AS total_vol
+    FROM insider_transactions
+    WHERE type = 'buy'
+      AND executed_volume > 0
+      AND from_date >= ?
+    GROUP BY code, lower(trim(position))
+    HAVING buy_days >= 3
+  `).all(cutoff) as Row[];
+
+  return rows.map((r) => ({
+    code:                r.code,
+    position:            r.position,
+    buyDays:             r.buy_days,
+    totalExecutedVolume: r.total_vol,
+  }));
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Public API
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -57,33 +118,41 @@ function makeRowId(raw: RawInsiderRow): string {
  *   2. Store new records in SQLite
  *   3. Classify each transaction via leadershipSignal service
  *   4. Detect mass insider buy patterns
- *   5. Send Telegram alerts for HIGH/CRITICAL signals
+ *   5. Detect accumulation streaks → insert evidence fragments
+ *   6. Insert alert rows for significant single buys + streaks (INSERT OR IGNORE)
  *
- * Never throws — all errors are logged.
+ * Never calls sendTelegramMarket — Alert Commander exclusivity rule.
+ * Wrapped in recordJobRun for observability.
+ *
+ * @param db               - Optional injected DB (uses production DB when omitted)
+ * @param fetchOverride    - Optional injected fetcher (uses real SSC fetch when omitted)
+ * @param _overrides       - Reserved for test injection (sendMarket never called)
  */
-export async function runInsiderCheck(): Promise<void> {
-  logger.info("[insiderCheckJob] starting insider transaction check");
+export async function runInsiderCheck(
+  db?: Database,
+  fetchOverride?: () => Promise<RawInsiderRow[]>,
+  _overrides?: InsiderCheckOverrides,
+): Promise<void> {
+  const database = db ?? getDb();
 
-  try {
-    // ── Step 1: Fetch from SSC ─────────────────────────────────────────────
-    const scraped = await fetchInsiderTransactions();
+  await recordJobRun(database, "insiderCheckJob", async () => {
+    logger.info("[insiderCheckJob] starting insider transaction check");
+
+    // ── Step 1: Fetch from SSC ───────────────────────────────────────────────
+    const fetch = fetchOverride ?? fetchInsiderTransactions;
+    const scraped = await fetch();
     logger.info("[insiderCheckJob] fetched transactions", {
       count: scraped.length,
     });
 
-    if (scraped.length === 0) {
-      logger.info("[insiderCheckJob] no new transactions — done");
-      return;
-    }
-
-    // ── Step 2: Store ──────────────────────────────────────────────────────
-    const db = getDb();
+    // ── Step 2: Store ────────────────────────────────────────────────────────
     const fetchedAt = new Date().toISOString();
+    let rowsStored = 0;
 
     for (const tx of scraped) {
       try {
         const id = makeRowId(tx);
-        if (hasInsiderTransaction(db, id)) continue;
+        if (hasInsiderTransaction(database, id)) continue;
 
         const row: InsiderRow = {
           id,
@@ -98,7 +167,8 @@ export async function runInsiderCheck(): Promise<void> {
           toDate: tx.toDate,
           fetchedAt,
         };
-        insertInsiderTransaction(db, row);
+        insertInsiderTransaction(database, row);
+        rowsStored++;
       } catch (err) {
         // Duplicate or constraint error — skip silently
         logger.debug("[insiderCheckJob] insert skipped", {
@@ -108,9 +178,7 @@ export async function runInsiderCheck(): Promise<void> {
       }
     }
 
-    // ── Step 3: Classify individual signals ───────────────────────────────
-    const allAlerts: string[] = [];
-
+    // ── Step 3: Classify individual signals ─────────────────────────────────
     // Map scraped tx to domain InsiderTransaction type (skip "other" type)
     const domainTxs: InsiderTransaction[] = scraped
       .filter((t): t is RawInsiderRow & { type: "buy" | "sell" } => t.type === "buy" || t.type === "sell")
@@ -125,23 +193,7 @@ export async function runInsiderCheck(): Promise<void> {
         date: t.fromDate,
       }));
 
-    for (const tx of domainTxs) {
-      const signal = classifyInsiderTransaction(tx, DEFAULT_OUTSTANDING);
-      if (!signal) continue; // filtered out (< 0.1% threshold)
-
-      if (signal.severity === "high" || signal.severity === "critical") {
-        const emoji = signal.direction === "up" ? "↑" : "↓";
-        const severity =
-          signal.severity === "critical" ? "NGHIEM TRONG" : "QUAN TRONG";
-        allAlerts.push(
-          `[${severity}] Giao dich noi bo ${tx.code} ${emoji}\n` +
-            `${signal.reasoning}`,
-        );
-      }
-    }
-
-    // ── Step 4: Mass insider buy detection ────────────────────────────────
-    // Group by stock code
+    // ── Step 4: Detect mass insider buy (classification only — no Telegram) ──
     const byCode = new Map<string, InsiderTransaction[]>();
     for (const tx of domainTxs) {
       const arr = byCode.get(tx.code) ?? [];
@@ -149,30 +201,79 @@ export async function runInsiderCheck(): Promise<void> {
       byCode.set(tx.code, arr);
     }
 
-    for (const [code, txs] of byCode.entries()) {
-      const massSignal = detectMassInsiderBuy(txs, 30);
-      if (massSignal && (massSignal.severity === "high" || massSignal.severity === "critical")) {
-        allAlerts.push(
-          `[QUAN TRONG] Tich luy noi bo ${code}\n` + massSignal.reasoning,
-        );
-      }
+    // ── Step 5: Detect accumulation streaks → evidence fragments ─────────────
+    const streaks = detectAccumulationStreaks(database, 30);
+
+    for (const streak of streaks) {
+      insertEvidenceFragment(database, {
+        stock:         streak.code,
+        evidence_type: "insider_accumulation",
+        direction:     "bullish",
+        magnitude:     Math.min(1.0, streak.buyDays / 10),
+        confidence:    0.85,
+        source_agent:  "insiderCheckJob",
+        ttl_days:      30,
+      });
+      logger.info("[insiderCheckJob] evidence fragment inserted", {
+        code: streak.code, buyDays: streak.buyDays,
+      });
     }
 
-    // ── Step 5: Send Telegram ──────────────────────────────────────────────
-    if (allAlerts.length > 0) {
+    // ── Step 6: Insert alert rows (INSERT OR IGNORE for same-day dedup) ──────
+    const utcDay = new Date().toISOString().slice(0, 10);
+    const triggeredAt = new Date().toISOString();
+
+    const insertAlertStmt = database.prepare(`
+      INSERT OR IGNORE INTO alerts
+        (id, triggered_at, severity, signals_json, affected_actions_json,
+         analysis_ids_json, message, read, user_note, sent_by)
+      VALUES
+        (?, ?, 'high', ?, ?, NULL, ?, 0, NULL, 'server')
+    `);
+
+    let alertsInserted = 0;
+
+    // Streak alerts
+    for (const streak of streaks) {
+      const id = `insider-streak-${streak.code}-${utcDay}`;
       const msg =
-        `SSC Giao Dich Noi Bo — ${new Date().toLocaleDateString("vi-VN")}\n\n` +
-        allAlerts.join("\n\n");
-      await sendTelegramMarket(msg);
-      logger.info("[insiderCheckJob] Telegram alert sent", {
-        alertCount: allAlerts.length,
-      });
-    } else {
-      logger.info("[insiderCheckJob] no HIGH/CRITICAL signals — no alert sent");
+        `Tich luy noi bo ${streak.code}: ${streak.buyDays} ngay mua lien tiep ` +
+        `boi ${streak.position} — co hieu ung lon nhat trong thi truong VN`;
+      const result = insertAlertStmt.run(
+        id,
+        triggeredAt,
+        JSON.stringify(["insider_accumulation"]),
+        JSON.stringify([{ code: streak.code, expectedImpact: "up", confidence: 0.85 }]),
+        msg,
+      );
+      if (result.changes > 0) alertsInserted++;
     }
-  } catch (err) {
-    logger.error("[insiderCheckJob] unexpected error", {
-      error: err instanceof Error ? err.message : String(err),
+
+    // Significant single-transaction alerts (> 1% of DEFAULT_OUTSTANDING, buy only)
+    for (const tx of domainTxs) {
+      if (tx.type !== "buy") continue;
+      const pct = (tx.volume / DEFAULT_OUTSTANDING) * 100;
+      if (pct < 1.0) continue;
+      const signal = classifyInsiderTransaction(tx, DEFAULT_OUTSTANDING);
+      if (!signal || (signal.severity !== "high" && signal.severity !== "critical")) continue;
+      const id = `insider-single-${tx.code}-${tx.insiderName.slice(0, 10).replace(/\s/g, "")}-${utcDay}`;
+      const result = insertAlertStmt.run(
+        id,
+        triggeredAt,
+        JSON.stringify(["insider_buy"]),
+        JSON.stringify([{ code: tx.code, expectedImpact: "up", confidence: signal.confidence }]),
+        signal.reasoning,
+      );
+      if (result.changes > 0) alertsInserted++;
+      logger.info("[insiderCheckJob] alert row inserted", { code: tx.code, pct });
+    }
+
+    logger.info("[insiderCheckJob] done", {
+      rowsStored,
+      streaks: streaks.length,
+      alertsInserted,
     });
-  }
+
+    return { rowsWritten: rowsStored + alertsInserted };
+  });
 }

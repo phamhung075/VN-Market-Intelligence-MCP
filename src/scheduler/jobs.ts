@@ -48,6 +48,7 @@ import { runBaseRateComputationJob } from './baseRateComputationJob.js'
 import { runPredictionResolutionJob } from './predictionResolutionJob.js'
 import { runCalibrationReportJob } from './calibrationReportJob.js'
 import { runForeignFlowAlertJobCron } from './foreignFlowAlertJob.js'
+import { runInsiderCheck } from './insiderCheckJob.js'
 import { getDb } from '../infrastructure/db/schema.js'
 import { recordJobRun } from '../infrastructure/db/cronJobRunStore.js'
 
@@ -107,6 +108,8 @@ export const CRONS = {
   calibrationReport:      Bun.env.CRON_CALIBRATION_REPORT          ?? '0 13 * * 0',
   /** Foreign flow alert: daily 09:30 UTC (16:30 VN) weekdays — task 1133, Sprint 061 */
   foreignFlowAlert:       Bun.env.CRON_FOREIGN_FLOW_ALERT          ?? '30 9 * * 1-5',
+  /** Insider SSC disclosure check: daily 01:00 UTC (08:00 VN) Mon-Sun — task 1143, Sprint 063 */
+  insiderCheck:           Bun.env.CRON_INSIDER_CHECK               ?? '0 1 * * *',
 }
 
 function log(msg: string) {
@@ -372,6 +375,15 @@ export function startScheduler() {
     } catch (err) {
       log(`[foreign-flow-alert] uncaught: ${err instanceof Error ? err.message : String(err)}`)
     }
+  }, { timezone: 'UTC' })
+
+  // Daily 01:00 UTC (08:00 VN) — Insider SSC transaction check — task 1143, Sprint 063
+  // Mon-Sun: SSC disclosures can be published on weekends.
+  // runInsiderCheck() uses insertAlert + insertEvidenceFragment (no direct Telegram).
+  cron.schedule(CRONS.insiderCheck, async () => {
+    await recordJobRun(getDb(), 'insiderCheckJob', async () => {
+      await runInsiderCheck()
+    })
   }, { timezone: 'UTC' })
 
   log(`[scheduler] jobs registered — ${Object.keys(CRONS).length} cron keys in CRONS map (incl. WAL checkpoint + 5 summary) + vps-watchdog active`)
