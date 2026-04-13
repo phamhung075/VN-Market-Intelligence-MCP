@@ -6,7 +6,7 @@
 
 Live data → `docs/data/cron-registry.json`
 
-**Orphan** (not registered): `insiderCheckJob.ts` | **Legacy** (fallback test only): `newsPollerJob.ts`
+**Orphan** (not registered): none | **Legacy** (fallback test only): `newsPollerJob.ts`
 
 ## Intelligence Cycle Steps (15-min tick)
 
@@ -29,6 +29,17 @@ Live data → `docs/data/cron-registry.json`
 | 00:30 1st of month | Monthly summary | `CRON_SUMMARY_MONTHLY` |
 | 01:00 Jan/Apr/Jul/Oct 1st | Quarterly summary | `CRON_SUMMARY_QUARTERLY` |
 | 02:00 Jan 2nd | Yearly summary | `CRON_SUMMARY_YEARLY` |
+
+## Evidence & Prediction Pipeline Jobs
+
+| Schedule | Job | Task |
+|----------|-----|------|
+| 16:00 UTC daily (23:00 VN) | `evidenceAccumulatorJob` — aggregates evidence fragments per stock into bullish/bearish scores | 1118 |
+| 19:00 UTC Sunday (02:00 VN Mon) | `baseRateComputationJob` — weekly recompute of per-signal-type base rates for calibration | 1122 |
+| 16:30 UTC daily (23:30 VN) | `predictionResolutionJob` — resolves prediction claims whose horizon has expired; computes Brier score | 1125 |
+| 13:00 UTC Sunday (20:00 VN) | `calibrationReportJob` — weekly Brier score calibration report + Telegram digest to WORK | 1128 |
+| 09:30 UTC M-F (16:30 VN) | `foreignFlowAlertJob` — daily foreign flow smart-money scan; fires HIGH alerts + evidence fragments | 1133 |
+| 01:00 UTC daily (08:00 VN) | `insiderCheckJob` — SSC insider transaction check + streak detection + evidence fragments | 1143 |
 
 ## VPS Proxy Watchdog (price)
 

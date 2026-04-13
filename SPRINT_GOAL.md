@@ -1,6 +1,37 @@
 # Sprint Goal
 
-## Current Sprint — 063 (COMPLETE)
+## Current Sprint — 064 (ACTIVE)
+
+started: 2026-04-13 | theme: Knowledge Sync — Align Agent Tool Maps with 91-Tool Reality
+
+### Goal
+
+Five sprints (059-063) shipped 9 new MCP tools — the prediction engine, calibration reports, foreign flow signals, insider transactions, agent work log, and cron health. These tools are registered in production and accessible, but `mcp-tools.md` still shows the stale Sprint 055 agent tool mapping. Every Cowork analysis agent (01-08) is currently unable to discover or use these capabilities. This sprint synchronizes the knowledge layer with reality: update `mcp-tools.md` agent-tool tables and write the `08-prediction-synthesizer.md` tool section so all agents can use the full 91-tool surface.
+
+### Scope
+
+| Area | In/Out |
+|------|--------|
+| `mcp-tools.md` agent tool mapping: add 9 missing tools to correct agent rows | IN |
+| Agent 08 (Prediction Synthesizer) tool section added to mcp-tools.md | IN |
+| `08-prediction-synthesizer.md` Cowork agent file: confirm tool list matches mcp-tools.md | IN |
+| Alert Commander (05): add `get_insider_transactions`, `get_foreign_flow` to its tool list | IN |
+| Digest Writer (06): add `get_calibration_report`, `get_insider_transactions`, `get_foreign_flow` | IN |
+| Market Watcher (04): add `get_foreign_flow` to its anomaly-detection tool list | IN |
+| Alert Commander + Prediction Synthesizer: add `record_evidence_fragment` | IN |
+| Dev Team Cron: add `get_cron_health` to ops tools | IN |
+| Unified Coordinator: add `get_cron_health`, `get_insider_transactions`, `get_foreign_flow` | IN |
+| Rewriting agent .md logic (rules, protocols) — only tool lists | OUT |
+| New MCP tools or cron jobs | OUT |
+| VPS changes | OUT |
+
+### Success Metric
+
+`mcp-tools.md` agent table lists all 9 new tools (get_cron_health, log_agent_work, get_agent_work_log, record_evidence_fragment, get_evidence_summary, create_prediction_claim, get_calibration_report, get_foreign_flow, get_insider_transactions) in the correct agent rows. `08-prediction-synthesizer.md` lists its tools matching mcp-tools.md. No new tests required — documentation-only sprint. `bun tsc --noEmit` still clean (no code touched).
+
+---
+
+## Previous Sprint — 063 (COMPLETE)
 
 started: 2026-04-12 | completed: 2026-04-13 | theme: Task 1135 Unblock + Insider Transaction Detection
 
