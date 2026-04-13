@@ -1,6 +1,51 @@
 # Sprint Goal
 
-## Current Sprint — 065 (PLANNING)
+## Current Sprint — 067 (COMPLETE)
+
+started: 2026-04-13 | completed: 2026-04-13 | theme: Morning Briefing Intelligence Enrichment — surface insider, foreign flow, and evidence scores in the daily briefing
+
+### Goal
+
+The morning briefing was missing three intelligence layers: overnight insider transactions, previous-day foreign flow, and top evidence conviction scores. The user in France had to query three separate tools to build a complete picture before market open. This sprint extends `assembleBriefing()` with three new optional fields (`insiderRecent`, `foreignFlowSummary`, `evidenceTopScores`), adds Steps 14-16 with independent try/catch blocks so a single query failure cannot abort the briefing, and renders the three new sections in `morningBriefingJob.ts`.
+
+### Scope
+
+| Area | In/Out |
+|------|--------|
+| `DailyBriefing` interface: 3 new optional fields + 3 exported row types + `BEARISH_WARNING_THRESHOLD` constant | IN |
+| `assembleBriefing.ts` Steps 14-16: query `insider_transactions`, `vnstock_trading_stats`, `evidence_scores` | IN |
+| `morningBriefingJob.ts`: render 3 new Telegram sections (Insider Moi, Dong Tien Ngoai, Tich Luy Bang Chung) | IN |
+| TDD: 31 tests in `src/__tests__/1159-morning-briefing-enrichment.test.ts` | IN |
+| `project-stats.json`: advance currentSprint to 67 | IN |
+| New MCP tools or new cron jobs | OUT |
+| VPS changes | OUT |
+
+### Results
+
+All 4 developer tasks shipped (1159-1162) + REQ-067 + TECH-067 Done:
+- TDD red phase: 30 fail / 1 pass (1159): shipped
+- `DailyBriefing` type extension + 3 query helpers (Steps 14-16): shipped (1160)
+- Telegram renderer for 3 new sections: shipped (1161)
+- project-stats.json currentSprint 66 → 67: shipped (1162)
+- 31/31 tests pass. `bun tsc --noEmit` clean.
+
+---
+
+## Previous Sprint — 066 (COMPLETE)
+
+started: 2026-04-12 | completed: 2026-04-12 | theme: Code Hygiene: process.env Purge + Test Encoding Fix
+
+### Goal
+
+Sprint 066 resolved two hygiene issues: (1) replaced all `process.env` references with `Bun.env` across server.ts, systemTools.ts, telegram.ts, index.ts, and logger.ts; (2) fixed 3 failing /ask tests in `238-user-requests.test.ts` that broke after Vietnamese accented output was introduced.
+
+### Results
+
+4 tasks shipped (1155-1158). `bun tsc --noEmit` clean. process.env purged from 13 call sites. 3 test assertions updated.
+
+---
+
+## Previous Sprint — 065 (COMPLETE)
 
 started: 2026-04-12 | theme: Prediction Claim Resolution Loop — close the feedback gap so calibration has real data
 

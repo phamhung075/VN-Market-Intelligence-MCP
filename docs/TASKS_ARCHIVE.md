@@ -5,6 +5,21 @@ Active board lives in `TASKS.md`.
 
 ---
 
+### Sprint 067 — Morning Briefing Intelligence Enrichment — Done 2026-04-13
+
+6 tasks shipped. Extended `DailyBriefing` with 3 optional fields (`insiderRecent`, `foreignFlowSummary`, `evidenceTopScores`). Added Steps 14-16 in `assembleBriefing()` querying `insider_transactions`, `vnstock_trading_stats`, `evidence_scores`. Rendered 3 new Telegram sections in `morningBriefingJob.ts`. 31/31 tests pass. No new tools or cron jobs.
+
+| ID | Title | Commit |
+|----|-------|--------|
+| REQ-067 | BA: REQ_067.md — DB queries, field names, section format strings, type extensions | — |
+| TECH-067 | Architect: TECH_067.md — implementation plan, DDD layer map, test scaffold outline | — |
+| 1159 | TDD red phase — 30 failing tests for 3 new briefing sections (AC-1 to AC-6) | a466dcb |
+| 1160 | Green phase — extend DailyBriefing + BEARISH_WARNING_THRESHOLD + 3 query helpers + Steps 14-16 | e78b30e |
+| 1161 | Render 3 new Telegram sections in morningBriefingJob.ts | e78b30e |
+| 1162 | Advance project-stats.json currentSprint 66 → 67, lastUpdated 2026-04-13 | (this commit) |
+
+---
+
 ### Sprint 059 — Prediction Engine Phase B+C — Done 2026-04-12
 
 6 tasks shipped. +2 MCP tools (get_evidence_summary, create_prediction_claim). +2 scheduler files (baseRateComputationJob, predictionResolutionJob). +1 Cowork agent (08-prediction-synthesizer.md). Tool count 86 → 88. Scheduler count 24 → 26. Analysis agents 8 → 9.
