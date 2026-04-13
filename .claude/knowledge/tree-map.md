@@ -87,6 +87,6 @@ CLAUDE.md (root — always loaded)
 
 On every run, verify:
 1. `docs/data/tool-registry.json`.toolCount matches `grep -c registerTool src/interface/mcp/tools/*.ts`
-2. `docs/data/cron-registry.json`.schedulerFileCount matches `ls src/scheduler/*Job.ts | wc -l`
+2. `docs/data/cron-registry.json`.schedulerFileCount matches `ls src/scheduler/*.ts | grep -v "^jobs\.ts$" | grep -v "/jobs\.ts" | wc -l` (includes summaryJobs.ts, excludes jobs.ts orchestrator)
 3. No knowledge `.md` file contains hardcoded counts (numbers that should be in JSON)
 4. All pointers in this tree resolve (target file exists)

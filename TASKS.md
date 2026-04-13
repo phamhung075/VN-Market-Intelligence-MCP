@@ -4,6 +4,225 @@
 
 ---
 
+## Sprint 071 — Per-Ticker Intelligence Summary
+
+Vision: `SPRINT_GOAL.md`
+Spec: `docs/REQ_071.md` | Design: `docs/TECH_071.md`
+
+### Kanban
+
+| ID | Title | Agent | Layer | Depends On | Branch | Status |
+|----|-------|-------|-------|------------|--------|--------|
+| REQ-071 | BA: write REQ_071.md — per-ticker intelligence summary spec, data contracts, acceptance criteria | BA | — | — | — | Done |
+| TECH-071 | Architect: write TECH_071.md — DDD layer plan, interface contracts, test strategy | Architect | — | REQ-071 | — | Done |
+| PM-071 | PM: sprint planning — create tasks 1178–1181 in TASKS.md, assign to Developer, set branch | PM | — | TECH-071 | — | Done |
+| 1178 | TDD: write failing tests for AC-1 to AC-8 in `src/__tests__/1178-ticker-intelligence.test.ts` | Developer | tests | TECH-071 ✓ | task/1178-ticker-intelligence | Done |
+| 1179 | Implement `tickerIntelligenceTools.ts` — all 6 sections + `handleGetTickerIntelligence` + `formatTickerIntelligence` + `registerTickerIntelligenceTools` (FR-1 through FR-8) | Developer | interface | 1178 ✓ | task/1178-ticker-intelligence | Review |
+| 1180 | Register `registerTickerIntelligenceTools` in `registry.ts`; update `087-server-wiring.test.ts` to expect `toolCount = 97` (FR-9) | Developer | interface | 1179 ✓ | task/1178-ticker-intelligence | Todo |
+| 1181 | Sprint close: advance `project-stats.json` `currentSprint` to 71, `toolCount` to 97, update `lastUpdated` | Developer | docs/data | 1179 ✓, 1180 ✓ | task/1178-ticker-intelligence | Backlog |
+
+**WIP state:** 0 tasks In Progress (limit: 2). Sprint 071 ACTIVE. Task 1178 Done. Task 1179 in Review. Task 1180 unblocked.
+
+---
+
+### Task 1178 — TDD: write failing tests for AC-1 to AC-8
+
+**Branch**: `task/1178-ticker-intelligence`
+**Layer**: tests
+**Depends on**: TECH-071 (approved design)
+
+#### Files to read first
+
+- `src/__tests__/1146-get-insider-transactions.test.ts` — DB injection pattern to copy (`handleGetInsiderTransactions` called directly, in-memory db)
+- `src/infrastructure/db/evidenceFragmentStore.ts` — `getLatestEvidenceScore` signature
+- `src/infrastructure/db/insiderStore.ts` — `getInsiderTransactionsFiltered` signature
+- `src/infrastructure/db/predictionClaimStore.ts` — `getResolvedClaims` signature
+
+#### Files to create
+
+- CREATE: `src/__tests__/1178-ticker-intelligence.test.ts`
+
+#### Setup boilerplate
+
+```typescript
+process.env["DB_PATH"] = ":memory:";
+import { describe, it, expect, beforeEach, afterEach } from "bun:test";
+import Database from "bun:sqlite";
+import { handleGetTickerIntelligence, formatTickerIntelligence } from "../interface/mcp/tools/tickerIntelligenceTools.js";
+```
+
+The test file must define a `buildDb()` helper that creates an in-memory `Database` instance and runs the following DDL:
+
+```sql
+CREATE TABLE market_prices_history (code TEXT, price REAL, volume INTEGER, fetched_at TEXT);
+CREATE TABLE evidence_scores (id INTEGER PRIMARY KEY, stock TEXT, score_date TEXT,
+  bullish_score REAL, bearish_score REAL, neutral_score REAL, fragment_count INTEGER, computed_at TEXT);
+CREATE TABLE insider_transactions (id INTEGER PRIMARY KEY AUTOINCREMENT, code TEXT,
+  insider_name TEXT, position TEXT, type TEXT, executed_volume INTEGER, registered_volume INTEGER,
+  price REAL, from_date TEXT, to_date TEXT, fetched_at TEXT);
+CREATE TABLE vnstock_trading_stats (code TEXT, foreign_volume INTEGER, foreign_room INTEGER,
+  current_holding_ratio REAL, fetched_at TEXT);
+CREATE TABLE financial_reports (id INTEGER PRIMARY KEY, action_code TEXT, sort_key TEXT,
+  period_year INTEGER, period_quarter INTEGER, ai_analysis TEXT);
+CREATE TABLE prediction_claims (id INTEGER PRIMARY KEY, stock TEXT, agent_id TEXT,
+  claim_text TEXT, direction TEXT, target_price REAL, creation_price REAL,
+  resolution_date TEXT, confidence REAL, resolution_outcome TEXT, brier_score REAL,
+  resolved_at TEXT, created_at TEXT);
+```
+
+All tests call `handleGetTickerIntelligence(code, db)` directly — no MCP transport overhead. Import is named; if the module does not exist yet, TypeScript will compile but the import will fail at runtime, causing all tests to fail (red phase).
+
+#### Test cases to write (all must fail — red phase)
+
+| Test | AC | What it proves |
+|---|---|---|
+| `AC-1: full brief with all data` | AC-1 | Seed all 6 tables for VCB; assert header `=== INTELLIGENCE BRIEF: VCB ===`, `85,000 VND`, `Bullish 0.7200`, 2 insider lines, `TICH CUC`, `Chinh xac 2/2 (100.0%)`, footer `===================================` |
+| `AC-2: clean brief with no data` | AC-2 | Empty DB for HPG; assert all 6 section labels present with their respective no-data strings |
+| `AC-3: ticker normalised to uppercase` | AC-3 | Insert price for `"FPT"`, call with `"fpt"`; assert header shows `FPT` and price data returned |
+| `AC-4: malformed ai_analysis JSON` | AC-4 | Insert `ai_analysis = "not-valid-json"` for VNM; assert section 5 shows `(loi phan tich BCTC)` |
+| `AC-5: insider cap at 3 with overflow` | AC-5 | Insert 5 insider rows for VCB within last 7 days; assert exactly 3 transaction lines + `(+2 giao dich khac trong 7 ngay)` |
+| `AC-6: all brier_scores null` | AC-6 | Insert 2 resolved claims for TCB with NULL brier_score; assert `Brier TB: N/A` |
+| `AC-7: tool registered in server wiring` | AC-7 | Import `registry.ts`; assert `get_ticker_intelligence` present (toolCount = 97 deferred to task 1180) |
+| `AC-8: formatTickerIntelligence output structure` | AC-8 | Call `formatTickerIntelligence` directly with stub sections; assert header uses exactly 35 `=`, all 6 labels present, footer uses exactly 35 `=` |
+| `edge: section 5 missing ai_analysis fields` | edge | Insert valid JSON `{}` (no outlook/summary); assert section 5 shows `(loi phan tich BCTC)` |
+
+#### Acceptance Criteria
+
+**Given** `src/__tests__/1178-ticker-intelligence.test.ts` is written with the 9 test cases above and `tickerIntelligenceTools.ts` does not yet exist
+
+**When** `bun test src/__tests__/1178-ticker-intelligence.test.ts` is run
+
+**Then**
+- All 9 tests fail with import or runtime errors (red phase confirmed)
+- `bun tsc --noEmit` shows only the expected "module not found" errors for the not-yet-existing implementation file — no other type errors
+- No changes are made to any non-test file
+
+---
+
+### Task 1179 — Implement tickerIntelligenceTools.ts
+
+**Branch**: `task/1178-ticker-intelligence`
+**Layer**: interface
+**Depends on**: 1178 (red-phase tests committed)
+
+#### Files to read first
+
+- `src/__tests__/1178-ticker-intelligence.test.ts` — the test contracts to satisfy
+- `src/interface/mcp/tools/foreignFlowTools.ts` — DB injection pattern + `formatVolume` / `formatPrice` local helpers to replicate
+- `src/interface/mcp/tools/insiderTools.ts` — `registerInsiderTools` DB injection pattern
+- `src/infrastructure/db/evidenceFragmentStore.ts` — `getLatestEvidenceScore(db, ticker)` return type
+- `src/infrastructure/db/insiderStore.ts` — `getInsiderTransactionsFiltered(db, { codes, sinceDate })` return shape
+- `src/infrastructure/db/predictionClaimStore.ts` — `getResolvedClaims(db, ticker, limit)` return shape
+- `src/infrastructure/db/schema.ts` — `getDb()` import path
+
+#### Files to create
+
+- CREATE: `src/interface/mcp/tools/tickerIntelligenceTools.ts`
+
+#### Implementation requirements
+
+Export three functions in this file:
+
+1. `registerTickerIntelligenceTools(server: McpServer, db?: Database): void`
+   - Registers tool `get_ticker_intelligence` with input schema `{ code: z.string() }`
+   - Uses `db ?? getDb()` pattern (same as `foreignFlowTools.ts`)
+
+2. `handleGetTickerIntelligence(code: string, db: Database): Promise<string>`
+   - Normalises `code` via `.toUpperCase().trim()`
+   - Runs all 6 sections in sequential independent `try/catch` blocks (see error isolation pattern in TECH-071)
+   - Calls `formatTickerIntelligence(code, sections, timestamp)`
+   - Outer try/catch returns a generic error string if anything escapes all inner guards
+
+3. `formatTickerIntelligence(code: string, sections: [string, string, string, string, string, string], timestamp: string): string`
+   - Assembles the complete brief — header line `=== INTELLIGENCE BRIEF: {CODE} ===`, timestamp line, 6 labelled sections, footer line
+   - Header and footer each use exactly 35 `=` characters
+
+Section implementation details (refer to TECH-071 `Per-Section Implementation Plan`):
+- Section 1: inline SQL on `market_prices_history`; `formatPrice` = `Math.round(n).toLocaleString("en-US")`; `formatVolume` thresholds: `>=1_000_000` → `M`, `>=1_000` → `K`, else raw integer
+- Section 2: `getLatestEvidenceScore(db, ticker)` — scores to `.toFixed(4)`, fragment_count as integer
+- Section 3: `getInsiderTransactionsFiltered(db, { codes: [ticker], sinceDate })` — 7-day window, cap at 3 rows, overflow line, type map `buy→mua / sell→ban`
+- Section 4: inline SQL on `vnstock_trading_stats`; zero-guard on `foreign_volume`; `holding_ratio = (current_holding_ratio * 100).toFixed(2)`
+- Section 5: inline SQL on `financial_reports`; `JSON.parse` inside inner try/catch; outlook map `positive→TICH CUC / neutral→TRUNG TINH / negative→TIEU CUC / mixed→HO HOP / else→KHONG RO`; summary truncated at 120 chars + `"..."`
+- Section 6: `getResolvedClaims(db, ticker, 20)`; compute `correct`, `pct`, `avg_brier` (null-filtered); `avg_brier = "N/A"` when no non-null scores
+
+#### Acceptance Criteria
+
+**Given** `tickerIntelligenceTools.ts` is implemented and the 9 tests from task 1178 exist
+
+**When** `bun test src/__tests__/1178-ticker-intelligence.test.ts` is run
+
+**Then**
+- All 9 tests pass (0 failures)
+- `bun tsc --noEmit` reports 0 errors
+- `registry.ts` is NOT yet modified (that is task 1180)
+
+---
+
+### Task 1180 — Register tool in registry.ts + update 087-server-wiring.test.ts
+
+**Branch**: `task/1178-ticker-intelligence`
+**Layer**: interface
+**Depends on**: 1179 (implementation complete and tests green)
+
+#### Files to read first
+
+- `src/interface/mcp/tools/registry.ts` — existing import list and `toolRegistry` array
+- `src/__tests__/087-server-wiring.test.ts` — locate `toolCount` assertion to update
+- `docs/data/tool-registry.json` — current `toolCount` to verify starting value
+
+#### Files to modify
+
+- MODIFY: `src/interface/mcp/tools/registry.ts`
+  - Add import: `import { registerTickerIntelligenceTools } from "./tickerIntelligenceTools.js";`
+  - Append to `toolRegistry` array: `registerTickerIntelligenceTools, // Sprint 071: get_ticker_intelligence (+1 tool → 97)`
+- MODIFY: `src/__tests__/087-server-wiring.test.ts`
+  - Find the assertion that checks `toolCount` and update the expected value from `96` to `97`
+- MODIFY: `docs/data/tool-registry.json`
+  - Set `toolCount` to `97`
+  - Add entry for `get_ticker_intelligence` in the tool list
+
+#### Acceptance Criteria
+
+**Given** `registry.ts` is updated with the new import and array entry
+
+**When** `bun test src/__tests__/087-server-wiring.test.ts` and `bun test src/__tests__/1178-ticker-intelligence.test.ts` are run
+
+**Then**
+- Both test files pass with 0 failures
+- `bun tsc --noEmit` reports 0 errors
+- `get_ticker_intelligence` appears in the registered tool list
+- `docs/data/tool-registry.json` `toolCount` = 97
+
+---
+
+### Task 1181 — Sprint close
+
+**Branch**: `task/1178-ticker-intelligence`
+**Layer**: docs/data
+**Depends on**: 1179 ✓, 1180 ✓
+
+#### Files to modify
+
+- MODIFY: `docs/data/project-stats.json`
+  - Set `currentSprint` to `71`
+  - Set `toolCount` to `97`
+  - Set `lastUpdated` to today's date (`2026-04-13`)
+
+#### Acceptance Criteria
+
+**Given** tasks 1179 and 1180 are Done and all tests pass
+
+**When** `docs/data/project-stats.json` is updated and `bun test && bun tsc --noEmit` are run
+
+**Then**
+- `project-stats.json` `currentSprint` = 71
+- `project-stats.json` `toolCount` = 97
+- `bun test` passes with 0 failures (full suite)
+- `bun tsc --noEmit` reports 0 errors
+- All task branches deleted locally and remotely, working directory back on `main`
+
+---
+
 ## Sprint 070 — Calibration Label Integration
 
 Vision: `SPRINT_GOAL.md`

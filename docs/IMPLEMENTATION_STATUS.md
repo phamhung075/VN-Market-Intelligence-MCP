@@ -160,6 +160,67 @@ Sprint 056 complete. Backlog items in TASKS.md. Sprint 057 planning pending.
 - Task 1118: `evidenceAccumulatorJob.ts` — nightly 23:00 VN, purge + weighted score accumulation per stock; CRONS map key `evidenceAccumulator` (7 tests)
 - Net: +1 tool, +1 cron, 31/31 new tests pass. bun tsc --noEmit clean.
 
+## Done — Sprint 058 (2026-04-12)
+
+- Task 1119/1120: split-block OCR extraction for income statement + balance sheet with magnitude inference fallback (scanned PDF hardening)
+
+## Done — Sprint 059 (2026-04-12)
+
+- Tasks 1121+1123: likelihood ratio store + prediction_claims store CRUD
+- Task 1122: `baseRateComputationJob.ts` — weekly base-rate computation (`CRON_BASE_RATE_COMPUTATION` `0 19 * * 0` UTC)
+- Task 1125: `predictionResolutionJob.ts` — daily prediction resolution with direction-based outcome matching
+- Task 1126: Agent 08 `08-prediction-synthesizer.md` added to Cowork roster
+
+## Done — Sprint 060 (2026-04-12)
+
+- Task 1129: `get_calibration_report` MCP tool (+1 tool → 89 total) in `calibrationTools.ts`
+- Task 1130: Agent 08 self-assessment Step 0 integrates calibration into prediction cycle
+
+## Done — Sprint 061 (2026-04-12)
+
+- Tasks 1131-1134: VPS foreign flow pipeline — VPS-side extraction in `fetch-prices.sh`, `foreignFlowAlertJob.ts`, `get_foreign_flow` MCP tool (+1 tool), diagnostic endpoint `GET /api/foreign-flow-status`
+- `foreignFlowAlertJob.ts` registered (`CRON_FOREIGN_FLOW_ALERT` `30 9 * * 1-5` UTC)
+
+## Done — Sprint 062 (2026-04-13)
+
+- Tasks 1136-1140: `recordJobRun` wrapper extended to morningBriefing, intelligenceCycle, eveningSummary, alertDigest, utility/infra jobs, bctcOverdueCheck, vpsProxyWatchdog, cronHealthAlert — full cron observability coverage
+
+## Done — Sprint 063 (2026-04-13)
+
+- Tasks 1141-1146: `insider_transactions` DDL + schema migration, `insiderCheckJob.ts` refactored with streak detection + alert rows + cron registration (`CRON_INSIDER_CHECK` `0 1 * * *` UTC), `get_insider_transactions` MCP tool (+1 tool)
+- insiderCheckJob promoted from orphan to registered job
+
+## Done — Sprint 064 (2026-04-13)
+
+- Knowledge sync: align all agent tool maps with 90-tool reality (commit 882d507); `project-stats.json` corrected to toolCount=90
+
+## Done — Sprint 065 (2026-04-13)
+
+- Tasks 1150-1154: prediction claim resolution loop — `creation_price` + direction fallback fixes; full end-to-end prediction lifecycle closed
+
+## Done — Sprint 066 (2026-04-13)
+
+- Hotfix: process.env purge + test encoding fix for CI stability
+
+## Done — Sprint 067 (2026-04-13)
+
+- Tasks 1159-1162: morning briefing enrichment — `assembleBriefing` extended with 3 query helpers for richer daily context
+
+## Done — Sprint 068 (2026-04-13)
+
+- Tasks 1163-1167: `market_messages` DDL + `marketMessageStore.ts`, `marketMessageTools.ts` with `get_unreviewed_market_messages` + `review_market_message` MCP tools, `sendTelegramMarket` persist option migrated to 10 call sites (+2 tools)
+
+## Done — Sprint 069 (2026-04-13)
+
+- Tasks 1168-1172: `get_market_message_digest` + `batch_review_market_messages` MCP tools added (+2 tools), `recordJobRun` wrap verified for remaining jobs, Task 1139 administrative close
+- Net: market message review system complete (4 tools total in category)
+
+## Done — Sprint 070 (2026-04-13)
+
+- Tasks 1173-1177: calibration label integration — `getLabelAccuracyReport` in `marketMessageStore.ts`, `get_label_accuracy_report` MCP tool (+1 tool → 96 total), `calibrationReportJob.ts` extended with label accuracy section + WORK Telegram block
+- `calibrationReportJob.ts` registered (`CRON_CALIBRATION_REPORT` `0 13 * * 0` UTC)
+- Net: +1 tool (96 total), label accuracy pipeline complete
+
 ## Deferred
 
 - E2E test: daily briefing flow (task 125)

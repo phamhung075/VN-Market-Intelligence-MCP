@@ -1,6 +1,34 @@
 # Sprint Goal
 
-## Current Sprint — 070 (COMPLETE)
+## Current Sprint — 071 (PLANNING)
+
+started: 2026-04-13 | theme: Per-Ticker Intelligence Summary — collapse 5-7 tool calls into one unified ticker intelligence view
+
+### Goal
+
+The user must currently invoke 5-7 separate MCP tools (get_evidence_score, get_insider_transactions, get_stock_prices, get_foreign_flow_alert, get_financial_reports, get_calibration_report) to build a complete pre-trade intelligence picture for a single stock. This sprint introduces a single `get_ticker_intelligence` MCP tool that aggregates all current signals for one ticker — latest price, evidence score, recent insider activity, previous-day foreign flow, latest BCTC outlook, and calibration accuracy for that stock's predictions — into a formatted Vietnamese-language intelligence brief. One call, complete picture.
+
+### Scope
+
+| Area | In/Out |
+|------|--------|
+| New MCP tool `get_ticker_intelligence(code: string)` in a new `tickerIntelligenceTools.ts` | IN |
+| Query aggregation: market_prices (latest close), evidence_scores (latest row), insider_transactions (last 7 days), vnstock_trading_stats (latest foreign_volume), financial_reports (most recent ai_analysis), prediction_claims (resolution_outcome stats for this ticker) | IN |
+| Formatted output: structured Vietnamese-language intelligence brief with clear sections | IN |
+| Error handling: best-effort per section — if any sub-query fails, that section shows "(no data)" instead of crashing | IN |
+| TDD: failing tests first in `src/__tests__/1178-ticker-intelligence.test.ts` | IN |
+| `project-stats.json` advance to sprint 071, toolCount 96 → 97 | IN |
+| New cron jobs | OUT |
+| VPS changes | OUT |
+| Changes to existing tools or briefing jobs | OUT |
+
+### Success Metric
+
+After this sprint: (1) `get_ticker_intelligence("VCB")` returns a single formatted string with at least 5 intelligence sections (price, evidence, insider, foreign flow, BCTC). (2) Any section with no data shows "(no data)" not an error. (3) Full test suite green, `bun tsc --noEmit` clean. (4) `project-stats.json` currentSprint = 71, toolCount = 97.
+
+---
+
+## Previous Sprint — 070 (COMPLETE)
 
 started: 2026-04-13 | completed: 2026-04-13 | theme: Calibration Label Integration — surface human verdict labels as per-agent signal accuracy in the calibration report
 

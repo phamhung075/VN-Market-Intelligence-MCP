@@ -1,0 +1,109 @@
+# Archive — Sprints 064–070 (Knowledge Sync → Calibration Label Integration)
+
+---
+
+## Sprint 064 — Knowledge Sync: Align Agent Tool Maps with 91-Tool Reality (Done 2026-04-13)
+
+4 tasks. Documentation-only sprint — no code changes. Updated mcp-tools.md agent tool tables: +9 tools to correct agent rows + Agent 08 row. Commit 882d507.
+
+| ID | Title | Status |
+|----|-------|--------|
+| REQ-064 | BA: REQ_064.md — tool additions per agent, change matrix | Done |
+| TECH-064 | Architect: confirm no code changes needed | Done |
+| 1148 | Update mcp-tools.md agent tool tables | Done |
+| 1149 | Verify 08-prediction-synthesizer.md matches updated mcp-tools.md | Done |
+
+---
+
+## Sprint 065 — Prediction Claim Resolution Loop (Done 2026-04-12)
+
+7 tasks. ALTER TABLE migration for creation_price, PredictionClaimInput/Row/ClaimDbRow interfaces, fix evaluateOutcome(), direction + expected_move_pct in create_prediction_claim tool. 29 tests pass.
+
+| ID | Title | Layer | Status |
+|----|-------|-------|--------|
+| REQ-065 | BA: REQ_065.md | — | Done |
+| TECH-065 | Architect: TECH_065.md | — | Done |
+| 1150 | ALTER TABLE migration for creation_price in schema.ts | infrastructure | Done |
+| 1151 | PredictionClaimInput/Row/ClaimDbRow interfaces + INSERT update | infrastructure | Done |
+| 1152 | Fix evaluateOutcome() + pass creation_price | scheduler | Done |
+| 1153 | Add direction + expected_move_pct + price lookup to create_prediction_claim | interface | Done |
+| 1154 | Tests: AC-1 through AC-7 | tests | Done |
+
+---
+
+## Sprint 066 — Code Hygiene: process.env Purge + Test Encoding Fix (Done 2026-04-12)
+
+4 tasks. Replaced all process.env with Bun.env in server.ts, systemTools.ts, telegram.ts, index.ts, logger.ts. Fixed 3 failing /ask tests (accented Vietnamese output).
+
+| ID | Title | Layer | Status |
+|----|-------|-------|--------|
+| 1155 | Replace process.env with Bun.env in server.ts + systemTools.ts + telegram.ts | interface/infrastructure | Done |
+| 1156 | Replace process.env with Bun.env in index.ts + logger.ts | infrastructure | Done |
+| 1157 | Fix 3 failing /ask tests — accented Vietnamese output | tests | Done |
+| 1158 | Advance project-stats.json currentSprint 65 → 66 | docs/data | Done |
+
+---
+
+## Sprint 067 — Morning Briefing Intelligence Enrichment (Done 2026-04-13)
+
+6 tasks. Extended DailyBriefing with insiderRecent, foreignFlowSummary, evidenceTopScores. Steps 14-16 in assembleBriefing(). 3 new Telegram sections in morningBriefingJob.ts. 31/31 tests pass.
+
+| ID | Title | Commit |
+|----|-------|--------|
+| REQ-067 | BA: REQ_067.md | — |
+| TECH-067 | Architect: TECH_067.md | — |
+| 1159 | TDD red phase — 30 failing tests for 3 new briefing sections | a466dcb |
+| 1160 | Green phase — extend DailyBriefing + 3 query helpers + Steps 14-16 | e78b30e |
+| 1161 | Render 3 new Telegram sections in morningBriefingJob.ts | e78b30e |
+| 1162 | Advance project-stats.json currentSprint 66 → 67 | — |
+
+---
+
+## Sprint 068 — MARKET Message Quality Review System (Done 2026-04-13)
+
+7 tasks. market_messages SQLite table, marketMessageStore.ts (insert, getUnreviewed, review), sendTelegramMarket() persist option + 10 call sites, 2 MCP tools (get_unreviewed_market_messages, review_market_message). Tool count 91 → 93. 36/36 tests pass.
+
+| ID | Title | Commit |
+|----|-------|--------|
+| REQ-068 | BA: REQ_068.md | — |
+| TECH-068 | Architect: TECH_068.md | — |
+| PM-068 | PM: tasks 1163-1167 | — |
+| 1163 | TDD red phase — 36 failing tests | fc53049 |
+| 1164 | market_messages DDL + marketMessageStore.ts | 43a6075 |
+| 1165 | sendTelegramMarket() persist option + 10 call sites | 1a10b7a |
+| 1166 | marketMessageTools.ts + 2 tools registered | a52de4a |
+| 1167 | Sprint close | — |
+
+---
+
+## Sprint 069 — Market Message Review UX + Task 1139 Close (Done 2026-04-13)
+
+8 tasks. getMarketMessageDigest + batchReviewMarketMessages helpers. 2 MCP tools (get_market_message_digest, batch_review_market_messages). Task 1139 admin close. Tool count 93 → 95. 22/22 new tests pass.
+
+| ID | Title | Status |
+|----|-------|--------|
+| REQ-069 | BA: REQ_069.md | Done |
+| TECH-069 | Architect: TECH_069.md | Done |
+| PM-069 | PM: tasks 1168–1172 | Done |
+| 1168 | TDD red phase — 22 failing tests | Done |
+| 1169 | getMarketMessageDigest + batchReviewMarketMessages in marketMessageStore.ts | Done |
+| 1170 | 2 MCP tool handlers registered in marketMessageTools.ts | Done |
+| 1171 | Task 1139 admin close | Done |
+| 1172 | Sprint close: toolCount 93 → 95 | Done |
+
+---
+
+## Sprint 070 — Calibration Label Integration (Done 2026-04-13)
+
+8 tasks. LabelAccuracyRow interface + getLabelAccuracyReport in marketMessageStore.ts. get_label_accuracy_report MCP tool in calibrationTools.ts. CalibrationJobResult.label_accuracy + Step 3.5 in runCalibrationReport. Tool count 95 → 96. 18/18 new tests pass.
+
+| ID | Title | Status |
+|----|-------|--------|
+| REQ-070 | BA: REQ_070.md | Done |
+| TECH-070 | Architect: TECH_070.md | Done |
+| PM-070 | PM: tasks 1173–1177 | Done |
+| 1173 | TDD red phase — 9 failing tests | Done |
+| 1174 | LabelAccuracyRow + getLabelAccuracyReport in marketMessageStore.ts | Done |
+| 1175 | get_label_accuracy_report tool in calibrationTools.ts | Done |
+| 1176 | CalibrationJobResult.label_accuracy + Step 3.5 + sendCalibrationDigest WORK block | Done |
+| 1177 | Sprint close: toolCount 95 → 96 | Done |

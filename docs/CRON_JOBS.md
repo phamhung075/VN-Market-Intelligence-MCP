@@ -25,6 +25,11 @@
 | 07:00 UTC Sunday | `devTeamHeartbeat` | `0 7 * * 0` (`CRON_DEV_TEAM_HEARTBEAT`) | System health + weekly observability report |
 | 08:00 UTC Sunday | `predictionOutcome` | `0 8 * * 0` (`CRON_PREDICTION_OUTCOME`) | Evaluate prediction signals vs actual outcomes |
 | ***/12 min** | `askQueueCheck` | `*/12 * * * *` | Check ask_queue for pending /ask questions; post signal to agent_signals for 07-qa-responder if count > 0 (task 1074) |
+| 23:00 VN daily | `evidenceAccumulator` | `0 16 * * *` UTC (`CRON_EVIDENCE_ACCUMULATOR`) | Purge expired evidence + weighted score accumulation per stock (task 1118) |
+| 02:00 VN Sunday | `baseRateComputation` | `0 19 * * 0` UTC (`CRON_BASE_RATE_COMPUTATION`) | Weekly base-rate computation for prediction likelihood ratios (sprint 059) |
+| 20:00 VN Sunday | `calibrationReportJob` | `0 13 * * 0` UTC (`CRON_CALIBRATION_REPORT`) | Weekly Brier score calibration report + label accuracy + Telegram digest (sprint 060/070) |
+| 16:30 VN M–F | `foreignFlowAlertJob` | `30 9 * * 1-5` UTC (`CRON_FOREIGN_FLOW_ALERT`) | Daily foreign flow smart-money scan — HIGH alerts + evidence fragments (sprint 061) |
+| 08:00 VN daily | `insiderCheckJob` | `0 1 * * *` UTC (`CRON_INSIDER_CHECK`) | Daily SSC insider transaction check + streak detection + evidence fragments (sprint 063) |
 
 ## Intelligence Cycle Steps (15-min tick)
 
@@ -64,8 +69,8 @@ This job is in `src/scheduler/vpsProxyWatchdogJob.ts` (154 lines). Registered in
 
 ## Notes
 
-- Total scheduler files: **24** (`jobs.ts` + `summaryJobs.ts` + 22 job handlers including `cronHealthAlertJob.ts`, `vpsProxyWatchdogJob.ts`, `bctcReparseJob.ts`).
-- `insiderCheckJob.ts` exists in `src/scheduler/` but is **not registered** in `jobs.ts` (orphan — Sprint 039-040 era, pending wiring).
+- Total scheduler files: **29** (`jobs.ts` + `summaryJobs.ts` + 27 job handlers including `cronHealthAlertJob.ts`, `vpsProxyWatchdogJob.ts`, `bctcReparseJob.ts`, `evidenceAccumulatorJob.ts`, `baseRateComputationJob.ts`, `calibrationReportJob.ts`, `foreignFlowAlertJob.ts`, `insiderCheckJob.ts`).
+- `insiderCheckJob.ts` is registered in `jobs.ts` since Sprint 063 (was an orphan in Sprint 039-040 era).
 - `newsPollerJob.ts` is legacy (superseded by `intelligenceCycleJob`); kept for fallback testing only.
 - `userRequestCheckJob.ts` was referenced in Sprint 050 design but was **not created** — `/ask` + `/why` handling is done inline in `intelligenceCycleJob.ts` or `telegramCommands.ts`.
 - VPS cron has been removed. The fetch schedule now lives inside `vps-scripts/fetch-prices-loop.sh` controlled by systemd on the Vultr host.
