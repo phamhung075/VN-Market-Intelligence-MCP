@@ -15,10 +15,10 @@ Vision: `SPRINT_GOAL.md`
 | REQ-072 | Requirements: BCTC financial_reports empty bug | BA | docs | — | — | Done |
 | 1181 | TDD red: failing test for financial_reports persistence | Dev | test | — | — | Done |
 | 1182 | Fix storeReport error propagation + WAL checkpoint | Dev | application | 1181 ✓ | task/1182-bctc-persist-fix | Todo |
-| 1183 | Fix 308-tool-registry.test.ts count 57 → 59 | Dev | test | — | task/1183-registry-count-fix | In Progress |
+| 1183 | Fix 308-tool-registry.test.ts count 57 → 59 | Dev | test | — | — | Done |
 | 1184 | project-stats.json sprint 72 advance + QA smoke | Dev | docs | 1182, 1183 | — | Backlog |
 
-**WIP:** 1 In Progress (1183).
+**WIP:** 0 In Progress.
 
 ---
 
