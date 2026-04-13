@@ -4,7 +4,344 @@
 
 ---
 
-## Sprint 062 — Cron Observability Completion (ACTIVE)
+## Sprint 063 — Task 1135 Unblock + Insider Transaction Detection (ACTIVE)
+
+Vision: `SPRINT_GOAL.md`
+Spec: `docs/REQ_063.md`
+Tech: `docs/TECH_063.md`
+
+### Kanban
+
+| ID | Title | Agent | Layer | Depends On | Branch | Status |
+|----|-------|-------|-------|------------|--------|--------|
+| REQ-063 | BA: write REQ_063.md for insider transactions + 1135 unblock | BA | — | — | — | Done |
+| TECH-063 | Architect: review REQ_063, produce TECH_063.md | Architect | — | REQ-063 | — | Done |
+| PM-063 | PM: sprint planning — break TECH_063 into tasks 1141+, assign batches | PM | — | TECH-063 | — | Done |
+| 1141 | FR-3: insider_transactions DDL in initDatabase() + indexes + test | Developer | infrastructure | — | task/1141-insider-ddl | Todo |
+| 1142 | FR-1: VPS script foreign flow step with env-var field names + test notes | Developer | infrastructure | — | task/1142-vps-foreign-flow | Todo |
+| 1143 | FR-5: Refactor insiderCheckJob — remove Telegram, add streak detection + insertAlert + evidenceFragment + test | Developer | domain/infrastructure | 1141 ✓ | task/1143-insider-check-job-refactor | Backlog |
+| 1144 | FR-2: GET /api/foreign-flow-status diagnostic endpoint + test | Developer | interface | — | task/1144-foreign-flow-status | Review |
+| 1145 | FR-4: Register insiderCheck cron in jobs.ts + recordJobRun wrap + test | Developer | interface/scheduler | 1141 ✓, 1143 ✓ | task/1145-insider-cron-registration | Backlog |
+| 1146 | FR-6: get_insider_transactions MCP tool + insiderStore date-filter + test | Developer | interface/infrastructure | 1141 ✓ | task/1146-get-insider-transactions | Backlog |
+| 1147 | FR-counts: Update project-stats.json (toolCount 91) + cron-registry.json | Developer | docs/data | 1145 ✓, 1146 ✓ | task/1147-counts-update | Backlog |
+
+**WIP state:** 0 tasks In Progress (limit: 2). Sprint planning complete — 7 tasks created.
+
+**Parallelism notes:**
+- Batch A (no deps, start immediately): 1141, 1142, 1144 — all three are independent. Load WIP slots with 1141 + 1142 first (Track B DDL and Track A VPS script). 1144 can start when a slot opens.
+- Batch B (depends on 1141): 1143 (Track B job refactor) and 1146 (MCP tool) can run in parallel once 1141 is done.
+- Batch C (depends on 1141 + 1143): 1145 (cron registration) unblocks after both are merged.
+- Batch D (depends on 1145 + 1146): 1147 (counts update) is the final task.
+
+---
+
+### Task 1141 — FR-3: insider_transactions DDL in initDatabase() + indexes + test
+
+**Branch**: `task/1141-insider-ddl`
+**Layer**: infrastructure
+**Depends on**: none (Batch A — start immediately)
+
+#### Files to read first
+
+- `src/infrastructure/db/schema.ts` — find the `vps_push_log` block (around line 840) to locate the insertion point; read the "Tables created" header comment at the top of the file
+
+#### Files to create / modify
+
+- MODIFY: `src/infrastructure/db/schema.ts` — add `insider_transactions` DDL after the `vps_push_log` block; update header comment to add `insider_transactions` to the "Tables created" list
+- CREATE: `src/__tests__/1141-insider-ddl.test.ts`
+
+#### Exact DDL to insert (after vps_push_log block)
+
+```typescript
+// ── Insider Transactions (Task 1141 / Sprint 063) ─────────────────────────
+db.exec(`
+  CREATE TABLE IF NOT EXISTS insider_transactions (
+    id                  TEXT PRIMARY KEY,
+    code                TEXT NOT NULL,
+    insider_name        TEXT NOT NULL,
+    position            TEXT NOT NULL,
+    type                TEXT NOT NULL CHECK(type IN ('buy','sell','other')),
+    registered_volume   INTEGER NOT NULL DEFAULT 0,
+    executed_volume     INTEGER NOT NULL DEFAULT 0,
+    price               REAL NOT NULL DEFAULT 0,
+    from_date           TEXT NOT NULL,
+    to_date             TEXT NOT NULL,
+    fetched_at          TEXT NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_it_code_from_date
+    ON insider_transactions(code, from_date DESC);
+  CREATE INDEX IF NOT EXISTS idx_it_type_from_date
+    ON insider_transactions(type, from_date DESC);
+`);
+```
+
+#### Acceptance Criteria
+
+**Given** a fresh in-memory SQLite database
+**When** `initDatabase()` is called
+**Then**
+- `SELECT name FROM sqlite_master WHERE type='table' AND name='insider_transactions'` returns one row (not null)
+- `idx_it_code_from_date` index exists in `sqlite_master`
+- `idx_it_type_from_date` index exists in `sqlite_master`
+- `insertInsiderTransaction(db, validRow)` succeeds without throwing
+- `bun test src/__tests__/1141-insider-ddl.test.ts` exits 0
+- `bun tsc --noEmit` exits 0
+
+---
+
+### Task 1142 — FR-1: VPS script foreign flow step with env-var field names + test notes
+
+**Branch**: `task/1142-vps-foreign-flow`
+**Layer**: infrastructure (VPS shell script — outside Bun process)
+**Depends on**: none (Batch A — parallelisable with 1141)
+
+#### Files to read first
+
+- `vps-scripts/fetch-prices.sh` — locate Step 2 block (VN stocks fetch, holding `$VN_DATA`) and Step 3 block (VN indices); the new Step 2b inserts between them
+
+#### Files to create / modify
+
+- MODIFY: `vps-scripts/fetch-prices.sh` — insert Step 2b block between Step 2 and Step 3
+- CREATE: `src/__tests__/1142-fetch-prices-foreign-flow.test.ts` — shell integration test notes (document the manual test procedure; bun test file documents the expected log output pattern)
+
+#### Step 2b block to insert (see TECH_063.md Task 1142 section for full shell code)
+
+Key behaviours:
+- Reads `FOREIGN_FLOW_FBUY_FIELD`, `FOREIGN_FLOW_FSELL_FIELD` (default `fsellVol`), `FOREIGN_FLOW_FROOM_FIELD` (default `currentRoom`) from environment
+- If `FOREIGN_FLOW_FBUY_FIELD` is unset, logs `WARN: FOREIGN_FLOW_FBUY_FIELD not set, skipping foreign flow push` and skips gracefully
+- Uses `$VN_DATA` from Step 2 — no second API call
+- Computes `foreign_volume = (.[$fbuy] // 0) - (.[$fsell] // 0)` via `jq`
+- POSTs `ForeignFlowUpsertItem[]` to `$MCP_BASE_URL/api/push-foreign-flow` with `X-API-Key` header
+- Logs `FOREIGN_FLOW: N items pushed → $FF_RESP`
+
+#### Acceptance Criteria
+
+**Given** `FOREIGN_FLOW_FBUY_FIELD` is NOT set on the VPS host
+**When** the script runs
+**Then**
+- The log contains `WARN: FOREIGN_FLOW_FBUY_FIELD not set, skipping foreign flow push`
+- No POST to `/api/push-foreign-flow` is attempted
+- Script exits normally (price push still completes)
+
+**Given** `FOREIGN_FLOW_FBUY_FIELD=fbuyVol` and `FOREIGN_FLOW_FSELL_FIELD=fsellVol` are set
+**When** the script runs with non-empty `$VN_DATA`
+**Then**
+- `jq` extracts foreign flow fields using the configured names (null-coalesced to 0 if absent)
+- A POST is made with a non-empty `ForeignFlowUpsertItem[]` array
+- Log line `FOREIGN_FLOW: N items pushed` appears with N > 0
+- `bun tsc --noEmit` exits 0 (test file only has type annotations)
+
+---
+
+### Task 1143 — FR-5: Refactor insiderCheckJob — remove Telegram, add streak detection + insertAlert + evidenceFragment + test
+
+**Branch**: `task/1143-insider-check-job-refactor`
+**Layer**: domain (streak logic) / infrastructure (alert + evidence writes)
+**Depends on**: 1141 (insider_transactions table must exist before job can read/write it)
+
+#### Files to read first
+
+- `src/scheduler/insiderCheckJob.ts` — full file: locate Step 5 (direct Telegram send), existing imports, `allAlerts` construction
+- `src/infrastructure/db/evidenceFragmentStore.ts` — `insertEvidenceFragment` signature
+- `src/infrastructure/db/alertStore.ts` — `insertAlert` signature (or confirm inline INSERT pattern from foreignFlowAlertJob.ts)
+- `src/scheduler/foreignFlowAlertJob.ts` — reference pattern for `insertAlert` + `insertEvidenceFragment` usage
+
+#### Files to create / modify
+
+- MODIFY: `src/scheduler/insiderCheckJob.ts` — three changes (see TECH_063.md Task 1143 section for exact code)
+- CREATE: `src/__tests__/1143-insider-check-job.test.ts`
+
+#### Three changes required
+
+1. **Remove direct Telegram send**: delete `import { sendTelegramMarket }` and the entire Step 5 block that calls it
+2. **Add streak detection helper**: add pure function `detectAccumulationStreaks(db, windowDays)` above `runInsiderCheck()` — queries `insider_transactions` for `type='buy'` with `executed_volume > 0`, groups by `code + lower(trim(position))`, returns streaks with `buyDays >= 3`
+3. **Replace Step 5 with insertAlert + insertEvidenceFragment**: new Steps 5 + 6 insert evidence fragments for streaks, then insert alert rows for streaks AND significant single-buy transactions (>1% of DEFAULT_OUTSTANDING). Use `INSERT OR IGNORE` with day-scoped IDs to deduplicate within same calendar day
+
+#### Acceptance Criteria
+
+**Given** mock `fetchInsiderTransactions` returns buy rows for `VNM` on 3 distinct dates with `executedVolume > 0`
+**When** `runInsiderCheck()` is called
+**Then**
+- Transactions are inserted into `insider_transactions`
+- `sendTelegramMarket` is never called (verify by spy — import must be removed)
+- `insertEvidenceFragment` is called with `{ stock: 'VNM', evidence_type: 'insider_accumulation', confidence: 0.85 }`
+- An alert row appears in `alerts` table with `severity='high'`
+- A second call on the same UTC day does NOT insert a duplicate alert row (`INSERT OR IGNORE` deduplicates by day-scoped ID)
+- `sell` transactions do NOT trigger evidence fragments or alerts
+- `bun test src/__tests__/1143-insider-check-job.test.ts` exits 0
+- `bun tsc --noEmit` exits 0
+
+---
+
+### Task 1144 — FR-2: GET /api/foreign-flow-status diagnostic endpoint + test
+
+**Branch**: `task/1144-foreign-flow-status`
+**Layer**: interface (HTTP endpoint in server.ts)
+**Depends on**: none (Batch B, parallelisable with 1143)
+
+#### Files to read first
+
+- `src/interface/mcp/server.ts` — locate the `push-foreign-flow` block (around line 663) and the `GET /api/watchlist` block that follows it; new endpoint inserts between them
+- `src/infrastructure/db/schema.ts` — confirm `vps_push_log` table schema (`pushed_at`, `items_count`, `service` columns)
+
+#### Files to create / modify
+
+- MODIFY: `src/interface/mcp/server.ts` — insert new GET `/api/foreign-flow-status` handler after the `push-foreign-flow` block
+- CREATE: `src/__tests__/1144-foreign-flow-status.test.ts`
+
+#### Endpoint contract (see TECH_063.md Task 1144 section for full TypeScript code)
+
+- Auth: `X-API-Key` header must match `VPS_PUSH_API_KEY` env var; returns 401 if wrong or missing
+- Reads `FOREIGN_FLOW_FBUY_FIELD` / `FOREIGN_FLOW_FSELL_FIELD` / `FOREIGN_FLOW_FROOM_FIELD` from `Bun.env` (defaults: `fbuyVol`, `fsellVol`, `currentRoom`)
+- Queries `vps_push_log WHERE service='foreign-flow' ORDER BY pushed_at DESC LIMIT 1`
+- Queries sample row from `vnstock_trading_stats WHERE foreign_volume IS NOT NULL AND foreign_volume != 0 ORDER BY updated_at DESC LIMIT 1`
+- Returns `staleSince` if last push was > 48h ago, else null
+- Returns 200 even if no push has occurred yet (`lastPushSummary: null`)
+
+#### Acceptance Criteria
+
+**Given** no API key provided
+**When** `GET /api/foreign-flow-status` is called
+**Then** response is 401
+
+**Given** valid API key + no push has occurred yet
+**When** `GET /api/foreign-flow-status` is called
+**Then**
+- Response is 200 JSON
+- `lastPushSummary` is null
+- `tableRowCount` is 0
+- `configuredFields.fbuyField` equals `FOREIGN_FLOW_FBUY_FIELD` env value (or default `fbuyVol`)
+- `staleSince` is null
+
+**Given** valid API key + a push occurred > 48h ago
+**When** `GET /api/foreign-flow-status` is called
+**Then** `staleSince` is an ISO timestamp (not null)
+
+- `bun test src/__tests__/1144-foreign-flow-status.test.ts` exits 0
+- `bun tsc --noEmit` exits 0
+
+---
+
+### Task 1145 — FR-4: Register insiderCheck cron in jobs.ts + recordJobRun wrap + test
+
+**Branch**: `task/1145-insider-cron-registration`
+**Layer**: interface/scheduler
+**Depends on**: 1141 (DDL must exist), 1143 (job refactor must be merged — cannot register the old Telegram-violating version)
+
+#### Files to read first
+
+- `src/scheduler/jobs.ts` — locate: last import line (find `foreignFlowAlert` import), `CRONS` object (find `foreignFlowAlert` entry), `startScheduler()` function (find the foreignFlowAlert `cron.schedule()` block)
+- `src/scheduler/insiderCheckJob.ts` — confirm `runInsiderCheck` is the exported function name after Task 1143
+
+#### Files to create / modify
+
+- MODIFY: `src/scheduler/jobs.ts` — add import for `runInsiderCheck`, add `insiderCheck` entry to `CRONS`, add `cron.schedule()` call in `startScheduler()`
+- CREATE: `src/__tests__/1145-insider-cron-registration.test.ts`
+
+#### Exact changes (see TECH_063.md Task 1145 section)
+
+- Import: `import { runInsiderCheck } from './insiderCheckJob.js'`
+- CRONS entry: `insiderCheck: Bun.env.CRON_INSIDER_CHECK ?? '0 1 * * *'` (01:00 UTC = 08:00 VN, Mon-Sun)
+- Schedule call: wrapped in `recordJobRun(getDb(), 'insiderCheckJob', ...)` following Sprint 062 pattern
+- The terminal log line already uses `Object.keys(CRONS).length` — count increments automatically
+
+#### Acceptance Criteria
+
+**Given** the scheduler starts
+**When** `startScheduler()` is called
+**Then**
+- `CRONS` object contains an `insiderCheck` key
+- `cron.schedule()` is called for the `insiderCheck` schedule expression
+- `runInsiderCheck` is wrapped in `recordJobRun(getDb(), 'insiderCheckJob', ...)`
+- `bun test src/__tests__/1145-insider-cron-registration.test.ts` exits 0
+- `bun tsc --noEmit` exits 0
+
+---
+
+### Task 1146 — FR-6: get_insider_transactions MCP tool + insiderStore date-filter + test
+
+**Branch**: `task/1146-get-insider-transactions`
+**Layer**: interface/mcp (tool) + infrastructure/db (store extension)
+**Depends on**: 1141 (insider_transactions table must exist for queries to work)
+
+#### Files to read first
+
+- `src/infrastructure/db/insiderStore.ts` — existing `InsiderRow` type, `getInsiderTransactions()` signature, existing imports
+- `src/interface/mcp/tools/index.ts` — locate the last `register*Tools(server)` call to find the insertion point
+- `src/interface/mcp/tools/foreignFlowTools.ts` — reference pattern for tool structure and `getDb()` usage
+
+#### Files to create / modify
+
+- MODIFY: `src/infrastructure/db/insiderStore.ts` — add `getInsiderTransactionsFiltered(db, opts)` function (see TECH_063.md Task 1146 Step 1 for full code)
+- CREATE: `src/interface/mcp/tools/insiderTools.ts` — new file with `registerInsiderTools(server, resolveDb?)` export (see TECH_063.md Task 1146 Step 2 for full code)
+- MODIFY: `src/interface/mcp/tools/index.ts` — add `import { registerInsiderTools } from "./insiderTools.js"` and call `registerInsiderTools(server)`
+- CREATE: `src/__tests__/1146-get-insider-transactions.test.ts`
+
+#### Tool contract summary
+
+- Tool name: `get_insider_transactions`
+- Inputs: `code?` (ticker), `days?` (1–90, default 30), `type?` ("buy"|"sell"|"all", default "all")
+- If `code` omitted: queries `SELECT DISTINCT code FROM watchlist` and fetches all
+- Computes `streaks` on the fly: groups buy txs by `code + lower(trim(position))`, counts distinct `from_date` values, includes groups with >= 2 distinct buy days
+- Returns `{ transactions[], streaks[], totalCount, lookbackDays }`
+- Results ordered by `from_date DESC`, then `code ASC`
+
+#### Acceptance Criteria
+
+**Given** `insider_transactions` has 3 buy rows for `VNM` on 3 distinct dates (all `executedVolume > 0`) within 30 days
+**When** `get_insider_transactions({ code: "VNM" })` is called
+**Then**
+- `transactions` array contains all 3 rows
+- `streaks` contains one entry for `VNM` with `buyDays: 3`
+- `totalCount` equals `transactions.length`
+- Results are ordered `from_date DESC`
+
+**Given** no `code` param, watchlist has 2 stocks with transactions
+**When** `get_insider_transactions({})` is called
+**Then** transactions for both watchlist codes are returned
+
+**Given** `days=100` (over max)
+**When** tool is called
+**Then** `lookbackDays` is clamped to 90
+
+**Given** a sell-only row (executedVolume > 0)
+**When** streaks are computed
+**Then** the sell row does NOT appear in `streaks`
+
+- `bun test src/__tests__/1146-get-insider-transactions.test.ts` exits 0
+- `bun tsc --noEmit` exits 0
+
+---
+
+### Task 1147 — FR-counts: Update project-stats.json (toolCount 91) + cron-registry.json
+
+**Branch**: `task/1147-counts-update`
+**Layer**: docs/data
+**Depends on**: 1145 (cron registered), 1146 (tool registered)
+
+#### Files to read first
+
+- `docs/data/project-stats.json` — current `toolCount` value (expected: 90)
+- `docs/data/cron-registry.json` — current entries list, confirm `insiderCheck` is absent
+
+#### Files to create / modify
+
+- MODIFY: `docs/data/project-stats.json` — increment `toolCount` from 90 to 91
+- MODIFY: `docs/data/cron-registry.json` — add `insiderCheck` entry: `{ "key": "insiderCheck", "schedule": "0 1 * * *", "description": "Daily 01:00 UTC (08:00 VN) — SSC insider transaction check + streak detection", "task": 1145, "sprint": 63 }`
+
+#### Acceptance Criteria
+
+**Given** Tasks 1145 and 1146 are merged to main
+**When** `docs/data/project-stats.json` and `docs/data/cron-registry.json` are updated
+**Then**
+- `project-stats.json` `toolCount` equals 91
+- `cron-registry.json` contains an entry with `key: "insiderCheck"` and `schedule: "0 1 * * *"`
+- `bun tsc --noEmit` exits 0
+- `GET /health` returns `toolCount: 91` after server restart
+
+---
+
+## Sprint 062 — Cron Observability Completion (COMPLETE)
 
 Vision: `SPRINT_GOAL.md`
 Spec: `docs/REQ_062.md`
