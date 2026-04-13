@@ -4,7 +4,7 @@
 
 ---
 
-## Sprint 068 — MARKET Message Quality Review System (BACKLOG)
+## Sprint 068 — MARKET Message Quality Review System (ACTIVE)
 
 Vision: `SPRINT_GOAL.md`
 
@@ -12,9 +12,279 @@ Vision: `SPRINT_GOAL.md`
 
 | ID | Title | Agent | Layer | Depends On | Branch | Status |
 |----|-------|-------|-------|------------|--------|--------|
-| REQ-068 | BA: write REQ_068.md — exact DDL for market_messages table, sendTelegramMarket() modification contract (INSERT signature, from_agent/message_type derivation), tool param schemas for get_unreviewed_market_messages + review_market_message, migration strategy, acceptance criteria | BA | — | — | — | Backlog |
+| REQ-068 | BA: write REQ_068.md — exact DDL for market_messages table, sendTelegramMarket() modification contract (INSERT signature, from_agent/message_type derivation), tool param schemas for get_unreviewed_market_messages + review_market_message, migration strategy, acceptance criteria | BA | — | — | — | Done |
+| TECH-068 | Architect: write TECH_068.md — implementation plan for tasks 1163-1167, DDD layer map, test scaffold outline | Architect | — | REQ-068 | — | Done |
+| PM-068 | PM: sprint planning — create tasks 1163-1167 in TASKS.md, assign to Developer, set branch name | PM | — | TECH-068 | — | Done |
+| 1163 | TDD: write failing tests for AC-1 to AC-12 in `src/__tests__/1163-market-message-review.test.ts` | Developer | tests | TECH-068 ✓ | task/1163-market-message-review | Review |
+| 1164 | Add `market_messages` DDL to `schema.ts` + create `marketMessageStore.ts` (insertMarketMessage, getUnreviewedMarketMessages, reviewMarketMessage) | Developer | infrastructure | 1163 | task/1163-market-message-review | Todo |
+| 1165 | Modify `sendTelegramMarket()` to accept and use `persist` option + update `notifyTelegramAlert`, `sendTelegram` alias, and 8 scheduler/interface call sites | Developer | infrastructure/scheduler/interface | 1164 | task/1163-market-message-review | Todo |
+| 1166 | Create `marketMessageTools.ts` + register `get_unreviewed_market_messages` and `review_market_message` in `registry.ts` | Developer | interface | 1165 | task/1163-market-message-review | Todo |
+| 1167 | Advance `docs/data/project-stats.json` currentSprint to 68, update lastUpdated | Developer | docs/data | 1166 | task/1163-market-message-review | Todo |
 
-**WIP state:** 0 tasks In Progress. Queued after Sprint 067.
+**WIP state:** 0 tasks In Progress. Sprint 068 started 2026-04-13. REQ-068 Done. TECH-068 Done. PM-068 Done. Task 1163 in Review. Tasks 1164-1167 queued in Todo.
+
+---
+
+### Task 1163 — TDD: write failing tests for AC-1 to AC-12
+
+**Branch**: `task/1163-market-message-review`
+**Layer**: tests
+**Depends on**: TECH-068 (approved design)
+
+#### Files to read first
+
+- `src/infrastructure/db/schema.ts` — locate `initDatabase()`, understand the established `db.exec()` block pattern and the header comment listing all tables
+- `src/__tests__/002-db-schema.test.ts` — established `:memory:` + `initDatabase()` + `closeDb()` pattern to copy exactly
+- `src/__tests__/188-alert-digest.test.ts` — second reference for in-memory DB test isolation pattern
+
+#### Files to create
+
+- CREATE: `src/__tests__/1163-market-message-review.test.ts`
+
+#### Test groups to write (all must fail on first commit — red phase)
+
+Write the following `describe` blocks in order. Every test must compile but fail because the referenced modules (`marketMessageStore.ts`, updated `telegram.ts`, `marketMessageTools.ts`) do not yet exist:
+
+1. `market_messages table creation` — `PRAGMA table_info` returns 9 columns; `PRAGMA index_list` returns 4 indexes; second `initDatabase()` call does not throw
+2. `insertMarketMessage` — insert returns id >= 1; SELECT row matches params; `sent_at` is a valid datetime string; verdict and reviewed_at are null
+3. `getUnreviewedMarketMessages ordering` — 3 rows (2 unreviewed, 1 reviewed); query returns 2 rows in DESC sent_at order; reviewed row excluded
+4. `getUnreviewedMarketMessages ticker filter` — 3 unreviewed rows with different tickers; `ticker="VCB"` returns exactly 1 row
+5. `getUnreviewedMarketMessages empty state` — all rows have non-null verdict; function returns `[]`
+6. `reviewMarketMessage success` — sets verdict, verdict_note, non-null reviewed_at on target row; returns `true`
+7. `reviewMarketMessage idempotent` — second call overwrites verdict; no error thrown; returns `true`
+8. `reviewMarketMessage unknown id` — returns `false`; no exception
+9. `reviewMarketMessage invalid verdict` — throws `Error("Invalid verdict")`
+10. `sendTelegramMarket persist on success` — mock fetchFn returning `{ ok: true }`; one row inserted with correct from_agent and content
+11. `sendTelegramMarket no persist on failure` — mock fetchFn returning `{ ok: false, status: 400 }`; zero rows in market_messages
+12. `sendTelegramMarket backward compat (no persist)` — calling without persist option inserts row with from_agent="unknown", message_type="unknown", ticker=null
+13. `get_unreviewed_market_messages MCP tool — rows exist` — JSON array, newest first, correct structure
+14. `get_unreviewed_market_messages MCP tool — empty` — returns bilingual plain-text string
+15. `get_unreviewed_market_messages MCP tool — ticker filter` — `ticker="VCB"` returns only VCB row
+16. `review_market_message MCP tool — success with note` — returns `"Message N labelled as 'noise'. Note saved."`
+17. `review_market_message MCP tool — success without note` — returns `"Message N labelled as 'signal'."` (no trailing note)
+18. `review_market_message MCP tool — idempotent` — returns success; row overwritten
+19. `review_market_message MCP tool — unknown id` — returns `"Message 999 not found."`
+
+**Test isolation rule**: set `process.env["DB_PATH"] = ":memory:"` before all imports. Call `closeDb()` in `afterAll`. Call `initDatabase()` in `beforeAll`. This matches `002-db-schema.test.ts` exactly.
+
+**MCP tool testing pattern**: export testable handler functions from `marketMessageTools.ts` alongside `registerMarketMessageTools`. Call those handler functions directly in tests with the in-memory DB already initialised — do not call `server.tool()` in tests.
+
+#### Acceptance Criteria
+
+**Given** `src/__tests__/1163-market-message-review.test.ts` exists with all 19 test cases
+**When** `bun test src/__tests__/1163-market-message-review.test.ts` is run before tasks 1164-1166 are done
+**Then**
+- All 19 test cases exist and are syntactically valid TypeScript
+- Tests fail (red) because `marketMessageStore.ts` and `marketMessageTools.ts` do not yet exist
+- `bun tsc --noEmit` passes (imports typed correctly via `import type` or forward declarations where needed)
+
+---
+
+### Task 1164 — Add market_messages DDL to schema.ts + create marketMessageStore.ts
+
+**Branch**: `task/1163-market-message-review` (same branch, continued)
+**Layer**: infrastructure
+**Depends on**: 1163 (test file committed, all tests red)
+
+#### Files to read first
+
+- `src/infrastructure/db/schema.ts` — locate the last `db.exec()` block (after `vps_push_log` block) and the header comment listing all tables; find the established comment-banner pattern
+- `src/infrastructure/db/telegramReportStore.ts` — structural reference for the new `marketMessageStore.ts` (mirrored pattern)
+- `src/__tests__/002-db-schema.test.ts` — understand what the schema test asserts so the new DDL does not break existing assertions
+
+#### Files to create / modify
+
+- MODIFY: `src/infrastructure/db/schema.ts` — add the `market_messages` DDL block after the last existing `db.exec()` block; update the header comment to include `market_messages` in the "Tables created" list
+- CREATE: `src/infrastructure/db/marketMessageStore.ts`
+
+#### Exact DDL to insert in schema.ts
+
+```sql
+-- ── Market Messages (Sprint 068) ──────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS market_messages (
+  id           INTEGER PRIMARY KEY AUTOINCREMENT,
+  from_agent   TEXT    NOT NULL,
+  message_type TEXT    NOT NULL,
+  ticker       TEXT,
+  content      TEXT    NOT NULL,
+  sent_at      TEXT    NOT NULL DEFAULT (datetime('now')),
+  verdict      TEXT,
+  verdict_note TEXT,
+  reviewed_at  TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_mm_sent_at    ON market_messages(sent_at DESC);
+CREATE INDEX IF NOT EXISTS idx_mm_from_agent ON market_messages(from_agent);
+CREATE INDEX IF NOT EXISTS idx_mm_verdict    ON market_messages(verdict);
+CREATE INDEX IF NOT EXISTS idx_mm_ticker     ON market_messages(ticker);
+```
+
+#### marketMessageStore.ts public surface
+
+Export the following types and functions (exact signatures from TECH-068):
+- `MarketMessageAgent` union type (12 values including `"unknown"`)
+- `MarketMessageType` union type (12 values including `"unknown"`)
+- `MarketMessageRow` interface (9 fields)
+- `insertMarketMessage(db, params): number` — wrapped in try/catch; returns 0 on failure
+- `getUnreviewedMarketMessages(db, limit?, ticker?): MarketMessageRow[]` — limit clamped 1-100, default 20; two SQL variants (with/without ticker)
+- `reviewMarketMessage(db, id, verdict, note?): boolean` — validates verdict is `"signal"` or `"noise"`, throws `Error("Invalid verdict")` for any other value
+
+Use `db.prepare(...).run(...)` for INSERT. Obtain rowid via `.lastInsertRowid`. All three query functions use parameterized `?` placeholders — never string-interpolate user input.
+
+#### Acceptance Criteria
+
+**Given** `schema.ts` updated and `marketMessageStore.ts` created
+**When** `bun test src/__tests__/1163-market-message-review.test.ts` is run
+**Then**
+- Test groups 1-9 (table creation + store functions) pass (green)
+- Test groups 10-19 (telegram persist + MCP tools) still fail (not yet implemented)
+- `bun tsc --noEmit` reports 0 errors
+- Existing schema tests (`002-db-schema.test.ts`) continue to pass
+
+---
+
+### Task 1165 — Modify sendTelegramMarket() persist option + 10 call site migrations
+
+**Branch**: `task/1163-market-message-review` (same branch, continued)
+**Layer**: infrastructure / scheduler / interface
+**Depends on**: 1164 (marketMessageStore.ts exists and store tests pass)
+
+#### Files to read first
+
+- `src/infrastructure/notifiers/telegram.ts` — locate `sendTelegramMarket()`, `sendTelegram()` alias, `notifyTelegramAlert()`, `SendTelegramOptions` interface, `TelegramNotifier` interface; understand the `sendTelegramBug()` post-send DB block (exact pattern to mirror)
+- `src/scheduler/morningBriefingJob.ts` lines 250-265 — locate the chunked send loop to understand the full-text-before-split structural tension (documented in TECH-068 Risk Assessment)
+
+#### Files to modify
+
+- MODIFY: `src/infrastructure/notifiers/telegram.ts` — extend `SendTelegramOptions` with optional `persist` field; add post-send DB block to `sendTelegramMarket()`; update `sendTelegram()` alias; update `notifyTelegramAlert()`; update `TelegramNotifier` interface
+- MODIFY: `src/scheduler/morningBriefingJob.ts` — call `insertMarketMessage` once with full `text` before the chunk loop; do NOT pass `persist` to the `sendTelegramMarket` calls inside the loop
+- MODIFY: `src/scheduler/eveningSummaryJob.ts` — add `persist` to `sendTelegramMarket` call
+- MODIFY: `src/scheduler/franceSummaryJob.ts` — add `persist` to `sendTelegramMarket` call
+- MODIFY: `src/scheduler/patternWatchJob.ts` — extract ticker via `/\b([A-Z]{2,4})\b/` regex before the send call; add `persist` with extracted ticker
+- MODIFY: `src/scheduler/calibrationReportJob.ts` — add `persist` ONLY to the MARKET path (line ~370); do NOT touch the WORK path (`sendTelegramWork` call)
+- MODIFY: `src/scheduler/weeklyPortfolioReportJob.ts` — add `persist` to `sendTelegramMarket` call
+- MODIFY: `src/scheduler/weatherCheckJob.ts` — add `persist` to `sendTelegramMarket` call
+- MODIFY: `src/interface/mcp/tools/telegramTools.ts` — add `persist` to `sendTelegramMarket` call on the `market` branch only
+- MODIFY: `src/interface/mcp/server.ts` — add `persist` to the three `sendTelegramMarket` call sites (lines ~318, ~562, ~599)
+
+#### Key implementation details
+
+`sendTelegramMarket()` post-send block (insert after `const result = await coreSend(...)`):
+```typescript
+if (result.ok) {
+  try {
+    const db = getDb();
+    insertMarketMessage(db, {
+      from_agent: options.persist?.from_agent ?? "unknown",
+      message_type: options.persist?.message_type ?? "unknown",
+      ticker: options.persist?.ticker ?? null,
+      content: text,
+    });
+  } catch (persistErr) {
+    log.warn("[telegram] insertMarketMessage failed — message was sent but not persisted", {
+      error: persistErr instanceof Error ? persistErr.message : String(persistErr),
+    });
+  }
+}
+return result.ok;
+```
+
+`sendTelegram()` alias update:
+```typescript
+export async function sendTelegram(text: string): Promise<boolean> {
+  return sendTelegramMarket(text, {
+    persist: { from_agent: "alert-digest", message_type: "alert_digest" },
+  });
+}
+```
+
+`morningBriefingJob.ts` chunking fix: call `insertMarketMessage(getDb(), { from_agent: "morning-briefing", message_type: "morning_briefing", ticker: null, content: text })` once before the chunk loop. The `sendTelegramMarket` calls inside the loop must NOT carry a `persist` option.
+
+`calibrationReportJob.ts` caution: only the MARKET channel send path receives `persist`. The WORK path (`sendTelegramWork`) must not be modified.
+
+#### Acceptance Criteria
+
+**Given** all 10 call sites updated and `telegram.ts` modified
+**When** `bun test src/__tests__/1163-market-message-review.test.ts` is run
+**Then**
+- Test groups 1-12 (store + telegram persist) pass (green)
+- Test groups 13-19 (MCP tools) still fail (not yet implemented)
+- `bun tsc --noEmit` reports 0 errors
+- `bun test` full suite: no regressions in existing tests
+
+---
+
+### Task 1166 — Create marketMessageTools.ts + register in registry.ts
+
+**Branch**: `task/1163-market-message-review` (same branch, continued)
+**Layer**: interface
+**Depends on**: 1165 (telegram persist tests pass)
+
+#### Files to read first
+
+- `src/interface/mcp/tools/calibrationTools.ts` — exact pattern for `getDb()` lazy call at invocation time; `server.tool()` registration structure
+- `src/interface/mcp/tools/insiderTools.ts` — second pattern reference (db-injectable store functions)
+- `src/interface/mcp/tools/registry.ts` — locate where to add `registerMarketMessageTools` call
+
+#### Files to create / modify
+
+- CREATE: `src/interface/mcp/tools/marketMessageTools.ts`
+- MODIFY: `src/interface/mcp/tools/registry.ts` — add `registerMarketMessageTools(server)` call
+
+#### marketMessageTools.ts structure
+
+Export `registerMarketMessageTools(server: McpServer): void` that registers two tools:
+
+**Tool 1: `get_unreviewed_market_messages`**
+- Params: `limit` (z.coerce.number, 1-50, default 20), `ticker` (z.string optional)
+- Calls `getUnreviewedMarketMessages(getDb(), limit, ticker ?? null)`
+- When rows exist: returns `JSON.stringify(rows, null, 2)` as text content
+- When empty: returns `"Khong co tin nhan chua review. Tat ca da duoc danh gia."`
+
+**Tool 2: `review_market_message`**
+- Params: `id` (z.coerce.number, min 1), `verdict` (z.enum(["signal","noise"])), `note` (z.string optional)
+- Calls `reviewMarketMessage(getDb(), id, verdict, note ?? null)`
+- When `true` (found): returns `"Message {id} labelled as '{verdict}'.{note ? ' Note saved.' : ''}"`
+- When `false` (not found): returns `"Message {id} not found."`
+- On exception: returns `"Error reviewing message {id}: {error.message}"`
+
+Also export testable handler functions (for use in tests without MCP server setup):
+- `handleGetUnreviewedMarketMessages(params, db): string`
+- `handleReviewMarketMessage(params, db): string`
+
+This export pattern allows tests to call handlers directly, matching `168-prediction-mcp-tool.test.ts` pattern.
+
+#### Acceptance Criteria
+
+**Given** `marketMessageTools.ts` created and `registry.ts` updated
+**When** `bun test src/__tests__/1163-market-message-review.test.ts` is run
+**Then**
+- All 19 test groups pass (full green)
+- `bun tsc --noEmit` reports 0 errors
+- `bun test` full suite: all previously passing tests continue to pass
+- Both new tools appear in the MCP tool list (verify via `curl http://localhost:3000/health` or by reading registry.ts)
+
+---
+
+### Task 1167 — Advance project-stats.json currentSprint to 68
+
+**Branch**: `task/1163-market-message-review` (same branch, continued)
+**Layer**: docs/data
+**Depends on**: 1166 (all 19 tests green, full suite passing)
+
+#### Files to modify
+
+- MODIFY: `docs/data/project-stats.json` — set `currentSprint` to `68`; update `lastUpdated` to today's date (`2026-04-13`)
+
+#### Acceptance Criteria
+
+**Given** all tasks 1163-1166 are complete and `bun test` is green
+**When** `docs/data/project-stats.json` is updated
+**Then**
+- `currentSprint` field equals `68`
+- `lastUpdated` field equals `"2026-04-13"`
+- `bun tsc --noEmit` reports 0 errors
+- `bun test` exits 0 with no failures (AC-12 from REQ-068 satisfied)
+- Branch `task/1163-market-message-review` is merged to main and deleted (local + remote)
 
 ---
 
