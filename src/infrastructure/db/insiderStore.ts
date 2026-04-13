@@ -127,6 +127,79 @@ export function getInsiderTransactions(
 }
 
 /**
+ * Retrieve insider transactions with optional filters for code, date range,
+ * and transaction type. Supports watchlist-aware multi-code queries.
+ * Results ordered by from_date DESC, then code ASC.
+ *
+ * @param db   - SQLite database handle
+ * @param opts - Filter options (codes, sinceDate, type)
+ */
+export function getInsiderTransactionsFiltered(
+  db: Database,
+  opts: {
+    codes?: string[];         // if empty/undefined, no code filter
+    sinceDate?: string;       // ISO date string, inclusive
+    type?: "buy" | "sell" | "all";
+  },
+): InsiderRow[] {
+  const { codes, sinceDate, type } = opts;
+
+  const conditions: string[] = [];
+  const params: (string | number)[] = [];
+
+  if (codes && codes.length > 0) {
+    const placeholders = codes.map(() => "?").join(", ");
+    conditions.push(`code IN (${placeholders})`);
+    params.push(...codes);
+  }
+  if (sinceDate) {
+    conditions.push("from_date >= ?");
+    params.push(sinceDate);
+  }
+  if (type && type !== "all") {
+    conditions.push("type = ?");
+    params.push(type);
+  }
+
+  const where = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+  const sql = `
+    SELECT * FROM insider_transactions
+    ${where}
+    ORDER BY from_date DESC, code ASC
+  `;
+
+  type DbRow = {
+    id: string;
+    code: string;
+    insider_name: string;
+    position: string;
+    type: string;
+    registered_volume: number;
+    executed_volume: number;
+    price: number;
+    from_date: string;
+    to_date: string;
+    fetched_at: string;
+  };
+
+  const rows = db.prepare<DbRow, (string | number)[]>(sql).all(...params) as DbRow[];
+
+  return rows.map((r) => ({
+    id: r.id,
+    code: r.code,
+    insiderName: r.insider_name,
+    position: r.position,
+    type: r.type as "buy" | "sell" | "other",
+    registeredVolume: r.registered_volume,
+    executedVolume: r.executed_volume,
+    price: r.price,
+    fromDate: r.from_date,
+    toDate: r.to_date,
+    fetchedAt: r.fetched_at,
+  }));
+}
+
+/**
  * Check if a transaction with the given id already exists.
  */
 export function hasInsiderTransaction(db: Database, id: string): boolean {

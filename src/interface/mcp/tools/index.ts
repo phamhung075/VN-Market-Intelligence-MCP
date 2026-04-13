@@ -73,3 +73,5 @@ export { registerAskQueueTools } from "./askQueueTools.js";
 export { registerVpsProxyTools } from "./vpsProxyTools.js";
 // Sprint 060 — Calibration Report tool (Task 1129)
 export { registerCalibrationTools } from "./calibrationTools.js";
+// Sprint 063 — Insider Transactions MCP tool (Task 1146)
+export { registerInsiderTools } from "./insiderTools.js";
