@@ -44,17 +44,24 @@ Live data → `docs/data/cron-registry.json`
 ## VPS Proxy Watchdog (price)
 
 `vpsProxyWatchdogJob.ts` — runs `*/10 2-8 * * 1-5` UTC (market hours).
-Reads `MAX(market_prices.updated_at)`. If >5 min stale → one Telegram MARKET alert (30-min cooldown).
-**NEVER SSHes into VPS.** VPS liveness owned by systemd (`vn-price-fetch.service`, `Restart=always`).
+Reads `MAX(market_prices.updated_at)`. If >15 min stale → one Telegram WORK alert (30-min cooldown).
+**NEVER SSHes into VPS.** VPS liveness owned by systemd on Vinahost (`vn-price-fetch.service`, `Restart=always`).
 
-## VPS BCTC PDF Proxy (VPS-side only, task 1112)
+## VPS Services (VPS-side only)
 
-NOT a Bun scheduler. Two systemd units on Vultr VPS Singapore:
-- `vn-bctc-fetch.service` (`Restart=always`, `RestartSec=10`) → `fetch-bctc-loop.sh` → `fetch-bctc.sh`
-- Cadence: every 6 hours (no market-hours window — BCTC filings published any time)
-- Queue: `GET /api/bctc-fetch-queue` (pulls `bctc_vps_queue` pending rows)
-- Push: `POST /api/push-bctc-pdf` (multipart PDF → MCP parses + stores)
-Full design → `docs/ARCHITECTURE.md#bctc-pdf-proxy-vn-bctc-fetchservice----task-1112`
+NOT Bun schedulers. Five systemd units on Vinahost VPS Vietnam (`$VINAHOST_IP`). Deploy: `./deploy-vinahost.sh`. Health check: `ssh root@$VINAHOST_IP /root/vps-status.sh`.
+
+| Service | Script | Interval | What |
+|---------|--------|----------|------|
+| `vn-price-fetch.service` | `fetch-prices.sh` | 60s market hours | VN stock prices + foreign flow |
+| `vn-bctc-fetch.service` | `fetch-bctc.sh` | 6h | BCTC PDF queue |
+| `vn-news-fetch.service` | `fetch-vn-news.sh` | 15min | 10 news sources, 226 items/cycle |
+| `vn-sbv-fetch.service` | `fetch-sbv.sh` | 30min | VCB FX rates |
+| `vn-foreign-flow.service` | `fetch-foreign-flow.sh` | 60s market hours | Foreign buy/sell |
+
+BCTC queue: `GET /api/bctc-fetch-queue` (pulls `bctc_vps_queue` pending rows) | `POST /api/push-bctc-pdf` (multipart PDF → MCP parses + stores).
+Bot-guarded sources: `vps-scripts/fetch-browser.py` (Playwright/Chromium).
+Full design → `docs/ARCHITECTURE.md#vps-proxy-geo-block-workaround`
 
 ## Claude Code Agent Crons (CronCreate — session-scoped)
 

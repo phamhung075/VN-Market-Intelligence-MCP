@@ -17,6 +17,7 @@ Vision: `SPRINT_GOAL.md`
 | 1182 | Fix storeReport error propagation + WAL checkpoint | Dev | application | 1181 ✓ | — | Done |
 | 1183 | Fix 308-tool-registry.test.ts count 57 → 59 | Dev | test | — | — | Done |
 | 1184 | project-stats.json sprint 72 advance + QA smoke | Dev | docs | 1182, 1183 | — | Backlog |
+| 1185 | Investigate baodautu.vn RSS parsing (HTTP 200, 0 items) | Dev | infrastructure | — | — | Backlog |
 
 **WIP:** 0 In Progress. 0 Review.
 
@@ -78,3 +79,13 @@ File to modify: `src/__tests__/308-tool-registry.test.ts`
 
 **Status:** Backlog (blocked on 1182+1183) | **Layer:** docs/data
 Verify `currentSprint=72`, `toolCount=96`. Run `bun test && bun tsc --noEmit`. Write `reports/TASK_REPORT_072.md`.
+
+### 1185 — Investigate baodautu.vn RSS parsing (HTTP 200, 0 items)
+
+**Status:** Backlog | **Layer:** infrastructure
+**Context:** `fetch-vn-news.sh` on Vinahost VPS gets HTTP 200 from `baodautu.vn/dau-tu-tai-chinh.rss` but parses 0 items. All other 9 sources working. Investigate:
+1. Fetch raw RSS content on VPS and inspect actual XML structure
+2. Check if feed uses non-standard item element names (e.g. `<entry>` instead of `<item>`)
+3. Check for encoding issues (charset declaration vs actual encoding)
+4. Fix parser/grep pattern in `fetch-vn-news.sh` or flag the feed as permanently broken
+**Done when:** baodautu.vn delivers items in the cycle OR is documented as permanently broken with confirmed reason

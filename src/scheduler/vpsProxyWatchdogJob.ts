@@ -2,13 +2,13 @@
  * VPS Proxy Freshness Watchdog — observe-only alert.
  *
  * Problem:
- *   The VPS price proxy (Vultr host) is the ONLY path for VN stock prices —
+ *   The VPS price proxy (Vinahost host) is the ONLY path for VN stock prices —
  *   the MCP host is geo-blocked from upstream feeds. On 2026-03-27 the VPS
  *   crontab silently disappeared and market_prices went stale for 10 days
  *   before anyone noticed.
  *
  * Design (chosen over an SSH self-healer):
- *   Liveness of the VPS is the VPS's own responsibility. On the Vultr host
+ *   Liveness of the VPS is the VPS's own responsibility. On the Vinahost host
  *   the fetcher runs as a systemd service (`vn-price-fetch.service`) with
  *   `Restart=always`, which survives reboot, process crash, and accidental
  *   `crontab -r`. This file is the MCP-side observer: it watches
@@ -26,7 +26,7 @@
  * Operator action on the alert:
  *   SSH into the VPS and run `systemctl status vn-price-fetch` — the
  *   Telegram message includes the exact command. If the service is truly
- *   broken, redeploy via `./deploy-vps-proxy.sh` from a developer machine.
+ *   broken, redeploy via `./deploy-vinahost.sh` from a developer machine.
  *
  * @module scheduler/vpsProxyWatchdogJob
  */
@@ -130,16 +130,16 @@ export async function runVpsProxyWatchdog(
   });
 
   const message =
-    `[VPS watchdog] Vultr price pushes stopped.\n` +
+    `[VPS watchdog] Vinahost VN price pushes stopped.\n` +
     `Last market_prices update: ${latestStr}\n` +
     `Stale for: ${ageMinutes >= 0 ? `${ageMinutes} min` : "no data since boot"}\n` +
     `\n` +
     `Operator action:\n` +
-    `  ssh root@<VULTR_IP>\n` +
+    `  ssh root@$VINAHOST_IP\n` +
     `  systemctl status vn-price-fetch\n` +
     `  journalctl -u vn-price-fetch -n 50\n` +
     `\n` +
-    `If the unit is broken, redeploy: ./deploy-vps-proxy.sh`;
+    `If the unit is broken, redeploy: ./deploy-vinahost.sh`;
 
   const notify =
     options.notify ??

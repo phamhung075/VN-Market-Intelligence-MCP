@@ -88,7 +88,7 @@ Do NOT interrupt the user for routine coding decisions or sprint planning.
 
 ## Infrastructure context (for feature planning)
 
-**VPS Singapore (Vultr)**: available for bypassing geo-blocks on ALL Vietnamese data sources. When planning any new feature that fetches data from Vietnam, always design it to run on the VPS using the push pattern (VPS fetches → pushes to MCP server in France via API). MCP server in France should NEVER directly fetch from Vietnamese domains.
+**VPS Vietnam (Vinahost `$VINAHOST_IP`)**: available for bypassing geo-blocks on ALL Vietnamese data sources. When planning any new feature that fetches data from Vietnam, always design it to run on the VPS using the push pattern (VPS fetches → pushes to MCP server in France via API). MCP server in France should NEVER directly fetch from Vietnamese domains. Bot-guarded sources (e.g., sites with JS challenges): use `vps-scripts/fetch-browser.py` (Playwright/Chromium headless) on the VPS.
 
 - Current VPS services + migration status → `docs/ARCHITECTURE.md#vps-proxy-geo-block-workaround`
 
