@@ -88,7 +88,7 @@ export async function handleReviewMarketMessage(args: {
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     return {
-      content: [{ type: "text" as const, text: `Error: ${msg}` }],
+      content: [{ type: "text" as const, text: `Error reviewing message ${args.id}: ${msg}` }],
     };
   }
 
@@ -123,7 +123,7 @@ export function registerMarketMessageTools(server: McpServer): void {
     "get_unreviewed_market_messages",
     "List unreviewed MARKET channel messages for quality review. Returns newest first. Optional ticker filter.",
     {
-      limit: z.number().int().min(1).max(100).default(20).optional(),
+      limit: z.coerce.number().int().min(1).max(50).default(20).optional(),
       ticker: z.string().optional(),
     },
     async (args) => {
