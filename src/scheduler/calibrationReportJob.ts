@@ -367,7 +367,9 @@ async function sendCalibrationDigest(
       const { sendTelegramMarket } = await import(
         "../infrastructure/notifiers/telegram.js"
       );
-      return sendTelegramMarket(msg);
+      return sendTelegramMarket(msg, {
+        persist: { from_agent: "calibration-report", message_type: "calibration_report" },
+      });
     });
 
   // ── WORK channel (always) ─────────────────────────────────────────────────

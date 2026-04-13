@@ -161,7 +161,9 @@ export async function runWeatherCheck(opts: WeatherCheckOptions = {}): Promise<v
           msg += "\n";
         }
 
-        await sendTelegramMarket(msg);
+        await sendTelegramMarket(msg, {
+          persist: { from_agent: "weather-check", message_type: "weather" },
+        });
       } catch (err) {
         logger.warn("[weatherCheckJob] Telegram send failed", {
           error: err instanceof Error ? err.message : String(err),

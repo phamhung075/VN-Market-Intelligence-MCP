@@ -49,7 +49,10 @@ export function registerTelegramTools(server: McpServer): void {
     async ({ channel, message }) => {
       try {
         if (channel === "market") {
-          const success = await sendTelegramMarket(message, { parseMode: "" });
+          const success = await sendTelegramMarket(message, {
+            parseMode: "",
+            persist: { from_agent: "mcp-user", message_type: "user_ask_reply" },
+          });
           return {
             content: [
               {

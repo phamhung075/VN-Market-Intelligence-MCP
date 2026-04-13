@@ -318,6 +318,7 @@ export async function createBunServer(
           await sendTelegramMarket(result.text, {
             parseMode: "",
             chatId: result.chatId,
+            persist: { from_agent: "mcp-user", message_type: "user_ask_reply" },
           });
         }
       } catch (err) {
@@ -559,7 +560,9 @@ export async function createBunServer(
                     try {
                       const sevLabel = alert.severity === "critical" ? "NGHIÊM TRỌNG" : "QUAN TRỌNG";
                       const msg = `[${sevLabel}] ${alert.message}`;
-                      await sendTelegramMarket(msg);
+                      await sendTelegramMarket(msg, {
+                        persist: { from_agent: "mcp-user", message_type: "user_ask_reply" },
+                      });
                       // Mark as notified
                       db.prepare("UPDATE alerts SET notified_telegram = 1 WHERE id = ?").run(alert.id);
                       log.info("[push-prices] Telegram alert sent", { id: alert.id, severity: alert.severity });
@@ -596,7 +599,9 @@ export async function createBunServer(
 
                   const typeLabel = t.alertType === "stop_loss" ? "CẮT LỖ" : "CHỐT LỜI";
                   const msg = `[${typeLabel}] ${t.code} đạt ngưỡng ${t.threshold.toLocaleString()} VND (hiện tại: ${t.currentPrice.toLocaleString()} VND)`;
-                  await sendTelegramMarket(msg);
+                  await sendTelegramMarket(msg, {
+                    persist: { from_agent: "mcp-user", message_type: "user_ask_reply" },
+                  });
                   log.info("[push-prices] price alert fired", { code: t.code, type: t.alertType, threshold: t.threshold });
                 }
               }

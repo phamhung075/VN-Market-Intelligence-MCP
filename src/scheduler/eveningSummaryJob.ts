@@ -115,7 +115,9 @@ export async function runEveningSummary(
           }
         }
 
-        await sendTelegramMarket(lines.join("\n"));
+        await sendTelegramMarket(lines.join("\n"), {
+          persist: { from_agent: "evening-summary", message_type: "evening_summary" },
+        });
         logger.info("[eveningSummaryJob] Telegram sent");
       } catch (tgErr) {
         logger.warn("[eveningSummaryJob] Telegram send failed", {
