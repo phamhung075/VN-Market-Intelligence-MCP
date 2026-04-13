@@ -9,7 +9,7 @@
  *   marketClose           15:30 weekdays       (task 103) ✓
  *   sscCheck              20:00 daily          (task 104) ✓
  *   alertDigest           21:00 weekdays       (task 188) ✓
- *   eveningSummary        22:00 weekdays       (task 105) ✓
+ *   eveningSummary        22:30 weekdays       (task 105, rescheduled task 1186) ✓
  *   dataAuditDaily        23:00 daily          (task 157) ✓
  *   dataAuditWeekly       01:00 Sunday         (task 157) ✓
  *   predictionMarketPoll  every 30 min         (task 167) ✓
@@ -59,7 +59,7 @@ export const CRONS = {
   marketClose:            Bun.env.CRON_MARKET_CLOSE               ?? '30 15 * * 1-5',
   sscCheck:               Bun.env.CRON_SSC_CHECK                  ?? '0 20 * * *',
   alertDigest:            Bun.env.CRON_ALERT_DIGEST               ?? '0 21 * * 1-5',
-  eveningSummary:         Bun.env.CRON_EVENING_SUMMARY            ?? '0 22 * * 1-5',
+  eveningSummary:         Bun.env.CRON_EVENING_SUMMARY            ?? '30 22 * * 1-5',
   dataAuditDaily:         Bun.env.CRON_DATA_AUDIT_DAILY           ?? '0 23 * * *',
   weeklyPortfolioReport:  Bun.env.CRON_WEEKLY_PORTFOLIO_REPORT    ?? '0 23 * * 0',
   dataAuditWeekly:        Bun.env.CRON_DATA_AUDIT_WEEKLY          ?? '0 1 * * 0',

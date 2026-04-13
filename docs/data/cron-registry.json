@@ -17,7 +17,7 @@
     { "schedule": "15:30 VN M-F", "name": "marketClose", "desc": "Market close snapshot" },
     { "schedule": "20:00 VN daily", "name": "sscCheck", "desc": "SSC nightly BCTC check" },
     { "schedule": "21:00 VN M-F", "name": "alertDigest", "desc": "Nightly alert digest" },
-    { "schedule": "22:00 VN M-F", "name": "eveningSummary", "desc": "Evening market summary" },
+    { "schedule": "22:30 VN M-F", "name": "eveningSummary", "desc": "Evening market summary (rescheduled task 1186 — avoids race with intelligenceCycleJob at 22:00)" },
     { "schedule": "22:30 VN daily", "name": "dailySummary", "desc": "Daily summary generation" },
     { "schedule": "22:30 VN Sunday", "name": "patternWatch", "desc": "Weekly pattern watch" },
     { "schedule": "23:00 VN daily", "name": "dataAuditDaily", "desc": "Data integrity audit" },

@@ -409,14 +409,14 @@ describe("Task 105 — Evening Summary Job", () => {
     expect(content.generatedAt).toBe(summary.generatedAt);
   });
 
-  // ── Test 10: Cron registered at 0 22 * * 1-5 ─────────────────────────────
-  it("CRONS.eveningSummary is registered at weekday 22:00 pattern", () => {
-    // Default value should be weekday-only per TECH_006
+  // ── Test 10: Cron registered at 30 22 * * 1-5 (rescheduled by task 1186) ─
+  it("CRONS.eveningSummary is registered at weekday 22:30 pattern", () => {
+    // Rescheduled from 22:00 → 22:30 (task 1186) to avoid race with
+    // intelligenceCycleJob which fires at 22:00 and takes ~2 minutes.
     const pattern = CRONS.eveningSummary;
     expect(typeof pattern).toBe("string");
-    // Accept both daily (0 22 * * *) and weekday (0 22 * * 1-5) patterns —
-    // TECH_006 specifies 1-5 but env override could change it; test the default.
-    expect(pattern).toMatch(/^0 22 \* \* /);
+    // Accept both daily (30 22 * * *) and weekday (30 22 * * 1-5) patterns.
+    expect(pattern).toMatch(/^30 22 \* \* /);
   });
 
   // ── Test 11: Concurrency guard ────────────────────────────────────────────
