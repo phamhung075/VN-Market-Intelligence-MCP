@@ -18,7 +18,7 @@ Spec: `docs/REQ_062.md`
 | PM-062 | PM: sprint planning — break TECH_062 into tasks 1136–1140, assign batches | PM | — | TECH-062 | — | Done |
 | 1136 | jobs.ts imports + summaryJobs.ts wrap (FR-16, FR-18) | Developer | interface/scheduler | — | task/1136-imports-summary-wrap | Review |
 | 1137 | Wrap critical briefing/cycle jobs: morningBriefing, intelligenceCycle, eveningSummary, alertDigest (FR-1–4) | Developer | interface/scheduler | 1136 | — | Todo |
-| 1138 | Wrap market/portfolio/prediction jobs: patternWatch, weeklyPortfolioReport, predictionMarketPoll, predictionOutcome (FR-5–8) | Developer | interface/scheduler | 1136 | — | Todo |
+| 1138 | Wrap market/portfolio/prediction jobs: patternWatch, weeklyPortfolioReport, predictionMarketPoll, predictionOutcome (FR-5–8) | Developer | interface/scheduler | 1136 | task/1138-market-portfolio-wrap | Review |
 | 1139 | Wrap utility/infra jobs: franceSummary, devTeamHeartbeat, weatherCheck, davPharmacyCheck (FR-9–12) | Developer | interface/scheduler | 1136 | — | Todo |
 | 1140 | Replace try/catch blocks: bctcOverdueCheck, vpsProxyWatchdog, cronHealthAlert (FR-13–15) | Developer | interface/scheduler | 1136 | — | Todo |
 
