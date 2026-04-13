@@ -4,6 +4,300 @@
 
 ---
 
+## Sprint 069 — Market Message Review UX + Task 1139 Close
+
+Vision: `SPRINT_GOAL.md`
+Spec: `docs/REQ_069.md` | Design: `docs/TECH_069.md`
+
+### Kanban
+
+| ID | Title | Agent | Layer | Depends On | Branch | Status |
+|----|-------|-------|-------|------------|--------|--------|
+| REQ-069 | BA: write REQ_069.md — digest + batch review UX, Task 1139 close spec, acceptance criteria | BA | — | — | — | Done |
+| TECH-069 | Architect: write TECH_069.md — DDD layer plan, interface contracts, SQL, test strategy, dependency graph | Architect | — | REQ-069 | — | Done |
+| PM-069 | PM: sprint planning — create tasks 1168–1172 in TASKS.md, assign to Developer, set branch | PM | — | TECH-069 | — | Done |
+| 1168 | TDD: write failing tests for AC-1 to AC-12 + AC-14 in `src/__tests__/1168-market-message-digest.test.ts` | Developer | tests | TECH-069 ✓ | task/1168-market-message-digest | Review |
+| 1169 | Add `getMarketMessageDigest` + `batchReviewMarketMessages` + types to `marketMessageStore.ts` (FR-1, FR-2) | Developer | infrastructure | 1168 ✓ | task/1168-market-message-digest | Backlog |
+| 1170 | Add `handleGetMarketMessageDigest`, `handleBatchReviewMarketMessages` + register two new MCP tools in `marketMessageTools.ts` (FR-3, FR-4, FR-5) | Developer | interface | 1169 ✓ | task/1168-market-message-digest | Backlog |
+| 1171 | Close Task 1139: verify recordJobRun wraps in `jobs.ts`, confirm Done in TASKS.md, archive in `docs/TASKS_ARCHIVE.md` (FR-6) | Developer | admin | — | main (no code changes expected) | Todo |
+| 1172 | Sprint close: advance `project-stats.json` `currentSprint` to 69, `toolCount` to 95, update `lastUpdated` | Developer | docs/data | 1170 ✓, 1171 ✓ | task/1168-market-message-digest | Backlog |
+
+**WIP state:** 0 tasks In Progress (limit: 2). Sprint 069 ACTIVE. Task 1168 in Review.
+
+---
+
+### Task 1168 — TDD: write failing tests for AC-1 to AC-12 + AC-14
+
+**Branch**: `task/1168-market-message-digest`
+**Layer**: tests
+**Depends on**: TECH-069 (approved design)
+
+#### Files to read first
+
+- `src/__tests__/1163-market-message-review.test.ts` — isolation pattern to copy exactly (`process.env["DB_PATH"] = ":memory:"` at file top before any import, `initDatabase` + `closeDb` in `beforeEach`/`afterEach`)
+- `src/infrastructure/db/marketMessageStore.ts` — existing exports (`insertMarketMessage`, `getUnreviewedMarketMessages`, `reviewMarketMessage`) to understand current shape before adding new exports
+- `src/interface/mcp/tools/marketMessageTools.ts` — existing handler exports to confirm `handleGetMarketMessageDigest` and `handleBatchReviewMarketMessages` do not yet exist
+
+#### Files to create
+
+- CREATE: `src/__tests__/1168-market-message-digest.test.ts`
+
+#### Setup boilerplate (copy from `1163-market-message-review.test.ts` pattern)
+
+```typescript
+process.env["DB_PATH"] = ":memory:";
+import { describe, it, expect, beforeEach, afterEach, afterAll } from "bun:test";
+import { initDatabase, getDb, closeDb } from "../infrastructure/db/schema.js";
+import { insertMarketMessage, getMarketMessageDigest, batchReviewMarketMessages }
+  from "../infrastructure/db/marketMessageStore.js";
+import { handleGetMarketMessageDigest, handleBatchReviewMarketMessages }
+  from "../interface/mcp/tools/marketMessageTools.js";
+
+beforeEach(() => { initDatabase(getDb()); });
+afterEach(() => { closeDb(); });
+afterAll(() => { closeDb(); });
+```
+
+#### Test groups to write (all must fail on first commit — red phase)
+
+| Test group | ACs covered | What is tested |
+|---|---|---|
+| `getMarketMessageDigest — grouped entries` | AC-1 | 5 rows per AC-1 scenario; 3 entries returned; correct counts, ids, ordering |
+| `getMarketMessageDigest — excludes reviewed rows` | AC-1 | id 14 with verdict "signal" absent from result |
+| `getMarketMessageDigest — limit_days respects date cutoff` | AC-2 | Row at `datetime('now', '-8 days')` excluded; row at `datetime('now', '-1 day')` included |
+| `getMarketMessageDigest — empty state` | AC-3 | No unreviewed rows; returns `[]` |
+| `getMarketMessageDigest — id_list single row` | edge | One group, one row; `"42".split(",").map(Number)` produces `[42]` |
+| `getMarketMessageDigest — default limit_days=7` | edge | No second arg; rows 6 days ago included, 8 days ago excluded |
+| `getMarketMessageDigest — limit_days clamped min` | edge | `limit_days=0` treated as 1 (store-level clamping, not Zod) |
+| `getMarketMessageDigest — limit_days clamped max` | edge | `limit_days=50` treated as 30 |
+| `batchReviewMarketMessages — updates all ids` | AC-4 | 3 rows updated; returns `{ updated: 3, notFound: [] }` |
+| `batchReviewMarketMessages — reports notFound` | AC-5 | ids [20, 21, 999]; returns `{ updated: 2, notFound: [999] }` |
+| `batchReviewMarketMessages — empty ids no-op` | AC-6 | `ids=[]`; returns `{ updated: 0, notFound: [] }` with no SQL |
+| `batchReviewMarketMessages — invalid verdict throws` | AC-7 | `verdict="maybe"`; throws `Error("Invalid verdict")` |
+| `batchReviewMarketMessages — sets verdict_note` | AC-4 | SELECT row; `verdict_note = "overnight noise batch"` |
+| `batchReviewMarketMessages — idempotent overwrite` | edge | Two calls with different verdicts; second wins; no error |
+| `batchReviewMarketMessages — all not found` | edge | 200 non-existent ids; `{ updated: 0, notFound: [all 200] }` |
+| `get_market_message_digest MCP tool — formatted output` | AC-8 | Text contains `[2026-04-13]`, `2 tin`, `ids: [`, `Tong: 3` |
+| `get_market_message_digest MCP tool — empty state` | AC-9 | Returns `"Khong co tin nhan chua review trong 7 ngay qua."` |
+| `batch_review_market_messages MCP tool — all found` | AC-10 | Returns `"3 tin da duoc danh gia la 'noise'."` |
+| `batch_review_market_messages MCP tool — partial notFound` | AC-11 | Text contains `"2 tin"`, `"1 ID khong tim thay"`, `"999"` |
+| `batch_review_market_messages MCP tool — with note` | AC-12 | Text ends `"Note saved."`; row has `verdict_note = "false alarm"` |
+| `batch_review_market_messages MCP tool — all not found` | edge | Returns `"Khong tim thay bat ky tin nhan nao."` |
+| `batch_review_market_messages MCP tool — invalid verdict error` | edge | Returns `"Error in batch review: Invalid verdict"` |
+
+All tests must compile (TypeScript valid) but fail because `getMarketMessageDigest`, `batchReviewMarketMessages`, `handleGetMarketMessageDigest`, `handleBatchReviewMarketMessages` do not yet exist in their respective modules.
+
+#### Acceptance Criteria
+
+**Given** `src/__tests__/1168-market-message-digest.test.ts` exists with all 22 test cases
+**When** `bun test src/__tests__/1168-market-message-digest.test.ts` is run before tasks 1169–1170 are done
+**Then**
+- All 22 test cases exist and are syntactically valid TypeScript
+- Tests fail (red) because `getMarketMessageDigest`, `batchReviewMarketMessages` are not yet exported from `marketMessageStore.ts` and handlers are not yet exported from `marketMessageTools.ts`
+- `bun tsc --noEmit` passes (imports forward-declared or typed correctly)
+
+---
+
+### Task 1169 — Add getMarketMessageDigest + batchReviewMarketMessages to marketMessageStore.ts
+
+**Branch**: `task/1168-market-message-digest`
+**Layer**: infrastructure
+**Depends on**: 1168 ✓
+
+#### Files to read first
+
+- `src/infrastructure/db/marketMessageStore.ts` — full file: existing `reviewMarketMessage` UPDATE SQL (column name is `reviewed_at`), `insertMarketMessage` pattern, existing exported interfaces
+- `src/infrastructure/db/schema.ts` — confirm `market_messages` DDL column names (`verdict`, `verdict_note`, `reviewed_at`, `sent_at`, `from_agent`, `content`, `id`)
+- `src/infrastructure/db/telegramReportStore.ts` — `db.transaction()` pattern to replicate for batch
+
+#### Files to modify
+
+- MODIFY: `src/infrastructure/db/marketMessageStore.ts` — add two interfaces and two exported functions
+
+#### New exports to add
+
+**Interfaces** (add before the function declarations):
+
+```typescript
+export interface MarketMessageDigestEntry {
+  date: string;
+  from_agent: string;
+  count: number;
+  ids: number[];
+  preview: string;
+}
+
+export interface BatchReviewResult {
+  updated: number;
+  notFound: number[];
+}
+```
+
+**`getMarketMessageDigest`** — SQL with clamping:
+
+```typescript
+export function getMarketMessageDigest(
+  db: Database,
+  limit_days?: number,
+): MarketMessageDigestEntry[] {
+  const days = Math.min(30, Math.max(1, limit_days ?? 7));
+  // SQL: GROUP BY date(sent_at), from_agent — see TECH_069.md for full query
+  // Post-query: row.id_list.split(",").map(Number) → ids array
+  // Null guard: (row.id_list ?? "").split(",").map(Number).filter(Boolean)
+}
+```
+
+Full SQL (copy verbatim from `docs/TECH_069.md` Interface Contracts section).
+
+**`batchReviewMarketMessages`** — transaction design:
+
+1. `if (verdict !== "signal" && verdict !== "noise") throw new Error("Invalid verdict");`
+2. `if (ids.length === 0) return { updated: 0, notFound: [] };`
+3. Prepare UPDATE statement once outside the transaction closure
+4. Execute `db.transaction(...)` iterating over ids, tracking `changes > 0`
+5. Return `{ updated, notFound }`
+
+Full implementation (copy verbatim from `docs/TECH_069.md` Interface Contracts section).
+
+#### Acceptance Criteria
+
+**Given** both functions and interfaces are exported from `marketMessageStore.ts`
+**When** `bun test src/__tests__/1168-market-message-digest.test.ts` is run (store-level tests only)
+**Then**
+- All store-level test groups pass (AC-1 through AC-7 + edge cases for store functions)
+- MCP tool test groups still fail (handlers not yet implemented — expected)
+- `bun tsc --noEmit` reports 0 errors
+- `bun test` (full suite) shows no regressions in prior tests
+
+---
+
+### Task 1170 — Add MCP tool handlers + register two new tools in marketMessageTools.ts
+
+**Branch**: `task/1168-market-message-digest`
+**Layer**: interface
+**Depends on**: 1169 ✓
+
+#### Files to read first
+
+- `src/interface/mcp/tools/marketMessageTools.ts` — full file: existing `handleGetUnreviewedMarketMessages`, `handleReviewMarketMessage` handler pattern to replicate; existing `registerMarketMessageTools` function signature
+- `src/interface/mcp/tools/registry.ts` — confirm `registerMarketMessageTools(server)` is already called; confirm no new registry entry is needed
+- `docs/TECH_069.md` — handler formatting logic and Zod schemas (copy verbatim)
+
+#### Files to modify
+
+- MODIFY: `src/interface/mcp/tools/marketMessageTools.ts` — add two handler exports + two tool registrations inside existing `registerMarketMessageTools`
+
+#### Do NOT modify
+
+- `src/interface/mcp/tools/registry.ts` — already calls `registerMarketMessageTools(server)`; no change needed
+
+#### New exports to add
+
+**`handleGetMarketMessageDigest`** — formatting logic (copy verbatim from `docs/TECH_069.md`):
+- Call `getMarketMessageDigest(db, days)`
+- Empty state: return `"Khong co tin nhan chua review trong ${days} ngay qua."`
+- Non-empty: build header, per-date/per-agent lines with count + ids + preview, footer with total count
+
+**`handleBatchReviewMarketMessages`** — try/catch wrapping `batchReviewMarketMessages`:
+- Error path: return `"Error in batch review: ${msg}"`
+- All found: return `"${updated} tin da duoc danh gia la '${verdict}'.${noteText}"`
+- Partial notFound: append `"${notFound.length} ID khong tim thay: [${notFound.join(', ')}]"`
+- All not found: return `"Khong tim thay bat ky tin nhan nao. IDs: [${notFound.join(', ')}]."`
+
+**Tool registrations** (append inside `registerMarketMessageTools`, after Sprint 068 registrations):
+
+```typescript
+server.tool("get_market_message_digest", "...", { limit_days: z.coerce.number()... }, ...)
+server.tool("batch_review_market_messages", "...", { ids: z.array(...)..., verdict: z.enum(...)..., note: z.string()... }, ...)
+```
+
+Full Zod schemas: copy verbatim from `docs/TECH_069.md` MCP tool Zod schemas section.
+
+#### Acceptance Criteria
+
+**Given** both handlers are exported and both tools are registered in `marketMessageTools.ts`
+**When** `bun test src/__tests__/1168-market-message-digest.test.ts` is run
+**Then**
+- All 22 test cases pass (green phase complete)
+- `bun test` (full suite) passes with 0 failures
+- `bun tsc --noEmit` reports 0 errors
+- `grep "server.tool" src/interface/mcp/tools/marketMessageTools.ts` returns 4 matches (2 from Sprint 068 + 2 new)
+
+---
+
+### Task 1171 — Close Task 1139: verify recordJobRun wraps, confirm Done, archive
+
+**Branch**: main (no code changes expected; commit only if archival edit required)
+**Layer**: admin
+**Depends on**: none (independent, run in parallel with 1168–1170)
+
+#### Files to read first
+
+- `src/scheduler/jobs.ts` — grep for `recordJobRun` to confirm 4 target jobs are already wrapped
+- `docs/TASKS_ARCHIVE.md` — check if Task 1139 entry already exists
+
+#### Verification steps
+
+1. Run `grep -n "recordJobRun" src/scheduler/jobs.ts` and confirm matches for all four jobs:
+   - `franceSummaryJob` (expected line ~267)
+   - `devTeamHeartbeatJob` (expected line ~274)
+   - `weatherCheckJob` (expected line ~290)
+   - `davPharmacyCheckJob` (expected line ~297)
+2. Confirm Task 1139 row in TASKS.md already shows `Done` (TECH-069 brownfield check confirmed this).
+3. Check `docs/TASKS_ARCHIVE.md` for an existing Task 1139 entry. If absent, add it.
+4. No code changes to `src/scheduler/jobs.ts` are expected. If grep fails to find any of the four wraps, stop and escalate — do not silently skip.
+
+#### Files to modify (only if archival entry is absent)
+
+- MODIFY: `docs/TASKS_ARCHIVE.md` — add Task 1139 archival entry if not already present
+
+#### Acceptance Criteria
+
+**Given** the current `main` branch state
+**When** `grep -n "recordJobRun" src/scheduler/jobs.ts` is run
+**Then**
+- Output contains matches for `franceSummaryJob`, `devTeamHeartbeatJob`, `weatherCheckJob`, `davPharmacyCheckJob` (4 matches minimum)
+- Task 1139 row in TASKS.md has status `Done`
+- `docs/TASKS_ARCHIVE.md` contains an entry for Task 1139
+- `bun test` passes with 0 failures (no regression)
+- `bun tsc --noEmit` reports 0 errors
+
+---
+
+### Task 1172 — Sprint close: advance project-stats.json to sprint 069, toolCount 95
+
+**Branch**: `task/1168-market-message-digest`
+**Layer**: docs/data
+**Depends on**: 1170 ✓, 1171 ✓
+
+#### Files to read first
+
+- `docs/data/project-stats.json` — current values: `currentSprint`, `toolCount`, `lastUpdated`
+- `src/interface/mcp/tools/` — grep `server.tool(` across all tool files to verify total count is 95 before writing
+
+#### Verification before writing
+
+Run `grep -r "server\.tool(" src/interface/mcp/tools/ | wc -l` to confirm the count matches 95 (93 existing + 2 new from task 1170). If the count does not match 95, investigate before updating `toolCount`.
+
+#### Files to modify
+
+- MODIFY: `docs/data/project-stats.json` — set `currentSprint` to `69`, `toolCount` to `95`, update `lastUpdated` to today's date
+
+#### Acceptance Criteria
+
+**Given** tasks 1168–1171 are all Done and branch `task/1168-market-message-digest` is merged to `main`
+**When** `docs/data/project-stats.json` is updated and the branch is merged
+**Then**
+- `project-stats.json` `currentSprint` = `69`
+- `project-stats.json` `toolCount` = `95`
+- `project-stats.json` `lastUpdated` = `2026-04-13` (or the actual date of completion)
+- `bun test` passes with 0 failures
+- `bun tsc --noEmit` reports 0 errors
+- Branch `task/1168-market-message-digest` is deleted locally and remotely
+- `git branch --show-current` = `main`
+
+---
+
 ## Sprint 068 — MARKET Message Quality Review System (COMPLETE)
 
 Vision: `SPRINT_GOAL.md`
