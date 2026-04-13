@@ -20,7 +20,7 @@ Spec: `docs/REQ_062.md`
 | 1137 | Wrap critical briefing/cycle jobs: morningBriefing, intelligenceCycle, eveningSummary, alertDigest (FR-1–4) | Developer | interface/scheduler | 1136 | task/1137-wrap-briefing-cycle | Review |
 | 1138 | Wrap market/portfolio/prediction jobs: patternWatch, weeklyPortfolioReport, predictionMarketPoll, predictionOutcome (FR-5–8) | Developer | interface/scheduler | 1136 | task/1138-market-portfolio-wrap | Review |
 | 1139 | Wrap utility/infra jobs: franceSummary, devTeamHeartbeat, weatherCheck, davPharmacyCheck (FR-9–12) | Developer | interface/scheduler | 1136 | task/1139-utility-wrap | Review |
-| 1140 | Replace try/catch blocks: bctcOverdueCheck, vpsProxyWatchdog, cronHealthAlert (FR-13–15) | Developer | interface/scheduler | 1136 | — | Todo |
+| 1140 | Replace try/catch blocks: bctcOverdueCheck, vpsProxyWatchdog, cronHealthAlert (FR-13–15) | Developer | interface/scheduler | 1136 | task/1140-trycatch-replace | Review |
 
 **WIP state:** 0 tasks In Progress (limit: 2). Tasks 1137–1140 blocked on 1136 merge/QA.
 
