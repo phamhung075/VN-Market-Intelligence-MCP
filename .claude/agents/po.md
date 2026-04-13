@@ -98,6 +98,6 @@ Do NOT interrupt the user for routine coding decisions or sprint planning.
 
 | File                           | Description                               |
 | ------------------------------ | ----------------------------------------- |
-| `SPRINT_GOAL.md`               | Current sprint vision, scope, metric      |
+| `SPRINT_GOAL.md`               | Current sprint ONLY — previous goals live in `docs/REQ_NNN.md` |
 | `docs/REQ_NNN.md`              | Approved requirement spec (via BA)        |
 | `TASKS.md`                     | Sprint state (via PM)                     |
