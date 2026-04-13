@@ -9,10 +9,13 @@
  *   AC-5: Telegram message includes all three new sections when data present
  *   AC-6: Complete empty-state — all arrays [], no crash, no phantom headers
  *
- * RED PHASE: these tests import functions/types that do not exist yet.
- * They must FAIL before Task 1160 is implemented.
+ * RED PHASE: the three DailyBriefing fields (insiderRecent, foreignFlowSummary,
+ * evidenceTopScores), the BEARISH_WARNING_THRESHOLD constant, and the
+ * formatBriefingMessage export do NOT exist yet. Tests access them through
+ * `as Record<string, unknown>` casts so TypeScript compiles cleanly while
+ * the assertions fail at runtime — correct TDD red state.
  *
- * Layer: tests — uses in-memory SQLite; no HTTP, no Telegram.
+ * Layer: tests — uses in-memory SQLite; no HTTP, no Telegram sends.
  */
 
 import { describe, it, expect, beforeEach, afterEach } from "bun:test";
@@ -120,7 +123,7 @@ function setupTestDb(): Database {
     );
   `);
 
-  // New tables used by the three enrichment steps (steps 14-16)
+  // New tables used by the three enrichment steps (Steps 14-16)
   db.exec(`
     CREATE TABLE IF NOT EXISTS insider_transactions (
       id               TEXT PRIMARY KEY,
@@ -275,7 +278,7 @@ function seedEvidenceScore(
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Shared briefing options helper
+// Shared test infrastructure
 // ─────────────────────────────────────────────────────────────────────────────
 
 const TEST_BRIEFINGS_DIR = join(
@@ -292,6 +295,42 @@ function cleanupBriefingsDir(): void {
 
 function noop() {
   return Promise.resolve({ fetched: 0, inserted: 0, duplicates: 0, alerts: 0, errors: 0 });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Type helpers — cast to wide type to access not-yet-existent fields without
+// TypeScript errors. Tests fail at runtime when fields are absent (red phase).
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Typed view for new DailyBriefing enrichment fields (runtime check only). */
+interface EnrichedBriefing {
+  date: string;
+  vnIndex?: { price: number; changePct: number };
+  watchlistSummary: unknown[];
+  /** Not present before Task 1160 — tests fail when undefined */
+  insiderRecent?: Array<{
+    code: string;
+    type: string;
+    executedVolume: number;
+    insiderName: string;
+    fromDate: string;
+  }>;
+  /** Not present before Task 1160 — tests fail when undefined */
+  foreignFlowSummary?: Array<{
+    code: string;
+    direction: "net_buy" | "net_sell";
+    foreignVolume: number;
+    date: string;
+  }>;
+  /** Not present before Task 1160 — tests fail when undefined */
+  evidenceTopScores?: Array<{
+    code: string;
+    netScore: number;
+    bullishScore: number;
+    bearishScore: number;
+    fragmentCount: number;
+    scoreDate: string;
+  }>;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -321,19 +360,18 @@ describe("Task 1159 — Morning Briefing Intelligence Enrichment", () => {
       seedWatchlist(db, "VCB");
       seedWatchlist(db, "FPT");
 
-      // 3 rows for watchlist stocks
       seedInsiderTransaction(db, { code: "VCB", executedVolume: 2_000_000, insiderName: "Nguyen A" });
       seedInsiderTransaction(db, { code: "VCB", executedVolume: 1_500_000, insiderName: "Nguyen B" });
       seedInsiderTransaction(db, { code: "FPT", executedVolume: 800_000, insiderName: "Tran C" });
       // Non-watchlist stock — must be excluded
       seedInsiderTransaction(db, { code: "ACB", executedVolume: 5_000_000, insiderName: "Le D" });
 
-      const briefing = await assembleBriefing({
+      const briefing = (await assembleBriefing({
         db,
         pollNewsFn: noop,
         fetchVnIndexFn: async () => null,
         briefingsDir: TEST_BRIEFINGS_DIR,
-      });
+      })) as unknown as EnrichedBriefing;
 
       expect(Array.isArray(briefing.insiderRecent)).toBe(true);
 
@@ -357,12 +395,12 @@ describe("Task 1159 — Morning Briefing Intelligence Enrichment", () => {
       seedInsiderTransaction(db, { id: "it-4", code: "FPT", executedVolume: 1_000_000 });
       seedInsiderTransaction(db, { id: "it-5", code: "VCB", executedVolume:   500_000 });
 
-      const briefing = await assembleBriefing({
+      const briefing = (await assembleBriefing({
         db,
         pollNewsFn: noop,
         fetchVnIndexFn: async () => null,
         briefingsDir: TEST_BRIEFINGS_DIR,
-      });
+      })) as unknown as EnrichedBriefing;
 
       const rows = briefing.insiderRecent ?? [];
       expect(rows.length).toBeLessThanOrEqual(3);
@@ -388,12 +426,12 @@ describe("Task 1159 — Morning Briefing Intelligence Enrichment", () => {
         fromDate: "2026-04-12",
       });
 
-      const briefing = await assembleBriefing({
+      const briefing = (await assembleBriefing({
         db,
         pollNewsFn: noop,
         fetchVnIndexFn: async () => null,
         briefingsDir: TEST_BRIEFINGS_DIR,
-      });
+      })) as unknown as EnrichedBriefing;
 
       const rows = briefing.insiderRecent ?? [];
       expect(rows.length).toBeGreaterThan(0);
@@ -424,12 +462,12 @@ describe("Task 1159 — Morning Briefing Intelligence Enrichment", () => {
         fetchedAt: old, // older than 24h — must be excluded
       });
 
-      const briefing = await assembleBriefing({
+      const briefing = (await assembleBriefing({
         db,
         pollNewsFn: noop,
         fetchVnIndexFn: async () => null,
         briefingsDir: TEST_BRIEFINGS_DIR,
-      });
+      })) as unknown as EnrichedBriefing;
 
       expect(briefing.insiderRecent).toEqual([]);
     });
@@ -445,12 +483,12 @@ describe("Task 1159 — Morning Briefing Intelligence Enrichment", () => {
       seedWatchlist(db, "VCB");
       // No insider_transactions rows
 
-      const briefing = await assembleBriefing({
+      const briefing = (await assembleBriefing({
         db,
         pollNewsFn: noop,
         fetchVnIndexFn: async () => null,
         briefingsDir: TEST_BRIEFINGS_DIR,
-      });
+      })) as unknown as EnrichedBriefing;
 
       expect(briefing.insiderRecent).toEqual([]);
     });
@@ -463,12 +501,12 @@ describe("Task 1159 — Morning Briefing Intelligence Enrichment", () => {
       // No watchlist entries at all
       seedInsiderTransaction(db, { code: "VCB", executedVolume: 1_000_000 });
 
-      const briefing = await assembleBriefing({
+      const briefing = (await assembleBriefing({
         db,
         pollNewsFn: noop,
         fetchVnIndexFn: async () => null,
         briefingsDir: TEST_BRIEFINGS_DIR,
-      });
+      })) as unknown as EnrichedBriefing;
 
       expect(briefing.insiderRecent).toEqual([]);
     });
@@ -478,12 +516,12 @@ describe("Task 1159 — Morning Briefing Intelligence Enrichment", () => {
         "../application/usecases/assembleBriefing.js"
       );
 
-      const briefing = await assembleBriefing({
+      const briefing = (await assembleBriefing({
         db,
         pollNewsFn: noop,
         fetchVnIndexFn: async () => null,
         briefingsDir: TEST_BRIEFINGS_DIR,
-      });
+      })) as unknown as EnrichedBriefing;
 
       expect(briefing).toBeDefined();
       expect(typeof briefing.date).toBe("string");
@@ -498,26 +536,24 @@ describe("Task 1159 — Morning Briefing Intelligence Enrichment", () => {
         "../application/usecases/assembleBriefing.js"
       );
 
-      // Seed watchlist
       for (const code of ["VCB", "FPT", "VNM", "HPG", "MSN", "MWG"]) {
         seedWatchlist(db, code);
       }
 
-      // Seed most-recent trading stats (all same fetched_at)
       const now = new Date().toISOString();
       seedTradingStats(db, { code: "VCB", foreignVolume:  2_000_000, fetchedAt: now });
       seedTradingStats(db, { code: "FPT", foreignVolume:  1_500_000, fetchedAt: now });
       seedTradingStats(db, { code: "VNM", foreignVolume:    800_000, fetchedAt: now });
       seedTradingStats(db, { code: "HPG", foreignVolume: -3_000_000, fetchedAt: now });
       seedTradingStats(db, { code: "MSN", foreignVolume: -1_200_000, fetchedAt: now });
-      seedTradingStats(db, { code: "MWG", foreignVolume:          0, fetchedAt: now }); // must be excluded
+      seedTradingStats(db, { code: "MWG", foreignVolume:          0, fetchedAt: now }); // excluded
 
-      const briefing = await assembleBriefing({
+      const briefing = (await assembleBriefing({
         db,
         pollNewsFn: noop,
         fetchVnIndexFn: async () => null,
         briefingsDir: TEST_BRIEFINGS_DIR,
-      });
+      })) as unknown as EnrichedBriefing;
 
       const rows = briefing.foreignFlowSummary ?? [];
       expect(Array.isArray(rows)).toBe(true);
@@ -535,20 +571,19 @@ describe("Task 1159 — Morning Briefing Intelligence Enrichment", () => {
         "../application/usecases/assembleBriefing.js"
       );
 
-      for (const code of ["VCB", "HPG"]) {
-        seedWatchlist(db, code);
-      }
+      seedWatchlist(db, "VCB");
+      seedWatchlist(db, "HPG");
 
       const now = new Date().toISOString();
       seedTradingStats(db, { code: "VCB", foreignVolume:  2_000_000, fetchedAt: now });
       seedTradingStats(db, { code: "HPG", foreignVolume: -3_000_000, fetchedAt: now });
 
-      const briefing = await assembleBriefing({
+      const briefing = (await assembleBriefing({
         db,
         pollNewsFn: noop,
         fetchVnIndexFn: async () => null,
         briefingsDir: TEST_BRIEFINGS_DIR,
-      });
+      })) as unknown as EnrichedBriefing;
 
       const rows = briefing.foreignFlowSummary ?? [];
       const vcb = rows.find((r) => r.code === "VCB");
@@ -578,12 +613,12 @@ describe("Task 1159 — Morning Briefing Intelligence Enrichment", () => {
       // Newer row with negative volume — should be used
       seedTradingStats(db, { id: "vs-new", code: "VCB", foreignVolume: -500_000, fetchedAt: newer });
 
-      const briefing = await assembleBriefing({
+      const briefing = (await assembleBriefing({
         db,
         pollNewsFn: noop,
         fetchVnIndexFn: async () => null,
         briefingsDir: TEST_BRIEFINGS_DIR,
-      });
+      })) as unknown as EnrichedBriefing;
 
       const rows = briefing.foreignFlowSummary ?? [];
       const vcb = rows.find((r) => r.code === "VCB");
@@ -600,12 +635,12 @@ describe("Task 1159 — Morning Briefing Intelligence Enrichment", () => {
       // No watchlist entries
       seedTradingStats(db, { code: "VCB", foreignVolume: 2_000_000 });
 
-      const briefing = await assembleBriefing({
+      const briefing = (await assembleBriefing({
         db,
         pollNewsFn: noop,
         fetchVnIndexFn: async () => null,
         briefingsDir: TEST_BRIEFINGS_DIR,
-      });
+      })) as unknown as EnrichedBriefing;
 
       expect(briefing.foreignFlowSummary).toEqual([]);
     });
@@ -618,12 +653,12 @@ describe("Task 1159 — Morning Briefing Intelligence Enrichment", () => {
       seedWatchlist(db, "VCB");
       seedTradingStats(db, { code: "VCB", foreignVolume: 0 });
 
-      const briefing = await assembleBriefing({
+      const briefing = (await assembleBriefing({
         db,
         pollNewsFn: noop,
         fetchVnIndexFn: async () => null,
         briefingsDir: TEST_BRIEFINGS_DIR,
-      });
+      })) as unknown as EnrichedBriefing;
 
       expect(briefing.foreignFlowSummary).toEqual([]);
     });
@@ -640,7 +675,7 @@ describe("Task 1159 — Morning Briefing Intelligence Enrichment", () => {
       //   VCB: bullish=0.8, bearish=0.1 → net=0.70 (bullish leader)
       //   FPT: bullish=0.7, bearish=0.2 → net=0.50 (bullish leader)
       //   HPG: bullish=0.5, bearish=0.4 → net=0.10 (bullish leader)
-      //   VNM: bullish=0.3, bearish=3.5 → net=-3.20 (bearish warning, netScore < -2.0)
+      //   VNM: bullish=0.3, bearish=3.5 → net=-3.20 (bearish warning)
       for (const code of ["VCB", "FPT", "VNM", "HPG"]) {
         seedWatchlist(db, code);
       }
@@ -650,12 +685,12 @@ describe("Task 1159 — Morning Briefing Intelligence Enrichment", () => {
       seedEvidenceScore(db, { stock: "HPG", bullishScore: 0.5, bearishScore: 0.4, fragmentCount: 1 });
       seedEvidenceScore(db, { stock: "VNM", bullishScore: 0.3, bearishScore: 3.5, fragmentCount: 4 });
 
-      const briefing = await assembleBriefing({
+      const briefing = (await assembleBriefing({
         db,
         pollNewsFn: noop,
         fetchVnIndexFn: async () => null,
         briefingsDir: TEST_BRIEFINGS_DIR,
-      });
+      })) as unknown as EnrichedBriefing;
 
       const rows = briefing.evidenceTopScores ?? [];
       expect(Array.isArray(rows)).toBe(true);
@@ -676,17 +711,17 @@ describe("Task 1159 — Morning Briefing Intelligence Enrichment", () => {
       seedWatchlist(db, "VCB");
       seedEvidenceScore(db, { stock: "VCB", bullishScore: 0.8, bearishScore: 0.1, fragmentCount: 2 });
 
-      const briefing = await assembleBriefing({
+      const briefing = (await assembleBriefing({
         db,
         pollNewsFn: noop,
         fetchVnIndexFn: async () => null,
         briefingsDir: TEST_BRIEFINGS_DIR,
-      });
+      })) as unknown as EnrichedBriefing;
 
       const rows = briefing.evidenceTopScores ?? [];
       const vcb = rows.find((r) => r.code === "VCB");
       expect(vcb).toBeDefined();
-      // 0.8 - 0.1 = 0.7 (floating-point tolerance)
+      // 0.8 - 0.1 = 0.7
       expect(vcb!.netScore).toBeCloseTo(0.7, 5);
       expect(vcb!.bullishScore).toBeCloseTo(0.8, 5);
       expect(vcb!.bearishScore).toBeCloseTo(0.1, 5);
@@ -704,12 +739,12 @@ describe("Task 1159 — Morning Briefing Intelligence Enrichment", () => {
       // fragment_count = 0 → must be excluded
       seedEvidenceScore(db, { stock: "HPG", bullishScore: 0.8, bearishScore: 0.1, fragmentCount: 0 });
 
-      const briefing = await assembleBriefing({
+      const briefing = (await assembleBriefing({
         db,
         pollNewsFn: noop,
         fetchVnIndexFn: async () => null,
         briefingsDir: TEST_BRIEFINGS_DIR,
-      });
+      })) as unknown as EnrichedBriefing;
 
       const rows = briefing.evidenceTopScores ?? [];
       const codes = rows.map((r) => r.code);
@@ -724,16 +759,14 @@ describe("Task 1159 — Morning Briefing Intelligence Enrichment", () => {
 
       seedWatchlist(db, "VNM");
       // netScore = 0.3 - 3.5 = -3.2 → bearish warning (< -2.0)
-      // netScore is NOT > 0 so it wouldn't be in bullish leaders anyway
-      // but this ensures dedup logic is covered
       seedEvidenceScore(db, { stock: "VNM", bullishScore: 0.3, bearishScore: 3.5, fragmentCount: 4 });
 
-      const briefing = await assembleBriefing({
+      const briefing = (await assembleBriefing({
         db,
         pollNewsFn: noop,
         fetchVnIndexFn: async () => null,
         briefingsDir: TEST_BRIEFINGS_DIR,
-      });
+      })) as unknown as EnrichedBriefing;
 
       const rows = briefing.evidenceTopScores ?? [];
       const vnmRows = rows.filter((r) => r.code === "VNM");
@@ -769,12 +802,12 @@ describe("Task 1159 — Morning Briefing Intelligence Enrichment", () => {
         fragmentCount: 5,
       });
 
-      const briefing = await assembleBriefing({
+      const briefing = (await assembleBriefing({
         db,
         pollNewsFn: noop,
         fetchVnIndexFn: async () => null,
         briefingsDir: TEST_BRIEFINGS_DIR,
-      });
+      })) as unknown as EnrichedBriefing;
 
       const rows = briefing.evidenceTopScores ?? [];
       const vcb = rows.find((r) => r.code === "VCB");
@@ -791,12 +824,12 @@ describe("Task 1159 — Morning Briefing Intelligence Enrichment", () => {
       // No watchlist
       seedEvidenceScore(db, { stock: "VCB", bullishScore: 0.9, bearishScore: 0.1 });
 
-      const briefing = await assembleBriefing({
+      const briefing = (await assembleBriefing({
         db,
         pollNewsFn: noop,
         fetchVnIndexFn: async () => null,
         briefingsDir: TEST_BRIEFINGS_DIR,
-      });
+      })) as unknown as EnrichedBriefing;
 
       expect(briefing.evidenceTopScores).toEqual([]);
     });
@@ -809,33 +842,28 @@ describe("Task 1159 — Morning Briefing Intelligence Enrichment", () => {
       seedWatchlist(db, "VCB");
       // No evidence_scores rows
 
-      const briefing = await assembleBriefing({
+      const briefing = (await assembleBriefing({
         db,
         pollNewsFn: noop,
         fetchVnIndexFn: async () => null,
         briefingsDir: TEST_BRIEFINGS_DIR,
-      });
+      })) as unknown as EnrichedBriefing;
 
       expect(briefing.evidenceTopScores).toEqual([]);
     });
   });
 
   // ── AC-5: Telegram message includes all three new sections ──────────────────
+  // These tests import `formatBriefingMessage` which does NOT exist yet.
+  // They will fail at runtime with "undefined is not a function" (red phase).
   describe("AC-5: Telegram message includes three new sections when data present", () => {
     it("message contains '👤 Insider Mới:' header when insiderRecent is non-empty", async () => {
-      // Import the formatting helper via morningBriefingJob's runMorningBriefing
-      // We test indirectly: a briefing with insiderRecent data → the message must include the header
-      // Since the Telegram send is side-effect, we test the formatBriefingMessage export (if exported)
-      // OR we test that the DailyBriefing type carries the field correctly.
-      //
-      // For the RED phase, we verify the DailyBriefing type has the new fields and that
-      // the import of formatBriefingMessage (Task 1161 export) fails cleanly.
-      //
-      // This test imports the named export `formatBriefingMessage` from morningBriefingJob.ts
-      // which does NOT exist yet — it will fail with an import error (red phase).
-      const { formatBriefingMessage } = await import(
-        "../scheduler/morningBriefingJob.js"
-      );
+      const mod = await import("../scheduler/morningBriefingJob.js");
+      // formatBriefingMessage does not exist yet → fails here (red phase)
+      const formatBriefingMessage = (mod as Record<string, unknown>)["formatBriefingMessage"] as
+        | ((b: unknown) => string)
+        | undefined;
+      expect(typeof formatBriefingMessage).toBe("function");
 
       const briefing = {
         date: "2026-04-13",
@@ -857,15 +885,17 @@ describe("Task 1159 — Morning Briefing Intelligence Enrichment", () => {
         evidenceTopScores: [],
       };
 
-      const message = formatBriefingMessage(briefing);
+      const message = formatBriefingMessage!(briefing);
       expect(message).toContain("👤 Insider Mới:");
       expect(message).toContain("VCB");
     });
 
     it("message contains '🌊 Dòng Tiền Ngoại:' header when foreignFlowSummary is non-empty", async () => {
-      const { formatBriefingMessage } = await import(
-        "../scheduler/morningBriefingJob.js"
-      );
+      const mod = await import("../scheduler/morningBriefingJob.js");
+      const formatBriefingMessage = (mod as Record<string, unknown>)["formatBriefingMessage"] as
+        | ((b: unknown) => string)
+        | undefined;
+      expect(typeof formatBriefingMessage).toBe("function");
 
       const briefing = {
         date: "2026-04-13",
@@ -882,22 +912,24 @@ describe("Task 1159 — Morning Briefing Intelligence Enrichment", () => {
         generatedAt: new Date().toISOString(),
         insiderRecent: [],
         foreignFlowSummary: [
-          { code: "VCB", direction: "net_buy" as const, foreignVolume: 2_000_000, date: "2026-04-12" },
-          { code: "HPG", direction: "net_sell" as const, foreignVolume: -3_000_000, date: "2026-04-12" },
+          { code: "VCB", direction: "net_buy", foreignVolume: 2_000_000, date: "2026-04-12" },
+          { code: "HPG", direction: "net_sell", foreignVolume: -3_000_000, date: "2026-04-12" },
         ],
         evidenceTopScores: [],
       };
 
-      const message = formatBriefingMessage(briefing);
+      const message = formatBriefingMessage!(briefing);
       expect(message).toContain("🌊 Dòng Tiền Ngoại:");
       expect(message).toContain("MUA RÒNG");
       expect(message).toContain("BÁN RÒNG");
     });
 
     it("message contains '🧠 Tích Lũy Bằng Chứng:' header when evidenceTopScores is non-empty", async () => {
-      const { formatBriefingMessage } = await import(
-        "../scheduler/morningBriefingJob.js"
-      );
+      const mod = await import("../scheduler/morningBriefingJob.js");
+      const formatBriefingMessage = (mod as Record<string, unknown>)["formatBriefingMessage"] as
+        | ((b: unknown) => string)
+        | undefined;
+      expect(typeof formatBriefingMessage).toBe("function");
 
       const briefing = {
         date: "2026-04-13",
@@ -919,15 +951,17 @@ describe("Task 1159 — Morning Briefing Intelligence Enrichment", () => {
         ],
       };
 
-      const message = formatBriefingMessage(briefing);
+      const message = formatBriefingMessage!(briefing);
       expect(message).toContain("🧠 Tích Lũy Bằng Chứng:");
       expect(message).toContain("VCB");
     });
 
     it("type_label mapping: buy→MUA, sell→BÁN, other→KHÁC", async () => {
-      const { formatBriefingMessage } = await import(
-        "../scheduler/morningBriefingJob.js"
-      );
+      const mod = await import("../scheduler/morningBriefingJob.js");
+      const formatBriefingMessage = (mod as Record<string, unknown>)["formatBriefingMessage"] as
+        | ((b: unknown) => string)
+        | undefined;
+      expect(typeof formatBriefingMessage).toBe("function");
 
       const briefing = {
         date: "2026-04-13",
@@ -951,16 +985,18 @@ describe("Task 1159 — Morning Briefing Intelligence Enrichment", () => {
         evidenceTopScores: [],
       };
 
-      const message = formatBriefingMessage(briefing);
+      const message = formatBriefingMessage!(briefing);
       expect(message).toContain("MUA");
       expect(message).toContain("BÁN");
       expect(message).toContain("KHÁC");
     });
 
     it("executedVolume is formatted with comma thousands separator (en-US)", async () => {
-      const { formatBriefingMessage } = await import(
-        "../scheduler/morningBriefingJob.js"
-      );
+      const mod = await import("../scheduler/morningBriefingJob.js");
+      const formatBriefingMessage = (mod as Record<string, unknown>)["formatBriefingMessage"] as
+        | ((b: unknown) => string)
+        | undefined;
+      expect(typeof formatBriefingMessage).toBe("function");
 
       const briefing = {
         date: "2026-04-13",
@@ -982,15 +1018,17 @@ describe("Task 1159 — Morning Briefing Intelligence Enrichment", () => {
         evidenceTopScores: [],
       };
 
-      const message = formatBriefingMessage(briefing);
+      const message = formatBriefingMessage!(briefing);
       // 1,500,000 in en-US locale
       expect(message).toContain("1,500,000");
     });
 
     it("evidence icon: 🟢 for netScore > 0, 🔴 for netScore < -2.0", async () => {
-      const { formatBriefingMessage } = await import(
-        "../scheduler/morningBriefingJob.js"
-      );
+      const mod = await import("../scheduler/morningBriefingJob.js");
+      const formatBriefingMessage = (mod as Record<string, unknown>)["formatBriefingMessage"] as
+        | ((b: unknown) => string)
+        | undefined;
+      expect(typeof formatBriefingMessage).toBe("function");
 
       const briefing = {
         date: "2026-04-13",
@@ -1013,7 +1051,7 @@ describe("Task 1159 — Morning Briefing Intelligence Enrichment", () => {
         ],
       };
 
-      const message = formatBriefingMessage(briefing);
+      const message = formatBriefingMessage!(briefing);
       expect(message).toContain("🟢");
       expect(message).toContain("🔴");
     });
@@ -1029,12 +1067,12 @@ describe("Task 1159 — Morning Briefing Intelligence Enrichment", () => {
       seedWatchlist(db, "VCB");
       // No insider_transactions, no vnstock_trading_stats, no evidence_scores rows
 
-      const briefing = await assembleBriefing({
+      const briefing = (await assembleBriefing({
         db,
         pollNewsFn: noop,
         fetchVnIndexFn: async () => null,
         briefingsDir: TEST_BRIEFINGS_DIR,
-      });
+      })) as unknown as EnrichedBriefing;
 
       expect(briefing.insiderRecent).toEqual([]);
       expect(briefing.foreignFlowSummary).toEqual([]);
@@ -1046,7 +1084,6 @@ describe("Task 1159 — Morning Briefing Intelligence Enrichment", () => {
         "../application/usecases/assembleBriefing.js"
       );
 
-      // No rows anywhere
       let error: unknown = null;
       try {
         await assembleBriefing({
@@ -1063,9 +1100,11 @@ describe("Task 1159 — Morning Briefing Intelligence Enrichment", () => {
     });
 
     it("no phantom headers in Telegram message when all three arrays are empty", async () => {
-      const { formatBriefingMessage } = await import(
-        "../scheduler/morningBriefingJob.js"
-      );
+      const mod = await import("../scheduler/morningBriefingJob.js");
+      const formatBriefingMessage = (mod as Record<string, unknown>)["formatBriefingMessage"] as
+        | ((b: unknown) => string)
+        | undefined;
+      expect(typeof formatBriefingMessage).toBe("function");
 
       const briefing = {
         date: "2026-04-13",
@@ -1085,7 +1124,7 @@ describe("Task 1159 — Morning Briefing Intelligence Enrichment", () => {
         evidenceTopScores: [],
       };
 
-      const message = formatBriefingMessage(briefing);
+      const message = formatBriefingMessage!(briefing);
       expect(message).not.toContain("👤 Insider Mới:");
       expect(message).not.toContain("🌊 Dòng Tiền Ngoại:");
       expect(message).not.toContain("🧠 Tích Lũy Bằng Chứng:");
@@ -1098,12 +1137,12 @@ describe("Task 1159 — Morning Briefing Intelligence Enrichment", () => {
 
       seedWatchlist(db, "VCB");
 
-      const briefing = await assembleBriefing({
+      const briefing = (await assembleBriefing({
         db,
         pollNewsFn: noop,
         fetchVnIndexFn: async () => ({ price: 1285.5, changePct: 0.72 }),
         briefingsDir: TEST_BRIEFINGS_DIR,
-      });
+      })) as unknown as EnrichedBriefing;
 
       // Existing fields still present
       expect(typeof briefing.date).toBe("string");
@@ -1118,33 +1157,31 @@ describe("Task 1159 — Morning Briefing Intelligence Enrichment", () => {
     });
   });
 
-  // ── Type-shape contract ──────────────────────────────────────────────────────
-  describe("Type contract — exported types from assembleBriefing.ts", () => {
-    it("InsiderBriefingRow, ForeignFlowBriefingRow, EvidenceScoreBriefingRow are exported", async () => {
-      // If the export does not exist, this import will fail (red phase)
+  // ── Type contract ─────────────────────────────────────────────────────────
+  describe("Type contract — exported constants from assembleBriefing.ts", () => {
+    it("BEARISH_WARNING_THRESHOLD is exported as -2.0", async () => {
+      // If the export does not exist, this check will fail (red phase)
       const mod = await import(
         "../application/usecases/assembleBriefing.js"
       );
 
-      // We cannot check interface existence at runtime directly,
-      // but we can verify the named constant BEARISH_WARNING_THRESHOLD is exported
       expect(typeof (mod as Record<string, unknown>)["BEARISH_WARNING_THRESHOLD"]).toBe("number");
       expect((mod as Record<string, unknown>)["BEARISH_WARNING_THRESHOLD"]).toBe(-2.0);
     });
 
-    it("DailyBriefing has the three new optional array fields", async () => {
+    it("DailyBriefing has the three new optional array fields after Task 1160", async () => {
       const { assembleBriefing } = await import(
         "../application/usecases/assembleBriefing.js"
       );
 
-      const briefing = await assembleBriefing({
+      const briefing = (await assembleBriefing({
         db,
         pollNewsFn: noop,
         fetchVnIndexFn: async () => null,
         briefingsDir: TEST_BRIEFINGS_DIR,
-      });
+      })) as unknown as Record<string, unknown>;
 
-      // Fields must be present (either [] or populated array, never undefined)
+      // Fields must be present (either [] or populated array, never undefined after Task 1160)
       expect("insiderRecent" in briefing).toBe(true);
       expect("foreignFlowSummary" in briefing).toBe(true);
       expect("evidenceTopScores" in briefing).toBe(true);
