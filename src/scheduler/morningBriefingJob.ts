@@ -10,8 +10,149 @@
  * Layer: interface/scheduler — imports from application/usecases only.
  */
 
-import type { DailyBriefing } from "../application/usecases/assembleBriefing.js";
+import type {
+  DailyBriefing,
+  InsiderBriefingRow,
+  ForeignFlowBriefingRow,
+  EvidenceScoreBriefingRow,
+} from "../application/usecases/assembleBriefing.js";
+import { BEARISH_WARNING_THRESHOLD } from "../application/usecases/assembleBriefing.js";
 import { logger } from "../infrastructure/logger.js";
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Formatter
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Format a DailyBriefing as a compact Telegram message string.
+ * Exported for unit testing (AC-5 / AC-6 in task 1159).
+ * Plain-text output — no Markdown to avoid Telegram parse errors.
+ */
+export function formatBriefingMessage(briefing: DailyBriefing): string {
+  const lines: string[] = [`📋 BẢN TIN SÁNG ${briefing.date}`];
+
+  // ── VN-Index ──────────────────────────────────────────────
+  lines.push("");
+  if (briefing.vnIndex) {
+    const sign = briefing.vnIndex.changePct >= 0 ? "+" : "";
+    lines.push(`📈 VN-Index: ${briefing.vnIndex.price.toLocaleString("en-US")} (${sign}${briefing.vnIndex.changePct.toFixed(2)}%)`);
+  } else {
+    lines.push("📈 VN-Index: chưa có dữ liệu");
+  }
+
+  // ── Watchlist prices ──────────────────────────────────────
+  lines.push("");
+  lines.push("📊 Giá cổ phiếu:");
+  if (briefing.watchlistSummary.length > 0) {
+    for (const w of briefing.watchlistSummary) {
+      const price = w.price ? `${w.price.toLocaleString("en-US")}` : "N/A";
+      const chg = w.changePct != null ? ` (${w.changePct >= 0 ? "+" : ""}${w.changePct.toFixed(2)}%)` : "";
+      lines.push(`  ${w.code}: ${price}${chg}`);
+    }
+  } else {
+    lines.push("  Chưa có dữ liệu giá");
+  }
+
+  // ── Top stories ───────────────────────────────────────────
+  if (briefing.topStories.length > 0) {
+    lines.push("");
+    lines.push("📰 Tin quan trọng:");
+    for (const s of briefing.topStories.slice(0, 3)) {
+      const sentIcon = s.sentiment === "bullish" ? "🟢" : s.sentiment === "bearish" ? "🔴" : "⚪";
+      lines.push(`  ${sentIcon} ${s.title.slice(0, 70)}`);
+    }
+  }
+
+  // ── Unresolved alerts ─────────────────────────────────────
+  if (briefing.unresolvedAlerts && briefing.unresolvedAlerts.length > 0) {
+    lines.push("");
+    lines.push(`🚨 ${briefing.unresolvedAlerts.length} cảnh báo chưa xử lý:`);
+    for (const a of briefing.unresolvedAlerts.slice(0, 3)) {
+      lines.push(`  • [${a.severity.toUpperCase()}] ${a.message.slice(0, 60)}`);
+    }
+  }
+
+  // ── Top conviction ────────────────────────────────────────
+  if (briefing.topConviction) {
+    lines.push("");
+    lines.push(briefing.topConviction.summary);
+  }
+
+  // ── Sensitive dates ───────────────────────────────────────
+  if (briefing.sensitiveWarnings && briefing.sensitiveWarnings.length > 0) {
+    lines.push("");
+    for (const w of briefing.sensitiveWarnings.slice(0, 2)) {
+      lines.push(w);
+    }
+  }
+
+  // ── Macro abnormalities ───────────────────────────────────
+  if (briefing.macroSnapshot && briefing.macroSnapshot.length > 0) {
+    const abnormal = briefing.macroSnapshot.filter((m) => !m.status.includes("bình thường"));
+    if (abnormal.length > 0) {
+      lines.push("");
+      lines.push("🌍 Macro bất thường:");
+      for (const m of abnormal.slice(0, 3)) {
+        lines.push(`  ${m.status}`);
+      }
+    }
+  }
+
+  // ── Tracked commodities (top 5 non-normal) ────────────────
+  if (briefing.trackedCommodities && briefing.trackedCommodities.length > 0) {
+    lines.push("");
+    lines.push(`📦 ${briefing.trackedCommodities.length} chỉ số hàng hóa đang theo dõi`);
+  }
+
+  // ── New reports ────────────────────────────────────────────
+  if (briefing.newReports.length > 0) {
+    lines.push("");
+    lines.push("📄 BCTC mới:");
+    for (const r of briefing.newReports) {
+      lines.push(`  ${r.code} — ${r.period}`);
+    }
+  }
+
+  // ── Insider Mới ──────────────────────────────────────────────────────────────
+  if (briefing.insiderRecent && briefing.insiderRecent.length > 0) {
+    lines.push("");
+    lines.push("👤 Insider Mới:");
+    for (const row of briefing.insiderRecent as InsiderBriefingRow[]) {
+      const typeLabel =
+        row.type === "buy" ? "MUA" : row.type === "sell" ? "BÁN" : "KHÁC";
+      const vol = row.executedVolume.toLocaleString("en-US");
+      lines.push(`  ${row.code}: ${typeLabel} ${vol} cp — ${row.insiderName}`);
+    }
+  }
+
+  // ── Dòng Tiền Ngoại ──────────────────────────────────────────────────────────
+  if (briefing.foreignFlowSummary && briefing.foreignFlowSummary.length > 0) {
+    lines.push("");
+    lines.push("🌊 Dòng Tiền Ngoại:");
+    for (const row of briefing.foreignFlowSummary as ForeignFlowBriefingRow[]) {
+      const dirLabel = row.direction === "net_buy" ? "MUA RÒNG" : "BÁN RÒNG";
+      const vol = Math.abs(row.foreignVolume).toLocaleString("en-US");
+      lines.push(`  ${row.code}: ${dirLabel} ${vol}`);
+    }
+  }
+
+  // ── Tích Lũy Bằng Chứng ──────────────────────────────────────────────────────
+  if (briefing.evidenceTopScores && briefing.evidenceTopScores.length > 0) {
+    lines.push("");
+    lines.push("🧠 Tích Lũy Bằng Chứng:");
+    for (const row of briefing.evidenceTopScores as EvidenceScoreBriefingRow[]) {
+      const icon =
+        row.netScore > 0 ? "🟢" : row.netScore < BEARISH_WARNING_THRESHOLD ? "🔴" : "⚪";
+      lines.push(
+        `  ${icon} ${row.code}: net=${row.netScore.toFixed(2)} ` +
+          `(bull=${row.bullishScore.toFixed(2)}/bear=${row.bearishScore.toFixed(2)}, ` +
+          `${row.fragmentCount} mảnh)`,
+      );
+    }
+  }
+
+  return lines.join("\n");
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Concurrency guard
@@ -107,91 +248,7 @@ export async function runMorningBriefing(
       );
 
       // Format briefing as a compact Telegram message — always show all sections
-      const lines: string[] = [`📋 BẢN TIN SÁNG ${briefing.date}`];
-
-      // ── VN-Index ──────────────────────────────────────────────
-      lines.push("");
-      if (briefing.vnIndex) {
-        const sign = briefing.vnIndex.changePct >= 0 ? "+" : "";
-        lines.push(`📈 VN-Index: ${briefing.vnIndex.price.toLocaleString("en-US")} (${sign}${briefing.vnIndex.changePct.toFixed(2)}%)`);
-      } else {
-        lines.push("📈 VN-Index: chưa có dữ liệu");
-      }
-
-      // ── Watchlist prices ──────────────────────────────────────
-      lines.push("");
-      lines.push("📊 Giá cổ phiếu:");
-      if (briefing.watchlistSummary.length > 0) {
-        for (const w of briefing.watchlistSummary) {
-          const price = w.price ? `${w.price.toLocaleString("en-US")}` : "N/A";
-          const chg = w.changePct != null ? ` (${w.changePct >= 0 ? "+" : ""}${w.changePct.toFixed(2)}%)` : "";
-          lines.push(`  ${w.code}: ${price}${chg}`);
-        }
-      } else {
-        lines.push("  Chưa có dữ liệu giá");
-      }
-
-      // ── Top stories ───────────────────────────────────────────
-      if (briefing.topStories.length > 0) {
-        lines.push("");
-        lines.push("📰 Tin quan trọng:");
-        for (const s of briefing.topStories.slice(0, 3)) {
-          const sentIcon = s.sentiment === "bullish" ? "🟢" : s.sentiment === "bearish" ? "🔴" : "⚪";
-          lines.push(`  ${sentIcon} ${s.title.slice(0, 70)}`);
-        }
-      }
-
-      // ── Unresolved alerts ─────────────────────────────────────
-      if (briefing.unresolvedAlerts && briefing.unresolvedAlerts.length > 0) {
-        lines.push("");
-        lines.push(`🚨 ${briefing.unresolvedAlerts.length} cảnh báo chưa xử lý:`);
-        for (const a of briefing.unresolvedAlerts.slice(0, 3)) {
-          lines.push(`  • [${a.severity.toUpperCase()}] ${a.message.slice(0, 60)}`);
-        }
-      }
-
-      // ── Top conviction ────────────────────────────────────────
-      if (briefing.topConviction) {
-        lines.push("");
-        lines.push(briefing.topConviction.summary);
-      }
-
-      // ── Sensitive dates ───────────────────────────────────────
-      if (briefing.sensitiveWarnings && briefing.sensitiveWarnings.length > 0) {
-        lines.push("");
-        for (const w of briefing.sensitiveWarnings.slice(0, 2)) {
-          lines.push(w);
-        }
-      }
-
-      // ── Macro abnormalities ───────────────────────────────────
-      if (briefing.macroSnapshot && briefing.macroSnapshot.length > 0) {
-        const abnormal = briefing.macroSnapshot.filter((m) => !m.status.includes("bình thường"));
-        if (abnormal.length > 0) {
-          lines.push("");
-          lines.push("🌍 Macro bất thường:");
-          for (const m of abnormal.slice(0, 3)) {
-            lines.push(`  ${m.status}`);
-          }
-        }
-      }
-
-      // ── Tracked commodities (top 5 non-normal) ────────────────
-      if (briefing.trackedCommodities && briefing.trackedCommodities.length > 0) {
-        lines.push("");
-        lines.push(`📦 ${briefing.trackedCommodities.length} chỉ số hàng hóa đang theo dõi`);
-      }
-
-      // ── New reports ────────────────────────────────────────────
-      if (briefing.newReports.length > 0) {
-        lines.push("");
-        lines.push("📄 BCTC mới:");
-        for (const r of briefing.newReports) {
-          lines.push(`  ${r.code} — ${r.period}`);
-        }
-      }
-
-      const text = lines.join("\n");
+      const text = formatBriefingMessage(briefing);
 
       // Telegram limit: 4096 chars per message. Split if needed.
       const MAX_CHUNK = 4000;

@@ -26,6 +26,13 @@ import {
 } from "../../domain/services/portfolioPnlCalculator.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Named constants
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Net bearish weight threshold below which a stock is flagged as a bearish warning. */
+export const BEARISH_WARNING_THRESHOLD = -2.0;
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Public types
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -71,6 +78,48 @@ export interface NewReport {
 export interface VnIndexSnapshot {
   price: number;
   changePct: number;
+}
+
+/** Insider transaction row for the briefing enrichment (Step 14). */
+export interface InsiderBriefingRow {
+  /** Stock ticker, e.g. "VCB" */
+  code: string;
+  /** "buy" | "sell" | "other" */
+  type: string;
+  /** executed_volume from insider_transactions */
+  executedVolume: number;
+  /** insider_name from insider_transactions */
+  insiderName: string;
+  /** from_date (YYYY-MM-DD) from insider_transactions */
+  fromDate: string;
+}
+
+/** Foreign flow row for the briefing enrichment (Step 15). */
+export interface ForeignFlowBriefingRow {
+  /** Stock ticker */
+  code: string;
+  /** "net_buy" | "net_sell" */
+  direction: "net_buy" | "net_sell";
+  /** foreign_volume for the queried date (raw signed value, abs in display) */
+  foreignVolume: number;
+  /** Date of the data point (YYYY-MM-DD, derived from fetched_at) */
+  date: string;
+}
+
+/** Evidence score row for the briefing enrichment (Step 16). */
+export interface EvidenceScoreBriefingRow {
+  /** Stock ticker */
+  code: string;
+  /** bullish_score - bearish_score */
+  netScore: number;
+  /** Raw bullish_score */
+  bullishScore: number;
+  /** Raw bearish_score */
+  bearishScore: number;
+  /** fragment_count for this score row */
+  fragmentCount: number;
+  /** score_date (YYYY-MM-DD) */
+  scoreDate: string;
 }
 
 /** Macro indicator status for the briefing dashboard. */
@@ -119,6 +168,12 @@ export interface DailyBriefing {
    * Absent (undefined) on briefings generated before task 209.
    */
   portfolioPnl?: PortfolioPnlResult | null;
+  /** Insider transactions fetched_at in the last 24h, up to 3, for watchlist stocks */
+  insiderRecent?: InsiderBriefingRow[];
+  /** Foreign flow summary for the previous trading day, watchlist stocks only */
+  foreignFlowSummary?: ForeignFlowBriefingRow[];
+  /** Top evidence scores (bullish leaders + bearish warnings), latest score_date per stock */
+  evidenceTopScores?: EvidenceScoreBriefingRow[];
   /** ISO 8601 timestamp when this briefing was generated */
   generatedAt: string;
 }
@@ -176,6 +231,28 @@ interface PriceHistoryRow {
   price: number;
 }
 
+interface InsiderTransactionRow {
+  code: string;
+  type: string;
+  executed_volume: number;
+  insider_name: string;
+  from_date: string;
+}
+
+interface VnstatsRow {
+  code: string;
+  date: string;
+  foreign_volume: number;
+}
+
+interface EvidenceScoreRow {
+  code: string;
+  score_date: string;
+  bullish_score: number;
+  bearish_score: number;
+  fragment_count: number;
+}
+
 interface OpenPositionRow {
   code: string;
   shares: number;
@@ -219,6 +296,147 @@ function todayVietnam(): string {
   const m = String(vnNow.getUTCMonth() + 1).padStart(2, "0");
   const d = String(vnNow.getUTCDate()).padStart(2, "0");
   return `${y}-${m}-${d}`;
+}
+
+/**
+ * Query insider_transactions for watchlist stocks active in the last 24h.
+ * Returns at most 3 rows ordered by executed_volume DESC.
+ * Returns [] when watchlist is empty or no rows match.
+ */
+function queryInsiderRecent(
+  db: Database,
+  watchlistCodes: string[],
+): InsiderBriefingRow[] {
+  if (watchlistCodes.length === 0) return [];
+  const since24h = new Date(Date.now() - 24 * 3600_000).toISOString();
+  const placeholders = watchlistCodes.map(() => "?").join(", ");
+  const rows = db
+    .prepare<InsiderTransactionRow, (string | number)[]>(`
+      SELECT code, type, executed_volume, insider_name, from_date
+      FROM insider_transactions
+      WHERE fetched_at >= ?
+        AND code IN (${placeholders})
+      ORDER BY executed_volume DESC
+      LIMIT 3
+    `)
+    .all(since24h, ...watchlistCodes);
+  return rows.map((r) => ({
+    code: r.code,
+    type: r.type,
+    executedVolume: r.executed_volume,
+    insiderName: r.insider_name,
+    fromDate: r.from_date,
+  }));
+}
+
+/**
+ * Query vnstock_trading_stats for the most-recent foreign_volume per watchlist stock.
+ * Returns top 3 net-buy + top 3 net-sell rows (up to 6 total).
+ * Excludes rows where foreign_volume = 0 or NULL.
+ * Returns [] when watchlist is empty or no qualifying rows exist.
+ */
+function queryForeignFlowSummary(
+  db: Database,
+  watchlistCodes: string[],
+): ForeignFlowBriefingRow[] {
+  if (watchlistCodes.length === 0) return [];
+  const placeholders = watchlistCodes.map(() => "?").join(", ");
+  const rows = db
+    .prepare<VnstatsRow, (string | number)[]>(`
+      SELECT code,
+             substr(fetched_at, 1, 10) AS date,
+             foreign_volume
+      FROM vnstock_trading_stats
+      WHERE code IN (${placeholders})
+        AND foreign_volume IS NOT NULL
+        AND foreign_volume != 0
+        AND (code, fetched_at) IN (
+              SELECT code, MAX(fetched_at)
+              FROM vnstock_trading_stats
+              WHERE code IN (${placeholders})
+              GROUP BY code
+            )
+      ORDER BY foreign_volume DESC
+    `)
+    .all(...watchlistCodes, ...watchlistCodes);
+
+  const netBuyRows = rows
+    .filter((r) => r.foreign_volume > 0)
+    .slice(0, 3)
+    .map((r): ForeignFlowBriefingRow => ({
+      code: r.code,
+      direction: "net_buy",
+      foreignVolume: r.foreign_volume,
+      date: r.date,
+    }));
+
+  // rows is ordered DESC so most-negative values are at the end
+  const netSellRows = rows
+    .filter((r) => r.foreign_volume < 0)
+    .slice(-3)
+    .map((r): ForeignFlowBriefingRow => ({
+      code: r.code,
+      direction: "net_sell",
+      foreignVolume: r.foreign_volume,
+      date: r.date,
+    }));
+
+  return [...netBuyRows, ...netSellRows];
+}
+
+/**
+ * Query evidence_scores for the most-recent score per watchlist stock.
+ * Returns top 3 bullish leaders (netScore > 0, fragment_count >= 1) +
+ * all bearish warnings (netScore < BEARISH_WARNING_THRESHOLD, fragment_count >= 1).
+ * Deduplicates: bearish takes priority if a stock qualifies for both.
+ * Returns [] when watchlist is empty or no qualifying rows exist.
+ */
+function queryEvidenceTopScores(
+  db: Database,
+  watchlistCodes: string[],
+): EvidenceScoreBriefingRow[] {
+  if (watchlistCodes.length === 0) return [];
+  const placeholders = watchlistCodes.map(() => "?").join(", ");
+  const rows = db
+    .prepare<EvidenceScoreRow, (string | number)[]>(`
+      SELECT stock AS code,
+             score_date,
+             bullish_score,
+             bearish_score,
+             fragment_count
+      FROM evidence_scores
+      WHERE stock IN (${placeholders})
+        AND (stock, score_date) IN (
+              SELECT stock, MAX(score_date)
+              FROM evidence_scores
+              WHERE stock IN (${placeholders})
+              GROUP BY stock
+            )
+    `)
+    .all(...watchlistCodes, ...watchlistCodes);
+
+  const enriched = rows
+    .filter((r) => r.fragment_count >= 1)
+    .map((r) => ({
+      code: r.code,
+      netScore: r.bullish_score - r.bearish_score,
+      bullishScore: r.bullish_score,
+      bearishScore: r.bearish_score,
+      fragmentCount: r.fragment_count,
+      scoreDate: r.score_date,
+    }));
+
+  const bearishWarnings = enriched.filter(
+    (r) => r.netScore < BEARISH_WARNING_THRESHOLD,
+  );
+  const bearishCodes = new Set(bearishWarnings.map((r) => r.code));
+
+  const bullishLeaders = enriched
+    .filter((r) => r.netScore > 0 && !bearishCodes.has(r.code))
+    .sort((a, b) => b.netScore - a.netScore)
+    .slice(0, 3);
+
+  return [...bullishLeaders, ...bearishWarnings];
 }
 
 /**
@@ -607,6 +825,45 @@ export async function assembleBriefing(
     });
   }
 
+  // ── Step 14: Insider transactions (last 24h, watchlist only) ─────────────────
+  let insiderRecent: InsiderBriefingRow[] = [];
+  try {
+    insiderRecent = queryInsiderRecent(
+      db,
+      watchlistRows.map((r) => r.code),
+    );
+  } catch (insiderErr) {
+    logger.warn("[assembleBriefing] insiderRecent step failed", {
+      error: insiderErr instanceof Error ? insiderErr.message : String(insiderErr),
+    });
+  }
+
+  // ── Step 15: Foreign flow summary (previous trading day, watchlist only) ──────
+  let foreignFlowSummary: ForeignFlowBriefingRow[] = [];
+  try {
+    foreignFlowSummary = queryForeignFlowSummary(
+      db,
+      watchlistRows.map((r) => r.code),
+    );
+  } catch (ffErr) {
+    logger.warn("[assembleBriefing] foreignFlowSummary step failed", {
+      error: ffErr instanceof Error ? ffErr.message : String(ffErr),
+    });
+  }
+
+  // ── Step 16: Evidence top scores (bullish leaders + bearish warnings) ─────────
+  let evidenceTopScores: EvidenceScoreBriefingRow[] = [];
+  try {
+    evidenceTopScores = queryEvidenceTopScores(
+      db,
+      watchlistRows.map((r) => r.code),
+    );
+  } catch (esErr) {
+    logger.warn("[assembleBriefing] evidenceTopScores step failed", {
+      error: esErr instanceof Error ? esErr.message : String(esErr),
+    });
+  }
+
   // ── Step 13: Persist briefing ─────────────────────────────────────────────
   const date = todayVietnam();
   const generatedAt = new Date().toISOString();
@@ -625,6 +882,9 @@ export async function assembleBriefing(
     topConviction,
     predictionSignals,
     portfolioPnl,
+    insiderRecent,
+    foreignFlowSummary,
+    evidenceTopScores,
     generatedAt,
   };
 
