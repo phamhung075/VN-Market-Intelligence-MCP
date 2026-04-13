@@ -2,7 +2,7 @@
  * Evening Summary Job — Task 105 (Interface / Scheduler Layer)
  *
  * Thin cron wrapper around the `assembleEveningSummary` application use case.
- * Registered in `jobs.ts` at 22:00 Asia/Ho_Chi_Minh weekdays (0 22 * * 1-5).
+ * Registered in `jobs.ts` at 22:30 Asia/Ho_Chi_Minh weekdays (30 22 * * 1-5).
  *
  * A concurrency guard prevents a second invocation from starting while the
  * previous summary is still assembling.
