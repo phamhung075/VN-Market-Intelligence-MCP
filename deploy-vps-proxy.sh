@@ -152,14 +152,41 @@ echo "=== SBV/VCB unit status ==="
 systemctl --no-pager -l status vn-sbv-fetch.service | head -15
 SBVEOF
 
+# ── Foreign Flow Proxy deploy (Task 1142) ────────────────────────────────────
+echo ""
+echo "Deploying VN foreign flow proxy scripts..."
+
+TMP_FF=$(mktemp)
+sed -e "s|__MCP_BASE__|${MCP_BASE}|g" \
+    -e "s|__API_KEY__|${VPS_PUSH_API_KEY}|g" \
+    vps-scripts/fetch-foreign-flow.sh > "$TMP_FF"
+
+$SCP "$TMP_FF"                              ${VULTR_USER}@${VULTR_IP}:/root/fetch-foreign-flow.sh
+$SCP vps-scripts/fetch-foreign-flow-loop.sh ${VULTR_USER}@${VULTR_IP}:/root/fetch-foreign-flow-loop.sh
+$SCP vps-scripts/vn-foreign-flow.service \
+     ${VULTR_USER}@${VULTR_IP}:/etc/systemd/system/vn-foreign-flow.service
+rm "$TMP_FF"
+
+$SSH << 'FFEOF'
+set -e
+chmod +x /root/fetch-foreign-flow.sh /root/fetch-foreign-flow-loop.sh
+systemctl daemon-reload
+systemctl enable vn-foreign-flow.service
+systemctl restart vn-foreign-flow.service
+sleep 2
+echo "=== Foreign Flow unit status ==="
+systemctl --no-pager -l status vn-foreign-flow.service | head -15
+FFEOF
+
 echo ""
 echo "══════════════════════════════════════════"
-echo " Deploy complete — systemd owns all 4 VPS services"
+echo " Deploy complete — systemd owns all 5 VPS services"
 echo ""
-echo " Price proxy:    systemctl status vn-price-fetch"
-echo " BCTC proxy:     systemctl status vn-bctc-fetch"
-echo " News RSS proxy: systemctl status vn-news-fetch"
-echo " SBV/FX proxy:   systemctl status vn-sbv-fetch"
+echo " Price proxy:        systemctl status vn-price-fetch"
+echo " BCTC proxy:         systemctl status vn-bctc-fetch"
+echo " News RSS proxy:     systemctl status vn-news-fetch"
+echo " SBV/FX proxy:       systemctl status vn-sbv-fetch"
+echo " Foreign flow proxy: systemctl status vn-foreign-flow"
 echo ""
-echo " Logs: /var/log/vn-{price,bctc,news,sbv}-fetch.log"
+echo " Logs: /var/log/vn-{price,bctc,news,sbv,foreign}-flow.log"
 echo "══════════════════════════════════════════"

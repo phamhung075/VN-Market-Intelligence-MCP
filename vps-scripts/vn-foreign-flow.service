@@ -1,0 +1,22 @@
+[Unit]
+Description=VN Market foreign flow proxy — push foreign investor flow to zenmidi MCP
+Documentation=https://github.com/phamhung075/VN-Market-Intelligence-MCP
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/root/fetch-foreign-flow-loop.sh
+Restart=always
+RestartSec=5
+StandardOutput=append:/var/log/vn-foreign-flow.log
+StandardError=append:/var/log/vn-foreign-flow.log
+# Resource safety — the loop script is trivial; these caps just stop a
+# runaway from hurting the host.
+MemoryMax=128M
+TasksMax=32
+# Optional: uncomment and set an EnvironmentFile to override field names
+# EnvironmentFile=/etc/vn-foreign-flow.env
+
+[Install]
+WantedBy=multi-user.target

@@ -2,11 +2,26 @@
 # VN Market Price Proxy — auto-deployed
 # Fetches: VN stocks (batch) + VN indices (CafeF) + global indices (Yahoo Finance)
 # All pushed to MCP server in 1 call
+#
+# Step 2b: Foreign flow (fBuyVol / fSellVol / fRoom) extracted from VPS data
+# and pushed to /api/push-foreign-flow. Field names are configurable via:
+#
+#   FOREIGN_FLOW_FBUY_FIELD  — field name for foreign buy volume   (default: fBuyVol)
+#   FOREIGN_FLOW_FSELL_FIELD — field name for foreign sell volume  (default: fSellVol)
+#   FOREIGN_FLOW_ROOM_FIELD  — field name for remaining buy room   (default: fRoom)
+#
+# Set these env vars in the systemd unit's EnvironmentFile to override defaults.
 
 API_URL="__MCP_BASE__/api/push-prices"
+FOREIGN_FLOW_URL="__MCP_BASE__/api/push-foreign-flow"
 WATCHLIST_URL="__MCP_BASE__/api/watchlist"
 API_KEY="__API_KEY__"
 LOG="/var/log/vn-price-fetch.log"
+
+# Configurable foreign flow field names (can be overridden via environment)
+FBUY_FIELD="${FOREIGN_FLOW_FBUY_FIELD:-fBuyVol}"
+FSELL_FIELD="${FOREIGN_FLOW_FSELL_FIELD:-fSellVol}"
+FROOM_FIELD="${FOREIGN_FLOW_ROOM_FIELD:-fRoom}"
 
 LOG_SIZE=$(stat -c%s "$LOG" 2>/dev/null || echo 0)
 if [ "$LOG_SIZE" -gt 10485760 ]; then mv "$LOG" "$LOG.old"; fi
@@ -52,6 +67,29 @@ if [ -n "$VN_DATA" ] && [ "$VN_DATA" != "[]" ]; then
   echo "$(date -u) VN stocks: $VN_COUNT fetched" >> "$LOG"
 else
   echo "$(date -u) WARN: VN stocks empty response" >> "$LOG"
+fi
+
+# Step 2b: Extract foreign flow from VPS data and push to /api/push-foreign-flow
+# Idempotent — skipped if VN_DATA was empty or had no valid foreign flow fields.
+if [ -n "$VN_DATA" ] && [ "$VN_DATA" != "[]" ]; then
+  FF_JSON=$(echo "$VN_DATA" | jq --arg fbuy "$FBUY_FIELD" --arg fsell "$FSELL_FIELD" --arg froom "$FROOM_FIELD" \
+    '[.[] | select(.sym != null) | {
+      code: .sym,
+      foreignBuyVol:  (if .[$fbuy]  != null then (.[$fbuy]  | tonumber) else 0 end),
+      foreignSellVol: (if .[$fsell] != null then (.[$fsell] | tonumber) else 0 end),
+      foreignRoom:    (if .[$froom] != null then (.[$froom] | tonumber) else 0 end)
+    } | select(.foreignBuyVol > 0 or .foreignSellVol > 0 or .foreignRoom > 0)]' 2>/dev/null)
+  FF_COUNT=$(echo "$FF_JSON" | jq 'length' 2>/dev/null || echo 0)
+  if [ "$FF_COUNT" -gt 0 ]; then
+    FF_RESP=$(curl -s --connect-timeout 10 --max-time 15 \
+      -X POST "$FOREIGN_FLOW_URL" \
+      -H "Content-Type: application/json" \
+      -H "X-API-Key: $API_KEY" \
+      -d "$FF_JSON")
+    echo "$(date -u) FOREIGN_FLOW: $FF_COUNT items => $FF_RESP" >> "$LOG"
+  else
+    echo "$(date -u) FOREIGN_FLOW: no items with non-zero flow (fields: $FBUY_FIELD/$FSELL_FIELD/$FROOM_FIELD)" >> "$LOG"
+  fi
 fi
 
 # Step 3: Fetch VN indices (CafeF — VNINDEX + HNXINDEX)
