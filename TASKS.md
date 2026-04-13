@@ -16,13 +16,13 @@ Spec: `docs/REQ_062.md`
 | REQ-062 | BA: write REQ_062.md for cron observability completion | BA | — | — | — | Done |
 | TECH-062 | Architect: review REQ_062, produce TECH_062.md | Architect | — | REQ-062 | — | Done |
 | PM-062 | PM: sprint planning — break TECH_062 into tasks 1136–1140, assign batches | PM | — | TECH-062 | — | Done |
-| 1136 | jobs.ts imports + summaryJobs.ts wrap (FR-16, FR-18) | Developer | interface/scheduler | — | task/1136-imports-summary-wrap | Review |
-| 1137 | Wrap critical briefing/cycle jobs: morningBriefing, intelligenceCycle, eveningSummary, alertDigest (FR-1–4) | Developer | interface/scheduler | 1136 | task/1137-wrap-briefing-cycle | Review |
-| 1138 | Wrap market/portfolio/prediction jobs: patternWatch, weeklyPortfolioReport, predictionMarketPoll, predictionOutcome (FR-5–8) | Developer | interface/scheduler | 1136 | task/1138-market-portfolio-wrap | Review |
-| 1139 | Wrap utility/infra jobs: franceSummary, devTeamHeartbeat, weatherCheck, davPharmacyCheck (FR-9–12) | Developer | interface/scheduler | 1136 | task/1139-utility-wrap | Review |
-| 1140 | Replace try/catch blocks: bctcOverdueCheck, vpsProxyWatchdog, cronHealthAlert (FR-13–15) | Developer | interface/scheduler | 1136 | task/1140-trycatch-replace | Review |
+| 1136 | jobs.ts imports + summaryJobs.ts wrap (FR-16, FR-18) | Developer | interface/scheduler | — | task/1136-imports-summary-wrap | Done |
+| 1137 | Wrap critical briefing/cycle jobs: morningBriefing, intelligenceCycle, eveningSummary, alertDigest (FR-1–4) | Developer | interface/scheduler | 1136 | task/1137-wrap-briefing-cycle | Done |
+| 1138 | Wrap market/portfolio/prediction jobs: patternWatch, weeklyPortfolioReport, predictionMarketPoll, predictionOutcome (FR-5–8) | Developer | interface/scheduler | 1136 | task/1138-market-portfolio-wrap | Done |
+| 1139 | Wrap utility/infra jobs: franceSummary, devTeamHeartbeat, weatherCheck, davPharmacyCheck (FR-9–12) | Developer | interface/scheduler | 1136 | task/1139-utility-wrap | Done |
+| 1140 | Replace try/catch blocks: bctcOverdueCheck, vpsProxyWatchdog, cronHealthAlert (FR-13–15) | Developer | interface/scheduler | 1136 | task/1140-trycatch-replace | Done |
 
-**WIP state:** 0 tasks In Progress (limit: 2). Tasks 1137–1140 blocked on 1136 merge/QA.
+**WIP state:** 0 tasks In Progress (limit: 2). Sprint 062 COMPLETE — all tasks done.
 
 ---
 
