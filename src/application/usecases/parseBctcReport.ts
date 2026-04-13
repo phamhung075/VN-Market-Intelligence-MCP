@@ -27,6 +27,7 @@ import { computePeriodDelta } from "../../domain/services/periodDeltaComputer.js
 import type { FinancialMetrics } from "../../domain/services/periodDeltaComputer.js";
 import { validateFinancialReport } from "../../domain/services/bctcValidator.js";
 import { getDb, initDatabase } from "../../infrastructure/db/schema.js";
+import { logger } from "../../infrastructure/logger.js";
 
 import type {
   FinancialReport,
@@ -440,7 +441,29 @@ export async function parseBctcReport(
   // ── Step 7: Persist to SQLite ─────────────────────────────────────────────
   // Ensure DB is initialised (idempotent — no-op if already done)
   await initDatabase();
-  storeReport(report, validationStatus, validationNotes);
+  const db = getDb();
+
+  try {
+    storeReport(report, validationStatus, validationNotes);
+  } catch (err) {
+    throw new Error(
+      `storeReport failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
+  }
+
+  // WAL checkpoint — makes the new row visible to external readers immediately.
+  // Skipped for :memory: DBs (WAL mode is a no-op there).
+  const dbPath = Bun.env["DB_PATH"] ?? "";
+  if (dbPath !== ":memory:") {
+    try {
+      db.exec("PRAGMA wal_checkpoint(PASSIVE)");
+    } catch (checkpointErr) {
+      // Non-fatal: log and continue — data is already persisted in WAL
+      logger.debug("[parseBctcReport] WAL checkpoint busy or failed (non-fatal)", {
+        error: checkpointErr instanceof Error ? checkpointErr.message : String(checkpointErr),
+      });
+    }
+  }
 
   return report;
 }
