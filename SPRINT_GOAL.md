@@ -1,6 +1,44 @@
 # Sprint Goal
 
-## Current Sprint — 068 (COMPLETE)
+## Current Sprint — 069 (COMPLETE)
+
+started: 2026-04-13 | completed: 2026-04-13 | theme: Market Message Review UX + Task 1139 Close — digest + batch review workflow for overnight message triage
+
+### Goal
+
+The per-message review workflow introduced in Sprint 068 requires N individual `review_market_message` calls to clear a night's alerts. This sprint reduces morning triage to two tool calls: `get_market_message_digest` (grouped summary by date + agent with preview and ids) and `batch_review_market_messages` (bulk verdict in one call). Also closes the administrative debt of Task 1139 (wrap utility cron jobs with `recordJobRun`) that had been deferred since Sprint 062.
+
+### Scope
+
+| Area | In/Out |
+|------|--------|
+| `getMarketMessageDigest` query helper + `MarketMessageDigestEntry` type in `marketMessageStore.ts` | IN |
+| `batchReviewMarketMessages` transaction helper + `BatchReviewResult` type in `marketMessageStore.ts` | IN |
+| MCP tool `get_market_message_digest` — grouped digest output | IN |
+| MCP tool `batch_review_market_messages` — bulk verdict with notFound reporting | IN |
+| TDD: 22 failing tests first in `src/__tests__/1168-market-message-digest.test.ts` | IN |
+| Close Task 1139: verify `recordJobRun` wraps for 4 utility cron jobs, archive entry | IN |
+| `project-stats.json` advance to sprint 069, toolCount 93 → 95 | IN |
+| VPS changes | OUT |
+| New cron jobs | OUT |
+
+### Success Metric
+
+After this sprint: (1) `get_market_message_digest` groups unreviewed messages by date + agent with count, ids, preview. (2) `batch_review_market_messages` updates all supplied ids in one transaction, returns notFound list. (3) Task 1139 administrative close confirmed and archived. (4) Full test suite green, `bun tsc --noEmit` clean. (5) `project-stats.json` currentSprint = 69.
+
+### Results
+
+All 5 developer tasks shipped (1168-1172) + REQ-069 + TECH-069 Done:
+- TDD red phase: 22 failing tests for digest + batch review system (1168): shipped
+- `getMarketMessageDigest` + `batchReviewMarketMessages` + types in marketMessageStore.ts (1169): shipped
+- MCP tools `get_market_message_digest` + `batch_review_market_messages` registered (1170): shipped
+- Task 1139 administrative close: recordJobRun wraps verified, archive entry added (1171): shipped
+- Sprint close: project-stats.json currentSprint 68 → 69, toolCount 93 → 95 (1172): shipped
+- 22/22 new tests pass. Full suite green. `bun tsc --noEmit` clean.
+
+---
+
+## Previous Sprint — 068 (COMPLETE)
 
 started: 2026-04-13 | completed: 2026-04-13 | theme: MARKET Message Quality Review System — persist every MARKET channel message and add a human-review workflow
 

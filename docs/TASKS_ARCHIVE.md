@@ -5,6 +5,23 @@ Active board lives in `TASKS.md`.
 
 ---
 
+### Sprint 069 — Market Message Review UX + Task 1139 Close — Done 2026-04-13
+
+8 tasks shipped. Added `getMarketMessageDigest` + `batchReviewMarketMessages` helpers + types to `marketMessageStore.ts`. Added MCP tools `get_market_message_digest` + `batch_review_market_messages`. Closed Task 1139 administrative debt (recordJobRun wraps verified). Tool count 93 → 95. 22/22 new tests pass.
+
+| ID | Title | Commit |
+|----|-------|--------|
+| REQ-069 | BA: REQ_069.md — digest + batch review UX spec, Task 1139 close spec | — |
+| TECH-069 | Architect: TECH_069.md — DDD layer plan, SQL queries, Zod schemas, test strategy | — |
+| PM-069 | PM: sprint planning — tasks 1168–1172 in TASKS.md | — |
+| 1168 | TDD red phase — 22 failing tests for digest + batch review (AC-1 to AC-12 + AC-14) | — |
+| 1169 | getMarketMessageDigest + batchReviewMarketMessages + types in marketMessageStore.ts | — |
+| 1170 | handleGetMarketMessageDigest + handleBatchReviewMarketMessages + 2 tools registered in marketMessageTools.ts | — |
+| 1171 | Task 1139 admin close: recordJobRun wraps verified, archive entry confirmed | — |
+| 1172 | Sprint close: project-stats.json currentSprint 68 → 69, toolCount 93 → 95 | (this commit) |
+
+---
+
 ### Task 1139 — Wrap utility/infra jobs (FR-9, FR-10, FR-11, FR-12) — Done (Sprint 062)
 
 **Branch**: `task/1139-utility-wrap`
