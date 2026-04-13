@@ -4,6 +4,25 @@
 
 ---
 
+## Sprint 065 — Prediction Claim Resolution Loop (PLANNING)
+
+Vision: `SPRINT_GOAL.md`
+Spec: `docs/REQ_065.md`
+
+### Kanban
+
+| ID | Title | Agent | Layer | Depends On | Branch | Status |
+|----|-------|-------|-------|------------|--------|--------|
+| REQ-065 | BA: write REQ_065.md — exact schema changes, tool param additions, resolution logic, acceptance criteria | BA | — | — | — | Done |
+| TECH-065 | Architect: review REQ_065.md, produce TECH_065.md with exact code changes for all 4 files | Architect | — | REQ-065 | — | Done |
+| 1150 | FR-2 (DDL): ALTER TABLE migration for creation_price in schema.ts | Developer | infrastructure | TECH-065 | task/1150-prediction-resolution-loop | Review |
+| 1151 | FR-2 (store): PredictionClaimInput/Row/ClaimDbRow interfaces + INSERT update in predictionClaimStore.ts | Developer | infrastructure | 1150 | task/1150-prediction-resolution-loop | Review |
+| 1152 | FR-3 + FR-4: Fix evaluateOutcome() + pass creation_price in predictionResolutionJob.ts | Developer | scheduler | 1151 | task/1150-prediction-resolution-loop | Review |
+| 1153 | FR-1: Add direction + expected_move_pct + price lookup to create_prediction_claim tool in evidenceTools.ts | Developer | interface | 1151 | task/1150-prediction-resolution-loop | Review |
+| 1154 | Tests: 1154-prediction-resolution-loop.test.ts — AC-1 through AC-7 | Developer | — | 1152, 1153 | task/1150-prediction-resolution-loop | Review |
+
+---
+
 ## Sprint 064 — Knowledge Sync: Align Agent Tool Maps with 91-Tool Reality (COMPLETE — archive pending)
 
 Vision: `SPRINT_GOAL.md`
