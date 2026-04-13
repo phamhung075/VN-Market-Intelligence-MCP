@@ -31,11 +31,11 @@ Tech: `docs/TECH_067.md`
 | REQ-067 | BA: write REQ_067.md — exact DB queries, field names, section format strings, type extensions for BriefingResult, acceptance criteria | BA | — | — | — | Done |
 | TECH-067 | Architect: write TECH_067.md — implementation plan for tasks 1159-1162, DDD layer map, test scaffold outline | Architect | — | REQ-067 | — | Done |
 | 1159 | TDD: write failing tests for all 3 new briefing sections (AC-1 through AC-6) in `src/__tests__/1159-morning-briefing-enrichment.test.ts` | Developer | tests | TECH-067 ✓ | task/1159-morning-briefing-enrichment | Done |
-| 1160 | Extend `DailyBriefing` type + add 3 exported row types + `BEARISH_WARNING_THRESHOLD` constant + 3 query helpers + Steps 14-16 in `assembleBriefing.ts` (FR-1 to FR-4) | Developer | application | 1159 | task/1159-morning-briefing-enrichment | Review |
-| 1161 | Render 3 new Telegram sections (Insider Mới, Dòng Tiền Ngoại, Tích Lũy Bằng Chứng) in `morningBriefingJob.ts`; import `BEARISH_WARNING_THRESHOLD` from `assembleBriefing.ts` (FR-5) | Developer | interface/scheduler | 1160 | task/1159-morning-briefing-enrichment | Todo |
+| 1160 | Extend `DailyBriefing` type + add 3 exported row types + `BEARISH_WARNING_THRESHOLD` constant + 3 query helpers + Steps 14-16 in `assembleBriefing.ts` (FR-1 to FR-4) | Developer | application | 1159 | task/1159-morning-briefing-enrichment | Done |
+| 1161 | Render 3 new Telegram sections (Insider Mới, Dòng Tiền Ngoại, Tích Lũy Bằng Chứng) in `morningBriefingJob.ts`; import `BEARISH_WARNING_THRESHOLD` from `assembleBriefing.ts` (FR-5) | Developer | interface/scheduler | 1160 | task/1159-morning-briefing-enrichment | Done |
 | 1162 | Advance `docs/data/project-stats.json` currentSprint to 67, update lastUpdated to today | Developer | docs/data | 1161 | task/1159-morning-briefing-enrichment | Todo |
 
-**WIP state:** 0 tasks In Progress. Tasks 1159, 1160 Done/Review. Task 1161 is unblocked.
+**WIP state:** 0 tasks In Progress. Tasks 1159-1161 Done. Task 1162 is unblocked.
 
 ---
 
