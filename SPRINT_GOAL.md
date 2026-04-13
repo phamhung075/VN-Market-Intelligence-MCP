@@ -1,8 +1,14 @@
 # Sprint Goal
 
-## Current Sprint — 064 (ACTIVE)
+## Current Sprint — 065 (PLANNING)
 
-started: 2026-04-13 | theme: Knowledge Sync — Align Agent Tool Maps with 91-Tool Reality
+started: — | theme: TBD
+
+---
+
+## Previous Sprint — 064 (COMPLETE)
+
+started: 2026-04-13 | completed: 2026-04-13 | theme: Knowledge Sync — Align Agent Tool Maps with 91-Tool Reality
 
 ### Goal
 

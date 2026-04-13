@@ -4,7 +4,7 @@
 
 ---
 
-## Sprint 064 — Knowledge Sync: Align Agent Tool Maps with 91-Tool Reality (ACTIVE)
+## Sprint 064 — Knowledge Sync: Align Agent Tool Maps with 91-Tool Reality (COMPLETE — archive pending)
 
 Vision: `SPRINT_GOAL.md`
 
@@ -12,12 +12,12 @@ Vision: `SPRINT_GOAL.md`
 
 | ID | Title | Agent | Layer | Depends On | Branch | Status |
 |----|-------|-------|-------|------------|--------|--------|
-| REQ-064 | BA: write REQ_064.md — exact tool additions per agent, change matrix | BA | — | — | — | Backlog |
-| TECH-064 | Architect: review REQ_064, confirm no code changes needed | Architect | — | REQ-064 | — | Backlog |
-| 1148 | Update mcp-tools.md agent tool tables: add 9 new tools to correct agent rows + add Agent 08 row | Developer | docs | TECH-064 | task/1148-mcp-tools-sync | Backlog |
-| 1149 | Verify 08-prediction-synthesizer.md tool list matches updated mcp-tools.md | Developer | docs | 1148 | task/1148-mcp-tools-sync | Backlog |
+| REQ-064 | BA: write REQ_064.md — exact tool additions per agent, change matrix | BA | — | — | — | Done |
+| TECH-064 | Architect: review REQ_064, confirm no code changes needed | Architect | — | REQ-064 | — | Done |
+| 1148 | Update mcp-tools.md agent tool tables: add 9 new tools to correct agent rows + add Agent 08 row | Developer | docs | TECH-064 | task/1148-mcp-tools-sync | Done |
+| 1149 | Verify 08-prediction-synthesizer.md tool list matches updated mcp-tools.md | Developer | docs | 1148 | task/1148-mcp-tools-sync | Done |
 
-**WIP state:** 0 tasks In Progress. Sprint just started — pass to BA.
+**WIP state:** 0 tasks In Progress. Sprint 064 COMPLETE 2026-04-13. All 4 tasks (REQ-064, TECH-064, 1148, 1149) Done. Delivered in commit 882d507 — documentation-only sprint, no code changes needed.
 
 ---
 
