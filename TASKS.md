@@ -4,6 +4,347 @@
 
 ---
 
+## Sprint 062 — Cron Observability Completion (ACTIVE)
+
+Vision: `SPRINT_GOAL.md`
+Spec: `docs/REQ_062.md`
+
+### Kanban
+
+| ID | Title | Agent | Layer | Depends On | Branch | Status |
+|----|-------|-------|-------|------------|--------|--------|
+| REQ-062 | BA: write REQ_062.md for cron observability completion | BA | — | — | — | Done |
+| TECH-062 | Architect: review REQ_062, produce TECH_062.md | Architect | — | REQ-062 | — | Done |
+| PM-062 | PM: sprint planning — break TECH_062 into tasks 1136–1140, assign batches | PM | — | TECH-062 | — | Done |
+| 1136 | jobs.ts imports + summaryJobs.ts wrap (FR-16, FR-18) | Developer | interface/scheduler | — | task/1136-imports-summary-wrap | Review |
+| 1137 | Wrap critical briefing/cycle jobs: morningBriefing, intelligenceCycle, eveningSummary, alertDigest (FR-1–4) | Developer | interface/scheduler | 1136 | — | Todo |
+| 1138 | Wrap market/portfolio/prediction jobs: patternWatch, weeklyPortfolioReport, predictionMarketPoll, predictionOutcome (FR-5–8) | Developer | interface/scheduler | 1136 | — | Todo |
+| 1139 | Wrap utility/infra jobs: franceSummary, devTeamHeartbeat, weatherCheck, davPharmacyCheck (FR-9–12) | Developer | interface/scheduler | 1136 | — | Todo |
+| 1140 | Replace try/catch blocks: bctcOverdueCheck, vpsProxyWatchdog, cronHealthAlert (FR-13–15) | Developer | interface/scheduler | 1136 | — | Todo |
+
+**WIP state:** 0 tasks In Progress (limit: 2). Tasks 1137–1140 blocked on 1136 merge/QA.
+
+---
+
+### Task 1136 — jobs.ts imports + summaryJobs.ts wrap (FR-16, FR-18)
+
+**Branch**: `task/1136-imports-summary-wrap`
+**Layer**: interface/scheduler
+**Depends on**: none (Batch A — start immediately)
+
+#### Files to read first
+
+- `src/scheduler/jobs.ts` — lines 48–55 to locate the last import line (currently line 50: `runForeignFlowAlertJobCron`); confirm `getDb` and `recordJobRun` are NOT already imported
+- `src/scheduler/summaryJobs.ts` — lines 1–30 (existing imports, ~line 21 is last import); lines 54–75 (current `runSummaryJob` body to be replaced)
+
+#### Files to create / modify
+
+- MODIFY: `src/scheduler/jobs.ts` — add 2 import lines after line 50
+- MODIFY: `src/scheduler/summaryJobs.ts` — add 2 import lines after line 21; replace `runSummaryJob` body (lines 54–75) with Pattern D
+
+#### Exact changes
+
+**jobs.ts** — add after the last import line (after `runForeignFlowAlertJobCron`):
+```typescript
+import { getDb } from '../infrastructure/db/schema.js'
+import { recordJobRun } from '../infrastructure/db/cronJobRunStore.js'
+```
+
+**summaryJobs.ts** — add after the existing `logger` import (after line 21):
+```typescript
+import { getDb } from "../infrastructure/db/schema.js"
+import { recordJobRun } from "../infrastructure/db/cronJobRunStore.js"
+```
+
+**summaryJobs.ts** — replace `runSummaryJob` (lines 54–75) with Pattern D:
+```typescript
+async function runSummaryJob(periodType: PeriodType): Promise<void> {
+  const db = getDb()
+  await recordJobRun(db, `summaryJob:${periodType}`, async () => {
+    const start = Date.now()
+    logger.info(`[summaryJob] starting ${periodType} summary generation`)
+    const summary = await generatePeriodicSummary(periodType)
+    const durationMs = Date.now() - start
+    logger.info(`[summaryJob] ${periodType} summary complete`, {
+      id: summary.id,
+      periodStart: summary.periodStart,
+      periodEnd: summary.periodEnd,
+      newsCount: summary.newsCount,
+      alertCount: summary.alertCount,
+      durationMs,
+    })
+  })
+}
+```
+
+Note: the outer `try/catch` in the original `runSummaryJob` is superseded by `recordJobRun`'s own error capture — remove it entirely. `getDb()` is called inside the callback (per-run), not at module level.
+
+#### Acceptance Criteria
+
+**Given** the two import lines are added to `jobs.ts` (after existing imports) and the Pattern D wrap replaces `runSummaryJob` in `summaryJobs.ts`
+**When** `bun tsc --noEmit` and `bun test` are run
+**Then**
+
+- `bun tsc --noEmit` reports 0 errors
+- `bun test` passes with 0 failures (no regression)
+- `jobs.ts` contains `import { getDb }` and `import { recordJobRun }` (grep-verifiable)
+- `summaryJobs.ts` `runSummaryJob` body is wrapped in `recordJobRun(db, \`summaryJob:${periodType}\`, ...)`
+- No standalone `try/catch` remains inside the new `runSummaryJob`
+- `jobs.ts` does NOT import `recordJobRun` for summary jobs (summary imports live in `summaryJobs.ts` only — AC-5)
+
+#### TDD Test location
+
+No new test file required for this task (REQ-062: "no new tests beyond verifying the wrap is present"). Verification via `bun tsc --noEmit` + `bun test` + grep checks.
+
+---
+
+### Task 1137 — Wrap critical briefing/cycle jobs (FR-1, FR-2, FR-3, FR-4)
+
+**Branch**: `task/1137-wrap-briefing-cycle`
+**Layer**: interface/scheduler
+**Depends on**: 1136 (imports must be merged before this task starts)
+
+#### Files to read first
+
+- `src/scheduler/jobs.ts` — lines 128–168 (morningBriefing, intelligenceCycle, eveningSummary, alertDigest cron blocks)
+- `src/scheduler/intelligenceCycleJob.ts` — confirm `CycleResult` fields: `newsFetched` and `impactEventsRan` exist (grep before writing Pattern B)
+
+#### Files to create / modify
+
+- MODIFY: `src/scheduler/jobs.ts` — wrap 4 call sites (lines 130–132, 143–145, 158–160, 163–165)
+
+#### Exact changes
+
+Replace each plain `await runX()` callback body with the appropriate `recordJobRun` wrapper:
+
+| Job | Lines | Pattern |
+|-----|-------|---------|
+| morningBriefing | 130–132 | A |
+| intelligenceCycle | 143–145 | B — `return { rowsWritten: (result?.newsFetched ?? 0) + (result?.impactEventsRan ?? 0) }` |
+| eveningSummary | 158–160 | A |
+| alertDigest | 163–165 | A |
+
+Pattern A (morningBriefing, eveningSummary, alertDigest):
+```typescript
+cron.schedule(CRONS.X, async () => {
+  await recordJobRun(getDb(), "XJob", async () => {
+    await runX()
+  })
+}, { timezone: 'Asia/Ho_Chi_Minh' })
+```
+
+Pattern B (intelligenceCycle):
+```typescript
+cron.schedule(CRONS.intelligenceCycle, async () => {
+  await recordJobRun(getDb(), "intelligenceCycleJob", async () => {
+    const result = await runIntelligenceCycle()
+    return { rowsWritten: (result?.newsFetched ?? 0) + (result?.impactEventsRan ?? 0) }
+  })
+}, { timezone: 'Asia/Ho_Chi_Minh' })
+```
+
+#### Acceptance Criteria
+
+**Given** task 1136 is merged and `getDb` + `recordJobRun` are imported in `jobs.ts`
+**When** the 4 call sites are wrapped and `bun tsc --noEmit` + `bun test` are run
+**Then**
+
+- `bun tsc --noEmit` reports 0 errors
+- `bun test` passes with 0 failures
+- Each of the 4 cron callbacks contains `recordJobRun(getDb(), "..."` (grep-verifiable)
+- `intelligenceCycleJob` callback uses `result?.newsFetched ?? 0` (null-safe)
+
+#### TDD Test location
+
+No new test file. Verification via `bun tsc --noEmit` + `bun test` + grep checks.
+
+---
+
+### Task 1138 — Wrap market/portfolio/prediction jobs (FR-5, FR-6, FR-7, FR-8)
+
+**Branch**: `task/1138-wrap-market-portfolio`
+**Layer**: interface/scheduler
+**Depends on**: 1136 (imports must be merged before this task starts)
+
+#### Files to read first
+
+- `src/scheduler/jobs.ts` — lines 172–260 (patternWatch, predictionMarketPoll, weeklyPortfolioReport, predictionOutcome cron blocks)
+
+#### Files to create / modify
+
+- MODIFY: `src/scheduler/jobs.ts` — wrap 4 call sites (lines 174–176, 201–203, 241–243, 257–259)
+
+#### Exact changes
+
+All 4 jobs use Pattern A (void return):
+
+| Job | Lines | jobName string |
+|-----|-------|---------------|
+| patternWatch | 174–176 | `"patternWatchJob"` |
+| predictionMarketPoll | 201–203 | `"predictionMarketPollJob"` |
+| weeklyPortfolioReport | 241–243 | `"weeklyPortfolioReportJob"` |
+| predictionOutcome | 257–259 | `"predictionOutcomeJob"` |
+
+Pattern A:
+```typescript
+cron.schedule(CRONS.X, async () => {
+  await recordJobRun(getDb(), "XJob", async () => {
+    await runX()
+  })
+}, { timezone: '...' })
+```
+
+Note: `predictionOutcome` uses `timezone: "UTC"` (check existing call site before applying).
+
+#### Acceptance Criteria
+
+**Given** task 1136 is merged
+**When** the 4 call sites are wrapped and `bun tsc --noEmit` + `bun test` are run
+**Then**
+
+- `bun tsc --noEmit` reports 0 errors
+- `bun test` passes with 0 failures
+- Each of the 4 cron callbacks contains `recordJobRun(getDb(), "..."` (grep-verifiable)
+
+#### TDD Test location
+
+No new test file. Verification via `bun tsc --noEmit` + `bun test` + grep checks.
+
+---
+
+### Task 1139 — Wrap utility/infra jobs (FR-9, FR-10, FR-11, FR-12)
+
+**Branch**: `task/1139-wrap-utility-infra`
+**Layer**: interface/scheduler
+**Depends on**: 1136 (imports must be merged before this task starts)
+
+#### Files to read first
+
+- `src/scheduler/jobs.ts` — lines 244–272 (franceSummary, devTeamHeartbeat, weatherCheck, davPharmacyCheck cron blocks)
+
+#### Files to create / modify
+
+- MODIFY: `src/scheduler/jobs.ts` — wrap 4 call sites (lines 246–248, 251–253, 263–265, 268–270)
+
+#### Exact changes
+
+All 4 jobs use Pattern A (void return):
+
+| Job | Lines | jobName string | Timezone |
+|-----|-------|---------------|----------|
+| franceSummary | 246–248 | `"franceSummaryJob"` | UTC |
+| devTeamHeartbeat | 251–253 | `"devTeamHeartbeatJob"` | UTC |
+| weatherCheck | 263–265 | `"weatherCheckJob"` | Asia/Ho_Chi_Minh |
+| davPharmacyCheck | 268–270 | `"davPharmacyJob"` | Asia/Ho_Chi_Minh |
+
+Pattern A:
+```typescript
+cron.schedule(CRONS.X, async () => {
+  await recordJobRun(getDb(), "XJob", async () => {
+    await runX()
+  })
+}, { timezone: '...' })
+```
+
+Note: confirm timezone on each existing call site before applying (do not flip UTC vs VN).
+
+#### Acceptance Criteria
+
+**Given** task 1136 is merged
+**When** the 4 call sites are wrapped and `bun tsc --noEmit` + `bun test` are run
+**Then**
+
+- `bun tsc --noEmit` reports 0 errors
+- `bun test` passes with 0 failures
+- Each of the 4 cron callbacks contains `recordJobRun(getDb(), "..."` (grep-verifiable)
+
+#### TDD Test location
+
+No new test file. Verification via `bun tsc --noEmit` + `bun test` + grep checks.
+
+---
+
+### Task 1140 — Replace try/catch blocks: bctcOverdueCheck, vpsProxyWatchdog, cronHealthAlert (FR-13, FR-14, FR-15)
+
+**Branch**: `task/1140-replace-trycatch`
+**Layer**: interface/scheduler
+**Depends on**: 1136 (imports must be merged before this task starts)
+
+#### Files to read first
+
+- `src/scheduler/jobs.ts` — lines 274–316 (the three inline try/catch blocks to remove)
+- Confirm exact field names: `bctcOverdueCheck` returns `{ alertsInserted, overdueFound, stocksChecked }`; `cronHealthAlert` returns `{ alertsSent }` — grep in their respective job files before writing
+
+#### Files to create / modify
+
+- MODIFY: `src/scheduler/jobs.ts` — remove 3 inline try/catch blocks; replace each with the appropriate `recordJobRun` wrapper (lines 276–285, 292–301, 306–315)
+
+#### Exact changes
+
+| Job | Lines | Action | Pattern |
+|-----|-------|--------|---------|
+| bctcOverdueCheck | 276–285 | Delete try/catch; apply Pattern B | `return { rowsWritten: r.alertsInserted }` |
+| vpsProxyWatchdog | 292–301 | Delete try/catch; apply Pattern C | string-return, no rowsWritten |
+| cronHealthAlert | 306–315 | Delete try/catch; apply Pattern B | `return { rowsWritten: r.alertsSent }` |
+
+Pattern B (bctcOverdueCheck):
+```typescript
+cron.schedule(CRONS.bctcOverdueCheck, async () => {
+  await recordJobRun(getDb(), "bctcOverdueCheckJob", async () => {
+    const r = await runBctcOverdueCheck()
+    if (r.alertsInserted > 0) {
+      log(`[bctc-overdue] inserted=${r.alertsInserted} overdue=${r.overdueFound} checked=${r.stocksChecked}`)
+    }
+    return { rowsWritten: r.alertsInserted }
+  })
+}, { timezone: 'Asia/Ho_Chi_Minh' })
+```
+
+Pattern C (vpsProxyWatchdog):
+```typescript
+cron.schedule(CRONS.vpsProxyWatchdog, async () => {
+  await recordJobRun(getDb(), "vpsProxyWatchdogJob", async () => {
+    const status = await runVpsProxyWatchdog()
+    if (status !== "ok" && status !== "off-hours" && status !== "cooldown") {
+      log(`[vps-watchdog] ${status}`)
+    }
+  })
+}, { timezone: 'UTC' })
+```
+
+Pattern B (cronHealthAlert):
+```typescript
+cron.schedule(CRONS.cronHealthAlert, async () => {
+  await recordJobRun(getDb(), "cronHealthAlertJob", async () => {
+    const r = await runCronHealthAlert()
+    if (r.alertsSent > 0) {
+      log(`[cron-health-alert] degraded=${r.alertsSent}`)
+    }
+    return { rowsWritten: r.alertsSent }
+  })
+}, { timezone: 'UTC' })
+```
+
+Important: `foreignFlowAlertJob` (lines ~345–352) also has an inline try/catch but is already internally instrumented via its own `recordJobRun` call. Do NOT touch it.
+
+#### Acceptance Criteria
+
+**Given** task 1136 is merged
+**When** the 3 try/catch blocks are replaced and `bun tsc --noEmit` + `bun test` are run
+**Then**
+
+- `bun tsc --noEmit` reports 0 errors
+- `bun test` passes with 0 failures
+- No standalone `try { await runBctcOverdueCheck() }` / `try { await runVpsProxyWatchdog() }` / `try { await runCronHealthAlert() }` patterns remain in `jobs.ts` (AC-4)
+- Each of the 3 call sites is wrapped in `recordJobRun(getDb(), "..."` (grep-verifiable)
+- `foreignFlowAlertJob` try/catch is left untouched
+
+#### TDD Test location
+
+No new test file. Verification via `bun tsc --noEmit` + `bun test` + grep checks (AC-4).
+
+---
+
 ## Sprint 061 — Foreign Flow VPS Pipeline (PARTIAL COMPLETE — 4/5)
 
 Vision: `SPRINT_GOAL.md` | Spec: `docs/REQ_061.md` | Design: `docs/TECH_061.md` (APPROVED_BY_ARCHITECT)
