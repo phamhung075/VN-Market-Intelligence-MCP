@@ -414,7 +414,10 @@ describe("Task 1178 — AC-2: empty DB returns no-data strings per section", () 
   });
 
   it("does not throw an exception", async () => {
-    await expect(handleGetTickerIntelligence("HPG", db)).resolves.not.toThrow();
+    // Bun quirk: .resolves.not.toThrow() misidentifies the resolved string as a
+    // thrown value. Use await-and-resolve pattern instead — semantically identical.
+    const result = await handleGetTickerIntelligence("HPG", db);
+    expect(typeof result).toBe("string");
   });
 });
 
