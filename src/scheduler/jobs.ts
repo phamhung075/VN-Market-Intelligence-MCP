@@ -183,7 +183,9 @@ export function startScheduler() {
 
   // Sunday 22:30 GMT+7 — Weekly pattern watch (task 146)
   cron.schedule(CRONS.patternWatch, async () => {
-    await runPatternWatch()
+    await recordJobRun(getDb(), 'patternWatchJob', async () => {
+      await runPatternWatch()
+    })
   }, { timezone: 'Asia/Ho_Chi_Minh' })
 
   registerSummaryJobs({
@@ -210,7 +212,9 @@ export function startScheduler() {
   })
 
   cron.schedule(CRONS.predictionMarketPoll, async () => {
-    await runPredictionMarketPoll()
+    await recordJobRun(getDb(), 'predictionMarketPollJob', async () => {
+      await runPredictionMarketPoll()
+    })
   }, { timezone: 'Asia/Ho_Chi_Minh' })
 
   // 09:30 GMT+7 daily — BCTC stranded-PDF auto-reparse — task 1019
@@ -250,7 +254,9 @@ export function startScheduler() {
 
   // Sunday 23:00 — Weekly portfolio report — task 218
   cron.schedule(CRONS.weeklyPortfolioReport, async () => {
-    await runWeeklyPortfolioReport()
+    await recordJobRun(getDb(), 'weeklyPortfolioReportJob', async () => {
+      await runWeeklyPortfolioReport()
+    })
   }, { timezone: 'Asia/Ho_Chi_Minh' })
 
   // Weekdays 06:00 UTC (07:00 CET) — France wake-up summary — task 243
@@ -266,7 +272,9 @@ export function startScheduler() {
   // Sunday 08:00 UTC — Prediction market outcome validation — task 248
   // Validates last 7 days of prediction signals: confirmed / false_positive / neutral
   cron.schedule(CRONS.predictionOutcome, async () => {
-    await runPredictionOutcomeCheck()
+    await recordJobRun(getDb(), 'predictionOutcomeJob', async () => {
+      await runPredictionOutcomeCheck()
+    })
   }, { timezone: "UTC" })
 
   // Every 6h — Weather check + climate signals — task 261
