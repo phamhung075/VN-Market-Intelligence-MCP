@@ -2,7 +2,28 @@
 
 ## Current Sprint — 065 (PLANNING)
 
-started: — | theme: TBD
+started: 2026-04-12 | theme: Prediction Claim Resolution Loop — close the feedback gap so calibration has real data
+
+### Goal
+
+The prediction engine is structurally broken: `create_prediction_claim` hardcodes `target_price: null`, so `predictionResolutionJob` always skips every claim with outcome=null. Zero claims are ever resolved, the `calibration_snapshots` table stays empty, and `get_calibration_report` returns "no data yet" forever. The agent feedback loop — the system's ability to learn which signals actually work — is completely idle. This sprint fixes the root cause: add `target_price` computation to claim creation (derived from current market price + horizon-based expected-move), add a percentage-threshold resolution mode to the resolution job, and verify end-to-end that claims are created, resolved, and appear in the calibration report.
+
+### Scope
+
+| Area | In/Out |
+|------|--------|
+| `create_prediction_claim` MCP tool: add optional `target_price` param; if omitted, derive from `market_prices.close * (1 + expected_move_pct)` where `expected_move_pct` is a new input | IN |
+| `predictionResolutionJob`: add fallback resolution mode — if `target_price` is still null, evaluate direction-only against price change sign (close_on_resolution_date > close_on_creation_date → bullish correct) | IN |
+| `predictionClaimStore`: add `creation_price` column to `prediction_claims` table so direction-only resolution has a baseline price | IN |
+| Smoke test: create one claim for VNM, advance mock date, run resolution job, verify `resolution_outcome IS NOT NULL` in DB | IN |
+| `calibrationReportJob` and snapshot logic: unchanged — already works once claims are resolved | OUT |
+| New MCP tools or new cron jobs | OUT |
+| VPS changes | OUT |
+| `process.env` cleanup in server.ts (deferred to Sprint 066) | OUT |
+
+### Success Metric
+
+After this sprint: (1) `create_prediction_claim` called with `expected_move_pct=0.05` and `horizon_days=10` for any watchlist stock creates a claim with a non-null `target_price` derived from the latest close price. (2) `predictionResolutionJob` resolves that claim when `resolution_date <= today` and a close price is available. (3) Full test suite green, `bun tsc --noEmit` clean.
 
 ---
 
