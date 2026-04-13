@@ -45,6 +45,11 @@ export interface PredictionClaimInput {
    * Optional — some claims are directional-only without a specific price target.
    */
   target_price?: number | null;
+  /**
+   * Price at claim-creation time (close from daily_ohlcv).
+   * Nullable — legacy rows inserted before Sprint 065 have NULL.
+   */
+  creation_price?: number | null;
   /** ISO 8601 date (YYYY-MM-DD) by which the claim should be resolved */
   resolution_date: string;
   /** Agent's stated confidence: 0.0 (no confidence) – 1.0 (certain) */
@@ -63,6 +68,8 @@ export interface PredictionClaimRow extends PredictionClaimInput {
    * NULL until the claim is resolved.
    */
   brier_score: number | null;
+  /** Sprint 065 — price at claim-creation time. NULL for legacy rows. */
+  creation_price: number | null;
   /** ISO 8601 UTC — when the claim was recorded */
   created_at: string;
   /** ISO 8601 UTC — when the claim was resolved. NULL while pending. */
@@ -84,6 +91,7 @@ interface ClaimDbRow {
   brier_score: number | null;
   created_at: string;
   resolved_at: string | null;
+  creation_price: number | null;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -103,6 +111,7 @@ function mapRow(r: ClaimDbRow): PredictionClaimRow {
     resolution_outcome: r.resolution_outcome,
     actual_price: r.actual_price,
     brier_score: r.brier_score,
+    creation_price: r.creation_price ?? null,   // Sprint 065
     created_at: r.created_at,
     resolved_at: r.resolved_at,
   };
@@ -128,8 +137,8 @@ export function insertPredictionClaim(
     .prepare(
       `INSERT OR IGNORE INTO prediction_claims
          (stock, agent_id, claim_text, direction, target_price,
-          resolution_date, confidence)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          resolution_date, confidence, creation_price)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
     )
     .run(
       params.stock,
@@ -139,6 +148,7 @@ export function insertPredictionClaim(
       params.target_price ?? null,
       params.resolution_date,
       params.confidence,
+      params.creation_price ?? null,
     );
 
   return result.changes > 0 ? (result.lastInsertRowid as number) : 0;
