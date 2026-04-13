@@ -130,7 +130,9 @@ export function startScheduler() {
 
   // 08:00 — Morning briefing (weekdays Mon-Fri only) — task 101
   cron.schedule(CRONS.morningBriefing, async () => {
-    await runMorningBriefing()
+    await recordJobRun(getDb(), 'morningBriefingJob', async () => {
+      await runMorningBriefing()
+    })
   }, { timezone: 'Asia/Ho_Chi_Minh' })
 
   // 09:00 — Market open scan (weekdays Mon-Fri only) — task 103
@@ -143,7 +145,10 @@ export function startScheduler() {
   //   A. pollNews  B. listSscDocs  C. fetchPrices  D. runImpactChain  E. sendAlerts
   // Outside market hours: news poll only (step A)
   cron.schedule(CRONS.intelligenceCycle, async () => {
-    await runIntelligenceCycle()
+    await recordJobRun(getDb(), 'intelligenceCycleJob', async () => {
+      const result = await runIntelligenceCycle()
+      return { rowsWritten: (result?.newsFetched ?? 0) + (result?.impactEventsRan ?? 0) }
+    })
   }, { timezone: 'Asia/Ho_Chi_Minh' })
 
   // 15:30 — Market close scan (weekdays Mon-Fri only) — task 103
@@ -158,12 +163,16 @@ export function startScheduler() {
 
   // 22:00 — Evening summary (weekdays Mon-Fri only) — task 105
   cron.schedule(CRONS.eveningSummary, async () => {
-    await runEveningSummary()
+    await recordJobRun(getDb(), 'eveningSummaryJob', async () => {
+      await runEveningSummary()
+    })
   }, { timezone: 'Asia/Ho_Chi_Minh' })
 
   // 21:00 — Alert digest (weekdays Mon-Fri only) — task 188
   cron.schedule(CRONS.alertDigest, async () => {
-    await runAlertDigest()
+    await recordJobRun(getDb(), 'alertDigestJob', async () => {
+      await runAlertDigest()
+    })
   }, { timezone: 'Asia/Ho_Chi_Minh' })
 
   // 03:00 GMT+7 (20:00 UTC) — WAL checkpoint (task 140)
