@@ -5,6 +5,22 @@ Active board lives in `TASKS.md`.
 
 ---
 
+### Task 1139 — Wrap utility/infra jobs (FR-9, FR-10, FR-11, FR-12) — Done (Sprint 062)
+
+**Branch**: `task/1139-utility-wrap`
+**Layer**: interface/scheduler
+**Depends on**: 1136
+
+Wrapped 4 utility/infra cron jobs in `src/scheduler/jobs.ts` with `recordJobRun`:
+- `franceSummaryJob` (~line 267)
+- `devTeamHeartbeatJob` (~line 274)
+- `weatherCheckJob` (~line 290)
+- `davPharmacyCheckJob` (~line 297)
+
+All 4 wraps verified present on `main` branch (administrative close confirmed in Sprint 069 Task 1171).
+
+---
+
 ### Sprint 068 — MARKET Message Quality Review System — Done 2026-04-13
 
 7 tasks shipped. Added `market_messages` SQLite table (INSERT on every `sendTelegramMarket()` call). Created `marketMessageStore.ts` with `insertMarketMessage`, `getUnreviewedMarketMessages`, `reviewMarketMessage`. Modified `sendTelegramMarket()` with `persist` option + migrated 10 call sites. Added 2 new MCP tools: `get_unreviewed_market_messages` + `review_market_message`. Tool count 91 → 93. 36/36 tests pass.

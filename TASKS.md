@@ -19,10 +19,10 @@ Spec: `docs/REQ_069.md` | Design: `docs/TECH_069.md`
 | 1168 | TDD: write failing tests for AC-1 to AC-12 + AC-14 in `src/__tests__/1168-market-message-digest.test.ts` | Developer | tests | TECH-069 ✓ | task/1168-market-message-digest | Done |
 | 1169 | Add `getMarketMessageDigest` + `batchReviewMarketMessages` + types to `marketMessageStore.ts` (FR-1, FR-2) | Developer | infrastructure | 1168 ✓ | task/1168-market-message-digest | Done |
 | 1170 | Add `handleGetMarketMessageDigest`, `handleBatchReviewMarketMessages` + register two new MCP tools in `marketMessageTools.ts` (FR-3, FR-4, FR-5) | Developer | interface | 1169 ✓ | task/1168-market-message-digest | Done |
-| 1171 | Close Task 1139: verify recordJobRun wraps in `jobs.ts`, confirm Done in TASKS.md, archive in `docs/TASKS_ARCHIVE.md` (FR-6) | Developer | admin | — | main (no code changes expected) | Todo |
+| 1171 | Close Task 1139: verify recordJobRun wraps in `jobs.ts`, confirm Done in TASKS.md, archive in `docs/TASKS_ARCHIVE.md` (FR-6) | Developer | admin | — | main (no code changes expected) | Done |
 | 1172 | Sprint close: advance `project-stats.json` `currentSprint` to 69, `toolCount` to 95, update `lastUpdated` | Developer | docs/data | 1170 ✓, 1171 ✓ | task/1168-market-message-digest | Backlog |
 
-**WIP state:** 0 tasks In Progress (limit: 2). Sprint 069 ACTIVE. Tasks 1168–1170 Done. Task 1171 Todo. Task 1172 Backlog.
+**WIP state:** 0 tasks In Progress (limit: 2). Sprint 069 ACTIVE. Tasks 1168–1171 Done. Task 1172 Backlog.
 
 ---
 
