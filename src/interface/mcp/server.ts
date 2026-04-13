@@ -34,6 +34,7 @@ import { insertReport } from "../../infrastructure/db/telegramReportStore.js";
 import { toolRegistry } from "./tools/registry.js";
 import { logVpsPush } from "../../infrastructure/db/vpsPushLogStore.js";
 import { upsertForeignFlow, type ForeignFlowUpsertItem } from "../../infrastructure/db/vnstockStore.js";
+import { buildForeignFlowStatusResponse } from "./foreignFlowStatusHandler.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Task 1112 — Minimal multipart/form-data parser for push-bctc-pdf
@@ -659,6 +660,23 @@ export async function createBunServer(
         res.writeHead(400, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ error: "Invalid JSON" }));
       }
+      return;
+    }
+
+    // ── Foreign flow diagnostic endpoint ─────────────────────────────────────
+    if (method === "GET" && pathname === "/api/foreign-flow-status") {
+      const apiKey = process.env.VPS_PUSH_API_KEY;
+      const authHeader =
+        (req.headers["x-api-key"] as string | undefined) ||
+        (req.headers["authorization"] as string | undefined)?.replace("Bearer ", "");
+      const db = getDb();
+      const result = buildForeignFlowStatusResponse({
+        db,
+        apiKey,
+        requestApiKey: authHeader,
+      });
+      res.writeHead(result.status, { "Content-Type": "application/json" });
+      res.end(JSON.stringify(result.body));
       return;
     }
 
