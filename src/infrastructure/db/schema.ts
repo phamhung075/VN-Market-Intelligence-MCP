@@ -840,6 +840,17 @@ export async function initDatabase(): Promise<void> {
   db.exec(`CREATE INDEX IF NOT EXISTS idx_vpl_service_ts ON vps_push_log(service, pushed_at)`);
 
   // ── Insider Transactions (Task 1141 / Sprint 063) ─────────────────────────
+  // Migration: drop legacy insider_transactions if it uses the old schema (missing from_date).
+  // The old table had columns: volume, transaction_date, disclosure_date, created_at.
+  // The new schema uses: from_date, to_date, fetched_at, registered_volume, executed_volume.
+  // Zero production rows — safe to recreate.
+  {
+    const cols: { name: string }[] = db.query("PRAGMA table_info(insider_transactions)").all() as { name: string }[];
+    const hasFromDate = cols.some(c => c.name === "from_date");
+    if (cols.length > 0 && !hasFromDate) {
+      db.exec("DROP TABLE IF EXISTS insider_transactions");
+    }
+  }
   db.exec(`
     CREATE TABLE IF NOT EXISTS insider_transactions (
       id                  TEXT PRIMARY KEY,
