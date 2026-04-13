@@ -4,10 +4,11 @@
 
 ---
 
-## Sprint 065 — Prediction Claim Resolution Loop (PLANNING)
+## Sprint 065 — Prediction Claim Resolution Loop (COMPLETE — archive pending)
 
 Vision: `SPRINT_GOAL.md`
 Spec: `docs/REQ_065.md`
+Tech: `docs/TECH_065.md`
 
 ### Kanban
 
@@ -15,11 +16,13 @@ Spec: `docs/REQ_065.md`
 |----|-------|-------|-------|------------|--------|--------|
 | REQ-065 | BA: write REQ_065.md — exact schema changes, tool param additions, resolution logic, acceptance criteria | BA | — | — | — | Done |
 | TECH-065 | Architect: review REQ_065.md, produce TECH_065.md with exact code changes for all 4 files | Architect | — | REQ-065 | — | Done |
-| 1150 | FR-2 (DDL): ALTER TABLE migration for creation_price in schema.ts | Developer | infrastructure | TECH-065 | task/1150-prediction-resolution-loop | Review |
-| 1151 | FR-2 (store): PredictionClaimInput/Row/ClaimDbRow interfaces + INSERT update in predictionClaimStore.ts | Developer | infrastructure | 1150 | task/1150-prediction-resolution-loop | Review |
-| 1152 | FR-3 + FR-4: Fix evaluateOutcome() + pass creation_price in predictionResolutionJob.ts | Developer | scheduler | 1151 | task/1150-prediction-resolution-loop | Review |
-| 1153 | FR-1: Add direction + expected_move_pct + price lookup to create_prediction_claim tool in evidenceTools.ts | Developer | interface | 1151 | task/1150-prediction-resolution-loop | Review |
-| 1154 | Tests: 1154-prediction-resolution-loop.test.ts — AC-1 through AC-7 | Developer | — | 1152, 1153 | task/1150-prediction-resolution-loop | Review |
+| 1150 | FR-2 (DDL): ALTER TABLE migration for creation_price in schema.ts | Developer | infrastructure | TECH-065 | task/1150-prediction-resolution-loop | Done |
+| 1151 | FR-2 (store): PredictionClaimInput/Row/ClaimDbRow interfaces + INSERT update in predictionClaimStore.ts | Developer | infrastructure | 1150 | task/1150-prediction-resolution-loop | Done |
+| 1152 | FR-3 + FR-4: Fix evaluateOutcome() + pass creation_price in predictionResolutionJob.ts | Developer | scheduler | 1151 | task/1150-prediction-resolution-loop | Done |
+| 1153 | FR-1: Add direction + expected_move_pct + price lookup to create_prediction_claim tool in evidenceTools.ts | Developer | interface | 1151 | task/1150-prediction-resolution-loop | Done |
+| 1154 | Tests: 1154-prediction-resolution-loop.test.ts — AC-1 through AC-7 | Developer | — | 1152, 1153 | task/1150-prediction-resolution-loop | Done |
+
+**WIP state:** 0 tasks In Progress. Sprint 065 COMPLETE 2026-04-12. All 7 tasks (REQ-065, TECH-065, 1150-1154) Done. 29 tests pass, bun tsc --noEmit clean. Merged to main via task/1150-prediction-resolution-loop.
 
 ---
 
