@@ -51,21 +51,38 @@ const RETRY_WINDOW_DAYS = 5;
 
 /**
  * Evaluates whether actual price confirms the claim's direction.
- * - bullish: actual >= target → correct
- * - bearish: actual <= target → correct
- * - neutral / no target: skip (return null)
+ *
+ * Decision table:
+ *   target non-null, bullish  → actual >= target ? 1 : 0
+ *   target non-null, bearish  → actual <= target ? 1 : 0
+ *   target null, creation non-null, bullish  → actual > creation ? 1 : 0
+ *   target null, creation non-null, bearish  → actual < creation ? 1 : 0
+ *   target null, creation null   → null (skip — no baseline)
+ *   neutral / other direction    → null (skip)
  */
 function evaluateOutcome(
   actualPrice: number,
   direction: string,
   targetPrice: number | null,
+  creationPrice: number | null,
 ): 0 | 1 | null {
-  if (targetPrice == null) return null;
+  if (targetPrice != null) {
+    switch (direction) {
+      case "bullish":
+        return actualPrice >= targetPrice ? 1 : 0;
+      case "bearish":
+        return actualPrice <= targetPrice ? 1 : 0;
+      default:
+        return null;
+    }
+  }
+  // Direction-only fallback — requires creation_price as baseline
+  if (creationPrice == null) return null;
   switch (direction) {
     case "bullish":
-      return actualPrice >= targetPrice ? 1 : 0;
+      return actualPrice > creationPrice ? 1 : 0;
     case "bearish":
-      return actualPrice <= targetPrice ? 1 : 0;
+      return actualPrice < creationPrice ? 1 : 0;
     default:
       return null;
   }
@@ -206,6 +223,7 @@ export async function runPredictionResolution(
         closePrice,
         claim.direction,
         claim.target_price ?? null,
+        claim.creation_price ?? null,   // Sprint 065 — direction-only fallback baseline
       );
 
       if (outcome === null) {

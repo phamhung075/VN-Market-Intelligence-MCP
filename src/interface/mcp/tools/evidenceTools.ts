@@ -304,8 +304,24 @@ export function registerEvidenceTools(
       probability: z.number().min(0.01).max(0.99),
       horizon_days: z.union([z.literal(5), z.literal(10), z.literal(20)]),
       resolution_criteria: z.string().min(1),
+      direction: z
+        .enum(["bullish", "bearish"])
+        .describe("Direction of the prediction"),
+      expected_move_pct: z
+        .number()
+        .min(0.001)
+        .max(0.5)
+        .describe("Expected percentage move, e.g. 0.05 for 5%"),
     },
-    async ({ stock, claim_text, probability, horizon_days, resolution_criteria }) => {
+    async ({
+      stock,
+      claim_text,
+      probability,
+      horizon_days,
+      resolution_criteria,
+      direction,
+      expected_move_pct,
+    }) => {
       try {
         const database = resolveDb();
         const ticker = stock.toUpperCase().trim();
@@ -324,24 +340,51 @@ export function registerEvidenceTools(
           };
         }
 
-        // Step 2: compute resolution_date = today + horizon_days calendar days
+        // Step 2: look up latest close price from daily_ohlcv
+        interface OhlcvRow { close: number }
+        const priceRow = database
+          .prepare(
+            `SELECT close FROM daily_ohlcv WHERE code = ? ORDER BY date DESC LIMIT 1`,
+          )
+          .get(ticker) as OhlcvRow | null;
+
+        if (!priceRow) {
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: `No price data found for ${ticker} — cannot compute target_price`,
+              },
+            ],
+          };
+        }
+
+        const creationPrice = priceRow.close;
+
+        // Step 3: compute target_price
+        const targetPrice =
+          direction === "bullish"
+            ? Math.round(creationPrice * (1 + expected_move_pct))
+            : Math.round(creationPrice * (1 - expected_move_pct));
+
+        // Step 4: compute resolution_date = today + horizon_days calendar days
         const resolutionDate = new Date();
         resolutionDate.setDate(resolutionDate.getDate() + horizon_days);
         const resolutionDateStr = resolutionDate.toISOString().slice(0, 10);
 
-        // Step 3: insert claim using existing store interface
-        // Map probability → confidence, use synthesizer agent id
+        // Step 5: insert claim
         const id = insertPredictionClaim(database, {
           stock: ticker,
           agent_id: "08-prediction-synthesizer",
           claim_text,
-          direction: "bullish", // default direction for synthesizer claims
-          target_price: null,
+          direction,
+          target_price: targetPrice,
+          creation_price: creationPrice,
           resolution_date: resolutionDateStr,
           confidence: probability,
         });
 
-        // Step 4: handle duplicate (INSERT OR IGNORE returned 0)
+        // Step 6: handle duplicate (INSERT OR IGNORE returned 0)
         if (id === 0) {
           return {
             content: [
@@ -353,7 +396,7 @@ export function registerEvidenceTools(
           };
         }
 
-        // Step 5: return confirmation
+        // Step 7: return confirmation
         return {
           content: [
             {
@@ -362,7 +405,11 @@ export function registerEvidenceTools(
                 `Prediction claim created: id=${id}\n` +
                 `Stock: ${ticker}\n` +
                 `Claim: ${claim_text}\n` +
+                `Direction: ${direction}\n` +
                 `Probability: ${probability.toFixed(2)}\n` +
+                `Expected move: ${(expected_move_pct * 100).toFixed(1)}%\n` +
+                `creation_price=${creationPrice} VND\n` +
+                `target_price=${targetPrice} VND\n` +
                 `Horizon: ${horizon_days} days\n` +
                 `resolution_date=${resolutionDateStr}`,
             },

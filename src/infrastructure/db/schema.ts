@@ -1287,6 +1287,13 @@ export async function initDatabase(): Promise<void> {
   db.exec(`CREATE INDEX IF NOT EXISTS idx_pc_resolution    ON prediction_claims(resolution_date)`);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_pc_outcome       ON prediction_claims(resolution_outcome)`);
 
+  // Sprint 065 / Task 1150: creation_price column — nullable for legacy rows
+  try {
+    db.exec(`ALTER TABLE prediction_claims ADD COLUMN creation_price REAL`);
+  } catch {
+    // Column already exists — safe to ignore
+  }
+
   // ── Calibration Snapshots (Task 1127, Sprint 060 Phase D) ─────────────────
   // Materialised weekly calibration statistics over resolved prediction_claims.
   // Written by calibrationReportJob every Sunday 13:00 UTC (20:00 VN).
