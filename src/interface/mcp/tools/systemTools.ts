@@ -197,10 +197,10 @@ export async function getSystemStatus(opts: SystemStatusOptions): Promise<string
     // Telegram env (liveness) — reads env at call-time, no secrets printed.
     dbLines.push("--- Telegram Env (live) ---");
     const telegramEnv = {
-      TELEGRAM_BOT_TOKEN: (process.env.TELEGRAM_BOT_TOKEN ?? Bun.env.TELEGRAM_BOT_TOKEN ?? "").length > 0,
-      TELEGRAM_INFO_MARKET_GROUP_ID: (process.env.TELEGRAM_INFO_MARKET_GROUP_ID ?? Bun.env.TELEGRAM_INFO_MARKET_GROUP_ID ?? "").length > 0,
-      TELEGRAM_INFO_WORK_CHANNEL_ID: (process.env.TELEGRAM_INFO_WORK_CHANNEL_ID ?? Bun.env.TELEGRAM_INFO_WORK_CHANNEL_ID ?? "").length > 0,
-      TELEGRAM_REPORT_BUG_CHANNEL_ID: (process.env.TELEGRAM_REPORT_BUG_CHANNEL_ID ?? Bun.env.TELEGRAM_REPORT_BUG_CHANNEL_ID ?? "").length > 0,
+      TELEGRAM_BOT_TOKEN: (Bun.env.TELEGRAM_BOT_TOKEN ?? "").length > 0,
+      TELEGRAM_INFO_MARKET_GROUP_ID: (Bun.env.TELEGRAM_INFO_MARKET_GROUP_ID ?? "").length > 0,
+      TELEGRAM_INFO_WORK_CHANNEL_ID: (Bun.env.TELEGRAM_INFO_WORK_CHANNEL_ID ?? "").length > 0,
+      TELEGRAM_REPORT_BUG_CHANNEL_ID: (Bun.env.TELEGRAM_REPORT_BUG_CHANNEL_ID ?? "").length > 0,
     };
     for (const [k, v] of Object.entries(telegramEnv)) {
       dbLines.push(`  ${k}: ${v ? "SET" : "MISSING"}`);

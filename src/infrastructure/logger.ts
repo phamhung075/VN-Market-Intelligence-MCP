@@ -251,7 +251,7 @@ export function createLogger(
     // Test isolation: when DB_PATH is ':memory:' we are in a unit test.
     // Skip all shared-file and shared-DB sinks so test fixtures never leak
     // into the production error log / system_logs table.
-    const isTestMode = process.env["DB_PATH"] === ":memory:";
+    const isTestMode = Bun.env["DB_PATH"] === ":memory:";
 
     // Tier 1: Global log (one-liner) — always for warn/error, info for key events
     if (!isTestMode && (LEVEL_WEIGHT[level] >= LEVEL_WEIGHT["warn"] || LEVEL_WEIGHT[level] >= LEVEL_WEIGHT["info"])) {
@@ -282,7 +282,7 @@ export function createLogger(
     message: string,
     context?: Record<string, unknown>,
   ): void {
-    const isTestMode = process.env["DB_PATH"] === ":memory:";
+    const isTestMode = Bun.env["DB_PATH"] === ":memory:";
 
     // Always write to tool-specific log regardless of minLevel (skipped in tests)
     if (!isTestMode) {

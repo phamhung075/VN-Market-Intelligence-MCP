@@ -333,7 +333,7 @@ export async function createBunServer(
 
     // ── Push Prices from VPS proxy ────────────────────────────────────────
     if (method === "POST" && pathname === "/api/push-prices") {
-      const apiKey = process.env.VPS_PUSH_API_KEY;
+      const apiKey = Bun.env.VPS_PUSH_API_KEY;
       const authHeader = req.headers["x-api-key"] || req.headers["authorization"]?.replace("Bearer ", "");
       if (!apiKey || authHeader !== apiKey) {
         res.writeHead(401, { "Content-Type": "application/json" });
@@ -622,7 +622,7 @@ export async function createBunServer(
 
     // ── Push Foreign Flow from VPS proxy ────────────────────────────────────
     if (method === "POST" && pathname === "/api/push-foreign-flow") {
-      const apiKey = process.env.VPS_PUSH_API_KEY;
+      const apiKey = Bun.env.VPS_PUSH_API_KEY;
       const authHeader = req.headers["x-api-key"] || req.headers["authorization"]?.replace("Bearer ", "");
       if (!apiKey || authHeader !== apiKey) {
         res.writeHead(401, { "Content-Type": "application/json" });
@@ -665,7 +665,7 @@ export async function createBunServer(
 
     // ── Foreign flow diagnostic endpoint ─────────────────────────────────────
     if (method === "GET" && pathname === "/api/foreign-flow-status") {
-      const apiKey = process.env.VPS_PUSH_API_KEY;
+      const apiKey = Bun.env.VPS_PUSH_API_KEY;
       const authHeader =
         (req.headers["x-api-key"] as string | undefined) ||
         (req.headers["authorization"] as string | undefined)?.replace("Bearer ", "");
@@ -682,7 +682,7 @@ export async function createBunServer(
 
     // ── Get all stock codes for VPS proxy (watchlist + reference stocks) ────
     if (method === "GET" && pathname === "/api/watchlist") {
-      const apiKey = process.env.VPS_PUSH_API_KEY;
+      const apiKey = Bun.env.VPS_PUSH_API_KEY;
       const authHeader = req.headers["x-api-key"] || req.headers["authorization"]?.replace("Bearer ", "");
       if (!apiKey || authHeader !== apiKey) {
         res.writeHead(401, { "Content-Type": "application/json" });
@@ -725,7 +725,7 @@ export async function createBunServer(
 
     // ── VPS push: VN news (CafeF, VnExpress, VnEconomy RSS) ────────────────
     if (method === "POST" && pathname === "/api/push-news") {
-      const apiKey = process.env.VPS_PUSH_API_KEY;
+      const apiKey = Bun.env.VPS_PUSH_API_KEY;
       const authHeader = req.headers["x-api-key"] || req.headers["authorization"]?.replace("Bearer ", "");
       if (!apiKey || authHeader !== apiKey) {
         res.writeHead(401, { "Content-Type": "application/json" });
@@ -808,7 +808,7 @@ export async function createBunServer(
 
     // ── VPS push: SBV / VCB FX rates ────────────────────────────────────────
     if (method === "POST" && pathname === "/api/push-sbv-rates") {
-      const apiKey = process.env.VPS_PUSH_API_KEY;
+      const apiKey = Bun.env.VPS_PUSH_API_KEY;
       const authHeader = req.headers["x-api-key"] || req.headers["authorization"]?.replace("Bearer ", "");
       if (!apiKey || authHeader !== apiKey) {
         res.writeHead(401, { "Content-Type": "application/json" });
@@ -867,7 +867,7 @@ export async function createBunServer(
 
     // ── Task 1112: BCTC VPS proxy — fetch queue ────────────────────────────
     if (method === "GET" && pathname === "/api/bctc-fetch-queue") {
-      const apiKey = process.env.VPS_PUSH_API_KEY;
+      const apiKey = Bun.env.VPS_PUSH_API_KEY;
       const authHeader = req.headers["x-api-key"] || req.headers["authorization"]?.replace("Bearer ", "");
       if (!apiKey || authHeader !== apiKey) {
         res.writeHead(401, { "Content-Type": "application/json" });
@@ -940,7 +940,7 @@ export async function createBunServer(
 
     // ── Task 1112: BCTC VPS proxy — push PDF ─────────────────────────────────
     if (method === "POST" && pathname === "/api/push-bctc-pdf") {
-      const apiKey = process.env.VPS_PUSH_API_KEY;
+      const apiKey = Bun.env.VPS_PUSH_API_KEY;
       const authHeader = req.headers["x-api-key"] || req.headers["authorization"]?.replace("Bearer ", "");
       if (!apiKey || authHeader !== apiKey) {
         res.writeHead(401, { "Content-Type": "application/json" });

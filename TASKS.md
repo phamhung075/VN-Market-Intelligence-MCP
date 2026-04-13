@@ -4,6 +4,25 @@
 
 ---
 
+## Sprint 066 — Code Hygiene: process.env Purge + Test Encoding Fix (ACTIVE)
+
+Vision: `SPRINT_GOAL.md`
+
+### Kanban
+
+| ID | Title | Agent | Layer | Depends On | Branch | Status |
+|----|-------|-------|-------|------------|--------|--------|
+| 1155 | Replace process.env with Bun.env in server.ts (8 occurrences) + systemTools.ts (4 occurrences) + telegram.ts (1 occurrence) | Developer | interface/infrastructure | — | task/1155-bun-env-purge | Done |
+| 1156 | Replace process.env with Bun.env in index.ts (6 Telegram + 1 TELEGRAM_ENABLED + LanceDB shims) + logger.ts (2 occurrences) | Developer | infrastructure | — | task/1155-bun-env-purge | Done |
+| 1157 | Fix 3 failing /ask tests in 238-user-requests.test.ts — update assertions to accented Vietnamese output | Developer | tests | — | task/1157-ask-encoding-fix | Done |
+| 1158 | Advance project-stats.json currentSprint 65 → 66, update lastUpdated | Developer | docs/data | 1155, 1156, 1157 | task/1155-bun-env-purge | Done |
+
+**WIP state:** 0 tasks In Progress. Sprint 066 COMPLETE 2026-04-12. All 4 tasks Done. bun tsc --noEmit clean, 3 new tests pass.
+
+**Parallelism:** Tasks 1155 + 1157 are fully independent — start both in parallel. 1156 can batch with 1155 on the same branch. 1158 is the final close-out task.
+
+---
+
 ## Sprint 065 — Prediction Claim Resolution Loop (COMPLETE — archive pending)
 
 Vision: `SPRINT_GOAL.md`

@@ -88,7 +88,7 @@ const ENV_VAR_BY_CHANNEL: Record<TelegramChannel, string> = {
 };
 
 function readEnv(name: string): string {
-  return Bun.env[name] ?? process.env[name] ?? "";
+  return Bun.env[name] ?? "";
 }
 
 function resolveChatId(channel: TelegramChannel): string {
