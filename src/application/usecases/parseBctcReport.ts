@@ -453,7 +453,7 @@ export async function parseBctcReport(
 
   // WAL checkpoint — makes the new row visible to external readers immediately.
   // Skipped for :memory: DBs (WAL mode is a no-op there).
-  const dbPath = process.env["DB_PATH"] ?? Bun.env["DB_PATH"] ?? "";
+  const dbPath = Bun.env["DB_PATH"] ?? "";
   if (dbPath !== ":memory:") {
     try {
       db.exec("PRAGMA wal_checkpoint(PASSIVE)");
