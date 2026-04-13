@@ -35,7 +35,11 @@ If PO returns NOTHING → send_telegram(channel="work", message="Dev loop: nothi
 **UNBLOCK(id, blocker):**
 Route to right agent: po/ba/architect/qa based on blocker type.
 
-## Step 3: Loop back
+## Step 3: Maintenance (every run)
+After completing work (or if PO returned NOTHING), run housekeeping:
+1. Agent(subagent_type=claude-manager-helper) — "Run full audit per your agent definition."
+
+## Step 4: Loop back
 After completing one item, back to Step 1. Repeat until NOTHING or 45-min cap.
 
 ## RULES (non-negotiable)
