@@ -24,6 +24,11 @@ import { createLogger } from "../logger.js";
 import { getPatternSummary } from "../../application/usecases/getPatternSummary.js";
 import { getDb } from "../db/index.js";
 import { insertReport } from "../db/telegramReportStore.js";
+import {
+  insertMarketMessage,
+  type MarketMessageAgent,
+  type MarketMessageType,
+} from "../db/marketMessageStore.js";
 
 const log = createLogger("info");
 
@@ -50,6 +55,17 @@ export interface SendTelegramOptions {
    * When omitted, falls back to the channel-specific env var.
    */
   chatId?: number;
+  /**
+   * When present, persists the sent message to the market_messages table for
+   * quality review (Sprint 068). Best-effort — failure logs a warning but does
+   * not affect the return value or the Telegram send result.
+   * Omit to use "unknown" fallback values.
+   */
+  persist?: {
+    from_agent?: MarketMessageAgent | string;
+    message_type?: MarketMessageType | string;
+    ticker?: string | null;
+  };
 }
 
 /**
@@ -217,6 +233,10 @@ async function coreSend(
  * Sends a text message to the MARKET channel (TELEGRAM_INFO_MARKET_GROUP_ID).
  * User-facing market alerts, briefings and analysis.
  *
+ * When `options.persist` is set, persists the message to the `market_messages`
+ * table for quality review (Sprint 068). Best-effort — DB failure logs a warning
+ * but does not affect the return value.
+ *
  * @returns true on success, false on any failure.
  */
 export async function sendTelegramMarket(
@@ -224,6 +244,21 @@ export async function sendTelegramMarket(
   options: SendTelegramOptions = {},
 ): Promise<boolean> {
   const result = await coreSend("market", text, options);
+  if (result.ok) {
+    try {
+      const db = getDb();
+      insertMarketMessage(db, {
+        from_agent: options.persist?.from_agent ?? "unknown",
+        message_type: options.persist?.message_type ?? "unknown",
+        ticker: options.persist?.ticker ?? null,
+        content: text,
+      });
+    } catch (persistErr) {
+      log.warn("[telegram] insertMarketMessage failed — message was sent but not persisted", {
+        error: persistErr instanceof Error ? persistErr.message : String(persistErr),
+      });
+    }
+  }
   return result.ok;
 }
 
@@ -430,7 +465,14 @@ export async function notifyTelegramAlert(
     }
   } catch { /* silent */ }
 
-  const sendOpts: SendTelegramOptions = { parseMode: "" };
+  const sendOpts: SendTelegramOptions = {
+    parseMode: "",
+    persist: {
+      from_agent: "alert-commander",
+      message_type: "alert",
+      ticker: alert.actionCode,
+    },
+  };
   if (options.fetchFn !== undefined) sendOpts.fetchFn = options.fetchFn;
   return sendTelegramMarket(text, sendOpts);
 }
@@ -451,5 +493,7 @@ export async function notifyTelegramDocument(
 
 /** Convenience alias used by alertDigestJob — routes digests to MARKET. */
 export async function sendTelegram(text: string): Promise<boolean> {
-  return sendTelegramMarket(text);
+  return sendTelegramMarket(text, {
+    persist: { from_agent: "alert-digest", message_type: "alert_digest" },
+  });
 }

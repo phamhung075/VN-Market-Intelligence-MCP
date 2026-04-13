@@ -285,7 +285,10 @@ async function sendTelegram(text: string): Promise<void> {
     const { sendTelegramMarket } = await import(
       "../infrastructure/notifiers/telegram.js"
     );
-    const ok = await sendTelegramMarket(text, { parseMode: "" });
+    const ok = await sendTelegramMarket(text, {
+      parseMode: "",
+      persist: { from_agent: "weekly-portfolio", message_type: "weekly_portfolio" },
+    });
     if (!ok) {
       logger.warn("[weeklyPortfolioReport] sendTelegramMarket returned false — check TELEGRAM_BOT_TOKEN / TELEGRAM_INFO_MARKET_GROUP_ID");
     }

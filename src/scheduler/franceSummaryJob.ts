@@ -128,7 +128,9 @@ export async function assembleFranceSummary(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const mod = await import("../infrastructure/notifiers/telegram.js" as string).catch(() => null) as any;
       if (mod?.sendTelegramMarket) {
-        await mod.sendTelegramMarket(msg);
+        await mod.sendTelegramMarket(msg, {
+          persist: { from_agent: "france-summary", message_type: "france_summary" },
+        });
       }
     });
 

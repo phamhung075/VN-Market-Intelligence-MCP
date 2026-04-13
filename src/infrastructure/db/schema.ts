@@ -11,6 +11,7 @@
  *   - financial_reports — BCTC financial report data (see bctc-schema.ts for DDL)
  *   - cron_job_runs         — scheduler job observability (Task 1100)
  *   - insider_transactions  — SSC insider disclosure rows (Task 1141)
+ *   - market_messages       — persisted MARKET channel messages for quality review (Sprint 068)
  *
  * `initDatabase()` is idempotent: uses CREATE TABLE IF NOT EXISTS and
  * CREATE INDEX IF NOT EXISTS throughout, so calling it multiple times is safe.
@@ -1320,5 +1321,28 @@ export async function initDatabase(): Promise<void> {
     )
   `);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_cs_snapshot_date ON calibration_snapshots(snapshot_date DESC)`);
+
+  // ── Market Messages (Sprint 068) ──────────────────────────────────────────────
+  // Persists all MARKET channel Telegram sends for quality review.
+  // from_agent identifies the scheduler job or MCP tool that sent the message.
+  // verdict / verdict_note / reviewed_at are populated by the review_market_message
+  // MCP tool — NULL means unreviewed.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS market_messages (
+      id           INTEGER PRIMARY KEY AUTOINCREMENT,
+      from_agent   TEXT    NOT NULL,
+      message_type TEXT    NOT NULL,
+      ticker       TEXT,
+      content      TEXT    NOT NULL,
+      sent_at      TEXT    NOT NULL DEFAULT (datetime('now')),
+      verdict      TEXT,
+      verdict_note TEXT,
+      reviewed_at  TEXT
+    );
+    CREATE INDEX IF NOT EXISTS idx_mm_sent_at    ON market_messages(sent_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_mm_from_agent ON market_messages(from_agent);
+    CREATE INDEX IF NOT EXISTS idx_mm_verdict    ON market_messages(verdict);
+    CREATE INDEX IF NOT EXISTS idx_mm_ticker     ON market_messages(ticker);
+  `);
 
 }

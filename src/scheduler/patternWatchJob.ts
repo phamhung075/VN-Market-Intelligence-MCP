@@ -110,7 +110,12 @@ export async function runPatternWatch(): Promise<void> {
         "⚠️ Pattern matching chỉ mang tính tham khảo, không phải khuyến nghị đầu tư",
       ].join("\n");
 
-      await sendTelegramMarket(message, { parseMode: "" });
+      const tickerMatch = message.match(/\b([A-Z]{2,4})\b/);
+      const patternTicker: string | null = tickerMatch?.[1] ?? null;
+      await sendTelegramMarket(message, {
+        parseMode: "",
+        persist: { from_agent: "pattern-watch", message_type: "pattern_watch", ticker: patternTicker },
+      });
       logger.info("[patternWatch] sent weekly pattern alert", {
         matches: warnings.length,
       });

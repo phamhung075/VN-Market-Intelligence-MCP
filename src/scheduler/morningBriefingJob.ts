@@ -250,6 +250,20 @@ export async function runMorningBriefing(
       // Format briefing as a compact Telegram message — always show all sections
       const text = formatBriefingMessage(briefing);
 
+      // Persist the full pre-split text once before chunking (Sprint 068).
+      // The chunk loop sends slices, so we insert the complete content here
+      // rather than inside the loop where only a partial chunk would be stored.
+      try {
+        const { getDb: getDbForPersist } = await import("../infrastructure/db/schema.js");
+        const { insertMarketMessage } = await import("../infrastructure/db/marketMessageStore.js");
+        insertMarketMessage(getDbForPersist(), {
+          from_agent: "morning-briefing",
+          message_type: "morning_briefing",
+          ticker: null,
+          content: text,
+        });
+      } catch { /* best effort — send must not be blocked */ }
+
       // Telegram limit: 4096 chars per message. Split if needed.
       const MAX_CHUNK = 4000;
       if (text.length <= MAX_CHUNK) {
