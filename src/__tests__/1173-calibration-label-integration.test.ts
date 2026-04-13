@@ -389,18 +389,6 @@ describe("Task 1173 — AC-4: get_label_accuracy_report MCP tool returns formatt
     // Seed two agents with reviewed messages
     // alert-commander: 42 reviewed, 31 signal, 11 noise
     // Insert rows with exact reviewed_at dates via direct SQL (parameterized)
-    for (let i = 0; i < 31; i++) {
-      db.run(
-        `INSERT INTO market_messages (from_agent, message_type, content, verdict, reviewed_at)
-         VALUES (?, ?, ?, ?, datetime('now', '-1 days'))`,
-        ["alert-commander", "alert", `signal-msg-${i}`],
-      );
-    }
-    // Missing 4th argument binding — use proper 4-param form
-    for (let i = 0; i < 31; i++) {
-      // Already inserted above, skip — re-do correctly below
-    }
-
     // Reset and seed properly
     db.run("DELETE FROM market_messages");
 
