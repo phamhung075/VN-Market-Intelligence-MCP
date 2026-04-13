@@ -31,6 +31,10 @@ import {
   type CalibrationCurveBucket,
   type PredictionSummary,
 } from "../infrastructure/db/calibrationSnapshotStore.js";
+import {
+  getLabelAccuracyReport,
+  type LabelAccuracyRow,
+} from "../infrastructure/db/marketMessageStore.js";
 import { recordJobRun } from "../infrastructure/db/cronJobRunStore.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -49,6 +53,8 @@ export interface CalibrationJobResult {
   top_predictions: PredictionSummary[];
   worst_predictions: PredictionSummary[];
   snapshot_id: number;
+  /** Per-agent accuracy from human verdict labels on market_messages. Empty array on error or no data. */
+  label_accuracy: LabelAccuracyRow[];
 }
 
 /** Injectable Telegram send functions (for testing without real HTTP) */
@@ -318,6 +324,18 @@ async function sendCalibrationDigest(
     }
   }
 
+  workLines.push("\nLabel Accuracy (90 ngay, human labels):");
+  if (result.label_accuracy.length === 0) {
+    workLines.push("  (no label data yet)");
+  } else {
+    for (const row of result.label_accuracy) {
+      const pct = row.signal_rate !== null
+        ? (row.signal_rate * 100).toFixed(1)
+        : "0.0";
+      workLines.push(`  ${row.from_agent}: ${row.signal_count}/${row.total_reviewed} signal (${pct}%)`);
+    }
+  }
+
   const workMsg = workLines.join("\n");
 
   // ── Build MARKET message ──────────────────────────────────────────────────
@@ -444,6 +462,16 @@ export async function runCalibrationReport(
   // ── Step 3: Per-agent averages ────────────────────────────────────────────
   const avgBrierByAgent = computeAvgByAgent(claims);
 
+  // ── Step 3.5: Per-agent label accuracy (human verdicts) ───────────────────
+  let labelAccuracy: LabelAccuracyRow[] = [];
+  try {
+    labelAccuracy = getLabelAccuracyReport(database, 90);
+  } catch (err) {
+    logger.warn("[calibrationReportJob] getLabelAccuracyReport failed — using empty", {
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
+
   // ── Step 4: Per-stock averages (min 3 claims) ─────────────────────────────
   const avgBrierByStock = computeAvgByStock(claims);
 
@@ -497,6 +525,7 @@ export async function runCalibrationReport(
     top_predictions: topPredictions,
     worst_predictions: worstPredictions,
     snapshot_id: snapshotId,
+    label_accuracy: labelAccuracy,
   };
 
   // ── Step 10: Send Telegram digest ─────────────────────────────────────────

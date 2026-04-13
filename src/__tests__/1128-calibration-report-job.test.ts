@@ -94,6 +94,25 @@ function makeDb(): Database {
     )
   `);
 
+  // market_messages table (required by getLabelAccuracyReport in Step 3.5 — Task 1176)
+  db.run(`
+    CREATE TABLE IF NOT EXISTS market_messages (
+      id           INTEGER PRIMARY KEY AUTOINCREMENT,
+      from_agent   TEXT    NOT NULL,
+      message_type TEXT    NOT NULL,
+      ticker       TEXT,
+      content      TEXT    NOT NULL,
+      sent_at      TEXT    NOT NULL DEFAULT (datetime('now')),
+      verdict      TEXT,
+      verdict_note TEXT,
+      reviewed_at  TEXT
+    )
+  `);
+  db.run(`CREATE INDEX IF NOT EXISTS idx_mm_sent_at    ON market_messages(sent_at DESC)`);
+  db.run(`CREATE INDEX IF NOT EXISTS idx_mm_from_agent ON market_messages(from_agent)`);
+  db.run(`CREATE INDEX IF NOT EXISTS idx_mm_verdict    ON market_messages(verdict)`);
+  db.run(`CREATE INDEX IF NOT EXISTS idx_mm_ticker     ON market_messages(ticker)`);
+
   return db;
 }
 
