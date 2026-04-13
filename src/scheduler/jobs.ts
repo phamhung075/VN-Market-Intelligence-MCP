@@ -276,14 +276,13 @@ export function startScheduler() {
   // existing Alert Commander Telegram dispatch. Deterministic per-day id
   // keeps cooldown/dedup intact.
   cron.schedule(CRONS.bctcOverdueCheck, async () => {
-    try {
+    await recordJobRun(getDb(), 'bctcOverdueCheckJob', async () => {
       const r = await runBctcOverdueCheck()
       if (r.alertsInserted > 0) {
         log(`[bctc-overdue] inserted=${r.alertsInserted} overdue=${r.overdueFound} checked=${r.stocksChecked}`)
       }
-    } catch (err) {
-      log(`[bctc-overdue] uncaught: ${err instanceof Error ? err.message : String(err)}`)
-    }
+      return { rowsWritten: r.alertsInserted }
+    })
   }, { timezone: 'Asia/Ho_Chi_Minh' })
 
   // Every 10 min during VN market hours — VPS price-proxy watchdog.
@@ -292,28 +291,25 @@ export function startScheduler() {
   // is expected to push during; off-hours runs short-circuit via
   // isVnMarketHoursUtc() anyway, but a tighter cron avoids extra wakeups.
   cron.schedule(CRONS.vpsProxyWatchdog, async () => {
-    try {
+    await recordJobRun(getDb(), 'vpsProxyWatchdogJob', async () => {
       const status = await runVpsProxyWatchdog()
       if (status !== "ok" && status !== "off-hours" && status !== "cooldown") {
         log(`[vps-watchdog] ${status}`)
       }
-    } catch (err) {
-      log(`[vps-watchdog] uncaught: ${err instanceof Error ? err.message : String(err)}`)
-    }
+    })
   }, { timezone: 'UTC' })
 
   // Daily 00:00 UTC (07:00 GMT+7) — Cron health alert (task 1103).
   // Sends ONE message to WORK channel if any job has < 80% success rate in last 24h.
   // Silent when all jobs are healthy (no heartbeat on all-green).
   cron.schedule(CRONS.cronHealthAlert, async () => {
-    try {
+    await recordJobRun(getDb(), 'cronHealthAlertJob', async () => {
       const r = await runCronHealthAlert()
       if (r.alertsSent > 0) {
         log(`[cron-health-alert] degraded=${r.alertsSent}`)
       }
-    } catch (err) {
-      log(`[cron-health-alert] uncaught: ${err instanceof Error ? err.message : String(err)}`)
-    }
+      return { rowsWritten: r.alertsSent }
+    })
   }, { timezone: 'UTC' })
 
   // Daily 23:00 VN (16:00 UTC) — Evidence accumulator — task 1118
