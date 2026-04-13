@@ -267,6 +267,73 @@ export function getMarketMessageDigest(
   }));
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Sprint 070 — Label Accuracy Report
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Per-agent accuracy statistics derived from human verdict labels. */
+export interface LabelAccuracyRow {
+  from_agent: string;
+  total_reviewed: number;
+  signal_count: number;
+  noise_count: number;
+  /** signal_count / total_reviewed. Null only as a guard; WHERE clause prevents it in practice. */
+  signal_rate: number | null;
+  last_reviewed_at: string | null;
+}
+
+/** Raw SQLite row shape from the GROUP BY label accuracy query. */
+type RawLabelAccuracyRow = {
+  from_agent: string;
+  total_reviewed: number | bigint;
+  signal_count: number | bigint;
+  noise_count: number | bigint;
+  signal_rate: number | null;
+  last_reviewed_at: string | null;
+};
+
+/**
+ * Returns per-agent signal accuracy computed from human verdict labels.
+ * Read-only. Groups market_messages WHERE verdict IS NOT NULL by from_agent.
+ *
+ * @param db         - SQLite database instance
+ * @param since_days - Lookback window in calendar days (default 90, clamped 1-365)
+ * @returns LabelAccuracyRow[] ordered by signal_rate DESC, total_reviewed DESC
+ */
+export function getLabelAccuracyReport(
+  db: Database,
+  since_days?: number,
+): LabelAccuracyRow[] {
+  const clampedDays = Math.min(365, Math.max(1, since_days ?? 90));
+
+  const rows = db
+    .prepare<RawLabelAccuracyRow, [number]>(
+      `SELECT
+         from_agent,
+         COUNT(*)                                            AS total_reviewed,
+         SUM(CASE WHEN verdict = 'signal' THEN 1 ELSE 0 END) AS signal_count,
+         SUM(CASE WHEN verdict = 'noise'  THEN 1 ELSE 0 END) AS noise_count,
+         CAST(SUM(CASE WHEN verdict = 'signal' THEN 1 ELSE 0 END) AS REAL)
+           / COUNT(*)                                        AS signal_rate,
+         MAX(reviewed_at)                                    AS last_reviewed_at
+       FROM market_messages
+       WHERE verdict IS NOT NULL
+         AND reviewed_at >= date('now', '-' || ? || ' days')
+       GROUP BY from_agent
+       ORDER BY signal_rate DESC, total_reviewed DESC`,
+    )
+    .all(clampedDays);
+
+  return rows.map((row) => ({
+    from_agent: row.from_agent,
+    total_reviewed: Number(row.total_reviewed),
+    signal_count: Number(row.signal_count),
+    noise_count: Number(row.noise_count),
+    signal_rate: row.signal_rate,
+    last_reviewed_at: row.last_reviewed_at,
+  }));
+}
+
 /**
  * Applies a single verdict to a list of message IDs in one SQLite transaction.
  *

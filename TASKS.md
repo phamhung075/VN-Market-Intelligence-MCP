@@ -4,6 +4,364 @@
 
 ---
 
+## Sprint 070 — Calibration Label Integration
+
+Vision: `SPRINT_GOAL.md`
+Spec: `docs/REQ_070.md` | Design: `docs/TECH_070.md`
+
+### Kanban
+
+| ID | Title | Agent | Layer | Depends On | Branch | Status |
+|----|-------|-------|-------|------------|--------|--------|
+| REQ-070 | BA: write REQ_070.md — calibration label integration spec, acceptance criteria | BA | — | — | — | Done |
+| TECH-070 | Architect: write TECH_070.md — DDD layer plan, SQL design, interface contracts, test strategy, risk analysis | Architect | — | REQ-070 | — | Done |
+| PM-070 | PM: sprint planning — create tasks 1173–1177 in TASKS.md, assign to Developer, set branch | PM | — | TECH-070 | — | Done |
+| 1173 | TDD: write failing tests for AC-1 to AC-9 in `src/__tests__/1173-label-accuracy-report.test.ts` | Developer | tests | TECH-070 ✓ | task/1173-calibration-label-integration | Done |
+| 1174 | Add `getLabelAccuracyReport` + `LabelAccuracyRow` type to `marketMessageStore.ts` (FR-1) | Developer | infrastructure | 1173 ✓ | task/1173-calibration-label-integration | Done |
+| 1175 | Add `get_label_accuracy_report` tool to `calibrationTools.ts` + extend `registerCalibrationTools` (FR-2, FR-4) | Developer | interface | 1174 ✓ | task/1173-calibration-label-integration | Done |
+| 1176 | Extend `CalibrationJobResult` with `label_accuracy` field + update `runCalibrationReport` Step 3.5 + `sendCalibrationDigest` WORK block (FR-3); extend `makeDb()` in `1128-calibration-report-job.test.ts` to create `market_messages` table | Developer | scheduler | 1174 ✓ | task/1173-calibration-label-integration | Done |
+| 1177 | Sprint close: advance `project-stats.json` `currentSprint` to 70, `toolCount` to 96, update `lastUpdated` | Developer | docs/data | 1175 ✓, 1176 ✓ | task/1173-calibration-label-integration | Done |
+
+**WIP state:** 0 tasks In Progress (limit: 2). Sprint 070 COMPLETE. Tasks 1173–1177 Done.
+
+---
+
+### Task 1173 — TDD: write failing tests for AC-1 to AC-9
+
+**Branch**: `task/1173-calibration-label-integration`
+**Layer**: tests
+**Depends on**: TECH-070 (approved design)
+
+#### Files to read first
+
+- `src/__tests__/1163-market-message-review.test.ts` — isolation pattern to copy exactly (`process.env["DB_PATH"] = ":memory:"` at file top before any import, `initDatabase` + `closeDb` in `beforeEach`/`afterEach`)
+- `src/__tests__/1128-calibration-report-job.test.ts` — `TelegramOverrides` pattern and `makeDb()` helper for AC-6, AC-7, AC-9
+- `src/__tests__/1129-calibration-tools.test.ts` — how `registerCalibrationTools` is called with an injected db for AC-4, AC-5
+- `src/infrastructure/db/marketMessageStore.ts` — existing exports to understand current shape before adding `getLabelAccuracyReport`
+- `src/scheduler/calibrationReportJob.ts` — existing `CalibrationJobResult` interface and `TelegramOverrides` type
+
+#### Files to create
+
+- CREATE: `src/__tests__/1173-label-accuracy-report.test.ts`
+
+#### Setup boilerplate
+
+```typescript
+process.env["DB_PATH"] = ":memory:";
+import { describe, it, expect, beforeEach, afterEach } from "bun:test";
+import { initDatabase, getDb, closeDb } from "../infrastructure/db/schema.js";
+import { insertMarketMessage, reviewMarketMessage,
+         getLabelAccuracyReport } from "../infrastructure/db/marketMessageStore.js";
+```
+
+In `beforeEach`: call `initDatabase()`. In `afterEach`: call `closeDb()`. The in-memory DB created by `initDatabase()` already creates `market_messages` with all four indices — no manual DDL needed.
+
+For AC-4 and AC-5 (MCP tool tests): use a real in-memory DB injected through `registerCalibrationTools(server, db)` — the existing `resolveDb` closure already accepts an optional `db` parameter.
+
+For AC-6, AC-7, AC-9 (job tests): use `TelegramOverrides` to capture the WORK message string:
+
+```typescript
+let capturedWork = "";
+const overrides: TelegramOverrides = {
+  sendWork: async (msg) => { capturedWork = msg; return true; },
+  sendMarket: async () => true,
+};
+const result = await runCalibrationReport(db, overrides);
+expect(capturedWork).toContain("Label Accuracy (90 ngay, human labels):");
+```
+
+#### Test groups to write (all must fail on first commit — red phase)
+
+| Test | AC | What it proves |
+|---|---|---|
+| `getLabelAccuracyReport — groups by from_agent, excludes unreviewed` | AC-1 | 5 rows → 2 groups; NULL verdict excluded; ordering signal_rate DESC |
+| `getLabelAccuracyReport — respects since_days window` | AC-2 | reviewed_at 95 days ago excluded; reviewed_at 5 days ago included |
+| `getLabelAccuracyReport — returns [] when no reviewed rows` | AC-3 | empty table / all NULL verdict → [] |
+| `get_label_accuracy_report MCP tool — formatted table with 2 rows` | AC-4 | header contains "90 ngay", percentages correct, footer counts correct |
+| `get_label_accuracy_report MCP tool — empty state message` | AC-5 | no data → Vietnamese empty-state text |
+| `runCalibrationReport — WORK message includes label_accuracy block` | AC-6 | captured workLines contain section header and agent lines |
+| `runCalibrationReport — WORK message shows (no label data yet)` | AC-7 | empty market_messages → fallback line present |
+| `CalibrationJobResult has label_accuracy field` | AC-8 | type assertion + runtime check; tsc clean |
+| `runCalibrationReport — getLabelAccuracyReport exception is isolated` | AC-9 | mock db.prepare throw → job completes, label_accuracy=[], WORK shows (no label data yet) |
+
+All tests must compile (TypeScript valid) but fail because `getLabelAccuracyReport` does not yet exist in `marketMessageStore.ts`, `get_label_accuracy_report` does not yet exist in `calibrationTools.ts`, and `CalibrationJobResult.label_accuracy` does not yet exist in `calibrationReportJob.ts`.
+
+#### Acceptance Criteria
+
+**Given** `src/__tests__/1173-label-accuracy-report.test.ts` exists with all 9 test cases
+**When** `bun test src/__tests__/1173-label-accuracy-report.test.ts` is run before tasks 1174–1176 are done
+**Then**
+- All 9 test cases exist and are syntactically valid TypeScript
+- Tests fail (red) because `getLabelAccuracyReport` is not yet exported from `marketMessageStore.ts` and `get_label_accuracy_report` is not yet registered in `calibrationTools.ts`
+- `bun tsc --noEmit` passes (imports forward-declared or typed correctly)
+
+---
+
+### Task 1174 — Add getLabelAccuracyReport + LabelAccuracyRow to marketMessageStore.ts
+
+**Branch**: `task/1173-calibration-label-integration`
+**Layer**: infrastructure
+**Depends on**: 1173 ✓
+
+#### Files to read first
+
+- `src/infrastructure/db/marketMessageStore.ts` — full file: existing exported interfaces (`MarketMessage`, `MarketMessageAgent`) and function patterns to follow
+- `src/infrastructure/db/schema.ts` — confirm `market_messages` DDL column names (`verdict`, `reviewed_at`, `from_agent`, `sent_at`)
+
+#### Files to modify
+
+- MODIFY: `src/infrastructure/db/marketMessageStore.ts` — add `LabelAccuracyRow` interface + `getLabelAccuracyReport` function
+
+#### New exports to add
+
+**Interface** (add before function declarations):
+
+```typescript
+export interface LabelAccuracyRow {
+  from_agent: string;
+  total_reviewed: number;
+  signal_count: number;
+  noise_count: number;
+  signal_rate: number | null;
+  last_reviewed_at: string | null;
+}
+```
+
+**`getLabelAccuracyReport`** — exact SQL and clamping:
+
+```typescript
+export function getLabelAccuracyReport(
+  db: Database,
+  since_days?: number,
+): LabelAccuracyRow[]
+```
+
+Clamping: `const clampedDays = Math.min(365, Math.max(1, since_days ?? 90));`
+
+SQL (parameterized, single binding `[clampedDays]`):
+
+```sql
+SELECT
+  from_agent,
+  COUNT(*)                                            AS total_reviewed,
+  SUM(CASE WHEN verdict = 'signal' THEN 1 ELSE 0 END) AS signal_count,
+  SUM(CASE WHEN verdict = 'noise'  THEN 1 ELSE 0 END) AS noise_count,
+  CAST(SUM(CASE WHEN verdict = 'signal' THEN 1 ELSE 0 END) AS REAL)
+    / COUNT(*)                                        AS signal_rate,
+  MAX(reviewed_at)                                    AS last_reviewed_at
+FROM market_messages
+WHERE verdict IS NOT NULL
+  AND reviewed_at >= date('now', '-' || ? || ' days')
+GROUP BY from_agent
+ORDER BY signal_rate DESC, total_reviewed DESC
+```
+
+Post-query: cast `signal_count` and `noise_count` to `number`; coerce `signal_rate` to `number | null`.
+
+#### Acceptance Criteria
+
+**Given** `getLabelAccuracyReport` and `LabelAccuracyRow` are exported from `marketMessageStore.ts`
+**When** `bun test src/__tests__/1173-label-accuracy-report.test.ts` is run
+**Then**
+- AC-1 passes: 5 rows → 2 groups, NULL verdict excluded, ordered signal_rate DESC
+- AC-2 passes: reviewed_at 95 days ago excluded, 5 days ago included
+- AC-3 passes: empty table → []
+- `bun tsc --noEmit` reports 0 errors
+
+---
+
+### Task 1175 — Add get_label_accuracy_report tool to calibrationTools.ts
+
+**Branch**: `task/1173-calibration-label-integration`
+**Layer**: interface
+**Depends on**: 1174 ✓
+
+#### Files to read first
+
+- `src/interface/mcp/tools/calibrationTools.ts` — full file: existing `registerCalibrationTools` signature, `resolveDb` closure pattern, `get_calibration_report` tool registration as the model to follow
+- `src/infrastructure/db/marketMessageStore.ts` — confirm `getLabelAccuracyReport` and `LabelAccuracyRow` are now exported (from task 1174)
+
+#### Files to modify
+
+- MODIFY: `src/interface/mcp/tools/calibrationTools.ts` — add import of `getLabelAccuracyReport, type LabelAccuracyRow` from `marketMessageStore.js`; add new tool inside existing `registerCalibrationTools`
+
+#### Tool registration (exact signature)
+
+```typescript
+server.tool(
+  "get_label_accuracy_report",
+  "Returns per-agent signal accuracy computed from human verdict labels on MARKET channel messages. " +
+  "Each row shows how often an agent's messages were labelled 'signal' vs 'noise' by the user. " +
+  "Use this alongside get_calibration_report to understand which agents generate genuine signals. " +
+  "since_days controls the lookback window (default 90 days, matching the calibration engine window).",
+  {
+    since_days: z.coerce.number().int().min(1).max(365).default(90).optional()
+      .describe("Lookback window in calendar days (1-365, default 90)"),
+  },
+  async ({ since_days }) => { ... }
+)
+```
+
+The handler calls `getLabelAccuracyReport(resolveDb(), since_days ?? 90)` and formats output per the contracts below. No change to `registry.ts` — `registerCalibrationTools(server)` already covers the new tool.
+
+#### Output format — non-empty path
+
+```
+Label Accuracy Report — {N} ngay gan nhat
+=========================================
+
+Agent                  Reviewed  Signal  Noise   Signal%   Last reviewed
+--------------------   --------  ------  -----   -------   -------------------------
+{from_agent.padEnd(22)}  {total_reviewed.padStart(8)}  {signal_count.padStart(6)}  {noise_count.padStart(5)}  {signal_rate_pct.padStart(7)}  {last_reviewed_at}
+
+-----------------------------------------
+Tong: {rows.length} agents, {totalReviewed} tin da review.
+Su dung get_calibration_report de xem Brier score tu prediction_claims.
+```
+
+`signal_rate_pct` = `(row.signal_rate * 100).toFixed(1) + "%"`. `totalReviewed` = `rows.reduce((s, r) => s + r.total_reviewed, 0)`.
+
+#### Output format — empty path
+
+```
+Khong co tin nhan da review trong {N} ngay qua.
+Hay su dung batch_review_market_messages de danh gia tin nhan.
+```
+
+#### Acceptance Criteria
+
+**Given** `get_label_accuracy_report` is registered in `registerCalibrationTools`
+**When** `bun test src/__tests__/1173-label-accuracy-report.test.ts` is run
+**Then**
+- AC-4 passes: formatted table header contains "90 ngay", `alert-commander` at 73.8%, `morning-briefing` at 64.3%, footer contains "2 agents" and "56 tin da review"
+- AC-5 passes: empty state returns exact Vietnamese text
+- `bun tsc --noEmit` reports 0 errors
+
+---
+
+### Task 1176 — Extend CalibrationJobResult + runCalibrationReport + sendCalibrationDigest; fix makeDb() in 1128 test
+
+**Branch**: `task/1173-calibration-label-integration`
+**Layer**: scheduler
+**Depends on**: 1174 ✓
+
+#### HIDDEN DEPENDENCY — read this first
+
+`src/__tests__/1128-calibration-report-job.test.ts` contains a `makeDb()` helper that creates only `prediction_claims` and `calibration_snapshots`. After this task's changes to `runCalibrationReport`, the job will query `market_messages` via `getLabelAccuracyReport`. The `makeDb()` helper in the 1128 test file MUST be extended to also create the `market_messages` table (with its four indices) so that existing 1128 tests do not fail with "no such table: market_messages".
+
+#### Files to read first
+
+- `src/scheduler/calibrationReportJob.ts` — full file: `CalibrationJobResult` interface, `runCalibrationReport` function (all steps), `sendCalibrationDigest` function (workLines construction)
+- `src/__tests__/1128-calibration-report-job.test.ts` — full file: `makeDb()` helper DDL, existing test structure, how `TelegramOverrides` is used
+- `src/infrastructure/db/schema.ts` — `market_messages` DDL (table + four indices) to copy into `makeDb()`
+- `src/infrastructure/db/marketMessageStore.ts` — confirm `getLabelAccuracyReport` and `LabelAccuracyRow` are exported (from task 1174)
+
+#### Files to modify
+
+- MODIFY: `src/scheduler/calibrationReportJob.ts` — extend `CalibrationJobResult`, add Step 3.5 to `runCalibrationReport`, extend `workLines` block in `sendCalibrationDigest`
+- MODIFY: `src/__tests__/1128-calibration-report-job.test.ts` — extend `makeDb()` to create `market_messages` table and its indices
+
+#### CalibrationJobResult extension
+
+```typescript
+export interface CalibrationJobResult {
+  // ... existing fields unchanged ...
+  /** Per-agent accuracy from human verdict labels on market_messages. Empty array on error or no data. */
+  label_accuracy: LabelAccuracyRow[];
+}
+```
+
+Import to add: `getLabelAccuracyReport, type LabelAccuracyRow` from `../infrastructure/db/marketMessageStore.js`.
+
+#### New Step 3.5 in runCalibrationReport (insert after existing Step 3)
+
+```typescript
+// ── Step 3.5: Per-agent label accuracy (human verdicts) ───────────────────
+let labelAccuracy: LabelAccuracyRow[] = [];
+try {
+  labelAccuracy = getLabelAccuracyReport(database, 90);
+} catch (err) {
+  logger.warn("[calibrationReportJob] getLabelAccuracyReport failed — using empty", {
+    error: err instanceof Error ? err.message : String(err),
+  });
+}
+```
+
+Thread `labelAccuracy` into `jobResult.label_accuracy` and pass via `CalibrationJobResult` to `sendCalibrationDigest`.
+
+#### workLines extension in sendCalibrationDigest (append after existing "Per-agent Brier:" block)
+
+```typescript
+workLines.push("\nLabel Accuracy (90 ngay, human labels):");
+if (result.label_accuracy.length === 0) {
+  workLines.push("  (no label data yet)");
+} else {
+  for (const row of result.label_accuracy) {
+    const pct = row.signal_rate !== null
+      ? (row.signal_rate * 100).toFixed(1)
+      : "0.0";
+    workLines.push(`  ${row.from_agent}: ${row.signal_count}/${row.total_reviewed} signal (${pct}%)`);
+  }
+}
+```
+
+#### makeDb() fix in 1128 test file
+
+Extend the existing `makeDb()` helper to run the `CREATE TABLE IF NOT EXISTS market_messages` DDL and all four `CREATE INDEX IF NOT EXISTS` statements that match the schema in `src/infrastructure/db/schema.ts`. Copy the exact DDL from `schema.ts` — do not paraphrase.
+
+#### Acceptance Criteria
+
+**Given** `CalibrationJobResult.label_accuracy` field exists, Step 3.5 is in `runCalibrationReport`, `workLines` block is extended, and `makeDb()` in 1128 test creates `market_messages`
+**When** `bun test src/__tests__/1173-label-accuracy-report.test.ts` is run
+**Then**
+- AC-6 passes: WORK message contains section header and agent lines
+- AC-7 passes: empty market_messages → WORK message contains "(no label data yet)"
+- AC-8 passes: returned object has `label_accuracy: LabelAccuracyRow[]`, tsc clean
+- AC-9 passes: mock db.prepare throw → job completes, label_accuracy=[], WORK shows "(no label data yet)"
+
+**And** when `bun test src/__tests__/1128-calibration-report-job.test.ts` is run
+**Then**
+- All pre-existing 1128 tests still pass (market_messages table now exists in makeDb())
+- `bun tsc --noEmit` reports 0 errors
+
+---
+
+### Task 1177 — Sprint close: advance project-stats.json to sprint 070
+
+**Branch**: `task/1173-calibration-label-integration`
+**Layer**: docs/data
+**Depends on**: 1175 ✓, 1176 ✓
+
+#### Files to read first
+
+- `docs/data/project-stats.json` — current values for `currentSprint`, `toolCount`, `lastUpdated`
+
+#### Files to modify
+
+- MODIFY: `docs/data/project-stats.json` — set `currentSprint` to `70`, `toolCount` to `96`, `lastUpdated` to today's date
+
+#### Verification steps
+
+1. Run `bun test` — confirm all tests pass including pre-existing suites
+2. Run `bun tsc --noEmit` — confirm 0 errors
+3. Confirm `get_label_accuracy_report` is the 96th tool (was 95 before this sprint)
+4. Merge branch `task/1173-calibration-label-integration` to `main`
+5. Delete branch locally and remotely: `git branch -d task/1173-calibration-label-integration && git push origin --delete task/1173-calibration-label-integration`
+6. Confirm `git branch --show-current` = `main`
+
+#### Acceptance Criteria
+
+**Given** tasks 1173–1176 are Done and all tests pass
+**When** `docs/data/project-stats.json` is updated and `bun test && bun tsc --noEmit` runs
+**Then**
+- `project-stats.json` has `currentSprint = 70`, `toolCount = 96`
+- `bun test` exits with 0 failures
+- `bun tsc --noEmit` exits with 0 errors
+- Branch `task/1173-calibration-label-integration` deleted locally and remotely
+- `git branch --show-current` = `main`
+
+---
+
 ## Sprint 069 — Market Message Review UX + Task 1139 Close
 
 Vision: `SPRINT_GOAL.md`

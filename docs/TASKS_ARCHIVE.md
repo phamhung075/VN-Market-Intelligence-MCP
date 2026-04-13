@@ -5,6 +5,23 @@ Active board lives in `TASKS.md`.
 
 ---
 
+### Sprint 070 — Calibration Label Integration — Done 2026-04-13
+
+8 tasks shipped. Added `LabelAccuracyRow` interface + `getLabelAccuracyReport` to `marketMessageStore.ts`. Added MCP tool `get_label_accuracy_report` in `calibrationTools.ts`. Extended `CalibrationJobResult.label_accuracy` field + Step 3.5 in `runCalibrationReport` + label accuracy block in `sendCalibrationDigest`. Fixed `makeDb()` in `1128-calibration-report-job.test.ts` to create `market_messages` table. Tool count 95 → 96. 18/18 new tests pass. 21/21 pre-existing 1128 tests pass.
+
+| ID | Title | Commit |
+|----|-------|--------|
+| REQ-070 | BA: REQ_070.md — calibration label integration spec, acceptance criteria | — |
+| TECH-070 | Architect: TECH_070.md — DDD layer plan, SQL design, interface contracts, test strategy, risk analysis | — |
+| PM-070 | PM: sprint planning — tasks 1173–1177 in TASKS.md | — |
+| 1173 | TDD red phase — 9 failing tests for label accuracy report (AC-1 to AC-9) in `1173-calibration-label-integration.test.ts` | — |
+| 1174 | `LabelAccuracyRow` interface + `getLabelAccuracyReport` function in `marketMessageStore.ts` | — |
+| 1175 | MCP tool `get_label_accuracy_report` registered in `calibrationTools.ts` | — |
+| 1176 | `CalibrationJobResult.label_accuracy` + Step 3.5 + `sendCalibrationDigest` WORK block + `makeDb()` fix in 1128 test | — |
+| 1177 | Sprint close: project-stats.json currentSprint 69 → 70, toolCount 95 → 96 | (this commit) |
+
+---
+
 ### Sprint 069 — Market Message Review UX + Task 1139 Close — Done 2026-04-13
 
 8 tasks shipped. Added `getMarketMessageDigest` + `batchReviewMarketMessages` helpers + types to `marketMessageStore.ts`. Added MCP tools `get_market_message_digest` + `batch_review_market_messages`. Closed Task 1139 administrative debt (recordJobRun wraps verified). Tool count 93 → 95. 22/22 new tests pass.

@@ -21,6 +21,10 @@ import {
   type CalibrationCurveBucket,
   type PredictionSummary,
 } from "../../../infrastructure/db/calibrationSnapshotStore.js";
+import {
+  getLabelAccuracyReport,
+  type LabelAccuracyRow,
+} from "../../../infrastructure/db/marketMessageStore.js";
 import { getDb } from "../../../infrastructure/db/schema.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -175,6 +179,91 @@ function formatFullReport(snapshot: CalibrationSnapshotRow): string {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Label accuracy report handler (exported for testability)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Format label accuracy report for a non-empty result set.
+ * Column alignment: Agent padEnd(22), Reviewed padStart(8), Signal padStart(6),
+ * Noise padStart(5), Signal% padStart(7), Last reviewed ISO timestamp.
+ *
+ * @param rows       - Per-agent rows from getLabelAccuracyReport
+ * @param since_days - Lookback window used, echoed in header
+ */
+function formatLabelAccuracyReport(rows: LabelAccuracyRow[], since_days: number): string {
+  const lines: string[] = [];
+
+  lines.push(`Label Accuracy Report — ${since_days} ngay gan nhat`);
+  lines.push("=========================================");
+  lines.push("");
+  lines.push(
+    "Agent                  Reviewed  Signal  Noise   Signal%   Last reviewed",
+  );
+  lines.push(
+    "--------------------   --------  ------  -----   -------   -------------------------",
+  );
+
+  for (const row of rows) {
+    const pct =
+      row.signal_rate !== null
+        ? (row.signal_rate * 100).toFixed(1) + "%"
+        : "0.0%";
+    const lastReviewed = row.last_reviewed_at ?? "—";
+    lines.push(
+      `${row.from_agent.padEnd(22)}  ${String(row.total_reviewed).padStart(8)}  ${String(row.signal_count).padStart(6)}  ${String(row.noise_count).padStart(5)}  ${pct.padStart(7)}  ${lastReviewed}`,
+    );
+  }
+
+  lines.push("");
+  lines.push("-----------------------------------------");
+  const totalReviewed = rows.reduce((s, r) => s + r.total_reviewed, 0);
+  lines.push(`Tong: ${rows.length} agents, ${totalReviewed} tin da review.`);
+  lines.push(
+    "Su dung get_calibration_report de xem Brier score tu prediction_claims.",
+  );
+
+  return lines.join("\n");
+}
+
+/**
+ * Handle the get_label_accuracy_report MCP tool call.
+ * Exported separately for testability.
+ *
+ * @param db         - SQLite database instance (injected or resolved via getDb)
+ * @param since_days - Lookback window in calendar days (1-365, default 90)
+ */
+export async function handleGetLabelAccuracyReport(
+  db: Database,
+  since_days?: number,
+): Promise<{ content: Array<{ type: "text"; text: string }> }> {
+  const days = since_days ?? 90;
+  try {
+    const rows = getLabelAccuracyReport(db, days);
+
+    if (rows.length === 0) {
+      const text =
+        `Khong co tin nhan da review trong ${days} ngay qua.\n` +
+        "Hay su dung batch_review_market_messages de danh gia tin nhan.";
+      return { content: [{ type: "text" as const, text }] };
+    }
+
+    const text = formatLabelAccuracyReport(rows, days);
+    return { content: [{ type: "text" as const, text }] };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error("[get_label_accuracy_report] Error:", msg);
+    return {
+      content: [
+        {
+          type: "text" as const,
+          text: `Error retrieving label accuracy report: ${msg}`,
+        },
+      ],
+    };
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Tool registration
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -253,6 +342,27 @@ export function registerCalibrationTools(
           ],
         };
       }
+    },
+  );
+
+  server.tool(
+    "get_label_accuracy_report",
+    "Returns per-agent signal accuracy computed from human verdict labels on MARKET channel messages. " +
+      "Each row shows how often an agent's messages were labelled 'signal' vs 'noise' by the user. " +
+      "Use this alongside get_calibration_report to understand which agents generate genuine signals. " +
+      "since_days controls the lookback window (default 90 days, matching the calibration engine window).",
+    {
+      since_days: z.coerce
+        .number()
+        .int()
+        .min(1)
+        .max(365)
+        .default(90)
+        .optional()
+        .describe("Lookback window in calendar days (1-365, default 90)"),
+    },
+    async ({ since_days }) => {
+      return handleGetLabelAccuracyReport(resolveDb(), since_days);
     },
   );
 }

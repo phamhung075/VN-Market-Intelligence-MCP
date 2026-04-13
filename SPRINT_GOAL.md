@@ -1,6 +1,44 @@
 # Sprint Goal
 
-## Current Sprint — 069 (COMPLETE)
+## Current Sprint — 070 (COMPLETE)
+
+started: 2026-04-13 | completed: 2026-04-13 | theme: Calibration Label Integration — surface human verdict labels as per-agent signal accuracy in the calibration report
+
+### Goal
+
+The calibration engine in Sprint 065 computes Brier scores from prediction claims, but has no visibility into how often each agent's MARKET channel messages were labelled as genuine signals vs noise by the user. This sprint connects the `market_messages` review labels (introduced in Sprint 068) to the calibration report: adds `getLabelAccuracyReport` to `marketMessageStore.ts`, exposes it as a new MCP tool `get_label_accuracy_report`, and surfaces the per-agent signal accuracy in the daily `sendCalibrationDigest` WORK message.
+
+### Scope
+
+| Area | In/Out |
+|------|--------|
+| `LabelAccuracyRow` interface + `getLabelAccuracyReport` function in `marketMessageStore.ts` | IN |
+| MCP tool `get_label_accuracy_report` in `calibrationTools.ts` (since_days param, formatted table output) | IN |
+| `CalibrationJobResult.label_accuracy` field + Step 3.5 in `runCalibrationReport` | IN |
+| `sendCalibrationDigest` WORK block: "Label Accuracy (90 ngay, human labels):" section | IN |
+| `makeDb()` fix in `1128-calibration-report-job.test.ts` to create `market_messages` table | IN |
+| TDD: 9 failing tests first in `src/__tests__/1173-calibration-label-integration.test.ts` | IN |
+| `project-stats.json` advance to sprint 070, toolCount 95 → 96 | IN |
+| VPS changes | OUT |
+| New cron jobs | OUT |
+
+### Success Metric
+
+After this sprint: (1) `get_label_accuracy_report` returns per-agent signal accuracy grouped from human verdict labels. (2) `sendCalibrationDigest` WORK message includes the label accuracy section. (3) 18/18 new tests pass + 21/21 pre-existing 1128 tests pass. (4) `bun tsc --noEmit` clean. (5) `project-stats.json` currentSprint = 70.
+
+### Results
+
+All 5 developer tasks shipped (1173-1177) + REQ-070 + TECH-070 Done:
+- TDD red phase: 9 failing tests (18 total with AC-8 type assertion + AC-9 isolation) in `1173-calibration-label-integration.test.ts` (1173): shipped
+- `getLabelAccuracyReport` + `LabelAccuracyRow` exported from `marketMessageStore.ts` (1174): shipped
+- MCP tool `get_label_accuracy_report` registered in `calibrationTools.ts` (1175): shipped
+- `CalibrationJobResult.label_accuracy` + Step 3.5 + `sendCalibrationDigest` WORK block + `makeDb()` fix (1176): shipped
+- Sprint close: project-stats.json currentSprint 69 → 70, toolCount 95 → 96 (1177): shipped
+- 18/18 new tests pass. 21/21 pre-existing 1128 tests pass. `bun tsc --noEmit` clean.
+
+---
+
+## Previous Sprint — 069 (COMPLETE)
 
 started: 2026-04-13 | completed: 2026-04-13 | theme: Market Message Review UX + Task 1139 Close — digest + batch review workflow for overnight message triage
 
