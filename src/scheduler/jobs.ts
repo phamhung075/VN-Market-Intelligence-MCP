@@ -246,12 +246,16 @@ export function startScheduler() {
 
   // Weekdays 06:00 UTC (07:00 CET) — France wake-up summary — task 243
   cron.schedule(CRONS.franceSummary, async () => {
-    await runFranceSummary()
+    await recordJobRun(getDb(), "franceSummaryJob", async () => {
+      await runFranceSummary()
+    })
   }, { timezone: "UTC" })
 
   // Sunday 07:00 UTC (08:00 CET) — Dev Team weekly heartbeat — task 245
   cron.schedule(CRONS.devTeamHeartbeat, async () => {
-    await runDevTeamHeartbeat()
+    await recordJobRun(getDb(), "devTeamHeartbeatJob", async () => {
+      await runDevTeamHeartbeat()
+    })
   }, { timezone: "UTC" })
 
   // Sunday 08:00 UTC — Prediction market outcome validation — task 248
@@ -263,12 +267,16 @@ export function startScheduler() {
   // Every 6h — Weather check + climate signals — task 261
   // Typhoon season (Jun-Nov): every 6h. Off-season: every 12h.
   cron.schedule(CRONS.weatherCheck, async () => {
-    await runWeatherCheck()
+    await recordJobRun(getDb(), "weatherCheckJob", async () => {
+      await runWeatherCheck()
+    })
   }, { timezone: 'Asia/Ho_Chi_Minh' })
 
   // 1st of month 06:00 — DAV drug approval check (Sprint 044)
   cron.schedule(CRONS.davPharmacyCheck, async () => {
-    await runDavPharmacyCheck()
+    await recordJobRun(getDb(), "davPharmacyCheckJob", async () => {
+      await runDavPharmacyCheck()
+    })
   }, { timezone: 'Asia/Ho_Chi_Minh' })
 
   // Daily 09:00 GMT+7 — BCTC overdue check (task 1018 slice 3).
