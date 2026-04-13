@@ -1,6 +1,33 @@
 # Sprint Goal
 
-## Current Sprint — 061 (PARTIAL COMPLETE — 4/5, Task 1135 Blocked)
+## Current Sprint — 062 (PLANNED)
+
+started: 2026-04-12 | theme: Cron Observability Completion — Close the Health Monitor Blind Spots
+
+### Goal
+
+`get_cron_health` and `cronHealthAlertJob` were shipped in Sprint 055 to give the system visibility into scheduler health. However, only 12 of 28 jobs use `recordJobRun`. The 16 remaining jobs — including `morningBriefingJob`, `intelligenceCycleJob`, `eveningSummaryJob`, `patternWatchJob`, `weeklyPortfolioReportJob`, and `insiderCheckJob` — are completely invisible to the health monitor. If any of these jobs start silently failing, no alert will fire and the user will never know. This sprint wraps every production scheduler job in `recordJobRun` so `get_cron_health` reflects the true health of the entire system.
+
+### Scope
+
+| Area | In/Out |
+|------|--------|
+| `recordJobRun` added to all 16 remaining scheduler jobs that lack it | IN |
+| `morningBriefingJob`, `intelligenceCycleJob`, `eveningSummaryJob` (highest user impact) | IN |
+| `patternWatchJob`, `weeklyPortfolioReportJob`, `insiderCheckJob`, `franceSummaryJob` | IN |
+| `alertDigestJob`, `bctcOverdueCheckJob`, `predictionMarketJob`, `predictionOutcomeJob` | IN |
+| `davPharmacyJob`, `weatherCheckJob`, `vpsProxyWatchdogJob`, `devTeamHeartbeatJob` | IN |
+| Modifying `cronHealthAlertJob` internals (already correct, just needs data) | OUT |
+| New MCP tools | OUT — `get_cron_health` already exists, just needs populated data |
+| Hot reload, VPS changes | OUT |
+
+### Success Metric
+
+`get_cron_health` returns non-zero `totalRuns` for all major jobs (morningBriefing, intelligenceCycle, eveningSummary, patternWatch, weeklyPortfolioReport, insiderCheck). `bun tsc --noEmit` clean. All new tests pass. At least one test per job confirms `recordJobRun` is called.
+
+---
+
+## Previous Sprint — 061 (PARTIAL COMPLETE — 4/5, Task 1135 Blocked)
 
 started: 2026-04-12 | theme: Foreign Flow VPS Pipeline — Activate Smart-Money Signals
 
