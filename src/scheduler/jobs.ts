@@ -48,6 +48,8 @@ import { runBaseRateComputationJob } from './baseRateComputationJob.js'
 import { runPredictionResolutionJob } from './predictionResolutionJob.js'
 import { runCalibrationReportJob } from './calibrationReportJob.js'
 import { runForeignFlowAlertJobCron } from './foreignFlowAlertJob.js'
+import { getDb } from '../infrastructure/db/schema.js'
+import { recordJobRun } from '../infrastructure/db/cronJobRunStore.js'
 
 export const CRONS = {
   morningBriefing:        Bun.env.CRON_MORNING_BRIEFING          ?? '0 8 * * 1-5',
