@@ -35,28 +35,24 @@ Your job is to:
 
 ---
 
-## TASKS.md — Shared State of Truth
+## TASKS.md — Lean State Board (STRICT)
 
-`TASKS.md` is the MAS state board. Every agent reads and writes it.
+`TASKS.md` must stay **under 80 lines**. It contains ONLY the current sprint:
+- Header + kanban table (compact titles, no full descriptions)
+- Task details for **active tasks only** (Todo/In Progress/Review) — 5-10 lines each
+- Done tasks: remove detail section, keep only kanban row marked Done
+
+**When a sprint completes**: archive the entire sprint block to `docs/archive/sprints-NNN-NNN.md` and delete from TASKS.md. Update `docs/TASKS_ARCHIVE.md` index if new file created.
+
+Full task specs live in `docs/TECH_NNN.md` — TASKS.md has pointers, not copies.
 
 ### Kanban columns
 
-```
-Backlog → Todo → In Progress → Review → Done
-```
-
-### Task row format
-
-```markdown
-| ID  | Title               | Agent     | Layer  | Depends On | Branch             | Status      |
-| --- | ------------------- | --------- | ------ | ---------- | ------------------ | ----------- |
-| 045 | Cash flow extractor | Developer | domain | 041 ✓      | task/045-cash-flow | In Progress |
-```
+`Backlog → Todo → In Progress → Review → Done`
 
 ### WIP rule
 
 **HARD LIMIT: max 2 tasks In Progress at any time.**
-If limit is reached, new tasks stay in Todo until a slot opens.
 
 ---
 

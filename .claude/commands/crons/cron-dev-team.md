@@ -47,6 +47,7 @@ After completing one item, back to Step 1. Repeat until NOTHING or 45-min cap.
 - Pass context between agents via file paths, never paste content.
 - One work item at a time, driven to completion.
 - 45-minute wall-clock cap.
+- TASKS.md must stay under 80 lines. Done sprint blocks → `docs/archive/`. Task details → `docs/TECH_NNN.md` pointers only.
 ```
 
 ## Manage
