@@ -1,8 +1,8 @@
 # Sprint Goal
 
-## Current Sprint — 063 (PLANNING)
+## Current Sprint — 063 (COMPLETE)
 
-started: 2026-04-12 | theme: Task 1135 Unblock + Insider Transaction Detection
+started: 2026-04-12 | completed: 2026-04-13 | theme: Task 1135 Unblock + Insider Transaction Detection
 
 ### Goal
 
@@ -29,6 +29,18 @@ Two parallel deliverables:
 ### Success Metric
 
 `get_insider_transactions("VNM")` returns structured rows when SSC RSS has recent data. `insiderCheckJob` fires at 08:00 VN and inserts at least one evidence fragment when accumulation streak detected. Task 1135 ships with `FOREIGN_FLOW_FBUY_FIELD` / `FOREIGN_FLOW_FSELL_FIELD` env vars and `/api/foreign-flow-status` returns current field config. `bun tsc --noEmit` clean. All new tests pass.
+
+### Results
+
+All 7 developer tasks shipped (1141-1147) + BA/Architect/PM tasks Done:
+- `insider_transactions` DDL + insiderStore CRUD: shipped (1141)
+- VPS foreign flow script with env-var field names: shipped (1142)
+- GET /api/foreign-flow-status diagnostic endpoint + test: shipped (1144)
+- `insiderCheckJob` refactored: removed Telegram, added `detectAccumulationStreaks()`, `insertEvidenceFragment`, INSERT OR IGNORE dedup into alerts table: shipped (1143)
+- insiderCheckJob registered in jobs.ts with `recordJobRun` wrap (CRONS.insiderCheck, daily 01:00 UTC = 08:00 VN): shipped (1145, absorbed into 1143 branch)
+- `get_insider_transactions` MCP tool + `getInsiderTransactionsFiltered` store function: shipped (1146) — toolCount: 90 → 91
+- project-stats.json toolCount 91 + cron-registry.json insiderCheck entry: shipped (1147, absorbed into 1146 branch)
+- 39/39 tests pass across sprint 063 test files. `bun tsc --noEmit` clean.
 
 ---
 

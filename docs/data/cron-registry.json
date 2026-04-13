@@ -1,8 +1,8 @@
 {
   "_maintained_by": "developer",
   "_trigger": "after adding/removing scheduler file, update count + list",
-  "lastUpdated": "2026-04-12",
-  "schedulerFileCount": 26,
+  "lastUpdated": "2026-04-13",
+  "schedulerFileCount": 27,
   "jobs": [
     { "schedule": "*/15 min", "name": "intelligenceCycle", "desc": "Main engine: news+prices+cascade+alerts" },
     { "schedule": "*/30 min", "name": "predictionMarketPoll", "desc": "Polymarket fetch + signal detection" },
@@ -28,8 +28,9 @@
     { "schedule": "08:00 UTC Sunday", "name": "predictionOutcome", "desc": "Prediction signal evaluation" },
     { "schedule": "1st monthly 06:00 VN", "name": "davPharmacyCheck", "desc": "DAV drug approval check" },
     { "schedule": "13:00 UTC Sunday (20:00 VN)", "name": "calibrationReportJob", "desc": "Weekly Brier score calibration report + Telegram digest" },
-    { "schedule": "09:30 UTC M-F (16:30 VN)", "name": "foreignFlowAlertJob", "desc": "Daily foreign flow smart-money scan — HIGH alerts + evidence fragments" }
+    { "schedule": "09:30 UTC M-F (16:30 VN)", "name": "foreignFlowAlertJob", "desc": "Daily foreign flow smart-money scan — HIGH alerts + evidence fragments" },
+    { "schedule": "01:00 UTC daily (08:00 VN)", "name": "insiderCheckJob", "desc": "Daily SSC insider transaction check + streak detection + evidence fragments" }
   ],
-  "orphan": ["insiderCheckJob.ts"],
+  "orphan": [],
   "legacy": ["newsPollerJob.ts"]
 }
