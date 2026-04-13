@@ -29,6 +29,8 @@ import { initDatabase, getDb, closeDb } from "../infrastructure/db/schema.js";
 import {
   insertMarketMessage,
   reviewMarketMessage,
+  getLabelAccuracyReport,
+  type LabelAccuracyRow as LabelAccuracyRowImported,
 } from "../infrastructure/db/marketMessageStore.js";
 import { registerCalibrationTools } from "../interface/mcp/tools/calibrationTools.js";
 import {
@@ -37,32 +39,9 @@ import {
   type CalibrationJobResult as CalibrationJobResultBase,
 } from "../scheduler/calibrationReportJob.js";
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Type stubs — symbols not yet implemented (tasks 1174, 1175, 1176).
-// These allow `bun tsc --noEmit` to pass in the red phase.
-// The actual implementations will be wired in subsequent tasks.
-// ─────────────────────────────────────────────────────────────────────────────
-
-/** Stub: will be exported from marketMessageStore.ts in task 1174 */
-export interface LabelAccuracyRow {
-  from_agent: string;
-  total_reviewed: number;
-  signal_count: number;
-  noise_count: number;
-  signal_rate: number | null;
-  last_reviewed_at: string | null;
-}
-
-/** Stub: getLabelAccuracyReport — will be implemented in task 1174 */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-declare function getLabelAccuracyReport(db: Database, since_days?: number): LabelAccuracyRow[];
-
-// At runtime, attempt to import the real function; if not yet exported, the test will fail.
-// We use a dynamic require-style approach via module augmentation in the test body.
-const marketMessageStoreMod = await import("../infrastructure/db/marketMessageStore.js") as Record<string, unknown>;
-const getLabelAccuracyReportImpl = marketMessageStoreMod["getLabelAccuracyReport"] as
-  | ((db: Database, since_days?: number) => LabelAccuracyRow[])
-  | undefined;
+// LabelAccuracyRow is now imported from marketMessageStore.js (task 1174).
+// Re-export local alias so the rest of the test file keeps using the same name.
+type LabelAccuracyRow = LabelAccuracyRowImported;
 
 /**
  * Extended CalibrationJobResult — will include label_accuracy in task 1176.
