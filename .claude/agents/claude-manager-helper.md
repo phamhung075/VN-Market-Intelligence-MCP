@@ -103,22 +103,28 @@ Everything else lives in knowledge files or docs.
 10. If over 120 lines → identify bloat sections, move to appropriate knowledge/docs file.
 11. Verify 3-section pointer structure intact: Knowledge / Volatile Data / Docs.
 
-### Pass 5: Memory Hygiene
+### Pass 5: Sprint File Size Caps
 
-12. Read `memory/MEMORY.md`.
-13. For each entry → verify still accurate against current repo.
-14. Update stale entries. Delete entries now documented in knowledge files.
-15. Never add memory for anything derivable from code or JSON data files.
+12. `wc -l TASKS.md` — if over **80 lines**: find Done sprint blocks still inline, move them to `docs/archive/sprints-NNN-NNN.md`, update `docs/TASKS_ARCHIVE.md` index, trim TASKS.md to current sprint only.
+13. `wc -l SPRINT_GOAL.md` — if over **30 lines**: previous sprint goals still inline, delete them (they live in `docs/REQ_NNN.md`), keep only current sprint section.
+14. Both files are maintained by PM agent during sprints. This pass catches any bloat PM left behind.
 
-### Pass 6: Dedup & Skills
+### Pass 6: Memory Hygiene
 
-16. **Agent boilerplate** — Grep `.claude/agents/*.md` for repeated blocks (>3 lines) in 3+ files → extract to `.claude/knowledge/`.
-17. **Knowledge file merging** — If 2 small files (<60 lines each) always read together → merge.
-18. **Skills extraction** — Repeated procedures across agents → `.claude/skills/<name>/SKILL.md`.
+15. Read `memory/MEMORY.md`.
+16. For each entry → verify still accurate against current repo.
+17. Update stale entries. Delete entries now documented in knowledge files.
+18. Never add memory for anything derivable from code or JSON data files.
 
-### Pass 7: Report
+### Pass 7: Dedup & Skills
 
-19. End every run with:
+19. **Agent boilerplate** — Grep `.claude/agents/*.md` for repeated blocks (>3 lines) in 3+ files → extract to `.claude/knowledge/`.
+20. **Knowledge file merging** — If 2 small files (<60 lines each) always read together → merge.
+21. **Skills extraction** — Repeated procedures across agents → `.claude/skills/<name>/SKILL.md`.
+
+### Pass 8: Report
+
+22. End every run with:
 ```
 Tree-map: <OK or N violations found>
 JSON drift: <OK or N mismatches fixed>
@@ -127,7 +133,12 @@ CLAUDE.md: <before> → <after> lines
 Memory: <updated files or "no change">
 Cowork refresh needed: yes/no
 ```
-20. Include paste-ready Cowork refresh prompt if any agent `.md` changed.
+Also report:
+```
+TASKS.md: <N> lines (<OK or TRIMMED from M>)
+SPRINT_GOAL.md: <N> lines (<OK or TRIMMED from M>)
+```
+23. Include paste-ready Cowork refresh prompt if any agent `.md` changed.
 
 ---
 
