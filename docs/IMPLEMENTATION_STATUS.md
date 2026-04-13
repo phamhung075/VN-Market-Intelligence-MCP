@@ -221,6 +221,12 @@ Sprint 056 complete. Backlog items in TASKS.md. Sprint 057 planning pending.
 - `calibrationReportJob.ts` registered (`CRON_CALIBRATION_REPORT` `0 13 * * 0` UTC)
 - Net: +1 tool (96 total), label accuracy pipeline complete
 
+## Done — Sprint 071 (2026-04-13)
+
+- Tasks 1178-1180: `tickerIntelligenceTools.ts` — `get_ticker_intelligence` tool assembles 8 data sections per ticker (price context, recent alerts, open positions, Kinh Dich reading, active predictions, evidence score, insider transactions, open cascade chains) into a Vietnamese-formatted intelligence report
+- `registry.ts` updated: `registerTickerIntelligenceTools` registered, tool count verified at 96
+- Net: +1 tool (96 total), per-ticker intelligence pipeline complete
+
 ## Deferred
 
 - E2E test: daily briefing flow (task 125)

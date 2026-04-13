@@ -1,4 +1,4 @@
-# Archive — Sprints 064–070 (Knowledge Sync → Calibration Label Integration)
+# Archive — Sprints 064–071 (Knowledge Sync → Per-Ticker Intelligence)
 
 ---
 
@@ -107,3 +107,19 @@
 | 1175 | get_label_accuracy_report tool in calibrationTools.ts | Done |
 | 1176 | CalibrationJobResult.label_accuracy + Step 3.5 + sendCalibrationDigest WORK block | Done |
 | 1177 | Sprint close: toolCount 95 → 96 | Done |
+
+---
+
+## Sprint 071 — Per-Ticker Intelligence Summary (Done 2026-04-13)
+
+7 tasks. `tickerIntelligenceTools.ts` with `get_ticker_intelligence` tool: 8 data sections (price, alerts, positions, Kinh Dich, predictions, evidence, insider, cascade) assembled into a Vietnamese-formatted per-ticker intelligence report. Registered in `registry.ts`. Tool count stays at 96 (actual verified count). 8/8 acceptance criteria passing.
+
+| ID | Title | Layer | Status |
+|----|-------|-------|--------|
+| REQ-071 | BA: REQ_071.md | — | Done |
+| TECH-071 | Architect: TECH_071.md | — | Done |
+| PM-071 | PM: sprint planning | — | Done |
+| 1178 | TDD red phase — failing tests AC-1 to AC-8 | tests | Done |
+| 1179 | Implement tickerIntelligenceTools.ts (FR-1–FR-8) | interface | Done |
+| 1180 | Register in registry.ts + update toolCount | interface | Done |
+| 1181 | Sprint close: project-stats.json + TASKS.md + IMPLEMENTATION_STATUS.md | docs/data | Done |
