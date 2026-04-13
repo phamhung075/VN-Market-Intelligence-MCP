@@ -1,6 +1,6 @@
 # Task Report: 1182 — storeReport error propagation + WAL checkpoint in parseBctcReport.ts
 date: 2026-04-13
-outcome: CHANGES_REQUESTED
+outcome: PASS
 
 ## Test Results
 - Unit tests (1181-financial-reports-persist.test.ts): 1 passed / 0 failed
@@ -52,6 +52,23 @@ const dbPath = Bun.env["DB_PATH"] ?? "";
 
 ## Merge Status
 BLOCKED — fix the process.env violation, then resubmit for QA.
+
+---
+
+### Re-Review — 2026-04-13 (post-fix)
+
+**QA outcome: PASS**
+
+Re-verification after Fixer applied the `process.env` correction:
+
+- `src/application/usecases/parseBctcReport.ts` line 456: `Bun.env["DB_PATH"] ?? ""` — confirmed.
+- Security scan (`grep -rn "process.env" src/` excluding `__tests__/`): 0 hits in production source.
+- `bun test src/__tests__/1181-financial-reports-persist.test.ts`: 1 pass / 0 fail / 3 expect() calls.
+- Smoke regression (7 test files, 92 tests): 92 pass / 0 fail.
+- `bun tsc --noEmit`: 0 errors.
+- DDD compliance: no domain/ → infrastructure/ runtime import in changed files.
+- Merged: `git merge --no-ff task/1182-bctc-pipeline-fix` into main.
+- Branch deleted: local + remote.
 
 ---
 
