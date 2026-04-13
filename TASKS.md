@@ -18,10 +18,10 @@ Spec: `docs/REQ_071.md` | Design: `docs/TECH_071.md`
 | PM-071 | PM: sprint planning | PM | — | TECH-071 | — | Done |
 | 1178 | TDD: failing tests AC-1 to AC-8 | Developer | tests | TECH-071 ✓ | task/1178-ticker-intelligence | Done |
 | 1179 | Implement `tickerIntelligenceTools.ts` (FR-1–FR-8) | Developer | interface | 1178 ✓ | task/1178-ticker-intelligence | Review |
-| 1180 | Register in `registry.ts` + update toolCount=97 (FR-9) | Developer | interface | 1179 ✓ | task/1178-ticker-intelligence | Todo |
+| 1180 | Register in `registry.ts` + update toolCount=97 (FR-9) | Developer | interface | 1179 ✓ | task/1180-register-ticker-intelligence | Review |
 | 1181 | Sprint close: project-stats.json | Developer | docs/data | 1180 ✓ | task/1178-ticker-intelligence | Backlog |
 
-**WIP:** 0 In Progress. Task 1179 in Review. Task 1180 unblocked.
+**WIP:** 0 In Progress. Task 1179 in Review. Task 1180 in Review.
 
 ---
 

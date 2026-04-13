@@ -75,3 +75,5 @@ export { registerVpsProxyTools } from "./vpsProxyTools.js";
 export { registerCalibrationTools } from "./calibrationTools.js";
 // Sprint 063 — Insider Transactions MCP tool (Task 1146)
 export { registerInsiderTools } from "./insiderTools.js";
+// Sprint 071 — Per-Ticker Intelligence Summary (Task 1180)
+export { registerTickerIntelligenceTools } from "./tickerIntelligenceTools.js";

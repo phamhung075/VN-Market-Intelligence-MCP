@@ -68,6 +68,7 @@ import { registerCalibrationTools } from "./calibrationTools.js";
 import { registerForeignFlowTools } from "./foreignFlowTools.js";
 import { registerInsiderTools } from "./insiderTools.js";
 import { registerMarketMessageTools } from "./marketMessageTools.js";
+import { registerTickerIntelligenceTools } from "./tickerIntelligenceTools.js";
 
 /**
  * Flat array of all MCP tool registration functions.
@@ -136,4 +137,5 @@ export const toolRegistry: Array<(server: McpServer) => void> = [
   registerForeignFlowTools,     // Task 1134: get_foreign_flow (+1 tool → 90)
   registerInsiderTools,         // Task 1146: get_insider_transactions (+1 tool → 91)
   registerMarketMessageTools,   // Task 1166: get_unreviewed_market_messages + review_market_message (+2 tools → 93)
+  registerTickerIntelligenceTools, // Task 1180: get_ticker_intelligence (+1 tool → 97)
 ];

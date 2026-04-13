@@ -4,6 +4,7 @@
   "_live_check": "curl -s http://127.0.0.1:3000/health | jq .toolCount",
   "lastUpdated": "2026-04-13",
   "toolCount": 96,
+  "_note": "Actual registered count verified 2026-04-13. Pre-task count was 95 (json had stale 96). Task 1180 adds get_ticker_intelligence → 96.",
   "categories": [
     { "name": "Watchlist", "count": 4, "tools": ["add_to_watchlist", "remove_from_watchlist", "get_watchlist", "update_thresholds"] },
     { "name": "Financial Reports", "count": 4, "tools": ["get_financial_summary", "compare_financials", "list_stored_pdfs", "read_bctc_pdf"] },
@@ -42,7 +43,8 @@
     { "name": "Calibration", "count": 2, "tools": ["get_calibration_report", "get_label_accuracy_report"] },
     { "name": "Foreign Flow", "count": 1, "tools": ["get_foreign_flow"] },
     { "name": "Insider Transactions", "count": 1, "tools": ["get_insider_transactions"] },
-    { "name": "Market Message Review", "count": 4, "tools": ["get_unreviewed_market_messages", "review_market_message", "get_market_message_digest", "batch_review_market_messages"] }
+    { "name": "Market Message Review", "count": 4, "tools": ["get_unreviewed_market_messages", "review_market_message", "get_market_message_digest", "batch_review_market_messages"] },
+    { "name": "Ticker Intelligence", "count": 1, "tools": ["get_ticker_intelligence"] }
   ],
   "renamed": {
     "get_system_health": "get_system_status",
