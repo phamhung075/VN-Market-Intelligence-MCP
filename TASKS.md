@@ -17,15 +17,15 @@ Tech: `docs/TECH_063.md`
 | REQ-063 | BA: write REQ_063.md for insider transactions + 1135 unblock | BA | — | — | — | Done |
 | TECH-063 | Architect: review REQ_063, produce TECH_063.md | Architect | — | REQ-063 | — | Done |
 | PM-063 | PM: sprint planning — break TECH_063 into tasks 1141+, assign batches | PM | — | TECH-063 | — | Done |
-| 1141 | FR-3: insider_transactions DDL in initDatabase() + indexes + test | Developer | infrastructure | — | task/1141-insider-ddl | Todo |
-| 1142 | FR-1: VPS script foreign flow step with env-var field names + test notes | Developer | infrastructure | — | task/1142-vps-foreign-flow | Todo |
+| 1141 | FR-3: insider_transactions DDL in initDatabase() + indexes + test | Developer | infrastructure | — | task/1141-insider-ddl | Done |
+| 1142 | FR-1: VPS script foreign flow step with env-var field names + test notes | Developer | infrastructure | — | task/1142-vps-foreign-flow | Done |
 | 1143 | FR-5: Refactor insiderCheckJob — remove Telegram, add streak detection + insertAlert + evidenceFragment + test | Developer | domain/infrastructure | 1141 ✓ | task/1143-insider-check-job-refactor | Backlog |
-| 1144 | FR-2: GET /api/foreign-flow-status diagnostic endpoint + test | Developer | interface | — | task/1144-foreign-flow-status | Review |
+| 1144 | FR-2: GET /api/foreign-flow-status diagnostic endpoint + test | Developer | interface | — | task/1144-foreign-flow-status | Done |
 | 1145 | FR-4: Register insiderCheck cron in jobs.ts + recordJobRun wrap + test | Developer | interface/scheduler | 1141 ✓, 1143 ✓ | task/1145-insider-cron-registration | Backlog |
 | 1146 | FR-6: get_insider_transactions MCP tool + insiderStore date-filter + test | Developer | interface/infrastructure | 1141 ✓ | task/1146-get-insider-transactions | Backlog |
 | 1147 | FR-counts: Update project-stats.json (toolCount 91) + cron-registry.json | Developer | docs/data | 1145 ✓, 1146 ✓ | task/1147-counts-update | Backlog |
 
-**WIP state:** 0 tasks In Progress (limit: 2). Sprint planning complete — 7 tasks created.
+**WIP state:** 0 tasks In Progress (limit: 2). Wave 1 (1141, 1142, 1144) merged to main 2026-04-12.
 
 **Parallelism notes:**
 - Batch A (no deps, start immediately): 1141, 1142, 1144 — all three are independent. Load WIP slots with 1141 + 1142 first (Track B DDL and Track A VPS script). 1144 can start when a slot opens.

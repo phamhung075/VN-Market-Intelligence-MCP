@@ -1,6 +1,38 @@
 # Sprint Goal
 
-## Current Sprint — 062 (COMPLETE)
+## Current Sprint — 063 (PLANNING)
+
+started: 2026-04-12 | theme: Task 1135 Unblock + Insider Transaction Detection
+
+### Goal
+
+Two parallel deliverables:
+
+1. Unblock Task 1135 (foreign flow VPS script) by shipping the script with configurable field names and a `/api/foreign-flow-status` diagnostic endpoint. The operator confirms field names post-deploy — no more VPS-SSH blocker gate in the sprint cycle.
+
+2. Activate insider transaction detection: `insiderCheckJob` is currently a health-monitored placeholder with zero logic. Connect it to the SSC insider transaction RSS feed (already partially wired in the news pipeline), extract structured buy/sell events per ticker, persist to a new `insider_transactions` table, and feed HIGH-confidence insider accumulation events as evidence fragments into the prediction engine.
+
+### Scope
+
+| Area | In/Out |
+|------|--------|
+| Task 1135 unblock: VPS script ships with field name config + `/api/foreign-flow-status` diagnostic endpoint | IN |
+| `insider_transactions` DDL + store (ticker, insiderName, role, transactionType, shares, price, date) | IN |
+| `insiderCheckJob` — daily 08:00 VN: parse SSC insider RSS, upsert transactions, flag accumulation streaks | IN |
+| `get_insider_transactions` MCP tool (+1 tool) — returns last 30 days per ticker or all watchlist | IN |
+| Evidence fragment integration: 3+ day buy streak by director/officer → `record_evidence_fragment(type="insider_accumulation")` | IN |
+| Telegram alert: significant insider buy (>1% of shares outstanding) → MARKET alert via Alert Commander | IN |
+| Historical backfill beyond 30 days | OUT |
+| Sell-side insider alerts (sells are noise, buys are signal) | OUT — sells stored but not alerted |
+| VPS SSH automation | OUT — operator runs diagnostic manually |
+
+### Success Metric
+
+`get_insider_transactions("VNM")` returns structured rows when SSC RSS has recent data. `insiderCheckJob` fires at 08:00 VN and inserts at least one evidence fragment when accumulation streak detected. Task 1135 ships with `FOREIGN_FLOW_FBUY_FIELD` / `FOREIGN_FLOW_FSELL_FIELD` env vars and `/api/foreign-flow-status` returns current field config. `bun tsc --noEmit` clean. All new tests pass.
+
+---
+
+## Previous Sprint — 062 (COMPLETE)
 
 started: 2026-04-12 | completed: 2026-04-12 | theme: Cron Observability Completion — Close the Health Monitor Blind Spots
 

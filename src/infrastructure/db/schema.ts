@@ -9,7 +9,8 @@
  *   - alerts           — triggered alert records
  *   - rag_analyses     — structured RAG memory entries (vector stored in LanceDB)
  *   - financial_reports — BCTC financial report data (see bctc-schema.ts for DDL)
- *   - cron_job_runs     — scheduler job observability (Task 1100)
+ *   - cron_job_runs         — scheduler job observability (Task 1100)
+ *   - insider_transactions  — SSC insider disclosure rows (Task 1141)
  *
  * `initDatabase()` is idempotent: uses CREATE TABLE IF NOT EXISTS and
  * CREATE INDEX IF NOT EXISTS throughout, so calling it multiple times is safe.
@@ -837,6 +838,27 @@ export async function initDatabase(): Promise<void> {
     )
   `);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_vpl_service_ts ON vps_push_log(service, pushed_at)`);
+
+  // ── Insider Transactions (Task 1141 / Sprint 063) ─────────────────────────
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS insider_transactions (
+      id                  TEXT PRIMARY KEY,
+      code                TEXT NOT NULL,
+      insider_name        TEXT NOT NULL,
+      position            TEXT NOT NULL,
+      type                TEXT NOT NULL CHECK(type IN ('buy','sell','other')),
+      registered_volume   INTEGER NOT NULL DEFAULT 0,
+      executed_volume     INTEGER NOT NULL DEFAULT 0,
+      price               REAL NOT NULL DEFAULT 0,
+      from_date           TEXT NOT NULL,
+      to_date             TEXT NOT NULL,
+      fetched_at          TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_it_code_from_date
+      ON insider_transactions(code, from_date DESC);
+    CREATE INDEX IF NOT EXISTS idx_it_type_from_date
+      ON insider_transactions(type, from_date DESC);
+  `);
 
   // ── Task 1112: BCTC VPS proxy queue ──────────────────────────────────────
   db.exec(`
