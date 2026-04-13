@@ -1,6 +1,44 @@
 # Sprint Goal
 
-## Current Sprint — 067 (COMPLETE)
+## Current Sprint — 068 (COMPLETE)
+
+started: 2026-04-13 | completed: 2026-04-13 | theme: MARKET Message Quality Review System — persist every MARKET channel message and add a human-review workflow
+
+### Goal
+
+Every alert and briefing the system sends to the MARKET Telegram channel is ephemeral — once sent, there is no record, no way to audit false positives, and no human-label corpus for the prediction calibration engine. This sprint introduces a `market_messages` SQLite table (INSERT on every `sendTelegramMarket()` call, capturing `from_agent`, `message_type`, `ticker`, `content`, and `sent_at`), and two new MCP tools: `get_unreviewed_market_messages` (returns the last N unreviewed messages) and `review_market_message` (marks a message as `signal` or `noise` with an optional note). The user can run a post-session review from Claude Desktop to label overnight alerts — labels feed directly into the calibration report built in Sprint 065.
+
+### Scope
+
+| Area | In/Out |
+|------|--------|
+| New SQLite table `market_messages` with migration in `schema.ts` | IN |
+| `sendTelegramMarket()` wrapper modified to INSERT into `market_messages` on every call | IN |
+| New MCP tool `get_unreviewed_market_messages` (params: limit, ticker?) | IN |
+| New MCP tool `review_market_message` (params: id, verdict: "signal"\|"noise", note?) | IN |
+| TDD: failing tests first in `src/__tests__/1163-market-message-review.test.ts` | IN |
+| `project-stats.json` advance to sprint 068 | IN |
+| Changes to alert firing logic or cooldown rules | OUT |
+| VPS changes | OUT |
+| Calibration score computation using labels (deferred to Sprint 069+) | OUT |
+
+### Success Metric
+
+After this sprint: (1) every `sendTelegramMarket()` call creates a row in `market_messages` with correct `from_agent` and `message_type`. (2) `get_unreviewed_market_messages` returns those rows. (3) `review_market_message` sets `verdict` and `reviewed_at`. (4) Full test suite green, `bun tsc --noEmit` clean. (5) `project-stats.json` currentSprint = 68.
+
+### Results
+
+All 5 developer tasks shipped (1163-1167) + REQ-068 + TECH-068 Done:
+- TDD red phase: 36 tests written for market_messages review system (1163): shipped
+- `market_messages` DDL + `marketMessageStore.ts` with insertMarketMessage, getUnreviewedMarketMessages, reviewMarketMessage: shipped (1164)
+- `sendTelegramMarket()` persist option + 10 call sites migrated: shipped (1165)
+- MCP tools `get_unreviewed_market_messages` + `review_market_message` registered: shipped (1166)
+- Sprint close: merge, project-stats.json currentSprint 67 → 68, toolCount 91 → 93: shipped (1167)
+- 36/36 tests pass. `bun tsc --noEmit` clean.
+
+---
+
+## Previous Sprint — 067 (COMPLETE)
 
 started: 2026-04-13 | completed: 2026-04-13 | theme: Morning Briefing Intelligence Enrichment — surface insider, foreign flow, and evidence scores in the daily briefing
 

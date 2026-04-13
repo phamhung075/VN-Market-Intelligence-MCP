@@ -5,6 +5,23 @@ Active board lives in `TASKS.md`.
 
 ---
 
+### Sprint 068 — MARKET Message Quality Review System — Done 2026-04-13
+
+7 tasks shipped. Added `market_messages` SQLite table (INSERT on every `sendTelegramMarket()` call). Created `marketMessageStore.ts` with `insertMarketMessage`, `getUnreviewedMarketMessages`, `reviewMarketMessage`. Modified `sendTelegramMarket()` with `persist` option + migrated 10 call sites. Added 2 new MCP tools: `get_unreviewed_market_messages` + `review_market_message`. Tool count 91 → 93. 36/36 tests pass.
+
+| ID | Title | Commit |
+|----|-------|--------|
+| REQ-068 | BA: REQ_068.md — DDL, sendTelegramMarket() contract, tool param schemas | — |
+| TECH-068 | Architect: TECH_068.md — implementation plan, DDD layer map, test scaffold | — |
+| PM-068 | PM: sprint planning — tasks 1163-1167 in TASKS.md | — |
+| 1163 | TDD red phase — 36 failing tests for market_messages review system | fc53049 |
+| 1164 | market_messages DDL + marketMessageStore.ts (insertMarketMessage, getUnreviewedMarketMessages, reviewMarketMessage) | 43a6075 |
+| 1165 | sendTelegramMarket() persist option + 10 call sites migrated | 1a10b7a |
+| 1166 | marketMessageTools.ts + get_unreviewed_market_messages + review_market_message registered | a52de4a |
+| 1167 | Sprint close: merge branch, project-stats.json currentSprint 67 → 68, toolCount 91 → 93 | (this commit) |
+
+---
+
 ### Sprint 067 — Morning Briefing Intelligence Enrichment — Done 2026-04-13
 
 6 tasks shipped. Extended `DailyBriefing` with 3 optional fields (`insiderRecent`, `foreignFlowSummary`, `evidenceTopScores`). Added Steps 14-16 in `assembleBriefing()` querying `insider_transactions`, `vnstock_trading_stats`, `evidence_scores`. Rendered 3 new Telegram sections in `morningBriefingJob.ts`. 31/31 tests pass. No new tools or cron jobs.

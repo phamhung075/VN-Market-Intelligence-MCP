@@ -4,7 +4,7 @@
 
 ---
 
-## Sprint 068 — MARKET Message Quality Review System (ACTIVE)
+## Sprint 068 — MARKET Message Quality Review System (COMPLETE)
 
 Vision: `SPRINT_GOAL.md`
 
@@ -18,10 +18,10 @@ Vision: `SPRINT_GOAL.md`
 | 1163 | TDD: write failing tests for AC-1 to AC-12 in `src/__tests__/1163-market-message-review.test.ts` | Developer | tests | TECH-068 ✓ | task/1163-market-message-review | Done |
 | 1164 | Add `market_messages` DDL to `schema.ts` + create `marketMessageStore.ts` (insertMarketMessage, getUnreviewedMarketMessages, reviewMarketMessage) | Developer | infrastructure | 1163 | task/1163-market-message-review | Done |
 | 1165 | Modify `sendTelegramMarket()` to accept and use `persist` option + update `notifyTelegramAlert`, `sendTelegram` alias, and 8 scheduler/interface call sites | Developer | infrastructure/scheduler/interface | 1164 | task/1163-market-message-review | Done |
-| 1166 | Create `marketMessageTools.ts` + register `get_unreviewed_market_messages` and `review_market_message` in `registry.ts` | Developer | interface | 1165 | task/1163-market-message-review | Review |
-| 1167 | Advance `docs/data/project-stats.json` currentSprint to 68, update lastUpdated | Developer | docs/data | 1166 | task/1163-market-message-review | Todo |
+| 1166 | Create `marketMessageTools.ts` + register `get_unreviewed_market_messages` and `review_market_message` in `registry.ts` | Developer | interface | 1165 | task/1163-market-message-review | Done |
+| 1167 | Merge + sprint close: merge branch, update project-stats.json, archive tasks | Developer | docs/data | 1166 | task/1163-market-message-review | Done |
 
-**WIP state:** 0 tasks In Progress. Sprint 068 started 2026-04-13. REQ-068 Done. TECH-068 Done. PM-068 Done. Tasks 1163-1165 Done (QA approved 2026-04-13). Task 1166 Review. Task 1167 queued in Todo.
+**WIP state:** 0 tasks In Progress. Sprint 068 COMPLETE 2026-04-13. All tasks Done.
 
 ---
 
