@@ -1,4 +1,4 @@
-# Archive — Sprints 064–071 (Knowledge Sync → Per-Ticker Intelligence)
+# Archive — Sprints 064–072 (Knowledge Sync → BCTC Pipeline Fix)
 
 ---
 
@@ -123,3 +123,17 @@
 | 1179 | Implement tickerIntelligenceTools.ts (FR-1–FR-8) | interface | Done |
 | 1180 | Register in registry.ts + update toolCount | interface | Done |
 | 1181 | Sprint close: project-stats.json + TASKS.md + IMPLEMENTATION_STATUS.md | docs/data | Done |
+
+---
+
+## Sprint 072 — BCTC Pipeline Fix + test hygiene (Done 2026-04-14)
+
+5 tasks. Fixed silent swallowing of storeReport errors in parseBctcReport.ts — errors now propagate as `"storeReport failed: <msg>"`. Added WAL checkpoint (`PRAGMA wal_checkpoint(PASSIVE)`) after successful store, guarded against `:memory:` DB. Fixed 308-tool-registry.test.ts tool count 57 → 59 (registering marketMessageTools + tickerIntelligenceTools). Tool count remains at 96. 4190/4244 tests pass (34 pre-existing failures from earlier sprints, 0 new regressions).
+
+| ID | Title | Layer | Status |
+|----|-------|-------|--------|
+| REQ-072 | BA: REQ_072.md — BCTC financial_reports empty bug | docs | Done |
+| 1181 | TDD red: failing test for financial_reports persistence | test | Done |
+| 1182 | Fix storeReport error propagation + WAL checkpoint | application | Done |
+| 1183 | Fix 308-tool-registry.test.ts count 57 → 59 | test | Done |
+| 1184 | Sprint close: project-stats.json sprint 72 → 73, smoke test | docs/data | Done |

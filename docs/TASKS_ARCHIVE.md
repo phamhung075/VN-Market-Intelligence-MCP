@@ -10,7 +10,7 @@ Active board → `TASKS.md`
 
 | File | Sprints | Period | Summary |
 |------|---------|--------|---------|
-| [sprints-064-071.md](archive/sprints-064-071.md) | 064–071 | 2026-04-12 → 04-13 | Knowledge sync, prediction resolution, Bun.env purge, briefing enrichment, market message review, calibration labels, per-ticker intelligence |
+| [sprints-064-072.md](archive/sprints-064-072.md) | 064–072 | 2026-04-12 → 04-14 | Knowledge sync, prediction resolution, Bun.env purge, briefing enrichment, market message review, calibration labels, per-ticker intelligence, BCTC pipeline fix |
 | [sprints-059-063.md](archive/sprints-059-063.md) | 059–063 | 2026-04-12 → 04-13 | Prediction engine B+C+D, foreign flow VPS, cron observability, insider detection |
 | [sprints-054-058.md](archive/sprints-054-058.md) | 054–058 | 2026-04-08 → 04-12 | Position ledger, /ask queue, alert narrowing, Kinh Dich default, observability, BCTC fallback, evidence store, OCR fix |
 | [sprints-048-053.md](archive/sprints-048-053.md) | 048–053 | 2026-04-06 → 04-07 | OCR pipeline, Kinh Dich differentiation, 3-channel Telegram migration |

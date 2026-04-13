@@ -3,13 +3,27 @@
     {
       "fingerprint": "cron_duplication:src/infrastructure/config.ts:scheduler_cron_defaults",
       "first_seen": "2026-04-07",
-      "last_reported": "2026-04-12",
+      "last_reported": "2026-04-13",
       "task": 1048,
       "note": "config.ts:scheduler section declares 7 cron default strings duplicating CRONS fallback defaults in jobs.ts. Task 1048 queued (Backlog). BLOCKED: circular-dep risk."
+    },
+    {
+      "fingerprint": "config_drift:alerts.newsMention.minCascadeConfidence",
+      "first_seen": "2026-04-13",
+      "last_reported": "2026-04-13",
+      "task": null,
+      "note": "config.ts default 0.7, mcp.config.json actual 0.85. Also affects telegramMinCascadeConfidence. Risk: code uses fallback in edge case, differs from production JSON."
+    },
+    {
+      "fingerprint": "config_drift:market.watchlist_vea",
+      "first_seen": "2026-04-13",
+      "last_reported": "2026-04-13",
+      "task": null,
+      "note": "mcp.config.json has VEA in watchlist (after VNM), config.ts default does not. Risk: env override ignores VEA unless explicitly set."
     }
   ],
-  "last_run": "2026-04-13T10:15:43Z",
+  "last_run": "2026-04-13T11:45:00Z",
   "checks_run": 5,
-  "findings_count": 0,
-  "clean": true
+  "findings_count": 2,
+  "clean": false
 }
