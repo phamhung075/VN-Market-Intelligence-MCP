@@ -16,13 +16,13 @@ Spec: `docs/REQ_070.md` | Design: `docs/TECH_070.md`
 | REQ-070 | BA: write REQ_070.md — calibration label integration spec, acceptance criteria | BA | — | — | — | Done |
 | TECH-070 | Architect: write TECH_070.md — DDD layer plan, SQL design, interface contracts, test strategy, risk analysis | Architect | — | REQ-070 | — | Done |
 | PM-070 | PM: sprint planning — create tasks 1173–1177 in TASKS.md, assign to Developer, set branch | PM | — | TECH-070 | — | Done |
-| 1173 | TDD: write failing tests for AC-1 to AC-9 in `src/__tests__/1173-label-accuracy-report.test.ts` | Developer | tests | TECH-070 ✓ | task/1173-calibration-label-integration | Review |
-| 1174 | Add `getLabelAccuracyReport` + `LabelAccuracyRow` type to `marketMessageStore.ts` (FR-1) | Developer | infrastructure | 1173 ✓ | task/1173-calibration-label-integration | Review |
-| 1175 | Add `get_label_accuracy_report` tool to `calibrationTools.ts` + extend `registerCalibrationTools` (FR-2, FR-4) | Developer | interface | 1174 ✓ | task/1173-calibration-label-integration | Review |
-| 1176 | Extend `CalibrationJobResult` with `label_accuracy` field + update `runCalibrationReport` Step 3.5 + `sendCalibrationDigest` WORK block (FR-3); extend `makeDb()` in `1128-calibration-report-job.test.ts` to create `market_messages` table | Developer | scheduler | 1174 ✓ | task/1173-calibration-label-integration | Review |
-| 1177 | Sprint close: advance `project-stats.json` `currentSprint` to 70, `toolCount` to 96, update `lastUpdated` | Developer | docs/data | 1175 ✓, 1176 ✓ | task/1173-calibration-label-integration | Backlog |
+| 1173 | TDD: write failing tests for AC-1 to AC-9 in `src/__tests__/1173-label-accuracy-report.test.ts` | Developer | tests | TECH-070 ✓ | task/1173-calibration-label-integration | Done |
+| 1174 | Add `getLabelAccuracyReport` + `LabelAccuracyRow` type to `marketMessageStore.ts` (FR-1) | Developer | infrastructure | 1173 ✓ | task/1173-calibration-label-integration | Done |
+| 1175 | Add `get_label_accuracy_report` tool to `calibrationTools.ts` + extend `registerCalibrationTools` (FR-2, FR-4) | Developer | interface | 1174 ✓ | task/1173-calibration-label-integration | Done |
+| 1176 | Extend `CalibrationJobResult` with `label_accuracy` field + update `runCalibrationReport` Step 3.5 + `sendCalibrationDigest` WORK block (FR-3); extend `makeDb()` in `1128-calibration-report-job.test.ts` to create `market_messages` table | Developer | scheduler | 1174 ✓ | task/1173-calibration-label-integration | Done |
+| 1177 | Sprint close: advance `project-stats.json` `currentSprint` to 70, `toolCount` to 96, update `lastUpdated` | Developer | docs/data | 1175 ✓, 1176 ✓ | task/1173-calibration-label-integration | Done |
 
-**WIP state:** 0 tasks In Progress (limit: 2). Tasks 1173, 1174, 1175, 1176 in Review.
+**WIP state:** 0 tasks In Progress (limit: 2). Sprint 070 COMPLETE. Tasks 1173–1177 Done.
 
 ---
 
