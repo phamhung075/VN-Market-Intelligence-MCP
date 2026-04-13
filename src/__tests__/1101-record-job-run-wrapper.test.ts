@@ -224,13 +224,8 @@ describe("Task 1101 — recordJobRun wrapper", () => {
 
   // ── structural: 5 target job files import recordJobRun ────────────────────────
 
-  it("structural: newsPollerJob imports recordJobRun", async () => {
-    const src = await Bun.file(
-      new URL("../scheduler/newsPollerJob.ts", import.meta.url).pathname,
-    ).text();
-    expect(src).toContain("recordJobRun");
-    expect(src).toContain("cronJobRunStore");
-  });
+  // newsPollerJob.ts removed in task 1187 (dead code — never scheduled).
+  // intelligenceCycleJob replaced it. Structural test removed.
 
   it("structural: sscCheckerJob imports recordJobRun", async () => {
     const src = await Bun.file(

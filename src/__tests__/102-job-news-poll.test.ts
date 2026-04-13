@@ -6,8 +6,10 @@
  *   - Deduplication: second call with same items inserts 0 rows
  *   - Cascade runs for new items
  *   - Alert generated when signals fire
- *   - newsPollerJob concurrency guard: overlapping poll skipped
  *   - UNIQUE index on rag_analyses.source_url created by initDatabase()
+ *
+ * Note: newsPollerJob.ts was removed in task 1187 (dead code — never scheduled
+ * in jobs.ts; intelligenceCycleJob replaced it). Concurrency guard tests removed.
  */
 
 import { describe, it, expect, beforeEach, afterEach } from "bun:test";
@@ -375,72 +377,6 @@ describe("Task 102 — News Polling Job", () => {
     });
   });
 
-  // ── newsPollerJob concurrency guard ──────────────────────────────────────
-
-  describe("runNewsPoller() concurrency guard", () => {
-    it("skips concurrent invocations while a poll is running", async () => {
-      // Reset module state for a clean test
-      const jobModule = await import("../scheduler/newsPollerJob.js");
-
-      let callCount = 0;
-      const slowPoll = async () => {
-        callCount++;
-        // Simulate a slow poll by yielding the microtask queue a few times
-        await new Promise<void>((r) => setTimeout(r, 10));
-        return { fetched: 0, inserted: 0, duplicates: 0, alerts: 0, errors: 0 };
-      };
-
-      // Start first invocation (will take ~10ms)
-      const p1 = jobModule.runNewsPoller(slowPoll);
-      // Start second immediately while first is still in flight
-      const p2 = jobModule.runNewsPoller(slowPoll);
-
-      await Promise.all([p1, p2]);
-
-      // Only the first invocation should have called the poll fn
-      expect(callCount).toBe(1);
-    });
-
-    it("error path surfaces stack + name + cause (reports 1065/1066)", async () => {
-      const jobModule = await import("../scheduler/newsPollerJob.js");
-      const loggerMod = await import("../infrastructure/logger.js");
-      const calls: Array<{ msg: string; ctx?: Record<string, unknown> }> = [];
-      const originalError = loggerMod.logger.error.bind(loggerMod.logger);
-      (loggerMod.logger as { error: typeof loggerMod.logger.error }).error = (msg, ctx) => {
-        calls.push({ msg, ctx: ctx as Record<string, unknown> });
-      };
-      try {
-        const boom = new Error("boom-downstream");
-        (boom as Error & { cause?: unknown }).cause = "rag_persist_failed";
-        const failing = async () => { throw boom; };
-        await jobModule.runNewsPoller(failing);
-      } finally {
-        (loggerMod.logger as { error: typeof loggerMod.logger.error }).error = originalError;
-      }
-      const errLog = calls.find((c) => c.msg.includes("unhandled error"));
-      expect(errLog).toBeDefined();
-      expect(errLog!.ctx).toBeDefined();
-      expect(errLog!.ctx!.error).toBe("boom-downstream");
-      expect(typeof errLog!.ctx!.stack).toBe("string");
-      expect((errLog!.ctx!.stack as string).length).toBeGreaterThan(10);
-      expect(errLog!.ctx!.errName).toBe("Error");
-      expect(errLog!.ctx!.cause).toBe("rag_persist_failed");
-    });
-
-    it("allows subsequent poll after first finishes", async () => {
-      const jobModule = await import("../scheduler/newsPollerJob.js");
-
-      let callCount = 0;
-      const fastPoll = async () => {
-        callCount++;
-        return { fetched: 0, inserted: 0, duplicates: 0, alerts: 0, errors: 0 };
-      };
-
-      // Reset internal state by running once first to ensure guard is released
-      await jobModule.runNewsPoller(fastPoll);
-      await jobModule.runNewsPoller(fastPoll);
-
-      expect(callCount).toBe(2);
-    });
-  });
 });
+// Note: runNewsPoller() concurrency guard tests removed — newsPollerJob.ts
+// deleted in task 1187 (dead code). intelligenceCycleJob has its own guard.
