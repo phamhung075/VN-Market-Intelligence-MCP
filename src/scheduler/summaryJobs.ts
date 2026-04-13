@@ -19,6 +19,8 @@
 import cron from "node-cron";
 import { generatePeriodicSummary, type PeriodType } from "../application/usecases/generatePeriodicSummary.js";
 import { logger } from "../infrastructure/logger.js";
+import { getDb } from "../infrastructure/db/schema.js"
+import { recordJobRun } from "../infrastructure/db/cronJobRunStore.js"
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -52,13 +54,12 @@ export interface SummaryCronConfig {
  * @param periodType - Summary period type to generate
  */
 async function runSummaryJob(periodType: PeriodType): Promise<void> {
-  const start = Date.now();
-  logger.info(`[summaryJob] starting ${periodType} summary generation`);
-
-  try {
-    const summary = await generatePeriodicSummary(periodType);
-    const durationMs = Date.now() - start;
-
+  const db = getDb()
+  await recordJobRun(db, `summaryJob:${periodType}`, async () => {
+    const start = Date.now()
+    logger.info(`[summaryJob] starting ${periodType} summary generation`)
+    const summary = await generatePeriodicSummary(periodType)
+    const durationMs = Date.now() - start
     logger.info(`[summaryJob] ${periodType} summary complete`, {
       id: summary.id,
       periodStart: summary.periodStart,
@@ -66,12 +67,8 @@ async function runSummaryJob(periodType: PeriodType): Promise<void> {
       newsCount: summary.newsCount,
       alertCount: summary.alertCount,
       durationMs,
-    });
-  } catch (err) {
-    logger.error(`[summaryJob] ${periodType} summary failed`, {
-      error: err instanceof Error ? err.message : String(err),
-    });
-  }
+    })
+  })
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
