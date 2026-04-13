@@ -16,12 +16,12 @@ Spec: `docs/REQ_071.md` | Design: `docs/TECH_071.md`
 | REQ-071 | BA: write REQ_071.md — per-ticker intelligence summary spec, data contracts, acceptance criteria | BA | — | — | — | Done |
 | TECH-071 | Architect: write TECH_071.md — DDD layer plan, interface contracts, test strategy | Architect | — | REQ-071 | — | Done |
 | PM-071 | PM: sprint planning — create tasks 1178–1181 in TASKS.md, assign to Developer, set branch | PM | — | TECH-071 | — | Done |
-| 1178 | TDD: write failing tests for AC-1 to AC-8 in `src/__tests__/1178-ticker-intelligence.test.ts` | Developer | tests | TECH-071 ✓ | task/1178-ticker-intelligence | Review |
-| 1179 | Implement `tickerIntelligenceTools.ts` — all 6 sections + `handleGetTickerIntelligence` + `formatTickerIntelligence` + `registerTickerIntelligenceTools` (FR-1 through FR-8) | Developer | interface | 1178 ✓ | task/1178-ticker-intelligence | Todo |
+| 1178 | TDD: write failing tests for AC-1 to AC-8 in `src/__tests__/1178-ticker-intelligence.test.ts` | Developer | tests | TECH-071 ✓ | task/1178-ticker-intelligence | Done |
+| 1179 | Implement `tickerIntelligenceTools.ts` — all 6 sections + `handleGetTickerIntelligence` + `formatTickerIntelligence` + `registerTickerIntelligenceTools` (FR-1 through FR-8) | Developer | interface | 1178 ✓ | task/1178-ticker-intelligence | Review |
 | 1180 | Register `registerTickerIntelligenceTools` in `registry.ts`; update `087-server-wiring.test.ts` to expect `toolCount = 97` (FR-9) | Developer | interface | 1179 ✓ | task/1178-ticker-intelligence | Todo |
 | 1181 | Sprint close: advance `project-stats.json` `currentSprint` to 71, `toolCount` to 97, update `lastUpdated` | Developer | docs/data | 1179 ✓, 1180 ✓ | task/1178-ticker-intelligence | Backlog |
 
-**WIP state:** 0 tasks In Progress (limit: 2). Sprint 071 ACTIVE. Task 1178 in Review.
+**WIP state:** 0 tasks In Progress (limit: 2). Sprint 071 ACTIVE. Task 1178 Done. Task 1179 in Review. Task 1180 unblocked.
 
 ---
 
