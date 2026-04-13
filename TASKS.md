@@ -12,11 +12,11 @@ Vision: `SPRINT_GOAL.md`
 
 | ID | Title | Agent | Layer | Depends On | Branch | Status |
 |----|-------|-------|-------|------------|--------|--------|
-| 1186 | Fix evening summary timing race — reschedule to 22:30 VN | Dev | scheduler | — | task/1186-evening-summary-timing | Review |
+| 1186 | Fix evening summary timing race — reschedule to 22:30 VN | Dev | scheduler | — | — | Done |
 | 1187 | Investigate pollNewsJob 0-rows + boom-downstream errors | Dev | infrastructure | — | — | Todo |
 | 1185 | Investigate baodautu.vn RSS parsing (HTTP 200, 0 items) | Dev | infrastructure | — | — | Backlog |
 
-**WIP:** 0 In Progress. 1 Review.
+**WIP:** 0 In Progress. 0 Review.
 
 ---
 
