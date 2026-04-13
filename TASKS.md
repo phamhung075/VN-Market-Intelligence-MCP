@@ -19,7 +19,7 @@ Spec: `docs/REQ_062.md`
 | 1136 | jobs.ts imports + summaryJobs.ts wrap (FR-16, FR-18) | Developer | interface/scheduler | — | task/1136-imports-summary-wrap | Review |
 | 1137 | Wrap critical briefing/cycle jobs: morningBriefing, intelligenceCycle, eveningSummary, alertDigest (FR-1–4) | Developer | interface/scheduler | 1136 | task/1137-wrap-briefing-cycle | Review |
 | 1138 | Wrap market/portfolio/prediction jobs: patternWatch, weeklyPortfolioReport, predictionMarketPoll, predictionOutcome (FR-5–8) | Developer | interface/scheduler | 1136 | task/1138-market-portfolio-wrap | Review |
-| 1139 | Wrap utility/infra jobs: franceSummary, devTeamHeartbeat, weatherCheck, davPharmacyCheck (FR-9–12) | Developer | interface/scheduler | 1136 | — | Todo |
+| 1139 | Wrap utility/infra jobs: franceSummary, devTeamHeartbeat, weatherCheck, davPharmacyCheck (FR-9–12) | Developer | interface/scheduler | 1136 | task/1139-utility-wrap | Review |
 | 1140 | Replace try/catch blocks: bctcOverdueCheck, vpsProxyWatchdog, cronHealthAlert (FR-13–15) | Developer | interface/scheduler | 1136 | — | Todo |
 
 **WIP state:** 0 tasks In Progress (limit: 2). Tasks 1137–1140 blocked on 1136 merge/QA.
@@ -1402,7 +1402,15 @@ Sprint 058 COMPLETE 2026-04-12. VNM income: revenue 1→63.6T, COGS 10→37.4T. 
 
 ## Review
 
-(empty — Sprint 055 fully verified 2026-04-11)
+### Task 1139 — Wrap utility/infra jobs (FR-9, FR-10, FR-11, FR-12)
+
+**Branch**: `task/1139-utility-wrap`
+**Layer**: interface/scheduler
+**Status**: Ready for review
+
+Wrapped franceSummaryJob, devTeamHeartbeatJob, weatherCheckJob, davPharmacyCheckJob with Pattern A recordJobRun.
+Test: `src/__tests__/1139-utility-observability.test.ts` (8 assertions, all pass).
+`bun tsc --noEmit` clean. Full suite: 27 pre-existing failures, 0 regressions introduced.
 
 ---
 
