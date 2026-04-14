@@ -328,6 +328,75 @@ const KEYWORD_RULES: KeywordRule[] = [
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════
+// Sports / Entertainment filter — Task 1219
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * Keywords that identify sports or entertainment prediction markets.
+ * These have no relevance to the Vietnamese financial market and should be
+ * discarded before any VN sector mapping is attempted.
+ *
+ * Matching is case-insensitive substring search on the question title.
+ */
+const SPORTS_ENTERTAINMENT_KEYWORDS: ReadonlyArray<string> = [
+  // Sports competitions
+  "world cup",
+  "super bowl",
+  "champions league",
+  "nba championship",
+  "nba finals",
+  "nfl",
+  "nba ",
+  "mlb ",
+  "nhl ",
+  "fifa",
+  "uefa",
+  "premier league",
+  "la liga",
+  "bundesliga",
+  "serie a",
+  "olympic",
+  "olympics",
+  "formula 1",
+  "formula one",
+  "wimbledon",
+  "grand slam",
+  "boxing",
+  "heavyweight",
+  "ufc",
+  "wrestle",
+  "wrestling",
+  "esports",
+  "e-sports",
+  // Awards / entertainment
+  "oscar",
+  "academy award",
+  "grammy",
+  "emmy",
+  "bafta",
+  "golden globe",
+  "cannes",
+  "film festival",
+  "box office",
+  "music award",
+];
+
+/**
+ * Returns true when the prediction market title is about sports or entertainment
+ * and has no VN financial market relevance.
+ *
+ * Task 1219: Polymarket and similar markets about sports outcomes / entertainment
+ * events should be excluded from VN sector mapping.
+ *
+ * @param questionText - The prediction market question / title
+ * @returns true if the question is about sports or entertainment
+ */
+export function isSportsOrEntertainmentMarket(questionText: string): boolean {
+  const lower = questionText.toLowerCase();
+  return SPORTS_ENTERTAINMENT_KEYWORDS.some((kw) => lower.includes(kw));
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
 // Core matching logic
 // ═══════════════════════════════════════════════════════════════════════════
 
@@ -387,6 +456,11 @@ export function mapPredictionToVn(
 
   // Early exit — nothing to match
   if (combined.trim().length === 0) {
+    return [];
+  }
+
+  // Task 1219: discard sports/entertainment markets — they have no VN relevance
+  if (isSportsOrEntertainmentMarket(questionText)) {
     return [];
   }
 
