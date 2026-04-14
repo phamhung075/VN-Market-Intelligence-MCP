@@ -14,6 +14,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { statSync } from "node:fs";
 import { resolve } from "node:path";
+import { getPipelineHealth } from "../../../application/usecases/getPipelineHealth.js";
 
 import { getAllBreakerStats } from "../../../infrastructure/circuitBreakerRegistry.js";
 import { getDb, initDatabase } from "../../../infrastructure/db/schema.js";
@@ -388,6 +389,34 @@ export function registerSystemTools(server: McpServer): void {
               text: `Error retrieving system status: ${(err as Error).message}`,
             },
           ],
+        };
+      }
+    },
+  );
+
+  // ── get_pipeline_health — news pipeline diagnostic snapshot ─────────────────
+  server.tool(
+    "get_pipeline_health",
+    "Returns a point-in-time diagnostic snapshot of the news pipeline: " +
+      "rag_analyses row counts for today/yesterday (GMT+7), last insert timestamp, " +
+      "per-source breakdown, VPS push count (24h), and evening report last run time. " +
+      "Use this to detect silent pipeline failures without SSH access.",
+    {},   // zero required parameters
+    async () => {
+      try {
+        const result = await getPipelineHealth();
+        return {
+          content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }],
+        };
+      } catch (err) {
+        logger.error("[get_pipeline_health] Unexpected error", {
+          error: err instanceof Error ? err.message : String(err),
+        });
+        return {
+          content: [{
+            type: "text" as const,
+            text: `Error: ${err instanceof Error ? err.message : String(err)}`,
+          }],
         };
       }
     },
