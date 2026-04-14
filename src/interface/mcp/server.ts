@@ -886,13 +886,32 @@ export async function createBunServer(
         const now = new Date();
         const currentYear = now.getFullYear();
         const currentMonth = now.getMonth() + 1; // 1-indexed
-        // Determine which quarter's BCTC we're looking for (previous quarter)
+
+        // 1201: Correct SSC filing deadline boundaries.
+        // Vietnamese SSC filing deadlines:
+        //   Q4 (Oct–Dec) filings due ~30 Mar  → collect Q4 during Jan–Apr
+        //   Q1 (Jan–Mar) filings due ~30 Apr  → collect Q1 during May–Jul
+        //   Q2 (Apr–Jun) filings due ~30 Jul  → collect Q2 during Aug–Oct
+        //   Q3 (Jul–Sep) filings due ~30 Oct  → collect Q3 during Nov–Dec
+        //
+        // Bug was: else if (currentMonth <= 6) → Q1, which fired in April (month 4)
+        // giving Q1-2026 instead of the correct Q4-2025.
         let targetYear = currentYear;
         let targetQuarter: string;
-        if (currentMonth <= 3) { targetYear = currentYear - 1; targetQuarter = "Q4"; }
-        else if (currentMonth <= 6) { targetQuarter = "Q1"; }
-        else if (currentMonth <= 9) { targetQuarter = "Q2"; }
-        else { targetQuarter = "Q3"; }
+        if (currentMonth <= 4) {
+          // Jan–Apr: collect Q4 of previous year (filed by ~30 March, stragglers through April)
+          targetYear = currentYear - 1;
+          targetQuarter = "Q4";
+        } else if (currentMonth <= 7) {
+          // May–Jul: collect Q1 of current year
+          targetQuarter = "Q1";
+        } else if (currentMonth <= 10) {
+          // Aug–Oct: collect Q2 of current year
+          targetQuarter = "Q2";
+        } else {
+          // Nov–Dec: collect Q3 of current year
+          targetQuarter = "Q3";
+        }
 
         // Get watchlist tickers
         const watchlistRows = db.prepare("SELECT code FROM watchlist ORDER BY code").all() as { code: string }[];
