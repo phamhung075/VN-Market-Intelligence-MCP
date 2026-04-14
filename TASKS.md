@@ -29,14 +29,14 @@ Vision: `SPRINT_GOAL.md`
 | 1220 | DPM alias resolver: require sector context for person-name alias matches | Dev | domain | — | 19a224b | Done |
 | 1221 | weeklyPortfolioReportJob: add DB-backed lock to prevent concurrent runs on restart | Dev | interface | — | — | Backlog |
 | 1222 | Add DFF (Đua Fat Group) to stock-classification.json — sector real_estate | Dev | domain | — | 80391f3 | Done |
-| 1223 | VNDiamond index exclusion → BEARISH cascade rule (ETF forced selling) | Dev | domain | — | — | Backlog |
+| 1223 | VNDiamond index exclusion → BEARISH cascade rule (ETF forced selling) | Dev | domain | — | 7b215d6 | Done |
 | 1225 | congbao + sbvCircular fetch failures — diagnose and fix (geo-block or URL change) | Dev | infrastructure | — | ab251e2 | Done |
-| 1226 | FTSE/index upgrade capital inflow → BULLISH cascade rule | Dev | domain | — | — | Backlog |
+| 1226 | FTSE/index upgrade capital inflow → BULLISH cascade rule | Dev | domain | — | 2d1a3f9 | Done |
 | 1227 | Source health table not updating on transient fetch failure (Reuters false OK) | Dev | infrastructure | — | 2877312 | Done |
 | 1228 | pollNews() scheduled path fails on startup while MCP fetch_and_analyze succeeds | Dev | infrastructure | — | — | Todo |
-| 1229 | VNDiamond/VN30/ETF index rebalance → BEARISH cascade rule (forced passive selling) | Dev | domain | — | — | Backlog |
-| 1233 | Taiwan conflict prediction market has no sector/stock mapping (FPT, VEA, GEX exposure) | Dev | domain | — | — | Backlog |
-| 1237 | FTSE inflow article misclassified NEUTRAL — should be BULLISH (passive fund catalyst) | Dev | domain | — | — | Backlog |
+| 1229 | VNDiamond/VN30/ETF index rebalance → BEARISH/BULLISH cascade rules (forced passive selling/buying) | Dev | domain | — | 2d1a3f9 | Done |
+| 1233 | Taiwan conflict prediction market has no sector/stock mapping (FPT, VEA, GEX exposure) | Dev | domain | — | b77a874 | Done |
+| 1237 | FTSE inflow article misclassified NEUTRAL — should be BULLISH (passive fund catalyst) | Dev | domain | — | f567802 | Done |
 | 1241 | Geopolitical escalation keywords missing — "phong tỏa", "đàm phán đổ vỡ" default to BULLISH | Dev | domain | — | 7dcd2de | Done |
 | 1246 | Hormuz/Suez/OPEC cascade rules: oil_supply_shock → bearish_market + bullish_oil_gas + bearish_aviation | Dev | domain | — | 5d021cf | Done |
 | 1247 | US personal finance / sports articles ingested as VN market signals (no relevance filter) | Dev | domain | — | — | Backlog |
