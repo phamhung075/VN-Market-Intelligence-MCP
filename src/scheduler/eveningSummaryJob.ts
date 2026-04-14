@@ -31,14 +31,18 @@ export function resetEveningSummaryGuard(): void {
 /**
  * Execute one evening summary cycle.
  *
- * Accepts an optional `summaryFn` parameter for testing (avoids importing the
- * real `assembleEveningSummary` in tests, which would trigger DB dependencies).
- * In production the default `summaryFn` dynamically imports `assembleEveningSummary`.
+ * Accepts optional injectable parameters for test isolation:
+ * - `summaryFn`: override the summary assembler (avoids DB dependencies in tests)
+ * - `sendFn`: override the Telegram sender (avoids network calls in tests)
  *
- * @param summaryFn - Optional override for the summary function (injectable for tests)
+ * In production both default to dynamic imports.
+ *
+ * @param summaryFn - Optional override for the summary function
+ * @param sendFn    - Optional override for the Telegram send function
  */
 export async function runEveningSummary(
   summaryFn?: () => Promise<EveningSummary>,
+  sendFn?: (message: string, opts: unknown) => Promise<void>,
 ): Promise<void> {
   if (_running) {
     logger.warn("[eveningSummaryJob] already running — skipping");
@@ -74,12 +78,21 @@ export async function runEveningSummary(
       summary.watchlistMovers.length > 0 ||
       summary.predictionSignals.length > 0;
 
-    if (hasContent) {
-      try {
+    // Resolve the send function: use injected sendFn for tests, or dynamic import in prod.
+    const doSend =
+      sendFn ??
+      (async (message: string, opts: unknown) => {
         const { sendTelegramMarket } = await import(
           "../infrastructure/notifiers/telegram.js"
         );
+        await sendTelegramMarket(
+          message,
+          opts as Parameters<typeof sendTelegramMarket>[1],
+        );
+      });
 
+    if (hasContent) {
+      try {
         const lines: string[] = [`TÓM TẮT BUỔI TỐI ${summary.date}`];
 
         if (summary.topAlerts.length > 0) {
@@ -115,7 +128,7 @@ export async function runEveningSummary(
           }
         }
 
-        await sendTelegramMarket(lines.join("\n"), {
+        await doSend(lines.join("\n"), {
           persist: { from_agent: "evening-summary", message_type: "evening_summary" },
         });
         logger.info("[eveningSummaryJob] Telegram sent");
@@ -125,7 +138,21 @@ export async function runEveningSummary(
         });
       }
     } else {
-      logger.info("[eveningSummaryJob] no content — skipping Telegram send");
+      logger.info("[eveningSummaryJob] no content — sending fallback Telegram message");
+      try {
+        const fallback =
+          `Tóm tắt buổi tối ${summary.date}: Không có dữ liệu thị trường. ` +
+          `Hệ thống không thu thập được tin tức, cảnh báo hoặc biến động giá. ` +
+          `Kiểm tra trạng thái pipeline: get_pipeline_health`;
+        await doSend(fallback, {
+          persist: { from_agent: "evening-summary", message_type: "evening_summary_empty" },
+        });
+        logger.info("[eveningSummaryJob] fallback Telegram sent");
+      } catch (tgErr) {
+        logger.warn("[eveningSummaryJob] fallback Telegram send failed", {
+          error: tgErr instanceof Error ? tgErr.message : String(tgErr),
+        });
+      }
     }
   } catch (err) {
     logger.error("[eveningSummaryJob] unhandled error in summary cycle", {
