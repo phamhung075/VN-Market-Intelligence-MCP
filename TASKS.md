@@ -32,7 +32,7 @@ Vision: `SPRINT_GOAL.md`
 | 1221 | weeklyPortfolioReportJob: add DB-backed lock to prevent concurrent runs on restart | Dev | interface | — | — | Backlog |
 | 1222 | Add DFF (Đua Fat Group) to stock-classification.json — sector real_estate | Dev | domain | — | — | Backlog |
 | 1223 | VNDiamond index exclusion → BEARISH cascade rule (ETF forced selling) | Dev | domain | — | — | Backlog |
-| 1224 | oil_gas_down → aviation BULLISH inverse rule (VJC fuel cost benefit) | Dev | domain | — | — | Backlog |
+| 1224 | oil_gas_down → aviation BULLISH inverse rule (VJC fuel cost benefit) | Dev | domain | — | — | Done |
 | 1225 | congbao + sbvCircular fetch failures — diagnose and fix (geo-block or URL change) | Dev | infrastructure | — | — | Backlog |
 | 1226 | FTSE/index upgrade capital inflow → BULLISH cascade rule | Dev | domain | — | — | Backlog |
 | 1227 | Source health table not updating on transient fetch failure (Reuters false OK) | Dev | infrastructure | — | — | Backlog |
