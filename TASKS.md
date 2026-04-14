@@ -21,7 +21,7 @@ Vision: `SPRINT_GOAL.md`
 | 1199 | Trading Economics impact scores all 10.0 regardless of VN relevance | Dev | domain | — | — | Backlog |
 | 1200 | Cascade "đầu tư công" missing sentiment polarity check | Dev | domain | — | — | Backlog |
 | 1201 | Banking Q4-2025 BCTC missing: BID, EIB, SHB, VCB (deadline 14/04) | Dev | infrastructure | 1193 ✓ | — | Done |
-| 1202 | FPT/HPG Q4-2025 BCTC missing — VPS BCTC fetcher gap (14 days overdue) | Dev | infrastructure | — | — | Backlog |
+| 1202 | FPT/HPG Q4-2025 BCTC missing — VPS BCTC fetcher gap (14 days overdue) | Dev | infrastructure | 1201 ✓ | — | Done |
 | 1203 | Dow Jones +59% spike: add outlier validation for macro indicators | Dev | domain | — | — | Backlog |
 | 1204 | VCB Q1-2025 BCTC all values = 0 (bad record from failed extraction) | Dev | application | — | — | Backlog |
 | 1205 | get_legal_risk_signals misses "truy tố" prosecution articles | Dev | domain | — | — | Backlog |
@@ -36,7 +36,7 @@ Vision: `SPRINT_GOAL.md`
 | 1214 | VNM Middle East dairy exposure missing from Hormuz cascade rules | Dev | domain | — | — | Backlog |
 | 1215 | Bug report dedup: suppress duplicate category within 4h in send_telegram | Dev | infrastructure | — | task/1215-bug-report-dedup | Review |
 
-**WIP:** 0 In Progress. 1 Review. 1 Done (1201).
+**WIP:** 0 In Progress. 1 Review (1215). 2 Done (1201, 1202).
 
 ---
 
