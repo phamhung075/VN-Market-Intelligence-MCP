@@ -20,6 +20,7 @@ import type { RssItem } from "../../infrastructure/fetchers/rss.js";
 import type { WatchlistEntry } from "../../domain/services/cascadeEngine.js";
 import type { SearchResult } from "../../domain/services/cascadeEngine.js";
 import { normalizeNews } from "../../domain/services/newsNormalizer.js";
+import { isVnRelevant } from "../../domain/services/vnRelevanceFilter.js";
 import { buildCausalChain } from "../../domain/services/cascadeEngine.js";
 import { detectStocksInText } from "../../domain/services/stockAliases.js";
 import { generateAlerts } from "../../domain/services/alertGenerator.js";
@@ -442,11 +443,22 @@ export async function pollNews(options: PollNewsOptions = {}): Promise<PollNewsR
 
   const fetched = allItems.length;
 
+  // ── Step 1c: VN relevance pre-filter (Task 1247) ─────────────────────────
+  // Discard non-VN articles (sports, US personal finance, entertainment) that
+  // have no VN market signal before committing cascade CPU.
+  const relevantItems = allItems.filter((item) =>
+    isVnRelevant({ title: item.title, content: item.content, source: item.source }),
+  );
+  const irrelevantCount = allItems.length - relevantItems.length;
+  if (irrelevantCount > 0) {
+    logger.debug(`[pollNews] VN relevance filter discarded ${irrelevantCount} non-VN articles`);
+  }
+
   // ── Step 1b: Auto-extract commodity/indicator prices from news text ─────
   // Stores discovered prices in tracked_indicators for σ-based analysis.
   try {
     const { extractAndStoreIndicators } = await import("../../infrastructure/db/commodityTracker.js");
-    for (const item of allItems) {
+    for (const item of relevantItems) {
       const text = `${item.title} ${item.content}`;
       extractAndStoreIndicators(text, item.source);
     }
@@ -467,7 +479,7 @@ export async function pollNews(options: PollNewsOptions = {}): Promise<PollNewsR
     "../../domain/services/sentimentClassifier.js"
   );
 
-  for (const item of allItems) {
+  for (const item of relevantItems) {
     const entry = normalizeNews(item);
     const cls = classifySentimentForInsert(`${entry.sourceTitle} ${entry.summary}`);
     entry.sentiment = cls.direction; // bullish | bearish | neutral
