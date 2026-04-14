@@ -73,6 +73,23 @@ const VN_BULLISH: SentimentKeyword[] = [
   // Task 1212: interest-rate cooling is a dovish / bullish monetary signal
   { word: "hạ nhiệt lãi suất", weight: 2 },
   { word: "lãi suất hạ nhiệt", weight: 2 },
+  // Task 1255: securities analyst upside forecast phrases
+  // "VN-Index hướng tới mốc 1800 điểm" / "dự báo VN-Index đạt X điểm"
+  { word: "hướng tới mốc", weight: 3 },
+  { word: "hướng đến mốc", weight: 3 },
+  { word: "dự báo tăng", weight: 3 },
+  { word: "dự báo đạt", weight: 2 },
+  { word: "kỳ vọng đạt", weight: 2 },
+  { word: "mục tiêu tăng", weight: 3 },
+  { word: "mục tiêu giá", weight: 2 },
+  { word: "tiệm cận mốc", weight: 2 },
+  // Upside consensus forecast — "dự báo X đạt Y" pattern
+  { word: "đạt mốc", weight: 2 },
+  { word: "chạm mốc", weight: 2 },
+  // "dự báo VN-Index đạt X điểm" → directional upside forecast
+  { word: "vn-index đạt", weight: 3 },
+  { word: "vnindex đạt", weight: 3 },
+  { word: "thị trường đạt", weight: 2 },
 ];
 
 /** Vietnamese bearish keywords */
