@@ -20,15 +20,15 @@ Vision: `SPRINT_GOAL.md`
 | 1208 | Stock price freshness reads direct-API timestamp, not VPS-push timestamp | Dev | infrastructure | — | — | Backlog |
 | 1209 | Polymarket test markets not refreshing (fetchedAt 12 days stale) | Dev | infrastructure | — | — | Backlog |
 | 1210 | Policy classifier misclassifies criminal prosecution as monetary_policy | Dev | domain | — | — | Backlog |
-| 1211 | BSR missing from "công ty lọc dầu" / "Bình Sơn" stock aliases | Dev | domain | — | — | Backlog |
+| 1211 | BSR missing from "công ty lọc dầu" / "Bình Sơn" stock aliases | Dev | domain | — | a6f218c | Done |
 | 1213 | Unicode corruption in Vietnamese analysis text (combining diacritics) | Dev | infrastructure | — | — | Backlog |
-| 1214 | VNM Middle East dairy exposure missing from Hormuz cascade rules | Dev | domain | — | — | Backlog |
+| 1214 | VNM Middle East dairy exposure missing from Hormuz cascade rules | Dev | domain | — | 5d021cf | Done |
 | 1217 | Outlier validation for macro indicators (Dow Jones -69% spike) | Dev | domain | — | — | Backlog |
 | 1218 | VPS BCTC queue: populate source_hints with actual PDF URLs from listSscDocuments | Dev | infrastructure | — | — | Backlog |
 | 1219 | Prediction market sector mapper: exclude sports/entertainment markets | Dev | domain | — | — | Backlog |
-| 1220 | DPM alias resolver: require sector context for person-name alias matches | Dev | domain | — | — | Backlog |
+| 1220 | DPM alias resolver: require sector context for person-name alias matches | Dev | domain | — | 19a224b | Done |
 | 1221 | weeklyPortfolioReportJob: add DB-backed lock to prevent concurrent runs on restart | Dev | interface | — | — | Backlog |
-| 1222 | Add DFF (Đua Fat Group) to stock-classification.json — sector real_estate | Dev | domain | — | — | Backlog |
+| 1222 | Add DFF (Đua Fat Group) to stock-classification.json — sector real_estate | Dev | domain | — | 80391f3 | Done |
 | 1223 | VNDiamond index exclusion → BEARISH cascade rule (ETF forced selling) | Dev | domain | — | — | Backlog |
 | 1225 | congbao + sbvCircular fetch failures — diagnose and fix (geo-block or URL change) | Dev | infrastructure | — | — | Backlog |
 | 1226 | FTSE/index upgrade capital inflow → BULLISH cascade rule | Dev | domain | — | — | Backlog |
@@ -42,7 +42,7 @@ Vision: `SPRINT_GOAL.md`
 | 1247 | US personal finance / sports articles ingested as VN market signals (no relevance filter) | Dev | domain | — | — | Backlog |
 | 1248 | BDI data staleness during supply chain crisis — fetch path needs geo-unblocked VPS route | Dev | infrastructure | — | — | Backlog |
 | 1251 | VNDiamond exclusion article: NER missing — specific ticker not extracted, generic cascade applied | Dev | domain | — | — | Backlog |
-| 1252 | Sync mcp.config.json::market.referenceStocks with SECTOR_PEERS (45+ missing tickers) | Janitor | config | — | — | Backlog |
+| 1252 | Sync mcp.config.json::market.referenceStocks with SECTOR_PEERS (45+ missing tickers) | Janitor | config | — | fb3ae99 | Done |
 
 **WIP:** 0 In Progress. 0 Review.
 
