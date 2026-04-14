@@ -59,10 +59,22 @@ function normalizeText(s: string): string {
  *
  * Both diacritic and ascii-free variants should be present where possible —
  * callers normalise at comparison time via normalizeText().
+ *
+ * `aliasContextGuards` (optional, Task 1220): a map from alias string →
+ * array of context keywords. When an alias appears in text, it is only
+ * counted as a match if at least one context keyword also appears in the
+ * same text block. Use this to prevent short/ambiguous aliases (e.g.
+ * "phu my") from matching person names or place names.
  */
 export interface StockCatalogEntry {
   companyName: string;
   aliases: string[];
+  /**
+   * Map from alias (exact string, will be normalised at build time) →
+   * array of context keywords (at least one must appear in text for the
+   * alias to fire). Aliases not listed here have no context requirement.
+   */
+  aliasContextGuards?: Record<string, string[]>;
 }
 
 export const STOCK_CATALOG: Record<string, StockCatalogEntry> = {
@@ -532,10 +544,25 @@ export const STOCK_CATALOG: Record<string, StockCatalogEntry> = {
     companyName: "Phu My Fertilizer",
     aliases: [
       "phu my", "phan bon phu my", "dam phu my",
+      "Đạm Phú Mỹ", "đạm phú mỹ",
       "petrovietnam fertilizer", "pvfcco",
       "cong ty phan bon va hoa chat dau khi",
       "fertilizer and chemicals phu my",
     ],
+    // Task 1220: "phu my" is a common Vietnamese name fragment ("Nguyễn Phú Mỹ")
+    // and also appears in place names ("Khu công nghiệp Phú Mỹ 3").
+    // Require fertilizer/chemical sector context keywords within the same text.
+    aliasContextGuards: {
+      "phu my": [
+        "phan bon", "phân bón",
+        "fertilizer",
+        "dam", "đạm",
+        "urea",
+        "hoa chat", "hóa chất",
+        "pvfcco",
+        "petrovietnam fertilizer",
+      ],
+    },
   },
   VHC: {
     companyName: "Vinh Hoan Corporation",
@@ -616,6 +643,25 @@ const NORMALISED_ALIASES: Record<string, string[]> = (() => {
   return result;
 })();
 
+/**
+ * Pre-normalised context guard map (Task 1220).
+ * Maps ticker → { normAlias → normContextKeywords[] }.
+ * When an alias has a context guard, at least one context keyword must
+ * appear in the text for the match to count.
+ */
+const NORMALISED_CONTEXT_GUARDS: Record<string, Record<string, string[]>> = (() => {
+  const result: Record<string, Record<string, string[]>> = {};
+  for (const [code, entry] of Object.entries(STOCK_CATALOG)) {
+    if (!entry.aliasContextGuards) continue;
+    const guardMap: Record<string, string[]> = {};
+    for (const [alias, contextKws] of Object.entries(entry.aliasContextGuards)) {
+      guardMap[normalizeText(alias)] = contextKws.map(normalizeText);
+    }
+    result[code.toUpperCase()] = guardMap;
+  }
+  return result;
+})();
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Public API
 // ─────────────────────────────────────────────────────────────────────────────
@@ -671,8 +717,17 @@ export function detectStocksInText(
     const aliases = NORMALISED_ALIASES[upperCode];
     if (!aliases || aliases.length === 0) continue;
 
+    const contextGuards = NORMALISED_CONTEXT_GUARDS[upperCode];
+
     for (const alias of aliases) {
       if (isWordBoundaryMatch(normText, alias)) {
+        // Check context guard: if this alias requires context keywords,
+        // at least one must appear in the text (Task 1220).
+        const requiredContextKws = contextGuards?.[alias];
+        if (requiredContextKws && requiredContextKws.length > 0) {
+          const hasContext = requiredContextKws.some((kw) => normText.includes(kw));
+          if (!hasContext) continue; // alias matched but context missing — skip
+        }
         matched.add(upperCode);
         break; // one alias match is enough for this code
       }
