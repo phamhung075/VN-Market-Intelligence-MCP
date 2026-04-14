@@ -46,9 +46,9 @@ Vision: `SPRINT_GOAL.md`
 | 1248 | BDI data staleness during supply chain crisis — fetch path needs geo-unblocked VPS route | Dev | infrastructure | — | — | Backlog |
 | 1251 | VNDiamond exclusion article: NER missing — specific ticker not extracted, generic cascade applied | Dev | domain | — | — | Backlog |
 | 1255 | Alert Commander: alerts generated but never sent to Telegram market channel (USD/VND σ alert) | Dev | interface | — | — | Done |
-| 1256 | Gold price cascade falsely includes real_estate (PDR) via market-wide broadcast | Dev | domain | — | task/1256-gold-broadcast-exclusion | In Progress |
+| 1256 | Gold price cascade falsely includes real_estate (PDR) via market-wide broadcast | Dev | domain | — | — | Done |
 
-**WIP:** 1 In Progress. 0 Review.
+**WIP:** 0 In Progress. 0 Review.
 
 ---
 
