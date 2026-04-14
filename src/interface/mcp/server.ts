@@ -371,6 +371,9 @@ export async function createBunServer(
           return;
         }
 
+        // 1193: Capture handler start time BEFORE the upsert loop for lag_ms measurement
+        const startMs = Date.now();
+
         const db = getDb();
         const upsert = db.prepare(`
           INSERT OR REPLACE INTO market_prices (code, price, change_pct, volume, updated_at)
@@ -415,6 +418,29 @@ export async function createBunServer(
           // Task 1208: use server receive time (now), not VPS API timestamp (p.fetched_at)
           upsert.run(p.code, priceVal, changePct, p.volume ?? 0, now);
           count++;
+        }
+
+        // 1193: Post-upsert verification — catch DB singleton stale-FD failures.
+        // Runs synchronously before sending the HTTP response so any write failure
+        // is surfaced in the server log immediately (not deferred to next cycle).
+        try {
+          const verified = db.prepare(
+            `SELECT COUNT(*) AS n FROM market_prices WHERE updated_at >= ?`,
+          ).get(new Date(Date.now() - 5000).toISOString()) as { n: number };
+          log.info("[push-prices] post-upsert verify", {
+            inserted: count,
+            visible: verified.n,
+            lag_ms: Date.now() - startMs,
+          });
+          if (verified.n === 0 && count > 0) {
+            log.error("[push-prices] WRITE INVISIBLE — DB singleton may be stale", {
+              db_path: Bun.env["DB_PATH"] ?? "(unset)",
+            });
+          }
+        } catch (verifyErr) {
+          log.warn("[push-prices] post-upsert verify failed", {
+            error: verifyErr instanceof Error ? verifyErr.message : String(verifyErr),
+          });
         }
 
         // Store 1-min ticks (today only — for intraday review)
