@@ -4,6 +4,18 @@
 > Index → `docs/TASKS_ARCHIVE.md`
 > Current sprint + stats → `docs/data/project-stats.json`
 
+## Sprint 077 — TE RSS Fallback Chain (Done 2026-04-14)
+
+**Scope:** Replaced the broken session-gated `stream.ashx` endpoint in `tradingEconomicsStream.ts` with a sequential RSS fallback chain restoring Level 1/2 macro news to the intelligence cycle.
+
+**Key changes:**
+- `src/infrastructure/fetchers/tradingEconomicsStream.ts`: removed all `stream.ashx` references; defined three named feed constants (MarketWatch Economy RSS, Google News "global economy", Google News "financial markets"); sequential fallback — feed 1 → feed 2 → feed 3 → `[]`; all items tagged `source = "tradingeconomics"`; injectable `httpClient` parameter for test isolation; rate-limiter host key changed from `"tradingeconomics"` to `"tradingeconomics-rss"` (isolated from any legacy key).
+- `src/__tests__/1191-te-stream-rss.test.ts`: 8 acceptance-criteria tests — no `stream.ashx` references, three constants defined, fallback chain, source tag, httpClient injection, rate-limiter key, all pass.
+
+**Stats:** toolCount=97, schedulerFileCount=28, totalTasksDone=260. TypeScript: 0 errors.
+
+---
+
 ## Sprint 076 — Pipeline Watchdog Job (Done 2026-04-14)
 
 **Scope:** New scheduler `pipelineWatchdogJob.ts` providing automated stale-pipeline detection — fires a Telegram work-channel alert when RAG data has not been refreshed for more than 90 minutes, with a 3-hour cooldown to avoid repeated noise.

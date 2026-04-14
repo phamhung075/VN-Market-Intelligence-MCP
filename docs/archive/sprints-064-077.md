@@ -1,4 +1,4 @@
-# Archive — Sprints 064–076 (Knowledge Sync → Pipeline Watchdog Job)
+# Archive — Sprints 064–077 (Knowledge Sync → TE RSS Fallback Chain)
 
 ---
 
@@ -179,3 +179,13 @@
 | ID | Title | Layer | Status |
 |----|-------|-------|--------|
 | 1190 | Pipeline Watchdog — stale-pipeline Telegram alert | scheduler | Done |
+
+---
+
+## Sprint 077 — TE RSS Fallback Chain (Done 2026-04-14)
+
+1 task done. Rewrote `tradingEconomicsStream.ts` to replace the broken session-gated `stream.ashx` endpoint with a sequential RSS fallback chain: MarketWatch Economy RSS → Google News "global economy" → Google News "financial markets" → `[]`. All items tagged `source = "tradingeconomics"`. Rate-limiter host key isolated to `"tradingeconomics-rss"`. Injectable `httpClient` for test isolation. Level 1/2 macro news restored. totalTasksDone 259 → 260.
+
+| ID | Title | Layer | Status |
+|----|-------|-------|--------|
+| 1191 | Replace TE stream.ashx with public RSS feeds | infrastructure | Done |
