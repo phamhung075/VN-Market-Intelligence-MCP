@@ -21,7 +21,7 @@ Vision: `SPRINT_GOAL.md`
 | 1200 | Cascade "đầu tư công" missing sentiment polarity check | Dev | domain | — | — | Backlog |
 | 1203 | Dow Jones +59% spike: add outlier validation for macro indicators | Dev | domain | — | — | Backlog |
 | 1205 | get_legal_risk_signals misses "truy tố" prosecution articles | Dev | domain | — | — | Backlog |
-| 1206 | Cascade keyword fix: "đất vàng"→real_estate, "cầu" in "toàn cầu"→no construction | Dev | domain | — | — | Todo |
+| 1206 | Cascade keyword fix: "đất vàng"→real_estate, "cầu" in "toàn cầu"→no construction | Dev | domain | — | task/1206-keyword-fix | Review |
 | 1207 | Market-wide cascade confidence cap for non-watchlist company events | Dev | domain | — | — | Backlog |
 | 1208 | Stock price freshness reads direct-API timestamp, not VPS-push timestamp | Dev | infrastructure | — | — | Backlog |
 | 1209 | Polymarket test markets not refreshing (fetchedAt 12 days stale) | Dev | infrastructure | — | — | Backlog |
@@ -32,7 +32,7 @@ Vision: `SPRINT_GOAL.md`
 | 1214 | VNM Middle East dairy exposure missing from Hormuz cascade rules | Dev | domain | — | — | Backlog |
 | 1215 | Bug report dedup: suppress duplicate category within 4h in send_telegram | Dev | infrastructure | — | — | Done |
 
-**WIP:** 0 In Progress. 0 Review.
+**WIP:** 0 In Progress. 1 Review (1206).
 
 ---
 
