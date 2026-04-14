@@ -79,3 +79,10 @@ export type {
   EveningSummary,
   WatchlistMover,
 } from "./assembleEveningSummary.js";
+
+// Task 1189: Pipeline health snapshot (news pipeline diagnostic MCP tool)
+export { getPipelineHealth } from "./getPipelineHealth.js";
+export type {
+  GetPipelineHealthOptions,
+  PipelineHealthResult,
+} from "./getPipelineHealth.js";
