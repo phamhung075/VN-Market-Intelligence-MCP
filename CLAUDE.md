@@ -14,6 +14,10 @@
 - /ask FIFO queue, QA Responder protocol → `.claude/knowledge/ask-queue-protocol.md`
 - Fail-loud knowledge-load failure protocol (5 steps) → `.claude/knowledge/fail-loud-protocol.md`
 - Server restart policy (launchctl only, banned mechanisms) → `.claude/knowledge/restart-policy.md`
+- DDD layer rules, coding standards, test template, commit format → `.claude/knowledge/dev-standards.md`
+- Code janitor scan checklist, canonical sources, output contract → `.claude/knowledge/janitor-procedures.md`
+- Market analysis: cascade framework, trade maps, macro matrix, BCTC checklist → `.claude/knowledge/market-analysis.md`
+- QA review checklist: TDD/DDD/TS/security, task report template → `.claude/knowledge/qa-checklist.md`
 
 ### Volatile Data (`docs/data/*.json` = counts/lists, agents update during work)
 - Tool registry (tool list + count) → `docs/data/tool-registry.json`
