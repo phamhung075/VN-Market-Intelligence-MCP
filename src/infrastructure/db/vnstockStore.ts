@@ -47,14 +47,30 @@ export function runVnstockMigrations(): void {
       db.exec(
         `ALTER TABLE vnstock_trading_stats ADD COLUMN date TEXT NOT NULL DEFAULT '1970-01-01'`,
       );
-      db.exec(
-        `CREATE INDEX IF NOT EXISTS idx_vnstats_code_date ON vnstock_trading_stats(code, date)`,
-      );
       logger.info("[vnstock-store] migrated vnstock_trading_stats: added date column");
       _tradingStatsHasDateColumn = null;
     }
   } catch (err) {
     logger.warn("[vnstock-store] trading_stats date-column migration skipped", {
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
+
+  // Migration: ensure UNIQUE(code, date) index exists for ON CONFLICT(code, date)
+  // upsert to work. The ALTER TABLE migration above only adds the column + a
+  // regular (non-unique) index. ON CONFLICT requires a UNIQUE index.
+  // Production DBs migrated from old schema have the column but lack the
+  // UNIQUE constraint — causing "ON CONFLICT clause does not match any
+  // PRIMARY KEY or UNIQUE constraint" errors on every push-foreign-flow call.
+  try {
+    db.exec(
+      `CREATE UNIQUE INDEX IF NOT EXISTS uq_vnstats_code_date ON vnstock_trading_stats(code, date)`,
+    );
+    // Drop the old non-unique index if it exists — the unique index supersedes it
+    db.exec(`DROP INDEX IF EXISTS idx_vnstats_code_date`);
+    logger.info("[vnstock-store] ensured UNIQUE(code, date) index on vnstock_trading_stats");
+  } catch (err) {
+    logger.warn("[vnstock-store] UNIQUE(code, date) index migration skipped", {
       error: err instanceof Error ? err.message : String(err),
     });
   }
