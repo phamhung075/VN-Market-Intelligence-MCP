@@ -412,7 +412,8 @@ export async function createBunServer(
           } else {
             changePct = p.change_pct ? parseFloat(p.change_pct) : null;
           }
-          upsert.run(p.code, priceVal, changePct, p.volume ?? 0, p.fetched_at ?? now);
+          // Task 1208: use server receive time (now), not VPS API timestamp (p.fetched_at)
+          upsert.run(p.code, priceVal, changePct, p.volume ?? 0, now);
           count++;
         }
 

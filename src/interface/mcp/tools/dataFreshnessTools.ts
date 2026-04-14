@@ -95,7 +95,10 @@ const DATA_SOURCES: DataSourceDef[] = [
   },
   {
     label: "Gia co phieu",
-    query: "SELECT MAX(updated_at) AS ts FROM market_prices WHERE code NOT IN ('TEST','PROBE')",
+    // Task 1208: use vps_push_log.pushed_at not market_prices.updated_at.
+    // pushed_at is set by server on VPS receipt; updated_at may be stale API time.
+    query:
+      "SELECT MAX(pushed_at) AS ts FROM vps_push_log WHERE service = 'prices' AND status = 'ok'",
   },
   {
     label: "Hang hoa",
