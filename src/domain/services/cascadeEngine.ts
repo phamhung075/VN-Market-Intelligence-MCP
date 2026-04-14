@@ -800,6 +800,31 @@ const SECTOR_RULES: SectorRule[] = [
     confidence: 0.75,
     title: "Giá dầu tăng — tăng chi phí nhiên liệu hàng không",
   },
+  // Task 1224: Oil price FALL → aviation BULLISH (inverse relationship)
+  // Jet fuel is ~35-40% of airline OPEX. Lower oil = lower fuel cost = VJC bullish.
+  {
+    keywords: [
+      "giá dầu giảm", "oil price fall", "crude oil down", "oil crash", "oil slump",
+      "oil plunge", "oil drop", "oil decline", "dầu thô giảm", "dầu lao dốc",
+      "worst week", "oil tumble", "crude oil decline",
+    ],
+    domain: "aviation",
+    direction: "up",
+    confidence: 0.70,
+    title: "Giá dầu giảm — giảm chi phí nhiên liệu hàng không (VJC hưởng lợi)",
+  },
+  // Task 1224: Fuel tax cut → aviation BULLISH (reduced operating cost)
+  {
+    keywords: [
+      "giảm thuế xăng dầu", "thuế nhiên liệu", "fuel tax", "giảm thuế xăng",
+      "thuế xăng dầu về 0", "giảm thuế với xăng dầu", "thuế xăng về 0",
+      "tax cut fuel", "fuel tax reduction", "giảm thuế xăng dầu về 0",
+    ],
+    domain: "aviation",
+    direction: "up",
+    confidence: 0.72,
+    title: "Giảm thuế xăng dầu — chi phí nhiên liệu hàng không giảm (VJC tích cực)",
+  },
   {
     keywords: ["lãi suất tăng", "interest rate hike", "fed hike", "fed tăng lãi suất"],
     domain: "banking",
