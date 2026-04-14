@@ -362,9 +362,12 @@ export const STOCK_CATALOG: Record<string, StockCatalogEntry> = {
   BSR: {
     companyName: "Binh Son Refining and Petrochemical",
     aliases: [
-      "binh son", "loc dau binh son",
+      "Bình Sơn", "binh son",
+      "lọc dầu Bình Sơn", "loc dau binh son",
+      "công ty lọc hóa dầu Bình Sơn", "cong ty loc hoa dau binh son",
+      "lọc hóa dầu Bình Sơn", "loc hoa dau binh son",
       "binh son refining", "binh son petrochemical",
-      "loc hoa dau binh son", "bsr refinery",
+      "bsr refinery", "BSRC", "bsrc", "bsr",
     ],
   },
 
