@@ -224,6 +224,16 @@ export const STOCK_CATALOG: Record<string, StockCatalogEntry> = {
   },
 
   // ─── Real estate ───────────────────────────────────────────────────────────
+  DFF: {
+    companyName: "Duc Fat Group (Đua Fat)",
+    aliases: [
+      "Đức Phát", "duc phat",
+      "Đua Fat", "dua fat",
+      "dff", "DFF",
+      "tập đoàn đua fat", "tap doan dua fat",
+      "bất động sản đức phát", "bat dong san duc phat",
+    ],
+  },
   VIC: {
     companyName: "Vingroup",
     aliases: [
