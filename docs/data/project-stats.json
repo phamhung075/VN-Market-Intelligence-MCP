@@ -1,13 +1,13 @@
 {
   "_maintained_by": "PM / system-auditor",
   "_trigger": "sprint start/end, tool/cron count change",
-  "lastUpdated": "2026-04-14",
-  "currentSprint": 73,
-  "previousSprint": { "number": 72, "status": "COMPLETE", "completedDate": "2026-04-14" },
+  "lastUpdated": "2026-04-13",
+  "currentSprint": 74,
+  "previousSprint": { "number": 73, "status": "COMPLETE", "completedDate": "2026-04-13" },
   "toolCount": 96,
   "schedulerFileCount": 28,
-  "knowledgeFileCount": 11,
+  "knowledgeFileCount": 15,
   "devAgentCount": 13,
   "analysisAgentCount": 9,
-  "totalTasksDone": 253
+  "totalTasksDone": 255
 }

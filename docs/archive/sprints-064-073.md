@@ -1,4 +1,4 @@
-# Archive — Sprints 064–072 (Knowledge Sync → BCTC Pipeline Fix)
+# Archive — Sprints 064–073 (Knowledge Sync → Evening Intelligence Pipeline Fix)
 
 ---
 
@@ -137,3 +137,14 @@
 | 1182 | Fix storeReport error propagation + WAL checkpoint | application | Done |
 | 1183 | Fix 308-tool-registry.test.ts count 57 → 59 | test | Done |
 | 1184 | Sprint close: project-stats.json sprint 72 → 73, smoke test | docs/data | Done |
+
+---
+
+## Sprint 073 — Evening Intelligence Pipeline Fix (Done 2026-04-13)
+
+2 tasks done (1 carried to sprint 074). Rescheduled `eveningSummaryJob` from 22:00 to 22:30 VN to eliminate timing race with `intelligenceCycleJob` (~2 min run). Deleted dead `newsPollerJob.ts` (never registered in jobs.ts). Stubbed geo-blocked VN RSS fetchers (CafeF/VnExpress/VnEconomy) in `defaultPollNews()` — VN news arrives exclusively via POST /api/push-news from Vinahost VPS. totalTasksDone 253 → 255.
+
+| ID | Title | Layer | Status |
+|----|-------|-------|--------|
+| 1186 | Fix evening summary timing race — reschedule to 22:30 VN | scheduler | Done |
+| 1187 | Fix pollNewsJob dead code path — remove newsPollerJob + stub VN fetchers | infrastructure | Done |
