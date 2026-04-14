@@ -325,6 +325,29 @@ const KEYWORD_RULES: KeywordRule[] = [
     stocks: ["HPG", "HSG", "NKG", "VHC", "ANV", "GAS", "HVN"],
     direction: "bearish",
   },
+
+  // ── R15: Taiwan conflict / strait tension — supply chain disruption ────
+  // Task 1233: Polymarket markets about Taiwan conflict have clear exposure
+  // to VN stocks via semiconductor and electronics supply chains.
+  //   - FPT: tech supply chain (semiconductors sourced from Taiwan/TSMC)
+  //   - VEA (Vinamotor): auto parts supply chain from Taiwan
+  //   - GEX (Gelex): electronics manufacturing with Taiwan components
+  // Keyword matching requires a Taiwan context; war/conflict context is
+  // OR-within-group, so any single Taiwan-related keyword fires the rule.
+  {
+    id: "R15",
+    keywordGroups: [
+      [
+        "taiwan", "taiwan strait", "taiwan conflict", "taiwan invasion",
+        "taiwan war", "taiwan crisis", "cross-strait", "strait of taiwan",
+        "đài loan", "eo biển đài loan", "xung đột đài loan",
+        "taiwan semiconductor", "tsmc conflict",
+      ],
+    ],
+    sectors: ["tech", "automotive", "electronics"],
+    stocks: ["FPT", "VEA", "GEX"],
+    direction: "bearish",
+  },
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════
