@@ -12,9 +12,9 @@ Vision: `SPRINT_GOAL.md`
 
 | ID | Title | Agent | Layer | Depends On | Branch | Status |
 |----|-------|-------|-------|------------|--------|--------|
-| 1195 | Cascade keyword "hạ nhiệt" disambiguation: interest-rate vs geopolitical | Dev | domain | — | — | Backlog |
+| 1195 | Cascade keyword "hạ nhiệt" disambiguation: interest-rate vs geopolitical | Dev | domain | — | 15a3451 | Done |
 | 1199 | Trading Economics impact scores all 10.0 regardless of VN relevance | Dev | domain | — | — | Backlog |
-| 1200 | Cascade "đầu tư công" missing sentiment polarity check | Dev | domain | — | — | Backlog |
+| 1200 | Cascade "đầu tư công" missing sentiment polarity check | Dev | domain | — | 6b21acf | Done |
 | 1203 | Dow Jones +59% spike: add outlier validation for macro indicators | Dev | domain | — | — | Backlog |
 | 1207 | Market-wide cascade confidence cap for non-watchlist company events | Dev | domain | — | — | Backlog |
 | 1208 | Stock price freshness reads direct-API timestamp, not VPS-push timestamp | Dev | infrastructure | — | — | Backlog |
@@ -37,8 +37,8 @@ Vision: `SPRINT_GOAL.md`
 | 1229 | VNDiamond/VN30/ETF index rebalance → BEARISH cascade rule (forced passive selling) | Dev | domain | — | — | Backlog |
 | 1233 | Taiwan conflict prediction market has no sector/stock mapping (FPT, VEA, GEX exposure) | Dev | domain | — | — | Backlog |
 | 1237 | FTSE inflow article misclassified NEUTRAL — should be BULLISH (passive fund catalyst) | Dev | domain | — | — | Backlog |
-| 1241 | Geopolitical escalation keywords missing — "phong tỏa", "đàm phán đổ vỡ" default to BULLISH | Dev | domain | — | — | Backlog |
-| 1246 | Hormuz/Suez/OPEC cascade rules: oil_supply_shock → bearish_market + bullish_oil_gas + bearish_aviation | Dev | domain | — | — | Backlog |
+| 1241 | Geopolitical escalation keywords missing — "phong tỏa", "đàm phán đổ vỡ" default to BULLISH | Dev | domain | — | 7dcd2de | Done |
+| 1246 | Hormuz/Suez/OPEC cascade rules: oil_supply_shock → bearish_market + bullish_oil_gas + bearish_aviation | Dev | domain | — | 5d021cf | Done |
 | 1247 | US personal finance / sports articles ingested as VN market signals (no relevance filter) | Dev | domain | — | — | Backlog |
 | 1248 | BDI data staleness during supply chain crisis — fetch path needs geo-unblocked VPS route | Dev | infrastructure | — | — | Backlog |
 | 1251 | VNDiamond exclusion article: NER missing — specific ticker not extracted, generic cascade applied | Dev | domain | — | — | Backlog |
