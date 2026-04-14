@@ -67,7 +67,18 @@ CLAUDE.md (root — always loaded)
 │
 ├── docs/data/system-auditor-known-issues.json (dedup state: fingerprints of reported issues — volatile)
 │
-└── docs/data/code-janitor-known-findings.json (dedup state: fingerprints of known code findings — volatile)
+├── docs/data/code-janitor-known-findings.json (dedup state: fingerprints of known code findings — volatile)
+│
+├── docs/TASKS_ARCHIVE.md (index of done tasks by sprint)
+├── docs/archive/sprints-*.md (archived sprint task blocks — read-only history)
+│
+└── docs/historical/ (read-only reference, no maintenance required)
+    ├── docs/AGENT_REWRITE_SPEC.md (agent rewrite plan 2026-04-03 — historical)
+    ├── docs/SPRINT_039_ANALYSIS.md (sprint 039 post-mortem — historical)
+    ├── docs/SYSTEM_OPTIMIZATION_ANALYSIS.md (optimization analysis 2026-04-02 — historical)
+    ├── docs/TEST_OOM_INVESTIGATION.md (OOM investigation — historical)
+    ├── docs/CRON_JOBS.md (pointer stub → cron-jobs.md — historical redirect)
+    └── docs/REQ_NNN.md / docs/TECH_NNN.md (feature requirements + technical specs per task — historical)
 ```
 
 ## Deleted Files (merged into parents)

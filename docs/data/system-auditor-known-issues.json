@@ -25,6 +25,11 @@
     { "fingerprint": "doc_stale:cowork_00_setup_hardcoded_toolcount", "first_seen": "2026-04-12", "last_reported": "2026-04-12" },
     { "fingerprint": "log_warn:reuters_trading_economics_zero_items", "first_seen": "2026-04-12", "last_reported": "2026-04-12" },
     { "fingerprint": "doc_synced:project_stats_sprint_number", "first_seen": "2026-04-12", "last_reported": "2026-04-12" },
-    { "fingerprint": "doc_synced:00_setup_watchlist_tool_count", "first_seen": "2026-04-12", "last_reported": "2026-04-12" }
+    { "fingerprint": "doc_synced:00_setup_watchlist_tool_count", "first_seen": "2026-04-12", "last_reported": "2026-04-12" },
+    { "fingerprint": "log_error:hose_all_price_sources_fail", "first_seen": "2026-04-14", "last_reported": "2026-04-14" },
+    { "fingerprint": "log_error:weekly_portfolio_report_stuck_lock", "first_seen": "2026-04-14", "last_reported": "2026-04-14" },
+    { "fingerprint": "doc_synced:ARCHITECTURE_tool_and_scheduler_count", "first_seen": "2026-04-14", "last_reported": "2026-04-14" },
+    { "fingerprint": "doc_synced:project_stats_scheduler_count", "first_seen": "2026-04-14", "last_reported": "2026-04-14" },
+    { "fingerprint": "doc_synced:cron_registry_scheduler_count", "first_seen": "2026-04-14", "last_reported": "2026-04-14" }
   ]
 }
