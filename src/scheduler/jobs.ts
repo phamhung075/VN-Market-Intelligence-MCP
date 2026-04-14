@@ -140,7 +140,7 @@ export function startScheduler() {
 
   // 09:00 — Market open scan (weekdays Mon-Fri only) — task 103
   cron.schedule(CRONS.marketOpen, async () => {
-    await runMarketScan('open')
+    try { await runMarketScan('open') } catch (err) { log(`[marketOpen] uncaught: ${err instanceof Error ? err.message : String(err)}`) }
   }, { timezone: 'Asia/Ho_Chi_Minh' })
 
   // Every 15 min — Intelligence cycle (task 106)
@@ -156,12 +156,12 @@ export function startScheduler() {
 
   // 15:30 — Market close scan (weekdays Mon-Fri only) — task 103
   cron.schedule(CRONS.marketClose, async () => {
-    await runMarketScan('close')
+    try { await runMarketScan('close') } catch (err) { log(`[marketClose] uncaught: ${err instanceof Error ? err.message : String(err)}`) }
   }, { timezone: 'Asia/Ho_Chi_Minh' })
 
   // 20:00 — SSC report check (task 104)
   cron.schedule(CRONS.sscCheck, async () => {
-    await runSscCheck()
+    try { await runSscCheck() } catch (err) { log(`[sscCheck] uncaught: ${err instanceof Error ? err.message : String(err)}`) }
   }, { timezone: 'Asia/Ho_Chi_Minh' })
 
   // 22:00 — Evening summary (weekdays Mon-Fri only) — task 105
@@ -200,11 +200,11 @@ export function startScheduler() {
   })
 
   cron.schedule(CRONS.dataAuditDaily, async () => {
-    await runDailyAudit()
+    try { await runDailyAudit() } catch (err) { log(`[dataAuditDaily] uncaught: ${err instanceof Error ? err.message : String(err)}`) }
   }, { timezone: 'Asia/Ho_Chi_Minh' })
 
   cron.schedule(CRONS.dataAuditWeekly, async () => {
-    await runWeeklyAudit()
+    try { await runWeeklyAudit() } catch (err) { log(`[dataAuditWeekly] uncaught: ${err instanceof Error ? err.message : String(err)}`) }
   }, { timezone: 'Asia/Ho_Chi_Minh' })
 
   // Startup catch-up: if a server restart straddled the 23:00 daily cron,
@@ -222,7 +222,7 @@ export function startScheduler() {
 
   // 09:30 GMT+7 daily — BCTC stranded-PDF auto-reparse — task 1019
   cron.schedule(CRONS.bctcReparseJob, async () => {
-    await runBctcReparseJob()
+    try { await runBctcReparseJob() } catch (err) { log(`[bctcReparseJob] uncaught: ${err instanceof Error ? err.message : String(err)}`) }
   }, { timezone: 'Asia/Ho_Chi_Minh' })
 
   // Startup catch-up: if server restarts after 09:30 GMT+7, stranded PDFs
@@ -335,26 +335,26 @@ export function startScheduler() {
 
   // Daily 23:00 VN (16:00 UTC) — Evidence accumulator — task 1118
   cron.schedule(CRONS.evidenceAccumulator, async () => {
-    await runEvidenceAccumulatorJob()
+    try { await runEvidenceAccumulatorJob() } catch (err) { log(`[evidenceAccumulator] uncaught: ${err instanceof Error ? err.message : String(err)}`) }
   }, { timezone: 'UTC' })
 
   // Sunday 19:00 UTC (02:00 VN Monday) — Base rate computation — task 1122, Sprint 059
   cron.schedule(CRONS.baseRateComputation, async () => {
-    await runBaseRateComputationJob()
+    try { await runBaseRateComputationJob() } catch (err) { log(`[baseRateComputation] uncaught: ${err instanceof Error ? err.message : String(err)}`) }
   }, { timezone: 'UTC' })
 
   // Daily 16:30 UTC (23:30 VN) — Prediction resolution — task 1125
   // Fires after VN market close (15:30 VN = 08:30 UTC) giving the VPS
   // price-push service time to deliver daily_ohlcv rows before resolution runs.
   cron.schedule(CRONS.predictionResolution, async () => {
-    await runPredictionResolutionJob()
+    try { await runPredictionResolutionJob() } catch (err) { log(`[predictionResolution] uncaught: ${err instanceof Error ? err.message : String(err)}`) }
   }, { timezone: 'UTC' })
 
   // Sunday 13:00 UTC (20:00 VN) — Calibration report — task 1128, Sprint 060
   // Weekly materialised Brier score aggregation over 90-day prediction_claims window.
   // Sends digest to WORK (always) and MARKET (when total_resolved >= 1).
   cron.schedule(CRONS.calibrationReport, async () => {
-    await runCalibrationReportJob()
+    try { await runCalibrationReportJob() } catch (err) { log(`[calibrationReport] uncaught: ${err instanceof Error ? err.message : String(err)}`) }
   }, { timezone: 'UTC' })
 
   // Weekdays 09:30 UTC (16:30 VN) — Foreign flow alert scan — task 1133, Sprint 061

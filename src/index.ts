@@ -167,3 +167,10 @@ async function shutdown(signal: string) {
 
 process.on("SIGTERM", () => shutdown("SIGTERM"));
 process.on("SIGINT", () => shutdown("SIGINT"));
+
+// Bug 1254: safety net — log unhandled rejections instead of crashing.
+// All cron callbacks now have try/catch, but this catches any remaining gaps.
+process.on("unhandledRejection", (reason) => {
+  const msg = reason instanceof Error ? reason.message : String(reason);
+  log.error("[bootstrap] unhandledRejection — bug 1254 safety net", { error: msg });
+});
