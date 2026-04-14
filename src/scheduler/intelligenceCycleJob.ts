@@ -185,7 +185,22 @@ export function isMarketHours(now?: Date): boolean {
 
 async function defaultPollNews(): Promise<PollNewsResult> {
   const { pollNews } = await import("../application/usecases/pollNews.js");
-  return pollNews();
+  // VN news sources (CafeF, VnExpress, VnEconomy) are geo-blocked from France.
+  // They are delivered exclusively via POST /api/push-news from the Vinahost VPS
+  // (vn-news-fetch.service). Calling these fetchers directly produces circuit
+  // breaker errors and rows_written=0 on every 15-min cycle (task 1187).
+  // Inject empty stubs so pollNews only fetches from non-geo-blocked global
+  // sources (Reuters, Trading Economics).
+  // VPS push path calls pollNews() with real VN items injected as fetchers.
+  return pollNews({
+    fetchers: {
+      cafef:            async () => [],
+      vnexpress:        async () => [],
+      vneconomy:        async () => [],
+      // Reuters and Trading Economics are global — not geo-blocked from France.
+      // Omit them so pollNews uses the real default fetchers for these sources.
+    },
+  });
 }
 
 async function defaultListSscDocs(code: string): Promise<SscDocument[]> {

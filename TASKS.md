@@ -12,11 +12,11 @@ Vision: `SPRINT_GOAL.md`
 
 | ID | Title | Agent | Layer | Depends On | Branch | Status |
 |----|-------|-------|-------|------------|--------|--------|
-| 1186 | Fix evening summary timing race — reschedule to 22:30 VN | Dev | scheduler | — | — | Done |
-| 1187 | Investigate pollNewsJob 0-rows + boom-downstream errors | Dev | infrastructure | — | — | Todo |
+| 1186 | Fix evening summary timing race — reschedule to 22:30 VN | Dev | scheduler | — | task/1186-evening-summary-timing | Review |
+| 1187 | Fix pollNewsJob dead code path — remove newsPollerJob + stub VN fetchers | Dev | infrastructure | — | — | Done |
 | 1185 | Investigate baodautu.vn RSS parsing (HTTP 200, 0 items) | Dev | infrastructure | — | — | Backlog |
 
-**WIP:** 0 In Progress. 0 Review.
+**WIP:** 0 In Progress. 1 Review.
 
 ---
 
@@ -37,22 +37,22 @@ Steps:
 4. Restart server via launchctl kickstart, verify next run is scheduled at 22:30
 **Done when:** `eveningSummaryJob` is scheduled at 22:30 VN; cron registry docs updated; bun tsc clean
 
-### 1187 — Investigate pollNewsJob 0-rows + boom-downstream errors
+### 1187 — Fix pollNewsJob dead code path — remove newsPollerJob + stub VN fetchers
 
-**Status:** Todo | **Layer:** infrastructure
-**Context:** `pollNewsJob` runs every ~3 minutes and logs 0 `rows_written` on all 828 success
-runs. Each cycle also has exactly one slot with `error_msg: "boom-downstream"`. Meanwhile
-`intelligenceCycleJob` writes 100 rows to `rag_analyses` when it runs — so news IS arriving via
-VPS push (vps_push_log shows `service: "news"` with 226 items at 21:53 VN). The `pollNewsJob`
-appears to be reading from a queue that is always empty, while news actually arrives via the
-`/api/push-news` HTTP push path and goes directly to a staging table that the intelligence cycle
-consumes. Investigate:
-1. Read `src/scheduler/pollNewsJob.ts` (or equivalent) to understand what queue it polls
-2. Trace whether the job is redundant (VPS pushes directly), misconfigured, or broken
-3. Identify the source of `boom-downstream` — likely a circuit breaker or specific source
-4. Fix or disable the broken path; document findings in task report
-**Done when:** `boom-downstream` errors stop OR are understood and documented; if job is
-redundant it is removed from the cron schedule with doc update
+**Status:** Review | **Layer:** infrastructure
+**Findings:** `newsPollerJob.ts` was never registered in `jobs.ts` (intelligenceCycleJob
+replaced it). The 828 logged runs were historical. The real problem: `intelligenceCycleJob`'s
+`defaultPollNews()` called all 5 RSS fetchers including CafeF/VnExpress/VnEconomy directly
+from France — all geo-blocked. VN news arrives exclusively via POST /api/push-news from
+Vinahost VPS (`vn-news-fetch.service`). The `boom-downstream` string was a test fixture name,
+not a production error.
+**Fix:**
+1. Deleted `src/scheduler/newsPollerJob.ts` (dead file — never scheduled)
+2. Modified `defaultPollNews()` in `intelligenceCycleJob.ts` to inject empty fetchers for
+   cafef/vnexpress/vneconomy; Reuters and Trading Economics (non-geo-blocked) unchanged
+3. Removed dead test references in 102 and 1101 test files
+4. Added 4-test suite `1187-pollnews-dead-path.test.ts`
+**Done when:** Task is merged; VN direct-fetch errors stop in production
 
 ### 1185 — Investigate baodautu.vn RSS parsing (HTTP 200, 0 items)
 
