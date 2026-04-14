@@ -198,6 +198,60 @@ export function claimReport(db: Database, id: number, claimant: string): ClaimRe
   return { success: false };
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Deduplication helpers (Task 1215)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Extracts the category tag from a bug report message.
+ *
+ * Expected format: `📋 <category>\n` somewhere in the text.
+ * Returns the category string (e.g. "data_extraction_error") or null
+ * when no category marker is present.
+ */
+export function extractCategoryFromText(text: string): string | null {
+  // Match the clipboard emoji followed by optional whitespace and a word token.
+  // Works for both the Unicode emoji (📋, U+1F4CB) and plain ASCII fallback.
+  const match = text.match(/\u{1F4CB}\s*(\S+)/u);
+  return match?.[1] ?? null;
+}
+
+/**
+ * Returns true when an open (`status = 'new'`) report that shares the same
+ * category as `text` was created within the last `cooldownSeconds` seconds.
+ *
+ * Agents should call this before firing `send_telegram(channel="bug")` to
+ * avoid flooding the BUG channel with duplicate reports for the same issue.
+ *
+ * When `text` has no recognisable category marker, the check is skipped and
+ * the function returns false (no suppression for uncategorised messages).
+ *
+ * @param db              - SQLite database instance
+ * @param text            - Full text of the report about to be sent
+ * @param cooldownSeconds - Suppression window in seconds (default: 4 h)
+ */
+export function isDuplicateReport(
+  db: Database,
+  text: string,
+  cooldownSeconds: number = 4 * 3600,
+): boolean {
+  const category = extractCategoryFromText(text);
+  if (!category) return false;
+
+  const cutoff = Math.floor(Date.now() / 1000) - cooldownSeconds;
+  const row = db
+    .query<{ id: number }, [string, number]>(
+      `SELECT id FROM telegram_reports
+       WHERE status = 'new'
+         AND instr(text, ?) > 0
+         AND created_at >= ?
+       LIMIT 1`,
+    )
+    .get(category, cutoff);
+
+  return row !== null;
+}
+
 /**
  * Returns all reports that are both `status = 'new'` and unclaimed
  * (`claimed_by IS NULL`), ordered oldest-first.
