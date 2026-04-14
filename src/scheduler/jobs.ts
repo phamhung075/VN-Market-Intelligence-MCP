@@ -18,6 +18,7 @@
  *   devTeamHeartbeat       07:00 UTC Sunday    (task 245) ✓
  *   weatherCheck          every 6h (typhoon season) / 12h off-season  (task 261) ✓
  *   bctcOverdueCheck      09:00 daily          (task 1018 slice 3) ✓
+ *   pipelineWatchdog      every 30 min 24/7  (task 1190) ✓
  */
 
 import cron from 'node-cron'
@@ -49,6 +50,7 @@ import { runPredictionResolutionJob } from './predictionResolutionJob.js'
 import { runCalibrationReportJob } from './calibrationReportJob.js'
 import { runForeignFlowAlertJobCron } from './foreignFlowAlertJob.js'
 import { runInsiderCheck } from './insiderCheckJob.js'
+import { runPipelineWatchdog } from './pipelineWatchdogJob.js'
 import { getDb } from '../infrastructure/db/schema.js'
 import { recordJobRun } from '../infrastructure/db/cronJobRunStore.js'
 
@@ -110,6 +112,8 @@ export const CRONS = {
   foreignFlowAlert:       Bun.env.CRON_FOREIGN_FLOW_ALERT          ?? '30 9 * * 1-5',
   /** Insider SSC disclosure check: daily 01:00 UTC (08:00 VN) Mon-Sun — task 1143, Sprint 063 */
   insiderCheck:           Bun.env.CRON_INSIDER_CHECK               ?? '0 1 * * *',
+  /** Pipeline watchdog: every 30 min 24/7 — task 1190, Sprint 076 */
+  pipelineWatchdog:       Bun.env.CRON_PIPELINE_WATCHDOG            ?? '*/30 * * * *',
 }
 
 function log(msg: string) {
@@ -383,6 +387,18 @@ export function startScheduler() {
   cron.schedule(CRONS.insiderCheck, async () => {
     await recordJobRun(getDb(), 'insiderCheckJob', async () => {
       await runInsiderCheck()
+    })
+  }, { timezone: 'UTC' })
+
+  // Every 30 min 24/7 — Pipeline watchdog — task 1190
+  // Polls getPipelineHealth() and alerts WORK channel when staleMins > 90.
+  // 3-hour cooldown prevents alert floods during sustained outages.
+  cron.schedule(CRONS.pipelineWatchdog, async () => {
+    await recordJobRun(getDb(), 'pipelineWatchdogJob', async () => {
+      const result = await runPipelineWatchdog()
+      if (result === 'alert-sent' || result === 'notify-failed') {
+        log(`[pipeline-watchdog] ${result}`)
+      }
     })
   }, { timezone: 'UTC' })
 
