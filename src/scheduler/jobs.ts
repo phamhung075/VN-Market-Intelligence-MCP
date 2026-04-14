@@ -14,7 +14,6 @@
  *   dataAuditWeekly       01:00 Sunday         (task 157) ✓
  *   predictionMarketPoll  every 30 min         (task 167) ✓
  *   predictionOutcomeCheck Sunday 08:00 UTC    (task 248) ✓
- *   franceSummary          06:00 UTC weekdays  (task 243) ✓
  *   devTeamHeartbeat       07:00 UTC Sunday    (task 245) ✓
  *   weatherCheck          every 6h (typhoon season) / 12h off-season  (task 261) ✓
  *   bctcOverdueCheck      09:00 daily          (task 1018 slice 3) ✓
@@ -35,7 +34,6 @@ import { runPredictionMarketPoll } from './predictionMarketJob.js'
 import { runAlertDigest } from './alertDigestJob.js'
 import { runWeeklyPortfolioReport } from './weeklyPortfolioReportJob.js'
 import { runPredictionOutcomeCheck } from './predictionOutcomeJob.js'
-import { runFranceSummary } from './franceSummaryJob.js'
 import { runDevTeamHeartbeat } from './devTeamHeartbeatJob.js'
 import { runWeatherCheck } from './weatherCheckJob.js'
 import { runDavPharmacyCheck } from './davPharmacyJob.js'
@@ -76,8 +74,6 @@ export const CRONS = {
   bctcReparseJob:         Bun.env.CRON_BCTC_REPARSE_JOB           ?? '30 9 * * *',
   /** /ask queue check: every 12 min — signal 07-qa-responder when pending (task 1074) */
   askQueueCheck:          Bun.env.CRON_ASK_QUEUE_CHECK             ?? '*/12 * * * *',
-  /** France wake-up summary: weekdays 06:00 UTC (07:00 CET) — task 243 */
-  franceSummary:          Bun.env.CRON_FRANCE_SUMMARY             ?? '0 6 * * 1-5',
   /** SQLite WAL checkpoint: daily 03:00 GMT+7 = 20:00 UTC (task 140) */
   walCheckpoint:          Bun.env.CRON_WAL_CHECKPOINT             ?? '0 20 * * *',
   /** Periodic summary — daily: 22:30 every day (task 1023) */
@@ -265,13 +261,6 @@ export function startScheduler() {
       await runWeeklyPortfolioReport()
     })
   }, { timezone: 'Asia/Ho_Chi_Minh' })
-
-  // Weekdays 06:00 UTC (07:00 CET) — France wake-up summary — task 243
-  cron.schedule(CRONS.franceSummary, async () => {
-    await recordJobRun(getDb(), "franceSummaryJob", async () => {
-      await runFranceSummary()
-    })
-  }, { timezone: "UTC" })
 
   // Sunday 07:00 UTC (08:00 CET) — Dev Team weekly heartbeat — task 245
   cron.schedule(CRONS.devTeamHeartbeat, async () => {

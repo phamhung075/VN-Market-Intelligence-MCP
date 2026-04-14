@@ -19,6 +19,27 @@ import { logger } from "../infrastructure/logger.js";
 
 let _running = false;
 
+// ─────────────────────────────────────────────────────────────────────────────
+// DB-level same-day dedup guard
+// Prevents spam when the server restarts near 22:30 and the cron re-fires.
+// ─────────────────────────────────────────────────────────────────────────────
+
+function alreadySentToday(db: import("bun:sqlite").Database): boolean {
+  try {
+    const row = db
+      .prepare<{ cnt: number }, []>(
+        `SELECT COUNT(*) AS cnt
+         FROM market_messages
+         WHERE from_agent = 'evening-summary'
+           AND sent_at >= date('now')`,
+      )
+      .get();
+    return (row?.cnt ?? 0) > 0;
+  } catch {
+    return false; // fail-open: don't suppress if DB check fails
+  }
+}
+
 /** Reset concurrency guard — exported for test isolation. */
 export function resetEveningSummaryGuard(): void {
   _running = false;
@@ -52,6 +73,17 @@ export async function runEveningSummary(
   _running = true;
 
   try {
+    // DB-level dedup: skip if we already sent an evening summary today.
+    // Guards against server restarts near 22:30 causing double-fire.
+    try {
+      const { getDb } = await import("../infrastructure/db/index.js");
+      if (alreadySentToday(getDb())) {
+        logger.info("[eveningSummaryJob] already sent today — skipping duplicate");
+        return;
+      }
+    } catch {
+      // fail-open: if DB is unavailable, proceed and let the job run
+    }
     const fn =
       summaryFn ??
       (async () => {

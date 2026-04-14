@@ -41,6 +41,14 @@ CLAUDE.md (root — always loaded)
 │
 ├── .claude/knowledge/agent-roster.md (team structure: analysis 8 + dev 13, cooperation flow, signal bus)
 │
+├── .claude/knowledge/dev-standards.md (DDD layer rules, coding standards, test template, commit format, branch hygiene)
+│
+├── .claude/knowledge/janitor-procedures.md (code janitor: canonical sources, scan checklist, output contract, state file)
+│
+├── .claude/knowledge/market-analysis.md (causal cascade framework, impact scoring, trade maps, macro matrix, BCTC checklist)
+│
+├── .claude/knowledge/qa-checklist.md (TDD/DDD/TS/security/data integrity checklist, MCP tool rules, task report template)
+│
 ├── .claude/knowledge/fail-loud-protocol.md (failure handling: 5-step protocol — inlined in agents by design)
 │
 ├── .claude/knowledge/restart-policy.md (server restart: launchctl only, banned mechanisms, QA validation)
@@ -81,7 +89,11 @@ CLAUDE.md (root — always loaded)
 | `docs/data/system-auditor-known-issues.json` | System-Auditor | Each audit run |
 | `docs/data/code-janitor-known-findings.json` | Code-Janitor | Each janitor run |
 | `mcp.config.json` | Developer | Threshold tuning |
-| `.claude/knowledge/*.md` | Architect / claude-manager-helper | Logic or rule change |
+| `.claude/knowledge/dev-standards.md` | Developer / Architect | After adding coding standards or layer rules |
+| `.claude/knowledge/janitor-procedures.md` | Code-Janitor / Architect | After procedure change |
+| `.claude/knowledge/market-analysis.md` | Market-Analyst / BA | After cascade rule or BCTC checklist update |
+| `.claude/knowledge/qa-checklist.md` | QA / Architect | After QA rule change |
+| `.claude/knowledge/*.md` (all others) | Architect / claude-manager-helper | Logic or rule change |
 
 ## Drift Detection (System-Auditor)
 

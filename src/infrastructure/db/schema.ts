@@ -1322,6 +1322,38 @@ export async function initDatabase(): Promise<void> {
   `);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_cs_snapshot_date ON calibration_snapshots(snapshot_date DESC)`);
 
+  // ── Sprint 079 / Task 1201+1202: Backfill missing Q4-2025 BCTC queue rows ──────
+  // Banking tickers BID/EIB/SHB/VCB + industrial FPT/HPG missed Q4-2025 due to
+  // the quarter-detection bug (April was wrongly mapped to Q1). VCB Q1-2025 also
+  // needs re-fetch after the Task 1204 startup migration deletes the corrupted record.
+  //
+  // ON CONFLICT DO UPDATE WHERE status='failed' OR attempts>=5 ensures:
+  //   - Stale failed/exhausted rows are reset to pending.
+  //   - In-progress pending rows (attempts < 5) are left untouched.
+  //   - Rows already 'pending' with low attempt counts are not disrupted.
+  // This block is idempotent: safe to run on every server startup.
+  {
+    const BACKFILL_079 = [
+      { code: "BID", year: 2025, quarter: "Q4" },
+      { code: "EIB", year: 2025, quarter: "Q4" },
+      { code: "SHB", year: 2025, quarter: "Q4" },
+      { code: "VCB", year: 2025, quarter: "Q4" },
+      { code: "FPT", year: 2025, quarter: "Q4" },
+      { code: "HPG", year: 2025, quarter: "Q4" },
+      { code: "VCB", year: 2025, quarter: "Q1" }, // Task 1204: re-fetch after deletion of corrupted record
+    ];
+    const backfillStmt = db.prepare(`
+      INSERT INTO bctc_vps_queue (action_code, period_year, period_quarter, status, attempts)
+      VALUES (?, ?, ?, 'pending', 0)
+      ON CONFLICT(action_code, period_year, period_quarter)
+      DO UPDATE SET status = 'pending', attempts = 0, last_attempt = NULL
+      WHERE status = 'failed' OR attempts >= 5
+    `);
+    for (const entry of BACKFILL_079) {
+      backfillStmt.run(entry.code, entry.year, entry.quarter);
+    }
+  }
+
   // ── Market Messages (Sprint 068) ──────────────────────────────────────────────
   // Persists all MARKET channel Telegram sends for quality review.
   // from_agent identifies the scheduler job or MCP tool that sent the message.
