@@ -12,7 +12,7 @@ Vision: `SPRINT_GOAL.md`
 
 | ID | Title | Agent | Layer | Depends On | Branch | Status |
 |----|-------|-------|-------|------------|--------|--------|
-| 1189 | get_pipeline_health MCP tool | Dev | interface/application | TECH_075 | task/1189-pipeline-health | Review |
+| 1189 | get_pipeline_health MCP tool | Dev | interface/application | TECH_075 | — | Done |
 
 **WIP:** 0 In Progress.
 
