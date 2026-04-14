@@ -44,6 +44,8 @@ Vision: `SPRINT_GOAL.md`
 | 1246 | Hormuz/Suez/OPEC cascade rules: oil_supply_shock → bearish_market + bullish_oil_gas + bearish_aviation | Dev | domain | — | — | Backlog |
 | 1247 | US personal finance / sports articles ingested as VN market signals (no relevance filter) | Dev | domain | — | — | Backlog |
 | 1248 | BDI data staleness during supply chain crisis — fetch path needs geo-unblocked VPS route | Dev | infrastructure | — | — | Backlog |
+| 1251 | VNDiamond exclusion article: NER missing — specific ticker not extracted, generic cascade applied | Dev | domain | — | — | Backlog |
+| 1255 | Alert Commander: alerts generated but never sent to Telegram market channel (USD/VND σ alert) | Dev | interface | — | — | Backlog |
 
 **WIP:** 0 In Progress. 0 Review.
 
