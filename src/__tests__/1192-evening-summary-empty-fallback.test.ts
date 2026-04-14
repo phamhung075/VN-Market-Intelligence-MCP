@@ -1,12 +1,9 @@
 /**
- * Task 1192 — Evening summary empty-content fallback Telegram message
+ * Task 1192 — Evening summary empty-content: silent skip
  *
  * Tests for:
- *   1. When hasContent === false, sendFn is called once with a fallback message
- *   2. Fallback message is in Vietnamese, plain text, no Markdown
- *   3. Fallback message references get_pipeline_health
- *   4. When hasContent === true, sendFn is NOT called for the fallback path
- *      (normal Telegram send uses the injected sendFn)
+ *   1. When hasContent === false, sendFn is NOT called (silent skip)
+ *   2. When hasContent === true, sendFn is called once with normal content
  */
 
 process.env["DB_PATH"] = ":memory:";
@@ -59,8 +56,8 @@ describe("Task 1192 — Evening summary empty-content fallback", () => {
     resetEveningSummaryGuard();
   });
 
-  // ── Test 1: fallback send is called when hasContent === false ──────────────
-  it("calls sendFn once with fallback message when summary has no content", async () => {
+  // ── Test 1: no send when hasContent === false (silent skip) ─────────────────
+  it("does NOT call sendFn when summary has no content", async () => {
     const calls: Array<{ message: string; opts: unknown }> = [];
 
     const sendFn = async (message: string, opts: unknown) => {
@@ -69,51 +66,10 @@ describe("Task 1192 — Evening summary empty-content fallback", () => {
 
     await runEveningSummary(async () => emptySummary(), sendFn);
 
-    expect(calls.length).toBe(1);
+    expect(calls.length).toBe(0);
   });
 
-  // ── Test 2: fallback message is Vietnamese, plain text, no Markdown ────────
-  it("fallback message is Vietnamese plain text with no Markdown characters", async () => {
-    let capturedMessage = "";
-
-    const sendFn = async (message: string, _opts: unknown) => {
-      capturedMessage = message;
-    };
-
-    await runEveningSummary(async () => emptySummary(), sendFn);
-
-    // Must have content (not empty)
-    expect(capturedMessage.length).toBeGreaterThan(0);
-
-    // Must not contain Markdown bold/italic/code markers
-    // Note: underscores are allowed because get_pipeline_health tool name uses them.
-    // We check for asterisks, backticks, and hash headings only.
-    expect(capturedMessage).not.toMatch(/[*`#]/);
-
-    // Must contain Vietnamese text indicating empty summary
-    const lower = capturedMessage.toLowerCase();
-    const hasVietnamese =
-      lower.includes("tóm tắt") ||
-      lower.includes("buổi tối") ||
-      lower.includes("không có") ||
-      lower.includes("dữ liệu");
-    expect(hasVietnamese).toBe(true);
-  });
-
-  // ── Test 3: fallback message references get_pipeline_health ───────────────
-  it("fallback message references get_pipeline_health for diagnosis", async () => {
-    let capturedMessage = "";
-
-    const sendFn = async (message: string, _opts: unknown) => {
-      capturedMessage = message;
-    };
-
-    await runEveningSummary(async () => emptySummary(), sendFn);
-
-    expect(capturedMessage).toContain("get_pipeline_health");
-  });
-
-  // ── Test 4: when hasContent === true, normal send uses sendFn (not skipped) -
+  // ── Test 2: when hasContent === true, normal send uses sendFn (not skipped) -
   it("calls sendFn once for normal content (no double-send)", async () => {
     const calls: Array<{ message: string; opts: unknown }> = [];
 

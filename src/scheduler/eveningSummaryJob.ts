@@ -170,21 +170,7 @@ export async function runEveningSummary(
         });
       }
     } else {
-      logger.info("[eveningSummaryJob] no content — sending fallback Telegram message");
-      try {
-        const fallback =
-          `Tóm tắt buổi tối ${summary.date}: Không có dữ liệu thị trường. ` +
-          `Hệ thống không thu thập được tin tức, cảnh báo hoặc biến động giá. ` +
-          `Kiểm tra trạng thái pipeline: get_pipeline_health`;
-        await doSend(fallback, {
-          persist: { from_agent: "evening-summary", message_type: "evening_summary_empty" },
-        });
-        logger.info("[eveningSummaryJob] fallback Telegram sent");
-      } catch (tgErr) {
-        logger.warn("[eveningSummaryJob] fallback Telegram send failed", {
-          error: tgErr instanceof Error ? tgErr.message : String(tgErr),
-        });
-      }
+      logger.info("[eveningSummaryJob] no content — skipping Telegram (silent)");
     }
   } catch (err) {
     logger.error("[eveningSummaryJob] unhandled error in summary cycle", {
