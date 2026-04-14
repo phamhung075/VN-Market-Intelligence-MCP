@@ -57,16 +57,48 @@ export function parseRssFeed(xml: string): RssItem[] {
     const $ = cheerio.load(xml, { xmlMode: true });
     const items: RssItem[] = [];
 
-    $("item").each((_idx, el) => {
+    $("item, entry").each((_idx, el) => {
       const $el = $(el);
+      const tagName = (el as { tagName?: string; type: string }).tagName ?? el.type;
+      const isAtom = tagName === "entry";
 
       const title = $el.find("title").first().text().trim();
-      const url = $el.find("link").first().text().trim();
-      const publishedAt = $el.find("pubDate").first().text().trim();
-      const content =
-        $el.find("description").first().text().trim() ||
-        $el.find("content\\:encoded").first().text().trim() ||
-        $el.find("encoded").first().text().trim();
+
+      let url: string;
+      let publishedAt: string;
+      let content: string;
+
+      if (isAtom) {
+        // FR-2: Atom URL — priority chain
+        const linkEl = $el.find("link[rel='alternate'][href]").first();
+        const linkAny = $el.find("link[href]").first();
+        const idText = $el.find("id").first().text().trim();
+        url =
+          linkEl.attr("href")?.trim() ||
+          linkAny.attr("href")?.trim() ||
+          idText ||
+          "";
+
+        // FR-3: Atom date — priority chain
+        publishedAt =
+          $el.find("published").first().text().trim() ||
+          $el.find("updated").first().text().trim() ||
+          "";
+
+        // FR-4: Atom content — priority chain
+        content =
+          $el.find("summary").first().text().trim() ||
+          $el.find("content").first().text().trim() ||
+          "";
+      } else {
+        // RSS 2.0 — existing path, unchanged
+        url = $el.find("link").first().text().trim();
+        publishedAt = $el.find("pubDate").first().text().trim();
+        content =
+          $el.find("description").first().text().trim() ||
+          $el.find("content\\:encoded").first().text().trim() ||
+          $el.find("encoded").first().text().trim();
+      }
 
       // Skip items that have neither title nor url
       if (!title && !url) {
