@@ -225,3 +225,26 @@
 | 1198 | VND currency/ticker false positive in detectStocksInText | domain | Done |
 | 1206 | Cascade keyword fix: "đất vàng"→real_estate, "cầu" in "toàn cầu"→no construction | domain | Done |
 | 1212 | Interest rate cooling seed sentiment should be BULLISH not NEUTRAL | domain | Done |
+
+---
+
+## Sprint 081 — Domain Bug Batch: Cascade/Classification Gaps from Unified-Agent Reports (Active 2026-04-14)
+
+13 tasks targeting domain-layer bugs: NER gaps, macro keyword disambiguation, relevance pre-filter, DB lock, policy classification.
+Remaining Backlog: 1218 (VPS BCTC source_hints — needs SSH), 1248 (BDI VPS route — needs SSH).
+
+| ID | Title | Layer | Status |
+|----|-------|-------|--------|
+| 1199 | Trading Economics impact scores all 10.0 regardless of VN relevance | domain | Done |
+| 1210 | Policy classifier misclassifies criminal prosecution as monetary_policy | domain | Done |
+| 1213 | Unicode corruption in Vietnamese analysis text (combining diacritics) | infrastructure | Done |
+| 1218 | VPS BCTC queue: populate source_hints with actual PDF URLs | infrastructure | Backlog (needs VPS SSH) |
+| 1219 | Prediction market sector mapper: exclude sports/entertainment markets | domain | Done |
+| 1221 | weeklyPortfolioReportJob: DB-backed lock to prevent concurrent runs on restart | interface | Done |
+| 1228 | pollNews() scheduled path fails on startup | infrastructure | Done |
+| 1247 | US personal finance/sports articles ingested as VN market signals | domain | Done |
+| 1248 | BDI data staleness — needs geo-unblocked VPS route | infrastructure | Backlog (needs VPS SSH) |
+| 1251 | VNDiamond exclusion NER: specific ticker not extracted | domain | Done |
+| 1253 | VCB stale price in get_market_context — [STALE] warning | interface | Done |
+| 1254 | Duplicate morning briefing insert (from_agent=unknown) | infrastructure | Done |
+| 1255 | Retail net-buy cascade rule missing for securities sector | domain | Done |
