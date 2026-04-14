@@ -469,6 +469,28 @@ const KNOWN_VN_STOCKS: Set<string> = new Set([
   "VNM", "SAB", "MSN",
 ]);
 
+/**
+ * Currency-context exclusion map.
+ * Key: uppercase ticker that shares its name with a currency/unit abbreviation.
+ * Value: lowercase context tokens — if any appear in the 40-char window around
+ *        a Pattern-2 match, that match is discarded as a currency reference.
+ *
+ * Task 1198: guard "VND" (VNDirect Securities) against ISO-4217 currency hits
+ * in forex articles (e.g. "USD/VND tăng", "tỷ giá USD/VND").
+ * Pattern 1 (parenthetical) is NOT guarded — "(VND)" always means the ticker.
+ */
+const CURRENCY_CONTEXT_MAP: Map<string, string[]> = new Map([
+  [
+    "VND",
+    [
+      "usd/vnd", "vnd/usd", "tỷ giá", "exchange rate",
+      "đồng/usd", "billion vnd", "tỷ vnd", "nghìn tỷ vnd",
+      "triệu vnd", "tỷ đồng", "nghìn tỷ đồng", "mệnh giá",
+      "currency", "/vnd", "vnd/",
+    ],
+  ],
+]);
+
 // ═══════════════════════════════════════════════════════════════════════════
 // Classification helpers
 // ═══════════════════════════════════════════════════════════════════════════
@@ -519,10 +541,20 @@ function extractStockTickers(text: string): string[] {
   const wordMatches = text.matchAll(/\b([A-Za-z]{2,5})\b/g);
   for (const m of wordMatches) {
     const code = m[1]!.toUpperCase();
-    if (KNOWN_VN_STOCKS.has(code) && !seen.has(code)) {
-      found.push(code);
-      seen.add(code);
+    if (!KNOWN_VN_STOCKS.has(code) || seen.has(code)) continue;
+
+    // Currency-context guard: check 40-char window around match (Task 1198)
+    const currencyContextTokens = CURRENCY_CONTEXT_MAP.get(code);
+    if (currencyContextTokens) {
+      const matchStart = m.index ?? 0;
+      const windowStart = Math.max(0, matchStart - 40);
+      const windowEnd = Math.min(text.length, matchStart + code.length + 40);
+      const window = text.slice(windowStart, windowEnd).toLowerCase();
+      if (currencyContextTokens.some((tok) => window.includes(tok))) continue;
     }
+
+    found.push(code);
+    seen.add(code);
   }
 
   return found;
