@@ -14,9 +14,9 @@ Vision: `SPRINT_GOAL.md`
 |----|-------|-------|-------|------------|--------|--------|
 | 1194 | Missing MCP tools for Agent 08 Prediction Synthesizer | Dev | interface | — | — | Done |
 | 1195 | Cascade keyword "hạ nhiệt" disambiguation: interest-rate vs geopolitical | Dev | domain | — | — | Backlog |
-| 1197 | Cascade seed sentiment inversion: bullish headline classified BEARISH | Dev | domain | — | task/1197-sentiment-dedup | Review |
+| 1197 | Cascade seed sentiment inversion: bullish headline classified BEARISH | Dev | domain | — | — | Done |
 | 1216 | PM: sprint-plan TECH_080 domain bug batch (4 tasks) | PM | — | TECH_080 | — | Todo |
-| 1198 | VND currency/ticker false positive in detectStocksInText | Dev | domain | — | — | Todo |
+| 1198 | VND currency/ticker false positive in detectStocksInText | Dev | domain | — | task/1198-vnd-guard | Review |
 | 1199 | Trading Economics impact scores all 10.0 regardless of VN relevance | Dev | domain | — | — | Backlog |
 | 1200 | Cascade "đầu tư công" missing sentiment polarity check | Dev | domain | — | — | Backlog |
 | 1203 | Dow Jones +59% spike: add outlier validation for macro indicators | Dev | domain | — | — | Backlog |
