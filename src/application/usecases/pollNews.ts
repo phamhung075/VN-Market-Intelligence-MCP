@@ -476,7 +476,14 @@ export async function pollNews(options: PollNewsOptions = {}): Promise<PollNewsR
         // Convert watchlist impacts into news_mention signals
         // Relevance gate (task 152): filter noise before creating signals
         // Read gate config from mcp.config.json (with sensible defaults)
-        let nmCfg = { maxAgeMinutes: 240, requireNonNeutralSentiment: true, minSentimentConfidence: 0.5, minCascadeConfidence: 0.7, highTrustSources: ["cafef", "vnexpress", "vneconomy"] };
+        const DEFAULT_NEWS_MENTION_CONFIG = {
+          maxAgeMinutes: 240,
+          requireNonNeutralSentiment: true,
+          minSentimentConfidence: 0.5,
+          minCascadeConfidence: 0.85,
+          highTrustSources: ["cafef", "vnexpress", "vneconomy"],
+        };
+        let nmCfg = DEFAULT_NEWS_MENTION_CONFIG;
         try {
           const { loadMcpConfig } = await import("../../infrastructure/config.js");
           const cfg = loadMcpConfig();
