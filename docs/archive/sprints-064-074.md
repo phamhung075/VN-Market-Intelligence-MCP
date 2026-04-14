@@ -1,4 +1,4 @@
-# Archive — Sprints 064–073 (Knowledge Sync → Evening Intelligence Pipeline Fix)
+# Archive — Sprints 064–074 (Knowledge Sync → RSS Atom Support)
 
 ---
 
@@ -148,3 +148,14 @@
 |----|-------|-------|--------|
 | 1186 | Fix evening summary timing race — reschedule to 22:30 VN | scheduler | Done |
 | 1187 | Fix pollNewsJob dead code path — remove newsPollerJob + stub VN fetchers | infrastructure | Done |
+
+---
+
+## Sprint 074 — RSS Atom Support + baodautu.vn Fix (Done 2026-04-14)
+
+2 tasks done. Extended `parseRssFeed()` in `src/infrastructure/fetchers/rss.ts` to union-select `$("item, entry")` covering both RSS 2.0 and Atom 1.0 feeds. Added Atom-specific extraction for `url` (prefer `<link rel="alternate" href>` then `<link href>` then `<id>`), `publishedAt` (prefer `<published>` then `<updated>`), and `content` (prefer `<summary>` then `<content>`). Google News RSS and baodautu.vn both return Atom 1.0 — fix resolves 0-item parse results on every intelligence cycle. Task 1185 auto-resolved as side-effect of 1188. totalTasksDone 255 → 257.
+
+| ID | Title | Layer | Status |
+|----|-------|-------|--------|
+| 1188 | Fix rss.ts parser: add Atom `<entry>` support (Google News + baodautu.vn) | infrastructure | Done |
+| 1185 | Investigate baodautu.vn RSS parsing (HTTP 200, 0 items) | infrastructure | Done (auto-resolved by 1188) |

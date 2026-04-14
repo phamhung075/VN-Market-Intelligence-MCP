@@ -4,6 +4,19 @@
 > Index → `docs/TASKS_ARCHIVE.md`
 > Current sprint + stats → `docs/data/project-stats.json`
 
+## Sprint 074 — RSS Atom Support + baodautu.vn Fix (Done 2026-04-14)
+
+**Scope:** Extended RSS parser to support Atom 1.0 feeds; resolved 0-item parse results for Google News and baodautu.vn on every intelligence cycle.
+
+**Key changes:**
+- `src/infrastructure/fetchers/rss.ts` (`parseRssFeed()`): selector changed from `$("item")` to `$("item, entry")` — union covers RSS 2.0 and Atom 1.0. Added Atom-specific `url` extraction (prefer `<link rel="alternate" href>` → `<link href>` → `<id>`), `publishedAt` (`<published>` → `<updated>`), `content` (`<summary>` → `<content>`).
+- `src/__tests__/1188-rss-atom.test.ts`: fixtures for RSS 2.0 and Atom 1.0 (real-shape, not minimal); both return >= 1 item.
+- Task 1185 (baodautu.vn 0-item bug) auto-resolved as side-effect: feed is Atom 1.0, now correctly parsed.
+
+**Stats:** toolCount=96, schedulerFileCount=27, totalTasksDone=257. TypeScript: 0 errors.
+
+---
+
 ## Sprint 073 — Evening Intelligence Pipeline Fix (Done 2026-04-13)
 
 **Scope:** Fixed timing race between `eveningSummaryJob` and `intelligenceCycleJob` (both 22:00 VN); removed dead scheduler file; stubbed geo-blocked VN RSS fetchers.
