@@ -1,4 +1,4 @@
-# Archive — Sprints 064–074 (Knowledge Sync → RSS Atom Support)
+# Archive — Sprints 064–075 (Knowledge Sync → Pipeline Health Tool)
 
 ---
 
@@ -159,3 +159,13 @@
 |----|-------|-------|--------|
 | 1188 | Fix rss.ts parser: add Atom `<entry>` support (Google News + baodautu.vn) | infrastructure | Done |
 | 1185 | Investigate baodautu.vn RSS parsing (HTTP 200, 0 items) | infrastructure | Done (auto-resolved by 1188) |
+
+---
+
+## Sprint 075 — Pipeline Health MCP Tool (Done 2026-04-14)
+
+1 task done. New `get_pipeline_health` MCP tool exposing RAG pipeline observability: rows ingested today vs yesterday (GMT+7 boundary), per-source breakdown sorted by count DESC, VPS push log count last 24h, evening report last run timestamp. Use case `getPipelineHealth()` in `src/application/usecases/getPipelineHealth.ts`. Registered in `systemTools.ts`. Tool count 96 → 97. 7/7 acceptance criteria passing. totalTasksDone 257 → 258.
+
+| ID | Title | Layer | Status |
+|----|-------|-------|--------|
+| 1189 | get_pipeline_health MCP tool | application + interface | Done |

@@ -4,6 +4,20 @@
 > Index → `docs/TASKS_ARCHIVE.md`
 > Current sprint + stats → `docs/data/project-stats.json`
 
+## Sprint 075 — Pipeline Health MCP Tool (Done 2026-04-14)
+
+**Scope:** New `get_pipeline_health` MCP tool providing RAG pipeline observability from within Claude Desktop — replaces manual SQL queries to diagnose stale data.
+
+**Key changes:**
+- `src/application/usecases/getPipelineHealth.ts`: use case `getPipelineHealth({ db, nowMs, reportsDir })` returning `PipelineHealthResult` with 5 fields: `ragRows` (today/yesterday counts + staleMins clamped >= 0, respecting GMT+7 day boundary at Unix ms), `sources` (per-source_url row counts sorted DESC, null mapped to `"(unknown)"`), `vpsPushLast24h` (null when `vps_push_log` table absent, 0 when table exists but no ok-status rows in last 24h), `eveningReportLastRun` (ISO timestamp of newest `reports/YYYY-MM-DD-evening.json`, null if none), `generatedAt` (ISO timestamp).
+- `src/application/usecases/index.ts`: barrel re-export of `getPipelineHealth`.
+- `src/interface/mcp/tools/systemTools.ts`: registered `get_pipeline_health` tool after `get_system_status`. Input schema: optional `reportsDir` string.
+- `src/__tests__/1189-pipeline-health.test.ts`: 7 test cases covering GMT+7 boundary, stale clamp, null source mapping, absent vps_push_log table, ok vs non-ok row filter, empty reports dir.
+
+**Stats:** toolCount=97, schedulerFileCount=27, totalTasksDone=258. TypeScript: 0 errors.
+
+---
+
 ## Sprint 074 — RSS Atom Support + baodautu.vn Fix (Done 2026-04-14)
 
 **Scope:** Extended RSS parser to support Atom 1.0 feeds; resolved 0-item parse results for Google News and baodautu.vn on every intelligence cycle.
