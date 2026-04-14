@@ -185,20 +185,25 @@ export function isMarketHours(now?: Date): boolean {
 
 async function defaultPollNews(): Promise<PollNewsResult> {
   const { pollNews } = await import("../application/usecases/pollNews.js");
-  // VN news sources (CafeF, VnExpress, VnEconomy) are geo-blocked from France.
-  // They are delivered exclusively via POST /api/push-news from the Vinahost VPS
-  // (vn-news-fetch.service). Calling these fetchers directly produces circuit
-  // breaker errors and rows_written=0 on every 15-min cycle (task 1187).
-  // Inject empty stubs so pollNews only fetches from non-geo-blocked global
-  // sources (Reuters, Trading Economics).
-  // VPS push path calls pollNews() with real VN items injected as fetchers.
+  // Task 1228: ALL news sources are now delivered exclusively via POST /api/push-news
+  // from the Vinahost VPS (vn-news-fetch.service, 10 sources, 226 items/15min).
+  //
+  // Previous behavior: CafeF/VnExpress/VnEconomy were stubbed (task 1187), but
+  // Reuters and Trading Economics were still fetched directly. In practice Reuters
+  // is also unreliable from France (geo-block or rate-limit), producing repeated
+  // "step A failed — pollNews error" entries in system_logs and rows_written=0
+  // on every scheduled tick (task 1228).
+  //
+  // Fix: stub ALL five RSS sources. The scheduled intelligenceCycleJob pollNews
+  // call is now a no-op fetcher; all real ingestion happens via the VPS push path
+  // in server.ts. This eliminates startup errors and noise in cron_job_runs.
   return pollNews({
     fetchers: {
       cafef:            async () => [],
       vnexpress:        async () => [],
       vneconomy:        async () => [],
-      // Reuters and Trading Economics are global — not geo-blocked from France.
-      // Omit them so pollNews uses the real default fetchers for these sources.
+      reuters:          async () => [],  // Task 1228: VPS handles Reuters too
+      tradingeconomics: async () => [],  // Task 1228: VPS handles TE too
     },
   });
 }
