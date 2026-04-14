@@ -231,6 +231,9 @@ export const STOCK_CATALOG: Record<string, StockCatalogEntry> = {
       "vingroup corporation",
       "công ty vingroup", "cong ty vingroup",
       "vin group",
+      // CEO name — frequently appears without "Vingroup" in article titles
+      "phạm nhật vượng", "pham nhat vuong",
+      "chủ tịch phạm nhật vượng", "chu tich pham nhat vuong",
     ],
   },
   VHM: {
@@ -245,7 +248,11 @@ export const STOCK_CATALOG: Record<string, StockCatalogEntry> = {
   },
   NVL: {
     companyName: "Novaland",
-    aliases: ["novaland", "nova land", "dia oc nova"],
+    aliases: [
+      "novaland", "nova land", "dia oc nova",
+      "địa ốc nova", "tập đoàn novaland", "tap doan novaland",
+      "novaland group", "công ty novaland", "cong ty novaland",
+    ],
   },
   KDH: {
     companyName: "Khang Dien",

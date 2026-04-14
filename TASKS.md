@@ -43,6 +43,9 @@ Vision: `SPRINT_GOAL.md`
 | 1248 | BDI data staleness during supply chain crisis — fetch path needs geo-unblocked VPS route | Dev | infrastructure | — | — | Backlog |
 | 1251 | VNDiamond exclusion article: NER missing — specific ticker not extracted, generic cascade applied | Dev | domain | — | — | Backlog |
 | 1252 | Sync mcp.config.json::market.referenceStocks with SECTOR_PEERS (45+ missing tickers) | Janitor | config | — | — | Backlog |
+| 1253 | Company-name → ticker NER missing: Novaland/NVL, Vingroup/VIC, Vinhomes/VHM | Dev | domain | — | — | Done |
+| 1254 | get_credit_flow_signal: make params optional with DB-backed SBV rate fallback | Dev | domain | — | — | Backlog |
+| 1255 | VN-Index 1800-point forecast article classified NEUTRAL — should be BULLISH | Dev | domain | — | — | Backlog |
 
 **WIP:** 0 In Progress. 0 Review.
 

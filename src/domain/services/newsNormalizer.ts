@@ -17,6 +17,7 @@
 
 import type { RssItem } from "../../infrastructure/fetchers/rss.js";
 import type { DomainType } from "../../../bctc-schema.js";
+import { STOCK_CATALOG, detectStocksInText } from "./stockAliases.js";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Exported types
@@ -437,6 +438,12 @@ const BEARISH_KEYWORDS: string[] = [
 ];
 
 /**
+ * All ticker codes in STOCK_CATALOG — pre-built once at module load.
+ * Used by extractStockTickers() alias-fallback path (Task 1253).
+ */
+const ALL_CATALOG_CODES: string[] = Object.keys(STOCK_CATALOG);
+
+/**
  * Known VN stock tickers (HOSE / HNX / UPCOM).
  * Used for action-level classification and affectedActions population.
  */
@@ -555,6 +562,22 @@ function extractStockTickers(text: string): string[] {
 
     found.push(code);
     seen.add(code);
+  }
+
+  // Pattern 3: Alias-based company-name resolution (Task 1253)
+  // Scan text against ALL STOCK_CATALOG entries using detectStocksInText().
+  // This catches articles that mention "Novaland", "Vingroup", "Phạm Nhật Vượng"
+  // without including the literal ticker code (NVL, VIC, etc.).
+  // Only tickers not already found via patterns 1/2 are checked to avoid duplicates.
+  const remainingCodes = ALL_CATALOG_CODES.filter((c) => !seen.has(c));
+  if (remainingCodes.length > 0) {
+    const aliasHits = detectStocksInText(text, remainingCodes);
+    for (const code of aliasHits) {
+      if (!seen.has(code)) {
+        found.push(code);
+        seen.add(code);
+      }
+    }
   }
 
   return found;
