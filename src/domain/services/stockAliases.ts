@@ -74,6 +74,10 @@ export const STOCK_CATALOG: Record<string, StockCatalogEntry> = {
       "công ty cổ phần sữa việt nam", "cong ty co phan sua viet nam",
       "viet nam dairy", "vietnam dairy products", "vietnam dairy",
       "sua viet nam",
+      // Middle East export context aliases (Task 1214)
+      "xuất khẩu sữa", "xuat khau sua",
+      "thị trường Trung Đông", "thi truong trung dong",
+      "sữa xuất khẩu Trung Đông", "sua xuat khau trung dong",
     ],
   },
   FPT: {

@@ -516,7 +516,7 @@ function deriveDisplayValue(label: string, ctx: MacroContext): string {
 // Sector impact rules
 // ═══════════════════════════════════════════════════════════════════════════
 
-interface SectorRule {
+export interface SectorRule {
   /** Any single keyword match triggers this rule */
   keywords: string[];
   domain: DomainType;
@@ -526,7 +526,7 @@ interface SectorRule {
   title: string;
 }
 
-const SECTOR_RULES: SectorRule[] = [
+export const SECTOR_RULES: SectorRule[] = [
   // ── VN POLICY INTERVENTION OVERRIDE (must be FIRST — wins over war/recession bear rules) ──
   // Reports 920/922: when Vietnam government announces stabilization fund / market support
   // measures, the bullish policy RESPONSE must override bearish triggering-event keywords
@@ -1262,6 +1262,28 @@ const SECTOR_RULES: SectorRule[] = [
     direction: "down",
     confidence: 0.78,
     title: "Gián đoạn nguồn cung dầu — rủi ro địa chính trị cao, tâm lý risk-off ảnh hưởng VN-Index",
+  },
+
+  // ── Oil supply shock / Hormuz → retail BEARISH for VNM (Task 1214) ──────────
+  // VNM (Vinamilk) exports ~8% revenue to Middle East. Hormuz blockade or
+  // oil supply shock disrupts export logistics and raises shipping costs.
+  {
+    keywords: [
+      "strait of hormuz",
+      "hormuz blockade",
+      "hormuz blocked",
+      "phong tỏa hormuz",
+      "eo biển hormuz",
+      "oil supply shock",
+      "gián đoạn nguồn cung dầu",
+      "middle east conflict",
+      "middle east tension",
+      "xuất khẩu sữa",
+    ],
+    domain: "retail",
+    direction: "down",
+    confidence: 0.68,
+    title: "Gián đoạn Hormuz/Trung Đông — xuất khẩu sữa VNM sang Trung Đông bị ảnh hưởng, chi phí logistics tăng (VNM bearish)",
   },
 
   // ── Geopolitical DE-ESCALATION (MUST be before escalation — first match wins) ──
