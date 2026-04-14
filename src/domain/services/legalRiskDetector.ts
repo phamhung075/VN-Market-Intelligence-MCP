@@ -64,6 +64,8 @@ const LEGAL_PATTERNS: PatternEntry[] = [
   { pattern: /vướng lao lý/i, riskType: "prosecution", severity: "critical" },
   { pattern: /lãnh đạo bị bắt/i, riskType: "prosecution", severity: "critical" },
   { pattern: /bị truy tố/i, riskType: "prosecution", severity: "critical" },
+  // Task 1205: "truy tố" standalone (without "bị") — e.g. "Truy tố Vũ Đức Tĩnh"
+  { pattern: /(?:^|(?<=\s))truy tố(?=\s|$)/iu, riskType: "prosecution", severity: "critical" },
 
   // asset_freeze (CRITICAL)
   { pattern: /phong tỏa tài sản/i, riskType: "asset_freeze", severity: "critical" },
