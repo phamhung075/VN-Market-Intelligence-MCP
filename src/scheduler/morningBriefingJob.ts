@@ -265,12 +265,15 @@ export async function runMorningBriefing(
       } catch { /* best effort — send must not be blocked */ }
 
       // Telegram limit: 4096 chars per message. Split if needed.
+      // skipPersist=true on all send calls because the full text was already
+      // persisted to market_messages above (before chunking) — prevents duplicate
+      // rows with from_agent="unknown" (bug 1263).
       const MAX_CHUNK = 4000;
       if (text.length <= MAX_CHUNK) {
-        await sendTelegramMarket(text, { parseMode: "" });
+        await sendTelegramMarket(text, { parseMode: "", skipPersist: true });
       } else {
         for (let i = 0; i < text.length; i += MAX_CHUNK) {
-          await sendTelegramMarket(text.slice(i, i + MAX_CHUNK), { parseMode: "" });
+          await sendTelegramMarket(text.slice(i, i + MAX_CHUNK), { parseMode: "", skipPersist: true });
         }
       }
 

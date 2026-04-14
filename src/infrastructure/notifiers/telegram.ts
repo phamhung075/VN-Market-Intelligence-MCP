@@ -66,6 +66,13 @@ export interface SendTelegramOptions {
     message_type?: MarketMessageType | string;
     ticker?: string | null;
   };
+  /**
+   * When true, suppresses the automatic market_messages insert that normally
+   * happens inside sendTelegramMarket on success.  Use this when the caller has
+   * already persisted the full (pre-split) message and only wants the Telegram
+   * send side-effect — prevents duplicate rows with from_agent="unknown".
+   */
+  skipPersist?: boolean;
 }
 
 /**
@@ -244,7 +251,7 @@ export async function sendTelegramMarket(
   options: SendTelegramOptions = {},
 ): Promise<boolean> {
   const result = await coreSend("market", text, options);
-  if (result.ok) {
+  if (result.ok && !options.skipPersist) {
     try {
       const db = getDb();
       insertMarketMessage(db, {
