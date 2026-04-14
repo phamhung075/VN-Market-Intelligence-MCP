@@ -356,17 +356,28 @@ export function classifySentiment(text: string): SentimentResult {
   let bearishScore = 0;
   const triggeredKeywords: string[] = [];
 
+  // Task 1197: covered-range dedup — prevents shorter sub-phrases from scoring
+  // when a longer phrase at the same start position has already been scored.
+  const bullishCovered: Array<[number, number]> = [];
+  const bearishCovered: Array<[number, number]> = [];
+
+  function isCovered(covered: Array<[number, number]>, start: number): boolean {
+    return covered.some(([lo, hi]) => start >= lo && start < hi);
+  }
+
   // ── Process bullish keywords ────────────────────────────────────────────
   for (const kw of ALL_BULLISH) {
     const occurrences = findOccurrences(lower, kw.word);
-    for (const [start] of occurrences) {
+    for (const [start, end] of occurrences) {
+      if (isCovered(bullishCovered, start)) continue;      // already covered
+      bullishCovered.push([start, end]);                   // claim range
       const neg = detectNegation(lower, start);
       if (neg === "flip") {
         bearishScore += kw.weight; // strong negation → flip to bearish
       } else if (neg === "none") {
         bullishScore += kw.weight; // no negation → count as bullish
       }
-      // "cancel" → contribution is nullified (neither side gains)
+      // "cancel" → no score, but range is still claimed to suppress shorter sub-matches
       if (!triggeredKeywords.includes(kw.word)) {
         triggeredKeywords.push(kw.word);
       }
@@ -376,14 +387,17 @@ export function classifySentiment(text: string): SentimentResult {
   // ── Process bearish keywords ────────────────────────────────────────────
   for (const kw of ALL_BEARISH) {
     const occurrences = findOccurrences(lower, kw.word);
-    for (const [start] of occurrences) {
+    for (const [start, end] of occurrences) {
+      if (isCovered(bearishCovered, start)) continue;      // already covered
+      bearishCovered.push([start, end]);                   // claim range
       const neg = detectNegation(lower, start);
       if (neg === "flip") {
         bullishScore += kw.weight; // strong negation → flip to bullish
-      } else if (neg === "none") {
+      } else if (neg === "cancel") {
+        // nullified — no score, but range is claimed
+      } else {
         bearishScore += kw.weight; // no negation → count as bearish
       }
-      // "cancel" → contribution is nullified
       if (!triggeredKeywords.includes(kw.word)) {
         triggeredKeywords.push(kw.word);
       }
