@@ -1799,6 +1799,97 @@ export const SECTOR_RULES: SectorRule[] = [
     confidence: 0.78,
     title: "VNDiamond exclusion — ETF forced selling: quỹ thụ động buộc phải bán cổ phiếu bị loại (etf_forced_selling)",
   },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Task 1229 — Broader ETF / index rebalance rules
+  // Any index rebalance removal → BEARISH (etf_forced_selling, confidence 0.75).
+  // Any index addition → BULLISH (etf_inclusion, confidence 0.75).
+  // VNDiamond-specific rules (Task 1223) take first-match-wins per domain;
+  // these cover VN30/VN100/generic ETF rebalance events.
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // ── Index inclusion → forced passive buying (BULLISH) ─────────────────────
+  {
+    keywords: [
+      "được thêm vào vn30",
+      "thêm vào vn30",
+      "được thêm vào chỉ số",
+      "thêm vào chỉ số",
+      "được thêm vào rổ etf",
+      "thêm vào rổ etf",
+      "etf inclusion",
+      "index inclusion",
+      "được đưa vào rổ",
+      "gia nhập chỉ số",
+    ],
+    domain: "securities",
+    direction: "up",
+    confidence: 0.75,
+    title: "Index inclusion — ETF forced buying: cổ phiếu được thêm vào chỉ số hưởng dòng tiền thụ động (etf_inclusion)",
+  },
+
+  // ── Index removal → forced passive selling (BEARISH) ─────────────────────
+  {
+    keywords: [
+      "bị loại khỏi vn30",
+      "loại khỏi vn30",
+      "bị loại khỏi vn100",
+      "loại khỏi vn100",
+      "loại khỏi chỉ số",
+      "bị loại khỏi chỉ số",
+      "cơ cấu lại rổ",
+      "etf cơ cấu",
+      "rebalance",
+      "index rebalance",
+      "quỹ etf loại",
+      "loại khỏi rổ etf",
+    ],
+    domain: "securities",
+    direction: "down",
+    confidence: 0.75,
+    title: "Index rebalance — ETF forced selling: cổ phiếu bị loại khỏi chỉ số chịu áp lực bán ròng (etf_forced_selling)",
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Task 1226 — FTSE/MSCI index upgrade → massive passive fund inflows (BULLISH)
+  // Vietnam upgrade from Frontier to Emerging Market status triggers billions
+  // in passive fund inflows, especially benefiting banking and large-cap stocks.
+  // ═══════════════════════════════════════════════════════════════════════════
+  {
+    keywords: [
+      "ftse nâng hạng",
+      "nâng hạng thị trường mới nổi",
+      "emerging market",
+      "ftse russell",
+      "msci nâng hạng",
+      "vietnam upgrade",
+      "nâng hạng emerging",
+      "frontier to emerging",
+      "thị trường mới nổi",
+      "vn nâng hạng",
+    ],
+    domain: "banking",
+    direction: "up",
+    confidence: 0.85,
+    title: "FTSE/MSCI nâng hạng Việt Nam lên Emerging Market — dòng vốn thụ động khổng lồ, ngân hàng hưởng lợi trực tiếp (index_upgrade_inflow)",
+  },
+  {
+    keywords: [
+      "ftse nâng hạng",
+      "nâng hạng thị trường mới nổi",
+      "emerging market",
+      "ftse russell",
+      "msci nâng hạng",
+      "vietnam upgrade",
+      "nâng hạng emerging",
+      "frontier to emerging",
+      "thị trường mới nổi",
+    ],
+    domain: "securities",
+    direction: "up",
+    confidence: 0.82,
+    title: "FTSE/MSCI nâng hạng — CTCK hưởng lợi từ thanh khoản tăng vọt và dòng vốn ngoại (index_upgrade_inflow)",
+  },
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -2186,6 +2277,36 @@ export function buildCausalChain(
       domainEntry.confidence = boosted;
       domainEntry.reasoning +=
         ` [PolicyCombo: ${comboResult.matchedCategories.join("+")} → ×${comboResult.multiplier.toFixed(2)} ${domain}]`;
+    }
+  }
+
+  // ── Step 2e: Non-watchlist company event confidence cap (Task 1207) ──────
+  // When a news article is about a specific company (affectedActions non-empty)
+  // that is NOT in the user's watchlist, cap all domain-level confidence at 0.6.
+  // Rationale: non-watchlist company noise should never generate high-confidence alerts.
+  //
+  // Cap applies when:
+  //   1. seedEntry.affectedActions has at least one company code (company-specific event)
+  //   2. NONE of those companies appear in the watchlist
+  //
+  // Cap is skipped when:
+  //   - affectedActions is empty (market-wide event)
+  //   - At least one affected company is in the watchlist
+  const NON_WATCHLIST_CONFIDENCE_CAP = 0.6;
+  if (seedEntry.affectedActions.length > 0) {
+    const watchlistCodes = new Set(watchlist.map((w) => w.actionCode));
+    const anyInWatchlist = seedEntry.affectedActions.some((code) => watchlistCodes.has(code));
+
+    if (!anyInWatchlist) {
+      for (const entry of entries) {
+        if (entry.level !== "domain") continue;
+        const before = entry.confidence;
+        if (entry.confidence > NON_WATCHLIST_CONFIDENCE_CAP) {
+          entry.confidence = NON_WATCHLIST_CONFIDENCE_CAP;
+        }
+        // Always annotate — cap was applied (or was already below threshold)
+        entry.reasoning += ` [NonWatchlistCap: company not in watchlist → confidence capped at ${NON_WATCHLIST_CONFIDENCE_CAP} (was ${before.toFixed(2)})]`;
+      }
     }
   }
 
