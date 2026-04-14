@@ -19,6 +19,8 @@
  * @module domain/services/earningsCalendar
  */
 
+import { MS_PER_DAY } from "./timeConstants.js";
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
 // ─────────────────────────────────────────────────────────────────────────────
@@ -54,8 +56,6 @@ export interface ClassifyInput extends DeadlineInfo {
 
 /** Days-before-deadline threshold for SAP_DEN classification */
 const SAP_DEN_WINDOW_DAYS = 14;
-
-const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 /**
  * Domains that have a 45-day filing deadline instead of the standard 30 days.

@@ -1,29 +1,39 @@
 {
+  "scan_date": "2026-04-13T00:00:00Z",
+  "last_run": "2026-04-13T00:00:00Z",
   "findings": [
     {
-      "fingerprint": "cron_duplication:src/infrastructure/config.ts:scheduler_cron_defaults",
-      "first_seen": "2026-04-07",
-      "last_reported": "2026-04-13",
-      "task": 1048,
-      "note": "config.ts:scheduler section declares 7 cron default strings duplicating CRONS fallback defaults in jobs.ts. Task 1048 queued (Backlog). BLOCKED: circular-dep risk."
+      "fingerprint": "check2:mcp.config.json:referenceStocks.real_estate",
+      "severity": "MEDIUM",
+      "category": "config-drift",
+      "description": "mcp.config.json referenceStocks.real_estate missing NLG, HDG from SECTOR_PEERS",
+      "canonical_source": "src/domain/services/sectorPeers.ts::SECTOR_PEERS",
+      "affected_file": "mcp.config.json",
+      "detail": "real_estate sector in config: [VHM,VIC,VRE,NVL,KDH,DXG,KBC,DIG,PDR,HUT] vs SECTOR_PEERS: [VIC,VHM,VRE,NVL,KDH,DXG,NLG,PDR,KBC,DIG,HUT,HDG]. Missing: NLG, HDG",
+      "added_date": "2026-04-13T00:00:00Z",
+      "expires_at": "2026-05-13T00:00:00Z"
     },
     {
-      "fingerprint": "config_drift:alerts.newsMention.minCascadeConfidence",
-      "first_seen": "2026-04-13",
-      "last_reported": "2026-04-13",
-      "task": null,
-      "note": "config.ts default 0.7, mcp.config.json actual 0.85. Also affects telegramMinCascadeConfidence. Risk: code uses fallback in edge case, differs from production JSON."
+      "fingerprint": "check2:mcp.config.json:referenceStocks.steel",
+      "severity": "MEDIUM",
+      "category": "config-drift",
+      "description": "mcp.config.json referenceStocks.steel missing TIS from SECTOR_PEERS",
+      "canonical_source": "src/domain/services/sectorPeers.ts::SECTOR_PEERS",
+      "affected_file": "mcp.config.json",
+      "detail": "steel sector in config: [HPG,HSG,NKG,POM] vs SECTOR_PEERS: [HPG,HSG,NKG,TIS,POM]. Missing: TIS",
+      "added_date": "2026-04-13T00:00:00Z",
+      "expires_at": "2026-05-13T00:00:00Z"
     },
     {
-      "fingerprint": "config_drift:market.watchlist_vea",
-      "first_seen": "2026-04-13",
-      "last_reported": "2026-04-13",
-      "task": null,
-      "note": "mcp.config.json has VEA in watchlist (after VNM), config.ts default does not. Risk: env override ignores VEA unless explicitly set."
+      "fingerprint": "check2:mcp.config.json:referenceStocks.oil_gas",
+      "severity": "MEDIUM",
+      "category": "config-drift",
+      "description": "mcp.config.json referenceStocks.oil_gas missing OIL from SECTOR_PEERS",
+      "canonical_source": "src/domain/services/sectorPeers.ts::SECTOR_PEERS",
+      "affected_file": "mcp.config.json",
+      "detail": "oil_gas sector in config: [GAS,PLX,BSR,PVD,PVS] vs SECTOR_PEERS: [GAS,PLX,BSR,PVD,PVS,OIL]. Missing: OIL",
+      "added_date": "2026-04-13T00:00:00Z",
+      "expires_at": "2026-05-13T00:00:00Z"
     }
-  ],
-  "last_run": "2026-04-13T11:45:00Z",
-  "checks_run": 5,
-  "findings_count": 2,
-  "clean": false
+  ]
 }

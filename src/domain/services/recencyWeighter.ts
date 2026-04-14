@@ -18,6 +18,7 @@
  */
 
 import type { SearchResult } from "../../infrastructure/rag/retriever.js";
+import { MS_PER_DAY } from "./timeConstants.js";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -40,7 +41,6 @@ export interface ScoredResult extends SearchResult {
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const DEFAULT_RECENCY_DAYS = 90;
-const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 // ─── Core functions ───────────────────────────────────────────────────────────
 
