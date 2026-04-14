@@ -343,6 +343,34 @@ export async function runWeeklyPortfolioReport(
         return getDb();
       })());
 
+    // ── Task 1221: DB-backed lock — prevents duplicate runs across restarts ────
+    // The in-memory `_running` flag resets on every launchctl restart. A restart
+    // that fires the Sunday cron within 6 hours of the last run would produce a
+    // duplicate report. Guard: check cron_job_runs for a 'running' row that
+    // started within the last 6 hours for this job.
+    try {
+      const staleThresholdHours = 6;
+      const existingRun = db
+        .prepare(
+          `SELECT id FROM cron_job_runs
+           WHERE job_name  = 'weeklyPortfolioReportJob'
+             AND status    = 'running'
+             AND started_at >= datetime('now', ? || ' hours')
+           LIMIT 1`,
+        )
+        .get(`-${staleThresholdHours}`) as { id: number } | undefined;
+
+      if (existingRun) {
+        logger.warn(
+          "[weeklyPortfolioReport] DB lock held by a recent run — skipping to prevent duplicate report",
+          { lockRowId: existingRun.id },
+        );
+        return;
+      }
+    } catch {
+      // cron_job_runs table may not exist in minimal test setups — proceed
+    }
+
     // ── Step 1: Query open positions with current prices ─────────────────────
     let positionRows: PositionRow[];
     try {
