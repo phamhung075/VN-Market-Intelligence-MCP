@@ -25,6 +25,12 @@ Vision: `SPRINT_GOAL.md`
 | 1213 | Unicode corruption in Vietnamese analysis text (combining diacritics) | Dev | infrastructure | — | — | Backlog |
 | 1214 | VNM Middle East dairy exposure missing from Hormuz cascade rules | Dev | domain | — | — | Backlog |
 | 1216 | PM: sprint-plan TECH_080 domain bug batch (4 tasks) | PM | — | TECH_080 | — | Todo |
+| 1217 | Outlier validation for macro indicators (Dow Jones -69% spike) | Dev | domain | — | — | Backlog |
+| 1218 | VPS BCTC queue: populate source_hints with actual PDF URLs from listSscDocuments | Dev | infrastructure | — | — | Backlog |
+| 1219 | Prediction market sector mapper: exclude sports/entertainment markets | Dev | domain | — | — | Backlog |
+| 1220 | DPM alias resolver: require sector context for person-name alias matches | Dev | domain | — | — | Backlog |
+| 1221 | weeklyPortfolioReportJob: add DB-backed lock to prevent concurrent runs on restart | Dev | interface | — | — | Backlog |
+| 1222 | Add DFF (Đua Fat Group) to stock-classification.json — sector real_estate | Dev | domain | — | — | Backlog |
 
 **WIP:** 0 In Progress. 0 Review.
 

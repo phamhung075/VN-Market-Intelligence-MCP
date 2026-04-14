@@ -2,15 +2,16 @@
 
 > Previous sprint goals live in their `docs/REQ_NNN.md` specs. This file = current sprint only.
 
-## Current Sprint — 079 (ACTIVE)
+## Current Sprint — 081 (ACTIVE)
 
-**Goal:** Restore data pipeline integrity — fix the two root causes that make the evening report produce empty content: VPS push-prices not persisting to `market_prices` table (1193) and BCTC extraction leaving `financial_reports` empty despite PDFs on disk (1196). Also clear the highest-signal domain bugs before the banking BCTC deadline.
+**Goal:** Domain bug batch — fix cascade/classification bugs from unified-agent reports. Clear backlog of domain-layer issues: macro keyword disambiguation, sentiment polarity checks, cascade confidence caps, stock alias tightening, and missing stock classifications.
 
 **Scope:**
-- IN: Task 1193 (prices not persisting), Task 1196 (BCTC extraction broken), Task 1201/1202 (Banking BCTC Q4-2025 — deadline 14/04), Task 1215 sign-off (already merged, needs QA report)
-- OUT: New features, UX changes, Kinh Dich layer, Prediction Synthesizer (those are next sprint)
+- IN: Tasks 1195, 1199, 1200, 1203, 1205, 1207, 1208, 1210, 1211, 1213, 1214, 1216 (PM sprint plan)
+- IN: New backlog from 2026-04-13/14 bug reports: 1217–1222 (see TASKS.md)
+- OUT: VPS BCTC service investigation (needs SSH access to VPS), UI changes
 
-**Success metric:** Evening report on 2026-04-14 contains at least 5 watchlist movers and 3 stories. BCTC extraction for BID/VCB/FPT/HPG shows non-zero values in `financial_reports`. Task 1215 archived as Done.
+**Success metric:** get_cascade_metrics shows oil_gas_down keyword hit rate above 10 hits/30d. US CPI surge articles classified correctly as BEARISH for VN markets. DFF/BSR/DPM aliases produce fewer false positives.
 
 ---
 
@@ -18,6 +19,8 @@
 
 | Sprint | Goal summary | Status |
 |--------|-------------|--------|
+| 080 | Domain bug dedup — ticker intelligence, macro cascade gaps | COMPLETE 2026-04-14 |
+| 079 | Data pipeline integrity — VPS price push + BCTC extraction | COMPLETE 2026-04-14 |
 | 078 | Evening summary empty-content fallback (1192) + bug dedup (1215) | COMPLETE 2026-04-14 |
 | 077 | Trading Economics RSS fallback chain (1191) | COMPLETE |
 | 076 | Pipeline watchdog job | COMPLETE |
