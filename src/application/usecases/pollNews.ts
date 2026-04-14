@@ -419,7 +419,21 @@ export async function pollNews(options: PollNewsOptions = {}): Promise<PollNewsR
   for (const { name, result } of sourceResults) {
     if (result.status === "fulfilled") {
       allItems.push(...result.value.slice(0, limit));
-      globalSourceTracker.recordSuccess(name);
+      if (result.value.length > 0) {
+        // Task 1227: only record success when items are actually returned.
+        // A fulfilled-but-empty result means the fetcher silently swallowed
+        // a geo-block or timeout (Reuters/Google News pattern) — recording
+        // success in that case produces false-OK in the source health table.
+        globalSourceTracker.recordSuccess(name);
+      } else {
+        // Fulfilled with 0 items — treat as transient failure so the source
+        // health table shows "degraded" instead of "OK". The consecutiveFailures
+        // counter resets as soon as the next poll returns items, so a few
+        // empty off-hours cycles won't trigger "down" status (threshold = 5).
+        errors++;
+        globalSourceTracker.recordFailure(name, "empty result — no items returned");
+        logger.debug(`[pollNews] ${name} returned 0 items — recorded as transient failure`, { source: name });
+      }
     } else {
       errors++;
       const errorMsg = result.reason instanceof Error
@@ -430,15 +444,6 @@ export async function pollNews(options: PollNewsOptions = {}): Promise<PollNewsR
         source: name,
         error: errorMsg,
       });
-    }
-  }
-
-  // Surface fulfilled-but-empty sources at DEBUG level. Circuit breaker +
-  // sourceHealthTracker already handle real failures; 0 items is common on
-  // weekends / off-hours and was drowning real WARNs in the error log.
-  for (const { name, result } of sourceResults) {
-    if (result.status === "fulfilled" && result.value.length === 0) {
-      logger.debug(`[pollNews] ${name} returned 0 items`, { source: name });
     }
   }
 
