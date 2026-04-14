@@ -1354,6 +1354,21 @@ export async function initDatabase(): Promise<void> {
     }
   }
 
+  // ── Sprint 079 / Task 1204: Delete corrupted VCB Q1-2025 record ──────────────
+  // VCB Q1-2025 was inserted with all values = 0 due to a failed PDF extraction.
+  // extraction_confidence < 0.1 means all 16 key fields were zero — no signal value.
+  // Conditional guard: only deletes if confidence < 0.1 so that a valid re-parsed row
+  // (confidence >= 0.3 after bctcReparseJob runs) is never accidentally removed.
+  // This block is idempotent: after the row is deleted and re-parsed, subsequent
+  // server restarts find no row matching extraction_confidence < 0.1 and do nothing.
+  db.prepare(`
+    DELETE FROM financial_reports
+    WHERE action_code = 'VCB'
+      AND period_year = 2025
+      AND period_type = 'Q1'
+      AND extraction_confidence < 0.1
+  `).run();
+
   // ── Market Messages (Sprint 068) ──────────────────────────────────────────────
   // Persists all MARKET channel Telegram sends for quality review.
   // from_agent identifies the scheduler job or MCP tool that sent the message.
