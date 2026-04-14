@@ -492,6 +492,7 @@ export async function pollNews(options: PollNewsOptions = {}): Promise<PollNewsR
     if ((item.source ?? "").toLowerCase() === "tradingeconomics") {
       entry.impactScore = scoreMacroIndicator(item.title);
     }
+
     const wasInserted = tryInsertEntry(db, entry);
 
     if (wasInserted) {
