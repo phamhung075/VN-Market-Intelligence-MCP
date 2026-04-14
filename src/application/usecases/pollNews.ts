@@ -21,6 +21,7 @@ import type { WatchlistEntry } from "../../domain/services/cascadeEngine.js";
 import type { SearchResult } from "../../domain/services/cascadeEngine.js";
 import { normalizeNews } from "../../domain/services/newsNormalizer.js";
 import { isVnRelevant } from "../../domain/services/vnRelevanceFilter.js";
+import { scoreMacroIndicator } from "../../domain/services/macroIndicatorScorer.js";
 import { buildCausalChain } from "../../domain/services/cascadeEngine.js";
 import { detectStocksInText } from "../../domain/services/stockAliases.js";
 import { generateAlerts } from "../../domain/services/alertGenerator.js";
@@ -483,6 +484,15 @@ export async function pollNews(options: PollNewsOptions = {}): Promise<PollNewsR
     const entry = normalizeNews(item);
     const cls = classifySentimentForInsert(`${entry.sourceTitle} ${entry.summary}`);
     entry.sentiment = cls.direction; // bullish | bearish | neutral
+
+    // Task 1199: apply tiered impact scoring for Trading Economics articles.
+    // The generic normalizer gives all TE articles high scores (8–10) because
+    // global macro keywords (inflation, interest rate) saturate the keyword count.
+    // Replace with a tier-aware score based on indicator name / VN relevance.
+    if ((item.source ?? "").toLowerCase() === "tradingeconomics") {
+      entry.impactScore = scoreMacroIndicator(item.title);
+    }
+
     const wasInserted = tryInsertEntry(db, entry);
 
     if (wasInserted) {
