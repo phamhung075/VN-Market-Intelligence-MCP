@@ -15,15 +15,15 @@ Vision: `SPRINT_GOAL.md`
 | 1195 | Cascade keyword "hạ nhiệt" disambiguation: interest-rate vs geopolitical | Dev | domain | — | 15a3451 | Done |
 | 1199 | Trading Economics impact scores all 10.0 regardless of VN relevance | Dev | domain | — | — | Backlog |
 | 1200 | Cascade "đầu tư công" missing sentiment polarity check | Dev | domain | — | 6b21acf | Done |
-| 1203 | Dow Jones +59% spike: add outlier validation for macro indicators | Dev | domain | — | — | Backlog |
-| 1207 | Market-wide cascade confidence cap for non-watchlist company events | Dev | domain | — | — | Backlog |
+| 1203 | Dow Jones +59% spike: add outlier validation for macro indicators | Dev | domain | — | 1cb7af1 | Done |
+| 1207 | Market-wide cascade confidence cap for non-watchlist company events | Dev | domain | — | 24264ad | Done |
 | 1208 | Stock price freshness reads direct-API timestamp, not VPS-push timestamp | Dev | infrastructure | — | 96358d4 | Done |
 | 1209 | Polymarket test markets not refreshing (fetchedAt 12 days stale) | Dev | infrastructure | — | b3b61c2 | Done |
 | 1210 | Policy classifier misclassifies criminal prosecution as monetary_policy | Dev | domain | — | — | Backlog |
 | 1211 | BSR missing from "công ty lọc dầu" / "Bình Sơn" stock aliases | Dev | domain | — | a6f218c | Done |
 | 1213 | Unicode corruption in Vietnamese analysis text (combining diacritics) | Dev | infrastructure | — | — | Backlog |
 | 1214 | VNM Middle East dairy exposure missing from Hormuz cascade rules | Dev | domain | — | 5d021cf | Done |
-| 1217 | Outlier validation for macro indicators (Dow Jones -69% spike) | Dev | domain | — | — | Backlog |
+| 1217 | Outlier validation for macro indicators (Dow Jones -69% spike) | Dev | domain | 1203 | 1cb7af1 | Done |
 | 1218 | VPS BCTC queue: populate source_hints with actual PDF URLs from listSscDocuments | Dev | infrastructure | — | — | Backlog |
 | 1219 | Prediction market sector mapper: exclude sports/entertainment markets | Dev | domain | — | — | Backlog |
 | 1220 | DPM alias resolver: require sector context for person-name alias matches | Dev | domain | — | 19a224b | Done |
