@@ -151,3 +151,13 @@ Commit 5764d1b. 25/25 tests pass.
 ### Task 1139 — Wrap utility/infra jobs (FR-9 to FR-12) — Done (Sprint 062, closed Sprint 069)
 
 Wrapped franceSummaryJob, devTeamHeartbeatJob, weatherCheckJob, davPharmacyCheckJob with recordJobRun. Administrative close confirmed in Sprint 069 Task 1171.
+
+---
+
+### Sprint 081 Bug Fixes — Done 2026-04-14
+
+- **1205**: get_legal_risk_signals misses "truy tố" — added standalone /truy tố/ regex pattern. Commit 3bb7ffd.
+- **1216**: PM: sprint-plan TECH_080 domain bug batch — tasks 1197/1198/1206/1212 all already done in sprint 080. Administrative close.
+- **1224**: oil_gas_down → aviation BULLISH inverse cascade rule (VJC fuel cost benefit). Commit 363b7b4.
+- **1255**: Alert Commander alerts never sent off-hours — step E moved outside marketHours gate. Commit beb7258.
+- **1256**: Gold price cascade falsely included real_estate (PDR) via market-wide broadcast — commodity broadcast exclusion added to cascadeEngine step 3b. Commit a90e5fe.
