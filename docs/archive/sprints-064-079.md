@@ -1,4 +1,4 @@
-# Archive — Sprints 064–077 (Knowledge Sync → TE RSS Fallback Chain)
+# Archive — Sprints 064–079 (Knowledge Sync → Price Persistence Observability)
 
 ---
 
@@ -199,3 +199,15 @@
 | ID | Title | Layer | Status |
 |----|-------|-------|--------|
 | 1192 | Evening summary empty-content fallback Telegram message | interface/scheduler | Done |
+
+## Sprint 079 — Price Persistence Observability + BCTC Banking Backfill (Done 2026-04-14)
+
+5 tasks done. VPS push-prices persistence fixed (market_prices table write path), BCTC quarter-detection corrected, banking BCTC backfill for 6 tickers (BID, EIB, SHB, VCB, FPT, HPG), BCTC extraction banking fallback added, VCB corrupted zero-value row cleaned up. totalTasksDone 261 → 266.
+
+| ID | Title | Layer | Status |
+|----|-------|-------|--------|
+| 1193 | VPS push-prices not persisting to market_prices table | infrastructure | Done |
+| 1201 | Banking Q4-2025 BCTC missing: BID, EIB, SHB, VCB (deadline 14/04) | infrastructure | Done |
+| 1202 | FPT/HPG Q4-2025 BCTC missing — VPS BCTC fetcher gap (14 days overdue) | infrastructure | Done |
+| 1196 | BCTC extraction: VNM/VEA PDFs on disk but financial_reports empty | application | Done |
+| 1204 | VCB Q1-2025 BCTC all values = 0 (bad record from failed extraction) | application | Done |

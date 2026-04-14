@@ -4,6 +4,21 @@
 > Index → `docs/TASKS_ARCHIVE.md`
 > Current sprint + stats → `docs/data/project-stats.json`
 
+## Sprint 079 — Price Persistence Observability + BCTC Banking Backfill (Done 2026-04-14)
+
+**Scope:** 5 tasks closing infrastructure gaps in the VPS price-push pipeline and BCTC banking data coverage.
+
+**Key changes:**
+- Task 1193: Fixed `market_prices` table write path so VPS-pushed prices are persisted correctly; added `vps_push_log` observability rows for each batch.
+- Task 1201: Backfilled Q4-2025 BCTC for banking tickers BID, EIB, SHB, VCB after the VPS BCTC fetcher failed to deliver within the SSC deadline window.
+- Task 1202: Backfilled Q4-2025 BCTC for FPT and HPG which were missing due to a 14-day VPS fetcher gap.
+- Task 1196: Fixed BCTC extraction quarter-detection logic (VNM/VEA PDFs were on disk but `financial_reports` table remained empty due to misclassified quarter label); added banking-sector fallback extraction path.
+- Task 1204: Deleted VCB Q1-2025 corrupted row where all financial values = 0 (caused by a prior failed PDF extraction), preventing bad data from polluting ratio calculations.
+
+**Stats:** toolCount=97, schedulerFileCount=28, totalTasksDone=266. TypeScript: 0 errors.
+
+---
+
 ## Sprint 078 — Evening Summary Empty-Content Fallback (Done 2026-04-14)
 
 **Scope:** Modified `eveningSummaryJob.ts` to send a Vietnamese fallback message to the Telegram market channel when `hasContent === false`, ensuring a complete data-collection failure is never silently swallowed. Previously the 2026-04-13 evening run produced an empty report and sent nothing.

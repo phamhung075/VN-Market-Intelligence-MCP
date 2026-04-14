@@ -4,7 +4,7 @@
 
 ---
 
-## Sprint 079 — Active
+## Sprint 080 — Active
 
 Vision: `SPRINT_GOAL.md`
 
@@ -12,18 +12,13 @@ Vision: `SPRINT_GOAL.md`
 
 | ID | Title | Agent | Layer | Depends On | Branch | Status |
 |----|-------|-------|-------|------------|--------|--------|
-| 1193 | VPS push-prices not persisting to market_prices table | Dev | infrastructure | — | — | Todo |
 | 1194 | Missing MCP tools for Agent 08 Prediction Synthesizer | Dev | interface | — | — | Todo |
 | 1195 | Cascade keyword "hạ nhiệt" disambiguation: interest-rate vs geopolitical | Dev | domain | — | — | Backlog |
-| 1196 | BCTC extraction: VNM/VEA PDFs on disk but financial_reports empty | Dev | application | — | — | Done |
 | 1197 | Cascade seed sentiment inversion: bullish headline classified BEARISH | Dev | domain | — | — | Backlog |
 | 1198 | VND currency/ticker false positive in detectStocksInText | Dev | domain | — | — | Backlog |
 | 1199 | Trading Economics impact scores all 10.0 regardless of VN relevance | Dev | domain | — | — | Backlog |
 | 1200 | Cascade "đầu tư công" missing sentiment polarity check | Dev | domain | — | — | Backlog |
-| 1201 | Banking Q4-2025 BCTC missing: BID, EIB, SHB, VCB (deadline 14/04) | Dev | infrastructure | 1193 ✓ | — | Done |
-| 1202 | FPT/HPG Q4-2025 BCTC missing — VPS BCTC fetcher gap (14 days overdue) | Dev | infrastructure | 1201 ✓ | — | Done |
 | 1203 | Dow Jones +59% spike: add outlier validation for macro indicators | Dev | domain | — | — | Backlog |
-| 1204 | VCB Q1-2025 BCTC all values = 0 (bad record from failed extraction) | Dev | application | — | task/1204-vcb-zero-cleanup | Review |
 | 1205 | get_legal_risk_signals misses "truy tố" prosecution articles | Dev | domain | — | — | Backlog |
 | 1206 | Cascade keyword fix: "đất vàng"→real_estate, "cầu" in "toàn cầu"→no construction | Dev | domain | — | — | Backlog |
 | 1207 | Market-wide cascade confidence cap for non-watchlist company events | Dev | domain | — | — | Backlog |
@@ -36,7 +31,7 @@ Vision: `SPRINT_GOAL.md`
 | 1214 | VNM Middle East dairy exposure missing from Hormuz cascade rules | Dev | domain | — | — | Backlog |
 | 1215 | Bug report dedup: suppress duplicate category within 4h in send_telegram | Dev | infrastructure | — | task/1215-bug-report-dedup | Review |
 
-**WIP:** 0 In Progress. 2 Review (1215, 1204). 3 Done (1196, 1201, 1202).
+**WIP:** 0 In Progress. 1 Review (1215).
 
 ---
 
