@@ -12,9 +12,9 @@ Vision: `SPRINT_GOAL.md`
 
 | ID | Title | Agent | Layer | Depends On | Branch | Status |
 |----|-------|-------|-------|------------|--------|--------|
-| 1190 | Pipeline Watchdog — stale-pipeline Telegram alert | Developer | scheduler | 1189 | task/1190-pipeline-watchdog | In Progress |
+| 1190 | Pipeline Watchdog — stale-pipeline Telegram alert | Developer | scheduler | 1189 | task/1190-pipeline-watchdog | Review |
 
-**WIP:** 1 In Progress.
+**WIP:** 0 In Progress.
 
 ---
 
