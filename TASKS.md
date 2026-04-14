@@ -12,7 +12,7 @@ Vision: `SPRINT_GOAL.md`
 
 | ID | Title | Agent | Layer | Depends On | Branch | Status |
 |----|-------|-------|-------|------------|--------|--------|
-| 1194 | Missing MCP tools for Agent 08 Prediction Synthesizer | Dev | interface | — | — | Todo |
+| 1194 | Missing MCP tools for Agent 08 Prediction Synthesizer | Dev | interface | — | task/1194-agent08-tools | Review |
 | 1195 | Cascade keyword "hạ nhiệt" disambiguation: interest-rate vs geopolitical | Dev | domain | — | — | Backlog |
 | 1197 | Cascade seed sentiment inversion: bullish headline classified BEARISH | Dev | domain | — | — | Backlog |
 | 1198 | VND currency/ticker false positive in detectStocksInText | Dev | domain | — | — | Backlog |
@@ -29,23 +29,11 @@ Vision: `SPRINT_GOAL.md`
 | 1212 | Interest rate cooling seed sentiment should be BULLISH not NEUTRAL | Dev | domain | — | — | Backlog |
 | 1213 | Unicode corruption in Vietnamese analysis text (combining diacritics) | Dev | infrastructure | — | — | Backlog |
 | 1214 | VNM Middle East dairy exposure missing from Hormuz cascade rules | Dev | domain | — | — | Backlog |
-| 1215 | Bug report dedup: suppress duplicate category within 4h in send_telegram | Dev | infrastructure | — | task/1215-bug-report-dedup | Review |
+| 1215 | Bug report dedup: suppress duplicate category within 4h in send_telegram | Dev | infrastructure | — | — | Done |
 
-**WIP:** 0 In Progress. 1 Review (1215).
+**WIP:** 0 In Progress. 0 Review.
 
 ---
 
 ## Task Details (active tasks only — Done tasks archived)
 
-### Task 1215 — Bug report dedup: suppress duplicate category within 4h
-
-**Why:** Analysis agents run every ~15 min and re-report the same bug each cycle until dev team cleans the channel. "hạ nhiệt" bug alone produced 16 identical reports in one evening. BUG channel becomes unreadable noise.
-
-**What:**
-- `extractCategoryFromText(text)` — parse `📋 <category>` line from report text (`telegramReportStore.ts`)
-- `isDuplicateReport(db, text, cooldownSeconds=4h)` — query for open (status=new) report with same category within cooldown (`telegramReportStore.ts`)
-- `sendTelegramBug()` calls dedup check before sending; returns -1 if suppressed (`telegram.ts`)
-- `send_telegram` tool returns descriptive message for -1 (suppressed) vs 0 (failed) (`telegramTools.ts`)
-- 7 unit tests in `src/__tests__/1215-bug-report-dedup.test.ts`
-
-**Done when:** All 7 tests pass, `bun tsc --noEmit` clean, server restarted.
