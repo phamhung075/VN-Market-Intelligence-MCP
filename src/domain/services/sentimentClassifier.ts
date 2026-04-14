@@ -73,6 +73,12 @@ const VN_BULLISH: SentimentKeyword[] = [
   // Task 1212: interest-rate cooling is a dovish / bullish monetary signal
   { word: "hạ nhiệt lãi suất", weight: 2 },
   { word: "lãi suất hạ nhiệt", weight: 2 },
+  // Task 1195: inflation cooling → BULLISH (dovish monetary signal)
+  { word: "lạm phát hạ nhiệt", weight: 2 },
+  { word: "hạ nhiệt lạm phát", weight: 2 },
+  { word: "inflation cooling", weight: 2 },
+  { word: "inflation eased", weight: 2 },
+  { word: "inflation slowed", weight: 1 },
   // Task 1200: positive "đầu tư công" context → BULLISH
   { word: "đẩy mạnh đầu tư công", weight: 2 },
   { word: "tăng đầu tư công", weight: 2 },
@@ -166,6 +172,22 @@ const VN_BEARISH: SentimentKeyword[] = [
   { word: "đầu tư công đình trệ", weight: 2 },
   { word: "đầu tư công giảm", weight: 2 },
   { word: "vốn đầu tư công giảm", weight: 3 },
+  // Task 1195: growth/economy cooling → BEARISH (longer phrases to avoid false positives)
+  // Weight 3 to overcome "tăng trưởng" bullish-2 + net bearish advantage
+  { word: "tốc độ tăng trưởng hạ nhiệt", weight: 4 },
+  { word: "tăng trưởng hạ nhiệt", weight: 3 },
+  { word: "kinh tế hạ nhiệt", weight: 3 },
+  { word: "gdp hạ nhiệt", weight: 3 },
+  { word: "hạ nhiệt tăng trưởng", weight: 3 },
+  { word: "hạ nhiệt kinh tế", weight: 3 },
+  { word: "nhu cầu hạ nhiệt", weight: 2 },
+  { word: "tiêu dùng hạ nhiệt", weight: 2 },
+  { word: "sản xuất hạ nhiệt", weight: 2 },
+  { word: "growth slowing", weight: 2 },
+  { word: "growth slowdown", weight: 2 },
+  { word: "economy cooling", weight: 2 },
+  { word: "gdp slowing", weight: 2 },
+  { word: "demand cooling", weight: 2 },
 ];
 
 /** English bullish keywords */
