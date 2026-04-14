@@ -7,11 +7,17 @@
  * Layer: infrastructure/fetchers — may use HTTP libs, must not import domain services.
  *
  * Error handling: never throws — returns [] on any error.
+ *
+ * Task 1225: Added circuit breaker (breakers.congbao) to stop flooding on geo-block.
+ * congbao.chinhphu.vn is a Vietnamese government site geo-blocked from France;
+ * repeated connection errors were silently accumulating. The circuit breaker backs
+ * off after 5 consecutive failures and waits 5 minutes before retrying.
  */
 
 import * as cheerio from "cheerio";
 import { logger } from "../logger.js";
 import { globalRateLimiter } from "../../domain/services/rateLimiter.js";
+import { breakers } from "../circuitBreakerRegistry.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -68,7 +74,11 @@ async function makeDefaultHttpClient(): Promise<HttpClient> {
 // Parsing
 // ─────────────────────────────────────────────────────────────────────────────
 
-function parseCongBaoHtml(html: string): PolicyDocument[] {
+/**
+ * Parse HTML from Công Báo Chính Phủ and extract policy documents.
+ * Exported for unit testing.
+ */
+export function parseCongBaoHtml(html: string): PolicyDocument[] {
   const documents: PolicyDocument[] = [];
 
   try {
@@ -134,6 +144,9 @@ function parseCongBaoHtml(html: string): PolicyDocument[] {
 /**
  * Fetch and parse recent policy documents from Công Báo Chính Phủ.
  *
+ * Task 1225: Wrapped in breakers.congbao so consecutive geo-block failures
+ * (ECONNREFUSED from France) open the circuit and prevent log flooding.
+ *
  * @param httpClient - Optional HTTP client for testing.
  * @returns Promise resolving to an array of PolicyDocument (empty on error).
  */
@@ -151,7 +164,12 @@ export async function fetchCongBao(httpClient?: HttpClient): Promise<PolicyDocum
 
   try {
     logger.debug("[congbao] fetching policy documents", { url: SEARCH_URL });
-    const html = await client.get(SEARCH_URL);
+    // Circuit breaker: after 5 consecutive failures (geo-block / timeout),
+    // opens the circuit and skips fetches for resetTimeoutMs to prevent
+    // log flooding from the France VPS calling a VN government portal.
+    const html = httpClient
+      ? await client.get(SEARCH_URL)
+      : await breakers.congbao.execute(() => client.get(SEARCH_URL));
     const documents = parseCongBaoHtml(html);
     logger.info("[congbao] fetched policy documents", { count: documents.length });
     return documents;

@@ -7,11 +7,16 @@
  * Layer: infrastructure/fetchers — may use HTTP libs, must not import domain services.
  *
  * Error handling: never throws — returns [] on any error.
+ *
+ * Task 1225: Added circuit breaker (breakers.sbvCircular) to stop flooding
+ * on geo-block. sbv.gov.vn is geo-accessible but slow; the circuit breaker
+ * backs off after 5 consecutive failures and waits 5 minutes before retrying.
  */
 
 import * as cheerio from "cheerio";
 import { logger } from "../logger.js";
 import { globalRateLimiter } from "../../domain/services/rateLimiter.js";
+import { breakers } from "../circuitBreakerRegistry.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -88,7 +93,11 @@ function classifyCircular(title: string): string {
   return "Khác";
 }
 
-function parseSbvHtml(html: string): SbvCircular[] {
+/**
+ * Parse HTML from sbv.gov.vn and extract NHNN circulars.
+ * Exported for unit testing.
+ */
+export function parseSbvHtml(html: string): SbvCircular[] {
   const circulars: SbvCircular[] = [];
 
   try {
@@ -148,6 +157,9 @@ function parseSbvHtml(html: string): SbvCircular[] {
 /**
  * Fetch and parse recent circulars from the State Bank of Vietnam (NHNN).
  *
+ * Task 1225: Wrapped in breakers.sbvCircular so repeated timeouts or
+ * connection errors open the circuit and stop log flooding.
+ *
  * @param httpClient - Optional HTTP client for testing.
  * @returns Promise resolving to an array of SbvCircular (empty on error).
  */
@@ -165,7 +177,11 @@ export async function fetchSbvCirculars(httpClient?: HttpClient): Promise<SbvCir
 
   try {
     logger.debug("[sbvCircular] fetching NHNN circulars", { url: CIRCULARS_URL });
-    const html = await client.get(CIRCULARS_URL);
+    // Circuit breaker: after 5 consecutive failures opens the circuit and
+    // skips fetches for resetTimeoutMs to prevent log flooding.
+    const html = httpClient
+      ? await client.get(CIRCULARS_URL)
+      : await breakers.sbvCircular.execute(() => client.get(CIRCULARS_URL));
     const circulars = parseSbvHtml(html);
     logger.info("[sbvCircular] fetched NHNN circulars", { count: circulars.length });
     return circulars;
