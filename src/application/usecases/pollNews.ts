@@ -83,6 +83,70 @@ export interface PollNewsOptions {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Insider family buying detector (Task 1260)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Vietnamese keyword patterns for insider / related-party share accumulation.
+ *
+ * Returns true when an article title contains BOTH:
+ *   (a) a family-relation term (con trai, con gái, vợ, chồng, người nhà, thành viên gia đình, etc.)
+ *       OR a related-party term (cổ đông lớn, người thân, lãnh đạo)
+ *   AND
+ *   (b) a buying-action term (gom cổ phiếu, mua gom, tích lũy, mua vào, đăng ký mua)
+ *
+ * Exported for unit testing.
+ */
+export function detectInsiderFamilyBuying(title: string): boolean {
+  const lower = title.toLowerCase();
+
+  const FAMILY_RELATION_PATTERNS = [
+    "con trai",
+    "con gái",
+    "con gai",
+    "vợ ",
+    "vo ",
+    "chồng ",
+    "chong ",
+    "người nhà",
+    "nguoi nha",
+    "thành viên gia đình",
+    "thanh vien gia dinh",
+    "người thân",
+    "nguoi than",
+    "anh trai",
+    "em trai",
+    "anh gái",
+    "em gái",
+    "bố ",
+    "mẹ ",
+    "cha ",
+    "me ",
+  ];
+
+  const BUYING_ACTION_PATTERNS = [
+    "gom cổ phiếu",
+    "gom co phieu",
+    "mua gom",
+    "tích lũy cổ phiếu",
+    "tich luy co phieu",
+    "mua vào",
+    "mua vao",
+    "đăng ký mua",
+    "dang ky mua",
+    "mua thêm",
+    "mua them",
+    "gom thêm",
+    "gom them",
+  ];
+
+  const hasFamily = FAMILY_RELATION_PATTERNS.some((p) => lower.includes(p));
+  const hasBuying = BUYING_ACTION_PATTERNS.some((p) => lower.includes(p));
+
+  return hasFamily && hasBuying;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Signal deduplication — prevents N× news_mention spam for the same stock
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -540,12 +604,21 @@ export async function pollNews(options: PollNewsOptions = {}): Promise<PollNewsR
           if (!directMention && currentCount >= MAX_SIGNALS_PER_STOCK_PER_CYCLE) continue;
           stockSignalCount.set(impact.actionCode, currentCount + 1);
 
+          // Task 1260: Elevate insider/family buying events from news_mention LOW
+          // to insider_trading MEDIUM. Vietnamese patterns: "con trai gom cổ phiếu",
+          // "người nhà mua vào", etc. These are related-party buying signals — higher
+          // investment significance than generic news mentions.
+          const isInsiderFamily = detectInsiderFamilyBuying(entry.sourceTitle);
           allSignals.push({
-            type: "news_mention",
-            severity: impact.confidence >= 0.8 ? "high" : impact.confidence >= 0.6 ? "medium" : "low",
+            type: isInsiderFamily ? "insider_trading" : "news_mention",
+            severity: isInsiderFamily
+              ? "medium"
+              : impact.confidence >= 0.8 ? "high" : impact.confidence >= 0.6 ? "medium" : "low",
             actionCode: impact.actionCode,
-            message: `${entry.sourceTitle} — ${impact.reasoning}`,
-            confidence: impact.confidence,
+            message: isInsiderFamily
+              ? `[Insider/family buying] ${entry.sourceTitle} — ${impact.reasoning}`
+              : `${entry.sourceTitle} — ${impact.reasoning}`,
+            confidence: isInsiderFamily ? Math.max(impact.confidence, 0.75) : impact.confidence,
             detectedAt: entry.createdAt,
           });
         }
