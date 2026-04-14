@@ -71,6 +71,21 @@ function seedPrice(
   `).run(code, price, price * changePct / 100, changePct, 1_000_000, new Date().toISOString(), exchange);
 }
 
+function seedStalePrice(
+  code: string,
+  price: number,
+  changePct: number,
+  daysAgo: number,
+  exchange: string = "HOSE",
+): void {
+  const db = getDb();
+  const staleDate = new Date(Date.now() - daysAgo * 24 * 3_600_000).toISOString();
+  db.prepare(`
+    INSERT OR REPLACE INTO market_prices (code, price, change_amt, change_pct, volume, updated_at, exchange)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+  `).run(code, price, price * changePct / 100, changePct, 1_000_000, staleDate, exchange);
+}
+
 function seedAlert(
   code: string,
   severity: "low" | "medium" | "high" | "critical",
@@ -287,5 +302,52 @@ describe("Task 239 — get_market_context compound tool", () => {
     expect(text).toContain("=== SYSTEM STATUS ===");
     // Should contain the pending alert count (unread alerts in DB)
     expect(text).toMatch(/\d+ alert/);
+  });
+
+  // ── Task 1253 — stale price staleness warning ────────────────────────────
+  it("Task 1253: marks price >24h old as [STALE] and shows summary warning", async () => {
+    seedWatchlistStock("VCB", "HOSE", "banking");
+    // Seed a price that is 18 days old (simulates the reported VCB bug)
+    seedStalePrice("VCB", 88_000, 3.53, 18);
+
+    const result = await callTool(server, "get_market_context", { hours_back: 24 });
+    const text = getText(result);
+
+    expect(text).toContain("[STALE]");
+    expect(text).toContain("stale (>24h)");
+    expect(text).toContain("Do NOT use for intraday signals");
+  });
+
+  it("Task 1253: fresh price (<24h) does NOT show [STALE] tag", async () => {
+    seedWatchlistStock("VCB", "HOSE", "banking");
+    // Fresh price — just now
+    seedPrice("VCB", 59_300, 0.17);
+
+    const result = await callTool(server, "get_market_context", { hours_back: 24 });
+    const text = getText(result);
+
+    expect(text).not.toContain("[STALE]");
+    expect(text).not.toContain("stale (>24h)");
+  });
+
+  it("Task 1253: mixed fresh+stale prices — only stale ones get [STALE] flag", async () => {
+    seedWatchlistStock("VCB", "HOSE", "banking");
+    seedWatchlistStock("FPT", "HOSE", "tech");
+    seedStalePrice("VCB", 88_000, 3.53, 18); // 18 days stale
+    seedPrice("FPT", 145_000, 1.0);          // fresh
+
+    const result = await callTool(server, "get_market_context", { hours_back: 24 });
+    const text = getText(result);
+
+    // VCB should be stale, FPT should not
+    const watchlistSection = (text.split("=== MACRO")[0] ?? "")
+      .split("=== WATCHLIST")[1] ?? "";
+    const vcbLine = watchlistSection.split("\n").find((l) => l.includes("VCB")) ?? "";
+    const fptLine = watchlistSection.split("\n").find((l) => l.includes("FPT")) ?? "";
+
+    expect(vcbLine).toContain("[STALE]");
+    expect(fptLine).not.toContain("[STALE]");
+    // Summary warning should mention exactly 1 stale price
+    expect(text).toContain("1 price(s) are stale");
   });
 });

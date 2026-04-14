@@ -147,6 +147,23 @@ function formatPriceChange(price: number | null, changePct: number | null): stri
   return `${priceStr} (${sign}${changePct.toFixed(2)}%)`;
 }
 
+/**
+ * Threshold (ms) above which a price timestamp is considered stale.
+ * 24 hours — prices older than this should be flagged [STALE] in the context
+ * output so that analysis agents know not to rely on them for intraday signals.
+ */
+const PRICE_STALE_THRESHOLD_MS = 24 * 3_600_000;
+
+/**
+ * Return true when the ISO-string timestamp is older than PRICE_STALE_THRESHOLD_MS.
+ * Returns false for null/undefined (no timestamp = unknown age, warn separately).
+ */
+function isPriceStale(updatedAt: string | null): boolean {
+  if (!updatedAt) return false;
+  const age = Date.now() - new Date(updatedAt).getTime();
+  return age > PRICE_STALE_THRESHOLD_MS;
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Section builders
 // ─────────────────────────────────────────────────────────────────────────────
@@ -182,14 +199,20 @@ function buildWatchlistSection(db: ReturnType<typeof getDb>): string {
     return lines.join("\n");
   }
 
+  let staleCount = 0;
   for (const r of rows) {
     const priceStr = formatPriceChange(r.price ?? null, r.change_pct ?? null);
     const updatedStr = r.price_updated
       ? r.price_updated.slice(0, 16).replace("T", " ")
       : "no price data";
+    const staleFlag = isPriceStale(r.price_updated) ? " [STALE]" : "";
+    if (staleFlag) staleCount++;
     lines.push(
-      `${r.code.padEnd(6)} [${r.exchange}] ${r.domain.padEnd(14)} ${priceStr}  (as of ${updatedStr})`,
+      `${r.code.padEnd(6)} [${r.exchange}] ${r.domain.padEnd(14)} ${priceStr}  (as of ${updatedStr})${staleFlag}`,
     );
+  }
+  if (staleCount > 0) {
+    lines.push(`⚠ ${staleCount} price(s) are stale (>24h). Do NOT use for intraday signals or daily % calculations.`);
   }
 
   return lines.join("\n");
