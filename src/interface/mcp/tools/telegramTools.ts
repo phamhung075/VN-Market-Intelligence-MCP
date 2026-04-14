@@ -84,6 +84,8 @@ export function registerTelegramTools(server: McpServer): void {
                 type: "text" as const,
                 text: msgId > 0
                   ? `Message sent to BUG channel. message_id: ${msgId}`
+                  : msgId === -1
+                  ? "BUG report suppressed — duplicate category already open within 4h. No action needed."
                   : "Failed — check TELEGRAM_BOT_TOKEN / TELEGRAM_REPORT_BUG_CHANNEL_ID env vars",
               },
             ],

@@ -23,7 +23,7 @@ import { detectSensitiveDates } from "../../domain/services/priceNewsValidator.j
 import { createLogger } from "../logger.js";
 import { getPatternSummary } from "../../application/usecases/getPatternSummary.js";
 import { getDb } from "../db/index.js";
-import { insertReport } from "../db/telegramReportStore.js";
+import { insertReport, isDuplicateReport, extractCategoryFromText } from "../db/telegramReportStore.js";
 import {
   insertMarketMessage,
   type MarketMessageAgent,
@@ -281,12 +281,32 @@ export async function sendTelegramWork(
  * Analysis → dev bug reports. Persists the message in the telegram_reports
  * table so the Dev Team autonomous loop can pick it up.
  *
- * @returns the Telegram message_id on success (for later deletion), 0 on failure.
+ * Dedup (Task 1215): if an open report with the same category already exists
+ * within the last 4 hours, the send is suppressed and -1 is returned.
+ *
+ * @returns the Telegram message_id on success (for later deletion),
+ *          0 on Telegram API failure,
+ *          -1 if suppressed as a duplicate.
  */
 export async function sendTelegramBug(
   text: string,
   options: SendTelegramOptions = {},
 ): Promise<number> {
+  // Dedup check — skip if same category has an open report within 4 h.
+  try {
+    const db = getDb();
+    if (isDuplicateReport(db, text)) {
+      const cat = extractCategoryFromText(text) ?? "unknown";
+      log.info(`[telegram] BUG report suppressed (duplicate category within 4h: ${cat})`);
+      return -1;
+    }
+  } catch (err) {
+    // Non-fatal — proceed with send if dedup check fails.
+    log.warn("[telegram] dedup check failed, proceeding with send", {
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
+
   const result = await coreSend("bug", text, options);
   if (!result.ok || result.messageId <= 0) return 0;
 
