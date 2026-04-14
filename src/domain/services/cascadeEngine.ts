@@ -1158,6 +1158,112 @@ const SECTOR_RULES: SectorRule[] = [
     title: "USD yếu — dòng vốn ngoại quay lại thị trường mới nổi",
   },
 
+  // ═══════════════════════════════════════════════════════════════════════════
+  // OIL_SUPPLY_SHOCK_RULES (Task 1246)
+  // Hormuz blockade / Suez closure / OPEC cut → sector cascades
+  // Must appear BEFORE generic geopolitical / oil-price rules so that
+  // the specific supply-shock context takes priority (first-match-wins per domain).
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // ── Oil supply shock → oil_gas BULLISH (price spike benefit for upstream) ─
+  {
+    keywords: [
+      "phong tỏa eo biển hormuz",
+      "phong tỏa hormuz",
+      "eo biển hormuz bị phong tỏa",
+      "hormuz blockade",
+      "strait of hormuz blocked",
+      "strait of hormuz blockade",
+      "hormuz strait blockade",
+      "hormuz strait blocked",
+      "suez closure",
+      "suez canal closed",
+      "suez canal closure",
+      "opec cắt giảm",
+      "opec cut",
+      "opec production cut",
+      "opec+ cut",
+      "gián đoạn nguồn cung dầu",
+      "oil supply disruption",
+      "oil supply shock",
+      "crude oil supply shock",
+    ],
+    domain: "oil_gas",
+    direction: "up",
+    confidence: 0.88,
+    title: "Gián đoạn nguồn cung dầu (Hormuz/Suez/OPEC) — giá dầu tăng mạnh, tích cực cho PVD, PVS, GAS",
+  },
+
+  // ── Oil supply shock → aviation BEARISH (jet fuel cost spike) ─────────────
+  {
+    keywords: [
+      "phong tỏa eo biển hormuz",
+      "phong tỏa hormuz",
+      "hormuz blockade",
+      "strait of hormuz blocked",
+      "strait of hormuz blockade",
+      "hormuz strait blockade",
+      "hormuz strait blocked",
+      "suez canal closed",
+      "suez canal closure",
+      "suez closure",
+      "opec cắt giảm",
+      "opec cut",
+      "opec production cut",
+      "gián đoạn nguồn cung dầu",
+      "oil supply disruption",
+      "oil supply shock",
+    ],
+    domain: "aviation",
+    direction: "down",
+    confidence: 0.84,
+    title: "Gián đoạn nguồn cung dầu — chi phí nhiên liệu hàng không tăng mạnh (VJC, HVN chịu áp lực)",
+  },
+
+  // ── Oil supply shock → logistics BEARISH (route disruption + fuel cost) ────
+  {
+    keywords: [
+      "phong tỏa eo biển hormuz",
+      "phong tỏa hormuz",
+      "hormuz blockade",
+      "strait of hormuz blocked",
+      "strait of hormuz blockade",
+      "hormuz strait blockade",
+      "hormuz strait blocked",
+      "suez canal closed",
+      "suez canal closure",
+      "suez closure",
+      "gián đoạn nguồn cung dầu",
+      "oil supply disruption",
+      "oil supply shock",
+    ],
+    domain: "logistics",
+    direction: "down",
+    confidence: 0.82,
+    title: "Gián đoạn nguồn cung dầu — tuyến vận tải bị gián đoạn, chi phí tăng (GMD, PHP chịu áp lực)",
+  },
+
+  // ── Oil supply shock → securities BEARISH (market-wide risk-off) ───────────
+  {
+    keywords: [
+      "phong tỏa eo biển hormuz",
+      "phong tỏa hormuz",
+      "eo biển hormuz bị phong tỏa",
+      "hormuz blockade",
+      "strait of hormuz blocked",
+      "strait of hormuz blockade",
+      "hormuz strait blockade",
+      "hormuz strait blocked",
+      "gián đoạn nguồn cung dầu",
+      "oil supply shock",
+      "crude oil supply shock",
+    ],
+    domain: "securities",
+    direction: "down",
+    confidence: 0.78,
+    title: "Gián đoạn nguồn cung dầu — rủi ro địa chính trị cao, tâm lý risk-off ảnh hưởng VN-Index",
+  },
+
   // ── Geopolitical DE-ESCALATION (MUST be before escalation — first match wins) ──
   // When news contains BOTH "war" and "peace", de-escalation wins because
   // peace/ceasefire keywords are checked first.
