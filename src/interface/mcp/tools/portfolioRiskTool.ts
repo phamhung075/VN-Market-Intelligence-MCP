@@ -21,6 +21,7 @@ import {
   type PositionSnapshot,
   type DailyPriceRow,
 } from "../../../domain/services/portfolioRiskCalculator.js";
+import { currentPriceQuery } from "../../../infrastructure/db/priceQueries.js";
 import { logger } from "../../../infrastructure/logger.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -87,14 +88,15 @@ export function registerPortfolioRiskTool(server: McpServer): void {
         const db = getDb();
 
         // ── 1. Load open positions ─────────────────────────────────────────────
+        // Use currentPriceQuery to COALESCE market_prices → daily_ohlcv so that
+        // off-hours / VPS-gap periods still return a valid price (bug 1224).
         let positionRows: PositionRow[] = [];
         try {
           positionRows = db
             .query<PositionRow, []>(
               `SELECT p.code, p.shares, p.avg_price,
-                      mp.price AS current_price
+                      ${currentPriceQuery("p.code")} AS current_price
                FROM positions p
-               LEFT JOIN market_prices mp ON mp.code = p.code
                WHERE p.closed_at IS NULL
                ORDER BY p.opened_at ASC`,
             )
