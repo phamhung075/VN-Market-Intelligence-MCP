@@ -761,8 +761,12 @@ function computeConfidence(level: AnalysisLevel, keywordCount: number): number {
  * @returns    - Fully populated AnalysisEntry ready for the cascade engine
  */
 export function normalizeNews(item: RssItem): AnalysisEntry {
-  const title = decodeHtmlEntities(item.title?.trim() ?? "");
-  const content = decodeHtmlEntities(item.content?.trim() ?? "");
+  // Task 1213: normalize all incoming text to NFC before any processing.
+  // Vietnamese text can arrive in NFD (combining diacritics) form from RSS
+  // feeds, SSC portal, and VPS proxy scripts. NFD form breaks keyword matching
+  // because "Việt Nam" NFD !== "Việt Nam" NFC.
+  const title = decodeHtmlEntities((item.title?.trim() ?? "").normalize("NFC"));
+  const content = decodeHtmlEntities((item.content?.trim() ?? "").normalize("NFC"));
   const source = item.source?.toLowerCase() ?? "";
 
   // Combined lowercase text for keyword scanning
