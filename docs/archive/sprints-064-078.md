@@ -189,3 +189,13 @@
 | ID | Title | Layer | Status |
 |----|-------|-------|--------|
 | 1191 | Replace TE stream.ashx with public RSS feeds | infrastructure | Done |
+
+---
+
+## Sprint 078 — Evening Summary Empty-Content Fallback (Done 2026-04-14)
+
+1 task done. Modified `eveningSummaryJob.ts` to send a Vietnamese fallback Telegram market-channel message when `hasContent === false`, making a complete data-collection failure distinguishable from normal operation. Added injectable `sendFn` parameter to `runEveningSummary` for test isolation. totalTasksDone 260 → 261.
+
+| ID | Title | Layer | Status |
+|----|-------|-------|--------|
+| 1192 | Evening summary empty-content fallback Telegram message | interface/scheduler | Done |

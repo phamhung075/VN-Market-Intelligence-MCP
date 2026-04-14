@@ -4,6 +4,18 @@
 > Index → `docs/TASKS_ARCHIVE.md`
 > Current sprint + stats → `docs/data/project-stats.json`
 
+## Sprint 078 — Evening Summary Empty-Content Fallback (Done 2026-04-14)
+
+**Scope:** Modified `eveningSummaryJob.ts` to send a Vietnamese fallback message to the Telegram market channel when `hasContent === false`, ensuring a complete data-collection failure is never silently swallowed. Previously the 2026-04-13 evening run produced an empty report and sent nothing.
+
+**Key changes:**
+- `src/scheduler/eveningSummaryJob.ts`: added injectable `sendFn` parameter to `runEveningSummary`; in the `hasContent === false` else-branch, calls `sendFn(channel="market")` with a Vietnamese message directing users to run `get_pipeline_health` to diagnose the pipeline gap.
+- `src/__tests__/1192-evening-summary-empty-fallback.test.ts`: 4 acceptance-criteria tests — fallback fires when no content, fallback message is Vietnamese, references `get_pipeline_health`, normal path sends regular summary not fallback.
+
+**Stats:** toolCount=97, schedulerFileCount=28, totalTasksDone=261. TypeScript: 0 errors.
+
+---
+
 ## Sprint 077 — TE RSS Fallback Chain (Done 2026-04-14)
 
 **Scope:** Replaced the broken session-gated `stream.ashx` endpoint in `tradingEconomicsStream.ts` with a sequential RSS fallback chain restoring Level 1/2 macro news to the intelligence cycle.
