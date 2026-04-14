@@ -934,23 +934,54 @@ export async function createBunServer(
           insertStmt.run(code, targetYear, targetQuarter);
         }
 
-        // Return pending queue items (max 10)
+        // Return pending queue items (max 10) — include cached source_url
         const pendingRows = db.prepare(
-          `SELECT action_code, period_year, period_quarter FROM bctc_vps_queue
+          `SELECT action_code, period_year, period_quarter, source_url FROM bctc_vps_queue
            WHERE status = 'pending' AND attempts < 5
            ORDER BY created_at ASC LIMIT 10`,
-        ).all() as { action_code: string; period_year: number; period_quarter: string }[];
+        ).all() as { action_code: string; period_year: number; period_quarter: string; source_url: string | null }[];
 
-        const queue = pendingRows.map((r) => ({
+        // Task 1218: enrich pending items with PDF URLs from SSC portal
+        // so VPS can fetch directly without re-discovery
+        const { enrichQueueWithPdfUrls, buildQueueSourceHints } = await import(
+          "../../application/usecases/bctcQueueEnricher.js"
+        );
+
+        // Injectable listDocs for production (uses listSscDocuments)
+        const listDocsForEnrich = async (code: string, quarter: string, year: number) => {
+          try {
+            const { listSscDocuments } = await import("../../infrastructure/fetchers/ssc.js");
+            return listSscDocuments(code, "quarterly", year);
+          } catch {
+            return [];
+          }
+        };
+
+        const enriched = await enrichQueueWithPdfUrls(
+          pendingRows.map((r) => ({
+            action_code: r.action_code,
+            period_year: r.period_year,
+            period_quarter: r.period_quarter,
+            source_url: r.source_url,
+          })),
+          listDocsForEnrich,
+        );
+
+        // Persist discovered PDF URLs back to the queue table
+        const updateSourceUrl = db.prepare(
+          `UPDATE bctc_vps_queue SET source_url = ? WHERE action_code = ? AND period_year = ? AND period_quarter = ? AND source_url IS NULL`,
+        );
+        for (const item of enriched) {
+          if (item.source_url) {
+            updateSourceUrl.run(item.source_url, item.action_code, item.period_year, item.period_quarter);
+          }
+        }
+
+        const queue = enriched.map((r) => ({
           action_code: r.action_code,
           period_year: r.period_year,
           period_quarter: r.period_quarter,
-          source_hints: [
-            `https://congbothongtin.ssc.gov.vn/faces/NewsSearch`,
-            `https://www.hsx.vn/Modules/Listed/Web/StockDisclosure/${r.action_code}`,
-            `https://hnx.vn/cong-bo-thong-tin/cong-ty-co-phan.html?StockCode=${r.action_code}`,
-            `https://upcom.hnx.vn/cong-bo-thong-tin/cong-ty-co-phan.html?StockCode=${r.action_code}`,
-          ],
+          source_hints: buildQueueSourceHints(r),
         }));
 
         res.writeHead(200, { "Content-Type": "application/json" });
