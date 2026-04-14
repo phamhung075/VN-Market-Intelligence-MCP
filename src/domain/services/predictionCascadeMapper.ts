@@ -344,7 +344,7 @@ const KEYWORD_RULES: KeywordRule[] = [
         "taiwan semiconductor", "tsmc conflict",
       ],
     ],
-    sectors: ["tech", "automotive", "electronics"],
+    sectors: ["tech", "automotive"],
     stocks: ["FPT", "VEA", "GEX"],
     direction: "bearish",
   },
