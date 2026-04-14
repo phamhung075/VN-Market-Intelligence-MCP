@@ -1,19 +1,22 @@
 /**
- * Infrastructure — Trading Economics News Stream Fetcher
+ * Infrastructure — Trading Economics News Fetcher (RSS strategy)
  *
- * Fetches global macro/market news from the Trading Economics live stream.
- * API: https://tradingeconomics.com/ws/stream.ashx
+ * Fetches global macro/market news using three free public RSS feeds with
+ * sequential fallback, replacing the defunct session-gated stream.ashx endpoint.
  *
- * This provides Level 1 (global) and Level 2 (country) intelligence for the
- * causal cascade: Fed rate decisions, oil prices, commodity moves, GDP data,
- * inflation, stock market moves — all with country, category, and importance.
+ * Strategy:
+ *   1. MarketWatch top stories RSS — if ≥1 item → done.
+ *   2. Google News: global economy / central banks / inflation — if ≥1 item → done.
+ *   3. Google News: financial markets / commodities / USD-VND exchange rate.
+ *   4. All empty → return [] (never throws).
  *
- * Items are normalized to RssItem for compatibility with pollNews pipeline.
+ * Items are normalized to RssItem for compatibility with the pollNews pipeline.
  *
  * Layer: infrastructure/fetchers — may use HTTP libs, must not import domain/.
  */
 
-import type { RssItem } from "./rss.js";
+import { parseRssFeed, type RssItem } from "./rss.js";
+import type { HttpClient } from "./ssc.js";
 import { logger } from "../logger.js";
 import { globalRateLimiter } from "../../domain/services/rateLimiter.js";
 
@@ -21,34 +24,89 @@ import { globalRateLimiter } from "../../domain/services/rateLimiter.js";
 // Constants
 // ---------------------------------------------------------------------------
 
-/** Trading Economics stream AJAX endpoint. */
-const TE_STREAM_URL = "https://tradingeconomics.com/ws/stream.ashx";
+/** Feed 1: MarketWatch top stories RSS. */
+const MW_RSS_URL =
+  "https://feeds.marketwatch.com/marketwatch/topstories/";
+
+/** Feed 2: Google News — global economy, central banks, inflation. */
+const GNEWS_MACRO_URL =
+  "https://news.google.com/rss/search?q=global+economy+OR+central+bank+OR+interest+rate+OR+inflation&hl=en";
+
+/** Feed 3: Google News — financial markets, commodities, USD/VND. */
+const GNEWS_MARKETS_URL =
+  "https://news.google.com/rss/search?q=financial+markets+OR+commodities+OR+USD+VND+exchange+rate&hl=en";
 
 /** Source tag for all items from this fetcher. */
 const TE_SOURCE = "tradingeconomics";
 
-/** Default number of items to fetch per call. */
-const DEFAULT_LIMIT = 30;
-
-/** HTTP timeout in milliseconds. */
-const TIMEOUT_MS = 15_000;
-
 // ---------------------------------------------------------------------------
-// Response types (internal)
+// Default HTTP client (axios, lazy-imported)
 // ---------------------------------------------------------------------------
 
-/** Shape of a single item from the stream.ashx API. */
-interface TEStreamItem {
-  ID?: number;
-  title?: string;
-  description?: string;
-  url?: string;
-  author?: string;
-  country?: string;
-  category?: string;
-  importance?: number; // 1-3 scale (3 = most important)
-  date?: string;       // ISO 8601
-  image?: string | null;
+/**
+ * Creates the default production HTTP client backed by axios.
+ * Lazy-imported so tests that inject a mock never load axios.
+ */
+async function makeDefaultHttpClient(): Promise<HttpClient> {
+  const axiosModule = await import("axios");
+  const axios = axiosModule.default;
+
+  return {
+    async get(url: string): Promise<string> {
+      const response = await axios.get<string>(url, {
+        headers: {
+          // MarketWatch and Google News block bot-like UAs with 403 — use a browser UA
+          "User-Agent":
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+          Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+          "Accept-Language": "en-US,en;q=0.9",
+        },
+        timeout: 15_000,
+        responseType: "text",
+        maxRedirects: 5,
+      });
+      return response.data;
+    },
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Internal helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Attempts to fetch and parse an RSS feed from the given URL.
+ * Returns a tagged array of RssItem, or an empty array on any failure.
+ *
+ * @param url       - RSS feed URL to fetch.
+ * @param sourceTag - Source identifier to stamp onto every returned item.
+ * @param client    - HTTP client to use for the request.
+ */
+async function tryFetchFeed(
+  url: string,
+  sourceTag: string,
+  client: HttpClient,
+): Promise<RssItem[]> {
+  try {
+    logger.debug("[te-rss] fetching RSS feed", { url, source: sourceTag });
+    const xml = await client.get(url);
+    const items = parseRssFeed(xml);
+
+    if (items.length === 0) {
+      logger.debug("[te-rss] empty feed result", { url, source: sourceTag });
+      return [];
+    }
+
+    const tagged = items.map((item) => ({ ...item, source: sourceTag }));
+    logger.info("[te-rss] fetched RSS items", { source: sourceTag, count: tagged.length });
+    return tagged;
+  } catch (err) {
+    logger.warn("[te-rss] failed to fetch RSS feed", {
+      url,
+      error: err instanceof Error ? err.message : String(err),
+    });
+    return [];
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -56,93 +114,48 @@ interface TEStreamItem {
 // ---------------------------------------------------------------------------
 
 /**
- * Fetches the latest news from the Trading Economics global stream.
+ * Fetches global macro/market news from public RSS feeds with sequential fallback.
  *
- * Returns items as RssItem[] for direct integration with pollNews pipeline.
- * The `content` field includes country and category metadata for cascade engine.
+ * Strategy:
+ *   1. MarketWatch top stories. If ≥1 item → done.
+ *   2. Google News global economy / central banks / inflation. If ≥1 item → done.
+ *   3. Google News financial markets / commodities / USD-VND. If ≥1 item → done.
+ *   4. All empty → return [] (never throws).
  *
- * @param limit - Max number of items to fetch (default: 30)
- * @returns Array of RssItem tagged with source = 'tradingeconomics'. Empty on error.
+ * @param httpClient - Optional HTTP client; defaults to an axios-backed client.
+ *                     Inject a mock in tests to avoid real network calls.
+ * @returns Promise resolving to an array of RssItem (empty on total failure).
  */
 export async function fetchTradingEconomicsStream(
-  limit = DEFAULT_LIMIT,
+  httpClient?: HttpClient,
 ): Promise<RssItem[]> {
-  // Rate limit guard — skip if called too soon
-  if (!globalRateLimiter.canCall("tradingeconomics.com")) {
-    logger.debug("[te-stream] rate-limited — skipping fetch", {
-      waitMs: globalRateLimiter.getWaitMs("tradingeconomics.com"),
+  // Rate limit guard — skip if called too soon (test mode bypasses via injected httpClient)
+  if (!httpClient && !globalRateLimiter.canCall("tradingeconomics-rss")) {
+    logger.debug("[te-rss] rate-limited — skipping fetch", {
+      waitMs: globalRateLimiter.getWaitMs("tradingeconomics-rss"),
     });
     return [];
   }
 
-  globalRateLimiter.recordCall("tradingeconomics.com");
+  const client = httpClient ?? (await makeDefaultHttpClient());
 
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
+  if (!httpClient) globalRateLimiter.recordCall("tradingeconomics-rss");
 
-  try {
-    const url = `${TE_STREAM_URL}?start=0&size=${limit}`;
+  // Step 1: MarketWatch top stories
+  const feed1 = await tryFetchFeed(MW_RSS_URL, TE_SOURCE, client);
+  if (feed1.length > 0) return feed1;
 
-    logger.debug("[te-stream] fetching news stream", { url, limit });
+  // Step 2: Google News — global economy / central banks / inflation
+  logger.info("[te-rss] Feed 1 empty or failed — trying Feed 2 (GNEWS_MACRO)");
+  const feed2 = await tryFetchFeed(GNEWS_MACRO_URL, TE_SOURCE, client);
+  if (feed2.length > 0) return feed2;
 
-    const response = await fetch(url, {
-      headers: {
-        "User-Agent":
-          "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
-        Accept: "application/json",
-        Referer: "https://tradingeconomics.com/stream",
-      },
-      signal: controller.signal,
-    });
+  // Step 3: Google News — financial markets / commodities / USD-VND
+  logger.info("[te-rss] Feed 2 empty or failed — trying Feed 3 (GNEWS_MARKETS)");
+  const feed3 = await tryFetchFeed(GNEWS_MARKETS_URL, TE_SOURCE, client);
+  if (feed3.length > 0) return feed3;
 
-    if (!response.ok) {
-      throw new Error(`TE stream HTTP ${response.status}`);
-    }
-
-    const data: TEStreamItem[] = await response.json();
-
-    if (!Array.isArray(data)) {
-      logger.warn("[te-stream] unexpected response format");
-      return [];
-    }
-
-    const items: RssItem[] = [];
-
-    for (const item of data) {
-      if (!item.title) continue;
-
-      // Build enriched content with metadata for cascade engine
-      const country = item.country ?? "Global";
-      const category = item.category ?? "";
-      const importance = item.importance ?? 1;
-      const description = item.description ?? "";
-
-      // Prefix content with structured metadata so cascade engine can parse it
-      const content = `[${country}] [${category}] [importance:${importance}] ${description}`;
-
-      items.push({
-        title: item.title,
-        url: item.url
-          ? `https://tradingeconomics.com${item.url}`
-          : `https://tradingeconomics.com/stream#${item.ID ?? ""}`,
-        publishedAt: item.date ?? new Date().toISOString(),
-        content,
-        source: TE_SOURCE,
-      });
-    }
-
-    logger.info("[te-stream] fetched stream items", {
-      count: items.length,
-      countries: [...new Set(data.map((d) => d.country).filter(Boolean))].slice(0, 5),
-    });
-
-    return items;
-  } catch (err) {
-    logger.error("[te-stream] failed to fetch stream", {
-      error: err instanceof Error ? err.message : String(err),
-    });
-    return [];
-  } finally {
-    clearTimeout(timeoutId);
-  }
+  // All three failed
+  logger.warn("[te-rss] all RSS sources failed — returning empty array");
+  return [];
 }
