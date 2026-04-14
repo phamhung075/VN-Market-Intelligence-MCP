@@ -9,7 +9,19 @@
  *   - Cycle still completes when syncSectorPeersFn throws
  */
 
-import { describe, it, expect } from "bun:test";
+import { describe, it, expect, beforeAll, afterAll } from "bun:test";
+
+// Test isolation: prevent logger from writing to production system_logs DB.
+// We cannot use DB_PATH=:memory: because some cycle steps read the live watchlist
+// table directly (step C2). Instead we signal TEST_LOG_SUPPRESS to the logger.
+const _origDbPath = process.env["DB_PATH"];
+beforeAll(() => {
+  process.env["TEST_LOG_SUPPRESS"] = "1";
+});
+afterAll(() => {
+  delete process.env["TEST_LOG_SUPPRESS"];
+  if (_origDbPath !== undefined) process.env["DB_PATH"] = _origDbPath;
+});
 
 // Helper to build a minimal deps object for the cycle with all non-peer steps no-op
 function buildBaseDeps(overrides: Record<string, unknown> = {}) {

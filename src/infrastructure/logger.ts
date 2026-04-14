@@ -248,10 +248,12 @@ export function createLogger(
       // Ignore sink errors
     }
 
-    // Test isolation: when DB_PATH is ':memory:' we are in a unit test.
-    // Skip all shared-file and shared-DB sinks so test fixtures never leak
+    // Test isolation: when DB_PATH is ':memory:' OR TEST_LOG_SUPPRESS='1',
+    // skip all shared-file and shared-DB sinks so test fixtures never leak
     // into the production error log / system_logs table.
-    const isTestMode = Bun.env["DB_PATH"] === ":memory:";
+    // TEST_LOG_SUPPRESS is used by tests that need the real DB (watchlist etc.)
+    // but must not pollute system_logs with intentional throw() error strings.
+    const isTestMode = Bun.env["DB_PATH"] === ":memory:" || Bun.env["TEST_LOG_SUPPRESS"] === "1";
 
     // Tier 1: Global log (one-liner) — always for warn/error, info for key events
     if (!isTestMode && (LEVEL_WEIGHT[level] >= LEVEL_WEIGHT["warn"] || LEVEL_WEIGHT[level] >= LEVEL_WEIGHT["info"])) {
