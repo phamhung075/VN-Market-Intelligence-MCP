@@ -769,6 +769,15 @@ const SECTOR_RULES: SectorRule[] = [
     confidence: 0.68,
     title: "Thoái vốn DNNN — giải phóng quỹ đất và tài sản BĐS (cơ hội M&A)",
   },
+  // Task 1206: prime urban land ("đất vàng") → real_estate bullish
+  // "vàng" alone does not appear in gold_mining rules, so no collision risk.
+  {
+    keywords: ["đất vàng", "quỹ đất vàng", "vị trí đất vàng"],
+    domain: "real_estate",
+    direction: "up",
+    confidence: 0.75,
+    title: "Đất vàng — quỹ đất vị trí đắc địa, tích cực trực tiếp cho bất động sản",
+  },
 
   {
     keywords: ["giá dầu tăng", "oil price rise", "crude oil up", "giá dầu tăng mạnh", "opec"],
@@ -820,7 +829,7 @@ const SECTOR_RULES: SectorRule[] = [
     title: "Lãi suất giảm — tích cực cho bất động sản (vay mua nhà rẻ hơn)",
   },
   {
-    keywords: ["giá thép tăng", "steel price rise", "steel price up"],
+    keywords: ["giá thép tăng", "steel price rise", "steel price up", "nhu cầu thép"],
     domain: "steel",
     direction: "up",
     confidence: 0.80,
@@ -1435,7 +1444,8 @@ const SECTOR_RULES: SectorRule[] = [
   {
     keywords: [
       "cao tốc", "đầu tư công", "giải ngân đầu tư", "hạ tầng giao thông",
-      "sân bay long thành", "đường sắt", "cầu", "cảng biển", "capex",
+      "sân bay long thành", "đường sắt", "xây cầu", "cầu đường bộ",
+      "cầu vượt", "cầu cao tốc", "cảng biển", "capex",
       "public investment", "infrastructure investment",
     ],
     domain: "construction",
