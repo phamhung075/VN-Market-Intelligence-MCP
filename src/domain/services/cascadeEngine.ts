@@ -1931,6 +1931,49 @@ export const SECTOR_RULES: SectorRule[] = [
     confidence: 0.72,
     title: "Dòng vốn ETF/passive fund — ngân hàng lớn (VCB, BID) hưởng lợi do chiếm tỷ trọng cao trong chỉ số (passive_fund_inflow)",
   },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Task 1255 — Retail net-buying at scale → securities sector BULLISH
+  //
+  // "Nhà đầu tư cá nhân mua ròng" at large VND amounts (>1,000 tỷ) is a
+  // direct revenue signal for brokerages: higher retail activity → higher
+  // commission income for SSI/VCI/VIX/VND/HCM.
+  //
+  // Previously: article classified bullish impact 9 but no alert generated
+  // for securities sector (bug 1261 from unified-agent 2026-04-14).
+  // ═══════════════════════════════════════════════════════════════════════════
+  {
+    keywords: [
+      "nhà đầu tư cá nhân mua ròng",
+      "cá nhân mua ròng",
+      "retail mua ròng",
+      "nhà đầu tư cá nhân tăng mua",
+      "thanh khoản thị trường tăng",
+      "khối cá nhân mua ròng",
+      "nhà đầu tư nội mua ròng",
+      "dòng tiền cá nhân vào",
+    ],
+    domain: "securities",
+    direction: "up",
+    confidence: 0.78,
+    title: "Nhà đầu tư cá nhân mua ròng quy mô lớn — phí môi giới CTCK (SSI/VCI/VIX/VND) tăng (retail_netbuy_securities)",
+  },
+  {
+    keywords: [
+      "nhà đầu tư cá nhân mua ròng",
+      "cá nhân mua ròng",
+      "retail mua ròng",
+      "nhà đầu tư cá nhân tăng mua",
+      "thanh khoản thị trường tăng",
+      "khối cá nhân mua ròng",
+      "nhà đầu tư nội mua ròng",
+      "dòng tiền cá nhân vào",
+    ],
+    domain: "banking",
+    direction: "up",
+    confidence: 0.62,
+    title: "Nhà đầu tư cá nhân mua ròng — thanh khoản tăng hỗ trợ hoạt động ngân hàng (retail_netbuy_banking)",
+  },
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════
