@@ -107,7 +107,11 @@ const DATA_SOURCES: DataSourceDef[] = [
   },
   {
     label: "Du doan (Poly)",
-    query: "SELECT MAX(fetched_at) AS ts FROM prediction_markets",
+    // Task 1209: use updated_at (server write time) not fetched_at (Polymarket
+    // API timestamp). When Polymarket returns no new markets, the old rows
+    // keep their stale fetched_at but updated_at reflects the last DB write
+    // from storeSnapshot — giving the correct poll freshness signal.
+    query: "SELECT MAX(updated_at) AS ts FROM prediction_markets",
   },
   {
     label: "BCTC",
