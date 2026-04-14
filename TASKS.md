@@ -17,8 +17,8 @@ Vision: `SPRINT_GOAL.md`
 | 1200 | Cascade "đầu tư công" missing sentiment polarity check | Dev | domain | — | 6b21acf | Done |
 | 1203 | Dow Jones +59% spike: add outlier validation for macro indicators | Dev | domain | — | — | Backlog |
 | 1207 | Market-wide cascade confidence cap for non-watchlist company events | Dev | domain | — | — | Backlog |
-| 1208 | Stock price freshness reads direct-API timestamp, not VPS-push timestamp | Dev | infrastructure | — | — | Backlog |
-| 1209 | Polymarket test markets not refreshing (fetchedAt 12 days stale) | Dev | infrastructure | — | — | Backlog |
+| 1208 | Stock price freshness reads direct-API timestamp, not VPS-push timestamp | Dev | infrastructure | — | 96358d4 | Done |
+| 1209 | Polymarket test markets not refreshing (fetchedAt 12 days stale) | Dev | infrastructure | — | b3b61c2 | Done |
 | 1210 | Policy classifier misclassifies criminal prosecution as monetary_policy | Dev | domain | — | — | Backlog |
 | 1211 | BSR missing from "công ty lọc dầu" / "Bình Sơn" stock aliases | Dev | domain | — | a6f218c | Done |
 | 1213 | Unicode corruption in Vietnamese analysis text (combining diacritics) | Dev | infrastructure | — | — | Backlog |
@@ -30,9 +30,9 @@ Vision: `SPRINT_GOAL.md`
 | 1221 | weeklyPortfolioReportJob: add DB-backed lock to prevent concurrent runs on restart | Dev | interface | — | — | Backlog |
 | 1222 | Add DFF (Đua Fat Group) to stock-classification.json — sector real_estate | Dev | domain | — | 80391f3 | Done |
 | 1223 | VNDiamond index exclusion → BEARISH cascade rule (ETF forced selling) | Dev | domain | — | — | Backlog |
-| 1225 | congbao + sbvCircular fetch failures — diagnose and fix (geo-block or URL change) | Dev | infrastructure | — | — | Backlog |
+| 1225 | congbao + sbvCircular fetch failures — diagnose and fix (geo-block or URL change) | Dev | infrastructure | — | ab251e2 | Done |
 | 1226 | FTSE/index upgrade capital inflow → BULLISH cascade rule | Dev | domain | — | — | Backlog |
-| 1227 | Source health table not updating on transient fetch failure (Reuters false OK) | Dev | infrastructure | — | — | Backlog |
+| 1227 | Source health table not updating on transient fetch failure (Reuters false OK) | Dev | infrastructure | — | 2877312 | Done |
 | 1228 | pollNews() scheduled path fails on startup while MCP fetch_and_analyze succeeds | Dev | infrastructure | — | — | Todo |
 | 1229 | VNDiamond/VN30/ETF index rebalance → BEARISH cascade rule (forced passive selling) | Dev | domain | — | — | Backlog |
 | 1233 | Taiwan conflict prediction market has no sector/stock mapping (FPT, VEA, GEX exposure) | Dev | domain | — | — | Backlog |
