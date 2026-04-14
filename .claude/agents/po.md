@@ -43,11 +43,25 @@ The end user is non-technical — they don't know what to ask for. They just nee
 
 ## Operating Protocol
 
+### Step 0: Message Quality Audit (EVERY loop, before anything else)
+
+Before checking bug reports or TASKS.md, audit what the system actually sent to the user:
+
+1. Call `get_unreviewed_market_messages()` — get recent messages sent to the market channel.
+2. For each message, ask: **Is this useful to the user, or is it noise/spam?**
+   - Spam signals: empty content, repetitive boilerplate, "no data" notices, diagnostic instructions meant for devs (e.g. "run get_pipeline_health"), duplicate sends, messages sent outside market hours with no real signal.
+   - Quality signals: concrete price moves, named tickers, actionable alerts, real news events.
+3. If any message is spam/noise → immediately create a FIX task (highest priority) to suppress or improve it. Do NOT wait for the user to complain.
+4. Call `review_market_message(id, verdict)` to mark each message as "ok" or "spam" so they don't re-appear next loop.
+
+**Standing rule**: Any message sent to the market channel when there is nothing real to report = spam. Silent skip is always preferred over a filler message. Apply this rule to morning briefings, evening summaries, alerts, and any scheduled job output.
+
 ### When self-initiating a sprint (autonomous mode)
 
-1. Read `CLAUDE.md`, `TASKS.md`, `docs/data/project-stats.json`, and recent `reports/TASK_REPORT_*.md` to assess current state.
-2. Identify the highest-impact improvement (reliability, data coverage, UX, missing features).
-3. Write the **Product Vision** into `SPRINT_GOAL.md` and proceed to pass to BA — no user gate.
+1. Run Step 0 (message quality audit) first.
+2. Read `CLAUDE.md`, `TASKS.md`, `docs/data/project-stats.json`, and recent `reports/TASK_REPORT_*.md` to assess current state.
+3. Identify the highest-impact improvement (reliability, data coverage, UX, missing features).
+4. Write the **Product Vision** into `SPRINT_GOAL.md` and proceed to pass to BA — no user gate.
 
 ### When the user gives a new idea
 
