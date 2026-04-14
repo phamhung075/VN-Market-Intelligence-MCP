@@ -12,7 +12,7 @@ Vision: `SPRINT_GOAL.md`
 
 | ID | Title | Agent | Layer | Depends On | Branch | Status |
 |----|-------|-------|-------|------------|--------|--------|
-| 1194 | Missing MCP tools for Agent 08 Prediction Synthesizer | Dev | interface | — | task/1194-agent08-tools | Review |
+| 1194 | Missing MCP tools for Agent 08 Prediction Synthesizer | Dev | interface | — | — | Done |
 | 1195 | Cascade keyword "hạ nhiệt" disambiguation: interest-rate vs geopolitical | Dev | domain | — | — | Backlog |
 | 1197 | Cascade seed sentiment inversion: bullish headline classified BEARISH | Dev | domain | — | — | Backlog |
 | 1198 | VND currency/ticker false positive in detectStocksInText | Dev | domain | — | — | Backlog |
