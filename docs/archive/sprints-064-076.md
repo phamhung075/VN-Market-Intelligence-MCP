@@ -1,4 +1,4 @@
-# Archive — Sprints 064–075 (Knowledge Sync → Pipeline Health Tool)
+# Archive — Sprints 064–076 (Knowledge Sync → Pipeline Watchdog Job)
 
 ---
 
@@ -169,3 +169,13 @@
 | ID | Title | Layer | Status |
 |----|-------|-------|--------|
 | 1189 | get_pipeline_health MCP tool | application + interface | Done |
+
+---
+
+## Sprint 076 — Pipeline Watchdog Job (Done 2026-04-14)
+
+1 task done. New `pipelineWatchdogJob.ts` scheduler (`*/30 * * * *`) that reads `getPipelineHealth()` and fires a Telegram work-channel alert when `staleMins > 90`, with a 3-hour cooldown to prevent alert spam. schedulerFileCount 27 → 28. totalTasksDone 258 → 259.
+
+| ID | Title | Layer | Status |
+|----|-------|-------|--------|
+| 1190 | Pipeline Watchdog — stale-pipeline Telegram alert | scheduler | Done |

@@ -4,6 +4,19 @@
 > Index → `docs/TASKS_ARCHIVE.md`
 > Current sprint + stats → `docs/data/project-stats.json`
 
+## Sprint 076 — Pipeline Watchdog Job (Done 2026-04-14)
+
+**Scope:** New scheduler `pipelineWatchdogJob.ts` providing automated stale-pipeline detection — fires a Telegram work-channel alert when RAG data has not been refreshed for more than 90 minutes, with a 3-hour cooldown to avoid repeated noise.
+
+**Key changes:**
+- `src/scheduler/pipelineWatchdogJob.ts`: cron `*/30 * * * *`, calls `getPipelineHealth()`, compares `staleMins > 90`, sends `send_telegram(channel="work")` alert with ticker staleness info and suppresses repeat alerts for 3 hours via in-memory cooldown timestamp.
+- `docs/data/cron-registry.json`: registered `pipelineWatchdogJob` entry; schedulerFileCount 27 → 28.
+- `src/__tests__/1190-pipeline-watchdog.test.ts`: test suite covering alert fires when staleMins > 90, suppressed when staleMins <= 90, cooldown blocks second alert within 3h, cooldown expires after 3h.
+
+**Stats:** toolCount=97, schedulerFileCount=28, totalTasksDone=259. TypeScript: 0 errors.
+
+---
+
 ## Sprint 075 — Pipeline Health MCP Tool (Done 2026-04-14)
 
 **Scope:** New `get_pipeline_health` MCP tool providing RAG pipeline observability from within Claude Desktop — replaces manual SQL queries to diagnose stale data.
