@@ -1890,6 +1890,47 @@ export const SECTOR_RULES: SectorRule[] = [
     confidence: 0.82,
     title: "FTSE/MSCI nâng hạng — CTCK hưởng lợi từ thanh khoản tăng vọt và dòng vốn ngoại (index_upgrade_inflow)",
   },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Task 1237 — ETF/passive fund inflow articles → BULLISH cascade
+  // Articles about capital inflows from passive/ETF funds following index events
+  // were previously misclassified as NEUTRAL. These keywords signal direct
+  // buying pressure from foreign passive fund flows.
+  // ═══════════════════════════════════════════════════════════════════════════
+  {
+    keywords: [
+      "dòng vốn etf",
+      "quỹ etf đổ vào",
+      "passive fund inflow",
+      "fund flow vào vn",
+      "dòng tiền etf",
+      "etf mua ròng",
+      "foreign fund inflow",
+      "vốn etf vào",
+      "khối ngoại mua ròng liên tiếp",
+      "foreign passive fund",
+    ],
+    domain: "securities",
+    direction: "up",
+    confidence: 0.78,
+    title: "Dòng vốn ETF/passive fund vào VN — thanh khoản tăng, hỗ trợ thị trường chứng khoán (passive_fund_inflow)",
+  },
+  {
+    keywords: [
+      "dòng vốn etf",
+      "quỹ etf đổ vào",
+      "passive fund inflow",
+      "fund flow vào vn",
+      "dòng tiền etf",
+      "etf mua ròng",
+      "foreign fund inflow",
+      "vốn etf vào",
+    ],
+    domain: "banking",
+    direction: "up",
+    confidence: 0.72,
+    title: "Dòng vốn ETF/passive fund — ngân hàng lớn (VCB, BID) hưởng lợi do chiếm tỷ trọng cao trong chỉ số (passive_fund_inflow)",
+  },
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════
