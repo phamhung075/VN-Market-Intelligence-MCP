@@ -37,6 +37,24 @@ export const breakers = {
     failureThreshold: 5,
     resetTimeoutMs: 600_000, // 10 minutes
   }),
+  /**
+   * Công Báo Chính Phủ — VN government site; geo-blocked from France.
+   * Lower reset timeout (5 min) to retry promptly once VPS routing is added.
+   * Task 1225.
+   */
+  congbao: new CircuitBreaker("congbao", {
+    failureThreshold: 5,
+    resetTimeoutMs: 300_000, // 5 minutes
+  }),
+  /**
+   * SBV (State Bank of Vietnam) circular portal.
+   * Slow and occasionally times out; 5 min reset timeout.
+   * Task 1225.
+   */
+  sbvCircular: new CircuitBreaker("sbvCircular", {
+    failureThreshold: 5,
+    resetTimeoutMs: 300_000, // 5 minutes
+  }),
 } as const;
 
 export type BreakerName = keyof typeof breakers;
