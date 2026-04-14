@@ -42,10 +42,42 @@ Vision: `SPRINT_GOAL.md`
 | 1247 | US personal finance / sports articles ingested as VN market signals (no relevance filter) | Dev | domain | — | — | Backlog |
 | 1248 | BDI data staleness during supply chain crisis — fetch path needs geo-unblocked VPS route | Dev | infrastructure | — | — | Backlog |
 | 1251 | VNDiamond exclusion article: NER missing — specific ticker not extracted, generic cascade applied | Dev | domain | — | — | Backlog |
+| 1252 | Sync mcp.config.json::market.referenceStocks with SECTOR_PEERS (45+ missing tickers) | Janitor | config | — | — | Backlog |
 
 **WIP:** 0 In Progress. 0 Review.
 
 ---
 
 ## Task Details (active tasks only — Done tasks archived)
+
+### 1252 — Sync mcp.config.json::market.referenceStocks with SECTOR_PEERS (45+ missing tickers)
+
+**Agent:** Janitor (Code DRY audit)
+**Layer:** Config
+**Severity:** MEDIUM — Incomplete sector context for tools
+
+**Problem:**
+mcp.config.json::market.referenceStocks is missing 45+ ticker entries vs the canonical SECTOR_PEERS in src/domain/services/sectorPeers.ts. Additionally, 4 entire sectors are missing from config (construction, energy, pharmaceutical, gold_mining).
+
+**Impact:**
+Tools like getSectorPeersForComparison(), sectorRotation analysis, and briefing generation return incomplete sector context, leading to incomplete sector-wide price analysis.
+
+**Examples:**
+- real_estate: config [VHM,VIC,VRE,NVL,KDH,DXG,KBC,DIG,PDR,HUT] vs SECTOR_PEERS [VIC,VHM,VRE,NVL,KDH,DXG,NLG,PDR,KBC,DIG,HUT,HDG] — missing NLG, HDG
+- tech: config [FPT,CMG] vs SECTOR_PEERS [FPT,CMG,ELC,SAM] — missing ELC, SAM
+- Full comparison: 14 sectors in config, 18 in SECTOR_PEERS
+
+**Canonical Source:**
+`src/domain/services/sectorPeers.ts::SECTOR_PEERS` (authoritative ticker classification)
+
+**Fix Approach:**
+1. For each sector in SECTOR_PEERS, update mcp.config.json::market.referenceStocks with all tickers
+2. Add missing sectors (construction, energy, pharmaceutical, gold_mining)
+3. Preserve ordering by market cap (first = leader)
+4. Verify all referenced tickers exist in STOCK_CATALOG
+
+**Testing:**
+- Check that all new tickers have test coverage in stock alias tests
+- Verify no build/config parse errors
+- Spot-check a few sector rotations in briefing output
 
