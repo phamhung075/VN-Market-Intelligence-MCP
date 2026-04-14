@@ -25,7 +25,8 @@ export type PolicyType =
   | "energy_policy"
   | "real_estate_policy"
   | "trade_policy"
-  | "monetary_policy";
+  | "monetary_policy"
+  | "legal_risk";
 
 export interface PolicySignal {
   /** Category of policy document */
@@ -56,7 +57,51 @@ interface PolicyRule {
   summaryTemplate: string;
 }
 
+/**
+ * Criminal prosecution exclusion keywords — Vietnamese legal proceedings.
+ * If any of these appear in the combined text, the article is about a legal
+ * prosecution of a person, NOT a monetary or credit policy change.
+ *
+ * Task 1210: must be checked BEFORE the monetary_policy rule to prevent
+ * misclassification of banker arrest/prosecution articles.
+ */
+const CRIMINAL_PROSECUTION_KEYWORDS: string[] = [
+  "khởi tố",
+  "khoi to",
+  "bắt giữ",
+  "bat giu",
+  "truy tố",
+  "truy to",
+  "xét xử",
+  "xet xu",
+  "bắt tạm giam",
+  "bat tam giam",
+  "bị can",
+  "bi can",
+  "bị cáo",
+  "bi cao",
+  "cơ quan điều tra",
+  "co quan dieu tra",
+  "cảnh sát điều tra",
+  "canh sat dieu tra",
+  "viện kiểm sát",
+  "vien kiem sat",
+  "tòa án",
+  "toa an",
+];
+
 const POLICY_RULES: PolicyRule[] = [
+  // ── LEGAL_RISK — must be FIRST to prevent criminal articles being mis-classified
+  // as monetary_policy when they contain "lãi suất" in the banking-crime context.
+  // Task 1210: any criminal prosecution keyword → legal_risk.
+  {
+    policyType: "legal_risk",
+    keywords: CRIMINAL_PROSECUTION_KEYWORDS,
+    sectors: ["banking"],
+    stocks: [],
+    defaultDirection: "down",
+    summaryTemplate: "Rủi ro pháp lý — khởi tố/xét xử liên quan ngành ngân hàng",
+  },
   {
     policyType: "credit_policy",
     keywords: ["room tín dụng", "lãi suất điều hành", "tăng trưởng tín dụng", "hạn mức tín dụng"],
