@@ -135,6 +135,10 @@ const F_REVENUE_DEDUCTIONS = /giam\s+tru\s+doanh\s+thu/i;
 const P_NET_REVENUE = /doanh\s+thu\s+thu[ầa]n/i;
 const F_NET_REVENUE = /doanh\s+thu\s+thuan/i;
 
+// 1196: Banking sector uses "Thu nhập lãi thuần" as net revenue equivalent
+const P_NET_REVENUE_BANKING = /thu\s+nh[ậa]p\s+l[ãa]i\s+thu[ầa]n/i;
+const F_NET_REVENUE_BANKING = /thu\s+nhap\s+lai\s+thuan/i;
+
 const P_COGS = /gi[áa]\s+v[ốo]n\s+h[àa]ng\s+b[áa]n/i;
 const F_COGS = /gia\s+von\s+hang\s+ban/i;
 
@@ -446,7 +450,11 @@ export function extractIncomeStatement(rawText: string): IncomeStatement {
   // --- Revenue ---
   const grossRevenue = fv(P_GROSS_REVENUE, F_GROSS_REVENUE, "01");
   const revenueDeductions = fv(P_REVENUE_DEDUCTIONS, F_REVENUE_DEDUCTIONS, "02");
-  const netRevenue = fv(P_NET_REVENUE, F_NET_REVENUE, "10");
+  let netRevenue = fv(P_NET_REVENUE, F_NET_REVENUE, "10");
+  // 1196: Banking sector fallback — "Thu nhập lãi thuần" maps to netRevenue
+  if (netRevenue === 0) {
+    netRevenue = fv(P_NET_REVENUE_BANKING, F_NET_REVENUE_BANKING);
+  }
   const cogs = fv(P_COGS, F_COGS, "11");
   let grossProfit = fv(P_GROSS_PROFIT, F_GROSS_PROFIT, "20");
   // Fallback: compute grossProfit if not explicitly stated

@@ -15,7 +15,7 @@ Vision: `SPRINT_GOAL.md`
 | 1193 | VPS push-prices not persisting to market_prices table | Dev | infrastructure | — | — | Todo |
 | 1194 | Missing MCP tools for Agent 08 Prediction Synthesizer | Dev | interface | — | — | Todo |
 | 1195 | Cascade keyword "hạ nhiệt" disambiguation: interest-rate vs geopolitical | Dev | domain | — | — | Backlog |
-| 1196 | BCTC extraction: VNM/VEA PDFs on disk but financial_reports empty | Dev | application | — | — | Backlog |
+| 1196 | BCTC extraction: VNM/VEA PDFs on disk but financial_reports empty | Dev | application | — | task/1196-bctc-extraction-fix | Review |
 | 1197 | Cascade seed sentiment inversion: bullish headline classified BEARISH | Dev | domain | — | — | Backlog |
 | 1198 | VND currency/ticker false positive in detectStocksInText | Dev | domain | — | — | Backlog |
 | 1199 | Trading Economics impact scores all 10.0 regardless of VN relevance | Dev | domain | — | — | Backlog |

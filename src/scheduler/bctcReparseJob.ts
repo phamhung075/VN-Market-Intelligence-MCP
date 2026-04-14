@@ -21,7 +21,7 @@
  *        telegram, pdf parser) and application (fetchParseAndStoreBctc).
  */
 
-import { readFileSync, existsSync } from "node:fs";
+import { readFileSync, existsSync, readdirSync } from "node:fs";
 import { basename, join } from "node:path";
 import { logger } from "../infrastructure/logger.js";
 import { getDb } from "../infrastructure/db/schema.js";
@@ -277,6 +277,75 @@ export async function reparseSingleWithOcrFallback(
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Sub-fix C (Task 1196): Disk-scan fallback
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Scan data/pdfs/ directly for BCTC PDFs that have no matching financial_reports
+ * row. Called by runBctcReparseJob() when agent_feedback returns 0 rows (D-7c
+ * did not run or ran without finding any stranded files).
+ *
+ * Does NOT write any agent_feedback rows — that remains D-7c's responsibility.
+ * Returns only StrandedPayload[] for the caller to process via reparse().
+ *
+ * @param db      - SQLite database (supports in-memory injection for tests)
+ * @param pdfDir  - Override pdf directory (defaults to data/pdfs/ — injectable for tests)
+ */
+export async function scanDiskForStrandedPdfs(
+  db: Database,
+  pdfDir?: string,
+): Promise<StrandedPayload[]> {
+  const resolvedPdfDir = pdfDir ?? join(process.cwd(), "data", "pdfs");
+  if (!existsSync(resolvedPdfDir)) return [];
+
+  let codes: string[];
+  try {
+    const watchlistCodes = db
+      .prepare("SELECT code FROM watchlist ORDER BY code")
+      .all() as { code: string }[];
+    codes = watchlistCodes.map((r) => r.code);
+  } catch {
+    // watchlist table may not exist in minimal test DBs — skip scan
+    return [];
+  }
+
+  const files = readdirSync(resolvedPdfDir).filter((f) =>
+    f.toLowerCase().endsWith(".pdf"),
+  );
+  const stranded: StrandedPayload[] = [];
+
+  for (const filename of files) {
+    const upper = filename.toUpperCase();
+    const matched = codes.find((c) => {
+      const re = new RegExp(`(^|[^A-Z])${c}([^A-Z]|$)`);
+      return re.test(upper);
+    });
+    if (!matched) continue;
+
+    const yq = parseYearQuarterFromFilename(filename);
+    if (!yq) continue;
+
+    // Check against financial_reports using period_type (TEXT: 'Q1'..'Q4')
+    const filed = db
+      .prepare(
+        `SELECT COUNT(*) AS cnt FROM financial_reports
+         WHERE action_code = ? AND period_year = ? AND period_type = ?`,
+      )
+      .get(matched, yq.year, yq.quarter) as { cnt: number };
+
+    if ((filed?.cnt ?? 0) > 0) continue;
+
+    stranded.push({
+      ticker: matched,
+      filename,
+      filePath: join(resolvedPdfDir, filename),
+    });
+  }
+
+  return stranded;
+}
+
 /**
  * Production deps wired to real infrastructure.
  * Lazy-imported inside reparseSingle to avoid loading LanceDB at module init.
@@ -337,6 +406,12 @@ export async function runBctcReparseJob(
           AND title LIKE '[AUDIT] stranded_bctc_pdf%'`,
     )
     .all() as FeedbackRow[];
+
+  // 1196: Start-of-cycle observability
+  logger.info("[bctc-reparse-job] starting cycle", {
+    feedbackRows: rows.length,
+    timestamp: new Date().toISOString(),
+  });
 
   const result: ReparseRunResult = {
     examined: rows.length,
@@ -412,6 +487,29 @@ export async function runBctcReparseJob(
           error: err instanceof Error ? err.message : String(err),
         });
       }
+    }
+  }
+
+  // 1196: Disk-scan fallback — process on-disk PDFs when D-7c has no feedback rows
+  if (rows.length === 0) {
+    const diskStranded = await scanDiskForStrandedPdfs(db);
+    logger.info("[bctc-reparse-job] disk-scan fallback", { found: diskStranded.length });
+    for (const payload of diskStranded) {
+      let success = false;
+      try {
+        success = await reparse(payload);
+      } catch (err) {
+        logger.warn("[bctc-reparse-job] disk-scan reparse threw", {
+          ticker: payload.ticker,
+          error: err instanceof Error ? err.message : String(err),
+        });
+      }
+      if (success) {
+        result.resolved++;
+      } else {
+        result.failed++;
+      }
+      result.examined++;
     }
   }
 

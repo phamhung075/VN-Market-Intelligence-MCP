@@ -143,8 +143,43 @@ function toMetrics(report: FinancialReport): FinancialMetrics {
 /**
  * Upsert a FinancialReport into the financial_reports SQLite table.
  * Uses INSERT OR REPLACE to handle re-runs idempotently.
+ *
+ * 1196: extractionConfidence guard —
+ *   0.0   → skip insert entirely (all-zero extraction, no signal value)
+ *   (0,0.2) → insert with validation_status='low_confidence', send WORK alert
  */
-function storeReport(report: FinancialReport, validationStatus: string, validationNotes: string | null): void {
+function storeReport(
+  report: FinancialReport,
+  validationStatus: string,
+  validationNotes: string | null,
+  extractionConfidence: number,
+): void {
+  // 1196: Guard — all-zero extraction produces no usable data; skip insert entirely.
+  if (extractionConfidence === 0) {
+    const msg =
+      `[BCTC] Zero-confidence extraction — skipped insert for ` +
+      `${report.actionCode} ${report.period.year}-${report.period.periodType ?? ""}`;
+    logger.warn(msg);
+    // Fire-and-forget: storeReport is sync; Telegram is async
+    void import("../../infrastructure/notifiers/telegram.js").then(({ sendTelegramWork }) => {
+      sendTelegramWork(msg, { parseMode: "" }).catch(() => {});
+    });
+    return; // NO INSERT
+  }
+
+  // 1196: Low-confidence path — insert but override validation status.
+  if (extractionConfidence < 0.2) {
+    validationStatus = "low_confidence";
+    const lowMsg =
+      `[BCTC] Low-confidence extraction (${(extractionConfidence * 100).toFixed(0)}%) — ` +
+      `inserting with low_confidence flag for ` +
+      `${report.actionCode} ${report.period.year}-${report.period.periodType ?? ""}`;
+    logger.warn(lowMsg);
+    void import("../../infrastructure/notifiers/telegram.js").then(({ sendTelegramWork }) => {
+      sendTelegramWork(lowMsg, { parseMode: "" }).catch(() => {});
+    });
+  }
+
   const db = getDb();
   const stmt = db.prepare(`
     INSERT OR REPLACE INTO financial_reports (
@@ -444,7 +479,7 @@ export async function parseBctcReport(
   const db = getDb();
 
   try {
-    storeReport(report, validationStatus, validationNotes);
+    storeReport(report, validationStatus, validationNotes, extractionConfidence);
   } catch (err) {
     throw new Error(
       `storeReport failed: ${err instanceof Error ? err.message : String(err)}`,
