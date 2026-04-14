@@ -133,6 +133,22 @@ const VN_BEARISH: SentimentKeyword[] = [
   { word: "phá sản", weight: 2 },
   { word: "thua lỗ", weight: 2 },
   { word: "giảm", weight: 1 },
+  // Task 1241: Geopolitical escalation — must classify BEARISH, not default to BULLISH/neutral
+  { word: "phong tỏa thương mại", weight: 3 },
+  { word: "phong tỏa kinh tế", weight: 3 },
+  { word: "lệnh phong tỏa", weight: 3 },
+  { word: "phong tỏa", weight: 2 },
+  { word: "đàm phán đổ vỡ", weight: 3 },
+  { word: "phá vỡ đàm phán", weight: 3 },
+  { word: "đổ vỡ đàm phán", weight: 3 },
+  { word: "leo thang căng thẳng", weight: 3 },
+  { word: "căng thẳng leo thang", weight: 3 },
+  { word: "leo thang xung đột", weight: 3 },
+  { word: "xung đột leo thang", weight: 3 },
+  { word: "căng thẳng địa chính trị", weight: 2 },
+  { word: "rủi ro địa chính trị", weight: 2 },
+  { word: "nguy cơ chiến tranh", weight: 3 },
+  { word: "ngưỡng chiến tranh", weight: 3 },
 ];
 
 /** English bullish keywords */
@@ -193,6 +209,19 @@ const EN_BEARISH: SentimentKeyword[] = [
   { word: "capital flight", weight: 3 },
   { word: "dump shares", weight: 3 },
   { word: "offload shares", weight: 2 },
+  // Task 1241: Geopolitical escalation keywords — English equivalents
+  { word: "talks collapsed", weight: 3 },
+  { word: "talks broke down", weight: 3 },
+  { word: "negotiations failed", weight: 3 },
+  { word: "negotiations collapsed", weight: 3 },
+  { word: "talks breakdown", weight: 3 },
+  { word: "diplomatic breakdown", weight: 3 },
+  { word: "blockade", weight: 2 },
+  { word: "escalation", weight: 2 },
+  { word: "military standoff", weight: 3 },
+  { word: "geopolitical risk", weight: 2 },
+  { word: "geopolitical tensions", weight: 2 },
+  { word: "war risk", weight: 3 },
 ];
 
 /** All bullish entries in one list (longest phrases first to avoid substring conflicts). */
