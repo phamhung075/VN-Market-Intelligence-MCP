@@ -12,7 +12,7 @@ Vision: `SPRINT_GOAL.md`
 
 | ID | Title | Agent | Layer | Depends On | Branch | Status |
 |----|-------|-------|-------|------------|--------|--------|
-| 1191 | Replace TE stream.ashx with public RSS feeds | Developer | infrastructure | — | task/1191-te-stream-rss | Review |
+| 1191 | Replace TE stream.ashx with public RSS feeds | Developer | infrastructure | — | task/1191-te-stream-rss | Done |
 
 **WIP:** 0 In Progress.
 
