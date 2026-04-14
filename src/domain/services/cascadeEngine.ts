@@ -1779,6 +1779,26 @@ export const SECTOR_RULES: SectorRule[] = [
     confidence: 0.70,
     title: "Tăng ngân sách y tế — tích cực cho ngành dược phẩm và thiết bị y tế",
   },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Task 1223 — VNDiamond index exclusion → ETF forced selling (BEARISH)
+  // When a stock is excluded from VNDiamond, passive ETFs tracking that index
+  // are forced to sell, creating systematic downward price pressure.
+  // ═══════════════════════════════════════════════════════════════════════════
+  {
+    keywords: [
+      "bị loại khỏi vndiamond",
+      "vndiamond loại",
+      "rổ vndiamond",
+      "loại khỏi vndiamond",
+      "vndiamond exclusion",
+      "vndiamond remove",
+    ],
+    domain: "securities",
+    direction: "down",
+    confidence: 0.78,
+    title: "VNDiamond exclusion — ETF forced selling: quỹ thụ động buộc phải bán cổ phiếu bị loại (etf_forced_selling)",
+  },
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════
