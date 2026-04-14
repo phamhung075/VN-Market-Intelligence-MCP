@@ -2407,6 +2407,40 @@ export function buildCausalChain(
 
   // Seed text used for alias detection — pre-computed once outside the loop
   const seedText = `${seedEntry.sourceTitle} ${seedEntry.summary}`;
+  // Normalised seed text for direct ticker-code NER (Task 1251)
+  const seedTextNorm = seedText.toLowerCase();
+
+  /**
+   * Task 1251 — Direct ticker-code NER helper.
+   *
+   * detectStocksInText() only checks company-name aliases. When the raw ticker
+   * code appears in the headline (e.g. "TCB bị loại khỏi rổ VNDiamond"), NER
+   * fails because "tcb" is not in TCB's alias list.
+   *
+   * This helper checks whether the raw 2-5 character ticker code appears in the
+   * normalised seed text as a whole-word (word-boundary) match. Only codes that
+   * are 2-5 characters are eligible to avoid matching very short tokens.
+   *
+   * Word-boundary: character before must be non-alphanumeric (or start-of-string),
+   * character after must be non-alphanumeric (or end-of-string).
+   */
+  function isDirectTickerMention(code: string): boolean {
+    const lower = code.toLowerCase();
+    if (lower.length < 2 || lower.length > 5) return false;
+
+    let startIdx = 0;
+    while (true) {
+      const idx = seedTextNorm.indexOf(lower, startIdx);
+      if (idx === -1) return false;
+
+      const beforeOk = idx === 0 || !/[a-z0-9]/.test(seedTextNorm[idx - 1]!);
+      const afterIdx = idx + lower.length;
+      const afterOk = afterIdx >= seedTextNorm.length || !/[a-z0-9]/.test(seedTextNorm[afterIdx]!);
+
+      if (beforeOk && afterOk) return true;
+      startIdx = idx + 1;
+    }
+  }
 
   for (const stock of deduplicatedWatchlist) {
     const domainEntry = domainEntryMap.get(stock.domain);
@@ -2415,11 +2449,16 @@ export function buildCausalChain(
     const aliasHits = detectStocksInText(seedText, [stock.actionCode]);
     const resolvedViaAlias = aliasHits.length > 0;
 
-    if (!domainEntry && !resolvedViaAlias) continue; // neither path matched — skip
+    // Task 1251: Direct ticker-code NER — check if the raw ticker (e.g. "TCB")
+    // appears as a word-boundary match in the headline/summary.
+    // This catches cases where the alias list lacks the 3-letter code itself.
+    const resolvedViaDirectCode = !resolvedViaAlias && isDirectTickerMention(stock.actionCode);
+
+    if (!domainEntry && !resolvedViaAlias && !resolvedViaDirectCode) continue; // neither path matched — skip
 
     let actionEntry: CausalChainEntry;
 
-    if (domainEntry) {
+    if (domainEntry && !resolvedViaDirectCode) {
       // Primary path: domain rule fired — use domain-rule confidence
       actionEntry = {
         level: "action",
@@ -2431,6 +2470,27 @@ export function buildCausalChain(
         impactScore: Math.round(domainEntry.impactScore * 0.9),
         confidence: domainEntry.confidence * 0.9,
         reasoning: `Cổ phiếu ${stock.actionCode} thuộc ngành ${stock.domain}, bị ảnh hưởng bởi: ${domainEntry.title}`,
+      };
+    } else if (resolvedViaDirectCode) {
+      // Task 1251: Direct ticker-code NER path — ticker appears explicitly in headline.
+      // Use the domain entry's confidence if available (domain rule also matched),
+      // otherwise use a higher confidence than alias-only (0.70) since explicit
+      // code mention is a strong signal (stronger than company-name alias: 0.55).
+      const hasDomainRule = domainEntry !== undefined;
+      actionEntry = {
+        level: "action",
+        title: `${stock.actionCode} — đề cập trực tiếp mã cổ phiếu`,
+        summary: `Cổ phiếu ${stock.actionCode} được nhắc đến trực tiếp bằng mã trong bài viết.`,
+        affectedDomains: [stock.domain],
+        affectedActions: [stock.actionCode],
+        sentiment: hasDomainRule ? domainEntry!.sentiment : seedEntry.sentiment,
+        impactScore: hasDomainRule
+          ? Math.round(domainEntry!.impactScore * 0.9)
+          : Math.round(seedEntry.impactScore * 0.7),
+        confidence: hasDomainRule ? domainEntry!.confidence * 0.9 : 0.70,
+        reasoning: hasDomainRule
+          ? `[DirectCodeNER+DomainRule: ${stock.actionCode}] Mã cổ phiếu được nhắc trực tiếp; quy tắc ngành ${stock.domain} cũng khớp. ${domainEntry!.title}`
+          : `[DirectCodeNER: ${stock.actionCode}] Mã cổ phiếu được nhắc trực tiếp trong tiêu đề. Không có quy tắc ngành khớp.`,
       };
     } else {
       // Alias fallback path: company trade name found in text, no domain rule fired
