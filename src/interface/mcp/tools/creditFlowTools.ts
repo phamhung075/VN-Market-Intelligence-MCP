@@ -14,20 +14,79 @@ import {
   analyzeCreditFlow,
   type CreditData,
 } from "../../../domain/services/creditFlowAnalyzer.js";
+import { getDb, initDatabase } from "../../../infrastructure/db/schema.js";
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Constants / DB-fallback helpers (Task 1254)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Default RE credit outstanding (nghìn tỷ VND).
+ * Based on SBV 2024 data: total outstanding RE credit ~2,800 nghìn tỷ VND.
+ * Used when DB has no better data available.
+ */
+export const DEFAULT_RE_CREDIT_TRILLION = 2_800;
+
+/**
+ * Typical mortgage-rate spread over SBV refinancing rate.
+ * Vietnamese commercial banks price mortgages at refi + 2-3%.
+ * Using 2.5% as midpoint.
+ */
+const MORTGAGE_SPREAD_PCT = 2.5;
+
+/**
+ * Derive a mortgage rate estimate from the SBV refinancing rate.
+ * mortgage ≈ refinancingRate + 2.5%
+ *
+ * @param refinancingRatePct - SBV refinancing rate in percent
+ */
+export function deriveMortgageRateFromSbv(refinancingRatePct: number): number {
+  return refinancingRatePct + MORTGAGE_SPREAD_PCT;
+}
+
+/**
+ * Read the latest SBV refinancing rate from DB.
+ * Returns null if DB is not available or has no data.
+ */
+async function readSbvRefinancingRate(): Promise<{ current: number; previous: number } | null> {
+  try {
+    await initDatabase();
+    const db = getDb();
+    const rows = db
+      .prepare(
+        `SELECT refinancing_rate_pct, fetched_at
+         FROM sbv_rates_history
+         ORDER BY fetched_at DESC
+         LIMIT 60`,
+      )
+      .all() as Array<{ refinancing_rate_pct: number; fetched_at: string }>;
+
+    if (rows.length === 0) return null;
+
+    const current = rows[0]!.refinancing_rate_pct;
+    // Use row ~30 days ago as "previous" — approximately 30 rows back at 30min interval
+    const previous = rows[Math.min(rows.length - 1, 48)]!.refinancing_rate_pct;
+
+    if (current <= 0) return null;
+    return { current, previous: previous > 0 ? previous : current };
+  } catch {
+    return null;
+  }
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Handler (exported for direct testing)
 // ─────────────────────────────────────────────────────────────────────────────
 
 interface GetCreditFlowSignalInput {
-  /** Current month RE credit outstanding (nghìn tỷ VND) */
-  currentReCreditTrillion: number;
-  /** Previous month RE credit outstanding (nghìn tỷ VND) */
-  previousReCreditTrillion: number;
-  /** Current month average mortgage rate (%) */
-  currentMortgageRatePct: number;
-  /** Previous month average mortgage rate (%) */
-  previousMortgageRatePct: number;
+  /** Current month RE credit outstanding (nghìn tỷ VND) — optional, falls back to DB/default */
+  currentReCreditTrillion?: number | undefined;
+  /** Previous month RE credit outstanding (nghìn tỷ VND) — optional, falls back to DB/default */
+  previousReCreditTrillion?: number | undefined;
+  /** Current month average mortgage rate (%) — optional, derived from SBV rates in DB */
+  currentMortgageRatePct?: number | undefined;
+  /** Previous month average mortgage rate (%) — optional, derived from SBV rates in DB */
+  previousMortgageRatePct?: number | undefined;
   /** Current month YoY credit growth % (optional, defaults to 15) */
   currentYoyGrowthPct?: number | undefined;
   /** Previous month YoY credit growth % (optional, defaults to 12) */
@@ -36,25 +95,49 @@ interface GetCreditFlowSignalInput {
 
 /**
  * Core handler logic — separated from MCP registration for testability.
+ *
+ * All 4 main params are optional (Task 1254). When not provided:
+ *   - Mortgage rates: derived from latest SBV refinancing rate in DB (refi + 2.5%)
+ *   - RE credit outstanding: uses DEFAULT_RE_CREDIT_TRILLION constant
  */
 export async function getCreditFlowSignalHandler(
   input: GetCreditFlowSignalInput,
 ): Promise<{ content: Array<{ type: "text"; text: string }> }> {
+  // ── DB fallback for mortgage rates (Task 1254) ───────────────────────────
+  let resolvedCurrentMortgage = input.currentMortgageRatePct;
+  let resolvedPreviousMortgage = input.previousMortgageRatePct;
+
+  if (resolvedCurrentMortgage === undefined || resolvedPreviousMortgage === undefined) {
+    const sbv = await readSbvRefinancingRate();
+    if (sbv) {
+      resolvedCurrentMortgage ??= deriveMortgageRateFromSbv(sbv.current);
+      resolvedPreviousMortgage ??= deriveMortgageRateFromSbv(sbv.previous);
+    } else {
+      // Final fallback: use VN typical mortgage rates (2024 avg ~10.5%)
+      resolvedCurrentMortgage ??= 10.5;
+      resolvedPreviousMortgage ??= 11.0;
+    }
+  }
+
+  // ── Default RE credit outstanding when not provided ──────────────────────
+  const resolvedCurrentCredit = input.currentReCreditTrillion ?? DEFAULT_RE_CREDIT_TRILLION;
+  const resolvedPreviousCredit = input.previousReCreditTrillion ?? (DEFAULT_RE_CREDIT_TRILLION * 0.98);
+
   const current: CreditData = {
-    totalCreditTrillion: input.currentReCreditTrillion * 5, // rough estimate
-    reCreditTrillion: input.currentReCreditTrillion,
+    totalCreditTrillion: resolvedCurrentCredit * 5, // rough estimate
+    reCreditTrillion: resolvedCurrentCredit,
     reCreditRatioPct: 20,
     yoyGrowthPct: input.currentYoyGrowthPct ?? 15,
-    avgMortgageRatePct: input.currentMortgageRatePct,
+    avgMortgageRatePct: resolvedCurrentMortgage,
     date: new Date().toISOString().slice(0, 10),
   };
 
   const previous: CreditData = {
-    totalCreditTrillion: input.previousReCreditTrillion * 5,
-    reCreditTrillion: input.previousReCreditTrillion,
+    totalCreditTrillion: resolvedPreviousCredit * 5,
+    reCreditTrillion: resolvedPreviousCredit,
     reCreditRatioPct: 19,
     yoyGrowthPct: input.previousYoyGrowthPct ?? 12,
-    avgMortgageRatePct: input.previousMortgageRatePct,
+    avgMortgageRatePct: resolvedPreviousMortgage,
     date: new Date(Date.now() - 30 * 86400 * 1000).toISOString().slice(0, 10),
   };
 
@@ -104,20 +187,25 @@ export async function getCreditFlowSignalHandler(
 export function registerCreditFlowTools(server: McpServer): void {
   server.tool(
     "get_credit_flow_signal",
-    "Phan tich thay doi tin dung bat dong san cua NHNN va tao tin hieu thi truong cho co phieu ngan hang va BDS.",
+    "Phan tich thay doi tin dung bat dong san cua NHNN va tao tin hieu thi truong cho co phieu ngan hang va BDS. " +
+    "Tat ca tham so deu tuy chon — neu khong cung cap, cong cu tu doc lai suat tai cap tu DB SBV va dung gia tri mac dinh cho du no tin dung.",
     {
       currentReCreditTrillion: z.coerce
         .number()
-        .describe("Du no tin dung BDS thang hien tai (nghin ty VND)"),
+        .optional()
+        .describe("Du no tin dung BDS thang hien tai (nghin ty VND) — tuy chon, mac dinh ~2800"),
       previousReCreditTrillion: z.coerce
         .number()
-        .describe("Du no tin dung BDS thang truoc (nghin ty VND)"),
+        .optional()
+        .describe("Du no tin dung BDS thang truoc (nghin ty VND) — tuy chon, mac dinh ~2744"),
       currentMortgageRatePct: z.coerce
         .number()
-        .describe("Lai suat vay mua nha trung binh thang hien tai (%)"),
+        .optional()
+        .describe("Lai suat vay mua nha trung binh thang hien tai (%) — tuy chon, tu dong lay tu bang sbv_rates"),
       previousMortgageRatePct: z.coerce
         .number()
-        .describe("Lai suat vay mua nha trung binh thang truoc (%)"),
+        .optional()
+        .describe("Lai suat vay mua nha trung binh thang truoc (%) — tuy chon, tu dong lay tu bang sbv_rates"),
       currentYoyGrowthPct: z.coerce
         .number()
         .optional()
