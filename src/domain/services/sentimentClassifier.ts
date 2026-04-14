@@ -70,6 +70,9 @@ const VN_BULLISH: SentimentKeyword[] = [
   { word: "miễn thuế giao dịch", weight: 3 },
   { word: "gói kích thích", weight: 3 },
   { word: "gói hỗ trợ", weight: 2 },
+  // Task 1212: interest-rate cooling is a dovish / bullish monetary signal
+  { word: "hạ nhiệt lãi suất", weight: 2 },
+  { word: "lãi suất hạ nhiệt", weight: 2 },
 ];
 
 /** Vietnamese bearish keywords */
@@ -136,6 +139,9 @@ const EN_BULLISH: SentimentKeyword[] = [
   { word: "government support package", weight: 3 },
   { word: "stimulus package", weight: 3 },
   { word: "stabilization fund", weight: 3 },
+  // Task 1212: English equivalents for interest-rate cooling
+  { word: "interest rate cooling", weight: 2 },
+  { word: "rates cooling", weight: 1 },
 ];
 
 /** English bearish keywords */
