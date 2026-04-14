@@ -1,4 +1,4 @@
-# Archive — Sprints 064–079 (Knowledge Sync → Price Persistence Observability)
+# Archive — Sprints 064–080 (Knowledge Sync → Domain Bug Batch)
 
 ---
 
@@ -211,3 +211,17 @@
 | 1202 | FPT/HPG Q4-2025 BCTC missing — VPS BCTC fetcher gap (14 days overdue) | infrastructure | Done |
 | 1196 | BCTC extraction: VNM/VEA PDFs on disk but financial_reports empty | application | Done |
 | 1204 | VCB Q1-2025 BCTC all values = 0 (bad record from failed extraction) | application | Done |
+---
+
+## Sprint 080 — Domain Bug Batch: Agent 08 Tools + Sentiment + VND Guard + Keywords (Done 2026-04-14)
+
+6 tasks closing domain-layer correctness gaps discovered by the system auditor and cowork analysis team.
+
+| ID | Title | Layer | Status |
+|----|-------|-------|--------|
+| 1215 | Bug report dedup: suppress duplicate category within 4h in send_telegram | infrastructure | Done |
+| 1194 | Missing MCP tools for Agent 08 Prediction Synthesizer | interface | Done |
+| 1197 | Cascade seed sentiment inversion: bullish headline classified BEARISH | domain | Done |
+| 1198 | VND currency/ticker false positive in detectStocksInText | domain | Done |
+| 1206 | Cascade keyword fix: "đất vàng"→real_estate, "cầu" in "toàn cầu"→no construction | domain | Done |
+| 1212 | Interest rate cooling seed sentiment should be BULLISH not NEUTRAL | domain | Done |

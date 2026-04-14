@@ -4,6 +4,22 @@
 > Index → `docs/TASKS_ARCHIVE.md`
 > Current sprint + stats → `docs/data/project-stats.json`
 
+## Sprint 080 — Domain Bug Batch: Agent 08 Tools + Sentiment + VND Guard + Keywords (Done 2026-04-14)
+
+**Scope:** 6 tasks closing domain-layer and infrastructure correctness gaps flagged by the system auditor and cowork analysis team.
+
+**Key changes:**
+- Task 1215: Added deduplication in `send_telegram` bug-report path — duplicate alert categories are suppressed within a 4-hour window to prevent noise flooding the BUG channel.
+- Task 1194: Implemented the 6 missing MCP tools for Agent 08 Prediction Synthesizer (`create_prediction_claim`, `list_prediction_claims`, `resolve_prediction_claim`, `get_prediction_scorecard`, `get_prediction_leaderboard`, `get_pending_predictions`) in `src/interface/tickerIntelligenceTools.ts`.
+- Task 1197: Fixed cascade seed sentiment inversion — bullish macro headlines (e.g. Fed rate cut) were being classified BEARISH due to inverted polarity lookup; corrected in `cascadeAnalysisService.ts`.
+- Task 1198: Added VND currency guard in `detectStocksInText` — tokens matching "VND", "đồng", and common currency-amount patterns are excluded from ticker extraction to prevent false positives.
+- Task 1206: Fixed cascade keyword disambiguation — "đất vàng" now correctly maps to `real_estate` (was missing); "cầu" inside "toàn cầu" / "cầu tiêu dùng" no longer triggers `construction` sector.
+- Task 1212: Corrected interest-rate cooling seed sentiment — "hạ lãi suất" (rate cut) seed is now `BULLISH` instead of `NEUTRAL`, aligning with the economic stimulus interpretation used by the rest of the cascade.
+
+**Stats:** toolCount=97, schedulerFileCount=28, totalTasksDone=272. TypeScript: 0 errors.
+
+---
+
 ## Sprint 079 — Price Persistence Observability + BCTC Banking Backfill (Done 2026-04-14)
 
 **Scope:** 5 tasks closing infrastructure gaps in the VPS price-push pipeline and BCTC banking data coverage.
