@@ -24,7 +24,7 @@ Vision: `SPRINT_GOAL.md`
 | 1211 | BSR missing from "công ty lọc dầu" / "Bình Sơn" stock aliases | Dev | domain | — | — | Backlog |
 | 1213 | Unicode corruption in Vietnamese analysis text (combining diacritics) | Dev | infrastructure | — | — | Backlog |
 | 1214 | VNM Middle East dairy exposure missing from Hormuz cascade rules | Dev | domain | — | — | Backlog |
-| 1216 | PM: sprint-plan TECH_080 domain bug batch (4 tasks) | PM | — | TECH_080 | — | Todo |
+| 1216 | PM: sprint-plan TECH_080 domain bug batch (4 tasks) | PM | — | TECH_080 | — | Done |
 | 1217 | Outlier validation for macro indicators (Dow Jones -69% spike) | Dev | domain | — | — | Backlog |
 | 1218 | VPS BCTC queue: populate source_hints with actual PDF URLs from listSscDocuments | Dev | infrastructure | — | — | Backlog |
 | 1219 | Prediction market sector mapper: exclude sports/entertainment markets | Dev | domain | — | — | Backlog |
@@ -46,8 +46,9 @@ Vision: `SPRINT_GOAL.md`
 | 1248 | BDI data staleness during supply chain crisis — fetch path needs geo-unblocked VPS route | Dev | infrastructure | — | — | Backlog |
 | 1251 | VNDiamond exclusion article: NER missing — specific ticker not extracted, generic cascade applied | Dev | domain | — | — | Backlog |
 | 1255 | Alert Commander: alerts generated but never sent to Telegram market channel (USD/VND σ alert) | Dev | interface | — | — | Done |
+| 1256 | Gold price cascade falsely includes real_estate (PDR) via market-wide broadcast | Dev | domain | — | task/1256-gold-broadcast-exclusion | In Progress |
 
-**WIP:** 0 In Progress. 0 Review.
+**WIP:** 1 In Progress. 0 Review.
 
 ---
 

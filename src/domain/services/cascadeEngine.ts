@@ -2045,6 +2045,29 @@ export function buildCausalChain(
   const effectiveBroadcastMin = broadcastMinImpact ?? 6;
   const seedTextForBroadcast = `${seedEntry.sourceTitle} ${seedEntry.summary}`;
 
+  // Task 1256: Commodity-source broadcast exclusion.
+  // If the article triggered a commodity-specific domain rule (gold_mining, oil_gas),
+  // restrict market-wide broadcast to domains already covered by cascade rules.
+  // This prevents gold/oil price articles from falsely alerting real_estate, banking, etc.
+  // via the generic "global article + high impact score → broadcast all" path.
+  // Only applies when domainEntryMap is non-empty (at least one rule matched) AND
+  // the article does NOT contain explicit VN market-wide signals (those override).
+  const COMMODITY_TRIGGER_DOMAINS = new Set<string>(["gold_mining", "oil_gas"]);
+  const matchedDomains = Array.from(domainEntryMap.keys());
+  const hasCommodityTrigger =
+    matchedDomains.some((d) => COMMODITY_TRIGGER_DOMAINS.has(d));
+  // A VN market-wide signal (VN-Index, "toàn thị trường") always broadcasts — don't suppress.
+  const seedLowerForVnCheck = seedTextForBroadcast.toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "");
+  const hasVnMarketWideSignal =
+    seedLowerForVnCheck.includes("vn-index") ||
+    seedLowerForVnCheck.includes("toan thi truong") ||
+    seedLowerForVnCheck.includes("thi truong chung khoan");
+
+  // Domains already covered by cascade rules (broadcast only extends these)
+  const alreadyCoveredDomains = new Set<string>(matchedDomains);
+
   if (
     isMarketWide(seedTextForBroadcast.toLowerCase(), seedEntry.level, seedEntry.impactScore, effectiveBroadcastMin) &&
     seedEntry.impactScore >= effectiveBroadcastMin
@@ -2056,6 +2079,18 @@ export function buildCausalChain(
 
     for (const stock of deduplicatedWatchlist) {
       if (alreadyCoveredCodes.has(stock.actionCode)) continue; // no double broadcast
+
+      // Task 1256: Commodity-source exclusion guard.
+      // If a commodity rule fired AND there is no VN market-wide signal,
+      // only broadcast to stocks whose domain is already covered by cascade rules.
+      // This prevents gold/oil articles from alerting real_estate, banking, etc.
+      if (
+        hasCommodityTrigger &&
+        !hasVnMarketWideSignal &&
+        !alreadyCoveredDomains.has(stock.domain)
+      ) {
+        continue; // Commodity article — skip unrelated sectors
+      }
 
       const broadcastConfidence = Math.min(0.7, seedEntry.impactScore / 10);
 
