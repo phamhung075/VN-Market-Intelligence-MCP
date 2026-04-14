@@ -977,6 +977,27 @@ export const SECTOR_RULES: SectorRule[] = [
     confidence: 0.65,
     title: "Giá dầu giảm — giảm chi phí nhiên liệu, tích cực cho logistics",
   },
+  // ── Cement / construction: infrastructure spending → bearish if cut (Task 1200) ─
+  // MUST appear BEFORE positive "đầu tư công" → steel rule (first-match-wins per domain).
+  {
+    keywords: [
+      "cắt giảm đầu tư công",
+      "giảm đầu tư công",
+      "đầu tư công chậm trễ",
+      "chậm trễ đầu tư công",
+      "đình trệ đầu tư công",
+      "đầu tư công đình trệ",
+      "đầu tư công giảm",
+      "vốn đầu tư công giảm",
+      "public investment cut",
+      "infrastructure spending cut",
+      "capex cut",
+    ],
+    domain: "steel",
+    direction: "down",
+    confidence: 0.75,
+    title: "Cắt giảm đầu tư công — nhu cầu thép xây dựng giảm (HPG, NKG bị ảnh hưởng)",
+  },
   // ── Cement / construction: infrastructure spending → bullish ─────────────
   {
     keywords: ["đầu tư công", "infrastructure spending", "public investment", "gói kích thích", "xây dựng hạ tầng", "cầu đường"],
@@ -1594,6 +1615,47 @@ export const SECTOR_RULES: SectorRule[] = [
 
 
   // ── CAPEX / Public Investment rules (task 250) ───────────────────────────
+  // Task 1200: BEARISH "đầu tư công" rules — must appear BEFORE the bullish rule
+  // so first-match-wins fires on negative context (cắt giảm, chậm trễ, đình trệ).
+  {
+    keywords: [
+      "cắt giảm đầu tư công",
+      "giảm đầu tư công",
+      "đầu tư công bị cắt",
+      "đầu tư công chậm trễ",
+      "chậm trễ đầu tư công",
+      "đình trệ đầu tư công",
+      "đầu tư công đình trệ",
+      "đầu tư công giảm",
+      "vốn đầu tư công giảm",
+      "public investment cut",
+      "public investment decline",
+      "capex cut",
+      "infrastructure spending cut",
+    ],
+    domain: "construction",
+    direction: "down",
+    confidence: 0.80,
+    title: "Cắt giảm/đình trệ đầu tư công — tiêu cực cho ngành xây dựng (CTD, HBC, LCG)",
+  },
+  {
+    keywords: [
+      "cắt giảm đầu tư công",
+      "giảm đầu tư công",
+      "đầu tư công chậm trễ",
+      "đình trệ đầu tư công",
+      "đầu tư công đình trệ",
+      "đầu tư công giảm",
+      "vốn đầu tư công giảm",
+      "public investment cut",
+      "infrastructure spending cut",
+      "capex cut",
+    ],
+    domain: "steel",
+    direction: "down",
+    confidence: 0.75,
+    title: "Cắt giảm đầu tư công — nhu cầu thép xây dựng giảm (HPG, NKG bị ảnh hưởng)",
+  },
   {
     keywords: [
       "cao tốc", "đầu tư công", "giải ngân đầu tư", "hạ tầng giao thông",

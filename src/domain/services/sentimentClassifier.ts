@@ -73,6 +73,14 @@ const VN_BULLISH: SentimentKeyword[] = [
   // Task 1212: interest-rate cooling is a dovish / bullish monetary signal
   { word: "hạ nhiệt lãi suất", weight: 2 },
   { word: "lãi suất hạ nhiệt", weight: 2 },
+  // Task 1200: positive "đầu tư công" context → BULLISH
+  { word: "đẩy mạnh đầu tư công", weight: 2 },
+  { word: "tăng đầu tư công", weight: 2 },
+  { word: "đầu tư công tăng", weight: 2 },
+  { word: "đẩy nhanh đầu tư công", weight: 2 },
+  { word: "thúc đẩy đầu tư công", weight: 2 },
+  { word: "giải ngân đầu tư công", weight: 2 },
+  { word: "đầu tư công tăng trưởng", weight: 2 },
   // Task 1255: securities analyst upside forecast phrases
   // "VN-Index hướng tới mốc 1800 điểm" / "dự báo VN-Index đạt X điểm"
   { word: "hướng tới mốc", weight: 3 },
@@ -149,6 +157,15 @@ const VN_BEARISH: SentimentKeyword[] = [
   { word: "rủi ro địa chính trị", weight: 2 },
   { word: "nguy cơ chiến tranh", weight: 3 },
   { word: "ngưỡng chiến tranh", weight: 3 },
+  // Task 1200: "đầu tư công" with negative modifiers → BEARISH for construction/materials
+  { word: "cắt giảm đầu tư công", weight: 3 },
+  { word: "giảm đầu tư công", weight: 2 },
+  { word: "đầu tư công chậm trễ", weight: 2 },
+  { word: "chậm trễ đầu tư công", weight: 2 },
+  { word: "đình trệ đầu tư công", weight: 2 },
+  { word: "đầu tư công đình trệ", weight: 2 },
+  { word: "đầu tư công giảm", weight: 2 },
+  { word: "vốn đầu tư công giảm", weight: 3 },
 ];
 
 /** English bullish keywords */
