@@ -12,14 +12,14 @@ Vision: `SPRINT_GOAL.md`
 
 | ID | Title | Agent | Layer | Depends On | Branch | Status |
 |----|-------|-------|-------|------------|--------|--------|
-| 1297 | fix(test-drift): update test 1190 schedulerFileCount assertion 28→29 | Dev | test | — | task/1297-1298-1299-test-drift-batch | Review |
-| 1298 | fix(test-drift): update test 313 VPS watchdog alert string Vultr→Vinahost | Dev | test | — | task/1297-1298-1299-test-drift-batch | Review |
-| 1299 | fix(test-drift): update test 137 Step E behavior — unconditional since Task 1255 | Dev | test | — | task/1297-1298-1299-test-drift-batch | Review |
+| 1297 | fix(test-drift): update test 1190 schedulerFileCount assertion 28→29 | Dev | test | — | — | Done |
+| 1298 | fix(test-drift): update test 313 VPS watchdog alert string Vultr→Vinahost | Dev | test | — | — | Done |
+| 1299 | fix(test-drift): update test 137 Step E behavior — unconditional since Task 1255 | Dev | test | — | — | Done |
 
 | 1218 | VPS BCTC queue: populate source_hints with actual PDF URLs from listSscDocuments | Dev | infrastructure | — | — | Backlog |
 | 1248 | BDI data staleness during supply chain crisis — fetch path needs geo-unblocked VPS route | Dev | infrastructure | — | — | Backlog |
 
-**WIP:** 0 In Progress. 3 Review.
+**WIP:** 0 In Progress. 0 Review.
 
 ## Sprint 087 — Complete
 
