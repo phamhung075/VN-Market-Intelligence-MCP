@@ -1,3 +1,5 @@
+process.env["DB_PATH"] = ":memory:";
+
 /**
  * Task 233 — system_changelog table + log_fix + get_recent_fixes MCP tools
  *

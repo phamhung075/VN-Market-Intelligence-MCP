@@ -1,3 +1,5 @@
+process.env["DB_PATH"] = ":memory:";
+
 /**
  * Task 267 — MCP Tool Tests: get_crisis_early_warning
  *

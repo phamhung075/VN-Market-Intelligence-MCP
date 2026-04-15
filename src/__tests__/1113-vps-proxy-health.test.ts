@@ -1,3 +1,5 @@
+process.env["DB_PATH"] = ":memory:";
+
 /**
  * VPS Proxy Health Observability Tests
  *

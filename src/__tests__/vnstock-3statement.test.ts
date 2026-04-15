@@ -1,9 +1,11 @@
+process.env["DB_PATH"] = ":memory:";
+
 /**
  * Tests for vnstock balance sheet + cash flow store (Gap 5)
  * TDD: failing first, then implement
  */
 
-import { describe, it, expect, beforeEach } from "bun:test";
+import { describe, it, expect, beforeEach, afterAll } from "bun:test";
 import { Database } from "bun:sqlite";
 import { tmpdir } from "os";
 import { join } from "path";
@@ -15,7 +17,7 @@ const testDbPath = join(tmpdir(), `vnstock-3stmt-test-${Date.now()}.db`);
 Bun.env["DB_PATH"] = testDbPath;
 
 // Import after setting env
-const { initDatabase } = await import("../infrastructure/db/schema.js");
+const { initDatabase, closeDb } = await import("../infrastructure/db/schema.js");
 const { storeBalanceSheet, getLatestBalanceSheet, storeCashFlow, getLatestCashFlow } =
   await import("../infrastructure/db/vnstockStore.js");
 
@@ -217,4 +219,8 @@ describe("vnstock cash flow store", () => {
     expect(retrieved!.financingCashFlow).toBeCloseTo(-300, 1);
     expect(retrieved!.netCashFlow).toBeCloseTo(-600, 1);
   });
+});
+
+afterAll(() => {
+  closeDb();
 });

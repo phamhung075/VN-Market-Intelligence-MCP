@@ -1,3 +1,5 @@
+process.env["DB_PATH"] = ":memory:";
+
 /**
  * Task 1073 — Telegram /ask Handler
  *

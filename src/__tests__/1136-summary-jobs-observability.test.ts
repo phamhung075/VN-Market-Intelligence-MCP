@@ -1,3 +1,5 @@
+process.env["DB_PATH"] = ":memory:";
+
 /**
  * Task 1136 — jobs.ts imports + summaryJobs.ts wrap
  *

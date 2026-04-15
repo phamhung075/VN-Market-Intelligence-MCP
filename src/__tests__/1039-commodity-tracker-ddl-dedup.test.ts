@@ -14,10 +14,10 @@
 // Must be set BEFORE importing schema module so module-level DB_PATH picks it up.
 process.env["DB_PATH"] = ":memory:";
 
-import { describe, it, expect, beforeAll } from "bun:test";
+import { describe, it, expect, beforeAll, afterAll } from "bun:test";
 import { readFileSync } from "fs";
 import { join } from "path";
-import { initDatabase, getDb } from "../infrastructure/db/schema.js";
+import { initDatabase, getDb, closeDb } from "../infrastructure/db/schema.js";
 import {
   extractAndStoreIndicators,
   getIndicatorHistory,
@@ -71,4 +71,8 @@ describe("Task 1039 — commodityTracker DDL deduplication", () => {
       expect(list.find((r) => r.indicator === "wheat_usd_bushel")).toBeDefined();
     });
   });
+});
+
+afterAll(() => {
+  closeDb();
 });

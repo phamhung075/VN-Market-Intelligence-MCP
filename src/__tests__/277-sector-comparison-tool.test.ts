@@ -1,3 +1,5 @@
+process.env["DB_PATH"] = ":memory:";
+
 /**
  * Task 277 — get_sector_comparison MCP Tool
  *

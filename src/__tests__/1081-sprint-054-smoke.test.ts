@@ -1,3 +1,5 @@
+process.env["DB_PATH"] = ":memory:";
+
 /**
  * Task 1081 — Sprint 054 End-to-End Smoke Test
  *

@@ -1,3 +1,5 @@
+process.env["DB_PATH"] = ":memory:";
+
 /**
  * Task: Enrichment Chain — Sequential Agent Reasoning
  * Tests for chainSynthesizer.ts (domain service) and agentSignalStore helpers.

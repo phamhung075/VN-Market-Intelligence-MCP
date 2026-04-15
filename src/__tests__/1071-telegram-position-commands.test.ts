@@ -1,3 +1,5 @@
+process.env["DB_PATH"] = ":memory:";
+
 /**
  * Task 1071 — Telegram /set_position + /check_position Handlers
  *

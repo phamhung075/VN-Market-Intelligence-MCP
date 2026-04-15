@@ -1,3 +1,5 @@
+process.env["DB_PATH"] = ":memory:";
+
 /**
  * Task 1116 — evidence_fragments DDL + evidenceFragmentStore CRUD
  *

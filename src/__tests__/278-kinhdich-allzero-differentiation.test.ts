@@ -1,3 +1,5 @@
+process.env["DB_PATH"] = ":memory:";
+
 /**
  * KI-278 — Kinh Dich identical readings when all data sources return 0.0
  *
@@ -17,7 +19,6 @@ import { computeReading } from "../domain/services/kinhDich/kinhDichReading.js";
 const WATCHLIST = ["VNM", "FPT", "VCB", "VEA"];
 
 beforeAll(async () => {
-  process.env["DB_PATH"] = ":memory:";
   await initDatabase();
   const db = getDb();
 

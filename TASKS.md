@@ -22,13 +22,13 @@ Vision: `SPRINT_GOAL.md`
 | ID | Title | Agent | Layer | Depends On | Branch | Status |
 |----|-------|-------|-------|------------|--------|--------|
 | 1300 | fix(sector-dedup): remove legacy 'pharma' key from mcp.config.json referenceStocks | Dev | domain | — | — | Done |
-| 1301 | fix(test-isolation): eliminate parallel SQLite state contamination in full suite run | Dev | test | 1300 | — | Todo |
+| 1301 | fix(test-isolation): eliminate parallel SQLite state contamination in full suite run | Dev | test | 1300 | task/1301-db-path-guard-sweep | Review |
 | — | [PM] Sprint plan tasks 1300+1301 per TECH_089.md | PM | — | — | — | Todo |
 
 | 1218 | VPS BCTC queue: populate source_hints with actual PDF URLs from listSscDocuments | Dev | infrastructure | — | — | Backlog |
 | 1248 | BDI data staleness during supply chain crisis — fetch path needs geo-unblocked VPS route | Dev | infrastructure | — | — | Backlog |
 
-**WIP:** 0 In Progress. 0 Review.
+**WIP:** 0 In Progress. 1 Review.
 
 ## Sprint 088 — Complete
 

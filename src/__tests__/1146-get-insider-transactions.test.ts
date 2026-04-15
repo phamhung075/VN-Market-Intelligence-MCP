@@ -1,3 +1,5 @@
+process.env["DB_PATH"] = ":memory:";
+
 /**
  * Task 1146 — get_insider_transactions MCP tool tests
  *

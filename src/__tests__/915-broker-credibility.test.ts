@@ -1,3 +1,5 @@
+process.env["DB_PATH"] = ":memory:";
+
 /**
  * Task 915 — Analyst-credibility discount on sanctioned brokers.
  *

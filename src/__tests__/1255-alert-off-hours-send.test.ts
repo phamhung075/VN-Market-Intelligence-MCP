@@ -1,3 +1,5 @@
+process.env["DB_PATH"] = ":memory:";
+
 /**
  * Task 1255 — Alert Commander: alerts generated but never sent off-hours
  *

@@ -1,3 +1,5 @@
+process.env["DB_PATH"] = ":memory:";
+
 /**
  * Bug 1224 — get_portfolio_risk returns 0 VND when market_prices is empty
  *

@@ -1,3 +1,5 @@
+process.env["DB_PATH"] = ":memory:";
+
 /**
  * Task 1101 — recordJobRun wrapper + apply to 5 existing jobs
  *

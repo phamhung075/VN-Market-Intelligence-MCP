@@ -1,3 +1,5 @@
+process.env["DB_PATH"] = ":memory:";
+
 /**
  * Task 236 — Merge alert mute 2→1 (manage_alert_mute)
  *

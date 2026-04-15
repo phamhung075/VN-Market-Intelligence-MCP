@@ -1,3 +1,5 @@
+process.env["DB_PATH"] = ":memory:";
+
 /**
  * Task 1254 — Fix duplicate morning-briefing market_messages insert (bug 1263)
  *
@@ -16,16 +18,14 @@
  *   AC-3  The SendTelegramOptions type exports skipPersist as optional boolean.
  */
 
-import { describe, it, expect } from "bun:test";
+import { describe, it, expect, afterAll } from "bun:test";
 import { Database } from "bun:sqlite";
-import { initDatabase, getDb } from "../infrastructure/db/schema.js";
+import { initDatabase, getDb, closeDb } from "../infrastructure/db/schema.js";
 import { insertMarketMessage } from "../infrastructure/db/marketMessageStore.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
 // ─────────────────────────────────────────────────────────────────────────────
-
-process.env["DB_PATH"] = ":memory:";
 
 function makeOkFetch() {
   return async (_url: string, _init: RequestInit): Promise<Response> => ({
@@ -132,4 +132,8 @@ describe("Task 1254 — insertMarketMessage baseline (no regression)", () => {
     expect(row?.from_agent).toBe("morning-briefing");
     expect(row?.content).toContain("BẢN TIN SÁNG");
   });
+});
+
+afterAll(() => {
+  closeDb();
 });

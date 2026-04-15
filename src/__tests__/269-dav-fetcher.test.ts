@@ -1,3 +1,5 @@
+process.env["DB_PATH"] = ":memory:";
+
 /**
  * Task 269 — DAV Pharmacy Fetcher + Pharma Store
  *

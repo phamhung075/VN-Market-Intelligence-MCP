@@ -1,3 +1,5 @@
+process.env["DB_PATH"] = ":memory:";
+
 /**
  * Task 1100 — cron_job_runs DDL + cronJobRunStore CRUD helpers
  *

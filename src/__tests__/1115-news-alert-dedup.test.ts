@@ -1,3 +1,5 @@
+process.env["DB_PATH"] = ":memory:";
+
 /**
  * Task 1115 — News alert deduplication after server restart (report #1114)
  *

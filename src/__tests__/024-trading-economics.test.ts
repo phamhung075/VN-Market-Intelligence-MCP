@@ -1,3 +1,5 @@
+process.env["DB_PATH"] = ":memory:";
+
 /**
  * Task 024 — Trading Economics Macro Indicator Scraper
  *

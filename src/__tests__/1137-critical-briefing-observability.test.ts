@@ -1,3 +1,5 @@
+process.env["DB_PATH"] = ":memory:";
+
 // src/__tests__/1137-critical-briefing-observability.test.ts
 import { describe, it, expect } from "bun:test";
 import { readFileSync } from "fs";
