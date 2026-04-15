@@ -4,7 +4,7 @@
 
 ---
 
-## Sprint 085 — Active
+## Sprint 086 — Active
 
 Vision: `SPRINT_GOAL.md`
 
@@ -12,12 +12,20 @@ Vision: `SPRINT_GOAL.md`
 
 | ID | Title | Agent | Layer | Depends On | Branch | Status |
 |----|-------|-------|-------|------------|--------|--------|
-| 1289 | fix(cascade): test 062 Task 162 vs Task 1256 contract conflict — update assertion to match commodity-exclusion behavior | QA | domain | — | — | Done |
-| 1290 | feat(scheduler): implement franceSummaryJob in jobs.ts — fixes test 1139 | Dev | scheduler | — | — | Done |
+| 1291 | fix(schema): systematic initDatabase() audit — add missing columns/tables (market_prices_history.exchange, alerts.sent_by, positions, insider_transactions, vnstock_trading_stats) | Dev | infrastructure | — | — | Todo |
+| 1292 | fix(kinh-dich): tickerJitter range drift — function returns 0.10/0.115, test asserts max 0.09 | Dev | domain | — | fix/1292-ticker-jitter-clamp | Review |
+| 1293 | fix(freshness): getDataFreshness() format drift — test 185 fails on 'Cu' label | Dev | domain | — | — | Todo |
 | 1218 | VPS BCTC queue: populate source_hints with actual PDF URLs from listSscDocuments | Dev | infrastructure | — | — | Backlog |
 | 1248 | BDI data staleness during supply chain crisis — fetch path needs geo-unblocked VPS route | Dev | infrastructure | — | — | Backlog |
 
-**WIP:** 0 In Progress. 0 Review.
+**WIP:** 0 In Progress. 1 Review.
+
+## Sprint 085 — Complete
+
+| ID | Title | Status |
+|----|-------|--------|
+| 1289 | fix(cascade): test 062 Task 162 vs Task 1256 contract conflict — update assertion to match commodity-exclusion behavior | Done |
+| 1290 | feat(scheduler): implement franceSummaryJob in jobs.ts — fixes test 1139 | Done |
 
 ## Sprint 084 — Complete
 
@@ -54,6 +62,62 @@ Vision: `SPRINT_GOAL.md`
 ---
 
 ## Task Details (active tasks only — Done tasks archived)
+
+### 1291 — fix(schema): systematic initDatabase() audit
+
+**Symptom:** Multiple test suites fail with "no such table / no such column" errors:
+- Tests 103, 1050: `table market_prices_history has no column named exchange` and `table alerts has no column named sent_by`
+- Test 125 (briefing e2e): `no such table: positions`, `no such table: insider_transactions`, `no such table: vnstock_trading_stats`
+
+**Root cause:** Same pattern as task 1286 (`daily_ohlcv`). Production tables exist via migrations applied to the live DB but were never added to `initDatabase()` in `src/infrastructure/db/schema.ts`. Tests use `:memory:` DB via `initDatabase()` — they see an older baseline schema.
+
+**Fix:**
+1. Grep all callers of the missing tables/columns in `src/` to derive the correct column sets.
+2. Add `ALTER TABLE` or `CREATE TABLE IF NOT EXISTS` clauses to `initDatabase()` in `schema.ts` for each missing item:
+   - `market_prices_history`: add `exchange TEXT` column
+   - `alerts`: add `sent_by TEXT` column
+   - `positions` table: full schema (ticker, quantity, avg_cost, etc.)
+   - `insider_transactions` table
+   - `vnstock_trading_stats` table
+3. Use `CREATE TABLE IF NOT EXISTS` for new tables and `ALTER TABLE ... ADD COLUMN IF NOT EXISTS` pattern for missing columns (SQLite: wrap in try/catch since IF NOT EXISTS is not supported for ADD COLUMN in older SQLite).
+
+**Test:** `src/__tests__/1291-schema-audit.test.ts`
+- Verify `initDatabase()` creates all five previously-missing items.
+- Verify tests 103, 125, and 1050 pass as regression (run after fix).
+
+---
+
+### 1292 — fix(kinh-dich): tickerJitter range drift
+
+**Symptom:** Test 1007 fails:
+- `tickerJitter("VCB")` returns `0.1` — test expects `<= 0.09`
+- `tickerJitter("A")` returns `0.115` — test expects `<= 0.09`
+
+**Root cause:** `tickerJitter()` in its current implementation has a jitter range of ±0.05 to ±0.10 (inclusive of 0.10). The test was written when the range was ±0.05 to ±0.09. The function or its constants have drifted.
+
+**Fix:** Align `tickerJitter()` to return values strictly within `(-0.09, -0.05) ∪ (+0.05, +0.09)` — i.e. max absolute value 0.089 (or clamp at 0.09 exclusive). Do NOT change test expectations — restore the original contract.
+
+Locate `tickerJitter` implementation and adjust the upper bound constant from 0.10/0.115 to 0.09.
+
+**Test:** `src/__tests__/1007-kinhdich-convergence.test.ts` — all 8 cases must pass.
+
+---
+
+### 1293 — fix(freshness): getDataFreshness() format drift
+
+**Symptom:** Test 185 fails: `shows 'Cu' for market_prices updated 10 hours ago` — the received string does not contain `'Cu'`.
+
+**Root cause:** `getDataFreshness()` format output has changed — the label or freshness indicator string format no longer includes `'Cu'` (Cũ = stale in Vietnamese abbreviation). Either the abbreviation was renamed or the threshold logic changed.
+
+**Fix:** Inspect `getDataFreshness()` implementation. Determine whether:
+- The output format changed (e.g. 'Cu' → 'Cũ' with diacritic, or 'Cu' → 'STALE') — if so, update the function to restore 'Cu' output for stale data.
+- The staleness threshold changed — if so, adjust so 10 hours triggers 'Cu'.
+
+Do NOT change test expectations. Restore the implementation to match the original contract.
+
+**Test:** `src/__tests__/185-data-freshness.test.ts` — all cases must pass.
+
+---
 
 ### 1289 — fix(cascade): test 062 Task 162 vs Task 1256 contract conflict
 
