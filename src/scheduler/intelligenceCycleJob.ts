@@ -577,18 +577,37 @@ async function _runCycle(deps: CycleDeps = {}): Promise<CycleResult> {
   // high/extreme breaches so the alert-trigger pipeline (Step E) actually fires.
   // Deterministic id = date + indicator + level → INSERT OR IGNORE dedups one
   // alert per indicator per level per UTC day (natural cooldown).
+  //
+  // Anti-spam guards (Task 1291-follow-up):
+  //   1. usdVndOfficial is skipped — it duplicates usdVndRate (same source, near-identical σ).
+  //   2. Before inserting, skip any indicator that already has a sent alert today
+  //      (notified_telegram=1, id LIKE 'macro-{today}-{name}-%'). This prevents
+  //      level-drift (extreme→high) from re-firing the same condition hours later.
   try {
     await withTimeout((async () => {
     const { getAllMacroStats } = await import("../infrastructure/db/macroStatsStore.js");
     const { classifyDeviation } = await import("../domain/services/macroThresholds.js");
     const { storeAlerts } = await import("../infrastructure/db/alertStore.js");
+    const { getDb: getDatabase } = await import("../infrastructure/db/schema.js");
     const stats = getAllMacroStats();
     const today = new Date().toISOString().slice(0, 10);
     const nowIso = new Date().toISOString();
+    const db = getDatabase();
     const macroAlerts: Alert[] = [];
     for (const s of stats) {
+      // Skip usdVndOfficial — duplicates usdVndRate (same USD/VND condition, near-identical σ)
+      if (s.name === "usdVndOfficial") continue;
+
       const dev = classifyDeviation(s);
       if (dev.level !== "high" && dev.level !== "extreme") continue;
+
+      // Skip if any alert for this indicator was already SENT today — prevents
+      // level-drift (e.g. extreme→high) from re-firing the same condition hours later.
+      const alreadySentToday = db.prepare(
+        `SELECT 1 FROM alerts WHERE id LIKE ? AND notified_telegram = 1 LIMIT 1`
+      ).get(`macro-${today}-${dev.name}-%`) as { 1: number } | undefined;
+      if (alreadySentToday) continue;
+
       const severity = dev.level === "extreme" ? "critical" : "high";
       macroAlerts.push({
         id: `macro-${today}-${dev.name}-${dev.level}`,
@@ -608,8 +627,7 @@ async function _runCycle(deps: CycleDeps = {}): Promise<CycleResult> {
       });
     }
     if (macroAlerts.length > 0) {
-      const { getDb: getDatabase } = await import("../infrastructure/db/schema.js");
-      storeAlerts(macroAlerts, getDatabase());
+      storeAlerts(macroAlerts, db);
       logger.info("[intelligence-cycle] step A2.5 — macro alerts persisted", {
         count: macroAlerts.length,
         ids: macroAlerts.map((a) => a.id),
@@ -820,9 +838,13 @@ async function _runCycle(deps: CycleDeps = {}): Promise<CycleResult> {
       // alerts in the same cycle can see siblings that were just sent —
       // prevents the "10 volume_spike alerts in 5 min for FPT/VCB/VNM" burst.
       for (const alert of unnotifiedAlerts) {
-        // Check cooldown — same stock + same signal type within cooldown window → skip
+        // Check cooldown — same stock + same signal type within cooldown window → skip.
+        // MACRO alerts are sustained conditions (not flash crashes): pass severity as "high"
+        // so the CRITICAL bypass in shouldSuppressAlert does not skip dedup for them.
+        const cooldownSeverity =
+          alert.severity === "critical" && alert.actionCode === "MACRO" ? "high" : alert.severity;
         const suppress = shouldSuppressAlert(
-          { stocks: [alert.actionCode], signalTypes: alert.signals.map((s) => s.type), severity: alert.severity },
+          { stocks: [alert.actionCode], signalTypes: alert.signals.map((s) => s.type), severity: cooldownSeverity },
           recentAlertHistory,
           effectiveCooldownConfig,
         );
