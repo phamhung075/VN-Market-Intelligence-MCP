@@ -13,7 +13,7 @@ Vision: `SPRINT_GOAL.md`
 | ID | Title | Agent | Layer | Depends On | Branch | Status |
 |----|-------|-------|-------|------------|--------|--------|
 | 1289 | fix(cascade): test 062 Task 162 vs Task 1256 contract conflict — update assertion to match commodity-exclusion behavior | QA | domain | — | — | Done |
-| 1290 | feat(scheduler): implement franceSummaryJob in jobs.ts — fixes test 1139 | Dev | scheduler | — | — | Backlog |
+| 1290 | feat(scheduler): implement franceSummaryJob in jobs.ts — fixes test 1139 | Dev | scheduler | — | — | Done |
 | 1218 | VPS BCTC queue: populate source_hints with actual PDF URLs from listSscDocuments | Dev | infrastructure | — | — | Backlog |
 | 1248 | BDI data staleness during supply chain crisis — fetch path needs geo-unblocked VPS route | Dev | infrastructure | — | — | Backlog |
 
