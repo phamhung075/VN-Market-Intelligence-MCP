@@ -137,6 +137,18 @@ function setupTestDb(): Database {
       reasoning       TEXT NOT NULL,
       detected_at     TEXT NOT NULL
     );
+
+    CREATE TABLE IF NOT EXISTS daily_ohlcv (
+      code       TEXT    NOT NULL,
+      date       TEXT    NOT NULL,
+      open       REAL    NOT NULL,
+      high       REAL    NOT NULL,
+      low        REAL    NOT NULL,
+      close      REAL    NOT NULL,
+      volume     REAL    NOT NULL DEFAULT 0,
+      updated_at TEXT    NOT NULL,
+      PRIMARY KEY (code, date)
+    );
   `);
 
   return db;
@@ -389,6 +401,7 @@ describe("Task 172 — assembleBriefing prediction signals section", () => {
       CREATE TABLE IF NOT EXISTS rag_analyses (id TEXT PRIMARY KEY, created_at TEXT NOT NULL, level TEXT NOT NULL, source_url TEXT, source_title TEXT, source_type TEXT, published_at TEXT, sentiment TEXT, impact_score REAL, impact_direction TEXT, confidence REAL, time_horizon TEXT, summary TEXT, reasoning TEXT, affected_countries TEXT, affected_domains TEXT, affected_actions TEXT, parent_ids TEXT, tags TEXT, embedding_text TEXT);
       CREATE TABLE IF NOT EXISTS alerts (id TEXT PRIMARY KEY, triggered_at TEXT NOT NULL, severity TEXT NOT NULL, signals_json TEXT, affected_actions_json TEXT, analysis_ids_json TEXT, message TEXT, read INTEGER NOT NULL DEFAULT 0, user_note TEXT, resolved_at TEXT, resolution_notes TEXT);
       CREATE TABLE IF NOT EXISTS financial_reports (id TEXT PRIMARY KEY, action_code TEXT NOT NULL, company_name TEXT, exchange TEXT, domain TEXT, period_year INTEGER, period_type TEXT, period_start TEXT, period_end TEXT, sort_key TEXT, ssc_url TEXT, parsed_at TEXT, balance_sheet_json TEXT DEFAULT '{}', income_stmt_json TEXT DEFAULT '{}', cash_flow_json TEXT DEFAULT '{}', ratios_json TEXT DEFAULT '{}');
+      CREATE TABLE IF NOT EXISTS daily_ohlcv (code TEXT NOT NULL, date TEXT NOT NULL, open REAL NOT NULL, high REAL NOT NULL, low REAL NOT NULL, close REAL NOT NULL, volume REAL NOT NULL DEFAULT 0, updated_at TEXT NOT NULL, PRIMARY KEY (code, date));
     `);
 
     const briefing = await assembleBriefing({

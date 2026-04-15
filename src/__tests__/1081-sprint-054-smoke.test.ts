@@ -128,6 +128,18 @@ function makeFullDb(): Database {
       action_note        TEXT,
       timestamp          TEXT    NOT NULL DEFAULT (datetime('now'))
     );
+
+    CREATE TABLE IF NOT EXISTS daily_ohlcv (
+      code       TEXT    NOT NULL,
+      date       TEXT    NOT NULL,
+      open       REAL    NOT NULL,
+      high       REAL    NOT NULL,
+      low        REAL    NOT NULL,
+      close      REAL    NOT NULL,
+      volume     REAL    NOT NULL DEFAULT 0,
+      updated_at TEXT    NOT NULL,
+      PRIMARY KEY (code, date)
+    );
   `);
 
   return db;

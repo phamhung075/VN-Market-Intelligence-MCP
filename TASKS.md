@@ -4,7 +4,7 @@
 
 ---
 
-## Sprint 083 — Active
+## Sprint 084 — Active
 
 Vision: `SPRINT_GOAL.md`
 
@@ -12,12 +12,21 @@ Vision: `SPRINT_GOAL.md`
 
 | ID | Title | Agent | Layer | Depends On | Branch | Status |
 |----|-------|-------|-------|------------|--------|--------|
-| 1285 | fix(cooldown): macro_deviation alerts bypass step E cooldown — sent 4x in 1h | Dev | scheduler | — | — | Done |
-| 1284 | schema.ts: replace process.env["DB_PATH"] fallback with Bun.env exclusively | Dev | infrastructure | — | — | Done |
+| 1286 | fix(schema): add daily_ohlcv table to initDatabase() — SQLiteError unblocks 172/179/1081 | Dev | infrastructure | — | fix/1286-daily-ohlcv-schema | Review |
+| 1287 | fix(cascade): R09/R11 rule drift in predictionCascadeMapper — war/conflict and inflation rules | Dev | domain | — | — | Todo |
+| 1288 | fix(pollNews): PollNewsResult shape mismatch in test 102 | Dev | application | 1286 | — | Todo |
 | 1218 | VPS BCTC queue: populate source_hints with actual PDF URLs from listSscDocuments | Dev | infrastructure | — | — | Backlog |
 | 1248 | BDI data staleness during supply chain crisis — fetch path needs geo-unblocked VPS route | Dev | infrastructure | — | — | Backlog |
 
-**WIP:** 0 In Progress. 0 Review. Remaining Backlog: 1218, 1248 require VPS SSH access.
+**WIP:** 0 In Progress. 1 Review.
+
+## Sprint 083 — Complete
+
+| ID | Title | Status |
+|----|-------|--------|
+| 1285 | fix(cooldown): macro_deviation alerts bypass step E cooldown — sent 4x in 1h | Done |
+| 1284 | schema.ts: replace process.env["DB_PATH"] fallback with Bun.env exclusively | Done |
+| 1283 | Code janitor scan: post-082 clean-state audit (checks 1-5) | Done |
 
 ## Sprint 082 — Complete
 
@@ -37,6 +46,50 @@ Vision: `SPRINT_GOAL.md`
 ---
 
 ## Task Details (active tasks only — Done tasks archived)
+
+### 1286 — fix(schema): add daily_ohlcv table to initDatabase()
+
+**Symptom:** 30+ tests across suites 172, 179, 1081, 1124, and 1007 fail with `SQLiteError: no such table: daily_ohlcv`. These tests use `:memory:` DB via `initDatabase()`, which does not create `daily_ohlcv`. The table exists in the production DB (created by a migration at some point) but was never added to the baseline `CREATE TABLE IF NOT EXISTS` block in `schema.ts`.
+
+**Fix:** Add `CREATE TABLE IF NOT EXISTS daily_ohlcv (...)` to `initDatabase()` in `src/infrastructure/db/schema.ts`. Schema must match what production queries expect (ticker, date, open, high, low, close, volume at minimum). Check existing callers of `daily_ohlcv` in the codebase to derive the correct column set.
+
+**Also:** Clear the stale finding in `docs/data/code-janitor-known-findings.json` — the DomainTypeEnum finding was resolved in sprint 083 but the file was not updated.
+
+**Test:** `src/__tests__/1286-daily-ohlcv-schema.test.ts`
+- Verify `initDatabase()` creates `daily_ohlcv` table.
+- Verify tests 172 and 179 pass after the fix (run as regression).
+
+---
+
+### 1287 — fix(cascade): R09/R11 rule drift in predictionCascadeMapper
+
+**Symptom:** Test 165 fails on:
+- R09: "war/conflict → aviation bearish, oil_gas bullish" — `predictionCascadeMapper` no longer produces an `oil_gas bullish` or `aviation bearish` match for war/conflict text.
+- R11: "inflation → banking neutral, real_estate bearish" — banking neutral not produced.
+- Multi-rule test: rich text with Fed + oil + inflation produces fewer than 3 results.
+
+**Root cause:** Cascade rules in `predictionCascadeMapper.ts` or `cascadeEngine.ts` have drifted since task 165 was written. Rule keywords, domain mappings, or sentiment assignments have changed.
+
+**Fix:** Align `predictionCascadeMapper` rules to restore R09 and R11 behaviour. Do NOT change test expectations — fix the rule logic to match the original contract. If the rules were intentionally changed, update the test with a comment explaining the new intent and adjust AC accordingly (but prefer fixing the logic).
+
+**Test:** `src/__tests__/165-prediction-cascade-mapper.test.ts` — all ACs must pass.
+
+---
+
+### 1288 — fix(pollNews): PollNewsResult shape mismatch in test 102
+
+**Symptom:** Test 102 fails on:
+- `returns PollNewsResult with correct shape on empty fetch` — `result` does not match expected object shape.
+- `inserts new items and returns correct counts` — inserted/duplicates/errors counts are wrong.
+- `counts errors per failing source but continues other sources` — error count is wrong.
+
+**Root cause:** `pollNews()` return type (`PollNewsResult`) has drifted from what test 102 expects. Either the interface gained/lost fields, or the counting logic changed.
+
+**Fix:** Align `pollNews()` return shape and counting to satisfy the test 102 contract. Depends on 1286 (DB must initialize correctly first).
+
+**Test:** `src/__tests__/102-job-news-poll.test.ts` — all ACs must pass.
+
+---
 
 ### 1285 — fix(cooldown): macro_deviation alerts bypass step E cooldown
 
