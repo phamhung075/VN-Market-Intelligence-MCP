@@ -55,7 +55,8 @@ function seedSchema(db: Database) {
       change_amt  REAL,
       change_pct  REAL,
       volume      REAL,
-      updated_at  TEXT
+      updated_at  TEXT,
+      exchange    TEXT DEFAULT 'HOSE'
     );
     CREATE TABLE IF NOT EXISTS alerts (
       id                    TEXT PRIMARY KEY,
@@ -66,13 +67,18 @@ function seedSchema(db: Database) {
       analysis_ids_json     TEXT,
       message               TEXT,
       read                  INTEGER NOT NULL DEFAULT 0,
-      user_note             TEXT
+      user_note             TEXT,
+      notified_telegram     INTEGER NOT NULL DEFAULT 0,
+      resolved_at           TEXT,
+      resolution_notes      TEXT,
+      sent_by               TEXT NOT NULL DEFAULT 'server'
     );
     CREATE TABLE IF NOT EXISTS market_prices_history (
       code       TEXT NOT NULL,
       price      REAL NOT NULL,
       volume     REAL NOT NULL,
       fetched_at TEXT NOT NULL,
+      exchange   TEXT DEFAULT 'HOSE',
       PRIMARY KEY (code, fetched_at)
     );
     CREATE INDEX IF NOT EXISTS idx_mph_code_fetched

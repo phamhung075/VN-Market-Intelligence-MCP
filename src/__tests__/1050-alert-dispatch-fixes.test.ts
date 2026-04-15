@@ -193,7 +193,8 @@ describe("Issue 2 — price_surge deterministic dedup ID (Task 1050)", () => {
         message               TEXT,
         read                  INTEGER NOT NULL DEFAULT 0,
         user_note             TEXT,
-        notified_telegram     INTEGER NOT NULL DEFAULT 0
+        notified_telegram     INTEGER NOT NULL DEFAULT 0,
+        sent_by               TEXT NOT NULL DEFAULT 'server'
       );
     `);
 
@@ -222,7 +223,10 @@ describe("Issue 2 — price_surge deterministic dedup ID (Task 1050)", () => {
     expect(count).toBe(1);
   });
 
-  it("news_mention type uses random ID (not deterministic) — no change to behaviour", async () => {
+  it("news_mention type uses deterministic day-bucket ID — same article same day = same ID", async () => {
+    // Task 1291 contract update: news_mention was made deterministic (day+title fingerprint)
+    // to prevent duplicate alerts after server restart when the same article is re-processed.
+    // Two signals with the same message on the same day produce the same dedup ID.
     const { generateAlerts } = await import(
       "../domain/services/alertGenerator.js"
     );
@@ -234,12 +238,14 @@ describe("Issue 2 — price_surge deterministic dedup ID (Task 1050)", () => {
       confidence: 0.7,
       detectedAt: "2026-04-08T04:00:00.000Z",
     };
+    // Same message, same day, different time → same day-bucket ID
     const signalB = { ...signalA, detectedAt: "2026-04-08T04:55:00.000Z" };
 
     const alerts1 = generateAlerts([signalA], [{ actionCode: "FPT" }]);
     const alerts2 = generateAlerts([signalB], [{ actionCode: "FPT" }]);
 
-    // news_mention remains random (different events each time)
-    expect(alerts1[0]!.id).not.toBe(alerts2[0]!.id);
+    // news_mention is now deterministic per (ticker, day, title fingerprint)
+    expect(alerts1[0]!.id).toBe(alerts2[0]!.id);
+    expect(alerts1[0]!.id).toMatch(/^alert-news-FPT-2026-04-08/);
   });
 });
