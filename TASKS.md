@@ -12,18 +12,18 @@ Vision: `SPRINT_GOAL.md`
 
 | ID | Title | Agent | Layer | Depends On | Branch | Status |
 |----|-------|-------|-------|------------|--------|--------|
-| 1286 | fix(schema): add daily_ohlcv table to initDatabase() — SQLiteError unblocks 172/179/1081 | Dev | infrastructure | — | fix/1286-daily-ohlcv-schema | Review |
 | 1287 | fix(cascade): R09/R11 rule drift in predictionCascadeMapper — war/conflict and inflation rules | Dev | domain | — | — | Todo |
-| 1288 | fix(pollNews): PollNewsResult shape mismatch in test 102 | Dev | application | 1286 | — | Todo |
+| 1288 | fix(pollNews): PollNewsResult shape mismatch in test 102 | Dev | application | — | — | Todo |
 | 1218 | VPS BCTC queue: populate source_hints with actual PDF URLs from listSscDocuments | Dev | infrastructure | — | — | Backlog |
 | 1248 | BDI data staleness during supply chain crisis — fetch path needs geo-unblocked VPS route | Dev | infrastructure | — | — | Backlog |
 
-**WIP:** 0 In Progress. 1 Review.
+**WIP:** 0 In Progress. 0 Review.
 
 ## Sprint 083 — Complete
 
 | ID | Title | Status |
 |----|-------|--------|
+| 1286 | fix(schema): add daily_ohlcv table to test DB setup — SQLiteError unblocks 172/179/1081 | Done |
 | 1285 | fix(cooldown): macro_deviation alerts bypass step E cooldown — sent 4x in 1h | Done |
 | 1284 | schema.ts: replace process.env["DB_PATH"] fallback with Bun.env exclusively | Done |
 | 1283 | Code janitor scan: post-082 clean-state audit (checks 1-5) | Done |
