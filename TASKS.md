@@ -4,7 +4,7 @@
 
 ---
 
-## Sprint 087 — Active
+## Sprint 088 — Active
 
 Vision: `SPRINT_GOAL.md`
 
@@ -12,14 +12,21 @@ Vision: `SPRINT_GOAL.md`
 
 | ID | Title | Agent | Layer | Depends On | Branch | Status |
 |----|-------|-------|-------|------------|--------|--------|
-| 1295 | fix(ssc): update test 1025 cases 7+8 to call `listSscDocumentsWithFlag` | Dev | infrastructure (test) | — | task/1295-ssc-listdocs-flag | Review |
-| 1296 | fix(prediction): relax direction+expected_move_pct to optional in evidenceTools.ts | Dev | interface | — | task/1296-prediction-schema-optional | Review |
-<!-- TECH_087.md approved — both tasks independent, ready for Dev implementation -->
+| 1297 | fix(test-drift): update test 1190 schedulerFileCount assertion 28→29 | Dev | test | — | task/1297-1298-1299-test-drift-batch | Review |
+| 1298 | fix(test-drift): update test 313 VPS watchdog alert string Vultr→Vinahost | Dev | test | — | task/1297-1298-1299-test-drift-batch | Review |
+| 1299 | fix(test-drift): update test 137 Step E behavior — unconditional since Task 1255 | Dev | test | — | task/1297-1298-1299-test-drift-batch | Review |
 
 | 1218 | VPS BCTC queue: populate source_hints with actual PDF URLs from listSscDocuments | Dev | infrastructure | — | — | Backlog |
 | 1248 | BDI data staleness during supply chain crisis — fetch path needs geo-unblocked VPS route | Dev | infrastructure | — | — | Backlog |
 
-**WIP:** 0 In Progress. 2 Review.
+**WIP:** 0 In Progress. 3 Review.
+
+## Sprint 087 — Complete
+
+| ID | Title | Status |
+|----|-------|--------|
+| 1295 | fix(ssc): update test 1025 cases 7+8 to call `listSscDocumentsWithFlag` | Done |
+| 1296 | fix(prediction): relax direction+expected_move_pct to optional in evidenceTools.ts | Done |
 
 ## Sprint 086 — Complete
 
@@ -47,6 +54,97 @@ Vision: `SPRINT_GOAL.md`
 ---
 
 ## Task Details (active tasks only)
+
+### 1297 — fix(test-drift): update test 1190 schedulerFileCount assertion 28→29
+
+**Branch:** `task/1297-scheduler-count-drift`
+**Layer:** test only — no production code change
+**Depends on:** none
+
+**Root cause:** `docs/data/cron-registry.json` `schedulerFileCount` was incremented to 29 (franceSummaryJob added in sprint 085, task 1290). Test 1190 hardcodes `expect(json.schedulerFileCount).toBe(28)` — assertion is now stale.
+
+**Files to read first:**
+- `src/__tests__/1190-pipeline-watchdog.test.ts` (line 281 — the failing assertion)
+- `docs/data/cron-registry.json` (confirm `schedulerFileCount: 29`)
+
+**Files to modify:**
+- MODIFY: `src/__tests__/1190-pipeline-watchdog.test.ts`
+
+**Exact change:**
+- Line 281: `expect(json.schedulerFileCount).toBe(28)` → `expect(json.schedulerFileCount).toBe(29)`
+- Update test description string on line 280 from `"schedulerFileCount === 28"` to `"schedulerFileCount === 29"` (the `it(...)` label)
+
+**Acceptance Criteria**
+
+**Given** `bun test src/__tests__/1190-pipeline-watchdog.test.ts`
+**When** the test runs
+**Then**
+- All 16 tests pass (was 15 pass / 1 fail)
+- `bun tsc --noEmit` shows 0 errors
+- No production code modified
+
+---
+
+### 1298 — fix(test-drift): update test 313 VPS watchdog alert string Vultr→Vinahost
+
+**Branch:** `task/1298-vps-watchdog-string-drift`
+**Layer:** test only — no production code change
+**Depends on:** none
+
+**Root cause:** Production code in `vpsProxyWatchdogJob.ts` was updated to reference "Vinahost VN price pushes stopped" (provider renamed from Vultr to Vinahost). Test 313 still asserts `.toContain("Vultr price pushes stopped")`.
+
+**Files to read first:**
+- `src/__tests__/313-vps-proxy-watchdog.test.ts` (find the failing `.toContain("Vultr...")` assertion)
+- `src/scheduler/vpsProxyWatchdogJob.ts` (confirm exact new alert string)
+
+**Files to modify:**
+- MODIFY: `src/__tests__/313-vps-proxy-watchdog.test.ts`
+
+**Exact change:** Replace `"Vultr price pushes stopped"` with the actual string fragment used in the production alert message. Read `vpsProxyWatchdogJob.ts` to confirm exact wording before making change.
+
+**Acceptance Criteria**
+
+**Given** `bun test src/__tests__/313-vps-proxy-watchdog.test.ts`
+**When** the test runs
+**Then**
+- All tests pass (0 fail)
+- `bun tsc --noEmit` shows 0 errors
+- No production code modified
+
+---
+
+### 1299 — fix(test-drift): update test 137 Step E behavior — unconditional since Task 1255
+
+**Branch:** `task/1299-step-e-drift`
+**Layer:** test only — no production code change
+**Depends on:** none
+
+**Root cause:** Task 1255 made Step E (send HIGH/CRITICAL alerts to Telegram) unconditional — it runs regardless of market hours. Test 137 case "Step E is skipped outside market hours" was written before that change; it sets `isMarketHoursFn: () => false` and asserts `readCalled === false`. After Task 1255 that expectation is wrong — `readUnnotifiedAlertsFn` IS called even outside market hours.
+
+**Files to read first:**
+- `src/__tests__/137-fix-alert-pipeline.test.ts` (lines 430–456 — the failing case)
+- `src/scheduler/intelligenceCycleJob.ts` (lines 791–810 — Step E unconditional comment, confirm current behavior)
+
+**Files to modify:**
+- MODIFY: `src/__tests__/137-fix-alert-pipeline.test.ts`
+
+**Exact change:** In the "Step E is skipped outside market hours" test case:
+- Update test description to: `"Step E runs unconditionally (even outside market hours)"`
+- Change assertion from `expect(readCalled).toBe(false)` to `expect(readCalled).toBe(true)`
+- `expect(result!.telegramAlertsSent).toBe(0)` should still hold (no alerts returned by mock)
+
+Also check if the other two timeouts (30s each) in test 137 are caused by the same drift — if the first two cases time out because of mock interaction changes, fix those too.
+
+**Acceptance Criteria**
+
+**Given** `bun test src/__tests__/137-fix-alert-pipeline.test.ts`
+**When** the test runs
+**Then**
+- All 3 previously-failing cases pass within 5s each (no 30s timeouts)
+- `bun tsc --noEmit` shows 0 errors
+- No production code modified
+
+---
 
 ### 1295 — fix(ssc): update test 1025 cases 7+8 to call `listSscDocumentsWithFlag`
 
