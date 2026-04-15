@@ -4,7 +4,7 @@
 
 ---
 
-## Sprint 088 — Active
+## Sprint 089 — Active
 
 Vision: `SPRINT_GOAL.md`
 
@@ -12,14 +12,22 @@ Vision: `SPRINT_GOAL.md`
 
 | ID | Title | Agent | Layer | Depends On | Branch | Status |
 |----|-------|-------|-------|------------|--------|--------|
-| 1297 | fix(test-drift): update test 1190 schedulerFileCount assertion 28→29 | Dev | test | — | — | Done |
-| 1298 | fix(test-drift): update test 313 VPS watchdog alert string Vultr→Vinahost | Dev | test | — | — | Done |
-| 1299 | fix(test-drift): update test 137 Step E behavior — unconditional since Task 1255 | Dev | test | — | — | Done |
+| 1300 | fix(sector-dedup): remove legacy 'pharma' key from mcp.config.json referenceStocks | Dev | domain | — | task/1300-remove-pharma-dedup | Review |
+| 1301 | fix(test-isolation): eliminate parallel SQLite state contamination in full suite run | Dev | test | 1300 | — | Todo |
+| — | [PM] Sprint plan tasks 1300+1301 per TECH_089.md | PM | — | — | — | Todo |
 
 | 1218 | VPS BCTC queue: populate source_hints with actual PDF URLs from listSscDocuments | Dev | infrastructure | — | — | Backlog |
 | 1248 | BDI data staleness during supply chain crisis — fetch path needs geo-unblocked VPS route | Dev | infrastructure | — | — | Backlog |
 
 **WIP:** 0 In Progress. 0 Review.
+
+## Sprint 088 — Complete
+
+| ID | Title | Status |
+|----|-------|--------|
+| 1297 | fix(test-drift): update test 1190 schedulerFileCount assertion 28→29 | Done |
+| 1298 | fix(test-drift): update test 313 VPS watchdog alert string Vultr→Vinahost | Done |
+| 1299 | fix(test-drift): update test 137 Step E behavior — unconditional since Task 1255 | Done |
 
 ## Sprint 087 — Complete
 
@@ -54,6 +62,71 @@ Vision: `SPRINT_GOAL.md`
 ---
 
 ## Task Details (active tasks only)
+
+### 1300 — fix(sector-dedup): remove legacy 'pharma' key from mcp.config.json referenceStocks
+
+**Branch:** `task/1300-sector-dedup-pharma`
+**Layer:** domain (config + data only — no TypeScript source change)
+**Depends on:** none
+
+**Root cause:** `mcp.config.json` contains both `pharma` (5 tickers: DHG, IMP, DMC, TRA, DBD) and `pharmaceutical` (7 tickers: DHG, IMP, DMC, DBD, PME, TRA, OPC) under `market.referenceStocks`. All `pharma` tickers are a subset of `pharmaceutical`. Test 1282 detects this duplicate and fails. The presence of both keys causes the sector alert system to potentially fire duplicate alerts for pharma tickers.
+
+**Root cause confirmed:** `mcp.config.json` — two keys coexist: `pharma` and `pharmaceutical`.
+
+**Files to read first:**
+- `mcp.config.json` (find `market.referenceStocks` section — confirm both keys exist)
+- `src/__tests__/1282-sector-classification-dedup.test.ts` (lines 88–95 — the failing assertion)
+
+**Files to modify:**
+- MODIFY: `mcp.config.json`
+
+**Exact change:** Under `market.referenceStocks`, remove the entire `"pharma": [...]` entry. The `pharmaceutical` key with 7 tickers (DHG, IMP, DMC, DBD, PME, TRA, OPC) is the canonical sector and must remain untouched.
+
+**Acceptance Criteria**
+
+**Given** `bun test src/__tests__/1282-sector-classification-dedup.test.ts`
+**When** the test runs
+**Then**
+- All 7 tests pass (was 6 pass / 1 fail)
+- `bun tsc --noEmit` shows 0 errors
+- No TypeScript source files modified — config change only
+- `pharmaceutical` key still present with all 7 tickers intact
+
+---
+
+### 1301 — fix(test-isolation): eliminate parallel SQLite state contamination in full suite run
+
+**Branch:** `task/1301-test-isolation-sqlite`
+**Layer:** test infrastructure
+**Depends on:** 1300
+
+**Root cause:** Full suite (`bun test`) runs test files in parallel workers. Multiple test files open the same SQLite DB path (or use a shared in-memory DB alias), causing state contamination. Symptoms: tests that pass in isolation fail under parallel execution — particularly test files 137, 278, 1294 which use `intelligenceCycleJob` and share DB-backed alert state.
+
+**Investigation steps:**
+1. Read failing test files (137, 278, 1294) — check how each sets `DB_PATH` and whether they use `:memory:` or a shared file path.
+2. Identify any test files that do NOT set `process.env["DB_PATH"] = ":memory:"` at the top.
+3. Fix: every test file that touches the DB must set `process.env["DB_PATH"] = ":memory:"` as the very first line (before any imports), OR use a unique temp file path via `mktemp`.
+
+**Files to read first:**
+- `src/__tests__/278-*.test.ts` (check DB_PATH setup)
+- `src/__tests__/1294-*.test.ts` (check DB_PATH setup)
+- `src/__tests__/137-fix-alert-pipeline.test.ts` line 1 (confirm `:memory:` is set)
+- Any test file referenced in the 22-failure full-suite run that does NOT have `DB_PATH = ":memory:"` as line 1
+
+**Files to modify:**
+- Any test file missing `process.env["DB_PATH"] = ":memory:";` as the first line
+
+**Acceptance Criteria**
+
+**Given** `bun test` (full parallel suite)
+**When** the suite completes
+**Then**
+- Total failures ≤ 2 (only OCR e2e Bun crash may remain — that is a Bun version limitation, not a test isolation issue)
+- Tests 137, 278, 1294 all pass in the parallel run
+- `bun tsc --noEmit` shows 0 errors
+- No production code modified
+
+---
 
 ### 1297 — fix(test-drift): update test 1190 schedulerFileCount assertion 28→29
 
