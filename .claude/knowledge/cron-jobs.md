@@ -67,6 +67,7 @@ Full design → `docs/ARCHITECTURE.md#vps-proxy-geo-block-workaround`
 
 | Schedule (UTC) | Agent | Model | Frequency rationale |
 |----------------|-------|-------|---------------------|
+| `7 * * * *` | dev-team (po→ba→architect→pm→developer→qa→fixer) | sonnet | Hourly. Calls individual agents directly in sequence. 45-min cap. |
 | `0 */6 * * *` | code-janitor | haiku | Every 6h. Mechanical grep — haiku sufficient. Early-exit if 0 src/ commits in 6h. |
 | `0 16 * * *` | system-auditor | sonnet | 1x/day 23:00 VN. Early-exit if 0 commits in 24h. |
 | `30 17 * * 1,4` | claude-manager-helper | sonnet | 2x/week (Mon+Thu 00:30 VN). Early-exit if 0 context file changes in 3 days. |

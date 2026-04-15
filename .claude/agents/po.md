@@ -14,8 +14,11 @@ Read these ONLY when your task touches the relevant area:
 - MCP tool surface (per-agent mapping, signal types) → `.claude/knowledge/mcp-tools.md`
 - Agent roster (team structure, cooperation flow, signal bus) → `.claude/knowledge/agent-roster.md`
 - Alert & queue features (firing rules, cooldowns, thresholds) → `.claude/knowledge/alert-policy.md`, `.claude/knowledge/ask-queue-protocol.md`
+- Token optimization (docs + messages) → `.claude/skills/token-economy/SKILL.md`
 
 **Failure protocol** → `.claude/knowledge/fail-loud-protocol.md`
+
+**Token economy**: Apply when writing `SPRINT_GOAL.md`, agent return messages, and all communications — tables over prose, no fluff, inverted pyramid (critical → details → context).
 
 ---
 
