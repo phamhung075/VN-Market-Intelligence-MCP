@@ -426,11 +426,13 @@ export async function pollNews(options: PollNewsOptions = {}): Promise<PollNewsR
         // success in that case produces false-OK in the source health table.
         globalSourceTracker.recordSuccess(name);
       } else {
-        // Fulfilled with 0 items — treat as transient failure so the source
-        // health table shows "degraded" instead of "OK". The consecutiveFailures
-        // counter resets as soon as the next poll returns items, so a few
-        // empty off-hours cycles won't trigger "down" status (threshold = 5).
-        errors++;
+        // Fulfilled with 0 items — record as transient failure in the health
+        // tracker (so source health shows "degraded" instead of "OK") but do
+        // NOT increment `errors`. The `errors` counter in PollNewsResult
+        // represents sources that threw an exception, not empty-result sources.
+        // Empty results are normal off-hours behaviour and should not affect
+        // the error count returned to callers or logged as failures.
+        // Task 1288: separated health-tracking concern from error-counting.
         globalSourceTracker.recordFailure(name, "empty result — no items returned");
         logger.debug(`[pollNews] ${name} returned 0 items — recorded as transient failure`, { source: name });
       }
