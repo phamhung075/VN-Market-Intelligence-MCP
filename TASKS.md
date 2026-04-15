@@ -13,13 +13,13 @@ Vision: `SPRINT_GOAL.md`
 | ID | Title | Agent | Layer | Depends On | Branch | Status |
 |----|-------|-------|-------|------------|--------|--------|
 | 1295 | fix(ssc): update test 1025 cases 7+8 to call `listSscDocumentsWithFlag` | Dev | infrastructure (test) | — | task/1295-ssc-listdocs-flag | Review |
-| 1296 | fix(prediction): relax direction+expected_move_pct to optional in evidenceTools.ts | Dev | interface | — | — | Todo |
+| 1296 | fix(prediction): relax direction+expected_move_pct to optional in evidenceTools.ts | Dev | interface | — | task/1296-prediction-schema-optional | Review |
 <!-- TECH_087.md approved — both tasks independent, ready for Dev implementation -->
 
 | 1218 | VPS BCTC queue: populate source_hints with actual PDF URLs from listSscDocuments | Dev | infrastructure | — | — | Backlog |
 | 1248 | BDI data staleness during supply chain crisis — fetch path needs geo-unblocked VPS route | Dev | infrastructure | — | — | Backlog |
 
-**WIP:** 0 In Progress. 0 Review.
+**WIP:** 0 In Progress. 2 Review.
 
 ## Sprint 086 — Complete
 
