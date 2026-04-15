@@ -199,6 +199,23 @@ export interface AlertPolicyConfig {
   alertCooldownMinutes: number;
 }
 
+/**
+ * Alert quality / deduplication settings (mcp.config.json `alertQuality` block).
+ * Controls step-E cooldown in the intelligence cycle.
+ */
+export interface AlertQualityConfig {
+  /** Minutes to suppress same stock+signal combo. Default: 30. */
+  cooldownMinutes: number;
+  /** Maximum alerts per stock per calendar day. Default: 3. */
+  maxAlertsPerStockPerDay: number;
+  /** Window (minutes) for exact-duplicate detection. Default: 60. */
+  dedupWindowMinutes: number;
+  /** Window (minutes) to group related alerts before sending. Default: 15. */
+  groupWindowMinutes: number;
+  /** Severity levels that are never suppressed. Default: ["critical"]. */
+  neverSuppressSeverity: string[];
+}
+
 export interface McpConfig {
   server: ServerConfig;
   data: DataConfig;
@@ -213,6 +230,8 @@ export interface McpConfig {
   predictionMarkets: PredictionMarketsConfig;
   /** Narrowed alert policy thresholds for Sprint 054 position-danger + watchlist-opportunity. */
   alertPolicy: AlertPolicyConfig;
+  /** Alert quality / deduplication settings — step-E cooldown (Task 1281). */
+  alertQuality: AlertQualityConfig;
   /** Feature flags for toggling infrastructure behaviour. Sprint 056. */
   features: FeaturesConfig;
 }
@@ -553,6 +572,16 @@ export function loadMcpConfig(): McpConfig {
         },
         alertCooldownMinutes: numVal(ap, "alertCooldownMinutes", 0),
       } satisfies AlertPolicyConfig;
+    })(),
+    alertQuality: (() => {
+      const aq = (get(f, "alertQuality") ?? {}) as Record<string, unknown>;
+      return {
+        cooldownMinutes: numVal(aq, "cooldownMinutes", 30),
+        maxAlertsPerStockPerDay: numVal(aq, "maxAlertsPerStockPerDay", 3),
+        dedupWindowMinutes: numVal(aq, "dedupWindowMinutes", 60),
+        groupWindowMinutes: numVal(aq, "groupWindowMinutes", 15),
+        neverSuppressSeverity: arrVal(aq, "neverSuppressSeverity", ["critical"]),
+      } satisfies AlertQualityConfig;
     })(),
     features: (() => {
       const ft = (get(f, "features") ?? {}) as Record<string, unknown>;

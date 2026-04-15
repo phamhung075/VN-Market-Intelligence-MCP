@@ -23,6 +23,7 @@
  */
 
 import { logger } from "../infrastructure/logger.js";
+import { mcpConfig } from "../infrastructure/config.js";
 import type { PollNewsResult } from "../application/usecases/pollNews.js";
 import type { SscDocument } from "../infrastructure/fetchers/ssc.js";
 import type { Alert } from "../domain/services/alertGenerator.js";
@@ -108,6 +109,18 @@ export interface CycleDeps {
    * Inject in tests to avoid real SQLite + domain side effects.
    */
   computeHexagramsFn?: (codes: string[]) => Promise<number>;
+  /**
+   * Task 1281 — Cooldown config for step E alert suppression.
+   * When not injected, reads from `mcpConfig.alertQuality` (mcp.config.json).
+   * Replaces the former hardcoded `{ cooldownMinutes: 60, maxAlertsPerStockPerDay: 3 }`.
+   */
+  cooldownConfig?: import("../domain/services/alertCooldown.js").CooldownConfig;
+  /**
+   * Task 1281 — Override recent alert history fetch for step E (test isolation).
+   * When not injected, step E queries the DB directly.
+   * Signature matches the in-memory history format used by shouldSuppressAlert.
+   */
+  getRecentAlertHistoryFn?: () => Promise<Array<{ stocks: string; signalTypes: string; triggeredAt: string }>>;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -775,34 +788,43 @@ async function _runCycle(deps: CycleDeps = {}): Promise<CycleResult> {
       // This window matches the 15-minute cron cadence with 1-minute overlap for drift.
       const unnotifiedAlerts = await withTimeout(readUnnotifiedAlertsFn(ALERT_WINDOW_MS), "step E readAlerts");
 
-      // Apply cooldown: suppress same stock+signal combo within 60 min
-      // Prevents VEA getting 6 alerts in 2 hours for unrelated articles
+      // Apply cooldown: suppress same stock+signal combo within the configured window.
+      // Prevents VEA getting 6 alerts in 2 hours for unrelated articles.
+      // cooldownMinutes is read from mcp.config.json `alertQuality.cooldownMinutes` (Task 1281).
       const { shouldSuppressAlert } = await import("../domain/services/alertCooldown.js");
-      const { getDb: getCooldownDb } = await import("../infrastructure/db/schema.js");
+      const effectiveCooldownConfig = deps.cooldownConfig ?? {
+        cooldownMinutes: mcpConfig.alertQuality.cooldownMinutes,
+        maxAlertsPerStockPerDay: mcpConfig.alertQuality.maxAlertsPerStockPerDay,
+      };
       let recentAlertHistory: Array<{ stocks: string; signalTypes: string; triggeredAt: string }> = [];
-      try {
-        const db = getCooldownDb();
-        const rows = db.prepare(
-          `SELECT affected_actions_json, signals_json, triggered_at
-           FROM alerts WHERE notified_telegram = 1 AND triggered_at > datetime('now', '-2 hours')`
-        ).all() as Array<{ affected_actions_json: string; signals_json: string; triggered_at: string }>;
-        recentAlertHistory = rows.map((r) => ({
-          stocks: r.affected_actions_json ? JSON.parse(r.affected_actions_json)?.[0]?.code ?? "" : "",
-          signalTypes: r.signals_json ? JSON.parse(r.signals_json).map((s: { type: string }) => s.type).join(",") : "",
-          triggeredAt: r.triggered_at,
-        }));
-      } catch { /* best-effort */ }
+      if (deps.getRecentAlertHistoryFn) {
+        try { recentAlertHistory = await deps.getRecentAlertHistoryFn(); } catch { /* best-effort */ }
+      } else {
+        const { getDb: getCooldownDb } = await import("../infrastructure/db/schema.js");
+        try {
+          const db = getCooldownDb();
+          const rows = db.prepare(
+            `SELECT affected_actions_json, signals_json, triggered_at
+             FROM alerts WHERE notified_telegram = 1 AND triggered_at > datetime('now', '-2 hours')`
+          ).all() as Array<{ affected_actions_json: string; signals_json: string; triggered_at: string }>;
+          recentAlertHistory = rows.map((r) => ({
+            stocks: r.affected_actions_json ? JSON.parse(r.affected_actions_json)?.[0]?.code ?? "" : "",
+            signalTypes: r.signals_json ? JSON.parse(r.signals_json).map((s: { type: string }) => s.type).join(",") : "",
+            triggeredAt: r.triggered_at,
+          }));
+        } catch { /* best-effort */ }
+      }
 
       // Send each alert individually with cooldown check.
       // The history snapshot is mutated after each send so back-to-back
       // alerts in the same cycle can see siblings that were just sent —
       // prevents the "10 volume_spike alerts in 5 min for FPT/VCB/VNM" burst.
       for (const alert of unnotifiedAlerts) {
-        // Check cooldown — same stock + same signal type within 60 min → skip
+        // Check cooldown — same stock + same signal type within cooldown window → skip
         const suppress = shouldSuppressAlert(
           { stocks: [alert.actionCode], signalTypes: alert.signals.map((s) => s.type), severity: alert.severity },
           recentAlertHistory,
-          { cooldownMinutes: 60, maxAlertsPerStockPerDay: 3 },
+          effectiveCooldownConfig,
         );
         if (suppress) {
           // Mark as notified without sending — suppressed by cooldown
