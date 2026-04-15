@@ -125,7 +125,11 @@ function setupTestDb(): Database {
       analysis_ids_json     TEXT,
       message               TEXT,
       read                  INTEGER NOT NULL DEFAULT 0,
-      user_note             TEXT
+      user_note             TEXT,
+      notified_telegram     INTEGER NOT NULL DEFAULT 0,
+      resolved_at           TEXT,
+      resolution_notes      TEXT,
+      sent_by               TEXT NOT NULL DEFAULT 'server'
     );
 
     CREATE TABLE IF NOT EXISTS financial_reports (
@@ -155,6 +159,61 @@ function setupTestDb(): Database {
       interest_rate REAL,
       fetched_at    TEXT NOT NULL,
       UNIQUE(country)
+    );
+
+    CREATE TABLE IF NOT EXISTS positions (
+      id          INTEGER PRIMARY KEY AUTOINCREMENT,
+      code        TEXT NOT NULL,
+      shares      INTEGER NOT NULL,
+      avg_price   REAL NOT NULL,
+      opened_at   TEXT NOT NULL DEFAULT (datetime('now')),
+      closed_at   TEXT,
+      notes       TEXT,
+      UNIQUE(code)
+    );
+
+    CREATE TABLE IF NOT EXISTS insider_transactions (
+      id                  TEXT PRIMARY KEY,
+      code                TEXT NOT NULL,
+      insider_name        TEXT NOT NULL,
+      position            TEXT NOT NULL,
+      type                TEXT NOT NULL,
+      registered_volume   INTEGER NOT NULL DEFAULT 0,
+      executed_volume     INTEGER NOT NULL DEFAULT 0,
+      price               REAL NOT NULL DEFAULT 0,
+      from_date           TEXT NOT NULL,
+      to_date             TEXT NOT NULL,
+      fetched_at          TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS vnstock_trading_stats (
+      id                    INTEGER PRIMARY KEY AUTOINCREMENT,
+      code                  TEXT NOT NULL,
+      date                  TEXT NOT NULL DEFAULT '1970-01-01',
+      foreign_room          INTEGER,
+      foreign_volume        INTEGER,
+      current_holding_ratio REAL,
+      max_holding_ratio     REAL,
+      avg_volume_2w         INTEGER,
+      high_52w              REAL,
+      low_52w               REAL,
+      pct_from_high_52w     REAL,
+      pct_from_low_52w      REAL,
+      fetched_at            TEXT NOT NULL,
+      created_at            TEXT NOT NULL DEFAULT (datetime('now')),
+      UNIQUE(code, date)
+    );
+
+    CREATE TABLE IF NOT EXISTS evidence_scores (
+      id             INTEGER PRIMARY KEY AUTOINCREMENT,
+      stock          TEXT NOT NULL,
+      score_date     TEXT NOT NULL,
+      bullish_score  REAL NOT NULL DEFAULT 0.0,
+      bearish_score  REAL NOT NULL DEFAULT 0.0,
+      neutral_score  REAL NOT NULL DEFAULT 0.0,
+      fragment_count INTEGER NOT NULL DEFAULT 0,
+      computed_at    TEXT NOT NULL,
+      UNIQUE(stock, score_date)
     );
   `);
 
