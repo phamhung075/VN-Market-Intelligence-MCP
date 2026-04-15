@@ -646,14 +646,35 @@ export async function createBunServer(
           return;
         }
 
-        const items: ForeignFlowUpsertItem[] = JSON.parse(body);
+        const rawItems: unknown[] = JSON.parse(body);
 
-        if (!Array.isArray(items) || items.length === 0) {
+        if (!Array.isArray(rawItems) || rawItems.length === 0) {
           logVpsPush({ service: "foreign-flow", itemsCount: 0, status: "error", errorMsg: "Expected non-empty array" });
           res.writeHead(400, { "Content-Type": "application/json" });
           res.end(JSON.stringify({ error: "Expected non-empty array" }));
           return;
         }
+
+        // Normalise VPS payload format → ForeignFlowUpsertItem.
+        // VPS script (fetch-foreign-flow.sh) sends camelCase fields without `date`:
+        //   { code, foreignBuyVol, foreignSellVol, foreignRoom }
+        // ForeignFlowUpsertItem expects snake_case + date:
+        //   { code, date, foreign_volume, foreign_room, holding_ratio, fetched_at }
+        const todayUtc = new Date().toISOString().slice(0, 10);
+        const items: ForeignFlowUpsertItem[] = (rawItems as Record<string, unknown>[]).map((raw) => {
+          const buyVol  = typeof raw.foreignBuyVol  === "number" ? raw.foreignBuyVol  : 0;
+          const sellVol = typeof raw.foreignSellVol === "number" ? raw.foreignSellVol : 0;
+          return {
+            code:            typeof raw.code           === "string" ? raw.code           : String(raw.code ?? ""),
+            date:            (typeof raw.date          === "string" && raw.date) ? raw.date : todayUtc,
+            foreign_volume:  typeof raw.foreign_volume === "number" ? raw.foreign_volume : (buyVol - sellVol),
+            foreign_room:    typeof raw.foreign_room   === "number" ? raw.foreign_room
+                           : typeof raw.foreignRoom    === "number" ? raw.foreignRoom
+                           : null,
+            holding_ratio:   typeof raw.holding_ratio  === "number" ? raw.holding_ratio  : null,
+            fetched_at:      typeof raw.fetched_at     === "string" ? raw.fetched_at     : null,
+          };
+        });
 
         const upserted = upsertForeignFlow(items);
         log.info("[push-foreign-flow] upserted rows", { count: upserted, source: "vps-proxy" });

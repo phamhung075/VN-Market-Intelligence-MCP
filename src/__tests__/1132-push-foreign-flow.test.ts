@@ -296,4 +296,63 @@ describe("Task 1132 — POST /api/push-foreign-flow: happy path", () => {
     expect(body.ok).toBe(true);
     expect(body.upserted).toBe(3);
   });
+
+  // ── Task 1271/1273 regression: VPS camelCase payload (no date field) ────────
+  it("accepts VPS-format payload (camelCase, no date) and stores net volume", async () => {
+    // VPS script sends: { code, foreignBuyVol, foreignSellVol, foreignRoom }
+    // Missing: date, foreign_volume, foreign_room (snake_case), holding_ratio
+    const vpsBatch = [
+      { code: "SSI", foreignBuyVol: 300000, foreignSellVol: 100000, foreignRoom: 5000000 },
+      { code: "VCI", foreignBuyVol: 50000,  foreignSellVol: 20000,  foreignRoom: 2000000 },
+    ];
+
+    const res = await fetch(`${base}/api/push-foreign-flow`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": VALID_KEY,
+      },
+      body: JSON.stringify(vpsBatch),
+    });
+    expect(res.status).toBe(200);
+    const resBody = await res.json() as { ok: boolean; upserted: number };
+    expect(resBody.ok).toBe(true);
+    expect(resBody.upserted).toBe(2);
+
+    // Verify net volume stored correctly: buyVol - sellVol
+    const db = getDb();
+    const ssi = db.query<{ foreign_volume: number; foreign_room: number }, [string]>(
+      "SELECT foreign_volume, foreign_room FROM vnstock_trading_stats WHERE code = ? ORDER BY date DESC LIMIT 1"
+    ).get("SSI");
+    expect(ssi).not.toBeNull();
+    expect(ssi!.foreign_volume).toBe(200000); // 300000 - 100000
+    expect(ssi!.foreign_room).toBe(5000000);
+  });
+
+  it("accepts mixed payload (some items have date, others do not)", async () => {
+    const mixed = [
+      { code: "BID", date: "2026-04-14", foreign_volume: 100, foreign_room: 1000, holding_ratio: 0.1, fetched_at: null },
+      { code: "CTG", foreignBuyVol: 80, foreignSellVol: 30, foreignRoom: 800 }, // no date
+    ];
+
+    const res = await fetch(`${base}/api/push-foreign-flow`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": VALID_KEY,
+      },
+      body: JSON.stringify(mixed),
+    });
+    expect(res.status).toBe(200);
+    const resBody = await res.json() as { ok: boolean; upserted: number };
+    expect(resBody.ok).toBe(true);
+    expect(resBody.upserted).toBe(2);
+
+    const db = getDb();
+    const ctg = db.query<{ foreign_volume: number }, [string]>(
+      "SELECT foreign_volume FROM vnstock_trading_stats WHERE code = ? ORDER BY date DESC LIMIT 1"
+    ).get("CTG");
+    expect(ctg).not.toBeNull();
+    expect(ctg!.foreign_volume).toBe(50); // 80 - 30
+  });
 });
