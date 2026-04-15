@@ -805,7 +805,7 @@ async function _runCycle(deps: CycleDeps = {}): Promise<CycleResult> {
           const db = getCooldownDb();
           const rows = db.prepare(
             `SELECT affected_actions_json, signals_json, triggered_at
-             FROM alerts WHERE notified_telegram = 1 AND triggered_at > datetime('now', '-2 hours')`
+             FROM alerts WHERE triggered_at > datetime('now', '-2 hours')`
           ).all() as Array<{ affected_actions_json: string; signals_json: string; triggered_at: string }>;
           recentAlertHistory = rows.map((r) => ({
             stocks: r.affected_actions_json ? JSON.parse(r.affected_actions_json)?.[0]?.code ?? "" : "",
@@ -846,14 +846,15 @@ async function _runCycle(deps: CycleDeps = {}): Promise<CycleResult> {
               error: markErr instanceof Error ? markErr.message : String(markErr),
             });
           }
-          // Prepend the just-sent alert into the in-memory cooldown snapshot
-          // so subsequent alerts in this same loop iteration see it.
-          recentAlertHistory.push({
-            stocks: alert.actionCode,
-            signalTypes: alert.signals.map((s) => s.type).join(","),
-            triggeredAt: new Date().toISOString(),
-          });
         }
+        // Always append into the in-memory cooldown snapshot regardless of
+        // whether the Telegram send succeeded (sent > 0) or failed (sent === 0).
+        // This prevents same-cycle sibling alerts from firing when Telegram is down.
+        recentAlertHistory.push({
+          stocks: alert.actionCode,
+          signalTypes: alert.signals.map((s) => s.type).join(","),
+          triggeredAt: new Date().toISOString(),
+        });
       }
 
       logger.debug("[intelligence-cycle] step E complete — alerts sent", {
