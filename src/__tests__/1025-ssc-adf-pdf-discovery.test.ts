@@ -22,7 +22,7 @@ import { describe, it, expect } from "bun:test";
 import {
   fetchHoseDisclosures,
   fetchHnxDisclosures,
-  listSscDocuments,
+  listSscDocumentsWithFlag,
 } from "../infrastructure/fetchers/ssc.js";
 import type { HttpClient } from "../infrastructure/fetchers/ssc.js";
 
@@ -229,7 +229,7 @@ describe("Task 1025 — SSC BCTC PDF discovery via HOSE/HNX fallback", () => {
       },
     };
 
-    const docs = await listSscDocuments("VCB", "quarterly", 2025, mockClient);
+    const docs = await listSscDocumentsWithFlag("VCB", "quarterly", 2025, false, mockClient);
 
     expect(sscFetched).toBe(true);
     // When fallback returns results, they should appear
@@ -253,7 +253,7 @@ describe("Task 1025 — SSC BCTC PDF discovery via HOSE/HNX fallback", () => {
       },
     };
 
-    const docs = await listSscDocuments("VCB", "quarterly", 2025, mockClient);
+    const docs = await listSscDocumentsWithFlag("VCB", "quarterly", 2025, false, mockClient);
 
     // SSC docs found — no HOSE fallback needed
     expect(hoseFetched).toBe(false);
