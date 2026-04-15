@@ -12,7 +12,7 @@ Vision: `SPRINT_GOAL.md`
 
 | ID | Title | Agent | Layer | Depends On | Branch | Status |
 |----|-------|-------|-------|------------|--------|--------|
-| 1300 | fix(sector-dedup): remove legacy 'pharma' key from mcp.config.json referenceStocks | Dev | domain | — | task/1300-remove-pharma-dedup | Review |
+| 1300 | fix(sector-dedup): remove legacy 'pharma' key from mcp.config.json referenceStocks | Dev | domain | — | — | Done |
 | 1301 | fix(test-isolation): eliminate parallel SQLite state contamination in full suite run | Dev | test | 1300 | — | Todo |
 | — | [PM] Sprint plan tasks 1300+1301 per TECH_089.md | PM | — | — | — | Todo |
 
