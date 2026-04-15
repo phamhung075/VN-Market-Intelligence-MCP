@@ -45,9 +45,12 @@ const DomainTypeEnum = z.enum([
   "insurance",
   "securities",
   "pharma",
+  "pharmaceutical",
   "logistics",
   "gold_mining",
   "automotive",
+  "construction",
+  "energy",
   "other",
 ]);
 
