@@ -427,7 +427,7 @@ describe("Task 137 — Step E: alerts flow through to sendAlertsFn", () => {
     expect(result!.telegramAlertsSent).toBe(0);
   }, CYCLE_TIMEOUT);
 
-  it("Step E is skipped outside market hours", async () => {
+  it("Step E runs unconditionally (even outside market hours)", async () => {
     const { runIntelligenceCycle, resetCycleGuard } = await import(
       "../scheduler/intelligenceCycleJob.js"
     );
@@ -450,7 +450,7 @@ describe("Task 137 — Step E: alerts flow through to sendAlertsFn", () => {
     });
 
     expect(result).not.toBeNull();
-    expect(readCalled).toBe(false);
+    expect(readCalled).toBe(true);
     expect(result!.telegramAlertsSent).toBe(0);
   }, CYCLE_TIMEOUT);
 });
