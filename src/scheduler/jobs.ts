@@ -49,6 +49,7 @@ import { runCalibrationReportJob } from './calibrationReportJob.js'
 import { runForeignFlowAlertJobCron } from './foreignFlowAlertJob.js'
 import { runInsiderCheck } from './insiderCheckJob.js'
 import { runPipelineWatchdog } from './pipelineWatchdogJob.js'
+import { runFranceSummary } from './franceSummaryJob.js'
 import { getDb } from '../infrastructure/db/schema.js'
 import { recordJobRun } from '../infrastructure/db/cronJobRunStore.js'
 
@@ -110,6 +111,8 @@ export const CRONS = {
   insiderCheck:           Bun.env.CRON_INSIDER_CHECK               ?? '0 1 * * *',
   /** Pipeline watchdog: every 30 min 24/7 — task 1190, Sprint 076 */
   pipelineWatchdog:       Bun.env.CRON_PIPELINE_WATCHDOG            ?? '*/30 * * * *',
+  /** France morning summary: weekdays 07:00 UTC = 08:00 CET, before Paris market open — task 1290 */
+  franceSummary:          Bun.env.CRON_FRANCE_SUMMARY               ?? '0 7 * * 1-5',
 }
 
 function log(msg: string) {
@@ -387,6 +390,17 @@ export function startScheduler() {
       const result = await runPipelineWatchdog()
       if (result === 'alert-sent' || result === 'notify-failed') {
         log(`[pipeline-watchdog] ${result}`)
+      }
+    })
+  }, { timezone: 'UTC' })
+
+  // Weekdays 07:00 UTC (08:00 CET) — France morning summary — task 1290
+  // Sends an overnight VN signal digest to WORK channel before Paris market open.
+  cron.schedule(CRONS.franceSummary, async () => {
+    await recordJobRun(getDb(), "franceSummaryJob", async () => {
+      const result = await runFranceSummary()
+      if (result.sent) {
+        log(`[france-summary] sent — signals=${result.signalCount}`)
       }
     })
   }, { timezone: 'UTC' })
