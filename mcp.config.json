@@ -67,13 +67,12 @@
       "utilities":     ["GEX", "REE", "PC1", "POW", "GEG", "BCG", "NT2"],
       "agriculture":   ["DPM", "VHC", "ANV", "HAG", "HNG", "ASM", "DBC"],
       "insurance":     ["BVH", "PVI", "BMI", "MIG"],
-      "pharma":        ["DHG", "IMP", "DMC", "TRA", "DBD"],
       "logistics":     ["GMD", "VTP", "VOS", "STG", "HAH"],
       "gold_mining":   ["PNJ"],
       "automotive":    ["VEA", "HAX", "CTF", "TMT", "SMA"],
       "construction":  ["HHV", "CTD", "VCG", "HBC", "FCN"],
       "energy":        ["GEG", "REE", "PC1", "BCG"],
-      "pharmaceutical":["DHG", "IMP", "DBD", "PME", "TRA", "OPC"],
+      "pharmaceutical":["DHG", "IMP", "DMC", "DBD", "PME", "TRA", "OPC"],
       "other":         ["DGC"]
     },
     "globalIndices": {

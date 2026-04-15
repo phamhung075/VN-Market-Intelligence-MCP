@@ -171,6 +171,7 @@ const SECTOR_PEERS: Record<DomainType, { code: string; exchange: string }[]> = {
   pharmaceutical: [
     { code: "DHG", exchange: "HOSE" },
     { code: "IMP", exchange: "HOSE" },
+    { code: "DMC", exchange: "HOSE" },  // Domesco Medical — previously in pharma only
     { code: "DBD", exchange: "HOSE" },
     { code: "PME", exchange: "HOSE" },
     { code: "TRA", exchange: "HOSE" },
