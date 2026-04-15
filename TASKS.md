@@ -12,12 +12,12 @@ Vision: `SPRINT_GOAL.md`
 
 | ID | Title | Agent | Layer | Depends On | Branch | Status |
 |----|-------|-------|-------|------------|--------|--------|
-| 1287 | fix(cascade): R09/R11 rule drift in predictionCascadeMapper — war/conflict and inflation rules | Dev | domain | — | — | Todo |
+| 1287 | fix(cascade): R09/R11 rule drift in predictionCascadeMapper — war/conflict and inflation rules | Dev | domain | — | fix/1287-cascade-rule-drift | Review |
 | 1288 | fix(pollNews): PollNewsResult shape mismatch in test 102 | Dev | application | — | — | Todo |
 | 1218 | VPS BCTC queue: populate source_hints with actual PDF URLs from listSscDocuments | Dev | infrastructure | — | — | Backlog |
 | 1248 | BDI data staleness during supply chain crisis — fetch path needs geo-unblocked VPS route | Dev | infrastructure | — | — | Backlog |
 
-**WIP:** 0 In Progress. 0 Review.
+**WIP:** 0 In Progress. 1 Review.
 
 ## Sprint 083 — Complete
 

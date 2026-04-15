@@ -368,7 +368,7 @@ const SPORTS_ENTERTAINMENT_KEYWORDS: ReadonlyArray<string> = [
   "champions league",
   "nba championship",
   "nba finals",
-  "nfl",
+  "nfl ",
   "nba ",
   "mlb ",
   "nhl ",
