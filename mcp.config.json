@@ -72,6 +72,7 @@
       "automotive":    ["VEA", "HAX", "CTF", "TMT", "SMA"],
       "construction":  ["HHV", "CTD", "VCG", "HBC", "FCN"],
       "energy":        ["GEG", "REE", "PC1", "BCG"],
+      "pharma":        ["DHG", "IMP", "DMC", "TRA", "DBD"],
       "pharmaceutical":["DHG", "IMP", "DMC", "DBD", "PME", "TRA", "OPC"],
       "other":         ["DGC"]
     },
