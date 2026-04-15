@@ -1,5 +1,31 @@
 {
-  "scan_date": "2026-04-15T10:30:00Z",
-  "last_run": "2026-04-15T10:30:00Z",
-  "findings": []
+  "scan_date": "2026-04-13T00:00:00Z",
+  "last_run": "2026-04-13T00:00:00Z",
+  "findings": [
+    {
+      "fingerprint": "check-2:mcp.config.json:referenceStocks",
+      "severity": "MEDIUM",
+      "category": "Duplicate classification maps",
+      "file": "mcp.config.json",
+      "line": 58,
+      "detail": "market.referenceStocks contains ticker arrays that duplicate data from src/domain/services/sectorPeers.ts:SECTOR_PEERS. All 12 sectors have identical ticker lists. When SECTOR_PEERS is updated (e.g., adding a new stock to a sector), the mcp.config.json must be manually updated as well.",
+      "canonical_source": "src/domain/services/sectorPeers.ts:SECTOR_PEERS",
+      "risk": "Data drift on sector/ticker updates. Requires two-edit maintenance (sectorPeers.ts + mcp.config.json).",
+      "discovered_at": "2026-04-13T00:00:00Z"
+    }
+  ],
+  "fixed_findings": [
+    {
+      "fingerprint": "check-3:src/domain/services/alertCooldown.ts:DEFAULT_CONFIG",
+      "severity": "LOW",
+      "category": "Hardcoded defaults vs config values",
+      "file": "src/domain/services/alertCooldown.ts",
+      "line": 25,
+      "detail": "DEFAULT_CONFIG.maxAlertsPerStockPerDay was 5 but mcp.config.json specifies 3.",
+      "fix_type": "refactor",
+      "fix_commit": "99df4a3443154923d8436ddad66400cd1f5771f3",
+      "fixed_at": "2026-04-13T00:00:00Z",
+      "fix_notes": "Aligned default with config canonical source. Production unaffected (config always passed)."
+    }
+  ]
 }
