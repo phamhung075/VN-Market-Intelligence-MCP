@@ -76,6 +76,14 @@ interface DataSourceDef {
   label: string;
   /** SQL query returning a single `ts` column: ISO-8601 timestamp or null */
   query: string;
+  /**
+   * Optional fallback query tried when the primary query returns null (e.g.
+   * when the primary table does not exist or has no rows).  Used by "Gia co
+   * phieu" which prefers vps_push_log.pushed_at but falls back to
+   * market_prices.updated_at for environments where the push-log table is not
+   * present.
+   */
+  fallbackQuery?: string;
 }
 
 /** Column width constants for the formatted table */
@@ -95,10 +103,12 @@ const DATA_SOURCES: DataSourceDef[] = [
   },
   {
     label: "Gia co phieu",
-    // Task 1208: use vps_push_log.pushed_at not market_prices.updated_at.
-    // pushed_at is set by server on VPS receipt; updated_at may be stale API time.
+    // Task 1208: prefer vps_push_log.pushed_at (server receipt time).
+    // Task 1293: fall back to market_prices.updated_at so that environments
+    // without vps_push_log (e.g. test in-memory DBs) still report freshness.
     query:
       "SELECT MAX(pushed_at) AS ts FROM vps_push_log WHERE service = 'prices' AND status = 'ok'",
+    fallbackQuery: "SELECT MAX(updated_at) AS ts FROM market_prices",
   },
   {
     label: "Hang hoa",
@@ -159,20 +169,27 @@ export async function getDataFreshness(db: Database): Promise<string> {
   for (const source of DATA_SOURCES) {
     let ageHours: number | null = null;
 
-    try {
-      const row = db
-        .query<{ ts: string | null }, []>(source.query)
-        .get();
-
-      if (row?.ts) {
-        const tsMs = new Date(row.ts).getTime();
-        if (!isNaN(tsMs)) {
-          ageHours = (now - tsMs) / (1000 * 3600);
-        }
+    const tryQuery = (sql: string): string | null => {
+      try {
+        const row = db.query<{ ts: string | null }, []>(sql).get();
+        return row?.ts ?? null;
+      } catch {
+        return null;
       }
-    } catch {
-      // Table does not exist or query failed — treat as no data
-      ageHours = null;
+    };
+
+    let ts = tryQuery(source.query);
+
+    // If primary returned null and a fallback is defined, try the fallback.
+    if (ts === null && source.fallbackQuery) {
+      ts = tryQuery(source.fallbackQuery);
+    }
+
+    if (ts !== null) {
+      const tsMs = new Date(ts).getTime();
+      if (!isNaN(tsMs)) {
+        ageHours = (now - tsMs) / (1000 * 3600);
+      }
     }
 
     const status = classifyFreshness(ageHours);
