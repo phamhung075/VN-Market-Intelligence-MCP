@@ -14,11 +14,11 @@ Vision: `SPRINT_GOAL.md`
 |----|-------|-------|-------|------------|--------|--------|
 | 1291 | fix(schema): systematic initDatabase() audit — add missing columns/tables (market_prices_history.exchange, alerts.sent_by, positions, insider_transactions, vnstock_trading_stats) | Dev | infrastructure | — | — | Todo |
 | 1292 | fix(kinh-dich): tickerJitter range drift — function returns 0.10/0.115, test asserts max 0.09 | Dev | domain | — | fix/1292-ticker-jitter-clamp | Review |
-| 1293 | fix(freshness): getDataFreshness() format drift — test 185 fails on 'Cu' label | Dev | domain | — | fix/1293-data-freshness-label | Review |
+| 1293 | fix(freshness): getDataFreshness() format drift — test 185 fails on 'Cu' label | Dev | domain | — | — | Done |
 | 1218 | VPS BCTC queue: populate source_hints with actual PDF URLs from listSscDocuments | Dev | infrastructure | — | — | Backlog |
 | 1248 | BDI data staleness during supply chain crisis — fetch path needs geo-unblocked VPS route | Dev | infrastructure | — | — | Backlog |
 
-**WIP:** 0 In Progress. 2 Review.
+**WIP:** 0 In Progress. 1 Review.
 
 ## Sprint 085 — Complete
 
