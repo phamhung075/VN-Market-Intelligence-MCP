@@ -31,6 +31,7 @@ import {
 } from "../../../infrastructure/db/likelihoodRatioStore.js";
 import {
   insertPredictionClaim,
+  type ClaimDirection,
 } from "../../../infrastructure/db/predictionClaimStore.js";
 import { getDb } from "../../../infrastructure/db/schema.js";
 
@@ -306,11 +307,13 @@ export function registerEvidenceTools(
       resolution_criteria: z.string().min(1),
       direction: z
         .enum(["bullish", "bearish"])
+        .optional()
         .describe("Direction of the prediction"),
       expected_move_pct: z
         .number()
         .min(0.001)
         .max(0.5)
+        .optional()
         .describe("Expected percentage move, e.g. 0.05 for 5%"),
     },
     async ({
@@ -340,32 +343,36 @@ export function registerEvidenceTools(
           };
         }
 
-        // Step 2: look up latest close price from daily_ohlcv
+        // Step 2: look up latest close price from daily_ohlcv (only needed when direction + pct provided)
         interface OhlcvRow { close: number }
-        const priceRow = database
-          .prepare(
-            `SELECT close FROM daily_ohlcv WHERE code = ? ORDER BY date DESC LIMIT 1`,
-          )
-          .get(ticker) as OhlcvRow | null;
+        let creationPrice: number | null = null;
+        if (direction != null && expected_move_pct != null) {
+          const priceRow = database
+            .prepare(
+              `SELECT close FROM daily_ohlcv WHERE code = ? ORDER BY date DESC LIMIT 1`,
+            )
+            .get(ticker) as OhlcvRow | null;
 
-        if (!priceRow) {
-          return {
-            content: [
-              {
-                type: "text" as const,
-                text: `No price data found for ${ticker} — cannot compute target_price`,
-              },
-            ],
-          };
+          if (!priceRow) {
+            return {
+              content: [
+                {
+                  type: "text" as const,
+                  text: `No price data found for ${ticker} — cannot compute target_price`,
+                },
+              ],
+            };
+          }
+          creationPrice = priceRow.close;
         }
 
-        const creationPrice = priceRow.close;
-
-        // Step 3: compute target_price
-        const targetPrice =
-          direction === "bullish"
-            ? Math.round(creationPrice * (1 + expected_move_pct))
-            : Math.round(creationPrice * (1 - expected_move_pct));
+        // Step 3: compute target_price — null when either direction or pct is absent
+        const targetPrice: number | null =
+          direction != null && expected_move_pct != null && creationPrice != null
+            ? direction === "bullish"
+              ? Math.round(creationPrice * (1 + expected_move_pct))
+              : Math.round(creationPrice * (1 - expected_move_pct))
+            : null;
 
         // Step 4: compute resolution_date = today + horizon_days calendar days
         const resolutionDate = new Date();
@@ -373,11 +380,12 @@ export function registerEvidenceTools(
         const resolutionDateStr = resolutionDate.toISOString().slice(0, 10);
 
         // Step 5: insert claim
+        // direction defaults to "neutral" when omitted — the DB column is NOT NULL
         const id = insertPredictionClaim(database, {
           stock: ticker,
           agent_id: "08-prediction-synthesizer",
           claim_text,
-          direction,
+          direction: (direction ?? "neutral") as ClaimDirection,
           target_price: targetPrice,
           creation_price: creationPrice,
           resolution_date: resolutionDateStr,
@@ -405,11 +413,11 @@ export function registerEvidenceTools(
                 `Prediction claim created: id=${id}\n` +
                 `Stock: ${ticker}\n` +
                 `Claim: ${claim_text}\n` +
-                `Direction: ${direction}\n` +
+                (direction ? `Direction: ${direction}\n` : "") +
                 `Probability: ${probability.toFixed(2)}\n` +
-                `Expected move: ${(expected_move_pct * 100).toFixed(1)}%\n` +
-                `creation_price=${creationPrice} VND\n` +
-                `target_price=${targetPrice} VND\n` +
+                (expected_move_pct != null ? `Expected move: ${(expected_move_pct * 100).toFixed(1)}%\n` : "") +
+                (creationPrice != null ? `creation_price=${creationPrice} VND\n` : "") +
+                (targetPrice != null ? `target_price=${targetPrice} VND\n` : "") +
                 `Horizon: ${horizon_days} days\n` +
                 `resolution_date=${resolutionDateStr}`,
             },
