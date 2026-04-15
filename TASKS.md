@@ -4,7 +4,7 @@
 
 ---
 
-## Sprint 084 — Active
+## Sprint 085 — Active
 
 Vision: `SPRINT_GOAL.md`
 
@@ -12,12 +12,20 @@ Vision: `SPRINT_GOAL.md`
 
 | ID | Title | Agent | Layer | Depends On | Branch | Status |
 |----|-------|-------|-------|------------|--------|--------|
-| 1287 | fix(cascade): R09/R11 rule drift in predictionCascadeMapper — war/conflict and inflation rules | Dev | domain | — | — | Done |
-| 1288 | fix(pollNews): PollNewsResult shape mismatch in test 102 | Dev | application | — | — | Done |
+| 1289 | fix(cascade): test 062 Task 162 vs Task 1256 contract conflict — update assertion to match commodity-exclusion behavior | Dev | domain | — | fix/1289-test-062-contract | Review |
+| 1290 | feat(scheduler): implement franceSummaryJob in jobs.ts — fixes test 1139 | Dev | scheduler | — | — | Backlog |
 | 1218 | VPS BCTC queue: populate source_hints with actual PDF URLs from listSscDocuments | Dev | infrastructure | — | — | Backlog |
 | 1248 | BDI data staleness during supply chain crisis — fetch path needs geo-unblocked VPS route | Dev | infrastructure | — | — | Backlog |
 
-**WIP:** 0 In Progress. 0 Review.
+**WIP:** 0 In Progress. 1 Review.
+
+## Sprint 084 — Complete
+
+| ID | Title | Status |
+|----|-------|--------|
+| 1287 | fix(cascade): R09/R11 rule drift in predictionCascadeMapper | Done |
+| 1288 | fix(pollNews): PollNewsResult shape mismatch in test 102 | Done |
+| 1286 | fix(schema): add daily_ohlcv table to test DB setup | Done |
 
 ## Sprint 083 — Complete
 
@@ -46,6 +54,44 @@ Vision: `SPRINT_GOAL.md`
 ---
 
 ## Task Details (active tasks only — Done tasks archived)
+
+### 1289 — fix(cascade): test 062 Task 162 vs Task 1256 contract conflict
+
+**Symptom:** Test 062 `"returns empty watchlistImpacts when no watchlist stocks match triggered domains"` fails. The test asserts `bankImpacts.length === 2` for VCB and BID when an oil price article (level="global", impactScore=7) is processed.
+
+**Root cause:** Task 1256 (sprint 081) added a commodity-source exclusion guard in `cascadeEngine.ts` step 3b. This guard intentionally prevents oil_gas articles from broadcasting to unrelated sectors (banking, real_estate) via the market-wide broadcast path. However, the test was written for the pre-1256 behavior where oil price articles DID broadcast to all sectors. The test title ("returns empty watchlistImpacts when no watchlist stocks match triggered domains") also contradicts the original assertion body — a name drift from before Task 162 was added.
+
+**Fix:** Update test 062 to match the correct post-1256 contract:
+- The test case for "global oil price article + banking watchlist" should now assert `bankImpacts.length === 0` (commodity exclusion fires, no broadcast to unrelated sectors).
+- Update the test description to accurately describe post-1256 behavior: "commodity-source oil article does NOT broadcast to unrelated sectors (banking)".
+- Add a new positive case: a global oil price article WITH VN market-wide signal ("vn-index" in text) SHOULD broadcast to banking (VnMarketWideSignal override). This tests the full logic.
+
+Do NOT change `cascadeEngine.ts` — the Task 1256 logic is correct. Fix the test only.
+
+**Test:** `src/__tests__/062-cascade-engine.test.ts`
+- All existing passing cases must remain green.
+- The 1 failing case must be corrected to assert 0 banking impacts (no broadcast from commodity article).
+
+---
+
+### 1290 — feat(scheduler): implement franceSummaryJob in jobs.ts
+
+**Symptom:** Test 1139 fails with 2 errors: `expect(src).toContain('recordJobRun(getDb(), "franceSummaryJob"')` and `expect(franceSummaryBlock).toContain("recordJobRun")`. The `franceSummaryJob` and `runFranceSummary()` don't exist anywhere in the codebase.
+
+**Context:** The user lives in France (UTC+1/UTC+2). A "France summary" job sends a brief morning or evening digest to the WORK channel summarizing overnight VN market developments in context of French trading hours. This is a utility job that aggregates recent analysis events and formats them for a French-time reader.
+
+**Fix:**
+1. Create `src/scheduler/franceSummaryJob.ts` — exports `runFranceSummary()`. This function queries recent analysis entries from the last 8h, formats a brief summary (top 3 signals, VN-Index direction, notable alerts), and sends to the WORK channel via `send_telegram(channel="work")`.
+2. Add `CRONS.franceSummary` key to `CRONS` map in `jobs.ts` (e.g. `'0 7 * * 1-5'` — 07:00 UTC = 08:00 CET, before Paris market open).
+3. Register the cron in `startScheduler()` wrapped in `recordJobRun(getDb(), "franceSummaryJob", ...)`.
+4. Import `runFranceSummary` from `./franceSummaryJob.js`.
+
+**Test:** `src/__tests__/1290-france-summary-job.test.ts`
+- Verify `runFranceSummary()` returns a result shape `{ sent: boolean, signalCount: number }`.
+- Verify it handles empty DB gracefully (no analysis rows = sends nothing, returns `{ sent: false, signalCount: 0 }`).
+- `src/__tests__/1139-utility-observability.test.ts` must pass (regression target).
+
+---
 
 ### 1286 — fix(schema): add daily_ohlcv table to initDatabase()
 

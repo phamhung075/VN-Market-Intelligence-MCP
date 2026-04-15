@@ -207,20 +207,21 @@ describe("Task 062 — buildCausalChain (pure domain)", () => {
       level: "global",
       summary: "oil price rise crude oil up sharply",
     });
-    // Banking stocks have no direct SECTOR_RULE match for oil price keywords,
-    // but Task 162 market-wide broadcast fires for global events with impactScore >= 6.
+    // Banking stocks have no direct SECTOR_RULE match for oil price keywords.
+    // Task 1256 (commodity-exclusion): when an oil/gold article triggers a
+    // commodity domain rule (oil_gas), market-wide broadcast is suppressed for
+    // all sectors NOT covered by that rule. Banking is excluded — 0 impacts expected.
     const watchlist: WatchlistEntry[] = [
       makeWatchlistEntry("VCB", "banking"),
       makeWatchlistEntry("BID", "banking"),
     ];
     const chain = buildCausalChain(entry, watchlist);
 
-    // Global event with impactScore 7 triggers market-wide broadcast (Task 162),
-    // cascading to all watchlist stocks not covered by direct SECTOR_RULE matches.
+    // Task 1256 commodity-exclusion blocks broadcast to banking from oil articles.
     const bankImpacts = chain.watchlistImpacts.filter(
       (i) => i.actionCode === "VCB" || i.actionCode === "BID",
     );
-    expect(bankImpacts.length).toBe(2);
+    expect(bankImpacts.length).toBe(0);
   });
 
   it("returns empty watchlistImpacts with an empty watchlist", () => {
