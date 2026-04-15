@@ -12,12 +12,12 @@ Vision: `SPRINT_GOAL.md`
 
 | ID | Title | Agent | Layer | Depends On | Branch | Status |
 |----|-------|-------|-------|------------|--------|--------|
-| 1281 | Alert cooldown config drift: step E hardcodes 60 min vs config 30 min | Dev | scheduler/domain | — | — | Todo |
+| 1281 | Alert cooldown config drift: step E hardcodes 60 min vs config 30 min | Dev | scheduler/domain | — | fix/1281-cooldown-config-drift | Review |
 | 1282 | Sector classification duplication: mcp.config.json referenceStocks vs SECTOR_PEERS | Dev | interface/config | — | — | Todo |
 | 1218 | VPS BCTC queue: populate source_hints with actual PDF URLs from listSscDocuments | Dev | infrastructure | — | — | Backlog |
 | 1248 | BDI data staleness during supply chain crisis — fetch path needs geo-unblocked VPS route | Dev | infrastructure | — | — | Backlog |
 
-**WIP:** 0 In Progress. 0 Review. Remaining Backlog: 1218, 1248 require VPS SSH access.
+**WIP:** 0 In Progress. 1 Review (1281). Remaining Backlog: 1218, 1248 require VPS SSH access.
 
 ## Sprint 081 — Complete
 
