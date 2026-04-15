@@ -4,6 +4,15 @@
 
 ---
 
+## Sprint 090 — Complete
+
+| ID | Title | Status |
+|----|-------|--------|
+| 1302 | feat(ta): implement technicalIndicators.ts domain service + TDD test | Done |
+| 1303 | feat(ta): implement technicalIndicatorTools.ts MCP handler + registry | Done |
+
+---
+
 ## Sprint 089 — Active
 
 Vision: `SPRINT_GOAL.md`

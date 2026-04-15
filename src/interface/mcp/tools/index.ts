@@ -77,3 +77,5 @@ export { registerCalibrationTools } from "./calibrationTools.js";
 export { registerInsiderTools } from "./insiderTools.js";
 // Sprint 071 — Per-Ticker Intelligence Summary (Task 1180)
 export { registerTickerIntelligenceTools } from "./tickerIntelligenceTools.js";
+// Sprint 090 — Technical Indicators (Task 1302/1303)
+export { registerTechnicalIndicatorTools } from "./technicalIndicatorTools.js";

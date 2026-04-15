@@ -2,9 +2,9 @@
   "_maintained_by": "developer",
   "_trigger": "after adding/removing MCP tool, update count + list",
   "_live_check": "curl -s http://127.0.0.1:3000/health | jq .toolCount",
-  "lastUpdated": "2026-04-13",
-  "toolCount": 97,
-  "_note": "Actual registered count verified 2026-04-13. Task 1189 adds get_pipeline_health → 97.",
+  "lastUpdated": "2026-04-15",
+  "toolCount": 98,
+  "_note": "Actual registered count verified 2026-04-15. Task 1302/1303 adds get_technical_indicators → 98.",
   "categories": [
     { "name": "Watchlist", "count": 4, "tools": ["add_to_watchlist", "remove_from_watchlist", "get_watchlist", "update_thresholds"] },
     { "name": "Financial Reports", "count": 4, "tools": ["get_financial_summary", "compare_financials", "list_stored_pdfs", "read_bctc_pdf"] },
@@ -44,7 +44,8 @@
     { "name": "Foreign Flow", "count": 1, "tools": ["get_foreign_flow"] },
     { "name": "Insider Transactions", "count": 1, "tools": ["get_insider_transactions"] },
     { "name": "Market Message Review", "count": 4, "tools": ["get_unreviewed_market_messages", "review_market_message", "get_market_message_digest", "batch_review_market_messages"] },
-    { "name": "Ticker Intelligence", "count": 1, "tools": ["get_ticker_intelligence"] }
+    { "name": "Ticker Intelligence", "count": 1, "tools": ["get_ticker_intelligence"] },
+    { "name": "Technical Analysis", "count": 1, "tools": ["get_technical_indicators"] }
   ],
   "renamed": {
     "get_system_health": "get_system_status",
