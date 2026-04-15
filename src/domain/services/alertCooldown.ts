@@ -24,7 +24,7 @@ export interface CooldownConfig {
 
 const DEFAULT_CONFIG: CooldownConfig = {
   cooldownMinutes: 30,
-  maxAlertsPerStockPerDay: 5,
+  maxAlertsPerStockPerDay: 3,
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
