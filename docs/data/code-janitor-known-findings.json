@@ -1,28 +1,5 @@
 {
   "scan_date": "2026-04-15T04:01:32Z",
   "last_run": "2026-04-15T04:01:32Z",
-  "findings": [
-    {
-      "fingerprint": "check5:intelligenceCycleJob.ts:cooldownMinutes_60_maxAlertsPerStockPerDay_3",
-      "severity": "HIGH",
-      "category": "config-drift",
-      "description": "intelligenceCycleJob step E hardcodes cooldownMinutes: 60 and maxAlertsPerStockPerDay: 3, both differ from mcp.config.json alertQuality (cooldownMinutes: 30, maxAlertsPerStockPerDay: 3) and from alertCooldown.ts DEFAULT_CONFIG (cooldownMinutes: 30, maxAlertsPerStockPerDay: 5)",
-      "canonical_source": "mcp.config.json::alertQuality, src/domain/services/alertCooldown.ts::DEFAULT_CONFIG",
-      "affected_file": "src/scheduler/intelligenceCycleJob.ts",
-      "detail": "Line 805: hardcoded { cooldownMinutes: 60, maxAlertsPerStockPerDay: 3 } passed to shouldSuppressAlert. Config specifies cooldownMinutes: 30 and (implicitly) maxAlertsPerStockPerDay: 5 as default. THREE DIFFERENT VALUES across system means prod behavior drifts from config and domain defaults. Comment indicates 60 is intentional for step E but should be config-driven.",
-      "added_date": "2026-04-15T04:01:32Z",
-      "expires_at": "2026-05-15T04:01:32Z"
-    },
-    {
-      "fingerprint": "check1:mcp.config.json:referenceStocks",
-      "severity": "MEDIUM",
-      "category": "duplicate-classification",
-      "description": "mcp.config.json market.referenceStocks duplicates sector classification data from SECTOR_PEERS (sectorPeers.ts). Both encode the same ticker-to-sector mapping.",
-      "canonical_source": "src/domain/services/sectorPeers.ts::SECTOR_PEERS",
-      "affected_file": "mcp.config.json",
-      "detail": "Lines 58-77: referenceStocks is a flat Record<sector, ticker[]> that mirrors the SECTOR_PEERS structure. Used only in server.ts line 711-712 to build refCodes for the /api/watchlist endpoint. SECTOR_PEERS is the authoritative source; referenceStocks must stay in sync manually. Risk: sector changes made in SECTOR_PEERS forgotten in mcp.config.json, causing API divergence.",
-      "added_date": "2026-04-15T04:01:32Z",
-      "expires_at": "2026-05-15T04:01:32Z"
-    }
-  ]
+  "findings": []
 }
