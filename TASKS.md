@@ -12,11 +12,11 @@ Vision: `SPRINT_GOAL.md`
 
 | ID | Title | Agent | Layer | Depends On | Branch | Status |
 |----|-------|-------|-------|------------|--------|--------|
-| 1284 | schema.ts: replace process.env["DB_PATH"] fallback with Bun.env exclusively | Dev | infrastructure | — | — | Backlog |
+| 1284 | schema.ts: replace process.env["DB_PATH"] fallback with Bun.env exclusively | Dev | infrastructure | — | fix/1284-schema-bun-env | Review |
 | 1218 | VPS BCTC queue: populate source_hints with actual PDF URLs from listSscDocuments | Dev | infrastructure | — | — | Backlog |
 | 1248 | BDI data staleness during supply chain crisis — fetch path needs geo-unblocked VPS route | Dev | infrastructure | — | — | Backlog |
 
-**WIP:** 0 In Progress. 0 Review. Remaining Backlog: 1284 (standalone); 1218, 1248 require VPS SSH access.
+**WIP:** 0 In Progress. 1 Review (1284). Remaining Backlog: 1218, 1248 require VPS SSH access.
 
 ## Sprint 082 — Complete
 
