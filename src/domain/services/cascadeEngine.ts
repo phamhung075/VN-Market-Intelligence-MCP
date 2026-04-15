@@ -2423,11 +2423,41 @@ export function buildCausalChain(
    *
    * Word-boundary: character before must be non-alphanumeric (or start-of-string),
    * character after must be non-alphanumeric (or end-of-string).
+   *
+   * Task 1266 — False positive guard: Vietnamese stock tickers ALWAYS appear
+   * in ALL-CAPS in news articles (e.g. "HUT", "TCB", "VNM"). Common Vietnamese
+   * words that happen to spell a ticker when diacritics are removed (e.g. "hụt"
+   * from "thiếu hụt" → "hut") are never written all-uppercase. Therefore we
+   * require the ticker to match in the ORIGINAL (non-lowercased) seedText as
+   * well, ensuring that case-folded common-word matches are rejected.
    */
-  function isDirectTickerMention(code: string): boolean {
-    const lower = code.toLowerCase();
-    if (lower.length < 2 || lower.length > 5) return false;
+  function hasUppercaseWordBoundary(text: string, upperCode: string): boolean {
+    let startIdx = 0;
+    while (true) {
+      const idx = text.indexOf(upperCode, startIdx);
+      if (idx === -1) return false;
 
+      const beforeOk = idx === 0 || !/[A-Za-z0-9]/.test(text[idx - 1]!);
+      const afterIdx = idx + upperCode.length;
+      const afterOk = afterIdx >= text.length || !/[A-Za-z0-9]/.test(text[afterIdx]!);
+
+      if (beforeOk && afterOk) return true;
+      startIdx = idx + 1;
+    }
+  }
+
+  function isDirectTickerMention(code: string): boolean {
+    const upper = code.toUpperCase();
+    if (upper.length < 2 || upper.length > 5) return false;
+
+    // Require the ticker to appear ALL-CAPS in the original text (Task 1266).
+    // This eliminates false positives from Vietnamese words that match a ticker
+    // only after diacritic stripping (e.g. "hụt" → "hut" matching "HUT").
+    if (!hasUppercaseWordBoundary(seedText, upper)) return false;
+
+    // Also verify it appears at word boundary in the lowercased text
+    // (guards against mid-word uppercase substrings, e.g. "HPGAS" vs "HPG").
+    const lower = upper.toLowerCase();
     let startIdx = 0;
     while (true) {
       const idx = seedTextNorm.indexOf(lower, startIdx);

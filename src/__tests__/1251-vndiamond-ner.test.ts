@@ -119,4 +119,38 @@ describe("Task 1251 — VNDiamond exclusion NER", () => {
     const hpgImpact = chain.watchlistImpacts.find((i) => i.actionCode === "HPG");
     expect(hpgImpact).toBeUndefined();
   });
+
+  // AC-6: Task 1266 — Vietnamese word "hụt" from "thiếu hụt" must NOT match ticker HUT
+  // The word is lowercase Vietnamese; HUT ticker only matches when written all-caps.
+  it("AC-6: HUT is NOT triggered by Vietnamese word 'hụt' in 'thiếu hụt'", () => {
+    const hutWatchlist: WatchlistEntry[] = [
+      { actionCode: "HUT", domain: "real_estate" as const, exchange: "HNX" },
+      ...WATCHLIST,
+    ];
+    const seed = makeSeed(
+      "Nguồn cung dầu sẽ càng thiếu hụt vì lệnh phong tỏa của Mỹ",
+      "Nguồn cung dầu thô thiếu hụt nghiêm trọng do lệnh phong tỏa eo Hormuz.",
+    );
+    const chain = buildCausalChain(seed, hutWatchlist, [], null, [], 6);
+
+    const hutImpact = chain.watchlistImpacts.find((i) => i.actionCode === "HUT");
+    // HUT should NOT be triggered — "hụt" is a Vietnamese word, not the ticker
+    expect(hutImpact).toBeUndefined();
+  });
+
+  // AC-7: HUT is correctly matched when "HUT" appears all-caps in article
+  it("AC-7: HUT IS triggered when all-caps 'HUT' appears explicitly in headline", () => {
+    const hutWatchlist: WatchlistEntry[] = [
+      { actionCode: "HUT", domain: "real_estate" as const, exchange: "HNX" },
+      ...WATCHLIST,
+    ];
+    const seed = makeSeed(
+      "HUT tăng mạnh sau thông tin dự án mới được phê duyệt",
+      "Cổ phiếu HUT của Tasco tăng 5% sau khi dự án được phê duyệt.",
+    );
+    const chain = buildCausalChain(seed, hutWatchlist, [], null, [], 6);
+
+    const hutImpact = chain.watchlistImpacts.find((i) => i.actionCode === "HUT");
+    expect(hutImpact).toBeDefined();
+  });
 });
