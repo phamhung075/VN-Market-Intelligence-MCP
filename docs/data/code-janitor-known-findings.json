@@ -1,39 +1,28 @@
 {
-  "scan_date": "2026-04-13T00:00:00Z",
-  "last_run": "2026-04-13T00:00:00Z",
+  "scan_date": "2026-04-15T04:01:32Z",
+  "last_run": "2026-04-15T04:01:32Z",
   "findings": [
     {
-      "fingerprint": "check2:mcp.config.json:referenceStocks.real_estate",
-      "severity": "MEDIUM",
+      "fingerprint": "check5:intelligenceCycleJob.ts:cooldownMinutes_60_maxAlertsPerStockPerDay_3",
+      "severity": "HIGH",
       "category": "config-drift",
-      "description": "mcp.config.json referenceStocks.real_estate missing NLG, HDG from SECTOR_PEERS",
-      "canonical_source": "src/domain/services/sectorPeers.ts::SECTOR_PEERS",
-      "affected_file": "mcp.config.json",
-      "detail": "real_estate sector in config: [VHM,VIC,VRE,NVL,KDH,DXG,KBC,DIG,PDR,HUT] vs SECTOR_PEERS: [VIC,VHM,VRE,NVL,KDH,DXG,NLG,PDR,KBC,DIG,HUT,HDG]. Missing: NLG, HDG",
-      "added_date": "2026-04-13T00:00:00Z",
-      "expires_at": "2026-05-13T00:00:00Z"
+      "description": "intelligenceCycleJob step E hardcodes cooldownMinutes: 60 and maxAlertsPerStockPerDay: 3, both differ from mcp.config.json alertQuality (cooldownMinutes: 30, maxAlertsPerStockPerDay: 3) and from alertCooldown.ts DEFAULT_CONFIG (cooldownMinutes: 30, maxAlertsPerStockPerDay: 5)",
+      "canonical_source": "mcp.config.json::alertQuality, src/domain/services/alertCooldown.ts::DEFAULT_CONFIG",
+      "affected_file": "src/scheduler/intelligenceCycleJob.ts",
+      "detail": "Line 805: hardcoded { cooldownMinutes: 60, maxAlertsPerStockPerDay: 3 } passed to shouldSuppressAlert. Config specifies cooldownMinutes: 30 and (implicitly) maxAlertsPerStockPerDay: 5 as default. THREE DIFFERENT VALUES across system means prod behavior drifts from config and domain defaults. Comment indicates 60 is intentional for step E but should be config-driven.",
+      "added_date": "2026-04-15T04:01:32Z",
+      "expires_at": "2026-05-15T04:01:32Z"
     },
     {
-      "fingerprint": "check2:mcp.config.json:referenceStocks.steel",
+      "fingerprint": "check1:mcp.config.json:referenceStocks",
       "severity": "MEDIUM",
-      "category": "config-drift",
-      "description": "mcp.config.json referenceStocks.steel missing TIS from SECTOR_PEERS",
+      "category": "duplicate-classification",
+      "description": "mcp.config.json market.referenceStocks duplicates sector classification data from SECTOR_PEERS (sectorPeers.ts). Both encode the same ticker-to-sector mapping.",
       "canonical_source": "src/domain/services/sectorPeers.ts::SECTOR_PEERS",
       "affected_file": "mcp.config.json",
-      "detail": "steel sector in config: [HPG,HSG,NKG,POM] vs SECTOR_PEERS: [HPG,HSG,NKG,TIS,POM]. Missing: TIS",
-      "added_date": "2026-04-13T00:00:00Z",
-      "expires_at": "2026-05-13T00:00:00Z"
-    },
-    {
-      "fingerprint": "check2:mcp.config.json:referenceStocks.oil_gas",
-      "severity": "MEDIUM",
-      "category": "config-drift",
-      "description": "mcp.config.json referenceStocks.oil_gas missing OIL from SECTOR_PEERS",
-      "canonical_source": "src/domain/services/sectorPeers.ts::SECTOR_PEERS",
-      "affected_file": "mcp.config.json",
-      "detail": "oil_gas sector in config: [GAS,PLX,BSR,PVD,PVS] vs SECTOR_PEERS: [GAS,PLX,BSR,PVD,PVS,OIL]. Missing: OIL",
-      "added_date": "2026-04-13T00:00:00Z",
-      "expires_at": "2026-05-13T00:00:00Z"
+      "detail": "Lines 58-77: referenceStocks is a flat Record<sector, ticker[]> that mirrors the SECTOR_PEERS structure. Used only in server.ts line 711-712 to build refCodes for the /api/watchlist endpoint. SECTOR_PEERS is the authoritative source; referenceStocks must stay in sync manually. Risk: sector changes made in SECTOR_PEERS forgotten in mcp.config.json, causing API divergence.",
+      "added_date": "2026-04-15T04:01:32Z",
+      "expires_at": "2026-05-15T04:01:32Z"
     }
   ]
 }

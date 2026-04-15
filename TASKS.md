@@ -12,6 +12,8 @@ Vision: `SPRINT_GOAL.md`
 
 | ID | Title | Agent | Layer | Depends On | Branch | Status |
 |----|-------|-------|-------|------------|--------|--------|
+| 1281 | [JANITOR] Alert cooldown config drift: step E hardcodes 60/3 vs config 30/5 | Dev | scheduler/domain | — | — | Backlog |
+| 1282 | [JANITOR] Sector classification duplication: mcp.config.json referenceStocks vs SECTOR_PEERS | Dev | interface/config | — | — | Backlog |
 | 1218 | VPS BCTC queue: populate source_hints with actual PDF URLs from listSscDocuments | Dev | infrastructure | — | — | Backlog |
 | 1248 | BDI data staleness during supply chain crisis — fetch path needs geo-unblocked VPS route | Dev | infrastructure | — | — | Backlog |
 
