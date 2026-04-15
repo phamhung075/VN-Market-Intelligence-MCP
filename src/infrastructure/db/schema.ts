@@ -61,7 +61,7 @@ export function getDb(): Database {
   if (_db) return _db;
 
   // Re-read env var each time — tests may set it after module load
-  const dbPath = process.env["DB_PATH"] ?? Bun.env["DB_PATH"] ?? DEFAULT_DB_PATH;
+  const dbPath = Bun.env["DB_PATH"] ?? DEFAULT_DB_PATH;
 
   // Ensure data directory exists — skip for the special `:memory:` path
   if (dbPath !== ":memory:") {
@@ -547,7 +547,7 @@ export async function initDatabase(): Promise<void> {
   // pdf_extracted_text, daily_ohlcv, market_summaries, …), which caused ~10
   // of the 20 pre-existing per-file flakes. Now we only guard the seed logic
   // itself and continue creating schema after.
-  const currentDbPath = process.env["DB_PATH"] ?? Bun.env["DB_PATH"] ?? DEFAULT_DB_PATH;
+  const currentDbPath = Bun.env["DB_PATH"] ?? DEFAULT_DB_PATH;
   const isTestEnv =
     currentDbPath === ":memory:" ||
     Bun.env["BUN_ENV"] === "test" ||
