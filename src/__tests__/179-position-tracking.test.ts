@@ -50,6 +50,20 @@ beforeEach(() => {
       updated_at  TEXT
     );
   `);
+  // daily_ohlcv is used as a fallback price source in listOpenPositions
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS daily_ohlcv (
+      code       TEXT    NOT NULL,
+      date       TEXT    NOT NULL,
+      open       REAL    NOT NULL,
+      high       REAL    NOT NULL,
+      low        REAL    NOT NULL,
+      close      REAL    NOT NULL,
+      volume     REAL    NOT NULL DEFAULT 0,
+      updated_at TEXT    NOT NULL,
+      PRIMARY KEY (code, date)
+    );
+  `);
 });
 
 afterEach(() => {
