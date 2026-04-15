@@ -1,5 +1,17 @@
 {
-  "scan_date": "2026-04-15T04:01:32Z",
-  "last_run": "2026-04-15T04:01:32Z",
-  "findings": []
+  "scan_date": "2026-04-15T10:30:00Z",
+  "last_run": "2026-04-15T10:30:00Z",
+  "findings": [
+    {
+      "check": 1,
+      "category": "duplicate_enum_definitions",
+      "file": "src/interface/mcp/tools/watchlist.ts",
+      "line": 35,
+      "symbol": "DomainTypeEnum",
+      "severity": "MEDIUM",
+      "detail": "DomainTypeEnum z.enum() is missing 'construction', 'energy', and 'pharmaceutical' compared to canonical SECTOR_PEERS in sectorPeers.ts and bctc-schema.ts. Prevents watchlist tool from accepting stocks in those domains.",
+      "canonical_source": "src/domain/services/sectorPeers.ts:34-206 (SECTOR_PEERS + SECTOR_NAME_VI)",
+      "risk": "Users cannot add stocks with domain='construction' or 'energy' via add_to_watchlist tool; type validation will fail. Low runtime risk since domain is optional, but creates maintenance burden."
+    }
+  ]
 }
