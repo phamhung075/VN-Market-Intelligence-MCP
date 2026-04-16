@@ -20,6 +20,7 @@
  *   pipelineWatchdog      every 30 min 24/7  (task 1190) ✓
  *   taAlertScan           every 15min VN market hours  (task 1307) ✓
  *   bbAlertScan           every 15min VN market hours  (task 1309) ✓
+ *   taAlertNotifier       every 15min VN market hours  (task 1314) ✓
  */
 
 import cron from 'node-cron'
@@ -54,6 +55,7 @@ import { runPipelineWatchdog } from './pipelineWatchdogJob.js'
 import { runFranceSummary } from './franceSummaryJob.js'
 import { runTaAlertScan } from './taAlertScanJob.js'
 import { runBbAlertScan } from './bbAlertScanJob.js'
+import { runTaAlertNotifierCron } from './taAlertNotifierJob.js'
 import { getDb } from '../infrastructure/db/schema.js'
 import { recordJobRun } from '../infrastructure/db/cronJobRunStore.js'
 
@@ -121,6 +123,8 @@ export const CRONS = {
   taAlertScan:            Bun.env.CRON_TA_ALERT_SCAN                 ?? '*/15 2-8 * * 1-5',
   /** bbAlertScan — every 15min VN market hours (task 1309) */
   bbAlertScan:            Bun.env.CRON_BB_ALERT_SCAN                  ?? '*/15 2-8 * * 1-5',
+  /** taAlertNotifier — deliver unnotified TA alerts to market channel every 15min VN market hours (task 1314) */
+  taAlertNotifier:        Bun.env.CRON_TA_ALERT_NOTIFIER               ?? '*/15 2-8 * * 1-5',
 }
 
 function log(msg: string) {
@@ -436,6 +440,19 @@ export function startScheduler() {
         log(`[bb-alert-scan] scanned=${result.scanned} fired=${result.fired}`)
       }
       return { rowsWritten: result.fired }
+    })
+  }, { timezone: 'UTC' })
+
+  // Every 15 min during VN market hours (02:00-08:59 UTC, Mon-Fri) — TA alert notifier — task 1314
+  // Delivers unnotified TA alert rows (ta_overbought/ta_oversold/ta_bb_breakout_up/down) to
+  // Telegram market channel. Batched (max 10/cycle). Marks notified_telegram=1 after send.
+  cron.schedule(CRONS.taAlertNotifier, async () => {
+    await recordJobRun(getDb(), 'taAlertNotifierJob', async () => {
+      const result = await runTaAlertNotifierCron()
+      if (result.sent > 0) {
+        log(`[ta-alert-notifier] sent=${result.sent}`)
+      }
+      return { rowsWritten: result.sent }
     })
   }, { timezone: 'UTC' })
 

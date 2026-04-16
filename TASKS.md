@@ -4,7 +4,16 @@
 
 ---
 
-## Sprint 097 — Active
+## Sprint 098 — Active
+
+| ID | Title | Status |
+|----|-------|--------|
+| 1315 | test(ta-notifier): TDD test 1314-ta-alert-notifier.test.ts — written FIRST | Review |
+| 1314 | feat(ta-notifier): implement taAlertNotifierJob.ts — forward unnotified TA alerts to Telegram market channel | Review |
+
+---
+
+## Sprint 097 — Complete
 
 | ID | Title | Status |
 |----|-------|--------|
@@ -123,6 +132,97 @@
 ---
 
 ## Task Details (active tasks only)
+
+### 1314 — feat(ta-notifier): implement taAlertNotifierJob.ts — forward unnotified TA alerts to Telegram market channel
+
+**Branch:** `task/1314-1315-ta-alert-notifier`
+**Layer:** scheduler
+**Depends on:** 1307 (taAlertScanJob — inserts ta_overbought/ta_oversold), 1309 (bbAlertScanJob — inserts ta_bb_breakout_up/ta_bb_breakout_down)
+**Status:** Backlog
+
+**Problem:** `taAlertScanJob` and `bbAlertScanJob` write `severity='warning'` alert rows to the `alerts` table every 15 minutes during market hours. The existing `readUnnotifiedAlerts` function (used by `intelligenceCycleJob`) only picks up `severity IN ('high','critical')` — so TA alerts are **never forwarded to Telegram**. Users only see them 8+ hours later in the 21:00 alert digest, making them useless for intraday decision-making.
+
+**Root cause:** `src/infrastructure/db/alertStore.ts` → `readUnnotifiedAlerts()` line 166: `WHERE severity IN ('high', 'critical')`. TA scan jobs use `severity = "warning"`. No other scheduled job reads `warning`-severity alerts.
+
+**Solution:** Create `src/scheduler/taAlertNotifierJob.ts` — a new scheduler job that:
+1. Runs every 15 minutes during VN market hours (`*/15 2-8 * * 1-5`) via `jobs.ts`
+2. Queries `alerts` for unnotified TA alert rows:
+   ```sql
+   SELECT * FROM alerts
+   WHERE notified_telegram = 0
+     AND json_extract(signals_json, '$[0].type') IN (
+       'ta_overbought', 'ta_oversold', 'ta_bb_breakout_up', 'ta_bb_breakout_down'
+     )
+   ORDER BY triggered_at ASC
+   ```
+3. If no rows → returns `{ sent: 0, skipped: 0 }` silently (no Telegram)
+4. Groups by ticker (from `affected_actions_json[0].code`)
+5. Formats a compact Vietnamese message (one block per alert, max 10 rows total):
+   - `ta_overbought` → `"{code}: RSI={value} quá mua"`
+   - `ta_oversold` → `"{code}: RSI={value} quá bán"`
+   - `ta_bb_breakout_up` → `"{code}: giá vượt BB trên — bứt phá tăng"`
+   - `ta_bb_breakout_down` → `"{code}: giá dưới BB dưới — bứt phá giảm"`
+   - Header: `"TA Alert [HH:MM VN]:"`
+6. Sends the batch as a single Telegram message to `channel="market"` (persist: `from_agent: "ta-notifier"`, `message_type: "ta_alert"`)
+7. **Only after a successful send**, marks each row `notified_telegram = 1` via `UPDATE alerts SET notified_telegram = 1 WHERE id = ?`
+8. **Per-row error isolation**: if the Telegram send throws, no rows are marked — they will be retried on the next 15-minute cycle
+9. Returns `{ sent: N, skipped: M }` where `sent` = rows successfully marked, `skipped` = rows already notified (sanity check — should be 0 due to WHERE clause)
+10. Registered in `jobs.ts` as `*/15 2-8 * * 1-5` with job name `taAlertNotifierJob`
+
+**DDD layer:** `scheduler` — may import from `infrastructure/db/` (alertStore or direct query), `infrastructure/notifiers/telegram.js`. MUST NOT import from `application/` or `interface/`.
+
+**Injectable deps for TDD:**
+- `db?: Database` — defaults to `getDb()`
+- `sendFn?: (msg: string, opts: unknown) => Promise<void>` — defaults to `sendTelegramMarket`
+- `nowFn?: () => Date` — defaults to `() => new Date()` (for logging timestamp in message header)
+
+**Files to change:**
+- `src/scheduler/taAlertNotifierJob.ts` — create
+- `src/scheduler/jobs.ts` — register new cron entry
+- `docs/data/cron-registry.json` — add entry, update `schedulerFileCount` to 32
+- `docs/data/project-stats.json` — update `schedulerFileCount` to 32
+
+**Acceptance Criteria:**
+- `src/scheduler/taAlertNotifierJob.ts` created
+- Job returns `{ sent: 0, skipped: 0 }` when no unnotified TA alerts exist
+- Job sends one Telegram message when 1+ unnotified TA alerts exist
+- Job marks each alert `notified_telegram = 1` after successful send
+- Job does NOT mark `notified_telegram = 1` if send throws
+- Non-TA alert types (`position-danger`, `macro_deviation`, etc.) are NOT picked up
+- Already-notified rows (`notified_telegram = 1`) are NOT re-sent
+- Job registered in `jobs.ts` cron `*/15 2-8 * * 1-5`, name `taAlertNotifierJob`
+- `cron-registry.json` and `project-stats.json` updated (`schedulerFileCount = 32`)
+- `bun test src/__tests__/1314-ta-alert-notifier.test.ts` all pass
+- `bun tsc --noEmit` 0 errors
+- No changes to `taAlertScanJob`, `bbAlertScanJob`, `readUnnotifiedAlerts`, Alert Commander, evening summary, morning briefing, or schema
+
+---
+
+### 1315 — test(ta-notifier): TDD test 1314-ta-alert-notifier.test.ts
+
+**Branch:** `task/1314-1315-ta-alert-notifier` (same branch as 1314)
+**Layer:** test
+**Depends on:** 1314 (taAlertNotifierJob implementation)
+**Status:** Backlog
+
+**Test cases (minimum):**
+1. `returns { sent: 0, skipped: 0 } when no unnotified TA alerts` — empty alerts table, assert no Telegram send
+2. `sends Telegram message when unnotified ta_overbought alert exists` — insert 1 alert row, assert sendFn called once, assert message contains ticker code
+3. `marks notified_telegram=1 after successful send` — insert 1 alert, run job, assert `notified_telegram = 1` in DB
+4. `does NOT mark notified_telegram=1 if sendFn throws` — inject sendFn that throws, assert `notified_telegram` remains 0
+5. `skips non-TA alert types` — insert 1 `position-danger` alert with `notified_telegram=0`, assert sendFn NOT called
+6. `skips already-notified rows` — insert 1 row with `notified_telegram=1`, assert sendFn NOT called
+7. `batches multiple alerts into one message` — insert 3 different tickers with different TA types, assert sendFn called exactly once, message contains all 3 tickers
+8. `message header contains "TA Alert"` — assert formatted message includes "TA Alert"
+9. `handles ta_bb_breakout_up and ta_bb_breakout_down types` — insert both types, assert sent=2
+
+**Acceptance Criteria:**
+- `bun test src/__tests__/1314-ta-alert-notifier.test.ts` ≥9 pass / 0 fail
+- In-memory SQLite (`new Database(":memory:")`), injectable deps, no real I/O
+- Test creates `alerts` table with full DDL (matching `schema.ts` DDL) before each test
+- `bun tsc --noEmit` 0 errors
+
+---
 
 ### 1312 — feat(evening-summary): add taSummary (RSI/MA20 at close) to EveningSummary type + Telegram message
 
