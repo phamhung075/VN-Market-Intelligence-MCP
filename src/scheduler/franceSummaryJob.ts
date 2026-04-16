@@ -1,21 +1,21 @@
 /**
- * France Summary Job — Task 1290 (Interface / Scheduler Layer)
+ * France Summary Job — Tasks 1316/1317 (Interface / Scheduler Layer)
  *
- * Sends a morning digest of overnight VN market signals to the WORK channel
- * at 07:00 UTC = 08:00 CET (before Paris market open). Relevant to the
+ * Sends a morning digest of VN market data to the MARKET channel at
+ * 07:00 UTC = 08:00 CET (before Paris market open). Relevant to the
  * France-based user who monitors Vietnam markets from UTC+1/+2.
  *
- * Logic:
- *   1. Query rag_analyses for the last 8h — captures VN market session
- *      (09:00-15:30 GMT+7 = 02:00-08:30 UTC the same day)
- *   2. If no rows found → return { sent: false, signalCount: 0 } (silent)
- *   3. Select top 3 signals by impact_score
- *   4. Format a brief plain-text English digest
- *   5. Send to WORK channel via sendTelegramWork
+ * Three data sources (each independent, per-query try/catch):
+ *   1. Top 3 price movers     — market_prices ORDER BY ABS(change_pct) DESC LIMIT 3
+ *   2. Top 3 recent alerts    — alerts ORDER BY severity rank DESC LIMIT 3
+ *   3. TA signal count        — COUNT(*) from alerts WHERE signals_json type LIKE 'ta_%'
+ *
+ * Silent skip when all three sources return empty data.
+ * Default sendFn: sendTelegramMarket (MARKET channel — user-facing digests).
  *
  * DDD Layer: interface/scheduler — may import from infrastructure only.
  *
- * All dependencies are injectable for TDD (db, sendFn).
+ * All dependencies are injectable for TDD (db, sendFn, nowFn).
  */
 
 import type { Database } from "bun:sqlite"
@@ -32,94 +32,200 @@ export type SendFn = (text: string) => Promise<boolean>
 export interface FranceSummaryResult {
   /** Whether a message was sent to Telegram. */
   sent: boolean
-  /** Total number of signals found in the look-back window. */
-  signalCount: number
+  /** Number of price movers included (max 3). */
+  moverCount: number
+  /** Number of alerts included (max 3). */
+  alertCount: number
+  /** Number of TA signal alerts found in the DB. */
+  taCount: number
 }
 
 /** Options for runFranceSummary (injectable for TDD). */
 export interface FranceSummaryOptions {
   /** SQLite DB (defaults to getDb() singleton). */
   db?: Database
-  /** Telegram send function (defaults to sendTelegramWork). */
+  /** Telegram send function (defaults to sendTelegramMarket). */
   sendFn?: SendFn
-  /** Look-back window in hours (default: 8). */
-  windowHours?: number
+  /** Injectable clock (defaults to () => new Date()). */
+  nowFn?: () => Date
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Internal types
 // ─────────────────────────────────────────────────────────────────────────────
 
-interface SignalRow {
+interface MoverRow {
+  code: string
+  price: number | null
+  change_pct: number | null
+}
+
+interface AlertRow {
   id: string
-  sentiment: string | null
-  impact_score: number | null
-  summary: string | null
-  level: string | null
+  severity: string
+  message: string | null
+  triggered_at: string
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Constants
+// Severity ordering for alert sort
+// The ORDER BY uses a CASE expression mapping severity to numeric rank.
+// critical=4, high=3, warning=2, info=1, unknown=0
 // ─────────────────────────────────────────────────────────────────────────────
 
-const DEFAULT_WINDOW_HOURS = 8
-const TOP_SIGNAL_COUNT = 3
+const SEVERITY_CASE = `
+  CASE severity
+    WHEN 'critical' THEN 4
+    WHEN 'high'     THEN 3
+    WHEN 'warning'  THEN 2
+    WHEN 'info'     THEN 1
+    ELSE                 0
+  END DESC
+`
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Core helpers
+// Query helpers
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Fetches recent signals from rag_analyses within the last N hours.
- *
- * @param db          - SQLite database
- * @param windowHours - Look-back window in hours
- * @returns Array of signal rows ordered by impact_score DESC
+ * Fetches top 3 price movers by ABS(change_pct) descending.
+ * Returns [] on any DB error (per-query isolation).
  */
-export function fetchRecentSignals(db: Database, windowHours: number): SignalRow[] {
-  const cutoff = new Date(Date.now() - windowHours * 3_600_000)
-    .toISOString()
-    .slice(0, 19)
-
-  return db
-    .prepare<SignalRow, [string]>(`
-      SELECT id, sentiment, impact_score, summary, level
-      FROM rag_analyses
-      WHERE created_at >= ?
-        AND summary IS NOT NULL
-        AND summary != ''
-      ORDER BY impact_score DESC
-    `)
-    .all(cutoff)
+function fetchTopMovers(db: Database): MoverRow[] {
+  try {
+    return db
+      .prepare<MoverRow, []>(`
+        SELECT code, price, change_pct
+        FROM market_prices
+        WHERE change_pct IS NOT NULL
+        ORDER BY ABS(change_pct) DESC
+        LIMIT 3
+      `)
+      .all()
+  } catch (err) {
+    logger.warn("[franceSummaryJob] market_prices query failed", {
+      error: err instanceof Error ? err.message : String(err),
+    })
+    return []
+  }
 }
 
 /**
- * Formats the France morning digest message.
- *
- * @param signals    - All signals found in the window
- * @param topSignals - Top 3 signals by impact_score to include in digest
- * @returns Formatted plain-text message string
+ * Fetches top 3 alerts ordered by severity rank (critical > high > warning > info).
+ * Returns [] on any DB error (per-query isolation).
  */
-export function formatFranceSummary(signals: SignalRow[], topSignals: SignalRow[]): string {
-  const dateStr = new Date().toISOString().slice(0, 10)
+function fetchTopAlerts(db: Database): AlertRow[] {
+  try {
+    return db
+      .prepare<AlertRow, []>(`
+        SELECT id, severity, message, triggered_at
+        FROM alerts
+        ORDER BY ${SEVERITY_CASE}, triggered_at DESC
+        LIMIT 3
+      `)
+      .all()
+  } catch (err) {
+    logger.warn("[franceSummaryJob] alerts query failed", {
+      error: err instanceof Error ? err.message : String(err),
+    })
+    return []
+  }
+}
+
+/**
+ * Counts alerts that contain at least one signal of type 'ta_%'
+ * (RSI, BB breakout, etc. written by taAlertScanJob / bbAlertScanJob).
+ * Returns 0 on any DB error.
+ */
+function fetchTaSignalCount(db: Database): number {
+  try {
+    const row = db
+      .prepare<{ cnt: number }, []>(`
+        SELECT COUNT(*) AS cnt
+        FROM alerts
+        WHERE signals_json LIKE '%"type":"ta_%'
+      `)
+      .get()
+    return row?.cnt ?? 0
+  } catch (err) {
+    logger.warn("[franceSummaryJob] TA count query failed", {
+      error: err instanceof Error ? err.message : String(err),
+    })
+    return 0
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Formatting helpers
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Formats a date as DD/MM/YYYY (Vietnamese convention). */
+function formatDateVI(d: Date): string {
+  const dd = String(d.getDate()).padStart(2, "0")
+  const mm = String(d.getMonth() + 1).padStart(2, "0")
+  const yyyy = d.getFullYear()
+  return `${dd}/${mm}/${yyyy}`
+}
+
+/** Formats change_pct with sign (e.g. +3.5% or -5.2%). */
+function formatPct(pct: number | null): string {
+  if (pct == null) return "n/a"
+  const sign = pct >= 0 ? "+" : ""
+  return `${sign}${pct.toFixed(2)}%`
+}
+
+/** Maps severity to a short Vietnamese label. */
+function severityLabel(s: string): string {
+  switch (s) {
+    case "critical": return "NGHIEM TRONG"
+    case "high":     return "CAO"
+    case "warning":  return "CANH BAO"
+    case "info":     return "THONG TIN"
+    default:         return s.toUpperCase()
+  }
+}
+
+/**
+ * Builds the full digest message in Vietnamese plain-text format.
+ */
+export function formatFranceSummaryVI(
+  dateStr: string,
+  movers: MoverRow[],
+  alerts: AlertRow[],
+  taCount: number,
+): string {
   const lines: string[] = []
-
-  lines.push(`France Summary — VN Overnight Signals (${dateStr})`)
-  lines.push(`Total signals (last 8h): ${signals.length}`)
+  lines.push(`Ban tin sang Phap — Thi truong VN (${dateStr})`)
   lines.push("")
 
-  if (topSignals.length === 0) {
-    lines.push("No notable signals.")
-    return lines.join("\n")
+  // Section 1: price movers
+  if (movers.length > 0) {
+    lines.push(`Top bien dong gia (${movers.length}):`)
+    for (const m of movers) {
+      const priceFmt = m.price != null ? m.price.toLocaleString("vi-VN") : "n/a"
+      lines.push(`  ${m.code}: ${priceFmt} dong (${formatPct(m.change_pct)})`)
+    }
+  } else {
+    lines.push("Khong co du lieu gia.")
   }
 
-  lines.push(`Top ${topSignals.length} signals by impact:`)
-  for (const sig of topSignals) {
-    const sentiment = sig.sentiment ?? "neutral"
-    const score = sig.impact_score != null ? sig.impact_score.toFixed(1) : "n/a"
-    const summary = (sig.summary ?? "").slice(0, 120)
-    lines.push(`  [${sentiment.toUpperCase()}] score=${score} — ${summary}`)
+  lines.push("")
+
+  // Section 2: alerts
+  if (alerts.length > 0) {
+    lines.push(`Canh bao gan nhat (${alerts.length}):`)
+    for (const a of alerts) {
+      const msg = (a.message ?? "").slice(0, 100)
+      lines.push(`  [${severityLabel(a.severity)}] ${msg}`)
+    }
+  } else {
+    lines.push("Khong co canh bao.")
   }
+
+  lines.push("")
+
+  // Section 3: TA signal count
+  lines.push(`Tin hieu ky thuat (TA): ${taCount} tin hieu`)
 
   return lines.join("\n")
 }
@@ -131,16 +237,15 @@ export function formatFranceSummary(signals: SignalRow[], topSignals: SignalRow[
 /**
  * Runs the France morning summary job.
  *
- * Queries recent rag_analyses entries and sends a brief digest to the WORK
- * channel. Silent when no signals found (returns { sent: false, signalCount: 0 }).
+ * Queries top 3 price movers, top 3 alerts, and TA signal count from SQLite.
+ * Sends a Vietnamese plain-text digest to the MARKET channel.
+ * Silent when all three sources return empty (no send, no log noise).
  *
  * Never throws — all errors are caught and logged.
  *
  * @param opts - Injectable dependencies for testability
  */
 export async function runFranceSummary(opts: FranceSummaryOptions = {}): Promise<FranceSummaryResult> {
-  const windowHours = opts.windowHours ?? DEFAULT_WINDOW_HOURS
-
   // Resolve DB
   let resolvedDb: Database
   if (opts.db) {
@@ -150,40 +255,38 @@ export async function runFranceSummary(opts: FranceSummaryOptions = {}): Promise
     resolvedDb = getDb()
   }
 
-  // Resolve send function
+  // Resolve send function — default: sendTelegramMarket (MARKET channel)
   let resolvedSend: SendFn
   if (opts.sendFn) {
     resolvedSend = opts.sendFn
   } else {
-    const { sendTelegramWork } = await import("../infrastructure/notifiers/telegram.js")
-    resolvedSend = (text: string) => sendTelegramWork(text, { parseMode: "" })
+    const { sendTelegramMarket } = await import("../infrastructure/notifiers/telegram.js")
+    resolvedSend = (text: string) => sendTelegramMarket(text, { parseMode: "" })
   }
 
-  // Fetch recent signals
-  let signals: SignalRow[]
-  try {
-    signals = fetchRecentSignals(resolvedDb, windowHours)
-  } catch (err) {
-    logger.warn("[franceSummaryJob] DB query failed — skipping", {
-      error: err instanceof Error ? err.message : String(err),
-    })
-    return { sent: false, signalCount: 0 }
+  // Resolve clock
+  const nowFn = opts.nowFn ?? (() => new Date())
+
+  // ── Per-query fetch (isolated try/catch) ───────────────────────────────
+  const movers = fetchTopMovers(resolvedDb)
+  const alerts = fetchTopAlerts(resolvedDb)
+  const taCount = fetchTaSignalCount(resolvedDb)
+
+  // Silent skip when all three sources are empty
+  if (movers.length === 0 && alerts.length === 0 && taCount === 0) {
+    return { sent: false, moverCount: 0, alertCount: 0, taCount: 0 }
   }
 
-  if (signals.length === 0) {
-    return { sent: false, signalCount: 0 }
-  }
-
-  const topSignals = signals.slice(0, TOP_SIGNAL_COUNT)
-  const message = formatFranceSummary(signals, topSignals)
+  const dateStr = formatDateVI(nowFn())
+  const message = formatFranceSummaryVI(dateStr, movers, alerts, taCount)
 
   try {
     await resolvedSend(message)
-    return { sent: true, signalCount: signals.length }
+    return { sent: true, moverCount: movers.length, alertCount: alerts.length, taCount }
   } catch (err) {
     logger.warn("[franceSummaryJob] Telegram send failed", {
       error: err instanceof Error ? err.message : String(err),
     })
-    return { sent: false, signalCount: signals.length }
+    return { sent: false, moverCount: movers.length, alertCount: alerts.length, taCount }
   }
 }

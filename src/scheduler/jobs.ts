@@ -402,14 +402,15 @@ export function startScheduler() {
     })
   }, { timezone: 'UTC' })
 
-  // Weekdays 07:00 UTC (08:00 CET) — France morning summary — task 1290
-  // Sends an overnight VN signal digest to WORK channel before Paris market open.
+  // Weekdays 07:00 UTC (08:00 CET) — France morning summary — tasks 1316/1317
+  // Sends Vietnamese digest to MARKET channel before Paris market open.
   cron.schedule(CRONS.franceSummary, async () => {
     await recordJobRun(getDb(), "franceSummaryJob", async () => {
       const result = await runFranceSummary()
       if (result.sent) {
-        log(`[france-summary] sent — signals=${result.signalCount}`)
+        log(`[france-summary] sent — movers=${result.moverCount} alerts=${result.alertCount} ta=${result.taCount}`)
       }
+      return { rowsWritten: result.moverCount + result.alertCount }
     })
   }, { timezone: 'UTC' })
 

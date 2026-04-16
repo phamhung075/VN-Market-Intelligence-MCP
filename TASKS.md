@@ -4,7 +4,16 @@
 
 ---
 
-## Sprint 095 — Active
+## Sprint 099 — Active
+
+| ID | Title | Status |
+|----|-------|--------|
+| 1316 | feat(france-summary): rewrite franceSummaryJob — Vietnamese digest to MARKET channel | Review |
+| 1317 | test(france-summary): TDD test 1316-france-summary-rewrite.test.ts | Review |
+
+---
+
+## Sprint 095 — Complete
 
 | ID | Title | Status |
 |----|-------|--------|
