@@ -4,7 +4,7 @@
 
 ---
 
-## Sprint 092 — Active
+## Sprint 093 — Active
 
 Vision: `SPRINT_GOAL.md`
 
@@ -12,9 +12,18 @@ Vision: `SPRINT_GOAL.md`
 
 | ID | Title | Agent | Layer | Depends On | Branch | Status |
 |----|-------|-------|-------|------------|--------|--------|
-| 1304 | feat(briefing): integrate TA signals (RSI/SMA) into morning briefing | Dev | application | 1302 | task/1304-ta-morning-briefing | Review |
+| 1305 | fix(test-drift): update test 308 tool count assertion 59→60 | Dev | test | — | task/1305-1306-tool-count-lock-contract | Review |
+| 1306 | fix(scheduler): align test 1221 DB lock contract — job uses cron_job_runs, test uses scheduler_locks | Dev | scheduler | — | task/1305-1306-tool-count-lock-contract | Review |
 
-**WIP:** 0 In Progress. 1 Review.
+**WIP:** 0 In Progress. 2 Review.
+
+---
+
+## Sprint 092 — Complete
+
+| ID | Title | Status |
+|----|-------|--------|
+| 1304 | feat(briefing): integrate TA signals (RSI/SMA) into morning briefing | Done |
 
 ---
 
@@ -85,6 +94,49 @@ Vision: `SPRINT_GOAL.md`
 ---
 
 ## Task Details (active tasks only)
+
+### 1305 — fix(test-drift): update test 308 tool count assertion 59→60
+
+**Branch:** `task/1305-test-308-tool-count-drift`
+**Layer:** test
+**Depends on:** none
+**Status:** Todo
+
+**Problem:** `src/__tests__/308-tool-registry.test.ts` line 63 asserts `toolRegistry.length` equals 59. Sprint 090 added `registerTechnicalIndicatorTools` to the registry making it 60. The test comment history (lines 50-62) must also be updated to record this addition.
+
+**Acceptance Criteria**
+- `src/__tests__/308-tool-registry.test.ts` assertion updated from `toBe(59)` to `toBe(60)`
+- Comment history extended: `"59 + registerTechnicalIndicatorTools (task 1303) = 60"`
+- `bun test ./src/__tests__/308-tool-registry.test.ts` shows 9 pass / 0 fail
+- `bun tsc --noEmit` 0 errors
+
+---
+
+### 1306 — fix(scheduler): align test 1221 DB lock contract
+
+**Branch:** `task/1306-fix-1221-db-lock-contract`
+**Layer:** scheduler
+**Depends on:** none
+**Status:** Todo
+
+**Problem:** Test 1221 (`runWeeklyPortfolioReport skips when DB lock is fresh`) fails because the test acquires a lock via `acquireSchedulerLock(db, "weeklyPortfolioReport")` which writes to `scheduler_locks` table, but `weeklyPortfolioReportJob.ts` checks `cron_job_runs` table for a `status='running'` row. The two mechanisms never intersect — the lock the test sets is invisible to the job.
+
+**Root cause:** Task 1221 originally intended to use `schedulerLockStore.ts` (`scheduler_locks` table) but the implementation in `weeklyPortfolioReportJob.ts` was written using `cron_job_runs` instead, leaving the test orphaned.
+
+**Solution options (pick one during implementation):**
+- Option A: Update `weeklyPortfolioReportJob.ts` to call `isSchedulerLockFresh` / `acquireSchedulerLock` from `schedulerLockStore.ts` — aligns implementation with test
+- Option B: Update test 1221 to insert a `cron_job_runs` row with `status='running'` instead — aligns test with implementation
+
+**Preferred:** Option A (use the canonical `schedulerLockStore` — consistent with other scheduler guards, keeps `cron_job_runs` for audit only).
+
+**Acceptance Criteria**
+- `bun test ./src/__tests__/1221-weekly-report-db-lock.test.ts` shows 0 fail (all skip/run cases pass)
+- `runWeeklyPortfolioReport` uses `isSchedulerLockFresh` from `schedulerLockStore.ts` to check lock before executing
+- Lock window = 6 hours (same as current `staleThresholdHours` constant)
+- `bun tsc --noEmit` 0 errors
+- No regression on `cron_job_runs` audit entries (those writes can remain)
+
+---
 
 ### 1304 — feat(briefing): integrate TA signals (RSI/SMA) into morning briefing
 
