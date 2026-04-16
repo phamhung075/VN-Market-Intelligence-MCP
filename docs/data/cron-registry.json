@@ -1,8 +1,8 @@
 {
   "_maintained_by": "developer",
   "_trigger": "after adding/removing scheduler file, update count + list",
-  "lastUpdated": "2026-04-14",
-  "schedulerFileCount": 28,
+  "lastUpdated": "2026-04-15",
+  "schedulerFileCount": 29,
   "jobs": [
     { "schedule": "*/15 min", "name": "intelligenceCycle", "desc": "Main engine: news+prices+cascade+alerts" },
     { "schedule": "*/30 min", "name": "predictionMarketPoll", "desc": "Polymarket fetch + signal detection" },
