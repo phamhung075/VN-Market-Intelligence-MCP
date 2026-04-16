@@ -30,6 +30,7 @@ function emptySummary(): EveningSummary {
     topStories: [],
     watchlistMovers: [],
     predictionSignals: [],
+    newsCount: 0,
     generatedAt: new Date().toISOString(),
   };
 }
@@ -43,6 +44,7 @@ function fullSummary(): EveningSummary {
     topStories: [],
     watchlistMovers: [],
     predictionSignals: [],
+    newsCount: 0,
     generatedAt: new Date().toISOString(),
   };
 }
