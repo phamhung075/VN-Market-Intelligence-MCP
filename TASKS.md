@@ -8,8 +8,8 @@
 
 | ID | Title | Status |
 |----|-------|--------|
-| 1312 | feat(evening-summary): add taSummary (RSI/MA20 at close) to EveningSummary type + Telegram message | Review |
-| 1313 | test(evening-summary): TDD test 1312-evening-summary-ta.test.ts | Review |
+| 1312 | feat(evening-summary): add taSummary (RSI/MA20 at close) to EveningSummary type + Telegram message | Done |
+| 1313 | test(evening-summary): TDD test 1312-evening-summary-ta.test.ts | Done |
 
 ---
 
