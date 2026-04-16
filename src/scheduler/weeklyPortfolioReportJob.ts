@@ -18,6 +18,11 @@
 
 import type { Database } from "bun:sqlite";
 import { logger } from "../infrastructure/logger.js";
+import {
+  isSchedulerLockFresh,
+  acquireSchedulerLock,
+  ensureSchedulerLocksTable,
+} from "../infrastructure/db/schedulerLockStore.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Public types
@@ -350,30 +355,21 @@ export async function runWeeklyPortfolioReport(
 
     // ── Task 1221: DB-backed lock — prevents duplicate runs across restarts ────
     // The in-memory `_running` flag resets on every launchctl restart. A restart
-    // that fires the Sunday cron within 6 hours of the last run would produce a
-    // duplicate report. Guard: check cron_job_runs for a 'running' row that
-    // started within the last 6 hours for this job.
+    // that fires the Sunday cron within the lock window of the last run would
+    // produce a duplicate report. Guard: use schedulerLockStore (scheduler_locks
+    // table) which is the canonical lock mechanism for all scheduler jobs.
     try {
-      const staleThresholdHours = 6;
-      const existingRun = db
-        .prepare(
-          `SELECT id FROM cron_job_runs
-           WHERE job_name  = 'weeklyPortfolioReportJob'
-             AND status    = 'running'
-             AND started_at >= datetime('now', ? || ' hours')
-           LIMIT 1`,
-        )
-        .get(`-${staleThresholdHours}`) as { id: number } | undefined;
-
-      if (existingRun) {
+      const lockWindowMinutes = 60;
+      ensureSchedulerLocksTable(db);
+      if (isSchedulerLockFresh(db, "weeklyPortfolioReport", lockWindowMinutes)) {
         logger.warn(
           "[weeklyPortfolioReport] DB lock held by a recent run — skipping to prevent duplicate report",
-          { lockRowId: existingRun.id },
         );
         return;
       }
+      acquireSchedulerLock(db, "weeklyPortfolioReport", lockWindowMinutes);
     } catch {
-      // cron_job_runs table may not exist in minimal test setups — proceed
+      // scheduler_locks table may not exist in minimal test setups — proceed
     }
 
     // ── Step 1: Query open positions with current prices ─────────────────────
