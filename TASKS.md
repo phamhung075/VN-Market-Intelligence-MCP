@@ -4,12 +4,12 @@
 
 ---
 
-## Sprint 103 — Active
+## Sprint 103 — Complete
 
 | ID | Title | Status |
 |----|-------|--------|
-| 1324 | fix(push-news): extend SourceFetchers + wire all 9 VPS sources in push-news handler | Review |
-| 1325 | test(push-news): TDD test 1324-push-news-all-sources.test.ts | Review |
+| 1324 | fix(push-news): extend SourceFetchers + wire all 9 VPS sources in push-news handler | Done |
+| 1325 | test(push-news): TDD test 1324-push-news-all-sources.test.ts | Done |
 
 ---
 

@@ -248,3 +248,14 @@ Remaining Backlog: 1218 (VPS BCTC source_hints — needs SSH), 1248 (BDI VPS rou
 | 1253 | VCB stale price in get_market_context — [STALE] warning | interface | Done |
 | 1254 | Duplicate morning briefing insert (from_agent=unknown) | infrastructure | Done |
 | 1255 | Retail net-buy cascade rule missing for securities sector | domain | Done |
+
+---
+
+## Sprint 103 — push-news: Wire All 9 VPS Sources (Done 2026-04-16)
+
+2 tasks. Fixed push-news handler to wire all 9 VPS news sources into pollNews (was only 3 of 9). SourceFetchers interface extended with 6 new optional keys; server.ts handler now uses dynamic Object.keys(bySource) spread. 10 TDD tests pass.
+
+| ID | Title | Layer | Status |
+|----|-------|-------|--------|
+| 1324 | fix(push-news): extend SourceFetchers + wire all 9 VPS sources in push-news handler | application/interface | Done |
+| 1325 | test(push-news): TDD test 1324-push-news-all-sources.test.ts | test | Done |
