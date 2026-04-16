@@ -24,6 +24,7 @@ Vision: `SPRINT_GOAL.md`
 | 1300 | fix(sector-dedup): remove legacy 'pharma' key from mcp.config.json referenceStocks | Dev | domain | — | — | Done |
 | 1301 | fix(test-isolation): eliminate parallel SQLite state contamination in full suite run | Dev | test | 1300 | — | Done |
 | — | [PM] Sprint plan tasks 1300+1301 per TECH_089.md | PM | — | — | — | Todo |
+| 1207 | fix(cascade): non-watchlist confidence cap — rebase onto main (062 stale assertion) | Dev | domain | — | task/1207-non-watchlist-confidence-cap | Review |
 
 | 1218 | VPS BCTC queue: populate source_hints with actual PDF URLs from listSscDocuments | Dev | infrastructure | — | — | Backlog |
 | 1248 | BDI data staleness during supply chain crisis — fetch path needs geo-unblocked VPS route | Dev | infrastructure | — | — | Backlog |
