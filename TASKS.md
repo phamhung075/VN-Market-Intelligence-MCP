@@ -4,6 +4,15 @@
 
 ---
 
+## Sprint 094 — Active
+
+| ID | Title | Agent | Layer | Depends On | Branch | Status |
+|----|-------|-------|-------|------------|--------|--------|
+| 1308 | TDD: write failing 1307-ta-alert-scan-job.test.ts (AC-1 through AC-9) | Dev | test | REQ-094 | task/1307-1308-ta-alert-scan-job | Review |
+| 1307 | feat(scheduler): implement taAlertScanJob.ts + wire into jobs.ts | Dev | scheduler | 1308,1302 | task/1307-1308-ta-alert-scan-job | Review |
+
+---
+
 ## Sprint 090 — Complete
 
 | ID | Title | Status |

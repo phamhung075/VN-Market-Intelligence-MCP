@@ -1,8 +1,8 @@
 {
   "_maintained_by": "developer",
   "_trigger": "after adding/removing scheduler file, update count + list",
-  "lastUpdated": "2026-04-14",
-  "schedulerFileCount": 28,
+  "lastUpdated": "2026-04-15",
+  "schedulerFileCount": 30,
   "jobs": [
     { "schedule": "*/15 min", "name": "intelligenceCycle", "desc": "Main engine: news+prices+cascade+alerts" },
     { "schedule": "*/30 min", "name": "predictionMarketPoll", "desc": "Polymarket fetch + signal detection" },
@@ -32,7 +32,9 @@
     { "schedule": "16:00 UTC daily (23:00 VN)", "name": "evidenceAccumulator", "desc": "Nightly evidence fragment purge + accumulation (evidenceAccumulatorJob.ts)" },
     { "schedule": "19:00 UTC Sunday (02:00 VN Mon)", "name": "baseRateComputation", "desc": "Weekly Bayesian base-rate recompute from evidence_fragments (baseRateComputationJob.ts)" },
     { "schedule": "16:30 UTC daily (23:30 VN)", "name": "predictionResolution", "desc": "Daily prediction claim auto-resolution after market close (predictionResolutionJob.ts)" },
-    { "schedule": "*/30 min", "name": "pipelineWatchdog", "desc": "Stale news pipeline detection — alerts work channel when staleMins > 90, 3h cooldown" }
+    { "schedule": "*/30 min", "name": "pipelineWatchdog", "desc": "Stale news pipeline detection — alerts work channel when staleMins > 90, 3h cooldown" },
+    { "schedule": "07:00 UTC M-F (08:00 CET)", "name": "franceSummaryJob", "desc": "France morning overnight VN signal digest to WORK channel before Paris market open" },
+    { "schedule": "*/15 min market (2-8 UTC M-F)", "name": "taAlertScanJob", "desc": "RSI(14) overbought/oversold intraday scan — inserts ta_overbought/ta_oversold alerts, 4h cooldown" }
   ],
   "orphan": [],
   "legacy": ["newsPollerJob.ts"]
