@@ -60,6 +60,8 @@ export interface EveningSummary {
    *  watchlist is empty or all signals are null (< 15 candles). Includes neutral signals — the
    *  display filter (non-neutral only) is applied in eveningSummaryJob.ts. */
   taSummary: TaSignal[];
+  /** Count of rag_analyses rows created since midnight Vietnam time — diagnostic field */
+  newsCount: number;
   /** ISO 8601 timestamp when this summary was generated */
   generatedAt: string;
 }
@@ -67,15 +69,17 @@ export interface EveningSummary {
 /**
  * Injectable dependencies for testability.
  *
- * @param db           - SQLite Database (defaults to getDb())
- * @param reportsDir   - Override output directory (defaults to ./reports)
- * @param computeTaFn  - Override TA computation function (defaults to defaultComputeTa).
- *                       Inject a mock in tests to avoid market_prices_history dependency.
+ * @param db              - SQLite Database (defaults to getDb())
+ * @param reportsDir      - Override output directory (defaults to ./reports)
+ * @param computeTaFn     - Override TA computation function (defaults to defaultComputeTa).
+ *                          Inject a mock in tests to avoid market_prices_history dependency.
+ * @param getNewsCountFn  - Optional override for the news COUNT query (for tests)
  */
 export interface AssembleEveningSummaryOptions {
   db?: Database;
   reportsDir?: string;
   computeTaFn?: (code: string, db: Database) => TaSignal | null;
+  getNewsCountFn?: (midnight: string) => number;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -207,6 +211,7 @@ export async function assembleEveningSummary(
     })());
 
   const reportsDir = options.reportsDir ?? "./reports";
+  const getNewsCountFn = options.getNewsCountFn;
 
   // ── Step 1: Top 5 stories since midnight ─────────────────────────────────
   const midnight = midnightVietnamAsUtc();
@@ -227,6 +232,25 @@ export async function assembleEveningSummary(
     sentiment: row.sentiment ?? "neutral",
     impactScore: row.impact_score ?? 0,
   }));
+
+  // ── News count since midnight (diagnostic field) ──────────────────────────
+  // Uses injected getNewsCountFn for testability; falls back to direct DB query.
+  // Midnight VN = today 00:00 UTC+7 = yesterday 17:00 UTC.
+  let newsCount = 0;
+  try {
+    if (getNewsCountFn) {
+      newsCount = getNewsCountFn(midnight);
+    } else {
+      const countRow = db
+        .prepare<{ cnt: number }, [string]>(
+          `SELECT COUNT(*) AS cnt FROM rag_analyses WHERE created_at >= ?`,
+        )
+        .get(midnight);
+      newsCount = countRow?.cnt ?? 0;
+    }
+  } catch {
+    newsCount = 0;
+  }
 
   // ── Step 2: Alerts from last 24 hours, sorted by severity DESC ────────────
   const since24h = new Date(Date.now() - 24 * 3600_000).toISOString();
@@ -333,6 +357,7 @@ export async function assembleEveningSummary(
     watchlistMovers,
     predictionSignals,
     taSummary,
+    newsCount,
     generatedAt,
   };
 

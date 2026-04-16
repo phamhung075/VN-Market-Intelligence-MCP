@@ -4,7 +4,16 @@
 
 ---
 
-## Sprint 101 — Active
+## Sprint 102 — Active
+
+| ID | Title | Status |
+|----|-------|--------|
+| 1322 | feat(evening): add newsCount diagnostic field to EveningSummary | Done |
+| 1323 | feat(evening): update eveningSummaryJob formatter — show "(N tin tức hôm nay)" | Done |
+
+---
+
+## Sprint 101 — Complete
 
 | ID | Title | Status |
 |----|-------|--------|

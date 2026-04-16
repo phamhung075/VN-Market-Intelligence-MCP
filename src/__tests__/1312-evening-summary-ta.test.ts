@@ -196,6 +196,7 @@ describe("AC-2: eveningSummaryJob — neutral ticker not in Telegram TA section"
       topStories: [],
       watchlistMovers: [],
       predictionSignals: [],
+      newsCount: 0,
       generatedAt: new Date().toISOString(),
       taSummary: [
         {
@@ -257,6 +258,7 @@ describe("AC-3: eveningSummaryJob — all neutral → no TA section in Telegram"
       topStories: [],
       watchlistMovers: [],
       predictionSignals: [],
+      newsCount: 0,
       generatedAt: new Date().toISOString(),
       taSummary: [
         {
@@ -401,6 +403,7 @@ describe("AC-5: assembleEveningSummary — empty watchlist produces taSummary: [
       topStories: [],
       watchlistMovers: [],
       predictionSignals: [],
+      newsCount: 0,
       generatedAt: new Date().toISOString(),
       taSummary: [],
     };
@@ -504,6 +507,7 @@ describe("Telegram TA section formatting — quá mua / quá bán / MA20 labels"
       topStories: [],
       watchlistMovers: [],
       predictionSignals: [],
+      newsCount: 0,
       generatedAt: new Date().toISOString(),
       taSummary: [
         {
@@ -534,6 +538,7 @@ describe("Telegram TA section formatting — quá mua / quá bán / MA20 labels"
       topStories: [],
       watchlistMovers: [],
       predictionSignals: [],
+      newsCount: 0,
       generatedAt: new Date().toISOString(),
       taSummary: [
         {
@@ -565,6 +570,7 @@ describe("Telegram TA section formatting — quá mua / quá bán / MA20 labels"
       topStories: [],
       watchlistMovers: [],
       predictionSignals: [],
+      newsCount: 0,
       generatedAt: new Date().toISOString(),
       taSummary: [
         {
@@ -603,6 +609,7 @@ describe("Telegram TA section formatting — quá mua / quá bán / MA20 labels"
       topStories: [],
       watchlistMovers: [],
       predictionSignals: [],
+      newsCount: 0,
       generatedAt: new Date().toISOString(),
       taSummary,
     };

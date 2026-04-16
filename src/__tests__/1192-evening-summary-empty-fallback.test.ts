@@ -31,6 +31,7 @@ function emptySummary(): EveningSummary {
     watchlistMovers: [],
     predictionSignals: [],
     taSummary: [],
+    newsCount: 0,
     generatedAt: new Date().toISOString(),
   };
 }
@@ -45,6 +46,7 @@ function fullSummary(): EveningSummary {
     watchlistMovers: [],
     predictionSignals: [],
     taSummary: [],
+    newsCount: 0,
     generatedAt: new Date().toISOString(),
   };
 }

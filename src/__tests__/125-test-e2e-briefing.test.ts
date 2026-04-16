@@ -1292,6 +1292,7 @@ describe("Task 125 — E2E Daily Briefing Flow", () => {
           watchlistMovers: [],
           predictionSignals: [],
           taSummary: [],
+          newsCount: 0,
           generatedAt: new Date().toISOString(),
         };
       };
@@ -1319,6 +1320,7 @@ describe("Task 125 — E2E Daily Briefing Flow", () => {
           watchlistMovers: [],
           predictionSignals: [],
           taSummary: [],
+          newsCount: 0,
           generatedAt: new Date().toISOString(),
         };
       };
