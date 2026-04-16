@@ -15,6 +15,7 @@ import type {
   InsiderBriefingRow,
   ForeignFlowBriefingRow,
   EvidenceScoreBriefingRow,
+  TaSignal,
 } from "../application/usecases/assembleBriefing.js";
 import { BEARISH_WARNING_THRESHOLD } from "../application/usecases/assembleBriefing.js";
 import { logger } from "../infrastructure/logger.js";
@@ -148,6 +149,24 @@ export function formatBriefingMessage(briefing: DailyBriefing): string {
           `(bull=${row.bullishScore.toFixed(2)}/bear=${row.bearishScore.toFixed(2)}, ` +
           `${row.fragmentCount} mảnh)`,
       );
+    }
+  }
+
+  // ── TA Tín hiệu ──────────────────────────────────────────────────────────────
+  if (briefing.taSummary && briefing.taSummary.length > 0) {
+    lines.push("");
+    lines.push("📡 TA Tín hiệu:");
+    for (const sig of briefing.taSummary as TaSignal[]) {
+      const rsiPart =
+        sig.rsiStatus === "overbought" ? `RSI=${sig.rsi14!.toFixed(1)} (quá mua)` :
+        sig.rsiStatus === "oversold"   ? `RSI=${sig.rsi14!.toFixed(1)} (quá bán)` :
+        "";
+      const maPart =
+        sig.priceVsMa20 === "above" ? "| giá trên MA20" :
+        sig.priceVsMa20 === "below" ? "| giá dưới MA20" :
+        "";
+      const parts = [rsiPart, maPart].filter(Boolean).join(" ");
+      lines.push(`  ${sig.code}: ${parts}`);
     }
   }
 

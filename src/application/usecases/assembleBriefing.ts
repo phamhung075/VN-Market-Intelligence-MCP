@@ -24,6 +24,10 @@ import {
   computePortfolioPnl,
   type PortfolioPnlResult,
 } from "../../domain/services/portfolioPnlCalculator.js";
+import {
+  computeRSI,
+  computeMA,
+} from "../../domain/services/technicalIndicators.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Named constants
@@ -106,6 +110,22 @@ export interface ForeignFlowBriefingRow {
   date: string;
 }
 
+/** TA signal for one watchlist ticker (Step 17). */
+export interface TaSignal {
+  /** Stock ticker, e.g. "VCB" */
+  code: string;
+  /** RSI(14) value, or null when fewer than 15 candles available */
+  rsi14: number | null;
+  /** RSI classification: strict > 70 = overbought, < 30 = oversold, else neutral */
+  rsiStatus: "overbought" | "oversold" | "neutral";
+  /** SMA20 value, or null when fewer than 20 candles available */
+  ma20: number | null;
+  /** Price position relative to MA20: "above" | "below" | "neutral" (when ma20 null or equal) */
+  priceVsMa20: "above" | "below" | "neutral";
+  /** Last known price (last candle close), or null when no data */
+  currentPrice: number | null;
+}
+
 /** Evidence score row for the briefing enrichment (Step 16). */
 export interface EvidenceScoreBriefingRow {
   /** Stock ticker */
@@ -174,6 +194,8 @@ export interface DailyBriefing {
   foreignFlowSummary?: ForeignFlowBriefingRow[];
   /** Top evidence scores (bullish leaders + bearish warnings), latest score_date per stock */
   evidenceTopScores?: EvidenceScoreBriefingRow[];
+  /** TA signals for watchlist tickers with at least one non-neutral signal */
+  taSummary?: TaSignal[];
   /** ISO 8601 timestamp when this briefing was generated */
   generatedAt: string;
 }
@@ -195,6 +217,12 @@ export interface AssembleBriefingOptions {
   pollNewsFn?: () => Promise<unknown>;
   fetchVnIndexFn?: () => Promise<VnIndexSnapshot | null>;
   briefingsDir?: string;
+  /**
+   * Override TA computation per ticker for test injection.
+   * Receives the ticker code and the active DB.
+   * Returns null when data is insufficient (< 15 candles).
+   */
+  computeTaFn?: (code: string, db: Database) => TaSignal | null;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -257,6 +285,12 @@ interface OpenPositionRow {
   code: string;
   shares: number;
   avg_price: number;
+}
+
+/** Internal: one daily price row from market_prices_history (Step 17). */
+interface CandleRow {
+  day: string;
+  close_price: number;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -460,6 +494,44 @@ function parseAffectedCodes(json: string | null): string[] {
   } catch {
     return [];
   }
+}
+
+/**
+ * Default TA computation for one ticker: queries market_prices_history for
+ * the last 60 days, computes RSI(14) and MA(20), and classifies signals.
+ * Returns null when fewer than 15 candles are available (RSI minimum).
+ */
+function defaultComputeTa(code: string, db: Database): TaSignal | null {
+  const rows = db.query<CandleRow, [string, string]>(
+    `SELECT date(fetched_at) AS day, AVG(price) AS close_price
+       FROM market_prices_history
+      WHERE code = ?
+        AND fetched_at >= datetime('now', ?)
+      GROUP BY date(fetched_at)
+      ORDER BY day ASC`,
+  ).all(code, "-60 days");
+
+  if (rows.length < 15) return null; // RSI minimum
+
+  const prices = rows.map((r) => r.close_price);
+  const currentPrice = prices.at(-1) ?? null;
+
+  const rsi14 = computeRSI(prices, 14);
+  const ma20 = computeMA(prices, 20);
+
+  const rsiStatus: TaSignal["rsiStatus"] =
+    rsi14 === null ? "neutral"
+    : rsi14 > 70   ? "overbought"
+    : rsi14 < 30   ? "oversold"
+    :                "neutral";
+
+  const priceVsMa20: TaSignal["priceVsMa20"] =
+    ma20 === null || currentPrice === null ? "neutral"
+    : currentPrice > ma20                  ? "above"
+    : currentPrice < ma20                  ? "below"
+    :                                        "neutral";
+
+  return { code, rsi14, rsiStatus, ma20, priceVsMa20, currentPrice };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -864,6 +936,26 @@ export async function assembleBriefing(
     });
   }
 
+  // ── Step 17: TA signals (non-neutral only) ─────────────────────────────────
+  let taSummary: TaSignal[] = [];
+  try {
+    const taFn = options.computeTaFn ?? defaultComputeTa;
+    const signals: TaSignal[] = [];
+    for (const row of watchlistRows) {
+      try {
+        const sig = taFn(row.code, db);
+        if (sig !== null) signals.push(sig);
+      } catch { /* per-ticker failure — skip silently */ }
+    }
+    taSummary = signals.filter(
+      (s) => s.rsiStatus !== "neutral" || s.priceVsMa20 !== "neutral",
+    );
+  } catch (taErr) {
+    logger.warn("[assembleBriefing] taSummary step failed", {
+      error: taErr instanceof Error ? taErr.message : String(taErr),
+    });
+  }
+
   // ── Step 13: Persist briefing ─────────────────────────────────────────────
   const date = todayVietnam();
   const generatedAt = new Date().toISOString();
@@ -885,6 +977,7 @@ export async function assembleBriefing(
     insiderRecent,
     foreignFlowSummary,
     evidenceTopScores,
+    taSummary,
     generatedAt,
   };
 
