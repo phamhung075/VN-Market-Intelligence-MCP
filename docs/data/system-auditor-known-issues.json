@@ -1,6 +1,6 @@
 {
   "issues": [
-    { "fingerprint": "log_error:weekly_portfolio_report_stuck_lock", "first_seen": "2026-04-14", "last_reported": "2026-04-14", "task": "1221", "status": "backlog" },
+    { "fingerprint": "log_error:weekly_portfolio_report_stuck_lock", "first_seen": "2026-04-14", "last_reported": "2026-04-14", "task": "1306", "status": "fixed", "fixedDate": "2026-04-15" },
     { "fingerprint": "log_error:hose_all_price_sources_fail", "first_seen": "2026-04-14", "last_reported": "2026-04-14", "note": "transient network — VPS price push expected off-hours", "status": "monitor" },
     { "fingerprint": "log_error:ssc_ssl_certificate", "first_seen": "2026-04-11", "last_reported": "2026-04-11", "note": "SSC geo-blocked from France — VPS proxy fallback active", "status": "monitor" },
     { "fingerprint": "log_warn:reuters_trading_economics_zero_items", "first_seen": "2026-04-12", "last_reported": "2026-04-12", "note": "off-hours normal; Reuters intermittent geo-block", "status": "monitor" }

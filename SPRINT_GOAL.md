@@ -2,7 +2,33 @@
 
 > Previous sprint goals live in their `docs/REQ_NNN.md` specs. This file = current sprint only.
 
-## Current Sprint — 092 (ACTIVE)
+## Current Sprint — 094 (ACTIVE)
+
+**Goal:** Complete the TA feature lifecycle — add a real-time RSI alert job that fires when a watchlist stock crosses RSI 70 (overbought) or RSI 30 (oversold), giving the user actionable intraday signals beyond the morning briefing snapshot.
+
+**Scope:**
+- IN: Task 1307 — feat(ta-alert): implement `taAlertScanJob.ts` — periodic job (every 15min during VN market hours) that calls `computeAllIndicators` per watchlist ticker and writes RSI alerts to the `alerts` table with 4h per-ticker cooldown
+- IN: Task 1308 — TDD test `src/__tests__/1307-ta-alert-scan-job.test.ts` covering: alert fires when RSI > 70, alert fires when RSI < 30, cooldown suppresses second fire within 4h, neutral RSI (40-60) fires no alert
+- OUT: changes to Alert Commander logic, briefing formatter, VPS proxies, BCTC tools
+
+**Success metric:** `bun test src/__tests__/1307-ta-alert-scan-job.test.ts` passes all cases. Alert Commander picks up TA RSI alerts from the `alerts` table and can forward to market channel. `bun tsc --noEmit` clean.
+
+---
+
+## Sprint 093 — COMPLETE
+
+**Goal:** Fix 2 pre-existing test failures that block a clean full-suite run — tool registry count drift (308) and weekly report DB lock contract mismatch (1221).
+
+**Scope:**
+- IN: Task 1305 — fix(test-drift): update test 308 tool count assertion 59→60 (technicalIndicatorTools added sprint 090)
+- IN: Task 1306 — fix(scheduler): align test 1221 DB lock check — job uses cron_job_runs, test uses scheduler_locks; fix the contract mismatch
+- OUT: new features, Alert Commander changes, VPS changes
+
+**Success metric:** `bun test` full suite passes tests 308 and 1221 with 0 new failures. `bun tsc --noEmit` clean.
+
+---
+
+## Sprint 092 — COMPLETE
 
 **Goal:** Integrate TA signals (RSI/MACD/SMA) from the sprint 090 domain service into the morning briefing — user currently receives price data only; adding overbought/oversold and MA-crossover signals makes the daily briefing actionable.
 
