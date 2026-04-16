@@ -827,11 +827,16 @@ export async function createBunServer(
             const { pollNews } = await import("../../application/usecases/pollNews.js");
             const result = await pollNews({
               fetchers: {
-                cafef: async () => bySource["cafef"] ?? [],
-                vnexpress: async () => bySource["vnexpress"] ?? [],
-                vneconomy: async () => bySource["vneconomy"] ?? [],
-                reuters: async () => [],   // Reuters/Google not VN-sourced
-                tradingeconomics: async () => [], // TE not VN-sourced
+                // Build a fetcher for every key present in bySource.
+                // This forwards all 9 (or more) VPS-pushed source keys without
+                // maintaining a hardcoded list here.
+                ...Object.fromEntries(
+                  Object.keys(bySource).map((src) => [src, async () => bySource[src] ?? []])
+                ),
+                // Non-VN sources: always no-op in push-news context.
+                // Placed after spread so they override any hypothetical key collision.
+                reuters:          async () => [],
+                tradingeconomics: async () => [],
               },
             });
             log.info("[push-news] pipeline complete", {

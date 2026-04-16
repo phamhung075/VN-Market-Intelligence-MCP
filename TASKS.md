@@ -4,7 +4,16 @@
 
 ---
 
-## Sprint 102 — Active
+## Sprint 103 — Active
+
+| ID | Title | Status |
+|----|-------|--------|
+| 1324 | fix(push-news): extend SourceFetchers + wire all 9 VPS sources in push-news handler | In Progress |
+| 1325 | test(push-news): TDD test 1324-push-news-all-sources.test.ts | In Progress |
+
+---
+
+## Sprint 102 — Complete
 
 | ID | Title | Status |
 |----|-------|--------|
@@ -168,6 +177,57 @@
 ---
 
 ## Task Details (active tasks only)
+
+### 1324 — fix(push-news): extend SourceFetchers + wire all 9 VPS sources in push-news handler
+
+**Branch:** `task/1324-1325-push-news-all-sources`
+**Layer:** application/usecases + interface/server
+**Status:** Backlog
+**Role:** Dev
+
+**Root cause (confirmed):**
+The `push-news` handler in `server.ts` (line 829-836) wires only `cafef`, `vnexpress`, `vneconomy` into `pollNews` fetchers. The VPS `vn-news-fetch.service` pushes 9 active sources. Items from `vietstock`, `vietnambiz`, `vnbusiness`, `tuoitre`, `nhandoan`, `nld` are received and `log.info`-d but never processed — `pollNews` drops them silently. This is why `rag_analyses` has 0 rows and `topStories: []` in every evening report.
+
+**Fix 1 — `src/application/usecases/pollNews.ts`:**
+Add keys to `SourceFetchers` interface: `vietstock`, `vietnambiz`, `vnbusiness`, `tuoitre`, `nhandoan`, `nld` (all optional `() => Promise<RssItem[]>`). In the production `pollNews` body, include each new fetcher in the parallel fetch array using the same pattern as existing sources.
+
+**Fix 2 — `src/interface/mcp/server.ts` (push-news handler, line 829-836):**
+Replace the hardcoded 5-key fetcher object with a dynamic map: for every key in `bySource`, wire `fetchers[key] = async () => bySource[key] ?? []`. This ensures any source name the VPS uses (current or future) flows through automatically.
+
+**Files to change:**
+- `src/application/usecases/pollNews.ts` — add 6 new fetcher keys to `SourceFetchers`
+- `src/interface/mcp/server.ts` — dynamic fetcher wiring in push-news handler
+
+**Acceptance Criteria:**
+- AC-1: `SourceFetchers` has keys `vietstock`, `vietnambiz`, `vnbusiness`, `tuoitre`, `nhandoan`, `nld`
+- AC-2: push-news handler wires all `bySource` keys dynamically (no hardcoded list)
+- AC-3: TDD test: inject 9-source payload, assert `result.inserted >= 1` and `rag_analyses` row count increases
+- AC-4: existing `cafef`/`vnexpress`/`vneconomy` fetcher behavior unchanged
+- AC-5: `bun tsc --noEmit` 0 errors
+
+---
+
+### 1325 — test(push-news): TDD test 1324-push-news-all-sources.test.ts
+
+**Branch:** `task/1324-1325-push-news-all-sources` (same as 1324)
+**Layer:** test
+**Depends on:** 1324
+**Status:** Backlog
+**Role:** Dev
+
+**Write tests FIRST (all failing), then apply fix from 1324.**
+
+**Test cases (3 required):**
+1. TC-1 (AC-3): Inject items from `vietstock`, `vietnambiz`, `vnbusiness`, `tuoitre`, `nhandoan`, `nld` via `pollNews({ fetchers: {...} })` → `result.inserted >= 1`, `rag_analyses` row count increases from 0
+2. TC-2 (AC-4): Inject `cafef` + `vnexpress` items as before → `result.inserted >= 1` (regression: existing sources still work)
+3. TC-3 (AC-2): Inject unknown source `"xyz"` items → no crash, items processed or silently skipped, no exception
+
+**Acceptance Criteria:**
+- `bun test src/__tests__/1324-push-news-all-sources.test.ts` >= 3 pass / 0 fail
+- In-memory SQLite via `new Database(":memory:")` + `initDatabase(db)`, no real HTTP
+- `bun tsc --noEmit` 0 errors
+
+---
 
 ### 1318 — fix(evening-summary): diagnose + fix predictionSignals always empty
 

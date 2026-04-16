@@ -52,11 +52,21 @@ export interface PollNewsResult {
  * Allows tests to inject mocks without touching real HTTP.
  */
 export interface SourceFetchers {
+  // Pre-existing sources (local fetchers + RSS)
   cafef?: () => Promise<RssItem[]>;
   vnexpress?: () => Promise<RssItem[]>;
   reuters?: () => Promise<RssItem[]>;
   vneconomy?: () => Promise<RssItem[]>;
   tradingeconomics?: () => Promise<RssItem[]>;
+  // VPS-push-only sources (no local fetcher — data arrives via POST /api/push-news)
+  vietstock?: () => Promise<RssItem[]>;
+  vietnambiz?: () => Promise<RssItem[]>;
+  vnbusiness?: () => Promise<RssItem[]>;
+  tuoitre?: () => Promise<RssItem[]>;
+  nhandan?: () => Promise<RssItem[]>;
+  nld?: () => Promise<RssItem[]>;
+  // Allow arbitrary future VPS source keys without requiring interface changes
+  [key: string]: (() => Promise<RssItem[]>) | undefined;
 }
 
 /**
@@ -386,25 +396,43 @@ export async function pollNews(options: PollNewsOptions = {}): Promise<PollNewsR
   const watchlist: WatchlistEntry[] =
     options.watchlist !== undefined ? options.watchlist : loadWatchlist(db);
 
-  // Resolve fetchers
-  const fetchers: Required<SourceFetchers> = {
-    cafef: options.fetchers?.cafef ?? defaultCafefFetcher,
-    vnexpress: options.fetchers?.vnexpress ?? defaultVnExpressFetcher,
-    reuters: options.fetchers?.reuters ?? defaultReutersFetcher,
-    vneconomy: options.fetchers?.vneconomy ?? defaultVnEconomyFetcher,
-    tradingeconomics: options.fetchers?.tradingeconomics ?? defaultTradingEconomicsFetcher,
+  // Known keys — local sources with defaults + named VPS-only sources
+  const knownKeys: Record<string, true> = {
+    cafef: true, vnexpress: true, reuters: true, vneconomy: true,
+    tradingeconomics: true, vietstock: true, vietnambiz: true,
+    vnbusiness: true, tuoitre: true, nhandan: true, nld: true,
   };
 
-  // ── Step 1: Fetch all 5 sources in parallel with health tracking ────────
+  // Resolve fetchers — local sources get defaults; VPS-only sources are
+  // injected when provided and skipped during scheduled runs.
+  // Unknown future VPS keys are passed through as-is from the caller.
+  // Use a Record<string, ...> accumulator to avoid exactOptionalPropertyTypes issues.
+  const resolvedFetchers: Record<string, () => Promise<RssItem[]>> = {
+    cafef:            options.fetchers?.cafef            ?? defaultCafefFetcher,
+    vnexpress:        options.fetchers?.vnexpress        ?? defaultVnExpressFetcher,
+    reuters:          options.fetchers?.reuters          ?? defaultReutersFetcher,
+    vneconomy:        options.fetchers?.vneconomy        ?? defaultVnEconomyFetcher,
+    tradingeconomics: options.fetchers?.tradingeconomics ?? defaultTradingEconomicsFetcher,
+  };
+  // VPS-push-only keys: only add if the caller provided them
+  const vpsOnlyKeys = ["vietstock", "vietnambiz", "vnbusiness", "tuoitre", "nhandan", "nld"] as const;
+  for (const key of vpsOnlyKeys) {
+    const fn = options.fetchers?.[key];
+    if (fn !== undefined) resolvedFetchers[key] = fn;
+  }
+  // Propagate any additional unknown future VPS keys injected by the caller
+  for (const [k, fn] of Object.entries(options.fetchers ?? {})) {
+    if (!(k in knownKeys) && fn !== undefined) {
+      resolvedFetchers[k] = fn;
+    }
+  }
+
+  // ── Step 1: Fetch all active sources in parallel with health tracking ───
   type SourceResult = { name: string; result: PromiseSettledResult<RssItem[]> };
 
-  const sourceEntries: Array<{ name: string; promise: Promise<RssItem[]> }> = [
-    { name: "CafeF RSS", promise: fetchers.cafef() },
-    { name: "VnExpress RSS", promise: fetchers.vnexpress() },
-    { name: "Reuters RSS", promise: fetchers.reuters() },
-    { name: "VnEconomy RSS", promise: fetchers.vneconomy() },
-    { name: "Trading Economics", promise: fetchers.tradingeconomics() },
-  ];
+  // Build source entries dynamically from all resolved fetchers
+  const sourceEntries: Array<{ name: string; promise: Promise<RssItem[]> }> =
+    Object.entries(resolvedFetchers).map(([key, fn]) => ({ name: key, promise: fn() }));
 
   const settled = await Promise.allSettled(sourceEntries.map((s) => s.promise));
 
