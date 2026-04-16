@@ -4,12 +4,21 @@
 
 ---
 
-## Sprint 100 — Active
+## Sprint 101 — Active
 
-| ID | Title | Role | Status |
-|----|-------|------|--------|
-| 1318 | fix(evening-summary): diagnose + fix predictionSignals always empty | Dev | Review |
-| 1319 | test(evening-summary): TDD test 1318-prediction-signals-evening.test.ts | Dev | Review |
+| ID | Title | Status |
+|----|-------|--------|
+| 1320 | refactor(ddd): create domain/models/shared-types.ts — move shared types out of infra | Done |
+| 1321 | test(ddd): TDD boundary test — zero infra imports in domain/ | Done |
+
+---
+
+## Sprint 100 — Complete
+
+| ID | Title | Status |
+|----|-------|--------|
+| 1318 | fix(evening-summary): diagnose + fix predictionSignals always empty | Done |
+| 1319 | test(evening-summary): TDD test 1318-prediction-signals-evening.test.ts | Done |
 
 ---
 

@@ -14,7 +14,7 @@
  * Layer: domain/services (pure — no I/O)
  */
 
-import type { VnstockEvent } from "../../infrastructure/fetchers/vnstockBridge.js";
+import type { VnstockEvent } from "../models/shared-types.js";
 
 // ---------------------------------------------------------------------------
 // Types

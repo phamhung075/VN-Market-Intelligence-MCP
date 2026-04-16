@@ -17,7 +17,7 @@
  * @module domain/services/recencyWeighter
  */
 
-import type { SearchResult } from "../../infrastructure/rag/retriever.js";
+import type { SearchResult } from "../models/shared-types.js";
 import { MS_PER_DAY } from "./timeConstants.js";
 
 // ─── Types ────────────────────────────────────────────────────────────────────

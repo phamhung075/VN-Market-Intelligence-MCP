@@ -88,37 +88,13 @@ export interface VnstockShareholder {
   ownPercent: number;
 }
 
-export interface VnstockEvent {
-  code: string;
-  eventName: string;
-  eventDate: string;   // ISO date "YYYY-MM-DD"
-  eventType: string;   // "Dividend", "AGM", "Share Issuance", etc.
-  description: string;
-}
-
-export interface VnstockIntradayTick {
-  code: string;
-  /** ISO datetime of the tick */
-  time: string;
-  /** Price in VND (vnstock raw × 1000) */
-  price: number;
-  volume: number;
-  /** "Buy" | "Sell" | "Unknown" */
-  matchType: string;
-}
-
-export interface VnstockOrderBook {
-  code: string;
-  /** Top 10 bid levels (price in VND × 1000) */
-  bids: Array<{ price: number; volume: number }>;
-  /** Top 10 ask levels (price in VND × 1000) */
-  asks: Array<{ price: number; volume: number }>;
-  bidTotal: number;
-  askTotal: number;
-  /** bidTotal / askTotal — > 1 means more buy-side pressure */
-  imbalanceRatio: number;
-  fetchedAt: string;
-}
+// Re-export shared types from domain (DDD fix — Task 1320)
+import type {
+  VnstockIntradayTick,
+  VnstockEvent,
+  VnstockOrderBook,
+} from "../../domain/models/shared-types.js";
+export type { VnstockIntradayTick, VnstockEvent, VnstockOrderBook };
 
 export interface VnstockBalanceSheet {
   code: string;

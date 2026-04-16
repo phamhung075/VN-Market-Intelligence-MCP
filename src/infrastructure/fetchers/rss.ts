@@ -15,24 +15,9 @@ import { logger } from "../logger.js";
 // Public types
 // ---------------------------------------------------------------------------
 
-/**
- * A single item parsed from an RSS feed.
- */
-export interface RssItem {
-  /** Article headline. */
-  title: string;
-  /** Canonical URL to the full article. */
-  url: string;
-  /** Publication timestamp as a raw string from the feed (e.g. RFC 2822 date). */
-  publishedAt: string;
-  /** Article summary / description (may contain HTML entities). */
-  content: string;
-  /**
-   * Source identifier set by the caller (e.g. 'cafef').
-   * parseRssFeed() always emits '' — callers must set it after parsing.
-   */
-  source: string;
-}
+// Re-export shared type from domain (DDD fix — Task 1320)
+import type { RssItem } from "../../domain/models/shared-types.js";
+export type { RssItem };
 
 // ---------------------------------------------------------------------------
 // Parser

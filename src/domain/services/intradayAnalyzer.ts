@@ -18,7 +18,7 @@
  * Layer: domain/services — ZERO imports from infrastructure/
  */
 
-import type { VnstockIntradayTick } from "../../infrastructure/fetchers/vnstockBridge.js";
+import type { VnstockIntradayTick } from "../models/shared-types.js";
 import type { Severity } from "./signalDetector.js";
 
 // ---------------------------------------------------------------------------
