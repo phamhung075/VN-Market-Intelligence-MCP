@@ -4,12 +4,29 @@
 
 ---
 
-## Sprint 095 — Active
+## Sprint 097 — Active
 
 | ID | Title | Status |
 |----|-------|--------|
-| 1309 | feat(ta-alert): implement bbAlertScanJob.ts — Bollinger Band breakout alert | Review |
-| 1310 | test(ta-alert): TDD test 1309-bb-alert-scan-job.test.ts | Review |
+| 1312 | feat(evening-summary): add taSummary (RSI/MA20 at close) to EveningSummary type + Telegram message | Review |
+| 1313 | test(evening-summary): TDD test 1312-evening-summary-ta.test.ts | Review |
+
+---
+
+## Sprint 096 — Complete
+
+| ID | Title | Status |
+|----|-------|--------|
+| 1311 | fix(ta-alert): cooldown query uses wall-clock now instead of nowFn — taAlertScanJob + bbAlertScanJob | Done |
+
+---
+
+## Sprint 095 — Complete
+
+| ID | Title | Status |
+|----|-------|--------|
+| 1309 | feat(ta-alert): implement bbAlertScanJob.ts — Bollinger Band breakout alert | Done |
+| 1310 | test(ta-alert): TDD test 1309-bb-alert-scan-job.test.ts | Done |
 
 ---
 
@@ -106,6 +123,104 @@
 ---
 
 ## Task Details (active tasks only)
+
+### 1312 — feat(evening-summary): add taSummary (RSI/MA20 at close) to EveningSummary type + Telegram message
+
+**Branch:** `task/1312-1313-evening-summary-ta`
+**Layer:** application + scheduler
+**Status:** Backlog
+
+**Problem:** The evening summary (`assembleEveningSummary`) shows `topAlerts`, `topStories`, `watchlistMovers`, and `predictionSignals` but no TA close-of-day state. The morning briefing (sprint 092) shows RSI and MA20 signals using `TaSignal[]` from `assembleBriefing.ts`. Users need the same context at close to plan overnight positions.
+
+**Solution:**
+1. Add `taSummary: TaSignal[]` field to `EveningSummary` interface in `src/application/usecases/assembleEveningSummary.ts`
+2. Import `TaSignal` from `assembleBriefing.ts` (already exported)
+3. Import `defaultComputeTa` function from `assembleBriefing.ts` OR duplicate the logic inline (the function is already tested via morning briefing tests, so import is preferred — verify it is exported)
+4. In `assembleEveningSummary`, after computing `watchlistMovers`, iterate watchlist tickers, call `defaultComputeTa(code, db)` per ticker, collect into `taSummary`
+5. In `eveningSummaryJob.ts`, in the Telegram formatter section, append a "TA tín hiệu đóng cửa" block when `taSummary` has at least one non-neutral signal (rsiStatus != "neutral" OR priceVsMa20 != "neutral"). Format per ticker: `"{code}: RSI={rsi14} (quá mua/quá bán)" + MA20 note`
+6. Persist the updated `EveningSummary` JSON (taSummary included) to `reports/YYYY-MM-DD-evening.json`
+
+**Check first:** Verify that `defaultComputeTa` is exported from `assembleBriefing.ts`. If not, export it. Do not duplicate.
+
+**Injectable deps (for TDD in task 1313):**
+- `computeTaFn?: (code: string, db: Database) => TaSignal | null` — defaults to `defaultComputeTa`
+
+**DDD layer:** `application/usecases` — no `infrastructure/` imports beyond `db/schema`. `scheduler` layer for Telegram formatting — no new DB imports there.
+
+**Files to change:**
+- `src/application/usecases/assembleEveningSummary.ts` — add `taSummary` field, `computeTaFn` dep, populate loop
+- `src/scheduler/eveningSummaryJob.ts` — add TA section to Telegram formatter
+
+**Acceptance Criteria:**
+- `EveningSummary` interface has `taSummary: TaSignal[]`
+- `assembleEveningSummary` populates `taSummary` by calling `defaultComputeTa` per watchlist ticker
+- Tickers with null RSI (no history) are included with `rsiStatus: "neutral"` and `priceVsMa20: "neutral"` OR skipped — match the morning briefing behavior (check `assembleBriefing.ts` line ~951: only non-neutral are included)
+- Evening Telegram message contains "TA tín hiệu đóng cửa" section when at least 1 ticker has non-neutral RSI or MA20
+- Evening Telegram message omits the TA section entirely when all tickers are neutral
+- `reports/YYYY-MM-DD-evening.json` includes `taSummary` field
+- `bun test src/__tests__/1312-evening-summary-ta.test.ts` all pass
+- `bun tsc --noEmit` 0 errors
+- No changes to morning briefing, taAlertScanJob, bbAlertScanJob, Alert Commander, VPS proxies
+
+---
+
+### 1313 — test(evening-summary): TDD test 1312-evening-summary-ta.test.ts
+
+**Branch:** `task/1312-1313-evening-summary-ta` (same branch as 1312)
+**Layer:** test
+**Depends on:** 1312 (assembleEveningSummary taSummary implementation)
+**Status:** Backlog
+
+**Test cases (minimum):**
+1. `taSummary populated from watchlist tickers` — inject 2 watchlist tickers, inject `computeTaFn` returning `{ rsiStatus: "overbought", ... }` for ticker 1 and `{ rsiStatus: "neutral", ... }` for ticker 2, assert `taSummary.length === 2`
+2. `taSummary is empty array when watchlist is empty` — 0 tickers, assert `taSummary: []`
+3. `taSummary skips ticker when computeTaFn returns null` — inject `computeTaFn` returning null, assert `taSummary.length === 0`
+4. `EveningSummary JSON includes taSummary field` — assert persisted JSON file has `taSummary` key
+5. `Telegram message includes TA section when at least one non-neutral signal` — inject 1 overbought ticker, assert formatted output contains "TA tín hiệu đóng cửa"
+6. `Telegram message omits TA section when all tickers neutral` — inject all neutral signals, assert formatted output does NOT contain "TA tín hiệu đóng cửa"
+
+**Acceptance Criteria:**
+- `bun test src/__tests__/1312-evening-summary-ta.test.ts` ≥6 pass / 0 fail
+- In-memory SQLite, injectable deps, no real I/O
+- `bun tsc --noEmit` 0 errors
+
+---
+
+### 1311 — fix(ta-alert): cooldown query uses wall-clock now instead of nowFn — taAlertScanJob + bbAlertScanJob
+
+**Branch:** `task/1311-ta-alert-cooldown-nowfn`
+**Layer:** scheduler
+**Status:** Backlog
+
+**Problem:** Both `taAlertScanJob.ts` and `bbAlertScanJob.ts` accept an injectable `nowFn` parameter for test isolation. The `nowFn` is used when building `triggered_at` for the INSERT, but the cooldown check SQL uses hardcoded `datetime('now', '-4 hours')` — wall-clock SQLite function. This means that when tests inject a `nowFn` returning a controlled past/future time, the cooldown query compares the injected `triggered_at` against real clock `now`. If the injected time is far enough from real clock now, the cooldown window is not aligned and the suppression check fails.
+
+**Root cause (both files):**
+```ts
+const COOLDOWN_SQL = `
+  SELECT COUNT(*) AS cnt
+    FROM alerts
+   WHERE json_extract(signals_json, '$[0].type') = ?
+     AND json_extract(affected_actions_json, '$[0].code') = ?
+     AND triggered_at >= datetime('now', '-4 hours')   -- ← hardcoded wall-clock
+`;
+```
+
+The inserted `triggered_at` = `nowFn().toISOString()`. The cooldown check uses `datetime('now', '-4 hours')`. If `nowFn()` differs from real now (e.g. test injects T+30min in the future, or T-30min in the past), the cutoff comparison can fail silently.
+
+**Fix:** Compute the cooldown cutoff from `nowFn()` rather than from SQLite `now`. Change the COOLDOWN_SQL to use a parameter `?` for the cutoff timestamp, and pass `new Date(nowFn().getTime() - 4 * 3_600_000).toISOString()` as the third bind parameter.
+
+**Files to change:**
+- `src/scheduler/taAlertScanJob.ts` — change COOLDOWN_SQL third bind + call site
+- `src/scheduler/bbAlertScanJob.ts` — same change
+
+**Acceptance Criteria**
+- `bun test src/__tests__/1307-ta-alert-scan-job.test.ts` passes all 9 tests (currently 2 fail: AC-5 cooldown)
+- `bun test src/__tests__/1309-bb-alert-scan-job.test.ts` passes all 10 tests (currently 1 fail: AC-6 cooldown)
+- `bun tsc --noEmit` 0 errors
+- No changes to tests, no new files, no changes to schema, Alert Commander, or other jobs
+- Cooldown still suppresses correctly in production (uses `nowFn()` default = `new Date()` = wall clock)
+
+---
 
 ### 1309 — feat(ta-alert): implement bbAlertScanJob.ts — Bollinger Band breakout alert
 

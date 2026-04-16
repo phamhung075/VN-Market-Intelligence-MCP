@@ -501,7 +501,7 @@ function parseAffectedCodes(json: string | null): string[] {
  * the last 60 days, computes RSI(14) and MA(20), and classifies signals.
  * Returns null when fewer than 15 candles are available (RSI minimum).
  */
-function defaultComputeTa(code: string, db: Database): TaSignal | null {
+export function defaultComputeTa(code: string, db: Database): TaSignal | null {
   const rows = db.query<CandleRow, [string, string]>(
     `SELECT date(fetched_at) AS day, AVG(price) AS close_price
        FROM market_prices_history
