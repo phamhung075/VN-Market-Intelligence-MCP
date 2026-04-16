@@ -12,9 +12,9 @@ Vision: `SPRINT_GOAL.md`
 
 | ID | Title | Agent | Layer | Depends On | Branch | Status |
 |----|-------|-------|-------|------------|--------|--------|
-| 1304 | feat(briefing): integrate TA signals (RSI/SMA) into morning briefing | Dev | application | 1302 | — | Todo |
+| 1304 | feat(briefing): integrate TA signals (RSI/SMA) into morning briefing | Dev | application | 1302 | task/1304-ta-morning-briefing | Review |
 
-**WIP:** 0 In Progress. 0 Review.
+**WIP:** 0 In Progress. 1 Review.
 
 ---
 
