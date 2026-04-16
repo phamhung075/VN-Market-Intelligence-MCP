@@ -19,6 +19,7 @@
  *   bctcOverdueCheck      09:00 daily          (task 1018 slice 3) ✓
  *   pipelineWatchdog      every 30 min 24/7  (task 1190) ✓
  *   taAlertScan           every 15min VN market hours  (task 1307) ✓
+ *   bbAlertScan           every 15min VN market hours  (task 1309) ✓
  */
 
 import cron from 'node-cron'
@@ -52,6 +53,7 @@ import { runInsiderCheck } from './insiderCheckJob.js'
 import { runPipelineWatchdog } from './pipelineWatchdogJob.js'
 import { runFranceSummary } from './franceSummaryJob.js'
 import { runTaAlertScan } from './taAlertScanJob.js'
+import { runBbAlertScan } from './bbAlertScanJob.js'
 import { getDb } from '../infrastructure/db/schema.js'
 import { recordJobRun } from '../infrastructure/db/cronJobRunStore.js'
 
@@ -117,6 +119,8 @@ export const CRONS = {
   franceSummary:          Bun.env.CRON_FRANCE_SUMMARY               ?? '0 7 * * 1-5',
   /** taAlertScan — every 15min VN market hours (task 1307) */
   taAlertScan:            Bun.env.CRON_TA_ALERT_SCAN                 ?? '*/15 2-8 * * 1-5',
+  /** bbAlertScan — every 15min VN market hours (task 1309) */
+  bbAlertScan:            Bun.env.CRON_BB_ALERT_SCAN                  ?? '*/15 2-8 * * 1-5',
 }
 
 function log(msg: string) {
@@ -417,6 +421,19 @@ export function startScheduler() {
       const result = await runTaAlertScan()
       if (result.fired > 0) {
         log(`[ta-alert-scan] scanned=${result.scanned} fired=${result.fired}`)
+      }
+      return { rowsWritten: result.fired }
+    })
+  }, { timezone: 'UTC' })
+
+  // Every 15 min during VN market hours (02:00-08:59 UTC, Mon-Fri) — BB alert scan — task 1309
+  // Scans watchlist BB20 upper/lower breakouts. Writes ta_bb_breakout_up/ta_bb_breakout_down rows.
+  // No direct Telegram — Alert Commander dispatches via readUnnotifiedAlerts().
+  cron.schedule(CRONS.bbAlertScan, async () => {
+    await recordJobRun(getDb(), 'bbAlertScanJob', async () => {
+      const result = await runBbAlertScan()
+      if (result.fired > 0) {
+        log(`[bb-alert-scan] scanned=${result.scanned} fired=${result.fired}`)
       }
       return { rowsWritten: result.fired }
     })
