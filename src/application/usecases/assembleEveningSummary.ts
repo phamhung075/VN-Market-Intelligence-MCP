@@ -316,7 +316,11 @@ export async function assembleEveningSummary(
     predictionSignals = allSignals.filter(
       (s) => s.severity === "high" || s.severity === "critical",
     );
-  } catch { /* best-effort */ }
+  } catch (err) {
+    logger.warn("[assembleEveningSummary] prediction signals query failed", {
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
 
   // ── Step 6: Persist summary ───────────────────────────────────────────────
   const date = todayVietnam();

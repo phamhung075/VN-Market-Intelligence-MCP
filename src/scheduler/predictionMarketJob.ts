@@ -343,10 +343,11 @@ export async function runPredictionMarketPoll(
         );
       }
     } catch (err) {
-      logger.error("[prediction-market-job] fetchPolymarkets failed", {
+      logger.warn("[prediction-market-job] fetchPolymarkets failed — falling back to cached snapshot", {
         error: String(err),
       });
-      return;
+      currentMarkets = loadPreviousSnapshot(db);
+      // fallthrough: signal detection continues against cached data
     }
 
     logger.info(
