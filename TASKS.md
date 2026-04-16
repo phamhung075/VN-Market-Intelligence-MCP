@@ -4,6 +4,15 @@
 
 ---
 
+## Sprint 101 — Active
+
+| ID | Title | Status |
+|----|-------|--------|
+| 1320 | refactor(ddd): create domain/models/shared-types.ts — move shared types out of infra | Review |
+| 1321 | test(ddd): TDD boundary test — zero infra imports in domain/ | Review |
+
+---
+
 ## Sprint 095 — Active
 
 | ID | Title | Status |

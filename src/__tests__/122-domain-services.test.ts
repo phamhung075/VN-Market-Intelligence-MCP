@@ -31,7 +31,7 @@ import {
 } from "../domain/services/cascadeEngine.js";
 import type { AnalysisEntry } from "../domain/services/newsNormalizer.js";
 import { normalizeNews } from "../domain/services/newsNormalizer.js";
-import type { RssItem } from "../infrastructure/fetchers/rss.js";
+import type { RssItem } from "../domain/models/shared-types.js";
 import type { DomainType } from "../../bctc-schema.js";
 
 // ═══════════════════════════════════════════════════════════════════════════

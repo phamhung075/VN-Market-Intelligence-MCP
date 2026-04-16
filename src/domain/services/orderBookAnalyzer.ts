@@ -17,7 +17,7 @@
  * Layer: domain/services — ZERO imports from infrastructure/
  */
 
-import type { VnstockOrderBook } from "../../infrastructure/fetchers/vnstockBridge.js";
+import type { VnstockOrderBook } from "../models/shared-types.js";
 import type { Severity } from "./signalDetector.js";
 
 // ---------------------------------------------------------------------------

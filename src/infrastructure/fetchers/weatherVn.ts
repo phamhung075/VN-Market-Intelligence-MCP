@@ -20,29 +20,13 @@ const nchmfBreaker = new CircuitBreaker("nchmf.gov.vn");
 // Public types
 // ---------------------------------------------------------------------------
 
-export type WeatherEventType =
-  | "typhoon"
-  | "flood"
-  | "drought"
-  | "heat_wave"
-  | "cold_snap"
-  | "el_nino"
-  | "la_nina";
-
-export type WeatherSeverity = "low" | "medium" | "high" | "critical";
-
-export interface WeatherEvent {
-  type: WeatherEventType;
-  severity: WeatherSeverity;
-  /** Affected provinces / regions */
-  regions: string[];
-  /** ISO date string of forecast */
-  forecastDate: string;
-  /** Human-readable impact duration, e.g. "48 giờ", "3-5 ngày" */
-  impactDuration: string;
-  /** Source description text */
-  description: string;
-}
+// Re-export shared types from domain (DDD fix — Task 1320)
+import type {
+  WeatherEventType,
+  WeatherSeverity,
+  WeatherEvent,
+} from "../../domain/models/shared-types.js";
+export type { WeatherEventType, WeatherSeverity, WeatherEvent };
 
 // ---------------------------------------------------------------------------
 // HTTP client interface (for injection in tests)

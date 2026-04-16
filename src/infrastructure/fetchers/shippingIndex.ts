@@ -86,18 +86,9 @@ const SHIPPING_SYMBOLS: Array<{ symbol: string; name: string }> = [
 /**
  * A single shipping index data point.
  */
-export interface ShippingIndex {
-  /** Index name: "BDI" | "FBX_ASIA_US" | "SCFI" */
-  name: string;
-  /** Current index value */
-  value: number;
-  /** Absolute change from previous close */
-  change: number;
-  /** Percentage change from previous close */
-  changePct: number;
-  /** Date of the reading (YYYY-MM-DD) */
-  date: string;
-}
+// Re-export shared type from domain (DDD fix — Task 1320)
+import type { ShippingIndex } from "../../domain/models/shared-types.js";
+export type { ShippingIndex };
 
 // ---------------------------------------------------------------------------
 // Default HTTP client (axios) — lazy import keeps tests free of axios

@@ -98,7 +98,6 @@ function makeOrderBook(
     bidTotal: 10000,
     askTotal: 10000,
     imbalanceRatio: 1.0,
-    fetchedAt: new Date().toISOString(),
     ...overrides,
   };
 }

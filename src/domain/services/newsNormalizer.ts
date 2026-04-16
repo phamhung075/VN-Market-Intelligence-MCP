@@ -15,7 +15,7 @@
  * adapters. The RssItem structural import is the sole approved exception.
  */
 
-import type { RssItem } from "../../infrastructure/fetchers/rss.js";
+import type { RssItem } from "../models/shared-types.js";
 import type { DomainType } from "../../../bctc-schema.js";
 import { STOCK_CATALOG, detectStocksInText } from "./stockAliases.js";
 

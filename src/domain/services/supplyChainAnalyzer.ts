@@ -22,7 +22,7 @@ import {
   type MacroDeviation,
 } from "./macroThresholds.js";
 import type { WatchlistEntry } from "./cascadeEngine.js";
-import type { ShippingIndex } from "../../infrastructure/fetchers/shippingIndex.js";
+import type { ShippingIndex } from "../models/shared-types.js";
 
 // ---------------------------------------------------------------------------
 // Types

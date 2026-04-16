@@ -15,7 +15,7 @@
  * Layer: domain/services — ZERO imports from infrastructure/ or application/.
  */
 
-import type { WeatherEvent, WeatherEventType, WeatherSeverity } from "../../infrastructure/fetchers/weatherVn.js";
+import type { WeatherEvent, WeatherEventType, WeatherSeverity } from "../models/shared-types.js";
 import type { ImpactDirection } from "./newsNormalizer.js";
 
 // ---------------------------------------------------------------------------

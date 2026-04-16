@@ -18,8 +18,8 @@ import { insertVector, searchSimilar } from "./vectorstore.js";
 import { buildEmbeddingText } from "../../domain/services/embeddingTextBuilder.js";
 import type { SearchResult } from "./vectorstore.js";
 
-// Re-export SearchResult so callers can type results without importing vectorstore directly
-export type { SearchResult } from "./vectorstore.js";
+// Re-export SearchResult from domain (DDD fix — Task 1320)
+export type { SearchResult } from "../../domain/models/shared-types.js";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 

@@ -12,4 +12,4 @@
  */
 
 // Re-export all domain models as they are implemented
-export {};
+export type * from "./shared-types.js";
