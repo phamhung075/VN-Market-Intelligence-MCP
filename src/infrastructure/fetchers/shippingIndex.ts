@@ -35,6 +35,39 @@ const YAHOO_API_BASE =
   Bun.env["YAHOO_FINANCE_API_URL"] ??
   "https://query1.finance.yahoo.com/v8/finance/chart";
 
+// ---------------------------------------------------------------------------
+// VPS proxy helpers (Task 1248)
+// ---------------------------------------------------------------------------
+
+/**
+ * Build the fetch URL for a shipping index symbol.
+ *
+ * Priority order:
+ *   1. `proxyBaseUrl` parameter (explicit override — used in tests or when
+ *      the caller detected a geo-block and wants to retry via VPS)
+ *   2. `BDI_VPS_PROXY_URL` env var (operator-level proxy configuration)
+ *   3. `YAHOO_FINANCE_API_URL` env var (existing override for all Yahoo calls)
+ *   4. Hardcoded Yahoo Finance API base (default)
+ *
+ * The symbol is URL-encoded to handle special characters like '^' in "^BDI".
+ *
+ * @param symbol       - Yahoo Finance symbol (e.g. "^BDI", "^BFIY")
+ * @param defaultBase  - Fallback base URL when no proxy is configured
+ * @param proxyBaseUrl - Optional explicit proxy override
+ * @returns            - Full URL string ready for fetch
+ */
+export function buildShippingIndexUrl(
+  symbol: string,
+  defaultBase: string,
+  proxyBaseUrl?: string,
+): string {
+  const base =
+    proxyBaseUrl ??
+    Bun.env["BDI_VPS_PROXY_URL"] ??
+    defaultBase;
+  return `${base}/${encodeURIComponent(symbol)}?interval=1d&range=1d`;
+}
+
 /**
  * Shipping index symbols mapped to their friendly names.
  * BDI is the primary bulk index, BFIY is the Freightos Baltic container rate.
@@ -103,8 +136,9 @@ async function fetchSymbolData(
   symbol: string,
   client: HttpClient,
   apiBase: string,
+  proxyBaseUrl?: string,
 ): Promise<SymbolResult | null> {
-  const url = `${apiBase}/${encodeURIComponent(symbol)}?interval=1d&range=1d`;
+  const url = buildShippingIndexUrl(symbol, apiBase, proxyBaseUrl);
 
   try {
     logger.debug("[shippingIndex] fetching symbol", { symbol, url });
@@ -158,17 +192,26 @@ async function fetchSymbolData(
  *
  * Uses Promise.allSettled so individual symbol failures don't abort others.
  *
- * @param httpClient - Injectable HTTP client (pass a mock in tests).
+ * Task 1248: supports routing through a VPS proxy to bypass geo-blocking.
+ * Priority order for the base URL:
+ *   1. proxyBaseUrl parameter (explicit override)
+ *   2. BDI_VPS_PROXY_URL env var (operator config)
+ *   3. YAHOO_FINANCE_API_URL env var (existing global override)
+ *   4. Yahoo Finance API (default)
+ *
+ * @param httpClient   - Injectable HTTP client (pass a mock in tests).
+ * @param proxyBaseUrl - Optional VPS proxy base URL override.
  * @returns Array of ShippingIndex entries. Never throws — returns [] on total failure.
  */
 export async function fetchShippingIndices(
   httpClient?: HttpClient,
+  proxyBaseUrl?: string,
 ): Promise<ShippingIndex[]> {
   const client = httpClient ?? (await makeDefaultHttpClient());
   const apiBase = Bun.env["YAHOO_FINANCE_API_URL"] ?? YAHOO_API_BASE;
 
   const results = await Promise.allSettled(
-    SHIPPING_SYMBOLS.map((s) => fetchSymbolData(s.symbol, client, apiBase)),
+    SHIPPING_SYMBOLS.map((s) => fetchSymbolData(s.symbol, client, apiBase, proxyBaseUrl)),
   );
 
   const indices: ShippingIndex[] = [];

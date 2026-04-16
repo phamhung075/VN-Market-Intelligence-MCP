@@ -67,6 +67,11 @@ export interface WeeklyReportOptions {
    * When provided, bypasses DB queries and formatting entirely.
    */
   reportFn?: () => Promise<void>;
+  /**
+   * Task 1221: disable DB-backed lock check (for unit tests that do not
+   * exercise the lock path). Defaults to false (lock check enabled).
+   */
+  skipDbLock?: boolean;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
