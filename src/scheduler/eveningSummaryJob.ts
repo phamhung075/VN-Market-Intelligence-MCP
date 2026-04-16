@@ -108,7 +108,10 @@ export async function runEveningSummary(
       summary.topStories.length > 0 ||
       summary.topAlerts.length > 0 ||
       summary.watchlistMovers.length > 0 ||
-      summary.predictionSignals.length > 0;
+      summary.predictionSignals.length > 0 ||
+      (summary.taSummary ?? []).some(
+        (s) => s.rsiStatus !== "neutral" || s.priceVsMa20 !== "neutral",
+      );
 
     // Resolve the send function: use injected sendFn for tests, or dynamic import in prod.
     const doSend =
@@ -157,6 +160,25 @@ export async function runEveningSummary(
           lines.push(`Tín hiệu dự đoán (${summary.predictionSignals.length}):`);
           for (const p of summary.predictionSignals.slice(0, 3)) {
             lines.push(`  ${p.question.slice(0, 70)}`);
+          }
+        }
+
+        const nonNeutralTa = (summary.taSummary ?? []).filter(
+          (s) => s.rsiStatus !== "neutral" || s.priceVsMa20 !== "neutral",
+        );
+        if (nonNeutralTa.length > 0) {
+          lines.push("");
+          lines.push("TA tín hiệu đóng cửa:");
+          for (const s of nonNeutralTa.slice(0, 5)) {
+            let line = `  ${s.code}:`;
+            if (s.rsi14 !== null && s.rsiStatus === "overbought") {
+              line += ` RSI=${s.rsi14.toFixed(1)} (quá mua)`;
+            } else if (s.rsi14 !== null && s.rsiStatus === "oversold") {
+              line += ` RSI=${s.rsi14.toFixed(1)} (quá bán)`;
+            }
+            if (s.priceVsMa20 === "above") line += ", giá trên MA20";
+            else if (s.priceVsMa20 === "below") line += ", giá dưới MA20";
+            lines.push(line);
           }
         }
 

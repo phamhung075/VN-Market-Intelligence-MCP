@@ -19,7 +19,8 @@ import { join } from "node:path";
 import { logger } from "../../infrastructure/logger.js";
 
 // Re-use shared types from assembleBriefing to avoid duplication
-import type { BriefingAlert, TopStory } from "./assembleBriefing.js";
+import type { BriefingAlert, TopStory, TaSignal } from "./assembleBriefing.js";
+import { defaultComputeTa } from "./assembleBriefing.js";
 import type { BriefingPredictionSignal } from "../../infrastructure/db/predictionStore.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -55,6 +56,10 @@ export interface EveningSummary {
   watchlistMovers: WatchlistMover[];
   /** HIGH/CRITICAL prediction market signals from the last 24h (crowd-sourced early warnings) */
   predictionSignals: BriefingPredictionSignal[];
+  /** RSI(14) + MA20 signals for all watchlist tickers at market close. Empty array when
+   *  watchlist is empty or all signals are null (< 15 candles). Includes neutral signals — the
+   *  display filter (non-neutral only) is applied in eveningSummaryJob.ts. */
+  taSummary: TaSignal[];
   /** ISO 8601 timestamp when this summary was generated */
   generatedAt: string;
 }
@@ -62,12 +67,15 @@ export interface EveningSummary {
 /**
  * Injectable dependencies for testability.
  *
- * @param db         - SQLite Database (defaults to getDb())
- * @param reportsDir - Override output directory (defaults to ./reports)
+ * @param db           - SQLite Database (defaults to getDb())
+ * @param reportsDir   - Override output directory (defaults to ./reports)
+ * @param computeTaFn  - Override TA computation function (defaults to defaultComputeTa).
+ *                       Inject a mock in tests to avoid market_prices_history dependency.
  */
 export interface AssembleEveningSummaryOptions {
   db?: Database;
   reportsDir?: string;
+  computeTaFn?: (code: string, db: Database) => TaSignal | null;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -102,6 +110,10 @@ interface WatchlistMoverRow {
   exchange: string | null;
   price: number | null;
   change_pct: number | null;
+}
+
+interface WatchlistCodeRow {
+  code: string;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -273,7 +285,30 @@ export async function assembleEveningSummary(
     exchange: row.exchange ?? "HOSE",
   }));
 
-  // ── Step 4: Prediction market signals (HIGH/CRITICAL only, last 24h) ─────────
+  // ── Step 4: TA signals ────────────────────────────────────────────────────
+  const taFn = options.computeTaFn ?? defaultComputeTa;
+  let taSummary: TaSignal[] = [];
+  try {
+    const watchlistRows = db
+      .prepare<WatchlistCodeRow, []>("SELECT code FROM watchlist")
+      .all();
+    const signals: TaSignal[] = [];
+    for (const { code } of watchlistRows) {
+      try {
+        const sig = taFn(code, db);
+        if (sig !== null) signals.push(sig);
+      } catch {
+        /* per-ticker: swallow, continue */
+      }
+    }
+    taSummary = signals;
+  } catch (err) {
+    logger.warn("[assembleEveningSummary] TA step failed", {
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
+
+  // ── Step 5: Prediction market signals (HIGH/CRITICAL only, last 24h) ─────────
   let predictionSignals: BriefingPredictionSignal[] = [];
   try {
     const { getRecentPredictionSignals } = await import("../../infrastructure/db/predictionStore.js");
@@ -283,7 +318,7 @@ export async function assembleEveningSummary(
     );
   } catch { /* best-effort */ }
 
-  // ── Step 5: Persist summary ───────────────────────────────────────────────
+  // ── Step 6: Persist summary ───────────────────────────────────────────────
   const date = todayVietnam();
   const generatedAt = new Date().toISOString();
 
@@ -293,6 +328,7 @@ export async function assembleEveningSummary(
     topStories,
     watchlistMovers,
     predictionSignals,
+    taSummary,
     generatedAt,
   };
 
