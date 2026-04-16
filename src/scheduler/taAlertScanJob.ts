@@ -11,7 +11,7 @@
  *   RSI 30–70 → no alert
  *
  * Cooldown: skips insert if same (ticker, alert_type) fired within the last 4h.
- * The cooldown query uses SQLite datetime('now', '-4 hours') — wall-clock based.
+ * The cooldown cutoff is computed from nowFn() so tests can inject controlled time.
  *
  * Alert row written to the `alerts` table following the same pattern as
  * bctcOverdueCheckJob. NO direct Telegram send — Alert Commander reads
@@ -87,7 +87,7 @@ const COOLDOWN_SQL = `
     FROM alerts
    WHERE json_extract(signals_json, '$[0].type') = ?
      AND json_extract(affected_actions_json, '$[0].code') = ?
-     AND triggered_at >= datetime('now', '-4 hours')
+     AND triggered_at >= ?
 `;
 
 const INSERT_ALERT_SQL = `
@@ -129,7 +129,8 @@ export async function runTaAlertScan(deps?: TaAlertScanDeps): Promise<TaAlertSca
   }
 
   // Prepare statements once for the entire scan pass (perf: avoids re-parsing per ticker)
-  const cooldownStmt = database.query<CooldownRow, [string, string]>(COOLDOWN_SQL);
+  const cooldownCutoff = new Date(nowFn().getTime() - 4 * 3_600_000).toISOString();
+  const cooldownStmt = database.query<CooldownRow, [string, string, string]>(COOLDOWN_SQL);
   const insertStmt = database.prepare(INSERT_ALERT_SQL);
 
   let scanned = 0;
@@ -176,7 +177,7 @@ export async function runTaAlertScan(deps?: TaAlertScanDeps): Promise<TaAlertSca
       }
 
       // g. Cooldown check — skip if same (code, alertType) fired within last 4h
-      const cooldownRow = cooldownStmt.get(alertType, code);
+      const cooldownRow = cooldownStmt.get(alertType, code, cooldownCutoff);
       if ((cooldownRow?.cnt ?? 0) > 0) {
         continue;
       }
