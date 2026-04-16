@@ -150,6 +150,15 @@ describe("Task 185 — getDataFreshness() output format", () => {
         message TEXT,
         read INTEGER DEFAULT 0
       );
+      CREATE TABLE IF NOT EXISTS vps_push_log (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        service TEXT NOT NULL,
+        items_count INTEGER NOT NULL DEFAULT 0,
+        status TEXT NOT NULL DEFAULT 'ok',
+        error_msg TEXT,
+        duration_ms INTEGER,
+        pushed_at TEXT NOT NULL DEFAULT (datetime('now'))
+      );
     `);
   });
 
@@ -196,6 +205,7 @@ describe("Task 185 — getDataFreshness() output format", () => {
   it("shows 'Cu' for market_prices updated 10 hours ago", async () => {
     const tenHoursAgo = new Date(Date.now() - 10 * 60 * 60 * 1000).toISOString();
     db.exec(`INSERT INTO market_prices (code, price, updated_at) VALUES ('VCB', 100, '${tenHoursAgo}')`);
+    db.exec(`INSERT INTO vps_push_log (service, items_count, status, pushed_at) VALUES ('prices', 1, 'ok', '${tenHoursAgo}')`);
 
     const result = await getDataFreshness(db);
     expect(result).toContain("Cu");
