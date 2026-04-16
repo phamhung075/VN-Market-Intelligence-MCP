@@ -4,7 +4,7 @@
 
 ---
 
-## Sprint 091 — Active
+## Sprint 092 — Active
 
 Vision: `SPRINT_GOAL.md`
 
@@ -12,12 +12,19 @@ Vision: `SPRINT_GOAL.md`
 
 | ID | Title | Agent | Layer | Depends On | Branch | Status |
 |----|-------|-------|-------|------------|--------|--------|
-| 1207 | fix(cascade): non-watchlist confidence cap — rebase onto main (062 stale assertion) | Dev | domain | — | task/1207-non-watchlist-confidence-cap | Review |
+| 1304 | feat(briefing): integrate TA signals (RSI/SMA) into morning briefing | Dev | application | 1302 | — | Todo |
 
-| 1218 | VPS BCTC queue: populate source_hints with actual PDF URLs from listSscDocuments | Dev | infrastructure | — | — | Backlog |
-| 1248 | BDI data staleness during supply chain crisis — fetch path needs geo-unblocked VPS route | Dev | infrastructure | — | — | Backlog |
+**WIP:** 0 In Progress. 0 Review.
 
-**WIP:** 0 In Progress. 1 Review.
+---
+
+## Sprint 091 — Complete
+
+| ID | Title | Status |
+|----|-------|--------|
+| 1207 | fix(cascade): non-watchlist confidence cap — rebase onto main (062 stale assertion) | Done |
+| 1218 | VPS BCTC queue: populate source_hints with actual PDF URLs from listSscDocuments | Done |
+| 1248 | BDI data staleness during supply chain crisis — fetch path needs geo-unblocked VPS route | Done |
 
 ---
 
@@ -79,17 +86,28 @@ Vision: `SPRINT_GOAL.md`
 
 ## Task Details (active tasks only)
 
-### 1207 — fix(cascade): non-watchlist confidence cap — rebase onto main
+### 1304 — feat(briefing): integrate TA signals (RSI/SMA) into morning briefing
 
-**Branch:** `task/1207-non-watchlist-confidence-cap`
-**Layer:** domain
-**Depends on:** none
-**Status:** Review
+**Branch:** `task/1304-ta-signals-morning-briefing`
+**Layer:** application
+**Depends on:** 1302 (technicalIndicators domain service, merged)
+**Status:** Todo
 
-**Root cause:** Non-watchlist tickers should have their confidence capped at a lower threshold than watchlist tickers in the cascade pipeline. Task 1207 implemented this cap but the branch became stale (062 assertion drifted after main moved forward). Needs rebase onto current main and re-verification.
+**Problem:** The `technicalIndicators.ts` domain service (RSI/MACD/SMA/Bollinger Bands) was added in sprint 090 as an MCP tool only. The morning briefing (`assembleBriefing.ts` + `morningBriefingJob.ts`) does not call it, so users never see TA signals in their daily Telegram briefing.
+
+**Solution:** Add a `taSummary` field to `DailyBriefing`, populate it in `assembleBriefing.ts` by calling `computeTechnicalIndicators` for each watchlist ticker, and render a compact "TA Signals" section in `formatBriefingMessage`.
+
+**Signal rules (simple, no noise):**
+- RSI > 70 → "overbought"
+- RSI < 30 → "oversold"
+- Price > SMA20 → "above MA20"
+- Price < SMA20 → "below MA20"
+- Only include tickers with at least one signal (silent skip if neutral)
 
 **Acceptance Criteria**
-- `bun test src/__tests__/062-*.test.ts` passes with 0 failures after rebase
+- `src/__tests__/1304-ta-morning-briefing.test.ts` passes with 0 failures (TDD first)
+- `formatBriefingMessage` output includes "TA Tín hiệu:" section when signals exist, omits section when none
+- `assembleBriefing.ts` calls `computeTechnicalIndicators` per watchlist ticker (injectable for tests)
 - `bun tsc --noEmit` shows 0 errors
-- Non-watchlist confidence cap logic intact
+- No change to Alert Commander, cascade pipeline, or VPS proxies
 

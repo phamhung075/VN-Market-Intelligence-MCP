@@ -2,16 +2,16 @@
 
 > Previous sprint goals live in their `docs/REQ_NNN.md` specs. This file = current sprint only.
 
-## Current Sprint — 091 (ACTIVE)
+## Current Sprint — 092 (ACTIVE)
 
-**Goal:** Merge stale task 1207 (cascade non-watchlist confidence cap) and clear the Review queue; fix remaining test-suite reliability gaps identified in sprint 089.
+**Goal:** Integrate TA signals (RSI/MACD/SMA) from the sprint 090 domain service into the morning briefing — user currently receives price data only; adding overbought/oversold and MA-crossover signals makes the daily briefing actionable.
 
 **Scope:**
-- IN: Task 1207 — fix(cascade): non-watchlist confidence cap rebase onto main (in Review since sprint 089)
-- IN: Data drift corrections — project-stats.json and cron-registry.json scheduler/tool counts corrected
-- OUT: New features, VPS SSH tasks (1218, 1248), backlog items
+- IN: Task 1304 — feat(briefing): add TA signal section to morning briefing (RSI overbought/oversold, price vs SMA20)
+- IN: TDD test covering briefing formatter with TA signal section
+- OUT: Alert Commander changes, BCTC changes, new MCP tools
 
-**Success metric:** Task 1207 merged to main. TASKS.md sprint 089 fully closed. Zero blocking test failures in targeted test files.
+**Success metric:** Morning briefing Telegram message includes a "TA Signals" section with RSI and SMA status for each watchlist ticker. Test 1304 passes. `bun tsc --noEmit` clean.
 
 ---
 
@@ -19,6 +19,7 @@
 
 | Sprint | Goal summary | Status |
 |--------|-------------|--------|
+| 091 | fix(cascade): non-watchlist confidence cap (1207) + backlog cleanup (1218, 1248) | COMPLETE 2026-04-15 |
 | 090 | feat(ta): technical indicators domain service + MCP handler (1302, 1303) | COMPLETE 2026-04-15 |
 | 089 | fix(sector-dedup) + fix(test-isolation) (1300, 1301) + cascade rebase (1207) | PARTIAL — 1207 in Review |
 | 088 | fix(test-drift): scheduler count, VPS string, Step E behavior (1297-1299) | COMPLETE 2026-04-15 |
