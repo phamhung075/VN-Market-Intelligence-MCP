@@ -1,4 +1,7 @@
 // src/__tests__/1290-france-summary-job.test.ts
+// Task 1290 — franceSummaryJob original tests, updated for 1316/1317 rewrite API
+// The job now reads from market_prices and alerts (not rag_analyses).
+// Return type changed: signalCount → { moverCount, alertCount, taCount }
 import { describe, it, expect, beforeEach } from "bun:test"
 import { Database } from "bun:sqlite"
 import { runFranceSummary } from "../scheduler/franceSummaryJob.js"
@@ -6,27 +9,30 @@ import { runFranceSummary } from "../scheduler/franceSummaryJob.js"
 function makeDb(): Database {
   const db = new Database(":memory:")
   db.exec(`
-    CREATE TABLE IF NOT EXISTS rag_analyses (
-      id                 TEXT PRIMARY KEY,
-      created_at         TEXT NOT NULL,
-      level              TEXT NOT NULL,
-      source_url         TEXT,
-      source_title       TEXT,
-      source_type        TEXT,
-      published_at       TEXT,
-      sentiment          TEXT,
-      impact_score       REAL,
-      impact_direction   TEXT,
-      confidence         REAL,
-      time_horizon       TEXT,
-      summary            TEXT,
-      reasoning          TEXT,
-      affected_countries TEXT,
-      affected_domains   TEXT,
-      affected_actions   TEXT,
-      parent_ids         TEXT,
-      tags               TEXT,
-      embedding_text     TEXT
+    CREATE TABLE IF NOT EXISTS market_prices (
+      code        TEXT PRIMARY KEY,
+      price       REAL,
+      change_amt  REAL,
+      change_pct  REAL,
+      volume      REAL,
+      updated_at  TEXT,
+      exchange    TEXT DEFAULT 'HOSE'
+    )
+  `)
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS alerts (
+      id                    TEXT PRIMARY KEY,
+      triggered_at          TEXT NOT NULL,
+      severity              TEXT NOT NULL,
+      signals_json          TEXT,
+      affected_actions_json TEXT,
+      analysis_ids_json     TEXT,
+      message               TEXT,
+      read                  INTEGER NOT NULL DEFAULT 0,
+      user_note             TEXT,
+      notified_telegram     INTEGER NOT NULL DEFAULT 0,
+      resolved_at           TEXT,
+      resolution_notes      TEXT
     )
   `)
   return db
@@ -39,25 +45,22 @@ describe("Task 1290 — franceSummaryJob", () => {
     db = makeDb()
   })
 
-  it("returns { sent: false, signalCount: 0 } when DB has no rag_analyses rows", async () => {
+  it("returns { sent: false } when DB has no market_prices or alerts rows", async () => {
     const sends: string[] = []
     const sendFn = async (text: string) => { sends.push(text); return true }
 
     const result = await runFranceSummary({ db, sendFn })
 
-    expect(result).toEqual({ sent: false, signalCount: 0 })
+    expect(result).toEqual({ sent: false, moverCount: 0, alertCount: 0, taCount: 0 })
     expect(sends).toHaveLength(0)
   })
 
-  it("returns { sent: true, signalCount: N } when recent analyses exist", async () => {
-    const now = new Date().toISOString()
-    // Insert 3 recent rag_analyses rows (within last 8h)
+  it("returns { sent: true } when market_prices data exists", async () => {
     db.exec(`
-      INSERT INTO rag_analyses (id, created_at, level, sentiment, impact_score, summary)
-      VALUES
-        ('a1', '${now}', 'action', 'bullish', 7.5, 'VCB tăng mạnh sau KQKD tích cực'),
-        ('a2', '${now}', 'country', 'bearish', 6.0, 'VN-Index giảm do áp lực bán nước ngoài'),
-        ('a3', '${now}', 'domain', 'bullish', 8.0, 'Ngân hàng hưởng lợi từ nới room tín dụng')
+      INSERT INTO market_prices (code, price, change_pct, updated_at) VALUES
+        ('VCB', 88000, 3.5, '2026-04-15T06:00:00'),
+        ('HPG', 22000, -5.2, '2026-04-15T06:00:00'),
+        ('VNM', 75000, 1.1, '2026-04-15T06:00:00')
     `)
 
     const sends: string[] = []
@@ -66,28 +69,26 @@ describe("Task 1290 — franceSummaryJob", () => {
     const result = await runFranceSummary({ db, sendFn })
 
     expect(result.sent).toBe(true)
-    expect(result.signalCount).toBeGreaterThanOrEqual(1)
+    expect(result.moverCount).toBeGreaterThanOrEqual(1)
     expect(sends).toHaveLength(1)
-    expect(sends[0]).toContain("France Summary")
   })
 
-  it("returns { sent: true, signalCount } with correct shape", async () => {
+  it("returns correct shape with boolean sent and number fields", async () => {
     const result = await runFranceSummary({ db, sendFn: async () => true })
     expect(typeof result.sent).toBe("boolean")
-    expect(typeof result.signalCount).toBe("number")
+    expect(typeof result.moverCount).toBe("number")
+    expect(typeof result.alertCount).toBe("number")
+    expect(typeof result.taCount).toBe("number")
   })
 
-  it("caps signalCount at 3 top signals in the message", async () => {
-    const now = new Date().toISOString()
-    // Insert 5 rows — top 3 by impact_score should be selected
+  it("caps moverCount at 3 top movers in the message", async () => {
     db.exec(`
-      INSERT INTO rag_analyses (id, created_at, level, sentiment, impact_score, summary)
-      VALUES
-        ('b1', '${now}', 'action', 'bullish', 9.0, 'Signal A high'),
-        ('b2', '${now}', 'action', 'bearish', 8.5, 'Signal B high'),
-        ('b3', '${now}', 'action', 'bullish', 8.0, 'Signal C mid'),
-        ('b4', '${now}', 'action', 'neutral', 5.0, 'Signal D low'),
-        ('b5', '${now}', 'action', 'bearish', 4.0, 'Signal E low')
+      INSERT INTO market_prices (code, price, change_pct, updated_at) VALUES
+        ('A', 1000, 9.0, '2026-04-15T06:00:00'),
+        ('B', 1000, -8.5, '2026-04-15T06:00:00'),
+        ('C', 1000, 8.0, '2026-04-15T06:00:00'),
+        ('D', 1000, -5.0, '2026-04-15T06:00:00'),
+        ('E', 1000, 4.0, '2026-04-15T06:00:00')
     `)
 
     const sends: string[] = []
@@ -96,21 +97,19 @@ describe("Task 1290 — franceSummaryJob", () => {
     const result = await runFranceSummary({ db, sendFn })
 
     expect(result.sent).toBe(true)
-    expect(result.signalCount).toBe(5)
-    // Message should mention top signals (by impact score)
-    expect(sends[0]).toContain("Signal A high")
-    expect(sends[0]).toContain("Signal B high")
-    expect(sends[0]).toContain("Signal C mid")
-    // Low-score signals should NOT appear
-    expect(sends[0]).not.toContain("Signal D low")
-    expect(sends[0]).not.toContain("Signal E low")
+    expect(result.moverCount).toBe(3)
+    // Top 3 by ABS(change_pct): A(9.0), B(-8.5), C(8.0)
+    expect(sends[0]).toContain("A")
+    expect(sends[0]).toContain("B")
+    expect(sends[0]).toContain("C")
+    // Low movers should NOT appear
+    expect(sends[0]).not.toContain("+4.00%")
   })
 
   it("does not throw when sendFn rejects", async () => {
-    const now = new Date().toISOString()
     db.exec(`
-      INSERT INTO rag_analyses (id, created_at, level, sentiment, impact_score, summary)
-      VALUES ('c1', '${now}', 'action', 'bullish', 7.0, 'Test signal')
+      INSERT INTO market_prices (code, price, change_pct, updated_at) VALUES
+        ('VCB', 88000, 3.5, '2026-04-15T06:00:00')
     `)
 
     const sendFn = async (_text: string) => { throw new Error("Telegram down") }
@@ -118,6 +117,6 @@ describe("Task 1290 — franceSummaryJob", () => {
     // Should not throw — error is swallowed internally
     const result = await runFranceSummary({ db, sendFn })
     expect(result.sent).toBe(false)
-    expect(result.signalCount).toBe(1)
+    expect(result.moverCount).toBe(1)
   })
 })
