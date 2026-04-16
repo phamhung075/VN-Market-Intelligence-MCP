@@ -18,6 +18,7 @@
  *   weatherCheck          every 6h (typhoon season) / 12h off-season  (task 261) ✓
  *   bctcOverdueCheck      09:00 daily          (task 1018 slice 3) ✓
  *   pipelineWatchdog      every 30 min 24/7  (task 1190) ✓
+ *   taAlertScan           every 15min VN market hours  (task 1307) ✓
  */
 
 import cron from 'node-cron'
@@ -50,6 +51,7 @@ import { runForeignFlowAlertJobCron } from './foreignFlowAlertJob.js'
 import { runInsiderCheck } from './insiderCheckJob.js'
 import { runPipelineWatchdog } from './pipelineWatchdogJob.js'
 import { runFranceSummary } from './franceSummaryJob.js'
+import { runTaAlertScan } from './taAlertScanJob.js'
 import { getDb } from '../infrastructure/db/schema.js'
 import { recordJobRun } from '../infrastructure/db/cronJobRunStore.js'
 
@@ -113,6 +115,8 @@ export const CRONS = {
   pipelineWatchdog:       Bun.env.CRON_PIPELINE_WATCHDOG            ?? '*/30 * * * *',
   /** France morning summary: weekdays 07:00 UTC = 08:00 CET, before Paris market open — task 1290 */
   franceSummary:          Bun.env.CRON_FRANCE_SUMMARY               ?? '0 7 * * 1-5',
+  /** taAlertScan — every 15min VN market hours (task 1307) */
+  taAlertScan:            Bun.env.CRON_TA_ALERT_SCAN                 ?? '*/15 2-8 * * 1-5',
 }
 
 function log(msg: string) {
@@ -402,6 +406,19 @@ export function startScheduler() {
       if (result.sent) {
         log(`[france-summary] sent — signals=${result.signalCount}`)
       }
+    })
+  }, { timezone: 'UTC' })
+
+  // Every 15 min during VN market hours (02:00-08:59 UTC, Mon-Fri) — TA alert scan — task 1307
+  // Scans watchlist RSI(14). Writes ta_overbought/ta_oversold rows to alerts table.
+  // No direct Telegram — Alert Commander dispatches via readUnnotifiedAlerts().
+  cron.schedule(CRONS.taAlertScan, async () => {
+    await recordJobRun(getDb(), 'taAlertScanJob', async () => {
+      const result = await runTaAlertScan()
+      if (result.fired > 0) {
+        log(`[ta-alert-scan] scanned=${result.scanned} fired=${result.fired}`)
+      }
+      return { rowsWritten: result.fired }
     })
   }, { timezone: 'UTC' })
 
