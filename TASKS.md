@@ -4,11 +4,20 @@
 
 ---
 
-## Sprint 109 — Active
+## Sprint 110 — Active
 
 | ID | Title | Status |
 |----|-------|--------|
-| 1334 | chore(tasks): archive stale task detail blocks + fix sprint status entries | Todo |
+| 1335 | fix(news-pipeline): diagnose and fix zero rag_analyses rows in production | Review |
+| 1336 | test(news-pipeline): TDD test 1335-news-pipeline-rag-insert.test.ts | Review |
+
+---
+
+## Sprint 109 — Complete
+
+| ID | Title | Status |
+|----|-------|--------|
+| 1334 | chore(tasks): archive stale task detail blocks + fix sprint status entries | Done |
 
 ---
 
