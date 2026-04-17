@@ -33,26 +33,27 @@ export function formatBriefingMessage(briefing: DailyBriefing): string {
   const lines: string[] = [`📋 BẢN TIN SÁNG ${briefing.date}`];
 
   // ── VN-Index ──────────────────────────────────────────────
-  lines.push("");
   if (briefing.vnIndex) {
+    lines.push("");
     const sign = briefing.vnIndex.changePct >= 0 ? "+" : "";
     lines.push(`📈 VN-Index: ${briefing.vnIndex.price.toLocaleString("en-US")} (${sign}${briefing.vnIndex.changePct.toFixed(2)}%)`);
-  } else {
-    lines.push("📈 VN-Index: chưa có dữ liệu");
   }
+  // omit section entirely when null
 
   // ── Watchlist prices ──────────────────────────────────────
-  lines.push("");
-  lines.push("📊 Giá cổ phiếu:");
   if (briefing.watchlistSummary.length > 0) {
-    for (const w of briefing.watchlistSummary) {
-      const price = w.price ? `${w.price.toLocaleString("en-US")}` : "N/A";
-      const chg = w.changePct != null ? ` (${w.changePct >= 0 ? "+" : ""}${w.changePct.toFixed(2)}%)` : "";
-      lines.push(`  ${w.code}: ${price}${chg}`);
+    const entries = briefing.watchlistSummary.filter((w) => w.price != null);
+    if (entries.length > 0) {
+      lines.push("");
+      lines.push("📊 Giá cổ phiếu:");
+      for (const w of entries) {
+        const price = w.price!.toLocaleString("en-US");
+        const chg = w.changePct != null ? ` (${w.changePct >= 0 ? "+" : ""}${w.changePct.toFixed(2)}%)` : "";
+        lines.push(`  ${w.code}: ${price}${chg}`);
+      }
     }
-  } else {
-    lines.push("  Chưa có dữ liệu giá");
   }
+  // omit header+entries entirely when empty or all null prices
 
   // ── Top stories ───────────────────────────────────────────
   if (briefing.topStories.length > 0) {
