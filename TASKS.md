@@ -4,6 +4,15 @@
 
 ---
 
+## Sprint 104 — Complete
+
+| ID | Title | Status |
+|----|-------|--------|
+| 1327 | test(macro-alert): TDD test 1326-macro-deviation-direction.test.ts (6 cases, all failing first) | Done |
+| 1326 | fix(macro-alert): direction-aware level label in classifyDeviation — "thấp bất thường" for below-mean | Done |
+
+---
+
 ## Sprint 103 — Complete
 
 | ID | Title | Status |
@@ -178,104 +187,68 @@
 
 ## Task Details (active tasks only)
 
-### 1324 — fix(push-news): extend SourceFetchers + wire all 9 VPS sources in push-news handler
+### 1327 — test(macro-alert): TDD test 1326-macro-deviation-direction.test.ts
 
-**Branch:** `task/1324-1325-push-news-all-sources`
-**Layer:** application/usecases + interface/server
-**Status:** Backlog
-**Role:** Dev
-
-**Root cause (confirmed):**
-The `push-news` handler in `server.ts` (line 829-836) wires only `cafef`, `vnexpress`, `vneconomy` into `pollNews` fetchers. The VPS `vn-news-fetch.service` pushes 9 active sources. Items from `vietstock`, `vietnambiz`, `vnbusiness`, `tuoitre`, `nhandoan`, `nld` are received and `log.info`-d but never processed — `pollNews` drops them silently. This is why `rag_analyses` has 0 rows and `topStories: []` in every evening report.
-
-**Fix 1 — `src/application/usecases/pollNews.ts`:**
-Add keys to `SourceFetchers` interface: `vietstock`, `vietnambiz`, `vnbusiness`, `tuoitre`, `nhandoan`, `nld` (all optional `() => Promise<RssItem[]>`). In the production `pollNews` body, include each new fetcher in the parallel fetch array using the same pattern as existing sources.
-
-**Fix 2 — `src/interface/mcp/server.ts` (push-news handler, line 829-836):**
-Replace the hardcoded 5-key fetcher object with a dynamic map: for every key in `bySource`, wire `fetchers[key] = async () => bySource[key] ?? []`. This ensures any source name the VPS uses (current or future) flows through automatically.
-
-**Files to change:**
-- `src/application/usecases/pollNews.ts` — add 6 new fetcher keys to `SourceFetchers`
-- `src/interface/mcp/server.ts` — dynamic fetcher wiring in push-news handler
-
-**Acceptance Criteria:**
-- AC-1: `SourceFetchers` has keys `vietstock`, `vietnambiz`, `vnbusiness`, `tuoitre`, `nhandoan`, `nld`
-- AC-2: push-news handler wires all `bySource` keys dynamically (no hardcoded list)
-- AC-3: TDD test: inject 9-source payload, assert `result.inserted >= 1` and `rag_analyses` row count increases
-- AC-4: existing `cafef`/`vnexpress`/`vneconomy` fetcher behavior unchanged
-- AC-5: `bun tsc --noEmit` 0 errors
-
----
-
-### 1325 — test(push-news): TDD test 1324-push-news-all-sources.test.ts
-
-**Branch:** `task/1324-1325-push-news-all-sources` (same as 1324)
+**Branch:** `task/1326-1327-macro-alert-direction`
 **Layer:** test
-**Depends on:** 1324
-**Status:** Backlog
+**Depends on:** none (TDD-first — write failing tests before fix)
+**Status:** In Progress
 **Role:** Dev
 
-**Write tests FIRST (all failing), then apply fix from 1324.**
+**Files to create:**
+- CREATE: `src/__tests__/1326-macro-deviation-direction.test.ts`
 
-**Test cases (3 required):**
-1. TC-1 (AC-3): Inject items from `vietstock`, `vietnambiz`, `vnbusiness`, `tuoitre`, `nhandoan`, `nld` via `pollNews({ fetchers: {...} })` → `result.inserted >= 1`, `rag_analyses` row count increases from 0
-2. TC-2 (AC-4): Inject `cafef` + `vnexpress` items as before → `result.inserted >= 1` (regression: existing sources still work)
-3. TC-3 (AC-2): Inject unknown source `"xyz"` items → no crash, items processed or silently skipped, no exception
+**Files to read first:**
+- `src/domain/services/macroThresholds.ts` — understand `classifyDeviation()` signature and `MacroStats` type
+- `docs/TECH_104.md` — 6 test case input values and assert strings
+
+**Test cases (6 required — all must FAIL before task 1326 is applied):**
+1. TC-1 (AC-1): `current=26364, mean=26333, stdDev=12, n=30` → zScore≈+2.6 → summary contains "cao bất thường", not "thấp bất thường"
+2. TC-2 (AC-2): `current=26302, mean=26333, stdDev=12, n=30` → zScore≈-2.6 → summary contains "thấp bất thường", not "cao bất thường"
+3. TC-3 (AC-3): `current=26375, mean=26333, stdDev=12, n=30` → zScore≈+3.5 → summary contains "cực cao"
+4. TC-4 (AC-4): `current=26291, mean=26333, stdDev=12, n=30` → zScore≈-3.5 → summary contains "cực thấp"
+5. TC-5 (AC-5): `current=26340, mean=26333, stdDev=12, n=30` → zScore≈+0.6 → summary contains "bình thường"
+6. TC-6 (regression): `current=26302, mean=26333.2, stdDev=12, n=30` → summary contains "thấp bất thường", not "cao bất thường"
 
 **Acceptance Criteria:**
-- `bun test src/__tests__/1324-push-news-all-sources.test.ts` >= 3 pass / 0 fail
-- In-memory SQLite via `new Database(":memory:")` + `initDatabase(db)`, no real HTTP
+
+**Given** a fresh checkout on `task/1326-1327-macro-alert-direction` before 1326 is applied
+**When** `bun test src/__tests__/1326-macro-deviation-direction.test.ts` runs
+**Then**
+- All 6 tests call `classifyDeviation()` directly — no DB, no HTTP, no Telegram
+- TC-2, TC-4, TC-6 fail (proving the bug exists — before-only labels)
+- TC-1, TC-3, TC-5 pass (above-mean path already correct)
+- After task 1326 is applied: all 6 pass / 0 fail
 - `bun tsc --noEmit` 0 errors
 
 ---
 
-### 1318 — fix(evening-summary): diagnose + fix predictionSignals always empty
+### 1326 — fix(macro-alert): direction-aware level label in classifyDeviation
 
-**Branch:** `task/1318-1319-prediction-signals-evening`
-**Layer:** application/usecases + scheduler + test
-**Status:** Todo
-**Tech ref:** `docs/TECH_100.md`
+**Branch:** `task/1326-1327-macro-alert-direction` (same as 1327)
+**Layer:** domain/services
+**Depends on:** 1327 (tests written and confirmed failing)
+**Status:** In Progress
+**Role:** Dev
 
-**Confirmed root causes (BA analysis 2026-04-15 — no investigation needed):**
-1. RC-1: `prediction_signals` table has 0 rows within 24h — signals never stored in production
-2. RC-2: `predictionMarketJob.ts` exits early (`return`) on `fetchPolymarkets` failure (geo-block from France) before reaching `detectPredictionSignals` or `storePredictionSignals`
-3. RC-3: `assembleEveningSummary.ts` swallows errors in prediction signals `catch` block silently — no log, no visibility
+**Files to read first:**
+- `src/domain/services/macroThresholds.ts` — full file, find `LEVEL_VI` const and line 138
+- `src/__tests__/1326-macro-deviation-direction.test.ts` — confirm tests exist and are red
 
-**Fix 1 — `predictionMarketJob.ts` (FR-4):** Replace bare `return` in the `fetchPolymarkets` catch block with a fallback to `loadPreviousSnapshot(db)` (helper already exists at line 70). Signal detection continues against cached data. 83 rows already in `prediction_markets` table.
-
-**Fix 2 — `assembleEveningSummary.ts` (FR-2):** Replace `catch { /* best-effort */ }` at line 319 with `catch (err) { logger.warn("[assembleEveningSummary] prediction signals query failed", { error: ... }) }`.
-
-**Files to change:**
-- `src/scheduler/predictionMarketJob.ts` — fallback on fetch failure (lines 345–350)
-- `src/application/usecases/assembleEveningSummary.ts` — add logger.warn to catch block (line 319)
-- `src/__tests__/1318-prediction-signals-evening.test.ts` — new TDD test (task 1319)
-
-**Acceptance Criteria (from REQ-100):**
-- AC-1: `predictionSignals.length >= 1` when DB has HIGH/CRITICAL signal within 24h
-- AC-2: `predictionSignals === []` when all signals older than 24h
-- AC-3: `logger.warn` called (not swallowed) when `getRecentPredictionSignals` throws
-- AC-4: `predictionMarketJob` does NOT exit early when `fetchPolymarkets` throws; `detectPredictionSignals` is called with cached snapshot
-- AC-5: `bun tsc --noEmit` 0 errors
-
----
-
-### 1319 — test(evening-summary): TDD test 1318-prediction-signals-evening.test.ts
-
-**Branch:** `task/1318-1319-prediction-signals-evening` (same branch as 1318)
-**Layer:** test
-**Depends on:** 1318 (fix implementation)
-**Status:** Todo
-**Tech ref:** `docs/TECH_100.md`
-
-**Write tests FIRST (all failing), then apply fixes from task 1318.**
-
-**Test cases (4 required by REQ-100 AC-1 to AC-4):**
-1. TC-1 (AC-1): Seed `prediction_signals` row with `severity='high'` and `detected_at=now()` → `assembleEveningSummary` returns `predictionSignals.length >= 1`, `severity === 'high'`
-2. TC-2 (AC-2): Seed signal with `detected_at = 25h ago` → `predictionSignals.length === 0`
-3. TC-3 (AC-3): Drop `prediction_signals` table before call → no exception propagates; `predictionSignals === []`; `logger.warn` was called
-4. TC-4 (AC-4): Seed 2 `prediction_markets` rows; call `runPredictionMarketPoll` with `fetchFn` that throws → job does not throw; signal detection path was reached (assert via DB row count or injected spy)
+**Files to modify:**
+- MODIFY: `src/domain/services/macroThresholds.ts`
+  - Add `LEVEL_VI_BELOW: Record<DeviationLevel, string>` with keys `{ normal: "bình thường", elevated: "thấp hơn TB", high: "thấp bất thường", extreme: "cực thấp" }`
+  - Rename `LEVEL_VI.extreme` from `"cực đoan"` → `"cực cao"`
+  - Replace line 138: `const levelVi = LEVEL_VI[level]` → `const levelVi = direction === "below" ? LEVEL_VI_BELOW[level] : LEVEL_VI[level]`
 
 **Acceptance Criteria:**
-- `bun test src/__tests__/1318-prediction-signals-evening.test.ts` >= 4 pass / 0 fail
-- In-memory SQLite via `new Database(":memory:")` + `initDatabase(db)`, injectable deps, no real I/O
+
+**Given** `src/__tests__/1326-macro-deviation-direction.test.ts` exists with 6 failing tests
+**When** the fix is applied to `macroThresholds.ts` and `bun test src/__tests__/1326-macro-deviation-direction.test.ts` runs
+**Then**
+- All 6 tests pass / 0 fail
+- AC-2: below-mean high → summary contains "thấp bất thường", not "cao bất thường"
+- AC-4: below-mean extreme → summary contains "cực thấp"
+- AC-3: above-mean extreme → summary contains "cực cao" (not "cực đoan")
+- No other test files regress (`bun test` full suite passes)
 - `bun tsc --noEmit` 0 errors

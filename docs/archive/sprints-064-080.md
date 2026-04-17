@@ -2,6 +2,17 @@
 
 ---
 
+## Sprint 104 — Direction-aware macro deviation labels (Done 2026-04-16)
+
+2 tasks. Pure domain fix + TDD tests. Fixed classifyDeviation() in macroThresholds.ts — below-mean deviations now use LEVEL_VI_BELOW map ("thấp hơn TB"/"thấp bất thường"/"cực thấp") instead of the above-mean map. Also renamed LEVEL_VI.extreme from "cực đoan" → "cực cao". 6 test cases added covering above/below × elevated/high/extreme.
+
+| ID | Title | Status |
+|----|-------|--------|
+| 1327 | test(macro-alert): TDD test 1326-macro-deviation-direction.test.ts (6 cases, all failing first) | Done |
+| 1326 | fix(macro-alert): direction-aware level label in classifyDeviation — "thấp bất thường" for below-mean | Done |
+
+---
+
 ## Sprint 064 — Knowledge Sync: Align Agent Tool Maps with 91-Tool Reality (Done 2026-04-13)
 
 4 tasks. Documentation-only sprint — no code changes. Updated mcp-tools.md agent tool tables: +9 tools to correct agent rows + Agent 08 row. Commit 882d507.
