@@ -4,6 +4,27 @@
 
 ---
 
+## Sprint 135 — Active
+
+| ID | Title | Status | Role |
+|----|-------|--------|------|
+| 1383 | test(france-msg-quality): TDD test 1383-france-summary-message-quality.test.ts — written FIRST | Review | Dev |
+| 1384 | fix(france-msg-quality): omit empty sections + fix Vietnamese diacritics in formatFranceSummaryVI | Todo | Dev |
+
+> Sprint goal: `SPRINT_GOAL.md` | Success: no "Khong co" filler in MARKET messages; diacritics correct; 5010+ pass, 0 fail
+
+---
+
+## Sprint 134 — Complete
+
+| ID | Title | Status | Role |
+|----|-------|--------|------|
+| 1382 | test(ocr-e2e-skip): mark 296-ocr-pipeline-e2e geo-blocked tests as skip — 0 fail baseline | Done | Dev |
+
+> Sprint goal: `SPRINT_GOAL.md` | COMPLETE 2026-04-17
+
+---
+
 ## Sprint 133 — Complete
 
 | ID | Title | Status | Role |
@@ -15,14 +36,14 @@
 
 ---
 
-## Sprint 116 — Active
+## Sprint 116 — Complete
 
 | ID | Title | Status | Role |
 |----|-------|--------|------|
 | 1346 | test(ta-adaptive): TDD test 1346-ta-adaptive-period.test.ts — written FIRST | Done | Dev |
 | 1347 | fix(ta-adaptive): lower defaultComputeTa candle guard to 8, adaptive RSI/MA periods | Done | Dev |
 
-> Tech design: `docs/TECH_116.md` (APPROVED_BY_ARCHITECT)
+> Tech design: `docs/TECH_116.md` (APPROVED_BY_ARCHITECT) | COMPLETE 2026-04-16
 
 ---
 
@@ -99,4 +120,40 @@
 ---
 
 ## Task Details (active tasks only)
+
+### 1383 — TDD test: 1383-france-summary-message-quality.test.ts (RED first)
+
+context: docs/handoffs/TASK_1383.md
+branch: task/1383-france-msg-quality-tdd
+layer: interface/scheduler
+depends_on: none
+
+files_to_create:
+- src/__tests__/1383-france-summary-message-quality.test.ts   # NEW — T1–T16 all RED
+
+acceptance_criteria:
+- Given franceSummaryJob.ts unchanged (still emits filler lines + ASCII diacritics)
+- When 1383-france-summary-message-quality.test.ts written with T1–T16
+- Then bun test src/__tests__/1383-france-summary-message-quality.test.ts = all FAIL (RED)
+- Then bun tsc --noEmit = 0 errors
+
+---
+
+### 1384 — fix: implement FR-1 (section-omit) + FR-2 (diacritics) in formatFranceSummaryVI
+
+context: docs/handoffs/TASK_1384.md
+branch: task/1384-france-msg-quality-fix
+layer: interface/scheduler
+depends_on: [1383 merged]
+
+files_to_modify:
+- src/scheduler/franceSummaryJob.ts   # MODIFY: formatFranceSummaryVI, severityLabel, rsiLabel, ma20Label
+
+acceptance_criteria:
+- Given 1383 test file with T1–T16 all RED
+- When FR-1 (section-omit via blocks[].join) + FR-2 (diacritics map) applied to franceSummaryJob.ts
+- Then bun test src/__tests__/1383-france-summary-message-quality.test.ts = all PASS (GREEN)
+- Then bun test full suite = 5010+ pass, 0 fail, 21+ skip
+- Then bun tsc --noEmit = 0 errors
+- Then grep "Khong co" src/scheduler/franceSummaryJob.ts = 0 matches
 
