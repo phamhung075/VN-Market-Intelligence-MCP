@@ -9,7 +9,7 @@
 | ID | Title | Status | Role |
 |----|-------|--------|------|
 | 1356 | test(ta-diag): TDD 1356-ta-diag.test.ts — written FIRST | Done | QA |
-| 1357 | feat(ta-diag): TaDiag block in assembleEveningSummary | Review | Dev |
+| 1357 | feat(ta-diag): TaDiag block in assembleEveningSummary | Done | Dev |
 
 > Req spec: `docs/REQ_121.md` — DONE (BA)
 > Tech design: `docs/TECH_121.md` — DONE (Architect)
