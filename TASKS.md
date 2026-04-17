@@ -110,12 +110,12 @@
 
 ---
 
-## Sprint 132 — Active
+## Sprint 132 — COMPLETE (2026-04-17)
 
 | ID | Title | Status | Role |
 |----|-------|--------|------|
-| 1378 | test(vps-auto-deploy): TDD — maybe-deploy-vps.sh detection logic (VPS files changed → deploy triggered, no VPS files → skipped) | Review | QA |
-| 1379 | feat(vps-auto-deploy): scripts/maybe-deploy-vps.sh + dev-standards.md branch hygiene step | Review | Dev |
+| 1378 | test(vps-auto-deploy): TDD — maybe-deploy-vps.sh detection logic (VPS files changed → deploy triggered, no VPS files → skipped) | Done | QA |
+| 1379 | feat(vps-auto-deploy): scripts/maybe-deploy-vps.sh + dev-standards.md branch hygiene step | Done | Dev |
 
 > Goal: Eliminate manual VPS deploy step — after any merge touching `vps-scripts/` or `deploy-vinahost.sh`, the developer agent runs `./scripts/maybe-deploy-vps.sh` automatically as part of branch hygiene.
 > Req spec: `docs/REQ_132.md` | Tech design: `docs/TECH_132.md` (APPROVED_BY_ARCHITECT) | Branch: `task/1378-1379-vps-auto-deploy`
