@@ -127,6 +127,26 @@ For each task moving to **In Progress**, inject full context:
 `src/__tests__/NNN-cash-flow.test.ts`
 ```
 
+### Recurring Bug Escalation Rule (mandatory)
+
+Before assigning any fix task, check git log for the same bug/module:
+
+```bash
+git log --oneline --all -- <affected_file> | grep -iE "fix|bug|patch|revert" | head -10
+```
+
+**If the same file/module has ≥ 2 prior fix commits** → **DO NOT assign to Developer.**
+
+Instead:
+1. Mark the task as **Blocked** in TASKS.md with label `RECURRING-BUG`
+2. Trigger **Architect** agent: `"Recurring bug detected in [module] — [N] prior fixes failed to resolve permanently. Need root-cause rethink before any new fix task."`
+3. Wait for Architect to produce `docs/TECH_NNN.md` with permanent design fix before unblocking
+4. Only after Architect sign-off: create new task with reference to TECH doc
+
+**Rationale**: patch loops waste sprint capacity and mask design flaws. Architect must own the permanent fix design.
+
+---
+
 ### Step 5 — Monitor and trigger
 
 After Developer marks task Done:
