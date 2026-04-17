@@ -2,6 +2,17 @@
 
 ---
 
+## Sprint 107 — Fix defaultComputeTa: daily_ohlcv instead of market_prices_history (Done 2026-04-16)
+
+2 tasks. Application layer fix + TDD tests. Rewrote `defaultComputeTa()` in `assembleBriefing.ts` to query `daily_ohlcv` (with `close` column, one row per day, official HOSE close price) instead of `market_prices_history` (intraday ticks requiring AVG + GROUP BY). Removes incorrect aggregation. 4 test cases: null for 0 rows, null for <15 rows, non-null TaSignal for 20 rows, priceVsMa20==="above" when last close exceeds MA20.
+
+| ID | Title | Status |
+|----|-------|--------|
+| 1331 | test(ta): TDD test 1330-ta-daily-ohlcv.test.ts — written FIRST | Done |
+| 1330 | fix(ta): rewrite defaultComputeTa to use daily_ohlcv.close instead of market_prices_history ticks | Done |
+
+---
+
 ## Sprint 105 — Test isolation: eliminate 30s timeouts in test 137 Step E (Done 2026-04-17)
 
 1 task. Test-only fix — no production code changed. Added `process.env["DB_PATH"] = ":memory:"` at line 1 of `137-fix-alert-pipeline.test.ts` and injected `getRecentAlertHistoryFn: async () => []` in all 6 `runIntelligenceCycle` calls in the Step E suite. Eliminates 4 × 30s timeout = 120s waste per full suite run. 19/19 tests pass in 735ms.

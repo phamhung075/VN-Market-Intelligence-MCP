@@ -1,6 +1,6 @@
 {
-  "scan_date": "2026-04-13T00:00:00Z",
-  "last_run": "2026-04-13T00:00:00Z",
+  "scan_date": "2026-04-13T15:45:00Z",
+  "last_run": "2026-04-13T15:45:00Z",
   "findings": [
     {
       "fingerprint": "check-2:mcp.config.json:referenceStocks",
@@ -12,6 +12,17 @@
       "canonical_source": "src/domain/services/sectorPeers.ts:SECTOR_PEERS",
       "risk": "Data drift on sector/ticker updates. Requires two-edit maintenance (sectorPeers.ts + mcp.config.json).",
       "discovered_at": "2026-04-13T00:00:00Z"
+    },
+    {
+      "fingerprint": "check-4:src/infrastructure/db/schedulerLockStore.ts:scheduler_locks",
+      "severity": "HIGH",
+      "category": "Schema duplication",
+      "file": "src/infrastructure/db/schedulerLockStore.ts",
+      "line": 38,
+      "detail": "scheduler_locks DDL is defined inline in ensureSchedulerLocksTable() function (lines 39-45) instead of being centralized in src/infrastructure/db/schema.ts:initDatabase(). This violates the schema canonical-source rule: all CREATE TABLE DDL should be in schema.ts only.",
+      "canonical_source": "src/infrastructure/db/schema.ts:initDatabase()",
+      "risk": "Production code touches two locations for same schema. Schema.ts comment at line 12 lists all known tables; scheduler_locks is missing, making it easy to miss during audits or when refactoring DB initialization.",
+      "discovered_at": "2026-04-13T15:45:00Z"
     }
   ],
   "fixed_findings": [

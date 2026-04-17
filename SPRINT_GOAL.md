@@ -2,7 +2,107 @@
 
 > Previous sprint goals live in their `docs/REQ_NNN.md` specs. This file = current sprint only.
 
-## Current Sprint — 100 (COMPLETE)
+## Current Sprint — 110 (ACTIVE)
+
+**Goal:** Fix `topStories: []` in every evening report. Production evening reports show `topStories: []` and `newsCount: 0` even when the VPS is pushing news every 15 minutes. The user never sees the top news-driven analyses at market close. Root cause is in the push-news → `pollNews` → `rag_analyses` pipeline — either the INSERT is not firing, the `created_at` timestamp mismatches the midnight-VN boundary query, or title-dedup is over-filtering all items.
+
+**Scope:**
+- IN: TDD test `src/__tests__/1335-news-pipeline-rag-insert.test.ts` — 4 cases proving push-news items appear in evening summary
+- IN: Fix root cause in push-news handler and/or `pollNews.tryInsertEntry` so `rag_analyses` rows land with correct `created_at`
+- OUT: Alert pipeline, VPS services, BCTC tools, TA scan jobs, schema changes
+
+**Success metric:** `assembleEveningSummary()` returns `topStories.length > 0` and `newsCount > 0` when push-news items exist since midnight VN. All 4 TDD cases pass. `bun tsc --noEmit` clean.
+
+**Status:** ACTIVE
+
+---
+
+## Sprint 109 — COMPLETE (2026-04-16)
+
+**Goal:** Housekeeping sprint — archive stale task detail blocks + fix sprint status entries. Task 1334 acceptance criteria met: stale blocks already removed from TASKS.md, Sprint 108 header shows COMPLETE, archive contains all Sprint 105-108 detail blocks.
+
+**Status:** COMPLETE 2026-04-16. Task 1334 Done.
+
+---
+
+## Sprint 108 — COMPLETE (2026-04-17)
+
+**Goal:** Fix 2 pre-existing test failures in `1227-source-health-empty-result.test.ts`. Root cause: `pollNews` records health under fetcher key `"reuters"` but the test asserts on `"Reuters RSS"` — two different buckets in the singleton `globalSourceTracker`. Fix: add a source key → display name map in `pollNews` so health is recorded under the human-readable name.
+
+**Status:** COMPLETE 2026-04-17. Tasks 1332+1333 merged.
+
+---
+
+## Sprint 107 — COMPLETE (2026-04-17)
+
+**Goal:** Fix `taSummary: []` in every evening report. TA signals (RSI, MA20) have been computed since sprint 094 but the evening summary always returns empty because `defaultComputeTa` reads from `market_prices_history` (intraday ticks — only 1 day of data) instead of `daily_ohlcv` (proper daily OHLCV — 10+ days growing). Switch the data source to `daily_ohlcv.close` so TA signals surface as soon as 15 trading days of OHLCV exist.
+
+**Scope:**
+- IN: `src/application/usecases/assembleBriefing.ts` — rewrite `defaultComputeTa()` to query `daily_ohlcv` (`SELECT date, close FROM daily_ohlcv WHERE code = ? ORDER BY date ASC LIMIT 60`) instead of averaging `market_prices_history` ticks by UTC day
+- IN: TDD test `src/__tests__/1330-ta-daily-ohlcv.test.ts` — verify `defaultComputeTa` returns non-null signal when `daily_ohlcv` has 15+ rows, returns null when < 15 rows, and that RSI/MA20 compute correctly from close prices
+- OUT: Changes to alert pipeline, VPS proxies, BCTC tools, other scheduler jobs
+
+**Success metric:** With 15+ rows in `daily_ohlcv` for a ticker, `defaultComputeTa()` returns a non-null `TaSignal`. Evening report `taSummary` field is non-empty for watchlist tickers that have 15+ days of OHLCV. `bun tsc --noEmit` clean. TDD tests pass.
+
+**Status:** COMPLETE 2026-04-17. Tasks 1330+1331 merged.
+
+---
+
+## Sprint 106 — COMPLETE (2026-04-17)
+
+**Goal:** Fix 10 persistent test timeouts in `278-cycle-peer-sync.test.ts`. All 10 tests call `runIntelligenceCycle` without `DB_PATH=":memory:"` and without injecting `getRecentAlertHistoryFn`, causing the cycle's internal cooldown `getDb()` calls to hit the production SQLite file. Result: all 10 tests hit the 5s limit — 50 seconds wasted per full suite run.
+
+**Scope:**
+- IN: `src/__tests__/278-cycle-peer-sync.test.ts` — add `process.env["DB_PATH"] = ":memory:"` at line 1 (before all imports)
+- IN: Add `getRecentAlertHistoryFn: async () => []` to `buildBaseDeps()` so all 10 `runIntelligenceCycle` call-sites are covered automatically
+- IN: Verify all 10 tests pass and total file runtime is under 10s
+- OUT: Changes to production code, other test files, intelligence cycle logic
+
+**Success metric:** `bun test ./src/__tests__/278-cycle-peer-sync.test.ts` — all 10 tests pass in under 10s total. `bun tsc --noEmit` clean. Full suite regression: 0 new failures vs Sprint 105 baseline (4885 pass).
+
+**Status:** COMPLETE 2026-04-17. Task 1329 merged.
+
+---
+
+## Sprint 105 — COMPLETE (2026-04-17)
+
+**Goal:** Fix 4 persistent test timeouts in `137-fix-alert-pipeline.test.ts` (Step E suite). These tests call `runIntelligenceCycle` without setting `DB_PATH=":memory:"` at file top, causing the cycle's internal `getDb()` calls to hit the production SQLite file. Result: 4 tests hit the 30s limit every full suite run, masking real regressions.
+
+**Scope:**
+- IN: `src/__tests__/137-fix-alert-pipeline.test.ts` — add `process.env["DB_PATH"] = ":memory:"` at line 1 (before all imports) so all dynamic `import("../infrastructure/db/schema.js")` calls inside `runIntelligenceCycle` resolve to the in-memory DB
+- IN: Inject `getRecentAlertHistoryFn: async () => []` in all 4 Step E test fixtures to prevent the fallthrough to `getCooldownDb()` real DB path
+- IN: Verify all 4 Step E tests complete well under 5s after fix
+- OUT: Changes to production code, other test files, intelligence cycle logic
+
+**Success metric:** `bun test ./src/__tests__/137-fix-alert-pipeline.test.ts` — all tests pass in under 10s total. `bun tsc --noEmit` clean. Full suite regression: 0 new failures.
+
+**Status:** COMPLETE 2026-04-17. Task 1328 merged.
+
+---
+
+## Sprint 104 — COMPLETE (2026-04-16)
+
+**Goal:** Fix misleading macro alert label — "cao bất thường" (abnormally high) is shown even when the value is BELOW the moving average (negative z-score). This is a user-facing messaging bug: the user reads "high" but the market condition is actually "low".
+
+**Scope:**
+- IN: `macroThresholds.ts` — make `LEVEL_VI` direction-aware: "cao bất thường" for above-mean deviations, "thấp bất thường" for below-mean deviations
+- IN: Update `classifyDeviation()` summary to use directional label
+- IN: TDD test covering: above-mean `high` → "cao bất thường", below-mean `high` → "thấp bất thường", above-mean `extreme` → "cực cao", below-mean `extreme` → "cực thấp"
+- OUT: Alert pipeline changes, VPS proxies, BCTC tools
+
+**Success metric:** Alert message for USD/VND below mean shows "thấp bất thường" not "cao bất thường". `bun tsc --noEmit` clean. TDD tests pass.
+
+**Status:** COMPLETE 2026-04-16. Tasks 1326+1327 merged.
+
+---
+
+## Sprint 103 — COMPLETE (2026-04-16)
+
+**Status:** COMPLETE 2026-04-16. Tasks 1324+1325 merged. push-news handler now wires all 9 VPS sources dynamically. 10/10 tests pass.
+
+---
+
+## Sprint 100 — COMPLETE (2026-04-15)
 
 **Goal:** Diagnose and fix `predictionSignals: []` in evening reports — the field has been empty across every daily report for weeks, meaning users never see prediction-based signals at close even when the prediction pipeline is running.
 
@@ -18,12 +118,12 @@
 
 ---
 
-## Current Sprint — 101 (COMPLETE)
+## Sprint 101 — COMPLETE (2026-04-15)
 **Status:** COMPLETE 2026-04-15. Tasks 1320+1321 merged. DDD boundary: 0 infra imports in domain/. All 4 tests pass.
 
 ---
 
-## Current Sprint — 102 (PLANNING)
+## Sprint 102 — COMPLETE (2026-04-15)
 
 **Goal:** Add a `newsCount` diagnostic field to the evening summary report — the `topStories: []` gap in production is invisible to the user and hard to debug. Surfacing how many raw news items were ingested since midnight gives immediate observability into whether the VPS news push is working and whether the intelligence cycle is writing analyses.
 
@@ -80,7 +180,15 @@
 
 | Sprint | Goal summary | Status |
 |--------|-------------|--------|
-| 102 | feat(evening-summary): newsCount diagnostic field + Telegram formatter (1322, 1323) | PLANNING |
+| 110 | fix(news-pipeline): push-news → rag_analyses insert gap — topStories always empty (1335, 1336) | ACTIVE |
+| 109 | chore(tasks): archive stale task detail blocks + fix sprint status entries (1334) | COMPLETE 2026-04-16 |
+| 108 | fix(source-health): pollNews SOURCE_DISPLAY_NAMES — eliminate 2 test-1227 failures (1332, 1333) | COMPLETE 2026-04-17 |
+| 107 | fix(ta): defaultComputeTa reads daily_ohlcv — TA signals in evening summary (1330, 1331) | COMPLETE 2026-04-17 |
+| 106 | fix(test-timeout): 278-cycle-peer-sync DB isolation — 10 tests pass (1329) | COMPLETE 2026-04-17 |
+| 105 | fix(test-timeout): 137 Step E test isolation — 4 timeout tests fixed (1328) | COMPLETE 2026-04-17 |
+| 104 | fix(macro-alert): direction-aware labels in classifyDeviation (1326, 1327) | COMPLETE 2026-04-16 |
+| 103 | fix(push-news): extend SourceFetchers + wire 9 VPS sources (1324, 1325) | COMPLETE 2026-04-16 |
+| 102 | feat(evening-summary): newsCount diagnostic field + Telegram formatter (1322, 1323) | COMPLETE 2026-04-15 |
 | 101 | refactor(ddd): shared-types.ts — zero infra imports in domain/ (1320, 1321) | COMPLETE 2026-04-15 |
 | 100 | fix(prediction): predictionSignals always empty in evening summary (1318, 1319) | COMPLETE 2026-04-15 |
 | 099 | feat(france-summary): rewrite franceSummaryJob — Vietnamese digest | COMPLETE 2026-04-15 |

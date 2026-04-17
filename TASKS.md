@@ -4,12 +4,12 @@
 
 ---
 
-## Sprint 110 — Active
+## Sprint 110 — Complete
 
 | ID | Title | Status |
 |----|-------|--------|
-| 1335 | fix(news-pipeline): diagnose and fix zero rag_analyses rows in production | Review |
-| 1336 | test(news-pipeline): TDD test 1335-news-pipeline-rag-insert.test.ts | Review |
+| 1335 | fix(news-pipeline): diagnose and fix zero rag_analyses rows in production | Done |
+| 1336 | test(news-pipeline): TDD test 1335-news-pipeline-rag-insert.test.ts | Done |
 
 ---
 
@@ -31,26 +31,3 @@
 ---
 
 ## Task Details (active tasks only)
-
-### 1334 — chore(tasks): archive stale task detail blocks
-
-**Branch:** `task/1334-tasks-cleanup`
-**Layer:** docs
-**Depends on:** none
-**Status:** Todo
-**Role:** Dev
-
-**Root cause:** TASKS.md task details section contains 8 completed task blocks (1332, 1333, 1331, 1330, 1329, 1327, 1326, 1328) — ~275 lines of stale content. These slow agent reads and create WIP confusion. SPRINT_GOAL.md Sprint 108 header still reads "PLANNING" though Sprint 108 is COMPLETE.
-
-**Files to modify:**
-- MODIFY: `TASKS.md` — remove task detail blocks for all Done tasks (1332, 1333, 1331, 1330, 1329, 1327, 1326, 1328). Keep only the Sprint 109 task detail block.
-- MODIFY: `SPRINT_GOAL.md` — update Sprint 108 header from "PLANNING" → "COMPLETE", add completion date
-- MODIFY: `SPRINT_GOAL.md` sprint history table — update Sprint 102 row from "PLANNING" → "COMPLETE 2026-04-15"
-- APPEND: `docs/TASKS_ARCHIVE.md` — paste the 8 removed task detail blocks under a "Sprint 105-108 task details" section
-
-**Acceptance Criteria:**
-- `TASKS.md` task details section has only the Sprint 109 task (1334) or is empty after 1334 completes
-- `SPRINT_GOAL.md` Sprint 108 shows COMPLETE
-- `docs/TASKS_ARCHIVE.md` contains the archived detail blocks
-- `bun tsc --noEmit` 0 errors (no code changes, TypeScript unaffected)
-- Full suite: 0 new failures (no code changes)
