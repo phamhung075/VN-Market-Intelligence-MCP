@@ -318,6 +318,17 @@ function tryInsertEntry(
   db: Database,
   entry: ReturnType<typeof normalizeNews>,
 ): boolean {
+  // Guard: createdAt must be a non-empty ISO 8601 string.
+  // normalizeNews() always sets this via new Date().toISOString(), but a defensive
+  // check prevents silent row drops if a code path ever passes undefined.
+  if (!entry.createdAt) {
+    logger.warn("[tryInsertEntry] entry.createdAt is missing — substituting current UTC time", {
+      entryId: entry.id,
+      sourceUrl: entry.sourceUrl,
+    });
+    entry.createdAt = new Date().toISOString();
+  }
+
   // Title-based dedup: only when entry has a URL (skip for no-URL items to
   // preserve the existing behaviour that empty-URL articles are always inserted)
   if (entry.sourceUrl && isTitleDuplicate(db, entry.sourceTitle)) {

@@ -8,8 +8,9 @@
  *   - Exchange identifiers: VN-Index, HOSE, HNX, UPCOM, VNINDEX
  *   - Known VN stock ticker codes (2-5 upper-case letters from KNOWN_VN_STOCKS)
  *
- * Vietnamese sources (cafef, vnexpress, vneconomy) always pass through —
- * they are presumed relevant by editorial selection.
+ * Vietnamese sources (cafef, vnexpress, vneconomy, vietstock, vietnambiz,
+ * vnbusiness, tuoitre, nhandan, nld, vps) always pass through — they are
+ * presumed relevant by editorial selection or VPS origin.
  *
  * Design:
  *   - Pure function — no I/O, no side effects, no async.
@@ -25,9 +26,21 @@
  * Articles from these sources always pass the relevance gate.
  */
 export const VN_SOURCE_IDS: ReadonlyArray<string> = [
+  // Pre-existing local fetchers
   "cafef",
   "vnexpress",
   "vneconomy",
+  // VPS-push-only sources (Sprint 103) — exclusively Vietnamese financial content;
+  // never require keyword scan to confirm VN relevance.
+  "vietstock",
+  "vietnambiz",
+  "vnbusiness",
+  "tuoitre",
+  "nhandan",
+  "nld",
+  // Generic VPS fallback: push handler sets source to "vps" when source field is
+  // missing from the pushed item. Treat as VN-relevant (VPS only serves VN sources).
+  "vps",
 ];
 
 /** VN exchange/index keywords (all lowercase, matched case-insensitively). */
