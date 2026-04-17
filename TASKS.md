@@ -4,14 +4,25 @@
 
 ---
 
-## Sprint 135 — Active
+## Sprint 136 — Active
+
+| ID | Title | Status | Role |
+|----|-------|--------|------|
+| 1385 | test(evening-news-filler): TDD test 1385-evening-summary-news-filler.test.ts — written FIRST | Done | Dev |
+| 1386 | fix(evening-news-filler): omit "Không có tin tức hôm nay" when newsCount=0 in eveningSummaryJob | Done | Dev |
+
+> Sprint goal: `SPRINT_GOAL.md` | Success: no "Không có" filler when other content present; newsCount line shown only when >0; 5018+ pass, 0 fail
+
+---
+
+## Sprint 135 — Complete
 
 | ID | Title | Status | Role |
 |----|-------|--------|------|
 | 1383 | test(france-msg-quality): TDD test 1383-france-summary-message-quality.test.ts — written FIRST | Done | Dev |
-| 1384 | fix(france-msg-quality): omit empty sections + fix Vietnamese diacritics in formatFranceSummaryVI | Review | Dev |
+| 1384 | fix(france-msg-quality): omit empty sections + fix Vietnamese diacritics in formatFranceSummaryVI | Done | Dev |
 
-> Sprint goal: `SPRINT_GOAL.md` | Success: no "Khong co" filler in MARKET messages; diacritics correct; 5010+ pass, 0 fail
+> Sprint goal: `SPRINT_GOAL.md` | COMPLETE 2026-04-17
 
 ---
 
@@ -121,39 +132,33 @@
 
 ## Task Details (active tasks only)
 
-### 1383 — TDD test: 1383-france-summary-message-quality.test.ts (RED first)
+### 1385 — TDD test: 1385-evening-summary-news-filler.test.ts (RED first)
 
-context: docs/handoffs/TASK_1383.md
-branch: task/1383-france-msg-quality-tdd
-layer: interface/scheduler
+context: docs/handoffs/TASK_1385.md
+branch: task/1385-evening-news-filler-tdd
+layer: scheduler
 depends_on: none
 
-files_to_create:
-- src/__tests__/1383-france-summary-message-quality.test.ts   # NEW — T1–T16 all RED
-
 acceptance_criteria:
-- Given franceSummaryJob.ts unchanged (still emits filler lines + ASCII diacritics)
-- When 1383-france-summary-message-quality.test.ts written with T1–T16
-- Then bun test src/__tests__/1383-france-summary-message-quality.test.ts = all FAIL (RED)
+- Given eveningSummaryJob.ts unchanged (still always appends "Không có tin tức hôm nay")
+- When T1–T4 written per TECH_136 test table
+- Then bun test src/__tests__/1385-evening-summary-news-filler.test.ts = T1+T3 FAIL (RED), T2+T4 may pass
 - Then bun tsc --noEmit = 0 errors
 
 ---
 
-### 1384 — fix: implement FR-1 (section-omit) + FR-2 (diacritics) in formatFranceSummaryVI
+### 1386 — fix: omit "Không có tin tức hôm nay" when newsCount=0
 
-context: docs/handoffs/TASK_1384.md
-branch: task/1384-france-msg-quality-fix
-layer: interface/scheduler
-depends_on: [1383 merged]
-
-files_to_modify:
-- src/scheduler/franceSummaryJob.ts   # MODIFY: formatFranceSummaryVI, severityLabel, rsiLabel, ma20Label
+context: docs/handoffs/TASK_1386.md
+branch: task/1386-evening-news-filler-fix
+layer: scheduler
+depends_on: [1385 merged]
 
 acceptance_criteria:
-- Given 1383 test file with T1–T16 all RED
-- When FR-1 (section-omit via blocks[].join) + FR-2 (diacritics map) applied to franceSummaryJob.ts
-- Then bun test src/__tests__/1383-france-summary-message-quality.test.ts = all PASS (GREEN)
-- Then bun test full suite = 5010+ pass, 0 fail, 21+ skip
+- Given 1385 T1–T4 with T1+T3 RED
+- When newsCount block patched per TECH_136 target state (3-line change, lines 156-163)
+- Then bun test src/__tests__/1385-evening-summary-news-filler.test.ts = all PASS (GREEN)
+- Then bun test full suite = 5018+ pass, 0 fail, 21+ skip
 - Then bun tsc --noEmit = 0 errors
-- Then grep "Khong co" src/scheduler/franceSummaryJob.ts = 0 matches
+- Then grep "Không có tin tức hôm nay" src/scheduler/eveningSummaryJob.ts = 0 matches
 
