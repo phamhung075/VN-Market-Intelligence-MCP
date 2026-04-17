@@ -1,14 +1,14 @@
 {
   "_maintained_by": "PM / system-auditor",
   "_trigger": "sprint start/end, tool/cron count change",
-  "lastUpdated": "2026-04-16",
-  "currentSprint": 114,
-  "previousSprint": { "number": 114, "status": "COMPLETE", "completedDate": "2026-04-16" },
-  "sprintGoal": "fix(ta-fallback): defaultComputeTa fallback to market_prices_history when daily_ohlcv < 15 rows",
+  "lastUpdated": "2026-04-17",
+  "currentSprint": 116,
+  "previousSprint": { "number": 115, "status": "COMPLETE", "completedDate": "2026-04-17" },
+  "sprintGoal": "fix(france-summary): 24h time window in fetchTopAlerts + same-day dedup guard",
   "toolCount": 98,
   "schedulerFileCount": 32,
   "knowledgeFileCount": 15,
   "devAgentCount": 13,
   "analysisAgentCount": 9,
-  "totalTasksDone": 298
+  "totalTasksDone": 300
 }
