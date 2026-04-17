@@ -3,7 +3,11 @@
  *
  * Root cause: query used non-existent columns `date` and `total_volume`.
  * Fix: ORDER BY fetched_at DESC, use avg_volume_2w as denominator.
+ *
+ * NOTE: DB_PATH must be set BEFORE any imports that transitively call getDb().
+ * Setting it here at module top ensures the singleton is not yet open.
  */
+process.env["DB_PATH"] = ":memory:";
 
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from "bun:test";
 import { computeForeignFlowScore } from "../interface/mcp/tools/kinhDichTools.js";
@@ -14,7 +18,7 @@ import { getDb, closeDb, initDatabase } from "../infrastructure/db/schema.js";
 // ─────────────────────────────────────────────────────────────────────────────
 
 beforeAll(async () => {
-  process.env["DB_PATH"] = ":memory:";
+  closeDb();
   await initDatabase();
 });
 

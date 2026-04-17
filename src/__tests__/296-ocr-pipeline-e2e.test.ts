@@ -98,7 +98,7 @@ describe("296 OCR pipeline e2e smoke test", () => {
       console.log("[296] netRevenue =", is_.netRevenue);
       expect(is_.netRevenue).toBeGreaterThan(0);
     },
-    600_000,
+    30_000,
   );
 
   // ─────────────────────────────────────────────────────────────────────────
