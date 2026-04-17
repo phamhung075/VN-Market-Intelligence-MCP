@@ -66,7 +66,7 @@
 
 | ID | Title | Status | Role |
 |----|-------|--------|------|
-| 1368 | test(ohlcv-aggregator-notify): TDD — ohlcvDailyAggregatorJob sends WORK-channel summary after aggregation | Review | QA |
+| 1368 | test(ohlcv-aggregator-notify): TDD — ohlcvDailyAggregatorJob sends WORK-channel summary after aggregation | Done | QA |
 | 1369 | feat(ohlcv-aggregator-notify): ohlcvDailyAggregatorJob — post WORK-channel health summary post-aggregation | Backlog | Dev |
 
 > Goal: Make the OHLCV → TA pipeline visible after each run. After `ohlcvDailyAggregatorJob` completes, send a WORK-channel Telegram summarizing: rows aggregated per ticker, how many tickers are TA-ready (>=8 rows), and whether taSummary would be non-empty at next evening report. Silent pipeline failures are invisible to the dev team today.
