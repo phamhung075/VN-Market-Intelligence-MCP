@@ -3,6 +3,14 @@
     { "fingerprint": "log_error:weekly_portfolio_report_stuck_lock", "first_seen": "2026-04-14", "last_reported": "2026-04-14", "task": "1306", "status": "fixed", "fixedDate": "2026-04-15" },
     { "fingerprint": "log_error:hose_all_price_sources_fail", "first_seen": "2026-04-14", "last_reported": "2026-04-14", "note": "transient network — VPS price push expected off-hours", "status": "monitor" },
     { "fingerprint": "log_error:ssc_ssl_certificate", "first_seen": "2026-04-11", "last_reported": "2026-04-11", "note": "SSC geo-blocked from France — VPS proxy fallback active", "status": "monitor" },
-    { "fingerprint": "log_warn:reuters_trading_economics_zero_items", "first_seen": "2026-04-12", "last_reported": "2026-04-12", "note": "off-hours normal; Reuters intermittent geo-block", "status": "monitor" }
+    { "fingerprint": "log_warn:reuters_trading_economics_zero_items", "first_seen": "2026-04-12", "last_reported": "2026-04-12", "note": "off-hours normal; Reuters intermittent geo-block", "status": "monitor" },
+    { "fingerprint": "stale_worktree:three_agent_worktrees", "first_seen": "2026-04-17", "last_reported": "2026-04-17", "note": "3 agent worktrees not cleaned up: agent-a29b75bd, agent-a6bdd797, agent-ac6668e4" },
+    { "fingerprint": "memory_stale:sprint_stats_in_project_034_status", "first_seen": "2026-04-17", "last_reported": "2026-04-17", "note": "MEMORY.md line 3 cites sprint 86, 97 tools, 29 scheduler files — actual sprint 128, 98 tools, 34 files" },
+    { "fingerprint": "memory_contradiction:vps_location", "first_seen": "2026-04-17", "last_reported": "2026-04-17", "note": "project_bctc_vps_proxy.md says VPS Singapore; ARCHITECTURE.md+CLAUDE.md say Vinahost Vietnam" },
+    { "fingerprint": "doc_stale_ambiguous:SPRINT_GOAL_missing_sprints_112_to_119", "first_seen": "2026-04-17", "last_reported": "2026-04-17", "note": "Sprints 112-119 have no entries in SPRINT_GOAL.md; exact goal text unknown — cannot auto-fill" },
+    { "fingerprint": "doc_synced:ARCHITECTURE.md", "first_seen": "2026-04-17", "last_reported": "2026-04-17", "note": "Updated tool count 97→98, scheduler files 28→34" },
+    { "fingerprint": "doc_synced:cron-registry.json", "first_seen": "2026-04-17", "last_reported": "2026-04-17", "note": "franceSummaryJob schedule corrected, added ohlcvDailyAggregatorJob+ohlcvStartupProbe, schedulerFileCount 32→34" },
+    { "fingerprint": "doc_synced:project-stats.json", "first_seen": "2026-04-17", "last_reported": "2026-04-17", "note": "currentSprint 120→128, schedulerFileCount 32→34, totalTasksDone 304→314" },
+    { "fingerprint": "doc_synced:SPRINT_GOAL.md", "first_seen": "2026-04-17", "last_reported": "2026-04-17", "note": "Removed duplicate Sprint 111 heading" }
   ]
 }

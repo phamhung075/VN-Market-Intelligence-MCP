@@ -2,13 +2,13 @@
   "_maintained_by": "PM / system-auditor",
   "_trigger": "sprint start/end, tool/cron count change",
   "lastUpdated": "2026-04-17",
-  "currentSprint": 120,
-  "previousSprint": { "number": 119, "status": "COMPLETE", "completedDate": "2026-04-17" },
-  "sprintGoal": "feat(prediction-diag): predictionDiag block + medium-severity fallback — fix predictionSignals always empty in evening report",
+  "currentSprint": 132,
+  "previousSprint": { "number": 131, "status": "COMPLETE", "completedDate": "2026-04-17" },
+  "sprintGoal": "feat(vps-auto-deploy): scripts/maybe-deploy-vps.sh + dev-standards branch hygiene — eliminate manual VPS deploy step",
   "toolCount": 98,
-  "schedulerFileCount": 32,
+  "schedulerFileCount": 34,
   "knowledgeFileCount": 15,
   "devAgentCount": 13,
   "analysisAgentCount": 9,
-  "totalTasksDone": 304
+  "totalTasksDone": 314
 }

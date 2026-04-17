@@ -1,15 +1,15 @@
 {
   "_maintained_by": "developer",
   "_trigger": "after adding/removing scheduler file, update count + list",
-  "lastUpdated": "2026-04-15",
-  "schedulerFileCount": 32,
+  "lastUpdated": "2026-04-17",
+  "schedulerFileCount": 34,
   "jobs": [
     { "schedule": "*/15 min", "name": "intelligenceCycle", "desc": "Main engine: news+prices+cascade+alerts" },
     { "schedule": "*/30 min", "name": "predictionMarketPoll", "desc": "Polymarket fetch + signal detection" },
     { "schedule": "*/6h", "name": "weatherCheck", "desc": "Typhoon season climate check" },
     { "schedule": "*/12 min", "name": "askQueueCheck", "desc": "/ask FIFO queue trigger" },
     { "schedule": "*/10 min market", "name": "vpsProxyWatchdog", "desc": "VPS proxy liveness — observe only" },
-{ "schedule": "08:00 VN M-F", "name": "morningBriefing", "desc": "Daily briefing: macro + conviction" },
+    { "schedule": "08:00 VN M-F", "name": "morningBriefing", "desc": "Daily briefing: macro + conviction" },
     { "schedule": "09:00 VN M-F", "name": "marketOpen", "desc": "Market open scan + price alerts" },
     { "schedule": "09:00 VN daily", "name": "bctcOverdueCheck", "desc": "BCTC overdue alert" },
     { "schedule": "09:30 VN daily", "name": "bctcReparseJob", "desc": "Re-parse recently added BCTC PDFs" },
@@ -33,10 +33,12 @@
     { "schedule": "19:00 UTC Sunday (02:00 VN Mon)", "name": "baseRateComputation", "desc": "Weekly Bayesian base-rate recompute from evidence_fragments (baseRateComputationJob.ts)" },
     { "schedule": "16:30 UTC daily (23:30 VN)", "name": "predictionResolution", "desc": "Daily prediction claim auto-resolution after market close (predictionResolutionJob.ts)" },
     { "schedule": "*/30 min", "name": "pipelineWatchdog", "desc": "Stale news pipeline detection — alerts work channel when staleMins > 90, 3h cooldown" },
-    { "schedule": "07:00 UTC M-F (08:00 CET)", "name": "franceSummaryJob", "desc": "France morning VN digest to MARKET channel: top 3 price movers, top 3 alerts, TA signal count — Vietnamese format, silent skip when empty" },
+    { "schedule": "*/30 6-8 UTC M-F (07:00-09:00 CET)", "name": "franceSummaryJob", "desc": "France morning VN digest to MARKET channel: top 3 price movers, top 3 alerts, TA signal count — Vietnamese format, silent skip when empty. alreadySentToday dedup prevents multi-fire within same UTC day." },
     { "schedule": "*/15 min market (2-8 UTC M-F)", "name": "taAlertScanJob", "desc": "RSI(14) overbought/oversold intraday scan — inserts ta_overbought/ta_oversold alerts, 4h cooldown" },
     { "schedule": "*/15 min market (2-8 UTC M-F)", "name": "bbAlertScanJob", "desc": "BB20 upper/lower breakout intraday scan — inserts ta_bb_breakout_up/ta_bb_breakout_down alerts, 4h cooldown" },
-    { "schedule": "*/15 min market (2-8 UTC M-F)", "name": "taAlertNotifierJob", "desc": "Deliver unnotified TA alerts (ta_overbought/ta_oversold/ta_bb_breakout_up/down) to Telegram market channel — batch 10/cycle" }
+    { "schedule": "*/15 min market (2-8 UTC M-F)", "name": "taAlertNotifierJob", "desc": "Deliver unnotified TA alerts (ta_overbought/ta_oversold/ta_bb_breakout_up/down) to Telegram market channel — batch 10/cycle" },
+    { "schedule": "0 16 UTC M-F (23:00 VN)", "name": "ohlcvDailyAggregatorJob", "desc": "Aggregate intraday market_prices_history ticks into daily_ohlcv rows post-market-close. Sends WORK-channel summary: rows per ticker, TA-ready count, top-3 tickers. (Sprint 122+127)" },
+    { "schedule": "startup (fire-and-forget)", "name": "ohlcvStartupProbe", "desc": "On server start: detect sparse daily_ohlcv tickers (<8 rows), write pending record to ohlcv_backfill_queue, alert WORK channel. VPS polls queue every 30min and runs backfill. (Sprint 119+123)" }
   ],
   "orphan": [],
   "legacy": ["newsPollerJob.ts"]

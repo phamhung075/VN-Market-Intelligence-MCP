@@ -2,23 +2,48 @@
 
 > Previous sprint goals live in their `docs/REQ_NNN.md` specs. This file = current sprint only.
 
-## Current Sprint — 120 (ACTIVE)
+## Sprint 129 — COMPLETE (2026-04-17)
 
-**Goal:** Fix `predictionSignals: []` in every evening report. The field has been empty in every production report since Sprint 100 shipped the fix. Either the prediction market job is silently discarding all fetched markets (relevance filter too strict, zero-volume filter over-aggressive, or Gamma API returning no matching keywords), or all generated signals are below "high" severity. The user never sees prediction-based risk context at market close.
-
-**Scope:**
-- IN: Add a `predictionDiag` diagnostic block to `EveningSummary` — counts of: markets fetched, signals generated (any severity), signals stored (last 24h in prediction_signals), signals passing severity filter (high/critical). Exposed in the evening JSON report only (not in Telegram message).
-- IN: In `assembleEveningSummary.ts` Step 5 — add fallback: if `predictionSignals` (high/critical) is empty but there are signals of any severity in the last 24h, include up to 3 medium-severity signals instead, so the user sees at least some prediction context.
-- IN: TDD test covering: (1) high/critical signals appear as-is, (2) when only medium signals exist, up to 3 appear, (3) when no signals exist, field is empty, (4) `predictionDiag.stored` reflects actual DB count.
-- OUT: Changes to Polymarket fetcher, detection logic, alert pipeline, VPS proxies, TA pipeline.
-
-**Success metric:** Evening report `predictionSignals` field is non-empty on any evening when at least one medium/high/critical prediction signal was generated in the last 24h. `predictionDiag` block visible in JSON report for observability. `bun tsc --noEmit` clean. 4+ TDD cases pass. Full suite 0 new failures.
-
-**Status:** ACTIVE
+**Goal:** Fix 17 pre-existing test failures from stale franceSummaryJob fixtures + schedulerFileCount drift.
+**Status:** COMPLETE. Tasks 1372+1373 merged. Full suite: 4998 pass, 1 fail (intentional OCR), 20 skip.
 
 ---
 
-## Sprint 111 — COMPLETE (2026-04-16)
+## Sprint 130 — COMPLETE (2026-04-17)
+
+**Goal:** Fix `taSummary: []` in every evening report by shifting `ohlcvDailyAggregatorJob` cron from 16:00 UTC to 15:00 UTC (30 min before evening summary at 15:30 UTC).
+**Status:** COMPLETE. Tasks 1374+1375 merged. `CRONS.ohlcvDailyAggregator` default = `'0 15 * * 1-5'`. 2026-04-17 report confirmed: taSummary has 31 tickers.
+
+---
+
+## Current Sprint — 132 (ACTIVE)
+
+**Goal:** Auto-run `./deploy-vinahost.sh` after merge when `vps-scripts/` or `deploy-vinahost.sh` changed — eliminate the manual VPS deploy step so the full automation loop is truly autonomous.
+
+**Scope:**
+- IN: `scripts/maybe-deploy-vps.sh` — shell helper: checks `git diff main~1 --name-only` for `vps-scripts/` or `deploy-vinahost.sh`; runs `./deploy-vinahost.sh` if match, skips with a WORK-channel note if no match
+- IN: `dev-standards.md` — add step 4a to Branch Hygiene: "If changed files include `vps-scripts/**` or `deploy-vinahost.sh`, run `./scripts/maybe-deploy-vps.sh` before deleting the task branch"
+- IN: TDD test `src/__tests__/1378-vps-auto-deploy.test.ts` — validate the detection logic: shell script exits 0 and prints "VPS deploy triggered" when VPS files are present in the diff; exits 0 and prints "VPS deploy skipped" when no VPS files changed
+- OUT: Changes to TypeScript source, cron jobs, alert pipeline, MCP tools
+
+**Success metric:** After any merge that touches `vps-scripts/` or `deploy-vinahost.sh`, the developer agent runs `./scripts/maybe-deploy-vps.sh` as part of branch hygiene — no manual step needed. `bun tsc --noEmit` clean. TDD tests pass.
+
+**Status:** ACTIVE — tasks 1378+1379
+
+---
+
+## Sprint 131 — COMPLETE (2026-04-17)
+
+**Goal:** Fix pre-existing test failure in `1192-evening-summary-empty-fallback.test.ts` line 91 (`calls.length` expected 1, got 0). Root cause: `runEveningSummary` calls `alreadySentToday(getDb())` using the production DB singleton, which ignores `DB_PATH=":memory:"` test isolation. When the production `market_messages` table already has an `evening-summary` row for today (the real summary fired at 15:30 UTC), the dedup guard silently skips the second test. Fix: accept an optional `db` parameter in `runEveningSummary` for the dedup check, defaulting to `getDb()` in production.
+
+**Scope:**
+- IN: `src/scheduler/eveningSummaryJob.ts` — add optional `db?: Database` to `runEveningSummary` signature; use it in `alreadySentToday` call
+- IN: `src/__tests__/1192-evening-summary-empty-fallback.test.ts` — pass an in-memory DB (with `market_messages` table) as `db` param so the dedup check resolves against isolated state
+- OUT: Changes to assembleEveningSummary, other scheduler jobs, alert pipeline, VPS proxies
+
+**Success metric:** `bun test src/__tests__/1192-evening-summary-empty-fallback.test.ts` — both tests pass. `bun tsc --noEmit` clean. Full suite regression: net 0 new failures (2 pre-existing → 1 pre-existing OCR only).
+
+**Status:** ACTIVE — tasks 1376+1377
 
 ---
 
