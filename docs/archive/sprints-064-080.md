@@ -2,6 +2,17 @@
 
 ---
 
+## Sprint 111 — Test hygiene: in-memory DB isolation + OCR timeout cap (Done 2026-04-16)
+
+2 tasks. Test-only changes, no production source modifications. Task 1337: moved `process.env["DB_PATH"] = ":memory:"` to line 10 (before all imports) in `297-foreign-flow-fix.test.ts` and added `afterAll(closeDb)` — eliminates UNIQUE constraint spam when suite runs in shared DB state. Task 1338: added explicit 30s timeout on OCR `it()` in `296-ocr-pipeline-e2e.test.ts` — stops 8+ minute hang when tesseract stalls on 61-page PDF.
+
+| ID | Title | Status |
+|----|-------|--------|
+| 1337 | fix(test-isolation): 297-foreign-flow-fix DB_PATH at line 1 + afterAll closeDb | Done |
+| 1338 | fix(test-timeout): 296-ocr-pipeline-e2e add explicit timeout on OCR it() | Done |
+
+---
+
 ## Sprint 107 — Fix defaultComputeTa: daily_ohlcv instead of market_prices_history (Done 2026-04-16)
 
 2 tasks. Application layer fix + TDD tests. Rewrote `defaultComputeTa()` in `assembleBriefing.ts` to query `daily_ohlcv` (with `close` column, one row per day, official HOSE close price) instead of `market_prices_history` (intraday ticks requiring AVG + GROUP BY). Removes incorrect aggregation. 4 test cases: null for 0 rows, null for <15 rows, non-null TaSignal for 20 rows, priceVsMa20==="above" when last close exceeds MA20.

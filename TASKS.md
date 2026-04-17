@@ -4,6 +4,15 @@
 
 ---
 
+## Sprint 111 — Complete
+
+| ID | Title | Status | Role |
+|----|-------|--------|------|
+| 1337 | fix(test-isolation): 297-foreign-flow-fix DB_PATH at line 1 + afterAll closeDb | Done | Dev |
+| 1338 | fix(test-timeout): 296-ocr-pipeline-e2e add explicit timeout on OCR it() | Done | Dev |
+
+---
+
 ## Sprint 110 — Complete
 
 | ID | Title | Status |
