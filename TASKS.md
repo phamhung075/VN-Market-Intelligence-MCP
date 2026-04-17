@@ -9,7 +9,7 @@
 | ID | Title | Status | Role |
 |----|-------|--------|------|
 | 1358 | test(ohlcv-aggregator): TDD 1358-ohlcv-daily-aggregator.test.ts — written FIRST | Done | QA |
-| 1359 | feat(ohlcv-aggregator): ohlcvDailyAggregatorJob + wire jobs.ts | Todo | Dev |
+| 1359 | feat(ohlcv-aggregator): ohlcvDailyAggregatorJob + wire jobs.ts | Review | Dev |
 
 > Req spec: `docs/REQ_122.md` — READY (BA complete)
 > Tech design: `docs/TECH_122.md` — APPROVED_BY_ARCHITECT
