@@ -27,6 +27,12 @@ import type { BriefingPredictionSignal } from "../../infrastructure/db/predictio
 // Public types
 // ─────────────────────────────────────────────────────────────────────────────
 
+/** Diagnostic counts for prediction pipeline observability — JSON report only, NOT sent to Telegram */
+export interface PredictionDiag {
+  /** Total prediction_signals rows fetched in last 24h, any severity */
+  stored: number;
+}
+
 /** A watchlist stock that moved >= 1% during the day. */
 export interface WatchlistMover {
   /** Stock ticker, e.g. "VCB" */
@@ -56,6 +62,8 @@ export interface EveningSummary {
   watchlistMovers: WatchlistMover[];
   /** HIGH/CRITICAL prediction market signals from the last 24h (crowd-sourced early warnings) */
   predictionSignals: BriefingPredictionSignal[];
+  /** Diagnostic counts for prediction pipeline observability — JSON report only, NOT sent to Telegram */
+  predictionDiag: PredictionDiag;
   /** RSI(14) + MA20 signals for all watchlist tickers at market close. Empty array when
    *  watchlist is empty or all signals are null (< 15 candles). Includes neutral signals — the
    *  display filter (non-neutral only) is applied in eveningSummaryJob.ts. */
@@ -80,6 +88,8 @@ export interface AssembleEveningSummaryOptions {
   reportsDir?: string;
   computeTaFn?: (code: string, db: Database) => TaSignal | null;
   getNewsCountFn?: (midnight: string) => number;
+  /** Override prediction signals fetch for tests — avoids mock.module in unit tests */
+  getPredictionSignalsFn?: (db: Database, hoursBack: number) => BriefingPredictionSignal[] | Promise<BriefingPredictionSignal[]>;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -332,14 +342,27 @@ export async function assembleEveningSummary(
     });
   }
 
-  // ── Step 5: Prediction market signals (HIGH/CRITICAL only, last 24h) ─────────
+  // ── Step 5: Prediction market signals — medium fallback + diag ──────────────
   let predictionSignals: BriefingPredictionSignal[] = [];
+  let predictionDiag: PredictionDiag = { stored: 0 };
   try {
-    const { getRecentPredictionSignals } = await import("../../infrastructure/db/predictionStore.js");
-    const allSignals = getRecentPredictionSignals(db, 24);
-    predictionSignals = allSignals.filter(
+    const signalsFn =
+      options.getPredictionSignalsFn ??
+      (await import("../../infrastructure/db/predictionStore.js")).getRecentPredictionSignals;
+    const allSignals = await signalsFn(db, 24);
+    const stored = allSignals.length;
+    predictionDiag = { stored };
+
+    const highCritical = allSignals.filter(
       (s) => s.severity === "high" || s.severity === "critical",
     );
+    if (highCritical.length > 0) {
+      predictionSignals = highCritical;
+    } else {
+      predictionSignals = allSignals
+        .filter((s) => s.severity === "medium")
+        .slice(0, 3);
+    }
   } catch (err) {
     logger.warn("[assembleEveningSummary] prediction signals query failed", {
       error: err instanceof Error ? err.message : String(err),
@@ -356,6 +379,7 @@ export async function assembleEveningSummary(
     topStories,
     watchlistMovers,
     predictionSignals,
+    predictionDiag,
     taSummary,
     newsCount,
     generatedAt,

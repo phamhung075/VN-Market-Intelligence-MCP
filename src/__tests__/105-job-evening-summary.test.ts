@@ -441,6 +441,7 @@ describe("Task 105 — Evening Summary Job", () => {
             topStories: [],
             watchlistMovers: [],
             predictionSignals: [],
+            predictionDiag: { stored: 0 },
             taSummary: [],
             newsCount: 0,
             generatedAt: new Date().toISOString(),

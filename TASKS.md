@@ -9,7 +9,7 @@
 | ID | Title | Status | Role |
 |----|-------|--------|------|
 | 1354 | test(prediction-diag): TDD 1354-prediction-signals-fallback.test.ts — written FIRST | Done | QA |
-| 1355 | feat(prediction-diag): predictionDiag block + medium-severity fallback in assembleEveningSummary | Todo | Dev |
+| 1355 | feat(prediction-diag): predictionDiag block + medium-severity fallback in assembleEveningSummary | Review | Dev |
 
 > Tech design: `docs/TECH_120.md` (APPROVED_BY_ARCHITECT)
 

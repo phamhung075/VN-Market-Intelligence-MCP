@@ -176,7 +176,6 @@ describe("AC-1: high/critical signals pass through — medium excluded when high
     const summary = await assembleEveningSummary({
       db,
       reportsDir: tmpDir,
-      // @ts-expect-error — getPredictionSignalsFn added by task 1355
       getPredictionSignalsFn: () =>
         Promise.resolve([highSignal, criticalSignal, mediumSignal]),
     });
@@ -188,7 +187,6 @@ describe("AC-1: high/critical signals pass through — medium excluded when high
     expect(severities).toContain("critical");
     expect(severities).not.toContain("medium");
 
-    // @ts-expect-error — predictionDiag added by task 1355
     expect(summary.predictionDiag.stored).toBe(3);
 
     db.close();
@@ -221,7 +219,6 @@ describe("AC-2: medium-severity fallback — up to 3 signals when no high/critic
     const summary = await assembleEveningSummary({
       db,
       reportsDir: tmpDir,
-      // @ts-expect-error — getPredictionSignalsFn added by task 1355
       getPredictionSignalsFn: () => Promise.resolve(signals),
     });
 
@@ -231,7 +228,6 @@ describe("AC-2: medium-severity fallback — up to 3 signals when no high/critic
       expect(s.severity).toBe("medium");
     }
 
-    // @ts-expect-error — predictionDiag added by task 1355
     expect(summary.predictionDiag.stored).toBe(4);
 
     db.close();
@@ -257,13 +253,11 @@ describe("AC-3: empty signals — predictionSignals: [], predictionDiag.stored: 
     const summary = await assembleEveningSummary({
       db,
       reportsDir: tmpDir,
-      // @ts-expect-error — getPredictionSignalsFn added by task 1355
       getPredictionSignalsFn: () => Promise.resolve([]),
     });
 
     expect(Array.isArray(summary.predictionSignals)).toBe(true);
     expect(summary.predictionSignals.length).toBe(0);
-    // @ts-expect-error — predictionDiag added by task 1355
     expect(summary.predictionDiag.stored).toBe(0);
 
     db.close();
@@ -298,7 +292,6 @@ describe("AC-4: mixed severity — high takes priority, predictionDiag.stored re
     const summary = await assembleEveningSummary({
       db,
       reportsDir: tmpDir,
-      // @ts-expect-error — getPredictionSignalsFn added by task 1355
       getPredictionSignalsFn: () => Promise.resolve(signals),
     });
 
@@ -308,7 +301,6 @@ describe("AC-4: mixed severity — high takes priority, predictionDiag.stored re
       expect(s.severity).toBe("high");
     }
 
-    // @ts-expect-error — predictionDiag added by task 1355
     expect(summary.predictionDiag.stored).toBe(5);
 
     db.close();
@@ -337,7 +329,6 @@ describe("AC-5: getPredictionSignalsFn throws — error swallowed, logger.warn c
       summary = await assembleEveningSummary({
         db,
         reportsDir: tmpDir,
-        // @ts-expect-error — getPredictionSignalsFn added by task 1355
         getPredictionSignalsFn: () => {
           throw new Error("simulated prediction fetch failure");
         },
@@ -350,7 +341,6 @@ describe("AC-5: getPredictionSignalsFn throws — error swallowed, logger.warn c
     expect(summary).toBeDefined();
     expect(Array.isArray(summary!.predictionSignals)).toBe(true);
     expect(summary!.predictionSignals.length).toBe(0);
-    // @ts-expect-error — predictionDiag added by task 1355
     expect(summary!.predictionDiag.stored).toBe(0);
 
     db.close();
@@ -364,7 +354,6 @@ describe("AC-5: getPredictionSignalsFn throws — error swallowed, logger.warn c
     await assembleEveningSummary({
       db,
       reportsDir: tmpDir,
-      // @ts-expect-error — getPredictionSignalsFn added by task 1355
       getPredictionSignalsFn: () => {
         throw new Error("simulated prediction fetch failure for warn check");
       },
