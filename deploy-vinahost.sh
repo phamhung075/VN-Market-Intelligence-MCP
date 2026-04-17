@@ -1,6 +1,6 @@
 #!/bin/bash
 # ═══════════════════════════════════════════════════════════════════════════
-# Vinahost VPS Deploy — All 5 VN data proxy services
+# Vinahost VPS Deploy — All 6 VN data proxy services
 # Usage: ./deploy-vinahost.sh
 #
 # Deploys to Vinahost Vietnam ($VINAHOST_IP) — in-country, no geo-block.
@@ -12,6 +12,7 @@
 #   vn-news-fetch.service     — CafeF/VnExpress/VnEconomy RSS every 15m
 #   vn-sbv-fetch.service      — Vietcombank FX rates every 30m
 #   vn-foreign-flow.service   — foreign flow from VPS API every 60s
+#   vn-ohlcv-backfill.timer   — OHLCV backfill poller every 30m (oneshot)
 # ═══════════════════════════════════════════════════════════════════════════
 
 set -e
@@ -156,15 +157,39 @@ echo "=== vn-foreign-flow status ==="
 systemctl --no-pager -l status vn-foreign-flow.service | head -12
 FFEOF
 
+# ── 6. OHLCV backfill poller ────────────────────────────────────────────────
+echo ""
+echo "Deploying OHLCV backfill poller..."
+TMP=$(mktemp)
+sed -e "s|__MCP_BASE__|${MCP_BASE}|g" \
+    -e "s|__API_KEY__|${VPS_PUSH_API_KEY}|g" \
+    vps-scripts/ohlcv-backfill-poll.sh > "$TMP"
+$SCP "$TMP" ${VH_USER}@${VH_IP}:/root/ohlcv-backfill-poll.sh
+$SCP vps-scripts/vn-ohlcv-backfill.service ${VH_USER}@${VH_IP}:/etc/systemd/system/vn-ohlcv-backfill.service
+$SCP vps-scripts/vn-ohlcv-backfill.timer   ${VH_USER}@${VH_IP}:/etc/systemd/system/vn-ohlcv-backfill.timer
+rm "$TMP"
+
+$SSH << 'BACKFILLEOF'
+set -e
+chmod +x /root/ohlcv-backfill-poll.sh
+systemctl daemon-reload
+systemctl enable vn-ohlcv-backfill.timer
+systemctl restart vn-ohlcv-backfill.timer
+sleep 2
+echo "=== vn-ohlcv-backfill timer status ==="
+systemctl --no-pager -l status vn-ohlcv-backfill.timer | head -12
+BACKFILLEOF
+
 echo ""
 echo "══════════════════════════════════════════"
-echo " Deploy complete — Vinahost Vietnam owns all 5 services"
+echo " Deploy complete — Vinahost Vietnam owns all 6 services"
 echo ""
 echo " Price proxy:        systemctl status vn-price-fetch"
 echo " BCTC proxy:         systemctl status vn-bctc-fetch"
 echo " News RSS proxy:     systemctl status vn-news-fetch"
 echo " SBV/FX proxy:       systemctl status vn-sbv-fetch"
 echo " Foreign flow proxy: systemctl status vn-foreign-flow"
+echo " OHLCV backfill:     systemctl status vn-ohlcv-backfill.timer"
 echo ""
-echo " Logs: /var/log/vn-{price,bctc,news,sbv,foreign-flow}.log"
+echo " Logs: /var/log/vn-{price,bctc,news,sbv,foreign-flow,ohlcv-backfill}.log"
 echo "══════════════════════════════════════════"
