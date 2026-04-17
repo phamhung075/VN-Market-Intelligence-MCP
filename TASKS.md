@@ -4,14 +4,36 @@
 
 ---
 
-## Sprint 138 — Active
+## Sprint 140 — Active
+
+| ID | Title | Status | Role |
+|----|-------|--------|------|
+| 1394 | test(alert-digest-diacritics): TDD test 1394-alert-digest-diacritics.test.ts — written FIRST | Review | Dev |
+| 1395 | fix(alert-digest-diacritics): replace unaccented Vietnamese strings in assembleAlertDigest MARKET message | Todo | Dev |
+
+> Sprint goal: `SPRINT_GOAL.md` | Success: no unaccented labels in MARKET alert digest; 5056+ pass, 0 fail
+
+---
+
+## Sprint 139 — Complete
+
+| ID | Title | Status | Role |
+|----|-------|--------|------|
+| 1392 | test(calibration-diacritics): TDD test 1392-calibration-report-diacritics.test.ts — written FIRST | Done | Dev |
+| 1393 | fix(calibration-diacritics): replace unaccented Vietnamese strings in calibrationReportJob MARKET message | Done | Dev |
+
+> Sprint goal: `SPRINT_GOAL.md` | COMPLETE 2026-04-17 | 5035 pass, 0 fail, 21 skip
+
+---
+
+## Sprint 138 — Complete
 
 | ID | Title | Status | Role |
 |----|-------|--------|------|
 | 1389 | test(weekly-portfolio-filler): TDD test 1389-weekly-portfolio-filler.test.ts — written FIRST | Done | Dev |
-| 1390 | fix(weekly-portfolio-filler): silent skip when no positions + proper Vietnamese diacritics in formatWeeklyReport | Review | Dev |
+| 1390 | fix(weekly-portfolio-filler): silent skip when no positions + proper Vietnamese diacritics in formatWeeklyReport | Done | Dev |
 
-> Sprint goal: `SPRINT_GOAL.md` | Success: no filler msg when positions=0; proper diacritics throughout; 5026+ pass, 0 fail
+> Sprint goal: `SPRINT_GOAL.md` | COMPLETE 2026-04-17 | 5030 pass, 0 fail, 21 skip
 
 ---
 
@@ -154,35 +176,15 @@
 
 ## Task Details (active tasks only)
 
-### 1389 — TDD test: 1389-weekly-portfolio-filler.test.ts (RED first)
+### 1394 — TDD test: 1394-alert-digest-diacritics.test.ts (RED first)
 
-branch: task/1389-weekly-portfolio-filler-tdd
-layer: scheduler
-depends_on: none
-
-acceptance_criteria:
-- Given formatWeeklyReport unchanged (still emits "(Chua co vi the nao trong danh muc)" when rows=0, unaccented labels)
-- When T1–T4 written per TECH_138 test table
-- T1: rows=[] → formatWeeklyReport output does NOT contain "(Chua co vi the nao"
-- T2: rows=[] → runWeeklyPortfolioReport with no positions = NO Telegram send (silent skip)
-- T3: rows present → output contains proper diacritics "Giá đầu tuần" not "Gia dau tuan"
-- T4: rows present → output contains "Tổng P&L tuần" not "Tong P&L tuan"
-- Then bun test src/__tests__/1389-weekly-portfolio-filler.test.ts = T1+T2+T3+T4 FAIL (RED)
-- Then bun tsc --noEmit = 0 errors
+context: docs/handoffs/TASK_1394.md
 
 ---
 
-### 1390 — fix: silent skip when no positions + proper diacritics in formatWeeklyReport
+### 1395 — fix: proper Vietnamese diacritics in assembleAlertDigest MARKET message
 
-branch: task/1390-weekly-portfolio-filler-fix
-layer: scheduler
-depends_on: [1389 merged]
+context: docs/handoffs/TASK_1395.md
 
-acceptance_criteria:
-- Given 1389 T1–T4 RED
-- When formatWeeklyReport patched: replace "(Chua co vi the nao trong danh muc)" with silent skip in runWeeklyPortfolioReport; upgrade all Vietnamese labels to proper diacritics
-- Then bun test src/__tests__/1389-weekly-portfolio-filler.test.ts = all PASS (GREEN)
-- Then bun test full suite = 5026+ pass, 0 fail, 21+ skip
-- Then bun tsc --noEmit = 0 errors
-- Then grep "Chua co\|gia dau\|Tong P&L" src/scheduler/weeklyPortfolioReportJob.ts = 0 matches
+---
 
