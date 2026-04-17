@@ -253,9 +253,9 @@ describe("Task 1358 — ohlcvDailyAggregatorJob (RED phase, all fail until 1359)
     expect(result.rowsWritten).toBe(0);
     expect(result.tickersSkipped).toBe(1);
 
-    // No row for today's VN date
+    // No row for today's VN date (bun:sqlite .get() returns null when no row found)
     const row = db.prepare("SELECT * FROM daily_ohlcv WHERE code = ? AND date = ?").get("VCB", VN_DATE);
-    expect(row).toBeUndefined();
+    expect(row).toBeNull();
   });
 
 });

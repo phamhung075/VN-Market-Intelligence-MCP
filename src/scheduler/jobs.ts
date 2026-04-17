@@ -57,6 +57,7 @@ import { runTaAlertScan } from './taAlertScanJob.js'
 import { runBbAlertScan } from './bbAlertScanJob.js'
 import { runTaAlertNotifierCron } from './taAlertNotifierJob.js'
 import { runOhlcvStartupProbe } from './ohlcvStartupProbe.js'
+import { runOhlcvDailyAggregator } from './ohlcvDailyAggregatorJob.js'
 import { getDb } from '../infrastructure/db/schema.js'
 import { recordJobRun } from '../infrastructure/db/cronJobRunStore.js'
 
@@ -128,6 +129,8 @@ export const CRONS = {
   bbAlertScan:            Bun.env.CRON_BB_ALERT_SCAN                  ?? '*/15 2-8 * * 1-5',
   /** taAlertNotifier — deliver unnotified TA alerts to market channel every 15min VN market hours (task 1314) */
   taAlertNotifier:        Bun.env.CRON_TA_ALERT_NOTIFIER               ?? '*/15 2-8 * * 1-5',
+  /** ohlcvDailyAggregator — aggregate intraday ticks into daily_ohlcv at 16:00 UTC (23:00 VN) Mon-Fri (task 1359, Sprint 122) */
+  ohlcvDailyAggregator:   Bun.env.CRON_OHLCV_DAILY_AGGREGATOR          ?? '0 16 * * 1-5',
 }
 
 function log(msg: string) {
@@ -465,6 +468,12 @@ export function startScheduler() {
       }
       return { rowsWritten: result.sent }
     })
+  }, { timezone: 'UTC' })
+
+  // 16:00 UTC (23:00 VN) Mon-Fri — OHLCV daily aggregator — task 1359, Sprint 122
+  // Aggregates intraday market_prices_history ticks into daily_ohlcv rows for each watchlist ticker.
+  cron.schedule(CRONS.ohlcvDailyAggregator, () => {
+    runOhlcvDailyAggregator().catch(console.error)
   }, { timezone: 'UTC' })
 
   log(`[scheduler] jobs registered — ${Object.keys(CRONS).length} cron keys in CRONS map (incl. WAL checkpoint + 5 summary) + vps-watchdog active`)
