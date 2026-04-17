@@ -4,6 +4,14 @@
 
 ---
 
+## Sprint 105 — Complete
+
+| ID | Title | Status |
+|----|-------|--------|
+| 1328 | fix(test-timeout): 137-fix-alert-pipeline Step E — add DB_PATH=:memory: + inject getRecentAlertHistoryFn [TECH_105] | Done |
+
+---
+
 ## Sprint 104 — Complete
 
 | ID | Title | Status |
@@ -252,3 +260,37 @@
 - AC-3: above-mean extreme → summary contains "cực cao" (not "cực đoan")
 - No other test files regress (`bun test` full suite passes)
 - `bun tsc --noEmit` 0 errors
+
+---
+
+## Task Details (Sprint 105)
+
+### 1328 — fix(test-timeout): 137 Step E tests — DB isolation + missing dep injection
+
+**Branch:** `task/1328-test137-step-e-timeout`
+**Layer:** test (test file only — no production code changes)
+**Depends on:** none
+**Status:** Backlog
+**Role:** Dev
+
+**Root cause:** `src/__tests__/137-fix-alert-pipeline.test.ts` has no `process.env["DB_PATH"] = ":memory:"` at file top. The 4 Step E tests call `runIntelligenceCycle` which internally calls `getDb()` via dynamic imports at multiple points (macro alert step A2.5, step E cooldown, etc.). Without `:memory:` set before module load, these resolve to the real production SQLite file — triggering WAL replay, disk I/O, and potential lock contention. Result: 30s timeout per test × 4 = 120s wasted in every full suite run, masking real regressions.
+
+**Files to read first:**
+- `src/__tests__/137-fix-alert-pipeline.test.ts` — full file, identify all 4 Step E test cases
+- `src/scheduler/intelligenceCycleJob.ts` lines 585–870 — understand all `getDb()` call sites inside the cycle so we know which deps to inject
+
+**Files to modify:**
+- MODIFY: `src/__tests__/137-fix-alert-pipeline.test.ts`
+  - ADD line 1: `process.env["DB_PATH"] = ":memory:";` (before all imports — same pattern as test 1192)
+  - In all 4 Step E test fixtures (`runIntelligenceCycle` calls), ADD: `getRecentAlertHistoryFn: async () => []` to prevent fallthrough to `getCooldownDb()` real-DB path
+  - Verify the 4 existing Step E tests still correctly test their AC (no semantic change — only DB isolation fix)
+
+**Acceptance Criteria:**
+
+**Given** the modified test file
+**When** `bun test ./src/__tests__/137-fix-alert-pipeline.test.ts` runs
+**Then**
+- All Step E tests (4 cases) pass / 0 fail
+- Total test file runtime under 10s
+- `bun tsc --noEmit` 0 errors
+- Full suite: 0 new failures vs baseline (4890 pass baseline from Sprint 104)

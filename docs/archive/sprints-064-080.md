@@ -2,6 +2,16 @@
 
 ---
 
+## Sprint 105 — Test isolation: eliminate 30s timeouts in test 137 Step E (Done 2026-04-17)
+
+1 task. Test-only fix — no production code changed. Added `process.env["DB_PATH"] = ":memory:"` at line 1 of `137-fix-alert-pipeline.test.ts` and injected `getRecentAlertHistoryFn: async () => []` in all 6 `runIntelligenceCycle` calls in the Step E suite. Eliminates 4 × 30s timeout = 120s waste per full suite run. 19/19 tests pass in 735ms.
+
+| ID | Title | Status |
+|----|-------|--------|
+| 1328 | fix(test-timeout): 137-fix-alert-pipeline Step E — add DB_PATH=:memory: + inject getRecentAlertHistoryFn | Done |
+
+---
+
 ## Sprint 104 — Direction-aware macro deviation labels (Done 2026-04-16)
 
 2 tasks. Pure domain fix + TDD tests. Fixed classifyDeviation() in macroThresholds.ts — below-mean deviations now use LEVEL_VI_BELOW map ("thấp hơn TB"/"thấp bất thường"/"cực thấp") instead of the above-mean map. Also renamed LEVEL_VI.extreme from "cực đoan" → "cực cao". 6 test cases added covering above/below × elevated/high/extreme.

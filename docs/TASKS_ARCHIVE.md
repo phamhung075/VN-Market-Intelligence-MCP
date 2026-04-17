@@ -10,7 +10,7 @@ Active board → `TASKS.md`
 
 | File | Sprints | Period | Summary |
 |------|---------|--------|---------|
-| [sprints-064-080.md](archive/sprints-064-080.md) | 064–104 | 2026-04-12 → 04-16 | Knowledge sync, prediction resolution, Bun.env purge, briefing enrichment, market message review, calibration labels, per-ticker intelligence, BCTC pipeline fix, evening pipeline fix, RSS Atom support, pipeline health tool, pipeline watchdog, TE RSS fallback chain, evening summary empty-content fallback, domain bug batch (cascade/NER/relevance), push-news all 9 VPS sources, direction-aware macro deviation labels |
+| [sprints-064-080.md](archive/sprints-064-080.md) | 064–105 | 2026-04-12 → 04-17 | Knowledge sync, prediction resolution, Bun.env purge, briefing enrichment, market message review, calibration labels, per-ticker intelligence, BCTC pipeline fix, evening pipeline fix, RSS Atom support, pipeline health tool, pipeline watchdog, TE RSS fallback chain, evening summary empty-content fallback, domain bug batch (cascade/NER/relevance), push-news all 9 VPS sources, direction-aware macro deviation labels, test isolation (137 Step E 30s timeout fix) |
 | [sprints-059-063.md](archive/sprints-059-063.md) | 059–063 | 2026-04-12 → 04-13 | Prediction engine B+C+D, foreign flow VPS, cron observability, insider detection |
 | [sprints-054-058.md](archive/sprints-054-058.md) | 054–058 | 2026-04-08 → 04-12 | Position ledger, /ask queue, alert narrowing, Kinh Dich default, observability, BCTC fallback, evidence store, OCR fix |
 | [sprints-048-053.md](archive/sprints-048-053.md) | 048–053 | 2026-04-06 → 04-07 | OCR pipeline, Kinh Dich differentiation, 3-channel Telegram migration |
