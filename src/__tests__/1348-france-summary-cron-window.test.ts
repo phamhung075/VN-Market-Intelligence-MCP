@@ -30,6 +30,34 @@ function makeDb(): Database {
     )
   `);
   db.exec(`
+    CREATE TABLE IF NOT EXISTS market_prices_history (
+      code       TEXT NOT NULL,
+      price      REAL NOT NULL,
+      volume     REAL NOT NULL,
+      fetched_at TEXT NOT NULL,
+      exchange   TEXT DEFAULT 'HOSE',
+      PRIMARY KEY (code, fetched_at)
+    )
+  `);
+  db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_mph_code_fetched
+      ON market_prices_history(code, fetched_at DESC)
+  `);
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS watchlist (
+      code   TEXT PRIMARY KEY,
+      domain TEXT NOT NULL DEFAULT 'unknown'
+    )
+  `);
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS daily_ohlcv (
+      code TEXT NOT NULL, date TEXT NOT NULL,
+      open REAL NOT NULL, high REAL NOT NULL, low REAL NOT NULL,
+      close REAL NOT NULL, volume REAL NOT NULL DEFAULT 0,
+      updated_at TEXT NOT NULL, PRIMARY KEY (code, date)
+    )
+  `);
+  db.exec(`
     CREATE TABLE IF NOT EXISTS alerts (
       id                    TEXT PRIMARY KEY,
       triggered_at          TEXT NOT NULL,
@@ -64,6 +92,12 @@ function seedMover(db: Database): void {
     INSERT OR REPLACE INTO market_prices (code, price, change_pct, updated_at)
     VALUES ('VCB', 88000, 3.5, datetime('now'))
   `);
+  db.exec(`
+    INSERT OR REPLACE INTO market_prices_history (code, price, volume, fetched_at) VALUES
+      ('VCB', 85000, 1000000, '2026-04-15T08:00:00'),
+      ('VCB', 88000, 1000000, '2026-04-16T08:00:00')
+  `);
+  db.exec(`INSERT OR REPLACE INTO watchlist (code) VALUES ('VCB')`);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

@@ -62,6 +62,20 @@ function makeDb(): Database {
     )
   `)
   db.exec(`
+    CREATE TABLE IF NOT EXISTS market_prices_history (
+      code       TEXT NOT NULL,
+      price      REAL NOT NULL,
+      volume     REAL NOT NULL,
+      fetched_at TEXT NOT NULL,
+      exchange   TEXT DEFAULT 'HOSE',
+      PRIMARY KEY (code, fetched_at)
+    )
+  `)
+  db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_mph_code_fetched
+      ON market_prices_history(code, fetched_at DESC)
+  `)
+  db.exec(`
     CREATE TABLE IF NOT EXISTS alerts (
       id                    TEXT PRIMARY KEY,
       triggered_at          TEXT NOT NULL,
@@ -159,6 +173,11 @@ describe("Task 1364 — France TA detail tests", () => {
       INSERT INTO market_prices (code, price, change_pct, updated_at)
       VALUES ('VHM', 55000, 3.5, '2026-04-17T06:00:00')
     `)
+    db.exec(`
+      INSERT OR REPLACE INTO market_prices_history (code, price, volume, fetched_at) VALUES
+        ('VHM', 53100, 1000000, '2026-04-16T08:00:00'),
+        ('VHM', 55000, 1000000, '2026-04-17T08:00:00')
+    `)
 
     // Inject computeTaFn: returns overbought signal for any code
     const computeTaFn = (code: string, _db: Database): TaSignalRow => ({
@@ -200,6 +219,11 @@ describe("Task 1364 — France TA detail tests", () => {
       VALUES ('HPG', 22000, -5.2, '2026-04-17T06:00:00')
     `)
     db.exec(`INSERT INTO watchlist (code) VALUES ('HPG')`)
+    db.exec(`
+      INSERT OR REPLACE INTO market_prices_history (code, price, volume, fetched_at) VALUES
+        ('HPG', 23200, 1000000, '2026-04-16T08:00:00'),
+        ('HPG', 22000, 1000000, '2026-04-17T08:00:00')
+    `)
 
     // computeTaFn returns null — simulates < 8 daily_ohlcv rows
     const computeTaFn = (_code: string, _db: Database): TaSignalRow | null => null
@@ -235,6 +259,11 @@ describe("Task 1364 — France TA detail tests", () => {
     db.exec(`
       INSERT INTO market_prices (code, price, change_pct, updated_at)
       VALUES ('VCB', 88000, 3.5, '2026-04-17T06:00:00')
+    `)
+    db.exec(`
+      INSERT OR REPLACE INTO market_prices_history (code, price, volume, fetched_at) VALUES
+        ('VCB', 85000, 1000000, '2026-04-16T08:00:00'),
+        ('VCB', 88000, 1000000, '2026-04-17T08:00:00')
     `)
 
     const taRow: TaSignalRow = {

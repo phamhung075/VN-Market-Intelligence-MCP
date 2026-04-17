@@ -23,6 +23,34 @@ function makeDb(): Database {
     )
   `)
   db.exec(`
+    CREATE TABLE IF NOT EXISTS market_prices_history (
+      code       TEXT NOT NULL,
+      price      REAL NOT NULL,
+      volume     REAL NOT NULL,
+      fetched_at TEXT NOT NULL,
+      exchange   TEXT DEFAULT 'HOSE',
+      PRIMARY KEY (code, fetched_at)
+    )
+  `)
+  db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_mph_code_fetched
+      ON market_prices_history(code, fetched_at DESC)
+  `)
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS watchlist (
+      code   TEXT PRIMARY KEY,
+      domain TEXT NOT NULL DEFAULT 'unknown'
+    )
+  `)
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS daily_ohlcv (
+      code TEXT NOT NULL, date TEXT NOT NULL,
+      open REAL NOT NULL, high REAL NOT NULL, low REAL NOT NULL,
+      close REAL NOT NULL, volume REAL NOT NULL DEFAULT 0,
+      updated_at TEXT NOT NULL, PRIMARY KEY (code, date)
+    )
+  `)
+  db.exec(`
     CREATE TABLE IF NOT EXISTS alerts (
       id                    TEXT PRIMARY KEY,
       triggered_at          TEXT NOT NULL,
@@ -87,6 +115,22 @@ describe("Task 1316/1317 — franceSummaryJob rewrite", () => {
         ('VNM', 75000, 1.1, '2026-04-15T06:00:00'),
         ('FPT', 110000, 4.8, '2026-04-15T06:00:00'),
         ('TCB', 33000, 0.2, '2026-04-15T06:00:00')
+    `)
+    db.exec(`
+      INSERT OR REPLACE INTO market_prices_history (code, price, volume, fetched_at) VALUES
+        ('VCB', 85000, 1000000, '2026-04-14T08:00:00'),
+        ('VCB', 88000, 1000000, '2026-04-15T08:00:00'),
+        ('HPG', 23200, 1000000, '2026-04-14T08:00:00'),
+        ('HPG', 22000, 1000000, '2026-04-15T08:00:00'),
+        ('VNM', 74200, 1000000, '2026-04-14T08:00:00'),
+        ('VNM', 75000, 1000000, '2026-04-15T08:00:00'),
+        ('FPT', 105000, 1000000, '2026-04-14T08:00:00'),
+        ('FPT', 110000, 1000000, '2026-04-15T08:00:00'),
+        ('TCB', 32900, 1000000, '2026-04-14T08:00:00'),
+        ('TCB', 33000, 1000000, '2026-04-15T08:00:00')
+    `)
+    db.exec(`
+      INSERT OR REPLACE INTO watchlist (code) VALUES ('VCB'), ('HPG'), ('VNM'), ('FPT'), ('TCB')
     `)
 
     const sends: string[] = []
@@ -154,6 +198,12 @@ describe("Task 1316/1317 — franceSummaryJob rewrite", () => {
       INSERT INTO market_prices (code, price, change_pct, updated_at) VALUES
         ('VCB', 88000, 3.5, '2026-04-15T06:00:00')
     `)
+    db.exec(`
+      INSERT OR REPLACE INTO market_prices_history (code, price, volume, fetched_at) VALUES
+        ('VCB', 85000, 1000000, '2026-04-14T08:00:00'),
+        ('VCB', 88000, 1000000, '2026-04-15T08:00:00')
+    `)
+    db.exec(`INSERT OR REPLACE INTO watchlist (code) VALUES ('VCB')`)
 
     const sends: string[] = []
     const sendFn = async (t: string) => { sends.push(t); return true }
@@ -215,6 +265,22 @@ describe("Task 1316/1317 — franceSummaryJob rewrite", () => {
         ('D', 1000, -5.0, '2026-04-15T06:00:00'),
         ('E', 1000, 4.0, '2026-04-15T06:00:00')
     `)
+    db.exec(`
+      INSERT OR REPLACE INTO market_prices_history (code, price, volume, fetched_at) VALUES
+        ('A', 926, 1000000, '2026-04-14T08:00:00'),
+        ('A', 1000, 1000000, '2026-04-15T08:00:00'),
+        ('B', 1075, 1000000, '2026-04-14T08:00:00'),
+        ('B', 1000, 1000000, '2026-04-15T08:00:00'),
+        ('C', 939, 1000000, '2026-04-14T08:00:00'),
+        ('C', 1000, 1000000, '2026-04-15T08:00:00'),
+        ('D', 1053, 1000000, '2026-04-14T08:00:00'),
+        ('D', 1000, 1000000, '2026-04-15T08:00:00'),
+        ('E', 961, 1000000, '2026-04-14T08:00:00'),
+        ('E', 1000, 1000000, '2026-04-15T08:00:00')
+    `)
+    db.exec(`
+      INSERT OR REPLACE INTO watchlist (code) VALUES ('A'), ('B'), ('C'), ('D'), ('E')
+    `)
 
     const result = await runFranceSummary({ db, sendFn: noopSend, nowFn: now })
     expect(result.moverCount).toBe(3)
@@ -259,6 +325,12 @@ describe("Task 1316/1317 — franceSummaryJob rewrite", () => {
       INSERT INTO market_prices (code, price, change_pct, updated_at) VALUES
         ('VCB', 88000, 3.5, '2026-04-15T06:00:00')
     `)
+    db.exec(`
+      INSERT OR REPLACE INTO market_prices_history (code, price, volume, fetched_at) VALUES
+        ('VCB', 85000, 1000000, '2026-04-14T08:00:00'),
+        ('VCB', 88000, 1000000, '2026-04-15T08:00:00')
+    `)
+    db.exec(`INSERT OR REPLACE INTO watchlist (code) VALUES ('VCB')`)
 
     const sendFn = async (_t: string): Promise<boolean> => {
       throw new Error("Telegram down")
