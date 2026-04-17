@@ -90,6 +90,7 @@ describe("Task 1332 — pollNews SOURCE_DISPLAY_NAMES: health tracked under disp
     await pollNews({
       db,
       watchlist: [],
+      ragRetriever: async () => [],
       fetchers: {
         reuters: async () => [{
           title: "Vietnam economy news",
@@ -128,6 +129,7 @@ describe("Task 1332 — pollNews SOURCE_DISPLAY_NAMES: health tracked under disp
     await pollNews({
       db,
       watchlist: [],
+      ragRetriever: async () => [],
       fetchers: {
         reuters: async () => [],
         cafef: async () => [], // empty — triggers recordFailure path
@@ -165,6 +167,7 @@ describe("Task 1332 — pollNews SOURCE_DISPLAY_NAMES: health tracked under disp
     await pollNews({
       db,
       watchlist: [],
+      ragRetriever: async () => [],
       fetchers: {
         reuters: async () => [{
           title: "Vietnam economy news",
@@ -202,7 +205,13 @@ describe("Task 1332 — pollNews SOURCE_DISPLAY_NAMES: health tracked under disp
     await pollNews({
       db,
       watchlist: [],
+      ragRetriever: async () => [],
       fetchers: {
+        reuters: async () => [],
+        cafef: async () => [],
+        vnexpress: async () => [],
+        vneconomy: async () => [],
+        tradingeconomics: async () => [],
         // "unknown_source_xyz" has no entry in SOURCE_DISPLAY_NAMES
         // so it should fall back to the raw key
         unknown_source_xyz: async () => [{
