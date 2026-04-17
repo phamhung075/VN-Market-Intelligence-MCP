@@ -4,11 +4,11 @@
   "lastUpdated": "2026-04-16",
   "currentSprint": 113,
   "previousSprint": { "number": 112, "status": "COMPLETE", "completedDate": "2026-04-16" },
-  "sprintGoal": "",
+  "sprintGoal": "fix(test-crash): LanceDB exit-132 crash in test 1332 — inject ragRetriever stub",
   "toolCount": 98,
   "schedulerFileCount": 32,
   "knowledgeFileCount": 15,
   "devAgentCount": 13,
   "analysisAgentCount": 9,
-  "totalTasksDone": 295
+  "totalTasksDone": 296
 }

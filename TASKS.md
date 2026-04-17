@@ -4,6 +4,14 @@
 
 ---
 
+## Sprint 113 — Complete
+
+| ID | Title | Status | Role |
+|----|-------|--------|------|
+| 1341 | fix(test-crash): inject ragRetriever stub in test 1332 to eliminate LanceDB exit-132 crash | Done | Dev |
+
+---
+
 ## Sprint 112 — Complete
 
 | ID | Title | Status | Role |
