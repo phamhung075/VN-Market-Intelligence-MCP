@@ -179,6 +179,11 @@ describe("Task 1221 — Scheduler DB lock", () => {
       CREATE TABLE IF NOT EXISTS portfolio_pnl_snapshots (id INTEGER PRIMARY KEY, date TEXT, code TEXT, shares INTEGER, avg_price REAL, current_price REAL, pnl_pct REAL, pnl_amount REAL, snapshot_at TEXT, UNIQUE(date, code));
     `);
 
+    // Seed one open position so the early-return guard (no positions → skip) does not fire
+    db.prepare(
+      "INSERT INTO positions (code, shares, avg_price, opened_at) VALUES (?, ?, ?, ?)"
+    ).run("VCB", 100, 83000, "2025-01-01T00:00:00Z");
+
     // Insert a stale lock (70 minutes ago)
     db.prepare(
       "INSERT INTO scheduler_locks (job_name, acquired_at) VALUES (?, datetime('now', '-70 minutes'))"
