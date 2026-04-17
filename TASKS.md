@@ -4,6 +4,17 @@
 
 ---
 
+## Sprint 119 — Active
+
+| ID | Title | Status | Role |
+|----|-------|--------|------|
+| 1352 | test(ohlcv-startup-probe): TDD test 1352-ohlcv-startup-probe.test.ts — written FIRST | Review | Dev |
+| 1353 | feat(ohlcv-startup-probe): ohlcvStartupProbe.ts + jobs.ts wire-up | Review | Dev |
+
+> Tech design: `docs/TECH_119.md` (APPROVED_BY_ARCHITECT)
+
+---
+
 ## Sprint 118 — Active
 
 | ID | Title | Status | Role |
