@@ -16,19 +16,24 @@
 
 ---
 
-## Current Sprint — 132 (ACTIVE)
+## Sprint 139 — COMPLETE (2026-04-17)
 
-**Goal:** Auto-run `./deploy-vinahost.sh` after merge when `vps-scripts/` or `deploy-vinahost.sh` changed — eliminate the manual VPS deploy step so the full automation loop is truly autonomous.
+**Goal:** Fix unaccented Vietnamese text in `calibrationReportJob` MARKET channel output.
+**Status:** COMPLETE. Tasks 1392+1393 merged. 5035 pass, 0 fail, 21 skip.
 
-**Scope:**
-- IN: `scripts/maybe-deploy-vps.sh` — shell helper: checks `git diff main~1 --name-only` for `vps-scripts/` or `deploy-vinahost.sh`; runs `./deploy-vinahost.sh` if match, skips with a WORK-channel note if no match
-- IN: `dev-standards.md` — add step 4a to Branch Hygiene: "If changed files include `vps-scripts/**` or `deploy-vinahost.sh`, run `./scripts/maybe-deploy-vps.sh` before deleting the task branch"
-- IN: TDD test `src/__tests__/1378-vps-auto-deploy.test.ts` — validate the detection logic: shell script exits 0 and prints "VPS deploy triggered" when VPS files are present in the diff; exits 0 and prints "VPS deploy skipped" when no VPS files changed
-- OUT: Changes to TypeScript source, cron jobs, alert pipeline, MCP tools
+---
 
-**Success metric:** After any merge that touches `vps-scripts/` or `deploy-vinahost.sh`, the developer agent runs `./scripts/maybe-deploy-vps.sh` as part of branch hygiene — no manual step needed. `bun tsc --noEmit` clean. TDD tests pass.
+## Sprint 140 — COMPLETE (2026-04-17)
 
-**Status:** ACTIVE — tasks 1378+1379
+**Goal:** Fix unaccented Vietnamese text in `assembleAlertDigest` MARKET weekday digest.
+**Status:** COMPLETE. Tasks 1394+1395 merged. 5061 pass, 0 fail, 21 skip.
+
+---
+
+## Sprint 138 — COMPLETE (2026-04-17)
+
+**Goal:** Fix `weeklyPortfolioReportJob` — silent skip when no positions + proper Vietnamese diacritics throughout.
+**Status:** COMPLETE. Tasks 1389+1390 merged + 1391 regression fix. 5030 pass, 0 fail, 21 skip.
 
 ---
 
