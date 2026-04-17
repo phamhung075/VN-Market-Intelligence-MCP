@@ -112,6 +112,7 @@ function fetchTopMovers(db: Database): MoverRow[] {
 
 /**
  * Fetches top 3 alerts ordered by severity rank (critical > high > warning > info).
+ * Only alerts triggered within the last 24 hours are considered (FR-1).
  * Returns [] on any DB error (per-query isolation).
  */
 function fetchTopAlerts(db: Database): AlertRow[] {
@@ -120,6 +121,7 @@ function fetchTopAlerts(db: Database): AlertRow[] {
       .prepare<AlertRow, []>(`
         SELECT id, severity, message, triggered_at
         FROM alerts
+        WHERE triggered_at >= datetime('now', '-24 hours')
         ORDER BY ${SEVERITY_CASE}, triggered_at DESC
         LIMIT 3
       `)
@@ -152,6 +154,29 @@ function fetchTaSignalCount(db: Database): number {
       error: err instanceof Error ? err.message : String(err),
     })
     return 0
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DB-level same-day dedup guard (FR-2)
+// Prevents duplicate digests when the cron re-fires after a server restart.
+// Fail-open: if the DB check throws (e.g. table missing on first boot), returns
+// false so the digest proceeds rather than being silently suppressed.
+// ─────────────────────────────────────────────────────────────────────────────
+
+function alreadySentToday(db: Database): boolean {
+  try {
+    const row = db
+      .prepare<{ cnt: number }, []>(
+        `SELECT COUNT(*) AS cnt
+         FROM market_messages
+         WHERE from_agent = 'france-summary'
+           AND sent_at >= date('now')`,
+      )
+      .get()
+    return (row?.cnt ?? 0) > 0
+  } catch {
+    return false // fail-open: do not suppress if DB check fails
   }
 }
 
@@ -255,13 +280,23 @@ export async function runFranceSummary(opts: FranceSummaryOptions = {}): Promise
     resolvedDb = getDb()
   }
 
+  // DB-level same-day dedup guard (FR-2)
+  // Fail-open: if check throws, proceed with send.
+  if (alreadySentToday(resolvedDb)) {
+    return { sent: false, moverCount: 0, alertCount: 0, taCount: 0 }
+  }
+
   // Resolve send function — default: sendTelegramMarket (MARKET channel)
   let resolvedSend: SendFn
   if (opts.sendFn) {
     resolvedSend = opts.sendFn
   } else {
     const { sendTelegramMarket } = await import("../infrastructure/notifiers/telegram.js")
-    resolvedSend = (text: string) => sendTelegramMarket(text, { parseMode: "" })
+    resolvedSend = (text: string) =>
+      sendTelegramMarket(text, {
+        parseMode: "",
+        persist: { from_agent: "france-summary", message_type: "france_summary" },
+      })
   }
 
   // Resolve clock
