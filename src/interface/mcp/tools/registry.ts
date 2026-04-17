@@ -70,6 +70,7 @@ import { registerInsiderTools } from "./insiderTools.js";
 import { registerMarketMessageTools } from "./marketMessageTools.js";
 import { registerTickerIntelligenceTools } from "./tickerIntelligenceTools.js";
 import { registerTechnicalIndicatorTools } from "./technicalIndicatorTools.js";
+import { registerPipelineHealthTools } from "./pipelineHealthTools.js";
 
 /**
  * Flat array of all MCP tool registration functions.
@@ -140,4 +141,5 @@ export const toolRegistry: Array<(server: McpServer) => void> = [
   registerMarketMessageTools,   // Task 1166: get_unreviewed_market_messages + review_market_message (+2 tools → 93)
   registerTickerIntelligenceTools, // Task 1180: get_ticker_intelligence (+1 tool → 97)
   registerTechnicalIndicatorTools, // Task 1302/1303: get_technical_indicators (+1 tool → 98)
+  registerPipelineHealthTools,     // Task 1367: get_pipeline_health (+1 tool → 100)
 ];
