@@ -9,26 +9,19 @@ process.env["DB_PATH"] = ":memory:";
  *  3. MCP tool get_cascade_metrics output format
  */
 
-import { describe, it, expect, beforeEach, afterEach } from "bun:test";
+import { describe, it, expect, beforeEach } from "bun:test";
 import { Database } from "bun:sqlite";
 import {
   recordHit,
   getHitMetrics,
   getDeadRules,
 } from "../infrastructure/db/cascadeHitStore.js";
-import { ensureCascadeHitsTable } from "./helpers/cascadeHitsTestDdl.js";
 import { buildCausalChain } from "../domain/services/cascadeEngine.js";
 import type { WatchlistEntry } from "../domain/services/cascadeEngine.js";
 import type { AnalysisEntry } from "../domain/services/newsNormalizer.js";
+import { initDatabase, getDb, closeDb } from "../infrastructure/db/index.js";
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
-
-function makeDb(): Database {
-  const db = new Database(":memory:");
-  db.exec("PRAGMA journal_mode = WAL");
-  ensureCascadeHitsTable(db);
-  return db;
-}
 
 function makeAnalysisEntry(summary: string): AnalysisEntry {
   return {
@@ -59,12 +52,10 @@ function makeAnalysisEntry(summary: string): AnalysisEntry {
 describe("Task 247 — cascadeHitStore", () => {
   let db: Database;
 
-  beforeEach(() => {
-    db = makeDb();
-  });
-
-  afterEach(() => {
-    db.close();
+  beforeEach(async () => {
+    closeDb();
+    await initDatabase();
+    db = getDb();
   });
 
   it("recordHit inserts a row into cascade_rule_hits", () => {

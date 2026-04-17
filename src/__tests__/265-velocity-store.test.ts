@@ -3,42 +3,37 @@ process.env["DB_PATH"] = ":memory:";
 /**
  * Task 265 — Mention Velocity Store + Reputation Store Tests
  *
- * Uses an in-memory SQLite DB (DB_PATH=:memory:) to test:
+ * Uses an in-memory SQLite DB via initDatabase() singleton to test:
  * - mentionVelocityStore: recordMention, getVelocity, getBaseline
  * - reputationStore: saveReputation, getReputation
  */
 
-import { describe, it, expect, beforeEach, afterEach } from "bun:test";
+import { describe, it, expect, beforeEach } from "bun:test";
 import { Database } from "bun:sqlite";
 import {
   recordMention,
   getVelocity,
   getBaseline,
 } from "../infrastructure/db/mentionVelocityStore.js";
-import { ensureMentionVelocityTable } from "./helpers/mentionVelocityTestDdl.js";
 import {
   saveReputation,
   getReputation,
 } from "../infrastructure/db/reputationStore.js";
-import { ensureReputationScoresTable } from "./helpers/reputationScoresTestDdl.js";
 import type { ReputationScore } from "../domain/services/reputationScorer.js";
+import { initDatabase, getDb, closeDb } from "../infrastructure/db/index.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Setup: in-memory DB per test
+// Setup: fresh in-memory DB per test
 // ─────────────────────────────────────────────────────────────────────────────
 
 let db: Database;
 
-beforeEach(() => {
-  db = new Database(":memory:");
-  db.exec("PRAGMA journal_mode = WAL");
-  ensureMentionVelocityTable(db);
-  ensureReputationScoresTable(db);
+beforeEach(async () => {
+  closeDb();
+  await initDatabase();
+  db = getDb();
 });
 
-afterEach(() => {
-  db.close();
-});
 
 // ─────────────────────────────────────────────────────────────────────────────
 // mentionVelocityStore tests

@@ -11,22 +11,25 @@ process.env["DB_PATH"] = ":memory:";
  * 5. Tool returns correct content format
  */
 
-import { describe, it, expect, beforeEach, afterEach } from "bun:test";
+import { describe, it, expect, beforeEach } from "bun:test";
 import { Database } from "bun:sqlite";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { recordMention } from "../infrastructure/db/mentionVelocityStore.js";
-import { ensureMentionVelocityTable } from "./helpers/mentionVelocityTestDdl.js";
 import { saveReputation } from "../infrastructure/db/reputationStore.js";
-import { ensureReputationScoresTable } from "./helpers/reputationScoresTestDdl.js";
 import { registerCrisisTools } from "../interface/mcp/tools/crisisTools.js";
+import { initDatabase, getDb, closeDb } from "../infrastructure/db/index.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Helpers
+// Setup
 // ─────────────────────────────────────────────────────────────────────────────
 
-function makeDb(): Database {
-  const db = new Database(":memory:");
-  db.exec("PRAGMA journal_mode = WAL");
+let db: Database;
+
+beforeEach(async () => {
+  closeDb();
+  await initDatabase();
+  db = getDb();
+  // Ensure watchlist table exists (not created by initDatabase — create inline)
   db.exec(`
     CREATE TABLE IF NOT EXISTS watchlist (
       code TEXT PRIMARY KEY, company_name TEXT, exchange TEXT NOT NULL,
@@ -35,20 +38,8 @@ function makeDb(): Database {
       alert_impact_min REAL NOT NULL DEFAULT 7, alert_report_new INTEGER NOT NULL DEFAULT 1
     );
   `);
-  ensureMentionVelocityTable(db);
-  ensureReputationScoresTable(db);
-  return db;
-}
-
-let db: Database;
-
-beforeEach(() => {
-  db = makeDb();
 });
 
-afterEach(() => {
-  db.close();
-});
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tests

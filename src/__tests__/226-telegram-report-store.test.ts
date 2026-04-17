@@ -10,7 +10,7 @@ process.env["DB_PATH"] = ":memory:";
  *   4. markProcessed — flips status to "processed"
  */
 
-import { describe, it, expect, beforeEach, afterEach } from "bun:test";
+import { describe, it, expect, beforeEach } from "bun:test";
 import { Database } from "bun:sqlite";
 import {
   insertReport,
@@ -18,43 +18,35 @@ import {
   markProcessed,
   getReport as getReportById,
 } from "../infrastructure/db/telegramReportStore.js";
-import { ensureTelegramReportsTable } from "./helpers/telegramReportsTestDdl.js";
+import { initDatabase, getDb, closeDb } from "../infrastructure/db/index.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Helpers
+// 1. DDL — table structure (via initDatabase singleton)
 // ─────────────────────────────────────────────────────────────────────────────
 
-function makeDb(): Database {
-  const db = new Database(":memory:");
-  db.exec("PRAGMA journal_mode = WAL");
-  ensureTelegramReportsTable(db);
-  return db;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// 1. DDL — table structure
-// ─────────────────────────────────────────────────────────────────────────────
-
-describe("Task 226 — ensureTelegramReportsTable (DDL)", () => {
-  it("creates the telegram_reports table without error", () => {
-    const db = new Database(":memory:");
-    expect(() => ensureTelegramReportsTable(db)).not.toThrow();
-    db.close();
+describe("Task 226 — telegram_reports DDL (via initDatabase)", () => {
+  it("initDatabase creates the telegram_reports table without error", async () => {
+    closeDb();
+    let threw = false;
+    try { await initDatabase(); } catch { threw = true; }
+    expect(threw).toBe(false);
   });
 
-  it("is idempotent — safe to call multiple times", () => {
-    const db = new Database(":memory:");
-    expect(() => {
-      ensureTelegramReportsTable(db);
-      ensureTelegramReportsTable(db);
-      ensureTelegramReportsTable(db);
-    }).not.toThrow();
-    db.close();
+  it("is idempotent — safe to call initDatabase multiple times", async () => {
+    closeDb();
+    await initDatabase();
+    closeDb();
+    await initDatabase();
+    closeDb();
+    let threw = false;
+    try { await initDatabase(); } catch { threw = true; }
+    expect(threw).toBe(false);
   });
 
-  it("creates idx_telegram_reports_status index", () => {
-    const db = new Database(":memory:");
-    ensureTelegramReportsTable(db);
+  it("creates idx_telegram_reports_status index", async () => {
+    closeDb();
+    await initDatabase();
+    const db = getDb();
     const idx = db
       .query<{ name: string }, []>(
         "SELECT name FROM sqlite_master WHERE type='index' AND name='idx_telegram_reports_status'",
@@ -62,12 +54,12 @@ describe("Task 226 — ensureTelegramReportsTable (DDL)", () => {
       .get();
     expect(idx).not.toBeNull();
     expect(idx?.name).toBe("idx_telegram_reports_status");
-    db.close();
   });
 
-  it("creates idx_telegram_reports_created index", () => {
-    const db = new Database(":memory:");
-    ensureTelegramReportsTable(db);
+  it("creates idx_telegram_reports_created index", async () => {
+    closeDb();
+    await initDatabase();
+    const db = getDb();
     const idx = db
       .query<{ name: string }, []>(
         "SELECT name FROM sqlite_master WHERE type='index' AND name='idx_telegram_reports_created'",
@@ -75,7 +67,6 @@ describe("Task 226 — ensureTelegramReportsTable (DDL)", () => {
       .get();
     expect(idx).not.toBeNull();
     expect(idx?.name).toBe("idx_telegram_reports_created");
-    db.close();
   });
 });
 
@@ -86,8 +77,7 @@ describe("Task 226 — ensureTelegramReportsTable (DDL)", () => {
 describe("Task 226 — insertReport (write path)", () => {
   let db: Database;
 
-  beforeEach(() => { db = makeDb(); });
-  afterEach(() => { db.close(); });
+  beforeEach(async () => { closeDb(); await initDatabase(); db = getDb(); });
 
   it("returns a positive integer row id", () => {
     const id = insertReport(db, "Test report text", "analysis-agent", 0, "normal");
@@ -145,8 +135,7 @@ describe("Task 226 — insertReport (write path)", () => {
 describe("Task 226 — listNewReports (read path)", () => {
   let db: Database;
 
-  beforeEach(() => { db = makeDb(); });
-  afterEach(() => { db.close(); });
+  beforeEach(async () => { closeDb(); await initDatabase(); db = getDb(); });
 
   it("returns empty array when no reports exist", () => {
     expect(listNewReports(db)).toHaveLength(0);
@@ -207,8 +196,7 @@ describe("Task 226 — listNewReports (read path)", () => {
 describe("Task 226 — markProcessed (update path)", () => {
   let db: Database;
 
-  beforeEach(() => { db = makeDb(); });
-  afterEach(() => { db.close(); });
+  beforeEach(async () => { closeDb(); await initDatabase(); db = getDb(); });
 
   it("flips status from 'new' to 'processed'", () => {
     const id = insertReport(db, "Process me", "agent", 0, "normal");
@@ -246,8 +234,7 @@ describe("Task 226 — markProcessed (update path)", () => {
 describe("Task 226 — getReportById (point lookup)", () => {
   let db: Database;
 
-  beforeEach(() => { db = makeDb(); });
-  afterEach(() => { db.close(); });
+  beforeEach(async () => { closeDb(); await initDatabase(); db = getDb(); });
 
   it("returns the correct row by id", () => {
     const id = insertReport(db, "Lookup test", "tester", 55, "monitor");

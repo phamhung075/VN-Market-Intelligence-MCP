@@ -13,24 +13,17 @@ process.env["DB_PATH"] = ":memory:";
  *   7. Each row includes all required fields
  */
 
-import { describe, it, expect, beforeEach, afterEach } from "bun:test";
+import { describe, it, expect, beforeEach } from "bun:test";
 import { Database } from "bun:sqlite";
 import {
   insertReport,
   markProcessed,
 } from "../infrastructure/db/telegramReportStore.js";
-import { ensureTelegramReportsTable } from "./helpers/telegramReportsTestDdl.js";
+import { initDatabase, getDb, closeDb } from "../infrastructure/db/index.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
 // ─────────────────────────────────────────────────────────────────────────────
-
-function makeDb(): Database {
-  const db = new Database(":memory:");
-  db.exec("PRAGMA journal_mode = WAL");
-  ensureTelegramReportsTable(db);
-  return db;
-}
 
 /**
  * Simulate what the MCP tool does: list rows filtered by status and limit,
@@ -80,8 +73,7 @@ function simulateReadTool(
 describe("Task 228 — read_telegram_reports: empty state", () => {
   let db: Database;
 
-  beforeEach(() => { db = makeDb(); });
-  afterEach(() => { db.close(); });
+  beforeEach(async () => { closeDb(); await initDatabase(); db = getDb(); });
 
   it("returns exit message when status=new and no reports exist", () => {
     const result = simulateReadTool(db, "new");
@@ -112,8 +104,7 @@ describe("Task 228 — read_telegram_reports: empty state", () => {
 describe("Task 228 — read_telegram_reports: status=new", () => {
   let db: Database;
 
-  beforeEach(() => { db = makeDb(); });
-  afterEach(() => { db.close(); });
+  beforeEach(async () => { closeDb(); await initDatabase(); db = getDb(); });
 
   it("returns an array when new reports exist", () => {
     insertReport(db, "New report 1", "agent-a", 10, "high");
@@ -149,8 +140,7 @@ describe("Task 228 — read_telegram_reports: status=new", () => {
 describe("Task 228 — read_telegram_reports: status=processed", () => {
   let db: Database;
 
-  beforeEach(() => { db = makeDb(); });
-  afterEach(() => { db.close(); });
+  beforeEach(async () => { closeDb(); await initDatabase(); db = getDb(); });
 
   it("returns empty array when no processed reports exist", () => {
     insertReport(db, "Unprocessed", "agent", 0, "normal");
@@ -176,8 +166,7 @@ describe("Task 228 — read_telegram_reports: status=processed", () => {
 describe("Task 228 — read_telegram_reports: status=all", () => {
   let db: Database;
 
-  beforeEach(() => { db = makeDb(); });
-  afterEach(() => { db.close(); });
+  beforeEach(async () => { closeDb(); await initDatabase(); db = getDb(); });
 
   it("returns both new and processed reports", () => {
     const id1 = insertReport(db, "New", "agent", 0, "normal");
@@ -198,8 +187,7 @@ describe("Task 228 — read_telegram_reports: status=all", () => {
 describe("Task 228 — read_telegram_reports: limit parameter", () => {
   let db: Database;
 
-  beforeEach(() => { db = makeDb(); });
-  afterEach(() => { db.close(); });
+  beforeEach(async () => { closeDb(); await initDatabase(); db = getDb(); });
 
   it("respects limit=1 and returns only 1 row", () => {
     insertReport(db, "Report 1", "agent", 0, "normal");
@@ -223,8 +211,7 @@ describe("Task 228 — read_telegram_reports: limit parameter", () => {
 describe("Task 228 — read_telegram_reports: field serialization", () => {
   let db: Database;
 
-  beforeEach(() => { db = makeDb(); });
-  afterEach(() => { db.close(); });
+  beforeEach(async () => { closeDb(); await initDatabase(); db = getDb(); });
 
   it("created_at is returned as ISO 8601 string", () => {
     insertReport(db, "ISO test", "agent", 0, "normal");

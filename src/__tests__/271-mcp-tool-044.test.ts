@@ -11,7 +11,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { registerPharmaTools } from "../interface/mcp/tools/pharmaTools.js";
 import { Database } from "bun:sqlite";
 import { insertPharmaEvent } from "../infrastructure/db/pharmaStore.js";
-import { initPharmaStore } from "./helpers/pharmaTestDdl.js";
+import { initDatabase, getDb, closeDb } from "../infrastructure/db/index.js";
 
 /** Create a McpServer instance and extract its registered tool names. */
 function getRegisteredTools(server: McpServer): string[] {
@@ -21,13 +21,14 @@ function getRegisteredTools(server: McpServer): string[] {
 }
 
 describe("Task 271 — MCP Tool: get_pharma_signals", () => {
-  it("registers get_pharma_signals tool on McpServer", () => {
+  it("registers get_pharma_signals tool on McpServer", async () => {
     const server = new McpServer(
       { name: "test", version: "1.0.0" },
       { capabilities: { tools: {} } },
     );
-    const db = new Database(":memory:");
-    initPharmaStore(db);
+    closeDb();
+    await initDatabase();
+    const db: Database = getDb();
 
     registerPharmaTools(server, db);
 
@@ -40,8 +41,9 @@ describe("Task 271 — MCP Tool: get_pharma_signals", () => {
       { name: "test", version: "1.0.0" },
       { capabilities: { tools: {} } },
     );
-    const db = new Database(":memory:");
-    initPharmaStore(db);
+    closeDb();
+    await initDatabase();
+    const db: Database = getDb();
 
     registerPharmaTools(server, db);
 
@@ -61,8 +63,9 @@ describe("Task 271 — MCP Tool: get_pharma_signals", () => {
       { name: "test", version: "1.0.0" },
       { capabilities: { tools: {} } },
     );
-    const db = new Database(":memory:");
-    initPharmaStore(db);
+    closeDb();
+    await initDatabase();
+    const db: Database = getDb();
 
     // Seed some events
     insertPharmaEvent(db, {
@@ -103,8 +106,9 @@ describe("Task 271 — MCP Tool: get_pharma_signals", () => {
       { name: "test", version: "1.0.0" },
       { capabilities: { tools: {} } },
     );
-    const db = new Database(":memory:");
-    initPharmaStore(db);
+    closeDb();
+    await initDatabase();
+    const db: Database = getDb();
 
     insertPharmaEvent(db, {
       event_type: "drug_approval",
@@ -145,8 +149,9 @@ describe("Task 271 — MCP Tool: get_pharma_signals", () => {
       { name: "test", version: "1.0.0" },
       { capabilities: { tools: {} } },
     );
-    const db = new Database(":memory:");
-    initPharmaStore(db);
+    closeDb();
+    await initDatabase();
+    const db: Database = getDb();
 
     registerPharmaTools(server, db);
 

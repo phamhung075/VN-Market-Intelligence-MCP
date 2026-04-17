@@ -18,13 +18,7 @@ import {
   listUpcomingBonds,
   updateBondStatus,
 } from "../infrastructure/db/bondMaturityStore.js";
-import { ensureBondMaturityTable } from "./helpers/bondMaturityTestDdl.js";
-
-function makeTestDb(): Database {
-  const db = new Database(":memory:");
-  ensureBondMaturityTable(db);
-  return db;
-}
+import { initDatabase, getDb, closeDb } from "../infrastructure/db/index.js";
 
 function daysFromNow(days: number): string {
   const d = new Date();
@@ -124,11 +118,13 @@ describe("Task 243 — Bond Maturity Tracker (domain)", () => {
 describe("Task 243 — Bond Maturity Store (infrastructure)", () => {
   let db: Database;
 
-  beforeEach(() => {
-    db = makeTestDb();
+  beforeEach(async () => {
+    closeDb();
+    await initDatabase();
+    db = getDb();
   });
 
-  it("ensureBondMaturityTable creates the table", () => {
+  it("initDatabase creates the bond_maturity table", () => {
     const rows = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='bond_maturity'").all();
     expect(rows.length).toBe(1);
   });

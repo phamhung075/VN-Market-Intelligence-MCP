@@ -8,59 +8,49 @@ process.env["DB_PATH"] = ":memory:";
  *   2. claimReport — second claim fails and returns existing claimant
  *   3. claimReport — calling twice by same claimant is idempotent (first call wins, second fails gracefully)
  *   4. listNewReports with unclaimed_only filter — excludes claimed rows
- *   5. Schema migration — claimed_by / claimed_at columns exist after ensureTelegramReportsTable
+ *   5. Schema migration — claimed_by / claimed_at columns exist after initDatabase
  */
 
-import { describe, it, expect, beforeEach, afterEach } from "bun:test";
+import { describe, it, expect, beforeEach } from "bun:test";
 import { Database } from "bun:sqlite";
 import {
   insertReport,
   claimReport,
   listNewReportsUnclaimed,
 } from "../infrastructure/db/telegramReportStore.js";
-import { ensureTelegramReportsTable } from "./helpers/telegramReportsTestDdl.js";
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Helpers
-// ─────────────────────────────────────────────────────────────────────────────
-
-function makeDb(): Database {
-  const db = new Database(":memory:");
-  db.exec("PRAGMA journal_mode = WAL");
-  ensureTelegramReportsTable(db);
-  return db;
-}
+import { initDatabase, getDb, closeDb } from "../infrastructure/db/index.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 1. Schema — claimed_by and claimed_at columns exist
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("Task 231 — schema: claimed_by / claimed_at columns", () => {
-  it("telegram_reports table has claimed_by column after ensureTelegramReportsTable", () => {
-    const db = new Database(":memory:");
-    ensureTelegramReportsTable(db);
+  it("telegram_reports table has claimed_by column after initDatabase", async () => {
+    closeDb();
+    await initDatabase();
+    const db = getDb();
     const cols = db
       .query<{ name: string }, []>("PRAGMA table_info(telegram_reports)")
       .all()
       .map((c) => c.name);
     expect(cols).toContain("claimed_by");
-    db.close();
   });
 
-  it("telegram_reports table has claimed_at column after ensureTelegramReportsTable", () => {
-    const db = new Database(":memory:");
-    ensureTelegramReportsTable(db);
+  it("telegram_reports table has claimed_at column after initDatabase", async () => {
+    closeDb();
+    await initDatabase();
+    const db = getDb();
     const cols = db
       .query<{ name: string }, []>("PRAGMA table_info(telegram_reports)")
       .all()
       .map((c) => c.name);
     expect(cols).toContain("claimed_at");
-    db.close();
   });
 
-  it("claimed_by defaults to NULL on new rows", () => {
-    const db = new Database(":memory:");
-    ensureTelegramReportsTable(db);
+  it("claimed_by defaults to NULL on new rows", async () => {
+    closeDb();
+    await initDatabase();
+    const db = getDb();
     const id = insertReport(db, "Test row", "agent", 0, "normal");
     const row = db
       .query<{ claimed_by: string | null }, [number]>(
@@ -69,17 +59,17 @@ describe("Task 231 — schema: claimed_by / claimed_at columns", () => {
       .get(id);
     expect(row).not.toBeNull();
     expect(row!.claimed_by).toBeNull();
-    db.close();
   });
 
-  it("ALTER TABLE migration is idempotent — ensureTelegramReportsTable is safe to call multiple times", () => {
-    const db = new Database(":memory:");
-    expect(() => {
-      ensureTelegramReportsTable(db);
-      ensureTelegramReportsTable(db);
-      ensureTelegramReportsTable(db);
-    }).not.toThrow();
-    db.close();
+  it("initDatabase is idempotent — safe to call multiple times", async () => {
+    closeDb();
+    await initDatabase();
+    closeDb();
+    await initDatabase();
+    closeDb();
+    let threw = false;
+    try { await initDatabase(); } catch { threw = true; }
+    expect(threw).toBe(false);
   });
 });
 
@@ -90,8 +80,7 @@ describe("Task 231 — schema: claimed_by / claimed_at columns", () => {
 describe("Task 231 — claimReport: success path", () => {
   let db: Database;
 
-  beforeEach(() => { db = makeDb(); });
-  afterEach(() => { db.close(); });
+  beforeEach(async () => { closeDb(); await initDatabase(); db = getDb(); });
 
   it("returns success=true when claiming an unclaimed report", () => {
     const id = insertReport(db, "Problem: VNM data stale", "analysis-agent", 0, "high");
@@ -139,8 +128,7 @@ describe("Task 231 — claimReport: success path", () => {
 describe("Task 231 — claimReport: contention / failure path", () => {
   let db: Database;
 
-  beforeEach(() => { db = makeDb(); });
-  afterEach(() => { db.close(); });
+  beforeEach(async () => { closeDb(); await initDatabase(); db = getDb(); });
 
   it("returns success=false when a different claimant already claimed the report", () => {
     const id = insertReport(db, "Race condition target", "agent", 0, "critical");
@@ -183,8 +171,7 @@ describe("Task 231 — claimReport: contention / failure path", () => {
 describe("Task 231 — listNewReportsUnclaimed", () => {
   let db: Database;
 
-  beforeEach(() => { db = makeDb(); });
-  afterEach(() => { db.close(); });
+  beforeEach(async () => { closeDb(); await initDatabase(); db = getDb(); });
 
   it("returns empty array when all new reports are claimed", () => {
     const id = insertReport(db, "Claimed report", "agent", 0, "normal");

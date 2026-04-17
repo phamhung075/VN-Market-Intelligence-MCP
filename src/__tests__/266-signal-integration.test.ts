@@ -14,23 +14,10 @@ import { describe, it, expect } from "bun:test";
 import { Database } from "bun:sqlite";
 import { detectSignals } from "../domain/services/signalDetector.js";
 import type { SignalType } from "../domain/services/signalDetector.js";
-import { ensureMentionVelocityTable } from "./helpers/mentionVelocityTestDdl.js";
-import { saveReputation, getReputation } from "../infrastructure/db/reputationStore.js";
-import { ensureReputationScoresTable } from "./helpers/reputationScoresTestDdl.js";
+import { saveReputation } from "../infrastructure/db/reputationStore.js";
 import { CRISIS_COOLDOWN_MINUTES } from "../domain/services/crisisPatternDetector.js";
 import { getReputationWarnings } from "../application/usecases/getReputationWarnings.js";
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Helper
-// ─────────────────────────────────────────────────────────────────────────────
-
-function makeDb() {
-  const db = new Database(":memory:");
-  db.exec("PRAGMA journal_mode = WAL");
-  ensureMentionVelocityTable(db);
-  ensureReputationScoresTable(db);
-  return db;
-}
+import { initDatabase, getDb, closeDb } from "../infrastructure/db/index.js";
 
 describe("Task 266 — Signal Integration", () => {
   // 1. SignalType extends with crisis_event
@@ -108,8 +95,10 @@ describe("Task 266 — Signal Integration", () => {
   });
 
   // 6. getReputationWarnings returns stocks with score < 50
-  it("getReputationWarnings returns stocks with reputation < 50", () => {
-    const db = makeDb();
+  it("getReputationWarnings returns stocks with reputation < 50", async () => {
+    closeDb();
+    await initDatabase();
+    const db: Database = getDb();
     const today = new Date().toISOString().slice(0, 10);
     saveReputation(db, {
       stockCode: "VNM",
@@ -128,12 +117,13 @@ describe("Task 266 — Signal Integration", () => {
     const warnings = getReputationWarnings(db, ["VNM", "FPT"]);
     expect(warnings.length).toBe(1);
     expect(warnings[0]!.stockCode).toBe("VNM");
-    db.close();
   });
 
   // 7. getReputationWarnings returns empty when all scores safe
-  it("getReputationWarnings returns empty when all reputation scores are >= 50", () => {
-    const db = makeDb();
+  it("getReputationWarnings returns empty when all reputation scores are >= 50", async () => {
+    closeDb();
+    await initDatabase();
+    const db: Database = getDb();
     const today = new Date().toISOString().slice(0, 10);
     saveReputation(db, {
       stockCode: "VNM",
@@ -144,15 +134,15 @@ describe("Task 266 — Signal Integration", () => {
     }, today);
     const warnings = getReputationWarnings(db, ["VNM"]);
     expect(warnings.length).toBe(0);
-    db.close();
   });
 
   // 8. getReputationWarnings handles stocks with no reputation record
-  it("getReputationWarnings ignores stocks with no reputation record", () => {
-    const db = makeDb();
+  it("getReputationWarnings ignores stocks with no reputation record", async () => {
+    closeDb();
+    await initDatabase();
+    const db: Database = getDb();
     const warnings = getReputationWarnings(db, ["VNM", "FPT"]);
     // No records → no warnings
     expect(warnings.length).toBe(0);
-    db.close();
   });
 });

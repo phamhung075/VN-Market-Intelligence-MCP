@@ -13,14 +13,14 @@ process.env["DB_PATH"] = ":memory:";
  * in-memory SQLite database, without starting a real HTTP server.
  */
 
-import { describe, it, expect, beforeEach, afterEach } from "bun:test";
+import { describe, it, expect, beforeEach } from "bun:test";
 import { Database } from "bun:sqlite";
 import {
   insertReport,
   listNewReports,
   type TelegramReport,
 } from "../infrastructure/db/telegramReportStore.js";
-import { ensureTelegramReportsTable } from "./helpers/telegramReportsTestDdl.js";
+import { initDatabase, getDb, closeDb } from "../infrastructure/db/index.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers — simulate the webhook dispatch logic in isolation
@@ -68,13 +68,10 @@ describe("Task 227 — Webhook Report Channel dispatch", () => {
   const REPORT_CHAT_ID = "99999";
   const COMMAND_CHAT_ID = "11111";
 
-  beforeEach(() => {
-    db = new Database(":memory:");
-    ensureTelegramReportsTable(db);
-  });
-
-  afterEach(() => {
-    db.close();
+  beforeEach(async () => {
+    closeDb();
+    await initDatabase();
+    db = getDb();
   });
 
   // ── Routing decisions ────────────────────────────────────────────────────

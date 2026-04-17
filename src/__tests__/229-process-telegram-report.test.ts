@@ -15,7 +15,7 @@ process.env["DB_PATH"] = ":memory:";
  *   9. After processing, read_telegram_reports returns exit message
  */
 
-import { describe, it, expect, beforeEach, afterEach } from "bun:test";
+import { describe, it, expect, beforeEach } from "bun:test";
 import { Database } from "bun:sqlite";
 import {
   insertReport,
@@ -23,18 +23,11 @@ import {
   markProcessed,
   listNewReports,
 } from "../infrastructure/db/telegramReportStore.js";
-import { ensureTelegramReportsTable } from "./helpers/telegramReportsTestDdl.js";
+import { initDatabase, getDb, closeDb } from "../infrastructure/db/index.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
 // ─────────────────────────────────────────────────────────────────────────────
-
-function makeDb(): Database {
-  const db = new Database(":memory:");
-  db.exec("PRAGMA journal_mode = WAL");
-  ensureTelegramReportsTable(db);
-  return db;
-}
 
 /**
  * Simulate what process_telegram_report does without involving real Telegram.
@@ -87,8 +80,7 @@ async function simulateProcessTool(
 describe("Task 229 — process_telegram_report: not found", () => {
   let db: Database;
 
-  beforeEach(() => { db = makeDb(); });
-  afterEach(() => { db.close(); });
+  beforeEach(async () => { closeDb(); await initDatabase(); db = getDb(); });
 
   it("returns 'Report N not found.' for a non-existent id", async () => {
     const result = await simulateProcessTool(db, 99999);
@@ -110,8 +102,7 @@ describe("Task 229 — process_telegram_report: not found", () => {
 describe("Task 229 — process_telegram_report: DB update", () => {
   let db: Database;
 
-  beforeEach(() => { db = makeDb(); });
-  afterEach(() => { db.close(); });
+  beforeEach(async () => { closeDb(); await initDatabase(); db = getDb(); });
 
   it("marks the row status as 'processed'", async () => {
     const id = insertReport(db, "To process", "agent", 0, "normal");
@@ -145,8 +136,7 @@ describe("Task 229 — process_telegram_report: DB update", () => {
 describe("Task 229 — process_telegram_report: confirmation message (message_id > 0)", () => {
   let db: Database;
 
-  beforeEach(() => { db = makeDb(); });
-  afterEach(() => { db.close(); });
+  beforeEach(async () => { closeDb(); await initDatabase(); db = getDb(); });
 
   it("returns confirmation including message_id when message_id > 0 and delete=true", async () => {
     const id = insertReport(db, "Report with TG message", "agent", 42, "high");
@@ -182,8 +172,7 @@ describe("Task 229 — process_telegram_report: confirmation message (message_id
 describe("Task 229 — process_telegram_report: confirmation message (message_id = 0)", () => {
   let db: Database;
 
-  beforeEach(() => { db = makeDb(); });
-  afterEach(() => { db.close(); });
+  beforeEach(async () => { closeDb(); await initDatabase(); db = getDb(); });
 
   it("returns 'deletion skipped' when message_id=0", async () => {
     const id = insertReport(db, "No TG message", "agent", 0, "normal");
@@ -200,8 +189,7 @@ describe("Task 229 — process_telegram_report: confirmation message (message_id
 describe("Task 229 — process_telegram_report: delete_telegram_message=false", () => {
   let db: Database;
 
-  beforeEach(() => { db = makeDb(); });
-  afterEach(() => { db.close(); });
+  beforeEach(async () => { closeDb(); await initDatabase(); db = getDb(); });
 
   it("skips Telegram deletion when delete_telegram_message=false", async () => {
     const deletedIds: number[] = [];
@@ -230,8 +218,7 @@ describe("Task 229 — process_telegram_report: delete_telegram_message=false", 
 describe("Task 229 — process_telegram_report: correct message_id forwarded", () => {
   let db: Database;
 
-  beforeEach(() => { db = makeDb(); });
-  afterEach(() => { db.close(); });
+  beforeEach(async () => { closeDb(); await initDatabase(); db = getDb(); });
 
   it("passes the stored message_id to the delete function", async () => {
     const capturedIds: number[] = [];
@@ -252,8 +239,7 @@ describe("Task 229 — process_telegram_report: correct message_id forwarded", (
 describe("Task 229 — process_telegram_report: full loop integration", () => {
   let db: Database;
 
-  beforeEach(() => { db = makeDb(); });
-  afterEach(() => { db.close(); });
+  beforeEach(async () => { closeDb(); await initDatabase(); db = getDb(); });
 
   it("after processing all reports, listNewReports returns empty array", async () => {
     const id1 = insertReport(db, "Report 1", "agent", 10, "normal");

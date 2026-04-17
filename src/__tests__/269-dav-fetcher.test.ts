@@ -8,15 +8,15 @@ process.env["DB_PATH"] = ":memory:";
  *   - pharmaStore: SQLite CRUD for pharma_events table
  */
 
-import { describe, it, expect, beforeEach, afterEach } from "bun:test";
+import { describe, it, expect, beforeEach } from "bun:test";
 import { fetchDavPharmacy, type DrugApproval } from "../infrastructure/fetchers/davPharmacy.js";
 import {
   insertPharmaEvent,
   getPharmaEvents,
   type PharmaEventRow,
 } from "../infrastructure/db/pharmaStore.js";
-import { initPharmaStore } from "./helpers/pharmaTestDdl.js";
 import { Database } from "bun:sqlite";
+import { initDatabase, getDb, closeDb } from "../infrastructure/db/index.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DAV Fetcher tests (mock HTTP client)
@@ -95,7 +95,7 @@ describe("Task 269 — DAV Pharmacy Fetcher", () => {
       get: async (_url: string): Promise<string> => DAV_SAMPLE_HTML,
     };
     const result = await fetchDavPharmacy(mockClient);
-    const dhgApproval = result.find((d) => d.relatedStocks.includes("DHG"));
+    const dhgApproval = result.find((d: DrugApproval) => d.relatedStocks.includes("DHG"));
     expect(dhgApproval).toBeDefined();
   });
 
@@ -104,7 +104,7 @@ describe("Task 269 — DAV Pharmacy Fetcher", () => {
       get: async (_url: string): Promise<string> => DAV_SAMPLE_HTML,
     };
     const result = await fetchDavPharmacy(mockClient);
-    const impApproval = result.find((d) => d.relatedStocks.includes("IMP"));
+    const impApproval = result.find((d: DrugApproval) => d.relatedStocks.includes("IMP"));
     expect(impApproval).toBeDefined();
   });
 
@@ -134,23 +134,20 @@ describe("Task 269 — DAV Pharmacy Fetcher", () => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Pharma Store tests (in-memory SQLite)
+// Pharma Store tests (in-memory SQLite via singleton)
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("Task 269 — Pharma Store", () => {
   let db: Database;
 
-  beforeEach(() => {
-    db = new Database(":memory:");
-    initPharmaStore(db);
-  });
-
-  afterEach(() => {
-    db.close();
+  beforeEach(async () => {
+    closeDb();
+    await initDatabase();
+    db = getDb();
   });
 
   it("creates pharma_events table without error", () => {
-    // initPharmaStore already ran — just verify table exists
+    // initDatabase already ran — just verify table exists
     const tables = db
       .query<{ name: string }, []>(
         "SELECT name FROM sqlite_master WHERE type='table' AND name='pharma_events'",
