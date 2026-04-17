@@ -4,14 +4,25 @@
 
 ---
 
-## Sprint 137 — Active
+## Sprint 138 — Active
 
 | ID | Title | Status | Role |
 |----|-------|--------|------|
-| 1387 | test(morning-briefing-filler): TDD test 1387-morning-briefing-filler.test.ts — written FIRST | Review | Dev |
-| 1388 | fix(morning-briefing-filler): omit filler sections in formatBriefingMessage when data absent | Review | Dev |
+| 1389 | test(weekly-portfolio-filler): TDD test 1389-weekly-portfolio-filler.test.ts — written FIRST | Done | Dev |
+| 1390 | fix(weekly-portfolio-filler): silent skip when no positions + proper Vietnamese diacritics in formatWeeklyReport | Review | Dev |
 
-> Sprint goal: `SPRINT_GOAL.md` | Success: no "chưa có dữ liệu" / "N/A" filler when sections empty; 5021+ pass, 0 fail
+> Sprint goal: `SPRINT_GOAL.md` | Success: no filler msg when positions=0; proper diacritics throughout; 5026+ pass, 0 fail
+
+---
+
+## Sprint 137 — Complete
+
+| ID | Title | Status | Role |
+|----|-------|--------|------|
+| 1387 | test(morning-briefing-filler): TDD test 1387-morning-briefing-filler.test.ts — written FIRST | Done | Dev |
+| 1388 | fix(morning-briefing-filler): omit filler sections in formatBriefingMessage when data absent | Done | Dev |
+
+> Sprint goal: `SPRINT_GOAL.md` | COMPLETE 2026-04-17
 
 ---
 
@@ -143,65 +154,35 @@
 
 ## Task Details (active tasks only)
 
-### 1387 — TDD test: 1387-morning-briefing-filler.test.ts (RED first)
+### 1389 — TDD test: 1389-weekly-portfolio-filler.test.ts (RED first)
 
-context: docs/handoffs/TASK_1387.md
-branch: task/1387-morning-briefing-filler-tdd
+branch: task/1389-weekly-portfolio-filler-tdd
 layer: scheduler
 depends_on: none
 
 acceptance_criteria:
-- Given formatBriefingMessage unchanged (still emits "chưa có dữ liệu" / "N/A" / "Chưa có dữ liệu giá")
-- When T1–T4 written per TECH_137 test table
-- Then bun test src/__tests__/1387-morning-briefing-filler.test.ts = T1+T2+T3 FAIL (RED)
+- Given formatWeeklyReport unchanged (still emits "(Chua co vi the nao trong danh muc)" when rows=0, unaccented labels)
+- When T1–T4 written per TECH_138 test table
+- T1: rows=[] → formatWeeklyReport output does NOT contain "(Chua co vi the nao"
+- T2: rows=[] → runWeeklyPortfolioReport with no positions = NO Telegram send (silent skip)
+- T3: rows present → output contains proper diacritics "Giá đầu tuần" not "Gia dau tuan"
+- T4: rows present → output contains "Tổng P&L tuần" not "Tong P&L tuan"
+- Then bun test src/__tests__/1389-weekly-portfolio-filler.test.ts = T1+T2+T3+T4 FAIL (RED)
 - Then bun tsc --noEmit = 0 errors
 
 ---
 
-### 1388 — fix: omit filler sections in formatBriefingMessage when data absent
+### 1390 — fix: silent skip when no positions + proper diacritics in formatWeeklyReport
 
-context: docs/handoffs/TASK_1388.md
-branch: task/1388-morning-briefing-filler-fix
+branch: task/1390-weekly-portfolio-filler-fix
 layer: scheduler
-depends_on: [1387 merged]
+depends_on: [1389 merged]
 
 acceptance_criteria:
-- Given 1387 T1–T4 with T1+T2+T3 RED
-- When formatBriefingMessage patched per TECH_137 target state
-- Then bun test src/__tests__/1387-morning-briefing-filler.test.ts = all PASS (GREEN)
-- Then bun test full suite = 5021+ pass, 0 fail, 21+ skip
+- Given 1389 T1–T4 RED
+- When formatWeeklyReport patched: replace "(Chua co vi the nao trong danh muc)" with silent skip in runWeeklyPortfolioReport; upgrade all Vietnamese labels to proper diacritics
+- Then bun test src/__tests__/1389-weekly-portfolio-filler.test.ts = all PASS (GREEN)
+- Then bun test full suite = 5026+ pass, 0 fail, 21+ skip
 - Then bun tsc --noEmit = 0 errors
-- Then grep "chưa có dữ liệu\|Chưa có dữ liệu giá" src/scheduler/morningBriefingJob.ts = 0 matches
-
----
-
-### 1385 — TDD test: 1385-evening-summary-news-filler.test.ts (RED first)
-
-context: docs/handoffs/TASK_1385.md
-branch: task/1385-evening-news-filler-tdd
-layer: scheduler
-depends_on: none
-
-acceptance_criteria:
-- Given eveningSummaryJob.ts unchanged (still always appends "Không có tin tức hôm nay")
-- When T1–T4 written per TECH_136 test table
-- Then bun test src/__tests__/1385-evening-summary-news-filler.test.ts = T1+T3 FAIL (RED), T2+T4 may pass
-- Then bun tsc --noEmit = 0 errors
-
----
-
-### 1386 — fix: omit "Không có tin tức hôm nay" when newsCount=0
-
-context: docs/handoffs/TASK_1386.md
-branch: task/1386-evening-news-filler-fix
-layer: scheduler
-depends_on: [1385 merged]
-
-acceptance_criteria:
-- Given 1385 T1–T4 with T1+T3 RED
-- When newsCount block patched per TECH_136 target state (3-line change, lines 156-163)
-- Then bun test src/__tests__/1385-evening-summary-news-filler.test.ts = all PASS (GREEN)
-- Then bun test full suite = 5018+ pass, 0 fail, 21+ skip
-- Then bun tsc --noEmit = 0 errors
-- Then grep "Không có tin tức hôm nay" src/scheduler/eveningSummaryJob.ts = 0 matches
+- Then grep "Chua co\|gia dau\|Tong P&L" src/scheduler/weeklyPortfolioReportJob.ts = 0 matches
 
