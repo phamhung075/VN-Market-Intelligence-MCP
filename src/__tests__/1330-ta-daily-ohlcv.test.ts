@@ -190,9 +190,9 @@ describe("1330 — defaultComputeTa reads daily_ohlcv", () => {
     expect(vcbSignal).toBeUndefined();
   });
 
-  it("TC-2: returns null when daily_ohlcv has < 15 rows for ticker", async () => {
+  it("TC-2: returns TaSignal when daily_ohlcv has 14 rows (>= 8 after fix — adaptive periods)", async () => {
     addWatchlistEntry(db, "VCB");
-    seedOhlcv(db, "VCB", 14); // 14 rows — below RSI minimum
+    seedOhlcv(db, "VCB", 14); // 14 rows — now sufficient with adaptive guard (>= 8)
 
     const result = await assembleBriefing({
       db,
@@ -202,8 +202,12 @@ describe("1330 — defaultComputeTa reads daily_ohlcv", () => {
       briefingsDir: tmpDir,
     });
 
+    // After fix: 14 >= 8 → returns TaSignal with adaptive RSI period 13, MA period 14
+    // Strictly increasing prices → RSI near 100 (overbought) → appears in taSummary
     const vcbSignal = result.taSummary?.find((s) => s.code === "VCB");
-    expect(vcbSignal).toBeUndefined();
+    expect(vcbSignal).toBeDefined();
+    expect(vcbSignal?.rsi14).not.toBeNull();
+    expect(vcbSignal?.ma20).not.toBeNull();
   });
 
   it("TC-3: returns TaSignal with rsi + maFast + maSlow when daily_ohlcv has 20+ rows (FAILS before fix)", async () => {

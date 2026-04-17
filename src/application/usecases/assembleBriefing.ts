@@ -498,8 +498,8 @@ function parseAffectedCodes(json: string | null): string[] {
 
 /**
  * Default TA computation for one ticker: queries daily_ohlcv for the last 60
- * candles, computes RSI(14) and MA(20), and classifies signals.
- * Returns null when fewer than 15 candles are available (RSI minimum).
+ * candles, computes RSI and MA with adaptive periods, and classifies signals.
+ * Returns null when fewer than 8 candles are available (RSI minimum).
  */
 export function defaultComputeTa(code: string, db: Database): TaSignal | null {
   const rows = db.query<CandleRow, [string]>(
@@ -510,13 +510,13 @@ export function defaultComputeTa(code: string, db: Database): TaSignal | null {
       LIMIT 60`,
   ).all(code);
 
-  if (rows.length < 15) return null; // RSI minimum
+  if (rows.length < 8) return null; // RSI minimum
 
   const prices = rows.map((r) => r.close_price);
   const currentPrice = prices.at(-1) ?? null;
 
-  const rsi14 = computeRSI(prices, 14);
-  const ma20 = computeMA(prices, 20);
+  const rsi14 = computeRSI(prices, Math.min(14, rows.length - 1));
+  const ma20 = computeMA(prices, Math.min(20, rows.length));
 
   const rsiStatus: TaSignal["rsiStatus"] =
     rsi14 === null ? "neutral"
