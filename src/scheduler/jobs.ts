@@ -117,8 +117,10 @@ export const CRONS = {
   insiderCheck:           Bun.env.CRON_INSIDER_CHECK               ?? '0 1 * * *',
   /** Pipeline watchdog: every 30 min 24/7 — task 1190, Sprint 076 */
   pipelineWatchdog:       Bun.env.CRON_PIPELINE_WATCHDOG            ?? '*/30 * * * *',
-  /** France morning summary: weekdays 07:00 UTC = 08:00 CET, before Paris market open — task 1290 */
-  franceSummary:          Bun.env.CRON_FRANCE_SUMMARY               ?? '0 7 * * 1-5',
+  /** France morning summary: every 30 min 06:00-08:59 UTC Mon-Fri — task 1349, Sprint 117
+   *  Widened from single-point '0 7 * * 1-5' to survive server restarts during active dev.
+   *  Dedup guard (alreadySentToday) in franceSummaryJob.ts prevents duplicate sends. */
+  franceSummary:          Bun.env.CRON_FRANCE_SUMMARY               ?? '*/30 6-8 * * 1-5',
   /** taAlertScan — every 15min VN market hours (task 1307) */
   taAlertScan:            Bun.env.CRON_TA_ALERT_SCAN                 ?? '*/15 2-8 * * 1-5',
   /** bbAlertScan — every 15min VN market hours (task 1309) */
