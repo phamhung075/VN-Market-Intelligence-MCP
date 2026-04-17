@@ -74,190 +74,102 @@
 
 ---
 
-## Sprint 128 — Active
+## Sprint 128 — COMPLETE (2026-04-17)
 
 | ID | Title | Status | Role |
 |----|-------|--------|------|
 | 1370 | test(france-watchlist-movers): TDD — fetchTopMovers filters by watchlist | Done | QA |
-| 1371 | feat(france-watchlist-movers): fetchTopMovers JOIN watchlist, source market_prices_history | Review | Dev |
+| 1371 | feat(france-watchlist-movers): fetchTopMovers JOIN watchlist, source market_prices_history | Done | Dev |
 
 > Goal: France morning briefing movers section currently shows any ticker with the highest % move globally. Filter to watchlist-only so the user only sees moves for stocks they track.
-> Branch(1370): merged to main 2026-04-17 | Branch(1371): `task/1371-france-watchlist-movers-impl`
+> Branch(1370): merged to main 2026-04-17 | Branch(1371): merged to main 2026-04-17 | PO sign-off: 2026-04-17
+
+---
+
+## Sprint 129 — Active
+
+| ID | Title | Status | Role |
+|----|-------|--------|------|
+| 1372 | fix(france-test-fixtures): update stale makeDb() in 5 test files — add market_prices_history + watchlist tables | Review | Dev |
+| 1373 | fix(cron-registry-count): update schedulerFileCount assertion in 1190-pipeline-watchdog.test.ts from 32 → 34 | Review | Dev |
+
+> Goal: Fix 17 pre-existing test failures — stale franceSummaryJob test fixtures that still use market_prices to seed movers (impl now reads market_prices_history + watchlist JOIN); plus fix stale schedulerFileCount assertion (32 → 34).
+> Affected files: src/__tests__/1290-france-summary-job.test.ts, 1316-france-summary-rewrite.test.ts, 1344-france-summary-stale-alerts.test.ts, 1348-france-summary-cron-window.test.ts, 1364-france-ta-detail.test.ts, 1190-pipeline-watchdog.test.ts
 
 ---
 
 ## Task Details (active tasks only)
 
-### Task 1370 — test(france-watchlist-movers): TDD RED tests
+### Task 1372 — fix(france-test-fixtures): update stale makeDb() in 5 test files
 
-**Branch**: `task/1370-france-watchlist-movers-tdd`
+**Branch**: `task/1372-1373-france-test-fixtures`
 **Layer**: test
 **Depends on**: none
 
-**Context**: `franceSummaryJob` fetches top movers from `market_prices ORDER BY ABS(change_pct) DESC LIMIT 3` with no filter — returns any stock in the DB. The user monitors 30 specific watchlist tickers. A 6.95% VIC move is relevant; a random non-watchlist stock is not.
+**Context**: Sprint 128 changed `fetchTopMovers` to read from `market_prices_history` + `watchlist` JOIN. Five older test files still create only a `market_prices` table and seed via `INSERT INTO market_prices` — the new impl can't find those rows, returns no movers, and `sent: false`, failing AC checks.
 
-**Files to read first**
-- `src/scheduler/franceSummaryJob.ts` (fetchTopMovers function, lines 105-122)
-- `src/__tests__/1364-france-ta-detail.test.ts` (existing pattern for this job)
+**Files to modify** (add `market_prices_history` + `watchlist` tables to `makeDb()`, update seed helpers):
+- `src/__tests__/1290-france-summary-job.test.ts`
+- `src/__tests__/1316-france-summary-rewrite.test.ts`
+- `src/__tests__/1344-france-summary-stale-alerts.test.ts`
+- `src/__tests__/1348-france-summary-cron-window.test.ts`
+- `src/__tests__/1364-france-ta-detail.test.ts`
 
-**Files to create**
-- CREATE: `src/__tests__/1370-france-watchlist-movers.test.ts`
-
-Line 1: `process.env["DB_PATH"] = ":memory:";`
-
-**Acceptance Criteria** (all RED before 1371, all GREEN after)
-- AC-1: When watchlist has VIC+HPG and market_prices has VIC(+7%), HPG(-5%), and XYZ(+10% — not on watchlist), movers section shows only VIC and HPG, not XYZ
-- AC-2: When watchlist is empty, movers section returns [] (no crash)
-- AC-3: When a watchlist ticker has no price row, it is silently skipped (no crash)
-- AC-4: Top-3 limit still applies — if watchlist has 10 tickers with price data, only top 3 by ABS(change_pct) appear
-- `bun tsc --noEmit` 0 errors
-
----
-
-### Task 1371 — feat(france-watchlist-movers): restrict mover query to watchlist JOIN
-
-**Branch**: `task/1371-france-watchlist-movers-impl`
-**Layer**: scheduler
-**Depends on**: 1370 (TDD tests RED)
-
-**Files to read first**
-- `src/__tests__/1370-france-watchlist-movers.test.ts` (AC definitions)
-- `src/scheduler/franceSummaryJob.ts` (`fetchTopMovers` function)
-
-**Files to modify**
-- MODIFY: `src/scheduler/franceSummaryJob.ts` — change `fetchTopMovers` SQL to `INNER JOIN watchlist USING (code)` so only watchlist tickers are returned
-
-**SQL change** (in `fetchTopMovers`):
+**Pattern** (apply to each `makeDb()` function — add after existing table creates):
 ```sql
--- BEFORE:
-SELECT code, price, change_pct FROM market_prices
-WHERE change_pct IS NOT NULL ORDER BY ABS(change_pct) DESC LIMIT 3
-
--- AFTER:
-SELECT mp.code, mp.price, mp.change_pct
-FROM market_prices mp
-INNER JOIN watchlist w ON w.code = mp.code
-WHERE mp.change_pct IS NOT NULL
-ORDER BY ABS(mp.change_pct) DESC LIMIT 3
+CREATE TABLE IF NOT EXISTS market_prices_history (
+  code       TEXT NOT NULL,
+  price      REAL NOT NULL,
+  volume     REAL NOT NULL,
+  fetched_at TEXT NOT NULL,
+  exchange   TEXT DEFAULT 'HOSE',
+  PRIMARY KEY (code, fetched_at)
+);
+CREATE INDEX IF NOT EXISTS idx_mph_code_fetched
+  ON market_prices_history(code, fetched_at DESC);
+CREATE TABLE IF NOT EXISTS watchlist (
+  code   TEXT PRIMARY KEY,
+  domain TEXT NOT NULL DEFAULT 'unknown'
+);
+CREATE TABLE IF NOT EXISTS daily_ohlcv (
+  code TEXT NOT NULL, date TEXT NOT NULL,
+  open REAL NOT NULL, high REAL NOT NULL, low REAL NOT NULL,
+  close REAL NOT NULL, volume REAL NOT NULL DEFAULT 0,
+  updated_at TEXT NOT NULL, PRIMARY KEY (code, date)
+);
 ```
 
-**Acceptance Criteria**
-- All 4 AC tests from 1370 pass
-- `bun tsc --noEmit` 0 errors
-- Full suite 0 new failures
-
----
-
-### Task 1368 — test(ohlcv-aggregator-notify): TDD RED tests
-
-**Branch**: `task/1368-ohlcv-aggregator-notify-tdd`
-**Layer**: test
-**Depends on**: none
-
-**Context**: `ohlcvDailyAggregatorJob` (Sprint 122) runs at `0 16 * * 1-5` UTC and aggregates intraday ticks into `daily_ohlcv`. When it finishes, no notification is sent — the dev team has no way to know how many rows were aggregated or whether TA signals will appear in the evening report. The `get_pipeline_health` MCP tool (Sprint 126) can answer this question but requires manual invocation.
-
-**Files to read first**
-- `src/scheduler/ohlcvDailyAggregatorJob.ts` (current structure, injectable params)
-- `src/__tests__/1358-ohlcv-daily-aggregator.test.ts` (existing pattern for this job)
-- `src/infrastructure/notifiers/telegram.ts` (sendTelegramWork pattern)
-
-**Files to create**
-- CREATE: `src/__tests__/1368-ohlcv-aggregator-notify.test.ts`
-
-Line 1: `process.env["DB_PATH"] = ":memory:";`
-
-**Acceptance Criteria** (all RED before 1369, all GREEN after)
-- AC-1: After aggregation with 10 rows for "VIC" and 5 rows for "HPG", sendWorkFn called once with message containing "VIC" and "HPG"
-- AC-2: Message includes count of TA-ready tickers (>= 8 rows) — "2/2 sẵn sàng TA" or equivalent
-- AC-3: When sendWorkFn throws, job does NOT propagate error (notification is best-effort)
-- AC-4: When zero rows aggregated (empty DB), sendWorkFn called with message indicating 0 rows / 0 tickers TA-ready
-- `bun tsc --noEmit` 0 errors
-
----
-
-### Task 1369 — feat(ohlcv-aggregator-notify): post WORK-channel health summary
-
-**Branch**: `task/1369-ohlcv-aggregator-notify-impl`
-**Layer**: scheduler
-**Depends on**: 1368 (TDD tests RED)
-
-**Files to read first**
-- `src/__tests__/1368-ohlcv-aggregator-notify.test.ts` (AC definitions)
-- `src/scheduler/ohlcvDailyAggregatorJob.ts` (inject sendWorkFn parameter)
-
-**Files to modify**
-- MODIFY: `src/scheduler/ohlcvDailyAggregatorJob.ts` — add optional `sendWorkFn` injectable param; after aggregation loop, call with summary: rows per ticker, TA-ready count, timestamp
-
-**Notification message format** (Vietnamese, WORK channel):
-```
-OHLCV tổng hợp {date}: {N} tickers, {M} sẵn sàng TA (>= 8 ngày)
-Top: {ticker1}={rows1}d, {ticker2}={rows2}d, {ticker3}={rows3}d
-```
-
-**Acceptance Criteria**
-- All 4 AC tests from 1368 pass
-- `sendWorkFn` defaults to `sendTelegramWork` when not injected (prod path)
-- Notification is best-effort: any error caught+logged, job continues
-- `bun tsc --noEmit` 0 errors
-- Full suite 0 new failures
-
----
-
-### Task 1370 — test(france-watchlist-movers): TDD tests for watchlist-filtered movers
-
-**Branch**: `task/1370-france-watchlist-movers-tdd`
-**Layer**: test
-**Depends on**: none
-**Status**: Review
-
-**Context**: `fetchTopMovers` in `franceSummaryJob.ts` currently queries `market_prices` globally — any ticker in the DB can appear as a top mover. The France briefing should only show movers for stocks the user watches. Task 1371 will change the query to JOIN watchlist and source from `market_prices_history`.
-
-**Files created**
-- `src/__tests__/1370-france-watchlist-movers.test.ts`
-
-**Acceptance Criteria** (AC-1/AC-2 are RED; AC-3/AC-4 pass for implementation-independent reasons)
-- AC-1: non-watchlist ticker has highest % move → excluded from movers; watchlist ticker appears
-- AC-2: empty watchlist → movers array is empty (no crash)
-- AC-3: watchlist ticker has no price row → handled gracefully, not included in movers
-- AC-4: 5 watchlist tickers with moves → movers capped at top 3 by abs(change%)
-- `bun tsc --noEmit` 0 errors
-
----
-
-### Task 1371 — feat(france-watchlist-movers): fetchTopMovers JOIN watchlist
-
-**Branch**: `task/1371-france-watchlist-movers-impl`
-**Layer**: interface/scheduler
-**Depends on**: 1370 (TDD tests RED)
-**Status**: Todo
-
-**Files to read first**
-- `src/__tests__/1370-france-watchlist-movers.test.ts` (AC definitions)
-- `src/scheduler/franceSummaryJob.ts` (fetchTopMovers to modify)
-- `src/infrastructure/db/schema.ts` (market_prices_history schema)
-
-**Files to modify**
-- MODIFY: `src/scheduler/franceSummaryJob.ts` — change `fetchTopMovers` to JOIN watchlist and query `market_prices_history` (latest price per code) instead of `market_prices`
-
-**New query shape**:
+**Seed helper pattern** — replace `INSERT INTO market_prices` seeds with a helper that inserts two rows into `market_prices_history` (yesterday + today) and one row into `watchlist`:
 ```sql
-SELECT w.code, mph.price, mph.change_pct
-FROM watchlist w
-JOIN (
-  SELECT code, price,
-         ROUND((price - LAG(price) OVER (PARTITION BY code ORDER BY fetched_at)) /
-               LAG(price) OVER (PARTITION BY code ORDER BY fetched_at) * 100, 2) AS change_pct
-  FROM market_prices_history
-) mph ON mph.code = w.code
-WHERE mph.change_pct IS NOT NULL
-ORDER BY ABS(mph.change_pct) DESC
-LIMIT 3
+-- yesterday row
+INSERT OR REPLACE INTO market_prices_history (code, price, volume, fetched_at)
+  VALUES (?, priceYesterday, 1000000, '2026-04-16T08:00:00');
+-- today row
+INSERT OR REPLACE INTO market_prices_history (code, price, volume, fetched_at)
+  VALUES (?, priceToday, 1000000, '2026-04-17T08:00:00');
+-- watchlist
+INSERT OR REPLACE INTO watchlist (code) VALUES (?);
 ```
 
 **Acceptance Criteria**
-- All 4 AC tests from 1370 pass (GREEN)
+- All 17 previously-failing tests pass (0 new failures)
 - `bun tsc --noEmit` 0 errors
-- Full suite 0 new failures
+- Full suite net improvement: 17 fewer failures vs current baseline
+
+---
+
+### Task 1373 — fix(cron-registry-count): schedulerFileCount 32 → 34 in 1190-pipeline-watchdog.test.ts
+
+**Branch**: same as 1372 (`task/1372-1373-france-test-fixtures`)
+**Layer**: test
+**Depends on**: none
+
+**Files to modify**
+- `src/__tests__/1190-pipeline-watchdog.test.ts` — find assertion `schedulerFileCount === 32`, update to `=== 34`
+
+**Acceptance Criteria**
+- `cron-registry.json integrity > schedulerFileCount === 34` passes
+- `bun tsc --noEmit` 0 errors
 
 ---
 
