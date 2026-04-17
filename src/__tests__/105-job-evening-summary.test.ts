@@ -442,6 +442,7 @@ describe("Task 105 — Evening Summary Job", () => {
             watchlistMovers: [],
             predictionSignals: [],
             predictionDiag: { stored: 0 },
+            taDiag: { tickersWithSignal: 0, tickersBelowThreshold: 0, ohlcvRowsMin: 0, ohlcvRowsMax: 0 },
             taSummary: [],
             newsCount: 0,
             generatedAt: new Date().toISOString(),
