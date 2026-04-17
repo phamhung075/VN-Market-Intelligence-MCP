@@ -4,108 +4,73 @@
 
 ---
 
-## Sprint 118 — Active
+## Sprint 120 — Active
 
 | ID | Title | Status | Role |
 |----|-------|--------|------|
-| 1350 | test(ohlcv-backfill): TDD test 1350-ohlcv-backfill-endpoint.test.ts — written FIRST | Backlog | Dev |
-| 1351 | feat(ohlcv-backfill): POST /api/push-ohlcv-history endpoint + vps-scripts/fetch-ohlcv-backfill.sh | Backlog | Dev |
+| 1354 | test(prediction-diag): TDD 1354-prediction-signals-fallback.test.ts — written FIRST | Review | Dev |
+| 1355 | feat(prediction-diag): predictionDiag block + medium-severity fallback in assembleEveningSummary | Todo | Dev |
 
-> Tech design: `docs/TECH_118.md` (pending Architect)
-
----
-
-## Sprint 117 — Complete
-
-| ID | Title | Status | Role |
-|----|-------|--------|------|
-| 1348 | test(france-summary-cron): TDD test 1348-france-summary-cron-window.test.ts — written FIRST | Done | Dev |
-| 1349 | fix(france-summary-cron): widen cron window to every-30-min 06-08 UTC with dedup guard | Done | Dev |
-
-> Tech design: `docs/TECH_117.md` (APPROVED_BY_ARCHITECT)
-
----
-
-## Sprint 116 — Complete
-
-| ID | Title | Status | Role |
-|----|-------|--------|------|
-| 1346 | test(ta-adaptive): write 1346-ta-adaptive-periods.test.ts against pre-fix code | Done | Dev |
-| 1347 | fix(ta-adaptive): lower guard to 8, apply adaptive Math.min for RSI + MA periods | Done | Dev |
-
----
-
-## Sprint 115 — Complete
-
-| ID | Title | Status | Role |
-|----|-------|--------|------|
-| 1344 | test(france-summary): TDD test 1344-france-summary-stale-alerts.test.ts — written FIRST | Done | Dev |
-| 1345 | fix(france-summary): add 24h time window to fetchTopAlerts + same-day dedup guard | Done | Dev |
-
-> Tech design: `docs/TECH_115.md` (APPROVED_BY_ARCHITECT)
-
----
-
-## Sprint 114 — Complete
-
-| ID | Title | Status | Role |
-|----|-------|--------|------|
-| 1342 | test(ta-fallback): TDD test 1342-ta-fallback-intraday.test.ts — written FIRST | Done | Dev |
-| 1343 | fix(ta-fallback): defaultComputeTa fallback to market_prices_history when daily_ohlcv < 15 rows | Done | Dev |
-
----
-
-## Sprint 113 — Complete
-
-| ID | Title | Status | Role |
-|----|-------|--------|------|
-| 1341 | fix(test-crash): inject ragRetriever stub in test 1332 to eliminate LanceDB exit-132 crash | Done | Dev |
-
----
-
-## Sprint 112 — Complete
-
-| ID | Title | Status | Role |
-|----|-------|--------|------|
-| 1339 | test(alert-delivery): TDD test 1339-alert-delivery-medium.test.ts — medium severity | Done | Dev |
-| 1340 | fix(alert-delivery): add medium to readUnnotifiedAlerts severity IN list | Done | Dev |
-
----
-
-## Sprint 111 — Complete
-
-| ID | Title | Status | Role |
-|----|-------|--------|------|
-| 1337 | fix(test-isolation): 297-foreign-flow-fix DB_PATH at line 1 + afterAll closeDb | Done | Dev |
-| 1338 | fix(test-timeout): 296-ocr-pipeline-e2e add explicit timeout on OCR it() | Done | Dev |
-
----
-
-## Sprint 110 — Complete
-
-| ID | Title | Status |
-|----|-------|--------|
-| 1335 | fix(news-pipeline): diagnose and fix zero rag_analyses rows in production | Done |
-| 1336 | test(news-pipeline): TDD test 1335-news-pipeline-rag-insert.test.ts | Done |
-
----
-
-## Sprint 109 — Complete
-
-| ID | Title | Status |
-|----|-------|--------|
-| 1334 | chore(tasks): archive stale task detail blocks + fix sprint status entries | Done |
-
----
-
-## Sprint 108 — Complete
-
-| ID | Title | Status |
-|----|-------|--------|
-| 1332 | test(source-health): TDD test 1332-pollnews-source-display-name.test.ts — written FIRST | Done |
-| 1333 | fix(source-health): add SOURCE_DISPLAY_NAMES map to pollNews — record health under display name | Done |
+> Tech design: `docs/TECH_120.md` (APPROVED_BY_ARCHITECT)
 
 ---
 
 ## Task Details (active tasks only)
 
+### Task 1354 — test(prediction-diag): TDD test
+
+**Branch**: `task/1354-prediction-diag-tdd`
+**Layer**: test
+**Depends on**: none
+
+**Files to create**
+- CREATE: `src/__tests__/1354-prediction-signals-fallback.test.ts`
+
+**Files to read first**
+- `src/application/usecases/assembleEveningSummary.ts` lines 335-347 (Step 5 prediction signals)
+- `src/infrastructure/db/predictionStore.ts` lines 73-130 (`getRecentPredictionSignals` query)
+- `src/__tests__/1318-prediction-signals-evening.test.ts` (pattern: in-memory DB + `assembleEveningSummary` import)
+
+**Acceptance Criteria**
+
+**Given** `src/__tests__/1354-prediction-signals-fallback.test.ts` with line 1: `process.env["DB_PATH"] = ":memory:";`, injecting signals via `getPredictionSignalsFn` option (no `mock.module`)
+**When** `bun test 1354` runs before task 1355 is applied
+**Then**
+- AC-1: 2 signals (high + critical) → `predictionSignals` length 2, `predictionDiag.stored` === 2
+- AC-2: 4 medium signals, 0 high/critical → `predictionSignals` length 3 (capped), `predictionDiag.stored` === 4
+- AC-3: 0 signals → `predictionSignals` === [], `predictionDiag.stored` === 0
+- AC-4: 5 signals (2 high + 2 medium + 1 low) → `predictionSignals` length 2 (high only), `predictionDiag.stored` === 5
+- AC-5: `getPredictionSignalsFn` throws → `predictionSignals` === [], `predictionDiag.stored` === 0; `logger.warn` called with message containing "prediction"
+- All 5 tests RED before 1355; GREEN after 1355
+
+---
+
+### Task 1355 — feat(prediction-diag): predictionDiag + medium fallback
+
+**Branch**: `task/1355-prediction-diag-impl`
+**Layer**: application/usecases
+**Depends on**: 1354 (TDD tests written, confirmed RED)
+
+**Files to modify**
+- MODIFY: `src/application/usecases/assembleEveningSummary.ts`
+  - Add `PredictionDiag` interface above `EveningSummary`
+  - Add `predictionDiag: PredictionDiag` field to `EveningSummary`
+  - Add optional `getPredictionSignalsFn` to `AssembleEveningSummaryOptions`
+  - Replace Step 5 (lines 335-347) with medium-fallback + diag block per TECH_120
+
+**Files to read first**
+- `src/application/usecases/assembleEveningSummary.ts` lines 50-65 (types) + 335-347 (Step 5)
+- `src/infrastructure/db/predictionStore.ts` lines 73-130 (`getRecentPredictionSignals`)
+
+**Acceptance Criteria**
+
+**Given** task 1354 tests exist and are RED
+**When** changes applied and `bun test 1354` runs
+**Then**
+- All 5 AC tests pass, 0 failures
+- `bun tsc --noEmit` 0 errors
+- `PredictionDiag { stored: number }` interface exported from `assembleEveningSummary.ts`
+- Fallback: no high/critical → up to 3 medium signals from last 24h
+- `predictionDiag.stored` = COUNT of all `prediction_signals` rows in last 24h (any severity)
+- Telegram formatter untouched — `predictionDiag` is JSON-only, not sent to Telegram
+- Full suite 0 new failures
