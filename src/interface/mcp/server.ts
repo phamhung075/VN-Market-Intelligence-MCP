@@ -825,25 +825,29 @@ export async function createBunServer(
         setImmediate(async () => {
           try {
             const { pollNews } = await import("../../application/usecases/pollNews.js");
-            const result = await pollNews({
-              fetchers: {
-                // Build a fetcher for every key present in bySource.
-                // This forwards all 9 (or more) VPS-pushed source keys without
-                // maintaining a hardcoded list here.
-                ...Object.fromEntries(
-                  Object.keys(bySource).map((src) => [src, async () => bySource[src] ?? []])
-                ),
-                // Non-VN sources: always no-op in push-news context.
-                // Placed after spread so they override any hypothetical key collision.
-                reuters:          async () => [],
-                tradingeconomics: async () => [],
-              },
-            });
-            log.info("[push-news] pipeline complete", {
-              fetched: result.fetched,
-              inserted: result.inserted,
-              duplicates: result.duplicates,
-              alerts: result.alerts,
+            const { recordJobRun } = await import("../../infrastructure/db/cronJobRunStore.js");
+            const { getDb } = await import("../../infrastructure/db/schema.js");
+            await recordJobRun(getDb(), "pollNewsJob", async () => {
+              const result = await pollNews({
+                fetchers: {
+                  // Build a fetcher for every key present in bySource.
+                  // This forwards all 9 (or more) VPS-pushed source keys without
+                  // maintaining a hardcoded list here.
+                  ...Object.fromEntries(
+                    Object.keys(bySource).map((src) => [src, async () => bySource[src] ?? []])
+                  ),
+                  // Non-VN sources: always no-op in push-news context.
+                  // Placed after spread so they override any hypothetical key collision.
+                  reuters:          async () => [],
+                  tradingeconomics: async () => [],
+                },
+              });
+              log.info("[push-news] pipeline complete", {
+                fetched: result.fetched,
+                inserted: result.inserted,
+                duplicates: result.duplicates,
+                alerts: result.alerts,
+              });
             });
           } catch (err) {
             log.error("[push-news] pipeline failed", {
