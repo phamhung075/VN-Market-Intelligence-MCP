@@ -4,6 +4,17 @@
 
 ---
 
+## Sprint 117 — Active
+
+| ID | Title | Status | Role |
+|----|-------|--------|------|
+| 1348 | test(france-summary-cron): TDD test 1348-france-summary-cron-window.test.ts — written FIRST | Review | Dev |
+| 1349 | fix(france-summary-cron): widen cron window to every-30-min 06-08 UTC with dedup guard | Review | Dev |
+
+> Tech design: `docs/TECH_117.md` (APPROVED_BY_ARCHITECT)
+
+---
+
 ## Sprint 116 — Complete
 
 | ID | Title | Status | Role |
