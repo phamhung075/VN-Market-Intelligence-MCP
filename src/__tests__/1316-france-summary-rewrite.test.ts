@@ -110,11 +110,11 @@ describe("Task 1316/1317 — franceSummaryJob rewrite", () => {
   it("AC4: top 3 alerts returned, severity sorted (critical > high > warning > info)", async () => {
     db.exec(`
       INSERT INTO alerts (id, triggered_at, severity, message) VALUES
-        ('al1', '2026-04-15T06:00:00', 'info', 'Tin tức thông thường'),
-        ('al2', '2026-04-15T06:00:00', 'critical', 'Cảnh báo nghiêm trọng'),
-        ('al3', '2026-04-15T06:00:00', 'warning', 'Cảnh báo vừa'),
-        ('al4', '2026-04-15T06:00:00', 'high', 'Cảnh báo cao'),
-        ('al5', '2026-04-15T06:00:00', 'info', 'Thông tin khác')
+        ('al1', datetime('now', '-1 hour'), 'info', 'Tin tức thông thường'),
+        ('al2', datetime('now', '-1 hour'), 'critical', 'Cảnh báo nghiêm trọng'),
+        ('al3', datetime('now', '-1 hour'), 'warning', 'Cảnh báo vừa'),
+        ('al4', datetime('now', '-1 hour'), 'high', 'Cảnh báo cao'),
+        ('al5', datetime('now', '-1 hour'), 'info', 'Thông tin khác')
     `)
 
     const sends: string[] = []
@@ -137,13 +137,13 @@ describe("Task 1316/1317 — franceSummaryJob rewrite", () => {
   it("AC5: taCount counts alerts with signals_json containing ta_% type", async () => {
     db.exec(`
       INSERT INTO alerts (id, triggered_at, severity, signals_json, message) VALUES
-        ('ta1', '2026-04-15T06:00:00', 'warning',
+        ('ta1', datetime('now', '-1 hour'), 'warning',
           '[{"type":"ta_overbought","message":"RSI cao"}]', 'RSI overbought'),
-        ('ta2', '2026-04-15T06:00:00', 'warning',
+        ('ta2', datetime('now', '-1 hour'), 'warning',
           '[{"type":"ta_oversold","message":"RSI thấp"}]', 'RSI oversold'),
-        ('ta3', '2026-04-15T06:00:00', 'warning',
+        ('ta3', datetime('now', '-1 hour'), 'warning',
           '[{"type":"ta_bb_breakout_up","message":"BB vượt trên"}]', 'BB breakout'),
-        ('nta', '2026-04-15T06:00:00', 'warning',
+        ('nta', datetime('now', '-1 hour'), 'warning',
           '[{"type":"macro_deviation","message":"macro"}]', 'Macro alert')
     `)
 
@@ -180,7 +180,7 @@ describe("Task 1316/1317 — franceSummaryJob rewrite", () => {
     db.exec(`DROP TABLE market_prices`)
     db.exec(`
       INSERT INTO alerts (id, triggered_at, severity, message) VALUES
-        ('al1', '2026-04-15T06:00:00', 'critical', 'Cảnh báo quan trọng')
+        ('al1', datetime('now', '-1 hour'), 'critical', 'Cảnh báo quan trọng')
     `)
 
     const sends: string[] = []
@@ -231,11 +231,11 @@ describe("Task 1316/1317 — franceSummaryJob rewrite", () => {
   it("AC10: alertCount is capped at 3 even when more alerts exist", async () => {
     db.exec(`
       INSERT INTO alerts (id, triggered_at, severity, message) VALUES
-        ('x1', '2026-04-15T06:00:00', 'critical', 'A'),
-        ('x2', '2026-04-15T06:00:00', 'critical', 'B'),
-        ('x3', '2026-04-15T06:00:00', 'high', 'C'),
-        ('x4', '2026-04-15T06:00:00', 'high', 'D'),
-        ('x5', '2026-04-15T06:00:00', 'warning', 'E')
+        ('x1', datetime('now', '-1 hour'), 'critical', 'A'),
+        ('x2', datetime('now', '-1 hour'), 'critical', 'B'),
+        ('x3', datetime('now', '-1 hour'), 'high', 'C'),
+        ('x4', datetime('now', '-1 hour'), 'high', 'D'),
+        ('x5', datetime('now', '-1 hour'), 'warning', 'E')
     `)
 
     const result = await runFranceSummary({ db, sendFn: noopSend, nowFn: now })
@@ -248,7 +248,7 @@ describe("Task 1316/1317 — franceSummaryJob rewrite", () => {
   it("AC11: taCount is 0 when alerts table has no ta_% signal types", async () => {
     db.exec(`
       INSERT INTO alerts (id, triggered_at, severity, signals_json, message) VALUES
-        ('n1', '2026-04-15T06:00:00', 'warning',
+        ('n1', datetime('now', '-1 hour'), 'warning',
           '[{"type":"macro_deviation","message":"x"}]', 'Macro')
     `)
 

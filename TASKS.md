@@ -4,6 +4,17 @@
 
 ---
 
+## Sprint 115 — Active
+
+| ID | Title | Status | Role |
+|----|-------|--------|------|
+| 1344 | test(france-summary): TDD test 1344-france-summary-stale-alerts.test.ts — written FIRST | Review | Dev |
+| 1345 | fix(france-summary): add 24h time window to fetchTopAlerts + same-day dedup guard | Review | Dev |
+
+> Tech design: `docs/TECH_115.md` (APPROVED_BY_ARCHITECT)
+
+---
+
 ## Sprint 114 — Complete
 
 | ID | Title | Status | Role |
