@@ -19,7 +19,7 @@
 
 | ID | Title | Status | Role |
 |----|-------|--------|------|
-| 1360 | test(ohlcv-backfill-queue): TDD — written FIRST, must be RED | Review | Dev |
+| 1360 | test(ohlcv-backfill-queue): TDD — written FIRST, must be RED | Done | QA |
 | 1361 | feat(ohlcv-backfill-queue): backfill queue endpoint + VPS poll script | Todo | Dev |
 
 > Req spec: `docs/REQ_123.md` | Tech design: `docs/TECH_123.md`
