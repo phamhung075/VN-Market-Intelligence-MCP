@@ -4,14 +4,14 @@
 
 ---
 
-## Sprint 133 — Review
+## Sprint 133 — Complete
 
 | ID | Title | Status | Role |
 |----|-------|--------|------|
-| 1380 | test(isolation): write 1380-test-isolation-preload.test.ts — TDD RED proves isolation gap | Review | Dev |
-| 1381 | fix(isolation): create setup.ts preload + bunfig.toml + migrate 12 call-site test files | Review | Dev |
+| 1380 | test(isolation): write 1380-test-isolation-preload.test.ts — TDD RED proves isolation gap | Done | Dev |
+| 1381 | fix(isolation): create setup.ts preload + bunfig.toml + migrate 12 call-site test files | Done | Dev |
 
-> Tech design: `docs/TECH_133.md` | Req: `docs/REQ_133.md`
+> Tech design: `docs/TECH_133.md` | Req: `docs/REQ_133.md` | Report: `reports/TASK_REPORT_1380.md` | COMPLETE 2026-04-17
 
 ---
 
@@ -19,8 +19,8 @@
 
 | ID | Title | Status | Role |
 |----|-------|--------|------|
-| 1346 | test(ta-adaptive): TDD test 1346-ta-adaptive-period.test.ts — written FIRST | Todo | Dev |
-| 1347 | fix(ta-adaptive): lower defaultComputeTa candle guard to 8, adaptive RSI/MA periods | Todo | Dev |
+| 1346 | test(ta-adaptive): TDD test 1346-ta-adaptive-period.test.ts — written FIRST | Done | Dev |
+| 1347 | fix(ta-adaptive): lower defaultComputeTa candle guard to 8, adaptive RSI/MA periods | Done | Dev |
 
 > Tech design: `docs/TECH_116.md` (APPROVED_BY_ARCHITECT)
 
