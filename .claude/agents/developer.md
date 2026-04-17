@@ -91,5 +91,9 @@ full_suite_pass: true
 
 6. Update TASKS.md: In Progress → Review
 7. Notify PM/QA: "Task NNN ready for review on branch task/NNN-... — handoff: docs/handoffs/TASK_NNN.md"
+8. **Update `docs/SYSTEM_STATUS.md`** if the task fixes a scheduler, VPS service, or MCP tool:
+   - Change status emoji (`✅ ok` / `⚠️ flaky` / `❌ down`)
+   - Update "Last Run", "Notes", or "Known Issues" table
+   - Update "Last updated" header line
 
 Branch hygiene after QA merge → `.claude/knowledge/dev-standards.md`
