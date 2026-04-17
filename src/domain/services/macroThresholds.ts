@@ -71,7 +71,14 @@ const LEVEL_VI: Record<DeviationLevel, string> = {
   normal: "bình thường",
   elevated: "cao hơn TB",
   high: "cao bất thường",
-  extreme: "cực đoan",
+  extreme: "cực cao",
+};
+
+const LEVEL_VI_BELOW: Record<DeviationLevel, string> = {
+  normal: "bình thường",
+  elevated: "thấp hơn TB",
+  high: "thấp bất thường",
+  extreme: "cực thấp",
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -135,7 +142,7 @@ export function classifyDeviation(stats: MacroStats): MacroDeviation {
     "at_mean";
 
   const nameVi = INDICATOR_NAME_VI[name] ?? name;
-  const levelVi = LEVEL_VI[level];
+  const levelVi = direction === "below" ? LEVEL_VI_BELOW[level] : LEVEL_VI[level];
   const dirVi = direction === "above" ? "trên" : direction === "below" ? "dưới" : "quanh";
   const sign = zScore >= 0 ? "+" : "";
 
