@@ -66,6 +66,8 @@ After merge to main, verify:
 2. `git status --short` = empty
 3. Delete task branch: `git branch -d task/NNN-*` + `git push origin --delete task/NNN-*`
 4. Remove worktrees: `git worktree remove --force .claude/worktrees/<name>`
+4a. If changed files include `vps-scripts/**` or `deploy-vinahost.sh`, run
+    `./scripts/maybe-deploy-vps.sh` before deleting the task branch.
 5. Drop stashes from merged branch
 
 Full reference → `.claude/WORKFLOW.md#branch-hygiene-checklist`
