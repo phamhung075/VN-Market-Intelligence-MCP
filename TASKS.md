@@ -62,7 +62,7 @@
 
 ---
 
-## Sprint 127 — Active
+## Sprint 127 — COMPLETE (2026-04-17)
 
 | ID | Title | Status | Role |
 |----|-------|--------|------|
@@ -70,23 +70,83 @@
 | 1369 | feat(ohlcv-aggregator-notify): ohlcvDailyAggregatorJob — post WORK-channel health summary post-aggregation | Done | QA |
 
 > Goal: Make the OHLCV → TA pipeline visible after each run. After `ohlcvDailyAggregatorJob` completes, send a WORK-channel Telegram summarizing: rows aggregated per ticker, how many tickers are TA-ready (>=8 rows), and whether taSummary would be non-empty at next evening report. Silent pipeline failures are invisible to the dev team today.
-> Sprint 127 | PO initiated: 2026-04-17
+> Req spec: `docs/REQ_127.md` | Tech design: `docs/TECH_127.md` | PO sign-off: 2026-04-17
 
 ---
 
-## Sprint 127 — Active
+## Sprint 128 — Active
 
 | ID | Title | Status | Role |
 |----|-------|--------|------|
-| 1370 | test(france-watchlist-movers): TDD — fetchTopMovers filters by watchlist | Review | QA |
+| 1370 | test(france-watchlist-movers): TDD — fetchTopMovers filters by watchlist | Done | QA |
 | 1371 | feat(france-watchlist-movers): fetchTopMovers JOIN watchlist, source market_prices_history | Todo | Dev |
 
 > Goal: France morning briefing movers section currently shows any ticker with the highest % move globally. Filter to watchlist-only so the user only sees moves for stocks they track.
-> Branch(1370): `task/1370-france-watchlist-movers-tdd`
+> Branch(1370): merged to main 2026-04-17 | Branch(1371): `task/1371-france-watchlist-movers-impl`
 
 ---
 
 ## Task Details (active tasks only)
+
+### Task 1370 — test(france-watchlist-movers): TDD RED tests
+
+**Branch**: `task/1370-france-watchlist-movers-tdd`
+**Layer**: test
+**Depends on**: none
+
+**Context**: `franceSummaryJob` fetches top movers from `market_prices ORDER BY ABS(change_pct) DESC LIMIT 3` with no filter — returns any stock in the DB. The user monitors 30 specific watchlist tickers. A 6.95% VIC move is relevant; a random non-watchlist stock is not.
+
+**Files to read first**
+- `src/scheduler/franceSummaryJob.ts` (fetchTopMovers function, lines 105-122)
+- `src/__tests__/1364-france-ta-detail.test.ts` (existing pattern for this job)
+
+**Files to create**
+- CREATE: `src/__tests__/1370-france-watchlist-movers.test.ts`
+
+Line 1: `process.env["DB_PATH"] = ":memory:";`
+
+**Acceptance Criteria** (all RED before 1371, all GREEN after)
+- AC-1: When watchlist has VIC+HPG and market_prices has VIC(+7%), HPG(-5%), and XYZ(+10% — not on watchlist), movers section shows only VIC and HPG, not XYZ
+- AC-2: When watchlist is empty, movers section returns [] (no crash)
+- AC-3: When a watchlist ticker has no price row, it is silently skipped (no crash)
+- AC-4: Top-3 limit still applies — if watchlist has 10 tickers with price data, only top 3 by ABS(change_pct) appear
+- `bun tsc --noEmit` 0 errors
+
+---
+
+### Task 1371 — feat(france-watchlist-movers): restrict mover query to watchlist JOIN
+
+**Branch**: `task/1371-france-watchlist-movers-impl`
+**Layer**: scheduler
+**Depends on**: 1370 (TDD tests RED)
+
+**Files to read first**
+- `src/__tests__/1370-france-watchlist-movers.test.ts` (AC definitions)
+- `src/scheduler/franceSummaryJob.ts` (`fetchTopMovers` function)
+
+**Files to modify**
+- MODIFY: `src/scheduler/franceSummaryJob.ts` — change `fetchTopMovers` SQL to `INNER JOIN watchlist USING (code)` so only watchlist tickers are returned
+
+**SQL change** (in `fetchTopMovers`):
+```sql
+-- BEFORE:
+SELECT code, price, change_pct FROM market_prices
+WHERE change_pct IS NOT NULL ORDER BY ABS(change_pct) DESC LIMIT 3
+
+-- AFTER:
+SELECT mp.code, mp.price, mp.change_pct
+FROM market_prices mp
+INNER JOIN watchlist w ON w.code = mp.code
+WHERE mp.change_pct IS NOT NULL
+ORDER BY ABS(mp.change_pct) DESC LIMIT 3
+```
+
+**Acceptance Criteria**
+- All 4 AC tests from 1370 pass
+- `bun tsc --noEmit` 0 errors
+- Full suite 0 new failures
+
+---
 
 ### Task 1368 — test(ohlcv-aggregator-notify): TDD RED tests
 
@@ -205,6 +265,7 @@ LIMIT 3
 
 | Sprint | Goal summary | Status |
 |--------|-------------|--------|
+| 127 | feat(ohlcv-aggregator-notify): WORK-channel post-aggregation health summary (1368, 1369) | COMPLETE 2026-04-17 |
 | 126 | feat(pipeline-health-tool): get_pipeline_health MCP tool — OHLCV row counts + TA readiness (1366, 1367) | COMPLETE 2026-04-17 |
 | 125 | feat(france-ta-detail): France briefing TA section — ticker-level RSI/MA20 (1364, 1365) | COMPLETE 2026-04-17 |
 | 124 | feat(vps-deploy-backfill): wire ohlcv-backfill-poll.sh as 6th VPS service (1362, 1363) | COMPLETE 2026-04-17 |
