@@ -2,13 +2,13 @@
   "_maintained_by": "PM / system-auditor",
   "_trigger": "sprint start/end, tool/cron count change",
   "lastUpdated": "2026-04-16",
-  "currentSprint": 113,
-  "previousSprint": { "number": 112, "status": "COMPLETE", "completedDate": "2026-04-16" },
-  "sprintGoal": "fix(test-crash): LanceDB exit-132 crash in test 1332 — inject ragRetriever stub",
+  "currentSprint": 114,
+  "previousSprint": { "number": 114, "status": "COMPLETE", "completedDate": "2026-04-16" },
+  "sprintGoal": "fix(ta-fallback): defaultComputeTa fallback to market_prices_history when daily_ohlcv < 15 rows",
   "toolCount": 98,
   "schedulerFileCount": 32,
   "knowledgeFileCount": 15,
   "devAgentCount": 13,
   "analysisAgentCount": 9,
-  "totalTasksDone": 296
+  "totalTasksDone": 298
 }

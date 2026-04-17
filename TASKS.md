@@ -4,12 +4,12 @@
 
 ---
 
-## Sprint 114 — Active
+## Sprint 114 — Complete
 
 | ID | Title | Status | Role |
 |----|-------|--------|------|
-| 1342 | test(ta-fallback): TDD test 1342-ta-fallback-intraday.test.ts — written FIRST | Review | Dev |
-| 1343 | fix(ta-fallback): defaultComputeTa fallback to market_prices_history when daily_ohlcv < 15 rows | Review | Dev |
+| 1342 | test(ta-fallback): TDD test 1342-ta-fallback-intraday.test.ts — written FIRST | Done | Dev |
+| 1343 | fix(ta-fallback): defaultComputeTa fallback to market_prices_history when daily_ohlcv < 15 rows | Done | Dev |
 
 ---
 
@@ -66,24 +66,4 @@
 ---
 
 ## Task Details (active tasks only)
-
-### 1342 — test(ta-fallback): TDD test 1342-ta-fallback-intraday.test.ts
-
-- Spec: `docs/REQ_114.md` FR-3
-- File: `src/__tests__/1342-ta-fallback-intraday.test.ts`
-- Must be written and committed BEFORE task 1343.
-- TC-1: daily_ohlcv >= 15 rows → primary path, non-null signal
-- TC-2: daily_ohlcv < 15 rows + market_prices_history >= 15 distinct dates → fallback path, non-null signal
-- TC-3: both sources empty → null
-- TC-4: daily_ohlcv 0 rows + market_prices_history 14 distinct dates → null
-- All 4 TCs must FAIL before fix, PASS after fix.
-
-### 1343 — fix(ta-fallback): defaultComputeTa fallback to market_prices_history when daily_ohlcv < 15 rows
-
-- Spec: `docs/REQ_114.md` FR-1, FR-2
-- File: `src/application/usecases/assembleBriefing.ts` — `defaultComputeTa()` only
-- When daily_ohlcv count < 15: run fallback GROUP BY DATE(fetched_at) MAX(price) query on market_prices_history
-- Reuse existing CandleRow type for fallback rows (alias day + close_price in SQL)
-- Return null when both sources < 15 rows; return TaSignal otherwise
-- bun tsc --noEmit must be clean; no new types introduced; signature unchanged
 
