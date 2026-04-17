@@ -33,6 +33,18 @@ export interface PredictionDiag {
   stored: number;
 }
 
+/** Diagnostic counts for TA pipeline observability — JSON report only, NOT sent to Telegram */
+export interface TaDiag {
+  /** Watchlist tickers where computeTaFn returned a non-null TaSignal */
+  tickersWithSignal: number;
+  /** Watchlist tickers where daily_ohlcv row count < 8 (defaultComputeTa guard threshold) */
+  tickersBelowThreshold: number;
+  /** Minimum daily_ohlcv row count across all watchlist tickers (0 if empty watchlist) */
+  ohlcvRowsMin: number;
+  /** Maximum daily_ohlcv row count across all watchlist tickers (0 if empty watchlist) */
+  ohlcvRowsMax: number;
+}
+
 /** A watchlist stock that moved >= 1% during the day. */
 export interface WatchlistMover {
   /** Stock ticker, e.g. "VCB" */
@@ -64,6 +76,8 @@ export interface EveningSummary {
   predictionSignals: BriefingPredictionSignal[];
   /** Diagnostic counts for prediction pipeline observability — JSON report only, NOT sent to Telegram */
   predictionDiag: PredictionDiag;
+  /** Diagnostic counts for TA pipeline observability — JSON report only, NOT sent to Telegram */
+  taDiag: TaDiag;
   /** RSI(14) + MA20 signals for all watchlist tickers at market close. Empty array when
    *  watchlist is empty or all signals are null (< 15 candles). Includes neutral signals — the
    *  display filter (non-neutral only) is applied in eveningSummaryJob.ts. */
@@ -90,6 +104,8 @@ export interface AssembleEveningSummaryOptions {
   getNewsCountFn?: (midnight: string) => number;
   /** Override prediction signals fetch for tests — avoids mock.module in unit tests */
   getPredictionSignalsFn?: (db: Database, hoursBack: number) => BriefingPredictionSignal[] | Promise<BriefingPredictionSignal[]>;
+  /** Override OHLCV row count query for tests — avoids real DB dependency */
+  getOhlcvRowCountFn?: (code: string, db: Database) => number;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -187,6 +203,24 @@ function parseAffectedCodes(json: string | null): string[] {
       .filter((v): v is string => v !== null);
   } catch {
     return [];
+  }
+}
+
+/**
+ * Default production implementation: COUNT(*) of daily_ohlcv rows for a ticker.
+ * Returns 0 if the table does not exist yet (graceful degradation during DB migrations).
+ */
+function defaultGetOhlcvRowCount(code: string, db: Database): number {
+  try {
+    const row = db
+      .prepare<{ cnt: number }, [string]>(
+        "SELECT COUNT(*) AS cnt FROM daily_ohlcv WHERE code = ?",
+      )
+      .get(code);
+    return row?.cnt ?? 0;
+  } catch {
+    // Table may not exist in older DB schemas — treat as 0 rows
+    return 0;
   }
 }
 
@@ -321,25 +355,41 @@ export async function assembleEveningSummary(
 
   // ── Step 4: TA signals ────────────────────────────────────────────────────
   const taFn = options.computeTaFn ?? defaultComputeTa;
+  const rowCountFn = options.getOhlcvRowCountFn ?? defaultGetOhlcvRowCount;
   let taSummary: TaSignal[] = [];
+  let taDiag: TaDiag = { tickersWithSignal: 0, tickersBelowThreshold: 0, ohlcvRowsMin: 0, ohlcvRowsMax: 0 };
   try {
     const watchlistRows = db
       .prepare<WatchlistCodeRow, []>("SELECT code FROM watchlist")
       .all();
     const signals: TaSignal[] = [];
+    const rowCounts: number[] = [];
+    let withSignal = 0;
+    let belowThreshold = 0;
     for (const { code } of watchlistRows) {
       try {
+        const cnt = rowCountFn(code, db);
+        rowCounts.push(cnt);
+        if (cnt < 8) belowThreshold++;
         const sig = taFn(code, db);
-        if (sig !== null) signals.push(sig);
+        if (sig !== null) { signals.push(sig); withSignal++; }
       } catch {
+        rowCounts.push(0);
         /* per-ticker: swallow, continue */
       }
     }
     taSummary = signals;
+    taDiag = {
+      tickersWithSignal: withSignal,
+      tickersBelowThreshold: belowThreshold,
+      ohlcvRowsMin: rowCounts.length > 0 ? Math.min(...rowCounts) : 0,
+      ohlcvRowsMax: rowCounts.length > 0 ? Math.max(...rowCounts) : 0,
+    };
   } catch (err) {
     logger.warn("[assembleEveningSummary] TA step failed", {
       error: err instanceof Error ? err.message : String(err),
     });
+    // taDiag stays at zero-default — no crash
   }
 
   // ── Step 5: Prediction market signals — medium fallback + diag ──────────────
@@ -380,6 +430,7 @@ export async function assembleEveningSummary(
     watchlistMovers,
     predictionSignals,
     predictionDiag,
+    taDiag,
     taSummary,
     newsCount,
     generatedAt,

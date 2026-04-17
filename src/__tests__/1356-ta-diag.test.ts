@@ -163,13 +163,11 @@ describe("AC-1: all tickers have 20 OHLCV rows — all return signals", () => {
       db,
       reportsDir: tmpDir,
       computeTaFn: (code) => makeSignal(code),
-      // @ts-expect-error — getOhlcvRowCountFn not yet on AssembleEveningSummaryOptions (task 1357 adds it)
       getOhlcvRowCountFn: (_code: string, _db: unknown) => 20,
       getPredictionSignalsFn: () => Promise.resolve([]),
     });
 
-    // @ts-expect-error — taDiag not yet on EveningSummary (task 1357 adds it)
-    const diag = summary.taDiag as { tickersWithSignal: number; tickersBelowThreshold: number; ohlcvRowsMin: number; ohlcvRowsMax: number };
+    const diag = summary.taDiag;
 
     expect(diag.tickersWithSignal).toBe(2);
     expect(diag.tickersBelowThreshold).toBe(0);
@@ -204,13 +202,11 @@ describe("AC-2: all tickers sparse (3 rows < 8 threshold) — no signals", () =>
       db,
       reportsDir: tmpDir,
       computeTaFn: (_code) => null,
-      // @ts-expect-error — getOhlcvRowCountFn not yet on AssembleEveningSummaryOptions (task 1357 adds it)
       getOhlcvRowCountFn: (_code: string, _db: unknown) => 3,
       getPredictionSignalsFn: () => Promise.resolve([]),
     });
 
-    // @ts-expect-error — taDiag not yet on EveningSummary (task 1357 adds it)
-    const diag = summary.taDiag as { tickersWithSignal: number; tickersBelowThreshold: number; ohlcvRowsMin: number; ohlcvRowsMax: number };
+    const diag = summary.taDiag;
 
     expect(diag.tickersWithSignal).toBe(0);
     expect(diag.tickersBelowThreshold).toBe(2);
@@ -252,13 +248,11 @@ describe("AC-3: mixed — one ticker with signal (20 rows), one sparse (5 rows)"
       db,
       reportsDir: tmpDir,
       computeTaFn: (code) => signalMap[code] ?? null,
-      // @ts-expect-error — getOhlcvRowCountFn not yet on AssembleEveningSummaryOptions (task 1357 adds it)
       getOhlcvRowCountFn: (code: string, _db: unknown) => rowCountMap[code] ?? 0,
       getPredictionSignalsFn: () => Promise.resolve([]),
     });
 
-    // @ts-expect-error — taDiag not yet on EveningSummary (task 1357 adds it)
-    const diag = summary.taDiag as { tickersWithSignal: number; tickersBelowThreshold: number; ohlcvRowsMin: number; ohlcvRowsMax: number };
+    const diag = summary.taDiag;
 
     expect(diag.tickersWithSignal).toBe(1);
     expect(diag.tickersBelowThreshold).toBe(1);
@@ -298,7 +292,6 @@ describe("AC-4: getOhlcvRowCountFn throws — taDiag defaults to zeros, no crash
         computeTaFn: (_code) => {
           throw new Error("simulated TA computation failure");
         },
-        // @ts-expect-error — getOhlcvRowCountFn not yet on AssembleEveningSummaryOptions (task 1357 adds it)
         getOhlcvRowCountFn: (_code: string, _db: unknown) => {
           throw new Error("simulated OHLCV row count failure");
         },
@@ -313,8 +306,7 @@ describe("AC-4: getOhlcvRowCountFn throws — taDiag defaults to zeros, no crash
     expect(Array.isArray(summary!.taSummary)).toBe(true);
     expect(summary!.taSummary.length).toBe(0);
 
-    // @ts-expect-error — taDiag not yet on EveningSummary (task 1357 adds it)
-    const diag = summary!.taDiag as { tickersWithSignal: number; tickersBelowThreshold: number; ohlcvRowsMin: number; ohlcvRowsMax: number } | undefined;
+    const diag = summary!.taDiag;
 
     // When both rowCountFn and computeTaFn throw per-ticker, the inner catch handles them.
     // taDiag should reflect 0 across all fields (zero-default or all-zeros from push(0) path).

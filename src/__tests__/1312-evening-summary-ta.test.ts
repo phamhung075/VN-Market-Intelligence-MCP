@@ -197,6 +197,7 @@ describe("AC-2: eveningSummaryJob — neutral ticker not in Telegram TA section"
       watchlistMovers: [],
       predictionSignals: [],
       predictionDiag: { stored: 0 },
+      taDiag: { tickersWithSignal: 0, tickersBelowThreshold: 0, ohlcvRowsMin: 0, ohlcvRowsMax: 0 },
       newsCount: 0,
       generatedAt: new Date().toISOString(),
       taSummary: [
@@ -260,6 +261,7 @@ describe("AC-3: eveningSummaryJob — all neutral → no TA section in Telegram"
       watchlistMovers: [],
       predictionSignals: [],
       predictionDiag: { stored: 0 },
+      taDiag: { tickersWithSignal: 0, tickersBelowThreshold: 0, ohlcvRowsMin: 0, ohlcvRowsMax: 0 },
       newsCount: 0,
       generatedAt: new Date().toISOString(),
       taSummary: [
@@ -406,6 +408,7 @@ describe("AC-5: assembleEveningSummary — empty watchlist produces taSummary: [
       watchlistMovers: [],
       predictionSignals: [],
       predictionDiag: { stored: 0 },
+      taDiag: { tickersWithSignal: 0, tickersBelowThreshold: 0, ohlcvRowsMin: 0, ohlcvRowsMax: 0 },
       newsCount: 0,
       generatedAt: new Date().toISOString(),
       taSummary: [],
@@ -511,6 +514,7 @@ describe("Telegram TA section formatting — quá mua / quá bán / MA20 labels"
       watchlistMovers: [],
       predictionSignals: [],
       predictionDiag: { stored: 0 },
+      taDiag: { tickersWithSignal: 0, tickersBelowThreshold: 0, ohlcvRowsMin: 0, ohlcvRowsMax: 0 },
       newsCount: 0,
       generatedAt: new Date().toISOString(),
       taSummary: [
@@ -543,6 +547,7 @@ describe("Telegram TA section formatting — quá mua / quá bán / MA20 labels"
       watchlistMovers: [],
       predictionSignals: [],
       predictionDiag: { stored: 0 },
+      taDiag: { tickersWithSignal: 0, tickersBelowThreshold: 0, ohlcvRowsMin: 0, ohlcvRowsMax: 0 },
       newsCount: 0,
       generatedAt: new Date().toISOString(),
       taSummary: [
@@ -576,6 +581,7 @@ describe("Telegram TA section formatting — quá mua / quá bán / MA20 labels"
       watchlistMovers: [],
       predictionSignals: [],
       predictionDiag: { stored: 0 },
+      taDiag: { tickersWithSignal: 0, tickersBelowThreshold: 0, ohlcvRowsMin: 0, ohlcvRowsMax: 0 },
       newsCount: 0,
       generatedAt: new Date().toISOString(),
       taSummary: [
@@ -616,6 +622,7 @@ describe("Telegram TA section formatting — quá mua / quá bán / MA20 labels"
       watchlistMovers: [],
       predictionSignals: [],
       predictionDiag: { stored: 0 },
+      taDiag: { tickersWithSignal: 0, tickersBelowThreshold: 0, ohlcvRowsMin: 0, ohlcvRowsMax: 0 },
       newsCount: 0,
       generatedAt: new Date().toISOString(),
       taSummary,
