@@ -444,7 +444,20 @@ export async function pollNews(options: PollNewsOptions = {}): Promise<PollNewsR
   const allItems: RssItem[] = [];
   let errors = 0;
 
+  // Task 1333: translate raw fetcher keys to display names before recording health.
+  // These values must exactly match the bucket keys pre-seeded by
+  // globalSourceTracker.seedKnownSources() in sourceHealthTools.ts.
+  // "tradingeconomics" → "Trading Economics" (no "RSS" suffix) to match seedKnownSources line 54.
+  const SOURCE_DISPLAY_NAMES: Record<string, string> = {
+    reuters: "Reuters RSS",
+    cafef: "CafeF RSS",
+    vnexpress: "VnExpress RSS",
+    vneconomy: "VnEconomy RSS",
+    tradingeconomics: "Trading Economics",
+  };
+
   for (const { name, result } of sourceResults) {
+    const displayName = SOURCE_DISPLAY_NAMES[name] ?? name;
     if (result.status === "fulfilled") {
       allItems.push(...result.value.slice(0, limit));
       if (result.value.length > 0) {
@@ -452,7 +465,7 @@ export async function pollNews(options: PollNewsOptions = {}): Promise<PollNewsR
         // A fulfilled-but-empty result means the fetcher silently swallowed
         // a geo-block or timeout (Reuters/Google News pattern) — recording
         // success in that case produces false-OK in the source health table.
-        globalSourceTracker.recordSuccess(name);
+        globalSourceTracker.recordSuccess(displayName);
       } else {
         // Fulfilled with 0 items — record as transient failure in the health
         // tracker (so source health shows "degraded" instead of "OK") but do
@@ -461,7 +474,7 @@ export async function pollNews(options: PollNewsOptions = {}): Promise<PollNewsR
         // Empty results are normal off-hours behaviour and should not affect
         // the error count returned to callers or logged as failures.
         // Task 1288: separated health-tracking concern from error-counting.
-        globalSourceTracker.recordFailure(name, "empty result — no items returned");
+        globalSourceTracker.recordFailure(displayName, "empty result — no items returned");
         logger.debug(`[pollNews] ${name} returned 0 items — recorded as transient failure`, { source: name });
       }
     } else {
@@ -469,7 +482,7 @@ export async function pollNews(options: PollNewsOptions = {}): Promise<PollNewsR
       const errorMsg = result.reason instanceof Error
         ? result.reason.message
         : String(result.reason);
-      globalSourceTracker.recordFailure(name, errorMsg);
+      globalSourceTracker.recordFailure(displayName, errorMsg);
       logger.error(`[pollNews] ${name} fetch failed: ${errorMsg.slice(0, 120)}`, {
         source: name,
         error: errorMsg,
