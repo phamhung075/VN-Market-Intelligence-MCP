@@ -502,7 +502,7 @@ function parseAffectedCodes(json: string | null): string[] {
  * Returns null when fewer than 15 candles are available (RSI minimum).
  */
 export function defaultComputeTa(code: string, db: Database): TaSignal | null {
-  const rows = db.query<CandleRow, [string]>(
+  let rows = db.query<CandleRow, [string]>(
     `SELECT date AS day, close AS close_price
        FROM daily_ohlcv
       WHERE code = ?
@@ -510,7 +510,19 @@ export function defaultComputeTa(code: string, db: Database): TaSignal | null {
       LIMIT 60`,
   ).all(code);
 
-  if (rows.length < 15) return null; // RSI minimum
+  if (rows.length < 15) {
+    // Fall back to intraday ticks aggregated into synthetic daily closes
+    const fallbackRows = db.prepare<CandleRow, [string]>(
+      `SELECT DATE(fetched_at) AS day, MAX(price) AS close_price
+       FROM market_prices_history
+       WHERE code = ?
+       GROUP BY DATE(fetched_at)
+       ORDER BY day ASC
+       LIMIT 60`
+    ).all(code);
+    if (fallbackRows.length < 15) return null;
+    rows = fallbackRows;
+  }
 
   const prices = rows.map((r) => r.close_price);
   const currentPrice = prices.at(-1) ?? null;
