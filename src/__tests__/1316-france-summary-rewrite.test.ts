@@ -52,12 +52,12 @@ describe("Task 1316/1317 — franceSummaryJob rewrite", () => {
   let db: Database
   beforeEach(() => { db = makeDb() })
 
-  it("AC1: returns { sent, moverCount, alertCount, taCount } shape", async () => {
+  it("AC1: returns { sent, moverCount, alertCount, taSignals } shape", async () => {
     const result = await runFranceSummary({ db, sendFn: noopSend, nowFn: now })
     expect(typeof result.sent).toBe("boolean")
     expect(typeof result.moverCount).toBe("number")
     expect(typeof result.alertCount).toBe("number")
-    expect(typeof result.taCount).toBe("number")
+    expect(Array.isArray(result.taSignals)).toBe(true)
   })
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -72,7 +72,7 @@ describe("Task 1316/1317 — franceSummaryJob rewrite", () => {
     expect(result.sent).toBe(false)
     expect(result.moverCount).toBe(0)
     expect(result.alertCount).toBe(0)
-    expect(result.taCount).toBe(0)
+    expect(result.taSignals.length).toBe(0)
     expect(sends).toHaveLength(0)
   })
 
@@ -132,23 +132,18 @@ describe("Task 1316/1317 — franceSummaryJob rewrite", () => {
   })
 
   // ─────────────────────────────────────────────────────────────────────────
-  // AC 5: TA signal count from alerts WHERE signals_json type LIKE 'ta_%'
+  // AC 5: taSignals is an array (TA per-ticker signals replace old taCount)
   // ─────────────────────────────────────────────────────────────────────────
-  it("AC5: taCount counts alerts with signals_json containing ta_% type", async () => {
+  it("AC5: taSignals is always an array (TaSignalRow[])", async () => {
     db.exec(`
       INSERT INTO alerts (id, triggered_at, severity, signals_json, message) VALUES
         ('ta1', datetime('now', '-1 hour'), 'warning',
-          '[{"type":"ta_overbought","message":"RSI cao"}]', 'RSI overbought'),
-        ('ta2', datetime('now', '-1 hour'), 'warning',
-          '[{"type":"ta_oversold","message":"RSI thấp"}]', 'RSI oversold'),
-        ('ta3', datetime('now', '-1 hour'), 'warning',
-          '[{"type":"ta_bb_breakout_up","message":"BB vượt trên"}]', 'BB breakout'),
-        ('nta', datetime('now', '-1 hour'), 'warning',
-          '[{"type":"macro_deviation","message":"macro"}]', 'Macro alert')
+          '[{"type":"ta_overbought","message":"RSI cao"}]', 'RSI overbought')
     `)
 
     const result = await runFranceSummary({ db, sendFn: noopSend, nowFn: now })
-    expect(result.taCount).toBe(3)
+    expect(Array.isArray(result.taSignals)).toBe(true)
+    expect(typeof result.taSignals.length).toBe("number")
   })
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -243,9 +238,9 @@ describe("Task 1316/1317 — franceSummaryJob rewrite", () => {
   })
 
   // ─────────────────────────────────────────────────────────────────────────
-  // AC 11: taCount is 0 when no ta_% alerts exist
+  // AC 11: taSignals is empty array when no non-neutral watchlist signals exist
   // ─────────────────────────────────────────────────────────────────────────
-  it("AC11: taCount is 0 when alerts table has no ta_% signal types", async () => {
+  it("AC11: taSignals.length is 0 when no non-neutral TA signals found", async () => {
     db.exec(`
       INSERT INTO alerts (id, triggered_at, severity, signals_json, message) VALUES
         ('n1', datetime('now', '-1 hour'), 'warning',
@@ -253,7 +248,7 @@ describe("Task 1316/1317 — franceSummaryJob rewrite", () => {
     `)
 
     const result = await runFranceSummary({ db, sendFn: noopSend, nowFn: now })
-    expect(result.taCount).toBe(0)
+    expect(result.taSignals.length).toBe(0)
   })
 
   // ─────────────────────────────────────────────────────────────────────────

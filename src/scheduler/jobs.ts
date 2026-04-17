@@ -425,7 +425,7 @@ export function startScheduler() {
     await recordJobRun(getDb(), "franceSummaryJob", async () => {
       const result = await runFranceSummary()
       if (result.sent) {
-        log(`[france-summary] sent — movers=${result.moverCount} alerts=${result.alertCount} ta=${result.taCount}`)
+        log(`[france-summary] sent — movers=${result.moverCount} alerts=${result.alertCount} ta=${result.taSignals.length}`)
       }
       return { rowsWritten: result.moverCount + result.alertCount }
     })

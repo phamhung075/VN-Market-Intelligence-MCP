@@ -51,7 +51,11 @@ describe("Task 1290 — franceSummaryJob", () => {
 
     const result = await runFranceSummary({ db, sendFn })
 
-    expect(result).toEqual({ sent: false, moverCount: 0, alertCount: 0, taCount: 0 })
+    expect(result.sent).toBe(false)
+    expect(result.moverCount).toBe(0)
+    expect(result.alertCount).toBe(0)
+    expect(Array.isArray(result.taSignals)).toBe(true)
+    expect(result.taSignals.length).toBe(0)
     expect(sends).toHaveLength(0)
   })
 
@@ -78,7 +82,7 @@ describe("Task 1290 — franceSummaryJob", () => {
     expect(typeof result.sent).toBe("boolean")
     expect(typeof result.moverCount).toBe("number")
     expect(typeof result.alertCount).toBe("number")
-    expect(typeof result.taCount).toBe("number")
+    expect(Array.isArray(result.taSignals)).toBe(true)
   })
 
   it("caps moverCount at 3 top movers in the message", async () => {

@@ -1,5 +1,5 @@
 /**
- * France Summary Job — Tasks 1316/1317 (Interface / Scheduler Layer)
+ * France Summary Job — Tasks 1316/1317/1365 (Interface / Scheduler Layer)
  *
  * Sends a morning digest of VN market data to the MARKET channel at
  * 07:00 UTC = 08:00 CET (before Paris market open). Relevant to the
@@ -8,14 +8,14 @@
  * Three data sources (each independent, per-query try/catch):
  *   1. Top 3 price movers     — market_prices ORDER BY ABS(change_pct) DESC LIMIT 3
  *   2. Top 3 recent alerts    — alerts ORDER BY severity rank DESC LIMIT 3
- *   3. TA signal count        — COUNT(*) from alerts WHERE signals_json type LIKE 'ta_%'
+ *   3. TA signals (top 3)     — watchlist tickers × computeTaFn, non-neutral, sorted by RSI dev
  *
  * Silent skip when all three sources return empty data.
  * Default sendFn: sendTelegramMarket (MARKET channel — user-facing digests).
  *
  * DDD Layer: interface/scheduler — may import from infrastructure only.
  *
- * All dependencies are injectable for TDD (db, sendFn, nowFn).
+ * All dependencies are injectable for TDD (db, sendFn, nowFn, computeTaFn).
  */
 
 import type { Database } from "bun:sqlite"
@@ -28,6 +28,15 @@ import { logger } from "../infrastructure/logger.js"
 /** Injectable Telegram send function. */
 export type SendFn = (text: string) => Promise<boolean>
 
+/** Subset of TaSignal — only fields needed for France briefing display. */
+export interface TaSignalRow {
+  code: string
+  rsi14: number | null
+  rsiStatus: "overbought" | "oversold" | "neutral"
+  priceVsMa20: "above" | "below" | "neutral"
+  ma20: number | null
+}
+
 /** Result of runFranceSummary. */
 export interface FranceSummaryResult {
   /** Whether a message was sent to Telegram. */
@@ -36,8 +45,8 @@ export interface FranceSummaryResult {
   moverCount: number
   /** Number of alerts included (max 3). */
   alertCount: number
-  /** Number of TA signal alerts found in the DB. */
-  taCount: number
+  /** Top-3 non-neutral TA signals (replaces taCount). */
+  taSignals: TaSignalRow[]
 }
 
 /** Options for runFranceSummary (injectable for TDD). */
@@ -48,6 +57,8 @@ export interface FranceSummaryOptions {
   sendFn?: SendFn
   /** Injectable clock (defaults to () => new Date()). */
   nowFn?: () => Date
+  /** Injectable TA compute fn for TDD (defaults to defaultComputeTa). */
+  computeTaFn?: (code: string, db: Database) => TaSignalRow | null
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -135,25 +146,55 @@ function fetchTopAlerts(db: Database): AlertRow[] {
 }
 
 /**
- * Counts alerts that contain at least one signal of type 'ta_%'
- * (RSI, BB breakout, etc. written by taAlertScanJob / bbAlertScanJob).
- * Returns 0 on any DB error.
+ * Fetches top-3 non-neutral TA signals for all watchlist tickers.
+ *
+ * Steps:
+ *   1. SELECT code FROM watchlist ORDER BY code
+ *   2. For each code: call computeTaFn(code, db)
+ *   3. Filter: keep rows where rsiStatus !== "neutral" || priceVsMa20 !== "neutral"
+ *   4. Sort: Math.abs((rsi14 ?? 50) - 50) descending (most extreme RSI first)
+ *   5. Slice top 3
+ *
+ * Returns [] on any error (fail-open, per-query isolation).
  */
-function fetchTaSignalCount(db: Database): number {
+function fetchTaSignals(
+  db: Database,
+  computeTaFn?: (code: string, db: Database) => TaSignalRow | null,
+): TaSignalRow[] {
   try {
-    const row = db
-      .prepare<{ cnt: number }, []>(`
-        SELECT COUNT(*) AS cnt
-        FROM alerts
-        WHERE signals_json LIKE '%"type":"ta_%'
-      `)
-      .get()
-    return row?.cnt ?? 0
+    interface WatchlistRow { code: string }
+    const codes = db
+      .prepare<WatchlistRow, []>("SELECT code FROM watchlist ORDER BY code")
+      .all()
+      .map((r) => r.code)
+
+    const rows: TaSignalRow[] = []
+    for (const code of codes) {
+      try {
+        const signal = computeTaFn ? computeTaFn(code, db) : null
+        if (
+          signal !== null &&
+          signal !== undefined &&
+          (signal.rsiStatus !== "neutral" || signal.priceVsMa20 !== "neutral")
+        ) {
+          rows.push(signal)
+        }
+      } catch {
+        // per-ticker isolation — continue
+      }
+    }
+
+    rows.sort(
+      (a, b) =>
+        Math.abs((b.rsi14 ?? 50) - 50) - Math.abs((a.rsi14 ?? 50) - 50),
+    )
+
+    return rows.slice(0, 3)
   } catch (err) {
-    logger.warn("[franceSummaryJob] TA count query failed", {
+    logger.warn("[franceSummaryJob] fetchTaSignals failed", {
       error: err instanceof Error ? err.message : String(err),
     })
-    return 0
+    return []
   }
 }
 
@@ -210,14 +251,36 @@ function severityLabel(s: string): string {
   }
 }
 
+/** Maps rsiStatus to Vietnamese label. */
+function rsiLabel(status: TaSignalRow["rsiStatus"]): string {
+  switch (status) {
+    case "overbought": return "qua mua"
+    case "oversold":   return "qua ban"
+    default:           return ""
+  }
+}
+
+/** Maps priceVsMa20 to Vietnamese label. */
+function ma20Label(pos: TaSignalRow["priceVsMa20"]): string {
+  switch (pos) {
+    case "above": return "gia tren MA20"
+    case "below": return "gia duoi MA20"
+    default:      return ""
+  }
+}
+
 /**
  * Builds the full digest message in Vietnamese plain-text format.
+ *
+ * Fourth argument changed from taCount: number → taSignals: TaSignalRow[]
+ * (Task 1365 — replaces TA count with per-ticker RSI/MA20 signals).
+ * Accepts number for legacy call-site compat (treated as empty signals array).
  */
 export function formatFranceSummaryVI(
   dateStr: string,
   movers: MoverRow[],
   alerts: AlertRow[],
-  taCount: number,
+  taSignals: TaSignalRow[] | number,
 ): string {
   const lines: string[] = []
   lines.push(`Ban tin sang Phap — Thi truong VN (${dateStr})`)
@@ -249,8 +312,27 @@ export function formatFranceSummaryVI(
 
   lines.push("")
 
-  // Section 3: TA signal count
-  lines.push(`Tin hieu ky thuat (TA): ${taCount} tin hieu`)
+  // Section 3: TA signals (per-ticker RSI/MA20 detail)
+  // Accepts TaSignalRow[] (new) or number (legacy — treated as empty)
+  const signals: TaSignalRow[] = Array.isArray(taSignals) ? taSignals : []
+
+  if (signals.length > 0) {
+    lines.push(`Tin hieu ky thuat (top ${signals.length}):`)
+    for (const s of signals) {
+      const parts: string[] = []
+      const rsi = rsiLabel(s.rsiStatus)
+      if (rsi) {
+        const rsiVal = s.rsi14 != null ? ` (RSI ${s.rsi14.toFixed(1)})` : ""
+        parts.push(`${rsi}${rsiVal}`)
+      }
+      const ma = ma20Label(s.priceVsMa20)
+      if (ma) parts.push(ma)
+      const detail = parts.length > 0 ? ` — ${parts.join(", ")}` : ""
+      lines.push(`  ${s.code}${detail}`)
+    }
+  } else {
+    lines.push("Khong co tin hieu ky thuat")
+  }
 
   return lines.join("\n")
 }
@@ -283,7 +365,7 @@ export async function runFranceSummary(opts: FranceSummaryOptions = {}): Promise
   // DB-level same-day dedup guard (FR-2)
   // Fail-open: if check throws, proceed with send.
   if (alreadySentToday(resolvedDb)) {
-    return { sent: false, moverCount: 0, alertCount: 0, taCount: 0 }
+    return { sent: false, moverCount: 0, alertCount: 0, taSignals: [] }
   }
 
   // Resolve send function — default: sendTelegramMarket (MARKET channel)
@@ -305,23 +387,23 @@ export async function runFranceSummary(opts: FranceSummaryOptions = {}): Promise
   // ── Per-query fetch (isolated try/catch) ───────────────────────────────
   const movers = fetchTopMovers(resolvedDb)
   const alerts = fetchTopAlerts(resolvedDb)
-  const taCount = fetchTaSignalCount(resolvedDb)
+  const taSignals = fetchTaSignals(resolvedDb, opts.computeTaFn)
 
   // Silent skip when all three sources are empty
-  if (movers.length === 0 && alerts.length === 0 && taCount === 0) {
-    return { sent: false, moverCount: 0, alertCount: 0, taCount: 0 }
+  if (movers.length === 0 && alerts.length === 0 && taSignals.length === 0) {
+    return { sent: false, moverCount: 0, alertCount: 0, taSignals: [] }
   }
 
   const dateStr = formatDateVI(nowFn())
-  const message = formatFranceSummaryVI(dateStr, movers, alerts, taCount)
+  const message = formatFranceSummaryVI(dateStr, movers, alerts, taSignals)
 
   try {
     await resolvedSend(message)
-    return { sent: true, moverCount: movers.length, alertCount: alerts.length, taCount }
+    return { sent: true, moverCount: movers.length, alertCount: alerts.length, taSignals }
   } catch (err) {
     logger.warn("[franceSummaryJob] Telegram send failed", {
       error: err instanceof Error ? err.message : String(err),
     })
-    return { sent: false, moverCount: movers.length, alertCount: alerts.length, taCount }
+    return { sent: false, moverCount: movers.length, alertCount: alerts.length, taSignals }
   }
 }
