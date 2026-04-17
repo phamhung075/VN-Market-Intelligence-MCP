@@ -163,7 +163,7 @@ export function readUnnotifiedAlerts(
   const rows = db
     .prepare(
       `SELECT * FROM alerts
-       WHERE severity IN ('high', 'critical')
+       WHERE severity IN ('high', 'critical', 'medium')
          AND notified_telegram = 0
          AND unixepoch(triggered_at) >= unixepoch('now') - ?
        ORDER BY triggered_at ASC`,
