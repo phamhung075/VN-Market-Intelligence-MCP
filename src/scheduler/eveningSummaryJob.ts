@@ -155,11 +155,9 @@ export async function runEveningSummary(
 
         // News count diagnostic line (Task 1323)
         const newsCount = summary.newsCount ?? 0;
-        lines.push("");
         if (newsCount > 0) {
+          lines.push("");
           lines.push(`(${newsCount} tin tức hôm nay)`);
-        } else {
-          lines.push("Không có tin tức hôm nay");
         }
 
         if (summary.watchlistMovers.length > 0) {

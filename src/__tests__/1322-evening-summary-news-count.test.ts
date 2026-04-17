@@ -233,8 +233,8 @@ describe("Task 1323 — eveningSummaryJob formatter: tin tức hôm nay", () => 
     expect(calls[0]!.message).toContain("(3 tin tức hôm nay)");
   });
 
-  // ── AC-4: message shows "Không có tin tức hôm nay" when newsCount = 0 ────────
-  it("AC-4: Telegram message includes 'Không có tin tức hôm nay' when newsCount = 0", async () => {
+  // ── AC-4 (updated Task 1386): newsCount=0 → no filler line emitted ──────────
+  it("AC-4: Telegram message omits news filler when newsCount = 0", async () => {
     const calls: Array<{ message: string; opts: unknown }> = [];
 
     const summaryFn = async (): Promise<EveningSummary> => ({
@@ -259,6 +259,6 @@ describe("Task 1323 — eveningSummaryJob formatter: tin tức hôm nay", () => 
     await runEveningSummary(summaryFn, sendFn);
 
     expect(calls.length).toBe(1);
-    expect(calls[0]!.message).toContain("Không có tin tức hôm nay");
+    expect(calls[0]!.message).not.toContain("Không có tin tức hôm nay");
   });
 });
