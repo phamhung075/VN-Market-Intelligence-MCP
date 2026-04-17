@@ -38,7 +38,7 @@
 
 ---
 
-## Sprint 125 — Active
+## Sprint 125 — COMPLETE (2026-04-17)
 
 | ID | Title | Status | Role |
 |----|-------|--------|------|
@@ -46,62 +46,105 @@
 | 1365 | feat(france-ta-detail): franceSummaryJob — replace taCount with top 3 non-neutral TA signals | Done | QA |
 
 > Goal: Enrich France morning briefing TA section with actionable ticker-level RSI/MA20 signals so the user sees which watchlist stocks are overbought/oversold each morning, not just a count.
-> Req spec: `docs/REQ_125.md` | Tech design: `docs/TECH_125.md`
+> Req spec: `docs/REQ_125.md` | Tech design: `docs/TECH_125.md` | PO sign-off: 2026-04-17
+
+---
+
+## Sprint 126 — Active
+
+| ID | Title | Status | Role |
+|----|-------|--------|------|
+| 1366 | test(pipeline-health-tool): TDD — get_pipeline_health MCP tool returns OHLCV + backfill + TA status | Review | QA |
+| 1367 | feat(pipeline-health-tool): implement get_pipeline_health MCP tool | Todo | Dev |
+
+> Goal: Add `get_pipeline_health` MCP tool so the user/dev team can instantly inspect the full OHLCV → TA pipeline state (row counts per ticker, backfill queue status, last aggregator run, TA signal count) without digging into logs or waiting for the next evening report.
+> Req spec: `docs/REQ_126.md` | Tech design: `docs/TECH_126.md` | Architect: APPROVED_BY_ARCHITECT
 
 ---
 
 ## Task Details (active tasks only)
 
-### Task 1364 — test(france-ta-detail): TDD tests for TA signal detail in France briefing
+### Task 1366 — test(pipeline-health-tool): TDD for get_pipeline_health MCP tool
 
-**Branch**: `task/1364-france-ta-detail-tdd`
+**Branch**: `task/1366-pipeline-health-tool-tdd`
 **Layer**: test
 **Depends on**: none
 
-**Context**: The France morning briefing (`franceSummaryJob.ts`) currently shows only a count of TA signals (`taCount`). The user gets "Tin hieu ky thuat (TA): 5 tin hieu" with no indication of which tickers are overbought/oversold. Since the OHLCV pipeline is now healthy (8-10 rows per watchlist ticker), the TA signals are actionable. This sprint enriches the briefing TA section with top 3 non-neutral signals (ticker, RSI status, price vs MA20).
+**Context**: The OHLCV pipeline (Sprints 121-124) was fully built but we have no way to verify it works without waiting for the next evening report. The `taSummary: []` in every production report means the user never sees TA signals. `get_pipeline_health` gives instant visibility: OHLCV row counts per ticker, backfill queue status, last aggregator run timestamp, and TA signal count — all from a single MCP tool call.
 
 **Files to read first**
-- `src/scheduler/franceSummaryJob.ts` (existing job + formatFranceSummaryVI)
 - `src/application/usecases/assembleBriefing.ts` (`defaultComputeTa`, `TaSignal` type)
-- `src/__tests__/1352-ohlcv-startup-probe.test.ts` or similar for in-memory DB pattern
+- `src/infrastructure/db/` (pattern for counting rows, querying ohlcv_backfill_queue)
+- Any existing health/diagnostic tool in `src/interface/mcp/tools/` for pattern reference
 
 **Files to create**
-- CREATE: `src/__tests__/1364-france-ta-detail.test.ts`
+- CREATE: `src/__tests__/1366-pipeline-health-tool.test.ts`
 
 Line 1: `process.env["DB_PATH"] = ":memory:";`
 
-**Acceptance Criteria** (all RED before 1365, all GREEN after)
-- AC-1: `formatFranceSummaryVI` called with `taSignals=[{code:"VHM",rsiStatus:"overbought",rsi14:78.2,priceVsMa20:"above"}]` → message contains "VHM" and "qua mua"
-- AC-2: `formatFranceSummaryVI` called with empty `taSignals` → message contains "Khong co tin hieu ky thuat" (not just count 0)
-- AC-3: `runFranceSummary` with DB containing ≥8 daily_ohlcv rows for a ticker → sent message includes ticker code and RSI status string
-- AC-4: `runFranceSummary` with empty daily_ohlcv → sent message does NOT crash, sends with "Khong co tin hieu ky thuat"
+**Acceptance Criteria** (all RED before 1367, all GREEN after)
+- AC-1: `getPipelineHealth()` with 10 daily_ohlcv rows for ticker "VIC" → result includes `{ code: "VIC", ohlcvRows: 10 }` in `tickerStatus` array
+- AC-2: `getPipelineHealth()` with empty daily_ohlcv → `tickerStatus` entries have `ohlcvRows: 0`, `taReady: false`
+- AC-3: `getPipelineHealth()` with a pending backfill queue entry → `backfillQueue.pending: true`
+- AC-4: `getPipelineHealth()` with no queue entries → `backfillQueue.pending: false`
+- AC-5: `getPipelineHealth()` with ≥8 rows for ticker "HPG" and valid OHLCV data → `taSignalCount >= 0` (no crash)
 - `bun tsc --noEmit` 0 errors
 
 ---
 
-### Task 1365 — feat(france-ta-detail): replace taCount with top-3 TA signal detail in France briefing
+### Task 1367 — feat(pipeline-health-tool): implement get_pipeline_health MCP tool
 
-**Branch**: `task/1365-france-ta-detail-impl`
-**Layer**: scheduler/application
-**Depends on**: 1364 (TDD tests RED)
+**Branch**: `task/1367-pipeline-health-tool-impl`
+**Layer**: interface/application
+**Depends on**: 1366 (TDD tests RED)
 
 **Files to read first**
-- `src/__tests__/1364-france-ta-detail.test.ts` (AC definitions)
-- `src/scheduler/franceSummaryJob.ts` (full file)
-- `src/application/usecases/assembleBriefing.ts` (`defaultComputeTa`, `TaSignal` type)
+- `src/__tests__/1366-pipeline-health-tool.test.ts` (AC definitions)
+- `src/interface/mcp/tools/` (existing tool patterns)
+- `src/application/usecases/assembleBriefing.ts` (defaultComputeTa)
 
-**Files to modify**
-- MODIFY: `src/scheduler/franceSummaryJob.ts`:
-  - Add `fetchTaSignals(db, watchlistCodes)` helper — calls `defaultComputeTa` for each watchlist ticker, returns top 3 non-neutral signals sorted by RSI deviation from 50
-  - Update `FranceSummaryResult` to include `taSignals: TaSignalRow[]` (replace `taCount`)
-  - Update `formatFranceSummaryVI` signature: replace `taCount: number` with `taSignals: TaSignalRow[]`
-  - Update TA section in formatted output: list ticker + "qua mua" / "qua ban" + RSI value + above/below MA20
+**Files to create/modify**
+- CREATE: `src/application/usecases/getPipelineHealth.ts` — pure use-case, no infra imports
+- MODIFY: `src/interface/mcp/tools/` — register `get_pipeline_health` tool
+- MODIFY: `src/interface/mcp/index.ts` or tool registry — wire tool
+
+**Tool output shape**:
+```ts
+{
+  generatedAt: string;           // ISO timestamp
+  tickerStatus: Array<{
+    code: string;
+    ohlcvRows: number;           // COUNT(*) from daily_ohlcv WHERE code=?
+    taReady: boolean;            // ohlcvRows >= 8
+    taSignal?: string;           // "overbought"|"oversold"|"neutral"|"error"
+    rsi14?: number;
+  }>;
+  backfillQueue: {
+    pending: boolean;
+    lastRequestedAt?: string;
+    lastCompletedAt?: string;
+  };
+  aggregatorLastRun?: string;    // most recent daily_ohlcv MAX(date) across all tickers
+  taSummaryCount: number;        // total non-neutral signals across watchlist
+}
+```
 
 **Acceptance Criteria**
-- All 4 AC tests from 1364 pass
-- Watchlist codes fetched from `watchlist` table (same pattern as evening summary)
-- Max 3 non-neutral signals shown (overbought RSI>70, oversold RSI<30; or above/below MA20 if RSI neutral)
-- Neutral-only tickers not shown (section says "Khong co tin hieu" when all tickers neutral)
-- Backward-compatible: `alreadySentToday` guard and dedup logic unchanged
+- All 5 AC tests from 1366 pass
+- DDD clean: `getPipelineHealth.ts` in `application/` with zero infra imports (DB passed as param)
+- Tool registered under name `get_pipeline_health` with description explaining each field
 - `bun tsc --noEmit` 0 errors
 - Full suite 0 new failures
+
+---
+
+## Sprint History
+
+| Sprint | Goal summary | Status |
+|--------|-------------|--------|
+| 125 | feat(france-ta-detail): France briefing TA section — ticker-level RSI/MA20 (1364, 1365) | COMPLETE 2026-04-17 |
+| 124 | feat(vps-deploy-backfill): wire ohlcv-backfill-poll.sh as 6th VPS service (1362, 1363) | COMPLETE 2026-04-17 |
+| 123 | feat(ohlcv-backfill-queue): auto-trigger backfill via VPS pull pattern (1360, 1361) | COMPLETE 2026-04-17 |
+| 122 | feat(ohlcv-aggregator): ohlcvDailyAggregatorJob post-close cron (1358, 1359) | COMPLETE 2026-04-17 |
+| 121 | feat(ta-diag): taDiag observability block in evening summary (1356, 1357) | COMPLETE 2026-04-17 |
+| 120 | fix(prediction-diag): predictionDiag + medium-severity fallback (1354, 1355) | COMPLETE 2026-04-17 |
