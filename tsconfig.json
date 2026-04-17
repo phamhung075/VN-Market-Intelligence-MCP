@@ -16,9 +16,8 @@
     "exactOptionalPropertyTypes": true,
 
     /* Paths */
-    "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["./src/*"]
     },
 
     /* Misc */
