@@ -9,7 +9,7 @@
 | ID | Title | Status | Role |
 |----|-------|--------|------|
 | 1350 | test(ohlcv-backfill): TDD test 1350-ohlcv-backfill-endpoint.test.ts — written FIRST | Done | Dev |
-| 1351 | feat(ohlcv-backfill): POST /api/push-ohlcv-history endpoint + vps-scripts/fetch-ohlcv-backfill.sh | Todo | Dev |
+| 1351 | feat(ohlcv-backfill): POST /api/push-ohlcv-history endpoint + vps-scripts/fetch-ohlcv-backfill.sh | Done | Dev |
 
 > Tech design: `docs/TECH_118.md` (APPROVED_BY_ARCHITECT)
 

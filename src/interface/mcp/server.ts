@@ -1187,6 +1187,77 @@ export async function createBunServer(
       return;
     }
 
+    // ── Push OHLCV history from VPS one-time backfill script ────────────────
+    if (method === "POST" && pathname === "/api/push-ohlcv-history") {
+      const apiKey = Bun.env.VPS_PUSH_API_KEY;
+      const authHeader = req.headers["x-api-key"] || req.headers["authorization"]?.replace("Bearer ", "");
+      if (!apiKey || authHeader !== apiKey) {
+        res.writeHead(401, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "Unauthorized" }));
+        return;
+      }
+
+      let body = "";
+      for await (const chunk of req) body += chunk;
+      try {
+        const parsed: unknown = JSON.parse(body);
+        const payload = parsed as Record<string, unknown>;
+
+        if (typeof payload.code !== "string" || !payload.code) {
+          res.writeHead(400, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ error: "Missing required field: code (string)" }));
+          return;
+        }
+
+        if (!Array.isArray(payload.bars)) {
+          res.writeHead(400, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ error: "Missing required field: bars (array)" }));
+          return;
+        }
+
+        const code = payload.code;
+        const bars = payload.bars as Record<string, unknown>[];
+
+        if (bars.length === 0) {
+          res.writeHead(200, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ ok: true, inserted: 0, code }));
+          return;
+        }
+
+        const db = getDb();
+        const now = new Date().toISOString();
+        const stmt = db.prepare(`
+          INSERT OR REPLACE INTO daily_ohlcv (code, date, open, high, low, close, volume, updated_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        `);
+
+        let inserted = 0;
+        const upsertAll = db.transaction(() => {
+          for (const bar of bars) {
+            const open  = typeof bar.open  === "number" ? bar.open  : 0;
+            const close = typeof bar.close === "number" ? bar.close : 0;
+            if (open <= 0 || close <= 0) continue;
+            const date   = typeof bar.date   === "string" ? bar.date   : "";
+            const high   = typeof bar.high   === "number" ? bar.high   : open;
+            const low    = typeof bar.low    === "number" ? bar.low    : open;
+            const volume = typeof bar.volume === "number" ? bar.volume : 0;
+            stmt.run(code, date, open, high, low, close, volume, now);
+            inserted++;
+          }
+        });
+        upsertAll();
+
+        log.info("[push-ohlcv-history] inserted bars", { code, count: inserted });
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: true, inserted, code }));
+      } catch (err) {
+        log.error("[push-ohlcv-history] parse error", { error: err instanceof Error ? err.message : String(err) });
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "Invalid JSON" }));
+      }
+      return;
+    }
+
     // ── 404 ───────────────────────────────────────────────────────────────
     res.writeHead(404, { "Content-Type": "application/json" });
     res.end(JSON.stringify({ error: "Not found", path: pathname }));
