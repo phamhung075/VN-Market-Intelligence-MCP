@@ -287,7 +287,7 @@ interface OpenPositionRow {
   avg_price: number;
 }
 
-/** Internal: one daily price row from market_prices_history (Step 17). */
+/** Internal: one daily price row — day TEXT, close_price REAL. */
 interface CandleRow {
   day: string;
   close_price: number;
@@ -497,19 +497,18 @@ function parseAffectedCodes(json: string | null): string[] {
 }
 
 /**
- * Default TA computation for one ticker: queries market_prices_history for
- * the last 60 days, computes RSI(14) and MA(20), and classifies signals.
+ * Default TA computation for one ticker: queries daily_ohlcv for the last 60
+ * candles, computes RSI(14) and MA(20), and classifies signals.
  * Returns null when fewer than 15 candles are available (RSI minimum).
  */
 export function defaultComputeTa(code: string, db: Database): TaSignal | null {
-  const rows = db.query<CandleRow, [string, string]>(
-    `SELECT date(fetched_at) AS day, AVG(price) AS close_price
-       FROM market_prices_history
+  const rows = db.query<CandleRow, [string]>(
+    `SELECT date AS day, close AS close_price
+       FROM daily_ohlcv
       WHERE code = ?
-        AND fetched_at >= datetime('now', ?)
-      GROUP BY date(fetched_at)
-      ORDER BY day ASC`,
-  ).all(code, "-60 days");
+      ORDER BY date ASC
+      LIMIT 60`,
+  ).all(code);
 
   if (rows.length < 15) return null; // RSI minimum
 
