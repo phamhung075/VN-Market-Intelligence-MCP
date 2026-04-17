@@ -231,14 +231,14 @@ export function computeWeekSummary(db: Database, codes: string[]): WeekSummary {
  *
  * Output format (ASCII table, no Markdown):
  * ```
- * BAO CAO DANH MUC TUAN (29/03 - 04/04)
+ * BÁO CÁO DANH MỤC TUẦN (29/03 - 04/04)
  *
- * Ma    | Gia dau tuan | Gia cuoi tuan | Thay doi tuan
+ * Mã    | Giá đầu tuần | Giá cuối tuần | Thay đổi tuần
  * VCB   | 83.000       | 85.000        | +2.4%
  * FPT   | 117.000      | 115.000       | -1.7%
  *
- * Tong P&L tuan: +1.500.000 VND (+1.2%)
- * Tong P&L tich luy: +7.500.000 VND (+5.6%)
+ * Tổng P&L tuần: +1.500.000 VND (+1.2%)
+ * Tổng P&L tích lũy: +7.500.000 VND (+5.6%)
  * ```
  *
  * @param rows    - Open position rows with price data
@@ -256,28 +256,24 @@ export function formatWeeklyReport(
 
   const lines: string[] = [];
 
-  lines.push(`BAO CAO DANH MUC TUAN (${weekStart} - ${weekEnd})`);
+  lines.push(`BÁO CÁO DANH MỤC TUẦN (${weekStart} - ${weekEnd})`);
   lines.push("");
 
-  if (rows.length === 0) {
-    lines.push("(Chua co vi the nao trong danh muc)");
-  } else {
-    // Table header
-    lines.push("Ma    | Gia dau tuan | Gia cuoi tuan | Thay doi tuan");
-    lines.push("------+--------------+---------------+--------------");
+  // Table header
+  lines.push("Mã    | Giá đầu tuần | Giá cuối tuần | Thay đổi tuần");
+  lines.push("------+--------------+---------------+--------------");
 
-    for (const row of rows) {
-      const code = row.code.padEnd(5, " ");
-      const startPriceStr = fmtVnd(row.startOfWeekPrice).padEnd(12, " ");
-      const endPriceStr = fmtVnd(row.currentPrice).padEnd(13, " ");
-      const changePctStr = fmtPct(row.weekChangePct);
-      lines.push(`${code} | ${startPriceStr} | ${endPriceStr} | ${changePctStr}`);
-    }
+  for (const row of rows) {
+    const code = row.code.padEnd(5, " ");
+    const startPriceStr = fmtVnd(row.startOfWeekPrice).padEnd(12, " ");
+    const endPriceStr = fmtVnd(row.currentPrice).padEnd(13, " ");
+    const changePctStr = fmtPct(row.weekChangePct);
+    lines.push(`${code} | ${startPriceStr} | ${endPriceStr} | ${changePctStr}`);
   }
 
   lines.push("");
-  lines.push(`Tong P&L tuan: ${fmtVndSigned(summary.weekPnlAmount)} (${fmtPct(summary.weekPnlPct)})`);
-  lines.push(`Tong P&L tich luy: ${fmtVndSigned(summary.totalPnlAmount)} (${fmtPct(summary.totalPnlPct)})`);
+  lines.push(`Tổng P&L tuần: ${fmtVndSigned(summary.weekPnlAmount)} (${fmtPct(summary.weekPnlPct)})`);
+  lines.push(`Tổng P&L tích lũy: ${fmtVndSigned(summary.totalPnlAmount)} (${fmtPct(summary.totalPnlPct)})`);
 
   return lines.join("\n");
 }
@@ -460,6 +456,11 @@ export async function runWeeklyPortfolioReport(
     });
 
     // ── Step 5: Format report ────────────────────────────────────────────────
+    if (portfolioRows.length === 0) {
+      logger.info("[weeklyPortfolioReport] no open positions — skipping send");
+      return;
+    }
+
     const reportText = formatWeeklyReport(portfolioRows, summary);
 
     logger.info(
