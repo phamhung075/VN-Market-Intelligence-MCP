@@ -72,6 +72,9 @@ describe("Task 1221 — weeklyPortfolioReportJob DB-backed lock", () => {
       "INSERT INTO scheduler_locks (job_name, acquired_at, released_at) VALUES (?, datetime('now', '-70 minutes'), NULL)"
     ).run("weeklyPortfolioReport");
 
+    // Seed one open position so the early-return guard does not fire
+    db.prepare("INSERT INTO positions (code, shares, avg_price, closed_at) VALUES (?, ?, ?, NULL)").run("VCB", 100, 80000);
+
     let sendCallCount = 0;
     await runWeeklyPortfolioReport({
       db,
@@ -87,6 +90,9 @@ describe("Task 1221 — weeklyPortfolioReportJob DB-backed lock", () => {
 
     // Only a lock for a different job exists; no row for weeklyPortfolioReport
     acquireSchedulerLock(db, "someOtherJob");
+
+    // Seed one open position so the early-return guard does not fire
+    db.prepare("INSERT INTO positions (code, shares, avg_price, closed_at) VALUES (?, ?, ?, NULL)").run("VCB", 100, 80000);
 
     let sendCallCount = 0;
     await runWeeklyPortfolioReport({
@@ -106,6 +112,9 @@ describe("Task 1221 — weeklyPortfolioReportJob DB-backed lock", () => {
       "INSERT INTO scheduler_locks (job_name, acquired_at, released_at) VALUES (?, datetime('now', '-1 minute'), NULL)"
     ).run("dataAuditJob");
 
+    // Seed one open position so the early-return guard does not fire
+    db.prepare("INSERT INTO positions (code, shares, avg_price, closed_at) VALUES (?, ?, ?, NULL)").run("VCB", 100, 80000);
+
     let sendCallCount = 0;
     await runWeeklyPortfolioReport({
       db,
@@ -117,6 +126,9 @@ describe("Task 1221 — weeklyPortfolioReportJob DB-backed lock", () => {
 
   it("proceeds when scheduler_locks table is empty", async () => {
     const db = buildDb();
+
+    // Seed one open position so the early-return guard does not fire
+    db.prepare("INSERT INTO positions (code, shares, avg_price, closed_at) VALUES (?, ?, ?, NULL)").run("VCB", 100, 80000);
 
     let sendCallCount = 0;
     await runWeeklyPortfolioReport({

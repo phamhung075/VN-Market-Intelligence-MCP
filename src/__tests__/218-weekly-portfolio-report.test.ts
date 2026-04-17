@@ -141,7 +141,7 @@ describe("Task 218 — Weekly Portfolio Report", () => {
     expect(typeof result).toBe("string");
     expect(result.length).toBeGreaterThan(0);
     // Should contain the header keyword
-    expect(result).toContain("BAO CAO");
+    expect(result).toContain("BÁO CÁO");
   });
 
   // ── 2. formatWeeklyReport: single position formatted correctly ─────────────
@@ -375,8 +375,8 @@ describe("Task 218 — Weekly Portfolio Report", () => {
       runWeeklyPortfolioReport({ db, sendFn }),
     ).resolves.toBeUndefined();
 
-    // Still sends a report (even with empty portfolio)
-    expect(capturedMessage.length).toBeGreaterThan(0);
+    // Empty portfolio triggers silent-skip — sendFn must not be called
+    expect(capturedMessage.length).toBe(0);
   });
 
   // ── 14. CRONS.weeklyPortfolioReport registered at Sunday 23:00 ───────────
