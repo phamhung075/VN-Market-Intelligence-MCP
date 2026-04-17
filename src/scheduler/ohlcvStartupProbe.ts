@@ -69,6 +69,20 @@ export async function runOhlcvStartupProbe(
       return { sparseTickers: [], sent: false };
     }
 
+    // Phase 3: insert a queue row if no existing pending row (dedup guard)
+    try {
+      const existing = db.prepare<{ id: number }, []>(
+        "SELECT id FROM ohlcv_backfill_queue WHERE done = 0 LIMIT 1"
+      ).get();
+      if (!existing) {
+        db.prepare(
+          "INSERT INTO ohlcv_backfill_queue (queued_at, done) VALUES (datetime('now'), 0)"
+        ).run();
+      }
+    } catch {
+      // ohlcv_backfill_queue table may not exist on older deployments — skip
+    }
+
     // Build and send the alert message
     const tickerList = sparseTickers
       .map((t) => `${t.code}(${t.count})`)

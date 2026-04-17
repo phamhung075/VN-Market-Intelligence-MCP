@@ -1258,6 +1258,54 @@ export async function createBunServer(
       return;
     }
 
+    // ── Task 1361: GET /api/ohlcv-backfill-queue — VPS polls for pending backfill ──
+    if (method === "GET" && pathname === "/api/ohlcv-backfill-queue") {
+      const apiKey = Bun.env.VPS_PUSH_API_KEY;
+      const authHeader = req.headers["x-api-key"] || req.headers["authorization"]?.replace("Bearer ", "");
+      if (!apiKey || authHeader !== apiKey) {
+        res.writeHead(401, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "Unauthorized" }));
+        return;
+      }
+      try {
+        const db = getDb();
+        const row = db.prepare<{ id: number }, []>(
+          "SELECT id FROM ohlcv_backfill_queue WHERE done = 0 LIMIT 1"
+        ).get();
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ pending: row !== null }));
+      } catch (err) {
+        log.error("[ohlcv-backfill-queue] error", { error: err instanceof Error ? err.message : String(err) });
+        res.writeHead(500, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "Server error" }));
+      }
+      return;
+    }
+
+    // ── Task 1361: POST /api/ohlcv-backfill-done — VPS signals backfill complete ──
+    if (method === "POST" && pathname === "/api/ohlcv-backfill-done") {
+      const apiKey = Bun.env.VPS_PUSH_API_KEY;
+      const authHeader = req.headers["x-api-key"] || req.headers["authorization"]?.replace("Bearer ", "");
+      if (!apiKey || authHeader !== apiKey) {
+        res.writeHead(401, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "Unauthorized" }));
+        return;
+      }
+      try {
+        const db = getDb();
+        db.prepare(
+          "UPDATE ohlcv_backfill_queue SET done = 1 WHERE done = 0"
+        ).run();
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: true }));
+      } catch (err) {
+        log.error("[ohlcv-backfill-done] error", { error: err instanceof Error ? err.message : String(err) });
+        res.writeHead(500, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "Server error" }));
+      }
+      return;
+    }
+
     // ── 404 ───────────────────────────────────────────────────────────────
     res.writeHead(404, { "Content-Type": "application/json" });
     res.end(JSON.stringify({ error: "Not found", path: pathname }));

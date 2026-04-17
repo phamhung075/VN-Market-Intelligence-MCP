@@ -20,7 +20,7 @@
 | ID | Title | Status | Role |
 |----|-------|--------|------|
 | 1360 | test(ohlcv-backfill-queue): TDD — written FIRST, must be RED | Done | QA |
-| 1361 | feat(ohlcv-backfill-queue): backfill queue endpoint + VPS poll script | Todo | Dev |
+| 1361 | feat(ohlcv-backfill-queue): backfill queue endpoint + VPS poll script | Review | Dev |
 
 > Req spec: `docs/REQ_123.md` | Tech design: `docs/TECH_123.md`
 > Goal: Auto-trigger OHLCV backfill via VPS pull pattern — seed daily_ohlcv with 60 days of history so taSummary activates within hours, not 15 trading days
