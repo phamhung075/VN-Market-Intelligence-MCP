@@ -4,74 +4,84 @@
 
 ---
 
-## Sprint 122 — Active
+## Sprint 122 — COMPLETE (2026-04-17)
 
 | ID | Title | Status | Role |
 |----|-------|--------|------|
 | 1358 | test(ohlcv-aggregator): TDD 1358-ohlcv-daily-aggregator.test.ts — written FIRST | Done | QA |
 | 1359 | feat(ohlcv-aggregator): ohlcvDailyAggregatorJob + wire jobs.ts | Done | Dev |
 
-> Req spec: `docs/REQ_122.md` — READY (BA complete)
-> Tech design: `docs/TECH_122.md` — APPROVED_BY_ARCHITECT
+> Req spec: `docs/REQ_122.md` | Tech design: `docs/TECH_122.md` | PO sign-off: 2026-04-17
+
+---
+
+## Sprint 123 — Active
+
+| ID | Title | Status | Role |
+|----|-------|--------|------|
+| 1360 | test(ohlcv-backfill-queue): TDD — written FIRST, must be RED | Review | Dev |
+| 1361 | feat(ohlcv-backfill-queue): backfill queue endpoint + VPS poll script | Todo | Dev |
+
+> Req spec: `docs/REQ_123.md` | Tech design: `docs/TECH_123.md`
+> Goal: Auto-trigger OHLCV backfill via VPS pull pattern — seed daily_ohlcv with 60 days of history so taSummary activates within hours, not 15 trading days
 
 ---
 
 ## Task Details (active tasks only)
 
-### Task 1358 — test(ohlcv-aggregator): TDD test (written FIRST, must be RED)
+### Task 1360 — test(ohlcv-backfill-queue): TDD tests (written FIRST, must be RED)
 
-**Branch**: `task/1358-ohlcv-aggregator-tdd`
+**Branch**: `task/1360-ohlcv-backfill-queue-tdd`
 **Layer**: test
 **Depends on**: none
 
+**Context**: `daily_ohlcv` is sparse because the VPS backfill script (`vps-scripts/fetch-ohlcv-backfill.sh`) has never been run automatically. The startup probe alerts devs but requires manual action. This sprint adds a queue-based mechanism: startup probe writes a `pending` record to `ohlcv_backfill_queue`; VPS polls `GET /api/ohlcv-backfill-queue` and runs the backfill automatically; VPS confirms via `POST /api/ohlcv-backfill-done`.
+
 **Files to read first**
-- `src/scheduler/ohlcvStartupProbe.ts` (injection pattern)
-- `src/__tests__/1356-ta-diag.test.ts` (in-memory DB pattern for scheduler tests)
+- `src/scheduler/ohlcvStartupProbe.ts` (existing probe pattern)
+- `src/interface/mcp/server.ts` (BCTC queue endpoint pattern: `/api/bctc-fetch-queue`, `/api/push-bctc-pdf`)
+- `src/infrastructure/db/schema.ts` (table DDL patterns)
+- `src/__tests__/1358-ohlcv-aggregator.test.ts` (in-memory DB pattern)
 
 **Files to create**
-- CREATE: `src/__tests__/1358-ohlcv-daily-aggregator.test.ts`
+- CREATE: `src/__tests__/1360-ohlcv-backfill-queue.test.ts`
 
-Line 1: `process.env["DB_PATH"] = ":memory:";` — DDL: `watchlist`, `market_prices_history`, `daily_ohlcv`
-Pin `nowMsFn` → `2026-04-17T09:00:00.000Z`, `windowStart="2026-04-16T17:00:00.000Z"`
+Line 1: `process.env["DB_PATH"] = ":memory:";`
+DDL: `ohlcv_backfill_queue` table (id INTEGER PK, status TEXT DEFAULT 'pending', requested_at TEXT, completed_at TEXT)
 
-**Acceptance Criteria** (all RED before 1359, all GREEN after)
-- AC-1: VCB+FPT 3 ticks each → 2 rows, correct O/H/L/C/V, date="2026-04-17", result={2,2,0}
-- AC-2: 1 ticker, 0 ticks → 0 rows, no throw, result={1,0,1}
-- AC-3: existing VCB row + 1 later tick, re-run → 1 row, close updated, no UNIQUE error
-- AC-4: ticks in yesterday's window only → 0 rows today, result={1,0,1}
-- `sendWorkFn` called once when rowsWritten > 0; `bun tsc --noEmit` 0 errors
+**Acceptance Criteria** (all RED before 1361, all GREEN after)
+- AC-1: `GET /api/ohlcv-backfill-queue` with valid API key → 200 `{pending: true}` when queue has pending row, `{pending: false}` when empty
+- AC-2: `GET /api/ohlcv-backfill-queue` with missing/wrong API key → 401
+- AC-3: `POST /api/ohlcv-backfill-done` with valid key → 200 `{ok: true}`, row status updated to `done`, `completed_at` set
+- AC-4: startup probe with sparse tickers + queue empty → inserts pending row into `ohlcv_backfill_queue`; probe with queue already pending → no duplicate insert
+- `bun tsc --noEmit` 0 errors
 
 ---
 
-### Task 1359 — feat(ohlcv-aggregator): ohlcvDailyAggregatorJob + wire jobs.ts
+### Task 1361 — feat(ohlcv-backfill-queue): endpoint + VPS poll script
 
-**Branch**: `task/1359-ohlcv-aggregator-impl`
-**Layer**: scheduler
-**Depends on**: 1358 (TDD tests written, confirmed RED)
+**Branch**: `task/1361-ohlcv-backfill-queue-impl`
+**Layer**: interface/scheduler + vps-scripts
+**Depends on**: 1360 (TDD tests RED)
 
 **Files to read first**
-- `src/scheduler/ohlcvStartupProbe.ts` (injection pattern + dynamic import defaults)
-- `src/scheduler/jobs.ts` (CRONS object + startScheduler cron.schedule pattern)
-- `src/infrastructure/db/schema.ts` (daily_ohlcv + market_prices_history schemas)
+- `src/__tests__/1360-ohlcv-backfill-queue.test.ts` (AC definitions)
+- `src/interface/mcp/server.ts` (BCTC queue pattern)
+- `src/scheduler/ohlcvStartupProbe.ts` (probe to modify)
+- `vps-scripts/fetch-ohlcv-backfill.sh` (existing backfill script to integrate)
 
 **Files to create**
-- CREATE: `src/scheduler/ohlcvDailyAggregatorJob.ts` — exports `OhlcvAggregatorDeps`, `OhlcvAggregatorResult`, `runOhlcvDailyAggregator`
+- CREATE: `vps-scripts/ohlcv-backfill-poll.sh` — VPS-side poller: `GET /api/ohlcv-backfill-queue` every 30 min; if `pending=true`, run `fetch-ohlcv-backfill.sh`, then `POST /api/ohlcv-backfill-done`
 
 **Files to modify**
-- MODIFY: `src/scheduler/jobs.ts` — add `CRONS.ohlcvDailyAggregator` + `cron.schedule` registration
-- MODIFY: `docs/data/cron-registry.json` — append entry, set `schedulerFileCount: 33`
-- MODIFY: `docs/data/project-stats.json` — set `schedulerFileCount: 33`
+- MODIFY: `src/interface/mcp/server.ts` — add `GET /api/ohlcv-backfill-queue` + `POST /api/ohlcv-backfill-done` handlers
+- MODIFY: `src/infrastructure/db/schema.ts` — add `ohlcv_backfill_queue` table DDL
+- MODIFY: `src/scheduler/ohlcvStartupProbe.ts` — after sparse tickers detected, insert pending row into `ohlcv_backfill_queue` if no pending row exists
 
 **Acceptance Criteria**
-
-**Given** 1358 tests are RED
-**When** implementation is complete and `bun test src/__tests__/1358-ohlcv-daily-aggregator.test.ts` runs
-**Then**
-- All 4 AC tests pass / 0 fail
-- VN midnight boundary: `windowStart = new Date(Date.parse(vnDateString+"T00:00:00+07:00")).toISOString()`, `windowEnd = new Date(nowMs).toISOString()`
-- SQL uses 3 queries per ticker (MIN/MAX/COUNT, ASC LIMIT 1, DESC LIMIT 1) with `[code, windowStart, windowEnd]` bindings
-- Upsert: `INSERT INTO daily_ohlcv ... ON CONFLICT(code, date) DO UPDATE SET ...` (no INSERT OR REPLACE)
-- Cron: `CRONS.ohlcvDailyAggregator = Bun.env.CRON_OHLCV_DAILY_AGGREGATOR ?? '0 16 * * 1-5'`, `timezone: 'UTC'`
-- `cron-registry.json` entry added (`"name":"ohlcvDailyAggregatorJob"`, `"schedule":"16:00 UTC M-F (23:00 VN)"`)
+- All 4 AC tests from 1360 pass
+- VPS script: polls queue, runs backfill on pending, posts done — idempotent (second run with `pending=false` → skips)
+- Schema: `ohlcv_backfill_queue(id, status, requested_at, completed_at)` with `CREATE TABLE IF NOT EXISTS`
+- Startup probe: inserts at most 1 pending row (guard against duplicates)
 - `bun tsc --noEmit` 0 errors
 - Full suite 0 new failures
