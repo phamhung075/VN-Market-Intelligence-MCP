@@ -17,7 +17,7 @@
  */
 process.env["DB_PATH"] = ":memory:";
 
-import { describe, it, expect, beforeAll, afterAll } from "bun:test";
+import { describe, it, test, expect, beforeAll, afterAll } from "bun:test";
 import { closeDb, initDatabase } from "../infrastructure/db/schema.js";
 import {
   isOcrAvailable,
@@ -65,7 +65,8 @@ afterAll(() => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("296 OCR pipeline e2e smoke test", () => {
-  it(
+  // geo-blocked from France — requires VPS proxy, run manually on VPS
+  test.skip(
     "extracts VNM PDF via OCR and asserts financial ranges",
     async () => {
       if (!isOcrAvailable()) {
