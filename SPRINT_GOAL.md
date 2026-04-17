@@ -2,18 +2,38 @@
 
 > Previous sprint goals live in their `docs/REQ_NNN.md` specs. This file = current sprint only.
 
-## Current Sprint — 110 (ACTIVE)
+## Current Sprint — 112 (ACTIVE)
+
+**Goal:** Deliver `medium` severity alerts (price_surge, news_mention) to the user via Telegram MARKET channel. Currently `readUnnotifiedAlerts` only picks up `severity IN ('high', 'critical')` — 3 confirmed `price_surge` alerts (FPT +5.13%, MSN +5.13%, VIC +5.65%) and 8 `news_mention` at medium are silently dropped, never reaching the user. This means intraday +5% watchlist moves go unnoticed.
+
+**Scope:**
+- IN: `src/infrastructure/db/alertStore.ts` — extend `readUnnotifiedAlerts` WHERE clause to include `'medium'` alongside `'high'` and `'critical'`
+- IN: TDD test `src/__tests__/1339-medium-alert-delivery.test.ts` — 4 cases: (1) medium price_surge is returned by `readUnnotifiedAlerts`, (2) medium news_mention is returned, (3) low severity is NOT returned, (4) already-notified medium is NOT returned
+- OUT: Changes to Telegram formatter, alert scoring logic, VPS proxies, BCTC tools, TA scan jobs
+
+**Success metric:** `readUnnotifiedAlerts` returns `medium` severity rows. Production: FPT/MSN/VIC price_surge alerts (currently stuck at notified_telegram=0) would have been delivered. `bun tsc --noEmit` clean. 4+ TDD cases pass. Full suite 0 new failures.
+
+**Status:** ACTIVE
+
+---
+
+## Sprint 111 — COMPLETE (2026-04-16)
+
+---
+
+## Sprint 111 — COMPLETE (2026-04-16)
+
+**Goal:** Fix 2 pre-existing test suite failures — (1) test 297 UNIQUE constraint violation caused by missing DB_PATH isolation at line 1, and (2) test 296 OCR e2e timeout that blocks full suite completion.
+
+**Status:** COMPLETE 2026-04-16. Tasks 1337+1338 merged. Full suite: 4910 pass, 20 skip, 1 fail (intentional OCR timeout at 30s).
+
+---
+
+## Sprint 110 — COMPLETE (2026-04-16)
 
 **Goal:** Fix `topStories: []` in every evening report. Production evening reports show `topStories: []` and `newsCount: 0` even when the VPS is pushing news every 15 minutes. The user never sees the top news-driven analyses at market close. Root cause is in the push-news → `pollNews` → `rag_analyses` pipeline — either the INSERT is not firing, the `created_at` timestamp mismatches the midnight-VN boundary query, or title-dedup is over-filtering all items.
 
-**Scope:**
-- IN: TDD test `src/__tests__/1335-news-pipeline-rag-insert.test.ts` — 4 cases proving push-news items appear in evening summary
-- IN: Fix root cause in push-news handler and/or `pollNews.tryInsertEntry` so `rag_analyses` rows land with correct `created_at`
-- OUT: Alert pipeline, VPS services, BCTC tools, TA scan jobs, schema changes
-
-**Success metric:** `assembleEveningSummary()` returns `topStories.length > 0` and `newsCount > 0` when push-news items exist since midnight VN. All 4 TDD cases pass. `bun tsc --noEmit` clean.
-
-**Status:** ACTIVE
+**Status:** COMPLETE 2026-04-16. Tasks 1335+1336 merged. VN_SOURCE_IDS extended to 10 entries, createdAt guard added to tryInsertEntry. 4/4 TDD cases pass.
 
 ---
 

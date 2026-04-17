@@ -4,12 +4,12 @@
 
 ---
 
-## Sprint 112 — In Progress
+## Sprint 112 — Complete
 
 | ID | Title | Status | Role |
 |----|-------|--------|------|
-| 1339 | test(alert-delivery): TDD test 1339-alert-delivery-medium.test.ts — medium severity | Review | Dev |
-| 1340 | fix(alert-delivery): add medium to readUnnotifiedAlerts severity IN list | Review | Dev |
+| 1339 | test(alert-delivery): TDD test 1339-alert-delivery-medium.test.ts — medium severity | Done | Dev |
+| 1340 | fix(alert-delivery): add medium to readUnnotifiedAlerts severity IN list | Done | Dev |
 
 ---
 
