@@ -79,7 +79,7 @@
 | ID | Title | Status | Role |
 |----|-------|--------|------|
 | 1370 | test(france-watchlist-movers): TDD — fetchTopMovers filters by watchlist | Done | QA |
-| 1371 | feat(france-watchlist-movers): fetchTopMovers JOIN watchlist, source market_prices_history | Todo | Dev |
+| 1371 | feat(france-watchlist-movers): fetchTopMovers JOIN watchlist, source market_prices_history | Review | Dev |
 
 > Goal: France morning briefing movers section currently shows any ticker with the highest % move globally. Filter to watchlist-only so the user only sees moves for stocks they track.
 > Branch(1370): merged to main 2026-04-17 | Branch(1371): `task/1371-france-watchlist-movers-impl`
