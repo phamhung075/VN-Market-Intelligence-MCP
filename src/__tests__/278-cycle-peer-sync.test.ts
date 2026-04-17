@@ -1,3 +1,4 @@
+process.env["DB_PATH"] = ":memory:";
 /**
  * Task 278 — Wire Peer Sync into Intelligence Cycle (Step A3b)
  *
@@ -11,12 +12,14 @@
 
 import { describe, it, expect, beforeAll, afterAll } from "bun:test";
 
-// Test isolation: prevent logger from writing to production system_logs DB.
-// We cannot use DB_PATH=:memory: because some cycle steps read the live watchlist
-// table directly (step C2). Instead we signal TEST_LOG_SUPPRESS to the logger.
+// Test isolation: DB_PATH=:memory: (line 1) ensures schema.js opens a fresh
+// in-memory database. We call initDatabase() here to create all tables (including
+// watchlist) so step C2 of the intelligence cycle can query them without throwing.
 const _origDbPath = process.env["DB_PATH"];
-beforeAll(() => {
+beforeAll(async () => {
   process.env["TEST_LOG_SUPPRESS"] = "1";
+  const { initDatabase } = await import("../infrastructure/db/schema.js");
+  await initDatabase();
 });
 afterAll(() => {
   delete process.env["TEST_LOG_SUPPRESS"];
@@ -33,6 +36,7 @@ function buildBaseDeps(overrides: Record<string, unknown> = {}) {
     sendAlertsFn: async () => 0,
     readUnnotifiedAlertsFn: async () => [],
     markAlertNotifiedFn: async () => {},
+    getRecentAlertHistoryFn: async () => [],
     ...overrides,
   };
 }
