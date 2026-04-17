@@ -86,90 +86,65 @@
 
 ---
 
-## Sprint 129 — Active
+## Sprint 129 — COMPLETE (2026-04-17)
 
 | ID | Title | Status | Role |
 |----|-------|--------|------|
 | 1372 | fix(france-test-fixtures): update stale makeDb() in 5 test files — add market_prices_history + watchlist tables | Done | QA |
 | 1373 | fix(cron-registry-count): update schedulerFileCount assertion in 1190-pipeline-watchdog.test.ts from 32 → 34 | Done | QA |
 
-> Goal: Fix 17 pre-existing test failures — stale franceSummaryJob test fixtures that still use market_prices to seed movers (impl now reads market_prices_history + watchlist JOIN); plus fix stale schedulerFileCount assertion (32 → 34).
-> Affected files: src/__tests__/1290-france-summary-job.test.ts, 1316-france-summary-rewrite.test.ts, 1344-france-summary-stale-alerts.test.ts, 1348-france-summary-cron-window.test.ts, 1364-france-ta-detail.test.ts, 1190-pipeline-watchdog.test.ts
+> Goal: Fix 17 pre-existing test failures — stale franceSummaryJob test fixtures. Tasks merged 2026-04-17. Full suite: 4998 pass, 1 fail (intentional OCR), 20 skip.
+> PO sign-off: 2026-04-17
+
+---
+
+## Sprint 130 — Active
+
+| ID | Title | Status | Role |
+|----|-------|--------|------|
+| 1374 | test(ohlcv-aggregator-cron): TDD — CRON_OHLCV_DAILY_AGGREGATOR default is 0 15 * * 1-5 (before evening summary at 15:30) | Review | QA |
+| 1375 | fix(ohlcv-aggregator-cron): shift ohlcvDailyAggregator from 16:00 UTC to 15:00 UTC — before evening summary | Review | Dev |
+
+> Goal: Fix `taSummary: []` in every evening report — the aggregator runs at 16:00 UTC but evening summary fires at 15:30 UTC, so TA signals are never ready. Move aggregator to 15:00 UTC (22:00 VN) giving 30 min margin.
+> Branch: `task/1374-1375-ohlcv-cron-timing`
 
 ---
 
 ## Task Details (active tasks only)
 
-### Task 1372 — fix(france-test-fixtures): update stale makeDb() in 5 test files
+### Task 1374 — test(ohlcv-aggregator-cron): TDD — aggregator cron default before 15:30
 
-**Branch**: `task/1372-1373-france-test-fixtures`
+**Branch**: `task/1374-1375-ohlcv-cron-timing`
 **Layer**: test
 **Depends on**: none
 
-**Context**: Sprint 128 changed `fetchTopMovers` to read from `market_prices_history` + `watchlist` JOIN. Five older test files still create only a `market_prices` table and seed via `INSERT INTO market_prices` — the new impl can't find those rows, returns no movers, and `sent: false`, failing AC checks.
+**Context**: `ohlcvDailyAggregatorJob` runs at `0 16 * * 1-5` (16:00 UTC) but `eveningSummaryJob` fires at `30 22 * * 1-5` (22:30 UTC? No — check jobs.ts: eveningSummary default `30 22` is 22:30 VN = 15:30 UTC). The aggregator fires 30 min AFTER the summary, so `taSummary` is always empty in the evening JSON. Fix: move aggregator default to `0 15 * * 1-5` (15:00 UTC = 22:00 VN), 30 min before the summary.
 
-**Files to modify** (add `market_prices_history` + `watchlist` tables to `makeDb()`, update seed helpers):
-- `src/__tests__/1290-france-summary-job.test.ts`
-- `src/__tests__/1316-france-summary-rewrite.test.ts`
-- `src/__tests__/1344-france-summary-stale-alerts.test.ts`
-- `src/__tests__/1348-france-summary-cron-window.test.ts`
-- `src/__tests__/1364-france-ta-detail.test.ts`
-
-**Pattern** (apply to each `makeDb()` function — add after existing table creates):
-```sql
-CREATE TABLE IF NOT EXISTS market_prices_history (
-  code       TEXT NOT NULL,
-  price      REAL NOT NULL,
-  volume     REAL NOT NULL,
-  fetched_at TEXT NOT NULL,
-  exchange   TEXT DEFAULT 'HOSE',
-  PRIMARY KEY (code, fetched_at)
-);
-CREATE INDEX IF NOT EXISTS idx_mph_code_fetched
-  ON market_prices_history(code, fetched_at DESC);
-CREATE TABLE IF NOT EXISTS watchlist (
-  code   TEXT PRIMARY KEY,
-  domain TEXT NOT NULL DEFAULT 'unknown'
-);
-CREATE TABLE IF NOT EXISTS daily_ohlcv (
-  code TEXT NOT NULL, date TEXT NOT NULL,
-  open REAL NOT NULL, high REAL NOT NULL, low REAL NOT NULL,
-  close REAL NOT NULL, volume REAL NOT NULL DEFAULT 0,
-  updated_at TEXT NOT NULL, PRIMARY KEY (code, date)
-);
-```
-
-**Seed helper pattern** — replace `INSERT INTO market_prices` seeds with a helper that inserts two rows into `market_prices_history` (yesterday + today) and one row into `watchlist`:
-```sql
--- yesterday row
-INSERT OR REPLACE INTO market_prices_history (code, price, volume, fetched_at)
-  VALUES (?, priceYesterday, 1000000, '2026-04-16T08:00:00');
--- today row
-INSERT OR REPLACE INTO market_prices_history (code, price, volume, fetched_at)
-  VALUES (?, priceToday, 1000000, '2026-04-17T08:00:00');
--- watchlist
-INSERT OR REPLACE INTO watchlist (code) VALUES (?);
-```
+**File to create**: `src/__tests__/1374-ohlcv-aggregator-cron.test.ts`
 
 **Acceptance Criteria**
-- All 17 previously-failing tests pass (0 new failures)
+- Test asserts: `CRONS.ohlcvDailyAggregator` default value equals `"0 15 * * 1-5"`
+- Test asserts: `CRONS.eveningSummary` default value equals `"30 22 * * 1-5"` (unchanged, for documentation)
 - `bun tsc --noEmit` 0 errors
-- Full suite net improvement: 17 fewer failures vs current baseline
+- Test is RED before fix (current default is `0 16`)
 
 ---
 
-### Task 1373 — fix(cron-registry-count): schedulerFileCount 32 → 34 in 1190-pipeline-watchdog.test.ts
+### Task 1375 — fix(ohlcv-aggregator-cron): shift default from 16:00 to 15:00 UTC
 
-**Branch**: same as 1372 (`task/1372-1373-france-test-fixtures`)
-**Layer**: test
-**Depends on**: none
+**Branch**: same as 1374 (`task/1374-1375-ohlcv-cron-timing`)
+**Layer**: scheduler
+**Depends on**: 1374
 
 **Files to modify**
-- `src/__tests__/1190-pipeline-watchdog.test.ts` — find assertion `schedulerFileCount === 32`, update to `=== 34`
+- `src/scheduler/jobs.ts` — change `ohlcvDailyAggregator` default from `'0 16 * * 1-5'` to `'0 15 * * 1-5'`
 
 **Acceptance Criteria**
-- `cron-registry.json integrity > schedulerFileCount === 34` passes
+- `CRONS.ohlcvDailyAggregator` default = `'0 15 * * 1-5'`
+- Test 1374 is GREEN
 - `bun tsc --noEmit` 0 errors
+- No other cron defaults changed
+- Full suite regression: 0 new failures
 
 ---
 

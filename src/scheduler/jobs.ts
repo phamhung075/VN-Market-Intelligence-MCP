@@ -129,8 +129,10 @@ export const CRONS = {
   bbAlertScan:            Bun.env.CRON_BB_ALERT_SCAN                  ?? '*/15 2-8 * * 1-5',
   /** taAlertNotifier — deliver unnotified TA alerts to market channel every 15min VN market hours (task 1314) */
   taAlertNotifier:        Bun.env.CRON_TA_ALERT_NOTIFIER               ?? '*/15 2-8 * * 1-5',
-  /** ohlcvDailyAggregator — aggregate intraday ticks into daily_ohlcv at 16:00 UTC (23:00 VN) Mon-Fri (task 1359, Sprint 122) */
-  ohlcvDailyAggregator:   Bun.env.CRON_OHLCV_DAILY_AGGREGATOR          ?? '0 16 * * 1-5',
+  /** ohlcvDailyAggregator — aggregate intraday ticks into daily_ohlcv at 15:00 UTC (22:00 VN) Mon-Fri (task 1375, Sprint 130)
+   *  Shifted from 16:00 → 15:00 UTC: runs 30 min before eveningSummary (15:30 UTC = 22:30 VN),
+   *  ensuring taSummary is populated in the evening report. */
+  ohlcvDailyAggregator:   Bun.env.CRON_OHLCV_DAILY_AGGREGATOR          ?? '0 15 * * 1-5',
 }
 
 function log(msg: string) {
@@ -470,7 +472,8 @@ export function startScheduler() {
     })
   }, { timezone: 'UTC' })
 
-  // 16:00 UTC (23:00 VN) Mon-Fri — OHLCV daily aggregator — task 1359, Sprint 122
+  // 15:00 UTC (22:00 VN) Mon-Fri — OHLCV daily aggregator — task 1375, Sprint 130
+  // Shifted from 16:00 → 15:00 UTC so aggregation runs 30 min before eveningSummary (15:30 UTC).
   // Aggregates intraday market_prices_history ticks into daily_ohlcv rows for each watchlist ticker.
   cron.schedule(CRONS.ohlcvDailyAggregator, () => {
     runOhlcvDailyAggregator().catch(console.error)
