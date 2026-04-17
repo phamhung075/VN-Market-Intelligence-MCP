@@ -1,3 +1,5 @@
+process.env["DB_PATH"] = ":memory:";
+
 /**
  * Task 137 — Fix Step E: Read alerts from DB and send to Telegram
  *
@@ -290,6 +292,7 @@ describe("Task 137 — Step E: alerts flow through to sendAlertsFn", () => {
         return alerts.length;
       },
       getWatchlistCodesFn: async () => [],
+      getRecentAlertHistoryFn: async () => [],
       readUnnotifiedAlertsFn: async (windowMs) => {
         const { readUnnotifiedAlerts } = await import("../infrastructure/db/alertStore.js");
         const windowMinutes = windowMs / 60_000;
@@ -320,6 +323,7 @@ describe("Task 137 — Step E: alerts flow through to sendAlertsFn", () => {
       runImpactChainFn: async () => 0,
       sendAlertsFn: async (alerts) => alerts.length, // returns count = success
       getWatchlistCodesFn: async () => [],
+      getRecentAlertHistoryFn: async () => [],
       readUnnotifiedAlertsFn: async (windowMs) => {
         const { readUnnotifiedAlerts } = await import("../infrastructure/db/alertStore.js");
         return readUnnotifiedAlerts(windowMs / 60_000, db);
@@ -352,6 +356,7 @@ describe("Task 137 — Step E: alerts flow through to sendAlertsFn", () => {
       runImpactChainFn: async () => 0,
       sendAlertsFn: async (alerts: { id: string }[]) => alerts.length,
       getWatchlistCodesFn: async () => [],
+      getRecentAlertHistoryFn: async () => [],
       readUnnotifiedAlertsFn: async (windowMs: number) => {
         const { readUnnotifiedAlerts } = await import("../infrastructure/db/alertStore.js");
         return readUnnotifiedAlerts(windowMs / 60_000, db);
@@ -389,6 +394,7 @@ describe("Task 137 — Step E: alerts flow through to sendAlertsFn", () => {
       // sendAlertsFn returns 0 = none sent (e.g. Telegram not configured)
       sendAlertsFn: async (_alerts) => 0,
       getWatchlistCodesFn: async () => [],
+      getRecentAlertHistoryFn: async () => [],
       readUnnotifiedAlertsFn: async (windowMs) => {
         const { readUnnotifiedAlerts } = await import("../infrastructure/db/alertStore.js");
         return readUnnotifiedAlerts(windowMs / 60_000, db);
@@ -420,6 +426,7 @@ describe("Task 137 — Step E: alerts flow through to sendAlertsFn", () => {
       runImpactChainFn: async () => 0,
       sendAlertsFn: async (alerts) => alerts.length,
       getWatchlistCodesFn: async () => [],
+      getRecentAlertHistoryFn: async () => [],
       readUnnotifiedAlertsFn: async (_windowMs) => [],
     });
 
@@ -443,6 +450,7 @@ describe("Task 137 — Step E: alerts flow through to sendAlertsFn", () => {
       runImpactChainFn: async () => 0,
       sendAlertsFn: async (alerts) => alerts.length,
       getWatchlistCodesFn: async () => [],
+      getRecentAlertHistoryFn: async () => [],
       readUnnotifiedAlertsFn: async (_windowMs) => {
         readCalled = true;
         return [];
