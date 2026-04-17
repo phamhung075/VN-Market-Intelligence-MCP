@@ -4,6 +4,15 @@
 
 ---
 
+## Sprint 116 — Complete
+
+| ID | Title | Status | Role |
+|----|-------|--------|------|
+| 1346 | test(ta-adaptive): write 1346-ta-adaptive-periods.test.ts against pre-fix code | Done | Dev |
+| 1347 | fix(ta-adaptive): lower guard to 8, apply adaptive Math.min for RSI + MA periods | Done | Dev |
+
+---
+
 ## Sprint 115 — Complete
 
 | ID | Title | Status | Role |
