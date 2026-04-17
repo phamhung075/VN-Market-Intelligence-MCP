@@ -4,6 +4,32 @@
 
 ---
 
+## Sprint 108 — Active
+
+| ID | Title | Status |
+|----|-------|--------|
+| 1332 | test(source-health): TDD test 1332-pollnews-source-display-name.test.ts — written FIRST | Review |
+| 1333 | fix(source-health): add SOURCE_DISPLAY_NAMES map to pollNews — record health under display name | Review |
+
+---
+
+## Sprint 107 — Complete
+
+| ID | Title | Status |
+|----|-------|--------|
+| 1331 | test(ta): TDD test 1330-ta-daily-ohlcv.test.ts — written FIRST | Done |
+| 1330 | fix(ta): rewrite defaultComputeTa to use daily_ohlcv.close instead of market_prices_history ticks | Done |
+
+---
+
+## Sprint 106 — Complete
+
+| ID | Title | Status |
+|----|-------|--------|
+| 1329 | fix(test-timeout): 278-cycle-peer-sync — add DB_PATH=:memory: + inject getRecentAlertHistoryFn in buildBaseDeps | Done |
+
+---
+
 ## Sprint 105 — Complete
 
 | ID | Title | Status |
@@ -194,6 +220,180 @@
 ---
 
 ## Task Details (active tasks only)
+
+### 1332 — test(source-health): TDD test pollnews-source-display-name
+
+**Branch:** `task/1332-1333-source-display-name`
+**Layer:** test
+**Depends on:** none (TDD-first)
+**Status:** Review
+**Role:** Dev
+
+**Root cause to prove:** `pollNews` calls `globalSourceTracker.recordSuccess("reuters")` using the raw fetcher key. The test (and the health UI) checks `"Reuters RSS"` — a different bucket. The test on line 164-200 of `1227-source-health-empty-result.test.ts` manually seeds failures on `"Reuters RSS"`, then runs `pollNews` with Reuters returning items, then asserts `"Reuters RSS"` status is `"ok"`. But `pollNews` updates the `"reuters"` bucket, not `"Reuters RSS"` — so the assertion fails.
+
+**Files to read first:**
+- `src/application/usecases/pollNews.ts` lines 430–475 — the health tracking loop and `recordSuccess`/`recordFailure` call sites
+- `src/__tests__/1227-source-health-empty-result.test.ts` lines 124–200 — the two pollNews integration tests
+
+**Files to create:**
+- CREATE: `src/__tests__/1332-pollnews-source-display-name.test.ts`
+
+**Test cases (3 required — must FAIL before task 1333 fix):**
+1. TC-1: `pollNews` with `reuters: async () => [item]` → `globalSourceTracker.getHealth("Reuters RSS").status === "ok"` (fails: pollNews records under `"reuters"` not `"Reuters RSS"`)
+2. TC-2: `pollNews` with `cafef: async () => []` → `globalSourceTracker.getHealth("CafeF RSS").consecutiveFailures > 0` (fails: recorded under `"cafef"`)
+3. TC-3: After TC-1, `globalSourceTracker.getHealth("reuters")` is either absent or at default state (confirms old key is no longer used)
+
+**Acceptance Criteria:**
+
+**Given** `src/__tests__/1332-pollnews-source-display-name.test.ts` written before the fix
+**When** `bun test src/__tests__/1332-pollnews-source-display-name.test.ts` runs (before task 1333)
+**Then** TC-1 and TC-2 FAIL (proving the bug). TC-3 passes.
+After task 1333: all 3 pass.
+`bun tsc --noEmit` 0 errors.
+
+---
+
+### 1333 — fix(source-health): SOURCE_DISPLAY_NAMES map in pollNews
+
+**Branch:** `task/1332-1333-source-display-name` (same as 1332)
+**Layer:** application/usecases
+**Depends on:** 1332 (tests written and confirmed failing)
+**Status:** Review
+**Role:** Dev
+
+**Files to read first:**
+- `src/application/usecases/pollNews.ts` lines 430–475 — health tracking loop
+- `src/__tests__/1332-pollnews-source-display-name.test.ts` — confirm TC-1 and TC-2 are red
+
+**Files to modify:**
+- MODIFY: `src/application/usecases/pollNews.ts`
+  - Add constant before the health tracking loop:
+    ```ts
+    const SOURCE_DISPLAY_NAMES: Record<string, string> = {
+      reuters: "Reuters RSS",
+      cafef: "CafeF RSS",
+      vnexpress: "VnExpress RSS",
+      vneconomy: "VnEconomy RSS",
+      tradingeconomics: "Trading Economics RSS",
+    };
+    ```
+  - Replace `globalSourceTracker.recordSuccess(name)` with `globalSourceTracker.recordSuccess(SOURCE_DISPLAY_NAMES[name] ?? name)`
+  - Replace both `globalSourceTracker.recordFailure(name, ...)` calls with `globalSourceTracker.recordFailure(SOURCE_DISPLAY_NAMES[name] ?? name, ...)`
+
+**Acceptance Criteria:**
+
+**Given** `src/__tests__/1332-pollnews-source-display-name.test.ts` with TC-1+TC-2 failing
+**When** fix applied and `bun test src/__tests__/1332-pollnews-source-display-name.test.ts` runs
+**Then** all 3 pass.
+`bun test src/__tests__/1227-source-health-empty-result.test.ts` — all 8 pass / 0 fail (the 2 pre-existing failures eliminated).
+Full suite regression: 0 new failures vs Sprint 107 baseline.
+`bun tsc --noEmit` 0 errors.
+
+---
+
+### 1331 — test(ta): TDD test 1330-ta-daily-ohlcv.test.ts
+
+**Branch:** `task/1330-1331-ta-daily-ohlcv`
+**Layer:** test
+**Depends on:** none (TDD-first)
+**Status:** Backlog
+**Role:** Dev
+
+**Files to read first:**
+- `src/application/usecases/assembleBriefing.ts` lines 504–535 — current `defaultComputeTa()` signature and return type `TaSignal | null`
+- `src/infrastructure/db/schema.ts` lines 134–148 — `daily_ohlcv` schema (code, date, open, high, low, close, volume)
+
+**Files to create:**
+- CREATE: `src/__tests__/1330-ta-daily-ohlcv.test.ts`
+
+**Test cases (4 required — written before production change):**
+1. TC-1: `daily_ohlcv` has 0 rows for ticker → `defaultComputeTa()` returns null
+2. TC-2: `daily_ohlcv` has 14 rows (< 15) → returns null
+3. TC-3: `daily_ohlcv` has 20 rows with known close prices → returns non-null `TaSignal` with `code`, `rsi14`, `rsiStatus`, `ma20`, `priceVsMa20`, `currentPrice` all defined
+4. TC-4: `daily_ohlcv` has 20 rows where last close > MA20 → `priceVsMa20 === "above"`
+
+**Acceptance Criteria:**
+
+**Given** a fresh `daily_ohlcv` table with synthetic close prices
+**When** `bun test src/__tests__/1330-ta-daily-ohlcv.test.ts` runs (before task 1330 fix is applied)
+**Then**
+- TC-1, TC-2: pass (null return for insufficient data — already correct)
+- TC-3, TC-4: FAIL (production code reads `market_prices_history`, not `daily_ohlcv` — proves the bug)
+- After task 1330 is applied: all 4 pass
+- `bun tsc --noEmit` 0 errors
+
+---
+
+### 1330 — fix(ta): rewrite defaultComputeTa to use daily_ohlcv
+
+**Branch:** `task/1330-1331-ta-daily-ohlcv` (same as 1331)
+**Layer:** application/usecases
+**Depends on:** 1331 (tests written and confirmed failing)
+**Status:** Backlog
+**Role:** Dev
+
+**Files to read first:**
+- `src/application/usecases/assembleBriefing.ts` lines 504–535 — full `defaultComputeTa()` function
+- `src/__tests__/1330-ta-daily-ohlcv.test.ts` — confirm tests exist and TC-3/TC-4 are red
+
+**Files to modify:**
+- MODIFY: `src/application/usecases/assembleBriefing.ts`
+  - In `defaultComputeTa()`: replace the `market_prices_history` query with:
+    ```sql
+    SELECT date, close AS close_price
+    FROM daily_ohlcv
+    WHERE code = ?
+    ORDER BY date ASC
+    LIMIT 60
+    ```
+  - Remove the `GROUP BY date(fetched_at)` grouping and the `AVG(price)` aggregation — `daily_ohlcv` already has one row per day with the official close price
+  - Keep the `if (rows.length < 15) return null` guard unchanged
+  - Keep all downstream RSI/MA20 computation unchanged — only the data source changes
+
+**Acceptance Criteria:**
+
+**Given** `src/__tests__/1330-ta-daily-ohlcv.test.ts` exists with TC-3/TC-4 failing
+**When** fix is applied and `bun test src/__tests__/1330-ta-daily-ohlcv.test.ts` runs
+**Then**
+- All 4 tests pass / 0 fail
+- TC-3: `defaultComputeTa()` returns non-null signal from `daily_ohlcv` data
+- TC-4: `priceVsMa20 === "above"` when last close exceeds MA20
+- No regression in other TA tests (`bun test` full suite 0 new failures)
+- `bun tsc --noEmit` 0 errors
+
+---
+
+### 1329 — fix(test-timeout): 278-cycle-peer-sync DB isolation
+
+**Branch:** `task/1329-test278-timeout`
+**Layer:** test (test file only — no production code changes)
+**Depends on:** none
+**Status:** Backlog
+**Role:** Dev
+
+**Root cause:** `src/__tests__/278-cycle-peer-sync.test.ts` does NOT set `process.env["DB_PATH"] = ":memory:"` at file top. The comment on line 15 incorrectly claims this is impossible; task 1328 (test 137 fix) proved the pattern works — set `:memory:` at line 1 AND inject `getRecentAlertHistoryFn: async () => []` into `buildBaseDeps()`. Without this, the cycle's cooldown `getDb()` calls hit the production SQLite file, causing all 10 tests to timeout at 5s (50s wasted per full suite run).
+
+**Files to read first:**
+- `src/__tests__/278-cycle-peer-sync.test.ts` — full file, understand `buildBaseDeps()` and all 10 test call-sites
+- `src/__tests__/137-fix-alert-pipeline.test.ts` lines 1–5 — confirm the working pattern for `:memory:` + `getRecentAlertHistoryFn` injection
+
+**Files to modify:**
+- MODIFY: `src/__tests__/278-cycle-peer-sync.test.ts`
+  - ADD line 1: `process.env["DB_PATH"] = ":memory:";` (before all imports — same pattern as test 1192 and test 137)
+  - ADD `getRecentAlertHistoryFn: async () => []` to the `buildBaseDeps()` return object — this automatically covers all 10 tests
+  - REMOVE or UPDATE the incorrect comment on line 15 ("We cannot use DB_PATH=:memory: because...") — this comment is wrong; the real reason for past timeout was missing `getRecentAlertHistoryFn`
+
+**Acceptance Criteria:**
+
+**Given** the modified test file
+**When** `bun test ./src/__tests__/278-cycle-peer-sync.test.ts` runs
+**Then**
+- All 10 tests pass / 0 fail
+- Total test file runtime under 10s
+- `bun tsc --noEmit` 0 errors
+- Full suite: 0 new failures vs Sprint 105 baseline (4885 pass, 14 fail pre-existing)
+
+---
 
 ### 1327 — test(macro-alert): TDD test 1326-macro-deviation-direction.test.ts
 
