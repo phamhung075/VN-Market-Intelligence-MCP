@@ -8,6 +8,7 @@
 
 process.env["DB_PATH"] = ":memory:";
 import { describe, it, expect, beforeEach } from "bun:test";
+import { Database } from "bun:sqlite";
 import type { EveningSummary } from "../application/usecases/assembleEveningSummary.js";
 import { runEveningSummary, resetEveningSummaryGuard } from "../scheduler/eveningSummaryJob.js";
 
@@ -59,6 +60,24 @@ function fullSummary(): EveningSummary {
 // Tests
 // ─────────────────────────────────────────────────────────────────────────────
 
+/**
+ * Create a fresh in-memory SQLite DB with the market_messages table.
+ * This is injected into runEveningSummary so the dedup guard sees an empty
+ * table and never short-circuits the test (production-DB bleed fix, task 1376).
+ */
+function makeTestDb(): Database {
+  const db = new Database(":memory:");
+  db.run(`
+    CREATE TABLE IF NOT EXISTS market_messages (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      from_agent TEXT NOT NULL,
+      message_type TEXT NOT NULL,
+      sent_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+  `);
+  return db;
+}
+
 describe("Task 1192 — Evening summary empty-content fallback", () => {
   beforeEach(() => {
     resetEveningSummaryGuard();
@@ -72,7 +91,7 @@ describe("Task 1192 — Evening summary empty-content fallback", () => {
       calls.push({ message, opts });
     };
 
-    await runEveningSummary(async () => emptySummary(), sendFn);
+    await runEveningSummary(async () => emptySummary(), sendFn, makeTestDb());
 
     expect(calls.length).toBe(0);
   });
@@ -85,7 +104,7 @@ describe("Task 1192 — Evening summary empty-content fallback", () => {
       calls.push({ message, opts });
     };
 
-    await runEveningSummary(async () => fullSummary(), sendFn);
+    await runEveningSummary(async () => fullSummary(), sendFn, makeTestDb());
 
     // Exactly one send for the normal content path
     expect(calls.length).toBe(1);
