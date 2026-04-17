@@ -4,14 +4,25 @@
 
 ---
 
-## Sprint 136 — Active
+## Sprint 137 — Active
+
+| ID | Title | Status | Role |
+|----|-------|--------|------|
+| 1387 | test(morning-briefing-filler): TDD test 1387-morning-briefing-filler.test.ts — written FIRST | Review | Dev |
+| 1388 | fix(morning-briefing-filler): omit filler sections in formatBriefingMessage when data absent | Review | Dev |
+
+> Sprint goal: `SPRINT_GOAL.md` | Success: no "chưa có dữ liệu" / "N/A" filler when sections empty; 5021+ pass, 0 fail
+
+---
+
+## Sprint 136 — Complete
 
 | ID | Title | Status | Role |
 |----|-------|--------|------|
 | 1385 | test(evening-news-filler): TDD test 1385-evening-summary-news-filler.test.ts — written FIRST | Done | Dev |
 | 1386 | fix(evening-news-filler): omit "Không có tin tức hôm nay" when newsCount=0 in eveningSummaryJob | Done | Dev |
 
-> Sprint goal: `SPRINT_GOAL.md` | Success: no "Không có" filler when other content present; newsCount line shown only when >0; 5018+ pass, 0 fail
+> Sprint goal: `SPRINT_GOAL.md` | COMPLETE 2026-04-17
 
 ---
 
@@ -131,6 +142,38 @@
 ---
 
 ## Task Details (active tasks only)
+
+### 1387 — TDD test: 1387-morning-briefing-filler.test.ts (RED first)
+
+context: docs/handoffs/TASK_1387.md
+branch: task/1387-morning-briefing-filler-tdd
+layer: scheduler
+depends_on: none
+
+acceptance_criteria:
+- Given formatBriefingMessage unchanged (still emits "chưa có dữ liệu" / "N/A" / "Chưa có dữ liệu giá")
+- When T1–T4 written per TECH_137 test table
+- Then bun test src/__tests__/1387-morning-briefing-filler.test.ts = T1+T2+T3 FAIL (RED)
+- Then bun tsc --noEmit = 0 errors
+
+---
+
+### 1388 — fix: omit filler sections in formatBriefingMessage when data absent
+
+context: docs/handoffs/TASK_1388.md
+branch: task/1388-morning-briefing-filler-fix
+layer: scheduler
+depends_on: [1387 merged]
+
+acceptance_criteria:
+- Given 1387 T1–T4 with T1+T2+T3 RED
+- When formatBriefingMessage patched per TECH_137 target state
+- Then bun test src/__tests__/1387-morning-briefing-filler.test.ts = all PASS (GREEN)
+- Then bun test full suite = 5021+ pass, 0 fail, 21+ skip
+- Then bun tsc --noEmit = 0 errors
+- Then grep "chưa có dữ liệu\|Chưa có dữ liệu giá" src/scheduler/morningBriefingJob.ts = 0 matches
+
+---
 
 ### 1385 — TDD test: 1385-evening-summary-news-filler.test.ts (RED first)
 
