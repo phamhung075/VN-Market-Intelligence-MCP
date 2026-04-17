@@ -1369,6 +1369,20 @@ export async function initDatabase(): Promise<void> {
       AND extraction_confidence < 0.1
   `).run();
 
+  // ── OHLCV Backfill Queue (Task 1361 / Sprint 123) ─────────────────────────────
+  // Tracks pending backfill requests triggered by ohlcvStartupProbe.
+  // VPS polls GET /api/ohlcv-backfill-queue; after running backfill it POSTs to
+  // /api/ohlcv-backfill-done which sets done=1. Probe deduplicates: it only inserts
+  // when no done=0 row already exists.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS ohlcv_backfill_queue (
+      id         INTEGER PRIMARY KEY AUTOINCREMENT,
+      queued_at  TEXT NOT NULL DEFAULT (datetime('now')),
+      done       INTEGER NOT NULL DEFAULT 0
+    )
+  `);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_obq_done ON ohlcv_backfill_queue(done)`);
+
   // ── Market Messages (Sprint 068) ──────────────────────────────────────────────
   // Persists all MARKET channel Telegram sends for quality review.
   // from_agent identifies the scheduler job or MCP tool that sent the message.
