@@ -4,73 +4,78 @@
 
 ---
 
-## Sprint 120 — Active
+## Sprint 121 — Active
+
+| ID | Title | Status | Role |
+|----|-------|--------|------|
+| 1356 | test(ta-diag): TDD 1356-ta-diag.test.ts — written FIRST | Review | Dev |
+| 1357 | feat(ta-diag): TaDiag block in assembleEveningSummary | Todo | Dev |
+
+> Req spec: `docs/REQ_121.md` — DONE (BA)
+> Tech design: `docs/TECH_121.md` — DONE (Architect)
+
+---
+
+## Sprint 120 — COMPLETE (2026-04-17)
 
 | ID | Title | Status | Role |
 |----|-------|--------|------|
 | 1354 | test(prediction-diag): TDD 1354-prediction-signals-fallback.test.ts — written FIRST | Done | QA |
-| 1355 | feat(prediction-diag): predictionDiag block + medium-severity fallback in assembleEveningSummary | Review | Dev |
-
-> Tech design: `docs/TECH_120.md` (APPROVED_BY_ARCHITECT)
+| 1355 | feat(prediction-diag): predictionDiag block + medium-severity fallback in assembleEveningSummary | Done | QA |
 
 ---
 
 ## Task Details (active tasks only)
 
-### Task 1354 — test(prediction-diag): TDD test
+### Task 1356 — test(ta-diag): TDD test (written FIRST, must be RED)
 
-**Branch**: `task/1354-prediction-diag-tdd`
+**Branch**: `task/1356-ta-diag-tdd`
 **Layer**: test
 **Depends on**: none
 
 **Files to create**
-- CREATE: `src/__tests__/1354-prediction-signals-fallback.test.ts`
+- CREATE: `src/__tests__/1356-ta-diag.test.ts`
 
 **Files to read first**
-- `src/application/usecases/assembleEveningSummary.ts` lines 335-347 (Step 5 prediction signals)
-- `src/infrastructure/db/predictionStore.ts` lines 73-130 (`getRecentPredictionSignals` query)
-- `src/__tests__/1318-prediction-signals-evening.test.ts` (pattern: in-memory DB + `assembleEveningSummary` import)
+- `src/application/usecases/assembleEveningSummary.ts` (EveningSummary interface, taSummary assembly step)
+- `src/__tests__/1354-prediction-signals-fallback.test.ts` (injection pattern for assembleEveningSummary)
+- `src/__tests__/1312-evening-summary-ta.test.ts` (taSummary test pattern)
 
 **Acceptance Criteria**
 
-**Given** `src/__tests__/1354-prediction-signals-fallback.test.ts` with line 1: `process.env["DB_PATH"] = ":memory:";`, injecting signals via `getPredictionSignalsFn` option (no `mock.module`)
-**When** `bun test 1354` runs before task 1355 is applied
-**Then**
-- AC-1: 2 signals (high + critical) → `predictionSignals` length 2, `predictionDiag.stored` === 2
-- AC-2: 4 medium signals, 0 high/critical → `predictionSignals` length 3 (capped), `predictionDiag.stored` === 4
-- AC-3: 0 signals → `predictionSignals` === [], `predictionDiag.stored` === 0
-- AC-4: 5 signals (2 high + 2 medium + 1 low) → `predictionSignals` length 2 (high only), `predictionDiag.stored` === 5
-- AC-5: `getPredictionSignalsFn` throws → `predictionSignals` === [], `predictionDiag.stored` === 0; `logger.warn` called with message containing "prediction"
-- All 5 tests RED before 1355; GREEN after 1355
+Line 1: `process.env["DB_PATH"] = ":memory:";`
+Use injectable `computeTaFn` + `getOhlcvRowCountFn` options in `assembleEveningSummary`.
+
+- AC-1: 2 watchlist tickers, both with 15+ OHLCV rows, both returning TaSignal → `taDiag.tickersWithSignal === 2`, `taDiag.tickersBelowThreshold === 0`, `taDiag.ohlcvRowsMin >= 15`, `taDiag.ohlcvRowsMax >= 15`
+- AC-2: 2 watchlist tickers, both sparse (3 rows each) → `taDiag.tickersWithSignal === 0`, `taDiag.tickersBelowThreshold === 2`, `taDiag.ohlcvRowsMin === 3`, `taDiag.ohlcvRowsMax === 3`
+- AC-3: 1 ticker has signal, 1 sparse → `taDiag.tickersWithSignal === 1`, `taDiag.tickersBelowThreshold === 1`
+- AC-4: `computeTaFn` throws → `taDiag` defaults to `{ tickersWithSignal: 0, tickersBelowThreshold: 0, ohlcvRowsMin: 0, ohlcvRowsMax: 0 }`, no crash
+- All 4 tests RED before 1357; GREEN after 1357
 
 ---
 
-### Task 1355 — feat(prediction-diag): predictionDiag + medium fallback
+### Task 1357 — feat(ta-diag): TaDiag block in assembleEveningSummary
 
-**Branch**: `task/1355-prediction-diag-impl`
+**Branch**: `task/1357-ta-diag-impl`
 **Layer**: application/usecases
-**Depends on**: 1354 (TDD tests written, confirmed RED)
+**Depends on**: 1356 (TDD tests written, confirmed RED)
 
 **Files to modify**
 - MODIFY: `src/application/usecases/assembleEveningSummary.ts`
-  - Add `PredictionDiag` interface above `EveningSummary`
-  - Add `predictionDiag: PredictionDiag` field to `EveningSummary`
-  - Add optional `getPredictionSignalsFn` to `AssembleEveningSummaryOptions`
-  - Replace Step 5 (lines 335-347) with medium-fallback + diag block per TECH_120
+  - Add `TaDiag` interface: `{ tickersWithSignal: number; tickersBelowThreshold: number; ohlcvRowsMin: number; ohlcvRowsMax: number }`
+  - Add `taDiag: TaDiag` field to `EveningSummary`
+  - Add optional `getOhlcvRowCountFn?: (code: string, db: Database) => number` to `AssembleEveningSummaryOptions`
+  - In taSummary assembly step: for each watchlist ticker, call `getOhlcvRowCountFn` (default: `SELECT COUNT(*) FROM daily_ohlcv WHERE code = ?`), track min/max/threshold counts alongside existing `defaultComputeTa` calls
 
 **Files to read first**
-- `src/application/usecases/assembleEveningSummary.ts` lines 50-65 (types) + 335-347 (Step 5)
-- `src/infrastructure/db/predictionStore.ts` lines 73-130 (`getRecentPredictionSignals`)
+- `src/application/usecases/assembleEveningSummary.ts` (full taSummary assembly step)
+- `src/infrastructure/db/schema.ts` (daily_ohlcv table definition)
 
 **Acceptance Criteria**
 
-**Given** task 1354 tests exist and are RED
-**When** changes applied and `bun test 1354` runs
-**Then**
-- All 5 AC tests pass, 0 failures
+- All 4 AC tests from 1356 pass, 0 failures
 - `bun tsc --noEmit` 0 errors
-- `PredictionDiag { stored: number }` interface exported from `assembleEveningSummary.ts`
-- Fallback: no high/critical → up to 3 medium signals from last 24h
-- `predictionDiag.stored` = COUNT of all `prediction_signals` rows in last 24h (any severity)
-- Telegram formatter untouched — `predictionDiag` is JSON-only, not sent to Telegram
+- `TaDiag` interface exported from `assembleEveningSummary.ts`
+- `taDiag` present in evening JSON report (same pattern as `predictionDiag` — JSON only, NOT in Telegram)
+- Telegram formatter untouched
 - Full suite 0 new failures
