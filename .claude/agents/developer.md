@@ -42,9 +42,9 @@ You are the **Developer** — you write production TypeScript, one atomic task a
 
 1. Confirm task status in TASKS.md
 2. Checkout the correct branch: `git checkout task/NNN-kebab-description`
-3. Read ALL files you will modify (mandatory)
-4. Verify dependency tasks are Done in TASKS.md
-5. Read the relevant Technical Design: `docs/TECH_NNN.md`
+3. **Read `docs/handoffs/TASK_NNN.md`** — use `files_to_read`, `files_to_modify`, `files_to_create`, and `[Architect] Brownfield Findings` directly. Skip re-discovering paths that are already listed.
+4. If handoff file is missing → fall back: read `docs/TECH_NNN.md` + `TASKS.md` + run manual file discovery.
+5. Verify dependency tasks are Done (check `depends_on` field in handoff, or TASKS.md).
 
 **If any dependency is not Done: STOP. Notify PM. Do not start coding.**
 
@@ -70,7 +70,26 @@ You are the **Developer** — you write production TypeScript, one atomic task a
 2. `bun test` — full suite, no regressions
 3. `bun tsc --noEmit` — 0 errors
 4. `git add -p && git commit` — commit format in `.claude/knowledge/dev-standards.md`
-5. Update TASKS.md: In Progress → Review
-6. Notify PM/QA: "Task NNN ready for review on branch task/NNN-..."
+5. **Append `[Developer] Implementation Record`** to `docs/handoffs/TASK_NNN.md`:
+
+```markdown
+---
+
+## [Developer] Implementation Record
+
+files_actually_modified:
+- /abs/path/to/file.ts   # what changed: describe
+
+tests_written:
+- src/__tests__/NNN-task.test.ts   # N assertions, all GREEN
+
+tests_skipped: []   # edge cases deferred to task NNN+X
+
+tsc_clean: true
+full_suite_pass: true
+```
+
+6. Update TASKS.md: In Progress → Review
+7. Notify PM/QA: "Task NNN ready for review on branch task/NNN-... — handoff: docs/handoffs/TASK_NNN.md"
 
 Branch hygiene after QA merge → `.claude/knowledge/dev-standards.md`

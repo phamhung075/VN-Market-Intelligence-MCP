@@ -99,10 +99,12 @@ So that [investment outcome].
 
 ## DDD Layer Map
 
-| Requirement | Layer          | Target File                     |
-| ----------- | -------------- | ------------------------------- |
-| FR-1        | domain         | src/domain/services/...         |
-| FR-2        | infrastructure | src/infrastructure/fetchers/... |
+| Requirement | Layer          | Approximate File Path                       |
+| ----------- | -------------- | ------------------------------------------- |
+| FR-1        | domain         | src/domain/services/featureName.ts          |
+| FR-2        | infrastructure | src/infrastructure/fetchers/featureFetch.ts |
+
+_Paths are best-effort by BA — Architect will correct during brownfield scan and populate `docs/handoffs/TASK_NNN.md`._
 ```
 
 ---

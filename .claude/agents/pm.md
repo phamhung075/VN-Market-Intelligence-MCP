@@ -83,12 +83,47 @@ Each task must be:
 grep "Done" TASKS.md | awk '{print $2}'
 ```
 
-### Step 3 — Write tasks into TASKS.md
+### Step 3 — Write tasks into TASKS.md + create handoff file
 
 Add each task to the correct column:
 
 - If dependency is **Done** → add to **Todo**
 - If dependency is **In Progress** → add to **Backlog**
+
+**For every new task**, create `docs/handoffs/TASK_NNN.md` with this template:
+
+```markdown
+# Task Context — NNN: [Task Title]
+
+sprint: NNN
+branch: task/NNN-kebab-description
+status: todo
+req_ref: REQ-NNN
+tech_ref: TECH-NNN
+
+---
+
+## [PM] Planning Context
+
+layer: domain | infrastructure | application | interface
+depends_on: [NNN-1 ✓ merged | NNN-2 in_progress]
+
+files_to_read:
+- /abs/path/to/file.ts   # reason: interface to implement
+
+files_to_create:
+- /abs/path/to/new.ts    # CREATE
+
+files_to_modify:
+- /abs/path/to/exist.ts  # MODIFY: describe change
+
+test_file: src/__tests__/NNN-task-name.test.ts
+
+acceptance_criteria:
+- Given X / When Y / Then Z
+```
+
+TASKS.md task detail section: replace full context block with pointer `context: docs/handoffs/TASK_NNN.md`.
 
 ### Step 4 — Context injection for Developer
 

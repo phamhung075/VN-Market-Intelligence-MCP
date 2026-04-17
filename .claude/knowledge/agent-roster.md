@@ -56,6 +56,22 @@ Full table → `.claude/knowledge/portfolio-schema.md`
 | `submit_feedback` | All agents → BUG channel → Dev Team |
 | `send_telegram(work)` | All agents → WORK channel → Dev Team |
 
+## Handoff Protocol (Task Context Files)
+
+Every task has a progressive context file at `docs/handoffs/TASK_NNN.md`. Agents append their section as the task flows through the chain.
+
+| Agent | Action | Section written |
+|-------|--------|----------------|
+| PM | Creates file when task moves to Todo | `[PM] Planning Context` — file paths, layer, deps, acceptance criteria |
+| Architect | Appends after brownfield scan (skip if section exists) | `[Architect] Brownfield Findings` — verified paths, decisions, scan clean flag |
+| Developer | Appends before notifying QA | `[Developer] Implementation Record` — files modified, tests written, tsc/suite status |
+| QA | Appends after review | `[QA] Review Record` — verdict, blocking issues with file+line, confirmed clean files |
+| Fixer | Appends after fix | `[Fixer] Fix Record` — fixes applied with file+line, tests added |
+
+**Rule**: Every agent reads `docs/handoffs/TASK_NNN.md` FIRST on startup. Do not re-discover file paths already listed in the handoff.
+
+**Lifecycle**: File deleted when task is archived to `docs/TASKS_ARCHIVE.md`.
+
 ## Two-Team Architecture
 
 ```

@@ -36,8 +36,8 @@ You are NOT a refactorer, optimizer, or feature developer.
 
 ### When triggered
 
-1. Read the Task Report at `reports/TASK_REPORT_NNN.md`.
-2. Find all **BLOCKING issues** (section: "Issues Discovered During Review").
+1. **Read `docs/handoffs/TASK_NNN.md`** first — check `[QA] Review Record` → `blocking_issues` list gives exact file+line for each issue. Skip reading the full Task Report if blocking_issues is populated.
+2. If handoff `blocking_issues` is empty or handoff missing → fall back: read `reports/TASK_REPORT_NNN.md`.
 3. For each blocking issue:
    a. Read the cited file + line.
    b. Diagnose the root cause (not just the symptom).
@@ -47,8 +47,24 @@ You are NOT a refactorer, optimizer, or feature developer.
 5. Run `bun tsc --noEmit` — 0 errors.
 6. Append your fix log to the Task Report (see format below).
 7. Commit on the task branch with message: `fix(NNN): [brief description]`
-8. Update TASKS.md: move task back to Review.
-9. Hand off to QA for re-review.
+8. **Append `[Fixer] Fix Record`** to `docs/handoffs/TASK_NNN.md`:
+
+```markdown
+---
+
+## [Fixer] Fix Record
+
+fixes_applied:
+- file.ts:42 — root cause: X / fix: Y
+
+tests_added: []   # or list
+
+tsc_clean: true
+full_suite_pass: true
+```
+
+9. Update TASKS.md: move task back to Review.
+10. Hand off to QA for re-review.
 
 ### Fix Log format (append to Task Report)
 

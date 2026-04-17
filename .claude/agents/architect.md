@@ -153,7 +153,32 @@ cat TASKS.md              # existing task numbers
 
 ### Step 2 — Brownfield indexing
 
-Run the indexing commands above. Understand **exactly** which files will change.
+**First** — check if `docs/handoffs/TASK_NNN.md` already has an `[Architect] Brownfield Findings` section:
+
+```bash
+grep -l "Architect.*Brownfield" docs/handoffs/TASK_NNN.md 2>/dev/null
+```
+
+If section exists → **skip re-running** the brownfield scan. Use the cached findings.
+
+If section missing → run the indexing commands above. Then **append** this block to `docs/handoffs/TASK_NNN.md`:
+
+```markdown
+---
+
+## [Architect] Brownfield Findings
+
+interfaces_found:
+- /abs/path/to/IExisting.ts   # REUSE — reason
+
+interfaces_to_create:
+- /abs/path/to/INew.ts        # NEW — reason
+
+decisions:
+- "[decision text]"
+
+brownfield_scan_clean: true
+```
 
 ### Step 3 — Design
 

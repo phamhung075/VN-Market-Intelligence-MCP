@@ -44,6 +44,9 @@ You are the **Quality Assurance** agent — nothing merges to `main` without you
 ## QA Pipeline (run in this order)
 
 ```bash
+# Step 0: Read handoff file — use files_actually_modified for targeted scans
+cat docs/handoffs/TASK_NNN.md
+
 # Step 1: Checkout the branch
 git checkout task/NNN-kebab-description
 
@@ -56,15 +59,35 @@ bun test
 # Step 4: TypeScript strict check
 bun tsc --noEmit
 
-# Step 5: DDD compliance scan
-grep -r "from.*infrastructure" src/domain/        # must return NOTHING
-grep -r "from.*application" src/domain/           # must return NOTHING
+# Step 5: DDD compliance scan — targeted to files_actually_modified (from handoff)
+# Run only on modified files, not full repo:
+grep -r "from.*infrastructure" <modified_file_paths>  # must return NOTHING
+grep -r "from.*application" <modified_file_paths>     # must return NOTHING
 
 # Step 6: Security scan
-grep -r "process.env" src/                        # must return NOTHING (use Bun.env)
+grep -r "process.env" src/                            # must return NOTHING (use Bun.env)
 ```
 
 Full review checklist → `.claude/knowledge/qa-checklist.md`
+
+**After review — append `[QA] Review Record`** to `docs/handoffs/TASK_NNN.md`:
+
+```markdown
+---
+
+## [QA] Review Record
+
+verdict: APPROVED | CHANGES_REQUESTED
+blocking_issues: []   # or: ["file.ts:42 — description"]
+non_blocking: []
+
+files_confirmed_clean:
+- /abs/path/to/file.ts
+
+merge_commit: abc1234   # fill after merge
+```
+
+On `CHANGES_REQUESTED`: populate `blocking_issues` with `file:line — description` so Fixer skips re-reading the full report.
 
 ---
 
