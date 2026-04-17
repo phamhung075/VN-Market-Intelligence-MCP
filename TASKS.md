@@ -98,31 +98,84 @@
 
 ---
 
-## Sprint 130 — Active
+## Sprint 130 — COMPLETE (2026-04-17)
 
 | ID | Title | Status | Role |
 |----|-------|--------|------|
-| 1374 | test(ohlcv-aggregator-cron): TDD — CRON_OHLCV_DAILY_AGGREGATOR default is 0 15 * * 1-5 (before evening summary at 15:30) | Review | QA |
-| 1375 | fix(ohlcv-aggregator-cron): shift ohlcvDailyAggregator from 16:00 UTC to 15:00 UTC — before evening summary | Review | Dev |
+| 1374 | test(ohlcv-aggregator-cron): TDD — CRON_OHLCV_DAILY_AGGREGATOR default is 0 15 * * 1-5 (before evening summary at 15:30) | Done | QA |
+| 1375 | fix(ohlcv-aggregator-cron): shift ohlcvDailyAggregator from 16:00 UTC to 15:00 UTC — before evening summary | Done | Dev |
 
 > Goal: Fix `taSummary: []` in every evening report — the aggregator runs at 16:00 UTC but evening summary fires at 15:30 UTC, so TA signals are never ready. Move aggregator to 15:00 UTC (22:00 VN) giving 30 min margin.
-> Branch: `task/1374-1375-ohlcv-cron-timing`
+> Branch: merged to main 2026-04-17 | PO sign-off: 2026-04-17
 
 ---
 
-## Sprint 131 — Active
+## Sprint 132 — Active
 
 | ID | Title | Status | Role |
 |----|-------|--------|------|
-| 1376 | fix(evening-summary-db): add optional db param to runEveningSummary for test isolation | Review | Dev |
-| 1377 | fix(evening-summary-test): inject in-memory DB into 1192 test to prevent production-DB bleed | Review | Dev |
+| 1378 | test(vps-auto-deploy): TDD — maybe-deploy-vps.sh detection logic (VPS files changed → deploy triggered, no VPS files → skipped) | Review | QA |
+| 1379 | feat(vps-auto-deploy): scripts/maybe-deploy-vps.sh + dev-standards.md branch hygiene step | Review | Dev |
+
+> Goal: Eliminate manual VPS deploy step — after any merge touching `vps-scripts/` or `deploy-vinahost.sh`, the developer agent runs `./scripts/maybe-deploy-vps.sh` automatically as part of branch hygiene.
+> Req spec: `docs/REQ_132.md` | Tech design: `docs/TECH_132.md` (APPROVED_BY_ARCHITECT) | Branch: `task/1378-1379-vps-auto-deploy`
+
+---
+
+## Sprint 131 — COMPLETE (2026-04-17)
+
+| ID | Title | Status | Role |
+|----|-------|--------|------|
+| 1376 | fix(evening-summary-db): add optional db param to runEveningSummary for test isolation | Done | Dev |
+| 1377 | fix(evening-summary-test): inject in-memory DB into 1192 test to prevent production-DB bleed | Done | Dev |
 
 > Goal: Fix production-DB bleed in 1192-evening-summary-empty-fallback.test.ts — dedup guard was reading the production singleton DB, causing the test to skip when a real evening summary had already run today.
-> Branch: `task/1376-1377-evening-summary-db-isolation`
+> Branch: merged to main 2026-04-17 | PO sign-off: 2026-04-17
 
 ---
 
 ## Task Details (active tasks only)
+
+### Task 1378 — test(vps-auto-deploy): TDD — maybe-deploy-vps.sh detection logic
+
+**Branch**: `task/1378-1379-vps-auto-deploy`
+**Layer**: test + shell
+**Depends on**: none
+
+**Context**: After any merge that modifies `vps-scripts/**` or `deploy-vinahost.sh`, the developer agent must run `./scripts/maybe-deploy-vps.sh` to push the updated scripts to the Vinahost VPS. Currently this step is missing from `dev-standards.md` branch hygiene — the user has to do it manually. This task writes a TDD test to validate the detection and dispatch logic of `maybe-deploy-vps.sh`.
+
+**File to create**: `src/__tests__/1378-vps-auto-deploy.test.ts`
+
+**Acceptance Criteria**
+- Test verifies: `scripts/maybe-deploy-vps.sh` exists and is executable
+- Test verifies: script exits 0 (not 1) in both trigger and skip paths (use `--dry-run` flag)
+- Test verifies: with `--dry-run` + fake diff containing `vps-scripts/fetch-prices.sh`, script prints "VPS deploy triggered" and exits 0
+- Test verifies: with `--dry-run` + fake diff containing only `src/scheduler/jobs.ts`, script prints "VPS deploy skipped" and exits 0
+- `bun tsc --noEmit` 0 errors
+- Test is RED before the script exists
+
+---
+
+### Task 1379 — feat(vps-auto-deploy): scripts/maybe-deploy-vps.sh + dev-standards.md update
+
+**Branch**: same as 1378 (`task/1378-1379-vps-auto-deploy`)
+**Layer**: shell + documentation
+**Depends on**: 1378
+
+**Files to create/modify**
+- `scripts/maybe-deploy-vps.sh` — detects VPS file changes via `git diff HEAD~1 --name-only`; if any path matches `vps-scripts/` or `deploy-vinahost.sh`, runs `./deploy-vinahost.sh`; supports `--dry-run` flag (prints action without executing); sends a WORK-channel Telegram notification via `curl` with deploy result
+- `.claude/knowledge/dev-standards.md` — insert step 4a in Branch Hygiene: "If changed files include `vps-scripts/**` or `deploy-vinahost.sh`, run `./scripts/maybe-deploy-vps.sh`"
+
+**Acceptance Criteria**
+- `scripts/maybe-deploy-vps.sh` is executable (`chmod +x`)
+- `--dry-run` mode: prints "VPS deploy triggered" or "VPS deploy skipped" without calling `deploy-vinahost.sh`
+- Detection: matches `vps-scripts/any-file.sh` and `deploy-vinahost.sh`; skips for `src/`, `docs/`, `.claude/` paths
+- `dev-standards.md` branch hygiene section includes the new step
+- Test 1378 is GREEN
+- `bun tsc --noEmit` 0 errors
+- Full suite regression: 0 new failures
+
+---
 
 ### Task 1374 — test(ohlcv-aggregator-cron): TDD — aggregator cron default before 15:30
 
@@ -164,6 +217,11 @@
 
 | Sprint | Goal summary | Status |
 |--------|-------------|--------|
+| 132 | feat(vps-auto-deploy): maybe-deploy-vps.sh + dev-standards branch hygiene (1378, 1379) | ACTIVE |
+| 131 | fix(evening-summary-db): inject db param into runEveningSummary — eliminate production-DB bleed (1376, 1377) | COMPLETE 2026-04-17 |
+| 130 | fix(ohlcv-aggregator-cron): shift aggregator from 16:00 to 15:00 UTC — before evening summary (1374, 1375) | COMPLETE 2026-04-17 |
+| 129 | fix(france-test-fixtures): stale makeDb() in 5 test files + cron-registry-count drift (1372, 1373) | COMPLETE 2026-04-17 |
+| 128 | feat(france-watchlist-movers): fetchTopMovers JOIN watchlist — filter movers to watchlist only (1370, 1371) | COMPLETE 2026-04-17 |
 | 127 | feat(ohlcv-aggregator-notify): WORK-channel post-aggregation health summary (1368, 1369) | COMPLETE 2026-04-17 |
 | 126 | feat(pipeline-health-tool): get_pipeline_health MCP tool — OHLCV row counts + TA readiness (1366, 1367) | COMPLETE 2026-04-17 |
 | 125 | feat(france-ta-detail): France briefing TA section — ticker-level RSI/MA20 (1364, 1365) | COMPLETE 2026-04-17 |
