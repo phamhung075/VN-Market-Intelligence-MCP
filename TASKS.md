@@ -42,7 +42,7 @@
 
 | ID | Title | Status | Role |
 |----|-------|--------|------|
-| 1364 | test(france-ta-detail): TDD — franceSummaryJob TA section shows ticker signals not just count | Review | QA |
+| 1364 | test(france-ta-detail): TDD — franceSummaryJob TA section shows ticker signals not just count | Done | QA |
 | 1365 | feat(france-ta-detail): franceSummaryJob — replace taCount with top 3 non-neutral TA signals | Todo | Dev |
 
 > Goal: Enrich France morning briefing TA section with actionable ticker-level RSI/MA20 signals so the user sees which watchlist stocks are overbought/oversold each morning, not just a count.
