@@ -150,16 +150,17 @@ describe("Task 1364 — France TA detail tests", () => {
     const msg = formatFranceSummaryVI("17/04/2026", [], [], taSignals as unknown as number)
 
     expect(msg).toContain("VHM")
-    expect(msg).toContain("qua mua")
+    expect(msg).toContain("quá mua")
   })
 
   // ─────────────────────────────────────────────────────────────────────────
   // AC-2: formatFranceSummaryVI with empty taSignals → "Khong co tin hieu ky thuat"
   // ─────────────────────────────────────────────────────────────────────────
-  it("AC-2: formatFranceSummaryVI with empty taSignals renders 'Khong co tin hieu ky thuat'", () => {
+  it("AC-2: formatFranceSummaryVI with empty taSignals renders no TA section (section omitted)", () => {
     const msg = formatFranceSummaryVI("17/04/2026", [], [], [] as unknown as number)
 
-    expect(msg).toContain("Khong co tin hieu ky thuat")
+    expect(msg).not.toContain("Khong co tin hieu ky thuat")
+    expect(msg).not.toContain("Tín hiệu kỹ thuật")
   })
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -201,10 +202,10 @@ describe("Task 1364 — France TA detail tests", () => {
     expect(msg).toContain("VHM")
     // Must contain at least one TA status label
     const hasLabel =
-      msg.includes("qua mua") ||
-      msg.includes("qua ban") ||
-      msg.includes("tren MA20") ||
-      msg.includes("duoi MA20")
+      msg.includes("quá mua") ||
+      msg.includes("quá bán") ||
+      msg.includes("trên MA20") ||
+      msg.includes("dưới MA20")
     expect(hasLabel).toBe(true)
   })
 
@@ -247,7 +248,9 @@ describe("Task 1364 — France TA detail tests", () => {
     expect(sends).toHaveLength(1)
     const msg = sends[0]
     if (msg === undefined) throw new Error("No message sent")
-    expect(msg).toContain("Khong co tin hieu ky thuat")
+    expect(msg).not.toContain("Khong co tin hieu ky thuat")
+    // TA section omitted when computeTaFn returns null for all tickers
+    expect(msg).not.toContain("Tín hiệu kỹ thuật")
   })
 
   // ─────────────────────────────────────────────────────────────────────────

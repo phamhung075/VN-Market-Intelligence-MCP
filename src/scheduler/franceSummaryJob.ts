@@ -275,10 +275,10 @@ function formatPct(pct: number | null): string {
 /** Maps severity to a short Vietnamese label. */
 function severityLabel(s: string): string {
   switch (s) {
-    case "critical": return "NGHIEM TRONG"
+    case "critical": return "NGHIÊM TRỌNG"
     case "high":     return "CAO"
-    case "warning":  return "CANH BAO"
-    case "info":     return "THONG TIN"
+    case "warning":  return "CẢNH BÁO"
+    case "info":     return "THÔNG TIN"
     default:         return s.toUpperCase()
   }
 }
@@ -286,8 +286,8 @@ function severityLabel(s: string): string {
 /** Maps rsiStatus to Vietnamese label. */
 function rsiLabel(status: TaSignalRow["rsiStatus"]): string {
   switch (status) {
-    case "overbought": return "qua mua"
-    case "oversold":   return "qua ban"
+    case "overbought": return "quá mua"
+    case "oversold":   return "quá bán"
     default:           return ""
   }
 }
@@ -295,8 +295,8 @@ function rsiLabel(status: TaSignalRow["rsiStatus"]): string {
 /** Maps priceVsMa20 to Vietnamese label. */
 function ma20Label(pos: TaSignalRow["priceVsMa20"]): string {
   switch (pos) {
-    case "above": return "gia tren MA20"
-    case "below": return "gia duoi MA20"
+    case "above": return "giá trên MA20"
+    case "below": return "giá dưới MA20"
     default:      return ""
   }
 }
@@ -314,42 +314,39 @@ export function formatFranceSummaryVI(
   alerts: AlertRow[],
   taSignals: TaSignalRow[] | number,
 ): string {
-  const lines: string[] = []
-  lines.push(`Ban tin sang Phap — Thi truong VN (${dateStr})`)
-  lines.push("")
+  const header = `Bản tin sáng Pháp — Thị trường VN (${dateStr})`
 
-  // Section 1: price movers
+  const blocks: string[] = []
+
+  // Section 1: price movers — omit entirely when empty
   if (movers.length > 0) {
-    lines.push(`Top bien dong gia (${movers.length}):`)
+    const lines: string[] = []
+    lines.push(`Top biến động giá (${movers.length}):`)
     for (const m of movers) {
       const priceFmt = m.price != null ? m.price.toLocaleString("vi-VN") : "n/a"
-      lines.push(`  ${m.code}: ${priceFmt} dong (${formatPct(m.change_pct)})`)
+      lines.push(`  ${m.code}: ${priceFmt} đồng (${formatPct(m.change_pct)})`)
     }
-  } else {
-    lines.push("Khong co du lieu gia.")
+    blocks.push(lines.join("\n"))
   }
 
-  lines.push("")
-
-  // Section 2: alerts
+  // Section 2: alerts — omit entirely when empty
   if (alerts.length > 0) {
-    lines.push(`Canh bao gan nhat (${alerts.length}):`)
+    const lines: string[] = []
+    lines.push(`Cảnh báo gần nhất (${alerts.length}):`)
     for (const a of alerts) {
       const msg = (a.message ?? "").slice(0, 100)
       lines.push(`  [${severityLabel(a.severity)}] ${msg}`)
     }
-  } else {
-    lines.push("Khong co canh bao.")
+    blocks.push(lines.join("\n"))
   }
 
-  lines.push("")
-
-  // Section 3: TA signals (per-ticker RSI/MA20 detail)
+  // Section 3: TA signals — omit entirely when empty
   // Accepts TaSignalRow[] (new) or number (legacy — treated as empty)
   const signals: TaSignalRow[] = Array.isArray(taSignals) ? taSignals : []
 
   if (signals.length > 0) {
-    lines.push(`Tin hieu ky thuat (top ${signals.length}):`)
+    const lines: string[] = []
+    lines.push(`Tín hiệu kỹ thuật (top ${signals.length}):`)
     for (const s of signals) {
       const parts: string[] = []
       const rsi = rsiLabel(s.rsiStatus)
@@ -362,11 +359,10 @@ export function formatFranceSummaryVI(
       const detail = parts.length > 0 ? ` — ${parts.join(", ")}` : ""
       lines.push(`  ${s.code}${detail}`)
     }
-  } else {
-    lines.push("Khong co tin hieu ky thuat")
+    blocks.push(lines.join("\n"))
   }
 
-  return lines.join("\n")
+  return header + (blocks.length > 0 ? "\n\n" + blocks.join("\n\n") : "")
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
