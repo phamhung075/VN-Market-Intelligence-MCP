@@ -142,27 +142,27 @@ export function formatAlertDigest(
   stockBlocks: StockAlertBlock[],
 ): string {
   if (totalCount === 0) {
-    return `[${date}] Tom tat canh bao\nKhong co canh bao trong 24 gio qua.`;
+    return `[${date}] Tóm tắt cảnh báo\nKhông có cảnh báo trong 24 giờ qua.`;
   }
 
   const lines: string[] = [];
 
   // Header
-  lines.push(`[${date}] Tom tat canh bao (24 gio qua)`);
+  lines.push(`[${date}] Tóm tắt cảnh báo (24 giờ qua)`);
   lines.push(
-    `Tong: ${totalCount} canh bao | Nghiem trong: ${criticalCount} | Quan trong: ${highCount}`,
+    `Tổng: ${totalCount} cảnh báo | Nghiêm trọng: ${criticalCount} | Quan trọng: ${highCount}`,
   );
   lines.push("");
 
   // Per-stock blocks
   for (const block of stockBlocks) {
     const label = block.code === "(khac)" ? "(khac)" : block.code;
-    lines.push(`${label} — ${block.count} canh bao:`);
+    lines.push(`${label} — ${block.count} cảnh báo:`);
     for (const msg of block.topMessages) {
       lines.push(`  - ${msg}`);
     }
     if (block.overflow > 0) {
-      lines.push(`  (va ${block.overflow} canh bao khac)`);
+      lines.push(`  (và ${block.overflow} cảnh báo khác)`);
     }
     lines.push("");
   }
@@ -236,7 +236,7 @@ export async function assembleAlertDigest(
 
       const top3 = sorted.slice(0, 3);
       const overflow = sorted.length - top3.length;
-      const topMessages = top3.map((a) => a.message ?? "(khong co noi dung)");
+      const topMessages = top3.map((a) => a.message ?? "(không có nội dung)");
 
       return {
         code,
