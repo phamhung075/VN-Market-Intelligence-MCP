@@ -90,8 +90,8 @@
 
 | ID | Title | Status | Role |
 |----|-------|--------|------|
-| 1372 | fix(france-test-fixtures): update stale makeDb() in 5 test files — add market_prices_history + watchlist tables | Review | Dev |
-| 1373 | fix(cron-registry-count): update schedulerFileCount assertion in 1190-pipeline-watchdog.test.ts from 32 → 34 | Review | Dev |
+| 1372 | fix(france-test-fixtures): update stale makeDb() in 5 test files — add market_prices_history + watchlist tables | Done | QA |
+| 1373 | fix(cron-registry-count): update schedulerFileCount assertion in 1190-pipeline-watchdog.test.ts from 32 → 34 | Done | QA |
 
 > Goal: Fix 17 pre-existing test failures — stale franceSummaryJob test fixtures that still use market_prices to seed movers (impl now reads market_prices_history + watchlist JOIN); plus fix stale schedulerFileCount assertion (32 → 34).
 > Affected files: src/__tests__/1290-france-summary-job.test.ts, 1316-france-summary-rewrite.test.ts, 1344-france-summary-stale-alerts.test.ts, 1348-france-summary-cron-window.test.ts, 1364-france-ta-detail.test.ts, 1190-pipeline-watchdog.test.ts
