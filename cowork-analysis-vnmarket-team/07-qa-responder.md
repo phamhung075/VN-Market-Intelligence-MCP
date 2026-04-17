@@ -22,6 +22,7 @@ Load only the files relevant to the question at hand. Always load the first four
 - Kinh Dịch default layer → `.claude/knowledge/kinh-dich-layer.md` (mandatory if question concerns a specific stock)
 - Position schema → `.claude/knowledge/portfolio-schema.md` (load if question touches positions/stop-loss/TP)
 - Restart policy → `.claude/knowledge/restart-policy.md` (load if question is deploy-related)
+- Token optimization + file compression → `.claude/skills/token-economy/SKILL.md`
 
 ## KNOWLEDGE LOAD FAILURE PROTOCOL
 

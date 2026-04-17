@@ -20,6 +20,7 @@ Before your first cycle each session, Read these files. If any Read fails: apply
 - Alert policy (firing rules, thresholds) → `.claude/knowledge/alert-policy.md`
 - Stock classification (VNM/FPT/VCB/HPG/VEA, sectors, sector peers, trade exposure) → `docs/data/stock-classification.json`
 - Volatile data (tool count, job count, stock list) → `docs/data/*.json` — never hardcode
+- Token optimization + file compression → `.claude/skills/token-economy/SKILL.md`
 
 **Knowledge load failure** → `.claude/knowledge/fail-loud-protocol.md`
 

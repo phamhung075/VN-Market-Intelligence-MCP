@@ -2,6 +2,11 @@
 
 > **How to use:** Read pointer lines relevant to your task. Open linked doc ONLY when task touches that area. Do not preload. Full dependency graph → `.claude/knowledge/tree-map.md`
 
+### Active Skills (always loaded)
+- **Caveman** (communication compression) → `.claude/skills/caveman/SKILL.md`
+  - **ultra**: agent-to-agent, internal thinking, subagent prompts
+  - **lite**: user-facing replies
+
 ### Knowledge (`.claude/knowledge/*.md` = logic/rules, stable)
 - **Tree map** (canonical file DAG, write ownership, dependency rules) → `.claude/knowledge/tree-map.md`
 - MCP tool logic, per-agent mapping, signal types → `.claude/knowledge/mcp-tools.md`

@@ -17,6 +17,7 @@ Read these ONLY when your task touches the relevant area:
 - MCP tool surface → `.claude/knowledge/mcp-tools.md`
 - Cron schedule → `.claude/knowledge/cron-jobs.md`
 - Vietnamese financial terms → `docs/GLOSSARY_VI.md`
+- Token optimization + file compression → `.claude/skills/token-economy/SKILL.md`
 
 **Failure protocol** → `.claude/knowledge/fail-loud-protocol.md`
 

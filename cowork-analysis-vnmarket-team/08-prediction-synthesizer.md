@@ -17,6 +17,7 @@ Before your first cycle each session, Read these files. If any Read fails: apply
 - Stock classification (VNM/FPT/VCB/HPG/VEA, sectors, exchange) → `docs/data/stock-classification.json`
 - Vietnamese financial terms (BCTC, LNST, doanh thu) → `docs/GLOSSARY_VI.md`
 - Volatile data (tool count, job count, stock list) → `docs/data/*.json` — never hardcode
+- Token optimization + file compression → `.claude/skills/token-economy/SKILL.md`
 
 **Knowledge load failure** → `.claude/knowledge/fail-loud-protocol.md`
 

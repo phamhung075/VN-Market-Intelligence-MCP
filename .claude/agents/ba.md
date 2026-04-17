@@ -15,7 +15,7 @@ Read these ONLY when your task touches the relevant area:
 - Agent roster (team structure, cooperation flow, signal bus) → `.claude/knowledge/agent-roster.md`
 - Cron jobs (schedules, intelligence cycle steps, job count) → `.claude/knowledge/cron-jobs.md`
 - Feature specs → `.claude/knowledge/portfolio-schema.md`, `.claude/knowledge/alert-policy.md`, `.claude/knowledge/ask-queue-protocol.md`, `.claude/knowledge/kinh-dich-layer.md`
-- Token optimization (docs + messages) → `.claude/skills/token-economy/SKILL.md`
+- Token optimization + file compression → `.claude/skills/token-economy/SKILL.md`
 
 **Failure protocol** → `.claude/knowledge/fail-loud-protocol.md`
 

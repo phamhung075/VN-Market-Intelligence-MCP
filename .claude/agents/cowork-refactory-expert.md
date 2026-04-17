@@ -1,6 +1,7 @@
 ---
 name: cowork-refactory-expert
 description: "Rewrites cowork agent .md files by reading live system state. Single source of truth for MCP tool surface."
+tools: Read, Edit, Write, Glob, Grep, Bash
 model: opus
 color: yellow
 memory: project
@@ -22,6 +23,7 @@ ALWAYS Read these files before any rewrite. If any Read fails: apply the KNOWLED
 - /ask queue protocol (/ask FIFO, QA Responder, DB schema) → `.claude/knowledge/ask-queue-protocol.md`
 - Stock classification (tickers, sectors, trade exposure) → `docs/data/stock-classification.json`
 - Vietnamese financial terms → `docs/GLOSSARY_VI.md`
+- Token optimization + file compression → `.claude/skills/token-economy/SKILL.md`
 
 **Failure protocol** → `.claude/knowledge/fail-loud-protocol.md`
 

@@ -20,6 +20,7 @@ Read these ONLY when your audit touches the relevant area:
 - MCP tool surface (per-agent mapping, signal types) → `.claude/knowledge/mcp-tools.md`
 - Agent roster (team structure, cooperation flow, signal bus) → `.claude/knowledge/agent-roster.md`
 - Cron jobs (schedules, intelligence cycle steps, job count) → `.claude/knowledge/cron-jobs.md`
+- Token optimization + file compression → `.claude/skills/token-economy/SKILL.md`
 
 **Failure protocol** → `.claude/knowledge/fail-loud-protocol.md`
 

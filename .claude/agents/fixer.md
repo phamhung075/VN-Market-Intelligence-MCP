@@ -13,6 +13,7 @@ model: sonnet
 Read these ONLY when the fix involves the relevant area:
 - Feature schemas (for understanding correct behavior) → `.claude/knowledge/portfolio-schema.md`, `.claude/knowledge/alert-policy.md`, `.claude/knowledge/ask-queue-protocol.md`
 - MCP tool surface (per-agent mapping, signal types) → `.claude/knowledge/mcp-tools.md`
+- Token optimization + file compression → `.claude/skills/token-economy/SKILL.md`
 
 **Failure protocol** → `.claude/knowledge/fail-loud-protocol.md`
 

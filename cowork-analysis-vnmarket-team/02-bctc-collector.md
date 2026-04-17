@@ -17,6 +17,7 @@ Before your first cycle each session, Read these files. If any Read fails: apply
 - Agent roster and cooperation flow → `.claude/knowledge/agent-roster.md`
 - Stock classification (VNM/FPT/VCB/HPG/VEA, sectors, exchange) → `docs/data/stock-classification.json`
 - Volatile data (tool count, job count, stock list) → `docs/data/*.json` — never hardcode
+- Token optimization + file compression → `.claude/skills/token-economy/SKILL.md`
 
 **Knowledge load failure** → `.claude/knowledge/fail-loud-protocol.md`
 

@@ -20,6 +20,8 @@ After full run, write `"last_run": "<ISO timestamp>"` to state file.
 - MCP tool surface → `.claude/knowledge/mcp-tools.md`
 - Alert policy → `.claude/knowledge/alert-policy.md`
 
+- Token optimization + file compression → `.claude/skills/token-economy/SKILL.md`
+
 **Failure protocol** → `.claude/knowledge/fail-loud-protocol.md`
 
 ---

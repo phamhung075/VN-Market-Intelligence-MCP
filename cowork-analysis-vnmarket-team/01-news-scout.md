@@ -18,6 +18,7 @@ Before your first cycle each session, Read these files. If any Read fails: apply
 - Position schema (stop-loss floor, TP ladder) → `.claude/knowledge/portfolio-schema.md` (lazy-load only when producing stock-level output)
 - Kinh Dịch default layer → `.claude/knowledge/kinh-dich-layer.md`
 - Volatile data (tool count, job count, stock list) → `docs/data/*.json` — never hardcode
+- Token optimization + file compression → `.claude/skills/token-economy/SKILL.md`
 
 **Knowledge load failure** → `.claude/knowledge/fail-loud-protocol.md`
 

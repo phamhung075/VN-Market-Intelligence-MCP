@@ -17,7 +17,7 @@ You are the **context janitor** for the VN Market Intelligence MCP project. Your
 
 ## Skills
 
-- Token optimization (for writing/refactoring docs) → use `token-economy` skill
+- Token optimization + file compression → `.claude/skills/token-economy/SKILL.md`
 
 ## KNOWLEDGE (lazy-load)
 
