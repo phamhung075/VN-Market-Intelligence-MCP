@@ -55,15 +55,18 @@ export function resetEveningSummaryGuard(): void {
  * Accepts optional injectable parameters for test isolation:
  * - `summaryFn`: override the summary assembler (avoids DB dependencies in tests)
  * - `sendFn`: override the Telegram sender (avoids network calls in tests)
+ * - `db`: override the SQLite database instance (avoids production-DB bleed in tests)
  *
- * In production both default to dynamic imports.
+ * In production all three default to their respective singletons / dynamic imports.
  *
  * @param summaryFn - Optional override for the summary function
  * @param sendFn    - Optional override for the Telegram send function
+ * @param db        - Optional override for the SQLite DB used by the dedup guard
  */
 export async function runEveningSummary(
   summaryFn?: () => Promise<EveningSummary>,
   sendFn?: (message: string, opts: unknown) => Promise<void>,
+  db?: import("bun:sqlite").Database,
 ): Promise<void> {
   if (_running) {
     logger.warn("[eveningSummaryJob] already running — skipping");
@@ -76,8 +79,12 @@ export async function runEveningSummary(
     // DB-level dedup: skip if we already sent an evening summary today.
     // Guards against server restarts near 22:30 causing double-fire.
     try {
-      const { getDb } = await import("../infrastructure/db/index.js");
-      if (alreadySentToday(getDb())) {
+      let dedupDb = db;
+      if (!dedupDb) {
+        const { getDb } = await import("../infrastructure/db/index.js");
+        dedupDb = getDb();
+      }
+      if (alreadySentToday(dedupDb)) {
         logger.info("[eveningSummaryJob] already sent today — skipping duplicate");
         return;
       }

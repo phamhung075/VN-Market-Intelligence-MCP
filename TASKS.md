@@ -110,6 +110,18 @@
 
 ---
 
+## Sprint 131 — Active
+
+| ID | Title | Status | Role |
+|----|-------|--------|------|
+| 1376 | fix(evening-summary-db): add optional db param to runEveningSummary for test isolation | Review | Dev |
+| 1377 | fix(evening-summary-test): inject in-memory DB into 1192 test to prevent production-DB bleed | Review | Dev |
+
+> Goal: Fix production-DB bleed in 1192-evening-summary-empty-fallback.test.ts — dedup guard was reading the production singleton DB, causing the test to skip when a real evening summary had already run today.
+> Branch: `task/1376-1377-evening-summary-db-isolation`
+
+---
+
 ## Task Details (active tasks only)
 
 ### Task 1374 — test(ohlcv-aggregator-cron): TDD — aggregator cron default before 15:30
