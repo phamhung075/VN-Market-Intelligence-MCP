@@ -2,16 +2,17 @@
 
 > Previous sprint goals live in their `docs/REQ_NNN.md` specs. This file = current sprint only.
 
-## Current Sprint — 112 (ACTIVE)
+## Current Sprint — 118 (ACTIVE)
 
-**Goal:** Deliver `medium` severity alerts (price_surge, news_mention) to the user via Telegram MARKET channel. Currently `readUnnotifiedAlerts` only picks up `severity IN ('high', 'critical')` — 3 confirmed `price_surge` alerts (FPT +5.13%, MSN +5.13%, VIC +5.65%) and 8 `news_mention` at medium are silently dropped, never reaching the user. This means intraday +5% watchlist moves go unnoticed.
+**Goal:** Backfill `daily_ohlcv` with 60 days of historical OHLCV for all 30 watchlist tickers — the `taSummary` field in evening reports has been empty since sprint 097 because `defaultComputeTa()` requires 15+ rows in `daily_ohlcv` and the table only accumulates 1 row per trading day since the server was last deployed. Without backfill, TA signals will not appear for approximately 3 more weeks.
 
 **Scope:**
-- IN: `src/infrastructure/db/alertStore.ts` — extend `readUnnotifiedAlerts` WHERE clause to include `'medium'` alongside `'high'` and `'critical'`
-- IN: TDD test `src/__tests__/1339-medium-alert-delivery.test.ts` — 4 cases: (1) medium price_surge is returned by `readUnnotifiedAlerts`, (2) medium news_mention is returned, (3) low severity is NOT returned, (4) already-notified medium is NOT returned
-- OUT: Changes to Telegram formatter, alert scoring logic, VPS proxies, BCTC tools, TA scan jobs
+- IN: New VPS script `vps-scripts/fetch-ohlcv-backfill.sh` — fetches last 60 trading days of OHLCV from TCBS chart API (`api.tcbs.com.vn/stock-insight/v1/stock/bars`) for each watchlist ticker, pushes to `/api/push-ohlcv-history` endpoint
+- IN: New MCP server endpoint `POST /api/push-ohlcv-history` (in `src/interface/mcp/server.ts`) — accepts `{ code, bars: [{date, open, high, low, close, volume}] }`, inserts into `daily_ohlcv` via INSERT OR REPLACE, protected by `X-API-Key` header
+- IN: TDD test `src/__tests__/1350-ohlcv-backfill-endpoint.test.ts` — covers: (1) valid bars array inserts N rows, (2) duplicate date upserts (not duplicated), (3) missing API key rejected 401, (4) empty bars array is no-op, (5) malformed payload returns 400
+- OUT: Changes to VPS systemd services (one-time manual script, not a loop), TA compute logic, alert pipeline, BCTC tools
 
-**Success metric:** `readUnnotifiedAlerts` returns `medium` severity rows. Production: FPT/MSN/VIC price_surge alerts (currently stuck at notified_telegram=0) would have been delivered. `bun tsc --noEmit` clean. 4+ TDD cases pass. Full suite 0 new failures.
+**Success metric:** After running `fetch-ohlcv-backfill.sh` on VPS, `daily_ohlcv` has 50+ rows per watchlist ticker. Evening report `taSummary` is non-empty. `bun tsc --noEmit` clean. 5+ TDD cases pass. Full suite 0 new failures.
 
 **Status:** ACTIVE
 

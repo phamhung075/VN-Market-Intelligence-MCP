@@ -1,14 +1,14 @@
 {
   "_maintained_by": "PM / system-auditor",
   "_trigger": "sprint start/end, tool/cron count change",
-  "lastUpdated": "2026-04-16",
-  "currentSprint": 117,
-  "previousSprint": { "number": 116, "status": "COMPLETE", "completedDate": "2026-04-16" },
-  "sprintGoal": "fix(ta-adaptive): lower guard to <8, adaptive RSI/MA periods for taSummary with 10 candles",
+  "lastUpdated": "2026-04-17",
+  "currentSprint": 118,
+  "previousSprint": { "number": 117, "status": "COMPLETE", "completedDate": "2026-04-17" },
+  "sprintGoal": "feat(ohlcv-backfill): POST /api/push-ohlcv-history + VPS backfill script — populate daily_ohlcv with 60 days historical data so taSummary is non-empty immediately",
   "toolCount": 98,
   "schedulerFileCount": 32,
   "knowledgeFileCount": 15,
   "devAgentCount": 13,
   "analysisAgentCount": 9,
-  "totalTasksDone": 302
+  "totalTasksDone": 304
 }

@@ -4,12 +4,23 @@
 
 ---
 
-## Sprint 117 — Active
+## Sprint 118 — Active
 
 | ID | Title | Status | Role |
 |----|-------|--------|------|
-| 1348 | test(france-summary-cron): TDD test 1348-france-summary-cron-window.test.ts — written FIRST | Review | Dev |
-| 1349 | fix(france-summary-cron): widen cron window to every-30-min 06-08 UTC with dedup guard | Review | Dev |
+| 1350 | test(ohlcv-backfill): TDD test 1350-ohlcv-backfill-endpoint.test.ts — written FIRST | Backlog | Dev |
+| 1351 | feat(ohlcv-backfill): POST /api/push-ohlcv-history endpoint + vps-scripts/fetch-ohlcv-backfill.sh | Backlog | Dev |
+
+> Tech design: `docs/TECH_118.md` (pending Architect)
+
+---
+
+## Sprint 117 — Complete
+
+| ID | Title | Status | Role |
+|----|-------|--------|------|
+| 1348 | test(france-summary-cron): TDD test 1348-france-summary-cron-window.test.ts — written FIRST | Done | Dev |
+| 1349 | fix(france-summary-cron): widen cron window to every-30-min 06-08 UTC with dedup guard | Done | Dev |
 
 > Tech design: `docs/TECH_117.md` (APPROVED_BY_ARCHITECT)
 
