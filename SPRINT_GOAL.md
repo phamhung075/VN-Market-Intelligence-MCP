@@ -2,17 +2,17 @@
 
 > Previous sprint goals live in their `docs/REQ_NNN.md` specs. This file = current sprint only.
 
-## Current Sprint — 118 (ACTIVE)
+## Current Sprint — 120 (ACTIVE)
 
-**Goal:** Backfill `daily_ohlcv` with 60 days of historical OHLCV for all 30 watchlist tickers — the `taSummary` field in evening reports has been empty since sprint 097 because `defaultComputeTa()` requires 15+ rows in `daily_ohlcv` and the table only accumulates 1 row per trading day since the server was last deployed. Without backfill, TA signals will not appear for approximately 3 more weeks.
+**Goal:** Fix `predictionSignals: []` in every evening report. The field has been empty in every production report since Sprint 100 shipped the fix. Either the prediction market job is silently discarding all fetched markets (relevance filter too strict, zero-volume filter over-aggressive, or Gamma API returning no matching keywords), or all generated signals are below "high" severity. The user never sees prediction-based risk context at market close.
 
 **Scope:**
-- IN: New VPS script `vps-scripts/fetch-ohlcv-backfill.sh` — fetches last 60 trading days of OHLCV from TCBS chart API (`api.tcbs.com.vn/stock-insight/v1/stock/bars`) for each watchlist ticker, pushes to `/api/push-ohlcv-history` endpoint
-- IN: New MCP server endpoint `POST /api/push-ohlcv-history` (in `src/interface/mcp/server.ts`) — accepts `{ code, bars: [{date, open, high, low, close, volume}] }`, inserts into `daily_ohlcv` via INSERT OR REPLACE, protected by `X-API-Key` header
-- IN: TDD test `src/__tests__/1350-ohlcv-backfill-endpoint.test.ts` — covers: (1) valid bars array inserts N rows, (2) duplicate date upserts (not duplicated), (3) missing API key rejected 401, (4) empty bars array is no-op, (5) malformed payload returns 400
-- OUT: Changes to VPS systemd services (one-time manual script, not a loop), TA compute logic, alert pipeline, BCTC tools
+- IN: Add a `predictionDiag` diagnostic block to `EveningSummary` — counts of: markets fetched, signals generated (any severity), signals stored (last 24h in prediction_signals), signals passing severity filter (high/critical). Exposed in the evening JSON report only (not in Telegram message).
+- IN: In `assembleEveningSummary.ts` Step 5 — add fallback: if `predictionSignals` (high/critical) is empty but there are signals of any severity in the last 24h, include up to 3 medium-severity signals instead, so the user sees at least some prediction context.
+- IN: TDD test covering: (1) high/critical signals appear as-is, (2) when only medium signals exist, up to 3 appear, (3) when no signals exist, field is empty, (4) `predictionDiag.stored` reflects actual DB count.
+- OUT: Changes to Polymarket fetcher, detection logic, alert pipeline, VPS proxies, TA pipeline.
 
-**Success metric:** After running `fetch-ohlcv-backfill.sh` on VPS, `daily_ohlcv` has 50+ rows per watchlist ticker. Evening report `taSummary` is non-empty. `bun tsc --noEmit` clean. 5+ TDD cases pass. Full suite 0 new failures.
+**Success metric:** Evening report `predictionSignals` field is non-empty on any evening when at least one medium/high/critical prediction signal was generated in the last 24h. `predictionDiag` block visible in JSON report for observability. `bun tsc --noEmit` clean. 4+ TDD cases pass. Full suite 0 new failures.
 
 **Status:** ACTIVE
 
