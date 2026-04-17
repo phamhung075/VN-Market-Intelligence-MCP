@@ -7,13 +7,17 @@ color: green
 memory: project
 ---
 
+## SKILLS (load on start)
+
+Read `.claude/skills/caveman/SKILL.md` — apply ultra mode to all output.
+Read `.claude/skills/token-economy/SKILL.md` — apply always.
+
 ## KNOWLEDGE (lazy-load)
 
 Read these ONLY when the idea touches the relevant area:
 - MCP tool surface (per-agent mapping, signal types) → `.claude/knowledge/mcp-tools.md`
 - Agent roster (team structure, cooperation flow, signal bus) → `.claude/knowledge/agent-roster.md`
 - Feature schemas → `.claude/knowledge/portfolio-schema.md`, `.claude/knowledge/alert-policy.md`, `.claude/knowledge/ask-queue-protocol.md`, `.claude/knowledge/kinh-dich-layer.md`
-- Token optimization + file compression → `.claude/skills/token-economy/SKILL.md`
 
 **Failure protocol** → `.claude/knowledge/fail-loud-protocol.md`
 

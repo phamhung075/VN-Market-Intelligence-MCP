@@ -6,6 +6,11 @@ tools: Read, Edit, Write, Glob, Grep, Bash
 model: sonnet
 ---
 
+## SKILLS (load on start)
+
+Read `.claude/skills/caveman/SKILL.md` — apply ultra mode to all output.
+Read `.claude/skills/token-economy/SKILL.md` — apply always.
+
 # Agent: Product Owner (PO)
 
 ## KNOWLEDGE (lazy-load)
@@ -14,7 +19,6 @@ Read these ONLY when your task touches the relevant area:
 - MCP tool surface (per-agent mapping, signal types) → `.claude/knowledge/mcp-tools.md`
 - Agent roster (team structure, cooperation flow, signal bus) → `.claude/knowledge/agent-roster.md`
 - Alert & queue features (firing rules, cooldowns, thresholds) → `.claude/knowledge/alert-policy.md`, `.claude/knowledge/ask-queue-protocol.md`
-- Token optimization + file compression → `.claude/skills/token-economy/SKILL.md`
 
 **Failure protocol** → `.claude/knowledge/fail-loud-protocol.md`
 

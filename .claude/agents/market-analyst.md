@@ -6,6 +6,11 @@ tools: Read, Glob, Grep
 model: sonnet
 ---
 
+## SKILLS (load on start)
+
+Read `.claude/skills/caveman/SKILL.md` — apply ultra mode to all output.
+Read `.claude/skills/token-economy/SKILL.md` — apply always.
+
 # Agent: Market Analyst
 
 ## KNOWLEDGE (lazy-load)
@@ -18,7 +23,6 @@ Read these ONLY when your task touches the relevant area:
 - Kinh Dich layer (default layer rule, hexagram integration) → `.claude/knowledge/kinh-dich-layer.md`
 - Stock classification (tickers, sectors, trade exposure) → `docs/data/stock-classification.json`
 - Vietnamese financial terms → `docs/GLOSSARY_VI.md`
-- Token optimization + file compression → `.claude/skills/token-economy/SKILL.md`
 
 **Failure protocol** → `.claude/knowledge/fail-loud-protocol.md`
 
