@@ -138,7 +138,7 @@ describe("Task 188 — Daily Alert Digest", () => {
   // ── 2: "Khong co canh bao" on empty alerts ────────────────────────────────
   it("text contains 'Khong co canh bao' when no alerts in last 24h", async () => {
     const digest = await assembleAlertDigest({ db });
-    expect(digest.text).toContain("Khong co canh bao");
+    expect(digest.text).toContain("Không có cảnh báo");
   });
 
   // ── 3: 7 alerts spanning 3 stocks → 3 stock blocks with correct counts ────
@@ -208,7 +208,7 @@ describe("Task 188 — Daily Alert Digest", () => {
     expect(block).toBeDefined();
     expect(block!.count).toBe(5);
     // The text should contain the overflow suffix
-    expect(digest.text).toContain("va 2 canh bao khac");
+    expect(digest.text).toContain("và 2 cảnh báo khác");
   });
 
   // ── 6: Severity counts in header match actual DB data ────────────────────
@@ -291,7 +291,7 @@ describe("Task 188 — Daily Alert Digest", () => {
             criticalCount: 0,
             highCount: 0,
             stockBlocks: [],
-            text: "Khong co canh bao",
+            text: "Không có cảnh báo",
             generatedAt: new Date().toISOString(),
           });
         }, 50);
@@ -362,7 +362,7 @@ describe("Task 188 — Daily Alert Digest", () => {
         criticalCount: 0,
         highCount: 0,
         stockBlocks: [],
-        text: "Khong co canh bao",
+        text: "Không có cảnh báo",
         generatedAt: new Date().toISOString(),
       });
 
