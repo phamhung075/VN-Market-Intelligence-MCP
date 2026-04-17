@@ -8,8 +8,8 @@
 
 | ID | Title | Status | Role |
 |----|-------|--------|------|
-| 1350 | test(ohlcv-backfill): TDD test 1350-ohlcv-backfill-endpoint.test.ts — written FIRST | Backlog | Dev |
-| 1351 | feat(ohlcv-backfill): POST /api/push-ohlcv-history endpoint + vps-scripts/fetch-ohlcv-backfill.sh | Backlog | Dev |
+| 1350 | test(ohlcv-backfill): TDD test 1350-ohlcv-backfill-endpoint.test.ts — written FIRST | Review | Dev |
+| 1351 | feat(ohlcv-backfill): POST /api/push-ohlcv-history endpoint + vps-scripts/fetch-ohlcv-backfill.sh | Review | Dev |
 
 > Tech design: `docs/TECH_118.md` (pending Architect)
 
