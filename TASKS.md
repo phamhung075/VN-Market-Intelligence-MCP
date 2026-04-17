@@ -74,6 +74,18 @@
 
 ---
 
+## Sprint 127 — Active
+
+| ID | Title | Status | Role |
+|----|-------|--------|------|
+| 1370 | test(france-watchlist-movers): TDD — fetchTopMovers filters by watchlist | Review | QA |
+| 1371 | feat(france-watchlist-movers): fetchTopMovers JOIN watchlist, source market_prices_history | Todo | Dev |
+
+> Goal: France morning briefing movers section currently shows any ticker with the highest % move globally. Filter to watchlist-only so the user only sees moves for stocks they track.
+> Branch(1370): `task/1370-france-watchlist-movers-tdd`
+
+---
+
 ## Task Details (active tasks only)
 
 ### Task 1368 — test(ohlcv-aggregator-notify): TDD RED tests
@@ -126,6 +138,64 @@ Top: {ticker1}={rows1}d, {ticker2}={rows2}d, {ticker3}={rows3}d
 - All 4 AC tests from 1368 pass
 - `sendWorkFn` defaults to `sendTelegramWork` when not injected (prod path)
 - Notification is best-effort: any error caught+logged, job continues
+- `bun tsc --noEmit` 0 errors
+- Full suite 0 new failures
+
+---
+
+### Task 1370 — test(france-watchlist-movers): TDD tests for watchlist-filtered movers
+
+**Branch**: `task/1370-france-watchlist-movers-tdd`
+**Layer**: test
+**Depends on**: none
+**Status**: Review
+
+**Context**: `fetchTopMovers` in `franceSummaryJob.ts` currently queries `market_prices` globally — any ticker in the DB can appear as a top mover. The France briefing should only show movers for stocks the user watches. Task 1371 will change the query to JOIN watchlist and source from `market_prices_history`.
+
+**Files created**
+- `src/__tests__/1370-france-watchlist-movers.test.ts`
+
+**Acceptance Criteria** (AC-1/AC-2 are RED; AC-3/AC-4 pass for implementation-independent reasons)
+- AC-1: non-watchlist ticker has highest % move → excluded from movers; watchlist ticker appears
+- AC-2: empty watchlist → movers array is empty (no crash)
+- AC-3: watchlist ticker has no price row → handled gracefully, not included in movers
+- AC-4: 5 watchlist tickers with moves → movers capped at top 3 by abs(change%)
+- `bun tsc --noEmit` 0 errors
+
+---
+
+### Task 1371 — feat(france-watchlist-movers): fetchTopMovers JOIN watchlist
+
+**Branch**: `task/1371-france-watchlist-movers-impl`
+**Layer**: interface/scheduler
+**Depends on**: 1370 (TDD tests RED)
+**Status**: Todo
+
+**Files to read first**
+- `src/__tests__/1370-france-watchlist-movers.test.ts` (AC definitions)
+- `src/scheduler/franceSummaryJob.ts` (fetchTopMovers to modify)
+- `src/infrastructure/db/schema.ts` (market_prices_history schema)
+
+**Files to modify**
+- MODIFY: `src/scheduler/franceSummaryJob.ts` — change `fetchTopMovers` to JOIN watchlist and query `market_prices_history` (latest price per code) instead of `market_prices`
+
+**New query shape**:
+```sql
+SELECT w.code, mph.price, mph.change_pct
+FROM watchlist w
+JOIN (
+  SELECT code, price,
+         ROUND((price - LAG(price) OVER (PARTITION BY code ORDER BY fetched_at)) /
+               LAG(price) OVER (PARTITION BY code ORDER BY fetched_at) * 100, 2) AS change_pct
+  FROM market_prices_history
+) mph ON mph.code = w.code
+WHERE mph.change_pct IS NOT NULL
+ORDER BY ABS(mph.change_pct) DESC
+LIMIT 3
+```
+
+**Acceptance Criteria**
+- All 4 AC tests from 1370 pass (GREEN)
 - `bun tsc --noEmit` 0 errors
 - Full suite 0 new failures
 
