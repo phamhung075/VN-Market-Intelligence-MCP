@@ -55,7 +55,7 @@
 | ID | Title | Status | Role |
 |----|-------|--------|------|
 | 1366 | test(pipeline-health-tool): TDD — get_pipeline_health MCP tool returns OHLCV + backfill + TA status | Done | QA |
-| 1367 | feat(pipeline-health-tool): implement get_pipeline_health MCP tool | Review | Dev |
+| 1367 | feat(pipeline-health-tool): implement get_pipeline_health MCP tool | Done | QA |
 
 > Goal: Add `get_pipeline_health` MCP tool so the user/dev team can instantly inspect the full OHLCV → TA pipeline state (row counts per ticker, backfill queue status, last aggregator run, TA signal count) without digging into logs or waiting for the next evening report.
 > Req spec: `docs/REQ_126.md` | Tech design: `docs/TECH_126.md` | Architect: APPROVED_BY_ARCHITECT
