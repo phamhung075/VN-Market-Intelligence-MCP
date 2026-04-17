@@ -8,7 +8,7 @@
 
 | ID | Title | Status | Role |
 |----|-------|--------|------|
-| 1383 | test(france-msg-quality): TDD test 1383-france-summary-message-quality.test.ts — written FIRST | Review | Dev |
+| 1383 | test(france-msg-quality): TDD test 1383-france-summary-message-quality.test.ts — written FIRST | Done | Dev |
 | 1384 | fix(france-msg-quality): omit empty sections + fix Vietnamese diacritics in formatFranceSummaryVI | Todo | Dev |
 
 > Sprint goal: `SPRINT_GOAL.md` | Success: no "Khong co" filler in MARKET messages; diacritics correct; 5010+ pass, 0 fail
