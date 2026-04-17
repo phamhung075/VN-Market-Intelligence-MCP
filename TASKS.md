@@ -8,10 +8,10 @@
 
 | ID | Title | Status | Role |
 |----|-------|--------|------|
-| 1350 | test(ohlcv-backfill): TDD test 1350-ohlcv-backfill-endpoint.test.ts — written FIRST | Backlog | Dev |
-| 1351 | feat(ohlcv-backfill): POST /api/push-ohlcv-history endpoint + vps-scripts/fetch-ohlcv-backfill.sh | Backlog | Dev |
+| 1350 | test(ohlcv-backfill): TDD test 1350-ohlcv-backfill-endpoint.test.ts — written FIRST | Review | Dev |
+| 1351 | feat(ohlcv-backfill): POST /api/push-ohlcv-history endpoint + vps-scripts/fetch-ohlcv-backfill.sh | Todo | Dev |
 
-> Tech design: `docs/TECH_118.md` (pending Architect)
+> Tech design: `docs/TECH_118.md` (APPROVED_BY_ARCHITECT)
 
 ---
 
@@ -108,4 +108,63 @@
 ---
 
 ## Task Details (active tasks only)
+
+### Task 1350 — test(ohlcv-backfill): TDD test
+
+**Branch**: `task/1350-ohlcv-backfill-tdd`
+**Layer**: test
+**Depends on**: none
+
+**Files to create**
+- CREATE: `src/__tests__/1350-ohlcv-backfill-endpoint.test.ts`
+
+**Files to read first**
+- `src/infrastructure/db/schema.ts` lines 152-165 (daily_ohlcv table schema)
+- `src/__tests__/297-foreign-flow-fix.test.ts` (pattern reference for push-* endpoint tests)
+- `src/interface/mcp/server.ts` lines 656-717 (push-foreign-flow handler, same auth pattern)
+
+**Acceptance Criteria**
+
+**Given** an in-memory SQLite DB with daily_ohlcv table, Bun server on port 0
+**When** five test cases are executed against POST /api/push-ohlcv-history
+**Then**
+- Case 1: valid key + 3 bars → 200 `{ ok:true, inserted:3, code:"VNM" }`, DB has 3 rows
+- Case 2: duplicate upsert same 3 bars → DB still has 3 rows (not 6), close reflects latest push
+- Case 3: missing X-API-Key → 401 `{ error:"Unauthorized" }`
+- Case 4: `bars: []` → 200 `{ ok:true, inserted:0 }`, DB has 0 rows
+- Case 5: missing `code` / `bars` not array → 400 `{ error:"..." }`
+- `bun test 1350` passes with 0 failures on unimplemented endpoint (tests written first, expected to fail until 1351)
+- Line 1 of file: `process.env["DB_PATH"] = ":memory:";`
+
+---
+
+### Task 1351 — feat(ohlcv-backfill): handler + VPS script
+
+**Branch**: `task/1351-ohlcv-backfill-impl`
+**Layer**: interface + infrastructure (VPS)
+**Depends on**: 1350 (TDD tests written)
+
+**Files to modify**
+- MODIFY: `src/interface/mcp/server.ts` — add handler block immediately before `// ── 404 ───` comment (~line 1190)
+
+**Files to create**
+- CREATE: `vps-scripts/fetch-ohlcv-backfill.sh`
+
+**Files to read first**
+- `docs/TECH_118.md` (full handler logic, upsert SQL, VPS script spec)
+- `src/interface/mcp/server.ts` lines 656-717 (push-foreign-flow — pattern to mirror exactly)
+- `src/interface/mcp/server.ts` lines 459-476 (push-prices OHLCV block — existing upsert pattern)
+- `vps-scripts/fetch-bctc.sh` (VPS script pattern — one-time, not systemd loop)
+
+**Acceptance Criteria**
+
+**Given** the handler is added to server.ts and vps-scripts/fetch-ohlcv-backfill.sh exists
+**When** the 5 TDD tests from task 1350 are run
+**Then**
+- All 5 tests pass with 0 failures
+- `bun tsc --noEmit` shows 0 errors
+- `OhlcvBar` and `PushOhlcvHistoryPayload` interfaces declared (no `any`)
+- Upsert uses ON CONFLICT(code, date) DO UPDATE with full overwrite (not MAX/MIN)
+- Values stored as full VND (no × 1000 conversion — TCBS sends full VND)
+- VPS script: iterates all watchlist tickers, calls TCBS chart API for 90 days, POSTs to /api/push-ohlcv-history, 0.2s sleep between tickers, exits 0 always
 
