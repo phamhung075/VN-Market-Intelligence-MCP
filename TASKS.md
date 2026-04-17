@@ -50,7 +50,7 @@
 
 ---
 
-## Sprint 126 — Active
+## Sprint 126 — COMPLETE (2026-04-17)
 
 | ID | Title | Status | Role |
 |----|-------|--------|------|
@@ -58,81 +58,74 @@
 | 1367 | feat(pipeline-health-tool): implement get_pipeline_health MCP tool | Done | QA |
 
 > Goal: Add `get_pipeline_health` MCP tool so the user/dev team can instantly inspect the full OHLCV → TA pipeline state (row counts per ticker, backfill queue status, last aggregator run, TA signal count) without digging into logs or waiting for the next evening report.
-> Req spec: `docs/REQ_126.md` | Tech design: `docs/TECH_126.md` | Architect: APPROVED_BY_ARCHITECT
+> Req spec: `docs/REQ_126.md` | Tech design: `docs/TECH_126.md` | PO sign-off: 2026-04-17
+
+---
+
+## Sprint 127 — Active
+
+| ID | Title | Status | Role |
+|----|-------|--------|------|
+| 1368 | test(ohlcv-aggregator-notify): TDD — ohlcvDailyAggregatorJob sends WORK-channel summary after aggregation | Done | QA |
+| 1369 | feat(ohlcv-aggregator-notify): ohlcvDailyAggregatorJob — post WORK-channel health summary post-aggregation | Backlog | Dev |
+
+> Goal: Make the OHLCV → TA pipeline visible after each run. After `ohlcvDailyAggregatorJob` completes, send a WORK-channel Telegram summarizing: rows aggregated per ticker, how many tickers are TA-ready (>=8 rows), and whether taSummary would be non-empty at next evening report. Silent pipeline failures are invisible to the dev team today.
+> Sprint 127 | PO initiated: 2026-04-17
 
 ---
 
 ## Task Details (active tasks only)
 
-### Task 1366 — test(pipeline-health-tool): TDD for get_pipeline_health MCP tool
+### Task 1368 — test(ohlcv-aggregator-notify): TDD RED tests
 
-**Branch**: `task/1366-pipeline-health-tool-tdd`
+**Branch**: `task/1368-ohlcv-aggregator-notify-tdd`
 **Layer**: test
 **Depends on**: none
 
-**Context**: The OHLCV pipeline (Sprints 121-124) was fully built but we have no way to verify it works without waiting for the next evening report. The `taSummary: []` in every production report means the user never sees TA signals. `get_pipeline_health` gives instant visibility: OHLCV row counts per ticker, backfill queue status, last aggregator run timestamp, and TA signal count — all from a single MCP tool call.
+**Context**: `ohlcvDailyAggregatorJob` (Sprint 122) runs at `0 16 * * 1-5` UTC and aggregates intraday ticks into `daily_ohlcv`. When it finishes, no notification is sent — the dev team has no way to know how many rows were aggregated or whether TA signals will appear in the evening report. The `get_pipeline_health` MCP tool (Sprint 126) can answer this question but requires manual invocation.
 
 **Files to read first**
-- `src/application/usecases/assembleBriefing.ts` (`defaultComputeTa`, `TaSignal` type)
-- `src/infrastructure/db/` (pattern for counting rows, querying ohlcv_backfill_queue)
-- Any existing health/diagnostic tool in `src/interface/mcp/tools/` for pattern reference
+- `src/scheduler/ohlcvDailyAggregatorJob.ts` (current structure, injectable params)
+- `src/__tests__/1358-ohlcv-daily-aggregator.test.ts` (existing pattern for this job)
+- `src/infrastructure/notifiers/telegram.ts` (sendTelegramWork pattern)
 
 **Files to create**
-- CREATE: `src/__tests__/1366-pipeline-health-tool.test.ts`
+- CREATE: `src/__tests__/1368-ohlcv-aggregator-notify.test.ts`
 
 Line 1: `process.env["DB_PATH"] = ":memory:";`
 
-**Acceptance Criteria** (all RED before 1367, all GREEN after)
-- AC-1: `getPipelineHealth()` with 10 daily_ohlcv rows for ticker "VIC" → result includes `{ code: "VIC", ohlcvRows: 10 }` in `tickerStatus` array
-- AC-2: `getPipelineHealth()` with empty daily_ohlcv → `tickerStatus` entries have `ohlcvRows: 0`, `taReady: false`
-- AC-3: `getPipelineHealth()` with a pending backfill queue entry → `backfillQueue.pending: true`
-- AC-4: `getPipelineHealth()` with no queue entries → `backfillQueue.pending: false`
-- AC-5: `getPipelineHealth()` with ≥8 rows for ticker "HPG" and valid OHLCV data → `taSignalCount >= 0` (no crash)
+**Acceptance Criteria** (all RED before 1369, all GREEN after)
+- AC-1: After aggregation with 10 rows for "VIC" and 5 rows for "HPG", sendWorkFn called once with message containing "VIC" and "HPG"
+- AC-2: Message includes count of TA-ready tickers (>= 8 rows) — "2/2 sẵn sàng TA" or equivalent
+- AC-3: When sendWorkFn throws, job does NOT propagate error (notification is best-effort)
+- AC-4: When zero rows aggregated (empty DB), sendWorkFn called with message indicating 0 rows / 0 tickers TA-ready
 - `bun tsc --noEmit` 0 errors
 
 ---
 
-### Task 1367 — feat(pipeline-health-tool): implement get_pipeline_health MCP tool
+### Task 1369 — feat(ohlcv-aggregator-notify): post WORK-channel health summary
 
-**Branch**: `task/1367-pipeline-health-tool-impl`
-**Layer**: interface/application
-**Depends on**: 1366 (TDD tests RED)
+**Branch**: `task/1369-ohlcv-aggregator-notify-impl`
+**Layer**: scheduler
+**Depends on**: 1368 (TDD tests RED)
 
 **Files to read first**
-- `src/__tests__/1366-pipeline-health-tool.test.ts` (AC definitions)
-- `src/interface/mcp/tools/` (existing tool patterns)
-- `src/application/usecases/assembleBriefing.ts` (defaultComputeTa)
+- `src/__tests__/1368-ohlcv-aggregator-notify.test.ts` (AC definitions)
+- `src/scheduler/ohlcvDailyAggregatorJob.ts` (inject sendWorkFn parameter)
 
-**Files to create/modify**
-- CREATE: `src/application/usecases/getPipelineHealth.ts` — pure use-case, no infra imports
-- MODIFY: `src/interface/mcp/tools/` — register `get_pipeline_health` tool
-- MODIFY: `src/interface/mcp/index.ts` or tool registry — wire tool
+**Files to modify**
+- MODIFY: `src/scheduler/ohlcvDailyAggregatorJob.ts` — add optional `sendWorkFn` injectable param; after aggregation loop, call with summary: rows per ticker, TA-ready count, timestamp
 
-**Tool output shape**:
-```ts
-{
-  generatedAt: string;           // ISO timestamp
-  tickerStatus: Array<{
-    code: string;
-    ohlcvRows: number;           // COUNT(*) from daily_ohlcv WHERE code=?
-    taReady: boolean;            // ohlcvRows >= 8
-    taSignal?: string;           // "overbought"|"oversold"|"neutral"|"error"
-    rsi14?: number;
-  }>;
-  backfillQueue: {
-    pending: boolean;
-    lastRequestedAt?: string;
-    lastCompletedAt?: string;
-  };
-  aggregatorLastRun?: string;    // most recent daily_ohlcv MAX(date) across all tickers
-  taSummaryCount: number;        // total non-neutral signals across watchlist
-}
+**Notification message format** (Vietnamese, WORK channel):
+```
+OHLCV tổng hợp {date}: {N} tickers, {M} sẵn sàng TA (>= 8 ngày)
+Top: {ticker1}={rows1}d, {ticker2}={rows2}d, {ticker3}={rows3}d
 ```
 
 **Acceptance Criteria**
-- All 5 AC tests from 1366 pass
-- DDD clean: `getPipelineHealth.ts` in `application/` with zero infra imports (DB passed as param)
-- Tool registered under name `get_pipeline_health` with description explaining each field
+- All 4 AC tests from 1368 pass
+- `sendWorkFn` defaults to `sendTelegramWork` when not injected (prod path)
+- Notification is best-effort: any error caught+logged, job continues
 - `bun tsc --noEmit` 0 errors
 - Full suite 0 new failures
 
@@ -142,6 +135,7 @@ Line 1: `process.env["DB_PATH"] = ":memory:";`
 
 | Sprint | Goal summary | Status |
 |--------|-------------|--------|
+| 126 | feat(pipeline-health-tool): get_pipeline_health MCP tool — OHLCV row counts + TA readiness (1366, 1367) | COMPLETE 2026-04-17 |
 | 125 | feat(france-ta-detail): France briefing TA section — ticker-level RSI/MA20 (1364, 1365) | COMPLETE 2026-04-17 |
 | 124 | feat(vps-deploy-backfill): wire ohlcv-backfill-poll.sh as 6th VPS service (1362, 1363) | COMPLETE 2026-04-17 |
 | 123 | feat(ohlcv-backfill-queue): auto-trigger backfill via VPS pull pattern (1360, 1361) | COMPLETE 2026-04-17 |
