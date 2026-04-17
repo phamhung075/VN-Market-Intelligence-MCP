@@ -68,6 +68,9 @@ export async function runOhlcvDailyAggregator(
   let rowsWritten = 0;
   let tickersSkipped = 0;
 
+  // Per-ticker row counts in daily_ohlcv (for taReady + top-3 computation)
+  const tickerOhlcvRows: Map<string, number> = new Map();
+
   for (const { code } of tickers) {
     tickersProcessed++;
 
@@ -117,10 +120,33 @@ export async function runOhlcvDailyAggregator(
     ).run(code, dateStr, open, high, low, close, volume, new Date(nowMs).toISOString());
 
     rowsWritten++;
+
+    // Count total OHLCV rows for this ticker (across all dates) for taReady check
+    const totalRowsRow = db.prepare(
+      "SELECT COUNT(*) as cnt FROM daily_ohlcv WHERE code = ?"
+    ).get(code) as { cnt: number } | undefined;
+    tickerOhlcvRows.set(code, totalRowsRow?.cnt ?? 1);
   }
 
-  const summary = `[ohlcv-aggregator] date=${dateStr} processed=${tickersProcessed} written=${rowsWritten} skipped=${tickersSkipped}`;
-  await sendWorkFn(summary);
+  // taReady: tickers with >= 8 OHLCV rows (enough for TA computation)
+  const taReadyCount = Array.from(tickerOhlcvRows.values()).filter((n) => n >= 8).length;
 
-  return { tickersProcessed, rowsWritten, tickersSkipped, sent: true };
+  // Top-3 tickers by row count (descending)
+  const top3 = Array.from(tickerOhlcvRows.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+    .map(([code]) => code);
+
+  const top3Str = top3.length > 0 ? ` top3=[${top3.join(",")}]` : "";
+  const summary = `[ohlcv-aggregator] date=${dateStr} processed=${tickersProcessed} written=${rowsWritten} skipped=${tickersSkipped} taReady=${taReadyCount}${top3Str}`;
+
+  let sent = false;
+  try {
+    await sendWorkFn(summary);
+    sent = true;
+  } catch {
+    // Swallow notification errors — aggregation succeeded regardless
+  }
+
+  return { tickersProcessed, rowsWritten, tickersSkipped, sent };
 }

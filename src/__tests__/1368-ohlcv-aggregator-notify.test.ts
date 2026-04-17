@@ -162,14 +162,14 @@ describe("Task 1368 — ohlcv-aggregator notify enrichment (RED phase)", () => {
     };
 
     // Must NOT throw — error swallowed
+    // Note: Bun 1.3.11 `.resolves.not.toThrow()` is broken for non-function resolved values;
+    // use direct await instead to assert the promise resolves without rejection.
     let result: Awaited<ReturnType<typeof runOhlcvDailyAggregator>> | undefined;
-    await expect(
-      runOhlcvDailyAggregator({
-        db: () => db,
-        nowMsFn: () => NOW_MS,
-        sendWorkFn,
-      }).then((r) => { result = r; })
-    ).resolves.not.toThrow();
+    result = await runOhlcvDailyAggregator({
+      db: () => db,
+      nowMsFn: () => NOW_MS,
+      sendWorkFn,
+    });
 
     // Aggregation still completed correctly
     expect(result).toBeDefined();
