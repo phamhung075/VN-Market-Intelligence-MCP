@@ -56,6 +56,7 @@ import { runFranceSummary } from './franceSummaryJob.js'
 import { runTaAlertScan } from './taAlertScanJob.js'
 import { runBbAlertScan } from './bbAlertScanJob.js'
 import { runTaAlertNotifierCron } from './taAlertNotifierJob.js'
+import { runOhlcvStartupProbe } from './ohlcvStartupProbe.js'
 import { getDb } from '../infrastructure/db/schema.js'
 import { recordJobRun } from '../infrastructure/db/cronJobRunStore.js'
 
@@ -147,6 +148,13 @@ export function startScheduler() {
     return;
   }
   g.__vnMarketSchedulerStarted = true;
+
+  // Startup probe — ohlcv data completeness check (task 1353, Sprint 119).
+  // Fire-and-forget: alerts WORK channel if any watchlist ticker has < 8
+  // daily_ohlcv rows, prompting operator to run fetch-ohlcv-backfill.sh on VPS.
+  void runOhlcvStartupProbe().then((r) => {
+    if (r.sent) log(`[ohlcv-probe] sparse tickers: ${r.sparseTickers.map(t => t.code).join(', ')}`)
+  }).catch(console.error)
 
   // 08:00 — Morning briefing (weekdays Mon-Fri only) — task 101
   cron.schedule(CRONS.morningBriefing, async () => {
