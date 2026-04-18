@@ -10,8 +10,8 @@
 
 | ID | Title | Status | Role |
 |----|-------|--------|------|
-| 1410 | test(tool-diacritics-sweep): RED test — assert accented output from 24 tool files | Review | Dev |
-| 1411 | fix(tool-diacritics-sweep): replace all unaccented Vietnamese strings in 24 files | Review | Dev |
+| 1410 | test(tool-diacritics-sweep): RED test — assert accented output from 24 tool files | Done | Dev |
+| 1411 | fix(tool-diacritics-sweep): replace all unaccented Vietnamese strings in 24 files | Done | Dev |
 
 ---
 
