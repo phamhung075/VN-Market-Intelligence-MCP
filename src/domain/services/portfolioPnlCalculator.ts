@@ -8,7 +8,7 @@
  *   - Aggregate totals (sum of priced positions only)
  *
  * Also provides formatPnlSection() which produces the Vietnamese-format
- * DANH MUC block used in the morning briefing.
+ * DANH MỤC block used in the morning briefing.
  *
  * All prices are in raw VND (not million VND) — consistent with positionStore.ts
  * and market_prices table.
@@ -152,13 +152,13 @@ function fmtPct(pct: number): string {
  *
  * Example output:
  * ```
- * DANH MUC (2 vi the)
+ * DANH MỤC (2 vị thế)
  *
- * Ma    | SL      | Gia TB    | Gia HT    | Lai/Lo
+ * Mã    | SL      | Giá TB    | Giá HT    | Lãi/Lỗ
  * VCB   | 1,000   | 75,000    | 85,000    | +13.3% (+10,000,000)
  * FPT   | 500     | 120,000   | 115,000   | -4.2% (-2,500,000)
  *
- * Tong: +7,500,000 VND (+5.6%)
+ * Tổng: +7,500,000 VND (+5.6%)
  * ```
  *
  * @param result - The PortfolioPnlResult from computePortfolioPnl().
@@ -168,9 +168,9 @@ export function formatPnlSection(result: PortfolioPnlResult): string {
   if (result.items.length === 0) return "";
 
   const lines: string[] = [
-    `DANH MUC (${result.items.length} vi the)`,
+    `DANH MỤC (${result.items.length} vị thế)`,
     "",
-    "Ma     | SL        | Gia TB     | Gia HT     | Lai/Lo",
+    "Mã     | SL        | Giá TB     | Giá HT     | Lãi/Lỗ",
     "-------|-----------|------------|------------|-----------------------------",
   ];
 
@@ -192,7 +192,7 @@ export function formatPnlSection(result: PortfolioPnlResult): string {
 
   const totalAmountStr = fmtPnlAmount(result.totalPnlAmount);
   const totalPctStr = fmtPct(result.totalPnlPct);
-  lines.push(`Tong: ${totalAmountStr} VND (${totalPctStr})`);
+  lines.push(`Tổng: ${totalAmountStr} VND (${totalPctStr})`);
 
   return lines.join("\n");
 }
