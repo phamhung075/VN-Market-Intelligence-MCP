@@ -22,6 +22,7 @@ import type { Database } from "bun:sqlite"
 import { logger } from "../infrastructure/logger.js"
 import { formatPnlSection } from "../domain/services/portfolioPnlCalculator.js"
 import type { PortfolioPnlResult } from "../domain/services/portfolioPnlCalculator.js"
+import type { VnIndexSnapshot } from "../application/usecases/assembleEveningSummary.js"
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Public types
@@ -49,6 +50,8 @@ export interface FranceSummaryResult {
   alertCount: number
   /** Top-3 non-neutral TA signals (replaces taCount). */
   taSignals: TaSignalRow[]
+  /** VN-Index snapshot included in digest, or null if unavailable. */
+  vnIndex: VnIndexSnapshot | null
 }
 
 /** Options for runFranceSummary (injectable for TDD). */
@@ -67,6 +70,12 @@ export interface FranceSummaryOptions {
    * Return null to skip the P&L section (e.g. no positions or DB unavailable).
    */
   getPnlFn?: () => Promise<PortfolioPnlResult | null>
+  /**
+   * Injectable VN-Index fetch fn for TDD.
+   * Defaults to querying market_prices WHERE code = 'VNINDEX'.
+   * Return null to skip the VN-Index block.
+   */
+  fetchVnIndexFn?: () => Promise<VnIndexSnapshot | null>
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -325,10 +334,21 @@ export function formatFranceSummaryVI(
   alerts: AlertRow[],
   taSignals: TaSignalRow[] | number,
   portfolioPnl?: PortfolioPnlResult | null,
+  vnIndex?: VnIndexSnapshot | null,
 ): string {
   const header = `Bản tin sáng Pháp — Thị trường VN (${dateStr})`
 
   const blocks: string[] = []
+
+  // Section 0: VN-Index close — always first block when present
+  if (vnIndex != null) {
+    const closeFmt = Math.round(vnIndex.close).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")
+    const chSign = vnIndex.change >= 0 ? "+" : ""
+    const pctSign = vnIndex.changePct >= 0 ? "+" : ""
+    blocks.push(
+      `VN-Index: ${closeFmt} (${chSign}${Math.round(vnIndex.change)} / ${pctSign}${vnIndex.changePct.toFixed(2)}%)`,
+    )
+  }
 
   // Section 1: price movers — omit entirely when empty
   if (movers.length > 0) {
@@ -413,7 +433,7 @@ export async function runFranceSummary(opts: FranceSummaryOptions = {}): Promise
   // DB-level same-day dedup guard (FR-2)
   // Fail-open: if check throws, proceed with send.
   if (alreadySentToday(resolvedDb)) {
-    return { sent: false, moverCount: 0, alertCount: 0, taSignals: [] }
+    return { sent: false, moverCount: 0, alertCount: 0, taSignals: [], vnIndex: null }
   }
 
   // Resolve send function — default: sendTelegramMarket (MARKET channel)
@@ -431,6 +451,35 @@ export async function runFranceSummary(opts: FranceSummaryOptions = {}): Promise
 
   // Resolve clock
   const nowFn = opts.nowFn ?? (() => new Date())
+
+  // ── VN-Index snapshot (best-effort, injectable via fetchVnIndexFn) ─────────
+  let vnIndex: VnIndexSnapshot | null = null
+  try {
+    if (opts.fetchVnIndexFn) {
+      vnIndex = await opts.fetchVnIndexFn()
+    } else {
+      // Default: query market_prices for VNINDEX ticker
+      interface VnIndexRow { price: number; change_pct: number; fetched_at: string }
+      const row = resolvedDb
+        .prepare<VnIndexRow, []>(
+          `SELECT price, change_pct, fetched_at FROM market_prices WHERE code = 'VNINDEX' LIMIT 1`,
+        )
+        .get()
+      if (row) {
+        vnIndex = {
+          close: row.price,
+          change: Math.round(row.price * (row.change_pct / 100) / (1 + row.change_pct / 100)),
+          changePct: row.change_pct,
+          fetchedAt: row.fetched_at,
+        }
+      }
+    }
+  } catch (err) {
+    logger.warn("[franceSummaryJob] fetchVnIndexFn failed — skipping VN-Index block", {
+      error: err instanceof Error ? err.message : String(err),
+    })
+    vnIndex = null
+  }
 
   // ── Per-query fetch (isolated try/catch) ───────────────────────────────
   const movers = fetchTopMovers(resolvedDb)
@@ -481,21 +530,27 @@ export async function runFranceSummary(opts: FranceSummaryOptions = {}): Promise
 
   const hasPnl = portfolioPnl != null && portfolioPnl.items.length > 0
 
-  // Silent skip when all sources are empty
-  if (movers.length === 0 && alerts.length === 0 && taSignals.length === 0 && !hasPnl) {
-    return { sent: false, moverCount: 0, alertCount: 0, taSignals: [] }
+  // Silent skip when all sources are empty (including vnIndex)
+  if (
+    movers.length === 0 &&
+    alerts.length === 0 &&
+    taSignals.length === 0 &&
+    !hasPnl &&
+    vnIndex == null
+  ) {
+    return { sent: false, moverCount: 0, alertCount: 0, taSignals: [], vnIndex: null }
   }
 
   const dateStr = formatDateVI(nowFn())
-  const message = formatFranceSummaryVI(dateStr, movers, alerts, taSignals, portfolioPnl)
+  const message = formatFranceSummaryVI(dateStr, movers, alerts, taSignals, portfolioPnl, vnIndex)
 
   try {
     await resolvedSend(message)
-    return { sent: true, moverCount: movers.length, alertCount: alerts.length, taSignals }
+    return { sent: true, moverCount: movers.length, alertCount: alerts.length, taSignals, vnIndex }
   } catch (err) {
     logger.warn("[franceSummaryJob] Telegram send failed", {
       error: err instanceof Error ? err.message : String(err),
     })
-    return { sent: false, moverCount: movers.length, alertCount: alerts.length, taSignals }
+    return { sent: false, moverCount: movers.length, alertCount: alerts.length, taSignals, vnIndex }
   }
 }

@@ -240,7 +240,7 @@ describe("Task 1364 — France TA detail tests", () => {
     } catch {
       threw = true
       // Provide a default to satisfy TS — test will fail via threw === true check
-      result = { sent: false, moverCount: 0, alertCount: 0, taSignals: [] }
+      result = { sent: false, moverCount: 0, alertCount: 0, taSignals: [], vnIndex: null }
     }
 
     expect(threw).toBe(false)
