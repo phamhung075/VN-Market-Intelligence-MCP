@@ -5,7 +5,7 @@
  * Without periodic checkpoints, the WAL grows unbounded.
  *
  * This module provides:
- *   - `runWalCheckpoint()` — PASSIVE checkpoint (never blocks readers/writers)
+ *   - `runWalCheckpoint()` — RESTART checkpoint (blocks new writers until complete, truncates WAL)
  *   - `registerShutdownHook()` — checkpoint on SIGTERM/SIGINT before exit
  *
  * Scheduled daily at 03:00 GMT+7 via cron in jobs.ts.
@@ -15,34 +15,56 @@
 
 import { getDb } from "./schema.js";
 import { logger } from "../logger.js";
+import type { Database } from "bun:sqlite";
+
+/** Deps injectable for testing; defaults to real implementations. */
+export interface CheckpointDeps {
+  getDb: () => Database;
+  log: typeof logger;
+}
 
 /**
- * Runs a PASSIVE WAL checkpoint on the main database.
+ * Runs a RESTART WAL checkpoint on the main database.
  *
- * PASSIVE mode: checkpoints as many frames as possible without blocking
- * any concurrent readers or writers. Safe to call anytime.
+ * RESTART mode: checkpoints all frames, then blocks new writers until all
+ * existing readers have finished so the WAL file can be reset to zero.
+ * Safe to call at 03:00 GMT+7 off-hours when reader pressure is minimal.
+ * Prevents unbounded WAL growth (root cause of 270MB WAL accumulation and
+ * SQLite "malformed disk image" corruption in vnstock-sync).
  *
+ * @param deps — optional injectable deps (for testing)
  * @returns { walSize, checkpointed } — frames in WAL vs frames checkpointed
  */
-export function runWalCheckpoint(): { walSize: number; checkpointed: number } {
+export function runWalCheckpoint(deps?: CheckpointDeps): { walSize: number; checkpointed: number } {
+  const _getDb = deps?.getDb ?? getDb;
+  const _log = deps?.log ?? logger;
   try {
-    const db = getDb();
+    const db = _getDb();
     const result = db.query<{ busy: number; log: number; checkpointed: number }, []>(
-      "PRAGMA wal_checkpoint(PASSIVE)",
+      "PRAGMA wal_checkpoint(RESTART)",
     ).get();
 
     const walSize = result?.log ?? 0;
     const checkpointed = result?.checkpointed ?? 0;
+    const remaining = walSize - checkpointed;
 
-    logger.info("[checkpoint] WAL checkpoint complete", {
+    _log.info("[checkpoint] WAL checkpoint complete", {
       walSize,
       checkpointed,
-      remaining: walSize - checkpointed,
+      remaining,
     });
+
+    if (remaining > 1000) {
+      _log.warn("[checkpoint] remaining frames > 1000 — WAL growth runaway risk", {
+        walSize,
+        checkpointed,
+        remaining,
+      });
+    }
 
     return { walSize, checkpointed };
   } catch (err) {
-    logger.error("[checkpoint] WAL checkpoint failed", {
+    _log.error("[checkpoint] WAL checkpoint failed", {
       error: err instanceof Error ? err.message : String(err),
     });
     return { walSize: 0, checkpointed: 0 };

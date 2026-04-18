@@ -162,6 +162,17 @@
 
 ---
 
+## Sprint 163 — fix(checkpoint): PASSIVE → RESTART mode
+
+| ID | Title | Status | Role |
+|----|-------|--------|------|
+| 1447 | fix(checkpoint): PASSIVE → RESTART mode | Review | Dev |
+
+> Report: `reports/TASK_REPORT_1447.md`
+> Handoff: `docs/handoffs/TASK_1447.md`
+
+---
+
 ## Backlog
 
 | ID | Title | Priority | Notes |
