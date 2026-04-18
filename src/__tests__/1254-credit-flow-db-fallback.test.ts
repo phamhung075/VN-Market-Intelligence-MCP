@@ -28,7 +28,7 @@ describe("Task 1254 — get_credit_flow_signal DB fallback", () => {
       currentMortgageRatePct: 10.5,
       previousMortgageRatePct: 11.0,
     });
-    expect(result.content[0]?.text).toContain("TIN DUNG BAT DONG SAN");
+    expect(result.content[0]?.text).toContain("TÍN DỤNG BẤT ĐỘNG SẢN");
   });
 
   it("AC-2: deriveMortgageRateFromSbv adds 2.5 spread over refinancing rate", () => {
@@ -49,6 +49,6 @@ describe("Task 1254 — get_credit_flow_signal DB fallback", () => {
       currentMortgageRatePct: undefined,
       previousMortgageRatePct: undefined,
     });
-    expect(result.content[0]?.text).toContain("TIN DUNG BAT DONG SAN");
+    expect(result.content[0]?.text).toContain("TÍN DỤNG BẤT ĐỘNG SẢN");
   });
 });

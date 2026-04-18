@@ -287,7 +287,7 @@ describe("Task 277 — get_sector_comparison MCP tool", () => {
     seedMarketPrices();
     const result = await callTool(server, "get_sector_comparison", { code: "VCB" });
     const text = firstText(result);
-    expect(text).toMatch(/Gia hom nay|gia.*hom nay|Gia.*nay/i);
+    expect(text).toMatch(/Giá hôm nay|Gia hom nay|gia.*hom nay|Gia.*nay/i);
     // VCB change_pct = -1.2%
     expect(text).toMatch(/-1\.2%/);
   });
@@ -375,7 +375,7 @@ describe("Task 277 — get_sector_comparison MCP tool", () => {
     seedTradingStats();
     const result = await callTool(server, "get_sector_comparison", { code: "VCB" });
     const text = firstText(result);
-    expect(text).toMatch(/nuoc ngoai|ngoai|foreign|dong tien/i);
+    expect(text).toMatch(/nuoc ngoai|ngoai|ngoài|foreign|dong tien|Dòng tiền/i);
   });
 
   // ── 12. Case normalisation ────────────────────────────────────────────────

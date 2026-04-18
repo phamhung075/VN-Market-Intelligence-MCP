@@ -291,7 +291,7 @@ describe("Task 191 — get_performance_attribution MCP tool", () => {
 
   it("returns Vietnamese no-data message when alerts table is empty", async () => {
     const result = await callTool(server, "get_performance_attribution", { days: 30 });
-    expect(result.content[0]!.text).toContain("Khong co du lieu");
+    expect(result.content[0]!.text).toContain("Không có dữ liệu");
   });
 
   it("returns formatted attribution table with alerts data", async () => {
@@ -327,7 +327,7 @@ describe("Task 191 — get_performance_attribution MCP tool", () => {
     const text = result.content[0]!.text;
 
     // Should contain header (case-insensitive check)
-    expect(text.toLowerCase()).toContain("hieu suat");
+    expect(text.toLowerCase()).toContain("hiệu suất".toLowerCase());
     // Should mention price_drop signal type
     expect(text).toContain("price_drop");
   });
@@ -375,7 +375,7 @@ describe("Task 191 — get_performance_attribution MCP tool", () => {
     const text = result.content[0]!.text;
 
     // 60-day-old alert should not appear in 30-day window
-    expect(text).toContain("Khong co du lieu");
+    expect(text).toContain("Không có dữ liệu");
   });
 
   it("accepts optional signalType filter parameter", async () => {

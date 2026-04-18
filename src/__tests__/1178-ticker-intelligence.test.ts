@@ -310,7 +310,7 @@ describe("Task 1178 — AC-1: full brief with all data present", () => {
 
   it("response contains [1] GIA section with price 85,000 VND", async () => {
     const result = await handleGetTickerIntelligence("VCB", db);
-    expect(result).toContain("[1] GIA");
+    expect(result).toContain("[1] GIÁ");
     expect(result).toContain("85,000 VND");
   });
 
@@ -322,7 +322,7 @@ describe("Task 1178 — AC-1: full brief with all data present", () => {
 
   it("response contains [3] INSIDER (7 NGAY) section with 2 transaction lines", async () => {
     const result = await handleGetTickerIntelligence("VCB", db);
-    expect(result).toContain("[3] INSIDER (7 NGAY)");
+    expect(result).toContain("[3] INSIDER (7 NGÀY)");
     // Two insider lines (Nguyen Van A and Tran Thi B)
     expect(result).toContain("Nguyen Van A");
     expect(result).toContain("Tran Thi B");
@@ -330,7 +330,7 @@ describe("Task 1178 — AC-1: full brief with all data present", () => {
 
   it("response contains [4] KHOI NGOAI section with foreign volume", async () => {
     const result = await handleGetTickerIntelligence("VCB", db);
-    expect(result).toContain("[4] KHOI NGOAI");
+    expect(result).toContain("[4] KHỐI NGOẠI");
     // 800000 formatted as abbreviated volume
     expect(result).toMatch(/800\.(0+)?K|0\.80M|800\.0K/);
   });
@@ -344,8 +344,8 @@ describe("Task 1178 — AC-1: full brief with all data present", () => {
 
   it("response contains [6] DU DOAN section with 100.0% accuracy", async () => {
     const result = await handleGetTickerIntelligence("VCB", db);
-    expect(result).toContain("[6] DU DOAN");
-    expect(result).toContain("Chinh xac 2/2 (100.0%)");
+    expect(result).toContain("[6] DỰ ĐOÁN");
+    expect(result).toContain("Chính xác 2/2 (100.0%)");
   });
 
   it("response ends with the 35-equals footer", async () => {
@@ -375,8 +375,8 @@ describe("Task 1178 — AC-2: empty DB returns no-data strings per section", () 
 
   it("section 1 shows (khong co du lieu)", async () => {
     const result = await handleGetTickerIntelligence("HPG", db);
-    expect(result).toContain("[1] GIA");
-    expect(result).toContain("(khong co du lieu)");
+    expect(result).toContain("[1] GIÁ");
+    expect(result).toContain("(không có dữ liệu)");
   });
 
   it("section 2 shows (khong co du lieu)", async () => {
@@ -386,31 +386,31 @@ describe("Task 1178 — AC-2: empty DB returns no-data strings per section", () 
     const lines = result.split("\n");
     const evidenceIdx = lines.findIndex((l: string) => l.includes("[2] EVIDENCE SCORE"));
     expect(evidenceIdx).toBeGreaterThanOrEqual(0);
-    expect(lines.slice(evidenceIdx, evidenceIdx + 3).join("\n")).toContain("(khong co du lieu)");
+    expect(lines.slice(evidenceIdx, evidenceIdx + 3).join("\n")).toContain("(không có dữ liệu)");
   });
 
   it("section 3 shows (khong co giao dich insider trong 7 ngay qua)", async () => {
     const result = await handleGetTickerIntelligence("HPG", db);
-    expect(result).toContain("[3] INSIDER (7 NGAY)");
-    expect(result).toContain("(khong co giao dich insider trong 7 ngay qua)");
+    expect(result).toContain("[3] INSIDER (7 NGÀY)");
+    expect(result).toContain("(không có giao dịch insider trong 7 ngày qua)");
   });
 
   it("section 4 shows (khong co du lieu khoi ngoai)", async () => {
     const result = await handleGetTickerIntelligence("HPG", db);
-    expect(result).toContain("[4] KHOI NGOAI");
-    expect(result).toContain("(khong co du lieu khoi ngoai)");
+    expect(result).toContain("[4] KHỐI NGOẠI");
+    expect(result).toContain("(không có dữ liệu khối ngoại)");
   });
 
   it("section 5 shows (chua co phan tich BCTC)", async () => {
     const result = await handleGetTickerIntelligence("HPG", db);
     expect(result).toContain("[5] BCTC AI");
-    expect(result).toContain("(chua co phan tich BCTC)");
+    expect(result).toContain("(chưa có phân tích BCTC)");
   });
 
   it("section 6 shows (chua co du doan da giai quyet)", async () => {
     const result = await handleGetTickerIntelligence("HPG", db);
-    expect(result).toContain("[6] DU DOAN");
-    expect(result).toContain("(chua co du doan da giai quyet)");
+    expect(result).toContain("[6] DỰ ĐOÁN");
+    expect(result).toContain("(chưa có dự đoán đã giải quyết)");
   });
 
   it("does not throw an exception", async () => {
@@ -474,12 +474,12 @@ describe("Task 1178 — AC-4: malformed ai_analysis JSON handled gracefully", ()
 
   it("all 6 section labels are still present despite JSON parse failure", async () => {
     const result = await handleGetTickerIntelligence("VNM", db);
-    expect(result).toContain("[1] GIA");
+    expect(result).toContain("[1] GIÁ");
     expect(result).toContain("[2] EVIDENCE SCORE");
-    expect(result).toContain("[3] INSIDER (7 NGAY)");
-    expect(result).toContain("[4] KHOI NGOAI");
+    expect(result).toContain("[3] INSIDER (7 NGÀY)");
+    expect(result).toContain("[4] KHỐI NGOẠI");
     expect(result).toContain("[5] BCTC AI");
-    expect(result).toContain("[6] DU DOAN");
+    expect(result).toContain("[6] DỰ ĐOÁN");
   });
 });
 
@@ -516,7 +516,7 @@ describe("Task 1178 — AC-5: insider section caps at 3, shows overflow", () => 
 
   it("section 3 ends with (+2 giao dich khac trong 7 ngay) overflow line", async () => {
     const result = await handleGetTickerIntelligence("VCB", db);
-    expect(result).toContain("(+2 giao dich khac trong 7 ngay)");
+    expect(result).toContain("(+2 giao dịch khác trong 7 ngày)");
   });
 });
 
@@ -536,8 +536,8 @@ describe("Task 1178 — AC-6: section 6 shows N/A Brier when all scores null", (
 
   it("section 6 shows Chinh xac 2/2 (100.0%) | Brier TB: N/A", async () => {
     const result = await handleGetTickerIntelligence("TCB", db);
-    expect(result).toContain("[6] DU DOAN");
-    expect(result).toContain("Chinh xac 2/2 (100.0%) | Brier TB: N/A");
+    expect(result).toContain("[6] DỰ ĐOÁN");
+    expect(result).toContain("Chính xác 2/2 (100.0%) | Brier TB: N/A");
   });
 });
 
@@ -564,12 +564,12 @@ describe("Task 1178 — AC-7/AC-8: formatTickerIntelligence output structure", (
       "s1", "s2", "s3", "s4", "s5", "s6",
     ];
     const result = formatTickerIntelligence("VCB", sections, "2026-04-13T08:00:00.000Z");
-    expect(result).toContain("[1] GIA");
+    expect(result).toContain("[1] GIÁ");
     expect(result).toContain("[2] EVIDENCE SCORE");
-    expect(result).toContain("[3] INSIDER (7 NGAY)");
-    expect(result).toContain("[4] KHOI NGOAI");
+    expect(result).toContain("[3] INSIDER (7 NGÀY)");
+    expect(result).toContain("[4] KHỐI NGOẠI");
     expect(result).toContain("[5] BCTC AI");
-    expect(result).toContain("[6] DU DOAN");
+    expect(result).toContain("[6] DỰ ĐOÁN");
   });
 
   it("each section content appears in the correct position", () => {
@@ -630,7 +630,7 @@ describe("Task 1178 — Edge: section 5 missing ai_analysis fields", () => {
   it("section 5 shows (loi phan tich BCTC) when outlook field is missing", async () => {
     const result = await handleGetTickerIntelligence("MSN", db);
     expect(result).toContain("[5] BCTC AI");
-    expect(result).toContain("(loi phan tich BCTC)");
+    expect(result).toContain("(lỗi phân tích BCTC)");
   });
 });
 
@@ -654,7 +654,7 @@ describe("Task 1178 — Edge: section 4 zero foreign_volume treated as no data",
 
   it("section 4 shows (khong co du lieu khoi ngoai) when foreign_volume is 0", async () => {
     const result = await handleGetTickerIntelligence("VNM", db);
-    expect(result).toContain("[4] KHOI NGOAI");
-    expect(result).toContain("(khong co du lieu khoi ngoai)");
+    expect(result).toContain("[4] KHỐI NGOẠI");
+    expect(result).toContain("(không có dữ liệu khối ngoại)");
   });
 });
