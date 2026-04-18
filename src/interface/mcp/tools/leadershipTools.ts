@@ -63,31 +63,31 @@ export async function getInsiderSignalsHandler(
       content: [
         {
           type: "text" as const,
-          text: `Khong co tin hieu giao dich noi bo dang ke cho ${input.code} trong thoi gian gan day.`,
+          text: `Không có tín hiệu giao dịch nội bộ đáng kể cho ${input.code} trong thời gian gần đây.`,
         },
       ],
     };
   }
 
   const severityLabel: Record<string, string> = {
-    critical: "NGHIEM TRONG",
-    high: "QUAN TRONG",
-    medium: "LUU Y",
-    low: "THONG TIN",
+    critical: "NGHIÊM TRỌNG",
+    high: "QUAN TRỌNG",
+    medium: "LƯU Ý",
+    low: "THÔNG TIN",
   };
 
   const lines: string[] = [
-    `TIN HIEU LANH DAO / GIAO DICH NOI BO — ${input.code}`,
-    `Tong so tin hieu: ${signals.length}`,
+    `TÍN HIỆU LÃNH ĐẠO / GIAO DỊCH NỘI BỘ — ${input.code}`,
+    `Tổng số tín hiệu: ${signals.length}`,
     "",
   ];
 
   for (const s of signals) {
     lines.push(`[${severityLabel[s.severity] ?? s.severity}] ${s.type.toUpperCase()}`);
-    lines.push(`  Lanh dao: ${s.insiderName} (${s.position})`);
-    lines.push(`  Xu huong: ${s.direction === "up" ? "TANG" : s.direction === "down" ? "GIAM" : "TRUNG TINH"}`);
-    lines.push(`  Do tin cay: ${(s.confidence * 100).toFixed(0)}%`);
-    lines.push(`  Ly do: ${s.reasoning}`);
+    lines.push(`  Lãnh đạo: ${s.insiderName} (${s.position})`);
+    lines.push(`  Xu hướng: ${s.direction === "up" ? "TĂNG" : s.direction === "down" ? "GIẢM" : "TRUNG TÍNH"}`);
+    lines.push(`  Độ tin cậy: ${(s.confidence * 100).toFixed(0)}%`);
+    lines.push(`  Lý do: ${s.reasoning}`);
     lines.push("");
   }
 

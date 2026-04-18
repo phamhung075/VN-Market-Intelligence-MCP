@@ -144,28 +144,28 @@ export async function getCreditFlowSignalHandler(
   const signal = analyzeCreditFlow(current, previous);
 
   const severityLabel: Record<string, string> = {
-    critical: "NGHIEM TRONG",
-    high: "QUAN TRONG",
-    medium: "LUU Y",
-    low: "THONG TIN",
+    critical: "NGHIÊM TRỌNG",
+    high: "QUAN TRỌNG",
+    medium: "LƯU Ý",
+    low: "THÔNG TIN",
   };
 
   const dirLabel =
     signal.direction === "up"
-      ? "TICH CUC"
+      ? "TÍCH CỰC"
       : signal.direction === "down"
-        ? "TIEU CUC"
-        : "TRUNG TINH";
+        ? "TIÊU CỰC"
+        : "TRUNG TÍNH";
 
   const lines: string[] = [
-    `TIN DUNG BAT DONG SAN — PHAN TICH TAC DONG`,
-    `Muc do: ${severityLabel[signal.severity] ?? signal.severity}`,
-    `Xu huong: ${dirLabel}`,
-    `Do tin cay: ${(signal.confidence * 100).toFixed(0)}%`,
+    `TÍN DỤNG BẤT ĐỘNG SẢN — PHÂN TÍCH TÁC ĐỘNG`,
+    `Mức độ: ${severityLabel[signal.severity] ?? signal.severity}`,
+    `Xu hướng: ${dirLabel}`,
+    `Độ tin cậy: ${(signal.confidence * 100).toFixed(0)}%`,
     "",
-    `Tom tat: ${signal.summary}`,
+    `Tóm tắt: ${signal.summary}`,
     "",
-    `Co phieu bi anh huong:`,
+    `Cổ phiếu bị ảnh hưởng:`,
   ];
 
   for (const s of signal.affectedStocks) {

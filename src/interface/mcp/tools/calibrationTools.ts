@@ -193,7 +193,7 @@ function formatFullReport(snapshot: CalibrationSnapshotRow): string {
 function formatLabelAccuracyReport(rows: LabelAccuracyRow[], since_days: number): string {
   const lines: string[] = [];
 
-  lines.push(`Label Accuracy Report — ${since_days} ngay gan nhat`);
+  lines.push(`Label Accuracy Report — ${since_days} ngày gần nhất`);
   lines.push("=========================================");
   lines.push("");
   lines.push(
@@ -217,9 +217,9 @@ function formatLabelAccuracyReport(rows: LabelAccuracyRow[], since_days: number)
   lines.push("");
   lines.push("-----------------------------------------");
   const totalReviewed = rows.reduce((s, r) => s + r.total_reviewed, 0);
-  lines.push(`Tong: ${rows.length} agents, ${totalReviewed} tin da review.`);
+  lines.push(`Tổng: ${rows.length} agents, ${totalReviewed} tin đã review.`);
   lines.push(
-    "Su dung get_calibration_report de xem Brier score tu prediction_claims.",
+    "Sử dụng get_calibration_report để xem Brier score từ prediction_claims.",
   );
 
   return lines.join("\n");
@@ -242,8 +242,8 @@ export async function handleGetLabelAccuracyReport(
 
     if (rows.length === 0) {
       const text =
-        `Khong co tin nhan da review trong ${days} ngay qua.\n` +
-        "Hay su dung batch_review_market_messages de danh gia tin nhan.";
+        `Không có tin nhắn đã review trong ${days} ngày qua.\n` +
+        "Hãy sử dụng batch_review_market_messages để đánh giá tin nhắn.";
       return { content: [{ type: "text" as const, text }] };
     }
 

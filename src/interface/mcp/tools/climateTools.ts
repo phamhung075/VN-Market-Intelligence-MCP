@@ -84,34 +84,34 @@ export async function getClimateRiskSignals(
     .filter((s) => s.affectedStocks.length > 0);
 
   // ── Format output ─────────────────────────────────────────────────────────
-  let text = `=== PHAN TICH RUI RO KHI HAU ===\n\n`;
-  text += `Thang ${currentMonth}: ${seasonalCtx}\n\n`;
+  let text = `=== PHÂN TÍCH RỦI RO KHÍ HẬU ===\n\n`;
+  text += `Tháng ${currentMonth}: ${seasonalCtx}\n\n`;
 
   if (weatherEvents.length === 0) {
-    text += `Khong co canh bao thoi tiet hien hanh.\n\n`;
+    text += `Không có cảnh báo thời tiết hiện hành.\n\n`;
   } else {
-    text += `Su kien thoi tiet dang hoat dong: ${weatherEvents.length}\n\n`;
+    text += `Sự kiện thời tiết đang hoạt động: ${weatherEvents.length}\n\n`;
     for (const event of weatherEvents) {
       const sev = event.severity.toUpperCase();
       text += `[${sev}] ${event.type.replace(/_/g, " ").toUpperCase()}\n`;
-      text += `  Vung: ${event.regions.join(", ")}\n`;
-      text += `  Mo ta: ${event.description.slice(0, 120)}\n`;
-      text += `  Thoi han: ${event.impactDuration}\n\n`;
+      text += `  Vùng: ${event.regions.join(", ")}\n`;
+      text += `  Mô tả: ${event.description.slice(0, 120)}\n`;
+      text += `  Thời hạn: ${event.impactDuration}\n\n`;
     }
   }
 
   if (signals.length > 0) {
-    text += `=== CO PHIEU BI ANH HUONG ===\n\n`;
+    text += `=== CỔ PHIẾU BỊ ẢNH HƯỞNG ===\n\n`;
     for (const signal of signals) {
-      text += `${signal.eventType.replace(/_/g, " ").toUpperCase()} (${signal.severity}, tin tuong: ${(signal.confidence * 100).toFixed(0)}%)\n`;
+      text += `${signal.eventType.replace(/_/g, " ").toUpperCase()} (${signal.severity}, tin tưởng: ${(signal.confidence * 100).toFixed(0)}%)\n`;
       for (const stock of signal.affectedStocks) {
-        const dir = stock.direction === "up" ? "TANG" : stock.direction === "down" ? "GIAM" : "TRUNG LAP";
+        const dir = stock.direction === "up" ? "TĂNG" : stock.direction === "down" ? "GIẢM" : "TRUNG LẬP";
         text += `  ${stock.code}: ${dir} — ${stock.reasoning.slice(0, 100)}\n`;
       }
       text += "\n";
     }
   } else {
-    text += `Khong co co phieu trong danh muc bi anh huong truc tiep.\n`;
+    text += `Không có cổ phiếu trong danh mục bị ảnh hưởng trực tiếp.\n`;
   }
 
   if (opts.stock) {
@@ -150,7 +150,7 @@ export function registerClimateTools(server: McpServer): void {
           content: [
             {
               type: "text" as const,
-              text: `Loi khi lay tin hieu khi hau: ${err instanceof Error ? err.message : String(err)}`,
+              text: `Lỗi khi lấy tín hiệu khí hậu: ${err instanceof Error ? err.message : String(err)}`,
             },
           ],
         };

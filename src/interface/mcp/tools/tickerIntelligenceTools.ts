@@ -71,22 +71,22 @@ export function formatTickerIntelligence(
     `=== INTELLIGENCE BRIEF: ${code} ===`,
     `Thoi gian: ${timestamp}`,
     "",
-    "[1] GIA",
+    "[1] GIÁ",
     s1,
     "",
     "[2] EVIDENCE SCORE",
     s2,
     "",
-    "[3] INSIDER (7 NGAY)",
+    "[3] INSIDER (7 NGÀY)",
     s3,
     "",
-    "[4] KHOI NGOAI",
+    "[4] KHỐI NGOẠI",
     s4,
     "",
     "[5] BCTC AI",
     s5,
     "",
-    "[6] DU DOAN",
+    "[6] DỰ ĐOÁN",
     s6,
     "",
     footer,
@@ -99,7 +99,7 @@ export function formatTickerIntelligence(
 
 /** Section 1: Latest price from market_prices_history */
 function buildSection1(db: Database, ticker: string): string {
-  let result = "(khong co du lieu)";
+  let result = "(không có dữ liệu)";
   try {
     type PriceRow = { price: number; volume: number; fetched_at: string };
     const row = db
@@ -115,7 +115,7 @@ function buildSection1(db: Database, ticker: string): string {
     if (!row) return result;
 
     const date = row.fetched_at.slice(0, 10);
-    result = `Gia hien tai: ${formatPrice(row.price)} VND | KL: ${formatVolume(row.volume)} | Ngay: ${date}`;
+    result = `Giá hiện tại: ${formatPrice(row.price)} VND | KL: ${formatVolume(row.volume)} | Ngày: ${date}`;
   } catch {
     // section stays as no-data default
   }
@@ -124,7 +124,7 @@ function buildSection1(db: Database, ticker: string): string {
 
 /** Section 2: Evidence score from evidence_scores via store function */
 function buildSection2(db: Database, ticker: string): string {
-  let result = "(khong co du lieu)";
+  let result = "(không có dữ liệu)";
   try {
     const score = getLatestEvidenceScore(db, ticker);
     if (!score) return result;
@@ -143,7 +143,7 @@ function buildSection2(db: Database, ticker: string): string {
 
 /** Section 3: Recent insider transactions (7 days) from insiderStore */
 function buildSection3(db: Database, ticker: string): string {
-  let result = "(khong co giao dich insider trong 7 ngay qua)";
+  let result = "(không có giao dịch insider trong 7 ngày qua)";
   try {
     const sinceDate = new Date(Date.now() - 7 * 86_400_000)
       .toISOString()
@@ -163,7 +163,7 @@ function buildSection3(db: Database, ticker: string): string {
     );
 
     if (txs.length > 3) {
-      lines.push(`(+${txs.length - 3} giao dich khac trong 7 ngay)`);
+      lines.push(`(+${txs.length - 3} giao dịch khác trong 7 ngày)`);
     }
 
     result = lines.join("\n");
@@ -175,7 +175,7 @@ function buildSection3(db: Database, ticker: string): string {
 
 /** Section 4: Foreign flow from vnstock_trading_stats (inline SQL) */
 function buildSection4(db: Database, ticker: string): string {
-  let result = "(khong co du lieu khoi ngoai)";
+  let result = "(không có dữ liệu khối ngoại)";
   try {
     type ForeignRow = {
       foreign_volume: number;
@@ -198,10 +198,10 @@ function buildSection4(db: Database, ticker: string): string {
 
     const holdingRatio = (row.current_holding_ratio * 100).toFixed(2);
     result =
-      `Khoi ngoai (${row.date}): ` +
+      `Khối ngoại (${row.date}): ` +
       `KL ${formatVolume(row.foreign_volume)} | ` +
-      `Room con lai: ${formatVolume(row.foreign_room)} | ` +
-      `Ty le so huu: ${holdingRatio}%`;
+      `Room còn lại: ${formatVolume(row.foreign_room)} | ` +
+      `Tỷ lệ sở hữu: ${holdingRatio}%`;
   } catch {
     // section stays as no-data default
   }
@@ -210,7 +210,7 @@ function buildSection4(db: Database, ticker: string): string {
 
 /** Section 5: BCTC AI outlook from financial_reports (inline SQL + JSON.parse) */
 function buildSection5(db: Database, ticker: string): string {
-  let result = "(chua co phan tich BCTC)";
+  let result = "(chưa có phân tích BCTC)";
   try {
     type ReportRow = {
       action_code: string;
@@ -242,7 +242,7 @@ function buildSection5(db: Database, ticker: string): string {
         typeof aiAnalysis.outlook !== "string" ||
         typeof aiAnalysis.summary !== "string"
       ) {
-        return "(loi phan tich BCTC)";
+        return "(lỗi phân tích BCTC)";
       }
 
       const outlookMap: Record<string, string> = {
@@ -259,7 +259,7 @@ function buildSection5(db: Database, ticker: string): string {
           ? summaryRaw.slice(0, 120) + "..."
           : summaryRaw;
 
-      result = `BCTC (${row.sort_key}): Nhan dinh ${outlookVi} | ${summaryTruncated}`;
+      result = `BCTC (${row.sort_key}): Nhận định ${outlookVi} | ${summaryTruncated}`;
     } catch {
       result = "(loi phan tich BCTC)";
     }
@@ -271,7 +271,7 @@ function buildSection5(db: Database, ticker: string): string {
 
 /** Section 6: Prediction calibration accuracy via predictionClaimStore */
 function buildSection6(db: Database, ticker: string): string {
-  let result = "(chua co du doan da giai quyet)";
+  let result = "(chưa có dự đoán đã giải quyết)";
   try {
     const claims = getResolvedClaims(db, ticker, 20);
     const N = claims.length;
@@ -294,7 +294,7 @@ function buildSection6(db: Database, ticker: string): string {
       avgBrier = "N/A";
     }
 
-    result = `Du doan (${N} resolved): Chinh xac ${correct}/${N} (${pct}%) | Brier TB: ${avgBrier}`;
+    result = `Dự đoán (${N} resolved): Chính xác ${correct}/${N} (${pct}%) | Brier TB: ${avgBrier}`;
   } catch {
     // section stays as no-data default
   }
@@ -337,7 +337,7 @@ export async function handleGetTickerIntelligence(
     );
   } catch (err) {
     console.error("[handleGetTickerIntelligence] Unexpected error:", err);
-    return "Loi: Khong the lay thong tin. Vui long thu lai.";
+    return "Lỗi: Không thể lấy thông tin. Vui lòng thử lại.";
   }
 }
 
