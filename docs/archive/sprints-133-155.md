@@ -1,7 +1,7 @@
-# Archive — Sprints 133–154
+# Archive — Sprints 133–155
 
 Period: 2026-04-17 → 2026-04-18
-Archived from TASKS.md on Sprint 154 completion.
+Archived from TASKS.md on Sprint 155 completion.
 
 ---
 
@@ -291,4 +291,18 @@ PO sign-off: 2026-04-18
 Goal: fix(evening-ta-filter): restrict evening TA section to RSI overbought/oversold signals only.
 Branch: task/1428-evening-ta-rsi-filter
 Report: reports/TASK_REPORT_1428.md
+PO sign-off: 2026-04-18
+
+---
+
+## Sprint 155 — COMPLETE (2026-04-18)
+
+| ID | Title | Status | Role |
+|----|-------|--------|------|
+| 1430 | test(startup-catchup): TDD RED — shouldRunCatchup + probe assertions | Done | Dev |
+| 1431 | feat(startup-catchup): implement shouldRunCatchup + probe setTimeout in jobs.ts GREEN | Done | Dev |
+| ARCH | review REQ_1430.md + write TECH_1430.md | Done | Architect |
+
+Goal: feat(startup-catchup): run morning-briefing + evening-summary on restart if missed today.
+Branch: task/1430-startup-catchup
 PO sign-off: 2026-04-18

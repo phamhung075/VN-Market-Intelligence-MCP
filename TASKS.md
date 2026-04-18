@@ -63,13 +63,15 @@
 
 ---
 
-## Sprint 155 — feat(startup-catchup): run morning-briefing + evening-summary on restart if missed today
+## Sprint 155 — feat(startup-catchup): run morning-briefing + evening-summary on restart if missed today — COMPLETE (2026-04-18)
 
 | ID | Title | Status | Role |
 |----|-------|--------|------|
-| 1430 | test(startup-catchup): TDD RED — shouldRunCatchup + probe assertions | Review | Dev |
-| 1431 | feat(startup-catchup): implement shouldRunCatchup + probe setTimeout in jobs.ts GREEN | Review | Dev |
+| 1430 | test(startup-catchup): TDD RED — shouldRunCatchup + probe assertions | Done | Dev |
+| 1431 | feat(startup-catchup): implement shouldRunCatchup + probe setTimeout in jobs.ts GREEN | Done | Dev |
 | ARCH | review REQ_1430.md + write TECH_1430.md | Done | Architect |
+
+> Archived: `docs/archive/sprints-133-155.md`
 
 ---
 
