@@ -16,6 +16,7 @@ import type {
   ForeignFlowBriefingRow,
   EvidenceScoreBriefingRow,
   TaSignal,
+  BctcDeadlineRow,
 } from "../application/usecases/assembleBriefing.js";
 import { BEARISH_WARNING_THRESHOLD } from "../application/usecases/assembleBriefing.js";
 import { logger } from "../infrastructure/logger.js";
@@ -168,6 +169,23 @@ export function formatBriefingMessage(briefing: DailyBriefing): string {
         "";
       const parts = [rsiPart, maPart].filter(Boolean).join(" ");
       lines.push(`  ${sig.code}: ${parts}`);
+    }
+  }
+
+  // ── BCTC sắp đến ─────────────────────────────────────────────────────────────
+  if (briefing.upcomingDeadlines && briefing.upcomingDeadlines.length > 0) {
+    lines.push("");
+    lines.push("📅 BCTC sắp đến:");
+    for (const row of briefing.upcomingDeadlines as BctcDeadlineRow[]) {
+      if (row.status === "QUA_HAN") {
+        lines.push(
+          `  ${row.code}: Q${row.quarter}/${row.year} — QUÁ HẠN ${Math.abs(row.daysUntilDeadline)} ngày`
+        );
+      } else {
+        lines.push(
+          `  ${row.code}: Q${row.quarter}/${row.year} — hạn ${row.deadline} (${row.daysUntilDeadline} ngày)`
+        );
+      }
     }
   }
 

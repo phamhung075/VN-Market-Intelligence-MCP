@@ -28,6 +28,11 @@ import {
   computeRSI,
   computeMA,
 } from "../../domain/services/technicalIndicators.js";
+import {
+  getCurrentDeadline,
+  getNextDeadline,
+  classifyFilingStatus,
+} from "../../domain/services/earningsCalendar.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Named constants
@@ -126,6 +131,23 @@ export interface TaSignal {
   currentPrice: number | null;
 }
 
+/** One BCTC deadline row for watchlist stocks with SAP_DEN or QUA_HAN status. */
+export interface BctcDeadlineRow {
+  /** Watchlist ticker */
+  code: string;
+  /** Sector domain — drives extended deadline for banking/insurance */
+  domain: string;
+  /** Quarter number from DeadlineInfo.quarter */
+  quarter: 1 | 2 | 3 | 4;
+  /** Fiscal year from DeadlineInfo.year */
+  year: number;
+  /** ISO date string YYYY-MM-DD of statutory deadline */
+  deadline: string;
+  /** Negative = overdue; 0–14 = imminent */
+  daysUntilDeadline: number;
+  status: "SAP_DEN" | "QUA_HAN";
+}
+
 /** Evidence score row for the briefing enrichment (Step 16). */
 export interface EvidenceScoreBriefingRow {
   /** Stock ticker */
@@ -196,6 +218,8 @@ export interface DailyBriefing {
   evidenceTopScores?: EvidenceScoreBriefingRow[];
   /** TA signals for watchlist tickers with at least one non-neutral signal */
   taSummary?: TaSignal[];
+  /** BCTC filing deadlines within 14 days for unfiled watchlist stocks; absent on error */
+  upcomingDeadlines?: BctcDeadlineRow[];
   /** ISO 8601 timestamp when this briefing was generated */
   generatedAt: string;
 }
@@ -223,6 +247,11 @@ export interface AssembleBriefingOptions {
    * Returns null when data is insufficient (< 15 candles).
    */
   computeTaFn?: (code: string, db: Database) => TaSignal | null;
+  /**
+   * Injectable clock for Step 18 date computation.
+   * Tests always set this. Production leaves it undefined — defaults to new Date().
+   */
+  nowFn?: () => Date;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -291,6 +320,11 @@ interface OpenPositionRow {
 interface CandleRow {
   day: string;
   close_price: number;
+}
+
+/** Internal: filing date result from financial_reports query. */
+interface FiledAtRow {
+  filed_at: string | null;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -967,6 +1001,106 @@ export async function assembleBriefing(
     });
   }
 
+  // ── Step 18: BCTC upcoming deadlines ──────────────────────────────────────
+  let upcomingDeadlines: BctcDeadlineRow[] = [];
+  try {
+    const today = (options.nowFn ?? (() => new Date()))();
+
+    // Detect whether period_quarter column exists (may be absent in legacy DBs)
+    let hasPeriodQuarter = false;
+    try {
+      const cols = db.query<{ name: string }, []>(
+        "PRAGMA table_info(financial_reports)"
+      ).all();
+      hasPeriodQuarter = cols.some((c) => c.name === "period_quarter");
+    } catch { /* schema probe failed — use fallback */ }
+
+    const filedAtStmtByQuarter = hasPeriodQuarter
+      ? db.prepare<FiledAtRow, [string, number, number]>(`
+          SELECT MAX(parsed_at) AS filed_at
+          FROM financial_reports
+          WHERE action_code = ?
+            AND period_year = ?
+            AND period_quarter = ?
+        `)
+      : null;
+
+    const rows: BctcDeadlineRow[] = [];
+
+    // Helper: query whether a stock has filed for a given quarter/year
+    const queryFiledAt = (code: string, year: number, quarter: number): string | null => {
+      if (filedAtStmtByQuarter) {
+        const r = filedAtStmtByQuarter.get(code, year, quarter);
+        return r?.filed_at ?? null;
+      }
+      // Fallback: match period_type string e.g. 'Q1'
+      const periodType = `Q${quarter}`;
+      const r = db.prepare<FiledAtRow, [string, number, string]>(`
+        SELECT MAX(parsed_at) AS filed_at
+        FROM financial_reports
+        WHERE action_code = ?
+          AND period_year = ?
+          AND period_type = ?
+      `).get(code, year, periodType);
+      return r?.filed_at ?? null;
+    };
+
+    if (!hasPeriodQuarter) {
+      logger.warn("[assembleBriefing] Step 18: period_quarter column absent — using period_type fallback");
+    }
+
+    for (const row of watchlistRows) {
+      try {
+        // Pick the deadline closest to today (minimum |daysUntilDeadline|).
+        // This avoids surfacing stale overdue quarters when a new quarter is
+        // already within the SAP_DEN window.
+        //   - getNextDeadline  → next upcoming (SAP_DEN cases)
+        //   - getCurrentDeadline → last passed (QUA_HAN cases)
+        const nextInfo = getNextDeadline(today, row.domain);
+        const currentInfo = getCurrentDeadline(today, row.domain);
+
+        // Compute days until each candidate (negative = overdue)
+        const daysToCurrent = Math.floor(
+          (currentInfo.deadline.getTime() - today.getTime()) / (24 * 3600_000)
+        );
+        const daysToNext = Math.floor(
+          (nextInfo.deadline.getTime() - today.getTime()) / (24 * 3600_000)
+        );
+
+        // Pick the candidate with smallest absolute day distance to today.
+        // When they are the same quarter, pick either (same result).
+        const info =
+          Math.abs(daysToNext) <= Math.abs(daysToCurrent) ? nextInfo : currentInfo;
+
+        const filedAt = queryFiledAt(row.code, info.year, info.quarter);
+        const fs = classifyFilingStatus(today, {
+          ...info,
+          filingDate: filedAt,
+        });
+
+        if (fs.status === "SAP_DEN" || fs.status === "QUA_HAN") {
+          rows.push({
+            code: row.code,
+            domain: row.domain,
+            quarter: info.quarter,
+            year: info.year,
+            deadline: info.deadline.toISOString().slice(0, 10),
+            daysUntilDeadline: fs.daysUntilDeadline!,
+            status: fs.status,
+          });
+        }
+      } catch { /* per-stock failure — skip silently */ }
+    }
+
+    upcomingDeadlines = rows.sort(
+      (a, b) => a.daysUntilDeadline - b.daysUntilDeadline
+    );
+  } catch (deadlineErr) {
+    logger.warn("[assembleBriefing] upcomingDeadlines step failed", {
+      error: deadlineErr instanceof Error ? deadlineErr.message : String(deadlineErr),
+    });
+  }
+
   // ── Step 13: Persist briefing ─────────────────────────────────────────────
   const date = todayVietnam();
   const generatedAt = new Date().toISOString();
@@ -989,6 +1123,7 @@ export async function assembleBriefing(
     foreignFlowSummary,
     evidenceTopScores,
     taSummary,
+    upcomingDeadlines,
     generatedAt,
   };
 
