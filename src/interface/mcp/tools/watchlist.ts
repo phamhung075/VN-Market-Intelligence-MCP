@@ -283,8 +283,8 @@ export function registerWatchlistTools(server: McpServer): void {
             {
               type: "text" as const,
               text:
-                `Da them ${actionCode} (${exchange}) vao danh sach theo doi.\n` +
-                `Canh bao: giam ${dropPct}% | tang +${risePct}% | impact >= ${impactScore}/10` +
+                `Đã thêm ${actionCode} (${exchange}) vào danh sách theo dõi.\n` +
+                `Cảnh báo: giảm ${dropPct}% | tăng +${risePct}% | impact >= ${impactScore}/10` +
                 suggestion,
             },
           ],

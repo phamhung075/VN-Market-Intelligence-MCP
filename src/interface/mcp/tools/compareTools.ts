@@ -383,7 +383,7 @@ export function registerCompareTools(server: McpServer): void {
         const alertVals = codes.map((c) =>
           String(alertCounts.get(c) ?? 0),
         );
-        lines.push(buildRow("Canh bao (7d)", alertVals));
+        lines.push(buildRow("Cảnh báo (7d)", alertVals));
 
         // Xac tin (conviction score)
         const convictionVals = codes.map((c) => {

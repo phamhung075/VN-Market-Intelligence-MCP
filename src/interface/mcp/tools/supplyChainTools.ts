@@ -76,16 +76,16 @@ export function buildSupplyChainExposureOutput(
       medium: "LUU Y",
       low: "THAP",
     };
-    lines.push(`\nSU KIEN GIAN DOAN [${sevMap[event.severity] ?? event.severity.toUpperCase()}]:`);
-    lines.push(`  Loai: ${event.eventType}`);
-    lines.push(`  Mo ta: ${event.description}`);
-    lines.push(`  Tuyen duong bi anh huong: ${event.affectedRoutes.join(", ")}`);
+    lines.push(`\nSỰ KIỆN GIÁN ĐOẠN [${sevMap[event.severity] ?? event.severity.toUpperCase()}]:`);
+    lines.push(`  Loại: ${event.eventType}`);
+    lines.push(`  Mô tả: ${event.description}`);
+    lines.push(`  Tuyến đường bị ảnh hưởng: ${event.affectedRoutes.join(", ")}`);
     if (event.affectedStocks.length > 0) {
-      lines.push(`  Co phieu bi anh huong: ${event.affectedStocks.join(", ")}`);
+      lines.push(`  Cổ phiếu bị ảnh hưởng: ${event.affectedStocks.join(", ")}`);
     }
-    lines.push(`  Do tin cay: ${Math.round(event.confidence * 100)}%`);
+    lines.push(`  Độ tin cậy: ${Math.round(event.confidence * 100)}%`);
   } else {
-    lines.push("\nSu kien gian doan: Khong phat hien su kien bat thuong");
+    lines.push("\nSự kiện gián đoạn: Không phát hiện sự kiện bất thường");
   }
 
   // ── Section 3: Stock signals ──────────────────────────────────────────────

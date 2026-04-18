@@ -731,7 +731,7 @@ export function registerKinhDichTools(server: McpServer): void {
           const ts = r.timestamp.slice(0, 16).replace("T", " ");
           const confPct = Math.round(r.confidence * 100);
           lines.push(
-            `${ts} | Que ${r.hexagramNumber} ${queName} ${chinese} | Tin hieu: ${r.tradingSignal} | Do tin cay: ${confPct}%`,
+            `${ts} | Quẻ ${r.hexagramNumber} ${queName} ${chinese} | Tín hiệu: ${r.tradingSignal} | Độ tin cậy: ${confPct}%`,
           );
         }
 
@@ -805,7 +805,7 @@ export function registerKinhDichTools(server: McpServer): void {
         lines.push(
           `=== XAC SUAT CHUYEN QUE: Tu Que ${hexagram_number} (${fromName}) ===`,
         );
-        lines.push(`Co phieu: ${code}`);
+        lines.push(`Cổ phiếu: ${code}`);
         lines.push("");
         lines.push("Xac suat chuyen sang (top 10):");
 
@@ -1005,7 +1005,7 @@ export function registerKinhDichTools(server: McpServer): void {
             content: [
               {
                 type: "text" as const,
-                text: `Loi: Khong co du lieu giai thich cho Que ${number} (${meta.name}).`,
+                text: `Lỗi: Không có dữ liệu giải thích cho Quẻ ${number} (${meta.name}).`,
               },
             ],
           };
@@ -1029,13 +1029,13 @@ export function registerKinhDichTools(server: McpServer): void {
         lines.push(`  Hanh dong: ${data.image.action}`);
         lines.push("");
 
-        lines.push(`Tinh trang que:`);
-        lines.push(`  Xu huong: ${data.state.trend}`);
+        lines.push(`Tình trạng quẻ:`);
+        lines.push(`  Xu hướng: ${data.state.trend}`);
         lines.push(`  Su nghiep: ${data.state.career}`);
-        lines.push(`  Canh bao: ${data.state.warning}`);
+        lines.push(`  Cảnh báo: ${data.state.warning}`);
         lines.push("");
 
-        lines.push("6 Hao (tung duong):");
+        lines.push("6 Hào (từng đường):");
         for (const line of data.lines) {
           lines.push(
             `  Hao ${line.position} (${line.name}): ${line.vietnamese}`,
