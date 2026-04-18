@@ -1,7 +1,7 @@
-# Archive — Sprints 133–151
+# Archive — Sprints 133–152
 
 Period: 2026-04-17 → 2026-04-18
-Archived from TASKS.md on Sprint 151 completion.
+Archived from TASKS.md on Sprint 152 completion.
 
 ---
 
@@ -247,4 +247,19 @@ Handoff: docs/handoffs/TASK_1420.md
 Goal: Add upcomingDeadlines BCTC section to morning briefing.
 Branch: task/1422-1423-morning-briefing-upcoming-deadlines
 Handoffs: docs/handoffs/TASK_1422.md, docs/handoffs/TASK_1423.md
+PO sign-off: 2026-04-18
+
+---
+
+## Sprint 152 — COMPLETE (2026-04-18)
+
+| ID | Title | Status | Role |
+|----|-------|--------|------|
+| 1424 | test(evening-summary): TDD RED — sector aggregation assertions | Done | Dev |
+| 1425 | feat(evening-summary): sector aggregation from watchlist movers GREEN | Done | Dev |
+| ARCH | review REQ_1424.md + write TECH_1424.md | Done | Architect |
+
+Goal: feat(evening-summary): sector aggregation from watchlist movers.
+Branch: task/1424-1425-evening-summary-sector-aggregation
+Handoffs: docs/handoffs/TASK_1424.md, docs/handoffs/TASK_1425.md
 PO sign-off: 2026-04-18

@@ -27,13 +27,15 @@
 
 ---
 
-## Sprint 152 — feat(evening-summary): sector aggregation from watchlist movers
+## Sprint 152 — feat(evening-summary): sector aggregation from watchlist movers — COMPLETE (2026-04-18)
 
 | ID | Title | Status | Role |
 |----|-------|--------|------|
-| 1424 | test(evening-summary): TDD RED — sector aggregation assertions | Review | Dev |
-| 1425 | feat(evening-summary): sector aggregation from watchlist movers GREEN | Review | Dev |
+| 1424 | test(evening-summary): TDD RED — sector aggregation assertions | Done | Dev |
+| 1425 | feat(evening-summary): sector aggregation from watchlist movers GREEN | Done | Dev |
 | ARCH | review REQ_1424.md + write TECH_1424.md | Done | Architect |
+
+> Archived: `docs/archive/sprints-133-152.md`
 
 ---
 
