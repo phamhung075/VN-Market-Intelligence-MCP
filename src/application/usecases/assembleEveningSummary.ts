@@ -384,8 +384,47 @@ export async function assembleEveningSummary(
     ? "COALESCE(mp.exchange, w.exchange)"
     : "w.exchange";
 
-  const moverRows = db
-    .prepare<WatchlistMoverRow, []>(`
+  // Check whether daily_ohlcv table exists (may be absent on older DB schemas).
+  const ohlcvExists =
+    db
+      .prepare<{ cnt: number }, []>(
+        `SELECT COUNT(*) AS cnt FROM sqlite_master
+         WHERE type='table' AND name='daily_ohlcv'`,
+      )
+      .get()?.cnt ?? 0;
+
+  // Build watchlist movers query.
+  // When daily_ohlcv exists: use a CTE to compute change_pct from today vs yesterday
+  // close as fallback when market_prices lacks a fresh row for a ticker.
+  // When daily_ohlcv is absent: fall back to simple LEFT JOIN on market_prices only.
+  const moverSql = ohlcvExists
+    ? `
+      WITH ohlcv_change AS (
+        SELECT
+          t.code,
+          t.close AS today_close,
+          CASE
+            WHEN y.close IS NOT NULL AND y.close <> 0
+            THEN (t.close - y.close) * 100.0 / y.close
+            ELSE NULL
+          END AS computed_pct
+        FROM daily_ohlcv t
+        JOIN daily_ohlcv y
+          ON y.code = t.code
+         AND y.date = date(t.date, '-1 day')
+        WHERE t.date = date('now')
+      )
+      SELECT w.code,
+             ${exchangeExpr} AS exchange,
+             COALESCE(mp.price, oc.today_close) AS price,
+             COALESCE(mp.change_pct, oc.computed_pct) AS change_pct
+      FROM watchlist w
+      LEFT JOIN market_prices mp ON mp.code = w.code
+      LEFT JOIN ohlcv_change oc ON oc.code = w.code
+      WHERE ABS(COALESCE(mp.change_pct, oc.computed_pct, 0)) >= 1.0
+      ORDER BY ABS(COALESCE(mp.change_pct, oc.computed_pct, 0)) DESC
+    `
+    : `
       SELECT w.code,
              ${exchangeExpr} AS exchange,
              mp.price,
@@ -394,8 +433,9 @@ export async function assembleEveningSummary(
       LEFT JOIN market_prices mp ON mp.code = w.code
       WHERE ABS(COALESCE(mp.change_pct, 0)) >= 1.0
       ORDER BY ABS(COALESCE(mp.change_pct, 0)) DESC
-    `)
-    .all();
+    `;
+
+  const moverRows = db.prepare<WatchlistMoverRow, []>(moverSql).all();
 
   const watchlistMovers: WatchlistMover[] = moverRows.map((row) => ({
     code: row.code,
