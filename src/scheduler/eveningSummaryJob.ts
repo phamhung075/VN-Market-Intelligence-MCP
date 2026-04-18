@@ -204,7 +204,8 @@ export async function runEveningSummary(
       (summary.taSummary ?? []).some(
         (s) => s.rsiStatus !== "neutral",
       ) ||
-      (summary.portfolioPnl != null && summary.portfolioPnl.items.length > 0);
+      (summary.portfolioPnl != null && summary.portfolioPnl.items.length > 0) ||
+      summary.vnIndex != null;
 
     // Resolve the send function: use injected sendFn for tests, or dynamic import in prod.
     const doSend =
