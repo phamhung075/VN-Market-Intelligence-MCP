@@ -57,7 +57,7 @@
     ],
     "referenceStocks": {
       "banking":       ["VCB", "BID", "CTG", "TCB", "MBB", "VPB", "ACB", "SHB", "EIB", "STB", "HDB", "TPB"],
-      "real_estate":   ["VIC", "VHM", "VRE", "NVL", "KDH", "DXG", "NLG", "PDR", "KBC", "DIG", "HUT", "HDG", "DFF"],
+      "real_estate":   ["VIC", "VHM", "VRE", "NVL", "KDH", "DXG", "NLG", "PDR", "KBC", "DIG", "HDG", "DFF"],
       "steel":         ["HPG", "HSG", "NKG", "TIS", "POM"],
       "oil_gas":       ["GAS", "PLX", "BSR", "PVD", "PVS", "OIL"],
       "aviation":      ["HVN", "VJC", "ACV", "SCS"],
@@ -70,7 +70,7 @@
       "logistics":     ["GMD", "VTP", "VOS", "STG", "HAH"],
       "gold_mining":   ["PNJ"],
       "automotive":    ["VEA", "HAX", "CTF", "TMT", "SMA"],
-      "construction":  ["HHV", "CTD", "VCG", "HBC", "FCN"],
+      "construction":  ["HHV", "CTD", "VCG", "HBC", "FCN", "HUT"],
       "energy":        ["GEG", "REE", "PC1", "BCG"],
       "pharmaceutical":["DHG", "IMP", "DMC", "DBD", "PME", "TRA", "OPC"],
       "other":         ["DGC"]

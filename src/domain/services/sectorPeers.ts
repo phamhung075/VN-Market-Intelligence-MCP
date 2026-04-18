@@ -63,7 +63,6 @@ const SECTOR_PEERS: Record<DomainType, { code: string; exchange: string }[]> = {
     { code: "PDR", exchange: "HOSE" },
     { code: "KBC", exchange: "HOSE" },
     { code: "DIG", exchange: "HOSE" },
-    { code: "HUT", exchange: "HNX" },
     { code: "HDG", exchange: "HOSE" },
     { code: "DFF", exchange: "HOSE" },
   ],
@@ -161,6 +160,7 @@ const SECTOR_PEERS: Record<DomainType, { code: string; exchange: string }[]> = {
     { code: "VCG", exchange: "HOSE" },
     { code: "HBC", exchange: "HOSE" },
     { code: "FCN", exchange: "HOSE" },
+    { code: "HUT", exchange: "HNX" },
   ],
   energy: [
     { code: "GEG", exchange: "HOSE" },
