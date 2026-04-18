@@ -7,10 +7,18 @@
  *   → compute confidence → store in SQLite
  */
 
-import { describe, it, expect, beforeAll, afterAll } from "bun:test";
+import { describe, it, expect, beforeAll, afterAll, mock } from "bun:test";
 import { parseBctcReport } from "../application/usecases/parseBctcReport.js";
 import { initDatabase, getDb, closeDb } from "../infrastructure/db/schema.js";
 import type { FiscalPeriod } from "../../bctc-schema.js";
+
+// Prevent test fixtures (e.g. actionCode="EMPTY") from firing real Telegram messages.
+mock.module("../infrastructure/notifiers/telegram.js", () => ({
+  sendTelegramWork: () => Promise.resolve({ ok: true, messageId: 0 }),
+  sendTelegramMarket: () => Promise.resolve({ ok: true, messageId: 0 }),
+  sendTelegramBug: () => Promise.resolve({ ok: true, messageId: 0 }),
+  sendTelegram: () => Promise.resolve({ ok: true, messageId: 0 }),
+}));
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Test fixtures
