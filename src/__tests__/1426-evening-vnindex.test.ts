@@ -156,9 +156,11 @@ describe("AC-4: vnIndex = undefined when fetchVnIndexFn throws", () => {
 // AC-5..AC-8: runEveningSummary — VN-Index line in Telegram message
 // ─────────────────────────────────────────────────────────────────────────────
 
+type SummaryOverrides = Omit<Partial<EveningSummary>, "vnIndex"> & { vnIndex?: VnIndexSnapshot | undefined };
+
 /** Base summary with vnIndex present */
-function makeSummary(overrides: Partial<EveningSummary> = {}): EveningSummary {
-  return {
+function makeSummary(overrides: SummaryOverrides = {}): EveningSummary {
+  const base: EveningSummary = {
     date: "2026-04-18",
     topAlerts: [],
     topStories: [],
@@ -180,8 +182,19 @@ function makeSummary(overrides: Partial<EveningSummary> = {}): EveningSummary {
       changePct: 0.94,
       fetchedAt: "2026-04-18T15:30:00.000Z",
     },
-    ...overrides,
   };
+  // exactOptionalPropertyTypes: omit vnIndex key entirely when override sets it undefined
+  const { vnIndex: overrideVnIndex, ...rest } = overrides;
+  if ("vnIndex" in overrides) {
+    const result = { ...base, ...rest };
+    if (overrideVnIndex !== undefined) {
+      result.vnIndex = overrideVnIndex;
+    } else {
+      delete result.vnIndex;
+    }
+    return result;
+  }
+  return { ...base, ...rest };
 }
 
 describe("AC-5: VN-Index line at index 1 (immediately after header)", () => {

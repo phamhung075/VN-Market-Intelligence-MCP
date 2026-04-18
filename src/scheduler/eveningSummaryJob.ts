@@ -54,6 +54,11 @@ export function resetEveningSummaryGuard(): void {
 // Formatting helpers
 // ─────────────────────────────────────────────────────────────────────────────
 
+/** Vietnamese dot-thousands formatter: 1285 → "1.285" */
+function fmtThousands(n: number): string {
+  return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+}
+
 /**
  * Formats watchlistMovers into sector-grouped + flat lines.
  * Exported for unit-test isolation (Task 1424 / 1425).
@@ -215,6 +220,17 @@ export async function runEveningSummary(
     if (hasContent) {
       try {
         const lines: string[] = [`TÓM TẮT BUỔI TỐI ${summary.date}`];
+
+        // VN-Index close — first content line (FR-4, REQ-1426)
+        if (summary.vnIndex) {
+          const { close, change, changePct } = summary.vnIndex;
+          const closeFmt = fmtThousands(close);
+          const chSign = change >= 0 ? "+" : "";
+          const pctSign = changePct >= 0 ? "+" : "";
+          lines.push(
+            `VN-Index: ${closeFmt} (${chSign}${Math.round(change)} / ${pctSign}${changePct.toFixed(2)}%)`,
+          );
+        }
 
         if (summary.topAlerts.length > 0) {
           lines.push("");
