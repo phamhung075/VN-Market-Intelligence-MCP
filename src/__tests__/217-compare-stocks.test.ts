@@ -287,14 +287,14 @@ describe("Task 217 — compare_stocks MCP tool", () => {
 
   // ── 7. Alert count ────────────────────────────────────────────────────────
 
-  it("output contains Canh bao row with alert counts for last 7 days", async () => {
+  it("output contains Cảnh báo row with alert counts for last 7 days", async () => {
     seedPrices();
     seedAlerts();
     const result = await callTool(server, "compare_stocks", {
       codes: ["VCB", "FPT", "HPG", "VNM"],
     });
     const text = firstText(result);
-    expect(text).toMatch(/Canh bao/i);
+    expect(text).toMatch(/C[aả]nh b[aá]o/i);
   });
 
   it("counts VCB alerts correctly (3 in last 7 days)", async () => {
@@ -307,7 +307,7 @@ describe("Task 217 — compare_stocks MCP tool", () => {
     // VCB has 3 alerts; FPT has 1 alert
     // The text should contain "3" and "1" in the Canh bao row
     const lines = text.split("\n");
-    const alertLine = lines.find((l) => /Canh bao/i.test(l));
+    const alertLine = lines.find((l) => /C[aả]nh b[aá]o/i.test(l));
     expect(alertLine).toBeDefined();
     expect(alertLine!).toContain("3");
   });
@@ -320,7 +320,7 @@ describe("Task 217 — compare_stocks MCP tool", () => {
     });
     const text = firstText(result);
     const lines = text.split("\n");
-    const alertLine = lines.find((l) => /Canh bao/i.test(l));
+    const alertLine = lines.find((l) => /C[aả]nh b[aá]o/i.test(l));
     expect(alertLine).toBeDefined();
     // VNM should show 0 (old alert excluded)
     expect(alertLine!).toContain("0");

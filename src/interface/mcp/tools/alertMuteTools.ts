@@ -139,7 +139,7 @@ export function registerAlertMuteTools(server: McpServer): void {
         const lines: string[] = [];
         if (isExpired) {
           lines.push(
-            `${code}: lenh tat tieng da het han (${formatViDate(wasUntil)}). Canh bao da duoc bat lai.`,
+            `${code}: lệnh tắt tiếng đã hết hạn (${formatViDate(wasUntil)}). Cảnh báo đã được bật lại.`,
           );
         } else {
           lines.push(
