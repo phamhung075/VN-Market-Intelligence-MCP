@@ -228,18 +228,18 @@ function formatReport(code: string, candles: DailyCandle[], lookbackDays: number
   let verdict: string;
   let phrase: string;
   if (tangCount >= giamCount && tangCount > total / 2) {
-    verdict = "TANG";
-    phrase = "co the xem xet MUA khi RSI < 70";
+    verdict = "TĂNG";
+    phrase = "có thể xem xét MUA khi RSI < 70";
   } else if (giamCount > tangCount && giamCount > total / 2) {
-    verdict = "GIAM";
-    phrase = "can than — co the xem xet chot loi hoac cho them xac nhan";
+    verdict = "GIẢM";
+    phrase = "cẩn thận — có thể xem xét chốt lời hoặc chờ thêm xác nhận";
   } else {
-    verdict = "TRUNG TINH";
-    phrase = "chua ro xu huong — theo doi them truoc khi hanh dong";
+    verdict = "TRUNG TÍNH";
+    phrase = "chưa rõ xu hướng — theo dõi thêm trước khi hành động";
   }
 
-  lines.push(`Ket luan: ${tangCount}/${total} chi bao TANG — ${phrase}`);
-  lines.push(`Tong the: ${verdict}`);
+  lines.push(`Kết luận: ${tangCount}/${total} chỉ báo TĂNG — ${phrase}`);
+  lines.push(`Tổng thể: ${verdict}`);
 
   return lines.join("\n");
 }
