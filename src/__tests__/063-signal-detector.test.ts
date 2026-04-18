@@ -42,6 +42,9 @@ function oldIso(hoursAgo: number = 48): string {
 // ---------------------------------------------------------------------------
 
 describe("Task 063 — Signal Detector", () => {
+  // Safe clock outside ATC window (07:30–08:35 UTC) to avoid time-flakes.
+  const safeNow = new Date("2026-04-18T10:00:00Z");
+
   // TC-1: price drop triggers price_drop
   it("returns price_drop signal when price falls by -5%", () => {
     const snapshot = makeSnapshot({
@@ -132,7 +135,7 @@ describe("Task 063 — Signal Detector", () => {
       avgVolume: 1_000_000,
     });
 
-    const signals = detectSignals(snapshot);
+    const signals = detectSignals(snapshot, { _now: safeNow });
 
     const types = signals.map((s) => s.type);
     expect(types).toContain("volume_spike");
@@ -162,6 +165,7 @@ describe("Task 063 — Signal Detector", () => {
     const context: SignalContext = {
       latestReportDate: recentIso(10), // → report_new
       recentNews: [{ title: "VCB bán vốn nhà nước", source: "Reuters" }], // → news_mention
+      _now: safeNow,
     };
 
     const signals = detectSignals(snapshot, context);

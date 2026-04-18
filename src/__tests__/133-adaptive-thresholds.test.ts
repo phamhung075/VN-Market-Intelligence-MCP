@@ -227,6 +227,9 @@ describe("Task 133 — Volatility Calculator", () => {
 // ---------------------------------------------------------------------------
 
 describe("Task 133 — Signal Detector with Adaptive Volatility", () => {
+  // Safe clock outside ATC window (07:30–08:35 UTC) to avoid time-flakes.
+  const safeNow = new Date("2026-04-18T10:00:00Z");
+
   // TC-17: detectSignals uses adaptive thresholds when volatility provided
   it("uses adaptive drop threshold when volatility is provided", () => {
     // Stable stock: adaptive threshold = -3%, fixed default = -5%
@@ -300,7 +303,7 @@ describe("Task 133 — Signal Detector with Adaptive Volatility", () => {
       avgVolume: 1_000_000,
     });
 
-    const signals = detectSignals(snapshot, { volatility: vol });
+    const signals = detectSignals(snapshot, { volatility: vol, _now: safeNow });
     expect(signals.map((s) => s.type)).toContain("volume_spike");
   });
 

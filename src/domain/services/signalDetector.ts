@@ -238,13 +238,14 @@ export function detectSignals(
   }
 
   // ── 2. Volume spike ──────────────────────────────────────────────────────
-  // Suppress during VN ATC closing auction (14:30-15:00 VN = 07:30-08:00 UTC).
-  // ATC concentrates end-of-day orders into a single batch, producing uniform
-  // ~5.3× spikes across ALL stocks — pure false positives (report #1083).
+  // Suppress during VN ATC closing auction (14:30-15:00 VN = 07:30-08:00 UTC)
+  // AND post-close volume flush (15:00-15:35 VN = 08:00-08:35 UTC).
+  // ATC concentrates end-of-day orders; post-close flush drains residual orders —
+  // both produce uniform false-positive spikes (report #1083, sprint 142).
   const utcNow = context?._now ?? new Date();
   const utcH = utcNow.getUTCHours();
   const utcM = utcNow.getUTCMinutes();
-  const isAtcWindow = (utcH === 7 && utcM >= 30) || (utcH === 8 && utcM <= 5);
+  const isAtcWindow = (utcH === 7 && utcM >= 30) || (utcH === 8 && utcM <= 35);
 
   if (!isAtcWindow && avgVolume > 0 && volume >= avgVolume * volumeMultiplier) {
     const multiplier = volume / avgVolume;
