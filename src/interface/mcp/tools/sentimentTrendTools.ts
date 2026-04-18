@@ -90,23 +90,23 @@ function fetchSentimentEntries(
  * Tom tat: VNM co xu huong tich cuc ...
  * ```
  */
-function formatTrendOutput(
+export function formatTrendOutput(
   trend: ReturnType<typeof computeSentimentTrend>,
 ): string {
   const lines: string[] = [];
 
-  lines.push(`Xu huong tam ly ${trend.code} (${trend.windowDays} ngay)`);
+  lines.push(`Xu hướng tâm lý ${trend.code} (${trend.windowDays} ngày)`);
   lines.push("");
 
   if (trend.dailyBreakdown.length === 0) {
-    lines.push(`Khong co du lieu cam tinh cho ${trend.code} trong ${trend.windowDays} ngay qua.`);
+    lines.push(`Không có dữ liệu cảm tính cho ${trend.code} trong ${trend.windowDays} ngày qua.`);
     lines.push("");
-    lines.push(`Tom tat: ${trend.summary}`);
+    lines.push(`Tóm tắt: ${trend.summary}`);
     return lines.join("\n");
   }
 
   // Header
-  lines.push("Ngay   | Tin  | Tich cuc | Tieu cuc | Trung lap | Diem");
+  lines.push("Ngày   | Tin  | Tích cực | Tiêu cực | Trung lập | Điểm");
   lines.push("-------|------|----------|----------|-----------|-----");
 
   for (const day of trend.dailyBreakdown) {
@@ -133,14 +133,14 @@ function formatTrendOutput(
   // Trend direction label
   const dirLabel =
     trend.trendDirection === "improving"
-      ? "DANG CAI THIEN"
+      ? "ĐANG CẢI THIỆN"
       : trend.trendDirection === "deteriorating"
-        ? "DANG XAU DI"
-        : "ON DINH";
+        ? "ĐANG XẤU ĐI"
+        : "ỔN ĐỊNH";
 
   const slopeSign = trend.slope >= 0 ? "+" : "";
-  lines.push(`Xu huong: ${dirLabel} (slope: ${slopeSign}${trend.slope.toFixed(2)})`);
-  lines.push(`Tom tat: ${trend.summary}`);
+  lines.push(`Xu hướng: ${dirLabel} (slope: ${slopeSign}${trend.slope.toFixed(2)})`);
+  lines.push(`Tóm tắt: ${trend.summary}`);
 
   return lines.join("\n");
 }

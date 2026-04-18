@@ -69,15 +69,15 @@ function fmtPct(pct: number): string {
  *
  *   Tong gia tri: 142,500,000 VND | Tong lai/lo: +7,500,000 VND (+5.6%)
  */
-function buildPortfolioText(positions: PositionWithPnl[]): string {
+export function buildPortfolioText(positions: PositionWithPnl[]): string {
   if (positions.length === 0) {
-    return "Danh muc dau tu trong. Dung set_position de them vi the moi.";
+    return "Danh mục đầu tư trống. Dùng set_position để thêm vị thế mới.";
   }
 
   const lines: string[] = [
-    `Danh muc dau tu (${positions.length} vi the)`,
+    `Danh mục đầu tư (${positions.length} vị thế)`,
     "",
-    "Ma     | So luong | Gia TB         | Gia hien tai   | Lai/Lo",
+    "Mã     | Số lượng | Giá TB         | Giá hiện tại   | Lãi/Lỗ",
     "-------|----------|----------------|----------------|-----------------------------",
   ];
 
@@ -106,10 +106,10 @@ function buildPortfolioText(positions: PositionWithPnl[]): string {
   if (totalCost > 0 && totalValue > 0) {
     const totalPnlPct = (totalPnl / totalCost) * 100;
     lines.push(
-      `Tong gia tri: ${fmtVnd(totalValue)} VND | Tong lai/lo: ${fmtPnl(totalPnl)} (${fmtPct(totalPnlPct)})`,
+      `Tổng giá trị: ${fmtVnd(totalValue)} VND | Tổng lãi/lỗ: ${fmtPnl(totalPnl)} (${fmtPct(totalPnlPct)})`,
     );
   } else {
-    lines.push(`Tong gia von: ${fmtVnd(totalCost)} VND | Chua co gia thi truong`);
+    lines.push(`Tổng giá vốn: ${fmtVnd(totalCost)} VND | Chưa có giá thị trường`);
   }
 
   return lines.join("\n");
@@ -225,11 +225,11 @@ export function registerPositionTools(server: McpServer, _testDb?: Database): vo
             {
               type: "text" as const,
               text:
-                `Vi the ${actionCode} da duoc luu:\n` +
-                `  So luong: ${fmtVnd(shares)} co phieu\n` +
-                `  Gia trung binh: ${fmtVnd(avgPrice)} VND\n` +
-                `  Von dau tu: ${fmtVnd(costBasis)} VND` +
-                (notes ? `\n  Ghi chu: ${notes}` : ""),
+                `Vị thế ${actionCode} đã được lưu:\n` +
+                `  Số lượng: ${fmtVnd(shares)} cổ phiếu\n` +
+                `  Giá trung bình: ${fmtVnd(avgPrice)} VND\n` +
+                `  Vốn đầu tư: ${fmtVnd(costBasis)} VND` +
+                (notes ? `\n  Ghi chú: ${notes}` : ""),
             },
           ],
         };
@@ -305,8 +305,8 @@ export function registerPositionTools(server: McpServer, _testDb?: Database): vo
             {
               type: "text" as const,
               text: closed
-                ? `Vi the ${actionCode} da duoc dong lai.`
-                : `Khong tim thay vi the mo nao cho ${actionCode}.`,
+                ? `Vị thế ${actionCode} đã được đóng lại.`
+                : `Không tìm thấy vị thế mở nào cho ${actionCode}.`,
             },
           ],
         };

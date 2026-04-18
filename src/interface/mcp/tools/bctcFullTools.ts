@@ -85,9 +85,9 @@ interface RagRow {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** Convert million VND → "X,XXX.X tỷ VND" */
-function fmtBillions(millionVnd: number): string {
+export function fmtBillions(millionVnd: number): string {
   const billion = millionVnd / 1000;
-  return `${billion.toLocaleString("vi-VN", { maximumFractionDigits: 1 })} ty VND`;
+  return `${billion.toLocaleString("vi-VN", { maximumFractionDigits: 1 })} tỷ VND`;
 }
 
 /** Format percentage — null → "N/A" */
@@ -229,7 +229,7 @@ function buildComparisonSection(
   if (!priorRow) {
     return [
       `=== QoQ/YoY COMPARISON ===`,
-      `Chi co mot ky bao cao. Khong du du lieu de so sanh.`,
+      `Chỉ có một kỳ báo cáo. Không đủ dữ liệu để so sánh.`,
     ].join("\n");
   }
 
@@ -292,10 +292,10 @@ function buildSentimentSection(db: Database, code: string): string {
 
   const dirLabel =
     trend.trendDirection === "improving"
-      ? "TANG (dang cai thien)"
+      ? "TĂNG (đang cải thiện)"
       : trend.trendDirection === "deteriorating"
-        ? "GIAM (dang xau di)"
-        : "ON DINH";
+        ? "GIẢM (đang xấu đi)"
+        : "ỔN ĐỊNH";
 
   const slopeSign = trend.slope >= 0 ? "+" : "";
   const rSquared = entries.length >= 2
@@ -308,7 +308,7 @@ function buildSentimentSection(db: Database, code: string): string {
   ];
 
   if (entries.length === 0) {
-    lines.push(`Khong co du lieu cam tinh cho ${code} trong ${WINDOW_DAYS} ngay qua.`);
+    lines.push(`Không có dữ liệu cảm tính cho ${code} trong ${WINDOW_DAYS} ngày qua.`);
   } else {
     lines.push(`Direction: ${dirLabel}`);
     lines.push(`Slope: ${slopeSign}${trend.slope.toFixed(2)}${rSquared}`);
@@ -386,7 +386,7 @@ export function registerBctcFullTools(
             content: [
               {
                 type: "text" as const,
-                text: `Chua co du lieu BCTC cho ${upperCode}. Kiem tra bang list_stored_pdfs.`,
+                text: `Chưa có dữ liệu BCTC cho ${upperCode}. Kiểm tra bằng list_stored_pdfs.`,
               },
             ],
           };

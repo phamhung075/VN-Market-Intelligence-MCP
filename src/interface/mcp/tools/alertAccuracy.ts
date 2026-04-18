@@ -234,19 +234,62 @@ function scoreAlert(
 // Output formatter
 // ─────────────────────────────────────────────────────────────────────────────
 
-function formatAccuracyReport(
+/**
+ * Format accuracy report from pre-scored alert rows.
+ * Exported for testability (task 1411).
+ *
+ * @param rows   - AlertRow array (empty → no-data message)
+ * @param days   - Lookback window echoed in header
+ * @param filter - Optional stock code filter
+ */
+export function formatAccuracyReport(
+  rows: AlertRow[],
   days: number,
-  actionCodeFilter: string | undefined,
-  totalAlerts: number,
-  hits: number,
-  misses: number,
-  unknowns: number,
-  signalBreakdown: Map<string, { hit: number; miss: number; unknown: number }>,
-  stockBreakdown: Map<string, { hit: number; miss: number; unknown: number }>,
+  filter?: string,
 ): string {
+  if (rows.length === 0) {
+    const filterSuffix = filter ? ` cho ${filter}` : "";
+    return `Không có dữ liệu để đánh giá${filterSuffix} trong ${days} ngày qua.`;
+  }
+
+  let totalAlerts = 0;
+  let hits = 0;
+  let misses = 0;
+  let unknowns = 0;
+  const signalBreakdown = new Map<string, { hit: number; miss: number; unknown: number }>();
+  const stockBreakdown = new Map<string, { hit: number; miss: number; unknown: number }>();
+
+  for (const row of rows) {
+    const signalTypes = extractSignalTypes(row.signals_json);
+    const code = extractPrimaryCode(row.affected_actions_json);
+    if (!code) continue;
+    if (filter && code !== filter) continue;
+
+    const predictedDir = alertPredictedDirection(signalTypes);
+    const result = scoreAlert(predictedDir, row.triggered_at, code);
+
+    totalAlerts++;
+    if (result === "HIT") hits++;
+    else if (result === "MISS") misses++;
+    else unknowns++;
+
+    const primarySignal = signalTypes[0] ?? "unknown";
+    const sigCounts = signalBreakdown.get(primarySignal) ?? { hit: 0, miss: 0, unknown: 0 };
+    if (result === "HIT") sigCounts.hit++;
+    else if (result === "MISS") sigCounts.miss++;
+    else sigCounts.unknown++;
+    signalBreakdown.set(primarySignal, sigCounts);
+
+    const stockCounts = stockBreakdown.get(code) ?? { hit: 0, miss: 0, unknown: 0 };
+    if (result === "HIT") stockCounts.hit++;
+    else if (result === "MISS") stockCounts.miss++;
+    else stockCounts.unknown++;
+    stockBreakdown.set(code, stockCounts);
+  }
+
   if (totalAlerts === 0) {
-    const filter = actionCodeFilter ? ` cho ${actionCodeFilter}` : "";
-    return `Khong co du lieu de danh gia${filter} trong ${days} ngay qua.`;
+    const filterSuffix = filter ? ` cho ${filter}` : "";
+    return `Không có dữ liệu để đánh giá${filterSuffix} trong ${days} ngày qua.`;
   }
 
   const hitPct = Math.round((hits / totalAlerts) * 100);
@@ -254,25 +297,24 @@ function formatAccuracyReport(
   const unknownPct = 100 - hitPct - missPct;
 
   const lines: string[] = [
-    `Do chinh xac tin hieu (${days} ngay)`,
+    `Độ chính xác tín hiệu (${days} ngày)`,
     "",
   ];
 
-  if (actionCodeFilter) {
-    lines.push(`Co phieu: ${actionCodeFilter}`);
+  if (filter) {
+    lines.push(`Cổ phiếu: ${filter}`);
     lines.push("");
   }
 
   lines.push(
-    `Tong: ${totalAlerts} canh bao | Hit: ${hits} (${hitPct}%) | Miss: ${misses} (${missPct}%) | Unknown: ${unknowns} (${unknownPct}%)`,
+    `Tổng: ${totalAlerts} cảnh báo | Hit: ${hits} (${hitPct}%) | Miss: ${misses} (${missPct}%) | Unknown: ${unknowns} (${unknownPct}%)`,
   );
 
   // ── Signal type breakdown ─────────────────────────────────────────────────
   if (signalBreakdown.size > 0) {
     lines.push("");
-    lines.push("Phan tich theo loai tin hieu:");
+    lines.push("Phân tích theo loại tín hiệu:");
 
-    // Sort by scoreable (hit+miss) count descending
     const sorted = [...signalBreakdown.entries()].sort(
       ([, a], [, b]) => b.hit + b.miss - (a.hit + a.miss),
     );
@@ -283,14 +325,12 @@ function formatAccuracyReport(
         lines.push(`  ${sigType}: N/A (${counts.unknown} unknown)`);
       } else {
         const pct = Math.round((counts.hit / scoreable) * 100);
-        lines.push(
-          `  ${sigType}: ${pct}% (${counts.hit}/${scoreable})`,
-        );
+        lines.push(`  ${sigType}: ${pct}% (${counts.hit}/${scoreable})`);
       }
     }
   }
 
-  // ── Stock breakdown — worst performers (by accuracy on scoreable) ─────────
+  // ── Stock breakdown — worst performers ───────────────────────────────────
   const worstStocks: Array<{ code: string; hit: number; total: number; accuracy: number }> = [];
 
   for (const [code, counts] of stockBreakdown.entries()) {
@@ -300,19 +340,16 @@ function formatAccuracyReport(
     worstStocks.push({ code, hit: counts.hit, total: scoreable, accuracy });
   }
 
-  // Sort ascending by accuracy (worst first)
   worstStocks.sort((a, b) => a.accuracy - b.accuracy);
 
   if (worstStocks.length > 0) {
     lines.push("");
-    lines.push("Co phieu chinh xac thap nhat:");
+    lines.push("Cổ phiếu chính xác thấp nhất:");
 
     const displayCount = Math.min(5, worstStocks.length);
     for (let i = 0; i < displayCount; i++) {
       const s = worstStocks[i]!;
-      lines.push(
-        `  ${s.code}: ${s.total} canh bao, ${s.accuracy}% chinh xac`,
-      );
+      lines.push(`  ${s.code}: ${s.total} cảnh báo, ${s.accuracy}% chính xác`);
     }
   }
 
@@ -375,61 +412,7 @@ export function registerAlertAccuracyTool(server: McpServer): void {
           .all(...queryParams) as AlertRow[];
 
         // ── Score each alert ───────────────────────────────────────────────
-        let totalAlerts = 0;
-        let hits = 0;
-        let misses = 0;
-        let unknowns = 0;
-
-        const signalBreakdown = new Map<
-          string,
-          { hit: number; miss: number; unknown: number }
-        >();
-        const stockBreakdown = new Map<
-          string,
-          { hit: number; miss: number; unknown: number }
-        >();
-
-        for (const row of alertRows) {
-          const signalTypes = extractSignalTypes(row.signals_json);
-          const code = extractPrimaryCode(row.affected_actions_json);
-
-          if (!code) continue; // skip alerts without a stock code
-          if (actionCode && code !== actionCode) continue;
-
-          const predictedDir = alertPredictedDirection(signalTypes);
-          const result = scoreAlert(predictedDir, row.triggered_at, code);
-
-          totalAlerts++;
-          if (result === "HIT") hits++;
-          else if (result === "MISS") misses++;
-          else unknowns++;
-
-          // Update signal breakdown
-          const primarySignal = signalTypes[0] ?? "unknown";
-          const sigCounts = signalBreakdown.get(primarySignal) ?? { hit: 0, miss: 0, unknown: 0 };
-          if (result === "HIT") sigCounts.hit++;
-          else if (result === "MISS") sigCounts.miss++;
-          else sigCounts.unknown++;
-          signalBreakdown.set(primarySignal, sigCounts);
-
-          // Update stock breakdown
-          const stockCounts = stockBreakdown.get(code) ?? { hit: 0, miss: 0, unknown: 0 };
-          if (result === "HIT") stockCounts.hit++;
-          else if (result === "MISS") stockCounts.miss++;
-          else stockCounts.unknown++;
-          stockBreakdown.set(code, stockCounts);
-        }
-
-        const text = formatAccuracyReport(
-          days,
-          actionCode,
-          totalAlerts,
-          hits,
-          misses,
-          unknowns,
-          signalBreakdown,
-          stockBreakdown,
-        );
+        const text = formatAccuracyReport(alertRows, days, actionCode);
 
         return {
           content: [{ type: "text" as const, text }],
@@ -440,7 +423,7 @@ export function registerAlertAccuracyTool(server: McpServer): void {
           content: [
             {
               type: "text" as const,
-              text: `Loi khi tinh toan do chinh xac: ${(err as Error).message}`,
+              text: `Lỗi khi tính toán độ chính xác: ${(err as Error).message}`,
             },
           ],
         };

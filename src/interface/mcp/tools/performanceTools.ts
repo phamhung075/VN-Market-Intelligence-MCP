@@ -111,21 +111,21 @@ function extractPrimaryCode(json: string | null): string | null {
  * @param days         - Lookback period in days (for header)
  * @param signalFilter - Optional signal type filter applied (for header)
  */
-function formatAttribution(
+export function formatAttribution(
   performances: ReturnType<typeof computeAttribution>,
   days: number,
   signalFilter: string | undefined,
 ): string {
   if (performances.length === 0) {
     const filterNote = signalFilter ? ` (${signalFilter})` : "";
-    return `Khong co du lieu${filterNote} trong ${days} ngay qua.`;
+    return `Không có dữ liệu${filterNote} trong ${days} ngày qua.`;
   }
 
   const lines: string[] = [];
 
   // ── Header ────────────────────────────────────────────────────────────────
-  const filterNote = signalFilter ? ` - Loc: ${signalFilter}` : "";
-  lines.push(`Hieu suat theo loai tin hieu (${days} ngay)${filterNote}`);
+  const filterNote = signalFilter ? ` - Lọc: ${signalFilter}` : "";
+  lines.push(`Hiệu suất theo loại tín hiệu (${days} ngày)${filterNote}`);
   lines.push("");
 
   // ── Table header ──────────────────────────────────────────────────────────
@@ -133,9 +133,9 @@ function formatAttribution(
   const numCol = (n: number | string, w = 6) => String(n).padStart(w);
 
   const header =
-    "Loai".padEnd(COL_W) +
+    "Loại".padEnd(COL_W) +
     "| " + numCol("SL") + " " +
-    "| " + numCol("Thang") + " " +
+    "| " + numCol("Thắng") + " " +
     "| " + numCol("Thua") + " " +
     "| " + numCol("TB %", 7) + " " +
     "| " + numCol("Win Rate", 9);
@@ -179,7 +179,7 @@ function formatAttribution(
       : 0;
 
   lines.push(
-    `Tong: ${totalAlerts} alerts | Win Rate trung binh: ${avgWinRate}%`,
+    `Tổng: ${totalAlerts} alerts | Win Rate trung bình: ${avgWinRate}%`,
   );
 
   return lines.join("\n");
@@ -302,7 +302,7 @@ export function registerPerformanceTools(server: McpServer): void {
           content: [
             {
               type: "text" as const,
-              text: `Loi khi tinh toan hieu suat: ${(err as Error).message}`,
+              text: `Lỗi khi tính toán hiệu suất: ${(err as Error).message}`,
             },
           ],
         };

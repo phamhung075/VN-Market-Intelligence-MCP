@@ -179,30 +179,30 @@ function pad(s: string, width: number): string {
  *
  *   Diem da dang hoa: 0.58 / 1.00 (Trung binh)
  */
-function formatOutput(
+export function formatOutput(
   correlations: { pair: [string, string]; r: number }[],
-  score: number,
-  days: number,
   stockCount: number,
+  days: number,
 ): string {
+  const score = correlations.length > 0 ? diversificationScore(correlations) : 0;
   const lines: string[] = [];
 
-  lines.push(`=== Ma tran tuong quan (${days} ngay gan nhat) ===`);
-  lines.push(`Co phieu phan tich: ${stockCount}  |  Cap tuong quan: ${correlations.length}`);
+  lines.push(`=== Ma trận tương quan (${days} ngày gần nhất) ===`);
+  lines.push(`Cổ phiếu phân tích: ${stockCount}  |  Cặp tương quan: ${correlations.length}`);
   lines.push("");
 
   if (correlations.length === 0) {
     lines.push(
-      "Khong du du lieu lich su gia de tinh tuong quan.",
-      "Vui long cho he thong thu thap du lieu (toi thieu 2 ngay x 2 co phieu).",
+      "Không đủ dữ liệu lịch sử giá để tính tương quan,",
+      "Vui lòng chờ hệ thống thu thập dữ liệu (tối thiểu 2 ngày × 2 cổ phiếu).",
     );
   } else {
     // Table header
     const hdr = [
-      pad("Ma 1", 6),
-      pad("Ma 2", 6),
-      pad("Tuong quan", 12),
-      "Muc do",
+      pad("Mã 1", 6),
+      pad("Mã 2", 6),
+      pad("Tương quan", 12),
+      "Mức độ",
     ].join(" | ");
     lines.push(hdr);
     lines.push("-".repeat(hdr.length));
@@ -227,18 +227,18 @@ function formatOutput(
     lines.push("");
     const grade = diversificationGrade(score);
     lines.push(
-      `Diem da dang hoa: ${score.toFixed(2)} / 1.00 (${grade})`,
+      `Điểm đa dạng hoá: ${score.toFixed(2)} / 1.00 (${grade})`,
     );
 
     // Interpretation note
     if (score >= 0.8) {
-      lines.push("-> Danh muc da dang hoa tot. Rui ro tap trung thap.");
+      lines.push("-> Danh mục đa dạng hoá tốt. Rủi ro tập trung thấp.");
     } else if (score >= 0.6) {
-      lines.push("-> Danh muc da dang hoa trung binh.");
+      lines.push("-> Danh mục đa dạng hoá trung bình.");
     } else if (score >= 0.4) {
-      lines.push("-> Danh muc it da dang hoa. Xem xet them co phieu cac nganh khac.");
+      lines.push("-> Danh mục ít đa dạng hoá. Xem xét thêm cổ phiếu các ngành khác.");
     } else {
-      lines.push("-> Danh muc tap trung cao, cac co phieu bien dong cung chieu!");
+      lines.push("-> Danh mục tập trung cao, các cổ phiếu biến động cùng chiều!");
     }
   }
 
@@ -316,10 +316,10 @@ export function registerCorrelationTools(server: McpServer): void {
               {
                 type: "text" as const,
                 text: [
-                  "=== Ma tran tuong quan ===",
+                  "=== Ma trận tương quan ===",
                   "",
-                  "Watchlist trong (khong co co phieu). ",
-                  "Vui long them co phieu vao watchlist truoc (add_watchlist_stock).",
+                  "Watchlist trống (không có cổ phiếu). ",
+                  "Vui lòng thêm cổ phiếu vào watchlist trước (add_watchlist_stock).",
                 ].join("\n"),
               },
             ],
@@ -340,14 +340,12 @@ export function registerCorrelationTools(server: McpServer): void {
 
         // ── Compute correlations ─────────────────────────────────────────────
         const correlations = computeCorrelationMatrix(returnSeries);
-        const score = diversificationScore(correlations);
 
         // ── Format output ────────────────────────────────────────────────────
         const text = formatOutput(
           correlations,
-          score,
-          days,
           returnSeries.size,
+          days,
         );
 
         return { content: [{ type: "text" as const, text }] };
@@ -359,7 +357,7 @@ export function registerCorrelationTools(server: McpServer): void {
           content: [
             {
               type: "text" as const,
-              text: `Loi khi tinh ma tran tuong quan: ${(err as Error).message}`,
+              text: `Lỗi khi tính ma trận tương quan: ${(err as Error).message}`,
             },
           ],
         };
