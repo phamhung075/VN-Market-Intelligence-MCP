@@ -11,7 +11,7 @@
 | 1420 | wrap-missing-jobs-recordJobRun | Done |
 | 1421 | ohlcv-health-digest-fix | Done |
 
-> Archived: `docs/archive/sprints-133-150.md`
+> Archived: `docs/archive/sprints-133-154.md`
 
 ---
 
@@ -23,7 +23,7 @@
 | 1423 | feat(morning-briefing): add upcomingDeadlines BCTC section GREEN | Done | Dev |
 | ARCH | review REQ_1422.md + write TECH_1422.md | Done | Architect |
 
-> Archived: `docs/archive/sprints-133-151.md`
+> Archived: `docs/archive/sprints-133-154.md`
 
 ---
 
@@ -35,7 +35,7 @@
 | 1425 | feat(evening-summary): sector aggregation from watchlist movers GREEN | Done | Dev |
 | ARCH | review REQ_1424.md + write TECH_1424.md | Done | Architect |
 
-> Archived: `docs/archive/sprints-133-152.md`
+> Archived: `docs/archive/sprints-133-154.md`
 
 ---
 
@@ -47,16 +47,19 @@
 | 1427 | feat(evening-summary): add vnIndex to EveningSummary + formatter GREEN | Done | Dev |
 | ARCH | review REQ_1426.md + write TECH_1426.md | Done | Architect |
 
-> Archived: `docs/archive/sprints-133-153.md`
+> Archived: `docs/archive/sprints-133-154.md`
 
 ---
 
-## Sprint 154 — fix(evening-ta-filter): restrict TA section to RSI overbought/oversold only
+## Sprint 154 — fix(evening-ta-filter): restrict TA section to RSI overbought/oversold only — COMPLETE (2026-04-18)
 
 | ID | Title | Status | Role |
 |----|-------|--------|------|
-| 1428 | test(evening-ta-filter): TDD RED — RSI-only TA filter assertions | Review | Dev |
-| 1429 | fix(evening-ta-filter): change both predicates to rsiStatus-only GREEN | Review | Dev |
+| 1428 | test(evening-ta-filter): TDD RED — RSI-only TA filter assertions | Done | Dev |
+| 1429 | fix(evening-ta-filter): change both predicates to rsiStatus-only GREEN | Done | Dev |
+
+> Report: `reports/TASK_REPORT_1428.md`
+> Archived: `docs/archive/sprints-133-154.md`
 
 ---
 

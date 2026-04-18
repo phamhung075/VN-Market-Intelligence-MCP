@@ -1,7 +1,7 @@
-# Archive — Sprints 133–153
+# Archive — Sprints 133–154
 
 Period: 2026-04-17 → 2026-04-18
-Archived from TASKS.md on Sprint 153 completion.
+Archived from TASKS.md on Sprint 154 completion.
 
 ---
 
@@ -277,4 +277,18 @@ PO sign-off: 2026-04-18
 Goal: feat(evening-summary): VN-Index close price added to evening summary.
 Branch: task/1426-evening-vnindex
 Handoffs: docs/handoffs/TASK_1426.md, docs/handoffs/TASK_1427.md
+PO sign-off: 2026-04-18
+
+---
+
+## Sprint 154 — COMPLETE (2026-04-18)
+
+| ID | Title | Status | Role |
+|----|-------|--------|------|
+| 1428 | test(evening-ta-filter): TDD RED — RSI-only TA filter assertions | Done | Dev |
+| 1429 | fix(evening-ta-filter): change both predicates to rsiStatus-only GREEN | Done | Dev |
+
+Goal: fix(evening-ta-filter): restrict evening TA section to RSI overbought/oversold signals only.
+Branch: task/1428-evening-ta-rsi-filter
+Report: reports/TASK_REPORT_1428.md
 PO sign-off: 2026-04-18
