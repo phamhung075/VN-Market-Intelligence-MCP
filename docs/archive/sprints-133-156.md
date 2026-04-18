@@ -1,7 +1,7 @@
-# Archive — Sprints 133–155
+# Archive — Sprints 133–156
 
 Period: 2026-04-17 → 2026-04-18
-Archived from TASKS.md on Sprint 155 completion.
+Archived from TASKS.md on Sprint 156 completion.
 
 ---
 
@@ -305,4 +305,18 @@ PO sign-off: 2026-04-18
 
 Goal: feat(startup-catchup): run morning-briefing + evening-summary on restart if missed today.
 Branch: task/1430-startup-catchup
+PO sign-off: 2026-04-18
+
+---
+
+## Sprint 156 — COMPLETE (2026-04-18)
+
+| ID | Title | Status | Role |
+|----|-------|--------|------|
+| 1432 | test(foreign-flow-sentinel): TDD RED — sentinel filter assertions | Done | Dev |
+| 1433 | fix(foreign-flow-sentinel): filter 9999999 from queryForeignFlowSummary GREEN | Done | Dev |
+
+Goal: fix(foreign-flow-sentinel): filter 9999999 sentinel value from foreign flow summary queries.
+Report: reports/TASK_REPORT_1432.md
+Branch: task/1432-foreign-flow-sentinel
 PO sign-off: 2026-04-18
