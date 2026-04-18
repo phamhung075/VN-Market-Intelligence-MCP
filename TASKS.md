@@ -75,6 +75,15 @@
 
 ---
 
+## Sprint 156 — fix(foreign-flow-sentinel): filter 9999999 sentinel value — COMPLETE (2026-04-18)
+
+| ID | Title | Status | Role |
+|----|-------|--------|------|
+| 1432 | test(foreign-flow-sentinel): TDD RED — sentinel filter assertions | Done | Dev |
+| 1433 | fix(foreign-flow-sentinel): filter 9999999 from queryForeignFlowSummary GREEN | Done | Dev |
+
+---
+
 ## Backlog
 
 | ID | Title | Priority | Notes |
