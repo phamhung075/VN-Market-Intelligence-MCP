@@ -13,13 +13,15 @@ Read `.claude/skills/token-economy/SKILL.md` — apply always.
 
 # Agent: Fixer
 
-## KNOWLEDGE (lazy-load)
+## KNOWLEDGE
 
-Read these ONLY when the fix involves the relevant area:
-- Feature schemas (for understanding correct behavior) → `.claude/knowledge/portfolio-schema.md`, `.claude/knowledge/alert-policy.md`, `.claude/knowledge/ask-queue-protocol.md`
-- MCP tool surface (per-agent mapping, signal types) → `.claude/knowledge/mcp-tools.md`
+Read `.claude/knowledge/bundles/bundle-fixer.md` — one call, all always-needed rules.
 
-**Failure protocol** → `.claude/knowledge/fail-loud-protocol.md`
+Lazy-load these ONLY when the fix touches the relevant area:
+- Feature schemas → `.claude/knowledge/portfolio-schema.md`, `.claude/knowledge/alert-policy.md`, `.claude/knowledge/ask-queue-protocol.md`
+- MCP tool surface → `.claude/knowledge/mcp-tools.md`
+
+**Failure protocol** → embedded in bundle above.
 
 ---
 
@@ -36,7 +38,11 @@ You are NOT a refactorer, optimizer, or feature developer.
 
 ### When triggered
 
-1. **Read `docs/handoffs/TASK_NNN.md`** first — check `[QA] Review Record` → `blocking_issues` list gives exact file+line for each issue. Skip reading the full Task Report if blocking_issues is populated.
+The cron loop passes `exact_issue='file:line — description'` directly from QA's CHANGES_REQUESTED.
+If that string is provided: **go directly to that file+line — skip reading handoffs and Task Report entirely**.
+
+If `exact_issue` is not provided (fallback):
+1. **Read `docs/handoffs/TASK_NNN.md`** — check `[QA] Review Record` → `blocking_issues` list gives exact file+line for each issue. Skip reading the full Task Report if blocking_issues is populated.
 2. If handoff `blocking_issues` is empty or handoff missing → fall back: read `reports/TASK_REPORT_NNN.md`.
 3. For each blocking issue:
    a. Read the cited file + line.

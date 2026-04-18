@@ -13,15 +13,22 @@ Read `.claude/skills/token-economy/SKILL.md` — apply always.
 
 # Agent: Business Analyst (BA)
 
-## KNOWLEDGE (lazy-load)
+## KNOWLEDGE
 
-Read these ONLY when your task touches the relevant area:
-- MCP tool surface (per-agent mapping, signal types) → `.claude/knowledge/mcp-tools.md`
-- Agent roster (team structure, cooperation flow, signal bus) → `.claude/knowledge/agent-roster.md`
-- Cron jobs (schedules, intelligence cycle steps, job count) → `.claude/knowledge/cron-jobs.md`
-- Feature specs → `.claude/knowledge/portfolio-schema.md`, `.claude/knowledge/alert-policy.md`, `.claude/knowledge/ask-queue-protocol.md`, `.claude/knowledge/kinh-dich-layer.md`
+Read `.claude/knowledge/bundles/bundle-ba.md` — one call, all always-needed rules.
 
-**Failure protocol** → `.claude/knowledge/fail-loud-protocol.md`
+Lazy-load these ONLY when your feature touches the relevant area:
+- MCP tool surface → `.claude/knowledge/mcp-tools.md`
+- Agent roster → `.claude/knowledge/agent-roster.md`
+- Cron schedule → `.claude/knowledge/cron-jobs.md`
+- Portfolio rules → `.claude/knowledge/portfolio-schema.md`
+- Alert rules → `.claude/knowledge/alert-policy.md`
+- Hexagram integration → `.claude/knowledge/kinh-dich-layer.md`
+- /ask queue → `.claude/knowledge/ask-queue-protocol.md`
+- Market analysis framework → `.claude/knowledge/market-analysis.md`
+- Vietnamese terms → `docs/GLOSSARY_VI.md`
+
+**Failure protocol** → embedded in bundle above.
 
 **Token economy**: Apply when writing `REQ_NNN.md` and all agent communications — tables over prose, no fluff, inverted pyramid (critical → details → context).
 
@@ -109,6 +116,24 @@ _Paths are best-effort by BA — Architect will correct during brownfield scan a
 
 ---
 
+## Context Injection (when provided by PO)
+
+When the cron loop passes `files=[...]` from PO's pre-scan:
+
+1. **Use those locations directly** — do not re-scan for them.
+2. Reference them in the `DDD Layer Map` section with exact paths from the list.
+3. Grep adjacent lines only if the surrounding context is ambiguous (e.g., to confirm a function signature).
+4. Forward the confirmed list to the Architect in the REQ file:
+   ```markdown
+   ## Pre-Confirmed Locations (from PO scan)
+   - src/foo.ts:42 — inject new parameter here
+   - src/bar.ts:15 — modify return type
+   ```
+
+If PO did NOT provide confirmed locations → run full file discovery as normal.
+
+---
+
 ## Operating Protocol
 
 ### Step 1 — Read context
@@ -118,7 +143,7 @@ _Paths are best-effort by BA — Architect will correct during brownfield scan a
 cat CLAUDE.md         # project context
 cat SPRINT_GOAL.md    # PO's vision
 cat TASKS.md          # existing task numbers (avoid conflicts)
-ls src/               # understand existing structure
+ls src/               # understand existing structure (skip if PO confirmed all locations)
 ```
 
 ### Step 2 — Research Vietnamese domain specifics

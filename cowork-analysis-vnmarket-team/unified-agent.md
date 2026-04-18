@@ -72,6 +72,29 @@ Read before first cycle. If any Read fails → `.claude/knowledge/fail-loud-prot
 
 ## EACH CYCLE
 
+### CYCLE GATE — run before anything else
+
+Get current UTC hour: `TZ=UTC date +%H` and weekday: `TZ=UTC date +%u` (1=Mon … 7=Sun).
+
+| UTC hour | Condition | Mode |
+|----------|-----------|------|
+| 01 | any weekday | PREDICTION_REVIEW |
+| 02–08 | Mon–Fri (1–5) | MARKET |
+| 20 | any | DAILY_REVIEW |
+| 13 | Sunday (7) | WEEKLY_REVIEW |
+| any other | any | IDLE |
+
+**IDLE**: skip Steps 0, 2, 3, 4, 4b, 4c, 4d, 5. Run ONLY Step 1b (dev cron health) then:
+`send_telegram(channel="work", "unified-agent idle ({utc_hour}:07 UTC): dev health checked.")` → EXIT.
+
+**PREDICTION_REVIEW**: run Step 1b + Step 2 (prediction markets only: `get_prediction_markets`) + Step 6 heartbeat → EXIT.
+
+**DAILY_REVIEW**: run Step 1 + Step 1b + DAILY REVIEW section + DAILY TWO-TEAM RESUME → EXIT.
+
+**WEEKLY_REVIEW**: run WEEKLY DEEP REVIEW section → EXIT.
+
+**MARKET**: run full cycle (Steps 0–6). Continue below.
+
 ### Step 0: Agent Signals
 `get_agent_signals(agent="unified-agent")`
 - `urgent_news` → prioritize those stocks
@@ -83,6 +106,25 @@ Read before first cycle. If any Read fails → `.claude/knowledge/fail-loud-prot
 2. `get_rate_limit_status`
 
 **Position-aware**: `get_portfolio_positions()`. Weight toward held stocks. `get_user_positions_for_analysis({ ticker })` per stock → POSITION INSIGHT. Fails → fail-loud. Schema: `.claude/knowledge/portfolio-schema.md`.
+
+### Step 1c: Base Context Signal + Early-Exit (MARKET mode only)
+
+1. `get_market_snapshot()` — lightweight current prices + VN-Index + macro.
+2. Before posting: gather two additional data points:
+   a. `get_recent_fixes(days=3, limit=10)` → extract list of fix titles
+   b. `get_watchlist()` → extract list of ticker codes only (not full details)
+3. Post base context for cowork agents:
+   `post_agent_signal(from_agent="unified-agent", to_agent="all", signal_type="chain_catalyst", payload={ title: "BASE_CONTEXT", detail: JSON.stringify({ vn_index: <value>, top_movers: [<top 3 tickers by abs% change>], macro_ok: true, system_ok: <bool from Step 1>, rate_ok: <bool from Step 1>, recent_fixes: ["1450: fix foo", "1449: fix bar"], watchlist_tickers: ["VNM", "FPT", "VCB", ...], ts: "<ISO timestamp>" }), impact_score: 0 }, ttl_minutes=20)`
+
+3. **Early-exit check** — if ALL conditions true:
+   - Step 1: `get_system_status` all sources healthy, no circuit breakers open, no errors in last 30 min
+   - Step 1: `get_rate_limit_status` no source near limit
+   - `get_agent_signals(agent="unified-agent")` empty (no pending signals)
+   - `get_unreviewed_market_messages(limit=5)` — no spam messages queued
+
+   → `send_telegram(channel="work", "unified-agent market ({utc_time} UTC): all green — no signals, system clean. BASE_CONTEXT posted.")` → EXIT (skip Steps 2–5).
+
+   Otherwise → continue to Step 2.
 
 ### Step 1b: Dev Team Cron Health (S1 + S3)
 Every cycle. Only way to detect stuck dev-team cron (Claude Code CronCreate, not server-side).

@@ -19,7 +19,7 @@ Read before first cycle. If any Read fails → `.claude/knowledge/fail-loud-prot
 | Tools + signals | `.claude/knowledge/mcp-tools.md` |
 | Agent roster | `.claude/knowledge/agent-roster.md` |
 | Kinh Dich | `.claude/knowledge/kinh-dich-layer.md` |
-| Stock classification | call `get_watchlist()` MCP tool (never load stock-classification.json) |
+| Stock classification | call `get_watchlist()` MCP tool (never load stock-classification.json) — Shortcut: if BASE_CONTEXT_FRESH (from Step 0), `watchlist_tickers` list is in signal payload — use directly, skip `get_watchlist()` call. Call get_watchlist() only when BASE_CONTEXT is absent. |
 | Vietnamese terms | `docs/GLOSSARY_VI.md` |
 | Volatile data | `docs/data/*.json` — never hardcode |
 | Token optimization | `.claude/skills/token-economy/SKILL.md` |
@@ -34,11 +34,14 @@ Read before first cycle. If any Read fails → `.claude/knowledge/fail-loud-prot
 `get_agent_signals(agent="report-analyzer")`
 - `cross_validate` → prioritize full BCTC analysis for those stocks
 - `urgent_news` → cross-reference with financial data
+- `chain_catalyst` with `payload.title = "BASE_CONTEXT"` from `unified-agent`, age < 20 min → set BASE_CONTEXT_FRESH=true
 
 ### Step 1: Market Context
-`get_market_context(hours_back=24)`
+Check Step 0 result:
+- BASE_CONTEXT_FRESH=true → `get_market_snapshot()` + `get_user_positions_for_analysis({ ticker })` per stock. Skip `get_market_context()`.
+- BASE_CONTEXT_FRESH=false → `get_market_context(hours_back=24)` as normal, then positions per stock.
 
-**Position-aware**: `get_user_positions_for_analysis({ ticker })` per stock. Position exists → POSITION INSIGHT (P/L, stop-loss, TP 30/30/20/20, action 24h, Kinh Dich). Fails → fail-loud. Schema: `.claude/knowledge/portfolio-schema.md`.
+**Position-aware**: `get_user_positions_for_analysis({ ticker })` per stock always required regardless of BASE_CONTEXT_FRESH. If fails → fail-loud. Schema: `.claude/knowledge/portfolio-schema.md`.
 
 ### Step 2: Analyze Reports
 1. `get_bctc_full(code)` per watchlist stock — financial summary + QoQ/YoY + sentiment
@@ -79,7 +82,8 @@ Only if needed (new PDF, no DB data yet): `list_stored_pdfs` then `read_bctc_pdf
 | Insider selling + declining financials | CRITICAL (cross-signal) |
 
 ### Step 5: MANDATORY — Report to Dev Team
-First `get_recent_fixes(10)`. For each NEW issue: `submit_feedback(agent="report-analyzer", ...)`
+Dedup: check BASE_CONTEXT signal first (from Step 0). If `recent_fixes` list present in signal payload (age < 20min) → use that list, skip `get_recent_fixes()` call. Otherwise → `get_recent_fixes(days=3, limit=10)` as normal.
+For each NEW issue: `submit_feedback(agent="report-analyzer", ...)`
 
 Check for: wrong BCTC data | trade map gap | stock misclassification | insider vs BCTC contradiction | accounting identity fail
 

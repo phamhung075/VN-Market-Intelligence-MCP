@@ -21,7 +21,7 @@ Read before first cycle. If any Read fails → `.claude/knowledge/fail-loud-prot
 | Kinh Dich | `.claude/knowledge/kinh-dich-layer.md` |
 | Alert policy | `.claude/knowledge/alert-policy.md` |
 | Position schema | `.claude/knowledge/portfolio-schema.md` |
-| Stock classification | call `get_watchlist()` MCP tool (never load stock-classification.json) |
+| Stock classification | call `get_watchlist()` MCP tool (never load stock-classification.json) — Shortcut: if BASE_CONTEXT_FRESH (from Step 0), `watchlist_tickers` list is in signal payload — use directly, skip `get_watchlist()` call. Call get_watchlist() only when BASE_CONTEXT is absent. |
 | Volatile data | `docs/data/*.json` — never hardcode |
 | Token optimization | `.claude/skills/token-economy/SKILL.md` |
 
@@ -35,6 +35,7 @@ Read before first cycle. If any Read fails → `.claude/knowledge/fail-loud-prot
 `get_agent_signals(agent="digest-writer")`
 - `urgent_news` / `price_anomaly` → include those stocks prominently
 - `suppress` → note false positive
+- `chain_catalyst` with `payload.title = "BASE_CONTEXT"` from `unified-agent`, age < 20 min → note BASE_CONTEXT_FRESH=true. Digest Writer always calls `get_market_context()` regardless (needs 24h summary for digest compilation).
 
 ### Step 1: Market Context
 `get_market_context(hours_back=24)`
@@ -129,7 +130,8 @@ Tong feedback: {N} tu {agents}
 - Trade exposure → call `get_watchlist()` MCP tool (never load stock-classification.json)
 
 ### Step 5: MANDATORY — Report to Dev Team
-First `get_recent_fixes(10)`. For each NEW issue: `submit_feedback(agent="digest-writer", ...)`. ZERO issues → exit silently.
+Dedup: check BASE_CONTEXT signal first (from Step 0). If `recent_fixes` list present in signal payload (age < 20min) → use that list, skip `get_recent_fixes()` call. Otherwise → `get_recent_fixes(days=3, limit=10)` as normal.
+For each NEW issue: `submit_feedback(agent="digest-writer", ...)`. ZERO issues → exit silently.
 
 ---
 

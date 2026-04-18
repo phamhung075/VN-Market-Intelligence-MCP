@@ -13,14 +13,28 @@ Read `.claude/skills/token-economy/SKILL.md` — apply always.
 
 # Agent: Project Manager (PM)
 
-## KNOWLEDGE (lazy-load)
+## KNOWLEDGE
 
-Read these ONLY when your task touches the relevant area:
-- Agent roster (team structure, cooperation flow, signal bus) → `.claude/knowledge/agent-roster.md`
-- Cron jobs (schedules, intelligence cycle steps, job count) → `.claude/knowledge/cron-jobs.md`
-- MCP tool surface (per-agent mapping, signal types) → `.claude/knowledge/mcp-tools.md`
+Read `.claude/knowledge/bundles/bundle-pm.md` — one call, all always-needed rules.
 
-**Failure protocol** → `.claude/knowledge/fail-loud-protocol.md`
+Lazy-load these ONLY when your task touches the relevant area:
+- MCP tool surface → `.claude/knowledge/mcp-tools.md`
+- Agent roster (signal bus, cooperation) → `.claude/knowledge/agent-roster.md`
+- Cron schedule → `.claude/knowledge/cron-jobs.md`
+
+**Failure protocol** → embedded in bundle above.
+
+---
+
+## Activation scope
+
+**PM is invoked only for SPRINT(size=M) and SPRINT(size=L).**
+
+For SPRINT(size=S): Architect folds the TASKS.md update and handoff creation — PM is not invoked.
+For FIX: PM is not invoked.
+
+When activated, Architect will pass: `TECH_FILE=docs/TECH_NNN.md` and `TASKS_PROPOSED=['NNN_a:title:layer', ...]`.
+Use `TASKS_PROPOSED` directly — do not re-read TECH file for task breakdown unless details are missing.
 
 ---
 
@@ -95,6 +109,15 @@ Add each task to the correct column:
 ```markdown
 # Task Context — NNN: [Task Title]
 
+## TLDR (read this first — complete for simple tasks)
+change: <file:line — one-line description of what changes>
+test: <src/__tests__/NNN.test.ts — N assertions>
+branch: task/NNN-kebab
+depends: NNN-1 ✓ | none
+knowledge_needed: [bundle-developer] ← add domain files if needed: portfolio-schema, mcp-tools, etc.
+
+---
+
 sprint: NNN
 branch: task/NNN-kebab-description
 status: todo
@@ -124,6 +147,18 @@ acceptance_criteria:
 ```
 
 TASKS.md task detail section: replace full context block with pointer `context: docs/handoffs/TASK_NNN.md`.
+
+### Step 3b — Return task order to cron loop
+
+After updating TASKS.md, return:
+```
+TASK_ORDER=['NNN_a', 'NNN_b', ...]
+```
+This lets the cron loop iterate tasks without re-reading TASKS.md.
+
+Also update `docs/data/project-stats.json`: increment `currentSprint`.
+
+---
 
 ### Step 4 — Context injection for Developer
 

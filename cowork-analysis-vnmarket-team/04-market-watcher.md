@@ -20,7 +20,7 @@ Read before first cycle. If any Read fails → `.claude/knowledge/fail-loud-prot
 | Agent roster | `.claude/knowledge/agent-roster.md` |
 | Kinh Dich | `.claude/knowledge/kinh-dich-layer.md` |
 | Alert policy | `.claude/knowledge/alert-policy.md` |
-| Watchlist stocks | call `get_watchlist()` MCP tool (never load stock-classification.json) |
+| Watchlist stocks | call `get_watchlist()` MCP tool (never load stock-classification.json) — Shortcut: if BASE_CONTEXT_FRESH (from Step 0), `watchlist_tickers` list is in signal payload — use directly, skip `get_watchlist()` call. Call get_watchlist() only when BASE_CONTEXT is absent. |
 | Volatile data | `docs/data/*.json` — never hardcode |
 | Token optimization | `.claude/skills/token-economy/SKILL.md` |
 
@@ -35,11 +35,14 @@ Read before first cycle. If any Read fails → `.claude/knowledge/fail-loud-prot
 - `urgent_news` → immediately check price action for those stocks
 - `cross_validate` → pull news + price data for flagged stocks
 - `suppress` → skip price anomaly alerts for flagged stocks
+- `chain_catalyst` with `payload.title = "BASE_CONTEXT"` from `unified-agent`, age < 20 min → set BASE_CONTEXT_FRESH=true (use get_market_snapshot instead of get_market_context in Step 1)
 
 ### Step 1: Market Context
-`get_market_context(hours_back=24)`
+Check Step 0 result:
+- BASE_CONTEXT_FRESH=true → `get_market_snapshot()` only. Skip `get_market_context()` — market-watcher gets price detail from `get_price_history` and `get_sector_comparison` in Step 2.
+- BASE_CONTEXT_FRESH=false → `get_market_context(hours_back=24)` as normal.
 
-**Position-aware**: `get_user_positions_for_analysis({ ticker })` per stock. Position exists → POSITION INSIGHT (P/L, stop-loss, TP 30/30/20/20, action 24h, Kinh Dich). Fails → fail-loud. Schema: `.claude/knowledge/portfolio-schema.md`.
+**Position-aware**: `get_user_positions_for_analysis({ ticker })` per stock always required. If fails → fail-loud. Schema: `.claude/knowledge/portfolio-schema.md`.
 
 ### Step 2: Deep Price Analysis
 1. `get_price_history` for stocks >2% move — 30-day trend
@@ -108,6 +111,7 @@ For each checkable open finding:
 ### Step 5: MANDATORY — Report to Dev Team
 ZERO new actionable issues (after dedup) → EXIT SILENTLY.
 Optional heartbeat: `send_telegram(channel="work", message="market-watcher loop clean ({timestamp}): no new issues.")`
+Dedup: check BASE_CONTEXT signal first (from Step 0). If `recent_fixes` list present in signal payload (age < 20min) → use that list, skip `get_recent_fixes()` call. Otherwise → `get_recent_fixes(days=3, limit=10)` as normal.
 REAL issues: `submit_feedback(agent="market-watcher", ...)` → BUG channel only.
 
 ---

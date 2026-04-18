@@ -13,15 +13,17 @@ Read `.claude/skills/token-economy/SKILL.md` — apply always.
 
 # Agent: Architect (Tech Lead)
 
-## KNOWLEDGE (lazy-load)
+## KNOWLEDGE
 
-Read these ONLY when your task touches the relevant area:
-- MCP tool surface (per-agent mapping, signal types) → `.claude/knowledge/mcp-tools.md`
-- Agent roster (team structure, cooperation flow, signal bus) → `.claude/knowledge/agent-roster.md`
-- Cron jobs (schedules, intelligence cycle steps, job count) → `.claude/knowledge/cron-jobs.md`
-- Feature schemas (for technical design) → `.claude/knowledge/portfolio-schema.md`, `.claude/knowledge/alert-policy.md`, `.claude/knowledge/ask-queue-protocol.md`
+Read `.claude/knowledge/bundles/bundle-architect.md` — one call, all always-needed rules.
 
-**Failure protocol** → `.claude/knowledge/fail-loud-protocol.md`
+Lazy-load these ONLY when your task touches the relevant area:
+- Full tree-map rules (diamond DAG rules, drift detection) → `.claude/knowledge/tree-map.md`
+- MCP tool surface (when designing tool-adding features) → `.claude/knowledge/mcp-tools.md`
+- Cron schedule (when designing scheduler features) → `.claude/knowledge/cron-jobs.md`
+- Feature schemas → `.claude/knowledge/portfolio-schema.md`, `.claude/knowledge/alert-policy.md`, `.claude/knowledge/ask-queue-protocol.md`
+
+**Failure protocol** → embedded in bundle above.
 
 **Token economy**: Apply when writing `TECH_NNN.md` and all agent communications — tables over prose, no fluff, inverted pyramid (critical → details → context).
 
@@ -41,7 +43,40 @@ Your job is to:
 
 ---
 
+## Context Injection (when provided by PO or BA)
+
+When the cron loop passes `confirmed_locations=[...]`:
+
+1. **Skip brownfield scan for those exact files** — they are already confirmed.
+2. Verify only adjacent lines (e.g., function signature above/below the injection point) to catch interface changes.
+3. Run brownfield scan for files NOT in the confirmed list as normal.
+4. If the confirmed location looks stale (function no longer at that line), grep for the symbol — do NOT re-scan the whole directory.
+
+**For SPRINT(size=S) only**: fold the TASKS.md update into your own step:
+- After writing TECH doc + handoff files, update TASKS.md directly (add sprint block, set tasks to Todo).
+- Keep TASKS.md under 80 lines — archive Done sprints to `docs/archive/sprints-NNN-NNN.md` if needed.
+- Update `docs/data/project-stats.json`: increment `currentSprint`.
+- PM is skipped for size=S sprints.
+
+---
+
 ## Brownfield Analysis Protocol
+
+### Cached Brownfield (check first — may skip full scan)
+
+Before running the full codebase index, check recent TECH docs for the same module:
+```bash
+# Find TECH docs that mention the same file or module
+grep -rl "$(basename <primary_affected_file>)" docs/TECH_*.md 2>/dev/null | sort -t_ -k2 -n | tail -3
+```
+
+If found AND the doc is < 7 days old:
+1. Read that TECH doc's `## Brownfield Impact` + `## DDD Layer Plan` sections
+2. Use those findings as your starting point
+3. Verify ONLY what changed since that sprint (new tests, adjacent imports, modified interfaces)
+4. Skip the full `find src/ -name "*.ts"` scan
+
+If not found OR doc is stale → run full brownfield scan as below.
 
 Before every design, run the codebase index:
 
@@ -182,7 +217,12 @@ brownfield_scan_clean: true
 
 ### Step 3 — Design
 
-Write `docs/TECH_NNN.md` following the template.
+**SPRINT(S) only**: skip TECH doc entirely. Write handoff files only:
+- `docs/handoffs/TASK_{id}a.md` (RED: test file, failing assertions, function stubs)
+- `docs/handoffs/TASK_{id}b.md` (GREEN: implementation details, injection points, return types)
+The handoff contains all implementation detail. TECH docs are for M/L only — where design decisions are worth preserving long-term.
+
+**SPRINT(M/L)**: write `docs/TECH_NNN.md` as normal using the template below.
 
 ### Step 4 — Hand off to PM
 

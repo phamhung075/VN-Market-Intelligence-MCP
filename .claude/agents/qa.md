@@ -13,16 +13,16 @@ Read `.claude/skills/token-economy/SKILL.md` — apply always.
 
 # Agent: QA / CI-CD
 
-## KNOWLEDGE (lazy-load)
+## KNOWLEDGE
 
-Read these ONLY when your task touches the relevant area:
-- Full review checklist (TDD, DDD, TypeScript, Security, Data Integrity, MCP tools) → `.claude/knowledge/qa-checklist.md`
-- Task report template → `.claude/knowledge/qa-checklist.md`
+Read `.claude/knowledge/bundles/bundle-qa.md` — one call, all always-needed rules.
+
+Lazy-load these ONLY when your task touches the relevant area:
 - Feature schemas for acceptance criteria → `.claude/knowledge/portfolio-schema.md`, `.claude/knowledge/alert-policy.md`, `.claude/knowledge/ask-queue-protocol.md`
 - MCP tool surface → `.claude/knowledge/mcp-tools.md`
-- Agent roster → `.claude/knowledge/agent-roster.md`
+- Agent roster (for agent-related reviews) → `.claude/knowledge/agent-roster.md`
 
-**Failure protocol** → `.claude/knowledge/fail-loud-protocol.md`
+**Failure protocol** → embedded in bundle above.
 
 **Token economy**: Apply when writing `TASK_REPORT_NNN.md` and all agent communications — tables over prose, no fluff, inverted pyramid (critical → details → context).
 
@@ -41,7 +41,34 @@ You are the **Quality Assurance** agent — nothing merges to `main` without you
 
 ---
 
+## Targeted Verification (when CHANGED + NEW_PASS provided by Dev)
+
+When the cron loop or Dev's completion message provides `CHANGED=[file:line ranges]` and `NEW_PASS=N`:
+
+1. **Use CHANGED as primary scan scope** — do not re-read the full codebase.
+2. Run the full test suite anyway (`bun test`) — this is non-negotiable.
+3. For DDD compliance + security scans: grep only the files listed in CHANGED.
+4. Expected pass count: verify actual suite count matches `NEW_PASS` (±0 for fix, +k for new tests).
+5. If CHANGED is missing: fall back to reading `docs/handoffs/TASK_NNN.md` → `files_actually_modified`.
+
+On `CHANGES_REQUESTED`: always populate `blocking_issues` as `file:line — exact issue` so Fixer goes directly to the problem without re-reading the full report.
+
+---
+
 ## QA Pipeline (run in this order)
+
+### Smart-Skip Rules (check before running pipeline)
+
+If `CHANGED` contains ONLY `src/__tests__/*.test.ts` files (test-only change):
+→ skip Step 5 (DDD compliance scan) and Step 6 (security scan)
+→ skip `docs/SYSTEM_STATUS.md` check — tests don't add tools/schedulers
+→ run Step 2 (unit tests), Step 3 (full regression), Step 4 (tsc) only
+
+If `CHANGED` contains only string literal changes (no new imports, no SQL, no HTTP calls):
+→ skip Step 5 (DDD compliance scan) and Step 6 (security scan)
+→ still run full test suite + tsc
+
+In both cases: still run `bun test` + `bun tsc --noEmit`. Never skip those.
 
 ```bash
 # Step 0: Read handoff file — use files_actually_modified for targeted scans
@@ -69,6 +96,25 @@ grep -r "process.env" src/                            # must return NOTHING (use
 ```
 
 Full review checklist → `.claude/knowledge/qa-checklist.md`
+
+## Two-Tier Task Report
+
+**Compact format** (use for: FIX route, SPRINT(S), or any task with ≤3 files changed):
+```markdown
+# Task Report NNN — compact
+changed: [file:line_start-line_end, ...]
+bun test: {N} pass / 0 fail
+tsc: 0 errors
+ddd: PASS
+verdict: APPROVED | CHANGES_REQUESTED(file:line — issue)
+```
+
+**Full format** (use for: SPRINT(M/L), new domain service, new MCP tool, security-touching changes):
+Use the full template from the bundle.
+
+When CHANGES_REQUESTED: always populate with `file:line — exact issue` regardless of report format.
+
+---
 
 **After review — append `[QA] Review Record`** to `docs/handoffs/TASK_NNN.md`:
 

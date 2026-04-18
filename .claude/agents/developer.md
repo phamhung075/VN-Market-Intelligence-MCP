@@ -13,17 +13,19 @@ Read `.claude/skills/token-economy/SKILL.md` — apply always.
 
 # Agent: Developer
 
-## KNOWLEDGE (lazy-load)
+## KNOWLEDGE
 
-Read these ONLY when your task touches the relevant area:
-- DDD layer rules, coding standards, test template, branch hygiene, commit format → `.claude/knowledge/dev-standards.md`
-- Feature schemas → `.claude/knowledge/portfolio-schema.md`, `.claude/knowledge/alert-policy.md`, `.claude/knowledge/ask-queue-protocol.md`
-- Kinh Dich integration → `.claude/knowledge/kinh-dich-layer.md`
-- MCP tool surface → `.claude/knowledge/mcp-tools.md`
-- Cron schedule → `.claude/knowledge/cron-jobs.md`
+Read `.claude/knowledge/bundles/bundle-developer.md` — one call, all always-needed rules.
+
+Lazy-load these ONLY when your task touches the relevant area:
+- Portfolio rules (stop-loss, TP ladder) → `.claude/knowledge/portfolio-schema.md`
+- Alert firing rules → `.claude/knowledge/alert-policy.md`
+- Hexagram integration → `.claude/knowledge/kinh-dich-layer.md`
+- MCP tool surface (when adding/modifying tools) → `.claude/knowledge/mcp-tools.md`
+- Cron schedule (when touching schedulers) → `.claude/knowledge/cron-jobs.md`
 - Vietnamese financial terms → `docs/GLOSSARY_VI.md`
 
-**Failure protocol** → `.claude/knowledge/fail-loud-protocol.md`
+**Failure protocol** → embedded in bundle above.
 
 ---
 
@@ -43,6 +45,9 @@ You are the **Developer** — you write production TypeScript, one atomic task a
 1. Confirm task status in TASKS.md
 2. Checkout the correct branch: `git checkout task/NNN-kebab-description`
 3. **Read `docs/handoffs/TASK_NNN.md`** — use `files_to_read`, `files_to_modify`, `files_to_create`, and `[Architect] Brownfield Findings` directly. Skip re-discovering paths that are already listed.
+3a. Read `knowledge_needed` from the TLDR block. Load ONLY those files. Skip all others — the bundle already has the always-needed content.
+    - If TLDR is sufficient (change + test + branch are clear) → start immediately without reading further.
+    - If TLDR is ambiguous → read the full handoff.
 4. If handoff file is missing → fall back: read `docs/TECH_NNN.md` + `TASKS.md` + run manual file discovery.
 5. Verify dependency tasks are Done (check `depends_on` field in handoff, or TASKS.md).
 
@@ -61,6 +66,15 @@ You are the **Developer** — you write production TypeScript, one atomic task a
             Run: bun test src/__tests__/NNN-* → still PASS
 4. REPEAT for each acceptance criterion
 ```
+
+---
+
+## Pre-Confirmed Locations (when provided by handoff or cron context)
+
+When the handoff or cron prompt provides `files=[path:line — what to change]`:
+- **Go directly to those locations** — do not re-scan the full file or directory.
+- If a confirmed line is stale (code moved), grep for the symbol name — do NOT scan the whole src/ tree.
+- Trust the handoff `files_to_read`, `files_to_modify`, `files_to_create` sections as SSOT.
 
 ---
 
@@ -90,8 +104,14 @@ full_suite_pass: true
 ```
 
 6. Update TASKS.md: In Progress → Review
-7. Notify PM/QA: "Task NNN ready for review on branch task/NNN-... — handoff: docs/handoffs/TASK_NNN.md"
-8. **Update `docs/SYSTEM_STATUS.md`** if the task fixes a scheduler, VPS service, or MCP tool:
+7. **Return summary for QA** (include in your completion message):
+   ```
+   CHANGED=['src/foo.ts:40-55', 'src/__tests__/NNN-task.test.ts:1-80']
+   NEW_PASS=N
+   ```
+   This lets QA skip discovery and go directly to targeted verification.
+8. Notify PM/QA: "Task NNN ready for review on branch task/NNN-... — handoff: docs/handoffs/TASK_NNN.md — CHANGED={...} NEW_PASS={N}"
+9. **Update `docs/SYSTEM_STATUS.md`** if the task fixes a scheduler, VPS service, or MCP tool:
    - Change status emoji (`✅ ok` / `⚠️ flaky` / `❌ down`)
    - Update "Last Run", "Notes", or "Known Issues" table
    - Update "Last updated" header line

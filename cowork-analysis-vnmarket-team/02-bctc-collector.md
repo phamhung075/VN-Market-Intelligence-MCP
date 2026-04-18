@@ -18,7 +18,7 @@ Read before first cycle. If any Read fails → `.claude/knowledge/fail-loud-prot
 | Tree map | `.claude/knowledge/tree-map.md` |
 | Tools + signals | `.claude/knowledge/mcp-tools.md` |
 | Agent roster | `.claude/knowledge/agent-roster.md` |
-| Stock classification | call `get_watchlist()` MCP tool (never load stock-classification.json) |
+| Stock classification | call `get_watchlist()` MCP tool (never load stock-classification.json) — Shortcut: if BASE_CONTEXT_FRESH (from Step 0), `watchlist_tickers` list is in signal payload — use directly, skip `get_watchlist()` call. Call get_watchlist() only when BASE_CONTEXT is absent. |
 | Volatile data | `docs/data/*.json` — never hardcode |
 | Token optimization | `.claude/skills/token-economy/SKILL.md` |
 
@@ -31,9 +31,12 @@ Read before first cycle. If any Read fails → `.claude/knowledge/fail-loud-prot
 ### Step 0: Agent Signals
 `get_agent_signals(agent="bctc-collector")`
 - `cross_validate` → prioritize that stock's BCTC status
+- `chain_catalyst` with `payload.title = "BASE_CONTEXT"` from `unified-agent`, age < 20 min → set BASE_CONTEXT_FRESH=true
 
 ### Step 1: Market Context
-`get_market_context(hours_back=24)`
+Check Step 0 result:
+- BASE_CONTEXT_FRESH=true → `get_market_snapshot()` only (lightweight current prices). Skip `get_market_context()` — BCTC work does not need 24h news history.
+- BASE_CONTEXT_FRESH=false → `get_market_context(hours_back=24)` as normal.
 
 ### Step 2: Collect BCTC Status
 1. `get_earnings_calendar` — upcoming filing deadlines
@@ -46,7 +49,8 @@ Read before first cycle. If any Read fails → `.claude/knowledge/fail-loud-prot
 6. `get_system_status` — check FRESHNESS + ERRORS
 
 ### Step 3: MANDATORY — Report to Dev Team
-First `get_recent_fixes(10)`. For each NEW issue: `submit_feedback(agent="bctc-collector", ...)`
+Dedup: check BASE_CONTEXT signal first (from Step 0). If `recent_fixes` list present in signal payload (age < 20min) → use that list, skip `get_recent_fixes()` call. Otherwise → `get_recent_fixes(days=3, limit=10)` as normal.
+For each NEW issue: `submit_feedback(agent="bctc-collector", ...)`
 
 Check for: missing BCTC | PDF download/parse fail | wrong calendar deadlines | suspicious data | SSC job timing
 

@@ -16,6 +16,7 @@ Before your first cycle each session, Read these files. If any Read fails: apply
 - Agent roster and cooperation flow → `.claude/knowledge/agent-roster.md`
 - Cron schedule reference → `.claude/knowledge/cron-jobs.md`
 - Watchlist stocks → call `get_watchlist()` MCP tool (never load stock-classification.json)
+  Shortcut: if BASE_CONTEXT_FRESH (from Step 0), `watchlist_tickers` list is in signal payload — use directly, skip `get_watchlist()` call. Call get_watchlist() only when BASE_CONTEXT is absent.
 - Position schema (stop-loss floor, TP ladder) → `.claude/knowledge/portfolio-schema.md` (lazy-load only when producing stock-level output)
 - Kinh Dịch default layer → `.claude/knowledge/kinh-dich-layer.md`
 - Volatile data (tool count, job count, stock list) → `docs/data/*.json` — never hardcode
@@ -33,6 +34,7 @@ Before your first cycle each session, Read these files. If any Read fails: apply
 Call `get_agent_signals(agent="news-scout")`:
 - `cross_validate` signals → include both news + price context for flagged stocks
 - `suppress` signals → skip news analysis for flagged stocks this cycle
+- `chain_catalyst` with `payload.title = "BASE_CONTEXT"` from `unified-agent`, age < 20 min → note BASE_CONTEXT_FRESH=true. News Scout always calls `get_market_context()` regardless (needs 24h news history).
 
 ### Step 1: Get Market Context
 Call `get_market_context(hours_back=24)` — returns watchlist, prices, macro, alerts, and recent analysis in ONE call.
@@ -79,7 +81,8 @@ Ask yourself:
 4. Did you see a new commodity/indicator the system doesn't track? → new_indicator
 5. Did any source fail or return stale data? → performance_issue
 
-First call `get_recent_fixes(10)`. For each NEW issue: `submit_feedback(agent="news-scout", category=..., title=..., detail=..., priority=..., to="@dev")`
+Dedup: check BASE_CONTEXT signal first (from Step 0). If `recent_fixes` list present in signal payload (age < 20min) → use that list, skip `get_recent_fixes()` call. Otherwise → `get_recent_fixes(days=3, limit=10)` as normal.
+For each NEW issue: `submit_feedback(agent="news-scout", category=..., title=..., detail=..., priority=..., to="@dev")`
 
 If ZERO issues: exit silently — do NOT file "no issues" to BUG.
 

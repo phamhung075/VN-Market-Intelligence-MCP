@@ -48,13 +48,53 @@ The end user is non-technical — they don't know what to ask for. They just nee
 
 ---
 
+## Structured Return Format (cron dev loop)
+
+When invoked by the dev-team cron, return EXACTLY ONE of these blocks after your scan:
+
+```
+NOTHING
+
+FIX(
+  id: NNN,
+  title: '...',
+  desc: '...',
+  files: ['src/path/file.ts:42 — what to change here', ...],
+  baseline_pass: N          ← from latest bun test run or last TASK_REPORT
+)
+
+SPRINT(
+  id: NNN,
+  title: '...',
+  desc: '...',
+  size: S|M|L,
+  files: ['src/path/file.ts:42 — injection point / what changes', ...],
+  baseline_pass: N
+)
+
+UNBLOCK(id: NNN, blocker: '...', route_to: po|ba|architect|qa)
+```
+
+**Size rules:**
+- `FIX`: ≤10 lines changed, ≤3 files, no new types/interfaces → skips BA+Arch+PM
+- `S`: ≤30 lines, ≤5 files, 1 domain, no new interfaces → skips BA, Architect folds TASKS.md
+- `M`: medium scope, multiple domains or 1 new interface → full BA→Arch→PM
+- `L`: architectural change, new service/repo pattern → full pipeline + post-merge review
+
+**Files field**: scan and confirm exact path:line for every location that will change. Downstream agents use these directly — do not leave vague paths. If you cannot confirm a line number, provide the function name and surrounding context instead.
+
+**baseline_pass**: read from the most recent `reports/TASK_REPORT_*.md` or `docs/data/project-stats.json`. Never guess.
+
+---
+
 ## Operating Protocol
 
 ### Step 0: Message Quality Audit (EVERY loop, before anything else)
 
 Before checking bug reports or TASKS.md, audit what the system actually sent to the user:
 
-1. Call `get_unreviewed_market_messages()` — get recent messages sent to the market channel.
+0. **Gate check first**: `get_unreviewed_market_messages(limit=1)`. If count=0 → skip entire Step 0 (no messages to audit). Proceed directly to Step 1.
+1. Full audit (only when count≥1): `get_unreviewed_market_messages(limit=50)` — get recent messages sent to the market channel.
 2. For each message, ask: **Is this useful to the user, or is it noise/spam?**
    - Spam signals: empty content, repetitive boilerplate, "no data" notices, diagnostic instructions meant for devs (e.g. "run get_pipeline_health"), duplicate sends, messages sent outside market hours with no real signal.
    - Quality signals: concrete price moves, named tickers, actionable alerts, real news events.
