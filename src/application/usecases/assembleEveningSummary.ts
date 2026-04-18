@@ -22,6 +22,7 @@ import { logger } from "../../infrastructure/logger.js";
 import type { BriefingAlert, TopStory, TaSignal } from "./assembleBriefing.js";
 import { defaultComputeTa } from "./assembleBriefing.js";
 import type { BriefingPredictionSignal } from "../../infrastructure/db/predictionStore.js";
+import type { PortfolioPnlResult } from "../../domain/services/portfolioPnlCalculator.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Public types
@@ -100,6 +101,12 @@ export interface EveningSummary {
   generatedAt: string;
   /** VN-Index close snapshot. Present on success; undefined when fetch fails or returns null. */
   vnIndex?: VnIndexSnapshot;
+  /**
+   * Portfolio P&L snapshot — per-position and aggregate unrealized P&L at market close.
+   * null when there are no open positions or getPnlFn returns null.
+   * undefined on summaries generated before task 1441.
+   */
+  portfolioPnl?: PortfolioPnlResult | null;
 }
 
 /**
@@ -122,6 +129,13 @@ export interface AssembleEveningSummaryOptions {
   getOhlcvRowCountFn?: (code: string, db: Database) => number;
   /** Override VN-Index fetch for tests — avoids real HTTP calls */
   fetchVnIndexFn?: () => Promise<import("../../infrastructure/fetchers/hose.js").MarketPrice | null>;
+  /**
+   * Injectable P&L computation — avoids real DB positions table in tests.
+   * When provided, called instead of the default DB-backed implementation.
+   * Return null to signal "no open positions" (section skipped).
+   * Throw to signal error (portfolioPnl set to null, no crash).
+   */
+  getPnlFn?: () => Promise<PortfolioPnlResult | null>;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -456,6 +470,52 @@ export async function assembleEveningSummary(
     });
   }
 
+  // ── Step 5b: Portfolio P&L snapshot (best-effort) ────────────────────────
+  let portfolioPnl: PortfolioPnlResult | null = null;
+  try {
+    if (options.getPnlFn) {
+      portfolioPnl = await options.getPnlFn();
+    } else {
+      // Default: query positions table + market_prices (mirrors assembleBriefing pattern)
+      interface OpenPositionRow { code: string; shares: number; avg_price: number }
+      const openPositions = db
+        .prepare<OpenPositionRow, []>(
+          `SELECT code, shares, avg_price FROM positions WHERE closed_at IS NULL`,
+        )
+        .all();
+
+      if (openPositions.length > 0) {
+        const priceRows = db
+          .prepare<{ code: string; price: number }, []>(
+            `SELECT code, price FROM market_prices WHERE price IS NOT NULL AND price > 0
+             UNION ALL
+             SELECT code, close AS price FROM daily_ohlcv
+             WHERE (code, date) IN (SELECT code, MAX(date) FROM daily_ohlcv GROUP BY code)
+               AND code NOT IN (SELECT code FROM market_prices WHERE price IS NOT NULL AND price > 0)`,
+          )
+          .all();
+        const priceMap = new Map(priceRows.map((r) => [r.code, r.price]));
+
+        const { computePortfolioPnl } = await import(
+          "../../domain/services/portfolioPnlCalculator.js"
+        );
+        portfolioPnl = computePortfolioPnl(
+          openPositions.map((p) => ({
+            code: p.code,
+            shares: p.shares,
+            avgPrice: p.avg_price,
+          })),
+          priceMap,
+        );
+      }
+    }
+  } catch (pnlErr) {
+    logger.warn("[assembleEveningSummary] portfolioPnl step failed", {
+      error: pnlErr instanceof Error ? pnlErr.message : String(pnlErr),
+    });
+    portfolioPnl = null;
+  }
+
   // ── Step 6: Persist summary ───────────────────────────────────────────────
   const date = todayVietnam();
   const generatedAt = new Date().toISOString();
@@ -472,6 +532,7 @@ export async function assembleEveningSummary(
     newsCount,
     generatedAt,
     ...(vnIndex !== undefined ? { vnIndex } : {}),
+    portfolioPnl,
   };
 
   try {

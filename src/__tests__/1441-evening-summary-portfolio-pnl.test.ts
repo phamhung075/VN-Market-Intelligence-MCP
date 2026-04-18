@@ -146,8 +146,9 @@ describe("1441 (a) — EveningSummary.portfolioPnl populated → Telegram messag
     // Field must exist on the returned summary
     expect(summary.portfolioPnl).toBeDefined();
     expect(summary.portfolioPnl).not.toBeNull();
-    expect(summary.portfolioPnl!.items.length).toBe(2);
-    expect(summary.portfolioPnl!.items[0].code).toBe("VCB");
+    const pnl = summary.portfolioPnl!;
+    expect(pnl.items.length).toBe(2);
+    expect(pnl.items[0]!.code).toBe("VCB");
   });
 
   it("formatBriefingMessage renders DANH MỤC block when portfolioPnl has items", async () => {
@@ -228,7 +229,7 @@ describe("1441 (b) — no positions → section absent, no crash", () => {
 
     // Give at least one piece of content so hasContent fires
     db.exec(`INSERT INTO rag_analyses (id, created_at, level, source_title, impact_score)
-             VALUES ('ra1', datetime('now'), 'country', 'Test Story', 8.0)`);
+             VALUES ('ra1', strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), 'country', 'Test Story', 8.0)`);
 
     await runEveningSummary(
       async () =>
@@ -262,7 +263,7 @@ describe("1441 (c) — formatPnlSection returns empty string → section absent"
     const captured: string[] = [];
 
     db.exec(`INSERT INTO rag_analyses (id, created_at, level, source_title, impact_score)
-             VALUES ('ra2', datetime('now'), 'country', 'Test Story 2', 7.5)`);
+             VALUES ('ra2', strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), 'country', 'Test Story 2', 7.5)`);
 
     await runEveningSummary(
       async () =>
