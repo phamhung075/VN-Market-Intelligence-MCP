@@ -82,6 +82,8 @@
 | 1432 | test(foreign-flow-sentinel): TDD RED — sentinel filter assertions | Done | Dev |
 | 1433 | fix(foreign-flow-sentinel): filter 9999999 from queryForeignFlowSummary GREEN | Done | Dev |
 
+> Report: `reports/TASK_REPORT_1432.md`
+
 ---
 
 ## Backlog
