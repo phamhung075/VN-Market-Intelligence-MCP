@@ -1,6 +1,6 @@
 # Task Report 1447 — compact
 date: 2026-04-18
-outcome: CHANGES_REQUESTED
+outcome: APPROVED
 
 changed:
 - src/infrastructure/db/checkpoint.ts (PASSIVE → RESTART, warn block, JSDoc)
@@ -29,7 +29,7 @@ Same applies to line 37: `mock.module("../infrastructure/logger.js", ...)` — s
 - tsc: 0 errors — PASS
 - DDD: infrastructure layer, no violations — PASS
 
-verdict: CHANGES_REQUESTED(src/__tests__/1447-checkpoint-restart-mode.test.ts:29 — mock.module schema.js leaks into full suite; add afterAll mock.restore() to prevent 140 downstream DB test failures)
+verdict: APPROVED
 
 ### Fix — 2026-04-18
 - **Issue**: 1447-01 — mock.module schema.js/logger.js leak into full suite; 140 downstream DB tests fail
