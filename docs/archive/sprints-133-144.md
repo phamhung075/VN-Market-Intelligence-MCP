@@ -1,7 +1,7 @@
-# Archive — Sprints 133–143
+# Archive — Sprints 133–144
 
 Period: 2026-04-17 → 2026-04-18
-Archived from TASKS.md on Sprint 143 completion.
+Archived from TASKS.md on Sprint 144 completion.
 
 ---
 
@@ -140,4 +140,17 @@ PO sign-off: 2026-04-18
 
 Goal: HUT reclassified from real_estate to construction sector — removes false cascade alerts. DB migration idempotent UPDATE in schema.ts.
 Spec: docs/REQ_1406.md | Tech: docs/TECH_1406.md
+PO sign-off: 2026-04-18
+
+---
+
+## Sprint 144 — COMPLETE (2026-04-18)
+
+| ID | Title | Status |
+|----|-------|--------|
+| 1408 | test(tool-diacritics): RED test — kinhDichTools + technicalIndicatorTools + supplyChainTools diacritics | Done |
+| 1409 | fix(tool-diacritics): extract helpers + replace unaccented strings in three files | Done |
+
+Goal: Proper Vietnamese diacritics in kinhDichTools, technicalIndicatorTools, supplyChainTools — extracted helper fns + replaced all unaccented strings.
+Spec: docs/REQ_1408.md | Tech: docs/TECH_1408.md
 PO sign-off: 2026-04-18

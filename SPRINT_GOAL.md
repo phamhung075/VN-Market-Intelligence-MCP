@@ -2,6 +2,28 @@
 
 > Previous sprint goals live in their `docs/REQ_NNN.md` specs. This file = current sprint only.
 
+## Sprint 144 — ACTIVE
+
+**Goal:** Fix unaccented Vietnamese text in MCP tool responses — `kinhDichTools.ts`, `technicalIndicatorTools.ts`, and `supplyChainTools.ts`. Sprints 135-143 fixed alert/digest/conviction pipelines but left these three tool files with broken diacritics visible to the user on every MCP tool call.
+
+**Scope:**
+- IN: `kinhDichTools.ts:1032-1040` — fix "THUAN LOI cho giao dich — xu huong tich cuc", "BAT LOI cho giao dich — can than trong", "TRUNG TINH — can xem them tin hieu khac", "Nhan dinh giao dich" → proper accented Vietnamese
+- IN: `technicalIndicatorTools.ts:150,155,156,164` — fix "can 50 nen", "sap xep hon hop", "Xu huong", "can toi thieu 15 nen" → proper accented Vietnamese
+- IN: `supplyChainTools.ts:106,115,117,119` — fix "Tin hieu co phieu: Khong co...", "TONG KET: Co tin hieu QUAN TRONG...", "Phat hien tin hieu nhe", "Chuoi cung ung on dinh..." → proper accented Vietnamese
+- IN: TDD test `src/__tests__/1408-tool-diacritics.test.ts` — RED first, assert fixed strings appear in output
+- OUT: kinhDichReading.ts lookup keys ("BAT LOI" score key stays), alert pipeline, VPS proxies, schema changes
+
+**Success metric:** All three files output properly accented Vietnamese. TDD test GREEN. `bun tsc --noEmit` clean. 5055+ pass, 0 fail.
+
+---
+
+## Sprint 143 — COMPLETE (2026-04-18)
+
+**Goal:** Reclassify HUT real_estate → construction in sectorPeers + DB migration.
+**Status:** COMPLETE. Tasks 1406-1407 merged. 5055 pass, 0 fail.
+
+---
+
 ## Sprint 129 — COMPLETE (2026-04-17)
 
 **Goal:** Fix 17 pre-existing test failures from stale franceSummaryJob fixtures + schedulerFileCount drift.
@@ -20,6 +42,27 @@
 
 **Goal:** Fix unaccented Vietnamese text in `calibrationReportJob` MARKET channel output.
 **Status:** COMPLETE. Tasks 1392+1393 merged. 5035 pass, 0 fail, 21 skip.
+
+---
+
+## Sprint 142 — COMPLETE (2026-04-18)
+
+**Goal:** Fix two HIGH alert-quality bugs: (1) volume spike multiplier shows identical 5.9× across all tickers; (2) conviction scorer outputs unaccented Vietnamese labels.
+**Status:** COMPLETE. Tasks 1402-1405 merged. 5055 pass, 0 fail.
+
+---
+
+## Sprint 141 — COMPLETE
+
+**Goal:** Fix test DB isolation — `setup.ts` sets `process.env["DB_PATH"]` but `schema.ts` reads `Bun.env["DB_PATH"]` (different namespaces in Bun). Every full test run leaks fixture rows into production `data/market.db`. Phantom rows (epoch 1970, 400+) pollute BUG channel and PO audit loop.
+
+**Scope:**
+- IN: `src/__tests__/setup.ts:12` — change `process.env["DB_PATH"]` to `Bun.env["DB_PATH"]`
+- IN: Purge existing phantom rows (`DELETE FROM telegram_reports WHERE created_at < 1000000` via migration or one-time script)
+- IN: TDD test `src/__tests__/1396-db-isolation.test.ts` — assert `Bun.env["DB_PATH"]` is `":memory:"` during test run, assert production DB path never opened
+- OUT: Changes to `schema.ts`, alert pipeline, VPS proxies, any other scheduler
+
+**Success metric:** No phantom rows accumulate in `data/market.db` after `bun test`. `bun tsc --noEmit` clean. TDD test passes. BUG channel no longer shows 1970-epoch reports.
 
 ---
 
