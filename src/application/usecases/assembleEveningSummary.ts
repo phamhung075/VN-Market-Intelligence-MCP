@@ -27,6 +27,18 @@ import type { BriefingPredictionSignal } from "../../infrastructure/db/predictio
 // Public types
 // ─────────────────────────────────────────────────────────────────────────────
 
+/** VN-Index snapshot captured at market close. */
+export interface VnIndexSnapshot {
+  /** Closing price (MarketPrice.price) */
+  close: number;
+  /** Signed integer change: Math.round(price - previousPrice) */
+  change: number;
+  /** Percentage change rounded to 2 dp (MarketPrice.changePct) */
+  changePct: number;
+  /** ISO 8601 timestamp from MarketPrice.fetchedAt */
+  fetchedAt: string;
+}
+
 /** Diagnostic counts for prediction pipeline observability — JSON report only, NOT sent to Telegram */
 export interface PredictionDiag {
   /** Total prediction_signals rows fetched in last 24h, any severity */
@@ -86,6 +98,8 @@ export interface EveningSummary {
   newsCount: number;
   /** ISO 8601 timestamp when this summary was generated */
   generatedAt: string;
+  /** VN-Index close snapshot. Present on success; undefined when fetch fails or returns null. */
+  vnIndex?: VnIndexSnapshot;
 }
 
 /**
@@ -106,6 +120,8 @@ export interface AssembleEveningSummaryOptions {
   getPredictionSignalsFn?: (db: Database, hoursBack: number) => BriefingPredictionSignal[] | Promise<BriefingPredictionSignal[]>;
   /** Override OHLCV row count query for tests — avoids real DB dependency */
   getOhlcvRowCountFn?: (code: string, db: Database) => number;
+  /** Override VN-Index fetch for tests — avoids real HTTP calls */
+  fetchVnIndexFn?: () => Promise<import("../../infrastructure/fetchers/hose.js").MarketPrice | null>;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -256,6 +272,27 @@ export async function assembleEveningSummary(
 
   const reportsDir = options.reportsDir ?? "./reports";
   const getNewsCountFn = options.getNewsCountFn;
+
+  // ── Step 0: VN-Index snapshot (best-effort, front-loaded) ────────────────
+  let vnIndex: VnIndexSnapshot | undefined;
+  try {
+    const fetchFn =
+      options.fetchVnIndexFn ??
+      (await import("../../infrastructure/fetchers/hose.js")).fetchVnIndex;
+    const mp = await fetchFn();
+    if (mp !== null) {
+      vnIndex = {
+        close: mp.price,
+        change: Math.round(mp.price - mp.previousPrice),
+        changePct: Math.round(mp.changePct * 100) / 100,
+        fetchedAt: mp.fetchedAt,
+      };
+    }
+  } catch (err) {
+    logger.warn("[assembleEveningSummary] fetchVnIndex failed", {
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
 
   // ── Step 1: Top 5 stories since midnight ─────────────────────────────────
   const midnight = midnightVietnamAsUtc();
@@ -434,6 +471,7 @@ export async function assembleEveningSummary(
     taSummary,
     newsCount,
     generatedAt,
+    ...(vnIndex !== undefined ? { vnIndex } : {}),
   };
 
   try {
