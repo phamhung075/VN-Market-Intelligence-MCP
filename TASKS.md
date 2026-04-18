@@ -149,6 +149,15 @@
 
 ---
 
+## Sprint 162 — feat(france-summary): portfolio P&L block
+
+| ID | Title | Status | Role |
+|----|-------|--------|------|
+| 1444 | test(france-summary): TDD RED — portfolio P&L assertions | Done | Dev |
+| 1445 | feat(france-summary): add portfolioPnl to runFranceSummary + formatFranceSummaryVI GREEN | Done | Dev |
+
+---
+
 ## Backlog
 
 | ID | Title | Priority | Notes |

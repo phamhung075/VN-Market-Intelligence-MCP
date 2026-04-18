@@ -20,6 +20,8 @@
 
 import type { Database } from "bun:sqlite"
 import { logger } from "../infrastructure/logger.js"
+import { formatPnlSection } from "../domain/services/portfolioPnlCalculator.js"
+import type { PortfolioPnlResult } from "../domain/services/portfolioPnlCalculator.js"
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Public types
@@ -59,6 +61,12 @@ export interface FranceSummaryOptions {
   nowFn?: () => Date
   /** Injectable TA compute fn for TDD (defaults to defaultComputeTa). */
   computeTaFn?: (code: string, db: Database) => TaSignalRow | null
+  /**
+   * Injectable portfolio P&L fn for TDD.
+   * Defaults to computing P&L from the positions table via portfolioPnlCalculator.
+   * Return null to skip the P&L section (e.g. no positions or DB unavailable).
+   */
+  getPnlFn?: () => Promise<PortfolioPnlResult | null>
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -307,12 +315,16 @@ function ma20Label(pos: TaSignalRow["priceVsMa20"]): string {
  * Fourth argument changed from taCount: number → taSignals: TaSignalRow[]
  * (Task 1365 — replaces TA count with per-ticker RSI/MA20 signals).
  * Accepts number for legacy call-site compat (treated as empty signals array).
+ *
+ * Fifth argument (Task 1444/1445): optional portfolioPnl — renders DANH MỤC
+ * block when present and non-empty. Omitted when null/undefined or empty items.
  */
 export function formatFranceSummaryVI(
   dateStr: string,
   movers: MoverRow[],
   alerts: AlertRow[],
   taSignals: TaSignalRow[] | number,
+  portfolioPnl?: PortfolioPnlResult | null,
 ): string {
   const header = `Bản tin sáng Pháp — Thị trường VN (${dateStr})`
 
@@ -360,6 +372,14 @@ export function formatFranceSummaryVI(
       lines.push(`  ${s.code}${detail}`)
     }
     blocks.push(lines.join("\n"))
+  }
+
+  // Section 4: portfolio P&L — omit when null/undefined or items empty
+  if (portfolioPnl != null && portfolioPnl.items.length > 0) {
+    const pnlBlock = formatPnlSection(portfolioPnl)
+    if (pnlBlock.length > 0) {
+      blocks.push(pnlBlock)
+    }
   }
 
   return header + (blocks.length > 0 ? "\n\n" + blocks.join("\n\n") : "")
@@ -417,13 +437,57 @@ export async function runFranceSummary(opts: FranceSummaryOptions = {}): Promise
   const alerts = fetchTopAlerts(resolvedDb)
   const taSignals = fetchTaSignals(resolvedDb, opts.computeTaFn)
 
-  // Silent skip when all three sources are empty
-  if (movers.length === 0 && alerts.length === 0 && taSignals.length === 0) {
+  // ── Portfolio P&L (best-effort, injectable via getPnlFn) ───────────────
+  let portfolioPnl: PortfolioPnlResult | null = null
+  try {
+    if (opts.getPnlFn) {
+      portfolioPnl = await opts.getPnlFn()
+    } else {
+      // Default: query positions table + market_prices (mirrors assembleEveningSummary)
+      interface OpenPositionRow { code: string; shares: number; avg_price: number }
+      interface PriceRow { code: string; price: number }
+      const openPositions = resolvedDb
+        .prepare<OpenPositionRow, []>(
+          `SELECT code, shares, avg_price FROM positions WHERE status = 'open'`,
+        )
+        .all()
+      if (openPositions.length > 0) {
+        const codes = openPositions.map((p) => `'${p.code}'`).join(",")
+        const priceRows = resolvedDb
+          .prepare<PriceRow, []>(
+            `SELECT code, price FROM market_prices WHERE code IN (${codes})`,
+          )
+          .all()
+        const priceMap = new Map(priceRows.map((r) => [r.code, r.price]))
+        const { computePortfolioPnl } = await import(
+          "../domain/services/portfolioPnlCalculator.js"
+        )
+        portfolioPnl = computePortfolioPnl(
+          openPositions.map((p) => ({
+            code: p.code,
+            shares: p.shares,
+            avgPrice: p.avg_price,
+          })),
+          priceMap,
+        )
+      }
+    }
+  } catch (err) {
+    logger.warn("[franceSummaryJob] getPnlFn failed — skipping P&L section", {
+      error: err instanceof Error ? err.message : String(err),
+    })
+    portfolioPnl = null
+  }
+
+  const hasPnl = portfolioPnl != null && portfolioPnl.items.length > 0
+
+  // Silent skip when all sources are empty
+  if (movers.length === 0 && alerts.length === 0 && taSignals.length === 0 && !hasPnl) {
     return { sent: false, moverCount: 0, alertCount: 0, taSignals: [] }
   }
 
   const dateStr = formatDateVI(nowFn())
-  const message = formatFranceSummaryVI(dateStr, movers, alerts, taSignals)
+  const message = formatFranceSummaryVI(dateStr, movers, alerts, taSignals, portfolioPnl)
 
   try {
     await resolvedSend(message)
