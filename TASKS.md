@@ -38,11 +38,21 @@
 
 > Sprint goal: COMPLETE 2026-04-18 | volume-spike-multiplier fix + alert-diacritics fix merged to main
 
+## Sprint 143 — Active
+
+> Spec: `docs/REQ_1406.md` | Tech: `docs/TECH_1406.md` (APPROVED_BY_ARCHITECT)
+
+| ID | Title | Status | Role |
+|----|-------|--------|------|
+| 1406 | test(hut-sector): RED test — assert HUT not in real_estate, is in construction | Review | Dev |
+| 1407 | fix(hut-sector): move HUT to construction in SECTOR_PEERS + DB migration | Todo | Dev |
+
+---
+
 ## Backlog
 
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
-| 1399 | fix(hut-sector): HUT misclassified as real_estate — triggers BĐS cascade incorrectly (should be infrastructure/construction) | MEDIUM | Sprint 143 |
 
 ---
 
@@ -75,10 +85,34 @@
 ### 1399 — fix(hut-sector): HUT misclassified as real_estate
 
 **Priority:** MEDIUM
+**Status:** Superseded by Sprint 143 (tasks 1406 + 1407). Root cause confirmed by BA 2026-04-18.
 **Root cause:** HUT (Tasco Joint Stock Company — toll roads, highway infrastructure) appears in the alert system classified under `real_estate` sector, causing it to trigger "Bất động sản giảm đồng loạt" cascade alerts alongside 9 genuine real estate stocks. HUT's business is highway concessions + infrastructure construction, not property development.
+**Root cause location (confirmed):** `src/domain/services/sectorPeers.ts:66` — `{ code: "HUT", exchange: "HNX" }` is hardcoded inside the `real_estate` array. This drives `getStockProfile("HUT")` → `domain: "real_estate"`, which seeds the DB watchlist and all cascade/comparison tools.
+**Fix:** Spec in `docs/REQ_1406.md`.
+
+---
+
+### 1406 — test(hut-sector): RED test
+
+**Priority:** MEDIUM
+**Spec:** `docs/REQ_1406.md` FR-4
+**Test file:** `src/__tests__/1406-hut-sector-reclassify.test.ts`
+**Cases (3 minimum, all must be RED before fix):**
+1. `getSectorPeers("real_estate", new Set(), Infinity)` — must NOT contain `{ code: "HUT" }`
+2. `getSectorPeers("construction", new Set(), Infinity)` — must contain `{ code: "HUT", exchange: "HNX" }`
+3. `getStockProfile("HUT")` — must return `{ domain: "construction", exchange: "HNX" }`
+**Depends on:** nothing — pure domain service, no DB I/O
+
+---
+
+### 1407 — fix(hut-sector): move HUT + DB migration
+
+**Priority:** MEDIUM
+**Spec:** `docs/REQ_1406.md` FR-1, FR-3
 **Files:**
-- `docs/data/stock-classification.json` — HUT entry needs sector changed from `real_estate` to `infrastructure` (or `construction`). NOTE: HUT is NOT currently in the `watchlist` array of this file (verified 2026-04-17). The misclassification may be in a different store — check `data/market.db` watchlist table: `SELECT code, sector FROM watchlist WHERE code = 'HUT'`
-- If not in DB watchlist, the source may be hardcoded in a sector cascade rule — grep `src/` for `"HUT"` to find where it is assigned to real_estate.
-**Fix:** (1) Locate exact HUT sector assignment (DB row or hardcoded string); (2) reclassify to `infrastructure`; (3) verify cascade rule test for real_estate no longer includes HUT.
+- `src/domain/services/sectorPeers.ts:66` — remove HUT from `real_estate[]`, add to `construction[]`
+- `src/infrastructure/db/schema.ts` — add idempotent migration: `UPDATE watchlist SET domain = 'construction' WHERE code = 'HUT' AND domain = 'real_estate'`
+**Acceptance:** Tasks 1406 tests GREEN. `1282-sector-classification-dedup.test.ts` still passes. `bun tsc --noEmit` clean.
+**Depends on:** 1406 (RED test must exist first)
 
 ---

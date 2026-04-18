@@ -1406,4 +1406,10 @@ export async function initDatabase(): Promise<void> {
     CREATE INDEX IF NOT EXISTS idx_mm_ticker     ON market_messages(ticker);
   `);
 
+  // Task 1407 — HUT domain migration: real_estate → construction
+  // Safe: WHERE clause makes it a no-op if already correct or HUT not in watchlist.
+  db.exec(
+    `UPDATE watchlist SET domain = 'construction' WHERE code = 'HUT' AND domain = 'real_estate'`
+  );
+
 }

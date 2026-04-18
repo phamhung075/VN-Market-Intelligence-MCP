@@ -29,7 +29,7 @@ const WATCHLIST: { code: string; domain: DomainType; exchange: string }[] = [
   { code: "VHM", domain: "real_estate", exchange: "HOSE" },
   { code: "VIC", domain: "real_estate", exchange: "HOSE" },
   { code: "KBC", domain: "real_estate", exchange: "HOSE" },
-  { code: "HUT", domain: "real_estate", exchange: "HNX"  },
+  { code: "HUT", domain: "construction", exchange: "HNX"  },
   { code: "DIG", domain: "real_estate", exchange: "HOSE" },
   { code: "DXG", domain: "real_estate", exchange: "HOSE" },
   { code: "KDH", domain: "real_estate", exchange: "HOSE" },
