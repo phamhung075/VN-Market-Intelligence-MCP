@@ -87,6 +87,17 @@
 
 ---
 
+## Sprint 157 — fix(morning-briefing): show commodity values instead of count-only — COMPLETE (2026-04-18)
+
+| ID | Title | Status | Role |
+|----|-------|--------|------|
+| 1434 | test(morning-briefing): TDD RED — commodity values assertions | Done | Dev |
+| 1435 | fix(morning-briefing): replace count-only line with per-commodity lines GREEN | Done | Dev |
+
+> Handoff: `docs/handoffs/TASK_1434.md`
+
+---
+
 ## Backlog
 
 | ID | Title | Priority | Notes |
