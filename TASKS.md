@@ -38,14 +38,16 @@
 
 > Sprint goal: COMPLETE 2026-04-18 | volume-spike-multiplier fix + alert-diacritics fix merged to main
 
-## Sprint 143 — Active
+## Sprint 143 — Complete
 
 > Spec: `docs/REQ_1406.md` | Tech: `docs/TECH_1406.md` (APPROVED_BY_ARCHITECT)
 
 | ID | Title | Status | Role |
 |----|-------|--------|------|
-| 1406 | test(hut-sector): RED test — assert HUT not in real_estate, is in construction | Review | Dev |
-| 1407 | fix(hut-sector): move HUT to construction in SECTOR_PEERS + DB migration | Todo | Dev |
+| 1406 | test(hut-sector): RED test — assert HUT not in real_estate, is in construction | Done | Dev |
+| 1407 | fix(hut-sector): move HUT to construction in SECTOR_PEERS + DB migration | Done | Dev |
+
+> Sprint goal: COMPLETE 2026-04-18 | HUT reclassified real_estate → construction, DB migration idempotent
 
 ---
 

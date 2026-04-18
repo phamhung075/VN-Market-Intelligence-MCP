@@ -1,7 +1,7 @@
-# Archive — Sprints 133–142
+# Archive — Sprints 133–143
 
 Period: 2026-04-17 → 2026-04-18
-Archived from TASKS.md on Sprint 143 start.
+Archived from TASKS.md on Sprint 143 completion.
 
 ---
 
@@ -127,4 +127,17 @@ PO sign-off: 2026-04-18
 
 Goal: Fix volume-spike-multiplier uniform 5.9x bug (ATC guard extension + per-ticker avgVolume isolation) + proper Vietnamese diacritics in convictionScorer and technicalIndicatorTools.
 Spec: docs/REQ_1402.md | Tech: docs/TECH_1402.md
+PO sign-off: 2026-04-18
+
+---
+
+## Sprint 143 — COMPLETE (2026-04-18)
+
+| ID | Title | Status |
+|----|-------|--------|
+| 1406 | test(hut-sector): RED test — assert HUT not in real_estate, is in construction | Done |
+| 1407 | fix(hut-sector): move HUT to construction in SECTOR_PEERS + DB migration | Done |
+
+Goal: HUT reclassified from real_estate to construction sector — removes false cascade alerts. DB migration idempotent UPDATE in schema.ts.
+Spec: docs/REQ_1406.md | Tech: docs/TECH_1406.md
 PO sign-off: 2026-04-18
