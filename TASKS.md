@@ -9,6 +9,7 @@
 | ID | Title | Status |
 |----|-------|--------|
 | 1420 | wrap-missing-jobs-recordJobRun | Done |
+| 1421 | ohlcv-health-digest-fix | Done |
 
 > Archived: `docs/archive/sprints-133-150.md`
 

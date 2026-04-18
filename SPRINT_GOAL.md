@@ -2,7 +2,20 @@
 
 > Previous sprint goals live in their `docs/REQ_NNN.md` specs. This file = current sprint only.
 
-## Sprint 144 — ACTIVE
+## Sprint 150 — COMPLETE (2026-04-18)
+
+**Goal:** Fix ohlcvDailyAggregatorJob health gap + alertDigestTools diacritics.
+**Scope:**
+- IN: `jobs.ts` — wrap ohlcvDailyAggregator cron with `recordJobRun(db, 'ohlcv-daily-aggregator', ...)`
+- IN: `alertDigestTools.ts` — fix 3 unaccented strings: "[Telegram: da gui thanh cong]" → "[Telegram: đã gửi thành công]", "(Telegram chua duoc cau hinh)" → "(Telegram chưa được cấu hình)"
+- IN: TDD test `src/__tests__/1421-ohlcv-health-and-digest-diacritics.test.ts` — 6 assertions, RED → GREEN
+- OUT: Schema changes, VPS proxies, alert routing, new features
+
+**Status:** COMPLETE. Task 1421 merged. 6/6 TDD assertions GREEN. `bun tsc --noEmit` clean.
+
+---
+
+## Sprint 144 — COMPLETE (2026-04-18)
 
 **Goal:** Fix unaccented Vietnamese text in MCP tool responses — `kinhDichTools.ts`, `technicalIndicatorTools.ts`, and `supplyChainTools.ts`. Sprints 135-143 fixed alert/digest/conviction pipelines but left these three tool files with broken diacritics visible to the user on every MCP tool call.
 
