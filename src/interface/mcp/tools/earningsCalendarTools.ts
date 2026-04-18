@@ -55,10 +55,10 @@ interface FilingRow {
 /** Map FilingStatusCode → Vietnamese display label */
 function statusLabel(code: FilingStatusCode): string {
   switch (code) {
-    case "DA_NOP":  return "DA NOP";
-    case "QUA_HAN": return "QUA HAN";
-    case "SAP_DEN": return "SAP DEN";
-    case "UOC_TINH": return "(uoc tinh)";
+    case "DA_NOP":  return "ĐÃ NỘP";
+    case "QUA_HAN": return "QUÁ HẠN";
+    case "SAP_DEN": return "SẮP ĐẾN";
+    case "UOC_TINH": return "(ước tính)";
   }
 }
 
@@ -137,8 +137,8 @@ export function registerEarningsCalendarTools(
     "get_earnings_calendar",
     "Show BCTC (financial report) filing deadlines and statuses for all watchlist stocks. " +
       "For each stock, displays the next quarterly filing deadline and one of: " +
-      "DA NOP (filed), QUA HAN (overdue), SAP DEN (due within 14 days), " +
-      "or (uoc tinh) (estimated — deadline > 14 days away).",
+      "ĐÃ NỘP (filed), QUÁ HẠN (overdue), SẮP ĐẾN (due within 14 days), " +
+      "or (ước tính) (estimated — deadline > 14 days away).",
     {
       /** Test-only override for the reference date (ISO: YYYY-MM-DD or YYYY-MM-DDTHH:mm:ssZ) */
       _testDate: z.string().optional().describe("Test-only: override reference date (ISO format)"),
@@ -162,7 +162,7 @@ export function registerEarningsCalendarTools(
             content: [
               {
                 type: "text" as const,
-                text: "Danh sach theo doi trong\n(Them co phieu vao watchlist de xem lich nop BCTC)",
+                text: "Danh sách theo dõi trống\n(Thêm cổ phiếu vào watchlist để xem lịch nộp BCTC)",
               },
             ],
           };
@@ -188,10 +188,10 @@ export function registerEarningsCalendarTools(
 
         // Build calendar lines
         const lines: string[] = [
-          "=== LICH NOP BCTC ===",
-          `Ngay tham chieu: ${today.toISOString().slice(0, 10)}`,
+          "=== LỊCH NỘP BCTC ===",
+          `Ngày tham chiếu: ${today.toISOString().slice(0, 10)}`,
           "",
-          "CO PHIEU  QUY      HAN NOP      TRANG THAI         NGAY NOP",
+          "CỔ PHIẾU  QUÝ      HẠN NỘP      TRẠNG THÁI         NGÀY NỘP",
           "--------  -------  -----------  -----------------  ----------",
         ];
 
@@ -231,8 +231,8 @@ export function registerEarningsCalendarTools(
         }
 
         lines.push("");
-        lines.push(`Tong: ${watchlist.length} co phieu`);
-        lines.push("Ghi chu: (uoc tinh) = han nop con xa hon 14 ngay | SAP DEN = con duoi 14 ngay | QUA HAN = da qua han | DA NOP = da co bao cao");
+        lines.push(`Tổng: ${watchlist.length} cổ phiếu`);
+        lines.push("Ghi chú: (ước tính) = hạn nộp còn xa hơn 14 ngày | SẮP ĐẾN = còn dưới 14 ngày | QUÁ HẠN = đã quá hạn | ĐÃ NỘP = đã có báo cáo");
 
         return {
           content: [{ type: "text" as const, text: lines.join("\n") }],
@@ -245,7 +245,7 @@ export function registerEarningsCalendarTools(
           content: [
             {
               type: "text" as const,
-              text: `Loi khi lay lich nop BCTC: ${(err as Error).message}`,
+              text: `Lỗi khi lấy lịch nộp BCTC: ${(err as Error).message}`,
             },
           ],
         };

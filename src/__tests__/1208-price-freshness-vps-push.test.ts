@@ -76,12 +76,12 @@ describe("Task 1208 — Stock price freshness uses VPS-push timestamp", () => {
     expect(pushAgeHours).toBeGreaterThan(11);
     expect(priceAgeHours).toBeLessThan(3);
     const { classifyFreshness } = await import("../interface/mcp/tools/dataFreshnessTools.js");
-    expect(classifyFreshness(pushAgeHours)).toBe("Cu");
-    expect(classifyFreshness(priceAgeHours)).toBe("Binh thuong");
+    expect(classifyFreshness(pushAgeHours)).toBe("Cũ");
+    expect(classifyFreshness(priceAgeHours)).toBe("Bình thường");
     db.close();
   });
 
-  it("getDataFreshness: Gia co phieu row uses vps_push_log pushed_at (fresh push = Tot)", async () => {
+  it("getDataFreshness: Gia co phieu row uses vps_push_log pushed_at (fresh push = Tốt)", async () => {
     const { getDataFreshness } = await import("../interface/mcp/tools/dataFreshnessTools.js");
     const db = buildTestDb();
     const staleUpdatedAt = new Date(Date.now() - 2 * 3600_000).toISOString();
@@ -91,7 +91,7 @@ describe("Task 1208 — Stock price freshness uses VPS-push timestamp", () => {
     db.prepare("INSERT INTO vps_push_log (service, items_count, status, pushed_at) VALUES (?, ?, ?, ?)")
       .run("prices", 130, "ok", freshPushAt);
     const report = await getDataFreshness(db);
-    expect(report).toContain("Tot");
+    expect(report).toContain("Tốt");
     db.close();
   });
 
@@ -101,7 +101,7 @@ describe("Task 1208 — Stock price freshness uses VPS-push timestamp", () => {
     db.prepare("INSERT OR REPLACE INTO market_prices (code, price, change_pct, volume, updated_at) VALUES (?, ?, ?, ?, ?)")
       .run("VHM", 45000, -0.5, 1000000, new Date(Date.now() - 2 * 3600_000).toISOString());
     const report = await getDataFreshness(db);
-    expect(report).toContain("Chua co du lieu");
+    expect(report).toContain("Chưa có dữ liệu");
     db.close();
   });
 });

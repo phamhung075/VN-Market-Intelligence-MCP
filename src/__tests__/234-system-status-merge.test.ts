@@ -74,13 +74,13 @@ describe("Task 234 — getSystemStatus()", () => {
   it("SOURCE HEALTH section includes Vietnamese header", async () => {
     const result = await getSystemStatus({ includeErrors: true, errorLines: 5 });
     const srcSection = result.slice(result.indexOf("=== SOURCE HEALTH ==="));
-    expect(srcSection).toContain("Tinh trang nguon du lieu");
+    expect(srcSection).toContain("Tình trạng nguồn dữ liệu");
   });
 
   it("DATA FRESHNESS section includes Vietnamese header", async () => {
     const result = await getSystemStatus({ includeErrors: true, errorLines: 5 });
     const freshSection = result.slice(result.indexOf("=== DATA FRESHNESS ==="));
-    expect(freshSection).toContain("Do tuoi du lieu");
+    expect(freshSection).toContain("Độ tuổi dữ liệu");
   });
 
   it("returns a string (not an object)", async () => {

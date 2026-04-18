@@ -115,7 +115,7 @@ export async function getClimateRiskSignals(
   }
 
   if (opts.stock) {
-    text += `\nLoc: ${opts.stock}`;
+    text += `\nLọc: ${opts.stock}`;
   }
 
   return {

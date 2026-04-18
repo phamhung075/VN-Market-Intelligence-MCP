@@ -227,14 +227,14 @@ describe("Task 210 — formatSourceHealth output", () => {
     const output = formatSourceHealthTable(tracker.getAllHealth());
 
     // Header present
-    expect(output).toContain("Tinh trang nguon du lieu");
+    expect(output).toContain("Tình trạng nguồn dữ liệu");
     // Source names present
     expect(output).toContain("CafeF RSS");
     expect(output).toContain("Trading Economics");
     // Status Vietnamese labels
     expect(output).toContain("OK");
-    expect(output).toContain("Suy giam");
-    expect(output).toContain("Ngung");
+    expect(output).toContain("Suy giảm");
+    expect(output).toContain("Ngưng");
     // Down source gets warning symbol
     expect(output).toContain("⚠");
   });
@@ -244,6 +244,6 @@ describe("Task 210 — formatSourceHealth output", () => {
       "../interface/mcp/tools/sourceHealthTools.js"
     );
     const output = formatSourceHealthTable([]);
-    expect(output).toContain("Chua co du lieu");
+    expect(output).toContain("Chưa có dữ liệu");
   });
 });

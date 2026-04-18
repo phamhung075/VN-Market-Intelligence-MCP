@@ -12,8 +12,8 @@
  *   - unmute_stock_alerts (removed in task 236)
  *
  * Output format (Vietnamese):
- *   VCB da duoc tat tieng trong 24 gio (den 02/04 15:30)
- *   VCB da duoc bat lai canh bao.
+ *   VCB đã được tắt tiếng trong 24 giờ (đến 02/04 15:30)
+ *   VCB đã được bật lại cảnh báo.
  *
  * @module interface/mcp/tools/alertMuteTools
  */
@@ -100,14 +100,14 @@ export function registerAlertMuteTools(server: McpServer): void {
           const untilStr = formatViDate(until);
 
           const lines: string[] = [
-            `${code} da duoc tat tieng trong ${resolvedHours} gio (den ${untilStr})`,
+            `${code} đã được tắt tiếng trong ${resolvedHours} giờ (đến ${untilStr})`,
           ];
           if (reason) {
-            lines.push(`Ly do: ${reason}`);
+            lines.push(`Lý do: ${reason}`);
           }
           lines.push("");
           lines.push(
-            "De bat lai canh bao, goi manage_alert_mute voi action='unmute'.",
+            "Để bật lại cảnh báo, gọi manage_alert_mute với action='unmute'.",
           );
 
           return {
@@ -127,7 +127,7 @@ export function registerAlertMuteTools(server: McpServer): void {
             content: [
               {
                 type: "text" as const,
-                text: `${code} hien khong bi tat tieng canh bao.`,
+                text: `${code} hiện không bị tắt tiếng cảnh báo.`,
               },
             ],
           };
@@ -143,7 +143,7 @@ export function registerAlertMuteTools(server: McpServer): void {
           );
         } else {
           lines.push(
-            `${code} da duoc bat lai canh bao (truoc khi het han ${formatViDate(wasUntil)}).`,
+            `${code} đã được bật lại cảnh báo (trước khi hết hạn ${formatViDate(wasUntil)}).`,
           );
         }
 
@@ -152,11 +152,12 @@ export function registerAlertMuteTools(server: McpServer): void {
         };
       } catch (err) {
         console.error("[manage_alert_mute] Failed:", err);
+        const errAction = action === "mute" ? "Lỗi khi tắt tiếng" : "Lỗi khi bật lại";
         return {
           content: [
             {
               type: "text" as const,
-              text: `Loi khi ${action === "mute" ? "tat tieng" : "bat lai"} canh bao cho ${code}: ${err instanceof Error ? err.message : String(err)}`,
+              text: `${errAction} cảnh báo cho ${code}: ${err instanceof Error ? err.message : String(err)}`,
             },
           ],
         };

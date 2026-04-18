@@ -25,7 +25,7 @@ import { SourceHealthTracker } from "../../../domain/services/sourceHealthTracke
  * the in-memory health state. Without this, every hot-reload of pollNews.ts
  * (or any module that transitively re-imports sourceHealthTools.ts) creates
  * a fresh tracker with `lastSuccessAt = null` for all sources, causing the
- * SOURCE HEALTH table to show "Chua bao gio" even though fetchers are running
+ * SOURCE HEALTH table to show "Chưa bao giờ" even though fetchers are running
  * successfully (regression reported in Loop #36, report 1003).
  *
  * Application-layer modules (e.g. pollNews.ts) import and use this directly:
@@ -60,8 +60,8 @@ globalSourceTracker.seedKnownSources([
 
 const STATUS_LABEL: Record<string, string> = {
   ok: "OK",
-  degraded: "Suy giam",
-  down: "Ngung",
+  degraded: "Suy giảm",
+  down: "Ngưng",
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -73,14 +73,14 @@ const STATUS_LABEL: Record<string, string> = {
  *
  * Example output:
  * ```
- * Tinh trang nguon du lieu
+ * Tình trạng nguồn dữ liệu
  * ========================
  *
- * Nguon              | Trang thai | Lan cuoi thanh cong | Loi lien tiep
+ * Nguồn              | Trạng thái | Lần cuối thành công | Lỗi liên tiếp
  * -------------------|------------|---------------------|---------------
- * CafeF RSS          | OK         | 5 phut truoc        | 0
- * Google News        | Suy giam   | 2 gio truoc         | 3
- * Trading Economics  | Ngung      | 6 gio truoc         | 7 ⚠
+ * CafeF RSS          | OK         | 5 phút trước        | 0
+ * Google News        | Suy giảm   | 2 giờ trước         | 3
+ * Trading Economics  | Ngưng      | 6 giờ trước         | 7 ⚠
  * ```
  *
  * @param sources - Array of SourceHealth records (from getAllHealth()).
@@ -88,14 +88,14 @@ const STATUS_LABEL: Record<string, string> = {
  */
 export function formatSourceHealthTable(sources: SourceHealth[]): string {
   if (sources.length === 0) {
-    return "Tinh trang nguon du lieu\n========================\n\nChua co du lieu. Chua co nguon nao duoc theo doi.";
+    return "Tình trạng nguồn dữ liệu\n========================\n\nChưa có dữ liệu. Chưa có nguồn nào được theo dõi.";
   }
 
   const lines: string[] = [
-    "Tinh trang nguon du lieu",
+    "Tình trạng nguồn dữ liệu",
     "========================",
     "",
-    "Nguon              | Trang thai | Lan cuoi thanh cong | Loi lien tiep",
+    "Nguồn              | Trạng thái | Lần cuối thành công | Lỗi liên tiếp",
     "-------------------|------------|---------------------|---------------",
   ];
 
@@ -115,7 +115,7 @@ export function formatSourceHealthTable(sources: SourceHealth[]): string {
   }
 
   lines.push("");
-  lines.push(`Cap nhat luc: ${new Date().toISOString()}`);
+  lines.push(`Cập nhật lúc: ${new Date().toISOString()}`);
 
   return lines.join("\n");
 }
@@ -128,21 +128,21 @@ export function formatSourceHealthTable(sources: SourceHealth[]): string {
  * Convert an ISO timestamp to a Vietnamese relative-time string.
  *
  * @param isoString - ISO-8601 timestamp or null.
- * @returns           Human-readable relative string, e.g. "5 phut truoc".
+ * @returns           Human-readable relative string, e.g. "5 phút trước".
  */
 function formatRelativeTime(isoString: string | null): string {
-  if (!isoString) return "Chua bao gio";
+  if (!isoString) return "Chưa bao giờ";
 
   const diffMs = Date.now() - new Date(isoString).getTime();
   const diffSec = Math.floor(diffMs / 1000);
 
-  if (diffSec < 60) return `${diffSec} giay truoc`;
+  if (diffSec < 60) return `${diffSec} giây trước`;
   const diffMin = Math.floor(diffSec / 60);
-  if (diffMin < 60) return `${diffMin} phut truoc`;
+  if (diffMin < 60) return `${diffMin} phút trước`;
   const diffHr = Math.floor(diffMin / 60);
-  if (diffHr < 24) return `${diffHr} gio truoc`;
+  if (diffHr < 24) return `${diffHr} giờ trước`;
   const diffDay = Math.floor(diffHr / 24);
-  return `${diffDay} ngay truoc`;
+  return `${diffDay} ngày trước`;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

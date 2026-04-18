@@ -5,11 +5,11 @@
  * full MCP tool handler (earningsCalendarTools.ts).
  *
  * Acceptance criteria:
- *  - Watchlist stock with no filing → next Q deadline shown as "(uoc tinh)"
- *  - Stock past deadline with no entry → "QUA HAN"
- *  - Stock within 14 days of deadline → "SAP DEN"
- *  - Stock with actual filing → "DA NOP" with date
- *  - Empty watchlist → "Danh sach theo doi trong"
+ *  - Watchlist stock with no filing → next Q deadline shown as "(ước tính)"
+ *  - Stock past deadline with no entry → "QUÁ HẠN"
+ *  - Stock within 14 days of deadline → "SẮP ĐẾN"
+ *  - Stock with actual filing → "ĐÃ NỘP" with date
+ *  - Empty watchlist → "Danh sách theo dõi trống"
  *  - >= 14 tests, tsc 0 errors
  *
  * Vietnamese BCTC statutory deadlines (calendar days after quarter end):
@@ -200,7 +200,7 @@ async function callTool(
 }
 
 describe("Task 187 — get_earnings_calendar MCP tool", () => {
-  it("returns 'Danh sach theo doi trong' for empty watchlist", async () => {
+  it("returns 'Danh sách theo dõi trống' for empty watchlist", async () => {
     const db = new Database(":memory:");
     db.exec(`CREATE TABLE IF NOT EXISTS watchlist (
       code TEXT PRIMARY KEY, exchange TEXT NOT NULL, domain TEXT NOT NULL DEFAULT 'other',
@@ -226,7 +226,7 @@ describe("Task 187 — get_earnings_calendar MCP tool", () => {
       _testDate: "2026-04-01",
     });
 
-    expect(text).toContain("Danh sach theo doi trong");
+    expect(text).toContain("Danh sách theo dõi trống");
   });
 
   it("shows UOC_TINH for a stock with no filing and deadline far away", async () => {
@@ -258,10 +258,10 @@ describe("Task 187 — get_earnings_calendar MCP tool", () => {
     });
 
     expect(text).toContain("VNM");
-    expect(text).toContain("uoc tinh");
+    expect(text).toContain("ước tính");
   });
 
-  it("shows QUA HAN for a stock past its deadline with no filing", async () => {
+  it("shows QUÁ HẠN for a stock past its deadline with no filing", async () => {
     const db = new Database(":memory:");
     db.exec(`CREATE TABLE IF NOT EXISTS watchlist (
       code TEXT PRIMARY KEY, exchange TEXT NOT NULL, domain TEXT NOT NULL DEFAULT 'other',
@@ -284,16 +284,16 @@ describe("Task 187 — get_earnings_calendar MCP tool", () => {
     const server = new McpServer({ name: "test", version: "0.0.1" }, { capabilities: { tools: {} } });
     registerEarningsCalendarTools(server, db);
 
-    // Date: 2026-04-01. Q4-2025 deadline was Mar 30 2026 → QUA HAN, no filing for FPT
+    // Date: 2026-04-01. Q4-2025 deadline was Mar 30 2026 → QUÁ HẠN, no filing for FPT
     const text = await callTool(server, "get_earnings_calendar", {
       _testDate: "2026-04-01",
     });
 
     expect(text).toContain("FPT");
-    expect(text).toContain("QUA HAN");
+    expect(text).toContain("QUÁ HẠN");
   });
 
-  it("shows SAP DEN for a stock with deadline within 14 days", async () => {
+  it("shows SẮP ĐẾN for a stock with deadline within 14 days", async () => {
     const db = new Database(":memory:");
     db.exec(`CREATE TABLE IF NOT EXISTS watchlist (
       code TEXT PRIMARY KEY, exchange TEXT NOT NULL, domain TEXT NOT NULL DEFAULT 'other',
@@ -316,16 +316,16 @@ describe("Task 187 — get_earnings_calendar MCP tool", () => {
     const server = new McpServer({ name: "test", version: "0.0.1" }, { capabilities: { tools: {} } });
     registerEarningsCalendarTools(server, db);
 
-    // Date: 2026-04-17. Next deadline Q1-2026: Apr 30 2026 (13 days away → SAP DEN)
+    // Date: 2026-04-17. Next deadline Q1-2026: Apr 30 2026 (13 days away → SẮP ĐẾN)
     const text = await callTool(server, "get_earnings_calendar", {
       _testDate: "2026-04-17",
     });
 
     expect(text).toContain("VCB");
-    expect(text).toContain("SAP DEN");
+    expect(text).toContain("SẮP ĐẾN");
   });
 
-  it("shows DA NOP with date for a stock that has filed", async () => {
+  it("shows ĐÃ NỘP with date for a stock that has filed", async () => {
     const db = new Database(":memory:");
     db.exec(`CREATE TABLE IF NOT EXISTS watchlist (
       code TEXT PRIMARY KEY, exchange TEXT NOT NULL, domain TEXT NOT NULL DEFAULT 'other',
@@ -356,13 +356,13 @@ describe("Task 187 — get_earnings_calendar MCP tool", () => {
     const server = new McpServer({ name: "test", version: "0.0.1" }, { capabilities: { tools: {} } });
     registerEarningsCalendarTools(server, db);
 
-    // Date: 2026-04-01. Q4-2025 deadline was Mar 30 2026, VCB filed on Mar 15 → DA NOP
+    // Date: 2026-04-01. Q4-2025 deadline was Mar 30 2026, VCB filed on Mar 15 → ĐÃ NỘP
     const text = await callTool(server, "get_earnings_calendar", {
       _testDate: "2026-04-01",
     });
 
     expect(text).toContain("VCB");
-    expect(text).toContain("DA NOP");
+    expect(text).toContain("ĐÃ NỘP");
     expect(text).toContain("2026-03-15");
   });
 
@@ -398,14 +398,14 @@ describe("Task 187 — get_earnings_calendar MCP tool", () => {
     const server = new McpServer({ name: "test", version: "0.0.1" }, { capabilities: { tools: {} } });
     registerEarningsCalendarTools(server, db);
 
-    // Date: 2026-04-01 — VCB: DA NOP, FPT: QUA HAN (deadline Mar 30 passed, no filing)
+    // Date: 2026-04-01 — VCB: ĐÃ NỘP, FPT: QUÁ HẠN (deadline Mar 30 passed, no filing)
     const text = await callTool(server, "get_earnings_calendar", {
       _testDate: "2026-04-01",
     });
 
     expect(text).toContain("VCB");
-    expect(text).toContain("DA NOP");
+    expect(text).toContain("ĐÃ NỘP");
     expect(text).toContain("FPT");
-    expect(text).toContain("QUA HAN");
+    expect(text).toContain("QUÁ HẠN");
   });
 });

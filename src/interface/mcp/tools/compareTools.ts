@@ -308,7 +308,7 @@ export function registerCompareTools(server: McpServer): void {
           content: [
             {
               type: "text" as const,
-              text: "Loi: Can it nhat 2 ma co phieu de so sanh (at least 2 codes required).",
+              text: "Lỗi: Cần ít nhất 2 mã cổ phiếu để so sánh (at least 2 codes required).",
             },
           ],
         };
@@ -318,7 +318,7 @@ export function registerCompareTools(server: McpServer): void {
           content: [
             {
               type: "text" as const,
-              text: "Loi: Toi da 5 ma co phieu moi lan so sanh (at most 5 codes per comparison).",
+              text: "Lỗi: Tối đa 5 mã cổ phiếu mỗi lần so sánh (at most 5 codes per comparison).",
             },
           ],
         };
@@ -341,24 +341,24 @@ export function registerCompareTools(server: McpServer): void {
         // ── Build output table ────────────────────────────────────────────────
         const lines: string[] = [];
 
-        lines.push(`So sanh co phieu (${codes.length} ma)`);
+        lines.push(`So sánh cổ phiếu (${codes.length} mã)`);
         lines.push("");
 
         const sep = buildSeparator(codes.length);
 
         // Header row
-        lines.push(buildRow("Chi tieu", codes));
+        lines.push(buildRow("Chỉ tiêu", codes));
         lines.push(sep);
 
         // Gia (price)
         const priceVals = codes.map((c) => fmtPrice(prices.get(c)?.price));
-        lines.push(buildRow("Gia", priceVals));
+        lines.push(buildRow("Giá", priceVals));
 
         // Thay doi (change %)
         const changeVals = codes.map((c) =>
           fmtChangePct(prices.get(c)?.change_pct),
         );
-        lines.push(buildRow("Thay doi", changeVals));
+        lines.push(buildRow("Thay đổi", changeVals));
 
         lines.push(sep);
 
@@ -390,10 +390,10 @@ export function registerCompareTools(server: McpServer): void {
           const s = conviction.get(c);
           return s != null ? s.toFixed(1) : "N/A";
         });
-        lines.push(buildRow("Xac tin", convictionVals));
+        lines.push(buildRow("Xác tín", convictionVals));
 
         lines.push("");
-        lines.push(`Cap nhat: ${new Date().toISOString().slice(0, 16).replace("T", " ")} UTC`);
+        lines.push(`Cập nhật: ${new Date().toISOString().slice(0, 16).replace("T", " ")} UTC`);
 
         return {
           content: [{ type: "text" as const, text: lines.join("\n") }],
@@ -406,7 +406,7 @@ export function registerCompareTools(server: McpServer): void {
           content: [
             {
               type: "text" as const,
-              text: `Loi khi so sanh co phieu: ${(err as Error).message}`,
+              text: `Lỗi khi so sánh cổ phiếu: ${(err as Error).message}`,
             },
           ],
         };

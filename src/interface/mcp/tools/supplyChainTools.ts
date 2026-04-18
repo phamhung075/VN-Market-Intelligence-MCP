@@ -52,12 +52,12 @@ export function buildSupplyChainExposureOutput(
     timeStyle: "short",
   });
 
-  lines.push(`PHAN TICH CHUOI CUNG UNG - ${now}`);
+  lines.push(`PHÂN TÍCH CHUỖI CUNG ỨNG - ${now}`);
   lines.push("=".repeat(50));
 
   // ── Section 1: Shipping indices ───────────────────────────────────────────
   if (indices.length > 0) {
-    lines.push("\nCHI SO VAN TAI BIEN:");
+    lines.push("\nCHỈ SỐ VẬN TẢI BIỂN:");
     for (const idx of indices) {
       const sign = idx.changePct >= 0 ? "+" : "";
       lines.push(
@@ -65,16 +65,16 @@ export function buildSupplyChainExposureOutput(
       );
     }
   } else {
-    lines.push("\nChi so van tai: Chua co du lieu (shipping index chua fetch)");
+    lines.push("\nChỉ số vận tải: Chưa có dữ liệu (shipping index chưa fetch)");
   }
 
   // ── Section 2: Disruption event ──────────────────────────────────────────
   if (event) {
     const sevMap: Record<string, string> = {
-      critical: "NGHIEM TRONG",
-      high: "QUAN TRONG",
-      medium: "LUU Y",
-      low: "THAP",
+      critical: "NGHIÊM TRỌNG",
+      high: "QUAN TRỌNG",
+      medium: "LƯU Ý",
+      low: "THẤP",
     };
     lines.push(`\nSỰ KIỆN GIÁN ĐOẠN [${sevMap[event.severity] ?? event.severity.toUpperCase()}]:`);
     lines.push(`  Loại: ${event.eventType}`);
@@ -90,15 +90,15 @@ export function buildSupplyChainExposureOutput(
 
   // ── Section 3: Stock signals ──────────────────────────────────────────────
   if (signals.length > 0) {
-    lines.push("\nTIN HIEU TAC DONG CO PHIEU:");
+    lines.push("\nTÍN HIỆU TÁC ĐỘNG CỔ PHIẾU:");
     for (const sig of signals) {
       const absZ = Math.abs(sig.deviation.zScore);
       const sigmaStr = `${sig.deviation.zScore >= 0 ? "+" : ""}${sig.deviation.zScore.toFixed(1)}σ`;
       lines.push(`\n  ${sig.index} - ${sigmaStr} (${sig.severity.toUpperCase()}, tin cay ${Math.round(sig.confidence * 100)}%):`);
-      lines.push(`  Sai lech: ${sig.deviation.summary}`);
+      lines.push(`  Sai lệch: ${sig.deviation.summary}`);
 
       for (const stock of sig.affectedStocks) {
-        const dirIcon = stock.direction === "bullish" ? "TANG" : stock.direction === "bearish" ? "GIAM" : "TRUNG LAP";
+        const dirIcon = stock.direction === "bullish" ? "TĂNG" : stock.direction === "bearish" ? "GIẢM" : "TRUNG LẬP";
         lines.push(`    ${stock.code} [${dirIcon}]: ${stock.reasoning}`);
       }
     }

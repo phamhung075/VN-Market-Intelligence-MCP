@@ -93,10 +93,10 @@ describe("Task 1293 — getDataFreshness() 'Cu' fallback via market_prices", () 
     db.exec(`INSERT INTO market_prices (code, price, updated_at) VALUES ('VCB', 100, '${tenHoursAgo}')`);
 
     const result = await getDataFreshness(db);
-    expect(result).toContain("Cu");
+    expect(result).toContain("Cũ");
   });
 
-  it("shows 'Cu' when vps_push_log has a row 10 hours old (primary path)", async () => {
+  it("shows 'Cũ' when vps_push_log has a row 10 hours old (primary path)", async () => {
     // AC-2: primary path still works
     db = buildMinimalDb({ withVpsPushLog: true });
     const tenHoursAgo = new Date(Date.now() - 10 * 60 * 60 * 1000).toISOString();
@@ -105,24 +105,24 @@ describe("Task 1293 — getDataFreshness() 'Cu' fallback via market_prices", () 
     );
 
     const result = await getDataFreshness(db);
-    expect(result).toContain("Cu");
+    expect(result).toContain("Cũ");
   });
 
-  it("shows 'Chua co du lieu' for Gia co phieu when both tables are absent", async () => {
+  it("shows 'Chưa có dữ liệu' for Giá cổ phiếu when both tables are absent", async () => {
     // AC-3: graceful null path — no crash, no phantom status
     db = buildMinimalDb({});
     const result = await getDataFreshness(db);
     // The report must still be generated without throwing
     expect(typeof result).toBe("string");
-    expect(result).toContain("Chua co du lieu");
+    expect(result).toContain("Chưa có dữ liệu");
   });
 
-  it("shows 'Tot' when market_prices has a row updated 5 minutes ago", async () => {
+  it("shows 'Tốt' when market_prices has a row updated 5 minutes ago", async () => {
     db = buildMinimalDb({ withMarketPrices: true });
     const fiveMinsAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
     db.exec(`INSERT INTO market_prices (code, price, updated_at) VALUES ('VNM', 80, '${fiveMinsAgo}')`);
 
     const result = await getDataFreshness(db);
-    expect(result).toContain("Tot");
+    expect(result).toContain("Tốt");
   });
 });

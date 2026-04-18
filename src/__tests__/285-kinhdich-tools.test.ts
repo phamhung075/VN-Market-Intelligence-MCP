@@ -123,7 +123,7 @@ describe("Task 285 — Kinh Dich MCP Tools", () => {
       expect(text).toContain("Kiền");
       expect(text).toContain("乾");
       // Should contain the core meaning section
-      expect(text).toContain("Y nghia chinh");
+      expect(text).toContain("Ý nghĩa chính");
     });
 
     it("returns Vi Te data for hexagram 64", async () => {
@@ -173,12 +173,12 @@ describe("Task 285 — Kinh Dich MCP Tools", () => {
 
     it("output contains judgment section", async () => {
       const text = await callTool(server, "explain_hexagram", { number: 1 });
-      expect(text).toContain("Hao tu");
+      expect(text).toContain("Hào từ");
     });
 
     it("output contains image section", async () => {
       const text = await callTool(server, "explain_hexagram", { number: 1 });
-      expect(text).toContain("Tuong truyen");
+      expect(text).toContain("Tượng truyện");
     });
   });
 
