@@ -15,6 +15,13 @@
 
 import { getDb } from "./schema.js";
 import { logger } from "../logger.js";
+import type { Database } from "bun:sqlite";
+
+/** Deps injectable for testing; defaults to real implementations. */
+export interface CheckpointDeps {
+  getDb: () => Database;
+  log: typeof logger;
+}
 
 /**
  * Runs a RESTART WAL checkpoint on the main database.
@@ -25,11 +32,14 @@ import { logger } from "../logger.js";
  * Prevents unbounded WAL growth (root cause of 270MB WAL accumulation and
  * SQLite "malformed disk image" corruption in vnstock-sync).
  *
+ * @param deps — optional injectable deps (for testing)
  * @returns { walSize, checkpointed } — frames in WAL vs frames checkpointed
  */
-export function runWalCheckpoint(): { walSize: number; checkpointed: number } {
+export function runWalCheckpoint(deps?: CheckpointDeps): { walSize: number; checkpointed: number } {
+  const _getDb = deps?.getDb ?? getDb;
+  const _log = deps?.log ?? logger;
   try {
-    const db = getDb();
+    const db = _getDb();
     const result = db.query<{ busy: number; log: number; checkpointed: number }, []>(
       "PRAGMA wal_checkpoint(RESTART)",
     ).get();
@@ -38,14 +48,14 @@ export function runWalCheckpoint(): { walSize: number; checkpointed: number } {
     const checkpointed = result?.checkpointed ?? 0;
     const remaining = walSize - checkpointed;
 
-    logger.info("[checkpoint] WAL checkpoint complete", {
+    _log.info("[checkpoint] WAL checkpoint complete", {
       walSize,
       checkpointed,
       remaining,
     });
 
     if (remaining > 1000) {
-      logger.warn("[checkpoint] remaining frames > 1000 — WAL growth runaway risk", {
+      _log.warn("[checkpoint] remaining frames > 1000 — WAL growth runaway risk", {
         walSize,
         checkpointed,
         remaining,
@@ -54,7 +64,7 @@ export function runWalCheckpoint(): { walSize: number; checkpointed: number } {
 
     return { walSize, checkpointed };
   } catch (err) {
-    logger.error("[checkpoint] WAL checkpoint failed", {
+    _log.error("[checkpoint] WAL checkpoint failed", {
       error: err instanceof Error ? err.message : String(err),
     });
     return { walSize: 0, checkpointed: 0 };
