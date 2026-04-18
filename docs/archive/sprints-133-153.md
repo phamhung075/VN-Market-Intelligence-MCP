@@ -1,7 +1,7 @@
-# Archive — Sprints 133–152
+# Archive — Sprints 133–153
 
 Period: 2026-04-17 → 2026-04-18
-Archived from TASKS.md on Sprint 152 completion.
+Archived from TASKS.md on Sprint 153 completion.
 
 ---
 
@@ -262,4 +262,19 @@ PO sign-off: 2026-04-18
 Goal: feat(evening-summary): sector aggregation from watchlist movers.
 Branch: task/1424-1425-evening-summary-sector-aggregation
 Handoffs: docs/handoffs/TASK_1424.md, docs/handoffs/TASK_1425.md
+PO sign-off: 2026-04-18
+
+---
+
+## Sprint 153 — COMPLETE (2026-04-18)
+
+| ID | Title | Status | Role |
+|----|-------|--------|------|
+| 1426 | test(evening-summary): TDD RED — vnIndex assertions | Done | Dev |
+| 1427 | feat(evening-summary): add vnIndex to EveningSummary + formatter GREEN | Done | Dev |
+| ARCH | review REQ_1426.md + write TECH_1426.md | Done | Architect |
+
+Goal: feat(evening-summary): VN-Index close price added to evening summary.
+Branch: task/1426-evening-vnindex
+Handoffs: docs/handoffs/TASK_1426.md, docs/handoffs/TASK_1427.md
 PO sign-off: 2026-04-18

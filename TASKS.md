@@ -39,13 +39,15 @@
 
 ---
 
-## Sprint 153 — feat(evening-summary): VN-Index close — ACTIVE
+## Sprint 153 — feat(evening-summary): VN-Index close — COMPLETE (2026-04-18)
 
 | ID | Title | Status | Role |
 |----|-------|--------|------|
-| 1426 | test(evening-summary): TDD RED — vnIndex assertions | Review | Dev |
-| 1427 | feat(evening-summary): add vnIndex to EveningSummary + formatter GREEN | Review | Dev |
+| 1426 | test(evening-summary): TDD RED — vnIndex assertions | Done | Dev |
+| 1427 | feat(evening-summary): add vnIndex to EveningSummary + formatter GREEN | Done | Dev |
 | ARCH | review REQ_1426.md + write TECH_1426.md | Done | Architect |
+
+> Archived: `docs/archive/sprints-133-153.md`
 
 ---
 
