@@ -86,6 +86,8 @@ export interface NewReport {
 /** VN-Index snapshot. */
 export interface VnIndexSnapshot {
   price: number;
+  /** Absolute point change from previous close (Math.round(price - previousPrice)). */
+  change?: number;
   changePct: number;
 }
 
@@ -648,10 +650,14 @@ export async function assembleBriefing(
         );
         const result = await fetchVnIndex();
         if (result) {
-          return {
+          const snap: VnIndexSnapshot = {
             price: result.price,
             changePct: result.changePct,
           };
+          if (result.previousPrice != null && result.previousPrice !== 0) {
+            snap.change = Math.round(result.price - result.previousPrice);
+          }
+          return snap;
         }
         return null;
       } catch (err) {

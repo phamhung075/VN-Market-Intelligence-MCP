@@ -53,8 +53,18 @@ export function formatBriefingMessage(briefing: DailyBriefing): string {
   // ── VN-Index ──────────────────────────────────────────────
   if (briefing.vnIndex) {
     lines.push("");
-    const sign = briefing.vnIndex.changePct >= 0 ? "+" : "";
-    lines.push(`📈 VN-Index: ${briefing.vnIndex.price.toLocaleString("en-US")} (${sign}${briefing.vnIndex.changePct.toFixed(2)}%)`);
+    const { price, changePct, change } = briefing.vnIndex;
+    // Vietnamese dot-thousands: 1285 → "1.285"
+    const priceFmt = Math.round(price).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    const pctSign = changePct >= 0 ? "+" : "";
+    let suffix: string;
+    if (change !== undefined) {
+      const chSign = change >= 0 ? "+" : "";
+      suffix = `(${chSign}${Math.round(change)} / ${pctSign}${changePct.toFixed(2)}%)`;
+    } else {
+      suffix = `(${pctSign}${changePct.toFixed(2)}%)`;
+    }
+    lines.push(`📈 VN-Index: ${priceFmt} ${suffix}`);
   }
   // omit section entirely when null
 
