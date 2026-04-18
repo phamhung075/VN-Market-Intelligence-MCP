@@ -12,6 +12,11 @@
 
 import type { EveningSummary } from "../application/usecases/assembleEveningSummary.js";
 import { logger } from "../infrastructure/logger.js";
+import {
+  computeSectorAverage,
+  getStockProfile,
+  SECTOR_NAME_VI,
+} from "../domain/services/sectorPeers.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Concurrency guard
@@ -43,6 +48,80 @@ function alreadySentToday(db: import("bun:sqlite").Database): boolean {
 /** Reset concurrency guard — exported for test isolation. */
 export function resetEveningSummaryGuard(): void {
   _running = false;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Formatting helpers
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Formats watchlistMovers into sector-grouped + flat lines.
+ * Exported for unit-test isolation (Task 1424 / 1425).
+ *
+ * @param movers - WatchlistMover[] sorted |changePct| DESC (from assembleEveningSummary)
+ * @returns string[] — ready to push onto the message lines array
+ */
+export function formatMoversSection(
+  movers: { code: string; changePct: number }[],
+): string[] {
+  if (movers.length === 0) return [];
+
+  // Group by domain
+  const sectorMap = new Map<string, { code: string; changePct: number }[]>();
+  for (const m of movers) {
+    const profile = getStockProfile(m.code);
+    const domain = profile?.domain ?? "other";
+    if (!sectorMap.has(domain)) sectorMap.set(domain, []);
+    sectorMap.get(domain)!.push(m);
+  }
+
+  // Split: multi-mover sectors (>=2, not "other") vs single-mover
+  const multiSectors: { domain: string; movers: { code: string; changePct: number }[]; avgPct: number }[] = [];
+  const singleMovers: { code: string; changePct: number }[] = [];
+
+  for (const [domain, domainMovers] of sectorMap.entries()) {
+    if (domain !== "other" && domainMovers.length >= 2) {
+      const avgPct = computeSectorAverage(domainMovers) ?? 0;
+      multiSectors.push({ domain, movers: domainMovers, avgPct });
+    } else {
+      singleMovers.push(...domainMovers);
+    }
+  }
+
+  // No multi-mover sector → flat block only (backward-compat)
+  if (multiSectors.length === 0) {
+    const lines: string[] = ["", "Biến động giá:"];
+    for (const m of singleMovers) {
+      const sign = m.changePct >= 0 ? "+" : "";
+      lines.push(`  ${m.code}: ${sign}${m.changePct.toFixed(2)}%`);
+    }
+    return lines;
+  }
+
+  // Sort sectors by |avgPct| DESC
+  multiSectors.sort((a, b) => Math.abs(b.avgPct) - Math.abs(a.avgPct));
+
+  const lines: string[] = ["", "Biến động theo ngành:"];
+  for (const sector of multiSectors) {
+    const sectorLabel = (SECTOR_NAME_VI as Record<string, string>)[sector.domain] ?? sector.domain;
+    const sign = sector.avgPct >= 0 ? "+" : "";
+    lines.push(`  ${sectorLabel} (+${sector.movers.length} cp): avg ${sign}${sector.avgPct.toFixed(2)}%`);
+    for (const m of sector.movers.slice(0, 5)) {
+      const mSign = m.changePct >= 0 ? "+" : "";
+      lines.push(`    ${m.code}: ${mSign}${m.changePct.toFixed(2)}%`);
+    }
+  }
+
+  // Flat block for single-mover tickers
+  if (singleMovers.length > 0) {
+    lines.push("", "Biến động giá:");
+    for (const m of singleMovers) {
+      const sign = m.changePct >= 0 ? "+" : "";
+      lines.push(`  ${m.code}: ${sign}${m.changePct.toFixed(2)}%`);
+    }
+  }
+
+  return lines;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -160,14 +239,7 @@ export async function runEveningSummary(
           lines.push(`(${newsCount} tin tức hôm nay)`);
         }
 
-        if (summary.watchlistMovers.length > 0) {
-          lines.push("");
-          lines.push("Biến động giá:");
-          for (const m of summary.watchlistMovers.slice(0, 5)) {
-            const sign = m.changePct >= 0 ? "+" : "";
-            lines.push(`  ${m.code}: ${sign}${m.changePct.toFixed(2)}%`);
-          }
-        }
+        lines.push(...formatMoversSection(summary.watchlistMovers));
 
         if (summary.predictionSignals.length > 0) {
           lines.push("");
