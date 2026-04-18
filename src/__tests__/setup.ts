@@ -9,4 +9,4 @@
  * setup (closeDb + initDatabase). This preload only enforces the DB_PATH
  * invariant at the earliest possible point — before any module import.
  */
-process.env["DB_PATH"] = ":memory:";
+Bun.env["DB_PATH"] = ":memory:";

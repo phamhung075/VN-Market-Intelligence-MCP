@@ -4,6 +4,41 @@
 
 ---
 
+## Sprint 141 — Active
+
+| ID | Title | Status | Role |
+|----|-------|--------|------|
+| 1400 | test(db-isolation): TDD 1400-db-isolation.test.ts — assert Bun.env isolation | Review | Dev |
+| 1401 | fix(db-isolation): setup.ts Bun.env + purge phantom rows + dev-standards template | Review | Dev |
+
+### 1400 — test(db-isolation): RED test — assert Bun.env["DB_PATH"] = ":memory:" during bun test
+
+branch: task/1400-db-isolation
+layer: infrastructure (test)
+depends_on: none
+context: docs/handoffs/TASK_1400.md
+
+acceptance_criteria:
+- Given no setup.ts fix yet
+- When `bun test src/__tests__/1400-db-isolation.test.ts` runs
+- Then first assertion FAILS (Bun.env["DB_PATH"] is undefined) — RED confirmed
+
+### 1401 — fix(db-isolation): setup.ts Bun.env + purge phantom rows + dev-standards template
+
+branch: task/1400-db-isolation
+layer: infrastructure
+depends_on: 1400 done (RED test written, failure confirmed)
+context: docs/handoffs/TASK_1401.md
+
+acceptance_criteria:
+- Both 1400-db-isolation.test.ts assertions GREEN after setup.ts fix
+- 0 remaining `process.env["DB_PATH"]` in src/__tests__/
+- purge script deletes 400+ phantom rows; SELECT COUNT returns 0
+- data/market.db mtime unchanged after bun test
+- Full suite >= 5061 pass, 0 new failures; bun tsc --noEmit clean
+
+---
+
 ## Sprint 140 — Complete
 
 | ID | Title | Status | Role |
@@ -15,8 +50,62 @@
 
 ---
 
-## Task Details (active tasks only)
+## Backlog — Detected from Telegram Audit (2026-04-17)
 
-_No active tasks._
+| ID | Title | Priority | Channel | Source |
+|----|-------|----------|---------|--------|
+| 1396 | fix(bug-channel-spam): phantom "First"/"Second" records in telegram_reports (epoch 1970, 400+ rows) | CRITICAL | BUG | read_telegram_reports |
+| 1397 | fix(volume-spike-multiplier): all tickers show identical 5.9× — hardcoded/wrong baseline in volumeSpike threshold | HIGH | MARKET alerts | get_alerts |
+| 1398 | fix(alert-diacritics): unaccented Vietnamese in server-side alert messages ("Kha chac chan", "KL xac nhan", "TANG/GIAM") | HIGH | MARKET alerts | get_alerts |
+| 1399 | fix(hut-sector): HUT misclassified as real_estate — triggers BĐS cascade incorrectly (should be infrastructure/construction) | MEDIUM | MARKET alerts | get_alerts |
+
+---
+
+## Task Details (backlog)
+
+### 1396 — fix(bug-channel-spam): phantom telegram_reports rows
+
+**Priority:** CRITICAL
+**Root cause:** Test preload (`src/__tests__/setup.ts:12`) sets `process.env["DB_PATH"] = ":memory:"` but `getDb()` reads `Bun.env["DB_PATH"]` (`src/infrastructure/db/schema.ts:64`). In Bun, `process.env` mutations do NOT propagate to `Bun.env` — so every test run opens the production `data/market.db` singleton, and fixture inserts from `src/__tests__/226-telegram-report-store.test.ts:153-155` (`text="First"/"Second"/"Third"`, `created_at=1000/2000/3000`, epoch 1970) and `src/__tests__/231-claim-telegram-report.test.ts:194-197` leak into production. IDs jump ~45 per full test suite run.
+**Files:**
+- `src/__tests__/setup.ts:12` — uses `process.env` instead of `Bun.env` → fix is `Bun.env["DB_PATH"] = ":memory:"`
+- `src/infrastructure/db/schema.ts:64` — reads `Bun.env["DB_PATH"]` (correct, do not change)
+- `src/__tests__/226-telegram-report-store.test.ts:153-155` — phantom fixture rows
+- `src/__tests__/231-claim-telegram-report.test.ts:194-197` — additional phantom fixture rows
+**Impact:** Dev loop PO agent reads these as real bug reports every cycle — pollutes BUG channel, wastes tokens, masks real reports. 400+ phantom rows in `data/market.db` as of 2026-04-17.
+**Fix:** (1) Change `setup.ts:12` from `process.env["DB_PATH"]` to `Bun.env["DB_PATH"]`; (2) purge existing phantom rows (`DELETE FROM telegram_reports WHERE created_at < 1000000`); (3) TDD test asserting production DB path is never used during `bun test`.
+
+### 1397 — fix(volume-spike-multiplier): identical 5.9× across all tickers
+
+**Priority:** HIGH
+**Root cause:** Two compounding issues:
+1. `src/interface/mcp/server.ts:514` comment documents a past "bogus uniform 5.3× spikes" fix but the 5.9× still fires. The SQL at lines 522-531 queries `MAX(volume) per day` excluding today via `substr(fetched_at, 1, 10) < ?` — if `fetched_at` timezone mismatch causes all closed-day rows to be excluded, `avg_vol=NULL` propagates as `avgVolume=0`, and the `avgVolume > 0` guard at `src/domain/services/signalDetector.ts:249` suppresses spikes entirely. But if the issue is that volume is intraday cumulative and the average is an end-of-day baseline, the ratio converges identically across all tickers mid-session.
+2. ATC window guard at `src/domain/services/signalDetector.ts:247` blocks `07:30–08:05 UTC` but the uniform 5.9× fires at `08:30 UTC` (= 15:30 VN, post-ATC session close) — just outside the guard window.
+**Files:**
+- `src/interface/mcp/server.ts:517-534` — `avgVolMap` SQL computation per ticker
+- `src/domain/services/signalDetector.ts:244-258` — ATC window guard (lines 247-248) and volume spike message (line 255)
+- `src/domain/services/signalDetector.ts:145` — `VOLUME_SPIKE_MULTIPLIER = 2` (threshold, not the 5.9× value)
+**Impact:** Volume spike alerts unreliable — user cannot distinguish real anomalies from systematic end-of-session misfires.
+**Fix:** (1) Extend ATC guard to cover 08:00–08:35 UTC (market close flush window); (2) add logging to dump per-ticker `avgVolume` values to confirm per-ticker isolation; (3) TDD test asserting two tickers with different avg volumes produce different multipliers.
+
+### 1398 — fix(alert-diacritics): unaccented text in server-side alert messages
+
+**Priority:** HIGH
+**Root cause:** Conviction scoring labels and inline message strings in the alert assembly pipeline use unaccented Vietnamese. Sprints 135-140 fixed scheduler digest formatters but did NOT touch the conviction scorer or its output strings.
+**Files (exact locations):**
+- `src/domain/services/convictionScorer.ts:127-130` — `LEVEL_VI` labels: `"XAC TIN CAO"`, `"Kha chac chan"`, `"Hon hop"`, `"Tin hieu yeu/mau thuan"` all need diacritics
+- `src/domain/services/convictionScorer.ts:338` — inline string `"tin hieu mau thuan, than trong"` needs diacritics
+- `src/interface/mcp/tools/technicalIndicatorTools.ts:235` — `"can than — co the xem xet chot loi hoac cho them xac nhan"` needs diacritics
+- `src/interface/mcp/tools/kinhDichTools.ts:1035` — `"BAT LOI cho giao dich — can than trong"` needs diacritics (secondary, not in alert pipeline)
+**Fix:** TDD RED (test that `scoreConviction()` output contains correct accented strings) → GREEN (replace all unaccented labels in `convictionScorer.ts` + `technicalIndicatorTools.ts`). Do NOT touch `kinhDich/kinhDichReading.ts:80` — that `"BAT LOI"` is a lookup key, not user-facing text.
+
+### 1399 — fix(hut-sector): HUT misclassified as real_estate
+
+**Priority:** MEDIUM
+**Root cause:** HUT (Tasco Joint Stock Company — toll roads, highway infrastructure) appears in the alert system classified under `real_estate` sector, causing it to trigger "Bất động sản giảm đồng loạt" cascade alerts alongside 9 genuine real estate stocks. HUT's business is highway concessions + infrastructure construction, not property development.
+**Files:**
+- `docs/data/stock-classification.json` — HUT entry needs sector changed from `real_estate` to `infrastructure` (or `construction`). NOTE: HUT is NOT currently in the `watchlist` array of this file (verified 2026-04-17). The misclassification may be in a different store — check `data/market.db` watchlist table: `SELECT code, sector FROM watchlist WHERE code = 'HUT'`
+- If not in DB watchlist, the source may be hardcoded in a sector cascade rule — grep `src/` for `"HUT"` to find where it is assigned to real_estate.
+**Fix:** (1) Locate exact HUT sector assignment (DB row or hardcoded string); (2) reclassify to `infrastructure`; (3) verify cascade rule test for real_estate no longer includes HUT.
 
 ---
