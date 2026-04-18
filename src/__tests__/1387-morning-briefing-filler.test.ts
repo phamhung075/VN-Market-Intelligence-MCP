@@ -84,7 +84,7 @@ describe("Task 1387 — morning briefing filler removal (RED)", () => {
     expect(msg).not.toContain("Chưa có")
     // VN-Index section still present
     expect(msg).toContain("VN-Index")
-    expect(msg).toContain("1,250")
+    expect(msg).toContain("1.251")
   })
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -129,7 +129,7 @@ describe("Task 1387 — morning briefing filler removal (RED)", () => {
 
     // VN-Index section present with real data
     expect(msg).toContain("VN-Index")
-    expect(msg).toContain("1,250")
+    expect(msg).toContain("1.251")
     // Watchlist section present
     expect(msg).toContain("VCB")
     expect(msg).toContain("88,000")
