@@ -15,30 +15,36 @@
 
 ---
 
-## Backlog — Detected from Telegram Audit (2026-04-17)
+## Sprint 141 — Complete
 
-| ID | Title | Priority | Channel | Source |
-|----|-------|----------|---------|--------|
-| 1396 | fix(bug-channel-spam): phantom "First"/"Second" records in telegram_reports (epoch 1970, 400+ rows) | CRITICAL | BUG | read_telegram_reports |
-| 1397 | fix(volume-spike-multiplier): all tickers show identical 5.9× — hardcoded/wrong baseline in volumeSpike threshold | HIGH | MARKET alerts | get_alerts |
-| 1398 | fix(alert-diacritics): unaccented Vietnamese in server-side alert messages ("Kha chac chan", "KL xac nhan", "TANG/GIAM") | HIGH | MARKET alerts | get_alerts |
-| 1399 | fix(hut-sector): HUT misclassified as real_estate — triggers BĐS cascade incorrectly (should be infrastructure/construction) | MEDIUM | MARKET alerts | get_alerts |
+| ID | Title | Status | Role |
+|----|-------|--------|------|
+| 1396 | fix(db-isolation): setup.ts process.env → Bun.env + purge phantom telegram_report rows | Done | Dev |
+| 1400 | test(db-isolation): RED test — assert Bun.env["DB_PATH"] = ":memory:" | Done | Dev |
+| 1401 | fix(db-isolation): setup.ts + purge phantom rows + dev-standards template | Done | Dev |
+
+> Sprint goal: COMPLETE 2026-04-18 | fix shipped, 84 phantom rows purged
+
+## Sprint 142 — Active
+
+> Spec: `docs/REQ_1402.md` | Tech: `docs/TECH_1402.md` (APPROVED_BY_ARCHITECT)
+
+| ID | Title | Status | Role |
+|----|-------|--------|------|
+| 1402 | test(volume-spike-multiplier): RED test — assert two tickers with different avg volumes produce different multipliers | Done | Dev |
+| 1403 | fix(volume-spike-multiplier): extend ATC guard + per-ticker avgVolume logging + correct baseline query | Done | Dev |
+| 1404 | test(alert-diacritics): RED test — assert convictionScorer labels contain correct Vietnamese diacritics | Review | Dev |
+| 1405 | fix(alert-diacritics): replace unaccented labels in convictionScorer.ts + technicalIndicatorTools.ts | Todo | Dev |
+
+## Backlog
+
+| ID | Title | Priority | Notes |
+|----|-------|----------|-------|
+| 1399 | fix(hut-sector): HUT misclassified as real_estate — triggers BĐS cascade incorrectly (should be infrastructure/construction) | MEDIUM | Sprint 143 |
 
 ---
 
 ## Task Details (backlog)
-
-### 1396 — fix(bug-channel-spam): phantom telegram_reports rows
-
-**Priority:** CRITICAL
-**Root cause:** Test preload (`src/__tests__/setup.ts:12`) sets `process.env["DB_PATH"] = ":memory:"` but `getDb()` reads `Bun.env["DB_PATH"]` (`src/infrastructure/db/schema.ts:64`). In Bun, `process.env` mutations do NOT propagate to `Bun.env` — so every test run opens the production `data/market.db` singleton, and fixture inserts from `src/__tests__/226-telegram-report-store.test.ts:153-155` (`text="First"/"Second"/"Third"`, `created_at=1000/2000/3000`, epoch 1970) and `src/__tests__/231-claim-telegram-report.test.ts:194-197` leak into production. IDs jump ~45 per full test suite run.
-**Files:**
-- `src/__tests__/setup.ts:12` — uses `process.env` instead of `Bun.env` → fix is `Bun.env["DB_PATH"] = ":memory:"`
-- `src/infrastructure/db/schema.ts:64` — reads `Bun.env["DB_PATH"]` (correct, do not change)
-- `src/__tests__/226-telegram-report-store.test.ts:153-155` — phantom fixture rows
-- `src/__tests__/231-claim-telegram-report.test.ts:194-197` — additional phantom fixture rows
-**Impact:** Dev loop PO agent reads these as real bug reports every cycle — pollutes BUG channel, wastes tokens, masks real reports. 400+ phantom rows in `data/market.db` as of 2026-04-17.
-**Fix:** (1) Change `setup.ts:12` from `process.env["DB_PATH"]` to `Bun.env["DB_PATH"]`; (2) purge existing phantom rows (`DELETE FROM telegram_reports WHERE created_at < 1000000`); (3) TDD test asserting production DB path is never used during `bun test`.
 
 ### 1397 — fix(volume-spike-multiplier): identical 5.9× across all tickers
 
