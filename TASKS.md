@@ -39,6 +39,16 @@
 
 ---
 
+## Sprint 153 — feat(evening-summary): VN-Index close — ACTIVE
+
+| ID | Title | Status | Role |
+|----|-------|--------|------|
+| 1426 | test(evening-summary): TDD RED — vnIndex assertions | Review | Dev |
+| 1427 | feat(evening-summary): add vnIndex to EveningSummary + formatter GREEN | Review | Dev |
+| ARCH | review REQ_1426.md + write TECH_1426.md | Done | Architect |
+
+---
+
 ## Backlog
 
 | ID | Title | Priority | Notes |
