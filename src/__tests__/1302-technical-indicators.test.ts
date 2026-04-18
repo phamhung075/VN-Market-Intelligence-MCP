@@ -418,7 +418,7 @@ describe("MCP handler integration", () => {
     expect(text).toContain("Lower=");
 
     // Conclusion
-    expect(text).toContain("Ket luan:");
+    expect(text).toContain("Kết luận:");
     // Should contain a verdict
     const hasVerdict = text.includes("TANG") || text.includes("GIAM") || text.includes("TRUNG TINH");
     expect(hasVerdict).toBe(true);
