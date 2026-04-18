@@ -149,12 +149,16 @@
 
 ---
 
-## Sprint 162 — feat(france-summary): portfolio P&L block
+## Sprint 162 — feat(france-summary): portfolio P&L block — COMPLETE (2026-04-18)
 
 | ID | Title | Status | Role |
 |----|-------|--------|------|
 | 1444 | test(france-summary): TDD RED — portfolio P&L assertions | Done | Dev |
 | 1445 | feat(france-summary): add portfolioPnl to runFranceSummary + formatFranceSummaryVI GREEN | Done | Dev |
+
+> Report: `reports/TASK_REPORT_1444.md`
+> Merged: eb016e5 — branch deleted
+> Archived: `docs/archive/sprints-133-162.md`
 
 ---
 

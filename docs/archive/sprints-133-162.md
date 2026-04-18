@@ -1,7 +1,7 @@
-# Archive — Sprints 133–161
+# Archive — Sprints 133–162
 
 Period: 2026-04-17 → 2026-04-18
-Archived from TASKS.md on Sprint 161 completion.
+Archived from TASKS.md on Sprint 162 completion.
 
 ---
 
@@ -388,4 +388,18 @@ PO sign-off: 2026-04-18
 Goal: feat(evening-summary): include portfolio P&L section in evening summary at market close.
 Report: reports/TASK_REPORT_1441.md
 Merged: 47d9aa8 — branch deleted
+PO sign-off: 2026-04-18
+
+---
+
+## Sprint 162 — feat(france-summary): portfolio P&L block — COMPLETE (2026-04-18)
+
+| ID | Title | Status | Role |
+|----|-------|--------|------|
+| 1444 | test(france-summary): TDD RED — portfolio P&L assertions | Done | Dev |
+| 1445 | feat(france-summary): add portfolioPnl to runFranceSummary + formatFranceSummaryVI GREEN | Done | Dev |
+
+Goal: feat(france-summary): add portfolio P&L block to France-timezone summary message.
+Report: reports/TASK_REPORT_1444.md
+Merged: eb016e5 — branch deleted
 PO sign-off: 2026-04-18
