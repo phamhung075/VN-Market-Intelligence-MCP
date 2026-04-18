@@ -254,7 +254,7 @@ describe("Task 223 — get_target_allocation MCP tool", () => {
     const server = makeServer();
     const result = await callTool(server, "get_target_allocation", {});
     const text = result.content[0]!.text;
-    expect(text.toLowerCase()).toMatch(/chua co|no target|trong|empty|khong co/i);
+    expect(text).toMatch(/Chưa có|no target|trong|empty|không có/i);
   });
 
   it("shows target weights table with drift when positions exist", async () => {
@@ -285,6 +285,6 @@ describe("Task 223 — get_target_allocation MCP tool", () => {
     expect(text).toContain("40%");
     expect(text).toContain("60%");
     // Should show drift labels
-    expect(text.toLowerCase()).toMatch(/thua|thieu|lech|drift|over|under/i);
+    expect(text).toMatch(/thừa|thiếu|Lệch|drift|over|under/i);
   });
 });

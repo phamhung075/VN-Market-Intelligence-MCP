@@ -60,7 +60,7 @@ export interface SnapshotResult {
   filePath: string;
   /** File size in MB (1 decimal place). 0 on error. */
   fileSizeMb: number;
-  /** Set when the file could not be written. Contains "(khong the ghi file)". */
+  /** Set when the file could not be written. Contains "(không thể ghi file)". */
   error?: string;
 }
 
@@ -208,7 +208,7 @@ export async function exportPortfolioSnapshot(
       snapshot,
       filePath: "",
       fileSizeMb: 0,
-      error: `(khong the ghi file): ${msg}`,
+      error: `(không thể ghi file): ${msg}`,
     };
   }
 }

@@ -87,11 +87,11 @@ function buildRuleListText(
   const total = rows.length;
 
   if (total === 0) {
-    return "Chua co quy tac canh bao tuy chinh nao.";
+    return "Chưa có quy tắc cảnh báo tùy chỉnh nào.";
   }
 
   const lines: string[] = [
-    `Quy tac canh bao tuy chinh (${active} dang hoat dong / ${total} tong cong)`,
+    `Quy tắc cảnh báo tùy chỉnh (${active} đang hoạt động / ${total} tổng cộng)`,
     "",
     "ID  | Ma    | Dieu kien   | Nguong      | Trang thai",
     "----|-------|-------------|-------------|-------------------------------",
@@ -156,7 +156,7 @@ export function registerCustomAlertTools(server: McpServer): void {
           content: [
             {
               type: "text" as const,
-              text: `Loi khi lay danh sach quy tac: ${err instanceof Error ? err.message : String(err)}`,
+              text: `Lỗi khi lấy danh sách quy tắc: ${err instanceof Error ? err.message : String(err)}`,
             },
           ],
         };
