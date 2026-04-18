@@ -10,6 +10,15 @@
 
 ---
 
+## Sprint 149 — diacritics wave 6
+
+| ID | Title | Agent | Status | Notes |
+|----|-------|-------|--------|-------|
+| 1418 | RED test: diacritics wave 6 (6 files) | Dev | Review | `src/__tests__/1418-diacritics-wave6.test.ts` |
+| 1419 | fix: restore diacritics in wave 6 files | Dev | Review | Depends on 1418 RED |
+
+---
+
 ## Backlog
 
 | ID | Title | Priority | Notes |
