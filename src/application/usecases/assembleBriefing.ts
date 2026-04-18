@@ -724,10 +724,10 @@ export async function assembleBriefing(
     .prepare<WatchlistRow, []>(`
       SELECT w.code, w.domain,
              COALESCE(
-               (SELECT mp.price FROM market_prices mp WHERE mp.code = w.code AND mp.price IS NOT NULL AND mp.price > 0),
+               (SELECT mp.price FROM market_prices mp WHERE mp.code = w.code AND mp.price IS NOT NULL AND mp.price > 0 AND mp.updated_at >= datetime('now', '-3 days')),
                (SELECT d.close FROM daily_ohlcv d WHERE d.code = w.code ORDER BY d.date DESC LIMIT 1)
              ) AS price,
-             (SELECT mp2.change_pct FROM market_prices mp2 WHERE mp2.code = w.code AND mp2.price IS NOT NULL AND mp2.price > 0) AS change_pct
+             (SELECT mp2.change_pct FROM market_prices mp2 WHERE mp2.code = w.code AND mp2.price IS NOT NULL AND mp2.price > 0 AND mp2.updated_at >= datetime('now', '-3 days')) AS change_pct
       FROM watchlist w
       ORDER BY w.code
     `)
@@ -919,11 +919,17 @@ export async function assembleBriefing(
       // Build a price map — market_prices preferred, daily_ohlcv fallback
       const priceRows = db
         .prepare<{ code: string; price: number }, []>(
-          `SELECT code, price FROM market_prices WHERE price IS NOT NULL AND price > 0
+          `SELECT code, price FROM market_prices
+           WHERE price IS NOT NULL AND price > 0
+             AND updated_at >= datetime('now', '-3 days')
            UNION ALL
            SELECT code, close AS price FROM daily_ohlcv
            WHERE (code, date) IN (SELECT code, MAX(date) FROM daily_ohlcv GROUP BY code)
-             AND code NOT IN (SELECT code FROM market_prices WHERE price IS NOT NULL AND price > 0)`,
+             AND code NOT IN (
+               SELECT code FROM market_prices
+               WHERE price IS NOT NULL AND price > 0
+                 AND updated_at >= datetime('now', '-3 days')
+             )`,
         )
         .all();
       const priceMap = new Map(priceRows.map((r) => [r.code, r.price]));
