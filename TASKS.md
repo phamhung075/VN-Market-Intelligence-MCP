@@ -4,7 +4,7 @@
 
 ---
 
-## Sprint 145 — ACTIVE
+## Sprint 145 — COMPLETE (2026-04-18)
 
 > Spec: `docs/REQ_1410.md` | Tech: `docs/TECH_1410.md` (APPROVED_BY_ARCHITECT)
 

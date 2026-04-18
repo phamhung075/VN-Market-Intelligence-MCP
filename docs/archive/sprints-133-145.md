@@ -154,3 +154,16 @@ PO sign-off: 2026-04-18
 Goal: Proper Vietnamese diacritics in kinhDichTools, technicalIndicatorTools, supplyChainTools — extracted helper fns + replaced all unaccented strings.
 Spec: docs/REQ_1408.md | Tech: docs/TECH_1408.md
 PO sign-off: 2026-04-18
+
+---
+
+## Sprint 145 — COMPLETE (2026-04-18)
+
+| ID | Title | Status |
+|----|-------|--------|
+| 1410 | test(tool-diacritics-sweep): RED test — assert accented output from 24 tool files | Done |
+| 1411 | fix(tool-diacritics-sweep): replace all unaccented Vietnamese strings in 24 files | Done |
+
+Goal: Vietnamese diacritics sweep across all 24 remaining tool files — TDD RED test first, then full string replacement.
+Spec: docs/REQ_1410.md | Tech: docs/TECH_1410.md
+PO sign-off: 2026-04-18
