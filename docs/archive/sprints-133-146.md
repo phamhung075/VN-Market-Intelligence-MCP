@@ -1,7 +1,7 @@
-# Archive — Sprints 133–144
+# Archive — Sprints 133–146
 
 Period: 2026-04-17 → 2026-04-18
-Archived from TASKS.md on Sprint 144 completion.
+Archived from TASKS.md on Sprint 146 completion.
 
 ---
 
@@ -166,4 +166,17 @@ PO sign-off: 2026-04-18
 
 Goal: Vietnamese diacritics sweep across all 24 remaining tool files — TDD RED test first, then full string replacement.
 Spec: docs/REQ_1410.md | Tech: docs/TECH_1410.md
+PO sign-off: 2026-04-18
+
+---
+
+## Sprint 146 — COMPLETE (2026-04-18)
+
+| ID | Title | Status |
+|----|-------|--------|
+| 1412 | test(diacritics-wave3): RED test — scheduler + domain + application layer diacritics | Done |
+| 1413 | fix(diacritics-wave3): replace all unaccented Vietnamese in 8 files | Done |
+
+Goal: Vietnamese diacritics wave-3 sweep — scheduler + domain + application layers (predictionMarketJob, calibrationReportJob, getCrisisEarlyWarning, sentimentTrend, kinhDich formatters, decisionNoteSynthesizer + 20 interface tool files).
+Spec: docs/REQ_1412.md | Tech: docs/TECH_1412.md
 PO sign-off: 2026-04-18

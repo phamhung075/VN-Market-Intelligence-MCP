@@ -4,6 +4,17 @@
 
 ---
 
+## Sprint 146 — COMPLETE (2026-04-18)
+
+> Spec: `docs/REQ_1412.md` | Tech: `docs/TECH_1412.md` (APPROVED_BY_ARCHITECT) | Goal: fix unaccented Vietnamese in scheduler + domain + application layers (8 files)
+
+| ID | Title | Status | Role |
+|----|-------|--------|------|
+| 1412 | test(diacritics-wave3): RED test — scheduler + domain + application layer diacritics | Done | Dev |
+| 1413 | fix(diacritics-wave3): replace all unaccented Vietnamese in 8 files | Done | Dev |
+
+---
+
 ## Sprint 145 — COMPLETE (2026-04-18)
 
 > Spec: `docs/REQ_1410.md` | Tech: `docs/TECH_1410.md` (APPROVED_BY_ARCHITECT)
@@ -34,6 +45,46 @@
 ---
 
 ## Task Details
+
+### 1412 — test(diacritics-wave3): RED test — 28 files scheduler + domain + application
+
+**Branch:** `task/1412-diacritics-wave3-red-test`
+**Layer:** test
+**Depends on:** nothing
+**Blocks:** 1413 must wait for this to be RED + merged
+
+**Files with unaccented Vietnamese to cover (28 total):**
+- `src/scheduler/predictionMarketJob.ts:251,255` — "Loai tin hieu", "Phan tich"
+- `src/scheduler/calibrationReportJob.ts:353` — "Xu huong"
+- `src/application/usecases/getCrisisEarlyWarning.ts:133,149,154` — "Khong co tin hieu", "co phieu", "xu huong"
+- `src/domain/services/sentimentTrend.ts:179-202` — "xu huong", "cam tinh", "on dinh"
+- `src/domain/services/kinhDich/kinhDichFormatter.ts` — check for unaccented strings
+- `src/domain/services/kinhDich/kinhDichReading.ts` — ASCII variant keys (intentional — skip lookup keys, fix display strings only)
+- `src/domain/services/kinhDich/nguHanhClassifier.ts`
+- `src/domain/services/decisionNoteSynthesizer.ts`
+- 20 `src/interface/mcp/tools/` files: `alertAccuracy.ts`, `alertMuteTools.ts`, `changelogTools.ts`, `climateTools.ts`, `compareTools.ts`, `correlationTools.ts`, `creditFlowTools.ts`, `dataFreshnessTools.ts`, `earningsCalendarTools.ts`, `energyTools.ts`, `kinhDichTools.ts`, `leadershipTools.ts`, `performanceTools.ts`, `pharmaTools.ts`, `portfolioTools.ts`, `sentimentTrendTools.ts`, `supplyChainTools.ts`, `telegramReportTools.ts`, `targetAllocationTools.ts`, `watchlist.ts`
+
+**Acceptance Criteria:**
+- 28+ cases FAIL (RED) — string assertions fail on unaccented text
+- `bun tsc --noEmit` clean
+- Sprint 144+145 regression cases PASS
+
+---
+
+### 1413 — fix(diacritics-wave3): 28 files string fix
+
+**Branch:** `task/1413-diacritics-wave3-fix`
+**Layer:** scheduler, application, domain, interface
+**Depends on:** 1412 RED + merged
+
+**Files to modify:** 28 files listed in task 1412 details above
+
+**Acceptance Criteria:**
+- All 1412 test cases GREEN
+- `bun tsc --noEmit` 0 errors
+- `bun test` full suite 5090+ pass, 0 fail
+
+---
 
 ### 1410 — test(tool-diacritics-sweep): RED test 24 files
 
