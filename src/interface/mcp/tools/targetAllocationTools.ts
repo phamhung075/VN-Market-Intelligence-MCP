@@ -12,14 +12,14 @@
  *
  * Output format for get_target_allocation (Vietnamese, plain text):
  *
- *   Phan bo muc tieu
+ *   Phân bổ mục tiêu
  *
- *   Ma    | Muc tieu | Hien tai | Lech
- *   VCB   | 40%      | 50.0%    | +10.0% (thua)
- *   FPT   | 30%      | 25.0%    | -5.0% (thieu)
- *   HPG   | 30%      | 25.0%    | -5.0% (thieu)
+ *   Mã    | Mục tiêu | Hiện tại | Lệch
+ *   VCB   | 40%      | 50.0%    | +10.0% (thừa)
+ *   FPT   | 30%      | 25.0%    | -5.0% (thiếu)
+ *   HPG   | 30%      | 25.0%    | -5.0% (thiếu)
  *
- *   Tong danh muc: 14,000,000 VND
+ *   Tổng danh mục: 14,000,000 VND
  *
  * @module interface/mcp/tools/targetAllocationTools
  */
@@ -99,8 +99,8 @@ export function registerTargetAllocationTools(server: McpServer): void {
               {
                 type: "text" as const,
                 text:
-                  "Chua co muc tieu phan bo.\n" +
-                  "Dung set_target_allocation de thiet lap muc tieu.",
+                  "Chưa có mục tiêu phân bổ.\n" +
+                  "Dùng set_target_allocation để thiết lập mục tiêu.",
               },
             ],
           };
@@ -155,12 +155,12 @@ export function registerTargetAllocationTools(server: McpServer): void {
 
         // ── Build output table ───────────────────────────────────────────────
         const header = [
-          "Phan bo muc tieu",
+          "Phân bổ mục tiêu",
           "",
-          pad("Ma", 8) +
-            pad("Muc tieu", 12) +
-            pad("Hien tai", 12) +
-            "Lech",
+          pad("Mã", 8) +
+            pad("Mục tiêu", 12) +
+            pad("Hiện tại", 12) +
+            "Lệch",
           "-".repeat(50),
         ];
 
@@ -171,10 +171,10 @@ export function registerTargetAllocationTools(server: McpServer): void {
           const drift = actual - target;
           const driftStr =
             drift === 0
-              ? "  0.0% (dung)"
+              ? "  0.0% (đúng)"
               : drift > 0
-                ? `+${drift.toFixed(1)}% (thua)`
-                : `${drift.toFixed(1)}% (thieu)`;
+                ? `+${drift.toFixed(1)}% (thừa)`
+                : `${drift.toFixed(1)}% (thiếu)`;
 
           rows.push(
             pad(row.code, 8) +
@@ -201,26 +201,26 @@ export function registerTargetAllocationTools(server: McpServer): void {
               pad(pv.code, 8) +
                 pad("—", 12) +
                 pad(`${actual.toFixed(1)}%`, 12) +
-                "(khong co muc tieu)",
+                "(không có mục tiêu)",
             );
           }
         }
 
         const footer: string[] = [""];
         if (totalValue > 0) {
-          footer.push(`Tong danh muc: ${fmtVnd(totalValue)} VND`);
+          footer.push(`Tổng danh mục: ${fmtVnd(totalValue)} VND`);
         }
         if (priceMap.size < positionRows.length) {
           const missingPrices = positionRows
             .filter((p) => !priceMap.has(p.code))
             .map((p) => p.code);
           footer.push(
-            `Luu y: Gia uoc tinh (gia von) cho: ${missingPrices.join(", ")}`,
+            `Lưu ý: Giá ước tính (giá vốn) cho: ${missingPrices.join(", ")}`,
           );
         }
         if (positionRows.length === 0) {
           footer.push(
-            "Luu y: Chua co vi tri nao trong danh muc — them vi tri bang set_position.",
+            "Lưu ý: Chưa có vị trí nào trong danh mục — thêm vị trí bằng set_position.",
           );
         }
 
@@ -234,7 +234,7 @@ export function registerTargetAllocationTools(server: McpServer): void {
           content: [
             {
               type: "text" as const,
-              text: `Loi khi doc phan bo muc tieu: ${(err as Error).message}`,
+              text: `Lỗi khi đọc phân bổ mục tiêu: ${(err as Error).message}`,
             },
           ],
         };

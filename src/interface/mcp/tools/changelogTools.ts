@@ -155,7 +155,7 @@ export function registerChangelogTools(server: McpServer): void {
           content: [
             {
               type: "text" as const,
-              text: `Loi khi ghi sua loi: ${err instanceof Error ? err.message : String(err)}`,
+              text: `Lỗi khi ghi sửa lỗi: ${err instanceof Error ? err.message : String(err)}`,
             },
           ],
         };
@@ -192,14 +192,14 @@ export function registerChangelogTools(server: McpServer): void {
             content: [
               {
                 type: "text" as const,
-                text: "Chua co sua loi nao duoc ghi lai.",
+                text: "Chưa có sửa lỗi nào được ghi lại.",
               },
             ],
           };
         }
 
         const formatted = entries.map(formatEntry).join("\n\n");
-        const header = `=== ${entries.length} sua loi gan nhat (moi nhat truoc) ===\n\n`;
+        const header = `=== ${entries.length} sửa lỗi gần nhất (mới nhất trước) ===\n\n`;
 
         return {
           content: [
@@ -215,7 +215,7 @@ export function registerChangelogTools(server: McpServer): void {
           content: [
             {
               type: "text" as const,
-              text: `Loi khi doc lich su sua loi: ${err instanceof Error ? err.message : String(err)}`,
+              text: `Lỗi khi đọc lịch sử sửa lỗi: ${err instanceof Error ? err.message : String(err)}`,
             },
           ],
         };

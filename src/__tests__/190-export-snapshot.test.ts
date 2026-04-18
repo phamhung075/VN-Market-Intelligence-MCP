@@ -251,7 +251,7 @@ describe("Task 190 — Portfolio Snapshot Export", () => {
     const result = await exportPortfolioSnapshot({ db, exportDir: badDir });
 
     expect(result.error).toBeTruthy();
-    expect(result.error).toContain("khong the ghi file");
+    expect(result.error).toContain("không thể ghi file");
   });
 
   // ── 7: All tables export as empty arrays when 0 rows ──────────────────────
