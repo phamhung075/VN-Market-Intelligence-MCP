@@ -4,14 +4,16 @@
 
 ---
 
-## Sprint 147 — IN PROGRESS
+## Sprint 147 — COMPLETE (2026-04-18)
 
 > Spec: `docs/REQ_1414.md` | Tech: `docs/TECH_1414.md` (APPROVED_BY_ARCHITECT) | Goal: fix(diacritics-wave4): 13 strings in 5 interface/mcp/tools files
 
 | ID | Title | Status | Role |
 |----|-------|--------|------|
-| 1414 | test(diacritics-wave4): RED test — 5 interface/mcp/tools files diacritics | Review | Dev |
-| 1415 | fix(diacritics-wave4): replace all unaccented Vietnamese in 5 files | Review | Dev |
+| 1414 | test(diacritics-wave4): RED test — 5 interface/mcp/tools files diacritics | Done | Dev |
+| 1415 | fix(diacritics-wave4): replace all unaccented Vietnamese in 5 files | Done | Dev |
+
+Archived → `docs/archive/sprints-133-147.md`
 
 ---
 

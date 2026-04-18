@@ -1,7 +1,7 @@
-# Archive — Sprints 133–146
+# Archive — Sprints 133–147
 
 Period: 2026-04-17 → 2026-04-18
-Archived from TASKS.md on Sprint 146 completion.
+Archived from TASKS.md on Sprint 147 completion.
 
 ---
 
@@ -179,4 +179,17 @@ PO sign-off: 2026-04-18
 
 Goal: Vietnamese diacritics wave-3 sweep — scheduler + domain + application layers (predictionMarketJob, calibrationReportJob, getCrisisEarlyWarning, sentimentTrend, kinhDich formatters, decisionNoteSynthesizer + 20 interface tool files).
 Spec: docs/REQ_1412.md | Tech: docs/TECH_1412.md
+PO sign-off: 2026-04-18
+
+---
+
+## Sprint 147 — COMPLETE (2026-04-18)
+
+| ID | Title | Status |
+|----|-------|--------|
+| 1414 | test(diacritics-wave4): RED test — 5 interface/mcp/tools files diacritics | Done |
+| 1415 | fix(diacritics-wave4): replace all unaccented Vietnamese in 5 files | Done |
+
+Goal: Vietnamese diacritics wave-4 sweep — 5 interface/mcp/tools files (13 strings).
+Spec: docs/REQ_1414.md | Tech: docs/TECH_1414.md
 PO sign-off: 2026-04-18
