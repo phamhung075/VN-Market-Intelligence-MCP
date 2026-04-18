@@ -235,24 +235,24 @@ function predictionSignalsToGenericSignals(
 export function buildTelegramMessage(signal: PredictionSignal): string {
   const severityLabel =
     signal.severity === "critical"
-      ? "NGHIEM TRONG"
+      ? "NGHIÊM TRỌNG"
       : signal.severity === "high"
-        ? "QUAN TRONG"
-        : "LUU Y";
+        ? "QUAN TRỌNG"
+        : "LƯU Ý";
 
   const pctShift =
     signal.yesPricePrev !== null
-      ? ` (dich chuyen ${((signal.yesPriceCurr - (signal.yesPricePrev ?? 0)) * 100).toFixed(1)}%)`
+      ? ` (dịch chuyển ${((signal.yesPriceCurr - (signal.yesPricePrev ?? 0)) * 100).toFixed(1)}%)`
       : "";
 
   return (
     `[POLYMARKET] ${severityLabel}\n` +
-    `Thi truong: ${signal.marketQuestion}\n` +
-    `Loai tin hieu: ${signal.signalType}${pctShift}\n` +
-    `Xac suat YES: ${(signal.yesPriceCurr * 100).toFixed(1)}%\n` +
-    `Khoi luong 24h: $${signal.volume24h.toLocaleString("en-US")}\n` +
-    `Do tin cay: ${(signal.confidence * 100).toFixed(0)}%\n` +
-    `Phan tich: ${signal.reasoning}`
+    `Thị trường: ${signal.marketQuestion}\n` +
+    `Loại tín hiệu: ${signal.signalType}${pctShift}\n` +
+    `Xác suất YES: ${(signal.yesPriceCurr * 100).toFixed(1)}%\n` +
+    `Khối lượng 24h: $${signal.volume24h.toLocaleString("en-US")}\n` +
+    `Độ tin cậy: ${(signal.confidence * 100).toFixed(0)}%\n` +
+    `Phân tích: ${signal.reasoning}`
   );
 }
 

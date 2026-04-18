@@ -187,7 +187,7 @@ describe("Task 284 — computeReading", () => {
 
   it("actionNote contains Vietnamese recommendation keyword", () => {
     const reading = computeReading("VCB", POSITIVE_SCORES);
-    expect(reading.actionNote).toContain("KHUYEN NGHI:");
+    expect(reading.actionNote).toContain("KHUYẾN NGHỊ:");
 
     const note = reading.actionNote.toUpperCase();
     const validActions = ["MUA", "BAN", "GIU", "CHO", "THAN TRONG"];
@@ -249,19 +249,19 @@ describe("Task 284 — formatReading", () => {
 
   it("includes que chinh section", () => {
     const output = formatReading(reading);
-    expect(output).toContain("Que chinh:");
-    expect(output).toContain("Xu huong:");
+    expect(output).toContain("Quẻ chính:");
+    expect(output).toContain("Xu hướng:");
   });
 
   it("includes 6 hao section", () => {
     const output = formatReading(reading);
-    expect(output).toContain("6 Hao:");
-    expect(output).toContain("So hao");
-    expect(output).toContain("Nhi hao");
-    expect(output).toContain("Tam hao");
-    expect(output).toContain("Tu hao");
-    expect(output).toContain("Ngu hao");
-    expect(output).toContain("Thuong hao");
+    expect(output).toContain("6 Hào:");
+    expect(output).toContain("Sơ hào");
+    expect(output).toContain("Nhị hào");
+    expect(output).toContain("Tam hào");
+    expect(output).toContain("Tứ hào");
+    expect(output).toContain("Ngũ hào");
+    expect(output).toContain("Thượng hào");
   });
 
   it("includes Lao state indicator ⚡ for Lao haos", () => {
@@ -273,23 +273,23 @@ describe("Task 284 — formatReading", () => {
 
   it("includes hao dong section", () => {
     const output = formatReading(reading);
-    expect(output).toContain("Hao dong:");
+    expect(output).toContain("Hào động:");
   });
 
   it("includes ho que and bien que sections", () => {
     const output = formatReading(reading);
-    expect(output).toContain("Ho que (an sau):");
-    expect(output).toContain("Bien que (tuong lai):");
+    expect(output).toContain("Hộ quẻ (ẩn sâu):");
+    expect(output).toContain("Biến quẻ (tương lai):");
   });
 
   it("includes ngu hanh section", () => {
     const output = formatReading(reading);
-    expect(output).toContain("Ngu Hanh:");
+    expect(output).toContain("Ngũ Hành:");
   });
 
-  it("includes action note with KHUYEN NGHI", () => {
+  it("includes action note with KHUYẾN NGHỊ", () => {
     const output = formatReading(reading);
-    expect(output).toContain("KHUYEN NGHI:");
+    expect(output).toContain("KHUYẾN NGHỊ:");
   });
 
   it("does NOT include Markov section when markov is null", () => {
@@ -314,22 +314,22 @@ describe("Task 284 — formatReading", () => {
 
     // All key sections must be present
     expect(output).toContain("=== KINH DICH:");
-    expect(output).toContain("Que chinh:");
-    expect(output).toContain("6 Hao:");
-    expect(output).toContain("Hao dong:");
-    expect(output).toContain("Ho que (an sau):");
-    expect(output).toContain("Bien que (tuong lai):");
-    expect(output).toContain("Ngu Hanh:");
-    expect(output).toContain("KHUYEN NGHI:");
+    expect(output).toContain("Quẻ chính:");
+    expect(output).toContain("6 Hào:");
+    expect(output).toContain("Hào động:");
+    expect(output).toContain("Hộ quẻ (ẩn sâu):");
+    expect(output).toContain("Biến quẻ (tương lai):");
+    expect(output).toContain("Ngũ Hành:");
+    expect(output).toContain("KHUYẾN NGHỊ:");
   });
 
   it("hao dong section mentions changing line positions when present", () => {
     // scores[0]=0.85→LAO_DUONG, scores[1]=-0.85→LAO_AM → hao dong at 1,2
     const r = computeReading("VCB", MIXED_SCORES);
     const output = formatReading(r);
-    expect(output).toContain("Hao dong:");
+    expect(output).toContain("Hào động:");
     // Should mention at least one of the changing line positions
-    const haoDongLine = output.split("\n").find((l) => l.startsWith("Hao dong:")) ?? "";
+    const haoDongLine = output.split("\n").find((l) => l.startsWith("Hào động:")) ?? "";
     // Positions 1 and 2 are changing
     expect(haoDongLine).toContain("1");
     expect(haoDongLine).toContain("2");
@@ -339,7 +339,7 @@ describe("Task 284 — formatReading", () => {
     // All THIEU scores → no Lao → no changing lines
     const r = computeReading("VCB", [0.5, 0.3, 0.2, 0.4, 0.3, 0.5]);
     const output = formatReading(r);
-    const haoDongLine = output.split("\n").find((l) => l.startsWith("Hao dong:")) ?? "";
-    expect(haoDongLine).toContain("Khong co hao dong");
+    const haoDongLine = output.split("\n").find((l) => l.startsWith("Hào động:")) ?? "";
+    expect(haoDongLine).toContain("Không có hào động");
   });
 });

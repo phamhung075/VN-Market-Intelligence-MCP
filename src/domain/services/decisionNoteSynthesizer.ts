@@ -51,16 +51,16 @@ export interface ActionNoteInput {
 /**
  * Format the P&L display line for the portfolio dashboard.
  *
- * Returns "CHUA CO VI THE" when called with null.
+ * Returns "CHƯA CÓ VỊ THẾ" when called with null.
  *
  * Example output:
- *   "Vi the: 1,000 co phieu @ 75,000 | Gia hien tai: 85,000 | Lai/Lo: +13.33%"
+ *   "Vị thế: 1,000 cổ phiếu @ 75,000 | Giá hiện tại: 85,000 | Lãi/Lỗ: +13.33%"
  *
  * @param input - Position data, or null if no position exists.
  */
 export function buildPositionLine(input: PositionLineInput | null): string {
   if (input === null) {
-    return "CHUA CO VI THE";
+    return "CHƯA CÓ VỊ THẾ";
   }
 
   const { shares, avgPrice, currentPrice, pnlPct } = input;
@@ -71,7 +71,7 @@ export function buildPositionLine(input: PositionLineInput | null): string {
   const sign = pnlPct >= 0 ? "+" : "";
   const pnlStr = `${sign}${pnlPct.toFixed(2)}%`;
 
-  return `Vi the: ${sharesStr} co phieu @ ${avgStr} | Gia hien tai: ${curStr} | Lai/Lo: ${pnlStr}`;
+  return `Vị thế: ${sharesStr} cổ phiếu @ ${avgStr} | Giá hiện tại: ${curStr} | Lãi/Lỗ: ${pnlStr}`;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -81,16 +81,16 @@ export function buildPositionLine(input: PositionLineInput | null): string {
 /**
  * Produce a deterministic Vietnamese action recommendation.
  *
- * The note always begins with "Khuyen nghi: " followed by the action keyword.
+ * The note always begins with "Khuyến nghị: " followed by the action keyword.
  *
  * Rules evaluated in priority order:
- *   1. No position data                          → CHUA CO VI THE
- *   2. pnlPct < -10                              → GIAM BOT (stop-loss)
- *   3. conviction < 0.4                          → GIAM BOT (low confidence)
- *   4. conviction >= 0.8 AND pnlPct > 0          → THEM VAO
- *   5. 0.4 <= conviction < 0.6 AND pnlPct < -5  → XEM XET GIAM
+ *   1. No position data                          → CHƯA CÓ VỊ THẾ
+ *   2. pnlPct < -10                              → GIẢM BỚT (stop-loss)
+ *   3. conviction < 0.4                          → GIẢM BỚT (low confidence)
+ *   4. conviction >= 0.8 AND pnlPct > 0          → THÊM VÀO
+ *   5. 0.4 <= conviction < 0.6 AND pnlPct < -5  → XEM XÉT GIẢM
  *   6. default (0.6 <= conviction < 0.8, or
- *               0.4-0.6 with pnlPct >= -5)       → GIU NGUYEN
+ *               0.4-0.6 with pnlPct >= -5)       → GIỮ NGUYÊN
  *
  * @param input - Conviction score, P&L percentage, and direction.
  */
@@ -99,27 +99,27 @@ export function buildActionNote(input: ActionNoteInput): string {
 
   // Rule 1: No position data
   if (pnlPct === null) {
-    return "Khuyen nghi: CHUA CO VI THE";
+    return "Khuyến nghị: CHƯA CÓ VỊ THẾ";
   }
 
   // Rule 2: Hard stop-loss — deep loss triggers reduction regardless of conviction
   if (pnlPct < -10) {
-    return "Khuyen nghi: GIAM BOT";
+    return "Khuyến nghị: GIẢM BỚT";
   }
 
   // Rule 3: Low conviction — signals are too noisy to trust
   if (convictionScore < 0.4) {
-    return "Khuyen nghi: GIAM BOT";
+    return "Khuyến nghị: GIẢM BỚT";
   }
 
   // Rule 4: High conviction + positive P&L → add to position
   if (convictionScore >= 0.8 && pnlPct > 0) {
-    return "Khuyen nghi: THEM VAO";
+    return "Khuyến nghị: THÊM VÀO";
   }
 
   // Rule 5: Moderate conviction + moderate loss → consider reducing
   if (convictionScore >= 0.4 && convictionScore < 0.6 && pnlPct < -5) {
-    return "Khuyen nghi: XEM XET GIAM";
+    return "Khuyến nghị: XEM XÉT GIẢM";
   }
 
   // Rule 6: Default — hold position
@@ -127,5 +127,5 @@ export function buildActionNote(input: ActionNoteInput): string {
   //         0.8+ conviction with pnlPct <= 0
   //         0.4-0.6 with pnlPct >= -5
   void direction; // direction available for future extension
-  return "Khuyen nghi: GIU NGUYEN";
+  return "Khuyến nghị: GIỮ NGUYÊN";
 }

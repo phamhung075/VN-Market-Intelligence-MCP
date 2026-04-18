@@ -50,12 +50,12 @@ describe("Task 180 — buildPositionLine", () => {
       pnlPct: 10.0,
     });
     // Should contain position info indicator
-    expect(line.toLowerCase()).toMatch(/vi the|co phieu|gia|lai/i);
+    expect(line).toMatch(/Vị thế|cổ phiếu|Giá|Lãi/u);
   });
 
-  it("returns CHUA CO VI THE when no position data", () => {
+  it("returns CHƯA CÓ VỊ THẾ when no position data", () => {
     const line = buildPositionLine(null);
-    expect(line).toContain("CHUA CO VI THE");
+    expect(line).toContain("CHƯA CÓ VỊ THẾ");
   });
 });
 
@@ -64,119 +64,119 @@ describe("Task 180 — buildPositionLine", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("Task 180 — buildActionNote", () => {
-  it("returns THEM VAO when conviction >= 0.8 and pnlPct > 0", () => {
+  it("returns THÊM VÀO when conviction >= 0.8 and pnlPct > 0", () => {
     const input: ActionNoteInput = {
       convictionScore: 0.85,
       pnlPct: 5.0,
       direction: "bullish",
     };
     const note = buildActionNote(input);
-    expect(note).toContain("THEM VAO");
+    expect(note).toContain("THÊM VÀO");
   });
 
-  it("returns THEM VAO at exactly conviction = 0.8 with positive P&L", () => {
+  it("returns THÊM VÀO at exactly conviction = 0.8 with positive P&L", () => {
     const input: ActionNoteInput = {
       convictionScore: 0.8,
       pnlPct: 1.0,
       direction: "bullish",
     };
     const note = buildActionNote(input);
-    expect(note).toContain("THEM VAO");
+    expect(note).toContain("THÊM VÀO");
   });
 
-  it("returns GIU NGUYEN when conviction 0.6 <= score < 0.8", () => {
+  it("returns GIỮ NGUYÊN when conviction 0.6 <= score < 0.8", () => {
     const input: ActionNoteInput = {
       convictionScore: 0.7,
       pnlPct: 2.0,
       direction: "bullish",
     };
     const note = buildActionNote(input);
-    expect(note).toContain("GIU NGUYEN");
+    expect(note).toContain("GIỮ NGUYÊN");
   });
 
-  it("returns GIU NGUYEN at exactly conviction = 0.6", () => {
+  it("returns GIỮ NGUYÊN at exactly conviction = 0.6", () => {
     const input: ActionNoteInput = {
       convictionScore: 0.6,
       pnlPct: 0.0,
       direction: "neutral",
     };
     const note = buildActionNote(input);
-    expect(note).toContain("GIU NGUYEN");
+    expect(note).toContain("GIỮ NGUYÊN");
   });
 
-  it("returns XEM XET GIAM when conviction 0.4-0.6 and pnlPct < -5", () => {
+  it("returns XEM XÉT GIẢM when conviction 0.4-0.6 and pnlPct < -5", () => {
     const input: ActionNoteInput = {
       convictionScore: 0.5,
       pnlPct: -8.0,
       direction: "bearish",
     };
     const note = buildActionNote(input);
-    expect(note).toContain("XEM XET GIAM");
+    expect(note).toContain("XEM XÉT GIẢM");
   });
 
-  it("returns GIU NGUYEN when conviction 0.4-0.6 and pnlPct >= -5", () => {
+  it("returns GIỮ NGUYÊN when conviction 0.4-0.6 and pnlPct >= -5", () => {
     const input: ActionNoteInput = {
       convictionScore: 0.5,
       pnlPct: -3.0,
       direction: "neutral",
     };
     const note = buildActionNote(input);
-    expect(note).toContain("GIU NGUYEN");
+    expect(note).toContain("GIỮ NGUYÊN");
   });
 
-  it("returns GIAM BOT when conviction < 0.4", () => {
+  it("returns GIẢM BỚT when conviction < 0.4", () => {
     const input: ActionNoteInput = {
       convictionScore: 0.3,
       pnlPct: 2.0,
       direction: "bearish",
     };
     const note = buildActionNote(input);
-    expect(note).toContain("GIAM BOT");
+    expect(note).toContain("GIẢM BỚT");
   });
 
-  it("returns GIAM BOT when pnlPct < -10 regardless of conviction", () => {
+  it("returns GIẢM BỚT when pnlPct < -10 regardless of conviction", () => {
     const input: ActionNoteInput = {
       convictionScore: 0.75,
       pnlPct: -15.0,
       direction: "bullish",
     };
     const note = buildActionNote(input);
-    expect(note).toContain("GIAM BOT");
+    expect(note).toContain("GIẢM BỚT");
   });
 
-  it("returns CHUA CO VI THE when pnlPct is null (no position)", () => {
+  it("returns CHƯA CÓ VỊ THẾ when pnlPct is null (no position)", () => {
     const input: ActionNoteInput = {
       convictionScore: 0.9,
       pnlPct: null,
       direction: "bullish",
     };
     const note = buildActionNote(input);
-    expect(note).toContain("CHUA CO VI THE");
+    expect(note).toContain("CHƯA CÓ VỊ THẾ");
   });
 
-  it("note starts with Khuyen nghi:", () => {
+  it("note starts with Khuyến nghị:", () => {
     const note = buildActionNote({ convictionScore: 0.7, pnlPct: 3.0, direction: "bullish" });
-    expect(note).toMatch(/^Khuyen nghi:/);
+    expect(note).toMatch(/^Khuyến nghị:/);
   });
 
-  it("THEM VAO requires conviction >= 0.8 — just below threshold goes to GIU NGUYEN", () => {
+  it("THÊM VÀO requires conviction >= 0.8 — just below threshold goes to GIỮ NGUYÊN", () => {
     const input: ActionNoteInput = {
       convictionScore: 0.79,
       pnlPct: 10.0,
       direction: "bullish",
     };
     const note = buildActionNote(input);
-    expect(note).toContain("GIU NGUYEN");
-    expect(note).not.toContain("THEM VAO");
+    expect(note).toContain("GIỮ NGUYÊN");
+    expect(note).not.toContain("THÊM VÀO");
   });
 
-  it("GIAM BOT at conviction < 0.4 with positive P&L", () => {
+  it("GIẢM BỚT at conviction < 0.4 with positive P&L", () => {
     const input: ActionNoteInput = {
       convictionScore: 0.39,
       pnlPct: 5.0,
       direction: "neutral",
     };
     const note = buildActionNote(input);
-    expect(note).toContain("GIAM BOT");
+    expect(note).toContain("GIẢM BỚT");
   });
 });

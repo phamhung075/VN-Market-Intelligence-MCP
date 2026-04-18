@@ -123,20 +123,20 @@ export function formatCrisisWarningOutput(
 ): McpContentItem[] {
   const lines: string[] = [];
 
-  lines.push("=== RADAR KHUNG HOANG — Crisis Early Warning ===");
-  lines.push(`Thoi gian: ${new Date().toISOString()}`);
+  lines.push("=== RADAR KHỦNG HOẢNG — Crisis Early Warning ===");
+  lines.push(`Thời gian: ${new Date().toISOString()}`);
   lines.push("");
 
   // Crisis indicators section
-  lines.push("--- CHI SO CANH BAO KHUNG HOANG ---");
+  lines.push("--- CHỈ SỐ CẢNH BÁO KHỦNG HOẢNG ---");
   if (result.crisisIndicators.length === 0) {
-    lines.push("Khong co tin hieu khung hoang nao duoc phat hien.");
+    lines.push("Không có tín hiệu khủng hoảng nào được phát hiện.");
   } else {
     for (const ind of result.crisisIndicators) {
       lines.push(
-        `[CANH BAO] ${ind.stockCode}: velocity ${ind.velocityRatio.toFixed(1)}x baseline | ` +
+        `[CẢNH BÁO] ${ind.stockCode}: velocity ${ind.velocityRatio.toFixed(1)}x baseline | ` +
         `${ind.mentionCount} mentions (${ind.negativeCount} negative) | ` +
-        `${ind.sourceCount} nguon tin | ${ind.hour}`,
+        `${ind.sourceCount} nguồn tin | ${ind.hour}`,
       );
     }
   }
@@ -144,14 +144,14 @@ export function formatCrisisWarningOutput(
   lines.push("");
 
   // Reputation scores section
-  lines.push("--- UY TIN DOANH NGHIEP (score < 50) ---");
+  lines.push("--- UY TÍN DOANH NGHIỆP (score < 50) ---");
   if (result.reputationScores.length === 0) {
-    lines.push("Tat ca co phieu co diem uy tin an toan.");
+    lines.push("Tất cả cổ phiếu có điểm uy tín an toàn.");
   } else {
     for (const rep of result.reputationScores) {
       lines.push(
         `[${rep.riskLevel.toUpperCase()}] ${rep.stockCode}: score=${rep.score.toFixed(1)} | ` +
-        `xu huong=${rep.trend}`,
+        `xu hướng=${rep.trend}`,
       );
     }
   }

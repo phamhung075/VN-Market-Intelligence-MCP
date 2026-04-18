@@ -294,12 +294,12 @@ export function buildCalibrationMarketMessage(result: CalibrationJobResult, date
   ];
 
   if (result.avg_brier_score !== null) {
-    marketLines.push(`Brier Score trung binh: ${result.avg_brier_score.toFixed(4)}`);
+    marketLines.push(`Brier Score trung bình: ${result.avg_brier_score.toFixed(4)}`);
   }
 
   if (result.trend_delta !== null) {
     const trend = result.trend_delta < 0 ? "cải thiện" : result.trend_delta === 0 ? "ổn định" : "xuống cấp";
-    marketLines.push(`Xu huong: ${trend} (delta ${result.trend_delta.toFixed(4)})`);
+    marketLines.push(`Xu hướng: ${trend} (delta ${result.trend_delta.toFixed(4)})`);
   }
 
   if (result.top_predictions.length > 0) {
