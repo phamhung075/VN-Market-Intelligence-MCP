@@ -27,6 +27,7 @@ import {
   getOpenChainFindings,
   computeCycleId,
   type SignalType,
+  type AgentSignal,
 } from "../../../infrastructure/db/agentSignalStore.js";
 
 // ── Zod schemas ─────────────────────────────────────────────────────────────
@@ -61,8 +62,6 @@ const PayloadSchema = z.object({
 }).passthrough();
 
 // ── formatSignalLines ────────────────────────────────────────────────────────
-
-import type { AgentSignal } from "../../../infrastructure/db/agentSignalStore.js";
 
 /**
  * Format pending signals as plain text. Exported for testability (task 1411).
