@@ -400,7 +400,7 @@ function queryInsiderRecent(
 /**
  * Query vnstock_trading_stats for the most-recent foreign_volume per watchlist stock.
  * Returns top 3 net-buy + top 3 net-sell rows (up to 6 total).
- * Excludes rows where foreign_volume = 0 or NULL.
+ * Excludes rows where foreign_volume = 0, NULL, or the sentinel ±9999999.
  * Returns [] when watchlist is empty or no qualifying rows exist.
  */
 function queryForeignFlowSummary(
@@ -418,6 +418,7 @@ function queryForeignFlowSummary(
       WHERE code IN (${placeholders})
         AND foreign_volume IS NOT NULL
         AND foreign_volume != 0
+        AND ABS(foreign_volume) != 9999999
         AND (code, fetched_at) IN (
               SELECT code, MAX(fetched_at)
               FROM vnstock_trading_stats
@@ -451,6 +452,13 @@ function queryForeignFlowSummary(
 
   return [...netBuyRows, ...netSellRows];
 }
+
+/**
+ * Test-only export: exposes queryForeignFlowSummary for unit tests that
+ * need to exercise the SQL filter logic with an injected in-memory DB.
+ * @internal
+ */
+export const queryForeignFlowSummary_TEST = queryForeignFlowSummary;
 
 /**
  * Query evidence_scores for the most-recent score per watchlist stock.
