@@ -532,6 +532,7 @@ export async function createBunServer(
                 if (row?.avg_vol && row.avg_vol > 0) avgVolMap.set(p.code, row.avg_vol);
               } catch { /* best effort */ }
             }
+            console.log(`[volume-spike] avgVol map: ${JSON.stringify(Object.fromEntries(avgVolMap))}`);
 
             // Detect signals for each stock (skip indices)
             for (const p of prices) {
