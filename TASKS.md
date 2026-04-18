@@ -112,6 +112,18 @@
 
 ---
 
+## Sprint 159 — feat(morning-briefing): render portfolio P&L section
+
+| ID | Title | Status | Role |
+|----|-------|--------|------|
+| 1438 | test(morning-briefing): TDD RED — portfolio P&L section assertions | Review | Dev |
+| 1439 | feat(morning-briefing): call formatPnlSection in formatBriefingMessage GREEN | Review | Dev |
+
+> Branch: `task/1438-morning-briefing-portfolio-pnl`
+> Handoff: `docs/handoffs/TASK_1438.md`, `docs/handoffs/TASK_1439.md`
+
+---
+
 ## Backlog
 
 | ID | Title | Priority | Notes |
