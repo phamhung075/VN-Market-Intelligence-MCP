@@ -157,7 +157,7 @@ describe("Task 282 — classifyNguHanh (Five Elements)", () => {
     const result = classifyNguHanh("Moc", "Hoa");
     expect(result.dynamic).toBe("TUONG_SINH");
     expect(result.score).toBe(0.3);
-    expect(result.interpretation).toContain("Noi luc sinh ngoai luc");
+    expect(result.interpretation).toContain("Nội lực sinh ngoại lực");
   });
 
   it("Hoa sinh Tho → TUONG_SINH, score +0.3", () => {
@@ -189,14 +189,14 @@ describe("Task 282 — classifyNguHanh (Five Elements)", () => {
     const result = classifyNguHanh("Moc", "Thuy");
     expect(result.dynamic).toBe("TUONG_SINH");
     expect(result.score).toBe(0.2);
-    expect(result.interpretation).toContain("Ngoai luc ho tro noi luc");
+    expect(result.interpretation).toContain("Ngoại lực hỗ trợ nội lực");
   });
 
   it("Moc khac Tho (lower destroys upper) → TUONG_KHAC, -0.3", () => {
     const result = classifyNguHanh("Moc", "Tho");
     expect(result.dynamic).toBe("TUONG_KHAC");
     expect(result.score).toBe(-0.3);
-    expect(result.interpretation).toContain("Noi luc khac ngoai luc");
+    expect(result.interpretation).toContain("Nội lực khắc ngoại lực");
   });
 
   it("Tho khac Thuy → TUONG_KHAC, -0.3", () => {
@@ -228,14 +228,14 @@ describe("Task 282 — classifyNguHanh (Five Elements)", () => {
     const result = classifyNguHanh("Thuy", "Tho");
     expect(result.dynamic).toBe("TUONG_KHAC");
     expect(result.score).toBe(-0.3);
-    expect(result.interpretation).toContain("Ngoai luc triet tieu noi luc");
+    expect(result.interpretation).toContain("Ngoại lực triệt tiêu nội lực");
   });
 
   it("Kim + Kim → SAME, score +0.1", () => {
     const result = classifyNguHanh("Kim", "Kim");
     expect(result.dynamic).toBe("SAME");
     expect(result.score).toBe(0.1);
-    expect(result.interpretation).toContain("Cung hanh");
+    expect(result.interpretation).toContain("Cùng hành");
   });
 
   it("Moc + Moc → SAME, +0.1", () => {

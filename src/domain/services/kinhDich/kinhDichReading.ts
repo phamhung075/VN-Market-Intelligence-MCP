@@ -254,7 +254,7 @@ export function computeReading(
 
   const tradingSignal = majorityVote(actions);
   const tradingSignalDisplay =
-    combinedScore >= 0 ? `${tradingSignal} (tich cuc)` : `${tradingSignal} (tieu cuc)`;
+    combinedScore >= 0 ? `${tradingSignal} (tích cực)` : `${tradingSignal} (tiêu cực)`;
 
   // 9. queChiNh
   const queChiNh = {
@@ -278,25 +278,25 @@ export function computeReading(
 
   // 11. Action note
   const actionVerb = tradingSignal;
-  const scoreSign = combinedScore >= 0 ? "tich cuc" : "tieu cuc";
+  const scoreSign = combinedScore >= 0 ? "tích cực" : "tiêu cực";
   const actionNote =
-    `KHUYEN NGHI: ${actionVerb} — Que ${queChiNh.name} (${queChiNh.number}) ${scoreSign}` +
-    `, xu huong: ${trendRaw.split("—")[0]?.trim() ?? trendRaw}` +
-    `. Do tin cay: ${Math.round(confidence * 100)}%.`;
+    `KHUYẾN NGHỊ: ${actionVerb} — Quẻ ${queChiNh.name} (${queChiNh.number}) ${scoreSign}` +
+    `, xu hướng: ${trendRaw.split("—")[0]?.trim() ?? trendRaw}` +
+    `. Độ tin cậy: ${Math.round(confidence * 100)}%.`;
 
   // 12. Overall reading (Vietnamese prose)
   const changingDesc =
     changingLines.length > 0
-      ? `Hao dong: ${changingLines.join(", ")} — bien chuyen sang ${bienQue.name}.`
-      : `Khong co hao dong — que on dinh.`;
+      ? `Hào động: ${changingLines.join(", ")} — biến chuyển sang ${bienQue.name}.`
+      : `Không có hào động — quẻ ổn định.`;
 
   const overallReading =
-    `[${stockCode}] Que ${queMeta.name} (${queChinhNumber}) ${queMeta.chinese}. ` +
+    `[${stockCode}] Quẻ ${queMeta.name} (${queChinhNumber}) ${queMeta.chinese}. ` +
     `${queData.coreMeaning} ` +
-    `Xu huong: ${trendRaw}. ` +
-    `Ho que (an sau): ${hoQue.name} — ${hoQue.coreMeaning.slice(0, 80)}. ` +
+    `Xu hướng: ${trendRaw}. ` +
+    `Hộ quẻ (ẩn sâu): ${hoQue.name} — ${hoQue.coreMeaning.slice(0, 80)}. ` +
     `${changingDesc} ` +
-    `Ngu Hanh: ${nguHanh.interpretation}. ` +
+    `Ngũ Hành: ${nguHanh.interpretation}. ` +
     actionNote;
 
   return {

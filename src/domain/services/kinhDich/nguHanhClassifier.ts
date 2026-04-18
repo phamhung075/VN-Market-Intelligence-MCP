@@ -78,27 +78,27 @@ export function classifyNguHanh(
   if (lowerElement === upperElement) {
     dynamic = "SAME";
     score = 0.1;
-    interpretation = "Cung hanh — tang cuong xu huong hien tai";
+    interpretation = "Cùng hành — tăng cường xu hướng hiện tại";
   } else if (GENERATION[lowerElement] === upperElement) {
     dynamic = "TUONG_SINH";
     score = 0.3;
-    interpretation = "Noi luc sinh ngoai luc — xu huong ben vung";
+    interpretation = "Nội lực sinh ngoại lực — xu hướng bền vững";
   } else if (GENERATION[upperElement] === lowerElement) {
     dynamic = "TUONG_SINH";
     score = 0.2;
-    interpretation = "Ngoai luc ho tro noi luc — moi truong thuan loi";
+    interpretation = "Ngoại lực hỗ trợ nội lực — môi trường thuận lợi";
   } else if (DESTRUCTION[lowerElement] === upperElement) {
     dynamic = "TUONG_KHAC";
     score = -0.3;
-    interpretation = "Noi luc khac ngoai luc — mau thuan noi tai";
+    interpretation = "Nội lực khắc ngoại lực — mâu thuẫn nội tại";
   } else if (DESTRUCTION[upperElement] === lowerElement) {
     dynamic = "TUONG_KHAC";
     score = -0.3;
-    interpretation = "Ngoai luc triet tieu noi luc — ap luc ben ngoai";
+    interpretation = "Ngoại lực triệt tiêu nội lực — áp lực bên ngoài";
   } else {
     dynamic = "NEUTRAL";
     score = 0.0;
-    interpretation = "Trung tinh — khong tuong tac dac biet";
+    interpretation = "Trung tính — không tương tác đặc biệt";
   }
 
   return { lower: lowerElement, upper: upperElement, dynamic, score, interpretation };

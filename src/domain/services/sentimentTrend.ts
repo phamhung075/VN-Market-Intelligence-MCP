@@ -192,20 +192,20 @@ function buildVietnameseSummary(
   const totalBearish = ascending.reduce((s, d) => s + d.bearish, 0);
 
   if (totalEntries === 0) {
-    return `${code} khong co du lieu cam tinh trong ${windowDays} ngay qua.`;
+    return `${code} không có dữ liệu cảm tính trong ${windowDays} ngày qua.`;
   }
 
   const dirLabel =
     direction === "improving"
-      ? "co xu huong TICH CUC"
+      ? "có xu hướng TÍCH CỰC"
       : direction === "deteriorating"
-        ? "co xu huong TIEU CUC"
-        : "ON DINH";
+        ? "có xu hướng TIÊU CỰC"
+        : "ỔN ĐỊNH";
 
   const slopeStr = `slope: ${slope >= 0 ? "+" : ""}${roundSlope(slope).toFixed(2)}`;
 
   return (
-    `${code} ${dirLabel} trong ${windowDays} ngay qua ` +
+    `${code} ${dirLabel} trong ${windowDays} ngày qua ` +
     `(${totalBullish}/${totalEntries} tin bullish, ${totalBearish} bearish, ${slopeStr}).`
   );
 }
