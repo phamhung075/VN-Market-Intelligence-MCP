@@ -13,6 +13,7 @@
  * Using the real export name. Function signature unchanged.
  */
 
+import { describe, it, expect } from "bun:test";
 import { computeConviction } from "../domain/services/convictionScorer.js";
 
 describe("1404 alert-diacritics convictionScorer", () => {
