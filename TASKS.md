@@ -125,6 +125,17 @@
 
 ---
 
+## Sprint 160 — fix(portfolio-pnl): Vietnamese diacritics in formatPnlSection
+
+| ID | Title | Status | Role |
+|----|-------|--------|------|
+| 1440 | fix(portfolio-pnl): Vietnamese diacritics in formatPnlSection | Review | Dev |
+
+> Branch: `task/1440-portfolio-pnl-diacritics`
+> Handoff: `docs/handoffs/TASK_1440.md`
+
+---
+
 ## Backlog
 
 | ID | Title | Priority | Notes |
