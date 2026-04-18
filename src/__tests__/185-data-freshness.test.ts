@@ -8,11 +8,11 @@
  *   1. `getDataFreshness()` returns a non-empty string report
  *   2. Report contains header "Do tuoi du lieu"
  *   3. All 7 data sources appear in the output
- *   4. `classifyFreshness()` returns "Tot" for age < 1h
- *   5. `classifyFreshness()` returns "Binh thuong" for age 1h–6h
- *   6. `classifyFreshness()` returns "Cu" for age 6h–24h
- *   7. `classifyFreshness()` returns "Rat cu" for age >= 24h
- *   8. `classifyFreshness()` returns "Chua co du lieu" for null age
+ *   4. `classifyFreshness()` returns "Tốt" for age < 1h
+ *   5. `classifyFreshness()` returns "Bình thường" for age 1h–6h
+ *   6. `classifyFreshness()` returns "Cũ" for age 6h–24h
+ *   7. `classifyFreshness()` returns "Rất cũ" for age >= 24h
+ *   8. `classifyFreshness()` returns "Chưa có dữ liệu" for null age
  *   9. `formatAge()` formats fractional hours correctly (e.g. 0.25h)
  *  10. The tool is registered and callable via McpServer
  *
@@ -39,40 +39,40 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("Task 185 — classifyFreshness()", () => {
-  it("returns 'Tot' for age 0 hours (just updated)", () => {
-    expect(classifyFreshness(0)).toBe("Tot");
+  it("returns 'Tốt' for age 0 hours (just updated)", () => {
+    expect(classifyFreshness(0)).toBe("Tốt");
   });
 
-  it("returns 'Tot' for age 0.99h (just under 1h)", () => {
-    expect(classifyFreshness(0.99)).toBe("Tot");
+  it("returns 'Tốt' for age 0.99h (just under 1h)", () => {
+    expect(classifyFreshness(0.99)).toBe("Tốt");
   });
 
-  it("returns 'Binh thuong' for age exactly 1h", () => {
-    expect(classifyFreshness(1)).toBe("Binh thuong");
+  it("returns 'Bình thường' for age exactly 1h", () => {
+    expect(classifyFreshness(1)).toBe("Bình thường");
   });
 
-  it("returns 'Binh thuong' for age 5.9h", () => {
-    expect(classifyFreshness(5.9)).toBe("Binh thuong");
+  it("returns 'Bình thường' for age 5.9h", () => {
+    expect(classifyFreshness(5.9)).toBe("Bình thường");
   });
 
-  it("returns 'Cu' for age exactly 6h", () => {
-    expect(classifyFreshness(6)).toBe("Cu");
+  it("returns 'Cũ' for age exactly 6h", () => {
+    expect(classifyFreshness(6)).toBe("Cũ");
   });
 
-  it("returns 'Cu' for age 23.9h", () => {
-    expect(classifyFreshness(23.9)).toBe("Cu");
+  it("returns 'Cũ' for age 23.9h", () => {
+    expect(classifyFreshness(23.9)).toBe("Cũ");
   });
 
-  it("returns 'Rat cu' for age exactly 24h", () => {
-    expect(classifyFreshness(24)).toBe("Rat cu");
+  it("returns 'Rất cũ' for age exactly 24h", () => {
+    expect(classifyFreshness(24)).toBe("Rất cũ");
   });
 
-  it("returns 'Rat cu' for age 48h", () => {
-    expect(classifyFreshness(48)).toBe("Rat cu");
+  it("returns 'Rất cũ' for age 48h", () => {
+    expect(classifyFreshness(48)).toBe("Rất cũ");
   });
 
-  it("returns 'Chua co du lieu' for null (table missing or empty)", () => {
-    expect(classifyFreshness(null)).toBe("Chua co du lieu");
+  it("returns 'Chưa có dữ liệu' for null (table missing or empty)", () => {
+    expect(classifyFreshness(null)).toBe("Chưa có dữ liệu");
   });
 });
 
@@ -81,9 +81,9 @@ describe("Task 185 — classifyFreshness()", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("Task 185 — formatAge()", () => {
-  it("formats 15 minutes as '15 phut truoc' when < 1h", () => {
+  it("formats 15 minutes as '15 phút trước' when < 1h", () => {
     const result = formatAge(0.25);
-    expect(result).toContain("phut");
+    expect(result).toContain("phút");
   });
 
   it("formats 1 hour as '1.0h'", () => {
@@ -96,9 +96,9 @@ describe("Task 185 — formatAge()", () => {
     expect(result).toContain("2.5h");
   });
 
-  it("formats 48 hours as '2 ngay truoc'", () => {
+  it("formats 48 hours as '2 ngày trước'", () => {
     const result = formatAge(48);
-    expect(result).toContain("ngay");
+    expect(result).toContain("ngày");
   });
 
   it("returns 'N/A' for null age", () => {
@@ -172,56 +172,56 @@ describe("Task 185 — getDataFreshness() output format", () => {
     expect(result.length).toBeGreaterThan(0);
   });
 
-  it("includes the header 'Do tuoi du lieu'", async () => {
+  it("includes the header 'Độ tuổi dữ liệu'", async () => {
     const result = await getDataFreshness(db);
-    expect(result).toContain("Do tuoi du lieu");
+    expect(result).toContain("Độ tuổi dữ liệu");
   });
 
   it("includes all 7 data source labels", async () => {
     const result = await getDataFreshness(db);
-    expect(result).toContain("Tin tuc");
-    expect(result).toContain("Gia co phieu");
-    expect(result).toContain("Hang hoa");
-    expect(result).toContain("Ty gia SBV");
-    expect(result).toContain("Du doan");
+    expect(result).toContain("Tin tức");
+    expect(result).toContain("Giá cổ phiếu");
+    expect(result).toContain("Hàng hóa");
+    expect(result).toContain("Tỷ giá SBV");
+    expect(result).toContain("Dự đoán");
     expect(result).toContain("BCTC");
     expect(result).toContain("System");
   });
 
-  it("shows 'Chua co du lieu' for tables with no rows", async () => {
+  it("shows 'Chưa có dữ liệu' for tables with no rows", async () => {
     // Tables exist but are empty — rag_analyses returns null MAX
     const result = await getDataFreshness(db);
-    expect(result).toContain("Chua co du lieu");
+    expect(result).toContain("Chưa có dữ liệu");
   });
 
-  it("shows 'Tot' for rag_analyses updated 10 minutes ago", async () => {
+  it("shows 'Tốt' for rag_analyses updated 10 minutes ago", async () => {
     const tenMinsAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
     db.exec(`INSERT INTO rag_analyses (id, created_at, level) VALUES ('r1', '${tenMinsAgo}', 'global')`);
 
     const result = await getDataFreshness(db);
-    expect(result).toContain("Tot");
+    expect(result).toContain("Tốt");
   });
 
-  it("shows 'Cu' for market_prices updated 10 hours ago", async () => {
+  it("shows 'Cũ' for market_prices updated 10 hours ago", async () => {
     const tenHoursAgo = new Date(Date.now() - 10 * 60 * 60 * 1000).toISOString();
     db.exec(`INSERT INTO market_prices (code, price, updated_at) VALUES ('VCB', 100, '${tenHoursAgo}')`);
     db.exec(`INSERT INTO vps_push_log (service, items_count, status, pushed_at) VALUES ('prices', 1, 'ok', '${tenHoursAgo}')`);
 
     const result = await getDataFreshness(db);
-    expect(result).toContain("Cu");
+    expect(result).toContain("Cũ");
   });
 
-  it("shows 'Rat cu' for financial_reports updated 3 days ago", async () => {
+  it("shows 'Rất cũ' for financial_reports updated 3 days ago", async () => {
     const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString();
     db.exec(`INSERT INTO financial_reports (id, stock_code, parsed_at) VALUES ('f1', 'VCB', '${threeDaysAgo}')`);
 
     const result = await getDataFreshness(db);
-    expect(result).toContain("Rat cu");
+    expect(result).toContain("Rất cũ");
   });
 
-  it("includes 'Kiem tra luc' timestamp at the end", async () => {
+  it("includes 'Kiểm tra lúc' timestamp at the end", async () => {
     const result = await getDataFreshness(db);
-    expect(result).toContain("Kiem tra luc");
+    expect(result).toContain("Kiểm tra lúc");
   });
 });
 
@@ -269,8 +269,8 @@ describe("Task 185 — registerDataFreshnessTools()", () => {
     const report = await getDataFreshness(db);
     const bctcLine = report.split("\n").find((l) => l.includes("BCTC"));
     expect(bctcLine).toBeDefined();
-    expect(bctcLine).not.toContain("Chua co du lieu");
-    expect(bctcLine).toContain("Tot");
+    expect(bctcLine).not.toContain("Chưa có dữ liệu");
+    expect(bctcLine).toContain("Tốt");
     db.close();
   });
 

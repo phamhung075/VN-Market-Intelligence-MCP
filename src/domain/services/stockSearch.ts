@@ -209,13 +209,13 @@ export function formatSearchResults(
   results: StockSearchResult[],
 ): string {
   if (results.length === 0) {
-    return `Khong tim thay ket qua nao cho "${query}".`;
+    return `Không tìm thấy kết quả nào cho "${query}".`;
   }
 
   const lines: string[] = [
-    `Ket qua tim kiem "${query}" (${results.length} ket qua)`,
+    `Kết quả tìm kiếm "${query}" (${results.length} kết quả)`,
     "",
-    `Ma    | Ten cong ty                     | San   | Nganh               | Theo doi`,
+    `Mã    | Tên công ty                     | Sàn   | Ngành               | Theo dõi`,
     `------+---------------------------------+-------+---------------------+---------`,
   ];
 

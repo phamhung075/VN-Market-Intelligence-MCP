@@ -88,9 +88,9 @@ function maSignal(
 
 /** RSI zone label. */
 function rsiLabel(rsi: number): { signal: "TANG" | "GIAM" | "TRUNG TINH"; label: string } {
-  if (rsi > 70) return { signal: "TANG", label: `Qua mua (overbought)` };
-  if (rsi < 40) return { signal: "GIAM", label: `Qua ban (oversold)` };
-  return { signal: "TRUNG TINH", label: `Trung tinh (vung 40-70, con du room)` };
+  if (rsi > 70) return { signal: "TANG", label: `Quá mua (overbought)` };
+  if (rsi < 40) return { signal: "GIAM", label: `Quá bán (oversold)` };
+  return { signal: "TRUNG TINH", label: `Trung tính (vùng 40-70, còn dư room)` };
 }
 
 /** MACD verdict based on histogram sign. */
@@ -128,11 +128,11 @@ function formatReport(code: string, candles: DailyCandle[], lookbackDays: number
 
   // ── Insufficient data guard ────────────────────────────────────────────────
   if (candles.length < 35) {
-    lines.push(`[${code}] Khong du du lieu ky thuat`);
+    lines.push(`[${code}] Không đủ dữ liệu kỹ thuật`);
     lines.push(
-      `Tim thay ${candles.length} nen (can toi thieu 35 cho MACD).`,
+      `Tìm thấy ${candles.length} nến (cần tối thiểu 35 cho MACD).`,
     );
-    lines.push(`Vui long thu lai sau khi co them du lieu lich su.`);
+    lines.push(`Vui lòng thử lại sau khi có thêm dữ liệu lịch sử.`);
     return lines.join("\n");
   }
 
@@ -141,7 +141,7 @@ function formatReport(code: string, candles: DailyCandle[], lookbackDays: number
   const lastPrice = candles[candles.length - 1]!.close;
 
   // ── Header ─────────────────────────────────────────────────────────────────
-  lines.push(`[${code}] Chi bao ky thuat — ${today} (${lookbackDays} ngay)`);
+  lines.push(`[${code}] Chỉ báo kỹ thuật — ${today} (${lookbackDays} ngày)`);
   lines.push("");
 
   // ── MA block ──────────────────────────────────────────────────────────────
@@ -150,8 +150,8 @@ function formatReport(code: string, candles: DailyCandle[], lookbackDays: number
   const ma50Str = result.ma50 !== null ? `MA50=${fmtPrice(result.ma50)}` : "MA50=N/A (cần 50 nến)";
   const maSig = maSignal(lastPrice, result.ma5, result.ma20, result.ma50);
   const maDesc =
-    maSig === "TANG" ? "gia > MA5 > MA20 > MA50" :
-    maSig === "GIAM" ? "gia < MA5 < MA20 < MA50" :
+    maSig === "TANG" ? "giá > MA5 > MA20 > MA50" :
+    maSig === "GIAM" ? "giá < MA5 < MA20 < MA50" :
     "sắp xếp hỗn hợp";
   lines.push(`MA:   ${ma5Str}  ${ma20Str}  ${ma50Str}  → Xu hướng ${maSig} (${maDesc})`);
 
@@ -169,14 +169,14 @@ function formatReport(code: string, candles: DailyCandle[], lookbackDays: number
     const { line, signal, histogram } = result.macd;
     const sig = macdSignal(histogram);
     const desc =
-      sig === "TANG" ? "histogram duong va tang" :
-      sig === "GIAM" ? "histogram am va giam" :
+      sig === "TANG" ? "histogram dương và tăng" :
+      sig === "GIAM" ? "histogram âm và giảm" :
       "histogram = 0";
     lines.push(
       `MACD:  Line=${fmtSigned(line)}  Signal=${fmtSigned(signal)}  Hist=${fmtSigned(histogram)}  → ${sig} (${desc})`,
     );
   } else {
-    lines.push(`MACD:  N/A (can toi thieu 34 nen)`);
+    lines.push(`MACD:  N/A (cần tối thiểu 34 nến)`);
   }
 
   // ── BB block ───────────────────────────────────────────────────────────────
@@ -184,10 +184,10 @@ function formatReport(code: string, candles: DailyCandle[], lookbackDays: number
     const { upper, mid, lower } = result.bb20;
     const { pct } = bbSignal(lastPrice, upper, lower);
     const zone =
-      pct > 80 ? "cao (canh overbought)" :
-      pct > 50 ? "trung binh-cao" :
-      pct > 20 ? "trung binh-thap" :
-      "thap (canh oversold)";
+      pct > 80 ? "cao (cảnh overbought)" :
+      pct > 50 ? "trung bình-cao" :
+      pct > 20 ? "trung bình-thấp" :
+      "thấp (cảnh oversold)";
     lines.push(
       `BB(20):  Upper=${fmtPrice(upper)}  Mid=${fmtPrice(mid)}  Lower=${fmtPrice(lower)}`,
     );
@@ -195,7 +195,7 @@ function formatReport(code: string, candles: DailyCandle[], lookbackDays: number
       `         Price=${fmtPrice(lastPrice)} → ${fmtDec1(pct)}% cua dai BB (${zone})`,
     );
   } else {
-    lines.push(`BB(20):  N/A (can toi thieu 20 nen)`);
+    lines.push(`BB(20):  N/A (cần tối thiểu 20 nến)`);
   }
 
   // ── Conclusion block ───────────────────────────────────────────────────────
@@ -333,7 +333,7 @@ export function registerTechnicalIndicatorTools(
           content: [
             {
               type: "text" as const,
-              text: `Loi tinh chi bao ky thuat ${code}: ${err instanceof Error ? err.message : String(err)}`,
+              text: `Lỗi tính chỉ báo kỹ thuật ${code}: ${err instanceof Error ? err.message : String(err)}`,
             },
           ],
         };

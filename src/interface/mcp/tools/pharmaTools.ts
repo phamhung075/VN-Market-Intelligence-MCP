@@ -110,11 +110,11 @@ export function registerPharmaTools(server: McpServer, dbOverride?: Database): v
         if (rows.length === 0) {
           lines.push("Không có tín hiệu dược phẩm nào trong kỳ hạn này.");
           if (args.stock) {
-            lines.push(`(Loc theo co phieu: ${args.stock})`);
+            lines.push(`(Lọc theo cổ phiếu: ${args.stock})`);
           }
         } else {
           if (args.stock) {
-            lines.push(`Loc theo co phieu: ${args.stock}`, "");
+            lines.push(`Lọc theo cổ phiếu: ${args.stock}`, "");
           }
           for (const row of rows) {
             lines.push(formatEvent(row));

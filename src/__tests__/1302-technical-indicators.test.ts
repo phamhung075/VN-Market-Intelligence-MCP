@@ -395,7 +395,7 @@ describe("MCP handler integration", () => {
 
     // Header
     expect(text).toContain("[VCB]");
-    expect(text).toContain("Chi bao ky thuat");
+    expect(text).toContain("Chỉ báo kỹ thuật");
 
     // MA block
     expect(text).toContain("MA5=");
@@ -432,9 +432,9 @@ describe("MCP handler integration", () => {
     });
     const text = result.content[0]!.text;
 
-    expect(text).toContain("[HPG] Khong du du lieu ky thuat");
-    expect(text).toContain("Tim thay 10 nen");
-    expect(text).toContain("can toi thieu 35 cho MACD");
+    expect(text).toContain("[HPG] Không đủ dữ liệu kỹ thuật");
+    expect(text).toContain("Tìm thấy 10 nến");
+    expect(text).toContain("cần tối thiểu 35 cho MACD");
     // No crash — single content item with text
     expect(result.content).toHaveLength(1);
     expect(result.content[0]!.type).toBe("text");
@@ -458,8 +458,8 @@ describe("MCP handler integration", () => {
     });
     const text = result.content[0]!.text;
     // 0 candles < 35 — should return the insufficient data message
-    expect(text).toContain("Khong du du lieu ky thuat");
-    expect(text).toContain("Tim thay 0 nen");
+    expect(text).toContain("Không đủ dữ liệu kỹ thuật");
+    expect(text).toContain("Tìm thấy 0 nến");
   });
 
   it("MACD block shows histogram sign matching bullish uptrend", async () => {

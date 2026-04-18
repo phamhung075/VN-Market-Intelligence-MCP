@@ -184,7 +184,7 @@ describe("Task 217 — compare_stocks MCP tool", () => {
     const result = await callTool(server, "compare_stocks", {
       codes: ["VCB", "FPT"],
     });
-    expect(firstText(result)).toContain("So sanh");
+    expect(firstText(result)).toContain("So sánh");
   });
 
   it("output includes stock codes as column headers", async () => {
@@ -200,24 +200,24 @@ describe("Task 217 — compare_stocks MCP tool", () => {
 
   // ── 4. Price row ──────────────────────────────────────────────────────────
 
-  it("output contains Gia row with formatted prices", async () => {
+  it("output contains Giá row with formatted prices", async () => {
     seedPrices();
     const result = await callTool(server, "compare_stocks", {
       codes: ["VCB", "FPT"],
     });
     const text = firstText(result);
-    expect(text).toMatch(/Gia/i);
+    expect(text).toMatch(/Giá/i);
     // VCB price 85,000
     expect(text).toMatch(/85[,.]?000/);
   });
 
-  it("output contains Thay doi row with +/- sign", async () => {
+  it("output contains Thay đổi row with +/- sign", async () => {
     seedPrices();
     const result = await callTool(server, "compare_stocks", {
       codes: ["VCB", "FPT"],
     });
     const text = firstText(result);
-    expect(text).toMatch(/Thay doi/i);
+    expect(text).toMatch(/Thay đổi/i);
     // VCB +1.2%, FPT -0.5%
     expect(text).toMatch(/\+1\.2%/);
     expect(text).toMatch(/-0\.5%/);
@@ -328,13 +328,13 @@ describe("Task 217 — compare_stocks MCP tool", () => {
 
   // ── 8. Conviction row ─────────────────────────────────────────────────────
 
-  it("output contains Xac tin row (even if N/A when no table)", async () => {
+  it("output contains Xác tín row (even if N/A when no table)", async () => {
     seedPrices();
     const result = await callTool(server, "compare_stocks", {
       codes: ["VCB", "FPT"],
     });
     const text = firstText(result);
-    expect(text).toMatch(/Xac tin|xac.*tin/i);
+    expect(text).toMatch(/Xác tín/i);
   });
 
   // ── 9. Stock not found in any table ──────────────────────────────────────

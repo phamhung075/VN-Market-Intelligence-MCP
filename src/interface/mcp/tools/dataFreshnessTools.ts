@@ -36,11 +36,11 @@ import { tradingWindowLabel } from "../../../domain/services/tradingWindow.js";
  * @returns Human-readable Vietnamese freshness status.
  */
 export function classifyFreshness(ageHours: number | null): string {
-  if (ageHours === null) return "Chua co du lieu";
-  if (ageHours < 1) return "Tot";
-  if (ageHours < 6) return "Binh thuong";
-  if (ageHours < 24) return "Cu";
-  return "Rat cu";
+  if (ageHours === null) return "Chưa có dữ liệu";
+  if (ageHours < 1) return "Tốt";
+  if (ageHours < 6) return "Bình thường";
+  if (ageHours < 24) return "Cũ";
+  return "Rất cũ";
 }
 
 /**
@@ -58,11 +58,11 @@ export function formatAge(ageHours: number | null): string {
   if (ageHours === null) return "N/A";
   if (ageHours < 1) {
     const minutes = Math.round(ageHours * 60);
-    return `${minutes} phut truoc`;
+    return `${minutes} phút trước`;
   }
   if (ageHours >= 24) {
     const days = Math.round(ageHours / 24);
-    return `${days} ngay truoc`;
+    return `${days} ngày trước`;
   }
   return `${ageHours.toFixed(1)}h`;
 }
@@ -98,11 +98,11 @@ const COL_STATUS = 16;
 
 const DATA_SOURCES: DataSourceDef[] = [
   {
-    label: "Tin tuc (RSS)",
+    label: "Tin tức (RSS)",
     query: "SELECT MAX(created_at) AS ts FROM rag_analyses",
   },
   {
-    label: "Gia co phieu",
+    label: "Giá cổ phiếu",
     // Task 1208: prefer vps_push_log.pushed_at (server receipt time).
     // Task 1293: fall back to market_prices.updated_at so that environments
     // without vps_push_log (e.g. test in-memory DBs) still report freshness.
@@ -111,15 +111,15 @@ const DATA_SOURCES: DataSourceDef[] = [
     fallbackQuery: "SELECT MAX(updated_at) AS ts FROM market_prices",
   },
   {
-    label: "Hang hoa",
+    label: "Hàng hóa",
     query: "SELECT MAX(fetched_at) AS ts FROM commodity_prices",
   },
   {
-    label: "Ty gia SBV",
+    label: "Tỷ giá SBV",
     query: "SELECT MAX(fetched_at) AS ts FROM sbv_rates",
   },
   {
-    label: "Du doan (Poly)",
+    label: "Dự đoán (Poly)",
     // Task 1209: use updated_at (server write time) not fetched_at (Polymarket
     // API timestamp). When Polymarket returns no new markets, the old rows
     // keep their stale fetched_at but updated_at reflects the last DB write
@@ -154,14 +154,14 @@ export async function getDataFreshness(db: Database): Promise<string> {
   const now = Date.now();
 
   const lines: string[] = [
-    "Do tuoi du lieu",
+    "Độ tuổi dữ liệu",
     `Trading window: ${tradingWindowLabel()}`,
     "=".repeat(COL_SOURCE + COL_UPDATED + COL_AGE + COL_STATUS + 9),
     [
-      "Nguon".padEnd(COL_SOURCE),
-      "Cap nhat cuoi".padEnd(COL_UPDATED),
-      "Tuoi".padEnd(COL_AGE),
-      "Trang thai",
+      "Nguồn".padEnd(COL_SOURCE),
+      "Cập nhật cuối".padEnd(COL_UPDATED),
+      "Tuổi".padEnd(COL_AGE),
+      "Trạng thái",
     ].join(" | "),
     "-".repeat(COL_SOURCE + COL_UPDATED + COL_AGE + COL_STATUS + 9),
   ];
@@ -197,11 +197,11 @@ export async function getDataFreshness(db: Database): Promise<string> {
     const updatedStr = formatAge(ageHours);
 
     const statusIcon =
-      status === "Tot" ? "v Tot" :
-      status === "Binh thuong" ? "~ Binh thuong" :
-      status === "Cu" ? "! Cu" :
-      status === "Rat cu" ? "!! Rat cu" :
-      "- Chua co du lieu";
+      status === "Tốt" ? "v Tốt" :
+      status === "Bình thường" ? "~ Bình thường" :
+      status === "Cũ" ? "! Cũ" :
+      status === "Rất cũ" ? "!! Rất cũ" :
+      "- Chưa có dữ liệu";
 
     lines.push(
       [
@@ -214,7 +214,7 @@ export async function getDataFreshness(db: Database): Promise<string> {
   }
 
   lines.push("");
-  lines.push(`Kiem tra luc: ${new Date(now).toISOString()}`);
+  lines.push(`Kiểm tra lúc: ${new Date(now).toISOString()}`);
 
   return lines.join("\n");
 }

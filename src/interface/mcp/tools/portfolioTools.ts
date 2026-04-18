@@ -118,7 +118,7 @@ export function registerPortfolioTools(server: McpServer): void {
           .all();
 
         if (watchlist.length === 0) {
-          return { content: [{ type: "text" as const, text: "Watchlist trong - them co phieu truoc." }] };
+          return { content: [{ type: "text" as const, text: "Watchlist trống - thêm cổ phiếu trước." }] };
         }
 
         const codes = watchlist.map((w) => w.code);
@@ -401,7 +401,7 @@ export function registerPortfolioTools(server: McpServer): void {
         for (const r of results) {
           const priceStr = r.price ? `${r.price.toLocaleString("en-US")} VND` : "N/A";
           const chgStr = r.changePct != null ? `${r.changePct >= 0 ? "+" : ""}${r.changePct.toFixed(2)}%` : "";
-          const sectorStr = r.sectorAvg != null ? `Nganh ${r.sectorName}: ${r.sectorAvg >= 0 ? "+" : ""}${r.sectorAvg}%` : "";
+          const sectorStr = r.sectorAvg != null ? `Ngành ${r.sectorName}: ${r.sectorAvg >= 0 ? "+" : ""}${r.sectorAvg}%` : "";
           const alertStr = r.openAlerts > 0 ? ` | ${r.openAlerts} alert` : "";
           const trendStr = r.trend.length >= 2 ? ` | trend: [${r.trend.map((t) => t.toFixed(2)).join(",")}]` : "";
 

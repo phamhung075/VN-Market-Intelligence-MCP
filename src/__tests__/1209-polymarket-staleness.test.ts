@@ -119,10 +119,10 @@ describe("Task 1209 — Polymarket staleness fix", () => {
 
     const report = await getDataFreshness(db);
 
-    // The "Du doan (Poly)" row should say "Tot" (< 1h) because updated_at is 10 min ago
-    // NOT "Rat cu" which would show with fetched_at (12 days ago)
-    expect(report).toContain("Tot");
-    expect(report).not.toMatch(/Rat cu.*Du doan|Du doan.*Rat cu/);
+    // The "Dự đoán (Poly)" row should say "Tốt" (< 1h) because updated_at is 10 min ago
+    // NOT "Rất cũ" which would show with fetched_at (12 days ago)
+    expect(report).toContain("Tốt");
+    expect(report).not.toMatch(/Rất cũ.*Dự đoán|Dự đoán.*Rất cũ/);
 
     db.close();
   });

@@ -565,7 +565,7 @@ export function registerKinhDichTools(server: McpServer): void {
             content: [
               {
                 type: "text" as const,
-                text: `Loi: ${code} khong co trong watchlist. Them co phieu truoc khi doc Kinh Dich.`,
+                text: `Lỗi: ${code} không có trong watchlist. Thêm cổ phiếu trước khi đọc Kinh Dịch.`,
               },
             ],
           };
@@ -618,7 +618,7 @@ export function registerKinhDichTools(server: McpServer): void {
           content: [
             {
               type: "text" as const,
-              text: `Loi khi doc Kinh Dich cho ${code}: ${(err as Error).message}`,
+              text: `Lỗi khi đọc Kinh Dịch cho ${code}: ${(err as Error).message}`,
             },
           ],
         };
@@ -673,7 +673,7 @@ export function registerKinhDichTools(server: McpServer): void {
           content: [
             {
               type: "text" as const,
-              text: `Loi khi tinh que thi truong: ${(err as Error).message}`,
+              text: `Lỗi khi tính quẻ thị trường: ${(err as Error).message}`,
             },
           ],
         };
@@ -713,15 +713,15 @@ export function registerKinhDichTools(server: McpServer): void {
             content: [
               {
                 type: "text" as const,
-                text: `Chua co lich su que Kinh Dich cho ${code} trong ${days} ngay qua. Chay get_kinhdich_reading truoc.`,
+                text: `Chưa có lịch sử quẻ Kinh Dịch cho ${code} trong ${days} ngày qua. Chạy get_kinhdich_reading trước.`,
               },
             ],
           };
         }
 
         const lines: string[] = [];
-        lines.push(`=== LICH SU KINH DICH: ${code} (${days} ngay) ===`);
-        lines.push(`Tong so lan doc: ${readings.length}`);
+        lines.push(`=== LỊCH SỬ KINH DỊCH: ${code} (${days} ngày) ===`);
+        lines.push(`Tổng số lần đọc: ${readings.length}`);
         lines.push("");
 
         for (const r of readings) {
@@ -737,7 +737,7 @@ export function registerKinhDichTools(server: McpServer): void {
 
         lines.push("");
         lines.push(
-          `Que pho bien nhat: ${getMostFrequentHexagram(readings)} | Cap nhat: ${new Date().toISOString().slice(0, 16).replace("T", " ")} UTC`,
+          `Quẻ phổ biến nhất: ${getMostFrequentHexagram(readings)} | Cập nhật: ${new Date().toISOString().slice(0, 16).replace("T", " ")} UTC`,
         );
 
         return {
@@ -752,7 +752,7 @@ export function registerKinhDichTools(server: McpServer): void {
           content: [
             {
               type: "text" as const,
-              text: `Loi khi lay lich su que cho ${code}: ${(err as Error).message}`,
+              text: `Lỗi khi lấy lịch sử quẻ cho ${code}: ${(err as Error).message}`,
             },
           ],
         };
@@ -795,7 +795,7 @@ export function registerKinhDichTools(server: McpServer): void {
             content: [
               {
                 type: "text" as const,
-                text: `Chua co du lieu chuyen qua cho Que ${hexagram_number} (${fromName}). Can them lich su doc que.`,
+                text: `Chưa có dữ liệu chuyển quẻ cho Quẻ ${hexagram_number} (${fromName}). Cần thêm lịch sử đọc quẻ.`,
               },
             ],
           };
@@ -803,11 +803,11 @@ export function registerKinhDichTools(server: McpServer): void {
 
         const lines: string[] = [];
         lines.push(
-          `=== XAC SUAT CHUYEN QUE: Tu Que ${hexagram_number} (${fromName}) ===`,
+          `=== XÁC SUẤT CHUYỂN QUẺ: Từ Quẻ ${hexagram_number} (${fromName}) ===`,
         );
         lines.push(`Cổ phiếu: ${code}`);
         lines.push("");
-        lines.push("Xac suat chuyen sang (top 10):");
+        lines.push("Xác suất chuyển sang (top 10):");
 
         for (const t of transitions) {
           const toMeta = QUE_META.find((q) => q.id === t.toHexagram);
@@ -815,11 +815,11 @@ export function registerKinhDichTools(server: McpServer): void {
           const pct = Math.round(t.probability * 100);
           const avgChange =
             t.avgPriceChange !== 0
-              ? ` | Thay doi TB: ${t.avgPriceChange >= 0 ? "+" : ""}${(t.avgPriceChange * 100).toFixed(1)}%`
+              ? ` | Thay đổi TB: ${t.avgPriceChange >= 0 ? "+" : ""}${(t.avgPriceChange * 100).toFixed(1)}%`
               : "";
           const winRateStr =
             t.winRate > 0
-              ? ` | Ty le thang: ${Math.round(t.winRate * 100)}%`
+              ? ` | Tỷ lệ thắng: ${Math.round(t.winRate * 100)}%`
               : "";
           lines.push(
             `  → Que ${t.toHexagram} ${toName}: ${pct}% (${t.count} lan)${avgChange}${winRateStr}`,
@@ -838,7 +838,7 @@ export function registerKinhDichTools(server: McpServer): void {
           content: [
             {
               type: "text" as const,
-              text: `Loi khi lay xac suat chuyen que: ${(err as Error).message}`,
+              text: `Lỗi khi lấy xác suất chuyển quẻ: ${(err as Error).message}`,
             },
           ],
         };
@@ -879,7 +879,7 @@ export function registerKinhDichTools(server: McpServer): void {
             content: [
               {
                 type: "text" as const,
-                text: `Chua co du lieu backtest cho ${code} trong ${days} ngay. Can them lich su doc que.`,
+                text: `Chưa có dữ liệu backtest cho ${code} trong ${days} ngày. Cần thêm lịch sử đọc quẻ.`,
               },
             ],
           };
@@ -919,12 +919,12 @@ export function registerKinhDichTools(server: McpServer): void {
         const result = computeBacktest(backtestReadings, priceRows);
 
         const lines: string[] = [];
-        lines.push(`=== BACKTEST KINH DICH: ${code} (${days} ngay) ===`);
+        lines.push(`=== BACKTEST KINH DỊCH: ${code} (${days} ngày) ===`);
         lines.push("");
-        lines.push(`Tong so lan doc: ${result.totalReadings}`);
-        lines.push(`Do chinh xac (BUY/SELL): ${Math.round(result.accuracy * 100)}%`);
+        lines.push(`Tổng số lần đọc: ${result.totalReadings}`);
+        lines.push(`Độ chính xác (BUY/SELL): ${Math.round(result.accuracy * 100)}%`);
         lines.push(
-          `Loi nhuan TB 5 phien: ${result.avgReturn5d >= 0 ? "+" : ""}${(result.avgReturn5d * 100).toFixed(2)}%`,
+          `Lợi nhuận TB 5 phiên: ${result.avgReturn5d >= 0 ? "+" : ""}${(result.avgReturn5d * 100).toFixed(2)}%`,
         );
 
         if (result.bestHexagram) {
@@ -933,7 +933,7 @@ export function registerKinhDichTools(server: McpServer): void {
           );
           const bestName = bestMeta?.name ?? `Que ${result.bestHexagram.number}`;
           lines.push(
-            `Que tot nhat: ${result.bestHexagram.number} ${bestName} (ty le thang: ${Math.round(result.bestHexagram.winRate * 100)}%, ${result.bestHexagram.count} lan)`,
+            `Quẻ tốt nhất: ${result.bestHexagram.number} ${bestName} (tỷ lệ thắng: ${Math.round(result.bestHexagram.winRate * 100)}%, ${result.bestHexagram.count} lần)`,
           );
         }
 
@@ -943,13 +943,13 @@ export function registerKinhDichTools(server: McpServer): void {
           );
           const worstName = worstMeta?.name ?? `Que ${result.worstHexagram.number}`;
           lines.push(
-            `Que xau nhat: ${result.worstHexagram.number} ${worstName} (ty le thang: ${Math.round(result.worstHexagram.winRate * 100)}%, ${result.worstHexagram.count} lan)`,
+            `Quẻ xấu nhất: ${result.worstHexagram.number} ${worstName} (tỷ lệ thắng: ${Math.round(result.worstHexagram.winRate * 100)}%, ${result.worstHexagram.count} lần)`,
           );
         }
 
         lines.push("");
         lines.push(
-          `Luu y: Backtest chi mang tinh tham khao. Kinh Dich la cong cu ho tro — khong phai cam ket loi nhuan.`,
+          `Lưu ý: Backtest chỉ mang tính tham khảo. Kinh Dịch là công cụ hỗ trợ — không phải cam kết lợi nhuận.`,
         );
 
         return {
@@ -964,7 +964,7 @@ export function registerKinhDichTools(server: McpServer): void {
           content: [
             {
               type: "text" as const,
-              text: `Loi khi chay backtest Kinh Dich: ${(err as Error).message}`,
+              text: `Lỗi khi chạy backtest Kinh Dịch: ${(err as Error).message}`,
             },
           ],
         };
@@ -993,7 +993,7 @@ export function registerKinhDichTools(server: McpServer): void {
             content: [
               {
                 type: "text" as const,
-                text: `Loi: Que ${number} khong ton tai. Que Kinh Dich chi co so tu 1 den 64.`,
+                text: `Lỗi: Quẻ ${number} không tồn tại. Quẻ Kinh Dịch chỉ có số từ 1 đến 64.`,
               },
             ],
           };
@@ -1015,23 +1015,23 @@ export function registerKinhDichTools(server: McpServer): void {
         lines.push(
           `=== QUE ${number}: ${meta.name} ${meta.chinese} ===`,
         );
-        lines.push(`Thuong quan (tren): ${meta.upper} | Ha quan (duoi): ${meta.lower}`);
+        lines.push(`Thượng quán (trên): ${meta.upper} | Hạ quán (dưới): ${meta.lower}`);
         lines.push("");
 
-        lines.push(`Y nghia chinh: ${data.coreMeaning}`);
+        lines.push(`Ý nghĩa chính: ${data.coreMeaning}`);
         lines.push("");
 
-        lines.push(`Hao tu (Phan quyet): ${data.judgment.vietnamese}`);
+        lines.push(`Hào từ (Phán quyết): ${data.judgment.vietnamese}`);
         lines.push(`  ${data.judgment.interpretation}`);
         lines.push("");
 
-        lines.push(`Tuong truyen (Hinh tuong): ${data.image.description}`);
-        lines.push(`  Hanh dong: ${data.image.action}`);
+        lines.push(`Tượng truyện (Hình tượng): ${data.image.description}`);
+        lines.push(`  Hành động: ${data.image.action}`);
         lines.push("");
 
         lines.push(`Tình trạng quẻ:`);
         lines.push(`  Xu hướng: ${data.state.trend}`);
-        lines.push(`  Su nghiep: ${data.state.career}`);
+        lines.push(`  Sự nghiệp: ${data.state.career}`);
         lines.push(`  Cảnh báo: ${data.state.warning}`);
         lines.push("");
 
@@ -1040,7 +1040,7 @@ export function registerKinhDichTools(server: McpServer): void {
           lines.push(
             `  Hao ${line.position} (${line.name}): ${line.vietnamese}`,
           );
-          lines.push(`    Ket qua: ${line.outcome} | Hanh dong: ${line.action}`);
+          lines.push(`    Kết quả: ${line.outcome} | Hành động: ${line.action}`);
           lines.push(`    ${line.interpretation.slice(0, 150)}`);
         }
 
@@ -1061,7 +1061,7 @@ export function registerKinhDichTools(server: McpServer): void {
           content: [
             {
               type: "text" as const,
-              text: `Loi khi giai thich Que ${number}: ${(err as Error).message}`,
+              text: `Lỗi khi giải thích Quẻ ${number}: ${(err as Error).message}`,
             },
           ],
         };
@@ -1090,5 +1090,5 @@ function getMostFrequentHexagram(
   if (!top) return "N/A";
 
   const meta = QUE_META.find((q) => q.id === top[0]);
-  return `Que ${top[0]} ${meta?.name ?? ""} (${top[1]} lan)`;
+  return `Quẻ ${top[0]} ${meta?.name ?? ""} (${top[1]} lần)`;
 }
