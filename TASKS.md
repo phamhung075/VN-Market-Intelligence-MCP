@@ -129,10 +129,19 @@
 
 | ID | Title | Status | Role |
 |----|-------|--------|------|
-| 1440 | fix(portfolio-pnl): Vietnamese diacritics in formatPnlSection | Review | Dev |
+| 1440 | fix(portfolio-pnl): Vietnamese diacritics in formatPnlSection | Done | QA |
 
-> Branch: `task/1440-portfolio-pnl-diacritics`
-> Handoff: `docs/handoffs/TASK_1440.md`
+> Merged: b18526d — branch deleted
+
+---
+
+## Sprint 161 — feat(evening-summary): portfolio P&L at market close
+
+| ID | Title | Status | Role |
+|----|-------|--------|------|
+| 1441 | test(evening-summary): TDD RED — portfolio P&L assertions | Review | Dev |
+| 1442 | feat(evening-summary): add portfolioPnl to EveningSummary + formatter GREEN | Review | Dev |
+| ARCH | review REQ_1441.md + write TECH_1441.md | Backlog | Architect |
 
 ---
 

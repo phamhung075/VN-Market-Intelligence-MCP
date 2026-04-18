@@ -17,6 +17,7 @@ import {
   getStockProfile,
   SECTOR_NAME_VI,
 } from "../domain/services/sectorPeers.js";
+import { formatPnlSection } from "../domain/services/portfolioPnlCalculator.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Concurrency guard
@@ -202,7 +203,8 @@ export async function runEveningSummary(
       summary.predictionSignals.length > 0 ||
       (summary.taSummary ?? []).some(
         (s) => s.rsiStatus !== "neutral",
-      );
+      ) ||
+      (summary.portfolioPnl != null && summary.portfolioPnl.items.length > 0);
 
     // Resolve the send function: use injected sendFn for tests, or dynamic import in prod.
     const doSend =
@@ -281,6 +283,15 @@ export async function runEveningSummary(
             if (s.priceVsMa20 === "above") line += ", giá trên MA20";
             else if (s.priceVsMa20 === "below") line += ", giá dưới MA20";
             lines.push(line);
+          }
+        }
+
+        // ── Portfolio P&L (task 1441/1442) ──────────────────────────────
+        if (summary.portfolioPnl != null && summary.portfolioPnl.items.length > 0) {
+          const pnlBlock = formatPnlSection(summary.portfolioPnl);
+          if (pnlBlock.length > 0) {
+            lines.push("");
+            lines.push(pnlBlock);
           }
         }
 
