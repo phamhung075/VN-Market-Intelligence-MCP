@@ -19,6 +19,7 @@ import type {
   BctcDeadlineRow,
 } from "../application/usecases/assembleBriefing.js";
 import { BEARISH_WARNING_THRESHOLD } from "../application/usecases/assembleBriefing.js";
+import { formatPnlSection } from "../domain/services/portfolioPnlCalculator.js";
 import { logger } from "../infrastructure/logger.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -214,6 +215,15 @@ export function formatBriefingMessage(briefing: DailyBriefing): string {
           `  ${row.code}: Q${row.quarter}/${row.year} — hạn ${row.deadline} (${row.daysUntilDeadline} ngày)`
         );
       }
+    }
+  }
+
+  // ── Portfolio P&L (task 1438/1439) ───────────────────────────────────────
+  if (briefing.portfolioPnl != null && briefing.portfolioPnl.items.length > 0) {
+    const pnlBlock = formatPnlSection(briefing.portfolioPnl);
+    if (pnlBlock.length > 0) {
+      lines.push("");
+      lines.push(pnlBlock);
     }
   }
 
