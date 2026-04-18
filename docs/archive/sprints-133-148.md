@@ -193,3 +193,17 @@ PO sign-off: 2026-04-18
 Goal: Vietnamese diacritics wave-4 sweep — 5 interface/mcp/tools files (13 strings).
 Spec: docs/REQ_1414.md | Tech: docs/TECH_1414.md
 PO sign-off: 2026-04-18
+
+
+---
+
+## Sprint 148 — COMPLETE (2026-04-18)
+
+| ID | Title | Status |
+|----|-------|--------|
+| 1416 | test(diacritics-wave5): RED test — 12 interface tools + 1 domain service | Done |
+| 1417 | fix(diacritics-wave5): replace 118 unaccented strings + update 5 legacy test files | Done |
+
+Goal: Vietnamese diacritics wave-5 sweep — 12 interface/mcp/tools files + 1 domain/services file (118 strings).
+Spec: docs/REQ_1416.md | Tech: docs/TECH_1416.md
+PO sign-off: 2026-04-18
