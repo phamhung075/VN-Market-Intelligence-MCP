@@ -1,9 +1,7 @@
 process.env["DB_PATH"] = ":memory:"; // isolation — must be first line
 
 import { describe, it, expect } from "bun:test";
-// @ts-expect-error — formatKinhDichTradingContext not yet exported; added in task 1409
 import { formatKinhDichTradingContext } from "../interface/mcp/tools/kinhDichTools.js";
-// @ts-expect-error — formatTaIndicatorReport not yet exported; alias added in task 1409
 import { formatTaIndicatorReport } from "../interface/mcp/tools/technicalIndicatorTools.js";
 import { buildSupplyChainExposureOutput } from "../interface/mcp/tools/supplyChainTools.js";
 import type { DailyCandle } from "../domain/services/technicalIndicators.js";

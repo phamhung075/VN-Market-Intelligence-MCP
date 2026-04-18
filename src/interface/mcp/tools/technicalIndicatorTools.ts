@@ -147,13 +147,13 @@ function formatReport(code: string, candles: DailyCandle[], lookbackDays: number
   // ── MA block ──────────────────────────────────────────────────────────────
   const ma5Str  = result.ma5  !== null ? `MA5=${fmtPrice(result.ma5)}`   : "MA5=N/A";
   const ma20Str = result.ma20 !== null ? `MA20=${fmtPrice(result.ma20)}` : "MA20=N/A";
-  const ma50Str = result.ma50 !== null ? `MA50=${fmtPrice(result.ma50)}` : "MA50=N/A (can 50 nen)";
+  const ma50Str = result.ma50 !== null ? `MA50=${fmtPrice(result.ma50)}` : "MA50=N/A (cần 50 nến)";
   const maSig = maSignal(lastPrice, result.ma5, result.ma20, result.ma50);
   const maDesc =
     maSig === "TANG" ? "gia > MA5 > MA20 > MA50" :
     maSig === "GIAM" ? "gia < MA5 < MA20 < MA50" :
-    "sap xep hon hop";
-  lines.push(`MA:   ${ma5Str}  ${ma20Str}  ${ma50Str}  → Xu huong ${maSig} (${maDesc})`);
+    "sắp xếp hỗn hợp";
+  lines.push(`MA:   ${ma5Str}  ${ma20Str}  ${ma50Str}  → Xu hướng ${maSig} (${maDesc})`);
 
   // ── RSI block ──────────────────────────────────────────────────────────────
   if (result.rsi14 !== null) {
@@ -161,7 +161,7 @@ function formatReport(code: string, candles: DailyCandle[], lookbackDays: number
     const { label } = rsiLabel(rsi);
     lines.push(`RSI(14): ${fmtDec1(rsi)} → ${label}`);
   } else {
-    lines.push(`RSI(14): N/A (can toi thieu 15 nen)`);
+    lines.push(`RSI(14): N/A (cần tối thiểu 15 nến)`);
   }
 
   // ── MACD block ─────────────────────────────────────────────────────────────
@@ -243,6 +243,9 @@ function formatReport(code: string, candles: DailyCandle[], lookbackDays: number
 
   return lines.join("\n");
 }
+
+/** Exported alias for testability (task 1408). Same function as formatReport. */
+export const formatTaIndicatorReport = formatReport;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tool registration

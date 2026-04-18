@@ -103,7 +103,7 @@ export function buildSupplyChainExposureOutput(
       }
     }
   } else {
-    lines.push("\nTin hieu co phieu: Khong co tin hieu dang ke (chi so vận tai trong ngưỡng binh thuong)");
+    lines.push("\nTín hiệu cổ phiếu: Không có tín hiệu đáng kể (chỉ số vận tải trong ngưỡng bình thường)");
   }
 
   // ── Section 4: Summary ────────────────────────────────────────────────────
@@ -112,11 +112,11 @@ export function buildSupplyChainExposureOutput(
     (s) => s.severity === "high" || s.severity === "critical",
   );
   if (highSignals.length > 0 || event?.severity === "critical") {
-    lines.push("TONG KET: Co tin hieu QUAN TRONG - theo doi chat chat HPG/GMD/VNM");
+    lines.push("TỔNG KẾT: Có tín hiệu QUAN TRỌNG — theo dõi chặt chẽ HPG/GMD/VNM");
   } else if (signals.length > 0) {
-    lines.push("TONG KET: Phat hien tin hieu nhe - theo doi them");
+    lines.push("TỔNG KẾT: Phát hiện tín hiệu nhẹ — theo dõi thêm");
   } else {
-    lines.push("TONG KET: Chuoi cung ung on dinh - khong co tin hieu bat thuong");
+    lines.push("TỔNG KẾT: Chuỗi cung ứng ổn định — không có tín hiệu bất thường");
   }
 
   return lines.join("\n");
