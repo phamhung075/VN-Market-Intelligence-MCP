@@ -34,7 +34,7 @@
 | 1402 | test(volume-spike-multiplier): RED test — assert two tickers with different avg volumes produce different multipliers | Done | Dev |
 | 1403 | fix(volume-spike-multiplier): extend ATC guard + per-ticker avgVolume logging + correct baseline query | Done | Dev |
 | 1404 | test(alert-diacritics): RED test — assert convictionScorer labels contain correct Vietnamese diacritics | Review | Dev |
-| 1405 | fix(alert-diacritics): replace unaccented labels in convictionScorer.ts + technicalIndicatorTools.ts | Todo | Dev |
+| 1405 | fix(alert-diacritics): replace unaccented labels in convictionScorer.ts + technicalIndicatorTools.ts | Review | Dev |
 
 ## Backlog
 
