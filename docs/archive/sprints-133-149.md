@@ -1,7 +1,7 @@
-# Archive — Sprints 133–147
+# Archive — Sprints 133–149
 
 Period: 2026-04-17 → 2026-04-18
-Archived from TASKS.md on Sprint 147 completion.
+Archived from TASKS.md on Sprint 149 completion.
 
 ---
 
@@ -206,4 +206,18 @@ PO sign-off: 2026-04-18
 
 Goal: Vietnamese diacritics wave-5 sweep — 12 interface/mcp/tools files + 1 domain/services file (118 strings).
 Spec: docs/REQ_1416.md | Tech: docs/TECH_1416.md
+PO sign-off: 2026-04-18
+
+
+---
+
+## Sprint 149 — COMPLETE (2026-04-18)
+
+| ID | Title | Status |
+|----|-------|--------|
+| 1418 | test(diacritics-wave6): RED test — 6 files diacritics | Done |
+| 1419 | fix(diacritics-wave6): restore diacritics in wave 6 files | Done |
+
+Goal: Vietnamese diacritics wave-6 sweep — 6 files.
+Spec: docs/TECH_1418.md
 PO sign-off: 2026-04-18
