@@ -124,10 +124,10 @@ export const WEIGHTS = {
 // ─────────────────────────────────────────────────────────────────────────────
 
 const LEVEL_VI: Record<ConvictionLevel, string> = {
-  conviction: "XAC TIN CAO",
-  strong: "Kha chac chan",
-  moderate: "Hon hop",
-  weak: "Tin hieu yeu/mau thuan",
+  conviction: "Xác tín cao",
+  strong: "Khá chắc chắn",
+  moderate: "Hỗn hợp",
+  weak: "Tín hiệu yếu/mâu thuẫn",
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -332,10 +332,10 @@ export function computeConviction(input: ConvictionInput): ConvictionResult {
 
   const agreeing = dims.length;
   const summary = agreeing >= 5
-    ? `${input.code} ${dirVi}: ${levelVi} - ${agreeing}/6 tin hieu dong thuan (${dims.join(", ")})`
+    ? `${input.code} ${dirVi}: ${levelVi} - ${agreeing}/6 tín hiệu đồng thuận (${dims.join(", ")})`
     : agreeing >= 2
-      ? `${input.code} ${dirVi}: ${levelVi} - ${dims.join(", ")} xac nhan`
-      : `${input.code}: ${levelVi} - tin hieu mau thuan, than trong`;
+      ? `${input.code} ${dirVi}: ${levelVi} - ${dims.join(", ")} xác nhận`
+      : `${input.code}: ${levelVi} - tín hiệu mâu thuẫn, thận trọng`;
 
   return {
     code: input.code,

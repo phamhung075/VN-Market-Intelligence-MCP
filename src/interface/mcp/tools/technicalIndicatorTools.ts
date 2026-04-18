@@ -232,7 +232,7 @@ function formatReport(code: string, candles: DailyCandle[], lookbackDays: number
     phrase = "co the xem xet MUA khi RSI < 70";
   } else if (giamCount > tangCount && giamCount > total / 2) {
     verdict = "GIAM";
-    phrase = "can than — co the xem xet chot loi hoac cho them xac nhan";
+    phrase = "cẩn thận — có thể xem xét chốt lời hoặc chờ thêm xác nhận";
   } else {
     verdict = "TRUNG TINH";
     phrase = "chua ro xu huong — theo doi them truoc khi hanh dong";
