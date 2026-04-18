@@ -44,7 +44,7 @@ return { content: [{ type: "text" as const, text: JSON.stringify(result, null, 2
 
 ```typescript
 // src/__tests__/NNN-task-name.test.ts
-process.env["DB_PATH"] = ":memory:";
+// Note: DB_PATH is set to :memory: by src/__tests__/setup.ts preload (Bun.env)
 import { describe, it, expect } from "bun:test";
 
 describe("Task NNN — Title", () => {
