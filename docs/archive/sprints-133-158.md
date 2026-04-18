@@ -1,7 +1,7 @@
-# Archive — Sprints 133–156
+# Archive — Sprints 133–158
 
 Period: 2026-04-17 → 2026-04-18
-Archived from TASKS.md on Sprint 156 completion.
+Archived from TASKS.md on Sprint 158 completion.
 
 ---
 
@@ -334,4 +334,17 @@ Goal: fix(morning-briefing): show commodity values instead of count-only in morn
 Handoff: docs/handoffs/TASK_1434.md
 Report: reports/TASK_REPORT_1434.md
 Branch: task/1434-morning-briefing-commodity-values
+PO sign-off: 2026-04-18
+
+---
+
+## Sprint 158 — COMPLETE (2026-04-18)
+
+| ID | Title | Status | Role |
+|----|-------|--------|------|
+| 1436 | test(morning-briefing): TDD RED — vnIndex point change assertions | Done | Dev |
+| 1437 | feat(morning-briefing): add change field to VnIndexSnapshot + formatter GREEN | Done | Dev |
+
+Goal: feat(morning-briefing): add point change to VN-Index display in morning briefing.
+Report: reports/TASK_REPORT_1436.md
 PO sign-off: 2026-04-18

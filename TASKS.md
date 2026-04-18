@@ -100,12 +100,15 @@
 
 ---
 
-## Sprint 158 — feat(morning-briefing): add point change to VN-Index display
+## Sprint 158 — feat(morning-briefing): add point change to VN-Index display — COMPLETE (2026-04-18)
 
 | ID | Title | Status | Role |
 |----|-------|--------|------|
-| 1436 | test(morning-briefing): TDD RED — vnIndex point change assertions | Review | Dev |
-| 1437 | feat(morning-briefing): add change field to VnIndexSnapshot + formatter GREEN | Review | Dev |
+| 1436 | test(morning-briefing): TDD RED — vnIndex point change assertions | Done | Dev |
+| 1437 | feat(morning-briefing): add change field to VnIndexSnapshot + formatter GREEN | Done | Dev |
+
+> Report: `reports/TASK_REPORT_1436.md`
+> Archived: `docs/archive/sprints-133-158.md`
 
 ---
 
