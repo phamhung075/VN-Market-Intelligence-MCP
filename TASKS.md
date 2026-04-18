@@ -100,6 +100,15 @@
 
 ---
 
+## Sprint 158 — feat(morning-briefing): add point change to VN-Index display
+
+| ID | Title | Status | Role |
+|----|-------|--------|------|
+| 1436 | test(morning-briefing): TDD RED — vnIndex point change assertions | Review | Dev |
+| 1437 | feat(morning-briefing): add change field to VnIndexSnapshot + formatter GREEN | Review | Dev |
+
+---
+
 ## Backlog
 
 | ID | Title | Priority | Notes |
