@@ -321,14 +321,14 @@ export function computeConviction(input: ConvictionInput): ConvictionResult {
 
   // Vietnamese summary - count signals > 0.6 across all 6 dimensions
   const levelVi = LEVEL_VI[level];
-  const dirVi = direction === "bullish" ? "TANG" : direction === "bearish" ? "GIAM" : "TRUNG TINH";
+  const dirVi = direction === "bullish" ? "Tăng" : direction === "bearish" ? "Giảm" : "Trung tính";
   const dims = [];
-  if (price.score > 0.6) dims.push("gia");
+  if (price.score > 0.6) dims.push("giá");
   if (vol > 0.6) dims.push("KL");
   if (sent > 0.6) dims.push("tin");
-  if (casc > 0.6) dims.push("vi mo");
-  if (sect > 0.6) dims.push("nganh");
-  if (kd > 0.6) dims.push("kinh dich");
+  if (casc > 0.6) dims.push("vĩ mô");
+  if (sect > 0.6) dims.push("ngành");
+  if (kd > 0.6) dims.push("kinh dịch");
 
   const agreeing = dims.length;
   const summary = agreeing >= 5
