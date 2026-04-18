@@ -510,6 +510,26 @@ export function computeMacroIndicatorScore(name: string): number {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Exported helpers (testability — task 1408/1409)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Formats the trading-context sentence for a Kinh Dich reading output.
+ * Exported for testability (task 1408).
+ * @param trend - the trend label from data.state.trend (any case)
+ */
+export function formatKinhDichTradingContext(trend: string): string {
+  const t = trend.toUpperCase();
+  if (t.includes("THUAN LOI") || t.includes("THUẬN LỢI")) {
+    return "Nhận định giao dịch: Thuận lợi cho giao dịch — xu hướng tích cực";
+  } else if (t.includes("BAT LOI") || t.includes("BẤT LỢI")) {
+    return "Nhận định giao dịch: Bất lợi cho giao dịch — cẩn thận";
+  } else {
+    return "Nhận định giao dịch: Trung tính — cần xem thêm tín hiệu khác";
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Tool registration
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -1027,17 +1047,7 @@ export function registerKinhDichTools(server: McpServer): void {
         lines.push("");
 
         // Trading summary
-        const trend = data.state.trend.toUpperCase();
-        let tradingContext = "";
-        if (trend.includes("THUAN LOI") || trend.includes("THUẬN LỢI")) {
-          tradingContext = "THUAN LOI cho giao dich — xu huong tich cuc";
-        } else if (trend.includes("BAT LOI") || trend.includes("BẤT LỢI")) {
-          tradingContext = "BAT LOI cho giao dich — can than trong";
-        } else {
-          tradingContext = "TRUNG TINH — can xem them tin hieu khac";
-        }
-
-        lines.push(`Nhan dinh giao dich: ${tradingContext}`);
+        lines.push(formatKinhDichTradingContext(data.state.trend));
 
         return {
           content: [{ type: "text" as const, text: lines.join("\n") }],

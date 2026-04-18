@@ -168,7 +168,7 @@ describe("Task 285 — Kinh Dich MCP Tools", () => {
 
     it("output contains trading context section", async () => {
       const text = await callTool(server, "explain_hexagram", { number: 11 });
-      expect(text).toContain("Nhan dinh giao dich");
+      expect(text).toContain("Nhận định giao dịch");
     });
 
     it("output contains judgment section", async () => {
