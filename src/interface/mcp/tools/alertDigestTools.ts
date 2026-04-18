@@ -31,7 +31,7 @@ export function registerAlertDigestTools(server: McpServer): void {
     "send_alert_digest",
     "Assemble the daily 24-hour alert digest grouped by stock and return " +
       "the formatted Vietnamese-language text. Optionally sends the digest " +
-      "via Telegram if configured. Returns '(Telegram chua duoc cau hinh)' " +
+      "via Telegram if configured. Returns '(Telegram chưa được cấu hình)' " +
       "if Telegram is not set up.",
     {
       sendTelegram: z
@@ -56,10 +56,10 @@ export function registerAlertDigestTools(server: McpServer): void {
             );
             const sent = await tg(digest.text);
             telegramStatus = sent
-              ? "\n[Telegram: da gui thanh cong]"
-              : "\n(Telegram chua duoc cau hinh)";
+              ? "\n[Telegram: đã gửi thành công]"
+              : "\n(Telegram chưa được cấu hình)";
           } catch {
-            telegramStatus = "\n(Telegram chua duoc cau hinh)";
+            telegramStatus = "\n(Telegram chưa được cấu hình)";
           }
         }
 

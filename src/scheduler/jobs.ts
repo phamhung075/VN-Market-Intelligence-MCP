@@ -537,8 +537,10 @@ export function startScheduler() {
   // 15:00 UTC (22:00 VN) Mon-Fri — OHLCV daily aggregator — task 1375, Sprint 130
   // Shifted from 16:00 → 15:00 UTC so aggregation runs 30 min before eveningSummary (15:30 UTC).
   // Aggregates intraday market_prices_history ticks into daily_ohlcv rows for each watchlist ticker.
-  cron.schedule(CRONS.ohlcvDailyAggregator, () => {
-    runOhlcvDailyAggregator().catch(console.error)
+  cron.schedule(CRONS.ohlcvDailyAggregator, async () => {
+    await recordJobRun(getDb(), 'ohlcv-daily-aggregator', async () => {
+      await runOhlcvDailyAggregator()
+    })
   }, { timezone: 'UTC' })
 
   log(`[scheduler] jobs registered — ${Object.keys(CRONS).length} cron keys in CRONS map (incl. WAL checkpoint + 5 summary) + vps-watchdog active`)
