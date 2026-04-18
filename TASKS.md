@@ -25,7 +25,7 @@
 
 > Sprint goal: COMPLETE 2026-04-18 | fix shipped, 84 phantom rows purged
 
-## Sprint 142 — Active
+## Sprint 142 — Complete
 
 > Spec: `docs/REQ_1402.md` | Tech: `docs/TECH_1402.md` (APPROVED_BY_ARCHITECT)
 
@@ -35,6 +35,8 @@
 | 1403 | fix(volume-spike-multiplier): extend ATC guard + per-ticker avgVolume logging + correct baseline query | Done | Dev |
 | 1404 | test(alert-diacritics): RED test — assert convictionScorer labels contain correct Vietnamese diacritics | Done | Dev |
 | 1405 | fix(alert-diacritics): replace unaccented labels in convictionScorer.ts + technicalIndicatorTools.ts | Done | Dev |
+
+> Sprint goal: COMPLETE 2026-04-18 | volume-spike-multiplier fix + alert-diacritics fix merged to main
 
 ## Backlog
 

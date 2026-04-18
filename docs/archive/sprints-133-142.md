@@ -1,7 +1,7 @@
-# Archive — Sprints 133–141
+# Archive — Sprints 133–142
 
 Period: 2026-04-17 → 2026-04-18
-Archived from TASKS.md on Sprint 142 start.
+Archived from TASKS.md on Sprint 143 start.
 
 ---
 
@@ -112,4 +112,19 @@ Full suite: 5061 pass, 0 fail, 21 skip | PO sign-off: 2026-04-17
 Goal: Fix Bun.env namespace mismatch in setup.ts — tests were writing to process.env but getDb() reads Bun.env, causing all test runs to open production data/market.db and leak phantom rows (400+) into telegram_reports.
 Branch: task/1400-db-isolation | Merge commit: 98ec2a0
 Fix: `process.env["DB_PATH"]` → `Bun.env["DB_PATH"]` in setup.ts:12 + dev-standards.md:47 + one-shot purge script.
+PO sign-off: 2026-04-18
+
+---
+
+## Sprint 142 — COMPLETE (2026-04-18)
+
+| ID | Title | Status |
+|----|-------|--------|
+| 1402 | test(volume-spike-multiplier): RED test — assert two tickers with different avg volumes produce different multipliers | Done |
+| 1403 | fix(volume-spike-multiplier): extend ATC guard + per-ticker avgVolume logging + correct baseline query | Done |
+| 1404 | test(alert-diacritics): RED test — assert convictionScorer labels contain correct Vietnamese diacritics | Done |
+| 1405 | fix(alert-diacritics): replace unaccented labels in convictionScorer.ts + technicalIndicatorTools.ts | Done |
+
+Goal: Fix volume-spike-multiplier uniform 5.9x bug (ATC guard extension + per-ticker avgVolume isolation) + proper Vietnamese diacritics in convictionScorer and technicalIndicatorTools.
+Spec: docs/REQ_1402.md | Tech: docs/TECH_1402.md
 PO sign-off: 2026-04-18
