@@ -51,6 +51,15 @@
 
 ---
 
+## Sprint 154 — fix(evening-ta-filter): restrict TA section to RSI overbought/oversold only
+
+| ID | Title | Status | Role |
+|----|-------|--------|------|
+| 1428 | test(evening-ta-filter): TDD RED — RSI-only TA filter assertions | Review | Dev |
+| 1429 | fix(evening-ta-filter): change both predicates to rsiStatus-only GREEN | Review | Dev |
+
+---
+
 ## Backlog
 
 | ID | Title | Priority | Notes |

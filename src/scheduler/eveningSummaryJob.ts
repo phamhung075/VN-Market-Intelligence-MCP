@@ -201,7 +201,7 @@ export async function runEveningSummary(
       summary.watchlistMovers.length > 0 ||
       summary.predictionSignals.length > 0 ||
       (summary.taSummary ?? []).some(
-        (s) => s.rsiStatus !== "neutral" || s.priceVsMa20 !== "neutral",
+        (s) => s.rsiStatus !== "neutral",
       );
 
     // Resolve the send function: use injected sendFn for tests, or dynamic import in prod.
@@ -266,7 +266,7 @@ export async function runEveningSummary(
         }
 
         const nonNeutralTa = (summary.taSummary ?? []).filter(
-          (s) => s.rsiStatus !== "neutral" || s.priceVsMa20 !== "neutral",
+          (s) => s.rsiStatus !== "neutral",
         );
         if (nonNeutralTa.length > 0) {
           lines.push("");
