@@ -16,7 +16,10 @@ import { z } from "zod";
 
 import { getDb, initDatabase } from "../../../infrastructure/db/schema.js";
 import { mapPredictionToVn } from "../../../domain/services/predictionCascadeMapper.js";
-import { computePredictionAccuracy } from "../../../scheduler/predictionOutcomeJob.js";
+import {
+  computePredictionAccuracy,
+  type PredictionAccuracyRow,
+} from "../../../scheduler/predictionOutcomeJob.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SQLite row types
@@ -99,6 +102,59 @@ function buildMarketOutput(row: PredictionMarketRow): Record<string, unknown> {
 // Tool registration
 // ─────────────────────────────────────────────────────────────────────────────
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Accuracy formatter (exported for testability — task 1411)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Format prediction accuracy rows as plain Vietnamese text.
+ *
+ * @param rows - Empty → no-data message; non-empty → table
+ * @param days - Lookback window echoed in header
+ */
+export function formatPredictionAccuracy(
+  rows: PredictionAccuracyRow[],
+  days: number,
+): string {
+  if (rows.length === 0) {
+    return (
+      `Không có dữ liệu kết quả tín hiệu dự báo trong ${days} ngày qua.\n` +
+      `(Việc xác thực kết quả được chạy hàng tuần — hãy thử lại sau.)\n` +
+      `Gọi lệnh run_prediction_outcome_check để chạy thủ công.`
+    );
+  }
+
+  const header =
+    `Độ chính xác tín hiệu Polymarket (${days} ngày qua)\n` +
+    `${"─".repeat(60)}\n`;
+
+  const lines = rows.map((r) => {
+    const pctStr = (r.precision * 100).toFixed(1);
+    return (
+      `Loại: ${r.signalType}\n` +
+      `  Tổng số: ${r.total}  |  Xác nhận: ${r.confirmed}  |  Sai: ${r.falsePositive}  |  Trung tính: ${r.neutral}\n` +
+      `  Độ chính xác: ${pctStr}%`
+    );
+  });
+
+  const overall = rows.reduce(
+    (acc, r) => { acc.total += r.total; acc.confirmed += r.confirmed; acc.falsePositive += r.falsePositive; return acc; },
+    { total: 0, confirmed: 0, falsePositive: 0 },
+  );
+  const overallDecided = overall.confirmed + overall.falsePositive;
+  const overallPrecision =
+    overallDecided > 0 ? ((overall.confirmed / overallDecided) * 100).toFixed(1) : "N/A";
+
+  const footer =
+    `${"─".repeat(60)}\n` +
+    `Tổng hợp: ${overall.total} kết quả | ` +
+    `Xác nhận: ${overall.confirmed} | ` +
+    `Sai: ${overall.falsePositive} | ` +
+    `Độ chính xác tổng: ${overallPrecision}%`;
+
+  return header + lines.join("\n\n") + "\n\n" + footer;
+}
+
 /**
  * Register the prediction markets tool on an McpServer instance.
  *
@@ -132,56 +188,7 @@ export function registerPredictionTools(server: McpServer): void {
 
         const rows = computePredictionAccuracy(db, days);
 
-        if (rows.length === 0) {
-          return {
-            content: [
-              {
-                type: "text" as const,
-                text: `Khong co du lieu ket qua tin hieu du bao trong ${days} ngay qua.\n` +
-                      `(Viec xac thuc ket qua duoc chay hang tuan — hay thu lai sau.)\n` +
-                      `Goi lenh run_prediction_outcome_check de chay thu cong.`,
-              },
-            ],
-          };
-        }
-
-        // Format as Vietnamese table
-        const header = `Do chinh xac tin hieu Polymarket (${days} ngay qua)\n` +
-                       `${"─".repeat(60)}\n`;
-
-        const lines = rows.map((r) => {
-          const pctStr = (r.precision * 100).toFixed(1);
-          return (
-            `Loai: ${r.signalType}\n` +
-            `  Tong so: ${r.total}  |  Xac nhan: ${r.confirmed}  |  Sai: ${r.falsePositive}  |  Trung tinh: ${r.neutral}\n` +
-            `  Do chinh xac: ${pctStr}%`
-          );
-        });
-
-        const overall = rows.reduce(
-          (acc, r) => {
-            acc.total += r.total;
-            acc.confirmed += r.confirmed;
-            acc.falsePositive += r.falsePositive;
-            return acc;
-          },
-          { total: 0, confirmed: 0, falsePositive: 0 },
-        );
-        const overallDecided = overall.confirmed + overall.falsePositive;
-        const overallPrecision =
-          overallDecided > 0
-            ? ((overall.confirmed / overallDecided) * 100).toFixed(1)
-            : "N/A";
-
-        const footer =
-          `${"─".repeat(60)}\n` +
-          `Tong hop: ${overall.total} ket qua | ` +
-          `Xac nhan: ${overall.confirmed} | ` +
-          `Sai: ${overall.falsePositive} | ` +
-          `Do chinh xac tong: ${overallPrecision}%`;
-
-        const text = header + lines.join("\n\n") + "\n\n" + footer;
-
+        const text = formatPredictionAccuracy(rows, days);
         return {
           content: [{ type: "text" as const, text }],
         };
@@ -191,7 +198,7 @@ export function registerPredictionTools(server: McpServer): void {
           content: [
             {
               type: "text" as const,
-              text: `Loi khi tinh do chinh xac: ${(err as Error).message}`,
+              text: `Lỗi khi tính độ chính xác: ${(err as Error).message}`,
             },
           ],
         };

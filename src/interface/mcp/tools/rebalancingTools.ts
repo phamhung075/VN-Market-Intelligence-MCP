@@ -43,6 +43,31 @@ interface PriceRow {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Formatter (exported for testability — task 1411)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Format rebalancing warnings and price-estimate notes.
+ *
+ * @param weightSum    - Sum of all target weights
+ * @param missingCodes - Codes with no live price (fallback to avg cost)
+ */
+export function formatRebalancingWarnings(
+  weightSum: number,
+  missingCodes: string[],
+): { warn: string; note: string } {
+  const warn =
+    Math.abs(weightSum - 100) > 1
+      ? `\nCẢNH BÁO: Tổng trọng số = ${weightSum.toFixed(2)}% (nên bằng 100%)\n`
+      : "";
+  const note =
+    missingCodes.length > 0
+      ? `\nLưu ý: Giá ước tính (dùng giá vốn trung bình) cho: ${missingCodes.join(", ")}\n`
+      : "";
+  return { warn, note };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Tool registration
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -82,8 +107,8 @@ export function registerRebalancingTools(server: McpServer): void {
                 {
                   type: "text" as const,
                   text:
-                    "Khong co muc tieu phan bo.\n" +
-                    "Vui long cung cap tham so targets hoac dat muc tieu truoc bang set_target_allocation.",
+                    "Không có mục tiêu phân bổ.\n" +
+                    "Vui lòng cung cấp tham số targets hoặc đặt mục tiêu trước bằng set_target_allocation.",
                 },
               ],
             };
@@ -110,8 +135,8 @@ export function registerRebalancingTools(server: McpServer): void {
               {
                 type: "text" as const,
                 text:
-                  "Khong tim thay vi tri nao trong danh muc.\n" +
-                  "Vui long them vi tri bang set_position truoc khi su dung cong cu nay.",
+                  "Không tìm thấy vị trí nào trong danh mục.\n" +
+                  "Vui lòng thêm vị trí bằng set_position trước khi sử dụng công cụ này.",
               },
             ],
           };
@@ -122,7 +147,7 @@ export function registerRebalancingTools(server: McpServer): void {
             content: [
               {
                 type: "text" as const,
-                text: "Danh muc trong. Vui long them vi tri truoc khi tai can bang.",
+                text: "Danh mục trống. Vui lòng thêm vị trí trước khi tái cân bằng.",
               },
             ],
           };
@@ -170,10 +195,6 @@ export function registerRebalancingTools(server: McpServer): void {
 
         // ── 6. Validate weights sum to ~100 ───────────────────────────────────
         const weightSum = Object.values(resolvedTargets).reduce((s, w) => s + w, 0);
-        const weightWarning =
-          Math.abs(weightSum - 100) > 1
-            ? `\nCANH BAO: Tong trong so = ${weightSum.toFixed(2)}% (nen bang 100%)\n`
-            : "";
 
         // ── 7. Compute rebalancing ────────────────────────────────────────────
         const actions = computeRebalancing(
@@ -186,10 +207,7 @@ export function registerRebalancingTools(server: McpServer): void {
         const missingPriceCodes = positions
           .filter((p) => !priceMap.has(p.code))
           .map((p) => p.code);
-        const priceNote =
-          missingPriceCodes.length > 0
-            ? `\nLuu y: Gia uoc tinh (dung gia von trung binh) cho: ${missingPriceCodes.join(", ")}\n`
-            : "";
+        const { warn: weightWarning, note: priceNote } = formatRebalancingWarnings(weightSum, missingPriceCodes);
 
         // ── 9. Format output ──────────────────────────────────────────────────
         const report = formatRebalancingReport(actions, totalPortfolioValue);
@@ -210,7 +228,7 @@ export function registerRebalancingTools(server: McpServer): void {
           content: [
             {
               type: "text" as const,
-              text: `Loi khi tinh toan tai can bang: ${(err as Error).message}`,
+              text: `Lỗi khi tính toán tái cân bằng: ${(err as Error).message}`,
             },
           ],
         };

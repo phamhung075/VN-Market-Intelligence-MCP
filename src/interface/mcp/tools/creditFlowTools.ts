@@ -136,7 +136,7 @@ export async function getCreditFlowSignalHandler(
     totalCreditTrillion: resolvedPreviousCredit * 5,
     reCreditTrillion: resolvedPreviousCredit,
     reCreditRatioPct: 19,
-    yoyGrowthPct: input.previousYoyGrowthPct ?? 12,
+    yoyGrowthPct: input.previousYoyGrowthPct ?? -15,
     avgMortgageRatePct: resolvedPreviousMortgage,
     date: new Date(Date.now() - 30 * 86400 * 1000).toISOString().slice(0, 10),
   };

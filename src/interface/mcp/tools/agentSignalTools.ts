@@ -60,6 +60,38 @@ const PayloadSchema = z.object({
     .describe("Impact score 0-10 (optional)"),
 }).passthrough();
 
+// ── formatSignalLines ────────────────────────────────────────────────────────
+
+import type { AgentSignal } from "../../../infrastructure/db/agentSignalStore.js";
+
+/**
+ * Format pending signals as plain text. Exported for testability (task 1411).
+ *
+ * @param signals - Array of AgentSignal (empty → no-data message)
+ * @param agent   - Agent name echoed in header
+ */
+export function formatSignalLines(signals: AgentSignal[], agent: string): string {
+  if (signals.length === 0) {
+    return "Không có tín hiệu mới.";
+  }
+  const lines: string[] = [
+    `Tín hiệu cho ${agent} (${signals.length} tin):`,
+    "",
+  ];
+  for (const s of signals) {
+    const stock = s.stockCode ? ` [${s.stockCode}]` : "";
+    lines.push(`[${s.id}] ${s.signalType.toUpperCase()}${stock} — từ: ${s.fromAgent}`);
+    if (s.payload.title) lines.push(`  Tiêu đề: ${s.payload.title}`);
+    if (s.payload.detail) lines.push(`  Chi tiết: ${s.payload.detail}`);
+    if (s.payload.impact_score !== undefined) {
+      lines.push(`  Mức độ ảnh hưởng: ${s.payload.impact_score}/10`);
+    }
+    lines.push(`  Trạng thái: ${s.status} | Hết hạn: ${s.expiresAt}`);
+    lines.push("");
+  }
+  return lines.join("\n").trimEnd();
+}
+
 // ── registerAgentSignalTools ─────────────────────────────────────────────────
 
 /**
@@ -204,33 +236,8 @@ export function registerAgentSignalTools(server: McpServer): void {
 
         const signals = getSignals(db, args.agent, { status: args.status });
 
-        if (signals.length === 0) {
-          return {
-            content: [{ type: "text" as const, text: "Khong co tin hieu moi." }],
-          };
-        }
-
-        const lines: string[] = [
-          `Tin hieu cho ${args.agent} (${signals.length} tin):`,
-          "",
-        ];
-
-        for (const s of signals) {
-          const stock = s.stockCode ? ` [${s.stockCode}]` : "";
-          lines.push(
-            `[${s.id}] ${s.signalType.toUpperCase()}${stock} — tu: ${s.fromAgent}`,
-          );
-          if (s.payload.title) lines.push(`  Tieu de: ${s.payload.title}`);
-          if (s.payload.detail) lines.push(`  Chi tiet: ${s.payload.detail}`);
-          if (s.payload.impact_score !== undefined) {
-            lines.push(`  Muc do anh huong: ${s.payload.impact_score}/10`);
-          }
-          lines.push(`  Trang thai: ${s.status} | Het han: ${s.expiresAt}`);
-          lines.push("");
-        }
-
         return {
-          content: [{ type: "text" as const, text: lines.join("\n").trimEnd() }],
+          content: [{ type: "text" as const, text: formatSignalLines(signals, args.agent) }],
         };
       } catch (err) {
         console.error("[get_agent_signals] Failed:", err);
@@ -331,7 +338,7 @@ export function registerAgentSignalTools(server: McpServer): void {
             content: [
               {
                 type: "text" as const,
-                text: `Chua co du lieu hieu qua tin hieu trong ${args.days} ngay qua.`,
+                text: `Chưa có dữ liệu hiệu quả tín hiệu trong ${args.days} ngày qua.`,
               },
             ],
           };
@@ -355,7 +362,7 @@ export function registerAgentSignalTools(server: McpServer): void {
         });
 
         const text = [
-          `Hieu qua tin hieu (${args.days} ngay qua):`,
+          `Hiệu quả tín hiệu (${args.days} ngày qua):`,
           "",
           header,
           sep,

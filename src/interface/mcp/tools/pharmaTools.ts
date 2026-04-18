@@ -35,27 +35,27 @@ const EVENT_TYPE_LABEL: Record<string, string> = {
 
 /** Map severity to Vietnamese emoji-free label. */
 const SEVERITY_LABEL: Record<string, string> = {
-  low: "[THAP]",
-  medium: "[TRUNG BINH]",
+  low: "[THẤP]",
+  medium: "[TRUNG BÌNH]",
   high: "[CAO]",
-  critical: "[NGIEM TRONG]",
+  critical: "[NGHIÊM TRỌNG]",
 };
 
 /**
  * Format a single pharma event row as a text block.
  */
-function formatEvent(row: PharmaEventRecord): string {
+export function formatEvent(row: PharmaEventRecord): string {
   const lines: string[] = [];
   const typeLabel = EVENT_TYPE_LABEL[row.event_type] ?? row.event_type;
   const severityLabel = SEVERITY_LABEL[row.severity] ?? row.severity.toUpperCase();
   const date = row.created_at.slice(0, 10);
 
   lines.push(`${severityLabel} ${typeLabel} | ${date}`);
-  if (row.stock_code) lines.push(`  Ma co phieu : ${row.stock_code}`);
-  if (row.drug_name) lines.push(`  Ten thuoc    : ${row.drug_name}`);
-  if (row.manufacturer) lines.push(`  Nha san xuat: ${row.manufacturer}`);
-  if (row.approval_date) lines.push(`  Ngay phe duyet: ${row.approval_date}`);
-  lines.push(`  Mo ta        : ${row.description}`);
+  if (row.stock_code) lines.push(`  Mã cổ phiếu : ${row.stock_code}`);
+  if (row.drug_name) lines.push(`  Tên thuốc    : ${row.drug_name}`);
+  if (row.manufacturer) lines.push(`  Nhà sản xuất : ${row.manufacturer}`);
+  if (row.approval_date) lines.push(`  Ngày phê duyệt: ${row.approval_date}`);
+  lines.push(`  Mô tả        : ${row.description}`);
 
   return lines.join("\n");
 }
@@ -102,13 +102,13 @@ export function registerPharmaTools(server: McpServer, dbOverride?: Database): v
         });
 
         const lines: string[] = [
-          "=== Tin hieu duoc pham (Pharma Signals) ===",
-          `Ky han: ${lookbackDays} ngay | So tin hieu: ${rows.length}`,
+          "=== Tín hiệu dược phẩm (Pharma Signals) ===",
+          `Kỳ hạn: ${lookbackDays} ngày | Số tín hiệu: ${rows.length}`,
           "",
         ];
 
         if (rows.length === 0) {
-          lines.push("Khong co tin hieu duoc pham nao trong ky han nay.");
+          lines.push("Không có tín hiệu dược phẩm nào trong kỳ hạn này.");
           if (args.stock) {
             lines.push(`(Loc theo co phieu: ${args.stock})`);
           }
