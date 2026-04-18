@@ -459,10 +459,10 @@ export async function runFranceSummary(opts: FranceSummaryOptions = {}): Promise
       vnIndex = await opts.fetchVnIndexFn()
     } else {
       // Default: query market_prices for VNINDEX ticker
-      interface VnIndexRow { price: number; change_pct: number; fetched_at: string }
+      interface VnIndexRow { price: number; change_pct: number; updated_at: string }
       const row = resolvedDb
         .prepare<VnIndexRow, []>(
-          `SELECT price, change_pct, fetched_at FROM market_prices WHERE code = 'VNINDEX' LIMIT 1`,
+          `SELECT price, change_pct, updated_at FROM market_prices WHERE code = 'VNINDEX' LIMIT 1`,
         )
         .get()
       if (row) {
@@ -470,7 +470,7 @@ export async function runFranceSummary(opts: FranceSummaryOptions = {}): Promise
           close: row.price,
           change: Math.round(row.price * (row.change_pct / 100) / (1 + row.change_pct / 100)),
           changePct: row.change_pct,
-          fetchedAt: row.fetched_at,
+          fetchedAt: row.updated_at,
         }
       }
     }
