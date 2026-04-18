@@ -573,7 +573,10 @@ describe("Telegram TA section formatting — quá mua / quá bán / MA20 labels"
     expect(capturedMessage).not.toContain("giá dưới MA20");
   });
 
-  it("shows giá dưới MA20 label without RSI note for neutral RSI", async () => {
+  it("neutral-RSI ticker excluded from TA section even when priceVsMa20 is below (Task 1429 RSI-only filter)", async () => {
+    // Task 1429: filter changed from `rsiStatus!==neutral || priceVsMa20!==neutral`
+    // to `rsiStatus!==neutral`. MA20 position still displayed as context per ticker
+    // line when ticker IS shown — but neutral-RSI tickers are now excluded entirely.
     const summary: EveningSummary = {
       date: "2026-04-15",
       topAlerts: [],
@@ -599,10 +602,9 @@ describe("Telegram TA section formatting — quá mua / quá bán / MA20 labels"
     let capturedMessage = "";
     await runEveningSummary(async () => summary, async (msg, _opts) => { capturedMessage = msg; });
 
-    expect(capturedMessage).toContain("TA tín hiệu đóng cửa");
-    expect(capturedMessage).toContain("FPT");
-    expect(capturedMessage).toContain("giá dưới MA20");
-    expect(capturedMessage).not.toContain("RSI=");
+    // Neutral RSI → entire TA section absent (new RSI-only filter)
+    expect(capturedMessage).not.toContain("TA tín hiệu đóng cửa");
+    expect(capturedMessage).not.toContain("FPT");
   });
 
   it("caps TA section at 5 tickers", async () => {
