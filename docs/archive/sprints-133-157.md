@@ -320,3 +320,18 @@ Goal: fix(foreign-flow-sentinel): filter 9999999 sentinel value from foreign flo
 Report: reports/TASK_REPORT_1432.md
 Branch: task/1432-foreign-flow-sentinel
 PO sign-off: 2026-04-18
+
+---
+
+## Sprint 157 — COMPLETE (2026-04-18)
+
+| ID | Title | Status | Role |
+|----|-------|--------|------|
+| 1434 | test(morning-briefing): TDD RED — commodity values assertions | Done | Dev |
+| 1435 | fix(morning-briefing): replace count-only line with per-commodity lines GREEN | Done | Dev |
+
+Goal: fix(morning-briefing): show commodity values instead of count-only in morning briefing output.
+Handoff: docs/handoffs/TASK_1434.md
+Report: reports/TASK_REPORT_1434.md
+Branch: task/1434-morning-briefing-commodity-values
+PO sign-off: 2026-04-18

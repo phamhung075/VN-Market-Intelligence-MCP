@@ -95,6 +95,8 @@
 | 1435 | fix(morning-briefing): replace count-only line with per-commodity lines GREEN | Done | Dev |
 
 > Handoff: `docs/handoffs/TASK_1434.md`
+> Report: `reports/TASK_REPORT_1434.md`
+> Archived: `docs/archive/sprints-133-157.md`
 
 ---
 
