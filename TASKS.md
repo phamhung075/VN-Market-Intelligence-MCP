@@ -15,13 +15,15 @@
 
 ---
 
-## Sprint 151 — ACTIVE (2026-04-18)
+## Sprint 151 — COMPLETE (2026-04-18)
 
 | ID | Title | Status | Role |
 |----|-------|--------|------|
-| 1422 | test(morning-briefing): TDD — upcomingDeadlines RED assertions | Review | Dev |
-| 1423 | feat(morning-briefing): add upcomingDeadlines BCTC section GREEN | Review | Dev |
+| 1422 | test(morning-briefing): TDD — upcomingDeadlines RED assertions | Done | Dev |
+| 1423 | feat(morning-briefing): add upcomingDeadlines BCTC section GREEN | Done | Dev |
 | ARCH | review REQ_1422.md + write TECH_1422.md | Done | Architect |
+
+> Archived: `docs/archive/sprints-133-151.md`
 
 ---
 

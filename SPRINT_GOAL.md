@@ -2,6 +2,20 @@
 
 > Previous sprint goals live in their `docs/REQ_NNN.md` specs. This file = current sprint only.
 
+## Sprint 151 — ACTIVE (2026-04-18)
+
+**Goal:** Add "BCTC sắp đến" (upcoming filing deadlines) section to morning briefing — show watchlist stocks with Q1 2026 deadlines within 14 days that have not yet filed. User is in BCTC season right now (Q1 deadline = Apr 30 standard, May 14 banking). Without this, morning briefing is silent on imminent filings even when 12/30 watchlist stocks are days away from statutory deadline.
+
+**Scope:**
+- IN: `assembleBriefing.ts` — add `upcomingDeadlines: BctcDeadlineRow[]` field to `DailyBriefing`; populate via `getCurrentDeadline()` + `classifyFilingStatus()` for each watchlist stock; include only `SAP_DEN` and `QUA_HAN` status rows
+- IN: `morningBriefingJob.ts` — add formatter section "BCTC sắp đến:" listing code + deadline + days remaining; omit section when empty
+- IN: TDD test `src/__tests__/1422-morning-briefing-bctc-deadlines.test.ts` — RED first: (a) SAP_DEN stocks appear in `upcomingDeadlines`, (b) QUA_HAN stocks appear, (c) DA_NOP stocks excluded, (d) formatted message contains deadline section, (e) section omitted when all filed
+- OUT: `earningsCalendarTools.ts` changes, alert pipeline, VPS proxies, schema changes
+
+**Success metric:** Morning briefing message contains "BCTC sắp đến" section with correct stock codes when any watchlist stock has unfiled deadline within 14 days. TDD test GREEN. `bun tsc --noEmit` clean.
+
+---
+
 ## Sprint 150 — COMPLETE (2026-04-18)
 
 **Goal:** Fix ohlcvDailyAggregatorJob health gap + alertDigestTools diacritics.

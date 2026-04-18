@@ -1,7 +1,7 @@
-# Archive — Sprints 133–150
+# Archive — Sprints 133–151
 
 Period: 2026-04-17 → 2026-04-18
-Archived from TASKS.md on Sprint 150 completion.
+Archived from TASKS.md on Sprint 151 completion.
 
 ---
 
@@ -233,3 +233,18 @@ PO sign-off: 2026-04-18
 Goal: Cron health coverage — wrap all missing scheduler jobs with recordJobRun.
 Branch: task/1420-cron-health-coverage
 Handoff: docs/handoffs/TASK_1420.md
+
+---
+
+## Sprint 151 — COMPLETE (2026-04-18)
+
+| ID | Title | Status | Role |
+|----|-------|--------|------|
+| 1422 | test(morning-briefing): TDD — upcomingDeadlines RED assertions | Done | Dev |
+| 1423 | feat(morning-briefing): add upcomingDeadlines BCTC section GREEN | Done | Dev |
+| ARCH | review REQ_1422.md + write TECH_1422.md | Done | Architect |
+
+Goal: Add upcomingDeadlines BCTC section to morning briefing.
+Branch: task/1422-1423-morning-briefing-upcoming-deadlines
+Handoffs: docs/handoffs/TASK_1422.md, docs/handoffs/TASK_1423.md
+PO sign-off: 2026-04-18

@@ -2,13 +2,13 @@
   "_maintained_by": "PM / system-auditor",
   "_trigger": "sprint start/end, tool/cron count change",
   "lastUpdated": "2026-04-18",
-  "currentSprint": 144,
-  "previousSprint": { "number": 143, "status": "COMPLETE", "completedDate": "2026-04-18" },
-  "sprintGoal": "fix(tool-diacritics): kinhDichTools + technicalIndicatorTools + supplyChainTools",
+  "currentSprint": 151,
+  "previousSprint": { "number": 150, "status": "COMPLETE", "completedDate": "2026-04-18" },
+  "sprintGoal": "feat(morning-briefing): BCTC upcoming deadlines section — show SAP_DEN watchlist stocks",
   "toolCount": 98,
   "schedulerFileCount": 34,
   "knowledgeFileCount": 15,
   "devAgentCount": 13,
   "analysisAgentCount": 9,
-  "totalTasksDone": 314
+  "totalTasksDone": 316
 }
