@@ -21,6 +21,8 @@
  *   taAlertScan           every 15min VN market hours  (task 1307) ✓
  *   bbAlertScan           every 15min VN market hours  (task 1309) ✓
  *   taAlertNotifier       every 15min VN market hours  (task 1314) ✓
+ *   startupCatchup (morning)  30s after boot if 01:00 UTC passed  (task 1430) ✓
+ *   startupCatchup (evening)  30s after boot if 15:30 UTC passed  (task 1430) ✓
  */
 
 import cron from 'node-cron'
@@ -134,6 +136,52 @@ export const CRONS = {
    *  Shifted from 16:00 → 15:00 UTC: runs 30 min before eveningSummary (15:30 UTC = 22:30 VN),
    *  ensuring taSummary is populated in the evening report. */
   ohlcvDailyAggregator:   Bun.env.CRON_OHLCV_DAILY_AGGREGATOR          ?? '0 15 * * 1-5',
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// shouldRunCatchup — startup catch-up decision helper (task 1430)
+//
+// Returns true when:
+//   (a) nowUtc is at or past the window threshold (windowUtcHour:windowUtcMin), AND
+//   (b) cron_job_runs has no row for jobName with started_at >= date('now').
+//
+// On any DB error returns false (fail-safe — do not fire the job).
+// nowUtc defaults to new Date() in production; inject a fixed Date in tests.
+// ─────────────────────────────────────────────────────────────────────────────
+export function shouldRunCatchup(
+  db: Database,
+  jobName: string,
+  windowUtcHour: number,
+  windowUtcMin: number,
+  nowUtc: Date = new Date(),
+): boolean {
+  const utcHour = nowUtc.getUTCHours()
+  const utcMin  = nowUtc.getUTCMinutes()
+  const windowReached =
+    utcHour > windowUtcHour ||
+    (utcHour === windowUtcHour && utcMin >= windowUtcMin)
+
+  if (!windowReached) {
+    log(`[startup-catchup] ${jobName}: window not reached (utcHour=${utcHour})`)
+    return false
+  }
+
+  try {
+    const row = db
+      .prepare<{ cnt: number }, [string]>(
+        `SELECT COUNT(*) AS cnt FROM cron_job_runs
+         WHERE job_name = ? AND started_at >= date('now')`,
+      )
+      .get(jobName)
+    if ((row?.cnt ?? 0) > 0) {
+      log(`[startup-catchup] ${jobName}: already ran today — skipping`)
+      return false
+    }
+    return true
+  } catch {
+    log(`[startup-catchup] ${jobName}: DB error — skipping (fail-safe)`)
+    return false
+  }
 }
 
 function log(msg: string) {
@@ -328,6 +376,28 @@ export function startScheduler() {
       }
     } catch (err) {
       log(`[bctc-reparse] startup catch-up failed: ${err instanceof Error ? err.message : String(err)}`)
+    }
+  }, 30_000)
+
+  // Startup catch-up: if server restarts after 08:00 GMT+7 (01:00 UTC) or
+  // 22:30 GMT+7 (15:30 UTC) without morning briefing / evening summary having
+  // run, fire them once. 30s delay matches bctcReparseJob pattern. task 1430.
+  setTimeout(async () => {
+    try {
+      log('[startup-catchup] probe firing — checking morningBriefingJob + eveningSummaryJob')
+      const db = getDb()
+
+      if (shouldRunCatchup(db, 'morningBriefingJob', 1, 0)) {
+        log('[startup-catchup] morningBriefingJob: running catch-up')
+        await recordJobRun(db, 'morningBriefingJob', async () => { await runMorningBriefing() })
+      }
+
+      if (shouldRunCatchup(db, 'eveningSummaryJob', 15, 30)) {
+        log('[startup-catchup] eveningSummaryJob: running catch-up')
+        await recordJobRun(db, 'eveningSummaryJob', async () => { await runEveningSummary() })
+      }
+    } catch (err) {
+      log(`[startup-catchup] error: ${err instanceof Error ? err.message : String(err)}`)
     }
   }, 30_000)
 
