@@ -26,6 +26,23 @@ import { logger } from "../infrastructure/logger.js";
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
+ * Format the commodities section as an array of lines.
+ * Renders up to 5 items as "  Name: value unit".
+ * Returns an empty array when the list is empty.
+ * Exported for unit testing (task 1434/1435).
+ */
+export function formatCommoditiesSection(
+  commodities: { indicator: string; value: number; unit: string; dataPoints: number }[],
+): string[] {
+  if (commodities.length === 0) return [];
+  const lines: string[] = ["📦 Hàng hóa:"];
+  for (const c of commodities.slice(0, 5)) {
+    lines.push(`  ${c.indicator}: ${c.value} ${c.unit}`.trimEnd());
+  }
+  return lines;
+}
+
+/**
  * Format a DailyBriefing as a compact Telegram message string.
  * Exported for unit testing (AC-5 / AC-6 in task 1159).
  * Plain-text output — no Markdown to avoid Telegram parse errors.
@@ -101,10 +118,11 @@ export function formatBriefingMessage(briefing: DailyBriefing): string {
     }
   }
 
-  // ── Tracked commodities (top 5 non-normal) ────────────────
-  if (briefing.trackedCommodities && briefing.trackedCommodities.length > 0) {
+  // ── Tracked commodities (top 5) ──────────────────────────
+  const commodityLines = formatCommoditiesSection(briefing.trackedCommodities ?? []);
+  if (commodityLines.length > 0) {
     lines.push("");
-    lines.push(`📦 ${briefing.trackedCommodities.length} chỉ số hàng hóa đang theo dõi`);
+    for (const l of commodityLines) lines.push(l);
   }
 
   // ── New reports ────────────────────────────────────────────
