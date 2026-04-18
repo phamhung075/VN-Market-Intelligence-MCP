@@ -4,41 +4,6 @@
 
 ---
 
-## Sprint 141 — Active
-
-| ID | Title | Status | Role |
-|----|-------|--------|------|
-| 1400 | test(db-isolation): TDD 1400-db-isolation.test.ts — assert Bun.env isolation | Review | Dev |
-| 1401 | fix(db-isolation): setup.ts Bun.env + purge phantom rows + dev-standards template | Review | Dev |
-
-### 1400 — test(db-isolation): RED test — assert Bun.env["DB_PATH"] = ":memory:" during bun test
-
-branch: task/1400-db-isolation
-layer: infrastructure (test)
-depends_on: none
-context: docs/handoffs/TASK_1400.md
-
-acceptance_criteria:
-- Given no setup.ts fix yet
-- When `bun test src/__tests__/1400-db-isolation.test.ts` runs
-- Then first assertion FAILS (Bun.env["DB_PATH"] is undefined) — RED confirmed
-
-### 1401 — fix(db-isolation): setup.ts Bun.env + purge phantom rows + dev-standards template
-
-branch: task/1400-db-isolation
-layer: infrastructure
-depends_on: 1400 done (RED test written, failure confirmed)
-context: docs/handoffs/TASK_1401.md
-
-acceptance_criteria:
-- Both 1400-db-isolation.test.ts assertions GREEN after setup.ts fix
-- 0 remaining `process.env["DB_PATH"]` in src/__tests__/
-- purge script deletes 400+ phantom rows; SELECT COUNT returns 0
-- data/market.db mtime unchanged after bun test
-- Full suite >= 5061 pass, 0 new failures; bun tsc --noEmit clean
-
----
-
 ## Sprint 140 — Complete
 
 | ID | Title | Status | Role |
