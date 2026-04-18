@@ -85,3 +85,54 @@ Task 1404 branch should NOT merge to main yet — wait for Task 1405 (fix) to be
   - `technicalIndicatorTools.ts:235` — verdict/phrase strings fully accented
 - **Tests added**: None (existing 1404 suite now GREEN)
 - **Verified**: `bun test src/__tests__/1404-alert-diacritics-conviction.test.ts` → 4/4 PASS | `bun tsc --noEmit` → 0 errors
+
+---
+
+## [QA] Re-Review Record — 2026-04-18 (post-fixer pass)
+
+verdict: CHANGES_REQUESTED
+
+| Check | Result |
+|-------|--------|
+| (1) `1404-alert-diacritics-conviction.test.ts` — 4/4 GREEN | PASS |
+| (2) `convictionScorer.ts` LEVEL_VI accented | PASS — lines 127-130 confirmed |
+| (3) `convictionScorer.ts` summary template accented | PASS — lines 335-338 confirmed |
+| (4) `technicalIndicatorTools.ts:235` phrase accented | PASS — `"cẩn thận — có thể xem xét chốt lời hoặc chờ thêm xác nhận"` |
+| (5) `bun tsc --noEmit` | PASS — 0 errors |
+| (6) Full `bun test` 0 new failures vs main | FAIL — 1 regression |
+
+blocking_issues:
+- `src/__tests__/1302-technical-indicators.test.ts:421` — asserts `"Ket luan:"` (unaccented) but source now outputs `"Kết luận:"` after fixer accented `technicalIndicatorTools.ts:241`. Fixer updated the source but did not update the 1302 test to match.
+
+non_blocking: []
+
+files_confirmed_clean:
+- /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/__tests__/1404-alert-diacritics-conviction.test.ts
+- /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/domain/services/convictionScorer.ts
+- /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/interface/mcp/tools/technicalIndicatorTools.ts
+
+merge_commit: TBD (fill after merge)
+
+---
+
+## [QA] Final Review — 2026-04-18 (all checks GREEN)
+
+verdict: APPROVED
+
+| Check | Result |
+|-------|--------|
+| (1) `1404-alert-diacritics-conviction.test.ts` — 4/4 GREEN | PASS |
+| (2) `1302-technical-indicators.test.ts:421` expects `"Kết luận:"` | PASS |
+| (3) Full `bun test` — 5052 pass, 0 fail, 21 skip | PASS |
+| (4) `bun tsc --noEmit` | PASS — 0 errors |
+
+blocking_issues: []
+non_blocking: []
+
+files_confirmed_clean:
+- /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/__tests__/1404-alert-diacritics-conviction.test.ts
+- /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/__tests__/1302-technical-indicators.test.ts
+- /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/domain/services/convictionScorer.ts
+- /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/interface/mcp/tools/technicalIndicatorTools.ts
+
+merge_commit: TBD (fill after merge)
