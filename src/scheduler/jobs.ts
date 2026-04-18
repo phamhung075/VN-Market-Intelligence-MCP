@@ -60,6 +60,7 @@ import { runOhlcvStartupProbe } from './ohlcvStartupProbe.js'
 import { runOhlcvDailyAggregator } from './ohlcvDailyAggregatorJob.js'
 import { getDb } from '../infrastructure/db/schema.js'
 import { recordJobRun } from '../infrastructure/db/cronJobRunStore.js'
+import type { Database } from 'bun:sqlite'
 
 export const CRONS = {
   morningBriefing:        Bun.env.CRON_MORNING_BRIEFING          ?? '0 8 * * 1-5',
@@ -139,6 +140,63 @@ function log(msg: string) {
   console.log(`[${new Date().toISOString()}] [SCHEDULER] ${msg}`)
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Testable cron-callback wrappers — task 1420
+//
+// Each wrapper calls recordJobRun(db, jobName, fn) so the job name always
+// appears in cron_job_runs regardless of which DB is passed. Production cron
+// callbacks call these with getDb(); tests inject an in-memory DB and a no-op
+// fn to verify observability without running real business logic.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** dataAuditJob:weekly — task 157 */
+export async function runWeeklyAuditWithDb(
+  db: Database,
+  fn: () => Promise<void> = async () => { await runWeeklyAudit() },
+): Promise<void> {
+  await recordJobRun(db, 'dataAuditJob:weekly', fn)
+}
+
+/** bctcReparseJob — task 1019 */
+export async function runBctcReparseWithDb(
+  db: Database,
+  fn: () => Promise<void> = async () => { await runBctcReparseJob() },
+): Promise<void> {
+  await recordJobRun(db, 'bctcReparseJob', fn)
+}
+
+/** evidenceAccumulatorJob — task 1118 */
+export async function runEvidenceAccumulatorWithDb(
+  db: Database,
+  fn: () => Promise<void> = async () => { await runEvidenceAccumulatorJob() },
+): Promise<void> {
+  await recordJobRun(db, 'evidenceAccumulatorJob', fn)
+}
+
+/** baseRateComputationJob — task 1122 */
+export async function runBaseRateComputationWithDb(
+  db: Database,
+  fn: () => Promise<void> = async () => { await runBaseRateComputationJob() },
+): Promise<void> {
+  await recordJobRun(db, 'baseRateComputationJob', fn)
+}
+
+/** predictionResolutionJob — task 1125 */
+export async function runPredictionResolutionWithDb(
+  db: Database,
+  fn: () => Promise<void> = async () => { await runPredictionResolutionJob() },
+): Promise<void> {
+  await recordJobRun(db, 'predictionResolutionJob', fn)
+}
+
+/** calibrationReportJob — task 1128 */
+export async function runCalibrationReportWithDb(
+  db: Database,
+  fn: () => Promise<void> = async () => { await runCalibrationReportJob() },
+): Promise<void> {
+  await recordJobRun(db, 'calibrationReportJob', fn)
+}
+
 export function startScheduler() {
   // Idempotency guard — survives bun --hot module reloads.
   // Without this, every hot reload re-runs startScheduler() and stacks a
@@ -169,8 +227,9 @@ export function startScheduler() {
   }, { timezone: 'Asia/Ho_Chi_Minh' })
 
   // 09:00 — Market open scan (weekdays Mon-Fri only) — task 103
+  // recordJobRun called inside runMarketScan() — job visible in cron_job_runs
   cron.schedule(CRONS.marketOpen, async () => {
-    try { await runMarketScan('open') } catch (err) { log(`[marketOpen] uncaught: ${err instanceof Error ? err.message : String(err)}`) }
+    await runMarketScan('open')
   }, { timezone: 'Asia/Ho_Chi_Minh' })
 
   // Every 15 min — Intelligence cycle (task 106)
@@ -185,13 +244,15 @@ export function startScheduler() {
   }, { timezone: 'Asia/Ho_Chi_Minh' })
 
   // 15:30 — Market close scan (weekdays Mon-Fri only) — task 103
+  // recordJobRun called inside runMarketScan() — job visible in cron_job_runs
   cron.schedule(CRONS.marketClose, async () => {
-    try { await runMarketScan('close') } catch (err) { log(`[marketClose] uncaught: ${err instanceof Error ? err.message : String(err)}`) }
+    await runMarketScan('close')
   }, { timezone: 'Asia/Ho_Chi_Minh' })
 
   // 20:00 — SSC report check (task 104)
+  // recordJobRun called inside runSscCheck() — job visible in cron_job_runs
   cron.schedule(CRONS.sscCheck, async () => {
-    try { await runSscCheck() } catch (err) { log(`[sscCheck] uncaught: ${err instanceof Error ? err.message : String(err)}`) }
+    await runSscCheck()
   }, { timezone: 'Asia/Ho_Chi_Minh' })
 
   // 22:00 — Evening summary (weekdays Mon-Fri only) — task 105
@@ -229,12 +290,13 @@ export function startScheduler() {
     yearly:    CRONS.summaryYearly,
   })
 
+  // dataAuditJob:daily — recordJobRun called inside runDailyAudit() — task 157
   cron.schedule(CRONS.dataAuditDaily, async () => {
-    try { await runDailyAudit() } catch (err) { log(`[dataAuditDaily] uncaught: ${err instanceof Error ? err.message : String(err)}`) }
+    await runDailyAudit()
   }, { timezone: 'Asia/Ho_Chi_Minh' })
 
   cron.schedule(CRONS.dataAuditWeekly, async () => {
-    try { await runWeeklyAudit() } catch (err) { log(`[dataAuditWeekly] uncaught: ${err instanceof Error ? err.message : String(err)}`) }
+    await runWeeklyAuditWithDb(getDb())
   }, { timezone: 'Asia/Ho_Chi_Minh' })
 
   // Startup catch-up: if a server restart straddled the 23:00 daily cron,
@@ -252,7 +314,7 @@ export function startScheduler() {
 
   // 09:30 GMT+7 daily — BCTC stranded-PDF auto-reparse — task 1019
   cron.schedule(CRONS.bctcReparseJob, async () => {
-    try { await runBctcReparseJob() } catch (err) { log(`[bctcReparseJob] uncaught: ${err instanceof Error ? err.message : String(err)}`) }
+    await runBctcReparseWithDb(getDb())
   }, { timezone: 'Asia/Ho_Chi_Minh' })
 
   // Startup catch-up: if server restarts after 09:30 GMT+7, stranded PDFs
@@ -365,26 +427,26 @@ export function startScheduler() {
 
   // Daily 23:00 VN (16:00 UTC) — Evidence accumulator — task 1118
   cron.schedule(CRONS.evidenceAccumulator, async () => {
-    try { await runEvidenceAccumulatorJob() } catch (err) { log(`[evidenceAccumulator] uncaught: ${err instanceof Error ? err.message : String(err)}`) }
+    await runEvidenceAccumulatorWithDb(getDb())
   }, { timezone: 'UTC' })
 
   // Sunday 19:00 UTC (02:00 VN Monday) — Base rate computation — task 1122, Sprint 059
   cron.schedule(CRONS.baseRateComputation, async () => {
-    try { await runBaseRateComputationJob() } catch (err) { log(`[baseRateComputation] uncaught: ${err instanceof Error ? err.message : String(err)}`) }
+    await runBaseRateComputationWithDb(getDb())
   }, { timezone: 'UTC' })
 
   // Daily 16:30 UTC (23:30 VN) — Prediction resolution — task 1125
   // Fires after VN market close (15:30 VN = 08:30 UTC) giving the VPS
   // price-push service time to deliver daily_ohlcv rows before resolution runs.
   cron.schedule(CRONS.predictionResolution, async () => {
-    try { await runPredictionResolutionJob() } catch (err) { log(`[predictionResolution] uncaught: ${err instanceof Error ? err.message : String(err)}`) }
+    await runPredictionResolutionWithDb(getDb())
   }, { timezone: 'UTC' })
 
   // Sunday 13:00 UTC (20:00 VN) — Calibration report — task 1128, Sprint 060
   // Weekly materialised Brier score aggregation over 90-day prediction_claims window.
   // Sends digest to WORK (always) and MARKET (when total_resolved >= 1).
   cron.schedule(CRONS.calibrationReport, async () => {
-    try { await runCalibrationReportJob() } catch (err) { log(`[calibrationReport] uncaught: ${err instanceof Error ? err.message : String(err)}`) }
+    await runCalibrationReportWithDb(getDb())
   }, { timezone: 'UTC' })
 
   // Weekdays 09:30 UTC (16:30 VN) — Foreign flow alert scan — task 1133, Sprint 061
