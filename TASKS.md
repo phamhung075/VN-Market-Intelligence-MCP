@@ -166,7 +166,7 @@
 
 | ID | Title | Status | Role |
 |----|-------|--------|------|
-| 1447 | fix(checkpoint): PASSIVE → RESTART mode | Review | Dev |
+| 1447 | fix(checkpoint): PASSIVE → RESTART mode | Done | Dev |
 
 > Report: `reports/TASK_REPORT_1447.md`
 > Handoff: `docs/handoffs/TASK_1447.md`
