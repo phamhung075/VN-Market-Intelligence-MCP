@@ -135,13 +135,17 @@
 
 ---
 
-## Sprint 161 — feat(evening-summary): portfolio P&L at market close
+## Sprint 161 — feat(evening-summary): portfolio P&L at market close — COMPLETE (2026-04-18)
 
 | ID | Title | Status | Role |
 |----|-------|--------|------|
-| 1441 | test(evening-summary): TDD RED — portfolio P&L assertions | Review | Dev |
-| 1442 | feat(evening-summary): add portfolioPnl to EveningSummary + formatter GREEN | Review | Dev |
-| ARCH | review REQ_1441.md + write TECH_1441.md | Backlog | Architect |
+| 1441 | test(evening-summary): TDD RED — portfolio P&L assertions | Done | Dev |
+| 1442 | feat(evening-summary): add portfolioPnl to EveningSummary + formatter GREEN | Done | Dev |
+| ARCH | review REQ_1441.md + write TECH_1441.md | Done | Architect |
+
+> Report: `reports/TASK_REPORT_1441.md`
+> Merged: 47d9aa8 — branch deleted
+> Archived: `docs/archive/sprints-133-161.md`
 
 ---
 

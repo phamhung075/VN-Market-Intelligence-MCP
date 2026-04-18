@@ -1,7 +1,7 @@
-# Archive — Sprints 133–149
+# Archive — Sprints 133–161
 
 Period: 2026-04-17 → 2026-04-18
-Archived from TASKS.md on Sprint 149 completion.
+Archived from TASKS.md on Sprint 161 completion.
 
 ---
 
@@ -220,4 +220,172 @@ PO sign-off: 2026-04-18
 
 Goal: Vietnamese diacritics wave-6 sweep — 6 files.
 Spec: docs/TECH_1418.md
+PO sign-off: 2026-04-18
+
+---
+
+## Sprint 150 — COMPLETE (2026-04-18)
+
+| ID | Title | Status |
+|----|-------|--------|
+| 1420 | wrap-missing-jobs-recordJobRun | Done |
+
+Goal: Cron health coverage — wrap all missing scheduler jobs with recordJobRun.
+Branch: task/1420-cron-health-coverage
+Handoff: docs/handoffs/TASK_1420.md
+
+---
+
+## Sprint 151 — COMPLETE (2026-04-18)
+
+| ID | Title | Status | Role |
+|----|-------|--------|------|
+| 1422 | test(morning-briefing): TDD — upcomingDeadlines RED assertions | Done | Dev |
+| 1423 | feat(morning-briefing): add upcomingDeadlines BCTC section GREEN | Done | Dev |
+| ARCH | review REQ_1422.md + write TECH_1422.md | Done | Architect |
+
+Goal: Add upcomingDeadlines BCTC section to morning briefing.
+Branch: task/1422-1423-morning-briefing-upcoming-deadlines
+Handoffs: docs/handoffs/TASK_1422.md, docs/handoffs/TASK_1423.md
+PO sign-off: 2026-04-18
+
+---
+
+## Sprint 152 — COMPLETE (2026-04-18)
+
+| ID | Title | Status | Role |
+|----|-------|--------|------|
+| 1424 | test(evening-summary): TDD RED — sector aggregation assertions | Done | Dev |
+| 1425 | feat(evening-summary): sector aggregation from watchlist movers GREEN | Done | Dev |
+| ARCH | review REQ_1424.md + write TECH_1424.md | Done | Architect |
+
+Goal: feat(evening-summary): sector aggregation from watchlist movers.
+Branch: task/1424-1425-evening-summary-sector-aggregation
+Handoffs: docs/handoffs/TASK_1424.md, docs/handoffs/TASK_1425.md
+PO sign-off: 2026-04-18
+
+---
+
+## Sprint 153 — COMPLETE (2026-04-18)
+
+| ID | Title | Status | Role |
+|----|-------|--------|------|
+| 1426 | test(evening-summary): TDD RED — vnIndex assertions | Done | Dev |
+| 1427 | feat(evening-summary): add vnIndex to EveningSummary + formatter GREEN | Done | Dev |
+| ARCH | review REQ_1426.md + write TECH_1426.md | Done | Architect |
+
+Goal: feat(evening-summary): VN-Index close price added to evening summary.
+Branch: task/1426-evening-vnindex
+Handoffs: docs/handoffs/TASK_1426.md, docs/handoffs/TASK_1427.md
+PO sign-off: 2026-04-18
+
+---
+
+## Sprint 154 — COMPLETE (2026-04-18)
+
+| ID | Title | Status | Role |
+|----|-------|--------|------|
+| 1428 | test(evening-ta-filter): TDD RED — RSI-only TA filter assertions | Done | Dev |
+| 1429 | fix(evening-ta-filter): change both predicates to rsiStatus-only GREEN | Done | Dev |
+
+Goal: fix(evening-ta-filter): restrict evening TA section to RSI overbought/oversold signals only.
+Branch: task/1428-evening-ta-rsi-filter
+Report: reports/TASK_REPORT_1428.md
+PO sign-off: 2026-04-18
+
+---
+
+## Sprint 155 — COMPLETE (2026-04-18)
+
+| ID | Title | Status | Role |
+|----|-------|--------|------|
+| 1430 | test(startup-catchup): TDD RED — shouldRunCatchup + probe assertions | Done | Dev |
+| 1431 | feat(startup-catchup): implement shouldRunCatchup + probe setTimeout in jobs.ts GREEN | Done | Dev |
+| ARCH | review REQ_1430.md + write TECH_1430.md | Done | Architect |
+
+Goal: feat(startup-catchup): run morning-briefing + evening-summary on restart if missed today.
+Branch: task/1430-startup-catchup
+PO sign-off: 2026-04-18
+
+---
+
+## Sprint 156 — COMPLETE (2026-04-18)
+
+| ID | Title | Status | Role |
+|----|-------|--------|------|
+| 1432 | test(foreign-flow-sentinel): TDD RED — sentinel filter assertions | Done | Dev |
+| 1433 | fix(foreign-flow-sentinel): filter 9999999 from queryForeignFlowSummary GREEN | Done | Dev |
+
+Goal: fix(foreign-flow-sentinel): filter 9999999 sentinel value from foreign flow summary queries.
+Report: reports/TASK_REPORT_1432.md
+Branch: task/1432-foreign-flow-sentinel
+PO sign-off: 2026-04-18
+
+---
+
+## Sprint 157 — COMPLETE (2026-04-18)
+
+| ID | Title | Status | Role |
+|----|-------|--------|------|
+| 1434 | test(morning-briefing): TDD RED — commodity values assertions | Done | Dev |
+| 1435 | fix(morning-briefing): replace count-only line with per-commodity lines GREEN | Done | Dev |
+
+Goal: fix(morning-briefing): show commodity values instead of count-only in morning briefing output.
+Handoff: docs/handoffs/TASK_1434.md
+Report: reports/TASK_REPORT_1434.md
+Branch: task/1434-morning-briefing-commodity-values
+PO sign-off: 2026-04-18
+
+---
+
+## Sprint 158 — COMPLETE (2026-04-18)
+
+| ID | Title | Status | Role |
+|----|-------|--------|------|
+| 1436 | test(morning-briefing): TDD RED — vnIndex point change assertions | Done | Dev |
+| 1437 | feat(morning-briefing): add change field to VnIndexSnapshot + formatter GREEN | Done | Dev |
+
+Goal: feat(morning-briefing): add point change to VN-Index display in morning briefing.
+Report: reports/TASK_REPORT_1436.md
+PO sign-off: 2026-04-18
+
+---
+
+## Sprint 159 — COMPLETE (2026-04-18)
+
+| ID | Title | Status | Role |
+|----|-------|--------|------|
+| 1438 | test(morning-briefing): TDD RED — portfolio P&L section assertions | Done | Dev |
+| 1439 | feat(morning-briefing): call formatPnlSection in formatBriefingMessage GREEN | Done | Dev |
+
+Goal: feat(morning-briefing): render portfolio P&L section in morning briefing output.
+Report: reports/TASK_REPORT_1438.md
+Merged: 206cdc0
+PO sign-off: 2026-04-18
+
+---
+
+## Sprint 160 — fix(portfolio-pnl): Vietnamese diacritics in formatPnlSection — COMPLETE (2026-04-18)
+
+| ID | Title | Status | Role |
+|----|-------|--------|------|
+| 1440 | fix(portfolio-pnl): Vietnamese diacritics in formatPnlSection | Done | QA |
+
+Goal: Fix missing Vietnamese diacritics in formatPnlSection output strings.
+Merged: b18526d — branch deleted
+PO sign-off: 2026-04-18
+
+---
+
+## Sprint 161 — feat(evening-summary): portfolio P&L at market close — COMPLETE (2026-04-18)
+
+| ID | Title | Status | Role |
+|----|-------|--------|------|
+| 1441 | test(evening-summary): TDD RED — portfolio P&L assertions | Done | Dev |
+| 1442 | feat(evening-summary): add portfolioPnl to EveningSummary + formatter GREEN | Done | Dev |
+| ARCH | review REQ_1441.md + write TECH_1441.md | Backlog | Architect |
+
+Goal: feat(evening-summary): include portfolio P&L section in evening summary at market close.
+Report: reports/TASK_REPORT_1441.md
+Merged: 47d9aa8 — branch deleted
 PO sign-off: 2026-04-18
