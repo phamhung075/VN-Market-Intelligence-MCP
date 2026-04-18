@@ -1,3 +1,4 @@
+import { describe, it, expect } from "bun:test";
 import { detectSignals } from "../domain/services/signalDetector.js";
 
 describe("1402 volume-spike-multiplier isolation", () => {
