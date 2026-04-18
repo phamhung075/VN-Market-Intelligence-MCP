@@ -4,15 +4,13 @@
 
 ---
 
-## Sprint 148 — COMPLETE (2026-04-18)
+## Sprint 150 — COMPLETE (2026-04-18)
 
-> Archived: `docs/archive/sprints-133-148.md`
+| ID | Title | Status |
+|----|-------|--------|
+| 1420 | wrap-missing-jobs-recordJobRun | Done |
 
----
-
-## Sprint 149 — COMPLETE (2026-04-18)
-
-> Archived: `docs/archive/sprints-133-149.md`
+> Archived: `docs/archive/sprints-133-150.md`
 
 ---
 
