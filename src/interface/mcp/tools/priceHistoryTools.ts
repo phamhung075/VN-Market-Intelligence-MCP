@@ -89,20 +89,20 @@ function formatReturn(oldest: number, newest: number): string {
  * @param rows   - Data rows from the DB, sorted newest → oldest.
  * @returns Multi-line plain-text string suitable for MCP tool output.
  */
-function formatPriceHistory(code: string, days: number, rows: PriceRow[]): string {
+export function formatPriceHistory(code: string, days: number, rows: PriceRow[]): string {
   const lines: string[] = [];
 
-  lines.push(`Lich su gia ${code} (${days} ngay)`);
+  lines.push(`Lịch sử giá ${code} (${days} ngày)`);
   lines.push("=".repeat(52));
 
   if (rows.length === 0) {
-    lines.push(`Khong co du lieu cho ma ${code} trong ${days} ngay qua.`);
+    lines.push(`Không có dữ liệu cho mã ${code} trong ${days} ngày qua.`);
     return lines.join("\n");
   }
 
   // ── Table header ──────────────────────────────────────────────────────────
   lines.push(
-    `${"Ngay".padEnd(12)} | ${"Gia".padStart(10)} | ${"KL GD".padStart(10)} | ${"Thay doi".padStart(10)}`,
+    `${"Ngày".padEnd(12)} | ${"Giá".padStart(10)} | ${"KL GD".padStart(10)} | ${"Thay đổi".padStart(10)}`,
   );
   lines.push("-".repeat(52));
 
@@ -147,7 +147,7 @@ function formatPriceHistory(code: string, days: number, rows: PriceRow[]): strin
   const periodReturn = formatReturn(oldestPrice, newestPrice);
 
   lines.push(
-    `Thong ke: Min ${formatPrice(minPrice)} | Max ${formatPrice(maxPrice)} | TB ${formatPrice(avgPrice)} | Loi nhuan ${periodReturn}`,
+    `Thống kê: Min ${formatPrice(minPrice)} | Max ${formatPrice(maxPrice)} | TB ${formatPrice(avgPrice)} | Lợi nhuận ${periodReturn}`,
   );
 
   return lines.join("\n");
@@ -228,7 +228,7 @@ export function registerPriceHistoryTools(
           content: [
             {
               type: "text" as const,
-              text: `Loi truy van lich su gia ${code}: ${err instanceof Error ? err.message : String(err)}`,
+              text: `Lỗi truy vấn lịch sử giá ${code}: ${err instanceof Error ? err.message : String(err)}`,
             },
           ],
         };

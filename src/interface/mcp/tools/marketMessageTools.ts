@@ -52,7 +52,7 @@ export async function handleGetUnreviewedMarketMessages(args: {
       content: [
         {
           type: "text" as const,
-          text: "Khong co tin nhan chua review. Tat ca da duoc danh gia.",
+          text: "Không có tin nhắn chưa review. Tất cả đã được đánh giá.",
         },
       ],
     };
@@ -131,7 +131,7 @@ export async function handleGetMarketMessageDigest(args: {
       content: [
         {
           type: "text" as const,
-          text: `Khong co tin nhan chua review trong ${days} ngay qua.`,
+          text: `Không có tin nhắn chưa review trong ${days} ngày qua.`,
         },
       ],
     };
@@ -139,7 +139,7 @@ export async function handleGetMarketMessageDigest(args: {
 
   const totalCount = entries.reduce((sum, e) => sum + e.count, 0);
   const lines: string[] = [
-    `Digest chua review — ${days} ngay gan nhat`,
+    `Digest chưa review — ${days} ngày gần nhất`,
     "=========================================",
   ];
   let currentDate = "";
@@ -154,7 +154,7 @@ export async function handleGetMarketMessageDigest(args: {
   }
   lines.push("");
   lines.push("-----------------------------------------");
-  lines.push(`Tong: ${totalCount} tin chua review. Dung batch_review_market_messages de danh gia hang loat.`);
+  lines.push(`Tổng: ${totalCount} tin chưa review. Dùng batch_review_market_messages để đánh giá hàng loạt.`);
 
   return {
     content: [{ type: "text" as const, text: lines.join("\n") }],
@@ -196,7 +196,7 @@ export async function handleBatchReviewMarketMessages(args: {
       content: [
         {
           type: "text" as const,
-          text: `Khong tim thay bat ky tin nhan nao. IDs: [${notFound.join(", ")}].`,
+          text: `Không tìm thấy bất kỳ tin nhắn nào. IDs: [${notFound.join(", ")}].`,
         },
       ],
     };
@@ -204,14 +204,14 @@ export async function handleBatchReviewMarketMessages(args: {
 
   const notFoundText =
     notFound.length > 0
-      ? ` ${notFound.length} ID khong tim thay: [${notFound.join(", ")}].`
+      ? ` ${notFound.length} ID không tìm thấy: [${notFound.join(", ")}].`
       : "";
 
   return {
     content: [
       {
         type: "text" as const,
-        text: `${updated} tin da duoc danh gia la '${args.verdict}'.${notFoundText}${noteText}`,
+        text: `${updated} tin đã được đánh giá là '${args.verdict}'.${notFoundText}${noteText}`,
       },
     ],
   };

@@ -434,7 +434,7 @@ describe("Task 1173 — AC-4: get_label_accuracy_report MCP tool returns formatt
 
     // Header must contain the since_days value
     expect(text).toContain("Label Accuracy Report");
-    expect(text).toContain("90 ngay gan nhat");
+    expect(text).toContain("90 ngày gần nhất");
 
     // alert-commander row: signal_rate = 31/42 ≈ 73.8%
     expect(text).toContain("alert-commander");
@@ -446,7 +446,7 @@ describe("Task 1173 — AC-4: get_label_accuracy_report MCP tool returns formatt
 
     // Footer: 2 agents, 56 total reviewed
     expect(text).toContain("2 agents");
-    expect(text).toContain("56 tin da review");
+    expect(text).toContain("56 tin đã review");
   });
 });
 
@@ -474,8 +474,8 @@ describe("Task 1173 — AC-5: get_label_accuracy_report MCP tool empty state", (
     expect(result.isError).toBeFalsy();
     const text = extractText(result);
 
-    expect(text).toContain("Khong co tin nhan da review trong 90 ngay qua");
-    expect(text).toContain("Hay su dung batch_review_market_messages de danh gia tin nhan");
+    expect(text).toContain("Không có tin nhắn đã review trong 90 ngày qua");
+    expect(text).toContain("Hãy sử dụng batch_review_market_messages để đánh giá tin nhắn");
   });
 
   it("empty-state message reflects the actual since_days value passed", async () => {
@@ -487,7 +487,7 @@ describe("Task 1173 — AC-5: get_label_accuracy_report MCP tool empty state", (
     expect(result.isError).toBeFalsy();
     const text = extractText(result);
 
-    expect(text).toContain("30 ngay qua");
+    expect(text).toContain("30 ngày qua");
   });
 });
 

@@ -69,10 +69,10 @@ interface WatchlistRow {
 function formatSectorLine(entry: SectorRotationEntry): string {
   const label =
     entry.classification === "DONG_TIEN_VAO"
-      ? "[DONG TIEN VAO]"
+      ? "[DÒNG TIỀN VÀO]"
       : entry.classification === "DONG_TIEN_RA"
-        ? "[DONG TIEN RA]"
-        : "[ON DINH]";
+        ? "[DÒNG TIỀN RA]"
+        : "[ỔN ĐỊNH]";
 
   const ret5d =
     entry.avg5dReturn !== null
@@ -217,10 +217,10 @@ export async function getSectorRotationReport(db: Database): Promise<string> {
     // Outside trading window with no stored snapshot is expected — make it
     // observable instead of a bare error (mirrors report 1057 banner work).
     return [
-      "=== PHAN TICH DONG TIEN THEO NGANH ===",
+      "=== PHÂN TÍCH DÒNG TIỀN THEO NGÀNH ===",
       `Trading window: ${tradingWindowLabel(now)}`,
       "",
-      "Chua co du lieu gia thi truong",
+      "Chưa có dữ liệu giá thị trường",
     ].join("\n");
   }
 
@@ -334,7 +334,7 @@ export async function getSectorRotationReport(db: Database): Promise<string> {
 
   // ── 6. Format output ──────────────────────────────────────────────────────
   const lines: string[] = [];
-  lines.push("=== PHAN TICH DONG TIEN THEO NGANH ===");
+  lines.push("=== PHÂN TÍCH DÒNG TIỀN THEO NGÀNH ===");
   lines.push(`Trading window: ${tradingWindowLabel(now)}`);
   lines.push(
     `Nguon gia: ${priceSource === "live" ? "live API (force)" : priceSource === "mixed" ? "mixed (stored + live fallback)" : "stored snapshot (market_prices)"}`,
@@ -342,13 +342,13 @@ export async function getSectorRotationReport(db: Database): Promise<string> {
   lines.push(`Cap nhat: ${now.toISOString().slice(0, 16).replace("T", " ")} (GMT)`);
 
   if (result.only1dAvailable) {
-    lines.push("(chi co du lieu 1 ngay — chua du 5 phien giao dich)");
+    lines.push("(chỉ có dữ liệu 1 ngày — chưa đủ 5 phiên giao dịch)");
   }
 
   lines.push("");
 
   if (result.sectors.length === 0) {
-    lines.push("Chua co du lieu nganh.");
+    lines.push("Chưa có dữ liệu ngành.");
   } else {
     // Inflow sectors first
     const inflowSectors = result.sectors.filter(
@@ -362,7 +362,7 @@ export async function getSectorRotationReport(db: Database): Promise<string> {
     );
 
     if (inflowSectors.length > 0) {
-      lines.push("-- Nganh co dong tien vao --");
+      lines.push("-- Ngành có dòng tiền vào --");
       for (const entry of inflowSectors) {
         lines.push(formatSectorLine(entry));
       }
@@ -370,7 +370,7 @@ export async function getSectorRotationReport(db: Database): Promise<string> {
     }
 
     if (outflowSectors.length > 0) {
-      lines.push("-- Nganh co dong tien ra --");
+      lines.push("-- Ngành có dòng tiền ra --");
       for (const entry of outflowSectors) {
         lines.push(formatSectorLine(entry));
       }
@@ -378,7 +378,7 @@ export async function getSectorRotationReport(db: Database): Promise<string> {
     }
 
     if (neutralSectors.length > 0) {
-      lines.push("-- Nganh on dinh / khong ro xu huong --");
+      lines.push("-- Ngành ổn định / không rõ xu hướng --");
       for (const entry of neutralSectors) {
         lines.push(formatSectorLine(entry));
       }
@@ -396,14 +396,14 @@ export async function getSectorRotationReport(db: Database): Promise<string> {
         const stockList =
           watchlistInSector.length > 0 ? watchlistInSector.join(", ") : w.stocks.join(", ");
         lines.push(
-          `CANH BAO: ${stockList} trong nganh ${w.sectorNameVi} dang bi rut von (DONG TIEN RA)`,
+          `CẢNH BÁO: ${stockList} trong ngành ${w.sectorNameVi} đang bị rút vốn (DÒNG TIỀN RA)`,
         );
       }
       lines.push("");
     }
   }
 
-  lines.push(`Tong so nganh phan tich: ${result.sectors.length}`);
+  lines.push(`Tổng số ngành phân tích: ${result.sectors.length}`);
 
   return lines.join("\n");
 }

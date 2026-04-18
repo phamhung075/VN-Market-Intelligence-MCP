@@ -125,7 +125,7 @@ describe("Task 183 — get_alert_accuracy MCP tool", () => {
 
   it("returns 'no alerts' message when database is empty", async () => {
     const result = await callTool(server, "get_alert_accuracy", { days: 30 });
-    expect(result.content[0]!.text).toContain("Khong co du lieu");
+    expect(result.content[0]!.text).toContain("Không có dữ liệu");
   });
 
   it("scores a price_drop signal as HIT when price actually fell after alert", async () => {
@@ -226,7 +226,7 @@ describe("Task 183 — get_alert_accuracy MCP tool", () => {
     const result = await callTool(server, "get_alert_accuracy", { days: 7 });
     const text = result.content[0]!.text;
     // With 7-day lookback, the 10-day-old alert should not appear
-    expect(text).toContain("Khong co du lieu");
+    expect(text).toContain("Không có dữ liệu");
   });
 
   it("shows signal type breakdown in output", async () => {

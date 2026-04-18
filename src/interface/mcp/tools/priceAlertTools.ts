@@ -53,6 +53,30 @@ function fmtVnd(amount: number): string {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Formatter (exported for testability — task 1411)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Format the "price alert created" confirmation message.
+ *
+ * @param code      - Stock ticker code
+ * @param threshold - Alert threshold in VND
+ * @param dirLabel  - Direction label (e.g. "<=" or ">=")
+ */
+export function formatPriceAlertCreated(
+  code: string,
+  threshold: number,
+  dirLabel: string,
+): string {
+  return (
+    `Đã tạo cảnh báo giá thành công!\n\n` +
+    `Mã cổ phiếu : ${code}\n` +
+    `Ngưỡng kích hoạt: ${dirLabel} ${fmtVnd(threshold)} VND\n` +
+    `\nCảnh báo sẽ tự động kích hoạt khi giá đạt ngưỡng này.`
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Tool registration
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -111,9 +135,9 @@ export function registerPriceAlertTools(server: McpServer): void {
               {
                 type: "text" as const,
                 text:
-                  `Loi: Ma co phieu "${upperCode}" khong co trong danh sach theo doi.\n` +
-                  `Vui long them vao watchlist truoc khi dat canh bao gia.\n` +
-                  `Dung cong cu add_to_watchlist de them ma co phieu.`,
+                  `Lỗi: Mã cổ phiếu "${upperCode}" không có trong danh sách theo dõi.\n` +
+                  `Vui lòng thêm vào watchlist trước khi đặt cảnh báo giá.\n` +
+                  `Dùng công cụ add_to_watchlist để thêm mã cổ phiếu.`,
               },
             ],
           };
@@ -135,12 +159,8 @@ export function registerPriceAlertTools(server: McpServer): void {
             {
               type: "text" as const,
               text:
-                `Da tao canh bao gia thanh cong!\n\n` +
-                `Ma co phieu : ${upperCode}\n` +
-                `Loai        : ${alertTypeLabel}\n` +
-                `Nguong kich hoat: ${dirLabel} ${fmtVnd(threshold)} VND\n` +
-                (notes ? `Ghi chu     : ${notes}\n` : "") +
-                `\nCanh bao se tu dong kich hoat khi gia dat nguong nay.`,
+                formatPriceAlertCreated(upperCode, threshold, dirLabel) +
+                (notes ? `\nGhi chú     : ${notes}` : ""),
             },
           ],
         };
@@ -152,7 +172,7 @@ export function registerPriceAlertTools(server: McpServer): void {
           content: [
             {
               type: "text" as const,
-              text: `Loi khi tao canh bao: ${(err as Error).message}`,
+              text: `Lỗi khi tạo cảnh báo: ${(err as Error).message}`,
             },
           ],
         };
@@ -194,7 +214,7 @@ export function registerPriceAlertTools(server: McpServer): void {
             content: [
               {
                 type: "text" as const,
-                text: `Khong tim thay canh bao co ID = ${alertId}.\nDung get_alerts voi type='price' de xem danh sach canh bao hien co.`,
+                text: `Không tìm thấy cảnh báo có ID = ${alertId}.\nDùng get_alerts với type='price' để xem danh sách cảnh báo hiện có.`,
               },
             ],
           };
@@ -205,7 +225,7 @@ export function registerPriceAlertTools(server: McpServer): void {
             content: [
               {
                 type: "text" as const,
-                text: `Canh bao ID ${alertId} (${existing.code} ${existing.alert_type}) da duoc huy truoc do.`,
+                text: `Cảnh báo ID ${alertId} (${existing.code} ${existing.alert_type}) đã được huỷ trước đó.`,
               },
             ],
           };
@@ -224,12 +244,12 @@ export function registerPriceAlertTools(server: McpServer): void {
             {
               type: "text" as const,
               text:
-                `Da huy canh bao gia thanh cong.\n\n` +
+                `Đã huỷ cảnh báo giá thành công.\n\n` +
                 `ID          : ${alertId}\n` +
-                `Ma co phieu : ${existing.code}\n` +
-                `Loai        : ${alertTypeLabel}\n` +
-                `Nguong      : ${fmtVnd(existing.threshold)} VND\n` +
-                `Trang thai  : Da huy`,
+                `Mã cổ phiếu : ${existing.code}\n` +
+                `Loại        : ${alertTypeLabel}\n` +
+                `Ngưỡng      : ${fmtVnd(existing.threshold)} VND\n` +
+                `Trạng thái  : Đã huỷ`,
             },
           ],
         };
@@ -241,7 +261,7 @@ export function registerPriceAlertTools(server: McpServer): void {
           content: [
             {
               type: "text" as const,
-              text: `Loi khi huy canh bao: ${(err as Error).message}`,
+              text: `Lỗi khi huỷ cảnh báo: ${(err as Error).message}`,
             },
           ],
         };

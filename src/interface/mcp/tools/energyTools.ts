@@ -72,36 +72,36 @@ export async function getEnergyGridStatus(
   const signals = analyzeEnergyMarket(energyData);
 
   // ── Format output ─────────────────────────────────────────────────────────
-  let text = `=== TRANG THAI DIEN LUC VIET NAM ===\n\n`;
+  let text = `=== TRẠNG THÁI ĐIỆN LỰC VIỆT NAM ===\n\n`;
 
   // Reservoir summary
   if (reservoirs.length > 0) {
-    text += `Ho chua thuy dien:\n`;
+    text += `Hồ chứa thuỷ điện:\n`;
     for (const r of reservoirs) {
-      const trend = r.trend === "rising" ? "tang" : r.trend === "falling" ? "giam" : "on dinh";
+      const trend = r.trend === "rising" ? "tăng" : r.trend === "falling" ? "giảm" : "ổn định";
       text += `  ${r.name}: ${r.capacityPct}% (${trend})\n`;
     }
-    text += `  Trung binh: ${avgCapacity.toFixed(1)}%\n\n`;
+    text += `  Trung bình: ${avgCapacity.toFixed(1)}%\n\n`;
   } else {
-    text += `Ho chua: Khong lay duoc du lieu hien tai. Su dung uoc tinh mac dinh (70%).\n\n`;
+    text += `Hồ chứa: Không lấy được dữ liệu hiện tại. Sử dụng ước tính mặc định (70%).\n\n`;
   }
 
-  text += `Du lieu luoi dien (uoc tinh):\n`;
-  text += `  Thuy dien: ${avgCapacity.toFixed(0)}% dung tich\n`;
-  text += `  Nhiet dien: ${energyData.thermalDispatchPct}% phu tai\n`;
-  text += `  Nang luong tai tao: ${energyData.renewableDispatchPct}% phu tai\n`;
-  text += `  Nhu cau dinh: ~${energyData.peakDemandGW} GW / ${energyData.installedCapacityGW} GW cap dat (${((energyData.peakDemandGW / energyData.installedCapacityGW) * 100).toFixed(0)}%)\n\n`;
+  text += `Dữ liệu lưới điện (ước tính):\n`;
+  text += `  Thuỷ điện: ${avgCapacity.toFixed(0)}% dung tích\n`;
+  text += `  Nhiệt điện: ${energyData.thermalDispatchPct}% phụ tải\n`;
+  text += `  Năng lượng tái tạo: ${energyData.renewableDispatchPct}% phụ tải\n`;
+  text += `  Nhu cầu đỉnh: ~${energyData.peakDemandGW} GW / ${energyData.installedCapacityGW} GW cắp đặt (${((energyData.peakDemandGW / energyData.installedCapacityGW) * 100).toFixed(0)}%)\n\n`;
 
   if (signals.length === 0) {
-    text += `Tinh trang dien luong: BINH THUONG\n`;
-    text += `Khong co tin hieu bao dong dien luc hien tai.\n`;
+    text += `Tình trạng điện lượng: BÌNH THƯỜNG\n`;
+    text += `Không có tín hiệu báo động điện lực hiện tại.\n`;
   } else {
-    text += `=== TIN HIEU BAO DONG ===\n\n`;
+    text += `=== TÍN HIỆU BÁO ĐỘNG ===\n\n`;
     for (const signal of signals) {
       text += `[${signal.severity.toUpperCase()}] ${signal.type.replace(/_/g, " ").toUpperCase()}\n`;
-      text += `  Do tin cay: ${(signal.confidence * 100).toFixed(0)}%\n`;
+      text += `  Độ tin cậy: ${(signal.confidence * 100).toFixed(0)}%\n`;
       for (const stock of signal.affectedStocks) {
-        const dir = stock.direction === "up" ? "TANG" : stock.direction === "down" ? "GIAM" : "TRUNG LAP";
+        const dir = stock.direction === "up" ? "TĂNG" : stock.direction === "down" ? "GIẢM" : "TRUNG LẬP";
         text += `  ${stock.code}: ${dir} — ${stock.reasoning.slice(0, 120)}\n`;
       }
       text += "\n";
@@ -136,7 +136,7 @@ export function registerEnergyTools(server: McpServer): void {
           content: [
             {
               type: "text" as const,
-              text: `Loi khi lay tin hieu dien luc: ${err instanceof Error ? err.message : String(err)}`,
+              text: `Lỗi khi lấy tín hiệu điện lực: ${err instanceof Error ? err.message : String(err)}`,
             },
           ],
         };

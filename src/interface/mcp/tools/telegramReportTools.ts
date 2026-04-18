@@ -56,6 +56,24 @@ function serializeReport(row: TelegramReport): Record<string, unknown> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Error formatter (exported for testability — task 1411)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Format a Vietnamese error message for report operations.
+ *
+ * @param context - Operation context (e.g. "đọc", "xử lý")
+ * @param id      - Report ID (use 0 when no specific ID)
+ * @param msg     - Error message
+ */
+export function formatReportError(context: string, id: number, msg: string): string {
+  if (id > 0) {
+    return `Lỗi khi ${context} báo cáo ${id}: ${msg}`;
+  }
+  return `Lỗi khi ${context} báo cáo: ${msg}`;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Tool registration
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -127,7 +145,7 @@ export function registerTelegramReportTools(server: McpServer): void {
             content: [
               {
                 type: "text" as const,
-                text: "Khong co bao cao moi. Vong lap ket thuc.",
+                text: "Không có báo cáo mới. Vòng lặp kết thúc.",
               },
             ],
           };
@@ -148,7 +166,7 @@ export function registerTelegramReportTools(server: McpServer): void {
           content: [
             {
               type: "text" as const,
-              text: `Loi khi doc bao cao: ${err instanceof Error ? err.message : String(err)}`,
+              text: formatReportError("đọc", 0, err instanceof Error ? err.message : String(err)),
             },
           ],
         };
@@ -229,7 +247,7 @@ export function registerTelegramReportTools(server: McpServer): void {
           content: [
             {
               type: "text" as const,
-              text: `Loi khi xu ly bao cao ${id}: ${err instanceof Error ? err.message : String(err)}`,
+              text: formatReportError("xử lý", id, err instanceof Error ? err.message : String(err)),
             },
           ],
         };
@@ -300,7 +318,7 @@ export function registerTelegramReportTools(server: McpServer): void {
           content: [
             {
               type: "text" as const,
-              text: `Loi khi claim bao cao ${id}: ${err instanceof Error ? err.message : String(err)}`,
+              text: formatReportError("claim", id, err instanceof Error ? err.message : String(err)),
             },
           ],
         };

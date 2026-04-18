@@ -359,7 +359,7 @@ describe("Task 240 — get_bctc_full compound tool", () => {
     const server = makeServer(db);
     const text = await callTool(server, "get_bctc_full", { code: "XYZ" });
 
-    expect(text).toContain("Chua co du lieu BCTC cho XYZ");
+    expect(text).toContain("Chưa có dữ liệu BCTC cho XYZ");
     expect(text).toContain("list_stored_pdfs");
   });
 
@@ -372,7 +372,7 @@ describe("Task 240 — get_bctc_full compound tool", () => {
     expect(text).toContain("=== BCTC SUMMARY: VNM ===");
     expect(text).toContain("=== SENTIMENT TREND ===");
     // Sentiment section should indicate no data
-    expect(text).toContain("Khong co du lieu");
+    expect(text).toContain("Không có dữ liệu");
   });
 
   it("uppercases the code parameter automatically", async () => {

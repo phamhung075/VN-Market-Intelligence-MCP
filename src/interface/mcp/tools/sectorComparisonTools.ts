@@ -351,13 +351,13 @@ export function buildSectorComparisonOutput(input: SectorComparisonInput): strin
       }
     } else {
       // No peer data available — show target values, no comparison
-      lines.push(`${code} (khong du du lieu peers de so sanh):`);
+      lines.push(`${code} (không đủ dữ liệu peers để so sánh):`);
       lines.push(`  PE: ${fmtRatio(targetFin.pe)}`);
       lines.push(`  PB: ${fmtRatio(targetFin.pb)}`);
       lines.push(`  ROE: ${fmtRoe(targetFin.roe)}`);
     }
   } else {
-    lines.push(`${code}: Chua co du lieu tai chinh (N/A)`);
+    lines.push(`${code}: Chưa có dữ liệu tài chính (N/A)`);
     lines.push(`  PE: N/A | PB: N/A | ROE: N/A`);
   }
 
@@ -376,7 +376,7 @@ export function buildSectorComparisonOutput(input: SectorComparisonInput): strin
     ? peerChanges.reduce((a, b) => a + b, 0) / peerChanges.length
     : null;
 
-  lines.push("Gia hom nay:");
+  lines.push("Giá hôm nay:");
   const targetChangeLine = `  ${code}: ${fmtPct(targetPrice?.change_pct)}`;
   const sectorAvgLine = sectorAvgChange != null
     ? ` | Nganh TB: ${fmtPct(sectorAvgChange)}`
@@ -385,9 +385,9 @@ export function buildSectorComparisonOutput(input: SectorComparisonInput): strin
   // Describe sector direction
   let sectorDirection = "";
   if (sectorAvgChange != null) {
-    if (sectorAvgChange < -0.5) sectorDirection = " (toan nganh giam)";
-    else if (sectorAvgChange > 0.5) sectorDirection = " (toan nganh tang)";
-    else sectorDirection = " (nganh on dinh)";
+    if (sectorAvgChange < -0.5) sectorDirection = " (toàn ngành giảm)";
+    else if (sectorAvgChange > 0.5) sectorDirection = " (toàn ngành tăng)";
+    else sectorDirection = " (ngành ổn định)";
   }
 
   lines.push(`${targetChangeLine}${sectorAvgLine}${sectorDirection}`);
@@ -401,7 +401,7 @@ export function buildSectorComparisonOutput(input: SectorComparisonInput): strin
     .filter((v): v is number => v != null);
 
   if (targetStats?.foreign_volume != null || peerFlows.length > 0) {
-    lines.push("Dong tien nuoc ngoai (5 phien):");
+    lines.push("Dòng tiền nước ngoài (5 phiên):");
     const targetFlow = fmtForeignFlow(targetStats?.foreign_volume);
 
     const sectorNetFlow = peerFlows.length > 0
@@ -414,13 +414,13 @@ export function buildSectorComparisonOutput(input: SectorComparisonInput): strin
       const avgPeerFlow = peerFlows.reduce((a, b) => a + b, 0) / peerFlows.length;
       const targetFv = targetStats.foreign_volume;
       if (targetFv > 0 && avgPeerFlow <= 0) {
-        flowComparison = ` (${code} MANH HON nganh)`;
+        flowComparison = ` (${code} MẠNH HƠN ngành)`;
       } else if (targetFv < 0 && avgPeerFlow >= 0) {
-        flowComparison = ` (${code} YEU HON nganh)`;
+        flowComparison = ` (${code} YẾU HƠN ngành)`;
       } else if (targetFv > avgPeerFlow) {
-        flowComparison = ` (${code} MANH HON nganh)`;
+        flowComparison = ` (${code} MẠNH HƠN ngành)`;
       } else if (targetFv < avgPeerFlow) {
-        flowComparison = ` (${code} YEU HON nganh)`;
+        flowComparison = ` (${code} YẾU HƠN ngành)`;
       }
     }
 
@@ -429,12 +429,12 @@ export function buildSectorComparisonOutput(input: SectorComparisonInput): strin
   }
 
   // ── Peer detail section ───────────────────────────────────────────────────
-  lines.push("Chi tiet peers:");
+  lines.push("Chi tiết peers:");
 
   const peersToShow = peerCodes.filter((p) => p !== code).slice(0, 8);
 
   if (peersToShow.length === 0) {
-    lines.push("  (Khong co du lieu peers)");
+    lines.push("  (Không có dữ liệu peers)");
   } else {
     for (const peerCode of peersToShow) {
       const pf = financials.get(peerCode);
@@ -486,7 +486,7 @@ export function registerSectorComparisonTools(server: McpServer): void {
             content: [
               {
                 type: "text" as const,
-                text: `Loi: ${code} khong co trong watchlist. Chi so sanh duoc cac co phieu trong danh sach theo doi.`,
+                text: `Lỗi: ${code} không có trong watchlist. Chỉ so sánh được các cổ phiếu trong danh sách theo dõi.`,
               },
             ],
           };
@@ -530,7 +530,7 @@ export function registerSectorComparisonTools(server: McpServer): void {
           content: [
             {
               type: "text" as const,
-              text: `Loi khi so sanh nganh cho ${code}: ${(err as Error).message}`,
+              text: `Lỗi khi so sánh ngành cho ${code}: ${(err as Error).message}`,
             },
           ],
         };

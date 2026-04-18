@@ -4,6 +4,17 @@
 
 ---
 
+## Sprint 145 — ACTIVE
+
+> Spec: `docs/REQ_1410.md` | Tech: `docs/TECH_1410.md` (APPROVED_BY_ARCHITECT)
+
+| ID | Title | Status | Role |
+|----|-------|--------|------|
+| 1410 | test(tool-diacritics-sweep): RED test — assert accented output from 24 tool files | Review | Dev |
+| 1411 | fix(tool-diacritics-sweep): replace all unaccented Vietnamese strings in 24 files | Review | Dev |
+
+---
+
 ## Sprint 144 — COMPLETE (2026-04-18)
 
 > Spec: `docs/REQ_1408.md` | Tech: `docs/TECH_1408.md` (APPROVED_BY_ARCHITECT)
@@ -23,6 +34,50 @@
 ---
 
 ## Task Details
+
+### 1410 — test(tool-diacritics-sweep): RED test 24 files
+
+context: docs/handoffs/TASK_1410.md
+
+**Branch:** `task/1410-tool-diacritics-sweep-red-test`
+**Layer:** test
+**Depends on:** nothing
+**Blocks:** 1411 must wait for this to be RED + merged
+
+**Files to create:**
+- NEW: `src/__tests__/1410-tool-diacritics-sweep.test.ts` — 24 RED test cases + 3 Sprint 144 regression
+
+**Acceptance Criteria:**
+
+**Given** test file written before task 1411 exports exist
+**When** `bun test src/__tests__/1410-tool-diacritics-sweep.test.ts` runs
+**Then**
+- 24 cases FAIL (RED) — missing exports or failing string assertions
+- 3 Sprint 144 regression cases PASS (GREEN)
+- `bun tsc --noEmit` clean (use `@ts-expect-error` above not-yet-exported imports)
+
+---
+
+### 1411 — fix(tool-diacritics-sweep): 24 files string fix + export additions
+
+context: docs/handoffs/TASK_1411.md
+
+**Branch:** `task/1411-tool-diacritics-sweep-fix`
+**Layer:** interface
+**Depends on:** 1410 RED + merged first
+
+**Files to modify:** 24 files in `src/interface/mcp/tools/` (see TECH_1410.md DDD Layer Plan)
+
+**Acceptance Criteria:**
+
+**Given** 1410 RED test merged; all 24 source files fixed per REQ-1410 inventory
+**When** `bun test src/__tests__/1410-tool-diacritics-sweep.test.ts` runs
+**Then**
+- All 27 cases GREEN (24 new + 3 regression)
+- `bun tsc --noEmit` 0 errors
+- `bun test` full suite 5063+ pass, 0 fail
+
+---
 
 ### 1408 — test(tool-diacritics): RED test
 

@@ -145,19 +145,19 @@ function padCol(s: string, width: number): string {
 /**
  * Render the Vietnamese-language price alerts table for use inside get_alerts type="price"|"all".
  */
-function formatPriceAlertsSection(
+export function formatPriceAlertsSection(
   rows: PriceAlertRow[],
   priceMap: Map<string, number>,
 ): string {
   if (rows.length === 0) {
-    return "Canh bao gia\n\nKhong co canh bao nao dang hoat dong.";
+    return "Cảnh báo giá\n\nKhông có cảnh báo nào đang hoạt động.";
   }
 
   const active = rows.filter((r) => r.status === "active");
   const lines: string[] = [
-    `Canh bao gia (${active.length} dang hoat dong)`,
+    `Cảnh báo giá (${active.length} đang hoạt động)`,
     "",
-    `${padCol("Ma", 6)}| ${padCol("Loai", 12)}| ${padCol("Nguong", 12)}| ${padCol("Gia hien tai", 14)}| Trang thai`,
+    `${padCol("Mã", 6)}| ${padCol("Loại", 12)}| ${padCol("Ngưỡng", 12)}| ${padCol("Giá hiện tại", 14)}| Trạng thái`,
     "-".repeat(65),
   ];
 
@@ -168,10 +168,10 @@ function formatPriceAlertsSection(
     const giaHienTai = currentPrice !== undefined ? fmtVnd(currentPrice) : "N/A";
     const trangThai =
       row.status === "active"
-        ? "Hoat dong"
+        ? "Hoạt động"
         : row.status === "triggered"
-          ? "Da kich hoat"
-          : "Da huy";
+          ? "Đã kích hoạt"
+          : "Đã hủy";
 
     lines.push(
       `${padCol(row.code, 6)}| ${padCol(loai, 12)}| ${padCol(nguong, 12)}| ${padCol(giaHienTai, 14)}| ${trangThai}`,
@@ -179,7 +179,7 @@ function formatPriceAlertsSection(
   }
 
   lines.push("");
-  lines.push(`Tong: ${rows.length} canh bao (${active.length} hoat dong)`);
+  lines.push(`Tổng: ${rows.length} cảnh báo (${active.length} hoạt động)`);
   return lines.join("\n");
 }
 

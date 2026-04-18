@@ -18,6 +18,7 @@ import { z } from "zod";
 import { getDb, initDatabase } from "../../../infrastructure/db/schema.js";
 import {
   computePortfolioRisk,
+  type PortfolioRiskResult,
   type PositionSnapshot,
   type DailyPriceRow,
 } from "../../../domain/services/portfolioRiskCalculator.js";
@@ -54,6 +55,50 @@ function fmtVnd(amount: number): string {
 function fmtPct(pct: number): string {
   const sign = pct >= 0 ? "+" : "";
   return `${sign}${pct.toFixed(1)}%`;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Output formatter (exported for testability — task 1411)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Format portfolio risk metrics as plain Vietnamese text.
+ *
+ * @param result - Computed risk result from computePortfolioRisk
+ * @param days   - Lookback period in days (for header)
+ */
+export function formatPortfolioRiskOutput(
+  result: PortfolioRiskResult,
+  days: number,
+): string {
+  const lines: string[] = [];
+  lines.push(`Rủi ro danh mục (${days} ngày)`);
+  lines.push("");
+  lines.push(
+    `VaR (95%): ${fmtPct(result.var95Pct)} (${result.var95Vnd < 0 ? "-" : ""}${fmtVnd(result.var95Vnd)} VND)`,
+  );
+  if (result.maxDrawdownPct < 0) {
+    const startStr = result.maxDrawdownStart?.slice(0, 10) ?? "?";
+    const endStr = result.maxDrawdownEnd?.slice(0, 10) ?? "?";
+    lines.push(`Max Drawdown: ${fmtPct(result.maxDrawdownPct)} (${startStr} -> ${endStr})`);
+  } else {
+    lines.push("Max Drawdown: Không có (giá tăng liên tục trong kỳ)");
+  }
+  lines.push("");
+  lines.push("Heat Map:");
+  lines.push(
+    `${"Mã".padEnd(6)} | ${"Tỷ trọng".padEnd(8)} | ${"Vol".padEnd(6)} | ${"VaR".padEnd(7)} | Trạng thái`,
+  );
+  lines.push("-".repeat(55));
+  for (const row of result.heatMap) {
+    lines.push(
+      `${row.code.padEnd(6)} | ${(row.weightPct.toFixed(0) + "%").padEnd(8)} | ${(row.volPct.toFixed(1) + "%").padEnd(6)} | ${(row.var95Pct.toFixed(1) + "%").padEnd(7)} | ${row.status}`,
+    );
+  }
+  lines.push("");
+  lines.push(`Tổng giá trị: ${fmtVnd(result.totalValue)} VND`);
+  lines.push(`Tính đến: ${new Date().toISOString().slice(0, 16).replace("T", " ")} (UTC)`);
+  return lines.join("\n");
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -107,7 +152,7 @@ export function registerPortfolioRiskTool(server: McpServer): void {
             content: [
               {
                 type: "text" as const,
-                text: "Khong co vi tri nao. Hay them vi tri bang cong cu quan ly vi the (task 179).",
+                text: "Không có vị trí nào. Hãy thêm vị trí bằng công cụ quản lý vị thế.",
               },
             ],
           };
@@ -118,7 +163,7 @@ export function registerPortfolioRiskTool(server: McpServer): void {
             content: [
               {
                 type: "text" as const,
-                text: "Khong co vi tri mo nao trong danh muc.",
+                text: "Không có vị trí mở nào trong danh mục.",
               },
             ],
           };
@@ -179,48 +224,8 @@ export function registerPortfolioRiskTool(server: McpServer): void {
         const result = computePortfolioRisk(positions, priceHistory, days);
 
         // ── 5. Format Vietnamese output ────────────────────────────────────────
-        const lines: string[] = [];
-
-        lines.push(`Rui ro danh muc (${days} ngay)`);
-        lines.push("");
-
-        lines.push(
-          `VaR (95%): ${fmtPct(result.var95Pct)} (${result.var95Vnd < 0 ? "-" : ""}${fmtVnd(result.var95Vnd)} VND)`,
-        );
-
-        if (result.maxDrawdownPct < 0) {
-          const startStr = result.maxDrawdownStart
-            ? result.maxDrawdownStart.slice(0, 10)
-            : "?";
-          const endStr = result.maxDrawdownEnd
-            ? result.maxDrawdownEnd.slice(0, 10)
-            : "?";
-          lines.push(
-            `Max Drawdown: ${fmtPct(result.maxDrawdownPct)} (${startStr} -> ${endStr})`,
-          );
-        } else {
-          lines.push("Max Drawdown: Khong co (gia tang lien tuc trong ky)");
-        }
-
-        lines.push("");
-        lines.push("Heat Map:");
-        lines.push(
-          `${"Ma".padEnd(6)} | ${"Ty trong".padEnd(8)} | ${"Vol".padEnd(6)} | ${"VaR".padEnd(7)} | Trang thai`,
-        );
-        lines.push("-".repeat(55));
-
-        for (const row of result.heatMap) {
-          lines.push(
-            `${row.code.padEnd(6)} | ${(row.weightPct.toFixed(0) + "%").padEnd(8)} | ${(row.volPct.toFixed(1) + "%").padEnd(6)} | ${(row.var95Pct.toFixed(1) + "%").padEnd(7)} | ${row.status}`,
-          );
-        }
-
-        lines.push("");
-        lines.push(`Tong gia tri: ${fmtVnd(result.totalValue)} VND`);
-        lines.push(`Tinh den: ${new Date().toISOString().slice(0, 16).replace("T", " ")} (UTC)`);
-
         return {
-          content: [{ type: "text" as const, text: lines.join("\n") }],
+          content: [{ type: "text" as const, text: formatPortfolioRiskOutput(result, days) }],
         };
       } catch (err) {
         logger.error("[get_portfolio_risk] Error", {
@@ -230,7 +235,7 @@ export function registerPortfolioRiskTool(server: McpServer): void {
           content: [
             {
               type: "text" as const,
-              text: `Loi tinh rui ro danh muc: ${err instanceof Error ? err.message : String(err)}`,
+              text: `Lỗi tính rủi ro danh mục: ${err instanceof Error ? err.message : String(err)}`,
             },
           ],
         };

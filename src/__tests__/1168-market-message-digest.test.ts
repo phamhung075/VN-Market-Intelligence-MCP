@@ -554,7 +554,7 @@ describe("Task 1168 — get_market_message_digest MCP tool handler", () => {
     expect(text).toContain("ids: [");
     expect(text).toContain("morning-briefing");
     expect(text).toContain("1 tin");
-    expect(text).toContain("Tong: 3 tin chua review");
+    expect(text).toContain("Tổng: 3 tin chưa review");
   });
 
   it("AC-8: formatted text contains both ids 41 and 42 for the alert-commander group", async () => {
@@ -573,13 +573,13 @@ describe("Task 1168 — get_market_message_digest MCP tool handler", () => {
     const response = await handleGetMarketMessageDigest({ limit_days: 7 });
 
     expect(response.content).toHaveLength(1);
-    expect(response.content[0]!.text).toBe("Khong co tin nhan chua review trong 7 ngay qua.");
+    expect(response.content[0]!.text).toBe("Không có tin nhắn chưa review trong 7 ngày qua.");
   });
 
   it("edge: empty state with default (no limit_days arg) uses 7 in the empty message", async () => {
     const response = await handleGetMarketMessageDigest({});
 
-    expect(response.content[0]!.text).toContain("7 ngay qua");
+    expect(response.content[0]!.text).toContain("7 ngày qua");
   });
 });
 
@@ -599,7 +599,7 @@ describe("Task 1168 — batch_review_market_messages MCP tool handler", () => {
     });
 
     expect(response.content).toHaveLength(1);
-    expect(response.content[0]!.text).toBe("3 tin da duoc danh gia la 'noise'.");
+    expect(response.content[0]!.text).toBe("3 tin đã được đánh giá là 'noise'.");
   });
 
   it("AC-10: all 3 rows have verdict='noise' after tool call", async () => {
@@ -625,8 +625,8 @@ describe("Task 1168 — batch_review_market_messages MCP tool handler", () => {
     });
 
     const text = response.content[0]!.text;
-    expect(text).toContain("2 tin da duoc danh gia la 'signal'");
-    expect(text).toContain("1 ID khong tim thay");
+    expect(text).toContain("2 tin đã được đánh giá là 'signal'");
+    expect(text).toContain("1 ID không tìm thấy");
     expect(text).toContain("999");
   });
 
@@ -652,7 +652,7 @@ describe("Task 1168 — batch_review_market_messages MCP tool handler", () => {
       verdict: "noise",
     });
 
-    expect(response.content[0]!.text).toContain("Khong tim thay bat ky tin nhan nao.");
+    expect(response.content[0]!.text).toContain("Không tìm thấy bất kỳ tin nhắn nào.");
   });
 
   it("edge: invalid verdict propagates as error message from handler", async () => {
