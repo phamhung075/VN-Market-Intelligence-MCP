@@ -232,7 +232,7 @@ function predictionSignalsToGenericSignals(
 }
 
 /** Build a Vietnamese Telegram message for a high/critical prediction signal. */
-function buildTelegramMessage(signal: PredictionSignal): string {
+export function buildTelegramMessage(signal: PredictionSignal): string {
   const severityLabel =
     signal.severity === "critical"
       ? "NGHIEM TRONG"

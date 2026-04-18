@@ -280,6 +280,46 @@ function buildWorstPredictions(
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
+ * Build the MARKET Telegram message for the calibration digest.
+ *
+ * Extracted for unit testability — pure function, no I/O.
+ *
+ * @param result - CalibrationJobResult from runCalibrationReport
+ * @param date   - ISO date string (YYYY-MM-DD) for the report header
+ */
+export function buildCalibrationMarketMessage(result: CalibrationJobResult, date: string): string {
+  const marketLines: string[] = [
+    `BÁO CÁO CALIBRATION TUẦN ${date}`,
+    `Dự đoán đã giải quyết (90 ngày): ${result.total_resolved}`,
+  ];
+
+  if (result.avg_brier_score !== null) {
+    marketLines.push(`Brier Score trung binh: ${result.avg_brier_score.toFixed(4)}`);
+  }
+
+  if (result.trend_delta !== null) {
+    const trend = result.trend_delta < 0 ? "cải thiện" : result.trend_delta === 0 ? "ổn định" : "xuống cấp";
+    marketLines.push(`Xu huong: ${trend} (delta ${result.trend_delta.toFixed(4)})`);
+  }
+
+  if (result.top_predictions.length > 0) {
+    marketLines.push("\nDự đoán tốt nhất (Brier thấp):");
+    for (const p of result.top_predictions.slice(0, 3)) {
+      marketLines.push(`  ${p.stock} ${p.direction} (${p.agent_id}): ${p.brier_score.toFixed(4)}`);
+    }
+  }
+
+  if (result.worst_predictions.length > 0) {
+    marketLines.push("\nDự đoán kém nhất (Brier cao):");
+    for (const p of result.worst_predictions.slice(0, 3)) {
+      marketLines.push(`  ${p.stock} ${p.direction} (${p.agent_id}): ${p.brier_score.toFixed(4)}`);
+    }
+  }
+
+  return marketLines.join("\n");
+}
+
+/**
  * Format and dispatch the calibration digest.
  *
  * WORK channel: always sent (even when total_resolved = 0).
@@ -339,35 +379,7 @@ async function sendCalibrationDigest(
   const workMsg = workLines.join("\n");
 
   // ── Build MARKET message ──────────────────────────────────────────────────
-  const marketLines: string[] = [
-    `BÁO CÁO CALIBRATION TUẦN ${date}`,
-    `Dự đoán đã giải quyết (90 ngày): ${result.total_resolved}`,
-  ];
-
-  if (result.avg_brier_score !== null) {
-    marketLines.push(`Brier Score trung binh: ${result.avg_brier_score.toFixed(4)}`);
-  }
-
-  if (result.trend_delta !== null) {
-    const trend = result.trend_delta < 0 ? "cải thiện" : result.trend_delta === 0 ? "ổn định" : "xuống cấp";
-    marketLines.push(`Xu huong: ${trend} (delta ${result.trend_delta.toFixed(4)})`);
-  }
-
-  if (result.top_predictions.length > 0) {
-    marketLines.push("\nDự đoán tốt nhất (Brier thấp):");
-    for (const p of result.top_predictions.slice(0, 3)) {
-      marketLines.push(`  ${p.stock} ${p.direction} (${p.agent_id}): ${p.brier_score.toFixed(4)}`);
-    }
-  }
-
-  if (result.worst_predictions.length > 0) {
-    marketLines.push("\nDự đoán kém nhất (Brier cao):");
-    for (const p of result.worst_predictions.slice(0, 3)) {
-      marketLines.push(`  ${p.stock} ${p.direction} (${p.agent_id}): ${p.brier_score.toFixed(4)}`);
-    }
-  }
-
-  const marketMsg = marketLines.join("\n");
+  const marketMsg = buildCalibrationMarketMessage(result, date);
 
   // ── Resolve send functions ────────────────────────────────────────────────
   const sendWork =
