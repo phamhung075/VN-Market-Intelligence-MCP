@@ -443,15 +443,22 @@ export function storeCommoditySnapshot(
     // tracked_indicators — the stale news-mined values stayed as the latest
     // rows (e.g. brent_crude_usd=116 vs live 96.51), causing a dual-source
     // conflict visible to digest-writer and analysis agents.
-    const upsertTrackedIndicator = database.prepare(`
-      INSERT OR REPLACE INTO tracked_indicators (indicator, value, unit, source, extracted_at)
+    //
+    // Task 1489: DELETE existing yahoo rows for the two indicators before
+    // re-inserting to prevent unbounded row growth. tracked_indicators has no
+    // UNIQUE(indicator, source) constraint (it's a time-series table used by
+    // news-mining paths), so we guard dedup explicitly here for the yahoo source.
+    database.exec(`DELETE FROM tracked_indicators WHERE source = 'yahoo'
+                   AND indicator IN ('brent_crude_usd', 'gold_usd_oz')`);
+    const insertTrackedIndicator = database.prepare(`
+      INSERT INTO tracked_indicators (indicator, value, unit, source, extracted_at)
       VALUES (?, ?, ?, 'yahoo', ?)
     `);
     if (snapshot.brentCrudeUSD != null && snapshot.brentCrudeUSD > 0) {
-      upsertTrackedIndicator.run("brent_crude_usd", snapshot.brentCrudeUSD, "$/bbl", snapshot.fetchedAt);
+      insertTrackedIndicator.run("brent_crude_usd", snapshot.brentCrudeUSD, "$/bbl", snapshot.fetchedAt);
     }
     if (snapshot.goldUSDPerOz != null && snapshot.goldUSDPerOz > 0) {
-      upsertTrackedIndicator.run("gold_usd_oz", snapshot.goldUSDPerOz, "$/oz", snapshot.fetchedAt);
+      insertTrackedIndicator.run("gold_usd_oz", snapshot.goldUSDPerOz, "$/oz", snapshot.fetchedAt);
     }
   });
 

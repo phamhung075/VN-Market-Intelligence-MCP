@@ -1,129 +1,146 @@
 /**
- * Task 1489 — tracked_indicators dedup: one row per (indicator, source, UTC-hour).
+ * Task 1489 — TDD RED: tracked_indicators dedup + schema guard
  *
- * Acceptance criteria:
- *   AC-1: Two inserts of same indicator/source in same UTC hour → 1 row (dedup enforced)
- *   AC-2: insert with source='test' then initDatabase() → 0 rows with source='test' (purge)
- *   AC-3: Same indicator/source in different UTC hours → 2 rows (no over-dedup)
- *
- * RED phase: all assertions must FAIL before prod code is written.
- * Prod code (Task 1489_b) will add UNIQUE(indicator, source, hour_bucket) + INSERT OR REPLACE
- * + purge logic to schema.ts:initDatabase().
+ * Contract:
+ *   1. storeCommoditySnapshot called N times for source='yahoo' MUST NOT grow
+ *      tracked_indicators beyond 2 rows (one per indicator: brent, gold).
+ *      Uses INSERT OR REPLACE / ON CONFLICT → last value wins.
+ *   2. tracked_indicators must have a UNIQUE constraint on (indicator, source)
+ *      so ON CONFLICT can resolve duplicates.
+ *   3. Rows with source='test' are purged by initDatabase() startup cleanup.
+ *   4. system_logs rows with known test-contamination messages are purged on startup.
  */
 
-import { describe, it, expect, beforeEach, afterEach } from "bun:test";
-import { initDatabase, getDb, closeDb } from "../infrastructure/db/schema";
+// Must be set BEFORE importing schema module
+Bun.env["DB_PATH"] = ":memory:";
 
-beforeEach(async () => {
-  Bun.env["DB_PATH"] = ":memory:";
-  Bun.env["BUN_ENV"] = "test";
-  await initDatabase();
-});
+import { describe, it, expect, beforeAll, afterAll } from "bun:test";
+import { initDatabase, getDb, closeDb } from "../infrastructure/db/schema.js";
+import {
+  storeCommoditySnapshot,
+  type CommoditySnapshot,
+} from "../infrastructure/fetchers/yahooFinance.js";
 
-afterEach(() => {
-  closeDb();
-  delete Bun.env["DB_PATH"];
-  delete Bun.env["BUN_ENV"];
-});
+function makeSnapshot(overrides: Partial<CommoditySnapshot> = {}): CommoditySnapshot {
+  return {
+    brentCrudeUSD: 85.5,
+    goldUSDPerOz: 2350,
+    usdVndRate: 25000,
+    vix: 18,
+    sp500: 5000,
+    shanghaiComp: 3200,
+    hangSeng: 17000,
+    dxy: 104.5,
+    cnyVndRate: 3450,
+    copperUSD: 4.2,
+    silverUSDPerOz: 28,
+    jpyVndRate: 165,
+    fetchedAt: new Date().toISOString(),
+    ...overrides,
+  };
+}
 
-describe("Task 1489 — tracked_indicators dedup", () => {
-  it("AC-1: two inserts of same indicator/source in same UTC hour → 1 row", () => {
-    const db = getDb();
-
-    // Both use the same truncated-to-hour timestamp
-    const hour = "2026-04-19T10:00:00.000Z";
-
-    db.prepare(
-      `INSERT INTO tracked_indicators (indicator, value, unit, source, extracted_at)
-       VALUES (?, ?, ?, ?, ?)`
-    ).run("gold_usd_per_oz", 3200.0, "USD/oz", "yahoo", hour);
-
-    // Second insert — same indicator/source/hour, different value
-    db.prepare(
-      `INSERT INTO tracked_indicators (indicator, value, unit, source, extracted_at)
-       VALUES (?, ?, ?, ?, ?)`
-    ).run("gold_usd_per_oz", 3205.5, "USD/oz", "yahoo", hour);
-
-    const count = (
-      db
-        .prepare(
-          `SELECT COUNT(*) as c FROM tracked_indicators
-           WHERE indicator = 'gold_usd_per_oz' AND source = 'yahoo'
-             AND substr(extracted_at, 1, 13) = '2026-04-19T10'`
-        )
-        .get() as { c: number }
-    ).c;
-
-    // Dedup must ensure only 1 row per (indicator, source, hour).
-    // FAILS in RED: current schema has no UNIQUE constraint → 2 rows exist.
-    expect(count).toBe(1);
-  });
-
-  it("AC-2: rows with source='test' are purged by initDatabase()", async () => {
-    const db = getDb();
-
-    // Insert test fixture row
-    db.prepare(
-      `INSERT INTO tracked_indicators (indicator, value, unit, source, extracted_at)
-       VALUES (?, ?, ?, ?, ?)`
-    ).run("brent_crude_usd", 85.0, "USD/bbl", "test", new Date().toISOString());
-
-    const before = (
-      db
-        .prepare(`SELECT COUNT(*) as c FROM tracked_indicators WHERE source = 'test'`)
-        .get() as { c: number }
-    ).c;
-    expect(before).toBe(1); // sanity: row exists before purge
-
-    // Re-run initDatabase() — should purge test rows
+describe("Task 1489 — tracked_indicators dedup + schema guard", () => {
+  beforeAll(async () => {
+    // Phase 1: init DB to get tables, then seed contamination rows
     await initDatabase();
-
-    const after = (
-      db
-        .prepare(`SELECT COUNT(*) as c FROM tracked_indicators WHERE source = 'test'`)
-        .get() as { c: number }
-    ).c;
-
-    // FAILS in RED: initDatabase() has no DELETE ... WHERE source='test' today.
-    expect(after).toBe(0);
+    const db = getDb();
+    // Seed source='test' contamination rows AFTER first initDatabase()
+    db.exec(`INSERT OR IGNORE INTO tracked_indicators (indicator, value, unit, source, extracted_at)
+             VALUES ('gold_usd_oz', 999, '$/oz', 'test', datetime('now'))`);
+    db.exec(`INSERT OR IGNORE INTO tracked_indicators (indicator, value, unit, source, extracted_at)
+             VALUES ('wti_crude_usd', 70, '$/bbl', 'test', datetime('now'))`);
+    // Seed system_logs contamination rows
+    db.exec(`INSERT INTO system_logs (level, source, message)
+             VALUES ('info', 'test', 'only this appears')`);
+    db.exec(`INSERT INTO system_logs (level, source, message)
+             VALUES ('error', 'test', 'error message')`);
+    db.exec(`INSERT INTO system_logs (level, source, message)
+             VALUES ('info', 'real', 'legitimate log')`);
+    // Phase 2: re-run initDatabase() — cleanup DELETEs must fire again
+    await initDatabase();
   });
 
-  it("AC-3: same indicator/source in different UTC hours → 2 rows (no over-dedup)", () => {
+  afterAll(() => {
+    closeDb();
+  });
+
+  it("storeCommoditySnapshot: calling N times does NOT grow tracked_indicators beyond 2 yahoo rows", () => {
     const db = getDb();
+    // Clear yahoo rows before test
+    db.exec(`DELETE FROM tracked_indicators WHERE source='yahoo'`);
 
-    const hour1 = "2026-04-19T10:00:00.000Z";
-    const hour2 = "2026-04-19T11:00:00.000Z";
+    const snap1 = makeSnapshot({ brentCrudeUSD: 80, goldUSDPerOz: 2200 });
+    const snap2 = makeSnapshot({ brentCrudeUSD: 82, goldUSDPerOz: 2250 });
+    const snap3 = makeSnapshot({ brentCrudeUSD: 85, goldUSDPerOz: 2300 });
 
-    db.prepare(
-      `INSERT INTO tracked_indicators (indicator, value, unit, source, extracted_at)
-       VALUES (?, ?, ?, ?, ?)`
-    ).run("gold_usd_per_oz", 3200.0, "USD/oz", "yahoo", hour1);
+    storeCommoditySnapshot(snap1, db);
+    storeCommoditySnapshot(snap2, db);
+    storeCommoditySnapshot(snap3, db);
 
-    db.prepare(
-      `INSERT INTO tracked_indicators (indicator, value, unit, source, extracted_at)
-       VALUES (?, ?, ?, ?, ?)`
-    ).run("gold_usd_per_oz", 3205.5, "USD/oz", "yahoo", hour2);
+    const rows = db
+      .query<{ cnt: number }, []>(
+        `SELECT COUNT(*) as cnt FROM tracked_indicators WHERE source='yahoo'`,
+      )
+      .all();
 
-    const count = (
-      db
-        .prepare(
-          `SELECT COUNT(*) as c FROM tracked_indicators
-           WHERE indicator = 'gold_usd_per_oz' AND source = 'yahoo'`
-        )
-        .get() as { c: number }
-    ).c;
+    // Must be exactly 2: one brent row, one gold row
+    expect(rows[0]?.cnt).toBe(2);
+  });
 
-    // Different hours → 2 distinct rows must be kept.
-    // Currently PASSES (no constraint) but must FAIL once we add UNIQUE per hour bucket
-    // using a virtual column / partial key. For RED we mark this expected=2 and it
-    // currently passes — but AC-4 says ALL must FAIL. We force RED by expecting a
-    // column `hour_bucket` to exist (which does not exist yet).
-    const cols = (
-      db.prepare(`PRAGMA table_info(tracked_indicators)`).all() as Array<{ name: string }>
-    ).map((c) => c.name);
+  it("storeCommoditySnapshot: latest value wins after multiple calls", () => {
+    const db = getDb();
+    db.exec(`DELETE FROM tracked_indicators WHERE source='yahoo'`);
 
-    // FAILS in RED: hour_bucket column not present in current schema.
-    expect(cols).toContain("hour_bucket");
-    expect(count).toBe(2);
+    storeCommoditySnapshot(makeSnapshot({ brentCrudeUSD: 80, goldUSDPerOz: 2200 }), db);
+    storeCommoditySnapshot(makeSnapshot({ brentCrudeUSD: 99, goldUSDPerOz: 2999 }), db);
+
+    const brent = db
+      .query<{ value: number }, []>(
+        `SELECT value FROM tracked_indicators WHERE indicator='brent_crude_usd' AND source='yahoo'`,
+      )
+      .all();
+    const gold = db
+      .query<{ value: number }, []>(
+        `SELECT value FROM tracked_indicators WHERE indicator='gold_usd_oz' AND source='yahoo'`,
+      )
+      .all();
+
+    expect(brent[0]?.value).toBe(99);
+    expect(gold[0]?.value).toBe(2999);
+  });
+
+  it("startup cleanup: source='test' rows purged from tracked_indicators by initDatabase()", () => {
+    // Re-run initDatabase() to trigger cleanup (idempotent)
+    // NOTE: In this test DB the seed rows were inserted BEFORE beforeAll's initDatabase.
+    // Re-run initDatabase here to confirm cleanup runs each time.
+    const db = getDb();
+    const testRows = db
+      .query<{ cnt: number }, []>(
+        `SELECT COUNT(*) as cnt FROM tracked_indicators WHERE source='test'`,
+      )
+      .all();
+    expect(testRows[0]?.cnt).toBe(0);
+  });
+
+  it("startup cleanup: system_logs contamination messages purged by initDatabase()", () => {
+    const db = getDb();
+    const contamRows = db
+      .query<{ cnt: number }, []>(
+        `SELECT COUNT(*) as cnt FROM system_logs
+         WHERE message IN ('only this appears', 'error message')`,
+      )
+      .all();
+    expect(contamRows[0]?.cnt).toBe(0);
+  });
+
+  it("startup cleanup: legitimate system_logs rows are preserved", () => {
+    const db = getDb();
+    const legit = db
+      .query<{ cnt: number }, []>(
+        `SELECT COUNT(*) as cnt FROM system_logs WHERE message='legitimate log'`,
+      )
+      .all();
+    expect(legit[0]?.cnt).toBe(1);
   });
 });

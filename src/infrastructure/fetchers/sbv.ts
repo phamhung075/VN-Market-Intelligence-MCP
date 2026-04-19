@@ -64,10 +64,14 @@ const DEFAULT_REFINANCING_RATE = parseFloat(
 /**
  * A snapshot of SBV macro indicators at a point in time.
  *
- * @property overnightRatePct   - SBV overnight interest rate (% per year). 0 if unavailable.
- * @property refinancingRatePct - SBV refinancing rate (% per year). 0 if unavailable.
- * @property usdVndOfficial     - Official USD/VND exchange rate (Transfer rate). 0 if unavailable.
- * @property fetchedAt          - ISO 8601 timestamp when this snapshot was captured.
+ * @property overnightRatePct       - SBV overnight interest rate (% per year). 0 if unavailable.
+ * @property refinancingRatePct     - SBV refinancing rate (% per year). 0 if unavailable.
+ * @property usdVndOfficial         - Official USD/VND exchange rate (Transfer rate). 0 if unavailable.
+ * @property discountRatePct        - SBV discount rate (lãi suất chiết khấu, % per year). 0 if unavailable.
+ * @property maxDepositRatePct      - SBV max deposit rate cap (trần lãi suất huy động, % per year). 0 if unavailable.
+ * @property maxLendingRatePct      - SBV max lending rate cap (trần lãi suất cho vay, % per year). 0 if unavailable.
+ * @property interbankOvernightPct  - Interbank overnight rate (lãi suất liên ngân hàng qua đêm, % per year). 0 if unavailable.
+ * @property fetchedAt              - ISO 8601 timestamp when this snapshot was captured.
  */
 export interface SbvMacroSnapshot {
   /** Overnight interest rate in percent per year (e.g. 4.5 means 4.5%/year). */
@@ -76,6 +80,14 @@ export interface SbvMacroSnapshot {
   refinancingRatePct: number;
   /** Official USD/VND exchange rate (Transfer rate from VCB). */
   usdVndOfficial: number;
+  /** Discount rate (lãi suất chiết khấu) in percent per year. */
+  discountRatePct: number;
+  /** Max deposit rate cap (trần lãi suất huy động) in percent per year. */
+  maxDepositRatePct: number;
+  /** Max lending rate cap (trần lãi suất cho vay) in percent per year. */
+  maxLendingRatePct: number;
+  /** Interbank overnight rate (lãi suất liên ngân hàng qua đêm) in percent per year. */
+  interbankOvernightPct: number;
   /** ISO 8601 timestamp when this data was fetched. */
   fetchedAt: string;
 }
@@ -237,6 +249,10 @@ export async function fetchSbvRates(
     overnightRatePct,
     refinancingRatePct,
     usdVndOfficial,
+    discountRatePct: parseFloat(Bun.env["SBV_DISCOUNT_RATE"] ?? "0"),
+    maxDepositRatePct: parseFloat(Bun.env["SBV_MAX_DEPOSIT_RATE"] ?? "0"),
+    maxLendingRatePct: parseFloat(Bun.env["SBV_MAX_LENDING_RATE"] ?? "0"),
+    interbankOvernightPct: parseFloat(Bun.env["SBV_INTERBANK_OVERNIGHT"] ?? "0"),
     fetchedAt,
   };
 
@@ -273,15 +289,19 @@ export function storeSbvSnapshot(
 
   const upsertLatest = database.prepare(`
     INSERT OR REPLACE INTO sbv_rates
-      (source, overnight_rate_pct, refinancing_rate_pct, usd_vnd_official, fetched_at)
-    VALUES (?, ?, ?, ?, ?)
+      (source, overnight_rate_pct, refinancing_rate_pct, usd_vnd_official,
+       discount_rate_pct, max_deposit_rate_pct, max_lending_rate_pct, interbank_overnight_pct,
+       fetched_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
   // Dedup: only append history if no row exists for the same hour
   const insertHistory = database.prepare(`
     INSERT INTO sbv_rates_history
-      (source, overnight_rate_pct, refinancing_rate_pct, usd_vnd_official, fetched_at)
-    SELECT ?, ?, ?, ?, ?
+      (source, overnight_rate_pct, refinancing_rate_pct, usd_vnd_official,
+       discount_rate_pct, max_deposit_rate_pct, max_lending_rate_pct, interbank_overnight_pct,
+       fetched_at)
+    SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?
     WHERE NOT EXISTS (
       SELECT 1 FROM sbv_rates_history
       WHERE source = ? AND strftime('%Y-%m-%d %H', fetched_at) = strftime('%Y-%m-%d %H', ?)
@@ -294,6 +314,10 @@ export function storeSbvSnapshot(
       snapshot.overnightRatePct,
       snapshot.refinancingRatePct,
       snapshot.usdVndOfficial,
+      snapshot.discountRatePct,
+      snapshot.maxDepositRatePct,
+      snapshot.maxLendingRatePct,
+      snapshot.interbankOvernightPct,
       snapshot.fetchedAt,
     );
     insertHistory.run(
@@ -301,6 +325,10 @@ export function storeSbvSnapshot(
       snapshot.overnightRatePct,
       snapshot.refinancingRatePct,
       snapshot.usdVndOfficial,
+      snapshot.discountRatePct,
+      snapshot.maxDepositRatePct,
+      snapshot.maxLendingRatePct,
+      snapshot.interbankOvernightPct,
       snapshot.fetchedAt,
       source,
       snapshot.fetchedAt,

@@ -329,6 +329,21 @@ async function defaultMarkAlertNotified(alertId: string): Promise<void> {
   markAlertNotified(alertId);
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Task 1501 — Per-stock 15-minute hexagram cooldown
+// Prevents re-computing a reading for the same stock more than once per 15 min.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const _lastHexagramComputedAt: Record<string, number> = {};
+const HEXAGRAM_COOLDOWN_MS = 15 * 60 * 1000; // 15 minutes
+
+/** Reset the per-stock cooldown map (for test isolation). */
+export function resetHexagramCooldown(): void {
+  for (const key of Object.keys(_lastHexagramComputedAt)) {
+    delete _lastHexagramComputedAt[key];
+  }
+}
+
 /**
  * Task 303 — Step A4 production implementation.
  *
@@ -368,6 +383,13 @@ async function defaultComputeHexagrams(codes: string[]): Promise<number> {
   let computed = 0;
 
   for (const code of codes) {
+    // Task 1501: per-stock 15-min cooldown — skip if computed recently
+    const lastAt = _lastHexagramComputedAt[code] ?? 0;
+    if (lastAt > 0 && Date.now() - lastAt < HEXAGRAM_COOLDOWN_MS) {
+      logger.debug("[intelligence-cycle] step A4 — cooldown active, skipping stock", { code });
+      continue;
+    }
+
     try {
       // 1. Previous reading (for Markov)
       const previousReading = getLatestReading(code);
@@ -420,6 +442,7 @@ async function defaultComputeHexagrams(codes: string[]): Promise<number> {
         );
       }
 
+      _lastHexagramComputedAt[code] = Date.now();
       computed++;
     } catch (err) {
       logger.warn("[intelligence-cycle] step A4 — failed for stock", {
@@ -657,34 +680,38 @@ async function _runCycle(deps: CycleDeps = {}): Promise<CycleResult> {
   } catch { /* non-fatal — vnstock is best-effort */ }
 
   // Step A4: Auto-compute Kinh Dich hexagram reading per watchlist stock (Task 303).
-  // Runs unconditionally (market hours + off-hours). Off-hours: watchlistCodes may be
-  // empty (Step 0 only runs during market hours) so we re-query the watchlist from DB.
-  try {
-    const getWatchlistCodesFn = deps.getWatchlistCodesFn ?? defaultGetWatchlistCodes;
-    const codesToProcess =
-      watchlistCodes.length > 0 ? watchlistCodes : await getWatchlistCodesFn();
+  // Gated on market hours (09:00–15:30 GMT+7, Mon–Fri) — Task 1501.
+  // Off-hours readings are meaningless (no price action) and waste CPU.
+  if (!marketHours) {
+    logger.debug("[intelligence-cycle] step A4 skipped — outside market hours");
+  } else {
+    try {
+      const getWatchlistCodesFn = deps.getWatchlistCodesFn ?? defaultGetWatchlistCodes;
+      const codesToProcess =
+        watchlistCodes.length > 0 ? watchlistCodes : await getWatchlistCodesFn();
 
-    if (codesToProcess.length === 0) {
-      logger.debug("[intelligence-cycle] step A4 — watchlist empty, skipping hexagram batch");
-    } else {
-      const computeHexagramsFn =
-        deps.computeHexagramsFn ?? defaultComputeHexagrams;
-      hexagramsComputed = await withTimeout(
-        computeHexagramsFn(codesToProcess),
-        "step A4 hexagramBatch",
-        STEP_TIMEOUT_MS,
-      );
-      logger.debug("[intelligence-cycle] step A4 complete — hexagrams computed", {
-        hexagramsComputed,
-        codes: codesToProcess,
+      if (codesToProcess.length === 0) {
+        logger.debug("[intelligence-cycle] step A4 — watchlist empty, skipping hexagram batch");
+      } else {
+        const computeHexagramsFn =
+          deps.computeHexagramsFn ?? defaultComputeHexagrams;
+        hexagramsComputed = await withTimeout(
+          computeHexagramsFn(codesToProcess),
+          "step A4 hexagramBatch",
+          STEP_TIMEOUT_MS,
+        );
+        logger.debug("[intelligence-cycle] step A4 complete — hexagrams computed", {
+          hexagramsComputed,
+          codes: codesToProcess,
+        });
+      }
+    } catch (err) {
+      errors++;
+      hexagramsComputed = 0;
+      logger.warn("[intelligence-cycle] step A4 failed — hexagram batch error", {
+        error: err instanceof Error ? err.message : String(err),
       });
     }
-  } catch (err) {
-    errors++;
-    hexagramsComputed = 0;
-    logger.warn("[intelligence-cycle] step A4 failed — hexagram batch error", {
-      error: err instanceof Error ? err.message : String(err),
-    });
   }
 
   if (marketHours) {

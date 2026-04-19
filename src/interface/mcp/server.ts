@@ -892,6 +892,10 @@ export async function createBunServer(
           overnightRatePct?: number;
           refinancingRatePct?: number;
           usdVndOfficial: number;
+          discountRatePct?: number;
+          maxDepositRatePct?: number;
+          maxLendingRatePct?: number;
+          interbankOvernightPct?: number;
           fetchedAt?: string;
         } = JSON.parse(body);
 
@@ -906,6 +910,10 @@ export async function createBunServer(
           overnightRatePct: snapshot.overnightRatePct ?? 0,
           refinancingRatePct: snapshot.refinancingRatePct ?? 0,
           usdVndOfficial: snapshot.usdVndOfficial,
+          discountRatePct: snapshot.discountRatePct ?? 0,
+          maxDepositRatePct: snapshot.maxDepositRatePct ?? 0,
+          maxLendingRatePct: snapshot.maxLendingRatePct ?? 0,
+          interbankOvernightPct: snapshot.interbankOvernightPct ?? 0,
           fetchedAt: snapshot.fetchedAt ?? new Date().toISOString(),
         };
 
