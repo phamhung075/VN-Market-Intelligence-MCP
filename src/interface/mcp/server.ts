@@ -666,10 +666,10 @@ export async function createBunServer(
       let body = "";
       for await (const chunk of req) body += chunk;
       try {
-        if (!body.trim()) {
-          logVpsPush({ service: "foreign-flow", itemsCount: 0, status: "error", errorMsg: "Empty request body" });
+        if (body.trim().length <= 1) {
+          logVpsPush({ service: "foreign-flow", itemsCount: 0, status: "error", errorMsg: "Empty or truncated body" });
           res.writeHead(400, { "Content-Type": "application/json" });
-          res.end(JSON.stringify({ error: "Empty request body" }));
+          res.end(JSON.stringify({ error: "Empty or truncated body" }));
           return;
         }
 

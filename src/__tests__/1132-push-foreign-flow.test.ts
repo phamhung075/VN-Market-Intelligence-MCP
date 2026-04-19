@@ -117,7 +117,7 @@ describe("Task 1132 — POST /api/push-foreign-flow: validation", () => {
     });
     expect(res.status).toBe(400);
     const body = await res.json() as { error: string };
-    expect(body.error).toBe("Empty request body");
+    expect(body.error).toBe("Empty or truncated body");
   });
 
   it("returns 400 with 'Invalid JSON' on malformed JSON", async () => {

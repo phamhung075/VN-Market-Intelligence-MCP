@@ -77,16 +77,23 @@ RAW_COUNT=$(echo "$VN_DATA" | jq 'length' 2>/dev/null || echo 0)
 echo "$(date -u) VPS API: $RAW_COUNT raw items received" >> "$LOG"
 
 # Step 3: Extract foreign flow fields and filter out all-zero rows
+# jq hardening: use (// 0) instead of tonumber to handle both string and numeric API responses
 FF_JSON=$(echo "$VN_DATA" | jq \
   --arg fbuy  "$FBUY_FIELD" \
   --arg fsell "$FSELL_FIELD" \
   --arg froom "$FROOM_FIELD" \
   '[.[] | select(.sym != null) | {
     code:           .sym,
-    foreignBuyVol:  (if .[$fbuy]  != null then (.[$fbuy]  | tonumber) else 0 end),
-    foreignSellVol: (if .[$fsell] != null then (.[$fsell] | tonumber) else 0 end),
-    foreignRoom:    (if .[$froom] != null then (.[$froom] | tonumber) else 0 end)
+    foreignBuyVol:  ((.[$fbuy]  // 0) | if type == "string" then tonumber else . end),
+    foreignSellVol: ((.[$fsell] // 0) | if type == "string" then tonumber else . end),
+    foreignRoom:    ((.[$froom] // 0) | if type == "string" then tonumber else . end)
   } | select(.foreignBuyVol > 0 or .foreignSellVol > 0 or .foreignRoom > 0)]' 2>/dev/null)
+
+# Guard: jq error produces empty/null FF_JSON — exit before sending truncated body
+if [ -z "$FF_JSON" ]; then
+  echo "$(date -u) WARN: jq transform failed or produced empty output — skipping push" >> "$LOG"
+  exit 0
+fi
 
 FF_COUNT=$(echo "$FF_JSON" | jq 'length' 2>/dev/null || echo 0)
 

@@ -89,8 +89,8 @@
 |----|-------|--------|------|
 | 1489 | TDD RED: 1489-tracked-indicators-dedup.test.ts — storeCommoditySnapshot INSERT OR REPLACE, no unbounded growth, test-source rows purged | Review | Dev |
 | 1490 | GREEN: add INSERT OR REPLACE / ON CONFLICT logic to storeCommoditySnapshot in yahooFinance.ts; one-time DELETE of source='test' rows from tracked_indicators; DELETE of system_logs where message IN ('only this appears','error message') | Review | Dev |
-| 1491 | TDD RED: 1491-push-foreign-flow-parse.test.ts — push endpoint rejects malformed payload, returns 400 with error detail; VPS script sends correct shape | Todo | Dev |
-| 1492 | GREEN: fix push-foreign-flow MCP endpoint parse validation; fix vps-scripts/push-foreign-flow.sh to match expected schema | Todo | Dev |
+| 1491 | TDD RED: 1491-push-foreign-flow-parse.test.ts — push endpoint rejects malformed payload, returns 400 with error detail; VPS script sends correct shape | Done | Dev |
+| 1492 | GREEN: fix push-foreign-flow MCP endpoint parse validation; fix vps-scripts/push-foreign-flow.sh to match expected schema | Done | Dev |
 | 1493 | TDD RED: 1493-reuters-vps-push.test.ts — push-reuters endpoint inserts RSS items into rag_analyses; dedup by url; rejects malformed payload | Todo | Dev |
 | 1494 | GREEN: add vps-scripts/fetch-reuters.sh (VPS cron, fetches Reuters RSS, pushes to MCP /push-reuters); add push-reuters endpoint in MCP server; wire to pollNews source registry | Todo | Dev |
 | 1495 | TDD RED: 1495-tradingeconomics-vps-push.test.ts — push-tradingeconomics endpoint upserts all 13 indicator rows into tracked_indicators; rejects bad payload | Todo | Dev |
