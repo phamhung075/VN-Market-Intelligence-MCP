@@ -20,7 +20,7 @@
  *   AC-4: Existing test 278 still passes (sector peer sync unaffected).
  */
 
-process.env["DB_PATH"] = ":memory:";
+Bun.env["DB_PATH"] = ":memory:";
 
 import { describe, it, expect } from "bun:test";
 import { runIntelligenceCycle, resetCycleGuard } from "../scheduler/intelligenceCycleJob";

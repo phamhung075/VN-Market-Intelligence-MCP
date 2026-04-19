@@ -5,7 +5,7 @@
  * All tests inject a mock HttpClient — no real network calls.
  */
 
-process.env["DB_PATH"] = ":memory:";
+Bun.env["DB_PATH"] = ":memory:";
 
 import { describe, it, expect } from "bun:test";
 import type { HttpClient } from "../infrastructure/fetchers/ssc.js";

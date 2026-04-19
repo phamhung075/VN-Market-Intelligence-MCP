@@ -1,5 +1,5 @@
 // src/__tests__/1197-sentiment-dedup.test.ts
-process.env["DB_PATH"] = ":memory:";
+Bun.env["DB_PATH"] = ":memory:";
 import { describe, test, expect } from "bun:test";
 import { classifySentiment } from "../domain/services/sentimentClassifier.js";
 

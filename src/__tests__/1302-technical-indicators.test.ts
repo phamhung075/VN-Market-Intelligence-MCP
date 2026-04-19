@@ -1,4 +1,4 @@
-process.env["DB_PATH"] = ":memory:"; // isolation — must be first line
+Bun.env["DB_PATH"] = ":memory:"; // isolation — must be first line
 
 /**
  * Task 1302 + 1303 — Technical Indicators Domain Service + MCP Handler TDD

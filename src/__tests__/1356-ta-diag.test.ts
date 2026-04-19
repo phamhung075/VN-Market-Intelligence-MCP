@@ -1,4 +1,4 @@
-process.env["DB_PATH"] = ":memory:";
+Bun.env["DB_PATH"] = ":memory:";
 /**
  * Task 1356 — TDD: TaDiag observability block in evening summary
  *

@@ -6,7 +6,7 @@
  * when no foreign flow data is available. It must be excluded from briefings.
  */
 
-process.env["DB_PATH"] = ":memory:";
+Bun.env["DB_PATH"] = ":memory:";
 
 import { describe, it, expect } from "bun:test";
 import { Database } from "bun:sqlite";

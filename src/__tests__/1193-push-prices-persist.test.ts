@@ -9,7 +9,7 @@
 //   3. post-upsert verification SELECT returns visible count > 0
 //   4. startMs is captured and lag_ms is non-negative in the verify block
 
-process.env["DB_PATH"] = ":memory:";
+Bun.env["DB_PATH"] = ":memory:";
 
 import { describe, it, expect, beforeAll, beforeEach, afterAll } from "bun:test";
 import { initDatabase, getDb, closeDb } from "../infrastructure/db/schema.js";

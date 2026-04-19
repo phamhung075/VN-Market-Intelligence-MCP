@@ -1,4 +1,4 @@
-process.env["DB_PATH"] = ":memory:";
+Bun.env["DB_PATH"] = ":memory:";
 
 /**
  * Task 1254 — Fix duplicate morning-briefing market_messages insert (bug 1263)

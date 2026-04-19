@@ -30,7 +30,7 @@ import { registerExportTools } from "../interface/mcp/tools/exportTools.js";
 // ─────────────────────────────────────────────────────────────────────────────
 
 // Use in-memory DB to avoid side effects
-process.env["DB_PATH"] = ":memory:";
+Bun.env["DB_PATH"] = ":memory:";
 
 let server: McpServer;
 let registry: Record<string, unknown>;

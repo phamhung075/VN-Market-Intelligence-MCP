@@ -4,7 +4,7 @@
  * No real DB, no real Telegram. All dependencies injected.
  */
 
-process.env["DB_PATH"] = ":memory:";
+Bun.env["DB_PATH"] = ":memory:";
 
 import { describe, it, expect, beforeEach } from "bun:test";
 import {

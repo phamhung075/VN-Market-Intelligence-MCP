@@ -1,4 +1,4 @@
-process.env["DB_PATH"] = ":memory:";
+Bun.env["DB_PATH"] = ":memory:";
 
 /**
  * Task 1416 — RED test: diacritics wave 5

@@ -1,7 +1,7 @@
 // src/__tests__/251-mcp-tools.test.ts
 
 // Must set DB_PATH before ANY import that triggers module-level DB access (hnx.ts)
-process.env["DB_PATH"] = ":memory:";
+Bun.env["DB_PATH"] = ":memory:";
 
 import { describe, it, expect, beforeAll, afterAll } from "bun:test";
 

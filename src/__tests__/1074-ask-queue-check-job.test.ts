@@ -1,5 +1,5 @@
 Bun.env["DB_PATH"] = ":memory:";
-process.env["DB_PATH"] = ":memory:";
+Bun.env["DB_PATH"] = ":memory:";
 
 /**
  * Task 1074 — askQueueCheckJob Tests

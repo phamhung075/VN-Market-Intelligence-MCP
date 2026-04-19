@@ -9,7 +9,7 @@
  */
 
 // Must set DB_PATH before any import that triggers getDb()
-process.env["DB_PATH"] = ":memory:";
+Bun.env["DB_PATH"] = ":memory:";
 
 import { describe, it, expect, beforeAll, beforeEach, afterAll } from "bun:test";
 import {

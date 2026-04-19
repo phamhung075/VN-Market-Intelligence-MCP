@@ -1,4 +1,4 @@
-process.env["DB_PATH"] = ":memory:";
+Bun.env["DB_PATH"] = ":memory:";
 
 /**
  * Task 137 — Fix Step E: Read alerts from DB and send to Telegram

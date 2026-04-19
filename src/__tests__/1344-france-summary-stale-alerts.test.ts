@@ -1,6 +1,6 @@
 // src/__tests__/1344-france-summary-stale-alerts.test.ts
 // Task 1344 — TDD: stale alert filter + same-day dedup guard for franceSummaryJob
-process.env["DB_PATH"] = ":memory:";
+Bun.env["DB_PATH"] = ":memory:";
 import { describe, it, expect } from "bun:test";
 import { Database } from "bun:sqlite";
 import { runFranceSummary } from "../scheduler/franceSummaryJob.js";

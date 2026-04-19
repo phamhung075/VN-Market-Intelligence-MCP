@@ -1,4 +1,4 @@
-process.env["DB_PATH"] = ":memory:";
+Bun.env["DB_PATH"] = ":memory:";
 
 /**
  * Task 1456 — evening movers: ohlcv_change CTE uses MAX(date) not date('now')

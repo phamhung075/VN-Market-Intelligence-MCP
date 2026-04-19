@@ -21,7 +21,7 @@ import { registerAlertDigestTools } from "../interface/mcp/tools/alertDigestTool
 // Setup
 // ─────────────────────────────────────────────────────────────────────────────
 
-process.env["DB_PATH"] = ":memory:";
+Bun.env["DB_PATH"] = ":memory:";
 
 let server: McpServer;
 let registry: Record<string, unknown>;

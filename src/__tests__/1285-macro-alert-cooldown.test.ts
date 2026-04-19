@@ -1,5 +1,5 @@
 // src/__tests__/1285-macro-alert-cooldown.test.ts
-process.env["DB_PATH"] = ":memory:";
+Bun.env["DB_PATH"] = ":memory:";
 import { describe, it, expect } from "bun:test";
 import {
   runIntelligenceCycle,

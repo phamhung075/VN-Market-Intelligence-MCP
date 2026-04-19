@@ -1,4 +1,4 @@
-process.env["DB_PATH"] = ":memory:";
+Bun.env["DB_PATH"] = ":memory:";
 import { describe, it, expect } from "bun:test";
 import { parseCongBaoHtml } from "../infrastructure/fetchers/congbao.js";
 import { parseSbvHtml } from "../infrastructure/fetchers/sbvCircular.js";

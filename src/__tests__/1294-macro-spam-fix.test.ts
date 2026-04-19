@@ -1,5 +1,5 @@
 // src/__tests__/1294-macro-spam-fix.test.ts
-process.env["DB_PATH"] = ":memory:";
+Bun.env["DB_PATH"] = ":memory:";
 import { describe, it, expect, beforeEach } from "bun:test";
 import {
   runIntelligenceCycle,

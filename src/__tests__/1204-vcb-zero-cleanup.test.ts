@@ -11,7 +11,7 @@
 //   4. Migration is idempotent: running initDatabase() twice is safe
 //   5. Migration does not affect other VCB rows (Q4-2025, other tickers)
 
-process.env["DB_PATH"] = ":memory:";
+Bun.env["DB_PATH"] = ":memory:";
 
 import { describe, it, expect, beforeEach, afterEach } from "bun:test";
 import { initDatabase, getDb, closeDb } from "../infrastructure/db/schema.js";

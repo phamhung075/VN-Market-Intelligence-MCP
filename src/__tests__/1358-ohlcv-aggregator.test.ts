@@ -1,4 +1,4 @@
-process.env["DB_PATH"] = ":memory:";
+Bun.env["DB_PATH"] = ":memory:";
 // src/__tests__/1358-ohlcv-aggregator.test.ts
 // Task 1358 — TDD RED phase: 4 failing tests for ohlcvDailyAggregatorJob (Sprint 122)
 //

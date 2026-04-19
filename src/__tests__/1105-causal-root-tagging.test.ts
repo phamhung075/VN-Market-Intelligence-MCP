@@ -1,4 +1,4 @@
-process.env["DB_PATH"] = ":memory:";
+Bun.env["DB_PATH"] = ":memory:";
 
 /**
  * Task 1105 — Signal Fix A: causal_root_id Migration + Alert Commander Grouping

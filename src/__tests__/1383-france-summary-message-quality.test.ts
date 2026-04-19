@@ -1,4 +1,4 @@
-process.env["DB_PATH"] = ":memory:"
+Bun.env["DB_PATH"] = ":memory:"
 // src/__tests__/1383-france-summary-message-quality.test.ts
 // Task 1383 — TDD RED: France summary message quality tests
 //

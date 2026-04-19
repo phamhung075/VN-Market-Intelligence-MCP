@@ -1,4 +1,4 @@
-process.env["DB_PATH"] = ":memory:";
+Bun.env["DB_PATH"] = ":memory:";
 
 /**
  * Task 1346 — TDD tests for fix(ta-adaptive): Adaptive RSI/MA Periods in defaultComputeTa

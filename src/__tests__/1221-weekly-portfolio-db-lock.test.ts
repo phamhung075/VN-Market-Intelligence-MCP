@@ -1,5 +1,5 @@
 // src/__tests__/1221-weekly-portfolio-db-lock.test.ts
-process.env["DB_PATH"] = ":memory:";
+Bun.env["DB_PATH"] = ":memory:";
 import { describe, it, expect } from "bun:test";
 import { Database } from "bun:sqlite";
 import { runWeeklyPortfolioReport } from "../scheduler/weeklyPortfolioReportJob.js";

@@ -1,5 +1,5 @@
 // src/__tests__/1222-dff-stock-aliases.test.ts
-process.env["DB_PATH"] = ":memory:";
+Bun.env["DB_PATH"] = ":memory:";
 import { describe, it, expect } from "bun:test";
 import { detectStocksInText, getAliasesForCode, STOCK_CATALOG } from "../domain/services/stockAliases.js";
 

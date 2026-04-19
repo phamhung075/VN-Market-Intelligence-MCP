@@ -7,7 +7,7 @@
 //
 // TC-1: CRONS.ohlcvDailyAggregator default equals '0 15 * * 1-5' (not '0 16')
 // TC-2: CRON_OHLCV_DAILY_AGGREGATOR env var override is honoured (the ?? pattern)
-process.env["DB_PATH"] = ":memory:";
+Bun.env["DB_PATH"] = ":memory:";
 
 import { describe, it, expect, beforeAll, afterAll } from "bun:test";
 import { CRONS } from "../scheduler/jobs.js";

@@ -1,4 +1,4 @@
-process.env["DB_PATH"] = ":memory:";
+Bun.env["DB_PATH"] = ":memory:";
 // src/__tests__/1378-vps-auto-deploy.test.ts
 // Task 1378 — TDD: maybe-deploy-vps.sh detection logic (Sprint 132)
 //

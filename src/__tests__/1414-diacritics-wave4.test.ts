@@ -8,7 +8,7 @@
  * 13+ test cases across 5 files.
  */
 
-process.env["DB_PATH"] = ":memory:";
+Bun.env["DB_PATH"] = ":memory:";
 
 import { describe, it, expect } from "bun:test";
 import { readFileSync } from "fs";

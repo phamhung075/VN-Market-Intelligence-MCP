@@ -15,7 +15,7 @@
  * NOTE: DB_PATH must be set BEFORE any imports that transitively call getDb().
  * Setting it here at module top ensures the singleton is not yet open.
  */
-process.env["DB_PATH"] = ":memory:";
+Bun.env["DB_PATH"] = ":memory:";
 
 import { describe, it, test, expect, beforeAll, afterAll } from "bun:test";
 import { closeDb, initDatabase } from "../infrastructure/db/schema.js";

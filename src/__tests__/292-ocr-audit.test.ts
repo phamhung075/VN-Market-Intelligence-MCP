@@ -13,7 +13,7 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from "bun:test";
 
 // Must be set BEFORE importing schema so getDb() picks it up.
-process.env["DB_PATH"] = ":memory:";
+Bun.env["DB_PATH"] = ":memory:";
 
 import { initDatabase, getDb, closeDb } from "../infrastructure/db/schema.js";
 

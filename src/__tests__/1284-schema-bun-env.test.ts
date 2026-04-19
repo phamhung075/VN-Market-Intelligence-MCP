@@ -1,4 +1,4 @@
-process.env["DB_PATH"] = ":memory:";
+Bun.env["DB_PATH"] = ":memory:";
 
 // src/__tests__/1284-schema-bun-env.test.ts
 // Task 1284 — schema.ts must not reference process.env for DB_PATH

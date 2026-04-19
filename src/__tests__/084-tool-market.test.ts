@@ -11,7 +11,7 @@
  */
 
 // Set DB_PATH before any import that triggers getDb()
-process.env["DB_PATH"] = ":memory:";
+Bun.env["DB_PATH"] = ":memory:";
 
 import { describe, it, expect, beforeAll, afterAll, mock } from "bun:test";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";

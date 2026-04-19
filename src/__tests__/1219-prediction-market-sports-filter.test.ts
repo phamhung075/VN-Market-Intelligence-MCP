@@ -1,5 +1,5 @@
 // src/__tests__/1219-prediction-market-sports-filter.test.ts
-process.env["DB_PATH"] = ":memory:";
+Bun.env["DB_PATH"] = ":memory:";
 import { describe, it, expect } from "bun:test";
 import { mapPredictionToVn, isSportsOrEntertainmentMarket } from "../domain/services/predictionCascadeMapper.js";
 

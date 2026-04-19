@@ -1,5 +1,5 @@
 // src/__tests__/1251-vndiamond-ner.test.ts
-process.env["DB_PATH"] = ":memory:";
+Bun.env["DB_PATH"] = ":memory:";
 import { describe, it, expect } from "bun:test";
 import { buildCausalChain } from "../domain/services/cascadeEngine.js";
 import type { WatchlistEntry } from "../domain/services/cascadeEngine.js";

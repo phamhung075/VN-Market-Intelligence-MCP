@@ -1,4 +1,4 @@
-process.env["DB_PATH"] = ":memory:";
+Bun.env["DB_PATH"] = ":memory:";
 
 /**
  * Task 103 — Market open/close scan jobs (09:00 + 15:30 GMT+7)

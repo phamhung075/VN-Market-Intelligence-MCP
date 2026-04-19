@@ -9,7 +9,7 @@
  *   AC-4: Telegram message shows "Không có tin tức hôm nay" when count = 0
  */
 
-process.env["DB_PATH"] = ":memory:";
+Bun.env["DB_PATH"] = ":memory:";
 
 import { describe, it, expect, beforeEach, afterEach } from "bun:test";
 import { Database } from "bun:sqlite";

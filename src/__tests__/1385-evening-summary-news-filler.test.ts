@@ -1,4 +1,4 @@
-process.env["DB_PATH"] = ":memory:"
+Bun.env["DB_PATH"] = ":memory:"
 // src/__tests__/1385-evening-summary-news-filler.test.ts
 // Task 1385 — TDD RED: Evening summary news filler tests
 //

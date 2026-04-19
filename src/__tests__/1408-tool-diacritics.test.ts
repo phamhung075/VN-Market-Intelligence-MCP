@@ -1,4 +1,4 @@
-process.env["DB_PATH"] = ":memory:"; // isolation — must be first line
+Bun.env["DB_PATH"] = ":memory:"; // isolation — must be first line
 
 import { describe, it, expect } from "bun:test";
 import { formatKinhDichTradingContext } from "../interface/mcp/tools/kinhDichTools.js";

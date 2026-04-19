@@ -13,7 +13,7 @@
  *         broadcast when only oil_gas domain rules matched.
  */
 
-process.env["DB_PATH"] = ":memory:";
+Bun.env["DB_PATH"] = ":memory:";
 
 import { describe, it, expect } from "bun:test";
 import { buildCausalChain } from "../domain/services/cascadeEngine.js";

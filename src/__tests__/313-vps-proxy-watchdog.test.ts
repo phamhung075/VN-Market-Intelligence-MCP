@@ -9,7 +9,7 @@
  */
 
 // Test isolation: logger must not hit the production DB.
-process.env["DB_PATH"] = ":memory:";
+Bun.env["DB_PATH"] = ":memory:";
 
 import { describe, it, expect, beforeEach } from "bun:test";
 import {

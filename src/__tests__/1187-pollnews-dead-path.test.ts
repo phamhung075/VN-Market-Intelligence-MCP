@@ -9,7 +9,7 @@
  *   3. newsPollerJob.ts file is no longer present (dead file removed).
  */
 
-process.env["DB_PATH"] = ":memory:";
+Bun.env["DB_PATH"] = ":memory:";
 
 import { describe, it, expect } from "bun:test";
 import * as fs from "node:fs";

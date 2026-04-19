@@ -7,7 +7,7 @@
  * the job for the same (stock, deadline, day) does NOT produce duplicate rows.
  */
 
-process.env["DB_PATH"] = ":memory:";
+Bun.env["DB_PATH"] = ":memory:";
 
 import { describe, it, expect, beforeEach } from "bun:test";
 import { Database } from "bun:sqlite";

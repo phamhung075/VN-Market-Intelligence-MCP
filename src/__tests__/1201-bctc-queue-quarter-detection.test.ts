@@ -10,7 +10,7 @@
 //   3. Backfill upsert is idempotent: calling twice yields exactly 7 rows in
 //      bctc_vps_queue (6 Q4-2025 + 1 VCB Q1-2025), not 14
 
-process.env["DB_PATH"] = ":memory:";
+Bun.env["DB_PATH"] = ":memory:";
 
 import { describe, it, expect, beforeEach, afterEach } from "bun:test";
 import { initDatabase, getDb, closeDb } from "../infrastructure/db/schema.js";

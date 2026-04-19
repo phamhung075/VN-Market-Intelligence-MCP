@@ -11,7 +11,7 @@
  * TDD: Tests written first (RED), then implementation.
  */
 
-process.env["DB_PATH"] = ":memory:";
+Bun.env["DB_PATH"] = ":memory:";
 import { describe, it, expect } from "bun:test";
 import {
   fetchShippingIndices,

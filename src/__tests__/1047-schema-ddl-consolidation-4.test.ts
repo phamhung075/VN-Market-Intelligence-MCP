@@ -19,7 +19,7 @@
 
 import { describe, it, expect, beforeAll, afterAll } from "bun:test";
 
-process.env["DB_PATH"] = ":memory:";
+Bun.env["DB_PATH"] = ":memory:";
 
 import { initDatabase, getDb, closeDb } from "../infrastructure/db/schema.js";
 

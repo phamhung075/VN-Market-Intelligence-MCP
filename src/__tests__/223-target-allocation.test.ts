@@ -13,7 +13,7 @@ import { describe, it, expect, beforeEach, afterEach } from "bun:test";
 import { Database } from "bun:sqlite";
 
 // ─── Use an in-memory DB for all tests ───────────────────────────────────────
-process.env["DB_PATH"] = ":memory:";
+Bun.env["DB_PATH"] = ":memory:";
 
 import { getDb, initDatabase, closeDb } from "../infrastructure/db/schema.js";
 import {

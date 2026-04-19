@@ -12,7 +12,7 @@
  */
 
 // Must be set BEFORE importing schema module so module-level DB_PATH picks it up.
-process.env["DB_PATH"] = ":memory:";
+Bun.env["DB_PATH"] = ":memory:";
 
 import { describe, it, expect, beforeAll, afterAll } from "bun:test";
 import { readFileSync } from "fs";

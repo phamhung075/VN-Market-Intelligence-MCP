@@ -15,7 +15,7 @@
  * Also verifies that inline test DDLs in tests 103 and 1050 were updated to include
  * the missing columns so storeAlerts/storeMarketPrices work without schema errors.
  */
-process.env["DB_PATH"] = ":memory:";
+Bun.env["DB_PATH"] = ":memory:";
 
 import { describe, it, expect, beforeEach } from "bun:test";
 import { Database } from "bun:sqlite";

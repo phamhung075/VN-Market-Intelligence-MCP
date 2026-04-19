@@ -1,4 +1,4 @@
-process.env["DB_PATH"] = ":memory:";
+Bun.env["DB_PATH"] = ":memory:";
 
 // src/__tests__/1131-upsert-foreign-flow.test.ts
 import { describe, it, expect, beforeEach } from "bun:test";

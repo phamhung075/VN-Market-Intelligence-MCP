@@ -10,7 +10,7 @@
  *   6. isDuplicateReport returns false when category is null (uncategorised message)
  */
 
-process.env["DB_PATH"] = ":memory:";
+Bun.env["DB_PATH"] = ":memory:";
 import { describe, it, expect, beforeEach } from "bun:test";
 import { Database } from "bun:sqlite";
 import {

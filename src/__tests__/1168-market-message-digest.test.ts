@@ -32,7 +32,7 @@
  */
 
 // Must be set before importing schema module so module-level DB_PATH is picked up.
-process.env["DB_PATH"] = ":memory:";
+Bun.env["DB_PATH"] = ":memory:";
 
 import { describe, it, expect, beforeEach, afterEach, afterAll } from "bun:test";
 import { initDatabase, getDb, closeDb } from "../infrastructure/db/schema.js";

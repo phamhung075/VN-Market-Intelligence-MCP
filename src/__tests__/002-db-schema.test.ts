@@ -15,7 +15,7 @@ import { describe, it, expect, beforeAll, afterAll } from "bun:test";
 
 // Use in-memory SQLite for test isolation — avoids WAL file locking on Windows.
 // Must be set BEFORE importing schema module so the module-level DB_PATH picks it up.
-process.env["DB_PATH"] = ":memory:";
+Bun.env["DB_PATH"] = ":memory:";
 
 import { initDatabase, getDb, closeDb } from "../infrastructure/db/schema.js";
 

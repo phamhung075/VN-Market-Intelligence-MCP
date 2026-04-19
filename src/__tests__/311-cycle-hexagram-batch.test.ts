@@ -17,7 +17,7 @@
 // Without this, logger.persistLog writes the injected "mock hexagram batch
 // failure" error into the production ./data/market.db system_logs table,
 // polluting get_system_status for every analysis agent cycle afterwards.
-process.env["DB_PATH"] = ":memory:";
+Bun.env["DB_PATH"] = ":memory:";
 
 import { describe, it, expect, beforeEach } from "bun:test";
 import Database from "bun:sqlite";

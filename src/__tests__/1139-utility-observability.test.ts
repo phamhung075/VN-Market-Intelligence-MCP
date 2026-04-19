@@ -1,4 +1,4 @@
-process.env["DB_PATH"] = ":memory:";
+Bun.env["DB_PATH"] = ":memory:";
 
 // src/__tests__/1139-utility-observability.test.ts
 import { describe, it, expect } from "bun:test"

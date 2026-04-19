@@ -1,4 +1,4 @@
-process.env["DB_PATH"] = ":memory:";
+Bun.env["DB_PATH"] = ":memory:";
 
 /**
  * Task 1331 — TDD tests for fix(ta): defaultComputeTa reads daily_ohlcv

@@ -17,7 +17,7 @@
 import { describe, it, expect, beforeEach, afterEach } from "bun:test";
 
 // Force in-memory SQLite before any module that calls getDb() is loaded.
-process.env["DB_PATH"] = ":memory:";
+Bun.env["DB_PATH"] = ":memory:";
 
 import { closeDb, initDatabase } from "../infrastructure/db/schema.js";
 import {

@@ -1,5 +1,5 @@
 // src/__tests__/1247-vn-relevance-prefilter.test.ts
-process.env["DB_PATH"] = ":memory:";
+Bun.env["DB_PATH"] = ":memory:";
 import { describe, it, expect } from "bun:test";
 import { isVnRelevant, VN_SOURCE_IDS } from "../domain/services/vnRelevanceFilter.js";
 

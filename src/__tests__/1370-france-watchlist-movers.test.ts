@@ -1,4 +1,4 @@
-process.env["DB_PATH"] = ":memory:";
+Bun.env["DB_PATH"] = ":memory:";
 // src/__tests__/1370-france-watchlist-movers.test.ts
 // Task 1370 — TDD: franceSummaryJob fetchTopMovers filters by watchlist
 //

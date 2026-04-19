@@ -14,7 +14,7 @@
  *
  * Layer: domain/services (sentimentClassifier.ts)
  */
-process.env["DB_PATH"] = ":memory:";
+Bun.env["DB_PATH"] = ":memory:";
 import { describe, it, expect } from "bun:test";
 import { classifySentiment } from "../domain/services/sentimentClassifier.js";
 

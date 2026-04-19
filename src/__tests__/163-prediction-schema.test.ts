@@ -22,7 +22,7 @@ import { describe, it, expect, beforeAll, afterAll } from "bun:test";
 // We use a separate :memory: handle per this file by NOT re-setting process.env
 // (which would be ignored due to ES module hoisting) and instead ensuring all
 // IDs used here are globally unique across the full test run.
-process.env["DB_PATH"] = ":memory:";
+Bun.env["DB_PATH"] = ":memory:";
 
 import { initDatabase, getDb, closeDb } from "../infrastructure/db/schema.js";
 

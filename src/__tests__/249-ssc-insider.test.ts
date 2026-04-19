@@ -1,4 +1,4 @@
-process.env["DB_PATH"] = ":memory:";
+Bun.env["DB_PATH"] = ":memory:";
 
 // src/__tests__/249-ssc-insider.test.ts
 import { describe, it, expect, beforeEach, afterEach } from "bun:test";

@@ -1,4 +1,4 @@
-process.env["DB_PATH"] = ":memory:";
+Bun.env["DB_PATH"] = ":memory:";
 
 /**
  * Task 1325 — TDD test for Task 1324 (push-news: all 9 VPS sources wired into pollNews)

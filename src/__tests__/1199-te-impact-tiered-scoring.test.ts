@@ -1,5 +1,5 @@
 // src/__tests__/1199-te-impact-tiered-scoring.test.ts
-process.env["DB_PATH"] = ":memory:";
+Bun.env["DB_PATH"] = ":memory:";
 import { describe, it, expect } from "bun:test";
 import { scoreMacroIndicator, MacroIndicatorTier } from "../domain/services/macroIndicatorScorer.js";
 

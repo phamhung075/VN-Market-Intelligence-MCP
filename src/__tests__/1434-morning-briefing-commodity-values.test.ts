@@ -1,4 +1,4 @@
-process.env["DB_PATH"] = ":memory:"
+Bun.env["DB_PATH"] = ":memory:"
 // src/__tests__/1434-morning-briefing-commodity-values.test.ts
 // Task 1434 — TDD RED: commodity section shows per-commodity values (not count-only)
 //

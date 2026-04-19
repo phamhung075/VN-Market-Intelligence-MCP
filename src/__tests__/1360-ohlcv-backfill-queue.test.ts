@@ -1,4 +1,4 @@
-process.env["DB_PATH"] = ":memory:";
+Bun.env["DB_PATH"] = ":memory:";
 // src/__tests__/1360-ohlcv-backfill-queue.test.ts
 // Task 1360 — TDD: ohlcv-backfill-queue endpoint + probe dedup tests (Sprint 123)
 //

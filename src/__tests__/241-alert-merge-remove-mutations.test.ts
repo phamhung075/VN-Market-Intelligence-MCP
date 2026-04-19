@@ -29,7 +29,7 @@ import { registerTargetAllocationTools } from "../interface/mcp/tools/targetAllo
 // ─────────────────────────────────────────────────────────────────────────────
 // Use in-memory DB so tests don't touch on-disk data
 // ─────────────────────────────────────────────────────────────────────────────
-process.env["DB_PATH"] = ":memory:";
+Bun.env["DB_PATH"] = ":memory:";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers

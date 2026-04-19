@@ -1,5 +1,5 @@
 // src/__tests__/1214-vnm-hormuz-cascade.test.ts
-process.env["DB_PATH"] = ":memory:";
+Bun.env["DB_PATH"] = ":memory:";
 import { describe, it, expect } from "bun:test";
 import { detectStocksInText, getAliasesForCode } from "../domain/services/stockAliases.js";
 import { SECTOR_RULES } from "../domain/services/cascadeEngine.js";

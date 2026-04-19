@@ -8,7 +8,7 @@
  *   AC-4. The tool count reported by the running server increases by 1 (96 → 97).
  */
 
-process.env["DB_PATH"] = ":memory:";
+Bun.env["DB_PATH"] = ":memory:";
 
 import { describe, it, expect, beforeAll, afterAll } from "bun:test";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";

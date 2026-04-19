@@ -18,7 +18,7 @@ import {
   type TelegramUpdate,
 } from "../infrastructure/notifiers/telegramCommands.js";
 
-process.env["DB_PATH"] = ":memory:";
+Bun.env["DB_PATH"] = ":memory:";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Test helpers

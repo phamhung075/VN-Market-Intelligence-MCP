@@ -1,4 +1,4 @@
-process.env["DB_PATH"] = ":memory:";
+Bun.env["DB_PATH"] = ":memory:";
 /**
  * Task 278 — Wire Peer Sync into Intelligence Cycle (Step A3b)
  *

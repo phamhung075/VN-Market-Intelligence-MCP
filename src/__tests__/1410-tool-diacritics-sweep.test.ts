@@ -1,4 +1,4 @@
-process.env["DB_PATH"] = ":memory:"; // must be first line
+Bun.env["DB_PATH"] = ":memory:"; // must be first line
 
 import { describe, it, expect } from "bun:test";
 import { Database } from "bun:sqlite";

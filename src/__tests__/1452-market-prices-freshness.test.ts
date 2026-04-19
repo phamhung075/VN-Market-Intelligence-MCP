@@ -9,7 +9,7 @@
  * portfolio subqueries, isolated from the full briefing pipeline.
  */
 
-process.env["DB_PATH"] = ":memory:";
+Bun.env["DB_PATH"] = ":memory:";
 
 import { describe, it, expect, beforeEach } from "bun:test";
 import { Database } from "bun:sqlite";

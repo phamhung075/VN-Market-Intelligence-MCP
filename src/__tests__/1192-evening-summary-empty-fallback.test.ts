@@ -7,7 +7,7 @@ Bun.env["DB_PATH"] = ":memory:";
  *   2. When hasContent === true, sendFn is called once with normal content
  */
 
-process.env["DB_PATH"] = ":memory:";
+Bun.env["DB_PATH"] = ":memory:";
 import { describe, it, expect, beforeEach } from "bun:test";
 import { Database } from "bun:sqlite";
 import type { EveningSummary } from "../application/usecases/assembleEveningSummary.js";

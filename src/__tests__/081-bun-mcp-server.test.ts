@@ -18,7 +18,7 @@
  */
 
 // Must be set before any import that triggers getDb() / ensureExchangeColumn()
-process.env["DB_PATH"] = ":memory:";
+Bun.env["DB_PATH"] = ":memory:";
 
 import { describe, it, expect, beforeAll, afterAll } from "bun:test";
 import { initDatabase, closeDb } from "../infrastructure/db/schema.js";

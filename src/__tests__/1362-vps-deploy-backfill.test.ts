@@ -1,4 +1,4 @@
-process.env["DB_PATH"] = ":memory:";
+Bun.env["DB_PATH"] = ":memory:";
 // src/__tests__/1362-vps-deploy-backfill.test.ts
 // Task 1362 — TDD: static content checks for deploy-vinahost.sh + systemd units (Sprint 124)
 //

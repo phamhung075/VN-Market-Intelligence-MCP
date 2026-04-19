@@ -7,7 +7,7 @@ Bun.env["DB_PATH"] = ":memory:";
 //   - dedup guard (alreadySentToday) blocks re-send on same day
 //   - yesterday's send row does NOT block today's send
 //   - CRONS.franceSummary default equals '*/30 6-8 * * 1-5' (AC-6, passes after Task 1349)
-process.env["DB_PATH"] = ":memory:";
+Bun.env["DB_PATH"] = ":memory:";
 import { describe, it, expect } from "bun:test";
 import { Database } from "bun:sqlite";
 import { runFranceSummary } from "../scheduler/franceSummaryJob.js";

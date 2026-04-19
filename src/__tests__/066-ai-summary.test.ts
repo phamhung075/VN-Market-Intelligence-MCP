@@ -8,7 +8,7 @@
 import { describe, it, expect, beforeAll, afterAll } from "bun:test";
 
 // Set DB_PATH before any schema import
-process.env["DB_PATH"] = ":memory:";
+Bun.env["DB_PATH"] = ":memory:";
 
 import {
   generateAiSummary,

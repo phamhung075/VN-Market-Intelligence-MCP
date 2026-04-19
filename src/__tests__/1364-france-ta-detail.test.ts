@@ -1,4 +1,4 @@
-process.env["DB_PATH"] = ":memory:"
+Bun.env["DB_PATH"] = ":memory:"
 // src/__tests__/1364-france-ta-detail.test.ts
 // Task 1364 — TDD: France morning briefing TA signal detail
 // Tests are RED until task 1365 implements the new interface.

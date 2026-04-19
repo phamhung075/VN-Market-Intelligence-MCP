@@ -14,7 +14,7 @@
 //   AC-4: FPT failed row is reset to pending by initDatabase() startup migration
 //   AC-5: HPG pending row with attempts<5 is NOT disrupted by initDatabase()
 
-process.env["DB_PATH"] = ":memory:";
+Bun.env["DB_PATH"] = ":memory:";
 
 import { describe, it, expect, beforeEach, afterEach } from "bun:test";
 import { initDatabase, getDb, closeDb } from "../infrastructure/db/schema.js";

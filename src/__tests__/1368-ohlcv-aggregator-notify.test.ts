@@ -1,4 +1,4 @@
-process.env["DB_PATH"] = ":memory:";
+Bun.env["DB_PATH"] = ":memory:";
 // src/__tests__/1368-ohlcv-aggregator-notify.test.ts
 // Task 1368 — TDD RED phase: notify enrichment tests for ohlcvDailyAggregatorJob (Sprint 127)
 //

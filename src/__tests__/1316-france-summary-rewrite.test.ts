@@ -1,6 +1,6 @@
 // src/__tests__/1316-france-summary-rewrite.test.ts
 // Task 1316/1317 — Rewrite franceSummaryJob: Vietnamese digest to MARKET channel
-process.env["DB_PATH"] = ":memory:"
+Bun.env["DB_PATH"] = ":memory:"
 import { describe, it, expect, beforeEach } from "bun:test"
 import { Database } from "bun:sqlite"
 import { runFranceSummary, type FranceSummaryResult } from "../scheduler/franceSummaryJob.js"

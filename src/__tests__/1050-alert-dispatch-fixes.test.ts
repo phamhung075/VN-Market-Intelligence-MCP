@@ -19,7 +19,7 @@
  * same signal type within the same hour is silently ignored by INSERT OR IGNORE.
  */
 
-process.env["DB_PATH"] = ":memory:";
+Bun.env["DB_PATH"] = ":memory:";
 
 import { describe, it, expect } from "bun:test";
 import { Database } from "bun:sqlite";

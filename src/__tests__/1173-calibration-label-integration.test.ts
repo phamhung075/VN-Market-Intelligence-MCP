@@ -18,7 +18,7 @@
  */
 
 // Must be set before importing any schema module so the module-level DB_PATH is picked up.
-process.env["DB_PATH"] = ":memory:";
+Bun.env["DB_PATH"] = ":memory:";
 
 import { describe, it, expect, beforeEach, afterEach } from "bun:test";
 import { Database } from "bun:sqlite";
