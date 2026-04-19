@@ -10,7 +10,7 @@ describe("1480 DB isolation batch5: Bun.env enforcement", () => {
 
     for await (const file of glob.scan({ cwd: process.cwd() })) {
       const firstLine = readFileSync(file, "utf8").split("\n")[0] ?? "";
-      if (firstLine.includes('Bun.env["DB_PATH"]')) {
+      if (firstLine.includes('process.env["DB_PATH"]')) {
         offenders.push(file);
       }
     }
