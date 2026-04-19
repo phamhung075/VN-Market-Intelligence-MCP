@@ -32,3 +32,10 @@ summary: Branch is RED-only. Single commit `test(1497): RED — SBV rates non-ze
   - `src/__tests__/028-sbv-rates.test.ts` — setupTestDb + SBV-10/11 fixtures updated for new interface
 - **Tests added**: None (existing tests updated to match new interface)
 - **Verified**: `bun test` PASS (17/17) | `bun tsc --noEmit` PASS
+
+### Fix — 2026-04-19
+- **Issue**: schema.ts on branch task/1497-sbv-rates-fix missing 1489 tracked_indicators dedup block (stale branch pre-merge)
+- **Root cause**: branch created before task 1489 merged to main; schema.ts lacked hour_bucket column, UNIQUE constraint, trigger, and test-cleanup DELETE; merge also left duplicate property artifacts in SbvMacroSnapshot interface, object literals in sbv.ts/server.ts/028 test fixtures, and a RED-phase 1497 test file (add/add conflict)
+- **Fix**: git merge main; resolved all conflicts keeping both 1489 and 1497 changes; removed 6 sets of merge-artifact duplicate object keys; corrected persist block arg count (12→9); replaced stale RED test file with GREEN 10-test suite
+- **Tests added**: None
+- **Verified**: `bun test` 1489=5/5, 1497=10/10, 028=14/14 PASS | `bun tsc --noEmit` PASS
