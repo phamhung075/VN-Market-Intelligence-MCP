@@ -1,6 +1,6 @@
 {
-  "scan_date": "2026-04-19T10:15:13Z",
-  "last_run": "2026-04-19T10:15:13Z",
+  "scan_date": "2026-04-18T20:30:00Z",
+  "last_run": "2026-04-18T20:30:00Z",
   "findings": [
     {
       "fingerprint": "check-2:mcp.config.json:referenceStocks",
@@ -52,5 +52,37 @@
       "fixed_at": "2026-04-13T00:00:00Z",
       "fix_notes": "Aligned default with config canonical source. Production unaffected (config always passed)."
     }
-  ]
+  ],
+  "scan_checks": {
+    "check-1-duplicate-classification-maps": {
+      "status": "complete",
+      "items_scanned": 15,
+      "findings": 0,
+      "notes": "Record<string, { }> patterns searched. No new duplications found outside canonicals."
+    },
+    "check-2-hardcoded-ticker-arrays": {
+      "status": "complete",
+      "items_scanned": 30,
+      "findings": 0,
+      "notes": "Ticker arrays outside canonicals verified as business logic (muasamcong.ts contract-to-stock mapping) or comments. No data duplication."
+    },
+    "check-3-repeated-magic-numbers": {
+      "status": "complete",
+      "items_scanned": 50,
+      "findings": 0,
+      "notes": "Cron strings and timeouts/thresholds verified. No identical numbers in 3+ production files."
+    },
+    "check-4-schema-duplication": {
+      "status": "complete",
+      "items_scanned": 20,
+      "findings": 0,
+      "notes": "scheduler_locks dual DDL is intentional (documented comment at line 39 of schedulerLockStore.ts). Canonical source is schema.ts."
+    },
+    "check-5-config-drift": {
+      "status": "complete",
+      "items_scanned": 10,
+      "findings": 0,
+      "notes": "clobApiUrl, gammaApiUrl, and all timeouts verified against mcp.config.json. All fallbacks correct."
+    }
+  }
 }

@@ -21,7 +21,7 @@ import { getDb } from "../db/schema.js";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
-const PROJECT_ROOT = resolve(import.meta.dir, "../../../..");
+const PROJECT_ROOT = resolve(import.meta.dir, "../../..");
 const AGENT_FILE = resolve(PROJECT_ROOT, "cowork-analysis-vnmarket-team/07-qa-responder.md");
 const CLAUDE_BIN = "/Users/admin/.local/bin/claude";
 
