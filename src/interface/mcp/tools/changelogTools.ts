@@ -96,7 +96,7 @@ export function registerChangelogTools(server: McpServer): void {
         .number()
         .int()
         .optional()
-        .describe("ID cua bao cao telegram_reports lien quan (tuy chon)"),
+        .describe("ID của báo cáo telegram_reports liên quan (tùy chọn)"),
       supersedes_alert_ids: z
         .array(z.string())
         .optional()

@@ -115,7 +115,7 @@ export function registerLeadershipTools(server: McpServer): void {
       windowDays: z
         .number()
         .optional()
-        .describe("Cua so thoi gian cho mass insider buy (default: 30 ngay)"),
+        .describe("Cửa sổ thời gian cho mass insider buy (default: 30 ngày)"),
       transactions: z
         .array(
           z.object({
