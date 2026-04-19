@@ -60,3 +60,21 @@ tests_skipped: []
 
 tsc_clean: n/a (RED phase — no prod code)
 full_suite_pass: n/a (RED phase)
+
+---
+
+## [Developer] Implementation Record — 1495_b GREEN
+
+files_actually_modified:
+- /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/infrastructure/db/schema.ts   # macro_indicators +9 cols DDL + idempotent ALTER migration
+- /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/interface/mcp/server.ts   # POST /api/push-tradingeconomics + TE_COLUMN_MAP allowlist
+
+files_created:
+- /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/vps-scripts/fetch-tradingeconomics.sh   # VPS script: polls TE API 12 indicators, pushes to MCP
+
+tests_written: []   # test file created in 1495_a RED phase
+
+tests_skipped: []
+
+tsc_clean: true
+full_suite_pass: true   # 5644 pass, 17 pre-existing failures (unrelated)

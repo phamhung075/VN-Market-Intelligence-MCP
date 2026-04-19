@@ -93,8 +93,7 @@
 | 1492 | GREEN: fix push-foreign-flow MCP endpoint parse validation; fix vps-scripts/push-foreign-flow.sh to match expected schema | Todo | Dev |
 | 1493 | TDD RED: 1493-reuters-vps-push.test.ts — push-reuters endpoint inserts RSS items into rag_analyses; dedup by url; rejects malformed payload | Todo | Dev |
 | 1494 | GREEN: add vps-scripts/fetch-reuters.sh (VPS cron, fetches Reuters RSS, pushes to MCP /push-reuters); add push-reuters endpoint in MCP server; wire to pollNews source registry | Todo | Dev |
-| 1495 | TDD RED: 1495-tradingeconomics-vps-push.test.ts — push-tradingeconomics endpoint upserts all 13 indicator rows into tracked_indicators; rejects bad payload | Todo | Dev |
-| 1496 | GREEN: add vps-scripts/fetch-tradingeconomics.sh (VPS cron, scrapes TE via Playwright, pushes 13 indicators); add push-tradingeconomics endpoint in MCP server | Todo | Dev |
+| 1495 | GREEN: push-tradingeconomics endpoint + schema +9 cols + vps script | Review | Dev |
 | 1497 | TDD RED: 1497-sbv-rates-fix.test.ts — storeSbvRates writes non-zero overnight_rate + refinancing_rate; new columns present: discount_rate_pct, max_deposit_rate_pct, max_lending_rate_pct, interbank_overnight_pct | Todo | Dev |
 | 1498 | GREEN: fix vn-sbv-fetch.service / sbv.ts fetcher — parse correct fields from SBV portal; extend sbv_rates schema with 4 new columns | Todo | Dev |
 | 1499 | TDD RED: 1499-gso-macro-vps-push.test.ts — push-gso endpoint upserts macro_indicators row with non-stale fetched_at; rejects bad payload | Todo | Dev |
