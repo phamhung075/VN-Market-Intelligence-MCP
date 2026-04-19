@@ -121,11 +121,11 @@ export interface ForeignFlowBriefingRow {
 export interface TaSignal {
   /** Stock ticker, e.g. "VCB" */
   code: string;
-  /** RSI(14) value, or null when fewer than 15 candles available */
+  /** RSI(14) value, or null when fewer than 8 candles available (adaptive RSI period) */
   rsi14: number | null;
   /** RSI classification: strict > 70 = overbought, < 30 = oversold, else neutral */
   rsiStatus: "overbought" | "oversold" | "neutral";
-  /** SMA20 value, or null when fewer than 20 candles available */
+  /** SMA20 value, or null when fewer than 8 candles available (adaptive MA period) */
   ma20: number | null;
   /** Price position relative to MA20: "above" | "below" | "neutral" (when ma20 null or equal) */
   priceVsMa20: "above" | "below" | "neutral";
@@ -246,7 +246,7 @@ export interface AssembleBriefingOptions {
   /**
    * Override TA computation per ticker for test injection.
    * Receives the ticker code and the active DB.
-   * Returns null when data is insufficient (< 15 candles).
+   * Returns null when data is insufficient (< 8 candles).
    */
   computeTaFn?: (code: string, db: Database) => TaSignal | null;
   /**
