@@ -4,161 +4,7 @@
 
 ---
 
-## Sprint 150 — COMPLETE (2026-04-18)
-
-| ID | Title | Status |
-|----|-------|--------|
-| 1420 | wrap-missing-jobs-recordJobRun | Done |
-| 1421 | ohlcv-health-digest-fix | Done |
-
-> Archived: `docs/archive/sprints-133-154.md`
-
----
-
-## Sprint 151 — COMPLETE (2026-04-18)
-
-| ID | Title | Status | Role |
-|----|-------|--------|------|
-| 1422 | test(morning-briefing): TDD — upcomingDeadlines RED assertions | Done | Dev |
-| 1423 | feat(morning-briefing): add upcomingDeadlines BCTC section GREEN | Done | Dev |
-| ARCH | review REQ_1422.md + write TECH_1422.md | Done | Architect |
-
-> Archived: `docs/archive/sprints-133-154.md`
-
----
-
-## Sprint 152 — feat(evening-summary): sector aggregation from watchlist movers — COMPLETE (2026-04-18)
-
-| ID | Title | Status | Role |
-|----|-------|--------|------|
-| 1424 | test(evening-summary): TDD RED — sector aggregation assertions | Done | Dev |
-| 1425 | feat(evening-summary): sector aggregation from watchlist movers GREEN | Done | Dev |
-| ARCH | review REQ_1424.md + write TECH_1424.md | Done | Architect |
-
-> Archived: `docs/archive/sprints-133-154.md`
-
----
-
-## Sprint 153 — feat(evening-summary): VN-Index close — COMPLETE (2026-04-18)
-
-| ID | Title | Status | Role |
-|----|-------|--------|------|
-| 1426 | test(evening-summary): TDD RED — vnIndex assertions | Done | Dev |
-| 1427 | feat(evening-summary): add vnIndex to EveningSummary + formatter GREEN | Done | Dev |
-| ARCH | review REQ_1426.md + write TECH_1426.md | Done | Architect |
-
-> Archived: `docs/archive/sprints-133-154.md`
-
----
-
-## Sprint 154 — fix(evening-ta-filter): restrict TA section to RSI overbought/oversold only — COMPLETE (2026-04-18)
-
-| ID | Title | Status | Role |
-|----|-------|--------|------|
-| 1428 | test(evening-ta-filter): TDD RED — RSI-only TA filter assertions | Done | Dev |
-| 1429 | fix(evening-ta-filter): change both predicates to rsiStatus-only GREEN | Done | Dev |
-
-> Report: `reports/TASK_REPORT_1428.md`
-> Archived: `docs/archive/sprints-133-154.md`
-
----
-
-## Sprint 155 — feat(startup-catchup): run morning-briefing + evening-summary on restart if missed today — COMPLETE (2026-04-18)
-
-| ID | Title | Status | Role |
-|----|-------|--------|------|
-| 1430 | test(startup-catchup): TDD RED — shouldRunCatchup + probe assertions | Done | Dev |
-| 1431 | feat(startup-catchup): implement shouldRunCatchup + probe setTimeout in jobs.ts GREEN | Done | Dev |
-| ARCH | review REQ_1430.md + write TECH_1430.md | Done | Architect |
-
-> Archived: `docs/archive/sprints-133-155.md`
-
----
-
-## Sprint 156 — fix(foreign-flow-sentinel): filter 9999999 sentinel value — COMPLETE (2026-04-18)
-
-| ID | Title | Status | Role |
-|----|-------|--------|------|
-| 1432 | test(foreign-flow-sentinel): TDD RED — sentinel filter assertions | Done | Dev |
-| 1433 | fix(foreign-flow-sentinel): filter 9999999 from queryForeignFlowSummary GREEN | Done | Dev |
-
-> Report: `reports/TASK_REPORT_1432.md`
-> Archived: `docs/archive/sprints-133-156.md`
-
----
-
-## Sprint 157 — fix(morning-briefing): show commodity values instead of count-only — COMPLETE (2026-04-18)
-
-| ID | Title | Status | Role |
-|----|-------|--------|------|
-| 1434 | test(morning-briefing): TDD RED — commodity values assertions | Done | Dev |
-| 1435 | fix(morning-briefing): replace count-only line with per-commodity lines GREEN | Done | Dev |
-
-> Handoff: `docs/handoffs/TASK_1434.md`
-> Report: `reports/TASK_REPORT_1434.md`
-> Archived: `docs/archive/sprints-133-157.md`
-
----
-
-## Sprint 158 — feat(morning-briefing): add point change to VN-Index display — COMPLETE (2026-04-18)
-
-| ID | Title | Status | Role |
-|----|-------|--------|------|
-| 1436 | test(morning-briefing): TDD RED — vnIndex point change assertions | Done | Dev |
-| 1437 | feat(morning-briefing): add change field to VnIndexSnapshot + formatter GREEN | Done | Dev |
-
-> Report: `reports/TASK_REPORT_1436.md`
-> Archived: `docs/archive/sprints-133-158.md`
-
----
-
-## Sprint 159 — feat(morning-briefing): render portfolio P&L section — COMPLETE (2026-04-18)
-
-| ID | Title | Status | Role |
-|----|-------|--------|------|
-| 1438 | test(morning-briefing): TDD RED — portfolio P&L section assertions | Done | Dev |
-| 1439 | feat(morning-briefing): call formatPnlSection in formatBriefingMessage GREEN | Done | Dev |
-
-> Report: `reports/TASK_REPORT_1438.md`
-> Merged: 206cdc0
-> Archived: `docs/archive/sprints-133-159.md`
-
----
-
-## Sprint 160 — fix(portfolio-pnl): Vietnamese diacritics in formatPnlSection
-
-| ID | Title | Status | Role |
-|----|-------|--------|------|
-| 1440 | fix(portfolio-pnl): Vietnamese diacritics in formatPnlSection | Done | QA |
-
-> Merged: b18526d — branch deleted
-
----
-
-## Sprint 161 — feat(evening-summary): portfolio P&L at market close — COMPLETE (2026-04-18)
-
-| ID | Title | Status | Role |
-|----|-------|--------|------|
-| 1441 | test(evening-summary): TDD RED — portfolio P&L assertions | Done | Dev |
-| 1442 | feat(evening-summary): add portfolioPnl to EveningSummary + formatter GREEN | Done | Dev |
-| ARCH | review REQ_1441.md + write TECH_1441.md | Done | Architect |
-
-> Report: `reports/TASK_REPORT_1441.md`
-> Merged: 47d9aa8 — branch deleted
-> Archived: `docs/archive/sprints-133-161.md`
-
----
-
-## Sprint 162 — feat(france-summary): portfolio P&L block — COMPLETE (2026-04-18)
-
-| ID | Title | Status | Role |
-|----|-------|--------|------|
-| 1444 | test(france-summary): TDD RED — portfolio P&L assertions | Done | Dev |
-| 1445 | feat(france-summary): add portfolioPnl to runFranceSummary + formatFranceSummaryVI GREEN | Done | Dev |
-
-> Report: `reports/TASK_REPORT_1444.md`
-> Merged: eb016e5 — branch deleted
-> Archived: `docs/archive/sprints-133-162.md`
+> Sprints 133–162 archived: `docs/archive/sprints-133-162.md`
 
 ---
 
@@ -170,6 +16,55 @@
 
 > Report: `reports/TASK_REPORT_1447.md`
 > Handoff: `docs/handoffs/TASK_1447.md`
+
+---
+
+## Sprint 164 — fix(evening-summary): hasContent ignores vnIndex
+
+| ID | Title | Status | Role |
+|----|-------|--------|------|
+| 1449 | fix(evening-summary): add vnIndex != null to hasContent OR-chain | Done | Dev |
+
+> Report: `reports/TASK_REPORT_1449.md`
+
+---
+
+## Sprint 165 — feat(france-summary): VN-Index snapshot in morning digest
+
+| ID | Title | Status | Role |
+|----|-------|--------|------|
+| 1450_a | test(france-summary): TDD RED — vnIndex block assertions | Done | Dev |
+| 1450_b | feat(france-summary): add fetchVnIndexFn + Section 0 VN-Index block GREEN | Done | Dev |
+
+> Reports: `reports/TASK_REPORT_1450a.md`, `reports/TASK_REPORT_1450b.md`
+
+---
+
+## Sprint 166 — fix(france-summary): market_prices fetched_at → updated_at
+
+| ID | Title | Status | Role |
+|----|-------|--------|------|
+| 1451 | fix(france-summary): market_prices column fetched_at → updated_at | Done | Dev |
+
+> Report: `reports/TASK_REPORT_1451.md`
+
+---
+
+## Sprint 167 — fix(assembleBriefing): stale market_prices freshness guard
+
+| ID | Title | Status | Role |
+|----|-------|--------|------|
+| 1452 | fix(assembleBriefing): add 3-day freshness guard to market_prices subqueries | Todo | Dev |
+
+---
+
+## Sprint 168 — fix(france-summary): market_prices freshness guard
+
+| ID | Title | Status | Role |
+|----|-------|--------|------|
+| 1455 | fix(france-summary): market_prices freshness guard — VNINDEX + portfolio P&L queries | Review | Dev |
+
+> Handoff: `docs/handoffs/TASK_1455.md`
 
 ---
 
