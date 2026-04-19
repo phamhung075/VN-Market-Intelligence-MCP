@@ -790,6 +790,11 @@ export async function initDatabase(): Promise<void> {
   `);
 
   // ── Tracked indicators (created lazily by commodityTracker, canonical here) ─
+  // Task 1489: hour_bucket column + UNIQUE(indicator, source, hour_bucket) ON CONFLICT REPLACE
+  // ensures at most one row per indicator+source per clock-hour (dedup).
+  // hour_bucket is populated by an AFTER INSERT trigger so callers need not set it.
+  // ON CONFLICT REPLACE: when the trigger's UPDATE causes a unique clash, the old row
+  // is silently replaced — net effect is one row per (indicator, source, UTC-hour).
   db.exec(`
     CREATE TABLE IF NOT EXISTS tracked_indicators (
       id           INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -797,10 +802,19 @@ export async function initDatabase(): Promise<void> {
       value        REAL NOT NULL,
       unit         TEXT NOT NULL DEFAULT '',
       source       TEXT NOT NULL DEFAULT '',
-      extracted_at TEXT NOT NULL
+      extracted_at TEXT NOT NULL,
+      hour_bucket  TEXT,
+      UNIQUE(indicator, source, hour_bucket) ON CONFLICT REPLACE
     );
     CREATE INDEX IF NOT EXISTS idx_tracked_ind_name_time
       ON tracked_indicators(indicator, extracted_at DESC);
+    CREATE TRIGGER IF NOT EXISTS trg_tracked_ind_hour_bucket
+      AFTER INSERT ON tracked_indicators
+      BEGIN
+        UPDATE tracked_indicators
+          SET hour_bucket = strftime('%Y-%m-%dT%H:00:00', NEW.extracted_at)
+          WHERE id = NEW.id AND hour_bucket IS NULL;
+      END;
   `);
 
   // ── Mention velocity: canonical DDL lives above (Task 265, ~line 271).
@@ -1455,5 +1469,9 @@ export async function initDatabase(): Promise<void> {
   // Cleanup: remove stale VCB test fixture rows that leaked before sprint-181 DB isolation fix
   db.exec(`DELETE FROM market_prices WHERE code = 'VCB' AND updated_at < datetime('now', '-7 days')`);
   db.exec(`DELETE FROM market_prices_history WHERE code = 'VCB' AND fetched_at < datetime('now', '-7 days')`);
+
+  // Task 1489: remove tracked_indicators rows inserted by tests (source='test')
+  // so test-generated noise never persists into production state.
+  db.exec(`DELETE FROM tracked_indicators WHERE source='test'`);
 
 }
