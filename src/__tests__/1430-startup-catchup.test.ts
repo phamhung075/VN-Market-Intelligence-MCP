@@ -87,4 +87,16 @@ describe("shouldRunCatchup", () => {
     const now = new Date("2026-04-18T08:00:00Z");
     expect(shouldRunCatchup(db, "franceSummaryJob", 9, 0, now)).toBe(false);
   });
+
+  it("AC-11: Saturday + weekdayOnly=true — returns false even if window passed", () => {
+    // 2026-04-19 is a Saturday (getUTCDay() === 6)
+    const now = new Date("2026-04-19T03:00:00Z");
+    expect(shouldRunCatchup(db, "morningBriefingJob", 1, 0, now, true)).toBe(false);
+  });
+
+  it("AC-12: Monday + weekdayOnly=true + window passed + no row — returns true", () => {
+    // 2026-04-20 is a Monday (getUTCDay() === 1)
+    const now = new Date("2026-04-20T03:00:00Z");
+    expect(shouldRunCatchup(db, "morningBriefingJob", 1, 0, now, true)).toBe(true);
+  });
 });
