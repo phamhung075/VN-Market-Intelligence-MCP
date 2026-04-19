@@ -1,4 +1,9 @@
 Bun.env["DB_PATH"] = ":memory:";
+// Isolation guard: load real telegram module bypassing Bun mock cache.
+// 1485 registers a process-global stub; this cache-busts it via absolute path+query.
+const _realMod1254 = await import(
+  Bun.resolveSync("../infrastructure/notifiers/telegram.js", import.meta.dir) + "?isolate=1254"
+);
 
 /**
  * Task 1254 — Fix duplicate morning-briefing market_messages insert (bug 1263)
@@ -54,9 +59,7 @@ describe("Task 1254 — sendTelegramMarket skipPersist option", () => {
     Bun.env.TELEGRAM_BOT_TOKEN = "test-token-1254";
     Bun.env.TELEGRAM_INFO_MARKET_GROUP_ID = "-100123456";
 
-    const { sendTelegramMarket } = await import(
-      "../infrastructure/notifiers/telegram.js"
-    );
+    const { sendTelegramMarket } = _realMod1254;
     await sendTelegramMarket("Test briefing text", {
       parseMode: "",
       skipPersist: true,
@@ -83,9 +86,7 @@ describe("Task 1254 — sendTelegramMarket skipPersist option", () => {
     Bun.env.TELEGRAM_BOT_TOKEN = "test-token-1254";
     Bun.env.TELEGRAM_INFO_MARKET_GROUP_ID = "-100123456";
 
-    const { sendTelegramMarket } = await import(
-      "../infrastructure/notifiers/telegram.js"
-    );
+    const { sendTelegramMarket } = _realMod1254;
     await sendTelegramMarket("Test briefing text no-skip", {
       parseMode: "",
       // skipPersist omitted → default behaviour = insert
@@ -101,7 +102,7 @@ describe("Task 1254 — sendTelegramMarket skipPersist option", () => {
 
   it("AC-3: SendTelegramOptions type exports skipPersist as optional boolean", async () => {
     // Type-level check — if the import compiles the type is exported correctly.
-    const { } = await import("../infrastructure/notifiers/telegram.js");
+    const { } = _realMod1254;
     // If TypeScript compilation succeeds with skipPersist in the options above,
     // this test passes (runtime assertion is a no-op guard).
     expect(true).toBe(true);

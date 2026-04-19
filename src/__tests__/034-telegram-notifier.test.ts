@@ -1,5 +1,13 @@
 Bun.env["DB_PATH"] = ":memory:";
 
+import { mock } from "bun:test";
+// Isolation guard: bypass process-global mock.module stub from 047.
+// Load real telegram module via absolute-path+query-bust (bypasses Bun mock cache).
+// Tests use _realMod directly instead of await import() to avoid hitting the stub.
+const _realMod = await import(
+  Bun.resolveSync("../infrastructure/notifiers/telegram.js", import.meta.dir) + "?isolate=034"
+);
+
 /**
  * Task 034 — Telegram Bot Notifier
  *
@@ -13,7 +21,7 @@ Bun.env["DB_PATH"] = ":memory:";
  *   - send_test_telegram MCP tool: success + failure
  */
 
-import { describe, it, expect, beforeEach, afterEach, mock } from "bun:test";
+import { describe, it, expect, beforeEach, afterEach } from "bun:test";
 import type { Alert } from "../domain/services/alertGenerator.js";
 import type { Signal } from "../domain/services/signalDetector.js";
 
@@ -95,9 +103,7 @@ describe("Task 034 — Telegram Bot Notifier", () => {
 
     const mockFetch = mock(async () => makeResponse(200, { ok: true, result: {} }));
 
-    const { sendTelegramMarket } = await import(
-      "../infrastructure/notifiers/telegram.js"
-    );
+    const { sendTelegramMarket } = _realMod;
 
     const result = await sendTelegramMarket("Hello", { fetchFn: mockFetch as unknown as typeof fetch });
     expect(result).toBe(true);
@@ -110,9 +116,7 @@ describe("Task 034 — Telegram Bot Notifier", () => {
 
     const mockFetch = mock(async () => makeResponse(200));
 
-    const { sendTelegramMarket } = await import(
-      "../infrastructure/notifiers/telegram.js"
-    );
+    const { sendTelegramMarket } = _realMod;
 
     const result = await sendTelegramMarket("Hello", { fetchFn: mockFetch as unknown as typeof fetch });
     expect(result).toBe(false);
@@ -125,9 +129,7 @@ describe("Task 034 — Telegram Bot Notifier", () => {
 
     const mockFetch = mock(async () => makeResponse(200));
 
-    const { sendTelegramMarket } = await import(
-      "../infrastructure/notifiers/telegram.js"
-    );
+    const { sendTelegramMarket } = _realMod;
 
     const result = await sendTelegramMarket("Hello", { fetchFn: mockFetch as unknown as typeof fetch });
     expect(result).toBe(false);
@@ -140,9 +142,7 @@ describe("Task 034 — Telegram Bot Notifier", () => {
 
     const mockFetch = mock(async () => makeResponse(401, { ok: false, description: "Unauthorized" }));
 
-    const { sendTelegramMarket } = await import(
-      "../infrastructure/notifiers/telegram.js"
-    );
+    const { sendTelegramMarket } = _realMod;
 
     const result = await sendTelegramMarket("Hello", { fetchFn: mockFetch as unknown as typeof fetch });
     expect(result).toBe(false);
@@ -154,9 +154,7 @@ describe("Task 034 — Telegram Bot Notifier", () => {
 
     const mockFetch = mock(async () => makeResponse(500, { ok: false }));
 
-    const { sendTelegramMarket } = await import(
-      "../infrastructure/notifiers/telegram.js"
-    );
+    const { sendTelegramMarket } = _realMod;
 
     const result = await sendTelegramMarket("Hello", { fetchFn: mockFetch as unknown as typeof fetch });
     expect(result).toBe(false);
@@ -168,9 +166,7 @@ describe("Task 034 — Telegram Bot Notifier", () => {
 
     const mockFetch = mock(async () => { throw new Error("ECONNREFUSED"); });
 
-    const { sendTelegramMarket } = await import(
-      "../infrastructure/notifiers/telegram.js"
-    );
+    const { sendTelegramMarket } = _realMod;
 
     const result = await sendTelegramMarket("Hello", { fetchFn: mockFetch as unknown as typeof fetch });
     expect(result).toBe(false);
@@ -182,9 +178,7 @@ describe("Task 034 — Telegram Bot Notifier", () => {
 
     const mockFetch = mock(async () => { throw new Error("Catastrophic failure"); });
 
-    const { sendTelegramMarket } = await import(
-      "../infrastructure/notifiers/telegram.js"
-    );
+    const { sendTelegramMarket } = _realMod;
 
     await expect(sendTelegramMarket("Hello", { fetchFn: mockFetch as unknown as typeof fetch })).resolves.toBe(false);
   });
@@ -199,9 +193,7 @@ describe("Task 034 — Telegram Bot Notifier", () => {
       return makeResponse(200);
     });
 
-    const { sendTelegramMarket } = await import(
-      "../infrastructure/notifiers/telegram.js"
-    );
+    const { sendTelegramMarket } = _realMod;
 
     await sendTelegramMarket("Test message", { fetchFn: mockFetch as unknown as typeof fetch });
     expect(capturedUrl).toContain("api.telegram.org");
@@ -219,9 +211,7 @@ describe("Task 034 — Telegram Bot Notifier", () => {
       return makeResponse(200);
     });
 
-    const { sendTelegramMarket } = await import(
-      "../infrastructure/notifiers/telegram.js"
-    );
+    const { sendTelegramMarket } = _realMod;
 
     await sendTelegramMarket("Hello Telegram", { fetchFn: mockFetch as unknown as typeof fetch });
     expect(capturedBody.chat_id).toBe("99999");
@@ -238,9 +228,7 @@ describe("Task 034 — Telegram Bot Notifier", () => {
 
     const mockFetch = mock(async () => makeResponse(200));
 
-    const { notifyTelegramAlert } = await import(
-      "../infrastructure/notifiers/telegram.js"
-    );
+    const { notifyTelegramAlert } = _realMod;
 
     const alert = makeAlert("high");
     const result = await notifyTelegramAlert(alert, { fetchFn: mockFetch as unknown as typeof fetch });
@@ -254,9 +242,7 @@ describe("Task 034 — Telegram Bot Notifier", () => {
 
     const mockFetch = mock(async () => makeResponse(200));
 
-    const { notifyTelegramAlert } = await import(
-      "../infrastructure/notifiers/telegram.js"
-    );
+    const { notifyTelegramAlert } = _realMod;
 
     const alert = makeAlert("critical");
     const result = await notifyTelegramAlert(alert, { fetchFn: mockFetch as unknown as typeof fetch });
@@ -270,9 +256,7 @@ describe("Task 034 — Telegram Bot Notifier", () => {
 
     const mockFetch = mock(async () => makeResponse(200));
 
-    const { notifyTelegramAlert } = await import(
-      "../infrastructure/notifiers/telegram.js"
-    );
+    const { notifyTelegramAlert } = _realMod;
 
     const alert = makeAlert("low");
     const result = await notifyTelegramAlert(alert, { fetchFn: mockFetch as unknown as typeof fetch });
@@ -286,9 +270,7 @@ describe("Task 034 — Telegram Bot Notifier", () => {
 
     const mockFetch = mock(async () => makeResponse(200));
 
-    const { notifyTelegramAlert } = await import(
-      "../infrastructure/notifiers/telegram.js"
-    );
+    const { notifyTelegramAlert } = _realMod;
 
     const alert = makeAlert("medium");
     const result = await notifyTelegramAlert(alert, { fetchFn: mockFetch as unknown as typeof fetch });
@@ -306,9 +288,7 @@ describe("Task 034 — Telegram Bot Notifier", () => {
       return makeResponse(200);
     });
 
-    const { notifyTelegramAlert } = await import(
-      "../infrastructure/notifiers/telegram.js"
-    );
+    const { notifyTelegramAlert } = _realMod;
 
     const alert = makeAlert("high");
     await notifyTelegramAlert(alert, { fetchFn: mockFetch as unknown as typeof fetch });
@@ -334,9 +314,7 @@ describe("Task 034 — Telegram Bot Notifier", () => {
       return makeResponse(200);
     });
 
-    const { notifyTelegramDocument } = await import(
-      "../infrastructure/notifiers/telegram.js"
-    );
+    const { notifyTelegramDocument } = _realMod;
 
     const doc = {
       actionCode: "VCB",
@@ -359,9 +337,7 @@ describe("Task 034 — Telegram Bot Notifier", () => {
 
     const mockFetch = mock(async () => makeResponse(200));
 
-    const { notifyTelegramDocument } = await import(
-      "../infrastructure/notifiers/telegram.js"
-    );
+    const { notifyTelegramDocument } = _realMod;
 
     const result = await notifyTelegramDocument(
       { actionCode: "VCB", title: "Test doc", publishedAt: "01/01/2025" },
@@ -381,9 +357,7 @@ describe("Task 034 — Telegram Bot Notifier", () => {
       return makeResponse(200);
     });
 
-    const { sendTelegramMarket } = await import(
-      "../infrastructure/notifiers/telegram.js"
-    );
+    const { sendTelegramMarket } = _realMod;
 
     await sendTelegramMarket("*bold text*", {
       parseMode: "Markdown",
@@ -394,7 +368,7 @@ describe("Task 034 — Telegram Bot Notifier", () => {
   });
 
   it("TC-18: TelegramNotifier type is exported (interface check via typeof)", async () => {
-    const mod = await import("../infrastructure/notifiers/telegram.js");
+    const mod = _realMod;
     // The module must export the functions (duck-typing check)
     expect(typeof mod.sendTelegramMarket).toBe("function");
     expect(typeof mod.notifyTelegramAlert).toBe("function");

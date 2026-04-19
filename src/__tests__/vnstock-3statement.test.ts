@@ -16,14 +16,19 @@ import { join } from "path";
 const testDbPath = join(tmpdir(), `vnstock-3stmt-test-${Date.now()}.db`);
 Bun.env["DB_PATH"] = testDbPath;
 
-// Import after setting env
+// Import after setting env.
+// Use absolute-path+query-bust to bypass Bun mock.module cache poison from 1466
+// (which stubs vnstockStore.js with no-op functions).
 const { initDatabase, closeDb } = await import("../infrastructure/db/schema.js");
-const { storeBalanceSheet, getLatestBalanceSheet, storeCashFlow, getLatestCashFlow } =
-  await import("../infrastructure/db/vnstockStore.js");
+const _vnstockRealMod = await import(
+  Bun.resolveSync("../infrastructure/db/vnstockStore.js", import.meta.dir) + "?isolate=vnstock3stmt"
+);
+const { storeBalanceSheet, getLatestBalanceSheet, storeCashFlow, getLatestCashFlow } = _vnstockRealMod;
 
 describe("vnstock balance sheet store", () => {
   beforeEach(async () => {
-    await initDatabase();
+    closeDb();           // drop stale handle
+    await initDatabase(); // fresh DB + schema
   });
 
   it("stores and retrieves balance sheet for a stock", () => {
@@ -132,7 +137,8 @@ describe("vnstock balance sheet store", () => {
 
 describe("vnstock cash flow store", () => {
   beforeEach(async () => {
-    await initDatabase();
+    closeDb();           // drop stale handle
+    await initDatabase(); // fresh DB + schema
   });
 
   it("stores and retrieves cash flow for a stock", () => {
