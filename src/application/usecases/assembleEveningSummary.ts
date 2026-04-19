@@ -412,7 +412,7 @@ export async function assembleEveningSummary(
         JOIN daily_ohlcv y
           ON y.code = t.code
          AND y.date = date(t.date, '-1 day')
-        WHERE t.date = date('now')
+        WHERE t.date = (SELECT MAX(date) FROM daily_ohlcv)
       )
       SELECT w.code,
              ${exchangeExpr} AS exchange,
