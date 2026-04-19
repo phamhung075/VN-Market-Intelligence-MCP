@@ -189,9 +189,17 @@ export async function syncVnstockData(codes: string[]): Promise<number> {
         logger.debug("[vnstock-sync] all fresh, skipped", { code });
       }
     } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (msg.includes("malformed")) {
+        logger.warn("[vnstock-sync] DB malformed — bailing sync loop early", {
+          code,
+          error: msg,
+        });
+        break;
+      }
       logger.warn("[vnstock-sync] failed for stock", {
         code,
-        error: err instanceof Error ? err.message : String(err),
+        error: msg,
       });
     }
   }
