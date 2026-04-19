@@ -8,12 +8,23 @@
 
 ---
 
-## Sprint 175 — feat(ohlcv-staleness): daily OHLCV staleness check cron
+## Sprint 176 — fix(sync): bail early on DB corruption in syncVnstockData
+
+| ID | Title | Status | Role |
+|----|-------|--------|------|
+| 1466_a | test(sync): TDD RED — 3 failing assertions for DB corruption bail guard | Review | Dev |
+| 1466_b | fix(sync): GREEN — add malformed guard + break in syncVnstockData catch block | Review | Dev |
+
+---
+
+## Sprint 175 — feat(ohlcv-staleness): daily OHLCV staleness check cron — COMPLETE
 
 | ID | Title | Status | Role |
 |----|-------|--------|------|
 | 1465_a | test(ohlcv-staleness): TDD RED — 5 failing assertions for runOhlcvStalenessCheck | Done | Dev |
-| 1465_b | feat(ohlcv-staleness): GREEN — implement ohlcvStalenessCheckJob + wire into jobs.ts CRONS | Review | Dev |
+| 1465_b | feat(ohlcv-staleness): GREEN — implement ohlcvStalenessCheckJob + wire into jobs.ts CRONS | Done | Dev |
+
+> Report: `reports/TASK_REPORT_1465b.md`
 
 ---
 
