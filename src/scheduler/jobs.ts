@@ -86,8 +86,8 @@ export const CRONS = {
   bctcReparseJob:         Bun.env.CRON_BCTC_REPARSE_JOB           ?? '30 9 * * *',
   /** /ask queue check: every 12 min — signal 07-qa-responder when pending (task 1074) */
   askQueueCheck:          Bun.env.CRON_ASK_QUEUE_CHECK             ?? '*/12 * * * *',
-  /** SQLite WAL checkpoint: daily 03:00 GMT+7 = 20:00 UTC (task 140) */
-  walCheckpoint:          Bun.env.CRON_WAL_CHECKPOINT             ?? '0 20 * * *',
+  /** SQLite WAL checkpoint: every 6h (task 1464 — was daily 20:00 UTC, busy readers blocked TRUNCATE causing 497MB WAL) */
+  walCheckpoint:          Bun.env.CRON_WAL_CHECKPOINT             ?? '0 */6 * * *',
   /** Periodic summary — daily: 22:30 every day (task 1023) */
   summaryDaily:           Bun.env.CRON_SUMMARY_DAILY              ?? '30 22 * * *',
   /** Periodic summary — weekly: 23:00 every Sunday (task 1023) */

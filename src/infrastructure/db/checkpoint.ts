@@ -54,8 +54,8 @@ export function runWalCheckpoint(deps?: CheckpointDeps): { walSize: number; chec
       remaining,
     });
 
-    if (remaining > 1000) {
-      _log.warn("[checkpoint] remaining frames > 1000 — WAL growth runaway risk", {
+    if (remaining > 10000) {
+      _log.error("[checkpoint] WAL stuck >40MB — restarting may be needed", {
         walSize,
         checkpointed,
         remaining,
