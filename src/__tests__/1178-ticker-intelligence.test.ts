@@ -466,10 +466,10 @@ describe("Task 1178 — AC-4: malformed ai_analysis JSON handled gracefully", ()
     });
   });
 
-  it("section 5 shows (loi phan tich BCTC) when JSON is malformed", async () => {
+  it("section 5 shows (lỗi phân tích BCTC) when JSON is malformed", async () => {
     const result = await handleGetTickerIntelligence("VNM", db);
     expect(result).toContain("[5] BCTC AI");
-    expect(result).toContain("(loi phan tich BCTC)");
+    expect(result).toContain("(lỗi phân tích BCTC)");
   });
 
   it("all 6 section labels are still present despite JSON parse failure", async () => {
