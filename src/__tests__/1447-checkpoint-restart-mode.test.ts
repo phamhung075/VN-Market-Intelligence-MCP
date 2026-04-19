@@ -1,8 +1,8 @@
 /**
- * Task 1447 — checkpoint: PASSIVE → RESTART mode
+ * Task 1447/1458 — checkpoint: PASSIVE → RESTART → TRUNCATE mode
  *
  * Tests:
- *   (a) runWalCheckpoint() issues PRAGMA wal_checkpoint(RESTART), not PASSIVE
+ *   (a) runWalCheckpoint() issues PRAGMA wal_checkpoint(TRUNCATE), not PASSIVE/RESTART
  *   (b) returns { walSize, checkpointed } shape
  *   (c) logs a WARN when remaining frames > 1000
  *   (d) does not throw when db.query returns null (error path returns zeros)
@@ -47,7 +47,7 @@ const deps: CheckpointDeps = {
 
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe("Task 1447 — checkpoint RESTART mode", () => {
+describe("Task 1447/1458 — checkpoint TRUNCATE mode", () => {
   beforeEach(() => {
     queryCalls.length = 0;
     warnCalls.length = 0;
@@ -55,11 +55,12 @@ describe("Task 1447 — checkpoint RESTART mode", () => {
     errorCalls.length = 0;
   });
 
-  it("(a) uses RESTART mode, not PASSIVE", () => {
+  it("(a) uses TRUNCATE mode, not PASSIVE or RESTART", () => {
     mockQueryReturn = { busy: 0, log: 500, checkpointed: 500 };
     runWalCheckpoint(deps);
     expect(queryCalls.length).toBe(1);
-    expect(queryCalls[0]).toContain("RESTART");
+    expect(queryCalls[0]).toContain("TRUNCATE");
+    expect(queryCalls[0]).not.toContain("RESTART");
     expect(queryCalls[0]).not.toContain("PASSIVE");
   });
 

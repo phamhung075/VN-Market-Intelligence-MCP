@@ -5,7 +5,7 @@
  * Without periodic checkpoints, the WAL grows unbounded.
  *
  * This module provides:
- *   - `runWalCheckpoint()` — RESTART checkpoint (blocks new writers until complete, truncates WAL)
+ *   - `runWalCheckpoint()` — TRUNCATE checkpoint (checkpoints all frames and resets WAL to zero)
  *   - `registerShutdownHook()` — checkpoint on SIGTERM/SIGINT before exit
  *
  * Scheduled daily at 03:00 GMT+7 via cron in jobs.ts.
@@ -24,12 +24,12 @@ export interface CheckpointDeps {
 }
 
 /**
- * Runs a RESTART WAL checkpoint on the main database.
+ * Runs a TRUNCATE WAL checkpoint on the main database.
  *
- * RESTART mode: checkpoints all frames, then blocks new writers until all
- * existing readers have finished so the WAL file can be reset to zero.
+ * TRUNCATE mode: checkpoints all frames and resets the WAL file to zero
+ * length regardless of active readers, matching the shutdown hook behaviour.
  * Safe to call at 03:00 GMT+7 off-hours when reader pressure is minimal.
- * Prevents unbounded WAL growth (root cause of 270MB WAL accumulation and
+ * Prevents unbounded WAL growth (root cause of 438MB WAL accumulation and
  * SQLite "malformed disk image" corruption in vnstock-sync).
  *
  * @param deps — optional injectable deps (for testing)
@@ -41,7 +41,7 @@ export function runWalCheckpoint(deps?: CheckpointDeps): { walSize: number; chec
   try {
     const db = _getDb();
     const result = db.query<{ busy: number; log: number; checkpointed: number }, []>(
-      "PRAGMA wal_checkpoint(RESTART)",
+      "PRAGMA wal_checkpoint(TRUNCATE)",
     ).get();
 
     const walSize = result?.log ?? 0;
