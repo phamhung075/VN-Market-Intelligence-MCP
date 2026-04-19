@@ -462,7 +462,7 @@ export async function runFranceSummary(opts: FranceSummaryOptions = {}): Promise
       interface VnIndexRow { price: number; change_pct: number; updated_at: string }
       const row = resolvedDb
         .prepare<VnIndexRow, []>(
-          `SELECT price, change_pct, updated_at FROM market_prices WHERE code = 'VNINDEX' LIMIT 1`,
+          `SELECT price, change_pct, updated_at FROM market_prices WHERE code = 'VNINDEX' AND updated_at >= datetime('now', '-3 days') LIMIT 1`,
         )
         .get()
       if (row) {
@@ -504,7 +504,7 @@ export async function runFranceSummary(opts: FranceSummaryOptions = {}): Promise
         const codes = openPositions.map((p) => `'${p.code}'`).join(",")
         const priceRows = resolvedDb
           .prepare<PriceRow, []>(
-            `SELECT code, price FROM market_prices WHERE code IN (${codes})`,
+            `SELECT code, price FROM market_prices WHERE code IN (${codes}) AND updated_at >= datetime('now', '-3 days')`,
           )
           .all()
         const priceMap = new Map(priceRows.map((r) => [r.code, r.price]))
