@@ -71,7 +71,7 @@ export function spawnQaResponder(): SpawnResult {
     const agentPrompt = readFileSync(AGENT_FILE, "utf-8");
 
     _running = true;
-    const proc = Bun.spawn([CLAUDE_BIN, "--print", "-p", agentPrompt], {
+    const proc = Bun.spawn([CLAUDE_BIN, "--dangerously-skip-permissions", "--print", "-p", agentPrompt], {
       cwd: PROJECT_ROOT,
       stdout: "ignore",
       stderr: "ignore",
