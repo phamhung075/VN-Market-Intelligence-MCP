@@ -1,3 +1,4 @@
+Bun.env["DB_PATH"] = ":memory:";
 /**
  * Task 235 — Merge Telegram send tools: 3 → 1 send_telegram
  *

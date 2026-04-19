@@ -1,3 +1,4 @@
+Bun.env["DB_PATH"] = ":memory:";
 /**
  * Task 125 — E2E Daily Briefing Flow
  *

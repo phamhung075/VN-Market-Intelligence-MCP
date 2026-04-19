@@ -1,3 +1,4 @@
+Bun.env["DB_PATH"] = ":memory:";
 /**
  * Task 126 — Macro Cascade Integration
  *

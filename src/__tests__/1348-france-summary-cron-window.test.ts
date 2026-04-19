@@ -1,3 +1,4 @@
+Bun.env["DB_PATH"] = ":memory:";
 // src/__tests__/1348-france-summary-cron-window.test.ts
 // Task 1348 — TDD: cron window tests for france-summary job (Sprint 117)
 //

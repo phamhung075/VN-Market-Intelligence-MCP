@@ -1,3 +1,4 @@
+Bun.env["DB_PATH"] = ":memory:";
 /**
  * Task 1192 — Evening summary empty-content: silent skip
  *
