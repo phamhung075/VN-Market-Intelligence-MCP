@@ -1,4 +1,9 @@
 Bun.env["DB_PATH"] = ":memory:";
+// Isolation guard: load real telegram module bypassing Bun mock cache.
+// 1485/047 register a process-global stub; this cache-busts it via absolute path+query.
+const _telegramRealMod = await import(
+  Bun.resolveSync("../infrastructure/notifiers/telegram.js", import.meta.dir) + "?isolate=1163"
+);
 /**
  * Task 1163 — MARKET Message Quality Review System (TDD red phase)
  *
@@ -140,8 +145,8 @@ interface SendTelegramMarketOptions {
   };
 }
 
-// Import sendTelegramMarket — cast to extended signature so persist field compiles
-import { sendTelegramMarket as _sendTelegramMarketBase } from "../infrastructure/notifiers/telegram.js";
+// Use real sendTelegramMarket from cache-busted module (bypasses 047/1485 stub)
+const _sendTelegramMarketBase = _telegramRealMod.sendTelegramMarket;
 const sendTelegramMarket = _sendTelegramMarketBase as (
   text: string,
   options?: SendTelegramMarketOptions,
