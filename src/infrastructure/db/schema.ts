@@ -431,24 +431,37 @@ export async function initDatabase(): Promise<void> {
   // `sbv_rates_history` — append-only time series for macro σ analysis.
   db.exec(`
     CREATE TABLE IF NOT EXISTS sbv_rates (
-      source               TEXT PRIMARY KEY,
-      overnight_rate_pct   REAL NOT NULL DEFAULT 0,
-      refinancing_rate_pct REAL NOT NULL DEFAULT 0,
-      usd_vnd_official     REAL NOT NULL DEFAULT 0,
-      fetched_at           TEXT NOT NULL
+      source                  TEXT PRIMARY KEY,
+      overnight_rate_pct      REAL NOT NULL DEFAULT 0,
+      refinancing_rate_pct    REAL NOT NULL DEFAULT 0,
+      discount_rate_pct       REAL NOT NULL DEFAULT 0,
+      max_deposit_rate_pct    REAL NOT NULL DEFAULT 0,
+      max_lending_rate_pct    REAL NOT NULL DEFAULT 0,
+      interbank_overnight_pct REAL NOT NULL DEFAULT 0,
+      usd_vnd_official        REAL NOT NULL DEFAULT 0,
+      fetched_at              TEXT NOT NULL
     )
   `);
   db.exec(`
     CREATE TABLE IF NOT EXISTS sbv_rates_history (
-      id                   INTEGER PRIMARY KEY AUTOINCREMENT,
-      source               TEXT NOT NULL,
-      overnight_rate_pct   REAL NOT NULL DEFAULT 0,
-      refinancing_rate_pct REAL NOT NULL DEFAULT 0,
-      usd_vnd_official     REAL NOT NULL DEFAULT 0,
-      fetched_at           TEXT NOT NULL
+      id                      INTEGER PRIMARY KEY AUTOINCREMENT,
+      source                  TEXT NOT NULL,
+      overnight_rate_pct      REAL NOT NULL DEFAULT 0,
+      refinancing_rate_pct    REAL NOT NULL DEFAULT 0,
+      discount_rate_pct       REAL NOT NULL DEFAULT 0,
+      max_deposit_rate_pct    REAL NOT NULL DEFAULT 0,
+      max_lending_rate_pct    REAL NOT NULL DEFAULT 0,
+      interbank_overnight_pct REAL NOT NULL DEFAULT 0,
+      usd_vnd_official        REAL NOT NULL DEFAULT 0,
+      fetched_at              TEXT NOT NULL
     )
   `);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_srh_source_fetched ON sbv_rates_history(source, fetched_at DESC)`);
+  // Task 1497 — idempotent migration for existing production DBs
+  for (const col of ["discount_rate_pct", "max_deposit_rate_pct", "max_lending_rate_pct", "interbank_overnight_pct"]) {
+    try { db.exec(`ALTER TABLE sbv_rates ADD COLUMN ${col} REAL NOT NULL DEFAULT 0`); } catch {}
+    try { db.exec(`ALTER TABLE sbv_rates_history ADD COLUMN ${col} REAL NOT NULL DEFAULT 0`); } catch {}
+  }
 
   // ── Prediction Markets (task 163) ──────────────────────────────────────────
   // `prediction_markets` is an upsert target — one row per market, overwritten

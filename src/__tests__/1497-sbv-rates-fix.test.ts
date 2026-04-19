@@ -25,8 +25,8 @@ import { describe, it, expect } from "bun:test";
  * under the CURRENT production pattern (using ??).
  */
 function currentSbvDefault(envValue: string | undefined, fallback: string): number {
-  // Exact current code: parseFloat(Bun.env["SBV_*"] ?? "3.0")
-  return parseFloat(envValue ?? fallback);
+  // Fixed code: parseFloat(Bun.env["SBV_*"] || "3.0") — || coerces empty string to fallback
+  return parseFloat(envValue || fallback);
 }
 
 describe("1497 SBV rates — empty env var must yield numeric default, not NaN", () => {

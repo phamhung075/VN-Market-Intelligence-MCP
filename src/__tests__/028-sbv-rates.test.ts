@@ -106,20 +106,28 @@ function setupTestDb(): Database {
   const db = new Database(":memory:");
   db.exec(`
     CREATE TABLE IF NOT EXISTS sbv_rates (
-      source TEXT PRIMARY KEY,
-      overnight_rate_pct REAL NOT NULL DEFAULT 0,
-      refinancing_rate_pct REAL NOT NULL DEFAULT 0,
-      usd_vnd_official REAL NOT NULL DEFAULT 0,
-      fetched_at TEXT NOT NULL
+      source                  TEXT PRIMARY KEY,
+      overnight_rate_pct      REAL NOT NULL DEFAULT 0,
+      refinancing_rate_pct    REAL NOT NULL DEFAULT 0,
+      discount_rate_pct       REAL NOT NULL DEFAULT 0,
+      max_deposit_rate_pct    REAL NOT NULL DEFAULT 0,
+      max_lending_rate_pct    REAL NOT NULL DEFAULT 0,
+      interbank_overnight_pct REAL NOT NULL DEFAULT 0,
+      usd_vnd_official        REAL NOT NULL DEFAULT 0,
+      fetched_at              TEXT NOT NULL
     );
 
     CREATE TABLE IF NOT EXISTS sbv_rates_history (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      source TEXT NOT NULL,
-      overnight_rate_pct REAL NOT NULL DEFAULT 0,
-      refinancing_rate_pct REAL NOT NULL DEFAULT 0,
-      usd_vnd_official REAL NOT NULL DEFAULT 0,
-      fetched_at TEXT NOT NULL
+      id                      INTEGER PRIMARY KEY AUTOINCREMENT,
+      source                  TEXT NOT NULL,
+      overnight_rate_pct      REAL NOT NULL DEFAULT 0,
+      refinancing_rate_pct    REAL NOT NULL DEFAULT 0,
+      discount_rate_pct       REAL NOT NULL DEFAULT 0,
+      max_deposit_rate_pct    REAL NOT NULL DEFAULT 0,
+      max_lending_rate_pct    REAL NOT NULL DEFAULT 0,
+      interbank_overnight_pct REAL NOT NULL DEFAULT 0,
+      usd_vnd_official        REAL NOT NULL DEFAULT 0,
+      fetched_at              TEXT NOT NULL
     );
 
     CREATE INDEX IF NOT EXISTS idx_sbv_history_source_time
@@ -270,12 +278,20 @@ describe("Task 028 — SBV Macro Fetcher (VCB XML + config fallbacks)", () => {
     const snapshot1: SbvMacroSnapshot = {
       overnightRatePct: 3.0,
       refinancingRatePct: 4.5,
+      discountRatePct: 1.5,
+      maxDepositRatePct: 5.0,
+      maxLendingRatePct: 12.0,
+      interbankOvernightPct: 4.0,
       usdVndOfficial: 26000,
       fetchedAt: new Date().toISOString(),
     };
     const snapshot2: SbvMacroSnapshot = {
       overnightRatePct: 3.0,
       refinancingRatePct: 4.5,
+      discountRatePct: 1.5,
+      maxDepositRatePct: 5.0,
+      maxLendingRatePct: 12.0,
+      interbankOvernightPct: 4.0,
       usdVndOfficial: 26135,
       fetchedAt: new Date().toISOString(),
     };
@@ -300,12 +316,20 @@ describe("Task 028 — SBV Macro Fetcher (VCB XML + config fallbacks)", () => {
     const snapshot1: SbvMacroSnapshot = {
       overnightRatePct: 3.0,
       refinancingRatePct: 4.5,
+      discountRatePct: 1.5,
+      maxDepositRatePct: 5.0,
+      maxLendingRatePct: 12.0,
+      interbankOvernightPct: 4.0,
       usdVndOfficial: 26000,
       fetchedAt: new Date(Date.now() - 3600_000).toISOString(),
     };
     const snapshot2: SbvMacroSnapshot = {
       overnightRatePct: 3.0,
       refinancingRatePct: 4.5,
+      discountRatePct: 1.5,
+      maxDepositRatePct: 5.0,
+      maxLendingRatePct: 12.0,
+      interbankOvernightPct: 4.0,
       usdVndOfficial: 26135,
       fetchedAt: new Date().toISOString(),
     };

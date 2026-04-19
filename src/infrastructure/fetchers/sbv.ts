@@ -51,10 +51,22 @@ const VCB_RATES_URL: string =
  * Override via env vars or mcp.config.json sbv section.
  */
 const DEFAULT_OVERNIGHT_RATE = parseFloat(
-  Bun.env["SBV_OVERNIGHT_RATE"] ?? "3.0",
+  Bun.env["SBV_OVERNIGHT_RATE"] || "3.0",
 );
 const DEFAULT_REFINANCING_RATE = parseFloat(
-  Bun.env["SBV_REFINANCING_RATE"] ?? "4.5",
+  Bun.env["SBV_REFINANCING_RATE"] || "4.5",
+);
+const DEFAULT_DISCOUNT_RATE = parseFloat(
+  Bun.env["SBV_DISCOUNT_RATE"] || "1.5",
+);
+const DEFAULT_MAX_DEPOSIT_RATE = parseFloat(
+  Bun.env["SBV_MAX_DEPOSIT_RATE"] || "5.0",
+);
+const DEFAULT_MAX_LENDING_RATE = parseFloat(
+  Bun.env["SBV_MAX_LENDING_RATE"] || "12.0",
+);
+const DEFAULT_INTERBANK_OVERNIGHT = parseFloat(
+  Bun.env["SBV_INTERBANK_OVERNIGHT"] || "4.0",
 );
 
 // ---------------------------------------------------------------------------
@@ -74,6 +86,14 @@ export interface SbvMacroSnapshot {
   overnightRatePct: number;
   /** Refinancing (tái cấp vốn) rate in percent per year. */
   refinancingRatePct: number;
+  /** Discount rate (lãi suất chiết khấu) in percent per year. */
+  discountRatePct: number;
+  /** Maximum deposit rate cap in percent per year. */
+  maxDepositRatePct: number;
+  /** Maximum lending rate cap in percent per year. */
+  maxLendingRatePct: number;
+  /** Interbank overnight rate in percent per year. */
+  interbankOvernightPct: number;
   /** Official USD/VND exchange rate (Transfer rate from VCB). */
   usdVndOfficial: number;
   /** ISO 8601 timestamp when this data was fetched. */
@@ -233,9 +253,18 @@ export async function fetchSbvRates(
     return null;
   }
 
+  const discountRatePct = Number.isNaN(DEFAULT_DISCOUNT_RATE) ? 0 : DEFAULT_DISCOUNT_RATE;
+  const maxDepositRatePct = Number.isNaN(DEFAULT_MAX_DEPOSIT_RATE) ? 0 : DEFAULT_MAX_DEPOSIT_RATE;
+  const maxLendingRatePct = Number.isNaN(DEFAULT_MAX_LENDING_RATE) ? 0 : DEFAULT_MAX_LENDING_RATE;
+  const interbankOvernightPct = Number.isNaN(DEFAULT_INTERBANK_OVERNIGHT) ? 0 : DEFAULT_INTERBANK_OVERNIGHT;
+
   const snapshot: SbvMacroSnapshot = {
     overnightRatePct,
     refinancingRatePct,
+    discountRatePct,
+    maxDepositRatePct,
+    maxLendingRatePct,
+    interbankOvernightPct,
     usdVndOfficial,
     fetchedAt,
   };
@@ -273,15 +302,19 @@ export function storeSbvSnapshot(
 
   const upsertLatest = database.prepare(`
     INSERT OR REPLACE INTO sbv_rates
-      (source, overnight_rate_pct, refinancing_rate_pct, usd_vnd_official, fetched_at)
-    VALUES (?, ?, ?, ?, ?)
+      (source, overnight_rate_pct, refinancing_rate_pct, discount_rate_pct,
+       max_deposit_rate_pct, max_lending_rate_pct, interbank_overnight_pct,
+       usd_vnd_official, fetched_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
   // Dedup: only append history if no row exists for the same hour
   const insertHistory = database.prepare(`
     INSERT INTO sbv_rates_history
-      (source, overnight_rate_pct, refinancing_rate_pct, usd_vnd_official, fetched_at)
-    SELECT ?, ?, ?, ?, ?
+      (source, overnight_rate_pct, refinancing_rate_pct, discount_rate_pct,
+       max_deposit_rate_pct, max_lending_rate_pct, interbank_overnight_pct,
+       usd_vnd_official, fetched_at)
+    SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?
     WHERE NOT EXISTS (
       SELECT 1 FROM sbv_rates_history
       WHERE source = ? AND strftime('%Y-%m-%d %H', fetched_at) = strftime('%Y-%m-%d %H', ?)
@@ -293,6 +326,10 @@ export function storeSbvSnapshot(
       source,
       snapshot.overnightRatePct,
       snapshot.refinancingRatePct,
+      snapshot.discountRatePct,
+      snapshot.maxDepositRatePct,
+      snapshot.maxLendingRatePct,
+      snapshot.interbankOvernightPct,
       snapshot.usdVndOfficial,
       snapshot.fetchedAt,
     );
@@ -300,6 +337,10 @@ export function storeSbvSnapshot(
       source,
       snapshot.overnightRatePct,
       snapshot.refinancingRatePct,
+      snapshot.discountRatePct,
+      snapshot.maxDepositRatePct,
+      snapshot.maxLendingRatePct,
+      snapshot.interbankOvernightPct,
       snapshot.usdVndOfficial,
       snapshot.fetchedAt,
       source,
