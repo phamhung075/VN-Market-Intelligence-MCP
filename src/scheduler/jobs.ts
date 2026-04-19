@@ -154,7 +154,16 @@ export function shouldRunCatchup(
   windowUtcHour: number,
   windowUtcMin: number,
   nowUtc: Date = new Date(),
+  weekdayOnly: boolean = false,
 ): boolean {
+  if (weekdayOnly) {
+    const day = nowUtc.getUTCDay()
+    if (day === 0 || day === 6) {
+      log(`[startup-catchup] ${jobName}: weekend — skipping (weekdayOnly)`)
+      return false
+    }
+  }
+
   const utcHour = nowUtc.getUTCHours()
   const utcMin  = nowUtc.getUTCMinutes()
   const windowReached =
@@ -389,17 +398,17 @@ export function startScheduler() {
       log('[startup-catchup] probe firing — checking morningBriefingJob + eveningSummaryJob + franceSummaryJob')
       const db = getDb()
 
-      if (shouldRunCatchup(db, 'morningBriefingJob', 1, 0)) {
+      if (shouldRunCatchup(db, 'morningBriefingJob', 1, 0, new Date(), true)) {
         log('[startup-catchup] morningBriefingJob: running catch-up')
         await recordJobRun(db, 'morningBriefingJob', async () => { await runMorningBriefing() })
       }
 
-      if (shouldRunCatchup(db, 'eveningSummaryJob', 15, 30)) {
+      if (shouldRunCatchup(db, 'eveningSummaryJob', 15, 30, new Date(), true)) {
         log('[startup-catchup] eveningSummaryJob: running catch-up')
         await recordJobRun(db, 'eveningSummaryJob', async () => { await runEveningSummary() })
       }
 
-      if (shouldRunCatchup(db, 'franceSummaryJob', 9, 0)) {
+      if (shouldRunCatchup(db, 'franceSummaryJob', 9, 0, new Date(), true)) {
         log('[startup-catchup] franceSummaryJob: running catch-up')
         await recordJobRun(db, 'franceSummaryJob', async () => { await runFranceSummary() })
       }
