@@ -142,13 +142,13 @@ export async function runWeatherCheck(opts: WeatherCheckOptions = {}): Promise<v
         const { sendTelegramMarket } = await import(
           "../infrastructure/notifiers/telegram.js"
         );
-        let msg = `CANH BAO KHI HAU + DIEN LUC\n`;
+        let msg = `CẢNH BÁO KHÍ HẬU + ĐIỆN LỰC\n`;
         msg += `Thang ${currentMonth}: ${seasonalCtx.slice(0, 100)}\n\n`;
 
         for (const s of highClimate) {
           msg += `[${s.severity.toUpperCase()}] ${s.eventType.replace("_", " ").toUpperCase()}\n`;
           for (const stock of s.affectedStocks.slice(0, 3)) {
-            msg += `  ${stock.code}: ${stock.direction === "up" ? "TANG" : "GIAM"} — ${stock.reasoning.slice(0, 80)}\n`;
+            msg += `  ${stock.code}: ${stock.direction === "up" ? "TĂNG" : "GIẢM"} — ${stock.reasoning.slice(0, 80)}\n`;
           }
           msg += "\n";
         }
@@ -156,7 +156,7 @@ export async function runWeatherCheck(opts: WeatherCheckOptions = {}): Promise<v
         for (const s of highEnergy) {
           msg += `[${s.severity.toUpperCase()}] ${s.type.replace("_", " ").toUpperCase()}\n`;
           for (const stock of s.affectedStocks.slice(0, 3)) {
-            msg += `  ${stock.code}: ${stock.direction === "up" ? "TANG" : "GIAM"} — ${stock.reasoning.slice(0, 80)}\n`;
+            msg += `  ${stock.code}: ${stock.direction === "up" ? "TĂNG" : "GIẢM"} — ${stock.reasoning.slice(0, 80)}\n`;
           }
           msg += "\n";
         }
