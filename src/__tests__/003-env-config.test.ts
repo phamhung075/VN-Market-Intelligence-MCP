@@ -1,3 +1,5 @@
+Bun.env["DB_PATH"] = ":memory:";
+
 /**
  * Task 003 — Env config + structured logging
  *
