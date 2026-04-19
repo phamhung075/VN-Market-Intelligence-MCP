@@ -1,3 +1,4 @@
+Bun.env["DB_PATH"] = ":memory:";
 /**
  * Task 047 — BCTC Orchestrator (Full Parse Pipeline)
  *
@@ -14,10 +15,10 @@ import type { FiscalPeriod } from "../../bctc-schema.js";
 
 // Prevent test fixtures (e.g. actionCode="EMPTY") from firing real Telegram messages.
 mock.module("../infrastructure/notifiers/telegram.js", () => ({
-  sendTelegramWork: () => Promise.resolve({ ok: true, messageId: 0 }),
-  sendTelegramMarket: () => Promise.resolve({ ok: true, messageId: 0 }),
-  sendTelegramBug: () => Promise.resolve({ ok: true, messageId: 0 }),
-  sendTelegram: () => Promise.resolve({ ok: true, messageId: 0 }),
+  sendTelegramWork: () => Promise.resolve(true),
+  sendTelegramMarket: () => Promise.resolve(true),
+  sendTelegramBug: () => Promise.resolve(true),
+  sendTelegram: () => Promise.resolve(true),
 }));
 
 // ─────────────────────────────────────────────────────────────────────────────
