@@ -91,29 +91,29 @@ function buildNarrative(
   links: ChainLink[],
 ): string {
   const pct = Math.round(conviction * 100);
-  const actionVi = action === "BUY" ? "MUA" : action === "SELL" ? "BAN" : action === "WATCH" ? "THEO DOI" : "GIU";
+  const actionVi = action === "BUY" ? "MUA" : action === "SELL" ? "BÁN" : action === "WATCH" ? "THEO DÕI" : "GIỮ";
 
   const sortedLinks = [...links].sort((a, b) => a.depth - b.depth);
 
   const lines: string[] = [
-    `${stockCode} — ${actionVi}: ${pct}% xac tin`,
+    `${stockCode} — ${actionVi}: ${pct}% xác tín`,
   ];
 
   const DEPTH_LABEL: Record<number, string> = {
     0: "Catalyst",
-    1: "Co ban",
-    2: "Gia",
-    3: "Tong hop",
+    1: "Cơ bản",
+    2: "Giá",
+    3: "Tổng hợp",
   };
 
   for (const link of sortedLinks) {
-    const label = DEPTH_LABEL[link.depth] ?? `Lop ${link.depth}`;
+    const label = DEPTH_LABEL[link.depth] ?? `Lớp ${link.depth}`;
     const summary = safeStr(link.findingData["summary"]) || link.signalType;
     lines.push(`• ${label}: ${summary} (${link.agent})`);
   }
 
   const agentCount = new Set(links.map(l => l.agent)).size;
-  lines.push(`Xac nhan: ${links.length} lop tu ${agentCount} agent doc lap`);
+  lines.push(`Xác nhận: ${links.length} lớp từ ${agentCount} agent độc lập`);
 
   return lines.join("\n");
 }
