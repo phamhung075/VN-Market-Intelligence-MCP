@@ -261,7 +261,7 @@ function buildSection5(db: Database, ticker: string): string {
 
       result = `BCTC (${row.sort_key}): Nhận định ${outlookVi} | ${summaryTruncated}`;
     } catch {
-      result = "(loi phan tich BCTC)";
+      result = "(lỗi phân tích BCTC)";
     }
   } catch {
     // outer catch: SQL error (e.g. table missing) → no-data default stays

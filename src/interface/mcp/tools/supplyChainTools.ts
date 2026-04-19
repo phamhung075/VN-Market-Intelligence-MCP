@@ -315,7 +315,7 @@ export function registerSupplyChainTools(server: McpServer): void {
           content: [
             {
               type: "text" as const,
-              text: "Loi: Khong the lay du lieu chuoi cung ung. Vui long thu lai.",
+              text: "Lỗi: Không thể lấy dữ liệu chuỗi cung ứng. Vui lòng thử lại.",
             },
           ],
         };

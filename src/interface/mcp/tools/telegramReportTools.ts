@@ -86,14 +86,14 @@ export function registerTelegramReportTools(server: McpServer): void {
   // ── read_telegram_reports ─────────────────────────────────────────────────
   server.tool(
     "read_telegram_reports",
-    "Doc cac bao cao tu kenh Report Channel. Mac dinh tra ve cac bao cao chua xu ly (status=new). " +
+    "Đọc các báo cáo từ kênh Report Channel. Mặc định trả về các báo cáo chưa xử lý (status=new). " +
       "Khi không có báo cáo mới, trả về thông báo thoát vòng lặp Dev Team.",
     {
       status: z
         .enum(["new", "processed", "all"])
         .optional()
         .default("new")
-        .describe("Trang thai bao cao can lay: 'new' (mac dinh), 'processed', hoac 'all'"),
+        .describe("Trạng thái báo cáo cần lấy: 'new' (mặc định), 'processed', hoặc 'all'"),
       limit: z.coerce
         .number()
         .int()
@@ -101,14 +101,14 @@ export function registerTelegramReportTools(server: McpServer): void {
         .max(50)
         .optional()
         .default(20)
-        .describe("So ban ghi toi da tra ve (1-50, mac dinh 20)"),
+        .describe("Số bản ghi tối đa trả về (1-50, mặc định 20)"),
       unclaimed_only: z
         .boolean()
         .optional()
         .default(true)
         .describe(
-          "Chi tra ve bao cao chua duoc claim (mac dinh: true). " +
-            "Dat false de xem tat ca bao cao bao gom ca da claimed.",
+          "Chỉ trả về báo cáo chưa được claim (mặc định: true). " +
+            "Đặt false để xem tất cả báo cáo bao gồm cả đã claimed.",
         ),
     },
     async ({ status, limit, unclaimed_only }) => {
@@ -177,8 +177,8 @@ export function registerTelegramReportTools(server: McpServer): void {
   // ── process_telegram_report ───────────────────────────────────────────────
   server.tool(
     "process_telegram_report",
-    "Danh dau mot bao cao la da xu ly va tuy chon xoa tin nhan Telegram tuong ung " +
-      "khoi kenh Report Channel de giu kenh sach se.",
+    "Đánh dấu một báo cáo là đã xử lý và tùy chọn xóa tin nhắn Telegram tương ứng " +
+      "khỏi kênh Report Channel để giữ kênh sạch sẽ.",
     {
       id: z.coerce
         .number()
@@ -190,7 +190,7 @@ export function registerTelegramReportTools(server: McpServer): void {
         .optional()
         .default(true)
         .describe(
-          "Xoa tin nhan Telegram trong kenh Report Channel sau khi xu ly (mac dinh: true)",
+          "Xóa tin nhắn Telegram trong kênh Report Channel sau khi xử lý (mặc định: true)",
         ),
     },
     async ({ id, delete_telegram_message }) => {
@@ -258,20 +258,20 @@ export function registerTelegramReportTools(server: McpServer): void {
   // ── claim_telegram_report ─────────────────────────────────────────────────
   server.tool(
     "claim_telegram_report",
-    "Dat quyen so huu (ownership lock) cho mot bao cao de tranh hai agent xu ly cung luc. " +
-      "Dung truoc khi goi process_telegram_report. " +
-      "Neu da co agent khac claim roi, tra ve thong bao 'Already claimed by {claimant}'.",
+    "Đặt quyền sở hữu (ownership lock) cho một báo cáo để tránh hai agent xử lý cùng lúc. " +
+      "Dùng trước khi gọi process_telegram_report. " +
+      "Nếu đã có agent khác claim rồi, trả về thông báo 'Already claimed by {claimant}'.",
     {
       id: z.coerce
         .number()
         .int()
         .min(1)
-        .describe("Primary key cua ban ghi telegram_reports can claim"),
+        .describe("Primary key của bản ghi telegram_reports cần claim"),
       claimant: z
         .string()
         .min(1)
         .describe(
-          "Ten dinh danh cua agent dang claim ban ghi nay (vi du: 'dev-team', 'unified-agent')",
+          "Tên định danh của agent đang claim bản ghi này (ví dụ: 'dev-team', 'unified-agent')",
         ),
     },
     async ({ id, claimant }) => {

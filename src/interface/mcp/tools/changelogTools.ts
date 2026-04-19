@@ -66,32 +66,32 @@ export function registerChangelogTools(server: McpServer): void {
   // ── log_fix ───────────────────────────────────────────────────────────────
   server.tool(
     "log_fix",
-    "Dev Team ghi lai mot sua loi vao bang system_changelog. " +
-      "Analysis Team co the dung get_recent_fixes de kiem tra truoc khi bao cao lai van de da duoc xu ly.",
+    "Dev Team ghi lại một sửa lỗi vào bảng system_changelog. " +
+      "Analysis Team có thể dùng get_recent_fixes để kiểm tra trước khi báo cáo lại vấn đề đã được xử lý.",
     {
       title: z
         .string()
         .min(1)
-        .describe("Ten ngan mo ta sua loi (bat buoc)"),
+        .describe("Tên ngắn mô tả sửa lỗi (bắt buộc)"),
       detail: z
         .string()
         .optional()
         .default("")
-        .describe("Mo ta chi tiet ve thay doi (tuy chon)"),
+        .describe("Mô tả chi tiết về thay đổi (tùy chọn)"),
       fix_type: z
         .string()
         .optional()
         .default("bugfix")
-        .describe("Loai sua loi: 'bugfix', 'hotfix', 'feature', 'docs', 'refactor' (mac dinh: bugfix)"),
+        .describe("Loại sửa lỗi: 'bugfix', 'hotfix', 'feature', 'docs', 'refactor' (mặc định: bugfix)"),
       files: z
         .array(z.string())
         .optional()
         .default([])
-        .describe("Danh sach cac file da thay doi (duong dan tuong doi)"),
+        .describe("Danh sách các file đã thay đổi (đường dẫn tương đối)"),
       commit_hash: z
         .string()
         .optional()
-        .describe("Git commit hash tuong ung (tuy chon)"),
+        .describe("Git commit hash tương ứng (tùy chọn)"),
       related_feedback_id: z.coerce
         .number()
         .int()
@@ -101,8 +101,8 @@ export function registerChangelogTools(server: McpServer): void {
         .array(z.string())
         .optional()
         .describe(
-          "Task 1005 — danh sach id alerts cu da bi sua loi nay vo hieu hoa. " +
-            "Moi alert trong danh sach se duoc danh dau 'Superseded by fix' trong resolution_notes.",
+          "Task 1005 — danh sách id alerts cũ đã bị sửa lỗi này vô hiệu hóa. " +
+            "Mỗi alert trong danh sách sẽ được đánh dấu 'Superseded by fix' trong resolution_notes.",
         ),
     },
     async ({ title, detail, fix_type, files, commit_hash, related_feedback_id, supersedes_alert_ids }) => {
@@ -166,9 +166,9 @@ export function registerChangelogTools(server: McpServer): void {
   // ── get_recent_fixes ──────────────────────────────────────────────────────
   server.tool(
     "get_recent_fixes",
-    "Lay danh sach cac sua loi gan nhat tu Dev Team. " +
-      "Analysis Team nen goi tool nay truoc khi bao cao van de de tranh bao cao trung lap. " +
-      "Tra ve cac sua loi moi nhat truoc (DESC).",
+    "Lấy danh sách các sửa lỗi gần nhất từ Dev Team. " +
+      "Analysis Team nên gọi tool này trước khi báo cáo vấn đề để tránh báo cáo trùng lặp. " +
+      "Trả về các sửa lỗi mới nhất trước (DESC).",
     {
       limit: z.coerce
         .number()
@@ -177,7 +177,7 @@ export function registerChangelogTools(server: McpServer): void {
         .max(50)
         .optional()
         .default(10)
-        .describe("So ban ghi toi da tra ve (1-50, mac dinh 10)"),
+        .describe("Số bản ghi tối đa trả về (1-50, mặc định 10)"),
     },
     async ({ limit }) => {
       try {
