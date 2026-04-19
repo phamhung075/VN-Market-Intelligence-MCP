@@ -26,7 +26,7 @@ import {
 // ---------------------------------------------------------------------------
 
 beforeAll(async () => {
-  process.env["DB_PATH"] = ":memory:";
+  Bun.env["DB_PATH"] = ":memory:";
   await initDatabase();
 });
 

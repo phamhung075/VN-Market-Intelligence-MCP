@@ -134,7 +134,7 @@ function clearOcrCache(filename: string): void {
 // ─────────────────────────────────────────────────────────────────────────────
 
 beforeAll(async () => {
-  process.env["DB_PATH"] = ":memory:";
+  Bun.env["DB_PATH"] = ":memory:";
   closeDb();
   await initDatabase();
 });

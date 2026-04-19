@@ -90,7 +90,7 @@ const mockSearchContext = mock(async () => []);
 
 beforeEach(() => {
   // Force in-memory SQLite for tests
-  process.env["DB_PATH"] = ":memory:";
+  Bun.env["DB_PATH"] = ":memory:";
 });
 
 afterEach(async () => {

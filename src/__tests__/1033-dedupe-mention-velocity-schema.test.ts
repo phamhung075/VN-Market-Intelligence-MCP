@@ -15,7 +15,7 @@ import { resolve } from "node:path";
 import { initDatabase, getDb, closeDb } from "../infrastructure/db/schema.js";
 
 beforeAll(async () => {
-  process.env["DB_PATH"] = ":memory:";
+  Bun.env["DB_PATH"] = ":memory:";
   await initDatabase();
 });
 

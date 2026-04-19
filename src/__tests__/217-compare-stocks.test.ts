@@ -120,7 +120,7 @@ function seedAlerts(): void {
 let server: McpServer;
 
 beforeAll(async () => {
-  process.env["DB_PATH"] = ":memory:";
+  Bun.env["DB_PATH"] = ":memory:";
   await initDatabase();
   server = new McpServer(
     { name: "test-compare", version: "0.0.1" },
@@ -131,7 +131,7 @@ beforeAll(async () => {
 
 afterAll(() => {
   closeDb();
-  delete process.env["DB_PATH"];
+  delete Bun.env["DB_PATH"];
 });
 
 beforeEach(() => {

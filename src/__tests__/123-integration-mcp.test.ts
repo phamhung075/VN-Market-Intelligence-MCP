@@ -317,7 +317,7 @@ let server: McpServer;
 
 beforeAll(async () => {
   // Use isolated test DB to prevent corrupting production watchlist
-  process.env["DB_PATH"] = ":memory:";
+  Bun.env["DB_PATH"] = ":memory:";
   await initDatabase();
 
   server = new McpServer(
@@ -335,7 +335,7 @@ beforeAll(async () => {
 
 afterAll(() => {
   closeDb();
-  delete process.env["DB_PATH"];
+  delete Bun.env["DB_PATH"];
 });
 
 // Clean all tables before each test for isolation between roundtrips

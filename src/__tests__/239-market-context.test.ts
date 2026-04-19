@@ -139,7 +139,7 @@ function seedMacroIndicator(name: string, value: number): void {
 let server: McpServer;
 
 beforeAll(async () => {
-  process.env["DB_PATH"] = ":memory:";
+  Bun.env["DB_PATH"] = ":memory:";
   await initDatabase();
   // Add exchange column (normally added by hose/hnx fetchers at runtime)
   const db = getDb();

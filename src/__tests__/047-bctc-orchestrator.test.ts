@@ -131,13 +131,13 @@ const TEST_PERIOD: FiscalPeriod = {
 
 beforeAll(async () => {
   // Use in-memory SQLite for tests
-  process.env["DB_PATH"] = ":memory:";
+  Bun.env["DB_PATH"] = ":memory:";
   await initDatabase();
 });
 
 afterAll(() => {
   closeDb();
-  delete process.env["DB_PATH"];
+  delete Bun.env["DB_PATH"];
 });
 
 // ─────────────────────────────────────────────────────────────────────────────

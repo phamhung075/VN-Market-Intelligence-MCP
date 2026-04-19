@@ -28,7 +28,7 @@ import {
 
 async function freshDb(): Promise<void> {
   closeDb();
-  process.env["DB_PATH"] = ":memory:";
+  Bun.env["DB_PATH"] = ":memory:";
   await initDatabase();
 }
 

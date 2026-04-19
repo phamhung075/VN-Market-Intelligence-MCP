@@ -10,7 +10,7 @@
  *   vnstock_trading_stats, financial_reports, prediction_claims
  *
  * DB injection pattern: handleGetTickerIntelligence(code, db) called directly.
- * process.env["DB_PATH"] set to ":memory:" to prevent getDb() from opening
+ * Bun.env["DB_PATH"] set to ":memory:" to prevent getDb() from opening
  * the production database if the fallback path is invoked.
  */
 

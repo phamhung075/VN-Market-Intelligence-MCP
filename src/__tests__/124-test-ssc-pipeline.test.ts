@@ -131,7 +131,7 @@ const ROW_VCB_ANNUAL: SscRow = {
 // ─────────────────────────────────────────────────────────────────────────────
 
 beforeAll(async () => {
-  process.env["DB_PATH"] = ":memory:";
+  Bun.env["DB_PATH"] = ":memory:";
   closeDb();
   await initDatabase();
 });

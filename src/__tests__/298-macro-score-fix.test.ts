@@ -19,7 +19,7 @@ import { getDb, closeDb, initDatabase } from "../infrastructure/db/schema.js";
 // ─────────────────────────────────────────────────────────────────────────────
 
 beforeAll(async () => {
-  process.env["DB_PATH"] = ":memory:";
+  Bun.env["DB_PATH"] = ":memory:";
   await initDatabase();
 
   // Create tracked_indicators table (owned by commodityTracker, not main schema)
@@ -40,7 +40,7 @@ beforeAll(async () => {
 
 afterAll(() => {
   closeDb();
-  delete process.env["DB_PATH"];
+  delete Bun.env["DB_PATH"];
 });
 
 beforeEach(() => {

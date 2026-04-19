@@ -28,7 +28,7 @@ import {
 let db: Database;
 
 beforeEach(async () => {
-  process.env["DB_PATH"] = ":memory:";
+  Bun.env["DB_PATH"] = ":memory:";
   Bun.env["DB_PATH"] = ":memory:";
   closeDb();
   await initDatabase();
@@ -39,7 +39,7 @@ beforeEach(async () => {
 
 afterEach(() => {
   closeDb();
-  delete process.env["DB_PATH"];
+  delete Bun.env["DB_PATH"];
   delete Bun.env["DB_PATH"];
 });
 

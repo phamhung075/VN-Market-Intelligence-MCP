@@ -58,7 +58,7 @@ let server: McpServer;
 
 beforeAll(async () => {
   // Force in-memory database for all tests
-  process.env["DB_PATH"] = ":memory:";
+  Bun.env["DB_PATH"] = ":memory:";
   await initDatabase();
 
   server = new McpServer(
@@ -70,7 +70,7 @@ beforeAll(async () => {
 
 afterAll(() => {
   closeDb();
-  delete process.env["DB_PATH"];
+  delete Bun.env["DB_PATH"];
 });
 
 beforeEach(() => {

@@ -25,7 +25,7 @@ import {
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
 function makeDb(): Database {
-  process.env["DB_PATH"] = ":memory:";
+  Bun.env["DB_PATH"] = ":memory:";
   closeDb();
   return new Database(":memory:");
 }
@@ -48,7 +48,7 @@ describe("Task 1123 — prediction_claims store", () => {
   let db: Database;
 
   beforeEach(async () => {
-    process.env["DB_PATH"] = ":memory:";
+    Bun.env["DB_PATH"] = ":memory:";
     closeDb();
     db = makeDb();
     // Run initDatabase to create the prediction_claims table

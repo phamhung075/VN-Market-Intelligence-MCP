@@ -27,7 +27,7 @@
  *   - MCP tool all not found
  *   - MCP tool invalid verdict error path
  *
- * Test isolation: process.env["DB_PATH"] = ":memory:" set before any import.
+ * Test isolation: Bun.env["DB_PATH"] = ":memory:" set before any import.
  * Each test resets DB via closeDb() + await initDatabase() in beforeEach/afterEach.
  */
 

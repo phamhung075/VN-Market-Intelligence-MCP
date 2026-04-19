@@ -21,7 +21,7 @@ const VNSTOCK_TABLES = [
 ];
 
 beforeAll(async () => {
-  process.env["DB_PATH"] = ":memory:";
+  Bun.env["DB_PATH"] = ":memory:";
   // NOTE: intentionally NOT calling initVnstockTables() — tables must exist
   // from initDatabase() alone.
   await initDatabase();
@@ -29,7 +29,7 @@ beforeAll(async () => {
 
 afterAll(() => {
   closeDb();
-  delete process.env["DB_PATH"];
+  delete Bun.env["DB_PATH"];
 });
 
 describe("Task 1042 — vnstock DDL in initDatabase()", () => {

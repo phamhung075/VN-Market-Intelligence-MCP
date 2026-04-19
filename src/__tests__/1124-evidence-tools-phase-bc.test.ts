@@ -24,7 +24,7 @@ import { registerEvidenceTools } from "../interface/mcp/tools/evidenceTools.js";
 // ─────────────────────────────────────────────────────────────────────────────
 
 async function makeTestSetup(): Promise<{ db: Database; client: Client }> {
-  process.env["DB_PATH"] = ":memory:";
+  Bun.env["DB_PATH"] = ":memory:";
   closeDb();
   await initDatabase();
   const { getDb } = await import("../infrastructure/db/schema.js");

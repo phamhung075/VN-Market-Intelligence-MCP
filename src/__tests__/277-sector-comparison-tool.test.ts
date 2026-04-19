@@ -121,7 +121,7 @@ function seedTradingStats(): void {
 let server: McpServer;
 
 beforeAll(async () => {
-  process.env["DB_PATH"] = `:memory:`;
+  Bun.env["DB_PATH"] = `:memory:`;
   closeDb(); // ensure fresh DB when running in parallel with other test files
   await initDatabase();
   server = new McpServer(
@@ -133,7 +133,7 @@ beforeAll(async () => {
 
 afterAll(() => {
   closeDb();
-  delete process.env["DB_PATH"];
+  delete Bun.env["DB_PATH"];
 });
 
 beforeEach(() => {

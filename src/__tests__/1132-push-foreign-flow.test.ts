@@ -37,7 +37,7 @@ let base: string;
 
 beforeAll(async () => {
   // Route all DB calls to an in-memory database for this test suite
-  process.env["DB_PATH"] = ":memory:";
+  Bun.env["DB_PATH"] = ":memory:";
   process.env["VPS_PUSH_API_KEY"] = VALID_KEY;
 
   closeDb();
@@ -50,7 +50,7 @@ beforeAll(async () => {
 afterAll(async () => {
   await server.close();
   closeDb();
-  delete process.env["DB_PATH"];
+  delete Bun.env["DB_PATH"];
   delete process.env["VPS_PUSH_API_KEY"];
 });
 

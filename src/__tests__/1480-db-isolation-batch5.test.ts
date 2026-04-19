@@ -10,13 +10,13 @@ describe("1480 DB isolation batch5: Bun.env enforcement", () => {
 
     for await (const file of glob.scan({ cwd: process.cwd() })) {
       const firstLine = readFileSync(file, "utf8").split("\n")[0] ?? "";
-      if (firstLine.includes('process.env["DB_PATH"]')) {
+      if (firstLine.includes('Bun.env["DB_PATH"]')) {
         offenders.push(file);
       }
     }
 
     if (offenders.length > 0) {
-      console.error(`Files still using process.env["DB_PATH"] at line 1 (${offenders.length}):`);
+      console.error(`Files still using Bun.env["DB_PATH"] at line 1 (${offenders.length}):`);
       offenders.forEach((f) => console.error(`  ${f}`));
     }
 

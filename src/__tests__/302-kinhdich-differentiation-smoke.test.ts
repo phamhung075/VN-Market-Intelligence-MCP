@@ -51,7 +51,7 @@ const SECTOR_ROWS: { code: string; change: number }[] = [
 ];
 
 beforeAll(async () => {
-  process.env["DB_PATH"] = ":memory:";
+  Bun.env["DB_PATH"] = ":memory:";
   await initDatabase();
   const db = getDb();
 
@@ -132,7 +132,7 @@ beforeAll(async () => {
 
 afterAll(() => {
   closeDb();
-  delete process.env["DB_PATH"];
+  delete Bun.env["DB_PATH"];
 });
 
 describe("Task 302 — Kinh Dịch differentiation smoke test", () => {

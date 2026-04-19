@@ -16,7 +16,7 @@
  *   AC-11: backward compatibility — existing callers without persist option
  *   AC-12: full test suite green (TypeScript compilation + all tests)
  *
- * Test isolation: process.env["DB_PATH"] = ":memory:" set before any import.
+ * Test isolation: Bun.env["DB_PATH"] = ":memory:" set before any import.
  * Each describe block resets the DB via closeDb() + initDatabase() in beforeEach.
  */
 

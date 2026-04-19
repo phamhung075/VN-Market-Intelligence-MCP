@@ -17,13 +17,13 @@ import { initDatabase, getDb, closeDb } from "../infrastructure/db/schema";
 import { ensureSchedulerLocksTable } from "../infrastructure/db/schedulerLockStore";
 
 beforeAll(async () => {
-  process.env["DB_PATH"] = ":memory:";
+  Bun.env["DB_PATH"] = ":memory:";
   await initDatabase();
 });
 
 afterAll(() => {
   closeDb();
-  delete process.env["DB_PATH"];
+  delete Bun.env["DB_PATH"];
 });
 
 describe("Task 1457 — scheduler_locks in schema.ts", () => {
