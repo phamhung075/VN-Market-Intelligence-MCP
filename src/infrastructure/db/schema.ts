@@ -802,6 +802,12 @@ export async function initDatabase(): Promise<void> {
     CREATE INDEX IF NOT EXISTS idx_tracked_ind_name_time
       ON tracked_indicators(indicator, extracted_at DESC);
   `);
+  // Task 1489: one-time purge of test-contamination rows.
+  // source='test' rows are inserted by integration tests that leak into non-memory DBs.
+  db.exec(`DELETE FROM tracked_indicators WHERE source = 'test'`);
+  // Task 1490: purge known system_logs test-contamination rows (message-exact match).
+  db.exec(`DELETE FROM system_logs WHERE message IN ('only this appears', 'error message')`);
+
 
   // ── Mention velocity: canonical DDL lives above (Task 265, ~line 271).
   // Duplicate block removed Task 1033 — keep a single source of truth so
