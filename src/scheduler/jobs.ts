@@ -384,7 +384,7 @@ export function startScheduler() {
   // run, fire them once. 30s delay matches bctcReparseJob pattern. task 1430.
   setTimeout(async () => {
     try {
-      log('[startup-catchup] probe firing — checking morningBriefingJob + eveningSummaryJob')
+      log('[startup-catchup] probe firing — checking morningBriefingJob + eveningSummaryJob + franceSummaryJob')
       const db = getDb()
 
       if (shouldRunCatchup(db, 'morningBriefingJob', 1, 0)) {
@@ -395,6 +395,11 @@ export function startScheduler() {
       if (shouldRunCatchup(db, 'eveningSummaryJob', 15, 30)) {
         log('[startup-catchup] eveningSummaryJob: running catch-up')
         await recordJobRun(db, 'eveningSummaryJob', async () => { await runEveningSummary() })
+      }
+
+      if (shouldRunCatchup(db, 'franceSummaryJob', 9, 0)) {
+        log('[startup-catchup] franceSummaryJob: running catch-up')
+        await recordJobRun(db, 'franceSummaryJob', async () => { await runFranceSummary() })
       }
     } catch (err) {
       log(`[startup-catchup] error: ${err instanceof Error ? err.message : String(err)}`)

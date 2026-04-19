@@ -77,4 +77,14 @@ describe("shouldRunCatchup", () => {
     const now = new Date("2026-04-18T03:00:00Z");
     expect(shouldRunCatchup(db, "morningBriefingJob", 1, 0, now)).toBe(true);
   });
+
+  it("AC-9: france window passed (10:00 UTC > 09:00 threshold), no row — returns true", () => {
+    const now = new Date("2026-04-18T10:00:00Z");
+    expect(shouldRunCatchup(db, "franceSummaryJob", 9, 0, now)).toBe(true);
+  });
+
+  it("AC-10: france window not yet reached (08:00 UTC < 09:00 threshold) — returns false", () => {
+    const now = new Date("2026-04-18T08:00:00Z");
+    expect(shouldRunCatchup(db, "franceSummaryJob", 9, 0, now)).toBe(false);
+  });
 });
