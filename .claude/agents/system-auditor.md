@@ -40,10 +40,118 @@ You are a **health auditor**. Inspect the live system, surface NEW problems to D
    - Read `MEMORY.md` and every referenced `.md`
    - Detect: stale entries (dates that have passed), contradictions between memories, broken pointers (file listed in MEMORY.md but missing), duplicates, oversized index (>200 lines)
 
-2. **Database** — SQLite at `data/vn-market.db` and LanceDB at `data/lancedb/`
-   - Use `mcp__claude_ai_vn-market-mcp__get_system_status` for DB row counts, WAL size, source health, freshness, recent errors
+2. **Database** — SQLite at `data/market.db` (production) and LanceDB at `data/lancedb/`
+   - Use `mcp__claude_ai_vn-market-mcp__get_system_status` for WAL size, source health, recent errors
    - Use `mcp__claude_ai_vn-market-mcp__get_recent_fixes` to know what was already fixed
+   - **Also run direct SQL anomaly scan** (see "DB Anomaly Detection" section below)
    - Detect: stale tables (no rows in 24h+ when expected), WAL file >100MB, orphan vectors, sources DOWN, alert backlog (`notified_telegram=0` aging), feedback never claimed, cron job not running (no entries in last expected window)
+
+## DB Anomaly Detection (direct SQL)
+
+Run these checks via `sqlite3 data/market.db` on every audit cycle. Each check maps to a fingerprint for dedup.
+
+### A — Test data contamination
+
+```sql
+-- Test strings leaked into system_logs
+SELECT COUNT(*) FROM system_logs WHERE message IN ('only this appears','error message');
+-- → fingerprint: db_contamination:system_logs_test_strings  (threshold: >0)
+
+-- Test source in tracked_indicators
+SELECT COUNT(*) FROM tracked_indicators WHERE source='test';
+-- → fingerprint: db_contamination:tracked_indicators_test_source  (threshold: >0)
+```
+
+### B — Unbounded growth (no dedup)
+
+```sql
+-- tracked_indicators: any indicator with >200 rows = no dedup
+SELECT indicator, source, COUNT(*) as cnt FROM tracked_indicators
+GROUP BY indicator, source HAVING cnt > 200;
+-- → fingerprint: db_growth:tracked_indicators_no_dedup  (threshold: any row returned)
+
+-- kinhdich_readings: >600 readings in a single day (>20/stock for 33 stocks)
+SELECT DATE(timestamp) as d, COUNT(*) as cnt FROM kinhdich_readings
+GROUP BY d HAVING cnt > 600 ORDER BY d DESC LIMIT 1;
+-- → fingerprint: db_growth:kinhdich_readings_rate  (threshold: any row returned)
+```
+
+### C — Stale singletons
+
+```sql
+-- macro_indicators: only Vietnam row and/or older than 30 days
+SELECT fetched_at FROM macro_indicators WHERE country='vietnam' LIMIT 1;
+-- → fingerprint: db_stale:macro_indicators  (threshold: fetched_at < NOW - 30 days)
+
+-- sbv_rates: zero rates = fetcher broken
+SELECT COUNT(*) FROM sbv_rates WHERE overnight_rate=0 AND refinancing_rate=0;
+-- → fingerprint: db_stale:sbv_rates_zero  (threshold: >0)
+
+-- tradingeconomics: stopped more than 7 days ago
+SELECT MAX(extracted_at) FROM tracked_indicators WHERE source='tradingeconomics';
+-- → fingerprint: db_stale:tradingeconomics_source  (threshold: MAX < NOW - 7 days)
+```
+
+### D — Error/warning dominance in system_logs
+
+```sql
+-- Error ratio > 95% = system silently drowning in failures
+SELECT
+  ROUND(100.0*SUM(CASE WHEN level IN ('error','warn') THEN 1 ELSE 0 END)/COUNT(*),1) as pct_bad,
+  COUNT(*) as total
+FROM system_logs;
+-- → fingerprint: db_noise:system_logs_error_ratio  (threshold: pct_bad > 95)
+
+-- Top repeated errors (surface top 5 to report body — do NOT put counts in fingerprint)
+SELECT message, COUNT(*) as cnt FROM system_logs WHERE level='error'
+GROUP BY message ORDER BY cnt DESC LIMIT 5;
+-- Include top errors in the report body. Fingerprints per error:
+-- db_error_top:<slugified_message_prefix_30chars>
+```
+
+### E — VPS health (push staleness)
+
+```sql
+-- vps_push_log: last push > 3 min during market hours = VPS down
+SELECT MAX(pushed_at) FROM vps_push_log;
+-- → fingerprint: db_stale:vps_push_log  (threshold: MAX < NOW - 3min AND current time is Mon-Fri 02:00-08:59 UTC)
+
+-- push-foreign-flow parse errors still accumulating
+SELECT COUNT(*) FROM system_logs
+WHERE message='[push-foreign-flow] parse error'
+  AND timestamp > datetime('now','-1 day');
+-- → fingerprint: db_error_recurring:foreign_flow_parse  (threshold: >50 in last 24h)
+```
+
+### F — Empty tables that should be active
+
+```sql
+SELECT COUNT(*) FROM market_prices;
+-- → fingerprint: db_empty:market_prices  (threshold: =0 AND current time is Mon-Fri 08:00-17:00 VN = 01:00-10:00 UTC)
+
+SELECT COUNT(*) FROM market_prices_history;
+-- → fingerprint: db_empty:market_prices_history  (threshold: =0)
+```
+
+### G — RAG window too narrow
+
+```sql
+SELECT
+  ROUND(julianday(MAX(created_at)) - julianday(MIN(created_at)), 1) as days_span,
+  COUNT(*) as total
+FROM rag_analyses;
+-- → fingerprint: db_narrow:rag_analyses_window  (threshold: days_span < 5 OR total < 200)
+```
+
+### Reporting DB anomaly findings
+
+Each check that fires adds a finding to the batch report under category `[db_anomaly]`. Example:
+
+```
+[db_anomaly] tracked_indicators_no_dedup
+  Chi tiet: brent_crude_usd|yahoo co 801 dong — INSERT khong dedup, tang vo han
+  Goi y: Them WHERE NOT EXISTS check tuong tu commodity_prices_history
+```
 
 3. **Changelog** — recent system changes
    - Use `mcp__claude_ai_vn-market-mcp__get_recent_fixes` (last 14 days) and `git log --since="14 days ago" --oneline`
@@ -118,7 +226,8 @@ Procedure:
 2. Inspect memory dir → collect findings.
 3. Call `get_system_status` + `get_recent_fixes` + `git log` → collect findings + changelog entries.
 4. Tail logs → collect findings.
-5. Run **Doc sync** pass → edit stale docs, collect `doc_synced:*` findings.
+5. **Run DB Anomaly Detection** — execute all SQL checks A–G above → collect findings.
+6. Run **Doc sync** pass → edit stale docs, collect `doc_synced:*` findings.
 6. Filter out known fingerprints.
 7. If new findings exist → send ONE batched Report Channel message (include a "Docs updated" subsection listing synced files).
 8. Update state file (append new fingerprints, prune expired).

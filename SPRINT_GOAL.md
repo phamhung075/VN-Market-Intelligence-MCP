@@ -2,7 +2,253 @@
 
 > Previous sprint goals live in their `docs/REQ_NNN.md` specs. This file = current sprint only.
 
-## Sprint 151 — ACTIVE (2026-04-18)
+## Sprint 189 — UPCOMING (planned 2026-04-19)
+
+**Goal:** DB health restoration + VPS geo-routing completion. Production `market.db` has 7 critical anomalies: `tracked_indicators` grows unbounded (~800 rows/month/symbol), test rows leaked into production tables, Reuters/TradingEconomics/GSO all geo-blocked from France and dead, SBV rates returning zero, `push-foreign-flow` sending malformed payloads, kinhdich over-sampling at 89 readings/stock/day. All geo-blocked sources must route through Vinahost VPS Vietnam via the push pattern. This sprint makes the market intelligence pipeline complete and clean.
+
+**Scope:**
+
+| Task | Area | Type |
+|------|------|------|
+| 1489-1490 | `tracked_indicators` dedup + test contamination purge | Code fix + DB cleanup |
+| 1491-1492 | `push-foreign-flow` parse error fix (VPS script + endpoint) | VPS + endpoint fix |
+| 1493-1494 | Reuters RSS via VPS (`fetch-reuters.sh` + push endpoint) | New VPS service |
+| 1495-1496 | TradingEconomics 13 indicators via VPS Playwright (`fetch-tradingeconomics.sh` + push endpoint) | New VPS service |
+| 1497-1498 | SBV rates fetcher fix — non-zero values + 4 new schema columns | Fetcher fix + schema |
+| 1499-1500 | GSO macro data via VPS (`fetch-gso.sh` + push endpoint + 9 new macro columns) | New VPS service |
+| 1501-1502 | Kinhdich cron throttle — market hours 09:00-15:00 VN only, max 1/stock/15min | Scheduler fix |
+
+**OUT:** OHLCV foreign flow columns (Sprint 190), cascade outcome tracking (Sprint 191), Sprint 188 Yahoo Extended scope.
+
+**Success metrics:**
+- `tracked_indicators`: 0 duplicate rows per symbol per day after fix; 0 source='test' rows
+- `system_logs`: 0 rows with message='only this appears' or message='error message'
+- Reuters: items appear in `rag_analyses` within 15min of VPS push
+- TradingEconomics: all 13 indicators update daily from VPS
+- SBV: `overnight_rate` and `refinancing_rate` non-zero after next fetch cycle
+- GSO: `macro_indicators` row has `fetched_at` within 24h after next VPS run
+- Kinhdich: `kinhdich_readings` peak <= 24 rows/stock/day
+- All 14 TDD tests GREEN. `bun tsc --noEmit` clean. baseline: 5629 pass.
+
+---
+
+## Sprint 188 — ACTIVE (2026-04-19)
+
+**Goal:** Expand Yahoo Finance fetcher from 3 symbols to 12 — add VIX, S&P500, Shanghai Composite, Hang Seng, DXY, CNY/VND, copper, silver, JPY/VND. These feed the causal chain macro layer (global -> country -> sector -> stock). Without them, the cascade engine is blind to major global risk-off signals (VIX spike, DXY surge) that regularly precede VN market selloffs.
+
+**Scope:**
+- IN: `src/infrastructure/fetchers/yahooFinance.ts` — extend `SYMBOLS` map (9 new symbols), extend `CommoditySnapshot` type (9 new fields), extend `storeCommoditySnapshot` to persist new columns
+- IN: `src/infrastructure/db/schema.ts` — `commodity_prices` + `commodity_prices_history`: add 9 new columns (DEFAULT 0, backward compat, no migration needed)
+- IN: `src/application/usecases/runImpactChain.ts` — extend `MacroContext` with new fields; pass vix, sp500, dxy, hangSeng to cascade engine for global risk-off scoring
+- IN: `src/__tests__/1487-yahoo-finance-extended.test.ts` (NEW) — TDD RED first: (a) 12 symbols fetched concurrently; (b) each new field in CommoditySnapshot; (c) storeCommoditySnapshot writes all 12 columns; (d) partial failure (3 symbols null) stores rest; (e) existing 3-field consumers backward compat
+- OUT: VPS changes, sbv_rates fix, foreign flow columns, macro_indicators backfill, cascade rule outcome tracking
+
+**Success metric:** `commodity_prices` row has all 12 columns populated after one fetch cycle. Cascade engine receives VIX + DXY context. TDD GREEN. `bun tsc --noEmit` clean. baseline: 5629 pass.
+
+---
+
+## Sprint 186 — COMPLETE (2026-04-19)
+
+**Goal:** Fix remaining 28 full-suite test failures caused by `047-bctc-orchestrator.test.ts`'s `mock.module("telegram.js")` permanently replacing the real module in Bun's process-wide registry. Sprint 185 fixed the return type (CoreSendResult → boolean), but Bun's `mock.module` is process-global — even with correct return type, `034`, `1254`, and `1163` still receive the stub version of `sendTelegramMarket` that ignores `fetchFn` and always returns `true`. Additionally, `vnstock-3statement.test.ts` gets 8 failures because `schema.js` is cached from a prior file's import with a different DB connection, so `storeBalanceSheet`/`getLatestCashFlow` operate on a stale DB handle.
+
+**Scope:**
+- IN: `src/__tests__/034-telegram-notifier.test.ts:2` — add `mock.module("../infrastructure/notifiers/telegram.js", ...)` override at file top with real passthrough implementation so `047`'s stub is evicted; OR restructure each `it()` to use top-level imported functions that bypass Bun's registry
+- IN: `src/__tests__/1254-morning-briefing-no-dup-insert.test.ts:86` — same mock.module override so AC-2 receives the real `sendTelegramMarket` that inserts into `market_messages`
+- IN: `src/__tests__/1163-market-message-review.test.ts` — same mock.module override for failing AC-3/AC-4/AC-11 cases
+- IN: `src/__tests__/vnstock-3statement.test.ts:20` — fix DB isolation so `storeBalanceSheet`/`storeCashFlow` use the same in-memory connection that `initDatabase()` initializes (likely need to pass `db` explicitly or call `getDb()` fresh after `initDatabase()`)
+- OUT: production code changes, schema changes, VPS proxies, alert pipeline
+
+**Success metric:** Full suite fail count drops from 28 to ≤5 (intentional OCR only). `034`, `1254`, `1163`, `vnstock-3statement` all GREEN in full suite. `bun tsc --noEmit` clean. baseline: 5599 pass.
+
+---
+
+## Sprint 185 — COMPLETE (2026-04-19)
+
+**Goal:** Fix `047-bctc-orchestrator.test.ts` mock.module returning wrong return type for `sendTelegramMarket`/`sendTelegramWork`/`sendTelegramBug`. The mock returns `Promise.resolve({ ok: true, messageId: 0 })` (CoreSendResult object) but the real functions return `Promise<boolean>`. In full suite, Bun's module cache is poisoned: any test file that imports `telegram.js` after `047` loads gets the mock version, causing `034-telegram-notifier` (~15 fails) and `1163-market-message-review` (~5 fails) to receive an object instead of `true`/`false`. Also add missing `Bun.env["DB_PATH"] = ":memory:";` as line 1 of `047`.
+
+**Scope:**
+- IN: `src/__tests__/047-bctc-orchestrator.test.ts:1` — add `Bun.env["DB_PATH"] = ":memory:";` as new line 1
+- IN: `src/__tests__/047-bctc-orchestrator.test.ts:17-19` — change `Promise.resolve({ ok: true, messageId: 0 })` to `Promise.resolve(true)` for all three send function mocks
+- OUT: production code changes, schema changes, VPS proxies, alert pipeline
+
+**Success metric:** Full suite fail count drops from 29 to ≤10 (targeting elimination of the 034 + 1163 cluster). `bun tsc --noEmit` clean. baseline: 5598 pass.
+
+---
+
+## Sprint 184 — COMPLETE (2026-04-19)
+
+**Goal:** Fix 2 test-isolation regressions causing 30 full-suite failures. (1) `1480-db-isolation-batch5.test.ts` has inverted condition: `if (firstLine.includes('Bun.env["DB_PATH"]'))` flags correctly-isolated files as offenders — should check `process.env["DB_PATH"]` (the banned pattern). Sprint 181+182 added `Bun.env["DB_PATH"]` to 109+ files as the correct pattern, so this assertion now incorrectly finds 126 offenders. (2) `1163-market-message-review.test.ts` has no `Bun.env["DB_PATH"] = ":memory:";` at line 1 — causes DB contamination in full suite that cascades to 034, 1254, vnstock-3statement failures.
+
+**Scope:**
+- IN: `src/__tests__/1480-db-isolation-batch5.test.ts:13` — change `'Bun.env["DB_PATH"]'` to `'process.env["DB_PATH"]'` in the `firstLine.includes(...)` check (fixes inverted assertion)
+- IN: `src/__tests__/1163-market-message-review.test.ts:1` — insert `Bun.env["DB_PATH"] = ":memory:";` as new line 1 (fixes full-suite DB contamination)
+- OUT: production code changes, schema changes, VPS proxies, alert pipeline
+
+**Success metric:** Full suite fail count drops from 30 to ≤1 (intentional OCR only). `1480` test: 0 offenders. `034`, `1163`, `1254`, `vnstock-3statement` all GREEN in full suite. `bun tsc --noEmit` clean. baseline: 5597 pass.
+
+---
+
+## Sprint 183 — COMPLETE (2026-04-19)
+
+**Goal:** Fix 8 pre-existing test failures caused by `spawnQaResponder()` using `getDb()` internally instead of the injected test DB, and 1 test assertion drift in `1073`. APPROVED, merged commit e36daa8.
+
+---
+
+## Sprint 179 — COMPLETE (2026-04-19)
+
+---
+
+## Sprint 180 — COMPLETE (2026-04-19)
+
+---
+
+## Sprint 182 — COMPLETE (2026-04-19)
+
+**Goal:** fix(test-isolation): batch6 — bulk Bun.env DB_PATH fix in 50 beforeEach/body test files. APPROVED, merged commit 7c4df5f.
+
+---
+
+## Sprint 181 — COMPLETE (2026-04-19)
+
+**Goal:** Fix production DB contamination by test runs. 109 test files use `process.env["DB_PATH"] = ":memory:"` as line 1 — the wrong namespace in Bun. When tests run, `schema.ts` reads `Bun.env["DB_PATH"]` (not `process.env`), so these files inadvertently open the production `data/market.db`. Confirmed production impact: system_logs show test strings ("simulated...failure for AC-3", "check timestamp", "warning message") appearing at 2026-04-18 15:30–15:39 UTC alongside real production job output — dev test runs contaminated the production DB during sprint work. This also explains the 38 full-suite test failures (race condition when test file imports DB modules before `setup.ts` preload takes effect in that worker). Fix: bulk replace `process.env["DB_PATH"]` → `Bun.env["DB_PATH"]` in all 109 affected test files.
+
+**Scope:**
+- IN: 109 test files — replace `process.env["DB_PATH"] = ":memory:";` at line 1 with `Bun.env["DB_PATH"] = ":memory:";` (list: `034-telegram-notifier.test.ts`, `vnstock-3statement.test.ts`, `1254-morning-briefing-no-dup-insert.test.ts`, `102-job-news-poll.test.ts`, `103-job-market-scan.test.ts`, `105-job-evening-summary.test.ts`, `106-intelligence-cycle.test.ts`, `1070-position-ledger.test.ts`, and 101 more files matching `for f in src/__tests__/*.test.ts; do head -1 "$f" | grep -q 'process.env\["DB_PATH"\]' && echo "$f"; done`)
+- IN: `src/__tests__/1480-db-isolation-batch5.test.ts` (NEW) — TDD RED first: assert all 109 target files have `Bun.env["DB_PATH"] = ":memory:";` as firstExecutableLine
+- OUT: production code changes, schema changes, VPS proxies, alert pipeline
+
+**Success metric:** Full suite: fail count drops from 38 to ≤5 (only intentional OCR timeout remains). Production DB no longer receives test rows. TDD test GREEN. `bun tsc --noEmit` clean. baseline: 5587 pass.
+
+---
+
+**Goal:** Fix 38 pre-existing full-suite test failures caused by `Bun.env["DB_PATH"]` not being set at line 1 in the affected test files. These tests pass individually but fail in full suite because `schema.ts` reads `Bun.env["DB_PATH"]` (not `process.env`) — so tests that only set `process.env["DB_PATH"]` inadvertently open the production `data/market.db`. With 38 silent failures, real regressions are masked. Fix: add `Bun.env["DB_PATH"] = ":memory:"` before any imports in the ~10 highest-impact failing test files.
+
+**Scope:**
+- IN: `src/__tests__/1192-evening-summary-empty-fallback.test.ts:1` — add `Bun.env["DB_PATH"] = ":memory:";` at line 1
+- IN: `src/__tests__/125-test-e2e-briefing.test.ts:1` — add `Bun.env["DB_PATH"] = ":memory:";` at line 1
+- IN: `src/__tests__/1348-france-summary-cron-window.test.ts:1` — add `Bun.env["DB_PATH"] = ":memory:";` at line 1
+- IN: `src/__tests__/235-telegram-send-merge.test.ts:1` — add `Bun.env["DB_PATH"] = ":memory:";` at line 1
+- IN: `src/__tests__/126-macro-cascade.test.ts:1` — add `Bun.env["DB_PATH"] = ":memory:";` at line 1
+- IN: `src/__tests__/1074-ask-queue-check-job.test.ts:1` — verify or add `Bun.env["DB_PATH"] = ":memory:";` at line 1
+- IN: TDD test `src/__tests__/1479-db-isolation-batch4.test.ts` (NEW) — assert `Bun.env["DB_PATH"]` is `":memory:"` in each of the fixed files (import-time env check); assert full suite run does not grow test failure count beyond pre-existing 38→N
+- OUT: production code changes, schema changes, VPS proxies, alert pipeline
+
+**Success metric:** Full suite: fail count drops from 38 to ≤28. TDD test GREEN. `bun tsc --noEmit` clean. baseline: 5581 pass.
+
+## Sprint 178 — COMPLETE (2026-04-19)
+
+**Goal:** Fix remaining unaccented Vietnamese in 4 MCP tool files (batch 3). Agents reading tool descriptions for `log_fix`, `get_recent_fixes`, `read_telegram_reports`, `process_telegram_report`, `claim_telegram_report`, `get_supply_chain_exposure`, and ticker intelligence see garbled text instead of proper Vietnamese. Fixes all user-visible and agent-visible diacritics in this batch.
+
+**Scope:**
+- IN: `src/interface/mcp/tools/changelogTools.ts:69-70,75,80,85,90,94,99,104-105` — fix 10 unaccented strings in `log_fix` + `get_recent_fixes` tool descriptions and param describes
+- IN: `src/interface/mcp/tools/telegramReportTools.ts:89,96,104,110-111,180-181,261-263,269,274` — fix 8 unaccented strings in `read_telegram_reports`, `process_telegram_report`, `claim_telegram_report` tool descriptions and param describes
+- IN: `src/interface/mcp/tools/supplyChainTools.ts:318` — fix 1 error-path string: "Loi: Khong the lay du lieu chuoi cung ung" → "Lỗi: Không thể lấy dữ liệu chuỗi cung ứng. Vui lòng thử lại."
+- IN: `src/interface/mcp/tools/tickerIntelligenceTools.ts:264` — fix 1 error-path string: "(loi phan tich BCTC)" → "(lỗi phân tích BCTC)"
+- IN: `src/__tests__/1473-tool-diacritics-batch3.test.ts` (NEW) — TDD RED first: assertions for all ~20 fixed strings
+- OUT: logic changes, schema changes, VPS proxies, alert pipeline
+
+**Success metric:** All ~20 broken strings replaced with properly accented Vietnamese. TDD test GREEN. `bun tsc --noEmit` clean. baseline: 5589 pass.
+
+## Sprint 176 — COMPLETE (2026-04-19)
+
+**Goal:** Fix BUG channel flood from SQLite corruption. When `syncVnstockData` hits "database disk image is malformed", it logs once per stock (30 tickers = 30 WARNs per 60s cycle). Add an early-bail guard: detect malformed error in the per-stock catch block, emit ONE consolidated warn, and break the loop. Prevents 30-per-cycle BUG reports that obscure real actionable signals.
+
+**Scope:**
+- IN: `src/application/usecases/syncVnstockData.ts:191` — check if err message includes "malformed"; if so `logger.warn("[vnstock-sync] DB corruption detected — halting sync cycle", { error })` then `break`; else log per-stock warn as before
+- IN: `src/__tests__/1466-sync-db-corruption-bail.test.ts` (NEW) — TDD RED: (a) malformed error on first stock → loop breaks, only 1 warn total, remaining stocks skipped; (b) non-malformed error → per-stock warn, loop continues; (c) mixed: malformed on 3rd of 5 → 2 normal warns + 1 malformed warn + break
+- OUT: vnstockStore changes, schema changes, checkpoint logic, alert pipeline
+
+**Success metric:** On DB corruption, `syncVnstockData` emits exactly 1 warn and stops. TDD GREEN. `bun tsc --noEmit` clean. baseline: 5565 pass.
+
+---
+
+## Sprint 175 — COMPLETE (2026-04-19)
+
+**Goal:** Add a daily OHLCV staleness check cron that fires at 08:15 UTC Mon-Fri (30 min after market close = 15:15 VN). If `daily_ohlcv` has zero rows for the current VN date for more than 50% of watchlist tickers, send a WORK channel alert listing the missing tickers. This closes the VPS price-push silent-failure gap: when `vn-price-fetch.service` stops mid-day, the startup probe misses it (only fires at boot), and the evening summary silently shows `watchlistMovers: []` with no operator notification.
+
+**Scope:**
+- IN: `src/scheduler/ohlcvStalenessCheckJob.ts` (NEW, ~50 lines) — `runOhlcvStalenessCheck(deps?)` reads `daily_ohlcv WHERE code IN watchlist AND date = VN_today`, counts missing tickers, sends WORK alert when threshold exceeded (>50% of watchlist)
+- IN: `src/scheduler/jobs.ts:138` — add `ohlcvStalenessCheck: Bun.env.CRON_OHLCV_STALENESS_CHECK ?? '15 8 * * 1-5'` to CRONS map
+- IN: `src/scheduler/jobs.ts:631` — add `cron.schedule(CRONS.ohlcvStalenessCheck, ..., { timezone: 'UTC' })` after ohlcvDailyAggregator block
+- IN: `src/__tests__/1465-ohlcv-staleness-check.test.ts` — TDD RED first: (a) all watchlist tickers present today → no alert; (b) >50% missing → alert sent with ticker list; (c) exactly 50% missing → no alert (edge); (d) empty watchlist → no alert; (e) VN date computation correct
+- OUT: ohlcvStartupProbe.ts (unchanged — startup probe kept as complementary check), schema changes, VPS proxies, alert pipeline, market channel
+
+**Success metric:** `ohlcvStalenessCheck` cron registered in `cron_job_runs`. WORK alert fires when VPS stops pushing for current VN trading day. TDD test GREEN. `bun tsc --noEmit` clean. baseline: 5560 pass.
+
+---
+
+## Sprint 172 — COMPLETE (2026-04-19)
+
+**Goal:** Fix stale `market_prices` rows leaking wrong `change_pct` into evening summary `watchlistMovers`. `assembleEveningSummary.ts` joins `market_prices` without a freshness guard — VCB's stale row (88,000 from 2026-03-27, `change_pct` from that day) passes the `|change_pct| >= 1.0` filter and appears as the only mover. All other tickers correctly have no `market_prices` row, so they fall back to the OHLCV CTE — but they too may have computed_pct below threshold on a normal day. Sprint 167 fixed this pattern in `assembleBriefing.ts` (lines 727, 730, 922, 926); Sprint 168 fixed it in `franceSummaryJob.ts`. This sprint applies the same fix to `assembleEveningSummary.ts`.
+
+**Scope:**
+- IN: `src/application/usecases/assembleEveningSummary.ts:422` — add `AND mp.updated_at >= datetime('now', '-3 days')` to `LEFT JOIN market_prices mp ON mp.code = w.code` (OHLCV path)
+- IN: `src/application/usecases/assembleEveningSummary.ts:433` — same freshness guard (fallback path, no OHLCV table)
+- IN: TDD test `src/__tests__/1462-evening-mover-freshness.test.ts` — assert stale `market_prices` row (>3 days) is ignored; fresh row (today) is used; OHLCV computed_pct used when market_prices is stale
+- OUT: `assembleBriefing.ts`, `franceSummaryJob.ts`, alert pipeline, VPS proxies, schema changes
+
+**Success metric:** Stale `market_prices` row does not appear in evening `watchlistMovers`. OHLCV-computed movers surface correctly when `market_prices` is stale. TDD test GREEN. `bun tsc --noEmit` clean. baseline: 5546 pass.
+
+---
+
+## Sprint 171 — COMPLETE (2026-04-19)
+
+**Goal:** Fix WAL unbounded growth causing SQLite "database disk image is malformed" errors. Current WAL = 438MB. Root cause: (1) daily `walCheckpoint` cron uses `RESTART` mode — when any reader is active at 20:00 UTC, `RESTART` cannot truncate the WAL file on disk, leaving it at full size. (2) Job not wrapped in `recordJobRun` — zero observability into checkpoint success/failure. Fix: change to `TRUNCATE` mode (same as shutdown hook), add `recordJobRun` wrapper.
+
+**Scope:**
+- IN: `src/infrastructure/db/checkpoint.ts:44` — `PRAGMA wal_checkpoint(RESTART)` → `PRAGMA wal_checkpoint(TRUNCATE)`. Update JSDoc lines 8,27,29 to reflect TRUNCATE.
+- IN: `src/scheduler/jobs.ts:322-324` — wrap `runWalCheckpoint()` in `recordJobRun(getDb(), 'walCheckpointJob', ...)` so job appears in `cron_job_runs`
+- IN: `src/__tests__/1447-checkpoint-restart-mode.test.ts:5,58,62,63` — update test title/assertions: `TRUNCATE` not `RESTART`, `not.toContain("RESTART")` → `not.toContain("PASSIVE")`
+- OUT: `registerShutdownHook()` (already uses TRUNCATE — no change), schema changes, VPS proxies, alert pipeline
+
+**Success metric:** `walCheckpointJob` appears in `cron_job_runs` after next 20:00 UTC run. WAL file shrinks to near-zero after checkpoint. `bun tsc --noEmit` clean. All 5 existing tests in 1447 pass (updated assertions). baseline: 5542 pass.
+
+---
+
+## Sprint 170 — COMPLETE (2026-04-18)
+
+**Goal:** Move `scheduler_locks` DDL from inline `ensureSchedulerLocksTable()` in `schedulerLockStore.ts` to the canonical `schema.ts:initDatabase()`. The janitor flagged this as HIGH severity — schema DDL split across two locations creates maintenance risk: the `scheduler_locks` table is missing from `schema.ts`'s table inventory comment, making it invisible during audits. Fix makes `ensureSchedulerLocksTable` a no-op (DDL now runs at startup via `initDatabase`).
+
+**Scope:**
+- IN: `src/infrastructure/db/schema.ts:1407` — add `scheduler_locks` DDL (3 columns: job_name PK, acquired_at, released_at) inside the final `db.exec(...)` block before closing backtick
+- IN: `src/infrastructure/db/schedulerLockStore.ts:38-46` — replace body of `ensureSchedulerLocksTable` with a no-op comment (function kept for API compat with `weeklyPortfolioReportJob.ts:359`)
+- IN: TDD test `src/__tests__/1457-scheduler-locks-schema.test.ts` — assert `scheduler_locks` table exists after `initDatabase()` alone (no call to `ensureSchedulerLocksTable`); assert `ensureSchedulerLocksTable` is a no-op (doesn't fail, doesn't create duplicate)
+- OUT: `weeklyPortfolioReportJob.ts` (caller unchanged), alert pipeline, VPS proxies, other schema changes
+
+**Success metric:** `initDatabase()` creates `scheduler_locks` without needing `ensureSchedulerLocksTable`. TDD test GREEN. `bun tsc --noEmit` clean. baseline: 5539 pass.
+
+---
+
+## Sprint 169 — COMPLETE (2026-04-18)
+
+**Goal:** Fix `watchlistMovers: []` in every evening summary — `assembleEveningSummary.ts` uses `WHERE t.date = date('now')` (UTC date) in the `ohlcv_change` CTE. VN market closes at 15:00 VN = 08:00 UTC; the evening summary fires at 15:30 UTC = 22:30 VN. By then `date('now')` = today UTC, but `daily_ohlcv` only has rows for the last VN **trading** day (e.g. April 17 on a Saturday). The CTE returns 0 rows → no movers computed → `watchlistMovers: []` every evening/weekend.
+
+**Scope:**
+- IN: `src/application/usecases/assembleEveningSummary.ts:415` — change `WHERE t.date = date('now')` to `WHERE t.date = (SELECT MAX(date) FROM daily_ohlcv)` so the CTE always uses the latest available trading day
+- IN: TDD test `src/__tests__/1456-evening-watchlist-movers-ohlcv-date.test.ts` — seed `daily_ohlcv` with rows dated yesterday (not today), assert `watchlistMovers` is non-empty when |changePct| >= 1.0; also assert today-only seed returns same result (MAX(date) = today works too)
+- OUT: `market_prices`, alert pipeline, franceSummaryJob, schema changes, VPS proxies
+
+**Success metric:** Evening summary produces non-empty `watchlistMovers` when `daily_ohlcv` has data for the latest VN trading day (even if not UTC-today). TDD test GREEN. `bun tsc --noEmit` clean. baseline: 5536 pass.
+
+---
+
+## Sprint 167 — COMPLETE (2026-04-18)
+
+**Goal:** Fix stale `market_prices` rows leaking into morning briefing — `assembleBriefing.ts` queries `market_prices` without a freshness guard, so a stale VCB row (88,000 from 2026-03-27) takes priority over the correct `daily_ohlcv` fallback (59,500). Audit's 3-day delete and the briefing query are inconsistent — audit deletes `updated_at < 3 days` but if audit missed a cycle, the row persists with a wrong price shown to the user.
+
+**Scope:**
+- IN: `assembleBriefing.ts:727` — add `AND mp.updated_at >= datetime('now', '-3 days')` to watchlist price subquery
+- IN: `assembleBriefing.ts:730` — same freshness guard on `change_pct` subquery
+- IN: `assembleBriefing.ts:922` — same freshness guard on portfolio P&L price map first SELECT
+- IN: `assembleBriefing.ts:926` — update NOT IN subquery to also filter by freshness
+- IN: TDD test `src/__tests__/1452-market-prices-freshness.test.ts` — assert stale market_prices row (>3 days) is ignored in favor of daily_ohlcv; fresh row (today) is used
+- OUT: dataAuditJob changes, franceSummaryJob, schema changes, VPS proxies
+
+**Success metric:** Morning briefing uses `daily_ohlcv` fallback when `market_prices` row is >3 days old. TDD test GREEN. `bun tsc --noEmit` clean.
+
+---
+
+## Sprint 151 — COMPLETE (2026-04-18)
 
 **Goal:** Add "BCTC sắp đến" (upcoming filing deadlines) section to morning briefing — show watchlist stocks with Q1 2026 deadlines within 14 days that have not yet filed. User is in BCTC season right now (Q1 deadline = Apr 30 standard, May 14 banking). Without this, morning briefing is silent on imminent filings even when 12/30 watchlist stocks are days away from statutory deadline.
 

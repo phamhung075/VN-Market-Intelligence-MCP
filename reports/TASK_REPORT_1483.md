@@ -1,6 +1,6 @@
 # Task Report 1483 — compact
 date: 2026-04-19
-outcome: CHANGES_REQUESTED
+outcome: APPROVED
 
 changed:
 - src/__tests__/1480-db-isolation-batch5.test.ts:13
@@ -41,7 +41,7 @@ src/__tests__/1480-db-isolation-batch5.test.ts:19 — error message says "Bun.en
 
 ## Merge Status
 
-NOT MERGED — blocking issue must be resolved first.
+MERGED — bfa59ef — branch task/1483-isolation-fix deleted local+remote.
 
 ---
 
@@ -50,4 +50,4 @@ NOT MERGED — blocking issue must be resolved first.
 - **Root cause**: Three locations in 1480 contained the unsplit literal: the `it()` description (line 7), the `includes()` call (line 13), and the error message (line 20). Splitting only line 13 left lines 7 and 20 still matching 1481's full-file scan.
 - **Fix**: `src/__tests__/1480-db-isolation-batch5.test.ts` — split literal in all three locations using `'process.env' + '["DB_PATH"]'` concatenation pattern. Error message now references `${banned}` (also fixes non-blocking Bun.env label).
 - **Tests added**: None
-- **Verified**: `bun test` 1480 PASS (1/0) | `bun test` 1481 PASS (1/0) | `bun tsc --noEmit` PASS
+- **Verified**: `bun test` 1480 PASS (1/0) | `bun test` 1481 PASS (1/0) | `bun test` 1163 PASS (36/0) | `bun tsc --noEmit` PASS | full suite 29 fail (all pre-existing, main had 30 before merge)

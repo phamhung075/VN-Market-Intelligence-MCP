@@ -139,3 +139,16 @@ tests_skipped: []
 
 tsc_clean: true
 full_suite_pass: n/a (RED phase — failures expected)
+
+---
+
+## [QA] Review Record
+
+verdict: APPROVED
+blocking_issues: []
+non_blocking: []
+
+files_confirmed_clean:
+- /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/__tests__/1472-tool-diacritics-batch2.test.ts
+
+merge_commit: n/a — RED phase, branch stays open for GREEN (1472b)

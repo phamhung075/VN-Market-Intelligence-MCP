@@ -208,3 +208,18 @@ tests_skipped: []
 
 tsc_clean: true
 full_suite_pass: true   # 22 pre-existing failures unrelated to this task
+
+---
+
+## [QA] Review Record
+
+verdict: APPROVED
+blocking_issues: []
+non_blocking:
+  - "src/__tests__/1465-ohlcv-staleness-check.test.ts untracked — not in any commit (RED or GREEN). Tests exist and pass; procedural TDD gap only."
+
+files_confirmed_clean:
+  - /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/scheduler/ohlcvStalenessCheckJob.ts
+  - /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/scheduler/jobs.ts
+
+merge_commit: 1694c68
