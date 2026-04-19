@@ -158,7 +158,7 @@ describe("Task 1370 — fetchTopMovers filters by watchlist", () => {
     const sends: string[] = []
     const sendFn = async (t: string) => { sends.push(t); return true }
 
-    const opts: FranceSummaryOptions = { db, sendFn, nowFn: now }
+    const opts: FranceSummaryOptions = { db, sendFn, nowFn: now, getPnlFn: async () => null }
     const result = await runFranceSummary(opts)
 
     // Job must send (there is at least one watchlist mover)
@@ -192,7 +192,7 @@ describe("Task 1370 — fetchTopMovers filters by watchlist", () => {
     const sends: string[] = []
     const sendFn = async (t: string) => { sends.push(t); return true }
 
-    const opts: FranceSummaryOptions = { db, sendFn, nowFn: now }
+    const opts: FranceSummaryOptions = { db, sendFn, nowFn: now, getPnlFn: async () => null }
 
     let threw = false
     let result: Awaited<ReturnType<typeof runFranceSummary>>
@@ -230,7 +230,7 @@ describe("Task 1370 — fetchTopMovers filters by watchlist", () => {
     const sends: string[] = []
     const sendFn = async (t: string) => { sends.push(t); return true }
 
-    const opts: FranceSummaryOptions = { db, sendFn, nowFn: now }
+    const opts: FranceSummaryOptions = { db, sendFn, nowFn: now, getPnlFn: async () => null }
 
     let threw = false
     let result: Awaited<ReturnType<typeof runFranceSummary>>
@@ -278,7 +278,7 @@ describe("Task 1370 — fetchTopMovers filters by watchlist", () => {
     const sends: string[] = []
     const sendFn = async (t: string) => { sends.push(t); return true }
 
-    const opts: FranceSummaryOptions = { db, sendFn, nowFn: now }
+    const opts: FranceSummaryOptions = { db, sendFn, nowFn: now, getPnlFn: async () => null }
     const result = await runFranceSummary(opts)
 
     expect(result.sent).toBe(true)
