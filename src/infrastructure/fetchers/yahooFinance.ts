@@ -47,11 +47,22 @@ const YAHOO_API_BASE =
   Bun.env["YAHOO_FINANCE_API_URL"] ??
   "https://query1.finance.yahoo.com/v8/finance/chart";
 
-/** The three commodity symbols fetched on every call. */
+/** The 12 commodity/index symbols fetched on every call. */
 const SYMBOLS = {
-  brent: "BZ=F",
-  gold: "GC=F",
+  // existing
+  brent:  "BZ=F",
+  gold:   "GC=F",
   usdVnd: "USDVND=X",
+  // new (FR-1) — 9 global risk-off symbols
+  vix:      "^VIX",       // CBOE Volatility Index (fear gauge)
+  sp500:    "^GSPC",      // S&P 500 index
+  shanghai: "000001.SS",  // Shanghai Composite — 15-min delay on Yahoo free tier
+  hangSeng: "^HSI",       // Hang Seng index
+  dxy:      "DX-Y.NYB",  // US Dollar Index (NYB venue; 0 stored if unresolvable)
+  cnyVnd:   "CNHVND=X",  // CNH/VND offshore rate (low liquidity)
+  copper:   "HG=F",       // Copper futures (USD/lb)
+  silver:   "SI=F",       // Silver futures (USD/oz)
+  jpyVnd:   "JPYVND=X",  // JPY/VND exchange rate
 } as const;
 
 /** Source identifier written to SQLite rows. */
@@ -62,9 +73,9 @@ const SOURCE = "yahoo";
 // ---------------------------------------------------------------------------
 
 /**
- * A snapshot of the three commodity prices at a single point in time.
+ * A snapshot of 12 commodity/index prices at a single point in time.
  *
- * All prices are in USD (or USD/VND for the exchange rate).
+ * All prices are in USD (or USD/VND for exchange rates).
  * A value of 0 means the field could not be parsed from the response.
  */
 export interface CommoditySnapshot {
@@ -76,6 +87,25 @@ export interface CommoditySnapshot {
   usdVndRate: number;
   /** ISO 8601 timestamp of when this snapshot was fetched. */
   fetchedAt: string;
+  // ── new fields (FR-2) — all 0 when individual fetch fails ─────────────────
+  /** CBOE Volatility Index level. 0 if unavailable. */
+  vix: number;
+  /** S&P 500 index level. 0 if unavailable. */
+  sp500: number;
+  /** Shanghai Composite level (15-min delay on Yahoo free tier). 0 if unavailable. */
+  shanghaiComp: number;
+  /** Hang Seng index level. 0 if unavailable. */
+  hangSeng: number;
+  /** US Dollar Index (DXY) level. 0 if unavailable (DX-Y.NYB venue). */
+  dxy: number;
+  /** CNH to VND offshore exchange rate. 0 if unavailable. */
+  cnyVndRate: number;
+  /** Copper futures price in USD per lb. 0 if unavailable. */
+  copperUSD: number;
+  /** Silver futures price in USD per troy oz. 0 if unavailable. */
+  silverUSDPerOz: number;
+  /** JPY to VND exchange rate. 0 if unavailable. */
+  jpyVndRate: number;
 }
 
 // ---------------------------------------------------------------------------
@@ -207,11 +237,24 @@ export async function fetchYahooFinancePrices(
     apiBase,
   });
 
-  // Fetch all three symbols concurrently
-  const [brentResult, goldResult, usdVndResult] = await Promise.allSettled([
-    fetchSymbolPrice(SYMBOLS.brent, client, apiBase),
-    fetchSymbolPrice(SYMBOLS.gold, client, apiBase),
-    fetchSymbolPrice(SYMBOLS.usdVnd, client, apiBase),
+  // Fetch all 12 symbols concurrently (FR-3)
+  const [
+    brentResult, goldResult, usdVndResult,
+    vixResult, sp500Result, shanghaiResult, hangSengResult,
+    dxyResult, cnyVndResult, copperResult, silverResult, jpyVndResult,
+  ] = await Promise.allSettled([
+    fetchSymbolPrice(SYMBOLS.brent,    client, apiBase),
+    fetchSymbolPrice(SYMBOLS.gold,     client, apiBase),
+    fetchSymbolPrice(SYMBOLS.usdVnd,   client, apiBase),
+    fetchSymbolPrice(SYMBOLS.vix,      client, apiBase),
+    fetchSymbolPrice(SYMBOLS.sp500,    client, apiBase),
+    fetchSymbolPrice(SYMBOLS.shanghai, client, apiBase),
+    fetchSymbolPrice(SYMBOLS.hangSeng, client, apiBase),
+    fetchSymbolPrice(SYMBOLS.dxy,      client, apiBase),
+    fetchSymbolPrice(SYMBOLS.cnyVnd,   client, apiBase),
+    fetchSymbolPrice(SYMBOLS.copper,   client, apiBase),
+    fetchSymbolPrice(SYMBOLS.silver,   client, apiBase),
+    fetchSymbolPrice(SYMBOLS.jpyVnd,   client, apiBase),
   ]);
 
   const brentCrudeUSD =
@@ -229,26 +272,67 @@ export async function fetchYahooFinancePrices(
       ? usdVndResult.value
       : 0;
 
-  // If ALL three fields are 0, nothing was parsed — return null.
-  if (brentCrudeUSD === 0 && goldUSDPerOz === 0 && usdVndRate === 0) {
-    logger.warn(
-      "[yahooFinance] all three symbols returned 0 — no data parsed",
-      { apiBase },
-    );
+  const vix =
+    vixResult.status === "fulfilled" && vixResult.value !== null ? vixResult.value : 0;
+  const sp500 =
+    sp500Result.status === "fulfilled" && sp500Result.value !== null ? sp500Result.value : 0;
+  const shanghaiComp =
+    shanghaiResult.status === "fulfilled" && shanghaiResult.value !== null ? shanghaiResult.value : 0;
+  const hangSeng =
+    hangSengResult.status === "fulfilled" && hangSengResult.value !== null ? hangSengResult.value : 0;
+  const dxy =
+    dxyResult.status === "fulfilled" && dxyResult.value !== null ? dxyResult.value : 0;
+  const cnyVndRate =
+    cnyVndResult.status === "fulfilled" && cnyVndResult.value !== null ? cnyVndResult.value : 0;
+  const copperUSD =
+    copperResult.status === "fulfilled" && copperResult.value !== null ? copperResult.value : 0;
+  const silverUSDPerOz =
+    silverResult.status === "fulfilled" && silverResult.value !== null ? silverResult.value : 0;
+  const jpyVndRate =
+    jpyVndResult.status === "fulfilled" && jpyVndResult.value !== null ? jpyVndResult.value : 0;
+
+  // Return null ONLY when ALL 12 fields are 0 (FR-3 business rule)
+  if (
+    brentCrudeUSD === 0 && goldUSDPerOz === 0 && usdVndRate === 0 &&
+    vix === 0 && sp500 === 0 && shanghaiComp === 0 && hangSeng === 0 &&
+    dxy === 0 && cnyVndRate === 0 && copperUSD === 0 && silverUSDPerOz === 0 &&
+    jpyVndRate === 0
+  ) {
+    logger.warn("[yahooFinance] all 12 symbols returned 0 — no data parsed", { apiBase });
     return null;
   }
 
   const snapshot: CommoditySnapshot = {
+    // existing
     brentCrudeUSD,
     goldUSDPerOz,
     usdVndRate,
     fetchedAt,
+    // new (FR-4)
+    vix,
+    sp500,
+    shanghaiComp,
+    hangSeng,
+    dxy,
+    cnyVndRate,
+    copperUSD,
+    silverUSDPerOz,
+    jpyVndRate,
   };
 
   logger.info("[yahooFinance] fetched commodity prices", {
     brentCrudeUSD,
     goldUSDPerOz,
     usdVndRate,
+    vix,
+    sp500,
+    shanghaiComp,
+    hangSeng,
+    dxy,
+    cnyVndRate,
+    copperUSD,
+    silverUSDPerOz,
+    jpyVndRate,
     fetchedAt,
   });
 
@@ -277,8 +361,10 @@ export function storeCommoditySnapshot(
 
   const upsertLatest = database.prepare(`
     INSERT OR REPLACE INTO commodity_prices
-      (source, brent_crude_usd, gold_usd_per_oz, usd_vnd_rate, fetched_at)
-    VALUES (?, ?, ?, ?, ?)
+      (source, brent_crude_usd, gold_usd_per_oz, usd_vnd_rate,
+       vix, sp500, shanghai_comp, hang_seng, dxy, cny_vnd_rate,
+       copper_usd, silver_usd_per_oz, jpy_vnd_rate, fetched_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
   // Sprint 052 / backlog 921: yahooFinance is the single source of truth for
@@ -297,8 +383,10 @@ export function storeCommoditySnapshot(
   // Dedup: only append history if no row exists for the same hour
   const appendHistory = database.prepare(`
     INSERT INTO commodity_prices_history
-      (source, brent_crude_usd, gold_usd_per_oz, usd_vnd_rate, fetched_at)
-    SELECT ?, ?, ?, ?, ?
+      (source, brent_crude_usd, gold_usd_per_oz, usd_vnd_rate,
+       vix, sp500, shanghai_comp, hang_seng, dxy, cny_vnd_rate,
+       copper_usd, silver_usd_per_oz, jpy_vnd_rate, fetched_at)
+    SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
     WHERE NOT EXISTS (
       SELECT 1 FROM commodity_prices_history
       WHERE source = ? AND strftime('%Y-%m-%d %H', fetched_at) = strftime('%Y-%m-%d %H', ?)
@@ -311,6 +399,15 @@ export function storeCommoditySnapshot(
       snapshot.brentCrudeUSD,
       snapshot.goldUSDPerOz,
       snapshot.usdVndRate,
+      snapshot.vix,
+      snapshot.sp500,
+      snapshot.shanghaiComp,
+      snapshot.hangSeng,
+      snapshot.dxy,
+      snapshot.cnyVndRate,
+      snapshot.copperUSD,
+      snapshot.silverUSDPerOz,
+      snapshot.jpyVndRate,
       snapshot.fetchedAt,
     );
     appendHistory.run(
@@ -318,7 +415,17 @@ export function storeCommoditySnapshot(
       snapshot.brentCrudeUSD,
       snapshot.goldUSDPerOz,
       snapshot.usdVndRate,
+      snapshot.vix,
+      snapshot.sp500,
+      snapshot.shanghaiComp,
+      snapshot.hangSeng,
+      snapshot.dxy,
+      snapshot.cnyVndRate,
+      snapshot.copperUSD,
+      snapshot.silverUSDPerOz,
+      snapshot.jpyVndRate,
       snapshot.fetchedAt,
+      // dedup WHERE bindings
       SOURCE,
       snapshot.fetchedAt,
     );

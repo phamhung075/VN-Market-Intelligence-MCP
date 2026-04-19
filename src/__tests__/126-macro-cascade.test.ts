@@ -141,6 +141,7 @@ describe("Task 126 — Macro Cascade Integration", () => {
       refinancingRatePct: null,
       overnightRatePct: null,
       usdVndOfficial: null,
+      vix: null, sp500: null, dxy: null, hangSeng: null,
     };
 
     const baseChain = buildCausalChain(seed, watchlist);
@@ -168,6 +169,7 @@ describe("Task 126 — Macro Cascade Integration", () => {
       refinancingRatePct: null,
       overnightRatePct: null,
       usdVndOfficial: null,
+      vix: null, sp500: null, dxy: null, hangSeng: null,
     };
 
     const baseChain = buildCausalChain(seed, watchlist);
@@ -191,6 +193,7 @@ describe("Task 126 — Macro Cascade Integration", () => {
       refinancingRatePct: null,
       overnightRatePct: null,
       usdVndOfficial: null,
+      vix: null, sp500: null, dxy: null, hangSeng: null,
     };
 
     const baseChain = buildCausalChain(seed, watchlist);
@@ -214,6 +217,7 @@ describe("Task 126 — Macro Cascade Integration", () => {
       refinancingRatePct: null,
       overnightRatePct: null,
       usdVndOfficial: null,
+      vix: null, sp500: null, dxy: null, hangSeng: null,
     };
 
     const baseChain = buildCausalChain(seed, watchlist);
@@ -241,6 +245,7 @@ describe("Task 126 — Macro Cascade Integration", () => {
       refinancingRatePct: 7,
       overnightRatePct: null,
       usdVndOfficial: null,
+      vix: null, sp500: null, dxy: null, hangSeng: null,
     };
 
     const baseChain = buildCausalChain(bankSeed, watchlist);
@@ -271,6 +276,7 @@ describe("Task 126 — Macro Cascade Integration", () => {
       refinancingRatePct: 3,
       overnightRatePct: null,
       usdVndOfficial: null,
+      vix: null, sp500: null, dxy: null, hangSeng: null,
     };
 
     const baseChain = buildCausalChain(bankSeed, watchlist);
@@ -301,6 +307,7 @@ describe("Task 126 — Macro Cascade Integration", () => {
       refinancingRatePct: null,
       overnightRatePct: null,
       usdVndOfficial: null,
+      vix: null, sp500: null, dxy: null, hangSeng: null,
     };
 
     const baseChain = buildCausalChain(seed, watchlist);
@@ -330,6 +337,7 @@ describe("Task 126 — Macro Cascade Integration", () => {
       refinancingRatePct: 10, // should push confidence to floor
       overnightRatePct: null,
       usdVndOfficial: null,
+      vix: null, sp500: null, dxy: null, hangSeng: null,
     };
 
     const chainHigh = buildCausalChain(seed, watchlist, undefined, macroHigh);
@@ -344,6 +352,7 @@ describe("Task 126 — Macro Cascade Integration", () => {
       refinancingRatePct: 2, // should push confidence up but capped at 0.99
       overnightRatePct: null,
       usdVndOfficial: null,
+      vix: null, sp500: null, dxy: null, hangSeng: null,
     };
 
     const chainLow = buildCausalChain(seed, watchlist, undefined, macroLow);
@@ -366,6 +375,7 @@ describe("Task 126 — Macro Cascade Integration", () => {
       refinancingRatePct: null,
       overnightRatePct: null,
       usdVndOfficial: null,
+      vix: null, sp500: null, dxy: null, hangSeng: null,
     };
 
     const baseChain = buildCausalChain(seed, watchlist);
@@ -394,6 +404,7 @@ describe("Task 126 — Macro Cascade Integration", () => {
       refinancingRatePct: null,
       overnightRatePct: null,
       usdVndOfficial: null,
+      vix: null, sp500: null, dxy: null, hangSeng: null,
     };
 
     const macroChain = buildCausalChain(seed, watchlist, undefined, macro);
@@ -431,9 +442,9 @@ describe("Task 126 — Macro Cascade Integration", () => {
       commodityFetcher: async () => {
         commodityCalled = true;
         return {
-          brentCrudeUSD: 95,
-          goldUSDPerOz: 1950,
-          usdVndRate: 24500,
+          brentCrudeUSD: 95, goldUSDPerOz: 1950, usdVndRate: 24500,
+          vix: 0, sp500: 0, shanghaiComp: 0, hangSeng: 0, dxy: 0,
+          cnyVndRate: 0, copperUSD: 0, silverUSDPerOz: 0, jpyVndRate: 0,
           fetchedAt: new Date().toISOString(),
         };
       },

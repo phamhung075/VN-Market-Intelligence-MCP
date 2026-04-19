@@ -284,8 +284,8 @@ describe("Task 1487 — Yahoo Finance Extended 12-symbol (RED)", () => {
 
   // T-7: Null snapshot → MacroContext new fields are null (FR-7 null guard)
   it("T-7: null commodity snapshot → MacroContext vix/sp500/dxy/hangSeng all null", async () => {
-    // commodity = null simulates fetch failure
-    const commodity: CommoditySnapshot | null = null;
+    // commodity = null simulates fetch failure — cast prevents TS from narrowing to null
+    const commodity = null as CommoditySnapshot | null;
 
     const macroContext: MacroContext = {
       brentCrudeUSD:      commodity?.brentCrudeUSD ?? null,
