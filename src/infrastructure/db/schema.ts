@@ -457,7 +457,7 @@ export async function initDatabase(): Promise<void> {
     )
   `);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_srh_source_fetched ON sbv_rates_history(source, fetched_at DESC)`);
-  // Migration: add 4 new columns to existing sbv_rates tables (task 1497)
+  // Task 1497 — idempotent migration for existing production DBs
   for (const col of ["discount_rate_pct", "max_deposit_rate_pct", "max_lending_rate_pct", "interbank_overnight_pct"]) {
     try { db.exec(`ALTER TABLE sbv_rates ADD COLUMN ${col} REAL NOT NULL DEFAULT 0`); } catch {}
     try { db.exec(`ALTER TABLE sbv_rates_history ADD COLUMN ${col} REAL NOT NULL DEFAULT 0`); } catch {}

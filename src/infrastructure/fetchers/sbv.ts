@@ -51,10 +51,22 @@ const VCB_RATES_URL: string =
  * Override via env vars or mcp.config.json sbv section.
  */
 const DEFAULT_OVERNIGHT_RATE = parseFloat(
-  Bun.env["SBV_OVERNIGHT_RATE"] ?? "3.0",
+  Bun.env["SBV_OVERNIGHT_RATE"] || "3.0",
 );
 const DEFAULT_REFINANCING_RATE = parseFloat(
-  Bun.env["SBV_REFINANCING_RATE"] ?? "4.5",
+  Bun.env["SBV_REFINANCING_RATE"] || "4.5",
+);
+const DEFAULT_DISCOUNT_RATE = parseFloat(
+  Bun.env["SBV_DISCOUNT_RATE"] || "1.5",
+);
+const DEFAULT_MAX_DEPOSIT_RATE = parseFloat(
+  Bun.env["SBV_MAX_DEPOSIT_RATE"] || "5.0",
+);
+const DEFAULT_MAX_LENDING_RATE = parseFloat(
+  Bun.env["SBV_MAX_LENDING_RATE"] || "12.0",
+);
+const DEFAULT_INTERBANK_OVERNIGHT = parseFloat(
+  Bun.env["SBV_INTERBANK_OVERNIGHT"] || "4.0",
 );
 
 // ---------------------------------------------------------------------------
@@ -245,14 +257,19 @@ export async function fetchSbvRates(
     return null;
   }
 
+  const discountRatePct = Number.isNaN(DEFAULT_DISCOUNT_RATE) ? 0 : DEFAULT_DISCOUNT_RATE;
+  const maxDepositRatePct = Number.isNaN(DEFAULT_MAX_DEPOSIT_RATE) ? 0 : DEFAULT_MAX_DEPOSIT_RATE;
+  const maxLendingRatePct = Number.isNaN(DEFAULT_MAX_LENDING_RATE) ? 0 : DEFAULT_MAX_LENDING_RATE;
+  const interbankOvernightPct = Number.isNaN(DEFAULT_INTERBANK_OVERNIGHT) ? 0 : DEFAULT_INTERBANK_OVERNIGHT;
+
   const snapshot: SbvMacroSnapshot = {
     overnightRatePct,
     refinancingRatePct,
     usdVndOfficial,
-    discountRatePct: parseFloat(Bun.env["SBV_DISCOUNT_RATE"] ?? "0"),
-    maxDepositRatePct: parseFloat(Bun.env["SBV_MAX_DEPOSIT_RATE"] ?? "0"),
-    maxLendingRatePct: parseFloat(Bun.env["SBV_MAX_LENDING_RATE"] ?? "0"),
-    interbankOvernightPct: parseFloat(Bun.env["SBV_INTERBANK_OVERNIGHT"] ?? "0"),
+    discountRatePct,
+    maxDepositRatePct,
+    maxLendingRatePct,
+    interbankOvernightPct,
     fetchedAt,
   };
 
