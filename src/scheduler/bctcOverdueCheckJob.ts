@@ -224,7 +224,8 @@ export async function runBctcOverdueCheck(opts: RunOptions = {}): Promise<RunRes
   if (overdueTickers.length > 0) {
     // Use the first ticker's year/quarter for the batch id (all same period)
     const { year, quarter } = overdueTickers[0]!;
-    const alertId = `bctc-overdue:batch:${year}:Q${quarter}:${utcDay}`;
+    const weekEpoch = Math.floor(now.getTime() / (7 * 24 * 3600 * 1000));
+    const alertId = `bctc-overdue:batch:${year}:Q${quarter}:W${weekEpoch}`;
 
     const tickerList = overdueTickers
       .map((t) => `${t.code} (${t.daysOverdue}d)`)

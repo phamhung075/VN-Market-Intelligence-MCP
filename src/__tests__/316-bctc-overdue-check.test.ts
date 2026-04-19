@@ -181,4 +181,32 @@ describe("runBctcOverdueCheck (Task 1018 slice 1)", () => {
 
     expect(result.alertsInserted).toBe(1);
   });
+
+  it("Task 1467 — weekly dedup: same alert does NOT re-fire on a different day within the same 7-day window", async () => {
+    db.run("INSERT INTO watchlist (code, domain) VALUES ('FPT', 'general')");
+
+    // Day 1: alert fires (FPT overdue Q4-2025, now=2026-04-05 Sun)
+    const day1 = new Date("2026-04-05T03:00:00Z");
+    const first = await runBctcOverdueCheck({ db, now: day1 });
+    expect(first.alertsInserted).toBe(1);
+
+    // Day 2 (next day, same ISO week): alert must NOT fire again
+    const day2 = new Date("2026-04-06T03:00:00Z");
+    const second = await runBctcOverdueCheck({ db, now: day2 });
+    expect(second.alertsInserted).toBe(0);
+
+    // Only 1 alert row total
+    expect(
+      (db.query<{ c: number }, []>("SELECT COUNT(*) AS c FROM alerts").get())!.c,
+    ).toBe(1);
+
+    // Day 8 (next 7-day epoch): alert fires again
+    const day8 = new Date("2026-04-12T03:00:00Z");
+    const third = await runBctcOverdueCheck({ db, now: day8 });
+    expect(third.alertsInserted).toBe(1);
+
+    expect(
+      (db.query<{ c: number }, []>("SELECT COUNT(*) AS c FROM alerts").get())!.c,
+    ).toBe(2);
+  });
 });
