@@ -106,6 +106,8 @@ describe("synthesizeChain", () => {
     expect(chain!.agents).toContain("market-watcher");
     expect(chain!.conviction).toBeGreaterThan(0);
     expect(chain!.conviction).toBeLessThanOrEqual(1);
+    expect(chain!.narrative).toContain("xác tín");
+    expect(chain!.narrative).not.toContain("xac tin");
   });
 
   it("produces higher conviction with three confirming layers", () => {
