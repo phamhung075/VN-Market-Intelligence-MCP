@@ -45,6 +45,16 @@ export interface CommoditySnapshot {
   /** USD/VND market rate */
   usdVndRate: number;
   fetchedAt: string;
+  // new risk-off fields (sprint 188, FR-7)
+  vix: number;
+  sp500: number;
+  shanghaiComp: number;
+  hangSeng: number;
+  dxy: number;
+  cnyVndRate: number;
+  copperUSD: number;
+  silverUSDPerOz: number;
+  jpyVndRate: number;
 }
 
 /**
@@ -136,12 +146,17 @@ export async function runImpactChain(input: RunCascadeInput): Promise<CausalChai
 
   // Assemble MacroContext — fields stay null when the fetcher failed/returned null
   const macroContext: MacroContext = {
-    brentCrudeUSD: commodity?.brentCrudeUSD ?? null,
-    goldUSDPerOz: commodity?.goldUSDPerOz ?? null,
-    usdVndMarket: commodity?.usdVndRate ?? null,
+    brentCrudeUSD:      commodity?.brentCrudeUSD ?? null,
+    goldUSDPerOz:       commodity?.goldUSDPerOz ?? null,
+    usdVndMarket:       commodity?.usdVndRate ?? null,
     refinancingRatePct: sbv?.refinancingRatePct ?? null,
-    overnightRatePct: sbv?.overnightRatePct ?? null,
-    usdVndOfficial: sbv?.usdVndOfficial ?? null,
+    overnightRatePct:   sbv?.overnightRatePct ?? null,
+    usdVndOfficial:     sbv?.usdVndOfficial ?? null,
+    // new risk-off fields (sprint 188, FR-7) — null when commodity fetch failed
+    vix:      commodity?.vix      ?? null,
+    sp500:    commodity?.sp500    ?? null,
+    dxy:      commodity?.dxy      ?? null,
+    hangSeng: commodity?.hangSeng ?? null,
   };
 
   // ── Step 1: Resolve seed entry ───────────────────────────────────────────

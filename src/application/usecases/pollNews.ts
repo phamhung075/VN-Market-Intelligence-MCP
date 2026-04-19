@@ -596,6 +596,11 @@ export async function pollNews(options: PollNewsOptions = {}): Promise<PollNewsR
         refinancingRatePct: sbv.status === "fulfilled" ? sbv.value?.refinancingRatePct ?? null : null,
         overnightRatePct: sbv.status === "fulfilled" ? sbv.value?.overnightRatePct ?? null : null,
         usdVndOfficial: sbv.status === "fulfilled" ? sbv.value?.usdVndOfficial ?? null : null,
+        // new risk-off fields (sprint 188, FR-7)
+        vix:      commodity.status === "fulfilled" ? commodity.value?.vix      ?? null : null,
+        sp500:    commodity.status === "fulfilled" ? commodity.value?.sp500    ?? null : null,
+        dxy:      commodity.status === "fulfilled" ? commodity.value?.dxy      ?? null : null,
+        hangSeng: commodity.status === "fulfilled" ? commodity.value?.hangSeng ?? null : null,
       };
     } catch { /* no macro context */ }
 

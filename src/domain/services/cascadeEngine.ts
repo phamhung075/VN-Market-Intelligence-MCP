@@ -106,6 +106,15 @@ export interface MacroContext {
   overnightRatePct: number | null;
   /** SBV official USD/VND exchange rate. */
   usdVndOfficial: number | null;
+  // ── new risk-off fields (sprint 188, FR-7) ─────────────────────────────────
+  /** CBOE Volatility Index. null = data unavailable, cascade rules skip. */
+  vix: number | null;
+  /** S&P 500 index level. null = data unavailable, cascade rules skip. */
+  sp500: number | null;
+  /** US Dollar Index (DXY). null = data unavailable, cascade rules skip. */
+  dxy: number | null;
+  /** Hang Seng index level. null = data unavailable, cascade rules skip. */
+  hangSeng: number | null;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════

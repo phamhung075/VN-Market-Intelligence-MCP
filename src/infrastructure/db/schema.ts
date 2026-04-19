@@ -377,24 +377,54 @@ export async function initDatabase(): Promise<void> {
   // `commodity_prices_history` — append-only time series for σ-based macro thresholds.
   db.exec(`
     CREATE TABLE IF NOT EXISTS commodity_prices (
-      source          TEXT PRIMARY KEY,
-      brent_crude_usd REAL NOT NULL DEFAULT 0,
-      gold_usd_per_oz REAL NOT NULL DEFAULT 0,
-      usd_vnd_rate    REAL NOT NULL DEFAULT 0,
-      fetched_at      TEXT NOT NULL
+      source            TEXT PRIMARY KEY,
+      brent_crude_usd   REAL NOT NULL DEFAULT 0,
+      gold_usd_per_oz   REAL NOT NULL DEFAULT 0,
+      usd_vnd_rate      REAL NOT NULL DEFAULT 0,
+      vix               REAL NOT NULL DEFAULT 0,
+      sp500             REAL NOT NULL DEFAULT 0,
+      shanghai_comp     REAL NOT NULL DEFAULT 0,
+      hang_seng         REAL NOT NULL DEFAULT 0,
+      dxy               REAL NOT NULL DEFAULT 0,
+      cny_vnd_rate      REAL NOT NULL DEFAULT 0,
+      copper_usd        REAL NOT NULL DEFAULT 0,
+      silver_usd_per_oz REAL NOT NULL DEFAULT 0,
+      jpy_vnd_rate      REAL NOT NULL DEFAULT 0,
+      fetched_at        TEXT NOT NULL
     )
   `);
   db.exec(`
     CREATE TABLE IF NOT EXISTS commodity_prices_history (
-      id              INTEGER PRIMARY KEY AUTOINCREMENT,
-      source          TEXT NOT NULL,
-      brent_crude_usd REAL NOT NULL DEFAULT 0,
-      gold_usd_per_oz REAL NOT NULL DEFAULT 0,
-      usd_vnd_rate    REAL NOT NULL DEFAULT 0,
-      fetched_at      TEXT NOT NULL
+      id                INTEGER PRIMARY KEY AUTOINCREMENT,
+      source            TEXT NOT NULL,
+      brent_crude_usd   REAL NOT NULL DEFAULT 0,
+      gold_usd_per_oz   REAL NOT NULL DEFAULT 0,
+      usd_vnd_rate      REAL NOT NULL DEFAULT 0,
+      vix               REAL NOT NULL DEFAULT 0,
+      sp500             REAL NOT NULL DEFAULT 0,
+      shanghai_comp     REAL NOT NULL DEFAULT 0,
+      hang_seng         REAL NOT NULL DEFAULT 0,
+      dxy               REAL NOT NULL DEFAULT 0,
+      cny_vnd_rate      REAL NOT NULL DEFAULT 0,
+      copper_usd        REAL NOT NULL DEFAULT 0,
+      silver_usd_per_oz REAL NOT NULL DEFAULT 0,
+      jpy_vnd_rate      REAL NOT NULL DEFAULT 0,
+      fetched_at        TEXT NOT NULL
     )
   `);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_cph_source_fetched ON commodity_prices_history(source, fetched_at DESC)`);
+
+  // FR-6: idempotent migration for existing production DBs that were created
+  // before sprint 188. `CREATE TABLE IF NOT EXISTS` above covers new DBs.
+  // These ALTERs are no-ops if the column already exists (SQLite ignores "duplicate column").
+  const commodity9Cols = [
+    "vix", "sp500", "shanghai_comp", "hang_seng", "dxy",
+    "cny_vnd_rate", "copper_usd", "silver_usd_per_oz", "jpy_vnd_rate",
+  ];
+  for (const col of commodity9Cols) {
+    try { db.exec(`ALTER TABLE commodity_prices ADD COLUMN ${col} REAL NOT NULL DEFAULT 0`); } catch {}
+    try { db.exec(`ALTER TABLE commodity_prices_history ADD COLUMN ${col} REAL NOT NULL DEFAULT 0`); } catch {}
+  }
 
   // ── SBV Rates (task 028) ──────────────────────────────────────────────────
   // `sbv_rates` — latest snapshot per source (upsert via INSERT OR REPLACE).
