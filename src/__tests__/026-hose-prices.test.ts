@@ -228,7 +228,7 @@ describe("Task 026 — HOSE Market Data Fetcher", () => {
   describe("storeMarketPrices() + getAvgVolume()", () => {
     beforeAll(async () => {
       // Use isolated test DB
-      process.env["DB_PATH"] = ":memory:";
+      Bun.env["DB_PATH"] = ":memory:";
       // initDatabase() creates market_prices_history (with exchange column)
       // via canonical schema.ts — no separate inline DDL needed.
       await initDatabase();

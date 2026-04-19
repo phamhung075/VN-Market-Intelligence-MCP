@@ -25,7 +25,7 @@ describe("Task 1400 — DB isolation: Bun.env namespace", () => {
   it("setup.ts uses Bun.env namespace (not process.env) to set DB_PATH", () => {
     const setupPath = resolve(import.meta.dir, "setup.ts");
     const source = readFileSync(setupPath, "utf8");
-    // Must NOT contain process.env["DB_PATH"] assignment
+    // Must NOT contain Bun.env["DB_PATH"] assignment
     expect(source).not.toMatch(/process\.env\["DB_PATH"\]/);
     // Must contain Bun.env["DB_PATH"] assignment
     expect(source).toMatch(/Bun\.env\["DB_PATH"\]/);

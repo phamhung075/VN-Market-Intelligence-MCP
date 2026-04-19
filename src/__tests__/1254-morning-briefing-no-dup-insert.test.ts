@@ -42,7 +42,7 @@ function makeOkFetch() {
 
 describe("Task 1254 — sendTelegramMarket skipPersist option", () => {
   it("AC-1: skipPersist:true suppresses auto market_messages insert", async () => {
-    process.env["DB_PATH"] = ":memory:";
+    Bun.env["DB_PATH"] = ":memory:";
     await initDatabase();
     const db = getDb();
 
@@ -72,7 +72,7 @@ describe("Task 1254 — sendTelegramMarket skipPersist option", () => {
   });
 
   it("AC-2: without skipPersist, a market_messages row IS inserted on success", async () => {
-    process.env["DB_PATH"] = ":memory:";
+    Bun.env["DB_PATH"] = ":memory:";
     await initDatabase();
     const db = getDb();
 
@@ -114,7 +114,7 @@ describe("Task 1254 — sendTelegramMarket skipPersist option", () => {
 
 describe("Task 1254 — insertMarketMessage baseline (no regression)", () => {
   it("insertMarketMessage inserts a row with correct from_agent", async () => {
-    process.env["DB_PATH"] = ":memory:";
+    Bun.env["DB_PATH"] = ":memory:";
     await initDatabase();
     const db = getDb();
 

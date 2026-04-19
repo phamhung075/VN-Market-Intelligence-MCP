@@ -48,7 +48,7 @@ async function callTool(
 let server: McpServer;
 
 beforeAll(async () => {
-  process.env["DB_PATH"] = ":memory:";
+  Bun.env["DB_PATH"] = ":memory:";
   await initDatabase();
   server = new McpServer({ name: "test", version: "0.0.0" });
   registerPerformanceTools(server);
@@ -413,7 +413,7 @@ describe("Task 191 — get_performance_attribution MCP tool", () => {
       expect(result.content[0]!.text.length).toBeGreaterThan(0);
     } finally {
       // Restore DB for subsequent tests
-      process.env["DB_PATH"] = ":memory:";
+      Bun.env["DB_PATH"] = ":memory:";
       await initDatabase();
     }
   });

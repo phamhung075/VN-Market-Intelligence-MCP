@@ -29,7 +29,7 @@ function makeTestDb(): Database {
 
 // Reset the singleton between tests — needed because initDatabase() uses getDb()
 function setTestDbEnv(): void {
-  process.env["DB_PATH"] = ":memory:";
+  Bun.env["DB_PATH"] = ":memory:";
   process.env["BUN_ENV"] = "test";
 }
 

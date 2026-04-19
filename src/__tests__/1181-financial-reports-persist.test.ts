@@ -17,7 +17,7 @@
  *
  * Setup contract (per TECH_072 § Test setup requirements):
  *   1. closeDb() resets the singleton before each test body
- *   2. process.env["DB_PATH"] = ":memory:" before initDatabase()
+ *   2. Bun.env["DB_PATH"] = ":memory:" before initDatabase()
  *   3. initDatabase() creates schema on the :memory: connection
  *   4. closeDb() in afterEach — reset singleton between tests
  *   5. DB_PATH restored in afterAll
@@ -64,7 +64,7 @@ Tiền và tương đương tiền đầu kỳ                       500.000
 Tiền và tương đương tiền cuối kỳ                    1.600.000
 `;
 
-const ORIGINAL_DB_PATH = process.env["DB_PATH"];
+const ORIGINAL_DB_PATH = Bun.env["DB_PATH"];
 
 afterEach(() => {
   // Reset singleton between tests so each test body starts with a clean DB
@@ -74,9 +74,9 @@ afterEach(() => {
 afterAll(() => {
   // Restore DB_PATH to its pre-test value
   if (ORIGINAL_DB_PATH === undefined) {
-    delete process.env["DB_PATH"];
+    delete Bun.env["DB_PATH"];
   } else {
-    process.env["DB_PATH"] = ORIGINAL_DB_PATH;
+    Bun.env["DB_PATH"] = ORIGINAL_DB_PATH;
   }
 });
 
@@ -86,7 +86,7 @@ describe("1181 — financial_reports persistence", () => {
     closeDb();
 
     // Step 2: point the DB singleton to an in-memory DB (hermetic, no disk I/O)
-    process.env["DB_PATH"] = ":memory:";
+    Bun.env["DB_PATH"] = ":memory:";
 
     // Step 3: initialise schema on the fresh :memory: connection
     await initDatabase();

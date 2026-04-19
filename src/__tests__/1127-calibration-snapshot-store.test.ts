@@ -80,14 +80,14 @@ let db: Database;
 
 beforeEach(async () => {
   closeDb();
-  process.env["DB_PATH"] = ":memory:";
+  Bun.env["DB_PATH"] = ":memory:";
   await initDatabase();
   db = getDb();
 });
 
 afterEach(() => {
   closeDb();
-  delete process.env["DB_PATH"];
+  delete Bun.env["DB_PATH"];
 });
 
 // ─────────────────────────────────────────────────────────────────────────────

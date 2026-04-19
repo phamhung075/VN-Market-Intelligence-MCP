@@ -22,7 +22,7 @@ import { initDatabase, closeDb, getDb } from "../infrastructure/db/schema.js";
 
 describe("Task 1286 — initDatabase() creates daily_ohlcv table", () => {
   beforeEach(async () => {
-    process.env["DB_PATH"] = ":memory:";
+    Bun.env["DB_PATH"] = ":memory:";
     closeDb();
     await initDatabase();
   });

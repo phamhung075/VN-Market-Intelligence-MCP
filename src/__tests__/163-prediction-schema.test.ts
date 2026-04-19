@@ -10,7 +10,7 @@
  *   6. prediction_signals FK constraint is enforced
  *   7. initDatabase() is idempotent (calling twice does not crash)
  *
- * NOTE: process.env["DB_PATH"] must be set before this module is imported
+ * NOTE: Bun.env["DB_PATH"] must be set before this module is imported
  * because DB_PATH is a module-level const evaluated at import time (ES module
  * hoisting). This test therefore shares the singleton DB with the rest of the
  * test suite and uses globally-unique IDs + cleanup to avoid UNIQUE conflicts.

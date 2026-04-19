@@ -35,7 +35,7 @@ const FAKE_SSC_DOC_2 = {
 // ─────────────────────────────────────────────────────────────────────────────
 
 beforeAll(async () => {
-  process.env["DB_PATH"] = ":memory:";
+  Bun.env["DB_PATH"] = ":memory:";
   await initDatabase();
 });
 

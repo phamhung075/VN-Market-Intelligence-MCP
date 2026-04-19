@@ -43,7 +43,7 @@ import {
 beforeEach(() => {
   // Fresh in-memory DB for every test
   closeDb();
-  process.env["DB_PATH"] = ":memory:";
+  Bun.env["DB_PATH"] = ":memory:";
   initDatabase();
 });
 

@@ -7,7 +7,7 @@ Bun.env["DB_PATH"] = ":memory:";
  * (RED before setup.ts + bunfig.toml preload are in place).
  *
  * After Task 1381 lands they all turn GREEN:
- *   1. process.env["DB_PATH"] equals ":memory:" — set by preload before module loads
+ *   1. Bun.env["DB_PATH"] equals ":memory:" — set by preload before module loads
  *   2. After closeDb() + initDatabase(), market_messages table exists and is empty
  *   3. Repeat in second it() — proves beforeEach resets DB between tests
  */
@@ -17,7 +17,7 @@ import { getDb, initDatabase, closeDb } from "../infrastructure/db/index.js";
 
 describe("Task 1380 — test isolation via preload", () => {
   it("process.env DB_PATH is :memory: (set by preload before module evaluation)", () => {
-    expect(process.env["DB_PATH"]).toBe(":memory:");
+    expect(Bun.env["DB_PATH"]).toBe(":memory:");
   });
 
   it("fresh DB after closeDb + initDatabase has zero rows in market_messages (first call)", async () => {

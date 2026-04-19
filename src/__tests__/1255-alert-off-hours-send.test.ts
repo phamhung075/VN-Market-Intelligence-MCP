@@ -17,13 +17,13 @@ Bun.env["DB_PATH"] = ":memory:";
 
 import { describe, it, expect, beforeAll, afterAll } from "bun:test";
 
-const _origDbPath = process.env["DB_PATH"];
+const _origDbPath = Bun.env["DB_PATH"];
 beforeAll(() => {
   process.env["TEST_LOG_SUPPRESS"] = "1";
 });
 afterAll(() => {
   delete process.env["TEST_LOG_SUPPRESS"];
-  if (_origDbPath !== undefined) process.env["DB_PATH"] = _origDbPath;
+  if (_origDbPath !== undefined) Bun.env["DB_PATH"] = _origDbPath;
 });
 
 import type { Alert } from "../domain/services/alertGenerator";

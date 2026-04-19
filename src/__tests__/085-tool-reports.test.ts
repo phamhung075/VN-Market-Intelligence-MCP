@@ -389,7 +389,7 @@ describe("Task 085 — SSC Report MCP Tools", () => {
 
   beforeAll(async () => {
     // Use an in-memory SQLite for all tests
-    process.env["DB_PATH"] = ":memory:";
+    Bun.env["DB_PATH"] = ":memory:";
     await initDatabase();
 
     // Remove any rows left by earlier test files that share the same singleton

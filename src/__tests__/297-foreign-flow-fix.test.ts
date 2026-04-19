@@ -24,7 +24,7 @@ beforeAll(async () => {
 
 afterAll(() => {
   closeDb();
-  delete process.env["DB_PATH"];
+  delete Bun.env["DB_PATH"];
 });
 
 beforeEach(() => {

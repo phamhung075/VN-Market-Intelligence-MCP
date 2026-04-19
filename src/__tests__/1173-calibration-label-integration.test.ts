@@ -13,7 +13,7 @@
  *   AC-8: CalibrationJobResult has label_accuracy field (type check + runtime)
  *   AC-9: getLabelAccuracyReport exception is isolated inside calibrationReportJob
  *
- * Test isolation: process.env["DB_PATH"] = ":memory:" set before any import.
+ * Test isolation: Bun.env["DB_PATH"] = ":memory:" set before any import.
  * Each describe block resets the DB via closeDb() + initDatabase() in beforeEach/afterEach.
  */
 

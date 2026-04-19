@@ -15,7 +15,7 @@ import { describe, it, expect, beforeAll, afterAll } from "bun:test";
 // Test isolation: DB_PATH=:memory: (line 1) ensures schema.js opens a fresh
 // in-memory database. We call initDatabase() here to create all tables (including
 // watchlist) so step C2 of the intelligence cycle can query them without throwing.
-const _origDbPath = process.env["DB_PATH"];
+const _origDbPath = Bun.env["DB_PATH"];
 beforeAll(async () => {
   process.env["TEST_LOG_SUPPRESS"] = "1";
   const { initDatabase } = await import("../infrastructure/db/schema.js");
@@ -23,7 +23,7 @@ beforeAll(async () => {
 });
 afterAll(() => {
   delete process.env["TEST_LOG_SUPPRESS"];
-  if (_origDbPath !== undefined) process.env["DB_PATH"] = _origDbPath;
+  if (_origDbPath !== undefined) Bun.env["DB_PATH"] = _origDbPath;
 });
 
 // Helper to build a minimal deps object for the cycle with all non-peer steps no-op

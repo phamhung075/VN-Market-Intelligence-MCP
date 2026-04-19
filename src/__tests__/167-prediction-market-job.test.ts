@@ -453,7 +453,7 @@ describe("Task 167 — Prediction Market Scheduler Job", () => {
         // Simulate the launchd race: a fresh on-disk DB file with NO tables,
         // then run the cron path that resolves via the getDb() singleton.
         const tmpPath = `/tmp/vn-market-test-race-${Date.now()}.db`;
-        process.env["DB_PATH"] = tmpPath;
+        Bun.env["DB_PATH"] = tmpPath;
 
         // Reset the schema.js singleton so the next getDb() opens tmpPath.
         const schemaMod = await import("../infrastructure/db/schema.js");
@@ -492,7 +492,7 @@ describe("Task 167 — Prediction Market Scheduler Job", () => {
 
         // Cleanup
         schemaMod.closeDb();
-        delete process.env["DB_PATH"];
+        delete Bun.env["DB_PATH"];
       },
     );
   });

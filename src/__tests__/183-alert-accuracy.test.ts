@@ -44,7 +44,7 @@ async function callTool(
 let server: McpServer;
 
 beforeAll(async () => {
-  process.env["DB_PATH"] = ":memory:";
+  Bun.env["DB_PATH"] = ":memory:";
   await initDatabase();
 
   // Create market_prices_history table (normally created by hose.ts lazily)

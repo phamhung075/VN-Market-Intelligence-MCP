@@ -118,7 +118,7 @@ function seedAnalysis(
 let server: McpServer;
 
 beforeAll(async () => {
-  process.env["DB_PATH"] = ":memory:";
+  Bun.env["DB_PATH"] = ":memory:";
   await initDatabase();
 
   server = new McpServer(
@@ -130,7 +130,7 @@ beforeAll(async () => {
 
 afterAll(() => {
   closeDb();
-  delete process.env["DB_PATH"];
+  delete Bun.env["DB_PATH"];
 });
 
 beforeEach(() => {
