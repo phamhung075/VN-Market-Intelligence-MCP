@@ -238,7 +238,7 @@ export async function runInsiderCheck(
       const id = `insider-streak-${streak.code}-${utcDay}`;
       const msg =
         `Tich luy noi bo ${streak.code}: ${streak.buyDays} ngay mua lien tiep ` +
-        `boi ${streak.position} — co hieu ung lon nhat trong thi truong VN`;
+        `bởi ${streak.position} — có hiệu ứng lớn nhất trong thị trường VN`;
       const result = insertAlertStmt.run(
         id,
         triggeredAt,

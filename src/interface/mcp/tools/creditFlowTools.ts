@@ -187,33 +187,33 @@ export async function getCreditFlowSignalHandler(
 export function registerCreditFlowTools(server: McpServer): void {
   server.tool(
     "get_credit_flow_signal",
-    "Phan tich thay doi tin dung bat dong san cua NHNN va tao tin hieu thi truong cho co phieu ngan hang va BDS. " +
-    "Tat ca tham so deu tuy chon — neu khong cung cap, cong cu tu doc lai suat tai cap tu DB SBV va dung gia tri mac dinh cho du no tin dung.",
+    "Phân tích thay đổi tín dụng bất động sản của NHNN và tạo tín hiệu thị trường cho cổ phiếu ngân hàng và BDS. " +
+    "Tất cả tham số đều tùy chọn — nếu không cung cấp, công cụ tự đọc lãi suất tái cấp từ DB SBV và dùng giá trị mặc định cho dư nợ tín dụng.",
     {
       currentReCreditTrillion: z.coerce
         .number()
         .optional()
-        .describe("Du no tin dung BDS thang hien tai (nghin ty VND) — tuy chon, mac dinh ~2800"),
+        .describe("Dư nợ tín dụng BDS tháng hiện tại (nghìn tỷ VND) — tùy chọn, mặc định ~2800"),
       previousReCreditTrillion: z.coerce
         .number()
         .optional()
-        .describe("Du no tin dung BDS thang truoc (nghin ty VND) — tuy chon, mac dinh ~2744"),
+        .describe("Dư nợ tín dụng BDS tháng trước (nghìn tỷ VND) — tùy chọn, mặc định ~2744"),
       currentMortgageRatePct: z.coerce
         .number()
         .optional()
-        .describe("Lai suat vay mua nha trung binh thang hien tai (%) — tuy chon, tu dong lay tu bang sbv_rates"),
+        .describe("Lãi suất vay mua nhà trung bình tháng hiện tại (%) — tùy chọn, tự động lấy từ bảng sbv_rates"),
       previousMortgageRatePct: z.coerce
         .number()
         .optional()
-        .describe("Lai suat vay mua nha trung binh thang truoc (%) — tuy chon, tu dong lay tu bang sbv_rates"),
+        .describe("Lãi suất vay mua nhà trung bình tháng trước (%) — tùy chọn, tự động lấy từ bảng sbv_rates"),
       currentYoyGrowthPct: z.coerce
         .number()
         .optional()
-        .describe("Tang truong tin dung YoY thang hien tai (%)"),
+        .describe("Tăng trưởng tín dụng YoY tháng hiện tại (%)"),
       previousYoyGrowthPct: z.coerce
         .number()
         .optional()
-        .describe("Tang truong tin dung YoY thang truoc (%)"),
+        .describe("Tăng trưởng tín dụng YoY tháng trước (%)"),
     },
     async (input) => getCreditFlowSignalHandler(input),
   );

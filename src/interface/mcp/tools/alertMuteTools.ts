@@ -58,15 +58,15 @@ function formatViDate(date: Date): string {
 export function registerAlertMuteTools(server: McpServer): void {
   server.tool(
     "manage_alert_mute",
-    "Tat tieng (mute) hoac bat lai (unmute) canh bao cho mot ma co phieu. " +
-      "Dung action='mute' de tat tieng trong N gio (mac dinh 24). " +
-      "Dung action='unmute' de bat lai canh bao ngay lap tuc.",
+    "Tắt tiếng (mute) hoặc bật lại (unmute) cảnh báo cho một mã cổ phiếu. " +
+      "Dùng action='mute' để tắt tiếng trong N giờ (mặc định 24). " +
+      "Dùng action='unmute' để bật lại cảnh báo ngay lập tức.",
     {
       code: z
         .string()
         .min(1)
         .max(10)
-        .describe("Ma co phieu (vi du: VCB, FPT, VNM)"),
+        .describe("Mã cổ phiếu (ví dụ: VCB, FPT, VNM)"),
       action: z
         .enum(["mute", "unmute"])
         .describe("'mute' de tat tieng, 'unmute' de bat lai"),

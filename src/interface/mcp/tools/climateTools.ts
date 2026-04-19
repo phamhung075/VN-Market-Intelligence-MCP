@@ -133,9 +133,9 @@ export async function getClimateRiskSignals(
 export function registerClimateTools(server: McpServer): void {
   server.tool(
     "get_climate_risk_signals",
-    "Lay tin hieu rui ro khi hau va thoi tiet cho co phieu VN. Phan tich anh huong bao lu, han han, El Nino/La Nina, nang nong len cac co phieu theo doi (REE, GEG, BVH, MPC, IDC, v.v.). Bao gom lich rui ro mua vu VN.",
+    "Lấy tín hiệu rủi ro khí hậu và thời tiết cho cổ phiếu VN. Phân tích ảnh hưởng bão lũ, hạn hán, El Nino/La Nina, nắng nóng lên các cổ phiếu theo dõi (REE, GEG, BVH, MPC, IDC, v.v.). Bao gồm lịch rủi ro mùa vụ VN.",
     {
-      stock: z.string().optional().describe("Ma co phieu de loc ket qua (tuy chon, vi du: REE, GEG, BVH)"),
+      stock: z.string().optional().describe("Mã cổ phiếu để lọc kết quả (tùy chọn, ví dụ: REE, GEG, BVH)"),
     },
     async ({ stock }) => {
       try {

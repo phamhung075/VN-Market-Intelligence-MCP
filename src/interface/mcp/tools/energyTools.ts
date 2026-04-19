@@ -123,7 +123,7 @@ export async function getEnergyGridStatus(
 export function registerEnergyTools(server: McpServer): void {
   server.tool(
     "get_energy_grid_signals",
-    "Lay tin hieu thi truong dien luc VN: muc nuoc ho thuy dien, co cau phat dien, nguy co thieu dien. Phan tich anh huong len co phieu nang luong (REE, GEG, PC1) va khu cong nghiep (IDC, KBC).",
+    "Lấy tín hiệu thị trường điện lực VN: mức nước hồ thủy điện, cơ cấu phát điện, nguy cơ thiếu điện. Phân tích ảnh hưởng lên cổ phiếu năng lượng (REE, GEG, PC1) và khu công nghiệp (IDC, KBC).",
     {},
     async () => {
       try {

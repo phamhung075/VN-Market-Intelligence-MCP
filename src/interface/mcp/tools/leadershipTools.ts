@@ -106,12 +106,12 @@ export async function getInsiderSignalsHandler(
 export function registerLeadershipTools(server: McpServer): void {
   server.tool(
     "get_insider_signals",
-    "Phan tich giao dich noi bo cua lanh dao cong ty va tao tin hieu mua/ban/mass-buy cho co phieu.",
+    "Phân tích giao dịch nội bộ của lãnh đạo công ty và tạo tín hiệu mua/bán/mass-buy cho cổ phiếu.",
     {
-      code: z.string().describe("Ma co phieu, vi du VCB, HPG"),
+      code: z.string().describe("Mã cổ phiếu, ví dụ VCB, HPG"),
       outstandingShares: z
         .number()
-        .describe("So co phieu dang luu hanh (shares)"),
+        .describe("Số cổ phiếu đang lưu hành (shares)"),
       windowDays: z
         .number()
         .optional()
@@ -131,7 +131,7 @@ export function registerLeadershipTools(server: McpServer): void {
           }),
         )
         .optional()
-        .describe("Danh sach giao dich can phan tich (neu co)"),
+        .describe("Danh sách giao dịch cần phân tích (nếu có)"),
     },
     async (input) => {
       const txs: InsiderTransaction[] | undefined = input.transactions?.map(

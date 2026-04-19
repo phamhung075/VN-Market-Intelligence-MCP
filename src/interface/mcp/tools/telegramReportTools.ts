@@ -87,7 +87,7 @@ export function registerTelegramReportTools(server: McpServer): void {
   server.tool(
     "read_telegram_reports",
     "Doc cac bao cao tu kenh Report Channel. Mac dinh tra ve cac bao cao chua xu ly (status=new). " +
-      "Khi khong co bao cao moi, tra ve thong bao thoat vong lap Dev Team.",
+      "Khi không có báo cáo mới, trả về thông báo thoát vòng lặp Dev Team.",
     {
       status: z
         .enum(["new", "processed", "all"])

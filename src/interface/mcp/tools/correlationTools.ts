@@ -260,10 +260,10 @@ export function formatOutput(
 export function registerCorrelationTools(server: McpServer): void {
   server.tool(
     "get_correlation_matrix",
-    "Tinh ma tran tuong quan Pearson cho tat ca cap co phieu trong watchlist. " +
-      "Su dung lich su gia tich luy trong SQLite (market_prices_history). " +
-      "Tra ve bang tuong quan co phan loai muc do (rat thap / thap / trung binh / cao / rat cao) " +
-      "va diem da dang hoa danh muc (0-1). " +
+    "Tính ma trận tương quan Pearson cho tất cả cặp cổ phiếu trong watchlist. " +
+      "Sử dụng lịch sử giá tích lũy trong SQLite (market_prices_history). " +
+      "Trả về bảng tương quan có phân loại mức độ (rất thấp / thấp / trung bình / cao / rất cao) " +
+      "và điểm đa dạng hóa danh mục (0-1). " +
       "Compute Pearson correlation matrix for all watchlist stock pairs using price history.",
     {
       days: z.coerce
