@@ -1319,6 +1319,73 @@ export async function createBunServer(
       return;
     }
 
+    // ── Task 1494: POST /api/push-reuters — VPS RSS push ─────────────────
+    if (method === "POST" && pathname === "/api/push-reuters") {
+      const apiKey = Bun.env.VPS_PUSH_API_KEY;
+      const authHeader = req.headers["x-api-key"] || req.headers["authorization"]?.replace("Bearer ", "");
+      if (!apiKey || authHeader !== apiKey) {
+        res.writeHead(401, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "Unauthorized" }));
+        return;
+      }
+
+      let body = "";
+      for await (const chunk of req) body += chunk;
+      try {
+        const payload = JSON.parse(body) as { items?: unknown };
+        const rawItems = Array.isArray(payload?.items) ? payload.items : [];
+
+        const db = getDb();
+        const stmt = db.prepare(`
+          INSERT OR IGNORE INTO rag_analyses
+            (id, created_at, level, source_url, source_title, source_type,
+             published_at, sentiment, impact_score, impact_direction, confidence,
+             time_horizon, summary, reasoning, affected_countries, affected_domains,
+             affected_actions, parent_ids, tags, embedding_text)
+          VALUES
+            (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL)
+        `);
+
+        let inserted = 0;
+        let duplicate = 0;
+        const now = new Date().toISOString();
+
+        for (const raw of rawItems as Record<string, unknown>[]) {
+          const url = typeof raw.url === "string" ? raw.url : null;
+          const title = typeof raw.title === "string" ? raw.title : "";
+          const publishedAt = typeof raw.published_at === "string" ? raw.published_at : now;
+          // Use crypto hash of url (or title+now) so IDs are unique even for similar URLs
+          const hashInput = url ?? (title + now);
+          const hashBuf = new Uint8Array(await crypto.subtle.digest("SHA-1", new TextEncoder().encode(hashInput)));
+          const hashHex = Array.from(hashBuf).map((b) => b.toString(16).padStart(2, "0")).join("").slice(0, 16);
+          const id = `reuters-${hashHex}`;
+
+          const result = stmt.run(
+            id, now, "global",
+            url, title, "news",
+            publishedAt, "neutral", null, "neutral", null,
+            "short", title, null,
+            JSON.stringify(["VN"]), JSON.stringify([]), JSON.stringify([]),
+            JSON.stringify([]), JSON.stringify(["reuters"]),
+          );
+          if ((result.changes as number) > 0) {
+            inserted++;
+          } else {
+            duplicate++;
+          }
+        }
+
+        log.info("[push-reuters] items processed", { inserted, duplicate });
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: true, inserted, duplicate }));
+      } catch (err) {
+        log.error("[push-reuters] error", { error: err instanceof Error ? err.message : String(err) });
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "Invalid JSON" }));
+      }
+      return;
+    }
+
     // ── 404 ───────────────────────────────────────────────────────────────
     res.writeHead(404, { "Content-Type": "application/json" });
     res.end(JSON.stringify({ error: "Not found", path: pathname }));
