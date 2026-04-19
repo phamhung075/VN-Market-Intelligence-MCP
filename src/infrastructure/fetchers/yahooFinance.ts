@@ -444,7 +444,7 @@ export function storeCommoditySnapshot(
     // rows (e.g. brent_crude_usd=116 vs live 96.51), causing a dual-source
     // conflict visible to digest-writer and analysis agents.
     const upsertTrackedIndicator = database.prepare(`
-      INSERT INTO tracked_indicators (indicator, value, unit, source, extracted_at)
+      INSERT OR REPLACE INTO tracked_indicators (indicator, value, unit, source, extracted_at)
       VALUES (?, ?, ?, 'yahoo', ?)
     `);
     if (snapshot.brentCrudeUSD != null && snapshot.brentCrudeUSD > 0) {
