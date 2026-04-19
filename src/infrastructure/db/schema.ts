@@ -1422,4 +1422,8 @@ export async function initDatabase(): Promise<void> {
     )
   `);
 
+  // Cleanup: remove stale VCB test fixture rows that leaked before sprint-181 DB isolation fix
+  db.exec(`DELETE FROM market_prices WHERE code = 'VCB' AND updated_at < datetime('now', '-7 days')`);
+  db.exec(`DELETE FROM market_prices_history WHERE code = 'VCB' AND fetched_at < datetime('now', '-7 days')`);
+
 }
