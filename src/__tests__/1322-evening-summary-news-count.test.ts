@@ -177,6 +177,7 @@ describe("Task 1322 — EveningSummary.newsCount field", () => {
     const summary = await assembleEveningSummary({
       db,
       reportsDir: TEST_REPORTS_DIR,
+      getPnlFn: async () => null,
     });
 
     expect(typeof summary.newsCount).toBe("number");
@@ -193,6 +194,7 @@ describe("Task 1322 — EveningSummary.newsCount field", () => {
     const summary = await assembleEveningSummary({
       db,
       reportsDir: TEST_REPORTS_DIR,
+      getPnlFn: async () => null,
     });
 
     expect(summary.newsCount).toBe(0);
