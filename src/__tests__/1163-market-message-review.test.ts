@@ -1,3 +1,4 @@
+Bun.env["DB_PATH"] = ":memory:";
 /**
  * Task 1163 — MARKET Message Quality Review System (TDD red phase)
  *
