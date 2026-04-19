@@ -18,6 +18,7 @@ import { readFileSync } from "fs";
 import { resolve } from "path";
 import { getPendingAskQuestions } from "../db/askQueueStore.js";
 import { getDb } from "../db/schema.js";
+import type { Database } from "bun:sqlite";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -53,10 +54,10 @@ export function isQaResponderRunning(): boolean {
  *
  * @returns SpawnResult describing what happened.
  */
-export function spawnQaResponder(): SpawnResult {
+export function spawnQaResponder(db?: Database): SpawnResult {
   // Gate 1: pending questions?
-  const db = getDb();
-  const pending = getPendingAskQuestions(db, 1);
+  const resolvedDb = db ?? getDb();
+  const pending = getPendingAskQuestions(resolvedDb, 1);
   if (pending.length === 0) {
     return { spawned: false, reason: "no_pending" };
   }

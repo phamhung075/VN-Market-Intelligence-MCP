@@ -126,7 +126,7 @@ describe("Task 1073 — Telegram /ask handler", () => {
 
     expect(result).not.toBeNull();
     expect(result!.text).toMatch(/Câu hỏi đã ghi nhận \(#[0-9]+\)/);
-    expect(result!.text).toContain("12 phút");
+    expect(result!.text).toContain("Đang xử lý");
   });
 
   it("reply includes the assigned queue id", async () => {
