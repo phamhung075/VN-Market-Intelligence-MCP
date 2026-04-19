@@ -1412,4 +1412,14 @@ export async function initDatabase(): Promise<void> {
     `UPDATE watchlist SET domain = 'construction' WHERE code = 'HUT' AND domain = 'real_estate'`
   );
 
+  // Task 1457 — canonical DDL for scheduler_locks (moved from schedulerLockStore.ts).
+  // ensureSchedulerLocksTable() is now a no-op kept for API compat.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS scheduler_locks (
+      job_name     TEXT PRIMARY KEY,
+      acquired_at  TEXT NOT NULL DEFAULT (datetime('now')),
+      released_at  TEXT
+    )
+  `);
+
 }
