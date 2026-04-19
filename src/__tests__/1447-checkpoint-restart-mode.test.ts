@@ -4,7 +4,7 @@
  * Tests:
  *   (a) runWalCheckpoint() issues PRAGMA wal_checkpoint(TRUNCATE), not PASSIVE/RESTART
  *   (b) returns { walSize, checkpointed } shape
- *   (c) logs a WARN when remaining frames > 1000
+ *   (c) logs ERROR when remaining frames > 10000
  *   (d) does not throw when db.query returns null (error path returns zeros)
  */
 
@@ -71,13 +71,13 @@ describe("Task 1447/1458 — checkpoint TRUNCATE mode", () => {
     expect(result.checkpointed).toBe(750);
   });
 
-  it("(c) logs WARN when remaining frames > 1000", () => {
-    // log=2000, checkpointed=500 → remaining=1500 > 1000
-    mockQueryReturn = { busy: 1, log: 2000, checkpointed: 500 };
+  it("(c) logs ERROR when remaining frames > 10000", () => {
+    // log=12000, checkpointed=500 → remaining=11500 > 10000
+    mockQueryReturn = { busy: 1, log: 12000, checkpointed: 500 };
     runWalCheckpoint(deps);
-    expect(warnCalls.length).toBeGreaterThan(0);
-    const warnMsg = warnCalls[0]?.msg ?? "";
-    expect(warnMsg).toContain("remaining");
+    expect(errorCalls.length).toBeGreaterThan(0);
+    const errorMsg = errorCalls[0]?.msg ?? "";
+    expect(errorMsg).toContain("WAL stuck");
   });
 
   it("(c2) does NOT warn when remaining frames <= 1000", () => {
