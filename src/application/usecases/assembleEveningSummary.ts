@@ -420,6 +420,7 @@ export async function assembleEveningSummary(
              COALESCE(mp.change_pct, oc.computed_pct) AS change_pct
       FROM watchlist w
       LEFT JOIN market_prices mp ON mp.code = w.code
+                                 AND mp.updated_at >= datetime('now', '-3 days')
       LEFT JOIN ohlcv_change oc ON oc.code = w.code
       WHERE ABS(COALESCE(mp.change_pct, oc.computed_pct, 0)) >= 1.0
       ORDER BY ABS(COALESCE(mp.change_pct, oc.computed_pct, 0)) DESC
@@ -431,6 +432,7 @@ export async function assembleEveningSummary(
              mp.change_pct
       FROM watchlist w
       LEFT JOIN market_prices mp ON mp.code = w.code
+                                 AND mp.updated_at >= datetime('now', '-3 days')
       WHERE ABS(COALESCE(mp.change_pct, 0)) >= 1.0
       ORDER BY ABS(COALESCE(mp.change_pct, 0)) DESC
     `;
