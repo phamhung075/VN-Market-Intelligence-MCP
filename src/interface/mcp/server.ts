@@ -1311,6 +1311,84 @@ export async function createBunServer(
       return;
     }
 
+    // ── Task 1495: POST /api/push-tradingeconomics — VPS macro push ──────────
+    if (method === "POST" && pathname === "/api/push-tradingeconomics") {
+      const apiKey = Bun.env.VPS_PUSH_API_KEY;
+      const authHeader = req.headers["x-api-key"] || req.headers["authorization"]?.replace("Bearer ", "");
+      if (!apiKey || authHeader !== apiKey) {
+        res.writeHead(401, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "Unauthorized" }));
+        return;
+      }
+      let body = "";
+      for await (const chunk of req) body += chunk;
+      try {
+        const payload = JSON.parse(body) as {
+          country?: string;
+          indicators?: Array<{ name: string; value: number; unit?: string; fetched_at?: string }>;
+        };
+        const country = typeof payload.country === "string" ? payload.country : "VN";
+        const rawIndicators = Array.isArray(payload.indicators) ? payload.indicators : [];
+
+        // Allowlist: maps TE indicator name → macro_indicators column
+        const TE_COLUMN_MAP: Record<string, string> = {
+          cpi:                 "cpi",
+          gdp_growth:          "gdp_growth",
+          interest_rate:       "interest_rate",
+          unemployment_rate:   "unemployment_rate",
+          inflation_rate:      "inflation_rate",
+          trade_balance:       "trade_balance",
+          current_account:     "current_account",
+          government_debt:     "government_debt",
+          budget_deficit:      "budget_deficit",
+          manufacturing_pmi:   "manufacturing_pmi",
+          consumer_confidence: "consumer_confidence",
+          retail_sales:        "retail_sales",
+        };
+
+        // Filter to known columns only
+        const known = rawIndicators.filter(
+          (i) => typeof i.name === "string" && i.name in TE_COLUMN_MAP && typeof i.value === "number"
+        );
+
+        const db = getDb();
+        const now = new Date().toISOString();
+
+        if (known.length === 0) {
+          // Ensure row exists for country; upsert with no col updates
+          db.prepare(
+            `INSERT INTO macro_indicators (country, fetched_at) VALUES (?, ?)
+             ON CONFLICT(country) DO UPDATE SET fetched_at = excluded.fetched_at`
+          ).run(country, now);
+          res.writeHead(200, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ ok: true, country, updated_cols: 0 }));
+          return;
+        }
+
+        // Build dynamic UPDATE SET clause (safe: keys are from TE_COLUMN_MAP only)
+        const setClauses = known.map((i) => `${TE_COLUMN_MAP[i.name]} = ?`).join(", ");
+        const values = known.map((i) => i.value);
+
+        // Upsert: insert or update on conflict
+        db.prepare(
+          `INSERT INTO macro_indicators (country, fetched_at) VALUES (?, ?)
+           ON CONFLICT(country) DO UPDATE SET fetched_at = excluded.fetched_at`
+        ).run(country, now);
+        db.prepare(
+          `UPDATE macro_indicators SET ${setClauses}, fetched_at = ? WHERE country = ?`
+        ).run(...values, now, country);
+
+        log.info("[push-tradingeconomics] updated macro_indicators", { country, updated_cols: known.length });
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: true, country, updated_cols: known.length }));
+      } catch (err) {
+        log.error("[push-tradingeconomics] error", { error: err instanceof Error ? err.message : String(err) });
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "Invalid JSON" }));
+      }
+      return;
+    }
+
     // ── 404 ───────────────────────────────────────────────────────────────
     res.writeHead(404, { "Content-Type": "application/json" });
     res.end(JSON.stringify({ error: "Not found", path: pathname }));

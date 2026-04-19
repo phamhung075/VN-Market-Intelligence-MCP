@@ -357,20 +357,37 @@ export async function initDatabase(): Promise<void> {
     // TABLE above already added the columns — nothing to migrate.
   }
 
-  // ── Macro Indicators (Task 024) ────────────────────────────────────────────
+  // ── Macro Indicators (Task 024 / Task 1495) ────────────────────────────────
   // Stores macro economic data fetched from Trading Economics.
   // UNIQUE(country) enforces upsert semantics via INSERT OR REPLACE.
   db.exec(`
     CREATE TABLE IF NOT EXISTS macro_indicators (
-      id            INTEGER PRIMARY KEY AUTOINCREMENT,
-      country       TEXT NOT NULL,
-      cpi           REAL,
-      gdp_growth    REAL,
-      interest_rate REAL,
-      fetched_at    TEXT NOT NULL,
+      id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+      country             TEXT NOT NULL,
+      cpi                 REAL,
+      gdp_growth          REAL,
+      interest_rate       REAL,
+      unemployment_rate   REAL,
+      inflation_rate      REAL,
+      trade_balance       REAL,
+      current_account     REAL,
+      government_debt     REAL,
+      budget_deficit      REAL,
+      manufacturing_pmi   REAL,
+      consumer_confidence REAL,
+      retail_sales        REAL,
+      fetched_at          TEXT NOT NULL,
       UNIQUE(country)
     );
   `);
+  // Task 1495: idempotent migration for existing production DBs (adds +9 cols)
+  for (const col of [
+    "unemployment_rate", "inflation_rate", "trade_balance", "current_account",
+    "government_debt", "budget_deficit", "manufacturing_pmi", "consumer_confidence",
+    "retail_sales",
+  ]) {
+    try { db.exec(`ALTER TABLE macro_indicators ADD COLUMN ${col} REAL`); } catch {}
+  }
 
   // ── Commodity Prices (tasks 025, 028) ─────────────────────────────────────
   // `commodity_prices` — latest snapshot per source (upsert via INSERT OR REPLACE).
