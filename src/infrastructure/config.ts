@@ -542,7 +542,7 @@ export function loadMcpConfig(): McpConfig {
       return {
         enabled,
         pollingIntervalMinutes: numVal(pm, "pollingIntervalMinutes", 30),
-        clobApiUrl: (typeof pm["clobApiUrl"] === "string" && pm["clobApiUrl"]) ? pm["clobApiUrl"] : (Bun.env["POLYMARKET_CLOB_API_URL"] ?? "https://clob-api.polymarket.com"),
+        clobApiUrl: (typeof pm["clobApiUrl"] === "string" && pm["clobApiUrl"]) ? pm["clobApiUrl"] : (Bun.env["POLYMARKET_CLOB_API_URL"] ?? "https://clob.polymarket.com"),
         gammaApiUrl: (typeof pm["gammaApiUrl"] === "string" && pm["gammaApiUrl"]) ? pm["gammaApiUrl"] : (Bun.env["POLYMARKET_GAMMA_API_URL"] ?? "https://gamma-api.polymarket.com"),
         probabilityShiftPct: numVal(pm, "probabilityShiftPct", 5),
         volumeSpikeThresholdUsd: numVal(pm, "volumeSpikeThresholdUsd", 50000),
