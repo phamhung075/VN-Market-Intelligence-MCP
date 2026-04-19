@@ -60,6 +60,7 @@ import { runBbAlertScan } from './bbAlertScanJob.js'
 import { runTaAlertNotifierCron } from './taAlertNotifierJob.js'
 import { runOhlcvStartupProbe } from './ohlcvStartupProbe.js'
 import { runOhlcvDailyAggregator } from './ohlcvDailyAggregatorJob.js'
+import { runOhlcvStalenessCheck } from './ohlcvStalenessCheckJob.js'
 import { getDb } from '../infrastructure/db/schema.js'
 import { recordJobRun } from '../infrastructure/db/cronJobRunStore.js'
 import type { Database } from 'bun:sqlite'
@@ -136,6 +137,10 @@ export const CRONS = {
    *  Shifted from 16:00 → 15:00 UTC: runs 30 min before eveningSummary (15:30 UTC = 22:30 VN),
    *  ensuring taSummary is populated in the evening report. */
   ohlcvDailyAggregator:   Bun.env.CRON_OHLCV_DAILY_AGGREGATOR          ?? '0 15 * * 1-5',
+  /** ohlcvStalenessCheck — daily OHLCV staleness check at 08:15 UTC Mon-Fri (task 1465, Sprint 175)
+   *  Fires after VN market open data push window. Alerts WORK if >50% watchlist tickers
+   *  are missing from daily_ohlcv for the current VN date. Covers mid-day VPS outage. */
+  ohlcvStalenessCheck:    Bun.env.CRON_OHLCV_STALENESS_CHECK            ?? '15 8 * * 1-5',
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -626,6 +631,15 @@ export function startScheduler() {
   cron.schedule(CRONS.ohlcvDailyAggregator, async () => {
     await recordJobRun(getDb(), 'ohlcv-daily-aggregator', async () => {
       await runOhlcvDailyAggregator()
+    })
+  }, { timezone: 'UTC' })
+
+  // 08:15 UTC Mon-Fri — OHLCV staleness check — task 1465, Sprint 175
+  // Fires after VN market open. Alerts WORK when >50% watchlist tickers have no
+  // daily_ohlcv row for today's VN date (UTC+7). Covers mid-day VPS price-push failure.
+  cron.schedule(CRONS.ohlcvStalenessCheck, async () => {
+    await recordJobRun(getDb(), 'ohlcv-staleness-check', async () => {
+      await runOhlcvStalenessCheck()
     })
   }, { timezone: 'UTC' })
 

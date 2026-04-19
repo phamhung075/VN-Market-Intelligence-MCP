@@ -1,14 +1,14 @@
 {
   "_maintained_by": "PM / system-auditor",
   "_trigger": "sprint start/end, tool/cron count change",
-  "lastUpdated": "2026-04-18",
-  "currentSprint": 151,
-  "previousSprint": { "number": 150, "status": "COMPLETE", "completedDate": "2026-04-18" },
-  "sprintGoal": "feat(morning-briefing): BCTC upcoming deadlines section — show SAP_DEN watchlist stocks",
+  "lastUpdated": "2026-04-19",
+  "currentSprint": 176,
+  "previousSprint": { "number": 175, "status": "IN_PROGRESS", "completedDate": null },
+  "sprintGoal": "feat(ohlcv-staleness): daily OHLCV staleness check cron at 08:15 UTC Mon-Fri",
   "toolCount": 98,
-  "schedulerFileCount": 34,
+  "schedulerFileCount": 35,
   "knowledgeFileCount": 15,
   "devAgentCount": 13,
   "analysisAgentCount": 9,
-  "totalTasksDone": 316
+  "totalTasksDone": 320
 }
