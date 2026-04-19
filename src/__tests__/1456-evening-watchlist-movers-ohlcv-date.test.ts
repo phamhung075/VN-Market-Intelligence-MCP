@@ -214,3 +214,71 @@ describe("1456 (b) — MAX(date) = today path (regression guard)", () => {
     db.close();
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Test (c): Task 1461 — Mon+Fri seed, skip Sat/Sun → prev trading day = Fri
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("1461 (c) — Monday uses Friday as previous trading day (skip weekend)", () => {
+  it("VCB seeded Mon+Fri (no Sat/Sun rows) → watchlistMovers non-empty", async () => {
+    const db = setupTestDb();
+
+    db.prepare(`INSERT INTO watchlist (code, exchange) VALUES ('VCB', 'HOSE')`).run();
+
+    // Mon 2026-04-14, Fri 2026-04-11 — no Sat/Sun rows exist
+    const monStr = "2026-04-14"; // Monday (MAX date in table)
+    const friStr = "2026-04-11"; // Friday (prev trading day)
+
+    // Fri: 80000, Mon: 86000 → +7.5% change
+    db.prepare(
+      `INSERT OR REPLACE INTO daily_ohlcv (code, date, open, high, low, close, volume)
+       VALUES (?, ?, 80000, 80000, 80000, 80000, 100000)`,
+    ).run("VCB", friStr);
+
+    db.prepare(
+      `INSERT OR REPLACE INTO daily_ohlcv (code, date, open, high, low, close, volume)
+       VALUES (?, ?, 86000, 86000, 86000, 86000, 120000)`,
+    ).run("VCB", monStr);
+
+    const summary = await assembleEveningSummary(baseOptions(db));
+
+    // Old code: y.date = date('2026-04-14', '-1 day') = '2026-04-13' (Sunday) → no row → NULL → empty
+    // Fixed code: y.date = MAX(date WHERE date < '2026-04-14') = '2026-04-11' (Friday) → +7.5%
+    const vcb = summary.watchlistMovers.find((m) => m.code === "VCB");
+    expect(vcb).toBeDefined();
+    expect(Math.abs(vcb!.changePct)).toBeGreaterThanOrEqual(1.0);
+
+    db.close();
+  });
+
+  it("post-holiday: seed Wed+Mon (skip Tue holiday) → prev trading day = Mon", async () => {
+    const db = setupTestDb();
+
+    db.prepare(`INSERT INTO watchlist (code, exchange) VALUES ('HPG', 'HOSE')`).run();
+
+    // Wed=2026-04-15 (latest), Mon=2026-04-13 (prev trading day, skip Tue holiday 04-14)
+    const wedStr = "2026-04-15";
+    const monStr = "2026-04-13";
+
+    // Mon: 50000, Wed: 47500 → -5% change
+    db.prepare(
+      `INSERT OR REPLACE INTO daily_ohlcv (code, date, open, high, low, close, volume)
+       VALUES (?, ?, 50000, 50000, 50000, 50000, 200000)`,
+    ).run("HPG", monStr);
+
+    db.prepare(
+      `INSERT OR REPLACE INTO daily_ohlcv (code, date, open, high, low, close, volume)
+       VALUES (?, ?, 47500, 47500, 47500, 47500, 180000)`,
+    ).run("HPG", wedStr);
+
+    const summary = await assembleEveningSummary(baseOptions(db));
+
+    // Old code: y.date = date('2026-04-15', '-1 day') = '2026-04-14' (holiday) → no row → NULL → empty
+    // Fixed code: y.date = MAX(date WHERE date < '2026-04-15') = '2026-04-13' (Monday) → -5%
+    const hpg = summary.watchlistMovers.find((m) => m.code === "HPG");
+    expect(hpg).toBeDefined();
+    expect(hpg!.changePct).toBeLessThan(-1.0);
+
+    db.close();
+  });
+});
