@@ -288,22 +288,44 @@ export async function assembleEveningSummary(
   const getNewsCountFn = options.getNewsCountFn;
 
   // ── Step 0: VN-Index snapshot (best-effort, front-loaded) ────────────────
+  // Default: read from market_prices DB (code="VNINDEX", updated within 3 days).
+  // VN-Index is pushed by VPS every 60s — avoids geo-blocked live fetch from France.
+  // fetchVnIndexFn option overrides default for test injection.
   let vnIndex: VnIndexSnapshot | undefined;
   try {
-    const fetchFn =
-      options.fetchVnIndexFn ??
-      (await import("../../infrastructure/fetchers/hose.js")).fetchVnIndex;
-    const mp = await fetchFn();
-    if (mp !== null) {
-      vnIndex = {
-        close: mp.price,
-        change: Math.round(mp.price - mp.previousPrice),
-        changePct: Math.round(mp.changePct * 100) / 100,
-        fetchedAt: mp.fetchedAt,
-      };
+    if (options.fetchVnIndexFn) {
+      // Test-injected or custom fetch path (e.g. hose.ts for local dev)
+      const mp = await options.fetchVnIndexFn();
+      if (mp !== null) {
+        vnIndex = {
+          close: mp.price,
+          change: Math.round(mp.price - mp.previousPrice),
+          changePct: Math.round(mp.changePct * 100) / 100,
+          fetchedAt: mp.fetchedAt,
+        };
+      }
+    } else {
+      // Default: read VNINDEX from market_prices (VPS-pushed every 60s)
+      const row = db
+        .prepare<{ price: number; change_pct: number; updated_at: string }, []>(
+          `SELECT price, change_pct, updated_at
+           FROM market_prices
+           WHERE code = 'VNINDEX'
+             AND updated_at >= datetime('now', '-3 days')
+           LIMIT 1`,
+        )
+        .get();
+      if (row !== null && row !== undefined) {
+        vnIndex = {
+          close: row.price,
+          change: Math.round(row.price * row.change_pct / 100),
+          changePct: Math.round(row.change_pct * 100) / 100,
+          fetchedAt: row.updated_at,
+        };
+      }
     }
   } catch (err) {
-    logger.warn("[assembleEveningSummary] fetchVnIndex failed", {
+    logger.warn("[assembleEveningSummary] vnIndex step failed", {
       error: err instanceof Error ? err.message : String(err),
     });
   }
