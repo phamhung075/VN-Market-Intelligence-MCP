@@ -411,7 +411,7 @@ export async function assembleEveningSummary(
         FROM daily_ohlcv t
         JOIN daily_ohlcv y
           ON y.code = t.code
-         AND y.date = date(t.date, '-1 day')
+         AND y.date = (SELECT MAX(date) FROM daily_ohlcv WHERE date < t.date)
         WHERE t.date = (SELECT MAX(date) FROM daily_ohlcv)
       )
       SELECT w.code,
