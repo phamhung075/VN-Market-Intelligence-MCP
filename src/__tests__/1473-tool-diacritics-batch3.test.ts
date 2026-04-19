@@ -181,4 +181,20 @@ describe("1473: Vietnamese diacritics batch 3", () => {
       expect(src).toContain("(lỗi phân tích BCTC)");
     });
   });
+
+  describe("leadershipTools.ts — windowDays param (batch 4 tail)", () => {
+    const src = read("src/interface/mcp/tools/leadershipTools.ts");
+
+    it("windowDays param: 'Cửa sổ thời gian cho mass insider buy (default: 30 ngày)'", () => {
+      expect(src).toContain("Cửa sổ thời gian cho mass insider buy (default: 30 ngày)");
+    });
+  });
+
+  describe("changelogTools.ts — report_id param (batch 4 tail)", () => {
+    const src = read("src/interface/mcp/tools/changelogTools.ts");
+
+    it("report_id param: 'ID của báo cáo telegram_reports liên quan (tùy chọn)'", () => {
+      expect(src).toContain("ID của báo cáo telegram_reports liên quan (tùy chọn)");
+    });
+  });
 });
