@@ -317,10 +317,12 @@ export function startScheduler() {
     })
   }, { timezone: 'Asia/Ho_Chi_Minh' })
 
-  // 03:00 GMT+7 (20:00 UTC) — WAL checkpoint (task 140)
+  // 03:00 GMT+7 (20:00 UTC) — WAL checkpoint (task 140, 1458)
   // Note: 20:00 UTC = 03:00 GMT+7 (ICT). Overridable via CRON_WAL_CHECKPOINT env var.
-  cron.schedule(CRONS.walCheckpoint, () => {
-    runWalCheckpoint()
+  cron.schedule(CRONS.walCheckpoint, async () => {
+    await recordJobRun(getDb(), 'walCheckpointJob', async () => {
+      runWalCheckpoint()
+    })
   })
 
   // Sunday 22:30 GMT+7 — Weekly pattern watch (task 146)
