@@ -18,7 +18,7 @@
 import type { Database } from "bun:sqlite";
 import { getDb } from "../infrastructure/db/schema.js";
 import { getPendingAskQuestions } from "../infrastructure/db/askQueueStore.js";
-import { postSignal } from "../infrastructure/db/agentSignalStore.js";
+import { spawnQaResponder } from "../infrastructure/agents/qaResponderSpawner.js";
 import { recordJobRun } from "../infrastructure/db/cronJobRunStore.js";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -58,14 +58,9 @@ export function runAskQueueCheck(db?: Database): AskQueueCheckResult {
       result = { signaled: false, count: 0 };
     } else {
       const count = pending.length;
-      postSignal(conn, {
-        fromAgent: "askQueueCheck",
-        toAgent: "07-qa-responder",
-        signalType: "pending_questions",
-        payload: { count },
-        ttlMinutes: 15,
-      });
-      result = { signaled: true, count };
+      // Spawn locally — 0 tokens if already running or queue empties between checks
+      const spawn = spawnQaResponder();
+      result = { signaled: spawn.spawned, count };
     }
 
     // Observability: fire-and-forget — does not block the sync return.

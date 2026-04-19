@@ -19,6 +19,7 @@ import {
   getPendingAskQuestions,
   answerAskQuestion,
 } from "../../../infrastructure/db/askQueueStore.js";
+import { spawnQaResponder } from "../../../infrastructure/agents/qaResponderSpawner.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Zod schemas
@@ -89,7 +90,23 @@ export function registerAskQueueTools(server: McpServer, _testDb?: Database): vo
     },
   );
 
-  // ── 2. answer_ask_question ────────────────────────────────────────────────
+  // ── 2. run_qa_responder ───────────────────────────────────────────────────
+
+  server.tool(
+    "run_qa_responder",
+    "Spawn the 07-qa-responder agent locally via claude CLI to process pending /ask questions. " +
+      "No-op if queue is empty (0 tokens wasted) or agent is already running. " +
+      "Returns spawn status: spawned, reason, pending count.",
+    {},
+    async () => {
+      const result = spawnQaResponder();
+      return {
+        content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }],
+      };
+    },
+  );
+
+  // ── 3. answer_ask_question ────────────────────────────────────────────────
 
   server.tool(
     "answer_ask_question",

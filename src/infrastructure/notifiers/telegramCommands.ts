@@ -34,6 +34,7 @@ import {
   listOpenPositions,
 } from "../db/positionStore.js";
 import { insertAskQuestion } from "../db/askQueueStore.js";
+import { spawnQaResponder } from "../agents/qaResponderSpawner.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Public types
@@ -305,7 +306,9 @@ function handleAsk(db: Database, args: string[], userId: string): string {
   }
 
   const id = insertAskQuestion(db, question, userId);
-  return `Câu hỏi đã ghi nhận (#${id}). Sẽ trả lời trong 12 phút.`;
+  // Fire-and-forget — spawn QA Responder immediately; askQueueCheckJob is the fallback
+  try { spawnQaResponder(); } catch { /* silent — fallback cron handles it */ }
+  return `Câu hỏi đã ghi nhận (#${id}). Đang xử lý...`;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
