@@ -36,6 +36,9 @@ import type { Database } from "bun:sqlite";
  * Idempotent — safe to call on every startup.
  */
 export function ensureSchedulerLocksTable(db: Database): void {
+  // Task 1457: DDL also lives in schema.ts:initDatabase() (canonical audit location).
+  // Kept here so callers that build their own DB (e.g. tests, weeklyPortfolioReportJob)
+  // can still create the table without going through initDatabase().
   db.exec(`
     CREATE TABLE IF NOT EXISTS scheduler_locks (
       job_name     TEXT PRIMARY KEY,
