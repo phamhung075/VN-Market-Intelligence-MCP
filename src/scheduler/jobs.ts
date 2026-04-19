@@ -33,6 +33,7 @@ import { runEveningSummary } from './eveningSummaryJob.js'
 import { runIntelligenceCycle } from './intelligenceCycleJob.js'
 import { registerSummaryJobs } from './summaryJobs.js'
 import { runWalCheckpoint, registerShutdownHook } from '../infrastructure/db/checkpoint.js'
+import { walCheckpointAlert } from './walCheckpointAlert.js'
 import { runPatternWatch } from './patternWatchJob.js'
 import { runDailyAudit, runWeeklyAudit, runDailyAuditIfStale } from './dataAuditJob.js'
 import { runPredictionMarketPoll } from './predictionMarketJob.js'
@@ -335,7 +336,8 @@ export function startScheduler() {
   // Note: 20:00 UTC = 03:00 GMT+7 (ICT). Overridable via CRON_WAL_CHECKPOINT env var.
   cron.schedule(CRONS.walCheckpoint, async () => {
     await recordJobRun(getDb(), 'walCheckpointJob', async () => {
-      runWalCheckpoint()
+      const walResult = runWalCheckpoint()
+      await walCheckpointAlert(walResult)
     })
   })
 
