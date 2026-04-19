@@ -130,7 +130,7 @@ describe("Task 303 — Cycle Step A4: hexagram batch", () => {
 
   // ── AC-5: Off-hours: watchlist re-queried when Step 0 codes empty ────────
 
-  it("off-hours run re-queries watchlist codes for Step A4", async () => {
+  it("skips step A4 (hexagram compute) when off-hours", async () => {
     let hexFnCalledWithCodes: string[] = [];
     const deps = makeDeps({
       isMarketHoursFn: () => false, // off-hours — Step 0 won't load codes
@@ -142,9 +142,9 @@ describe("Task 303 — Cycle Step A4: hexagram batch", () => {
     });
     const result = await runIntelligenceCycle(deps);
     expect(result).not.toBeNull();
-    // Off-hours cycle skips step 0 (no market hours), but A4 re-queries
-    expect((result as CycleResult).hexagramsComputed).toBe(2);
-    expect(hexFnCalledWithCodes).toEqual(["VNM", "VCB"]);
+    // Off-hours cycle gates A4 behind !marketHours → hexagramsComputed stays 0
+    expect((result as CycleResult).hexagramsComputed).toBe(0);
+    expect(hexFnCalledWithCodes).toEqual([]);
   });
 });
 

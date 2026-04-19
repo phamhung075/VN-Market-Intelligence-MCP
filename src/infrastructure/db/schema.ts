@@ -426,7 +426,7 @@ export async function initDatabase(): Promise<void> {
     try { db.exec(`ALTER TABLE commodity_prices_history ADD COLUMN ${col} REAL NOT NULL DEFAULT 0`); } catch {}
   }
 
-  // ── SBV Rates (task 028) ──────────────────────────────────────────────────
+  // ── SBV Rates (task 028, extended task 1497) ─────────────────────────────
   // `sbv_rates` — latest snapshot per source (upsert via INSERT OR REPLACE).
   // `sbv_rates_history` — append-only time series for macro σ analysis.
   db.exec(`
@@ -434,11 +434,11 @@ export async function initDatabase(): Promise<void> {
       source                  TEXT PRIMARY KEY,
       overnight_rate_pct      REAL NOT NULL DEFAULT 0,
       refinancing_rate_pct    REAL NOT NULL DEFAULT 0,
+      usd_vnd_official        REAL NOT NULL DEFAULT 0,
       discount_rate_pct       REAL NOT NULL DEFAULT 0,
       max_deposit_rate_pct    REAL NOT NULL DEFAULT 0,
       max_lending_rate_pct    REAL NOT NULL DEFAULT 0,
       interbank_overnight_pct REAL NOT NULL DEFAULT 0,
-      usd_vnd_official        REAL NOT NULL DEFAULT 0,
       fetched_at              TEXT NOT NULL
     )
   `);
@@ -448,11 +448,11 @@ export async function initDatabase(): Promise<void> {
       source                  TEXT NOT NULL,
       overnight_rate_pct      REAL NOT NULL DEFAULT 0,
       refinancing_rate_pct    REAL NOT NULL DEFAULT 0,
+      usd_vnd_official        REAL NOT NULL DEFAULT 0,
       discount_rate_pct       REAL NOT NULL DEFAULT 0,
       max_deposit_rate_pct    REAL NOT NULL DEFAULT 0,
       max_lending_rate_pct    REAL NOT NULL DEFAULT 0,
       interbank_overnight_pct REAL NOT NULL DEFAULT 0,
-      usd_vnd_official        REAL NOT NULL DEFAULT 0,
       fetched_at              TEXT NOT NULL
     )
   `);
@@ -803,6 +803,11 @@ export async function initDatabase(): Promise<void> {
   `);
 
   // ── Tracked indicators (created lazily by commodityTracker, canonical here) ─
+  // Task 1489: hour_bucket column + UNIQUE(indicator, source, hour_bucket) ON CONFLICT REPLACE
+  // ensures at most one row per indicator+source per clock-hour (dedup).
+  // hour_bucket is populated by an AFTER INSERT trigger so callers need not set it.
+  // ON CONFLICT REPLACE: when the trigger's UPDATE causes a unique clash, the old row
+  // is silently replaced — net effect is one row per (indicator, source, UTC-hour).
   db.exec(`
     CREATE TABLE IF NOT EXISTS tracked_indicators (
       id           INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -810,11 +815,26 @@ export async function initDatabase(): Promise<void> {
       value        REAL NOT NULL,
       unit         TEXT NOT NULL DEFAULT '',
       source       TEXT NOT NULL DEFAULT '',
-      extracted_at TEXT NOT NULL
+      extracted_at TEXT NOT NULL,
+      hour_bucket  TEXT,
+      UNIQUE(indicator, source, hour_bucket) ON CONFLICT REPLACE
     );
     CREATE INDEX IF NOT EXISTS idx_tracked_ind_name_time
       ON tracked_indicators(indicator, extracted_at DESC);
+    CREATE TRIGGER IF NOT EXISTS trg_tracked_ind_hour_bucket
+      AFTER INSERT ON tracked_indicators
+      BEGIN
+        UPDATE tracked_indicators
+          SET hour_bucket = strftime('%Y-%m-%dT%H:00:00', NEW.extracted_at)
+          WHERE id = NEW.id AND hour_bucket IS NULL;
+      END;
   `);
+  // Task 1489: one-time purge of test-contamination rows.
+  // source='test' rows are inserted by integration tests that leak into non-memory DBs.
+  db.exec(`DELETE FROM tracked_indicators WHERE source = 'test'`);
+  // Task 1490: purge known system_logs test-contamination rows (message-exact match).
+  db.exec(`DELETE FROM system_logs WHERE message IN ('only this appears', 'error message')`);
+
 
   // ── Mention velocity: canonical DDL lives above (Task 265, ~line 271).
   // Duplicate block removed Task 1033 — keep a single source of truth so
@@ -1468,5 +1488,9 @@ export async function initDatabase(): Promise<void> {
   // Cleanup: remove stale VCB test fixture rows that leaked before sprint-181 DB isolation fix
   db.exec(`DELETE FROM market_prices WHERE code = 'VCB' AND updated_at < datetime('now', '-7 days')`);
   db.exec(`DELETE FROM market_prices_history WHERE code = 'VCB' AND fetched_at < datetime('now', '-7 days')`);
+
+  // Task 1489: remove tracked_indicators rows inserted by tests (source='test')
+  // so test-generated noise never persists into production state.
+  db.exec(`DELETE FROM tracked_indicators WHERE source='test'`);
 
 }
