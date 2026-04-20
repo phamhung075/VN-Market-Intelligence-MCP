@@ -12,7 +12,7 @@
  * Coercible fields: foreign_volume, foreign_room, holding_ratio, fetched_at (numeric)
  */
 
-import type { ForeignFlowUpsertItem } from "../../../infrastructure/db/vnstockStore.js";
+import type { ForeignFlowUpsertItem } from "../../models/shared-types.js";
 
 /**
  * Validation error for a single item in a batch

@@ -33,7 +33,8 @@ import { validateWebhookRequest } from "../../infrastructure/notifiers/telegramW
 import { insertReport } from "../../infrastructure/db/telegramReportStore.js";
 import { toolRegistry } from "./tools/registry.js";
 import { logVpsPush, type VpsPushLogEntry } from "../../infrastructure/db/vpsPushLogStore.js";
-import { upsertForeignFlow, type ForeignFlowUpsertItem } from "../../infrastructure/db/vnstockStore.js";
+import { upsertForeignFlow } from "../../infrastructure/db/vnstockStore.js";
+import type { ForeignFlowUpsertItem } from "../../domain/models/shared-types.js";
 import { writeForeignFlowToOhlcv, type WriteForeignFlowItem } from "../../infrastructure/db/ohlcvForeignFlowStore.js";
 import { buildForeignFlowStatusResponse } from "./foreignFlowStatusHandler.js";
 import { validateForeignFlowPayload } from "../../domain/services/market-data/foreignFlowValidator.js";

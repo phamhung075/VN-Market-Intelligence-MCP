@@ -14,7 +14,7 @@
 import { describe, it, expect } from "bun:test";
 import { validateForeignFlowPayload } from "../domain/services/market-data/foreignFlowValidator.js";
 import type { ValidationResult } from "../domain/services/market-data/foreignFlowValidator.js";
-import type { ForeignFlowUpsertItem } from "../infrastructure/db/vnstockStore.js";
+import type { ForeignFlowUpsertItem } from "../domain/models/shared-types.js";
 
 // ── Test Data Builders ────────────────────────────────────────────────────────
 

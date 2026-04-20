@@ -6,10 +6,8 @@ import { Database } from "bun:sqlite";
 
 // We call these with an in-memory Database injected as the optional db param.
 // Import paths use .js extension for ESM compatibility.
-import {
-  upsertForeignFlow,
-  type ForeignFlowUpsertItem,
-} from "../infrastructure/db/vnstockStore.js";
+import { upsertForeignFlow } from "../infrastructure/db/vnstockStore.js";
+import type { ForeignFlowUpsertItem } from "../domain/models/shared-types.js";
 
 // ---------------------------------------------------------------------------
 // In-memory schema bootstrap

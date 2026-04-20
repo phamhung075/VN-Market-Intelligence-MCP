@@ -25,6 +25,7 @@ import type {
   VnstockCashFlow,
 } from "../fetchers/vnstockBridge.js";
 import type { DailyForeignFlow } from "../../domain/services/foreignFlowAnalyzer.js";
+import type { ForeignFlowUpsertItem } from "../../domain/models/shared-types.js";
 
 // ---------------------------------------------------------------------------
 // DDL — canonical SSOT is initDatabase() in schema.ts (Task 1042)
@@ -335,23 +336,6 @@ export function getForeignFlowHistory(code: string, days = 10): DailyForeignFlow
 // ---------------------------------------------------------------------------
 // Foreign flow upsert — Task 1131, Sprint 061
 // ---------------------------------------------------------------------------
-
-/**
- * Input item for upsertForeignFlow.
- * Only the four foreign-flow columns are targeted in the DO UPDATE SET clause;
- * price/financial columns written by storeTradingStats are never overwritten.
- */
-export interface ForeignFlowUpsertItem {
-  code: string;
-  /** "YYYY-MM-DD" */
-  date: string;
-  foreign_volume: number;
-  foreign_room: number | null;
-  /** Holding ratio as a decimal (0–1). If > 1.0, the function divides by 100. */
-  holding_ratio: number | null;
-  /** ISO 8601 UTC timestamp. null → server uses SQLite datetime('now'). */
-  fetched_at: string | null;
-}
 
 /**
  * Upsert foreign flow columns only.
