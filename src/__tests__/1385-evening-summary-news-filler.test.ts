@@ -29,6 +29,7 @@ function makeSummary(overrides: Partial<EveningSummary> = {}): EveningSummary {
     taSummary: [],
     newsCount: 0,
     generatedAt: "2026-04-17T22:30:00Z",
+    foreignFlowMovers: [],
     ...overrides,
   }
 }

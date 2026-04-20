@@ -1113,8 +1113,12 @@ export async function initDatabase(): Promise<void> {
       high       REAL    NOT NULL,
       low        REAL    NOT NULL,
       close      REAL    NOT NULL,
-      volume     REAL    NOT NULL DEFAULT 0,
-      updated_at TEXT    NOT NULL,
+      volume           REAL    NOT NULL DEFAULT 0,
+      updated_at       TEXT    NOT NULL,
+      foreign_buy_vol  REAL,
+      foreign_sell_vol REAL,
+      foreign_net_vol  REAL,
+      put_through_vol  REAL,
       PRIMARY KEY (code, date)
     )
   `);
@@ -1510,4 +1514,37 @@ export async function initDatabase(): Promise<void> {
   // so test-generated noise never persists into production state.
   db.exec(`DELETE FROM tracked_indicators WHERE source='test'`);
 
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Task 1503 — foreign flow column migration
+// Run after initDatabase() on existing deployments where daily_ohlcv was created
+// without the four foreign flow columns.
+// Safe to call on a fresh DB — ALTER TABLE IF NOT EXISTS is a no-op when the col exists.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Add foreign flow columns to daily_ohlcv if they do not already exist.
+ * Idempotent — safe to call on fresh and existing databases.
+ */
+export async function migrateForeignFlowColumns(db: import("bun:sqlite").Database): Promise<void> {
+  // SQLite ALTER TABLE does not support IF NOT EXISTS in older versions used by Bun.
+  // Detect existing cols via PRAGMA and skip ALTER when already present.
+  const cols = db
+    .prepare<{ name: string }, []>("PRAGMA table_info(daily_ohlcv)")
+    .all()
+    .map((r) => r.name);
+
+  const toAdd: Array<[string, string]> = [
+    ["foreign_buy_vol",  "REAL"],
+    ["foreign_sell_vol", "REAL"],
+    ["foreign_net_vol",  "REAL"],
+    ["put_through_vol",  "REAL"],
+  ];
+
+  for (const [col, type] of toAdd) {
+    if (!cols.includes(col)) {
+      db.exec(`ALTER TABLE daily_ohlcv ADD COLUMN ${col} ${type}`);
+    }
+  }
 }

@@ -58,6 +58,18 @@ export interface TaDiag {
   ohlcvRowsMax: number;
 }
 
+/** A stock with notable foreign investor net flow at market close (Task 1503). */
+export interface ForeignFlowMover {
+  /** Stock ticker, e.g. "VCB" */
+  code: string;
+  /** Net foreign volume (buy - sell), positive = net buy, negative = net sell */
+  foreignNetVol: number;
+  /** Raw foreign buy volume */
+  foreignBuyVol: number;
+  /** Raw foreign sell volume */
+  foreignSellVol: number;
+}
+
 /** A watchlist stock that moved >= 1% during the day. */
 export interface WatchlistMover {
   /** Stock ticker, e.g. "VCB" */
@@ -107,6 +119,13 @@ export interface EveningSummary {
    * undefined on summaries generated before task 1441.
    */
   portfolioPnl?: PortfolioPnlResult | null;
+  /**
+   * Top stocks by absolute foreign net flow volume at market close (Task 1503).
+   * Up to 5 entries, ordered by |foreignNetVol| DESC.
+   * Empty array when no foreign flow data is available.
+   * undefined on summaries generated before task 1503.
+   */
+  foreignFlowMovers?: ForeignFlowMover[];
 }
 
 /**
@@ -136,6 +155,11 @@ export interface AssembleEveningSummaryOptions {
    * Throw to signal error (portfolioPnl set to null, no crash).
    */
   getPnlFn?: () => Promise<PortfolioPnlResult | null>;
+  /**
+   * Injectable foreign flow movers query for tests — avoids real DB dependency.
+   * When provided, called instead of the default daily_ohlcv query.
+   */
+  getForeignFlowMoversFn?: (db: Database) => ForeignFlowMover[];
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -507,6 +531,42 @@ export async function assembleEveningSummary(
     // taDiag stays at zero-default — no crash
   }
 
+  // ── Step 4b: Foreign flow movers (Task 1503) ─────────────────────────────────
+  let foreignFlowMovers: ForeignFlowMover[] = [];
+  try {
+    if (options.getForeignFlowMoversFn) {
+      foreignFlowMovers = options.getForeignFlowMoversFn(db);
+    } else {
+      interface OhlcvFlowRow {
+        code: string;
+        foreign_net_vol: number;
+        foreign_buy_vol: number;
+        foreign_sell_vol: number;
+      }
+      const flowRows = db
+        .prepare<OhlcvFlowRow, []>(
+          `SELECT code, foreign_net_vol, foreign_buy_vol, foreign_sell_vol
+             FROM daily_ohlcv
+            WHERE date = (SELECT MAX(date) FROM daily_ohlcv)
+              AND foreign_net_vol IS NOT NULL
+            ORDER BY ABS(foreign_net_vol) DESC
+            LIMIT 5`,
+        )
+        .all();
+      foreignFlowMovers = flowRows.map((r) => ({
+        code: r.code,
+        foreignNetVol: r.foreign_net_vol,
+        foreignBuyVol: r.foreign_buy_vol,
+        foreignSellVol: r.foreign_sell_vol,
+      }));
+    }
+  } catch (err) {
+    logger.warn("[assembleEveningSummary] foreignFlowMovers step failed", {
+      error: err instanceof Error ? err.message : String(err),
+    });
+    foreignFlowMovers = [];
+  }
+
   // ── Step 5: Prediction market signals — medium fallback + diag ──────────────
   let predictionSignals: BriefingPredictionSignal[] = [];
   let predictionDiag: PredictionDiag = { stored: 0 };
@@ -597,6 +657,7 @@ export async function assembleEveningSummary(
     generatedAt,
     ...(vnIndex !== undefined ? { vnIndex } : {}),
     portfolioPnl,
+    foreignFlowMovers,
   };
 
   try {
