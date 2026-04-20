@@ -129,6 +129,30 @@ afterAll(() => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Date helpers — relative to today so tests never drift with calendar
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Returns "YYYY-MM-DD HH:MM:SS" for N calendar days ago at the given time.
+ * Defaults to "08:00:00" when no time is supplied.
+ */
+function daysAgo(n: number, time = "08:00:00"): string {
+  const d = new Date();
+  d.setDate(d.getDate() - n);
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd} ${time}`;
+}
+
+/**
+ * Returns "YYYY-MM-DD" for N calendar days ago.
+ */
+function dateOnly(n: number): string {
+  return daysAgo(n).slice(0, 10);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Helpers
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -235,15 +259,15 @@ describe("Task 1168 — getMarketMessageDigest", () => {
     const db = getDb();
 
     // 5 rows per AC-1 scenario. All dates are within 7-day window.
-    // ids 10,11 from alert-commander on 2026-04-13 — unreviewed
-    // id 12 from morning-briefing on 2026-04-13 — unreviewed
-    // id 13 from alert-commander on 2026-04-12 — unreviewed
-    // id 14 from alert-commander on 2026-04-12 — already reviewed (verdict signal)
-    seedRowWithId(10, { from_agent: "alert-commander", message_type: "alert", content: "Alert content 10", sent_at: "2026-04-13 08:00:00" });
-    seedRowWithId(11, { from_agent: "alert-commander", message_type: "alert", content: "Alert content 11", sent_at: "2026-04-13 09:00:00" });
-    seedRowWithId(12, { from_agent: "morning-briefing", message_type: "morning_briefing", content: "Briefing 13/04 content", sent_at: "2026-04-13 06:00:00" });
-    seedRowWithId(13, { from_agent: "alert-commander", message_type: "alert", content: "Alert content 13", sent_at: "2026-04-12 10:00:00" });
-    seedRowWithId(14, { from_agent: "alert-commander", message_type: "alert", content: "Alert content 14 already reviewed", sent_at: "2026-04-12 11:00:00", verdict: "signal", reviewed_at: "2026-04-13 12:00:00" });
+    // ids 10,11 from alert-commander 6 days ago — unreviewed
+    // id 12 from morning-briefing 6 days ago — unreviewed
+    // id 13 from alert-commander 7 days ago — unreviewed
+    // id 14 from alert-commander 7 days ago — already reviewed (verdict signal)
+    seedRowWithId(10, { from_agent: "alert-commander", message_type: "alert", content: "Alert content 10", sent_at: daysAgo(6, "08:00:00") });
+    seedRowWithId(11, { from_agent: "alert-commander", message_type: "alert", content: "Alert content 11", sent_at: daysAgo(6, "09:00:00") });
+    seedRowWithId(12, { from_agent: "morning-briefing", message_type: "morning_briefing", content: "Briefing 13/04 content", sent_at: daysAgo(6, "06:00:00") });
+    seedRowWithId(13, { from_agent: "alert-commander", message_type: "alert", content: "Alert content 13", sent_at: daysAgo(7, "10:00:00") });
+    seedRowWithId(14, { from_agent: "alert-commander", message_type: "alert", content: "Alert content 14 already reviewed", sent_at: daysAgo(7, "11:00:00"), verdict: "signal", reviewed_at: daysAgo(6, "12:00:00") });
 
     const entries = getMarketMessageDigest(db, 7);
 
@@ -251,22 +275,22 @@ describe("Task 1168 — getMarketMessageDigest", () => {
     expect(entries).toHaveLength(3);
 
     // Entries ordered date DESC, then agent ASC
-    expect(entries[0]!.date).toBe("2026-04-13");
+    expect(entries[0]!.date).toBe(dateOnly(6));
     expect(entries[0]!.from_agent).toBe("alert-commander");
-    expect(entries[1]!.date).toBe("2026-04-13");
+    expect(entries[1]!.date).toBe(dateOnly(6));
     expect(entries[1]!.from_agent).toBe("morning-briefing");
-    expect(entries[2]!.date).toBe("2026-04-12");
+    expect(entries[2]!.date).toBe(dateOnly(7));
     expect(entries[2]!.from_agent).toBe("alert-commander");
   });
 
-  it("AC-1: alert-commander 2026-04-13 entry has count=2 and ids containing 10 and 11", () => {
+  it("AC-1: alert-commander 6-days-ago entry has count=2 and ids containing 10 and 11", () => {
     const db = getDb();
 
-    seedRowWithId(10, { from_agent: "alert-commander", message_type: "alert", content: "Content for id 10", sent_at: "2026-04-13 08:00:00" });
-    seedRowWithId(11, { from_agent: "alert-commander", message_type: "alert", content: "Content for id 11", sent_at: "2026-04-13 09:00:00" });
+    seedRowWithId(10, { from_agent: "alert-commander", message_type: "alert", content: "Content for id 10", sent_at: daysAgo(6, "08:00:00") });
+    seedRowWithId(11, { from_agent: "alert-commander", message_type: "alert", content: "Content for id 11", sent_at: daysAgo(6, "09:00:00") });
 
     const entries = getMarketMessageDigest(db, 7);
-    const entry = entries.find(e => e.date === "2026-04-13" && e.from_agent === "alert-commander");
+    const entry = entries.find(e => e.date === dateOnly(6) && e.from_agent === "alert-commander");
 
     expect(entry).toBeDefined();
     expect(entry!.count).toBe(2);
@@ -274,13 +298,13 @@ describe("Task 1168 — getMarketMessageDigest", () => {
     expect(entry!.ids).toContain(11);
   });
 
-  it("AC-1: morning-briefing 2026-04-13 entry has count=1 and ids=[12]", () => {
+  it("AC-1: morning-briefing 6-days-ago entry has count=1 and ids=[12]", () => {
     const db = getDb();
 
-    seedRowWithId(12, { from_agent: "morning-briefing", message_type: "morning_briefing", content: "Briefing content 12", sent_at: "2026-04-13 06:00:00" });
+    seedRowWithId(12, { from_agent: "morning-briefing", message_type: "morning_briefing", content: "Briefing content 12", sent_at: daysAgo(6, "06:00:00") });
 
     const entries = getMarketMessageDigest(db, 7);
-    const entry = entries.find(e => e.date === "2026-04-13" && e.from_agent === "morning-briefing");
+    const entry = entries.find(e => e.date === dateOnly(6) && e.from_agent === "morning-briefing");
 
     expect(entry).toBeDefined();
     expect(entry!.count).toBe(1);
@@ -290,7 +314,7 @@ describe("Task 1168 — getMarketMessageDigest", () => {
   it("AC-1: excludes rows where verdict is not null", () => {
     const db = getDb();
 
-    seedRowWithId(14, { from_agent: "alert-commander", message_type: "alert", content: "Already reviewed", sent_at: "2026-04-12 11:00:00", verdict: "signal", reviewed_at: "2026-04-13 00:00:00" });
+    seedRowWithId(14, { from_agent: "alert-commander", message_type: "alert", content: "Already reviewed", sent_at: daysAgo(7, "11:00:00"), verdict: "signal", reviewed_at: daysAgo(6, "00:00:00") });
 
     const entries = getMarketMessageDigest(db, 7);
     const match = entries.find(e => e.ids.includes(14));
@@ -333,7 +357,7 @@ describe("Task 1168 — getMarketMessageDigest", () => {
   it("edge: single row in group — ids is an array of exactly one number", () => {
     const db = getDb();
 
-    seedRowWithId(42, { from_agent: "alert-commander", message_type: "alert", content: "Single row content", sent_at: "2026-04-13 10:00:00" });
+    seedRowWithId(42, { from_agent: "alert-commander", message_type: "alert", content: "Single row content", sent_at: daysAgo(6, "10:00:00") });
 
     const entries = getMarketMessageDigest(db, 7);
     const entry = entries.find(e => e.from_agent === "alert-commander");
@@ -408,7 +432,7 @@ describe("Task 1168 — getMarketMessageDigest", () => {
     const db = getDb();
     const longContent = "A".repeat(200);
 
-    seedRowWithId(55, { from_agent: "alert-commander", message_type: "alert", content: longContent, sent_at: "2026-04-13 08:00:00" });
+    seedRowWithId(55, { from_agent: "alert-commander", message_type: "alert", content: longContent, sent_at: daysAgo(6, "08:00:00") });
 
     const entries = getMarketMessageDigest(db, 7);
     const entry = entries.find(e => e.from_agent === "alert-commander");
@@ -426,9 +450,9 @@ describe("Task 1168 — batchReviewMarketMessages", () => {
   it("AC-4: updates all 3 ids in one transaction — returns { updated: 3, notFound: [] }", () => {
     const db = getDb();
 
-    const id20 = seedRow({ from_agent: "alert-commander", message_type: "alert", content: "msg 20", sent_at: "2026-04-13 08:00:00" });
-    const id21 = seedRow({ from_agent: "alert-commander", message_type: "alert", content: "msg 21", sent_at: "2026-04-13 08:01:00" });
-    const id22 = seedRow({ from_agent: "alert-commander", message_type: "alert", content: "msg 22", sent_at: "2026-04-13 08:02:00" });
+    const id20 = seedRow({ from_agent: "alert-commander", message_type: "alert", content: "msg 20", sent_at: daysAgo(6, "08:00:00") });
+    const id21 = seedRow({ from_agent: "alert-commander", message_type: "alert", content: "msg 21", sent_at: daysAgo(6, "08:01:00") });
+    const id22 = seedRow({ from_agent: "alert-commander", message_type: "alert", content: "msg 22", sent_at: daysAgo(6, "08:02:00") });
 
     const result = batchReviewMarketMessages(db, [id20, id21, id22], "noise", "overnight noise batch");
 
@@ -439,9 +463,9 @@ describe("Task 1168 — batchReviewMarketMessages", () => {
   it("AC-4: sets verdict='noise', verdict_note, and reviewed_at on all 3 updated rows", () => {
     const db = getDb();
 
-    const id20 = seedRow({ from_agent: "alert-commander", message_type: "alert", content: "msg 20", sent_at: "2026-04-13 08:00:00" });
-    const id21 = seedRow({ from_agent: "alert-commander", message_type: "alert", content: "msg 21", sent_at: "2026-04-13 08:01:00" });
-    const id22 = seedRow({ from_agent: "alert-commander", message_type: "alert", content: "msg 22", sent_at: "2026-04-13 08:02:00" });
+    const id20 = seedRow({ from_agent: "alert-commander", message_type: "alert", content: "msg 20", sent_at: daysAgo(6, "08:00:00") });
+    const id21 = seedRow({ from_agent: "alert-commander", message_type: "alert", content: "msg 21", sent_at: daysAgo(6, "08:01:00") });
+    const id22 = seedRow({ from_agent: "alert-commander", message_type: "alert", content: "msg 22", sent_at: daysAgo(6, "08:02:00") });
 
     batchReviewMarketMessages(db, [id20, id21, id22], "noise", "overnight noise batch");
 
@@ -457,8 +481,8 @@ describe("Task 1168 — batchReviewMarketMessages", () => {
   it("AC-5: reports notFound ids — ids [id20, id21] exist, id 999 does not", () => {
     const db = getDb();
 
-    const id20 = seedRow({ from_agent: "alert-commander", message_type: "alert", content: "msg 20", sent_at: "2026-04-13 08:00:00" });
-    const id21 = seedRow({ from_agent: "alert-commander", message_type: "alert", content: "msg 21", sent_at: "2026-04-13 08:01:00" });
+    const id20 = seedRow({ from_agent: "alert-commander", message_type: "alert", content: "msg 20", sent_at: daysAgo(6, "08:00:00") });
+    const id21 = seedRow({ from_agent: "alert-commander", message_type: "alert", content: "msg 21", sent_at: daysAgo(6, "08:01:00") });
 
     const result = batchReviewMarketMessages(db, [id20, id21, 999], "noise");
 
@@ -469,7 +493,7 @@ describe("Task 1168 — batchReviewMarketMessages", () => {
   it("AC-5: no exception thrown when some ids are not found", () => {
     const db = getDb();
 
-    const id20 = seedRow({ from_agent: "alert-commander", message_type: "alert", content: "msg 20", sent_at: "2026-04-13 08:00:00" });
+    const id20 = seedRow({ from_agent: "alert-commander", message_type: "alert", content: "msg 20", sent_at: daysAgo(6, "08:00:00") });
 
     expect(() => {
       batchReviewMarketMessages(db, [id20, 888, 999], "noise");
@@ -496,7 +520,7 @@ describe("Task 1168 — batchReviewMarketMessages", () => {
   it("edge: idempotent overwrite — second call with different verdict wins", () => {
     const db = getDb();
 
-    const id = seedRow({ from_agent: "alert-commander", message_type: "alert", content: "overwrite me", sent_at: "2026-04-13 08:00:00" });
+    const id = seedRow({ from_agent: "alert-commander", message_type: "alert", content: "overwrite me", sent_at: daysAgo(6, "08:00:00") });
 
     batchReviewMarketMessages(db, [id], "noise");
     batchReviewMarketMessages(db, [id], "signal", "correction");
@@ -520,7 +544,7 @@ describe("Task 1168 — batchReviewMarketMessages", () => {
   it("edge: note is optional — null note stores null in verdict_note", () => {
     const db = getDb();
 
-    const id = seedRow({ from_agent: "alert-commander", message_type: "alert", content: "no note", sent_at: "2026-04-13 08:00:00" });
+    const id = seedRow({ from_agent: "alert-commander", message_type: "alert", content: "no note", sent_at: daysAgo(6, "08:00:00") });
 
     batchReviewMarketMessages(db, [id], "noise");
 
@@ -535,12 +559,12 @@ describe("Task 1168 — batchReviewMarketMessages", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("Task 1168 — get_market_message_digest MCP tool handler", () => {
-  it("AC-8: formatted output contains [2026-04-13], agent names, counts, ids, and footer", async () => {
+  it("AC-8: formatted output contains date header, agent names, counts, ids, and footer", async () => {
     // 3 unreviewed rows: ids 42,41 from alert-commander, id 39 from morning-briefing
-    // All on 2026-04-13
-    seedRowWithId(42, { from_agent: "alert-commander", message_type: "alert", content: "VCB alert content", sent_at: "2026-04-13 10:00:00" });
-    seedRowWithId(41, { from_agent: "alert-commander", message_type: "alert", content: "HPG alert content", sent_at: "2026-04-13 09:00:00" });
-    seedRowWithId(39, { from_agent: "morning-briefing", message_type: "morning_briefing", content: "Briefing 13/04 content", sent_at: "2026-04-13 06:00:00" });
+    // All on dateOnly(6) (6 days ago)
+    seedRowWithId(42, { from_agent: "alert-commander", message_type: "alert", content: "VCB alert content", sent_at: daysAgo(6, "10:00:00") });
+    seedRowWithId(41, { from_agent: "alert-commander", message_type: "alert", content: "HPG alert content", sent_at: daysAgo(6, "09:00:00") });
+    seedRowWithId(39, { from_agent: "morning-briefing", message_type: "morning_briefing", content: "Briefing 13/04 content", sent_at: daysAgo(6, "06:00:00") });
 
     const response = await handleGetMarketMessageDigest({ limit_days: 7 });
 
@@ -548,7 +572,7 @@ describe("Task 1168 — get_market_message_digest MCP tool handler", () => {
     expect(response.content[0]!.type).toBe("text");
 
     const text = response.content[0]!.text;
-    expect(text).toContain("[2026-04-13]");
+    expect(text).toContain(`[${dateOnly(6)}]`);
     expect(text).toContain("alert-commander");
     expect(text).toContain("2 tin");
     expect(text).toContain("ids: [");
@@ -558,8 +582,8 @@ describe("Task 1168 — get_market_message_digest MCP tool handler", () => {
   });
 
   it("AC-8: formatted text contains both ids 41 and 42 for the alert-commander group", async () => {
-    seedRowWithId(42, { from_agent: "alert-commander", message_type: "alert", content: "Content 42", sent_at: "2026-04-13 10:00:00" });
-    seedRowWithId(41, { from_agent: "alert-commander", message_type: "alert", content: "Content 41", sent_at: "2026-04-13 09:00:00" });
+    seedRowWithId(42, { from_agent: "alert-commander", message_type: "alert", content: "Content 42", sent_at: daysAgo(6, "10:00:00") });
+    seedRowWithId(41, { from_agent: "alert-commander", message_type: "alert", content: "Content 41", sent_at: daysAgo(6, "09:00:00") });
 
     const response = await handleGetMarketMessageDigest({ limit_days: 7 });
     const text = response.content[0]!.text;
@@ -589,9 +613,9 @@ describe("Task 1168 — get_market_message_digest MCP tool handler", () => {
 
 describe("Task 1168 — batch_review_market_messages MCP tool handler", () => {
   it("AC-10: all found — returns \"3 tin da duoc danh gia la 'noise'.\"", async () => {
-    const id20 = seedRow({ from_agent: "alert-commander", message_type: "alert", content: "msg 20", sent_at: "2026-04-13 08:00:00" });
-    const id21 = seedRow({ from_agent: "alert-commander", message_type: "alert", content: "msg 21", sent_at: "2026-04-13 08:01:00" });
-    const id22 = seedRow({ from_agent: "alert-commander", message_type: "alert", content: "msg 22", sent_at: "2026-04-13 08:02:00" });
+    const id20 = seedRow({ from_agent: "alert-commander", message_type: "alert", content: "msg 20", sent_at: daysAgo(6, "08:00:00") });
+    const id21 = seedRow({ from_agent: "alert-commander", message_type: "alert", content: "msg 21", sent_at: daysAgo(6, "08:01:00") });
+    const id22 = seedRow({ from_agent: "alert-commander", message_type: "alert", content: "msg 22", sent_at: daysAgo(6, "08:02:00") });
 
     const response = await handleBatchReviewMarketMessages({
       ids: [id20, id21, id22],
@@ -603,9 +627,9 @@ describe("Task 1168 — batch_review_market_messages MCP tool handler", () => {
   });
 
   it("AC-10: all 3 rows have verdict='noise' after tool call", async () => {
-    const id20 = seedRow({ from_agent: "alert-commander", message_type: "alert", content: "msg 20", sent_at: "2026-04-13 08:00:00" });
-    const id21 = seedRow({ from_agent: "alert-commander", message_type: "alert", content: "msg 21", sent_at: "2026-04-13 08:01:00" });
-    const id22 = seedRow({ from_agent: "alert-commander", message_type: "alert", content: "msg 22", sent_at: "2026-04-13 08:02:00" });
+    const id20 = seedRow({ from_agent: "alert-commander", message_type: "alert", content: "msg 20", sent_at: daysAgo(6, "08:00:00") });
+    const id21 = seedRow({ from_agent: "alert-commander", message_type: "alert", content: "msg 21", sent_at: daysAgo(6, "08:01:00") });
+    const id22 = seedRow({ from_agent: "alert-commander", message_type: "alert", content: "msg 22", sent_at: daysAgo(6, "08:02:00") });
 
     await handleBatchReviewMarketMessages({ ids: [id20, id21, id22], verdict: "noise" });
 
@@ -616,8 +640,8 @@ describe("Task 1168 — batch_review_market_messages MCP tool handler", () => {
   });
 
   it("AC-11: partial notFound — text contains '2 tin', '1 ID khong tim thay', and '999'", async () => {
-    const id20 = seedRow({ from_agent: "alert-commander", message_type: "alert", content: "msg 20", sent_at: "2026-04-13 08:00:00" });
-    const id21 = seedRow({ from_agent: "alert-commander", message_type: "alert", content: "msg 21", sent_at: "2026-04-13 08:01:00" });
+    const id20 = seedRow({ from_agent: "alert-commander", message_type: "alert", content: "msg 20", sent_at: daysAgo(6, "08:00:00") });
+    const id21 = seedRow({ from_agent: "alert-commander", message_type: "alert", content: "msg 21", sent_at: daysAgo(6, "08:01:00") });
 
     const response = await handleBatchReviewMarketMessages({
       ids: [id20, id21, 999],
@@ -631,7 +655,7 @@ describe("Task 1168 — batch_review_market_messages MCP tool handler", () => {
   });
 
   it("AC-12: with note — text ends with 'Note saved.', row has verdict_note='false alarm'", async () => {
-    const id20 = seedRow({ from_agent: "alert-commander", message_type: "alert", content: "msg 20", sent_at: "2026-04-13 08:00:00" });
+    const id20 = seedRow({ from_agent: "alert-commander", message_type: "alert", content: "msg 20", sent_at: daysAgo(6, "08:00:00") });
 
     const response = await handleBatchReviewMarketMessages({
       ids: [id20],
