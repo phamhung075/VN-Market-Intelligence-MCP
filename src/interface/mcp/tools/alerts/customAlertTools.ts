@@ -16,10 +16,10 @@
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
-import { getDb, ensureCustomAlertRulesTable } from "../../../infrastructure/db/schema.js";
+import { getDb, ensureCustomAlertRulesTable } from "../../../../infrastructure/db/schema.js";
 import {
   listCustomAlertRules,
-} from "../../../infrastructure/db/customAlertRuleStore.js";
+} from "../../../../infrastructure/db/customAlertRuleStore.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Formatting helpers

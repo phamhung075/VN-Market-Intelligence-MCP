@@ -13,8 +13,8 @@
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { Database } from "bun:sqlite";
-import { logger } from "../../../infrastructure/logger.js";
-import { getOhlcvPipelineHealth } from "../../../application/usecases/getOhlcvPipelineHealth.js";
+import { logger } from "../../../../infrastructure/logger.js";
+import { getOhlcvPipelineHealth } from "../../../../application/usecases/getOhlcvPipelineHealth.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers — formatting
@@ -75,7 +75,7 @@ export function registerPipelineHealthTools(
         if (_db) {
           db = _db;
         } else {
-          const { getDb } = await import("../../../infrastructure/db/index.js");
+          const { getDb } = await import("../../../../infrastructure/db/index.js");
           db = getDb();
         }
 

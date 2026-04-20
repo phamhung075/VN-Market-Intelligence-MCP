@@ -139,7 +139,7 @@ describe("Task 1005 — markAlertsSuperseded", () => {
 // formatAlertRow integration — SUPERSEDED tag visibility
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { formatAlertRow } from "../interface/mcp/tools/alerts.js";
+import { formatAlertRow } from "../interface/mcp/tools/alerts/alerts.js";
 
 describe("Task 1005 — formatAlertRow SUPERSEDED marker", () => {
   const baseRow = {

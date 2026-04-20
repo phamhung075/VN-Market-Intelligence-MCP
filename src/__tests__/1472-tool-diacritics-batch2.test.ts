@@ -78,7 +78,7 @@ describe("1472: Vietnamese diacritics batch 2", () => {
   });
 
   describe("alertMuteTools.ts", () => {
-    const src = read("src/interface/mcp/tools/alertMuteTools.ts");
+    const src = read("src/interface/mcp/tools/alerts/alertMuteTools.ts");
     it("tool description has diacritics: Tắt tiếng", () => {
       expect(src).toContain("Tắt tiếng (mute)");
     });

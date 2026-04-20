@@ -13,7 +13,7 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from "bun:test";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { initDatabase, getDb, closeDb } from "../infrastructure/db/schema.js";
-import { registerAlertTools } from "../interface/mcp/tools/alerts.js";
+import { registerAlertTools } from "../interface/mcp/tools/alerts/alerts.js";
 import { storeAlerts } from "../infrastructure/db/alertStore.js";
 import { generateAlerts } from "../domain/services/alertGenerator.js";
 import type { Signal } from "../domain/services/signalDetector.js";

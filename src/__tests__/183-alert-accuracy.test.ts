@@ -13,7 +13,7 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from "bun:test";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { initDatabase, getDb, closeDb } from "../infrastructure/db/schema.js";
-import { registerAlertAccuracyTool } from "../interface/mcp/tools/alertAccuracy.js";
+import { registerAlertAccuracyTool } from "../interface/mcp/tools/alerts/alertAccuracy.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers — direct tool invocation (bypass SSE transport)

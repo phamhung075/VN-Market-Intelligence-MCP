@@ -27,7 +27,7 @@ import {
   insertCronJobRunStart,
   updateCronJobRunEnd,
 } from "../infrastructure/db/cronJobRunStore.js";
-import { runCronHealthAlert } from "../scheduler/cronHealthAlertJob.js";
+import { runCronHealthAlert } from "../scheduler/alerts/cronHealthAlertJob.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // In-memory DB factory — creates only the cron_job_runs table needed for

@@ -14,8 +14,8 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import {
   assembleAlertDigest,
-} from "../../../application/usecases/assembleAlertDigest.js";
-import { initDatabase } from "../../../infrastructure/db/schema.js";
+} from "../../../../application/usecases/assembleAlertDigest.js";
+import { initDatabase } from "../../../../infrastructure/db/schema.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tool registration
@@ -52,7 +52,7 @@ export function registerAlertDigestTools(server: McpServer): void {
         if (shouldSend) {
           try {
             const { sendTelegram: tg } = await import(
-              "../../../infrastructure/notifiers/telegram.js"
+              "../../../../infrastructure/notifiers/telegram.js"
             );
             const sent = await tg(digest.text);
             telegramStatus = sent

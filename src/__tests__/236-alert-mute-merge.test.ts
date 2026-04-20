@@ -20,7 +20,7 @@ import {
   muteStock,
   listMutes,
 } from "../infrastructure/db/alertMuteStore.js";
-import { registerAlertMuteTools } from "../interface/mcp/tools/alertMuteTools.js";
+import { registerAlertMuteTools } from "../interface/mcp/tools/alerts/alertMuteTools.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers

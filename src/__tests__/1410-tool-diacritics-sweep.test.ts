@@ -22,8 +22,8 @@ import { buildSupplyChainExposureOutput } from "../interface/mcp/tools/supplyCha
 // Functions accessed via (ns as any)["name"] so @ts-expect-error is not needed here;
 // the expect(fn).toBeDefined() assertion is what goes RED until task 1411 adds exports.
 import * as agentSignalToolsNs from "../interface/mcp/tools/agentSignalTools.js";
-import * as alertAccuracyNs from "../interface/mcp/tools/alertAccuracy.js";
-import * as alertsNs from "../interface/mcp/tools/alerts.js";
+import * as alertAccuracyNs from "../interface/mcp/tools/alerts/alertAccuracy.js";
+import * as alertsNs from "../interface/mcp/tools/alerts/alerts.js";
 import * as bctcFullToolsNs from "../interface/mcp/tools/financial-reports/bctcFullTools.js";
 import * as correlationToolsNs from "../interface/mcp/tools/correlationTools.js";
 import * as performanceToolsNs from "../interface/mcp/tools/performanceTools.js";

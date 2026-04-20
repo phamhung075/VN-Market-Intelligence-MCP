@@ -40,4 +40,4 @@ export {
 } from "./tools/financial-reports/reports.js";
 
 // ── Task 086: Alert MCP tools ──────────────────────────────────────────────
-export { registerAlertTools } from "./tools/alerts.js";
+export { registerAlertTools } from "./tools/alerts/alerts.js";
