@@ -54,10 +54,10 @@ export function formatGlobalSnapshotSection(
   if (!snap) return [];
   return [
     "🌐 Thị trường toàn cầu:",
-    `  VIX: ${snap.vix}`,
-    `  DXY: ${snap.dxy}`,
-    `  S&P500: ${snap.sp500}`,
-    `  Hang Seng: ${snap.hangSeng}`,
+    `  VIX: ${snap.vix.toFixed(2)}`,
+    `  DXY: ${snap.dxy.toFixed(2)}`,
+    `  S&P500: ${Math.round(snap.sp500)}`,
+    `  Hang Seng: ${Math.round(snap.hangSeng)}`,
   ];
 }
 

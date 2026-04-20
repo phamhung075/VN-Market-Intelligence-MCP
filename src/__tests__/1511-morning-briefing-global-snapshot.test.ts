@@ -14,7 +14,7 @@
 import { describe, test, expect, beforeEach } from "bun:test";
 import Database from "bun:sqlite";
 
-// ─── Minimal DDL (commodity_prices only) ─────────────────────────────────────
+// ─── Minimal DDL (all tables assembleBriefing queries) ───────────────────────
 function setupDb(db: Database): void {
   db.exec(`
     CREATE TABLE IF NOT EXISTS commodity_prices (
@@ -24,6 +24,28 @@ function setupDb(db: Database): void {
       sp500           REAL NOT NULL DEFAULT 0,
       hang_seng       REAL NOT NULL DEFAULT 0,
       fetched_at      TEXT NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS rag_analyses (
+      source_title TEXT, level TEXT NOT NULL DEFAULT 'country',
+      sentiment TEXT, impact_score REAL, created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+    CREATE TABLE IF NOT EXISTS alerts (
+      id TEXT PRIMARY KEY, triggered_at TEXT NOT NULL, severity TEXT NOT NULL,
+      message TEXT, affected_actions_json TEXT, resolved_at TEXT
+    );
+    CREATE TABLE IF NOT EXISTS watchlist (
+      code TEXT PRIMARY KEY, domain TEXT NOT NULL DEFAULT 'other'
+    );
+    CREATE TABLE IF NOT EXISTS financial_reports (
+      id TEXT PRIMARY KEY, action_code TEXT NOT NULL, period_type TEXT,
+      period_year INTEGER, parsed_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+    CREATE TABLE IF NOT EXISTS market_prices (
+      code TEXT PRIMARY KEY, price REAL, change_pct REAL, updated_at TEXT
+    );
+    CREATE TABLE IF NOT EXISTS daily_ohlcv (
+      code TEXT NOT NULL, date TEXT NOT NULL, open REAL, high REAL, low REAL,
+      close REAL, volume REAL, PRIMARY KEY (code, date)
     );
   `);
 }
@@ -38,12 +60,21 @@ describe("1511 briefing-global-snapshot", () => {
   });
 
   test("AC-1: GlobalSnapshot interface has vix, dxy, sp500, hangSeng, fetchedAt", async () => {
-    // Import the type — if GlobalSnapshot does not exist this import will fail
-    const mod = await import("../application/usecases/assembleBriefing.js");
-    // The interface manifests at runtime via a real object produced by assembleBriefing.
-    // We verify the shape by checking the exported symbol exists.
-    // RED: GlobalSnapshot is not exported yet — this assertion fails.
-    expect(typeof (mod as Record<string, unknown>)["GlobalSnapshot"]).not.toBe("undefined");
+    // GlobalSnapshot is a TS interface (no runtime value). Verify shape by producing a real
+    // object via assembleBriefing with a seeded row and checking all 5 fields exist.
+    db.exec(`
+      INSERT INTO commodity_prices (source, vix, dxy, sp500, hang_seng, fetched_at)
+      VALUES ('yahoo', 18.5, 104.3, 5120.75, 17250.0, '2026-04-20T07:00:00Z');
+    `);
+    const { assembleBriefing } = await import("../application/usecases/assembleBriefing.js");
+    const briefing = await assembleBriefing({ db, pollNewsFn: async () => {}, fetchVnIndexFn: async () => null });
+    const snap = briefing.globalSnapshot!;
+    expect(snap).toBeDefined();
+    expect(typeof snap.vix).toBe("number");
+    expect(typeof snap.dxy).toBe("number");
+    expect(typeof snap.sp500).toBe("number");
+    expect(typeof snap.hangSeng).toBe("number");
+    expect(typeof snap.fetchedAt).toBe("string");
   });
 
   // AC-2: assembleBriefing populates globalSnapshot from DB row

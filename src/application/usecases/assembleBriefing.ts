@@ -1132,6 +1132,24 @@ export async function assembleBriefing(
     });
   }
 
+  // ── Step 19: Global market snapshot from commodity_prices ────────────────
+  let globalSnapshot: GlobalSnapshot | undefined;
+  try {
+    interface CpRow { vix: number; dxy: number; sp500: number; hang_seng: number; fetched_at: string }
+    const cpRow = db.prepare<CpRow, []>(
+      `SELECT vix, dxy, sp500, hang_seng, fetched_at FROM commodity_prices ORDER BY fetched_at DESC LIMIT 1`
+    ).get();
+    if (cpRow && (cpRow.vix !== 0 || cpRow.dxy !== 0 || cpRow.sp500 !== 0 || cpRow.hang_seng !== 0)) {
+      globalSnapshot = {
+        vix: cpRow.vix,
+        dxy: cpRow.dxy,
+        sp500: cpRow.sp500,
+        hangSeng: cpRow.hang_seng,
+        fetchedAt: cpRow.fetched_at,
+      };
+    }
+  } catch { /* best-effort: commodity_prices may not exist in all envs */ }
+
   // ── Step 13: Persist briefing ─────────────────────────────────────────────
   const date = todayVietnam();
   const generatedAt = new Date().toISOString();
@@ -1155,6 +1173,7 @@ export async function assembleBriefing(
     evidenceTopScores,
     taSummary,
     upcomingDeadlines,
+    ...(globalSnapshot !== undefined ? { globalSnapshot } : {}),
     generatedAt,
   };
 
