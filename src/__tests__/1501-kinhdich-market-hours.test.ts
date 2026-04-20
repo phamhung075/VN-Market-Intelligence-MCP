@@ -50,7 +50,7 @@ const WED_11AM_VN_UTC = "2026-04-22T04:00:00.000Z";
 describe("Task 1501 — step A4 market-hours gate", () => {
   it("skips hexagram batch on Saturday (off-hours weekend)", async () => {
     const { runIntelligenceCycle, resetCycleGuard, isMarketHours } =
-      await import("../scheduler/intelligenceCycleJob.js");
+      await import("../scheduler/news-analysis/intelligenceCycleJob.js");
     resetCycleGuard();
 
     let computeCalled = false;
@@ -74,7 +74,7 @@ describe("Task 1501 — step A4 market-hours gate", () => {
 
   it("skips hexagram batch on Monday 08:00 VN (before market open)", async () => {
     const { runIntelligenceCycle, resetCycleGuard, isMarketHours } =
-      await import("../scheduler/intelligenceCycleJob.js");
+      await import("../scheduler/news-analysis/intelligenceCycleJob.js");
     resetCycleGuard();
 
     let computeCalled = false;
@@ -98,7 +98,7 @@ describe("Task 1501 — step A4 market-hours gate", () => {
 
   it("runs hexagram batch during market hours (Wednesday 11:00 VN)", async () => {
     const { runIntelligenceCycle, resetCycleGuard, isMarketHours } =
-      await import("../scheduler/intelligenceCycleJob.js");
+      await import("../scheduler/news-analysis/intelligenceCycleJob.js");
     resetCycleGuard();
 
     const result = await runIntelligenceCycle({
@@ -127,7 +127,7 @@ describe("Task 1501 — step A4 market-hours gate", () => {
 describe("Task 1501 — per-stock cooldown (<15 min) skips storeReading", () => {
   it("resetHexagramCooldown is exported and second run within 15 min is skipped", async () => {
     // Dynamically import so TypeScript doesn't error on the missing export.
-    const cycleModule = await import("../scheduler/intelligenceCycleJob.js") as Record<string, unknown>;
+    const cycleModule = await import("../scheduler/news-analysis/intelligenceCycleJob.js") as Record<string, unknown>;
 
     const resetHexagramCooldown = cycleModule["resetHexagramCooldown"] as (() => void) | undefined;
 
@@ -138,7 +138,7 @@ describe("Task 1501 — per-stock cooldown (<15 min) skips storeReading", () => 
     resetHexagramCooldown!();
 
     const { runIntelligenceCycle, resetCycleGuard, isMarketHours } =
-      await import("../scheduler/intelligenceCycleJob.js");
+      await import("../scheduler/news-analysis/intelligenceCycleJob.js");
 
     const COOLDOWN_MS = 15 * 60 * 1000;
     const lastSeenAt: Record<string, number> = {};

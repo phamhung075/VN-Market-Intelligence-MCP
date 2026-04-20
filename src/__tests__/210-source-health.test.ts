@@ -215,7 +215,7 @@ describe("Task 210 — SourceHealthTracker", () => {
 describe("Task 210 — formatSourceHealth output", () => {
   it("formats a table with Vietnamese labels", async () => {
     const { formatSourceHealthTable } = await import(
-      "../interface/mcp/tools/sourceHealthTools.js"
+      "../interface/mcp/tools/news-analysis/sourceHealthTools.js"
     );
 
     const tracker = new SourceHealthTracker();
@@ -241,7 +241,7 @@ describe("Task 210 — formatSourceHealth output", () => {
 
   it("returns a message when no sources are tracked", async () => {
     const { formatSourceHealthTable } = await import(
-      "../interface/mcp/tools/sourceHealthTools.js"
+      "../interface/mcp/tools/news-analysis/sourceHealthTools.js"
     );
     const output = formatSourceHealthTable([]);
     expect(output).toContain("Chưa có dữ liệu");

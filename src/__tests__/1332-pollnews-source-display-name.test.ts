@@ -76,7 +76,7 @@ describe("Task 1332 — pollNews SOURCE_DISPLAY_NAMES: health tracked under disp
   it("TC-1: pollNews with reuters returning items → records success under 'Reuters RSS'", async () => {
     const { pollNews } = await import("../application/usecases/pollNews.js");
     const { globalSourceTracker } = await import(
-      "../interface/mcp/tools/sourceHealthTools.js"
+      "../interface/mcp/tools/news-analysis/sourceHealthTools.js"
     );
 
     const db = buildPollNewsTestDb();
@@ -118,7 +118,7 @@ describe("Task 1332 — pollNews SOURCE_DISPLAY_NAMES: health tracked under disp
   it("TC-2: pollNews with cafef returning [] → incrementes consecutiveFailures under 'CafeF RSS'", async () => {
     const { pollNews } = await import("../application/usecases/pollNews.js");
     const { globalSourceTracker } = await import(
-      "../interface/mcp/tools/sourceHealthTools.js"
+      "../interface/mcp/tools/news-analysis/sourceHealthTools.js"
     );
 
     const db = buildPollNewsTestDb();
@@ -153,7 +153,7 @@ describe("Task 1332 — pollNews SOURCE_DISPLAY_NAMES: health tracked under disp
   it("TC-3: pollNews never writes to raw key 'reuters' bucket — display name used exclusively", async () => {
     const { pollNews } = await import("../application/usecases/pollNews.js");
     const { globalSourceTracker } = await import(
-      "../interface/mcp/tools/sourceHealthTools.js"
+      "../interface/mcp/tools/news-analysis/sourceHealthTools.js"
     );
 
     const db = buildPollNewsTestDb();
@@ -195,7 +195,7 @@ describe("Task 1332 — pollNews SOURCE_DISPLAY_NAMES: health tracked under disp
   it("TC-4: pollNews with unknown fetcher key uses raw key as fallback display name", async () => {
     const { pollNews } = await import("../application/usecases/pollNews.js");
     const { globalSourceTracker } = await import(
-      "../interface/mcp/tools/sourceHealthTools.js"
+      "../interface/mcp/tools/news-analysis/sourceHealthTools.js"
     );
 
     const db = buildPollNewsTestDb();

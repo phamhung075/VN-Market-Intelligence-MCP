@@ -168,7 +168,7 @@ describe("Task 1086 — financial_reports row count trend detection", () => {
     // Delete 2 rows to simulate disappearance
     db.prepare("DELETE FROM financial_reports WHERE id IN ('fr-1', 'fr-2')").run();
 
-    const { runDailyAudit } = await import("../scheduler/dataAuditJob.js");
+    const { runDailyAudit } = await import("../scheduler/news-analysis/dataAuditJob.js");
     const findings = await runDailyAudit(db, async () => {});
 
     // Should have a row_count_drop finding for financial_reports
@@ -206,7 +206,7 @@ describe("Task 1086 — financial_reports row count trend detection", () => {
       "INSERT INTO audit_state (id, last_daily_audit_at, last_daily_findings) VALUES (1, datetime('now', '-1 day'), ?)",
     ).run(JSON.stringify(previousFindings));
 
-    const { runDailyAudit } = await import("../scheduler/dataAuditJob.js");
+    const { runDailyAudit } = await import("../scheduler/news-analysis/dataAuditJob.js");
     const findings = await runDailyAudit(db, async () => {});
 
     // No row_count_drop finding
@@ -244,7 +244,7 @@ describe("Task 1086 — financial_reports row count trend detection", () => {
       "INSERT INTO audit_state (id, last_daily_audit_at, last_daily_findings) VALUES (1, datetime('now', '-1 day'), ?)",
     ).run(JSON.stringify(previousFindings));
 
-    const { runDailyAudit } = await import("../scheduler/dataAuditJob.js");
+    const { runDailyAudit } = await import("../scheduler/news-analysis/dataAuditJob.js");
     const findings = await runDailyAudit(db, async () => {});
 
     // Both drop and snapshot findings present
@@ -270,7 +270,7 @@ describe("Task 1086 — financial_reports row count trend detection", () => {
       "INSERT INTO financial_reports (id, code, created_at) VALUES ('fr-2', 'FPT', datetime('now'))",
     ).run();
 
-    const { runDailyAudit } = await import("../scheduler/dataAuditJob.js");
+    const { runDailyAudit } = await import("../scheduler/news-analysis/dataAuditJob.js");
     const findings = await runDailyAudit(db, async () => {});
 
     // No drop finding (no previous baseline)

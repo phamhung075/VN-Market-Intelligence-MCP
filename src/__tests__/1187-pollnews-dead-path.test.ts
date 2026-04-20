@@ -116,7 +116,7 @@ describe("Task 1187 — pollNewsJob dead code path", () => {
   // ─────────────────────────────────────────────────────────────────────────
   it("intelligenceCycleJob calls pollNews with empty VN geo-blocked fetchers", async () => {
     // Import the cycle module and verify it exports runIntelligenceCycle.
-    const cycleModule = await import("../scheduler/intelligenceCycleJob.js");
+    const cycleModule = await import("../scheduler/news-analysis/intelligenceCycleJob.js");
     expect(typeof cycleModule.runIntelligenceCycle).toBe("function");
     expect(typeof cycleModule.resetCycleGuard).toBe("function");
 

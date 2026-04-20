@@ -16,7 +16,7 @@ import {
   type DailySentiment,
   type SentimentTrend,
 } from "../domain/services/sentimentTrend.js";
-import { registerSentimentTrendTools } from "../interface/mcp/tools/sentimentTrendTools.js";
+import { registerSentimentTrendTools } from "../interface/mcp/tools/news-analysis/sentimentTrendTools.js";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 

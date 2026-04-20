@@ -22,11 +22,11 @@
  * infrastructure only. Must not import directly from domain/.
  */
 
-import { logger } from "../infrastructure/logger.js";
-import { mcpConfig } from "../infrastructure/config.js";
-import type { PollNewsResult } from "../application/usecases/pollNews.js";
-import type { SscDocument } from "../infrastructure/fetchers/ssc.js";
-import type { Alert } from "../domain/services/alertGenerator.js";
+import { logger } from "../../infrastructure/logger.js";
+import { mcpConfig } from "../../infrastructure/config.js";
+import type { PollNewsResult } from "../../application/usecases/pollNews.js";
+import type { SscDocument } from "../../infrastructure/fetchers/ssc.js";
+import type { Alert } from "../../domain/services/alertGenerator.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Public types
@@ -114,7 +114,7 @@ export interface CycleDeps {
    * When not injected, reads from `mcpConfig.alertQuality` (mcp.config.json).
    * Replaces the former hardcoded `{ cooldownMinutes: 60, maxAlertsPerStockPerDay: 3 }`.
    */
-  cooldownConfig?: import("../domain/services/alertCooldown.js").CooldownConfig;
+  cooldownConfig?: import("../../domain/services/alertCooldown.js").CooldownConfig;
   /**
    * Task 1281 — Override recent alert history fetch for step E (test isolation).
    * When not injected, step E queries the DB directly.
@@ -197,7 +197,7 @@ export function isMarketHours(now?: Date): boolean {
 // ─────────────────────────────────────────────────────────────────────────────
 
 async function defaultPollNews(): Promise<PollNewsResult> {
-  const { pollNews } = await import("../application/usecases/pollNews.js");
+  const { pollNews } = await import("../../application/usecases/pollNews.js");
   // Task 1228: ALL news sources are now delivered exclusively via POST /api/push-news
   // from the Vinahost VPS (vn-news-fetch.service, 10 sources, 226 items/15min).
   //
@@ -222,7 +222,7 @@ async function defaultPollNews(): Promise<PollNewsResult> {
 }
 
 async function defaultListSscDocs(code: string): Promise<SscDocument[]> {
-  const { listSscDocuments } = await import("../infrastructure/fetchers/ssc.js");
+  const { listSscDocuments } = await import("../../infrastructure/fetchers/ssc.js");
   const year = new Date().getFullYear();
   return listSscDocuments(code, "quarterly", year);
 }
@@ -231,7 +231,7 @@ async function defaultFetchPrices(codes: string[]): Promise<number> {
   if (codes.length === 0) return 0;
 
   // Classify stocks by exchange from watchlist domain
-  const { getDb } = await import("../infrastructure/db/schema.js");
+  const { getDb } = await import("../../infrastructure/db/schema.js");
   const db = getDb();
   let upcomCodes: string[] = [];
   let hoseCodes: string[] = [];
@@ -249,10 +249,10 @@ async function defaultFetchPrices(codes: string[]): Promise<number> {
 
   // Fetch HOSE stocks (VnDirect → CafeF fallback)
   if (hoseCodes.length > 0) {
-    const { fetchHosePrices } = await import("../infrastructure/fetchers/hose.js");
+    const { fetchHosePrices } = await import("../../infrastructure/fetchers/hose.js");
     const prices = await fetchHosePrices(hoseCodes);
     if (prices.length > 0) {
-      const { storeMarketPrices } = await import("../infrastructure/fetchers/hose.js");
+      const { storeMarketPrices } = await import("../../infrastructure/fetchers/hose.js");
       await storeMarketPrices(prices);
     }
     total += prices.length;
@@ -260,8 +260,8 @@ async function defaultFetchPrices(codes: string[]): Promise<number> {
 
   // Fetch UPCOM stocks (VnDirect stock_prices fallback)
   if (upcomCodes.length > 0) {
-    const { fetchUpcomPrices } = await import("../infrastructure/fetchers/hnx.js");
-    const { storeMarketPrices } = await import("../infrastructure/fetchers/hose.js");
+    const { fetchUpcomPrices } = await import("../../infrastructure/fetchers/hnx.js");
+    const { storeMarketPrices } = await import("../../infrastructure/fetchers/hose.js");
     const prices = await fetchUpcomPrices(upcomCodes);
     if (prices.length > 0) await storeMarketPrices(prices);
     total += prices.length;
@@ -279,7 +279,7 @@ async function defaultRunImpactChain(): Promise<number> {
 async function defaultSendAlerts(alerts: Alert[]): Promise<number> {
   if (alerts.length === 0) return 0;
   try {
-    const { notifyTelegramAlert } = await import("../infrastructure/notifiers/telegram.js");
+    const { notifyTelegramAlert } = await import("../../infrastructure/notifiers/telegram.js");
     let sent = 0;
     for (const alert of alerts) {
       if (alert.severity === "high" || alert.severity === "critical") {
@@ -295,7 +295,7 @@ async function defaultSendAlerts(alerts: Alert[]): Promise<number> {
 }
 
 async function defaultGetWatchlistCodes(): Promise<string[]> {
-  const { getDb } = await import("../infrastructure/db/schema.js");
+  const { getDb } = await import("../../infrastructure/db/schema.js");
   const db = getDb();
   const rows = db.prepare("SELECT code FROM watchlist").all() as Array<{ code: string }>;
   return rows.map((r) => r.code);
@@ -319,13 +319,13 @@ async function defaultGetWatchlistCodes(): Promise<string[]> {
 const ALERT_WINDOW_MS = 24 * 60 * 60 * 1000;
 
 async function defaultReadUnnotifiedAlerts(windowMs: number): Promise<Alert[]> {
-  const { readUnnotifiedAlerts } = await import("../infrastructure/db/alertStore.js");
+  const { readUnnotifiedAlerts } = await import("../../infrastructure/db/alertStore.js");
   const windowMinutes = windowMs / 60_000;
   return readUnnotifiedAlerts(windowMinutes);
 }
 
 async function defaultMarkAlertNotified(alertId: string): Promise<void> {
-  const { markAlertNotified } = await import("../infrastructure/db/alertStore.js");
+  const { markAlertNotified } = await import("../../infrastructure/db/alertStore.js");
   markAlertNotified(alertId);
 }
 
@@ -363,22 +363,22 @@ export function resetHexagramCooldown(): void {
  */
 async function defaultComputeHexagrams(codes: string[]): Promise<number> {
   const { computeHaoScores } = await import(
-    "../interface/mcp/tools/kinhdich/kinhDichTools.js"
+    "../../interface/mcp/tools/kinhdich/kinhDichTools.js"
   );
   const { computeReading } = await import(
-    "../domain/services/kinhDich/kinhDichReading.js"
+    "../../domain/services/kinhDich/kinhDichReading.js"
   );
   const { getTopTransitions } = await import(
-    "../infrastructure/db/hexagramStore.js"
+    "../../infrastructure/db/hexagramStore.js"
   );
   const { QUE_META } = await import(
-    "../domain/services/kinhDich/hexagramLibrary.js"
+    "../../domain/services/kinhDich/hexagramLibrary.js"
   );
   const {
     getLatestReading,
     storeReading,
     recordTransition,
-  } = await import("../infrastructure/db/hexagramStore.js");
+  } = await import("../../infrastructure/db/hexagramStore.js");
 
   let computed = 0;
 
@@ -583,12 +583,12 @@ async function _runCycle(deps: CycleDeps = {}): Promise<CycleResult> {
   try {
     await withTimeout((async () => {
       try {
-        const { fetchYahooFinancePrices, storeCommoditySnapshot } = await import("../infrastructure/fetchers/yahooFinance.js");
+        const { fetchYahooFinancePrices, storeCommoditySnapshot } = await import("../../infrastructure/fetchers/yahooFinance.js");
         const commodity = await fetchYahooFinancePrices();
         if (commodity) await storeCommoditySnapshot(commodity);
       } catch { /* best-effort */ }
       try {
-        const { fetchSbvRates, storeSbvSnapshot } = await import("../infrastructure/fetchers/sbv.js");
+        const { fetchSbvRates, storeSbvSnapshot } = await import("../../infrastructure/fetchers/sbv.js");
         const sbv = await fetchSbvRates();
         if (sbv) await storeSbvSnapshot(sbv);
       } catch { /* best-effort */ }
@@ -608,10 +608,10 @@ async function _runCycle(deps: CycleDeps = {}): Promise<CycleResult> {
   //      level-drift (extreme→high) from re-firing the same condition hours later.
   try {
     await withTimeout((async () => {
-    const { getAllMacroStats } = await import("../infrastructure/db/macroStatsStore.js");
-    const { classifyDeviation } = await import("../domain/services/macroThresholds.js");
-    const { storeAlerts } = await import("../infrastructure/db/alertStore.js");
-    const { getDb: getDatabase } = await import("../infrastructure/db/schema.js");
+    const { getAllMacroStats } = await import("../../infrastructure/db/macroStatsStore.js");
+    const { classifyDeviation } = await import("../../domain/services/macroThresholds.js");
+    const { storeAlerts } = await import("../../infrastructure/db/alertStore.js");
+    const { getDb: getDatabase } = await import("../../infrastructure/db/schema.js");
     const stats = getAllMacroStats();
     const today = new Date().toISOString().slice(0, 10);
     const nowIso = new Date().toISOString();
@@ -667,8 +667,8 @@ async function _runCycle(deps: CycleDeps = {}): Promise<CycleResult> {
   // Runs for all watchlist stocks, skips if data is still fresh.
   try {
     await withTimeout((async () => {
-      const { syncVnstockData } = await import("../application/usecases/syncVnstockData.js");
-      const { getDb: getDatabase } = await import("../infrastructure/db/schema.js");
+      const { syncVnstockData } = await import("../../application/usecases/syncVnstockData.js");
+      const { getDb: getDatabase } = await import("../../infrastructure/db/schema.js");
       const watchlistRows = getDatabase()
         .prepare("SELECT code FROM watchlist")
         .all() as Array<{ code: string }>;
@@ -772,12 +772,12 @@ async function _runCycle(deps: CycleDeps = {}): Promise<CycleResult> {
     // each (trading_stats + financials + balance_sheet, relaxed staleness).
     try {
       const syncFn = deps.syncSectorPeersFn ?? (async (entries) => {
-        const { syncSectorPeers } = await import("../application/usecases/syncSectorPeers.js");
+        const { syncSectorPeers } = await import("../../application/usecases/syncSectorPeers.js");
         // syncSectorPeers expects DomainType — we pass watchlist domain strings as-is
-        return syncSectorPeers(entries as { actionCode: string; domain: import("../../bctc-schema.js").DomainType }[]);
+        return syncSectorPeers(entries as { actionCode: string; domain: import("../../../bctc-schema.js").DomainType }[]);
       });
 
-      const { getDb: getCycleDb } = await import("../infrastructure/db/schema.js");
+      const { getDb: getCycleDb } = await import("../../infrastructure/db/schema.js");
       const cycleDb = getCycleDb();
       const watchlistRows = cycleDb
         .prepare("SELECT code, domain FROM watchlist")
@@ -836,7 +836,7 @@ async function _runCycle(deps: CycleDeps = {}): Promise<CycleResult> {
       // Apply cooldown: suppress same stock+signal combo within the configured window.
       // Prevents VEA getting 6 alerts in 2 hours for unrelated articles.
       // cooldownMinutes is read from mcp.config.json `alertQuality.cooldownMinutes` (Task 1281).
-      const { shouldSuppressAlert } = await import("../domain/services/alertCooldown.js");
+      const { shouldSuppressAlert } = await import("../../domain/services/alertCooldown.js");
       const effectiveCooldownConfig = deps.cooldownConfig ?? {
         cooldownMinutes: mcpConfig.alertQuality.cooldownMinutes,
         maxAlertsPerStockPerDay: mcpConfig.alertQuality.maxAlertsPerStockPerDay,
@@ -845,7 +845,7 @@ async function _runCycle(deps: CycleDeps = {}): Promise<CycleResult> {
       if (deps.getRecentAlertHistoryFn) {
         try { recentAlertHistory = await deps.getRecentAlertHistoryFn(); } catch { /* best-effort */ }
       } else {
-        const { getDb: getCooldownDb } = await import("../infrastructure/db/schema.js");
+        const { getDb: getCooldownDb } = await import("../../infrastructure/db/schema.js");
         try {
           const db = getCooldownDb();
           const rows = db.prepare(
@@ -1040,13 +1040,13 @@ export async function runIntelligenceCycle(
  * This runs with zero Claude API tokens — purely rule-based domain logic.
  */
 export async function runChainSynthesis(): Promise<void> {
-  const { getDb } = await import("../infrastructure/db/schema.js");
+  const { getDb } = await import("../../infrastructure/db/schema.js");
   const {
     getChainFindings,
     postSignal,
     computeCycleId,
-  } = await import("../infrastructure/db/agentSignalStore.js");
-  const { synthesizeChain } = await import("../domain/services/chainSynthesizer.js");
+  } = await import("../../infrastructure/db/agentSignalStore.js");
+  const { synthesizeChain } = await import("../../domain/services/chainSynthesizer.js");
 
   const db = getDb();
   const cycleId = computeCycleId();

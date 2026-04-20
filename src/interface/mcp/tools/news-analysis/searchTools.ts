@@ -12,9 +12,9 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 
-import { getDb, initDatabase } from "../../../infrastructure/db/schema.js";
-import { searchStocks, formatSearchResults } from "../../../domain/services/stockSearch.js";
-import { logger } from "../../../infrastructure/logger.js";
+import { getDb, initDatabase } from "../../../../infrastructure/db/schema.js";
+import { searchStocks, formatSearchResults } from "../../../../domain/services/stockSearch.js";
+import { logger } from "../../../../infrastructure/logger.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Registration

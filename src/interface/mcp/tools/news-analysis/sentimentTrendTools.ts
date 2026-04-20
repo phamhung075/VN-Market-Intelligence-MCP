@@ -19,9 +19,9 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { Database } from "bun:sqlite";
 
-import { computeSentimentTrend } from "../../../domain/services/sentimentTrend.js";
-import { getDb } from "../../../infrastructure/db/schema.js";
-import { logger } from "../../../infrastructure/logger.js";
+import { computeSentimentTrend } from "../../../../domain/services/sentimentTrend.js";
+import { getDb } from "../../../../infrastructure/db/schema.js";
+import { logger } from "../../../../infrastructure/logger.js";
 
 // ─── Internal DB row type ────────────────────────────────────────────────────
 

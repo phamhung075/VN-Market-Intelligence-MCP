@@ -271,7 +271,7 @@ const CYCLE_TIMEOUT = 30_000;
 describe("Task 137 — Step E: alerts flow through to sendAlertsFn", () => {
   it("passes DB alerts to sendAlertsFn and returns correct count (AC-1)", async () => {
     const { runIntelligenceCycle, resetCycleGuard } = await import(
-      "../scheduler/intelligenceCycleJob.js"
+      "../scheduler/news-analysis/intelligenceCycleJob.js"
     );
     resetCycleGuard();
 
@@ -308,7 +308,7 @@ describe("Task 137 — Step E: alerts flow through to sendAlertsFn", () => {
 
   it("marks alerts as notified_telegram = 1 after successful send (AC-1)", async () => {
     const { runIntelligenceCycle, resetCycleGuard } = await import(
-      "../scheduler/intelligenceCycleJob.js"
+      "../scheduler/news-analysis/intelligenceCycleJob.js"
     );
     resetCycleGuard();
 
@@ -342,7 +342,7 @@ describe("Task 137 — Step E: alerts flow through to sendAlertsFn", () => {
 
   it("second cycle sends 0 alerts after first marks them notified (AC-1 idempotency)", async () => {
     const { runIntelligenceCycle, resetCycleGuard } = await import(
-      "../scheduler/intelligenceCycleJob.js"
+      "../scheduler/news-analysis/intelligenceCycleJob.js"
     );
 
     const db = createTestDb();
@@ -378,7 +378,7 @@ describe("Task 137 — Step E: alerts flow through to sendAlertsFn", () => {
 
   it("does not mark alert when sendAlertsFn returns 0 (AC-2)", async () => {
     const { runIntelligenceCycle, resetCycleGuard } = await import(
-      "../scheduler/intelligenceCycleJob.js"
+      "../scheduler/news-analysis/intelligenceCycleJob.js"
     );
     resetCycleGuard();
 
@@ -414,7 +414,7 @@ describe("Task 137 — Step E: alerts flow through to sendAlertsFn", () => {
 
   it("telegramAlertsSent = 0 when no unnotified HIGH/CRITICAL alerts exist", async () => {
     const { runIntelligenceCycle, resetCycleGuard } = await import(
-      "../scheduler/intelligenceCycleJob.js"
+      "../scheduler/news-analysis/intelligenceCycleJob.js"
     );
     resetCycleGuard();
 
@@ -436,7 +436,7 @@ describe("Task 137 — Step E: alerts flow through to sendAlertsFn", () => {
 
   it("Step E runs unconditionally (even outside market hours)", async () => {
     const { runIntelligenceCycle, resetCycleGuard } = await import(
-      "../scheduler/intelligenceCycleJob.js"
+      "../scheduler/news-analysis/intelligenceCycleJob.js"
     );
     resetCycleGuard();
 

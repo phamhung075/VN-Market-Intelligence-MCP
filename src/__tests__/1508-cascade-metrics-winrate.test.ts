@@ -109,7 +109,7 @@ describe("1508 cascade-metrics-winrate", () => {
   // AC-4: formatCascadeMetrics includes WinRate column header
   test("AC-4: formatCascadeMetrics output contains WinRate column", async () => {
     const { formatCascadeMetrics } = await import(
-      "../interface/mcp/tools/cascadeMetricsTools.js"
+      "../interface/mcp/tools/news-analysis/cascadeMetricsTools.js"
     );
 
     const metrics = [
@@ -124,7 +124,7 @@ describe("1508 cascade-metrics-winrate", () => {
   // AC-5: formatCascadeMetrics overall accuracy summary line
   test("AC-5: formatCascadeMetrics overall accuracy summary line", async () => {
     const { formatCascadeMetrics } = await import(
-      "../interface/mcp/tools/cascadeMetricsTools.js"
+      "../interface/mcp/tools/news-analysis/cascadeMetricsTools.js"
     );
 
     const metrics = [

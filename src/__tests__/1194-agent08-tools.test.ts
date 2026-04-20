@@ -27,7 +27,7 @@ import { describe, it, expect, beforeEach, afterEach } from "bun:test";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { initDatabase, getDb, closeDb } from "../infrastructure/db/schema.js";
 import { registerPredictionTools } from "../interface/mcp/tools/macro/predictionTools.js";
-import { registerAgentSignalTools } from "../interface/mcp/tools/agentSignalTools.js";
+import { registerAgentSignalTools } from "../interface/mcp/tools/news-analysis/agentSignalTools.js";
 import { registerEvidenceTools } from "../interface/mcp/tools/macro/evidenceTools.js";
 
 // ─── helpers ────────────────────────────────────────────────────────────────

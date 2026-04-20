@@ -184,7 +184,7 @@ describe("Task 157 — Data Audit Job", () => {
     // Valid row
     db.prepare("INSERT INTO market_prices (code, price, updated_at) VALUES (?, ?, datetime('now'))").run("VCB", 85000);
 
-    const { runDailyAudit } = await import("../scheduler/dataAuditJob.js");
+    const { runDailyAudit } = await import("../scheduler/news-analysis/dataAuditJob.js");
     const findings = await runDailyAudit(db, async () => { /* no-op telegram */ });
 
     // Recent zero-price rows survive; stale zero-price row deleted
@@ -215,7 +215,7 @@ describe("Task 157 — Data Audit Job", () => {
       VALUES (?, datetime('now','-5 days'), 'warning', 0)
     `).run("alert-recent");
 
-    const { runDailyAudit } = await import("../scheduler/dataAuditJob.js");
+    const { runDailyAudit } = await import("../scheduler/news-analysis/dataAuditJob.js");
     const findings = await runDailyAudit(db, async () => {});
 
     // Old alert should be marked read
@@ -239,7 +239,7 @@ describe("Task 157 — Data Audit Job", () => {
       VALUES ('news-scout', 'cascade_rule_gap', 'Missing rule', 'details', 'medium', 'new', datetime('now','-15 days'))
     `).run();
 
-    const { runDailyAudit } = await import("../scheduler/dataAuditJob.js");
+    const { runDailyAudit } = await import("../scheduler/news-analysis/dataAuditJob.js");
     const findings = await runDailyAudit(db, async () => {});
 
     // Check priority was escalated
@@ -276,7 +276,7 @@ describe("Task 157 — Data Audit Job", () => {
       "INSERT INTO tracked_indicators (indicator, value, unit, source, fetched_at) VALUES (?, ?, ?, ?, datetime('now'))"
     ).run("brent_crude_usd", 5.0, "usd", "test");
 
-    const { runWeeklyAudit } = await import("../scheduler/dataAuditJob.js");
+    const { runWeeklyAudit } = await import("../scheduler/news-analysis/dataAuditJob.js");
     const findings = await runWeeklyAudit(db, async () => {});
 
     const f = findings.find((x) => x.check === "outlier_indicator_values");
@@ -310,7 +310,7 @@ describe("Task 157 — Data Audit Job", () => {
       VALUES ('yahoo', 82, 2050, 24100, datetime('now','-5 days'))
     `).run();
 
-    const { runWeeklyAudit } = await import("../scheduler/dataAuditJob.js");
+    const { runWeeklyAudit } = await import("../scheduler/news-analysis/dataAuditJob.js");
     const findings = await runWeeklyAudit(db, async () => {});
 
     // Old row deleted, recent row remains
@@ -331,7 +331,7 @@ describe("Task 157 — Data Audit Job", () => {
     const sentMessages: string[] = [];
     const mockTelegram = async (text: string) => { sentMessages.push(text); };
 
-    const { runDailyAudit } = await import("../scheduler/dataAuditJob.js");
+    const { runDailyAudit } = await import("../scheduler/news-analysis/dataAuditJob.js");
     const findings = await runDailyAudit(db, mockTelegram);
 
     // Telegram should NOT have been called
@@ -347,7 +347,7 @@ describe("Task 157 — Data Audit Job", () => {
       throw new Error("LanceDB unavailable");
     };
 
-    const { runWeeklyAudit } = await import("../scheduler/dataAuditJob.js");
+    const { runWeeklyAudit } = await import("../scheduler/news-analysis/dataAuditJob.js");
     // Should not throw
     let findings: Awaited<ReturnType<typeof runWeeklyAudit>>;
     expect(async () => {
@@ -365,7 +365,7 @@ describe("Task 157 — Data Audit Job", () => {
 
   // ── AC-8: audit_state updated after run ───────────────────────────────────
   it("AC-8: upserts audit_state singleton row after daily audit", async () => {
-    const { runDailyAudit } = await import("../scheduler/dataAuditJob.js");
+    const { runDailyAudit } = await import("../scheduler/news-analysis/dataAuditJob.js");
     await runDailyAudit(db, async () => {});
 
     const row = db.query<{ last_daily_audit_at: string | null }, []>(
@@ -379,7 +379,7 @@ describe("Task 157 — Data Audit Job", () => {
   });
 
   it("AC-8: upserts audit_state singleton row after weekly audit", async () => {
-    const { runWeeklyAudit } = await import("../scheduler/dataAuditJob.js");
+    const { runWeeklyAudit } = await import("../scheduler/news-analysis/dataAuditJob.js");
     await runWeeklyAudit(db, async () => {});
 
     const row = db.query<{
@@ -398,7 +398,7 @@ describe("Task 157 — Data Audit Job", () => {
       VALUES ('news-scout', 'cascade_rule_gap', 'Old rule', '', 'medium', 'new', datetime('now','-15 days'))
     `).run();
 
-    const { runDailyAudit } = await import("../scheduler/dataAuditJob.js");
+    const { runDailyAudit } = await import("../scheduler/news-analysis/dataAuditJob.js");
 
     // First run
     await runDailyAudit(db, async () => {});
@@ -439,7 +439,7 @@ describe("Task 157 — Data Audit Job", () => {
       VALUES (?, datetime('now','-65 days'), 'warning', 1, NULL)
     `).run("alert-old-unresolved");
 
-    const { runDailyAudit } = await import("../scheduler/dataAuditJob.js");
+    const { runDailyAudit } = await import("../scheduler/news-analysis/dataAuditJob.js");
     await runDailyAudit(db, async () => {});
 
     const row = db.query<{ resolved_at: string | null; resolution_notes: string | null }, []>(
@@ -460,7 +460,7 @@ describe("Task 157 — Data Audit Job", () => {
       VALUES (datetime('now','-10 days'), 'info', 'test', 'recent log')
     `).run();
 
-    const { runDailyAudit } = await import("../scheduler/dataAuditJob.js");
+    const { runDailyAudit } = await import("../scheduler/news-analysis/dataAuditJob.js");
     await runDailyAudit(db, async () => {});
 
     // Old log deleted (it was inserted before the audit ran, which also adds a log)
@@ -479,7 +479,7 @@ describe("Task 157 — Data Audit Job", () => {
 
   // ── Extra: D-10 row count snapshot ────────────────────────────────────────
   it("D-10: row_count_snapshot produces info findings for major tables", async () => {
-    const { runDailyAudit } = await import("../scheduler/dataAuditJob.js");
+    const { runDailyAudit } = await import("../scheduler/news-analysis/dataAuditJob.js");
     const findings = await runDailyAudit(db, async () => {});
 
     const snapshotFindings = findings.filter((f) => f.check === "row_count_snapshot");
@@ -511,7 +511,7 @@ describe("Task 157 — Data Audit Job", () => {
       VALUES ('VNM', 81000, 110000, datetime('now','-1 day','start of day','+10 hours'), 'HOSE')
     `).run();
 
-    const { runWeeklyAudit } = await import("../scheduler/dataAuditJob.js");
+    const { runWeeklyAudit } = await import("../scheduler/news-analysis/dataAuditJob.js");
     const findings = await runWeeklyAudit(db, async () => {});
 
     // Should keep 1 row (the latest)
@@ -534,7 +534,7 @@ describe("Task 157 — Data Audit Job", () => {
       VALUES ('orphan-alert', datetime('now','-2 days'), 'warning', '["missing-id-1","missing-id-2"]')
     `).run();
 
-    const { runWeeklyAudit } = await import("../scheduler/dataAuditJob.js");
+    const { runWeeklyAudit } = await import("../scheduler/news-analysis/dataAuditJob.js");
     const findings = await runWeeklyAudit(db, async () => {});
 
     const f = findings.find((x) => x.check === "orphan_alerts");
@@ -551,7 +551,7 @@ describe("Task 157 — Data Audit Job", () => {
     const sentMessages: string[] = [];
     const mockTelegram = async (text: string) => { sentMessages.push(text); };
 
-    const { runDailyAudit } = await import("../scheduler/dataAuditJob.js");
+    const { runDailyAudit } = await import("../scheduler/news-analysis/dataAuditJob.js");
     await runDailyAudit(db, mockTelegram);
 
     expect(sentMessages.length).toBe(1);

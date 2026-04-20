@@ -25,7 +25,7 @@
 
 import { describe, it, expect } from "bun:test";
 import { parseStrandedDetail } from "../scheduler/financial-reports/bctcReparseJob.js";
-import { buildFindingTitle, type AuditFinding } from "../scheduler/dataAuditJob.js";
+import { buildFindingTitle, type AuditFinding } from "../scheduler/news-analysis/dataAuditJob.js";
 
 describe("Report 1055 — parseStrandedDetail legacy fallback", () => {
   it("reconstructs payload from a legacy 'Stranded PDFs (need re-parse): TICKER:filename' row", () => {

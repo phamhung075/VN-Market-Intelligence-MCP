@@ -21,7 +21,7 @@ import { buildSupplyChainExposureOutput } from "../interface/mcp/tools/supplyCha
 // ── Not yet exported — use namespace import + dynamic property access ─────────
 // Functions accessed via (ns as any)["name"] so @ts-expect-error is not needed here;
 // the expect(fn).toBeDefined() assertion is what goes RED until task 1411 adds exports.
-import * as agentSignalToolsNs from "../interface/mcp/tools/agentSignalTools.js";
+import * as agentSignalToolsNs from "../interface/mcp/tools/news-analysis/agentSignalTools.js";
 import * as alertAccuracyNs from "../interface/mcp/tools/alerts/alertAccuracy.js";
 import * as alertsNs from "../interface/mcp/tools/alerts/alerts.js";
 import * as bctcFullToolsNs from "../interface/mcp/tools/financial-reports/bctcFullTools.js";
@@ -34,7 +34,7 @@ import * as predictionToolsNs from "../interface/mcp/tools/macro/predictionTools
 import * as priceAlertToolsNs from "../interface/mcp/tools/market-data/priceAlertTools.js";
 import * as priceHistoryToolsNs from "../interface/mcp/tools/market-data/priceHistoryTools.js";
 import * as rebalancingToolsNs from "../interface/mcp/tools/portfolio/rebalancingTools.js";
-import * as sentimentTrendToolsNs from "../interface/mcp/tools/sentimentTrendTools.js";
+import * as sentimentTrendToolsNs from "../interface/mcp/tools/news-analysis/sentimentTrendTools.js";
 import * as telegramReportToolsNs from "../interface/mcp/tools/briefings/telegramReportTools.js";
 
 import type { DailyCandle } from "../domain/services/technicalIndicators.js";

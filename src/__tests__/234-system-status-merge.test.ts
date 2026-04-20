@@ -18,7 +18,7 @@ import {
   getSystemStatus,
   registerSystemTools,
 } from "../interface/mcp/tools/system/systemTools.js";
-import { registerSourceHealthTools } from "../interface/mcp/tools/sourceHealthTools.js";
+import { registerSourceHealthTools } from "../interface/mcp/tools/news-analysis/sourceHealthTools.js";
 import { registerDataFreshnessTools } from "../interface/mcp/tools/market-data/dataFreshnessTools.js";
 
 // ─────────────────────────────────────────────────────────────────────────────

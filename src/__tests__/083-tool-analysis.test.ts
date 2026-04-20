@@ -24,7 +24,7 @@ mock.module("../infrastructure/rag/retriever.js", () => ({
 }));
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { registerAnalysisTools } from "../interface/mcp/tools/analysis.js";
+import { registerAnalysisTools } from "../interface/mcp/tools/news-analysis/analysis.js";
 import { closeDb } from "../infrastructure/db/schema.js";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────

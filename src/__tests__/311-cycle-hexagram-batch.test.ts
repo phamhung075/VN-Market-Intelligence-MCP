@@ -26,7 +26,7 @@ import {
   resetCycleGuard,
   type CycleDeps,
   type CycleResult,
-} from "../scheduler/intelligenceCycleJob.js";
+} from "../scheduler/news-analysis/intelligenceCycleJob.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers

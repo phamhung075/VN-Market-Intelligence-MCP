@@ -11,10 +11,10 @@
  * Must not import directly from domain/.
  */
 
-import { checkSscReports } from "../application/usecases/checkSscReports.js";
-import { logger } from "../infrastructure/logger.js";
-import { getDb } from "../infrastructure/db/schema.js";
-import { recordJobRun } from "../infrastructure/db/cronJobRunStore.js";
+import { checkSscReports } from "../../application/usecases/checkSscReports.js";
+import { logger } from "../../infrastructure/logger.js";
+import { getDb } from "../../infrastructure/db/schema.js";
+import { recordJobRun } from "../../infrastructure/db/cronJobRunStore.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Concurrency guard

@@ -18,20 +18,20 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 
-import { getDb, initDatabase } from "../../../infrastructure/db/schema.js";
-import { appendKinhDich } from "../../../domain/services/kinhDich/kinhDichWrapper.js";
-import { fetchCafeF } from "../../../infrastructure/fetchers/cafef.js";
-import { fetchVnExpress } from "../../../infrastructure/fetchers/vnexpress.js";
-import { fetchReuters } from "../../../infrastructure/fetchers/reuters.js";
-import { fetchVnEconomy } from "../../../infrastructure/fetchers/vneconomy.js";
-import { normalizeNews } from "../../../domain/services/newsNormalizer.js";
-import { runImpactChain } from "../../../application/usecases/runImpactChain.js";
-import { searchContext, insertAnalysis } from "../../../infrastructure/rag/retriever.js";
-import type { SearchResult } from "../../../infrastructure/rag/retriever.js";
-import { applyRecencyWeighting } from "../../../domain/services/recencyWeighter.js";
-import type { WatchlistEntry } from "../../../domain/services/cascadeEngine.js";
-import type { DomainType } from "../../../../bctc-schema.js";
-import { logger } from "../../../infrastructure/logger.js";
+import { getDb, initDatabase } from "../../../../infrastructure/db/schema.js";
+import { appendKinhDich } from "../../../../domain/services/kinhDich/kinhDichWrapper.js";
+import { fetchCafeF } from "../../../../infrastructure/fetchers/cafef.js";
+import { fetchVnExpress } from "../../../../infrastructure/fetchers/vnexpress.js";
+import { fetchReuters } from "../../../../infrastructure/fetchers/reuters.js";
+import { fetchVnEconomy } from "../../../../infrastructure/fetchers/vneconomy.js";
+import { normalizeNews } from "../../../../domain/services/newsNormalizer.js";
+import { runImpactChain } from "../../../../application/usecases/runImpactChain.js";
+import { searchContext, insertAnalysis } from "../../../../infrastructure/rag/retriever.js";
+import type { SearchResult } from "../../../../infrastructure/rag/retriever.js";
+import { applyRecencyWeighting } from "../../../../domain/services/recencyWeighter.js";
+import type { WatchlistEntry } from "../../../../domain/services/cascadeEngine.js";
+import type { DomainType } from "../../../../../bctc-schema.js";
+import { logger } from "../../../../infrastructure/logger.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SQLite row type for watchlist queries
@@ -392,7 +392,7 @@ export function registerAnalysisTools(server: McpServer): void {
         // has a larger pool to choose from before trimming to the final k.
         // Build options object without undefined keys (exactOptionalPropertyTypes)
         const rawK = Math.min(k * 3, 20);
-        const searchOptions: import("../../../infrastructure/rag/retriever.js").SearchOptions = { k: rawK };
+        const searchOptions: import("../../../../infrastructure/rag/retriever.js").SearchOptions = { k: rawK };
         if (level !== undefined) searchOptions.level = level;
         if (actionCode !== undefined) searchOptions.actionCode = actionCode;
         const rawResults: SearchResult[] = await searchContext(query, searchOptions);
