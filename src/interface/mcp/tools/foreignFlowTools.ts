@@ -82,8 +82,8 @@ export function formatForeignFlowOutput(
 
   // Daily history table
   lines.push("Daily history");
-  lines.push("  Date        | Foreign Volume | Foreign Room  | Holding Ratio");
-  lines.push("  ------------|----------------|---------------|---------------");
+  lines.push("  Date        | Net Vol (daily) | Foreign Room  | Holding Ratio");
+  lines.push("  ------------|-----------------|---------------|---------------");
   for (const row of history) {
     const date = row.date.slice(0, 10).padEnd(12);
     const vol = fmtVol(row.foreignVolume).padStart(14);
@@ -142,26 +142,32 @@ export function registerForeignFlowTools(
         // we call the query directly on the injected db.
         let history: DailyForeignFlow[];
         if (db) {
-          // Test path: query the injected in-memory db directly
+          // Test path: query daily_ohlcv directly on injected db.
+          // ASC order to build cumulative sum; reversed to DESC for analyzeForeignFlow.
           const rows = resolvedDb
             .prepare<any, [string, number]>(
               `SELECT code,
-                      substr(fetched_at, 1, 10) AS date,
-                      foreign_volume, foreign_room, current_holding_ratio
-               FROM vnstock_trading_stats
+                      date,
+                      COALESCE(foreign_net_vol, 0) AS net_vol
+               FROM daily_ohlcv
                WHERE code = ?
-               ORDER BY fetched_at DESC
+               ORDER BY date ASC
                LIMIT ?`,
             )
             .all(code, days);
 
-          history = rows.map((row: any) => ({
-            code: row.code,
-            date: row.date,
-            foreignVolume: row.foreign_volume ?? 0,
-            foreignRoom: row.foreign_room ?? 0,
-            holdingRatio: row.current_holding_ratio ?? 0,
-          }));
+          let cumsum = 0;
+          const ascending: DailyForeignFlow[] = rows.map((row: any) => {
+            cumsum += row.net_vol as number;
+            return {
+              code: row.code as string,
+              date: row.date as string,
+              foreignVolume: cumsum,
+              foreignRoom: 0,
+              holdingRatio: 0,
+            };
+          });
+          history = ascending.reverse();
         } else {
           // Production path: use the shared store function
           history = getForeignFlowHistory(code, days);
