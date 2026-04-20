@@ -34,4 +34,4 @@ export VULTR_USERNAME="${VULTR_USERNAME:-root}"
 export VULTR_PASSWORD="${VULTR_PASSWORD:-}"
 export VPS_PUSH_API_KEY="${VPS_PUSH_API_KEY:-}"
 
-exec /Users/admin/.bun/bin/bun --hot run src/index.ts
+exec /Users/admin/.bun/bin/bun run src/index.ts
