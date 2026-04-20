@@ -32,7 +32,7 @@ import {
   getCurrentDeadline,
   getNextDeadline,
   classifyFilingStatus,
-} from "../../domain/services/earningsCalendar.js";
+} from "../../domain/services/financial-reports/earningsCalendar.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Named constants
@@ -836,7 +836,7 @@ export async function assembleBriefing(
   // ── Step 8: Sensitive date warnings ─────────────────────────────────────────
   let sensitiveWarnings: string[] = [];
   try {
-    const { detectSensitiveDates } = await import("../../domain/services/priceNewsValidator.js");
+    const { detectSensitiveDates } = await import("../../domain/services/financial-reports/priceNewsValidator.js");
     sensitiveWarnings = detectSensitiveDates();
   } catch { /* best-effort */ }
 

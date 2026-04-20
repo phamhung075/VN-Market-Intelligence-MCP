@@ -15,7 +15,7 @@
  * Layer: domain/services — pure logic, no I/O.
  */
 
-import type { SentimentDirection } from "./sentimentClassifier.js";
+import type { SentimentDirection } from "../sentimentClassifier.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types

@@ -15,8 +15,8 @@ import { describe, it, expect } from "bun:test";
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import pdfParse from "pdf-parse";
-import { extractBalanceSheet } from "../domain/services/balanceSheetExtractor.js";
-import { extractIncomeStatement } from "../domain/services/incomeStatementExtractor.js";
+import { extractBalanceSheet } from "../domain/services/financial-reports/balanceSheetExtractor.js";
+import { extractIncomeStatement } from "../domain/services/financial-reports/incomeStatementExtractor.js";
 
 // ---------------------------------------------------------------------------
 // PDF path — resolved to absolute for portability

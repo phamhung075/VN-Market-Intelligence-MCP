@@ -21,16 +21,16 @@ import { z } from "zod";
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join, resolve } from "node:path";
 
-import { getDb, initDatabase } from "../../../infrastructure/db/schema.js";
-import { computePeriodDelta } from "../../../domain/services/periodDeltaComputer.js";
+import { getDb, initDatabase } from "../../../../infrastructure/db/schema.js";
+import { computePeriodDelta } from "../../../../domain/services/financial-reports/periodDeltaComputer.js";
 import {
   fetchParseAndStoreBctc,
   type FetchParseAndStoreBctcParams,
   type QuarterString,
-} from "../../../application/usecases/fetchParseAndStoreBctc.js";
+} from "../../../../application/usecases/fetchParseAndStoreBctc.js";
 
-import type { FinancialReport } from "../../../../bctc-schema.js";
-import type { FinancialMetrics } from "../../../domain/services/periodDeltaComputer.js";
+import type { FinancialReport } from "../../../../../bctc-schema.js";
+import type { FinancialMetrics } from "../../../../domain/services/financial-reports/periodDeltaComputer.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Dependency injection type for the fetch pipeline
@@ -578,7 +578,7 @@ export function registerReportTools(
         }
 
         // Try cached text first (instant — from background OCR)
-        const { getCachedPdfText } = await import("../../../infrastructure/fetchers/pdfOcrWorker.js");
+        const { getCachedPdfText } = await import("../../../../infrastructure/fetchers/pdfOcrWorker.js");
         const cached = getCachedPdfText(filename, maxChars ?? 50000);
 
         let text: string;

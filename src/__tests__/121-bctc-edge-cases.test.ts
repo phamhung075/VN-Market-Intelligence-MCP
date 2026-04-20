@@ -13,9 +13,9 @@
 
 import { describe, it, expect } from "bun:test";
 import { parseVnNumber } from "../domain/services/vnNumberParser.js";
-import { extractBalanceSheet } from "../domain/services/balanceSheetExtractor.js";
-import { extractIncomeStatement } from "../domain/services/incomeStatementExtractor.js";
-import { extractCashFlow } from "../domain/services/cashFlowExtractor.js";
+import { extractBalanceSheet } from "../domain/services/financial-reports/balanceSheetExtractor.js";
+import { extractIncomeStatement } from "../domain/services/financial-reports/incomeStatementExtractor.js";
+import { extractCashFlow } from "../domain/services/financial-reports/cashFlowExtractor.js";
 
 // ============================================================================
 // parseVnNumber — uncovered branches (P-01 to P-15)

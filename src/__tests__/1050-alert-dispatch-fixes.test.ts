@@ -62,7 +62,7 @@ function buildBctcDb(): Database {
 describe("Issue 1 — bctcOverdueCheck signals_json format (Task 1050)", () => {
   it("signals_json must be a Signal object array with .type and .message (not string array)", async () => {
     const { runBctcOverdueCheck } = await import(
-      "../scheduler/bctcOverdueCheckJob.js"
+      "../scheduler/financial-reports/bctcOverdueCheckJob.js"
     );
     const db = buildBctcDb();
     db.run("INSERT INTO watchlist (code, domain) VALUES ('FPT', 'general')");
@@ -91,7 +91,7 @@ describe("Issue 1 — bctcOverdueCheck signals_json format (Task 1050)", () => {
 
   it("formatSignalVi-compatible: signals[0].type and signals[0].message are non-undefined strings", async () => {
     const { runBctcOverdueCheck } = await import(
-      "../scheduler/bctcOverdueCheckJob.js"
+      "../scheduler/financial-reports/bctcOverdueCheckJob.js"
     );
     const { readUnnotifiedAlerts } = await import(
       "../infrastructure/db/alertStore.js"

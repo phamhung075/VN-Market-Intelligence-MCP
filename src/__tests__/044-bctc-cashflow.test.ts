@@ -4,7 +4,7 @@
  * TDD tests for extractCashFlow(rawText) → CashFlowStatement
  */
 import { describe, it, expect } from "bun:test";
-import { extractCashFlow } from "../domain/services/cashFlowExtractor";
+import { extractCashFlow } from "../domain/services/financial-reports/cashFlowExtractor";
 
 // ---------------------------------------------------------------------------
 // Sample 1: Full cash flow statement

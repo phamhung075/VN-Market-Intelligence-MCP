@@ -23,13 +23,13 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import type { Database } from "bun:sqlite";
 
-import { getDb, initDatabase } from "../../../infrastructure/db/schema.js";
-import { logger } from "../../../infrastructure/logger.js";
+import { getDb, initDatabase } from "../../../../infrastructure/db/schema.js";
+import { logger } from "../../../../infrastructure/logger.js";
 import {
   getCurrentDeadline,
   classifyFilingStatus,
   type FilingStatusCode,
-} from "../../../domain/services/earningsCalendar.js";
+} from "../../../../domain/services/financial-reports/earningsCalendar.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Internal DB row types

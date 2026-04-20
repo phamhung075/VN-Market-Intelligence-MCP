@@ -9,7 +9,7 @@
  * Simulates corrupted pdf-parse output where Vietnamese diacritics are stripped.
  */
 import { describe, it, expect } from "bun:test";
-import { extractIncomeStatement } from "../domain/services/incomeStatementExtractor";
+import { extractIncomeStatement } from "../domain/services/financial-reports/incomeStatementExtractor";
 
 // ---------------------------------------------------------------------------
 // Sample: All diacritics stripped (simulating corrupted pdf-parse output)

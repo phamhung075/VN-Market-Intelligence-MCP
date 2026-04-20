@@ -19,13 +19,13 @@
 
 import { randomUUID } from "node:crypto";
 
-import { extractBalanceSheet } from "../../domain/services/balanceSheetExtractor.js";
-import { extractIncomeStatement } from "../../domain/services/incomeStatementExtractor.js";
-import { extractCashFlow } from "../../domain/services/cashFlowExtractor.js";
-import { computeFinancialRatios } from "../../domain/services/ratioComputer.js";
-import { computePeriodDelta } from "../../domain/services/periodDeltaComputer.js";
-import type { FinancialMetrics } from "../../domain/services/periodDeltaComputer.js";
-import { validateFinancialReport } from "../../domain/services/bctcValidator.js";
+import { extractBalanceSheet } from "../../domain/services/financial-reports/balanceSheetExtractor.js";
+import { extractIncomeStatement } from "../../domain/services/financial-reports/incomeStatementExtractor.js";
+import { extractCashFlow } from "../../domain/services/financial-reports/cashFlowExtractor.js";
+import { computeFinancialRatios } from "../../domain/services/financial-reports/ratioComputer.js";
+import { computePeriodDelta } from "../../domain/services/financial-reports/periodDeltaComputer.js";
+import type { FinancialMetrics } from "../../domain/services/financial-reports/periodDeltaComputer.js";
+import { validateFinancialReport } from "../../domain/services/financial-reports/bctcValidator.js";
 import { getDb, initDatabase } from "../../infrastructure/db/schema.js";
 import { logger } from "../../infrastructure/logger.js";
 
@@ -330,7 +330,7 @@ export async function parseBctcReport(
 
   // ── Step 3: Compute financial ratios ─────────────────────────────────────
   const prevBs = previousReport?.balanceSheet;
-  const ratioParams: import("../../domain/services/ratioComputer.js").ComputeRatiosParams = {
+  const ratioParams: import("../../domain/services/financial-reports/ratioComputer.js").ComputeRatiosParams = {
     bs: balanceSheet,
     is: incomeStatement,
     cf: cashFlow,

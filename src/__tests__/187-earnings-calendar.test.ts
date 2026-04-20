@@ -26,7 +26,7 @@ import {
   getNextDeadline,
   type FilingStatus,
   type DeadlineInfo,
-} from "../domain/services/earningsCalendar.js";
+} from "../domain/services/financial-reports/earningsCalendar.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Domain service: getDeadlineForQuarter
@@ -178,7 +178,7 @@ describe("Task 187 — classifyFilingStatus", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { registerEarningsCalendarTools } from "../interface/mcp/tools/earningsCalendarTools.js";
+import { registerEarningsCalendarTools } from "../interface/mcp/tools/financial-reports/earningsCalendarTools.js";
 import { Database } from "bun:sqlite";
 
 /** Call a registered MCP tool by name using the SDK's internal registry. */

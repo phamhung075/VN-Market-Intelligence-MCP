@@ -19,7 +19,7 @@
  * @module domain/services/earningsCalendar
  */
 
-import { MS_PER_DAY } from "./timeConstants.js";
+import { MS_PER_DAY } from "../timeConstants.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types

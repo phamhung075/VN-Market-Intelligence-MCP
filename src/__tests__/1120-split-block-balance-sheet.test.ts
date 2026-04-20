@@ -23,7 +23,7 @@
  */
 
 import { describe, it, expect } from "bun:test";
-import { extractBalanceSheet } from "../domain/services/balanceSheetExtractor";
+import { extractBalanceSheet } from "../domain/services/financial-reports/balanceSheetExtractor";
 
 // ---------------------------------------------------------------------------
 // Minimal split-block sample — simulates VNM OCR structure (pages 5+6+7)

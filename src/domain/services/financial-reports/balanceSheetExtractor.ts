@@ -20,7 +20,7 @@
  * Depends only on parseVnNumber (domain/services).
  */
 
-import { parseVnNumber } from "./vnNumberParser";
+import { parseVnNumber } from "../vnNumberParser.js";
 import type {
   BalanceSheet,
   CurrentAssets,
@@ -28,7 +28,7 @@ import type {
   CurrentLiabilities,
   LongTermLiabilities,
   Equity,
-} from "../../../bctc-schema";
+} from "../../../../bctc-schema";
 
 // ---------------------------------------------------------------------------
 // Helpers

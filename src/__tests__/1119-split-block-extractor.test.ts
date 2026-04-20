@@ -19,8 +19,8 @@
  */
 
 import { describe, it, expect } from "bun:test";
-import { extractIncomeStatement } from "../domain/services/incomeStatementExtractor";
-import { extractBalanceSheet } from "../domain/services/balanceSheetExtractor";
+import { extractIncomeStatement } from "../domain/services/financial-reports/incomeStatementExtractor";
+import { extractBalanceSheet } from "../domain/services/financial-reports/balanceSheetExtractor";
 
 // ---------------------------------------------------------------------------
 // Minimal split-block sample — simulates the VNM OCR structure

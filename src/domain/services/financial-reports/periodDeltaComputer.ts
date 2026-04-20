@@ -10,7 +10,7 @@
  * Pure function, zero I/O. Domain layer only.
  */
 
-import type { ValueChange, RatioChange, PeriodDelta } from "../../../bctc-schema.js";
+import type { ValueChange, RatioChange, PeriodDelta } from "../../../../bctc-schema.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Public input type

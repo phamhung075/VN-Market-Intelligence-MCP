@@ -20,7 +20,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { registerFeedbackTools } from "../interface/mcp/tools/feedbackTools.js";
 import { registerSystemTools } from "../interface/mcp/tools/systemTools.js";
 import { registerAlertTools } from "../interface/mcp/tools/alerts.js";
-import { registerReportTools } from "../interface/mcp/tools/reports.js";
+import { registerReportTools } from "../interface/mcp/tools/financial-reports/reports.js";
 import { registerSearchStocksTools } from "../interface/mcp/tools/searchTools.js";
 import { registerAlertCheckTools } from "../interface/mcp/tools/alertCheckTools.js";
 import { registerExportTools } from "../interface/mcp/tools/exportTools.js";

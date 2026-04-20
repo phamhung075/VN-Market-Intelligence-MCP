@@ -17,7 +17,7 @@ import {
   parseStrandedDetail,
   parseYearQuarterFromFilename,
   runBctcReparseJob,
-} from "../scheduler/bctcReparseJob.js";
+} from "../scheduler/financial-reports/bctcReparseJob.js";
 
 function makeDb(): Database {
   const db = new Database(":memory:");

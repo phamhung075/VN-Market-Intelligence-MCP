@@ -87,14 +87,26 @@ merge: d9912d7
 
 ---
 
-## Sprint 211 — refactor(kinhdich): move tool + wrapper into kinhdich/ subfolders
+## Sprint 211 — refactor(kinhdich): move tool + wrapper into kinhdich/ subfolders — COMPLETE
 
 | ID | Title | Status | Role |
 |----|-------|--------|------|
-| 1539_a | TDD RED: `211-kinhdich-module-move.test.ts` — import from barrels, assert registerKinhDichTools defined at new path | Todo | Dev |
-| 1539_b | GREEN: move kinhDichTools.ts + kinhDichWrapper.ts, update barrel paths, tsc + tests green | Todo | Dev |
+| 1539_a | TDD RED: `211-kinhdich-module-move.test.ts` — import from barrels, assert registerKinhDichTools defined at new path | Done | Dev |
+| 1539_b | GREEN: move kinhDichTools.ts + kinhDichWrapper.ts, update barrel paths, tsc + tests green | Done | Dev |
 
 context: `docs/REQ_211.md` | `docs/TECH_211.md`
+merge: 57b5504
+
+---
+
+## Sprint 212 — refactor(financial-reports): move tool + domain + scheduler files into subfolders
+
+| ID | Title | Status | Role |
+|----|-------|--------|------|
+| 1540_a | TDD RED: `212-financial-reports-module-move.test.ts` | Todo | Dev |
+| 1540_b | GREEN: move 13 files, update all import paths, tsc + tests green | Todo | Dev |
+
+context: `docs/REQ_212.md`
 
 ---
 
@@ -102,7 +114,7 @@ context: `docs/REQ_211.md` | `docs/TECH_211.md`
 
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
-| — | Phase 3 sprint 212: financial-reports module file moves | medium | After 211 |
+| — | Phase 3 sprint 213: system module file moves | medium | After 212 |
 | — | Phase 3 sprint 213: system module file moves | medium | After 212 |
 | — | Phase 3 sprint 214: briefings module file moves | medium | After 213 |
 | — | Phase 3 sprint 215: alerts module file moves | medium | After 214 |

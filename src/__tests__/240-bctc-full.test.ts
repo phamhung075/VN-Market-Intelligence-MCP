@@ -14,7 +14,7 @@
 import { describe, it, expect, beforeEach } from "bun:test";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { Database } from "bun:sqlite";
-import { registerBctcFullTools } from "../interface/mcp/tools/bctcFullTools.js";
+import { registerBctcFullTools } from "../interface/mcp/tools/financial-reports/bctcFullTools.js";
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
