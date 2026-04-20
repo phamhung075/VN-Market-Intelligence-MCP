@@ -66,7 +66,7 @@ describe("VPS proxy freshness watchdog", () => {
       });
       expect(status).toBe("alert-sent");
       expect(calls.length).toBe(1);
-      expect(calls[0]).toContain("Vinahost VN price pushes stopped");
+      expect(calls[0]).toContain("Stale data detected");
       expect(calls[0]).toContain("systemctl status vn-price-fetch");
       expect(calls[0]).toContain("deploy-vinahost.sh");
     });
