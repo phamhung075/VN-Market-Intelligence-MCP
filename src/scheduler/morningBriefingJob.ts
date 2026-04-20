@@ -43,11 +43,22 @@ export function formatCommoditiesSection(
   return lines;
 }
 
-/** stub — RED phase (task 1511a). GREEN impl in 1511b. */
+/**
+ * Format a global market snapshot as an array of Telegram lines.
+ * Returns [] only when snap is null/undefined (guard at call sites).
+ * Exported for unit testing (task 1511b).
+ */
 export function formatGlobalSnapshotSection(
-  _snap: { vix: number; dxy: number; sp500: number; hangSeng: number; fetchedAt: string }
+  snap: { vix: number; dxy: number; sp500: number; hangSeng: number; fetchedAt: string }
 ): string[] {
-  return []; // stub — RED
+  if (!snap) return [];
+  return [
+    "🌐 Thị trường toàn cầu:",
+    `  VIX: ${snap.vix}`,
+    `  DXY: ${snap.dxy}`,
+    `  S&P500: ${snap.sp500}`,
+    `  Hang Seng: ${snap.hangSeng}`,
+  ];
 }
 
 /**
@@ -141,6 +152,15 @@ export function formatBriefingMessage(briefing: DailyBriefing): string {
   if (commodityLines.length > 0) {
     lines.push("");
     for (const l of commodityLines) lines.push(l);
+  }
+
+  // ── Global market snapshot ────────────────────────────────
+  if (briefing.globalSnapshot) {
+    const snapLines = formatGlobalSnapshotSection(briefing.globalSnapshot);
+    if (snapLines.length > 0) {
+      lines.push("");
+      for (const l of snapLines) lines.push(l);
+    }
   }
 
   // ── New reports ────────────────────────────────────────────
