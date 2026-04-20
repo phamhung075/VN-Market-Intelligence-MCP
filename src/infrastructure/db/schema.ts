@@ -1528,10 +1528,6 @@ export async function initDatabase(dbArg?: import("bun:sqlite").Database): Promi
     )
   `);
 
-  // Cleanup: remove stale VCB test fixture rows that leaked before sprint-181 DB isolation fix
-  db.exec(`DELETE FROM market_prices WHERE code = 'VCB' AND updated_at < datetime('now', '-7 days')`);
-  db.exec(`DELETE FROM market_prices_history WHERE code = 'VCB' AND fetched_at < datetime('now', '-7 days')`);
-
   // Task 1489: remove tracked_indicators rows inserted by tests (source='test')
   // so test-generated noise never persists into production state.
   db.exec(`DELETE FROM tracked_indicators WHERE source='test'`);
