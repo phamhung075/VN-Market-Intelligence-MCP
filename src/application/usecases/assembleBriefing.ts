@@ -45,6 +45,15 @@ export const BEARISH_WARNING_THRESHOLD = -2.0;
 // Public types
 // ─────────────────────────────────────────────────────────────────────────────
 
+/** Global market snapshot from commodity_prices table (VIX, DXY, S&P500, Hang Seng). */
+export interface GlobalSnapshot {
+  vix: number;
+  dxy: number;
+  sp500: number;
+  hangSeng: number;
+  fetchedAt: string;
+}
+
 /** One top story from rag_analyses. */
 export interface TopStory {
   title: string;
@@ -222,6 +231,8 @@ export interface DailyBriefing {
   taSummary?: TaSignal[];
   /** BCTC filing deadlines within 14 days for unfiled watchlist stocks; absent on error */
   upcomingDeadlines?: BctcDeadlineRow[];
+  /** Global market snapshot (VIX, DXY, S&P500, Hang Seng); absent when commodity_prices empty */
+  globalSnapshot?: GlobalSnapshot;
   /** ISO 8601 timestamp when this briefing was generated */
   generatedAt: string;
 }

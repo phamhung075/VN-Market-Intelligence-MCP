@@ -43,6 +43,13 @@ export function formatCommoditiesSection(
   return lines;
 }
 
+/** stub — RED phase (task 1511a). GREEN impl in 1511b. */
+export function formatGlobalSnapshotSection(
+  _snap: { vix: number; dxy: number; sp500: number; hangSeng: number; fetchedAt: string }
+): string[] {
+  return []; // stub — RED
+}
+
 /**
  * Format a DailyBriefing as a compact Telegram message string.
  * Exported for unit testing (AC-5 / AC-6 in task 1159).
