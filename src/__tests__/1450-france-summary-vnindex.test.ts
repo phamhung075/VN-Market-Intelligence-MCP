@@ -47,6 +47,7 @@ function setupTestDb(): Database {
     CREATE TABLE IF NOT EXISTS daily_ohlcv (
       code TEXT NOT NULL, date TEXT NOT NULL,
       open REAL, high REAL, low REAL, close REAL, volume REAL,
+      foreign_net_vol REAL,
       PRIMARY KEY (code, date)
     );
   `);

@@ -26,15 +26,21 @@ interface McpTextResult {
 function buildInMemoryDb(): Database {
   const db = new Database(":memory:");
 
-  // Minimal schema — only the columns getForeignFlowHistory uses
+  // Minimal schema — daily_ohlcv is the foreign flow source since sprint 1517b
   db.exec(`
-    CREATE TABLE IF NOT EXISTS vnstock_trading_stats (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      code TEXT NOT NULL,
-      fetched_at TEXT NOT NULL,
-      foreign_volume INTEGER NOT NULL DEFAULT 0,
-      foreign_room INTEGER NOT NULL DEFAULT 0,
-      current_holding_ratio REAL NOT NULL DEFAULT 0
+    CREATE TABLE IF NOT EXISTS daily_ohlcv (
+      code             TEXT NOT NULL,
+      date             TEXT NOT NULL,
+      open             REAL,
+      high             REAL,
+      low              REAL,
+      close            REAL,
+      volume           REAL,
+      foreign_buy_vol  REAL,
+      foreign_sell_vol REAL,
+      foreign_net_vol  REAL,
+      put_through_vol  REAL,
+      PRIMARY KEY (code, date)
     );
   `);
 
@@ -42,37 +48,30 @@ function buildInMemoryDb(): Database {
 }
 
 /**
- * Insert N days of ascending foreign_volume data for a stock.
- * Each row is 1 day apart (today going backwards).
- * foreignVolume increases by `dailyBuy` each day so that all deltas are positive (net_buy).
+ * Insert N days of per-day net_vol data for a stock into daily_ohlcv.
+ * Each row foreign_net_vol = 150_000 → cumsum ascending → deltas +150k → HIGH signal.
  */
 function seedHighBuySignal(db: Database, code: string, days: number): void {
-  // days of data — most recent inserted last so ORDER BY fetched_at DESC gives [today, ..., oldest]
-  const base = 1_000_000; // starting cumulative volume
-  const dailyBuy = 50_000;  // daily delta (+50k each day → 3d net = 150k > HIGH_VOLUME_THRESHOLD 100k)
-
+  const netVolPerDay = 150_000; // each row = one day's net flow → sum > HIGH threshold
   for (let i = days - 1; i >= 0; i--) {
-    const date = new Date(Date.now() - i * 86_400_000);
-    const dateStr = date.toISOString().slice(0, 19).replace("T", " ");
-    const volume = base + (days - 1 - i) * dailyBuy;
+    const d = new Date(Date.now() - i * 86_400_000);
+    const dateStr = d.toISOString().slice(0, 10);
     db.prepare(
-      `INSERT INTO vnstock_trading_stats (code, fetched_at, foreign_volume, foreign_room, current_holding_ratio)
-       VALUES (?, ?, ?, ?, ?)`,
-    ).run(code, dateStr, volume, 5_000_000, 0.28 + (days - 1 - i) * 0.002);
+      `INSERT OR IGNORE INTO daily_ohlcv (code, date, foreign_net_vol) VALUES (?, ?, ?)`,
+    ).run(code, dateStr, netVolPerDay);
   }
 }
 
 /**
- * Insert N days of zero foreign_volume data.
+ * Insert N days of zero foreign_net_vol data into daily_ohlcv.
  */
 function seedZeroVolume(db: Database, code: string, days: number): void {
   for (let i = days - 1; i >= 0; i--) {
-    const date = new Date(Date.now() - i * 86_400_000);
-    const dateStr = date.toISOString().slice(0, 19).replace("T", " ");
+    const d = new Date(Date.now() - i * 86_400_000);
+    const dateStr = d.toISOString().slice(0, 10);
     db.prepare(
-      `INSERT INTO vnstock_trading_stats (code, fetched_at, foreign_volume, foreign_room, current_holding_ratio)
-       VALUES (?, ?, ?, ?, ?)`,
-    ).run(code, dateStr, 0, 0, 0);
+      `INSERT OR IGNORE INTO daily_ohlcv (code, date, foreign_net_vol) VALUES (?, ?, ?)`,
+    ).run(code, dateStr, 0);
   }
 }
 
@@ -121,11 +120,10 @@ describe("Task 1134 — get_foreign_flow MCP tool", () => {
 
   // ── AC-2: insufficient data (< 2 rows) ────────────────────────────────────
   it("returns insufficient data message when fewer than 2 rows exist", async () => {
-    // Insert only 1 row
+    // Insert only 1 row — insufficient for delta calc (needs >= 2)
     db.prepare(
-      `INSERT INTO vnstock_trading_stats (code, fetched_at, foreign_volume, foreign_room, current_holding_ratio)
-       VALUES (?, ?, ?, ?, ?)`,
-    ).run("TCB", "2026-04-10 10:00:00", 500_000, 2_000_000, 0.15);
+      `INSERT OR IGNORE INTO daily_ohlcv (code, date, foreign_net_vol) VALUES (?, ?, ?)`,
+    ).run("TCB", "2026-04-10", 500_000);
 
     const client = await buildConnectedPair(db);
 

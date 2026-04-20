@@ -44,6 +44,7 @@ function makeDb(): Database {
       code TEXT NOT NULL, date TEXT NOT NULL,
       open REAL NOT NULL, high REAL NOT NULL, low REAL NOT NULL,
       close REAL NOT NULL, volume REAL NOT NULL DEFAULT 0,
+      foreign_net_vol REAL,
       updated_at TEXT NOT NULL, PRIMARY KEY (code, date)
     )
   `)

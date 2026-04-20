@@ -46,22 +46,21 @@ function makeDb(): Database {
     )
   `);
 
-  // vnstock_trading_stats table (minimal subset for getForeignFlowHistory)
+  // daily_ohlcv table (foreign flow source since sprint 1517b)
   db.run(`
-    CREATE TABLE IF NOT EXISTS vnstock_trading_stats (
-      code                TEXT NOT NULL,
-      date                TEXT NOT NULL DEFAULT '1970-01-01',
-      foreign_volume      REAL,
-      foreign_room        REAL,
-      current_holding_ratio REAL,
-      avg_volume_2w       REAL,
-      high_52w            REAL,
-      low_52w             REAL,
-      pct_from_high_52w   REAL,
-      pct_from_low_52w    REAL,
-      max_holding_ratio   REAL,
-      fetched_at          TEXT NOT NULL DEFAULT (datetime('now')),
-      UNIQUE(code, date)
+    CREATE TABLE IF NOT EXISTS daily_ohlcv (
+      code             TEXT NOT NULL,
+      date             TEXT NOT NULL,
+      open             REAL,
+      high             REAL,
+      low              REAL,
+      close            REAL,
+      volume           REAL,
+      foreign_buy_vol  REAL,
+      foreign_sell_vol REAL,
+      foreign_net_vol  REAL,
+      put_through_vol  REAL,
+      PRIMARY KEY (code, date)
     )
   `);
 
@@ -128,26 +127,26 @@ function seedWatchlist(db: Database, codes: string[]): void {
 }
 
 /**
- * Seed N days of foreign flow history for a stock, sorted newest-first in DB.
- * foreignVolumes: array of cumulative volumes, index 0 = most recent.
+ * Seed N days of foreign net flow for a stock in daily_ohlcv.
+ * netVolPerDay: direct net_vol value per row (not cumulative).
+ * Production COALESCE query sums these as running total in app layer.
+ * index 0 = most recent day.
  */
 function seedForeignFlow(
   db: Database,
   code: string,
-  foreignVolumes: number[],
+  netVolPerDay: number[],
 ): void {
   const ins = db.prepare(`
-    INSERT OR IGNORE INTO vnstock_trading_stats
-      (code, date, foreign_volume, foreign_room, current_holding_ratio, fetched_at)
-    VALUES (?, ?, ?, 1000000, 0.30, ?)
+    INSERT OR IGNORE INTO daily_ohlcv (code, date, foreign_net_vol)
+    VALUES (?, ?, ?)
   `);
   const today = new Date();
-  for (let i = 0; i < foreignVolumes.length; i++) {
+  for (let i = 0; i < netVolPerDay.length; i++) {
     const d = new Date(today);
     d.setDate(d.getDate() - i);
     const dateStr = d.toISOString().slice(0, 10);
-    const fetchedAt = d.toISOString();
-    ins.run(code, dateStr, foreignVolumes[i] ?? 0, fetchedAt);
+    ins.run(code, dateStr, netVolPerDay[i] ?? 0);
   }
 }
 
@@ -190,13 +189,13 @@ describe("Task 1133 — foreignFlowAlertJob", () => {
       db = makeDb();
       seedWatchlist(db, ["VNM", "FPT"]);
 
-      // VNM: 5 consecutive net_buy days — foreignVolume increasing each day
-      // history DESC: [500000, 450000, 400000, 350000, 300000]
-      // deltas: +50000/day for 4 consecutive days → HIGH (streak=4 >= 3 AND |net3d|>=100k)
-      seedForeignFlow(db, "VNM", [500000, 450000, 400000, 350000, 300000]);
+      // VNM: 4 consecutive net_buy days of 150k each → cumsum ascending → deltas +150k → HIGH
+      // Per-day net_vol (index 0 = most recent): [150k, 150k, 150k, 150k, 0]
+      // cumsum ASC: 0→150k→300k→450k→600k; reversed DESC deltas: 150k×4 consecutive → HIGH
+      seedForeignFlow(db, "VNM", [150_000, 150_000, 150_000, 150_000, 0]);
 
       // FPT: only 1 row → insufficient for delta calc → skipped
-      seedForeignFlow(db, "FPT", [200000]);
+      seedForeignFlow(db, "FPT", [10_000]);
 
       const { overrides } = makeNoopTelegram();
       result = await runForeignFlowAlertJob(db, overrides);
@@ -218,7 +217,7 @@ describe("Task 1133 — foreignFlowAlertJob", () => {
     beforeEach(async () => {
       db = makeDb();
       seedWatchlist(db, ["VNM"]);
-      seedForeignFlow(db, "VNM", [500000, 450000, 400000, 350000, 300000]);
+      seedForeignFlow(db, "VNM", [150_000, 150_000, 150_000, 150_000, 0]);
       const { overrides } = makeNoopTelegram();
       await runForeignFlowAlertJob(db, overrides);
     });
@@ -258,7 +257,7 @@ describe("Task 1133 — foreignFlowAlertJob", () => {
     beforeEach(async () => {
       db = makeDb();
       seedWatchlist(db, ["VNM"]);
-      seedForeignFlow(db, "VNM", [500000, 450000, 400000, 350000, 300000]);
+      seedForeignFlow(db, "VNM", [150_000, 150_000, 150_000, 150_000, 0]);
       const { overrides } = makeNoopTelegram();
       await runForeignFlowAlertJob(db, overrides);
     });
@@ -283,7 +282,7 @@ describe("Task 1133 — foreignFlowAlertJob", () => {
     beforeEach(async () => {
       db = makeDb();
       seedWatchlist(db, ["VNM"]);
-      seedForeignFlow(db, "VNM", [500000, 450000, 400000, 350000, 300000]);
+      seedForeignFlow(db, "VNM", [150_000, 150_000, 150_000, 150_000, 0]);
       const { overrides } = makeNoopTelegram();
       await runForeignFlowAlertJob(db, overrides); // first run
     });
@@ -323,7 +322,7 @@ describe("Task 1133 — foreignFlowAlertJob", () => {
     beforeEach(async () => {
       db = makeDb();
       seedWatchlist(db, ["VNM"]);
-      seedForeignFlow(db, "VNM", [500000, 450000, 400000, 350000, 300000]);
+      seedForeignFlow(db, "VNM", [150_000, 150_000, 150_000, 150_000, 0]);
       const t = makeNoopTelegram();
       workCalls = t.workCalls;
       marketCalls = t.marketCalls;
@@ -345,8 +344,8 @@ describe("Task 1133 — foreignFlowAlertJob", () => {
     beforeEach(async () => {
       db = makeDb();
       seedWatchlist(db, ["VNM"]);
-      // Decreasing volumes → net_sell → bearish
-      seedForeignFlow(db, "VNM", [300000, 350000, 400000, 450000, 500000]);
+      // Negative per-day net_vol → cumsum decreasing → deltas negative → net_sell → bearish
+      seedForeignFlow(db, "VNM", [-150_000, -150_000, -150_000, -150_000, 0]);
       const { overrides } = makeNoopTelegram();
       await runForeignFlowAlertJob(db, overrides);
     });
@@ -369,8 +368,8 @@ describe("Task 1133 — foreignFlowAlertJob", () => {
     beforeEach(async () => {
       db = makeDb();
       seedWatchlist(db, ["VNM"]);
-      // Alternating volumes → neutral/low severity
-      seedForeignFlow(db, "VNM", [310000, 300000, 310000, 300000, 310000]);
+      // Alternating per-day net_vol → no consistent streak → neutral/low severity
+      seedForeignFlow(db, "VNM", [10_000, -10_000, 10_000, -10_000, 0]);
       const { overrides } = makeNoopTelegram();
       result = await runForeignFlowAlertJob(db, overrides);
     });
