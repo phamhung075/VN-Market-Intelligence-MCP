@@ -22,7 +22,7 @@ import type {
   GetPipelineHealthOptions,
   PipelineHealthResult,
 } from "../application/usecases/getPipelineHealth.js";
-import { sendTelegramWork } from "../infrastructure/notifiers/telegram.js";
+import { sendTelegramWork, sendTelegramMarket } from "../infrastructure/notifiers/telegram.js";
 import { logger } from "../infrastructure/logger.js";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -69,6 +69,7 @@ export type WatchdogResult =
 export async function runPipelineWatchdog(options?: {
   now?: Date;
   notify?: (message: string) => Promise<boolean>;
+  notifyUser?: (message: string) => Promise<unknown>;
   getPipelineHealthFn?: (
     opts?: GetPipelineHealthOptions,
   ) => Promise<PipelineHealthResult>;
@@ -79,6 +80,9 @@ export async function runPipelineWatchdog(options?: {
   const notify =
     options?.notify ??
     ((msg: string) => sendTelegramWork(msg, { parseMode: "" }));
+  const notifyUser =
+    options?.notifyUser ??
+    ((msg: string) => sendTelegramMarket(msg, { parseMode: "" }));
 
   // Step 1: call the health use case
   let health: PipelineHealthResult;
@@ -133,6 +137,17 @@ export async function runPipelineWatchdog(options?: {
       return "notify-failed";
     }
     lastAlertAt = now.getTime();
+    // Best-effort MARKET alert — failure does not change return value
+    const userMessage =
+      `News analysis pipeline stale for ${staleMins} min — ` +
+      `market alerts and briefings may be delayed.`;
+    try {
+      await notifyUser(userMessage);
+    } catch (userErr) {
+      logger.warn("[pipelineWatchdog] MARKET user alert failed", {
+        error: userErr instanceof Error ? userErr.message : String(userErr),
+      });
+    }
     return "alert-sent";
   } catch (err) {
     logger.error("[pipelineWatchdog] alert send failed", {
