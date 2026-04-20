@@ -7,7 +7,7 @@ import { describe, it, expect } from "bun:test";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { Database } from "bun:sqlite";
 import { registerLegalRiskTools } from "../interface/mcp/tools/legalRiskTools.js";
-import { registerPolicyTools } from "../interface/mcp/tools/policyTools.js";
+import { registerPolicyTools } from "../interface/mcp/tools/macro/policyTools.js";
 import { registerBondMaturityTools } from "../interface/mcp/tools/bondMaturityTools.js";
 
 // ─────────────────────────────────────────────────────────────────────────────

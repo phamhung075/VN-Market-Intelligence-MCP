@@ -4,7 +4,7 @@ import { describe, it, expect } from "bun:test";
 import { Database } from "bun:sqlite";
 
 // ── Always-exported (no @ts-expect-error) ────────────────────────────────────
-import { handleGetLabelAccuracyReport } from "../interface/mcp/tools/calibrationTools.js";
+import { handleGetLabelAccuracyReport } from "../interface/mcp/tools/macro/calibrationTools.js";
 import { getClimateRiskSignals } from "../interface/mcp/tools/climateTools.js";
 import { getCreditFlowSignalHandler } from "../interface/mcp/tools/creditFlowTools.js";
 import { getEnergyGridStatus } from "../interface/mcp/tools/energyTools.js";
@@ -30,7 +30,7 @@ import * as performanceToolsNs from "../interface/mcp/tools/portfolio/performanc
 import * as pharmaToolsNs from "../interface/mcp/tools/pharmaTools.js";
 import * as portfolioRiskToolNs from "../interface/mcp/tools/portfolio/portfolioRiskTool.js";
 import * as positionToolsNs from "../interface/mcp/tools/portfolio/positionTools.js";
-import * as predictionToolsNs from "../interface/mcp/tools/predictionTools.js";
+import * as predictionToolsNs from "../interface/mcp/tools/macro/predictionTools.js";
 import * as priceAlertToolsNs from "../interface/mcp/tools/priceAlertTools.js";
 import * as priceHistoryToolsNs from "../interface/mcp/tools/priceHistoryTools.js";
 import * as rebalancingToolsNs from "../interface/mcp/tools/portfolio/rebalancingTools.js";

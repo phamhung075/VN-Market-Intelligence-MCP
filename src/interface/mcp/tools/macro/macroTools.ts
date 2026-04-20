@@ -23,12 +23,12 @@ import { z } from "zod";
 import {
   fetchYahooFinancePrices,
   type CommoditySnapshot,
-} from "../../../infrastructure/fetchers/yahooFinance.js";
+} from "../../../../infrastructure/fetchers/yahooFinance.js";
 import {
   fetchSbvRates,
   type SbvMacroSnapshot,
-} from "../../../infrastructure/fetchers/sbv.js";
-import { logger } from "../../../infrastructure/logger.js";
+} from "../../../../infrastructure/fetchers/sbv.js";
+import { logger } from "../../../../infrastructure/logger.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Public types

@@ -130,7 +130,7 @@ describe("Task 1209 — Polymarket staleness fix", () => {
   // ── predictionMarketJob: disabled flag ────────────────────────────────────
 
   it("runPredictionMarketPoll: returns immediately when disabled", async () => {
-    const { runPredictionMarketPoll } = await import("../scheduler/predictionMarketJob.js");
+    const { runPredictionMarketPoll } = await import("../scheduler/macro/predictionMarketJob.js");
     const db = buildTestDb();
 
     let fetchCalled = false;
@@ -150,7 +150,7 @@ describe("Task 1209 — Polymarket staleness fix", () => {
   // ── predictionMarketJob: updated_at is refreshed on each poll ────────────
 
   it("runPredictionMarketPoll: updated_at is refreshed even when API returns same fetchedAt", async () => {
-    const { runPredictionMarketPoll } = await import("../scheduler/predictionMarketJob.js");
+    const { runPredictionMarketPoll } = await import("../scheduler/macro/predictionMarketJob.js");
     const db = buildTestDb();
 
     const staleTimestamp = new Date(Date.now() - 12 * 24 * 3600_000).toISOString();

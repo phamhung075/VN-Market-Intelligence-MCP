@@ -36,10 +36,10 @@ import { runWalCheckpoint, registerShutdownHook } from '../infrastructure/db/che
 import { walCheckpointAlert } from './walCheckpointAlert.js'
 import { runPatternWatch } from './patternWatchJob.js'
 import { runDailyAudit, runWeeklyAudit, runDailyAuditIfStale } from './dataAuditJob.js'
-import { runPredictionMarketPoll } from './predictionMarketJob.js'
+import { runPredictionMarketPoll } from './macro/predictionMarketJob.js'
 import { runAlertDigest } from './alerts/alertDigestJob.js'
 import { runWeeklyPortfolioReport } from './portfolio/weeklyPortfolioReportJob.js'
-import { runPredictionOutcomeCheck } from './predictionOutcomeJob.js'
+import { runPredictionOutcomeCheck } from './macro/predictionOutcomeJob.js'
 import { runDevTeamHeartbeat } from './system/devTeamHeartbeatJob.js'
 import { runWeatherCheck } from './weatherCheckJob.js'
 import { runDavPharmacyCheck } from './davPharmacyJob.js'
@@ -49,9 +49,9 @@ import { runBctcReparseJob } from './financial-reports/bctcReparseJob.js'
 import { runAskQueueCheck } from './system/askQueueCheckJob.js'
 import { runCronHealthAlert } from './alerts/cronHealthAlertJob.js'
 import { runEvidenceAccumulatorJob } from './evidenceAccumulatorJob.js'
-import { runBaseRateComputationJob } from './baseRateComputationJob.js'
-import { runPredictionResolutionJob } from './predictionResolutionJob.js'
-import { runCalibrationReportJob } from './calibrationReportJob.js'
+import { runBaseRateComputationJob } from './macro/baseRateComputationJob.js'
+import { runPredictionResolutionJob } from './macro/predictionResolutionJob.js'
+import { runCalibrationReportJob } from './macro/calibrationReportJob.js'
 import { runForeignFlowAlertJobCron } from './foreignFlowAlertJob.js'
 import { runInsiderCheck } from './insiderCheckJob.js'
 import { runPipelineWatchdog } from './pipelineWatchdogJob.js'
@@ -655,7 +655,7 @@ export function startScheduler() {
   // Runs after ohlcvDailyAggregator (20:00 UTC) so D+3/D+7 closes are fully aggregated.
   cron.schedule(CRONS.cascadeBacktest, async () => {
     await recordJobRun(getDb(), 'cascade-backtest', async () => {
-      const { runCascadeBacktest } = await import('./cascadeBacktestJob.js');
+      const { runCascadeBacktest } = await import('./macro/cascadeBacktestJob.js');
       await runCascadeBacktest();
     });
   }, { timezone: 'UTC' })

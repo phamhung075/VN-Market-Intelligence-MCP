@@ -10,9 +10,9 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { Database } from "bun:sqlite";
-import { getDb } from "../../../infrastructure/db/schema.js";
-import { logger } from "../../../infrastructure/logger.js";
-import { classifyPolicy, type PolicySignal } from "../../../domain/services/policyImpactMapper.js";
+import { getDb } from "../../../../infrastructure/db/schema.js";
+import { logger } from "../../../../infrastructure/logger.js";
+import { classifyPolicy, type PolicySignal } from "../../../../domain/services/policyImpactMapper.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Internal types

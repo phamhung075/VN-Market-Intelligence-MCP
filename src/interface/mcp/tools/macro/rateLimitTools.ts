@@ -11,7 +11,7 @@
  */
 
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { globalRateLimiter, DEFAULT_INTERVALS } from "../../../domain/services/rateLimiter.js";
+import { globalRateLimiter, DEFAULT_INTERVALS } from "../../../../domain/services/rateLimiter.js";
 
 // ---------------------------------------------------------------------------
 // Helpers

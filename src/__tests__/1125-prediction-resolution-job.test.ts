@@ -19,7 +19,7 @@ import { Database } from "bun:sqlite";
 import {
   runPredictionResolution,
   type PredictionResolutionResult,
-} from "../scheduler/predictionResolutionJob.js";
+} from "../scheduler/macro/predictionResolutionJob.js";
 import { CRONS } from "../scheduler/jobs.js";
 import { computeBrierScore } from "../domain/services/baseRateComputer.js";
 

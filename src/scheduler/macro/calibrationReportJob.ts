@@ -24,18 +24,18 @@
  */
 
 import type { Database } from "bun:sqlite";
-import { logger } from "../infrastructure/logger.js";
+import { logger } from "../../infrastructure/logger.js";
 import {
   insertCalibrationSnapshot,
   getPreviousCalibrationSnapshot,
   type CalibrationCurveBucket,
   type PredictionSummary,
-} from "../infrastructure/db/calibrationSnapshotStore.js";
+} from "../../infrastructure/db/calibrationSnapshotStore.js";
 import {
   getLabelAccuracyReport,
   type LabelAccuracyRow,
-} from "../infrastructure/db/marketMessageStore.js";
-import { recordJobRun } from "../infrastructure/db/cronJobRunStore.js";
+} from "../../infrastructure/db/marketMessageStore.js";
+import { recordJobRun } from "../../infrastructure/db/cronJobRunStore.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -82,7 +82,7 @@ interface ResolvedClaimRow {
 
 /** Lazily import the production DB (avoids loading in tests) */
 async function defaultGetDb(): Promise<Database> {
-  const { getDb } = await import("../infrastructure/db/index.js");
+  const { getDb } = await import("../../infrastructure/db/index.js");
   return getDb();
 }
 
@@ -386,7 +386,7 @@ async function sendCalibrationDigest(
     telegramOverrides?.sendWork ??
     (async (msg: string) => {
       const { sendTelegramWork } = await import(
-        "../infrastructure/notifiers/telegram.js"
+        "../../infrastructure/notifiers/telegram.js"
       );
       return sendTelegramWork(msg);
     });
@@ -395,7 +395,7 @@ async function sendCalibrationDigest(
     telegramOverrides?.sendMarket ??
     (async (msg: string) => {
       const { sendTelegramMarket } = await import(
-        "../infrastructure/notifiers/telegram.js"
+        "../../infrastructure/notifiers/telegram.js"
       );
       return sendTelegramMarket(msg, {
         persist: { from_agent: "calibration-report", message_type: "calibration_report" },

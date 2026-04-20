@@ -118,7 +118,7 @@ describe("Task 167 — Prediction Market Scheduler Job", () => {
   // ── 1. Module export ────────────────────────────────────────────────────────
   describe("module exports", () => {
     it("exports runPredictionMarketPoll as an async function", async () => {
-      const mod = await import("../scheduler/predictionMarketJob.js");
+      const mod = await import("../scheduler/macro/predictionMarketJob.js");
       expect(typeof mod.runPredictionMarketPoll).toBe("function");
     });
   });
@@ -127,7 +127,7 @@ describe("Task 167 — Prediction Market Scheduler Job", () => {
   describe("runPredictionMarketPoll() — disabled", () => {
     it("returns early without calling fetchFn when enabled=false", async () => {
       const { runPredictionMarketPoll } = await import(
-        "../scheduler/predictionMarketJob.js"
+        "../scheduler/macro/predictionMarketJob.js"
       );
 
       let fetchCalled = false;
@@ -159,7 +159,7 @@ describe("Task 167 — Prediction Market Scheduler Job", () => {
 
     it("completes without error when fetchFn returns empty array", async () => {
       const { runPredictionMarketPoll } = await import(
-        "../scheduler/predictionMarketJob.js"
+        "../scheduler/macro/predictionMarketJob.js"
       );
 
       await expect(
@@ -173,7 +173,7 @@ describe("Task 167 — Prediction Market Scheduler Job", () => {
 
     it("stores no signals when market list is empty", async () => {
       const { runPredictionMarketPoll } = await import(
-        "../scheduler/predictionMarketJob.js"
+        "../scheduler/macro/predictionMarketJob.js"
       );
 
       await runPredictionMarketPoll({
@@ -205,7 +205,7 @@ describe("Task 167 — Prediction Market Scheduler Job", () => {
 
     it("stores prediction markets snapshot to DB", async () => {
       const { runPredictionMarketPoll } = await import(
-        "../scheduler/predictionMarketJob.js"
+        "../scheduler/macro/predictionMarketJob.js"
       );
 
       const markets = [makeMarket({ id: "mkt-snap-001" })];
@@ -228,7 +228,7 @@ describe("Task 167 — Prediction Market Scheduler Job", () => {
 
     it("detects volume_spike signal and stores it in prediction_signals", async () => {
       const { runPredictionMarketPoll } = await import(
-        "../scheduler/predictionMarketJob.js"
+        "../scheduler/macro/predictionMarketJob.js"
       );
 
       // Volume > default 50 000 USD threshold → volume_spike
@@ -264,7 +264,7 @@ describe("Task 167 — Prediction Market Scheduler Job", () => {
 
     it("detects probability_shift signal when yes_price moved >= threshold", async () => {
       const { runPredictionMarketPoll } = await import(
-        "../scheduler/predictionMarketJob.js"
+        "../scheduler/macro/predictionMarketJob.js"
       );
 
       const previous = [
@@ -307,7 +307,7 @@ describe("Task 167 — Prediction Market Scheduler Job", () => {
 
     it("does not duplicate signals on repeated calls with same data", async () => {
       const { runPredictionMarketPoll } = await import(
-        "../scheduler/predictionMarketJob.js"
+        "../scheduler/macro/predictionMarketJob.js"
       );
 
       const markets = [
@@ -364,7 +364,7 @@ describe("Task 167 — Prediction Market Scheduler Job", () => {
   describe("runPredictionMarketPoll() — concurrency guard", () => {
     it("skips concurrent invocation while a poll is in flight", async () => {
       const { runPredictionMarketPoll } = await import(
-        "../scheduler/predictionMarketJob.js"
+        "../scheduler/macro/predictionMarketJob.js"
       );
 
       let callCount = 0;
@@ -390,7 +390,7 @@ describe("Task 167 — Prediction Market Scheduler Job", () => {
 
     it("allows subsequent run after first completes", async () => {
       const { runPredictionMarketPoll } = await import(
-        "../scheduler/predictionMarketJob.js"
+        "../scheduler/macro/predictionMarketJob.js"
       );
 
       let callCount = 0;
@@ -410,7 +410,7 @@ describe("Task 167 — Prediction Market Scheduler Job", () => {
   describe("runPredictionMarketPoll() — error resilience", () => {
     it("never throws even when fetchFn rejects", async () => {
       const { runPredictionMarketPoll } = await import(
-        "../scheduler/predictionMarketJob.js"
+        "../scheduler/macro/predictionMarketJob.js"
       );
 
       const failFetch = async (): Promise<PredictionMarket[]> => {
@@ -470,7 +470,7 @@ describe("Task 167 — Prediction Market Scheduler Job", () => {
         probe.close();
 
         const { runPredictionMarketPoll } = await import(
-          "../scheduler/predictionMarketJob.js"
+          "../scheduler/macro/predictionMarketJob.js"
         );
 
         // No opts.db → job must call initDatabase() internally.

@@ -87,7 +87,7 @@ mock.module("../infrastructure/db/predictionStore.js", () => {
 });
 
 import { assembleEveningSummary } from "../application/usecases/assembleEveningSummary.js";
-import { runPredictionMarketPoll } from "../scheduler/predictionMarketJob.js";
+import { runPredictionMarketPoll } from "../scheduler/macro/predictionMarketJob.js";
 import * as loggerModule from "../infrastructure/logger.js";
 
 // ─────────────────────────────────────────────────────────────────────────────

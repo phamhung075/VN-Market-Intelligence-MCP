@@ -26,7 +26,7 @@
  */
 
 import type { Database } from "bun:sqlite";
-import { logger } from "../infrastructure/logger.js";
+import { logger } from "../../infrastructure/logger.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -183,7 +183,7 @@ export async function runPredictionOutcomeCheck(
     resolvedDb = db;
   } else {
     try {
-      const { getDb } = await import("../infrastructure/db/schema.js");
+      const { getDb } = await import("../../infrastructure/db/schema.js");
       resolvedDb = getDb();
     } catch (err) {
       logger.error("[prediction-outcome-job] could not resolve DB", {
