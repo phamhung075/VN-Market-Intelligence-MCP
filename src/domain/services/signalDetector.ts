@@ -151,13 +151,15 @@ const REPORT_FRESH_HOURS = 24; // reports within 24 h count as "new"
  * | |change %| | severity  |
  * |------------|-----------|
  * | < 5 %      | low       |
- * | 5 – 9.9 %  | medium    |
- * | 10 – 14.9 %| high      |
+ * | 5 – 6.9 %  | medium    |
+ * | 7 – 14.9 % | high      |
  * | ≥ 15 %     | critical  |
+ *
+ * Note: VN circuit breakers fire at ±7%, so 7%+ moves are market-significant.
  */
 function priceSeverity(absPct: number): Severity {
   if (absPct >= 15) return "critical";
-  if (absPct >= 10) return "high";
+  if (absPct >= 7) return "high";
   if (absPct >= 5) return "medium";
   return "low";
 }

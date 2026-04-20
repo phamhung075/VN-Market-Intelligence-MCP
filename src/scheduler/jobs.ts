@@ -569,9 +569,7 @@ export function startScheduler() {
   // Mon-Sun: SSC disclosures can be published on weekends.
   // runInsiderCheck() uses insertAlert + insertEvidenceFragment (no direct Telegram).
   cron.schedule(CRONS.insiderCheck, async () => {
-    await recordJobRun(getDb(), 'insiderCheckJob', async () => {
-      await runInsiderCheck()
-    })
+    await runInsiderCheck()
   }, { timezone: 'UTC' })
 
   // Every 30 min 24/7 — Pipeline watchdog — task 1190
@@ -628,13 +626,10 @@ export function startScheduler() {
   // Delivers unnotified TA alert rows (ta_overbought/ta_oversold/ta_bb_breakout_up/down) to
   // Telegram market channel. Batched (max 10/cycle). Marks notified_telegram=1 after send.
   cron.schedule(CRONS.taAlertNotifier, async () => {
-    await recordJobRun(getDb(), 'taAlertNotifierJob', async () => {
-      const result = await runTaAlertNotifierCron()
-      if (result.sent > 0) {
-        log(`[ta-alert-notifier] sent=${result.sent}`)
-      }
-      return { rowsWritten: result.sent }
-    })
+    const result = await runTaAlertNotifierCron()
+    if (result.sent > 0) {
+      log(`[ta-alert-notifier] sent=${result.sent}`)
+    }
   }, { timezone: 'UTC' })
 
   // 15:00 UTC (22:00 VN) Mon-Fri — OHLCV daily aggregator — task 1375, Sprint 130
