@@ -18,7 +18,7 @@ import {
   getCreditFlowSignalHandler,
   deriveMortgageRateFromSbv,
   DEFAULT_RE_CREDIT_TRILLION,
-} from "../interface/mcp/tools/creditFlowTools.js";
+} from "../interface/mcp/tools/sector/creditFlowTools.js";
 
 describe("Task 1254 — get_credit_flow_signal DB fallback", () => {
   it("AC-1: handler works with all params explicitly provided", async () => {

@@ -25,7 +25,7 @@ import {
   listBrokerSanctions,
   listActiveBrokerSanctions,
 } from "../infrastructure/db/brokerSanctionStore.js";
-import { registerBrokerCredibilityTools } from "../interface/mcp/tools/brokerCredibilityTools.js";
+import { registerBrokerCredibilityTools } from "../interface/mcp/tools/sector/brokerCredibilityTools.js";
 
 // Task 1038: broker_sanctions DDL lives in schema.ts:initDatabase() for
 // production. Tests using :memory: databases create the table inline here to

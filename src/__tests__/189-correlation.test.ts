@@ -14,7 +14,7 @@ import {
   diversificationScore,
 } from "../domain/services/correlationCalculator.js";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { registerCorrelationTools } from "../interface/mcp/tools/correlationTools.js";
+import { registerCorrelationTools } from "../interface/mcp/tools/sector/correlationTools.js";
 
 // ---------------------------------------------------------------------------
 // Helpers

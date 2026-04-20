@@ -21,17 +21,17 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { Database } from "bun:sqlite";
 
-import { getDb, initDatabase } from "../../../infrastructure/db/schema.js";
-import { logger } from "../../../infrastructure/logger.js";
+import { getDb, initDatabase } from "../../../../infrastructure/db/schema.js";
+import { logger } from "../../../../infrastructure/logger.js";
 import {
   detectSectorRotation,
   type SectorPriceData,
   type SectorRotationEntry,
-} from "../../../domain/services/sectorRotationDetector.js";
-import type { DomainType } from "../../../../bctc-schema.js";
-import { fetchHosePrices, type MarketPrice } from "../../../infrastructure/fetchers/hose.js";
-import { fetchHnxPrices, fetchUpcomPrices } from "../../../infrastructure/fetchers/hnx.js";
-import { tradingWindowLabel } from "../../../domain/services/tradingWindow.js";
+} from "../../../../domain/services/sectorRotationDetector.js";
+import type { DomainType } from "../../../../../bctc-schema.js";
+import { fetchHosePrices, type MarketPrice } from "../../../../infrastructure/fetchers/hose.js";
+import { fetchHnxPrices, fetchUpcomPrices } from "../../../../infrastructure/fetchers/hnx.js";
+import { tradingWindowLabel } from "../../../../domain/services/tradingWindow.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Internal types
@@ -309,7 +309,7 @@ export async function getSectorRotationReport(db: Database): Promise<string> {
   // Determine which sectors are represented in the data
   const representedSectors = new Set<DomainType>();
   const { getSectorForCode } = await import(
-    "../../../domain/services/sectorRotationDetector.js"
+    "../../../../domain/services/sectorRotationDetector.js"
   );
   for (const code of Object.keys(priceMap)) {
     const sector =

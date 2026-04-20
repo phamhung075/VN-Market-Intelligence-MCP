@@ -24,9 +24,9 @@ import {
   diversificationScore,
   correlationLabel,
   diversificationGrade,
-} from "../../../domain/services/correlationCalculator.js";
-import { getDb, initDatabase } from "../../../infrastructure/db/schema.js";
-import { logger } from "../../../infrastructure/logger.js";
+} from "../../../../domain/services/correlationCalculator.js";
+import { getDb, initDatabase } from "../../../../infrastructure/db/schema.js";
+import { logger } from "../../../../infrastructure/logger.js";
 
 // ---------------------------------------------------------------------------
 // Internal types

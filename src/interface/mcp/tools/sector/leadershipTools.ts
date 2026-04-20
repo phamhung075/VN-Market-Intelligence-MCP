@@ -16,7 +16,7 @@ import {
   type InsiderTransaction,
   type InsiderPosition,
   type LeadershipSignal,
-} from "../../../domain/services/leadershipSignal.js";
+} from "../../../../domain/services/leadershipSignal.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Handler (exported for direct testing)

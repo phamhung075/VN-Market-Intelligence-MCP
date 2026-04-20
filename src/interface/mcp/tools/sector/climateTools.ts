@@ -15,12 +15,12 @@
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { logger } from "../../../infrastructure/logger.js";
-import { fetchWeatherWarnings } from "../../../infrastructure/fetchers/weatherVn.js";
+import { logger } from "../../../../infrastructure/logger.js";
+import { fetchWeatherWarnings } from "../../../../infrastructure/fetchers/weatherVn.js";
 import {
   mapClimateImpact,
   getSeasonalContext,
-} from "../../../domain/services/climateImpactMapper.js";
+} from "../../../../domain/services/climateImpactMapper.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Core logic (exported for integration testing)
@@ -45,7 +45,7 @@ export async function getClimateRiskSignals(
   // ── Fetch watchlist from DB ───────────────────────────────────────────────
   let watchlist: Array<{ actionCode: string; domain: string; exchange: string }> = [];
   try {
-    const { getDb } = await import("../../../infrastructure/db/schema.js");
+    const { getDb } = await import("../../../../infrastructure/db/schema.js");
     const db = getDb();
     const rows = db
       .prepare<{ code: string; domain: string; exchange: string }, []>(

@@ -13,8 +13,8 @@ import { z } from "zod";
 import {
   analyzeCreditFlow,
   type CreditData,
-} from "../../../domain/services/creditFlowAnalyzer.js";
-import { getDb, initDatabase } from "../../../infrastructure/db/schema.js";
+} from "../../../../domain/services/creditFlowAnalyzer.js";
+import { getDb, initDatabase } from "../../../../infrastructure/db/schema.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Constants / DB-fallback helpers (Task 1254)

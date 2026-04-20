@@ -11,9 +11,9 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { Database } from "bun:sqlite";
-import { getDb } from "../../../infrastructure/db/schema.js";
-import { logger } from "../../../infrastructure/logger.js";
-import { detectLegalRisk } from "../../../domain/services/legalRiskDetector.js";
+import { getDb } from "../../../../infrastructure/db/schema.js";
+import { logger } from "../../../../infrastructure/logger.js";
+import { detectLegalRisk } from "../../../../domain/services/legalRiskDetector.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Internal types

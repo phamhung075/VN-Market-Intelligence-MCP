@@ -6,7 +6,7 @@
 
 import { describe, it, expect } from "bun:test";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { registerSupplyChainTools } from "../interface/mcp/tools/supplyChainTools.js";
+import { registerSupplyChainTools } from "../interface/mcp/tools/sector/supplyChainTools.js";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -51,7 +51,7 @@ describe("Task 256 — MCP Tool: get_supply_chain_exposure", () => {
   it("returns valid MCP content format from tool handler logic", async () => {
     // Import the handler utility directly for unit testing
     const { buildSupplyChainExposureOutput } = await import(
-      "../interface/mcp/tools/supplyChainTools.js"
+      "../interface/mcp/tools/sector/supplyChainTools.js"
     );
 
     const result = buildSupplyChainExposureOutput(

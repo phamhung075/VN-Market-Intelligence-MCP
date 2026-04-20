@@ -38,7 +38,7 @@ import {
   type SectorPriceData,
   type SectorRotationResult,
 } from "../domain/services/sectorRotationDetector.js";
-import { registerSectorRotationTools } from "../interface/mcp/tools/sectorRotationTools.js";
+import { registerSectorRotationTools } from "../interface/mcp/tools/sector/sectorRotationTools.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helper: build a SectorPriceData entry
@@ -248,10 +248,7 @@ describe("Task 186 — registerSectorRotationTools()", () => {
   });
 
   it("barrel index exports registerSectorRotationTools", async () => {
-    const indexSrc = await Bun.file(
-      new URL("../interface/mcp/tools/index.ts", import.meta.url).pathname,
-    ).text();
-    expect(indexSrc).toContain("registerSectorRotationTools");
-    expect(indexSrc).toContain("sectorRotationTools.js");
+    const mod = await import("../interface/mcp/tools/sector/index.js");
+    expect(typeof mod.registerSectorRotationTools).toBe("function");
   });
 });

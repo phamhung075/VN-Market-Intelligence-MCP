@@ -14,7 +14,7 @@ import {
   fetchPublicContracts,
   type HttpClient,
   type PublicContract,
-} from "../../../infrastructure/fetchers/muasamcong.js";
+} from "../../../../infrastructure/fetchers/muasamcong.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Handler (exported for direct testing)

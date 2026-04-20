@@ -8,7 +8,7 @@ Bun.env["DB_PATH"] = ":memory:";
 
 import { describe, it, expect } from "bun:test";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { registerPharmaTools } from "../interface/mcp/tools/pharmaTools.js";
+import { registerPharmaTools } from "../interface/mcp/tools/sector/pharmaTools.js";
 import { Database } from "bun:sqlite";
 import { insertPharmaEvent } from "../infrastructure/db/pharmaStore.js";
 import { initDatabase, getDb, closeDb } from "../infrastructure/db/index.js";
