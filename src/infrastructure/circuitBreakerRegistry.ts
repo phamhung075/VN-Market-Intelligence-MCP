@@ -55,6 +55,14 @@ export const breakers = {
     failureThreshold: 5,
     resetTimeoutMs: 300_000, // 5 minutes
   }),
+  /**
+   * Foreign Flow VPS push endpoint.
+   * Task 1566: Detect sustained database write failures; back off after 5 failures.
+   */
+  foreignFlow: new CircuitBreaker("foreignFlow", {
+    failureThreshold: 5,
+    resetTimeoutMs: 30_000, // 30 seconds — relatively fast reset since it's a direct write
+  }),
 } as const;
 
 export type BreakerName = keyof typeof breakers;
