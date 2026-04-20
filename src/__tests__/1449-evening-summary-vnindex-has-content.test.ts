@@ -10,6 +10,8 @@ import { describe, it, expect, mock } from "bun:test";
 import { runEveningSummary, resetEveningSummaryGuard } from "../scheduler/eveningSummaryJob.js";
 import type { EveningSummary } from "../application/usecases/assembleEveningSummary.js";
 
+const FRESH_FETCHED_AT = new Date().toISOString();
+
 const EMPTY_SUMMARY: EveningSummary = {
   date: "2026-04-18",
   topStories: [],
@@ -20,13 +22,13 @@ const EMPTY_SUMMARY: EveningSummary = {
   taDiag: { tickersWithSignal: 0, tickersBelowThreshold: 0, ohlcvRowsMin: 0, ohlcvRowsMax: 0 },
   taSummary: [],
   newsCount: 0,
-  generatedAt: "2026-04-18T08:30:00.000Z",
+  generatedAt: FRESH_FETCHED_AT,
   portfolioPnl: null,
   vnIndex: {
     close: 1250.5,
     change: 3.2,
     changePct: 0.26,
-    fetchedAt: "2026-04-18T08:30:00.000Z",
+    fetchedAt: FRESH_FETCHED_AT,
   },
 };
 
