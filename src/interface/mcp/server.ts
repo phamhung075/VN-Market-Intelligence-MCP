@@ -1464,6 +1464,81 @@ export async function createBunServer(
       return;
     }
 
+    // ── Task 1499: POST /api/push-gso — VPS GSO macro push ────────────────
+    if (method === "POST" && pathname === "/api/push-gso") {
+      const apiKey = Bun.env.VPS_PUSH_API_KEY;
+      const authHeader = req.headers["x-api-key"] || req.headers["authorization"]?.replace("Bearer ", "");
+      if (!apiKey || authHeader !== apiKey) {
+        res.writeHead(401, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "Unauthorized" }));
+        return;
+      }
+      let body = "";
+      for await (const chunk of req) body += chunk;
+      let payload: { country?: string; indicators?: unknown };
+      try {
+        payload = JSON.parse(body) as { country?: string; indicators?: unknown };
+      } catch {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "Invalid JSON" }));
+        return;
+      }
+      if (!Array.isArray(payload.indicators)) {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "indicators must be an array" }));
+        return;
+      }
+      const country = typeof payload.country === "string" ? payload.country : "VN";
+      const rawIndicators = payload.indicators as Array<{ name: string; value: number; unit?: string; fetched_at?: string }>;
+
+      // Allowlist: GSO indicator name → macro_indicators column
+      const GSO_ALLOWED_COLS: Record<string, string> = {
+        cpi:                 "cpi",
+        gdp_growth:          "gdp_growth",
+        unemployment_rate:   "unemployment_rate",
+        inflation_rate:      "inflation_rate",
+        retail_sales:        "retail_sales",
+        trade_balance:       "trade_balance",
+        consumer_confidence: "consumer_confidence",
+        manufacturing_pmi:   "manufacturing_pmi",
+        government_debt:     "government_debt",
+        budget_deficit:      "budget_deficit",
+        current_account:     "current_account",
+      };
+
+      // Filter to known columns only; unknown cols are silently ignored
+      const known = rawIndicators.filter(
+        (i) => typeof i.name === "string" && i.name in GSO_ALLOWED_COLS && typeof i.value === "number"
+      );
+
+      const db = getDb();
+      const now = new Date().toISOString();
+
+      // INSERT OR IGNORE to create row if absent (preserves existing columns)
+      db.prepare(
+        `INSERT OR IGNORE INTO macro_indicators (country, fetched_at) VALUES (?, ?)`
+      ).run(country, now);
+
+      if (known.length > 0) {
+        // Dynamic UPDATE: only update known GSO columns + fetched_at
+        const setClauses = known.map((i) => `${GSO_ALLOWED_COLS[i.name]} = ?`).join(", ");
+        const values = known.map((i) => i.value);
+        db.prepare(
+          `UPDATE macro_indicators SET ${setClauses}, fetched_at = ? WHERE country = ?`
+        ).run(...values, now, country);
+      } else {
+        // No known cols — still update fetched_at to mark row as refreshed
+        db.prepare(
+          `UPDATE macro_indicators SET fetched_at = ? WHERE country = ?`
+        ).run(now, country);
+      }
+
+      log.info("[push-gso] upserted macro_indicators", { country, updated_cols: known.length });
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ ok: true, country, upserted: true }));
+      return;
+    }
+
     // ── 404 ───────────────────────────────────────────────────────────────
     res.writeHead(404, { "Content-Type": "application/json" });
     res.end(JSON.stringify({ error: "Not found", path: pathname }));
