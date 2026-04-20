@@ -17,8 +17,8 @@
 
 import { describe, it, expect, beforeAll } from "bun:test";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { registerFeedbackTools } from "../interface/mcp/tools/feedbackTools.js";
-import { registerSystemTools } from "../interface/mcp/tools/systemTools.js";
+import { registerFeedbackTools } from "../interface/mcp/tools/system/feedbackTools.js";
+import { registerSystemTools } from "../interface/mcp/tools/system/systemTools.js";
 import { registerAlertTools } from "../interface/mcp/tools/alerts.js";
 import { registerReportTools } from "../interface/mcp/tools/financial-reports/reports.js";
 import { registerSearchStocksTools } from "../interface/mcp/tools/searchTools.js";

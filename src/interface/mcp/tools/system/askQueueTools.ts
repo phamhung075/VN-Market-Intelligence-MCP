@@ -14,12 +14,12 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { Database } from "bun:sqlite";
 import { z } from "zod";
 
-import { getDb } from "../../../infrastructure/db/schema.js";
+import { getDb } from "../../../../infrastructure/db/schema.js";
 import {
   getPendingAskQuestions,
   answerAskQuestion,
-} from "../../../infrastructure/db/askQueueStore.js";
-import { spawnQaResponder } from "../../../infrastructure/agents/qaResponderSpawner.js";
+} from "../../../../infrastructure/db/askQueueStore.js";
+import { spawnQaResponder } from "../../../../infrastructure/agents/qaResponderSpawner.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Zod schemas

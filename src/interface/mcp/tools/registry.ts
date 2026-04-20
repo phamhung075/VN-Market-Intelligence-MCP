@@ -10,7 +10,7 @@
 
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
-import { registerWatchlistTools } from "./watchlist.js";
+import { registerWatchlistTools } from "./system/watchlist.js";
 import { registerReportTools } from "./financial-reports/reports.js";
 import { registerAlertTools } from "./alerts.js";
 import { registerAnalysisTools } from "./analysis.js";
@@ -18,9 +18,9 @@ import { registerMarketTools } from "./marketTools.js";
 import { registerMacroTools } from "./macroTools.js";
 import { registerTelegramTools } from "./telegramTools.js";
 import { registerSummaryTools } from "./summaryTools.js";
-import { registerSystemTools } from "./systemTools.js";
+import { registerSystemTools } from "./system/systemTools.js";
 import { registerPortfolioTools } from "./portfolioTools.js";
-import { registerFeedbackTools } from "./feedbackTools.js";
+import { registerFeedbackTools } from "./system/feedbackTools.js";
 import { registerPredictionTools } from "./predictionTools.js";
 import { registerPriceHistoryTools } from "./priceHistoryTools.js";
 import { registerPositionTools } from "./positionTools.js";
@@ -59,10 +59,10 @@ import { registerPharmaTools } from "./pharmaTools.js";
 import { registerSectorComparisonTools } from "./sectorComparisonTools.js";
 import { registerKinhDichTools } from "./kinhdich/kinhDichTools.js";
 import { registerBrokerCredibilityTools } from "./brokerCredibilityTools.js";
-import { registerAskQueueTools } from "./askQueueTools.js";
-import { registerAgentWorkLogTools } from "./agentWorkLogTools.js";
+import { registerAskQueueTools } from "./system/askQueueTools.js";
+import { registerAgentWorkLogTools } from "./system/agentWorkLogTools.js";
 import { registerCronHealthTools } from "./cronHealthTools.js";
-import { registerVpsProxyTools } from "./vpsProxyTools.js";
+import { registerVpsProxyTools } from "./system/vpsProxyTools.js";
 import { registerEvidenceTools } from "./evidenceTools.js";
 import { registerCalibrationTools } from "./calibrationTools.js";
 import { registerForeignFlowTools } from "./foreignFlowTools.js";

@@ -13,7 +13,7 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from "bun:test";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { initDatabase, getDb, closeDb } from "../infrastructure/db/schema.js";
-import { registerWatchlistTools } from "../interface/mcp/tools/watchlist.js";
+import { registerWatchlistTools } from "../interface/mcp/tools/system/watchlist.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Typed SQLite row shape (subset of watchlist columns used in tests)

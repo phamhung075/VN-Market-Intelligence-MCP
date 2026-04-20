@@ -29,7 +29,7 @@ import {
   getPendingAskQuestions,
   answerAskQuestion,
 } from "../infrastructure/db/askQueueStore.js";
-import { runAskQueueCheck } from "../scheduler/askQueueCheckJob.js";
+import { runAskQueueCheck } from "../scheduler/system/askQueueCheckJob.js";
 import {
   checkPositionDanger,
   checkWatchlistOpportunity,
@@ -38,7 +38,7 @@ import { appendKinhDich } from "../domain/services/kinhDich/kinhDichWrapper.js";
 
 // Interface layer
 import { handleTelegramCommand, type TelegramUpdate } from "../infrastructure/notifiers/telegramCommands.js";
-import { registerAskQueueTools } from "../interface/mcp/tools/askQueueTools.js";
+import { registerAskQueueTools } from "../interface/mcp/tools/system/askQueueTools.js";
 import { registerPositionTools } from "../interface/mcp/tools/positionTools.js";
 
 // ─────────────────────────────────────────────────────────────────────────────

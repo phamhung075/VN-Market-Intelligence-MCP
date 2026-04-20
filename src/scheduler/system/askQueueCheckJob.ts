@@ -16,11 +16,11 @@
  */
 
 import type { Database } from "bun:sqlite";
-import { getDb } from "../infrastructure/db/schema.js";
-import { getPendingAskQuestions } from "../infrastructure/db/askQueueStore.js";
-import { postSignal } from "../infrastructure/db/agentSignalStore.js";
-import { spawnQaResponder } from "../infrastructure/agents/qaResponderSpawner.js";
-import { recordJobRun } from "../infrastructure/db/cronJobRunStore.js";
+import { getDb } from "../../infrastructure/db/schema.js";
+import { getPendingAskQuestions } from "../../infrastructure/db/askQueueStore.js";
+import { postSignal } from "../../infrastructure/db/agentSignalStore.js";
+import { spawnQaResponder } from "../../infrastructure/agents/qaResponderSpawner.js";
+import { recordJobRun } from "../../infrastructure/db/cronJobRunStore.js";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 

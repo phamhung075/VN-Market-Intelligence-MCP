@@ -10,7 +10,7 @@
 import { describe, it, expect } from "bun:test";
 import {
   buildPeerSuggestionText,
-} from "../interface/mcp/tools/watchlist.js";
+} from "../interface/mcp/tools/system/watchlist.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
