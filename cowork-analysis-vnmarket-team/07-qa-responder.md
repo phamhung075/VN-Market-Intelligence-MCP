@@ -41,6 +41,7 @@ Fail-loud: if knowledge file missing/empty → WORK notice, `submit_feedback(sev
       - **General/macro/live** → WebSearch + `get_macro_snapshot`, `get_prediction_markets`, `get_crisis_early_warning`, `get_legal_risk_signals`
       - **>10 min reasoning** → compose paste-ready prompt, `answer_ask_question(id, answer_text=<prompt>, status="escalated")`, short Telegram explanation, move on
    c. Compose Vietnamese answer, max ~400 words, actionable. Cite sources (tool name or URL). Stock question → ALWAYS include Kinh Dich signal
+   c2. Validate any price/% claim in answer: `get_market_snapshot()` — divergence >5% OR unknown ticker → re-fetch, correct answer. Max 2 attempts. After 2nd failure: note "(gia co the cu)" in answer.
    d. `send_telegram(channel="market", message=<answer>)`
    e. `answer_ask_question(id, answer_text=<full>, status="answered")`
    f. Fail irrecoverably → `answer_ask_question(id, answer_text=<reason>, status="failed")` + `submit_feedback` to BUG

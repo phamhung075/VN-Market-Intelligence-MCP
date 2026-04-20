@@ -42,7 +42,7 @@ Read before first cycle. If any Read fails → `.claude/knowledge/fail-loud-prot
 2. **Serve user** — answer investment questions via MCP tools
 3. **Report problems** → BUG channel for Dev Team
 4. **Quality control** — verify accuracy, flag false positives
-5. **LAST-MILE REVIEWER** — ONLY analysis-team agent with backend MCP access. Cowork agents draft blind. Cross-check EVERY claim against backend. Divergence → `submit_feedback`. Most important duty.
+5. **Quality Reviewer (daily/weekly)** — verify output accuracy during WEEKLY_REVIEW mode. In MARKET mode, agents self-validate via direct MCP access. Step 4c runs weekly only.
 6. **Daily review** (22:00 VN) — read BUG channel, triage, write reports
 7. **Weekly deep review** (Sunday 20:00 VN) — patterns, observability, code review rotation
 
@@ -79,7 +79,7 @@ Get current UTC hour: `TZ=UTC date +%H` and weekday: `TZ=UTC date +%u` (1=Mon �
 | UTC hour | Condition | Mode |
 |----------|-----------|------|
 | 01 | any weekday | PREDICTION_REVIEW |
-| 02–08 | Mon–Fri (1–5) | MARKET |
+| 02–08 | Mon–Fri (1–5) | MARKET (Step 4c SKIPPED) |
 | 20 | any | DAILY_REVIEW |
 | 13 | Sunday (7) | WEEKLY_REVIEW |
 | any other | any | IDLE |
@@ -93,19 +93,23 @@ Get current UTC hour: `TZ=UTC date +%H` and weekday: `TZ=UTC date +%u` (1=Mon �
 
 **WEEKLY_REVIEW**: run WEEKLY DEEP REVIEW section → EXIT.
 
-**MARKET**: run full cycle (Steps 0–6). Continue below.
+**MARKET**: run full cycle Steps 0–6 EXCEPT Step 4c. Step 4d (message quality audit) still runs in MARKET mode.
+**WEEKLY_REVIEW**: run WEEKLY DEEP REVIEW section, which includes Step 4c quality review.
 
-### Step 0: Agent Signals
-`get_agent_signals(agent="unified-agent")`
-- `urgent_news` → prioritize those stocks
-- `cross_validate` → pull news + price for flagged stocks
-- `suppress` → skip alerts for flagged stocks
-
-### Step 1: System Health
-1. `get_system_status` — server, circuit breakers, sources, freshness, errors
-2. `get_rate_limit_status`
+### Step 0: Bootstrap
+`get_cycle_bootstrap(agent_name="unified-agent")`
+- `bootstrap.agent_signals`: process `urgent_news`, `cross_validate`, `suppress` as before
+- `bootstrap.market_context`: use as context (Step 2 still calls `get_market_context(24h)` for full compound context — unified-agent needs extra portfolio signals not in bootstrap)
+- `bootstrap.system_status`: initial health check (Step 1 below adds detail)
+- `bootstrap.error.<key>` present: apply fail-loud protocol immediately
 
 **Position-aware**: `get_portfolio_positions()`. Weight toward held stocks. `get_user_positions_for_analysis({ ticker })` per stock → POSITION INSIGHT. Fails → fail-loud. Schema: `.claude/knowledge/portfolio-schema.md`.
+
+**Step 1b** (moved here from later): Dev Team Cron Health (S1 + S3) — run every cycle. Only way to detect stuck dev-team cron.
+
+1. `read_telegram_reports(status="new", unclaimed_only=true)`
+2. `get_recent_fixes(days=2)`
+3. Check stale threshold + inferred failure conditions (see below)
 
 ### Step 1c: Base Context Signal + Early-Exit (MARKET mode only)
 
@@ -167,9 +171,9 @@ Primary: `07-qa-responder` (every 12 min via `askQueueCheck` cron). If down >30 
 - `get_signal_effectiveness` — chain vs standalone precision
 - Chain consistently outperforms → recommend increasing chain weight
 
-### Step 4c: LAST-MILE REVIEW (MANDATORY)
+### Step 4c: QUALITY REVIEW (WEEKLY_REVIEW mode only — skip in MARKET mode)
 
-Only analysis-team agent with backend access. Cowork agents draft blind. Verify sent output.
+All agents now have direct MCP access and self-validate before posting. This step runs only during WEEKLY_REVIEW to catch systemic patterns across the week.
 
 1. Pull recent outbound:
    - `get_alerts(hours_back=24)` — alerts shipped to MARKET

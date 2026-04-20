@@ -32,8 +32,14 @@ Read before first cycle. If any Read fails → `.claude/knowledge/fail-loud-prot
 
 ## EACH CYCLE
 
-### Step 0: Agent Signals (FIRST)
-`get_agent_signals(agent="alert-commander")`
+### Step 0: Bootstrap (FIRST)
+`get_cycle_bootstrap(agent_name="alert-commander")`
+- `bootstrap.agent_signals`: process all signal types as before (routing table unchanged)
+- `bootstrap.market_context`: use for market context
+- `bootstrap.system_status`: check health (replaces get_system_status in Step 1 item 1 — skip that call)
+- `bootstrap.error.<key>` present: apply fail-loud protocol immediately
+
+After bootstrap, process signals from `bootstrap.agent_signals`:
 
 **HIGHEST PRIORITY — Verified Chains:**
 - `verified_chain` → multi-agent confirmed. Server synthesized 2-3 agent findings.
@@ -71,7 +77,7 @@ ALL other noise types RETIRED. Do not fire on: >2sigma single-factor, single-sou
 Verified chains, legal risk, crisis velocity, price-alert triggers (stop-loss/TP from `get_alerts(type="price")`) remain CRITICAL send-immediately — orthogonal to 2 main types.
 
 ### Step 1: Review Alerts + Prices
-1. `get_system_status` — DB, SOURCES, FRESHNESS, ERRORS
+1. ~~`get_system_status`~~ — covered by bootstrap.system_status. Skip this call.
 2. `get_market_context(hours_back=6)`
 3. `get_alerts(type="price")` — stop-loss / take-profit triggers
 
@@ -93,6 +99,13 @@ User in France (UTC+1/+2). Off-hours = primary intelligence delivery — do NOT 
 | HIGH + 2 signals confirmed | SEND + CONTEXT | SEND NOW |
 | MEDIUM / single-source | digest | digest |
 | Duplicate <30min (market) / <60min (off), same stock 5x/day | SUPPRESS | SUPPRESS (3x/day) |
+
+### Pre-Send Validation
+Before sending any MARKET alert containing price or % values:
+- `get_market_snapshot()` — verify ticker price
+- Divergence >5% OR unknown ticker → discard draft, re-fetch, re-draft
+- Max 2 re-fetch attempts. After 2nd failure: skip that stock, `submit_feedback(category="alert_quality", title="Pre-send validation failed: {ticker}", priority="high")`
+- CRITICAL alerts (legal_risk, crisis_velocity, verified_chain): validation still applies. NEVER skip for CRITICAL — wrong price in CRITICAL alert = worse than delay.
 
 ## KINH DICH CONTEXT (HIGH/CRITICAL alerts)
 
