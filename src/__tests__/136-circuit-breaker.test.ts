@@ -19,7 +19,7 @@ import {
   resetAllBreakers,
 } from "../infrastructure/circuitBreakerRegistry.js";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { registerSystemTools } from "../interface/mcp/tools/systemTools.js";
+import { registerSystemTools } from "../interface/mcp/tools/system/systemTools.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers

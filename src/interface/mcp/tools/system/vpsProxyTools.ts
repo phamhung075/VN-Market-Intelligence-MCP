@@ -10,8 +10,8 @@
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { getVpsProxyHealth, type VpsServiceHealth } from "../../../infrastructure/db/vpsPushLogStore.js";
-import { getDb } from "../../../infrastructure/db/schema.js";
+import { getVpsProxyHealth, type VpsServiceHealth } from "../../../../infrastructure/db/vpsPushLogStore.js";
+import { getDb } from "../../../../infrastructure/db/schema.js";
 import type { Database } from "bun:sqlite";
 
 // Expected push intervals per service (minutes)

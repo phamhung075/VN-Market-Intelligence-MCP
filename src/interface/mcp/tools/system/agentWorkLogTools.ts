@@ -20,8 +20,8 @@ import {
   logAgentWorkStart,
   logAgentWorkEnd,
   getAgentWorkLog,
-} from "../../../infrastructure/db/agentWorkLogStore.js";
-import { getDb } from "../../../infrastructure/db/schema.js";
+} from "../../../../infrastructure/db/agentWorkLogStore.js";
+import { getDb } from "../../../../infrastructure/db/schema.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tool registration

@@ -92,7 +92,7 @@ function insertChangelog(db: Database, fixedAt: string): void {
 // ─────────────────────────────────────────────────────────────────────────────
 
 async function importHeartbeat() {
-  const mod = await import("../scheduler/devTeamHeartbeatJob.js");
+  const mod = await import("../scheduler/system/devTeamHeartbeatJob.js");
   return mod;
 }
 

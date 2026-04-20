@@ -31,7 +31,7 @@ export {
 export { SseSessionManager } from "./transport.js";
 
 // ── Task 082: Watchlist MCP tools ─────────────────────────────────────────
-export { registerWatchlistTools } from "./tools/watchlist.js";
+export { registerWatchlistTools } from "./tools/system/watchlist.js";
 
 // ── Task 085: SSC report MCP tools ─────────────────────────────────────────
 export {

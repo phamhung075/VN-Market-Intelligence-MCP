@@ -210,7 +210,7 @@ export async function runDevTeamHeartbeat(
   if (db) {
     resolvedDb = db;
   } else {
-    const { getDb } = await import("../infrastructure/db/schema.js");
+    const { getDb } = await import("../../infrastructure/db/schema.js");
     resolvedDb = getDb();
   }
 
@@ -219,7 +219,7 @@ export async function runDevTeamHeartbeat(
     resolvedSend = sendFn;
   } else {
     const { sendTelegramWork } = await import(
-      "../infrastructure/notifiers/telegram.js"
+      "../../infrastructure/notifiers/telegram.js"
     );
     resolvedSend = (text: string) => sendTelegramWork(text, { parseMode: "" });
   }

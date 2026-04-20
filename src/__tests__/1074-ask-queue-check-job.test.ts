@@ -17,7 +17,7 @@ Bun.env["DB_PATH"] = ":memory:";
 
 import { describe, it, expect, beforeEach } from "bun:test";
 import { Database } from "bun:sqlite";
-import { runAskQueueCheck } from "../scheduler/askQueueCheckJob.js";
+import { runAskQueueCheck } from "../scheduler/system/askQueueCheckJob.js";
 import { CRONS } from "../scheduler/jobs.js";
 import { insertAskQuestion } from "../infrastructure/db/askQueueStore.js";
 

@@ -247,7 +247,7 @@ describe("Task 1101 — recordJobRun wrapper", () => {
 
   it("structural: askQueueCheckJob imports recordJobRun", async () => {
     const src = await Bun.file(
-      new URL("../scheduler/askQueueCheckJob.ts", import.meta.url).pathname,
+      new URL("../scheduler/system/askQueueCheckJob.ts", import.meta.url).pathname,
     ).text();
     expect(src).toContain("recordJobRun");
     expect(src).toContain("cronJobRunStore");

@@ -14,7 +14,7 @@ Bun.env["DB_PATH"] = ":memory:";
 import { describe, it, expect, beforeEach } from "bun:test";
 import { Database } from "bun:sqlite";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { registerAgentWorkLogTools } from "../interface/mcp/tools/agentWorkLogTools.js";
+import { registerAgentWorkLogTools } from "../interface/mcp/tools/system/agentWorkLogTools.js";
 import { logAgentWorkStart } from "../infrastructure/db/agentWorkLogStore.js";
 
 // ─── In-memory DB helper ───────────────────────────────────────────────────

@@ -14,7 +14,7 @@
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { logger } from "../../../infrastructure/logger.js";
+import { logger } from "../../../../infrastructure/logger.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tool registration
@@ -60,7 +60,7 @@ export function registerFeedbackTools(server: McpServer): void {
         // Send to BUG channel (TELEGRAM_REPORT_BUG_CHANNEL_ID) — single source of truth
         let msgId = 0;
         try {
-          const { sendTelegramBug } = await import("../../../infrastructure/notifiers/telegram.js");
+          const { sendTelegramBug } = await import("../../../../infrastructure/notifiers/telegram.js");
           const emoji = priority === "critical" ? "🚨" : priority === "high" ? "🔴" : priority === "medium" ? "🟡" : "🟢";
           const recipient = to.startsWith("@") ? to : `@${to}`;
           const msg = [

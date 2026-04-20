@@ -17,7 +17,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import {
   getSystemStatus,
   registerSystemTools,
-} from "../interface/mcp/tools/systemTools.js";
+} from "../interface/mcp/tools/system/systemTools.js";
 import { registerSourceHealthTools } from "../interface/mcp/tools/sourceHealthTools.js";
 import { registerDataFreshnessTools } from "../interface/mcp/tools/dataFreshnessTools.js";
 
