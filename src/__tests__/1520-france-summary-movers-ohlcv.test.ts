@@ -1,13 +1,13 @@
 Bun.env["DB_PATH"] = ":memory:";
-// src/__tests__/1370-france-watchlist-movers.test.ts
-// Task 1370 — TDD: franceSummaryJob fetchTopMovers filters by watchlist
+// src/__tests__/1520-france-summary-movers-ohlcv.test.ts
+// Task 205 — TDD: fetchTopMovers reads daily_ohlcv instead of market_prices_history
 //
-// Updated by task 205: seeds changed from market_prices_history to
-// daily_ohlcv (open/close) since fetchTopMovers now reads daily_ohlcv.
+// Verifies that movers are ranked by ABS(change_pct) computed from
+// daily_ohlcv (close-open)/open*100, not from consecutive 60s VPS ticks.
 //
-// Test strategy: direct DB setup + call runFranceSummary with sendFn spy.
-// Insert tickers into watchlist + daily_ohlcv.
-// Verify movers array only contains watchlist tickers.
+// Test strategy: seed daily_ohlcv with 3 watchlist tickers at distinct
+// open/close values, assert that the top mover is correctly identified
+// and that change_pct is non-zero when open != close.
 
 import { describe, it, expect, beforeEach } from "bun:test"
 import { Database } from "bun:sqlite"
@@ -15,9 +15,7 @@ import { runFranceSummary } from "../scheduler/franceSummaryJob.js"
 import type { FranceSummaryOptions } from "../scheduler/franceSummaryJob.js"
 
 // ─────────────────────────────────────────────────────────────────────────────
-// DB helper — creates all tables needed by franceSummaryJob
-// daily_ohlcv is the movers source (task 205 fix).
-// market_prices_history kept to satisfy any other callers that reference it.
+// DB helper — minimal tables required by franceSummaryJob
 // ─────────────────────────────────────────────────────────────────────────────
 
 function makeDb(): Database {
@@ -42,10 +40,6 @@ function makeDb(): Database {
       exchange   TEXT DEFAULT 'HOSE',
       PRIMARY KEY (code, fetched_at)
     )
-  `)
-  db.exec(`
-    CREATE INDEX IF NOT EXISTS idx_mph_code_fetched
-      ON market_prices_history(code, fetched_at DESC)
   `)
   db.exec(`
     CREATE TABLE IF NOT EXISTS alerts (
@@ -97,23 +91,19 @@ function makeDb(): Database {
 const noopSend = async (_text: string) => true
 const now = () => new Date("2026-04-17T07:00:00.000Z")
 
-// Helper: insert a ticker into daily_ohlcv with a given change_pct.
-// open is derived from priceToday and changePct so that
-// (close-open)/open*100 == changePct.
+/** Insert a ticker into daily_ohlcv with explicit open/close values. */
 function insertOhlcv(
   db: Database,
   code: string,
-  priceToday: number,
-  changePct: number,
+  date: string,
+  open: number,
+  close: number,
 ): void {
-  const open = priceToday / (1 + changePct / 100)
-  const close = priceToday
   const high = Math.max(open, close) * 1.01
   const low = Math.min(open, close) * 0.99
-  const date = "2026-04-17"
   db.exec(
     `INSERT OR REPLACE INTO daily_ohlcv (code, date, open, high, low, close, volume, updated_at)
-     VALUES ('${code}', '${date}', ${open.toFixed(2)}, ${high.toFixed(2)}, ${low.toFixed(2)}, ${close}, 1000000, '${date}T16:00:00')`,
+     VALUES ('${code}', '${date}', ${open}, ${high}, ${low}, ${close}, 1000000, '${date}T16:00:00')`,
   )
 }
 
@@ -121,7 +111,7 @@ function insertOhlcv(
 // Tests
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe("Task 1370 — fetchTopMovers filters by watchlist", () => {
+describe("Task 205 — fetchTopMovers uses daily_ohlcv (open/close)", () => {
   let db: Database
 
   beforeEach(() => {
@@ -129,22 +119,23 @@ describe("Task 1370 — fetchTopMovers filters by watchlist", () => {
   })
 
   // ───────────────────────────────────────────────────────────────────────────
-  // AC-1: Non-watchlist ticker has highest % move → excluded from movers;
-  //       watchlist ticker appears in movers result.
+  // AC-1: Top mover is the ticker with largest (close-open)/open, not 0%
   //
-  // Setup: NON_WL has change_pct=+20% (highest), WL1 has change_pct=+5%
-  //        Only WL1 is in watchlist.
-  // Expect: result.moverCount >= 1 and the sent message contains "WL1" but
-  //         NOT "NON_WL" in the movers section.
+  // Seed: 3 watchlist tickers on '2026-04-17'
+  //   BIG: open=100, close=110 → +10%
+  //   MED: open=100, close=105 → +5%
+  //   SML: open=100, close=102 → +2%
   //
-  // GREEN since task 1371 + task 205.
+  // VPS ticks would show 0% (same price in market_prices_history).
+  // Expect: moverCount=3, message contains "BIG" before "MED" before "SML"
   // ───────────────────────────────────────────────────────────────────────────
-  it("AC-1: non-watchlist ticker excluded; watchlist ticker appears in movers", async () => {
-    // NON_WL: highest move but NOT in watchlist
-    insertOhlcv(db, "NON_WL", 100_000, 20.0)
-    // WL1: in watchlist, lower move
-    insertOhlcv(db, "WL1", 50_000, 5.0)
-    db.exec(`INSERT INTO watchlist (code) VALUES ('WL1')`)
+  it("AC-1: top mover ranked by daily_ohlcv ABS(change_pct), non-zero", async () => {
+    const date = "2026-04-17"
+    insertOhlcv(db, "BIG", date, 100_000, 110_000)  // +10%
+    insertOhlcv(db, "MED", date, 100_000, 105_000)  // +5%
+    insertOhlcv(db, "SML", date, 100_000, 102_000)  // +2%
+
+    db.exec(`INSERT INTO watchlist (code) VALUES ('BIG'), ('MED'), ('SML')`)
 
     const sends: string[] = []
     const sendFn = async (t: string) => { sends.push(t); return true }
@@ -152,114 +143,69 @@ describe("Task 1370 — fetchTopMovers filters by watchlist", () => {
     const opts: FranceSummaryOptions = { db, sendFn, nowFn: now, getPnlFn: async () => null }
     const result = await runFranceSummary(opts)
 
-    // Job must send (there is at least one watchlist mover)
+    expect(result.sent).toBe(true)
+    expect(result.moverCount).toBe(3)
+
+    const msg = sends[0] ?? ""
+    // All three must appear
+    expect(msg).toContain("BIG")
+    expect(msg).toContain("MED")
+    expect(msg).toContain("SML")
+    // BIG must appear before MED (sorted descending by abs change_pct)
+    expect(msg.indexOf("BIG")).toBeLessThan(msg.indexOf("MED"))
+    expect(msg.indexOf("MED")).toBeLessThan(msg.indexOf("SML"))
+  })
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // AC-2: VPS ticks with identical prices do NOT produce 0% movers
+  //
+  // Seed: market_prices_history has same price for cur and prev (60s apart) → 0%
+  //       daily_ohlcv has open != close → non-zero %
+  // Expect: moverCount >= 1 with non-zero change in message
+  // ───────────────────────────────────────────────────────────────────────────
+  it("AC-2: VPS ticks at same price → daily_ohlcv still shows non-zero move", async () => {
+    const date = "2026-04-17"
+    // daily_ohlcv: open=50000, close=55000 → +10%
+    insertOhlcv(db, "VIC", date, 50_000, 55_000)
+    db.exec(`INSERT INTO watchlist (code) VALUES ('VIC')`)
+
+    // VPS ticks: same price (would produce 0% in old query)
+    db.exec(`
+      INSERT OR REPLACE INTO market_prices_history (code, price, volume, fetched_at)
+      VALUES ('VIC', 55000, 1000000, '2026-04-17T07:59:00'),
+             ('VIC', 55000, 1000000, '2026-04-17T08:00:00')
+    `)
+
+    const sends: string[] = []
+    const sendFn = async (t: string) => { sends.push(t); return true }
+
+    const opts: FranceSummaryOptions = { db, sendFn, nowFn: now, getPnlFn: async () => null }
+    const result = await runFranceSummary(opts)
+
     expect(result.sent).toBe(true)
     expect(result.moverCount).toBeGreaterThanOrEqual(1)
 
     const msg = sends[0] ?? ""
-    // Watchlist ticker must appear in the message movers section
-    expect(msg).toContain("WL1")
-    // Non-watchlist ticker must NOT appear in the movers section
-    expect(msg).not.toContain("NON_WL")
+    expect(msg).toContain("VIC")
+    // Must NOT show 0.00%
+    expect(msg).not.toContain("VIC +0.00%")
+    expect(msg).not.toContain("VIC -0.00%")
   })
 
   // ───────────────────────────────────────────────────────────────────────────
-  // AC-2: Empty watchlist → movers array is empty (no crash).
+  // AC-3: Only the MAX(date) row is used — older rows do not affect result
   //
-  // Setup: 3 tickers with prices in daily_ohlcv; watchlist is empty.
-  // Expect: result.moverCount === 0, no crash, job does not send
-  //         (all sources empty → silent skip).
+  // Seed: 'AAA' has rows on '2026-04-16' (open=100, close=50 → -50%) and
+  //       '2026-04-17' (open=100, close=103 → +3%)
+  // Expect: change_pct reflects the 2026-04-17 row (+3%), not the -50% stale row
   // ───────────────────────────────────────────────────────────────────────────
-  it("AC-2: empty watchlist → movers is empty, no crash", async () => {
-    // Tickers in price tables but NOT in watchlist
-    insertOhlcv(db, "VIC", 80_000, 3.0)
-    insertOhlcv(db, "VHM", 45_000, 2.5)
-    insertOhlcv(db, "HPG", 22_000, -4.0)
-    // watchlist is empty — no INSERT
+  it("AC-3: only MAX(date) daily_ohlcv row is used for change_pct", async () => {
+    // Old row (should be ignored)
+    insertOhlcv(db, "AAA", "2026-04-16", 100_000, 50_000)  // -50% if used
+    // Latest row
+    insertOhlcv(db, "AAA", "2026-04-17", 100_000, 103_000)  // +3%
 
-    const sends: string[] = []
-    const sendFn = async (t: string) => { sends.push(t); return true }
-
-    const opts: FranceSummaryOptions = { db, sendFn, nowFn: now, getPnlFn: async () => null }
-
-    let threw = false
-    let result: Awaited<ReturnType<typeof runFranceSummary>>
-    try {
-      result = await runFranceSummary(opts)
-    } catch {
-      threw = true
-      result = { sent: false, moverCount: 0, alertCount: 0, taSignals: [], vnIndex: null, globalSnapshot: null }
-    }
-
-    expect(threw).toBe(false)
-    // No watchlist tickers → moverCount must be 0
-    expect(result!.moverCount).toBe(0)
-  })
-
-  // ───────────────────────────────────────────────────────────────────────────
-  // AC-3: Watchlist ticker has no price row → handled gracefully, not included
-  //       in movers.
-  //
-  // Setup: WL_NO_PRICE is in watchlist but has no entry in daily_ohlcv.
-  //        WL_WITH_PRICE has both.
-  // Expect: no crash, WL_NO_PRICE not in movers, WL_WITH_PRICE appears.
-  // ───────────────────────────────────────────────────────────────────────────
-  it("AC-3: watchlist ticker with no price row is handled gracefully, not in movers", async () => {
-    // WL_WITH_PRICE: in watchlist AND has price data
-    insertOhlcv(db, "WL_WITH_PRICE", 30_000, 6.0)
-    db.exec(`INSERT INTO watchlist (code) VALUES ('WL_WITH_PRICE')`)
-
-    // WL_NO_PRICE: in watchlist but NO price data in daily_ohlcv
-    db.exec(`INSERT INTO watchlist (code) VALUES ('WL_NO_PRICE')`)
-    // Do NOT insert any price rows for WL_NO_PRICE
-
-    const sends: string[] = []
-    const sendFn = async (t: string) => { sends.push(t); return true }
-
-    const opts: FranceSummaryOptions = { db, sendFn, nowFn: now, getPnlFn: async () => null }
-
-    let threw = false
-    let result: Awaited<ReturnType<typeof runFranceSummary>>
-    try {
-      result = await runFranceSummary(opts)
-    } catch {
-      threw = true
-      result = { sent: false, moverCount: 0, alertCount: 0, taSignals: [], vnIndex: null, globalSnapshot: null }
-    }
-
-    expect(threw).toBe(false)
-    // WL_WITH_PRICE has price data → at least 1 mover
-    expect(result!.moverCount).toBeGreaterThanOrEqual(1)
-    // WL_NO_PRICE must not appear in movers
-    const msg = sends[0] ?? ""
-    expect(msg).not.toContain("WL_NO_PRICE")
-    // WL_WITH_PRICE must appear (it has price data)
-    expect(msg).toContain("WL_WITH_PRICE")
-  })
-
-  // ───────────────────────────────────────────────────────────────────────────
-  // AC-4: 5 watchlist tickers with moves → movers capped at top 3 by abs(change%).
-  //
-  // Setup: 5 watchlist tickers with distinct change_pct values.
-  //        change_pct values: 10%, 8%, 6%, 4%, 2%
-  // Expect: moverCount === 3, message contains the top 3 tickers (10%, 8%, 6%)
-  //         and does NOT contain the bottom 2 (4%, 2%).
-  //
-  // GREEN since task 1371 + task 205.
-  // ───────────────────────────────────────────────────────────────────────────
-  it("AC-4: 5 watchlist tickers → movers capped at top 3 by abs(change%)", async () => {
-    const tickers = [
-      { code: "TOP1", price: 50_000, changePct: 10.0 },
-      { code: "TOP2", price: 40_000, changePct: 8.0 },
-      { code: "TOP3", price: 30_000, changePct: 6.0 },
-      { code: "BOT4", price: 20_000, changePct: 4.0 },
-      { code: "BOT5", price: 10_000, changePct: 2.0 },
-    ]
-
-    for (const t of tickers) {
-      insertOhlcv(db, t.code, t.price, t.changePct)
-      db.exec(`INSERT INTO watchlist (code) VALUES ('${t.code}')`)
-    }
+    db.exec(`INSERT INTO watchlist (code) VALUES ('AAA')`)
 
     const sends: string[] = []
     const sendFn = async (t: string) => { sends.push(t); return true }
@@ -268,16 +214,41 @@ describe("Task 1370 — fetchTopMovers filters by watchlist", () => {
     const result = await runFranceSummary(opts)
 
     expect(result.sent).toBe(true)
-    // Must be capped at 3
-    expect(result.moverCount).toBe(3)
+    expect(result.moverCount).toBeGreaterThanOrEqual(1)
 
     const msg = sends[0] ?? ""
-    // Top 3 tickers must appear
-    expect(msg).toContain("TOP1")
-    expect(msg).toContain("TOP2")
-    expect(msg).toContain("TOP3")
-    // Bottom 2 must NOT appear
-    expect(msg).not.toContain("BOT4")
-    expect(msg).not.toContain("BOT5")
+    expect(msg).toContain("AAA")
+    // Should show roughly +3%, definitely not -50%
+    expect(msg).not.toContain("-50")
+    expect(msg).not.toContain("-49")
+  })
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // AC-4: Non-watchlist ticker in daily_ohlcv is excluded
+  //
+  // Seed: 'NOWL' in daily_ohlcv but NOT in watchlist (big mover +20%)
+  //       'WL1' in both watchlist and daily_ohlcv (+3%)
+  // Expect: moverCount=1, message contains 'WL1' but NOT 'NOWL'
+  // ───────────────────────────────────────────────────────────────────────────
+  it("AC-4: non-watchlist ticker in daily_ohlcv is excluded", async () => {
+    const date = "2026-04-17"
+    insertOhlcv(db, "NOWL", date, 100_000, 120_000)  // +20%, not in watchlist
+    insertOhlcv(db, "WL1",  date, 100_000, 103_000)  // +3%, in watchlist
+
+    db.exec(`INSERT INTO watchlist (code) VALUES ('WL1')`)
+    // NOWL intentionally NOT inserted into watchlist
+
+    const sends: string[] = []
+    const sendFn = async (t: string) => { sends.push(t); return true }
+
+    const opts: FranceSummaryOptions = { db, sendFn, nowFn: now, getPnlFn: async () => null }
+    const result = await runFranceSummary(opts)
+
+    expect(result.sent).toBe(true)
+    expect(result.moverCount).toBe(1)
+
+    const msg = sends[0] ?? ""
+    expect(msg).toContain("WL1")
+    expect(msg).not.toContain("NOWL")
   })
 })
