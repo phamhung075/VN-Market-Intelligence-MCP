@@ -49,7 +49,7 @@ export function _resetWatchdogCooldown(): void {
 
 export type WatchdogResult =
   | "ok"            // staleMins <= STALE_THRESHOLD_MINS
-  | "no-data"       // staleMins === null (rag_analyses table is empty)
+  | "no-data"       // reserved — no longer returned; null staleMins now treated as stale
   | "alert-sent"    // stale + cooldown passed + notify returned truthy
   | "cooldown"      // stale but within 3-hour cooldown window
   | "notify-failed"; // stale + cooldown passed + notify returned false or threw
@@ -98,14 +98,15 @@ export async function runPipelineWatchdog(options?: {
   // Step 2: evaluate staleMins
   const { staleMins } = health.ragRows;
 
-  if (staleMins === null) {
-    logger.debug("[pipelineWatchdog] no data — rag_analyses table is empty");
-    return "no-data";
-  }
-
-  if (staleMins <= STALE_THRESHOLD_MINS) {
+  // null means rag_analyses is completely empty — treat as infinitely stale
+  // (total pipeline outage confirmed by 2026-04-21 evening report: newsCount=0)
+  if (staleMins !== null && staleMins <= STALE_THRESHOLD_MINS) {
     logger.debug("[pipelineWatchdog] healthy", { staleMins });
     return "ok";
+  }
+
+  if (staleMins === null) {
+    logger.warn("[pipelineWatchdog] rag_analyses empty — treating as total outage");
   }
 
   // Step 3: cooldown check
@@ -120,9 +121,11 @@ export async function runPipelineWatchdog(options?: {
       ? String(health.vpsPushLast24h)
       : "unknown";
 
+  const staleDisplay = staleMins !== null ? `${staleMins} min` : "no data since boot";
+
   const message =
     `[Pipeline Watchdog] News pipeline silent.\n` +
-    `Stale for: ${staleMins} min\n` +
+    `Stale for: ${staleDisplay}\n` +
     `Today's rag_analyses rows: ${health.ragRows.today}\n` +
     `Last insert: ${lastInsertedAt}\n` +
     `VPS news pushes (24h): ${vpsPush}\n` +
@@ -139,7 +142,7 @@ export async function runPipelineWatchdog(options?: {
     lastAlertAt = now.getTime();
     // Best-effort MARKET alert — failure does not change return value
     const userMessage =
-      `News analysis pipeline stale for ${staleMins} min — ` +
+      `News analysis pipeline stale for ${staleDisplay} — ` +
       `market alerts and briefings may be delayed.`;
     try {
       await notifyUser(userMessage);

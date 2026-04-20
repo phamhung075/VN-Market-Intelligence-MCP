@@ -74,7 +74,7 @@ describe("runPipelineWatchdog — staleness gate", () => {
     expect(notifyCallCount).toBe(0);
   });
 
-  it("staleMins = null (empty table) → 'no-data', notify not called", async () => {
+  it("staleMins = null (empty table, total outage) → 'alert-sent', notify called once", async () => {
     let notifyCallCount = 0;
     const notify = async (_msg: string): Promise<boolean> => {
       notifyCallCount++;
@@ -84,8 +84,8 @@ describe("runPipelineWatchdog — staleness gate", () => {
       getPipelineHealthFn: async () => makeHealth(null),
       notify,
     });
-    expect(result).toBe("no-data");
-    expect(notifyCallCount).toBe(0);
+    expect(result).toBe("alert-sent");
+    expect(notifyCallCount).toBe(1);
   });
 
   it("staleMins = 120, lastAlertAt = 0 → 'alert-sent', notify called once", async () => {
