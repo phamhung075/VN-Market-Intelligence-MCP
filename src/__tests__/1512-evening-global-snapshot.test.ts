@@ -11,14 +11,83 @@ function setupDb(db: Database): void {
       hang_seng  REAL NOT NULL DEFAULT 0,
       fetched_at TEXT NOT NULL
     );
-    CREATE TABLE IF NOT EXISTS rag_analyses (id INTEGER PRIMARY KEY, ticker TEXT, title TEXT, summary TEXT, level TEXT, impact_score REAL, published_at TEXT, source_url TEXT, created_at TEXT);
-    CREATE TABLE IF NOT EXISTS alerts (id INTEGER PRIMARY KEY, ticker TEXT, alert_type TEXT, severity TEXT, message TEXT, created_at TEXT);
-    CREATE TABLE IF NOT EXISTS watchlist (ticker TEXT PRIMARY KEY);
-    CREATE TABLE IF NOT EXISTS market_prices (ticker TEXT PRIMARY KEY, change_pct REAL, price REAL, updated_at TEXT);
-    CREATE TABLE IF NOT EXISTS prediction_signals (id INTEGER PRIMARY KEY, ticker TEXT, signal_type TEXT, confidence TEXT, rationale TEXT, source TEXT, created_at TEXT, expires_at TEXT);
-    CREATE TABLE IF NOT EXISTS market_messages (id INTEGER PRIMARY KEY, from_agent TEXT, message_type TEXT, sent_at TEXT);
-    CREATE TABLE IF NOT EXISTS portfolio_positions (id INTEGER PRIMARY KEY, ticker TEXT, quantity INTEGER, avg_price REAL, opened_at TEXT, closed_at TEXT);
-    CREATE TABLE IF NOT EXISTS daily_ohlcv (ticker TEXT, date TEXT, open REAL, high REAL, low REAL, close REAL, volume INTEGER, foreign_buy_vol INTEGER, foreign_sell_vol INTEGER, PRIMARY KEY (ticker, date));
+    CREATE TABLE IF NOT EXISTS rag_analyses (
+      id INTEGER PRIMARY KEY,
+      ticker TEXT,
+      title TEXT,
+      source_title TEXT,
+      summary TEXT,
+      level TEXT,
+      sentiment TEXT,
+      impact_score REAL,
+      published_at TEXT,
+      source_url TEXT,
+      created_at TEXT
+    );
+    CREATE TABLE IF NOT EXISTS alerts (
+      id TEXT PRIMARY KEY,
+      triggered_at TEXT NOT NULL,
+      severity TEXT NOT NULL,
+      signals_json TEXT,
+      affected_actions_json TEXT,
+      analysis_ids_json TEXT,
+      message TEXT,
+      read INTEGER NOT NULL DEFAULT 0,
+      notified_telegram INTEGER NOT NULL DEFAULT 0
+    );
+    CREATE TABLE IF NOT EXISTS watchlist (
+      code TEXT PRIMARY KEY,
+      company_name TEXT,
+      exchange TEXT NOT NULL DEFAULT 'HOSE',
+      domain TEXT NOT NULL DEFAULT 'other',
+      notes TEXT,
+      added_at TEXT NOT NULL DEFAULT ''
+    );
+    CREATE TABLE IF NOT EXISTS market_prices (
+      code TEXT PRIMARY KEY,
+      price REAL,
+      change_amt REAL,
+      change_pct REAL,
+      volume REAL,
+      updated_at TEXT,
+      exchange TEXT DEFAULT 'HOSE'
+    );
+    CREATE TABLE IF NOT EXISTS prediction_signals (
+      id INTEGER PRIMARY KEY,
+      question TEXT,
+      outcome TEXT,
+      confidence TEXT,
+      rationale TEXT,
+      source TEXT,
+      created_at TEXT,
+      expires_at TEXT,
+      severity TEXT
+    );
+    CREATE TABLE IF NOT EXISTS market_messages (
+      id INTEGER PRIMARY KEY,
+      from_agent TEXT,
+      message_type TEXT,
+      sent_at TEXT
+    );
+    CREATE TABLE IF NOT EXISTS portfolio_positions (
+      id INTEGER PRIMARY KEY,
+      code TEXT,
+      shares REAL,
+      avg_price REAL,
+      opened_at TEXT,
+      closed_at TEXT
+    );
+    CREATE TABLE IF NOT EXISTS daily_ohlcv (
+      code TEXT NOT NULL,
+      date TEXT NOT NULL,
+      open REAL NOT NULL DEFAULT 0,
+      high REAL NOT NULL DEFAULT 0,
+      low REAL NOT NULL DEFAULT 0,
+      close REAL NOT NULL,
+      volume REAL NOT NULL DEFAULT 0,
+      updated_at TEXT NOT NULL DEFAULT '',
+      PRIMARY KEY (code, date)
+    );
   `);
 }
 

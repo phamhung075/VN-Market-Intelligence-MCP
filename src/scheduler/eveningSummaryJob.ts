@@ -18,6 +18,8 @@ import {
   SECTOR_NAME_VI,
 } from "../domain/services/sectorPeers.js";
 import { formatPnlSection } from "../domain/services/portfolioPnlCalculator.js";
+import { formatGlobalSnapshotSection } from "./morningBriefingJob.js";
+import type { GlobalSnapshot } from "../application/usecases/assembleBriefing.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Concurrency guard
@@ -157,6 +159,101 @@ export function formatForeignFlowSection(
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Evening message formatter (exported for unit testing — task 1512)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Build Telegram lines for the evening summary.
+ * Exported for unit testing (task 1512).
+ */
+export function formatEveningSummaryLines(summary: EveningSummary): string[] {
+  const lines: string[] = [`TÓM TẮT BUỔI TỐI ${summary.date}`];
+
+  // VN-Index close — first content line (FR-4, REQ-1426)
+  if (summary.vnIndex) {
+    const { close, change, changePct } = summary.vnIndex;
+    const closeFmt = fmtThousands(close);
+    const chSign = change >= 0 ? "+" : "";
+    const pctSign = changePct >= 0 ? "+" : "";
+    lines.push(
+      `VN-Index: ${closeFmt} (${chSign}${Math.round(change)} / ${pctSign}${changePct.toFixed(2)}%)`,
+    );
+  }
+
+  if (summary.topAlerts.length > 0) {
+    lines.push("");
+    lines.push(`Cảnh báo (${summary.topAlerts.length}):`);
+    for (const a of summary.topAlerts.slice(0, 5)) {
+      lines.push(`  [${a.severity.toUpperCase()}] ${a.message.slice(0, 80)}`);
+    }
+  }
+
+  if (summary.topStories.length > 0) {
+    lines.push("");
+    lines.push(`Tin quan trọng (${summary.topStories.length}):`);
+    for (const s of summary.topStories.slice(0, 5)) {
+      lines.push(`  - ${s.title.slice(0, 80)}`);
+    }
+  }
+
+  // News count diagnostic line (Task 1323)
+  const newsCount = summary.newsCount ?? 0;
+  if (newsCount > 0) {
+    lines.push("");
+    lines.push(`(${newsCount} tin tức hôm nay)`);
+  }
+
+  lines.push(...formatMoversSection(summary.watchlistMovers));
+
+  if (summary.predictionSignals.length > 0) {
+    lines.push("");
+    lines.push(`Tín hiệu dự đoán (${summary.predictionSignals.length}):`);
+    for (const p of summary.predictionSignals.slice(0, 3)) {
+      lines.push(`  ${p.question.slice(0, 70)}`);
+    }
+  }
+
+  const nonNeutralTa = (summary.taSummary ?? []).filter(
+    (s) => s.rsiStatus !== "neutral",
+  );
+  if (nonNeutralTa.length > 0) {
+    lines.push("");
+    lines.push("TA tín hiệu đóng cửa:");
+    for (const s of nonNeutralTa.slice(0, 5)) {
+      let line = `  ${s.code}:`;
+      if (s.rsi14 !== null && s.rsiStatus === "overbought") {
+        line += ` RSI=${s.rsi14.toFixed(1)} (quá mua)`;
+      } else if (s.rsi14 !== null && s.rsiStatus === "oversold") {
+        line += ` RSI=${s.rsi14.toFixed(1)} (quá bán)`;
+      }
+      if (s.priceVsMa20 === "above") line += ", giá trên MA20";
+      else if (s.priceVsMa20 === "below") line += ", giá dưới MA20";
+      lines.push(line);
+    }
+  }
+
+  // ── Portfolio P&L (task 1441/1442) ──────────────────────────────
+  if (summary.portfolioPnl != null && summary.portfolioPnl.items.length > 0) {
+    const pnlBlock = formatPnlSection(summary.portfolioPnl);
+    if (pnlBlock.length > 0) {
+      lines.push("");
+      lines.push(pnlBlock);
+    }
+  }
+
+  // ── Khối ngoại / Foreign flow (task 1503) ───────────────────────
+  lines.push(...formatForeignFlowSection(summary.foreignFlowMovers ?? []));
+
+  // ── Global snapshot (task 1512) ──────────────────────────────────
+  if (summary.globalSnapshot) {
+    lines.push("");
+    lines.push(...formatGlobalSnapshotSection(summary.globalSnapshot as GlobalSnapshot));
+  }
+
+  return lines;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Public API
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -249,82 +346,7 @@ export async function runEveningSummary(
 
     if (hasContent) {
       try {
-        const lines: string[] = [`TÓM TẮT BUỔI TỐI ${summary.date}`];
-
-        // VN-Index close — first content line (FR-4, REQ-1426)
-        if (summary.vnIndex) {
-          const { close, change, changePct } = summary.vnIndex;
-          const closeFmt = fmtThousands(close);
-          const chSign = change >= 0 ? "+" : "";
-          const pctSign = changePct >= 0 ? "+" : "";
-          lines.push(
-            `VN-Index: ${closeFmt} (${chSign}${Math.round(change)} / ${pctSign}${changePct.toFixed(2)}%)`,
-          );
-        }
-
-        if (summary.topAlerts.length > 0) {
-          lines.push("");
-          lines.push(`Cảnh báo (${summary.topAlerts.length}):`);
-          for (const a of summary.topAlerts.slice(0, 5)) {
-            lines.push(`  [${a.severity.toUpperCase()}] ${a.message.slice(0, 80)}`);
-          }
-        }
-
-        if (summary.topStories.length > 0) {
-          lines.push("");
-          lines.push(`Tin quan trọng (${summary.topStories.length}):`);
-          for (const s of summary.topStories.slice(0, 5)) {
-            lines.push(`  - ${s.title.slice(0, 80)}`);
-          }
-        }
-
-        // News count diagnostic line (Task 1323)
-        const newsCount = summary.newsCount ?? 0;
-        if (newsCount > 0) {
-          lines.push("");
-          lines.push(`(${newsCount} tin tức hôm nay)`);
-        }
-
-        lines.push(...formatMoversSection(summary.watchlistMovers));
-
-        if (summary.predictionSignals.length > 0) {
-          lines.push("");
-          lines.push(`Tín hiệu dự đoán (${summary.predictionSignals.length}):`);
-          for (const p of summary.predictionSignals.slice(0, 3)) {
-            lines.push(`  ${p.question.slice(0, 70)}`);
-          }
-        }
-
-        const nonNeutralTa = (summary.taSummary ?? []).filter(
-          (s) => s.rsiStatus !== "neutral",
-        );
-        if (nonNeutralTa.length > 0) {
-          lines.push("");
-          lines.push("TA tín hiệu đóng cửa:");
-          for (const s of nonNeutralTa.slice(0, 5)) {
-            let line = `  ${s.code}:`;
-            if (s.rsi14 !== null && s.rsiStatus === "overbought") {
-              line += ` RSI=${s.rsi14.toFixed(1)} (quá mua)`;
-            } else if (s.rsi14 !== null && s.rsiStatus === "oversold") {
-              line += ` RSI=${s.rsi14.toFixed(1)} (quá bán)`;
-            }
-            if (s.priceVsMa20 === "above") line += ", giá trên MA20";
-            else if (s.priceVsMa20 === "below") line += ", giá dưới MA20";
-            lines.push(line);
-          }
-        }
-
-        // ── Portfolio P&L (task 1441/1442) ──────────────────────────────
-        if (summary.portfolioPnl != null && summary.portfolioPnl.items.length > 0) {
-          const pnlBlock = formatPnlSection(summary.portfolioPnl);
-          if (pnlBlock.length > 0) {
-            lines.push("");
-            lines.push(pnlBlock);
-          }
-        }
-
-        // ── Khối ngoại / Foreign flow (task 1503) ───────────────────────
-        lines.push(...formatForeignFlowSection(summary.foreignFlowMovers ?? []));
+        const lines = formatEveningSummaryLines(summary);
 
         await doSend(lines.join("\n"), {
           persist: { from_agent: "evening-summary", message_type: "evening_summary" },

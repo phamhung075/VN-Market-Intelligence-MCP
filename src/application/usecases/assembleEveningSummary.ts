@@ -19,7 +19,7 @@ import { join } from "node:path";
 import { logger } from "../../infrastructure/logger.js";
 
 // Re-use shared types from assembleBriefing to avoid duplication
-import type { BriefingAlert, TopStory, TaSignal } from "./assembleBriefing.js";
+import type { BriefingAlert, TopStory, TaSignal, GlobalSnapshot } from "./assembleBriefing.js";
 import { defaultComputeTa } from "./assembleBriefing.js";
 import type { BriefingPredictionSignal } from "../../infrastructure/db/predictionStore.js";
 import type { PortfolioPnlResult } from "../../domain/services/portfolioPnlCalculator.js";
@@ -126,6 +126,11 @@ export interface EveningSummary {
    * undefined on summaries generated before task 1503.
    */
   foreignFlowMovers?: ForeignFlowMover[];
+  /**
+   * VIX / DXY / SP500 / Hang Seng snapshot at market close (Task 1512).
+   * undefined when commodity_prices table is empty or all values are zero.
+   */
+  globalSnapshot?: GlobalSnapshot;
 }
 
 /**
@@ -640,6 +645,30 @@ export async function assembleEveningSummary(
     portfolioPnl = null;
   }
 
+  // ── Step 6b: Global snapshot (VIX / DXY / SP500 / Hang Seng) ─────────────
+  let globalSnapshot: GlobalSnapshot | undefined;
+  try {
+    const gsRow = db
+      .query<
+        { vix: number; dxy: number; sp500: number; hang_seng: number; fetched_at: string },
+        []
+      >("SELECT vix, dxy, sp500, hang_seng, fetched_at FROM commodity_prices LIMIT 1")
+      .get();
+    if (gsRow && (gsRow.vix !== 0 || gsRow.dxy !== 0 || gsRow.sp500 !== 0)) {
+      globalSnapshot = {
+        vix: gsRow.vix,
+        dxy: gsRow.dxy,
+        sp500: gsRow.sp500,
+        hangSeng: gsRow.hang_seng,
+        fetchedAt: gsRow.fetched_at,
+      };
+    }
+  } catch (gsErr) {
+    logger.warn("[assembleEveningSummary] globalSnapshot step failed", {
+      error: gsErr instanceof Error ? gsErr.message : String(gsErr),
+    });
+  }
+
   // ── Step 6: Persist summary ───────────────────────────────────────────────
   const date = todayVietnam();
   const generatedAt = new Date().toISOString();
@@ -658,6 +687,8 @@ export async function assembleEveningSummary(
     ...(vnIndex !== undefined ? { vnIndex } : {}),
     portfolioPnl,
     foreignFlowMovers,
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    ...(globalSnapshot !== undefined ? { globalSnapshot } : { globalSnapshot: undefined as unknown as GlobalSnapshot }),
   };
 
   try {
