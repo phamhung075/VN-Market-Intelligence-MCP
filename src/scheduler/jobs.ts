@@ -403,26 +403,34 @@ export function startScheduler() {
   // 22:30 GMT+7 (15:30 UTC) without morning briefing / evening summary having
   // run, fire them once. 30s delay matches bctcReparseJob pattern. task 1430.
   setTimeout(async () => {
-    try {
-      log('[startup-catchup] probe firing — checking morningBriefingJob + eveningSummaryJob + franceSummaryJob')
-      const db = getDb()
+    log('[startup-catchup] probe firing — checking morningBriefingJob + eveningSummaryJob + franceSummaryJob')
+    const db = getDb()
 
+    try {
       if (shouldRunCatchup(db, 'morningBriefingJob', 1, 0, new Date(), true)) {
         log('[startup-catchup] morningBriefingJob: running catch-up')
         await recordJobRun(db, 'morningBriefingJob', async () => { await runMorningBriefing() })
       }
+    } catch (err) {
+      log(`[startup-catchup] morningBriefingJob error: ${err instanceof Error ? err.message : String(err)}`)
+    }
 
+    try {
       if (shouldRunCatchup(db, 'eveningSummaryJob', 15, 30, new Date(), true)) {
         log('[startup-catchup] eveningSummaryJob: running catch-up')
         await recordJobRun(db, 'eveningSummaryJob', async () => { await runEveningSummary() })
       }
+    } catch (err) {
+      log(`[startup-catchup] eveningSummaryJob error: ${err instanceof Error ? err.message : String(err)}`)
+    }
 
+    try {
       if (shouldRunCatchup(db, 'franceSummaryJob', 9, 0, new Date(), true)) {
         log('[startup-catchup] franceSummaryJob: running catch-up')
         await recordJobRun(db, 'franceSummaryJob', async () => { await runFranceSummary() })
       }
     } catch (err) {
-      log(`[startup-catchup] error: ${err instanceof Error ? err.message : String(err)}`)
+      log(`[startup-catchup] franceSummaryJob error: ${err instanceof Error ? err.message : String(err)}`)
     }
   }, 30_000)
 
