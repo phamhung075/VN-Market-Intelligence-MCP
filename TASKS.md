@@ -13,13 +13,13 @@
 
 ---
 
-## Sprint 228 — fix(foreign-flow): root-cause parse errors + add defensive validation
+## Sprint 228 — fix(foreign-flow): root-cause parse errors + add defensive validation — COMPLETE (2026-04-21)
 
 | ID | Title | Status | Role |
 |----|-------|--------|------|
-| 1566_a | [Dev] TDD RED — `1566-foreign-flow-parse-hardening.test.ts` with 5 failing assertions | Todo | Dev |
-| 1566_b | [Dev] GREEN — foreignFlowValidator + server.ts truncation/schema + CB integration + schema ext | Todo | Dev |
-| 1566_c | [DevOps/Dev] VPS audit & hardening: fetch-foreign-flow.sh diagnostics, payload patterns, truncation evidence | Review | Dev |
+| 1566_a | [Dev] TDD RED — `1566-foreign-flow-parse-hardening.test.ts` with 5 failing assertions | Done | Dev |
+| 1566_b | [Dev] GREEN — foreignFlowValidator + server.ts truncation/schema + CB integration + schema ext | Done | Dev |
+| 1566_c | [DevOps/Dev] VPS audit & hardening: fetch-foreign-flow.sh diagnostics, payload patterns, truncation evidence | Done | Dev |
 
 ---
 
@@ -32,7 +32,7 @@
 | 1562 | [Dev] Track A: create 02-financial-analyst.md + 06-digest-predict.md; delete old 02/03/08 agent files; update agent-roster.md + mcp-tools.md | Done | Dev |
 | 1563 | [Dev] Track B: `getCycleBootstrap` use case + `registerCycleBootstrapTool` + registry.ts + tool-registry.json | Done | Dev |
 | 1564 | [Dev] Track C: update all 7 agent .md files — Step 0 bootstrap + validation step + unified-agent role change (ships after 1563) | Done | Dev |
-| 1565 | [QA] Verify: bootstrap tool shape, agent count 9→7, signal latency ≤3s, no hallucinated prices reach MARKET | Review | QA |
+| 1565 | [QA] Verify: bootstrap tool shape, agent count 9→7, signal latency ≤3s, no hallucinated prices reach MARKET | Done | QA |
 
 ---
 
