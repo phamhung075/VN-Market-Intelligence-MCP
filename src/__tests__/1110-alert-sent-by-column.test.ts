@@ -23,7 +23,7 @@ Bun.env["DB_PATH"] = ":memory:";
 
 import { initDatabase, getDb, closeDb } from "../infrastructure/db/schema.js";
 import { storeAlerts, storeAlertsFromCommander } from "../infrastructure/db/alertStore.js";
-import { registerAlertTools } from "../interface/mcp/tools/alerts.js";
+import { registerAlertTools } from "../interface/mcp/tools/alerts/alerts.js";
 import type { Alert } from "../domain/services/alertGenerator.js";
 import type { Signal } from "../domain/services/signalDetector.js";
 

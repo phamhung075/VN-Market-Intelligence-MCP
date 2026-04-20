@@ -22,7 +22,7 @@ import {
 import { generateAlerts } from "../domain/services/alertGenerator.js";
 import type { Signal } from "../domain/services/signalDetector.js";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { registerAlertMuteTools } from "../interface/mcp/tools/alertMuteTools.js";
+import { registerAlertMuteTools } from "../interface/mcp/tools/alerts/alertMuteTools.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers

@@ -23,11 +23,11 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 
-import { initDatabase, getDb } from "../../../infrastructure/db/schema.js";
-import { detectSignals } from "../../../domain/services/signalDetector.js";
-import type { MarketSnapshot } from "../../../domain/services/signalDetector.js";
-import { generateAlerts } from "../../../domain/services/alertGenerator.js";
-import type { Alert } from "../../../domain/services/alertGenerator.js";
+import { initDatabase, getDb } from "../../../../infrastructure/db/schema.js";
+import { detectSignals } from "../../../../domain/services/signalDetector.js";
+import type { MarketSnapshot } from "../../../../domain/services/signalDetector.js";
+import { generateAlerts } from "../../../../domain/services/alertGenerator.js";
+import type { Alert } from "../../../../domain/services/alertGenerator.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types

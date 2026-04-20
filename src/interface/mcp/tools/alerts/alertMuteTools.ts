@@ -20,12 +20,12 @@
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { getDb, initDatabase } from "../../../infrastructure/db/schema.js";
+import { getDb, initDatabase } from "../../../../infrastructure/db/schema.js";
 import {
   muteStock,
   unmuteStock,
   listMutes,
-} from "../../../infrastructure/db/alertMuteStore.js";
+} from "../../../../infrastructure/db/alertMuteStore.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Formatting helpers

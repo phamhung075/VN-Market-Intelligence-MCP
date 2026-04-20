@@ -16,7 +16,7 @@
  */
 
 import type { Database } from "bun:sqlite";
-import { getCronJobHealthSummary } from "../infrastructure/db/cronJobRunStore.js";
+import { getCronJobHealthSummary } from "../../infrastructure/db/cronJobRunStore.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Constants
@@ -62,7 +62,7 @@ export async function runCronHealthAlert(
   if (db) {
     resolvedDb = db;
   } else {
-    const { getDb } = await import("../infrastructure/db/schema.js");
+    const { getDb } = await import("../../infrastructure/db/schema.js");
     resolvedDb = getDb();
   }
 
@@ -71,7 +71,7 @@ export async function runCronHealthAlert(
     resolvedSend = sendFn;
   } else {
     const { sendTelegramWork } = await import(
-      "../infrastructure/notifiers/telegram.js"
+      "../../infrastructure/notifiers/telegram.js"
     );
     resolvedSend = (text: string) => sendTelegramWork(text, { parseMode: "" });
   }

@@ -277,7 +277,7 @@ describe("Task 188 — Daily Alert Digest", () => {
 
   // ── 12: Concurrency guard ────────────────────────────────────────────────
   it("concurrency guard skips second invocation if first is still running", async () => {
-    const { runAlertDigest } = await import("../scheduler/alertDigestJob.js");
+    const { runAlertDigest } = await import("../scheduler/alerts/alertDigestJob.js");
 
     let callCount = 0;
 
@@ -308,7 +308,7 @@ describe("Task 188 — Daily Alert Digest", () => {
   // ── 13: MCP tool send_alert_digest is registered on server ───────────────
   it("send_alert_digest MCP tool is registered on McpServer", () => {
     const { McpServer } = require("@modelcontextprotocol/sdk/server/mcp.js");
-    const { registerAlertDigestTools } = require("../interface/mcp/tools/alertDigestTools.js");
+    const { registerAlertDigestTools } = require("../interface/mcp/tools/alerts/alertDigestTools.js");
 
     const server = new McpServer(
       { name: "test-188", version: "0.0.0" },
@@ -326,7 +326,7 @@ describe("Task 188 — Daily Alert Digest", () => {
   // ── 14: MCP tool returns text content ────────────────────────────────────
   it("send_alert_digest MCP tool handler returns text content", async () => {
     const { McpServer } = require("@modelcontextprotocol/sdk/server/mcp.js");
-    const { registerAlertDigestTools } = require("../interface/mcp/tools/alertDigestTools.js");
+    const { registerAlertDigestTools } = require("../interface/mcp/tools/alerts/alertDigestTools.js");
 
     const server = new McpServer(
       { name: "test-188b", version: "0.0.0" },
@@ -351,7 +351,7 @@ describe("Task 188 — Daily Alert Digest", () => {
   // ── 15: Telegram not configured → returns config message ────────────────
   it("when Telegram not configured, digest text includes config notice", async () => {
     // The digest assembly itself works; the Telegram notice is in the job
-    const { runAlertDigest } = await import("../scheduler/alertDigestJob.js");
+    const { runAlertDigest } = await import("../scheduler/alerts/alertDigestJob.js");
 
     let receivedDigest: AlertDigest | undefined;
 

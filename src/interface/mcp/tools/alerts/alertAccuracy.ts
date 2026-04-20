@@ -32,7 +32,7 @@
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { getDb, initDatabase } from "../../../infrastructure/db/schema.js";
+import { getDb, initDatabase } from "../../../../infrastructure/db/schema.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Internal types

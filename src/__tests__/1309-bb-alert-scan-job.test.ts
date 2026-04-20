@@ -94,7 +94,7 @@ function getAlerts(db: Database): Array<{
 // Import the production function (will fail until implementation exists)
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { runBbAlertScan } from "../scheduler/bbAlertScanJob.js";
+import { runBbAlertScan } from "../scheduler/alerts/bbAlertScanJob.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tests

@@ -16,8 +16,8 @@
  * infrastructure/notifiers only.
  */
 
-import type { AlertDigest } from "../application/usecases/assembleAlertDigest.js";
-import { logger } from "../infrastructure/logger.js";
+import type { AlertDigest } from "../../application/usecases/assembleAlertDigest.js";
+import { logger } from "../../infrastructure/logger.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Concurrency guard
@@ -55,7 +55,7 @@ export async function runAlertDigest(
       digestFn ??
       (async () => {
         const { assembleAlertDigest } = await import(
-          "../application/usecases/assembleAlertDigest.js"
+          "../../application/usecases/assembleAlertDigest.js"
         );
         return assembleAlertDigest();
       });
@@ -86,7 +86,7 @@ export async function runAlertDigest(
     // Attempt to send via Telegram if configured
     try {
       const { sendTelegram } = await import(
-        "../infrastructure/notifiers/telegram.js"
+        "../../infrastructure/notifiers/telegram.js"
       );
       const sent = await sendTelegram(digest.text);
 

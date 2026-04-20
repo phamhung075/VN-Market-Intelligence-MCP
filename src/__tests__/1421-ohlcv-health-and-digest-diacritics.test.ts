@@ -80,7 +80,7 @@ describe("Task 1421 FIX A — ohlcv-daily-aggregator health coverage", () => {
 describe("Task 1421 FIX B — alertDigestTools.ts diacritics", () => {
   const TOOLS_PATH = join(
     import.meta.dir,
-    "../interface/mcp/tools/alertDigestTools.ts",
+    "../interface/mcp/tools/alerts/alertDigestTools.ts",
   );
 
   it("source contains '[Telegram: đã gửi thành công]' (accented)", () => {

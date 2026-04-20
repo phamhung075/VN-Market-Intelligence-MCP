@@ -12,7 +12,7 @@
 
 import { describe, it, expect, beforeEach } from "bun:test";
 import { Database } from "bun:sqlite";
-import { runCronHealthAlert } from "../scheduler/cronHealthAlertJob.js";
+import { runCronHealthAlert } from "../scheduler/alerts/cronHealthAlertJob.js";
 import { CRONS } from "../scheduler/jobs.js";
 
 // ─────────────────────────────────────────────────────────────────────────────

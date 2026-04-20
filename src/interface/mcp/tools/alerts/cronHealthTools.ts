@@ -17,8 +17,8 @@ import type { Database } from "bun:sqlite";
 import {
   getCronJobHealthSummary,
   type CronJobHealthSummary,
-} from "../../../infrastructure/db/cronJobRunStore.js";
-import { getDb } from "../../../infrastructure/db/schema.js";
+} from "../../../../infrastructure/db/cronJobRunStore.js";
+import { getDb } from "../../../../infrastructure/db/schema.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Formatting

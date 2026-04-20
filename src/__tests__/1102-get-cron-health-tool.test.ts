@@ -14,7 +14,7 @@ Bun.env["DB_PATH"] = ":memory:";
 import { describe, it, expect, beforeEach } from "bun:test";
 import { Database } from "bun:sqlite";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { registerCronHealthTools } from "../interface/mcp/tools/cronHealthTools.js";
+import { registerCronHealthTools } from "../interface/mcp/tools/alerts/cronHealthTools.js";
 import {
   insertCronJobRunStart,
   updateCronJobRunEnd,
