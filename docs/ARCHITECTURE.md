@@ -77,9 +77,9 @@ src/
 │   ├── mcp/
 │   │   ├── server.ts                ← McpServer factory, registers tools via registry.ts
 │   │   ├── transport.ts             ← SSEServerTransport setup
-│   │   └── tools/                   ← 99 registered MCP tools (via registry.ts)
+│   │   └── tools/                   ← 100 registered MCP tools (via registry.ts)
 │   └── scheduler/index.ts           ← startScheduler()
-└── scheduler/                       ← 36 files: jobs.ts + summaryJobs.ts + 34 job handlers
+└── scheduler/                       ← 37 files: jobs.ts + summaryJobs.ts + 35 job handlers
 ```
 
 ## Key Data Flow

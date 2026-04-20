@@ -43,6 +43,17 @@ context: `docs/handoffs/TASK_211.md`
 
 ---
 
+## Sprint 193 — fix(test-isolation): 1526 mock.module poison — 47 failures — COMPLETE
+
+| ID | Title | Status | Role |
+|----|-------|--------|------|
+| 219 | fix(test-isolation): remove mock.module from 1526; inject detectSignalsFn via DI param | Done | Dev |
+
+context: `docs/handoffs/TASK_219.md`
+merge: 26eba37
+
+---
+
 ## Backlog
 
 | ID | Title | Priority | Notes |

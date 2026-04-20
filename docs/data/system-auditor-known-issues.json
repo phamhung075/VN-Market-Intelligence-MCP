@@ -3,12 +3,23 @@
     { "fingerprint": "log_error:hose_all_price_sources_fail", "first_seen": "2026-04-14", "last_reported": "2026-04-14", "note": "transient network — VPS price push expected off-hours", "status": "monitor" },
     { "fingerprint": "log_error:ssc_ssl_certificate", "first_seen": "2026-04-11", "last_reported": "2026-04-11", "note": "SSC geo-blocked from France — VPS proxy fallback active", "status": "monitor" },
     { "fingerprint": "log_warn:reuters_trading_economics_zero_items", "first_seen": "2026-04-12", "last_reported": "2026-04-12", "note": "off-hours normal; Reuters intermittent geo-block", "status": "monitor" },
-    { "fingerprint": "memory_stale:sprint_stats_in_project_034_status", "first_seen": "2026-04-17", "last_reported": "2026-04-17", "note": "MEMORY.md line 3 cites sprint 86, 97 tools, 29 scheduler files — actual sprint 180, 99 tools, 36 files" },
+    { "fingerprint": "memory_stale:sprint_stats_in_project_034_status", "first_seen": "2026-04-17", "last_reported": "2026-04-17", "note": "MEMORY.md line 3 cites sprint 86, 97 tools, 29 scheduler files — actual sprint 216, 100 tools, 37 files" },
     { "fingerprint": "memory_contradiction:vps_location", "first_seen": "2026-04-17", "last_reported": "2026-04-17", "note": "project_bctc_vps_proxy.md says VPS Singapore; ARCHITECTURE.md+CLAUDE.md say Vinahost Vietnam" },
     { "fingerprint": "doc_stale_ambiguous:SPRINT_GOAL_missing_sprints_112_to_119", "first_seen": "2026-04-17", "last_reported": "2026-04-17", "note": "Sprints 112-119 have no entries in SPRINT_GOAL.md; exact goal text unknown — cannot auto-fill" },
-    { "fingerprint": "doc_synced:ARCHITECTURE.md", "first_seen": "2026-04-17", "last_reported": "2026-04-19", "note": "2026-04-17: 97→98 tools, 28→34 sched files. 2026-04-19: 98→99 tools, 34→36 sched files" },
+    { "fingerprint": "doc_synced:ARCHITECTURE.md", "first_seen": "2026-04-17", "last_reported": "2026-04-20", "note": "2026-04-17: 97→98 tools, 28→34 sched files. 2026-04-19: 98→99 tools, 34→36 sched files. 2026-04-20: 99→100 tools, 36→37 sched files" },
     { "fingerprint": "doc_synced:cron-registry.json", "first_seen": "2026-04-17", "last_reported": "2026-04-17", "note": "franceSummaryJob schedule corrected, added ohlcvDailyAggregatorJob+ohlcvStartupProbe, schedulerFileCount 32→34" },
-    { "fingerprint": "doc_synced:project-stats.json", "first_seen": "2026-04-17", "last_reported": "2026-04-17", "note": "currentSprint 120→128, schedulerFileCount 32→34, totalTasksDone 304→314" },
-    { "fingerprint": "doc_synced:SPRINT_GOAL.md", "first_seen": "2026-04-17", "last_reported": "2026-04-17", "note": "Removed duplicate Sprint 111 heading" }
+    { "fingerprint": "doc_synced:project-stats.json", "first_seen": "2026-04-17", "last_reported": "2026-04-20", "note": "2026-04-17: currentSprint 120→128. 2026-04-20: schedulerFileCount 36→37" },
+    { "fingerprint": "doc_synced:SPRINT_GOAL.md", "first_seen": "2026-04-17", "last_reported": "2026-04-17", "note": "Removed duplicate Sprint 111 heading" },
+    { "fingerprint": "db_growth:tracked_indicators_no_dedup", "first_seen": "2026-04-20", "last_reported": "2026-04-20", "note": "brent_crude_usd|yahoo=803, gold_usd_oz|yahoo=804, gdp_growth_pct|vneconomy=295 rows — no dedup on INSERT" },
+    { "fingerprint": "db_growth:kinhdich_readings_rate", "first_seen": "2026-04-20", "last_reported": "2026-04-20", "note": "651 kinhdich readings on 2026-04-20 (>600 threshold) — cron oversampling" },
+    { "fingerprint": "db_stale:macro_indicators", "first_seen": "2026-04-20", "last_reported": "2026-04-20", "note": "macro_indicators.fetched_at=2025-03-01 for Vietnam — 400+ days stale (threshold: >30 days)" },
+    { "fingerprint": "db_noise:system_logs_error_ratio", "first_seen": "2026-04-20", "last_reported": "2026-04-20", "note": "100% of 84,328 system_logs are error/warn level — no info-level logs, logger config suspect" },
+    { "fingerprint": "db_error_top:reuters_failed_to_fetch_rss_fee", "first_seen": "2026-04-20", "last_reported": "2026-04-20", "note": "[reuters] failed to fetch RSS feed — 11,752 occurrences, geo-blocked from France" },
+    { "fingerprint": "db_error_top:pdf_failed_to_download_or_ex", "first_seen": "2026-04-20", "last_reported": "2026-04-20", "note": "[pdf] failed to download or extract PDF — 8,520 occurrences, VPS BCTC proxy may be down" },
+    { "fingerprint": "db_error_top:push_foreign_flow_parse_erro", "first_seen": "2026-04-20", "last_reported": "2026-04-20", "note": "[push-foreign-flow] parse error — 3,739 total / 784 in last 24h, fix in sprint 214 insufficient" },
+    { "fingerprint": "db_error_recurring:foreign_flow_parse", "first_seen": "2026-04-20", "last_reported": "2026-04-20", "note": "784 parse errors in last 24h (threshold: >50) — fix not effective, needs root-cause audit" },
+    { "fingerprint": "db_narrow:rag_analyses_window", "first_seen": "2026-04-20", "last_reported": "2026-04-20", "note": "RAG window 3.0 days, 526 entries — days_span < 5 threshold fires, pollNews may not be running" },
+    { "fingerprint": "doc_stale_ambiguous:TASKS.md_sprints_193_to_215", "first_seen": "2026-04-20", "last_reported": "2026-04-20", "note": "TASKS.md has sprint 190-192 then jumps to 216 — sprints 193-215 absent, archive status unknown" },
+    { "fingerprint": "doc_stale_ambiguous:SPRINT_GOAL.md_sprints_190_to_216", "first_seen": "2026-04-20", "last_reported": "2026-04-20", "note": "Sprint 188 still ACTIVE, 189 UPCOMING in SPRINT_GOAL.md — project at sprint 216, 26 sprints undocumented" }
   ]
 }

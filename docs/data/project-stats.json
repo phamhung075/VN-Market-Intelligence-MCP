@@ -6,7 +6,7 @@
   "previousSprint": { "number": 207, "status": "COMPLETE", "completedDate": "2026-04-20" },
   "sprintGoal": "fix(briefing): BCTC-overdue prefix dedup in unresolvedAlerts",
   "toolCount": 100,
-  "schedulerFileCount": 36,
+  "schedulerFileCount": 37,
   "knowledgeFileCount": 15,
   "devAgentCount": 13,
   "analysisAgentCount": 9,
