@@ -280,6 +280,32 @@ export function initSystemTables(db: Database): void {
   `);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_vpl_service_ts ON vps_push_log(service, pushed_at)`);
 
+  // Task 1566: Extend vps_push_log with 8 new observability columns (safe IF NOT EXISTS)
+  try {
+    db.exec(`ALTER TABLE vps_push_log ADD COLUMN truncation_detected INTEGER`);
+  } catch {}
+  try {
+    db.exec(`ALTER TABLE vps_push_log ADD COLUMN schema_errors_count INTEGER`);
+  } catch {}
+  try {
+    db.exec(`ALTER TABLE vps_push_log ADD COLUMN failed_item_indices TEXT`);
+  } catch {}
+  try {
+    db.exec(`ALTER TABLE vps_push_log ADD COLUMN parse_time_ms INTEGER`);
+  } catch {}
+  try {
+    db.exec(`ALTER TABLE vps_push_log ADD COLUMN validation_time_ms INTEGER`);
+  } catch {}
+  try {
+    db.exec(`ALTER TABLE vps_push_log ADD COLUMN db_time_ms INTEGER`);
+  } catch {}
+  try {
+    db.exec(`ALTER TABLE vps_push_log ADD COLUMN vps_response_size_bytes INTEGER`);
+  } catch {}
+  try {
+    db.exec(`ALTER TABLE vps_push_log ADD COLUMN circuit_breaker_state TEXT`);
+  } catch {}
+
   // ── Scheduler Locks (Task 1457) ───────────────────────────────────────────
   db.exec(`
     CREATE TABLE IF NOT EXISTS scheduler_locks (

@@ -18,6 +18,15 @@ export interface VpsPushLogEntry {
   status: "ok" | "error";
   errorMsg?: string;
   durationMs?: number;
+  // Task 1566: extended observability for foreign-flow
+  truncationDetected?: boolean;
+  schemaErrorsCount?: number;
+  failedItemIndices?: string; // JSON-stringified array of indices with errors
+  parseTimeMs?: number;
+  validationTimeMs?: number;
+  dbTimeMs?: number;
+  vpsResponseSizeBytes?: number;
+  circuitBreakerState?: "closed" | "open" | "half-open";
 }
 
 /**
@@ -26,14 +35,26 @@ export interface VpsPushLogEntry {
 export function logVpsPush(entry: VpsPushLogEntry, db?: Database): void {
   const d = db ?? getDb();
   d.prepare(
-    `INSERT INTO vps_push_log (service, items_count, status, error_msg, duration_ms)
-     VALUES (?, ?, ?, ?, ?)`,
+    `INSERT INTO vps_push_log (
+       service, items_count, status, error_msg, duration_ms,
+       truncation_detected, schema_errors_count, failed_item_indices,
+       parse_time_ms, validation_time_ms, db_time_ms,
+       vps_response_size_bytes, circuit_breaker_state
+     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   ).run(
     entry.service,
     entry.itemsCount,
     entry.status,
     entry.errorMsg ?? null,
     entry.durationMs ?? null,
+    entry.truncationDetected ?? null,
+    entry.schemaErrorsCount ?? null,
+    entry.failedItemIndices ?? null,
+    entry.parseTimeMs ?? null,
+    entry.validationTimeMs ?? null,
+    entry.dbTimeMs ?? null,
+    entry.vpsResponseSizeBytes ?? null,
+    entry.circuitBreakerState ?? null,
   );
 }
 

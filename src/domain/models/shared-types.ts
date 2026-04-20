@@ -126,3 +126,24 @@ export interface RssItem {
    */
   source: string;
 }
+
+// ---------------------------------------------------------------------------
+// Foreign Flow Input Type (Task 1131 / 1566b)
+// ---------------------------------------------------------------------------
+
+/**
+ * Input item for upsertForeignFlow.
+ * Only the four foreign-flow columns are targeted in the DO UPDATE SET clause;
+ * price/financial columns written by storeTradingStats are never overwritten.
+ */
+export interface ForeignFlowUpsertItem {
+  code: string;
+  /** "YYYY-MM-DD" */
+  date: string;
+  foreign_volume: number;
+  foreign_room: number | null;
+  /** Holding ratio as a decimal (0–1). If > 1.0, the function divides by 100. */
+  holding_ratio: number | null;
+  /** ISO 8601 UTC timestamp. null → server uses SQLite datetime('now'). */
+  fetched_at: string | null;
+}

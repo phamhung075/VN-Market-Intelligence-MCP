@@ -13,12 +13,13 @@
 
 ---
 
-## Sprint 227 — fix(watchdog): MARKET "pipeline restored" alert on VPS recovery
+## Sprint 228 — fix(foreign-flow): root-cause parse errors + add defensive validation
 
 | ID | Title | Status | Role |
 |----|-------|--------|------|
-| 1557_a | TDD RED: `1557-watchdog-recovery.test.ts` — 3 failing assertions: recovery fires after stale, silent if never stale, reset clears flag | Review | Dev |
-| 1557_b | GREEN: add `lastWasStale` flag + `_resetWatchdogStaleFlag()` export; "ok" branch sends recovery MARKET msg + returns "restored" when flag set; set flag on alert-sent | Todo | Dev |
+| 1566_a | [Dev] TDD RED — `1566-foreign-flow-parse-hardening.test.ts` with 5 failing assertions | Todo | Dev |
+| 1566_b | [Dev] GREEN — foreignFlowValidator + server.ts truncation/schema + CB integration + schema ext | Todo | Dev |
+| 1566_c | [DevOps/Dev] VPS audit & hardening: fetch-foreign-flow.sh diagnostics, payload patterns, truncation evidence | Review | Dev |
 
 ---
 
