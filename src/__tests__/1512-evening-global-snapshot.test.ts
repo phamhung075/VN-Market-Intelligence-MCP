@@ -102,7 +102,7 @@ describe("1512 evening-global-snapshot", () => {
   test("AC-1: EveningSummary interface has globalSnapshot field", async () => {
     const mod = await import("../application/usecases/assembleEveningSummary.js");
     // Field not present yet — verify by calling assembleEveningSummary and checking key exists
-    const summary = await (mod.assembleEveningSummary as Function)({ db });
+    const summary = await (mod.assembleEveningSummary as Function)({ db, reportsDir: "/tmp/__test-1512__" });
     // RED: globalSnapshot key absent → fails hasOwnProperty or toBeDefined
     expect("globalSnapshot" in summary).toBe(true);
   });
@@ -111,7 +111,7 @@ describe("1512 evening-global-snapshot", () => {
   test("AC-2: assembleEveningSummary populates globalSnapshot from commodity_prices", async () => {
     db.exec(`INSERT INTO commodity_prices VALUES ('yahoo', 19.5, 103.8, 5200.0, 17500.0, '2026-04-20T22:00:00Z')`);
     const { assembleEveningSummary } = await import("../application/usecases/assembleEveningSummary.js");
-    const summary = await assembleEveningSummary({ db });
+    const summary = await assembleEveningSummary({ db, reportsDir: "/tmp/__test-1512__" });
     expect(summary.globalSnapshot).toBeDefined();
     expect(summary.globalSnapshot!.vix).toBeCloseTo(19.5);
     expect(summary.globalSnapshot!.dxy).toBeCloseTo(103.8);
@@ -123,7 +123,7 @@ describe("1512 evening-global-snapshot", () => {
   // AC-3
   test("AC-3: assembleEveningSummary sets globalSnapshot=undefined when commodity_prices empty", async () => {
     const { assembleEveningSummary } = await import("../application/usecases/assembleEveningSummary.js");
-    const summary = await assembleEveningSummary({ db });
+    const summary = await assembleEveningSummary({ db, reportsDir: "/tmp/__test-1512__" });
     expect(summary.globalSnapshot).toBeUndefined();
   });
 
