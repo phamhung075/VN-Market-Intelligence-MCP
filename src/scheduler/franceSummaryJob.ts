@@ -53,6 +53,8 @@ export interface FranceSummaryResult {
   moverCount: number
   /** Number of alerts included (max 3). */
   alertCount: number
+  /** Deduplicated alert rows returned (max 3, 40-char prefix dedup). */
+  alerts: AlertRow[]
   /** Top-3 non-neutral TA signals (replaces taCount). */
   taSignals: TaSignalRow[]
   /** VN-Index snapshot included in digest, or null if unavailable. */
@@ -191,15 +193,21 @@ function fetchTopMovers(db: Database): MoverRow[] {
  */
 function fetchTopAlerts(db: Database): AlertRow[] {
   try {
-    return db
+    const rows = db
       .prepare<AlertRow, []>(`
         SELECT id, severity, message, triggered_at
         FROM alerts
         WHERE triggered_at >= datetime('now', '-24 hours')
         ORDER BY ${SEVERITY_CASE}, triggered_at DESC
-        LIMIT 3
+        LIMIT 10
       `)
       .all()
+    const seen = new Map<string, AlertRow>()
+    for (const r of rows) {
+      const prefix = (r.message ?? "").slice(0, 40)
+      if (!seen.has(prefix)) seen.set(prefix, r)
+    }
+    return Array.from(seen.values()).slice(0, 3)
   } catch (err) {
     logger.warn("[franceSummaryJob] alerts query failed", {
       error: err instanceof Error ? err.message : String(err),
@@ -478,7 +486,7 @@ export async function runFranceSummary(opts: FranceSummaryOptions = {}): Promise
   // DB-level same-day dedup guard (FR-2)
   // Fail-open: if check throws, proceed with send.
   if (alreadySentToday(resolvedDb)) {
-    return { sent: false, moverCount: 0, alertCount: 0, taSignals: [], vnIndex: null, globalSnapshot: null, foreignFlowMovers: [], upcomingDeadlines: [] }
+    return { sent: false, moverCount: 0, alertCount: 0, alerts: [], taSignals: [], vnIndex: null, globalSnapshot: null, foreignFlowMovers: [], upcomingDeadlines: [] }
   }
 
   // Resolve send function — default: sendTelegramMarket (MARKET channel)
@@ -738,7 +746,7 @@ export async function runFranceSummary(opts: FranceSummaryOptions = {}): Promise
     foreignFlowMovers.length === 0 &&
     upcomingDeadlines.length === 0
   ) {
-    return { sent: false, moverCount: 0, alertCount: 0, taSignals: [], vnIndex: null, globalSnapshot: null, foreignFlowMovers: [], upcomingDeadlines: [] }
+    return { sent: false, moverCount: 0, alertCount: 0, alerts: [], taSignals: [], vnIndex: null, globalSnapshot: null, foreignFlowMovers: [], upcomingDeadlines: [] }
   }
 
   const dateStr = formatDateVI(nowFn())
@@ -746,11 +754,11 @@ export async function runFranceSummary(opts: FranceSummaryOptions = {}): Promise
 
   try {
     await resolvedSend(message)
-    return { sent: true, moverCount: movers.length, alertCount: alerts.length, taSignals, vnIndex, globalSnapshot, foreignFlowMovers, upcomingDeadlines }
+    return { sent: true, moverCount: movers.length, alertCount: alerts.length, alerts, taSignals, vnIndex, globalSnapshot, foreignFlowMovers, upcomingDeadlines }
   } catch (err) {
     logger.warn("[franceSummaryJob] Telegram send failed", {
       error: err instanceof Error ? err.message : String(err),
     })
-    return { sent: false, moverCount: movers.length, alertCount: alerts.length, taSignals, vnIndex, globalSnapshot, foreignFlowMovers, upcomingDeadlines }
+    return { sent: false, moverCount: movers.length, alertCount: alerts.length, alerts, taSignals, vnIndex, globalSnapshot, foreignFlowMovers, upcomingDeadlines }
   }
 }

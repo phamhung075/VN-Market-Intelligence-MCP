@@ -188,7 +188,7 @@ describe("Task 1370 — fetchTopMovers filters by watchlist", () => {
       result = await runFranceSummary(opts)
     } catch {
       threw = true
-      result = { sent: false, moverCount: 0, alertCount: 0, taSignals: [], vnIndex: null, globalSnapshot: null }
+      result = { sent: false, moverCount: 0, alertCount: 0, alerts: [], taSignals: [], vnIndex: null, globalSnapshot: null }
     }
 
     expect(threw).toBe(false)
@@ -224,7 +224,7 @@ describe("Task 1370 — fetchTopMovers filters by watchlist", () => {
       result = await runFranceSummary(opts)
     } catch {
       threw = true
-      result = { sent: false, moverCount: 0, alertCount: 0, taSignals: [], vnIndex: null, globalSnapshot: null }
+      result = { sent: false, moverCount: 0, alertCount: 0, alerts: [], taSignals: [], vnIndex: null, globalSnapshot: null }
     }
 
     expect(threw).toBe(false)

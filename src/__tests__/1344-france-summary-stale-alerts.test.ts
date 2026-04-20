@@ -305,3 +305,27 @@ describe("Task 1344 — france-summary stale alerts + dedup", () => {
   });
 
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Task 213 — fetchTopAlerts 40-char prefix dedup
+// ─────────────────────────────────────────────────────────────────────────────
+describe("Task 213 — fetchTopAlerts prefix dedup", () => {
+  it("AC-1: 2 BCTC alerts with same 40-char prefix within 24h → only 1 returned", async () => {
+    const db = makeDb();
+    seedMover(db);
+
+    // Seed 2 alerts with identical 40-char prefix fired at different times within 24h
+    const prefix = "BCTC overdue: VCB has not filed Q1-2026 r";
+    db.exec(`
+      INSERT INTO alerts (id, triggered_at, severity, message)
+      VALUES
+        ('bctc-1', datetime('now', '-1 hours'),  'warning', '${prefix}eport (1st notice)'),
+        ('bctc-2', datetime('now', '-2 hours'),  'warning', '${prefix}eport (2nd notice)')
+    `);
+
+    const result = await runFranceSummary({ db, sendFn: noopSend, nowFn: now });
+    // Only 1 of the 2 identical-prefix BCTC alerts should survive dedup
+    expect(result.alerts.length).toBe(1);
+    expect((result.alerts[0]?.message ?? "").startsWith(prefix)).toBe(true);
+  });
+});
