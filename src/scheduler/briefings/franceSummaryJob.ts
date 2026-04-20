@@ -25,7 +25,7 @@ import type { PortfolioPnlResult } from "../../domain/services/portfolioPnlCalcu
 import type { VnIndexSnapshot } from "../../application/usecases/assembleEveningSummary.js"
 import type { GlobalSnapshot } from "../../application/usecases/assembleBriefing.js"
 import { formatGlobalSnapshotSection } from "./morningBriefingJob.js"
-import { formatForeignFlowSection } from "./eveningSummaryJob.js"
+import { formatForeignFlowSection, isVnIndexFresh } from "./eveningSummaryJob.js"
 import type { ForeignFlowMover } from "../../application/usecases/assembleEveningSummary.js"
 import type { BctcDeadlineRow } from "../../application/usecases/assembleBriefing.js"
 
@@ -370,8 +370,10 @@ export function formatFranceSummaryVI(
     const closeFmt = Math.round(vnIndex.close).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")
     const chSign = vnIndex.change >= 0 ? "+" : ""
     const pctSign = vnIndex.changePct >= 0 ? "+" : ""
+    const staleSuffix =
+      vnIndex.fetchedAt && !isVnIndexFresh(vnIndex.fetchedAt) ? " (cũ)" : "";
     blocks.push(
-      `VN-Index: ${closeFmt} (${chSign}${Math.round(vnIndex.change)} / ${pctSign}${vnIndex.changePct.toFixed(2)}%)`,
+      `VN-Index: ${closeFmt} (${chSign}${Math.round(vnIndex.change)} / ${pctSign}${vnIndex.changePct.toFixed(2)}%)${staleSuffix}`,
     )
   }
 

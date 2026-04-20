@@ -20,6 +20,7 @@ import type {
 } from "../../application/usecases/assembleBriefing.js";
 import { BEARISH_WARNING_THRESHOLD } from "../../application/usecases/assembleBriefing.js";
 import { formatPnlSection } from "../../domain/services/portfolioPnlCalculator.js";
+import { isVnIndexFresh } from "./eveningSummaryJob.js";
 import { logger } from "../../infrastructure/logger.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -83,7 +84,9 @@ export function formatBriefingMessage(briefing: DailyBriefing): string {
     } else {
       suffix = `(${pctSign}${changePct.toFixed(2)}%)`;
     }
-    lines.push(`📈 VN-Index: ${priceFmt} ${suffix}`);
+    const staleSuffix =
+      briefing.vnIndex.fetchedAt && !isVnIndexFresh(briefing.vnIndex.fetchedAt) ? " (cũ)" : "";
+    lines.push(`📈 VN-Index: ${priceFmt} ${suffix}${staleSuffix}`);
   }
   // omit section entirely when null
 

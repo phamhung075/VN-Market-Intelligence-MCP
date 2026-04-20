@@ -98,6 +98,8 @@ export interface VnIndexSnapshot {
   /** Absolute point change from previous close (Math.round(price - previousPrice)). */
   change?: number;
   changePct: number;
+  /** ISO 8601 timestamp when the price was fetched (from market_prices.fetched_at or hose fetch). Absent on legacy snapshots. */
+  fetchedAt?: string;
 }
 
 /** Insider transaction row for the briefing enrichment (Step 14). */
