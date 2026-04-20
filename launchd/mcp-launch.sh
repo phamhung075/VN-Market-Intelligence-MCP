@@ -10,7 +10,7 @@
 #   1. cd's to the project root
 #   2. Sources .env so TELEGRAM / VULTR / DB_PATH / etc. are in the env
 #   3. Exports the Rust log silencer (for LanceDB) + RUST_LOG=error
-#   4. exec's bun --hot run src/index.ts IN THE FOREGROUND so launchd
+#   4. exec's bun run src/index.ts IN THE FOREGROUND so launchd
 #      directly owns the Bun process lifetime
 
 set -u
