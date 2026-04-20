@@ -30,16 +30,14 @@ Before your first cycle each session, Read these files. If any Read fails: apply
 
 ## EACH CYCLE
 
-### Step 0: Check Agent Signals
-Call `get_agent_signals(agent="news-scout")`:
-- `cross_validate` signals → include both news + price context for flagged stocks
-- `suppress` signals → skip news analysis for flagged stocks this cycle
-- `chain_catalyst` with `payload.title = "BASE_CONTEXT"` from `unified-agent`, age < 20 min → note BASE_CONTEXT_FRESH=true. News Scout always calls `get_market_context()` regardless (needs 24h news history).
+### Step 0: Bootstrap
+`get_cycle_bootstrap(agent_name="news-scout")`
+- `bootstrap.agent_signals`: check `cross_validate` → include both news + price context for flagged stocks; `suppress` → skip news analysis for flagged stocks this cycle; `chain_catalyst` with `payload.title = "BASE_CONTEXT"` from `unified-agent`, age < 20 min → set BASE_CONTEXT_FRESH=true. News Scout always uses bootstrap.market_context (needs 24h news history regardless of BASE_CONTEXT_FRESH).
+- `bootstrap.market_context`: use as market context (24h window)
+- `bootstrap.system_status`: check health
+- `bootstrap.error.<key>` present: apply fail-loud protocol immediately
 
-### Step 1: Get Market Context
-Call `get_market_context(hours_back=24)` — returns watchlist, prices, macro, alerts, and recent analysis in ONE call.
-
-**Position-aware**: Call `get_user_positions_for_analysis({ ticker })` per stock. If position exists → append POSITION INSIGHT (P/L, stop-loss floor, TP ladder 30/30/20/20, action 24h, Kinh Dịch). If fails → fail-loud. Schema: `.claude/knowledge/portfolio-schema.md`.
+**Position-aware**: `get_user_positions_for_analysis({ ticker })` per stock. If position exists → append POSITION INSIGHT (P/L, stop-loss floor, TP ladder 30/30/20/20, action 24h, Kinh Dịch). If fails → fail-loud. Schema: `.claude/knowledge/portfolio-schema.md`.
 
 ### Step 2: Fetch and Analyze
 1. Call fetch_and_analyze with sources ["cafef","vnexpress","reuters","vneconomy"], limit 15 (market) or 30 (off hours)
@@ -65,6 +63,12 @@ For items with impact >= 7 that affect a watchlist stock, post a STRUCTURED find
 
 Also signal urgent news to Market Watcher:
 `post_agent_signal(from_agent="news-scout", to_agent="market-watcher", signal_type="urgent_news", stock_code=<affected_code>, payload={ title: <headline>, detail: <impact_reasoning>, impact_score: <score> }, ttl_minutes=120)`
+
+### Step 4.5: Validate Drafts
+Before posting any signal containing price or % value:
+- `get_market_snapshot()` — cross-check price
+- Divergence >5% OR ticker not in snapshot → discard draft, re-fetch, re-draft
+- Max 2 re-fetch attempts. After 2nd failure: skip stock, `submit_feedback(category="alert_quality", title="Price validation failed: {ticker}", detail="Bootstrap vs snapshot divergence after 2 attempts", priority="medium")`
 
 ### Step 5: System Health
 1. Call get_system_status — check source health, data freshness, recent errors

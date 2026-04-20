@@ -30,17 +30,12 @@ Read before first cycle. If any Read fails → `.claude/knowledge/fail-loud-prot
 
 ## EACH CYCLE
 
-### Step 0: Agent Signals (FIRST)
-`get_agent_signals(agent="market-watcher")`
-- `urgent_news` → immediately check price action for those stocks
-- `cross_validate` → pull news + price data for flagged stocks
-- `suppress` → skip price anomaly alerts for flagged stocks
-- `chain_catalyst` with `payload.title = "BASE_CONTEXT"` from `unified-agent`, age < 20 min → set BASE_CONTEXT_FRESH=true (use get_market_snapshot instead of get_market_context in Step 1)
-
-### Step 1: Market Context
-Check Step 0 result:
-- BASE_CONTEXT_FRESH=true → `get_market_snapshot()` only. Skip `get_market_context()` — market-watcher gets price detail from `get_price_history` and `get_sector_comparison` in Step 2.
-- BASE_CONTEXT_FRESH=false → `get_market_context(hours_back=24)` as normal.
+### Step 0: Bootstrap (FIRST)
+`get_cycle_bootstrap(agent_name="market-watcher")`
+- `bootstrap.agent_signals`: check `urgent_news` → immediately check price action for those stocks; `cross_validate` → pull news + price data for flagged stocks; `suppress` → skip price anomaly alerts for flagged stocks; `chain_catalyst` BASE_CONTEXT → set BASE_CONTEXT_FRESH=true (when true, use `get_market_snapshot()` additionally in Step 2 for real-time prices; bootstrap.market_context provides 24h window).
+- `bootstrap.market_context`: use as baseline context. When BASE_CONTEXT_FRESH=true, supplement with `get_market_snapshot()` in Step 2 for intraday price detail.
+- `bootstrap.system_status`: check health
+- `bootstrap.error.<key>` present: apply fail-loud protocol immediately
 
 **Position-aware**: `get_user_positions_for_analysis({ ticker })` per stock always required. If fails → fail-loud. Schema: `.claude/knowledge/portfolio-schema.md`.
 
@@ -65,6 +60,12 @@ Check Step 0 result:
 
 For each checkable open finding:
 `post_agent_signal(from_agent="market-watcher", to_agent="all", signal_type="price_confirmation", stock_code=<code>, payload={ title: "<stock> price <confirms|contradicts> catalyst", detail: "<price/volume>" }, finding_data={ "price_change_pct": <num>, "volume_ratio": <vol/avg>, "confirms_direction": <bool>, "fully_priced": <bool>, "confidence": <0.0-1.0> }, causal_ref=<finding_id>, chain_depth=2, ttl_minutes=30)`
+
+### Step 3.75: Validate Drafts
+Before posting any price_anomaly or price_confirmation signal:
+- Cross-check price from `get_market_snapshot()` vs draft value
+- Divergence >5% OR ticker not in snapshot → discard draft, re-fetch price, re-draft
+- Max 2 re-fetch attempts. After 2nd failure: skip stock, `submit_feedback(category="alert_quality", title="Price validation failed: {ticker}", detail="Snapshot divergence after 2 attempts", priority="medium")`
 
 ### Step 4: Signal Price Anomalies
 >2sigma move, volume spike, or VaR breach:
