@@ -1,9 +1,10 @@
 /**
  * TASK 207 — stale vnIndex must not trigger hasContent
+ * Updated by TASK 222: fresh vnIndex alone also must NOT trigger send.
  *
  * ACs:
  * (a) stale vnIndex alone (fetchedAt 2 days ago) → sendFn NOT called
- * (b) fresh vnIndex alone (fetchedAt now) → sendFn called once
+ * (b) fresh vnIndex alone (fetchedAt now) → sendFn NOT called (task 222 fix)
  * (c) stale vnIndex + fresh watchlistMovers → sendFn called once
  */
 
@@ -58,7 +59,7 @@ describe("1523 — eveningSummaryJob stale vnIndex guard", () => {
     expect(sendFn).not.toHaveBeenCalled();
   });
 
-  it("(b) fresh vnIndex alone DOES trigger send", async () => {
+  it("(b) fresh vnIndex alone does NOT trigger send — task 222 fix", async () => {
     resetEveningSummaryGuard();
 
     const summary: EveningSummary = {
@@ -76,7 +77,7 @@ describe("1523 — eveningSummaryJob stale vnIndex guard", () => {
 
     await runEveningSummary(summaryFn, sendFn);
 
-    expect(sendFn).toHaveBeenCalledTimes(1);
+    expect(sendFn).not.toHaveBeenCalled();
   });
 
   it("(c) stale vnIndex + fresh watchlistMovers DOES trigger send", async () => {

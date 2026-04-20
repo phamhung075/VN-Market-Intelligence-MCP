@@ -343,7 +343,6 @@ export async function runEveningSummary(
         (s) => s.rsiStatus !== "neutral",
       ) ||
       (summary.portfolioPnl != null && summary.portfolioPnl.items.length > 0) ||
-      (summary.vnIndex != null && isVnIndexFresh(summary.vnIndex.fetchedAt)) ||
       (summary.foreignFlowMovers?.length ?? 0) > 0;
 
     // Resolve the send function: use injected sendFn for tests, or dynamic import in prod.

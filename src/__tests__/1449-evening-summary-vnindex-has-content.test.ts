@@ -1,9 +1,8 @@
 /**
- * TASK 1449 — hasContent must include vnIndex != null
+ * TASK 1449 — hasContent vnIndex parity
  *
- * When VPS pipeline is down but VNDirect is up, assembleEveningSummary returns
- * a non-null vnIndex with no movers/alerts/stories. Before the fix hasContent
- * was false → silent skip. After the fix sendFn must be called.
+ * Updated by TASK 222: vnIndex alone must NOT trigger send (VPS-down empty briefing bug).
+ * vnIndex still renders in the message when present; it just cannot be the sole hasContent trigger.
  */
 
 import { describe, it, expect, mock } from "bun:test";
@@ -33,7 +32,7 @@ const EMPTY_SUMMARY: EveningSummary = {
 };
 
 describe("1449 — eveningSummaryJob hasContent vnIndex parity", () => {
-  it("calls sendFn when summary has only vnIndex (no movers/alerts/stories)", async () => {
+  it("does NOT call sendFn when summary has only vnIndex (no movers/alerts/stories) — task 222 fix", async () => {
     resetEveningSummaryGuard();
 
     const summaryFn = mock(async () => EMPTY_SUMMARY);
@@ -41,7 +40,7 @@ describe("1449 — eveningSummaryJob hasContent vnIndex parity", () => {
 
     await runEveningSummary(summaryFn, sendFn);
 
-    expect(sendFn).toHaveBeenCalledTimes(1);
+    expect(sendFn).not.toHaveBeenCalled();
   });
 
   it("does NOT call sendFn when summary has no content at all (vnIndex also null)", async () => {
