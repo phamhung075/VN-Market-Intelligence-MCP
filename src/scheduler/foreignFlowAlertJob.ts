@@ -80,31 +80,39 @@ function getForeignFlowHistoryFromDb(
   code: string,
   days = 10,
 ): DailyForeignFlow[] {
+  // Query daily_ohlcv ASC so we can build a running cumulative sum.
+  // COALESCE foreign_net_vol to 0 for rows where foreign flow was not yet written.
   const rows = database
     .prepare<unknown, [string, number]>(
       `SELECT code,
-              substr(fetched_at, 1, 10) AS date,
-              foreign_volume, foreign_room, current_holding_ratio
-       FROM vnstock_trading_stats
+              date,
+              COALESCE(foreign_net_vol, 0) AS net_vol
+       FROM daily_ohlcv
        WHERE code = ?
-       ORDER BY fetched_at DESC
+       ORDER BY date ASC
        LIMIT ?`,
     )
     .all(code, days) as Array<{
     code: string;
     date: string;
-    foreign_volume: number | null;
-    foreign_room: number | null;
-    current_holding_ratio: number | null;
+    net_vol: number;
   }>;
 
-  return rows.map((row) => ({
-    code: row.code,
-    date: row.date,
-    foreignVolume: row.foreign_volume ?? 0,
-    foreignRoom: row.foreign_room ?? 0,
-    holdingRatio: row.current_holding_ratio ?? 0,
-  }));
+  // Build cumulative sum (ascending) so delta[i] = net_vol[i] when reversed.
+  let cumsum = 0;
+  const ascending: DailyForeignFlow[] = rows.map((row) => {
+    cumsum += row.net_vol;
+    return {
+      code: row.code,
+      date: row.date,
+      foreignVolume: cumsum,
+      foreignRoom: 0,
+      holdingRatio: 0,
+    };
+  });
+
+  // analyzeForeignFlow expects DESC (most recent first).
+  return ascending.reverse();
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
