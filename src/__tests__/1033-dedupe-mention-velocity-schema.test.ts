@@ -26,15 +26,15 @@ afterAll(() => {
 });
 
 describe("Task 1033 — mention_velocity schema dedup", () => {
-  it("schema.ts defines mention_velocity CREATE TABLE exactly once", () => {
-    const schemaPath = resolve(
-      import.meta.dir,
-      "../infrastructure/db/schema.ts",
-    );
-    const src = readFileSync(schemaPath, "utf8");
-    const matches = src.match(
-      /CREATE TABLE IF NOT EXISTS mention_velocity/g,
-    );
+  it("schema.ts defines mention_velocity CREATE TABLE exactly once (via schema-news slice)", () => {
+    // Sprint 209: DDL moved to schema-news.ts. Count across both files to
+    // ensure exactly one canonical definition and no duplicate in schema.ts.
+    const schemaPath = resolve(import.meta.dir, "../infrastructure/db/schema.ts");
+    const newsPath = resolve(import.meta.dir, "../infrastructure/db/schema-news.ts");
+    const schemaSrc = readFileSync(schemaPath, "utf8");
+    const newsSrc = readFileSync(newsPath, "utf8");
+    const combined = schemaSrc + newsSrc;
+    const matches = combined.match(/CREATE TABLE IF NOT EXISTS mention_velocity/g);
     expect(matches).not.toBeNull();
     expect(matches!.length).toBe(1);
   });

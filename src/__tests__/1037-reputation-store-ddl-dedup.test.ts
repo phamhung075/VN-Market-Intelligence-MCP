@@ -27,11 +27,16 @@ describe("Task 1037 — reputation_scores DDL dedup", () => {
     expect(src).not.toMatch(/CREATE TABLE[^;]*reputation_scores/i);
   });
 
-  it("schema.ts still defines reputation_scores (canonical)", () => {
-    const src = readFileSync(
+  it("schema.ts (or its schema-news slice) still defines reputation_scores (canonical)", () => {
+    // Sprint 209: DDL moved to schema-news.ts slice. Accept either file.
+    const schemaSrc = readFileSync(
       join(import.meta.dir, "..", "infrastructure", "db", "schema.ts"),
       "utf8",
     );
-    expect(src).toMatch(/CREATE TABLE IF NOT EXISTS reputation_scores/);
+    const newsSrc = readFileSync(
+      join(import.meta.dir, "..", "infrastructure", "db", "schema-news.ts"),
+      "utf8",
+    );
+    expect(schemaSrc + newsSrc).toMatch(/CREATE TABLE IF NOT EXISTS reputation_scores/);
   });
 });
