@@ -25,6 +25,9 @@ import type { PortfolioPnlResult } from "../domain/services/portfolioPnlCalculat
 import type { VnIndexSnapshot } from "../application/usecases/assembleEveningSummary.js"
 import type { GlobalSnapshot } from "../application/usecases/assembleBriefing.js"
 import { formatGlobalSnapshotSection } from "./morningBriefingJob.js"
+import { formatForeignFlowSection } from "./eveningSummaryJob.js"
+import type { ForeignFlowMover } from "../application/usecases/assembleEveningSummary.js"
+import type { BctcDeadlineRow } from "../application/usecases/assembleBriefing.js"
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Public types
@@ -56,6 +59,10 @@ export interface FranceSummaryResult {
   vnIndex: VnIndexSnapshot | null
   /** Global market snapshot (VIX, DXY, S&P500, Hang Seng); null when unavailable. */
   globalSnapshot: GlobalSnapshot | null
+  /** Foreign flow top movers from daily_ohlcv; null when unavailable. */
+  foreignFlowMovers?: ForeignFlowMover[]
+  /** Upcoming BCTC filing deadlines for watchlist stocks (Task 1519). */
+  upcomingDeadlines?: BctcDeadlineRow[]
 }
 
 /** Options for runFranceSummary (injectable for TDD). */
@@ -86,6 +93,19 @@ export interface FranceSummaryOptions {
    * Return null to skip the global section.
    */
   getGlobalSnapshotFn?: () => Promise<GlobalSnapshot | null>
+  /**
+   * Injectable foreign flow fn for TDD.
+   * Signature matches eveningSummaryJob usage: receives the resolved DB.
+   * Defaults to querying daily_ohlcv (latest date, ABS(foreign_net_vol) DESC LIMIT 5).
+   * Return [] to skip the section.
+   */
+  getForeignFlowMoversFn?: (db: Database) => ForeignFlowMover[]
+  /**
+   * Injectable BCTC deadline fn for TDD (Task 1519).
+   * Receives (db, now) and returns upcoming/overdue deadline rows for watchlist stocks.
+   * Stub — not wired to hasContent or send path until GREEN phase.
+   */
+  getUpcomingDeadlinesFn?: (db: Database, now: Date) => BctcDeadlineRow[]
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -346,6 +366,8 @@ export function formatFranceSummaryVI(
   portfolioPnl?: PortfolioPnlResult | null,
   vnIndex?: VnIndexSnapshot | null,
   globalSnapshot?: GlobalSnapshot | null,
+  foreignFlowMovers?: ForeignFlowMover[],
+  upcomingDeadlines?: BctcDeadlineRow[],
 ): string {
   const header = `Bản tin sáng Pháp — Thị trường VN (${dateStr})`
 
@@ -375,6 +397,11 @@ export function formatFranceSummaryVI(
       lines.push(`  ${m.code}: ${priceFmt} đồng (${formatPct(m.change_pct)})`)
     }
     blocks.push(lines.join("\n"))
+  }
+
+  // Section 1.5: Foreign investor flow (Khối ngoại) — Task 1516
+  if (foreignFlowMovers && foreignFlowMovers.length > 0) {
+    blocks.push(...formatForeignFlowSection(foreignFlowMovers))
   }
 
   // Section 2: alerts — omit entirely when empty
@@ -418,6 +445,24 @@ export function formatFranceSummaryVI(
     }
   }
 
+  // Section 4.5: BCTC sắp đến — mirrors morningBriefingJob.ts BCTC block
+  if (upcomingDeadlines && upcomingDeadlines.length > 0) {
+    const lines: string[] = []
+    lines.push("BCTC sắp đến:")
+    for (const row of upcomingDeadlines) {
+      if (row.status === "QUA_HAN") {
+        lines.push(
+          `  ${row.code}: Q${row.quarter}/${row.year} — QUÁ HẠN ${Math.abs(row.daysUntilDeadline)} ngày`
+        )
+      } else {
+        lines.push(
+          `  ${row.code}: Q${row.quarter}/${row.year} — hạn ${row.deadline} (${row.daysUntilDeadline} ngày)`
+        )
+      }
+    }
+    blocks.push(lines.join("\n"))
+  }
+
   return header + (blocks.length > 0 ? "\n\n" + blocks.join("\n\n") : "")
 }
 
@@ -449,7 +494,7 @@ export async function runFranceSummary(opts: FranceSummaryOptions = {}): Promise
   // DB-level same-day dedup guard (FR-2)
   // Fail-open: if check throws, proceed with send.
   if (alreadySentToday(resolvedDb)) {
-    return { sent: false, moverCount: 0, alertCount: 0, taSignals: [], vnIndex: null, globalSnapshot: null }
+    return { sent: false, moverCount: 0, alertCount: 0, taSignals: [], vnIndex: null, globalSnapshot: null, foreignFlowMovers: [], upcomingDeadlines: [] }
   }
 
   // Resolve send function — default: sendTelegramMarket (MARKET channel)
@@ -576,6 +621,128 @@ export async function runFranceSummary(opts: FranceSummaryOptions = {}): Promise
 
   const hasPnl = portfolioPnl != null && portfolioPnl.items.length > 0
 
+  // ── Foreign flow movers (best-effort, injectable via getForeignFlowMoversFn) ─
+  let foreignFlowMovers: ForeignFlowMover[] = []
+  try {
+    if (opts.getForeignFlowMoversFn) {
+      foreignFlowMovers = opts.getForeignFlowMoversFn(resolvedDb)
+    } else {
+      // Default: query daily_ohlcv latest date, exclude NULL foreign_net_vol, top 5 by ABS(net)
+      interface FfRow { code: string; foreign_buy_vol: number; foreign_sell_vol: number; foreign_net_vol: number }
+      const latestDateRow = resolvedDb
+        .prepare<{ date: string }, []>(
+          `SELECT date FROM daily_ohlcv WHERE foreign_net_vol IS NOT NULL ORDER BY date DESC LIMIT 1`,
+        )
+        .get()
+      if (latestDateRow) {
+        const ffRows = resolvedDb
+          .prepare<FfRow, [string]>(
+            `SELECT code, foreign_buy_vol, foreign_sell_vol, foreign_net_vol
+               FROM daily_ohlcv
+              WHERE date = ? AND foreign_net_vol IS NOT NULL
+              ORDER BY ABS(foreign_net_vol) DESC
+              LIMIT 5`,
+          )
+          .all(latestDateRow.date)
+        foreignFlowMovers = ffRows.map((r) => ({
+          code: r.code,
+          foreignNetVol: r.foreign_net_vol,
+          foreignBuyVol: r.foreign_buy_vol,
+          foreignSellVol: r.foreign_sell_vol,
+        }))
+      }
+    }
+  } catch (err) {
+    logger.warn("[franceSummaryJob] getForeignFlowMoversFn failed — skipping foreign flow section", {
+      error: err instanceof Error ? err.message : String(err),
+    })
+    foreignFlowMovers = []
+  }
+
+  // ── BCTC upcoming deadlines (best-effort, injectable via getUpcomingDeadlinesFn) ─
+  let upcomingDeadlines: BctcDeadlineRow[] = []
+  try {
+    const now = nowFn()
+    if (opts.getUpcomingDeadlinesFn) {
+      upcomingDeadlines = opts.getUpcomingDeadlinesFn(resolvedDb, now)
+    } else {
+      // Default: mirrors assembleBriefing.ts Step 18
+      const { getCurrentDeadline, getNextDeadline, classifyFilingStatus } =
+        await import("../domain/services/earningsCalendar.js")
+
+      // Read watchlist rows (code + domain)
+      interface WatchlistRow { code: string; domain: string }
+      const wlRows = resolvedDb
+        .prepare<WatchlistRow, []>(`SELECT code, domain FROM watchlist`)
+        .all()
+
+      // Detect period_quarter column presence
+      let hasPeriodQuarter = false
+      try {
+        const cols = resolvedDb.query<{ name: string }, []>(
+          "PRAGMA table_info(financial_reports)"
+        ).all()
+        hasPeriodQuarter = cols.some((c) => c.name === "period_quarter")
+      } catch { /* schema probe failed */ }
+
+      interface FiledAtRow { filed_at: string | null }
+      const filedAtStmt = hasPeriodQuarter
+        ? resolvedDb.prepare<FiledAtRow, [string, number, number]>(`
+            SELECT MAX(parsed_at) AS filed_at FROM financial_reports
+            WHERE action_code = ? AND period_year = ? AND period_quarter = ?
+          `)
+        : null
+
+      const queryFiledAt = (code: string, year: number, quarter: number): string | null => {
+        if (filedAtStmt) {
+          const r = filedAtStmt.get(code, year, quarter)
+          return r?.filed_at ?? null
+        }
+        const periodType = `Q${quarter}`
+        const r = resolvedDb.prepare<FiledAtRow, [string, number, string]>(`
+          SELECT MAX(parsed_at) AS filed_at FROM financial_reports
+          WHERE action_code = ? AND period_year = ? AND period_type = ?
+        `).get(code, year, periodType)
+        return r?.filed_at ?? null
+      }
+
+      const rows: BctcDeadlineRow[] = []
+      for (const wl of wlRows) {
+        try {
+          const nextInfo = getNextDeadline(now, wl.domain)
+          const currentInfo = getCurrentDeadline(now, wl.domain)
+          const daysToCurrent = Math.floor(
+            (currentInfo.deadline.getTime() - now.getTime()) / (24 * 3600_000)
+          )
+          const daysToNext = Math.floor(
+            (nextInfo.deadline.getTime() - now.getTime()) / (24 * 3600_000)
+          )
+          const info =
+            Math.abs(daysToNext) <= Math.abs(daysToCurrent) ? nextInfo : currentInfo
+          const filedAt = queryFiledAt(wl.code, info.year, info.quarter)
+          const fs = classifyFilingStatus(now, { ...info, filingDate: filedAt })
+          if (fs.status === "SAP_DEN" || fs.status === "QUA_HAN") {
+            rows.push({
+              code: wl.code,
+              domain: wl.domain,
+              quarter: info.quarter,
+              year: info.year,
+              deadline: info.deadline.toISOString().slice(0, 10),
+              daysUntilDeadline: fs.daysUntilDeadline!,
+              status: fs.status,
+            })
+          }
+        } catch { /* per-stock failure — skip silently */ }
+      }
+      upcomingDeadlines = rows.sort((a, b) => a.daysUntilDeadline - b.daysUntilDeadline)
+    }
+  } catch (err) {
+    logger.warn("[franceSummaryJob] getUpcomingDeadlinesFn failed — skipping BCTC deadlines", {
+      error: err instanceof Error ? err.message : String(err),
+    })
+    upcomingDeadlines = []
+  }
+
   // Silent skip when all sources are empty (including vnIndex and globalSnapshot)
   if (
     movers.length === 0 &&
@@ -583,21 +750,23 @@ export async function runFranceSummary(opts: FranceSummaryOptions = {}): Promise
     taSignals.length === 0 &&
     !hasPnl &&
     vnIndex == null &&
-    globalSnapshot == null
+    globalSnapshot == null &&
+    foreignFlowMovers.length === 0 &&
+    upcomingDeadlines.length === 0
   ) {
-    return { sent: false, moverCount: 0, alertCount: 0, taSignals: [], vnIndex: null, globalSnapshot: null }
+    return { sent: false, moverCount: 0, alertCount: 0, taSignals: [], vnIndex: null, globalSnapshot: null, foreignFlowMovers: [], upcomingDeadlines: [] }
   }
 
   const dateStr = formatDateVI(nowFn())
-  const message = formatFranceSummaryVI(dateStr, movers, alerts, taSignals, portfolioPnl, vnIndex, globalSnapshot)
+  const message = formatFranceSummaryVI(dateStr, movers, alerts, taSignals, portfolioPnl, vnIndex, globalSnapshot, foreignFlowMovers, upcomingDeadlines)
 
   try {
     await resolvedSend(message)
-    return { sent: true, moverCount: movers.length, alertCount: alerts.length, taSignals, vnIndex, globalSnapshot }
+    return { sent: true, moverCount: movers.length, alertCount: alerts.length, taSignals, vnIndex, globalSnapshot, foreignFlowMovers, upcomingDeadlines }
   } catch (err) {
     logger.warn("[franceSummaryJob] Telegram send failed", {
       error: err instanceof Error ? err.message : String(err),
     })
-    return { sent: false, moverCount: movers.length, alertCount: alerts.length, taSignals, vnIndex, globalSnapshot }
+    return { sent: false, moverCount: movers.length, alertCount: alerts.length, taSignals, vnIndex, globalSnapshot, foreignFlowMovers, upcomingDeadlines }
   }
 }
