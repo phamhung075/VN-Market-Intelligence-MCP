@@ -163,7 +163,14 @@ function fetchTopMovers(db: Database): MoverRow[] {
           (o.close - o.open) / o.open * 100.0      AS change_pct
         FROM daily_ohlcv o
         INNER JOIN watchlist w ON w.code = o.code
-        WHERE o.date = (SELECT MAX(date) FROM daily_ohlcv)
+        WHERE o.date = COALESCE(
+            (SELECT o2.date FROM daily_ohlcv o2
+             INNER JOIN watchlist w2 ON w2.code = o2.code
+             WHERE o2.open != 0 AND o2.open IS NOT NULL
+               AND ABS(o2.close - o2.open) / o2.open * 100.0 > 0.1
+             ORDER BY o2.date DESC LIMIT 1),
+            (SELECT MAX(date) FROM daily_ohlcv)
+          )
           AND o.open != 0
         ORDER BY ABS((o.close - o.open) / o.open * 100.0) DESC
         LIMIT 3

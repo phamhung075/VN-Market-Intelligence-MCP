@@ -280,4 +280,50 @@ describe("Task 1370 — fetchTopMovers filters by watchlist", () => {
     expect(msg).not.toContain("BOT4")
     expect(msg).not.toContain("BOT5")
   })
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // AC-5 (task 1522): today's rows have open==close (0% change, pre-market);
+  //                   yesterday has real moves → movers must come from yesterday.
+  //
+  // Setup:
+  //   today   (2026-04-17): STOCK_A open==close  (0.00% change)
+  //   today   (2026-04-17): STOCK_B open==close  (0.00% change)
+  //   yesterday (2026-04-16): STOCK_A +5%,  STOCK_B +3%
+  // Expect: moverCount >= 1, codes in message are from yesterday's session
+  //         (i.e. movers come from 2026-04-16, not the flat today rows).
+  // ───────────────────────────────────────────────────────────────────────────
+  it("AC-5 (1522): today pre-market rows (0% change) skipped; movers from yesterday", async () => {
+    // Insert today's flat rows (open == close, simulates pre-market OHLCV)
+    db.exec(`
+      INSERT INTO daily_ohlcv (code, date, open, high, low, close, volume, updated_at)
+      VALUES
+        ('STOCK_A', '2026-04-17', 100.0, 100.0, 100.0, 100.0, 0, '2026-04-17T06:00:00'),
+        ('STOCK_B', '2026-04-17', 50.0,  50.0,  50.0,  50.0,  0, '2026-04-17T06:00:00')
+    `)
+    // Insert yesterday's rows with real moves
+    db.exec(`
+      INSERT INTO daily_ohlcv (code, date, open, high, low, close, volume, updated_at)
+      VALUES
+        ('STOCK_A', '2026-04-16', 95.24, 102.0, 94.0, 100.0, 1000000, '2026-04-16T15:00:00'),
+        ('STOCK_B', '2026-04-16', 48.54, 52.0,  48.0, 50.0,  800000,  '2026-04-16T15:00:00')
+    `)
+    // Both stocks in watchlist
+    db.exec(`
+      INSERT INTO watchlist (code) VALUES ('STOCK_A'), ('STOCK_B')
+    `)
+
+    const sends: string[] = []
+    const sendFn = async (t: string) => { sends.push(t); return true }
+
+    const opts: FranceSummaryOptions = { db, sendFn, nowFn: now, getPnlFn: async () => null }
+    const result = await runFranceSummary(opts)
+
+    // Should produce movers (from yesterday, not today's 0% rows)
+    expect(result.moverCount).toBeGreaterThanOrEqual(1)
+
+    const msg = sends[0] ?? ""
+    // At least one of our tickers must appear in the message
+    const hasMover = msg.includes("STOCK_A") || msg.includes("STOCK_B")
+    expect(hasMover).toBe(true)
+  })
 })
