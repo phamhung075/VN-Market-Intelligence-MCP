@@ -1,3 +1,4 @@
+Bun.env["DB_PATH"] = ":memory:";
 /**
  * Task 217 — compare_stocks MCP Tool
  *
@@ -51,10 +52,10 @@ function seedPrices(): void {
   db.exec(`
     INSERT OR REPLACE INTO market_prices (code, price, change_amt, change_pct, volume, updated_at)
     VALUES
-      ('VCB',  85000.0,  1000.0,  1.2, 1500000, '2026-04-01T09:30:00Z'),
-      ('FPT', 115000.0, -575.0,  -0.5, 800000,  '2026-04-01T09:30:00Z'),
-      ('HPG',  28000.0,  630.0,   2.3, 5000000, '2026-04-01T09:30:00Z'),
-      ('VNM',  72000.0,  -72.0,  -0.1, 600000,  '2026-04-01T09:30:00Z')
+      ('VCB',  85000.0,  1000.0,  1.2, 1500000, datetime('now')),
+      ('FPT', 115000.0, -575.0,  -0.5, 800000,  datetime('now')),
+      ('HPG',  28000.0,  630.0,   2.3, 5000000, datetime('now')),
+      ('VNM',  72000.0,  -72.0,  -0.1, 600000,  datetime('now'))
   `);
 }
 
