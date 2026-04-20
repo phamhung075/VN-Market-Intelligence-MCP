@@ -142,6 +142,8 @@ export const CRONS = {
    *  Fires after VN market open data push window. Alerts WORK if >50% watchlist tickers
    *  are missing from daily_ohlcv for the current VN date. Covers mid-day VPS outage. */
   ohlcvStalenessCheck:    Bun.env.CRON_OHLCV_STALENESS_CHECK            ?? '15 8 * * 1-5',
+  /** cascadeBacktest — daily backtest: fills price_impact_3d/7d/outcome_correct on cascade_rule_hits rows >3d old (task 1505, Sprint 192) */
+  cascadeBacktest:        Bun.env.CRON_CASCADE_BACKTEST                  ?? '30 20 * * *',
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -643,6 +645,16 @@ export function startScheduler() {
     await recordJobRun(getDb(), 'ohlcv-staleness-check', async () => {
       await runOhlcvStalenessCheck()
     })
+  }, { timezone: 'UTC' })
+
+  // 20:30 UTC daily — cascade backtest — task 1505, Sprint 192
+  // Fills price_impact_3d/7d/outcome_correct on cascade_rule_hits rows older than 3 days.
+  // Runs after ohlcvDailyAggregator (20:00 UTC) so D+3/D+7 closes are fully aggregated.
+  cron.schedule(CRONS.cascadeBacktest, async () => {
+    await recordJobRun(getDb(), 'cascade-backtest', async () => {
+      const { runCascadeBacktest } = await import('./cascadeBacktestJob.js');
+      await runCascadeBacktest();
+    });
   }, { timezone: 'UTC' })
 
   log(`[scheduler] jobs registered — ${Object.keys(CRONS).length} cron keys in CRONS map (incl. WAL checkpoint + 5 summary) + vps-watchdog active`)
