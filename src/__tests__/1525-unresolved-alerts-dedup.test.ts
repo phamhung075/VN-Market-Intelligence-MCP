@@ -180,3 +180,31 @@ describe("AC-c: LIMIT 5 respected after dedup", () => {
     expect(result.unresolvedAlerts.length).toBeLessThanOrEqual(5);
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// AC-d: prefix-dedup — 3 BCTC overdue rows with same prefix but different
+//       day suffixes collapse to 1 (highest triggered_at kept)
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("AC-d: BCTC overdue prefix-dedup collapses near-identical messages", () => {
+  it("returns 1 BCTC overdue alert when 3 rows share the same 40-char prefix", async () => {
+    const db = buildTestDb();
+    // Messages share identical first 40 chars; only the suffix (day count) differs.
+    // Prefix = "BCTC overdue Q1-2026: BID past deadline " (40 chars)
+    db.exec(`
+      INSERT INTO alerts (id, triggered_at, severity, message, affected_actions_json)
+      VALUES
+        ('d1', datetime('now', '-1 hour'),  'high', 'BCTC overdue Q1-2026: BID past deadline (4d)', '["BID"]'),
+        ('d2', datetime('now', '-2 hours'), 'high', 'BCTC overdue Q1-2026: BID past deadline (5d)', '["BID"]'),
+        ('d3', datetime('now', '-3 hours'), 'high', 'BCTC overdue Q1-2026: BID past deadline (6d)', '["BID"]');
+    `);
+
+    const result = await assembleBriefing({ db, ...NOOP_OPTS });
+    const bctcAlerts = result.unresolvedAlerts.filter((a) =>
+      a.message.startsWith("BCTC overdue Q1-2026: BID past deadline")
+    );
+    expect(bctcAlerts).toHaveLength(1);
+    // Highest triggered_at (most recent) should be kept — SQL orders MAX(triggered_at) DESC
+    expect(bctcAlerts[0]!.message).toBe("BCTC overdue Q1-2026: BID past deadline (4d)");
+  });
+});
