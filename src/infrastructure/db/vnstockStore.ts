@@ -407,12 +407,19 @@ export function upsertForeignFlow(
   let affected = 0;
 
   if (hasDate) {
-    // Primary path — use INSERT OR REPLACE to handle both UNIQUE(code) legacy
-    // constraint and UNIQUE(code, date) without conflict ordering issues.
+    // Primary path — UNIQUE(code, date). Use ON CONFLICT DO UPDATE SET so that
+    // only the four foreign-flow columns are touched; price/financial columns
+    // written by storeTradingStats (avg_volume_2w, high_52w, low_52w, …) are
+    // never overwritten or NULLed.
     const stmt = database.prepare(
-      `INSERT OR REPLACE INTO vnstock_trading_stats
+      `INSERT INTO vnstock_trading_stats
          (code, date, foreign_volume, foreign_room, current_holding_ratio, fetched_at)
-       VALUES (?, ?, ?, ?, ?, COALESCE(?, datetime('now')))`,
+       VALUES (?, ?, ?, ?, ?, COALESCE(?, datetime('now')))
+       ON CONFLICT(code, date) DO UPDATE SET
+         foreign_volume        = excluded.foreign_volume,
+         foreign_room          = excluded.foreign_room,
+         current_holding_ratio = excluded.current_holding_ratio,
+         fetched_at            = excluded.fetched_at`,
     );
 
     const runAll = database.transaction(() => {
