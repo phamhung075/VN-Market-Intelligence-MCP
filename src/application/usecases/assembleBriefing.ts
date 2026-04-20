@@ -877,11 +877,22 @@ export async function assembleBriefing(
         LIMIT 5
       `)
       .all();
-    unresolvedAlerts = unresolvedRows.map((row) => ({
-      severity: row.severity,
-      message: row.message ?? "",
-      stocks: parseAffectedCodes(row.affected_actions_json),
-    }));
+    // App-level prefix-dedup: BCTC overdue rows fire weekly with updated day-counts
+    // ("BID (5d)" vs "BID (6d)"), so GROUP BY message fails to merge them.
+    // Keep highest triggered_at per 40-char prefix (SQL already orders MAX(triggered_at) DESC).
+    const seen = new Map<string, { severity: string; message: string; stocks: string[] }>();
+    for (const row of unresolvedRows) {
+      const msg = row.message ?? "";
+      const prefix = msg.slice(0, 40);
+      if (!seen.has(prefix)) {
+        seen.set(prefix, {
+          severity: row.severity,
+          message: msg,
+          stocks: parseAffectedCodes(row.affected_actions_json),
+        });
+      }
+    }
+    unresolvedAlerts = Array.from(seen.values()).slice(0, 5);
   } catch { /* best-effort */ }
 
   // ── Step 11: Top conviction signal from watchlist ──────────────────────────

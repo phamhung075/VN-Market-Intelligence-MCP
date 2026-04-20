@@ -22,7 +22,7 @@ merge: 9f882cc
 
 ---
 
-## Sprint 191 — feat(cascade-outcome): backtesting schema + outcome tracking — ACTIVE
+## Sprint 191 — feat(cascade-outcome): backtesting schema + outcome tracking — COMPLETE
 
 | ID | Title | Status | Role |
 |----|-------|--------|------|
@@ -30,6 +30,16 @@ merge: 9f882cc
 | 1504_b | GREEN: schema ALTER migrations + cascadeHitStore updateOutcome + marketMessageStore updateImpact + get_cascade_outcomes MCP tool | Review | Dev |
 
 context: `docs/handoffs/TASK_1504_a.md` | `docs/handoffs/TASK_1504_b.md`
+
+---
+
+## Sprint 192 — fix(briefing): BCTC-overdue prefix dedup in unresolvedAlerts — COMPLETE
+
+| ID | Title | Status | Role |
+|----|-------|--------|------|
+| 211 | fix(briefing): BCTC-overdue prefix dedup — app-level 40-char prefix dedup after SQL fetch | Done | Dev |
+
+context: `docs/handoffs/TASK_211.md`
 
 ---
 
