@@ -184,10 +184,10 @@ describe("runPipelineWatchdog — cooldown logic", () => {
     const getPipelineHealthFn = async () => makeHealth(200);
 
     const now1 = new Date("2026-04-13T10:00:00.000Z");
-    await runPipelineWatchdog({ now: now1, getPipelineHealthFn, notify });
+    await runPipelineWatchdog({ now: now1, getPipelineHealthFn, notify, notifyUser: async () => {} });
     // 90 min later — still within 3-hour cooldown
     const now2 = new Date("2026-04-13T11:30:00.000Z");
-    const result = await runPipelineWatchdog({ now: now2, getPipelineHealthFn, notify });
+    const result = await runPipelineWatchdog({ now: now2, getPipelineHealthFn, notify, notifyUser: async () => {} });
 
     expect(result).toBe("cooldown");
     expect(notifyCallCount).toBe(1);
@@ -202,11 +202,11 @@ describe("runPipelineWatchdog — cooldown logic", () => {
     const getPipelineHealthFn = async () => makeHealth(200);
 
     const now1 = new Date("2026-04-13T10:00:00.000Z");
-    await runPipelineWatchdog({ now: now1, getPipelineHealthFn, notify });
+    await runPipelineWatchdog({ now: now1, getPipelineHealthFn, notify, notifyUser: async () => {} });
 
     // 4h01m later — cooldown expired
     const now2 = new Date("2026-04-13T14:01:00.000Z");
-    const result = await runPipelineWatchdog({ now: now2, getPipelineHealthFn, notify });
+    const result = await runPipelineWatchdog({ now: now2, getPipelineHealthFn, notify, notifyUser: async () => {} });
 
     expect(result).toBe("alert-sent");
     expect(notifyCallCount).toBe(2);
@@ -221,11 +221,11 @@ describe("runPipelineWatchdog — cooldown logic", () => {
     const now = new Date("2026-04-13T10:00:00.000Z");
     const getPipelineHealthFn = async () => makeHealth(200);
 
-    const result1 = await runPipelineWatchdog({ now, getPipelineHealthFn, notify });
+    const result1 = await runPipelineWatchdog({ now, getPipelineHealthFn, notify, notifyUser: async () => {} });
     expect(result1).toBe("notify-failed");
 
     // Immediately retry — cooldown not advanced, should try again
-    const result2 = await runPipelineWatchdog({ now, getPipelineHealthFn, notify });
+    const result2 = await runPipelineWatchdog({ now, getPipelineHealthFn, notify, notifyUser: async () => {} });
     expect(result2).toBe("notify-failed");
     expect(notifyCallCount).toBe(2);
   });
@@ -262,11 +262,11 @@ describe("runPipelineWatchdog — cooldown logic", () => {
     const getPipelineHealthFn = async () => makeHealth(200);
     const now1 = new Date("2026-04-13T10:00:00.000Z");
 
-    await runPipelineWatchdog({ now: now1, getPipelineHealthFn, notify });
+    await runPipelineWatchdog({ now: now1, getPipelineHealthFn, notify, notifyUser: async () => {} });
     _resetWatchdogCooldown();
 
     const now2 = new Date("2026-04-13T10:01:00.000Z");
-    const result = await runPipelineWatchdog({ now: now2, getPipelineHealthFn, notify });
+    const result = await runPipelineWatchdog({ now: now2, getPipelineHealthFn, notify, notifyUser: async () => {} });
     expect(result).toBe("alert-sent"); // not "cooldown" — reset worked
     expect(notifyCallCount).toBe(2);
   });
