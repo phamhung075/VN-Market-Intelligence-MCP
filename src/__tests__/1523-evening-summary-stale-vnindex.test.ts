@@ -11,7 +11,7 @@ import { describe, it, expect, mock } from "bun:test";
 import {
   runEveningSummary,
   resetEveningSummaryGuard,
-} from "../scheduler/eveningSummaryJob.js";
+} from "../scheduler/briefings/eveningSummaryJob.js";
 import type { EveningSummary } from "../application/usecases/assembleEveningSummary.js";
 
 const TWO_DAYS_AGO = new Date(Date.now() - 2 * 24 * 3600 * 1000).toISOString();

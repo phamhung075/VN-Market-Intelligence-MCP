@@ -17,7 +17,7 @@
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { getDb, initDatabase } from "../../../infrastructure/db/schema.js";
+import { getDb, initDatabase } from "../../../../infrastructure/db/schema.js";
 import {
   listNewReports,
   listAllReports,
@@ -26,8 +26,8 @@ import {
   markProcessed,
   claimReport,
   type TelegramReport,
-} from "../../../infrastructure/db/telegramReportStore.js";
-import { deleteTelegramBug } from "../../../infrastructure/notifiers/telegram.js";
+} from "../../../../infrastructure/db/telegramReportStore.js";
+import { deleteTelegramBug } from "../../../../infrastructure/notifiers/telegram.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers

@@ -14,8 +14,8 @@ import { Database } from "bun:sqlite";
 import {
   runFranceSummary,
   formatFranceSummaryVI,
-} from "../scheduler/franceSummaryJob.js";
-import type { FranceSummaryOptions, FranceSummaryResult } from "../scheduler/franceSummaryJob.js";
+} from "../scheduler/briefings/franceSummaryJob.js";
+import type { FranceSummaryOptions, FranceSummaryResult } from "../scheduler/briefings/franceSummaryJob.js";
 import type { VnIndexSnapshot } from "../application/usecases/assembleEveningSummary.js";
 
 // ── minimal in-memory DB ──────────────────────────────────────────────────────

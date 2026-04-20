@@ -19,15 +19,15 @@
  */
 
 import type { Database } from "bun:sqlite"
-import { logger } from "../infrastructure/logger.js"
-import { formatPnlSection } from "../domain/services/portfolioPnlCalculator.js"
-import type { PortfolioPnlResult } from "../domain/services/portfolioPnlCalculator.js"
-import type { VnIndexSnapshot } from "../application/usecases/assembleEveningSummary.js"
-import type { GlobalSnapshot } from "../application/usecases/assembleBriefing.js"
+import { logger } from "../../infrastructure/logger.js"
+import { formatPnlSection } from "../../domain/services/portfolioPnlCalculator.js"
+import type { PortfolioPnlResult } from "../../domain/services/portfolioPnlCalculator.js"
+import type { VnIndexSnapshot } from "../../application/usecases/assembleEveningSummary.js"
+import type { GlobalSnapshot } from "../../application/usecases/assembleBriefing.js"
 import { formatGlobalSnapshotSection } from "./morningBriefingJob.js"
 import { formatForeignFlowSection } from "./eveningSummaryJob.js"
-import type { ForeignFlowMover } from "../application/usecases/assembleEveningSummary.js"
-import type { BctcDeadlineRow } from "../application/usecases/assembleBriefing.js"
+import type { ForeignFlowMover } from "../../application/usecases/assembleEveningSummary.js"
+import type { BctcDeadlineRow } from "../../application/usecases/assembleBriefing.js"
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Public types
@@ -479,7 +479,7 @@ export async function runFranceSummary(opts: FranceSummaryOptions = {}): Promise
   if (opts.db) {
     resolvedDb = opts.db
   } else {
-    const { getDb } = await import("../infrastructure/db/schema.js")
+    const { getDb } = await import("../../infrastructure/db/schema.js")
     resolvedDb = getDb()
   }
 
@@ -494,7 +494,7 @@ export async function runFranceSummary(opts: FranceSummaryOptions = {}): Promise
   if (opts.sendFn) {
     resolvedSend = opts.sendFn
   } else {
-    const { sendTelegramMarket } = await import("../infrastructure/notifiers/telegram.js")
+    const { sendTelegramMarket } = await import("../../infrastructure/notifiers/telegram.js")
     resolvedSend = (text: string) =>
       sendTelegramMarket(text, {
         parseMode: "",
@@ -592,7 +592,7 @@ export async function runFranceSummary(opts: FranceSummaryOptions = {}): Promise
           .all()
         const priceMap = new Map(priceRows.map((r) => [r.code, r.price]))
         const { computePortfolioPnl } = await import(
-          "../domain/services/portfolioPnlCalculator.js"
+          "../../domain/services/portfolioPnlCalculator.js"
         )
         portfolioPnl = computePortfolioPnl(
           openPositions.map((p) => ({
@@ -660,7 +660,7 @@ export async function runFranceSummary(opts: FranceSummaryOptions = {}): Promise
     } else {
       // Default: mirrors assembleBriefing.ts Step 18
       const { getCurrentDeadline, getNextDeadline, classifyFilingStatus } =
-        await import("../domain/services/financial-reports/earningsCalendar.js")
+        await import("../../domain/services/financial-reports/earningsCalendar.js")
 
       // Read watchlist rows (code + domain)
       interface WatchlistRow { code: string; domain: string }

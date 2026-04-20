@@ -4,7 +4,7 @@
 // Return type changed: signalCount → { moverCount, alertCount, taCount }
 import { describe, it, expect, beforeEach } from "bun:test"
 import { Database } from "bun:sqlite"
-import { runFranceSummary } from "../scheduler/franceSummaryJob.js"
+import { runFranceSummary } from "../scheduler/briefings/franceSummaryJob.js"
 
 function makeDb(): Database {
   const db = new Database(":memory:")

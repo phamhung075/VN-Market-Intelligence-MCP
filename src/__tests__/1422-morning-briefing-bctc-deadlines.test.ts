@@ -10,7 +10,7 @@ Bun.env["DB_PATH"] = ":memory:";
 import { describe, it, expect, beforeEach, afterEach } from "bun:test";
 import { Database } from "bun:sqlite";
 import { assembleBriefing } from "../application/usecases/assembleBriefing.js";
-import { formatBriefingMessage } from "../scheduler/morningBriefingJob.js";
+import { formatBriefingMessage } from "../scheduler/briefings/morningBriefingJob.js";
 import type { DailyBriefing } from "../application/usecases/assembleBriefing.js";
 
 // ─────────────────────────────────────────────────────────────────────────────

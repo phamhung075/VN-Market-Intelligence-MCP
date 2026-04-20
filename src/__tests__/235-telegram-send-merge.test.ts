@@ -14,7 +14,7 @@ Bun.env["DB_PATH"] = ":memory:";
 
 import { describe, it, expect, beforeAll, mock } from "bun:test";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { registerTelegramTools } from "../interface/mcp/tools/telegramTools.js";
+import { registerTelegramTools } from "../interface/mcp/tools/briefings/telegramTools.js";
 import { registerAlertDigestTools } from "../interface/mcp/tools/alertDigestTools.js";
 
 // ─────────────────────────────────────────────────────────────────────────────

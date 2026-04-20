@@ -24,8 +24,8 @@ import {
   getMarketMessageDigest,
   batchReviewMarketMessages,
   type BatchReviewResult,
-} from "../../../infrastructure/db/marketMessageStore.js";
-import { getDb } from "../../../infrastructure/db/schema.js";
+} from "../../../../infrastructure/db/marketMessageStore.js";
+import { getDb } from "../../../../infrastructure/db/schema.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Handler functions (exported for direct test use)

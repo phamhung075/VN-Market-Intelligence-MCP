@@ -448,7 +448,7 @@ describe("persistLog — system_logs table", () => {
 
 describe("MCP summary tools — output format", () => {
   it("get_market_summary returns content array with text", async () => {
-    const { registerSummaryTools } = await import("../interface/mcp/tools/summaryTools.js");
+    const { registerSummaryTools } = await import("../interface/mcp/tools/briefings/summaryTools.js");
     const { McpServer } = await import("@modelcontextprotocol/sdk/server/mcp.js");
 
     const server = new McpServer(
@@ -463,7 +463,7 @@ describe("MCP summary tools — output format", () => {
   });
 
   it("get_market_summary and generate_market_summary are both registered", async () => {
-    const { registerSummaryTools } = await import("../interface/mcp/tools/summaryTools.js");
+    const { registerSummaryTools } = await import("../interface/mcp/tools/briefings/summaryTools.js");
     const { McpServer } = await import("@modelcontextprotocol/sdk/server/mcp.js");
 
     const server = new McpServer(

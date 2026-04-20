@@ -9,7 +9,7 @@ import { getClimateRiskSignals } from "../interface/mcp/tools/climateTools.js";
 import { getCreditFlowSignalHandler } from "../interface/mcp/tools/creditFlowTools.js";
 import { getEnergyGridStatus } from "../interface/mcp/tools/energyTools.js";
 import { getInsiderSignalsHandler } from "../interface/mcp/tools/leadershipTools.js";
-import { handleGetMarketMessageDigest } from "../interface/mcp/tools/marketMessageTools.js";
+import { handleGetMarketMessageDigest } from "../interface/mcp/tools/briefings/marketMessageTools.js";
 import { buildSectorComparisonOutput } from "../interface/mcp/tools/sectorComparisonTools.js";
 import { getSectorRotationReport } from "../interface/mcp/tools/sectorRotationTools.js";
 import { formatTickerIntelligence } from "../interface/mcp/tools/tickerIntelligenceTools.js";
@@ -35,7 +35,7 @@ import * as priceAlertToolsNs from "../interface/mcp/tools/priceAlertTools.js";
 import * as priceHistoryToolsNs from "../interface/mcp/tools/priceHistoryTools.js";
 import * as rebalancingToolsNs from "../interface/mcp/tools/rebalancingTools.js";
 import * as sentimentTrendToolsNs from "../interface/mcp/tools/sentimentTrendTools.js";
-import * as telegramReportToolsNs from "../interface/mcp/tools/telegramReportTools.js";
+import * as telegramReportToolsNs from "../interface/mcp/tools/briefings/telegramReportTools.js";
 
 import type { DailyCandle } from "../domain/services/technicalIndicators.js";
 import type { DomainType } from "../../bctc-schema.js";

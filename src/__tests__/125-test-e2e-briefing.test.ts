@@ -1141,8 +1141,8 @@ describe("Task 125 — E2E Daily Briefing Flow", () => {
   describe("Full morning + evening cycle (bookend E2E)", () => {
     it("morning briefing + evening summary share the same Vietnam date", async () => {
       // Reset concurrency guards from previous tests
-      const { resetMorningBriefingGuard } = await import("../scheduler/morningBriefingJob.js");
-      const { resetEveningSummaryGuard } = await import("../scheduler/eveningSummaryJob.js");
+      const { resetMorningBriefingGuard } = await import("../scheduler/briefings/morningBriefingJob.js");
+      const { resetEveningSummaryGuard } = await import("../scheduler/briefings/eveningSummaryJob.js");
       resetMorningBriefingGuard();
       resetEveningSummaryGuard();
 
@@ -1217,7 +1217,7 @@ describe("Task 125 — E2E Daily Briefing Flow", () => {
   describe("concurrency guards", () => {
     it("runMorningBriefing skips concurrent invocation", async () => {
       const { runMorningBriefing } = await import(
-        "../scheduler/morningBriefingJob.js"
+        "../scheduler/briefings/morningBriefingJob.js"
       );
 
       let callCount = 0;
@@ -1250,7 +1250,7 @@ describe("Task 125 — E2E Daily Briefing Flow", () => {
 
     it("runMorningBriefing allows sequential runs after first completes", async () => {
       const { runMorningBriefing } = await import(
-        "../scheduler/morningBriefingJob.js"
+        "../scheduler/briefings/morningBriefingJob.js"
       );
 
       let callCount = 0;
@@ -1280,7 +1280,7 @@ describe("Task 125 — E2E Daily Briefing Flow", () => {
 
     it("runEveningSummary skips concurrent invocation", async () => {
       const { runEveningSummary } = await import(
-        "../scheduler/eveningSummaryJob.js"
+        "../scheduler/briefings/eveningSummaryJob.js"
       );
 
       let callCount = 0;
@@ -1311,7 +1311,7 @@ describe("Task 125 — E2E Daily Briefing Flow", () => {
 
     it("runEveningSummary allows sequential runs after first completes", async () => {
       const { runEveningSummary } = await import(
-        "../scheduler/eveningSummaryJob.js"
+        "../scheduler/briefings/eveningSummaryJob.js"
       );
 
       let callCount = 0;

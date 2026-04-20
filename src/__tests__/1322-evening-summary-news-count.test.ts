@@ -19,7 +19,7 @@ import {
   assembleEveningSummary,
 } from "../application/usecases/assembleEveningSummary.js";
 import type { EveningSummary } from "../application/usecases/assembleEveningSummary.js";
-import { runEveningSummary, resetEveningSummaryGuard } from "../scheduler/eveningSummaryJob.js";
+import { runEveningSummary, resetEveningSummaryGuard } from "../scheduler/briefings/eveningSummaryJob.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers

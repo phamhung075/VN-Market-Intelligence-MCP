@@ -425,7 +425,7 @@ describe("Task 105 — Evening Summary Job", () => {
   it("concurrency guard skips second invocation if first is still running", async () => {
     // Import the job module
     const { runEveningSummary } = await import(
-      "../scheduler/eveningSummaryJob.js"
+      "../scheduler/briefings/eveningSummaryJob.js"
     );
 
     let callCount = 0;

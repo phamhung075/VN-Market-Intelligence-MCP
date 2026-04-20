@@ -11,8 +11,8 @@ Bun.env["DB_PATH"] = ":memory:";
 
 import { describe, it, expect, beforeEach } from "bun:test"
 import { Database } from "bun:sqlite"
-import { runFranceSummary } from "../scheduler/franceSummaryJob.js"
-import type { FranceSummaryOptions } from "../scheduler/franceSummaryJob.js"
+import { runFranceSummary } from "../scheduler/briefings/franceSummaryJob.js"
+import type { FranceSummaryOptions } from "../scheduler/briefings/franceSummaryJob.js"
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DB helper — minimal tables required by franceSummaryJob

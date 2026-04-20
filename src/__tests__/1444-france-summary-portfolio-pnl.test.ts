@@ -76,8 +76,8 @@ function setupTestDb(): Database {
 import {
   runFranceSummary,
   formatFranceSummaryVI,
-} from "../scheduler/franceSummaryJob.js";
-import type { FranceSummaryOptions } from "../scheduler/franceSummaryJob.js";
+} from "../scheduler/briefings/franceSummaryJob.js";
+import type { FranceSummaryOptions } from "../scheduler/briefings/franceSummaryJob.js";
 import type { PortfolioPnlResult } from "../domain/services/portfolioPnlCalculator.js";
 
 // ─────────────────────────────────────────────────────────────────────────────

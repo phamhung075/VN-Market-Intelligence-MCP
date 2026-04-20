@@ -858,7 +858,7 @@ describe("Task 1159 — Morning Briefing Intelligence Enrichment", () => {
   // They will fail at runtime with "undefined is not a function" (red phase).
   describe("AC-5: Telegram message includes three new sections when data present", () => {
     it("message contains '👤 Insider Mới:' header when insiderRecent is non-empty", async () => {
-      const mod = await import("../scheduler/morningBriefingJob.js");
+      const mod = await import("../scheduler/briefings/morningBriefingJob.js");
       // formatBriefingMessage does not exist yet → fails here (red phase)
       const formatBriefingMessage = (mod as Record<string, unknown>)["formatBriefingMessage"] as
         | ((b: unknown) => string)
@@ -891,7 +891,7 @@ describe("Task 1159 — Morning Briefing Intelligence Enrichment", () => {
     });
 
     it("message contains '🌊 Dòng Tiền Ngoại:' header when foreignFlowSummary is non-empty", async () => {
-      const mod = await import("../scheduler/morningBriefingJob.js");
+      const mod = await import("../scheduler/briefings/morningBriefingJob.js");
       const formatBriefingMessage = (mod as Record<string, unknown>)["formatBriefingMessage"] as
         | ((b: unknown) => string)
         | undefined;
@@ -925,7 +925,7 @@ describe("Task 1159 — Morning Briefing Intelligence Enrichment", () => {
     });
 
     it("message contains '🧠 Tích Lũy Bằng Chứng:' header when evidenceTopScores is non-empty", async () => {
-      const mod = await import("../scheduler/morningBriefingJob.js");
+      const mod = await import("../scheduler/briefings/morningBriefingJob.js");
       const formatBriefingMessage = (mod as Record<string, unknown>)["formatBriefingMessage"] as
         | ((b: unknown) => string)
         | undefined;
@@ -957,7 +957,7 @@ describe("Task 1159 — Morning Briefing Intelligence Enrichment", () => {
     });
 
     it("type_label mapping: buy→MUA, sell→BÁN, other→KHÁC", async () => {
-      const mod = await import("../scheduler/morningBriefingJob.js");
+      const mod = await import("../scheduler/briefings/morningBriefingJob.js");
       const formatBriefingMessage = (mod as Record<string, unknown>)["formatBriefingMessage"] as
         | ((b: unknown) => string)
         | undefined;
@@ -992,7 +992,7 @@ describe("Task 1159 — Morning Briefing Intelligence Enrichment", () => {
     });
 
     it("executedVolume is formatted with comma thousands separator (en-US)", async () => {
-      const mod = await import("../scheduler/morningBriefingJob.js");
+      const mod = await import("../scheduler/briefings/morningBriefingJob.js");
       const formatBriefingMessage = (mod as Record<string, unknown>)["formatBriefingMessage"] as
         | ((b: unknown) => string)
         | undefined;
@@ -1024,7 +1024,7 @@ describe("Task 1159 — Morning Briefing Intelligence Enrichment", () => {
     });
 
     it("evidence icon: 🟢 for netScore > 0, 🔴 for netScore < -2.0", async () => {
-      const mod = await import("../scheduler/morningBriefingJob.js");
+      const mod = await import("../scheduler/briefings/morningBriefingJob.js");
       const formatBriefingMessage = (mod as Record<string, unknown>)["formatBriefingMessage"] as
         | ((b: unknown) => string)
         | undefined;
@@ -1100,7 +1100,7 @@ describe("Task 1159 — Morning Briefing Intelligence Enrichment", () => {
     });
 
     it("no phantom headers in Telegram message when all three arrays are empty", async () => {
-      const mod = await import("../scheduler/morningBriefingJob.js");
+      const mod = await import("../scheduler/briefings/morningBriefingJob.js");
       const formatBriefingMessage = (mod as Record<string, unknown>)["formatBriefingMessage"] as
         | ((b: unknown) => string)
         | undefined;

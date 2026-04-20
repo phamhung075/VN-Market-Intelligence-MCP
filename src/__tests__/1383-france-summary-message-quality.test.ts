@@ -9,8 +9,8 @@ Bun.env["DB_PATH"] = ":memory:"
 // All tests are RED until task 1384 implements the fixes in formatFranceSummaryVI.
 
 import { describe, it, expect } from "bun:test"
-import { formatFranceSummaryVI } from "../scheduler/franceSummaryJob.js"
-import type { TaSignalRow } from "../scheduler/franceSummaryJob.js"
+import { formatFranceSummaryVI } from "../scheduler/briefings/franceSummaryJob.js"
+import type { TaSignalRow } from "../scheduler/briefings/franceSummaryJob.js"
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Fixture builders

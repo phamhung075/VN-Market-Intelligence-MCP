@@ -7,7 +7,7 @@
  */
 
 import { describe, it, expect, mock } from "bun:test";
-import { runEveningSummary, resetEveningSummaryGuard } from "../scheduler/eveningSummaryJob.js";
+import { runEveningSummary, resetEveningSummaryGuard } from "../scheduler/briefings/eveningSummaryJob.js";
 import type { EveningSummary } from "../application/usecases/assembleEveningSummary.js";
 
 const FRESH_FETCHED_AT = new Date().toISOString();

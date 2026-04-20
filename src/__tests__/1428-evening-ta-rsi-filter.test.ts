@@ -20,7 +20,7 @@ import type { TaSignal } from "../application/usecases/assembleBriefing.js";
 import {
   runEveningSummary,
   resetEveningSummaryGuard,
-} from "../scheduler/eveningSummaryJob.js";
+} from "../scheduler/briefings/eveningSummaryJob.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Shared mock DB — satisfies dedup guard (returns empty count → no skip)

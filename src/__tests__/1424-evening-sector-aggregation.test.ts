@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect } from "bun:test";
-import { formatMoversSection } from "../scheduler/eveningSummaryJob.js";
+import { formatMoversSection } from "../scheduler/briefings/eveningSummaryJob.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // AC-1: 2+ movers same banking sector + lone tech mover

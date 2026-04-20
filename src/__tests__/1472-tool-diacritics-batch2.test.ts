@@ -88,7 +88,7 @@ describe("1472: Vietnamese diacritics batch 2", () => {
   });
 
   describe("telegramReportTools.ts", () => {
-    const src = read("src/interface/mcp/tools/telegramReportTools.ts");
+    const src = read("src/interface/mcp/tools/briefings/telegramReportTools.ts");
     it("comment string has diacritics: Khi không có", () => {
       expect(src).toContain("Khi không có báo cáo mới");
     });

@@ -23,7 +23,7 @@ import { join } from "node:path";
 import {
   formatBriefingMessage,
   resetMorningBriefingGuard,
-} from "../scheduler/morningBriefingJob.js";
+} from "../scheduler/briefings/morningBriefingJob.js";
 
 import {
   assembleBriefing,

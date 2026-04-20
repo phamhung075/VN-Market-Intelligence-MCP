@@ -17,8 +17,8 @@ import { Database } from "bun:sqlite"
 import {
   formatFranceSummaryVI,
   runFranceSummary,
-} from "../scheduler/franceSummaryJob.js"
-import type { FranceSummaryOptions, FranceSummaryResult } from "../scheduler/franceSummaryJob.js"
+} from "../scheduler/briefings/franceSummaryJob.js"
+import type { FranceSummaryOptions, FranceSummaryResult } from "../scheduler/briefings/franceSummaryJob.js"
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TaSignalRow — forward declaration of the type that task 1365 will export.

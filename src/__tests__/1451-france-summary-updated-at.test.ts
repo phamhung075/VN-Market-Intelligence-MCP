@@ -11,8 +11,8 @@ Bun.env["DB_PATH"] = ":memory:";
 
 import { describe, it, expect } from "bun:test";
 import { Database } from "bun:sqlite";
-import { runFranceSummary } from "../scheduler/franceSummaryJob.js";
-import type { FranceSummaryOptions } from "../scheduler/franceSummaryJob.js";
+import { runFranceSummary } from "../scheduler/briefings/franceSummaryJob.js";
+import type { FranceSummaryOptions } from "../scheduler/briefings/franceSummaryJob.js";
 
 // ── minimal in-memory DB with market_prices using updated_at ─────────────────
 

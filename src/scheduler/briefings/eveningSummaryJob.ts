@@ -10,16 +10,16 @@
  * Layer: interface/scheduler — imports from application/usecases only.
  */
 
-import type { EveningSummary } from "../application/usecases/assembleEveningSummary.js";
-import { logger } from "../infrastructure/logger.js";
+import type { EveningSummary } from "../../application/usecases/assembleEveningSummary.js";
+import { logger } from "../../infrastructure/logger.js";
 import {
   computeSectorAverage,
   getStockProfile,
   SECTOR_NAME_VI,
-} from "../domain/services/sectorPeers.js";
-import { formatPnlSection } from "../domain/services/portfolioPnlCalculator.js";
+} from "../../domain/services/sectorPeers.js";
+import { formatPnlSection } from "../../domain/services/portfolioPnlCalculator.js";
 import { formatGlobalSnapshotSection } from "./morningBriefingJob.js";
-import type { GlobalSnapshot } from "../application/usecases/assembleBriefing.js";
+import type { GlobalSnapshot } from "../../application/usecases/assembleBriefing.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Concurrency guard
@@ -304,7 +304,7 @@ export async function runEveningSummary(
     try {
       let dedupDb = db;
       if (!dedupDb) {
-        const { getDb } = await import("../infrastructure/db/index.js");
+        const { getDb } = await import("../../infrastructure/db/index.js");
         dedupDb = getDb();
       }
       if (alreadySentToday(dedupDb)) {
@@ -318,7 +318,7 @@ export async function runEveningSummary(
       summaryFn ??
       (async () => {
         const { assembleEveningSummary } = await import(
-          "../application/usecases/assembleEveningSummary.js"
+          "../../application/usecases/assembleEveningSummary.js"
         );
         return assembleEveningSummary();
       });
@@ -351,7 +351,7 @@ export async function runEveningSummary(
       sendFn ??
       (async (message: string, opts: unknown) => {
         const { sendTelegramMarket } = await import(
-          "../infrastructure/notifiers/telegram.js"
+          "../../infrastructure/notifiers/telegram.js"
         );
         await sendTelegramMarket(
           message,
