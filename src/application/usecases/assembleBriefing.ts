@@ -872,7 +872,8 @@ export async function assembleBriefing(
         FROM alerts
         WHERE severity IN ('high', 'critical')
           AND resolved_at IS NULL
-        ORDER BY triggered_at DESC
+        GROUP BY message
+        ORDER BY MAX(triggered_at) DESC
         LIMIT 5
       `)
       .all();
