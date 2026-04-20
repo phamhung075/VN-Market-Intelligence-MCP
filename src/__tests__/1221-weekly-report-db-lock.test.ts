@@ -156,7 +156,7 @@ describe("Task 1221 — Scheduler DB lock", () => {
     acquireSchedulerLock(db, "weeklyPortfolioReport");
 
     const { runWeeklyPortfolioReport } = await import(
-      "../scheduler/weeklyPortfolioReportJob.js"
+      "../scheduler/portfolio/weeklyPortfolioReportJob.js"
     );
 
     let sendCalled = false;
@@ -190,7 +190,7 @@ describe("Task 1221 — Scheduler DB lock", () => {
     ).run("weeklyPortfolioReport");
 
     const { runWeeklyPortfolioReport } = await import(
-      "../scheduler/weeklyPortfolioReportJob.js"
+      "../scheduler/portfolio/weeklyPortfolioReportJob.js"
     );
 
     let sendCalled = false;

@@ -15,15 +15,15 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 
-import { getDb, initDatabase } from "../../../infrastructure/db/schema.js";
+import { getDb, initDatabase } from "../../../../infrastructure/db/schema.js";
 import {
   computePortfolioRisk,
   type PortfolioRiskResult,
   type PositionSnapshot,
   type DailyPriceRow,
-} from "../../../domain/services/portfolioRiskCalculator.js";
-import { currentPriceQuery } from "../../../infrastructure/db/priceQueries.js";
-import { logger } from "../../../infrastructure/logger.js";
+} from "../../../../domain/services/portfolioRiskCalculator.js";
+import { currentPriceQuery } from "../../../../infrastructure/db/priceQueries.js";
+import { logger } from "../../../../infrastructure/logger.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SQLite row types

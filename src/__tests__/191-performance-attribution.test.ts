@@ -17,7 +17,7 @@ import {
   computeAttribution,
   type SignalPerformance,
 } from "../domain/services/performanceAttribution.js";
-import { registerPerformanceTools } from "../interface/mcp/tools/performanceTools.js";
+import { registerPerformanceTools } from "../interface/mcp/tools/portfolio/performanceTools.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers — direct tool invocation (bypass SSE transport)

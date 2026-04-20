@@ -17,12 +17,12 @@
  */
 
 import type { Database } from "bun:sqlite";
-import { logger } from "../infrastructure/logger.js";
+import { logger } from "../../infrastructure/logger.js";
 import {
   isSchedulerLockFresh,
   acquireSchedulerLock,
   ensureSchedulerLocksTable,
-} from "../infrastructure/db/schedulerLockStore.js";
+} from "../../infrastructure/db/schedulerLockStore.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Public types
@@ -289,7 +289,7 @@ export function formatWeeklyReport(
 async function sendTelegram(text: string): Promise<void> {
   try {
     const { sendTelegramMarket } = await import(
-      "../infrastructure/notifiers/telegram.js"
+      "../../infrastructure/notifiers/telegram.js"
     );
     const ok = await sendTelegramMarket(text, {
       parseMode: "",
@@ -345,7 +345,7 @@ export async function runWeeklyPortfolioReport(
     const db =
       opts.db ??
       (await (async () => {
-        const { getDb } = await import("../infrastructure/db/schema.js");
+        const { getDb } = await import("../../infrastructure/db/schema.js");
         return getDb();
       })());
 

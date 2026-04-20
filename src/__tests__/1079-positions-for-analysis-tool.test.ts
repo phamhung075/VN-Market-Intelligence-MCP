@@ -12,7 +12,7 @@ Bun.env["DB_PATH"] = ":memory:";
 import { describe, it, expect, beforeEach } from "bun:test";
 import { Database } from "bun:sqlite";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { registerPositionTools } from "../interface/mcp/tools/positionTools.js";
+import { registerPositionTools } from "../interface/mcp/tools/portfolio/positionTools.js";
 import { upsertPosition } from "../infrastructure/db/positionStore.js";
 
 // ─────────────────────────────────────────────────────────────────────────────

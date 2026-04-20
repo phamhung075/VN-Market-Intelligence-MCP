@@ -26,14 +26,14 @@ import * as alertAccuracyNs from "../interface/mcp/tools/alerts/alertAccuracy.js
 import * as alertsNs from "../interface/mcp/tools/alerts/alerts.js";
 import * as bctcFullToolsNs from "../interface/mcp/tools/financial-reports/bctcFullTools.js";
 import * as correlationToolsNs from "../interface/mcp/tools/correlationTools.js";
-import * as performanceToolsNs from "../interface/mcp/tools/performanceTools.js";
+import * as performanceToolsNs from "../interface/mcp/tools/portfolio/performanceTools.js";
 import * as pharmaToolsNs from "../interface/mcp/tools/pharmaTools.js";
-import * as portfolioRiskToolNs from "../interface/mcp/tools/portfolioRiskTool.js";
-import * as positionToolsNs from "../interface/mcp/tools/positionTools.js";
+import * as portfolioRiskToolNs from "../interface/mcp/tools/portfolio/portfolioRiskTool.js";
+import * as positionToolsNs from "../interface/mcp/tools/portfolio/positionTools.js";
 import * as predictionToolsNs from "../interface/mcp/tools/predictionTools.js";
 import * as priceAlertToolsNs from "../interface/mcp/tools/priceAlertTools.js";
 import * as priceHistoryToolsNs from "../interface/mcp/tools/priceHistoryTools.js";
-import * as rebalancingToolsNs from "../interface/mcp/tools/rebalancingTools.js";
+import * as rebalancingToolsNs from "../interface/mcp/tools/portfolio/rebalancingTools.js";
 import * as sentimentTrendToolsNs from "../interface/mcp/tools/sentimentTrendTools.js";
 import * as telegramReportToolsNs from "../interface/mcp/tools/briefings/telegramReportTools.js";
 

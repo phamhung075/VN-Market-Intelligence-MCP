@@ -187,7 +187,7 @@ describe("Task 223 — drift computation", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { registerTargetAllocationTools } from "../interface/mcp/tools/targetAllocationTools.js";
+import { registerTargetAllocationTools } from "../interface/mcp/tools/portfolio/targetAllocationTools.js";
 
 type ToolResult = { content: Array<{ type: string; text: string }> };
 

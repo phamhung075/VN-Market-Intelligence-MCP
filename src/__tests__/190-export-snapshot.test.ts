@@ -337,7 +337,7 @@ describe("Task 190 — Portfolio Snapshot Export", () => {
   // ── 12: MCP tool removed — sprint-036 task 230 ───────────────────────────
   it("export_portfolio_snapshot is NOT registered as an MCP tool (removed in task 230)", () => {
     const { McpServer } = require("@modelcontextprotocol/sdk/server/mcp.js");
-    const { registerExportTools } = require("../interface/mcp/tools/exportTools.js");
+    const { registerExportTools } = require("../interface/mcp/tools/portfolio/exportTools.js");
 
     const server = new McpServer(
       { name: "test-190", version: "0.0.0" },

@@ -18,14 +18,14 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 
-import { getDb, initDatabase } from "../../../infrastructure/db/schema.js";
+import { getDb, initDatabase } from "../../../../infrastructure/db/schema.js";
 import {
   computeRebalancing,
   formatRebalancingReport,
   type Position,
-} from "../../../domain/services/rebalancingCalculator.js";
-import { getTargetWeights } from "../../../infrastructure/db/targetAllocationStore.js";
-import { logger } from "../../../infrastructure/logger.js";
+} from "../../../../domain/services/rebalancingCalculator.js";
+import { getTargetWeights } from "../../../../infrastructure/db/targetAllocationStore.js";
+import { logger } from "../../../../infrastructure/logger.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Internal DB row shapes

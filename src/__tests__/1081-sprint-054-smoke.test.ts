@@ -39,7 +39,7 @@ import { appendKinhDich } from "../domain/services/kinhDich/kinhDichWrapper.js";
 // Interface layer
 import { handleTelegramCommand, type TelegramUpdate } from "../infrastructure/notifiers/telegramCommands.js";
 import { registerAskQueueTools } from "../interface/mcp/tools/system/askQueueTools.js";
-import { registerPositionTools } from "../interface/mcp/tools/positionTools.js";
+import { registerPositionTools } from "../interface/mcp/tools/portfolio/positionTools.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Shared DB factory: creates all tables needed across the full sprint surface

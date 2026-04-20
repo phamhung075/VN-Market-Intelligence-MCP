@@ -23,7 +23,7 @@ import { registerAlertTools } from "../interface/mcp/tools/alerts/alerts.js";
 import { registerReportTools } from "../interface/mcp/tools/financial-reports/reports.js";
 import { registerSearchStocksTools } from "../interface/mcp/tools/searchTools.js";
 import { registerAlertCheckTools } from "../interface/mcp/tools/alerts/alertCheckTools.js";
-import { registerExportTools } from "../interface/mcp/tools/exportTools.js";
+import { registerExportTools } from "../interface/mcp/tools/portfolio/exportTools.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Setup: a single McpServer with all affected tool groups registered

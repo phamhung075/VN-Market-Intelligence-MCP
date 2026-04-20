@@ -30,12 +30,12 @@
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { getDb, initDatabase } from "../../../infrastructure/db/schema.js";
+import { getDb, initDatabase } from "../../../../infrastructure/db/schema.js";
 import {
   computeAttribution,
   type AlertInput,
   type PricePoint,
-} from "../../../domain/services/performanceAttribution.js";
+} from "../../../../domain/services/performanceAttribution.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Internal types for DB row shapes

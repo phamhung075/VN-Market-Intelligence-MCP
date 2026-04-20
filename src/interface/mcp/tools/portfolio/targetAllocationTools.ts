@@ -26,11 +26,11 @@
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
-import { getDb, initDatabase } from "../../../infrastructure/db/schema.js";
+import { getDb, initDatabase } from "../../../../infrastructure/db/schema.js";
 import {
   getTargetWeights,
-} from "../../../infrastructure/db/targetAllocationStore.js";
-import { logger } from "../../../infrastructure/logger.js";
+} from "../../../../infrastructure/db/targetAllocationStore.js";
+import { logger } from "../../../../infrastructure/logger.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Internal DB row shapes
