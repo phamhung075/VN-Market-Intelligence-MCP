@@ -180,6 +180,10 @@ describe("Task 1364 — France TA detail tests", () => {
         ('VHM', 53100, 1000000, '2026-04-16T08:00:00'),
         ('VHM', 55000, 1000000, '2026-04-17T08:00:00')
     `)
+    db.exec(`
+      INSERT OR REPLACE INTO daily_ohlcv (code, date, open, high, low, close, volume, updated_at)
+      VALUES ('VHM', '2026-04-17', 53100, 56000, 52500, 55000, 1000000, '2026-04-17T16:00:00')
+    `)
 
     // Inject computeTaFn: returns overbought signal for any code
     const computeTaFn = (code: string, _db: Database): TaSignalRow => ({
@@ -226,6 +230,10 @@ describe("Task 1364 — France TA detail tests", () => {
         ('HPG', 23200, 1000000, '2026-04-16T08:00:00'),
         ('HPG', 22000, 1000000, '2026-04-17T08:00:00')
     `)
+    db.exec(`
+      INSERT OR REPLACE INTO daily_ohlcv (code, date, open, high, low, close, volume, updated_at)
+      VALUES ('HPG', '2026-04-17', 23200, 23500, 21500, 22000, 1000000, '2026-04-17T16:00:00')
+    `)
 
     // computeTaFn returns null — simulates < 8 daily_ohlcv rows
     const computeTaFn = (_code: string, _db: Database): TaSignalRow | null => null
@@ -268,6 +276,10 @@ describe("Task 1364 — France TA detail tests", () => {
       INSERT OR REPLACE INTO market_prices_history (code, price, volume, fetched_at) VALUES
         ('VCB', 85000, 1000000, '2026-04-16T08:00:00'),
         ('VCB', 88000, 1000000, '2026-04-17T08:00:00')
+    `)
+    db.exec(`
+      INSERT OR REPLACE INTO daily_ohlcv (code, date, open, high, low, close, volume, updated_at)
+      VALUES ('VCB', '2026-04-17', 85000, 89000, 84000, 88000, 1000000, '2026-04-17T16:00:00')
     `)
 
     const taRow: TaSignalRow = {

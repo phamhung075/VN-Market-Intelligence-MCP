@@ -92,6 +92,10 @@ function seedMover(db: Database): void {
       ('VCB', 88000, 1000000, '2026-04-17T07:00:00')
   `);
   db.exec(`INSERT OR REPLACE INTO watchlist (code) VALUES ('VCB')`);
+  db.exec(`
+    INSERT OR REPLACE INTO daily_ohlcv (code, date, open, high, low, close, volume, updated_at)
+    VALUES ('VCB', '2026-04-16', 85000, 89000, 84000, 88000, 1000000, '2026-04-16T16:00:00')
+  `);
 }
 
 const noopSend = async (_text: string) => true;
@@ -220,6 +224,15 @@ describe("Task 1344 — france-summary stale alerts + dedup", () => {
       CREATE TABLE watchlist (code TEXT PRIMARY KEY, domain TEXT NOT NULL DEFAULT 'unknown')
     `);
     db.exec(`
+      CREATE TABLE daily_ohlcv (
+        code TEXT NOT NULL, date TEXT NOT NULL,
+        open REAL NOT NULL, high REAL NOT NULL, low REAL NOT NULL,
+        close REAL NOT NULL, volume REAL NOT NULL DEFAULT 0,
+        foreign_net_vol REAL,
+        updated_at TEXT NOT NULL, PRIMARY KEY (code, date)
+      )
+    `);
+    db.exec(`
       INSERT INTO market_prices (code, price, change_pct, updated_at)
       VALUES ('VCB', 88000, 3.5, datetime('now'))
     `);
@@ -229,6 +242,10 @@ describe("Task 1344 — france-summary stale alerts + dedup", () => {
         ('VCB', 88000, 1000000, '2026-04-17T07:00:00')
     `);
     db.exec(`INSERT OR REPLACE INTO watchlist (code) VALUES ('VCB')`);
+    db.exec(`
+      INSERT OR REPLACE INTO daily_ohlcv (code, date, open, high, low, close, volume, updated_at)
+      VALUES ('VCB', '2026-04-16', 85000, 89000, 84000, 88000, 1000000, '2026-04-16T16:00:00')
+    `);
 
     const sends: string[] = [];
     const sendFn = async (t: string) => { sends.push(t); return true; };

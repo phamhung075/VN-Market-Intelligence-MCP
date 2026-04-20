@@ -158,6 +158,10 @@ describe("1450 (c) — vnIndex block omitted when fetchVnIndexFn returns null", 
       VALUES ('VCB', 85000, 1000, datetime('now', '-1 minute')),
              ('VCB', 75000, 900,  datetime('now', '-2 minutes'))
     `);
+    db.exec(`
+      INSERT OR REPLACE INTO daily_ohlcv (code, date, open, high, low, close, volume)
+      VALUES ('VCB', '2026-04-18', 75000, 86000, 74000, 85000, 1000000)
+    `);
 
     const captured: string[] = [];
 

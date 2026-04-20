@@ -107,6 +107,12 @@ describe("Task 1290 — franceSummaryJob", () => {
     db.exec(`
       INSERT OR REPLACE INTO watchlist (code) VALUES ('VCB'), ('HPG'), ('VNM')
     `)
+    db.exec(`
+      INSERT OR REPLACE INTO daily_ohlcv (code, date, open, high, low, close, volume, updated_at) VALUES
+        ('VCB', '2026-04-15', 85000, 89000, 84000, 88000, 1000000, '2026-04-15T16:00:00'),
+        ('HPG', '2026-04-15', 23000, 23500, 21500, 22000, 1000000, '2026-04-15T16:00:00'),
+        ('VNM', '2026-04-15', 74000, 76000, 73000, 75000, 1000000, '2026-04-15T16:00:00')
+    `)
 
     const sends: string[] = []
     const sendFn = async (text: string) => { sends.push(text); return true }
@@ -151,6 +157,15 @@ describe("Task 1290 — franceSummaryJob", () => {
     db.exec(`
       INSERT OR REPLACE INTO watchlist (code) VALUES ('A'), ('B'), ('C'), ('D'), ('E')
     `)
+    // daily_ohlcv: A=+9%, B=-8.5%, C=+8%, D=-5%, E=+4%
+    db.exec(`
+      INSERT OR REPLACE INTO daily_ohlcv (code, date, open, high, low, close, volume, updated_at) VALUES
+        ('A', '2026-04-15', 917,  1010, 910,  1000, 1000000, '2026-04-15T16:00:00'),
+        ('B', '2026-04-15', 1085, 1090, 995,  1000, 1000000, '2026-04-15T16:00:00'),
+        ('C', '2026-04-15', 926,  1010, 920,  1000, 1000000, '2026-04-15T16:00:00'),
+        ('D', '2026-04-15', 1053, 1060, 995,  1000, 1000000, '2026-04-15T16:00:00'),
+        ('E', '2026-04-15', 962,  1010, 955,  1000, 1000000, '2026-04-15T16:00:00')
+    `)
 
     const sends: string[] = []
     const sendFn = async (text: string) => { sends.push(text); return true }
@@ -178,6 +193,10 @@ describe("Task 1290 — franceSummaryJob", () => {
         ('VCB', 88000, 1000000, '2026-04-15T08:00:00')
     `)
     db.exec(`INSERT OR REPLACE INTO watchlist (code) VALUES ('VCB')`)
+    db.exec(`
+      INSERT OR REPLACE INTO daily_ohlcv (code, date, open, high, low, close, volume, updated_at) VALUES
+        ('VCB', '2026-04-15', 85000, 89000, 84000, 88000, 1000000, '2026-04-15T16:00:00')
+    `)
 
     const sendFn = async (_text: string) => { throw new Error("Telegram down") }
 
