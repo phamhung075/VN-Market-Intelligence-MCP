@@ -152,12 +152,12 @@ export async function initDatabase(dbArg?: import("bun:sqlite").Database): Promi
     CREATE TABLE IF NOT EXISTS daily_ohlcv (
       code       TEXT    NOT NULL,
       date       TEXT    NOT NULL,
-      open       REAL    NOT NULL,
-      high       REAL    NOT NULL,
-      low        REAL    NOT NULL,
+      open       REAL    NOT NULL DEFAULT 0,
+      high       REAL    NOT NULL DEFAULT 0,
+      low        REAL    NOT NULL DEFAULT 0,
       close      REAL    NOT NULL,
       volume     REAL    NOT NULL DEFAULT 0,
-      updated_at TEXT    NOT NULL,
+      updated_at TEXT    NOT NULL DEFAULT '',
       PRIMARY KEY (code, date)
     );
     CREATE INDEX IF NOT EXISTS idx_daily_ohlcv_code_date
@@ -1120,12 +1120,12 @@ export async function initDatabase(dbArg?: import("bun:sqlite").Database): Promi
     CREATE TABLE IF NOT EXISTS daily_ohlcv (
       code       TEXT    NOT NULL,
       date       TEXT    NOT NULL,
-      open       REAL    NOT NULL,
-      high       REAL    NOT NULL,
-      low        REAL    NOT NULL,
+      open       REAL    NOT NULL DEFAULT 0,
+      high       REAL    NOT NULL DEFAULT 0,
+      low        REAL    NOT NULL DEFAULT 0,
       close      REAL    NOT NULL,
       volume           REAL    NOT NULL DEFAULT 0,
-      updated_at       TEXT    NOT NULL,
+      updated_at       TEXT    NOT NULL DEFAULT '',
       foreign_buy_vol  REAL,
       foreign_sell_vol REAL,
       foreign_net_vol  REAL,

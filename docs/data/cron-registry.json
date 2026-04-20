@@ -2,7 +2,7 @@
   "_maintained_by": "developer",
   "_trigger": "after adding/removing scheduler file, update count + list",
   "lastUpdated": "2026-04-19",
-  "schedulerFileCount": 36,
+  "schedulerFileCount": 37,
   "jobs": [
     { "schedule": "*/15 min", "name": "intelligenceCycle", "desc": "Main engine: news+prices+cascade+alerts" },
     { "schedule": "*/30 min", "name": "predictionMarketPoll", "desc": "Polymarket fetch + signal detection" },
@@ -40,6 +40,7 @@
     { "schedule": "0 16 UTC M-F (23:00 VN)", "name": "ohlcvDailyAggregatorJob", "desc": "Aggregate intraday market_prices_history ticks into daily_ohlcv rows post-market-close. Sends WORK-channel summary: rows per ticker, TA-ready count, top-3 tickers. (Sprint 122+127)" },
     { "schedule": "startup (fire-and-forget)", "name": "ohlcvStartupProbe", "desc": "On server start: detect sparse daily_ohlcv tickers (<8 rows), write pending record to ohlcv_backfill_queue, alert WORK channel. VPS polls queue every 30min and runs backfill. (Sprint 119+123)" },
     { "schedule": "15 8 * * 1-5", "name": "ohlcvStalenessCheckJob", "file": "src/scheduler/ohlcvStalenessCheckJob.ts", "desc": "OHLCV staleness check weekdays — alerts WORK channel when daily_ohlcv rows are stale or missing post-market-close" },
+    { "schedule": "20:30 UTC daily", "name": "cascadeBacktestJob", "file": "src/scheduler/cascadeBacktestJob.ts", "desc": "Daily backtest: fills price_impact_3d/7d/outcome_correct on cascade_rule_hits rows older than 3 days using daily_ohlcv closes. Sends WORK summary." },
     { "schedule": "helper", "name": "walCheckpointAlert", "file": "src/scheduler/walCheckpointAlert.ts", "type": "helper", "desc": "WAL stuck Telegram alert helper — sends WORK channel alert when WAL checkpoint is stale (Sprint 179)" }
   ],
   "orphan": [],
