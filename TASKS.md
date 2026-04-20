@@ -9,32 +9,29 @@
 > Sprints 177–181 archived: `docs/archive/sprints-177-181.md`
 > Sprints 182–189 archived: `docs/archive/sprints-182-189.md`
 > Sprints 190–220 archived: `docs/archive/sprints-190-220.md`
+> Sprints 221–225 archived: `docs/archive/sprints-221-225.md`
 
 ---
 
-## Sprint 223 — fix(pipelineWatchdog): also alert MARKET channel when news pipeline goes stale — COMPLETE 2026-04-20
+## Sprint 227 — fix(watchdog): MARKET "pipeline restored" alert on VPS recovery
 
 | ID | Title | Status | Role |
 |----|-------|--------|------|
-| 1551 | Add notifyUser? + sendTelegramMarket to pipelineWatchdogJob; human-friendly MARKET message, best-effort | Done | Dev |
+| 1557_a | TDD RED: `1557-watchdog-recovery.test.ts` — 3 failing assertions: recovery fires after stale, silent if never stale, reset clears flag | Review | Dev |
+| 1557_b | GREEN: add `lastWasStale` flag + `_resetWatchdogStaleFlag()` export; "ok" branch sends recovery MARKET msg + returns "restored" when flag set; set flag on alert-sent | Todo | Dev |
 
 ---
 
-## Sprint 222 — fix(watchdog): also alert MARKET channel when VPS data pipeline goes stale — COMPLETE 2026-04-21
+## Sprint 226 — refactor(cowork): agent merge + composite bootstrap tool + direct MCP access — HOT SPRINT
 
 | ID | Title | Status | Role |
 |----|-------|--------|------|
-| 1550_a | TDD RED: `1550-watchdog-market-alert.test.ts` — 3 failing assertions: MARKET alert sent when stale, skipped in cooldown, WORK still fires | Done | Dev |
-| 1550_b | GREEN: add `notifyUser?` to options + `sendTelegramMarket` import; send user-friendly MARKET alert after WORK alert succeeds | Done | Dev |
-
----
-
-## Sprint 221 — fix(watchdog): extend VPS staleness coverage to news + OHLCV — COMPLETE 2026-04-21
-
-| ID | Title | Status | Role |
-|----|-------|--------|------|
-| 1549_a | TDD RED: `1549-watchdog-news-staleness.test.ts` — 6 failing assertions for news + OHLCV staleness checks | Done | Dev |
-| 1549_b | GREEN: extend runVpsProxyWatchdog to check rag_analyses + daily_ohlcv freshness; off-hours guard unchanged | Done | Dev |
+| 1560 | [BA] Write REQ_226.md: tool contract, agent merge file list, MCP access mechanism, migration safety, test plan | Done | BA |
+| 1561 | [Arch] Write TECH_226.md: `get_cycle_bootstrap` implementation, Cowork .md merge diffs, access grant design | Done | Architect |
+| 1562 | [Dev] Track A: create 02-financial-analyst.md + 06-digest-predict.md; delete old 02/03/08 agent files; update agent-roster.md + mcp-tools.md | Todo | Dev |
+| 1563 | [Dev] Track B: `getCycleBootstrap` use case + `registerCycleBootstrapTool` + registry.ts + tool-registry.json | Todo | Dev |
+| 1564 | [Dev] Track C: update all 7 agent .md files — Step 0 bootstrap + validation step + unified-agent role change (ships after 1563) | Todo | Dev |
+| 1565 | [QA] Verify: bootstrap tool shape, agent count 9→7, signal latency ≤3s, no hallucinated prices reach MARKET | Backlog | QA |
 
 ---
 

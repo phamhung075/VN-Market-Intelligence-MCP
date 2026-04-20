@@ -53,6 +53,12 @@ export function _resetWatchdogCooldown(): void {
 }
 
 /**
+ * Test-only reset of the lastWasStale flag.
+ * Stub — body implemented in task 227b.
+ */
+export function _resetWatchdogStaleFlag(): void { /* stub — body in 227b */ }
+
+/**
  * Returns true if the current UTC instant is inside VN market hours
  * (Mon-Fri 02:00-08:59 UTC, matching the VPS systemd schedule window).
  */
