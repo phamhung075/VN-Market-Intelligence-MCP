@@ -4,8 +4,8 @@ import { describe, it, expect } from "bun:test";
 import {
   runIntelligenceCycle,
   resetCycleGuard,
-} from "../scheduler/intelligenceCycleJob.js";
-import type { CycleDeps } from "../scheduler/intelligenceCycleJob.js";
+} from "../scheduler/news-analysis/intelligenceCycleJob.js";
+import type { CycleDeps } from "../scheduler/news-analysis/intelligenceCycleJob.js";
 import type { Alert } from "../domain/services/alertGenerator.js";
 import { loadMcpConfig } from "../infrastructure/config.js";
 

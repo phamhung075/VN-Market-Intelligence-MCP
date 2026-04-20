@@ -18,7 +18,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 
-import { getDb, initDatabase } from "../../../infrastructure/db/schema.js";
+import { getDb, initDatabase } from "../../../../infrastructure/db/schema.js";
 import {
   postSignal,
   getSignals,
@@ -28,7 +28,7 @@ import {
   computeCycleId,
   type SignalType,
   type AgentSignal,
-} from "../../../infrastructure/db/agentSignalStore.js";
+} from "../../../../infrastructure/db/agentSignalStore.js";
 
 // ── Zod schemas ─────────────────────────────────────────────────────────────
 
@@ -165,7 +165,7 @@ export function registerAgentSignalTools(server: McpServer): void {
 
         const cycleId = args.cycle_id ?? computeCycleId();
 
-        const signalInput: import("../../../infrastructure/db/agentSignalStore.js").PostSignalInput =
+        const signalInput: import("../../../../infrastructure/db/agentSignalStore.js").PostSignalInput =
           {
             fromAgent: args.from_agent,
             toAgent: args.to_agent,
@@ -325,7 +325,7 @@ export function registerAgentSignalTools(server: McpServer): void {
         await initDatabase();
         const db = getDb();
 
-        const effectivenessOpts: import("../../../infrastructure/db/agentSignalStore.js").GetEffectivenessOptions =
+        const effectivenessOpts: import("../../../../infrastructure/db/agentSignalStore.js").GetEffectivenessOptions =
           { days: args.days };
         if (args.from_agent !== undefined) effectivenessOpts.fromAgent = args.from_agent;
         if (args.signal_type !== undefined) effectivenessOpts.signalType = args.signal_type;

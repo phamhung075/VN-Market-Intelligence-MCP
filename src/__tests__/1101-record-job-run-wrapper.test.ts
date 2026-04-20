@@ -255,7 +255,7 @@ describe("Task 1101 — recordJobRun wrapper", () => {
 
   it("structural: dataAuditJob imports recordJobRun", async () => {
     const src = await Bun.file(
-      new URL("../scheduler/dataAuditJob.ts", import.meta.url).pathname,
+      new URL("../scheduler/news-analysis/dataAuditJob.ts", import.meta.url).pathname,
     ).text();
     expect(src).toContain("recordJobRun");
     expect(src).toContain("cronJobRunStore");

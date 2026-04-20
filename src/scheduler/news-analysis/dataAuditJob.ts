@@ -20,8 +20,8 @@
 import { Database } from "bun:sqlite";
 import { existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
-import { getCurrentDeadline } from "../domain/services/financial-reports/earningsCalendar.js";
-import { recordJobRun } from "../infrastructure/db/cronJobRunStore.js";
+import { getCurrentDeadline } from "../../domain/services/financial-reports/earningsCalendar.js";
+import { recordJobRun } from "../../infrastructure/db/cronJobRunStore.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -266,21 +266,21 @@ function buildTelegramMessage(mode: "daily" | "weekly", findings: AuditFinding[]
 // ─────────────────────────────────────────────────────────────────────────────
 
 async function defaultGetDb(): Promise<Database> {
-  const { getDb } = await import("../infrastructure/db/schema.js");
+  const { getDb } = await import("../../infrastructure/db/schema.js");
   return getDb();
 }
 
 async function defaultSendTelegram(text: string): Promise<void> {
   try {
-    const { mcpConfig } = await import("../infrastructure/config.js");
+    const { mcpConfig } = await import("../../infrastructure/config.js");
     if (!mcpConfig.telegram?.enabled) return;
-    const { sendTelegramWork } = await import("../infrastructure/notifiers/telegram.js");
+    const { sendTelegramWork } = await import("../../infrastructure/notifiers/telegram.js");
     await sendTelegramWork(text, { parseMode: "" });
   } catch { /* best-effort */ }
 }
 
 async function defaultGetCount(): Promise<number> {
-  const { getCount } = await import("../infrastructure/rag/vectorstore.js");
+  const { getCount } = await import("../../infrastructure/rag/vectorstore.js");
   return getCount();
 }
 
@@ -1086,7 +1086,7 @@ export async function runDailyAudit(
 
     // Clean expired agent signals (Sprint 038)
     try {
-      const { cleanExpired } = await import("../infrastructure/db/agentSignalStore.js");
+      const { cleanExpired } = await import("../../infrastructure/db/agentSignalStore.js");
       const removed = cleanExpired(database);
       if (removed > 0) {
         findings.push({ table: "agent_signals", check: "expired_cleanup", severity: "info", rowsAffected: removed, action: "auto_cleaned", detail: `Removed ${removed} expired signals` });
@@ -1155,7 +1155,7 @@ export async function runWeeklyAudit(
 
   // LanceDB compaction — reduce fragmentation (6000+ files → fewer, larger files)
   try {
-    const { compactVectorStore } = await import("../infrastructure/rag/vectorstore.js");
+    const { compactVectorStore } = await import("../../infrastructure/rag/vectorstore.js");
     const result = await compactVectorStore();
     if (result) {
       allFindings.push({

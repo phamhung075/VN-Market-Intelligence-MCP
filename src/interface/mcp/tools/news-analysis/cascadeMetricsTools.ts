@@ -14,8 +14,8 @@
 
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { getDb } from "../../../infrastructure/db/schema.js";
-import { getHitMetricsWithAccuracy, getDeadRules } from "../../../infrastructure/db/cascadeHitStore.js";
+import { getDb } from "../../../../infrastructure/db/schema.js";
+import { getHitMetricsWithAccuracy, getDeadRules } from "../../../../infrastructure/db/cascadeHitStore.js";
 
 // ─── Known rule keys (derived from SECTOR_RULES in cascadeEngine.ts) ──────────
 // Format: {domain}_{direction} — first matching rule per domain wins.

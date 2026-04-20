@@ -10,7 +10,7 @@
  * Layer: interface/scheduler
  */
 
-import { logger } from "../infrastructure/logger.js";
+import { logger } from "../../infrastructure/logger.js";
 
 /**
  * Run the weekly pattern watch scan.
@@ -20,8 +20,8 @@ import { logger } from "../infrastructure/logger.js";
  */
 export async function runPatternWatch(): Promise<void> {
   try {
-    const { getDb } = await import("../infrastructure/db/schema.js");
-    const { sendTelegramMarket } = await import("../infrastructure/notifiers/telegram.js");
+    const { getDb } = await import("../../infrastructure/db/schema.js");
+    const { sendTelegramMarket } = await import("../../infrastructure/notifiers/telegram.js");
     const db = getDb();
 
     // Get watchlist codes

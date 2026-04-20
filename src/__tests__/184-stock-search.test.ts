@@ -9,7 +9,7 @@
 import { describe, it, expect, beforeAll, afterAll } from "bun:test";
 import { searchStocks, type StockSearchResult } from "../domain/services/stockSearch.js";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { registerSearchStocksTools } from "../interface/mcp/tools/searchTools.js";
+import { registerSearchStocksTools } from "../interface/mcp/tools/news-analysis/searchTools.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 1. Domain service — searchStocks()

@@ -47,7 +47,7 @@ function buildBaseDeps(overrides: Record<string, unknown> = {}) {
 
 describe("Task 278 — peer sync during market hours", () => {
   it("calls syncSectorPeersFn during market hours", async () => {
-    const { runIntelligenceCycle, resetCycleGuard } = await import("../scheduler/intelligenceCycleJob.js");
+    const { runIntelligenceCycle, resetCycleGuard } = await import("../scheduler/news-analysis/intelligenceCycleJob.js");
     resetCycleGuard();
 
     let peerSyncCalled = false;
@@ -67,7 +67,7 @@ describe("Task 278 — peer sync during market hours", () => {
   });
 
   it("peer sync receives correct watchlist entries with domain", async () => {
-    const { runIntelligenceCycle, resetCycleGuard } = await import("../scheduler/intelligenceCycleJob.js");
+    const { runIntelligenceCycle, resetCycleGuard } = await import("../scheduler/news-analysis/intelligenceCycleJob.js");
     resetCycleGuard();
 
     let receivedEntries: Array<{ actionCode: string; domain: string }> = [];
@@ -88,7 +88,7 @@ describe("Task 278 — peer sync during market hours", () => {
   });
 
   it("peer sync result is logged but does not affect CycleResult fields", async () => {
-    const { runIntelligenceCycle, resetCycleGuard } = await import("../scheduler/intelligenceCycleJob.js");
+    const { runIntelligenceCycle, resetCycleGuard } = await import("../scheduler/news-analysis/intelligenceCycleJob.js");
     resetCycleGuard();
 
     const result = await runIntelligenceCycle({
@@ -112,7 +112,7 @@ describe("Task 278 — peer sync during market hours", () => {
 
 describe("Task 278 — peer sync skipped off-hours", () => {
   it("does NOT call syncSectorPeersFn when off-hours", async () => {
-    const { runIntelligenceCycle, resetCycleGuard } = await import("../scheduler/intelligenceCycleJob.js");
+    const { runIntelligenceCycle, resetCycleGuard } = await import("../scheduler/news-analysis/intelligenceCycleJob.js");
     resetCycleGuard();
 
     let peerSyncCalled = false;
@@ -132,7 +132,7 @@ describe("Task 278 — peer sync skipped off-hours", () => {
   });
 
   it("off-hours cycle has zero peer sync errors regardless", async () => {
-    const { runIntelligenceCycle, resetCycleGuard } = await import("../scheduler/intelligenceCycleJob.js");
+    const { runIntelligenceCycle, resetCycleGuard } = await import("../scheduler/news-analysis/intelligenceCycleJob.js");
     resetCycleGuard();
 
     const result = await runIntelligenceCycle({
@@ -156,7 +156,7 @@ describe("Task 278 — peer sync skipped off-hours", () => {
 
 describe("Task 278 — peer sync failure is non-fatal", () => {
   it("cycle completes and increments errors when syncSectorPeersFn throws", async () => {
-    const { runIntelligenceCycle, resetCycleGuard } = await import("../scheduler/intelligenceCycleJob.js");
+    const { runIntelligenceCycle, resetCycleGuard } = await import("../scheduler/news-analysis/intelligenceCycleJob.js");
     resetCycleGuard();
 
     let fetchPricesCalled = false;
@@ -183,7 +183,7 @@ describe("Task 278 — peer sync failure is non-fatal", () => {
   });
 
   it("peer sync timeout does not abort downstream steps (D and E still run)", async () => {
-    const { runIntelligenceCycle, resetCycleGuard } = await import("../scheduler/intelligenceCycleJob.js");
+    const { runIntelligenceCycle, resetCycleGuard } = await import("../scheduler/news-analysis/intelligenceCycleJob.js");
     resetCycleGuard();
 
     let impactCalled = false;
@@ -208,7 +208,7 @@ describe("Task 278 — peer sync failure is non-fatal", () => {
   });
 
   it("errors from peer sync failure plus other step failures sum correctly", async () => {
-    const { runIntelligenceCycle, resetCycleGuard } = await import("../scheduler/intelligenceCycleJob.js");
+    const { runIntelligenceCycle, resetCycleGuard } = await import("../scheduler/news-analysis/intelligenceCycleJob.js");
     resetCycleGuard();
 
     const result = await runIntelligenceCycle({
@@ -234,7 +234,7 @@ describe("Task 278 — peer sync failure is non-fatal", () => {
 
 describe("Task 278 — CycleDeps backward compatibility", () => {
   it("cycle runs fine when syncSectorPeersFn is NOT provided (uses default)", async () => {
-    const { runIntelligenceCycle, resetCycleGuard } = await import("../scheduler/intelligenceCycleJob.js");
+    const { runIntelligenceCycle, resetCycleGuard } = await import("../scheduler/news-analysis/intelligenceCycleJob.js");
     resetCycleGuard();
 
     // Backward-compat test: the CycleDeps type allows syncSectorPeersFn to be omitted.
@@ -259,7 +259,7 @@ describe("Task 278 — CycleDeps backward compatibility", () => {
   });
 
   it("cycle without syncSectorPeersFn during market hours is still valid", async () => {
-    const { runIntelligenceCycle, resetCycleGuard } = await import("../scheduler/intelligenceCycleJob.js");
+    const { runIntelligenceCycle, resetCycleGuard } = await import("../scheduler/news-analysis/intelligenceCycleJob.js");
     resetCycleGuard();
 
     // Backward-compat: verifies the cycle result is well-formed when syncSectorPeersFn

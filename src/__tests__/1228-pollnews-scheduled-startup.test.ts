@@ -23,7 +23,7 @@
 Bun.env["DB_PATH"] = ":memory:";
 
 import { describe, it, expect } from "bun:test";
-import { runIntelligenceCycle, resetCycleGuard } from "../scheduler/intelligenceCycleJob";
+import { runIntelligenceCycle, resetCycleGuard } from "../scheduler/news-analysis/intelligenceCycleJob";
 
 describe("Task 1228 — defaultPollNews stubs all sources (no Reuters/TE failures)", () => {
   it("AC-1+2: cycle step A completes without throwing when all fetchers are stubs", async () => {

@@ -21,7 +21,7 @@ import { describe, it, expect } from "bun:test";
 
 describe("Task 106 — isMarketHours()", () => {
   it("returns true at 10:00 GMT+7 on Monday", async () => {
-    const { isMarketHours } = await import("../scheduler/intelligenceCycleJob.js");
+    const { isMarketHours } = await import("../scheduler/news-analysis/intelligenceCycleJob.js");
 
     // 10:00 GMT+7 = 03:00 UTC on a Monday (2026-03-30 is a Monday)
     const monday10am = new Date("2026-03-30T03:00:00.000Z");
@@ -29,7 +29,7 @@ describe("Task 106 — isMarketHours()", () => {
   });
 
   it("returns true at 09:00 GMT+7 on Wednesday (market open)", async () => {
-    const { isMarketHours } = await import("../scheduler/intelligenceCycleJob.js");
+    const { isMarketHours } = await import("../scheduler/news-analysis/intelligenceCycleJob.js");
 
     // 09:00 GMT+7 = 02:00 UTC on Wednesday (2026-04-01 is a Wednesday)
     const wed9am = new Date("2026-04-01T02:00:00.000Z");
@@ -37,7 +37,7 @@ describe("Task 106 — isMarketHours()", () => {
   });
 
   it("returns true at 15:30 GMT+7 on Friday (market close boundary)", async () => {
-    const { isMarketHours } = await import("../scheduler/intelligenceCycleJob.js");
+    const { isMarketHours } = await import("../scheduler/news-analysis/intelligenceCycleJob.js");
 
     // 15:30 GMT+7 = 08:30 UTC on Friday (2026-04-03 is a Friday)
     const fri330pm = new Date("2026-04-03T08:30:00.000Z");
@@ -45,7 +45,7 @@ describe("Task 106 — isMarketHours()", () => {
   });
 
   it("returns false at 20:00 GMT+7 (after market close)", async () => {
-    const { isMarketHours } = await import("../scheduler/intelligenceCycleJob.js");
+    const { isMarketHours } = await import("../scheduler/news-analysis/intelligenceCycleJob.js");
 
     // 20:00 GMT+7 = 13:00 UTC on Monday
     const monday8pm = new Date("2026-03-30T13:00:00.000Z");
@@ -53,7 +53,7 @@ describe("Task 106 — isMarketHours()", () => {
   });
 
   it("returns false at 08:59 GMT+7 (just before open)", async () => {
-    const { isMarketHours } = await import("../scheduler/intelligenceCycleJob.js");
+    const { isMarketHours } = await import("../scheduler/news-analysis/intelligenceCycleJob.js");
 
     // 08:59 GMT+7 = 01:59 UTC on Monday
     const monday859am = new Date("2026-03-30T01:59:00.000Z");
@@ -61,7 +61,7 @@ describe("Task 106 — isMarketHours()", () => {
   });
 
   it("returns false at 15:31 GMT+7 (just after close)", async () => {
-    const { isMarketHours } = await import("../scheduler/intelligenceCycleJob.js");
+    const { isMarketHours } = await import("../scheduler/news-analysis/intelligenceCycleJob.js");
 
     // 15:31 GMT+7 = 08:31 UTC on Monday
     const monday331pm = new Date("2026-03-30T08:31:00.000Z");
@@ -69,7 +69,7 @@ describe("Task 106 — isMarketHours()", () => {
   });
 
   it("returns false on Saturday", async () => {
-    const { isMarketHours } = await import("../scheduler/intelligenceCycleJob.js");
+    const { isMarketHours } = await import("../scheduler/news-analysis/intelligenceCycleJob.js");
 
     // 10:00 GMT+7 = 03:00 UTC on Saturday (2026-04-04)
     const sat10am = new Date("2026-04-04T03:00:00.000Z");
@@ -77,7 +77,7 @@ describe("Task 106 — isMarketHours()", () => {
   });
 
   it("returns false on Sunday", async () => {
-    const { isMarketHours } = await import("../scheduler/intelligenceCycleJob.js");
+    const { isMarketHours } = await import("../scheduler/news-analysis/intelligenceCycleJob.js");
 
     // 12:00 GMT+7 = 05:00 UTC on Sunday (2026-04-05)
     const sun12pm = new Date("2026-04-05T05:00:00.000Z");
@@ -114,7 +114,7 @@ const NO_NET_MARKET_DEPS = {
 
 describe("Task 106 — runIntelligenceCycle() during market hours", () => {
   it("calls pollNews during market hours", async () => {
-    const { runIntelligenceCycle, resetCycleGuard } = await import("../scheduler/intelligenceCycleJob.js");
+    const { runIntelligenceCycle, resetCycleGuard } = await import("../scheduler/news-analysis/intelligenceCycleJob.js");
     resetCycleGuard();
 
     let pollCalled = false;
@@ -135,7 +135,7 @@ describe("Task 106 — runIntelligenceCycle() during market hours", () => {
   });
 
   it("calls listSscDocs during market hours", async () => {
-    const { runIntelligenceCycle, resetCycleGuard } = await import("../scheduler/intelligenceCycleJob.js");
+    const { runIntelligenceCycle, resetCycleGuard } = await import("../scheduler/news-analysis/intelligenceCycleJob.js");
     resetCycleGuard();
 
     const sscCodes: string[] = [];
@@ -155,7 +155,7 @@ describe("Task 106 — runIntelligenceCycle() during market hours", () => {
   });
 
   it("calls fetchPrices during market hours", async () => {
-    const { runIntelligenceCycle, resetCycleGuard } = await import("../scheduler/intelligenceCycleJob.js");
+    const { runIntelligenceCycle, resetCycleGuard } = await import("../scheduler/news-analysis/intelligenceCycleJob.js");
     resetCycleGuard();
 
     let fetchPricesCalled = false;
@@ -174,7 +174,7 @@ describe("Task 106 — runIntelligenceCycle() during market hours", () => {
   });
 
   it("calls runImpactChain during market hours", async () => {
-    const { runIntelligenceCycle, resetCycleGuard } = await import("../scheduler/intelligenceCycleJob.js");
+    const { runIntelligenceCycle, resetCycleGuard } = await import("../scheduler/news-analysis/intelligenceCycleJob.js");
     resetCycleGuard();
 
     let impactCalled = false;
@@ -194,7 +194,7 @@ describe("Task 106 — runIntelligenceCycle() during market hours", () => {
   });
 
   it("calls sendAlerts during market hours when alerts are available", async () => {
-    const { runIntelligenceCycle, resetCycleGuard } = await import("../scheduler/intelligenceCycleJob.js");
+    const { runIntelligenceCycle, resetCycleGuard } = await import("../scheduler/news-analysis/intelligenceCycleJob.js");
     resetCycleGuard();
 
     let alertsSent = 0;
@@ -213,7 +213,7 @@ describe("Task 106 — runIntelligenceCycle() during market hours", () => {
   });
 
   it("returns CycleResult with all required fields", async () => {
-    const { runIntelligenceCycle, resetCycleGuard } = await import("../scheduler/intelligenceCycleJob.js");
+    const { runIntelligenceCycle, resetCycleGuard } = await import("../scheduler/news-analysis/intelligenceCycleJob.js");
     resetCycleGuard();
 
     const result = await runIntelligenceCycle({
@@ -245,7 +245,7 @@ describe("Task 106 — runIntelligenceCycle() during market hours", () => {
 
 describe("Task 106 — runIntelligenceCycle() outside market hours", () => {
   it("only polls news outside market hours (no SSC, prices, impact chain)", async () => {
-    const { runIntelligenceCycle, resetCycleGuard } = await import("../scheduler/intelligenceCycleJob.js");
+    const { runIntelligenceCycle, resetCycleGuard } = await import("../scheduler/news-analysis/intelligenceCycleJob.js");
     resetCycleGuard();
 
     let pollCalled = false;
@@ -282,7 +282,7 @@ describe("Task 106 — runIntelligenceCycle() outside market hours", () => {
   });
 
   it("returns correct CycleResult fields outside market hours", async () => {
-    const { runIntelligenceCycle, resetCycleGuard } = await import("../scheduler/intelligenceCycleJob.js");
+    const { runIntelligenceCycle, resetCycleGuard } = await import("../scheduler/news-analysis/intelligenceCycleJob.js");
     resetCycleGuard();
 
     const result = await runIntelligenceCycle({
@@ -310,7 +310,7 @@ describe("Task 106 — runIntelligenceCycle() outside market hours", () => {
 
 describe("Task 106 — concurrency guard", () => {
   it("skips second invocation if previous cycle still running", async () => {
-    const { runIntelligenceCycle, resetCycleGuard } = await import("../scheduler/intelligenceCycleJob.js");
+    const { runIntelligenceCycle, resetCycleGuard } = await import("../scheduler/news-analysis/intelligenceCycleJob.js");
     resetCycleGuard();
 
     let callCount = 0;
@@ -346,7 +346,7 @@ describe("Task 106 — concurrency guard", () => {
   });
 
   it("allows new cycle after previous finishes", async () => {
-    const { runIntelligenceCycle, resetCycleGuard } = await import("../scheduler/intelligenceCycleJob.js");
+    const { runIntelligenceCycle, resetCycleGuard } = await import("../scheduler/news-analysis/intelligenceCycleJob.js");
     resetCycleGuard();
 
     let callCount = 0;
@@ -378,7 +378,7 @@ describe("Task 106 — concurrency guard", () => {
 
 describe("Task 106 — duration tracking", () => {
   it("durationMs is positive and roughly correct", async () => {
-    const { runIntelligenceCycle, resetCycleGuard } = await import("../scheduler/intelligenceCycleJob.js");
+    const { runIntelligenceCycle, resetCycleGuard } = await import("../scheduler/news-analysis/intelligenceCycleJob.js");
     resetCycleGuard();
 
     const start = Date.now();
@@ -399,7 +399,7 @@ describe("Task 106 — duration tracking", () => {
   });
 
   it("logs a warning when cycle duration exceeds 12 minutes", async () => {
-    const { runIntelligenceCycle, resetCycleGuard } = await import("../scheduler/intelligenceCycleJob.js");
+    const { runIntelligenceCycle, resetCycleGuard } = await import("../scheduler/news-analysis/intelligenceCycleJob.js");
     resetCycleGuard();
 
     const warnings: string[] = [];
@@ -440,7 +440,7 @@ describe("Task 106 — duration tracking", () => {
 
 describe("Task 106 — graceful degradation", () => {
   it("continues cycle even if pollNews throws", async () => {
-    const { runIntelligenceCycle, resetCycleGuard } = await import("../scheduler/intelligenceCycleJob.js");
+    const { runIntelligenceCycle, resetCycleGuard } = await import("../scheduler/news-analysis/intelligenceCycleJob.js");
     resetCycleGuard();
 
     let fetchPricesCalled = false;
@@ -461,7 +461,7 @@ describe("Task 106 — graceful degradation", () => {
   });
 
   it("continues cycle even if listSscDocs throws", async () => {
-    const { runIntelligenceCycle, resetCycleGuard } = await import("../scheduler/intelligenceCycleJob.js");
+    const { runIntelligenceCycle, resetCycleGuard } = await import("../scheduler/news-analysis/intelligenceCycleJob.js");
     resetCycleGuard();
 
     let fetchPricesCalled = false;
@@ -483,7 +483,7 @@ describe("Task 106 — graceful degradation", () => {
   });
 
   it("continues cycle even if fetchPrices throws", async () => {
-    const { runIntelligenceCycle, resetCycleGuard } = await import("../scheduler/intelligenceCycleJob.js");
+    const { runIntelligenceCycle, resetCycleGuard } = await import("../scheduler/news-analysis/intelligenceCycleJob.js");
     resetCycleGuard();
 
     let impactCalled = false;
@@ -505,7 +505,7 @@ describe("Task 106 — graceful degradation", () => {
   });
 
   it("returns result with errors count equal to number of failed steps", async () => {
-    const { runIntelligenceCycle, resetCycleGuard } = await import("../scheduler/intelligenceCycleJob.js");
+    const { runIntelligenceCycle, resetCycleGuard } = await import("../scheduler/news-analysis/intelligenceCycleJob.js");
     resetCycleGuard();
 
     const result = await runIntelligenceCycle({
@@ -523,7 +523,7 @@ describe("Task 106 — graceful degradation", () => {
   });
 
   it("still returns a valid CycleResult when getWatchlistCodes throws", async () => {
-    const { runIntelligenceCycle, resetCycleGuard } = await import("../scheduler/intelligenceCycleJob.js");
+    const { runIntelligenceCycle, resetCycleGuard } = await import("../scheduler/news-analysis/intelligenceCycleJob.js");
     resetCycleGuard();
 
     const result = await runIntelligenceCycle({

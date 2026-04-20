@@ -165,7 +165,7 @@ describe("1504 cascade-outcome", () => {
 
     recordHit(db, "steel_up", "text3", "steel", "HPG"); // pending — no outcome
 
-    const { queryCascadeOutcomes } = await import("../interface/mcp/tools/cascadeOutcomeTools.js");
+    const { queryCascadeOutcomes } = await import("../interface/mcp/tools/news-analysis/cascadeOutcomeTools.js");
     const rows = queryCascadeOutcomes(db, { days: 30 });
     expect(rows).toHaveLength(3);
     const pending = rows.find((r) => r.ruleKey === "steel_up");
@@ -182,7 +182,7 @@ describe("1504 cascade-outcome", () => {
     recordHit(db, "banking_up", "t1", "banking", "VCB,TCB");
     recordHit(db, "steel_up", "t2", "steel", "HPG,HSG");
 
-    const { queryCascadeOutcomes } = await import("../interface/mcp/tools/cascadeOutcomeTools.js");
+    const { queryCascadeOutcomes } = await import("../interface/mcp/tools/news-analysis/cascadeOutcomeTools.js");
     const rows = queryCascadeOutcomes(db, { days: 30, ticker: "VCB" });
     expect(rows).toHaveLength(1);
     expect(rows[0]!.ruleKey).toBe("banking_up");

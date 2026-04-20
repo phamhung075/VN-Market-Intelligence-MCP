@@ -28,7 +28,7 @@ import { generateAlerts } from "../../domain/services/alertGenerator.js";
 import { storeAlerts } from "../../infrastructure/db/alertStore.js";
 import { getDb } from "../../infrastructure/db/schema.js";
 import { logger } from "../../infrastructure/logger.js";
-import { globalSourceTracker } from "../../interface/mcp/tools/sourceHealthTools.js";
+import { globalSourceTracker } from "../../interface/mcp/tools/news-analysis/sourceHealthTools.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types

@@ -11,8 +11,8 @@
  */
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { SourceHealth } from "../../../domain/services/sourceHealthTracker.js";
-import { SourceHealthTracker } from "../../../domain/services/sourceHealthTracker.js";
+import type { SourceHealth } from "../../../../domain/services/sourceHealthTracker.js";
+import { SourceHealthTracker } from "../../../../domain/services/sourceHealthTracker.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Singleton tracker — shared across the process lifetime

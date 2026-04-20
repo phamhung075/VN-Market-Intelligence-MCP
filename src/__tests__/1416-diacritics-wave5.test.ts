@@ -21,7 +21,7 @@ import {
   formatAge,
 } from "../interface/mcp/tools/market-data/dataFreshnessTools.js";
 
-import { formatSourceHealthTable } from "../interface/mcp/tools/sourceHealthTools.js";
+import { formatSourceHealthTable } from "../interface/mcp/tools/news-analysis/sourceHealthTools.js";
 
 import { formatSearchResults } from "../domain/services/stockSearch.js";
 

@@ -61,7 +61,7 @@ function buildOffHoursDeps(overrides: Record<string, unknown> = {}) {
 
 describe("Task 1255 — alert sending off-hours", () => {
   it("AC-1: readUnnotifiedAlertsFn is called even off-hours", async () => {
-    const { runIntelligenceCycle, resetCycleGuard } = await import("../scheduler/intelligenceCycleJob.js");
+    const { runIntelligenceCycle, resetCycleGuard } = await import("../scheduler/news-analysis/intelligenceCycleJob.js");
     resetCycleGuard();
 
     let readAlertsCalled = false;
@@ -81,7 +81,7 @@ describe("Task 1255 — alert sending off-hours", () => {
   });
 
   it("AC-2: off-hours + unnotified HIGH alert → sendAlertsFn called and alert marked notified", async () => {
-    const { runIntelligenceCycle, resetCycleGuard } = await import("../scheduler/intelligenceCycleJob.js");
+    const { runIntelligenceCycle, resetCycleGuard } = await import("../scheduler/news-analysis/intelligenceCycleJob.js");
     resetCycleGuard();
 
     let sendAlertsCalled = false;
@@ -106,7 +106,7 @@ describe("Task 1255 — alert sending off-hours", () => {
   });
 
   it("AC-3: during market hours, step E still works (no regression)", async () => {
-    const { runIntelligenceCycle, resetCycleGuard } = await import("../scheduler/intelligenceCycleJob.js");
+    const { runIntelligenceCycle, resetCycleGuard } = await import("../scheduler/news-analysis/intelligenceCycleJob.js");
     resetCycleGuard();
 
     let sendAlertsCalled = false;

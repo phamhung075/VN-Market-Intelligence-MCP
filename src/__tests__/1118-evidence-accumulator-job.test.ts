@@ -11,7 +11,7 @@
 
 import { describe, it, expect, beforeEach } from "bun:test";
 import { Database } from "bun:sqlite";
-import { runEvidenceAccumulator } from "../scheduler/evidenceAccumulatorJob.js";
+import { runEvidenceAccumulator } from "../scheduler/news-analysis/evidenceAccumulatorJob.js";
 import { CRONS } from "../scheduler/jobs.js";
 
 // ─────────────────────────────────────────────────────────────────────────────

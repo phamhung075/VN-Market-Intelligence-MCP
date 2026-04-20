@@ -21,7 +21,7 @@ import { registerFeedbackTools } from "../interface/mcp/tools/system/feedbackToo
 import { registerSystemTools } from "../interface/mcp/tools/system/systemTools.js";
 import { registerAlertTools } from "../interface/mcp/tools/alerts/alerts.js";
 import { registerReportTools } from "../interface/mcp/tools/financial-reports/reports.js";
-import { registerSearchStocksTools } from "../interface/mcp/tools/searchTools.js";
+import { registerSearchStocksTools } from "../interface/mcp/tools/news-analysis/searchTools.js";
 import { registerAlertCheckTools } from "../interface/mcp/tools/alerts/alertCheckTools.js";
 import { registerExportTools } from "../interface/mcp/tools/portfolio/exportTools.js";
 

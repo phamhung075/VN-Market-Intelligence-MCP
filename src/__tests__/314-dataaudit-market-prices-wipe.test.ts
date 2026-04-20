@@ -141,7 +141,7 @@ describe("Task 314 — dataAuditJob must not wipe live market_prices snapshot", 
       "INSERT INTO market_prices (code, price, updated_at) VALUES (?, ?, datetime('now','-2 days'))"
     ).run("STALE0", 0);
 
-    const { runDailyAudit } = await import("../scheduler/dataAuditJob.js");
+    const { runDailyAudit } = await import("../scheduler/news-analysis/dataAuditJob.js");
     const findings = await runDailyAudit(db, async () => { /* telegram no-op */ });
 
     const remaining = db
@@ -170,7 +170,7 @@ describe("Task 314 — dataAuditJob must not wipe live market_prices snapshot", 
       "INSERT INTO market_prices (code, price, updated_at) VALUES (?, ?, datetime('now'))"
     ).run("FRESH", 70000);
 
-    const { runDailyAudit } = await import("../scheduler/dataAuditJob.js");
+    const { runDailyAudit } = await import("../scheduler/news-analysis/dataAuditJob.js");
     const findings = await runDailyAudit(db, async () => { /* telegram no-op */ });
 
     const d1 = findings.find((f) => f.check === "zero_price_rows");
@@ -202,7 +202,7 @@ describe("Task 314 — dataAuditJob must not wipe live market_prices snapshot", 
       ).run(code, 10000);
     }
 
-    const { runDailyAudit } = await import("../scheduler/dataAuditJob.js");
+    const { runDailyAudit } = await import("../scheduler/news-analysis/dataAuditJob.js");
     const findings = await runDailyAudit(db, async () => { /* telegram no-op */ });
 
     const d1 = findings.find((f) => f.check === "zero_price_rows");
