@@ -1146,9 +1146,9 @@ describe("Task 125 — E2E Daily Briefing Flow", () => {
       resetMorningBriefingGuard();
       resetEveningSummaryGuard();
 
-      // Use a timestamp after VN midnight so rag_analyses appear in topStories
-      // regardless of what UTC time the test runs (avoids "1h ago < midnight" edge case)
-      const recentTimestamp = new Date(new Date(midnightVietnamUtc()).getTime() + 3_600_000).toISOString();
+      // Use Date.now() - 1h so seed rows always fall within assembleBriefing's 12h window,
+      // regardless of when the test runs relative to VN midnight.
+      const recentTimestamp = new Date(Date.now() - 3_600_000).toISOString();
 
       // Shared test data
       seedWatchlist(db, "VCB", "HOSE", "banking");
