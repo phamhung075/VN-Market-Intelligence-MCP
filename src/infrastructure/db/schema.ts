@@ -1532,6 +1532,9 @@ export async function initDatabase(dbArg?: import("bun:sqlite").Database): Promi
   // so test-generated noise never persists into production state.
   db.exec(`DELETE FROM tracked_indicators WHERE source='test'`);
 
+  // Task 198: wire foreign flow column migration so daily_ohlcv always has the 4 columns.
+  await migrateForeignFlowColumns(db);
+
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
