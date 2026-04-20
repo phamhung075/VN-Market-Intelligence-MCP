@@ -87,10 +87,29 @@ merge: d9912d7
 
 ---
 
+## Sprint 211 — refactor(kinhdich): move tool + wrapper into kinhdich/ subfolders
+
+| ID | Title | Status | Role |
+|----|-------|--------|------|
+| 1539_a | TDD RED: `211-kinhdich-module-move.test.ts` — import from barrels, assert registerKinhDichTools defined at new path | Todo | Dev |
+| 1539_b | GREEN: move kinhDichTools.ts + kinhDichWrapper.ts, update barrel paths, tsc + tests green | Todo | Dev |
+
+context: `docs/REQ_211.md` | `docs/TECH_211.md`
+
+---
+
 ## Backlog
 
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
-| — | Phase 3: full folder restructure into src/modules/ (one module/sprint × 10) | low | After Phase 2 |
+| — | Phase 3 sprint 212: financial-reports module file moves | medium | After 211 |
+| — | Phase 3 sprint 213: system module file moves | medium | After 212 |
+| — | Phase 3 sprint 214: briefings module file moves | medium | After 213 |
+| — | Phase 3 sprint 215: alerts module file moves | medium | After 214 |
+| — | Phase 3 sprint 216: portfolio module file moves | medium | After 215 |
+| — | Phase 3 sprint 217: macro module file moves | medium | After 216 |
+| — | Phase 3 sprint 218: market-data module file moves | medium | After 217 |
+| — | Phase 3 sprint 219: news-analysis module file moves | medium | After 218 |
+| — | Phase 3 sprint 220: sector module file moves | medium | After 219 |
 
 ---

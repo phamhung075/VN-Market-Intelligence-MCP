@@ -363,7 +363,7 @@ export function resetHexagramCooldown(): void {
  */
 async function defaultComputeHexagrams(codes: string[]): Promise<number> {
   const { computeHaoScores } = await import(
-    "../interface/mcp/tools/kinhDichTools.js"
+    "../interface/mcp/tools/kinhdich/kinhDichTools.js"
   );
   const { computeReading } = await import(
     "../domain/services/kinhDich/kinhDichReading.js"

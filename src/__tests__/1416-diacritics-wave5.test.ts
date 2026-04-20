@@ -396,7 +396,7 @@ describe("1416 wave5 — Group B: source-scan", () => {
   // ── kinhDichTools.ts ─────────────────────────────────────────────────────────
 
   describe("kinhDichTools.ts (28 strings)", () => {
-    const src = readTool("kinhDichTools.ts");
+    const src = readTool("kinhdich/kinhDichTools.ts");
 
     // Error strings
     it("contains 'không có trong watchlist. Thêm cổ phiếu trước khi đọc Kinh Dịch'", () => {

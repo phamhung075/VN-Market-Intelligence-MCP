@@ -14,7 +14,7 @@ import { buildSectorComparisonOutput } from "../interface/mcp/tools/sectorCompar
 import { getSectorRotationReport } from "../interface/mcp/tools/sectorRotationTools.js";
 import { formatTickerIntelligence } from "../interface/mcp/tools/tickerIntelligenceTools.js";
 // Sprint 144 regression (already exported, already GREEN)
-import { formatKinhDichTradingContext } from "../interface/mcp/tools/kinhDichTools.js";
+import { formatKinhDichTradingContext } from "../interface/mcp/tools/kinhdich/kinhDichTools.js";
 import { formatTaIndicatorReport } from "../interface/mcp/tools/technicalIndicatorTools.js";
 import { buildSupplyChainExposureOutput } from "../interface/mcp/tools/supplyChainTools.js";
 

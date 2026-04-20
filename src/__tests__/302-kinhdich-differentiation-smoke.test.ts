@@ -17,7 +17,7 @@ import {
   computeForeignFlowScore,
   computeSectorScore,
   computeMacroScore,
-} from "../interface/mcp/tools/kinhDichTools.js";
+} from "../interface/mcp/tools/kinhdich/kinhDichTools.js";
 import { computeReading } from "../domain/services/kinhDich/kinhDichReading.js";
 
 const STOCKS: { code: string; domain: string; change: number }[] = [

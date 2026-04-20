@@ -11,7 +11,7 @@
 
 import { describe, it, expect, beforeAll } from "bun:test";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { registerKinhDichTools } from "../interface/mcp/tools/kinhDichTools.js";
+import { registerKinhDichTools } from "../interface/mcp/tools/kinhdich/kinhDichTools.js";
 import { QUE_META, QUE_DATA } from "../domain/services/kinhDich/hexagramLibrary.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
