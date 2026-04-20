@@ -123,12 +123,12 @@ describe("1418 wave6 — Group B: source-scan (targetAllocationTools.ts)", () =>
     expect(src).not.toContain("Chua co muc tieu phan bo.");
   });
 
-  it('contains "Dùng set_target_allocation để thiết lập mục tiêu."', () => {
-    expect(src).toContain("Dùng set_target_allocation để thiết lập mục tiêu.");
+  it('contains "Vui lòng thiết lập mục tiêu qua analyst workflow trước khi xem gap."', () => {
+    expect(src).toContain("Vui lòng thiết lập mục tiêu qua analyst workflow trước khi xem gap.");
   });
 
-  it('not contains "Dung set_target_allocation de thiet lap muc tieu."', () => {
-    expect(src).not.toContain("Dung set_target_allocation de thiet lap muc tieu.");
+  it('not contains "Vui long thiet lap muc tieu qua analyst workflow truoc khi xem gap."', () => {
+    expect(src).not.toContain("Vui long thiet lap muc tieu qua analyst workflow truoc khi xem gap.");
   });
 
   it('contains "Phân bổ mục tiêu"', () => {
