@@ -7,7 +7,7 @@
  */
 
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from "bun:test";
-import { computeSectorScore } from "../interface/mcp/tools/kinhDichTools.js";
+import { computeSectorScore } from "../interface/mcp/tools/kinhdich/kinhDichTools.js";
 import { getDb, closeDb, initDatabase } from "../infrastructure/db/schema.js";
 
 // ─────────────────────────────────────────────────────────────────────────────

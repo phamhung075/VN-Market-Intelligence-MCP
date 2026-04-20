@@ -8,7 +8,7 @@ import { Database } from "bun:sqlite";
 
 // ─── Type import for function under test ────────────────────────────────────
 // (will fail until kinhDichWrapper.ts is created)
-import { appendKinhDich } from "../domain/services/kinhDichWrapper.js";
+import { appendKinhDich } from "../domain/services/kinhDich/kinhDichWrapper.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers: build an in-memory SQLite DB with kinhdich_readings seed data

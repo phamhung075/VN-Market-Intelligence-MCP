@@ -27,7 +27,7 @@ function readTool(filename: string): string {
 // ── FILE 1: kinhDichTools.ts — 7 strings ─────────────────────────────────────
 
 describe("1414 FILE 1 — kinhDichTools.ts: handler string diacritics", () => {
-  const src = readTool("kinhDichTools.ts");
+  const src = readTool("kinhdich/kinhDichTools.ts");
 
   it("line 734: history row must use Quẻ not Que", () => {
     // Template: `${ts} | Quẻ ${r.hexagramNumber} ...`

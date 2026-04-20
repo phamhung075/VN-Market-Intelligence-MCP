@@ -23,7 +23,7 @@ import { fetchHnxPrices, fetchUpcomPrices } from "../../../infrastructure/fetche
 import { getPatternSummary } from "../../../application/usecases/getPatternSummary.js";
 import { logger } from "../../../infrastructure/logger.js";
 import type { HttpClient } from "../../../infrastructure/fetchers/ssc.js";
-import { appendKinhDich } from "../../../domain/services/kinhDichWrapper.js";
+import { appendKinhDich } from "../../../domain/services/kinhDich/kinhDichWrapper.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Internal types

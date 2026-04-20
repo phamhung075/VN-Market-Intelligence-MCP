@@ -19,7 +19,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 
 import { getDb, initDatabase } from "../../../infrastructure/db/schema.js";
-import { appendKinhDich } from "../../../domain/services/kinhDichWrapper.js";
+import { appendKinhDich } from "../../../domain/services/kinhDich/kinhDichWrapper.js";
 import { fetchCafeF } from "../../../infrastructure/fetchers/cafef.js";
 import { fetchVnExpress } from "../../../infrastructure/fetchers/vnexpress.js";
 import { fetchReuters } from "../../../infrastructure/fetchers/reuters.js";

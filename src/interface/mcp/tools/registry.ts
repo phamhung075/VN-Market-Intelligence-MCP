@@ -57,7 +57,7 @@ import { registerLeadershipTools } from "./leadershipTools.js";
 import { registerCrisisTools } from "./crisisTools.js";
 import { registerPharmaTools } from "./pharmaTools.js";
 import { registerSectorComparisonTools } from "./sectorComparisonTools.js";
-import { registerKinhDichTools } from "./kinhDichTools.js";
+import { registerKinhDichTools } from "./kinhdich/kinhDichTools.js";
 import { registerBrokerCredibilityTools } from "./brokerCredibilityTools.js";
 import { registerAskQueueTools } from "./askQueueTools.js";
 import { registerAgentWorkLogTools } from "./agentWorkLogTools.js";
