@@ -28,6 +28,21 @@ import type { GlobalSnapshot } from "../application/usecases/assembleBriefing.js
 let _running = false;
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Freshness guard
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Returns true when a vnIndex fetchedAt timestamp is within the last 25 hours.
+ * A stale index (e.g. VPS down for >25h) must not trigger a send on its own.
+ */
+export function isVnIndexFresh(
+  fetchedAt: string,
+  nowMs: number = Date.now(),
+): boolean {
+  return nowMs - new Date(fetchedAt).getTime() < 25 * 3600 * 1000;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // DB-level same-day dedup guard
 // Prevents spam when the server restarts near 22:30 and the cron re-fires.
 // ─────────────────────────────────────────────────────────────────────────────
@@ -328,7 +343,7 @@ export async function runEveningSummary(
         (s) => s.rsiStatus !== "neutral",
       ) ||
       (summary.portfolioPnl != null && summary.portfolioPnl.items.length > 0) ||
-      summary.vnIndex != null ||
+      (summary.vnIndex != null && isVnIndexFresh(summary.vnIndex.fetchedAt)) ||
       (summary.foreignFlowMovers?.length ?? 0) > 0;
 
     // Resolve the send function: use injected sendFn for tests, or dynamic import in prod.
