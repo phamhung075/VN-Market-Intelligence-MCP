@@ -131,6 +131,32 @@ export function formatMoversSection(
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Foreign flow formatter (Task 1503)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Format the "Khối ngoại" (foreign investor flow) block for the evening Telegram message.
+ *
+ * @param movers - Array of ForeignFlowMover entries ordered by |foreignNetVol| DESC.
+ * @returns string[] — ready to push onto the message lines array. Empty when movers is empty.
+ */
+export function formatForeignFlowSection(
+  movers: { code: string; foreignNetVol: number; foreignBuyVol: number; foreignSellVol: number }[],
+): string[] {
+  if (movers.length === 0) return [];
+
+  const lines: string[] = ["", `Khối ngoại (top ${movers.length}):`];
+  for (const m of movers) {
+    const direction = m.foreignNetVol >= 0 ? "mua ròng" : "bán ròng";
+    const netK = (Math.abs(m.foreignNetVol) / 1000).toFixed(3);
+    const buyK = (m.foreignBuyVol / 1000).toFixed(3);
+    const sellK = (m.foreignSellVol / 1000).toFixed(3);
+    lines.push(`  ${m.code}: ${direction} ${netK}k (mua ${buyK}k / bán ${sellK}k)`);
+  }
+  return lines;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Public API
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -205,7 +231,8 @@ export async function runEveningSummary(
         (s) => s.rsiStatus !== "neutral",
       ) ||
       (summary.portfolioPnl != null && summary.portfolioPnl.items.length > 0) ||
-      summary.vnIndex != null;
+      summary.vnIndex != null ||
+      (summary.foreignFlowMovers?.length ?? 0) > 0;
 
     // Resolve the send function: use injected sendFn for tests, or dynamic import in prod.
     const doSend =
@@ -295,6 +322,9 @@ export async function runEveningSummary(
             lines.push(pnlBlock);
           }
         }
+
+        // ── Khối ngoại / Foreign flow (task 1503) ───────────────────────
+        lines.push(...formatForeignFlowSection(summary.foreignFlowMovers ?? []));
 
         await doSend(lines.join("\n"), {
           persist: { from_agent: "evening-summary", message_type: "evening_summary" },

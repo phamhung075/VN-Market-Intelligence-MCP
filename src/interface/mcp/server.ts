@@ -34,6 +34,7 @@ import { insertReport } from "../../infrastructure/db/telegramReportStore.js";
 import { toolRegistry } from "./tools/registry.js";
 import { logVpsPush } from "../../infrastructure/db/vpsPushLogStore.js";
 import { upsertForeignFlow, type ForeignFlowUpsertItem } from "../../infrastructure/db/vnstockStore.js";
+import { writeForeignFlowToOhlcv, type WriteForeignFlowItem } from "../../infrastructure/db/ohlcvForeignFlowStore.js";
 import { buildForeignFlowStatusResponse } from "./foreignFlowStatusHandler.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -705,6 +706,24 @@ export async function createBunServer(
 
         const upserted = upsertForeignFlow(items);
         log.info("[push-foreign-flow] upserted rows", { count: upserted, source: "vps-proxy" });
+
+        // Write foreign flow cols to daily_ohlcv (Task 1503) — best-effort, no crash on failure.
+        try {
+          const ohlcvItems: WriteForeignFlowItem[] = (rawItems as Record<string, unknown>[]).map((raw) => ({
+            code:           typeof raw.code           === "string" ? raw.code : String(raw.code ?? ""),
+            date:           (typeof raw.date          === "string" && raw.date) ? raw.date : todayUtc,
+            foreignBuyVol:  typeof raw.foreignBuyVol  === "number" ? raw.foreignBuyVol  : 0,
+            foreignSellVol: typeof raw.foreignSellVol === "number" ? raw.foreignSellVol : 0,
+            putThroughVol:  typeof raw.putThroughVol  === "number" ? raw.putThroughVol  : 0,
+          }));
+          const ohlcvResult = await writeForeignFlowToOhlcv(ohlcvItems);
+          log.info("[push-foreign-flow] ohlcv rows updated", { changes: ohlcvResult.changes });
+        } catch (ohlcvErr) {
+          log.warn("[push-foreign-flow] writeForeignFlowToOhlcv failed (non-fatal)", {
+            error: ohlcvErr instanceof Error ? ohlcvErr.message : String(ohlcvErr),
+          });
+        }
+
         logVpsPush({ service: "foreign-flow", itemsCount: upserted, status: "ok" });
         res.writeHead(200, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ ok: true, upserted }));
