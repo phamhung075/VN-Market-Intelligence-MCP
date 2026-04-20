@@ -384,3 +384,47 @@ export function batchReviewMarketMessages(
 
   return { updated, notFound };
 }
+
+/**
+ * Write impact tracking data to an existing market_messages row.
+ *
+ * Partial update: only provided (non-undefined) fields are written.
+ * Null values are stored explicitly. Returns true if row found and updated.
+ *
+ * @param db     - SQLite database instance
+ * @param id     - Primary key of the message row
+ * @param impact - Partial impact fields to write
+ */
+export function updateImpact(
+  db: Database,
+  id: number,
+  impact: {
+    impactScore?: number | null;
+    priceAtMessage?: number | null;
+    price3dAfter?: number | null;
+  },
+): boolean {
+  const setClauses: string[] = [];
+  const values: (number | null)[] = [];
+
+  if (impact.impactScore !== undefined) {
+    setClauses.push("impact_score = ?");
+    values.push(impact.impactScore);
+  }
+  if (impact.priceAtMessage !== undefined) {
+    setClauses.push("price_at_message = ?");
+    values.push(impact.priceAtMessage);
+  }
+  if (impact.price3dAfter !== undefined) {
+    setClauses.push("price_3d_after = ?");
+    values.push(impact.price3dAfter);
+  }
+
+  if (setClauses.length === 0) return false;
+
+  const result = db
+    .prepare(`UPDATE market_messages SET ${setClauses.join(", ")} WHERE id = ?`)
+    .run(...values, id);
+
+  return result.changes > 0;
+}

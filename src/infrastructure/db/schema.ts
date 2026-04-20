@@ -98,8 +98,8 @@ export function closeDb(): void {
  * Safe to call at startup and in tests — every statement uses
  * CREATE TABLE IF NOT EXISTS / CREATE INDEX IF NOT EXISTS.
  */
-export async function initDatabase(): Promise<void> {
-  const db = getDb();
+export async function initDatabase(dbArg?: import("bun:sqlite").Database): Promise<void> {
+  const db = dbArg ?? getDb();
 
   // ── Watchlist ──────────────────────────────────────────────────────────────
   db.exec(`
@@ -1081,6 +1081,17 @@ export async function initDatabase(): Promise<void> {
   db.exec(`CREATE INDEX IF NOT EXISTS idx_cascade_hits_rule ON cascade_rule_hits(rule_key)`);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_cascade_hits_at   ON cascade_rule_hits(hit_at)`);
 
+  // Sprint 191 — outcome tracking columns (idempotent: try/catch per column)
+  for (const sql of [
+    `ALTER TABLE cascade_rule_hits ADD COLUMN source_rag_id   TEXT`,
+    `ALTER TABLE cascade_rule_hits ADD COLUMN price_impact_3d REAL`,
+    `ALTER TABLE cascade_rule_hits ADD COLUMN price_impact_7d REAL`,
+    `ALTER TABLE cascade_rule_hits ADD COLUMN outcome_correct INTEGER`,
+    `ALTER TABLE cascade_rule_hits ADD COLUMN confidence      REAL`,
+  ]) {
+    try { db.exec(sql); } catch { /* column already exists — safe */ }
+  }
+
   // ── Audit state: singleton row for dataAuditJob (Task 1041) ─────────────
   // Previously created inline in src/scheduler/dataAuditJob.ts:ensureAuditDependencies().
   // Moved here so fresh test DBs and new deployments get the table from initDatabase().
@@ -1489,6 +1500,15 @@ export async function initDatabase(): Promise<void> {
     CREATE INDEX IF NOT EXISTS idx_mm_verdict    ON market_messages(verdict);
     CREATE INDEX IF NOT EXISTS idx_mm_ticker     ON market_messages(ticker);
   `);
+
+  // Sprint 191 — impact tracking columns (idempotent: try/catch per column)
+  for (const sql of [
+    `ALTER TABLE market_messages ADD COLUMN impact_score     REAL`,
+    `ALTER TABLE market_messages ADD COLUMN price_at_message REAL`,
+    `ALTER TABLE market_messages ADD COLUMN price_3d_after   REAL`,
+  ]) {
+    try { db.exec(sql); } catch { /* column already exists — safe */ }
+  }
 
   // Task 1407 — HUT domain migration: real_estate → construction
   // Safe: WHERE clause makes it a no-op if already correct or HUT not in watchlist.

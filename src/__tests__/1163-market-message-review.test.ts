@@ -239,7 +239,7 @@ describe("Task 1163 — 1. market_messages table creation (AC-1)", () => {
     expect(row?.name).toBe("market_messages");
   });
 
-  it("market_messages table has all 9 columns", () => {
+  it("market_messages table has all 12 columns", () => {
     const db = getDb();
     const cols = db
       .prepare("PRAGMA table_info(market_messages)")
@@ -254,7 +254,11 @@ describe("Task 1163 — 1. market_messages table creation (AC-1)", () => {
     expect(names).toContain("verdict");
     expect(names).toContain("verdict_note");
     expect(names).toContain("reviewed_at");
-    expect(names).toHaveLength(9);
+    // Sprint 191 — impact tracking cols
+    expect(names).toContain("impact_score");
+    expect(names).toContain("price_at_message");
+    expect(names).toContain("price_3d_after");
+    expect(names).toHaveLength(12);
   });
 
   it("market_messages table has 4 required indexes", () => {
