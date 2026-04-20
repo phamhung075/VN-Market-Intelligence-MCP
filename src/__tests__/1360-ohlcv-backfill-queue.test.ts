@@ -23,7 +23,7 @@ import { describe, it, expect, beforeAll, afterAll, beforeEach } from "bun:test"
 import { Database } from "bun:sqlite";
 import { getDb, closeDb, initDatabase } from "../infrastructure/db/schema.js";
 import { createBunServer } from "../interface/mcp/server.js";
-import { runOhlcvStartupProbe } from "../scheduler/ohlcvStartupProbe.js";
+import { runOhlcvStartupProbe } from "../scheduler/market-data/ohlcvStartupProbe.js";
 
 // ── Constants ────────────────────────────────────────────────────────────────
 

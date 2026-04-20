@@ -31,7 +31,7 @@ import {
   formatAge,
   getDataFreshness,
   registerDataFreshnessTools,
-} from "../interface/mcp/tools/dataFreshnessTools.js";
+} from "../interface/mcp/tools/market-data/dataFreshnessTools.js";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
 // ─────────────────────────────────────────────────────────────────────────────

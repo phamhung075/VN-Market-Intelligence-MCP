@@ -14,7 +14,7 @@ import { insertInsiderTransaction, getInsiderTransactionsFiltered } from "../inf
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import { registerInsiderTools } from "../interface/mcp/tools/insiderTools.js";
+import { registerInsiderTools } from "../interface/mcp/tools/market-data/insiderTools.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types

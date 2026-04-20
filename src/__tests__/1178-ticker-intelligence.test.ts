@@ -21,7 +21,7 @@ import { Database } from "bun:sqlite";
 import {
   handleGetTickerIntelligence,
   formatTickerIntelligence,
-} from "../interface/mcp/tools/tickerIntelligenceTools.js";
+} from "../interface/mcp/tools/market-data/tickerIntelligenceTools.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DB setup

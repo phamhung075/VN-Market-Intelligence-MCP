@@ -19,13 +19,13 @@ import { join } from "path";
 import {
   classifyFreshness,
   formatAge,
-} from "../interface/mcp/tools/dataFreshnessTools.js";
+} from "../interface/mcp/tools/market-data/dataFreshnessTools.js";
 
 import { formatSourceHealthTable } from "../interface/mcp/tools/sourceHealthTools.js";
 
 import { formatSearchResults } from "../domain/services/stockSearch.js";
 
-import { formatTaIndicatorReport } from "../interface/mcp/tools/technicalIndicatorTools.js";
+import { formatTaIndicatorReport } from "../interface/mcp/tools/market-data/technicalIndicatorTools.js";
 
 // ── Source-scan helpers ────────────────────────────────────────────────────────
 

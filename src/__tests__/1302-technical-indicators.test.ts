@@ -377,7 +377,7 @@ describe("MCP handler integration", () => {
       { name: "test-server", version: "1.0.0" },
       { capabilities: { tools: {} } },
     );
-    const { registerTechnicalIndicatorTools } = require("../interface/mcp/tools/technicalIndicatorTools.js");
+    const { registerTechnicalIndicatorTools } = require("../interface/mcp/tools/market-data/technicalIndicatorTools.js");
     registerTechnicalIndicatorTools(server, db);
   });
 

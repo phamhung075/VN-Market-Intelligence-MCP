@@ -299,7 +299,7 @@ describe("Task 103 — Market Scan Use Case + Job", () => {
   // ── 9. marketScanJob exports runMarketScan ────────────────────────────────
 
   it("marketScanJob exports runMarketScan function", async () => {
-    const mod = await import("../scheduler/marketScanJob.js");
+    const mod = await import("../scheduler/market-data/marketScanJob.js");
     expect(typeof mod.runMarketScan).toBe("function");
   });
 

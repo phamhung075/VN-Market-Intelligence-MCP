@@ -20,12 +20,12 @@
  */
 
 import type { Database } from "bun:sqlite";
-import { logger } from "../infrastructure/logger.js";
-import { recordJobRun } from "../infrastructure/db/cronJobRunStore.js";
-import { analyzeForeignFlow, type DailyForeignFlow } from "../domain/services/foreignFlowAnalyzer.js";
+import { logger } from "../../infrastructure/logger.js";
+import { recordJobRun } from "../../infrastructure/db/cronJobRunStore.js";
+import { analyzeForeignFlow, type DailyForeignFlow } from "../../domain/services/foreignFlowAnalyzer.js";
 import {
   insertEvidenceFragment,
-} from "../infrastructure/db/evidenceFragmentStore.js";
+} from "../../infrastructure/db/evidenceFragmentStore.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -65,7 +65,7 @@ interface WatchlistRow {
 // ─────────────────────────────────────────────────────────────────────────────
 
 async function defaultGetDb(): Promise<Database> {
-  const { getDb } = await import("../infrastructure/db/index.js");
+  const { getDb } = await import("../../infrastructure/db/index.js");
   return getDb();
 }
 
@@ -264,7 +264,7 @@ export async function runForeignFlowAlertJob(
     telegramOverrides?.sendWork ??
     (async (msg: string) => {
       const { sendTelegramWork } = await import(
-        "../infrastructure/notifiers/telegram.js"
+        "../../infrastructure/notifiers/telegram.js"
       );
       return sendTelegramWork(msg);
     });

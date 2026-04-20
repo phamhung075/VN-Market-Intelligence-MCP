@@ -95,7 +95,7 @@ describe("1472: Vietnamese diacritics batch 2", () => {
   });
 
   describe("insiderCheckJob.ts", () => {
-    const src = read("src/scheduler/insiderCheckJob.ts");
+    const src = read("src/scheduler/market-data/insiderCheckJob.ts");
     it("MARKET output has diacritics: có hiệu ứng lớn nhất", () => {
       expect(src).toContain("có hiệu ứng lớn nhất trong thị trường VN");
     });

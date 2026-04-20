@@ -3,7 +3,7 @@ Bun.env["DB_PATH"] = ":memory:";
 // Task 1352 — TDD: ohlcv-startup-probe (Sprint 119)
 //
 // Tests are written FIRST (RED state). The implementation file
-// src/scheduler/ohlcvStartupProbe.ts does not exist yet.
+// src/scheduler/market-data/ohlcvStartupProbe.ts does not exist yet.
 //
 // 5 test cases:
 //   TC-1: sparse — 2 tickers with < 8 rows → sendWorkFn called once, both listed
@@ -14,7 +14,7 @@ Bun.env["DB_PATH"] = ":memory:";
 
 import { describe, it, expect } from "bun:test";
 import { Database } from "bun:sqlite";
-import { runOhlcvStartupProbe } from "../scheduler/ohlcvStartupProbe.js";
+import { runOhlcvStartupProbe } from "../scheduler/market-data/ohlcvStartupProbe.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DB helpers

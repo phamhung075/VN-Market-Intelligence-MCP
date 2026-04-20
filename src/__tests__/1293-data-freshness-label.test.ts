@@ -17,7 +17,7 @@
 
 import { describe, it, expect, beforeEach, afterEach } from "bun:test";
 import { Database } from "bun:sqlite";
-import { getDataFreshness } from "../interface/mcp/tools/dataFreshnessTools.js";
+import { getDataFreshness } from "../interface/mcp/tools/market-data/dataFreshnessTools.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers

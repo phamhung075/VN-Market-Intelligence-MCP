@@ -10,7 +10,7 @@
 
 import { describe, it, expect } from "bun:test";
 import { Database } from "bun:sqlite";
-import { runForeignFlowAlertJob } from "../scheduler/foreignFlowAlertJob.js";
+import { runForeignFlowAlertJob } from "../scheduler/market-data/foreignFlowAlertJob.js";
 
 const noop = async (_: string) => true;
 

@@ -23,7 +23,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { Database } from "bun:sqlite";
 
-import { tradingWindowLabel } from "../../../domain/services/tradingWindow.js";
+import { tradingWindowLabel } from "../../../../domain/services/tradingWindow.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Pure helpers (exported for unit testing)

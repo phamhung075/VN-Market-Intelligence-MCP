@@ -13,7 +13,7 @@ import { Database } from "bun:sqlite";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import { registerForeignFlowTools } from "../interface/mcp/tools/foreignFlowTools.js";
+import { registerForeignFlowTools } from "../interface/mcp/tools/market-data/foreignFlowTools.js";
 
 function setupTestDb(): Database {
   const db = new Database(":memory:");

@@ -19,7 +19,7 @@ import {
   registerSystemTools,
 } from "../interface/mcp/tools/system/systemTools.js";
 import { registerSourceHealthTools } from "../interface/mcp/tools/sourceHealthTools.js";
-import { registerDataFreshnessTools } from "../interface/mcp/tools/dataFreshnessTools.js";
+import { registerDataFreshnessTools } from "../interface/mcp/tools/market-data/dataFreshnessTools.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helper: collect registered tool names from a McpServer instance

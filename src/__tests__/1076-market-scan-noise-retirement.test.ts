@@ -192,7 +192,7 @@ describe("Task 1076 — Market Scan Noise Retirement", () => {
 
   it("marketScanJob.ts source does not call send_telegram(channel='market') for noise types", () => {
     const src = readFileSync(
-      resolve(ROOT, "src/scheduler/marketScanJob.ts"),
+      resolve(ROOT, "src/scheduler/market-data/marketScanJob.ts"),
       "utf-8",
     );
     // The wrapper must not have any direct telegram market sends

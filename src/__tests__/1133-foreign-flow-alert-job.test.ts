@@ -20,7 +20,7 @@ import {
   runForeignFlowAlertJob,
   type ForeignFlowAlertResult,
   type TelegramOverridesFF,
-} from "../scheduler/foreignFlowAlertJob.js";
+} from "../scheduler/market-data/foreignFlowAlertJob.js";
 import { CRONS } from "../scheduler/jobs.js";
 
 // ─────────────────────────────────────────────────────────────────────────────

@@ -175,7 +175,7 @@ describe("1473: Vietnamese diacritics batch 3", () => {
   });
 
   describe("tickerIntelligenceTools.ts — error text", () => {
-    const src = read("src/interface/mcp/tools/tickerIntelligenceTools.ts");
+    const src = read("src/interface/mcp/tools/market-data/tickerIntelligenceTools.ts");
 
     it("error text has diacritics: '(lỗi phân tích BCTC)'", () => {
       expect(src).toContain("(lỗi phân tích BCTC)");

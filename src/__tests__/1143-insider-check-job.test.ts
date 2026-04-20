@@ -133,7 +133,7 @@ describe("Task 1143 — insiderCheckJob refactor", () => {
     // Seed 3 distinct buy days → streak >= 3
     seedBuyRows(db, "VCB", "chu tich hoi dong quan tri", [5, 10, 15]);
 
-    const { runInsiderCheck } = await import("../scheduler/insiderCheckJob.js");
+    const { runInsiderCheck } = await import("../scheduler/market-data/insiderCheckJob.js");
 
     // Call with an empty fetcher (no new raw rows) and injected market override
     await runInsiderCheck(db, async () => [], {
@@ -147,7 +147,7 @@ describe("Task 1143 — insiderCheckJob refactor", () => {
     const db = makeDb();
     seedBuyRows(db, "VNM", "giam doc dieu hanh", [2, 7, 14]);
 
-    const { runInsiderCheck } = await import("../scheduler/insiderCheckJob.js");
+    const { runInsiderCheck } = await import("../scheduler/market-data/insiderCheckJob.js");
     await runInsiderCheck(db, async () => []);
 
     const row = db.prepare(
@@ -162,7 +162,7 @@ describe("Task 1143 — insiderCheckJob refactor", () => {
     const db = makeDb();
     seedBuyRows(db, "HPG", "pho tong giam doc", [3, 8, 20]);
 
-    const { runInsiderCheck } = await import("../scheduler/insiderCheckJob.js");
+    const { runInsiderCheck } = await import("../scheduler/market-data/insiderCheckJob.js");
     await runInsiderCheck(db, async () => []);
 
     type Row = { stock: string; evidence_type: string; direction: string };
@@ -181,7 +181,7 @@ describe("Task 1143 — insiderCheckJob refactor", () => {
     // 5 sell days — should NOT trigger streak alert
     seedBuyRows(db, "FPT", "giam doc", [1, 5, 10, 15, 20], { type: "sell" });
 
-    const { runInsiderCheck } = await import("../scheduler/insiderCheckJob.js");
+    const { runInsiderCheck } = await import("../scheduler/market-data/insiderCheckJob.js");
     await runInsiderCheck(db, async () => []);
 
     const row = db.prepare(
@@ -196,7 +196,7 @@ describe("Task 1143 — insiderCheckJob refactor", () => {
     const db = makeDb();
     seedBuyRows(db, "VCB", "chu tich", [4, 9, 18]);
 
-    const { runInsiderCheck } = await import("../scheduler/insiderCheckJob.js");
+    const { runInsiderCheck } = await import("../scheduler/market-data/insiderCheckJob.js");
     await runInsiderCheck(db, async () => []);
     await runInsiderCheck(db, async () => []);
 
@@ -212,7 +212,7 @@ describe("Task 1143 — insiderCheckJob refactor", () => {
     const db = makeDb();
     seedBuyRows(db, "VPB", "thanh vien hoi dong quan tri", [6, 11, 16]);
 
-    const { runInsiderCheck } = await import("../scheduler/insiderCheckJob.js");
+    const { runInsiderCheck } = await import("../scheduler/market-data/insiderCheckJob.js");
     await runInsiderCheck(db, async () => []);
 
     type RunRow = { job_name: string; status: string };
@@ -228,7 +228,7 @@ describe("Task 1143 — insiderCheckJob refactor", () => {
   it("runInsiderCheck stores new raw transactions passed via fetcher override", async () => {
     const db = makeDb();
 
-    const { runInsiderCheck } = await import("../scheduler/insiderCheckJob.js");
+    const { runInsiderCheck } = await import("../scheduler/market-data/insiderCheckJob.js");
     await runInsiderCheck(db, async () => [
       {
         code: "TCB",

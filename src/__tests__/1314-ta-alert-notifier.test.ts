@@ -22,7 +22,7 @@ import { Database } from "bun:sqlite";
 import {
   runTaAlertNotifier,
   type TaAlertNotifierResult,
-} from "../scheduler/taAlertNotifierJob.js";
+} from "../scheduler/market-data/taAlertNotifierJob.js";
 import { CRONS } from "../scheduler/jobs.js";
 
 // ─────────────────────────────────────────────────────────────────────────────

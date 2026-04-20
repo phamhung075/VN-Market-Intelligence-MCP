@@ -95,7 +95,7 @@ describe("Task 1209 — Polymarket staleness fix", () => {
   it("DATA_SOURCES definition for prediction_markets uses MAX(updated_at)", async () => {
     // Import the module and inspect its private DATA_SOURCES definition
     // by running the getDataFreshness function with a controlled DB
-    const { getDataFreshness } = await import("../interface/mcp/tools/dataFreshnessTools.js");
+    const { getDataFreshness } = await import("../interface/mcp/tools/market-data/dataFreshnessTools.js");
 
     const db = buildTestDb();
 

@@ -75,14 +75,14 @@ describe("Task 1208 — Stock price freshness uses VPS-push timestamp", () => {
     const priceAgeHours = (Date.now() - new Date(priceRow!.ts).getTime()) / (1000 * 3600);
     expect(pushAgeHours).toBeGreaterThan(11);
     expect(priceAgeHours).toBeLessThan(3);
-    const { classifyFreshness } = await import("../interface/mcp/tools/dataFreshnessTools.js");
+    const { classifyFreshness } = await import("../interface/mcp/tools/market-data/dataFreshnessTools.js");
     expect(classifyFreshness(pushAgeHours)).toBe("Cũ");
     expect(classifyFreshness(priceAgeHours)).toBe("Bình thường");
     db.close();
   });
 
   it("getDataFreshness: Gia co phieu row uses vps_push_log pushed_at (fresh push = Tốt)", async () => {
-    const { getDataFreshness } = await import("../interface/mcp/tools/dataFreshnessTools.js");
+    const { getDataFreshness } = await import("../interface/mcp/tools/market-data/dataFreshnessTools.js");
     const db = buildTestDb();
     const staleUpdatedAt = new Date(Date.now() - 2 * 3600_000).toISOString();
     db.prepare("INSERT OR REPLACE INTO market_prices (code, price, change_pct, volume, updated_at) VALUES (?, ?, ?, ?, ?)")
@@ -96,7 +96,7 @@ describe("Task 1208 — Stock price freshness uses VPS-push timestamp", () => {
   });
 
   it("getDataFreshness: Gia co phieu shows no data when VPS never pushed", async () => {
-    const { getDataFreshness } = await import("../interface/mcp/tools/dataFreshnessTools.js");
+    const { getDataFreshness } = await import("../interface/mcp/tools/market-data/dataFreshnessTools.js");
     const db = buildTestDb();
     db.prepare("INSERT OR REPLACE INTO market_prices (code, price, change_pct, volume, updated_at) VALUES (?, ?, ?, ?, ?)")
       .run("VHM", 45000, -0.5, 1000000, new Date(Date.now() - 2 * 3600_000).toISOString());

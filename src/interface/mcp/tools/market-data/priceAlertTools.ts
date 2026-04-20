@@ -18,8 +18,8 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 
-import { getDb, initDatabase } from "../../../infrastructure/db/schema.js";
-import { logger } from "../../../infrastructure/logger.js";
+import { getDb, initDatabase } from "../../../../infrastructure/db/schema.js";
+import { logger } from "../../../../infrastructure/logger.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Internal DB row shapes

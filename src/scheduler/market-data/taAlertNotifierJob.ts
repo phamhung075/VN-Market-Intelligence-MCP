@@ -20,8 +20,8 @@
  */
 
 import type { Database } from "bun:sqlite";
-import { logger } from "../infrastructure/logger.js";
-import { recordJobRun } from "../infrastructure/db/cronJobRunStore.js";
+import { logger } from "../../infrastructure/logger.js";
+import { recordJobRun } from "../../infrastructure/db/cronJobRunStore.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -65,7 +65,7 @@ const BATCH_SIZE = 10;
 // ─────────────────────────────────────────────────────────────────────────────
 
 async function defaultGetDb(): Promise<Database> {
-  const { getDb } = await import("../infrastructure/db/index.js");
+  const { getDb } = await import("../../infrastructure/db/index.js");
   return getDb();
 }
 
@@ -210,7 +210,7 @@ export async function runTaAlertNotifier(
     deps?.sendFn ??
     (async (msg: string, opts: unknown) => {
       const { sendTelegramMarket } = await import(
-        "../infrastructure/notifiers/telegram.js"
+        "../../infrastructure/notifiers/telegram.js"
       );
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await sendTelegramMarket(msg, opts as any);
