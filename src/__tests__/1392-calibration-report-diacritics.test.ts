@@ -20,7 +20,7 @@ import { Database } from "bun:sqlite";
 import {
   runCalibrationReport,
   type TelegramOverrides,
-} from "../scheduler/calibrationReportJob.js";
+} from "../scheduler/macro/calibrationReportJob.js";
 import { insertCalibrationSnapshot } from "../infrastructure/db/calibrationSnapshotStore.js";
 
 // ─────────────────────────────────────────────────────────────────────────────

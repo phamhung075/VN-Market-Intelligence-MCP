@@ -17,7 +17,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { initDatabase, closeDb } from "../infrastructure/db/schema.js";
-import { registerCalibrationTools } from "../interface/mcp/tools/calibrationTools.js";
+import { registerCalibrationTools } from "../interface/mcp/tools/macro/calibrationTools.js";
 import {
   insertCalibrationSnapshot,
   type CalibrationSnapshotInput,

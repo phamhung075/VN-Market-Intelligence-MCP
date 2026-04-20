@@ -23,7 +23,7 @@ import {
   runCalibrationReport,
   type CalibrationJobResult,
   type TelegramOverrides,
-} from "../scheduler/calibrationReportJob.js";
+} from "../scheduler/macro/calibrationReportJob.js";
 import { insertCalibrationSnapshot } from "../infrastructure/db/calibrationSnapshotStore.js";
 import { CRONS } from "../scheduler/jobs.js";
 

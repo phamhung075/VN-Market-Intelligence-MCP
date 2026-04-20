@@ -17,7 +17,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { initDatabase, closeDb } from "../infrastructure/db/schema.js";
-import { registerEvidenceTools } from "../interface/mcp/tools/evidenceTools.js";
+import { registerEvidenceTools } from "../interface/mcp/tools/macro/evidenceTools.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers

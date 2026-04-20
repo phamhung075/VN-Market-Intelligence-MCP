@@ -11,7 +11,7 @@
 
 import { describe, it, expect, beforeEach, afterEach } from "bun:test";
 import { Database } from "bun:sqlite";
-import { runPredictionOutcomeCheck } from "../scheduler/predictionOutcomeJob.js";
+import { runPredictionOutcomeCheck } from "../scheduler/macro/predictionOutcomeJob.js";
 
 // ─── In-memory DB helpers ──────────────────────────────────────────────────────
 
@@ -306,7 +306,7 @@ describe("Task 248 — Prediction Market Outcome Validation", () => {
     db.exec(`UPDATE prediction_signals SET outcome = 'confirmed' WHERE id = 'acc-4'`);
 
     const { computePredictionAccuracy } = await import(
-      "../scheduler/predictionOutcomeJob.js"
+      "../scheduler/macro/predictionOutcomeJob.js"
     );
     const result = computePredictionAccuracy(db, 30);
 
@@ -332,7 +332,7 @@ describe("Task 248 — Prediction Market Outcome Validation", () => {
     await expect(runPredictionOutcomeCheck(db)).resolves.toBeUndefined();
 
     const { computePredictionAccuracy } = await import(
-      "../scheduler/predictionOutcomeJob.js"
+      "../scheduler/macro/predictionOutcomeJob.js"
     );
     const result = computePredictionAccuracy(db, 30);
     expect(result).toEqual([]);

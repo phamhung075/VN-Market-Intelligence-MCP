@@ -16,7 +16,7 @@ Bun.env["DB_PATH"] = ":memory:";
 import { describe, it, expect, beforeEach, afterEach } from "bun:test";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { initDatabase, getDb, closeDb } from "../infrastructure/db/schema.js";
-import { registerPredictionTools } from "../interface/mcp/tools/predictionTools.js";
+import { registerPredictionTools } from "../interface/mcp/tools/macro/predictionTools.js";
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 

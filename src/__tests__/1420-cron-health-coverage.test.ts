@@ -35,9 +35,9 @@ import { runBctcReparseJob } from "../scheduler/financial-reports/bctcReparseJob
 import {
   runEvidenceAccumulator,
 } from "../scheduler/evidenceAccumulatorJob.js";
-import { runBaseRateComputation } from "../scheduler/baseRateComputationJob.js";
-import { runPredictionResolution } from "../scheduler/predictionResolutionJob.js";
-import { runCalibrationReport } from "../scheduler/calibrationReportJob.js";
+import { runBaseRateComputation } from "../scheduler/macro/baseRateComputationJob.js";
+import { runPredictionResolution } from "../scheduler/macro/predictionResolutionJob.js";
+import { runCalibrationReport } from "../scheduler/macro/calibrationReportJob.js";
 import {
   runWeeklyAuditWithDb,
   runBctcReparseWithDb,

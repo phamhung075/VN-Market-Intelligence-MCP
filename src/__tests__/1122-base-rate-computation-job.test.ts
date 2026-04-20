@@ -18,7 +18,7 @@ import {
   computeBrierScore,
   clampLikelihoodRatio,
 } from "../domain/services/baseRateComputer.js";
-import { runBaseRateComputation } from "../scheduler/baseRateComputationJob.js";
+import { runBaseRateComputation } from "../scheduler/macro/baseRateComputationJob.js";
 import { CRONS } from "../scheduler/jobs.js";
 
 // ─────────────────────────────────────────────────────────────────────────────

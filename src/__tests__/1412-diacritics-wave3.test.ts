@@ -13,14 +13,14 @@ Bun.env["DB_PATH"] = ":memory:";
 import { describe, it, expect } from "bun:test";
 
 // ── FILE 1: predictionMarketJob.ts ───────────────────────────────────────────
-import { buildTelegramMessage } from "../scheduler/predictionMarketJob.js";
+import { buildTelegramMessage } from "../scheduler/macro/predictionMarketJob.js";
 import type { PredictionSignal } from "../domain/services/predictionSignalDetector.js";
 
 // ── FILE 2: calibrationReportJob.ts ─────────────────────────────────────────
 import {
   buildCalibrationMarketMessage,
   type CalibrationJobResult,
-} from "../scheduler/calibrationReportJob.js";
+} from "../scheduler/macro/calibrationReportJob.js";
 
 // ── FILE 3: getCrisisEarlyWarning.ts ─────────────────────────────────────────
 import { formatCrisisWarningOutput } from "../application/usecases/getCrisisEarlyWarning.js";

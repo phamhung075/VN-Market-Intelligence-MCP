@@ -14,7 +14,7 @@ describe("1505 cascade-backtest", () => {
 
   // AC-1: runCascadeBacktest import exists and returns result shape
   test("AC-1: runCascadeBacktest exists and returns CascadeBacktestResult shape", async () => {
-    const { runCascadeBacktest } = await import("../scheduler/cascadeBacktestJob.js");
+    const { runCascadeBacktest } = await import("../scheduler/macro/cascadeBacktestJob.js");
     const result = await runCascadeBacktest({ db, sendWorkFn: async () => true });
     expect(result).toHaveProperty("processed");
     expect(result).toHaveProperty("skipped");
@@ -26,7 +26,7 @@ describe("1505 cascade-backtest", () => {
   // AC-2: skip rows newer than 3 days (WHERE clause pre-filters)
   test("AC-2: rows < 3 days old are not processed", async () => {
     const { recordHit } = await import("../infrastructure/db/cascadeHitStore.js");
-    const { runCascadeBacktest } = await import("../scheduler/cascadeBacktestJob.js");
+    const { runCascadeBacktest } = await import("../scheduler/macro/cascadeBacktestJob.js");
 
     recordHit(db, "oil_gas_up", "text", "oil_gas", "VCB");
     // hit_at defaults to now — within 3 days
@@ -45,7 +45,7 @@ describe("1505 cascade-backtest", () => {
   // AC-3: fills price_impact_3d and outcome_correct = 1 when price rises > 1%
   test("AC-3: fills price_impact_3d and outcome_correct=1 for +2% rise", async () => {
     const { recordHit } = await import("../infrastructure/db/cascadeHitStore.js");
-    const { runCascadeBacktest } = await import("../scheduler/cascadeBacktestJob.js");
+    const { runCascadeBacktest } = await import("../scheduler/macro/cascadeBacktestJob.js");
 
     recordHit(db, "oil_gas_up", "text", "oil_gas", "VCB");
     const hitRow = db.prepare("SELECT id FROM cascade_rule_hits ORDER BY id DESC LIMIT 1").get() as { id: number };
@@ -67,7 +67,7 @@ describe("1505 cascade-backtest", () => {
   // AC-4: outcome_correct = 0 when price drops > 1%
   test("AC-4: outcome_correct=0 for -4% drop", async () => {
     const { recordHit } = await import("../infrastructure/db/cascadeHitStore.js");
-    const { runCascadeBacktest } = await import("../scheduler/cascadeBacktestJob.js");
+    const { runCascadeBacktest } = await import("../scheduler/macro/cascadeBacktestJob.js");
 
     recordHit(db, "banking_down", "text", "banking", "VCB");
     const hitRow = db.prepare("SELECT id FROM cascade_rule_hits ORDER BY id DESC LIMIT 1").get() as { id: number };
@@ -88,7 +88,7 @@ describe("1505 cascade-backtest", () => {
 
   // AC-5: affected_stocks NULL → noData, updateOutcome NOT called
   test("AC-5: affected_stocks NULL counted as noData, row untouched", async () => {
-    const { runCascadeBacktest } = await import("../scheduler/cascadeBacktestJob.js");
+    const { runCascadeBacktest } = await import("../scheduler/macro/cascadeBacktestJob.js");
 
     db.prepare(
       "INSERT INTO cascade_rule_hits (rule_key, matched_text, hit_at) VALUES (?, ?, ?)"
@@ -102,7 +102,7 @@ describe("1505 cascade-backtest", () => {
   // AC-6: close_d3 missing → row untouched, noData++
   test("AC-6: missing close_d3 leaves row untouched, noData++", async () => {
     const { recordHit } = await import("../infrastructure/db/cascadeHitStore.js");
-    const { runCascadeBacktest } = await import("../scheduler/cascadeBacktestJob.js");
+    const { runCascadeBacktest } = await import("../scheduler/macro/cascadeBacktestJob.js");
 
     recordHit(db, "oil_gas_up", "text", "oil_gas", "FPT");
     const hitRow = db.prepare("SELECT id FROM cascade_rule_hits ORDER BY id DESC LIMIT 1").get() as { id: number };
@@ -122,7 +122,7 @@ describe("1505 cascade-backtest", () => {
 
   // AC-7: sendWorkFn called exactly once with correct format
   test("AC-7: sendWorkFn called exactly once matching [cascade-backtest] format", async () => {
-    const { runCascadeBacktest } = await import("../scheduler/cascadeBacktestJob.js");
+    const { runCascadeBacktest } = await import("../scheduler/macro/cascadeBacktestJob.js");
 
     const messages: string[] = [];
     const sendWorkFn = async (msg: string) => { messages.push(msg); return true; };

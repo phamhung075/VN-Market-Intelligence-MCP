@@ -24,8 +24,8 @@ import {
   insertPredictionClaim,
   type PredictionClaimInput,
 } from "../infrastructure/db/predictionClaimStore.js";
-import { runPredictionResolution } from "../scheduler/predictionResolutionJob.js";
-import { registerEvidenceTools } from "../interface/mcp/tools/evidenceTools.js";
+import { runPredictionResolution } from "../scheduler/macro/predictionResolutionJob.js";
+import { registerEvidenceTools } from "../interface/mcp/tools/macro/evidenceTools.js";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
 // ─────────────────────────────────────────────────────────────────────────────

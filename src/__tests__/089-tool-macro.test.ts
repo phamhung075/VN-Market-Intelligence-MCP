@@ -24,7 +24,7 @@ mock.module("../infrastructure/rag/retriever.js", () => ({
 }));
 
 import { initDatabase, closeDb } from "../infrastructure/db/schema.js";
-import { registerMacroTools } from "../interface/mcp/tools/macroTools.js";
+import { registerMacroTools } from "../interface/mcp/tools/macro/macroTools.js";
 import { registerMacroTools as registerMacroToolsFromIndex } from "../interface/mcp/tools/index.js";
 
 // ---------------------------------------------------------------------------

@@ -24,16 +24,16 @@ import { z } from "zod";
 import {
   insertEvidenceFragment,
   getLatestEvidenceScore,
-} from "../../../infrastructure/db/evidenceFragmentStore.js";
+} from "../../../../infrastructure/db/evidenceFragmentStore.js";
 import {
   getLikelihoodRatio,
   getLikelihoodRatios,
-} from "../../../infrastructure/db/likelihoodRatioStore.js";
+} from "../../../../infrastructure/db/likelihoodRatioStore.js";
 import {
   insertPredictionClaim,
   type ClaimDirection,
-} from "../../../infrastructure/db/predictionClaimStore.js";
-import { getDb } from "../../../infrastructure/db/schema.js";
+} from "../../../../infrastructure/db/predictionClaimStore.js";
+import { getDb } from "../../../../infrastructure/db/schema.js";
 
 /**
  * Register the evidence fragment tool on an McpServer instance.

@@ -21,14 +21,14 @@
  * Dependency injection: all I/O dependencies can be overridden for testing.
  */
 
-import { logger } from "../infrastructure/logger.js";
-import { getDb, initDatabase } from "../infrastructure/db/schema.js";
+import { logger } from "../../infrastructure/logger.js";
+import { getDb, initDatabase } from "../../infrastructure/db/schema.js";
 import type { Database } from "bun:sqlite";
 import type {
   PredictionMarket,
   PredictionSignal,
   PredictionSignalConfig,
-} from "../domain/services/predictionSignalDetector.js";
+} from "../../domain/services/predictionSignalDetector.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Public options type for dependency injection
@@ -296,7 +296,7 @@ export async function runPredictionMarketPoll(
     if (enabled === undefined) {
       try {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const cfgMod = await import("../infrastructure/config.js" as any);
+        const cfgMod = await import("../../infrastructure/config.js" as any);
         const cfg = (cfgMod as { loadMcpConfig?: () => { predictionMarkets?: { enabled?: boolean } } }).loadMcpConfig?.() ?? {};
         enabled = (cfg as { predictionMarkets?: { enabled?: boolean } }).predictionMarkets?.enabled ?? false;
       } catch {
@@ -334,9 +334,9 @@ export async function runPredictionMarketPoll(
       } else {
         // Dynamic imports for modules provided by dependency tasks (164, 169).
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const polyMod = await import("../infrastructure/fetchers/polymarket.js" as any);
+        const polyMod = await import("../../infrastructure/fetchers/polymarket.js" as any);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const cfgMod = await import("../infrastructure/config.js" as any);
+        const cfgMod = await import("../../infrastructure/config.js" as any);
         const cfg = (cfgMod as { loadMcpConfig?: () => { predictionMarkets: Record<string, unknown> } }).loadMcpConfig?.() ?? {};
         currentMarkets = await (polyMod as { fetchPolymarkets: (cfg: unknown) => Promise<PredictionMarket[]> }).fetchPolymarkets(
           (cfg as { predictionMarkets?: unknown }).predictionMarkets ?? {},
@@ -370,7 +370,7 @@ export async function runPredictionMarketPoll(
 
     // ── Step 6: detect signals ────────────────────────────────────────────
     const { detectPredictionSignals } = await import(
-      "../domain/services/predictionSignalDetector.js"
+      "../../domain/services/predictionSignalDetector.js"
     );
 
     let signalConfig: PredictionSignalConfig;
@@ -379,7 +379,7 @@ export async function runPredictionMarketPoll(
     } else {
       try {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const cfgMod = await import("../infrastructure/config.js" as any);
+        const cfgMod = await import("../../infrastructure/config.js" as any);
         const cfg = (cfgMod as { loadMcpConfig?: () => { predictionMarkets: { volumeSpikeThresholdUsd: number; probabilityShiftPct: number; minUniqueWallets: number } } }).loadMcpConfig?.() ?? { predictionMarkets: null };
         const pm = (cfg as { predictionMarkets?: { volumeSpikeThresholdUsd?: number; probabilityShiftPct?: number; minUniqueWallets?: number } | null }).predictionMarkets;
         signalConfig = {
@@ -455,7 +455,7 @@ export async function runPredictionMarketPoll(
             await opts.telegramFn(msg);
           } else {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const notifierMod = await import("../infrastructure/notifiers/telegram.js" as any);
+            const notifierMod = await import("../../infrastructure/notifiers/telegram.js" as any);
             await (notifierMod as { sendTelegram: (msg: string) => Promise<void> }).sendTelegram(msg);
           }
         } catch (err) {

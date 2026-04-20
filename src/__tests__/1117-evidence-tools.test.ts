@@ -11,7 +11,7 @@
 import { describe, it, expect, beforeEach } from "bun:test";
 import { Database } from "bun:sqlite";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { registerEvidenceTools } from "../interface/mcp/tools/evidenceTools.js";
+import { registerEvidenceTools } from "../interface/mcp/tools/macro/evidenceTools.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Schema + server fixtures

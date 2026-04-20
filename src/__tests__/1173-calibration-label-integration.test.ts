@@ -32,12 +32,12 @@ import {
   getLabelAccuracyReport,
   type LabelAccuracyRow as LabelAccuracyRowImported,
 } from "../infrastructure/db/marketMessageStore.js";
-import { registerCalibrationTools } from "../interface/mcp/tools/calibrationTools.js";
+import { registerCalibrationTools } from "../interface/mcp/tools/macro/calibrationTools.js";
 import {
   runCalibrationReport,
   type TelegramOverrides,
   type CalibrationJobResult as CalibrationJobResultBase,
-} from "../scheduler/calibrationReportJob.js";
+} from "../scheduler/macro/calibrationReportJob.js";
 
 // LabelAccuracyRow is now imported from marketMessageStore.js (task 1174).
 // Re-export local alias so the rest of the test file keeps using the same name.
