@@ -36,27 +36,30 @@ import { sendTelegramWork, sendTelegramMarket } from "../infrastructure/notifier
 import { logger } from "../infrastructure/logger.js";
 
 /** If the newest market_prices row is older than this, raise an alert.
- * VPS pushes every ~5-10 min. 15 min allows 2-3 missed pushes before
- * alerting (was 5 min — too aggressive, caused false alarms). */
-const STALE_THRESHOLD_MS = 15 * 60 * 1000; // 15 minutes
+ * VPS pushes every ~5-10 min. 45 min allows several missed pushes before
+ * alerting — avoids false alarms on brief lulls or VPS reboot. */
+const STALE_THRESHOLD_MS = 45 * 60 * 1000; // 45 minutes
 
 /** Minimum wait between two stale-alerts during the same outage. */
 const ALERT_COOLDOWN_MS = 30 * 60 * 1000; // 30 minutes
 
 let lastAlertAt = 0;
+let lastWasStale = false;
 
 /**
  * Test-only reset of the in-module cooldown timer.
  */
 export function _resetWatchdogCooldown(): void {
   lastAlertAt = 0;
+  lastWasStale = false;
 }
 
 /**
- * Test-only reset of the lastWasStale flag.
- * Stub — body implemented in task 227b.
+ * Test-only reset of the lastWasStale recovery flag.
  */
-export function _resetWatchdogStaleFlag(): void { /* stub — body in 227b */ }
+export function _resetWatchdogStaleFlag(): void {
+  lastWasStale = false;
+}
 
 /**
  * Returns true if the current UTC instant is inside VN market hours
@@ -202,6 +205,22 @@ export async function runVpsProxyWatchdog(
   }
 
   if (stale.length === 0) {
+    if (lastWasStale) {
+      lastWasStale = false;
+      const notifyUser =
+        options.notifyUser ??
+        ((msg: string) => sendTelegramMarket(msg, { parseMode: "" }));
+      try {
+        await notifyUser(
+          "VPS data pipeline restored — all services are sending fresh data again.",
+        );
+      } catch (err) {
+        logger.warn("[vps-watchdog] recovery MARKET alert failed", {
+          error: err instanceof Error ? err.message : String(err),
+        });
+      }
+      return "restored";
+    }
     return "ok";
   }
 
@@ -258,6 +277,7 @@ export async function runVpsProxyWatchdog(
       return "notify-failed";
     }
     lastAlertAt = now.getTime();
+    lastWasStale = true;
     // Best-effort MARKET alert — failure does not change return value
     try {
       await notifyUser(userMessage);
