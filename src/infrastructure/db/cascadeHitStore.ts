@@ -21,6 +21,10 @@ export interface CascadeRuleMetric {
   hitCount: number;
   /** ISO datetime string of the most recent hit */
   lastHit: string;
+  /** Rows where outcome_correct IS NOT NULL (backtested) */
+  evaluated: number;
+  /** Win rate as percentage 0-100. 0 when evaluated=0. */
+  winRate: number;
 }
 
 // DDL is canonical in schema.ts:872 via initDatabase(). Tests use
@@ -136,6 +140,57 @@ export function getHitMetrics(db: Database, days: number = 30): CascadeRuleMetri
     ruleKey: r.rule_key,
     hitCount: r.hit_count,
     lastHit: r.last_hit,
+    evaluated: 0,
+    winRate: 0,
+  }));
+}
+
+/**
+ * Get hit metrics with accuracy (win-rate) grouped by rule_key.
+ *
+ * win-rate = COUNT(outcome_correct = 1) / COUNT(outcome_correct IS NOT NULL) * 100
+ * Rows where outcome_correct IS NULL are excluded from evaluated + winRate.
+ * winRate = 0 when evaluated = 0.
+ *
+ * @param db   - Active bun:sqlite Database connection
+ * @param days - Look-back window in days (default 30)
+ */
+export function getHitMetricsWithAccuracy(
+  db: Database,
+  days: number = 30,
+): CascadeRuleMetric[] {
+  const rows = db
+    .prepare<
+      {
+        rule_key: string;
+        hit_count: number;
+        last_hit: string;
+        evaluated: number;
+        correct: number;
+      },
+      [number]
+    >(`
+      SELECT
+        rule_key,
+        COUNT(*)                                              AS hit_count,
+        MAX(hit_at)                                           AS last_hit,
+        COUNT(outcome_correct)                                AS evaluated,
+        COALESCE(SUM(CASE WHEN outcome_correct = 1 THEN 1 ELSE 0 END), 0) AS correct
+      FROM cascade_rule_hits
+      WHERE hit_at >= datetime('now', '-' || ? || ' days')
+      GROUP BY rule_key
+      ORDER BY hit_count DESC
+    `)
+    .all(days);
+
+  return rows.map((r) => ({
+    ruleKey:   r.rule_key,
+    hitCount:  r.hit_count,
+    lastHit:   r.last_hit,
+    evaluated: r.evaluated,
+    winRate:   r.evaluated > 0
+      ? Math.round((r.correct / r.evaluated) * 1000) / 10  // one decimal
+      : 0,
   }));
 }
 
@@ -155,7 +210,7 @@ export function getDeadRules(
 ): string[] {
   if (knownRules.length === 0) return [];
 
-  const activeMetrics = getHitMetrics(db, days);
+  const activeMetrics = getHitMetricsWithAccuracy(db, days);
   const activeKeys = new Set(activeMetrics.map((m) => m.ruleKey));
 
   return knownRules.filter((key) => !activeKeys.has(key));

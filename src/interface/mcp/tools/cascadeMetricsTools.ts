@@ -15,7 +15,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { getDb } from "../../../infrastructure/db/schema.js";
-import { getHitMetrics, getDeadRules } from "../../../infrastructure/db/cascadeHitStore.js";
+import { getHitMetricsWithAccuracy, getDeadRules } from "../../../infrastructure/db/cascadeHitStore.js";
 
 // ─── Known rule keys (derived from SECTOR_RULES in cascadeEngine.ts) ──────────
 // Format: {domain}_{direction} — first matching rule per domain wins.
@@ -40,7 +40,7 @@ export const KNOWN_CASCADE_RULE_KEYS: string[] = [
  * Format the cascade metrics as a plain-text table with a dead-rules section.
  */
 export function formatCascadeMetrics(
-  metrics: { ruleKey: string; hitCount: number; lastHit: string }[],
+  metrics: { ruleKey: string; hitCount: number; lastHit: string; evaluated: number; winRate: number }[],
   deadRules: string[],
   days: number,
 ): string {
@@ -51,12 +51,31 @@ export function formatCascadeMetrics(
   if (metrics.length === 0) {
     lines.push("No rule hits recorded in this window.");
   } else {
-    lines.push(`${"Rule Key".padEnd(40)} ${"Hits".padStart(6)}  Last Hit`);
-    lines.push("─".repeat(72));
+    lines.push(
+      `${"Rule Key".padEnd(40)} ${"Hits".padStart(6)}  ${"Eval".padStart(6)}  ${"WinRate".padStart(8)}  Last Hit`,
+    );
+    lines.push("─".repeat(90));
     for (const m of metrics) {
+      const winRateStr = m.evaluated > 0 ? `${m.winRate.toFixed(1)}%` : "—";
       lines.push(
-        `${m.ruleKey.padEnd(40)} ${String(m.hitCount).padStart(6)}  ${m.lastHit}`,
+        `${m.ruleKey.padEnd(40)} ${String(m.hitCount).padStart(6)}  ${String(m.evaluated).padStart(6)}  ${winRateStr.padStart(8)}  ${m.lastHit}`,
       );
+    }
+
+    // Overall accuracy summary
+    const totalEvaluated = metrics.reduce((s, m) => s + m.evaluated, 0);
+    const totalCorrect   = metrics.reduce(
+      (s, m) => s + Math.round((m.winRate / 100) * m.evaluated),
+      0,
+    );
+    lines.push("");
+    if (totalEvaluated > 0) {
+      const overall = Math.round((totalCorrect / totalEvaluated) * 1000) / 10;
+      lines.push(
+        `Overall accuracy: ${overall.toFixed(1)}% (${totalCorrect} correct / ${totalEvaluated} evaluated)`,
+      );
+    } else {
+      lines.push(`Overall accuracy: — (0 evaluated)`);
     }
   }
 
@@ -93,7 +112,7 @@ export function registerCascadeMetricsTools(server: McpServer): void {
     async ({ days }) => {
       try {
         const db = getDb();
-        const metrics = getHitMetrics(db, days);
+        const metrics = getHitMetricsWithAccuracy(db, days);
         const deadRules = getDeadRules(db, KNOWN_CASCADE_RULE_KEYS, days);
         const text = formatCascadeMetrics(metrics, deadRules, days);
 
