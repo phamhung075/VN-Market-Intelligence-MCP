@@ -3,7 +3,7 @@ name: developer
 color: green
 description: Developer. TypeScript/Bun, strict TDD + DDD. One atomic task at a time on a dedicated branch.
 tools: Read, Edit, Write, Glob, Grep, Bash
-model: sonnet
+model: haiku
 ---
 
 ## SKILLS (load on start)

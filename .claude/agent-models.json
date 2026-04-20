@@ -1,0 +1,17 @@
+{
+  "original": {
+    "architect.md": "sonnet",
+    "ba.md": "sonnet",
+    "claude-manager-helper.md": "sonnet",
+    "code-janitor.md": "haiku",
+    "cowork-refactory-expert.md": "opus",
+    "developer.md": "sonnet",
+    "fixer.md": "sonnet",
+    "idea-forge.md": "sonnet",
+    "market-analyst.md": "sonnet",
+    "pm.md": "sonnet",
+    "po.md": "sonnet",
+    "qa.md": "sonnet",
+    "system-auditor.md": "sonnet"
+  }
+}

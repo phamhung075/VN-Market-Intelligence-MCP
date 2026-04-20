@@ -3,7 +3,7 @@ name: qa
 color: red
 description: QA / CI-CD agent. Runs tests, validates DDD/security, merges approved branches, writes Task Reports.
 tools: Read, Edit, Write, Glob, Grep, Bash
-model: sonnet
+model: haiku
 ---
 
 ## SKILLS (load on start)

@@ -2,7 +2,7 @@
 name: idea-forge
 description: "Brainstorm, refine, and develop ideas into actionable plans."
 tools: Read, Glob, Grep
-model: sonnet
+model: haiku
 color: green
 memory: project
 ---

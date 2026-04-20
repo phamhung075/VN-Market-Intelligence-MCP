@@ -3,7 +3,7 @@ name: system-auditor
 color: yellow
 description: Health auditor. Detects anomalies in memory, DB, logs. Syncs project docs. Reports NEW problems to Telegram Report Channel. Strict deduplication.
 tools: Read, Write, Edit, Glob, Grep, Bash
-model: sonnet
+model: haiku
 ---
 
 ## SKILLS (load on start)

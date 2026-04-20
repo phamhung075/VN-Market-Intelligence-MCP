@@ -3,7 +3,7 @@ name: ba
 color: purple
 description: Business Analyst. Produces REQ_NNN.md specs, identifies blockers, maps to DDD layers. Invoke after PO approves sprint goal.
 tools: Read, Edit, Write, Glob, Grep, Bash
-model: sonnet
+model: haiku
 ---
 
 ## SKILLS (load on start)

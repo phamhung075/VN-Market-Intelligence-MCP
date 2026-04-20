@@ -2,7 +2,7 @@
 name: cowork-refactory-expert
 description: "Rewrites cowork agent .md files by reading live system state. Single source of truth for MCP tool surface."
 tools: Read, Edit, Write, Glob, Grep, Bash
-model: opus
+model: haiku
 color: yellow
 memory: project
 ---

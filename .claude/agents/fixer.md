@@ -3,7 +3,7 @@ name: fixer
 color: orange
 description: Fixer. Applies minimum targeted fixes on CHANGES_REQUESTED tasks. Never refactors — only fixes what QA flagged.
 tools: Read, Edit, Write, Glob, Grep, Bash
-model: sonnet
+model: haiku
 ---
 
 ## SKILLS (load on start)

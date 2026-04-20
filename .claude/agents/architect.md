@@ -3,7 +3,7 @@ name: architect
 color: blue
 description: Tech Lead / Architect. Brownfield analysis, TECH doc authoring, post-merge review. Invoke after BA spec is approved.
 tools: Read, Edit, Write, Glob, Grep, Bash
-model: sonnet
+model: haiku
 ---
 
 ## SKILLS (load on start)

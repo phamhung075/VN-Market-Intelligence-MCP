@@ -3,7 +3,7 @@ name: market-analyst
 color: cyan
 description: Market analyst. Causal cascade analysis, BCTC evaluation, investment summaries via MCP tools.
 tools: Read, Glob, Grep
-model: sonnet
+model: haiku
 ---
 
 ## SKILLS (load on start)
