@@ -6,7 +6,7 @@
  * France-based user who monitors Vietnam markets from UTC+1/+2.
  *
  * Three data sources (each independent, per-query try/catch):
- *   1. Top 3 price movers     — market_prices_history INNER JOIN watchlist, ORDER BY ABS(change_pct) DESC LIMIT 3
+ *   1. Top 3 price movers     — daily_ohlcv INNER JOIN watchlist, (close-open)/open*100 ORDER BY ABS(change_pct) DESC LIMIT 3
  *   2. Top 3 recent alerts    — alerts ORDER BY severity rank DESC LIMIT 3
  *   3. TA signals (top 3)     — watchlist tickers × computeTaFn, non-neutral, sorted by RSI dev
  *
@@ -148,7 +148,9 @@ const SEVERITY_CASE = `
 /**
  * Fetches top 3 price movers by ABS(change_pct) descending.
  * Only watchlist tickers are considered (INNER JOIN watchlist).
- * Reads from market_prices_history (latest vs previous price per ticker).
+ * Reads from daily_ohlcv (close-open)/open*100 for the latest date.
+ * This avoids the 0% delta problem from consecutive 60s VPS push ticks
+ * that share the same price value.
  * Returns [] on any DB error (per-query isolation).
  */
 function fetchTopMovers(db: Database): MoverRow[] {
@@ -156,44 +158,19 @@ function fetchTopMovers(db: Database): MoverRow[] {
     return db
       .prepare<MoverRow, []>(`
         SELECT
-          cur.code                                         AS code,
-          cur.price                                        AS price,
-          CASE
-            WHEN prev.price IS NOT NULL AND prev.price != 0
-            THEN (cur.price - prev.price) / prev.price * 100.0
-            ELSE NULL
-          END                                              AS change_pct
-        FROM (
-          SELECT code, price, fetched_at,
-                 ROW_NUMBER() OVER (PARTITION BY code ORDER BY fetched_at DESC) AS rn
-          FROM market_prices_history
-        ) AS cur
-        INNER JOIN watchlist w ON w.code = cur.code
-        LEFT JOIN (
-          SELECT code, price,
-                 ROW_NUMBER() OVER (PARTITION BY code ORDER BY fetched_at DESC) AS rn
-          FROM market_prices_history
-        ) AS prev ON prev.code = cur.code AND prev.rn = 2
-        WHERE cur.rn = 1
-          AND (
-            CASE
-              WHEN prev.price IS NOT NULL AND prev.price != 0
-              THEN (cur.price - prev.price) / prev.price * 100.0
-              ELSE NULL
-            END
-          ) IS NOT NULL
-        ORDER BY ABS(
-          CASE
-            WHEN prev.price IS NOT NULL AND prev.price != 0
-            THEN (cur.price - prev.price) / prev.price * 100.0
-            ELSE NULL
-          END
-        ) DESC
+          o.code                                   AS code,
+          o.close                                  AS price,
+          (o.close - o.open) / o.open * 100.0      AS change_pct
+        FROM daily_ohlcv o
+        INNER JOIN watchlist w ON w.code = o.code
+        WHERE o.date = (SELECT MAX(date) FROM daily_ohlcv)
+          AND o.open != 0
+        ORDER BY ABS((o.close - o.open) / o.open * 100.0) DESC
         LIMIT 3
       `)
       .all()
   } catch (err) {
-    logger.warn("[franceSummaryJob] market_prices_history query failed", {
+    logger.warn("[franceSummaryJob] daily_ohlcv query failed", {
       error: err instanceof Error ? err.message : String(err),
     })
     return []

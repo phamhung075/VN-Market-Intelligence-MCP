@@ -108,26 +108,15 @@ describe("Task 1316/1317 — franceSummaryJob rewrite", () => {
   // AC 3: Top 3 price movers by ABS(change_pct) DESC
   // ─────────────────────────────────────────────────────────────────────────
   it("AC3: top 3 price movers selected by ABS(change_pct) DESC", async () => {
+    // daily_ohlcv is the movers source (task 205). change_pct = (close-open)/open*100
+    // VCB: +3.5%, HPG: -5.2%, VNM: +1.1%, FPT: +4.8%, TCB: +0.2%
     db.exec(`
-      INSERT INTO market_prices (code, price, change_pct, updated_at) VALUES
-        ('VCB', 88000, 3.5, '2026-04-15T06:00:00'),
-        ('HPG', 22000, -5.2, '2026-04-15T06:00:00'),
-        ('VNM', 75000, 1.1, '2026-04-15T06:00:00'),
-        ('FPT', 110000, 4.8, '2026-04-15T06:00:00'),
-        ('TCB', 33000, 0.2, '2026-04-15T06:00:00')
-    `)
-    db.exec(`
-      INSERT OR REPLACE INTO market_prices_history (code, price, volume, fetched_at) VALUES
-        ('VCB', 85000, 1000000, '2026-04-14T08:00:00'),
-        ('VCB', 88000, 1000000, '2026-04-15T08:00:00'),
-        ('HPG', 23200, 1000000, '2026-04-14T08:00:00'),
-        ('HPG', 22000, 1000000, '2026-04-15T08:00:00'),
-        ('VNM', 74200, 1000000, '2026-04-14T08:00:00'),
-        ('VNM', 75000, 1000000, '2026-04-15T08:00:00'),
-        ('FPT', 105000, 1000000, '2026-04-14T08:00:00'),
-        ('FPT', 110000, 1000000, '2026-04-15T08:00:00'),
-        ('TCB', 32900, 1000000, '2026-04-14T08:00:00'),
-        ('TCB', 33000, 1000000, '2026-04-15T08:00:00')
+      INSERT OR REPLACE INTO daily_ohlcv (code, date, open, high, low, close, volume, updated_at) VALUES
+        ('VCB', '2026-04-15', 85000, 90000, 84000, 88000,  1000000, '2026-04-15T16:00:00'),
+        ('HPG', '2026-04-15', 23200, 24000, 21000, 22000,  1000000, '2026-04-15T16:00:00'),
+        ('VNM', '2026-04-15', 74200, 76000, 73000, 75000,  1000000, '2026-04-15T16:00:00'),
+        ('FPT', '2026-04-15', 105000, 112000, 104000, 110000, 1000000, '2026-04-15T16:00:00'),
+        ('TCB', '2026-04-15', 32900, 34000, 32000, 33000,  1000000, '2026-04-15T16:00:00')
     `)
     db.exec(`
       INSERT OR REPLACE INTO watchlist (code) VALUES ('VCB'), ('HPG'), ('VNM'), ('FPT'), ('TCB')
@@ -194,14 +183,10 @@ describe("Task 1316/1317 — franceSummaryJob rewrite", () => {
   // AC 6: Vietnamese format output
   // ─────────────────────────────────────────────────────────────────────────
   it("AC6: output message is in Vietnamese format", async () => {
+    // daily_ohlcv is the movers source (task 205)
     db.exec(`
-      INSERT INTO market_prices (code, price, change_pct, updated_at) VALUES
-        ('VCB', 88000, 3.5, '2026-04-15T06:00:00')
-    `)
-    db.exec(`
-      INSERT OR REPLACE INTO market_prices_history (code, price, volume, fetched_at) VALUES
-        ('VCB', 85000, 1000000, '2026-04-14T08:00:00'),
-        ('VCB', 88000, 1000000, '2026-04-15T08:00:00')
+      INSERT OR REPLACE INTO daily_ohlcv (code, date, open, high, low, close, volume, updated_at) VALUES
+        ('VCB', '2026-04-15', 85000, 90000, 84000, 88000, 1000000, '2026-04-15T16:00:00')
     `)
     db.exec(`INSERT OR REPLACE INTO watchlist (code) VALUES ('VCB')`)
 
@@ -257,26 +242,14 @@ describe("Task 1316/1317 — franceSummaryJob rewrite", () => {
   // AC 9: moverCount is the number of rows actually returned (max 3)
   // ─────────────────────────────────────────────────────────────────────────
   it("AC9: moverCount is capped at 3 even when more rows exist", async () => {
+    // daily_ohlcv is the movers source (task 205). 5 watchlist tickers → LIMIT 3
     db.exec(`
-      INSERT INTO market_prices (code, price, change_pct, updated_at) VALUES
-        ('A', 1000, 8.0, '2026-04-15T06:00:00'),
-        ('B', 1000, -7.0, '2026-04-15T06:00:00'),
-        ('C', 1000, 6.5, '2026-04-15T06:00:00'),
-        ('D', 1000, -5.0, '2026-04-15T06:00:00'),
-        ('E', 1000, 4.0, '2026-04-15T06:00:00')
-    `)
-    db.exec(`
-      INSERT OR REPLACE INTO market_prices_history (code, price, volume, fetched_at) VALUES
-        ('A', 926, 1000000, '2026-04-14T08:00:00'),
-        ('A', 1000, 1000000, '2026-04-15T08:00:00'),
-        ('B', 1075, 1000000, '2026-04-14T08:00:00'),
-        ('B', 1000, 1000000, '2026-04-15T08:00:00'),
-        ('C', 939, 1000000, '2026-04-14T08:00:00'),
-        ('C', 1000, 1000000, '2026-04-15T08:00:00'),
-        ('D', 1053, 1000000, '2026-04-14T08:00:00'),
-        ('D', 1000, 1000000, '2026-04-15T08:00:00'),
-        ('E', 961, 1000000, '2026-04-14T08:00:00'),
-        ('E', 1000, 1000000, '2026-04-15T08:00:00')
+      INSERT OR REPLACE INTO daily_ohlcv (code, date, open, high, low, close, volume, updated_at) VALUES
+        ('A', '2026-04-15', 926,  1100, 920,  1000, 1000000, '2026-04-15T16:00:00'),
+        ('B', '2026-04-15', 1075, 1100, 990,  1000, 1000000, '2026-04-15T16:00:00'),
+        ('C', '2026-04-15', 939,  1100, 930,  1000, 1000000, '2026-04-15T16:00:00'),
+        ('D', '2026-04-15', 1053, 1100, 990,  1000, 1000000, '2026-04-15T16:00:00'),
+        ('E', '2026-04-15', 961,  1100, 950,  1000, 1000000, '2026-04-15T16:00:00')
     `)
     db.exec(`
       INSERT OR REPLACE INTO watchlist (code) VALUES ('A'), ('B'), ('C'), ('D'), ('E')
@@ -321,14 +294,10 @@ describe("Task 1316/1317 — franceSummaryJob rewrite", () => {
   // AC 12: does not throw when sendFn rejects
   // ─────────────────────────────────────────────────────────────────────────
   it("AC12: does not throw when sendFn rejects", async () => {
+    // daily_ohlcv is the movers source (task 205)
     db.exec(`
-      INSERT INTO market_prices (code, price, change_pct, updated_at) VALUES
-        ('VCB', 88000, 3.5, '2026-04-15T06:00:00')
-    `)
-    db.exec(`
-      INSERT OR REPLACE INTO market_prices_history (code, price, volume, fetched_at) VALUES
-        ('VCB', 85000, 1000000, '2026-04-14T08:00:00'),
-        ('VCB', 88000, 1000000, '2026-04-15T08:00:00')
+      INSERT OR REPLACE INTO daily_ohlcv (code, date, open, high, low, close, volume, updated_at) VALUES
+        ('VCB', '2026-04-15', 85000, 90000, 84000, 88000, 1000000, '2026-04-15T16:00:00')
     `)
     db.exec(`INSERT OR REPLACE INTO watchlist (code) VALUES ('VCB')`)
 

@@ -87,16 +87,12 @@ function makeDb(): Database {
   return db;
 }
 
-/** Insert a price mover so the digest has data to send. */
+/** Insert a price mover so the digest has data to send.
+ * Uses daily_ohlcv (task 205 fix) — open=85000, close=88000 ≈ +3.53% */
 function seedMover(db: Database): void {
   db.exec(`
-    INSERT OR REPLACE INTO market_prices (code, price, change_pct, updated_at)
-    VALUES ('VCB', 88000, 3.5, datetime('now'))
-  `);
-  db.exec(`
-    INSERT OR REPLACE INTO market_prices_history (code, price, volume, fetched_at) VALUES
-      ('VCB', 85000, 1000000, '2026-04-15T08:00:00'),
-      ('VCB', 88000, 1000000, '2026-04-16T08:00:00')
+    INSERT OR REPLACE INTO daily_ohlcv (code, date, open, high, low, close, volume, updated_at)
+    VALUES ('VCB', '2026-04-16', 85000, 90000, 84000, 88000, 1000000, '2026-04-16T16:00:00')
   `);
   db.exec(`INSERT OR REPLACE INTO watchlist (code) VALUES ('VCB')`);
 }
