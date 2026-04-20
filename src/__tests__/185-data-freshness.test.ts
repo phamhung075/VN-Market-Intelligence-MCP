@@ -277,7 +277,7 @@ describe("Task 185 — registerDataFreshnessTools()", () => {
   it("barrel index exports registerDataFreshnessTools", async () => {
     // Verify by checking the exported name in index.ts source (avoids loading hnx.ts)
     const indexSrc = await Bun.file(
-      new URL("../interface/mcp/tools/index.ts", import.meta.url).pathname,
+      new URL("../interface/mcp/tools/market-data/index.ts", import.meta.url).pathname,
     ).text();
     expect(indexSrc).toContain("registerDataFreshnessTools");
     expect(indexSrc).toContain("dataFreshnessTools.js");

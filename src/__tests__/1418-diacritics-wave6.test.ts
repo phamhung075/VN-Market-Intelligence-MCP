@@ -47,7 +47,7 @@ describe("1418 wave6 — Group A: direct-call (exportPortfolioSnapshot)", () => 
 // =============================================================================
 
 describe("1418 wave6 — Group B: source-scan (customAlertTools.ts)", () => {
-  const src = readFileSync(join(TOOLS, "customAlertTools.ts"), "utf8");
+  const src = readFileSync(join(TOOLS, "alerts/customAlertTools.ts"), "utf8");
 
   it('contains "Chưa có quy tắc cảnh báo tùy chỉnh nào."', () => {
     expect(src).toContain("Chưa có quy tắc cảnh báo tùy chỉnh nào.");
@@ -77,7 +77,7 @@ describe("1418 wave6 — Group B: source-scan (customAlertTools.ts)", () => {
 });
 
 describe("1418 wave6 — Group B: source-scan (changelogTools.ts)", () => {
-  const src = readFileSync(join(TOOLS, "changelogTools.ts"), "utf8");
+  const src = readFileSync(join(TOOLS, "briefings/changelogTools.ts"), "utf8");
 
   it('contains "Lỗi khi ghi sửa lỗi:"', () => {
     expect(src).toContain("Lỗi khi ghi sửa lỗi:");
@@ -113,7 +113,7 @@ describe("1418 wave6 — Group B: source-scan (changelogTools.ts)", () => {
 });
 
 describe("1418 wave6 — Group B: source-scan (targetAllocationTools.ts)", () => {
-  const src = readFileSync(join(TOOLS, "targetAllocationTools.ts"), "utf8");
+  const src = readFileSync(join(TOOLS, "portfolio/targetAllocationTools.ts"), "utf8");
 
   it('contains "Chưa có mục tiêu phân bổ."', () => {
     expect(src).toContain("Chưa có mục tiêu phân bổ.");

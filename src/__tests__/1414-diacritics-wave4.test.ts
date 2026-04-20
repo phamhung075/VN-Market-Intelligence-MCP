@@ -134,7 +134,7 @@ describe("1414 FILE 2 — supplyChainTools.ts: buildSupplyChainExposureOutput", 
 // ── FILE 3: alertMuteTools.ts — 1 string ─────────────────────────────────────
 
 describe("1414 FILE 3 — alertMuteTools.ts: unmute expired handler string", () => {
-  const src = readTool("alertMuteTools.ts");
+  const src = readTool("alerts/alertMuteTools.ts");
 
   it("line 142: expired mute message must use lệnh tắt tiếng đã hết hạn and Cảnh báo đã được bật lại", () => {
     expect(src).toContain("lệnh tắt tiếng đã hết hạn");
@@ -150,7 +150,7 @@ describe("1414 FILE 3 — alertMuteTools.ts: unmute expired handler string", () 
 // ── FILE 4: watchlist.ts — 2 strings (lines 286-287) ─────────────────────────
 
 describe("1414 FILE 4 — watchlist.ts: add_to_watchlist confirmation strings", () => {
-  const src = readTool("watchlist.ts");
+  const src = readTool("system/watchlist.ts");
 
   it("line 286: confirmation must use Đã thêm ... vào danh sách theo dõi not Da them ... vao danh sach theo doi", () => {
     expect(src).toContain("Đã thêm ${actionCode} (${exchange}) vào danh sách theo dõi.\\n");
@@ -171,7 +171,7 @@ describe("1414 FILE 4 — watchlist.ts: add_to_watchlist confirmation strings", 
 // ── FILE 5: compareTools.ts — 1 string ───────────────────────────────────────
 
 describe("1414 FILE 5 — compareTools.ts: buildRow label diacritics", () => {
-  const src = readTool("compareTools.ts");
+  const src = readTool("news-analysis/compareTools.ts");
 
   it("line 386: buildRow alert label must use Cảnh báo (7d) not Canh bao (7d)", () => {
     expect(src).toContain('buildRow("Cảnh báo (7d)"');

@@ -134,7 +134,7 @@ describe("1416 wave5 — Group B: source-scan", () => {
   // ── alertMuteTools.ts ───────────────────────────────────────────────────────
 
   describe("alertMuteTools.ts (6 strings)", () => {
-    const src = readTool("alertMuteTools.ts");
+    const src = readTool("alerts/alertMuteTools.ts");
 
     it("contains 'đã được tắt tiếng trong'", () => {
       expect(src).toContain("đã được tắt tiếng trong");
@@ -177,7 +177,7 @@ describe("1416 wave5 — Group B: source-scan", () => {
   // ── climateTools.ts ─────────────────────────────────────────────────────────
 
   describe("climateTools.ts (1 string)", () => {
-    const src = readTool("climateTools.ts");
+    const src = readTool("sector/climateTools.ts");
 
     it("contains 'Lọc: ${opts.stock}'", () => {
       expect(src).toContain("Lọc: ${opts.stock}");
@@ -191,7 +191,7 @@ describe("1416 wave5 — Group B: source-scan", () => {
   // ── compareTools.ts ─────────────────────────────────────────────────────────
 
   describe("compareTools.ts (9 strings)", () => {
-    const src = readTool("compareTools.ts");
+    const src = readTool("news-analysis/compareTools.ts");
 
     it("contains 'Lỗi: Cần ít nhất 2 mã cổ phiếu'", () => {
       expect(src).toContain("Lỗi: Cần ít nhất 2 mã cổ phiếu");
@@ -246,7 +246,7 @@ describe("1416 wave5 — Group B: source-scan", () => {
   // ── dataFreshnessTools.ts — source-scan supplement ──────────────────────────
 
   describe("dataFreshnessTools.ts — label/header source-scan", () => {
-    const src = readTool("dataFreshnessTools.ts");
+    const src = readTool("market-data/dataFreshnessTools.ts");
 
     it('contains \'"Tin tức (RSS)"\'', () => {
       expect(src).toContain('"Tin tức (RSS)"');
@@ -333,7 +333,7 @@ describe("1416 wave5 — Group B: source-scan", () => {
   // ── earningsCalendarTools.ts ─────────────────────────────────────────────────
 
   describe("earningsCalendarTools.ts (10 strings)", () => {
-    const src = readTool("earningsCalendarTools.ts");
+    const src = readTool("financial-reports/earningsCalendarTools.ts");
 
     it('contains \'"ĐÃ NỘP"\'', () => {
       expect(src).toContain('"ĐÃ NỘP"');
@@ -543,7 +543,7 @@ describe("1416 wave5 — Group B: source-scan", () => {
   // ── pharmaTools.ts ───────────────────────────────────────────────────────────
 
   describe("pharmaTools.ts (1 string)", () => {
-    const src = readTool("pharmaTools.ts");
+    const src = readTool("sector/pharmaTools.ts");
 
     it("contains 'Lọc theo cổ phiếu:'", () => {
       expect(src).toContain("Lọc theo cổ phiếu:");
@@ -557,7 +557,7 @@ describe("1416 wave5 — Group B: source-scan", () => {
   // ── portfolioTools.ts ────────────────────────────────────────────────────────
 
   describe("portfolioTools.ts (2 strings)", () => {
-    const src = readTool("portfolioTools.ts");
+    const src = readTool("portfolio/portfolioTools.ts");
 
     it("contains 'Watchlist trống'", () => {
       expect(src).toContain("Watchlist trống");
@@ -579,7 +579,7 @@ describe("1416 wave5 — Group B: source-scan", () => {
   // ── sourceHealthTools.ts — source-scan supplement ───────────────────────────
 
   describe("sourceHealthTools.ts — label/status source-scan", () => {
-    const src = readTool("sourceHealthTools.ts");
+    const src = readTool("news-analysis/sourceHealthTools.ts");
 
     it('contains \'"Suy giảm"\'', () => {
       expect(src).toContain('"Suy giảm"');
@@ -658,7 +658,7 @@ describe("1416 wave5 — Group B: source-scan", () => {
   // ── supplyChainTools.ts ──────────────────────────────────────────────────────
 
   describe("supplyChainTools.ts (10 strings)", () => {
-    const src = readTool("supplyChainTools.ts");
+    const src = readTool("sector/supplyChainTools.ts");
 
     it("contains 'PHÂN TÍCH CHUỖI CUNG ỨNG'", () => {
       expect(src).toContain("PHÂN TÍCH CHUỖI CUNG ỨNG");
@@ -729,7 +729,7 @@ describe("1416 wave5 — Group B: source-scan", () => {
   // ── technicalIndicatorTools.ts — source-scan supplement ─────────────────────
 
   describe("technicalIndicatorTools.ts — source-scan", () => {
-    const src = readTool("technicalIndicatorTools.ts");
+    const src = readTool("market-data/technicalIndicatorTools.ts");
 
     it("contains 'Quá mua (overbought)'", () => {
       expect(src).toContain("Quá mua (overbought)");

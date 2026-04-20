@@ -10,7 +10,7 @@ function read(rel: string) {
 
 describe("1472: Vietnamese diacritics batch 2", () => {
   describe("leadershipTools.ts", () => {
-    const src = read("src/interface/mcp/tools/leadershipTools.ts");
+    const src = read("src/interface/mcp/tools/sector/leadershipTools.ts");
     it("tool description has diacritics", () => {
       expect(src).toContain("Phân tích giao dịch nội bộ");
     });
@@ -26,7 +26,7 @@ describe("1472: Vietnamese diacritics batch 2", () => {
   });
 
   describe("correlationTools.ts", () => {
-    const src = read("src/interface/mcp/tools/correlationTools.ts");
+    const src = read("src/interface/mcp/tools/sector/correlationTools.ts");
     it("tool description has diacritics: tương quan", () => {
       expect(src).toContain("tương quan");
     });
@@ -39,7 +39,7 @@ describe("1472: Vietnamese diacritics batch 2", () => {
   });
 
   describe("creditFlowTools.ts", () => {
-    const src = read("src/interface/mcp/tools/creditFlowTools.ts");
+    const src = read("src/interface/mcp/tools/sector/creditFlowTools.ts");
     it("tool description has diacritics: Phân tích", () => {
       expect(src).toContain("Phân tích thay đổi tín dụng");
     });
@@ -61,14 +61,14 @@ describe("1472: Vietnamese diacritics batch 2", () => {
   });
 
   describe("energyTools.ts", () => {
-    const src = read("src/interface/mcp/tools/energyTools.ts");
+    const src = read("src/interface/mcp/tools/sector/energyTools.ts");
     it("tool description has diacritics: Lấy tín hiệu thị trường", () => {
       expect(src).toContain("Lấy tín hiệu thị trường điện lực");
     });
   });
 
   describe("climateTools.ts", () => {
-    const src = read("src/interface/mcp/tools/climateTools.ts");
+    const src = read("src/interface/mcp/tools/sector/climateTools.ts");
     it("tool description has diacritics: Lấy tín hiệu", () => {
       expect(src).toContain("Lấy tín hiệu rủi ro khí hậu");
     });

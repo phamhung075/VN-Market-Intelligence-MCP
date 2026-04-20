@@ -161,7 +161,7 @@ describe("1473: Vietnamese diacritics batch 3", () => {
   });
 
   describe("supplyChainTools.ts — error text", () => {
-    const src = read("src/interface/mcp/tools/supplyChainTools.ts");
+    const src = read("src/interface/mcp/tools/sector/supplyChainTools.ts");
 
     it("error text has diacritics: 'Lỗi: Không thể lấy'", () => {
       expect(src).toContain("Lỗi: Không thể lấy");
@@ -183,7 +183,7 @@ describe("1473: Vietnamese diacritics batch 3", () => {
   });
 
   describe("leadershipTools.ts — windowDays param (batch 4 tail)", () => {
-    const src = read("src/interface/mcp/tools/leadershipTools.ts");
+    const src = read("src/interface/mcp/tools/sector/leadershipTools.ts");
 
     it("windowDays param: 'Cửa sổ thời gian cho mass insider buy (default: 30 ngày)'", () => {
       expect(src).toContain("Cửa sổ thời gian cho mass insider buy (default: 30 ngày)");
