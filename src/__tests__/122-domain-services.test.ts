@@ -239,13 +239,22 @@ describe("Task 122 — Signal Detector branch coverage", () => {
     expect(drop!.severity).toBe("low");
   });
 
-  // SD-14: priceSeverity — 5–9.9% → medium
-  it("SD-14: priceSeverity — 5-9.9% produces medium severity", () => {
-    const snapshot = makeSnapshot({ price: 93_000, previousPrice: 100_000 }); // -7%
+  // SD-14: priceSeverity — 5–6.9% → medium
+  it("SD-14: priceSeverity — 5-6.9% produces medium severity", () => {
+    const snapshot = makeSnapshot({ price: 94_000, previousPrice: 100_000 }); // -6%
     const signals = detectSignals(snapshot);
     const drop = signals.find((s) => s.type === "price_drop");
     expect(drop).toBeDefined();
     expect(drop!.severity).toBe("medium");
+  });
+
+  // SD-14b: priceSeverity — 7% → high (VN circuit breaker threshold)
+  it("SD-14b: priceSeverity — 7% produces high severity", () => {
+    const snapshot = makeSnapshot({ price: 93_000, previousPrice: 100_000 }); // -7%
+    const signals = detectSignals(snapshot);
+    const drop = signals.find((s) => s.type === "price_drop");
+    expect(drop).toBeDefined();
+    expect(drop!.severity).toBe("high");
   });
 
   // SD-15: priceSeverity — 10–14.9% → high
