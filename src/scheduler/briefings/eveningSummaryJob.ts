@@ -190,8 +190,9 @@ export function formatEveningSummaryLines(summary: EveningSummary): string[] {
     const closeFmt = fmtThousands(close);
     const chSign = change >= 0 ? "+" : "";
     const pctSign = changePct >= 0 ? "+" : "";
+    const freshSuffix = isVnIndexFresh(summary.vnIndex.fetchedAt) ? "" : " (cũ)";
     lines.push(
-      `VN-Index: ${closeFmt} (${chSign}${Math.round(change)} / ${pctSign}${changePct.toFixed(2)}%)`,
+      `VN-Index: ${closeFmt} (${chSign}${Math.round(change)} / ${pctSign}${changePct.toFixed(2)}%)${freshSuffix}`,
     );
   }
 
