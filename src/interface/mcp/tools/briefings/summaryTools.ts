@@ -13,12 +13,12 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 
-import { initDatabase } from "../../../infrastructure/db/schema.js";
-import { logger } from "../../../infrastructure/logger.js";
+import { initDatabase } from "../../../../infrastructure/db/schema.js";
+import { logger } from "../../../../infrastructure/logger.js";
 import {
   generatePeriodicSummary,
   type PeriodType,
-} from "../../../application/usecases/generatePeriodicSummary.js";
+} from "../../../../application/usecases/generatePeriodicSummary.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Shared helpers
@@ -71,13 +71,13 @@ export function registerSummaryTools(server: McpServer): void {
       try {
         await initDatabase();
 
-        const { getDb } = await import("../../../infrastructure/db/schema.js");
+        const { getDb } = await import("../../../../infrastructure/db/schema.js");
         const db = getDb();
         const refDate = parseDate(date);
 
         // Compute period_start to look up cached record
         const { getPeriodDateRange } = await import(
-          "../../../application/usecases/generatePeriodicSummary.js"
+          "../../../../application/usecases/generatePeriodicSummary.js"
         );
         const range = getPeriodDateRange(period as PeriodType, refDate);
 
@@ -158,7 +158,7 @@ export function registerSummaryTools(server: McpServer): void {
       try {
         await initDatabase();
 
-        const { getDb } = await import("../../../infrastructure/db/schema.js");
+        const { getDb } = await import("../../../../infrastructure/db/schema.js");
         const db = getDb();
         const refDate = parseDate(date);
 

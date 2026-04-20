@@ -12,7 +12,7 @@ Bun.env["DB_PATH"] = ":memory:"
 // T4 may already pass (documents expected green behavior).
 
 import { describe, it, expect } from "bun:test"
-import { formatBriefingMessage } from "../scheduler/morningBriefingJob.js"
+import { formatBriefingMessage } from "../scheduler/briefings/morningBriefingJob.js"
 import type { DailyBriefing } from "../application/usecases/assembleBriefing.js"
 
 // ─────────────────────────────────────────────────────────────────────────────

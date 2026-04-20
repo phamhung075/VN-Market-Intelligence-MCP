@@ -129,7 +129,7 @@ describe("1512 evening-global-snapshot", () => {
 
   // AC-4 — reuse formatter from morningBriefingJob (should already pass post-1511)
   test("AC-4: formatGlobalSnapshotSection returns header + 4 metric lines", async () => {
-    const mod = await import("../scheduler/morningBriefingJob.js");
+    const mod = await import("../scheduler/briefings/morningBriefingJob.js");
     const formatGlobal = (mod as Record<string, unknown>)["formatGlobalSnapshotSection"] as (
       snap: { vix: number; dxy: number; sp500: number; hangSeng: number; fetchedAt: string }
     ) => string[];
@@ -143,7 +143,7 @@ describe("1512 evening-global-snapshot", () => {
 
   // AC-5 — extracted formatter includes global block
   test("AC-5: formatEveningSummaryLines includes global snapshot section when present", async () => {
-    const mod = await import("../scheduler/eveningSummaryJob.js");
+    const mod = await import("../scheduler/briefings/eveningSummaryJob.js");
     // RED: formatEveningSummaryLines not exported yet
     const formatLines = (mod as Record<string, unknown>)["formatEveningSummaryLines"] as (
       summary: Record<string, unknown>

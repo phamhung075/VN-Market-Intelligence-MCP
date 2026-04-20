@@ -648,7 +648,7 @@ describe("Task 101 — Morning Briefing Job", () => {
   describe("runMorningBriefing() concurrency guard", () => {
     it("skips concurrent invocations while a briefing is running", async () => {
       const { runMorningBriefing } = await import(
-        "../scheduler/morningBriefingJob.js"
+        "../scheduler/briefings/morningBriefingJob.js"
       );
 
       let callCount = 0;
@@ -683,7 +683,7 @@ describe("Task 101 — Morning Briefing Job", () => {
 
     it("allows subsequent run after first completes", async () => {
       const { runMorningBriefing } = await import(
-        "../scheduler/morningBriefingJob.js"
+        "../scheduler/briefings/morningBriefingJob.js"
       );
 
       let callCount = 0;

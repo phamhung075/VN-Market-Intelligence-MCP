@@ -29,7 +29,7 @@ import type { TaSignal } from "../application/usecases/assembleBriefing.js";
 import {
   runEveningSummary,
   resetEveningSummaryGuard,
-} from "../scheduler/eveningSummaryJob.js";
+} from "../scheduler/briefings/eveningSummaryJob.js";
 import type { EveningSummary } from "../application/usecases/assembleEveningSummary.js";
 
 // ─────────────────────────────────────────────────────────────────────────────

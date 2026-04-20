@@ -293,7 +293,7 @@ describe("Task 1503 AC4 — assembleEveningSummary includes foreignFlowMovers", 
 
 describe("Task 1503 AC5 — eveningSummaryJob formatter includes Khoi ngoai block", () => {
   it("formatted message includes 'Khối ngoại' when foreignFlowMovers.length > 0", async () => {
-    const jobModule = await import("../scheduler/eveningSummaryJob.js");
+    const jobModule = await import("../scheduler/briefings/eveningSummaryJob.js");
     const formatFn = (jobModule as Record<string, unknown>)["formatForeignFlowSection"] as
       | ((movers: { code: string; foreignNetVol: number; foreignBuyVol: number; foreignSellVol: number }[]) => string[])
       | undefined;

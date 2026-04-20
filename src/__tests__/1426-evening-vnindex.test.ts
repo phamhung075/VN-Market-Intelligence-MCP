@@ -28,7 +28,7 @@ import {
 import {
   runEveningSummary,
   resetEveningSummaryGuard,
-} from "../scheduler/eveningSummaryJob.js";
+} from "../scheduler/briefings/eveningSummaryJob.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Shared mock DB — returns empty arrays for all queries (no real DB needed)

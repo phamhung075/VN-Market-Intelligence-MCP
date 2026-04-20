@@ -118,7 +118,7 @@ describe("1511 briefing-global-snapshot", () => {
 
   // AC-4: formatGlobalSnapshotSection returns correct lines
   test("AC-4: formatGlobalSnapshotSection returns header + 4 metric lines", async () => {
-    const mod = await import("../scheduler/morningBriefingJob.js");
+    const mod = await import("../scheduler/briefings/morningBriefingJob.js");
     // RED: formatGlobalSnapshotSection not exported yet
     const formatGlobal = (mod as Record<string, unknown>)["formatGlobalSnapshotSection"] as (
       snap: { vix: number; dxy: number; sp500: number; hangSeng: number; fetchedAt: string }
@@ -136,7 +136,7 @@ describe("1511 briefing-global-snapshot", () => {
 
   // AC-5: formatBriefingMessage includes "Thị trường toàn cầu" header
   test("AC-5: formatBriefingMessage includes global snapshot section when present", async () => {
-    const { formatBriefingMessage } = await import("../scheduler/morningBriefingJob.js");
+    const { formatBriefingMessage } = await import("../scheduler/briefings/morningBriefingJob.js");
 
     const briefing = {
       date: "2026-04-20",

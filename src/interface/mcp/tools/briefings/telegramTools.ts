@@ -22,7 +22,7 @@ import {
   sendTelegramMarket,
   sendTelegramWork,
   sendTelegramBug,
-} from "../../../infrastructure/notifiers/telegram.js";
+} from "../../../../infrastructure/notifiers/telegram.js";
 
 export function registerTelegramTools(server: McpServer): void {
   server.tool(

@@ -88,7 +88,7 @@ import {
   assembleEveningSummary,
 } from "../application/usecases/assembleEveningSummary.js";
 import type { AssembleEveningSummaryOptions } from "../application/usecases/assembleEveningSummary.js";
-import { runEveningSummary, resetEveningSummaryGuard } from "../scheduler/eveningSummaryJob.js";
+import { runEveningSummary, resetEveningSummaryGuard } from "../scheduler/briefings/eveningSummaryJob.js";
 import type { PortfolioPnlResult } from "../domain/services/portfolioPnlCalculator.js";
 
 // ─────────────────────────────────────────────────────────────────────────────

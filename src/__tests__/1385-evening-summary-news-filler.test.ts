@@ -10,7 +10,7 @@ Bun.env["DB_PATH"] = ":memory:"
 
 import { describe, it, expect, beforeAll } from "bun:test"
 import { Database } from "bun:sqlite"
-import { runEveningSummary, resetEveningSummaryGuard } from "../scheduler/eveningSummaryJob.js"
+import { runEveningSummary, resetEveningSummaryGuard } from "../scheduler/briefings/eveningSummaryJob.js"
 import type { EveningSummary } from "../application/usecases/assembleEveningSummary.js"
 
 // ─────────────────────────────────────────────────────────────────────────────

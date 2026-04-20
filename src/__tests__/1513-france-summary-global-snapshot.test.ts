@@ -5,8 +5,8 @@ import { Database } from "bun:sqlite";
 import {
   runFranceSummary,
   formatFranceSummaryVI,
-} from "../scheduler/franceSummaryJob.js";
-import type { FranceSummaryOptions, FranceSummaryResult } from "../scheduler/franceSummaryJob.js";
+} from "../scheduler/briefings/franceSummaryJob.js";
+import type { FranceSummaryOptions, FranceSummaryResult } from "../scheduler/briefings/franceSummaryJob.js";
 import type { GlobalSnapshot } from "../application/usecases/assembleBriefing.js";
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────

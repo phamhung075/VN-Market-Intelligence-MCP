@@ -404,7 +404,7 @@ describe("Task 034 — send_test_telegram MCP tool", () => {
   });
 
   it("TC-19: registerTelegramTools exports a function", async () => {
-    const mod = await import("../interface/mcp/tools/telegramTools.js");
+    const mod = await import("../interface/mcp/tools/briefings/telegramTools.js");
     expect(typeof mod.registerTelegramTools).toBe("function");
   });
 
@@ -425,7 +425,7 @@ describe("Task 034 — send_test_telegram MCP tool", () => {
 
     try {
       const { McpServer } = await import("@modelcontextprotocol/sdk/server/mcp.js");
-      const { registerTelegramTools } = await import("../interface/mcp/tools/telegramTools.js");
+      const { registerTelegramTools } = await import("../interface/mcp/tools/briefings/telegramTools.js");
 
       const server = new McpServer(
         { name: "test", version: "1.0.0" },

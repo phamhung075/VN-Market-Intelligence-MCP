@@ -3,7 +3,7 @@
 Bun.env["DB_PATH"] = ":memory:"
 import { describe, it, expect, beforeEach } from "bun:test"
 import { Database } from "bun:sqlite"
-import { runFranceSummary, type FranceSummaryResult } from "../scheduler/franceSummaryJob.js"
+import { runFranceSummary, type FranceSummaryResult } from "../scheduler/briefings/franceSummaryJob.js"
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Test DB helpers

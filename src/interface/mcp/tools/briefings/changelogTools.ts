@@ -17,13 +17,13 @@
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { getDb, initDatabase } from "../../../infrastructure/db/schema.js";
+import { getDb, initDatabase } from "../../../../infrastructure/db/schema.js";
 import {
   insertChangelog,
   getRecentChangelogs,
   type ChangelogEntry,
-} from "../../../infrastructure/db/changelogStore.js";
-import { markAlertsSuperseded } from "../../../infrastructure/db/alertsSupersedeStore.js";
+} from "../../../../infrastructure/db/changelogStore.js";
+import { markAlertsSuperseded } from "../../../../infrastructure/db/alertsSupersedeStore.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers

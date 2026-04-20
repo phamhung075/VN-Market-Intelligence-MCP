@@ -13,7 +13,7 @@
  */
 
 import { describe, it, expect } from "bun:test"
-import { formatBriefingMessage } from "../scheduler/morningBriefingJob.js"
+import { formatBriefingMessage } from "../scheduler/briefings/morningBriefingJob.js"
 import type { DailyBriefing, VnIndexSnapshot } from "../application/usecases/assembleBriefing.js"
 
 // ─────────────────────────────────────────────────────────────────────────────

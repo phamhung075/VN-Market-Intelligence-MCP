@@ -108,7 +108,7 @@ const { insertMarketMessage: _insertMarketMessage, getMarketMessageDigest, batch
 void _insertMarketMessage;
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const toolsModule = require("../interface/mcp/tools/marketMessageTools.js") as {
+const toolsModule = require("../interface/mcp/tools/briefings/marketMessageTools.js") as {
   handleGetMarketMessageDigest: HandleGetMarketMessageDigestFn;
   handleBatchReviewMarketMessages: HandleBatchReviewMarketMessagesFn;
 };

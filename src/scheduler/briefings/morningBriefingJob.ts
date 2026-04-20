@@ -17,10 +17,10 @@ import type {
   EvidenceScoreBriefingRow,
   TaSignal,
   BctcDeadlineRow,
-} from "../application/usecases/assembleBriefing.js";
-import { BEARISH_WARNING_THRESHOLD } from "../application/usecases/assembleBriefing.js";
-import { formatPnlSection } from "../domain/services/portfolioPnlCalculator.js";
-import { logger } from "../infrastructure/logger.js";
+} from "../../application/usecases/assembleBriefing.js";
+import { BEARISH_WARNING_THRESHOLD } from "../../application/usecases/assembleBriefing.js";
+import { formatPnlSection } from "../../domain/services/portfolioPnlCalculator.js";
+import { logger } from "../../infrastructure/logger.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Formatter
@@ -300,7 +300,7 @@ export async function runMorningBriefing(
       briefingFn ??
       (async () => {
         const { assembleBriefing } = await import(
-          "../application/usecases/assembleBriefing.js"
+          "../../application/usecases/assembleBriefing.js"
         );
         return assembleBriefing();
       });
@@ -322,7 +322,7 @@ export async function runMorningBriefing(
     if (!alreadySent) {
       try {
         // briefing_log DDL is now canonical in initDatabase() (task 1040)
-        const { getDb } = await import("../infrastructure/db/schema.js");
+        const { getDb } = await import("../../infrastructure/db/schema.js");
         const db = getDb();
         const row = db.query<{ date: string }, [string]>(
           "SELECT date FROM briefing_log WHERE date = ?",
@@ -347,7 +347,7 @@ export async function runMorningBriefing(
     } else {
     try {
       const { sendTelegramMarket } = await import(
-        "../infrastructure/notifiers/telegram.js"
+        "../../infrastructure/notifiers/telegram.js"
       );
 
       // Format briefing as a compact Telegram message — always show all sections
@@ -357,8 +357,8 @@ export async function runMorningBriefing(
       // The chunk loop sends slices, so we insert the complete content here
       // rather than inside the loop where only a partial chunk would be stored.
       try {
-        const { getDb: getDbForPersist } = await import("../infrastructure/db/schema.js");
-        const { insertMarketMessage } = await import("../infrastructure/db/marketMessageStore.js");
+        const { getDb: getDbForPersist } = await import("../../infrastructure/db/schema.js");
+        const { insertMarketMessage } = await import("../../infrastructure/db/marketMessageStore.js");
         insertMarketMessage(getDbForPersist(), {
           from_agent: "morning-briefing",
           message_type: "morning_briefing",
@@ -383,7 +383,7 @@ export async function runMorningBriefing(
       _lastBriefingSentDate = briefing.date;
       // Persist to SQLite so it survives restarts
       try {
-        const { getDb } = await import("../infrastructure/db/schema.js");
+        const { getDb } = await import("../../infrastructure/db/schema.js");
         const db = getDb();
         db.prepare(`INSERT OR IGNORE INTO briefing_log (date, sent_at) VALUES (?, ?)`).run(briefing.date, new Date().toISOString());
       } catch { /* best effort */ }

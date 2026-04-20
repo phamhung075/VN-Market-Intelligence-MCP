@@ -7,7 +7,7 @@
  */
 
 import { describe, it, expect } from "bun:test";
-import { formatBriefingMessage } from "../scheduler/morningBriefingJob.js";
+import { formatBriefingMessage } from "../scheduler/briefings/morningBriefingJob.js";
 import { formatPnlSection } from "../domain/services/portfolioPnlCalculator.js";
 import type { DailyBriefing } from "../application/usecases/assembleBriefing.js";
 import type { PortfolioPnlResult } from "../domain/services/portfolioPnlCalculator.js";

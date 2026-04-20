@@ -153,7 +153,7 @@ const sendTelegramMarket = _sendTelegramMarketBase as (
 ) => Promise<boolean>;
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const toolsModule = require("../interface/mcp/tools/marketMessageTools.js") as {
+const toolsModule = require("../interface/mcp/tools/briefings/marketMessageTools.js") as {
   handleGetUnreviewedMarketMessages: HandleGetUnreviewedFn;
   handleReviewMarketMessage: HandleReviewFn;
 };

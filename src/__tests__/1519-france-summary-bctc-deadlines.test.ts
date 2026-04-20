@@ -5,7 +5,7 @@ import { Database } from "bun:sqlite";
 import {
   runFranceSummary,
   formatFranceSummaryVI,
-} from "../scheduler/franceSummaryJob.js";
+} from "../scheduler/briefings/franceSummaryJob.js";
 import type { BctcDeadlineRow } from "../application/usecases/assembleBriefing.js";
 
 // ─────────────────────────────────────────────────────────────────────────────

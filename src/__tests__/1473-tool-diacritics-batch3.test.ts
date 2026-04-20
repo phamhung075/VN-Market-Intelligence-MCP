@@ -10,7 +10,7 @@ function read(rel: string) {
 
 describe("1473: Vietnamese diacritics batch 3", () => {
   describe("changelogTools.ts — log_fix tool", () => {
-    const src = read("src/interface/mcp/tools/changelogTools.ts");
+    const src = read("src/interface/mcp/tools/briefings/changelogTools.ts");
 
     it("log_fix tool description: 'ghi lại một sửa lỗi'", () => {
       expect(src).toContain("ghi lại một sửa lỗi");
@@ -48,7 +48,7 @@ describe("1473: Vietnamese diacritics batch 3", () => {
   });
 
   describe("changelogTools.ts — get_recent_fixes tool", () => {
-    const src = read("src/interface/mcp/tools/changelogTools.ts");
+    const src = read("src/interface/mcp/tools/briefings/changelogTools.ts");
 
     it("get_recent_fixes description: 'Lấy danh sách'", () => {
       expect(src).toContain("Lấy danh sách");
@@ -74,7 +74,7 @@ describe("1473: Vietnamese diacritics batch 3", () => {
   });
 
   describe("telegramReportTools.ts — read_telegram_reports tool", () => {
-    const src = read("src/interface/mcp/tools/telegramReportTools.ts");
+    const src = read("src/interface/mcp/tools/briefings/telegramReportTools.ts");
 
     it("tool description: 'Đọc các báo cáo'", () => {
       expect(src).toContain("Đọc các báo cáo");
@@ -109,7 +109,7 @@ describe("1473: Vietnamese diacritics batch 3", () => {
   });
 
   describe("telegramReportTools.ts — process_telegram_report tool", () => {
-    const src = read("src/interface/mcp/tools/telegramReportTools.ts");
+    const src = read("src/interface/mcp/tools/briefings/telegramReportTools.ts");
 
     it("tool description: 'Đánh dấu một báo cáo'", () => {
       expect(src).toContain("Đánh dấu một báo cáo");
@@ -135,7 +135,7 @@ describe("1473: Vietnamese diacritics batch 3", () => {
   });
 
   describe("telegramReportTools.ts — claim_telegram_report tool", () => {
-    const src = read("src/interface/mcp/tools/telegramReportTools.ts");
+    const src = read("src/interface/mcp/tools/briefings/telegramReportTools.ts");
 
     it("tool description: 'Đặt quyền sở hữu'", () => {
       expect(src).toContain("Đặt quyền sở hữu");
@@ -191,7 +191,7 @@ describe("1473: Vietnamese diacritics batch 3", () => {
   });
 
   describe("changelogTools.ts — report_id param (batch 4 tail)", () => {
-    const src = read("src/interface/mcp/tools/changelogTools.ts");
+    const src = read("src/interface/mcp/tools/briefings/changelogTools.ts");
 
     it("report_id param: 'ID của báo cáo telegram_reports liên quan (tùy chọn)'", () => {
       expect(src).toContain("ID của báo cáo telegram_reports liên quan (tùy chọn)");
