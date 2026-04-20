@@ -17,7 +17,7 @@
 | ID | Title | Status | Role |
 |----|-------|--------|------|
 | 1549_a | TDD RED: `1549-watchdog-news-staleness.test.ts` — 6 failing assertions for news + OHLCV staleness checks | Done | Dev |
-| 1549_b | GREEN: extend runVpsProxyWatchdog to check rag_analyses + daily_ohlcv freshness; off-hours guard unchanged | Review | Dev |
+| 1549_b | GREEN: extend runVpsProxyWatchdog to check rag_analyses + daily_ohlcv freshness; off-hours guard unchanged | Done | Dev |
 
 context: `docs/handoffs/TASK_1549a.md` | `docs/handoffs/TASK_1549b.md`
 
