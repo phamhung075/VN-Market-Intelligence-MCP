@@ -54,21 +54,35 @@ merge: 26eba37
 
 ---
 
-## Sprint 209 — feat(schema): modular monolith phase 1 — schema decomposition
+## Sprint 209 — refactor(schema): split schema.ts into 8 per-domain slices — COMPLETE
 
 | ID | Title | Status | Role |
 |----|-------|--------|------|
-| 1527_a | TDD RED: failing tests for schema slice files existence + daily_ohlcv merge | In Progress | Dev |
-| 1527_b | GREEN: create schema slice files, update schema.ts to import slices | Todo | Dev |
-| 1528 | schema-market-data.ts: prices, OHLCV, foreign flow tables | Todo | Dev |
-| 1529 | schema-financial-reports.ts: BCTC + PDF tables | Todo | Dev |
-| 1530 | schema-news.ts: news, market messages, cascade | Todo | Dev |
-| 1531 | schema-alerts.ts: alerts, mutes, custom rules | Todo | Dev |
-| 1532 | schema-portfolio.ts: positions, P&L, targets | Todo | Dev |
-| 1533 | schema-briefings.ts: briefing_log, market_summaries | Todo | Dev |
-| 1534 | schema-macro.ts: macro stats, commodities, SBV, predictions | Todo | Dev |
-| 1535 | schema-system.ts: cron runs, agent logs, evidence, system tables | Todo | Dev |
-| 1536 | schema.ts refactor: import all slices, remove inline DDL, verify tsc + full test pass | Todo | Dev |
+| 1527_a | TDD RED: `1527-schema-slices.test.ts` — 8 slice init functions + orchestrator + daily_ohlcv merge | Done | Dev |
+| 1527_b | GREEN: create 8 slice files, schema.ts refactored to thin orchestrator | Done | Dev |
+| 1528 | schema-market-data.ts: watchlist, market_prices, daily_ohlcv (merged DDL), ohlcv_backfill_queue | Done | Dev |
+| 1529 | schema-financial-reports.ts: BCTC + PDF + vnstock tables | Done | Dev |
+| 1530 | schema-news.ts: rag_analyses, agent_signals, mention_velocity, cascade, trade_exposures, insider | Done | Dev |
+| 1531 | schema-alerts.ts: alerts, mutes, custom rules, price_alerts, broker_sanctions | Done | Dev |
+| 1532 | schema-portfolio.ts: positions, P&L snapshots, targets | Done | Dev |
+| 1533 | schema-briefings.ts: briefing_log, market_summaries | Done | Dev |
+| 1534 | schema-macro.ts: macro_indicators, commodities, SBV, predictions, kinhdich, bond, pharma | Done | Dev |
+| 1535 | schema-system.ts: cron runs, agent logs, evidence, system tables, scheduler_locks | Done | Dev |
+| 1536 | schema.ts orchestrator: imports all slices, zero inline DDL, tsc clean + full suite green | Done | Dev |
+
+context: `docs/REQ_209.md` | `docs/TECH_209.md`
+merge: a235956
+
+---
+
+## Sprint 210 — refactor(barrels): module index.ts public contracts per feature group
+
+| ID | Title | Status | Role |
+|----|-------|--------|------|
+| 1538_a | TDD RED: `210-module-barrels.test.ts` — 5 failing assertions for barrel imports | Todo | Dev |
+| 1538_b | GREEN: 10 tool sub-barrels + updated tools/index.ts + domain/services/index.ts + scheduler/index.ts | Todo | Dev |
+
+context: `docs/REQ_210.md` | `docs/TECH_210.md`
 
 ---
 
@@ -76,5 +90,6 @@ merge: 26eba37
 
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
+| — | Phase 3: full folder restructure into src/modules/ (one module/sprint × 10) | low | After Phase 2 |
 
 ---

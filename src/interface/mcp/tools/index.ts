@@ -1,81 +1,30 @@
 /**
- * Barrel — MCP tool registration functions
+ * MCP Tools — top-level barrel — Sprint 210
  *
- * Re-exports all `register*Tools` functions so that server.ts (and tests) can
- * import from a single entry point.
+ * Re-exports all tool register functions grouped by feature module.
+ * Each sub-barrel declares the public contract for its module.
+ *
+ * Module groups:
+ *   market-data      — prices, foreign flow, technical indicators, insider
+ *   financial-reports — BCTC, earnings calendar, reports
+ *   news-analysis    — cascade, sentiment, search, source health
+ *   alerts           — alert firing, accuracy, digests, mutes, pipeline health
+ *   portfolio        — positions, P&L, risk, rebalancing, allocation
+ *   briefings        — summaries, market messages, Telegram, changelog
+ *   macro            — macro indicators, policy, predictions, calibration
+ *   sector           — sector comparison, rotation, thematic tools
+ *   kinhdich         — hexagram readings
+ *   system           — system tools, VPS proxy, ask queue, watchlist
  *
  * @module interface/mcp/tools
  */
-
-export { registerWatchlistTools } from "./watchlist.js";
-export { registerReportTools } from "./reports.js";
-export { registerAlertTools } from "./alerts.js";
-export { registerAnalysisTools } from "./analysis.js";
-export { registerMarketTools } from "./marketTools.js";
-export { registerMacroTools } from "./macroTools.js";
-export { registerTelegramTools } from "./telegramTools.js";
-export { registerSummaryTools } from "./summaryTools.js";
-export { registerSystemTools } from "./systemTools.js";
-export { registerPortfolioTools } from "./portfolioTools.js";
-export { registerFeedbackTools } from "./feedbackTools.js";
-export { registerPredictionTools } from "./predictionTools.js";
-export { registerAlertCheckTools } from "./alertCheckTools.js";
-export { registerPriceHistoryTools } from "./priceHistoryTools.js";
-export { registerPositionTools } from "./positionTools.js";
-export { registerPortfolioRiskTool } from "./portfolioRiskTool.js";
-export { registerAlertAccuracyTool } from "./alertAccuracy.js";
-export { registerSearchStocksTools } from "./searchTools.js";
-export { registerDataFreshnessTools } from "./dataFreshnessTools.js";
-export { registerSectorRotationTools } from "./sectorRotationTools.js";
-export { registerEarningsCalendarTools } from "./earningsCalendarTools.js";
-export { registerAlertDigestTools } from "./alertDigestTools.js";
-export { registerCorrelationTools } from "./correlationTools.js";
-export { registerExportTools } from "./exportTools.js";
-export { registerPerformanceTools } from "./performanceTools.js";
-export { registerRebalancingTools } from "./rebalancingTools.js";
-export { registerPriceAlertTools } from "./priceAlertTools.js";
-export { registerRateLimitTools } from "./rateLimitTools.js";
-export { registerSourceHealthTools } from "./sourceHealthTools.js";
-export { registerCompareTools } from "./compareTools.js";
-export { registerCustomAlertTools } from "./customAlertTools.js";
-export { registerAlertMuteTools } from "./alertMuteTools.js";
-export { registerTargetAllocationTools } from "./targetAllocationTools.js";
-export { registerSentimentTrendTools } from "./sentimentTrendTools.js";
-export { registerTelegramReportTools } from "./telegramReportTools.js";
-export { registerChangelogTools } from "./changelogTools.js";
-export { registerBctcFullTools } from "./bctcFullTools.js";
-export { registerMarketContextTools } from "./marketContextTools.js";
-export { registerAgentSignalTools } from "./agentSignalTools.js";
-export { registerCascadeMetricsTools } from "./cascadeMetricsTools.js";
-export { registerSupplyChainTools } from "./supplyChainTools.js";
-export { registerLegalRiskTools } from "./legalRiskTools.js";
-export { registerPolicyTools } from "./policyTools.js";
-export { registerBondMaturityTools } from "./bondMaturityTools.js";
-export { registerClimateTools } from "./climateTools.js";
-export { registerEnergyTools } from "./energyTools.js";
-// Sprint 040 — Macro Catalyst tools (task 251)
-export { registerPublicInvestmentTools } from "./publicInvestmentTools.js";
-export { registerCreditFlowTools } from "./creditFlowTools.js";
-export { registerLeadershipTools } from "./leadershipTools.js";
-// Sprint 043 — Crisis Detection tools (task 267)
-export { registerCrisisTools } from "./crisisTools.js";
-// Sprint 044 — Pharma tools
-export { registerPharmaTools } from "./pharmaTools.js";
-// Sprint 045 — Sector Comparison tools
-export { registerSectorComparisonTools } from "./sectorComparisonTools.js";
-// Sprint 046 — Kinh Dịch tools
-export { registerKinhDichTools } from "./kinhDichTools.js";
-// Sprint 054 — Broker Credibility (Task 915)
-export { registerBrokerCredibilityTools } from "./brokerCredibilityTools.js";
-// Sprint 054 — Ask Queue tools (Task 1078)
-export { registerAskQueueTools } from "./askQueueTools.js";
-// VPS Proxy Health (observability for all 4 VPS services)
-export { registerVpsProxyTools } from "./vpsProxyTools.js";
-// Sprint 060 — Calibration Report tool (Task 1129)
-export { registerCalibrationTools } from "./calibrationTools.js";
-// Sprint 063 — Insider Transactions MCP tool (Task 1146)
-export { registerInsiderTools } from "./insiderTools.js";
-// Sprint 071 — Per-Ticker Intelligence Summary (Task 1180)
-export { registerTickerIntelligenceTools } from "./tickerIntelligenceTools.js";
-// Sprint 090 — Technical Indicators (Task 1302/1303)
-export { registerTechnicalIndicatorTools } from "./technicalIndicatorTools.js";
+export * from "./market-data/index.js";
+export * from "./financial-reports/index.js";
+export * from "./news-analysis/index.js";
+export * from "./alerts/index.js";
+export * from "./portfolio/index.js";
+export * from "./briefings/index.js";
+export * from "./macro/index.js";
+export * from "./sector/index.js";
+export * from "./kinhdich/index.js";
+export * from "./system/index.js";

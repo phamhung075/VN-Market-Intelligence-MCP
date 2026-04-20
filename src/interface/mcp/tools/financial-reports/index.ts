@@ -1,0 +1,7 @@
+/**
+ * Financial Reports module barrel — Sprint 210
+ * Public API: BCTC, earnings calendar, report tools
+ */
+export { registerBctcFullTools } from "../bctcFullTools.js";
+export { registerEarningsCalendarTools } from "../earningsCalendarTools.js";
+export { registerReportTools } from "../reports.js";
