@@ -731,7 +731,7 @@ export async function createBunServer(
         log.error("[push-foreign-flow] parse error", { error: err instanceof Error ? err.message : String(err) });
         logVpsPush({ service: "foreign-flow", itemsCount: 0, status: "error", errorMsg: err instanceof Error ? err.message : String(err) });
         res.writeHead(400, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ error: "Invalid JSON" }));
+        res.end(JSON.stringify({ error: err instanceof Error ? err.message : String(err) }));
       }
       return;
     }
