@@ -18,7 +18,7 @@ import { getAllBreakerStats } from "../../../../infrastructure/circuitBreakerReg
 import { getDb, initDatabase } from "../../../../infrastructure/db/schema.js";
 import { logger, getErrorSummary } from "../../../../infrastructure/logger.js";
 import { globalSourceTracker, formatSourceHealthTable } from "../sourceHealthTools.js";
-import { getDataFreshness } from "../dataFreshnessTools.js";
+import { getDataFreshness } from "../market-data/dataFreshnessTools.js";
 import { tradingWindowLabel } from "../../../../domain/services/tradingWindow.js";
 
 // ─────────────────────────────────────────────────────────────────────────────

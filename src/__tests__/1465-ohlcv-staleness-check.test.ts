@@ -11,7 +11,7 @@ Bun.env["DB_PATH"] = ":memory:";
 
 import { describe, it, expect } from "bun:test";
 import { Database } from "bun:sqlite";
-import { runOhlcvStalenessCheck } from "../scheduler/ohlcvStalenessCheckJob.js";
+import { runOhlcvStalenessCheck } from "../scheduler/market-data/ohlcvStalenessCheckJob.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DB helpers

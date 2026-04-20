@@ -239,7 +239,7 @@ describe("Task 1101 — recordJobRun wrapper", () => {
 
   it("structural: marketScanJob imports recordJobRun", async () => {
     const src = await Bun.file(
-      new URL("../scheduler/marketScanJob.ts", import.meta.url).pathname,
+      new URL("../scheduler/market-data/marketScanJob.ts", import.meta.url).pathname,
     ).text();
     expect(src).toContain("recordJobRun");
     expect(src).toContain("cronJobRunStore");

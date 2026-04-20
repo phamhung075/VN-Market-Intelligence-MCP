@@ -132,13 +132,13 @@ describe("Task 206 — checkPriceAlerts domain service", () => {
 
 describe("Task 206 — MCP tool registration", () => {
   it("registerPriceAlertTools export exists", async () => {
-    const mod = await import("../interface/mcp/tools/priceAlertTools.js");
+    const mod = await import("../interface/mcp/tools/market-data/priceAlertTools.js");
     expect(typeof mod.registerPriceAlertTools).toBe("function");
   });
 
   it("registers 2 tools: set_price_alert, delete_price_alert (get_price_alerts merged into get_alerts per task 241)", async () => {
     const { registerPriceAlertTools } = await import(
-      "../interface/mcp/tools/priceAlertTools.js"
+      "../interface/mcp/tools/market-data/priceAlertTools.js"
     );
     const McpServerMod = await import("@modelcontextprotocol/sdk/server/mcp.js");
     const server = new McpServerMod.McpServer(

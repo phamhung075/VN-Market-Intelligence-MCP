@@ -28,7 +28,7 @@ export async function runOhlcvStartupProbe(
     if (deps?.db) {
       db = deps.db;
     } else {
-      const { getDb } = await import("../infrastructure/db/schema.js");
+      const { getDb } = await import("../../infrastructure/db/schema.js");
       db = getDb();
     }
 
@@ -36,7 +36,7 @@ export async function runOhlcvStartupProbe(
       sendWorkFn = deps.sendWorkFn;
     } else {
       const { sendTelegramWork } = await import(
-        "../infrastructure/notifiers/telegram.js"
+        "../../infrastructure/notifiers/telegram.js"
       );
       sendWorkFn = (msg: string) => sendTelegramWork(msg, { parseMode: "" });
     }

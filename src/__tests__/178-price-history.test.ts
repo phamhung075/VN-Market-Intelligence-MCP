@@ -75,7 +75,7 @@ describe("Task 178 — get_price_history MCP tool", () => {
     );
 
     // Dynamically import and register with injected DB
-    const { registerPriceHistoryTools } = require("../interface/mcp/tools/priceHistoryTools.js");
+    const { registerPriceHistoryTools } = require("../interface/mcp/tools/market-data/priceHistoryTools.js");
     registerPriceHistoryTools(server, db);
   });
 

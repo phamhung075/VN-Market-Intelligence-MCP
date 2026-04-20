@@ -11,7 +11,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { Database } from "bun:sqlite";
-import { registerForeignFlowTools } from "../interface/mcp/tools/foreignFlowTools.js";
+import { registerForeignFlowTools } from "../interface/mcp/tools/market-data/foreignFlowTools.js";
 
 // MCP callTool returns unknown — use this helper to extract text safely
 interface McpTextResult {

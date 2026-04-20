@@ -13,8 +13,8 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { Database } from "bun:sqlite";
 import { z } from "zod";
-import { getInsiderTransactionsFiltered } from "../../../infrastructure/db/insiderStore.js";
-import { getDb } from "../../../infrastructure/db/schema.js";
+import { getInsiderTransactionsFiltered } from "../../../../infrastructure/db/insiderStore.js";
+import { getDb } from "../../../../infrastructure/db/schema.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Streak computation (read-path only — mirrors write-path logic in insiderCheckJob)

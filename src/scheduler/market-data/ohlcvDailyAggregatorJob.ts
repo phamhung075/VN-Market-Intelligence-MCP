@@ -4,8 +4,8 @@
 // VN timezone (UTC+7): window = [VN midnight UTC, now).
 
 import { Database } from "bun:sqlite";
-import { getDb } from "../infrastructure/db/schema.js";
-import { sendTelegramWork } from "../infrastructure/notifiers/telegram.js";
+import { getDb } from "../../infrastructure/db/schema.js";
+import { sendTelegramWork } from "../../infrastructure/notifiers/telegram.js";
 
 export interface OhlcvAggregatorDeps {
   db?: () => Database;

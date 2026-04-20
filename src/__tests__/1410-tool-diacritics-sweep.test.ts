@@ -12,10 +12,10 @@ import { getInsiderSignalsHandler } from "../interface/mcp/tools/leadershipTools
 import { handleGetMarketMessageDigest } from "../interface/mcp/tools/briefings/marketMessageTools.js";
 import { buildSectorComparisonOutput } from "../interface/mcp/tools/sectorComparisonTools.js";
 import { getSectorRotationReport } from "../interface/mcp/tools/sectorRotationTools.js";
-import { formatTickerIntelligence } from "../interface/mcp/tools/tickerIntelligenceTools.js";
+import { formatTickerIntelligence } from "../interface/mcp/tools/market-data/tickerIntelligenceTools.js";
 // Sprint 144 regression (already exported, already GREEN)
 import { formatKinhDichTradingContext } from "../interface/mcp/tools/kinhdich/kinhDichTools.js";
-import { formatTaIndicatorReport } from "../interface/mcp/tools/technicalIndicatorTools.js";
+import { formatTaIndicatorReport } from "../interface/mcp/tools/market-data/technicalIndicatorTools.js";
 import { buildSupplyChainExposureOutput } from "../interface/mcp/tools/supplyChainTools.js";
 
 // ── Not yet exported — use namespace import + dynamic property access ─────────
@@ -31,8 +31,8 @@ import * as pharmaToolsNs from "../interface/mcp/tools/pharmaTools.js";
 import * as portfolioRiskToolNs from "../interface/mcp/tools/portfolio/portfolioRiskTool.js";
 import * as positionToolsNs from "../interface/mcp/tools/portfolio/positionTools.js";
 import * as predictionToolsNs from "../interface/mcp/tools/macro/predictionTools.js";
-import * as priceAlertToolsNs from "../interface/mcp/tools/priceAlertTools.js";
-import * as priceHistoryToolsNs from "../interface/mcp/tools/priceHistoryTools.js";
+import * as priceAlertToolsNs from "../interface/mcp/tools/market-data/priceAlertTools.js";
+import * as priceHistoryToolsNs from "../interface/mcp/tools/market-data/priceHistoryTools.js";
 import * as rebalancingToolsNs from "../interface/mcp/tools/portfolio/rebalancingTools.js";
 import * as sentimentTrendToolsNs from "../interface/mcp/tools/sentimentTrendTools.js";
 import * as telegramReportToolsNs from "../interface/mcp/tools/briefings/telegramReportTools.js";

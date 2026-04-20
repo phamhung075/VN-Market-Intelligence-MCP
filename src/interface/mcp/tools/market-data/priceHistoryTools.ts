@@ -20,7 +20,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import type { Database } from "bun:sqlite";
-import { logger } from "../../../infrastructure/logger.js";
+import { logger } from "../../../../infrastructure/logger.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -193,7 +193,7 @@ export function registerPriceHistoryTools(
           db = _db;
         } else {
           // Production path: import singleton lazily to avoid circular deps
-          const { getDb } = await import("../../../infrastructure/db/index.js");
+          const { getDb } = await import("../../../../infrastructure/db/index.js");
           db = getDb();
         }
 

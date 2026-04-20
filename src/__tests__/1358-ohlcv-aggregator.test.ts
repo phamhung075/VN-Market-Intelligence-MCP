@@ -12,7 +12,7 @@ Bun.env["DB_PATH"] = ":memory:";
 
 import { describe, it, expect, beforeEach } from "bun:test";
 import { Database } from "bun:sqlite";
-import { runOhlcvDailyAggregator } from "../scheduler/ohlcvDailyAggregatorJob.js";
+import { runOhlcvDailyAggregator } from "../scheduler/market-data/ohlcvDailyAggregatorJob.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Pinned time constants

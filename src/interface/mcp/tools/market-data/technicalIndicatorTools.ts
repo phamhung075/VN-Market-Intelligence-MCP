@@ -24,11 +24,11 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import type { Database } from "bun:sqlite";
-import { logger } from "../../../infrastructure/logger.js";
+import { logger } from "../../../../infrastructure/logger.js";
 import {
   computeAllIndicators,
   type DailyCandle,
-} from "../../../domain/services/technicalIndicators.js";
+} from "../../../../domain/services/technicalIndicators.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -293,7 +293,7 @@ export function registerTechnicalIndicatorTools(
         if (_db) {
           db = _db;
         } else {
-          const { getDb } = await import("../../../infrastructure/db/index.js");
+          const { getDb } = await import("../../../../infrastructure/db/index.js");
           db = getDb();
         }
 

@@ -91,7 +91,7 @@ function getAlerts(db: Database): Array<{ id: string; signals_json: string; affe
 // Import the production function (will fail until implementation exists)
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { runTaAlertScan } from "../scheduler/taAlertScanJob.js";
+import { runTaAlertScan } from "../scheduler/market-data/taAlertScanJob.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tests

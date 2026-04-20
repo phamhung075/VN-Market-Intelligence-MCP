@@ -16,10 +16,10 @@
 import type { Database } from "bun:sqlite";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { getDb } from "../../../infrastructure/db/index.js";
-import { getLatestEvidenceScore } from "../../../infrastructure/db/evidenceFragmentStore.js";
-import { getInsiderTransactionsFiltered } from "../../../infrastructure/db/insiderStore.js";
-import { getResolvedClaims } from "../../../infrastructure/db/predictionClaimStore.js";
+import { getDb } from "../../../../infrastructure/db/index.js";
+import { getLatestEvidenceScore } from "../../../../infrastructure/db/evidenceFragmentStore.js";
+import { getInsiderTransactionsFiltered } from "../../../../infrastructure/db/insiderStore.js";
+import { getResolvedClaims } from "../../../../infrastructure/db/predictionClaimStore.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Formatting helpers (local — do not import from peer tool files)

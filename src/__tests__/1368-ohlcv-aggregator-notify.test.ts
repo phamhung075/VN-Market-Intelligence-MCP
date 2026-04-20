@@ -9,7 +9,7 @@ Bun.env["DB_PATH"] = ":memory:";
 
 import { describe, it, expect } from "bun:test";
 import { Database } from "bun:sqlite";
-import { runOhlcvDailyAggregator } from "../scheduler/ohlcvDailyAggregatorJob.js";
+import { runOhlcvDailyAggregator } from "../scheduler/market-data/ohlcvDailyAggregatorJob.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Pinned time: 2026-04-17T09:00:00.000Z → VN date 2026-04-17

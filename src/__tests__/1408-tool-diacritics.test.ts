@@ -2,7 +2,7 @@ Bun.env["DB_PATH"] = ":memory:"; // isolation — must be first line
 
 import { describe, it, expect } from "bun:test";
 import { formatKinhDichTradingContext } from "../interface/mcp/tools/kinhdich/kinhDichTools.js";
-import { formatTaIndicatorReport } from "../interface/mcp/tools/technicalIndicatorTools.js";
+import { formatTaIndicatorReport } from "../interface/mcp/tools/market-data/technicalIndicatorTools.js";
 import { buildSupplyChainExposureOutput } from "../interface/mcp/tools/supplyChainTools.js";
 import type { DailyCandle } from "../domain/services/technicalIndicators.js";
 import type { SupplyChainSignal } from "../domain/services/supplyChainAnalyzer.js";
