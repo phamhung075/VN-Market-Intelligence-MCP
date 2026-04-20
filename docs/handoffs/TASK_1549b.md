@@ -260,3 +260,18 @@ tests_skipped: []
 
 tsc_clean: true
 full_suite_pass: true   # note: bun OOM crash on full suite is pre-existing Bun 1.3.11 bug; targeted scheduler tests 15/15 pass
+
+---
+
+## [QA] Review Record
+
+verdict: APPROVED
+blocking_issues: []
+non_blocking: []
+
+files_confirmed_clean:
+- /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/scheduler/vpsProxyWatchdogJob.ts
+- /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/__tests__/1549-watchdog-news-staleness.test.ts
+- /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/__tests__/313-vps-proxy-watchdog.test.ts
+
+merge_commit: pending

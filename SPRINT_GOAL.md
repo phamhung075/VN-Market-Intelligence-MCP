@@ -1,5 +1,24 @@
 # Sprint Goal
 
+## Sprint 221 — fix(watchdog): extend VPS staleness coverage to news + OHLCV
+
+**Goal:** User received 3 consecutive days of silent empty briefings (Apr 19-21) because the VPS news service died and the watchdog only monitors `market_prices`. Extend the watchdog to also check `rag_analyses` (news) and `daily_ohlcv` (price history) freshness so any future multi-service outage fires an alert immediately.
+
+**Scope:**
+
+| Area | IN | OUT |
+|------|----|-----|
+| `vpsProxyWatchdogJob.ts` | Add `readLatestNewsTimestamp()` + `readLatestOhlcvTimestamp()`; extend `runVpsProxyWatchdog` to check all 3 sources; single consolidated alert lists all stale services | SSH healing, new cron schedule, new Telegram channel |
+| Test `1549-watchdog-news-staleness.test.ts` | 6 assertions: news stale fires alert, OHLCV stale fires alert, prices OK + news stale still fires, off-hours skips all, cooldown respected per source, alert message names stale services | Changes to market hours logic |
+
+**Success metric:**
+- `bun test src/__tests__/1549-watchdog-news-staleness.test.ts` → 6 pass
+- Full suite stays at 5923+ pass / 0 fail
+- `bun tsc --noEmit` clean
+- Alert message includes service name(s) that are stale (not just "prices stopped")
+
+---
+
 > Previous sprint goals live in their `docs/REQ_NNN.md` specs. This file = current sprint only.
 
 ## Phase 3 Modular Monolith — COMPLETE (2026-04-20)
