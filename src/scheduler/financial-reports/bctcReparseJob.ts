@@ -23,12 +23,12 @@
 
 import { readFileSync, existsSync, readdirSync } from "node:fs";
 import { basename, join } from "node:path";
-import { logger } from "../infrastructure/logger.js";
-import { getDb } from "../infrastructure/db/schema.js";
-import { recordJobRun } from "../infrastructure/db/cronJobRunStore.js";
-import { extractPdfText } from "../infrastructure/fetchers/pdf.js";
-import { getCachedPdfText } from "../infrastructure/fetchers/pdfOcrWorker.js";
-import { sendTelegramWork } from "../infrastructure/notifiers/telegram.js";
+import { logger } from "../../infrastructure/logger.js";
+import { getDb } from "../../infrastructure/db/schema.js";
+import { recordJobRun } from "../../infrastructure/db/cronJobRunStore.js";
+import { extractPdfText } from "../../infrastructure/fetchers/pdf.js";
+import { getCachedPdfText } from "../../infrastructure/fetchers/pdfOcrWorker.js";
+import { sendTelegramWork } from "../../infrastructure/notifiers/telegram.js";
 import type { Database } from "bun:sqlite";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -352,7 +352,7 @@ export async function scanDiskForStrandedPdfs(
  */
 async function makeProductionDeps(): Promise<ReparseDeps> {
   const { fetchParseAndStoreBctc } = await import(
-    "../application/usecases/fetchParseAndStoreBctc.js"
+    "../../application/usecases/fetchParseAndStoreBctc.js"
   );
   return {
     extractText: async (buf: Buffer) => extractPdfText(buf),

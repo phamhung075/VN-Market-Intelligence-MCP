@@ -7,8 +7,8 @@
  * Depends only on parseVnNumber (domain/services).
  */
 
-import { parseVnNumber } from "./vnNumberParser";
-import type { CashFlowStatement } from "../../../bctc-schema";
+import { parseVnNumber } from "../vnNumberParser.js";
+import type { CashFlowStatement } from "../../../../bctc-schema";
 
 // ---------------------------------------------------------------------------
 // Helpers (same pattern as balanceSheetExtractor)

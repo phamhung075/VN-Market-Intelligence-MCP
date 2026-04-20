@@ -24,8 +24,8 @@ import {
   extractAndStorePdfPages,
   getCachedPdfText,
 } from "../infrastructure/fetchers/pdfOcrWorker.js";
-import { extractBalanceSheet } from "../domain/services/balanceSheetExtractor.js";
-import { extractIncomeStatement } from "../domain/services/incomeStatementExtractor.js";
+import { extractBalanceSheet } from "../domain/services/financial-reports/balanceSheetExtractor.js";
+import { extractIncomeStatement } from "../domain/services/financial-reports/incomeStatementExtractor.js";
 import { readdirSync } from "node:fs";
 import { join, resolve } from "node:path";
 
@@ -111,7 +111,7 @@ describe("296 OCR pipeline e2e smoke test", () => {
     "reparseSingleWithOcrFallback uses OCR cache text when pdf-parse yields low confidence",
     async () => {
       const { reparseSingleWithOcrFallback } = await import(
-        "../scheduler/bctcReparseJob.js"
+        "../scheduler/financial-reports/bctcReparseJob.js"
       );
 
       // Simulate a scanned PDF: pdf-parse returns near-empty text
@@ -152,7 +152,7 @@ describe("296 OCR pipeline e2e smoke test", () => {
     "reparseSingleWithOcrFallback returns false when both pdf-parse and OCR cache are empty",
     async () => {
       const { reparseSingleWithOcrFallback } = await import(
-        "../scheduler/bctcReparseJob.js"
+        "../scheduler/financial-reports/bctcReparseJob.js"
       );
 
       const result = await reparseSingleWithOcrFallback(

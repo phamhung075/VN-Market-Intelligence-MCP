@@ -24,7 +24,7 @@
  */
 
 import { describe, it, expect } from "bun:test";
-import { parseStrandedDetail } from "../scheduler/bctcReparseJob.js";
+import { parseStrandedDetail } from "../scheduler/financial-reports/bctcReparseJob.js";
 import { buildFindingTitle, type AuditFinding } from "../scheduler/dataAuditJob.js";
 
 describe("Report 1055 — parseStrandedDetail legacy fallback", () => {

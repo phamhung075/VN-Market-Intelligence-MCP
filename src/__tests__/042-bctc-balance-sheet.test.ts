@@ -4,7 +4,7 @@
  * TDD tests for extractBalanceSheet(rawText) → BalanceSheet
  */
 import { describe, it, expect } from "bun:test";
-import { extractBalanceSheet } from "../domain/services/balanceSheetExtractor";
+import { extractBalanceSheet } from "../domain/services/financial-reports/balanceSheetExtractor";
 
 // ---------------------------------------------------------------------------
 // Sample 1: Standard BCTC with full line items

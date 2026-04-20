@@ -4,7 +4,7 @@
  * TDD tests for extractIncomeStatement(rawText) → IncomeStatement
  */
 import { describe, it, expect } from "bun:test";
-import { extractIncomeStatement } from "../domain/services/incomeStatementExtractor";
+import { extractIncomeStatement } from "../domain/services/financial-reports/incomeStatementExtractor";
 
 // ---------------------------------------------------------------------------
 // Sample 1: Full income statement (Báo cáo KQHĐKD)

@@ -11,7 +11,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
 import { registerWatchlistTools } from "./watchlist.js";
-import { registerReportTools } from "./reports.js";
+import { registerReportTools } from "./financial-reports/reports.js";
 import { registerAlertTools } from "./alerts.js";
 import { registerAnalysisTools } from "./analysis.js";
 import { registerMarketTools } from "./marketTools.js";
@@ -27,7 +27,7 @@ import { registerPositionTools } from "./positionTools.js";
 import { registerPortfolioRiskTool } from "./portfolioRiskTool.js";
 import { registerAlertAccuracyTool } from "./alertAccuracy.js";
 import { registerSectorRotationTools } from "./sectorRotationTools.js";
-import { registerEarningsCalendarTools } from "./earningsCalendarTools.js";
+import { registerEarningsCalendarTools } from "./financial-reports/earningsCalendarTools.js";
 import { registerAlertDigestTools } from "./alertDigestTools.js";
 import { registerCorrelationTools } from "./correlationTools.js";
 import { registerPerformanceTools } from "./performanceTools.js";
@@ -41,7 +41,7 @@ import { registerTargetAllocationTools } from "./targetAllocationTools.js";
 import { registerSentimentTrendTools } from "./sentimentTrendTools.js";
 import { registerTelegramReportTools } from "./telegramReportTools.js";
 import { registerChangelogTools } from "./changelogTools.js";
-import { registerBctcFullTools } from "./bctcFullTools.js";
+import { registerBctcFullTools } from "./financial-reports/bctcFullTools.js";
 import { registerMarketContextTools } from "./marketContextTools.js";
 import { registerAgentSignalTools } from "./agentSignalTools.js";
 import { registerCascadeMetricsTools } from "./cascadeMetricsTools.js";

@@ -19,7 +19,7 @@
  */
 
 import type { Alert } from "../../domain/services/alertGenerator.js";
-import { detectSensitiveDates } from "../../domain/services/priceNewsValidator.js";
+import { detectSensitiveDates } from "../../domain/services/financial-reports/priceNewsValidator.js";
 import { createLogger } from "../logger.js";
 import { getPatternSummary } from "../../application/usecases/getPatternSummary.js";
 import { getDb } from "../db/index.js";

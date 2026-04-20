@@ -3,7 +3,7 @@ import { describe, it, expect } from "bun:test";
 import {
   validateFinancialReport,
   type ValidationResult,
-} from "../domain/services/bctcValidator.js";
+} from "../domain/services/financial-reports/bctcValidator.js";
 
 // ────────────────────────────────────────────────────────────────────────────
 // Helpers

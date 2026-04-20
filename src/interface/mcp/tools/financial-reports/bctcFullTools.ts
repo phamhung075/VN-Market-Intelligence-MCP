@@ -19,11 +19,11 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { Database } from "bun:sqlite";
 
-import { getDb } from "../../../infrastructure/db/schema.js";
-import { computePeriodDelta } from "../../../domain/services/periodDeltaComputer.js";
-import { computeSentimentTrend } from "../../../domain/services/sentimentTrend.js";
-import { logger } from "../../../infrastructure/logger.js";
-import type { FinancialMetrics } from "../../../domain/services/periodDeltaComputer.js";
+import { getDb } from "../../../../infrastructure/db/schema.js";
+import { computePeriodDelta } from "../../../../domain/services/financial-reports/periodDeltaComputer.js";
+import { computeSentimentTrend } from "../../../../domain/services/sentimentTrend.js";
+import { logger } from "../../../../infrastructure/logger.js";
+import type { FinancialMetrics } from "../../../../domain/services/financial-reports/periodDeltaComputer.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SQLite row types

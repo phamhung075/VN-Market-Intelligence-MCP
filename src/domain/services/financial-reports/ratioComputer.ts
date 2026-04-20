@@ -10,7 +10,7 @@ import type {
   IncomeStatement,
   CashFlowStatement,
   FinancialRatios,
-} from "../../../bctc-schema";
+} from "../../../../bctc-schema";
 
 export interface ComputeRatiosParams {
   bs: BalanceSheet;

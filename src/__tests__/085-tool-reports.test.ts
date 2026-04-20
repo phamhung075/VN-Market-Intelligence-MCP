@@ -14,7 +14,7 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from "bun:test";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { initDatabase, getDb, closeDb } from "../infrastructure/db/schema.js";
-import { registerReportTools } from "../interface/mcp/tools/reports.js";
+import { registerReportTools } from "../interface/mcp/tools/financial-reports/reports.js";
 import type { FinancialReport } from "../../bctc-schema.js";
 
 // ─────────────────────────────────────────────────────────────────────────────

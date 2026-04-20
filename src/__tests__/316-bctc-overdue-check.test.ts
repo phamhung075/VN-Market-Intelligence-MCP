@@ -12,7 +12,7 @@ Bun.env["DB_PATH"] = ":memory:";
 import { describe, it, expect, beforeEach } from "bun:test";
 import { Database } from "bun:sqlite";
 
-import { runBctcOverdueCheck } from "../scheduler/bctcOverdueCheckJob.js";
+import { runBctcOverdueCheck } from "../scheduler/financial-reports/bctcOverdueCheckJob.js";
 import { readUnnotifiedAlerts } from "../infrastructure/db/alertStore.js";
 
 function buildDb(): Database {

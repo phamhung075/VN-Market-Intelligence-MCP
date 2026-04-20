@@ -18,7 +18,7 @@
 
 import { describe, it, expect, beforeEach, mock } from "bun:test";
 import { Database } from "bun:sqlite";
-import { runBctcReparseJob } from "../scheduler/bctcReparseJob.js";
+import { runBctcReparseJob } from "../scheduler/financial-reports/bctcReparseJob.js";
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
@@ -148,7 +148,7 @@ describe("Bug 1068 — reparseSingle OCR cache fallback", () => {
 describe("Bug 1068 — reparseSingleWithOcrFallback unit tests", () => {
   it("uses OCR cache text when extractPdfText returns low confidence", async () => {
     const { reparseSingleWithOcrFallback } = await import(
-      "../scheduler/bctcReparseJob.js"
+      "../scheduler/financial-reports/bctcReparseJob.js"
     );
 
     const ocrText = "A".repeat(200); // well above 100-char threshold
@@ -181,7 +181,7 @@ describe("Bug 1068 — reparseSingleWithOcrFallback unit tests", () => {
 
   it("returns false when OCR cache also empty", async () => {
     const { reparseSingleWithOcrFallback } = await import(
-      "../scheduler/bctcReparseJob.js"
+      "../scheduler/financial-reports/bctcReparseJob.js"
     );
 
     const result = await reparseSingleWithOcrFallback(
@@ -204,7 +204,7 @@ describe("Bug 1068 — reparseSingleWithOcrFallback unit tests", () => {
 
   it("returns false when OCR cache confidence is below 0.3", async () => {
     const { reparseSingleWithOcrFallback } = await import(
-      "../scheduler/bctcReparseJob.js"
+      "../scheduler/financial-reports/bctcReparseJob.js"
     );
 
     const result = await reparseSingleWithOcrFallback(

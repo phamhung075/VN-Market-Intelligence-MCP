@@ -20,7 +20,7 @@ import { tmpdir } from "node:os";
 describe("Sub-fix A: extractIncomeStatement — banking net revenue fallback", () => {
   it("extracts netRevenue from 'Thu nhập lãi thuần' when standard pattern yields 0", async () => {
     const { extractIncomeStatement } = await import(
-      "../domain/services/incomeStatementExtractor.js"
+      "../domain/services/financial-reports/incomeStatementExtractor.js"
     );
 
     // Banking BCTC text: does NOT have "Doanh thu thuần", uses "Thu nhập lãi thuần"
@@ -39,7 +39,7 @@ Lợi nhuận sau thuế           6.800.000
 
   it("extracts netRevenue from diacritic-stripped 'Thu nhap lai thuan' (OCR fallback)", async () => {
     const { extractIncomeStatement } = await import(
-      "../domain/services/incomeStatementExtractor.js"
+      "../domain/services/financial-reports/incomeStatementExtractor.js"
     );
 
     // Simulate OCR-corrupted text: diacritics stripped
@@ -57,7 +57,7 @@ Loi nhuan sau thue           4.100.000
 
   it("does NOT change netRevenue for non-banking text that already has Doanh thu thuần", async () => {
     const { extractIncomeStatement } = await import(
-      "../domain/services/incomeStatementExtractor.js"
+      "../domain/services/financial-reports/incomeStatementExtractor.js"
     );
 
     const nonBankingText = `
@@ -73,7 +73,7 @@ Lợi nhuận gộp                4.000.000
 
   it("banking fallback does not activate when standard pattern already found a value", async () => {
     const { extractIncomeStatement } = await import(
-      "../domain/services/incomeStatementExtractor.js"
+      "../domain/services/financial-reports/incomeStatementExtractor.js"
     );
 
     // Text has BOTH patterns — standard pattern takes precedence
@@ -180,13 +180,13 @@ describe("Sub-fix B: storeReport — zero-confidence guard", () => {
 
     // Use the module's extractIncomeStatement on empty text (produces all-zero)
     const { extractIncomeStatement } = await import(
-      "../domain/services/incomeStatementExtractor.js"
+      "../domain/services/financial-reports/incomeStatementExtractor.js"
     );
     const { extractBalanceSheet } = await import(
-      "../domain/services/balanceSheetExtractor.js"
+      "../domain/services/financial-reports/balanceSheetExtractor.js"
     );
     const { extractCashFlow } = await import(
-      "../domain/services/cashFlowExtractor.js"
+      "../domain/services/financial-reports/cashFlowExtractor.js"
     );
 
     const emptyText = "";
@@ -262,13 +262,13 @@ describe("Sub-fix C: scanDiskForStrandedPdfs — disk-scan fallback", () => {
   }
 
   it("scanDiskForStrandedPdfs is exported from bctcReparseJob", async () => {
-    const mod = await import("../scheduler/bctcReparseJob.js");
+    const mod = await import("../scheduler/financial-reports/bctcReparseJob.js");
     expect(typeof mod.scanDiskForStrandedPdfs).toBe("function");
   });
 
   it("returns one StrandedPayload when VNM PDF on disk has no financial_reports row", async () => {
     const { scanDiskForStrandedPdfs } = await import(
-      "../scheduler/bctcReparseJob.js"
+      "../scheduler/financial-reports/bctcReparseJob.js"
     );
 
     const db = makeTestDb();
@@ -287,7 +287,7 @@ describe("Sub-fix C: scanDiskForStrandedPdfs — disk-scan fallback", () => {
 
   it("excludes PDFs that already have a matching financial_reports row", async () => {
     const { scanDiskForStrandedPdfs } = await import(
-      "../scheduler/bctcReparseJob.js"
+      "../scheduler/financial-reports/bctcReparseJob.js"
     );
 
     const db = makeTestDb();
@@ -308,7 +308,7 @@ describe("Sub-fix C: scanDiskForStrandedPdfs — disk-scan fallback", () => {
 
   it("returns empty array when pdfDir does not exist", async () => {
     const { scanDiskForStrandedPdfs } = await import(
-      "../scheduler/bctcReparseJob.js"
+      "../scheduler/financial-reports/bctcReparseJob.js"
     );
 
     const db = makeTestDb();
@@ -320,7 +320,7 @@ describe("Sub-fix C: scanDiskForStrandedPdfs — disk-scan fallback", () => {
 
   it("ignores PDFs that do not match any watchlist ticker", async () => {
     const { scanDiskForStrandedPdfs } = await import(
-      "../scheduler/bctcReparseJob.js"
+      "../scheduler/financial-reports/bctcReparseJob.js"
     );
 
     const db = makeTestDb();
@@ -335,7 +335,7 @@ describe("Sub-fix C: scanDiskForStrandedPdfs — disk-scan fallback", () => {
 
   it("ignores files with unrecognizable year/quarter in filename", async () => {
     const { scanDiskForStrandedPdfs } = await import(
-      "../scheduler/bctcReparseJob.js"
+      "../scheduler/financial-reports/bctcReparseJob.js"
     );
 
     const db = makeTestDb();
@@ -388,7 +388,7 @@ describe("Sub-fix C: runBctcReparseJob — observability logs", () => {
 
   it("logs [bctc-reparse-job] starting cycle with feedbackRows field", async () => {
     const { runBctcReparseJob } = await import(
-      "../scheduler/bctcReparseJob.js"
+      "../scheduler/financial-reports/bctcReparseJob.js"
     );
 
     const db = makeTestDb();
@@ -421,7 +421,7 @@ describe("Sub-fix C: runBctcReparseJob — observability logs", () => {
 
   it("logs [bctc-reparse-job] cycle complete with examined/resolved/failed fields", async () => {
     const { runBctcReparseJob } = await import(
-      "../scheduler/bctcReparseJob.js"
+      "../scheduler/financial-reports/bctcReparseJob.js"
     );
 
     const db = makeTestDb();

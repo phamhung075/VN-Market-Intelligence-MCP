@@ -20,7 +20,7 @@
 import { Database } from "bun:sqlite";
 import { existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
-import { getCurrentDeadline } from "../domain/services/earningsCalendar.js";
+import { getCurrentDeadline } from "../domain/services/financial-reports/earningsCalendar.js";
 import { recordJobRun } from "../infrastructure/db/cronJobRunStore.js";
 
 // ─────────────────────────────────────────────────────────────────────────────

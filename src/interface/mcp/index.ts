@@ -37,7 +37,7 @@ export { registerWatchlistTools } from "./tools/watchlist.js";
 export {
   registerReportTools,
   type PipelineFn,
-} from "./tools/reports.js";
+} from "./tools/financial-reports/reports.js";
 
 // ── Task 086: Alert MCP tools ──────────────────────────────────────────────
 export { registerAlertTools } from "./tools/alerts.js";

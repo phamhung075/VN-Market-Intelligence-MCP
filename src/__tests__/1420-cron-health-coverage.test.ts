@@ -31,7 +31,7 @@ import { describe, it, expect, beforeEach } from "bun:test";
 import { Database } from "bun:sqlite";
 import { recordJobRun } from "../infrastructure/db/cronJobRunStore.js";
 import { runDailyAudit, runWeeklyAudit } from "../scheduler/dataAuditJob.js";
-import { runBctcReparseJob } from "../scheduler/bctcReparseJob.js";
+import { runBctcReparseJob } from "../scheduler/financial-reports/bctcReparseJob.js";
 import {
   runEvidenceAccumulator,
 } from "../scheduler/evidenceAccumulatorJob.js";

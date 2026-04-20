@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect } from "bun:test";
-import { computeFinancialRatios } from "../domain/services/ratioComputer";
+import { computeFinancialRatios } from "../domain/services/financial-reports/ratioComputer";
 import type {
   BalanceSheet,
   IncomeStatement,

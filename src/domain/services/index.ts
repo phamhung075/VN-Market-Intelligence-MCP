@@ -21,15 +21,15 @@ export * from "./alertMuteChecker.js";
 export * from "./alertPolicyChecker.js";
 
 // --- Financial extractors ---
-export * from "./balanceSheetExtractor.js";
-export * from "./cashFlowExtractor.js";
-export * from "./incomeStatementExtractor.js";
-export * from "./ratioComputer.js";
-export * from "./periodDeltaComputer.js";
+export * from "./financial-reports/balanceSheetExtractor.js";
+export * from "./financial-reports/cashFlowExtractor.js";
+export * from "./financial-reports/incomeStatementExtractor.js";
+export * from "./financial-reports/ratioComputer.js";
+export * from "./financial-reports/periodDeltaComputer.js";
 // bctcValidator: ValidationResult collides with priceNewsValidator — export function only
-export { validateFinancialReport } from "./bctcValidator.js";
+export { validateFinancialReport } from "./financial-reports/bctcValidator.js";
 // priceNewsValidator: ValidationResult collides — export functions only
-export { validatePriceNews, extractHistoricalParallels, detectSensitiveDates } from "./priceNewsValidator.js";
+export { validatePriceNews, extractHistoricalParallels, detectSensitiveDates } from "./financial-reports/priceNewsValidator.js";
 
 // --- Market analysis ---
 export * from "./signalDetector.js";
@@ -79,7 +79,7 @@ export * from "./stopLossComputer.js";
 export * from "./bondMaturityTracker.js";
 export * from "./catalystCalendar.js";
 export * from "./customAlertEvaluator.js";
-export * from "./earningsCalendar.js";
+export * from "./financial-reports/earningsCalendar.js";
 export * from "./reputationScorer.js";
 export * from "./sourceHealthTracker.js";
 export * from "./stockAliases.js";

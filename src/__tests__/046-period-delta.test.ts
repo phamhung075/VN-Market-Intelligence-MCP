@@ -3,7 +3,7 @@ import { describe, it, expect } from "bun:test";
 import {
   computePeriodDelta,
   type FinancialMetrics,
-} from "../domain/services/periodDeltaComputer.js";
+} from "../domain/services/financial-reports/periodDeltaComputer.js";
 
 // ---------------------------------------------------------------------------
 // Shared fixtures

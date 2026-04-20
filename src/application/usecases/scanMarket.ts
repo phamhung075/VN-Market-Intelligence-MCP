@@ -21,7 +21,7 @@ import { getDb } from "../../infrastructure/db/schema.js";
 import { storeMarketPrices } from "../../infrastructure/fetchers/hose.js";
 import type { MarketPrice } from "../../infrastructure/fetchers/hose.js";
 import { logger } from "../../infrastructure/logger.js";
-import { validatePriceNews, type PriceAction, type NewsSentiment } from "../../domain/services/priceNewsValidator.js";
+import { validatePriceNews, type PriceAction, type NewsSentiment } from "../../domain/services/financial-reports/priceNewsValidator.js";
 import { classifySentiment } from "../../domain/services/sentimentClassifier.js";
 import { computeConviction, type ConvictionInput } from "../../domain/services/convictionScorer.js";
 import {

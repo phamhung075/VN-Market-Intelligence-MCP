@@ -8,7 +8,7 @@
  * - applyMultiplier — all monetary fields scaled by multiplier
  */
 import { describe, it, expect } from "bun:test";
-import { extractBalanceSheet } from "../domain/services/balanceSheetExtractor";
+import { extractBalanceSheet } from "../domain/services/financial-reports/balanceSheetExtractor";
 
 // ---------------------------------------------------------------------------
 // FR-1: Unit header detection + multiplier application (287b/287c)

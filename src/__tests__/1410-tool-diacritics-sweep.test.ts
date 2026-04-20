@@ -24,7 +24,7 @@ import { buildSupplyChainExposureOutput } from "../interface/mcp/tools/supplyCha
 import * as agentSignalToolsNs from "../interface/mcp/tools/agentSignalTools.js";
 import * as alertAccuracyNs from "../interface/mcp/tools/alertAccuracy.js";
 import * as alertsNs from "../interface/mcp/tools/alerts.js";
-import * as bctcFullToolsNs from "../interface/mcp/tools/bctcFullTools.js";
+import * as bctcFullToolsNs from "../interface/mcp/tools/financial-reports/bctcFullTools.js";
 import * as correlationToolsNs from "../interface/mcp/tools/correlationTools.js";
 import * as performanceToolsNs from "../interface/mcp/tools/performanceTools.js";
 import * as pharmaToolsNs from "../interface/mcp/tools/pharmaTools.js";

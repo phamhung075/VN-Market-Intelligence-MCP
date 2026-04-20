@@ -660,7 +660,7 @@ export async function runFranceSummary(opts: FranceSummaryOptions = {}): Promise
     } else {
       // Default: mirrors assembleBriefing.ts Step 18
       const { getCurrentDeadline, getNextDeadline, classifyFilingStatus } =
-        await import("../domain/services/earningsCalendar.js")
+        await import("../domain/services/financial-reports/earningsCalendar.js")
 
       // Read watchlist rows (code + domain)
       interface WatchlistRow { code: string; domain: string }
