@@ -75,14 +75,15 @@ merge: a235956
 
 ---
 
-## Sprint 210 — refactor(barrels): module index.ts public contracts per feature group
+## Sprint 210 — refactor(barrels): module index.ts public contracts per feature group — COMPLETE
 
 | ID | Title | Status | Role |
 |----|-------|--------|------|
-| 1538_a | TDD RED: `210-module-barrels.test.ts` — 5 failing assertions for barrel imports | Todo | Dev |
-| 1538_b | GREEN: 10 tool sub-barrels + updated tools/index.ts + domain/services/index.ts + scheduler/index.ts | Todo | Dev |
+| 1538_a | TDD RED: `210-module-barrels.test.ts` — 13 failing assertions for barrel imports | Done | Dev |
+| 1538_b | GREEN: 10 tool sub-barrels + updated tools/index.ts + domain/services/index.ts + scheduler/index.ts | Done | Dev |
 
 context: `docs/REQ_210.md` | `docs/TECH_210.md`
+merge: d9912d7
 
 ---
 
