@@ -19,13 +19,13 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { Database } from "bun:sqlite";
 import { z } from "zod";
 
-import { getDb, initDatabase } from "../../../infrastructure/db/schema.js";
+import { getDb, initDatabase } from "../../../../infrastructure/db/schema.js";
 import {
   upsertPosition,
   listOpenPositions,
   closePosition,
   type PositionWithPnl,
-} from "../../../infrastructure/db/positionStore.js";
+} from "../../../../infrastructure/db/positionStore.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Formatting helpers

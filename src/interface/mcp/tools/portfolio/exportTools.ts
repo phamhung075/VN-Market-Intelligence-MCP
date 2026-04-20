@@ -8,8 +8,8 @@
  */
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { exportPortfolioSnapshot } from "../../../application/usecases/exportPortfolioSnapshot.js";
-import { logger } from "../../../infrastructure/logger.js";
+import { exportPortfolioSnapshot } from "../../../../application/usecases/exportPortfolioSnapshot.js";
+import { logger } from "../../../../infrastructure/logger.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tool registration

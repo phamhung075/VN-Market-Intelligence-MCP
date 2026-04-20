@@ -135,7 +135,7 @@ describe("Task 218 — Weekly Portfolio Report", () => {
   // ── 1. formatWeeklyReport: valid output on empty positions ─────────────────
   it("formatWeeklyReport returns non-empty string on empty positions", async () => {
     const { formatWeeklyReport } = await import(
-      "../scheduler/weeklyPortfolioReportJob.js"
+      "../scheduler/portfolio/weeklyPortfolioReportJob.js"
     );
     const result = formatWeeklyReport([], { weekPnlAmount: 0, weekPnlPct: 0, totalPnlAmount: 0, totalPnlPct: 0 });
     expect(typeof result).toBe("string");
@@ -147,7 +147,7 @@ describe("Task 218 — Weekly Portfolio Report", () => {
   // ── 2. formatWeeklyReport: single position formatted correctly ─────────────
   it("formatWeeklyReport includes stock code in the report text", async () => {
     const { formatWeeklyReport } = await import(
-      "../scheduler/weeklyPortfolioReportJob.js"
+      "../scheduler/portfolio/weeklyPortfolioReportJob.js"
     );
 
     const rows = [
@@ -176,7 +176,7 @@ describe("Task 218 — Weekly Portfolio Report", () => {
   // ── 3. formatWeeklyReport: multiple positions in table ────────────────────
   it("formatWeeklyReport includes all stock codes when multiple positions", async () => {
     const { formatWeeklyReport } = await import(
-      "../scheduler/weeklyPortfolioReportJob.js"
+      "../scheduler/portfolio/weeklyPortfolioReportJob.js"
     );
 
     const rows = [
@@ -200,7 +200,7 @@ describe("Task 218 — Weekly Portfolio Report", () => {
   // ── 4. formatWeeklyReport: positive total shows "+" ─────────────────────
   it("formatWeeklyReport shows + sign for positive week P&L", async () => {
     const { formatWeeklyReport } = await import(
-      "../scheduler/weeklyPortfolioReportJob.js"
+      "../scheduler/portfolio/weeklyPortfolioReportJob.js"
     );
 
     const result = formatWeeklyReport([], {
@@ -217,7 +217,7 @@ describe("Task 218 — Weekly Portfolio Report", () => {
   // ── 5. formatWeeklyReport: negative total shows "-" ─────────────────────
   it("formatWeeklyReport shows minus sign for negative week P&L", async () => {
     const { formatWeeklyReport } = await import(
-      "../scheduler/weeklyPortfolioReportJob.js"
+      "../scheduler/portfolio/weeklyPortfolioReportJob.js"
     );
 
     const result = formatWeeklyReport([], {
@@ -233,7 +233,7 @@ describe("Task 218 — Weekly Portfolio Report", () => {
   // ── 6. formatWeeklyReport: date range header ─────────────────────────────
   it("formatWeeklyReport includes a date range in the header", async () => {
     const { formatWeeklyReport } = await import(
-      "../scheduler/weeklyPortfolioReportJob.js"
+      "../scheduler/portfolio/weeklyPortfolioReportJob.js"
     );
 
     const result = formatWeeklyReport([], {
@@ -250,7 +250,7 @@ describe("Task 218 — Weekly Portfolio Report", () => {
   // ── 7. computeWeekSummary: week_pnl_amount from snapshots ────────────────
   it("computeWeekSummary computes weekPnlAmount from earliest vs latest snapshot", async () => {
     const { computeWeekSummary } = await import(
-      "../scheduler/weeklyPortfolioReportJob.js"
+      "../scheduler/portfolio/weeklyPortfolioReportJob.js"
     );
 
     const today = isoDate(0);
@@ -269,7 +269,7 @@ describe("Task 218 — Weekly Portfolio Report", () => {
   // ── 8. computeWeekSummary: weekPnlPct computed ───────────────────────────
   it("computeWeekSummary computes weekPnlPct as percent of cost basis", async () => {
     const { computeWeekSummary } = await import(
-      "../scheduler/weeklyPortfolioReportJob.js"
+      "../scheduler/portfolio/weeklyPortfolioReportJob.js"
     );
 
     const today = isoDate(0);
@@ -289,7 +289,7 @@ describe("Task 218 — Weekly Portfolio Report", () => {
   // ── 9. computeWeekSummary: no snapshots → zeroed deltas ──────────────────
   it("computeWeekSummary returns zeros when no snapshots exist", async () => {
     const { computeWeekSummary } = await import(
-      "../scheduler/weeklyPortfolioReportJob.js"
+      "../scheduler/portfolio/weeklyPortfolioReportJob.js"
     );
 
     const result = computeWeekSummary(db, ["VCB", "FPT"]);
@@ -303,7 +303,7 @@ describe("Task 218 — Weekly Portfolio Report", () => {
   // ── 10. runWeeklyPortfolioReport: concurrency guard ──────────────────────
   it("runWeeklyPortfolioReport skips second concurrent call", async () => {
     const { runWeeklyPortfolioReport } = await import(
-      "../scheduler/weeklyPortfolioReportJob.js"
+      "../scheduler/portfolio/weeklyPortfolioReportJob.js"
     );
 
     let callCount = 0;
@@ -324,7 +324,7 @@ describe("Task 218 — Weekly Portfolio Report", () => {
   // ── 11. runWeeklyPortfolioReport: calls sendFn with text on populated DB ─
   it("runWeeklyPortfolioReport calls sendFn with a non-empty string when positions exist", async () => {
     const { runWeeklyPortfolioReport } = await import(
-      "../scheduler/weeklyPortfolioReportJob.js"
+      "../scheduler/portfolio/weeklyPortfolioReportJob.js"
     );
 
     seedPosition(db, "VCB", 100, 80000);
@@ -344,7 +344,7 @@ describe("Task 218 — Weekly Portfolio Report", () => {
   // ── 12. runWeeklyPortfolioReport: tolerates sendFn rejection ─────────────
   it("runWeeklyPortfolioReport does not throw when sendFn rejects", async () => {
     const { runWeeklyPortfolioReport } = await import(
-      "../scheduler/weeklyPortfolioReportJob.js"
+      "../scheduler/portfolio/weeklyPortfolioReportJob.js"
     );
 
     seedPosition(db, "VCB", 100, 80000);
@@ -363,7 +363,7 @@ describe("Task 218 — Weekly Portfolio Report", () => {
   // ── 13. runWeeklyPortfolioReport: works on empty positions table ──────────
   it("runWeeklyPortfolioReport does not throw on empty positions table", async () => {
     const { runWeeklyPortfolioReport } = await import(
-      "../scheduler/weeklyPortfolioReportJob.js"
+      "../scheduler/portfolio/weeklyPortfolioReportJob.js"
     );
 
     let capturedMessage = "";

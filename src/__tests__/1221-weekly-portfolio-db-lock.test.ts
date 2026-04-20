@@ -2,7 +2,7 @@
 Bun.env["DB_PATH"] = ":memory:";
 import { describe, it, expect } from "bun:test";
 import { Database } from "bun:sqlite";
-import { runWeeklyPortfolioReport } from "../scheduler/weeklyPortfolioReportJob.js";
+import { runWeeklyPortfolioReport } from "../scheduler/portfolio/weeklyPortfolioReportJob.js";
 import {
   acquireSchedulerLock,
   ensureSchedulerLocksTable,

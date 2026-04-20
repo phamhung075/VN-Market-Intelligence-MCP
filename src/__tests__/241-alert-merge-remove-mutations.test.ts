@@ -24,7 +24,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { registerAlertTools } from "../interface/mcp/tools/alerts/alerts.js";
 import { registerPriceAlertTools } from "../interface/mcp/tools/priceAlertTools.js";
 import { registerCustomAlertTools } from "../interface/mcp/tools/alerts/customAlertTools.js";
-import { registerTargetAllocationTools } from "../interface/mcp/tools/targetAllocationTools.js";
+import { registerTargetAllocationTools } from "../interface/mcp/tools/portfolio/targetAllocationTools.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Use in-memory DB so tests don't touch on-disk data

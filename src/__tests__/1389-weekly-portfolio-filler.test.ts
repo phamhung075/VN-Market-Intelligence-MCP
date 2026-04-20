@@ -16,8 +16,8 @@ import { Database } from "bun:sqlite";
 import {
   formatWeeklyReport,
   runWeeklyPortfolioReport,
-} from "../scheduler/weeklyPortfolioReportJob.js";
-import type { PortfolioRow, WeekSummary } from "../scheduler/weeklyPortfolioReportJob.js";
+} from "../scheduler/portfolio/weeklyPortfolioReportJob.js";
+import type { PortfolioRow, WeekSummary } from "../scheduler/portfolio/weeklyPortfolioReportJob.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Fixtures

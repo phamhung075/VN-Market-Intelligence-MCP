@@ -13,16 +13,16 @@
  */
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { getDb, initDatabase } from "../../../infrastructure/db/schema.js";
-import { computeConviction, deriveKinhDichScore } from "../../../domain/services/convictionScorer.js";
-import { getSectorPeers, SECTOR_NAME_VI } from "../../../domain/services/sectorPeers.js";
-import { buildPositionLine, buildActionNote } from "../../../domain/services/decisionNoteSynthesizer.js";
-import { listOpenPositions } from "../../../infrastructure/db/positionStore.js";
-import { fetchHosePrices, type MarketPrice } from "../../../infrastructure/fetchers/hose.js";
-import { fetchHnxPrices, fetchUpcomPrices } from "../../../infrastructure/fetchers/hnx.js";
-import { logger } from "../../../infrastructure/logger.js";
-import { QUE_META } from "../../../domain/services/kinhDich/hexagramLibrary.js";
-import type { DomainType } from "../../../../bctc-schema";
+import { getDb, initDatabase } from "../../../../infrastructure/db/schema.js";
+import { computeConviction, deriveKinhDichScore } from "../../../../domain/services/convictionScorer.js";
+import { getSectorPeers, SECTOR_NAME_VI } from "../../../../domain/services/sectorPeers.js";
+import { buildPositionLine, buildActionNote } from "../../../../domain/services/decisionNoteSynthesizer.js";
+import { listOpenPositions } from "../../../../infrastructure/db/positionStore.js";
+import { fetchHosePrices, type MarketPrice } from "../../../../infrastructure/fetchers/hose.js";
+import { fetchHnxPrices, fetchUpcomPrices } from "../../../../infrastructure/fetchers/hnx.js";
+import { logger } from "../../../../infrastructure/logger.js";
+import { QUE_META } from "../../../../domain/services/kinhDich/hexagramLibrary.js";
+import type { DomainType } from "../../../../../bctc-schema.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Row types
