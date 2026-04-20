@@ -32,7 +32,7 @@
  */
 
 import { getDb } from "../infrastructure/db/schema.js";
-import { sendTelegramWork } from "../infrastructure/notifiers/telegram.js";
+import { sendTelegramWork, sendTelegramMarket } from "../infrastructure/notifiers/telegram.js";
 import { logger } from "../infrastructure/logger.js";
 
 /** If the newest market_prices row is older than this, raise an alert.
@@ -139,6 +139,7 @@ export async function runVpsProxyWatchdog(
   options: {
     now?: Date;
     notify?: (message: string) => Promise<unknown>;
+    notifyUser?: (message: string) => Promise<unknown>;
     readPrice?: () => Date | null;
     readNews?:  () => Date | null;
     readOhlcv?: () => Date | null;
@@ -234,12 +235,31 @@ export async function runVpsProxyWatchdog(
     options.notify ??
     ((msg: string) => sendTelegramWork(msg, { parseMode: "" }));
 
+  const notifyUser =
+    options.notifyUser ??
+    ((msg: string) => sendTelegramMarket(msg, { parseMode: "" }));
+
+  // Build human-friendly MARKET message (no SSH commands, no operator jargon)
+  const uniqueStaleServices = [...new Set(stale.map((s) => s.service))];
+  const userMessage =
+    `Data pipeline issue detected — the following VPS services have stopped sending fresh data:\n` +
+    uniqueStaleServices.map((s) => `  • ${s}`).join("\n") +
+    `\n\nMarket data may be delayed or unavailable. The dev team has been notified and is investigating.`;
+
   try {
     const ok = await notify(message);
     if (ok === false) {
       return "notify-failed";
     }
     lastAlertAt = now.getTime();
+    // Best-effort MARKET alert — failure does not change return value
+    try {
+      await notifyUser(userMessage);
+    } catch (userErr) {
+      logger.warn("[vps-watchdog] MARKET user alert failed", {
+        error: userErr instanceof Error ? userErr.message : String(userErr),
+      });
+    }
     return "alert-sent";
   } catch (err) {
     logger.error("[vps-watchdog] alert send failed", {
