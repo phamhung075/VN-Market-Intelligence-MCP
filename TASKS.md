@@ -22,16 +22,16 @@
 
 ---
 
-## Sprint 226 — refactor(cowork): agent merge + composite bootstrap tool + direct MCP access — HOT SPRINT
+## Sprint 226 — refactor(cowork): agent merge + composite bootstrap tool + direct MCP access — COMPLETE (2026-04-21)
 
 | ID | Title | Status | Role |
 |----|-------|--------|------|
 | 1560 | [BA] Write REQ_226.md: tool contract, agent merge file list, MCP access mechanism, migration safety, test plan | Done | BA |
 | 1561 | [Arch] Write TECH_226.md: `get_cycle_bootstrap` implementation, Cowork .md merge diffs, access grant design | Done | Architect |
-| 1562 | [Dev] Track A: create 02-financial-analyst.md + 06-digest-predict.md; delete old 02/03/08 agent files; update agent-roster.md + mcp-tools.md | Todo | Dev |
-| 1563 | [Dev] Track B: `getCycleBootstrap` use case + `registerCycleBootstrapTool` + registry.ts + tool-registry.json | Todo | Dev |
-| 1564 | [Dev] Track C: update all 7 agent .md files — Step 0 bootstrap + validation step + unified-agent role change (ships after 1563) | Todo | Dev |
-| 1565 | [QA] Verify: bootstrap tool shape, agent count 9→7, signal latency ≤3s, no hallucinated prices reach MARKET | Backlog | QA |
+| 1562 | [Dev] Track A: create 02-financial-analyst.md + 06-digest-predict.md; delete old 02/03/08 agent files; update agent-roster.md + mcp-tools.md | Done | Dev |
+| 1563 | [Dev] Track B: `getCycleBootstrap` use case + `registerCycleBootstrapTool` + registry.ts + tool-registry.json | Done | Dev |
+| 1564 | [Dev] Track C: update all 7 agent .md files — Step 0 bootstrap + validation step + unified-agent role change (ships after 1563) | Done | Dev |
+| 1565 | [QA] Verify: bootstrap tool shape, agent count 9→7, signal latency ≤3s, no hallucinated prices reach MARKET | Review | QA |
 
 ---
 
