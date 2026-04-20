@@ -34,7 +34,12 @@ export async function walCheckpointAlert(
       await sendTelegramWork(msg, { parseMode: "" });
     });
 
-  await send(
-    `WAL stuck: ${remaining} frames not checkpointed — manual restart may be needed`,
-  );
+  try {
+    await send(
+      `WAL stuck: ${remaining} frames not checkpointed — manual restart may be needed`,
+    );
+  } catch (err) {
+    // Log to stderr so launchd captures it — do not re-throw (alert must not crash cron job)
+    console.error("[walCheckpointAlert] failed to send Telegram alert:", err);
+  }
 }

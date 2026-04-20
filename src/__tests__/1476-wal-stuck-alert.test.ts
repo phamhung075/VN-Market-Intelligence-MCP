@@ -43,4 +43,12 @@ describe("walCheckpointAlert", () => {
 
     expect(sendWorkCalls).toHaveLength(0);
   });
+
+  it("does NOT throw when sendWork fn rejects (Telegram failure must not crash cron)", async () => {
+    const throwingFn = async (_msg: string) => { throw new Error("Telegram timeout"); };
+    // remaining = 200000 - 4 = 199996 (>> 50000) — would normally call sendWork
+    await expect(
+      walCheckpointAlert({ walSize: 200000, checkpointed: 4 }, throwingFn),
+    ).resolves.toBeUndefined();
+  });
 });

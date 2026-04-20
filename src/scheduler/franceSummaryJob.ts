@@ -23,6 +23,8 @@ import { logger } from "../infrastructure/logger.js"
 import { formatPnlSection } from "../domain/services/portfolioPnlCalculator.js"
 import type { PortfolioPnlResult } from "../domain/services/portfolioPnlCalculator.js"
 import type { VnIndexSnapshot } from "../application/usecases/assembleEveningSummary.js"
+import type { GlobalSnapshot } from "../application/usecases/assembleBriefing.js"
+import { formatGlobalSnapshotSection } from "./morningBriefingJob.js"
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Public types
@@ -52,6 +54,8 @@ export interface FranceSummaryResult {
   taSignals: TaSignalRow[]
   /** VN-Index snapshot included in digest, or null if unavailable. */
   vnIndex: VnIndexSnapshot | null
+  /** Global market snapshot (VIX, DXY, S&P500, Hang Seng); null when unavailable. */
+  globalSnapshot: GlobalSnapshot | null
 }
 
 /** Options for runFranceSummary (injectable for TDD). */
@@ -76,6 +80,12 @@ export interface FranceSummaryOptions {
    * Return null to skip the VN-Index block.
    */
   fetchVnIndexFn?: () => Promise<VnIndexSnapshot | null>
+  /**
+   * Injectable global snapshot fn for TDD.
+   * Defaults to querying commodity_prices (same query as assembleBriefing.ts Step 12b).
+   * Return null to skip the global section.
+   */
+  getGlobalSnapshotFn?: () => Promise<GlobalSnapshot | null>
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -335,6 +345,7 @@ export function formatFranceSummaryVI(
   taSignals: TaSignalRow[] | number,
   portfolioPnl?: PortfolioPnlResult | null,
   vnIndex?: VnIndexSnapshot | null,
+  globalSnapshot?: GlobalSnapshot | null,
 ): string {
   const header = `Bản tin sáng Pháp — Thị trường VN (${dateStr})`
 
@@ -348,6 +359,11 @@ export function formatFranceSummaryVI(
     blocks.push(
       `VN-Index: ${closeFmt} (${chSign}${Math.round(vnIndex.change)} / ${pctSign}${vnIndex.changePct.toFixed(2)}%)`,
     )
+  }
+
+  // Section 0.5: global snapshot (VIX/DXY/SP500/HangSeng) — before movers
+  if (globalSnapshot != null) {
+    blocks.push(formatGlobalSnapshotSection(globalSnapshot).join("\n"))
   }
 
   // Section 1: price movers — omit entirely when empty
@@ -433,7 +449,7 @@ export async function runFranceSummary(opts: FranceSummaryOptions = {}): Promise
   // DB-level same-day dedup guard (FR-2)
   // Fail-open: if check throws, proceed with send.
   if (alreadySentToday(resolvedDb)) {
-    return { sent: false, moverCount: 0, alertCount: 0, taSignals: [], vnIndex: null }
+    return { sent: false, moverCount: 0, alertCount: 0, taSignals: [], vnIndex: null, globalSnapshot: null }
   }
 
   // Resolve send function — default: sendTelegramMarket (MARKET channel)
@@ -479,6 +495,36 @@ export async function runFranceSummary(opts: FranceSummaryOptions = {}): Promise
       error: err instanceof Error ? err.message : String(err),
     })
     vnIndex = null
+  }
+
+  // ── Global snapshot (best-effort, injectable via getGlobalSnapshotFn) ──────
+  let globalSnapshot: GlobalSnapshot | null = null
+  try {
+    if (opts.getGlobalSnapshotFn) {
+      globalSnapshot = await opts.getGlobalSnapshotFn()
+    } else {
+      // Default: query commodity_prices (same as assembleBriefing Step 12b)
+      interface CpRow { vix: number; dxy: number; sp500: number; hang_seng: number; fetched_at: string }
+      const cpRow = resolvedDb
+        .prepare<CpRow, []>(
+          `SELECT vix, dxy, sp500, hang_seng, fetched_at FROM commodity_prices ORDER BY fetched_at DESC LIMIT 1`,
+        )
+        .get()
+      if (cpRow && (cpRow.vix !== 0 || cpRow.dxy !== 0 || cpRow.sp500 !== 0 || cpRow.hang_seng !== 0)) {
+        globalSnapshot = {
+          vix: cpRow.vix,
+          dxy: cpRow.dxy,
+          sp500: cpRow.sp500,
+          hangSeng: cpRow.hang_seng,
+          fetchedAt: cpRow.fetched_at,
+        }
+      }
+    }
+  } catch (err) {
+    logger.warn("[franceSummaryJob] getGlobalSnapshotFn failed — skipping global section", {
+      error: err instanceof Error ? err.message : String(err),
+    })
+    globalSnapshot = null
   }
 
   // ── Per-query fetch (isolated try/catch) ───────────────────────────────
@@ -530,27 +576,28 @@ export async function runFranceSummary(opts: FranceSummaryOptions = {}): Promise
 
   const hasPnl = portfolioPnl != null && portfolioPnl.items.length > 0
 
-  // Silent skip when all sources are empty (including vnIndex)
+  // Silent skip when all sources are empty (including vnIndex and globalSnapshot)
   if (
     movers.length === 0 &&
     alerts.length === 0 &&
     taSignals.length === 0 &&
     !hasPnl &&
-    vnIndex == null
+    vnIndex == null &&
+    globalSnapshot == null
   ) {
-    return { sent: false, moverCount: 0, alertCount: 0, taSignals: [], vnIndex: null }
+    return { sent: false, moverCount: 0, alertCount: 0, taSignals: [], vnIndex: null, globalSnapshot: null }
   }
 
   const dateStr = formatDateVI(nowFn())
-  const message = formatFranceSummaryVI(dateStr, movers, alerts, taSignals, portfolioPnl, vnIndex)
+  const message = formatFranceSummaryVI(dateStr, movers, alerts, taSignals, portfolioPnl, vnIndex, globalSnapshot)
 
   try {
     await resolvedSend(message)
-    return { sent: true, moverCount: movers.length, alertCount: alerts.length, taSignals, vnIndex }
+    return { sent: true, moverCount: movers.length, alertCount: alerts.length, taSignals, vnIndex, globalSnapshot }
   } catch (err) {
     logger.warn("[franceSummaryJob] Telegram send failed", {
       error: err instanceof Error ? err.message : String(err),
     })
-    return { sent: false, moverCount: movers.length, alertCount: alerts.length, taSignals, vnIndex }
+    return { sent: false, moverCount: movers.length, alertCount: alerts.length, taSignals, vnIndex, globalSnapshot }
   }
 }
