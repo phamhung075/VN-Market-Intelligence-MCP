@@ -4,6 +4,50 @@
 > Index → `docs/TASKS_ARCHIVE.md`
 > Current sprint + stats → `docs/data/project-stats.json`
 
+## Sprints 209-220 — Modular Monolith Refactor: 3-Phase Module Split (Done 2026-04-20)
+
+**Scope:** Full structural refactor of `src/interface/mcp/tools/`, `src/domain/services/`, and `src/scheduler/` into 10 domain module subfolders. Zero breaking changes to external API surface.
+
+### Phase 1 — Schema Decomposition (Sprint 209)
+
+`src/infrastructure/db/schema.ts` (1,571 lines monolith) split into 8 domain slice files:
+- `schema-market-data.ts`, `schema-financial-reports.ts`, `schema-news.ts`, `schema-alerts.ts`
+- `schema-portfolio.ts`, `schema-briefings.ts`, `schema-macro.ts`, `schema-system.ts`
+
+`schema.ts` reduced to ~248-line thin orchestrator. All 38+ callers continue importing `getDb / initDatabase / closeDb` from `schema.ts` — no call-site changes. Every slice uses `CREATE TABLE IF NOT EXISTS` / `CREATE INDEX IF NOT EXISTS` throughout (idempotent).
+
+### Phase 2 — Barrel Index Files (Sprint 210)
+
+`index.ts` barrel files created for all 10 modules across:
+- `src/interface/mcp/tools/<module>/index.ts` (10 files)
+- `src/domain/services/<module>/index.ts` (where applicable)
+- `src/scheduler/<module>/index.ts` (where applicable)
+
+`registry.ts` and `jobs.ts` refactored to import only from module barrels.
+
+### Phase 3 — File Migration into Module Subfolders (Sprints 211-220)
+
+All tool, service, and scheduler files moved into 10 subfolders:
+
+| Sprint | Module migrated | Files moved |
+|--------|----------------|-------------|
+| 211 | `market-data/` | 10 tool files + 8 scheduler jobs |
+| 212 | `financial-reports/` | 3 tool files + 2 scheduler jobs + 8 domain services |
+| 213 | `news-analysis/` | 8 tool files + 5 scheduler jobs |
+| 214 | `alerts/` | 8 tool files + 3 scheduler jobs |
+| 215 | `portfolio/` | 7 tool files + 1 scheduler job |
+| 216 | `briefings/` | 5 tool files + 3 scheduler jobs |
+| 217 | `macro/` | 6 tool files + 6 scheduler jobs |
+| 218 | `kinhdich/` | 1 tool file + kinhDich/ domain subfolder (already existed) |
+| 219 | `system/` | 5 tool files + 2 scheduler jobs |
+| 220 | `sector/` | 14 tool files (no scheduler) |
+
+**Result:** 100 tools across 10 modules, 38 scheduler files, 0 TypeScript errors, 0 breaking imports.
+
+**Stats:** toolCount=100, schedulerFileCount=38, totalTasksDone=323. TypeScript: 0 errors.
+
+---
+
 ## Sprint 080 — Domain Bug Batch: Agent 08 Tools + Sentiment + VND Guard + Keywords (Done 2026-04-14)
 
 **Scope:** 6 tasks closing domain-layer and infrastructure correctness gaps flagged by the system auditor and cowork analysis team.

@@ -107,3 +107,12 @@ Start feature: `Use @po agent: "I want to add [feature]. Investment goal: [why].
 Artifacts: `docs/REQ_NNN.md` (BA) | `docs/TECH_NNN.md` (Architect) | `reports/TASK_REPORT_NNN.md` (QA) | `SPRINT_GOAL.md` (PO)
 
 Claude Desktop: `{ "mcpServers": { "vn-market": { "url": "http://localhost:3000/sse" } } }`
+
+## graphify
+
+This project has a graphify knowledge graph at graphify-out/.
+
+Rules:
+- Before answering architecture or codebase questions, read graphify-out/GRAPH_REPORT.md for god nodes and community structure
+- If graphify-out/wiki/index.md exists, navigate it instead of reading raw files
+- After modifying code files in this session, run `graphify update .` to keep the graph current (AST-only, no API cost)

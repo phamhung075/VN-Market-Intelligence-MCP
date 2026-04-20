@@ -6,6 +6,8 @@
 
 ## Folder Tree
 
+> Sprint 209-220: Modular Monolith refactor. Tools, services, and schedulers now organized into 10 domain module subfolders. See "Module Boundaries" section below.
+
 ```
 src/
 ├── index.ts                         ← Bun HTTP server entry (bootstrap + startScheduler)
@@ -13,38 +15,47 @@ src/
 │   ├── models/index.ts              ← FinancialReport, Alert, AnalysisEntry, Signal, WatchlistAction
 │   ├── repositories/index.ts        ← Repository interfaces (ports)
 │   └── services/
-│       ├── vnNumberParser.ts        ← Vietnamese number parser (parentheses, VND suffixes)
-│       ├── balanceSheetExtractor.ts / incomeStatementExtractor.ts / cashFlowExtractor.ts
-│       ├── ratioComputer.ts         ← 22 financial ratios
-│       ├── periodDeltaComputer.ts   ← QoQ / YoY deltas
-│       ├── embeddingTextBuilder.ts / newsNormalizer.ts
-│       ├── cascadeEngine.ts         ← Global → country → sector → stock causal chain
-│       ├── signalDetector.ts        ← Price drop/surge, volume spike, news mention, report
-│       ├── alertGenerator.ts        ← Multi-signal → Alert with severity
-│       ├── alertCooldown.ts / alertDedup.ts / alertGrouper.ts
-│       ├── bctcValidator.ts         ← Accounting identity validation
-│       ├── sentimentClassifier.ts   ← Rule-based bullish/bearish/neutral, Vi+EN
-│       ├── volatilityCalculator.ts  ← Historical vol → adaptive signal thresholds
-│       ├── sectorPeers.ts / macroThresholds.ts / priceNewsValidator.ts
-│       ├── convictionScorer.ts      ← 5-dimension cross-signal validation
-│       ├── tradeRelationships.ts / stockAliases.ts
-│       ├── predictionCascadeMapper.ts / predictionSignalDetector.ts
-│       ├── decisionNoteSynthesizer.ts / sparkline.ts / portfolioRiskCalculator.ts
-│       ├── stockSearch.ts / sectorRotationDetector.ts / earningsCalendar.ts
-│       ├── correlationCalculator.ts / performanceAttribution.ts / rebalancingCalculator.ts
-│       ├── portfolioPnlCalculator.ts / priceAlertChecker.ts
-│       ├── rateLimiter.ts           ← per-host token-bucket rate limiter
-│       ├── sourceHealthTracker.ts / customAlertEvaluator.ts / alertMuteChecker.ts / sentimentTrend.ts
-│       └── kinhDich/
+│       ├── index.ts                 ← Barrel re-export of all domain services
+│       ├── [flat files]             ← Cross-cutting services: cascadeEngine, signalDetector,
+│       │                               alertGenerator, alertCooldown, alertDedup, alertGrouper,
+│       │                               sentimentClassifier, volatilityCalculator, convictionScorer,
+│       │                               rateLimiter, sourceHealthTracker, customAlertEvaluator,
+│       │                               alertMuteChecker, sentimentTrend, embeddingTextBuilder,
+│       │                               newsNormalizer, vnNumberParser, stockSearch, stockAliases,
+│       │                               tradeRelationships, sectorPeers, macroThresholds,
+│       │                               predictionCascadeMapper, predictionSignalDetector,
+│       │                               decisionNoteSynthesizer, sparkline, portfolioRiskCalculator,
+│       │                               portfolioPnlCalculator, priceAlertChecker,
+│       │                               correlationCalculator, performanceAttribution,
+│       │                               rebalancingCalculator, sectorRotationDetector,
+│       │                               foreignFlowAnalyzer, technicalIndicators, intradayAnalyzer,
+│       │                               orderBookAnalyzer, recencyWeighter, chainSynthesizer, …
+│       ├── financial-reports/       ← BCTC domain logic
+│       │   ├── balanceSheetExtractor.ts / incomeStatementExtractor.ts / cashFlowExtractor.ts
+│       │   ├── ratioComputer.ts     ← 22 financial ratios
+│       │   ├── periodDeltaComputer.ts ← QoQ / YoY deltas
+│       │   ├── bctcValidator.ts     ← Accounting identity validation
+│       │   ├── earningsCalendar.ts / priceNewsValidator.ts
+│       │   └── index.ts
+│       └── kinhDich/                ← Kinh Dich hexagram engine
 │           ├── hexagramLibrary.ts   ← 64 hexagrams static data
 │           ├── hexagramResolver.ts / haoEncoder.ts / nuclearComputer.ts / transformedComputer.ts
 │           ├── nguHanhClassifier.ts ← Five Elements (Kim/Moc/Thuy/Hoa/Tho)
-│           ├── kinhDichReading.ts / kinhDichFormatter.ts / hexagramBacktester.ts
+│           ├── kinhDichReading.ts / kinhDichFormatter.ts / hexagramBacktester.ts / kinhDichWrapper.ts
 │           └── index.ts
 ├── infrastructure/
 │   ├── config.ts / logger.ts / circuitBreaker.ts / circuitBreakerRegistry.ts
 │   ├── db/
-│   │   ├── schema.ts                ← SQLite init (all tables + indexes)
+│   │   ├── schema.ts                ← Thin orchestrator (~248 lines): imports all slices,
+│   │   │                               exposes getDb / initDatabase / closeDb (backward-compat)
+│   │   ├── schema-market-data.ts    ← prices, OHLCV, foreign flow tables
+│   │   ├── schema-financial-reports.ts ← BCTC, PDF, vnstock tables
+│   │   ├── schema-news.ts           ← news, cascade, signals, insider tables
+│   │   ├── schema-alerts.ts         ← alerts, mutes, custom rules, price alerts, broker sanctions
+│   │   ├── schema-portfolio.ts      ← positions, P&L snapshots, target allocations
+│   │   ├── schema-briefings.ts      ← briefing_log, market_summaries
+│   │   ├── schema-macro.ts          ← macro indicators, commodities, SBV, predictions, kinhdich
+│   │   ├── schema-system.ts         ← cron runs, agent logs, evidence, system tables
 │   │   ├── alertStore.ts / macroStatsStore.ts / commodityTracker.ts / tradeStore.ts
 │   │   ├── predictionStore.ts / positionStore.ts / pnlSnapshotStore.ts
 │   │   ├── customAlertRuleStore.ts / alertMuteStore.ts / targetAllocationStore.ts
@@ -78,9 +89,73 @@ src/
 │   │   ├── server.ts                ← McpServer factory, registers tools via registry.ts
 │   │   ├── transport.ts             ← SSEServerTransport setup
 │   │   └── tools/                   ← 100 registered MCP tools (via registry.ts)
+│   │       ├── registry.ts          ← Central tool registration, imports all module barrels
+│   │       ├── index.ts             ← Top-level barrel
+│   │       ├── market-data/         ← prices, OHLCV, foreign flow, insider, TA, price alerts
+│   │       ├── financial-reports/   ← BCTC full/summary, earnings calendar
+│   │       ├── news-analysis/       ← search, cascade metrics, sentiment trend, source health
+│   │       ├── alerts/              ← alert management, digest, mute, custom rules, cron health
+│   │       ├── portfolio/           ← positions, P&L, risk, rebalancing, target allocations
+│   │       ├── briefings/           ← summary, Telegram report, changelog, market messages
+│   │       ├── macro/               ← macro indicators, policy, predictions, calibration
+│   │       ├── sector/              ← sector comparison, rotation, supply chain, energy, pharma, …
+│   │       ├── kinhdich/            ← hexagram readings and transitions
+│   │       └── system/              ← watchlist, ask queue, feedback, VPS proxy, system status
 │   └── scheduler/index.ts           ← startScheduler()
-└── scheduler/                       ← 37 files: jobs.ts + summaryJobs.ts + 35 job handlers
+└── scheduler/                       ← 38 files: jobs.ts + summaryJobs.ts + module subfolders
+    ├── jobs.ts                      ← Master cron registration
+    ├── summaryJobs.ts / vpsProxyWatchdogJob.ts / pipelineWatchdogJob.ts
+    ├── davPharmacyJob.ts / weatherCheckJob.ts / walCheckpointAlert.ts
+    ├── market-data/                 ← marketScanJob, foreignFlowAlertJob, insiderCheckJob,
+    │                                   taAlertScanJob, taAlertNotifierJob, ohlcvDailyAggregatorJob,
+    │                                   ohlcvStalenessCheckJob, ohlcvStartupProbe
+    ├── financial-reports/           ← bctcOverdueCheckJob, bctcReparseJob
+    ├── news-analysis/               ← intelligenceCycleJob, dataAuditJob, evidenceAccumulatorJob,
+    │                                   patternWatchJob, sscCheckerJob
+    ├── alerts/                      ← alertDigestJob, bbAlertScanJob, cronHealthAlertJob
+    ├── portfolio/                   ← weeklyPortfolioReportJob
+    ├── briefings/                   ← morningBriefingJob, eveningSummaryJob, franceSummaryJob
+    ├── macro/                       ← baseRateComputationJob, calibrationReportJob,
+    │                                   cascadeBacktestJob, predictionMarketJob,
+    │                                   predictionOutcomeJob, predictionResolutionJob
+    └── system/                      ← askQueueCheckJob, devTeamHeartbeatJob
 ```
+
+## Module Boundaries
+
+Ten domain modules span `tools/`, `domain/services/` (where applicable), and `scheduler/` subfolders. Each module owns its own `index.ts` barrel.
+
+| Module | Responsibility | Tools subfolder | Scheduler subfolder | Domain services subfolder |
+|--------|---------------|-----------------|--------------------|-----------------------------|
+| `market-data` | Stock prices, OHLCV, foreign buy/sell flow, insider trades, technical indicators, price alerts | Yes | Yes (8 jobs) | Flat (foreignFlowAnalyzer, technicalIndicators, intradayAnalyzer, priceAlertChecker, …) |
+| `financial-reports` | BCTC ingestion, parsing, ratio computation, earnings calendar | Yes | Yes (2 jobs) | Yes (balanceSheetExtractor, ratioComputer, bctcValidator, …) |
+| `news-analysis` | News search, cascade engine, sentiment trend, source health | Yes | Yes (5 jobs) | Flat (cascadeEngine, sentimentClassifier, newsNormalizer, chainSynthesizer, …) |
+| `alerts` | Alert lifecycle, dedup, cooldown, grouping, mute rules, custom rules, digest | Yes | Yes (3 jobs) | Flat (alertGenerator, alertCooldown, alertDedup, alertGrouper, alertMuteChecker, customAlertEvaluator, …) |
+| `portfolio` | Positions, P&L snapshots, risk scoring, rebalancing, target allocations | Yes | Yes (1 job) | Flat (portfolioPnlCalculator, portfolioRiskCalculator, rebalancingCalculator, performanceAttribution, …) |
+| `briefings` | Morning briefing, evening summary, France summary, Telegram formatting | Yes | Yes (3 jobs) | Flat (decisionNoteSynthesizer, sparkline, …) |
+| `macro` | Macro indicators, SBV FX, commodities, prediction markets, calibration | Yes | Yes (6 jobs) | Flat (macroThresholds, macroIndicatorScorer, policyImpactMapper, predictionCascadeMapper, …) |
+| `sector` | Sector comparison, rotation, supply chain, energy, pharma, credit flow, legal risk, climate | Yes | — | Flat (sectorRotationDetector, sectorValuationComparator, creditFlowAnalyzer, energyMarketAnalyzer, pharmaEventMapper, …) |
+| `kinhdich` | Hexagram readings, Hao encoding, Ngu Hanh, Markov transitions, backtesting | Yes | — | Yes (`kinhDich/` subfolder) |
+| `system` | Watchlist, /ask queue, feedback, VPS proxy health, system status, agent work logs | Yes | Yes (2 jobs) | — |
+
+**Barrel pattern**: every module exposes `index.ts` that re-exports all public symbols. `registry.ts` and `jobs.ts` import only from barrels — never from individual files within a module.
+
+## Schema Decomposition (Sprint 209)
+
+`src/infrastructure/db/schema.ts` was 1,571 lines (monolith). Split into 8 domain slices:
+
+| Slice file | Tables owned |
+|-----------|-------------|
+| `schema-market-data.ts` | `market_prices`, `ohlcv_daily`, `foreign_flow`, `vps_push_log`, `vnstock_*` |
+| `schema-financial-reports.ts` | `financial_reports`, `bctc_vps_queue`, PDF-related tables |
+| `schema-news.ts` | `news_items`, `rag_analyses`, `cascade_*`, `signals`, `insider_trades` |
+| `schema-alerts.ts` | `alerts`, `alert_mutes`, `custom_alert_rules`, `price_alerts`, `broker_sanctions` |
+| `schema-portfolio.ts` | `positions`, `pnl_snapshots`, `target_allocations` |
+| `schema-briefings.ts` | `briefing_log`, `market_summaries` |
+| `schema-macro.ts` | `macro_indicators`, `commodities`, `sbv_rates`, `prediction_*`, `kinhdich_readings`, `hexagram_transitions` |
+| `schema-system.ts` | `cron_job_runs`, `agent_work_log`, `evidence_items`, system tables |
+
+`schema.ts` (~248 lines) remains the sole public API: exports `getDb`, `initDatabase`, `closeDb`. All 38+ callers import from this path unchanged. Slices are internal — only `schema.ts` imports them.
 
 ## Key Data Flow
 
