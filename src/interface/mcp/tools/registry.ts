@@ -143,5 +143,5 @@ export const toolRegistry: Array<(server: McpServer) => void> = [
   registerTickerIntelligenceTools, // Task 1180: get_ticker_intelligence (+1 tool → 97)
   registerTechnicalIndicatorTools, // Task 1302/1303: get_technical_indicators (+1 tool → 98)
   registerPipelineHealthTools,     // Task 1367: get_pipeline_health (+1 tool → 100)
-  registerCascadeOutcomeTools,     // Task 1504: get_cascade_outcomes (+1 tool → 101)
+  registerCascadeOutcomeTools,     // Task 1504: get_cascade_outcomes (+1 tool → 100)
 ];

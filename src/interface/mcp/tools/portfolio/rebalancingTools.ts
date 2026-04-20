@@ -89,7 +89,7 @@ export function registerRebalancingTools(server: McpServer): void {
         .describe(
           'Target weights by stock code (must sum to 100). ' +
           'Example: {"VCB": 40, "FPT": 30, "HPG": 30}. ' +
-          'Omit to auto-load saved targets from portfolio_targets (set via set_target_allocation).',
+          'Omit to auto-load saved targets from portfolio_targets.',
         ),
     },
     async ({ targets }) => {
@@ -108,7 +108,7 @@ export function registerRebalancingTools(server: McpServer): void {
                   type: "text" as const,
                   text:
                     "Không có mục tiêu phân bổ.\n" +
-                    "Vui lòng cung cấp tham số targets hoặc đặt mục tiêu trước bằng set_target_allocation.",
+                    "Vui lòng cung cấp tham số targets hoặc đặt mục tiêu trước qua analyst workflow.",
                 },
               ],
             };

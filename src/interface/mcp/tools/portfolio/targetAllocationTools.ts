@@ -100,7 +100,7 @@ export function registerTargetAllocationTools(server: McpServer): void {
                 type: "text" as const,
                 text:
                   "Chưa có mục tiêu phân bổ.\n" +
-                  "Dùng set_target_allocation để thiết lập mục tiêu.",
+                  "Vui lòng thiết lập mục tiêu qua analyst workflow trước khi xem gap.",
               },
             ],
           };
