@@ -1,21 +1,36 @@
 # Sprint Goal
 
-## Sprint 227 — fix(watchdog): MARKET "pipeline restored" alert on VPS recovery
+## Sprint 229 — CHECKPOINT / NEXT PHASE PLANNING
 
-**Goal:** When VPS data pipeline recovers after going stale, send a recovery confirmation alert to MARKET channel. Users should know when the briefing pipeline is working again, not just when it breaks.
+**Status:** No active sprint. System at checkpoint after sprints 227-228 completion.
 
-**Scope:**
+**Recent completions:**
+- Sprint 227: VPS watchdog recovery alerts
+- Sprint 228: Foreign-flow parse hardening + defensive validation
+- Sprint 226: Agent merge (9→7) + unified bootstrap tool
 
-| Area | IN | OUT |
-|------|----|-----|
-| `1557_a` TDD RED | `src/__tests__/1557-watchdog-recovery.test.ts` — 3 assertions: (1) recovery fires after stale, (2) silent if never stale, (3) reset clears flag | SSH healing |
-| `1557_b` GREEN | Add `lastWasStale` flag to vpsProxyWatchdogJob; export `_resetWatchdogStaleFlag()`; "ok" branch sends recovery MARKET msg + returns "restored"; set flag on alert-sent | |
+**Next actions:**
+1. Product analysis: identify highest-impact improvement
+2. User-facing bugs or missing features
+3. Reliability/data quality regressions
+
+---
+
+## Sprint 228 — fix(foreign-flow): root-cause parse errors + add defensive validation
+
+**Goal:** Harden foreign-flow VPS fetch/parse pipeline against truncation + timeouts. Implement server-side validation + circuit breaker integration.
+
+**Result:**
+- `1566_a` RED: TDD test suite with 5 assertions ✅
+- `1566_b` GREEN: foreignFlowValidator domain service + server.ts handler + DDD fix ✅
+- `1566_c` VPS: fetch-foreign-flow.sh hardening + 16-section audit report ✅
 
 **Success metric:**
-- `bun test src/__tests__/1557-watchdog-recovery.test.ts` → 3 pass ✅
-- Full suite: 5956 pass / 0 fail ✅
+- `bun test src/__tests__/1566-*.test.ts` → 5 pass ✅
+- Full suite: 5982 pass baseline ✅
 - `bun tsc --noEmit` clean ✅
-- BOTH tasks (1557_a + 1557_b) merged to main ✅
+- All 3 tasks merged to main ✅
+- DDD layer violations resolved ✅
 
 **Status:** COMPLETE (2026-04-21)
 
