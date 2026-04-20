@@ -185,7 +185,7 @@ describe("1504 cascade-outcome", () => {
     const { queryCascadeOutcomes } = await import("../interface/mcp/tools/cascadeOutcomeTools.js");
     const rows = queryCascadeOutcomes(db, { days: 30, ticker: "VCB" });
     expect(rows).toHaveLength(1);
-    expect(rows[0].ruleKey).toBe("banking_up");
+    expect(rows[0]!.ruleKey).toBe("banking_up");
   });
 
   // AC-11: TypeScript compile clean (structural marker)

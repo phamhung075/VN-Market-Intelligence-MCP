@@ -45,11 +45,62 @@ export function recordHit(
   matchedText: string,
   sector?: string,
   stocks?: string,
+  sourceRagId?: string | null,
+  confidence?: number | null,
 ): void {
   db.prepare(`
-    INSERT INTO cascade_rule_hits (rule_key, matched_text, affected_sector, affected_stocks)
-    VALUES (?, ?, ?, ?)
-  `).run(ruleKey, matchedText, sector ?? null, stocks ?? null);
+    INSERT INTO cascade_rule_hits (rule_key, matched_text, affected_sector, affected_stocks, source_rag_id, confidence)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `).run(ruleKey, matchedText, sector ?? null, stocks ?? null, sourceRagId ?? null, confidence ?? null);
+}
+
+/**
+ * Write backtest outcome data to an existing cascade_rule_hits row.
+ *
+ * Only provided (non-undefined) fields are updated. Returns true if row
+ * found and updated, false if id not found. All-undefined outcome = no-op.
+ *
+ * @param db      - Active bun:sqlite Database connection
+ * @param id      - Primary key of the hit row to update
+ * @param outcome - Partial outcome fields to write
+ */
+export function updateOutcome(
+  db: Database,
+  id: number,
+  outcome: {
+    priceImpact3d?: number | null;
+    priceImpact7d?: number | null;
+    outcomeCorrect?: 0 | 1 | null;
+    confidence?: number | null;
+  },
+): boolean {
+  const setClauses: string[] = [];
+  const values: (number | null)[] = [];
+
+  if (outcome.priceImpact3d !== undefined) {
+    setClauses.push("price_impact_3d = ?");
+    values.push(outcome.priceImpact3d);
+  }
+  if (outcome.priceImpact7d !== undefined) {
+    setClauses.push("price_impact_7d = ?");
+    values.push(outcome.priceImpact7d);
+  }
+  if (outcome.outcomeCorrect !== undefined) {
+    setClauses.push("outcome_correct = ?");
+    values.push(outcome.outcomeCorrect);
+  }
+  if (outcome.confidence !== undefined) {
+    setClauses.push("confidence = ?");
+    values.push(outcome.confidence);
+  }
+
+  if (setClauses.length === 0) return false;
+
+  const result = db
+    .prepare(`UPDATE cascade_rule_hits SET ${setClauses.join(", ")} WHERE id = ?`)
+    .run(...values, id);
+
+  return result.changes > 0;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
