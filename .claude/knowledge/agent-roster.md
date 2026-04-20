@@ -2,20 +2,18 @@
 
 **Load when:** agent coordination, rewriting agent files, understanding team structure.
 
-## Analysis Team (Claude Cowork — 9 agents)
+## Analysis Team (Claude Cowork — 7 agents)
 
 | # | Agent | File | Role | Cycle |
 |---|-------|------|------|-------|
 | 0 | Setup | `00-setup-watchlist.md` | Seed watchlist | Once |
 | — | Unified Coordinator | `unified-agent.md` | Coordinate + quality review + last-mile check | On-demand + Daily 22:00 VN + Sunday 20:00 VN |
 | 1 | News Scout | `01-news-scout.md` | News, sentiment, impact chains, legal/crisis detection | 15 min (market) / 60 min (off) |
-| 2 | BCTC Collector | `02-bctc-collector.md` | Track BCTC availability | 2x daily (08:00 + 20:00 VN) |
-| 3 | Report Analyzer | `03-report-analyzer.md` | Analyze financials, insider signals | 2x daily (09:00 + 21:00 VN) |
+| 2 | Financial Analyst | `02-financial-analyst.md` | Collect BCTC status + analyze financials in same cycle | 2x daily (08:00 + 20:00 VN) |
 | 4 | Market Watcher | `04-market-watcher.md` | Prices, anomalies, supply chain, climate/energy | 5 min (market) / 2h (off) |
 | 5 | Alert Commander | `05-alert-commander.md` | ONLY agent → MARKET channel | 10 min (market) / 30 min (off) |
-| 6 | Digest Writer | `06-digest-writer.md` | Daily/weekly/monthly summaries | Daily 22:30 VN / Weekly Sunday / Monthly 1st |
+| 6 | Digest & Predict | `06-digest-predict.md` | Daily/weekly digests + Monday prediction synthesis | Daily 22:30 VN / Monday 07:30 VN / Weekly Sunday / Monthly 1st |
 | 7 | QA Responder | `07-qa-responder.md` | Answer /ask queue FIFO → MARKET | Every 12 min via askQueueCheck |
-| 8 | Prediction Synthesizer | `08-prediction-synthesizer.md` | Generate prediction claims pre-market | Monday 07:30 VN |
 
 Coordinator: `cowork-analysis-vnmarket-team/unified-agent.md`
 
@@ -48,11 +46,11 @@ Full table → `.claude/knowledge/portfolio-schema.md`
 | Signal | From → To |
 |--------|-----------|
 | `urgent_news` | News Scout → Market Watcher |
-| `chain_catalyst` | News Scout → Report Analyzer + Market Watcher |
-| `fundamental_validation` | Report Analyzer → Alert Commander |
+| `chain_catalyst` | News Scout → Financial Analyst + Market Watcher |
+| `fundamental_validation` | Financial Analyst → Alert Commander |
 | `price_confirmation` / `price_anomaly` | Market Watcher → Alert Commander |
 | `verified_chain` | Server synthesizes 2+ confirmations → Alert Commander |
-| `send_telegram(market)` | Alert Commander (05) / Digest Writer (06) / QA Responder (07) → User |
+| `send_telegram(market)` | Alert Commander (05) / Digest & Predict (06) / QA Responder (07) → User |
 | `submit_feedback` | All agents → BUG channel → Dev Team |
 | `send_telegram(work)` | All agents → WORK channel → Dev Team |
 
@@ -75,7 +73,7 @@ Every task has a progressive context file at `docs/handoffs/TASK_NNN.md`. Agents
 ## Two-Team Architecture
 
 ```
-ANALYSIS TEAM (Cowork, 9 agents, cloud)
+ANALYSIS TEAM (Cowork, 7 agents, cloud)
   → MARKET (TELEGRAM_INFO_MARKET_GROUP_ID)  = user alerts/answers
   → WORK   (TELEGRAM_INFO_WORK_CHANNEL_ID)  = status
   → BUG    (TELEGRAM_REPORT_BUG_CHANNEL_ID) = bugs
