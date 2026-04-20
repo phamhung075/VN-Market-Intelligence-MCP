@@ -61,21 +61,21 @@ describe("Task 251 — MCP Tool Registration", () => {
 
   it("registerPublicInvestmentTools is exported as a function", async () => {
     const { registerPublicInvestmentTools } = await import(
-      "../interface/mcp/tools/publicInvestmentTools.js"
+      "../interface/mcp/tools/sector/publicInvestmentTools.js"
     );
     expect(typeof registerPublicInvestmentTools).toBe("function");
   });
 
   it("registerCreditFlowTools is exported as a function", async () => {
     const { registerCreditFlowTools } = await import(
-      "../interface/mcp/tools/creditFlowTools.js"
+      "../interface/mcp/tools/sector/creditFlowTools.js"
     );
     expect(typeof registerCreditFlowTools).toBe("function");
   });
 
   it("registerLeadershipTools is exported as a function", async () => {
     const { registerLeadershipTools } = await import(
-      "../interface/mcp/tools/leadershipTools.js"
+      "../interface/mcp/tools/sector/leadershipTools.js"
     );
     expect(typeof registerLeadershipTools).toBe("function");
   });
@@ -88,7 +88,7 @@ describe("Task 251 — MCP Tool Registration", () => {
 describe("Task 251 — get_public_contracts handler", () => {
   it("returns content array with type=text", async () => {
     const { getPublicContractsHandler } = await import(
-      "../interface/mcp/tools/publicInvestmentTools.js"
+      "../interface/mcp/tools/sector/publicInvestmentTools.js"
     );
     const result = await getPublicContractsHandler({
       _testHtml: "<html><body></body></html>",
@@ -100,7 +100,7 @@ describe("Task 251 — get_public_contracts handler", () => {
 
   it("returns empty state message when no contracts found", async () => {
     const { getPublicContractsHandler } = await import(
-      "../interface/mcp/tools/publicInvestmentTools.js"
+      "../interface/mcp/tools/sector/publicInvestmentTools.js"
     );
     const result = await getPublicContractsHandler({
       _testHtml: "<html><body><p>Khong co du lieu</p></body></html>",
@@ -112,7 +112,7 @@ describe("Task 251 — get_public_contracts handler", () => {
 describe("Task 251 — get_credit_flow_signal handler", () => {
   it("returns content array with type=text", async () => {
     const { getCreditFlowSignalHandler } = await import(
-      "../interface/mcp/tools/creditFlowTools.js"
+      "../interface/mcp/tools/sector/creditFlowTools.js"
     );
     const result = await getCreditFlowSignalHandler({
       currentReCreditTrillion: 2900,
@@ -126,7 +126,7 @@ describe("Task 251 — get_credit_flow_signal handler", () => {
 
   it("text includes direction indicator", async () => {
     const { getCreditFlowSignalHandler } = await import(
-      "../interface/mcp/tools/creditFlowTools.js"
+      "../interface/mcp/tools/sector/creditFlowTools.js"
     );
     const result = await getCreditFlowSignalHandler({
       currentReCreditTrillion: 3200,
@@ -142,7 +142,7 @@ describe("Task 251 — get_credit_flow_signal handler", () => {
 describe("Task 251 — get_insider_signals handler", () => {
   it("returns content array with type=text", async () => {
     const { getInsiderSignalsHandler } = await import(
-      "../interface/mcp/tools/leadershipTools.js"
+      "../interface/mcp/tools/sector/leadershipTools.js"
     );
     const result = await getInsiderSignalsHandler({
       code: "VCB",
@@ -155,7 +155,7 @@ describe("Task 251 — get_insider_signals handler", () => {
 
   it("detects insider buy signal from test data", async () => {
     const { getInsiderSignalsHandler } = await import(
-      "../interface/mcp/tools/leadershipTools.js"
+      "../interface/mcp/tools/sector/leadershipTools.js"
     );
     const result = await getInsiderSignalsHandler({
       code: "VCB",

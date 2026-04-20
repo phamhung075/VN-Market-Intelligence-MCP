@@ -16,8 +16,8 @@ import { z } from "zod";
 import {
   getCrisisEarlyWarning,
   formatCrisisWarningOutput,
-} from "../.././../application/usecases/getCrisisEarlyWarning.js";
-import { getDb } from "../.././../infrastructure/db/schema.js";
+} from "../../../../application/usecases/getCrisisEarlyWarning.js";
+import { getDb } from "../../../../infrastructure/db/schema.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tool registration

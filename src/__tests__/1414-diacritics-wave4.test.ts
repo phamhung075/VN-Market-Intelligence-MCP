@@ -13,7 +13,7 @@ Bun.env["DB_PATH"] = ":memory:";
 import { describe, it, expect } from "bun:test";
 import { readFileSync } from "fs";
 import { join } from "path";
-import { buildSupplyChainExposureOutput } from "../interface/mcp/tools/supplyChainTools.js";
+import { buildSupplyChainExposureOutput } from "../interface/mcp/tools/sector/supplyChainTools.js";
 import type { SupplyChainEvent } from "../domain/services/supplyChainEventDetector.js";
 
 // ── Source file paths ─────────────────────────────────────────────────────────

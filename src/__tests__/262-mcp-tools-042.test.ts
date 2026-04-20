@@ -7,11 +7,11 @@
 import { describe, it, expect } from "bun:test";
 import {
   getClimateRiskSignals,
-} from "../interface/mcp/tools/climateTools.js";
+} from "../interface/mcp/tools/sector/climateTools.js";
 import {
   getEnergyGridSignals,
   getEnergyGridStatus,
-} from "../interface/mcp/tools/energyTools.js";
+} from "../interface/mcp/tools/sector/energyTools.js";
 
 // ---------------------------------------------------------------------------
 // Tests
@@ -61,8 +61,8 @@ describe("Task 262 — MCP Tools: Climate + Energy", () => {
 
   // 6. climateTools.ts and energyTools.ts export register functions
   it("climate and energy tools export registerClimateTools and registerEnergyTools", async () => {
-    const climateModule = await import("../interface/mcp/tools/climateTools.js");
-    const energyModule = await import("../interface/mcp/tools/energyTools.js");
+    const climateModule = await import("../interface/mcp/tools/sector/climateTools.js");
+    const energyModule = await import("../interface/mcp/tools/sector/energyTools.js");
     expect(typeof climateModule.registerClimateTools).toBe("function");
     expect(typeof energyModule.registerEnergyTools).toBe("function");
   });

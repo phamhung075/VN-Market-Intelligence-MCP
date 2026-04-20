@@ -20,7 +20,7 @@ Bun.env["DB_PATH"] = ":memory:";
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from "bun:test";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { initDatabase, getDb, closeDb } from "../infrastructure/db/schema.js";
-import { registerSectorComparisonTools } from "../interface/mcp/tools/sectorComparisonTools.js";
+import { registerSectorComparisonTools } from "../interface/mcp/tools/sector/sectorComparisonTools.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helper — invoke a registered MCP tool directly (bypasses SSE transport)

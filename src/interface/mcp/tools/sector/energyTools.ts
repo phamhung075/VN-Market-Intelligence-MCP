@@ -13,12 +13,12 @@
  */
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { logger } from "../../../infrastructure/logger.js";
-import { fetchReservoirLevels } from "../../../infrastructure/fetchers/hydrologicalData.js";
+import { logger } from "../../../../infrastructure/logger.js";
+import { fetchReservoirLevels } from "../../../../infrastructure/fetchers/hydrologicalData.js";
 import {
   analyzeEnergyMarket,
   type EnergyData,
-} from "../../../domain/services/energyMarketAnalyzer.js";
+} from "../../../../domain/services/energyMarketAnalyzer.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Core logic (exported for integration testing)

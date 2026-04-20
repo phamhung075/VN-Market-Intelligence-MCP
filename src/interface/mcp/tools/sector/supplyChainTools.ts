@@ -18,15 +18,15 @@
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { logger } from "../../../infrastructure/logger.js";
-import { getDb } from "../../../infrastructure/db/schema.js";
+import { logger } from "../../../../infrastructure/logger.js";
+import { getDb } from "../../../../infrastructure/db/schema.js";
 import {
   analyzeSupplyChainImpact,
   type SupplyChainSignal,
-} from "../../../domain/services/supplyChainAnalyzer.js";
-import { classifyDeviation } from "../../../domain/services/macroThresholds.js";
-import type { SupplyChainEvent } from "../../../domain/services/supplyChainEventDetector.js";
-import type { ShippingIndex } from "../../../infrastructure/fetchers/shippingIndex.js";
+} from "../../../../domain/services/supplyChainAnalyzer.js";
+import { classifyDeviation } from "../../../../domain/services/macroThresholds.js";
+import type { SupplyChainEvent } from "../../../../domain/services/supplyChainEventDetector.js";
+import type { ShippingIndex } from "../../../../infrastructure/fetchers/shippingIndex.js";
 
 // ---------------------------------------------------------------------------
 // Output builder (exported for unit testing)
@@ -181,7 +181,7 @@ function readShippingStats(
   db: ReturnType<typeof getDb>,
   indicator: string,
   limit = 30,
-): import("../../../domain/services/macroThresholds.js").MacroStats | null {
+): import("../../../../domain/services/macroThresholds.js").MacroStats | null {
   try {
     const rows = db
       .query<{ value: number }, [string, number]>(
@@ -218,7 +218,7 @@ function readShippingStats(
  */
 function readWatchlist(
   db: ReturnType<typeof getDb>,
-): Array<{ actionCode: string; domain: import("../../../domain/services/cascadeEngine.js").WatchlistEntry["domain"]; exchange: string }> {
+): Array<{ actionCode: string; domain: import("../../../../domain/services/cascadeEngine.js").WatchlistEntry["domain"]; exchange: string }> {
   try {
     const rows = db
       .query<WatchlistRow, []>(
@@ -227,7 +227,7 @@ function readWatchlist(
       .all();
     return rows.map((r) => ({
       actionCode: r.action_code,
-      domain: r.domain as import("../../../domain/services/cascadeEngine.js").WatchlistEntry["domain"],
+      domain: r.domain as import("../../../../domain/services/cascadeEngine.js").WatchlistEntry["domain"],
       exchange: r.exchange,
     }));
   } catch {

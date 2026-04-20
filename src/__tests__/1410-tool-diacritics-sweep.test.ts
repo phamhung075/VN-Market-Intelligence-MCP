@@ -5,18 +5,18 @@ import { Database } from "bun:sqlite";
 
 // ── Always-exported (no @ts-expect-error) ────────────────────────────────────
 import { handleGetLabelAccuracyReport } from "../interface/mcp/tools/macro/calibrationTools.js";
-import { getClimateRiskSignals } from "../interface/mcp/tools/climateTools.js";
-import { getCreditFlowSignalHandler } from "../interface/mcp/tools/creditFlowTools.js";
-import { getEnergyGridStatus } from "../interface/mcp/tools/energyTools.js";
-import { getInsiderSignalsHandler } from "../interface/mcp/tools/leadershipTools.js";
+import { getClimateRiskSignals } from "../interface/mcp/tools/sector/climateTools.js";
+import { getCreditFlowSignalHandler } from "../interface/mcp/tools/sector/creditFlowTools.js";
+import { getEnergyGridStatus } from "../interface/mcp/tools/sector/energyTools.js";
+import { getInsiderSignalsHandler } from "../interface/mcp/tools/sector/leadershipTools.js";
 import { handleGetMarketMessageDigest } from "../interface/mcp/tools/briefings/marketMessageTools.js";
-import { buildSectorComparisonOutput } from "../interface/mcp/tools/sectorComparisonTools.js";
-import { getSectorRotationReport } from "../interface/mcp/tools/sectorRotationTools.js";
+import { buildSectorComparisonOutput } from "../interface/mcp/tools/sector/sectorComparisonTools.js";
+import { getSectorRotationReport } from "../interface/mcp/tools/sector/sectorRotationTools.js";
 import { formatTickerIntelligence } from "../interface/mcp/tools/market-data/tickerIntelligenceTools.js";
 // Sprint 144 regression (already exported, already GREEN)
 import { formatKinhDichTradingContext } from "../interface/mcp/tools/kinhdich/kinhDichTools.js";
 import { formatTaIndicatorReport } from "../interface/mcp/tools/market-data/technicalIndicatorTools.js";
-import { buildSupplyChainExposureOutput } from "../interface/mcp/tools/supplyChainTools.js";
+import { buildSupplyChainExposureOutput } from "../interface/mcp/tools/sector/supplyChainTools.js";
 
 // ── Not yet exported — use namespace import + dynamic property access ─────────
 // Functions accessed via (ns as any)["name"] so @ts-expect-error is not needed here;
@@ -25,9 +25,9 @@ import * as agentSignalToolsNs from "../interface/mcp/tools/news-analysis/agentS
 import * as alertAccuracyNs from "../interface/mcp/tools/alerts/alertAccuracy.js";
 import * as alertsNs from "../interface/mcp/tools/alerts/alerts.js";
 import * as bctcFullToolsNs from "../interface/mcp/tools/financial-reports/bctcFullTools.js";
-import * as correlationToolsNs from "../interface/mcp/tools/correlationTools.js";
+import * as correlationToolsNs from "../interface/mcp/tools/sector/correlationTools.js";
 import * as performanceToolsNs from "../interface/mcp/tools/portfolio/performanceTools.js";
-import * as pharmaToolsNs from "../interface/mcp/tools/pharmaTools.js";
+import * as pharmaToolsNs from "../interface/mcp/tools/sector/pharmaTools.js";
 import * as portfolioRiskToolNs from "../interface/mcp/tools/portfolio/portfolioRiskTool.js";
 import * as positionToolsNs from "../interface/mcp/tools/portfolio/positionTools.js";
 import * as predictionToolsNs from "../interface/mcp/tools/macro/predictionTools.js";

@@ -16,7 +16,7 @@ import { Database } from "bun:sqlite";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { recordMention } from "../infrastructure/db/mentionVelocityStore.js";
 import { saveReputation } from "../infrastructure/db/reputationStore.js";
-import { registerCrisisTools } from "../interface/mcp/tools/crisisTools.js";
+import { registerCrisisTools } from "../interface/mcp/tools/sector/crisisTools.js";
 import { initDatabase, getDb, closeDb } from "../infrastructure/db/index.js";
 
 // ─────────────────────────────────────────────────────────────────────────────

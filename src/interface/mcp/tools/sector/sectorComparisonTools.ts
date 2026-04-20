@@ -17,18 +17,18 @@
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { getDb, initDatabase } from "../../../infrastructure/db/schema.js";
-import { logger } from "../../../infrastructure/logger.js";
+import { getDb, initDatabase } from "../../../../infrastructure/db/schema.js";
+import { logger } from "../../../../infrastructure/logger.js";
 import {
   getSectorPeers,
   SECTOR_NAME_VI,
-} from "../../../domain/services/sectorPeers.js";
+} from "../../../../domain/services/sectorPeers.js";
 import {
   compareToSector,
   median,
   type ValuationTier,
-} from "../../../domain/services/sectorValuationComparator.js";
-import type { DomainType } from "../../../../bctc-schema.js";
+} from "../../../../domain/services/sectorValuationComparator.js";
+import type { DomainType } from "../../../../../bctc-schema.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Internal row shapes (SQLite query results)
