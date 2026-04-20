@@ -1,21 +1,23 @@
 # Sprint Goal
 
-## Sprint 221 — fix(watchdog): extend VPS staleness coverage to news + OHLCV
+## Sprint 227 — fix(watchdog): MARKET "pipeline restored" alert on VPS recovery
 
-**Goal:** User received 3 consecutive days of silent empty briefings (Apr 19-21) because the VPS news service died and the watchdog only monitors `market_prices`. Extend the watchdog to also check `rag_analyses` (news) and `daily_ohlcv` (price history) freshness so any future multi-service outage fires an alert immediately.
+**Goal:** When VPS data pipeline recovers after going stale, send a recovery confirmation alert to MARKET channel. Users should know when the briefing pipeline is working again, not just when it breaks.
 
 **Scope:**
 
 | Area | IN | OUT |
 |------|----|-----|
-| `vpsProxyWatchdogJob.ts` | Add `readLatestNewsTimestamp()` + `readLatestOhlcvTimestamp()`; extend `runVpsProxyWatchdog` to check all 3 sources; single consolidated alert lists all stale services | SSH healing, new cron schedule, new Telegram channel |
-| Test `1549-watchdog-news-staleness.test.ts` | 6 assertions: news stale fires alert, OHLCV stale fires alert, prices OK + news stale still fires, off-hours skips all, cooldown respected per source, alert message names stale services | Changes to market hours logic |
+| `1557_a` TDD RED | `src/__tests__/1557-watchdog-recovery.test.ts` — 3 assertions: (1) recovery fires after stale, (2) silent if never stale, (3) reset clears flag | SSH healing |
+| `1557_b` GREEN | Add `lastWasStale` flag to vpsProxyWatchdogJob; export `_resetWatchdogStaleFlag()`; "ok" branch sends recovery MARKET msg + returns "restored"; set flag on alert-sent | |
 
 **Success metric:**
-- `bun test src/__tests__/1549-watchdog-news-staleness.test.ts` → 6 pass
-- Full suite stays at 5923+ pass / 0 fail
-- `bun tsc --noEmit` clean
-- Alert message includes service name(s) that are stale (not just "prices stopped")
+- `bun test src/__tests__/1557-watchdog-recovery.test.ts` → 3 pass ✅
+- Full suite: 5956 pass / 0 fail ✅
+- `bun tsc --noEmit` clean ✅
+- BOTH tasks (1557_a + 1557_b) merged to main ✅
+
+**Status:** COMPLETE (2026-04-21)
 
 ---
 
