@@ -79,7 +79,7 @@
 
 ---
 
-## Sprint 234 — feat(observability): VPS health dashboard + data freshness SLA enforcement
+## Sprint 234 — feat(observability): VPS health dashboard + data freshness SLA enforcement — IN PROGRESS
 
 **Goal:** Implement direct health polling of all 5 VPS services (prices/BCTC/news/SBV/foreign-flow) + active monitoring of signal source freshness with escalation callbacks. Prevent blindness to cascading failures and enforce data quality SLAs.
 
@@ -93,11 +93,11 @@
 
 | ID | Title | Status | Role |
 |----|-------|--------|------|
-| 234a | [BA] Write REQ_234.md: health polling contract, freshness SLA thresholds, escalation rules, test plan | Todo | BA |
-| 234b | [Arch] Write TECH_234.md: vpsServiceHealthJob design, freshnessSlaChecker logic, escalation flow | Todo | Architect |
-| 234c | [Dev] TDD RED — `234-vps-health-sla.test.ts` with 12+ assertions (vps polling + SLA checker) | Todo | Dev |
-| 234d | [Dev] GREEN — vpsServiceHealthJob + freshnessSlaChecker + schema + jobs integration | Todo | Dev |
-| 234e | [QA] Verification — health polling under normal/degraded VPS states, SLA escalation triggered correctly | Todo | QA |
+| 234a | TDD RED — `234-vps-health-sla.test.ts` with 12 assertions (all 5 services, SLA checks) | Todo | Dev |
+| 234b | GREEN — vpsHealthPoller + freshnessSlaChecker domain services + escalation callback | Todo | Dev |
+| 234c | Integration — schema tables + jobs.ts registration + MCP tools (get_vps_service_health + get_sla_status) | Todo | Dev |
+| 234d | Agent Step — integrate health queries into 02-financial-analyst + 04-market-watcher fetch logic | Todo | Dev |
+| 234e | QA Verification — e2e health polling + SLA escalation + tool output formatting | Todo | QA |
 
 ---
 
