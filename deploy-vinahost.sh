@@ -45,17 +45,31 @@ sed -e "s|__MCP_BASE__|${MCP_BASE}|g" \
     vps-scripts/fetch-prices.sh > "$TMP"
 $SCP "$TMP" ${VH_USER}@${VH_IP}:/root/fetch-prices.sh
 $SCP vps-scripts/fetch-prices-loop.sh ${VH_USER}@${VH_IP}:/root/fetch-prices-loop.sh
+$SCP vps-scripts/verify-deploy-price-fetch.sh ${VH_USER}@${VH_IP}:/root/verify-deploy-price-fetch.sh
 $SCP vps-scripts/vn-price-fetch.service ${VH_USER}@${VH_IP}:/etc/systemd/system/vn-price-fetch.service
 rm "$TMP"
 
 $SSH << 'EOF'
 set -e
 apt-get update -qq && apt-get install -y -qq jq curl bc > /dev/null 2>&1
-chmod +x /root/fetch-prices.sh /root/fetch-prices-loop.sh
+chmod +x /root/fetch-prices.sh /root/fetch-prices-loop.sh /root/verify-deploy-price-fetch.sh
 systemctl daemon-reload
 systemctl enable vn-price-fetch.service
 systemctl restart vn-price-fetch.service
-sleep 2
+sleep 1
+
+# Health check verification (30-second loop)
+echo ""
+echo "Verifying price fetch health..."
+if /root/verify-deploy-price-fetch.sh; then
+  echo "✓ Price fetch deployment verified"
+else
+  echo "✗ Price fetch verification FAILED — deploy incomplete"
+  echo "=== vn-price-fetch status ==="
+  systemctl --no-pager -l status vn-price-fetch.service | head -12
+  exit 1
+fi
+
 echo "=== vn-price-fetch status ==="
 systemctl --no-pager -l status vn-price-fetch.service | head -12
 EOF
