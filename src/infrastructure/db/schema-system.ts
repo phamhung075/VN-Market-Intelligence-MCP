@@ -314,4 +314,43 @@ export function initSystemTables(db: Database): void {
       released_at  TEXT
     )
   `);
+
+  // ── Signal Quality Audit (Task 233b) ──────────────────────────────────────
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS signal_quality_audit (
+      id                 INTEGER PRIMARY KEY AUTOINCREMENT,
+      signal_id          TEXT NOT NULL,
+      signal_type        TEXT NOT NULL CHECK(
+        signal_type IN ('price','news','bctc','fx','foreign_flow')
+      ),
+      ticker             TEXT,
+      source_primary     BOOLEAN,
+      source_fallback    BOOLEAN,
+      fallback_tier      INTEGER,
+      fallback_source    TEXT CHECK(
+        fallback_source IS NULL OR
+        fallback_source IN ('cache','yahoo','domestic_rss','congbao')
+      ),
+      confidence_score   REAL NOT NULL,
+      confidence_score_final REAL NOT NULL,
+      confidence_penalty REAL NOT NULL,
+      price              REAL,
+      price_age_minutes  INTEGER,
+      vps_breaker_state  TEXT,
+      coverage_gap       TEXT,
+      staleness_warning  BOOLEAN,
+      created_at         TEXT NOT NULL,
+      UNIQUE(signal_id)
+    )
+  `);
+
+  db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_signal_quality_audit_created_at
+      ON signal_quality_audit(created_at DESC)
+  `);
+
+  db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_signal_quality_audit_source
+      ON signal_quality_audit(source_fallback, signal_type, ticker)
+  `);
 }

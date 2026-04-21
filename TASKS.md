@@ -73,8 +73,8 @@
 
 | ID | Title | Status | Role |
 |----|-------|--------|------|
-| 233a | [Dev] TDD RED — `233-cowork-resilience-e2e.test.ts` with 27 failing assertions (AC-1 to AC-15) | In Progress | Dev |
-| 233b | [Dev] GREEN — signalValidator extension (confidence penalty + temporal decay) + audit logging + schema table | Todo | Dev |
+| 233a | [Dev] TDD RED — `233-cowork-resilience-e2e.test.ts` with 27 failing assertions (AC-1 to AC-15) | Done | Dev |
+| 233b | [Dev] GREEN — signalValidator extension (confidence penalty + temporal decay) + audit logging + schema table | Review | Dev |
 | 233c | [QA] Manual Smoke Test — market-hours execution (5 phases, 09:00–15:00 UTC+7) + observation log | Todo | QA |
 
 ---
