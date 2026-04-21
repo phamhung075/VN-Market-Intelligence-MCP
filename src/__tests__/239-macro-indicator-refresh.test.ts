@@ -87,7 +87,7 @@ describe("Task 239a — macro-indicator-refresh (RED phase)", () => {
     // Verify DB writes
     const row = db
       .prepare("SELECT cpi, gdp_growth, interest_rate, fetched_at FROM macro_indicators WHERE country = ?")
-      .get("VN");
+      .get("VN") as {cpi: number; gdp_growth: number; interest_rate: number; fetched_at: string} | undefined;
     expect(row).toBeTruthy();
     expect(row?.cpi).toBe(105.2);
     expect(row?.gdp_growth).toBe(6.5);
@@ -355,7 +355,7 @@ describe("Task 239a — macro-indicator-refresh (RED phase)", () => {
     // Verify last_refresh_job column exists and contains metadata
     const row = db
       .prepare("SELECT last_refresh_job FROM macro_indicators WHERE country = ?")
-      .get("VN");
+      .get("VN") as {last_refresh_job: string} | undefined;
 
     expect(row).toBeTruthy();
     expect(row?.last_refresh_job).toBeTruthy();
