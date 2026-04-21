@@ -63,6 +63,22 @@
 
 ---
 
+## Sprint 233 — verify(cowork-resilience): end-to-end fallback chain validation + signal quality audit
+
+**Goal:** Validate Sprint 232 fallback chains work correctly in production. Spot-check fallback signals labeled with source_fallback=true, confidence penalty 0.8075 applied, alert escalation fires when all sources exhausted. Market-hours smoke tests during Vietnam trading (09:00–15:00 +07:00).
+
+**Ref:** REQ-233, TECH-233
+
+**Blockers:** None (Sprint 232 complete).
+
+| ID | Title | Status | Role |
+|----|-------|--------|------|
+| 233a | [Dev] TDD RED — `233-cowork-resilience-e2e.test.ts` with 27 failing assertions (AC-1 to AC-15) | In Progress | Dev |
+| 233b | [Dev] GREEN — signalValidator extension (confidence penalty + temporal decay) + audit logging + schema table | Todo | Dev |
+| 233c | [QA] Manual Smoke Test — market-hours execution (5 phases, 09:00–15:00 UTC+7) + observation log | Todo | QA |
+
+---
+
 ## Backlog
 
 | ID | Title | Priority | Notes |
