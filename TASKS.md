@@ -9,119 +9,33 @@
 > Sprints 177–181 archived: `docs/archive/sprints-177-181.md`
 > Sprints 182–189 archived: `docs/archive/sprints-182-189.md`
 > Sprints 190–220 archived: `docs/archive/sprints-190-220.md`
-> Sprints 221–225 archived: `docs/archive/sprints-221-225.md`
-> Sprints 226–230 archived: `docs/archive/sprints-226-230.md` (pending archive after git push)
+> Sprints 221–230 archived: `docs/archive/sprints-221-230.md`
+> Sprints 231–239 archived: `docs/archive/sprints-231-239.md`
 
 ---
 
-## Sprint 226 — refactor(cowork): agent merge + composite bootstrap tool + direct MCP access — COMPLETE (2026-04-21)
+## Sprint 240 — Price Pipeline Recovery + Data Freshness Enforcement (2026-04-21)
+
+**CRITICAL:** market_prices stale 25 days. Backfill 500+ rows, watchdog SSH escalation, freshness gates in briefing/evening.
+
+**Ref:** REQ-240, TECH-240 | **Goal:** Restore price data, prevent future 25-day silence | **Status:** ACTIVE
 
 | ID | Title | Status | Role |
 |----|-------|--------|------|
-| 1560 | [BA] Write REQ_226.md: tool contract, agent merge file list, MCP access mechanism, migration safety, test plan | Done | BA |
-| 1561 | [Arch] Write TECH_226.md: `get_cycle_bootstrap` implementation, Cowork .md merge diffs, access grant design | Done | Architect |
-| 1562 | [Dev] Track A: create 02-financial-analyst.md + 06-digest-predict.md; delete old 02/03/08 agent files; update agent-roster.md + mcp-tools.md | Done | Dev |
-| 1563 | [Dev] Track B: `getCycleBootstrap` use case + `registerCycleBootstrapTool` + registry.ts + tool-registry.json | Done | Dev |
-| 1564 | [Dev] Track C: update all 7 agent .md files — Step 0 bootstrap + validation step + unified-agent role change (ships after 1563) | Done | Dev |
-| 1565 | [QA] Verify: bootstrap tool shape, agent count 9→7, signal latency ≤3s, no hallucinated prices reach MARKET | Done | QA |
+| 240a | TDD RED — price pipeline recovery test suite | Review | Dev |
+| 240b | GREEN — backfill service + watchdog escalation + freshness gates | Todo | Dev |
+| 240c | Integration — recordJobRun wrapper + schema UNIQUE constraint | Todo | Dev |
+| 240e | QA Smoke test — live price flow + briefing freshness | Todo | QA |
 
----
+### Task Details
 
-## Sprint 229 — fix(data-crisis): market_prices stale 24 days — implement 6h price-staleness watchdog + fallback assessment (2026-04-20) — COMPLETE
+**240a:** Depends: none | Context: `docs/handoffs/TASK_240a.md` | Create `src/__tests__/240-price-pipeline-recovery.test.ts` (12+ RED assertions)
 
-| ID | Title | Status | Role |
-|----|-------|--------|------|
-| 229_a | [Dev] TDD RED — `229-price-staleness-watchdog.test.ts` with 5–7 failing assertions (AC-1 to AC-7) | Done | Dev |
-| 229_b | [Dev] GREEN — watchdog implementation (priceUpdateWatchdogJob.ts + jobs.ts + eveningSummaryJob.ts + marketContextBuilder verify) | Done | Dev |
-| 229_c | [Dev] Investigation — VPS pipeline diagnostics + fallback assessment (FALLBACK_INVESTIGATION.md + ARCHITECTURE.md update) | Done | Dev |
+**240b:** Depends: 240a | Context: `docs/handoffs/TASK_240b.md` | CREATE priceBackfillService.ts | MODIFY watchdog + briefing gates
 
----
+**240c:** Depends: 240b | Context: `docs/handoffs/TASK_240c.md` | Wrap watchdog in recordJobRun + add UNIQUE(ticker, date, source)
 
-## Sprint 230 — verify(bootstrap): latency SLA validation + signal quality hardening + fail-loud protocol hardening — COMPLETE (2026-04-21)
-
-| ID | Title | Status | Role |
-|----|-------|--------|------|
-| 230a | [Dev] TDD RED — `230-bootstrap-verify.test.ts` with 12+ failing assertions (AC-1 to AC-4) | Done | Dev |
-| 230b | [Dev] GREEN — timing instrumentation + signalValidator service + schema extension + MCP tool registration | Done | Dev |
-| 230c | [Dev] Integration — agent .md fail-loud blocks (Step 0-b, 7 files) + QA AC-6 validation step + tool registry update | Done | Dev |
-
----
-
-## Sprint 232 — feat(cowork-resilience): multi-source fallback chains + exponential backoff + escalation callbacks — COMPLETE (2026-04-21)
-
-**Goal:** Prevent 25-day VPS outages via intelligent fallback chains (primary → cache → Yahoo/domestic/Công Báo), exponential backoff orchestration, per-service health monitoring, and fail-loud escalation.
-
-**Blockers:** None.
-
-| ID | Title | Status | Role |
-|----|-------|--------|------|
-| 232a | [Dev] TDD RED — `232-cowork-resilience.test.ts` with 12 acceptance criteria | Done | Dev |
-| 232b | [Dev] GREEN — resilientFetcher domain service (243 lines, exponential backoff, 180s timeout) | Done | Dev |
-| 232c | [Dev] Implementation — three source routers (news/price/BCTC) + mcp.config.json fallbacks config | Done | Dev |
-| 232d | [Dev] Integration — Agent Step 0c (VPS health check) + config loading + bootstrap validation | Done | Dev |
-| 232e | [QA] Verification — end-to-end test suite (20 tests, 49 assertions), DDD compliance, security hardening | Done | QA |
-
----
-
-## Sprint 233 — verify(cowork-resilience): end-to-end fallback chain validation + signal quality audit
-
-**Goal:** Validate Sprint 232 fallback chains work correctly in production. Spot-check fallback signals labeled with source_fallback=true, confidence penalty 0.8075 applied, alert escalation fires when all sources exhausted. Market-hours smoke tests during Vietnam trading (09:00–15:00 +07:00).
-
-**Ref:** REQ-233, TECH-233
-
-**Blockers:** None (Sprint 232 complete).
-
-| ID | Title | Status | Role |
-|----|-------|--------|------|
-| 233a | [Dev] TDD RED — `233-cowork-resilience-e2e.test.ts` with 27 failing assertions (AC-1 to AC-15) | Done | Dev |
-| 233b | [Dev] GREEN — signalValidator extension (confidence penalty + temporal decay) + audit logging + schema table | Done | Dev |
-| 233c | [QA] Manual Smoke Test — market-hours execution (5 phases, 09:00–15:00 UTC+7) + observation log | Todo | QA |
-
----
-
-## Sprint 239 — fix(data-crisis): macro indicator freshness + daily refresh enforcement — COMPLETE (2026-04-21)
-
-**Goal:** Diagnose and fix 400+ day staleness in macro_indicators table (last update 2025-03-01). Implement dedicated daily refresh job with SLA validation and stale-data escalation.
-
-**Blockers:** None.
-
-| ID | Title | Status | Role |
-|----|-------|--------|------|
-| 239a | TDD RED — `239-macro-indicator-refresh.test.ts` with 10 failing assertions (AC-1 to AC-10) | Done | Dev |
-| 239b | GREEN — macroIndicatorFetcher domain service (fallback chain: Yahoo→SBV→GSO) + SLA checker | Done | Dev |
-| 239c | Integration — schema + cron registry + scheduler wiring for macro indicator refresh | Done | Dev |
-| 239d | QA Verification — type safety audit + smoke test readiness | Done | QA |
-
----
-
-## Sprint 238 — feat(briefing-quality): quality gate for morning briefing signals — COMPLETE (2026-04-21)
-
-| ID | Title | Status | Role |
-|----|-------|--------|------|
-| 238a | TDD RED — `238-briefing-quality-gate.test.ts` with 15 failing assertions | Done | Dev |
-| 238b | GREEN — briefing quality gate implementation + confidence thresholds | Done | Dev |
-
----
-
-## Sprint 234 — feat(observability): VPS health dashboard + data freshness SLA enforcement — COMPLETE (2026-04-21)
-
-**Goal:** Implement direct health polling of all 5 VPS services (prices/BCTC/news/SBV/foreign-flow) + active monitoring of signal source freshness with escalation callbacks. Prevent blindness to cascading failures and enforce data quality SLAs.
-
-**Scope:**
-- FR-1: VPS service health polling job (5-min intervals, all endpoints)
-- FR-2: Data freshness SLA checker (30-min intervals, source age validation)
-- FR-3: Escalation protocol (alert Commander when data SLA breached)
-- FR-4: Health dashboard query tools (MCP tools for real-time status)
-
-**Blockers:** None (Sprint 233 independent).
-
-| ID | Title | Status | Role |
-|----|-------|--------|------|
-| 234a | TDD RED — `234-vps-health-sla.test.ts` with 12 assertions (all 5 services, SLA checks) | Done | Dev |
-| 234b | GREEN — vpsHealthPoller + freshnessSlaChecker domain services + escalation callback | Done | Dev |
-| 234c | Integration — schema tables + jobs.ts registration + MCP tools (get_vps_service_health + get_sla_status) | Done | Dev |
-| 234d | Agent Step — integrate health queries into 02-financial-analyst + 04-market-watcher fetch logic | Done | Dev |
-| 234e | QA Verification — e2e health polling + SLA escalation + tool output formatting | Done | QA |
+**240e:** Depends: 240c | Context: `docs/handoffs/TASK_240e.md` | QA manual smoke test + report
 
 ---
 

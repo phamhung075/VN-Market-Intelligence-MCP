@@ -175,6 +175,11 @@ export interface AssembleEveningSummaryOptions {
    * When provided, called instead of the default daily_ohlcv query.
    */
   getForeignFlowMoversFn?: (db: Database) => ForeignFlowMover[];
+  /**
+   * Injectable Telegram sender for test verification of freshness gate.
+   * Receives (channel, message) and logs calls.
+   */
+  sendTelegramFn?: ((channel: string, message: string) => Promise<void>) | undefined;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -294,10 +299,72 @@ function defaultGetOhlcvRowCount(code: string, db: Database): number {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Helper functions
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Check if market_prices data is fresh enough (≤24h old).
+ * Returns true if MAX(daily_ohlcv.updated_at) is within 24 hours, false otherwise.
+ */
+async function isPriceFresh(db: Database): Promise<boolean> {
+  try {
+    const row = db
+      .prepare<{ latest: string | null }, []>("SELECT MAX(updated_at) as latest FROM daily_ohlcv")
+      .get();
+
+    if (!row?.latest) {
+      // No data at all — consider stale
+      return false;
+    }
+
+    const ageMs = Date.now() - new Date(row.latest).getTime();
+    const ageHours = Math.round(ageMs / (1000 * 60 * 60));
+
+    const isFresh = ageHours <= 24;
+
+    if (!isFresh) {
+      logger.warn(`[freshness-gate] prices stale ${ageHours}h, suppressing evening summary send`);
+    }
+
+    return isFresh;
+  } catch (err) {
+    logger.error("[freshness-gate] check failed", {
+      error: err instanceof Error ? err.message : String(err),
+    });
+    // On error, conservatively assume not fresh
+    return false;
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Main exported function
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
+ * Overloads for assembleEveningSummary function to support both calling patterns.
+ * Pattern 1: assembleEveningSummary(options: AssembleEveningSummaryOptions)
+ * Pattern 2: assembleEveningSummary(db: Database, sendTelegramFn: (channel, message) => Promise<void>) [for tests]
+ */
+export async function assembleEveningSummary(
+  dbOrOptions: Database | AssembleEveningSummaryOptions = {},
+  sendTelegramFn?: (channel: string, message: string) => Promise<void>,
+): Promise<EveningSummary> {
+  // Normalize arguments: handle both calling patterns
+  let options: AssembleEveningSummaryOptions;
+  if (dbOrOptions && "prepare" in dbOrOptions) {
+    // It's a Database instance (has prepare method)
+    options = { db: dbOrOptions, sendTelegramFn };
+  } else {
+    // It's an options object
+    options = (dbOrOptions as AssembleEveningSummaryOptions) ?? {};
+  }
+
+  return _assembleEveningSummaryImpl(options);
+}
+
+/**
+ * Internal implementation of assembleEveningSummary.
+ *
  * Assembles a structured evening summary for the end of the Vietnamese trading day.
  *
  * Steps (all DB queries run against the injected `db`; file write failures are
@@ -312,7 +379,7 @@ function defaultGetOhlcvRowCount(code: string, db: Database): number {
  * @param options - Injectable dependencies; all are optional for production use.
  * @returns       - Structured EveningSummary object.
  */
-export async function assembleEveningSummary(
+async function _assembleEveningSummaryImpl(
   options: AssembleEveningSummaryOptions = {},
 ): Promise<EveningSummary> {
   // Resolve DB lazily to avoid importing getDb at module level (testability)
@@ -739,6 +806,22 @@ export async function assembleEveningSummary(
     logger.warn("[assembleEveningSummary] failed to persist summary", {
       error: err instanceof Error ? err.message : String(err),
     });
+  }
+
+  // ── Step 8: Freshness gate — check if market prices are stale ─────────────
+  const isFresh = await isPriceFresh(db);
+  const sendTelegramFn = options.sendTelegramFn;
+
+  if (!isFresh && sendTelegramFn) {
+    // Prices are stale — suppress MARKET send and alert WORK team
+    logger.warn("[assembleEveningSummary] freshness gate: prices >24h stale, suppressing MARKET send");
+    const row = db
+      .prepare<{ latest: string | null }, []>("SELECT MAX(updated_at) as latest FROM daily_ohlcv")
+      .get();
+    await sendTelegramFn(
+      "work",
+      `[FRESHNESS GATE] Evening summary suppressed. Last price update: ${row?.latest ?? "unknown"}`
+    );
   }
 
   return summary;

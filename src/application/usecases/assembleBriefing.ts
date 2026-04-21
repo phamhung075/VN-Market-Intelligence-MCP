@@ -250,6 +250,7 @@ export interface DailyBriefing {
  * @param pollNewsFn      - Override for pollNews (best-effort, errors are caught)
  * @param fetchVnIndexFn  - Override for VN-Index fetch (best-effort, errors are caught)
  * @param briefingsDir    - Override output directory (defaults to ./data/briefings)
+ * @param sendTelegramFn  - Override for Telegram sending (for testing freshness gate)
  */
 export interface AssembleBriefingOptions {
   db?: Database;
@@ -267,6 +268,11 @@ export interface AssembleBriefingOptions {
    * Tests always set this. Production leaves it undefined — defaults to new Date().
    */
   nowFn?: () => Date;
+  /**
+   * Injectable Telegram sender for test verification of freshness gate.
+   * Receives (channel, message) and logs calls.
+   */
+  sendTelegramFn?: ((channel: string, message: string) => Promise<void>) | undefined;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -554,6 +560,40 @@ function parseAffectedCodes(json: string | null): string[] {
 }
 
 /**
+ * Check if market_prices data is fresh enough (≤24h old).
+ * Returns true if MAX(daily_ohlcv.updated_at) is within 24 hours, false otherwise.
+ */
+async function isPriceFresh(db: Database): Promise<boolean> {
+  try {
+    const row = db
+      .prepare<{ latest: string | null }, []>("SELECT MAX(updated_at) as latest FROM daily_ohlcv")
+      .get();
+
+    if (!row?.latest) {
+      // No data at all — consider stale
+      return false;
+    }
+
+    const ageMs = Date.now() - new Date(row.latest).getTime();
+    const ageHours = Math.round(ageMs / (1000 * 60 * 60));
+
+    const isFresh = ageHours <= 24;
+
+    if (!isFresh) {
+      logger.warn(`[freshness-gate] prices stale ${ageHours}h, suppressing briefing send`);
+    }
+
+    return isFresh;
+  } catch (err) {
+    logger.error("[freshness-gate] check failed", {
+      error: err instanceof Error ? err.message : String(err),
+    });
+    // On error, conservatively assume not fresh
+    return false;
+  }
+}
+
+/**
  * Default TA computation for one ticker: queries daily_ohlcv for the last 60
  * candles, computes RSI and MA with adaptive periods, and classifies signals.
  * Returns null when fewer than 8 candles are available (RSI minimum).
@@ -607,6 +647,30 @@ export function defaultComputeTa(code: string, db: Database): TaSignal | null {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
+ * Overloads for assembleBriefing function to support both calling patterns.
+ * Pattern 1: assembleBriefing(options: AssembleBriefingOptions)
+ * Pattern 2: assembleBriefing(db: Database, sendTelegramFn: (channel, message) => Promise<void>) [for tests]
+ */
+export async function assembleBriefing(
+  dbOrOptions: Database | AssembleBriefingOptions = {},
+  sendTelegramFn?: (channel: string, message: string) => Promise<void>,
+): Promise<DailyBriefing> {
+  // Normalize arguments: handle both calling patterns
+  let options: AssembleBriefingOptions;
+  if (dbOrOptions && "prepare" in dbOrOptions) {
+    // It's a Database instance (has prepare method)
+    options = { db: dbOrOptions, sendTelegramFn };
+  } else {
+    // It's an options object
+    options = (dbOrOptions as AssembleBriefingOptions) ?? {};
+  }
+
+  return _assembleBriefingImpl(options);
+}
+
+/**
+ * Internal implementation of assembleBriefing.
+ *
  * Assembles a structured morning briefing for the Vietnamese market day.
  *
  * Steps (all DB queries run against the injected `db`; best-effort calls
@@ -624,7 +688,7 @@ export function defaultComputeTa(code: string, db: Database): TaSignal | null {
  * @param options - Injectable dependencies; all are optional for production use.
  * @returns       - Structured DailyBriefing object.
  */
-export async function assembleBriefing(
+async function _assembleBriefingImpl(
   options: AssembleBriefingOptions = {},
 ): Promise<DailyBriefing> {
   // Resolve DB lazily (avoid importing getDb at module level for testability)
@@ -1200,6 +1264,22 @@ export async function assembleBriefing(
     logger.warn("[assembleBriefing] failed to persist briefing", {
       error: err instanceof Error ? err.message : String(err),
     });
+  }
+
+  // ── Step 14: Freshness gate — check if market prices are stale ─────────────
+  const isFresh = await isPriceFresh(db);
+  const sendTelegramFn = options.sendTelegramFn;
+
+  if (!isFresh && sendTelegramFn) {
+    // Prices are stale — suppress MARKET send and alert WORK team
+    logger.warn("[assembleBriefing] freshness gate: prices >24h stale, suppressing MARKET send");
+    const row = db
+      .prepare<{ latest: string | null }, []>("SELECT MAX(updated_at) as latest FROM daily_ohlcv")
+      .get();
+    await sendTelegramFn(
+      "work",
+      `[FRESHNESS GATE] Briefing suppressed. Last price update: ${row?.latest ?? "unknown"}`
+    );
   }
 
   return briefing;

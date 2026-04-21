@@ -14,9 +14,41 @@
 
 ---
 
+## Sprint 240 — CRISIS: Price Pipeline Recovery + Data Freshness Enforcement (2026-04-21)
+
+**CRITICAL:** market_prices table stale 25 days (last update 2026-03-27). Evening briefing reports all zeros. User receives empty alerts, no watchlist movers, no stories.
+
+**Goal:** Restore live price data flow + add hardened observability to prevent 25-day data blackouts.
+
+**Scope — IN:**
+- FR-1: Diagnose + restart VPS price-fetch service (SSH + healthcheck)
+- FR-2: Backfill 25-day market_prices gap (HOSE/HNX/UPCOM daily OHLCV from cache or fallback)
+- FR-3: Harden price watchdog: move from log-only to auto-escalation (WORK/MARKET alerts, SMS if available)
+- FR-4: Add market_prices freshness gate to briefing jobs (refuse to send briefing if prices >24h stale)
+
+**Scope — OUT:** Long-term VPS infrastructure redesign (separate sprint)
+
+**Success metric:**
+- market_prices has ≥500 rows with updated_at >= 2026-04-20
+- Evening briefing report shows ≥3 watchlist movers with recent prices
+- VN Index price ≤1 day stale in briefing
+- Briefing job logs "price freshness OK" or "STALE DETECTED — suppressing send"
+
+**Size: L** (cross-layer: infrastructure diagnosis + domain recovery logic + scheduler wiring + briefing guards)
+
+**Next Steps (immediate):**
+1. Dev team SSH to VPS + diagnose vn-price-fetch service status
+2. If service running: trace why pushes aren't reaching server
+3. If service stopped: restart + force backfill
+4. Commit recovery + backfill script
+5. Implement freshness gates in briefing jobs
+6. QA smoke test during market hours
+
+---
+
 ## Next Sprint — TBD
 
-Awaiting PO assessment of product gaps and highest-impact improvements.
+Awaiting completion of Sprint 240 + PO reassessment of product gaps.
 
 **Previous:**
 
