@@ -1,5 +1,6 @@
 ---
 name: claude-manager-helper
+color: green
 description: Context janitor. Enforces tree-map DAG, keeps CLAUDE.md lean, prunes memory, validates knowledge/data split. Cron agent token economy.
 tools: Read, Write, Edit, Glob, Grep, Bash
 model: haiku

@@ -67,10 +67,11 @@ Full design → `docs/ARCHITECTURE.md#vps-proxy-geo-block-workaround`
 
 | Schedule (UTC) | Agent | Model | Frequency rationale |
 |----------------|-------|-------|---------------------|
-| `7 * * * *` | dev-team (po→ba→architect→pm→developer→qa→fixer) | sonnet | Hourly. Calls individual agents directly in sequence. 45-min cap. |
+| `7 * * * *` | dev-team (po→ba→architect→pm→developer→qa→fixer→ops) | mixed (sonnet/haiku) | Hourly. Calls individual agents in sequence. **Ops runs last (~30s baseline health check)**. Total 45-min cap. |
 | `0 */6 * * *` | code-janitor | haiku | Every 6h. Mechanical grep — haiku sufficient. Early-exit if 0 src/ commits in 6h. |
 | `0 16 * * *` | system-auditor | sonnet | 1x/day 23:00 VN. Early-exit if 0 commits in 24h. |
 | `30 17 * * 1,4` | claude-manager-helper | sonnet | 2x/week (Mon+Thu 00:30 VN). Early-exit if 0 context file changes in 3 days. |
+| `*/10 2-8 * * 1-5` | ops-emergency (escalation hook) | haiku | Market hours, 10-min cadence. **Only runs if VPS watchdog flags issue.** Otherwise silent observer. |
 
 **Token economy rules applied:**
 - All cron prompts are minimal (~20 words) — agent `.md` has full instructions

@@ -19,23 +19,27 @@ Coordinator: `cowork-analysis-vnmarket-team/unified-agent.md`
 
 ## Dev Team (Claude Code CLI — local cron)
 
-| Agent | File | Role |
-|-------|------|------|
-| PO | `po.md` | Vision, approves specs, final sign-off |
-| BA | `ba.md` | Requirements, edge cases, blockers |
-| Architect | `architect.md` | Brownfield analysis, technical design, risk |
-| PM | `pm.md` | Sprint planning, task breakdown, TASKS.md |
-| Developer | `developer.md` | TDD implementation, DDD compliance |
-| QA / CI-CD | `qa.md` | Test pipeline, merge gate, sprint report |
-| Fixer | `fixer.md` | Minimum fixes on changes-requested tasks |
-| Market Analyst | `market-analyst.md` | Investment analysis via MCP tools |
-| Idea Forge | `idea-forge.md` | Brainstorm, refine, expand ideas |
-| Cowork Refactory Expert | `cowork-refactory-expert.md` | Rewrite/update Cowork agent .md files |
-| System Auditor | `system-auditor.md` | Health audit: memory, DB, docs sync, anomaly detection |
-| Claude Manager Helper | `claude-manager-helper.md` | Context janitor: CLAUDE.md slim, docs sync, memory hygiene |
-| Code Janitor | `code-janitor.md` | DRY auditor cron (every 3h): duplicate ticker maps, hard-coded arrays, magic numbers, schema duplication |
+| Agent | File | Role | Model |
+|-------|------|------|-------|
+| PO | `po.md` | Vision, approves specs, final sign-off | Opus |
+| BA | `ba.md` | Requirements, edge cases, blockers | Sonnet |
+| Architect | `architect.md` | Brownfield analysis, technical design, risk | Sonnet |
+| PM | `pm.md` | Sprint planning, task breakdown, TASKS.md | Sonnet |
+| Developer | `developer.md` | TDD implementation, DDD compliance | Sonnet |
+| QA / CI-CD | `qa.md` | Test pipeline, merge gate, sprint report | Sonnet |
+| Fixer | `fixer.md` | Minimum fixes on changes-requested tasks | Sonnet |
+| **Ops** | **`ops.md`** | **VPS health, server restarts, incident response** | **Haiku** |
+| Market Analyst | `market-analyst.md` | Investment analysis via MCP tools | Sonnet |
+| Idea Forge | `idea-forge.md` | Brainstorm, refine, expand ideas | Sonnet |
+| Cowork Refactory Expert | `cowork-refactory-expert.md` | Rewrite/update Cowork agent .md files | Sonnet |
+| System Auditor | `system-auditor.md` | Health audit: memory, DB, docs sync, anomaly detection | Sonnet |
+| Claude Manager Helper | `claude-manager-helper.md` | Context janitor: CLAUDE.md slim, docs sync, memory hygiene | Sonnet |
+| Code Janitor | `code-janitor.md` | DRY auditor cron (every 3h): duplicate ticker maps, hard-coded arrays, magic numbers, schema duplication | Haiku |
 
-Dev team cron: fires hourly → calls individual subagents directly (po → ba → architect → pm → developer → qa → fixer) in sequence per work type
+Dev team cron workflow:
+- **Hourly cycle** (7 min UTC): po → ba → architect → pm → developer → qa → fixer → **ops** (baseline health check, ~30s)
+- **Ops invocation:** After QA merge, baseline health check only (observes, does not take action unless escalated)
+- **Early exit:** If all systems green + no VPS alerts for 7 days, skip diagnostics (check watchdog log only)
 
 ## Stock Classification
 
