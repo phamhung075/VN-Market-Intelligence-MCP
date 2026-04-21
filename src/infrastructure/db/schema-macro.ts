@@ -48,6 +48,8 @@ export function initMacroTables(db: Database): void {
   ]) {
     try { db.exec(`ALTER TABLE macro_indicators ADD COLUMN ${col} REAL`); } catch {}
   }
+  // Task 239: add column to track last refresh job attempt
+  try { db.exec(`ALTER TABLE macro_indicators ADD COLUMN last_refresh_job TEXT`); } catch {}
 
   // ── Commodity Prices (Task 025/028) ──────────────────────────────────────
   db.exec(`
