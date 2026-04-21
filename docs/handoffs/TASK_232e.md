@@ -106,3 +106,44 @@ QA task 232e is **Done** when:
 5. All dev tasks (232a-232d) merged to main
 6. Task branch deleted (local + remote)
 7. Main branch updated: `git pull origin main` → current
+
+---
+
+## [QA] Review Record
+
+**verdict**: APPROVED
+
+**blocking_issues**: None
+
+**non_blocking**: None
+
+**files_confirmed_clean**:
+- /src/domain/services/resilientFetcher.ts (pure domain, zero imports)
+- /src/infrastructure/fetchers/newsSourceRouter.ts (infra-only imports)
+- /src/infrastructure/fetchers/priceSourceRouter.ts (infra-only imports)
+- /src/infrastructure/fetchers/bctcSourceRouter.ts (infra-only imports)
+
+**test_results**:
+- 21/21 tests PASS
+- 36/36 assertions PASS (AC-1 to AC-12)
+- 0 TypeScript errors
+
+**security_checks**:
+- No infrastructure imports in domain layer
+- No circular imports
+- No SQL injection (parameterized queries only)
+- No hardcoded secrets
+- Circuit breaker read-only
+- 180s timeout enforced
+- Exponential backoff capped
+
+**integration_verified**:
+- Step 0c health check logs to console/trace
+- Router decision trees handle VPS open/stale/closed states
+- resilientFetcher retries primary → fallbacks → exhaustion
+- onExhausted callback fires with proper ExhaustedContext
+- Config fallbacks conservative (both disabled by default)
+- Signal metadata includes source_fallback, fetched_at, fallback_tier
+- Confidence penalty applied (0.85x for fallback sources)
+
+**merge_commit**: (pending)
