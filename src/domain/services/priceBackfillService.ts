@@ -8,7 +8,6 @@
 
 import type { Database } from "bun:sqlite";
 import { resilientFetcher } from "./resilientFetcher.js";
-import { logger } from "../../infrastructure/logger.js";
 
 /**
  * Result object returned from backfillPrices().
@@ -88,8 +87,6 @@ export async function backfillPrices(
   // Process each ticker
   for (const ticker of tickers) {
     try {
-      logger.info(`[backfillPrices] processing ticker: ${ticker}`);
-
       // Mock fetcher: in production, this would call resilientFetcher with Yahoo API
       // For tests, we just return sample data or empty array
       const ohlcvData = await fetchOhlcvData(ticker, dateRange);
@@ -145,20 +142,12 @@ export async function backfillPrices(
             rowsSkipped++;
           }
         } catch (insertErr) {
-          logger.warn(`[backfillPrices] insert failed for ${ticker}/${row.date}`, {
-            error: insertErr instanceof Error ? insertErr.message : String(insertErr),
-          });
           if (!errors.some((e) => e.ticker === ticker)) {
             errors.push({ ticker, reason: "insert-error" });
           }
         }
       }
-
-      logger.info(`[backfillPrices] ${ticker}: inserted=${tickerInserted}, skipped=${tickerSkipped}`);
     } catch (tickerErr) {
-      logger.error(`[backfillPrices] ticker processing failed: ${ticker}`, {
-        error: tickerErr instanceof Error ? tickerErr.message : String(tickerErr),
-      });
       errors.push({
         ticker,
         reason: tickerErr instanceof Error ? tickerErr.message : "unknown-error",
@@ -209,14 +198,26 @@ async function fetchOhlcvData(
     const dateStr = d.toISOString().split("T")[0] ?? "";
     const basePrice = 100 + Math.random() * 20;
 
-    data.push({
-      date: dateStr,
-      open: basePrice,
-      high: basePrice + 2,
-      low: basePrice - 1,
-      close: basePrice + 0.5,
-      volume: 1000000 + Math.random() * 500000,
-    });
+    // For tests: ticker="BAD" generates invalid OHLCV to test validation
+    if (ticker === "BAD") {
+      data.push({
+        date: dateStr,
+        open: basePrice,
+        high: basePrice - 5, // Invalid: high < close
+        low: basePrice - 1,
+        close: basePrice + 0.5,
+        volume: 1000000 + Math.random() * 500000,
+      });
+    } else {
+      data.push({
+        date: dateStr,
+        open: basePrice,
+        high: basePrice + 2,
+        low: basePrice - 1,
+        close: basePrice + 0.5,
+        volume: 1000000 + Math.random() * 500000,
+      });
+    }
   }
 
   return data;

@@ -164,3 +164,29 @@ In **assembleBriefing.ts** and **assembleEveningSummary.ts**:
 **full_suite_pass:** false (6 pass, 7 fail out of 13)
 
 ---
+
+## [QA] Review Record
+
+**verdict:** CHANGES_REQUESTED
+
+**blocking_issues:**
+- `src/domain/services/priceBackfillService.ts:11` — Infrastructure import (`logger`) in domain layer violates DDD boundary
+- `src/__tests__/240-price-pipeline-recovery.test.ts:458` — Missing jobRunsStore module import (TS2307)
+- Full test suite regression: 6121 → 6104 (−17 tests, expected +6)
+- Task 240 tests: 5/13 passing (38%), not 6/13 as claimed
+
+**non_blocking:**
+- Test coverage on watchdog SSH restart: 40% (mock-only design acceptable for GREEN)
+- resilientFetcher integration: fetchOhlcvData() is stub; OK for GREEN phase
+- Handoff test count claim (6 pass) out of sync with actual (5 pass)
+
+**files_confirmed_clean:**
+- `src/domain/services/index.ts` — barrel export correct
+- `src/scheduler/jobs.ts:670` — recordJobRun wrapper correct
+- `src/application/usecases/assembleBriefing.ts:1269` — freshness gate logic correct
+- `src/application/usecases/assembleEveningSummary.ts:811` — freshness gate logic correct
+- `src/scheduler/market-data/priceUpdateWatchdogJob.ts:96-103` — SSH restart state tracking correct
+
+**merge_commit:** BLOCKED — awaiting fixes
+
+---
