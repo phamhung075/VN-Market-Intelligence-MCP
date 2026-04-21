@@ -1,18 +1,33 @@
 # Sprint Goal
 
-## Sprint 229 — CHECKPOINT / NEXT PHASE PLANNING
+## Sprint 230 — Verify Bootstrap Performance + Signal Quality Hardening
 
-**Status:** No active sprint. System at checkpoint after sprints 227-228 completion.
+**Goal:** Validate that `get_cycle_bootstrap` tool meets its ≤3s p95 latency SLA, verify signal validation logic prevents hallucinated prices from reaching MARKET channel, and harden the fail-loud protocol for partial bootstrap failures.
+
+**Scope:**
+- **FR-1**: Instrument bootstrap tool with latency telemetry; run 100+ calls during market hours; validate p95 ≤ 3s
+- **FR-2**: Spot-check signal validation in agents (last 7 days); verify prices within ±5% of backend
+- **FR-3**: Test fail-loud protocol with injected bootstrap failures; verify agents handle gracefully (no silent skip)
+- **FR-4**: Extend signal confidence scoring to include timing + source freshness metadata
+
+**Success metric:**
+- Bootstrap p95 latency ≤ 3s (confirmed via instrumentation)
+- 100% of posted signals (last 7 days) pass price ±5% validation
+- All 3 bootstrap sub-call failures handled gracefully (agent-level fail-loud confirmed)
+- Signal metadata now includes `confidence_score` + `validated_at` timestamp
+
+**Size: M** (verification + hardening, full BA→Arch→PM pipeline)
+
+---
+
+## Sprint 229 — COMPLETE
+
+**Status:** Price-staleness watchdog + fallback assessment COMPLETE & MERGED (2026-04-21)
 
 **Recent completions:**
 - Sprint 227: VPS watchdog recovery alerts
 - Sprint 228: Foreign-flow parse hardening + defensive validation
 - Sprint 226: Agent merge (9→7) + unified bootstrap tool
-
-**Next actions:**
-1. Product analysis: identify highest-impact improvement
-2. User-facing bugs or missing features
-3. Reliability/data quality regressions
 
 ---
 

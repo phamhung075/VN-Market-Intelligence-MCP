@@ -30,8 +30,8 @@
 
 | ID | Title | Status | Role |
 |----|-------|--------|------|
-| 229_a | [Dev] TDD RED — `229-price-staleness-watchdog.test.ts` with 5–7 failing assertions (AC-1 to AC-7) | In Progress | Dev |
-| 229_b | [Dev] GREEN — watchdog implementation (priceUpdateWatchdogJob.ts + jobs.ts + eveningSummaryJob.ts + marketContextBuilder verify) | Todo | Dev |
+| 229_a | [Dev] TDD RED — `229-price-staleness-watchdog.test.ts` with 5–7 failing assertions (AC-1 to AC-7) | Done | Dev |
+| 229_b | [Dev] GREEN — watchdog implementation (priceUpdateWatchdogJob.ts + jobs.ts + eveningSummaryJob.ts + marketContextBuilder verify) | Done | Dev |
 | 229_c | [Dev] Investigation — VPS pipeline diagnostics + fallback assessment (FALLBACK_INVESTIGATION.md + ARCHITECTURE.md update) | Done | Dev |
 
 ### Task Details
@@ -44,6 +44,31 @@ context: docs/handoffs/TASK_229b.md
 
 #### 229_c — Investigation + ARCHITECTURE.md update
 context: docs/handoffs/TASK_229c.md
+
+---
+
+## Sprint 230 — verify(bootstrap): latency SLA validation + signal quality hardening + fail-loud protocol hardening
+
+**Goal:** Guarantee zero hallucinated prices reach MARKET channel; prove bootstrap meets ≤3s p95 latency; harden fail-loud protocol across all 7 Cowork agents.
+
+**Blockers:** None.
+
+| ID | Title | Status | Role |
+|----|-------|--------|------|
+| 230a | [Dev] TDD RED — `230-bootstrap-verify.test.ts` with 12+ failing assertions (AC-1 to AC-4) | Todo | Dev |
+| 230b | [Dev] GREEN — timing instrumentation + signalValidator service + schema extension + MCP tool registration | Todo | Dev |
+| 230c | [Dev] Integration — agent .md fail-loud blocks (Step 0-b, 7 files) + QA AC-6 validation step + tool registry update | Todo | Dev |
+
+### Task Details
+
+#### 230a — TDD RED test suite
+context: docs/handoffs/TASK_230a.md
+
+#### 230b — GREEN implementation
+context: docs/handoffs/TASK_230b.md
+
+#### 230c — Integration + QA validation
+context: docs/handoffs/TASK_230c.md
 
 ---
 
