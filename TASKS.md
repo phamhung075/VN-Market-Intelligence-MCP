@@ -22,8 +22,8 @@
 
 | ID | Title | Status | Role |
 |----|-------|--------|------|
-| 240a | TDD RED — price pipeline recovery test suite | Review | Dev |
-| 240b | GREEN — backfill service + watchdog escalation + freshness gates | Todo | Dev |
+| 240a | TDD RED — price pipeline recovery test suite | Done | Dev |
+| 240b | GREEN — backfill service + watchdog escalation + freshness gates | Done | Dev |
 | 240c | Integration — recordJobRun wrapper + schema UNIQUE constraint | Todo | Dev |
 | 240e | QA Smoke test — live price flow + briefing freshness | Todo | QA |
 
