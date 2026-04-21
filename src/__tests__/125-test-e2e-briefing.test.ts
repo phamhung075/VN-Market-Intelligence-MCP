@@ -1148,9 +1148,10 @@ describe("Task 125 — E2E Daily Briefing Flow", () => {
       resetMorningBriefingGuard();
       resetEveningSummaryGuard();
 
-      // Use Date.now() - 1h so seed rows always fall within assembleBriefing's 12h window,
-      // regardless of when the test runs relative to VN midnight.
-      const recentTimestamp = new Date(Date.now() - 3_600_000).toISOString();
+      // Seed with current time (guaranteed after Vietnam midnight). assembleBriefing
+      // queries created_at >= midnightVietnamAsUtc(), which is 7h behind UTC.
+      // Using Date.now() ensures row is always within today's Vietnam date.
+      const recentTimestamp = new Date(Date.now()).toISOString();
 
       // Shared test data
       seedWatchlist(db, "VCB", "HOSE", "banking");
