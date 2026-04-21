@@ -106,6 +106,19 @@ export * from "./timeConstants.js";
 export * from "./tradingWindow.js";
 export * from "./vnNumberParser.js";
 
+// --- VPS & System Health (Task 234) ---
+// vpsHealthPoller: exports can use * (no collisions)
+export * from "./vpsHealthPoller.js";
+// freshnessSlaChecker: SignalType collides with signalDetector — export functions only
+export {
+  checkDataFreshnessSla,
+  checkSignalSla,
+  classifySeverity,
+  isVnMarketHours,
+  getSlaThreshold,
+  DEFAULT_SLA_CONFIG,
+} from "./freshnessSlaChecker.js";
+
 // --- Kinh Dich sub-module ---
 export * from "./kinhDich/index.js";
 export * from "./kinhDich/kinhDichWrapper.js";

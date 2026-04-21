@@ -353,4 +353,52 @@ export function initSystemTables(db: Database): void {
     CREATE INDEX IF NOT EXISTS idx_signal_quality_audit_source
       ON signal_quality_audit(source_fallback, signal_type, ticker)
   `);
+
+  // ── VPS Service Health (Task 234) ──────────────────────────────────────────
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS vps_service_health (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      service_name TEXT NOT NULL CHECK(
+        service_name IN ('vn-price-fetch', 'vn-bctc-fetch', 'vn-news-fetch', 'vn-sbv-fetch', 'vn-foreign-flow')
+      ),
+      polled_at TEXT NOT NULL DEFAULT (datetime('now')),
+      health_status TEXT NOT NULL CHECK(
+        health_status IN ('healthy', 'unhealthy', 'unreachable')
+      ),
+      response_time_ms INTEGER,
+      last_successful_run TEXT,
+      uptime_seconds INTEGER,
+      error_message TEXT
+    )
+  `);
+  db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_vps_health_service_polled
+      ON vps_service_health(service_name, polled_at DESC)
+  `);
+
+  // ── SLA Breach Audit (Task 234) ───────────────────────────────────────────
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS sla_breach_audit (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      signal_type TEXT NOT NULL CHECK(
+        signal_type IN ('price', 'bctc', 'news', 'sbv_fx', 'foreign_flow')
+      ),
+      breached_at TEXT NOT NULL DEFAULT (datetime('now')),
+      age_minutes INTEGER NOT NULL,
+      threshold_minutes INTEGER NOT NULL,
+      status TEXT NOT NULL DEFAULT 'breach_open' CHECK(
+        status IN ('breach_open', 'recovered')
+      ),
+      severity TEXT NOT NULL CHECK(
+        severity IN ('HIGH', 'CRITICAL')
+      ),
+      escalation_callback_sent INTEGER DEFAULT 0,
+      recovered_at TEXT,
+      UNIQUE(signal_type, breached_at)
+    )
+  `);
+  db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_sla_breach_signal_status
+      ON sla_breach_audit(signal_type, status, breached_at DESC)
+  `);
 }

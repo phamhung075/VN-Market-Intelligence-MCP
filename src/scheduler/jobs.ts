@@ -63,6 +63,8 @@ import { runOhlcvStartupProbe } from './market-data/ohlcvStartupProbe.js'
 import { runOhlcvDailyAggregator } from './market-data/ohlcvDailyAggregatorJob.js'
 import { runOhlcvStalenessCheck } from './market-data/ohlcvStalenessCheckJob.js'
 import { priceUpdateWatchdog } from './market-data/priceUpdateWatchdogJob.js'
+import { runVpsHealthPolling } from './system/vpsServiceHealthJob.js'
+import { runFreshnessSlaMonitorJob } from './system/freshnessSlaMonitorJob.js'
 import { getDb } from '../infrastructure/db/schema.js'
 import { recordJobRun } from '../infrastructure/db/cronJobRunStore.js'
 import type { Database } from 'bun:sqlite'
@@ -149,6 +151,10 @@ export const CRONS = {
    *  Every 10 min during VN market hours (Mon-Fri 02:00-08:59 UTC). Early-warning layer
    *  (separate from 45-min VPS watchdog) to catch price pipeline failures and alert user. */
   priceUpdateWatchdog:    Bun.env.CRON_PRICE_UPDATE_WATCHDOG             ?? '*/10 2-8 * * 1-5',
+  /** vpsServiceHealth — VPS service health polling every 5 min (task 234) */
+  vpsServiceHealth:       Bun.env.CRON_VPS_SERVICE_HEALTH                 ?? '*/5 * * * *',
+  /** freshnessSlaMonitor — data freshness SLA check every 30 min (task 234) */
+  freshnessSlaMonitor:    Bun.env.CRON_FRESHNESS_SLA_MONITOR              ?? '*/30 * * * *',
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -675,5 +681,23 @@ export function startScheduler() {
     });
   }, { timezone: 'UTC' })
 
-  log(`[scheduler] jobs registered — ${Object.keys(CRONS).length} cron keys in CRONS map (incl. WAL checkpoint + 5 summary) + vps-watchdog active`)
+  // Every 5 min — VPS service health polling — task 234, Sprint 234
+  // Polls all 5 VPS services (price, BCTC, news, SBV, foreign-flow) and records health status.
+  // Circuit breaker protects against cascading failures.
+  cron.schedule(CRONS.vpsServiceHealth, async () => {
+    await recordJobRun(getDb(), 'vpsServiceHealthJob', async () => {
+      await runVpsHealthPolling()
+    })
+  }, { timezone: 'UTC' })
+
+  // Every 30 min — Data freshness SLA monitor — task 234, Sprint 234
+  // Checks signal source data freshness against SLA thresholds.
+  // Escalates to Alert Commander when SLA breaches detected with 60-min cooldown.
+  cron.schedule(CRONS.freshnessSlaMonitor, async () => {
+    await recordJobRun(getDb(), 'freshnessSlaMonitorJob', async () => {
+      await runFreshnessSlaMonitorJob()
+    })
+  }, { timezone: 'UTC' })
+
+  log(`[scheduler] jobs registered — ${Object.keys(CRONS).length} cron keys in CRONS map (incl. WAL checkpoint + 5 summary) + vps-watchdog + VPS health + SLA monitor active`)
 }
