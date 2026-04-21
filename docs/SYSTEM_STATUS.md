@@ -1,7 +1,7 @@
 # System Status Dashboard
 
 > **Maintained by:** Dev team (developer + qa agents) — update after every fix, sprint close, or health check.
-> **Last updated:** 2026-04-17 (sprint 140)
+> **Last updated:** 2026-04-21 (sprint 234 complete, server restarted)
 > **How to refresh:** run `get_cron_health`, `get_pipeline_health`, `get_system_status` MCP tools + SSH VPS status check.
 
 ---
@@ -57,15 +57,17 @@
 | `taAlertNotifierJob` | market hours | 100% | 2026-04-17 08:45 | ✅ ok | |
 | `taAlertScanJob` | market hours | 100% | 2026-04-17 08:45 | ✅ ok | |
 | `vpsProxyWatchdogJob` | every 30 min | 100% | 2026-04-17 08:50 | ✅ ok | observe-only — never restarts VPS. |
+| `vpsServiceHealthJob` | every 5 min | 100% | 2026-04-21 21:35 | ✅ ok | NEW — Sprint 234: direct health polling of all 5 VPS services. |
+| `freshnessSlaMonitorJob` | every 30 min | 100% | 2026-04-21 21:30 | ✅ ok | NEW — Sprint 234: data freshness SLA validation + escalation. |
 | `weatherCheckJob` | 17:00 UTC daily | 94.7% | 2026-04-17 17:00 | ⚠️ flaky | 1 failure in 19. External API timeout — monitor. |
 | `weeklyPortfolioReportJob` | Sunday | 100% | — | ✅ ok | |
 
 ---
 
-## 3. MCP Tools (98 registered — `src/interface/mcp/tools/`)
+## 3. MCP Tools (103 registered — `src/interface/mcp/tools/`)
 
 > Tools are registered in `src/interface/mcp/tools/registry.ts`. Count tracked in `docs/data/project-stats.json`.
-> Last verified: sprint 140, toolCount=98.
+> Last verified: sprint 234, toolCount=103.
 
 | Category | Files | Status | Notes |
 |----------|-------|--------|-------|
@@ -85,7 +87,7 @@
 | Sector | `sectorComparisonTools.ts`, `sectorRotationTools.ts` | ✅ ok | |
 | Signals | `agentSignalTools.ts`, `foreignFlowTools.ts`, `insiderTools.ts`, `sentimentTrendTools.ts`, `technicalIndicatorTools.ts`, `tickerIntelligenceTools.ts` | ✅ ok | |
 | Specialty | `climateTools.ts`, `energyTools.ts`, `pharmaTools.ts`, `legalRiskTools.ts`, `supplyChainTools.ts`, `crisisTools.ts`, `bondMaturityTools.ts`, `publicInvestmentTools.ts` | ✅ ok | |
-| System | `systemTools.ts`, `rateLimitTools.ts`, `sourceHealthTools.ts`, `dataFreshnessTools.ts`, `vpsProxyTools.ts`, `changelogTools.ts` | ✅ ok | |
+| System | `systemTools.ts`, `rateLimitTools.ts`, `sourceHealthTools.ts`, `dataFreshnessTools.ts`, `vpsProxyTools.ts`, `changelogTools.ts`, `vpsHealthTools.ts`, `slaStatusTools.ts` | ✅ ok | NEW: vpsHealthTools, slaStatusTools (Sprint 234) |
 | Telegram | `telegramTools.ts`, `telegramReportTools.ts` | ✅ ok | |
 | Watchlist | `watchlist.ts`, `priceHistoryTools.ts` | ✅ ok | |
 | Ask queue | `askQueueTools.ts` | ✅ ok | |

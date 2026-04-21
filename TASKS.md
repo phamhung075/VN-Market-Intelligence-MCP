@@ -79,7 +79,7 @@
 
 ---
 
-## Sprint 234 — feat(observability): VPS health dashboard + data freshness SLA enforcement — IN PROGRESS
+## Sprint 234 — feat(observability): VPS health dashboard + data freshness SLA enforcement — COMPLETE (2026-04-21)
 
 **Goal:** Implement direct health polling of all 5 VPS services (prices/BCTC/news/SBV/foreign-flow) + active monitoring of signal source freshness with escalation callbacks. Prevent blindness to cascading failures and enforce data quality SLAs.
 
@@ -96,8 +96,8 @@
 | 234a | TDD RED — `234-vps-health-sla.test.ts` with 12 assertions (all 5 services, SLA checks) | Done | Dev |
 | 234b | GREEN — vpsHealthPoller + freshnessSlaChecker domain services + escalation callback | Done | Dev |
 | 234c | Integration — schema tables + jobs.ts registration + MCP tools (get_vps_service_health + get_sla_status) | Done | Dev |
-| 234d | Agent Step — integrate health queries into 02-financial-analyst + 04-market-watcher fetch logic | Review | Dev |
-| 234e | QA Verification — e2e health polling + SLA escalation + tool output formatting | Todo | QA |
+| 234d | Agent Step — integrate health queries into 02-financial-analyst + 04-market-watcher fetch logic | Done | Dev |
+| 234e | QA Verification — e2e health polling + SLA escalation + tool output formatting | Done | QA |
 
 ---
 
