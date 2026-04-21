@@ -270,13 +270,13 @@ describe("Bootstrap Performance + Signal Quality (230)", () => {
     // This ensures fail-loud protocol is hardened across all Cowork agents
 
     const agentFiles = [
-      "cowork-analysis-vnmarket-team/01-news-scout.md",
-      "cowork-analysis-vnmarket-team/02-financial-analyst.md",
-      "cowork-analysis-vnmarket-team/04-market-watcher.md",
-      "cowork-analysis-vnmarket-team/05-alert-commander.md",
-      "cowork-analysis-vnmarket-team/06-digest-predict.md",
-      "cowork-analysis-vnmarket-team/07-qa-responder.md",
-      "cowork-analysis-vnmarket-team/unified-agent.md",
+      ".claude/agents/01-news-scout.md",
+      ".claude/agents/02-financial-analyst.md",
+      ".claude/agents/04-market-watcher.md",
+      ".claude/agents/05-alert-commander.md",
+      ".claude/agents/06-digest-predict.md",
+      ".claude/agents/07-qa-responder.md",
+      ".claude/agents/unified-agent.md",
     ];
 
     const projectRoot = path.resolve(__dirname, "../..");
