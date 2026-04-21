@@ -85,7 +85,7 @@ export function newsSourceRouter(
   return {
     primary: {
       type: "vps",
-      endpoint: `http://${process.env.VINAHOST_IP || "vps"}:3001/fetch-news`,
+      endpoint: `http://${Bun.env.VINAHOST_IP || "vps"}:3001/fetch-news`,
       timeout: 30000,
       description: "Real-time VPS proxy (10 sources, 226 items/15min)",
     },
