@@ -13,16 +13,6 @@
 
 ---
 
-## Sprint 228 — fix(foreign-flow): root-cause parse errors + add defensive validation — COMPLETE (2026-04-21)
-
-| ID | Title | Status | Role |
-|----|-------|--------|------|
-| 1566_a | [Dev] TDD RED — `1566-foreign-flow-parse-hardening.test.ts` with 5 failing assertions | Done | Dev |
-| 1566_b | [Dev] GREEN — foreignFlowValidator + server.ts truncation/schema + CB integration + schema ext | Done | Dev |
-| 1566_c | [DevOps/Dev] VPS audit & hardening: fetch-foreign-flow.sh diagnostics, payload patterns, truncation evidence | Done | Dev |
-
----
-
 ## Sprint 226 — refactor(cowork): agent merge + composite bootstrap tool + direct MCP access — COMPLETE (2026-04-21)
 
 | ID | Title | Status | Role |
@@ -33,6 +23,27 @@
 | 1563 | [Dev] Track B: `getCycleBootstrap` use case + `registerCycleBootstrapTool` + registry.ts + tool-registry.json | Done | Dev |
 | 1564 | [Dev] Track C: update all 7 agent .md files — Step 0 bootstrap + validation step + unified-agent role change (ships after 1563) | Done | Dev |
 | 1565 | [QA] Verify: bootstrap tool shape, agent count 9→7, signal latency ≤3s, no hallucinated prices reach MARKET | Done | QA |
+
+---
+
+## Sprint 229 — fix(data-crisis): market_prices stale 24 days — implement 6h price-staleness watchdog + fallback assessment
+
+| ID | Title | Status | Role |
+|----|-------|--------|------|
+| 229_a | [Dev] TDD RED — `229-price-staleness-watchdog.test.ts` with 5–7 failing assertions (AC-1 to AC-7) | Todo | Dev |
+| 229_b | [Dev] GREEN — watchdog implementation (priceUpdateWatchdogJob.ts + jobs.ts + eveningSummaryJob.ts + marketContextBuilder verify) | Todo | Dev |
+| 229_c | [Dev] Investigation — VPS pipeline diagnostics + fallback assessment (FALLBACK_INVESTIGATION.md + ARCHITECTURE.md update) | Done | Dev |
+
+### Task Details
+
+#### 229_a — TDD RED test suite
+context: docs/handoffs/TASK_229a.md
+
+#### 229_b — GREEN + FR-2 + FR-3 implementation
+context: docs/handoffs/TASK_229b.md
+
+#### 229_c — Investigation + ARCHITECTURE.md update
+context: docs/handoffs/TASK_229c.md
 
 ---
 

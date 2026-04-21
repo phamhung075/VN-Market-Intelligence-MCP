@@ -195,6 +195,20 @@ Deploy: `./deploy-vinahost.sh` (local, operator-only). Health check: `ssh root@$
 Pipeline: `GET /api/watchlist` (VPS pulls codes) | `POST /api/push-prices` (VPS pushes ~60 items/min)
 Market hours: Mon-Fri 02:00-08:59 UTC = 09:00-15:59 VN
 
+### Price Staleness Early-Warning Watchdog (SPRINT-229)
+
+The 45-minute VPS proxy watchdog (`vpsProxyWatchdogJob.ts`) monitors multi-source staleness broadly. Complementing this, a new **6-hour price-staleness watchdog** (`priceUpdateWatchdogJob.ts`) fires specifically when market prices go stale during VN market hours (Mon–Fri 02:00–08:59 UTC).
+
+**Design rationale**:
+- **Separate threshold (6h vs 45min)** detects different failure modes: 45-min catches network/service lulls; 6h catches silent pipeline failures (e.g., systemd service crash going unnoticed)
+- **VN market hours guard** prevents false alerts outside trading windows (off-hours staleness is expected/benign)
+- **30-min cooldown** prevents spam during sustained outages (one alert per 30-min window)
+- **Dual-channel alerts**: WORK channel (operator diagnostics + SSH commands), MARKET channel (user-friendly Vietnamese notice)
+- **Recovery detection**: Sends explicit "pipeline recovered" message when prices freshen after prior alert
+- **No fallback implementation**: Investigated in TASK-229c; CafeF RSS (<5–15 min stale) inadequate for real-time alerts; HNX API deferred to future sprint pending feasibility study
+
+This two-layer approach provides rapid operator response (6h detector fires within 10 minutes of staleness during market hours) while maintaining broad multi-source coverage (45min detector during off-hours and across all data sources).
+
 ### BCTC PDF Proxy (`vn-bctc-fetch.service`) — Task 1112
 
 | Component | Location | Role |
