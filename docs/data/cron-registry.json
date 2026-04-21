@@ -1,8 +1,8 @@
 {
   "_maintained_by": "developer",
   "_trigger": "after adding/removing scheduler file, update count + list",
-  "lastUpdated": "2026-04-19",
-  "schedulerFileCount": 37,
+  "lastUpdated": "2026-04-21",
+  "schedulerFileCount": 38,
   "jobs": [
     { "schedule": "*/15 min", "name": "intelligenceCycle", "desc": "Main engine: news+prices+cascade+alerts" },
     { "schedule": "*/30 min", "name": "predictionMarketPoll", "desc": "Polymarket fetch + signal detection" },
@@ -41,7 +41,8 @@
     { "schedule": "startup (fire-and-forget)", "name": "ohlcvStartupProbe", "desc": "On server start: detect sparse daily_ohlcv tickers (<8 rows), write pending record to ohlcv_backfill_queue, alert WORK channel. VPS polls queue every 30min and runs backfill. (Sprint 119+123)" },
     { "schedule": "15 8 * * 1-5", "name": "ohlcvStalenessCheckJob", "file": "src/scheduler/ohlcvStalenessCheckJob.ts", "desc": "OHLCV staleness check weekdays — alerts WORK channel when daily_ohlcv rows are stale or missing post-market-close" },
     { "schedule": "20:30 UTC daily", "name": "cascadeBacktestJob", "file": "src/scheduler/cascadeBacktestJob.ts", "desc": "Daily backtest: fills price_impact_3d/7d/outcome_correct on cascade_rule_hits rows older than 3 days using daily_ohlcv closes. Sends WORK summary." },
-    { "schedule": "helper", "name": "walCheckpointAlert", "file": "src/scheduler/walCheckpointAlert.ts", "type": "helper", "desc": "WAL stuck Telegram alert helper — sends WORK channel alert when WAL checkpoint is stale (Sprint 179)" }
+    { "schedule": "helper", "name": "walCheckpointAlert", "file": "src/scheduler/walCheckpointAlert.ts", "type": "helper", "desc": "WAL stuck Telegram alert helper — sends WORK channel alert when WAL checkpoint is stale (Sprint 179)" },
+    { "id": "macroIndicatorRefreshJob", "schedule": "0 6 * * * (06:00 VN daily)", "filePath": "src/scheduler/macro/macroIndicatorRefreshJob.ts", "description": "Macro indicator daily refresh with SLA validation (yahoo → sbv → gso fallback)" }
   ],
   "orphan": [],
   "legacy": ["newsPollerJob.ts"]

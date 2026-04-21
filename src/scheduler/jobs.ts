@@ -65,6 +65,7 @@ import { runOhlcvStalenessCheck } from './market-data/ohlcvStalenessCheckJob.js'
 import { priceUpdateWatchdog } from './market-data/priceUpdateWatchdogJob.js'
 import { runVpsHealthPolling } from './system/vpsServiceHealthJob.js'
 import { runFreshnessSlaMonitorJob } from './system/freshnessSlaMonitorJob.js'
+import { macroIndicatorRefreshJob, validateMacroFreshnessOnStartup } from './macro/index.js'
 import { getDb } from '../infrastructure/db/schema.js'
 import { recordJobRun } from '../infrastructure/db/cronJobRunStore.js'
 import type { Database } from 'bun:sqlite'
@@ -155,6 +156,8 @@ export const CRONS = {
   vpsServiceHealth:       Bun.env.CRON_VPS_SERVICE_HEALTH                 ?? '*/5 * * * *',
   /** freshnessSlaMonitor — data freshness SLA check every 30 min (task 234) */
   freshnessSlaMonitor:    Bun.env.CRON_FRESHNESS_SLA_MONITOR              ?? '*/30 * * * *',
+  /** macroIndicatorRefreshJob — daily macro indicator refresh at 06:00 GMT+7 (task 239) */
+  macroIndicatorRefresh:  Bun.env.CRON_MACRO_INDICATOR_REFRESH            ?? '0 6 * * *',
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -699,5 +702,20 @@ export function startScheduler() {
     })
   }, { timezone: 'UTC' })
 
-  log(`[scheduler] jobs registered — ${Object.keys(CRONS).length} cron keys in CRONS map (incl. WAL checkpoint + 5 summary) + vps-watchdog + VPS health + SLA monitor active`)
+  // 06:00 GMT+7 daily — Macro indicator refresh — task 239, Sprint 239
+  // Fetches and stores macro indicators from Yahoo/SBV/GSO with multi-source fallback.
+  // Runs before morning briefing (08:00) to ensure fresh macro data for daily briefing.
+  cron.schedule(CRONS.macroIndicatorRefresh, async () => {
+    await recordJobRun(getDb(), 'macroIndicatorRefreshJob', async () => {
+      await macroIndicatorRefreshJob()
+    })
+  }, { timezone: 'Asia/Ho_Chi_Minh' })
+
+  // Startup validation — check macro data freshness on server start
+  // Detects stale macro data (>24h old) and alerts WORK channel before morning briefing
+  void validateMacroFreshnessOnStartup().catch((err) => {
+    log(`[macro-startup-validation] error: ${err instanceof Error ? err.message : String(err)}`)
+  })
+
+  log(`[scheduler] jobs registered — ${Object.keys(CRONS).length} cron keys in CRONS map (incl. WAL checkpoint + 5 summary) + vps-watchdog + VPS health + SLA monitor + macro-refresh active`)
 }
