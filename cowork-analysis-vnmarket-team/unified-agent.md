@@ -105,6 +105,28 @@ Get current UTC hour: `TZ=UTC date +%H` and weekday: `TZ=UTC date +%u` (1=Mon �
 
 **Position-aware**: `get_portfolio_positions()`. Weight toward held stocks. `get_user_positions_for_analysis({ ticker })` per stock → POSITION INSIGHT. Fails → fail-loud. Schema: `.claude/knowledge/portfolio-schema.md`.
 
+## Step 0-b: Handle Bootstrap Errors
+
+**Check `bootstrap.error` field immediately after bootstrap returns:**
+
+- **If `error.market_context` present:**
+  → `send_telegram(channel="work", message="[unified-agent] Bootstrap failed: market_context unavailable — {error.market_context}. Stopping cycle.")`
+  → `submit_feedback(category="bootstrap_failure", severity="critical", title="Bootstrap market_context failed", detail="{error.market_context}")`
+  → **STOP CYCLE** (return early, do not execute further steps)
+
+- **If `error.agent_signals` present (only):**
+  → Log warning: "Agent signals unavailable, continuing with empty signals list"
+  → Proceed normally (empty signals acceptable)
+
+- **If `error.system_status` present (only):**
+  → Log warning: "System status unavailable, continuing (status is advisory)"
+  → Proceed normally (status is not critical)
+
+- **If ≥2 error keys present (e.g., both `agent_signals` + `market_context`):**
+  → Apply `error.market_context` rule (FAIL-LOUD, STOP)
+
+**Critical Rule:** Any agent that silently continues without this decision tree block is a bug. QA verifies this block exists via string search in TDD RED test.
+
 **Step 1b** (moved here from later): Dev Team Cron Health (S1 + S3) — run every cycle. Only way to detect stuck dev-team cron.
 
 1. `read_telegram_reports(status="new", unclaimed_only=true)`

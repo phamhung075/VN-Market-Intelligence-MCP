@@ -37,6 +37,12 @@ Full removed list → `docs/data/tool-registry.json` → `removed`
 | Dev Team Cron | `read_telegram_reports`, `claim_telegram_report`, `process_telegram_report`, `log_fix`, `get_recent_fixes`, `send_telegram(channel="work")`, `get_system_status`, `get_vps_proxy_health`, `get_cron_health` |
 | QA Responder (07) | `get_pending_ask_questions`, `answer_ask_question`, `get_user_requests`, `mark_user_request_answered`, `fetch_and_analyze`, `get_market_context`, `get_positions`, `get_kinhdich_reading`, `get_market_hexagram`, `get_bctc_full`, `get_sentiment_trend`, `get_legal_risk_signals`, `send_telegram(channel="market")`, `get_foreign_flow`, `get_insider_transactions` |
 
+## Shared Tools (Available to All Agents)
+
+| Tool | Purpose | REQ | Added |
+|------|---------|-----|-------|
+| `validate_signal_price` | Validate signal price vs live market snapshot (±5% tolerance) | 230 | 2026-04-21 |
+
 ## Mandatory Agent Patterns
 
 Opening sequence (ALL agents):

@@ -151,6 +151,43 @@ Update TASKS.md: Review → Done. Notify PM. Instruct Developer to run branch hy
 
 ---
 
+## AC-6: Real-World Signal Accuracy Audit (Task 230c)
+
+**Trigger:** After REQ-230 (Tasks 230a/230b/230c) deploy to production, during market hours.
+
+**Procedure:**
+
+1. **Latency Measurement (p95 calculation):**
+   - Collect all `[BOOTSTRAP]` log lines from production logs (1–2 hours of trading)
+   - Parse `elapsed_ms` values (expect 100–500 samples)
+   - Calculate p95 percentile (target ≤ 3000ms)
+   - If p95 > 3000ms → escalate to Architect; regression investigation required
+
+2. **Signal Accuracy Spot-Check:**
+   - Query agent_signals table: SELECT TOP 50 signals WHERE created_at > NOW - 2 hours AND signalType IN ('price', 'buy_signal', 'sell_signal')
+   - For each signal: fetch live `get_market_snapshot(ticker)` and compare
+   - Validate: `|signal.price - snapshot| / snapshot < 0.05` (within 5%)
+   - Count failures; if any > 0: escalate
+
+3. **Confidence Score Distribution:**
+   - Histogram of confidence_score values (should be clustered 90–100)
+   - If > 10% of signals have confidence < 80 → investigate snapshot data quality
+
+4. **Fail-Loud Protocol Activation:**
+   - Monitor Telegram #work channel for bootstrap_failure messages
+   - If any appear → investigate agent error handling immediately
+
+**Report Template:**
+```
+AC-6 Result (Date: YYYY-MM-DD, Market: HOSE)
+- p95 latency: {ms} ms (target ≤ 3000) ✓ / ✗
+- Signal accuracy: {N}/50 pass ✓ / {N} fail ✗
+- Confidence distribution: {histogram}
+- Fail-loud activations: {count}
+```
+
+---
+
 ## Gatekeeper — when to stop and notify human
 
 Pause ONLY when:

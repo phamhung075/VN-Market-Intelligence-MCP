@@ -262,4 +262,34 @@ describe("Bootstrap Performance + Signal Quality (230)", () => {
     expect(!!(criticalFailure.error as any)?.market_context).toBe(true); // STOP
     expect(criticalFailure.market_context).toBeNull();
   });
+
+  // ============ AC-4c: Fail-Loud Decision Tree in Agent .md Files ============
+
+  test("AC-4c: All 7 Cowork agent .md files include Step 0-b decision tree block", () => {
+    // Verify that all agent .md files contain the "Step 0-b: Handle Bootstrap Errors" section
+    // This ensures fail-loud protocol is hardened across all Cowork agents
+
+    const agentFiles = [
+      "cowork-analysis-vnmarket-team/01-news-scout.md",
+      "cowork-analysis-vnmarket-team/02-financial-analyst.md",
+      "cowork-analysis-vnmarket-team/04-market-watcher.md",
+      "cowork-analysis-vnmarket-team/05-alert-commander.md",
+      "cowork-analysis-vnmarket-team/06-digest-predict.md",
+      "cowork-analysis-vnmarket-team/07-qa-responder.md",
+      "cowork-analysis-vnmarket-team/unified-agent.md",
+    ];
+
+    const projectRoot = path.resolve(__dirname, "../..");
+    const requiredSection = "## Step 0-b: Handle Bootstrap Errors";
+
+    for (const agentFile of agentFiles) {
+      const filePath = path.join(projectRoot, agentFile);
+      const content = fs.readFileSync(filePath, "utf-8");
+
+      expect(content).toContain(
+        requiredSection,
+        `Agent file ${agentFile} missing "${requiredSection}" section`
+      );
+    }
+  });
 });

@@ -121,6 +121,28 @@ If DAMPENING_ACTIVE: append "Self-correction applied: confidence reduced 10% due
 
 **Position-aware**: `get_user_positions_for_analysis({ ticker })` per stock. Position exists → POSITION INSIGHT (P/L, stop-loss, TP 30/30/20/20, action 24h, Kinh Dich). Fails → fail-loud. Schema: `.claude/knowledge/portfolio-schema.md`.
 
+## Step 0-b: Handle Bootstrap Errors
+
+**Check `bootstrap.error` field immediately after bootstrap returns:**
+
+- **If `error.market_context` present:**
+  → `send_telegram(channel="work", message="[digest-predict] Bootstrap failed: market_context unavailable — {error.market_context}. Stopping cycle.")`
+  → `submit_feedback(category="bootstrap_failure", severity="critical", title="Bootstrap market_context failed", detail="{error.market_context}")`
+  → **STOP CYCLE** (return early, do not execute further steps)
+
+- **If `error.agent_signals` present (only):**
+  → Log warning: "Agent signals unavailable, continuing with empty signals list"
+  → Proceed normally (empty signals acceptable)
+
+- **If `error.system_status` present (only):**
+  → Log warning: "System status unavailable, continuing (status is advisory)"
+  → Proceed normally (status is not critical)
+
+- **If ≥2 error keys present (e.g., both `agent_signals` + `market_context`):**
+  → Apply `error.market_context` rule (FAIL-LOUD, STOP)
+
+**Critical Rule:** Any agent that silently continues without this decision tree block is a bug. QA verifies this block exists via string search in TDD RED test.
+
 ### Step 1: Market Context
 Already in `bootstrap.market_context` (24h). No separate call needed.
 

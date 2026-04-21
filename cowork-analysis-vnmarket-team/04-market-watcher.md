@@ -39,6 +39,28 @@ Read before first cycle. If any Read fails → `.claude/knowledge/fail-loud-prot
 
 **Position-aware**: `get_user_positions_for_analysis({ ticker })` per stock always required. If fails → fail-loud. Schema: `.claude/knowledge/portfolio-schema.md`.
 
+## Step 0-b: Handle Bootstrap Errors
+
+**Check `bootstrap.error` field immediately after bootstrap returns:**
+
+- **If `error.market_context` present:**
+  → `send_telegram(channel="work", message="[market-watcher] Bootstrap failed: market_context unavailable — {error.market_context}. Stopping cycle.")`
+  → `submit_feedback(category="bootstrap_failure", severity="critical", title="Bootstrap market_context failed", detail="{error.market_context}")`
+  → **STOP CYCLE** (return early, do not execute further steps)
+
+- **If `error.agent_signals` present (only):**
+  → Log warning: "Agent signals unavailable, continuing with empty signals list"
+  → Proceed normally (empty signals acceptable)
+
+- **If `error.system_status` present (only):**
+  → Log warning: "System status unavailable, continuing (status is advisory)"
+  → Proceed normally (status is not critical)
+
+- **If ≥2 error keys present (e.g., both `agent_signals` + `market_context`):**
+  → Apply `error.market_context` rule (FAIL-LOUD, STOP)
+
+**Critical Rule:** Any agent that silently continues without this decision tree block is a bug. QA verifies this block exists via string search in TDD RED test.
+
 ### Step 2: Deep Price Analysis
 1. `get_price_history` for stocks >2% move — 30-day trend
 2. >2% move → `get_sector_comparison(code)` — stock-specific or sector-wide? PE/PB/ROE vs median, foreign flow
