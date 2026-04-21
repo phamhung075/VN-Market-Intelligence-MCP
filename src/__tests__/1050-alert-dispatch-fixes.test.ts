@@ -53,7 +53,10 @@ function buildBctcDb(): Database {
       message               TEXT,
       read                  INTEGER NOT NULL DEFAULT 0,
       user_note             TEXT,
-      notified_telegram     INTEGER NOT NULL DEFAULT 0
+      notified_telegram     INTEGER NOT NULL DEFAULT 0,
+      sent_by               TEXT NOT NULL DEFAULT 'server',
+      confidence_score      REAL,
+      validated_at          TEXT
     );
   `);
   return db;
@@ -194,7 +197,9 @@ describe("Issue 2 — price_surge deterministic dedup ID (Task 1050)", () => {
         read                  INTEGER NOT NULL DEFAULT 0,
         user_note             TEXT,
         notified_telegram     INTEGER NOT NULL DEFAULT 0,
-        sent_by               TEXT NOT NULL DEFAULT 'server'
+        sent_by               TEXT NOT NULL DEFAULT 'server',
+        confidence_score      REAL,
+        validated_at          TEXT
       );
     `);
 

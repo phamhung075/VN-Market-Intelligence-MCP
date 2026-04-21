@@ -42,6 +42,8 @@ export function initAlertsTables(db: Database): void {
     ["resolved_at",       "TEXT"],
     ["resolution_notes",  "TEXT"],
     ["sent_by",           "TEXT NOT NULL DEFAULT 'server'"],
+    ["confidence_score",  "REAL"],
+    ["validated_at",      "TEXT"],
   ] as const) {
     try {
       db.exec(`ALTER TABLE alerts ADD COLUMN ${col} ${ddl}`);

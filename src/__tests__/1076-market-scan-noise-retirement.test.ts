@@ -67,7 +67,9 @@ function setupTestDb(): Database {
       message               TEXT,
       read                  INTEGER NOT NULL DEFAULT 0,
       user_note             TEXT,
-      sent_by               TEXT NOT NULL DEFAULT 'server'
+      sent_by               TEXT NOT NULL DEFAULT 'server',
+      confidence_score      REAL,
+      validated_at          TEXT
     );
     CREATE TABLE IF NOT EXISTS market_prices_history (
       code       TEXT NOT NULL,

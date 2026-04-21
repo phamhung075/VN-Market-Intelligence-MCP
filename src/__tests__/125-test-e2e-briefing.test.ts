@@ -130,7 +130,9 @@ function setupTestDb(): Database {
       notified_telegram     INTEGER NOT NULL DEFAULT 0,
       resolved_at           TEXT,
       resolution_notes      TEXT,
-      sent_by               TEXT NOT NULL DEFAULT 'server'
+      sent_by               TEXT NOT NULL DEFAULT 'server',
+      confidence_score      REAL,
+      validated_at          TEXT
     );
 
     CREATE TABLE IF NOT EXISTS financial_reports (
