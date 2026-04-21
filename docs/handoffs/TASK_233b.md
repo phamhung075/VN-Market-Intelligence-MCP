@@ -461,3 +461,30 @@ bun tsc --noEmit
 
 **tsc_clean:** true
 **full_suite_pass:** true (6045 tests pass; 14 unrelated failures pre-existing)
+
+---
+
+## [QA] Review Record
+
+**verdict:** APPROVED
+
+**blocking_issues:** []
+
+**non_blocking:** []
+
+**files_confirmed_clean:**
+- /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/domain/services/signalValidator.ts
+- /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/infrastructure/db/schema-system.ts
+- /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/__tests__/233-cowork-resilience-e2e.test.ts
+
+**review_summary:**
+- bun test src/__tests__/233-cowork-resilience-e2e.test.ts: 28 pass / 0 fail ✅
+- bun tsc --noEmit: 0 errors ✅
+- DDD compliance: signalValidator.ts has zero infrastructure imports ✅
+- Confidence penalty formula: 98 × 0.8075 × 0.9167 = 72.54 → 73 (AC-4) ✅
+- Temporal decay: Math.max(0.5, 1 - age_hours/24) correct ✅
+- Staleness warning: triggers at >240 minutes ✅
+- signal_quality_audit table: 16 columns + 2 indexes verified ✅
+- prepareSignalAuditRecord() helper: returns all 16 columns for DB insertion ✅
+
+**merge_commit:** (pending merge)

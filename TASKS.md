@@ -74,8 +74,30 @@
 | ID | Title | Status | Role |
 |----|-------|--------|------|
 | 233a | [Dev] TDD RED — `233-cowork-resilience-e2e.test.ts` with 27 failing assertions (AC-1 to AC-15) | Done | Dev |
-| 233b | [Dev] GREEN — signalValidator extension (confidence penalty + temporal decay) + audit logging + schema table | Review | Dev |
+| 233b | [Dev] GREEN — signalValidator extension (confidence penalty + temporal decay) + audit logging + schema table | Done | Dev |
 | 233c | [QA] Manual Smoke Test — market-hours execution (5 phases, 09:00–15:00 UTC+7) + observation log | Todo | QA |
+
+---
+
+## Sprint 234 — feat(observability): VPS health dashboard + data freshness SLA enforcement
+
+**Goal:** Implement direct health polling of all 5 VPS services (prices/BCTC/news/SBV/foreign-flow) + active monitoring of signal source freshness with escalation callbacks. Prevent blindness to cascading failures and enforce data quality SLAs.
+
+**Scope:**
+- FR-1: VPS service health polling job (5-min intervals, all endpoints)
+- FR-2: Data freshness SLA checker (30-min intervals, source age validation)
+- FR-3: Escalation protocol (alert Commander when data SLA breached)
+- FR-4: Health dashboard query tools (MCP tools for real-time status)
+
+**Blockers:** None (Sprint 233 independent).
+
+| ID | Title | Status | Role |
+|----|-------|--------|------|
+| 234a | [BA] Write REQ_234.md: health polling contract, freshness SLA thresholds, escalation rules, test plan | Todo | BA |
+| 234b | [Arch] Write TECH_234.md: vpsServiceHealthJob design, freshnessSlaChecker logic, escalation flow | Todo | Architect |
+| 234c | [Dev] TDD RED — `234-vps-health-sla.test.ts` with 12+ assertions (vps polling + SLA checker) | Todo | Dev |
+| 234d | [Dev] GREEN — vpsServiceHealthJob + freshnessSlaChecker + schema + jobs integration | Todo | Dev |
+| 234e | [QA] Verification — health polling under normal/degraded VPS states, SLA escalation triggered correctly | Todo | QA |
 
 ---
 

@@ -1,5 +1,31 @@
 # Sprint Goal
 
+## Sprint 234 — VPS Health Dashboard + Data Freshness SLA Enforcement
+
+**Goal:** After fallback chains (Sprint 232) go live, we need **visibility into which services are healthy** and **active enforcement of data quality SLAs**. Implement VPS service health polling (all 5 endpoints) + data freshness monitoring with escalation callbacks.
+
+**Scope:**
+- **FR-1**: VPS service health polling every 5 minutes (prices, BCTC, news, SBV, foreign-flow)
+- **FR-2**: Data freshness SLA checker every 30 minutes (source age validation per signal type)
+- **FR-3**: Escalation protocol (alert Commander when source age exceeds threshold)
+- **FR-4**: Health dashboard tools (query tools for real-time VPS service status)
+
+**Success metric:**
+- VPS health job polls all 5 endpoints successfully; results stored in vps_service_health table
+- Freshness SLA job detects stale sources and triggers escalation callback
+- Health status queryable via MCP tools
+- No data quality regressions vs baseline (6046 tests)
+
+**Size: M** (multiple jobs + schema extension + domain service + 2 new tool modules)
+
+---
+
+## Sprint 233 — Verify Cowork Resilience — IN PROGRESS
+
+**Status:** 2/3 tasks complete. Task 233c (manual smoke test) time-locked until next market day (09:00–15:00 UTC+7).
+
+**Previous:**
+
 ## Sprint 230 — Verify Bootstrap Performance + Signal Quality Hardening
 
 **Goal:** Validate that `get_cycle_bootstrap` tool meets its ≤3s p95 latency SLA, verify signal validation logic prevents hallucinated prices from reaching MARKET channel, and harden the fail-loud protocol for partial bootstrap failures.
