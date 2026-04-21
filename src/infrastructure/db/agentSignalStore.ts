@@ -73,6 +73,8 @@ export interface AgentSignal {
   status: "unread" | "read";
   createdAt: string;
   expiresAt: string;
+  confidence_score?: number; // 0–100, default 50 (Task 230)
+  validated_at?: string; // ISO8601, default created_at (Task 230)
 }
 
 /** Input for posting a new signal (extended with enrichment chain fields). */
@@ -111,6 +113,16 @@ export interface PostSignalInput {
    * NULL / undefined = unclassified, treated as weight 1.0 (backward compatible).
    */
   signalClass?: "structural_factor" | "cyclical" | "technical_signal" | "one_time_catalyst" | "sentiment" | null;
+  /**
+   * Task 230 — Confidence score (0–100) from signalValidator.
+   * Default: 50 (backward compatible if omitted).
+   */
+  confidence_score?: number;
+  /**
+   * Task 230 — ISO8601 timestamp of when signal was validated.
+   * Default: created_at if omitted.
+   */
+  validated_at?: string;
 }
 
 /**
@@ -244,6 +256,8 @@ export function postSignal(db: Database, input: PostSignalInput): number {
     causalRootId = null,
     causalRootLabel = null,
     signalClass = null,
+    confidence_score = 50, // Task 230: default 50
+    validated_at, // Task 230: optional validated_at
   } = input;
 
   // Check which optional column groups exist. Fresh DBs (with all columns)
@@ -275,12 +289,50 @@ export function postSignal(db: Database, input: PostSignalInput): number {
     }
   })();
 
+  const hasValidationColumns = (() => {
+    try {
+      db.prepare("SELECT confidence_score, validated_at FROM agent_signals LIMIT 0").all();
+      return true;
+    } catch {
+      return false;
+    }
+  })();
+
   if (hasChainColumns) {
     const now = new Date().toISOString().replace("T", " ").replace(/\.\d{3}Z$/, "");
     const expires = ttlMinutes != null ? expiresAt(ttlMinutes) : null;
+    const validatedAtValue = validated_at ?? now;
 
     if (hasCausalRootColumns) {
       if (hasSignalClassColumn) {
+        if (hasValidationColumns) {
+          const stmt = db.prepare(`
+            INSERT INTO agent_signals
+              (from_agent, to_agent, signal_type, stock_code, payload, status,
+               created_at, expires_at, cycle_id, finding_data, causal_ref, chain_depth,
+               causal_root_id, causal_root_label, signal_class, confidence_score, validated_at)
+            VALUES (?, ?, ?, ?, ?, 'unread', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          `);
+          const result = stmt.run(
+            fromAgent,
+            toAgent,
+            signalType,
+            stockCode,
+            JSON.stringify(payload),
+            now,
+            expires ?? expiresAt(ttlMinutes ?? 120),
+            cycleId ?? null,
+            JSON.stringify(findingData),
+            causalRef,
+            chainDepth,
+            causalRootId,
+            causalRootLabel,
+            signalClass,
+            confidence_score,
+            validatedAtValue,
+          );
+          return Number(result.lastInsertRowid);
+        }
         const stmt = db.prepare(`
           INSERT INTO agent_signals
             (from_agent, to_agent, signal_type, stock_code, payload, status,
@@ -303,6 +355,34 @@ export function postSignal(db: Database, input: PostSignalInput): number {
           causalRootId,
           causalRootLabel,
           signalClass,
+        );
+        return Number(result.lastInsertRowid);
+      }
+
+      if (hasValidationColumns) {
+        const stmt = db.prepare(`
+          INSERT INTO agent_signals
+            (from_agent, to_agent, signal_type, stock_code, payload, status,
+             created_at, expires_at, cycle_id, finding_data, causal_ref, chain_depth,
+             causal_root_id, causal_root_label, confidence_score, validated_at)
+          VALUES (?, ?, ?, ?, ?, 'unread', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `);
+        const result = stmt.run(
+          fromAgent,
+          toAgent,
+          signalType,
+          stockCode,
+          JSON.stringify(payload),
+          now,
+          expires ?? expiresAt(ttlMinutes ?? 120),
+          cycleId ?? null,
+          JSON.stringify(findingData),
+          causalRef,
+          chainDepth,
+          causalRootId,
+          causalRootLabel,
+          confidence_score,
+          validatedAtValue,
         );
         return Number(result.lastInsertRowid);
       }
@@ -333,6 +413,32 @@ export function postSignal(db: Database, input: PostSignalInput): number {
     }
 
     // Chain columns present but causal_root columns not yet migrated
+    if (hasValidationColumns) {
+      const stmt = db.prepare(`
+        INSERT INTO agent_signals
+          (from_agent, to_agent, signal_type, stock_code, payload, status,
+           created_at, expires_at, cycle_id, finding_data, causal_ref, chain_depth,
+           confidence_score, validated_at)
+        VALUES (?, ?, ?, ?, ?, 'unread', ?, ?, ?, ?, ?, ?, ?, ?)
+      `);
+      const result = stmt.run(
+        fromAgent,
+        toAgent,
+        signalType,
+        stockCode,
+        JSON.stringify(payload),
+        now,
+        expires ?? expiresAt(ttlMinutes ?? 120),
+        cycleId ?? null,
+        JSON.stringify(findingData),
+        causalRef,
+        chainDepth,
+        confidence_score,
+        validatedAtValue,
+      );
+      return Number(result.lastInsertRowid);
+    }
+
     const stmt = db.prepare(`
       INSERT INTO agent_signals
         (from_agent, to_agent, signal_type, stock_code, payload, status,
@@ -356,6 +462,29 @@ export function postSignal(db: Database, input: PostSignalInput): number {
   }
 
   // Fallback: base schema without chain columns
+  if (hasValidationColumns) {
+    const now = new Date().toISOString().replace("T", " ").replace(/\.\d{3}Z$/, "");
+    const validatedAtValue = validated_at ?? now;
+    const stmt = db.prepare(`
+      INSERT INTO agent_signals
+        (from_agent, to_agent, signal_type, stock_code, payload, status, expires_at,
+         confidence_score, validated_at)
+      VALUES
+        (?, ?, ?, ?, ?, 'unread', ?, ?, ?)
+    `);
+    const result = stmt.run(
+      fromAgent,
+      toAgent,
+      signalType,
+      stockCode,
+      JSON.stringify(payload),
+      expiresAt(ttlMinutes ?? 120),
+      confidence_score,
+      validatedAtValue,
+    );
+    return Number(result.lastInsertRowid);
+  }
+
   const stmt = db.prepare(`
     INSERT INTO agent_signals
       (from_agent, to_agent, signal_type, stock_code, payload, status, expires_at)
@@ -387,6 +516,7 @@ export interface GetSignalsOptions {
  * - Always filters out expired signals (expires_at <= now).
  * - Includes signals addressed directly to `agent` OR to the special value `"all"`.
  * - If status is "unread" (default), marks returned rows as "read" atomically.
+ * - Includes confidence_score and validated_at if they exist in the schema (Task 230).
  *
  * @param db    - Active bun:sqlite Database connection
  * @param agent - The receiving agent name
@@ -403,30 +533,44 @@ export function getSignals(
   const statusClause =
     statusFilter === "unread" ? "AND s.status = 'unread'" : "";
 
+  // Check if validation columns exist
+  let hasValidationColumns = false;
+  try {
+    db.prepare("SELECT confidence_score, validated_at FROM agent_signals LIMIT 0").all();
+    hasValidationColumns = true;
+  } catch {
+    hasValidationColumns = false;
+  }
+
+  const validationColumns = hasValidationColumns
+    ? ", confidence_score, validated_at"
+    : "";
+
+  type RawRow = {
+    id: number;
+    from_agent: string;
+    to_agent: string;
+    signal_type: string;
+    stock_code: string | null;
+    payload: string;
+    status: string;
+    created_at: string;
+    expires_at: string;
+    confidence_score?: number;
+    validated_at?: string;
+  };
+
   const rows = db
-    .query<
-      {
-        id: number;
-        from_agent: string;
-        to_agent: string;
-        signal_type: string;
-        stock_code: string | null;
-        payload: string;
-        status: string;
-        created_at: string;
-        expires_at: string;
-      },
-      [string]
-    >(
+    .query<RawRow, [string]>(
       `SELECT id, from_agent, to_agent, signal_type, stock_code, payload, status,
-              created_at, expires_at
+              created_at, expires_at${validationColumns}
        FROM agent_signals s
        WHERE (s.to_agent = ? OR s.to_agent = 'all')
          AND s.expires_at > datetime('now')
          ${statusClause}
        ORDER BY s.id ASC`,
     )
-    .all(agent);
+    .all(agent) as RawRow[];
 
   // Mark unread rows as read (only when we fetched in unread mode)
   if (statusFilter === "unread" && rows.length > 0) {
@@ -434,17 +578,31 @@ export function getSignals(
     db.exec(`UPDATE agent_signals SET status = 'read' WHERE id IN (${ids})`);
   }
 
-  return rows.map((r) => ({
-    id: r.id,
-    fromAgent: r.from_agent,
-    toAgent: r.to_agent,
-    signalType: r.signal_type as SignalType,
-    stockCode: r.stock_code,
-    payload: JSON.parse(r.payload) as SignalPayload,
-    status: (statusFilter === "unread" ? "read" : r.status) as "unread" | "read",
-    createdAt: r.created_at,
-    expiresAt: r.expires_at,
-  }));
+  return rows.map((r) => {
+    const signal: AgentSignal = {
+      id: r.id,
+      fromAgent: r.from_agent,
+      toAgent: r.to_agent,
+      signalType: r.signal_type as SignalType,
+      stockCode: r.stock_code,
+      payload: JSON.parse(r.payload) as SignalPayload,
+      status: (statusFilter === "unread" ? "read" : r.status) as "unread" | "read",
+      createdAt: r.created_at,
+      expiresAt: r.expires_at,
+    };
+
+    // Add optional Task 230 fields
+    if (hasValidationColumns) {
+      if (r.confidence_score !== undefined) {
+        signal.confidence_score = r.confidence_score;
+      }
+      if (r.validated_at !== undefined) {
+        signal.validated_at = r.validated_at;
+      }
+    }
+
+    return signal;
+  });
 }
 
 // ── recordOutcome ───────────────────────────────────────────────────────────
