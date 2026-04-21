@@ -25,6 +25,27 @@ function createTestDb(): Database {
     )
   `);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_vpl_service_ts ON vps_push_log(service, pushed_at)`);
+
+  // Task 1566: Extended observability columns (matching production schema)
+  const columns = [
+    "truncation_detected",
+    "schema_errors_count",
+    "failed_item_indices",
+    "parse_time_ms",
+    "validation_time_ms",
+    "db_time_ms",
+    "vps_response_size_bytes",
+    "circuit_breaker_state"
+  ];
+
+  for (const col of columns) {
+    try {
+      db.exec(`ALTER TABLE vps_push_log ADD COLUMN ${col} ${col === "failed_item_indices" || col === "circuit_breaker_state" ? "TEXT" : "INTEGER"}`);
+    } catch {
+      // Column may already exist in :memory: schema
+    }
+  }
+
   return db;
 }
 
