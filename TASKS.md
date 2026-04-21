@@ -30,7 +30,7 @@
 
 | ID | Title | Status | Role |
 |----|-------|--------|------|
-| 229_a | [Dev] TDD RED — `229-price-staleness-watchdog.test.ts` with 5–7 failing assertions (AC-1 to AC-7) | Todo | Dev |
+| 229_a | [Dev] TDD RED — `229-price-staleness-watchdog.test.ts` with 5–7 failing assertions (AC-1 to AC-7) | In Progress | Dev |
 | 229_b | [Dev] GREEN — watchdog implementation (priceUpdateWatchdogJob.ts + jobs.ts + eveningSummaryJob.ts + marketContextBuilder verify) | Todo | Dev |
 | 229_c | [Dev] Investigation — VPS pipeline diagnostics + fallback assessment (FALLBACK_INVESTIGATION.md + ARCHITECTURE.md update) | Done | Dev |
 
