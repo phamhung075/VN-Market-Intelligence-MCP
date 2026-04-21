@@ -1,28 +1,22 @@
 # Sprint Goal
 
-## Sprint 234 — VPS Health Dashboard + Data Freshness SLA Enforcement
+## Sprint 239 — Fix Macro Indicator Freshness + Daily Refresh Enforcement — COMPLETE (2026-04-21)
 
-**Goal:** After fallback chains (Sprint 232) go live, we need **visibility into which services are healthy** and **active enforcement of data quality SLAs**. Implement VPS service health polling (all 5 endpoints) + data freshness monitoring with escalation callbacks.
+**Goal:** Diagnose and fix 400+ day staleness in macro_indicators table (last update 2025-03-01). Implement dedicated daily refresh job with SLA validation and stale-data escalation.
 
-**Scope:**
-- **FR-1**: VPS service health polling every 5 minutes (prices, BCTC, news, SBV, foreign-flow)
-- **FR-2**: Data freshness SLA checker every 30 minutes (source age validation per signal type)
-- **FR-3**: Escalation protocol (alert Commander when source age exceeds threshold)
-- **FR-4**: Health dashboard tools (query tools for real-time VPS service status)
+**Result:**
+- Macro indicator fetcher implemented with 3-source fallback chain (Yahoo → SBV → GSO)
+- Daily refresh job scheduled at 06:00 GMT+7
+- SLA enforcement: 24-hour freshness window with escalation alerts to WORK channel
+- All 10 acceptance criteria verified, 6094 tests passing
 
-**Success metric:**
-- VPS health job polls all 5 endpoints successfully; results stored in vps_service_health table
-- Freshness SLA job detects stale sources and triggers escalation callback
-- Health status queryable via MCP tools
-- No data quality regressions vs baseline (6046 tests)
-
-**Size: M** (multiple jobs + schema extension + domain service + 2 new tool modules)
+**Status:** COMPLETE & MERGED — Ready for next sprint
 
 ---
 
-## Sprint 233 — Verify Cowork Resilience — IN PROGRESS
+## Next Sprint — TBD
 
-**Status:** 2/3 tasks complete. Task 233c (manual smoke test) time-locked until next market day (09:00–15:00 UTC+7).
+Awaiting PO assessment of product gaps and highest-impact improvements.
 
 **Previous:**
 

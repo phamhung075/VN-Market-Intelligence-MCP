@@ -79,6 +79,30 @@
 
 ---
 
+## Sprint 239 — fix(data-crisis): macro indicator freshness + daily refresh enforcement — COMPLETE (2026-04-21)
+
+**Goal:** Diagnose and fix 400+ day staleness in macro_indicators table (last update 2025-03-01). Implement dedicated daily refresh job with SLA validation and stale-data escalation.
+
+**Blockers:** None.
+
+| ID | Title | Status | Role |
+|----|-------|--------|------|
+| 239a | TDD RED — `239-macro-indicator-refresh.test.ts` with 10 failing assertions (AC-1 to AC-10) | Done | Dev |
+| 239b | GREEN — macroIndicatorFetcher domain service (fallback chain: Yahoo→SBV→GSO) + SLA checker | Done | Dev |
+| 239c | Integration — schema + cron registry + scheduler wiring for macro indicator refresh | Done | Dev |
+| 239d | QA Verification — type safety audit + smoke test readiness | Done | QA |
+
+---
+
+## Sprint 238 — feat(briefing-quality): quality gate for morning briefing signals — COMPLETE (2026-04-21)
+
+| ID | Title | Status | Role |
+|----|-------|--------|------|
+| 238a | TDD RED — `238-briefing-quality-gate.test.ts` with 15 failing assertions | Done | Dev |
+| 238b | GREEN — briefing quality gate implementation + confidence thresholds | Done | Dev |
+
+---
+
 ## Sprint 234 — feat(observability): VPS health dashboard + data freshness SLA enforcement — COMPLETE (2026-04-21)
 
 **Goal:** Implement direct health polling of all 5 VPS services (prices/BCTC/news/SBV/foreign-flow) + active monitoring of signal source freshness with escalation callbacks. Prevent blindness to cascading failures and enforce data quality SLAs.
