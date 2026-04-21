@@ -100,10 +100,17 @@ export async function runOhlcvDailyAggregator(
       "SELECT MAX(price) as high_p, MIN(price) as low_p FROM market_prices_history WHERE code = ? AND fetched_at >= ? AND fetched_at < ?"
     ).get(code, windowStart, windowEnd) as { high_p: number; low_p: number } | undefined;
 
-    const open = openRow!.price;
-    const close = closeRow!.price;
-    const high = hlRow!.high_p;
-    const low = hlRow!.low_p;
+    // Guard checks: ensure all OHLCV components exist before using
+    const open = openRow?.price;
+    const close = closeRow?.price;
+    const high = hlRow?.high_p;
+    const low = hlRow?.low_p;
+
+    if (open === undefined || close === undefined || high === undefined || low === undefined) {
+      tickersSkipped++;
+      continue;  // Skip ticker if any price component is missing
+    }
+
     const volume = count;
 
     // Upsert into daily_ohlcv
