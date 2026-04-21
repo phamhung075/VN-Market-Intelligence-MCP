@@ -55,7 +55,7 @@ context: docs/handoffs/TASK_229c.md
 
 | ID | Title | Status | Role |
 |----|-------|--------|------|
-| 230a | [Dev] TDD RED — `230-bootstrap-verify.test.ts` with 12+ failing assertions (AC-1 to AC-4) | Todo | Dev |
+| 230a | [Dev] TDD RED — `230-bootstrap-verify.test.ts` with 12+ failing assertions (AC-1 to AC-4) | Review | Dev |
 | 230b | [Dev] GREEN — timing instrumentation + signalValidator service + schema extension + MCP tool registration | Todo | Dev |
 | 230c | [Dev] Integration — agent .md fail-loud blocks (Step 0-b, 7 files) + QA AC-6 validation step + tool registry update | Todo | Dev |
 
