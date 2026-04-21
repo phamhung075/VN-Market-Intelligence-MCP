@@ -40,6 +40,44 @@ Read before first cycle. If any Read fails → `.claude/knowledge/fail-loud-prot
 
 **Position-aware**: `get_user_positions_for_analysis({ ticker })` per stock. If position exists → append POSITION INSIGHT (P/L, stop-loss floor, TP ladder 30/30/20/20, action 24h, Kinh Dich). If fails → fail-loud. Schema: `.claude/knowledge/portfolio-schema.md`.
 
+## Step 0-c: VPS Health Check Before BCTC Fetch
+
+**HEALTH-AWARE FETCH DECISION:**
+
+Before calling `get_bctc_full()` or `read_bctc_pdf()` in Step 1:
+
+1. `get_vps_service_health(service_name="vn-bctc-fetch")`
+   - If status='healthy' → proceed normally with BCTC fetch in Step 1
+   - If status='unhealthy' or 'unreachable' → skip BCTC fetch, log warning, continue analysis of other stocks (proceed to Step 2 with cached data)
+
+2. `get_sla_status(signal_type="bctc")`
+   - If status='ok' (age ≤ threshold) → data is fresh, safe to use
+   - If status='breached' → BCTC data stale; mark all BCTC findings with `source_cache=true` to alert downstream (Alert Commander applies confidence penalty)
+   - If severity='CRITICAL' (age > 1.5x threshold) → escalate: do not report BCTC findings; `submit_feedback(category="bctc_sla_critical", ...)`
+
+**Decision tree:**
+```
+health_status ← get_vps_service_health("vn-bctc-fetch")
+sla_status ← get_sla_status("bctc")
+
+if health_status == 'unhealthy' OR 'unreachable':
+  log: "VPS BCTC service unavailable; skipping BCTC fetch this cycle"
+  skip Step 1, go to Step 2 with empty BCTC results
+
+elif sla_status.status == 'breached' AND sla_status.severity == 'CRITICAL':
+  log: "BCTC data stale >1.5x threshold; escalating"
+  submit_feedback(category="bctc_sla_critical", detail="..." )
+  skip Step 1, go to Step 2
+
+elif sla_status.status == 'breached' AND sla_status.severity == 'HIGH':
+  log: "BCTC data age > threshold; continuing with confidence penalty"
+  proceed with Step 1 (fetch BCTC) but mark all findings: source_cache=true
+
+else:
+  log: "BCTC service healthy + fresh; proceeding"
+  proceed normally with Step 1
+```
+
 ## Step 0-b: Handle Bootstrap Errors
 
 **Check `bootstrap.error` field immediately after bootstrap returns:**

@@ -48,12 +48,48 @@ acceptance_criteria:
 
 ## Deliverable
 
-- [ ] vps_service_health table created (8 columns)
-- [ ] sla_breach_audit table created (9 columns)
-- [ ] Both tables indexed on (service_name, signal_type)
-- [ ] vpsServiceHealthPoll cron: */5 * * * *
-- [ ] freshnessSlaMonitor cron: */30 * * * *
-- [ ] Jobs imported + registered in startScheduler()
-- [ ] Tools exported + registered in toolRegistry
-- [ ] All 12 tests still GREEN
-- [ ] Tool output formats correctly (ASCII tables)
+- [x] vps_service_health table created (8 columns)
+- [x] sla_breach_audit table created (9 columns)
+- [x] Both tables indexed on (service_name, signal_type)
+- [x] vpsServiceHealthPoll cron: */5 * * * *
+- [x] freshnessSlaMonitor cron: */30 * * * *
+- [x] Jobs imported + registered in startScheduler()
+- [x] Tools exported + registered in toolRegistry
+- [x] All 12 tests still GREEN
+- [x] Tool output formats correctly (ASCII tables)
+
+---
+
+## [QA] Review Record
+
+**verdict**: APPROVED
+
+**blocking_issues**: []
+
+**non_blocking**: []
+
+**files_confirmed_clean**:
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/interface/mcp/tools/system/vpsHealthTools.ts` (187 lines, proper I/O, no circular imports)
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/interface/mcp/tools/system/slaStatusTools.ts` (238 lines, proper I/O, no circular imports)
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/interface/mcp/tools/registry.ts` (both tools registered at lines 66-67)
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/interface/mcp/tools/system/index.ts` (barrel exports added at lines 12-13)
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/docs/data/tool-registry.json` (toolCount: 104, new "VPS Health & SLA" category)
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/infrastructure/db/schema-system.ts` (vps_service_health at lines 357-377, sla_breach_audit at lines 379-403)
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/scheduler/jobs.ts` (imports at lines 66-67, registrations at lines 687-700)
+
+**test_results**:
+- bun test: 12 pass / 0 fail (as expected)
+- bun tsc --noEmit: 0 errors
+- DDD compliance: PASS (no cross-layer imports detected)
+
+**integration_checklist**:
+- [x] vpsHealthTools.ts exports `get_vps_service_health` with correct Zod schema (service_name enum, optional, default "all")
+- [x] slaStatusTools.ts exports `get_sla_status` with correct Zod schema (signal_type enum, optional, default "all")
+- [x] Tool registry updated with both tools (toolRegistry lines 141-142)
+- [x] Tool descriptions clear and actionable
+- [x] tool-registry.json updated (toolCount 104, new category "VPS Health & SLA")
+- [x] Barrel exports in system/index.ts updated (lines 12-13)
+- [x] No circular imports (tools import only db + MCP SDK)
+- [x] MCP tool parameter validation in place (service_name / signal_type filters with proper enum validation)
+
+**merge_ready**: YES

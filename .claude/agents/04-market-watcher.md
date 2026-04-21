@@ -39,6 +39,69 @@ Read before first cycle. If any Read fails → `.claude/knowledge/fail-loud-prot
 
 **Position-aware**: `get_user_positions_for_analysis({ ticker })` per stock always required. If fails → fail-loud. Schema: `.claude/knowledge/portfolio-schema.md`.
 
+## Step 0-c: VPS Health Check Before Price + News + Data Fetch
+
+**HEALTH-AWARE FETCH DECISION (THREE SOURCES):**
+
+Before calling `get_market_snapshot()`, `get_price_history()`, `get_news()` in Step 2-4:
+
+1. **Price Source Health:**
+   ```
+   health ← get_vps_service_health(service_name="vn-price-fetch")
+   sla ← get_sla_status(signal_type="price")
+
+   if health == 'unhealthy|unreachable':
+     skip live price fetch; use bootstrap.market_context (24h cached)
+     log: "Price service unavailable; using cached prices"
+
+   elif sla.status == 'breached' AND sla.severity == 'CRITICAL':
+     do NOT post price_anomaly or price_confirmation signals
+     submit_feedback(category="price_sla_critical")
+     log: "Price data stale >1.5x threshold; skipping price alerts"
+
+   elif sla.status == 'breached' AND sla.severity == 'HIGH':
+     proceed with price fetch but mark signals: source_fallback=true
+     Alert Commander applies confidence penalty 0.8075
+
+   else:
+     proceed normally (healthy + fresh)
+   ```
+
+2. **News Source Health:**
+   ```
+   health ← get_vps_service_health(service_name="vn-news-fetch")
+   sla ← get_sla_status(signal_type="news")
+
+   if health == 'unhealthy|unreachable' OR sla.severity == 'CRITICAL':
+     skip news fetch; rely on News Scout findings only
+     log: "News service unavailable; skipping market-watcher news analysis"
+
+   elif sla.status == 'breached' AND sla.severity == 'HIGH':
+     proceed with news but mark: source_cache=true
+
+   else:
+     proceed normally
+   ```
+
+3. **Macro Data (SBV FX + Foreign Flow) Health:**
+   ```
+   health_sbv ← get_vps_service_health(service_name="vn-sbv-fetch")
+   sla_sbv ← get_sla_status(signal_type="sbv_fx")
+
+   health_ff ← get_vps_service_health(service_name="vn-foreign-flow")
+   sla_ff ← get_sla_status(signal_type="foreign_flow")
+
+   if health_sbv == 'unreachable' OR sla_sbv.severity == 'CRITICAL':
+     skip SBV FX analysis
+
+   if health_ff == 'unreachable' OR sla_ff.severity == 'CRITICAL':
+     skip foreign flow analysis
+
+   For HIGH severity: mark signals with source_cache=true (confidence penalty applied)
+   ```
+
+**Summary:** All fetches check health first. If unavailable or critically stale → escalate to BUG channel, use fallback data. If stale but available → continue with confidence penalty applied by downstream (Alert Commander or registry validation).
+
 ## Step 0-b: Handle Bootstrap Errors
 
 **Check `bootstrap.error` field immediately after bootstrap returns:**
