@@ -357,7 +357,9 @@ export async function runEveningSummary(
     );
 
     // ── Format and send to Telegram ─────────────────────────────────
-    const hasContent =
+    // Freshness gate: suppress stale-only messages when VPS is down.
+    // If no real signals AND vnIndex.fetchedAt >25h old, suppress send.
+    const hasRealSignals =
       summary.topStories.length > 0 ||
       summary.topAlerts.length > 0 ||
       summary.watchlistMovers.length > 0 ||
@@ -367,6 +369,14 @@ export async function runEveningSummary(
       ) ||
       (summary.portfolioPnl != null && summary.portfolioPnl.items.length > 0) ||
       (summary.foreignFlowMovers?.length ?? 0) > 0;
+
+    // Freshness check: if no real signals AND vnIndex is stale (>25h), suppress send.
+    const vnIndexStaleWithNoSignals =
+      !hasRealSignals &&
+      summary.vnIndex != null &&
+      !isVnIndexFresh(summary.vnIndex.fetchedAt);
+
+    const hasContent = hasRealSignals && !vnIndexStaleWithNoSignals;
 
     // Resolve the send function: use injected sendFn for tests, or dynamic import in prod.
     const doSend =
