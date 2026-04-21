@@ -51,7 +51,7 @@ function querySignalAges(db: Database): Record<string, number> {
       UNION ALL
       SELECT
         'foreign_flow' as signal_type,
-        CAST((? - CAST((SELECT MAX(created_at) FROM foreign_flow) as INTEGER)) / 60 AS INTEGER) as age_minutes`
+        CAST((? - CAST((SELECT MAX(fetched_at) FROM vnstock_trading_stats) as INTEGER)) / 60 AS INTEGER) as age_minutes`
     )
     .all(now, now, now, now, now) as AgeRow[];
 
