@@ -271,7 +271,6 @@ describe("Task 239a — macro-indicator-refresh (RED phase)", () => {
     const result = await freshnessSlaChecker(db);
 
     expect(result).toBe(true);
-    expect(result).not.toBeDefined(); // This line will fail in RED phase (function doesn't exist)
   });
 
   // ──────────────────────────────────────────────────────────────────────────
