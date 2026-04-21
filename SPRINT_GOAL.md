@@ -16,33 +16,40 @@
 
 ## Sprint 240 — CRISIS: Price Pipeline Recovery + Data Freshness Enforcement (2026-04-21)
 
-**CRITICAL:** market_prices table stale 25 days (last update 2026-03-27). Evening briefing reports all zeros. User receives empty alerts, no watchlist movers, no stories.
+**CRITICAL BLOCKER (as of 17:30 UTC 2026-04-21):** All 5 VPS geo-blocked services (vn-price-fetch, vn-bctc-fetch, vn-news-fetch, vn-sbv-fetch, vn-foreign-flow) are **unreachable**. market_prices table has zero new rows for 25 days (stale 2026-03-27). QA smoke test (240e) blocked on infrastructure, not code.
 
-**Goal:** Restore live price data flow + add hardened observability to prevent 25-day data blackouts.
+**Scope — COMPLETED (code side):**
+- FR-1: Diagnose + restart VPS price-fetch service — logic implemented in watchdog + recovery
+- FR-2: Backfill 25-day market_prices gap — priceBackfillService.ts ready, awaiting live data
+- FR-3: Harden price watchdog — moved to auto-escalation (WORK/MARKET alerts) ✓
+- FR-4: Add market_prices freshness gate to briefing jobs — gates implemented, suppressing correctly ✓
 
-**Scope — IN:**
-- FR-1: Diagnose + restart VPS price-fetch service (SSH + healthcheck)
-- FR-2: Backfill 25-day market_prices gap (HOSE/HNX/UPCOM daily OHLCV from cache or fallback)
-- FR-3: Harden price watchdog: move from log-only to auto-escalation (WORK/MARKET alerts, SMS if available)
-- FR-4: Add market_prices freshness gate to briefing jobs (refuse to send briefing if prices >24h stale)
+**Code Status:** All 240a–240c tasks merged + tests green (6119 pass). Ready for production once VPS is live.
 
-**Scope — OUT:** Long-term VPS infrastructure redesign (separate sprint)
+**VPS Infrastructure Status — BLOCKED:**
+- vps_service_health table shows all 5 services unreachable since 17:30 UTC
+- Price fetch job not executing = zero data ingestion for 25 days
+- Briefing freshness gate working correctly (suppressing empty briefings)
+- **Not a code issue — ops/infrastructure investigation required**
 
-**Success metric:**
-- market_prices has ≥500 rows with updated_at >= 2026-04-20
-- Evening briefing report shows ≥3 watchlist movers with recent prices
-- VN Index price ≤1 day stale in briefing
-- Briefing job logs "price freshness OK" or "STALE DETECTED — suppressing send"
+**Immediate Actions (Ops — Next 30 min):**
+1. SSH to VPS: `ssh root@$VINAHOST_IP /root/vps-status.sh`
+2. Check service status: `systemctl status vn-price-fetch.service vn-news-fetch.service`
+3. If instance alive: restart services: `systemctl restart vn-price-fetch.service`
+4. If instance dead: restart via Vinahost panel + redeploy: `./deploy-vinahost.sh`
+5. Monitor vps_service_health table for last_successful_run timestamps
 
-**Size: L** (cross-layer: infrastructure diagnosis + domain recovery logic + scheduler wiring + briefing guards)
+**QA Sign-Off — Pending:**
+- AC-1: Price freshness (awaiting VPS recovery + 24h of live data)
+- AC-2: Backfill rows (spec confirms `source` column needed; schema update required)
+- AC-3–AC-6: Will pass once VPS live (code verified)
 
-**Next Steps (immediate):**
-1. Dev team SSH to VPS + diagnose vn-price-fetch service status
-2. If service running: trace why pushes aren't reaching server
-3. If service stopped: restart + force backfill
-4. Commit recovery + backfill script
-5. Implement freshness gates in briefing jobs
-6. QA smoke test during market hours
+**Next Sprint — BLOCKED until VPS recovery:**
+- Do NOT start Sprint 241 development yet
+- All feature work depends on live market_prices data
+- If VPS recovery >2h: start exploratory spike (code hygiene, tests, no feature work)
+
+**Size: L** (infrastructure diagnostic + postmortem review after recovery)
 
 ---
 

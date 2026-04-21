@@ -20,12 +20,12 @@
 
 **Ref:** REQ-240, TECH-240 | **Goal:** Restore price data, prevent future 25-day silence | **Status:** ACTIVE
 
-| ID | Title | Status | Role |
-|----|-------|--------|------|
-| 240a | TDD RED — price pipeline recovery test suite | Done | Dev |
-| 240b | GREEN — backfill service + watchdog escalation + freshness gates | Done | Dev |
-| 240c | Integration — recordJobRun wrapper + schema UNIQUE constraint | Review | Dev |
-| 240e | QA Smoke test — live price flow + briefing freshness | Todo | QA |
+| ID | Title | Status | Role | Blocker |
+|----|-------|--------|------|---------|
+| 240a | TDD RED — price pipeline recovery test suite | Done | Dev | — |
+| 240b | GREEN — backfill service + watchdog escalation + freshness gates | Done | Dev | — |
+| 240c | Integration — recordJobRun wrapper + schema UNIQUE constraint | Done | Dev | — |
+| 240e | QA Smoke test — live price flow + briefing freshness | Blocked | QA | **VPS INFRA DOWN** (all 5 geo-blocked services unreachable since 17:30 UTC 2026-04-21; market_prices 25 days stale; price fetch job offline) |
 
 ### Task Details
 
