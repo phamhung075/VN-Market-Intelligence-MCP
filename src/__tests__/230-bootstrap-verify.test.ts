@@ -286,9 +286,8 @@ describe("Bootstrap Performance + Signal Quality (230)", () => {
       const filePath = path.join(projectRoot, agentFile);
       const content = fs.readFileSync(filePath, "utf-8");
 
-      expect(content).toContain(
-        requiredSection,
-        `Agent file ${agentFile} missing "${requiredSection}" section`
+      expect(content, `Agent file ${agentFile} missing "${requiredSection}" section`).toContain(
+        requiredSection
       );
     }
   });
