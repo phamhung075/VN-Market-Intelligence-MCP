@@ -93,10 +93,10 @@
 
 | ID | Title | Status | Role |
 |----|-------|--------|------|
-| 234a | TDD RED — `234-vps-health-sla.test.ts` with 12 assertions (all 5 services, SLA checks) | Todo | Dev |
-| 234b | GREEN — vpsHealthPoller + freshnessSlaChecker domain services + escalation callback | Todo | Dev |
-| 234c | Integration — schema tables + jobs.ts registration + MCP tools (get_vps_service_health + get_sla_status) | Todo | Dev |
-| 234d | Agent Step — integrate health queries into 02-financial-analyst + 04-market-watcher fetch logic | Todo | Dev |
+| 234a | TDD RED — `234-vps-health-sla.test.ts` with 12 assertions (all 5 services, SLA checks) | Done | Dev |
+| 234b | GREEN — vpsHealthPoller + freshnessSlaChecker domain services + escalation callback | Done | Dev |
+| 234c | Integration — schema tables + jobs.ts registration + MCP tools (get_vps_service_health + get_sla_status) | Done | Dev |
+| 234d | Agent Step — integrate health queries into 02-financial-analyst + 04-market-watcher fetch logic | Review | Dev |
 | 234e | QA Verification — e2e health polling + SLA escalation + tool output formatting | Todo | QA |
 
 ---
