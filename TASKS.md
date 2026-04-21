@@ -10,6 +10,7 @@
 > Sprints 182–189 archived: `docs/archive/sprints-182-189.md`
 > Sprints 190–220 archived: `docs/archive/sprints-190-220.md`
 > Sprints 221–225 archived: `docs/archive/sprints-221-225.md`
+> Sprints 226–230 archived: `docs/archive/sprints-226-230.md` (pending archive after git push)
 
 ---
 
@@ -26,7 +27,7 @@
 
 ---
 
-## Sprint 229 — fix(data-crisis): market_prices stale 24 days — implement 6h price-staleness watchdog + fallback assessment
+## Sprint 229 — fix(data-crisis): market_prices stale 24 days — implement 6h price-staleness watchdog + fallback assessment (2026-04-20) — COMPLETE
 
 | ID | Title | Status | Role |
 |----|-------|--------|------|
@@ -34,24 +35,9 @@
 | 229_b | [Dev] GREEN — watchdog implementation (priceUpdateWatchdogJob.ts + jobs.ts + eveningSummaryJob.ts + marketContextBuilder verify) | Done | Dev |
 | 229_c | [Dev] Investigation — VPS pipeline diagnostics + fallback assessment (FALLBACK_INVESTIGATION.md + ARCHITECTURE.md update) | Done | Dev |
 
-### Task Details
-
-#### 229_a — TDD RED test suite
-context: docs/handoffs/TASK_229a.md
-
-#### 229_b — GREEN + FR-2 + FR-3 implementation
-context: docs/handoffs/TASK_229b.md
-
-#### 229_c — Investigation + ARCHITECTURE.md update
-context: docs/handoffs/TASK_229c.md
-
 ---
 
 ## Sprint 230 — verify(bootstrap): latency SLA validation + signal quality hardening + fail-loud protocol hardening — COMPLETE (2026-04-21)
-
-**Goal:** Guarantee zero hallucinated prices reach MARKET channel; prove bootstrap meets ≤3s p95 latency; harden fail-loud protocol across all 7 Cowork agents.
-
-**Blockers:** None.
 
 | ID | Title | Status | Role |
 |----|-------|--------|------|
@@ -59,16 +45,21 @@ context: docs/handoffs/TASK_229c.md
 | 230b | [Dev] GREEN — timing instrumentation + signalValidator service + schema extension + MCP tool registration | Done | Dev |
 | 230c | [Dev] Integration — agent .md fail-loud blocks (Step 0-b, 7 files) + QA AC-6 validation step + tool registry update | Done | Dev |
 
-### Task Details
+---
 
-#### 230a — TDD RED test suite
-context: docs/handoffs/TASK_230a.md
+## Sprint 232 — feat(cowork-resilience): multi-source fallback chains + exponential backoff + escalation callbacks — COMPLETE (2026-04-21)
 
-#### 230b — GREEN implementation
-context: docs/handoffs/TASK_230b.md
+**Goal:** Prevent 25-day VPS outages via intelligent fallback chains (primary → cache → Yahoo/domestic/Công Báo), exponential backoff orchestration, per-service health monitoring, and fail-loud escalation.
 
-#### 230c — Integration + QA validation
-context: docs/handoffs/TASK_230c.md
+**Blockers:** None.
+
+| ID | Title | Status | Role |
+|----|-------|--------|------|
+| 232a | [Dev] TDD RED — `232-cowork-resilience.test.ts` with 12 acceptance criteria | Done | Dev |
+| 232b | [Dev] GREEN — resilientFetcher domain service (243 lines, exponential backoff, 180s timeout) | Done | Dev |
+| 232c | [Dev] Implementation — three source routers (news/price/BCTC) + mcp.config.json fallbacks config | Done | Dev |
+| 232d | [Dev] Integration — Agent Step 0c (VPS health check) + config loading + bootstrap validation | Done | Dev |
+| 232e | [QA] Verification — end-to-end test suite (20 tests, 49 assertions), DDD compliance, security hardening | Done | QA |
 
 ---
 
