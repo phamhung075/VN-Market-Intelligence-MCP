@@ -289,5 +289,18 @@
 
   "features": {
     "disableSscPolling": true
+  },
+
+  "fallbacks": {
+    "enableDomesticNewsFallback": false,
+    "enableCongbaoFallback": false,
+    "congbaoMinVpsOpenMinutes": 120,
+    "thresholds": {
+      "news": 15,
+      "prices": 10,
+      "bctc": 360,
+      "sbv_rates": 120,
+      "foreign_flow": 60
+    }
   }
 }
