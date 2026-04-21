@@ -131,6 +131,16 @@ export interface EveningSummary {
    * undefined when commodity_prices table is empty or all values are zero.
    */
   globalSnapshot?: GlobalSnapshot;
+  /**
+   * ISO timestamp of MAX(market_prices.updated_at) — used by FR-3 evening summary
+   * data crisis detection. Used to flag stale price data in evening report.
+   */
+  lastPriceUpdate?: string;
+  /**
+   * ISO timestamp of MAX(rag_analyses.created_at) — used by FR-3 evening summary
+   * data crisis detection. Used to flag stale news data in evening report.
+   */
+  lastNewsUpdate?: string;
 }
 
 /**
@@ -669,7 +679,34 @@ export async function assembleEveningSummary(
     });
   }
 
-  // ── Step 6: Persist summary ───────────────────────────────────────────────
+  // ── Step 6c: Fetch data timestamps for FR-3 crisis detection ────────────────
+  let lastPriceUpdate: string | undefined;
+  let lastNewsUpdate: string | undefined;
+  try {
+    const priceRow = db
+      .query<{ ts: string | null }, []>(
+        "SELECT MAX(updated_at) AS ts FROM market_prices WHERE code NOT IN ('TEST','PROBE')",
+      )
+      .get();
+    if (priceRow?.ts) {
+      lastPriceUpdate = priceRow.ts;
+    }
+
+    const newsRow = db
+      .query<{ ts: string | null }, []>(
+        "SELECT MAX(created_at) AS ts FROM rag_analyses",
+      )
+      .get();
+    if (newsRow?.ts) {
+      lastNewsUpdate = newsRow.ts;
+    }
+  } catch (tsErr) {
+    logger.warn("[assembleEveningSummary] data timestamp fetch failed", {
+      error: tsErr instanceof Error ? tsErr.message : String(tsErr),
+    });
+  }
+
+  // ── Step 7: Persist summary ───────────────────────────────────────────────
   const date = todayVietnam();
   const generatedAt = new Date().toISOString();
 
@@ -689,6 +726,8 @@ export async function assembleEveningSummary(
     foreignFlowMovers,
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     ...(globalSnapshot !== undefined ? { globalSnapshot } : { globalSnapshot: undefined as unknown as GlobalSnapshot }),
+    ...(lastPriceUpdate !== undefined ? { lastPriceUpdate } : {}),
+    ...(lastNewsUpdate !== undefined ? { lastNewsUpdate } : {}),
   };
 
   try {
