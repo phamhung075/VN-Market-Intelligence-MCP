@@ -421,6 +421,45 @@ export async function scanMarket(
     });
   }
 
+  // ── Step 5c: Signal Price Validation — enrich signals with confidence_score ──
+  // For each price-based signal (price_drop, price_surge, volume_spike),
+  // enrich with confidence_score (0–100, derived from signal.confidence * 100)
+  // and validated_at timestamp.
+  // Filter out signals with confidence_score < 60 to prevent unreliable alerts.
+  const validatedSignals: typeof allSignals = [];
+  const CONFIDENCE_THRESHOLD = 60; // Min confidence (0–100) to pass to generateAlerts
+
+  for (const signal of allSignals) {
+    // Calculate confidence_score from signal's confidence (0..1 → 0..100)
+    const confidence_score = Math.round(signal.confidence * 100);
+    const validated_at = new Date().toISOString();
+
+    // Enrich signal with validation fields
+    signal.confidence_score = confidence_score;
+    signal.validated_at = validated_at;
+
+    // Filter: only include signals with confidence_score >= threshold
+    if (confidence_score >= CONFIDENCE_THRESHOLD) {
+      validatedSignals.push(signal);
+      logger.debug("[scanMarket] signal passed validation", {
+        actionCode: signal.actionCode,
+        signalType: signal.type,
+        confidence_score,
+      });
+    } else {
+      logger.debug("[scanMarket] signal filtered: low confidence", {
+        actionCode: signal.actionCode,
+        signalType: signal.type,
+        confidence_score,
+        threshold: CONFIDENCE_THRESHOLD,
+      });
+    }
+  }
+
+  // Replace allSignals with validated signals
+  allSignals.length = 0;
+  allSignals.push(...validatedSignals);
+
   result.signals = allSignals.length;
 
   if (allSignals.length === 0) {

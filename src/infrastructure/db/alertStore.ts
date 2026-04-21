@@ -61,9 +61,9 @@ export function storeAlerts(alerts: Alert[], db: Database): void {
   const insert = db.prepare(`
     INSERT OR IGNORE INTO alerts
       (id, triggered_at, severity, signals_json, affected_actions_json,
-       analysis_ids_json, message, read, user_note, sent_by)
+       analysis_ids_json, message, read, user_note, sent_by, confidence_score, validated_at)
     VALUES
-      (?, ?, ?, ?, ?, NULL, ?, 0, NULL, 'server')
+      (?, ?, ?, ?, ?, NULL, ?, 0, NULL, 'server', ?, ?)
   `);
 
   const insertMany = db.transaction((rows: Alert[]) => {
@@ -75,6 +75,8 @@ export function storeAlerts(alerts: Alert[], db: Database): void {
         JSON.stringify(alert.signals),
         JSON.stringify([{ code: alert.actionCode }]),
         alert.message,
+        alert.confidence_score ?? null,
+        alert.validated_at ?? null,
       );
     }
   });
@@ -100,9 +102,9 @@ export function storeAlertsFromCommander(alerts: Alert[], db: Database): void {
   const insert = db.prepare(`
     INSERT OR IGNORE INTO alerts
       (id, triggered_at, severity, signals_json, affected_actions_json,
-       analysis_ids_json, message, read, user_note, sent_by)
+       analysis_ids_json, message, read, user_note, sent_by, confidence_score, validated_at)
     VALUES
-      (?, ?, ?, ?, ?, NULL, ?, 0, NULL, 'alert-commander')
+      (?, ?, ?, ?, ?, NULL, ?, 0, NULL, 'alert-commander', ?, ?)
   `);
 
   const insertMany = db.transaction((rows: Alert[]) => {
@@ -114,6 +116,8 @@ export function storeAlertsFromCommander(alerts: Alert[], db: Database): void {
         JSON.stringify(alert.signals),
         JSON.stringify([{ code: alert.actionCode }]),
         alert.message,
+        alert.confidence_score ?? null,
+        alert.validated_at ?? null,
       );
     }
   });

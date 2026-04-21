@@ -28,13 +28,15 @@ import { isStockMuted } from "./alertMuteChecker.js";
 /**
  * A generated alert that aggregates one or more signals for a single stock.
  *
- * @property id          - UUID-style unique identifier
- * @property actionCode  - Stock ticker (e.g. "VCB")
- * @property signals     - The contributing Signal objects
- * @property severity    - Escalated severity: low | medium | high | critical
- * @property message     - Human-readable summary of all contributing signals
- * @property isRead      - Whether the alert has been acknowledged (default false)
- * @property createdAt   - ISO 8601 creation timestamp
+ * @property id              - UUID-style unique identifier
+ * @property actionCode      - Stock ticker (e.g. "VCB")
+ * @property signals         - The contributing Signal objects
+ * @property severity        - Escalated severity: low | medium | high | critical
+ * @property message         - Human-readable summary of all contributing signals
+ * @property isRead          - Whether the alert has been acknowledged (default false)
+ * @property createdAt       - ISO 8601 creation timestamp
+ * @property confidence_score - (optional) 0–100 confidence from validation (Task 231)
+ * @property validated_at    - (optional) ISO 8601 timestamp of validation (Task 231)
  */
 export interface Alert {
   id: string;
@@ -44,6 +46,8 @@ export interface Alert {
   message: string;
   isRead: boolean;
   createdAt: string;
+  confidence_score?: number;  // 0–100, from enriched signals
+  validated_at?: string;      // ISO 8601, from enriched signals
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -252,7 +256,26 @@ export function generateAlerts(
 
   for (const [actionCode, groupSignals] of grouped) {
     const severity = escalateSeverity(groupSignals);
-    alerts.push({
+
+    // Extract validation fields from signals (Task 231)
+    // Use the highest confidence_score and most recent validated_at from any signal
+    let confidence_score: number | undefined;
+    let validated_at: string | undefined;
+
+    for (const sig of groupSignals) {
+      if (sig.confidence_score !== undefined) {
+        if (confidence_score === undefined || sig.confidence_score > confidence_score) {
+          confidence_score = sig.confidence_score;
+        }
+      }
+      if (sig.validated_at !== undefined) {
+        if (validated_at === undefined || sig.validated_at > validated_at) {
+          validated_at = sig.validated_at;
+        }
+      }
+    }
+
+    const alert: Alert = {
       id: chooseAlertId(actionCode, groupSignals),
       actionCode,
       signals: groupSignals,
@@ -260,7 +283,13 @@ export function generateAlerts(
       message: buildMessage(actionCode, groupSignals, severity),
       isRead: false,
       createdAt: now,
-    });
+    };
+
+    // Add validation fields if present in signals
+    if (confidence_score !== undefined) alert.confidence_score = confidence_score;
+    if (validated_at !== undefined) alert.validated_at = validated_at;
+
+    alerts.push(alert);
   }
 
   return alerts;

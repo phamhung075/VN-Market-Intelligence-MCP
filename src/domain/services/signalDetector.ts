@@ -120,12 +120,14 @@ export interface SignalContext {
 /**
  * A detected market signal.
  *
- * @property type       - Category of signal
- * @property severity   - Qualitative urgency: low | medium | high | critical
- * @property actionCode - Stock ticker this signal applies to
- * @property message    - Human-readable description of the signal
- * @property confidence - 0..1 estimate of reliability
- * @property detectedAt - ISO 8601 timestamp when the signal was generated
+ * @property type              - Category of signal
+ * @property severity          - Qualitative urgency: low | medium | high | critical
+ * @property actionCode        - Stock ticker this signal applies to
+ * @property message           - Human-readable description of the signal
+ * @property confidence        - 0..1 estimate of reliability
+ * @property detectedAt        - ISO 8601 timestamp when the signal was generated
+ * @property confidence_score  - (optional) 0–100 confidence after validation (Task 231)
+ * @property validated_at      - (optional) ISO 8601 timestamp of validation (Task 231)
  */
 export interface Signal {
   type: SignalType;
@@ -134,6 +136,8 @@ export interface Signal {
   message: string;
   confidence: number;
   detectedAt: string;
+  confidence_score?: number;  // 0–100, set by validator
+  validated_at?: string;      // ISO 8601, set by validator
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
