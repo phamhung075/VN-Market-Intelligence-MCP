@@ -143,3 +143,24 @@ integration_verification:
 tsc_clean: true (0 TypeScript errors)
 full_suite_pass: true (47/47 tests GREEN on 240 sprint)
 
+---
+
+## [QA] Review Record
+
+verdict: APPROVED
+blocking_issues: []
+non_blocking: []
+
+files_confirmed_clean:
+- /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/__tests__/240c-integration.test.ts
+- /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/scheduler/jobs.ts (line 671 confirmed)
+- /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/infrastructure/db/schema-market-data.ts (line 84 confirmed)
+- /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/infrastructure/db/cronJobRunStore.ts
+
+test_count_verified: 6119 pass (6112 main + 7 new) = baseline + 240c tests ✓
+tsc_verified: 0 errors ✓
+ddd_verified: PASS (no cross-layer imports) ✓
+security_verified: PASS (no process.env, all SQL parameterized) ✓
+
+report: /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/reports/TASK_REPORT_240c.md
+

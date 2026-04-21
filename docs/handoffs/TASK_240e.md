@@ -156,3 +156,36 @@ All metrics must be verified and logged:
 - [ ] Sign-off complete → Sprint 240 DONE
 
 ---
+
+## [QA] Review Record
+
+**verdict:** CHANGES_REQUIRED
+
+**blocking_issues:**
+- **CRITICAL: VPS Proxy Infrastructure DOWN** — vps_service_health table shows all 5 geo-blocked services (price-fetch, bctc-fetch, news-fetch, sbv-fetch, foreign-flow) unreachable since 17:30 UTC. Contact Vinahost support to verify VPS instance health. No market data ingestion for 25 days.
+- Backfill schema mismatch: `source` column does not exist in market_prices; spec clarification needed
+- Evening briefing job not running: no 2026-04-21-evening.json files; verify cron schedule in cron-registry.json
+
+**non_blocking:**
+- Test 125 timezone dependency: test seeds RAG with `Date.now() - 1h`, fails if run late UTC. Fix: use midnightVietnamAsUtc() buffer (src/__tests__/125-test-e2e-briefing.test.ts:1153)
+
+**files_confirmed_clean:**
+- /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/scheduler/briefings/morningBriefingJob.ts — no DDD violations
+- /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/application/usecases/assembleBriefing.ts — no security issues
+- /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/__tests__/125-test-e2e-briefing.test.ts — test code only, non-blocking failure
+
+**test_results:**
+- bun test: 6119 pass / 1 fail / 21 skip across 500 files (45s runtime)
+- bun tsc --noEmit: 0 TypeScript errors
+- curl /health: 200 OK (server healthy, 103 tools, 150 sessions)
+
+**smoke_test_summary:**
+- Server Health: PASS
+- Database Schema: PASS (73 tables initialized)
+- Type Safety: PASS
+- Unit Tests: FAIL (1 test, timing-dependent, non-blocking)
+- Price Pipeline: FAIL (25-day stale data, VPS investigation needed)
+- Briefing Assembly: SUPPRESSED (cannot generate meaningful briefing without fresh prices)
+- Evening Summary Job: FAIL (not running)
+
+**merge_commit:** (pending blocking issue resolution)
