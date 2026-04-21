@@ -1,14 +1,17 @@
 {
   "_maintained_by": "PM / system-auditor",
-  "_trigger": "sprint start/end, tool/cron count change",
+  "_trigger": "sprint start/end, tool/cron count change, baseline test update",
   "lastUpdated": "2026-04-21",
   "currentSprint": 234,
   "previousSprint": { "number": 233, "status": "COMPLETE", "progressTasks": "3/3 complete (233a,233b,233c done)" },
   "sprintGoal": "feat(observability): VPS health dashboard + data freshness SLA enforcement — COMPLETE",
+  "testBaseline": 6076,
+  "testFailures": 0,
   "toolCount": 103,
   "schedulerFileCount": 40,
   "knowledgeFileCount": 15,
   "devAgentCount": 13,
   "analysisAgentCount": 9,
-  "totalTasksDone": 328
+  "totalTasksDone": 328,
+  "lastFixApplied": "fix-schema-alert-columns (bb4bcba)"
 }
