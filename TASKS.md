@@ -47,7 +47,7 @@ context: docs/handoffs/TASK_229c.md
 
 ---
 
-## Sprint 230 — verify(bootstrap): latency SLA validation + signal quality hardening + fail-loud protocol hardening
+## Sprint 230 — verify(bootstrap): latency SLA validation + signal quality hardening + fail-loud protocol hardening — COMPLETE (2026-04-21)
 
 **Goal:** Guarantee zero hallucinated prices reach MARKET channel; prove bootstrap meets ≤3s p95 latency; harden fail-loud protocol across all 7 Cowork agents.
 
@@ -55,9 +55,9 @@ context: docs/handoffs/TASK_229c.md
 
 | ID | Title | Status | Role |
 |----|-------|--------|------|
-| 230a | [Dev] TDD RED — `230-bootstrap-verify.test.ts` with 12+ failing assertions (AC-1 to AC-4) | Review | Dev |
+| 230a | [Dev] TDD RED — `230-bootstrap-verify.test.ts` with 12+ failing assertions (AC-1 to AC-4) | Done | Dev |
 | 230b | [Dev] GREEN — timing instrumentation + signalValidator service + schema extension + MCP tool registration | Done | Dev |
-| 230c | [Dev] Integration — agent .md fail-loud blocks (Step 0-b, 7 files) + QA AC-6 validation step + tool registry update | Review | Dev |
+| 230c | [Dev] Integration — agent .md fail-loud blocks (Step 0-b, 7 files) + QA AC-6 validation step + tool registry update | Done | Dev |
 
 ### Task Details
 
