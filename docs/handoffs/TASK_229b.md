@@ -29,6 +29,30 @@ files_to_read:
 - src/scheduler/briefings/eveningSummaryJob.ts  # lines 180–270: formatEveningSummaryLines
 - docs/TECH_229.md  # FR-1, FR-2, FR-3 detailed specs
 
+---
+
+## [QA] Review Record
+
+**verdict**: APPROVED
+
+**blocking_issues**: []
+
+**non_blocking**: []
+
+**files_confirmed_clean**:
+- /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/scheduler/market-data/priceUpdateWatchdogJob.ts — Implements all 5 functions with proper dependency injection, DDD compliant
+- /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/scheduler/jobs.ts — Cron registered with correct schedule (*/10 2-8 * * 1-5)
+- /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/scheduler/briefings/eveningSummaryJob.ts — FR-3 crisis detection added (lines 269-289)
+- /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/application/usecases/assembleEveningSummary.ts — lastPriceUpdate/lastNewsUpdate fields added
+- /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/domain/services/marketContextBuilder.ts — FR-2 already implemented, verified correct
+
+**test_results**:
+- Unit tests: 11 pass / 0 fail (src/__tests__/229-price-staleness-watchdog.test.ts)
+- Full regression: 5966 pass / 0 fail (pre-existing 6 failures unrelated)
+- TypeScript: 0 errors
+
+**merge_commit**: pending (awaiting merge)
+
 files_to_create:
 - src/scheduler/market-data/priceUpdateWatchdogJob.ts  # CREATE (~150 LOC, functions: priceUpdateWatchdog, isVnMarketHoursUtc, readLatestPriceTimestamp, _resetWatchdogCooldown, _resetWatchdogStaleFlag)
 

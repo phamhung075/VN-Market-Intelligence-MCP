@@ -33,11 +33,19 @@ export interface BootstrapError {
   system_status?: string;
 }
 
+export interface SubCallTimings {
+  agent_signals_ms: number | string; // number for fulfilled, "5000+" for timeout
+  market_context_ms: number | string;
+  system_status_ms: number | string;
+}
+
 export interface BootstrapResult {
   agent_signals: unknown[];
   market_context: string | null;
   system_status: string | null;
   error?: BootstrapError;
+  elapsed_ms: number; // Total wall-clock time in milliseconds
+  sub_call_timings: SubCallTimings; // Per-call timing breakdown
 }
 
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
@@ -55,17 +63,67 @@ export async function getCycleBootstrap(
 ): Promise<BootstrapResult> {
 
   const HOURS_BACK = 24;
+  const startTotal = Date.now();
 
-  const [signalsResult, contextResult, statusResult] = await Promise.allSettled([
-    withTimeout(Promise.resolve(getSignals(db, agentName)), 5000),
-    withTimeout(Promise.resolve(buildMarketContextText(db, HOURS_BACK)), 5000),
-    withTimeout(Promise.resolve(buildSystemStatusText(db)), 5000),
-  ]);
+  // Measure each sub-call independently
+  const startSignals = Date.now();
+  const signalsResult = await Promise.race([
+    Promise.resolve(getSignals(db, agentName)),
+    new Promise<{ status: "rejected"; reason: Error }>(
+      (_, reject) =>
+        setTimeout(
+          () => reject(new Error("Agent signals timeout")),
+          5000,
+        ),
+    ),
+  ]).then(
+    (value) => ({ status: "fulfilled" as const, value }),
+    (reason) => ({ status: "rejected" as const, reason }),
+  );
+  const agent_signals_ms = Math.max(1, Date.now() - startSignals);
+
+  const startContext = Date.now();
+  const contextResult = await Promise.race([
+    Promise.resolve(buildMarketContextText(db, HOURS_BACK)),
+    new Promise<string>(
+      (_, reject) =>
+        setTimeout(
+          () => reject(new Error("Market context timeout")),
+          5000,
+        ),
+    ),
+  ]).then(
+    (value) => ({ status: "fulfilled" as const, value }),
+    (reason) => ({ status: "rejected" as const, reason }),
+  );
+  const market_context_ms = Math.max(1, Date.now() - startContext);
+
+  const startStatus = Date.now();
+  const statusResult = await Promise.race([
+    Promise.resolve(buildSystemStatusText(db)),
+    new Promise<string>(
+      (_, reject) =>
+        setTimeout(
+          () => reject(new Error("System status timeout")),
+          5000,
+        ),
+    ),
+  ]).then(
+    (value) => ({ status: "fulfilled" as const, value }),
+    (reason) => ({ status: "rejected" as const, reason }),
+  );
+  const system_status_ms = Math.max(1, Date.now() - startStatus);
 
   const result: BootstrapResult = {
     agent_signals: [],
     market_context: null,
     system_status: null,
+    elapsed_ms: Math.max(1, Date.now() - startTotal),
+    sub_call_timings: {
+      agent_signals_ms: signalsResult.status === "fulfilled" ? agent_signals_ms : "5000+",
+      market_context_ms: contextResult.status === "fulfilled" ? market_context_ms : "5000+",
+      system_status_ms: statusResult.status === "fulfilled" ? system_status_ms : "5000+",
+    },
   };
 
   const errors: BootstrapError = {};

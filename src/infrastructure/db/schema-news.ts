@@ -88,6 +88,10 @@ export function initNewsTables(db: Database): void {
   // Task 1106 — signal class column
   try { db.exec(`ALTER TABLE agent_signals ADD COLUMN signal_class TEXT`); } catch {}
 
+  // Task 230 — signal validation columns
+  try { db.exec(`ALTER TABLE agent_signals ADD COLUMN confidence_score INTEGER DEFAULT 50`); } catch {}
+  try { db.exec(`ALTER TABLE agent_signals ADD COLUMN validated_at TEXT DEFAULT CURRENT_TIMESTAMP`); } catch {}
+
   db.exec(`CREATE INDEX IF NOT EXISTS idx_agent_signals_cycle ON agent_signals(cycle_id)`);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_agent_signals_chain ON agent_signals(causal_ref)`);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_agent_signals_stock ON agent_signals(stock_code, created_at)`);

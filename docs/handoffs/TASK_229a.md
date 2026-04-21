@@ -180,3 +180,22 @@ tests_skipped: []
 
 tsc_clean: true
 full_suite_pass: false (6 failing assertions expected in RED phase)
+
+---
+
+## [QA] Review Record
+
+verdict: APPROVED
+blocking_issues: []
+non_blocking: []
+
+files_confirmed_clean:
+- /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/__tests__/229-price-staleness-watchdog.test.ts — 162 lines, 11 assertions (5 pass + 6 RED)
+- /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/scheduler/market-data/priceUpdateWatchdogJob.ts — 76 lines, stub implementations
+
+test_results:
+- Target suite: 5 pass (AC-5c,5d,5e,6,7) / 6 fail (AC-1,2,3,4,5a,5b) = RED phase expected
+- Full suite: 5960 pass / 12 fail (6 from 229a + 6 pre-existing VPS failures) / 21 skip
+- TypeScript: 0 errors
+
+qa_notes: "TDD RED phase complete. All AC-1 to AC-7 covered with meaningful assertions. Test isolation via Bun.env. No DDD violations. Ready for 229b (GREEN implementation)."

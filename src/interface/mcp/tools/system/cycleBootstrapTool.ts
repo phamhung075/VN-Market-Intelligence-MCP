@@ -35,6 +35,16 @@ export function registerCycleBootstrapTool(server: McpServer): void {
       try {
         const db = getDb();
         const result = await getCycleBootstrap(db, agent_name);
+
+        // Observability logging per AC-4
+        const signalsTiming = result.sub_call_timings.agent_signals_ms;
+        const contextTiming = result.sub_call_timings.market_context_ms;
+        const statusTiming = result.sub_call_timings.system_status_ms;
+
+        console.log(
+          `[BOOTSTRAP] agent=cycle-init elapsed_ms=${result.elapsed_ms} signals_ms=${signalsTiming} context_ms=${contextTiming} status_ms=${statusTiming}`
+        );
+
         return {
           content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }],
         };
