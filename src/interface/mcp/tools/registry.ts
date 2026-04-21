@@ -63,6 +63,8 @@ import { registerAskQueueTools } from "./system/askQueueTools.js";
 import { registerAgentWorkLogTools } from "./system/agentWorkLogTools.js";
 import { registerCronHealthTools } from "./alerts/cronHealthTools.js";
 import { registerVpsProxyTools } from "./system/vpsProxyTools.js";
+import { registerVpsHealthTools } from "./system/vpsHealthTools.js";
+import { registerSlaStatusTools } from "./system/slaStatusTools.js";
 import { registerEvidenceTools } from "./macro/evidenceTools.js";
 import { registerCalibrationTools } from "./macro/calibrationTools.js";
 import { registerForeignFlowTools } from "./market-data/foreignFlowTools.js";
@@ -136,6 +138,8 @@ export const toolRegistry: Array<(server: McpServer) => void> = [
   registerAgentWorkLogTools,     // Task 1109: log_agent_work + get_agent_work_log
   registerCronHealthTools,       // Task 1102: get_cron_health
   registerVpsProxyTools,         // VPS proxy: get_vps_proxy_health
+  registerVpsHealthTools,        // Task 234: get_vps_service_health (+1 tool → 102)
+  registerSlaStatusTools,        // Task 234: get_sla_status (+1 tool → 103)
   registerEvidenceTools,         // Task 1117: record_evidence_fragment (+1 tool → 85)
   registerCalibrationTools,     // Task 1129: get_calibration_report (+1 tool → 89)
   registerForeignFlowTools,     // Task 1134: get_foreign_flow (+1 tool → 90)
