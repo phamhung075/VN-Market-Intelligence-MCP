@@ -215,7 +215,7 @@ export async function runVpsProxyWatchdog(
           "VPS data pipeline restored — all services are sending fresh data again.",
         );
       } catch (err) {
-        logger.warn("[vps-watchdog] recovery MARKET alert failed", {
+        logger.error("[vps-watchdog] recovery MARKET alert failed", {
           error: err instanceof Error ? err.message : String(err),
         });
       }
@@ -282,7 +282,7 @@ export async function runVpsProxyWatchdog(
     try {
       await notifyUser(userMessage);
     } catch (userErr) {
-      logger.warn("[vps-watchdog] MARKET user alert failed", {
+      logger.error("[vps-watchdog] MARKET user alert failed", {
         error: userErr instanceof Error ? userErr.message : String(userErr),
       });
     }
