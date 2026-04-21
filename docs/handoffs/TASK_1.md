@@ -126,3 +126,52 @@ fix(1193): Detect stale DB connections + force WAL checkpoint on push-prices
 - ✅ updated_at timestamp is current (within 5s of now)
 - ✅ All 31 watchlist stocks have recent prices (< 1min old)
 - ✅ No "WRITE INVISIBLE" errors in logs
+
+---
+
+## [Developer] Implementation Record
+
+Completed 2026-04-22
+
+files_actually_modified:
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/infrastructure/db/schema.ts` (lines 25-26, 66, 73-109): FIX A — added inode detection to getDb() to catch file replacement scenarios. Added _dbStat module-level variable, imported statSync from node:fs, and added inode check logic before returning cached _db.
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/interface/mcp/server.ts` (lines 450-459, 516-524): FIX B — added WAL checkpoint force after verify block (8 lines). FIX C — added async verification in setImmediate block to detect invisibility earlier (12 lines).
+
+tests_written: none (test already existed)
+
+tests_executed:
+- src/__tests__/1193-push-prices-persist.test.ts: 7 PASS
+- Full suite: 6124 PASS, 0 FAIL, 21 SKIP
+
+tsc_clean: true (0 errors)
+full_suite_pass: true (6124 tests, 0 regressions)
+
+Branch: task/1-fix-market-prices-persist
+Commit: faa7e77 — fix(1): Detect stale DB connections + force WAL checkpoint on push-prices
+
+---
+
+## [QA] Review Record
+
+**Date:** 2026-04-22
+**Reviewer:** QA Agent (Haiku)
+
+verdict: APPROVED
+
+blocking_issues: []
+
+non_blocking: []
+
+files_confirmed_clean:
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/infrastructure/db/schema.ts` (lines 25-26, 66, 73-109)
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/interface/mcp/server.ts` (lines 450-459, 516-524)
+
+test_results:
+- 1193-push-prices-persist.test.ts: 7 PASS / 0 FAIL
+- Full suite: 6124 PASS / 0 FAIL
+- TypeScript: 0 errors
+- DDD compliance: PASS
+
+merge_commit: (pending merge)
+
+Task Report: reports/TASK_REPORT_1.md
