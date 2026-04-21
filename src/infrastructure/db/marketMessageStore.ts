@@ -360,16 +360,17 @@ export function batchReviewMarketMessages(
     return { updated: 0, notFound: [] };
   }
 
-  const stmt = db.prepare(
-    `UPDATE market_messages
-     SET verdict = ?, verdict_note = ?, reviewed_at = datetime('now')
-     WHERE id = ?`,
-  );
-
   const notFound: number[] = [];
   let updated = 0;
 
   const txn = db.transaction(() => {
+    // Prepare statement inside transaction to ensure all updates execute within txn scope
+    const stmt = db.prepare(
+      `UPDATE market_messages
+       SET verdict = ?, verdict_note = ?, reviewed_at = datetime('now')
+       WHERE id = ?`,
+    );
+
     for (const id of ids) {
       const result = stmt.run(verdict, note ?? null, id);
       if (result.changes > 0) {
