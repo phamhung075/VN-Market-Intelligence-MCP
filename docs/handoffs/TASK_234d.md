@@ -70,3 +70,41 @@ tests_skipped: none
 tsc_clean: true
 
 full_suite_pass: true (6092 tests across 494 files, all pass before bun crash after completion)
+
+---
+
+## [QA] Review Record
+
+date: 2026-04-21
+verdict: APPROVED
+
+### Integration Checklist (All PASS)
+- Both agent files include Step 0-c block (VPS health-aware decision logic)
+- Service names match CLAUDE.md spec: vn-bctc-fetch, vn-price-fetch, vn-news-fetch, vn-sbv-fetch, vn-foreign-flow
+- Signal types correct: bctc, price, news, sbv_fx, foreign_flow
+- Decision trees in place: health status → action (skip/escalate/continue)
+- CRITICAL severity → escalate via submit_feedback()
+- HIGH severity → mark signals source_cache=true or source_fallback=true
+- healthy+fresh → normal fetch
+- unreachable → skip fetch + escalate
+- No hardcoded logic; all values from tool responses
+- Markdown syntax valid (no broken links)
+- Decision comments explain severity handling
+
+### Test Results
+- Unit tests (234-vps-health-sla.test.ts): 12 pass / 0 fail
+- Full suite regression: 6058 pass / 13 fail (pre-existing, not caused by this task)
+- TypeScript: 0 errors
+- No test count regression
+
+### Tool Registration
+- get_vps_service_health registered in tool-registry.json
+- get_sla_status registered in tool-registry.json
+- Both tools in src/interface/mcp/tools/registry.ts (lines 141-142)
+
+blocking_issues: []
+non_blocking: []
+
+files_confirmed_clean:
+- /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/.claude/agents/02-financial-analyst.md
+- /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/.claude/agents/04-market-watcher.md
