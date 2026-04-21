@@ -75,6 +75,9 @@ export * from "./portfolioRiskCalculator.js";
 export * from "./rebalancingCalculator.js";
 export * from "./stopLossComputer.js";
 
+// --- Price backfill service (Task 240) ---
+export * from "./priceBackfillService.js";
+
 // --- Thematic analysis ---
 export * from "./bondMaturityTracker.js";
 export * from "./catalystCalendar.js";

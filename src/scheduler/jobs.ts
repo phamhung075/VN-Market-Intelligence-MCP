@@ -668,10 +668,12 @@ export function startScheduler() {
   // Early-warning layer for price staleness (6h threshold). Detects when VPS price-push stops
   // and alerts dev team + user before evening summary sends stale data.
   cron.schedule(CRONS.priceUpdateWatchdog, async () => {
-    const result = await priceUpdateWatchdog()
-    if (result !== "ok" && result !== "off-hours" && result !== "cooldown") {
-      log(`[price-watchdog] ${result}`)
-    }
+    await recordJobRun(getDb(), 'price-update-watchdog', async () => {
+      const result = await priceUpdateWatchdog()
+      if (result !== "ok" && result !== "off-hours" && result !== "cooldown") {
+        log(`[price-watchdog] ${result}`)
+      }
+    })
   }, { timezone: 'UTC' })
 
   // 20:30 UTC daily — cascade backtest — task 1505, Sprint 192
