@@ -62,6 +62,7 @@ import { runTaAlertNotifierCron } from './market-data/taAlertNotifierJob.js'
 import { runOhlcvStartupProbe } from './market-data/ohlcvStartupProbe.js'
 import { runOhlcvDailyAggregator } from './market-data/ohlcvDailyAggregatorJob.js'
 import { runOhlcvStalenessCheck } from './market-data/ohlcvStalenessCheckJob.js'
+import { priceUpdateWatchdog } from './market-data/priceUpdateWatchdogJob.js'
 import { getDb } from '../infrastructure/db/schema.js'
 import { recordJobRun } from '../infrastructure/db/cronJobRunStore.js'
 import type { Database } from 'bun:sqlite'
@@ -144,6 +145,10 @@ export const CRONS = {
   ohlcvStalenessCheck:    Bun.env.CRON_OHLCV_STALENESS_CHECK            ?? '15 8 * * 1-5',
   /** cascadeBacktest — daily backtest: fills price_impact_3d/7d/outcome_correct on cascade_rule_hits rows >3d old (task 1505, Sprint 192) */
   cascadeBacktest:        Bun.env.CRON_CASCADE_BACKTEST                  ?? '30 20 * * *',
+  /** priceUpdateWatchdog — price staleness detection at 6h threshold (task 229, Sprint 229)
+   *  Every 10 min during VN market hours (Mon-Fri 02:00-08:59 UTC). Early-warning layer
+   *  (separate from 45-min VPS watchdog) to catch price pipeline failures and alert user. */
+  priceUpdateWatchdog:    Bun.env.CRON_PRICE_UPDATE_WATCHDOG             ?? '*/10 2-8 * * 1-5',
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -648,6 +653,16 @@ export function startScheduler() {
     await recordJobRun(getDb(), 'ohlcv-staleness-check', async () => {
       await runOhlcvStalenessCheck()
     })
+  }, { timezone: 'UTC' })
+
+  // Every 10 min during VN market hours (02:00-08:59 UTC, Mon-Fri) — Price update watchdog — task 229
+  // Early-warning layer for price staleness (6h threshold). Detects when VPS price-push stops
+  // and alerts dev team + user before evening summary sends stale data.
+  cron.schedule(CRONS.priceUpdateWatchdog, async () => {
+    const result = await priceUpdateWatchdog()
+    if (result !== "ok" && result !== "off-hours" && result !== "cooldown") {
+      log(`[price-watchdog] ${result}`)
+    }
   }, { timezone: 'UTC' })
 
   // 20:30 UTC daily — cascade backtest — task 1505, Sprint 192

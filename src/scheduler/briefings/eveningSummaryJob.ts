@@ -266,6 +266,28 @@ export function formatEveningSummaryLines(summary: EveningSummary): string[] {
     lines.push(...formatGlobalSnapshotSection(summary.globalSnapshot as GlobalSnapshot));
   }
 
+  // ── Data crisis detection (FR-3) ──────────────────────────────────
+  // If watchlistMovers + topStories both empty, check if reason is stale data
+  if (summary.watchlistMovers.length === 0 && summary.topStories.length === 0) {
+    const priceAgeMs = summary.lastPriceUpdate
+      ? Date.now() - new Date(summary.lastPriceUpdate).getTime()
+      : Infinity;
+    const newsAgeMs = summary.lastNewsUpdate
+      ? Date.now() - new Date(summary.lastNewsUpdate).getTime()
+      : Infinity;
+
+    const PRICE_STALE_6H = 6 * 60 * 60 * 1000;
+    const NEWS_STALE_15M = 15 * 60 * 1000;
+
+    if (priceAgeMs > PRICE_STALE_6H || newsAgeMs > NEWS_STALE_15M) {
+      const priceHours = Math.round(priceAgeMs / 3_600_000);
+      const newsHours = Math.round(newsAgeMs / 3_600_000);
+      lines.push(
+        `\n[⚠ Data pipeline crisis: prices stale ${priceHours}h, last news ${newsHours}h ago]`,
+      );
+    }
+  }
+
   return lines;
 }
 
