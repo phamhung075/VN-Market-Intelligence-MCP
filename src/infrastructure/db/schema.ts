@@ -22,7 +22,7 @@
  */
 
 import { Database } from "bun:sqlite";
-import { mkdirSync } from "node:fs";
+import { mkdirSync, statSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 
 import { initMarketDataTables } from "./schema-market-data.js";
@@ -63,6 +63,7 @@ export function ensureCustomAlertRulesTable(db: Database): void {
 }
 
 let _db: Database | null = null;
+let _dbStat: ReturnType<typeof statSync> | null = null;
 
 /**
  * Returns the singleton `bun:sqlite` Database instance.
@@ -70,10 +71,28 @@ let _db: Database | null = null;
  * Re-reads DB_PATH env var on each new connection so tests can override it.
  */
 export function getDb(): Database {
-  if (_db) return _db;
-
   // Re-read env var each time — tests may set it after module load
   const dbPath = Bun.env["DB_PATH"] ?? DEFAULT_DB_PATH;
+
+  // FIX A: Detect if file was replaced (inode changed)
+  // This catches the case where the database file was deleted and recreated
+  // while the server was running, preventing writes to stale file descriptors.
+  if (_db && dbPath !== ":memory:") {
+    const oldStat = _dbStat;
+    const newStat = statSync(dbPath, { throwIfNoEntry: false });
+    if (!oldStat || !newStat || oldStat.ino !== newStat.ino) {
+      // File was replaced — close stale connection
+      try {
+        _db.close();
+      } catch {
+        // ignore close errors
+      }
+      _db = null;
+      _dbStat = null;
+    }
+  }
+
+  if (_db) return _db;
 
   // Ensure data directory exists — skip for the special `:memory:` path
   if (dbPath !== ":memory:") {
@@ -86,6 +105,7 @@ export function getDb(): Database {
   _db.exec("PRAGMA foreign_keys = ON");
   _db.exec("PRAGMA wal_autocheckpoint=4000");
   _db.exec("PRAGMA busy_timeout=5000");
+  _dbStat = statSync(dbPath, { throwIfNoEntry: false });
   return _db;
 }
 

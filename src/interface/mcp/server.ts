@@ -447,6 +447,17 @@ export async function createBunServer(
           });
         }
 
+        // FIX B: Force WAL checkpoint after large price batch
+        // Ensures writes are committed to the main database file, not just the WAL.
+        if (count > 50) {
+          try {
+            db.exec("PRAGMA wal_checkpoint(RESTART)");
+            log.info("[push-prices] WAL checkpoint forced", { count });
+          } catch (e) {
+            log.warn("[push-prices] WAL checkpoint failed", { error: String(e) });
+          }
+        }
+
         // Store 1-min ticks (today only — for intraday review)
         const histInsert = db.prepare(`
           INSERT OR IGNORE INTO market_prices_history (code, price, volume, fetched_at)
@@ -502,6 +513,17 @@ export async function createBunServer(
         // Fire-and-forget — don't block the HTTP response
         setImmediate(async () => {
           try {
+            // FIX C: Verify market_prices is still fresh 100ms later
+            // Detects invisibility at the async phase, earlier than waiting for next cycle.
+            const freshCheck = db.prepare(
+              `SELECT COUNT(*) as n FROM market_prices WHERE updated_at >= ?`
+            ).get(new Date(Date.now() - 1000).toISOString()) as { n: number };
+            if (freshCheck.n === 0 && count > 0) {
+              log.error("[push-prices] ASYNC: market_prices invisibility confirmed", {
+                count, visible_now: freshCheck.n
+              });
+            }
+
             const { detectSignals } = await import("../../domain/services/signalDetector.js");
             const { generateAlerts } = await import("../../domain/services/alertGenerator.js");
             const { storeAlerts } = await import("../../infrastructure/db/alertStore.js");
