@@ -24,7 +24,6 @@
 | ID | Title | Priority | Notes |
 |----|----|----------|-------|
 | 1284 | IMF context sentiment detection | MEDIUM | Policy vs crisis distinction |
-| 1274 | HOSE staleness guard | MEDIUM | >2h old = circuit DEGRADED |
 | 1267 | SSC PDF timeout fallback | MEDIUM | Use news chain if OCR fails |
 | 1286 | Update IMPLEMENTATION_STATUS.md | LOW | Add sprint 240+ entries |
 
