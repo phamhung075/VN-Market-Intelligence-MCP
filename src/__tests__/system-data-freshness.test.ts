@@ -44,6 +44,43 @@ describe("Task 1282a — detectDataFreshnessBreach()", () => {
 
   beforeEach(() => {
     db = new Database(":memory:");
+
+    // Create test tables with stale data
+    // Price data 12 minutes old (exceeds 10min threshold but < 15min → HIGH breach)
+    const now = new Date();
+    const staleTime12min = new Date(now.getTime() - 12 * 60 * 1000);
+
+    db.exec(
+      `
+      CREATE TABLE vps_push_log (
+        service TEXT,
+        status TEXT,
+        pushed_at TEXT
+      );
+      INSERT INTO vps_push_log (service, status, pushed_at)
+      VALUES ('prices', 'ok', '${staleTime12min.toISOString()}');
+
+      CREATE TABLE market_prices (
+        updated_at TEXT
+      );
+
+      CREATE TABLE financial_reports (
+        parsed_at TEXT
+      );
+
+      CREATE TABLE rag_analyses (
+        created_at TEXT
+      );
+
+      CREATE TABLE sbv_rates (
+        fetched_at TEXT
+      );
+
+      CREATE TABLE foreign_flow_daily (
+        fetched_at TEXT
+      );
+    `,
+    );
   });
 
   afterEach(() => {
