@@ -2,17 +2,19 @@
  * Foreign Flow Validator (domain service)
  *
  * Task 1566b: Implement strict schema validation for foreign-flow payloads.
- * This is a STUB (RED phase) — types only, no implementation.
- * Tests in src/__tests__/1566-foreign-flow-parse-hardening.test.ts expect:
- *   - validateForeignFlowPayload() — validate and coerce batch of items
- *   - isForeignFlowUpsertItem() — type guard
- *   - coerceNumericField() — parse string/"123" to number
+ * Task 1289c: Integrate validator into fetcher — fail loudly on schema violations.
+ *
+ * Two validation paths:
+ *   - validateForeignFlowPayload() — validate ForeignFlowUpsertItem (POST endpoint, Task 1289d)
+ *   - validateForeignFlowFetcherPayload() — validate WriteForeignFlowItem (VPS fetcher, Task 1289c)
  *
  * Mandatory fields: code (string, non-empty), date (YYYY-MM-DD)
- * Coercible fields: foreign_volume, foreign_room, holding_ratio, fetched_at (numeric)
+ * WriteForeignFlowItem fields: code, date, foreignBuyVol, foreignSellVol, putThroughVol
+ * ForeignFlowUpsertItem fields: code, date, foreign_volume, foreign_room, holding_ratio, fetched_at
  */
 
 import type { ForeignFlowUpsertItem } from "../../models/shared-types.js";
+import type { WriteForeignFlowItem } from "../../../infrastructure/db/ohlcvForeignFlowStore.js";
 
 /**
  * Validation error for a single item in a batch
@@ -276,4 +278,148 @@ export function coerceNumericField(
     value: 0,
     error: `${fieldName} has unexpected type ${typeof value}`,
   };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Fetcher Validation: WriteForeignFlowItem Schema
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Result of fetcher validation (WriteForeignFlowItem schema)
+ */
+export interface FetcherValidationResult {
+  /** Items that passed validation and are ready for storage */
+  valid: WriteForeignFlowItem[];
+  /** List of validation failures (if any) */
+  errors: ValidationError[];
+}
+
+/**
+ * Validate and filter a batch of items from VPS payload (WriteForeignFlowItem schema).
+ *
+ * @param items - Array of unknown objects (JSON-parsed VPS payload)
+ * @returns { valid, errors } — valid items are type-safe WriteForeignFlowItem;
+ *          errors list details all validation failures (mandatory field missing, wrong type)
+ *
+ * Business rules:
+ * - Mandatory: `code` (string, non-empty), `date` (YYYY-MM-DD format)
+ * - Required: `foreignBuyVol` (number), `foreignSellVol` (number)
+ * - Optional: `putThroughVol` (number, defaults to 0 if missing)
+ * - Fail loudly: if any mandatory field is missing or wrong type, error is recorded
+ */
+export function validateForeignFlowFetcherPayload(items: unknown[]): FetcherValidationResult {
+  const valid: WriteForeignFlowItem[] = [];
+  const errors: ValidationError[] = [];
+
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i];
+
+    // Type check: must be an object
+    if (!item || typeof item !== "object") {
+      errors.push({
+        itemIndex: i,
+        field: "<root>",
+        reason: "item is not an object",
+        originalValue: item,
+      });
+      continue;
+    }
+
+    const obj = item as Record<string, unknown>;
+    const itemErrors: ValidationError[] = [];
+
+    // Validate mandatory field: code
+    if (typeof obj.code !== "string" || obj.code.trim().length === 0) {
+      itemErrors.push({
+        itemIndex: i,
+        field: "code",
+        reason: "required field: code must be a non-empty string",
+        originalValue: obj.code,
+      });
+    }
+
+    // Validate mandatory field: date (YYYY-MM-DD format)
+    if (typeof obj.date !== "string" || !obj.date.match(/^\d{4}-\d{2}-\d{2}$/)) {
+      itemErrors.push({
+        itemIndex: i,
+        field: "date",
+        reason: "required field: date must be string in YYYY-MM-DD format",
+        originalValue: obj.date,
+      });
+    }
+
+    // Validate mandatory field: foreignBuyVol (number)
+    if (typeof obj.foreignBuyVol !== "number" || !Number.isFinite(obj.foreignBuyVol)) {
+      itemErrors.push({
+        itemIndex: i,
+        field: "foreignBuyVol",
+        reason: "required field: foreignBuyVol must be a finite number",
+        originalValue: obj.foreignBuyVol,
+      });
+    }
+
+    // Validate mandatory field: foreignSellVol (number)
+    if (typeof obj.foreignSellVol !== "number" || !Number.isFinite(obj.foreignSellVol)) {
+      itemErrors.push({
+        itemIndex: i,
+        field: "foreignSellVol",
+        reason: "required field: foreignSellVol must be a finite number",
+        originalValue: obj.foreignSellVol,
+      });
+    }
+
+    // Validate optional field: putThroughVol (number or undefined; defaults to 0)
+    let putThroughVol = 0;
+    if (obj.putThroughVol !== undefined) {
+      if (typeof obj.putThroughVol !== "number" || !Number.isFinite(obj.putThroughVol)) {
+        itemErrors.push({
+          itemIndex: i,
+          field: "putThroughVol",
+          reason: "optional field: putThroughVol must be a finite number (defaults to 0 if omitted)",
+          originalValue: obj.putThroughVol,
+        });
+      } else {
+        putThroughVol = obj.putThroughVol;
+      }
+    }
+
+    // If any mandatory field errors, skip this item
+    if (
+      itemErrors.some(
+        (e) =>
+          e.field === "code" ||
+          e.field === "date" ||
+          e.field === "foreignBuyVol" ||
+          e.field === "foreignSellVol",
+      )
+    ) {
+      errors.push(...itemErrors);
+      continue;
+    }
+
+    // Add any optional field errors to the global errors list
+    errors.push(...itemErrors);
+
+    // If we have mandatory field values, create the valid item
+    if (
+      typeof obj.code === "string" &&
+      obj.code.trim().length > 0 &&
+      typeof obj.date === "string" &&
+      obj.date.match(/^\d{4}-\d{2}-\d{2}$/) &&
+      typeof obj.foreignBuyVol === "number" &&
+      Number.isFinite(obj.foreignBuyVol) &&
+      typeof obj.foreignSellVol === "number" &&
+      Number.isFinite(obj.foreignSellVol)
+    ) {
+      valid.push({
+        code: obj.code,
+        date: obj.date,
+        foreignBuyVol: obj.foreignBuyVol,
+        foreignSellVol: obj.foreignSellVol,
+        putThroughVol,
+      });
+    }
+  }
+
+  return { valid, errors };
 }

@@ -142,7 +142,18 @@ export async function fetchForeignFlowWithFallback(
     }
   } catch (err) {
     // Primary failed — proceed to fallback
-    logger.warn("[fallback] primary endpoint failed", { error: String(err) });
+    const errMsg = err instanceof Error ? err.message : String(err);
+
+    // Log validation errors with special handling for diagnostics
+    if (errMsg.includes("validation failed")) {
+      logger.warn("[fallback] VPS payload schema validation failed", {
+        error: errMsg,
+        timestamp,
+        hint: "Check VPS API response format — schema may have changed",
+      });
+    } else {
+      logger.warn("[fallback] primary endpoint failed", { error: errMsg });
+    }
   }
 
   // ───────────────────────────────────────────────────────────────────────────
@@ -262,16 +273,25 @@ async function fetchPrimaryVpsEndpoint(
       throw new Error("Invalid response format: expected .data array");
     }
 
-    // Validate each item matches WriteForeignFlowItem schema
-    return json.data
-      .filter((item: unknown) => isValidForeignFlowItem(item))
-      .map((item: any) => ({
-        code: item.code,
-        date: item.date,
-        foreignBuyVol: item.foreignBuyVol,
-        foreignSellVol: item.foreignSellVol,
-        putThroughVol: item.putThroughVol ?? 0,
-      }));
+    // Validate each item with strict schema validator (fail loudly on errors)
+    const { validateForeignFlowFetcherPayload } = await import(
+      "../../domain/services/market-data/foreignFlowValidator.js"
+    );
+    const validationResult = validateForeignFlowFetcherPayload(json.data);
+
+    if (validationResult.errors.length > 0) {
+      // Fail loudly with diagnostic details
+      const errorSummary = validationResult.errors
+        .slice(0, 5) // Limit to first 5 errors for readability
+        .map((e) => `Item ${e.itemIndex}: ${e.field} — ${e.reason}`)
+        .join("; ");
+      throw new Error(
+        `VPS payload validation failed: ${errorSummary}. Total errors: ${validationResult.errors.length}`,
+      );
+    }
+
+    // All items validated; return valid items
+    return validationResult.valid;
   } catch (err) {
     // Check if it was an abort error (timeout)
     if (err instanceof Error && err.name === "AbortError") {
