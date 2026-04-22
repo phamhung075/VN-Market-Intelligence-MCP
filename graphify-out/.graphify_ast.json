@@ -1,0 +1,583 @@
+{
+  "nodes": [
+    {
+      "id": "bctc_schema_ts",
+      "label": "bctc-schema.ts",
+      "file_type": "code",
+      "source_file": "bctc-schema.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "bctc_schema_buildperiod",
+      "label": "buildPeriod()",
+      "file_type": "code",
+      "source_file": "bctc-schema.ts",
+      "source_location": "L62"
+    },
+    {
+      "id": "bctc_schema_buildchartseries",
+      "label": "buildChartSeries()",
+      "file_type": "code",
+      "source_file": "bctc-schema.ts",
+      "source_location": "L407"
+    },
+    {
+      "id": "bctc_schema_getmetricvalue",
+      "label": "getMetricValue()",
+      "file_type": "code",
+      "source_file": "bctc-schema.ts",
+      "source_location": "L538"
+    },
+    {
+      "id": "bctc_schema_calcyoy",
+      "label": "calcYoY()",
+      "file_type": "code",
+      "source_file": "bctc-schema.ts",
+      "source_location": "L544"
+    },
+    {
+      "id": "bctc_schema_calcqoq",
+      "label": "calcQoQ()",
+      "file_type": "code",
+      "source_file": "bctc-schema.ts",
+      "source_location": "L563"
+    },
+    {
+      "id": "bctc_schema_computeratios",
+      "label": "computeRatios()",
+      "file_type": "code",
+      "source_file": "bctc-schema.ts",
+      "source_location": "L633"
+    },
+    {
+      "id": "bctc_schema_emptyreport",
+      "label": "emptyReport()",
+      "file_type": "code",
+      "source_file": "bctc-schema.ts",
+      "source_location": "L942"
+    },
+    {
+      "id": "vps_scripts_fetch_browser_py",
+      "label": "fetch-browser.py",
+      "file_type": "code",
+      "source_file": "vps-scripts/fetch-browser.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "fetch_browser_parse_rss",
+      "label": "parse_rss()",
+      "file_type": "code",
+      "source_file": "vps-scripts/fetch-browser.py",
+      "source_location": "L38"
+    },
+    {
+      "id": "fetch_browser_fetch_with_browser",
+      "label": "fetch_with_browser()",
+      "file_type": "code",
+      "source_file": "vps-scripts/fetch-browser.py",
+      "source_location": "L65"
+    },
+    {
+      "id": "fetch_browser_rationale_39",
+      "label": "Parse RSS XML into item list.",
+      "file_type": "rationale",
+      "source_file": "vps-scripts/fetch-browser.py",
+      "source_location": "L39"
+    },
+    {
+      "id": "scripts_smoke_test_sprint_001_ts",
+      "label": "smoke-test-sprint-001.ts",
+      "file_type": "code",
+      "source_file": "scripts/smoke-test-sprint-001.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "smoke_test_sprint_001_check",
+      "label": "check()",
+      "file_type": "code",
+      "source_file": "scripts/smoke-test-sprint-001.ts",
+      "source_location": "L81"
+    },
+    {
+      "id": "scripts_purge_phantom_reports_ts",
+      "label": "purge-phantom-reports.ts",
+      "file_type": "code",
+      "source_file": "scripts/purge-phantom-reports.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "scripts_parse_hexagrams_ts",
+      "label": "parse-hexagrams.ts",
+      "file_type": "code",
+      "source_file": "scripts/parse-hexagrams.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "parse_hexagrams_normaliseoutcome",
+      "label": "normaliseOutcome()",
+      "file_type": "code",
+      "source_file": "scripts/parse-hexagrams.ts",
+      "source_location": "L15"
+    },
+    {
+      "id": "parse_hexagrams_normaliseaction",
+      "label": "normaliseAction()",
+      "file_type": "code",
+      "source_file": "scripts/parse-hexagrams.ts",
+      "source_location": "L57"
+    },
+    {
+      "id": "parse_hexagrams_esc",
+      "label": "esc()",
+      "file_type": "code",
+      "source_file": "scripts/parse-hexagrams.ts",
+      "source_location": "L69"
+    },
+    {
+      "id": "parse_hexagrams_parsehexagram",
+      "label": "parseHexagram()",
+      "file_type": "code",
+      "source_file": "scripts/parse-hexagrams.ts",
+      "source_location": "L102"
+    },
+    {
+      "id": "parse_hexagrams_generatequedataentry",
+      "label": "generateQueDataEntry()",
+      "file_type": "code",
+      "source_file": "scripts/parse-hexagrams.ts",
+      "source_location": "L304"
+    },
+    {
+      "id": "src_index_ts",
+      "label": "index.ts",
+      "file_type": "code",
+      "source_file": "src/index.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "index_shutdown",
+      "label": "shutdown()",
+      "file_type": "code",
+      "source_file": "src/index.ts",
+      "source_location": "L154"
+    }
+  ],
+  "edges": [
+    {
+      "source": "bctc_schema_ts",
+      "target": "bctc_schema_buildperiod",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "bctc-schema.ts",
+      "source_location": "L62",
+      "weight": 1.0
+    },
+    {
+      "source": "bctc_schema_ts",
+      "target": "bctc_schema_buildchartseries",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "bctc-schema.ts",
+      "source_location": "L407",
+      "weight": 1.0
+    },
+    {
+      "source": "bctc_schema_ts",
+      "target": "bctc_schema_getmetricvalue",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "bctc-schema.ts",
+      "source_location": "L538",
+      "weight": 1.0
+    },
+    {
+      "source": "bctc_schema_ts",
+      "target": "bctc_schema_calcyoy",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "bctc-schema.ts",
+      "source_location": "L544",
+      "weight": 1.0
+    },
+    {
+      "source": "bctc_schema_ts",
+      "target": "bctc_schema_calcqoq",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "bctc-schema.ts",
+      "source_location": "L563",
+      "weight": 1.0
+    },
+    {
+      "source": "bctc_schema_ts",
+      "target": "bctc_schema_computeratios",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "bctc-schema.ts",
+      "source_location": "L633",
+      "weight": 1.0
+    },
+    {
+      "source": "bctc_schema_ts",
+      "target": "bctc_schema_emptyreport",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "bctc-schema.ts",
+      "source_location": "L942",
+      "weight": 1.0
+    },
+    {
+      "source": "bctc_schema_calcyoy",
+      "target": "bctc_schema_getmetricvalue",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "bctc-schema.ts",
+      "source_location": "L550",
+      "weight": 1.0
+    },
+    {
+      "source": "bctc_schema_calcqoq",
+      "target": "bctc_schema_getmetricvalue",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "bctc-schema.ts",
+      "source_location": "L568",
+      "weight": 1.0
+    },
+    {
+      "source": "vps_scripts_fetch_browser_py",
+      "target": "sys",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "vps-scripts/fetch-browser.py",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "vps_scripts_fetch_browser_py",
+      "target": "json",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "vps-scripts/fetch-browser.py",
+      "source_location": "L16",
+      "weight": 1.0
+    },
+    {
+      "source": "vps_scripts_fetch_browser_py",
+      "target": "time",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "vps-scripts/fetch-browser.py",
+      "source_location": "L17",
+      "weight": 1.0
+    },
+    {
+      "source": "vps_scripts_fetch_browser_py",
+      "target": "random",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "vps-scripts/fetch-browser.py",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "vps_scripts_fetch_browser_py",
+      "target": "xml_etree_elementtree",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "vps-scripts/fetch-browser.py",
+      "source_location": "L19",
+      "weight": 1.0
+    },
+    {
+      "source": "vps_scripts_fetch_browser_py",
+      "target": "html",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "vps-scripts/fetch-browser.py",
+      "source_location": "L20",
+      "weight": 1.0
+    },
+    {
+      "source": "vps_scripts_fetch_browser_py",
+      "target": "playwright_sync_api",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "vps-scripts/fetch-browser.py",
+      "source_location": "L22",
+      "weight": 1.0
+    },
+    {
+      "source": "vps_scripts_fetch_browser_py",
+      "target": "fetch_browser_parse_rss",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "vps-scripts/fetch-browser.py",
+      "source_location": "L38",
+      "weight": 1.0
+    },
+    {
+      "source": "vps_scripts_fetch_browser_py",
+      "target": "fetch_browser_fetch_with_browser",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "vps-scripts/fetch-browser.py",
+      "source_location": "L65",
+      "weight": 1.0
+    },
+    {
+      "source": "fetch_browser_fetch_with_browser",
+      "target": "fetch_browser_parse_rss",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "vps-scripts/fetch-browser.py",
+      "source_location": "L142",
+      "weight": 1.0
+    },
+    {
+      "source": "fetch_browser_rationale_39",
+      "target": "fetch_browser_parse_rss",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "vps-scripts/fetch-browser.py",
+      "source_location": "L39",
+      "weight": 1.0
+    },
+    {
+      "source": "scripts_smoke_test_sprint_001_ts",
+      "target": "src_application_usecases_parsebctcreport_ts",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/smoke-test-sprint-001.ts",
+      "source_location": "L17",
+      "weight": 1.0
+    },
+    {
+      "source": "scripts_smoke_test_sprint_001_ts",
+      "target": "src_infrastructure_db_schema_ts",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/smoke-test-sprint-001.ts",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "scripts_smoke_test_sprint_001_ts",
+      "target": "src_domain_services_embeddingtextbuilder_ts",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/smoke-test-sprint-001.ts",
+      "source_location": "L19",
+      "weight": 1.0
+    },
+    {
+      "source": "scripts_smoke_test_sprint_001_ts",
+      "target": "bctc_schema_ts",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/smoke-test-sprint-001.ts",
+      "source_location": "L20",
+      "weight": 1.0
+    },
+    {
+      "source": "scripts_smoke_test_sprint_001_ts",
+      "target": "smoke_test_sprint_001_check",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/smoke-test-sprint-001.ts",
+      "source_location": "L81",
+      "weight": 1.0
+    },
+    {
+      "source": "scripts_purge_phantom_reports_ts",
+      "target": "bun_sqlite",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/purge-phantom-reports.ts",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "scripts_purge_phantom_reports_ts",
+      "target": "node_path",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/purge-phantom-reports.ts",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "scripts_purge_phantom_reports_ts",
+      "target": "node_fs",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/purge-phantom-reports.ts",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "scripts_parse_hexagrams_ts",
+      "target": "fs",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/parse-hexagrams.ts",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "scripts_parse_hexagrams_ts",
+      "target": "path",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/parse-hexagrams.ts",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "scripts_parse_hexagrams_ts",
+      "target": "parse_hexagrams_normaliseoutcome",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/parse-hexagrams.ts",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "scripts_parse_hexagrams_ts",
+      "target": "parse_hexagrams_normaliseaction",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/parse-hexagrams.ts",
+      "source_location": "L57",
+      "weight": 1.0
+    },
+    {
+      "source": "scripts_parse_hexagrams_ts",
+      "target": "parse_hexagrams_esc",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/parse-hexagrams.ts",
+      "source_location": "L69",
+      "weight": 1.0
+    },
+    {
+      "source": "scripts_parse_hexagrams_ts",
+      "target": "parse_hexagrams_parsehexagram",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/parse-hexagrams.ts",
+      "source_location": "L102",
+      "weight": 1.0
+    },
+    {
+      "source": "scripts_parse_hexagrams_ts",
+      "target": "parse_hexagrams_generatequedataentry",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/parse-hexagrams.ts",
+      "source_location": "L304",
+      "weight": 1.0
+    },
+    {
+      "source": "parse_hexagrams_parsehexagram",
+      "target": "parse_hexagrams_normaliseoutcome",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/parse-hexagrams.ts",
+      "source_location": "L241",
+      "weight": 1.0
+    },
+    {
+      "source": "parse_hexagrams_parsehexagram",
+      "target": "parse_hexagrams_normaliseaction",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/parse-hexagrams.ts",
+      "source_location": "L244",
+      "weight": 1.0
+    },
+    {
+      "source": "parse_hexagrams_generatequedataentry",
+      "target": "parse_hexagrams_esc",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/parse-hexagrams.ts",
+      "source_location": "L310",
+      "weight": 1.0
+    },
+    {
+      "source": "src_index_ts",
+      "target": "src_infrastructure_config_ts",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "src/index.ts",
+      "source_location": "L29",
+      "weight": 1.0
+    },
+    {
+      "source": "src_index_ts",
+      "target": "src_infrastructure_logger_ts",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "src/index.ts",
+      "source_location": "L30",
+      "weight": 1.0
+    },
+    {
+      "source": "src_index_ts",
+      "target": "src_infrastructure_db_index_ts",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "src/index.ts",
+      "source_location": "L31",
+      "weight": 1.0
+    },
+    {
+      "source": "src_index_ts",
+      "target": "src_interface_mcp_server_ts",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "src/index.ts",
+      "source_location": "L32",
+      "weight": 1.0
+    },
+    {
+      "source": "src_index_ts",
+      "target": "src_scheduler_jobs_ts",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "src/index.ts",
+      "source_location": "L33",
+      "weight": 1.0
+    },
+    {
+      "source": "src_index_ts",
+      "target": "src_infrastructure_notifiers_telegramwebhooksetup_ts",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "src/index.ts",
+      "source_location": "L34",
+      "weight": 1.0
+    },
+    {
+      "source": "src_index_ts",
+      "target": "src_infrastructure_envcheck_ts",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "src/index.ts",
+      "source_location": "L35",
+      "weight": 1.0
+    },
+    {
+      "source": "src_index_ts",
+      "target": "index_shutdown",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/index.ts",
+      "source_location": "L154",
+      "weight": 1.0
+    }
+  ],
+  "input_tokens": 0,
+  "output_tokens": 0
+}
