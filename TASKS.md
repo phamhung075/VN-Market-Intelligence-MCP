@@ -46,12 +46,12 @@
 
 ## Sprint 1279 — MSCI Inclusion Cascade Detection (M-size)
 
-**Status:** ACTIVE | **Ref:** TECH-1279 | **Goal:** Detect MSCI index inclusion announcements → cascade HIGH alerts to large-cap watchlist | **Size:** M (2 tasks, ~8 hours) | **Report:** (pending)
+**Status:** COMPLETE | **Ref:** TECH-1279 | **Goal:** Detect MSCI index inclusion announcements → cascade HIGH alerts to large-cap watchlist | **Size:** M (2 tasks, ~8 hours) | **Report:** reports/TASK_REPORT_1279_FINAL.md
 
 | ID | Title | Status | Layer | Notes |
 |----|----|--------|-------|-------|
 | 1279a | RED: MSCI inclusion cascade tests | Done | test | 6 assertions; TC-1 to TC-6 PASS; merged to main |
-| 1279b | GREEN: Implement MSCI rules + cascadeExecutor | Todo | domain+app | msciDetector.ts, MSCI_INCLUSION_RULES, detectMsciCascadePeers(); 1279a ✓ merged |
+| 1279b | GREEN: Implement MSCI rules + cascadeExecutor | Done | domain+app | 11 GREEN tests PASS; 18 total (7 RED + 11 GREEN); merged ✓ |
 
 ---
 
@@ -63,19 +63,19 @@
 
 ---
 
-### Task 1279b — GREEN: Implement MSCI Rules + Integration
+### Task 1279b — GREEN: Implement MSCI Rules + Integration [DONE]
 
 **context:** docs/handoffs/TASK_1279b.md | **branch:** task/1279b-msci-inclusion-cascade-green-impl
 
-**Status:** UNBLOCKED. 1279a merged, RED TC-4 test now passes with this implementation.
+**Status:** Merged to main. All 11 GREEN tests (GC-1 to GC-10 + TC-4 contract) PASS. Full suite: 18 PASS (7 RED + 11 GREEN).
 
-**acceptance_criteria:**
-- Implement msciDetector.ts (pure domain service)
-- Add MSCI_INCLUSION_RULES to cascadeEngine.ts
-- Add detectMsciCascadePeers() to cascadeExecutor.ts
-- Integrate into buildCausalChain() step 2e
-- 10 GREEN tests (GC-1 to GC-10) all PASS
-- Baseline: 6171 → 6187 (+16 assertions)
+**acceptance_criteria:** ✓ ALL MET
+- [x] Implement msciDetector.ts (pure domain service, 155 lines, zero infrastructure imports)
+- [x] Add MSCI_INCLUSION_RULES to cascadeEngine.ts (3 rules @ line 2199)
+- [x] Add detectMsciCascadePeers() to cascadeExecutor.ts (41 lines @ line 166)
+- [x] Integrate into buildCausalChain() step 2e (19 lines @ line 2488)
+- [x] 11 GREEN tests (GC-1 to GC-10 + TC-4 contract) all PASS
+- [x] Baseline: 6171 → 6187 (+16 assertions) ✓ VERIFIED
 
 ---
 
