@@ -179,9 +179,47 @@ curl -I https://bgapidatafeed.vps.com.vn/
 
 ---
 
+## Sprint 1288 — Foreign Flow Fallback Source (Unblocking OPS Incident) (S-size)
+
+**Status:** READY FOR PLANNING | **Date auto-initiated:** 2026-04-22 | **Size:** S-size | **Priority:** HIGH (unblocks OPS recovery)
+
+**Background:** Foreign flow service (vn-foreign-flow.service on Vinahost VPS) down since 2026-04-22 07:36:55. Root cause under investigation by OPS. While OPS diagnoses the primary endpoint, dev can reduce user impact by implementing a fallback data source.
+
+**Goal:** Add fallback fetcher for foreign investor buy/sell flow when primary VPS endpoint (bgapidatafeed.vps.com.vn) is unreachable. Use secondary source (SSE alt data or cached flow data) to resume foreign flow ingestion while OPS recovers primary.
+
+**Solution:**
+- Extend `foreignFlowFetcher.ts` with fallback logic: try primary endpoint → on timeout/error, switch to secondary source
+- Secondary source options: SSE API (if available public endpoint), or use cached flow data from last successful push + incremental updates
+- Circuit breaker integration: if primary fails N times, auto-switch to secondary for X minutes
+- No schema changes, no new MCP tools
+- Test: verify fallback triggers correctly on primary endpoint failure
+
+**Scope:**
+- 1 file: `src/infrastructure/fetchers/foreignFlowFetcher.ts` (~40 lines fallback logic)
+- 1 test file: `src/__tests__/1288-foreign-flow-fallback.test.ts` (~8 assertions: primary success, fallback trigger, cache logic)
+- No domain/schema/interface changes
+
+**Acceptance Criteria:**
+- AC-1: Primary endpoint timeout → fallback activates within 2s
+- AC-2: Fallback returns structured `{ foreignInvestors, vnInvestors, timestamp }` data
+- AC-3: Circuit breaker prevents thrashing (after 3 failures, use secondary for 15 min)
+- AC-4: Test suite passes (6267 → 6275+)
+- AC-5: No console errors on fallback activation (log at info level)
+
+**Impact:**
+- Foreign flow data resumes flowing to database during OPS recovery
+- User briefings no longer suppress foreign flow data due to staleness
+- Reduces OPS recovery pressure — gives them time to fix primary without immediate data blackout
+
+**Dependencies:** None (secondary source is external)
+
+**Estimated effort:** 2 hours (dev + test + merge)
+
+---
+
 ## Next Sprint — TBD
 
-Post-sprint-1282 reassessment. Active: 1279b (MSCI GREEN), 1281b (agriculture GREEN). Backlog: 1287 (async BCTC), 1286 (schema updates).
+Post-1288. Backlog: 1284 (IMF sentiment), 1274 (HOSE staleness), 1267 (SSC PDF fallback), 1286 (IMPLEMENTATION_STATUS update).
 
 **Previous:**
 

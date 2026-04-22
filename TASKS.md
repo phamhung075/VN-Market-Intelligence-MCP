@@ -69,6 +69,19 @@
 
 ---
 
+## Sprint 1288 — Foreign Flow Fallback Source (S-size)
+
+**Status:** READY FOR PLANNING | **Goal:** Unblock OPS incident — foreign flow service down since 2026-04-22 | **Size:** S | **Baseline:** 6267 | **Target:** 6275+ (+8 assertions)
+
+| ID | Title | Status | Layer | Notes |
+|----|-------|--------|-------|-------|
+| 1288a | RED: Foreign flow fallback tests | Todo | test | 8 assertions: primary timeout, fallback activation, circuit breaker |
+| 1288b | GREEN: Implement fallback fetcher + circuit breaker logic | Todo | infrastructure | Extend foreignFlowFetcher.ts, add secondary source (SSE or cache) |
+
+**Context:** vn-foreign-flow.service down 2026-04-22 07:36:55–ongoing. Sprint 1283 shipped diagnostics tools. This sprint adds resilience: if primary endpoint fails, switch to secondary source automatically. Reduces OPS recovery pressure, resumes foreign flow ingestion during outage.
+
+---
+
 ## Backlog
 
 | ID | Title | Priority | Notes |
@@ -76,8 +89,6 @@
 | 1284 | IMF context sentiment | MEDIUM | Policy vs crisis distinction |
 | 1274 | HOSE staleness guard | MEDIUM | >2h old = circuit DEGRADED |
 | 1267 | SSC PDF timeout fallback | MEDIUM | Use news chain if OCR fails |
-| 1283b | Foreign flow fallback source | MEDIUM | If primary endpoint unrecoverable, use SSE alt data |
-| 1285 | Add rag_analyses + evidence_scores schema | HIGH | Structural additions (L-size) |
 | 1286 | Update IMPLEMENTATION_STATUS.md | LOW | Add sprint 240+ entries |
 
 ---
