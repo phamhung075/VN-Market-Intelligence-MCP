@@ -11,31 +11,58 @@
 > Sprints 190–220 archived: `docs/archive/sprints-190-220.md`
 > Sprints 221–230 archived: `docs/archive/sprints-221-230.md`
 > Sprints 231–239 archived: `docs/archive/sprints-231-239.md`
+> Sprints 240–240 archived: `docs/archive/sprints-240-240.md`
 
 ---
 
-## Sprint 240 — Price Pipeline Recovery + Data Freshness Enforcement (2026-04-21)
+## Sprint 1269 — Macro Direction Label Hardcoding Bug Fix
 
-**CRITICAL:** market_prices stale 25 days. Backfill 500+ rows, watchdog SSH escalation, freshness gates in briefing/evening.
+| ID | Title | Status | Type | Notes |
+|----|----|--------|------|-------|
+| 1269a | RED: Test suite for direction-aware labels (failing assertions) | Done | Test | 6 pass / 0 fail — merged to main |
+| 1269b | GREEN: Refactor classifyDeviation() with direction-aware labels | Done | Fix | Merged (3469439); TASK_REPORT_1269b.md approved |
 
-**Ref:** REQ-240, TECH-240 | **Goal:** Restore price data, prevent future 25-day silence | **Status:** ACTIVE
+**Problem:** Line 72 in macroThresholds.ts hardcodes "cao hơn TB" (above) in LEVEL_VI dict. When zScore=-1.65σ (BEARISH/below), label still says "cao hơn TB" — contradicts data direction.
 
-| ID | Title | Status | Role | Blocker |
-|----|-------|--------|------|---------|
-| 240a | TDD RED — price pipeline recovery test suite | Done | Dev | — |
-| 240b | GREEN — backfill service + watchdog escalation + freshness gates | Done | Dev | — |
-| 240c | Integration — recordJobRun wrapper + schema UNIQUE constraint | Done | Dev | — |
-| 240e | QA Smoke test — live price flow + briefing freshness | Blocked | QA | **VPS INFRA DOWN** (all 5 geo-blocked services unreachable since 17:30 UTC 2026-04-21; market_prices 25 days stale; price fetch job offline) |
+**Solution:**
+1. (1269a) Write 6 RED tests: elevated/high/extreme × above/below; TC-2,4,6 expose bug
+2. (1269b) Line 158: `levelVi = direction === "below" ? LEVEL_VI_BELOW[level] : LEVEL_VI[level]`
 
-### Task Details
+**Files changed:** macroThresholds.ts (1 line) | **Tests:** +6 in 1269-macro-direction-label.test.ts
 
-**240a:** Depends: none | Context: `docs/handoffs/TASK_240a.md` | Create `src/__tests__/240-price-pipeline-recovery.test.ts` (12+ RED assertions)
+---
 
-**240b:** Depends: 240a | Context: `docs/handoffs/TASK_240b.md` | CREATE priceBackfillService.ts | MODIFY watchdog + briefing gates
+## Sprint 1275 — Push Foreign Flow UNIQUE Constraint Error
 
-**240c:** Depends: 240b | Context: `docs/handoffs/TASK_240c.md` | Wrap watchdog in recordJobRun + add UNIQUE(ticker, date, source)
+| ID | Title | Status | Type | Notes |
+|----|----|--------|------|-------|
+| 1275a | RED: Duplicate insert test cases for vnstock_trading_stats | Done | Test | 6 pass / 0 fail — merged to main |
+| 1275b | GREEN: Add idempotent UNIQUE constraint + upsert fix | Done | Fix | Merged (529ac8a); TASK_REPORT_1275b.md approved |
 
-**240e:** Depends: 240c | Context: `docs/handoffs/TASK_240e.md` | QA manual smoke test + report
+**Problem:** Foreign flow fetch job fails with UNIQUE constraint violation on vnstock_trading_stats when inserting duplicate (code, date) pairs. Root cause: either the UNIQUE(code, date) constraint migration failed in production, or the ON CONFLICT clause can't find the constraint to match against.
+
+**Solution:**
+1. (1275a) Write 6 RED tests: verify constraint exists, test duplicate insert scenarios, validate migration
+2. (1275b) Strengthen runVnstockMigrations() to validate constraint + throw on failure; add guard check in upsertForeignFlow() before attempting ON CONFLICT; improve diagnostic logging
+
+**Files changed:** vnstockStore.ts (migrations + guard check), schema-financial-reports.ts (verify DDL) | **Tests:** +6 in 1275-foreign-flow-duplicate-constraint.test.ts
+
+---
+
+## Sprint 1276 — Macro Alert Cooldown 30-min Window Fix
+
+| ID | Title | Status | Type | Notes |
+|----|----|--------|------|-------|
+| 1276a | RED: Macro cooldown bypass test (failing assertions) | Done | Test | 4 pass / 0 fail — merged to main |
+| 1276b | GREEN: Fix cooldown + add logging | Done | Fix | Merged (9da9bd9); TASK_REPORT_1276b.md approved |
+
+**Problem:** USD/VND macro alerts fired 5x in 65 min (every ~13min) despite 30-min cooldown. Root cause: lines 869–872 in intelligenceCycleJob.ts downgrade critical MACRO alerts to severity="high", bypassing the CRITICAL check in shouldSuppressAlert(), allowing every alert through.
+
+**Solution:**
+1. (1276a) Write 4 failing tests asserting macro cooldown suppression
+2. (1276b) Remove severity downgrade, add MACRO exemption to CRITICAL bypass in alertCooldown.ts, add logging
+
+**Files changed:** intelligenceCycleJob.ts, alertCooldown.ts | **Tests:** +4 in 1276-macro-cooldown-bypass.test.ts
 
 ---
 

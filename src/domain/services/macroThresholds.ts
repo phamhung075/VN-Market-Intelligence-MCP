@@ -130,11 +130,24 @@ export function classifyDeviation(stats: MacroStats): MacroDeviation {
   const zScore = Math.round(((current - mean) / stdDev) * 100) / 100;
   const absZ = Math.abs(zScore);
 
-  const level: DeviationLevel =
+  // Minimum absolute deviation guards for indicators with inherent micro-fluctuations
+  // (e.g., SBV FX rates oscillate ±2-3 VND daily)
+  // This prevents false-positive CRITICAL alerts on economically meaningless moves.
+  const absDeviation = Math.abs(current - mean);
+  const minAbsDeviation = name.toLowerCase().includes("vnd") ? 10 : 0;
+
+  // If absolute deviation is below the threshold, downgrade level significantly
+  // to cap at "elevated" maximum (prevents high/extreme false positives)
+  let level: DeviationLevel =
     absZ >= 3 ? "extreme" :
     absZ >= 2 ? "high" :
     absZ >= 1 ? "elevated" :
     "normal";
+
+  if (minAbsDeviation > 0 && absDeviation < minAbsDeviation) {
+    // For VND indicators with small moves: cap at "elevated"
+    level = level === "extreme" || level === "high" ? "elevated" : level;
+  }
 
   const direction: DeviationDirection =
     zScore > 0.1 ? "above" :

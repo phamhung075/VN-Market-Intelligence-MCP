@@ -533,6 +533,8 @@ export interface SectorRule {
   confidence: number;
   /** Human-readable rule description, used as CausalChainEntry.title */
   title: string;
+  /** Optional: explicitly map rule to specific tickers (Task 1264) */
+  affected_actions?: { code: string; direction: ImpactDirection }[];
 }
 
 export const SECTOR_RULES: SectorRule[] = [
@@ -1222,6 +1224,11 @@ export const SECTOR_RULES: SectorRule[] = [
     direction: "up",
     confidence: 0.88,
     title: "Gián đoạn nguồn cung dầu (Hormuz/Suez/OPEC) — giá dầu tăng mạnh, tích cực cho PVD, PVS, GAS",
+    affected_actions: [
+      { code: "PVD", direction: "up" },
+      { code: "PVS", direction: "up" },
+      { code: "GAS", direction: "up" },
+    ],
   },
 
   // ── Oil supply shock → aviation BEARISH (jet fuel cost spike) ─────────────
@@ -1248,6 +1255,10 @@ export const SECTOR_RULES: SectorRule[] = [
     direction: "down",
     confidence: 0.84,
     title: "Gián đoạn nguồn cung dầu — chi phí nhiên liệu hàng không tăng mạnh (VJC, HVN chịu áp lực)",
+    affected_actions: [
+      { code: "VJC", direction: "down" },
+      { code: "HVN", direction: "down" },
+    ],
   },
 
   // ── Oil supply shock → logistics BEARISH (route disruption + fuel cost) ────
@@ -1271,6 +1282,11 @@ export const SECTOR_RULES: SectorRule[] = [
     direction: "down",
     confidence: 0.82,
     title: "Gián đoạn nguồn cung dầu — tuyến vận tải bị gián đoạn, chi phí tăng (GMD, PHP chịu áp lực)",
+    affected_actions: [
+      { code: "BSR", direction: "down" },
+      { code: "GMD", direction: "down" },
+      { code: "PHP", direction: "down" },
+    ],
   },
 
   // ── Oil supply shock → securities BEARISH (market-wide risk-off) ───────────
@@ -1965,7 +1981,13 @@ export const SECTOR_RULES: SectorRule[] = [
     domain: "securities",
     direction: "up",
     confidence: 0.78,
-    title: "Nhà đầu tư cá nhân mua ròng quy mô lớn — phí môi giới CTCK (SSI/VCI/VIX/VND) tăng (retail_netbuy_securities)",
+    title: "Nhà đầu tư cá nhân mua ròng quy mô lớn — phí môi giới CTCK (SSI/VCI/VIX/VND) tăng; VCB/BID/CTG/ACB hưởng lợi từ thanh khoản tăng (retail_netbuy_securities)",
+    affected_actions: [
+      { code: "VCB", direction: "up" },
+      { code: "BID", direction: "up" },
+      { code: "CTG", direction: "up" },
+      { code: "ACB", direction: "up" },
+    ],
   },
   {
     keywords: [
@@ -2403,6 +2425,44 @@ export function buildCausalChain(
     }
   }
 
+  // ── Step 2f: Action entries from rule affected_actions (Task 1264) ──────
+  // When a SectorRule has explicit affected_actions (e.g., Hormuz rule directly
+  // mapping to VJC, BSR), create direct action entries for those tickers.
+  // These bypass the watchlist membership check and create high-confidence alerts.
+  const ruleAffectedCodesSeen = new Set<string>();
+
+  for (const [domain, { rule, matchedKeyword }] of triggeredDomains) {
+    if (!rule.affected_actions || rule.affected_actions.length === 0) continue;
+
+    const domainEntry = domainEntryMap.get(domain);
+    if (!domainEntry) continue;
+
+    for (const affected of rule.affected_actions) {
+      if (ruleAffectedCodesSeen.has(affected.code)) continue; // no duplicates
+      ruleAffectedCodesSeen.add(affected.code);
+
+      // Find watchlist entry to get domain (needed for action entry)
+      const watchlistStock = watchlist.find((w) => w.actionCode === affected.code);
+      if (!watchlistStock) continue; // Skip if ticker not in watchlist
+
+      const affectedSentiment: Sentiment = affected.direction === "up" ? "bullish" : affected.direction === "down" ? "bearish" : "neutral";
+
+      const ruleAffectedEntry: CausalChainEntry = {
+        level: "action",
+        title: `${affected.code} — tác động trực tiếp từ quy tắc ${domain}`,
+        summary: `Cổ phiếu ${affected.code} bị ảnh hưởng trực tiếp bởi: ${rule.title}`,
+        affectedDomains: [watchlistStock.domain],
+        affectedActions: [affected.code],
+        sentiment: affectedSentiment,
+        impactScore: Math.round(seedEntry.impactScore * domainEntry.confidence),
+        confidence: domainEntry.confidence * 0.95,
+        reasoning: `[RuleAffected: ${affected.code}] Direct mapping from ${domain} rule: ${rule.title}`,
+      };
+
+      entries.push(ruleAffectedEntry);
+    }
+  }
+
   // ── Step 3: Action entries from watchlist ─────────────────────────────
   // Deduplicate watchlist by actionCode
   const seenStocks = new Set<string>();
@@ -2639,7 +2699,9 @@ export function buildCausalChain(
   }
 
   // ── Step 5: Build watchlistImpacts from action entries ─────────────────
-  const watchlistImpacts: WatchlistImpact[] = actionEntries.map((ae) => {
+  // Collect all action-level entries (from watchlist, broadcast, and rule affected_actions)
+  const allActionEntries = entries.filter((e) => e.level === "action");
+  const watchlistImpacts: WatchlistImpact[] = allActionEntries.map((ae) => {
     const actionCode = ae.affectedActions[0] ?? "";
     const domain = ae.affectedDomains[0] ?? ("other" as DomainType);
     const impactDirection: ImpactDirection =

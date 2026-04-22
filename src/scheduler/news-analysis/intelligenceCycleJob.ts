@@ -866,12 +866,10 @@ async function _runCycle(deps: CycleDeps = {}): Promise<CycleResult> {
       // prevents the "10 volume_spike alerts in 5 min for FPT/VCB/VNM" burst.
       for (const alert of unnotifiedAlerts) {
         // Check cooldown — same stock + same signal type within cooldown window → skip.
-        // MACRO alerts are sustained conditions (not flash crashes): pass severity as "high"
-        // so the CRITICAL bypass in shouldSuppressAlert does not skip dedup for them.
-        const cooldownSeverity =
-          alert.severity === "critical" && alert.actionCode === "MACRO" ? "high" : alert.severity;
+        // MACRO alerts are sustained conditions requiring full cooldown enforcement
+        // (no severity-based bypasses). Pass severity unchanged.
         const suppress = shouldSuppressAlert(
-          { stocks: [alert.actionCode], signalTypes: alert.signals.map((s) => s.type), severity: cooldownSeverity },
+          { stocks: [alert.actionCode], signalTypes: alert.signals.map((s) => s.type), severity: alert.severity, actionCode: alert.actionCode },
           recentAlertHistory,
           effectiveCooldownConfig,
         );
@@ -879,12 +877,23 @@ async function _runCycle(deps: CycleDeps = {}): Promise<CycleResult> {
           // Mark as notified without sending — suppressed by cooldown
           try { await markAlertNotifiedFn(alert.id); } catch { /* ok */ }
           logger.debug("[intelligence-cycle] step E — alert suppressed by cooldown", {
-            alertId: alert.id, stock: alert.actionCode,
+            alertId: alert.id,
+            stock: alert.actionCode,
+            severity: alert.severity,
+            signals: alert.signals.map((s) => s.type),
           });
           continue;
         }
 
         const sent = await sendAlertsFn([alert]);
+        logger.debug("[intelligence-cycle] step E — alert sent to Telegram", {
+          alertId: alert.id,
+          stock: alert.actionCode,
+          severity: alert.severity,
+          signals: alert.signals.map((s) => s.type),
+          sent,
+        });
+
         if (sent > 0) {
           telegramAlertsSent += sent;
           try {

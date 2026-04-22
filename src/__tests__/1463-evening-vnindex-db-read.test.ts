@@ -159,7 +159,8 @@ describe("AC-1: fresh VNINDEX row in market_prices → vnIndex populated from DB
 
   it("fetchedAt is set to the DB updated_at value", async () => {
     const db = makeDb();
-    const updatedAt = "2026-04-18T09:00:00.000Z";
+    // Use a dynamic timestamp within the last 3 days (e.g., 1 day ago)
+    const updatedAt = daysAgo(1);
     db.exec(`
       INSERT INTO market_prices (code, price, change_amt, change_pct, volume, updated_at)
       VALUES ('VNINDEX', 1285.5, 12.0, 0.94, 0, '${updatedAt}')

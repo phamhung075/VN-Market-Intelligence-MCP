@@ -10,6 +10,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { getDb } from "../../../../infrastructure/db/schema.js";
+import { DEFAULT_SLA_CONFIG, type SignalType } from "../../../../domain/services/freshnessSlaChecker.js";
 import type { Database } from "bun:sqlite";
 
 interface SlaStatusRow {
@@ -71,19 +72,24 @@ function querySignalAges(db: Database): Record<string, number> {
 }
 
 /**
- * Get SLA thresholds for each signal type
+ * Get SLA threshold for a signal type (canonical source: freshnessSlaChecker.DEFAULT_SLA_CONFIG)
  */
 function getSlaThresholds(signalType: string, isMarketHours: boolean): number {
-  const thresholds: Record<string, { market: number; offHours: number }> = {
-    price: { market: 10, offHours: 10 },
-    bctc: { market: 120, offHours: 360 },
-    news: { market: 30, offHours: 30 },
-    sbv_fx: { market: 30, offHours: 30 },
-    foreign_flow: { market: 10, offHours: 10 },
-  };
+  // Look up config from canonical domain source
+  const config = DEFAULT_SLA_CONFIG.find((c) => c.signalType === (signalType as SignalType));
+  if (!config) {
+    // Fallback for unknown signal types
+    return 60;
+  }
 
-  const t = thresholds[signalType] ?? { market: 60, offHours: 60 };
-  return isMarketHours ? t.market : t.offHours;
+  // Use market-hours or off-hours override if available, otherwise default
+  if (isMarketHours && config.marketHoursThresholdMinutes !== undefined) {
+    return config.marketHoursThresholdMinutes;
+  }
+  if (!isMarketHours && config.offHoursThresholdMinutes !== undefined) {
+    return config.offHoursThresholdMinutes;
+  }
+  return config.defaultThresholdMinutes;
 }
 
 /**
