@@ -115,6 +115,27 @@
 
 ---
 
+## INCIDENT: Foreign Flow Service Degradation (2026-04-22 07:36:55–ongoing)
+
+**Status:** ESCALATED TO OPS | **Severity:** MEDIUM | **Impact:** Foreign investor flow data stale (>7 days)
+
+**Timeline:**
+- 2026-04-15 07:52:10: Last successful push (157 items)
+- 2026-04-22 07:36:55: First error push (5108 cumulative errors in ~2 hours)
+- Root cause: Unknown — likely VPS endpoint down, field schema changed, or circuit breaker tripped
+
+**Diagnosis Required (OPS):**
+```bash
+ssh root@$VINAHOST_IP
+systemctl status vn-foreign-flow.service
+journalctl -u vn-foreign-flow -n 50
+curl -I https://bgapidatafeed.vps.com.vn/
+```
+
+**Dev Action (Sprint 1283a):** Once Ops reports findings, dev will add circuit breaker reset tool + fallback logic.
+
+---
+
 ## Sprint 1282 — DATA FRESHNESS MONITORING TOOL (S-size, AUTO-INITIATED)
 
 **Status:** READY FOR PLANNING | **Date auto-initiated:** 2026-04-22 | **Size:** S-size FIX
