@@ -1,10 +1,10 @@
 {
   "_maintained_by": "PM / system-auditor",
   "_trigger": "sprint start/end, tool/cron count change, baseline test update",
-  "lastUpdated": "2026-04-21",
-  "currentSprint": 240,
-  "previousSprint": { "number": 239, "status": "COMPLETE", "progressTasks": "4/4 complete (239a–239d done)" },
-  "sprintGoal": "CRISIS: Price Pipeline Recovery + Data Freshness Enforcement",
+  "lastUpdated": "2026-04-22",
+  "currentSprint": 1275,
+  "previousSprint": { "number": 240, "status": "COMPLETE", "progressTasks": "1/1 complete (240-crisis-resolved)" },
+  "sprintGoal": "Fix: Macro alert cooldown 30-min window not enforcing (USD/VND fires every 13min)",
   "testBaseline": 6076,
   "testFailures": 0,
   "toolCount": 103,
@@ -13,5 +13,5 @@
   "devAgentCount": 13,
   "analysisAgentCount": 9,
   "totalTasksDone": 328,
-  "lastFixApplied": "fix-schema-alert-columns (bb4bcba)"
+  "lastFixApplied": "macro-cooldown-bypass (pending 1276b)"
 }
