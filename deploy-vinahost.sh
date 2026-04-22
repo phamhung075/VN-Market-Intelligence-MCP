@@ -194,16 +194,41 @@ echo "=== vn-ohlcv-backfill timer status ==="
 systemctl --no-pager -l status vn-ohlcv-backfill.timer | head -12
 BACKFILLEOF
 
+# ── 7. BCTC URL Enricher (Task 1289) ────────────────────────────────────────
+echo ""
+echo "Deploying BCTC URL enricher (VPS-based, runs every 6h)..."
+TMP=$(mktemp)
+sed -e "s|__MCP_BASE__|${MCP_BASE}|g" \
+    -e "s|__API_KEY__|${VPS_PUSH_API_KEY}|g" \
+    vps-scripts/enrich-bctc-urls.sh > "$TMP"
+$SCP "$TMP" ${VH_USER}@${VH_IP}:/root/enrich-bctc-urls.sh
+$SCP vps-scripts/vn-bctc-enrich.service ${VH_USER}@${VH_IP}:/etc/systemd/system/vn-bctc-enrich.service
+$SCP vps-scripts/vn-bctc-enrich.timer   ${VH_USER}@${VH_IP}:/etc/systemd/system/vn-bctc-enrich.timer
+rm "$TMP"
+
+$SSH << 'ENRICHEOF'
+set -e
+chmod +x /root/enrich-bctc-urls.sh
+systemctl daemon-reload
+systemctl enable vn-bctc-enrich.timer
+systemctl restart vn-bctc-enrich.timer
+sleep 2
+echo "=== vn-bctc-enrich timer status ==="
+systemctl --no-pager -l status vn-bctc-enrich.timer | head -12
+ENRICHEOF
+
+
 echo ""
 echo "══════════════════════════════════════════"
-echo " Deploy complete — Vinahost Vietnam owns all 6 services"
+echo " Deploy complete — Vinahost Vietnam owns all 7 services"
 echo ""
 echo " Price proxy:        systemctl status vn-price-fetch"
 echo " BCTC proxy:         systemctl status vn-bctc-fetch"
+echo " BCTC URL enricher:  systemctl status vn-bctc-enrich.timer ← NEW"
 echo " News RSS proxy:     systemctl status vn-news-fetch"
 echo " SBV/FX proxy:       systemctl status vn-sbv-fetch"
 echo " Foreign flow proxy: systemctl status vn-foreign-flow"
 echo " OHLCV backfill:     systemctl status vn-ohlcv-backfill.timer"
 echo ""
-echo " Logs: /var/log/vn-{price,bctc,news,sbv,foreign-flow,ohlcv-backfill}.log"
+echo " Logs: /var/log/vn-{price,bctc,bctc-enrich,news,sbv,foreign-flow,ohlcv-backfill}.log"
 echo "══════════════════════════════════════════"
