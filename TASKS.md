@@ -30,16 +30,16 @@
 
 ---
 
-## Sprint 1283 — URGENT: Foreign Flow Service Recovery (INCIDENT 2026-04-22)
+## Sprint 1283 — Foreign Flow Circuit Breaker Diagnostics (S-size)
 
-**Status:** BLOCKED ON OPS | **Goal:** Add observability + recovery logic for foreign flow ingestion | **Size:** S (2 files, <50 lines)
+**Status:** TODO | **Goal:** Implement diagnostic + reset tools for foreign flow circuit breaker to unblock OPS incident recovery | **Size:** S (2 tasks, 2 tools, ~80 lines code + 8 tests) | **Baseline:** 6257 | **Target:** 6265 (+8 assertions) | **Note:** Circuit breaker diagnostics tool (incident recovery aid). Unblocks OPS troubleshooting when VPS foreign flow service stalls.
 
 | ID | Title | Status | Layer | Notes |
-|----|----|--------|-------|-------|
-| 1283 | BLOCK: Ops diagnose VPS bgapidatafeed endpoint | Blocked | ops | SSH: systemctl status vn-foreign-flow.service, journalctl, curl endpoint |
-| 1283a | DEV-READY: Add foreign flow circuit breaker reset tool | Todo | interface | New MCP tool to diagnose + reset CB if stuck |
+|----|-------|--------|-------|-------|
+| 1283a | RED: Foreign flow CB diagnostics tests | Todo | test | 8 assertions: state query, error counts, reset logic, idempotency |
+| 1283b | GREEN: Implement diagnostic + reset tools | Todo | interface | Two MCP tools: diagnose_foreign_flow_circuit_breaker() + reset_foreign_flow_circuit_breaker() |
 
-**Context:** vps_push_log shows 5108 consecutive error pushes (2026-04-22 07:36:55–now), last good push 2026-04-15 07:52:10. Probable causes: VPS endpoint down, field schema changed, circuit breaker tripped. Ops must diagnose first.
+**Context:** vps_push_log shows 5108 consecutive error pushes (2026-04-22 07:36:55–now), last good push 2026-04-15 07:52:10. Ops needs observability into circuit breaker state to diagnose root cause. Tools provide: state query (closed/open/half-open), failure counts, last failure timestamp, manual reset capability. Preparatory work (interface layer only, no schema changes).
 
 ---
 

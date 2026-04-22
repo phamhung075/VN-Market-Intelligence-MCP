@@ -142,7 +142,7 @@ export const toolRegistry: Array<(server: McpServer) => void> = [
   registerSlaStatusTools,        // Task 234: get_sla_status (+1 tool → 103)
   registerEvidenceTools,         // Task 1117: record_evidence_fragment (+1 tool → 85)
   registerCalibrationTools,     // Task 1129: get_calibration_report (+1 tool → 89)
-  registerForeignFlowTools,     // Task 1134: get_foreign_flow (+1 tool → 90)
+  registerForeignFlowTools,     // Task 1134: get_foreign_flow (+1 tool) + Task 1283: diagnostics tools (+2 tools → 105)
   registerInsiderTools,         // Task 1146: get_insider_transactions (+1 tool → 91)
   registerMarketMessageTools,   // Task 1166: get_unreviewed_market_messages + review_market_message (+2 tools → 93)
   registerTickerIntelligenceTools, // Task 1180: get_ticker_intelligence (+1 tool → 97)
