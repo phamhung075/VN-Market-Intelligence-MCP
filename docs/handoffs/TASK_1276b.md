@@ -242,3 +242,37 @@ Tests: 6080 passed / 0 failed (4 new from 1276a, all green from 1276b fix)
 
 - Negligible — removed one string comparison, added 4 debug logs
 - Macro alert processing in step E unaffected (same loop structure)
+
+---
+
+## [Developer] Implementation Record
+
+files_actually_modified:
+- /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/domain/services/alertCooldown.ts
+  - Line 55: Updated JSDoc to mention MACRO exemption
+  - Line 62: Added actionCode?: string to alert parameter type
+  - Line 67: Changed CRITICAL bypass check from `if (alert.severity === "critical") return false` to `if (alert.severity === "critical" && alert.actionCode !== "MACRO") return false`
+
+- /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/scheduler/news-analysis/intelligenceCycleJob.ts
+  - Lines 867-907: Removed cooldownSeverity downgrade logic
+  - Line 872: Removed `const cooldownSeverity = ...` conditional
+  - Line 875: Updated shouldSuppressAlert call to pass severity unchanged + actionCode field
+  - Lines 880-884: Enhanced suppressed alert log with severity and signals arrays
+  - Lines 889-896: Added new debug log after send attempt with severity, signals, and sent count
+
+- /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/__tests__/1276-macro-cooldown-bypass.test.ts
+  - Lines 11, 36, 63, 88: Added actionCode: "MACRO" field to all test alert objects
+
+tests_written:
+- src/__tests__/1276-macro-cooldown-bypass.test.ts (4 test cases, all GREEN)
+  - AC-1: MACRO alert with severity=critical suppressed by 10-min old alert (same signal)
+  - AC-2: MACRO alert NOT suppressed by 35-min old alert (outside window)
+  - AC-3: MACRO alert NOT suppressed by different signal type alert
+  - AC-4: MACRO alert suppressed when daily cap (3/day) reached
+
+tests_skipped: []
+
+tsc_clean: true
+full_suite_pass: true (6165 pass / 0 fail)
+
+commit: 9da9bd97fbcd8d3de7e43dd10b1ee9148b44ad98

@@ -54,7 +54,7 @@
 | ID | Title | Status | Type | Notes |
 |----|----|--------|------|-------|
 | 1276a | RED: Macro cooldown bypass test (failing assertions) | Review | Test | 4 failing tests showing macro alerts bypass 30-min cooldown window |
-| 1276b | GREEN: Fix cooldown + add logging | Todo | Fix | Remove severity downgrade in intelligenceCycleJob, fix CRITICAL bypass in alertCooldown |
+| 1276b | GREEN: Fix cooldown + add logging | Review | Fix | Remove severity downgrade in intelligenceCycleJob, fix CRITICAL bypass in alertCooldown |
 
 **Problem:** USD/VND macro alerts fired 5x in 65 min (every ~13min) despite 30-min cooldown. Root cause: lines 869–872 in intelligenceCycleJob.ts downgrade critical MACRO alerts to severity="high", bypassing the CRITICAL check in shouldSuppressAlert(), allowing every alert through.
 
