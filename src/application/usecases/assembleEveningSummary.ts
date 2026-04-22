@@ -412,15 +412,18 @@ async function _assembleEveningSummaryImpl(
       }
     } else {
       // Default: read VNINDEX from market_prices (VPS-pushed every 60s)
+      // Compute cutoff date dynamically to handle date-driven tests properly
+      const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
+      const cutoffDateStr = threeDaysAgo.toISOString().split('T')[0]!;
       const row = db
-        .prepare<{ price: number; change_pct: number; updated_at: string }, []>(
+        .prepare<{ price: number; change_pct: number; updated_at: string }, [string]>(
           `SELECT price, change_pct, updated_at
            FROM market_prices
            WHERE code = 'VNINDEX'
-             AND updated_at >= datetime('now', '-3 days')
+             AND date(updated_at) >= ?
            LIMIT 1`,
         )
-        .get();
+        .get(cutoffDateStr);
       if (row !== null && row !== undefined) {
         vnIndex = {
           close: row.price,

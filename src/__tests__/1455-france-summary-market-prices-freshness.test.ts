@@ -74,17 +74,22 @@ describe("1455 (a) — stale VNINDEX row (>3 days) → vnIndex is null", () => {
     const db = setupTestDb();
 
     // Insert stale VNINDEX row — updated 4 days ago (outside 3-day freshness window)
+    // Compute relative to the MOCKED time (2026-04-18), not system time
+    const mockNow = new Date("2026-04-18T07:00:00Z");
+    const fourDaysBeforeMock = new Date(mockNow.getTime() - 4 * 24 * 60 * 60 * 1000).toISOString();
     db.exec(`
       INSERT INTO market_prices (code, price, change_amt, change_pct, volume, updated_at)
-      VALUES ('VNINDEX', 1285.43, 12.0, 0.94, 5000000, datetime('now', '-4 days'))
+      VALUES ('VNINDEX', 1285.43, 12.0, 0.94, 5000000, '${fourDaysBeforeMock}')
     `);
 
     // Provide some watchlist mover so the digest has content (to ensure message is sent)
     db.exec(`INSERT INTO watchlist (code) VALUES ('VCB')`);
+    const twoMinutesBeforeMock = new Date(mockNow.getTime() - 2 * 60 * 1000).toISOString();
+    const oneMinuteBeforeMock = new Date(mockNow.getTime() - 1 * 60 * 1000).toISOString();
     db.exec(`
       INSERT INTO market_prices_history (code, price, volume, fetched_at)
-      VALUES ('VCB', 85000, 1000, datetime('now', '-1 minute')),
-             ('VCB', 75000, 900,  datetime('now', '-2 minutes'))
+      VALUES ('VCB', 85000, 1000, '${oneMinuteBeforeMock}'),
+             ('VCB', 75000, 900,  '${twoMinutesBeforeMock}')
     `);
 
     const captured: string[] = [];
@@ -92,7 +97,7 @@ describe("1455 (a) — stale VNINDEX row (>3 days) → vnIndex is null", () => {
     const opts: FranceSummaryOptions = {
       db,
       sendFn: async (msg) => { captured.push(msg); return true; },
-      nowFn: () => new Date("2026-04-18T07:00:00Z"),
+      nowFn: () => mockNow,
       getPnlFn: async () => null,
       // No fetchVnIndexFn → forces default SQL path
     };
@@ -109,10 +114,11 @@ describe("1455 (a) — stale VNINDEX row (>3 days) → vnIndex is null", () => {
   it("fresh VNINDEX row (updated today) → VN-Index block IS present", async () => {
     const db = setupTestDb();
 
-    // Insert fresh VNINDEX row
+    // Insert fresh VNINDEX row (at mocked time, not system time)
+    const mockNow = new Date("2026-04-18T07:00:00Z").toISOString();
     db.exec(`
       INSERT INTO market_prices (code, price, change_amt, change_pct, volume, updated_at)
-      VALUES ('VNINDEX', 1285.43, 12.0, 0.94, 5000000, datetime('now'))
+      VALUES ('VNINDEX', 1285.43, 12.0, 0.94, 5000000, '${mockNow}')
     `);
 
     const captured: string[] = [];
@@ -145,9 +151,11 @@ describe("1455 (b) — stale position prices (>3 days) → P&L N/A fallback", ()
     `);
 
     // Stale price for VCB (4 days old — outside 3-day window)
+    const mockNow = new Date("2026-04-18T07:00:00Z");
+    const fourDaysBeforeMock = new Date(mockNow.getTime() - 4 * 24 * 60 * 60 * 1000).toISOString();
     db.exec(`
       INSERT INTO market_prices (code, price, change_pct, updated_at)
-      VALUES ('VCB', 85000, 1.2, datetime('now', '-4 days'))
+      VALUES ('VCB', 85000, 1.2, '${fourDaysBeforeMock}')
     `);
 
     const captured: string[] = [];
@@ -155,7 +163,7 @@ describe("1455 (b) — stale position prices (>3 days) → P&L N/A fallback", ()
     const opts: FranceSummaryOptions = {
       db,
       sendFn: async (msg) => { captured.push(msg); return true; },
-      nowFn: () => new Date("2026-04-18T07:00:00Z"),
+      nowFn: () => mockNow,
       // No getPnlFn → forces default DB path
     };
 
@@ -180,10 +188,11 @@ describe("1455 (b) — stale position prices (>3 days) → P&L N/A fallback", ()
       VALUES ('VCB', 1000, 75000, 'open')
     `);
 
-    // Fresh price for VCB
+    // Fresh price for VCB (at mocked time, not system time)
+    const mockNow = new Date("2026-04-18T07:00:00Z");
     db.exec(`
       INSERT INTO market_prices (code, price, change_pct, updated_at)
-      VALUES ('VCB', 85000, 1.2, datetime('now'))
+      VALUES ('VCB', 85000, 1.2, '${mockNow.toISOString()}')
     `);
 
     const captured: string[] = [];
@@ -191,7 +200,7 @@ describe("1455 (b) — stale position prices (>3 days) → P&L N/A fallback", ()
     const opts: FranceSummaryOptions = {
       db,
       sendFn: async (msg) => { captured.push(msg); return true; },
-      nowFn: () => new Date("2026-04-18T07:00:00Z"),
+      nowFn: () => mockNow,
       // No getPnlFn → forces default DB path
     };
 
