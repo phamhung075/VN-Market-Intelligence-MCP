@@ -18,6 +18,7 @@
  * See handoff for acceptance of this trade-off.
  */
 
+import type { Database } from "bun:sqlite";
 import { getDb } from "../../../infrastructure/db/schema.js";
 
 /**
