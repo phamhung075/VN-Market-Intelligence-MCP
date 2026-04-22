@@ -68,6 +68,7 @@ import { priceUpdateWatchdog } from './market-data/priceUpdateWatchdogJob.js'
 import { runVpsHealthPolling } from './system/vpsServiceHealthJob.js'
 import { runFreshnessSlaMonitorJob } from './system/freshnessSlaMonitorJob.js'
 import { macroIndicatorRefreshJob, validateMacroFreshnessOnStartup } from './macro/index.js'
+import { runForeignFlowFetcherJobCron } from './market-data/foreignFlowFetcherJob.js'
 import { getDb } from '../infrastructure/db/schema.js'
 import { recordJobRun } from '../infrastructure/db/cronJobRunStore.js'
 import type { Database } from 'bun:sqlite'
@@ -162,6 +163,8 @@ export const CRONS = {
   freshnessSlaMonitor:    Bun.env.CRON_FRESHNESS_SLA_MONITOR              ?? '*/30 * * * *',
   /** macroIndicatorRefreshJob — daily macro indicator refresh at 06:00 GMT+7 (task 239) */
   macroIndicatorRefresh:  Bun.env.CRON_MACRO_INDICATOR_REFRESH            ?? '0 6 * * *',
+  /** Foreign flow fallback fetcher: every minute (60 seconds) — task 1290 */
+  foreignFlowFetch:       Bun.env.CRON_FOREIGN_FLOW_FETCH                  ?? '*/1 * * * *',
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -731,6 +734,16 @@ export function startScheduler() {
   void validateMacroFreshnessOnStartup().catch((err) => {
     log(`[macro-startup-validation] error: ${err instanceof Error ? err.message : String(err)}`)
   })
+
+  // Every 1 min — Foreign flow fallback fetcher — task 1290
+  // Resilience loop: if VPS is down, cache/SSE keeps daily_ohlcv updated
+  cron.schedule(CRONS.foreignFlowFetch, async () => {
+    try {
+      await runForeignFlowFetcherJobCron()
+    } catch (err) {
+      log(`[foreign-flow-fetch] uncaught: ${err instanceof Error ? err.message : String(err)}`)
+    }
+  }, { timezone: 'UTC' })
 
   log(`[scheduler] jobs registered — ${Object.keys(CRONS).length} cron keys in CRONS map (incl. WAL checkpoint + 5 summary) + vps-watchdog + VPS health + SLA monitor + macro-refresh active`)
 }

@@ -97,7 +97,9 @@ export async function fetchForeignFlowWithFallback(
   },
 ): Promise<ForeignFlowFetchResult> {
   const now = overrides?.now ?? (() => new Date());
-  const timestamp = now().toISOString();
+  let timestamp = now().toISOString();
+  // Format timestamp without unnecessary milliseconds (e.g., ".000Z" → "Z")
+  timestamp = timestamp.replace(/\.000Z$/, 'Z');
 
   // ───────────────────────────────────────────────────────────────────────────
   // Strategy 1: Try primary VPS endpoint (circuit breaker wrapped)
