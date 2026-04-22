@@ -66,6 +66,24 @@
 
 ---
 
+## Sprint 1277 — Ops Agent Integration + OHLCV Guard Checks Formalization
+
+| ID | Title | Status | Type | Notes |
+|----|----|--------|------|-------|
+| 1277a | RED: OHLCV guard checks test cases (6 TCs) | Done | Test | 3 pass / 3 fail (RED phase) — merged to main |
+| 1277b | GREEN: Guard checks validation + Ops integration | Todo | Test | Verify 6 tests pass, Ops agent ready, update stats |
+
+**Goal:** Formalize Ops Agent (already deployed) + OHLCV guard checks with comprehensive test coverage.
+
+**Scope:**
+- Ops agent docs: `.claude/agents/ops.md` ✓ (already merged, commit fb27186)
+- OHLCV guard checks: `src/scheduler/market-data/ohlcvDailyAggregatorJob.ts:103–112` ✓ (already merged, commit ff55779)
+- **New:** Test suite `src/__tests__/1277-ohlcv-guard-checks.test.ts` (6 test cases, TC-1 to TC-6)
+
+**Acceptance Criteria:** All 6 tests pass, zero regressions, test baseline 6165 → 6171+, Ops agent verified
+
+---
+
 ## Backlog
 
 | ID | Title | Priority | Notes |
