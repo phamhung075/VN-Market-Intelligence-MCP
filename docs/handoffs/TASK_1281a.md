@@ -358,3 +358,47 @@ None — TC-4 is intentionally failing (contract test pattern from 1278a)
 
 ### commit
 `a22b1a2` — "feat(test-1281a): agriculture weather cascade RED tests"
+
+---
+
+## [QA] Review Record
+
+**Date:** 2026-04-22
+**Verdict:** APPROVED
+
+### Test Suite Results
+- bun test src/__tests__/1281a-*.test.ts: 7 PASS / 1 FAIL (TC-4 contract, expected)
+- bun test (full suite): 6237 total (main baseline is also 6237, test already merged)
+- bun tsc --noEmit: 0 errors
+- Total assertions: 37 across 8 test cases
+
+### Files Confirmed Clean
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/__tests__/1281a-agriculture-cascade-red.test.ts` (402 lines)
+  - Imports: domain/services/cascadeEngine, bctc-schema only
+  - No infrastructure layer imports — DDD clean
+  - Mock `detectAgricultureWeatherKeywords()` with full confidence logic
+  - Watchlist fixture: 6 agriculture stocks + 3 control stocks (correctly typed)
+  - Test isolation: each test self-contained, no state leakage
+
+### Compliance Checks
+- **DDD Layer Integrity:** PASS — only domain types, no infrastructure imports
+- **TypeScript Strict:** PASS — 0 type errors
+- **Test Isolation:** PASS — independent fixtures, no shared state
+- **Contract Test (TC-4):** FAIL as expected — AGRICULTURE_WEATHER_RULES not yet defined
+- **Fixture Validation:** Watchlist uses valid DomainType (agriculture = line 35 bctc-schema.ts)
+
+### Test Case Validation
+- TC-1 (rainfall): keyword matching + confidence [0.2, 0.3]
+- TC-2 (drought): drought type + threshold validation
+- TC-3 (storm): storm keyword detection
+- TC-4 (contract): Intentional FAIL — GREEN phase will define AGRICULTURE_WEATHER_RULES
+- TC-5 (threshold): 0.6 minimum credibility + boundary test
+- TC-6 (multi-keyword): confidence formula (min(1.0, cred × count / 3.0))
+- TC-7 (filtering): domain filtering (agriculture only)
+- TC-8 (diacritics + forecast): forecast penalty (-0.2) + diacritics support
+
+### Blocking Issues
+None — all RED phase acceptance criteria met.
+
+### Merge Status
+APPROVED for merge to main. Test file already present on main branch (commit a22b1a2 inherited via common ancestry).

@@ -1,6 +1,6 @@
 {
-  "scan_date": "2026-04-19T10:22:00Z",
-  "last_run": "2026-04-19T10:22:00Z",
+  "scan_date": "2026-04-22T04:16:00Z",
+  "last_run": "2026-04-22T04:16:00Z",
   "findings": [
     {
       "fingerprint": "check-2:mcp.config.json:referenceStocks",
@@ -58,31 +58,31 @@
       "status": "complete",
       "items_scanned": 15,
       "findings": 0,
-      "notes": "Record<string, { }> patterns searched. No new duplications found outside canonicals."
+      "notes": "Record<string, { }> patterns searched. SECTOR_PEERS canonical in sectorPeers.ts. No new duplications found outside canonicals. Domain layer imports verified (comments only, no actual imports from infrastructure)."
     },
     "check-2-hardcoded-ticker-arrays": {
       "status": "complete",
       "items_scanned": 30,
       "findings": 0,
-      "notes": "Ticker arrays outside canonicals verified as business logic (muasamcong.ts contract-to-stock mapping) or comments. No data duplication."
+      "notes": "Ticker arrays outside canonicals verified as business logic (muasamcong.ts contract-to-stock mapping) or test fixtures. MAJOR_CAPS in priceSourceRouter.ts is service-specific logic for Yahoo Finance fallback eligibility, not data duplication. No redundant ticker arrays found."
     },
     "check-3-repeated-magic-numbers": {
       "status": "complete",
       "items_scanned": 50,
       "findings": 0,
-      "notes": "Cron strings and timeouts/thresholds verified. No identical numbers in 3+ production files."
+      "notes": "Cron strings verified canonical to jobs.ts (CRONS map). Timeout values (30000, 15000, 5000) in routers are service-specific logic (cache vs VPS vs Yahoo), not configuration drift. httpTimeoutMs canonical in config.ts → mcp.config.json. No identical thresholds in 3+ production files."
     },
     "check-4-schema-duplication": {
       "status": "complete",
       "items_scanned": 20,
       "findings": 0,
-      "notes": "scheduler_locks dual DDL is intentional (documented comment at line 39 of schedulerLockStore.ts). Canonical source is schema.ts."
+      "notes": "scheduler_locks dual DDL intentional (documented comment at line 39 of schedulerLockStore.ts for test backwards compatibility). alert_mutes DDL removed from store (line 21-23 documents removal in task 1049). Canonical source is schema.ts for both."
     },
     "check-5-config-drift": {
       "status": "complete",
       "items_scanned": 10,
       "findings": 0,
-      "notes": "clobApiUrl, gammaApiUrl, and all timeouts verified against mcp.config.json. All fallbacks correct."
+      "notes": "clobApiUrl, gammaApiUrl, all timeouts verified against mcp.config.json via config.ts loader (lines 545-546 show proper env override + ?? fallback pattern). All fallbacks correct and match canonical sources."
     }
   }
 }
