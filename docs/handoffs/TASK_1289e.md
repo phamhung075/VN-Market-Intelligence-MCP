@@ -253,3 +253,33 @@ curl -X POST http://localhost:3000/api/push-foreign-flow \
 - ✅ All 1289b tests still passing (31 total, all GREEN)
 - ✅ Task report filed (reports/TASK_REPORT_1289e.md)
 - ✅ Prevention checklist documented (docs/agent-memory/issues/foreign-flow-parse-cascade.md)
+
+---
+
+## [QA] Review Record
+
+**verdict:** APPROVED
+
+**blocking_issues:** None
+
+**non_blocking:** None
+
+**files_confirmed_clean:**
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/__tests__/1289e-validation-logging-integration.test.ts` — 8 tests, 32 assertions, all PASS
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/domain/services/market-data/foreignFlowValidator.ts` — DDD compliant (type-only import from infrastructure acceptable)
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/infrastructure/fetchers/foreignFlowFetcher.ts` — Validator integrated, silent filter eliminated, fail-loud strategy implemented
+
+**test_results:**
+- Sprint 1289 suite: 31/31 tests PASS (11 + 6 + 6 + 8)
+- Total assertions: 119
+- Full test suite: 6304 pass, 21 skip, 1 fail (unrelated to 1289)
+- TypeScript: 0 errors
+
+**root_cause_verification:**
+- Silent filter bug: ELIMINATED (replaced with validateForeignFlowFetcherPayload call)
+- Unified validation: CONFIRMED (both fetcher + endpoint call same validator)
+- Diagnostic logging: VERIFIED (error messages include itemIndex, field, reason)
+- Fallback integration: TESTED (test 6 confirms validation error context logging)
+- No regressions: CONFIRMED (test 8 verifies valid items still pass)
+
+**merge_commit:** Ready for merge (awaiting Architect approval before final commit)
