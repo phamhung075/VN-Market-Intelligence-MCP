@@ -13,18 +13,18 @@
 > Sprints 231–239 archived: `docs/archive/sprints-231-239.md`
 > Sprints 240–240 archived: `docs/archive/sprints-240-240.md`
 > Sprints 1269–1277 archived: `docs/archive/sprints-1269-1277.md`
-> Sprints 1278–1281 archived: `docs/archive/sprints-1278-1281.md` (includes MSCI inclusion + agriculture weather cascades, BCTC timeout fix, all merged)
+> Sprints 1278–1282 archived: `docs/archive/sprints-1278-1282.md` (includes MSCI inclusion + agriculture weather cascades + data freshness monitoring tool, BCTC timeout fix, all merged)
 
 ---
 
 ## Sprint 1282 — Data Freshness Monitoring Tool (S-size)
 
-**Status:** Review | **Goal:** Eliminate false alarm cascade rule gaps via data freshness detection tool | **Size:** S (2 tasks, 2 files) | **Baseline:** 6187 | **Target:** 6197 (+8 assertions)
+**Status:** COMPLETE | **Goal:** Eliminate false alarm cascade rule gaps via data freshness detection tool | **Size:** S (2 tasks, 2 files) | **Baseline:** 6187 | **Target:** 6197 (+8 assertions) | **Note:** Data freshness monitoring tool complete, all 8 tests PASS
 
 | ID | Title | Status | Layer | Notes |
 |----|-------|--------|-------|-------|
 | 1282a | RED: Data freshness monitoring tool tests | Done | test | 8 assertions: price/BCTC/news SLA breach + recovery detection |
-| 1282b | GREEN: Implement freshness detector + formatter | Review | interface+domain | Calls `freshnessSlaChecker` domain service, formats alerts |
+| 1282b | GREEN: Implement freshness detector + formatter | Done | interface+domain | Calls `freshnessSlaChecker` domain service, formats alerts |
 
 **Context:** Existing `freshnessSlaChecker.ts` (domain) defines SLA thresholds per signal type. New tool wraps it for interface layer (MCP + future briefing gate-keeping). Prevents cascade alerts when data is stale.
 
