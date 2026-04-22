@@ -1222,38 +1222,52 @@ export async function createBunServer(
         ).all() as { action_code: string; period_year: number; period_quarter: string; source_url: string | null }[];
 
         // Task 1218: enrich pending items with PDF URLs from SSC portal
-        // so VPS can fetch directly without re-discovery
-        const { enrichQueueWithPdfUrls, buildQueueSourceHints } = await import(
+        // so VPS can fetch directly without re-discovery.
+        // Task 1280: Add skip_enrichment param for emergency VPS timeouts.
+        const { buildQueueSourceHints } = await import(
           "../../application/usecases/bctcQueueEnricher.js"
         );
 
-        // Injectable listDocs for production (uses listSscDocuments)
-        const listDocsForEnrich = async (code: string, quarter: string, year: number) => {
-          try {
-            const { listSscDocuments } = await import("../../infrastructure/fetchers/ssc.js");
-            return listSscDocuments(code, "quarterly", year);
-          } catch {
-            return [];
-          }
-        };
+        // Parse query parameter: skip enrichment if VPS is timing out
+        const url = new URL(req.url!, "http://localhost");
+        const skipEnrichment = url.searchParams.get("skip_enrichment") === "true";
 
-        const enriched = await enrichQueueWithPdfUrls(
-          pendingRows.map((r) => ({
-            action_code: r.action_code,
-            period_year: r.period_year,
-            period_quarter: r.period_quarter,
-            source_url: r.source_url,
-          })),
-          listDocsForEnrich,
-        );
+        let enriched = pendingRows.map((r) => ({
+          action_code: r.action_code,
+          period_year: r.period_year,
+          period_quarter: r.period_quarter,
+          source_url: r.source_url,
+        }));
 
-        // Persist discovered PDF URLs back to the queue table
-        const updateSourceUrl = db.prepare(
-          `UPDATE bctc_vps_queue SET source_url = ? WHERE action_code = ? AND period_year = ? AND period_quarter = ? AND source_url IS NULL`,
-        );
-        for (const item of enriched) {
-          if (item.source_url) {
-            updateSourceUrl.run(item.source_url, item.action_code, item.period_year, item.period_quarter);
+        // Only enrich if requested (default behavior for normal VPS operation)
+        if (!skipEnrichment) {
+          const { enrichQueueWithPdfUrls } = await import(
+            "../../application/usecases/bctcQueueEnricher.js"
+          );
+
+          // Injectable listDocs for production (uses listSscDocuments)
+          const listDocsForEnrich = async (code: string, quarter: string, year: number) => {
+            try {
+              const { listSscDocuments } = await import("../../infrastructure/fetchers/ssc.js");
+              return listSscDocuments(code, "quarterly", year);
+            } catch {
+              return [];
+            }
+          };
+
+          enriched = await enrichQueueWithPdfUrls(
+            enriched,
+            listDocsForEnrich,
+          );
+
+          // Persist discovered PDF URLs back to the queue table
+          const updateSourceUrl = db.prepare(
+            `UPDATE bctc_vps_queue SET source_url = ? WHERE action_code = ? AND period_year = ? AND period_quarter = ? AND source_url IS NULL`,
+          );
+          for (const item of enriched) {
+            if (item.source_url) {
+              updateSourceUrl.run(item.source_url, item.action_code, item.period_year, item.period_quarter);
+            }
           }
         }
 

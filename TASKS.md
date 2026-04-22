@@ -71,11 +71,59 @@
 
 ---
 
+## Sprint 1279 — MSCI Inclusion Cascade Detection (M-size)
+
+**Status:** ACTIVE | **Ref:** TECH-1279 | **Goal:** Detect MSCI index inclusion announcements → cascade HIGH alerts to large-cap watchlist | **Size:** M (2 tasks, ~8 hours) | **Report:** (pending)
+
+| ID | Title | Status | Layer | Notes |
+|----|----|--------|-------|-------|
+| 1279a | RED: MSCI inclusion cascade tests | Todo | test | 6 assertions; TC-1,2,3,5,6 PASS, TC-4 intentional FAIL |
+| 1279b | GREEN: Implement MSCI rules + cascadeExecutor | Backlog | domain+app | Blocked by 1279a; msciDetector.ts, MSCI_INCLUSION_RULES, detectMsciCascadePeers() |
+
+---
+
+### Task 1279a — RED: MSCI Inclusion Cascade Tests
+
+**context:** docs/handoffs/TASK_1279a.md
+
+**acceptance_criteria:**
+- Given MSCI keywords (nộp danh sách, đáp ứng tiêu chí, chỉ số msci) in news text
+- When classifySentiment() or buildCausalChain() called
+- Then sentiment.direction="bullish", confidence >0.7, TC-1–TC-6 (5 PASS, 1 SKIP/FAIL expected)
+
+**branch:** task/1279a-msci-inclusion-cascade-red-test
+
+---
+
+### Task 1279b — GREEN: Implement MSCI Rules + Integration
+
+**context:** docs/handoffs/TASK_1279b.md
+
+**acceptance_criteria:**
+- Given MSCI keywords at credibility ≥0.7 (Reuters/SSC/Bloomberg)
+- When detectMsciCascadePeers() called with watchlist
+- Then returns large-cap stocks only (MWG, KDH, FPT, MSN, VCB, HPG, BID, CTG), no sector peers
+
+**depends_on:** 1279a ✓ (RED merged)
+
+**branch:** task/1279b-msci-inclusion-cascade-green-impl
+
+---
+
+## Sprint 1280 — URGENT FIX: BCTC Queue Timeout Blocker (FIX-size)
+
+**Status:** Todo | **Goal:** Unblock VPS BCTC fetch with quick parameter flag | **Size:** FIX (≤10 lines) | **Baseline:** 6187
+
+| ID | Title | Status | Layer | Notes |
+|----|-------|--------|-------|-------|
+| 1280 | FIX: `/api/bctc-fetch-queue` skip-enrichment flag | Todo | interface | Add query param to return queue in <1s without SSC lookups |
+
+---
+
 ## Backlog
 
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
-| 1279 | MSCI inclusion cascade | HIGH | Large-cap bullish, small-cap neutral |
 | 1286 | Agriculture weather cascade | HIGH | Heavy rain/drought on VNR/BFC/QNT |
 | 1284 | IMF context sentiment | MEDIUM | Policy vs crisis distinction |
 | 1274 | HOSE staleness guard | MEDIUM | >2h old = circuit DEGRADED |
@@ -84,5 +132,6 @@
 | 1282 | franceSummaryJob missing schema | MEDIUM | Add pre-flight checks |
 | 1285 | Add rag_analyses + evidence_scores schema | HIGH | Structural additions (L-size) |
 | 1283 | Update IMPLEMENTATION_STATUS.md | LOW | Add sprint 240+ entries |
+| 1287 | FOLLOWUP: Async BCTC enrichment (Option A) | MEDIUM | Background job to populate source_urls, prevents timeout on >100 items (sprint after 1280 merge) |
 
 ---
