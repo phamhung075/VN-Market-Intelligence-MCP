@@ -24,6 +24,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { Database } from "bun:sqlite";
 
 import { tradingWindowLabel } from "../../../../domain/services/tradingWindow.js";
+import { getMarketDataStalenessStatus } from "../../../../domain/services/market-data/marketDataValidator.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Pure helpers (exported for unit testing)
@@ -165,6 +166,28 @@ export async function getDataFreshness(db: Database): Promise<string> {
     ].join(" | "),
     "-".repeat(COL_SOURCE + COL_UPDATED + COL_AGE + COL_STATUS + 9),
   ];
+
+  // Check HOSE market data staleness (Task 1292b)
+  const hoseStatus = getMarketDataStalenessStatus();
+  const hoseAgeHours = hoseStatus.ageMs >= 0 ? hoseStatus.ageMs / (1000 * 3600) : null;
+  const hoseStatus_str = classifyFreshness(hoseAgeHours);
+  const hoseAge_str = hoseAgeHours !== null ? `${hoseAgeHours.toFixed(1)}h` : "N/A";
+  const hoseUpdated_str = formatAge(hoseAgeHours);
+  const hoseStatusIcon =
+    hoseStatus_str === "Tốt" ? "v Tốt" :
+    hoseStatus_str === "Bình thường" ? "~ Bình thường" :
+    hoseStatus_str === "Cũ" ? "! Cũ" :
+    hoseStatus_str === "Rất cũ" ? "!! Rất cũ" :
+    "- Chưa có dữ liệu";
+
+  lines.push(
+    [
+      "Giá HOSE (Staleness)".padEnd(COL_SOURCE),
+      hoseUpdated_str.padEnd(COL_UPDATED),
+      hoseAge_str.padEnd(COL_AGE),
+      hoseStatusIcon,
+    ].join(" | "),
+  );
 
   for (const source of DATA_SOURCES) {
     let ageHours: number | null = null;
