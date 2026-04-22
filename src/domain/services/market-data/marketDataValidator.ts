@@ -55,12 +55,16 @@ export function isPriceFresh(opts: {
 /**
  * Get detailed staleness status (for briefing + health tools).
  *
+ * @param opts.db - SQLite database (injected, defaults to getDb() if omitted)
+ * @param opts.maxAgeMs - Threshold in milliseconds (default: 2h = 7,200,000ms)
+ * @param opts.now - Current time function (default: Date.now, overridable for testing)
  * @returns { isFresh: boolean, ageMs: number, statusLabel: string }
  *   - isFresh: true if within threshold
  *   - ageMs: milliseconds since last HOSE update (or -1 if no data)
  *   - statusLabel: "Fresh", "Stale (2h+)", "No data"
  */
 export function getMarketDataStalenessStatus(opts: {
+  db?: Database;
   maxAgeMs?: number;
   now?: () => number;
 } = {}): {
@@ -71,7 +75,7 @@ export function getMarketDataStalenessStatus(opts: {
   const maxAgeMs = opts.maxAgeMs ?? 2 * 60 * 60 * 1000; // 2 hours default
   const now = opts.now ?? Date.now;
 
-  const db = getDb();
+  const db = opts.db ?? getDb();
   const result = db
     .prepare("SELECT MAX(updated_at) as max_timestamp FROM market_prices WHERE exchange = 'HOSE'")
     .get() as { max_timestamp: string | null } | undefined;
