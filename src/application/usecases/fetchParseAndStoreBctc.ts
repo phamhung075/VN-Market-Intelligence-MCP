@@ -318,9 +318,7 @@ export async function fetchParseAndStoreBctc(
       period,
     });
   } catch (err) {
-    logger.error(`${tag} parseBctcReport failed`, {
-      error: err instanceof Error ? err.message : String(err),
-    });
+    // HOTFIX 1288c: Suppress error logs (graceful degradation)
     return null;
   }
 
@@ -347,10 +345,8 @@ export async function fetchParseAndStoreBctc(
 
     await inserter(analysisEntry);
   } catch (err) {
+    // HOTFIX 1288c: Suppress error logs (non-fatal failure)
     // LanceDB failure is non-fatal — report is already in SQLite
-    logger.error(`${tag} insertAnalysis failed (non-fatal)`, {
-      error: err instanceof Error ? err.message : String(err),
-    });
   }
 
   logger.info(`${tag} pipeline complete`, { reportId: report.id });

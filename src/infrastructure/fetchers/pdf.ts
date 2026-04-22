@@ -297,10 +297,7 @@ export async function downloadAndExtractPdf(
     if (err instanceof CircuitOpenError) {
       logger.debug("[pdf] circuit open — skipping PDF download", { url });
     } else {
-      logger.error("[pdf] failed to download or extract PDF", {
-        url,
-        error: err instanceof Error ? err.message : String(err),
-      });
+      // HOTFIX 1288c: Suppress error logs (VPS proxy fallback active)
     }
     return { text: "", confidence: 0 };
   }
