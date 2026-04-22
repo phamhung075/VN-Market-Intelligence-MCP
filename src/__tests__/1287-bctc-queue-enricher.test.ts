@@ -74,13 +74,19 @@ function getQueueItems(db: Database): Array<{
 describe("Task 1287a — BCTC Queue Enricher (RED — failing tests)", () => {
   let testDb: Database;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     // Create a fresh in-memory database for each test
     closeDb();
     testDb = new SqliteDatabase(":memory:");
     testDb.exec("PRAGMA foreign_keys = ON");
     testDb.exec("PRAGMA journal_mode = WAL");
-    initDatabase(testDb);
+    await initDatabase(testDb);
+    // Clear any lingering queue items from previous tests
+    try {
+      testDb.exec("DELETE FROM bctc_vps_queue");
+    } catch {
+      // Table might not exist if initDatabase failed
+    }
   });
 
   afterEach(() => {

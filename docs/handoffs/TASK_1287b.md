@@ -326,3 +326,53 @@ Test baseline: 6248 + 8 = 6256 assertions
 3. All 7–8 assertions from 1287a RED phase pass
 4. TypeScript compiles without errors
 5. Ready to merge to main branch
+
+---
+
+## [Developer] Implementation Record
+
+**Status:** COMPLETE
+
+### Files Modified
+1. `/src/scheduler/financial-reports/bctcQueueEnricherJob.ts` (NEW, 200 lines)
+   - Implemented `runBctcQueueEnricherJob()` with full logic
+   - Helper: `fetchWithTimeout()` with Promise.race timeout protection
+   - Lazy-loads SSC fetcher with signature adapter (quarter → reportType conversion)
+   - Query: `SELECT ... WHERE source_url IS NULL AND status = 'pending' LIMIT ?`
+   - Batch processing: default 20 items per run
+   - Error handling: timeout (5s), partial failures, generic errors
+   - Logging: per-item debug + summary info messages
+
+2. `/src/scheduler/jobs.ts` (MODIFIED)
+   - Added import: `runBctcQueueEnricherJob`
+   - Added CRON def: `bctcQueueEnricher: '*/15 * * * *'` (env override: CRON_BCTC_QUEUE_ENRICHER)
+   - Registered cron job in `startScheduler()` with recordJobRun wrapper
+   - Updated top comment to document job
+
+3. `/src/__tests__/1287-bctc-queue-enricher.test.ts` (FIXED TEST SETUP)
+   - Changed `beforeEach()` to `async beforeEach()`
+   - Added `await initDatabase(testDb)` (was fire-and-forget, now properly awaited)
+   - Added `testDb.exec("DELETE FROM bctc_vps_queue")` to clear between tests (fixes database isolation)
+
+### Tests: 8 PASS
+- ✓ returns empty result when no pending queue items
+- ✓ populates source_url for items where SSC lookup succeeds
+- ✓ handles SSC fetcher timeout gracefully — does not throw
+- ✓ skips queue items that already have source_url — no redundant SSC call
+- ✓ reports partial failures — mixes successes, timeouts, and empty results
+- ✓ is idempotent — re-running does not duplicate enrichment
+- ✓ respects batch dequeue limit (20 items max per run)
+- ✓ counts empty SSC results as partial failures
+
+**Full Suite:** 6256 pass (baseline 6248 + 8 new tests), 21 skip, 1 fail (unrelated)
+
+### Type Safety
+- `bun tsc --noEmit`: 0 errors
+- BctcQueueEnricherRunResult interface: { itemsProcessed, urlsPopulated, timeoutFailures, partialFailures }
+- SscDocumentLookup type: (code, quarter, year) => Promise<SscDoc[]> ✓
+
+### DDD Compliance
+- Imports: domain (earningsCalendar, not used), infrastructure (db, logger, ssc fetcher), application (types)
+- No domain → domain violations
+- No cross-layer leakage
+- Scheduler layer (correct placement)
