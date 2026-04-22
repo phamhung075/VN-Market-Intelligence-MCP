@@ -104,6 +104,10 @@ const VN_BULLISH: SentimentKeyword[] = [
   { word: "vn-index đạt", weight: 3 },
   { word: "vnindex đạt", weight: 3 },
   { word: "thị trường đạt", weight: 2 },
+  // Task 1279: MSCI index inclusion — material bullish catalyst
+  { word: "nộp danh sách", weight: 1.0 },
+  { word: "đáp ứng tiêu chí", weight: 0.9 },
+  { word: "chỉ số msci", weight: 0.8 },
 ];
 
 /** Vietnamese bearish keywords */
