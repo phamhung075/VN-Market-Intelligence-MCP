@@ -19,6 +19,7 @@ import type { DomainType } from "../../../bctc-schema";
 import { classifySentiment } from "./sentimentClassifier.js";
 import { classifyDeviation, deviationToDelta, type MacroStats, type MacroDeviation } from "./macroThresholds.js";
 import { detectStocksInText } from "./stockAliases.js";
+import { detectMsciInclusion } from "./msciDetector.js";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Exported types
@@ -2177,6 +2178,27 @@ export const INSIDER_DUMP_RULES: CascadeKeywordRule[] = [
   { key: "insider_dump_banking_peers", keyword: "thoái sạch", sector: "banking" },
 ];
 
+/**
+ * MSCI inclusion cascade rules: News about MSCI index inclusion eligibility.
+ *
+ * Business logic:
+ *   - MSCI index inclusion is a major bullish catalyst (proven multi-quarter price impact)
+ *   - Affects large-cap stocks across all sectors (cross-sector, not sector-specific)
+ *   - Keywords: "nộp danh sách" (submit list), "đáp ứng tiêu chí" (meet criteria), "chỉ số msci" (MSCI index)
+ *   - Targets "all_largecp" pseudo-sector (application layer filters watchlist to large-cap only)
+ *
+ * Contrast with INSIDER_DUMP_RULES:
+ *   - Insider dump: bearish, sector-specific (banking), peer contagion
+ *   - MSCI inclusion: bullish, cross-sector, large-cap specific (no peer cascade)
+ *
+ * Task 1279: MSCI inclusion cascade detection + application integration
+ */
+export const MSCI_INCLUSION_RULES: CascadeKeywordRule[] = [
+  { key: "msci_large_cap_1", keyword: "nộp danh sách", sector: "all_largecp" },
+  { key: "msci_large_cap_2", keyword: "đáp ứng tiêu chí", sector: "all_largecp" },
+  { key: "msci_large_cap_3", keyword: "chỉ số msci", sector: "all_largecp" },
+];
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Task 1004 — Policy intervention combo detection
 // ─────────────────────────────────────────────────────────────────────────────
@@ -2424,7 +2446,27 @@ export function buildCausalChain(
     }
   }
 
-  // ── Step 2e: Non-watchlist company event confidence cap (Task 1207) ──────
+  // ── Step 2e: MSCI Inclusion Cascade (Task 1279) ─────────────────────────
+  // Detect MSCI index inclusion keywords + create domain-level cascade entry.
+  // MSCI inclusion is a cross-sector bullish catalyst affecting large-cap stocks.
+  // Application layer (detectMsciCascadePeers) filters watchlist to large-cap only.
+  const msciResult = detectMsciInclusion(summaryLower, seedEntry.confidence ?? 0.6);
+  if (msciResult.matched) {
+    const msciDomainEntry: CausalChainEntry = {
+      level: "domain",
+      title: "MSCI Inclusion Cascade",
+      summary: `${seedEntry.sourceTitle} — MSCI inclusion keywords detected`,
+      affectedDomains: [],  // MSCI is cross-sector
+      affectedActions: [],  // Populated by application layer via detectMsciCascadePeers()
+      sentiment: "bullish",
+      impactScore: Math.round(seedEntry.impactScore * msciResult.confidence),
+      confidence: msciResult.confidence,
+      reasoning: `MSCI inclusion detected: ${msciResult.keywords.join(", ")}. Targets large-cap watchlist stocks.`,
+    };
+    entries.push(msciDomainEntry);
+  }
+
+  // ── Step 2g: Non-watchlist company event confidence cap (Task 1207) ──────
   // When a news article is about a specific company (affectedActions non-empty)
   // that is NOT in the user's watchlist, cap all domain-level confidence at 0.6.
   // Rationale: non-watchlist company noise should never generate high-confidence alerts.
@@ -2454,7 +2496,7 @@ export function buildCausalChain(
     }
   }
 
-  // ── Step 2f: Action entries from rule affected_actions (Task 1264) ──────
+  // ── Step 2h: Action entries from rule affected_actions (Task 1264) ──────
   // When a SectorRule has explicit affected_actions (e.g., Hormuz rule directly
   // mapping to VJC, BSR), create direct action entries for those tickers.
   // These bypass the watchlist membership check and create high-confidence alerts.
