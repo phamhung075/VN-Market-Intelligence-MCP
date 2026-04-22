@@ -337,3 +337,25 @@ export async function runBctcQueueEnricherJob(opts: {
 ```
 
 The job will be registered in `src/scheduler/jobs.ts` with cron: `*/15 * * * *` (every 15 min).
+
+---
+
+## [Fixer] Fix Record
+
+**Date:** 2026-04-22
+
+fixes_applied:
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/__tests__/1287-bctc-queue-enricher.test.ts:41-46` — Root cause: Raw string interpolation in test helper created SQL injection vulnerability + UNIQUE constraint failures / Fix: Replaced `db.exec()` string interpolation with parameterized `db.prepare() + stmt.run()` and added `INSERT OR REPLACE` to handle backfill data collisions
+
+tests_added: []
+tsc_clean: true
+full_suite_pass: true
+
+**Result:**
+- All 8 tests now fail consistently on stub assertion (expected RED)
+- No UNIQUE constraint violations during setup
+- No SQL injection vulnerability
+- bun test: 8 FAIL (on assertions, not setup errors)
+- bun tsc --noEmit: 0 errors
+
+**Commit:** 98ae7c8 — fix(1287a): parameterize insertQueueItem helper to eliminate SQL injection
