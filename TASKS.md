@@ -71,14 +71,16 @@
 
 ## Sprint 1288 — Foreign Flow Fallback Source (S-size)
 
-**Status:** READY FOR PLANNING | **Goal:** Unblock OPS incident — foreign flow service down since 2026-04-22 | **Size:** S | **Baseline:** 6267 | **Target:** 6275+ (+8 assertions)
+**Status:** REVIEW | **Goal:** Unblock OPS incident — foreign flow service down since 2026-04-22 | **Size:** S | **Baseline:** 6267 | **Target:** 6275 (+8 assertions) | **Ref:** TECH handoff files in docs/handoffs/
 
 | ID | Title | Status | Layer | Notes |
 |----|-------|--------|-------|-------|
-| 1288a | RED: Foreign flow fallback tests | Todo | test | 8 assertions: primary timeout, fallback activation, circuit breaker |
-| 1288b | GREEN: Implement fallback fetcher + circuit breaker logic | Todo | infrastructure | Extend foreignFlowFetcher.ts, add secondary source (SSE or cache) |
+| 1288a | RED: Foreign flow fallback tests | Review | test | 8 assertions: primary timeout, fallback activation, circuit breaker, cache, SSE, staleness, recovery |
+| 1288b | GREEN: Implement fallback fetcher + circuit breaker logic | Review | infrastructure | NEW foreignFlowFetcher.ts: primary (CB wrapped) → cache → SSE → none |
 
-**Context:** vn-foreign-flow.service down 2026-04-22 07:36:55–ongoing. Sprint 1283 shipped diagnostics tools. This sprint adds resilience: if primary endpoint fails, switch to secondary source automatically. Reduces OPS recovery pressure, resumes foreign flow ingestion during outage.
+**Context:** vn-foreign-flow.service down 2026-04-22 07:36:55–ongoing. Sprint 1283 shipped diagnostics tools. This sprint adds resilience: if primary VPS endpoint fails, switch to secondary source (cache or SSE). Graceful degradation: primary (5s timeout, CB-wrapped) → cache (in-memory, <2h old) → SSE messages (recent broadcast) → empty with warning. No schema changes. Next sprint: integrate fetcher into scheduler job.
+
+**Handoff:** `docs/handoffs/TASK_1288a.md` (RED spec) | `docs/handoffs/TASK_1288b.md` (GREEN impl)
 
 ---
 

@@ -2,9 +2,9 @@
   "_maintained_by": "developer",
   "_trigger": "after adding/removing MCP tool, update count + list",
   "_live_check": "curl -s http://127.0.0.1:3000/health | jq .toolCount",
-  "lastUpdated": "2026-04-21",
-  "toolCount": 104,
-  "_note": "2026-04-21: get_vps_service_health + get_sla_status (Task 234) added → 104.",
+  "lastUpdated": "2026-04-22",
+  "toolCount": 105,
+  "_note": "2026-04-22: system-auditor sync. 2026-04-21: get_vps_service_health + get_sla_status (Task 234) added → 104. 2026-04-22: one additional tool detected → 105 (circuit breaker diagnostics from Sprint 1283).",
   "categories": [
     { "name": "Watchlist", "count": 4, "tools": ["add_to_watchlist", "remove_from_watchlist", "get_watchlist", "update_thresholds"] },
     { "name": "Financial Reports", "count": 4, "tools": ["get_financial_summary", "compare_financials", "list_stored_pdfs", "read_bctc_pdf"] },
