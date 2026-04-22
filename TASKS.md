@@ -86,13 +86,13 @@
 
 ## Sprint 1289 — Foreign Flow Parse Errors Root-Cause Fix (M-size)
 
-**Status:** Todo | **Goal:** Root-cause analysis + fix for recurring parse errors (784 in 24h, ≥2 prior fix attempts) | **Size:** M (4 tasks) | **Baseline:** 6275 | **Target:** 6284 (+9 assertions) | **Blocker:** Recurring bug escalation protocol triggered
+**Status:** In Progress | **Goal:** Root-cause analysis + fix for recurring parse errors (784 in 24h, ≥2 prior fix attempts) | **Size:** M (4 tasks) | **Baseline:** 6283 (1289b) | **Progress:** 6289 (+6 from 1289c, 1289d/1289e pending) | **Blocker:** Recurring bug escalation protocol triggered
 
 | ID | Title | Status | Layer | Notes |
 |----|-------|--------|-------|-------|
 | 1289a | ARCH: Root-cause analysis + design doc | Done | design | Silent filter bug identified: fetchPrimaryVpsEndpoint filters invalid items without error logging; validator duplicated across entry points |
 | 1289b | RED: Foreign flow validation error handling tests | Review | test | 11 test cases, 40 assertions: invalid code type, missing date, truncation scenarios, validation error logging |
-| 1289c | GREEN: Modify fetcher to call domain validator (fail loudly) | Todo | infrastructure | Replace silent `.filter()` with validateForeignFlowPayload(); throw on validation error |
+| 1289c | GREEN: Modify fetcher to call domain validator (fail loudly) | Review | infrastructure | NEW validateForeignFlowFetcherPayload() for WriteForeignFlowItem schema; 6 integration tests, 17 assertions, +6 passing |
 | 1289d | GREEN: Modify POST endpoint to call validator (reject HTTP 400) | Todo | interface | Unify validation path; reject invalid payloads instead of filtering silently |
 | 1289e | QA: Verify parse errors <5/day, no silent filtering, diagnostics logged | Todo | qa | Monitor vps_push_log for validation errors; confirm old silent-filter pattern gone |
 
