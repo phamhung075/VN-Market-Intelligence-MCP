@@ -1981,7 +1981,13 @@ export const SECTOR_RULES: SectorRule[] = [
     domain: "securities",
     direction: "up",
     confidence: 0.78,
-    title: "Nhà đầu tư cá nhân mua ròng quy mô lớn — phí môi giới CTCK (SSI/VCI/VIX/VND) tăng (retail_netbuy_securities)",
+    title: "Nhà đầu tư cá nhân mua ròng quy mô lớn — phí môi giới CTCK (SSI/VCI/VIX/VND) tăng; VCB/BID/CTG/ACB hưởng lợi từ thanh khoản tăng (retail_netbuy_securities)",
+    affected_actions: [
+      { code: "VCB", direction: "up" },
+      { code: "BID", direction: "up" },
+      { code: "CTG", direction: "up" },
+      { code: "ACB", direction: "up" },
+    ],
   },
   {
     keywords: [
