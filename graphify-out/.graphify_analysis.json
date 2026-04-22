@@ -1,0 +1,335 @@
+{
+  "communities": {
+    "0": [
+      "agent_memory_system",
+      "agriculture_detector",
+      "cascade_executor",
+      "ddd_compliance",
+      "ddd_layer_violations",
+      "domain_service_pure_logic",
+      "forecast_penalty",
+      "green_phase_1278b",
+      "keyword_whole_word_matching",
+      "msci_detector",
+      "red_phase_1278a",
+      "req_1279b",
+      "session_2026_04_22_morning",
+      "tech_1278",
+      "watchlist_filtering"
+    ],
+    "1": [
+      "baseline_6171_to_6187",
+      "cascade_engine",
+      "confidence_formula",
+      "confidence_threshold_0_7",
+      "green_phase_1279b",
+      "large_cap_cross_sector",
+      "msci_inclusion_rules",
+      "red_phase_1279a",
+      "req_1279",
+      "sprint_1279",
+      "sprint_1279_design_summary",
+      "tech_1279",
+      "tech_1279b",
+      "weather_credibility_0_6"
+    ],
+    "2": [
+      "agriculture_weather_rules",
+      "banking_sector_contagion",
+      "blockers_1281",
+      "cascade_pattern",
+      "green_phase_1281b",
+      "insider_dump_rules",
+      "performance_target_50ms",
+      "red_phase_1281a",
+      "req_1278",
+      "req_1281",
+      "sprint_1278",
+      "sprint_1281",
+      "tdd_red_green",
+      "tech_1281"
+    ],
+    "3": [
+      "bctc_schema_buildchartseries",
+      "bctc_schema_buildperiod",
+      "bctc_schema_calcqoq",
+      "bctc_schema_calcyoy",
+      "bctc_schema_computeratios",
+      "bctc_schema_emptyreport",
+      "bctc_schema_getmetricvalue",
+      "bctc_schema_ts",
+      "scripts_smoke_test_sprint_001_ts",
+      "smoke_test_sprint_001_check"
+    ],
+    "4": [
+      "parse_hexagrams_esc",
+      "parse_hexagrams_generatequedataentry",
+      "parse_hexagrams_normaliseaction",
+      "parse_hexagrams_normaliseoutcome",
+      "parse_hexagrams_parsehexagram",
+      "scripts_parse_hexagrams_ts"
+    ],
+    "5": [
+      "fetch_browser_fetch_with_browser",
+      "fetch_browser_parse_rss",
+      "fetch_browser_rationale_39",
+      "vps_scripts_fetch_browser_py"
+    ],
+    "6": [
+      "sprint_054_report",
+      "task_1189",
+      "task_1309",
+      "task_1310"
+    ],
+    "7": [
+      "index_shutdown",
+      "src_index_ts"
+    ],
+    "8": [
+      "insider_dump_bearish",
+      "sentiment_bullish_opposite_insider"
+    ],
+    "9": [
+      "task_1348",
+      "task_1349"
+    ],
+    "10": [
+      "task_1432",
+      "task_1566_b"
+    ],
+    "11": [
+      "report_market_watch_2026_04_01",
+      "task_238b"
+    ],
+    "12": [
+      "task_1406",
+      "task_1407"
+    ],
+    "13": [
+      "task_1416",
+      "task_1417"
+    ],
+    "14": [
+      "task_1422",
+      "task_1423"
+    ],
+    "15": [
+      "task_1378",
+      "task_1379"
+    ],
+    "16": [
+      "task_1402",
+      "task_1403"
+    ],
+    "17": [
+      "scripts_purge_phantom_reports_ts"
+    ],
+    "18": [
+      "security_review_sql"
+    ],
+    "19": [
+      "backward_compatibility"
+    ],
+    "20": [
+      "task_1463"
+    ],
+    "21": [
+      "task_1433"
+    ],
+    "22": [
+      "task_234e"
+    ],
+    "23": [
+      "task_1457"
+    ],
+    "24": [
+      "task_1507"
+    ],
+    "25": [
+      "task_1447"
+    ],
+    "26": [
+      "task_1480"
+    ],
+    "27": [
+      "task_1562"
+    ],
+    "28": [
+      "task_1358"
+    ],
+    "29": [
+      "task_1329"
+    ],
+    "30": [
+      "task_1453"
+    ],
+    "31": [
+      "task_088"
+    ]
+  },
+  "cohesion": {
+    "0": 0.18,
+    "1": 0.22,
+    "2": 0.18,
+    "3": 0.24,
+    "4": 0.53,
+    "5": 0.67,
+    "6": 0.5,
+    "7": 1.0,
+    "8": 1.0,
+    "9": 1.0,
+    "10": 1.0,
+    "11": 1.0,
+    "12": 1.0,
+    "13": 1.0,
+    "14": 1.0,
+    "15": 1.0,
+    "16": 1.0,
+    "17": 1.0,
+    "18": 1.0,
+    "19": 1.0,
+    "20": 1.0,
+    "21": 1.0,
+    "22": 1.0,
+    "23": 1.0,
+    "24": 1.0,
+    "25": 1.0,
+    "26": 1.0,
+    "27": 1.0,
+    "28": 1.0,
+    "29": 1.0,
+    "30": 1.0,
+    "31": 1.0
+  },
+  "gods": [
+    {
+      "id": "cascade_pattern",
+      "label": "Cascade Detection Pattern",
+      "degree": 7
+    },
+    {
+      "id": "tech_1278",
+      "label": "TECH-1278: Insider Dump Sentiment Cascade",
+      "degree": 6
+    },
+    {
+      "id": "tech_1279",
+      "label": "TECH-1279: MSCI Index Inclusion Cascade",
+      "degree": 6
+    },
+    {
+      "id": "req_1279",
+      "label": "REQ-1279: MSCI Index Inclusion Cascade Detection",
+      "degree": 5
+    },
+    {
+      "id": "tech_1281",
+      "label": "TECH-1281: Agriculture Weather Cascade",
+      "degree": 5
+    },
+    {
+      "id": "msci_detector",
+      "label": "msciDetector.ts",
+      "degree": 5
+    },
+    {
+      "id": "agriculture_detector",
+      "label": "agricultureDetector.ts",
+      "degree": 5
+    },
+    {
+      "id": "ddd_compliance",
+      "label": "DDD Compliance Rule",
+      "degree": 5
+    },
+    {
+      "id": "req_1278",
+      "label": "REQ-1278: Insider Dump Sentiment Cascade",
+      "degree": 4
+    },
+    {
+      "id": "cascade_executor",
+      "label": "cascadeExecutor.ts",
+      "degree": 4
+    }
+  ],
+  "surprises": [
+    {
+      "source": "Sprint 1278: Insider Dump Sentiment Cascade",
+      "target": "TECH-1278: Insider Dump Sentiment Cascade",
+      "source_files": [
+        "docs/ARCH_REVIEW_1278.md",
+        "docs/TECH_1278.md"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "references",
+      "why": "bridges separate communities; peripheral node `Sprint 1278: Insider Dump Sentiment Cascade` unexpectedly reaches hub `TECH-1278: Insider Dump Sentiment Cascade`"
+    },
+    {
+      "source": "Cascade Detection Pattern",
+      "target": "MSCI_INCLUSION_RULES",
+      "source_files": [
+        "docs/TECH_1278.md",
+        "docs/TECH_1279.md"
+      ],
+      "confidence": "INFERRED",
+      "relation": "pattern_of",
+      "why": "inferred connection - not explicitly stated in source; bridges separate communities"
+    },
+    {
+      "source": "Cascade Detection Pattern",
+      "target": "AGRICULTURE_WEATHER_RULES",
+      "source_files": [
+        "docs/TECH_1278.md",
+        "docs/TECH_1281.md"
+      ],
+      "confidence": "INFERRED",
+      "relation": "pattern_of",
+      "why": "inferred connection - not explicitly stated in source; peripheral node `AGRICULTURE_WEATHER_RULES` unexpectedly reaches hub `Cascade Detection Pattern`"
+    },
+    {
+      "source": "Performance Target <50ms keyword detection",
+      "target": "Cascade Detection Pattern",
+      "source_files": [
+        "docs/TECH_1279.md",
+        "docs/TECH_1278.md"
+      ],
+      "confidence": "INFERRED",
+      "relation": "rationale_for",
+      "why": "inferred connection - not explicitly stated in source; peripheral node `Performance Target <50ms keyword detection` unexpectedly reaches hub `Cascade Detection Pattern`"
+    },
+    {
+      "source": "Keyword Whole-Word Matching Pattern",
+      "target": "agricultureDetector.ts",
+      "source_files": [
+        "docs/TECH_1279.md",
+        "docs/TECH_1281.md"
+      ],
+      "confidence": "INFERRED",
+      "relation": "pattern_of",
+      "why": "inferred connection - not explicitly stated in source; peripheral node `Keyword Whole-Word Matching Pattern` unexpectedly reaches hub `agricultureDetector.ts`"
+    }
+  ],
+  "questions": [
+    {
+      "type": "bridge_node",
+      "question": "Why does `Cascade Detection Pattern` connect `Community 2` to `Community 1`?",
+      "why": "High betweenness centrality (0.043) - this node is a cross-community bridge."
+    },
+    {
+      "type": "bridge_node",
+      "question": "Why does `TECH-1279: MSCI Index Inclusion Cascade` connect `Community 1` to `Community 0`?",
+      "why": "High betweenness centrality (0.043) - this node is a cross-community bridge."
+    },
+    {
+      "type": "verify_inferred",
+      "question": "Are the 4 inferred relationships involving `Cascade Detection Pattern` (e.g. with `INSIDER_DUMP_RULES` and `MSCI_INCLUSION_RULES`) actually correct?",
+      "why": "`Cascade Detection Pattern` has 4 INFERRED edges - model-reasoned connections that need verification."
+    },
+    {
+      "type": "isolated_nodes",
+      "question": "What connects `Parse RSS XML into item list.`, `Agent Memory System`, `Session 2026-04-22 Morning Work` to the rest of the system?",
+      "why": "14 weakly-connected nodes found - possible documentation gaps or missing edges."
+    }
+  ]
+}
