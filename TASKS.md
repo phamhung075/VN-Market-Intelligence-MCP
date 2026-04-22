@@ -56,6 +56,19 @@
 
 ---
 
+## Sprint 1287 — Async BCTC Queue Enrichment (S-size)
+
+**Status:** Todo | **Goal:** Background job to enrich BCTC queue with source_urls, prevents /api timeout on >100 items | **Size:** S (2 tasks, ~40 lines job, 8 assertions) | **Baseline:** 6248 | **Target:** 6256 (+8 assertions)
+
+| ID | Title | Status | Layer | Notes |
+|----|-------|--------|-------|-------|
+| 1287a | RED: BCTC queue enricher tests | Todo | test | 7-8 assertions: job execution, URL population, timeout handling, idempotency |
+| 1287b | GREEN: Implement background scheduler job | Todo | scheduler | Dequeue 10–20 items/15min with NULL source_url, call SSC with 5s timeout, update DB |
+
+**Context:** Sprint 1280 added `skip_enrichment=true` flag to unblock `/api/bctc-fetch-queue` timeout when processing >100 PDFs. This sprint defers enrichment to background job: runs every 15min, batch-processes queue items, timeout-safe, retryable.
+
+---
+
 ## Backlog
 
 | ID | Title | Priority | Notes |
@@ -66,6 +79,5 @@
 | 1283b | Foreign flow fallback source | MEDIUM | If primary endpoint unrecoverable, use SSE alt data |
 | 1285 | Add rag_analyses + evidence_scores schema | HIGH | Structural additions (L-size) |
 | 1286 | Update IMPLEMENTATION_STATUS.md | LOW | Add sprint 240+ entries |
-| 1287 | FOLLOWUP: Async BCTC enrichment (Option A) | MEDIUM | Background job to populate source_urls, prevents timeout on >100 items (sprint after 1280 merge) |
 
 ---
