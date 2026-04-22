@@ -1,0 +1,494 @@
+{
+  "chunk_id": "006",
+  "chunk_type": "task_reports_batch",
+  "extraction_date": "2026-04-22",
+  "report_count": 24,
+  "summary": {
+    "total_tasks_reported": 24,
+    "approved_count": 24,
+    "failed_count": 0,
+    "coverage": "Sprints 007-220, coverage across TDD cycles, diacritics, infrastructure, automation, E2E testing",
+    "key_themes": [
+      "E2E briefing flow validation",
+      "Alert quality & deduplication",
+      "Vietnamese language diacritics restoration",
+      "Test fixture updates (France summary)",
+      "SLA monitoring & price pipeline recovery",
+      "Sentiment classifier deduplication",
+      "TA adaptive periods for small candle sets",
+      "Infrastructure monitoring (VPS proxy health)",
+      "Database isolation batch fixes"
+    ]
+  },
+  "reports_by_task": {
+    "TASK_125": {
+      "date": "2026-03-28",
+      "title": "E2E Daily Briefing Flow",
+      "status": "APPROVED",
+      "tests": "39 pass / 0 fail",
+      "type": "Integration/E2E test",
+      "ddd_layer": "test (covers application + scheduler)",
+      "key_findings": {
+        "description": "Comprehensive E2E test harness for daily briefing pipeline: pollNews → seed rag_analyses → assembleBriefing + assembleEveningSummary",
+        "dependencies_cleared": ["101", "102", "103", "104", "105", "024"],
+        "coverage_areas": [
+          "DailyBriefing output structure validation",
+          "Full pipeline roundtrip (news → briefing)",
+          "topStories filtering & sorting (5 max, impact_score DESC, today-only)",
+          "alerts parsing (12h window, both JSON formats)",
+          "watchlistSummary per-stock entries",
+          "newReports midnight cutoff",
+          "vnIndex presence/absence",
+          "Macro indicators persistence & upsert",
+          "Graceful degradation (all fetchers fail)",
+          "File persistence & idempotent overwrites",
+          "Evening summary with movers filtering",
+          "Morning+evening bookend E2E",
+          "Concurrency guards (prevent double-fire)"
+        ],
+        "test_count": 39,
+        "coverage": "13 describe blocks, 130 assertions, 271ms",
+        "pre_existing_issues": "2 failures in 085-tool-reports.test.ts (unrelated to 125)"
+      }
+    },
+    "TASK_065": {
+      "date": "2026-03-28",
+      "title": "Historical Pattern Matcher",
+      "status": "APPROVED",
+      "tests": "15 pass / 0 fail (full suite 379 pass)",
+      "type": "Application usecase",
+      "ddd_layer": "application",
+      "key_findings": {
+        "description": "Pattern-matching query in RAG memory for historical precedents: stock code + event keyword → aggregate stats + list of past analyses",
+        "issue_tdd_process": "Tests and implementation in same commit (no separate Red commit) — minor process violation, acceptable for deterministic dictionary module",
+        "query_pattern": "Stock ticker + keyword search over rag_analyses with impact scoring",
+        "security": "SQL uses parameterized ? placeholders; no injection risk",
+        "coverage": "100% lines/functions",
+        "false_positive_guard": "Stock code LIKE pattern with quotes: '%\"GAS\"%' prevents 'GASC' false matches"
+      }
+    },
+    "TASK_307": {
+      "date": "2026-04-07",
+      "title": "/why Payload Format + No-Arg Guard",
+      "status": "APPROVED",
+      "tests": "8 pass / 0 fail (238-user-requests.test.ts: 13 pass / 3 fail pre-existing)",
+      "type": "Infrastructure notifier (Telegram command)",
+      "ddd_layer": "infrastructure/notifiers",
+      "key_findings": {
+        "description": "Store /why VCB as payload 'why:VCB' (not 'Why did VCB move'); guard: /why with no arg or whitespace-only returns error + zero DB rows",
+        "payload_format_spec": "why:{TICKER_UPPERCASE}",
+        "validation": "args[0]?.trim() check; empty string returns Vietnamese error",
+        "pre_existing_debt": "3 /ask encoding mismatches (accented vs unaccented Vietnamese) in 238-user-requests.test.ts — not introduced by 307",
+        "downstream_dependency": "Task 306 (buildEnrichedAnswer) uses 'why:' prefix to trigger structured 'why did TICKER move' answer generation"
+      }
+    },
+    "TASK_280": {
+      "date": "2026-04-06",
+      "title": "Foreign Flow Delta + Corporate Events Calendar",
+      "status": "APPROVED",
+      "tests": "32 pass (vnstock-foreign-flow.test.ts + vnstock-catalyst.test.ts)",
+      "type": "Domain services",
+      "ddd_layer": "domain/services",
+      "key_findings": {
+        "description": "foreignFlowAnalyzer (compute holding ratio delta) + catalystCalendar (corporate event tracking)",
+        "coverage": "100% catalystCalendar, 97.53% foreignFlowAnalyzer (line 115 minor edge path uncovered)",
+        "naming_note": "Test file 280-hexagram-library.test.ts is repurposed task number; actual tests in vnstock-*.test.ts with correct coverage",
+        "pre_existing_failures": "62 failures on main all attributable to other tasks (178, 191, 206, 223, 232, 238, 243, 265, 278, 292, 293, 034, 084, 137, 153, 157, 169) — none from 280"
+      }
+    },
+    "TASK_1479": {
+      "date": "2026-04-19",
+      "title": "DB Isolation Batch 4",
+      "status": "APPROVED",
+      "tests": "6 pass / 0 fail (full suite 5587 pass / 38 fail pre-existing)",
+      "type": "Test infrastructure",
+      "ddd_layer": "test-only (smart-skip DDD scan)",
+      "key_findings": {
+        "description": "Prepend Bun.env[DB_PATH]=:memory: to 6 test files for isolation",
+        "isolation_verification": "All 6 target files confirmed with DB_PATH as first executable line",
+        "files_updated": [
+          "1192-evening-summary-empty-fallback.test.ts",
+          "125-test-e2e-briefing.test.ts",
+          "1348-france-summary-cron-window.test.ts",
+          "235-telegram-send-merge.test.ts",
+          "126-macro-cascade.test.ts",
+          "1074-ask-queue-check-job.test.ts"
+        ]
+      }
+    },
+    "TASK_222": {
+      "date": "2026-04-20",
+      "title": "Evening Summary VPS Down + hasContent OR Clause Removal",
+      "status": "APPROVED",
+      "tests": "5934 pass / 0 fail (baseline 5929 + 5 new)",
+      "type": "Scheduler + coverage",
+      "ddd_layer": "scheduler (allowed to import infrastructure/logger)",
+      "key_findings": {
+        "description": "Remove vnIndex-alone OR clause from hasContent check in eveningSummaryJob; add test for VPS-down scenario",
+        "line_346_fix": "hasContent no longer triggers on vnIndex presence alone; requires vpIndex AND (topStories OR topAlerts OR watchlistMovers)",
+        "export_preservation": "isVnIndexFresh() remains exported for morning briefing reuse",
+        "vnindex_rendering": "Still renders in message when present (lines 188-189 confirmed)"
+      }
+    },
+    "TASK_082": {
+      "date": "2026-03-26",
+      "title": "Watchlist MCP Tools",
+      "status": "APPROVED",
+      "tests": "12 pass / 0 fail (full suite all visible passed)",
+      "type": "MCP interface tools",
+      "ddd_layer": "interface/mcp/tools",
+      "key_findings": {
+        "description": "4 watchlist management tools: add_to_watchlist, get_watchlist, remove_from_watchlist, update_thresholds",
+        "coverage": "82.66% lines (uncovered = error-handling catch blocks, acceptable for in-memory SQLite happy path)",
+        "sql_safety": "All 4 statements use parameterized ? placeholders; update SET clause built from 3 whitelisted hardcoded strings",
+        "zod_validation": ".describe() on every input field",
+        "tool_format": "{ content: [{ type: 'text' as const, text: '...' }] }"
+      }
+    },
+    "TASK_1459": {
+      "date": "2026-04-19",
+      "title": "String Literal Fixes: Weather Check Job",
+      "status": "APPROVED",
+      "tests": "5542 pass / 0 fail",
+      "type": "String literal diacritics",
+      "ddd_layer": "scheduler",
+      "key_findings": {
+        "description": "Fix 3 Vietnamese string literals in weatherCheckJob.ts (lines 145, 151, 159) — all accented characters restored",
+        "strings_fixed": [
+          "L145: CẢNH BÁO KHÍ HẬU + ĐIỆN LỰC",
+          "L151: TĂNG",
+          "L159: GIẢM"
+        ]
+      }
+    },
+    "TASK_160": {
+      "date": "2026-04-01",
+      "title": "Company Name Alias Dictionary (stockAliases.ts)",
+      "status": "APPROVED",
+      "tests": "34 pass / 0 fail (200 assertions, 100% coverage)",
+      "type": "Domain service (pure dictionary)",
+      "ddd_layer": "domain/services",
+      "key_findings": {
+        "description": "Alias-based stock detection in text: getAliasesForCode(ticker) + detectStocksInText(text, watchlist)",
+        "issue_tdd_process": "Implementation commit (c08e4b5) before test commit (3c9daca) — reversal of TDD Red→Green order; non-blocking for pure deterministic dictionary",
+        "coverage": "25+ stocks, 5-9 aliases each (VNM 'vinamilk', HPG 'hoa phat', etc.)",
+        "deduplication": "Set-based; same alias twice in text returns one code",
+        "performance": "Pre-built normalized map, O(n×m) substring scan, <5ms for 500-char text + 20-stock watchlist"
+      }
+    },
+    "TASK_1408": {
+      "date": "2026-04-18",
+      "title": "MCP Tool Vietnamese Diacritics (Batch 1)",
+      "status": "APPROVED",
+      "tests": "8 pass / 0 fail (full suite 5063 pass)",
+      "type": "String literal + export refactor",
+      "ddd_layer": "interface/mcp/tools",
+      "key_findings": {
+        "description": "Add formatKinhDichTradingContext export; restore 4+4+4=12 accented strings across 3 files",
+        "exports_added": "formatKinhDichTradingContext from kinhDichTools, formatTaIndicatorReport alias from technicalIndicatorTools",
+        "strings_restored": {
+          "kindhDichTools": "Thuận lợi, tích cực, Bất lợi, cẩn thận, Trung tính, xem thêm",
+          "technicalIndicatorTools": "cần 50 nến, sắp xếp hỗn hợp, Xu hướng, cần tối thiểu 15 nến",
+          "supplyChainTools": "TỔNG KẾT, QUAN TRỌNG, theo dõi chặt chẽ, ổn định"
+        },
+        "scope_boundary": "kinhDichReading.ts 'BAT LOI' lookup key untouched; technicalIndicatorTools lines 131-135, 91-93, 172-179 untouched"
+      }
+    },
+    "TASK_131": {
+      "date": "2026-04-01",
+      "title": "Alert Quality System",
+      "status": "APPROVED",
+      "tests": "35 pass / 0 fail",
+      "type": "Domain services + scheduler integration",
+      "ddd_layer": "domain (alertCooldown, alertDedup, alertGrouper) + infrastructure (Step E in intelligenceCycleJob)",
+      "key_findings": {
+        "description": "Three pure domain services + config integration: cooldown (30min default), dedup (djb2 fingerprint), grouper (15min clustering)",
+        "acceptance_criteria": [
+          "Same stock+signal suppressed within cooldown",
+          "CRITICAL always passes cooldown",
+          "Daily cap (5 alerts/stock/day)",
+          "djb2 fingerprint stable & order-independent",
+          "Related alerts clustered 15min",
+          "Group severity = max of members",
+          "Config values from mcp.config.json"
+        ],
+        "config_block": "mcp.config.json alertQuality section with cooldownMinutes=30, maxAlertsPerStockPerDay=5",
+        "coverage": "alertGrouper 90% (1 dead branch stock=0 edge case)"
+      }
+    },
+    "TASK_105": {
+      "date": "2026-03-28",
+      "title": "Evening Summary Job (22:00 GMT+7)",
+      "status": "APPROVED",
+      "tests": "14 pass / 0 fail (full suite 504 pass)",
+      "type": "Application usecase + scheduler",
+      "ddd_layer": "application + interface (scheduler)",
+      "key_findings": {
+        "description": "assembleEveningSummary usecase + eveningSummaryJob scheduler; runs weekdays 22:00 Vietnam time",
+        "structure": "EveningSummary { date, topAlerts, topStories, watchlistMovers, generatedAt }",
+        "topAlerts": "Last 24h, severity DESC (critical>warning>info), capped 5",
+        "topStories": "Top 5 from rag_analyses since midnight, impact_score DESC",
+        "watchlistMovers": "|changePct| >= 1.0, sorted |changePct| DESC",
+        "persistence": "reports/YYYY-MM-DD-evening.json",
+        "cron": "CRONS.eveningSummary = '0 22 * * 1-5'",
+        "graceful_fallback": "market_prices.exchange absent → PRAGMA table_info + COALESCE fallback",
+        "concurrency_guard": "Skip double-fire; allow sequential",
+        "issue_tdd_process": "Tests and implementation in same commit (single-commit TDD, non-blocking)"
+      }
+    },
+    "TASK_045": {
+      "date": "2026-03-26",
+      "title": "Ratio Computation",
+      "status": "APPROVED",
+      "tests": "13 pass / 0 fail",
+      "type": "Domain service",
+      "ddd_layer": "domain",
+      "key_findings": {
+        "description": "computeFinancialRatios(params) — all 22 FinancialRatios from bctc-schema",
+        "ratio_categories": "Profitability, liquidity, leverage, efficiency, per-share, valuation",
+        "zero_division": "Returns null (never Infinity or NaN)",
+        "roe_logic": "netProfit / avgEquity × 100; uses average when prevBs provided, current otherwise",
+        "roic": "NOPAT / (Equity + NetDebt); guards zero operatingProfit",
+        "valuation_ratios": "Return null when price not provided",
+        "issue_code_smell": "safeDivide() called twice in percentage ternary (computes twice); deferred to tech debt"
+      }
+    },
+    "REPORT_ANALYZER_2026-03-29": {
+      "date": "2026-03-29",
+      "title": "Infrastructure Failure Report — SSC PDF URLs, API Timeouts, RSS 404s",
+      "status": "ANALYSIS (not a code task)",
+      "severity": "CRITICAL",
+      "key_findings": {
+        "blockers": [
+          "ssc-adf:// PDF URL scheme unresolvable (all BCTC extraction broken)",
+          "VnDirect API timeouts (15s) on HOSE price fetches",
+          "Reuters RSS 404/403 (global news reduced)",
+          "CafeF RSS 404 (domestic market news unavailable)",
+          "SBV pages 404 (macro data unavailable)",
+          "Watchlist empty (0 stocks configured)"
+        ],
+        "vps_impact": "All 5 geo-blocked services unreachable",
+        "data_quality": "VCB 2024-Q1 record all-zeros (failed extraction); VNM/FPT/VEA no data",
+        "alerts": "VCB [HIGH] price_drop+volume_spike unread (price data reliability uncertain)",
+        "market_summary": "Global bearish (US 7-month low, oil +6%, BYD profit decline); Vietnam mixed (VN-Index 1600-1725 range, institutions net buying)"
+      }
+    },
+    "TASK_1472b": {
+      "date": "2026-04-19",
+      "title": "fix(diacritics): Vietnamese Diacritics Restoration (Batch 2)",
+      "status": "APPROVED",
+      "tests": "20 pass / 0 fail (full suite 5589 pass / 29 pre-existing fail)",
+      "type": "String literal restoration",
+      "ddd_layer": "interface/scheduler (allowed to import infrastructure)",
+      "key_findings": {
+        "description": "Restore Vietnamese diacritics in 8 files (batch 2 continuation)",
+        "changes": "String-literal-only fixes across MCP tools and scheduler files",
+        "pre_existing_failures": "29 failures from Telegram notifier + balance sheet store (not introduced by this task)"
+      }
+    },
+    "TASK_014": {
+      "date": "2026-03-26",
+      "title": "Embedding Text Builder (Domain)",
+      "status": "APPROVED",
+      "tests": "14 pass / 0 fail",
+      "type": "Domain service",
+      "ddd_layer": "domain",
+      "key_findings": {
+        "description": "buildEmbeddingText(input) → deterministic newline-separated text for embedding pipeline",
+        "format": "[level] title\\nsummary\\ntags\\nstock:CODE",
+        "fields": "title, summary, tags[], optional level/actionCode",
+        "implementation_note": "Commit initially placed on wrong branch (task/043) during development; cherry-picked to correct branch",
+        "coverage": "100% lines/functions; all branches tested (empty fields, whitespace trimming, optional presence/absence)"
+      }
+    },
+    "TASK_1521a": {
+      "date": "2026-04-20",
+      "title": "Morning Briefing Job: AC-4 + AC-5 Fixes",
+      "status": "APPROVED",
+      "tests": "2 new pass (AC-4 + AC-5) out of 1511 targeted suite",
+      "type": "Scheduler fix",
+      "ddd_layer": "scheduler",
+      "key_findings": {
+        "description": "Modified morningBriefingJob.ts lines 46-62, 158-166; AC-1/2/3 pre-existing failures out of scope for 1521a",
+        "test_delta": "+2 new pass (AC-4 + AC-5) vs baseline (22423e1)",
+        "regression": "Full suite 5755 pass / 13 fail (13 = pre-existing, no regression)"
+      }
+    },
+    "TASK_1372": {
+      "date": "2026-04-17",
+      "title": "fix(france-test-fixtures): Update Stale makeDb() in 5 Test Files",
+      "status": "APPROVED",
+      "tests": "Full suite 4997-4998 pass / 1-2 fail (pre-existing flakiness)",
+      "type": "Test fixture update",
+      "ddd_layer": "test infrastructure",
+      "key_findings": {
+        "description": "Sprint 128 fetchTopMovers changed query source from market_prices to market_prices_history INNER JOIN watchlist; 5 test files still seeded via market_prices only",
+        "files_updated": [
+          "1290-france-summary-job.test.ts",
+          "1316-france-summary-rewrite.test.ts",
+          "1344-france-summary-stale-alerts.test.ts",
+          "1348-france-summary-cron-window.test.ts",
+          "1364-france-ta-detail.test.ts"
+        ],
+        "fix_applied": "Added market_prices_history + watchlist + daily_ohlcv tables to makeDb(); inserted 2 history rows per ticker",
+        "schedulerFileCount_fix": "1190-pipeline-watchdog updated: 32 → 34 (correct actual count)"
+      }
+    },
+    "TASK_1512b": {
+      "date": "2026-04-20",
+      "title": "Evening Summary: Global Snapshot Integration",
+      "status": "APPROVED",
+      "tests": "5 pass / 0 fail (full suite 5725 pass / 0 fail, exact baseline match)",
+      "type": "Application usecase refactor",
+      "ddd_layer": "application + scheduler",
+      "key_findings": {
+        "description": "Integrate GlobalSnapshot into assembleEveningSummary; Step 6b query + formatEveningSummaryLines export",
+        "files_modified": [
+          "src/application/usecases/assembleEveningSummary.ts (GlobalSnapshot import, interface field, Step 6b query, spread)",
+          "src/scheduler/eveningSummaryJob.ts (imports, formatEveningSummaryLines export, inline refactor)",
+          "src/__tests__/1512-evening-global-snapshot.test.ts (setupDb schema fix)"
+        ]
+      }
+    },
+    "TASK_1290": {
+      "date": "2026-04-15",
+      "title": "Scheduler: France Summary Job (07:00 GMT+7 weekdays)",
+      "status": "APPROVED",
+      "tests": "5 pass / 0 fail (regression 1139-utility-observability 8 pass)",
+      "type": "Scheduler job",
+      "ddd_layer": "scheduler",
+      "key_findings": {
+        "description": "runFranceSummary() — daily intelligence briefing for France market observers at 07:00 GMT+7 weekdays",
+        "cron": "CRONS.franceSummary = '0 7 * * 1-5'",
+        "registered": "recordJobRun(getDb(), 'franceSummaryJob', ...)",
+        "result_shape": "{ sent: boolean, signalCount: number }",
+        "empty_db": "{ sent: false, signalCount: 0 } (silent, no Telegram)",
+        "coverage": "84.38% lines; uncovered = dynamic import fallback branches (production-only)"
+      }
+    },
+    "TASK_1346": {
+      "date": "2026-04-16",
+      "title": "TA Adaptive Periods: RSI 14 → Min(14, rows-1), MA 20 → Min(20, rows)",
+      "status": "APPROVED",
+      "tests": "4 pass / 0 fail (full suite 4915 pass / 0 fail, pre-merge conflict resolved)",
+      "type": "Domain service (technical analysis)",
+      "ddd_layer": "application (assembleBriefing.ts)",
+      "key_findings": {
+        "description": "Lower TA minimum from 15 candles to 8; RSI + MA periods adaptive to available data",
+        "guard_change": "rows.length < 15 → < 8",
+        "rsi_adaptive": "Math.min(14, rows.length - 1) — prevents out-of-bounds when <14 candles",
+        "ma_adaptive": "Math.min(20, rows.length) — prevents MA period > available rows",
+        "conflict_resolution": "Sprint 114 added market_prices_history fallback for <15 case; 1346 updated fallback threshold to <8, keeping both mechanisms",
+        "rsi_na_note": "RSI N/A branch (line 164) architecturally unreachable from tests — documented, no test case needed"
+      }
+    },
+    "TASK_240e": {
+      "date": "2026-04-21",
+      "title": "QA Smoke Test — SLA Monitor Query Fix Verification",
+      "status": "APPROVED (code verified, infrastructure pending recovery)",
+      "severity": "CRITICAL infrastructure (code CLEAN)",
+      "key_findings": {
+        "description": "SLA monitor was crashing on query of non-existent foreign_flow table; fix: query vnstock_trading_stats.fetched_at instead",
+        "fix_applied": "slaStatusTools.ts line 54: foreign_flow → vnstock_trading_stats",
+        "verification": "Morning briefing 14 tests GREEN; E2E briefing 39 tests GREEN; Price pipeline 13 tests GREEN; full suite 6124 pass",
+        "infrastructure_status": "All 5 VPS services unreachable since 2026-04-21 17:30 UTC; market_prices stale 25 days (2026-03-27); code is sound, infrastructure requires recovery",
+        "code_readiness": "Ready for production once VPS infrastructure recovers + 24h fresh data"
+      }
+    },
+    "TASK_1206": {
+      "date": "2026-04-13",
+      "title": "Cascade Keyword Precision Fix",
+      "status": "APPROVED",
+      "tests": "4 pass / 0 fail (regression 4351 pass)",
+      "type": "Domain service (cascade engine)",
+      "ddd_layer": "domain/services",
+      "key_findings": {
+        "description": "Fix two keyword precision bugs in cascadeEngine.ts SECTOR_RULES",
+        "bug_a": "Bare 'cầu' matched unrelated phrases (toàn cầu=global, nhu cầu=demand) → construction false positives",
+        "bug_a_fix": "Removed bare 'cầu'; use specific phrases: xây cầu, cầu đường bộ, cầu vượt, cầu cao tốc",
+        "bug_b": "No rule for 'đất vàng' (prime urban land Vietnamese term) → fell through unhandled",
+        "bug_b_fix": "Added 'đất vàng' rule: real_estate, direction up, confidence 0.75, variants: [đất vàng, quỹ đất vàng, vị trí đất vàng]",
+        "gold_collision_safe": "No bare 'vàng' token in gold_mining lists; 'đất vàng' cannot cross-fire"
+      }
+    },
+    "TASK_1197": {
+      "date": "2026-04-13",
+      "title": "Sentiment Dedup: Covered-Range Lists",
+      "status": "APPROVED",
+      "tests": "7 pass / 0 fail (regression 31 pass from task 134)",
+      "type": "Domain service (sentiment classifier)",
+      "ddd_layer": "domain/services",
+      "key_findings": {
+        "description": "Fix double-scoring bug where shorter substring (giảm, weight=1) matched at same position as longer phrase (giảm mạnh, weight=2) → incorrect score inflation",
+        "solution": "bullishCovered + bearishCovered lists per classifySentiment() call; skip matches inside already-claimed ranges",
+        "longer_phrases_first": "ALL_BULLISH / ALL_BEARISH sorted by descending word length → longer phrases claim ranges before substrings",
+        "purity_preserved": "Covered ranges are local to each call; function remains pure (no shared mutable state)",
+        "negation_safe": "Negation detection still works (detectNegation called before scoring but after coverage check); 'không giảm' → bullish preserved"
+      }
+    }
+  },
+  "cross_cutting_patterns": [
+    {
+      "pattern": "TDD Process Violations (non-blocking)",
+      "affected_tasks": ["065", "160", "105", "045"],
+      "issue": "Tests and implementation committed together instead of separate Red/Green commits",
+      "severity": "Process only; no functional impact"
+    },
+    {
+      "pattern": "Vietnamese String Diacritics",
+      "affected_tasks": ["1408", "1459", "1472b"],
+      "issue": "Accented characters missing or inconsistent across UI strings",
+      "scope": "Batch restoration efforts in progress"
+    },
+    {
+      "pattern": "Test Fixture Schema Sync",
+      "affected_tasks": ["1479", "1372"],
+      "issue": "Test makeDb() functions out of sync with actual schema changes from scheduler updates",
+      "resolution": "Batch updates to fixtures when schema changes"
+    },
+    {
+      "pattern": "Infrastructure Cascading Failures",
+      "affected_tasks": ["240e", "REPORT_ANALYZER_2026-03-29"],
+      "issue": "VPS proxy services (geo-blocked API access) all down; affects price fetch, BCTC PDF extraction, news RSS, SBV rates, foreign flow",
+      "timeline": "Down since 2026-04-21 17:30 UTC; requires Vinahost recovery"
+    },
+    {
+      "pattern": "Config-Driven Thresholds",
+      "affected_tasks": ["131", "082"],
+      "pattern": "Alert cooldown, daily caps, watchlist thresholds all read from mcp.config.json",
+      "benefit": "No code changes needed for ops tuning"
+    }
+  ],
+  "dependencies_and_flow": {
+    "task_125_blockers": ["101", "102", "103", "104", "105", "024"],
+    "task_065_blockers": ["previous pattern matching implementation"],
+    "task_131_integration": "Step E in intelligenceCycleJob (alert quality filters)",
+    "task_240_blocker": "VPS infrastructure recovery (code is clean, awaiting Vinahost ops)"
+  },
+  "sprint_distribution": {
+    "sprint_007": ["125"],
+    "sprint_010": ["131"],
+    "sprint_019": ["160"],
+    "sprint_050": ["307", "280"],
+    "sprint_007-010": ["065", "105", "045", "014", "082"],
+    "sprint_113-116": ["1346", "1372"],
+    "sprint_128": ["1290"],
+    "sprint_130s": ["1197", "1206"],
+    "sprint_140s": ["1408", "1459", "1472b", "1479"],
+    "sprint_150s": ["1512b", "1521a"],
+    "sprint_220": ["240e"],
+    "undated_analysis": ["REPORT_ANALYZER_2026-03-29"]
+  },
+  "quality_metrics": {
+    "overall_pass_rate": "24/24 approved (100%)",
+    "avg_test_count_per_task": "~15 tests",
+    "ddd_violations": "0 in task scope (pre-existing in domain/services newsNormalizer.ts type imports accepted)",
+    "security_issues": "0 blocking; pre-existing process.env patterns in schema.ts noted",
+    "pre_existing_regressions": "Multiple sprints tracked; none attributed to tasks in chunk 006"
+  },
+  "extraction_notes": {
+    "chunk_scope": "24 reports covering TDD cycles, infrastructure monitoring, diacritics restoration, test fixture updates, E2E validation",
+    "timestamp": "2026-04-22",
+    "next_chunk": "007 (if list continues; extraction paused at 24/24 reports)"
+  }
+}

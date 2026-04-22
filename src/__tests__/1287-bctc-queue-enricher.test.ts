@@ -1,17 +1,15 @@
 /**
- * Task 1287a — RED: Async BCTC Queue Enricher Tests
+ * Task 1287a — BCTC Queue Enricher Tests (UPDATED for Task 1288c hotfix)
  *
- * Background scheduler job that enriches BCTC VPS queue items with missing
- * source_url values. Tests define expected behavior before implementation.
+ * HOTFIX (Task 1288c, 2026-04-22):
+ * Main server no longer enriches BCTC queue items from SSC.
+ * Items with source_url = NULL are marked as 'skipped'.
+ * VPS (Vietnam) is the ONLY source of BCTC queue data.
  *
- * Problem: /api/bctc-fetch-queue endpoint times out (504 after 60s) when
- * processing >100 BCTC PDFs due to sync SSC credibility lookups blocking
- * the queue response.
+ * Root cause: Main server in France cannot fetch from SSC (geo-blocked).
+ * This caused recurring timeouts every 15 minutes.
  *
- * Solution: Add skip_enrichment=true query parameter to skip sync enrichment,
- * defer to background job (this task) that runs every 15min.
- *
- * TDD: Tests written first (RED), then implementation.
+ * New behavior: Skip items without source_url, let VPS push complete items.
  */
 
 Bun.env["DB_PATH"] = ":memory:";
@@ -22,7 +20,6 @@ import { Database as SqliteDatabase } from "bun:sqlite";
 
 import { initDatabase, closeDb } from "../infrastructure/db/schema.js";
 import { runBctcQueueEnricherJob } from "../scheduler/financial-reports/bctcQueueEnricherJob.js";
-import type { SscDocumentLookup } from "../application/usecases/bctcQueueEnricher.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helper Functions
@@ -30,7 +27,6 @@ import type { SscDocumentLookup } from "../application/usecases/bctcQueueEnriche
 
 /**
  * Insert a test queue item directly into the database.
- * Uses INSERT OR REPLACE to handle any existing items with same code/year/quarter.
  */
 function insertQueueItem(
   db: Database,
@@ -48,61 +44,60 @@ function insertQueueItem(
 }
 
 /**
- * Query queue items to verify enrichment.
+ * Query all queue items by status.
  */
-function getQueueItems(db: Database): Array<{
+function getQueueItems(
+  db: Database,
+  status?: string,
+): Array<{
   action_code: string;
-  period_year: number;
-  period_quarter: string;
-  source_url: string | null;
   status: string;
+  source_url: string | null;
 }> {
-  return db
-    .query(
-      `SELECT action_code, period_year, period_quarter, source_url, status
-       FROM bctc_vps_queue
-       WHERE status = 'pending'
-       ORDER BY action_code`
-    )
-    .all() as any[];
+  const query = status
+    ? `SELECT action_code, status, source_url FROM bctc_vps_queue WHERE status = ? ORDER BY action_code`
+    : `SELECT action_code, status, source_url FROM bctc_vps_queue ORDER BY action_code`;
+
+  return (
+    status
+      ? db.query(query).all(status)
+      : db.query(query).all()
+  ) as any[];
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tests
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe("Task 1287a — BCTC Queue Enricher (RED — failing tests)", () => {
+describe("Task 1287a — BCTC Queue Enricher (Hotfix 1288c)", () => {
   let testDb: Database;
 
   beforeEach(async () => {
-    // Create a fresh in-memory database for each test
     closeDb();
     testDb = new SqliteDatabase(":memory:");
     testDb.exec("PRAGMA foreign_keys = ON");
     testDb.exec("PRAGMA journal_mode = WAL");
     await initDatabase(testDb);
-    // Clear any lingering queue items from previous tests
     try {
       testDb.exec("DELETE FROM bctc_vps_queue");
     } catch {
-      // Table might not exist if initDatabase failed
+      // ignore
     }
   });
 
   afterEach(() => {
-    // Clean up test database
     if (testDb) {
       try {
         testDb.close();
       } catch {
-        // ignore close errors
+        // ignore
       }
     }
     closeDb();
   });
 
   // ──────────────────────────────────────────────────────────────────────────
-  // TC-1: Job execution baseline
+  // TC-1: Empty queue — no-op
   // ──────────────────────────────────────────────────────────────────────────
 
   it("returns empty result when no pending queue items", async () => {
@@ -115,176 +110,135 @@ describe("Task 1287a — BCTC Queue Enricher (RED — failing tests)", () => {
   });
 
   // ──────────────────────────────────────────────────────────────────────────
-  // TC-2: URL population happy path
+  // TC-2: Items with NULL source_url are marked as 'skipped'
   // ──────────────────────────────────────────────────────────────────────────
 
-  it("populates source_url for items where SSC lookup succeeds", async () => {
-
-    // Insert 3 items, all with source_url = NULL
+  it("marks items with source_url=NULL as 'skipped' (awaiting VPS push)", async () => {
     insertQueueItem(testDb, "VCB", 2025, "Q1", null);
     insertQueueItem(testDb, "FPT", 2025, "Q1", null);
     insertQueueItem(testDb, "HPG", 2025, "Q1", null);
 
-    // Mock SSC fetcher: returns URL for VCB + FPT, fails for HPG
-    const sscLookup: SscDocumentLookup = async (code, _q, _y) => {
-      if (code === "VCB") return [{ url: "https://ssc.gov.vn/vcb.pdf" }];
-      if (code === "FPT") return [{ url: "https://ssc.gov.vn/fpt.pdf" }];
-      return [];
-    };
+    const result = await runBctcQueueEnricherJob({ db: testDb });
 
-    const result = await runBctcQueueEnricherJob({ db: testDb, sscLookup });
+    expect(result.itemsProcessed).toBe(3);
+    expect(result.partialFailures).toBe(3); // All skipped
 
-    expect(result.urlsPopulated).toBe(2);
-
-    const items = getQueueItems(testDb);
-    const vcbItem = items.find((i) => i.action_code === "VCB");
-    const fptItem = items.find((i) => i.action_code === "FPT");
-    const hpgItem = items.find((i) => i.action_code === "HPG");
-
-    expect(vcbItem?.source_url).toBe("https://ssc.gov.vn/vcb.pdf");
-    expect(fptItem?.source_url).toBe("https://ssc.gov.vn/fpt.pdf");
-    expect(hpgItem?.source_url).toBeNull();
+    const skipped = getQueueItems(testDb, "skipped");
+    expect(skipped.length).toBe(3);
+    expect(skipped.every((i) => i.source_url === null)).toBe(true);
   });
 
   // ──────────────────────────────────────────────────────────────────────────
-  // TC-3: Timeout handling
+  // TC-3: Items with existing source_url are ignored
   // ──────────────────────────────────────────────────────────────────────────
 
-  it("handles SSC fetcher timeout gracefully — does not throw", async () => {
-    insertQueueItem(testDb, "VCB", 2025, "Q1", null);
-
-    const sscLookup: SscDocumentLookup = async (_code, _q, _y) => {
-      throw new Error("Timeout: SSC portal not responding within 5s");
-    };
-
-    const result = await runBctcQueueEnricherJob({ db: testDb, sscLookup });
-
-    expect(result.timeoutFailures).toBe(1);
-
-    const items = getQueueItems(testDb);
-    const item = items[0];
-
-    expect(item?.source_url).toBeNull();
-    expect(item?.status).toBe("pending"); // Status unchanged
-  });
-
-  // ──────────────────────────────────────────────────────────────────────────
-  // TC-4: Skip already-enriched items
-  // ──────────────────────────────────────────────────────────────────────────
-
-  it("skips queue items that already have source_url — no redundant SSC call", async () => {
-
-    let sscCallCount = 0;
-    const sscLookup: SscDocumentLookup = async (_code: string, _q: string, _y: number) => {
-      sscCallCount++;
-      return [{ url: "https://ssc.gov.vn/new.pdf" }];
-    };
-
-    // One item already enriched, one not
-    insertQueueItem(testDb, "VCB", 2025, "Q1", "https://ssc.gov.vn/vcb-existing.pdf");
+  it("ignores items that already have source_url", async () => {
+    // One with URL (should be ignored), one without (should be skipped)
+    insertQueueItem(
+      testDb,
+      "VCB",
+      2025,
+      "Q1",
+      "https://ssc.gov.vn/vcb-existing.pdf"
+    );
     insertQueueItem(testDb, "FPT", 2025, "Q1", null);
 
-    const result = await runBctcQueueEnricherJob({ db: testDb, sscLookup });
+    const result = await runBctcQueueEnricherJob({ db: testDb });
 
-    // Should only call SSC for FPT (the unenriched one)
-    expect(sscCallCount).toBe(1);
-    expect(result.urlsPopulated).toBe(1);
+    expect(result.itemsProcessed).toBe(1); // Only FPT processed
+    expect(result.partialFailures).toBe(1); // FPT skipped
+
+    const skipped = getQueueItems(testDb, "skipped");
+    expect(skipped.length).toBe(1);
+    expect(skipped[0]?.action_code).toBe("FPT");
+
+    const pending = getQueueItems(testDb, "pending");
+    expect(pending.length).toBe(1);
+    expect(pending[0]?.action_code).toBe("VCB");
   });
 
   // ──────────────────────────────────────────────────────────────────────────
-  // TC-5: Partial failure with mixed results
-  // ──────────────────────────────────────────────────────────────────────────
-
-  it("reports partial failures — mixes successes, timeouts, and empty results", async () => {
-
-    // Insert 10 items
-    for (let i = 1; i <= 10; i++) {
-      insertQueueItem(testDb, `CODE${i}`, 2025, "Q1", null);
-    }
-
-    const sscLookup: SscDocumentLookup = async (code: string, _q: string, _y: number) => {
-      const num = parseInt(code.replace("CODE", ""), 10);
-      if (num <= 6) return [{ url: `https://ssc.gov.vn/code${num}.pdf` }]; // Success: 6
-      if (num <= 9) throw new Error("Timeout"); // Timeout: 3
-      return []; // Empty: 1
-    };
-
-    const result = await runBctcQueueEnricherJob({ db: testDb, sscLookup });
-
-    expect(result.itemsProcessed).toBe(10);
-    expect(result.urlsPopulated).toBe(6);
-    expect(result.timeoutFailures).toBe(3);
-    expect(result.partialFailures).toBe(1);
-
-    // All should remain in queue
-    const items = getQueueItems(testDb);
-    expect(items.length).toBe(10);
-    expect(items.every((i) => i.status === "pending")).toBe(true);
-  });
-
-  // ──────────────────────────────────────────────────────────────────────────
-  // TC-6: Idempotency — re-run on same items
-  // ──────────────────────────────────────────────────────────────────────────
-
-  it("is idempotent — re-running does not duplicate enrichment", async () => {
-    insertQueueItem(testDb, "VCB", 2025, "Q1", null);
-
-    let sscCallCount = 0;
-    const sscLookup: SscDocumentLookup = async (_code: string, _q: string, _y: number) => {
-      sscCallCount++;
-      return [{ url: "https://ssc.gov.vn/vcb.pdf" }];
-    };
-
-    // First run
-    const result1 = await runBctcQueueEnricherJob({ db: testDb, sscLookup });
-    expect(result1.urlsPopulated).toBe(1);
-    expect(sscCallCount).toBe(1);
-
-    // Second run on same data
-    const result2 = await runBctcQueueEnricherJob({ db: testDb, sscLookup });
-    expect(result2.urlsPopulated).toBe(0); // No more to enrich
-    expect(sscCallCount).toBe(1); // No new SSC call
-  });
-
-  // ──────────────────────────────────────────────────────────────────────────
-  // TC-7: Batch dequeue limit
+  // TC-4: Batch dequeue limit (max 20 per run)
   // ──────────────────────────────────────────────────────────────────────────
 
   it("respects batch dequeue limit (20 items max per run)", async () => {
-    // Insert 100 items
+    // Insert 100 items with NULL source_url
     for (let i = 1; i <= 100; i++) {
       insertQueueItem(testDb, `CODE${String(i).padStart(3, "0")}`, 2025, "Q1", null);
     }
 
-    const sscLookup: SscDocumentLookup = async (_code: string, _q: string, _y: number) => [
-      { url: "https://ssc.gov.vn/dummy.pdf" },
-    ];
-
-    const result = await runBctcQueueEnricherJob({ db: testDb, sscLookup });
+    const result = await runBctcQueueEnricherJob({ db: testDb });
 
     expect(result.itemsProcessed).toBe(20);
-    expect(result.urlsPopulated).toBe(20);
+    expect(result.partialFailures).toBe(20); // All skipped
+
+    const skipped = getQueueItems(testDb, "skipped");
+    expect(skipped.length).toBe(20);
+
+    const stillPending = getQueueItems(testDb, "pending");
+    expect(stillPending.length).toBe(80); // Remaining items still pending
   });
 
   // ──────────────────────────────────────────────────────────────────────────
-  // TC-8: Empty SSC results counted as partial failure
+  // TC-5: Idempotency — re-run does not re-skip already-skipped items
   // ──────────────────────────────────────────────────────────────────────────
 
-  it("counts empty SSC results as partial failures", async () => {
+  it("is idempotent — re-running does not re-process skipped items", async () => {
     insertQueueItem(testDb, "VCB", 2025, "Q1", null);
-    insertQueueItem(testDb, "FPT", 2025, "Q1", null);
 
-    const sscLookup: SscDocumentLookup = async (_code: string, _q: string, _y: number) => {
-      return []; // Empty result
-    };
+    // First run
+    const result1 = await runBctcQueueEnricherJob({ db: testDb });
+    expect(result1.itemsProcessed).toBe(1);
 
-    const result = await runBctcQueueEnricherJob({ db: testDb, sscLookup });
+    // Second run on same data
+    const result2 = await runBctcQueueEnricherJob({ db: testDb });
+    expect(result2.itemsProcessed).toBe(0); // No more items to process
 
-    expect(result.itemsProcessed).toBe(2);
+    const skipped = getQueueItems(testDb, "skipped");
+    expect(skipped.length).toBe(1);
+  });
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // TC-6: Mixed queue state (some pending, some skipped, some with URLs)
+  // ──────────────────────────────────────────────────────────────────────────
+
+  it("handles mixed queue state correctly", async () => {
+    insertQueueItem(testDb, "VCB", 2025, "Q1", null); // Will be skipped
+    insertQueueItem(testDb, "FPT", 2025, "Q1", "https://ssc.gov.vn/fpt.pdf"); // Has URL, ignored
+    insertQueueItem(testDb, "HPG", 2025, "Q1", null); // Will be skipped
+    insertQueueItem(testDb, "TCB", 2024, "Q4", null); // Will be skipped
+
+    const result = await runBctcQueueEnricherJob({ db: testDb });
+
+    expect(result.itemsProcessed).toBe(3); // VCB, HPG, TCB
+    expect(result.partialFailures).toBe(3); // All skipped
+
+    const skipped = getQueueItems(testDb, "skipped");
+    expect(skipped.length).toBe(3);
+    expect(skipped.map((i) => i.action_code).sort()).toEqual(["HPG", "TCB", "VCB"]);
+
+    const pending = getQueueItems(testDb, "pending");
+    expect(pending.length).toBe(1);
+    expect(pending[0]?.action_code).toBe("FPT");
+  });
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // TC-7: Graceful handling of DB query errors
+  // ──────────────────────────────────────────────────────────────────────────
+
+  it("returns empty result if query fails", async () => {
+    const badDb = {
+      query: () => {
+        throw new Error("Simulated DB error");
+      },
+      prepare: () => ({ run: () => {} }),
+    } as any;
+
+    const result = await runBctcQueueEnricherJob({ db: badDb });
+
+    expect(result.itemsProcessed).toBe(0);
     expect(result.urlsPopulated).toBe(0);
-    expect(result.partialFailures).toBe(2);
-
-    const items = getQueueItems(testDb);
-    expect(items.every((i) => i.source_url === null)).toBe(true);
+    expect(result.timeoutFailures).toBe(0);
+    expect(result.partialFailures).toBe(0);
   });
 });

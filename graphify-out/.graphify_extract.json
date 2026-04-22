@@ -1,639 +1,497 @@
 {
-  "directed": false,
-  "multigraph": false,
-  "graph": {},
   "nodes": [
     {
+      "id": "bctc_schema_ts",
       "label": "bctc-schema.ts",
       "file_type": "code",
       "source_file": "bctc-schema.ts",
-      "source_location": "L1",
-      "id": "bctc_schema_ts",
-      "community": 3,
-      "norm_label": "bctc-schema.ts"
+      "source_location": "L1"
     },
     {
+      "id": "bctc_schema_buildperiod",
       "label": "buildPeriod()",
       "file_type": "code",
       "source_file": "bctc-schema.ts",
-      "source_location": "L62",
-      "id": "bctc_schema_buildperiod",
-      "community": 3,
-      "norm_label": "buildperiod()"
+      "source_location": "L62"
     },
     {
+      "id": "bctc_schema_buildchartseries",
       "label": "buildChartSeries()",
       "file_type": "code",
       "source_file": "bctc-schema.ts",
-      "source_location": "L407",
-      "id": "bctc_schema_buildchartseries",
-      "community": 3,
-      "norm_label": "buildchartseries()"
+      "source_location": "L407"
     },
     {
+      "id": "bctc_schema_getmetricvalue",
       "label": "getMetricValue()",
       "file_type": "code",
       "source_file": "bctc-schema.ts",
-      "source_location": "L538",
-      "id": "bctc_schema_getmetricvalue",
-      "community": 3,
-      "norm_label": "getmetricvalue()"
+      "source_location": "L538"
     },
     {
+      "id": "bctc_schema_calcyoy",
       "label": "calcYoY()",
       "file_type": "code",
       "source_file": "bctc-schema.ts",
-      "source_location": "L544",
-      "id": "bctc_schema_calcyoy",
-      "community": 3,
-      "norm_label": "calcyoy()"
+      "source_location": "L544"
     },
     {
+      "id": "bctc_schema_calcqoq",
       "label": "calcQoQ()",
       "file_type": "code",
       "source_file": "bctc-schema.ts",
-      "source_location": "L563",
-      "id": "bctc_schema_calcqoq",
-      "community": 3,
-      "norm_label": "calcqoq()"
+      "source_location": "L563"
     },
     {
+      "id": "bctc_schema_computeratios",
       "label": "computeRatios()",
       "file_type": "code",
       "source_file": "bctc-schema.ts",
-      "source_location": "L633",
-      "id": "bctc_schema_computeratios",
-      "community": 3,
-      "norm_label": "computeratios()"
+      "source_location": "L633"
     },
     {
+      "id": "bctc_schema_emptyreport",
       "label": "emptyReport()",
       "file_type": "code",
       "source_file": "bctc-schema.ts",
-      "source_location": "L942",
-      "id": "bctc_schema_emptyreport",
-      "community": 3,
-      "norm_label": "emptyreport()"
+      "source_location": "L942"
     },
     {
+      "id": "vps_scripts_fetch_browser_py",
       "label": "fetch-browser.py",
       "file_type": "code",
       "source_file": "vps-scripts/fetch-browser.py",
-      "source_location": "L1",
-      "id": "vps_scripts_fetch_browser_py",
-      "community": 5,
-      "norm_label": "fetch-browser.py"
+      "source_location": "L1"
     },
     {
+      "id": "fetch_browser_parse_rss",
       "label": "parse_rss()",
       "file_type": "code",
       "source_file": "vps-scripts/fetch-browser.py",
-      "source_location": "L38",
-      "id": "fetch_browser_parse_rss",
-      "community": 5,
-      "norm_label": "parse_rss()"
+      "source_location": "L38"
     },
     {
+      "id": "fetch_browser_fetch_with_browser",
       "label": "fetch_with_browser()",
       "file_type": "code",
       "source_file": "vps-scripts/fetch-browser.py",
-      "source_location": "L65",
-      "id": "fetch_browser_fetch_with_browser",
-      "community": 5,
-      "norm_label": "fetch_with_browser()"
+      "source_location": "L65"
     },
     {
+      "id": "fetch_browser_rationale_39",
       "label": "Parse RSS XML into item list.",
       "file_type": "rationale",
       "source_file": "vps-scripts/fetch-browser.py",
-      "source_location": "L39",
-      "id": "fetch_browser_rationale_39",
-      "community": 5,
-      "norm_label": "parse rss xml into item list."
+      "source_location": "L39"
     },
     {
+      "id": "scripts_smoke_test_sprint_001_ts",
       "label": "smoke-test-sprint-001.ts",
       "file_type": "code",
       "source_file": "scripts/smoke-test-sprint-001.ts",
-      "source_location": "L1",
-      "id": "scripts_smoke_test_sprint_001_ts",
-      "community": 3,
-      "norm_label": "smoke-test-sprint-001.ts"
+      "source_location": "L1"
     },
     {
+      "id": "smoke_test_sprint_001_check",
       "label": "check()",
       "file_type": "code",
       "source_file": "scripts/smoke-test-sprint-001.ts",
-      "source_location": "L81",
-      "id": "smoke_test_sprint_001_check",
-      "community": 3,
-      "norm_label": "check()"
+      "source_location": "L81"
     },
     {
+      "id": "scripts_purge_phantom_reports_ts",
       "label": "purge-phantom-reports.ts",
       "file_type": "code",
       "source_file": "scripts/purge-phantom-reports.ts",
-      "source_location": "L1",
-      "id": "scripts_purge_phantom_reports_ts",
-      "community": 17,
-      "norm_label": "purge-phantom-reports.ts"
+      "source_location": "L1"
     },
     {
+      "id": "scripts_parse_hexagrams_ts",
       "label": "parse-hexagrams.ts",
       "file_type": "code",
       "source_file": "scripts/parse-hexagrams.ts",
-      "source_location": "L1",
-      "id": "scripts_parse_hexagrams_ts",
-      "community": 4,
-      "norm_label": "parse-hexagrams.ts"
+      "source_location": "L1"
     },
     {
+      "id": "parse_hexagrams_normaliseoutcome",
       "label": "normaliseOutcome()",
       "file_type": "code",
       "source_file": "scripts/parse-hexagrams.ts",
-      "source_location": "L15",
-      "id": "parse_hexagrams_normaliseoutcome",
-      "community": 4,
-      "norm_label": "normaliseoutcome()"
+      "source_location": "L15"
     },
     {
+      "id": "parse_hexagrams_normaliseaction",
       "label": "normaliseAction()",
       "file_type": "code",
       "source_file": "scripts/parse-hexagrams.ts",
-      "source_location": "L57",
-      "id": "parse_hexagrams_normaliseaction",
-      "community": 4,
-      "norm_label": "normaliseaction()"
+      "source_location": "L57"
     },
     {
+      "id": "parse_hexagrams_esc",
       "label": "esc()",
       "file_type": "code",
       "source_file": "scripts/parse-hexagrams.ts",
-      "source_location": "L69",
-      "id": "parse_hexagrams_esc",
-      "community": 4,
-      "norm_label": "esc()"
+      "source_location": "L69"
     },
     {
+      "id": "parse_hexagrams_parsehexagram",
       "label": "parseHexagram()",
       "file_type": "code",
       "source_file": "scripts/parse-hexagrams.ts",
-      "source_location": "L102",
-      "id": "parse_hexagrams_parsehexagram",
-      "community": 4,
-      "norm_label": "parsehexagram()"
+      "source_location": "L102"
     },
     {
+      "id": "parse_hexagrams_generatequedataentry",
       "label": "generateQueDataEntry()",
       "file_type": "code",
       "source_file": "scripts/parse-hexagrams.ts",
-      "source_location": "L304",
-      "id": "parse_hexagrams_generatequedataentry",
-      "community": 4,
-      "norm_label": "generatequedataentry()"
+      "source_location": "L304"
     },
     {
+      "id": "src_index_ts",
       "label": "index.ts",
       "file_type": "code",
       "source_file": "src/index.ts",
-      "source_location": "L1",
-      "id": "src_index_ts",
-      "community": 7,
-      "norm_label": "index.ts"
+      "source_location": "L1"
     },
     {
+      "id": "index_shutdown",
       "label": "shutdown()",
       "file_type": "code",
       "source_file": "src/index.ts",
-      "source_location": "L154",
-      "id": "index_shutdown",
-      "community": 7,
-      "norm_label": "shutdown()"
+      "source_location": "L154"
     },
     {
+      "id": "sprint_1278",
       "label": "Sprint 1278: Insider Dump Sentiment Cascade",
       "file_type": "sprint",
       "source_file": "docs/ARCH_REVIEW_1278.md",
-      "source_location": "line 1",
-      "id": "sprint_1278",
-      "community": 2,
-      "norm_label": "sprint 1278: insider dump sentiment cascade"
+      "source_location": "line 1"
     },
     {
+      "id": "req_1278",
       "label": "REQ-1278: Insider Dump Sentiment Cascade",
       "file_type": "document",
       "source_file": "docs/REQ_1278.md",
-      "source_location": "line 1",
-      "id": "req_1278",
-      "community": 2,
-      "norm_label": "req-1278: insider dump sentiment cascade"
+      "source_location": "line 1"
     },
     {
+      "id": "tech_1278",
       "label": "TECH-1278: Insider Dump Sentiment Cascade",
       "file_type": "document",
       "source_file": "docs/TECH_1278.md",
-      "source_location": "line 1",
-      "id": "tech_1278",
-      "community": 0,
-      "norm_label": "tech-1278: insider dump sentiment cascade"
+      "source_location": "line 1"
     },
     {
+      "id": "sprint_1279",
       "label": "Sprint 1279: MSCI Index Inclusion Cascade",
       "file_type": "sprint",
       "source_file": "docs/REQ_1279.md",
-      "source_location": "line 1",
-      "id": "sprint_1279",
-      "community": 1,
-      "norm_label": "sprint 1279: msci index inclusion cascade"
+      "source_location": "line 1"
     },
     {
+      "id": "req_1279",
       "label": "REQ-1279: MSCI Index Inclusion Cascade Detection",
       "file_type": "document",
       "source_file": "docs/REQ_1279.md",
-      "source_location": "line 1",
-      "id": "req_1279",
-      "community": 1,
-      "norm_label": "req-1279: msci index inclusion cascade detection"
+      "source_location": "line 1"
     },
     {
+      "id": "req_1279b",
       "label": "REQ-1279b: MSCI Inclusion Cascade (GREEN)",
       "file_type": "document",
       "source_file": "docs/REQ_1279b.md",
-      "source_location": "line 1",
-      "id": "req_1279b",
-      "community": 0,
-      "norm_label": "req-1279b: msci inclusion cascade (green)"
+      "source_location": "line 1"
     },
     {
+      "id": "tech_1279",
       "label": "TECH-1279: MSCI Index Inclusion Cascade",
       "file_type": "document",
       "source_file": "docs/TECH_1279.md",
-      "source_location": "line 1",
-      "id": "tech_1279",
-      "community": 1,
-      "norm_label": "tech-1279: msci index inclusion cascade"
+      "source_location": "line 1"
     },
     {
+      "id": "tech_1279b",
       "label": "TECH-1279b: MSCI Inclusion (GREEN Phase)",
       "file_type": "document",
       "source_file": "docs/TECH_1279b.md",
-      "source_location": "line 1",
-      "id": "tech_1279b",
-      "community": 1,
-      "norm_label": "tech-1279b: msci inclusion (green phase)"
+      "source_location": "line 1"
     },
     {
+      "id": "sprint_1281",
       "label": "Sprint 1281: Agriculture Weather Cascade",
       "file_type": "sprint",
       "source_file": "docs/REQ_1281.md",
-      "source_location": "line 1",
-      "id": "sprint_1281",
-      "community": 2,
-      "norm_label": "sprint 1281: agriculture weather cascade"
+      "source_location": "line 1"
     },
     {
+      "id": "req_1281",
       "label": "REQ-1281: Agriculture Weather Cascade Detection",
       "file_type": "document",
       "source_file": "docs/REQ_1281.md",
-      "source_location": "line 1",
-      "id": "req_1281",
-      "community": 2,
-      "norm_label": "req-1281: agriculture weather cascade detection"
+      "source_location": "line 1"
     },
     {
+      "id": "tech_1281",
       "label": "TECH-1281: Agriculture Weather Cascade",
       "file_type": "document",
       "source_file": "docs/TECH_1281.md",
-      "source_location": "line 1",
-      "id": "tech_1281",
-      "community": 2,
-      "norm_label": "tech-1281: agriculture weather cascade"
+      "source_location": "line 1"
     },
     {
+      "id": "cascade_pattern",
       "label": "Cascade Detection Pattern",
       "file_type": "pattern",
       "source_file": "docs/TECH_1278.md",
-      "source_location": "line 21-50",
-      "id": "cascade_pattern",
-      "community": 2,
-      "norm_label": "cascade detection pattern"
+      "source_location": "line 21-50"
     },
     {
+      "id": "insider_dump_rules",
       "label": "INSIDER_DUMP_RULES",
       "file_type": "domain_rule",
       "source_file": "docs/TECH_1278.md",
-      "source_location": "line 69-73",
-      "id": "insider_dump_rules",
-      "community": 2,
-      "norm_label": "insider_dump_rules"
+      "source_location": "line 69-73"
     },
     {
+      "id": "msci_inclusion_rules",
       "label": "MSCI_INCLUSION_RULES",
       "file_type": "domain_rule",
       "source_file": "docs/TECH_1279.md",
-      "source_location": "line 92-98",
-      "id": "msci_inclusion_rules",
-      "community": 1,
-      "norm_label": "msci_inclusion_rules"
+      "source_location": "line 92-98"
     },
     {
+      "id": "agriculture_weather_rules",
       "label": "AGRICULTURE_WEATHER_RULES",
       "file_type": "domain_rule",
       "source_file": "docs/TECH_1281.md",
-      "source_location": "line 146-164",
-      "id": "agriculture_weather_rules",
-      "community": 2,
-      "norm_label": "agriculture_weather_rules"
+      "source_location": "line 146-164"
     },
     {
+      "id": "cascade_executor",
       "label": "cascadeExecutor.ts",
       "file_type": "module",
       "source_file": "docs/TECH_1278.md",
-      "source_location": "line 105-163",
-      "id": "cascade_executor",
-      "community": 0,
-      "norm_label": "cascadeexecutor.ts"
+      "source_location": "line 105-163"
     },
     {
+      "id": "msci_detector",
       "label": "msciDetector.ts",
       "file_type": "module",
       "source_file": "docs/TECH_1279.md",
-      "source_location": "line 66-88",
-      "id": "msci_detector",
-      "community": 0,
-      "norm_label": "mscidetector.ts"
+      "source_location": "line 66-88"
     },
     {
+      "id": "agriculture_detector",
       "label": "agricultureDetector.ts",
       "file_type": "module",
       "source_file": "docs/TECH_1281.md",
-      "source_location": "line 74-126",
-      "id": "agriculture_detector",
-      "community": 0,
-      "norm_label": "agriculturedetector.ts"
+      "source_location": "line 74-126"
     },
     {
+      "id": "cascade_engine",
       "label": "cascadeEngine.ts",
       "file_type": "module",
       "source_file": "docs/TECH_1278.md",
-      "source_location": "line 20",
-      "id": "cascade_engine",
-      "community": 1,
-      "norm_label": "cascadeengine.ts"
+      "source_location": "line 20"
     },
     {
+      "id": "tdd_red_green",
       "label": "TDD Red-Green Test Strategy",
       "file_type": "pattern",
       "source_file": "docs/REQ_1278.md",
-      "source_location": "line 255-330",
-      "id": "tdd_red_green",
-      "community": 2,
-      "norm_label": "tdd red-green test strategy"
+      "source_location": "line 255-330"
     },
     {
+      "id": "ddd_layer_violations",
       "label": "DDD Layer Violations Pattern",
       "file_type": "pattern",
       "source_file": "docs/agent-memory/patterns/DDD-violations.md",
-      "source_location": "line 1",
-      "id": "ddd_layer_violations",
-      "community": 0,
-      "norm_label": "ddd layer violations pattern"
+      "source_location": "line 1"
     },
     {
+      "id": "agent_memory_system",
       "label": "Agent Memory System",
       "file_type": "system",
       "source_file": "docs/agent-memory/INDEX.md",
-      "source_location": "line 1",
-      "id": "agent_memory_system",
-      "community": 0,
-      "norm_label": "agent memory system"
+      "source_location": "line 1"
     },
     {
+      "id": "sprint_1279_design_summary",
       "label": "Sprint 1279 Design Summary",
       "file_type": "handoff",
       "source_file": "docs/handoffs/SPRINT_1279_DESIGN_SUMMARY.md",
-      "source_location": "line 1",
-      "id": "sprint_1279_design_summary",
-      "community": 1,
-      "norm_label": "sprint 1279 design summary"
+      "source_location": "line 1"
     },
     {
+      "id": "session_2026_04_22_morning",
       "label": "Session 2026-04-22 Morning Work",
       "file_type": "session",
       "source_file": "docs/agent-memory/sessions/2026-04-22-morning.md",
-      "source_location": "line 1",
-      "id": "session_2026_04_22_morning",
-      "community": 0,
-      "norm_label": "session 2026-04-22 morning work"
+      "source_location": "line 1"
     },
     {
+      "id": "confidence_threshold_0_7",
       "label": "Credibility Threshold 0.7 for MSCI",
       "file_type": "decision",
       "source_file": "docs/TECH_1279.md",
-      "source_location": "line 35-51",
-      "id": "confidence_threshold_0_7",
-      "community": 1,
-      "norm_label": "credibility threshold 0.7 for msci"
+      "source_location": "line 35-51"
     },
     {
+      "id": "large_cap_cross_sector",
       "label": "Large-Cap Cross-Sector Targeting (not peer cascade)",
       "file_type": "decision",
       "source_file": "docs/TECH_1279.md",
-      "source_location": "line 37-46",
-      "id": "large_cap_cross_sector",
-      "community": 1,
-      "norm_label": "large-cap cross-sector targeting (not peer cascade)"
+      "source_location": "line 37-46"
     },
     {
+      "id": "sentiment_bullish_opposite_insider",
       "label": "Sentiment Bullish (opposite insider bearish)",
       "file_type": "decision",
       "source_file": "docs/TECH_1279.md",
-      "source_location": "line 47-50",
-      "id": "sentiment_bullish_opposite_insider",
-      "community": 8,
-      "norm_label": "sentiment bullish (opposite insider bearish)"
+      "source_location": "line 47-50"
     },
     {
+      "id": "domain_service_pure_logic",
       "label": "Domain Service Pure Logic Principle",
       "file_type": "pattern",
       "source_file": "docs/TECH_1279.md",
-      "source_location": "line 53-56",
-      "id": "domain_service_pure_logic",
-      "community": 0,
-      "norm_label": "domain service pure logic principle"
+      "source_location": "line 53-56"
     },
     {
+      "id": "performance_target_50ms",
       "label": "Performance Target <50ms keyword detection",
       "file_type": "nfr",
       "source_file": "docs/TECH_1279.md",
-      "source_location": "line 199-202",
-      "id": "performance_target_50ms",
-      "community": 2,
-      "norm_label": "performance target <50ms keyword detection"
+      "source_location": "line 199-202"
     },
     {
+      "id": "baseline_6171_to_6187",
       "label": "Test Baseline 6171 to 6187 (+16 assertions)",
       "file_type": "metric",
       "source_file": "docs/TECH_1279.md",
-      "source_location": "line 298-301",
-      "id": "baseline_6171_to_6187",
-      "community": 1,
-      "norm_label": "test baseline 6171 to 6187 (+16 assertions)"
+      "source_location": "line 298-301"
     },
     {
+      "id": "insider_dump_bearish",
       "label": "Insider Dump Sentiment Bearish",
       "file_type": "decision",
       "source_file": "docs/TECH_1278.md",
-      "source_location": "line 23",
-      "id": "insider_dump_bearish",
-      "community": 8,
-      "norm_label": "insider dump sentiment bearish"
+      "source_location": "line 23"
     },
     {
+      "id": "banking_sector_contagion",
       "label": "Banking Sector Contagion Logic",
       "file_type": "business_rule",
       "source_file": "docs/REQ_1278.md",
-      "source_location": "line 52-53",
-      "id": "banking_sector_contagion",
-      "community": 2,
-      "norm_label": "banking sector contagion logic"
+      "source_location": "line 52-53"
     },
     {
+      "id": "watchlist_filtering",
       "label": "Watchlist Filtering by Domain",
       "file_type": "pattern",
       "source_file": "docs/REQ_1281.md",
-      "source_location": "line 48-59",
-      "id": "watchlist_filtering",
-      "community": 0,
-      "norm_label": "watchlist filtering by domain"
+      "source_location": "line 48-59"
     },
     {
+      "id": "weather_credibility_0_6",
       "label": "Weather Credibility Threshold 0.6 (lower than MSCI 0.7)",
       "file_type": "decision",
       "source_file": "docs/TECH_1281.md",
-      "source_location": "line 42-45",
-      "id": "weather_credibility_0_6",
-      "community": 1,
-      "norm_label": "weather credibility threshold 0.6 (lower than msci 0.7)"
+      "source_location": "line 42-45"
     },
     {
+      "id": "forecast_penalty",
       "label": "Forecast Penalty -0.2 to Credibility",
       "file_type": "rule",
       "source_file": "docs/TECH_1281.md",
-      "source_location": "line 112-114",
-      "id": "forecast_penalty",
-      "community": 0,
-      "norm_label": "forecast penalty -0.2 to credibility"
+      "source_location": "line 112-114"
     },
     {
+      "id": "keyword_whole_word_matching",
       "label": "Keyword Whole-Word Matching Pattern",
       "file_type": "pattern",
       "source_file": "docs/TECH_1279.md",
-      "source_location": "line 439-448",
-      "id": "keyword_whole_word_matching",
-      "community": 0,
-      "norm_label": "keyword whole-word matching pattern"
+      "source_location": "line 439-448"
     },
     {
+      "id": "confidence_formula",
       "label": "Confidence Formula: min(1.0, cred \u00d7 count / 3.0)",
       "file_type": "formula",
       "source_file": "docs/TECH_1279.md",
-      "source_location": "line 450-463",
-      "id": "confidence_formula",
-      "community": 1,
-      "norm_label": "confidence formula: min(1.0, cred \u00d7 count / 3.0)"
+      "source_location": "line 450-463"
     },
     {
+      "id": "red_phase_1278a",
       "label": "Task 1278a RED Phase",
       "file_type": "task",
       "source_file": "docs/ARCH_REVIEW_1278.md",
-      "source_location": "line 108-122",
-      "id": "red_phase_1278a",
-      "community": 0,
-      "norm_label": "task 1278a red phase"
+      "source_location": "line 108-122"
     },
     {
+      "id": "green_phase_1278b",
       "label": "Task 1278b GREEN Phase",
       "file_type": "task",
       "source_file": "docs/ARCH_REVIEW_1278.md",
-      "source_location": "line 123-132",
-      "id": "green_phase_1278b",
-      "community": 0,
-      "norm_label": "task 1278b green phase"
+      "source_location": "line 123-132"
     },
     {
+      "id": "red_phase_1279a",
       "label": "Task 1279a RED Phase",
       "file_type": "task",
       "source_file": "docs/TECH_1279.md",
-      "source_location": "line 138-149",
-      "id": "red_phase_1279a",
-      "community": 1,
-      "norm_label": "task 1279a red phase"
+      "source_location": "line 138-149"
     },
     {
+      "id": "green_phase_1279b",
       "label": "Task 1279b GREEN Phase",
       "file_type": "task",
       "source_file": "docs/TECH_1279.md",
-      "source_location": "line 150-165",
-      "id": "green_phase_1279b",
-      "community": 1,
-      "norm_label": "task 1279b green phase"
+      "source_location": "line 150-165"
     },
     {
+      "id": "red_phase_1281a",
       "label": "Task 1281a RED Phase",
       "file_type": "task",
       "source_file": "docs/TECH_1281.md",
-      "source_location": "line 254-265",
-      "id": "red_phase_1281a",
-      "community": 2,
-      "norm_label": "task 1281a red phase"
+      "source_location": "line 254-265"
     },
     {
+      "id": "green_phase_1281b",
       "label": "Task 1281b GREEN Phase",
       "file_type": "task",
       "source_file": "docs/TECH_1281.md",
-      "source_location": "line 266-282",
-      "id": "green_phase_1281b",
-      "community": 2,
-      "norm_label": "task 1281b green phase"
+      "source_location": "line 266-282"
     },
     {
+      "id": "blockers_1281",
       "label": "Blockers in REQ-1281",
       "file_type": "blocker",
       "source_file": "docs/REQ_1281.md",
-      "source_location": "line 129-139",
-      "id": "blockers_1281",
-      "community": 2,
-      "norm_label": "blockers in req-1281"
+      "source_location": "line 129-139"
     },
     {
+      "id": "ddd_compliance",
       "label": "DDD Compliance Rule",
       "file_type": "constraint",
       "source_file": "docs/ARCH_REVIEW_1278.md",
-      "source_location": "line 93-102",
-      "id": "ddd_compliance",
-      "community": 0,
-      "norm_label": "ddd compliance rule"
+      "source_location": "line 93-102"
     },
     {
+      "id": "security_review_sql",
       "label": "Security Review: No SQL Injection Risk",
       "file_type": "security",
       "source_file": "docs/ARCH_REVIEW_1278.md",
-      "source_location": "line 165-171",
-      "id": "security_review_sql",
-      "community": 18,
-      "norm_label": "security review: no sql injection risk"
+      "source_location": "line 165-171"
     },
     {
+      "id": "backward_compatibility",
       "label": "Backward Compatibility Guarantee",
       "file_type": "constraint",
       "source_file": "docs/ARCH_REVIEW_1278.md",
-      "source_location": "line 175-182",
-      "id": "backward_compatibility",
-      "community": 19,
-      "norm_label": "backward compatibility guarantee"
+      "source_location": "line 175-182"
     },
     {
+      "id": "task_1348",
       "type": "task",
       "label": "test(france-summary-cron): TDD test written FIRST",
       "status": "DONE",
@@ -647,24 +505,20 @@
         "cron pattern */30 6-8 UTC",
         "sends at 06:00, 07:00, 08:30 UTC",
         "dedup when already sent today"
-      ],
-      "id": "task_1348",
-      "community": 9,
-      "norm_label": "test(france-summary-cron): tdd test written first"
+      ]
     },
     {
+      "id": "task_1349",
       "type": "task",
       "label": "fix(france-summary-cron): widen cron to */30 6-8 UTC",
       "status": "DONE",
       "sprint": 117,
       "blocks": [
         "task_1348"
-      ],
-      "id": "task_1349",
-      "community": 9,
-      "norm_label": "fix(france-summary-cron): widen cron to */30 6-8 utc"
+      ]
     },
     {
+      "id": "task_1463",
       "type": "task",
       "label": "fix(evening-summary-vnindex-db-read): VNINDEX fresh/stale logic",
       "status": "DONE",
@@ -679,12 +533,10 @@
         "VNINDEX stale (>3d) \u2192 undefined",
         "No VNINDEX row \u2192 undefined"
       ],
-      "ddd_compliance": "PASS",
-      "id": "task_1463",
-      "community": 20,
-      "norm_label": "fix(evening-summary-vnindex-db-read): vnindex fresh/stale logic"
+      "ddd_compliance": "PASS"
     },
     {
+      "id": "task_1432",
       "type": "task",
       "label": "fix(foreign-flow-sentinel): filter 9999999 sentinel value",
       "status": "DONE",
@@ -705,12 +557,10 @@
         "src/application/usecases/assembleBriefing.ts"
       ],
       "ddd_compliance": "PASS",
-      "security": "PASS",
-      "id": "task_1432",
-      "community": 10,
-      "norm_label": "fix(foreign-flow-sentinel): filter 9999999 sentinel value"
+      "security": "PASS"
     },
     {
+      "id": "task_1433",
       "type": "task",
       "label": "fix(1432): GREEN implementation",
       "status": "DONE",
@@ -718,12 +568,10 @@
       "blocks": [
         "task_1432"
       ],
-      "merge_commit": "663e275",
-      "id": "task_1433",
-      "community": 21,
-      "norm_label": "fix(1432): green implementation"
+      "merge_commit": "663e275"
     },
     {
+      "id": "task_1566_b",
       "type": "task",
       "label": "fix(foreign-flow-validator): DDD layer violation + server.ts integration",
       "status": "DONE",
@@ -747,12 +595,10 @@
         "src/infrastructure/db/schema-system.ts"
       ],
       "ddd_compliance": "PASS",
-      "security": "PASS",
-      "id": "task_1566_b",
-      "community": 10,
-      "norm_label": "fix(foreign-flow-validator): ddd layer violation + server.ts integration"
+      "security": "PASS"
     },
     {
+      "id": "task_238b",
       "type": "task",
       "label": "GREEN: Briefing Quality Gate Verification + Test Suite Completion",
       "status": "DONE",
@@ -772,12 +618,10 @@
       "files_modified": [
         "src/__tests__/238-briefing-quality-gate.test.ts"
       ],
-      "impact": "Prevents spam from stale-data-only briefings",
-      "id": "task_238b",
-      "community": 11,
-      "norm_label": "green: briefing quality gate verification + test suite completion"
+      "impact": "Prevents spam from stale-data-only briefings"
     },
     {
+      "id": "task_234e",
       "type": "task",
       "label": "QA Verification: e2e health polling + SLA escalation",
       "status": "DONE",
@@ -807,12 +651,10 @@
       ],
       "ddd_compliance": "PASS",
       "security": "PASS",
-      "tool_count_delta": 3,
-      "id": "task_234e",
-      "community": 22,
-      "norm_label": "qa verification: e2e health polling + sla escalation"
+      "tool_count_delta": 3
     },
     {
+      "id": "task_1406",
       "type": "task",
       "label": "test(hut-sector-reclassify): HUT real_estate \u2192 construction",
       "status": "DONE",
@@ -828,24 +670,20 @@
         "mcp.config.json referenceStocks updated",
         "Schema migration idempotent"
       ],
-      "merge_commit": "c0e3987",
-      "id": "task_1406",
-      "community": 12,
-      "norm_label": "test(hut-sector-reclassify): hut real_estate \u2192 construction"
+      "merge_commit": "c0e3987"
     },
     {
+      "id": "task_1407",
       "type": "task",
       "label": "fix(1406): HUT sector reclassification",
       "status": "DONE",
       "sprint": 143,
       "blocks": [
         "task_1406"
-      ],
-      "id": "task_1407",
-      "community": 12,
-      "norm_label": "fix(1406): hut sector reclassification"
+      ]
     },
     {
+      "id": "report_market_watch_2026_04_01",
       "type": "analysis",
       "label": "Market Watch Report \u2014 2026-04-01",
       "date": "2026-04-01",
@@ -877,12 +715,10 @@
           "value": 4727.3,
           "status": "HIGH"
         }
-      },
-      "id": "report_market_watch_2026_04_01",
-      "community": 11,
-      "norm_label": "market watch report \u2014 2026-04-01"
+      }
     },
     {
+      "id": "task_1457",
       "type": "task",
       "label": "fix(scheduler-locks-schema): DDL table + index",
       "status": "DONE",
@@ -896,12 +732,10 @@
         "src/infrastructure/db/schedulerLockStore.ts",
         "src/__tests__/1457-scheduler-locks-schema.test.ts"
       ],
-      "merge_commit": "c6c2a95",
-      "id": "task_1457",
-      "community": 23,
-      "norm_label": "fix(scheduler-locks-schema): ddl table + index"
+      "merge_commit": "c6c2a95"
     },
     {
+      "id": "task_1507",
       "type": "task",
       "label": "fix(timezone-hardcoding): Test fixture relative dates",
       "status": "DONE",
@@ -915,12 +749,10 @@
         "1168-market-message-digest.test.ts: hardcoded 2026-04-* replaced with relative expressions",
         "daysAgo/dateOnly helpers added"
       ],
-      "merge_commit": "915bd21",
-      "id": "task_1507",
-      "community": 24,
-      "norm_label": "fix(timezone-hardcoding): test fixture relative dates"
+      "merge_commit": "915bd21"
     },
     {
+      "id": "task_1447",
       "type": "task",
       "label": "fix(checkpoint-restart-mode): PRAGMA wal_checkpoint(RESTART)",
       "status": "DONE",
@@ -947,12 +779,10 @@
           "severity": "BLOCKING",
           "resolution": "Use dependency injection instead of process-wide mock.module"
         }
-      ],
-      "id": "task_1447",
-      "community": 25,
-      "norm_label": "fix(checkpoint-restart-mode): pragma wal_checkpoint(restart)"
+      ]
     },
     {
+      "id": "task_1416",
       "type": "task",
       "label": "test(diacritics-wave5): Vietnamese string localization",
       "status": "DONE",
@@ -969,24 +799,20 @@
         "String literal replacements only"
       ],
       "files_modified": 13,
-      "merge_commit": "903ce8c",
-      "id": "task_1416",
-      "community": 13,
-      "norm_label": "test(diacritics-wave5): vietnamese string localization"
+      "merge_commit": "903ce8c"
     },
     {
+      "id": "task_1417",
       "type": "task",
       "label": "fix(1416): Diacritics localization implementation",
       "status": "DONE",
       "sprint": 119,
       "blocks": [
         "task_1416"
-      ],
-      "id": "task_1417",
-      "community": 13,
-      "norm_label": "fix(1416): diacritics localization implementation"
+      ]
     },
     {
+      "id": "task_1480",
       "type": "task",
       "label": "fix(db-isolation-batch5): Bulk Bun.env DB_PATH replacement",
       "status": "DONE",
@@ -1004,12 +830,10 @@
       "commits": [
         "28c94ad",
         "c41e545"
-      ],
-      "id": "task_1480",
-      "community": 26,
-      "norm_label": "fix(db-isolation-batch5): bulk bun.env db_path replacement"
+      ]
     },
     {
+      "id": "task_1422",
       "type": "task",
       "label": "feat(morning-briefing-bctc-deadlines): Earnings calendar section",
       "status": "DONE",
@@ -1031,23 +855,19 @@
         "src/application/usecases/assembleBriefing.ts",
         "src/scheduler/morningBriefingJob.ts"
       ],
-      "merge_commit": "7a5eeec",
-      "id": "task_1422",
-      "community": 14,
-      "norm_label": "feat(morning-briefing-bctc-deadlines): earnings calendar section"
+      "merge_commit": "7a5eeec"
     },
     {
+      "id": "task_1423",
       "type": "task",
       "label": "fix(1422): Morning briefing BCTC deadlines implementation",
       "status": "DONE",
       "blocks": [
         "task_1422"
-      ],
-      "id": "task_1423",
-      "community": 14,
-      "norm_label": "fix(1422): morning briefing bctc deadlines implementation"
+      ]
     },
     {
+      "id": "task_1562",
       "type": "task",
       "label": "docs(agent-roster + mcp-tools): Ops agent introduction",
       "status": "DONE",
@@ -1058,12 +878,10 @@
         "cowork-analysis-vnmarket-team/02-financial-analyst.md",
         "cowork-analysis-vnmarket-team/06-digest-predict.md"
       ],
-      "note": "Markdown-only task, no tests",
-      "id": "task_1562",
-      "community": 27,
-      "norm_label": "docs(agent-roster + mcp-tools): ops agent introduction"
+      "note": "Markdown-only task, no tests"
     },
     {
+      "id": "task_1189",
       "type": "task",
       "label": "feat(get_pipeline_health): System diagnostics MCP tool",
       "status": "DONE",
@@ -1088,12 +906,10 @@
       ],
       "tool_count_delta": 1,
       "ddd_compliance": "PASS",
-      "security": "PASS",
-      "id": "task_1189",
-      "community": 6,
-      "norm_label": "feat(get_pipeline_health): system diagnostics mcp tool"
+      "security": "PASS"
     },
     {
+      "id": "task_1358",
       "type": "task",
       "label": "test(ohlcv-aggregator): TDD RED tests for runOhlcvDailyAggregator",
       "status": "DONE",
@@ -1114,12 +930,10 @@
       "files_modified": [
         "src/__tests__/1358-ohlcv-aggregator.test.ts",
         "src/scheduler/ohlcvDailyAggregatorJob.ts"
-      ],
-      "id": "task_1358",
-      "community": 28,
-      "norm_label": "test(ohlcv-aggregator): tdd red tests for runohlcvdailyaggregator"
+      ]
     },
     {
+      "id": "sprint_054_report",
       "type": "sprint",
       "label": "Sprint 054 Complete",
       "date": "2026-04-08",
@@ -1148,12 +962,10 @@
       "tool_count_after": 80,
       "cron_count_before": 22,
       "cron_count_after": 23,
-      "tasks_completed": 12,
-      "id": "sprint_054_report",
-      "community": 6,
-      "norm_label": "sprint 054 complete"
+      "tasks_completed": 12
     },
     {
+      "id": "task_1309",
       "type": "task",
       "label": "feat(bbAlertScanJob): Bollinger Band breakout scanner",
       "status": "DONE",
@@ -1174,23 +986,19 @@
         "src/scheduler/bbAlertScanJob.ts",
         "src/__tests__/1309-bb-alert-scan-job.test.ts"
       ],
-      "scheduler_count_delta": 1,
-      "id": "task_1309",
-      "community": 6,
-      "norm_label": "feat(bbalertscanjob): bollinger band breakout scanner"
+      "scheduler_count_delta": 1
     },
     {
+      "id": "task_1310",
       "type": "task",
       "label": "test(1309): Bollinger Band alert coverage",
       "status": "DONE",
       "blocks": [
         "task_1309"
-      ],
-      "id": "task_1310",
-      "community": 6,
-      "norm_label": "test(1309): bollinger band alert coverage"
+      ]
     },
     {
+      "id": "task_1329",
       "type": "task",
       "label": "fix(278-cycle-peer-sync): DB isolation + stub functions",
       "status": "DONE",
@@ -1207,12 +1015,10 @@
         "5 pre-existing failures unrelated"
       ],
       "sprint": 106,
-      "merge_commit": "2026-04-17",
-      "id": "task_1329",
-      "community": 29,
-      "norm_label": "fix(278-cycle-peer-sync): db isolation + stub functions"
+      "merge_commit": "2026-04-17"
     },
     {
+      "id": "task_1378",
       "type": "task",
       "label": "feat(maybe-deploy-vps.sh): VPS auto-deploy gate",
       "status": "DONE",
@@ -1236,23 +1042,19 @@
         ".claude/dev-standards.md",
         "src/__tests__/1378-vps-auto-deploy.test.ts"
       ],
-      "merge_commit": "10d1ddd",
-      "id": "task_1378",
-      "community": 15,
-      "norm_label": "feat(maybe-deploy-vps.sh): vps auto-deploy gate"
+      "merge_commit": "10d1ddd"
     },
     {
+      "id": "task_1379",
       "type": "task",
       "label": "docs(dev-standards): Step 4a VPS deploy gate",
       "status": "DONE",
       "blocks": [
         "task_1378"
-      ],
-      "id": "task_1379",
-      "community": 15,
-      "norm_label": "docs(dev-standards): step 4a vps deploy gate"
+      ]
     },
     {
+      "id": "task_1453",
       "type": "task",
       "label": "fix(franceSummaryJob-catchup): Startup missed-send recovery",
       "status": "DONE",
@@ -1271,12 +1073,10 @@
         "src/__tests__/1430-startup-catchup.test.ts",
         "src/scheduler/jobs.ts"
       ],
-      "merge_commit": "c38bb4d",
-      "id": "task_1453",
-      "community": 30,
-      "norm_label": "fix(francesummaryjob-catchup): startup missed-send recovery"
+      "merge_commit": "c38bb4d"
     },
     {
+      "id": "task_1402",
       "type": "task",
       "label": "fix(volume-spike-multiplier): Per-ticker adaptive thresholds",
       "status": "DONE",
@@ -1298,23 +1098,19 @@
         "src/interface/mcp/server.ts",
         "src/__tests__/063-signal-detector.test.ts",
         "src/__tests__/133-adaptive-thresholds.test.ts"
-      ],
-      "id": "task_1402",
-      "community": 16,
-      "norm_label": "fix(volume-spike-multiplier): per-ticker adaptive thresholds"
+      ]
     },
     {
+      "id": "task_1403",
       "type": "task",
       "label": "fix(1402): ATC guard boundary safeguard",
       "status": "DONE",
       "blocks": [
         "task_1402"
-      ],
-      "id": "task_1403",
-      "community": 16,
-      "norm_label": "fix(1402): atc guard boundary safeguard"
+      ]
     },
     {
+      "id": "task_088",
       "type": "task",
       "label": "refactor(legacy-cleanup): Delete src/server.ts + src/tools/ stubs",
       "status": "DONE",
@@ -1330,977 +1126,955 @@
         "src/index.ts imports from src/interface/mcp/server.ts",
         "No broken imports"
       ],
-      "merge_commit": "main",
-      "id": "task_088",
-      "community": 31,
-      "norm_label": "refactor(legacy-cleanup): delete src/server.ts + src/tools/ stubs"
+      "merge_commit": "main"
     }
   ],
-  "links": [
+  "edges": [
     {
+      "source": "bctc_schema_ts",
+      "target": "bctc_schema_buildperiod",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "bctc-schema.ts",
       "source_location": "L62",
-      "weight": 1.0,
-      "_src": "bctc_schema_ts",
-      "_tgt": "bctc_schema_buildperiod",
-      "source": "bctc_schema_ts",
-      "target": "bctc_schema_buildperiod",
-      "confidence_score": 1.0
+      "weight": 1.0
     },
     {
+      "source": "bctc_schema_ts",
+      "target": "bctc_schema_buildchartseries",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "bctc-schema.ts",
       "source_location": "L407",
-      "weight": 1.0,
-      "_src": "bctc_schema_ts",
-      "_tgt": "bctc_schema_buildchartseries",
-      "source": "bctc_schema_ts",
-      "target": "bctc_schema_buildchartseries",
-      "confidence_score": 1.0
+      "weight": 1.0
     },
     {
+      "source": "bctc_schema_ts",
+      "target": "bctc_schema_getmetricvalue",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "bctc-schema.ts",
       "source_location": "L538",
-      "weight": 1.0,
-      "_src": "bctc_schema_ts",
-      "_tgt": "bctc_schema_getmetricvalue",
-      "source": "bctc_schema_ts",
-      "target": "bctc_schema_getmetricvalue",
-      "confidence_score": 1.0
+      "weight": 1.0
     },
     {
+      "source": "bctc_schema_ts",
+      "target": "bctc_schema_calcyoy",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "bctc-schema.ts",
       "source_location": "L544",
-      "weight": 1.0,
-      "_src": "bctc_schema_ts",
-      "_tgt": "bctc_schema_calcyoy",
-      "source": "bctc_schema_ts",
-      "target": "bctc_schema_calcyoy",
-      "confidence_score": 1.0
+      "weight": 1.0
     },
     {
+      "source": "bctc_schema_ts",
+      "target": "bctc_schema_calcqoq",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "bctc-schema.ts",
       "source_location": "L563",
-      "weight": 1.0,
-      "_src": "bctc_schema_ts",
-      "_tgt": "bctc_schema_calcqoq",
-      "source": "bctc_schema_ts",
-      "target": "bctc_schema_calcqoq",
-      "confidence_score": 1.0
+      "weight": 1.0
     },
     {
+      "source": "bctc_schema_ts",
+      "target": "bctc_schema_computeratios",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "bctc-schema.ts",
       "source_location": "L633",
-      "weight": 1.0,
-      "_src": "bctc_schema_ts",
-      "_tgt": "bctc_schema_computeratios",
-      "source": "bctc_schema_ts",
-      "target": "bctc_schema_computeratios",
-      "confidence_score": 1.0
+      "weight": 1.0
     },
     {
+      "source": "bctc_schema_ts",
+      "target": "bctc_schema_emptyreport",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "bctc-schema.ts",
       "source_location": "L942",
-      "weight": 1.0,
-      "_src": "bctc_schema_ts",
-      "_tgt": "bctc_schema_emptyreport",
-      "source": "bctc_schema_ts",
-      "target": "bctc_schema_emptyreport",
-      "confidence_score": 1.0
+      "weight": 1.0
     },
     {
-      "relation": "imports_from",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/smoke-test-sprint-001.ts",
-      "source_location": "L20",
-      "weight": 1.0,
-      "_src": "scripts_smoke_test_sprint_001_ts",
-      "_tgt": "bctc_schema_ts",
-      "source": "bctc_schema_ts",
-      "target": "scripts_smoke_test_sprint_001_ts",
-      "confidence_score": 1.0
-    },
-    {
+      "source": "bctc_schema_calcyoy",
+      "target": "bctc_schema_getmetricvalue",
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "bctc-schema.ts",
       "source_location": "L550",
-      "weight": 1.0,
-      "_src": "bctc_schema_calcyoy",
-      "_tgt": "bctc_schema_getmetricvalue",
-      "source": "bctc_schema_getmetricvalue",
-      "target": "bctc_schema_calcyoy",
-      "confidence_score": 1.0
+      "weight": 1.0
     },
     {
+      "source": "bctc_schema_calcqoq",
+      "target": "bctc_schema_getmetricvalue",
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "bctc-schema.ts",
       "source_location": "L568",
-      "weight": 1.0,
-      "_src": "bctc_schema_calcqoq",
-      "_tgt": "bctc_schema_getmetricvalue",
-      "source": "bctc_schema_getmetricvalue",
-      "target": "bctc_schema_calcqoq",
-      "confidence_score": 1.0
+      "weight": 1.0
     },
     {
+      "source": "vps_scripts_fetch_browser_py",
+      "target": "sys",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "vps-scripts/fetch-browser.py",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "vps_scripts_fetch_browser_py",
+      "target": "json",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "vps-scripts/fetch-browser.py",
+      "source_location": "L16",
+      "weight": 1.0
+    },
+    {
+      "source": "vps_scripts_fetch_browser_py",
+      "target": "time",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "vps-scripts/fetch-browser.py",
+      "source_location": "L17",
+      "weight": 1.0
+    },
+    {
+      "source": "vps_scripts_fetch_browser_py",
+      "target": "random",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "vps-scripts/fetch-browser.py",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "vps_scripts_fetch_browser_py",
+      "target": "xml_etree_elementtree",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "vps-scripts/fetch-browser.py",
+      "source_location": "L19",
+      "weight": 1.0
+    },
+    {
+      "source": "vps_scripts_fetch_browser_py",
+      "target": "html",
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "vps-scripts/fetch-browser.py",
+      "source_location": "L20",
+      "weight": 1.0
+    },
+    {
+      "source": "vps_scripts_fetch_browser_py",
+      "target": "playwright_sync_api",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "vps-scripts/fetch-browser.py",
+      "source_location": "L22",
+      "weight": 1.0
+    },
+    {
+      "source": "vps_scripts_fetch_browser_py",
+      "target": "fetch_browser_parse_rss",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "vps-scripts/fetch-browser.py",
       "source_location": "L38",
-      "weight": 1.0,
-      "_src": "vps_scripts_fetch_browser_py",
-      "_tgt": "fetch_browser_parse_rss",
-      "source": "vps_scripts_fetch_browser_py",
-      "target": "fetch_browser_parse_rss",
-      "confidence_score": 1.0
+      "weight": 1.0
     },
     {
+      "source": "vps_scripts_fetch_browser_py",
+      "target": "fetch_browser_fetch_with_browser",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "vps-scripts/fetch-browser.py",
       "source_location": "L65",
-      "weight": 1.0,
-      "_src": "vps_scripts_fetch_browser_py",
-      "_tgt": "fetch_browser_fetch_with_browser",
-      "source": "vps_scripts_fetch_browser_py",
-      "target": "fetch_browser_fetch_with_browser",
-      "confidence_score": 1.0
+      "weight": 1.0
     },
     {
+      "source": "fetch_browser_fetch_with_browser",
+      "target": "fetch_browser_parse_rss",
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "vps-scripts/fetch-browser.py",
       "source_location": "L142",
-      "weight": 1.0,
-      "_src": "fetch_browser_fetch_with_browser",
-      "_tgt": "fetch_browser_parse_rss",
-      "source": "fetch_browser_parse_rss",
-      "target": "fetch_browser_fetch_with_browser",
-      "confidence_score": 1.0
+      "weight": 1.0
     },
     {
+      "source": "fetch_browser_rationale_39",
+      "target": "fetch_browser_parse_rss",
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "vps-scripts/fetch-browser.py",
       "source_location": "L39",
-      "weight": 1.0,
-      "_src": "fetch_browser_rationale_39",
-      "_tgt": "fetch_browser_parse_rss",
-      "source": "fetch_browser_parse_rss",
-      "target": "fetch_browser_rationale_39",
-      "confidence_score": 1.0
+      "weight": 1.0
     },
     {
+      "source": "scripts_smoke_test_sprint_001_ts",
+      "target": "src_application_usecases_parsebctcreport_ts",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/smoke-test-sprint-001.ts",
+      "source_location": "L17",
+      "weight": 1.0
+    },
+    {
+      "source": "scripts_smoke_test_sprint_001_ts",
+      "target": "src_infrastructure_db_schema_ts",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/smoke-test-sprint-001.ts",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "scripts_smoke_test_sprint_001_ts",
+      "target": "src_domain_services_embeddingtextbuilder_ts",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/smoke-test-sprint-001.ts",
+      "source_location": "L19",
+      "weight": 1.0
+    },
+    {
+      "source": "scripts_smoke_test_sprint_001_ts",
+      "target": "bctc_schema_ts",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/smoke-test-sprint-001.ts",
+      "source_location": "L20",
+      "weight": 1.0
+    },
+    {
+      "source": "scripts_smoke_test_sprint_001_ts",
+      "target": "smoke_test_sprint_001_check",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "scripts/smoke-test-sprint-001.ts",
       "source_location": "L81",
-      "weight": 1.0,
-      "_src": "scripts_smoke_test_sprint_001_ts",
-      "_tgt": "smoke_test_sprint_001_check",
-      "source": "scripts_smoke_test_sprint_001_ts",
-      "target": "smoke_test_sprint_001_check",
-      "confidence_score": 1.0
+      "weight": 1.0
     },
     {
+      "source": "scripts_purge_phantom_reports_ts",
+      "target": "bun_sqlite",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/purge-phantom-reports.ts",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "scripts_purge_phantom_reports_ts",
+      "target": "node_path",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/purge-phantom-reports.ts",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "scripts_purge_phantom_reports_ts",
+      "target": "node_fs",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/purge-phantom-reports.ts",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "scripts_parse_hexagrams_ts",
+      "target": "fs",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/parse-hexagrams.ts",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "scripts_parse_hexagrams_ts",
+      "target": "path",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/parse-hexagrams.ts",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "scripts_parse_hexagrams_ts",
+      "target": "parse_hexagrams_normaliseoutcome",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "scripts/parse-hexagrams.ts",
       "source_location": "L15",
-      "weight": 1.0,
-      "_src": "scripts_parse_hexagrams_ts",
-      "_tgt": "parse_hexagrams_normaliseoutcome",
-      "source": "scripts_parse_hexagrams_ts",
-      "target": "parse_hexagrams_normaliseoutcome",
-      "confidence_score": 1.0
+      "weight": 1.0
     },
     {
+      "source": "scripts_parse_hexagrams_ts",
+      "target": "parse_hexagrams_normaliseaction",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "scripts/parse-hexagrams.ts",
       "source_location": "L57",
-      "weight": 1.0,
-      "_src": "scripts_parse_hexagrams_ts",
-      "_tgt": "parse_hexagrams_normaliseaction",
-      "source": "scripts_parse_hexagrams_ts",
-      "target": "parse_hexagrams_normaliseaction",
-      "confidence_score": 1.0
+      "weight": 1.0
     },
     {
+      "source": "scripts_parse_hexagrams_ts",
+      "target": "parse_hexagrams_esc",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "scripts/parse-hexagrams.ts",
       "source_location": "L69",
-      "weight": 1.0,
-      "_src": "scripts_parse_hexagrams_ts",
-      "_tgt": "parse_hexagrams_esc",
-      "source": "scripts_parse_hexagrams_ts",
-      "target": "parse_hexagrams_esc",
-      "confidence_score": 1.0
+      "weight": 1.0
     },
     {
+      "source": "scripts_parse_hexagrams_ts",
+      "target": "parse_hexagrams_parsehexagram",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "scripts/parse-hexagrams.ts",
       "source_location": "L102",
-      "weight": 1.0,
-      "_src": "scripts_parse_hexagrams_ts",
-      "_tgt": "parse_hexagrams_parsehexagram",
-      "source": "scripts_parse_hexagrams_ts",
-      "target": "parse_hexagrams_parsehexagram",
-      "confidence_score": 1.0
+      "weight": 1.0
     },
     {
+      "source": "scripts_parse_hexagrams_ts",
+      "target": "parse_hexagrams_generatequedataentry",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "scripts/parse-hexagrams.ts",
       "source_location": "L304",
-      "weight": 1.0,
-      "_src": "scripts_parse_hexagrams_ts",
-      "_tgt": "parse_hexagrams_generatequedataentry",
-      "source": "scripts_parse_hexagrams_ts",
-      "target": "parse_hexagrams_generatequedataentry",
-      "confidence_score": 1.0
+      "weight": 1.0
     },
     {
+      "source": "parse_hexagrams_parsehexagram",
+      "target": "parse_hexagrams_normaliseoutcome",
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "scripts/parse-hexagrams.ts",
       "source_location": "L241",
-      "weight": 1.0,
-      "_src": "parse_hexagrams_parsehexagram",
-      "_tgt": "parse_hexagrams_normaliseoutcome",
-      "source": "parse_hexagrams_normaliseoutcome",
-      "target": "parse_hexagrams_parsehexagram",
-      "confidence_score": 1.0
+      "weight": 1.0
     },
     {
+      "source": "parse_hexagrams_parsehexagram",
+      "target": "parse_hexagrams_normaliseaction",
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "scripts/parse-hexagrams.ts",
       "source_location": "L244",
-      "weight": 1.0,
-      "_src": "parse_hexagrams_parsehexagram",
-      "_tgt": "parse_hexagrams_normaliseaction",
-      "source": "parse_hexagrams_normaliseaction",
-      "target": "parse_hexagrams_parsehexagram",
-      "confidence_score": 1.0
+      "weight": 1.0
     },
     {
+      "source": "parse_hexagrams_generatequedataentry",
+      "target": "parse_hexagrams_esc",
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "scripts/parse-hexagrams.ts",
       "source_location": "L310",
-      "weight": 1.0,
-      "_src": "parse_hexagrams_generatequedataentry",
-      "_tgt": "parse_hexagrams_esc",
-      "source": "parse_hexagrams_esc",
-      "target": "parse_hexagrams_generatequedataentry",
-      "confidence_score": 1.0
+      "weight": 1.0
     },
     {
+      "source": "src_index_ts",
+      "target": "src_infrastructure_config_ts",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "src/index.ts",
+      "source_location": "L29",
+      "weight": 1.0
+    },
+    {
+      "source": "src_index_ts",
+      "target": "src_infrastructure_logger_ts",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "src/index.ts",
+      "source_location": "L30",
+      "weight": 1.0
+    },
+    {
+      "source": "src_index_ts",
+      "target": "src_infrastructure_db_index_ts",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "src/index.ts",
+      "source_location": "L31",
+      "weight": 1.0
+    },
+    {
+      "source": "src_index_ts",
+      "target": "src_interface_mcp_server_ts",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "src/index.ts",
+      "source_location": "L32",
+      "weight": 1.0
+    },
+    {
+      "source": "src_index_ts",
+      "target": "src_scheduler_jobs_ts",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "src/index.ts",
+      "source_location": "L33",
+      "weight": 1.0
+    },
+    {
+      "source": "src_index_ts",
+      "target": "src_infrastructure_notifiers_telegramwebhooksetup_ts",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "src/index.ts",
+      "source_location": "L34",
+      "weight": 1.0
+    },
+    {
+      "source": "src_index_ts",
+      "target": "src_infrastructure_envcheck_ts",
+      "relation": "imports_from",
+      "confidence": "EXTRACTED",
+      "source_file": "src/index.ts",
+      "source_location": "L35",
+      "weight": 1.0
+    },
+    {
+      "source": "src_index_ts",
+      "target": "index_shutdown",
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/index.ts",
       "source_location": "L154",
-      "weight": 1.0,
-      "_src": "src_index_ts",
-      "_tgt": "index_shutdown",
-      "source": "src_index_ts",
-      "target": "index_shutdown",
+      "weight": 1.0
+    },
+    {
+      "source": "sprint_1278",
+      "target": "req_1278",
+      "relation": "references",
+      "confidence": "EXTRACTED",
       "confidence_score": 1.0
     },
     {
+      "source": "sprint_1278",
+      "target": "tech_1278",
       "relation": "references",
       "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "_src": "sprint_1278",
-      "_tgt": "req_1278",
-      "source": "sprint_1278",
-      "target": "req_1278"
+      "confidence_score": 1.0
     },
     {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "_src": "sprint_1278",
-      "_tgt": "tech_1278",
-      "source": "sprint_1278",
-      "target": "tech_1278"
-    },
-    {
+      "source": "req_1278",
+      "target": "insider_dump_rules",
       "relation": "implements",
       "confidence": "EXTRACTED",
-      "confidence_score": 0.95,
-      "_src": "req_1278",
-      "_tgt": "insider_dump_rules",
-      "source": "req_1278",
-      "target": "insider_dump_rules"
+      "confidence_score": 0.95
     },
     {
+      "source": "req_1278",
+      "target": "cascade_pattern",
       "relation": "references",
       "confidence": "EXTRACTED",
-      "confidence_score": 0.9,
-      "_src": "req_1278",
-      "_tgt": "cascade_pattern",
-      "source": "req_1278",
-      "target": "cascade_pattern"
+      "confidence_score": 0.9
     },
     {
+      "source": "req_1278",
+      "target": "banking_sector_contagion",
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
-      "confidence_score": 0.95,
-      "_src": "req_1278",
-      "_tgt": "banking_sector_contagion",
-      "source": "req_1278",
-      "target": "banking_sector_contagion"
+      "confidence_score": 0.95
     },
     {
+      "source": "tech_1278",
+      "target": "cascade_engine",
       "relation": "implements",
       "confidence": "EXTRACTED",
-      "confidence_score": 0.95,
-      "_src": "tech_1278",
-      "_tgt": "cascade_engine",
-      "source": "tech_1278",
-      "target": "cascade_engine"
+      "confidence_score": 0.95
     },
     {
+      "source": "tech_1278",
+      "target": "cascade_executor",
       "relation": "implements",
       "confidence": "EXTRACTED",
-      "confidence_score": 0.95,
-      "_src": "tech_1278",
-      "_tgt": "cascade_executor",
-      "source": "tech_1278",
-      "target": "cascade_executor"
+      "confidence_score": 0.95
     },
     {
+      "source": "tech_1278",
+      "target": "red_phase_1278a",
       "relation": "references",
       "confidence": "EXTRACTED",
-      "confidence_score": 0.9,
-      "_src": "tech_1278",
-      "_tgt": "red_phase_1278a",
-      "source": "tech_1278",
-      "target": "red_phase_1278a"
+      "confidence_score": 0.9
     },
     {
+      "source": "tech_1278",
+      "target": "green_phase_1278b",
       "relation": "references",
       "confidence": "EXTRACTED",
-      "confidence_score": 0.9,
-      "_src": "tech_1278",
-      "_tgt": "green_phase_1278b",
-      "source": "tech_1278",
-      "target": "green_phase_1278b"
+      "confidence_score": 0.9
     },
     {
+      "source": "tech_1278",
+      "target": "ddd_compliance",
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
-      "confidence_score": 0.95,
-      "_src": "tech_1278",
-      "_tgt": "ddd_compliance",
-      "source": "tech_1278",
-      "target": "ddd_compliance"
+      "confidence_score": 0.95
     },
     {
+      "source": "sprint_1279",
+      "target": "req_1279",
       "relation": "references",
       "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "_src": "sprint_1279",
-      "_tgt": "req_1279",
-      "source": "sprint_1279",
-      "target": "req_1279"
+      "confidence_score": 1.0
     },
     {
+      "source": "sprint_1279",
+      "target": "tech_1279",
       "relation": "references",
       "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "_src": "sprint_1279",
-      "_tgt": "tech_1279",
-      "source": "sprint_1279",
-      "target": "tech_1279"
+      "confidence_score": 1.0
     },
     {
+      "source": "sprint_1279",
+      "target": "sprint_1279_design_summary",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 0.95
+    },
+    {
+      "source": "req_1279",
+      "target": "msci_inclusion_rules",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 0.95
+    },
+    {
+      "source": "req_1279",
+      "target": "cascade_pattern",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 0.9
+    },
+    {
+      "source": "req_1279",
+      "target": "large_cap_cross_sector",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 0.95
+    },
+    {
+      "source": "req_1279",
+      "target": "confidence_threshold_0_7",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 0.95
+    },
+    {
+      "source": "req_1279b",
+      "target": "msci_detector",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 0.95
+    },
+    {
+      "source": "req_1279b",
+      "target": "cascade_executor",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 0.9
+    },
+    {
+      "source": "tech_1279",
+      "target": "msci_detector",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 0.95
+    },
+    {
+      "source": "tech_1279",
+      "target": "msci_inclusion_rules",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 0.95
+    },
+    {
+      "source": "tech_1279",
+      "target": "cascade_engine",
+      "relation": "impacts",
+      "confidence": "EXTRACTED",
+      "confidence_score": 0.9
+    },
+    {
+      "source": "tech_1279",
+      "target": "red_phase_1279a",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 0.9
+    },
+    {
+      "source": "tech_1279",
+      "target": "green_phase_1279b",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 0.9
+    },
+    {
+      "source": "tech_1279b",
+      "target": "green_phase_1279b",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 0.95
+    },
+    {
+      "source": "tech_1279b",
+      "target": "cascade_engine",
+      "relation": "impacts",
+      "confidence": "EXTRACTED",
+      "confidence_score": 0.9
+    },
+    {
+      "source": "tech_1279b",
+      "target": "baseline_6171_to_6187",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 0.95
+    },
+    {
+      "source": "sprint_1281",
+      "target": "req_1281",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "sprint_1281",
+      "target": "tech_1281",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "id": "req_1281",
+      "target": "agriculture_weather_rules",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 0.95
+    },
+    {
+      "source": "req_1281",
+      "target": "cascade_pattern",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 0.9
+    },
+    {
+      "source": "req_1281",
+      "target": "blockers_1281",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0
+    },
+    {
+      "source": "tech_1281",
+      "target": "agriculture_detector",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 0.95
+    },
+    {
+      "source": "tech_1281",
+      "target": "agriculture_weather_rules",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 0.95
+    },
+    {
+      "source": "tech_1281",
+      "target": "red_phase_1281a",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 0.9
+    },
+    {
+      "source": "tech_1281",
+      "target": "green_phase_1281b",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 0.9
+    },
+    {
+      "source": "cascade_pattern",
+      "target": "insider_dump_rules",
+      "relation": "pattern_of",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85
+    },
+    {
+      "source": "cascade_pattern",
+      "target": "msci_inclusion_rules",
+      "relation": "pattern_of",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85
+    },
+    {
+      "source": "cascade_pattern",
+      "target": "agriculture_weather_rules",
+      "relation": "pattern_of",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85
+    },
+    {
+      "source": "msci_detector",
+      "target": "domain_service_pure_logic",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 0.95
+    },
+    {
+      "source": "agriculture_detector",
+      "target": "domain_service_pure_logic",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 0.95
+    },
+    {
+      "source": "confidence_threshold_0_7",
+      "target": "large_cap_cross_sector",
+      "relation": "rationale_for",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8
+    },
+    {
+      "source": "sentiment_bullish_opposite_insider",
+      "target": "insider_dump_bearish",
+      "relation": "contrasts",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85
+    },
+    {
+      "source": "weather_credibility_0_6",
+      "target": "confidence_threshold_0_7",
+      "relation": "contrasts",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8
+    },
+    {
+      "source": "keyword_whole_word_matching",
+      "target": "msci_detector",
+      "relation": "pattern_of",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85
+    },
+    {
+      "source": "keyword_whole_word_matching",
+      "target": "agriculture_detector",
+      "relation": "pattern_of",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85
+    },
+    {
+      "source": "confidence_formula",
+      "target": "baseline_6171_to_6187",
+      "relation": "rationale_for",
+      "confidence": "INFERRED",
+      "confidence_score": 0.75
+    },
+    {
+      "source": "red_phase_1278a",
+      "target": "green_phase_1278b",
+      "relation": "blocks",
+      "confidence": "INFERRED",
+      "confidence_score": 0.9
+    },
+    {
+      "source": "red_phase_1279a",
+      "target": "green_phase_1279b",
+      "relation": "blocks",
+      "confidence": "INFERRED",
+      "confidence_score": 0.9
+    },
+    {
+      "source": "red_phase_1281a",
+      "target": "green_phase_1281b",
+      "relation": "blocks",
+      "confidence": "INFERRED",
+      "confidence_score": 0.9
+    },
+    {
+      "source": "tdd_red_green",
+      "target": "red_phase_1278a",
+      "relation": "pattern_of",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85
+    },
+    {
+      "source": "tdd_red_green",
+      "target": "red_phase_1279a",
+      "relation": "pattern_of",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85
+    },
+    {
+      "source": "tdd_red_green",
+      "target": "red_phase_1281a",
+      "relation": "pattern_of",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85
+    },
+    {
+      "source": "ddd_layer_violations",
+      "target": "ddd_compliance",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 0.95
+    },
+    {
+      "source": "ddd_compliance",
+      "target": "cascade_executor",
+      "relation": "rationale_for",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85
+    },
+    {
+      "source": "ddd_compliance",
+      "target": "msci_detector",
+      "relation": "rationale_for",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85
+    },
+    {
+      "source": "ddd_compliance",
+      "target": "agriculture_detector",
+      "relation": "rationale_for",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85
+    },
+    {
+      "source": "session_2026_04_22_morning",
+      "target": "ddd_layer_violations",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 0.9
+    },
+    {
+      "source": "agent_memory_system",
+      "target": "ddd_layer_violations",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 0.9
+    },
+    {
+      "source": "sprint_1279_design_summary",
+      "target": "sprint_1279",
       "relation": "documents",
       "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "_src": "sprint_1279_design_summary",
-      "_tgt": "sprint_1279",
-      "source": "sprint_1279",
-      "target": "sprint_1279_design_summary"
+      "confidence_score": 1.0
     },
     {
-      "relation": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 0.95,
-      "_src": "req_1279",
-      "_tgt": "msci_inclusion_rules",
-      "source": "req_1279",
-      "target": "msci_inclusion_rules"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "confidence_score": 0.9,
-      "_src": "req_1279",
-      "_tgt": "cascade_pattern",
-      "source": "req_1279",
-      "target": "cascade_pattern"
-    },
-    {
-      "relation": "rationale_for",
-      "confidence": "EXTRACTED",
-      "confidence_score": 0.95,
-      "_src": "req_1279",
-      "_tgt": "large_cap_cross_sector",
-      "source": "req_1279",
-      "target": "large_cap_cross_sector"
-    },
-    {
-      "relation": "rationale_for",
-      "confidence": "EXTRACTED",
-      "confidence_score": 0.95,
-      "_src": "req_1279",
-      "_tgt": "confidence_threshold_0_7",
-      "source": "req_1279",
-      "target": "confidence_threshold_0_7"
-    },
-    {
-      "relation": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 0.95,
-      "_src": "req_1279b",
-      "_tgt": "msci_detector",
-      "source": "req_1279b",
-      "target": "msci_detector"
-    },
-    {
-      "relation": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 0.9,
-      "_src": "req_1279b",
-      "_tgt": "cascade_executor",
-      "source": "req_1279b",
-      "target": "cascade_executor"
-    },
-    {
-      "relation": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 0.95,
-      "_src": "tech_1279",
-      "_tgt": "msci_detector",
-      "source": "tech_1279",
-      "target": "msci_detector"
-    },
-    {
-      "relation": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 0.95,
-      "_src": "tech_1279",
-      "_tgt": "msci_inclusion_rules",
-      "source": "tech_1279",
-      "target": "msci_inclusion_rules"
-    },
-    {
-      "relation": "impacts",
-      "confidence": "EXTRACTED",
-      "confidence_score": 0.9,
-      "_src": "tech_1279",
-      "_tgt": "cascade_engine",
-      "source": "tech_1279",
-      "target": "cascade_engine"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "confidence_score": 0.9,
-      "_src": "tech_1279",
-      "_tgt": "red_phase_1279a",
-      "source": "tech_1279",
-      "target": "red_phase_1279a"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "confidence_score": 0.9,
-      "_src": "tech_1279",
-      "_tgt": "green_phase_1279b",
-      "source": "tech_1279",
-      "target": "green_phase_1279b"
-    },
-    {
-      "relation": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 0.95,
-      "_src": "tech_1279b",
-      "_tgt": "green_phase_1279b",
-      "source": "tech_1279b",
-      "target": "green_phase_1279b"
-    },
-    {
-      "relation": "impacts",
-      "confidence": "EXTRACTED",
-      "confidence_score": 0.9,
-      "_src": "tech_1279b",
-      "_tgt": "cascade_engine",
-      "source": "tech_1279b",
-      "target": "cascade_engine"
-    },
-    {
-      "relation": "rationale_for",
-      "confidence": "EXTRACTED",
-      "confidence_score": 0.95,
-      "_src": "tech_1279b",
-      "_tgt": "baseline_6171_to_6187",
-      "source": "tech_1279b",
-      "target": "baseline_6171_to_6187"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "_src": "sprint_1281",
-      "_tgt": "req_1281",
-      "source": "sprint_1281",
-      "target": "req_1281"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "_src": "sprint_1281",
-      "_tgt": "tech_1281",
-      "source": "sprint_1281",
-      "target": "tech_1281"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "confidence_score": 0.9,
-      "_src": "req_1281",
-      "_tgt": "cascade_pattern",
-      "source": "req_1281",
-      "target": "cascade_pattern"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "_src": "req_1281",
-      "_tgt": "blockers_1281",
-      "source": "req_1281",
-      "target": "blockers_1281"
-    },
-    {
-      "relation": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 0.95,
-      "_src": "tech_1281",
-      "_tgt": "agriculture_detector",
-      "source": "tech_1281",
-      "target": "agriculture_detector"
-    },
-    {
-      "relation": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 0.95,
-      "_src": "tech_1281",
-      "_tgt": "agriculture_weather_rules",
-      "source": "tech_1281",
-      "target": "agriculture_weather_rules"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "confidence_score": 0.9,
-      "_src": "tech_1281",
-      "_tgt": "red_phase_1281a",
-      "source": "tech_1281",
-      "target": "red_phase_1281a"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "confidence_score": 0.9,
-      "_src": "tech_1281",
-      "_tgt": "green_phase_1281b",
-      "source": "tech_1281",
-      "target": "green_phase_1281b"
-    },
-    {
-      "relation": "pattern_of",
-      "confidence": "INFERRED",
-      "confidence_score": 0.85,
-      "_src": "cascade_pattern",
-      "_tgt": "insider_dump_rules",
-      "source": "cascade_pattern",
-      "target": "insider_dump_rules"
-    },
-    {
-      "relation": "pattern_of",
-      "confidence": "INFERRED",
-      "confidence_score": 0.85,
-      "_src": "cascade_pattern",
-      "_tgt": "msci_inclusion_rules",
-      "source": "cascade_pattern",
-      "target": "msci_inclusion_rules"
-    },
-    {
-      "relation": "pattern_of",
-      "confidence": "INFERRED",
-      "confidence_score": 0.85,
-      "_src": "cascade_pattern",
-      "_tgt": "agriculture_weather_rules",
-      "source": "cascade_pattern",
-      "target": "agriculture_weather_rules"
-    },
-    {
-      "relation": "rationale_for",
-      "confidence": "INFERRED",
-      "confidence_score": 0.8,
-      "_src": "performance_target_50ms",
-      "_tgt": "cascade_pattern",
-      "source": "cascade_pattern",
-      "target": "performance_target_50ms"
-    },
-    {
-      "relation": "rationale_for",
-      "confidence": "INFERRED",
-      "confidence_score": 0.85,
-      "_src": "ddd_compliance",
-      "_tgt": "cascade_executor",
-      "source": "cascade_executor",
-      "target": "ddd_compliance"
-    },
-    {
-      "relation": "pattern_of",
-      "confidence": "INFERRED",
-      "confidence_score": 0.8,
-      "_src": "watchlist_filtering",
-      "_tgt": "cascade_executor",
-      "source": "cascade_executor",
-      "target": "watchlist_filtering"
-    },
-    {
-      "relation": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 0.95,
-      "_src": "msci_detector",
-      "_tgt": "domain_service_pure_logic",
-      "source": "msci_detector",
-      "target": "domain_service_pure_logic"
-    },
-    {
-      "relation": "pattern_of",
-      "confidence": "INFERRED",
-      "confidence_score": 0.85,
-      "_src": "keyword_whole_word_matching",
-      "_tgt": "msci_detector",
-      "source": "msci_detector",
-      "target": "keyword_whole_word_matching"
-    },
-    {
-      "relation": "rationale_for",
-      "confidence": "INFERRED",
-      "confidence_score": 0.85,
-      "_src": "ddd_compliance",
-      "_tgt": "msci_detector",
-      "source": "msci_detector",
-      "target": "ddd_compliance"
-    },
-    {
-      "relation": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 0.95,
-      "_src": "agriculture_detector",
-      "_tgt": "domain_service_pure_logic",
-      "source": "agriculture_detector",
-      "target": "domain_service_pure_logic"
-    },
-    {
-      "relation": "pattern_of",
-      "confidence": "INFERRED",
-      "confidence_score": 0.85,
-      "_src": "keyword_whole_word_matching",
-      "_tgt": "agriculture_detector",
-      "source": "agriculture_detector",
-      "target": "keyword_whole_word_matching"
-    },
-    {
-      "relation": "rationale_for",
-      "confidence": "INFERRED",
-      "confidence_score": 0.85,
-      "_src": "ddd_compliance",
-      "_tgt": "agriculture_detector",
-      "source": "agriculture_detector",
-      "target": "ddd_compliance"
-    },
-    {
-      "relation": "pattern_of",
-      "confidence": "INFERRED",
-      "confidence_score": 0.85,
-      "_src": "forecast_penalty",
-      "_tgt": "agriculture_detector",
-      "source": "agriculture_detector",
-      "target": "forecast_penalty"
-    },
-    {
-      "relation": "pattern_of",
-      "confidence": "INFERRED",
-      "confidence_score": 0.85,
-      "_src": "tdd_red_green",
-      "_tgt": "red_phase_1278a",
-      "source": "tdd_red_green",
-      "target": "red_phase_1278a"
-    },
-    {
-      "relation": "pattern_of",
-      "confidence": "INFERRED",
-      "confidence_score": 0.85,
-      "_src": "tdd_red_green",
-      "_tgt": "red_phase_1279a",
-      "source": "tdd_red_green",
-      "target": "red_phase_1279a"
-    },
-    {
-      "relation": "pattern_of",
-      "confidence": "INFERRED",
-      "confidence_score": 0.85,
-      "_src": "tdd_red_green",
-      "_tgt": "red_phase_1281a",
-      "source": "tdd_red_green",
-      "target": "red_phase_1281a"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "confidence_score": 0.95,
-      "_src": "ddd_layer_violations",
-      "_tgt": "ddd_compliance",
-      "source": "ddd_layer_violations",
-      "target": "ddd_compliance"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "confidence_score": 0.9,
-      "_src": "session_2026_04_22_morning",
-      "_tgt": "ddd_layer_violations",
-      "source": "ddd_layer_violations",
-      "target": "session_2026_04_22_morning"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "confidence_score": 0.9,
-      "_src": "agent_memory_system",
-      "_tgt": "ddd_layer_violations",
-      "source": "ddd_layer_violations",
-      "target": "agent_memory_system"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "confidence_score": 0.95,
-      "_src": "sprint_1279_design_summary",
-      "_tgt": "confidence_threshold_0_7",
       "source": "sprint_1279_design_summary",
-      "target": "confidence_threshold_0_7"
-    },
-    {
+      "target": "confidence_threshold_0_7",
       "relation": "references",
       "confidence": "EXTRACTED",
-      "confidence_score": 0.95,
-      "_src": "sprint_1279_design_summary",
-      "_tgt": "large_cap_cross_sector",
-      "source": "sprint_1279_design_summary",
-      "target": "large_cap_cross_sector"
+      "confidence_score": 0.95
     },
     {
+      "source": "sprint_1279_design_summary",
+      "target": "large_cap_cross_sector",
       "relation": "references",
       "confidence": "EXTRACTED",
-      "confidence_score": 0.95,
-      "_src": "sprint_1279_design_summary",
-      "_tgt": "baseline_6171_to_6187",
+      "confidence_score": 0.95
+    },
+    {
       "source": "sprint_1279_design_summary",
-      "target": "baseline_6171_to_6187"
+      "target": "baseline_6171_to_6187",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 0.95
     },
     {
+      "source": "performance_target_50ms",
+      "target": "cascade_pattern",
       "relation": "rationale_for",
       "confidence": "INFERRED",
-      "confidence_score": 0.8,
-      "_src": "confidence_threshold_0_7",
-      "_tgt": "large_cap_cross_sector",
-      "source": "confidence_threshold_0_7",
-      "target": "large_cap_cross_sector"
+      "confidence_score": 0.8
     },
     {
-      "relation": "contrasts",
+      "source": "forecast_penalty",
+      "target": "agriculture_detector",
+      "relation": "pattern_of",
       "confidence": "INFERRED",
-      "confidence_score": 0.8,
-      "_src": "weather_credibility_0_6",
-      "_tgt": "confidence_threshold_0_7",
-      "source": "confidence_threshold_0_7",
-      "target": "weather_credibility_0_6"
+      "confidence_score": 0.85
     },
     {
-      "relation": "contrasts",
+      "source": "watchlist_filtering",
+      "target": "cascade_executor",
+      "relation": "pattern_of",
       "confidence": "INFERRED",
-      "confidence_score": 0.85,
-      "_src": "sentiment_bullish_opposite_insider",
-      "_tgt": "insider_dump_bearish",
-      "source": "sentiment_bullish_opposite_insider",
-      "target": "insider_dump_bearish"
+      "confidence_score": 0.8
     },
     {
-      "relation": "rationale_for",
-      "confidence": "INFERRED",
-      "confidence_score": 0.75,
-      "_src": "confidence_formula",
-      "_tgt": "baseline_6171_to_6187",
-      "source": "baseline_6171_to_6187",
-      "target": "confidence_formula"
-    },
-    {
-      "relation": "blocks",
-      "confidence": "INFERRED",
-      "confidence_score": 0.9,
-      "_src": "red_phase_1278a",
-      "_tgt": "green_phase_1278b",
-      "source": "red_phase_1278a",
-      "target": "green_phase_1278b"
-    },
-    {
-      "relation": "blocks",
-      "confidence": "INFERRED",
-      "confidence_score": 0.9,
-      "_src": "red_phase_1279a",
-      "_tgt": "green_phase_1279b",
-      "source": "red_phase_1279a",
-      "target": "green_phase_1279b"
-    },
-    {
-      "relation": "blocks",
-      "confidence": "INFERRED",
-      "confidence_score": 0.9,
-      "_src": "red_phase_1281a",
-      "_tgt": "green_phase_1281b",
-      "source": "red_phase_1281a",
-      "target": "green_phase_1281b"
-    },
-    {
-      "type": "blocks",
-      "weight": 1.0,
-      "_src": "task_1348",
-      "_tgt": "task_1349",
       "source": "task_1348",
       "target": "task_1349",
-      "confidence_score": 1.0
-    },
-    {
       "type": "blocks",
-      "weight": 0.6,
-      "note": "1566_b fixes DDD violation in foreign-flow logic",
-      "_src": "task_1432",
-      "_tgt": "task_1566_b",
-      "source": "task_1432",
-      "target": "task_1566_b",
-      "confidence_score": 1.0
+      "weight": 1.0
     },
     {
-      "type": "informs",
-      "weight": 0.7,
-      "_src": "report_market_watch_2026_04_01",
-      "_tgt": "task_238b",
-      "source": "task_238b",
-      "target": "report_market_watch_2026_04_01",
-      "confidence_score": 1.0
-    },
-    {
-      "type": "blocks",
-      "weight": 1.0,
-      "_src": "task_1406",
-      "_tgt": "task_1407",
       "source": "task_1406",
       "target": "task_1407",
-      "confidence_score": 1.0
+      "type": "blocks",
+      "weight": 1.0
     },
     {
-      "type": "blocks",
-      "weight": 1.0,
-      "_src": "task_1416",
-      "_tgt": "task_1417",
       "source": "task_1416",
       "target": "task_1417",
-      "confidence_score": 1.0
+      "type": "blocks",
+      "weight": 1.0
     },
     {
-      "type": "blocks",
-      "weight": 1.0,
-      "_src": "task_1422",
-      "_tgt": "task_1423",
       "source": "task_1422",
       "target": "task_1423",
-      "confidence_score": 1.0
-    },
-    {
-      "type": "implements",
-      "weight": 0.8,
-      "_src": "sprint_054_report",
-      "_tgt": "task_1189",
-      "source": "task_1189",
-      "target": "sprint_054_report",
-      "confidence_score": 1.0
-    },
-    {
-      "type": "implements",
-      "weight": 0.8,
-      "_src": "sprint_054_report",
-      "_tgt": "task_1309",
-      "source": "sprint_054_report",
-      "target": "task_1309",
-      "confidence_score": 1.0
-    },
-    {
       "type": "blocks",
-      "weight": 1.0,
-      "_src": "task_1309",
-      "_tgt": "task_1310",
+      "weight": 1.0
+    },
+    {
       "source": "task_1309",
       "target": "task_1310",
-      "confidence_score": 1.0
+      "type": "blocks",
+      "weight": 1.0
     },
     {
-      "type": "blocks",
-      "weight": 1.0,
-      "_src": "task_1378",
-      "_tgt": "task_1379",
       "source": "task_1378",
       "target": "task_1379",
-      "confidence_score": 1.0
+      "type": "blocks",
+      "weight": 1.0
     },
     {
-      "type": "blocks",
-      "weight": 1.0,
-      "_src": "task_1402",
-      "_tgt": "task_1403",
       "source": "task_1402",
       "target": "task_1403",
-      "confidence_score": 1.0
+      "type": "blocks",
+      "weight": 1.0
+    },
+    {
+      "source": "sprint_054_report",
+      "target": "task_1189",
+      "type": "implements",
+      "weight": 0.8
+    },
+    {
+      "source": "sprint_054_report",
+      "target": "task_1309",
+      "type": "implements",
+      "weight": 0.8
+    },
+    {
+      "source": "report_market_watch_2026_04_01",
+      "target": "task_238b",
+      "type": "informs",
+      "weight": 0.7
+    },
+    {
+      "source": "task_1432",
+      "target": "task_1566_b",
+      "type": "blocks",
+      "weight": 0.6,
+      "note": "1566_b fixes DDD violation in foreign-flow logic"
     }
   ],
-  "hyperedges": []
+  "hyperedges": [],
+  "input_tokens": 114987,
+  "output_tokens": 2500
 }

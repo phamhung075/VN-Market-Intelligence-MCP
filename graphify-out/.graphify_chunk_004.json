@@ -1,0 +1,657 @@
+{
+  "metadata": {
+    "chunk": 4,
+    "total_chunks": 24,
+    "extraction_date": "2026-04-22",
+    "source_type": "task_reports_and_handoffs",
+    "file_count": 24
+  },
+  "tasks": [
+    {
+      "task_id": "1553",
+      "title": "VN-Index Briefing Freshness Guards",
+      "date": "2026-04-20",
+      "status": "APPROVED",
+      "files_modified": 4,
+      "test_results": {
+        "unit_pass": 4,
+        "unit_fail": 0,
+        "full_suite_pass": 5967,
+        "full_suite_fail": 0,
+        "typescript_errors": 0
+      },
+      "compliance": {
+        "ddd": "PASS",
+        "security": "PASS"
+      },
+      "key_findings": [
+        "Freshness guards added to morningBriefingJob and franceSummaryJob",
+        "3-day OHLCV staleness check implemented",
+        "4 new tests for briefing freshness verification"
+      ]
+    },
+    {
+      "task_id": "1369",
+      "title": "OHLCV Aggregator Notification Implementation",
+      "date": "2026-04-17",
+      "status": "APPROVED",
+      "files_modified": 2,
+      "test_results": {
+        "unit_pass": 4,
+        "unit_fail": 0,
+        "full_suite_pass": 4994,
+        "full_suite_fail": 1,
+        "typescript_errors": 0
+      },
+      "compliance": {
+        "ddd": "PASS",
+        "security": "PASS"
+      },
+      "key_findings": [
+        "sendWorkFn notification with written=N and taReady=N",
+        "Error swallowing verified for notification failures",
+        "Message includes top-3 ticker names",
+        "1 pre-existing flaky test (network-dependent)"
+      ]
+    },
+    {
+      "task_id": "market_watcher_2026_04_01_cycle4",
+      "title": "Market Watcher Cycle 4 Report (01 April 2026)",
+      "date": "2026-04-01",
+      "status": "ACTIVE_ANALYSIS",
+      "content_type": "cycle_report",
+      "key_findings": [
+        "VN-Index broke 1,700 point threshold (+1.81%)",
+        "VNM outperformed (+2.48% vs index +1.81%)",
+        "Macro risks: Brent crude $102.50, USD/VND 26,323, Gold $4,722 (record high)",
+        "HPG volume spike (24.2M shares) - dòng tiền signal",
+        "FPT underperforming despite Japan exposure positive signals",
+        "VEA facing dual macro pressure (oil + FX)"
+      ],
+      "alerts_generated": {
+        "HIGH": 3,
+        "MEDIUM": 3,
+        "LOW": 4
+      },
+      "watchlist_summary": {
+        "all_green": true,
+        "stocks_tracked": ["VNM", "VCB", "HPG", "FPT", "VEA"]
+      }
+    },
+    {
+      "task_id": "1318",
+      "title": "Prediction Signals Fallback + Evening Assembler Error Logging",
+      "date": "2026-04-16",
+      "status": "APPROVED",
+      "files_modified": 2,
+      "test_results": {
+        "unit_pass": 10,
+        "unit_fail": 0,
+        "full_suite_pass": 5977,
+        "full_suite_fail": 0,
+        "typescript_errors": 0
+      },
+      "compliance": {
+        "ddd": "PASS",
+        "security": "PASS"
+      },
+      "key_findings": [
+        "predictionMarketJob uses loadPreviousSnapshot on fetch failure",
+        "assembleEveningSummary logs prediction query failures instead of silently swallowing",
+        "Geo-block and network timeout handled via fallback path",
+        "Signal detection continues against cached data on fetch failure"
+      ]
+    },
+    {
+      "task_id": "1198",
+      "title": "VND Currency False Positive Guard",
+      "date": "2026-04-13",
+      "status": "APPROVED",
+      "files_modified": 1,
+      "test_results": {
+        "unit_pass": 8,
+        "unit_fail": 0,
+        "full_suite_pass": 23,
+        "full_suite_fail": 0,
+        "typescript_errors": 0
+      },
+      "compliance": {
+        "ddd": "PASS",
+        "security": "PASS"
+      },
+      "key_findings": [
+        "CURRENCY_CONTEXT_MAP constant with 15 VND forex context tokens",
+        "40-character window guard prevents Pattern-2 word-boundary false positives",
+        "Pattern-1 parenthetical matches (VNDirect ticker) still surface correctly",
+        "No regression on existing ticker extraction"
+      ]
+    },
+    {
+      "task_id": "1522",
+      "title": "France Watchlist Movers - COALESCE Subquery Fix",
+      "date": "2026-04-19",
+      "status": "APPROVED",
+      "files_modified": 2,
+      "test_results": {
+        "unit_pass": 5764,
+        "unit_fail": 5,
+        "typescript_errors": 0,
+        "pre_existing_fails": 5
+      },
+      "compliance": {
+        "ddd": "PASS",
+        "security": "PASS"
+      },
+      "key_findings": [
+        "COALESCE subquery replacing MAX(date) for freshness check",
+        "AC-5 added to france watchlist test coverage",
+        "5 pre-existing failures unrelated to task"
+      ]
+    },
+    {
+      "task_id": "1462",
+      "title": "Evening Mover Freshness Guards (3-day Staleness)",
+      "date": "2026-04-18",
+      "status": "APPROVED",
+      "files_modified": 2,
+      "test_results": {
+        "unit_pass": 5550,
+        "unit_fail": 0,
+        "typescript_errors": 0
+      },
+      "compliance": {
+        "ddd": "PASS",
+        "security": "PASS"
+      },
+      "key_findings": [
+        "Freshness guards: AND mp.updated_at >= datetime('now', '-3 days')",
+        "Two paths guarded: OHLCV fallback + no-OHLCV path",
+        "Stale 4d rows excluded, fresh rows included",
+        "Stale market_prices with fresh OHLCV prioritizes OHLCV"
+      ]
+    },
+    {
+      "task_id": "232a",
+      "title": "TDD RED Test Suite for Cowork Resilience",
+      "date": "2026-04-21",
+      "status": "APPROVED",
+      "phase": "RED",
+      "test_results": {
+        "passing": 7,
+        "failing": 13,
+        "expected": "7 passing (pure logic), 13 failing (awaiting implementations)"
+      },
+      "compliance": {
+        "ddd": "PASS",
+        "typescript": "clean",
+        "security": "PASS"
+      },
+      "key_findings": [
+        "20 test cases across 12 acceptance criteria",
+        "49 total assertions",
+        "Failing assertions drive implementation in 232b/c/d",
+        "Pure logic tests (AC-6, AC-7, AC-9, AC-10, AC-12) passing as expected",
+        "Stubs defined for resilientFetcher, newsSourceRouter, priceSourceRouter, bctcSourceRouter"
+      ]
+    },
+    {
+      "task_id": "1566c",
+      "title": "VPS Foreign Flow Fetch Hardening + Audit",
+      "date": "2026-04-21",
+      "status": "APPROVED",
+      "files_modified": 2,
+      "test_results": {
+        "unit_pass": 5982,
+        "unit_fail": 0,
+        "typescript_errors": 0
+      },
+      "compliance": {
+        "ddd": "PASS",
+        "bash_syntax": "valid"
+      },
+      "key_findings": [
+        "Root cause: 784 errors/24h from timeout + truncation gap",
+        "Timeout hardened from 20s to 60s",
+        "Truncation detection with regex check for closing bracket",
+        "Diagnostic logging with 4 levels (INFO/WARN/ERROR/DEBUG)",
+        "Millisecond-precision timing for all 4 steps",
+        "Defense-in-depth: client-side truncation detection + server validation + circuit breaker",
+        "16-section audit report with VPS validation checklist"
+      ]
+    },
+    {
+      "task_id": "1491",
+      "title": "Push Foreign Flow Body Parse Fix",
+      "date": "2026-04-19",
+      "status": "APPROVED",
+      "files_modified": 3,
+      "test_results": {
+        "unit_pass": 6,
+        "unit_fail": 0,
+        "regression_pass": 14,
+        "regression_fail": 0,
+        "typescript_errors": 0
+      },
+      "compliance": {
+        "ddd": "PASS",
+        "security": "PASS"
+      },
+      "key_findings": [
+        "Fixed: !body.trim() → body.trim().length <= 1",
+        "Error message: 'Empty or truncated body'",
+        "VPS script hardening: jq tonumber → // 0 type guard",
+        "FF_JSON empty guard before push",
+        "Test assertion updated in regression suite"
+      ]
+    },
+    {
+      "task_id": "234d",
+      "title": "Agent Step 0-c Health Queries in Financial-Analyst + Market-Watcher",
+      "date": "2026-04-21",
+      "status": "APPROVED",
+      "files_modified": 2,
+      "test_results": {
+        "unit_pass": 12,
+        "unit_fail": 0,
+        "full_suite_pass": 6058,
+        "full_suite_fail": 13,
+        "pre_existing_fails": 13
+      },
+      "compliance": {
+        "integration": "PASS"
+      },
+      "key_findings": [
+        "Step 0-c blocks added to both agents",
+        "Health-aware decision trees for data source selection",
+        "Multi-source checks: price/news/macro/bctc/foreign-flow",
+        "CRITICAL severity → escalate, HIGH → source_cache/fallback flags",
+        "get_vps_service_health() and get_sla_status() tool integration verified"
+      ]
+    },
+    {
+      "task_id": "1456",
+      "title": "Evening Watchlist Movers - OHLCV Date Fix",
+      "date": "2026-04-18",
+      "status": "APPROVED",
+      "files_modified": 2,
+      "test_results": {
+        "unit_pass": 5539,
+        "unit_fail": 0,
+        "typescript_errors": 0
+      },
+      "compliance": {
+        "ddd": "PASS",
+        "security": "PASS"
+      },
+      "key_findings": [
+        "Fixed: uses (SELECT MAX(date) FROM daily_ohlcv) instead of date('now')",
+        "Resolves timezone-dependent date mismatch in evening summary",
+        "3 new assertions for OHLCV date boundary"
+      ]
+    },
+    {
+      "task_id": "1506",
+      "title": "Compare Stocks Test - Bun.env DB_PATH Fix",
+      "date": "2026-04-19",
+      "status": "APPROVED",
+      "files_modified": 1,
+      "test_results": {
+        "unit_pass": 20,
+        "unit_fail": 0,
+        "full_suite_pass": 5707,
+        "full_suite_fail": 3,
+        "pre_existing_fails": 3
+      },
+      "compliance": {
+        "ddd": "PASS",
+        "security": "PASS"
+      },
+      "key_findings": [
+        "Line 1 set to Bun.env['DB_PATH'] = ':memory:'",
+        "Lines 55-58 use datetime('now') for test isolation",
+        "Pre-existing failures in tasks 1168, 239 unrelated"
+      ]
+    },
+    {
+      "task_id": "1481",
+      "title": "Bulk Bun.env DB_PATH Fix (Batch 6)",
+      "date": "2026-04-19",
+      "status": "APPROVED",
+      "files_modified": 51,
+      "test_results": {
+        "unit_pass": 5589,
+        "unit_fail": 38,
+        "baseline_unchanged": true,
+        "typescript_errors": 0
+      },
+      "compliance": {
+        "ddd": "PASS",
+        "security": "PASS"
+      },
+      "key_findings": [
+        "51 test files updated with Bun.env['DB_PATH']",
+        "Zero process.env occurrences in test files",
+        "Self-match guard verified (split string 'process.env' + '[DB_PATH]')",
+        "No regressions from baseline"
+      ]
+    },
+    {
+      "task_id": "239c",
+      "title": "Macro Refresh Job - Schema + Registry + Scheduler Integration",
+      "date": "2026-04-21",
+      "status": "APPROVED",
+      "files_modified": 4,
+      "test_results": {
+        "integration_pass": 8,
+        "integration_fail": 0,
+        "regression_pass": 0,
+        "typescript_errors": 0
+      },
+      "compliance": {
+        "ddd": "PASS",
+        "security": "PASS"
+      },
+      "key_findings": [
+        "ALTER TABLE macro_indicators ADD COLUMN last_refresh_job (idempotent)",
+        "macroIndicatorRefreshJob added to cron-registry.json",
+        "schedulerFileCount incremented 37→38",
+        "Cron registered at 06:00 GMT+7",
+        "validateMacroFreshnessOnStartup called on startup",
+        "Depends on 239b (merged), enables 239d"
+      ]
+    },
+    {
+      "task_id": "1563",
+      "title": "get_cycle_bootstrap Compound MCP Tool",
+      "date": "2026-04-21",
+      "status": "APPROVED",
+      "files_modified": 3,
+      "test_results": {
+        "unit_pass": 7,
+        "unit_fail": 0,
+        "full_suite_pass": 5955,
+        "full_suite_fail": 22,
+        "typescript_errors": 0
+      },
+      "compliance": {
+        "ddd": "PASS (fixed DDD violation)"
+      },
+      "key_findings": [
+        "Compound tool replacing 3-call opening sequence",
+        "Resolved DDD violation: application no longer imports infrastructure",
+        "Database injected as parameter (dependency injection)",
+        "Infrastructure access correctly in interface layer",
+        "Parallel SQLite reads via Promise.allSettled, target ≤3s p95",
+        "Unblocks task 1564 (Direct MCP access for 7 Cowork agents)"
+      ]
+    },
+    {
+      "task_id": "233a",
+      "title": "TDD RED Phase - Cowork Resilience E2E Test Suite",
+      "date": "2026-04-21",
+      "status": "APPROVED",
+      "phase": "RED",
+      "test_results": {
+        "task_pass": 18,
+        "task_fail": 10,
+        "regression_pass": 6036,
+        "regression_fail": 0,
+        "typescript_errors": 0
+      },
+      "compliance": {
+        "ddd": "PASS",
+        "security": "PASS"
+      },
+      "key_findings": [
+        "28 test cases across 15 acceptance criteria",
+        "10 failing assertions drive implementation in 233b",
+        "18 placeholder assertions (observational/deferred)",
+        "AC-1/2: confidence penalty logic (0.8075), temporal decay",
+        "AC-3: exhaustion callback + logging",
+        "AC-4/5: staleness warning, source_fallback metadata",
+        "AC-6-15: audit coverage, timeout, partial failure isolation"
+      ]
+    },
+    {
+      "task_id": "227a",
+      "title": "VPS Proxy Watchdog Recovery - TDD RED Phase",
+      "date": "2026-04-20",
+      "status": "APPROVED",
+      "phase": "RED",
+      "test_results": {
+        "task_pass": 1,
+        "task_fail": 2,
+        "full_suite_pass": 5947,
+        "full_suite_fail": 2,
+        "typescript_errors": 0
+      },
+      "compliance": {
+        "ddd": "PASS",
+        "security": "PASS"
+      },
+      "key_findings": [
+        "Stub: _resetWatchdogStaleFlag() exported as no-op",
+        "RED gate: tests 1+3 fail (require 'restored'/'ok' returns)",
+        "Test 2 passes (no-prior-stale → 'ok')",
+        "Drives implementation of lastWasStale flag + recovery path",
+        "Pattern correctly matches TDD RED spec"
+      ]
+    },
+    {
+      "task_id": "1188",
+      "title": "RSS Parser - Atom 1.0 Entry Support",
+      "date": "2026-04-13",
+      "status": "APPROVED",
+      "files_modified": 1,
+      "test_results": {
+        "atom_pass": 11,
+        "atom_fail": 0,
+        "rss_regression_pass": 27,
+        "rss_regression_fail": 0,
+        "typescript_errors": 0
+      },
+      "compliance": {
+        "ddd": "PASS",
+        "security": "PASS"
+      },
+      "key_findings": [
+        "Extends parseRssFeed() to support Atom 1.0 alongside RSS 2.0",
+        "Union selector: $('item, entry').each(...)",
+        "isAtom guard: tagName === 'entry'",
+        "Atom URL priority: <link rel='alternate' href> → <link href> → <id> text",
+        "No changes to RSS 2.0 else-branch (verbatim original)",
+        "Mixed documents (RSS + Atom) handled in single pass"
+      ]
+    },
+    {
+      "task_id": "1359",
+      "title": "OHLCV Daily Aggregator Implementation + jobs.ts Wire",
+      "date": "2026-04-17",
+      "status": "APPROVED",
+      "files_modified": 4,
+      "test_results": {
+        "unit_pass": 4,
+        "unit_fail": 0,
+        "full_suite_pass": 4988,
+        "full_suite_fail": 0,
+        "typescript_errors": 0
+      },
+      "compliance": {
+        "ddd": "PASS",
+        "security": "PASS"
+      },
+      "key_findings": [
+        "AC-1: VCB+FPT 3 ticks each → 2 rows, correct OHLCV",
+        "AC-2: 0 ticks → 0 rows, no throw",
+        "AC-3: Re-run same day → 1 row, close updated, no UNIQUE error",
+        "AC-4: Yesterday ticks → 0 rows today",
+        "VN midnight UTC: Date.UTC(vnYear, vnMonth, vnDay) - VN_OFFSET_MS",
+        "Half-open interval: [VN midnight UTC, nowMs)",
+        "CRON: 0 16 * * 1-5 (16:00 UTC = 23:00 VN, Mon-Fri)"
+      ]
+    },
+    {
+      "task_id": "1469",
+      "title": "Test Isolation - Bun.env DB_PATH Fix (003-env-config.test.ts)",
+      "date": "2026-04-19",
+      "status": "APPROVED",
+      "files_modified": 1,
+      "test_results": {
+        "unit_pass": 5569,
+        "unit_fail": 0,
+        "typescript_errors": 0
+      },
+      "compliance": {
+        "ddd": "PASS (smart-skip: test-only)"
+      },
+      "key_findings": [
+        "Line 1: Bun.env['DB_PATH'] = ':memory:'",
+        "Baseline 5569 preserved (no new tests)",
+        "Zero process.env occurrences",
+        "Post-run Bun v1.3.11 GC crash is known upstream bug"
+      ]
+    },
+    {
+      "task_id": "101",
+      "title": "Morning Briefing Job (08:00 GMT+7)",
+      "date": "2026-03-28",
+      "status": "APPROVED",
+      "sprint": 5,
+      "files_modified": 7,
+      "test_results": {
+        "unit_pass": 14,
+        "unit_fail": 0,
+        "regression_pass": 364,
+        "regression_fail": 0,
+        "typescript_errors": 0
+      },
+      "compliance": {
+        "ddd": "PASS",
+        "security": "PASS"
+      },
+      "key_findings": [
+        "pollNews called as best-effort pre-fetch",
+        "topStories: up to 5 rag_analyses since midnight GMT+7, sorted by impact_score DESC",
+        "alerts: unread alerts from last 12 hours",
+        "watchlistSummary: one entry per watchlist stock",
+        "newReports: stock codes with new financial_reports since midnight",
+        "vnIndex populated on success, undefined on failure",
+        "Briefing persisted to ./data/briefings/YYYY-MM-DD.json",
+        "CRON: 0 8 * * 1-5 (weekdays 08:00 Asia/Ho_Chi_Minh)",
+        "Concurrency guard: overlapping calls skipped, sequential calls allowed"
+      ]
+    },
+    {
+      "task_id": "041",
+      "title": "Vietnamese Number Parser",
+      "date": "2026-03-25",
+      "status": "APPROVED",
+      "files_modified": 3,
+      "test_results": {
+        "pass": 19,
+        "fail": 0,
+        "coverage": "100% function, 97.56% line"
+      },
+      "compliance": {
+        "ddd": "PASS",
+        "security": "PASS"
+      },
+      "key_findings": [
+        "Pure domain function: parseVnNumber()",
+        "Handles: dot-as-thousands, comma-as-decimal, parenthesized negatives",
+        "Detects English format when unambiguous",
+        "Heuristic: dot followed by 3 digits = thousands separator (1.000 = 1000)",
+        "19 test cases covering edge cases: empty, em-dash, en-dash, single dash, N/A, alphabetic",
+        "Barrel re-export in domain/services/index.ts"
+      ]
+    },
+    {
+      "task_id": "1438",
+      "title": "Morning Briefing Portfolio P&L Section",
+      "date": "2026-04-19",
+      "status": "APPROVED",
+      "sprint": 159,
+      "related": ["1439"],
+      "test_results": {
+        "unit_pass": 4,
+        "unit_fail": 0,
+        "full_suite_pass": 5469,
+        "full_suite_fail": 1,
+        "pre_existing_fail": 1
+      },
+      "compliance": {
+        "ddd": "PASS",
+        "security": "PASS"
+      },
+      "key_findings": [
+        "portfolioPnl non-null with items → output contains 'DANH MUC' or 'DANH MỤC'",
+        "portfolioPnl null/undefined → section absent, no crash",
+        "formatPnlSection returns '' for empty items → section absent",
+        "formatBriefingMessage calls formatPnlSection when portfolioPnl present",
+        "Guard: briefing.portfolioPnl != null && briefing.portfolioPnl.items.length > 0",
+        "Secondary guard: only append if pnlBlock.length > 0",
+        "Minimum change: 10 lines added to morningBriefingJob.ts"
+      ]
+    }
+  ],
+  "patterns_and_themes": {
+    "testing": [
+      "TDD RED/GREEN phases (232a, 233a, 227a, 1438)",
+      "Comprehensive test isolation (Bun.env DB_PATH fixes: 1481, 1506, 1469)",
+      "Freshness guards across multiple modules (1553, 1462, 1456)"
+    ],
+    "data_freshness": [
+      "3-day OHLCV staleness threshold",
+      "Market price freshness checks",
+      "datetime('now') for timezone-aware queries",
+      "MAX(date) subqueries to avoid false negatives"
+    ],
+    "vps_infrastructure": [
+      "VPS hardening for foreign flow (1566c): timeout, truncation detection, diagnostic logging",
+      "Defense-in-depth: client validation + server validation + circuit breaker",
+      "Audit reports and checklists for VPS operations"
+    ],
+    "ddd_compliance": [
+      "Layer order: domain ← application ← interface ← scheduler",
+      "Parameter injection over layer-crossing getDb() calls (1563)",
+      "Infrastructure imports only in scheduler/interface layers"
+    ],
+    "cowork_agent_improvements": [
+      "Health-aware decision trees for data source selection (234d)",
+      "Step 0-c blocks for get_vps_service_health + get_sla_status queries",
+      "Fallback + cache + escalation flows"
+    ],
+    "parser_enhancements": [
+      "Atom 1.0 RSS support (1188) - backward compatible with RSS 2.0",
+      "Vietnamese number parsing (041) with heuristics for disambiguation",
+      "VND currency false positive guard (1198) with context-aware filtering"
+    ]
+  },
+  "sprint_context": {
+    "current_sprint": "220 (per project-stats.json)",
+    "completed_sprints": [
+      "5 (101-105: core scheduler jobs)",
+      "122 (1359: OHLCV aggregator)",
+      "159 (1438-1439: portfolio P&L)"
+    ],
+    "key_deliverables": [
+      "Briefing freshness guards (1553, 1462, 1456)",
+      "VPS resilience hardening (1566c, 1491)",
+      "Cowork agent health awareness (234d)",
+      "TDD RED/GREEN test suites (232a, 233a, 227a, 1438)"
+    ]
+  },
+  "unblocking_dependencies": {
+    "1564": "Depends on 1563 (get_cycle_bootstrap) - Direct MCP access for 7 Cowork agents",
+    "233b": "Depends on 233a RED tests",
+    "239d": "Depends on 239c (macro refresh integration)",
+    "1439": "Depends on 1438 RED tests"
+  },
+  "quality_metrics": {
+    "test_pass_rate_avg": "99.5%",
+    "typescript_errors_total": 0,
+    "ddd_compliance_rate": "100%",
+    "security_issues": 0,
+    "pre_existing_failures_tracked": true
+  }
+}
