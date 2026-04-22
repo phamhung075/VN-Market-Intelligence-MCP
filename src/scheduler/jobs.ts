@@ -17,6 +17,7 @@
  *   devTeamHeartbeat       07:00 UTC Sunday    (task 245) ✓
  *   weatherCheck          every 6h (typhoon season) / 12h off-season  (task 261) ✓
  *   bctcOverdueCheck      09:00 daily          (task 1018 slice 3) ✓
+ *   bctcQueueEnricher     every 15 min         (task 1287) ✓
  *   pipelineWatchdog      every 30 min 24/7  (task 1190) ✓
  *   taAlertScan           every 15min VN market hours  (task 1307) ✓
  *   bbAlertScan           every 15min VN market hours  (task 1309) ✓
@@ -46,6 +47,7 @@ import { runDavPharmacyCheck } from './davPharmacyJob.js'
 import { runVpsProxyWatchdog } from './vpsProxyWatchdogJob.js'
 import { runBctcOverdueCheck } from './financial-reports/bctcOverdueCheckJob.js'
 import { runBctcReparseJob } from './financial-reports/bctcReparseJob.js'
+import { runBctcQueueEnricherJob } from './financial-reports/bctcQueueEnricherJob.js'
 import { runAskQueueCheck } from './system/askQueueCheckJob.js'
 import { runCronHealthAlert } from './alerts/cronHealthAlertJob.js'
 import { runEvidenceAccumulatorJob } from './news-analysis/evidenceAccumulatorJob.js'
@@ -90,6 +92,8 @@ export const CRONS = {
   bctcOverdueCheck:       Bun.env.CRON_BCTC_OVERDUE_CHECK         ?? '0 9 * * *',
   /** BCTC stranded-PDF auto-reparse: daily 09:30 GMT+7 (task 1019 slice 2) */
   bctcReparseJob:         Bun.env.CRON_BCTC_REPARSE_JOB           ?? '30 9 * * *',
+  /** BCTC queue enricher: every 15 min (task 1287) */
+  bctcQueueEnricher:      Bun.env.CRON_BCTC_QUEUE_ENRICHER        ?? '*/15 * * * *',
   /** /ask queue check: every 12 min — signal 07-qa-responder when pending (task 1074) */
   askQueueCheck:          Bun.env.CRON_ASK_QUEUE_CHECK             ?? '*/12 * * * *',
   /** SQLite WAL checkpoint: every 6h (task 1464 — was daily 20:00 UTC, busy readers blocked TRUNCATE causing 497MB WAL) */
@@ -412,6 +416,15 @@ export function startScheduler() {
       log(`[bctc-reparse] startup catch-up failed: ${err instanceof Error ? err.message : String(err)}`)
     }
   }, 30_000)
+
+  // Every 15 min — BCTC queue enricher background job (task 1287)
+  // Dequeues max 20 unenriched BCTC items per run, populates source_url via SSC lookup
+  cron.schedule(CRONS.bctcQueueEnricher, async () => {
+    await recordJobRun(getDb(), 'bctcQueueEnricherJob', async () => {
+      const result = await runBctcQueueEnricherJob()
+      return { rowsWritten: result.urlsPopulated }
+    })
+  }, { timezone: 'Asia/Ho_Chi_Minh' })
 
   // Startup catch-up: if server restarts after 08:00 GMT+7 (01:00 UTC) or
   // 22:30 GMT+7 (15:30 UTC) without morning briefing / evening summary having
