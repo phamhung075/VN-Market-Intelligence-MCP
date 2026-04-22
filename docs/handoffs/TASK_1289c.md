@@ -257,3 +257,23 @@ Type errors: 0 (bun tsc --noEmit)
 - 1289b tests validation at domain level (unit)
 - Full integration test will require 1289d (POST endpoint) + 1289e (production monitoring)
 - Test database is not available in unit tests, so fallback handler logs "no such table" errors (expected)
+
+---
+
+## [QA] Review Record
+
+**verdict:** APPROVED
+**blocking_issues:** []
+**non_blocking:** []
+
+**files_confirmed_clean:**
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/domain/services/market-data/foreignFlowValidator.ts`
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/infrastructure/fetchers/foreignFlowFetcher.ts`
+
+**test_results:**
+- 6 pass, 0 fail, 17 assertions
+- TypeScript clean (bun tsc --noEmit 0 errors)
+- DDD compliance verified
+- No regressions from baseline 6283 → 6289
+
+**merge_commit:** (pending)

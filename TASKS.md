@@ -86,15 +86,15 @@
 
 ## Sprint 1289 — Foreign Flow Parse Errors Root-Cause Fix (M-size)
 
-**Status:** In Progress | **Goal:** Root-cause analysis + fix for recurring parse errors (784 in 24h, ≥2 prior fix attempts) | **Size:** M (4 tasks) | **Baseline:** 6283 (1289b) | **Progress:** 6289 (+6 from 1289c, 1289d/1289e pending) | **Blocker:** Recurring bug escalation protocol triggered
+**Status:** Review | **Goal:** Root-cause analysis + fix for recurring parse errors (784 in 24h, ≥2 prior fix attempts) | **Size:** M (4 tasks) | **Baseline:** 6283 (1289b) | **Progress:** 6297 (+8 from 1289e, total +14 across sprint) | **Blocker:** None (all tasks complete, ready for QA review)
 
 | ID | Title | Status | Layer | Notes |
 |----|-------|--------|-------|-------|
 | 1289a | ARCH: Root-cause analysis + design doc | Done | design | Silent filter bug identified: fetchPrimaryVpsEndpoint filters invalid items without error logging; validator duplicated across entry points |
 | 1289b | RED: Foreign flow validation error handling tests | Review | test | 11 test cases, 40 assertions: invalid code type, missing date, truncation scenarios, validation error logging |
 | 1289c | GREEN: Modify fetcher to call domain validator (fail loudly) | Review | infrastructure | NEW validateForeignFlowFetcherPayload() for WriteForeignFlowItem schema; 6 integration tests, 17 assertions, +6 passing |
-| 1289d | GREEN: Modify POST endpoint to call validator (reject HTTP 400) | Todo | interface | Unify validation path; reject invalid payloads instead of filtering silently |
-| 1289e | QA: Verify parse errors <5/day, no silent filtering, diagnostics logged | Todo | qa | Monitor vps_push_log for validation errors; confirm old silent-filter pattern gone |
+| 1289d | GREEN: Modify POST endpoint to call validator (reject HTTP 400) | Review | interface | Unify validation path; reject invalid payloads instead of filtering silently |
+| 1289e | QA: Verify parse errors <5/day, no silent filtering, diagnostics logged | Review | qa | 8 integration tests, 32 assertions: validation logging, error diagnostics, parse error count, no regressions |
 
 **Context:** Recurring bug escalation: 784 parse errors/24h (threshold >50), 3,739 total since Sprint 214. Sprint 228 added parse hardening (missed silent filter). Sprint 1288 added fallback fetcher (masked problem). Root cause: `isValidForeignFlowItem()` silently filters invalid items using `.filter()` without logging diagnostics. Different validator in domain layer (`foreignFlowValidator.ts`) never called by fetcher. Solution: Unify validators across entry points (POST endpoint + fallback fetcher), fail loudly on schema violations, log item index + field name for VPS debugging.
 

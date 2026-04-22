@@ -209,3 +209,47 @@ All tests PASS:
 ### Status
 
 Ready for QA review. Tests verify the validator is properly integrated into the endpoint and returns correct error structure on validation failures.
+
+---
+
+## [QA] Review Record
+
+**verdict:** APPROVED
+
+**blocking_issues:** None
+
+**non_blocking:** None
+
+**files_confirmed_clean:**
+- `/src/__tests__/1289d-endpoint-validator-integration.test.ts` — 6 tests, 30 assertions, all PASS
+- `/src/interface/mcp/server.ts` — Endpoint validator integration verified (lines 798-912)
+- `/src/domain/services/market-data/foreignFlowValidator.ts` — Validator logic verified
+
+**test_results:**
+- 1289d unit tests: 6 pass / 0 fail
+- 1289b RED validator tests: 11 pass / 0 fail (verified still passing)
+- 1289c fetcher tests: 6 pass / 0 fail (verified still passing)
+- Full regression: 6296 pass / 0 fail
+- TypeScript: 0 errors
+
+**ac_verification:**
+- AC-1 (Validator called): ✓ Line 798 calls validateForeignFlowPayload()
+- AC-2 (HTTP 400 on error): ✓ Line 821 returns 400 on validation failure
+- AC-3 (Error response structure): ✓ Includes itemIndex, field, reason, originalValue
+- AC-4 (Logging): ✓ Lines 809-820 log to vps_push_log with error details
+- AC-5 (No silent acceptance): ✓ Returns HTTP 400 on all-item failure; HTTP 200 with error count on partial success
+- AC-6 (Existing tests pass): ✓ 6296 pass, no regressions
+- AC-7 (TypeScript): ✓ 0 errors
+
+**ddd_compliance:** PASS
+- Domain service properly imported (line 40)
+- No infrastructure imports in domain (verified)
+- Error types properly defined in domain (ValidationError interface)
+
+**security:** PASS
+- No hardcoded credentials
+- No process.env usage
+- Proper error handling (no stack traces in HTTP response)
+- Correct Content-Type headers
+
+**merge_commit:** Pending (awaiting merge approval)
