@@ -46,7 +46,7 @@ function makeSeed(
     sourceType: "news",
     publishedAt: new Date().toISOString(),
     summary,
-    level: "stock",
+    level: "action",
     sentiment: "bearish",
     impactScore: 7,
     impactDirection: "down",
@@ -180,8 +180,8 @@ describe("Task 1278a — Insider Dump Cascade (RED Phase)", () => {
     expect(chain.entries.length).toBeGreaterThan(0);
 
     // Seed entry should be preserved
-    const seedEntry = chain.entries[0];
-    expect(seedEntry.level).toBe("stock");
+    const seedEntry = chain.entries[0]!;
+    expect(seedEntry.level).toBe("action");
     expect(seedEntry.sentiment).toBe("bearish");
 
     // Domain entries should include banking (from affectedDomains)
