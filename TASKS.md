@@ -13,6 +13,7 @@
 > Sprints 231–239 archived: `docs/archive/sprints-231-239.md`
 > Sprints 240–240 archived: `docs/archive/sprints-240-240.md`
 > Sprints 1269–1277 archived: `docs/archive/sprints-1269-1277.md`
+> Sprints 1278–1281 archived: `docs/archive/sprints-1278-1281.md`
 
 ---
 
@@ -94,12 +95,12 @@
 
 ## Sprint 1281 — Agriculture Weather Cascade Detection (M-size)
 
-**Status:** ACTIVE | **Ref:** TECH-1281 | **Goal:** Detect rainfall/drought events → cascade alerts to agricultural stocks | **Size:** M (2 tasks, ~8 hours) | **Baseline:** 6187 | **Report:** (pending)
+**Status:** COMPLETE | **Ref:** TECH-1281 | **Goal:** Detect rainfall/drought events → cascade alerts to agricultural stocks | **Size:** M (2 tasks, ~8 hours) | **Baseline:** 6187 | **Report:** reports/TASK_REPORT_1281_FINAL.md
 
 | ID | Title | Status | Layer | Notes |
 |----|----|--------|-------|-------|
-| 1281a | RED: Agriculture weather cascade detection tests | Done | test | 7 PASS, 1 FAIL (TC-4 contract test); 8 assertions total; **merged ✓** |
-| 1281b | GREEN: Implement agriculture detector + rules + executor | Todo | domain+app | RED unblocked; agricultureDetector.ts, AGRICULTURE_WEATHER_RULES, detectAgricultureCascadePeers() |
+| 1281a | RED: Agriculture weather cascade detection tests | Done | test | 8 PASS; 8 assertions total; **merged ✓** |
+| 1281b | GREEN: Implement agriculture detector + rules + executor | Done | domain+app | 13 GREEN tests PASS; 21 total (8 RED + 13 GREEN); **merged ✓** |
 
 ---
 
