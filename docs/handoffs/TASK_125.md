@@ -50,3 +50,41 @@ The test comment claimed `Date.now()` ensures row is "always within today's Viet
 ```
 26b8310 fix(test-125): timezone-dependent 1h offset in briefing test
 ```
+
+---
+
+## [QA] Review Record
+
+**Date:** 2026-04-22
+**Verdict:** APPROVED
+
+### Test Suite Results
+- bun test: 6165 PASS / 21 SKIP / 0 FAIL (6165 tests across 508 files, 39.96s)
+- bun tsc --noEmit: 0 errors
+- Task-specific test (125-test-e2e-briefing.test.ts): PASS
+
+### Files Confirmed Clean
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/__tests__/125-test-e2e-briefing.test.ts` — timezone fix in place (line 1154, midnightVietnamUtc() + 1h buffer)
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/scheduler/market-data/ohlcvDailyAggregatorJob.ts` — guard checks implemented (lines 103-112, optional chaining + skippped ticker on undefined)
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/.claude/agents/ops.md` — Ops agent file present (8.1 KB, full metadata + workflow docs)
+
+### Compliance Checks
+- **DDD Layer Integrity:** PASS — no violations (domain→application→interface→scheduler direction only)
+- **TypeScript Strict:** PASS — 0 type errors
+- **Security:** PASS — no process.env usage in src/domain or src/infrastructure
+- **Merge Conflict Resolution:** PASS — reports/2026-04-22-evening.json kept main version (valid)
+
+### Commits Validated
+- ff55779: fix(ohlcvDailyAggregatorJob) — guard checks lines 103-112 ✓
+- fb27186: feat(ops) — agent + metadata audit + 1498 insertions ✓
+- 26b8310: fix(test-125) — timezone buffer fix ✓
+
+### Blocking Issues
+None — all acceptance criteria met.
+
+### Merge Status
+**MERGED TO MAIN** — all three commits present in ancestry of HEAD (main)
+- Verified: git merge-base --is-ancestor for all three commits returns true
+- Test baseline stable: 6165 pass (no regression)
+
+**merge_commit:** 91ec866 (integration of main into task/125 prior to final merge)

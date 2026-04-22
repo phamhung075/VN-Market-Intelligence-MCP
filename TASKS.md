@@ -71,7 +71,7 @@
 | ID | Title | Status | Type | Notes |
 |----|----|--------|------|-------|
 | 1277a | RED: OHLCV guard checks test cases (6 TCs) | Done | Test | 3 pass / 3 fail (RED phase) — merged to main |
-| 1277b | GREEN: Guard checks validation + Ops integration | Todo | Test | Verify 6 tests pass, Ops agent ready, update stats |
+| 1277b | GREEN: Guard checks validation + Ops integration | Done | Test | 6 pass / 0 fail — merged to main |
 
 **Goal:** Formalize Ops Agent (already deployed) + OHLCV guard checks with comprehensive test coverage.
 
