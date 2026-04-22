@@ -8,3 +8,4 @@ data/
 *.db-wal
 dist/
 .claude/worktrees
+reports/*-evening.json
