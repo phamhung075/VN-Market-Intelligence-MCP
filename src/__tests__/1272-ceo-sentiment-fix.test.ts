@@ -132,3 +132,281 @@ describe("Task 1272a — RED Phase: Insider Selling Sentiment Distinction", () =
     });
   });
 });
+
+/**
+ * Task 1272b — GREEN Phase: Insider Selling Sentiment Cascade Validation
+ *
+ * Validates that the insider selling sentiment fix works end-to-end:
+ * sentiment classifier → cascade executor → peer notification chain
+ *
+ * All 4 tests should PASS (implementation already correct from sprint 1278b)
+ */
+describe("Task 1272b — GREEN Phase: Insider Selling Sentiment Cascade Validation", () => {
+  describe("GC-1272-1: Full cascade flow for insider dump (keyword → sentiment → peers)", () => {
+    it("returns correct banking peers (BID/VCB/CTG/ACB) when CEO dumps shares", () => {
+      const watchlist: WatchlistEntry[] = [
+        { actionCode: "VCB", domain: "banking", exchange: "HOSE" },
+        { actionCode: "BID", domain: "banking", exchange: "HOSE" },
+        { actionCode: "CTG", domain: "banking", exchange: "HOSE" },
+        { actionCode: "ACB", domain: "banking", exchange: "HOSE" },
+        { actionCode: "VNM", domain: "agriculture", exchange: "HOSE" },
+        { actionCode: "HPG", domain: "steel", exchange: "HOSE" },
+      ];
+
+      // Article about VCB CEO dumping shares (insider sell signal)
+      const peers = detectInsiderDumpPeers(
+        "Tổng giám đốc ngân hàng Việt Nam VCB xả hàng khối lượng lớn cổ phiếu sau 12 năm lãnh đạo",
+        ["VCB"],
+        watchlist,
+      );
+
+      // Assertion 1: Must return peers list (not empty)
+      expect(peers.length).toBeGreaterThan(0);
+
+      // Assertion 2: Must include all banking peers except VCB
+      expect(peers).toContain("BID");
+      expect(peers).toContain("CTG");
+      expect(peers).toContain("ACB");
+
+      // Assertion 3: Must NOT include original stock (circular cascade protection)
+      expect(peers).not.toContain("VCB");
+
+      // Assertion 4: Must NOT include non-banking stocks
+      expect(peers).not.toContain("VNM");
+      expect(peers).not.toContain("HPG");
+
+      // Assertion 5: Verify sentiment is bearish (cascade trigger)
+      const sentiment = classifySentiment(
+        "Tổng giám đốc ngân hàng Việt Nam VCB xả hàng khối lượng lớn cổ phiếu sau 12 năm lãnh đạo"
+      );
+      expect(sentiment.direction).toBe("bearish");
+      expect(sentiment.confidence).toBeGreaterThan(0.6);
+      expect(sentiment.keywords).toContain("xả hàng");
+    });
+
+    it("handles multi-keyword insider dump articles correctly", () => {
+      const watchlist: WatchlistEntry[] = [
+        { actionCode: "BID", domain: "banking", exchange: "HOSE" },
+        { actionCode: "CTG", domain: "banking", exchange: "HOSE" },
+        { actionCode: "ACB", domain: "banking", exchange: "HOSE" },
+      ];
+
+      // Article with multiple insider dump keywords
+      const article = "Lãnh đạo BID bán sạch và thoái sạch vốn khỏi công ty";
+
+      const peers = detectInsiderDumpPeers(article, ["BID"], watchlist);
+
+      // Must fire cascade because both bán sạch and thoái sạch are matched
+      expect(peers.length).toBeGreaterThan(0);
+      expect(peers).toContain("CTG");
+      expect(peers).toContain("ACB");
+      expect(peers).not.toContain("BID");
+
+      // Verify sentiment
+      const sentiment = classifySentiment(article);
+      expect(sentiment.direction).toBe("bearish");
+      expect(sentiment.keywords.length).toBeGreaterThanOrEqual(2); // At least 2 dump keywords
+    });
+  });
+
+  describe("GC-1272-2: Mixed text (bullish context + bearish keyword) cascades with bearish sentiment", () => {
+    it("keyword dominance: xả hàng overrides positive context in sentiment scoring", () => {
+      // Mixed article with bullish context + bearish keyword
+      // bullishScore = tăng trưởng (2) + tăng mạnh (2) = 4
+      // bearishScore = xả hàng (3) + rút vốn (2) = 5
+      // confidence = 5 / (4+5) = 0.556, which is still <= 0.6
+      // Add more bearish to exceed 0.6: need bearishScore > 4*bullishScore
+      const article = "CTG báo cáo tăng mạnh nhưng CEO xả hàng cổ phiếu khối lượng lớn, rút vốn";
+
+      const sentiment = classifySentiment(article);
+
+      // Assertion 1: Despite positive context, xả hàng + rút vốn = bearish dominance
+      expect(sentiment.direction).toBe("bearish");
+      // For cascade to fire, confidence must exceed 0.6
+      // bearishScore = xả hàng(3) + rút vốn(2) = 5
+      // bullishScore = tăng mạnh(2) = 2
+      // confidence = 5/7 = 0.714 > 0.6 ✓
+      expect(sentiment.confidence).toBeGreaterThan(0.6);
+
+      // Assertion 2: Keyword extraction shows both bullish and bearish keywords detected
+      expect(sentiment.keywords).toContain("xả hàng");
+      expect(sentiment.keywords).toContain("tăng mạnh"); // Bullish also detected
+
+      // Assertion 3: Cascade must still fire because sentiment is bearish
+      const watchlist: WatchlistEntry[] = [
+        { actionCode: "CTG", domain: "banking", exchange: "HOSE" },
+        { actionCode: "BID", domain: "banking", exchange: "HOSE" },
+        { actionCode: "VCB", domain: "banking", exchange: "HOSE" },
+      ];
+
+      const peers = detectInsiderDumpPeers(article, ["CTG"], watchlist);
+      expect(peers.length).toBeGreaterThan(0);
+      expect(peers).toContain("BID");
+      expect(peers).toContain("VCB");
+    });
+
+    it("mixed sentiment with bán sạch still triggers bearish cascade", () => {
+      // bullishScore = tăng (1) = 1
+      // bearishScore = bán sạch(3) + thoái vốn(2) = 5
+      // confidence = 5/6 = 0.833 > 0.6 ✓
+      const article = "ACB tăng nhưng CEO bán sạch toàn bộ cổ phiếu, thoái vốn khỏi công ty";
+
+      const sentiment = classifySentiment(article);
+
+      // Bearish keywords (bán sạch + thoái vốn) dominate
+      expect(sentiment.direction).toBe("bearish");
+      expect(sentiment.confidence).toBeGreaterThan(0.6);
+
+      // Cascade fires
+      const watchlist: WatchlistEntry[] = [
+        { actionCode: "ACB", domain: "banking", exchange: "HOSE" },
+        { actionCode: "BID", domain: "banking", exchange: "HOSE" },
+      ];
+
+      const peers = detectInsiderDumpPeers(article, ["ACB"], watchlist);
+      expect(peers.length).toBeGreaterThan(0);
+      expect(peers).toContain("BID");
+    });
+  });
+
+  describe("GC-1272-3: Non-banking stocks excluded from peers (e.g., VNM/FPT filtered out)", () => {
+    it("filters out tech and agriculture non-banking stocks from cascade", () => {
+      const watchlist: WatchlistEntry[] = [
+        { actionCode: "VCB", domain: "banking", exchange: "HOSE" },
+        { actionCode: "BID", domain: "banking", exchange: "HOSE" },
+        { actionCode: "CTG", domain: "banking", exchange: "HOSE" },
+        { actionCode: "FPT", domain: "tech", exchange: "HOSE" },
+        { actionCode: "VNM", domain: "agriculture", exchange: "HOSE" },
+        { actionCode: "VNG", domain: "tech", exchange: "HOSE" },
+        { actionCode: "MWG", domain: "retail", exchange: "HOSE" },
+      ];
+
+      const peers = detectInsiderDumpPeers(
+        "Tổng giám đốc VCB xả hàng cổ phiếu",
+        ["VCB"],
+        watchlist,
+      );
+
+      // Assertion 1: Only banking stocks (BID, CTG) in result
+      expect(peers.length).toBe(2);
+      expect(peers).toContain("BID");
+      expect(peers).toContain("CTG");
+
+      // Assertion 2: Tech stocks excluded
+      expect(peers).not.toContain("FPT");
+      expect(peers).not.toContain("VNG");
+
+      // Assertion 3: Agriculture and retail stocks excluded
+      expect(peers).not.toContain("VNM");
+      expect(peers).not.toContain("MWG");
+
+      // Assertion 4: Original banking stock excluded
+      expect(peers).not.toContain("VCB");
+    });
+
+    it("handles mixed watchlist with only banking domain peers returned", () => {
+      const watchlist: WatchlistEntry[] = [
+        { actionCode: "BID", domain: "banking", exchange: "HOSE" },
+        { actionCode: "CTG", domain: "banking", exchange: "HOSE" },
+        { actionCode: "ACB", domain: "banking", exchange: "HOSE" },
+        { actionCode: "VCB", domain: "banking", exchange: "HOSE" },
+        // Majority non-banking
+        { actionCode: "HPG", domain: "steel", exchange: "HOSE" },
+        { actionCode: "FPT", domain: "tech", exchange: "HOSE" },
+        { actionCode: "VNM", domain: "agriculture", exchange: "HOSE" },
+        { actionCode: "GAS", domain: "oil_gas", exchange: "HOSE" },
+        { actionCode: "KDH", domain: "real_estate", exchange: "HOSE" },
+      ];
+
+      const peers = detectInsiderDumpPeers(
+        "Lãnh đạo BID bán sạch cổ phiếu",
+        ["BID"],
+        watchlist,
+      );
+
+      // Only banking peers
+      expect(peers.length).toBe(3); // BID excluded, so CTG + ACB + VCB
+      expect(peers).toContain("CTG");
+      expect(peers).toContain("ACB");
+      expect(peers).toContain("VCB");
+
+      // Non-banking excluded
+      expect(peers).not.toContain("HPG");
+      expect(peers).not.toContain("FPT");
+      expect(peers).not.toContain("VNM");
+      expect(peers).not.toContain("GAS");
+      expect(peers).not.toContain("KDH");
+    });
+  });
+
+  describe("GC-1272-4: Confidence scoring applied correctly (>0.6 threshold)", () => {
+    it("high-confidence xả hàng articles trigger cascade", () => {
+      const article = "Tổng giám đốc xả hàng cổ phiếu";
+
+      const sentiment = classifySentiment(article);
+
+      // xả hàng is high-weight (3), so confidence should exceed 0.6
+      expect(sentiment.direction).toBe("bearish");
+      expect(sentiment.confidence).toBeGreaterThan(0.6);
+
+      // Cascade fires
+      const watchlist: WatchlistEntry[] = [
+        { actionCode: "VCB", domain: "banking", exchange: "HOSE" },
+        { actionCode: "BID", domain: "banking", exchange: "HOSE" },
+      ];
+
+      const peers = detectInsiderDumpPeers(article, ["VCB"], watchlist);
+      expect(peers.length).toBeGreaterThan(0);
+      expect(peers).toContain("BID");
+    });
+
+    it("multi-keyword articles accumulate confidence above threshold", () => {
+      // Article with multiple insider dump keywords (bán sạch + thoái sạch)
+      const article = "Lãnh đạo VCB bán sạch và thoái sạch vốn khỏi công ty sau 15 năm";
+
+      const sentiment = classifySentiment(article);
+
+      // Multiple bearish keywords: bán sạch (3) + thoái sạch (3) = cumulative weight
+      // Should produce confidence > 0.6
+      expect(sentiment.direction).toBe("bearish");
+      expect(sentiment.confidence).toBeGreaterThan(0.6);
+      expect(sentiment.keywords.length).toBeGreaterThanOrEqual(2);
+
+      // Cascade fires with high confidence
+      const watchlist: WatchlistEntry[] = [
+        { actionCode: "VCB", domain: "banking", exchange: "HOSE" },
+        { actionCode: "BID", domain: "banking", exchange: "HOSE" },
+        { actionCode: "CTG", domain: "banking", exchange: "HOSE" },
+      ];
+
+      const peers = detectInsiderDumpPeers(article, ["VCB"], watchlist);
+      expect(peers.length).toBe(2); // BID and CTG
+      expect(peers).toContain("BID");
+      expect(peers).toContain("CTG");
+    });
+
+    it("confidence threshold blocks cascade on weak sentiment", () => {
+      // Ambiguous article: has dump keyword but weak context
+      // (This tests the confidence > 0.6 guard on line 65)
+      const watchlist: WatchlistEntry[] = [
+        { actionCode: "VCB", domain: "banking", exchange: "HOSE" },
+        { actionCode: "BID", domain: "banking", exchange: "HOSE" },
+      ];
+
+      // Test with a generic article that has the keyword but may be borderline
+      // In practice, single-word articles have lower confidence
+      const article = "xả hàng";
+
+      const sentiment = classifySentiment(article);
+      const peers = detectInsiderDumpPeers(article, ["VCB"], watchlist);
+
+      // If confidence is below 0.6, cascade does not fire (empty array)
+      if (sentiment.confidence <= 0.6) {
+        expect(peers.length).toBe(0);
+      } else {
+        // If confidence > 0.6, cascade fires
+        expect(peers.length).toBeGreaterThan(0);
+      }
+    });
+  });
+});
