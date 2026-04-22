@@ -183,6 +183,7 @@ describe("Task 1288a — Foreign Flow Fallback", () => {
       let fetchForeignFlowWithFallback: ((opts: unknown) => Promise<ForeignFlowFetchResult>) | undefined;
 
       try {
+        // @ts-ignore Dynamic import of not-yet-implemented module
         const mod = await import("../infrastructure/fetchers/foreignFlowFetcher.js");
         fetchForeignFlowWithFallback = (mod as Record<string, unknown>)
           .fetchForeignFlowWithFallback as ((opts: unknown) => Promise<ForeignFlowFetchResult>) | undefined;
@@ -204,6 +205,7 @@ describe("Task 1288a — Foreign Flow Fallback", () => {
       let fetchForeignFlowWithFallback: ((opts: unknown) => Promise<ForeignFlowFetchResult>) | undefined;
 
       try {
+        // @ts-ignore Dynamic import of not-yet-implemented module
         const mod = await import("../infrastructure/fetchers/foreignFlowFetcher.js");
         fetchForeignFlowWithFallback = (mod as Record<string, unknown>)
           .fetchForeignFlowWithFallback as ((opts: unknown) => Promise<ForeignFlowFetchResult>) | undefined;
@@ -240,9 +242,11 @@ describe("Task 1288a — Foreign Flow Fallback", () => {
       expect(fetchForeignFlowWithFallback).toBeDefined();
 
       if (fetchForeignFlowWithFallback) {
+        // Use a 3000ms timeout in the mock to test fallback behavior
+        // without conflicting with the test framework's 5000ms timeout
         const result = await fetchForeignFlowWithFallback({
           now: () => now,
-          fetchFn: makeFetchFn({ timeoutMs: 6000 }),
+          fetchFn: makeFetchFn({ timeoutMs: 3000 }),
           cacheStore: cache,
           sseMessageBus: messageBus,
         });
@@ -262,6 +266,7 @@ describe("Task 1288a — Foreign Flow Fallback", () => {
       let fetchForeignFlowWithFallback: ((opts: unknown) => Promise<ForeignFlowFetchResult>) | undefined;
 
       try {
+        // @ts-ignore Dynamic import of not-yet-implemented module
         const mod = await import("../infrastructure/fetchers/foreignFlowFetcher.js");
         fetchForeignFlowWithFallback = (mod as Record<string, unknown>)
           .fetchForeignFlowWithFallback as ((opts: unknown) => Promise<ForeignFlowFetchResult>) | undefined;
@@ -304,6 +309,7 @@ describe("Task 1288a — Foreign Flow Fallback", () => {
       let fetchForeignFlowWithFallback: ((opts: unknown) => Promise<ForeignFlowFetchResult>) | undefined;
 
       try {
+        // @ts-ignore Dynamic import of not-yet-implemented module
         const mod = await import("../infrastructure/fetchers/foreignFlowFetcher.js");
         fetchForeignFlowWithFallback = (mod as Record<string, unknown>)
           .fetchForeignFlowWithFallback as ((opts: unknown) => Promise<ForeignFlowFetchResult>) | undefined;
@@ -360,6 +366,7 @@ describe("Task 1288a — Foreign Flow Fallback", () => {
       let fetchForeignFlowWithFallback: ((opts: unknown) => Promise<ForeignFlowFetchResult>) | undefined;
 
       try {
+        // @ts-ignore Dynamic import of not-yet-implemented module
         const mod = await import("../infrastructure/fetchers/foreignFlowFetcher.js");
         fetchForeignFlowWithFallback = (mod as Record<string, unknown>)
           .fetchForeignFlowWithFallback as ((opts: unknown) => Promise<ForeignFlowFetchResult>) | undefined;
@@ -415,6 +422,7 @@ describe("Task 1288a — Foreign Flow Fallback", () => {
       let fetchForeignFlowWithFallback: ((opts: unknown) => Promise<ForeignFlowFetchResult>) | undefined;
 
       try {
+        // @ts-ignore Dynamic import of not-yet-implemented module
         const mod = await import("../infrastructure/fetchers/foreignFlowFetcher.js");
         fetchForeignFlowWithFallback = (mod as Record<string, unknown>)
           .fetchForeignFlowWithFallback as ((opts: unknown) => Promise<ForeignFlowFetchResult>) | undefined;
@@ -465,6 +473,7 @@ describe("Task 1288a — Foreign Flow Fallback", () => {
       let fetchForeignFlowWithFallback: ((opts: unknown) => Promise<ForeignFlowFetchResult>) | undefined;
 
       try {
+        // @ts-ignore Dynamic import of not-yet-implemented module
         const mod = await import("../infrastructure/fetchers/foreignFlowFetcher.js");
         fetchForeignFlowWithFallback = (mod as Record<string, unknown>)
           .fetchForeignFlowWithFallback as ((opts: unknown) => Promise<ForeignFlowFetchResult>) | undefined;
@@ -533,6 +542,7 @@ describe("Task 1288a — Foreign Flow Fallback", () => {
       let fetchForeignFlowWithFallback: ((opts: unknown) => Promise<ForeignFlowFetchResult>) | undefined;
 
       try {
+        // @ts-ignore Dynamic import of not-yet-implemented module
         const mod = await import("../infrastructure/fetchers/foreignFlowFetcher.js");
         fetchForeignFlowWithFallback = (mod as Record<string, unknown>)
           .fetchForeignFlowWithFallback as ((opts: unknown) => Promise<ForeignFlowFetchResult>) | undefined;
