@@ -9,16 +9,26 @@
  *   3. remaining = 0 (clean WAL) → sendTelegram NOT called
  */
 
-import { describe, it, expect, mock, beforeEach } from "bun:test";
+import { describe, it, expect, mock, beforeEach, afterEach } from "bun:test";
 import { walCheckpointAlert } from "../scheduler/walCheckpointAlert.js";
 
 describe("walCheckpointAlert", () => {
   let sendWorkCalls: Array<string>;
   let sendWorkFn: (msg: string) => Promise<void>;
+  let originalConsoleError: typeof console.error;
 
   beforeEach(() => {
     sendWorkCalls = [];
     sendWorkFn = async (msg: string) => { sendWorkCalls.push(msg); };
+    // Suppress console.error during error handling tests to prevent
+    // output leakage in parallel test suite
+    originalConsoleError = console.error;
+    console.error = () => {};
+  });
+
+  afterEach(() => {
+    // Restore console.error to avoid side effects on other tests
+    console.error = originalConsoleError;
   });
 
   it("calls sendWork with 'WAL stuck' when remaining > 50000", async () => {
