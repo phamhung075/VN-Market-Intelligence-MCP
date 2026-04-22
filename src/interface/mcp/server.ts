@@ -1478,6 +1478,80 @@ export async function createBunServer(
       return;
     }
 
+
+    // ── Task 1289 — VPS Queue Enrichment Endpoint ────────────────────────────
+    // VPS scheduler job POSTs discovered PDF URLs here.
+    // Receives: { action_code, period_year, period_quarter, source_url }
+    // Updates bctc_vps_queue.source_url for matching item
+    if (method === "POST" && pathname === "/api/enrich-queue-item") {
+      const apiKey = Bun.env.VPS_PUSH_API_KEY;
+      const authHeader = req.headers["x-api-key"] || req.headers["authorization"]?.replace("Bearer ", "");
+      if (!apiKey || authHeader !== apiKey) {
+        res.writeHead(401, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "Unauthorized" }));
+        return;
+      }
+
+      let body = "";
+      for await (const chunk of req) body += chunk;
+      try {
+        const payload = JSON.parse(body) as Record<string, unknown>;
+
+        const actionCode = payload.action_code;
+        const periodYear = payload.period_year;
+        const periodQuarter = payload.period_quarter;
+        const sourceUrl = payload.source_url;
+
+        if (typeof actionCode !== "string" || !actionCode) {
+          res.writeHead(400, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ error: "Missing required field: action_code (string)" }));
+          return;
+        }
+        if (typeof periodYear !== "number" || periodYear < 2000) {
+          res.writeHead(400, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ error: "Missing required field: period_year (number)" }));
+          return;
+        }
+        if (typeof periodQuarter !== "string" || !periodQuarter) {
+          res.writeHead(400, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ error: "Missing required field: period_quarter (string)" }));
+          return;
+        }
+        if (typeof sourceUrl !== "string" || !sourceUrl) {
+          res.writeHead(400, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ error: "Missing required field: source_url (string)" }));
+          return;
+        }
+
+        const db = getDb();
+        const stmt = db.prepare(
+          `UPDATE bctc_vps_queue 
+           SET source_url = ? 
+           WHERE action_code = ? AND period_year = ? AND period_quarter = ? AND source_url IS NULL`
+        );
+        const result = stmt.run(sourceUrl, actionCode, periodYear, periodQuarter);
+
+        log.info("[enrich-queue-item] URL enriched", {
+          actionCode,
+          periodYear,
+          periodQuarter,
+          sourceUrl,
+          updated: (result.changes ?? 0) > 0,
+        });
+
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: true, updated: (result.changes ?? 0) > 0 }));
+      } catch (err) {
+        log.error("[enrich-queue-item] error", {
+          error: err instanceof Error ? err.message : String(err),
+        });
+        res.writeHead(500, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "Server error" }));
+      }
+      return;
+    }
+
+
     // ── Push OHLCV history from VPS one-time backfill script ────────────────
     if (method === "POST" && pathname === "/api/push-ohlcv-history") {
       const apiKey = Bun.env.VPS_PUSH_API_KEY;

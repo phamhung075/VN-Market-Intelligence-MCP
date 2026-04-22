@@ -1,0 +1,11 @@
+[Unit]
+Description=VN Market BCTC URL Enricher Timer
+Documentation=https://github.com/phamhung075/VN-Market-Intelligence-MCP
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=6h
+AccuracySec=1min
+
+[Install]
+WantedBy=timers.target
