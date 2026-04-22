@@ -2,7 +2,7 @@
 
 **Type:** FIX (cleanup task)
 **Scope:** Remove tracked `reports/2026-04-22-evening.json` + add `.gitignore` pattern
-**Status:** REVIEW → CHANGES_REQUESTED
+**Status:** REVIEW → APPROVED
 
 ---
 
@@ -19,13 +19,13 @@
 - [x] .gitignore pattern correct (prevents future evening JSON files)
 - [x] TypeScript strict check: 0 errors
 - [x] Test suite: 6211 pass (no regressions)
-- [ ] Commit message: **MISSING co-author footer** ← BLOCKER
+- [x] Commit message: co-author footer present
 
 ---
 
 ## Implementation Record
 
-**Commit:** 28b7320 (fix(1277-data): Remove stale evening report from VCS)
+**Commit:** 9cab289 (fix(1277-data): Remove stale evening report from VCS)
 
 **Changes:**
 ```
@@ -33,21 +33,19 @@
 reports/2026-04-22-evening.json | -27 (file deleted)
 ```
 
-**Issue Found:** Commit message missing `Co-Authored-By: Claude Haiku 4.5 <noreply@anthropic.com>` footer.
+**Status:** APPROVED (fixer amended commit 9cab289 with co-author footer)
 
 ---
 
 ## [QA] Review Record
 
-**Date:** 2026-04-22
+**Date:** 2026-04-22 (re-review after fixer amendment)
 
-**Verdict:** CHANGES_REQUESTED
+**Verdict:** APPROVED
 
-**blocking_issues:**
-- `28b7320:1 — Missing co-author footer in commit message. Amend with: "Co-Authored-By: Claude Haiku 4.5 <noreply@anthropic.com>"`
+**blocking_issues:** None
 
-**non_blocking:**
-- None
+**non_blocking:** None
 
 **files_confirmed_clean:**
 - `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/.gitignore` — pattern added correctly
@@ -61,5 +59,7 @@ reports/2026-04-22-evening.json | -27 (file deleted)
 
 **tsc_clean:** PASS ✓
 
-**verdict_reason:** Code quality passes; commit hygiene fails (missing co-author). Fix required before merge.
+**verdict_reason:** Code quality PASS, commit hygiene PASS (co-author footer confirmed). Ready for merge.
+
+**merge_commit:** (pending git merge)
 
