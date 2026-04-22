@@ -239,3 +239,32 @@ DROP TABLE IF EXISTS vnstock_trading_stats;
 - Migration validates index creation success; test environment gracefully skips validation if table doesn't exist yet
 - All 6 test cases pass, covering constraint validation, duplicate insert scenarios, ON CONFLICT matching, date column defaults, and normalization
 - No regressions in full suite (1 fail is in unrelated task 1276a)
+
+---
+
+## [QA] Review Record
+
+**Date:** 2026-04-22
+
+**verdict:** APPROVED
+
+**blocking_issues:** []
+
+**non_blocking:** []
+
+**verification_summary:**
+- Migration validation: pragma_index_list check added (lines 73–120) ✓
+- Guard check: pre-upsert constraint validation (lines 436–480) ✓
+  - Detects explicit index: uq_vnstats_code_date
+  - Detects implicit index: sqlite_autoindex_vnstock_trading_stats_*
+  - Graceful fallback for older SQLite versions
+- Logging: diagnostic info for affected rows (lines 514–517, 544–548) ✓
+- Test coverage: all 6 UNIQUE constraint test cases pass ✓
+- Regression: full suite 6164 pass / 21 skip / 1 fail (unrelated 1276a) ✓
+- TypeScript: 0 errors ✓
+
+**files_confirmed_clean:**
+- /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/infrastructure/db/vnstockStore.ts
+- /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/__tests__/1275-foreign-flow-unique-constraint.test.ts
+
+**merge_commit:** [awaiting approval]
