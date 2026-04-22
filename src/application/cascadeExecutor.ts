@@ -18,6 +18,7 @@ import type { WatchlistEntry } from "../domain/services/cascadeEngine.js";
 import { INSIDER_DUMP_RULES } from "../domain/services/cascadeEngine.js";
 import { classifySentiment } from "../domain/services/sentimentClassifier.js";
 import { detectMsciInclusion } from "../domain/services/msciDetector.js";
+import { detectAgricultureWeatherKeywords } from "../domain/services/agricultureDetector.js";
 
 /**
  * Detect whether a news article describes insider leadership exit selling,
@@ -203,4 +204,111 @@ export function detectMsciCascadePeers(
     reasoning,
     confidence: msciResult.confidence,
   };
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Agriculture Weather Cascade (Task 1281)
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * Result of agriculture weather detection + agricultural stock filtering.
+ */
+export interface AgricultureCascadeResult {
+  /** True if weather keywords detected + credibility >= 0.6 */
+  matched: boolean;
+  /** List of detected weather keywords (lowercase) */
+  detectedKeywords: string[];
+  /** Weather impact type: "rainfall" | "drought" | "storm" | "cold_snap" | null */
+  impactType: string | null;
+  /** Agricultural watchlist stocks affected by cascade */
+  targetStocks: string[];
+  /** Human-readable explanation of cascade logic */
+  reasoning: string;
+  /** Confidence score: min(1.0, sourceCredibility × keywordCount / 3.0) */
+  confidence: number;
+}
+
+/**
+ * Detect agriculture weather keywords + identify agricultural watchlist stocks.
+ *
+ * Returns target agricultural stocks (empty array if rule doesn't apply).
+ *
+ * @param seedSummary - Original news article summary
+ * @param sourceCredibility - Credibility score [0, 1] (e.g., 0.95 for Reuters, 0.8 for VnExpress)
+ * @param watchlist - Full watchlist to find agricultural stocks
+ * @returns AgricultureCascadeResult with matched flag and targetStocks list
+ *
+ * Logic:
+ *   1. Call detectAgricultureWeatherKeywords(seedSummary, sourceCredibility)
+ *   2. If matched=false, return empty targetStocks + credibility rejection reason
+ *   3. If matched=true:
+ *      - Filter watchlist to domain="agriculture" stocks only
+ *      - Return targetStocks + confidence + impactType + reasoning
+ *
+ * Agricultural stock list (from watchlist.domain="agriculture"):
+ *   Core: VNR (agritech), BFC (agritech), QNT (aquaculture)
+ *   Extended: ANV (aquaculture), MPC (seafood), ASM (aquaculture)
+ *
+ * Example:
+ *   seedSummary = "VnExpress: Mưa lớn kéo dài 5 ngày ở Mekong Delta gây lũ lụt"
+ *   sourceCredibility = 0.8
+ *   watchlist = [VNR(agriculture), BFC(agriculture), QNT(agriculture), FPT(tech), VCB(banking)]
+ *   return = { matched: true, impactType: "rainfall", targetStocks: ["VNR", "BFC", "QNT"], confidence: 0.53, ... }
+ */
+export function detectAgricultureCascadePeers(
+  seedSummary: string,
+  sourceCredibility: number,
+  watchlist: WatchlistEntry[],
+): AgricultureCascadeResult {
+  // ── Step 1: Detect agriculture weather keywords ─────────────────────────
+  const weatherResult = detectAgricultureWeatherKeywords(seedSummary, sourceCredibility);
+
+  if (!weatherResult.matched) {
+    return {
+      matched: false,
+      detectedKeywords: [],
+      impactType: null,
+      targetStocks: [],
+      reasoning: `Agriculture weather keywords not detected or credibility < 0.6 (credibility: ${sourceCredibility.toFixed(2)})`,
+      confidence: 0,
+    };
+  }
+
+  // ── Step 2: Filter watchlist to agriculture-domain stocks ───────────────
+  const agricultureStocks = watchlist
+    .filter(w => w.domain === "agriculture")
+    .map(w => w.actionCode);
+
+  // ── Step 3: Build reasoning string ─────────────────────────────────────
+  const impactLabel = weatherResult.impactType || "weather";
+  const reasoning = `[Agriculture Weather] ${impactLabel} event detected (confidence: ${weatherResult.confidence.toFixed(2)}). Keywords: ${weatherResult.keywords.join(", ")}. Affected: ${agricultureStocks.join(", ")}`;
+
+  return {
+    matched: true,
+    detectedKeywords: weatherResult.keywords,
+    impactType: weatherResult.impactType,
+    targetStocks: agricultureStocks,
+    reasoning,
+    confidence: weatherResult.confidence,
+  };
+}
+
+/**
+ * Annotation helper for causal chain reasoning.
+ *
+ * @param impactType - Weather impact type (rainfall, drought, storm, cold_snap)
+ * @param affectedStocks - Agricultural stocks affected by cascade
+ * @returns Human-readable annotation for chain.reasoning
+ *
+ * Example: "[Agriculture Weather] Rainfall event. Affecting: QNT, ANV, MPC (aquaculture +), VNR, BFC (crops ~)"
+ */
+export function annotateAgricultureWeatherCascade(
+  impactType: string | null,
+  affectedStocks: string[],
+): string {
+  if (affectedStocks.length === 0) {
+    return "";
+  }
+  const impactLabel = impactType || "weather";
+  return `[Agriculture Weather] ${impactLabel} event. Affecting: ${affectedStocks.join(", ")}`;
 }
