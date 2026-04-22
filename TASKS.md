@@ -17,68 +17,16 @@
 
 ---
 
-## Sprint 1275 (Tier 2) — Foreign Flow Multi-Date UNIQUE Edge Cases (M-size)
+## Sprint 1282 — Data Freshness Monitoring Tool (S-size)
 
-| ID | Title | Status | Type | Notes |
-|----|----|--------|------|-------|
-| 1280 | Test: UNIQUE(code, date) rolling window (same stock, different dates) | Todo | Test | Validates constraint doesn't break multi-date inserts |
-
----
-
-## Sprint 1264 (Tier 2) — Hormuz Strait Cascade (M-size)
-
-| ID | Title | Status | Type | Notes |
-|----|----|--------|------|-------|
-| 1264 | Add geopolitical cascade: Hormuz closure → shipping/energy ALERTS | Todo | Sprint | Links oil surge to FPT/VSA/PVD/PLX signals |
-
----
-
-## Sprint 1280 — URGENT FIX: BCTC Queue Timeout Blocker (FIX-size)
-
-**Status:** Todo | **Goal:** Unblock VPS BCTC fetch with quick parameter flag | **Size:** FIX (≤10 lines) | **Baseline:** 6187
+**Status:** Todo | **Goal:** Eliminate false alarm cascade rule gaps via data freshness detection tool | **Size:** S (2 tasks, 2 files) | **Baseline:** 6187 | **Target:** 6197 (+8 assertions)
 
 | ID | Title | Status | Layer | Notes |
 |----|-------|--------|-------|-------|
-| 1280 | FIX: `/api/bctc-fetch-queue` skip-enrichment flag | Todo | interface | Add query param to return queue in <1s without SSC lookups |
+| 1282a | RED: Data freshness monitoring tool tests | Todo | test | 8 assertions: price/BCTC/news SLA breach + recovery detection |
+| 1282b | GREEN: Implement freshness detector + formatter | Todo | interface+domain | Calls `freshnessSlaChecker` domain service, formats alerts |
 
----
-
-## Sprint 1281 — Agriculture Weather Cascade Detection (M-size)
-
-**Status:** COMPLETE | **Ref:** TECH-1281 | **Goal:** Detect rainfall/drought events → cascade alerts to agricultural stocks | **Size:** M (2 tasks, ~8 hours) | **Baseline:** 6187 | **Report:** reports/TASK_REPORT_1281_FINAL.md
-
-| ID | Title | Status | Layer | Notes |
-|----|----|--------|-------|-------|
-| 1281a | RED: Agriculture weather cascade detection tests | Done | test | 8 PASS; 8 assertions total; **merged ✓** |
-| 1281b | GREEN: Implement agriculture detector + rules + executor | Done | domain+app | 13 GREEN tests PASS; 21 total (8 RED + 13 GREEN); **merged ✓** |
-
----
-
-### Task 1281a — RED: Agriculture Weather Cascade Tests
-
-**context:** docs/handoffs/TASK_1281a.md
-
-**acceptance_criteria:**
-- Given weather keywords (mưa lớn, hạn hán, bão, rét đậm) in news text
-- When detectAgricultureWeatherKeywords() called
-- Then matched=true, impactType in [rainfall|drought|storm|cold_snap], confidence >0.2, TC-1 through TC-7 PASS
-
-**branch:** task/1281a-agriculture-cascade-red-test
-
----
-
-### Task 1281b — GREEN: Implement Agriculture Detector + Rules + Integration
-
-**context:** docs/handoffs/TASK_1281b.md
-
-**acceptance_criteria:**
-- Given agriculture weather keywords at credibility ≥0.6 (Reuters/VnExpress)
-- When detectAgricultureCascadePeers() called with watchlist
-- Then returns agriculture-domain stocks only (VNR, BFC, QNT, ANV, MPC, ASM), excludes tech/banking, all GREEN tests PASS
-
-**depends_on:** 1281a ✓ (RED tests pass + merged)
-
-**branch:** task/1281b-agriculture-cascade-green-impl
+**Context:** Existing `freshnessSlaChecker.ts` (domain) defines SLA thresholds per signal type. New tool wraps it for interface layer (MCP + future briefing gate-keeping). Prevents cascade alerts when data is stale.
 
 ---
 
@@ -102,7 +50,6 @@
 | 1284 | IMF context sentiment | MEDIUM | Policy vs crisis distinction |
 | 1274 | HOSE staleness guard | MEDIUM | >2h old = circuit DEGRADED |
 | 1267 | SSC PDF timeout fallback | MEDIUM | Use news chain if OCR fails |
-| 1282 | PDF fetch retry (15→30s) | MEDIUM | Exponential backoff on VPS; was mistakenly labeled 1281 |
 | 1283b | Foreign flow fallback source | MEDIUM | If primary endpoint unrecoverable, use SSE alt data |
 | 1285 | Add rag_analyses + evidence_scores schema | HIGH | Structural additions (L-size) |
 | 1286 | Update IMPLEMENTATION_STATUS.md | LOW | Add sprint 240+ entries |

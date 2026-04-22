@@ -2,11 +2,11 @@
   "_maintained_by": "PM / system-auditor",
   "_trigger": "sprint start/end, tool/cron count change, baseline test update",
   "lastUpdated": "2026-04-22",
-  "currentSprint": 1280,
-  "previousSprint": { "number": 1279, "status": "COMPLETE", "progressTasks": "2/2 DONE (RED 1279a + GREEN 1279b: MSCI inclusion cascade, 18 tests total 7 RED + 11 GREEN)" },
-  "sprintGoal": "BCTC queue timeout blocker — add skip-enrichment flag to unblock VPS batch processing",
-  "testBaseline": 6187,
-  "testBaselineTarget": 6187,
+  "currentSprint": 1282,
+  "previousSprint": { "number": 1280, "status": "Todo", "progressTasks": "1/1 URGENT FIX: BCTC queue timeout blocker (add skip-enrichment flag)" },
+  "sprintGoal": "Eliminate false alarm cascade rule gaps via data freshness detection tool",
+  "testBaseline": 6189,
+  "testBaselineTarget": 6197,
   "testFailures": 0,
   "toolCount": 103,
   "schedulerFileCount": 40,
@@ -15,5 +15,5 @@
   "analysisAgentCount": 9,
   "totalTasksDone": 332,
   "lastFixApplied": "MSCI inclusion cascade (sprint 1279)",
-  "currentSprintNotes": "Sprint 1280 URGENT FIX: BCTC queue timeout blocker. Add skip-enrichment flag to /api/bctc-fetch-queue endpoint for VPS batch processing (<1s without SSC lookups). Unblocks VPS, enrichment deferred to background job (future sprint 1287)."
+  "currentSprintNotes": "Sprint 1282: Data Freshness Monitoring Tool (S-size). Wraps existing freshnessSlaChecker domain service (SLA thresholds per signal: price 10min, BCTC 120min market / 360min off-hours, news 30min, SBV FX 30min, foreign flow 10min). Detects stale data to prevent cascade false alarms. 8 RED assertions (1282a) + implementation (1282b). Baseline 6189→6197."
 }
