@@ -69,9 +69,55 @@
 
 ---
 
+## Sprint 1280 — URGENT FIX: BCTC Queue Timeout Blocker (2026-04-22)
+
+**Status:** FIXED & MERGED | **Goal:** Unblock VPS BCTC fetch pipeline stalled 10 days | **Size:** FIX (≤10 lines)
+
+**Problem:**
+- `/api/bctc-fetch-queue` takes 67+ seconds (synchronous SSC enrichment × 63 items)
+- VPS timeout: 15 seconds → queue requests always fail
+- Result: zero BCTC PDFs fetched since 2026-04-12
+- 94% of watchlist stocks overdue for Q4-2025 filing analysis
+
+**Solution — Option B (Emergency Quick Fix):**
+- Added `?skip_enrichment=true` query parameter to endpoint
+- When set: returns queue in <1 second (no SSC lookups)
+- VPS uses cached source_urls + fallback portal hints
+- Financial Analyst cycle resumes with available PDFs immediately
+
+**What Changed:**
+- File: `src/interface/mcp/server.ts` (lines 1224–1268)
+- Wrapped enrichment loop in conditional (`if (!skipEnrichment)`)
+- URL parsing for query param check
+- No schema changes, no new dependencies
+
+**Impact:**
+- VPS can pull queue in <1 second ✓
+- BCTC ingestion resumes within 20 minutes ✓
+- Financial data freshness restored ✓
+- Temporary workaround while Option A (async job) is planned ✓
+
+**Status:** COMPLETE & SIGNED OFF (2026-04-22 15:35 UTC)
+
+---
+
+## Follow-up: Sprint 1287 — Async BCTC Enrichment (Option A — Backlog)
+
+**Goal:** Implement background job to populate source_urls, prevent timeout on >100 items
+
+**Scope:**
+- New scheduler job: `bctcQueueEnricherJob.ts` (runs every 15 min)
+- Enriches 10–20 queue items per run with SSC URLs
+- Updates `source_url` column in `bctc_vps_queue`
+- DB migration: populate source_url column
+
+**Timeline:** Schedule after 1280 merge (estimated 30–40 min dev + test)
+
+---
+
 ## Next Sprint — TBD
 
-PO reassessing product gaps. Backlog empty pending sprint planning.
+Post-FIX reassessment. Backlog: 1286 (agriculture cascade), 1285 (schema updates), others.
 
 **Previous:**
 
