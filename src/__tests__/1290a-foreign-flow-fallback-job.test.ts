@@ -15,7 +15,7 @@
  * @module __tests__/1290a-foreign-flow-fallback-job
  */
 
-import { describe, it, expect, beforeEach, afterEach, mock } from "bun:test";
+import { describe, it, expect, beforeEach, afterEach, beforeAll, afterAll, mock } from "bun:test";
 import type { WriteForeignFlowItem } from "../infrastructure/db/ohlcvForeignFlowStore.js";
 import {
   fetchForeignFlowWithFallback,
@@ -23,6 +23,7 @@ import {
   resetCircuitBreaker,
 } from "../infrastructure/fetchers/foreignFlowFetcher.js";
 import { breakers } from "../infrastructure/circuitBreakerRegistry.js";
+import { initDatabase, getDb, closeDb } from "../infrastructure/db/schema.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Test Data Builders
@@ -73,6 +74,16 @@ function createMockFetch(config: {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("Task 1290a — Foreign Flow Fallback Job Integration", () => {
+  beforeAll(async () => {
+    // Initialize in-memory database schema
+    await initDatabase();
+  });
+
+  afterAll(() => {
+    // Clean up database connection
+    closeDb();
+  });
+
   beforeEach(async () => {
     // Reset state before each test
     resetFallbackCache();

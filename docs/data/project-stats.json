@@ -4,7 +4,7 @@
   "lastUpdated": "2026-04-22",
   "currentSprint": 1290,
   "previousSprint": { "number": 1289, "status": "COMPLETE", "progressTasks": "Sprint 1289: Foreign flow parse errors root-cause fix merged (31 tests, +22 assertions, 0 failures)" },
-  "sprintGoal": "Sprint 1290: Integrate foreign flow fallback fetcher into scheduler job — complete resilience loop when primary VPS endpoint down",
+  "sprintGoal": "Sprint 1290: Integrate foreign flow fallback fetcher into scheduler job — complete resilience loop (primary→cache→SSE→none) when VPS endpoint down; activates every 60s via new scheduler job",
   "testBaseline": 6297,
   "testBaselineTarget": 6305,
   "testFailures": 0,
