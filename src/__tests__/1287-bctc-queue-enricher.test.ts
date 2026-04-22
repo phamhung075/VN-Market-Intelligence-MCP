@@ -30,6 +30,7 @@ import type { SscDocumentLookup } from "../application/usecases/bctcQueueEnriche
 
 /**
  * Insert a test queue item directly into the database.
+ * Uses INSERT OR REPLACE to handle any existing items with same code/year/quarter.
  */
 function insertQueueItem(
   db: Database,
@@ -38,12 +39,12 @@ function insertQueueItem(
   quarter: string,
   sourceUrl: string | null = null,
 ): void {
-  const sourceUrlClause = sourceUrl ? `'${sourceUrl}'` : "NULL";
-  db.exec(
-    `INSERT INTO bctc_vps_queue
+  const stmt = db.prepare(`
+    INSERT OR REPLACE INTO bctc_vps_queue
       (action_code, period_year, period_quarter, status, source_url)
-    VALUES ('${code}', ${year}, '${quarter}', 'pending', ${sourceUrlClause})`
-  );
+    VALUES (?, ?, ?, ?, ?)
+  `);
+  stmt.run(code, year, quarter, "pending", sourceUrl);
 }
 
 /**
