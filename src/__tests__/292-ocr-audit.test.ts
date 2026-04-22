@@ -285,14 +285,15 @@ describe("Task 292 — OCR audit fixes", () => {
       expect(src).not.toContain('"-r", "150"');
     });
 
-    it("pdfOcrWorker.ts source contains \"-r\", \"200\"", async () => {
+    it("pdfOcrWorker.ts source has DPI default 200 in ocrOnePage signature", async () => {
       const { readFileSync } = await import("node:fs");
       const { resolve } = await import("node:path");
       const src = readFileSync(
         resolve(import.meta.dir, "../infrastructure/fetchers/pdfOcrWorker.ts"),
         "utf-8"
       );
-      expect(src).toContain('"-r", "200"');
+      // After Task 1290: DPI is parameterized with default 200, so check for signature
+      expect(src).toContain('dpi: number = 200');
     });
   });
 
