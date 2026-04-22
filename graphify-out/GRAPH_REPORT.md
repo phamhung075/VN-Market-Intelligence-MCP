@@ -1,13 +1,13 @@
 # Graph Report - .  (2026-04-22)
 
 ## Corpus Check
-- 678 files · ~500,000 words
+- 721 files · ~2,119,608 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 102 nodes · 99 edges · 32 communities detected
-- Extraction: 79% EXTRACTED · 21% INFERRED · 0% AMBIGUOUS · INFERRED: 21 edges (avg confidence: 0.84)
-- Token cost: 114,987 input · 2,500 output
+- 679 nodes · 1048 edges · 57 communities detected
+- Extraction: 83% EXTRACTED · 17% INFERRED · 0% AMBIGUOUS · INFERRED: 173 edges (avg confidence: 0.81)
+- Token cost: 0 input · 0 output
 
 ## Community Hubs (Navigation)
 - [[_COMMUNITY_Community 0|Community 0]]
@@ -42,211 +42,370 @@
 - [[_COMMUNITY_Community 29|Community 29]]
 - [[_COMMUNITY_Community 30|Community 30]]
 - [[_COMMUNITY_Community 31|Community 31]]
+- [[_COMMUNITY_Community 32|Community 32]]
+- [[_COMMUNITY_Community 33|Community 33]]
+- [[_COMMUNITY_Community 34|Community 34]]
+- [[_COMMUNITY_Community 35|Community 35]]
+- [[_COMMUNITY_Community 36|Community 36]]
+- [[_COMMUNITY_Community 37|Community 37]]
+- [[_COMMUNITY_Community 38|Community 38]]
+- [[_COMMUNITY_Community 39|Community 39]]
+- [[_COMMUNITY_Community 40|Community 40]]
+- [[_COMMUNITY_Community 41|Community 41]]
+- [[_COMMUNITY_Community 42|Community 42]]
+- [[_COMMUNITY_Community 43|Community 43]]
+- [[_COMMUNITY_Community 44|Community 44]]
+- [[_COMMUNITY_Community 45|Community 45]]
+- [[_COMMUNITY_Community 46|Community 46]]
+- [[_COMMUNITY_Community 47|Community 47]]
+- [[_COMMUNITY_Community 48|Community 48]]
+- [[_COMMUNITY_Community 49|Community 49]]
+- [[_COMMUNITY_Community 50|Community 50]]
+- [[_COMMUNITY_Community 51|Community 51]]
+- [[_COMMUNITY_Community 52|Community 52]]
+- [[_COMMUNITY_Community 53|Community 53]]
+- [[_COMMUNITY_Community 54|Community 54]]
+- [[_COMMUNITY_Community 55|Community 55]]
+- [[_COMMUNITY_Community 56|Community 56]]
 
 ## God Nodes (most connected - your core abstractions)
-1. `Cascade Detection Pattern` - 7 edges
-2. `TECH-1278: Insider Dump Sentiment Cascade` - 6 edges
-3. `TECH-1279: MSCI Index Inclusion Cascade` - 6 edges
-4. `REQ-1279: MSCI Index Inclusion Cascade Detection` - 5 edges
-5. `TECH-1281: Agriculture Weather Cascade` - 5 edges
-6. `msciDetector.ts` - 5 edges
-7. `agricultureDetector.ts` - 5 edges
-8. `DDD Compliance Rule` - 5 edges
-9. `REQ-1278: Insider Dump Sentiment Cascade` - 4 edges
-10. `cascadeExecutor.ts` - 4 edges
+1. `get()` - 51 edges
+2. `getDb()` - 47 edges
+3. `runFreshnessSlaMonitor()` - 10 edges
+4. `_assembleBriefingImpl()` - 10 edges
+5. `scanMarket()` - 10 edges
+6. `initDatabase()` - 10 edges
+7. `buildCausalChain()` - 10 edges
+8. `formatFranceSummaryVI()` - 9 edges
+9. `runFranceSummary()` - 9 edges
+10. `markFetched()` - 9 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `Sprint 1278: Insider Dump Sentiment Cascade` --references--> `TECH-1278: Insider Dump Sentiment Cascade`  [EXTRACTED]
-  docs/ARCH_REVIEW_1278.md → docs/TECH_1278.md
-- `Cascade Detection Pattern` --pattern_of--> `MSCI_INCLUSION_RULES`  [INFERRED]
-  docs/TECH_1278.md → docs/TECH_1279.md
-- `Cascade Detection Pattern` --pattern_of--> `AGRICULTURE_WEATHER_RULES`  [INFERRED]
-  docs/TECH_1278.md → docs/TECH_1281.md
-- `Performance Target <50ms keyword detection` --rationale_for--> `Cascade Detection Pattern`  [INFERRED]
-  docs/TECH_1279.md → docs/TECH_1278.md
-- `Keyword Whole-Word Matching Pattern` --pattern_of--> `agricultureDetector.ts`  [INFERRED]
-  docs/TECH_1279.md → docs/TECH_1281.md
+- `check()` --calls--> `log()`  [INFERRED]
+  scripts/smoke-test-sprint-001.ts → src/scheduler/jobs.ts
+- `shutdown()` --calls--> `closeDb()`  [INFERRED]
+  src/index.ts → src/infrastructure/db/schema.ts
+- `runForeignFlowFetcherJobCron()` --calls--> `getDb()`  [INFERRED]
+  src/scheduler/market-data/foreignFlowFetcherJob.ts → src/infrastructure/db/schema.ts
+- `runMorningBriefing()` --calls--> `insertMarketMessage()`  [INFERRED]
+  src/scheduler/briefings/morningBriefingJob.ts → src/infrastructure/db/marketMessageStore.ts
+- `runBctcQueueEnricherJob()` --calls--> `getDb()`  [INFERRED]
+  src/scheduler/financial-reports/bctcQueueEnricherJob.ts → src/infrastructure/db/schema.ts
 
 ## Communities
 
 ### Community 0 - "Community 0"
-Cohesion: 0.18
-Nodes (15): Agent Memory System, agricultureDetector.ts, cascadeExecutor.ts, DDD Compliance Rule, DDD Layer Violations Pattern, Domain Service Pure Logic Principle, Forecast Penalty -0.2 to Credibility, Task 1278b GREEN Phase (+7 more)
+Cohesion: 0.06
+Nodes (37): assembleBriefing(), _assembleBriefingImpl(), isPriceFresh(), midnightVietnamAsUtc(), parseAffectedCodes(), queryEvidenceTopScores(), queryForeignFlowSummary(), queryInsiderRecent() (+29 more)
 
 ### Community 1 - "Community 1"
-Cohesion: 0.22
-Nodes (14): Test Baseline 6171 to 6187 (+16 assertions), cascadeEngine.ts, Confidence Formula: min(1.0, cred × count / 3.0), Credibility Threshold 0.7 for MSCI, Task 1279b GREEN Phase, Large-Cap Cross-Sector Targeting (not peer cascade), MSCI_INCLUSION_RULES, Task 1279a RED Phase (+6 more)
+Cohesion: 0.05
+Nodes (28): detectAgricultureWeatherKeywords(), findKeywordWholeWord(), isWordBoundary(), calcQoQ(), calcYoY(), getMetricValue(), applyDynamicMacroAdjustments(), applyMacroAdjustments() (+20 more)
 
 ### Community 2 - "Community 2"
-Cohesion: 0.18
-Nodes (14): AGRICULTURE_WEATHER_RULES, Banking Sector Contagion Logic, Blockers in REQ-1281, Cascade Detection Pattern, Task 1281b GREEN Phase, INSIDER_DUMP_RULES, Performance Target <50ms keyword detection, Task 1281a RED Phase (+6 more)
+Cohesion: 0.07
+Nodes (38): countRows(), queryRow(), getRow(), getRowCount(), AppConfigError, bool(), get(), loadConfig() (+30 more)
 
 ### Community 3 - "Community 3"
-Cohesion: 0.24
-Nodes (3): calcQoQ(), calcYoY(), getMetricValue()
+Cohesion: 0.05
+Nodes (15): seedSchema(), setupTestDb(), setupTestDb(), seedSchema(), setupTestDb(), runBctcQueueEnricherJob(), insertMarketMessage(), initAlertsTables() (+7 more)
 
 ### Community 4 - "Community 4"
-Cohesion: 0.53
-Nodes (5): esc(), generateQueDataEntry(), normaliseAction(), normaliseOutcome(), parseHexagram()
+Cohesion: 0.06
+Nodes (14): log(), shouldRunCatchup(), startScheduler(), fetchAndStoreMacroIndicators(), storeIndicators(), updateRefreshJobColumn(), macroIndicatorRefreshJob(), makeHttpClient() (+6 more)
 
 ### Community 5 - "Community 5"
-Cohesion: 0.67
-Nodes (3): fetch_with_browser(), parse_rss(), Parse RSS XML into item list.
+Cohesion: 0.07
+Nodes (43): Agent Memory System, agricultureDetector.ts, AGRICULTURE_WEATHER_RULES, Banking Sector Contagion Logic, Test Baseline 6171 to 6187 (+16 assertions), Blockers in REQ-1281, cascadeEngine.ts, cascadeExecutor.ts (+35 more)
 
 ### Community 6 - "Community 6"
-Cohesion: 0.5
-Nodes (4): Sprint 054 Complete, feat(get_pipeline_health): System diagnostics MCP tool, feat(bbAlertScanJob): Bollinger Band breakout scanner, test(1309): Bollinger Band alert coverage
+Cohesion: 0.06
+Nodes (16): getPipelineHealthFn(), makeHealth(), getPipelineHealthFn(), makeHealth(), notify(), notifyUser(), runPipelineWatchdog(), attemptSshRestart() (+8 more)
 
 ### Community 7 - "Community 7"
-Cohesion: 1.0
-Nodes (0): 
+Cohesion: 0.06
+Nodes (11): deduplicateForeignFlowItems(), extractForeignFlowFromSseMessages(), fetchForeignFlowWithFallback(), fetchPrimaryVpsEndpoint(), isValidForeignFlowItem(), runForeignFlowFetcherJob(), runForeignFlowFetcherJobCron(), coerceNumericField() (+3 more)
 
 ### Community 8 - "Community 8"
-Cohesion: 1.0
-Nodes (2): Insider Dump Sentiment Bearish, Sentiment Bullish (opposite insider bearish)
+Cohesion: 0.08
+Nodes (9): fetcher(), onExhausted(), fmtRatio(), fmtVol(), formatForeignFlowOutput(), backfillPrices(), fetchOhlcvData(), validateOhlcv() (+1 more)
 
 ### Community 9 - "Community 9"
-Cohesion: 1.0
-Nodes (2): test(france-summary-cron): TDD test written FIRST, fix(france-summary-cron): widen cron to */30 6-8 UTC
+Cohesion: 0.07
+Nodes (16): computeCycleId(), expiresAt(), getChainFindings(), getChainFromRoot(), getSignalsGroupedByCausalRoot(), postSignal(), shouldSuppressAlert(), readUnnotifiedAlerts() (+8 more)
 
 ### Community 10 - "Community 10"
-Cohesion: 1.0
-Nodes (2): fix(foreign-flow-sentinel): filter 9999999 sentinel value, fix(foreign-flow-validator): DDD layer violation + server.ts integration
+Cohesion: 0.12
+Nodes (15): detectDataFreshnessBreach(), checkDataFreshnessSla(), checkSignalSla(), classifySeverity(), getSlaThreshold(), isVnMarketHours(), escalateToCommander(), getPriorBreaches() (+7 more)
 
 ### Community 11 - "Community 11"
-Cohesion: 1.0
-Nodes (2): Market Watch Report — 2026-04-01, GREEN: Briefing Quality Gate Verification + Test Suite Completion
+Cohesion: 0.11
+Nodes (11): buildComparisonSection(), buildSummarySection(), fmtBillions(), fmtChange(), fmtPct(), fmtVnd(), fmtX(), rowToMetrics() (+3 more)
 
 ### Community 12 - "Community 12"
-Cohesion: 1.0
-Nodes (2): test(hut-sector-reclassify): HUT real_estate → construction, fix(1406): HUT sector reclassification
+Cohesion: 0.16
+Nodes (17): buildMessage(), chooseAlertId(), deterministicNewsId(), deterministicPriceId(), escalateSeverity(), generateAlerts(), generateId(), isDocAlreadyProcessed() (+9 more)
 
 ### Community 13 - "Community 13"
-Cohesion: 1.0
-Nodes (2): test(diacritics-wave5): Vietnamese string localization, fix(1416): Diacritics localization implementation
+Cohesion: 0.13
+Nodes (4): sendWorkFn(), runOhlcvDailyAggregator(), vnDateString(), vnMidnightUtcMs()
 
 ### Community 14 - "Community 14"
-Cohesion: 1.0
-Nodes (2): feat(morning-briefing-bctc-deadlines): Earnings calendar section, fix(1422): Morning briefing BCTC deadlines implementation
+Cohesion: 0.22
+Nodes (12): getSignals(), getCycleBootstrap(), buildAlertsSection(), buildAnalysisSection(), buildMacroSection(), buildMarketContextText(), buildSystemStatusText(), buildWatchlistSection() (+4 more)
 
 ### Community 15 - "Community 15"
-Cohesion: 1.0
-Nodes (2): feat(maybe-deploy-vps.sh): VPS auto-deploy gate, docs(dev-standards): Step 4a VPS deploy gate
+Cohesion: 0.16
+Nodes (3): fastFn(), slowFn(), todayVietnam()
 
 ### Community 16 - "Community 16"
-Cohesion: 1.0
-Nodes (2): fix(volume-spike-multiplier): Per-ticker adaptive thresholds, fix(1402): ATC guard boundary safeguard
+Cohesion: 0.29
+Nodes (9): buildAnalysisSummary(), buildFiscalPeriod(), fetchParseAndStoreBctc(), getDefaultInsertAnalysis(), normaliseFilename(), computeConfidence(), downloadAndExtractPdf(), extractPdfText() (+1 more)
 
 ### Community 17 - "Community 17"
-Cohesion: 1.0
+Cohesion: 0.2
 Nodes (0): 
 
 ### Community 18 - "Community 18"
-Cohesion: 1.0
-Nodes (1): Security Review: No SQL Injection Risk
+Cohesion: 0.53
+Nodes (5): esc(), generateQueDataEntry(), normaliseAction(), normaliseOutcome(), parseHexagram()
 
 ### Community 19 - "Community 19"
-Cohesion: 1.0
-Nodes (1): Backward Compatibility Guarantee
+Cohesion: 0.4
+Nodes (0): 
 
 ### Community 20 - "Community 20"
-Cohesion: 1.0
-Nodes (1): fix(evening-summary-vnindex-db-read): VNINDEX fresh/stale logic
+Cohesion: 0.67
+Nodes (3): fetch_with_browser(), parse_rss(), Parse RSS XML into item list.
 
 ### Community 21 - "Community 21"
-Cohesion: 1.0
-Nodes (1): fix(1432): GREEN implementation
+Cohesion: 0.5
+Nodes (4): Sprint 054 Complete, feat(get_pipeline_health): System diagnostics MCP tool, feat(bbAlertScanJob): Bollinger Band breakout scanner, test(1309): Bollinger Band alert coverage
 
 ### Community 22 - "Community 22"
-Cohesion: 1.0
-Nodes (1): QA Verification: e2e health polling + SLA escalation
+Cohesion: 0.67
+Nodes (0): 
 
 ### Community 23 - "Community 23"
-Cohesion: 1.0
-Nodes (1): fix(scheduler-locks-schema): DDL table + index
+Cohesion: 0.67
+Nodes (0): 
 
 ### Community 24 - "Community 24"
 Cohesion: 1.0
-Nodes (1): fix(timezone-hardcoding): Test fixture relative dates
+Nodes (2): Insider Dump Sentiment Bearish, Sentiment Bullish (opposite insider bearish)
 
 ### Community 25 - "Community 25"
 Cohesion: 1.0
-Nodes (1): fix(checkpoint-restart-mode): PRAGMA wal_checkpoint(RESTART)
+Nodes (2): test(france-summary-cron): TDD test written FIRST, fix(france-summary-cron): widen cron to */30 6-8 UTC
 
 ### Community 26 - "Community 26"
 Cohesion: 1.0
-Nodes (1): fix(db-isolation-batch5): Bulk Bun.env DB_PATH replacement
+Nodes (2): fix(foreign-flow-sentinel): filter 9999999 sentinel value, fix(foreign-flow-validator): DDD layer violation + server.ts integration
 
 ### Community 27 - "Community 27"
 Cohesion: 1.0
-Nodes (1): docs(agent-roster + mcp-tools): Ops agent introduction
+Nodes (2): Market Watch Report — 2026-04-01, GREEN: Briefing Quality Gate Verification + Test Suite Completion
 
 ### Community 28 - "Community 28"
 Cohesion: 1.0
-Nodes (1): test(ohlcv-aggregator): TDD RED tests for runOhlcvDailyAggregator
+Nodes (2): test(hut-sector-reclassify): HUT real_estate → construction, fix(1406): HUT sector reclassification
 
 ### Community 29 - "Community 29"
 Cohesion: 1.0
-Nodes (1): fix(278-cycle-peer-sync): DB isolation + stub functions
+Nodes (2): test(diacritics-wave5): Vietnamese string localization, fix(1416): Diacritics localization implementation
 
 ### Community 30 - "Community 30"
 Cohesion: 1.0
-Nodes (1): fix(franceSummaryJob-catchup): Startup missed-send recovery
+Nodes (2): feat(morning-briefing-bctc-deadlines): Earnings calendar section, fix(1422): Morning briefing BCTC deadlines implementation
 
 ### Community 31 - "Community 31"
 Cohesion: 1.0
+Nodes (2): feat(maybe-deploy-vps.sh): VPS auto-deploy gate, docs(dev-standards): Step 4a VPS deploy gate
+
+### Community 32 - "Community 32"
+Cohesion: 1.0
+Nodes (2): fix(volume-spike-multiplier): Per-ticker adaptive thresholds, fix(1402): ATC guard boundary safeguard
+
+### Community 33 - "Community 33"
+Cohesion: 1.0
+Nodes (0): 
+
+### Community 34 - "Community 34"
+Cohesion: 1.0
+Nodes (0): 
+
+### Community 35 - "Community 35"
+Cohesion: 1.0
+Nodes (0): 
+
+### Community 36 - "Community 36"
+Cohesion: 1.0
+Nodes (1): Security Review: No SQL Injection Risk
+
+### Community 37 - "Community 37"
+Cohesion: 1.0
+Nodes (1): Backward Compatibility Guarantee
+
+### Community 38 - "Community 38"
+Cohesion: 1.0
+Nodes (1): fix(evening-summary-vnindex-db-read): VNINDEX fresh/stale logic
+
+### Community 39 - "Community 39"
+Cohesion: 1.0
+Nodes (1): fix(1432): GREEN implementation
+
+### Community 40 - "Community 40"
+Cohesion: 1.0
+Nodes (1): QA Verification: e2e health polling + SLA escalation
+
+### Community 41 - "Community 41"
+Cohesion: 1.0
+Nodes (1): fix(scheduler-locks-schema): DDL table + index
+
+### Community 42 - "Community 42"
+Cohesion: 1.0
+Nodes (1): fix(timezone-hardcoding): Test fixture relative dates
+
+### Community 43 - "Community 43"
+Cohesion: 1.0
+Nodes (1): fix(checkpoint-restart-mode): PRAGMA wal_checkpoint(RESTART)
+
+### Community 44 - "Community 44"
+Cohesion: 1.0
+Nodes (1): fix(db-isolation-batch5): Bulk Bun.env DB_PATH replacement
+
+### Community 45 - "Community 45"
+Cohesion: 1.0
+Nodes (1): docs(agent-roster + mcp-tools): Ops agent introduction
+
+### Community 46 - "Community 46"
+Cohesion: 1.0
+Nodes (1): test(ohlcv-aggregator): TDD RED tests for runOhlcvDailyAggregator
+
+### Community 47 - "Community 47"
+Cohesion: 1.0
+Nodes (1): fix(278-cycle-peer-sync): DB isolation + stub functions
+
+### Community 48 - "Community 48"
+Cohesion: 1.0
+Nodes (1): fix(franceSummaryJob-catchup): Startup missed-send recovery
+
+### Community 49 - "Community 49"
+Cohesion: 1.0
 Nodes (1): refactor(legacy-cleanup): Delete src/server.ts + src/tools/ stubs
+
+### Community 50 - "Community 50"
+Cohesion: 1.0
+Nodes (0): 
+
+### Community 51 - "Community 51"
+Cohesion: 1.0
+Nodes (0): 
+
+### Community 52 - "Community 52"
+Cohesion: 1.0
+Nodes (0): 
+
+### Community 53 - "Community 53"
+Cohesion: 1.0
+Nodes (0): 
+
+### Community 54 - "Community 54"
+Cohesion: 1.0
+Nodes (0): 
+
+### Community 55 - "Community 55"
+Cohesion: 1.0
+Nodes (0): 
+
+### Community 56 - "Community 56"
+Cohesion: 1.0
+Nodes (0): 
 
 ## Knowledge Gaps
 - **14 isolated node(s):** `Parse RSS XML into item list.`, `Agent Memory System`, `Session 2026-04-22 Morning Work`, `Sentiment Bullish (opposite insider bearish)`, `Performance Target <50ms keyword detection` (+9 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **Thin community `Community 7`** (2 nodes): `shutdown()`, `index.ts`
+- **Thin community `Community 24`** (2 nodes): `Insider Dump Sentiment Bearish`, `Sentiment Bullish (opposite insider bearish)`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 8`** (2 nodes): `Insider Dump Sentiment Bearish`, `Sentiment Bullish (opposite insider bearish)`
+- **Thin community `Community 25`** (2 nodes): `test(france-summary-cron): TDD test written FIRST`, `fix(france-summary-cron): widen cron to */30 6-8 UTC`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 9`** (2 nodes): `test(france-summary-cron): TDD test written FIRST`, `fix(france-summary-cron): widen cron to */30 6-8 UTC`
+- **Thin community `Community 26`** (2 nodes): `fix(foreign-flow-sentinel): filter 9999999 sentinel value`, `fix(foreign-flow-validator): DDD layer violation + server.ts integration`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 10`** (2 nodes): `fix(foreign-flow-sentinel): filter 9999999 sentinel value`, `fix(foreign-flow-validator): DDD layer violation + server.ts integration`
+- **Thin community `Community 27`** (2 nodes): `Market Watch Report — 2026-04-01`, `GREEN: Briefing Quality Gate Verification + Test Suite Completion`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 11`** (2 nodes): `Market Watch Report — 2026-04-01`, `GREEN: Briefing Quality Gate Verification + Test Suite Completion`
+- **Thin community `Community 28`** (2 nodes): `test(hut-sector-reclassify): HUT real_estate → construction`, `fix(1406): HUT sector reclassification`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 12`** (2 nodes): `test(hut-sector-reclassify): HUT real_estate → construction`, `fix(1406): HUT sector reclassification`
+- **Thin community `Community 29`** (2 nodes): `test(diacritics-wave5): Vietnamese string localization`, `fix(1416): Diacritics localization implementation`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 13`** (2 nodes): `test(diacritics-wave5): Vietnamese string localization`, `fix(1416): Diacritics localization implementation`
+- **Thin community `Community 30`** (2 nodes): `feat(morning-briefing-bctc-deadlines): Earnings calendar section`, `fix(1422): Morning briefing BCTC deadlines implementation`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 14`** (2 nodes): `feat(morning-briefing-bctc-deadlines): Earnings calendar section`, `fix(1422): Morning briefing BCTC deadlines implementation`
+- **Thin community `Community 31`** (2 nodes): `feat(maybe-deploy-vps.sh): VPS auto-deploy gate`, `docs(dev-standards): Step 4a VPS deploy gate`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 15`** (2 nodes): `feat(maybe-deploy-vps.sh): VPS auto-deploy gate`, `docs(dev-standards): Step 4a VPS deploy gate`
+- **Thin community `Community 32`** (2 nodes): `fix(volume-spike-multiplier): Per-ticker adaptive thresholds`, `fix(1402): ATC guard boundary safeguard`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 16`** (2 nodes): `fix(volume-spike-multiplier): Per-ticker adaptive thresholds`, `fix(1402): ATC guard boundary safeguard`
+- **Thin community `Community 33`** (2 nodes): `throwingFn()`, `1476-wal-stuck-alert.test.ts`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 17`** (1 nodes): `purge-phantom-reports.ts`
+- **Thin community `Community 34`** (2 nodes): `buildBctcDb()`, `1050-alert-dispatch-fixes.test.ts`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 18`** (1 nodes): `Security Review: No SQL Injection Risk`
+- **Thin community `Community 35`** (1 nodes): `purge-phantom-reports.ts`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 19`** (1 nodes): `Backward Compatibility Guarantee`
+- **Thin community `Community 36`** (1 nodes): `Security Review: No SQL Injection Risk`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 20`** (1 nodes): `fix(evening-summary-vnindex-db-read): VNINDEX fresh/stale logic`
+- **Thin community `Community 37`** (1 nodes): `Backward Compatibility Guarantee`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 21`** (1 nodes): `fix(1432): GREEN implementation`
+- **Thin community `Community 38`** (1 nodes): `fix(evening-summary-vnindex-db-read): VNINDEX fresh/stale logic`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 22`** (1 nodes): `QA Verification: e2e health polling + SLA escalation`
+- **Thin community `Community 39`** (1 nodes): `fix(1432): GREEN implementation`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 23`** (1 nodes): `fix(scheduler-locks-schema): DDL table + index`
+- **Thin community `Community 40`** (1 nodes): `QA Verification: e2e health polling + SLA escalation`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 24`** (1 nodes): `fix(timezone-hardcoding): Test fixture relative dates`
+- **Thin community `Community 41`** (1 nodes): `fix(scheduler-locks-schema): DDL table + index`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 25`** (1 nodes): `fix(checkpoint-restart-mode): PRAGMA wal_checkpoint(RESTART)`
+- **Thin community `Community 42`** (1 nodes): `fix(timezone-hardcoding): Test fixture relative dates`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 26`** (1 nodes): `fix(db-isolation-batch5): Bulk Bun.env DB_PATH replacement`
+- **Thin community `Community 43`** (1 nodes): `fix(checkpoint-restart-mode): PRAGMA wal_checkpoint(RESTART)`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 27`** (1 nodes): `docs(agent-roster + mcp-tools): Ops agent introduction`
+- **Thin community `Community 44`** (1 nodes): `fix(db-isolation-batch5): Bulk Bun.env DB_PATH replacement`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 28`** (1 nodes): `test(ohlcv-aggregator): TDD RED tests for runOhlcvDailyAggregator`
+- **Thin community `Community 45`** (1 nodes): `docs(agent-roster + mcp-tools): Ops agent introduction`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 29`** (1 nodes): `fix(278-cycle-peer-sync): DB isolation + stub functions`
+- **Thin community `Community 46`** (1 nodes): `test(ohlcv-aggregator): TDD RED tests for runOhlcvDailyAggregator`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 30`** (1 nodes): `fix(franceSummaryJob-catchup): Startup missed-send recovery`
+- **Thin community `Community 47`** (1 nodes): `fix(278-cycle-peer-sync): DB isolation + stub functions`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 31`** (1 nodes): `refactor(legacy-cleanup): Delete src/server.ts + src/tools/ stubs`
+- **Thin community `Community 48`** (1 nodes): `fix(franceSummaryJob-catchup): Startup missed-send recovery`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 49`** (1 nodes): `refactor(legacy-cleanup): Delete src/server.ts + src/tools/ stubs`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 50`** (1 nodes): `index.ts`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 51`** (1 nodes): `1418-diacritics-wave6.test.ts`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 52`** (1 nodes): `1270-usd-vnd-threshold-fix.test.ts`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 53`** (1 nodes): `setup.ts`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 54`** (1 nodes): `1269-macro-direction-label.test.ts`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 55`** (1 nodes): `jobRunsStore.ts`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 56`** (1 nodes): `index.ts`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+
+## Suggested Questions
+_Questions this graph is uniquely positioned to answer:_
+
+- **Why does `get()` connect `Community 2` to `Community 0`, `Community 1`, `Community 3`, `Community 4`, `Community 6`, `Community 7`, `Community 9`, `Community 10`, `Community 11`, `Community 12`, `Community 13`, `Community 14`, `Community 16`?**
+  _High betweenness centrality (0.191) - this node is a cross-community bridge._
+- **Why does `getDb()` connect `Community 2` to `Community 0`, `Community 3`, `Community 4`, `Community 6`, `Community 7`, `Community 9`, `Community 10`, `Community 12`, `Community 13`?**
+  _High betweenness centrality (0.072) - this node is a cross-community bridge._
+- **Why does `buildCausalChain()` connect `Community 1` to `Community 2`?**
+  _High betweenness centrality (0.039) - this node is a cross-community bridge._
+- **Are the 45 inferred relationships involving `get()` (e.g. with `detectDataFreshnessBreach()` and `buildComparisonSection()`) actually correct?**
+  _`get()` has 45 INFERRED edges - model-reasoned connections that need verification._
+- **Are the 45 inferred relationships involving `getDb()` (e.g. with `readLatestPriceTimestamp()` and `readLatestNewsTimestamp()`) actually correct?**
+  _`getDb()` has 45 INFERRED edges - model-reasoned connections that need verification._
+- **Are the 7 inferred relationships involving `scanMarket()` (e.g. with `fetcher()` and `get()`) actually correct?**
+  _`scanMarket()` has 7 INFERRED edges - model-reasoned connections that need verification._
+- **What connects `Parse RSS XML into item list.`, `Agent Memory System`, `Session 2026-04-22 Morning Work` to the rest of the system?**
+  _14 weakly-connected nodes found - possible documentation gaps or missing edges._

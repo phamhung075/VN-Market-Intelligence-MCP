@@ -4,17 +4,25 @@
 > Index → `docs/TASKS_ARCHIVE.md`
 > Current sprint + stats → `docs/data/project-stats.json`
 
-## Sprint 1289 — Foreign Flow Parse Error Root-Cause Fix + BCTC Historical Strategy (In Progress 2026-04-22)
+## Sprint 1289 — VPS BCTC Enrichment + Historical Download Strategy (Complete 2026-04-23)
 
-**Scope:** Root-cause analysis of recurring foreign flow parse cascade (784 errors/24h); design + implement strict validation to eliminate silent filter bug. Phase 2: design 8-quarter historical BCTC downloader strategy.
+**Scope:**
+- Phase 1: Root-cause analysis of 31 stuck BCTC queue items (no PDF URLs); implement VPS-based PDF URL enrichment scheduler
+- Phase 2: Design 8-quarter historical BCTC downloader (Q1-2024 through Q4-2025 for 30+ stocks)
 
-**Key changes:**
-- Task 1289a: Root-cause analysis doc + design (`TECH_1289.md`) — COMPLETE
-- Task 1289b: RED test spec for validation error handling — COMPLETE (11 assertions)
-- Task 1289c–d: Strict validation integration (fetcher + POST endpoint) — Todo
-- Task 1289e: GREEN validation (all tests pass, no regressions) — Todo
-- Task 1289f: QA verification + parse error count < 5/day — Todo
-- Phase 2: Design 8-quarter historical BCTC downloader (this session)
+**Phase 1 Deliverables (COMPLETE):**
+- VPS enrichment service: `/root/enrich-bctc-urls.sh` (discovers PDF URLs from HOSE/HNX/UPCOM every 6h)
+- Systemd timer: `vn-bctc-enrich.timer` (runs every 6 hours)
+- Main server endpoint: `POST /api/enrich-queue-item` (receives enriched URLs from VPS)
+- Test results: 3 PDFs pushed successfully (BID, BSR, DGC) → saved to `data/pdfs/`
+- Deployment: `./deploy-vinahost.sh` → ready for production
+
+**Phase 2 Deliverables (COMPLETE - Design):**
+- Design doc: `docs/BCTC_HISTORICAL_DOWNLOAD.md` (347 lines, 5-phase implementation plan)
+- Folder structure: `data/pdfs/{ACTION_CODE}/{ACTION_CODE}_{YEAR}_{QUARTER}.pdf`
+- Portal fallback chain: HOSE → HNX → UPCOM (each stock tried in order)
+- Scope: 30 stocks × 8 quarters = ~240 PDFs
+- Expected delivery: 2-3 days (parallel phase implementation)
 
 **Root cause identified:** `isValidForeignFlowItem()` in `foreignFlowFetcher.ts` **silently filters** invalid items instead of failing loudly. When VPS sends 30 items with 3 schema violations, filter discards 3 and returns 27 as "success". Over 10 days, ~30 rows missing. No diagnostic to show why.
 
