@@ -35,7 +35,7 @@ export interface ForeignFlowFetcherJobResult {
   /** Warning if relevant (e.g., stale cache, all fallbacks exhausted) */
   warning?: string;
   /** Circuit breaker state for observability */
-  cbState?: 'closed' | 'open' | 'half-open';
+  cbState: 'closed' | 'open' | 'half-open';
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -89,14 +89,17 @@ export async function runForeignFlowFetcherJob(
     }
 
     // Return result with circuit breaker state
-    return {
+    const result: ForeignFlowFetcherJobResult = {
       source: fetchResult.source,
       changes: fetchResult.changes,
       timestamp: fetchResult.timestamp,
       fallbackActivated: fetchResult.source !== 'primary',
-      warning: fetchResult.warning,
       cbState,
     };
+    if (fetchResult.warning) {
+      result.warning = fetchResult.warning;
+    }
+    return result;
   } catch (err) {
     // Unexpected error — should not happen with fetchForeignFlowWithFallback,
     // but log it and return empty result with diagnostic
@@ -109,14 +112,15 @@ export async function runForeignFlowFetcherJob(
     const { breakers } = await import("../../infrastructure/circuitBreakerRegistry.js");
     const cbState = breakers.foreignFlow.stats.state as 'closed' | 'open' | 'half-open';
 
-    return {
+    const result: ForeignFlowFetcherJobResult = {
       source: 'none',
       changes: 0,
       timestamp,
       fallbackActivated: true,
-      warning: `unexpected error: ${errMsg}`,
       cbState,
+      warning: `unexpected error: ${errMsg}`,
     };
+    return result;
   }
 }
 
@@ -127,11 +131,11 @@ export async function runForeignFlowFetcherJob(
 /**
  * Cron-callable wrapper for the foreign flow fetcher job.
  *
- * Called every 60 seconds (*/1 * * * * in UTC).
+ * Called every 60 seconds. Cron pattern is every 1 minute in UTC.
  * Wraps runForeignFlowFetcherJob in recordJobRun for observability.
  * Used by jobs.ts at every minute (CRON_FOREIGN_FLOW_FETCH).
  *
- * @returns void (result logged internally)
+ * Returns void (result logged internally)
  */
 export async function runForeignFlowFetcherJobCron(): Promise<void> {
   const database = getDb();
