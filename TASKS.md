@@ -18,10 +18,40 @@
 
 ## Sprint 1278 — CEO Insider Selling Sentiment Cascade (M-size)
 
-| ID | Title | Status | Type | Notes |
-|----|----|--------|------|-------|
-| 1278a | RED: Insider dump keywords → cascade integration tests | Todo | Test | Map xả hàng/bán sạch/thoái sạch to affected stocks |
-| 1278b | GREEN: Implement sentiment cascade + validate rule firing | Todo | Fix | Affects banking sector (BID/VCB/CTG/ACB) |
+**Status:** COMPLETE | **Ref:** TECH-1278 | **Goal:** Detect insider selling sentiment → cascade to banking sector alerts | **Size:** M (2 tasks, 5–7 hours total) | **Report:** reports/TASK_REPORT_1278b.md
+
+| ID | Title | Status | Layer | Notes |
+|----|----|--------|-------|-------|
+| 1278a | RED: Insider dump sentiment cascade tests | Done | test | 6 assertions; TC-1 to TC-6 all PASS |
+| 1278b | GREEN: Implement INSIDER_DUMP_RULES + cascadeExecutor | Done | domain+app | 13 GREEN tests PASS; 16 total (6 RED + 10 GREEN); merged to main |
+
+---
+
+### Task 1278a — RED: Insider dump sentiment cascade tests
+
+**context:** docs/handoffs/TASK_1278a.md
+
+**acceptance_criteria:**
+- Given keywords (xả hàng, bán sạch, thoái sạch) present in text
+- When classifySentiment() called
+- Then sentiment.direction="bearish", confidence >0.6, TC-1 through TC-6 PASS
+
+**branch:** task/1278a-insider-dump-red-test
+
+---
+
+### Task 1278b — GREEN: Implement INSIDER_DUMP_RULES + cascadeExecutor
+
+**context:** docs/handoffs/TASK_1278b.md
+
+**acceptance_criteria:**
+- Given insider dump keywords at banking stock (e.g., VCB)
+- When detectInsiderDumpPeers() called
+- Then returns peer banking stocks (BID/CTG/ACB), excludes original, respects sentiment threshold >0.6
+
+**depends_on:** 1278a ✓ (RED contract defined)
+
+**branch:** task/1278b-insider-dump-green-impl
 
 ---
 
