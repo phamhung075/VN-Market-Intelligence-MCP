@@ -1,7 +1,7 @@
 # System Status Dashboard
 
 > **Maintained by:** Dev team (developer + qa agents) — update after every fix, sprint close, or health check.
-> **Last updated:** 2026-04-21 (sprint 234 complete, server restarted)
+> **Last updated:** 2026-04-22 (sprint 1283 complete, foreign flow diagnostics tools +2)
 > **How to refresh:** run `get_cron_health`, `get_pipeline_health`, `get_system_status` MCP tools + SSH VPS status check.
 
 ---
@@ -64,10 +64,10 @@
 
 ---
 
-## 3. MCP Tools (103 registered — `src/interface/mcp/tools/`)
+## 3. MCP Tools (105 registered — `src/interface/mcp/tools/`)
 
 > Tools are registered in `src/interface/mcp/tools/registry.ts`. Count tracked in `docs/data/project-stats.json`.
-> Last verified: sprint 234, toolCount=103.
+> Last verified: sprint 1283, toolCount=105. Added 2 foreign flow diagnostic tools (task 1283).
 
 | Category | Files | Status | Notes |
 |----------|-------|--------|-------|
@@ -85,7 +85,7 @@
 | Portfolio | `portfolioTools.ts`, `portfolioRiskTool.ts`, `positionTools.ts`, `targetAllocationTools.ts`, `rebalancingTools.ts`, `performanceTools.ts` | ✅ ok | |
 | Prediction | `predictionTools.ts` | ✅ ok | |
 | Sector | `sectorComparisonTools.ts`, `sectorRotationTools.ts` | ✅ ok | |
-| Signals | `agentSignalTools.ts`, `foreignFlowTools.ts`, `insiderTools.ts`, `sentimentTrendTools.ts`, `technicalIndicatorTools.ts`, `tickerIntelligenceTools.ts` | ✅ ok | |
+| Signals | `agentSignalTools.ts`, `foreignFlowTools.ts`, `insiderTools.ts`, `sentimentTrendTools.ts`, `technicalIndicatorTools.ts`, `tickerIntelligenceTools.ts` | ✅ ok | foreignFlowTools: +2 diagnostic tools (task 1283) |
 | Specialty | `climateTools.ts`, `energyTools.ts`, `pharmaTools.ts`, `legalRiskTools.ts`, `supplyChainTools.ts`, `crisisTools.ts`, `bondMaturityTools.ts`, `publicInvestmentTools.ts` | ✅ ok | |
 | System | `systemTools.ts`, `rateLimitTools.ts`, `sourceHealthTools.ts`, `dataFreshnessTools.ts`, `vpsProxyTools.ts`, `changelogTools.ts`, `vpsHealthTools.ts`, `slaStatusTools.ts` | ✅ ok | NEW: vpsHealthTools, slaStatusTools (Sprint 234) |
 | Telegram | `telegramTools.ts`, `telegramReportTools.ts` | ✅ ok | |
@@ -107,6 +107,7 @@
 | 1 | `vn-news-fetch.service` | Playwright thread crash on `vneconomy-finance` (browser source) | low | 2026-04-17 | TasksMax raised to 256 (task 1396) — monitor if recurs |
 | 2 | `cronHealthAlertJob` | 75% success rate (1 failure in 4 runs) | low | 2026-04-17 | Monitor — likely transient |
 | 3 | `weatherCheckJob` | 94.7% success rate | low | 2026-04-17 | External API timeout — monitor |
+| 4 | `vn-foreign-flow.service` | Service stalled 2026-04-22 07:36:55 (5108 consecutive errors) | medium | 2026-04-22 | RESOLVED: diagnostics tools added (task 1283). OPS can now call `diagnose_foreign_flow_circuit_breaker` + `reset_foreign_flow_circuit_breaker` MCP tools for recovery |
 
 ---
 
