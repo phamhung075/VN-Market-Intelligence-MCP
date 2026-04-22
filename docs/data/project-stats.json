@@ -2,10 +2,10 @@
   "_maintained_by": "PM / system-auditor",
   "_trigger": "sprint start/end, tool/cron count change, baseline test update",
   "lastUpdated": "2026-04-22",
-  "currentSprint": 1279,
-  "previousSprint": { "number": 1281, "status": "COMPLETE", "progressTasks": "2/2 DONE (RED 1281a + GREEN 1281b: agriculture weather cascade)" },
-  "sprintGoal": "Detect MSCI index inclusion announcements → cascade HIGH alerts to large-cap watchlist",
-  "testBaseline": 6177,
+  "currentSprint": 1280,
+  "previousSprint": { "number": 1279, "status": "COMPLETE", "progressTasks": "2/2 DONE (RED 1279a + GREEN 1279b: MSCI inclusion cascade, 18 tests total 7 RED + 11 GREEN)" },
+  "sprintGoal": "BCTC queue timeout blocker — add skip-enrichment flag to unblock VPS batch processing",
+  "testBaseline": 6187,
   "testBaselineTarget": 6187,
   "testFailures": 0,
   "toolCount": 103,
@@ -14,6 +14,6 @@
   "devAgentCount": 13,
   "analysisAgentCount": 9,
   "totalTasksDone": 332,
-  "lastFixApplied": "timezone-dependent test (sprint 125)",
-  "sprint1279Notes": "RED phase (1279a): MSCI inclusion cascade tests (6 assertions, TC-1 to TC-6 all PASS, TC-4 contract passes when GREEN rules added). MERGED. GREEN phase (1279b): Implement msciDetector.ts + MSCI_INCLUSION_RULES + detectMsciCascadePeers() in cascadeExecutor.ts + buildCausalChain integration (10 assertions, GC-1 to GC-10). Target: 6177→6187 (+10 assertions). Follows TECH-1279b approval."
+  "lastFixApplied": "MSCI inclusion cascade (sprint 1279)",
+  "currentSprintNotes": "Sprint 1280 URGENT FIX: BCTC queue timeout blocker. Add skip-enrichment flag to /api/bctc-fetch-queue endpoint for VPS batch processing (<1s without SSC lookups). Unblocks VPS, enrichment deferred to background job (future sprint 1287)."
 }

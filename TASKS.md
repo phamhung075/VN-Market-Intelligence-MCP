@@ -13,18 +13,7 @@
 > Sprints 231–239 archived: `docs/archive/sprints-231-239.md`
 > Sprints 240–240 archived: `docs/archive/sprints-240-240.md`
 > Sprints 1269–1277 archived: `docs/archive/sprints-1269-1277.md`
-> Sprints 1278–1281 archived: `docs/archive/sprints-1278-1281.md`
-
----
-
-## Sprint 1278 — CEO Insider Selling Sentiment Cascade (M-size)
-
-**Status:** COMPLETE | **Ref:** TECH-1278 | **Goal:** Detect insider selling sentiment → cascade to banking sector alerts | **Size:** M (2 tasks, 5–7 hours total) | **Report:** reports/TASK_REPORT_1278b.md
-
-| ID | Title | Status | Layer | Notes |
-|----|----|--------|-------|-------|
-| 1278a | RED: Insider dump sentiment cascade tests | Done | test | 6 assertions; TC-1 to TC-6 all PASS |
-| 1278b | GREEN: Implement INSIDER_DUMP_RULES + cascadeExecutor | Done | domain+app | 13 GREEN tests PASS; 16 total (6 RED + 10 GREEN); merged to main |
+> Sprints 1278–1281 archived: `docs/archive/sprints-1278-1281.md` (includes MSCI inclusion + agriculture weather cascades, BCTC timeout fix, all merged)
 
 ---
 
@@ -41,41 +30,6 @@
 | ID | Title | Status | Type | Notes |
 |----|----|--------|------|-------|
 | 1264 | Add geopolitical cascade: Hormuz closure → shipping/energy ALERTS | Todo | Sprint | Links oil surge to FPT/VSA/PVD/PLX signals |
-
----
-
-## Sprint 1279 — MSCI Inclusion Cascade Detection (M-size)
-
-**Status:** COMPLETE | **Ref:** TECH-1279 | **Goal:** Detect MSCI index inclusion announcements → cascade HIGH alerts to large-cap watchlist | **Size:** M (2 tasks, ~8 hours) | **Report:** reports/TASK_REPORT_1279_FINAL.md
-
-| ID | Title | Status | Layer | Notes |
-|----|----|--------|-------|-------|
-| 1279a | RED: MSCI inclusion cascade tests | Done | test | 6 assertions; TC-1 to TC-6 PASS; merged to main |
-| 1279b | GREEN: Implement MSCI rules + cascadeExecutor | Done | domain+app | 11 GREEN tests PASS; 18 total (7 RED + 11 GREEN); merged ✓ |
-
----
-
-### Task 1279a — RED: MSCI Inclusion Cascade Tests [DONE]
-
-**context:** docs/handoffs/TASK_1279a.md | **branch:** task/1279a-msci-inclusion-cascade-red-test
-
-**Status:** Merged to main. All 6 RED tests (TC-1 to TC-6) PASS. TC-4 (MSCI_INCLUSION_RULES contract) intentionally FAILED until 1279b implements rules.
-
----
-
-### Task 1279b — GREEN: Implement MSCI Rules + Integration [DONE]
-
-**context:** docs/handoffs/TASK_1279b.md | **branch:** task/1279b-msci-inclusion-cascade-green-impl
-
-**Status:** Merged to main. All 11 GREEN tests (GC-1 to GC-10 + TC-4 contract) PASS. Full suite: 18 PASS (7 RED + 11 GREEN).
-
-**acceptance_criteria:** ✓ ALL MET
-- [x] Implement msciDetector.ts (pure domain service, 155 lines, zero infrastructure imports)
-- [x] Add MSCI_INCLUSION_RULES to cascadeEngine.ts (3 rules @ line 2199)
-- [x] Add detectMsciCascadePeers() to cascadeExecutor.ts (41 lines @ line 166)
-- [x] Integrate into buildCausalChain() step 2e (19 lines @ line 2488)
-- [x] 11 GREEN tests (GC-1 to GC-10 + TC-4 contract) all PASS
-- [x] Baseline: 6171 → 6187 (+16 assertions) ✓ VERIFIED
 
 ---
 
