@@ -403,10 +403,8 @@ export function registerBctcFullTools(
           content: [{ type: "text" as const, text: output }],
         };
       } catch (err) {
-        logger.error("[get_bctc_full] Failed", {
-          code: upperCode,
-          error: err instanceof Error ? err.message : String(err),
-        });
+        // HOTFIX 1288c: Suppress query errors (main server just queries local DB)
+        // VPS will log detailed errors if PDF extraction fails
         return {
           content: [
             {

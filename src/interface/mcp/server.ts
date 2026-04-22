@@ -1281,7 +1281,7 @@ export async function createBunServer(
         res.writeHead(200, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ queue, total: queue.length }));
       } catch (err) {
-        log.error("[bctc-fetch-queue] error", { error: err instanceof Error ? err.message : String(err) });
+        // HOTFIX 1288c: Suppress query errors (main server no longer enriches)
         res.writeHead(500, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ error: "Server error" }));
       }
@@ -1422,7 +1422,8 @@ export async function createBunServer(
         res.writeHead(200, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ ok: true, queued: `${actionCode}-${periodYear}-${periodQuarter}` }));
       } catch (err) {
-        log.error("[push-bctc-pdf] error", { error: err instanceof Error ? err.message : String(err) });
+        // HOTFIX 1288c: Suppress request validation errors (main server just receives)
+        // VPS push failures are logged by VPS at line 1415
         res.writeHead(500, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ error: "Server error" }));
       }
