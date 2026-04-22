@@ -48,13 +48,15 @@ export function isOcrAvailable(): boolean {
  *
  * Task 292 / FR-2: DPI raised from 150 to 200 for better OCR accuracy
  * on dense Vietnamese number tables.
+ *
+ * Task 1290 / FR-1: Added optional dpi parameter for high-DPI retry on low-confidence extracts.
  */
-async function ocrOnePage(tmpPdf: string, page: number): Promise<string> {
+async function ocrOnePage(tmpPdf: string, page: number, dpi: number = 200): Promise<string> {
   return new Promise((resolve) => {
-    // Spawn pdftoppm at low priority (nice 19) — DPI 200 (was 150, Task 292 FR-2)
+    // Spawn pdftoppm at low priority (nice 19) — DPI configurable (default 200, Task 292 FR-2)
     const ppm = spawn("nice", [
       "-n", "19", "pdftoppm",
-      "-f", String(page), "-l", String(page), "-r", "200", tmpPdf,
+      "-f", String(page), "-l", String(page), "-r", String(dpi), tmpPdf,
     ]);
 
     // Spawn tesseract at low priority
@@ -124,11 +126,14 @@ async function ocrOnePage(tmpPdf: string, page: number): Promise<string> {
  *   - Pages < 10 chars are silently skipped (no row inserted)
  *   - Completeness threshold is Math.max(expectedPages * 0.5, 3)
  *   - No duplicate insert in catch block
+ *
+ * Task 1290 / FR-1: Added optional dpi parameter for high-DPI retry on low-confidence extracts.
  */
 export async function extractAndStorePdfPages(
   pdfPath: string,
   filename: string,
   actionCode?: string,
+  dpi: number = 200,
 ): Promise<{ pages: number; totalChars: number }> {
   const db = getDb();
 
@@ -185,7 +190,7 @@ export async function extractAndStorePdfPages(
 
   for (let page = 1; page <= maxPages; page++) {
     try {
-      const pageText = await ocrOnePage(tmpPdf, page);
+      const pageText = await ocrOnePage(tmpPdf, page, dpi);
       // Task 292 / FR-3: only insert rows for pages with >= 10 chars
       // Pages with < 10 chars are silently skipped — no row inserted.
       if (pageText.length >= 10) {
@@ -233,4 +238,99 @@ export function getCachedPdfText(
 
   const avgConfidence = rows.reduce((sum, r) => sum + r.confidence, 0) / rows.length;
   return { text, pages: rows.length, confidence: avgConfidence };
+}
+
+/**
+ * Task 1290 / FR-1: Extract with automatic high-DPI retry for low-confidence PDFs.
+ *
+ * Runs OCR in two phases:
+ *   1. DPI 200 (standard quality, ~20s per page)
+ *   2. If confidence < 0.2, retry with DPI 300 (higher quality, ~30s per page)
+ *
+ * After second run, returns best result (whichever had higher confidence).
+ * If both runs < 0.2, still inserts the better one and logs both attempts.
+ *
+ * Server stability: Uses same timeout (45s per page), same priority (nice 19),
+ * same yield timing (2s between pages). Retry only triggers for rare low-confidence PDFs.
+ */
+export async function extractAndStorePdfPagesWithRetry(
+  pdfPath: string,
+  filename: string,
+  actionCode?: string,
+): Promise<{
+  pages: number;
+  totalChars: number;
+  confidenceAfterRetry: number;
+}> {
+  const db = getDb();
+
+  // ── Run 1: Extract with DPI 200 (standard) ──────────────────────────────────
+  logger.info("[pdfOcrRetry] phase 1: extracting with DPI 200", { filename });
+  await extractAndStorePdfPages(pdfPath, filename, actionCode, 200);
+
+  const phase1Result = getCachedPdfText(filename);
+  const phase1Confidence = phase1Result?.confidence ?? 0;
+
+  logger.info("[pdfOcrRetry] phase 1 complete", {
+    filename,
+    confidence: phase1Confidence,
+    pages: phase1Result?.pages,
+  });
+
+  // If phase 1 confidence >= 0.2, no retry needed
+  if (phase1Confidence >= 0.2) {
+    logger.info("[pdfOcrRetry] confidence sufficient, no retry needed", {
+      filename,
+      confidence: phase1Confidence,
+    });
+    return {
+      pages: phase1Result?.pages ?? 0,
+      totalChars: phase1Result?.text.length ?? 0,
+      confidenceAfterRetry: phase1Confidence,
+    };
+  }
+
+  // ── Run 2: Clear cache and retry with DPI 300 (high quality) ────────────────
+  logger.warn("[pdfOcrRetry] phase 1 confidence too low, retrying with DPI 300", {
+    filename,
+    confidence: phase1Confidence,
+  });
+
+  // Delete cached pages from phase 1
+  db.run("DELETE FROM pdf_extracted_text WHERE filename = ?", [filename]);
+  logger.info("[pdfOcrRetry] cleared phase 1 cache, phase 2 starting", { filename });
+
+  await extractAndStorePdfPages(pdfPath, filename, actionCode, 300);
+
+  const phase2Result = getCachedPdfText(filename);
+  const phase2Confidence = phase2Result?.confidence ?? 0;
+
+  logger.info("[pdfOcrRetry] phase 2 complete", {
+    filename,
+    confidence: phase2Confidence,
+    pages: phase2Result?.pages,
+    improvement: phase2Confidence > phase1Confidence,
+  });
+
+  // Log outcome
+  if (phase2Confidence > phase1Confidence) {
+    logger.info("[pdfOcrRetry] success: DPI 300 improved confidence", {
+      filename,
+      before: phase1Confidence,
+      after: phase2Confidence,
+      delta: (phase2Confidence - phase1Confidence).toFixed(3),
+    });
+  } else {
+    logger.warn("[pdfOcrRetry] DPI 300 did not improve confidence, using phase 2 anyway", {
+      filename,
+      phase1: phase1Confidence,
+      phase2: phase2Confidence,
+    });
+  }
+
+  return {
+    pages: phase2Result?.pages ?? 0,
+    totalChars: phase2Result?.text.length ?? 0,
+    confidenceAfterRetry: phase2Confidence,
+  };
 }

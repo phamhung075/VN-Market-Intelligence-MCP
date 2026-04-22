@@ -33,6 +33,7 @@ import { CircuitOpenError } from "../../infrastructure/circuitBreaker.js";
 import {
   getCachedPdfText,
   extractAndStorePdfPages,
+  extractAndStorePdfPagesWithRetry,
   isOcrAvailable,
 } from "../../infrastructure/fetchers/pdfOcrWorker.js";
 import { parseBctcReport } from "./parseBctcReport.js";
@@ -261,7 +262,8 @@ export async function fetchParseAndStoreBctc(
             }),
           );
           writeFileSync(pdfPath, Buffer.from(resp.data));
-          await extractAndStorePdfPages(pdfPath, filename, actionCode);
+          // Task 1290: Use retry function for automatic high-DPI re-extraction on low confidence
+          await extractAndStorePdfPagesWithRetry(pdfPath, filename, actionCode);
           cached = getCachedPdfText(filename);
         } catch (err) {
           if (err instanceof CircuitOpenError) {
