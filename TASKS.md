@@ -20,12 +20,12 @@
 
 ## Sprint 1290 — Integrate Foreign Flow Fallback Fetcher (S-size)
 
-**Status:** Todo | **Goal:** Complete resilience loop by integrating fallback fetcher into scheduler job | **Size:** S (2 tasks, ~80 lines code, 8 assertions) | **Baseline:** 6297 | **Target:** 6305 (+8 assertions) | **Blocker:** None
+**Status:** Review | **Goal:** Complete resilience loop by integrating fallback fetcher into scheduler job | **Size:** S (2 tasks, ~80 lines code, 8 assertions) | **Baseline:** 6297 | **Target:** 6305 (+8 assertions) | **Blocker:** None
 
 | ID | Title | Status | Layer | Notes |
 |----|-------|--------|-------|-------|
 | 1290a | RED: Foreign flow fallback job test spec | Review | test | 8 assertions: primary success, timeout→cache, CB open, all fallbacks exhausted, stale cache, recovery, result contract, error logging |
-| 1290b | GREEN: Implement fallback fetcher job + cron registration | Todo | scheduler | NEW foreignFlowFetcherJob.ts: calls `fetchForeignFlowWithFallback()` every 60s, logs fallback activation, integrates into jobs.ts |
+| 1290b | GREEN: Implement fallback fetcher job + cron registration | Review | scheduler | foreignFlowFetcherJob.ts: calls `fetchForeignFlowWithFallback()` every 60s, logs fallback activation, integrates into jobs.ts. All 8 assertions PASS. |
 
 **Context:** Sprint 1288 delivered fallback logic (primary→cache→SSE→none) for when VPS is down. Current state: endpoint unreachable since 2026-04-22 07:36:55 (2+ weeks). Fallback is implemented but never called. This sprint activates it: new scheduler job fetches every 60s, hits fallback on timeout, uses cache/SSE to keep data flowing. Result: outages mitigated automatically. Alert Commander can analyze with staleness warnings until primary recovers.
 
