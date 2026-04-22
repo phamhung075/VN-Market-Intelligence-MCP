@@ -14,6 +14,6 @@
   "devAgentCount": 13,
   "analysisAgentCount": 9,
   "totalTasksDone": 340,
-  "lastFixApplied": "Sprint 1290 complete: Foreign flow fallback fetcher job integrated (merged 2026-04-22)",
-  "currentSprintNotes": "Sprint 1290 COMPLETE (merged 2026-04-22). Integrated fetchForeignFlowWithFallback() into scheduler job (60s frequency). Graceful degradation (primary→cache→SSE→none) now active when VPS endpoint unreachable. Job runs every 60 seconds, logs fallback activation + circuit breaker state. Baseline now 6305 (+8 assertions). Backlog: IMF sentiment (1284), HOSE staleness (1274), SSC PDF fallback (1267), IMPLEMENTATION_STATUS update (1286)."
+  "lastFixApplied": "Sprint 1289: Foreign flow parse error root-cause analysis + 8Q BCTC historical download design (TECH-1289 + BCTC_HISTORICAL_DOWNLOAD.md complete, Phase 2 approved)",
+  "currentSprintNotes": "Sprint 1289 IN PROGRESS (2026-04-22): Task 1289a COMPLETE (TECH-1289 root-cause analysis doc), 1289b COMPLETE (RED test spec, +11 assertions to baseline). Root cause identified: silent filter in foreignFlowFetcher.ts (784 errors/24h). Solution: unify validation across POST endpoint + fallback fetcher, call validateForeignFlowPayload() everywhere, fail loudly with HTTP 400 + diagnostic logging. Phase 2: 8Q historical BCTC design doc COMPLETE (discovery chain: HOSE→HNX→UPCOM→fallback, daily systemd job, ~240 PDFs expected). Next: 1289c–e dev tasks + QA. Backlog: IMF sentiment (1284), HOSE staleness (1274), SSC PDF fallback (1267)."
 }
