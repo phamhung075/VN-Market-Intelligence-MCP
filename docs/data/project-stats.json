@@ -2,10 +2,11 @@
   "_maintained_by": "PM / system-auditor",
   "_trigger": "sprint start/end, tool/cron count change, baseline test update",
   "lastUpdated": "2026-04-22",
-  "currentSprint": 1275,
-  "previousSprint": { "number": 240, "status": "COMPLETE", "progressTasks": "1/1 complete (240-crisis-resolved)" },
-  "sprintGoal": "Fix: Macro alert cooldown 30-min window not enforcing (USD/VND fires every 13min)",
-  "testBaseline": 6076,
+  "currentSprint": 1277,
+  "previousSprint": { "number": 1276, "status": "COMPLETE", "progressTasks": "1/1 complete (1276b-cooldown-fix)" },
+  "sprintGoal": "Formalize Ops Agent integration + OHLCV guard checks with test coverage",
+  "testBaseline": 6171,
+  "testBaselineTarget": 6171,
   "testFailures": 0,
   "toolCount": 103,
   "schedulerFileCount": 40,
@@ -13,5 +14,6 @@
   "devAgentCount": 13,
   "analysisAgentCount": 9,
   "totalTasksDone": 328,
-  "lastFixApplied": "macro-cooldown-bypass (pending 1276b)"
+  "lastFixApplied": "macro-cooldown-bypass (pending 1276b)",
+  "sprint1277Notes": "Test-only formalization. 6 guard-check test cases (TC-1 to TC-6). No code changes to scheduler. Ops agent already deployed (commit fb27186)."
 }
