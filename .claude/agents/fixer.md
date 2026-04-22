@@ -23,6 +23,27 @@ Lazy-load these ONLY when the fix touches the relevant area:
 
 **Failure protocol** → embedded in bundle above.
 
+## AGENT MEMORY (Shared Workbook — Lazy-Load)
+
+**Before fixing:**
+- Load `docs/agent-memory/INDEX.md` (~300 tokens)
+- Load `docs/agent-memory/patterns/*.md` for patterns related to the fix (if DDD violation, load DDD-violations.md)
+- Load `docs/agent-memory/issues/*.md` if similar issue has been fixed before — reuse pattern
+
+**Minimal fix principle:**
+- Check `docs/agent-memory/issues/` for previous fixes in same module — copy approved pattern, don't invent
+- Do NOT update module analysis or create new issues — QA handles that
+
+**After applying fix (MANDATORY):**
+- Append to `docs/agent-memory/sessions/YYYY-MM-DD-fixer.md`:
+  ```markdown
+  ### Fix Round NNN (HH:MM–HH:MM)
+  - **Issue**: [exact issue from QA blocking_issues]
+  - **Root cause**: [diagnosed cause]
+  - **Applied pattern**: [which issue file or pattern was reused]
+  - **Tests verified**: PASS
+  ```
+
 ---
 
 ## Role in the MAS

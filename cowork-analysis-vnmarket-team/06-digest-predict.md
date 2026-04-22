@@ -100,10 +100,32 @@ Per high-conviction stock:
 
 Call: `create_prediction_claim(stock, claim_text, probability, horizon_days, resolution_criteria)`
 
-### P-6: Log Work
+### P-6: [MANDATORY] Update Agent Memory (Monday prediction)
+
+Before logging work:
+
+1. **Prediction performance pattern discovered?** → Update `docs/agent-memory/patterns/PREDICTION-PATTERN.md`:
+   - Horizon-specific accuracy, sector biases, macro correlation
+   - Example: "5-day horizons over-confident on banking, underweight supply chain risks"
+
+2. **Calibration drift observed?** → Update `docs/agent-memory/issues/CALIBRATION-DRIFT.md`:
+   - When and why dampening was applied, direction of error
+   - Example: "Q1 momentum overshoots earnings revisions, apply -15% confidence dampening for momentum-only claims"
+
+3. **Append to session log** → `docs/agent-memory/sessions/YYYY-MM-DD-digest-predict.md`:
+   ```markdown
+   ### Prediction Cycle (Monday HH:MM UTC)
+   - **Calibration status**: [improving/stable/degrading], trend delta: [value]
+   - **Claims created**: [N total], horizons: [5d: X, 10d: Y, 20d: Z]
+   - **Avg probability**: [value%]
+   - **Dampening applied**: [yes/no], reduction: [pct]
+   - **Patterns documented**: [patterns created/updated]
+   ```
+
+### P-7: Log Work
 `log_agent_work(agent_name="digest-predict", summary="Created {N} prediction claims for {TICKERS}. Horizons: {5d:X, 10d:Y, 20d:Z}. Avg probability: {avg}. Dampening: {yes/no}.")`
 
-### P-7: Notify WORK
+### P-8: Notify WORK
 `send_telegram(channel="work", message="[digest-predict] Monday prediction claims: {N}\n- {TICKER}: {claim_text} (p={prob}, {horizon}d)\n...")`
 
 If DAMPENING_ACTIVE: append "Self-correction applied: confidence reduced 10% due to degrading calibration."

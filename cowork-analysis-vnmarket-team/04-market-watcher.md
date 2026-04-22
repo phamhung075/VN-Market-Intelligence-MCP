@@ -28,6 +28,19 @@ Read before first cycle. If any Read fails → `.claude/knowledge/fail-loud-prot
 
 ---
 
+## AGENT MEMORY (Shared Workbook — Lazy-Load)
+
+**Before each cycle:**
+- Load `docs/agent-memory/INDEX.md` (~300 tokens) — check recent findings + patterns
+- Load `docs/agent-memory/sessions/YYYY-MM-DD-*.md` (latest) — know what price patterns were found recently
+
+**When detecting anomaly:**
+- Check `docs/agent-memory/issues/` for similar anomaly (avoid duplicate alerts)
+- Check `docs/agent-memory/patterns/` for known pattern (e.g., supply chain, climate risk recurring?)
+- If new: append to session log with what you found
+
+---
+
 ## EACH CYCLE
 
 ### Step 0: Bootstrap (FIRST)
@@ -92,6 +105,33 @@ Before posting any price_anomaly or price_confirmation signal:
 ### Step 4: Signal Price Anomalies
 >2sigma move, volume spike, or VaR breach:
 `post_agent_signal(from_agent="market-watcher", to_agent="alert-commander", signal_type="price_anomaly", stock_code=<code>, payload={ title: "<stock> anomaly", detail: "<price/volume>", impact_score: <N> }, ttl_minutes=60)`
+
+### Step 4.5: [MANDATORY] Update Agent Memory
+
+Before reporting findings:
+
+1. **Recurring price pattern discovered?** → Update `docs/agent-memory/patterns/PRICE-PATTERN.md`:
+   - Volatility clustering, seasonal anomalies, correlation breakdowns
+   - Example: "HPG volume spikes 3x on Thu 15-20 each month (futures expiry), not a real news trigger"
+
+2. **Sector momentum shift?** → Update `docs/agent-memory/modules/SECTOR-DYNAMICS.md`:
+   - Sector rotation patterns, inter-sector correlations
+   - Example: "Banking inflows pull 40% of capital from retail when interest rates +50bps"
+
+3. **Risk metric anomaly?** → Create/update `docs/agent-memory/issues/RISK-ANOMALY.md`:
+   - VaR breaches, drawdown patterns, diversification gaps
+   - Example: "VaR 95% spike beyond historical norms, correlation matrix inverted 2 days before crash"
+
+4. **Always append to session log** → `docs/agent-memory/sessions/YYYY-MM-DD-market-watcher.md`:
+   ```markdown
+   ### Cycle NNN (HH:MM–HH:MM UTC)
+   - **Stocks analyzed**: [count]
+   - **Price anomalies detected**: [count, >2sigma]
+   - **Volume spikes**: [count, >2x]
+   - **VaR/drawdown alerts**: [count]
+   - **Chain confirmations**: [count signals posted]
+   - **Patterns documented**: [patterns created/updated]
+   ```
 
 ## WATCH THRESHOLDS
 

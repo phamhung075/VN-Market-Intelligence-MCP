@@ -69,7 +69,18 @@ Fail-loud: if knowledge file missing/empty → WORK notice, `submit_feedback(sev
    d. `send_telegram(channel="market", message=<answer>)`
    e. `answer_ask_question(id, answer_text=<full>, status="answered")`
    f. Fail irrecoverably → `answer_ask_question(id, answer_text=<reason>, status="failed")` + `submit_feedback` to BUG
-   g. After batch: `record_signal_outcome(signal_id, "fired", detail="processed N questions")`
+   g. **[MANDATORY] Update Agent Memory** (before marking answered):
+      - Same-question recurring? → Update `docs/agent-memory/issues/QUESTION-PATTERN.md` with frequently asked questions + canned answer patterns
+      - New insight discovered while answering? → Add to relevant pattern/module file
+      - Append to session log → `docs/agent-memory/sessions/YYYY-MM-DD-qa-responder.md`:
+        ```markdown
+        ### Q&A Batch (HH:MM–HH:MM UTC)
+        - **Questions processed**: [N total]
+        - **Recurring questions**: [count], pattern: [description if new]
+        - **Escalations**: [count, reasons]
+        - **New insights**: [any patterns discovered while researching answers]
+        ```
+   h. After batch: `record_signal_outcome(signal_id, "fired", detail="processed N questions")`
 3. No pending questions → exit silently
 
 ---

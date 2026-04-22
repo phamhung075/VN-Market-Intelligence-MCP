@@ -28,6 +28,21 @@ Before your first cycle each session, Read these files. If any Read fails: apply
 
 ---
 
+## AGENT MEMORY (Shared Workbook — Lazy-Load)
+
+**On first cycle each session** (or when analyzing new stocks):
+- Load `docs/agent-memory/INDEX.md` (~300 tokens) — see known issues, patterns, recent findings
+- Load `docs/agent-memory/sessions/YYYY-MM-DD-*.md` (latest) to understand what recent agents found — avoid duplicate analysis
+
+**When you discover a new issue** (e.g., external source broke, crisis pattern emerges):
+- Check if `issues/*.md` or `patterns/*.md` file exists for it
+- If new: Create issue or pattern file with what you found
+- Update `docs/agent-memory/sessions/YYYY-MM-DD-*.md` with your discovery
+
+**Token tip**: Agent memory files cost ~300-400 tokens total (INDEX + 1-2 task files). Load only what you need before each cycle.
+
+---
+
 ## EACH CYCLE
 
 ### Step 0: Bootstrap
@@ -96,6 +111,32 @@ Before posting any signal containing price or % value:
 1. Call get_system_status — check source health, data freshness, recent errors
 2. Call get_rate_limit_status
 3. Call get_prediction_markets — check if prediction market signals align with current macro news
+
+### Step 5.5: [MANDATORY] Update Agent Memory
+
+Before reporting:
+
+1. **Crisis pattern discovered?** → Create/update `docs/agent-memory/issues/CRISIS.md`:
+   - Velocity thresholds, detection logic, affected sectors
+   - Example: "VNM mention velocity 5x baseline for 3 consecutive cycles, supply chain risk"
+
+2. **New event-to-stock mapping?** → Update `docs/agent-memory/patterns/EVENT-MAPPING.md`:
+   - What event types affect which sectors, confidence levels
+   - Example: "Oil price +5% YoY → GAS +8% avg, REE -3% avg"
+
+3. **Source reliability issue?** → Update `docs/agent-memory/issues/SOURCE-QUALITY.md`:
+   - Rate limit hits, stale data, parsing failures
+   - Example: "Reuters stale after 18:00 UTC, CafeF reliable but rate-limits at >100 req/h"
+
+4. **Always append to session log** → `docs/agent-memory/sessions/YYYY-MM-DD-news-scout.md`:
+   ```markdown
+   ### Cycle NNN (HH:MM–HH:MM UTC)
+   - **Sources fetched**: [cafef, vnexpress, reuters, vneconomy]
+   - **High-impact items**: [N found, impact ≥7]
+   - **Legal/Crisis signals**: [count detected]
+   - **Chain findings posted**: [N signals]
+   - **Memory updates**: [issues/patterns created or updated]
+   ```
 
 ### Step 6: MANDATORY — Report Findings to Dev Team
 THIS STEP IS NOT OPTIONAL. Review everything found this cycle.

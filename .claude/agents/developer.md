@@ -27,6 +27,22 @@ Lazy-load these ONLY when your task touches the relevant area:
 
 **Failure protocol** → embedded in bundle above.
 
+## AGENT MEMORY (Shared Workbook — Lazy-Load)
+
+Read `docs/agent-memory/AGENT_STARTUP.md` (~5 min, token-efficient protocol).
+
+**Quick load for developer tasks:**
+- **Fixing a bug?** → Load `docs/agent-memory/INDEX.md` + relevant `issues/*.md` file (e.g., `WAL-checkpoint.md` if signal handler bug)
+- **Extending a module?** → Load `docs/agent-memory/modules/MODULE.md` (e.g., `modules/scheduler.md`) to see known issues + patterns
+- **Writing new code?** → Load `docs/agent-memory/patterns/PATTERN.md` (e.g., `DDD-violations.md`, `circuit-breaker.md`) to apply prevention
+- **Checking recent findings?** → Load latest `sessions/YYYY-MM-DD-*.md` to avoid re-doing analysis
+
+**Update protocol:**
+- Found a bug while coding? → Append to relevant `issues/*.md` or create new one
+- Discovered a new pattern? → Create `patterns/PATTERN.md` with examples + prevention
+- Analyzed a module in depth? → Update `modules/MODULE.md` with findings
+- Session done? → Append to `sessions/YYYY-MM-DD-developer.md` with task + findings + status
+
 ---
 
 ## Role in the MAS
@@ -103,15 +119,27 @@ tsc_clean: true
 full_suite_pass: true
 ```
 
-6. Update TASKS.md: In Progress → Review
-7. **Return summary for QA** (include in your completion message):
+6. **[MANDATORY] Update Agent Memory** (REQUIRED before QA):
+   - Did you discover a bug? → Create/update `docs/agent-memory/issues/BUGNAME.md` with fix details + prevention
+   - Did you find a pattern (DDD, SQL, rate-limiting, etc.)? → Create/update `docs/agent-memory/patterns/PATTERN.md` with examples
+   - Did you analyze a module deeply? → Update `docs/agent-memory/modules/MODULE.md` with verification status + findings
+   - Always: Append to `docs/agent-memory/sessions/YYYY-MM-DD-developer.md`:
+     ```markdown
+     ### Task NNN: [task name] (HH:MM–HH:MM)
+     - **Files changed**: [list]
+     - **Finding**: [pattern/bug/insight discovered]
+     - **Status**: Ready for QA
+     ```
+
+7. Update TASKS.md: In Progress → Review
+8. **Return summary for QA** (include in your completion message):
    ```
    CHANGED=['src/foo.ts:40-55', 'src/__tests__/NNN-task.test.ts:1-80']
    NEW_PASS=N
    ```
    This lets QA skip discovery and go directly to targeted verification.
-8. Notify PM/QA: "Task NNN ready for review on branch task/NNN-... — handoff: docs/handoffs/TASK_NNN.md — CHANGED={...} NEW_PASS={N}"
-9. **Update `docs/SYSTEM_STATUS.md`** if the task fixes a scheduler, VPS service, or MCP tool:
+9. Notify PM/QA: "Task NNN ready for review on branch task/NNN-... — handoff: docs/handoffs/TASK_NNN.md — CHANGED={...} NEW_PASS={N}"
+10. **Update `docs/SYSTEM_STATUS.md`** if the task fixes a scheduler, VPS service, or MCP tool:
    - Change status emoji (`✅ ok` / `⚠️ flaky` / `❌ down`)
    - Update "Last Run", "Notes", or "Known Issues" table
    - Update "Last updated" header line

@@ -28,6 +28,23 @@ Read these ONLY when your audit touches the relevant area:
 
 **Failure protocol** → `.claude/knowledge/fail-loud-protocol.md`
 
+## AGENT MEMORY (Shared Workbook — Lazy-Load)
+
+**On audit startup:**
+- Load `docs/agent-memory/INDEX.md` (~300 tokens)
+- Load `docs/agent-memory/issues/*.md` (known bugs, to check if duplicate)
+- Load `docs/agent-memory/modules/scheduler.md` (scheduler health check)
+
+**When detecting new anomaly:**
+- Check if `issues/*.md` file exists for this problem
+- If new: File under BUG channel as `submit_feedback(...)`
+- If duplicate: Skip (auditor deduplication rule)
+
+**Anomaly examples to track:**
+- WAL file growth (see `issues/WAL-checkpoint.md`)
+- Timezone test failures (see `issues/timezone-offsets.md`)
+- Null pointer patterns (see `issues/aggregator-guards.md`)
+
 ---
 
 ## Role
@@ -228,10 +245,14 @@ Procedure:
 4. Tail logs → collect findings.
 5. **Run DB Anomaly Detection** — execute all SQL checks A–G above → collect findings.
 6. Run **Doc sync** pass → edit stale docs, collect `doc_synced:*` findings.
-6. Filter out known fingerprints.
-7. If new findings exist → send ONE batched Report Channel message (include a "Docs updated" subsection listing synced files).
-8. Update state file (append new fingerprints, prune expired).
-9. Print a short stdout summary: `audited: N findings, M new, docs synced: K, reported: yes/no`.
+7. **[MANDATORY] Update Agent Memory** (before filtering known fingerprints):
+   - Found new anomaly type? → Create/update `docs/agent-memory/issues/ANOMALY.md` with detection method + recovery steps
+   - Detected recurring problem? → Update relevant pattern file in `docs/agent-memory/patterns/`
+   - Append to session log → `docs/agent-memory/sessions/YYYY-MM-DD-auditor.md` with audit findings + new issues discovered
+8. Filter out known fingerprints.
+9. If new findings exist → send ONE batched Report Channel message (include a "Docs updated" subsection listing synced files).
+10. Update state file (append new fingerprints, prune expired).
+11. Print a short stdout summary: `audited: N findings, M new, docs synced: K, reported: yes/no`.
 
 ## Hard rules
 

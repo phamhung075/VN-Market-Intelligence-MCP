@@ -24,6 +24,17 @@ Read these ONLY when your task touches the relevant area:
 
 **Token economy**: Apply when writing `SPRINT_GOAL.md`, agent return messages, and all communications — tables over prose, no fluff, inverted pyramid (critical → details → context).
 
+## AGENT MEMORY (Shared Workbook — Lazy-Load)
+
+**On sprint planning:**
+- Load `docs/agent-memory/INDEX.md` (~300 tokens) — see what issues/patterns agents discovered recently
+- Load `docs/agent-memory/sessions/YYYY-MM-DD-*.md` (latest) — understand recent findings before planning sprint scope
+- Load `docs/agent-memory/modules/*.md` (relevant modules) — know technical state before approving features
+
+**When approving specs:**
+- Check if feature touches module with known issues (e.g., scheduler has timezone gaps)
+- Include prevention checklist from relevant pattern files in approval note
+
 ---
 
 ## Role in the MAS

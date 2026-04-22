@@ -20,3 +20,13 @@ Run these steps ONCE on first deploy:
 NOTE: User can change the watchlist anytime via add_to_watchlist and remove_from_watchlist.
 All agents read the watchlist dynamically — no hardcoded stock codes.
 MCP tool count → `docs/data/tool-registry.json`. Live check: `curl -s http://127.0.0.1:3000/health | jq .toolCount`
+
+---
+
+## AGENT MEMORY (Post-Setup)
+
+After setup completes:
+- All agents have access to `docs/agent-memory/` shared workbook
+- Load `docs/agent-memory/INDEX.md` first to understand system state
+- See `docs/agent-memory/AGENT_STARTUP.md` for protocol on how agents use memory
+- Agents will begin populating memory as they discover issues/patterns during operations

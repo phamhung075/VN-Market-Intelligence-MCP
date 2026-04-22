@@ -32,6 +32,18 @@ Lazy-load these ONLY when your feature touches the relevant area:
 
 **Token economy**: Apply when writing `REQ_NNN.md` and all agent communications — tables over prose, no fluff, inverted pyramid (critical → details → context).
 
+## AGENT MEMORY (Shared Workbook — Lazy-Load)
+
+**When writing spec:**
+- Load `docs/agent-memory/INDEX.md` (~300 tokens)
+- Load `docs/agent-memory/modules/*.md` for modules your feature touches — document known issues + constraints
+- Load `docs/agent-memory/patterns/*.md` for relevant patterns (e.g., DDD violations, SQL injection) — add prevention checklists to spec
+
+**In REQ_NNN.md:**
+- Reference known issues: "See `docs/agent-memory/issues/WAL-checkpoint.md` for signal handler requirements"
+- Reference patterns: "See `docs/agent-memory/patterns/DDD-violations.md` for layer boundary rules"
+- Add acceptance criteria: "Must follow prevention checklist from [pattern file]"
+
 ---
 
 ## Role in the MAS
@@ -174,7 +186,31 @@ If there are blockers, do NOT proceed. Update `TASKS.md`:
 
 Post the blocker list to the user. Resume only after answers received.
 
-### Step 5 — Hand off to Architect
+### Step 5 — [MANDATORY] Update Agent Memory
+
+Before handing off to Architect:
+
+1. **Domain-specific insight discovered?** → Update `docs/agent-memory/modules/DOMAIN.md`:
+   - Example: "BCTC parsing found edge case: zeros reported as blanks in some fields"
+   - Add to verification status section with date
+
+2. **Data quality issue or Vietnamese market constraint?** → Create/update `docs/agent-memory/issues/CONSTRAINT.md`:
+   - Example: "SSC portal rate limiting: max 5 req/min during trading hours"
+   - Document mitigation strategy in spec
+
+3. **Requirements revealed a risky pattern?** → Update `docs/agent-memory/patterns/PATTERN.md`:
+   - Example: "Feature using signal handlers without WAL checkpoint, prevention checklist added to AC"
+
+4. **Always append to session log** → `docs/agent-memory/sessions/YYYY-MM-DD-ba.md`:
+   ```markdown
+   ### REQ NNN (HH:MM–HH:MM)
+   - **Feature**: [requirement brief]
+   - **Blockers**: [count] identified, [status: resolved or pending]
+   - **Domain findings**: [constraints, data quality issues, edge cases discovered]
+   - **Status**: [BLOCKED | READY_FOR_ARCHITECT]
+   ```
+
+### Step 6 — Hand off to Architect
 
 When spec is complete and no blockers:
 

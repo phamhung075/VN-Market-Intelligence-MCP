@@ -7,6 +7,13 @@
   - **ultra**: agent-to-agent, internal thinking, subagent prompts
   - **lite**: user-facing replies
 
+### Agent Memory (`docs/agent-memory/` = lazy-load shared workbook)
+- **INDEX.md** (quick lookup, always load first, ~300 tokens) → `docs/agent-memory/INDEX.md`
+- **issues/** (load only when debugging relevant bug)
+- **patterns/** (load when writing code that touches that pattern)
+- **modules/** (load when analyzing/refactoring a module)
+- **sessions/** (load when checking recent agent work, avoid duplicates)
+
 ### Knowledge (`.claude/knowledge/*.md` = logic/rules, stable)
 - **Tree map** (canonical file DAG, write ownership, dependency rules) → `.claude/knowledge/tree-map.md`
 - MCP tool logic, per-agent mapping, signal types → `.claude/knowledge/mcp-tools.md`

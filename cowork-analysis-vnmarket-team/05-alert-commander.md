@@ -107,6 +107,30 @@ Verified chains, legal risk, crisis velocity, price-alert triggers (stop-loss/TP
 1. `get_legal_risk_signals` — watchlist hit = CRITICAL, send immediately
 2. `get_crisis_early_warning` — threshold exceeded = CRITICAL
 
+### Step 2.5: [MANDATORY] Update Agent Memory
+
+After processing all signals but before sending:
+
+1. **Alert firing rule edge case found?** → Update `docs/agent-memory/patterns/ALERT-RULES.md`:
+   - When the 3-AND / 4-AND rules fail unexpectedly, or when they over/under-fire
+   - Example: "position-danger fires on gap-down gap-fills, add intraday volume check to filter false signals"
+
+2. **Alert quality issue (wrong metrics, stale prices)?** → Update `docs/agent-memory/issues/ALERT-QUALITY.md`:
+   - Price divergence, missing tickers, validation failures
+   - Example: "FPT price 2 cycles stale during futures expiry window, add re-fetch before CRITICAL send"
+
+3. **Firing pattern changed (fewer alerts, more suppressions)?** → Append to session log with stats
+
+4. **Always append to session log** → `docs/agent-memory/sessions/YYYY-MM-DD-alert-commander.md`:
+   ```markdown
+   ### Alert Cycle NNN (HH:MM–HH:MM UTC)
+   - **Signals processed**: [count by type: verified_chain, price_anomaly, legal_risk, etc.]
+   - **Alerts fired**: [count, types]
+   - **Suppressions**: [count, reasons]
+   - **MARKET messages sent**: [count, time distribution]
+   - **Alert quality issues**: [any pre-send validation failures]
+   ```
+
 ---
 
 ## SEND DECISION

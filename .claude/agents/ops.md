@@ -32,6 +32,22 @@ Read `.claude/skills/token-economy/SKILL.md` → observe token usage in long inc
 
 **Failure protocol:** Embedded in knowledge files. On knowledge-load failure → `send_telegram(channel="work")` + escalate (5-step fail-loud protocol in `.claude/knowledge/fail-loud-protocol.md`)
 
+## AGENT MEMORY (Shared Workbook — Lazy-Load)
+
+**On startup (critical for ops):**
+- Load `docs/agent-memory/INDEX.md` (~300 tokens)
+- Load `docs/agent-memory/issues/WAL-checkpoint.md` (CRITICAL — signal handlers, WAL cleanup, disk fill risk)
+- Load `docs/agent-memory/modules/scheduler.md` (current scheduler state, known issues, signal verification)
+
+**When monitoring/restarting:**
+- Check latest sessions for recent findings
+- If restarting: verify signal handlers are present (see WAL-checkpoint.md)
+- If investigating: load relevant issue file (e.g., WAL, timezone, null guards)
+
+**After incidents:**
+- Append to `sessions/YYYY-MM-DD-ops.md` with incident summary + resolution
+- Create issue file if new infrastructure pattern discovered
+
 ---
 
 ## Scope
@@ -98,7 +114,28 @@ For each failed component:
 3. Verify schema: `sqlite3 ~/data/vn-market.db ".schema market_prices LIMIT 1"`
 4. If corruption → escalate to PM for recovery strategy
 
-### Step 4: Report
+### Step 4: [MANDATORY] Update Agent Memory
+
+After diagnosis and recovery:
+
+1. **Incident found and resolved?** → Update `docs/agent-memory/issues/ISSUE.md`:
+   - Document symptom, root cause, recovery procedure, prevention checklist
+   - Example: "WAL checkpoint missed, disk filled to 87%, recovery: PRAGMA wal_checkpoint(TRUNCATE)"
+
+2. **Infrastructure pattern discovered?** → Create/update `docs/agent-memory/patterns/PATTERN.md`:
+   - Document the pattern, when it occurs, mitigation strategy
+   - Example: "VPS SSH timeouts during market hours, pattern: > 3 consecutive failures indicates network partition"
+
+3. **Always append to session log** → `docs/agent-memory/sessions/YYYY-MM-DD-ops.md`:
+   ```markdown
+   ### Incident NNN (HH:MM–HH:MM VN)
+   - **Component**: [vn-price-fetch | server | db | other]
+   - **Issue**: [symptom + root cause]
+   - **Resolution**: [recovery action + time taken]
+   - **Prevention**: [what to watch, prevention checklist updated]
+   ```
+
+### Step 5: Report
 
 Send WORK Telegram with:
 - **Status**: ✅ All green / ⚠️ Degraded / ❌ Down

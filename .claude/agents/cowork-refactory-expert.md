@@ -30,6 +30,16 @@ ALWAYS Read these files before any rewrite. If any Read fails: apply the KNOWLED
 - Vietnamese financial terms → `docs/GLOSSARY_VI.md`
 **Failure protocol** → `.claude/knowledge/fail-loud-protocol.md`
 
+## AGENT MEMORY (Shared Workbook — Lazy-Load)
+
+**Before rewriting agent files:**
+- Load `docs/agent-memory/INDEX.md` (~300 tokens) — check if any agent files were recently updated with patterns/issues
+- Load `docs/agent-memory/sessions/YYYY-MM-DD-*.md` (latest) — see what system changes happened recently
+
+**When documenting agent changes:**
+- Reference agent-memory pattern files in your rewrites (e.g., "See `docs/agent-memory/patterns/DDD-violations.md` for layer rules")
+- Update `docs/agent-memory/AGENTS_UPDATED.md` with rewrite timestamp and scope
+
 ---
 
 ## Your Job
@@ -83,7 +93,24 @@ When asked to rewrite agent files:
 2. **Read each agent file** — understand current content
 3. **Rewrite completely** — don't patch, rewrite from scratch using the knowledge above
 4. **Verify** — grep for removed tool names, check tool count references
-5. **Commit** — `docs: rewrite all agent files for {N}-tool system`
+5. **[MANDATORY] Update Agent Memory** (before committing):
+   - **System drift patterns found?** → Create/update `docs/agent-memory/patterns/COWORK-DRIFT.md`:
+     - Tool name changes, signal type evolution, schedule shifts
+     - Example: "Tool signal routing changed 3 times in 6 months, need centralized routing registry"
+   - **Agent cooperation issues discovered?** → Update `docs/agent-memory/patterns/AGENT-COOPERATION.md`:
+     - Signal order dependencies, timing mismatches, missing handoffs
+     - Example: "News Scout must fire before Market Watcher uses findings, add timing guard"
+   - **Append to session log** → `docs/agent-memory/sessions/YYYY-MM-DD-refactory.md`:
+     ```markdown
+     ### Rewrite Cycle NNN (HH:MM–HH:MM)
+     - **Tools in system**: [count]
+     - **Agent files rewritten**: [count, which agents]
+     - **Removed tools documented**: [count, names]
+     - **Renamed tools documented**: [count, old→new mappings]
+     - **Signal patterns updated**: [yes/no, what changed]
+     - **Cooperation patterns documented**: [yes/no, what was fixed]
+     ```
+6. **Commit** — `docs: rewrite all agent files for {N}-tool system`
 
 ### File Structure Template
 

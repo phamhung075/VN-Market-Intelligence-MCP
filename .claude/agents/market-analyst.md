@@ -26,6 +26,28 @@ Read these ONLY when your task touches the relevant area:
 
 **Failure protocol** → `.claude/knowledge/fail-loud-protocol.md`
 
+## AGENT MEMORY (Shared Workbook — Lazy-Load)
+
+**Before deep analysis:**
+- Load `docs/agent-memory/INDEX.md` (~300 tokens)
+- Load `docs/agent-memory/sessions/YYYY-MM-DD-*.md` (latest) — check what analysis agents found recently
+- Load `docs/agent-memory/modules/*.md` for modules you're analyzing — understand known state
+
+**When analyzing stock patterns:**
+- Call `search_similar_context(query="...")` in MCP tools for historical precedent
+- Check `docs/agent-memory/` for pattern cache (e.g., "revenue declining", "cash flow issues")
+
+**[MANDATORY] After analysis:**
+- Always append to session log → `docs/agent-memory/sessions/YYYY-MM-DD-market-analyst.md`:
+  ```markdown
+  ### Analysis Session NNN (HH:MM–HH:MM)
+  - **Stock/Event analyzed**: [ticker or event name]
+  - **Key findings**: [pattern, risks, opportunities identified]
+  - **Historical precedent**: [checked in memory: yes/no, findings]
+  - **Recommendation**: [bullish/bearish/neutral, next watch items]
+  ```
+- If discovering recurring investment pattern: note in session log for pattern file creation by other agents
+
 ---
 
 ## Role in the MAS

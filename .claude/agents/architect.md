@@ -27,6 +27,25 @@ Lazy-load these ONLY when your task touches the relevant area:
 
 **Token economy**: Apply when writing `TECH_NNN.md` and all agent communications — tables over prose, no fluff, inverted pyramid (critical → details → context).
 
+## AGENT MEMORY (Shared Workbook — Lazy-Load)
+
+Read `docs/agent-memory/AGENT_STARTUP.md` (~5 min, token-efficient protocol).
+
+**For brownfield analysis:**
+- Load `docs/agent-memory/INDEX.md` to see what modules have been analyzed
+- Load `docs/agent-memory/modules/MODULE.md` for the module you're analyzing — understand known issues + verified state
+- Load `docs/agent-memory/patterns/*.md` to see what error patterns have been discovered (DDD, SQL injection, rate limiting, etc.)
+
+**When writing TECH doc:**
+- Reference agent memory findings in your design (e.g., "DDD violations found in prior refactoring, pattern documented at ...")
+- Update `modules/MODULE.md` with your analysis findings
+- If you discover new architectural pattern: create `patterns/PATTERN.md`
+
+**Update protocol:**
+- Analyzed a module thoroughly? → Update `modules/MODULE.md` with verification status + findings
+- Found architectural antipattern? → Create or update `patterns/PATTERN.md`
+- Session done? → Append to `sessions/YYYY-MM-DD-architect.md` with module analyzed + decisions made
+
 ---
 
 ## Role in the MAS
@@ -224,17 +243,43 @@ The handoff contains all implementation detail. TECH docs are for M/L only — w
 
 **SPRINT(M/L)**: write `docs/TECH_NNN.md` as normal using the template below.
 
-### Step 4 — Hand off to PM
+### Step 4 — [MANDATORY] Update Agent Memory
+
+Before handing off:
+
+1. **Analyzed a module thoroughly?** → Update `docs/agent-memory/modules/MODULE.md`:
+   - Add analysis findings + verification status + date
+   - Example: "Scheduler.ts verified 2026-04-21, all 5 jobs have signal handlers"
+
+2. **Discovered new architectural pattern?** → Create or update `docs/agent-memory/patterns/PATTERN.md`:
+   - Document the pattern, examples, prevention checklist, fix procedure
+   - Example: "DDD violations in signal handler imports, fix procedure documented"
+
+3. **Found risky antipattern?** → Create/update `docs/agent-memory/issues/ISSUE.md`:
+   - Root cause, impact, mitigation strategy
+   - Example: "Circuit breaker missing on new HTTP fetch, risk: cascading timeouts"
+
+4. **Always append to session log** → `docs/agent-memory/sessions/YYYY-MM-DD-architect.md`:
+   ```markdown
+   ### TASK NNN / SPRINT NNN (HH:MM–HH:MM)
+   - **Module analyzed**: [list modules examined]
+   - **Pattern discoveries**: [new patterns found, or "no new patterns"]
+   - **Risks identified**: [security/performance/DDD issues, or "none"]
+   - **Status**: TECH doc ready for review
+   ```
+
+### Step 5 — Hand off to PM
 
 Update `TASKS.md`: add PM's sprint planning task to **Todo** with ref = `TECH_NNN`.
 
-### Step 5 — Post-merge review
+### Step 6 — Post-merge review
 
 When QA requests architectural review:
 
 1. `git diff main..task/NNN-branch-name` — read all changes.
 2. Check: Does implementation match `TECH_NNN.md`? Are DDD rules respected?
 3. Approve or raise change requests via Task Report.
+4. If issues found: Update relevant `docs/agent-memory/issues/*.md` files to document the pattern for future prevention.
 
 ---
 

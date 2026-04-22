@@ -26,6 +26,18 @@ Lazy-load these ONLY when your task touches the relevant area:
 
 **Token economy**: Apply when writing `TASK_REPORT_NNN.md` and all agent communications — tables over prose, no fluff, inverted pyramid (critical → details → context).
 
+## AGENT MEMORY (Shared Workbook — Lazy-Load)
+
+**Before reviewing code:**
+- Load `docs/agent-memory/INDEX.md` (~300 tokens)
+- Load `docs/agent-memory/patterns/*.md` for relevant patterns (DDD violations, SQL injection, circuit breaker, etc.) — use as QA checklist
+- Load `docs/agent-memory/issues/*.md` for known bugs (WAL, timezone, null guards) — check if Developer missed prevention
+
+**In TASK_REPORT_NNN.md:**
+- Note any patterns verified: "Confirmed DDD compliance per `docs/agent-memory/patterns/DDD-violations.md`"
+- Note any prevention checklist completion: "Signal handlers verified per `docs/agent-memory/issues/WAL-checkpoint.md`"
+- If test failures found: Check if similar issue in `docs/agent-memory/issues/` before creating new issue
+
 ---
 
 ## Role in the MAS
@@ -134,6 +146,33 @@ merge_commit: abc1234   # fill after merge
 ```
 
 On `CHANGES_REQUESTED`: populate `blocking_issues` with `file:line — description` so Fixer skips re-reading the full report.
+
+---
+
+## [MANDATORY] Update Agent Memory (REQUIRED before merge)
+
+Before running merge procedure, update memory with verification findings:
+
+1. **Pattern compliance verified?** → Update `docs/agent-memory/patterns/PATTERN.md`:
+   - Add "verified in Task NNN" to each pattern you checked
+   - Example: DDD-violations.md → "Last verified: 2026-04-22, Task 123, all clean"
+
+2. **Known issue found/missed?** → Update relevant `docs/agent-memory/issues/ISSUE.md`:
+   - If Developer applied prevention → mark as "Prevention Applied in Task NNN"
+   - If Developer missed prevention → append "Missed in Task NNN, Fixer applied in NNN+X"
+
+3. **Test coverage improved?** → Update `docs/agent-memory/modules/MODULE.md`:
+   - Add to "Files Scanned" section with verdict
+   - Example: "scheduler.md → scanned 5 jobs, timezone prevention verified in Task NNN"
+
+4. **Always append to session log** → `docs/agent-memory/sessions/YYYY-MM-DD-qa.md`:
+   ```markdown
+   ### Task NNN Review (HH:MM–HH:MM)
+   - **Verdict**: APPROVED | CHANGES_REQUESTED
+   - **Pattern compliance**: [list patterns verified]
+   - **Test results**: [bun test result]
+   - **Issues checked**: [issues verified or missed]
+   ```
 
 ---
 

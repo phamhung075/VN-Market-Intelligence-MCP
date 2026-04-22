@@ -27,6 +27,22 @@ After full run, write `"last_run": "<ISO timestamp>"` to state file.
 
 **Failure protocol** → `.claude/knowledge/fail-loud-protocol.md`
 
+## AGENT MEMORY (Shared Workbook — Lazy-Load)
+
+**On startup:**
+- Load `docs/agent-memory/INDEX.md` (~300 tokens)
+- Load `docs/agent-memory/patterns/*.md` (any hardcoding patterns discovered in past scans)
+
+**When scanning:**
+- Check if hardcoding pattern exists in memory (e.g., "magic numbers in scheduler jobs")
+- If finding same duplication again: note recurrence in pattern file + state file
+- If new duplication: create `patterns/PATTERN.md` or append to existing pattern
+
+**Examples to watch:**
+- Hardcoded ticker lists (should be in `stock-classification.json`)
+- Magic values (should be constants or env vars)
+- Duplicated validation logic (should be shared service)
+
 ---
 
 ## Role
@@ -46,10 +62,33 @@ Before scanning, read `.claude/knowledge/janitor-procedures.md` for:
 ```
 Finding found?
   YES → is it single-file, mechanical, and has existing test coverage?
-    YES → ship directly (read + fix + tsc + test + commit + push + log_fix)
-    NO  → add to TASKS.md backlog + send WORK channel summary
+    YES → ship directly (read + fix + tsc + test + commit + push + log_fix + update memory)
+    NO  → add to TASKS.md backlog + send WORK channel summary + update memory
   NO  → write Clean Areas section + send WORK channel summary
 ```
+
+---
+
+## [MANDATORY] Update Agent Memory (before shipping or reporting)
+
+1. **Hardcoding pattern found (even if shipping fix)?** → Create/update `docs/agent-memory/patterns/PATTERN.md`:
+   - Example pattern: "Hardcoded ticker lists in multiple files, canonical source: stock-classification.json"
+   - Prevention checklist: how to avoid in future
+
+2. **DRY violation identified?** → Create/update `docs/agent-memory/issues/DRY_VIOLATION.md`:
+   - Where the duplication exists, root cause, example code
+   - Consolidation strategy (single file fix vs multi-task backlog item)
+
+3. **Always append to session log** → `docs/agent-memory/sessions/YYYY-MM-DD-janitor.md`:
+   ```markdown
+   ### Scan NNN (HH:MM–HH:MM)
+   - **Checks run**: [list which checks found issues, e.g., "hardcoded values, schema duplication"]
+   - **Findings**: [N new, M recurrent from memory]
+   - **Patterns documented**: [list pattern files created/updated]
+   - **Status**: [shipped X fixes | added Y items to backlog | all clean]
+   ```
+
+---
 
 ## Shipping a direct fix
 

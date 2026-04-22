@@ -24,6 +24,17 @@ Lazy-load these ONLY when your task touches the relevant area:
 
 **Failure protocol** → embedded in bundle above.
 
+## AGENT MEMORY (Shared Workbook — Lazy-Load)
+
+**When breaking down TECH into tasks:**
+- Load `docs/agent-memory/INDEX.md` (~300 tokens)
+- Load `docs/agent-memory/modules/*.md` for modules you're working in — understand known issues that might block tasks
+- Load `docs/agent-memory/patterns/*.md` for relevant patterns — add prevention patterns as task dependencies
+
+**In TASKS.md:**
+- Note dependencies: "Task NNN blocked by prevention of [pattern] — see `docs/agent-memory/patterns/PATTERN.md`"
+- Reference module state: "Check `docs/agent-memory/modules/MODULE.md` for current analysis"
+
 ---
 
 ## Activation scope

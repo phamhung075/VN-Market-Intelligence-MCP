@@ -29,6 +29,24 @@ Read before first cycle. If any Read fails → `.claude/knowledge/fail-loud-prot
 
 ---
 
+## AGENT MEMORY (Shared Workbook — Lazy-Load)
+
+**On first cycle each session:**
+- Load `docs/agent-memory/INDEX.md` (~300 tokens)
+- Load `docs/agent-memory/patterns/SQL-injection.md` (if analyzing BCTC data + queries)
+- Load `docs/agent-memory/sessions/YYYY-MM-DD-*.md` (latest findings from other analysts)
+
+**When analyzing stocks:**
+- Check if analysis pattern exists (e.g., "revenue declining" recurring issue)
+- Call `search_similar_context(query="...")` to find historical precedent analysis
+
+**If discovering BCTC data quality issue:**
+- Create or update `issues/ISSUE-NAME.md`
+- Document root cause + prevention
+- Add to sessions log
+
+---
+
 ## EACH CYCLE
 
 ### Step 0: Bootstrap
@@ -97,6 +115,32 @@ For each open finding with BCTC data: does financial data CONFIRM or CONTRADICT 
 Validate draft: call `get_market_snapshot()` — price divergence >5% OR unknown ticker → discard + re-draft. Max 2 re-fetch attempts. After 2nd failure: skip stock, `submit_feedback(category="alert_quality", ...)`.
 
 `record_evidence_fragment` for each BCTC finding used in claims.
+
+### Step 4.5: [MANDATORY] Update Agent Memory
+
+Before reporting findings:
+
+1. **Data quality issue found?** → Create/update `docs/agent-memory/issues/BCTC-QUALITY.md`:
+   - Field parsing failures, OCR errors, missing data, inconsistent formats
+   - Example: "Income statement sometimes reports net loss as blank instead of negative, detection: (netIncome === '' && operatingCF < 0)"
+
+2. **BCTC pattern discovered?** → Update `docs/agent-memory/patterns/BCTC-ACCOUNTING.md`:
+   - Recurring accounting issues, hidden risks, reporting quirks
+   - Example: "VN companies frequently report large one-time items, reconcile to operating CF"
+
+3. **Stock fundamental pattern?** → Update `docs/agent-memory/modules/STOCK-FUNDAMENTALS.md`:
+   - Which stocks have known issues (seasonal revenue spikes, capex lumpy, etc.)
+   - Example: "VNM: Q1 always shows inventory buildup before Tet, normalize by Q2"
+
+4. **Always append to session log** → `docs/agent-memory/sessions/YYYY-MM-DD-financial-analyst.md`:
+   ```markdown
+   ### Analysis Cycle NNN (HH:MM–HH:MM UTC)
+   - **Stocks analyzed**: [count]
+   - **Critical findings**: [revenue decline, net loss, high D/E, etc.]
+   - **Insider/Legal signals**: [count detected]
+   - **Chain validations**: [count posted]
+   - **Data quality issues**: [issues/patterns created or updated]
+   ```
 
 ### Step 5: MANDATORY — Report to Dev Team
 Dedup: check BASE_CONTEXT signal first (from Step 0). If `recent_fixes` list present in signal payload (age < 20min) → use that list, skip `get_recent_fixes()` call. Otherwise → `get_recent_fixes(days=3, limit=10)` as normal.

@@ -26,6 +26,22 @@ Read `.claude/skills/token-economy/SKILL.md` — apply always.
 - **Tree map** (canonical DAG, write ownership, all rules) → `.claude/knowledge/tree-map.md` ← READ THIS FIRST EVERY RUN
 - Fail-loud protocol → `.claude/knowledge/fail-loud-protocol.md`
 
+## AGENT MEMORY (Shared Workbook — Lazy-Load)
+
+**On startup:**
+- Load `docs/agent-memory/INDEX.md` (~300 tokens) — ensure agent memory structure is valid
+- Load `docs/agent-memory/README.md` — understand lazy-load protocol
+
+**During audit:**
+- Check agent memory files are properly formatted (one issue/pattern/module per file)
+- Verify INDEX.md is up-to-date with actual files in `issues/`, `patterns/`, `modules/`, `sessions/`
+- If agent memory structure drifted: file BUG or fix via feedback
+
+**Update responsibility:**
+- Ensure INDEX.md stays under 150 lines (lazy-load overhead)
+- Archive old session files (> 7 days) to `docs/TASKS_ARCHIVE.md` if needed
+- Monitor agent memory growth
+
 ---
 
 ## Core Architecture — 3-Layer Knowledge System

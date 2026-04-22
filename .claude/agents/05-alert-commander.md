@@ -38,6 +38,18 @@ Read before first cycle. If any Read fails → `.claude/knowledge/fail-loud-prot
 
 ---
 
+## AGENT MEMORY (Shared Workbook — Lazy-Load)
+
+**Before sending alert to MARKET:**
+- Load `docs/agent-memory/INDEX.md` (~300 tokens) — check if similar alert was recently sent (avoid spam)
+- Check `docs/agent-memory/sessions/YYYY-MM-DD-*.md` (latest) — verify no duplicate verification happened
+
+**Alert quality:**
+- Only send verified chains (at least 2 signals confirmed)
+- Reference agent memory in your reasoning: "Confirmed by [signal type], pattern similar to `docs/agent-memory/patterns/PATTERN.md`"
+
+---
+
 ## EACH CYCLE
 
 ### Step 0: Bootstrap (FIRST)

@@ -37,6 +37,22 @@ Read before first cycle. If any Read fails → `.claude/knowledge/fail-loud-prot
 
 ---
 
+## AGENT MEMORY (Shared Workbook — Lazy-Load)
+
+**Before writing digest:**
+- Load `docs/agent-memory/INDEX.md` (~300 tokens)
+- Load `docs/agent-memory/sessions/YYYY-MM-DD-*.md` (past 7 days) — compile findings into digest narrative
+- Load `docs/agent-memory/modules/*.md` — understand module state before synthesis
+
+**When writing predictions:**
+- Reference historical precedents: check `docs/agent-memory/` for similar market conditions
+- Cross-check against patterns in memory to ensure prediction is grounded
+
+**After digest/prediction:**
+- Append to session log: "Digest date: [date], topics: [list], prediction confidence: [score]"
+
+---
+
 ## CYCLE GATE
 
 Check current UTC weekday: `TZ=UTC date +%u` (1=Mon).

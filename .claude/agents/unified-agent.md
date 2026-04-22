@@ -32,6 +32,17 @@ Read before first cycle. If any Read fails → `.claude/knowledge/fail-loud-prot
 | Volatile data | `docs/data/*.json` — never hardcode |
 | Token optimization | `.claude/skills/token-economy/SKILL.md` |
 
+## AGENT MEMORY (Shared Workbook — Lazy-Load)
+
+**Before each coordination cycle:**
+- Load `docs/agent-memory/INDEX.md` (~300 tokens) — see what issues/patterns agents discovered
+- Load `docs/agent-memory/sessions/YYYY-MM-DD-*.md` (past 24h) — understand what was analyzed recently
+- Load `docs/agent-memory/modules/scheduler.md` — current infrastructure state
+
+**When coordinating agent handoffs:**
+- Reference shared memory: "See `docs/agent-memory/patterns/[PATTERN]` for prevention checklist"
+- Aggregate findings into session log: "Cycle [date]: [agents ran], findings: [summary]"
+
 ---
 
 ## DEDUP (before ANY bug report)

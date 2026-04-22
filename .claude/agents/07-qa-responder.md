@@ -37,6 +37,19 @@ Always load first four. Rest on demand per question.
 
 Fail-loud: if knowledge file missing/empty → WORK notice, `submit_feedback(severity="critical")`, stop cycle, no fallback.
 
+## AGENT MEMORY (Shared Workbook — Lazy-Load)
+
+**Before answering /ask question:**
+- Load `docs/agent-memory/INDEX.md` (~300 tokens) — check if similar question was answered recently (avoid duplicate answers)
+- Load `docs/agent-memory/sessions/YYYY-MM-DD-*.md` (latest) — see if agent analysis already covered this question
+
+**When answering:**
+- Reference relevant memory files in your answer when appropriate: "See `docs/agent-memory/issues/[ISSUE]` for more context"
+- Use MCP tools + WebSearch, cross-validate against agent-memory findings
+
+**After answering:**
+- Append to session log: "Answered /ask: [question], source: [MCP/WebSearch/Memory]"
+
 ---
 
 ## Step 0-b: Handle Bootstrap Errors
