@@ -32,14 +32,14 @@
 
 ## Sprint 1283 — Foreign Flow Circuit Breaker Diagnostics (S-size)
 
-**Status:** TODO | **Goal:** Implement diagnostic + reset tools for foreign flow circuit breaker to unblock OPS incident recovery | **Size:** S (2 tasks, 2 tools, ~80 lines code + 8 tests) | **Baseline:** 6257 | **Target:** 6265 (+8 assertions) | **Note:** Circuit breaker diagnostics tool (incident recovery aid). Unblocks OPS troubleshooting when VPS foreign flow service stalls.
+**Status:** COMPLETE | **Goal:** Implement diagnostic + reset tools for foreign flow circuit breaker to unblock OPS incident recovery | **Size:** S (2 tasks, 2 tools, ~80 lines code + 10 tests) | **Baseline:** 6257 | **Target:** 6267 (+10 assertions) | **Note:** Circuit breaker diagnostics tool (incident recovery aid). Merged 2026-04-22. All tests PASS.
 
 | ID | Title | Status | Layer | Notes |
 |----|-------|--------|-------|-------|
-| 1283a | RED: Foreign flow CB diagnostics tests | Todo | test | 8 assertions: state query, error counts, reset logic, idempotency |
-| 1283b | GREEN: Implement diagnostic + reset tools | Todo | interface | Two MCP tools: diagnose_foreign_flow_circuit_breaker() + reset_foreign_flow_circuit_breaker() |
+| 1283a | RED: Foreign flow CB diagnostics tests | Done | test | 10 assertions: state query, error counts, reset logic, idempotency |
+| 1283b | GREEN: Implement diagnostic + reset tools | Done | interface | Two MCP tools: diagnose_foreign_flow_circuit_breaker() + reset_foreign_flow_circuit_breaker() |
 
-**Context:** vps_push_log shows 5108 consecutive error pushes (2026-04-22 07:36:55–now), last good push 2026-04-15 07:52:10. Ops needs observability into circuit breaker state to diagnose root cause. Tools provide: state query (closed/open/half-open), failure counts, last failure timestamp, manual reset capability. Preparatory work (interface layer only, no schema changes).
+**Context:** vps_push_log shows 5108 consecutive error pushes (2026-04-22 07:36:55–now), last good push 2026-04-15 07:52:10. Ops needs observability into circuit breaker state to diagnose root cause. Tools provide: state query (closed/open/half-open), failure counts, last failure timestamp, manual reset capability. Merged with full test coverage.
 
 ---
 
