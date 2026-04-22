@@ -8,6 +8,7 @@ describe("Task 1276 — Macro cooldown bypass fix", () => {
       stocks: ["MACRO"],
       signalTypes: ["macro_deviation"],
       severity: "critical", // MACRO alerts are "critical" (not downgraded)
+      actionCode: "MACRO", // Identify this as a macro alert for cooldown exemption logic
     };
 
     const tenMinAgo = new Date(Date.now() - 10 * 60_000).toISOString();
@@ -32,6 +33,7 @@ describe("Task 1276 — Macro cooldown bypass fix", () => {
       stocks: ["MACRO"],
       signalTypes: ["macro_deviation"],
       severity: "critical",
+      actionCode: "MACRO",
     };
 
     const thirtyFiveMinAgo = new Date(
@@ -58,6 +60,7 @@ describe("Task 1276 — Macro cooldown bypass fix", () => {
       stocks: ["MACRO"],
       signalTypes: ["macro_high_volatility"],
       severity: "critical",
+      actionCode: "MACRO",
     };
 
     const tenMinAgo = new Date(Date.now() - 10 * 60_000).toISOString();
@@ -82,6 +85,7 @@ describe("Task 1276 — Macro cooldown bypass fix", () => {
       stocks: ["MACRO"],
       signalTypes: ["macro_deviation"],
       severity: "high", // Non-critical to test daily cap (critical alerts bypass everything)
+      actionCode: "MACRO",
     };
 
     const today = new Date().toISOString();

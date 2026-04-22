@@ -52,19 +52,21 @@ function isToday(isoDate: string): boolean {
  * Decide whether the incoming alert should be suppressed.
  *
  * @param alert        - The candidate alert (stocks + signalTypes arrays).
- *                       If `severity` is "critical" the alert always passes.
+ *                       If `severity` is "critical" the alert always passes,
+ *                       EXCEPT for MACRO alerts which require normal cooldown.
  * @param recentAlerts - Persisted alert history (any time range; function
  *                       filters internally by window / today).
  * @param config       - Cooldown settings. Falls back to DEFAULT_CONFIG.
  * @returns            - `true` to suppress, `false` to allow.
  */
 export function shouldSuppressAlert(
-  alert: { stocks: string[]; signalTypes: string[]; severity?: string },
+  alert: { stocks: string[]; signalTypes: string[]; severity?: string; actionCode?: string },
   recentAlerts: Array<{ stocks: string; signalTypes: string; triggeredAt: string }>,
   config?: CooldownConfig,
 ): boolean {
-  // CRITICAL severity is never suppressed
-  if (alert.severity === "critical") return false;
+  // CRITICAL severity is never suppressed — EXCEPT MACRO alerts, which are
+  // sustained conditions requiring normal cooldown enforcement.
+  if (alert.severity === "critical" && alert.actionCode !== "MACRO") return false;
 
   const cfg = config ?? DEFAULT_CONFIG;
   const now = Date.now();
