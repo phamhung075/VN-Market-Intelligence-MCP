@@ -154,12 +154,12 @@ All 6 tests should pass.
 
 ## Acceptance Criteria
 
-- [ ] Line 158 updated to use direction-aware label selection
-- [ ] No new dependencies added
-- [ ] All 6 RED tests from TASK_1269a now pass
-- [ ] `bun test src/__tests__/1269-macro-direction-label.test.ts` → 6 pass, 0 fail
-- [ ] `bun test` (full suite) passes without regressions
-- [ ] TypeScript: `bun tsc --noEmit` → no errors
+- [x] Line 158 updated to use direction-aware label selection
+- [x] No new dependencies added
+- [x] All 6 RED tests from TASK_1269a now pass
+- [x] `bun test src/__tests__/1269-macro-direction-label.test.ts` → 6 pass, 0 fail
+- [x] `bun test` (full suite) passes without regressions
+- [x] TypeScript: `bun tsc --noEmit` → no errors
 
 ---
 
@@ -170,3 +170,26 @@ All 6 tests should pass.
 - **Tested by**: 6 unit tests (all directions × all levels)
 - **Downstream**: cascade engine + briefings use corrected labels in summaries
 - **Revert**: Safe — one-line change, can revert if needed
+
+---
+
+## [Developer] Implementation Record
+
+files_actually_modified:
+- /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/domain/services/macroThresholds.ts   # Line 158: direction-aware label selection already in place (fix from commit 8db31f9)
+
+tests_written: []
+tests_executed:
+- src/__tests__/1269-macro-direction-label.test.ts   # 6 assertions, all GREEN
+- full suite: 6159 pass, 0 fail, 21 skip
+
+tsc_clean: true
+full_suite_pass: true
+
+Implementation note: The direction-aware label selection was previously implemented in commit 8db31f9 (fix(1326)+test(1327)). This task validates the implementation and documents it under task 1269 numbering. All 6 test cases pass:
+- TC-1 (elevated above): "cao hơn TB" ✓
+- TC-2 (elevated below): "thấp hơn TB" ✓
+- TC-3 (high above): "cao bất thường" ✓
+- TC-4 (high below): "thấp bất thường" ✓
+- TC-5 (extreme above): "cực cao" ✓
+- TC-6 (extreme below): "cực thấp" ✓
