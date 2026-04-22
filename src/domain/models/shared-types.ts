@@ -147,3 +147,16 @@ export interface ForeignFlowUpsertItem {
   /** ISO 8601 UTC timestamp. null → server uses SQLite datetime('now'). */
   fetched_at: string | null;
 }
+
+/**
+ * Data transfer item for writing foreign flow columns to daily_ohlcv.
+ * Structured to match WriteForeignFlowItem in ohlcvForeignFlowStore (Task 1503, 1289).
+ * These fields correspond to daily_ohlcv table columns.
+ */
+export interface WriteForeignFlowItem {
+  code: string;
+  date: string;
+  foreignBuyVol: number;
+  foreignSellVol: number;
+  putThroughVol: number;
+}

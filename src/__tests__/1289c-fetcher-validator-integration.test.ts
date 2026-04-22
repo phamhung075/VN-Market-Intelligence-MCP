@@ -21,7 +21,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from "bun:test";
-import type { WriteForeignFlowItem } from "../infrastructure/db/ohlcvForeignFlowStore.js";
+import type { WriteForeignFlowItem } from "../domain/models/shared-types.js";
 import { resetCircuitBreaker, resetFallbackCache } from "../infrastructure/fetchers/foreignFlowFetcher.js";
 
 // For direct unit testing of fetchPrimaryVpsEndpoint

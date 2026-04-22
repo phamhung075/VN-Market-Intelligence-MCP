@@ -13,8 +13,7 @@
  * ForeignFlowUpsertItem fields: code, date, foreign_volume, foreign_room, holding_ratio, fetched_at
  */
 
-import type { ForeignFlowUpsertItem } from "../../models/shared-types.js";
-import type { WriteForeignFlowItem } from "../../../infrastructure/db/ohlcvForeignFlowStore.js";
+import type { ForeignFlowUpsertItem, WriteForeignFlowItem } from "../../models/shared-types.js";
 
 /**
  * Validation error for a single item in a batch

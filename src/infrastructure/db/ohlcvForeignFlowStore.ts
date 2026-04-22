@@ -7,14 +7,7 @@
  */
 
 import type { Database } from "bun:sqlite";
-
-export interface WriteForeignFlowItem {
-  code: string;
-  date: string;
-  foreignBuyVol: number;
-  foreignSellVol: number;
-  putThroughVol: number;
-}
+import type { WriteForeignFlowItem } from "../../domain/models/shared-types.js";
 
 /**
  * Update existing daily_ohlcv rows with foreign flow columns.

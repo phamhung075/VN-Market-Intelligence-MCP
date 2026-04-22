@@ -73,6 +73,10 @@ interface/ (REST, GraphQL, CLI)
 infrastructure/ (DB, HTTP clients, services)
 ```
 
+## Recent Prevention
+
+**Task 1289 (2026-04-22):** Fixed `WriteForeignFlowItem` type import in domain validator — moved type to domain/models/shared-types.ts, updated 4 files. Caught by test 1321-ddd-no-infra-imports-in-domain.test.ts. Test suite enforces this rule every run.
+
 ## Related
 
 - `.claude/knowledge/dev-standards.md` → DDD layering rules

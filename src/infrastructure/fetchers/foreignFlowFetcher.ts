@@ -13,7 +13,7 @@
  * @module infrastructure/fetchers/foreignFlowFetcher
  */
 
-import type { WriteForeignFlowItem } from "../db/ohlcvForeignFlowStore.js";
+import type { WriteForeignFlowItem } from "../../domain/models/shared-types.js";
 import { logger } from "../logger.js";
 
 // ─────────────────────────────────────────────────────────────────────────────

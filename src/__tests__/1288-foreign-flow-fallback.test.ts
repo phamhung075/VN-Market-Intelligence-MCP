@@ -19,7 +19,7 @@
 
 import { describe, it, expect, beforeEach } from "bun:test";
 import { CircuitBreaker } from "../infrastructure/circuitBreaker.js";
-import type { WriteForeignFlowItem } from "../infrastructure/db/ohlcvForeignFlowStore.js";
+import type { WriteForeignFlowItem } from "../domain/models/shared-types.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
