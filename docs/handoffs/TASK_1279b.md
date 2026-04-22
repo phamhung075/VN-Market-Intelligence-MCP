@@ -408,6 +408,36 @@ Total: 18/18 PASS
 
 ---
 
+## [QA] Review Record
+
+**verdict:** APPROVED
+
+**blocking_issues:** []
+
+**non_blocking:** []
+
+**files_confirmed_clean:**
+- /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/domain/services/msciDetector.ts
+- /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/domain/services/cascadeEngine.ts
+- /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/application/cascadeExecutor.ts
+- /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/__tests__/1279b-msci-inclusion-cascade-green.test.ts
+
+**test_results:**
+- RED phase (1279a): 7 PASS, 0 FAIL (all AC verified, TC-4 contract now passes)
+- GREEN phase (1279b): 11 PASS, 0 FAIL (all AC verified)
+- Total: 18 PASS, 0 FAIL
+- Full suite: 6208 PASS, 0 FAIL
+
+**ddd_compliance:** PASS — zero infrastructure imports in domain/msciDetector.ts, cascadeEngine.ts
+
+**typescript:** 0 errors
+
+**security:** PASS — no process.env, no hardcoded credentials, no SQL injection vectors
+
+**merge_commit:** 024ad78 — feat(1279b): GREEN — implement MSCI_INCLUSION_RULES + cascade detection
+
+---
+
 ## Implementation Order (Recommended)
 
 1. **Create msciDetector.ts** — Test with unit tests first (can run in isolation)
