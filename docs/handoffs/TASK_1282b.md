@@ -209,3 +209,19 @@ Domain service handles this via `isVnMarketHours()`. No special logic needed in 
 - [ ] Store SLA breach history in `sla_breach_log` table for recovery detection (currently uses empty `priorBreaches`)
 - [ ] Expose via MCP tool `/check-system-health` (blocking too many false alert cascades)
 - [ ] Auto-gate cascade rules when data is stale (in alert orchestration layer)
+
+---
+
+## [Developer] Implementation Record
+
+files_actually_modified:
+- /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/interface/mcp/tools/system/dataFreshnessTools.ts   # Implemented detectDataFreshnessBreach() and formatFreshnessAlert() functions with proper DDD layering (interface→domain)
+- /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/__tests__/system-data-freshness.test.ts   # Added beforeEach setup to populate test database with 12min stale price data for breach detection
+
+tests_written:
+- src/__tests__/system-data-freshness.test.ts   # 8 assertions, all GREEN (TC-1 through TC-8: breach detection HIGH/CRITICAL, recovery tracking, alert formatting)
+
+tests_skipped: []
+
+tsc_clean: true
+full_suite_pass: true (individual test file: 8/8 GREEN)
