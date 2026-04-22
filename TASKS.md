@@ -14,6 +14,19 @@
 > Sprints 240–240 archived: `docs/archive/sprints-240-240.md`
 > Sprints 1269–1277 archived: `docs/archive/sprints-1269-1277.md`
 > Sprints 1278–1282 archived: `docs/archive/sprints-1278-1282.md` (includes MSCI inclusion + agriculture weather cascades + data freshness monitoring tool, BCTC timeout fix, all merged)
+> Sprints 1283–1289 archived: `docs/archive/sprints-1283-1289.md` (includes foreign flow circuit breaker diagnostics, BCTC async queue enrichment, foreign flow fallback fetcher, data freshness monitoring, recurring parse errors root-cause fix, all merged)
+
+---
+
+## Backlog
+
+| ID | Title | Priority | Notes |
+|----|----|----------|-------|
+| 1290 | Integrate foreign flow fallback fetcher into scheduler job | MEDIUM | Fallback source (1288) ready; needs scheduler integration |
+| 1284 | IMF context sentiment detection | MEDIUM | Policy vs crisis distinction |
+| 1274 | HOSE staleness guard | MEDIUM | >2h old = circuit DEGRADED |
+| 1267 | SSC PDF timeout fallback | MEDIUM | Use news chain if OCR fails |
+| 1286 | Update IMPLEMENTATION_STATUS.md | LOW | Add sprint 240+ entries |
 
 ---
 
