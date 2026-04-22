@@ -359,3 +359,67 @@ full_suite_pass: true
 - bun tsc --noEmit: 0 errors
 
 **Commit:** 98ae7c8 — fix(1287a): parameterize insertQueueItem helper to eliminate SQL injection
+
+---
+
+## [QA] Review Record
+
+**Date:** 2026-04-22
+**Verdict:** APPROVED
+
+### Test Suite Results
+- Task-specific test (1287-bctc-queue-enricher.test.ts): **8 FAIL (expected RED)**
+  - All 8 failures are on stub assertions (stub.throw): `[bctcQueueEnricherJob] Implementation not yet added (Task 1287b)`
+  - No UNIQUE constraint errors during test setup
+  - No SQL injection vulnerabilities
+  - Failures occur at test execution, not during database initialization
+- Full regression: **6249 pass / 8 fail / 21 skip** (8 failures are task 1287a RED tests)
+- bun tsc --noEmit: **0 errors**
+
+### Files Confirmed Clean
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/__tests__/1287-bctc-queue-enricher.test.ts` (lines 35-48)
+  - insertQueueItem() helper uses parameterized `db.prepare()` with `?` placeholders
+  - `INSERT OR REPLACE` syntax handles backfill collisions
+  - stmt.run(code, year, quarter, "pending", sourceUrl) binds all parameters
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/scheduler/financial-reports/bctcQueueEnricherJob.ts`
+  - Stub implementation in place (throws expected error)
+  - Type exports: BctcQueueEnricherRunResult + function signature correct
+  - Ready for 1287b GREEN phase
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/application/usecases/bctcQueueEnricher.ts`
+  - SscDocumentLookup type exported correctly (line 43)
+  - Used by test file for dependency injection
+
+### Compliance Checks
+- **SQL Security:** PASS — no string interpolation, parameterized bindings used
+- **DDD Layer Integrity:** PASS — no domain/infrastructure imports in test
+- **TypeScript Strict:** PASS — 0 type errors (bun tsc --noEmit)
+- **Test Isolation:** PASS — each test gets fresh in-memory database (beforeEach/afterEach)
+- **Database Cleanup:** PASS — testDb.close() + closeDb() in afterEach
+
+### Commits Validated
+- 98ae7c8: fix(1287a) — parameterized insertQueueItem (6 insertions, 5 deletions) ✓
+- 0e34874: test(1287a) — RED test suite (8 failing assertions) ✓
+- 61c1bff: docs — [Fixer] Fix Record appended ✓
+
+### Blocking Issues
+None — all acceptance criteria met.
+
+### Expected Behavior Verified
+1. **TC-1 (empty queue):** stub.throw (expected)
+2. **TC-2 (URL population):** stub.throw (expected)
+3. **TC-3 (timeout handling):** stub.throw (expected)
+4. **TC-4 (skip enriched):** stub.throw (expected)
+5. **TC-5 (partial failures):** stub.throw (expected)
+6. **TC-6 (idempotency):** stub.throw (expected)
+7. **TC-7 (batch limit):** stub.throw (expected)
+8. **TC-8 (empty results):** stub.throw (expected)
+
+All tests fail on assertions (RED phase acceptable). No infrastructure errors.
+
+### DDD Compliance Details
+- Test file: `src/__tests__/1287-*` — interface layer (test code)
+- Imports only from: `bun:test`, `bun:sqlite`, `../infrastructure/db/schema.js`, `../scheduler/financial-reports/bctcQueueEnricherJob.js`, `../application/usecases/bctcQueueEnricher.js`
+- No violations of domain← application ← interface ← scheduler hierarchy
+
+### Next Step: 1287b (GREEN Phase)
+Developer to implement runBctcQueueEnricherJob() function signature per handoff notes (lines 319-339). All 8 test assertions will drive implementation.
