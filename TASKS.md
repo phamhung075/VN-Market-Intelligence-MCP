@@ -98,8 +98,8 @@
 
 | ID | Title | Status | Layer | Notes |
 |----|----|--------|-------|-------|
-| 1281a | RED: Agriculture weather cascade detection tests | Review | test | 7 PASS, 1 FAIL (TC-4 contract test); 8 assertions total |
-| 1281b | GREEN: Implement agriculture detector + rules + executor | Backlog | domain+app | Blocked by 1281a; agricultureDetector.ts, AGRICULTURE_WEATHER_RULES, detectAgricultureCascadePeers() |
+| 1281a | RED: Agriculture weather cascade detection tests | Done | test | 7 PASS, 1 FAIL (TC-4 contract test); 8 assertions total; **merged ✓** |
+| 1281b | GREEN: Implement agriculture detector + rules + executor | Todo | domain+app | RED unblocked; agricultureDetector.ts, AGRICULTURE_WEATHER_RULES, detectAgricultureCascadePeers() |
 
 ---
 
