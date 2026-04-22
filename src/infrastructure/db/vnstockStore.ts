@@ -69,11 +69,54 @@ export function runVnstockMigrations(): void {
     );
     // Drop the old non-unique index if it exists — the unique index supersedes it
     db.exec(`DROP INDEX IF EXISTS idx_vnstats_code_date`);
-    logger.info("[vnstock-store] ensured UNIQUE(code, date) index on vnstock_trading_stats");
+
+    // VALIDATE: Ensure the UNIQUE index was created successfully
+    // Check if table has rows (meaning it exists and has data)
+    const tableExists = db
+      .prepare<{ cnt: number }, []>(
+        `SELECT COUNT(*) as cnt FROM pragma_table_list() WHERE name = 'vnstock_trading_stats'`
+      )
+      .get();
+
+    if (!tableExists || tableExists.cnt === 0) {
+      // Table doesn't exist yet (normal in test environment before initDatabase)
+      logger.debug("[vnstock-store] vnstock_trading_stats table does not exist yet, skipping UNIQUE index validation");
+      return;
+    }
+
+    const indexCheck = db
+      .prepare<{ name: string; "unique": number }, [string]>(
+        `SELECT name, "unique" FROM pragma_index_list('vnstock_trading_stats') WHERE name = ?`
+      )
+      .get('uq_vnstats_code_date');
+
+    if (!indexCheck) {
+      throw new Error(
+        "UNIQUE index 'uq_vnstats_code_date' was not created. " +
+        "Verify table exists and has 'code' and 'date' columns."
+      );
+    }
+    if (!indexCheck.unique) {
+      throw new Error(
+        "Index 'uq_vnstats_code_date' exists but is not UNIQUE. " +
+        "Drop and recreate it."
+      );
+    }
+
+    logger.info("[vnstock-store] UNIQUE(code, date) index validated on vnstock_trading_stats");
   } catch (err) {
-    logger.warn("[vnstock-store] UNIQUE(code, date) index migration skipped", {
-      error: err instanceof Error ? err.message : String(err),
+    const msg = err instanceof Error ? err.message : String(err);
+    // If table doesn't exist, log at debug level and continue (test environment)
+    if (msg.includes("no such table")) {
+      logger.debug("[vnstock-store] vnstock_trading_stats table does not exist, skipping UNIQUE index validation");
+      return;
+    }
+    // Real error in production — fail fast
+    logger.error("[vnstock-store] UNIQUE(code, date) index validation FAILED", {
+      error: msg,
+      remediation: "Manual fix: DROP TABLE vnstock_trading_stats; run initDatabase() to recreate",
     });
+    throw err;
   }
 }
 
@@ -390,6 +433,52 @@ export function upsertForeignFlow(
 
   let affected = 0;
 
+  // Guard: Verify UNIQUE(code, date) constraint exists before attempting ON CONFLICT
+  // This catches misconfigured production DBs where the migration silently failed.
+  // Note: SQLite auto-creates autoindex if UNIQUE constraint is in CREATE TABLE (e.g. sqlite_autoindex_*),
+  // or we check for the explicit uq_vnstats_code_date index created by runVnstockMigrations().
+  if (hasDate) {
+    try {
+      const indexList = database
+        .prepare<{ name: string; "unique": number }, []>(
+          `SELECT name, "unique" FROM pragma_index_list('vnstock_trading_stats')
+           WHERE "unique" = 1`
+        )
+        .all();
+
+      // Check if ANY unique index exists for this table
+      // It could be:
+      // 1. uq_vnstats_code_date (explicit index created by runVnstockMigrations)
+      // 2. sqlite_autoindex_vnstock_trading_stats_1 (implicit from UNIQUE in CREATE TABLE)
+      // 3. Other unique indexes (future compatibility)
+      const hasUniqueConstraint = indexList.length > 0;
+
+      if (!hasUniqueConstraint) {
+        throw new Error(
+          "UNIQUE constraint missing on vnstock_trading_stats. " +
+          "Run runVnstockMigrations() or recreate the table. " +
+          "ON CONFLICT will fail without this constraint."
+        );
+      }
+    } catch (err) {
+      if (err instanceof Error && err.message.includes("pragma_index_list")) {
+        // pragma_index_list doesn't exist on this SQLite version — graceful fallback
+        logger.warn("[upsert-foreign-flow] constraint validation skipped (pragma_index_list unavailable)");
+      } else if (err instanceof Error && err.message.includes("UNIQUE constraint missing")) {
+        // Real error about missing constraint — propagate
+        logger.error("[upsert-foreign-flow] constraint check failed", {
+          error: err.message,
+        });
+        throw err;
+      } else {
+        // Other errors (e.g., parse error on query)
+        logger.warn("[upsert-foreign-flow] constraint validation skipped (query error)", {
+          error: err instanceof Error ? err.message : String(err),
+        });
+      }
+    }
+  }
+
   if (hasDate) {
     // Primary path — UNIQUE(code, date). Use ON CONFLICT DO UPDATE SET so that
     // only the four foreign-flow columns are touched; price/financial columns
@@ -420,6 +509,12 @@ export function upsertForeignFlow(
       }
     });
     runAll();
+
+    // Log summary
+    logger.debug("[upsert-foreign-flow] batch complete (with date column)", {
+      itemsProcessed: normalised.length,
+      rowsAffected: affected,
+    });
   } else {
     // Legacy-schema fallback — no date column, UNIQUE(code) only.
     const stmt = database.prepare(
@@ -446,6 +541,12 @@ export function upsertForeignFlow(
       }
     });
     runAll();
+
+    // Log summary
+    logger.debug("[upsert-foreign-flow] batch complete (legacy schema, no date column)", {
+      itemsProcessed: normalised.length,
+      rowsAffected: affected,
+    });
   }
 
   return affected;

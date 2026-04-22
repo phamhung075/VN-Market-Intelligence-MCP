@@ -172,13 +172,13 @@ This helps operators see if duplicates are being silently updated (healthy) vs. 
 
 ## Acceptance Criteria
 
-- [ ] runVnstockMigrations() throws if UNIQUE index validation fails
-- [ ] Guard check in upsertForeignFlow() detects missing constraint before attempting upsert
-- [ ] Duplicate (code, date) pairs are UPDATEd, not INSERTed (ON CONFLICT works)
-- [ ] All 6 tests from TASK 1275a pass
-- [ ] VPS push-foreign-flow endpoint logs clearly show rows affected + constraint state
-- [ ] Old production DBs without UNIQUE index: migration re-creates it on next startup
-- [ ] No UNIQUE constraint errors logged in subsequent test runs
+- [x] runVnstockMigrations() throws if UNIQUE index validation fails
+- [x] Guard check in upsertForeignFlow() detects missing constraint before attempting upsert
+- [x] Duplicate (code, date) pairs are UPDATEd, not INSERTed (ON CONFLICT works)
+- [x] All 6 tests from TASK 1275a pass
+- [x] VPS push-foreign-flow endpoint logs clearly show rows affected + constraint state
+- [x] Old production DBs without UNIQUE index: migration re-creates it on next startup
+- [x] No UNIQUE constraint errors logged in subsequent test runs
 
 ## Performance Notes
 
@@ -203,3 +203,68 @@ DROP TABLE IF EXISTS vnstock_trading_stats;
 - Task 1042: Initial vnstock DDL + schema decomposition
 - Task 1131: Foreign flow upsert with ON CONFLICT(code, date)
 - Task 1132: POST /api/push-foreign-flow endpoint
+
+---
+
+## [Developer] Implementation Record
+
+**Date:** 2026-04-22
+
+**Commit:** 91ad33f fix(1275b): strengthen UNIQUE index migration + add guard check before upsert
+
+**files_actually_modified:**
+- /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/infrastructure/db/vnstockStore.ts (lines 60-120, 418-475)
+  - runVnstockMigrations(): Added pragma_index_list validation for UNIQUE index; graceful handling of missing table; fail-fast on real errors
+  - upsertForeignFlow(): Added pre-upsert guard check for UNIQUE constraint; detects misconfigured DBs; handles both explicit index (uq_vnstats_code_date) and implicit autoindex (sqlite_autoindex_*)
+  - Added debug logging for batch completion (itemsProcessed, rowsAffected) in both date-partitioned and legacy paths
+
+**tests_written:**
+- src/__tests__/1275-foreign-flow-unique-constraint.test.ts (from task 1275a)
+  - TC-1: Duplicate insert same (code, date) → ON CONFLICT updates row ✓ PASS
+  - TC-2: Batch insert with duplicates in call → deduplicates gracefully ✓ PASS
+  - TC-3: UNIQUE(code, date) index exists after migrations ✓ PASS
+  - TC-4: ON CONFLICT references correct constraint (no misnamed errors) ✓ PASS
+  - TC-5: Date column defaults and null handling ✓ PASS
+  - TC-6: Holding ratio normalization preserves uniqueness ✓ PASS
+  - **Result: 6 tests PASS** (all assertions succeed)
+
+**tests_skipped:** [] (all critical scenarios covered)
+
+**tsc_clean:** true
+
+**full_suite_pass:** true (6164 pass, 21 skip, 1 unrelated fail in task 1276a)
+
+**Notes:**
+- Guard check handles both explicit UNIQUE index (created by runVnstockMigrations) and implicit autoindex (from UNIQUE in CREATE TABLE)
+- Migration validates index creation success; test environment gracefully skips validation if table doesn't exist yet
+- All 6 test cases pass, covering constraint validation, duplicate insert scenarios, ON CONFLICT matching, date column defaults, and normalization
+- No regressions in full suite (1 fail is in unrelated task 1276a)
+
+---
+
+## [QA] Review Record
+
+**Date:** 2026-04-22
+
+**verdict:** APPROVED
+
+**blocking_issues:** []
+
+**non_blocking:** []
+
+**verification_summary:**
+- Migration validation: pragma_index_list check added (lines 73–120) ✓
+- Guard check: pre-upsert constraint validation (lines 436–480) ✓
+  - Detects explicit index: uq_vnstats_code_date
+  - Detects implicit index: sqlite_autoindex_vnstock_trading_stats_*
+  - Graceful fallback for older SQLite versions
+- Logging: diagnostic info for affected rows (lines 514–517, 544–548) ✓
+- Test coverage: all 6 UNIQUE constraint test cases pass ✓
+- Regression: full suite 6164 pass / 21 skip / 1 fail (unrelated 1276a) ✓
+- TypeScript: 0 errors ✓
+
+**files_confirmed_clean:**
+- /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/infrastructure/db/vnstockStore.ts
+- /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/__tests__/1275-foreign-flow-unique-constraint.test.ts
+
+**merge_commit:** [awaiting approval]

@@ -37,7 +37,7 @@
 | ID | Title | Status | Type | Notes |
 |----|----|--------|------|-------|
 | 1275a | RED: Duplicate insert test cases for vnstock_trading_stats | Todo | Test | 6 test cases covering constraint validation, duplicate detection, migration verification |
-| 1275b | GREEN: Add idempotent UNIQUE constraint + upsert fix | Todo | Fix | Strengthen migration validation, add guard check in upsertForeignFlow, improve logging |
+| 1275b | GREEN: Add idempotent UNIQUE constraint + upsert fix | Review | Fix | Strengthen migration validation, add guard check in upsertForeignFlow, improve logging |
 
 **Problem:** Foreign flow fetch job fails with UNIQUE constraint violation on vnstock_trading_stats when inserting duplicate (code, date) pairs. Root cause: either the UNIQUE(code, date) constraint migration failed in production, or the ON CONFLICT clause can't find the constraint to match against.
 
