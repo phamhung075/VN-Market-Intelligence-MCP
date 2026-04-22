@@ -876,8 +876,10 @@ export async function createBunServer(
           validationErrors: validationErrors.length,
         });
 
-        // Step 6: Write foreign flow cols to daily_ohlcv (Task 1503) — best-effort, no crash on failure.
+        // Step 6: Write foreign flow cols to daily_ohlcv (Task 1503, 1288f) — best-effort, no crash on failure.
         // Use validated items from Step 3b; extract buy/sell volumes from raw payload at original indices.
+        // Validate foreignBuyVol and foreignSellVol are present before writing (don't silently coerce to 0).
+        let extractionErrors = 0;
         try {
           // Build a map of failed item indices for quick lookup
           const failedIndices = new Set(validationErrors.map((e) => e.itemIndex));
@@ -891,11 +893,34 @@ export async function createBunServer(
             const raw = (rawItems as Record<string, unknown>[])[i];
             if (!raw) continue;
 
+            // Validate foreignBuyVol and foreignSellVol BEFORE extraction (don't coerce to 0)
+            if (typeof raw.foreignBuyVol !== "number") {
+              log.error("[push-foreign-flow] Step 6 extraction error: missing foreignBuyVol", {
+                itemIndex: i,
+                field: "foreignBuyVol",
+                reason: `missing or non-numeric foreignBuyVol for ${raw.code}`,
+                originalValue: raw.foreignBuyVol,
+              });
+              extractionErrors++;
+              continue;
+            }
+
+            if (typeof raw.foreignSellVol !== "number") {
+              log.error("[push-foreign-flow] Step 6 extraction error: missing foreignSellVol", {
+                itemIndex: i,
+                field: "foreignSellVol",
+                reason: `missing or non-numeric foreignSellVol for ${raw.code}`,
+                originalValue: raw.foreignSellVol,
+              });
+              extractionErrors++;
+              continue;
+            }
+
             ohlcvItems.push({
               code: typeof raw.code === "string" ? raw.code : String(raw.code ?? ""),
               date: typeof raw.date === "string" && raw.date ? raw.date : todayUtc,
-              foreignBuyVol: typeof raw.foreignBuyVol === "number" ? raw.foreignBuyVol : 0,
-              foreignSellVol: typeof raw.foreignSellVol === "number" ? raw.foreignSellVol : 0,
+              foreignBuyVol: raw.foreignBuyVol,
+              foreignSellVol: raw.foreignSellVol,
               putThroughVol: typeof raw.putThroughVol === "number" ? raw.putThroughVol : 0,
             });
           }
@@ -903,6 +928,12 @@ export async function createBunServer(
           if (ohlcvItems.length > 0) {
             const ohlcvResult = await writeForeignFlowToOhlcv(ohlcvItems);
             log.info("[push-foreign-flow] ohlcv rows updated", { changes: ohlcvResult.changes });
+          }
+
+          if (extractionErrors > 0) {
+            log.warn("[push-foreign-flow] Step 6 extraction errors found", {
+              count: extractionErrors,
+            });
           }
         } catch (ohlcvErr) {
           log.warn("[push-foreign-flow] writeForeignFlowToOhlcv failed (non-fatal)", {
