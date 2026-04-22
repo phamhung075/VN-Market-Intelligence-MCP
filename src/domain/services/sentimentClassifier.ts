@@ -130,6 +130,7 @@ const VN_BEARISH: SentimentKeyword[] = [
   { word: "thoái sạch", weight: 3 },
   { word: "bán hết", weight: 2 },
   { word: "bán sạch", weight: 3 },
+  { word: "xả hàng", weight: 3 },
   { word: "muốn thoái sạch vốn", weight: 5 },
   { word: "thoái sạch vốn", weight: 4 },
   { word: "muốn thoái vốn", weight: 3 },
