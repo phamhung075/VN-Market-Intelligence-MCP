@@ -515,11 +515,14 @@ export async function runFranceSummary(opts: FranceSummaryOptions = {}): Promise
     } else {
       // Default: query market_prices for VNINDEX ticker
       interface VnIndexRow { price: number; change_pct: number; updated_at: string }
+      // Compute cutoff date using mocked nowFn for testability
+      const threeDaysAgo = new Date(nowFn().getTime() - 3 * 24 * 60 * 60 * 1000)
+      const cutoffDateStr = threeDaysAgo.toISOString().split('T')[0]!!
       const row = resolvedDb
-        .prepare<VnIndexRow, []>(
-          `SELECT price, change_pct, updated_at FROM market_prices WHERE code = 'VNINDEX' AND updated_at >= datetime('now', '-3 days') LIMIT 1`,
+        .prepare<VnIndexRow, [string]>(
+          `SELECT price, change_pct, updated_at FROM market_prices WHERE code = 'VNINDEX' AND date(updated_at) >= ? LIMIT 1`,
         )
-        .get()
+        .get(cutoffDateStr)
       if (row) {
         vnIndex = {
           close: row.price,
