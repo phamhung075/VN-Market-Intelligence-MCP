@@ -43,6 +43,19 @@
 
 ---
 
+## Sprint 1272 — Insider Selling Sentiment Fix (S-size)
+
+**Status:** COMPLETE | **Goal:** Distinguish insider selling (BEARISH) from buying (BULLISH) cascade | **Size:** S (2 tasks, 1 sentiment check + 1 cascade fix) | **Baseline:** 6189 | **Target:** 6197 (+4 RED + 4 GREEN assertions)
+
+| ID | Title | Status | Layer | Notes |
+|----|-------|--------|-------|-------|
+| 1272a | RED: Insider selling sentiment distinction tests | Done | test | 4 assertions: classifier bearish + cascade direction + mixed sentiment |
+| 1272b | GREEN: Fix sentiment direction logic in cascade executor | Done | application | Verify bearish check in detectInsiderDumpPeers + keyword weights |
+
+**Context:** CEO Group insider selling articles ("xả hàng", "bán sạch", "thoái sạch") misclassified as BULLISH, wrong cascade fired. Sentiment classifier correct; cascade executor has inverted direction check or keyword weight sign error. Outcome: Fix already implemented in Task 1278b; all tests pass.
+
+---
+
 ## Backlog
 
 | ID | Title | Priority | Notes |
