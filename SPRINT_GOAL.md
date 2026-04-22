@@ -115,9 +115,52 @@
 
 ---
 
+## Sprint 1282 — DATA FRESHNESS MONITORING TOOL (S-size, AUTO-INITIATED)
+
+**Status:** READY FOR PLANNING | **Date auto-initiated:** 2026-04-22 | **Size:** S-size FIX
+
+**Background:** False alarm incident revealed ops weakness
+- Report claimed: "Market prices stale 26 days (2026-03-27)"
+- Truth: Data LIVE (2026-04-22T07:34:49Z), 9,580 continuous VPS pushes
+- Root cause: vps_service_health monitoring table unreliable (depends on buggy SLA monitor)
+
+**Goal:** Implement canonical data freshness query tool to eliminate false alarms
+
+**Solution:**
+- New tool: `get_market_data_freshness` in system tools
+- Queries source of truth: vps_push_log.MAX(pushed_at) + market_prices.MAX(updated_at)
+- Returns: { market_live_at, last_vps_push_at, age_minutes, is_healthy }
+- Replaces unreliable vps_service_health queries
+- Added to /health endpoint for Telegram monitoring
+
+**Scope:**
+- 1 file: `src/interface/mcp/tools/system/dataFreshnessTools.ts` (~25 lines)
+- 1 test file: `src/__tests__/system-data-freshness.test.ts` (~8 assertions)
+- No schema changes, no new interfaces, no dependencies
+
+**Acceptance Criteria:**
+- AC-1: Tool executes without errors
+- AC-2: Returns correct market_live_at and last_vps_push_at timestamps
+- AC-3: is_healthy = true when last push < 10 min old (during market hours)
+- AC-4: is_healthy = false when last push > 1 hour old
+- AC-5: Test suite passes (6187 → 6195+)
+- AC-6: Tool registered in registry
+
+**Impact:**
+- Eliminates data staleness false alarms
+- Gives ops instant diagnosis: `get_market_data_freshness` → is_healthy: true/false
+- Future incidents resolved in 10 seconds instead of 2 hours
+- Training tool for ops: "Always query vps_push_log, not monitoring tables"
+
+**Dependencies:** None (vps_push_log table exists)
+
+**Estimated effort:** 1 hour (dev + test + merge)
+
+---
+
 ## Next Sprint — TBD
 
-Post-FIX reassessment. Backlog: 1286 (agriculture cascade), 1285 (schema updates), others.
+Post-sprint-1282 reassessment. Active: 1279b (MSCI GREEN), 1281b (agriculture GREEN). Backlog: 1287 (async BCTC), 1286 (schema updates).
 
 **Previous:**
 
