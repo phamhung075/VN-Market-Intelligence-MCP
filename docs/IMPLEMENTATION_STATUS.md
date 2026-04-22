@@ -4,6 +4,51 @@
 > Index → `docs/TASKS_ARCHIVE.md`
 > Current sprint + stats → `docs/data/project-stats.json`
 
+## Sprint 1289 — Foreign Flow Parse Error Root-Cause Fix + BCTC Historical Strategy (In Progress 2026-04-22)
+
+**Scope:** Root-cause analysis of recurring foreign flow parse cascade (784 errors/24h); design + implement strict validation to eliminate silent filter bug. Phase 2: design 8-quarter historical BCTC downloader strategy.
+
+**Key changes:**
+- Task 1289a: Root-cause analysis doc + design (`TECH_1289.md`) — COMPLETE
+- Task 1289b: RED test spec for validation error handling — COMPLETE (11 assertions)
+- Task 1289c–d: Strict validation integration (fetcher + POST endpoint) — Todo
+- Task 1289e: GREEN validation (all tests pass, no regressions) — Todo
+- Task 1289f: QA verification + parse error count < 5/day — Todo
+- Phase 2: Design 8-quarter historical BCTC downloader (this session)
+
+**Root cause identified:** `isValidForeignFlowItem()` in `foreignFlowFetcher.ts` **silently filters** invalid items instead of failing loudly. When VPS sends 30 items with 3 schema violations, filter discards 3 and returns 27 as "success". Over 10 days, ~30 rows missing. No diagnostic to show why.
+
+**Why prior fixes failed:**
+- Sprint 228: Added parse hardening to POST endpoint, but fallback fetcher uses different validation path
+- Sprint 1288: Added fallback strategy (primary→cache→SSE→none), which masks the problem instead of fixing it
+
+**Solution:** Unify schema validation across **all entry points** (VPS push endpoint + fallback fetcher). Use domain-layer `validateForeignFlowPayload()` everywhere. Fail loudly with HTTP 400 / throw on validation error. Log diagnostics (item index + field + reason).
+
+**Prevention pattern for future foreign flow changes:**
+1. All entry points must use the same validator (no silent filters)
+2. Fail loudly on schema errors (reject with HTTP 400 or throw)
+3. Log error diagnostics (item index + field name + expected type)
+4. Test both valid and invalid payloads
+5. No custom type guards that filter silently
+
+**Stats:** toolCount=105, schedulerFileCount=42, totalTasksDone=340, testBaseline=6305 (+11 from 1289b RED tests).
+
+---
+
+## Sprint 1290 — Foreign Flow Fallback Fetcher Integration (Done 2026-04-22)
+
+**Scope:** Integrate `fetchForeignFlowWithFallback()` into scheduler job; graceful degradation (primary→cache→SSE→none) when VPS endpoint unreachable.
+
+**Key changes:**
+- Task 1290a: RED test spec for fallback job — COMPLETE (8 test cases, 37 assertions)
+- Task 1290b–d: GREEN implementation + QA — COMPLETE (merged 2026-04-22)
+
+**Result:** `foreignFlowFetcherJob.ts` now has graceful fallback chain. Runs every 60 seconds. Logs fallback activation + circuit breaker state.
+
+**Stats:** toolCount=105, schedulerFileCount=42, totalTasksDone=340, testBaseline=6305.
+
+---
+
 ## Sprints 209-220 — Modular Monolith Refactor: 3-Phase Module Split (Done 2026-04-20)
 
 **Scope:** Full structural refactor of `src/interface/mcp/tools/`, `src/domain/services/`, and `src/scheduler/` into 10 domain module subfolders. Zero breaking changes to external API surface.

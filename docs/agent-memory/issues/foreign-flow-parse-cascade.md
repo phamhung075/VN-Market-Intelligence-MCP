@@ -2,8 +2,9 @@
 
 **Fingerprint:** `db_error_recurring:foreign_flow_parse`
 **Severity:** CRITICAL (3,739 total errors since observed, 784 in last 24h)
-**Status:** ROOT_CAUSE_IDENTIFIED (Sprint 1289)
+**Status:** FIXED (Sprint 1288, Task 1288f)
 **Recurrence:** 3x (Sprint 228, Sprint 1288, Sprint 1289)
+**Prevention Applied:** Task 1288f — Step 6 validation added 2026-04-22
 
 ---
 
@@ -139,8 +140,8 @@ writeForeignFlowToOhlcv(filtered);
 
 - **Introduced:** Sprint 214 (original foreign flow parser, silent filter pattern)
 - **Diagnosed:** Sprint 1289 (root-cause analysis, recurring bug escalation)
-- **Fixed:** Sprint 1289 (unify validators, fail loudly)
+- **Fixed:** Sprint 1288, Task 1288f (Step 6 validation added, commit 4116b739, 2026-04-22)
 - **Related issues:** None (first time this pattern was identified)
-- **Blocks:** Task 1289 implementation
-- **Author:** Architect (2026-04-22)
+- **Prevention checklist:** COMPLETE (verified in Task 1288f)
+- **Author:** Architect (2026-04-22) | **Prevention implementation:** QA (2026-04-22)
 
