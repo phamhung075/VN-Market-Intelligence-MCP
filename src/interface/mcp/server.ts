@@ -877,16 +877,33 @@ export async function createBunServer(
         });
 
         // Step 6: Write foreign flow cols to daily_ohlcv (Task 1503) — best-effort, no crash on failure.
+        // Use validated items from Step 3b; extract buy/sell volumes from raw payload at original indices.
         try {
-          const ohlcvItems: WriteForeignFlowItem[] = (rawItems as Record<string, unknown>[]).map((raw) => ({
-            code: typeof raw.code === "string" ? raw.code : String(raw.code ?? ""),
-            date: typeof raw.date === "string" && raw.date ? raw.date : todayUtc,
-            foreignBuyVol: typeof raw.foreignBuyVol === "number" ? raw.foreignBuyVol : 0,
-            foreignSellVol: typeof raw.foreignSellVol === "number" ? raw.foreignSellVol : 0,
-            putThroughVol: typeof raw.putThroughVol === "number" ? raw.putThroughVol : 0,
-          }));
-          const ohlcvResult = await writeForeignFlowToOhlcv(ohlcvItems);
-          log.info("[push-foreign-flow] ohlcv rows updated", { changes: ohlcvResult.changes });
+          // Build a map of failed item indices for quick lookup
+          const failedIndices = new Set(validationErrors.map((e) => e.itemIndex));
+
+          // Map valid items to WriteForeignFlowItem format by extracting from raw payload
+          const ohlcvItems: WriteForeignFlowItem[] = [];
+          for (let i = 0; i < normalizedItems.length; i++) {
+            // Skip items that failed validation
+            if (failedIndices.has(i)) continue;
+
+            const raw = (rawItems as Record<string, unknown>[])[i];
+            if (!raw) continue;
+
+            ohlcvItems.push({
+              code: typeof raw.code === "string" ? raw.code : String(raw.code ?? ""),
+              date: typeof raw.date === "string" && raw.date ? raw.date : todayUtc,
+              foreignBuyVol: typeof raw.foreignBuyVol === "number" ? raw.foreignBuyVol : 0,
+              foreignSellVol: typeof raw.foreignSellVol === "number" ? raw.foreignSellVol : 0,
+              putThroughVol: typeof raw.putThroughVol === "number" ? raw.putThroughVol : 0,
+            });
+          }
+
+          if (ohlcvItems.length > 0) {
+            const ohlcvResult = await writeForeignFlowToOhlcv(ohlcvItems);
+            log.info("[push-foreign-flow] ohlcv rows updated", { changes: ohlcvResult.changes });
+          }
         } catch (ohlcvErr) {
           log.warn("[push-foreign-flow] writeForeignFlowToOhlcv failed (non-fatal)", {
             error: ohlcvErr instanceof Error ? ohlcvErr.message : String(ohlcvErr),
