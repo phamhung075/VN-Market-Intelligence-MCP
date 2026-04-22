@@ -46,13 +46,9 @@ function createMockFetch(config: {
 }) {
   return async (url: string, opts?: any): Promise<Response> => {
     if (config.delay && config.delay > 5000) {
-      // Simulate timeout behavior
-      return new Promise((_, reject) => {
-        setTimeout(
-          () => reject(new Error("AbortError")),
-          config.delay,
-        );
-      });
+      // Simulate timeout behavior: reject immediately with AbortError
+      // (don't wait for actual delay — activates fallback logic without elapsed time)
+      throw new Error("AbortError");
     }
 
     if (config.error) {
