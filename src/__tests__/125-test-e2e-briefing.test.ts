@@ -1148,12 +1148,11 @@ describe("Task 125 — E2E Daily Briefing Flow", () => {
       resetMorningBriefingGuard();
       resetEveningSummaryGuard();
 
-      // Seed with explicit Vietnam midnight + 1h buffer. assembleBriefing
-      // queries created_at >= midnightVietnamAsUtc(), which is 7h behind UTC.
-      // Add 1h to midnight to ensure row is always within today's Vietnam date,
-      // regardless of when the test runs relative to UTC/Vietnam midnight boundaries.
+      // Seed with explicit Vietnam midnight + 1h for story freshness,
+      // but use current time for alerts (12h window query in assembleBriefing).
       const midnightUtc = new Date(midnightVietnamUtc());
-      const recentTimestamp = new Date(midnightUtc.getTime() + 3600_000).toISOString();
+      const storyTimestamp = new Date(midnightUtc.getTime() + 3600_000).toISOString();
+      const alertTimestamp = new Date().toISOString(); // Current time, within 12h window
 
       // Shared test data
       seedWatchlist(db, "VCB", "HOSE", "banking");
@@ -1162,7 +1161,7 @@ describe("Task 125 — E2E Daily Briefing Flow", () => {
       seedMarketPrice(db, "HPG", 55000, -1.8);
       seedRagAnalysis(db, {
         id: "cycle-ra-1",
-        created_at: recentTimestamp,
+        created_at: storyTimestamp,
         impact_score: 8.5,
         source_title: "Banking sector outlook positive",
         sentiment: "bullish",
@@ -1170,7 +1169,7 @@ describe("Task 125 — E2E Daily Briefing Flow", () => {
       });
       seedAlert(db, {
         id: "cycle-al-1",
-        triggered_at: recentTimestamp,
+        triggered_at: alertTimestamp,
         severity: "warning",
         message: "HPG down 1.8% on commodity price pressures",
         affected_actions_json: '["HPG"]',
