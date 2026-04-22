@@ -19,8 +19,8 @@
 
 | ID | Title | Status | Type | Notes |
 |----|----|--------|------|-------|
-| 1269a | RED: Test suite for direction-aware labels (failing assertions) | Todo | Test | 6 test cases covering all 3 levels × 2 directions; TC-2,4,6 fail without fix |
-| 1269b | GREEN: Refactor classifyDeviation() with direction-aware labels | Todo | Fix | Line 158: use LEVEL_VI_BELOW for negative zScore, LEVEL_VI for positive |
+| 1269a | RED: Test suite for direction-aware labels (failing assertions) | Done | Test | 6 pass / 0 fail — merged to main |
+| 1269b | GREEN: Refactor classifyDeviation() with direction-aware labels | Done | Fix | Merged (3469439); TASK_REPORT_1269b.md approved |
 
 **Problem:** Line 72 in macroThresholds.ts hardcodes "cao hơn TB" (above) in LEVEL_VI dict. When zScore=-1.65σ (BEARISH/below), label still says "cao hơn TB" — contradicts data direction.
 
@@ -36,8 +36,8 @@
 
 | ID | Title | Status | Type | Notes |
 |----|----|--------|------|-------|
-| 1275a | RED: Duplicate insert test cases for vnstock_trading_stats | Todo | Test | 6 test cases covering constraint validation, duplicate detection, migration verification |
-| 1275b | GREEN: Add idempotent UNIQUE constraint + upsert fix | Review | Fix | Strengthen migration validation, add guard check in upsertForeignFlow, improve logging |
+| 1275a | RED: Duplicate insert test cases for vnstock_trading_stats | Done | Test | 6 pass / 0 fail — merged to main |
+| 1275b | GREEN: Add idempotent UNIQUE constraint + upsert fix | Done | Fix | Merged (529ac8a); TASK_REPORT_1275b.md approved |
 
 **Problem:** Foreign flow fetch job fails with UNIQUE constraint violation on vnstock_trading_stats when inserting duplicate (code, date) pairs. Root cause: either the UNIQUE(code, date) constraint migration failed in production, or the ON CONFLICT clause can't find the constraint to match against.
 
@@ -53,8 +53,8 @@
 
 | ID | Title | Status | Type | Notes |
 |----|----|--------|------|-------|
-| 1276a | RED: Macro cooldown bypass test (failing assertions) | Review | Test | 4 failing tests showing macro alerts bypass 30-min cooldown window |
-| 1276b | GREEN: Fix cooldown + add logging | Review | Fix | Remove severity downgrade in intelligenceCycleJob, fix CRITICAL bypass in alertCooldown |
+| 1276a | RED: Macro cooldown bypass test (failing assertions) | Done | Test | 4 pass / 0 fail — merged to main |
+| 1276b | GREEN: Fix cooldown + add logging | Done | Fix | Merged (9da9bd9); TASK_REPORT_1276b.md approved |
 
 **Problem:** USD/VND macro alerts fired 5x in 65 min (every ~13min) despite 30-min cooldown. Root cause: lines 869–872 in intelligenceCycleJob.ts downgrade critical MACRO alerts to severity="high", bypassing the CRITICAL check in shouldSuppressAlert(), allowing every alert through.
 

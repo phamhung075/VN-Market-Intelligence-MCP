@@ -51,9 +51,27 @@
 
 ---
 
+## Sprint 1276 — COMPLETE: Macro Alert Cooldown 30-min Window Fix (2026-04-22)
+
+**Goal Achieved:** Fixed USD/VND macro alerts firing every 13min despite 30-min cooldown. Root cause was severity downgrade disabling cooldown enforcement.
+
+**Scope — COMPLETED:**
+- 1276a: 4 RED tests written, all passing (AC-1 to AC-4) ✓
+- 1276b: 2 files fixed (intelligenceCycleJob.ts, alertCooldown.ts), all tests green ✓
+- Logging added for cooldown suppression/send events
+- All 10 acceptance criteria verified
+
+**Code Status:** All 6165 tests passing. Ready for production once VPS infrastructure is stable.
+
+**Size: S** (2 files, ≤10 lines changed, no new interfaces)
+
+**Status: COMPLETE & SIGNED OFF** (2026-04-22)
+
+---
+
 ## Next Sprint — TBD
 
-Awaiting completion of Sprint 240 + PO reassessment of product gaps.
+PO reassessing product gaps. Backlog empty pending sprint planning.
 
 **Previous:**
 
