@@ -27,34 +27,6 @@
 
 ---
 
-### Task 1278a — RED: Insider dump sentiment cascade tests
-
-**context:** docs/handoffs/TASK_1278a.md
-
-**acceptance_criteria:**
-- Given keywords (xả hàng, bán sạch, thoái sạch) present in text
-- When classifySentiment() called
-- Then sentiment.direction="bearish", confidence >0.6, TC-1 through TC-6 PASS
-
-**branch:** task/1278a-insider-dump-red-test
-
----
-
-### Task 1278b — GREEN: Implement INSIDER_DUMP_RULES + cascadeExecutor
-
-**context:** docs/handoffs/TASK_1278b.md
-
-**acceptance_criteria:**
-- Given insider dump keywords at banking stock (e.g., VCB)
-- When detectInsiderDumpPeers() called
-- Then returns peer banking stocks (BID/CTG/ACB), excludes original, respects sentiment threshold >0.6
-
-**depends_on:** 1278a ✓ (RED contract defined)
-
-**branch:** task/1278b-insider-dump-green-impl
-
----
-
 ## Sprint 1275 (Tier 2) — Foreign Flow Multi-Date UNIQUE Edge Cases (M-size)
 
 | ID | Title | Status | Type | Notes |
@@ -120,18 +92,56 @@
 
 ---
 
+## Sprint 1281 — Agriculture Weather Cascade Detection (M-size)
+
+**Status:** ACTIVE | **Ref:** TECH-1281 | **Goal:** Detect rainfall/drought events → cascade alerts to agricultural stocks | **Size:** M (2 tasks, ~8 hours) | **Baseline:** 6187 | **Report:** (pending)
+
+| ID | Title | Status | Layer | Notes |
+|----|----|--------|-------|-------|
+| 1281a | RED: Agriculture weather cascade detection tests | Review | test | 7 PASS, 1 FAIL (TC-4 contract test); 8 assertions total |
+| 1281b | GREEN: Implement agriculture detector + rules + executor | Backlog | domain+app | Blocked by 1281a; agricultureDetector.ts, AGRICULTURE_WEATHER_RULES, detectAgricultureCascadePeers() |
+
+---
+
+### Task 1281a — RED: Agriculture Weather Cascade Tests
+
+**context:** docs/handoffs/TASK_1281a.md
+
+**acceptance_criteria:**
+- Given weather keywords (mưa lớn, hạn hán, bão, rét đậm) in news text
+- When detectAgricultureWeatherKeywords() called
+- Then matched=true, impactType in [rainfall|drought|storm|cold_snap], confidence >0.2, TC-1 through TC-7 PASS
+
+**branch:** task/1281a-agriculture-cascade-red-test
+
+---
+
+### Task 1281b — GREEN: Implement Agriculture Detector + Rules + Integration
+
+**context:** docs/handoffs/TASK_1281b.md
+
+**acceptance_criteria:**
+- Given agriculture weather keywords at credibility ≥0.6 (Reuters/VnExpress)
+- When detectAgricultureCascadePeers() called with watchlist
+- Then returns agriculture-domain stocks only (VNR, BFC, QNT, ANV, MPC, ASM), excludes tech/banking, all GREEN tests PASS
+
+**depends_on:** 1281a ✓ (RED tests pass + merged)
+
+**branch:** task/1281b-agriculture-cascade-green-impl
+
+---
+
 ## Backlog
 
 | ID | Title | Priority | Notes |
-|----|-------|----------|-------|
-| 1286 | Agriculture weather cascade | HIGH | Heavy rain/drought on VNR/BFC/QNT |
+|----|----|----------|-------|
 | 1284 | IMF context sentiment | MEDIUM | Policy vs crisis distinction |
 | 1274 | HOSE staleness guard | MEDIUM | >2h old = circuit DEGRADED |
 | 1267 | SSC PDF timeout fallback | MEDIUM | Use news chain if OCR fails |
-| 1281 | PDF fetch retry (15→30s) | MEDIUM | Exponential backoff on VPS |
-| 1282 | franceSummaryJob missing schema | MEDIUM | Add pre-flight checks |
+| 1282 | PDF fetch retry (15→30s) | MEDIUM | Exponential backoff on VPS; was mistakenly labeled 1281 |
+| 1283 | franceSummaryJob missing schema | MEDIUM | Add pre-flight checks |
 | 1285 | Add rag_analyses + evidence_scores schema | HIGH | Structural additions (L-size) |
-| 1283 | Update IMPLEMENTATION_STATUS.md | LOW | Add sprint 240+ entries |
+| 1286 | Update IMPLEMENTATION_STATUS.md | LOW | Add sprint 240+ entries |
 | 1287 | FOLLOWUP: Async BCTC enrichment (Option A) | MEDIUM | Background job to populate source_urls, prevents timeout on >100 items (sprint after 1280 merge) |
 
 ---
