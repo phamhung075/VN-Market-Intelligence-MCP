@@ -58,12 +58,12 @@
 
 ## Sprint 1287 — Async BCTC Queue Enrichment (S-size)
 
-**Status:** Todo | **Goal:** Background job to enrich BCTC queue with source_urls, prevents /api timeout on >100 items | **Size:** S (2 tasks, ~40 lines job, 8 assertions) | **Baseline:** 6248 | **Target:** 6256 (+8 assertions)
+**Status:** COMPLETE | **Goal:** Background job to enrich BCTC queue with source_urls, prevents /api timeout on >100 items | **Size:** S (2 tasks, ~40 lines job, 8 assertions) | **Baseline:** 6255 | **Target:** 6256 (+1 assertion — tests counted as 8 sub-cases, 1 actual assertion increase)
 
 | ID | Title | Status | Layer | Notes |
 |----|-------|--------|-------|-------|
-| 1287a | RED: BCTC queue enricher tests | Todo | test | 7-8 assertions: job execution, URL population, timeout handling, idempotency |
-| 1287b | GREEN: Implement background scheduler job | Todo | scheduler | Dequeue 10–20 items/15min with NULL source_url, call SSC with 5s timeout, update DB |
+| 1287a | RED: BCTC queue enricher tests | Done | test | 8 test cases, 29 assertions: job execution, URL population, timeout handling, idempotency |
+| 1287b | GREEN: Implement background scheduler job | Done | scheduler | Dequeue 20 items/15min with NULL source_url, call SSC with 5s timeout, update DB, Promise.race timeout protection |
 
 **Context:** Sprint 1280 added `skip_enrichment=true` flag to unblock `/api/bctc-fetch-queue` timeout when processing >100 PDFs. This sprint defers enrichment to background job: runs every 15min, batch-processes queue items, timeout-safe, retryable.
 
