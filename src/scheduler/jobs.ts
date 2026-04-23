@@ -70,6 +70,7 @@ import { runFreshnessSlaMonitorJob } from './system/freshnessSlaMonitorJob.js'
 import { macroIndicatorRefreshJob, validateMacroFreshnessOnStartup } from './macro/index.js'
 import { runForeignFlowFetcherJobCron } from './market-data/foreignFlowFetcherJob.js'
 import { runMonthlySignalQualityJob } from './audits/monthlySignalQualityJob.js'
+import { runImfIndicatorPollerJob } from './market-data/imfIndicatorPollerJob.js'
 import { getDb } from '../infrastructure/db/schema.js'
 import { recordJobRun } from '../infrastructure/db/cronJobRunStore.js'
 import type { Database } from 'bun:sqlite'
@@ -168,6 +169,8 @@ export const CRONS = {
   foreignFlowFetch:       Bun.env.CRON_FOREIGN_FLOW_FETCH                  ?? '*/1 * * * *',
   /** Monthly signal quality audit: 1st of month 00:00 UTC — task 1295c */
   monthlySignalQualityAudit: Bun.env.CRON_MONTHLY_SIGNAL_QUALITY_AUDIT     ?? '0 0 1 * *',
+  /** IMF indicator poller: every 6 hours — task 1296b */
+  imfIndicatorPoller:        Bun.env.CRON_IMF_INDICATOR_POLLER              ?? '0 */6 * * *',
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -757,5 +760,15 @@ export function startScheduler() {
     }
   }, { timezone: 'UTC' })
 
-  log(`[scheduler] jobs registered — ${Object.keys(CRONS).length} cron keys in CRONS map (incl. WAL checkpoint + 5 summary) + vps-watchdog + VPS health + SLA monitor + macro-refresh active`)
+  // Every 6 hours — IMF economic indicator poller — task 1296b
+  // Fetches IMF growth/inflation/oil forecasts, stores in imf_indicators table,
+  // classifies macro sentiment for signal enrichment via imfSentiment field.
+  cron.schedule(CRONS.imfIndicatorPoller, async () => {
+    await recordJobRun(getDb(), 'imfIndicatorPollerJob', async () => {
+      const result = await runImfIndicatorPollerJob()
+      return { rowsWritten: result.indicator_count }
+    })
+  }, { timezone: 'UTC' })
+
+  log(`[scheduler] jobs registered — ${Object.keys(CRONS).length} cron keys in CRONS map (incl. WAL checkpoint + 5 summary) + vps-watchdog + VPS health + SLA monitor + macro-refresh + imf-poller active`)
 }

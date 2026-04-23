@@ -51,6 +51,22 @@ export interface ChainCatalystFindingData {
 
   /** Source identifier: cafef, vnexpress, reuters, etc. */
   source: string;
+
+  /**
+   * Optional: IMF macro sentiment context for this catalyst (added task 1296b).
+   * Enriched by imfDataFetcher when a fresh IMF classification is available.
+   * Absent when IMF data is unavailable or confidence is below threshold.
+   */
+  imfSentiment?: {
+    /** Overall macro sentiment: -1.0 (bearish) to +1.0 (bullish) */
+    sentiment: number;
+    /** Confidence in the IMF signal: 0.0 to 1.0 */
+    confidence: number;
+    /** Sectors affected by IMF signal (e.g. ["banking", "export"]) */
+    affectedSectors: string[];
+    /** Human-readable reasoning (e.g. "IMF growth forecast ↑ supports banking NIM expansion") */
+    reasoning: string;
+  } | undefined;
 }
 
 export const ChainCatalystFindingDataSchema = z.object({
@@ -69,6 +85,12 @@ export const ChainCatalystFindingDataSchema = z.object({
   affected_sectors: z.array(z.string()).min(1),
   headline: z.string().min(1),
   source: z.string().min(1),
+  imfSentiment: z.object({
+    sentiment: z.number().min(-1).max(1),
+    confidence: z.number().min(0).max(1),
+    affectedSectors: z.array(z.string()),
+    reasoning: z.string().min(1),
+  }).optional(),
 });
 
 // ── PriceConfirmationFindingData ───────────────────────────────────────────────

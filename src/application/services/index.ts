@@ -11,3 +11,10 @@ export {
   generateAuditReport,
   type RejectionStats,
 } from "./signalQualityAudit.js";
+
+// Task 1296b: IMF Data Fetcher
+export {
+  fetchLatestImfIndicators,
+  storeImfIndicators,
+  getLatestImfIndicators,
+} from "./imfDataFetcher.js";
