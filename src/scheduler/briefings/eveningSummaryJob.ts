@@ -18,6 +18,7 @@ import {
   SECTOR_NAME_VI,
 } from "../../domain/services/sectorPeers.js";
 import { formatPnlSection } from "../../domain/services/portfolioPnlCalculator.js";
+import { TelegramMessageFactory } from "../../infrastructure/notifiers/telegramMessageFactory.js";
 import { formatGlobalSnapshotSection } from "./morningBriefingJob.js";
 import type { GlobalSnapshot } from "../../application/usecases/assembleBriefing.js";
 
@@ -200,7 +201,7 @@ export function formatEveningSummaryLines(summary: EveningSummary): string[] {
     lines.push("");
     lines.push(`Cảnh báo (${summary.topAlerts.length}):`);
     for (const a of summary.topAlerts.slice(0, 5)) {
-      lines.push(`  [${a.severity.toUpperCase()}] ${a.message.slice(0, 80)}`);
+      lines.push(`  [${a.severity.toUpperCase()}] ${TelegramMessageFactory.formatAlertMessage(a.message)}`);
     }
   }
 
@@ -208,7 +209,7 @@ export function formatEveningSummaryLines(summary: EveningSummary): string[] {
     lines.push("");
     lines.push(`Tin quan trọng (${summary.topStories.length}):`);
     for (const s of summary.topStories.slice(0, 5)) {
-      lines.push(`  - ${s.title.slice(0, 80)}`);
+      lines.push(`  - ${TelegramMessageFactory.formatStoryTitle(s.title)}`);
     }
   }
 

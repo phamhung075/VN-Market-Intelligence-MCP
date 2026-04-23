@@ -26,6 +26,7 @@ import type { VnIndexSnapshot } from "../../application/usecases/assembleEvening
 import type { GlobalSnapshot } from "../../application/usecases/assembleBriefing.js"
 import { formatGlobalSnapshotSection } from "./morningBriefingJob.js"
 import { formatForeignFlowSection, isVnIndexFresh } from "./eveningSummaryJob.js"
+import { TelegramMessageFactory } from "../../infrastructure/notifiers/telegramMessageFactory.js"
 import type { ForeignFlowMover } from "../../application/usecases/assembleEveningSummary.js"
 import type { BctcDeadlineRow } from "../../application/usecases/assembleBriefing.js"
 
@@ -403,7 +404,7 @@ export function formatFranceSummaryVI(
     const lines: string[] = []
     lines.push(`Cảnh báo gần nhất (${alerts.length}):`)
     for (const a of alerts) {
-      const msg = (a.message ?? "").slice(0, 100)
+      const msg = TelegramMessageFactory.formatAlertMessage(a.message ?? "")
       lines.push(`  [${severityLabel(a.severity)}] ${msg}`)
     }
     blocks.push(lines.join("\n"))

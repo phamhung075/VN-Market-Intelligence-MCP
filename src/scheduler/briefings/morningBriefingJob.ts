@@ -19,6 +19,7 @@ import type {
   BctcDeadlineRow,
 } from "../../application/usecases/assembleBriefing.js";
 import { BEARISH_WARNING_THRESHOLD } from "../../application/usecases/assembleBriefing.js";
+import { TelegramMessageFactory } from "../../infrastructure/notifiers/telegramMessageFactory.js";
 import { formatPnlSection } from "../../domain/services/portfolioPnlCalculator.js";
 import { isVnIndexFresh } from "./eveningSummaryJob.js";
 import { logger } from "../../infrastructure/logger.js";
@@ -120,7 +121,7 @@ export function formatBriefingMessage(briefing: DailyBriefing): string {
     lines.push("");
     lines.push(`🚨 ${briefing.unresolvedAlerts.length} cảnh báo chưa xử lý:`);
     for (const a of briefing.unresolvedAlerts.slice(0, 3)) {
-      lines.push(`  • [${a.severity.toUpperCase()}] ${a.message.slice(0, 60)}`);
+      lines.push(`  • [${a.severity.toUpperCase()}] ${TelegramMessageFactory.formatAlertMessage(a.message)}`);
     }
   }
 
