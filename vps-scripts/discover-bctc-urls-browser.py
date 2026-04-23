@@ -101,29 +101,60 @@ async def discover_from_hose(browser: Browser, code: str, year: int, quarter: st
     1. Navigate to page (wait for networkidle first)
     2. Wait for PDFs to appear via JavaScript detection (hybrid approach)
     3. Query all <a> elements with href containing ".pdf"
-    4. Filter by quarter + year in link text
-    5. Return first match with confidence 0.95
+    4. Try multiple selectors in case page structure changed
+    5. Filter by quarter + year in link text
+    6. Return first match with confidence 0.95
     """
     page = None
     try:
         page = await browser.new_page()
         url = f"https://www.hsx.vn/Modules/CMS/Web/ArticleList?category=BCTC&issuerCode={code}"
 
-        await page.goto(url, timeout=30000, wait_until="networkidle")
+        response = await page.goto(url, timeout=30000, wait_until="networkidle")
 
-        # Hybrid wait strategy: detect when PDFs actually render in DOM
-        # PDFs are loaded via AJAX after networkidle, so we must wait for them
-        try:
-            await page.wait_for_function(
-                "() => document.querySelectorAll('a[href*=\".pdf\"]').length > 0",
-                timeout=3000
-            )
-        except PlaywrightTimeoutError:
-            # Fallback: wait 2 seconds for any remaining JS execution
-            await page.wait_for_timeout(2000)
+        # Log page load status for debugging
+        status = response.status if response else 0
+        print(f"HOSE page load status: {status}", file=sys.stderr)
 
-        # Find all PDF links
+        # Extended wait strategy: PDFs may load slowly via AJAX
+        # Try primary detection first, then multiple fallback waits
+        pdf_found = False
+        for attempt in range(3):
+            try:
+                await page.wait_for_function(
+                    "() => document.querySelectorAll('a[href*=\".pdf\"]').length > 0",
+                    timeout=2000
+                )
+                pdf_found = True
+                break
+            except PlaywrightTimeoutError:
+                if attempt < 2:
+                    # Wait and retry if PDFs haven't appeared yet
+                    await page.wait_for_timeout(1500)
+                else:
+                    # Final fallback: wait one more time
+                    await page.wait_for_timeout(2000)
+
+        # Find all PDF links using primary selector
         pdf_links = await page.query_selector_all('a[href*=".pdf"]')
+
+        # If no PDFs found with primary selector, try alternative selectors
+        if not pdf_links:
+            print(f"No PDFs found with primary selector for {code}, trying alternatives", file=sys.stderr)
+            # Alternative selector: links containing PDF in different ways
+            pdf_links = await page.query_selector_all('a[href*="download"]')
+
+        if not pdf_links:
+            # Another alternative: look for any 'a' tags and filter in Python
+            all_links = await page.query_selector_all('a')
+            print(f"Total links found: {len(all_links)}", file=sys.stderr)
+            pdf_links = []
+            for link in all_links:
+                href = await link.get_attribute("href")
+                if href and ".pdf" in href.lower():
+                    pdf_links.append(link)
+
+        print(f"HOSE: {len(pdf_links)} PDF links found for {code}", file=sys.stderr)
 
         for link_elem in pdf_links:
             href = await link_elem.get_attribute("href")
@@ -170,19 +201,41 @@ async def discover_from_hnx(browser: Browser, code: str, year: int, quarter: str
         page = await browser.new_page()
         url = f"https://hnx.vn/cong-bo-thong-tin/cong-ty-co-phan.html?StockCode={code}"
 
-        await page.goto(url, timeout=30000, wait_until="networkidle")
+        response = await page.goto(url, timeout=30000, wait_until="networkidle")
+        status = response.status if response else 0
+        print(f"HNX page load status: {status}", file=sys.stderr)
 
-        # Hybrid wait strategy: detect when PDFs actually render in DOM
-        try:
-            await page.wait_for_function(
-                "() => document.querySelectorAll('a[href*=\".pdf\"]').length > 0",
-                timeout=3000
-            )
-        except PlaywrightTimeoutError:
-            # Fallback: wait 2 seconds for any remaining JS execution
-            await page.wait_for_timeout(2000)
+        # Extended wait strategy similar to HOSE
+        for attempt in range(3):
+            try:
+                await page.wait_for_function(
+                    "() => document.querySelectorAll('a[href*=\".pdf\"]').length > 0",
+                    timeout=2000
+                )
+                break
+            except PlaywrightTimeoutError:
+                if attempt < 2:
+                    await page.wait_for_timeout(1500)
+                else:
+                    await page.wait_for_timeout(2000)
 
         pdf_links = await page.query_selector_all('a[href*=".pdf"]')
+
+        # Alternative selectors if primary fails
+        if not pdf_links:
+            print(f"No PDFs with primary selector for HNX {code}, trying alternatives", file=sys.stderr)
+            pdf_links = await page.query_selector_all('a[href*="download"]')
+
+        if not pdf_links:
+            all_links = await page.query_selector_all('a')
+            print(f"HNX: Total links found: {len(all_links)}", file=sys.stderr)
+            pdf_links = []
+            for link in all_links:
+                href = await link.get_attribute("href")
+                if href and ".pdf" in href.lower():
+                    pdf_links.append(link)
+
+        print(f"HNX: {len(pdf_links)} PDF links found for {code}", file=sys.stderr)
 
         for link_elem in pdf_links:
             href = await link_elem.get_attribute("href")
