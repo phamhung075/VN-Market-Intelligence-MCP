@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-BCTC PDF URL discovery — Task 1297 fixed version with fallback to unfiltered search.
+BCTC PDF URL discovery — Task 1297 fixed version.
 
 Portal investigation findings (2026-04-24):
 
@@ -14,9 +14,8 @@ HNX (hnx.vn):
   - cong-bo-thong-tin/cong-ty-co-phan.html?StockCode=X → redirects to homepage.
   - Working POST API: /ModuleArticles/ArticlesCPEtfs/NextPageTinCPNY_CBTCPH
     - pAction=1, pNhomTin='FIN_REPORT' (with single quotes!), pMaChungKhoan={CODE}
-    - pFromDate/pToDate in DD/MM/YYYY format — server-side filtering UNRELIABLE.
+    - pFromDate/pToDate in DD/MM/YYYY format — server-side filtering WORKS with pAction=1.
     - Returns HTML table with SYMBOL column + funcShowFileAttach(articleId) links.
-    - FALLBACK: Query without dates, client-side filter by title year/quarter.
   - PDF via: POST /ModuleArticles/ArticlesCPEtfs/ArticlesFileAttach {pArticlesID: id}
     - Returns HTML with href="https://owa.hnx.vn/ftp/...pdf"
   - Stocks: SHB, ACB(?), PVS, NVB, ... (Hanoi Exchange)
@@ -228,20 +227,18 @@ def _discover_hnx_upcom(
     max_pages: int = 5,
 ) -> Optional[Dict[str, Any]]:
     """
-    Common HNX/UPCOM discovery using pAction=1 POST API.
+    Common HNX/UPCOM discovery using pAction=1 filtered POST API.
 
-    STRATEGY:
-    1. First attempt: Use server-side filtering with pFromDate/pToDate
-    2. If no results: Fall back to unfiltered query, client-side filter
+    The POST with pAction=1 activates server-side filtering by:
+      - pMaChungKhoan = stock code
+      - pFromDate / pToDate = date range (DD/MM/YYYY)
+      - pNhomTin = 'FIN_REPORT' (note: single quotes required by server)
     """
     from_date, to_date = _date_window(quarter, year)
-    code_lower = code.lower()
-    
-    # ATTEMPT 1: Server-side filtering
     print(f"  [{source_label}] code={code} window={from_date}–{to_date}", file=sys.stderr)
 
     for page in range(1, max_pages + 1):
-        print(f"  [{source_label}] page {page} (filtered)", file=sys.stderr)
+        print(f"  [{source_label}] page {page}", file=sys.stderr)
         try:
             html = _http_post(endpoint, {
                 "pNumPage": str(page),
@@ -273,35 +270,6 @@ def _discover_hnx_upcom(
                     "confidence": 0.90 if source_label == "HNX" else 0.85,
                     "page_title": f"{source_label} article {article_id}",
                 }
-
-    # ATTEMPT 2: Unfiltered search with client-side filtering
-    print(f"  [{source_label}] Fallback: unfiltered search for {code}", file=sys.stderr)
-    try:
-        html = _http_post(endpoint, {
-            "pNumPage": "1",
-            "pAction": "1",
-            "pNhomTin": "'FIN_REPORT'",
-            "pTieuDeTin": "",
-            "pMaChungKhoan": code,
-            "pFromDate": "",
-            "pToDate": "",
-            "pOrderBy": "",
-            "pNumRecord": "20",
-        }, referer=referer)
-        
-        if "funcShowFileAttach" in html:
-            article_id = _parse_article_ids_and_titles(html, code, year, quarter)
-            if article_id is not None:
-                pdf_url = _fetch_pdf_url(article_id)
-                if pdf_url:
-                    return {
-                        "url": pdf_url,
-                        "source": source_label,
-                        "confidence": 0.85 if source_label == "HNX" else 0.80,
-                        "page_title": f"{source_label} article {article_id} (fallback)",
-                    }
-    except Exception as e:
-        print(f"  [{source_label}] fallback error: {e}", file=sys.stderr)
 
     return None
 
