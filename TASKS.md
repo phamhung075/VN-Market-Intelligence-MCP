@@ -37,6 +37,7 @@ context: docs/handoffs/TASK_1294a.md
 **Branch**: task/1294a-imf-sentiment
 **Effort**: 7h
 **Depends on**: baseline ✓
+**Status**: Review
 
 ### Task 1294b: BCTC PDF Timeout Fallback
 

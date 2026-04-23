@@ -101,8 +101,11 @@ export function classifyImfSentiment(headline: string, summary: string): ImfClas
   const crisisMatch = checkKeywordMatch(combinedText, CRISIS_KEYWORDS);
   if (crisisMatch) {
     const sentiment = -0.45; // Middle of [-0.6, -0.3] range
-    // Capitalize first letter for readability
-    const capitalizedMatch = crisisMatch.charAt(0).toUpperCase() + crisisMatch.slice(1);
+    // Capitalize each word for readability
+    const capitalizedMatch = crisisMatch
+      .split(/\s+/)
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
     return {
       classification: 'imf_crisis_signal',
       sentiment,
