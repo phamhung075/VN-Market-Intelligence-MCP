@@ -115,3 +115,30 @@ Task complete when:
 - `bun tsc --noEmit` → 0 TS errors (builders are type-safe)
 - DDD rule check: domain/signals/signalBuilders.ts does NOT import infrastructure/
 - Builders exported in src/domain/signals/index.ts (barrel export)
+
+---
+
+## [Developer] Implementation Record
+
+files_actually_modified:
+- /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/domain/signals/signalBuilders.ts (NEW — 4 builder classes + 4 factory functions, 240 LOC)
+- /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/__tests__/1295a-signal-builders.test.ts (NEW — 16 test assertions, 4 scenarios per builder, 168 LOC)
+- /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/domain/signals/index.ts (MODIFIED — added barrel exports for builders, 12 lines added)
+
+tests_written:
+- src/__tests__/1295a-signal-builders.test.ts — 16 assertions, all GREEN
+  - 4 builders tested (ChainCatalyst, PriceConfirmation, UrgentNews, CrossValidate)
+  - 4 scenarios per builder: (a) complete payload passes, (b) missing field1 throws, (c) missing field2 throws, (d) missing field3 throws
+  - All assertions use fluent API chaining and validate build() behavior
+
+tests_skipped: []
+
+tsc_clean: true (no TypeScript errors)
+full_suite_pass: true (signal builders: 16/16, signal types: 28/28, total: 44/44)
+
+key_findings:
+- Fluent API pattern works as designed: each setter returns 'this' for method chaining
+- Zod validation correctly throws on missing/invalid required fields
+- DDD layering maintained: signalBuilders.ts imports only from domain/signals/ (no infrastructure/application)
+- CrossValidateFindingData interface was already defined in signalTypes.ts (task 1293a)
+- No breaking changes to existing signal type tests
