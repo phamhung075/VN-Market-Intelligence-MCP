@@ -51,6 +51,27 @@ export function initMacroTables(db: Database): void {
   // Task 239: add column to track last refresh job attempt
   try { db.exec(`ALTER TABLE macro_indicators ADD COLUMN last_refresh_job TEXT`); } catch {}
 
+  // ── IMF Indicators (Task 1296b) ────────────────────────────────────────────
+  // Separate table for structured IMF API data (code-keyed, not country-keyed)
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS imf_indicators (
+      id           INTEGER PRIMARY KEY AUTOINCREMENT,
+      code         TEXT NOT NULL,
+      name         TEXT NOT NULL,
+      value        REAL NOT NULL,
+      published_at TEXT NOT NULL,
+      age_in_days  INTEGER NOT NULL DEFAULT 0,
+      prev_value   REAL,
+      yoy_change   REAL,
+      source       TEXT NOT NULL DEFAULT 'imf_api',
+      confidence   REAL NOT NULL DEFAULT 0.95,
+      fetched_at   TEXT NOT NULL DEFAULT (datetime('now')),
+      UNIQUE(code) ON CONFLICT REPLACE
+    );
+    CREATE INDEX IF NOT EXISTS idx_imf_indicators_code ON imf_indicators(code);
+    CREATE INDEX IF NOT EXISTS idx_imf_indicators_fetched ON imf_indicators(fetched_at DESC);
+  `);
+
   // ── Commodity Prices (Task 025/028) ──────────────────────────────────────
   db.exec(`
     CREATE TABLE IF NOT EXISTS commodity_prices (

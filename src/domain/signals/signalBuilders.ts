@@ -52,7 +52,8 @@ export interface ChainCatalystBuilder {
 }
 
 class ChainCatalystBuilderImpl implements ChainCatalystBuilder {
-  private data: Partial<ChainCatalystFindingData> = {
+  // Use Omit to exclude optional imfSentiment — builders don't set IMF context
+  private data: Omit<Partial<ChainCatalystFindingData>, "imfSentiment"> = {
     affected_stocks: [],
     affected_sectors: [],
   };

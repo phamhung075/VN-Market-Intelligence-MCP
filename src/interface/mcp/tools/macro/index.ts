@@ -8,3 +8,5 @@ export { registerPredictionTools } from "./predictionTools.js";
 export { registerCalibrationTools } from "./calibrationTools.js";
 export { registerEvidenceTools } from "./evidenceTools.js";
 export { registerRateLimitTools } from "./rateLimitTools.js";
+// Task 1296b: IMF sentiment signals tool
+export { registerImfSignalsTool } from "./imfSignals.js";

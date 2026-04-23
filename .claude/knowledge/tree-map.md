@@ -53,6 +53,10 @@ CLAUDE.md (root — always loaded)
 │
 ├── .claude/knowledge/restart-policy.md (server restart: launchctl only, banned mechanisms, QA validation)
 │
+├── .claude/knowledge/ops-incident-response.md (incident playbook: service failures, recovery procedures, severity levels)
+│
+├── .claude/knowledge/vps-setup.md (VPS operations: Vinahost connection, service management, health checks)
+│
 ├── .claude/WORKFLOW.md (dev workflow: branch hygiene, merge checklist)
 │
 ├── docs/ARCHITECTURE.md (system design: folder tree, data flow, VPS price proxy + BCTC PDF proxy)
@@ -104,6 +108,8 @@ CLAUDE.md (root — always loaded)
 | `.claude/knowledge/janitor-procedures.md` | Code-Janitor / Architect | After procedure change |
 | `.claude/knowledge/market-analysis.md` | Market-Analyst / BA | After cascade rule or BCTC checklist update |
 | `.claude/knowledge/qa-checklist.md` | QA / Architect | After QA rule change |
+| `.claude/knowledge/ops-incident-response.md` | Ops / DevOps Lead | After incident discovery or procedure update |
+| `.claude/knowledge/vps-setup.md` | Ops / DevOps Lead | After VPS config change or new service |
 | `.claude/knowledge/*.md` (all others) | Architect / claude-manager-helper | Logic or rule change |
 
 ## Drift Detection (System-Auditor)

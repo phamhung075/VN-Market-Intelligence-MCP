@@ -13,6 +13,22 @@
  *   - Per-agent confidence breakdown
  */
 
+/**
+ * Minimum IMF confidence required before imfSentiment contributes to conviction.
+ * Overridable via Bun.env.IMF_CONFIDENCE_MIN (default 0.55).
+ */
+const IMF_CONFIDENCE_MIN = (() => {
+  const raw = Bun.env.IMF_CONFIDENCE_MIN;
+  if (raw !== undefined) {
+    const parsed = parseFloat(raw);
+    if (!isNaN(parsed) && parsed >= 0 && parsed <= 1) return parsed;
+  }
+  return 0.55;
+})();
+
+/** Weight of IMF sentiment contribution to conviction score (20%) */
+const IMF_CONVICTION_WEIGHT = 0.20;
+
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 export interface ChainLink {
@@ -264,7 +280,29 @@ export function synthesizeChain(links: ChainLink[]): SynthesizedChain | null {
   );
   const penalty = penaltyLinks.length * 0.05;
 
-  const rawConviction = base + bonus - penalty;
+  // IMF macro sentiment contribution (task 1296b)
+  // If any link has an imfSentiment field with confidence >= IMF_CONFIDENCE_MIN,
+  // contribute 20% of the IMF sentiment score to the conviction.
+  // Scaled: IMF sentiment [-1,+1] × weight → conviction delta [-0.2, +0.2]
+  let imfDelta = 0;
+  for (const link of sorted) {
+    const imfSentiment = link.findingData["imfSentiment"];
+    if (
+      imfSentiment !== null &&
+      imfSentiment !== undefined &&
+      typeof imfSentiment === "object"
+    ) {
+      const sentiment = safeNum((imfSentiment as Record<string, unknown>)["sentiment"]);
+      const imfConf = safeNum((imfSentiment as Record<string, unknown>)["confidence"]);
+      if (imfConf >= IMF_CONFIDENCE_MIN) {
+        // Positive IMF sentiment → adds to conviction; negative → subtracts
+        imfDelta += sentiment * IMF_CONVICTION_WEIGHT;
+        break; // use first link with valid IMF sentiment
+      }
+    }
+  }
+
+  const rawConviction = base + bonus - penalty + imfDelta;
   const conviction = Math.min(1, Math.max(0, rawConviction));
 
   // ── Action determination ─────────────────────────────────────────────────
