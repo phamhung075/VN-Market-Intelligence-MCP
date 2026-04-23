@@ -8,12 +8,14 @@
   - **lite**: user-facing replies
 
 ### Agent Memory (`docs/agent-memory/` = lazy-load shared workbook)
-- **MCP Tools** (startup discovery, zero file reads) → `get_memory_files(agent_name, task_type)` or `search_memory_by_trigger(trigger)`
-- **Startup protocol** (routing + examples) → `docs/agent-memory/AGENT_STARTUP.md`
-- **issues/** (load only when debugging relevant bug)
+- **MCP Tools** (4 tools: 2 read + 2 write) → `docs/agent-memory/AGENT_STARTUP.md`
+  - **Read**: `get_memory_files(agent_name, task_type)` | `search_memory_by_trigger(trigger)`
+  - **Write**: `append_session_record(...)` | `update_memory_file(...)` ← Use instead of Write tool
+- **Startup protocol** (MCP usage, routing + examples) → `docs/agent-memory/AGENT_STARTUP.md`
+- **issues/** (load when debugging relevant bug)
 - **patterns/** (load when writing code that touches that pattern)
 - **modules/** (load when analyzing/refactoring a module)
-- **sessions/** (load when checking recent agent work, avoid duplicates)
+- **sessions/** (load when checking recent agent work, append via MCP tool, avoid duplicates)
 
 ### Knowledge (`.claude/knowledge/*.md` = logic/rules, stable)
 - **Tree map** (canonical file DAG, write ownership, dependency rules) → `.claude/knowledge/tree-map.md`
