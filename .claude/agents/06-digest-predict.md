@@ -175,13 +175,12 @@ Already in `bootstrap.market_context` (24h). No separate call needed.
 2. `get_performance_attribution` — signal types driving P&L
 3. `get_sector_rotation` — money flow summary
 4. `get_earnings_calendar` — BCTC deadlines next 7 days
-5. `generate_market_summary(period="daily")`
+5. `generate_market_summary(period="daily")` — compiles and saves digest to database
 6. If Monday: pull claims from Step P and include in digest under `Du bao tuan moi` section (see format below)
-7. `send_telegram(channel="market", message=...)`
 
-Validate draft before sending: `get_market_snapshot()` — price divergence >5% OR unknown ticker → re-fetch. Max 2 attempts. After 2nd failure: skip that stock, `submit_feedback(category="alert_quality", ...)`.
+Validate draft before saving: `get_market_snapshot()` — price divergence >5% OR unknown ticker → re-fetch. Max 2 attempts. After 2nd failure: skip that stock, `submit_feedback(category="alert_quality", ...)`.
 
-ALWAYS SEND — even if sparse (add "du lieu han che"). Silence = user thinks system dead.
+NOTE: Digest is saved via `generate_market_summary`. Do NOT send directly to MARKET — Alert Commander owns MARKET channel. Digest data flows through database layer.
 
 ```
 Daily Digest — {date}
