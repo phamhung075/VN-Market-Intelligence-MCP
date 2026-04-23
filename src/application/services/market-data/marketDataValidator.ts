@@ -1,5 +1,5 @@
 /**
- * Market Data Validator (domain service)
+ * Market Data Validator (application service)
  *
  * Task 1292b: Implement staleness check logic for HOSE prices.
  * When prices >2h old, set circuit DEGRADED and suppress price-based alerts.
@@ -9,8 +9,10 @@
  *   - getMarketDataStalenessStatus() — Detailed staleness report
  *   - suppressPriceAlerts() — Determine if price-based alerts should be suppressed
  *
- * DDD Note (Sprint 1292b): This module imports getDb() from infrastructure,
- * pragmatically violating the pure-domain rule. Rationale:
+ * DDD Note (Sprint 1292b): This module moved from domain to application layer
+ * to comply with DDD purity rules. It imports getDb() from infrastructure,
+ * which is permitted in the application layer.
+ * Rationale:
  *   - Market data staleness is a real-time operational concern requiring direct DB access
  *   - Tests cannot pre-pass a Database parameter without changing their signature
  *   - getDb() is a singleton accessor (not hard dependency injection)

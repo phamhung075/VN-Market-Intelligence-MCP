@@ -3,7 +3,7 @@
  *
  * Test suite for HOSE price staleness detection logic.
  * All 4 test cases assert against NOT-YET-IMPLEMENTED functions
- * in src/domain/services/market-data/marketDataValidator.ts
+ * in src/application/services/market-data/marketDataValidator.ts
  *
  * Baseline: 6321 assertions
  * Expected: 6333 assertions (+12)
@@ -46,7 +46,7 @@ describe('HOSE Staleness Detection (RED Phase)', () => {
 
       // Import the NOT-YET-IMPLEMENTED function
       const { isPriceFresh } = await import(
-        '../domain/services/market-data/marketDataValidator.js'
+        '../application/services/market-data/marketDataValidator.js'
       );
 
       // RED assertion: function should return true (prices are within 2h)
@@ -75,7 +75,7 @@ describe('HOSE Staleness Detection (RED Phase)', () => {
 
       // Import the NOT-YET-IMPLEMENTED function
       const { isPriceFresh } = await import(
-        '../domain/services/market-data/marketDataValidator.js'
+        '../application/services/market-data/marketDataValidator.js'
       );
 
       // RED assertion: function should return false (prices are >2h old)
@@ -104,7 +104,7 @@ describe('HOSE Staleness Detection (RED Phase)', () => {
 
       // Import the NOT-YET-IMPLEMENTED function
       const { getMarketDataStalenessStatus } = await import(
-        '../domain/services/market-data/marketDataValidator.js'
+        '../application/services/market-data/marketDataValidator.js'
       );
 
       // RED assertion: function should return detailed status object
@@ -134,7 +134,7 @@ describe('HOSE Staleness Detection (RED Phase)', () => {
 
       // Import the NOT-YET-IMPLEMENTED function
       const { suppressPriceAlerts } = await import(
-        '../domain/services/market-data/marketDataValidator.js'
+        '../application/services/market-data/marketDataValidator.js'
       );
 
       // RED assertion: function should suppress price-based alerts when isFresh=false

@@ -24,7 +24,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { Database } from "bun:sqlite";
 
 import { tradingWindowLabel } from "../../../../domain/services/tradingWindow.js";
-import { getMarketDataStalenessStatus } from "../../../../domain/services/market-data/marketDataValidator.js";
+import { getMarketDataStalenessStatus } from "../../../../application/services/market-data/marketDataValidator.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Pure helpers (exported for unit testing)
