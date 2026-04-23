@@ -2,9 +2,9 @@
   "_maintained_by": "PM / system-auditor",
   "_trigger": "sprint start/end, tool/cron count change, baseline test update",
   "lastUpdated": "2026-04-23",
-  "currentSprint": "idle",
+  "currentSprint": 1296,
   "previousSprint": { "number": 1295, "status": "COMPLETE", "progressTasks": "Sprint 1295: Signal Payload Quality Enforcement — 4 tasks (1295a–d) merged. Signal builders (4 fluent-API classes), agent spec updates (news-scout + market-watcher), signal quality audit service (monthly cron + dashboard), E2E integration tests (53 assertions, 0 failures)." },
-  "sprintGoal": "IDLE — awaiting next sprint definition.",
+  "sprintGoal": "Infrastructure Recovery + IMF Sentiment Integration (2 tasks: 1296a BA research + 1296b Architect design + Dev implementation). Unblock BCTC historical backfill via OPS portal fix validation.",
   "testBaseline": 6459,
   "testBaselineTarget": 6450,
   "testFailures": 0,
@@ -13,7 +13,7 @@
   "knowledgeFileCount": 15,
   "devAgentCount": 13,
   "analysisAgentCount": 9,
-  "totalTasksDone": 350,
+  "totalTasksDone": 354,
   "lastFixApplied": "Sprint 1295: Signal Payload Quality Enforcement (fluent builders + monthly audit + E2E integration tests, all merged 2026-04-23)",
-  "currentSprintNotes": "IDLE. Baseline 6459/6450 tests passing (31 above target). Sprint 1295 complete: all 4 tasks merged. No scheduler changes in 1295d."
+  "currentSprintNotes": "Sprint 1296 in progress. Task 1296a (BA research) COMPLETE 2026-04-23 (2.5h used, research doc created). Task 1296b (Architect design) ready to start (depends on 1296a findings). Total effort: 13.5h (BA 2.5h done + Architect 3–4h + Dev 10h pending)."
 }

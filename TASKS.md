@@ -22,6 +22,80 @@
 
 ---
 
+## Sprint 1296: Infrastructure Recovery + IMF Sentiment Integration (13.5h total)
+
+| ID | Title | Layer | Status | Depends | Hours |
+|----|-------|-------|--------|---------|-------|
+| 1296a | IMF Indicator Research & Trade Mapping | ba | Done | none | 2–3 |
+| 1296b | IMF Sentiment Classifier Service | domain | Todo | 1296a | 10–11 |
+
+**Goal:** Unblock BCTC historical backfill (OPS-led validation) + plan IMF sentiment integration (BA research → Architect design → Dev implementation).
+
+**Note:** Part A (OPS validation: BCTC portal fix testing) is external to this design, documented in REQ-1296.
+
+---
+
+### Task Details — Sprint 1296
+
+#### 1296a: IMF Indicator Research & Trade Mapping (2–3h) — COMPLETE
+**context:** docs/handoffs/TASK_1296a.md | docs/handoffs/TASK_1296a_COMPLETION.md
+**Branch:** `task/1296a-imf-research`
+**Status:** Done (2026-04-23)
+
+**Scope:**
+- [x] Audit `docs/market-analysis.md` for existing 60+ cascade rules
+- [x] Research 4 IMF data sources: Official API, REST API (metadata.imf.org), web scraping, Trading Economics
+- [x] Evaluate: data freshness lag, reliability (uptime %), availability (free/paid), rate limits
+- [x] Create 11 candidate cascade rules (IMF indicator → VN sector → watchlist stocks; exceeds 8–12 minimum)
+- [x] Define confidence scoring for imfSentiment field (range 0.0–1.0, thresholds, decay formula)
+- [x] Resolve 3 blockers: B1 (IMF REST API selected), B2 (IMF-only Phase 1 confirmed), B3 (0.55 threshold recommended)
+
+**Deliverable:** `docs/RESEARCH_IMF_INDICATORS.md` (3,200+ words, 9 sections)
+
+**Acceptance Criteria:**
+- [x] AC-1: 4 IMF sources evaluated + 1 recommended (REST API) with justification
+- [x] AC-2: 11 cascade rules documented (exceeds 8–12) + sector sensitivity ranking (banking 0.75, exports 0.72, real estate 0.70)
+- [x] AC-3: imfSentiment field specified (schema, confidence scoring formula, 3 scenarios, effort estimate 13.5h)
+- [x] AC-4: All blockers resolved (B1 REST API, B2 IMF-only, B3 0.55 threshold) with recommendations
+
+#### 1296b: IMF Sentiment Classifier Service (10–11h total, design 3–4h + dev 10h)
+**context:** docs/handoffs/TASK_1296b.md
+**Branch:** `task/1296b-imf-classifier`
+**Status:** Todo
+**Depends on:** 1296a ✓
+
+**Design Phase (Architect, 3–4h):**
+- [ ] Produce `docs/TECH_1296b.md` (architecture, DDD layer mapping, interface contracts)
+
+**Implementation Phase (Dev, 10h):**
+
+RED Phase (2h):
+- CREATE: `src/domain/models/imfIndicators.ts` (types, constants)
+- CREATE: `src/__tests__/1296b-imf-*.test.ts` (RED: failing assertions)
+
+GREEN Phase (8h):
+- CREATE: `src/domain/services/imfDataClassifier.ts` (sentiment logic, pure function)
+- CREATE: `src/application/services/imfDataFetcher.ts` (HTTP fetch, circuit breaker, rate limiter)
+- CREATE: `src/scheduler/market-data/imfIndicatorPollerJob.ts` (6h refresh cycle)
+- CREATE: `src/interface/mcp/tools/macro-analysis/imfSignals.ts` (MCP tool)
+- MODIFY: `src/domain/signals/signalTypes.ts` (add imfSentiment field)
+- MODIFY: `src/domain/services/cascadeEngine.ts` (add 8–12 IMF rules)
+- MODIFY: `src/domain/services/chainSynthesizer.ts` (integrate imfSentiment)
+- All tests passing (20+ assertions, RED→GREEN phases)
+
+**Acceptance Criteria:**
+- [ ] IMF types + constants defined (ImfIndicator, IMF_INDICATORS)
+- [ ] Classifier logic: growth forecast → sentiment mapping, sector impacts
+- [ ] Fetcher: circuit breaker + rate limiter wrapping all HTTP calls
+- [ ] Signal schema: imfSentiment optional field added and validated
+- [ ] Cascade rules: 8–12 IMF-specific rules registered (IMF growth ↑ → banking ↑, etc.)
+- [ ] Poller job: 6h cycle, registered in `src/scheduler/cron-registry.ts`
+- [ ] MCP tool: `get_imf_signals` callable, returns JSON with indicators + sentiment
+- [ ] DDD compliance verified: domain layer imports only domain/Zod/primitives
+- [ ] All tests RED→GREEN: 20+ assertions passing, 0 failures
+
+---
+
 ## Sprint 1295: Signal Payload Quality Enforcement — Typed Builders (18h total) — COMPLETE
 
 | ID | Title | Layer | Status | Depends | Hours |
