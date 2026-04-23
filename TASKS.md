@@ -4,120 +4,69 @@
 
 ---
 
-> Sprints 133–162 archived: `docs/archive/sprints-133-162.md`
-> Sprints 163–176 archived: `docs/archive/sprints-163-176.md`
-> Sprints 177–181 archived: `docs/archive/sprints-177-181.md`
-> Sprints 182–189 archived: `docs/archive/sprints-182-189.md`
-> Sprints 190–220 archived: `docs/archive/sprints-190-220.md`
-> Sprints 221–230 archived: `docs/archive/sprints-221-230.md`
-> Sprints 231–239 archived: `docs/archive/sprints-231-239.md`
-> Sprints 240–240 archived: `docs/archive/sprints-240-240.md`
-> Sprints 1269–1277 archived: `docs/archive/sprints-1269-1277.md`
-> Sprints 1278–1282 archived: `docs/archive/sprints-1278-1282.md` (includes MSCI inclusion + agriculture weather cascades + data freshness monitoring tool, BCTC timeout fix, all merged)
-> Sprints 1282–1289 archived: `docs/archive/sprints-1282-1289.md` (includes data freshness monitoring tool, foreign flow circuit breaker diagnostics, insider selling sentiment fix, BCTC async queue enrichment, foreign flow fallback fetcher, parse errors root-cause fix, all merged)
-> Sprints 1290–1290 archived: `docs/archive/sprints-1290-1290.md` (includes foreign flow fallback fetcher integration into scheduler job, merged)
-> Sprints 1291–1294 archived: `docs/archive/sprints-1291-1294.md` (includes Alert signal payload schema hardening + Signal Payload Enrichment & BCTC Fallback Resilience, 6 subtasks total, all merged)
-> **Sprints 1289f, 1295, 1296 detail sections archived:** → `docs/archive/TASK_DETAILS_ARCHIVE.md`
+> Sprints 133–162: `docs/archive/sprints-133-162.md`
+> Sprints 163–176: `docs/archive/sprints-163-176.md`
+> Sprints 177–189: `docs/archive/sprints-177-181.md` / `sprints-182-189.md`
+> Sprints 190–240: `docs/archive/sprints-190-220.md` / `sprints-221-230.md` / `sprints-231-239.md` / `sprints-240-240.md`
+> Sprints 1269–1294: `docs/archive/sprints-1269-1277.md` / `1278-1282.md` / `1282-1289.md` / `1290-1290.md` / `1291-1294.md`
+> **Sprint 1289f/1295/1296 details + Sprint 1297/1299 task details archived:** `docs/archive/TASK_DETAILS_ARCHIVE.md`
 
 ---
 
-## Sprint 1296: Infrastructure Recovery + IMF Sentiment Integration (13.5h total) — DESIGN PHASE COMPLETE
-
-| ID | Title | Layer | Status | Depends | Hours |
-|----|-------|-------|--------|---------|-------|
-| 1296a | IMF Indicator Research & Trade Mapping | ba | Done | none | 2–3 |
-| 1296b | IMF Sentiment Classifier Service | domain | Design Complete | 1296a | 10–11 |
-
-**Goal:** Unblock BCTC historical backfill (OPS-led validation) + plan IMF sentiment integration (BA research → Architect design → Dev implementation).
-
-**Status:** Design phase complete. Task 1296a delivered with 11 cascade rules. 1296b design approved. Ready for Sprint 1297 implementation. Detailed specs → `docs/archive/TASK_DETAILS_ARCHIVE.md`.
+## Sprint 1296 — COMPLETE (1296a Done, 1296b impl in 1296) — details: `docs/archive/TASK_DETAILS_ARCHIVE.md`
 
 ---
 
-## Sprint 1297: Critical System Reliability & BCTC Historical Backfill (7–11h total) — IN PROGRESS
+## Sprint 1297: Critical System Reliability & BCTC Historical Backfill — IN PROGRESS
 
 | ID | Title | Layer | Status | Depends | Hours |
 |----|-------|-------|--------|---------|-------|
 | 1297a | Audit Phase II — Fail-Loud Protocol Injection (16 agents) | docs | Done | none | 2–3 |
-| 1297b | BCTC Portal URL Discovery Fix (unblock historical backfill) | vps-scripts | Todo | none | 4–6 |
+| 1297b | BCTC Portal URL Discovery Fix | vps-scripts | Todo | none | 4–6 |
 | 1297c | VPS Validation of BCTC Portal Fix | ops | Backlog | 1297b | 1–2 |
 
-**Goal:** Fix two critical blockers: (1) fail-loud protocol injected into all 21 agent files (robustness achieved), and (2) BCTC portal discovery script needs URL investigation + fix (blocks 37×8 historical backfill).
-
-**Status:** Phase 1297a complete. Queuing Developer for 1297b. 1297c awaits 1297b completion.
-
----
-
-### Task Details — Sprint 1297
-
-#### 1297a: Audit Phase II — Fail-Loud Protocol Injection (2–3h)
-**Status:** Done ✓ (merged 98ab4bd0)
-**Owner:** PM
-**Context:** Sprint 1296 (and recent audit) added fail-loud protocol sections to 5 critical agents (ba.md, architect.md, developer.md, fixer.md, pm.md). Remaining 14 agents (.claude/agents/*.md) still lack these sections.
-
-**Files to Modify:**
-- qa.md, code-janitor.md, po.md, system-auditor.md, unified-agent.md, ops.md, claude-manager-helper.md
-- 01-news-scout.md, 02-financial-analyst.md, 04-market-watcher.md, 05-alert-commander.md, 06-digest-predict.md, 07-qa-responder.md, cowork-refactory-expert.md, idea-forge.md, market-analyst.md
-
-**Scope:**
-- Add identical "Fail-Loud Lazy-Load Protocol" section to each agent file
-- Section must reference `.claude/knowledge/fail-loud-protocol.md` for full protocol details
-- Format: copy from ba.md (template) and adapt role context if needed
-- Validation: confirm all 22 agents have the section (simple grep check)
-
-**Acceptance Criteria:**
-- [x] All 16 remaining agent files updated with fail-loud protocol sections (01-news-scout, 02-financial-analyst, 04-market-watcher, 05-alert-commander, 06-digest-predict, 07-qa-responder, claude-manager-helper, code-janitor, cowork-refactory-expert, idea-forge, market-analyst, ops, po, qa, system-auditor, unified-agent)
-- [x] Each section references `.claude/knowledge/fail-loud-protocol.md`
-- [x] Commit: 98ab4bd0 "chore(1297a): Inject fail-loud protocol into 16 remaining agents"
-- [x] Verification: 21/21 agents have fail-loud protocol section (all .claude/agents/*.md files)
-
-#### 1297b: BCTC Portal URL Discovery Fix (4–6h)
-**Status:** Todo (queued for Developer)
-**Owner:** Developer
-**Context:** Task 1289g investigation identified broken BCTC portal URLs. Validation test (0/3 stocks returned PDFs) failed. Root cause: HOSE URL returns 404, HNX/UPCOM PDFs non-discoverable.
-
-**Files to Modify:**
-- `vps-scripts/discover-bctc-urls-browser.py` (primary)
-- `docs/BCTC_PORTAL_URL_FINDINGS_2026_UPDATED.md` (findings + rationale, updated)
-
-**Scope:**
-- Investigate current HOSE BCTC disclosure endpoint (manual curl + browser inspection)
-- Check if HNX serves PDFs via API or requires different page structure
-- Fix or bypass UPCOM SSL certificate issue
-- Update `discover_from_hose()`, `discover_from_hnx()`, `discover_from_upcom()` with correct URLs
-- Re-test with 3 stocks (VNM, BID, FPT 2024 Q4) — **target: ≥2/3 pass**
-
-**Acceptance Criteria:**
-- [ ] Current HOSE BCTC portal URL identified and verified (HTTP 200 + returns PDF links)
-- [ ] HNX portal structure mapped (AJAX endpoints or direct URLs confirmed)
-- [ ] UPCOM SSL issue resolved (bypass or correct endpoint)
-- [ ] Script updated with 3 working fallback chains
-- [ ] Re-test: VNM 2024 Q4 returns ≥1 PDF URL, BID 2024 Q4 returns ≥1 PDF URL
-- [ ] Code committed with clear rationale for URL changes
-- [ ] Update findings doc with solution summary
-
-#### 1297c: VPS Validation of BCTC Portal Fix (1–2h)
-**Status:** Backlog (depends on 1297b)
-**Owner:** Ops
-**Context:** After 1297b completes and URLs are fixed, OPS must validate on Vinahost VPS and execute full historical backfill.
-
-**Scope:**
-- Deploy fixed script to VPS
-- Re-run 3 test stocks (VNM, BID, FPT 2024 Q4)
-- Confirm ≥2/3 tests pass (return valid PDF URLs)
-- Execute full historical backfill: all 37 stocks × 8 quarters (Q1 2023–Q4 2024)
-- Verify DB ingestion completes without errors
-
-**Acceptance Criteria:**
-- [ ] Script deployed to VPS
-- [ ] Test validation: ≥2/3 stocks pass (URLs returned + PDFs downloadable)
-- [ ] Full backfill executed: 37 stocks × 8 quarters in DB
-- [ ] Spot-check 5 random BCTC records in DB (verify PE, PB, ROE fields populated)
-- [ ] Report: `reports/TASK_REPORT_1297c.md` summarizing results
+**Status:** 1297a Done (98ab4bd0). 1297b queued for Developer. 1297c blocked on 1297b.
+Details → `docs/archive/TASK_DETAILS_ARCHIVE.md`
 
 ---
 
+## Sprint 1298: IMF Sentiment Classifier — Test Completion (5–7h total) — Todo
 
+| ID | Title | Layer | Status | Depends | Hours |
+|----|-------|-------|--------|---------|-------|
+| 1298a | RED: verify imf-indicators.test + write imf-classifier.test (AC-2 deep) | tests | Done | none | 2–3 |
+| 1298b | GREEN: write imf-fetcher.test (AC-4) + imf-integration.test (AC-5/6/7/8) | tests | Done | 1298a | 3–4 |
+
+**Goal:** Complete test coverage for all 8 ACs. All 8 FRs already implemented in sprint 1296. Test-only sprint.
+
+### 1298a — RED phase
+context: `docs/handoffs/TASK_1298a.md`
+branch: `task/1298a-red-tests`
+verify: `src/__tests__/1296b-imf-indicators.test.ts` all green
+create: `src/__tests__/1296b-imf-classifier.test.ts` (AC-2: banking≈0.45, export≈0.35, stale<0.60, contraction<-0.3, multi-weighted, all-stale→imf_neutral)
+AC: both test files green, `bun tsc --noEmit` clean
+
+### 1298b — GREEN phase
+context: `docs/handoffs/TASK_1298b.md`
+branch: `task/1298b-green-imf-integration-tests` (TBD)
+depends: 1298a merged
+create: `src/__tests__/1296b-imf-fetcher.test.ts` (AC-4: HTTP mock, DB roundtrip, circuit breaker fallback)
+create: `src/__tests__/1296b-imf-integration.test.ts` (AC-5: cascade rules len=11 | AC-6: conviction weight | AC-7: scheduler shape | AC-8: MCP tool shape)
+AC: all 3 new test files pass, full suite ≥6508, `bun tsc --noEmit` clean, launchctl restart verified
+
+---
+
+## Sprint 1299: MCP Tool Context Optimization — PLANNING
+
+| ID | Title | Layer | Status | Depends | Hours |
+|----|-------|-------|--------|---------|-------|
+| 1299a | Tool Index + Reference Docs | docs/ba | Todo | none | 2–3 |
+| 1299b | Skill-Gated Loading (code + bootstrap) | interface/tests | Todo | 1299a | 3–4 |
+| 1299c | Session Memory Cache (cron + tracking) | infra/application | Todo | 1299b | 2–3 |
+
+**Goal:** Reduce default MCP tool context 65k→<30k tokens. Details → `docs/archive/TASK_DETAILS_ARCHIVE.md`
+
+---
 
 ## Backlog
 

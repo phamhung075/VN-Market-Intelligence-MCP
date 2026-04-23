@@ -1,33 +1,77 @@
 # Sprint Goal
 
-## Sprint 1297 — Critical System Reliability & BCTC Historical Backfill (2026-04-23)
+## Sprint 1299 — MCP Tool Context Optimization (2026-04-23)
 
-**Goal:** Fix two critical blockers preventing historical BCTC backfill and ensuring robust agent knowledge handling.
+**Goal:** Reduce default MCP tool context load from 65k tokens → <30k tokens while maintaining quality and agent capability.
+
+**Vision:**
+- Currently, every agent bootstrap loads ALL 106 tools (~65k tokens = 32.4% of context budget)
+- Problem: destroys reasoning capacity, reduces message history, forces tool culling mid-conversation
+- Solution: Implement three-part optimization (tool index + skill-gated loading + session memory cache) to free ~40k tokens for agent intelligence
 
 **Scope:**
 
 | Phase | Title | Owner | Duration | Status |
 |-------|-------|-------|----------|--------|
-| 1297a | Audit Phase II — Fail-Loud Protocol Injection (16 agents) | PM | 2–3h | ✓ Done |
-| 1297b | BCTC Portal URL Discovery Fix (unblock historical backfill) | Developer | 4–6h | Todo |
-| 1297c | VPS Validation of BCTC Portal Fix | Ops | 1–2h | Backlog |
+| 1299a | Tool Index + Reference Docs | BA | 2–3h | Todo |
+| 1299b | Skill-Gated Loading (code + bootstrap) | Developer | 3–4h | Todo |
+| 1299c | Session Memory Cache (cron + tracking) | Developer | 2–3h | Todo |
+
+**Acceptance Criteria:**
+
+| Phase | Success Metric |
+|-------|---|
+| **1299a** | ✓ Tool Index created: `docs/TOOL_INDEX.md` (1-liner per tool, <10k tokens). Skill manifest created: `docs/SKILL_MANIFEST.md` (per-skill tool map). Agent doc updated with loading rules. |
+| **1299b** | ✓ Bootstrap logic updated: `src/interface/rest/agentBootstrap.ts` (skill-aware tool filtering). Unit tests pass. Manual test: launch agent with 1 skill → loads ≤25 tools (not all 106). |
+| **1299c** | ✓ Session cache added: `src/infrastructure/cache/sessionToolCache.ts` (LRU, TTL=8h). Cron job `trackSessionToolUsage.ts` populates stats. Agent memory auto-updated: `docs/agent-memory/modules/tool-loading.md` (usage patterns). |
+| **Baseline** | ✓ Token count verified: default bootstrap <30k (pre-tool inflation). Agent reasoning window expands 40k+ tokens. Test baseline stable (6508/6508). |
 
 **Why:**
-- **1297a**: Sprint 1296 added fail-loud protocol to 5 critical agents. Remaining 14 agents (qa.md, code-janitor.md, po.md, system-auditor.md, etc.) still lack it. All agents must handle knowledge file failures gracefully.
-- **1297b**: Task 1289g identified broken BCTC portal URLs (HOSE returns 404, HNX/UPCOM PDFs non-discoverable). Script is sound, but endpoints need investigation. This is **blocking historical backfill** (37 stocks × 8 quarters).
-- **1297c**: After URLs fixed, OPS validates on VPS (3 test stocks: VNM, BID, FPT Q4 2024) and executes full backfill.
 
-**Success Metrics:**
-- **1297a**: ✓ All 21 agent files (.claude/agents/*.md) have fail-loud protocol sections + reference to `.claude/knowledge/fail-loud-protocol.md`. Commit: 98ab4bd0
-- **1297b**: vps-scripts/discover-bctc-urls-browser.py updated with correct portal endpoints, ≥2 of 3 test stocks return valid PDFs
-- **1297c**: Full 37×8 historical backfill completes, DB has BCTC data for all quarters Q1 2023–Q4 2024
+1. **Context pressure**: 65k tool context → agent forced to truncate reasoning/history
+2. **Feature debt**: agents can't maintain multi-message reasoning chains
+3. **UX impact**: briefings cut short, /ask answers incomplete, alerts less nuanced
+4. **Solution fits constraints**: no API costs, no new infra, uses existing skill system (Sprint 1297)
 
-**Effort:** ~7–11h total (a + b + c)
+**Effort:** ~7–10h total (a + b + c)
 
-**Priority:** HIGH (affects system reliability + unlocks market analysis depth)
+**Priority:** HIGH (restores reasoning depth, enables complex analysis, no dependencies on other sprints)
 
-**Status:** Phase 1297a complete (commit 98ab4bd0). Phases 1297b & 1297c queued for dev team execution. All documentation + handoffs finalized.
+**Dependencies:**
+- Sprint 1297 (skill system) ✓ COMPLETE
+- No blockers on external APIs/infrastructure
+
+**Metrics (Baseline vs Target):**
+
+| Metric | Current | Target | Method |
+|--------|---------|--------|--------|
+| Default tool context | 65k tokens | <30k tokens | bootstrap token count (via `/health` extension) |
+| Agent reasoning budget | ~50k tokens | ~90k tokens | context allocation audit |
+| Tool load time | N/A | <100ms | session cache hit rate |
+| Skill coverage | 100% (all agents receive all tools) | 95% (agent gets only skills' tools + common) | coverage analysis in test suite |
+| Test baseline | 6508 PASS | 6508+ PASS | bun test full suite |
+
+**Post-Sprint:** Archive to `docs/archive/SPRINT_GOAL_ARCHIVE.md`
 
 ---
 
-> Completed sprints archived → `docs/archive/SPRINT_GOAL_ARCHIVE.md`
+> **Decision Log:**
+> - Why not vector DB for tool lookup? (Token cost stays same, adds infra. Chose filter+cache instead.)
+> - Why session cache vs global? (Session-scoped tools shift per user workflow. Cache respects that. Global would over-generalize.)
+> - Why not drop tools? (No. Tools are discoverable by agents in edge cases. Index + loading = safe filtering, not removal.)
+
+---
+
+## Sprint 1298: IMF Sentiment Classifier Implementation (10–11h total) — Todo
+
+| ID | Title | Layer | Status | Depends | Hours |
+|----|-------|-------|--------|---------|-------|
+| 1298a | IMF Sentiment Classifier — RED tests + domain models | domain/tests | Todo | TECH_1296b.md | 3–4 |
+| 1298b | IMF Fetcher + Poller Job + Cron Registration | application/scheduler | Todo | 1298a | 4–5 |
+| 1298c | Signal Integration + MCP Tool + GREEN tests | domain/interface/tests | Todo | 1298b | 3–4 |
+
+**Goal**: Implement TECH_1296b.md design — IMF macro sentiment enriches ChainCatalyst conviction scoring via 11 cascade rules. Full spec: `docs/REQ_1298.md`. Design: `docs/TECH_1296b.md`.
+
+**Status**: BA spec complete. Queued for Developer.
+
+---
