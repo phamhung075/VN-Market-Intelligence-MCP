@@ -38,6 +38,8 @@ import {
 } from "../../infrastructure/fetchers/pdfOcrWorker.js";
 import { parseBctcReport } from "./parseBctcReport.js";
 import { logger } from "../../infrastructure/logger.js";
+import { extractBctcHints } from "../../domain/services/signalToBctcMapper.js";
+import { getDb } from "../../infrastructure/db/schema.js";
 
 import type { HttpClient } from "../../infrastructure/fetchers/ssc.js";
 import type { AnalysisInput } from "../../infrastructure/rag/retriever.js";
@@ -115,6 +117,11 @@ export interface FetchParseAndStoreBctcParams {
    * the SSC document was already resolved.
    */
   pdfUrl?: string;
+  /**
+   * Task 1294b: Enable fallback to news chain signals when PDF timeout occurs.
+   * Defaults to true. Set to false to disable fallback and throw on timeout.
+   */
+  enableBctcFallback?: boolean;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -161,13 +168,17 @@ function buildFiscalPeriod(year: number, quarter: QuarterString): FiscalPeriod {
  * Returns `null` (never throws) when:
  *  - No SSC documents are found for the given actionCode/year
  *  - PDF extraction yields empty text
+ *  - Fallback signals are insufficient or contradictory
+ *
+ * Throws when:
+ *  - PDF timeout occurs and enableBctcFallback=false
  *
  * @param params - Pipeline parameters with all injectable dependencies.
- * @returns The stored FinancialReport, or null on any terminal failure.
+ * @returns The stored FinancialReport with metadata, or null on any terminal failure.
  */
 export async function fetchParseAndStoreBctc(
   params: FetchParseAndStoreBctcParams,
-): Promise<FinancialReport | null> {
+): Promise<(FinancialReport & { fallback?: boolean; extraction_method?: string; confidence?: number; reason?: string }) | null> {
   const {
     actionCode,
     year,
@@ -177,6 +188,7 @@ export async function fetchParseAndStoreBctc(
     pdfTextOverride,
     insertAnalysisFn,
     pdfUrl,
+    enableBctcFallback = true,
   } = params;
 
   const tag = `[fetchParseAndStoreBctc] ${actionCode} ${year}-${quarter}`;
@@ -210,6 +222,7 @@ export async function fetchParseAndStoreBctc(
   logger.info(`${tag} step 2: extracting PDF text`);
 
   let rawText: string;
+  let extractionError: Error | null = null;
 
   if (pdfTextOverride !== undefined) {
     // Test shortcut — bypass real PDF extraction and OCR fallback
@@ -218,12 +231,19 @@ export async function fetchParseAndStoreBctc(
     // Task 1019: route SSC PDF downloads through breakers.ssc so network
     // timeouts on PDF fetch actually trip the shared SSC breaker. In test mode
     // (pdfHttpClient injected) skip the breaker so tests stay deterministic.
-    const extraction = await downloadAndExtractPdf(
-      doc.url,
-      pdfHttpClient,
-      pdfHttpClient ? undefined : breakers.ssc,
-    );
-    rawText = extraction.text;
+    try {
+      const extraction = await downloadAndExtractPdf(
+        doc.url,
+        pdfHttpClient,
+        pdfHttpClient ? undefined : breakers.ssc,
+      );
+      rawText = extraction.text;
+    } catch (err) {
+      // downloadAndExtractPdf normally doesn't throw, but if it does (e.g., in tests),
+      // capture it for later fallback decision
+      extractionError = err instanceof Error ? err : new Error(String(err));
+      rawText = "";
+    }
 
     // ── Task 293: OCR fallback when pdf-parse returns < 100 chars ─────────────
     // Scanned / image-based PDFs produce very little or no text via pdf-parse.
@@ -302,7 +322,25 @@ export async function fetchParseAndStoreBctc(
     }
   }
 
+  // Task 1294b: When PDF extraction returns empty text AND fallback is enabled,
+  // try the news chain fallback. This handles both explicit timeout errors and
+  // timeout situations detected during OCR attempts.
   if (!rawText || rawText.trim().length === 0) {
+    if (enableBctcFallback) {
+      logger.info(`${tag} PDF extraction failed — attempting news chain fallback`);
+      const fallbackResult = await tryNewsChainFallback(
+        actionCode,
+        year,
+        quarter,
+      );
+      if (fallbackResult) {
+        return fallbackResult;
+      }
+    }
+    // Fallback did not succeed or was disabled
+    if (extractionError && !enableBctcFallback) {
+      throw extractionError;
+    }
     logger.warn(`${tag} PDF extraction yielded empty text — aborting`);
     return null;
   }
@@ -398,4 +436,313 @@ function buildAnalysisSummary(report: FinancialReport): string {
   }
 
   return lines.join(" ");
+}
+
+/**
+ * Task 1294b: Fallback to news chain signals when PDF timeout occurs.
+ * Query recent signals for the stock code, extract financial field hints,
+ * validate for contradictions, and insert a fallback report with
+ * extraction_method='news_inference'.
+ *
+ * @returns Fallback FinancialReport with metadata, or null if fallback not possible.
+ */
+async function tryNewsChainFallback(
+  actionCode: string,
+  year: number,
+  quarter: QuarterString,
+): Promise<(FinancialReport & { fallback: boolean; extraction_method: string; confidence: number; reason?: string }) | null> {
+  const tag = `[fetchParseAndStoreBctc] ${actionCode} ${year}-${quarter} fallback`;
+  const db = getDb();
+  const period = buildFiscalPeriod(year, quarter);
+
+  try {
+    // Query recent signals for this stock
+    const maxAgeStr = Bun.env['BCTC_FALLBACK_SIGNAL_MAX_AGE_DAYS'] ?? '7';
+    const maxAgeDays = parseInt(maxAgeStr, 10);
+    const cutoffDate = new Date(Date.now() - maxAgeDays * 24 * 60 * 60 * 1000).toISOString();
+
+    logger.info(`${tag} querying signals from last ${maxAgeDays} days`);
+
+    // Query signals for this stock within the lookback window.
+    // Accept all signal types that have financial information.
+    const signals = db.prepare(`
+      SELECT finding_data, created_at
+      FROM agent_signals
+      WHERE stock_code = ? AND created_at >= ?
+      ORDER BY created_at DESC
+      LIMIT 20
+    `).all(actionCode, cutoffDate) as Array<{ finding_data: string; created_at: string }>;
+
+    logger.info(`${tag} found ${signals.length} relevant signals`);
+
+    // Check minimum signal count
+    if (signals.length < 2) {
+      logger.info(`${tag} insufficient signals (${signals.length} < 2) — skipping fallback`);
+      return null;
+    }
+
+    // Parse signals and extract hints
+    const hints = signals.map(s => {
+      try {
+        const data = JSON.parse(s.finding_data);
+        return extractBctcHints({ findingData: data });
+      } catch {
+        logger.debug(`${tag} failed to parse signal data`);
+        return null;
+      }
+    }).filter(h => h !== null) as ReturnType<typeof extractBctcHints>[];
+
+    if (hints.length < 2) {
+      logger.info(`${tag} insufficient valid signals (${hints.length} < 2) — skipping fallback`);
+      return null;
+    }
+
+    // Check for contradictions: all signals should point same direction
+    const directions = hints
+      .filter(h => h.revenue_growth_hint !== 0)
+      .map(h => Math.sign(h.revenue_growth_hint));
+
+    if (directions.length > 0) {
+      const allSameDir = directions.every(d => d === directions[0]);
+      if (!allSameDir) {
+        logger.info(`${tag} contradictory signal directions — skipping fallback`);
+        return null;
+      }
+    }
+
+    // Average confidence and field hints
+    const avgConfidence = hints.reduce((a, h) => a + h.confidence, 0) / hints.length;
+    const avgRevenue = hints.reduce((a, h) => a + h.revenue_growth_hint, 0) / hints.length;
+    const avgMargin = hints.reduce((a, h) => a + h.margin_trend, 0) / hints.length;
+
+    // Check for temporal discount: if signals mention old period year
+    let temporalDiscount = 1.0;
+    const signalText = signals.map(s => s.finding_data).join(' ');
+    if (signalText.includes('2023') && year === 2024) {
+      temporalDiscount = 0.8;
+      logger.debug(`${tag} temporal discount applied (0.8x) for 2023 data`);
+    }
+
+    // Calculate final confidence: baseline 0.55, apply multipliers, cap [0.45, 0.65]
+    const finalConfidence = Math.max(0.45, Math.min(0.65, 0.55 * temporalDiscount * avgConfidence));
+
+    logger.info(`${tag} fallback valid — confidence=${finalConfidence.toFixed(2)}`);
+
+    // Build minimal fallback report
+    const fallbackReport: FinancialReport & {
+      fallback: boolean;
+      extraction_method: string;
+      confidence: number;
+    } = {
+      id: randomUUID(),
+      actionCode,
+      companyName: 'Unknown (news_inference)',
+      exchange: 'UNKNOWN' as any,
+      domain: 'other',
+      period,
+      source: {
+        sscUrl: '',
+        pdfPath: null,
+        publishedAt: new Date().toISOString(),
+        parsedAt: new Date().toISOString(),
+        auditStatus: 'unaudited',
+        auditor: null,
+        reportLanguage: 'both',
+        pageCount: null,
+        extractionConfidence: finalConfidence,
+      },
+      balanceSheet: {
+        currentAssets: { cash: 0, shortTermInvestments: 0, accountsReceivable: 0, inventory: 0, otherCurrentAssets: 0, total: 0 },
+        nonCurrentAssets: { longTermReceivables: 0, fixedAssets: 0, investmentProperty: 0, longTermInvestments: 0, goodwill: 0, otherLongTermAssets: 0, total: 0 },
+        totalAssets: 0,
+        currentLiabilities: { shortTermDebt: 0, accountsPayable: 0, advancesFromCustomers: 0, taxPayable: 0, payablesToEmployees: 0, otherCurrentLiabilities: 0, total: 0 },
+        longTermLiabilities: { longTermDebt: 0, deferredTaxLiabilities: 0, otherLongTermLiabilities: 0, total: 0 },
+        totalLiabilities: 0,
+        equity: { shareCapital: 0, sharePremium: 0, treasuryShares: 0, retainedEarnings: 0, otherEquityFunds: 0, minorityInterest: 0, total: 0 },
+        totalLiabilitiesAndEquity: 0,
+      },
+      incomeStatement: {
+        netRevenue: 0,
+        cogs: 0,
+        grossProfit: 0,
+        operatingExpenses: 0,
+        operatingProfit: 0,
+        otherIncome: 0,
+        financingCosts: 0,
+        ebit: 0,
+        interestExpenses: 0,
+        profitBeforeTax: 0,
+        incomeTax: 0,
+        netProfit: 0,
+        minorityInterest: 0,
+        parentNetProfit: 0,
+        eps: 0,
+        dilutedEps: 0,
+        ebitda: 0,
+        ebitdaMargin: 0,
+      },
+      cashFlow: {
+        operatingCashFlow: 0,
+        capitalExpenditures: 0,
+        freeCashFlow: 0,
+        investingCashFlow: 0,
+        financingCashFlow: 0,
+        netChangeInCash: 0,
+      },
+      ratios: {
+        grossMarginPct: null,
+        operatingMarginPct: null,
+        netMarginPct: null,
+        ebitdaMarginPct: null,
+        roe: null,
+        roa: null,
+        roic: null,
+        currentRatio: null,
+        quickRatio: null,
+        cashRatio: null,
+        debtToEquity: null,
+        debtToAssets: null,
+        netDebt: null,
+        netDebtToEbitda: null,
+        interestCoverageRatio: null,
+        assetTurnover: null,
+        inventoryTurnover: null,
+        inventoryDays: null,
+        receivablesTurnover: null,
+        receivablesDays: null,
+        payablesTurnover: null,
+        payablesDays: null,
+        cashConversionCycle: null,
+        eps: 0,
+        bvps: null,
+        revenuePerShare: null,
+        fcfPerShare: null,
+        pe: null,
+        pb: null,
+        ps: null,
+        evToEbitda: null,
+        dividendYieldPct: null,
+      },
+      yoyDelta: null,
+      qoqDelta: null,
+      marketData: null,
+      aiAnalysis: null,
+      embedding: null,
+      embeddingText: `Fallback report from ${hints.length} chain signals. Revenue trend: ${avgRevenue > 0 ? 'positive' : avgRevenue < 0 ? 'negative' : 'neutral'}. Margin trend: ${avgMargin > 0 ? 'expanding' : avgMargin < 0 ? 'compressing' : 'stable'}.`,
+      notesRawText: null,
+      fallback: true,
+      extraction_method: 'news_inference',
+      confidence: finalConfidence,
+    } as any;
+
+    // Insert into database with fallback metadata
+    const stmt = db.prepare(`
+      INSERT OR REPLACE INTO financial_reports (
+        id, action_code, company_name, exchange, domain,
+        period_year, period_quarter, period_type, period_start, period_end, sort_key,
+        ssc_url, pdf_path, published_at, parsed_at, audit_status, auditor,
+        extraction_confidence,
+        net_revenue, gross_profit, operating_profit, ebitda,
+        profit_before_tax, net_profit, eps, diluted_eps,
+        total_assets, current_assets, cash, inventory,
+        total_liabilities, short_term_debt, long_term_debt, equity_total,
+        operating_cf, investing_cf, financing_cf, capex, free_cash_flow,
+        gross_margin_pct, operating_margin_pct, net_margin_pct,
+        roe, roa, current_ratio, debt_to_equity, net_debt_to_ebitda, pe, pb,
+        balance_sheet_json, income_stmt_json, cash_flow_json, ratios_json,
+        yoy_delta_json, qoq_delta_json,
+        market_data_json, embedding_text, notes_raw_text,
+        validation_status, validation_notes, extraction_method, extraction_source_note
+      ) VALUES (
+        $id, $actionCode, $companyName, $exchange, $domain,
+        $periodYear, $periodQuarter, $periodType, $periodStart, $periodEnd, $sortKey,
+        $sscUrl, $pdfPath, $publishedAt, $parsedAt, $auditStatus, $auditor,
+        $extractionConfidence,
+        $netRevenue, $grossProfit, $operatingProfit, $ebitda,
+        $profitBeforeTax, $netProfit, $eps, $dilutedEps,
+        $totalAssets, $currentAssets, $cash, $inventory,
+        $totalLiabilities, $shortTermDebt, $longTermDebt, $equityTotal,
+        $operatingCf, $investingCf, $financingCf, $capex, $freeCashFlow,
+        $grossMarginPct, $operatingMarginPct, $netMarginPct,
+        $roe, $roa, $currentRatio, $debtToEquity, $netDebtToEbitda, $pe, $pb,
+        $balanceSheetJson, $incomeStmtJson, $cashFlowJson, $ratiosJson,
+        $yoyDeltaJson, $qoqDeltaJson,
+        $marketDataJson, $embeddingText, $notesRawText,
+        $validationStatus, $validationNotes, $extractionMethod, $extractionSourceNote
+      )
+    `);
+
+    stmt.run({
+      $id: fallbackReport.id,
+      $actionCode: fallbackReport.actionCode,
+      $companyName: fallbackReport.companyName,
+      $exchange: fallbackReport.exchange,
+      $domain: fallbackReport.domain,
+      $periodYear: fallbackReport.period.year,
+      $periodQuarter: fallbackReport.period.quarter,
+      $periodType: fallbackReport.period.periodType,
+      $periodStart: fallbackReport.period.startDate,
+      $periodEnd: fallbackReport.period.endDate,
+      $sortKey: fallbackReport.period.sortKey,
+      $sscUrl: fallbackReport.source.sscUrl,
+      $pdfPath: fallbackReport.source.pdfPath,
+      $publishedAt: fallbackReport.source.publishedAt,
+      $parsedAt: fallbackReport.source.parsedAt,
+      $auditStatus: fallbackReport.source.auditStatus,
+      $auditor: fallbackReport.source.auditor,
+      $extractionConfidence: fallbackReport.source.extractionConfidence,
+      $netRevenue: fallbackReport.incomeStatement.netRevenue,
+      $grossProfit: fallbackReport.incomeStatement.grossProfit,
+      $operatingProfit: fallbackReport.incomeStatement.operatingProfit,
+      $ebitda: fallbackReport.incomeStatement.ebitda,
+      $profitBeforeTax: fallbackReport.incomeStatement.profitBeforeTax,
+      $netProfit: fallbackReport.incomeStatement.netProfit,
+      $eps: fallbackReport.incomeStatement.eps,
+      $dilutedEps: fallbackReport.incomeStatement.dilutedEps,
+      $totalAssets: fallbackReport.balanceSheet.totalAssets,
+      $currentAssets: fallbackReport.balanceSheet.currentAssets.total,
+      $cash: fallbackReport.balanceSheet.currentAssets.cash,
+      $inventory: fallbackReport.balanceSheet.currentAssets.inventory,
+      $totalLiabilities: fallbackReport.balanceSheet.totalLiabilities,
+      $shortTermDebt: fallbackReport.balanceSheet.currentLiabilities.shortTermDebt,
+      $longTermDebt: fallbackReport.balanceSheet.longTermLiabilities.longTermDebt,
+      $equityTotal: fallbackReport.balanceSheet.equity.total,
+      $operatingCf: fallbackReport.cashFlow.operatingCF,
+      $investingCf: fallbackReport.cashFlow.investingCF,
+      $financingCf: fallbackReport.cashFlow.financingCF,
+      $capex: fallbackReport.cashFlow.capex,
+      $freeCashFlow: fallbackReport.cashFlow.freeCashFlow,
+      $grossMarginPct: fallbackReport.ratios.grossMarginPct ?? null,
+      $operatingMarginPct: fallbackReport.ratios.operatingMarginPct ?? null,
+      $netMarginPct: fallbackReport.ratios.netMarginPct ?? null,
+      $roe: fallbackReport.ratios.roe ?? null,
+      $roa: fallbackReport.ratios.roa ?? null,
+      $currentRatio: fallbackReport.ratios.currentRatio ?? null,
+      $debtToEquity: fallbackReport.ratios.debtToEquity ?? null,
+      $netDebtToEbitda: fallbackReport.ratios.netDebtToEbitda ?? null,
+      $pe: fallbackReport.ratios.pe ?? null,
+      $pb: fallbackReport.ratios.pb ?? null,
+      $balanceSheetJson: JSON.stringify(fallbackReport.balanceSheet),
+      $incomeStmtJson: JSON.stringify(fallbackReport.incomeStatement),
+      $cashFlowJson: JSON.stringify(fallbackReport.cashFlow),
+      $ratiosJson: JSON.stringify(fallbackReport.ratios),
+      $yoyDeltaJson: null,
+      $qoqDeltaJson: null,
+      $marketDataJson: null,
+      $embeddingText: fallbackReport.embeddingText,
+      $notesRawText: fallbackReport.notesRawText,
+      $validationStatus: 'pending',
+      $validationNotes: `Fallback from news chain: ${hints.length} signals (age <${maxAgeDays}d)`,
+      $extractionMethod: 'news_inference',
+      $extractionSourceNote: `Fallback: PDF extraction timeout. Populated from ${hints.length} chain signals (signal age: <${maxAgeDays}d). Confidence: ${finalConfidence.toFixed(2)}`,
+    });
+
+    logger.info(`${tag} fallback report inserted`);
+    return fallbackReport;
+  } catch (err) {
+    logger.warn(`${tag} fallback process failed`, {
+      error: err instanceof Error ? err.message : String(err),
+    });
+    return null;
+  }
 }
