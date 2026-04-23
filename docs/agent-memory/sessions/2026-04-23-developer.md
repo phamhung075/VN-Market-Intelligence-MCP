@@ -36,3 +36,35 @@ not last in a scheduler function called later.
 before any async setup. Never add duplicate process.on('SIGTERM') handlers.
 
 **Ready for**: Production deployment (ops should verify WAL file ~0 bytes after restart)
+
+---
+
+### Task 1295d: Integration Test for Signal Builders (12:30–13:05 UTC)
+- **Status**: COMPLETE ✅
+- **Acceptance**: 7 test cases, 53 assertions (12+ required), all GREEN
+- **Dependencies**: 1295a ✅, 1295b ✅, 1295c ✅ (all tasks merged)
+
+**Implementation**:
+- Created E2E integration test covering full flow: builder → MCP validation → DB storage → synthesis
+- All 3 signal types tested (ChainCatalyst, PriceConfirmation, UrgentNews)
+- Validates: (1) builder construction succeeds with complete fields, (2) MCP tool accepts without rejection, (3) DB has all required fields, (4) synthesis conviction ≥0.75 (no fallback penalties)
+
+**Files Changed**:
+- src/__tests__/1295d-integration-builders-to-synthesis.test.ts: NEW (639 lines, 53 assertions)
+- docs/agent-memory/modules/signalBuilders.md: NEW (258 lines, comprehensive module analysis)
+- docs/agent-memory/patterns/signal-payload-quality.md: UPDATED (expanded builder prevention section)
+- docs/handoffs/TASK_1295d.md: appended [Developer] Implementation Record
+
+**Test Results**:
+- bun test src/__tests__/1295d-integration-*.test.ts: 7 pass, 0 fail, 53 assertions ✅
+- bun tsc --noEmit: 0 errors ✅
+- Full test suite: 6458 pass (pre-existing failures unrelated) ✅
+
+**Key Finding**: Builders enforce complete payloads at pre-emit stage (build() throws on incomplete data). Combined with MCP validation (same Zod schemas) and synthesizer defensive fallbacks, the system ensures:
+1. No incomplete signals reach DB
+2. No fallback penalties applied (confidence fully initialized)
+3. Conviction calculations proceed at full strength (≥0.75 for multi-link chains)
+
+**Pattern Documented**: signal-payload-quality.md now has full prevention checklist + usage examples for all 3 main signal types (ChainCatalyst, PriceConfirmation, UrgentNews).
+
+**Ready for**: QA review on task/1295d-integration branch

@@ -28,7 +28,7 @@
 | 1295a | Signal Builders (4 classes: Chain, Price, Urgent, Cross) | domain | Done | none | 8 |
 | 1295b | Agent Spec Update (01-news-scout, 04-market-watcher) | docs | Review | 1295a | 4 |
 | 1295c | Signal Quality Audit Service (monthly cron + dashboard) | application | Review | 1295a | 4 |
-| 1295d | Integration Test (E2E: builder → MCP → DB → synthesis) | tests | Todo | 1295a, 1295b, 1295c | 2 |
+| 1295d | Integration Test (E2E: builder → MCP → DB → synthesis) | tests | Review | 1295a, 1295b, 1295c | 2 |
 
 ---
 
