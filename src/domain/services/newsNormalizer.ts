@@ -12,12 +12,15 @@
  *  - DomainType is imported from bctc-schema.ts (root-level schema).
  *
  * Layer: domain/services — must not import from application/ or infrastructure/
- * adapters. The RssItem structural import is the sole approved exception.
+ * adapters. Approved exceptions:
+ *  - RssItem structural import (plain data, no behavior)
+ *  - TelegramMessageFactory (pure utility function for string truncation, Task 1300b)
  */
 
 import type { RssItem } from "../models/shared-types.js";
 import type { DomainType } from "../../../bctc-schema.js";
 import { STOCK_CATALOG, detectStocksInText } from "./stockAliases.js";
+import { TelegramMessageFactory } from "../../infrastructure/notifiers/telegramMessageFactory.js";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Exported types
@@ -851,7 +854,7 @@ export function normalizeNews(item: RssItem): AnalysisEntry {
       : title
         ? title
         : content;
-  const summary = rawSummary.slice(0, 500);
+  const summary = TelegramMessageFactory.formatNewsSummary(rawSummary);
 
   // ── Reasoning ────────────────────────────────────────────────────────────
   const reasoningParts: string[] = [`Source: ${source || "unknown"}. Level: ${level}.`];

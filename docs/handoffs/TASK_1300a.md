@@ -113,3 +113,22 @@ class TelegramMessageFactory {
 - All methods are **static** — no instantiation needed
 - RED phase = create factory + migrate briefing jobs (user-facing high impact)
 - GREEN phase (1300b) = migrate storage-layer functions + full regression
+
+---
+
+## [Developer] Implementation Record
+
+files_actually_modified:
+- /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/infrastructure/notifiers/telegramMessageFactory.ts   # created: TelegramMessageFactory singleton with 5 static methods + smartTruncate helper using Intl.Segmenter
+- /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/scheduler/briefings/morningBriefingJob.ts   # line 123: .slice(0,60) → formatAlertMessage(); added import
+- /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/scheduler/briefings/eveningSummaryJob.ts   # line 203: .slice(0,80) → formatAlertMessage(); line 211: .slice(0,80) → formatStoryTitle(); added import
+- /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/scheduler/briefings/franceSummaryJob.ts   # line 406: .slice(0,100) → formatAlertMessage(); added import
+
+tests_written:
+- src/__tests__/1300a-telegram-message-factory.test.ts   # 23 assertions, all GREEN
+
+tests_skipped:
+- storage-layer migrations (runPredictionImpactChain.ts:113, newsNormalizer.ts:854, policyImpactMapper.ts:233) deferred to task 1300b
+
+tsc_clean: true
+full_suite_pass: true   # 6573 tests pass (Bun runtime panic at teardown is known Bun bug, not a test failure)

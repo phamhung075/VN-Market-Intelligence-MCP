@@ -28,6 +28,7 @@
  */
 
 import { buildCausalChain } from "../../domain/services/cascadeEngine.js";
+import { TelegramMessageFactory } from "../../infrastructure/notifiers/telegramMessageFactory.js";
 import type { WatchlistEntry, CausalChain, SearchResult } from "../../domain/services/cascadeEngine.js";
 import { mapPredictionToVn } from "../../domain/services/predictionCascadeMapper.js";
 import type { PredictionSignal } from "../../domain/services/predictionSignalDetector.js";
@@ -110,7 +111,7 @@ export function buildPredictionEntry(signal: PredictionSignal): AnalysisEntry {
   const summary =
     `[Prediction Market] ${signal.marketQuestion} | ` +
     `YES: ${(signal.yesPriceCurr * 100).toFixed(1)}% | ` +
-    `${signal.reasoning}`.slice(0, 500);
+    TelegramMessageFactory.formatSignalReasoning(signal.reasoning);
 
   return {
     id: `pred-${signal.marketId}-${Date.now()}`,

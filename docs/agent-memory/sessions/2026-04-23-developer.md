@@ -1,4 +1,9 @@
 
+### Task 1300a: TelegramMessageFactory + 4 briefing job migrations (14:00–14:30 UTC)
+- **Files changed**: telegramMessageFactory.ts (created), morningBriefingJob.ts, eveningSummaryJob.ts, franceSummaryJob.ts, 1300a test file
+- **Finding**: Intl.Segmenter available in Bun — grapheme-safe truncation works without polyfill. word-boundary backtrack pattern via `lastIndexOf(' ')` on grapheme-sliced string is correct.
+- **Status**: Ready for QA. Branch: task/1300a-telegram-message-factory-red
+
 ### Task 1540: Critical WAL Checkpoint Bug Fix (11:40–11:52 UTC)
 - **Status**: COMPLETE ✅
 - **Severity**: CRITICAL (4th database corruption recurrence)
@@ -151,6 +156,21 @@ Implementation patterns belong in code docs or pattern libraries, not in agent b
 - **Status**: Ready for QA
 
 ### Task: ../../../etc/passwd
+
+### Task: Task 1300b: Memory Update Tools
+- **Finding**: Agents need update_memory tool
+- **Fix**: Implemented append_session_record
+- **Status**: Ready for QA
+
+### Task: Task 1300b: Memory Update Tools
+- **Finding**: Agents need update_memory tool
+- **Fix**: Implemented append_session_record
+- **Status**: Ready for QA
+
+### Task: Task 1300b: Memory Update Tools
+- **Finding**: Agents need update_memory tool
+- **Fix**: Implemented append_session_record
+- **Status**: Ready for QA
 
 ### Task: Task 1300b: Memory Update Tools
 - **Finding**: Agents need update_memory tool

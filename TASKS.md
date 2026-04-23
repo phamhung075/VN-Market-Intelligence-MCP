@@ -72,7 +72,7 @@ AC: all 3 new test files pass, full suite ≥6508, `bun tsc --noEmit` clean, lau
 
 | ID | Title | Layer | Status | Depends | Hours |
 |----|-------|-------|--------|---------|-------|
-| 1300a (RED) | Create TelegramMessageFactory service + migrate briefing jobs | infra/application | Backlog | none | 3–4 |
+| 1300a (RED) | Create TelegramMessageFactory service + migrate briefing jobs | infra/application | Review | none | 3–4 |
 | 1300b (GREEN) | Migrate storage-layer functions to factory + full regression | domain/application | Backlog | 1300a | 2–3 |
 
 **Root Cause:** 7 truncation bugs scattered across codebase — no centralized message formatting.

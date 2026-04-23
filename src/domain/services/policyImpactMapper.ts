@@ -7,12 +7,14 @@
  *
  * Design rules:
  * - Zero imports from infrastructure/ or application/ (DDD: domain-only)
+ *   Exception: TelegramMessageFactory (pure utility for string truncation, Task 1300b)
  * - No I/O, no side effects, no async
  * - DomainType sourced from bctc-schema.ts (root-level, permitted structural import)
  */
 
 import type { DomainType } from "../../../bctc-schema.js";
 import type { ImpactDirection } from "./newsNormalizer.js";
+import { TelegramMessageFactory } from "../../infrastructure/notifiers/telegramMessageFactory.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -224,13 +226,14 @@ export function classifyPolicy(title: string, body: string): PolicySignal | null
     if (!hasKeyword(normText, rule.keywords)) continue;
 
     const direction = resolveDirection(normText, rule);
+    const formattedBody = TelegramMessageFactory.formatPolicySummary(body.trim());
 
     return {
       policyType: rule.policyType,
       affectedSectors: rule.sectors,
       affectedStocks: rule.stocks,
       direction,
-      summary: `${rule.summaryTemplate} — ${title.trim() || body.trim().slice(0, 80)}`,
+      summary: `${rule.summaryTemplate} — ${title.trim() || formattedBody}`,
       confidence: 0.75,
     };
   }
