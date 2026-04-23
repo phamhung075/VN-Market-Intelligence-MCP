@@ -65,6 +65,82 @@ function safeBool(val: unknown): boolean {
 }
 
 /**
+ * Defensive confidence extractor with fallback for missing/invalid fields.
+ *
+ * Distinguishes between "confidence=0" (legitimate low signal) and
+ * "confidence=undefined" (missing field). Applies 0.3 penalty when field
+ * is uninitialized, signaling that confidence was imputed (not real).
+ *
+ * @param findingData - Record of finding fields from agent signal
+ * @returns { confidence: number, isInitialized: boolean }
+ */
+function extractConfidence(
+  findingData: Record<string, unknown>,
+): { confidence: number; isInitialized: boolean } {
+  const raw = findingData["confidence"];
+
+  // Distinguish undefined/null from legitimate 0
+  if (raw === undefined || raw === null) {
+    console.warn(
+      `[ChainSynthesizer] Uninitialized confidence field detected. Applying fallback (0.3 penalty).`,
+    );
+    return { confidence: 0.3, isInitialized: false };
+  }
+
+  // Valid numeric confidence
+  if (typeof raw === "number") {
+    const clamped = Math.max(0, Math.min(1, raw));
+    return { confidence: clamped, isInitialized: true };
+  }
+
+  // Coerce string to number (edge case)
+  const coerced = Number(raw);
+  if (!isNaN(coerced)) {
+    console.warn(
+      `[ChainSynthesizer] Coerced confidence from ${typeof raw} to number: ${coerced}`,
+    );
+    const clamped = Math.max(0, Math.min(1, coerced));
+    return { confidence: clamped, isInitialized: true };
+  }
+
+  // Unparseable type — fallback
+  console.error(
+    `[ChainSynthesizer] Invalid confidence type: ${typeof raw}. Applying fallback (0.3 penalty).`,
+  );
+  return { confidence: 0.3, isInitialized: false };
+}
+
+/**
+ * Defensive direction extractor with fallback for missing/invalid fields.
+ *
+ * Returns the direction from findingData, defaulting to "neutral" if missing.
+ * Logs warnings for invalid directions.
+ *
+ * @param findingData - Record of finding fields from agent signal
+ * @returns "bullish" | "bearish" | "neutral"
+ */
+function extractDirection(
+  findingData: Record<string, unknown>,
+): "bullish" | "bearish" | "neutral" {
+  const raw = findingData["direction"];
+  const dir = safeStr(raw);
+
+  if (dir === "bullish" || dir === "bearish") {
+    return dir;
+  }
+
+  // Missing or invalid direction defaults to neutral
+  if (!dir || typeof raw !== "string") {
+    console.warn(
+      `[ChainSynthesizer] Missing or invalid direction field. Defaulting to "neutral".`,
+    );
+    return "neutral";
+  }
+
+  return "neutral";
+}
+
+/**
  * Determine the dominant direction from all links.
  * Returns "bullish" | "bearish" | "neutral".
  */
@@ -72,7 +148,7 @@ function dominantDirection(links: ChainLink[]): "bullish" | "bearish" | "neutral
   let bull = 0;
   let bear = 0;
   for (const link of links) {
-    const dir = safeStr(link.findingData["direction"]);
+    const dir = extractDirection(link.findingData ?? {});
     if (dir === "bullish") bull++;
     else if (dir === "bearish") bear++;
   }
@@ -142,9 +218,29 @@ export function synthesizeChain(links: ChainLink[]): SynthesizedChain | null {
   const rootLink = sorted[0]!;
   const rootId = rootLink.id;
 
-  // ── Conviction calculation ───────────────────────────────────────────────
-  // Base: average of all findingData.confidence values
-  const confidences = sorted.map(l => safeNum(l.findingData["confidence"]));
+  // ── Conviction calculation with defensive confidence extraction ──────────
+  // Use extractConfidence to handle missing/invalid fields with fallbacks
+  const confidences: number[] = [];
+  const uninitializedLinks: string[] = [];
+
+  for (const link of sorted) {
+    const { confidence, isInitialized } = extractConfidence(
+      link.findingData ?? {},
+    );
+    confidences.push(confidence);
+
+    if (!isInitialized) {
+      uninitializedLinks.push(`${link.id} (${link.agent})`);
+    }
+  }
+
+  // Log if any links had uninitialized confidence fields
+  if (uninitializedLinks.length > 0) {
+    console.warn(
+      `[ChainSynthesizer] Chain ${rootId} (${stockCode}): ${uninitializedLinks.length} of ${links.length} links had uninitialized confidence. Links: ${uninitializedLinks.join(", ")}`,
+    );
+  }
+
   const base =
     confidences.length > 0
       ? confidences.reduce((s, c) => s + c, 0) / confidences.length
@@ -202,9 +298,10 @@ export function synthesizeChain(links: ChainLink[]): SynthesizedChain | null {
   };
 
   // ── Confidence breakdown ─────────────────────────────────────────────────
-  const confidenceBreakdown = sorted.map(l => ({
+  // Use the confidences array we already extracted above (with fallbacks applied)
+  const confidenceBreakdown = sorted.map((l, idx) => ({
     agent: l.agent,
-    confidence: safeNum(l.findingData["confidence"]),
+    confidence: confidences[idx]!,
   }));
 
   // ── Narrative ────────────────────────────────────────────────────────────

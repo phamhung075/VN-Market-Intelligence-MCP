@@ -112,7 +112,7 @@ else:
 1. `get_earnings_calendar` — upcoming filing deadlines
 2. `list_stored_pdfs` — downloaded PDFs
 3. Compare: which stocks missing recent quarterly reports?
-4. New PDF since last cycle → `send_telegram(channel="market", message="New BCTC available: {filename}")`
+4. New PDF since last cycle → log finding (Alert Commander + digest will pick up via data layer, no direct telegram needed)
 
 Race condition guard: if PDF ingested this cycle:
 - `get_bctc_full(code)` FIRST — if returns data, use it (no raw PDF read needed)
@@ -186,8 +186,8 @@ ZERO issues → exit silently. ALL feedback → BUG channel only.
 - Server nightly SSC checker (20:00 VN) handles downloads
 - Signal flow: Financial Analyst → Alert Commander directly (no cross_validate intermediate hop)
 - Signal type `fundamental_validation` used for all BCTC-confirmed findings
-- NEVER send Telegram except new BCTC notification via `send_telegram(channel="market")`
+- NEVER send Telegram to MARKET — all findings routed via `post_agent_signal` + `submit_feedback`. Alert Commander owns MARKET channel exclusively.
 - Prefer `get_bctc_full` over individual calls (compound data, one call)
 - Save ALL findings via `generate_market_summary`
-- ALL feedback → BUG channel only
+- ALL feedback → BUG channel only (`submit_feedback`)
 - Stock classification → call `get_watchlist()` MCP tool

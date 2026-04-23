@@ -49,71 +49,22 @@ echo "$QUEUE" | jq -c '.queue[]' 2>/dev/null | while read -r ITEM; do
     continue
   fi
 
-  PDF_URL=""
-  
-  # Try 1: HOSE portal (https://www.hsx.vn/Modules/CMS/Web/ArticleList?category=BCTC&issuerCode=CODE)
-  echo "$(date -u) $CODE $YEAR-$QTR: trying HOSE portal..." >> "$LOG"
-  HOSE_URL="https://www.hsx.vn/Modules/CMS/Web/ArticleList?category=BCTC&issuerCode=$CODE"
-  HOSE_HTML=$(curl -s --connect-timeout 10 --max-time 30 \
-    -H "User-Agent: VN-Market-Intelligence/1.0" \
-    "$HOSE_URL" 2>/dev/null || echo "")
-  
-  if [ ! -z "$HOSE_HTML" ]; then
-    # Extract PDF URLs from HOSE HTML (look for .pdf links in href attributes)
-    # Pattern: href="/Modules/CMS/Web/Article/...pdf" or similar
-    PDF_URL=$(echo "$HOSE_HTML" | grep -oP 'href="[^"]*\.pdf"' | head -1 | sed 's/href="\|"//g')
-    if [ ! -z "$PDF_URL" ]; then
-      # Resolve relative URLs to absolute
-      if [[ "$PDF_URL" != http* ]]; then
-        PDF_URL="https://www.hsx.vn${PDF_URL}"
-      fi
-      echo "$(date -u) $CODE $YEAR-$QTR: found PDF on HOSE: $PDF_URL" >> "$LOG"
-    fi
-  fi
-  
-  # Try 2: HNX portal (https://hnx.vn/cong-bo-thong-tin/cong-ty-co-phan.html?StockCode=CODE)
-  if [ -z "$PDF_URL" ]; then
-    echo "$(date -u) $CODE $YEAR-$QTR: trying HNX portal..." >> "$LOG"
-    HNX_URL="https://hnx.vn/cong-bo-thong-tin/cong-ty-co-phan.html?StockCode=$CODE"
-    HNX_HTML=$(curl -s --connect-timeout 10 --max-time 30 \
-      -H "User-Agent: VN-Market-Intelligence/1.0" \
-      "$HNX_URL" 2>/dev/null || echo "")
-    
-    if [ ! -z "$HNX_HTML" ]; then
-      PDF_URL=$(echo "$HNX_HTML" | grep -oP 'href="[^"]*\.pdf"' | head -1 | sed 's/href="\|"//g')
-      if [ ! -z "$PDF_URL" ]; then
-        if [[ "$PDF_URL" != http* ]]; then
-          PDF_URL="https://hnx.vn${PDF_URL}"
-        fi
-        echo "$(date -u) $CODE $YEAR-$QTR: found PDF on HNX: $PDF_URL" >> "$LOG"
-      fi
-    fi
-  fi
-  
-  # Try 3: UPCOM portal (https://upcom.hnx.vn/cong-bo-thong-tin/cong-ty-co-phan.html?StockCode=CODE)
-  if [ -z "$PDF_URL" ]; then
-    echo "$(date -u) $CODE $YEAR-$QTR: trying UPCOM portal..." >> "$LOG"
-    UPCOM_URL="https://upcom.hnx.vn/cong-bo-thong-tin/cong-ty-co-phan.html?StockCode=$CODE"
-    UPCOM_HTML=$(curl -s --connect-timeout 10 --max-time 30 \
-      -H "User-Agent: VN-Market-Intelligence/1.0" \
-      "$UPCOM_URL" 2>/dev/null || echo "")
-    
-    if [ ! -z "$UPCOM_HTML" ]; then
-      PDF_URL=$(echo "$UPCOM_HTML" | grep -oP 'href="[^"]*\.pdf"' | head -1 | sed 's/href="\|"//g')
-      if [ ! -z "$PDF_URL" ]; then
-        if [[ "$PDF_URL" != http* ]]; then
-          PDF_URL="https://upcom.hnx.vn${PDF_URL}"
-        fi
-        echo "$(date -u) $CODE $YEAR-$QTR: found PDF on UPCOM: $PDF_URL" >> "$LOG"
-      fi
-    fi
-  fi
+  # Step 2a: Try browser-based discovery (handles JavaScript-rendered portals)
+  echo "$(date -u) $CODE $YEAR-$QTR: discovering with browser automation..." >> "$LOG"
+  DISCOVERY_JSON=$(python3 /root/discover-bctc-urls-browser.py "$CODE" "$YEAR" "$QTR" 2>/dev/null || echo '{"results":[],"error":"discovery failed"}')
+
+  PDF_URL=$(echo "$DISCOVERY_JSON" | jq -r '.results[0].url // empty' 2>/dev/null)
+  SOURCE=$(echo "$DISCOVERY_JSON" | jq -r '.results[0].source // empty' 2>/dev/null)
+  CONFIDENCE=$(echo "$DISCOVERY_JSON" | jq -r '.results[0].confidence // 0' 2>/dev/null)
   
   # If no PDF found, skip this item
   if [ -z "$PDF_URL" ]; then
-    echo "$(date -u) $CODE $YEAR-$QTR: no PDF URL found in any portal" >> "$LOG"
+    ERROR=$(echo "$DISCOVERY_JSON" | jq -r '.error // "Unknown error"' 2>/dev/null)
+    echo "$(date -u) $CODE $YEAR-$QTR: discovery failed — $ERROR" >> "$LOG"
     continue
   fi
+
+  echo "$(date -u) $CODE $YEAR-$QTR: discovered from $SOURCE (confidence: $CONFIDENCE)" >> "$LOG"
   
   # Step 3: POST discovered URL back to main server
   PAYLOAD=$(cat <<EOF
