@@ -14,15 +14,6 @@ if [[ ! -d "$AGENTS_DIR" ]]; then
   exit 1
 fi
 
-# Map short names to full model IDs
-get_full_model() {
-  case "$1" in
-    haiku) echo "claude-haiku-4-5-20251001" ;;
-    sonnet) echo "claude-sonnet-4-6" ;;
-    *) echo "unknown" ;;
-  esac
-}
-
 show_usage() {
   echo "Usage: $0 <mode>"
   echo ""
@@ -52,8 +43,7 @@ echo "🔄 Switching to mode: $MODE"
 AGENTS=$(jq -r ".modes.\"$MODE\".agents | to_entries[] | .key" "$CONFIG_FILE")
 
 for AGENT in $AGENTS; do
-  MODEL_SHORT=$(jq -r ".modes.\"$MODE\".agents.\"$AGENT\"" "$CONFIG_FILE")
-  MODEL_FULL=$(get_full_model "$MODEL_SHORT")
+  MODEL=$(jq -r ".modes.\"$MODE\".agents.\"$AGENT\"" "$CONFIG_FILE")
   AGENT_FILE="$AGENTS_DIR/${AGENT}.md"
   
   if [[ ! -f "$AGENT_FILE" ]]; then
@@ -67,10 +57,10 @@ for AGENT in $AGENTS; do
   
   # Update model in frontmatter (or add if not present)
   if echo "$FRONTMATTER" | grep -q "^model:"; then
-    UPDATED_FRONTMATTER=$(echo "$FRONTMATTER" | sed "s/^model:.*/model: $MODEL_FULL/")
+    UPDATED_FRONTMATTER=$(echo "$FRONTMATTER" | sed "s/^model:.*/model: $MODEL/")
   else
     UPDATED_FRONTMATTER=$(echo "$FRONTMATTER" | sed "/^---$/i\\
-model: $MODEL_FULL")
+model: $MODEL")
   fi
   
   # Reconstruct file
@@ -78,7 +68,7 @@ model: $MODEL_FULL")
   echo "---" >> "$AGENT_FILE"
   echo "$BODY" >> "$AGENT_FILE"
   
-  echo "✓ $AGENT → $MODEL_SHORT"
+  echo "✓ $AGENT → $MODEL"
 done
 
 # Update current_mode in config
