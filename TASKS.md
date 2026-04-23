@@ -16,41 +16,49 @@
 > Sprints 1278–1282 archived: `docs/archive/sprints-1278-1282.md` (includes MSCI inclusion + agriculture weather cascades + data freshness monitoring tool, BCTC timeout fix, all merged)
 > Sprints 1282–1289 archived: `docs/archive/sprints-1282-1289.md` (includes data freshness monitoring tool, foreign flow circuit breaker diagnostics, insider selling sentiment fix, BCTC async queue enrichment, foreign flow fallback fetcher, parse errors root-cause fix, all merged)
 > Sprints 1290–1290 archived: `docs/archive/sprints-1290-1290.md` (includes foreign flow fallback fetcher integration into scheduler job, merged)
+> Sprints 1291–1294 archived: `docs/archive/sprints-1291-1294.md` (includes Alert signal payload schema hardening + Signal Payload Enrichment & BCTC Fallback Resilience, 6 subtasks total, all merged)
 
 ---
 
+## Sprint 1295: Signal Payload Quality Enforcement — Typed Builders (18h total)
+
+| ID | Title | Layer | Status | Depends | Hours |
+|----|-------|-------|--------|---------|-------|
+| 1295a | Signal Builders (4 classes: Chain, Price, Urgent, Cross) | domain | Review | none | 8 |
+| 1295b | Agent Spec Update (01-news-scout, 04-market-watcher) | docs | Todo | 1295a | 4 |
+| 1295c | Signal Quality Audit Service (monthly cron + dashboard) | application | Todo | 1295a | 4 |
+| 1295d | Integration Test (E2E: builder → MCP → DB → synthesis) | tests | Todo | 1295a, 1295b, 1295c | 2 |
+
 ---
 
-## Sprint 1294: Signal Payload Enrichment & BCTC Fallback Resilience
+### Task Details — Sprint 1295
 
-**Goal**: Restore signal chain completeness (IMF sentiment context) and improve BCTC extraction resilience (PDF timeout fallback to news context). Combines backlog items 1284 + 1267.
+#### 1295a: Signal Builders (8h, RED phase)
+context: docs/handoffs/TASK_1295a.md
+- CREATE: src/domain/signals/signalBuilders.ts (4 builder classes + factory functions)
+- CREATE: src/__tests__/1295a-signal-builders.test.ts (16 assertions)
+- MODIFY: src/domain/signals/index.ts (barrel export builders)
+- Each builder: fluent API, enforces required fields, reuses Zod schemas (1293a)
 
-| ID | Title | Status | Priority |
-|----|-------|--------|----------|
-| 1294a | IMF context sentiment detection | Done | MEDIUM |
-| 1294b | BCTC PDF timeout fallback to news chain | Done | MEDIUM |
+#### 1295b: Agent Spec Update (4h, documentation)
+context: docs/handoffs/TASK_1295b.md
+- MODIFY: .claude/agents/01-news-scout.md (add builder import + usage)
+- MODIFY: .claude/agents/04-market-watcher.md (add builder import + usage)
+- MODIFY: docs/agent-memory/patterns/signal-payload-quality.md (prevention pattern)
+- No automated tests (manual review + agent simulator)
 
-### Task 1294a: IMF Context Sentiment Detection
+#### 1295c: Signal Quality Audit Service (4h, GREEN phase)
+context: docs/handoffs/TASK_1295c.md
+- CREATE: src/application/services/signalQualityAudit.ts (queryRejectionStats + generateAuditReport)
+- CREATE: src/scheduler/audits/monthlySignalQualityJob.ts (cron: 1st month 00:00 UTC, alert threshold 2%)
+- CREATE: src/__tests__/1295c-signal-quality-audit.test.ts (10+ assertions)
+- MODIFY: src/application/services/index.ts, src/scheduler/cron-registry.ts
 
-context: docs/handoffs/TASK_1294a.md
-
-**Report**: reports/TASK_REPORT_1294a.md
-**Effort**: 7h
-**Depends on**: baseline ✓
-**Status**: Done (merged to main, commit 57132546)
-
-**Summary**: Pure domain service for IMF sentiment detection. 5 RED tests GREEN, 100% coverage, 6421/6421 full suite PASS, DDD compliant, security audit PASS. Deferred pollNews.ts integration to follow-up task. Ready for production.
-
-### Task 1294b: BCTC PDF Timeout Fallback
-
-context: docs/handoffs/TASK_1294b.md
-
-**Report**: reports/TASK_REPORT_1294b.md
-**Effort**: 8–10h (completed)
-**Depends on**: 1294a (IMF sentiment must populate signals.newsSentiment first) ✓
-**Status**: Done (merged to main, commit 193cb8ca)
-
-**Summary**: Fallback mechanism for PDF timeout scenarios. 7 RED tests GREEN (RED 8 non-blocking — parser limitation), 6428/6428 full suite PASS, DDD compliant, security audit PASS. Implements signal-based inference with temporal discounting and confidence penalties. Production ready.
+#### 1295d: Integration Test (2h, GREEN phase)
+context: docs/handoffs/TASK_1295d.md
+- CREATE: src/__tests__/1295d-integration-builders-to-synthesis.test.ts (12+ assertions, E2E flow)
+- CREATE: docs/agent-memory/modules/signalBuilders.md (module analysis)
+- MODIFY: docs/agent-memory/patterns/signal-payload-quality.md (builder prevention section)
 
 ---
 
