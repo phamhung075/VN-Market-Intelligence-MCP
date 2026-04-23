@@ -8,8 +8,8 @@
 
 | Phase | Title | Owner | Duration | Status |
 |-------|-------|-------|----------|--------|
-| 1297a | Audit Phase II — Fail-Loud Protocol Injection (remaining 14 agents) | PM | 2–3h | Backlog |
-| 1297b | BCTC Portal URL Discovery Fix (unblock historical backfill) | Developer | 4–6h | Backlog |
+| 1297a | Audit Phase II — Fail-Loud Protocol Injection (16 agents) | PM | 2–3h | ✓ Done |
+| 1297b | BCTC Portal URL Discovery Fix (unblock historical backfill) | Developer | 4–6h | Todo |
 | 1297c | VPS Validation of BCTC Portal Fix | Ops | 1–2h | Backlog |
 
 **Why:**
@@ -18,7 +18,7 @@
 - **1297c**: After URLs fixed, OPS validates on VPS (3 test stocks: VNM, BID, FPT Q4 2024) and executes full backfill.
 
 **Success Metrics:**
-- **1297a**: All 22 agent files (.claude/agents/*.md) have fail-loud protocol sections + reference to canonical .claude/knowledge/fail-loud-protocol.md
+- **1297a**: ✓ All 21 agent files (.claude/agents/*.md) have fail-loud protocol sections + reference to `.claude/knowledge/fail-loud-protocol.md`. Commit: 98ab4bd0
 - **1297b**: vps-scripts/discover-bctc-urls-browser.py updated with correct portal endpoints, ≥2 of 3 test stocks return valid PDFs
 - **1297c**: Full 37×8 historical backfill completes, DB has BCTC data for all quarters Q1 2023–Q4 2024
 
@@ -26,7 +26,7 @@
 
 **Priority:** HIGH (affects system reliability + unlocks market analysis depth)
 
-**Status:** PLANNING (1297a ready to queue, 1297b ready to queue after 1297a, 1297c awaits 1297b completion)
+**Status:** Phase 1297a complete (commit 98ab4bd0). Developer queued for 1297b. 1297c awaits 1297b completion.
 
 ---
 

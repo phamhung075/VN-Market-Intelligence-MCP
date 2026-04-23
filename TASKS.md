@@ -34,24 +34,24 @@
 
 ---
 
-## Sprint 1297: Critical System Reliability & BCTC Historical Backfill (7–11h total) — PLANNING
+## Sprint 1297: Critical System Reliability & BCTC Historical Backfill (7–11h total) — IN PROGRESS
 
 | ID | Title | Layer | Status | Depends | Hours |
 |----|-------|-------|--------|---------|-------|
-| 1297a | Audit Phase II — Fail-Loud Protocol Injection (14 agents) | docs | Backlog | none | 2–3 |
-| 1297b | BCTC Portal URL Discovery Fix (unblock historical backfill) | vps-scripts | Backlog | none | 4–6 |
+| 1297a | Audit Phase II — Fail-Loud Protocol Injection (16 agents) | docs | Done | none | 2–3 |
+| 1297b | BCTC Portal URL Discovery Fix (unblock historical backfill) | vps-scripts | Todo | none | 4–6 |
 | 1297c | VPS Validation of BCTC Portal Fix | ops | Backlog | 1297b | 1–2 |
 
-**Goal:** Fix two critical blockers: (1) remaining 14 agent files lack fail-loud protocol (robustness), and (2) BCTC portal discovery script has broken URLs (blocks 37×8 historical backfill).
+**Goal:** Fix two critical blockers: (1) fail-loud protocol injected into all 21 agent files (robustness achieved), and (2) BCTC portal discovery script needs URL investigation + fix (blocks 37×8 historical backfill).
 
-**Status:** PLANNING — 1297a ready to queue for PM, 1297b ready to queue for Developer, 1297c awaits 1297b completion.
+**Status:** Phase 1297a complete. Queuing Developer for 1297b. 1297c awaits 1297b completion.
 
 ---
 
 ### Task Details — Sprint 1297
 
 #### 1297a: Audit Phase II — Fail-Loud Protocol Injection (2–3h)
-**Status:** Backlog (ready to start)
+**Status:** Done ✓ (merged 98ab4bd0)
 **Owner:** PM
 **Context:** Sprint 1296 (and recent audit) added fail-loud protocol sections to 5 critical agents (ba.md, architect.md, developer.md, fixer.md, pm.md). Remaining 14 agents (.claude/agents/*.md) still lack these sections.
 
@@ -66,13 +66,13 @@
 - Validation: confirm all 22 agents have the section (simple grep check)
 
 **Acceptance Criteria:**
-- [ ] All 14 remaining agent files updated with fail-loud protocol sections
-- [ ] Each section references `.claude/knowledge/fail-loud-protocol.md`
-- [ ] Commit message clearly states "Audit 1297a" + "14 agents"
-- [ ] Verification: `grep -l "fail-loud protocol" .claude/agents/*.md | wc -l` returns 22
+- [x] All 16 remaining agent files updated with fail-loud protocol sections (01-news-scout, 02-financial-analyst, 04-market-watcher, 05-alert-commander, 06-digest-predict, 07-qa-responder, claude-manager-helper, code-janitor, cowork-refactory-expert, idea-forge, market-analyst, ops, po, qa, system-auditor, unified-agent)
+- [x] Each section references `.claude/knowledge/fail-loud-protocol.md`
+- [x] Commit: 98ab4bd0 "chore(1297a): Inject fail-loud protocol into 16 remaining agents"
+- [x] Verification: 21/21 agents have fail-loud protocol section (all .claude/agents/*.md files)
 
 #### 1297b: BCTC Portal URL Discovery Fix (4–6h)
-**Status:** Backlog (waiting for developer)
+**Status:** Todo (queued for Developer)
 **Owner:** Developer
 **Context:** Task 1289g investigation identified broken BCTC portal URLs. Validation test (0/3 stocks returned PDFs) failed. Root cause: HOSE URL returns 404, HNX/UPCOM PDFs non-discoverable.
 
