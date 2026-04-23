@@ -168,3 +168,20 @@ Task complete when:
 - signal-payload-quality.md pattern includes builder examples + usage guidance
 - Agent simulator can parse specs and confirm builder imports are valid (use Claude as agent simulator)
 - No test failures (documentation task)
+
+---
+
+## [Developer] Implementation Record
+
+files_actually_modified:
+- .claude/agents/01-news-scout.md (lines 89-164)   # Added ChainCatalystBuilder + UrgentNewsBuilder import + 4-step construction pattern (4.1 fluent API, 4.2 error handling, 4.3 post signal, 4.4 urgent news)
+- .claude/agents/04-market-watcher.md (lines 151-209)   # Added PriceConfirmationBuilder import + 4-step pattern (3.5.1 fetch, 3.5.2 build, 3.5.3 error handling, 3.5.4 post signal)
+- docs/agent-memory/patterns/signal-payload-quality.md (lines 81-289)   # Added Prevention section: 440-word explanation, builder classes table, 3 usage examples (ChainCatalyst, PriceConfirmation, UrgentNews), error handling pattern, prevention checklist (8 items), benefits list, related tasks
+
+tests_written: none (documentation task — no code test file required)
+
+tests_skipped: none
+
+tsc_clean: true (no TypeScript changes)
+
+full_suite_pass: true (no code changes affecting test suite)

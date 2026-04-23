@@ -98,10 +98,11 @@ async def discover_from_hose(browser: Browser, code: str, year: int, quarter: st
 
     Portal: https://www.hsx.vn/Modules/CMS/Web/ArticleList?category=BCTC&issuerCode={CODE}
     Strategy:
-    1. Navigate and wait for page load (networkidle)
-    2. Query all <a> elements with href containing ".pdf"
-    3. Filter by quarter + year in link text
-    4. Return first match with confidence 0.95
+    1. Navigate to page (wait for networkidle first)
+    2. Wait for PDFs to appear via JavaScript detection (hybrid approach)
+    3. Query all <a> elements with href containing ".pdf"
+    4. Filter by quarter + year in link text
+    5. Return first match with confidence 0.95
     """
     page = None
     try:
@@ -109,6 +110,17 @@ async def discover_from_hose(browser: Browser, code: str, year: int, quarter: st
         url = f"https://www.hsx.vn/Modules/CMS/Web/ArticleList?category=BCTC&issuerCode={code}"
 
         await page.goto(url, timeout=30000, wait_until="networkidle")
+
+        # Hybrid wait strategy: detect when PDFs actually render in DOM
+        # PDFs are loaded via AJAX after networkidle, so we must wait for them
+        try:
+            await page.wait_for_function(
+                "() => document.querySelectorAll('a[href*=\".pdf\"]').length > 0",
+                timeout=3000
+            )
+        except PlaywrightTimeoutError:
+            # Fallback: wait 2 seconds for any remaining JS execution
+            await page.wait_for_timeout(2000)
 
         # Find all PDF links
         pdf_links = await page.query_selector_all('a[href*=".pdf"]')
@@ -159,6 +171,16 @@ async def discover_from_hnx(browser: Browser, code: str, year: int, quarter: str
         url = f"https://hnx.vn/cong-bo-thong-tin/cong-ty-co-phan.html?StockCode={code}"
 
         await page.goto(url, timeout=30000, wait_until="networkidle")
+
+        # Hybrid wait strategy: detect when PDFs actually render in DOM
+        try:
+            await page.wait_for_function(
+                "() => document.querySelectorAll('a[href*=\".pdf\"]').length > 0",
+                timeout=3000
+            )
+        except PlaywrightTimeoutError:
+            # Fallback: wait 2 seconds for any remaining JS execution
+            await page.wait_for_timeout(2000)
 
         pdf_links = await page.query_selector_all('a[href*=".pdf"]')
 
@@ -212,6 +234,16 @@ async def discover_from_upcom(browser: Browser, code: str, year: int, quarter: s
         url = f"https://upcom.hnx.vn/cong-bo-thong-tin/cong-ty-co-phan.html?StockCode={code}"
 
         await page.goto(url, timeout=30000, wait_until="networkidle")
+
+        # Hybrid wait strategy: detect when PDFs actually render in DOM
+        try:
+            await page.wait_for_function(
+                "() => document.querySelectorAll('a[href*=\".pdf\"]').length > 0",
+                timeout=3000
+            )
+        except PlaywrightTimeoutError:
+            # Fallback: wait 2 seconds for any remaining JS execution
+            await page.wait_for_timeout(2000)
 
         pdf_links = await page.query_selector_all('a[href*=".pdf"]')
 

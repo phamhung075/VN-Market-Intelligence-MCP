@@ -325,3 +325,85 @@ Updated: `/docs/agent-memory/patterns/signal-payload-quality.md`
 **Patterns found**: Signal Payload Quality (type + implementation + integration + testing + pre-emit gap)
 **Architecture decision**: Option A (Typed Builders) + monthly audit
 **Result**: TECH_1295.md + implementation plan ready for dev team
+
+---
+
+## Task 1289 BCTC Portal Discovery — Root-Cause Investigation (2026-04-23 ongoing)
+
+**Time**: 2026-04-23 (02:36 UTC onwards)
+**Status**: INVESTIGATION HANDOFF READY
+
+### Context
+
+Task 1289f (BCTC PDF discovery via Playwright) deployed but backfill execution returned **0 PDFs discovered**. Prior investigation showed:
+- Option B (Direct API to hsx.vn/api/bctc, etc.) failed — endpoints return 404 (don't exist)
+- Reverted to Option A (Playwright browser automation) — current deployed solution
+- But discovery still failing; script runs without errors but finds no PDFs
+
+### Root-Cause Unknown
+
+Possible explanations:
+1. CSS selector `a[href*=".pdf"]` doesn't match actual portal HTML
+2. PDFs loaded after `networkidle` event (AJAX timing issue)
+3. Form not being submitted properly (stays on search page)
+4. Portal updated its HTML structure since original Task 1289f design
+5. Bot blocking or authentication required
+
+### Investigation Approach
+
+**Created:** `docs/BCTC_PORTAL_FORM_INVESTIGATION.md`
+- Comprehensive 4-phase investigation protocol
+- Methodology for reverse-engineering portals with DevTools
+- Portal-specific investigation templates (HOSE, HNX, UPCOM, SSC)
+- Common issues & diagnostics
+- Output format for Developer
+
+**Created:** `docs/handoffs/TASK_1289_PORTAL_INVESTIGATION.md`
+- Handoff document for Developer
+- Scope + success criteria
+- Expected deliverables
+- Timeline (2–3 hours investigation, 6–9 hours total fix)
+- Findings template
+
+### Architecture Decision
+
+**Recommended approach**: Manual DevTools investigation of each portal
+1. **Developer opens portal in Chrome/Firefox with DevTools**
+2. **Follows Phase 1–4 investigation checklist**
+3. **Documents form structure, AJAX endpoints, PDF selectors**
+4. **Creates portal-specific structure documents**
+5. **Updates Playwright script with correct selectors + wait strategies**
+
+**Why manual investigation necessary:**
+- Portals are live government services (change frequently)
+- Playwright timeout/selector issues require hands-on debugging
+- Cannot reverse-engineer from code alone; need to see actual rendering
+- High confidence findings enable 80%+ discovery rate on first try
+
+### Risk Assessment
+
+| Risk | Probability | Impact | Mitigation |
+|------|-------------|--------|-----------|
+| Portal structure completely changed | Low | High | Use SSC as fallback, accept 50% discovery rate |
+| Bot detection blocks Playwright | Low | High | Investigate headers + cookies, may need Selenoid/BrowserStack proxy |
+| AJAX timing issue unfixable | Very Low | Medium | Switch to direct API (if endpoints become public) |
+| Investigation takes >4 hours | Medium | Medium | Time-box at 3h, escalate findings to Architect for alternative approach |
+
+### Success Criteria
+
+Investigation successful when:
+- [ ] All 4 portals navigable and forms testable
+- [ ] CSS selectors for PDFs identified (or documented as not applicable)
+- [ ] Quarter/year extraction method confirmed
+- [ ] AJAX endpoints (if any) captured in Network tab
+- [ ] Confidence ≥70% for at least 2 portals (HOSE + HNX)
+- [ ] Playwright script update plan written + pseudo-code provided
+
+### Status
+
+- Investigation documents: **CREATED** (ready for Developer)
+- Handoff documentation: **COMPLETE**
+- Expected investigation start: 2026-04-24 (Dev Team)
+- Expected fix completion: 2026-04-25 or 2026-04-26 (pending investigation complexity)
+
+**Next step**: Assign to Developer. Expected deliverable: Portal structure documents + findings report by 2026-04-25 EOD.

@@ -69,6 +69,7 @@ import { runVpsHealthPolling } from './system/vpsServiceHealthJob.js'
 import { runFreshnessSlaMonitorJob } from './system/freshnessSlaMonitorJob.js'
 import { macroIndicatorRefreshJob, validateMacroFreshnessOnStartup } from './macro/index.js'
 import { runForeignFlowFetcherJobCron } from './market-data/foreignFlowFetcherJob.js'
+import { runMonthlySignalQualityJob } from './audits/monthlySignalQualityJob.js'
 import { getDb } from '../infrastructure/db/schema.js'
 import { recordJobRun } from '../infrastructure/db/cronJobRunStore.js'
 import type { Database } from 'bun:sqlite'
@@ -165,6 +166,8 @@ export const CRONS = {
   macroIndicatorRefresh:  Bun.env.CRON_MACRO_INDICATOR_REFRESH            ?? '0 6 * * *',
   /** Foreign flow fallback fetcher: every minute (60 seconds) — task 1290 */
   foreignFlowFetch:       Bun.env.CRON_FOREIGN_FLOW_FETCH                  ?? '*/1 * * * *',
+  /** Monthly signal quality audit: 1st of month 00:00 UTC — task 1295c */
+  monthlySignalQualityAudit: Bun.env.CRON_MONTHLY_SIGNAL_QUALITY_AUDIT     ?? '0 0 1 * *',
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -378,6 +381,15 @@ export function startScheduler() {
     quarterly: CRONS.summaryQuarterly,
     yearly:    CRONS.summaryYearly,
   })
+
+  // 1st of month 00:00 UTC — Monthly signal quality audit — task 1295c
+  // Queries signal_rejections from prior month and generates audit report.
+  // Alerts to WORK channel if rejection rate exceeds 2%.
+  cron.schedule(CRONS.monthlySignalQualityAudit, async () => {
+    await recordJobRun(getDb(), 'monthlySignalQualityAuditJob', async () => {
+      await runMonthlySignalQualityJob()
+    })
+  }, { timezone: 'UTC' })
 
   // dataAuditJob:daily — recordJobRun called inside runDailyAudit() — task 157
   cron.schedule(CRONS.dataAuditDaily, async () => {
