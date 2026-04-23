@@ -19,46 +19,33 @@
 
 ---
 
-## Sprint 1293: Alert Signal Payload Schema Hardening
-
-**Goal**: Restore 4-AND opportunity alerts by fixing missing numeric payload fields in chain_catalyst/price_confirmation signals. 5 bullish signals (VIC 9.5, NVL 8, BSR 7.5, HPG, VNM) suppressed 2026-04-23 02:36 cycle.
-
-| ID | Title | Status | Priority |
-|----|-------|--------|----------|
-| 1293a | Create strict signal type interfaces (domain/signals) | Done | CRITICAL |
-| 1293b | MCP tool validation for chain signals | Done | CRITICAL |
-| 1293c | DB audit log for rejections | Done | HIGH |
-| 1293d | Defensive fallbacks in synthesizer | Done | HIGH |
-
-### Task 1293a: Strict Signal Type Interfaces
-
-context: docs/handoffs/TASK_1293a.md
-
-### Task 1293b: MCP Tool Validation
-
-context: docs/handoffs/TASK_1293b.md
-
-### Task 1293c: Signal Rejection Audit Log
-
-context: docs/handoffs/TASK_1293c.md
-
-### Task 1293d: Domain Fallback Safety
-
-context: docs/handoffs/TASK_1293d.md
-
 ---
 
-## Sprint 1291: Phase 2 Enhancement — Browser-Based BCTC PDF Discovery
+## Sprint 1294: Signal Payload Enrichment & BCTC Fallback Resilience
 
-**Goal**: Upgrade Phase 2 BCTC enricher (Task 1289c–e) with browser automation to handle CSR portals. Current shell script (curl + grep) fails on JavaScript-rendered HTML. Replace with Playwright/Chromium on VPS to discover direct PDF URLs from HOSE/HNX/UPCOM.
+**Goal**: Restore signal chain completeness (IMF sentiment context) and improve BCTC extraction resilience (PDF timeout fallback to news context). Combines backlog items 1284 + 1267.
 
 | ID | Title | Status | Priority |
 |----|-------|--------|----------|
-| 1289f | Browser-based BCTC PDF URL discovery script for VPS | Done | HIGH |
+| 1294a | IMF context sentiment detection | Todo | MEDIUM |
+| 1294b | BCTC PDF timeout fallback to news chain | Todo | MEDIUM |
 
-### Task 1289f: Browser-Based BCTC PDF Discovery Script
+### Task 1294a: IMF Context Sentiment Detection
 
-context: docs/handoffs/TASK_1289f.md
+context: docs/handoffs/TASK_1294a.md
+
+**Branch**: task/1294a-imf-sentiment
+**Effort**: 7h
+**Depends on**: baseline ✓
+**Status**: Review
+
+### Task 1294b: BCTC PDF Timeout Fallback
+
+context: docs/handoffs/TASK_1294b.md
+
+**Branch**: task/1294b-bctc-fallback
+**Effort**: 8–10h
+**Depends on**: 1294a (IMF sentiment must populate signals.newsSentiment first)
 
 ---
 
@@ -66,8 +53,6 @@ context: docs/handoffs/TASK_1289f.md
 
 | ID | Title | Priority | Notes |
 |----|----|----------|-------|
-| 1284 | IMF context sentiment detection | MEDIUM | Policy vs crisis distinction |
-| 1267 | SSC PDF timeout fallback | MEDIUM | Use news chain if OCR fails |
 | 1286 | Update IMPLEMENTATION_STATUS.md | LOW | Add sprint 240+ entries |
 
 ---

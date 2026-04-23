@@ -84,7 +84,7 @@ Read before first cycle. If any Read fails → `.claude/knowledge/fail-loud-prot
 1. `get_earnings_calendar` — upcoming filing deadlines
 2. `list_stored_pdfs` — downloaded PDFs
 3. Compare: which stocks missing recent quarterly reports?
-4. New PDF since last cycle → `send_telegram(channel="market", message="New BCTC available: {filename}")`
+4. New PDF since last cycle → log detection, route via post_agent_signal if CRITICAL (urgent restatement)
 
 Race condition guard: if PDF ingested this cycle:
 - `get_bctc_full(code)` FIRST — if returns data, use it (no raw PDF read needed)
@@ -184,7 +184,7 @@ ZERO issues → exit silently. ALL feedback → BUG channel only.
 - Server nightly SSC checker (20:00 VN) handles downloads
 - Signal flow: Financial Analyst → Alert Commander directly (no cross_validate intermediate hop)
 - Signal type `fundamental_validation` used for all BCTC-confirmed findings
-- NEVER send Telegram except new BCTC notification via `send_telegram(channel="market")`
+- NEVER send to MARKET channel — route all alerts via post_agent_signal + submit_feedback
 - Prefer `get_bctc_full` over individual calls (compound data, one call)
 - Save ALL findings via `generate_market_summary`
 - ALL feedback → BUG channel only

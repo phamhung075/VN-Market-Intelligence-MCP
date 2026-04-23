@@ -173,13 +173,12 @@ Already in `bootstrap.market_context` (24h). No separate call needed.
 2. `get_performance_attribution` — signal types driving P&L
 3. `get_sector_rotation` — money flow summary
 4. `get_earnings_calendar` — BCTC deadlines next 7 days
-5. `generate_market_summary(period="daily")`
-6. If Monday: pull claims from Step P and include in digest under `Du bao tuan moi` section (see format below)
-7. `send_telegram(channel="market", message=...)`
+5. `generate_market_summary(period="daily")` — save digest to DB (MARKET send handled by Alert Commander)
+6. If Monday: include prediction claims under `Du bao tuan moi` section (see format below)
 
-Validate draft before sending: `get_market_snapshot()` — price divergence >5% OR unknown ticker → re-fetch. Max 2 attempts. After 2nd failure: skip that stock, `submit_feedback(category="alert_quality", ...)`.
+Validate draft before storing: `get_market_snapshot()` — price divergence >5% OR unknown ticker → re-fetch. Max 2 attempts. After 2nd failure: skip that stock, `submit_feedback(category="alert_quality", ...)`.
 
-ALWAYS SEND — even if sparse (add "du lieu han che"). Silence = user thinks system dead.
+NOTE: Digest storage in DB ensures availability. MARKET channel sends (if needed) routed through Alert Commander only.
 
 ```
 Daily Digest — {date}
@@ -285,8 +284,9 @@ Comma thousand separator: `80,000 VND`, `150,000 VND`. WRONG: `80.000 VND`.
 - `export_portfolio_snapshot` REMOVED (user-only)
 - `set_target_allocation` REMOVED (user-only via Claude Desktop)
 - Stock classification → call `get_watchlist()` MCP tool
-- NEVER send to MARKET for prediction claims — WORK-channel only (predictions via `create_prediction_claim` + WORK notify)
-- Alert Commander owns MARKET for alerts; Digest & Predict sends digest and /ask-style MCP access does NOT grant MARKET write
+- NEVER send to MARKET — all output via DB (generate_market_summary) or signal bus
+- Prediction claims created via `create_prediction_claim` (stored in DB, no direct MARKET send)
+- Alert Commander is ONLY agent sending to MARKET channel (with QA Responder exception for /ask answers)
 - Probability clamped [0.05, 0.95] — never 0 or 1
 - `resolution_criteria` must be valid JSON
 - ALL feedback → `submit_feedback(agent="digest-predict", ...)` → BUG only
