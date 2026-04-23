@@ -11,3 +11,4 @@ export { registerWatchlistTools } from "./watchlist.js";
 export { registerCycleBootstrapTool } from "./cycleBootstrapTool.js";
 export { registerVpsHealthTools } from "./vpsHealthTools.js";
 export { registerSlaStatusTools } from "./slaStatusTools.js";
+export { registerSignalDiagnosticsTools } from "./signalDiagnosticsTools.js";

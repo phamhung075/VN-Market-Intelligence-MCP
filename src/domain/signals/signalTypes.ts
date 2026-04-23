@@ -129,6 +129,31 @@ export const UrgentNewsFindingDataSchema = z.object({
   severity: z.enum(["low", "medium", "high", "critical"]),
 });
 
+// ── CrossValidateFindingData ───────────────────────────────────────────────────
+
+/**
+ * Finding data for cross_validate signals.
+ *
+ * Used to validate findings across multiple data sources and agents.
+ * All 3 fields are required and validated at parse time.
+ */
+export interface CrossValidateFindingData {
+  /** Directional bias: bullish, bearish, or neutral. */
+  direction: "bullish" | "bearish" | "neutral";
+
+  /** Confidence in the validation, range [0.0, 1.0]. */
+  confidence: number;
+
+  /** Summary of the validation findings. */
+  summary: string;
+}
+
+export const CrossValidateFindingDataSchema = z.object({
+  direction: z.enum(["bullish", "bearish", "neutral"]),
+  confidence: z.number().min(0).max(1),
+  summary: z.string().min(1),
+});
+
 // ── Index exports ──────────────────────────────────────────────────────────────
 
 /**
@@ -139,4 +164,5 @@ export const SignalSchemas = {
   ChainCatalyst: ChainCatalystFindingDataSchema,
   PriceConfirmation: PriceConfirmationFindingDataSchema,
   UrgentNews: UrgentNewsFindingDataSchema,
+  CrossValidate: CrossValidateFindingDataSchema,
 } as const;

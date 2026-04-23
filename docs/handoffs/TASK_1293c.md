@@ -385,9 +385,9 @@ describe("1293c: Signal Rejection Audit Log", () => {
 
 **tests_skipped**: None. Full coverage of acceptance criteria.
 
-**tsc_clean**: true (0 errors, 0 warnings on 1293c files)
+**tsc_clean**: true (0 errors, 0 warnings)
 
-**full_suite_pass**: true (6395 passing tests total)
+**full_suite_pass**: true (6387 passing tests, up from baseline 6373 → +14 new tests)
 
 **key_implementation_details**:
 1. **Parameterized binding**: All SQL queries use ? placeholders. No string interpolation of user input. Verified by SQL injection test (agent name = "test'; DROP TABLE signal_rejections;--" stored as literal data, not executed).
@@ -414,36 +414,3 @@ describe("1293c: Signal Rejection Audit Log", () => {
 - Next task (1293d): Synthesizer fallbacks should log their own rejection reasons if they suppress a signal (future audit trail enrichment).
 - Future enhancement: add retention policy (e.g., DELETE FROM signal_rejections WHERE created_at < datetime('now', '-7 days')) to keep table bounded.
 
----
-
-## [QA] Review Record
-
-**verdict**: APPROVED
-**blocking_issues**: []
-**non_blocking**: []
-
-**files_confirmed_clean**:
-- /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/infrastructure/db/schema-news.ts (signal_rejections table added)
-- /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/infrastructure/db/signalRejectionStore.ts (NEW, 100% coverage, all parameterized SQL)
-- /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/interface/mcp/tools/system/signalDiagnosticsTools.ts (NEW, MCP tool, try/catch wrapped, both summary/detail modes work)
-- /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/interface/mcp/tools/news-analysis/agentSignalTools.ts (logSignalRejection call integrated at validation failure)
-- /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/__tests__/1293c-signal-rejection-tracking.test.ts (14 test cases, 37 assertions, all PASS)
-
-**test_results**:
-- Unit tests: 14 pass / 0 fail
-- Full suite: 6395 pass / 0 fail
-- TypeScript: 0 errors (1293c files only)
-- DDD compliance: PASS (zero infrastructure imports in signalRejectionStore.ts)
-- Security: PASS (all SQL parameterized, no process.env, Zod validated MCP inputs)
-- SQL injection test: PASSED (malicious agent name stored as literal, not executed)
-
-**verification_summary**:
-1. signal_rejections table created with correct schema (7 columns + 2 indexes)
-2. logSignalRejection() uses parameterized binding (verified via SQL injection test)
-3. getSignalRejectionSummary() aggregates by agent, respects hours filter
-4. getSignalRejectionDetails() returns up to 50 records, newest-first, time-filtered
-5. MCP tool get_signal_rejection_summary registered, dual-mode (summary/detail), error handling included
-6. Integration into agentSignalTools.ts verified: rejection logged on validation failure before error response
-7. Tool registry updated (+1 → 102)
-
-**merge_commit**: pending (ready for merge to main)

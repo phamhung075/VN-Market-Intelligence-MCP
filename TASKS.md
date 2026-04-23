@@ -26,8 +26,8 @@
 | ID | Title | Status | Priority |
 |----|-------|--------|----------|
 | 1293a | Create strict signal type interfaces (domain/signals) | Done | CRITICAL |
-| 1293b | MCP tool validation for chain signals | Todo | CRITICAL |
-| 1293c | DB audit log for rejections | Todo | HIGH |
+| 1293b | MCP tool validation for chain signals | Review | CRITICAL |
+| 1293c | DB audit log for rejections | Review | HIGH |
 | 1293d | Defensive fallbacks in synthesizer | Review | HIGH |
 
 ### Task 1293a: Strict Signal Type Interfaces
@@ -54,7 +54,11 @@ context: docs/handoffs/TASK_1293d.md
 
 | ID | Title | Status | Priority |
 |----|-------|--------|----------|
+<<<<<<< HEAD
 | 1289f | Browser-based BCTC PDF URL discovery script for VPS | Review | HIGH |
+=======
+| 1289f | Browser-based BCTC PDF URL discovery script for VPS | Todo | HIGH |
+>>>>>>> task/1293c-signal-rejection-audit
 
 ### Task 1289f: Browser-Based BCTC PDF Discovery Script
 

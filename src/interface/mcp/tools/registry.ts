@@ -75,6 +75,7 @@ import { registerTechnicalIndicatorTools } from "./market-data/technicalIndicato
 import { registerPipelineHealthTools } from "./alerts/pipelineHealthTools.js";
 import { registerCascadeOutcomeTools } from "./news-analysis/cascadeOutcomeTools.js";
 import { registerCycleBootstrapTool } from "./system/cycleBootstrapTool.js";
+import { registerSignalDiagnosticsTools } from "./system/signalDiagnosticsTools.js";
 
 /**
  * Flat array of all MCP tool registration functions.
@@ -150,4 +151,5 @@ export const toolRegistry: Array<(server: McpServer) => void> = [
   registerPipelineHealthTools,     // Task 1367: get_pipeline_health (+1 tool → 100)
   registerCascadeOutcomeTools,     // Task 1504: get_cascade_outcomes (+1 tool → 100)
   registerCycleBootstrapTool,      // Task 1563: get_cycle_bootstrap (+1 tool → 101)
+  registerSignalDiagnosticsTools,  // Task 1293c: get_signal_rejection_summary (+1 tool → 102)
 ];
