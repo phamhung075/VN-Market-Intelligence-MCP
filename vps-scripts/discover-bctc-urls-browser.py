@@ -1,304 +1,258 @@
 #!/usr/bin/env python3
 """
-BCTC PDF URL discovery for historical backfill.
-Task 1289f Refinement: Option B - Direct API approach
+BCTC PDF URL discovery with Playwright browser automation.
+Task 1289f: Option A - Playwright/Chromium for JavaScript-rendered portals
 
-Replaces CSS selector + Playwright browser with direct AJAX API calls
-to HOSE/HNX/UPCOM backend endpoints.
+Handles BCTC discovery from CSR portals (React-rendered HTML) by:
+- Launching headless Chromium
+- Navigating to HOSE/HNX/UPCOM discovery pages
+- Waiting for page render and DOM population
+- Querying PDF links, extracting URLs, validating by year + quarter
+- Returning first match with confidence score
 
-Rationale:
-- BCTC portals load PDF links asynchronously via AJAX after page render
-- CSS selectors fail because PDFs aren't in DOM until AJAX completes
-- Direct API calls to backend endpoints are more reliable (~95% discovery rate)
-- Avoids browser automation overhead (Chromium, memory, zombie processes)
+Replaces non-functional API approach (Option B) that returned HTTP 404.
 
 Usage:
-    python3 discover-bctc-urls-browser.py VNM 2025 Q4
+    python3 discover-bctc-urls-browser.py VNM 2024 Q4
 Output:
-    {"url": "https://...", "source": "HOSE", "confidence": 0.95}
+    {"results": [{"url": "https://...", "source": "HOSE", "confidence": 0.95, "page_title": "..."}], "error": null}
     OR
-    {"url": null, "source": null, "confidence": 0, "error": "..."}
+    {"results": [], "error": "No PDF found in any portal"}
 """
 
 import sys
 import json
 import asyncio
-import aiohttp
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
+from playwright.async_api import async_playwright, Browser, Page, TimeoutError as PlaywrightTimeoutError
+
 
 async def discover_bctc_pdf(code: str, year: int, quarter: str) -> Dict[str, Any]:
     """
     Discover BCTC PDF URL from Vietnamese stock exchange portals.
 
     Tries portals in order: HOSE → HNX → UPCOM
-    Each portal API call uses direct HTTP requests with 10-second timeout.
+    Each portal uses browser automation with 30-second timeout per page.
 
     Args:
         code: Stock ticker (e.g., "VNM", "BID", "FPT")
-        year: Year (e.g., 2025)
+        year: Year (e.g., 2024)
         quarter: Quarter as string (e.g., "Q4", "Q3")
 
     Returns:
         {
-            "url": str or None,           # Full URL to PDF or null
-            "source": str or None,        # "HOSE" | "HNX" | "UPCOM" | null
-            "confidence": float,          # 0.85–0.95 (quality score)
-            "error": str (optional)       # Error message if failed
+            "results": [{
+                "url": str,               # Full URL to PDF
+                "source": str,            # "HOSE" | "HNX" | "UPCOM"
+                "confidence": float,      # 0.85–0.95 (quality score)
+                "page_title": str         # Page title for reference
+            }],
+            "error": str or None          # Error message if all failed
         }
     """
     normalized_quarter = quarter.upper()
+    results: List[Dict[str, Any]] = []
 
-    # Try HOSE first (highest quality API endpoint)
-    result = await discover_from_hose_api(code, year, normalized_quarter)
-    if result["url"]:
-        return result
-
-    # Try HNX second
-    result = await discover_from_hnx_api(code, year, normalized_quarter)
-    if result["url"]:
-        return result
-
-    # Try UPCOM third (fallback)
-    result = await discover_from_upcom_api(code, year, normalized_quarter)
-    if result["url"]:
-        return result
-
-    return {
-        "url": None,
-        "source": None,
-        "confidence": 0,
-        "error": f"No PDF found in HOSE, HNX, or UPCOM for {code} {year} {normalized_quarter}",
-    }
-
-
-async def discover_from_hose_api(code: str, year: int, quarter: str) -> Dict[str, Any]:
-    """
-    Discover BCTC PDF from HOSE API endpoint.
-
-    API: GET https://www.hsx.vn/api/bctc
-    Query params: code, year, quarter
-    Response: { pdfs: [{ url: string, title: string }] }
-    """
     try:
-        endpoint = "https://www.hsx.vn/api/bctc"
-        params = {
-            "code": code,
-            "year": year,
-            "quarter": quarter,
+        async with async_playwright() as playwright:
+            browser = await playwright.chromium.launch(args=["--no-sandbox"])
+
+            try:
+                # Try HOSE first (highest quality portal)
+                result = await discover_from_hose(browser, code, year, normalized_quarter)
+                if result:
+                    results.append(result)
+                    return {"results": results, "error": None}
+
+                # Try HNX second
+                result = await discover_from_hnx(browser, code, year, normalized_quarter)
+                if result:
+                    results.append(result)
+                    return {"results": results, "error": None}
+
+                # Try UPCOM third (fallback)
+                result = await discover_from_upcom(browser, code, year, normalized_quarter)
+                if result:
+                    results.append(result)
+                    return {"results": results, "error": None}
+
+                # All portals exhausted
+                return {
+                    "results": [],
+                    "error": f"No PDF found in HOSE, HNX, or UPCOM for {code} {year} {normalized_quarter}",
+                }
+
+            finally:
+                await browser.close()
+
+    except Exception as e:
+        return {
+            "results": [],
+            "error": f"Browser launch failed: {str(e)}",
         }
 
-        timeout = aiohttp.ClientTimeout(total=10)
-        async with aiohttp.ClientSession(timeout=timeout) as session:
-            async with session.get(
-                endpoint,
-                params=params,
-                headers={
-                    "User-Agent": "VN-Market-Intelligence/1.0 (+https://github.com/phamhung075/VN-Market-Intelligence-MCP)",
-                    "Accept": "application/json",
-                },
-            ) as response:
-                if response.status != 200:
+
+async def discover_from_hose(browser: Browser, code: str, year: int, quarter: str) -> Optional[Dict[str, Any]]:
+    """
+    Discover BCTC PDF from HOSE portal using browser automation.
+
+    Portal: https://www.hsx.vn/Modules/CMS/Web/ArticleList?category=BCTC&issuerCode={CODE}
+    Strategy:
+    1. Navigate and wait for page load (networkidle)
+    2. Query all <a> elements with href containing ".pdf"
+    3. Filter by quarter + year in link text
+    4. Return first match with confidence 0.95
+    """
+    page = None
+    try:
+        page = await browser.new_page()
+        url = f"https://www.hsx.vn/Modules/CMS/Web/ArticleList?category=BCTC&issuerCode={code}"
+
+        await page.goto(url, timeout=30000, wait_until="networkidle")
+
+        # Find all PDF links
+        pdf_links = await page.query_selector_all('a[href*=".pdf"]')
+
+        for link_elem in pdf_links:
+            href = await link_elem.get_attribute("href")
+            text_content = await link_elem.text_content()
+
+            # Check if quarter + year match in link text
+            if href and matches_quarter_and_year(text_content or "", quarter, year):
+                # Resolve relative URL to absolute
+                if not href.startswith("http"):
+                    href = f"https://www.hsx.vn{href}" if href.startswith("/") else f"https://www.hsx.vn/{href}"
+
+                if is_valid_pdf_url(href):
+                    page_title = await page.title()
                     return {
-                        "url": None,
+                        "url": href,
                         "source": "HOSE",
-                        "confidence": 0,
-                        "error": f"HOSE API returned {response.status}",
+                        "confidence": 0.95,
+                        "page_title": page_title,
                     }
 
-                data = await response.json()
-                pdfs = data.get("pdfs", [])
+        return None
 
-                # Find matching PDF by quarter and year in title
-                for pdf in pdfs:
-                    pdf_url = pdf.get("url", "")
-                    title = (pdf.get("title", "") or "").lower()
-
-                    if matches_quarter_and_year(title, quarter, year):
-                        if is_valid_pdf_url(pdf_url):
-                            return {
-                                "url": pdf_url,
-                                "source": "HOSE",
-                                "confidence": 0.95,
-                            }
-
-                return {"url": None, "source": "HOSE", "confidence": 0}
-
-    except asyncio.TimeoutError:
-        return {
-            "url": None,
-            "source": "HOSE",
-            "confidence": 0,
-            "error": "HOSE API timeout (10s)",
-        }
-    except json.JSONDecodeError:
-        return {
-            "url": None,
-            "source": "HOSE",
-            "confidence": 0,
-            "error": "HOSE API returned invalid JSON",
-        }
+    except PlaywrightTimeoutError:
+        return None
     except Exception as e:
-        return {
-            "url": None,
-            "source": "HOSE",
-            "confidence": 0,
-            "error": f"HOSE API error: {str(e)}",
-        }
+        # Log to stderr but continue to next portal
+        print(f"HOSE discovery error for {code}: {str(e)}", file=sys.stderr)
+        return None
+    finally:
+        if page:
+            await page.close()
 
 
-async def discover_from_hnx_api(code: str, year: int, quarter: str) -> Dict[str, Any]:
+async def discover_from_hnx(browser: Browser, code: str, year: int, quarter: str) -> Optional[Dict[str, Any]]:
     """
-    Discover BCTC PDF from HNX API endpoint.
+    Discover BCTC PDF from HNX portal using browser automation.
 
-    API: GET https://hnx.vn/api/disclosures
-    Query params: stock, type
-    Response: { data: [{ url: string, label: string }] }
+    Portal: https://hnx.vn/cong-bo-thong-tin/cong-ty-co-phan.html?StockCode={CODE}
+    Strategy: Same as HOSE, look for "BCTC", "Báo cáo tài chính", "BC/BĐHS" keywords
+    Confidence: 0.9 (lower than HOSE due to less standardized layout)
     """
+    page = None
     try:
-        endpoint = "https://hnx.vn/api/disclosures"
-        params = {
-            "stock": code,
-            "type": "BCTC",
-        }
+        page = await browser.new_page()
+        url = f"https://hnx.vn/cong-bo-thong-tin/cong-ty-co-phan.html?StockCode={code}"
 
-        timeout = aiohttp.ClientTimeout(total=10)
-        async with aiohttp.ClientSession(timeout=timeout) as session:
-            async with session.get(
-                endpoint,
-                params=params,
-                headers={
-                    "User-Agent": "VN-Market-Intelligence/1.0 (+https://github.com/phamhung075/VN-Market-Intelligence-MCP)",
-                    "Accept": "application/json",
-                },
-            ) as response:
-                if response.status != 200:
+        await page.goto(url, timeout=30000, wait_until="networkidle")
+
+        pdf_links = await page.query_selector_all('a[href*=".pdf"]')
+
+        for link_elem in pdf_links:
+            href = await link_elem.get_attribute("href")
+            text_content = await link_elem.text_content()
+
+            # Check quarter + year + financial report keyword
+            text_lower = (text_content or "").lower()
+            has_quarter_year = matches_quarter_and_year(text_lower, quarter, year)
+            has_report_keyword = any(
+                kw in text_lower for kw in ["bctc", "báo cáo tài chính", "bc/bđhs", "báo cáo"]
+            )
+
+            if href and (has_quarter_year or has_report_keyword):
+                if not href.startswith("http"):
+                    href = f"https://hnx.vn{href}" if href.startswith("/") else f"https://hnx.vn/{href}"
+
+                if is_valid_pdf_url(href):
+                    page_title = await page.title()
                     return {
-                        "url": None,
+                        "url": href,
                         "source": "HNX",
-                        "confidence": 0,
-                        "error": f"HNX API returned {response.status}",
+                        "confidence": 0.9,
+                        "page_title": page_title,
                     }
 
-                data = await response.json()
-                disclosures = data.get("data", [])
+        return None
 
-                # Find matching PDF by quarter and year in label
-                for disclosure in disclosures:
-                    pdf_url = disclosure.get("url", "")
-                    label = (disclosure.get("label", "") or "").lower()
-
-                    if matches_quarter_and_year(label, quarter, year):
-                        if is_valid_pdf_url(pdf_url):
-                            return {
-                                "url": pdf_url,
-                                "source": "HNX",
-                                "confidence": 0.9,
-                            }
-
-                return {"url": None, "source": "HNX", "confidence": 0}
-
-    except asyncio.TimeoutError:
-        return {
-            "url": None,
-            "source": "HNX",
-            "confidence": 0,
-            "error": "HNX API timeout (10s)",
-        }
-    except json.JSONDecodeError:
-        return {
-            "url": None,
-            "source": "HNX",
-            "confidence": 0,
-            "error": "HNX API returned invalid JSON",
-        }
+    except PlaywrightTimeoutError:
+        return None
     except Exception as e:
-        return {
-            "url": None,
-            "source": "HNX",
-            "confidence": 0,
-            "error": f"HNX API error: {str(e)}",
-        }
+        print(f"HNX discovery error for {code}: {str(e)}", file=sys.stderr)
+        return None
+    finally:
+        if page:
+            await page.close()
 
 
-async def discover_from_upcom_api(code: str, year: int, quarter: str) -> Dict[str, Any]:
+async def discover_from_upcom(browser: Browser, code: str, year: int, quarter: str) -> Optional[Dict[str, Any]]:
     """
-    Discover BCTC PDF from UPCOM API endpoint.
+    Discover BCTC PDF from UPCOM portal using browser automation.
 
-    API: GET https://upcom.hnx.vn/api/disclosures
-    Query params: stock, type
-    Response: { data: [{ url: string, label: string }] }
-
-    Note: UPCOM shares infrastructure with HNX
+    Portal: https://upcom.hnx.vn/cong-bo-thong-tin/cong-ty-co-phan.html?StockCode={CODE}
+    Strategy: Same as HNX (shares infrastructure)
+    Confidence: 0.85 (lowest, UPCOM is less liquid market)
     """
+    page = None
     try:
-        endpoint = "https://upcom.hnx.vn/api/disclosures"
-        params = {
-            "stock": code,
-            "type": "BCTC",
-        }
+        page = await browser.new_page()
+        url = f"https://upcom.hnx.vn/cong-bo-thong-tin/cong-ty-co-phan.html?StockCode={code}"
 
-        timeout = aiohttp.ClientTimeout(total=10)
-        async with aiohttp.ClientSession(timeout=timeout) as session:
-            async with session.get(
-                endpoint,
-                params=params,
-                headers={
-                    "User-Agent": "VN-Market-Intelligence/1.0 (+https://github.com/phamhung075/VN-Market-Intelligence-MCP)",
-                    "Accept": "application/json",
-                },
-            ) as response:
-                if response.status != 200:
+        await page.goto(url, timeout=30000, wait_until="networkidle")
+
+        pdf_links = await page.query_selector_all('a[href*=".pdf"]')
+
+        for link_elem in pdf_links:
+            href = await link_elem.get_attribute("href")
+            text_content = await link_elem.text_content()
+
+            text_lower = (text_content or "").lower()
+            has_quarter_year = matches_quarter_and_year(text_lower, quarter, year)
+            has_report_keyword = any(
+                kw in text_lower for kw in ["bctc", "báo cáo tài chính", "bc/bđhs", "báo cáo"]
+            )
+
+            if href and (has_quarter_year or has_report_keyword):
+                if not href.startswith("http"):
+                    href = f"https://upcom.hnx.vn{href}" if href.startswith("/") else f"https://upcom.hnx.vn/{href}"
+
+                if is_valid_pdf_url(href):
+                    page_title = await page.title()
                     return {
-                        "url": None,
+                        "url": href,
                         "source": "UPCOM",
-                        "confidence": 0,
-                        "error": f"UPCOM API returned {response.status}",
+                        "confidence": 0.85,
+                        "page_title": page_title,
                     }
 
-                data = await response.json()
-                disclosures = data.get("data", [])
+        return None
 
-                # Find matching PDF by quarter and year in label
-                for disclosure in disclosures:
-                    pdf_url = disclosure.get("url", "")
-                    label = (disclosure.get("label", "") or "").lower()
-
-                    if matches_quarter_and_year(label, quarter, year):
-                        if is_valid_pdf_url(pdf_url):
-                            return {
-                                "url": pdf_url,
-                                "source": "UPCOM",
-                                "confidence": 0.85,
-                            }
-
-                return {"url": None, "source": "UPCOM", "confidence": 0}
-
-    except asyncio.TimeoutError:
-        return {
-            "url": None,
-            "source": "UPCOM",
-            "confidence": 0,
-            "error": "UPCOM API timeout (10s)",
-        }
-    except json.JSONDecodeError:
-        return {
-            "url": None,
-            "source": "UPCOM",
-            "confidence": 0,
-            "error": "UPCOM API returned invalid JSON",
-        }
+    except PlaywrightTimeoutError:
+        return None
     except Exception as e:
-        return {
-            "url": None,
-            "source": "UPCOM",
-            "confidence": 0,
-            "error": f"UPCOM API error: {str(e)}",
-        }
+        print(f"UPCOM discovery error for {code}: {str(e)}", file=sys.stderr)
+        return None
+    finally:
+        if page:
+            await page.close()
 
 
 def matches_quarter_and_year(text: str, quarter: str, year: int) -> bool:
     """
-    Check if title/label contains matching quarter and year.
+    Check if link text contains matching quarter and year.
 
     Examples:
     - "BCTC Q1 2024" with quarter="Q1", year=2024 → True
@@ -311,13 +265,13 @@ def matches_quarter_and_year(text: str, quarter: str, year: int) -> bool:
     year_str = str(year)
     quarter_short = quarter.upper()[-1]  # "Q1" → "1"
 
-    # Check year
+    # Check year presence
     if year_str not in text:
         return False
 
-    # Check quarter in various formats
+    # Check quarter in various formats (English and Vietnamese)
     has_quarter = any(
-        q in text
+        q in text.lower()
         for q in [
             f"q{quarter_short}",  # "q1"
             quarter.lower(),  # "q1"
@@ -326,6 +280,7 @@ def matches_quarter_and_year(text: str, quarter: str, year: int) -> bool:
             f"qúy {quarter_short}",  # Vietnamese variant
             f"q{quarter_short}ỳ",  # "q1ỳ"
             f"quarter{quarter_short}",  # "quarter1"
+            f"kỳ {quarter_short}",  # Vietnamese: "kỳ 1"
         ]
     )
 
@@ -333,10 +288,20 @@ def matches_quarter_and_year(text: str, quarter: str, year: int) -> bool:
 
 
 def is_valid_pdf_url(url: str) -> bool:
-    """Validate that URL is a safe, legitimate PDF."""
+    """
+    Validate that URL is a safe, legitimate PDF.
+
+    Checks:
+    - Must end with .pdf
+    - Must be HTTP or HTTPS
+    - No JavaScript/data URIs (XSS prevention)
+    """
+    if not url:
+        return False
+
     lower_url = url.lower()
 
-    # Must be PDF and HTTPS/HTTP
+    # Must be PDF and HTTP(S)
     if not lower_url.endswith(".pdf"):
         return False
     if not (lower_url.startswith("http://") or lower_url.startswith("https://")):
@@ -351,33 +316,39 @@ def is_valid_pdf_url(url: str) -> bool:
 
 if __name__ == "__main__":
     # Command-line interface
-    if len(sys.argv) < 2:
+    if len(sys.argv) < 4:
         print(
             json.dumps(
                 {
-                    "url": None,
-                    "source": None,
-                    "confidence": 0,
+                    "results": [],
                     "error": "Usage: python3 discover-bctc-urls-browser.py <CODE> <YEAR> <QUARTER>",
                 }
             )
         )
         sys.exit(1)
 
-    code = sys.argv[1].upper()
-    year = int(sys.argv[2]) if len(sys.argv) > 2 else 2025
-    quarter = sys.argv[3].upper() if len(sys.argv) > 3 else "Q4"
-
     try:
+        code = sys.argv[1].upper()
+        year = int(sys.argv[2])
+        quarter = sys.argv[3].upper()
+
         result = asyncio.run(discover_bctc_pdf(code, year, quarter))
         print(json.dumps(result, ensure_ascii=False))
+    except (ValueError, IndexError):
+        print(
+            json.dumps(
+                {
+                    "results": [],
+                    "error": "Usage: python3 discover-bctc-urls-browser.py <CODE> <YEAR> <QUARTER>",
+                }
+            )
+        )
+        sys.exit(1)
     except Exception as e:
         print(
             json.dumps(
                 {
-                    "url": None,
-                    "source": None,
-                    "confidence": 0,
+                    "results": [],
                     "error": f"Script error: {str(e)}",
                 }
             )

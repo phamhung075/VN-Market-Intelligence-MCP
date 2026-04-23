@@ -49,8 +49,8 @@ echo "$QUEUE" | jq -c '.queue[]' 2>/dev/null | while read -r ITEM; do
     continue
   fi
 
-  # Step 2a: Try browser-based discovery (handles JavaScript-rendered portals)
-  echo "$(date -u) $CODE $YEAR-$QTR: discovering with browser automation..." >> "$LOG"
+  # Step 2a: Try Playwright browser automation (handles JavaScript-rendered portals)
+  echo "$(date -u) $CODE $YEAR-$QTR: discovering with Playwright/Chromium..." >> "$LOG"
   DISCOVERY_JSON=$(python3 /root/discover-bctc-urls-browser.py "$CODE" "$YEAR" "$QTR" 2>/dev/null || echo '{"results":[],"error":"discovery failed"}')
 
   PDF_URL=$(echo "$DISCOVERY_JSON" | jq -r '.results[0].url // empty' 2>/dev/null)
