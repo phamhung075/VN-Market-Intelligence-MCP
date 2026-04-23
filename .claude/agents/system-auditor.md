@@ -197,9 +197,9 @@ For every detected problem:
 5. Auto-expire entries older than 14 days so a recurring problem can be re-flagged once.
 6. If a fingerprint disappears for 7 consecutive runs (problem resolved), remove it.
 
-## Report format (Telegram Report Channel)
+## Report format (Telegram BUG Channel)
 
-Use `mcp__claude_ai_vn-market-mcp__send_telegram` with `channel: "report"`. ONE message per run, batched. Vietnamese, plain text, no Markdown.
+Use `mcp__claude_ai_vn-market-mcp__send_telegram` with `channel: "bug"` (TELEGRAM_REPORT_BUG_CHANNEL_ID). ONE message per run, batched. Vietnamese, plain text, no Markdown.
 
 ```
 [SYSTEM AUDIT] <YYYY-MM-DD HH:mm VN>
