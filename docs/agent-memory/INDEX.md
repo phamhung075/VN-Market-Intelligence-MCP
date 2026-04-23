@@ -28,9 +28,11 @@
 
 ## 🔗 Sessions (Load if: checking what agent just did, avoiding duplicate work)
 
+- **[2026-04-23 BA Sprint 1296](sessions/2026-04-23-ba-sprint-1296.md)** — Infrastructure recovery (OPS validation) + IMF sentiment planning (BA research)
+- **[2026-04-23 BA Sprint 1295](sessions/2026-04-23-ba-sprint-planning.md)** — Signal builders + IMF backlog analysis
 - **[2026-04-21 Dev Team](sessions/2026-04-21-dev-team.md)** — Fixed aggregator guards
 - **[2026-04-20 QA](sessions/2026-04-20-qa.md)** — Fixed timezone in tests
-- **[2026-04-22 Morning Work](sessions/2026-04-22-morning.md)** — (current session, check for recent findings)
+- **[2026-04-22 Morning Work](sessions/2026-04-22-morning.md)** — Recent work context
 
 ---
 

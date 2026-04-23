@@ -123,14 +123,4 @@ Claude Desktop: `{ "mcpServers": { "vn-market": { "url": "http://localhost:3000/
 
 ## graphify
 
-This project has a **persistent graphify knowledge graph** at `graphify-out/` (4515 nodes, 7174 edges, built 2026-04-20).
-
-**For queries:** Graph is ready. Use `/graphify query "..."` to explore—no rebuild needed.
-
-**For updates:** After code changes, run `/graphify update .` to refresh (AST-only, no install cost). Do NOT install graphify unless explicitly needed—the skill handles it intelligently.
-
-Rules:
-- Before answering architecture questions, read `graphify-out/GRAPH_REPORT.md` (god nodes + communities)
-- For god node definitions, check lines 274-284 of GRAPH_REPORT.md
-- Surprising connections are at line 286 (cross-cutting patterns the graph found)
-- Do NOT ask to install graphify if graph.json already exists
+Graph ready at `graphify-out/`. Query: `/graphify query "..."` | Update: `/graphify update .` (AST-only). See GRAPH_REPORT.md for god nodes + communities (lines 274-286).

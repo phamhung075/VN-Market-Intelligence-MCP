@@ -1,17 +1,83 @@
 {
-  "original": {
-    "architect.md": "sonnet",
-    "ba.md": "sonnet",
-    "claude-manager-helper.md": "sonnet",
-    "code-janitor.md": "haiku",
-    "cowork-refactory-expert.md": "opus",
-    "developer.md": "sonnet",
-    "fixer.md": "sonnet",
-    "idea-forge.md": "sonnet",
-    "market-analyst.md": "sonnet",
-    "pm.md": "sonnet",
-    "po.md": "sonnet",
-    "qa.md": "sonnet",
-    "system-auditor.md": "sonnet"
-  }
+  "modes": {
+    "eco": {
+      "description": "Full Haiku — minimize costs",
+      "agents": {
+        "01-news-scout": "haiku",
+        "02-financial-analyst": "haiku",
+        "04-market-watcher": "haiku",
+        "05-alert-commander": "haiku",
+        "06-digest-predict": "haiku",
+        "07-qa-responder": "haiku",
+        "architect": "haiku",
+        "ba": "haiku",
+        "claude-manager-helper": "haiku",
+        "code-janitor": "haiku",
+        "cowork-refactory-expert": "haiku",
+        "developer": "haiku",
+        "fixer": "haiku",
+        "idea-forge": "haiku",
+        "market-analyst": "haiku",
+        "ops": "haiku",
+        "pm": "haiku",
+        "po": "haiku",
+        "qa": "haiku",
+        "system-auditor": "haiku",
+        "unified-agent": "haiku"
+      }
+    },
+    "normal": {
+      "description": "Mix Haiku + Sonnet — balanced cost/quality",
+      "agents": {
+        "01-news-scout": "haiku",
+        "02-financial-analyst": "haiku",
+        "04-market-watcher": "haiku",
+        "05-alert-commander": "sonnet",
+        "06-digest-predict": "sonnet",
+        "07-qa-responder": "haiku",
+        "architect": "sonnet",
+        "ba": "sonnet",
+        "claude-manager-helper": "haiku",
+        "code-janitor": "haiku",
+        "cowork-refactory-expert": "haiku",
+        "developer": "sonnet",
+        "fixer": "haiku",
+        "idea-forge": "haiku",
+        "market-analyst": "sonnet",
+        "ops": "sonnet",
+        "pm": "haiku",
+        "po": "haiku",
+        "qa": "sonnet",
+        "system-auditor": "haiku",
+        "unified-agent": "haiku"
+      }
+    },
+    "performance": {
+      "description": "Full Sonnet — max quality",
+      "agents": {
+        "01-news-scout": "sonnet",
+        "02-financial-analyst": "sonnet",
+        "04-market-watcher": "sonnet",
+        "05-alert-commander": "sonnet",
+        "06-digest-predict": "sonnet",
+        "07-qa-responder": "sonnet",
+        "architect": "sonnet",
+        "ba": "sonnet",
+        "claude-manager-helper": "sonnet",
+        "code-janitor": "sonnet",
+        "cowork-refactory-expert": "sonnet",
+        "developer": "sonnet",
+        "fixer": "sonnet",
+        "idea-forge": "sonnet",
+        "market-analyst": "sonnet",
+        "ops": "sonnet",
+        "pm": "sonnet",
+        "po": "sonnet",
+        "qa": "sonnet",
+        "system-auditor": "sonnet",
+        "unified-agent": "sonnet"
+      }
+    }
+  },
+  "current_mode": "normal"
 }

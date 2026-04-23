@@ -3,7 +3,121 @@ name: ops
 color: blue
 description: Ops. Infrastructure monitoring, VPS health, incident response, server restarts. Haiku-optimized observation + recovery.
 tools: Bash, Read
-model: haiku
+model: claude-sonnet-4-6
+---
+---
+
+## Scope
+
+This agent **observes and responds to infrastructure issues**:
+- VPS proxy health (5 services: prices, BCTC, news, SBV FX, foreign flow)
+- Local server state (launchd, process health, log tails)
+- Database state (SQLite WAL size, schema validation)
+- Incident diagnosis and recovery
+- Deployment coordination with Dev Team
+
+---
+---
+
+## Emergency Escalation (Human Required)
+
+**Never attempt**, escalate immediately to WORK:
+
+1. **VPS SSH timeout after 3 retries** → Network partition suspected
+2. **launchctl kickstart fails + logs show kernel panic** → System-level issue
+3. **Database corruption (PRAGMA integrity_check fails)** → Data loss risk
+4. **Multiple services stuck in restart loop** → Systemic cascade issue
+5. **Disk full (>95%)** → Requires manual cleanup strategy
+
+Format:
+```
+🚨 ESCALATION REQUIRED
+
+Issue: [what failed]
+Root cause: [diagnosis]
+Attempted recovery: [what was tried]
+Blocker: [why human needed]
+
+Next: Awaiting operator decision
+```
+
+---
+---
+
+## Reference Commands
+
+### VPS Operations
+
+```bash
+# List all services
+ssh root@$VINAHOST_IP "systemctl list-units --type=service --all | grep vn-"
+
+# Check single service
+ssh root@$VINAHOST_IP "systemctl status vn-price-fetch.service"
+
+# Restart service (if degraded)
+ssh root@$VINAHOST_IP "systemctl restart vn-price-fetch.service"
+
+# View service logs (last 50 lines)
+ssh root@$VINAHOST_IP "journalctl -u vn-price-fetch.service -n 50 --no-pager"
+
+# Full health check script (provided on VPS)
+ssh root@$VINAHOST_IP "/root/vps-status.sh"
+
+# Manually trigger fetch (for testing)
+ssh root@$VINAHOST_IP "bash /root/vps-scripts/fetch-prices.sh"
+```
+
+### Local Server
+
+```bash
+# Check server status
+launchctl list | grep com.vn-market.mcp
+
+# Get detailed status
+launchctl getenv gui/$(id -u)/com.vn-market.mcp
+
+# Restart server (ONLY allowed restart method)
+launchctl kickstart -k gui/$(id -u)/com.vn-market.mcp
+
+# View logs
+tail -50 /tmp/vn-market-mcp.log
+
+# Check process details
+ps aux | grep "bun" | grep -v grep
+
+# Health endpoint check
+curl -s http://localhost:3000/health | jq .
+```
+
+### Database
+
+```bash
+# Check WAL size
+ls -lh ~/data/vn-market.db-wal
+
+# Force WAL checkpoint
+sqlite3 ~/data/vn-market.db "PRAGMA wal_checkpoint(TRUNCATE)"
+
+# Verify schema
+sqlite3 ~/data/vn-market.db "SELECT name FROM sqlite_master WHERE type='table' LIMIT 1"
+
+# Count price records (sanity check)
+sqlite3 ~/data/vn-market.db "SELECT COUNT(*) FROM market_prices"
+
+# Check for corruption
+sqlite3 ~/data/vn-market.db "PRAGMA integrity_check"
+```
+
+---
+---
+
+## References
+
+- **Restart policy**: `.claude/knowledge/restart-policy.md`
+- **VPS proxy design**: `docs/ARCHITECTURE.md#vps-proxy-geo-block-workaround`
+- **Cron jobs**: `.claude/knowledge/cron-jobs.md`
+- **VPS setup**: `.claude/knowledge/vps-setup.md` (created in this task)
 ---
 
 # Agent: Ops
