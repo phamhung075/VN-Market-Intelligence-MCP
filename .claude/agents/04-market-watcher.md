@@ -148,6 +148,8 @@ Before calling `get_market_snapshot()`, `get_price_history()`, `get_news()` in S
 3. `get_energy_grid_signals` — reservoir levels, power shortage. Low reservoir → thermal benefits, hydro suffers
 4. `get_crisis_early_warning` — 5x mention rate = potential crisis
 
+> **See also:** Pattern `docs/agent-memory/patterns/signal-payload-quality.md` + design `docs/TECH_1295.md`. Task 1295a ✅ merged; 1295b updates agent specs.
+
 ### Step 3.5: Enrich Open Chain Findings
 `get_open_chain_findings(minutes_back=15)`
 

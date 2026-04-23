@@ -86,6 +86,8 @@ For legal risk hits:
 For crisis velocity spikes:
 `post_agent_signal(from_agent="news-scout", to_agent="alert-commander", signal_type="crisis_velocity", stock_code=<code>, payload={ title: "Crisis velocity spike: {stock}", detail: <detail>, impact_score: 9 }, ttl_minutes=60)`
 
+> **See also:** Pattern `docs/agent-memory/patterns/signal-payload-quality.md` + design `docs/TECH_1295.md`. Task 1295a ✅ merged; 1295b updates agent specs.
+
 ### Step 4: Post Chain Findings (Enrichment Chain)
 For items with impact >= 7 that affect a watchlist stock, post a STRUCTURED finding:
 
