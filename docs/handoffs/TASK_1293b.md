@@ -273,3 +273,30 @@ describe("1293b: MCP Signal Validation", () => {
 - Next task (1293c): Log rejections to signal_validation_log table for audit trail.
 - Next task (1293d): Synthesizer should handle cases where finding_data fields are missing (defensive fallback to default values).
 
+---
+
+## [QA] Review Record
+
+**verdict**: APPROVED
+
+**blocking_issues**: []
+
+**non_blocking**: []
+
+**files_confirmed_clean**:
+- /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/domain/signals/signalTypes.ts — CrossValidateFindingDataSchema added, all 4 signal type schemas clean, no DDD violations
+- /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/interface/mcp/tools/news-analysis/agentSignalTools.ts — validateSignalPayload() exported, SIGNAL_TYPE_VALIDATORS map dispatches correctly, post_agent_signal validation occurs before DB storage (line 205 before line 244)
+- /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/__tests__/1293b-post-signal-validation.test.ts — 20 tests covering all 4 signal types, all ACs verified
+
+**qa_summary**:
+- Test Results: 20/20 unit tests PASS, 6373/6373 full regression PASS (baseline +20)
+- TypeScript: 0 errors (bun tsc --noEmit)
+- DDD Compliance: PASS (domain→infrastructure/application imports clean)
+- Security: PASS (no process.env, no SQL injection)
+- Backward Compatibility: cross_validate and unknown signal types pass through correctly
+- Forward Compatibility: extra fields accepted; unknown types logged + allowed
+- AC Verification: All 14 acceptance criteria PASS
+- Error Messages: Clear field-level feedback via Zod parse errors
+
+**merge_commit**: pending (awaiting merge instruction)
+
