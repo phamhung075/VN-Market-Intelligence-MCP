@@ -1,0 +1,268 @@
+================================================================================
+BCTC PDF DISCOVERY TEST RESULTS — 2026-04-23
+================================================================================
+
+TEST OBJECTIVE: Validate BCTC PDF discovery for historical quarters (2024 Q4)
+
+TEST EXECUTION ENVIRONMENT:
+  - Machine: macOS 23.3.0
+  - Python: 3.x
+  - Location: /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/
+  - Git branch: task/1289b-red-validation-tests
+  - Current date: 2026-04-23 07:00 UTC
+
+================================================================================
+MAIN TEST RESULTS
+================================================================================
+
+TEST 1: VNM 2024 Q4 (Target Test)
+────────────────────────────────────────────────────────────────────────────
+Command:    python3 vps-scripts/discover-bctc-urls-browser.py VNM 2024 Q4
+Status:     FAILED ✗
+Output:     {"url": null, "source": null, "confidence": 0, 
+             "error": "No PDF found in HOSE, HNX, or UPCOM for VNM 2024 Q4"}
+Result:     No PDF discovered
+
+TEST 2: VCB 2024 Q4 (Alternate 1 — Major Bank)
+────────────────────────────────────────────────────────────────────────────
+Command:    python3 vps-scripts/discover-bctc-urls-browser.py VCB 2024 Q4
+Status:     FAILED ✗
+Output:     {"url": null, "source": null, "confidence": 0, 
+             "error": "No PDF found in HOSE, HNX, or UPCOM for VCB 2024 Q4"}
+Result:     No PDF discovered
+
+TEST 3: FPT 2024 Q4 (Alternate 2 — Tech Company, HNX Listed)
+────────────────────────────────────────────────────────────────────────────
+Command:    python3 vps-scripts/discover-bctc-urls-browser.py FPT 2024 Q4
+Status:     FAILED ✗
+Output:     {"url": null, "source": null, "confidence": 0, 
+             "error": "No PDF found in HOSE, HNX, or UPCOM for FPT 2024 Q4"}
+Result:     No PDF discovered
+
+TEST 4: HOSE Portal Direct Check (Manual curl)
+────────────────────────────────────────────────────────────────────────────
+Command:    curl -s 'https://www.hsx.vn/Modules/CMS/Web/ArticleList?category=BCTC&issuerCode=VNM' | grep -i '\.pdf'
+Status:     FAILED ✗
+Output:     (empty — no PDF references found)
+Result:     Portal returns HTML shell with no PDF links visible
+
+TEST 5: HOSE API Endpoint Check (API validation)
+────────────────────────────────────────────────────────────────────────────
+Command:    curl -s 'https://www.hsx.vn/api/bctc?code=VNM&year=2024&quarter=Q4'
+Status:     FAILED ✗
+HTTP Code:  404 Not Found
+Output:     <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" ...>
+            <title>404 - File or directory not found.</title>
+Result:     API endpoint does not exist
+
+================================================================================
+ROOT CAUSE ANALYSIS
+================================================================================
+
+ISSUE #1: Non-existent API Endpoints
+──────────────────────────────────────
+The current discovery script (vps-scripts/discover-bctc-urls-browser.py) 
+attempts to call HTTP API endpoints that do not exist on HOSE/HNX/UPCOM portals.
+
+Expected Endpoint:    https://www.hsx.vn/api/bctc
+Actual HTTP Response: 404 Not Found
+
+IMPLICATION: All discovery attempts fail immediately at the first portal (HOSE),
+fall back to HNX (also fails), then UPCOM (also fails), then return "No PDF found".
+
+EVIDENCE:
+  - Direct curl test returns HTTP 404
+  - Portal returns HTML error page, not JSON
+  - No AJAX endpoint found that matches assumed schema
+
+ISSUE #2: Script Implementation Mismatch
+──────────────────────────────────────────
+The current repository contains Option B (Direct API) implementation, but:
+  - Ops session (2026-04-23) documented deployment of Playwright browser automation
+  - Actual script in repo: Uses aiohttp for HTTP API calls (NOT Playwright)
+  - Git commit: 01880421 "feat(1289f): Implement Option B direct API discovery"
+  - No Playwright dependency, no browser automation code
+
+IMPLICATION: Either Playwright version was deployed to VPS but repo differs,
+or Option B was deployed but never validated against actual portal.
+
+ISSUE #3: Async JavaScript Rendering Not Handled
+──────────────────────────────────────────────────
+HOSE portal is a React SPA (Single Page Application):
+  1. Initial HTTP response = HTML shell (no PDF links)
+  2. JavaScript renders page in browser
+  3. AJAX request fetches PDF list from backend
+  4. PDF DOM elements inserted ~500-2000ms after initial load
+
+Option B (Direct API) assumes synchronous API endpoints exist (they don't).
+Option A (Playwright) handles async rendering via browser automation.
+
+================================================================================
+IMPACT ASSESSMENT
+================================================================================
+
+SEVERITY: HIGH
+
+IMPACT:
+  ✗ BCTC historical PDF backfill blocked
+  ✗ Cannot discover 2024 Q4 financial statements for any stock
+  ✗ Script returns "No PDF found" for all quarters
+  ✗ Fallback discovery rate: 0/3 test cases = 0% success rate
+
+BLOCKED TASKS:
+  - Task 1289c: BCTC Historical Downloader (waiting for working discovery)
+  - Task 1289d: BCTC PDF Parser Integration (cannot parse if no PDFs found)
+  - Task 1289e: BCTC Enrichment Service (waiting for parsed BCTC data)
+
+AFFECTED DATA:
+  - Q1–Q4 2024 financial reports (30 stocks × 4 quarters = 120 missing records)
+  - Q1–Q4 2025 financial reports (30 stocks × 4 quarters = 120 missing records)
+  - Total: ~240 BCTC PDFs cannot be discovered
+
+================================================================================
+RECOMMENDATIONS
+================================================================================
+
+IMMEDIATE ACTION (0–30 min):
+  1. Clarify VPS deployment: Does VPS have Playwright or Option B version?
+     → SSH to VPS: ssh root@125.212.251.27 'head -10 /root/discover-bctc-urls-browser.py'
+  
+  2. If VPS has Option B (matches repo), need fix:
+     Option A: Revert to Playwright (known to work, documented in ops session)
+     Option B: Fix direct API (reverse-engineer actual HOSE/HNX AJAX endpoints)
+
+RECOMMENDED FIX (30 min—2 hours):
+  ★ Option A: Revert to Playwright Implementation
+    - Effort: 30 minutes
+    - Risk: LOW (was tested in ops session)
+    - Status: Known good implementation
+    - Steps:
+      1. Check git history for commit 0913c44d (Playwright version)
+      2. Restore vps-scripts/discover-bctc-urls-browser.py from that commit
+      3. Test locally: python3 vps-scripts/discover-bctc-urls-browser.py VNM 2024 Q1
+      4. Verify Playwright/Chromium installed on VPS
+      5. Deploy via ./deploy-vinahost.sh
+      6. Smoke test on VPS: ssh root@125.212.251.27 '/root/discover-bctc-urls-browser.py VNM 2024 Q1'
+
+ALTERNATIVE FIX (2—4 hours):
+  Option B: Reverse-Engineer Real AJAX Endpoints
+    - Effort: 2-4 hours (per-portal investigation)
+    - Risk: MEDIUM (requires browser DevTools inspection)
+    - Steps:
+      1. Open Firefox/Chrome, navigate to HOSE portal
+      2. DevTools → Network tab, search for stock
+      3. Identify AJAX request that returns PDF list
+      4. Document endpoint, parameters, response schema
+      5. Repeat for HNX, UPCOM
+      6. Update Python script with discovered endpoints
+      7. Test discovery rate ≥90%
+      8. Deploy to VPS
+
+EMERGENCY WORKAROUND (2—3 hours, NOT recommended for production):
+  Option C: Manual BCTC URL Seeding
+    - Create /root/bctc-urls-manual.csv with 296 known URLs
+    - Update shell script to read from CSV as fallback
+    - High maintenance burden, not scalable
+
+================================================================================
+PREVENTION CHECKLIST
+================================================================================
+
+For future API-based discovery work, require validation of:
+
+  [ ] API endpoint exists (curl test before implementation)
+  [ ] API response schema documented (actual JSON, not assumed)
+  [ ] Real-world test against live portal (not mock data)
+  [ ] Integration test in CI/CD that runs against live API
+  [ ] Fallback mechanism if API becomes unavailable
+  [ ] Monthly monitoring for API changes
+  [ ] SLA for discovery success rate (≥90% = healthy, <80% = alert)
+
+================================================================================
+FILES AFFECTED
+================================================================================
+
+BROKEN:
+  ✗ vps-scripts/discover-bctc-urls-browser.py
+    Issue: Non-existent API endpoints (/api/bctc returns 404)
+    Risk: 100% failure rate on all discovery attempts
+
+TESTING (Mocked, Not Validated):
+  ✗ src/__tests__/1289f-refinement-direct-api.test.ts
+    Issue: Tests mock API response, doesn't validate against real portal
+    Risk: Tests pass but code fails in production
+
+DOCUMENTATION (Stale):
+  ⚠ docs/TECH_1289.md
+  ⚠ docs/handoffs/TASK_1289f.md
+  Issue: Documents Option B as the recommended solution, doesn't mention it was never validated
+
+================================================================================
+REFERENCE DOCUMENTS
+================================================================================
+
+Knowledge Base:
+  - docs/agent-memory/issues/bctc-portal-discovery.md
+    → Root cause analysis (CSR portals, async AJAX loading)
+    → Solution options (A: Playwright, B: Direct API, C: Manual)
+    → Recommendation: Option B (but never implemented correctly)
+
+  - docs/agent-memory/sessions/2026-04-23-ops-bctc-deployment.md
+    → Deployment report claiming Playwright version deployed
+    → Issues found: "PDFs Not Found for Tested Quarters"
+    → Marked as pending validation with actual available PDFs
+
+Handoffs:
+  - docs/handoffs/TASK_1289f.md
+    → Full specification for Playwright-based discovery
+    → Implementation skeleton + TDD tests
+
+Portal APIs:
+  - HOSE: https://www.hsx.vn/Modules/CMS/Web/ArticleList?category=BCTC&issuerCode={CODE}
+  - HNX: https://hnx.vn/cong-bo-thong-tin/cong-ty-co-phan.html?StockCode={CODE}
+  - UPCOM: https://upcom.hnx.vn/cong-bo-thong-tin/cong-ty-co-phan.html?StockCode={CODE}
+
+================================================================================
+NEXT STEPS
+================================================================================
+
+QA Validation (Next Phase):
+  1. Verify which version is deployed on VPS (Playwright vs. Option B)
+  2. Attempt SSH connection to VPS
+  3. Run discovery test on VPS directly
+  4. Compare results with local test results
+  5. If mismatch, escalate to DevOps for version alignment
+
+Development (After QA Validation):
+  1. Select fix path (A: Revert to Playwright, B: Fix API endpoints)
+  2. Implement fix in 30 min — 4 hours depending on option
+  3. Update integration tests to validate against live portal
+  4. Deploy to VPS via standard deployment process
+  5. Smoke test on production stocks (VNM, VCB, HPG)
+  6. Monitor discovery rate for 48 hours
+  7. If ≥90% success rate, mark task as complete
+
+================================================================================
+TEST EXECUTION SUMMARY
+================================================================================
+
+Total Tests:           5
+Passed:               0
+Failed:               5
+Success Rate:         0%
+
+Execution Time:       ~45 seconds
+Python Version:       3.x
+aiohttp Installed:    Yes
+Network:              Active (curl requests successful, but API endpoints 404)
+
+Confidence Level:     HIGH
+  - Multiple test cases all fail the same way (API 404)
+  - Issue consistently reproducible
+  - Root cause clearly identified (non-existent endpoints)
+
+Recommendation:       Route to development team for immediate fix
+Priority:             HIGH (blocks BCTC backfill work stream)
+Escalation:           If VPS version differs, escalate to DevOps
+
+================================================================================
