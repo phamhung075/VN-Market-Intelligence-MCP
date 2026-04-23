@@ -71,8 +71,8 @@ context: docs/handoffs/TASK_1295d.md
 
 | ID | Title | Layer | Status | Depends | Hours |
 |----|-------|-------|--------|---------|-------|
-| 1289f-inv | Portal Form Investigation (SSC, HNX, UPCOM) | research | Todo | none | 2-3 |
-| 1289f-dev | Rewrite Discovery Script (form submission + result parsing) | vps-scripts | Todo | 1289f-inv | 3-6 |
+| 1289f-inv | Portal Form Investigation (SSC, HNX, UPCOM) | research | Done | none | 2-3 |
+| 1289f-dev | Rewrite Discovery Script (hybrid wait strategy) | vps-scripts | Done | 1289f-inv | 3-6 |
 | 1289f-test | VPS Testing + Full Backfill Validation | ops | Todo | 1289f-dev | 1-2 |
 
 ---
