@@ -86,3 +86,6 @@ export type {
   GetPipelineHealthOptions,
   PipelineHealthResult,
 } from "./getPipelineHealth.js";
+
+// Task 1289f: Browser-based BCTC PDF URL discovery (VPS-side Playwright automation)
+export { discoverBctcPdfUrlWithBrowser } from "./discoverBctcPdfUrlBrowser.js";
