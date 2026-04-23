@@ -29,6 +29,12 @@ import {
   type SignalType,
   type AgentSignal,
 } from "../../../../infrastructure/db/agentSignalStore.js";
+import {
+  ChainCatalystFindingDataSchema,
+  PriceConfirmationFindingDataSchema,
+  UrgentNewsFindingDataSchema,
+  CrossValidateFindingDataSchema,
+} from "../../../../domain/signals/signalTypes.js";
 
 // ── Zod schemas ─────────────────────────────────────────────────────────────
 
@@ -60,6 +66,57 @@ const PayloadSchema = z.object({
     .optional()
     .describe("Impact score 0-10 (optional)"),
 }).passthrough();
+
+// ── Signal Validation ───────────────────────────────────────────────────────────
+
+/**
+ * SIGNAL_TYPE_VALIDATORS — Zod schemas for all chain signal types.
+ * Used by post_agent_signal to validate finding_data before DB storage.
+ */
+const SIGNAL_TYPE_VALIDATORS = {
+  chain_catalyst: ChainCatalystFindingDataSchema,
+  price_confirmation: PriceConfirmationFindingDataSchema,
+  urgent_news: UrgentNewsFindingDataSchema,
+  cross_validate: CrossValidateFindingDataSchema,
+} as const;
+
+/**
+ * Validate signal payload against its type's schema.
+ *
+ * @param signalType - The signal type (chain_catalyst, price_confirmation, etc.)
+ * @param findingData - The finding_data object to validate
+ * @returns { valid: true } or { valid: false; errors: string[] } with detailed messages
+ *
+ * Unknown signal types pass through with a warning log (forward compatibility).
+ * Exported for test access.
+ */
+export function validateSignalPayload(
+  signalType: string,
+  findingData: unknown
+): { valid: true } | { valid: false; errors: string[] } {
+  const schema =
+    SIGNAL_TYPE_VALIDATORS[
+      signalType as keyof typeof SIGNAL_TYPE_VALIDATORS
+    ];
+
+  if (!schema) {
+    // Signal type has no validator (new type or legacy) — warn but allow
+    console.warn(
+      `[agentSignalTools] No validator for signal type: ${signalType}`
+    );
+    return { valid: true };
+  }
+
+  const result = schema.safeParse(findingData);
+  if (!result.success) {
+    const errors = result.error.issues.map((issue) => {
+      const path = issue.path.length > 0 ? issue.path.join(".") : "root";
+      return `${path}: ${issue.message}`;
+    });
+    return { valid: false, errors };
+  }
+  return { valid: true };
+}
 
 // ── formatSignalLines ────────────────────────────────────────────────────────
 
@@ -142,25 +199,26 @@ export function registerAgentSignalTools(server: McpServer): void {
         await initDatabase();
         const db = getDb();
 
-        // Task 693: cross_validate signals MUST carry direction + confidence
-        // + summary inside finding_data so downstream consumers (Alert
-        // Commander, report-analyzer) can act on them. Reject empty
-        // placeholders early instead of letting null fields propagate
-        // through the chain. Other signal types stay permissive.
-        if (args.signal_type === "cross_validate") {
-          const fd = (args.finding_data ?? {}) as Record<string, unknown>;
-          const missing: string[] = [];
-          if (fd["direction"] == null || fd["direction"] === "") missing.push("direction");
-          if (fd["confidence"] == null) missing.push("confidence");
-          if (fd["summary"] == null || fd["summary"] === "") missing.push("summary");
-          if (missing.length > 0) {
-            return {
-              content: [{
+        // Task 1293b: Validate chain signals (chain_catalyst, price_confirmation,
+        // urgent_news) and cross_validate using strict Zod schemas.
+        // Reject incomplete payloads with detailed error response before storage.
+        const validation = validateSignalPayload(args.signal_type, args.finding_data);
+        if (!validation.valid) {
+          const errorMsg = `Signal type '${args.signal_type}' has invalid or missing required fields:\n${validation.errors.join("\n")}\n\nSee TECH_1293_ROOTCAUSE.md for schema definition.`;
+
+          // Log to console for dev debugging
+          console.error(`[agentSignalTools] Signal rejected: ${errorMsg}`);
+
+          // Return MCP error (agent receives feedback immediately)
+          return {
+            content: [
+              {
                 type: "text" as const,
-                text: `Error: cross_validate signals require finding_data.{${missing.join(", ")}}. Empty placeholders are rejected — see report #693.`,
-              }],
-            };
-          }
+                text: `Error: ${errorMsg}`,
+              },
+            ],
+            isError: true,
+          };
         }
 
         const cycleId = args.cycle_id ?? computeCycleId();
