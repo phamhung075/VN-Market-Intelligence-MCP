@@ -63,6 +63,71 @@ context: docs/handoffs/TASK_1295d.md
 
 ---
 
+---
+
+## Sprint 1289f: BCTC Discovery Layer Rewrite (6-9h total)
+
+**Context:** Historical backfill executed but discovered 0 PDFs. Root cause: script uses non-existent portal URLs and doesn't submit search forms. Requires reverse-engineering VN exchange portals (SSC, HNX, UPCOM) and rewriting discovery logic.
+
+| ID | Title | Layer | Status | Depends | Hours |
+|----|-------|-------|--------|---------|-------|
+| 1289f-inv | Portal Form Investigation (SSC, HNX, UPCOM) | research | Todo | none | 2-3 |
+| 1289f-dev | Rewrite Discovery Script (form submission + result parsing) | vps-scripts | Todo | 1289f-inv | 3-6 |
+| 1289f-test | VPS Testing + Full Backfill Validation | ops | Todo | 1289f-dev | 1-2 |
+
+---
+
+### Task Details — Sprint 1289f
+
+#### 1289f-inv: Portal Form Investigation (2-3h)
+**Branch:** `task/1289f-portal-investigation`
+**Context:** `docs/handoffs/TASK_1289_PORTAL_INVESTIGATION.md`
+
+Investigation protocol created in: `docs/BCTC_PORTAL_FORM_INVESTIGATION.md`
+
+**Deliverables:**
+- [ ] SSC portal form structure (fields, selectors, submission method)
+- [ ] HNX portal form structure (backup)
+- [ ] UPCOM portal form structure (fallback)
+- [ ] PDF extraction pattern per portal
+- [ ] Expected AJAX endpoints or direct URLs
+- [ ] Report: `docs/BCTC_PORTAL_DISCOVERY_FINDINGS.md`
+
+#### 1289f-dev: Rewrite Discovery Script (3-6h)
+**Branch:** `task/1289f-discovery-rewrite`
+**Context:** `docs/handoffs/TASK_1289_DISCOVERY_REWRITE.md`
+
+**Files:**
+- MODIFY: `vps-scripts/discover-bctc-urls-browser.py` (complete rewrite)
+  - Replace URL-based discovery with form-based search
+  - Implement SSC form submission (primary)
+  - Implement HNX form submission (fallback 1)
+  - Implement UPCOM form submission (fallback 2)
+  - Parse result tables for PDF links
+  - Maintain JSON output format (url, source, confidence)
+- CREATE: `src/__tests__/1289f-discovery-form-submission.test.ts` (8+ assertions)
+- MODIFY: `vps-scripts/enrich-bctc-urls.sh` (if needed)
+
+**Success Criteria:**
+- Discovery rate ≥80% on test stocks (VNM, BID, FPT) × multiple quarters
+- <10s per stock (acceptable for form submission)
+- All JSON output valid
+- Fallback chain works (SSC → HNX → UPCOM)
+
+#### 1289f-test: VPS Testing + Full Backfill (1-2h)
+**Branch:** None (VPS ops)
+**Context:** `docs/handoffs/TASK_1289F_VPS_VALIDATION.md`
+
+**Steps:**
+- [ ] Deploy updated script to VPS
+- [ ] Test 3 stocks × 2 quarters (single discovery test)
+- [ ] Run full backfill: 37 stocks × 8 quarters
+- [ ] Monitor logs for success rate
+- [ ] Target: ≥192 PDFs discovered (80%), ≥173 downloaded (90%)
+- [ ] Report: `reports/TASK_REPORT_1289f_BACKFILL.md`
+
+---
+
 ## Backlog
 
 | ID | Title | Priority | Notes |
