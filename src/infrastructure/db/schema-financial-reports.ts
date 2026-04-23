@@ -49,6 +49,15 @@ export function initFinancialReportsTables(db: Database): void {
     if (!colNames.has("extraction_source_note")) {
       db.exec("ALTER TABLE financial_reports ADD COLUMN extraction_source_note TEXT");
     }
+    if (!colNames.has("revenue_growth_qoq")) {
+      db.exec("ALTER TABLE financial_reports ADD COLUMN revenue_growth_qoq REAL DEFAULT 0.0");
+    }
+    if (!colNames.has("margin_trend")) {
+      db.exec("ALTER TABLE financial_reports ADD COLUMN margin_trend REAL DEFAULT 0.0");
+    }
+    if (!colNames.has("debt_ratio_hint")) {
+      db.exec("ALTER TABLE financial_reports ADD COLUMN debt_ratio_hint REAL DEFAULT 0.0");
+    }
 
     // Add index for fallback signal lookups
     db.exec(`CREATE INDEX IF NOT EXISTS idx_fr_extraction_method ON financial_reports(action_code, extraction_method, parsed_at)`);

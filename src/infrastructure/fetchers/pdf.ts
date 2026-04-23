@@ -297,6 +297,10 @@ export async function downloadAndExtractPdf(
     if (err instanceof CircuitOpenError) {
       logger.debug("[pdf] circuit open — skipping PDF download", { url });
     } else {
+      // Task 1294b: Re-throw timeout errors so they can be handled by fallback logic
+      if (err instanceof Error && err.name === 'TimeoutError') {
+        throw err;
+      }
       logger.error("[pdf] failed to download or extract PDF", {
         url,
         error: err instanceof Error ? err.message : String(err),

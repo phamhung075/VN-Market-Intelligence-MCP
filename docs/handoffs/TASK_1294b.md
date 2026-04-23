@@ -855,3 +855,20 @@ After 1294b merges, QA team (via TECH_1294.md checklist) will:
 4. Validate downstreamtools apply 10% confidence penalty correctly
 
 ---
+
+## [QA] Review Record
+
+**verdict:** CHANGES_REQUESTED
+
+**blocking_issues:**
+- `src/application/usecases/fetchParseAndStoreBctc.ts:341-343` — Error not re-thrown when `enableBctcFallback=false` because `downloadAndExtractPdf` swallows timeout errors. Need to preserve/detect timeout and throw before fallback attempt.
+- `src/application/usecases/fetchParseAndStoreBctc.ts:449-482` — `tryNewsChainFallback` returns `null` when rejected, but tests expect object with `fallback: false` + `reason: string`. Change return type to always return object, or adjust test expectations.
+- `src/__tests__/1294b-bctc-fallback.test.ts:378-388` — Test queries non-existent DB columns (revenue_growth_qoq, margin_trend, debt_ratio_hint). Either add to schema or modify test to check existing fields.
+- `src/__tests__/1294b-bctc-fallback.test.ts:458-465` — Temporal discount logic mismatch. With avgConfidence=0.775, final = 0.55*0.8*0.775 = 0.341 → capped to 0.45, not < 0.55 as test expects. Clarify discount intent.
+
+**test_results:** 2 PASS / 6 FAIL (bun test 1294b-bctc-fallback.test.ts)
+
+**files_confirmed_clean:**
+- `src/domain/services/signalToBctcMapper.ts` — DDD compliant, zero infrastructure imports, correct extraction logic
+- `bun tsc --noEmit` — 0 errors
+

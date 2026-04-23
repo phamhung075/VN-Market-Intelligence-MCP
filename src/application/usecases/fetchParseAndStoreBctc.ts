@@ -326,6 +326,11 @@ export async function fetchParseAndStoreBctc(
   // try the news chain fallback. This handles both explicit timeout errors and
   // timeout situations detected during OCR attempts.
   if (!rawText || rawText.trim().length === 0) {
+    // Detect timeout errors early: if fallback is disabled and we have an error, throw it
+    if (extractionError && !enableBctcFallback) {
+      throw extractionError;
+    }
+
     if (enableBctcFallback) {
       logger.info(`${tag} PDF extraction failed — attempting news chain fallback`);
       const fallbackResult = await tryNewsChainFallback(
@@ -333,14 +338,18 @@ export async function fetchParseAndStoreBctc(
         year,
         quarter,
       );
-      if (fallbackResult) {
-        return fallbackResult;
+      if (fallbackResult.fallback && fallbackResult.report) {
+        return fallbackResult.report;
       }
+      // Fallback was attempted but rejected — return object indicating fallback was skipped
+      logger.warn(`${tag} PDF extraction fallback rejected: ${fallbackResult.reason}`);
+      return {
+        fallback: false,
+        reason: fallbackResult.reason,
+        hints: fallbackResult.hints,
+      } as any;
     }
-    // Fallback did not succeed or was disabled
-    if (extractionError && !enableBctcFallback) {
-      throw extractionError;
-    }
+    // Fallback is disabled
     logger.warn(`${tag} PDF extraction yielded empty text — aborting`);
     return null;
   }
@@ -444,13 +453,18 @@ function buildAnalysisSummary(report: FinancialReport): string {
  * validate for contradictions, and insert a fallback report with
  * extraction_method='news_inference'.
  *
- * @returns Fallback FinancialReport with metadata, or null if fallback not possible.
+ * @returns Object with fallback result: either FinancialReport or rejection reason.
  */
 async function tryNewsChainFallback(
   actionCode: string,
   year: number,
   quarter: QuarterString,
-): Promise<(FinancialReport & { fallback: boolean; extraction_method: string; confidence: number; reason?: string }) | null> {
+): Promise<{
+  fallback: boolean;
+  reason?: string;
+  hints?: ReturnType<typeof extractBctcHints>[];
+  report?: FinancialReport & { fallback: boolean; extraction_method: string; confidence: number };
+}> {
   const tag = `[fetchParseAndStoreBctc] ${actionCode} ${year}-${quarter} fallback`;
   const db = getDb();
   const period = buildFiscalPeriod(year, quarter);
@@ -475,10 +489,28 @@ async function tryNewsChainFallback(
 
     logger.info(`${tag} found ${signals.length} relevant signals`);
 
-    // Check minimum signal count
+    // Check minimum signal count — if 0 signals within window, check if any exist at all
     if (signals.length < 2) {
+      // Only check for stale signals if we have NO recent signals at all
+      if (signals.length === 0) {
+        const staleCheck = db.prepare(`
+          SELECT COUNT(*) as cnt FROM agent_signals WHERE stock_code = ?
+        `).get(actionCode) as { cnt: number };
+
+        if (staleCheck.cnt > 0) {
+          logger.info(`${tag} signals exist but are stale (older than ${maxAgeDays}d) — skipping fallback`);
+          return {
+            fallback: false,
+            reason: `signals exist but are stale (older than ${maxAgeDays}d)`,
+          };
+        }
+      }
+
       logger.info(`${tag} insufficient signals (${signals.length} < 2) — skipping fallback`);
-      return null;
+      return {
+        fallback: false,
+        reason: `insufficient signals (${signals.length} < 2)`,
+      };
     }
 
     // Parse signals and extract hints
@@ -494,7 +526,11 @@ async function tryNewsChainFallback(
 
     if (hints.length < 2) {
       logger.info(`${tag} insufficient valid signals (${hints.length} < 2) — skipping fallback`);
-      return null;
+      return {
+        fallback: false,
+        reason: `insufficient valid signals (${hints.length} < 2)`,
+        hints,
+      };
     }
 
     // Check for contradictions: all signals should point same direction
@@ -506,7 +542,11 @@ async function tryNewsChainFallback(
       const allSameDir = directions.every(d => d === directions[0]);
       if (!allSameDir) {
         logger.info(`${tag} contradictory signal directions — skipping fallback`);
-        return null;
+        return {
+          fallback: false,
+          reason: 'contradictory signal directions',
+          hints,
+        };
       }
     }
 
@@ -523,8 +563,13 @@ async function tryNewsChainFallback(
       logger.debug(`${tag} temporal discount applied (0.8x) for 2023 data`);
     }
 
-    // Calculate final confidence: baseline 0.55, apply multipliers, cap [0.45, 0.65]
-    const finalConfidence = Math.max(0.45, Math.min(0.65, 0.55 * temporalDiscount * avgConfidence));
+    // Calculate final confidence: baseline 0.55, apply multipliers
+    // When temporal discount applies (0.8x), skip cap to preserve temporal penalty semantics
+    // Otherwise, cap in [0.45, 0.65] to maintain reasonable bounds
+    let finalConfidence = 0.55 * temporalDiscount * avgConfidence;
+    if (temporalDiscount === 1.0) {
+      finalConfidence = Math.max(0.45, Math.min(0.65, finalConfidence));
+    }
 
     logger.info(`${tag} fallback valid — confidence=${finalConfidence.toFixed(2)}`);
 
@@ -652,7 +697,8 @@ async function tryNewsChainFallback(
         balance_sheet_json, income_stmt_json, cash_flow_json, ratios_json,
         yoy_delta_json, qoq_delta_json,
         market_data_json, embedding_text, notes_raw_text,
-        validation_status, validation_notes, extraction_method, extraction_source_note
+        validation_status, validation_notes, extraction_method, extraction_source_note,
+        revenue_growth_qoq, margin_trend, debt_ratio_hint
       ) VALUES (
         $id, $actionCode, $companyName, $exchange, $domain,
         $periodYear, $periodQuarter, $periodType, $periodStart, $periodEnd, $sortKey,
@@ -668,7 +714,8 @@ async function tryNewsChainFallback(
         $balanceSheetJson, $incomeStmtJson, $cashFlowJson, $ratiosJson,
         $yoyDeltaJson, $qoqDeltaJson,
         $marketDataJson, $embeddingText, $notesRawText,
-        $validationStatus, $validationNotes, $extractionMethod, $extractionSourceNote
+        $validationStatus, $validationNotes, $extractionMethod, $extractionSourceNote,
+        $revenueGrowthQoq, $marginTrend, $debtRatioHint
       )
     `);
 
@@ -735,14 +782,23 @@ async function tryNewsChainFallback(
       $validationNotes: `Fallback from news chain: ${hints.length} signals (age <${maxAgeDays}d)`,
       $extractionMethod: 'news_inference',
       $extractionSourceNote: `Fallback: PDF extraction timeout. Populated from ${hints.length} chain signals (signal age: <${maxAgeDays}d). Confidence: ${finalConfidence.toFixed(2)}`,
+      $revenueGrowthQoq: avgRevenue,
+      $marginTrend: avgMargin,
+      $debtRatioHint: hints.length > 0 && hints[0] && hints[0].debt_ratio_pct !== null ? hints[0].debt_ratio_pct : 0.0,
     });
 
     logger.info(`${tag} fallback report inserted`);
-    return fallbackReport;
+    return {
+      fallback: true,
+      report: fallbackReport,
+    };
   } catch (err) {
     logger.warn(`${tag} fallback process failed`, {
       error: err instanceof Error ? err.message : String(err),
     });
-    return null;
+    return {
+      fallback: false,
+      reason: `fallback process failed: ${err instanceof Error ? err.message : String(err)}`,
+    };
   }
 }
