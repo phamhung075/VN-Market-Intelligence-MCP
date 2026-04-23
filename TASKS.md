@@ -23,6 +23,7 @@
 
 | ID | Title | Priority | Notes |
 |----|----|----------|-------|
+| 1293 | Alert signal payload schema hardening | HIGH | Unblocks 4-AND opportunity alerts (VIC 9.5, NVL 8, BSR 7.5 suppressed 2026-04-23 02:36) |
 | 1284 | IMF context sentiment detection | MEDIUM | Policy vs crisis distinction |
 | 1267 | SSC PDF timeout fallback | MEDIUM | Use news chain if OCR fails |
 | 1286 | Update IMPLEMENTATION_STATUS.md | LOW | Add sprint 240+ entries |

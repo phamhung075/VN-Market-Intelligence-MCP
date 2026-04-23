@@ -2,11 +2,11 @@
   "_maintained_by": "PM / system-auditor",
   "_trigger": "sprint start/end, tool/cron count change, baseline test update",
   "lastUpdated": "2026-04-23",
-  "currentSprint": 1292,
-  "previousSprint": { "number": 1291, "status": "COMPLETE", "progressTasks": "Sprint 1291: Baseline tests +19 assertions → 6324 (all PASS)" },
-  "sprintGoal": "Sprint 1291: (Next sprint, backlog: IMF sentiment 1284, HOSE staleness 1274, SSC PDF fallback 1267)",
-  "testBaseline": 6324,
-  "testBaselineTarget": 6305,
+  "currentSprint": 1293,
+  "previousSprint": { "number": 1292, "status": "COMPLETE", "progressTasks": "Sprint 1292: HOSE staleness GREEN + foreign flow fallback integration (all tests 6325 PASS)" },
+  "sprintGoal": "Sprint 1293: Alert signal payload schema hardening — restore 4-AND opportunity alerts by adding numeric verification fields to chain_catalyst/price_confirmation payloads (blocks VIC 9.5, NVL 8, BSR 7.5 signals)",
+  "testBaseline": 6325,
+  "testBaselineTarget": 6325,
   "testFailures": 0,
   "toolCount": 105,
   "schedulerFileCount": 42,
@@ -14,6 +14,6 @@
   "devAgentCount": 13,
   "analysisAgentCount": 9,
   "totalTasksDone": 340,
-  "lastFixApplied": "Sprint 1289: Foreign flow parse error root-cause analysis + 8Q BCTC historical download design (TECH-1289 + BCTC_HISTORICAL_DOWNLOAD.md complete, Phase 2 approved)",
-  "currentSprintNotes": "Sprint 1292 COMPLETE (2026-04-23): Sprint 1291 baseline merged (+19 assertions, 6305→6324). Foreign flow fallback logic complete, all tests passing. Backlog: IMF sentiment (1284), SSC PDF fallback (1267), IMPLEMENTATION_STATUS update (1286). HOSE staleness (1274) completed in Sprint 1292."
+  "lastFixApplied": "Sprint 1292: HOSE staleness fix + foreign flow fallback integration",
+  "currentSprintNotes": "Sprint 1293 AUTO-INITIATED (2026-04-23 05:45 UTC): ALERT QUALITY ISSUE — 5 bullish signals (VIC 9.5, NVL 8, BSR 7.5 impact) suppressed 2026-04-23 02:36 cycle due to missing numeric payload fields (newsSentiment, kinhDichConfidence, agentSignalsMajority). Awaiting BA requirement spec for News Scout/Market Watcher payload schema fix. Backlog: IMF sentiment (1284), SSC PDF fallback (1267), IMPLEMENTATION_STATUS update (1286)."
 }
