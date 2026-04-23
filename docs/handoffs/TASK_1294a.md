@@ -311,3 +311,36 @@ The IMF classifier is now available for use by any code path that needs to class
 - Task 1294b (BCTC PDF timeout fallback) depends on 1294a. Once this merges, 1294b can begin.
 
 ---
+
+## [QA] Review Record
+
+**verdict:** APPROVED
+**date:** 2026-04-23
+
+**blocking_issues:** None
+
+**non_blocking:**
+- `/src/__tests__/1294a-imf-sentiment.test.ts:9` — Import missing `.js` extension (convention, Bun tolerates, tests pass)
+
+**files_confirmed_clean:**
+- `/abs/path/to/src/domain/services/imfSentimentClassifier.ts` — Pure domain service, 125 LOC, no infrastructure imports, 100% coverage, all 5 tests GREEN
+- `/abs/path/to/src/__tests__/1294a-imf-sentiment.test.ts` — 5 assertions covering all ACC, 21 expects total, 100% coverage
+- `/abs/path/to/TASKS.md` — Status updated to Review
+
+**test_results:**
+- Unit tests: 5/5 PASS
+- Full suite: 6421/6421 PASS (baseline 6416 + 5 new)
+- TypeScript: 0 errors
+- Coverage: 100%
+
+**ddd_compliance:** PASS — zero infrastructure imports, pure logic only
+
+**security:** PASS — no hardcoded credentials, no SQL, no regex DoS, no process.env
+
+**integration_status:** IMF classifier domain service complete and production-ready. Integration into pollNews.ts deferred per developer note (acknowledged in handoff as follow-up task). No blocking issues for merge.
+
+**next_action:** Merge to main. Developer proceeds to 1294b.
+
+**merge_commit:** (pending — fill after merge)
+
+---
