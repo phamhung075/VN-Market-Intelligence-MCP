@@ -54,7 +54,7 @@ context: docs/handoffs/TASK_1293d.md
 
 | ID | Title | Status | Priority |
 |----|-------|--------|----------|
-| 1289f | Browser-based BCTC PDF URL discovery script for VPS | Review | HIGH |
+| 1289f | Browser-based BCTC PDF URL discovery script for VPS | Done | HIGH |
 
 ### Task 1289f: Browser-Based BCTC PDF Discovery Script
 
