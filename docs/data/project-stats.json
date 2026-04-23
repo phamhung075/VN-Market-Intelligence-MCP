@@ -2,9 +2,9 @@
   "_maintained_by": "PM / system-auditor",
   "_trigger": "sprint start/end, tool/cron count change, baseline test update",
   "lastUpdated": "2026-04-23",
-  "currentSprint": 1296,
-  "previousSprint": { "number": 1295, "status": "COMPLETE", "progressTasks": "Sprint 1295: Signal Payload Quality Enforcement — 4 tasks (1295a–d) merged. Signal builders (4 fluent-API classes), agent spec updates (news-scout + market-watcher), signal quality audit service (monthly cron + dashboard), E2E integration tests (53 assertions, 0 failures)." },
-  "sprintGoal": "Infrastructure Recovery + IMF Sentiment Integration (2 tasks: 1296a BA research + 1296b Architect design + Dev implementation). Unblock BCTC historical backfill via OPS portal fix validation.",
+  "currentSprint": "idle",
+  "previousSprint": { "number": 1296, "status": "DESIGN_COMPLETE", "progressTasks": "Sprint 1296: Infrastructure Recovery + IMF Sentiment Integration — Task 1296a (IMF research) DONE with 11 cascade rules + confidence scoring (2.5h used). Task 1296b (IMF classifier) design APPROVED in docs/TECH_1296b.md. Ready for Sprint 1297 implementation (10h dev). Task 1289g BCTC portal fix ready for VPS deployment (45 min validation)." },
+  "sprintGoal": "awaiting Sprint 1297 dev queue (IMF classifier implementation 10h) or OPS validation (BCTC portal fix unblock)",
   "testBaseline": 6459,
   "testBaselineTarget": 6450,
   "testFailures": 0,
@@ -15,5 +15,5 @@
   "analysisAgentCount": 9,
   "totalTasksDone": 354,
   "lastFixApplied": "Sprint 1295: Signal Payload Quality Enforcement (fluent builders + monthly audit + E2E integration tests, all merged 2026-04-23)",
-  "currentSprintNotes": "Sprint 1296 in progress. Task 1296a (BA research) COMPLETE 2026-04-23 (2.5h used, research doc created). Task 1296b (Architect design) ready to start (depends on 1296a findings). Total effort: 13.5h (BA 2.5h done + Architect 3–4h + Dev 10h pending)."
+  "currentSprintNotes": "Sprint 1296 FINALIZED 2026-04-23. Task 1296a (IMF research) DONE. Task 1296b design phase APPROVED (docs/TECH_1296b.md). Task 1289g (BCTC portal fix) ready for VPS deployment (45 min validation unblocks historical backfill). Queuing Sprint 1297 dev phase."
 }

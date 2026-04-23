@@ -22,16 +22,18 @@
 
 ---
 
-## Sprint 1296: Infrastructure Recovery + IMF Sentiment Integration (13.5h total)
+## Sprint 1296: Infrastructure Recovery + IMF Sentiment Integration (13.5h total) — DESIGN PHASE COMPLETE
 
 | ID | Title | Layer | Status | Depends | Hours |
 |----|-------|-------|--------|---------|-------|
 | 1296a | IMF Indicator Research & Trade Mapping | ba | Done | none | 2–3 |
-| 1296b | IMF Sentiment Classifier Service | domain | Todo | 1296a | 10–11 |
+| 1296b | IMF Sentiment Classifier Service | domain | Design Complete | 1296a | 10–11 |
 
 **Goal:** Unblock BCTC historical backfill (OPS-led validation) + plan IMF sentiment integration (BA research → Architect design → Dev implementation).
 
-**Note:** Part A (OPS validation: BCTC portal fix testing) is external to this design, documented in REQ-1296.
+**Status:** Design phase complete. Task 1296a (IMF research) delivered with 11 cascade rules + confidence scoring. Task 1296b design approved in `docs/TECH_1296b.md`. Ready for Sprint 1297 implementation (10h dev phase).
+
+**Note:** Task 1289g (BCTC portal fix) ready for VPS deployment (~45 min validation). Part A (OPS validation: BCTC portal fix testing) is external to this design, documented in REQ-1296.
 
 ---
 
@@ -61,8 +63,9 @@
 #### 1296b: IMF Sentiment Classifier Service (10–11h total, design 3–4h + dev 10h)
 **context:** docs/handoffs/TASK_1296b.md
 **Branch:** `task/1296b-imf-classifier`
-**Status:** Todo
+**Status:** Design Complete (Architect Approved) — Ready for Sprint 1297 Dev Phase
 **Depends on:** 1296a ✓
+**Design Doc:** `docs/TECH_1296b.md` (architecture, DDD contracts, interface specs approved)
 
 **Design Phase (Architect, 3–4h):**
 - [ ] Produce `docs/TECH_1296b.md` (architecture, DDD layer mapping, interface contracts)
