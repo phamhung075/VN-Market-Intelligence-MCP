@@ -14,6 +14,6 @@
   "devAgentCount": 13,
   "analysisAgentCount": 9,
   "totalTasksDone": 355,
-  "lastFixApplied": "Sprint 1297: Add 6 factory skills (conviction-calculator, kinh-dich-interpreter, narrative-formatter, pre-fire-validation, quality-audit-loop, signal-intelligence) + sequential-market-analysis tool + agent workflow integration (merged 2026-04-23)",
-  "currentSprintNotes": "Sprint 1298 DONE. Sprint 1300 expanded: 7 truncation bugs found (4 user-facing in briefings, 3 storage-layer). Solution: TelegramMessageFactory singleton service to centralize all message formatting. 1300a (RED): Create factory + migrate briefings. 1300b (GREEN): Migrate storage-layer + regression. Queued: 1297b (BCTC), 1299a (Tool Index), 1300a (Factory). totalTasks in board: 10 (1297:3, 1298:2, 1299:3, 1300:2)."
+  "lastFixApplied": "Sprint 1303: Backlog drain — 6 bug fixes (price_surge 4h bucket, cost-pressure sentiment, corporate_governance policy type, test log purge, MARKET spam removal, append_session_record dedup) — merged 2026-04-24",
+  "currentSprintNotes": "Sprint 1303 DONE (2026-04-24). Processed 25 telegram reports from 8-day backlog. 6 code fixes committed. VPS all-services down — UNBLOCK task 1303g ready for ops. BCTC parser sprint + cascade rule gaps queued. totalTasks in board: 13 (1297:3, 1299:3, 1302:2, 1303:9-incl-backlog)."
 }
