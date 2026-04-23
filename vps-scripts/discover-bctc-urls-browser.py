@@ -1,228 +1,314 @@
 #!/usr/bin/env python3
 """
-BCTC PDF URL discovery for historical backfill.
-Handles async JavaScript rendering on VN stock exchange portals.
+BCTC PDF URL discovery with Playwright browser automation.
+Task 1289f: Option A - Playwright/Chromium for JavaScript-rendered portals
+
+Handles BCTC discovery from CSR portals (React-rendered HTML) by:
+- Launching headless Chromium
+- Navigating to HOSE/HNX/UPCOM discovery pages
+- Waiting for page render and DOM population
+- Querying PDF links, extracting URLs, validating by year + quarter
+- Returning first match with confidence score
+
+Replaces non-functional API approach (Option B) that returned HTTP 404.
 
 Usage:
-    python3 discover-bctc-urls-browser.py VNM 2025 Q4
+    python3 discover-bctc-urls-browser.py VNM 2024 Q4
 Output:
-    {"url": "https://...", "source": "HOSE", "confidence": 0.95}
+    {"results": [{"url": "https://...", "source": "HOSE", "confidence": 0.95, "page_title": "..."}], "error": null}
     OR
-    {"url": null, "source": null, "confidence": 0, "error": "..."}
+    {"results": [], "error": "No PDF found in any portal"}
 """
 
 import sys
 import json
 import asyncio
-from urllib.parse import urlparse, urljoin
-from playwright.async_api import async_playwright, TimeoutError as PlaywrightTimeout
+from typing import Optional, Dict, Any, List
+from playwright.async_api import async_playwright, Browser, Page, TimeoutError as PlaywrightTimeoutError
 
-async def discover_bctc_pdf(code: str, year: int, quarter: str) -> dict:
+
+async def discover_bctc_pdf(code: str, year: int, quarter: str) -> Dict[str, Any]:
     """
     Discover BCTC PDF URL from Vietnamese stock exchange portals.
 
     Tries portals in order: HOSE → HNX → UPCOM
-    Each portal is tried with a 30-second timeout.
+    Each portal uses browser automation with 30-second timeout per page.
 
     Args:
         code: Stock ticker (e.g., "VNM", "BID", "FPT")
-        year: Year (e.g., 2025)
+        year: Year (e.g., 2024)
         quarter: Quarter as string (e.g., "Q4", "Q3")
 
     Returns:
         {
-            "url": str or None,           # Full URL to PDF or null
-            "source": str or None,        # "HOSE" | "HNX" | "UPCOM" | null
-            "confidence": float,          # 0.85–0.95 (quality score)
-            "error": str (optional)       # Error message if failed
+            "results": [{
+                "url": str,               # Full URL to PDF
+                "source": str,            # "HOSE" | "HNX" | "UPCOM"
+                "confidence": float,      # 0.85–0.95 (quality score)
+                "page_title": str         # Page title for reference
+            }],
+            "error": str or None          # Error message if all failed
         }
     """
-    async with async_playwright() as p:
-        browser = await p.chromium.launch(
-            headless=True,
-            args=[
-                "--no-sandbox",
-                "--disable-dev-shm-usage",
-                "--disable-gpu",
-            ],
-        )
+    normalized_quarter = quarter.upper()
+    results: List[Dict[str, Any]] = []
 
-        # Try HOSE first (highest quality)
-        result = await _try_portal(
-            browser,
-            code,
-            year,
-            quarter,
-            portal="HOSE",
-            url_template="https://www.hsx.vn/Modules/CMS/Web/ArticleList?category=BCTC&issuerCode={code}",
-            confidence=0.95,
-        )
-        if result["url"]:
-            await browser.close()
-            return result
-
-        # Try HNX second
-        result = await _try_portal(
-            browser,
-            code,
-            year,
-            quarter,
-            portal="HNX",
-            url_template="https://hnx.vn/cong-bo-thong-tin/cong-ty-co-phan.html?StockCode={code}",
-            confidence=0.90,
-        )
-        if result["url"]:
-            await browser.close()
-            return result
-
-        # Try UPCOM third (lowest quality but still good)
-        result = await _try_portal(
-            browser,
-            code,
-            year,
-            quarter,
-            portal="UPCOM",
-            url_template="https://upcom.hnx.vn/cong-bo-thong-tin/cong-ty-co-phan.html?StockCode={code}",
-            confidence=0.85,
-        )
-        if result["url"]:
-            await browser.close()
-            return result
-
-        await browser.close()
-        return {
-            "url": None,
-            "source": None,
-            "confidence": 0,
-            "error": f"No PDF found in HOSE, HNX, or UPCOM for {code} {year} {quarter}",
-        }
-
-
-async def _try_portal(
-    browser,
-    code: str,
-    year: int,
-    quarter: str,
-    portal: str,
-    url_template: str,
-    confidence: float,
-) -> dict:
-    """
-    Try to discover PDF from a single portal.
-
-    Uses hybrid waiting strategy:
-    1. Navigate to portal with wait_until="networkidle2"
-    2. Try to wait for PDFs to appear via JavaScript detection (fast path)
-    3. If that times out, wait a fixed 2 seconds (fallback)
-    4. Extract all PDF links and filter by year/quarter
-    """
     try:
-        page = await browser.new_page()
-        portal_url = url_template.format(code=code)
+        async with async_playwright() as playwright:
+            browser = await playwright.chromium.launch(args=["--no-sandbox"])
 
-        # Step 1: Navigate to portal
-        try:
-            await page.goto(portal_url, wait_until="networkidle2", timeout=30000)
-        except PlaywrightTimeout:
-            await page.close()
-            return {
-                "url": None,
-                "source": portal,
-                "confidence": 0,
-                "error": f"Timeout navigating to {portal} portal",
-            }
+            try:
+                # Try HOSE first (highest quality portal)
+                result = await discover_from_hose(browser, code, year, normalized_quarter)
+                if result:
+                    results.append(result)
+                    return {"results": results, "error": None}
 
-        # Step 2: Wait for PDFs to appear (hybrid approach)
-        # Try JavaScript detection first (usually faster: 500ms–1s)
-        try:
-            await page.wait_for_function(
-                "() => document.querySelectorAll('a[href*=\".pdf\"]').length > 0",
-                timeout=3000,  # 3 second max for JS detection
-            )
-        except PlaywrightTimeout:
-            # Fallback: wait fixed 2 seconds (in case portal is slow)
-            await page.wait_for_timeout(2000)
+                # Try HNX second
+                result = await discover_from_hnx(browser, code, year, normalized_quarter)
+                if result:
+                    results.append(result)
+                    return {"results": results, "error": None}
 
-        # Step 3: Extract PDF links
-        pdf_elements = await page.locator('a[href*=".pdf"]').all()
+                # Try UPCOM third (fallback)
+                result = await discover_from_upcom(browser, code, year, normalized_quarter)
+                if result:
+                    results.append(result)
+                    return {"results": results, "error": None}
 
-        for pdf_elem in pdf_elements:
-            href = await pdf_elem.get_attribute("href")
-            if not href:
-                continue
+                # All portals exhausted
+                return {
+                    "results": [],
+                    "error": f"No PDF found in HOSE, HNX, or UPCOM for {code} {year} {normalized_quarter}",
+                }
 
-            # Get surrounding text for context matching
-            text_content = await pdf_elem.text_content()
-            context_str = f"{text_content} {href}".lower()
-
-            # Check if year and quarter are nearby (loose match)
-            year_str = str(year)
-            quarter_short = quarter.upper()[-1]  # "Q4" → "4"
-
-            has_year = year_str in context_str
-            has_quarter = (
-                quarter_short in context_str  # "Q4" context
-                or f"q{quarter_short}" in context_str  # "q4" context
-                or f"quarter {quarter_short}" in context_str
-            )
-
-            if has_year and has_quarter:
-                # Found a match! Resolve relative URL to absolute
-                full_url = _resolve_url(href, portal_url)
-                if _is_valid_pdf_url(full_url):
-                    await page.close()
-                    return {
-                        "url": full_url,
-                        "source": portal,
-                        "confidence": confidence,
-                    }
-
-        # No matching PDF found in this portal
-        await page.close()
-        return {
-            "url": None,
-            "source": portal,
-            "confidence": 0,
-        }
+            finally:
+                await browser.close()
 
     except Exception as e:
-        try:
-            await page.close()
-        except:
-            pass
         return {
-            "url": None,
-            "source": portal,
-            "confidence": 0,
-            "error": f"{portal} portal error: {str(e)}",
+            "results": [],
+            "error": f"Browser launch failed: {str(e)}",
         }
 
 
-def _resolve_url(path: str, base_url: str) -> str:
-    """Resolve relative URL to absolute URL."""
-    if not path:
-        return ""
+async def discover_from_hose(browser: Browser, code: str, year: int, quarter: str) -> Optional[Dict[str, Any]]:
+    """
+    Discover BCTC PDF from HOSE portal using browser automation.
 
-    # Already absolute
-    if path.startswith("http://") or path.startswith("https://"):
-        return path
+    Portal: https://www.hsx.vn/Modules/CMS/Web/ArticleList?category=BCTC&issuerCode={CODE}
+    Strategy:
+    1. Navigate and wait for page load (networkidle)
+    2. Query all <a> elements with href containing ".pdf"
+    3. Filter by quarter + year in link text
+    4. Return first match with confidence 0.95
+    """
+    page = None
+    try:
+        page = await browser.new_page()
+        url = f"https://www.hsx.vn/Modules/CMS/Web/ArticleList?category=BCTC&issuerCode={code}"
 
-    # Use urllib's urljoin for proper handling
-    return urljoin(base_url, path)
+        await page.goto(url, timeout=30000, wait_until="networkidle")
+
+        # Find all PDF links
+        pdf_links = await page.query_selector_all('a[href*=".pdf"]')
+
+        for link_elem in pdf_links:
+            href = await link_elem.get_attribute("href")
+            text_content = await link_elem.text_content()
+
+            # Check if quarter + year match in link text
+            if href and matches_quarter_and_year(text_content or "", quarter, year):
+                # Resolve relative URL to absolute
+                if not href.startswith("http"):
+                    href = f"https://www.hsx.vn{href}" if href.startswith("/") else f"https://www.hsx.vn/{href}"
+
+                if is_valid_pdf_url(href):
+                    page_title = await page.title()
+                    return {
+                        "url": href,
+                        "source": "HOSE",
+                        "confidence": 0.95,
+                        "page_title": page_title,
+                    }
+
+        return None
+
+    except PlaywrightTimeoutError:
+        return None
+    except Exception as e:
+        # Log to stderr but continue to next portal
+        print(f"HOSE discovery error for {code}: {str(e)}", file=sys.stderr)
+        return None
+    finally:
+        if page:
+            await page.close()
 
 
-def _is_valid_pdf_url(url: str) -> bool:
-    """Validate that URL is a safe, legitimate PDF."""
-    lower = url.lower()
+async def discover_from_hnx(browser: Browser, code: str, year: int, quarter: str) -> Optional[Dict[str, Any]]:
+    """
+    Discover BCTC PDF from HNX portal using browser automation.
 
-    # Must be PDF and HTTPS/HTTP
-    if not lower.endswith(".pdf"):
+    Portal: https://hnx.vn/cong-bo-thong-tin/cong-ty-co-phan.html?StockCode={CODE}
+    Strategy: Same as HOSE, look for "BCTC", "Báo cáo tài chính", "BC/BĐHS" keywords
+    Confidence: 0.9 (lower than HOSE due to less standardized layout)
+    """
+    page = None
+    try:
+        page = await browser.new_page()
+        url = f"https://hnx.vn/cong-bo-thong-tin/cong-ty-co-phan.html?StockCode={code}"
+
+        await page.goto(url, timeout=30000, wait_until="networkidle")
+
+        pdf_links = await page.query_selector_all('a[href*=".pdf"]')
+
+        for link_elem in pdf_links:
+            href = await link_elem.get_attribute("href")
+            text_content = await link_elem.text_content()
+
+            # Check quarter + year + financial report keyword
+            text_lower = (text_content or "").lower()
+            has_quarter_year = matches_quarter_and_year(text_lower, quarter, year)
+            has_report_keyword = any(
+                kw in text_lower for kw in ["bctc", "báo cáo tài chính", "bc/bđhs", "báo cáo"]
+            )
+
+            if href and (has_quarter_year or has_report_keyword):
+                if not href.startswith("http"):
+                    href = f"https://hnx.vn{href}" if href.startswith("/") else f"https://hnx.vn/{href}"
+
+                if is_valid_pdf_url(href):
+                    page_title = await page.title()
+                    return {
+                        "url": href,
+                        "source": "HNX",
+                        "confidence": 0.9,
+                        "page_title": page_title,
+                    }
+
+        return None
+
+    except PlaywrightTimeoutError:
+        return None
+    except Exception as e:
+        print(f"HNX discovery error for {code}: {str(e)}", file=sys.stderr)
+        return None
+    finally:
+        if page:
+            await page.close()
+
+
+async def discover_from_upcom(browser: Browser, code: str, year: int, quarter: str) -> Optional[Dict[str, Any]]:
+    """
+    Discover BCTC PDF from UPCOM portal using browser automation.
+
+    Portal: https://upcom.hnx.vn/cong-bo-thong-tin/cong-ty-co-phan.html?StockCode={CODE}
+    Strategy: Same as HNX (shares infrastructure)
+    Confidence: 0.85 (lowest, UPCOM is less liquid market)
+    """
+    page = None
+    try:
+        page = await browser.new_page()
+        url = f"https://upcom.hnx.vn/cong-bo-thong-tin/cong-ty-co-phan.html?StockCode={code}"
+
+        await page.goto(url, timeout=30000, wait_until="networkidle")
+
+        pdf_links = await page.query_selector_all('a[href*=".pdf"]')
+
+        for link_elem in pdf_links:
+            href = await link_elem.get_attribute("href")
+            text_content = await link_elem.text_content()
+
+            text_lower = (text_content or "").lower()
+            has_quarter_year = matches_quarter_and_year(text_lower, quarter, year)
+            has_report_keyword = any(
+                kw in text_lower for kw in ["bctc", "báo cáo tài chính", "bc/bđhs", "báo cáo"]
+            )
+
+            if href and (has_quarter_year or has_report_keyword):
+                if not href.startswith("http"):
+                    href = f"https://upcom.hnx.vn{href}" if href.startswith("/") else f"https://upcom.hnx.vn/{href}"
+
+                if is_valid_pdf_url(href):
+                    page_title = await page.title()
+                    return {
+                        "url": href,
+                        "source": "UPCOM",
+                        "confidence": 0.85,
+                        "page_title": page_title,
+                    }
+
+        return None
+
+    except PlaywrightTimeoutError:
+        return None
+    except Exception as e:
+        print(f"UPCOM discovery error for {code}: {str(e)}", file=sys.stderr)
+        return None
+    finally:
+        if page:
+            await page.close()
+
+
+def matches_quarter_and_year(text: str, quarter: str, year: int) -> bool:
+    """
+    Check if link text contains matching quarter and year.
+
+    Examples:
+    - "BCTC Q1 2024" with quarter="Q1", year=2024 → True
+    - "Báo cáo tài chính 2024 quý 1" with quarter="Q1", year=2024 → True
+    - "BCTC Q2 2024" with quarter="Q1", year=2024 → False
+    """
+    if not text:
         return False
-    if not (lower.startswith("http://") or lower.startswith("https://")):
+
+    year_str = str(year)
+    quarter_short = quarter.upper()[-1]  # "Q1" → "1"
+
+    # Check year presence
+    if year_str not in text:
+        return False
+
+    # Check quarter in various formats (English and Vietnamese)
+    has_quarter = any(
+        q in text.lower()
+        for q in [
+            f"q{quarter_short}",  # "q1"
+            quarter.lower(),  # "q1"
+            f"quarter {quarter_short}",  # "quarter 1"
+            f"quý {quarter_short}",  # Vietnamese: "quý 1"
+            f"qúy {quarter_short}",  # Vietnamese variant
+            f"q{quarter_short}ỳ",  # "q1ỳ"
+            f"quarter{quarter_short}",  # "quarter1"
+            f"kỳ {quarter_short}",  # Vietnamese: "kỳ 1"
+        ]
+    )
+
+    return has_quarter
+
+
+def is_valid_pdf_url(url: str) -> bool:
+    """
+    Validate that URL is a safe, legitimate PDF.
+
+    Checks:
+    - Must end with .pdf
+    - Must be HTTP or HTTPS
+    - No JavaScript/data URIs (XSS prevention)
+    """
+    if not url:
+        return False
+
+    lower_url = url.lower()
+
+    # Must be PDF and HTTP(S)
+    if not lower_url.endswith(".pdf"):
+        return False
+    if not (lower_url.startswith("http://") or lower_url.startswith("https://")):
         return False
 
     # Block JavaScript/data URIs
-    if any(x in lower for x in ["javascript:", "data:", "file://"]):
+    if any(x in lower_url for x in ["javascript:", "data:", "file://"]):
         return False
 
     return True
@@ -230,26 +316,40 @@ def _is_valid_pdf_url(url: str) -> bool:
 
 if __name__ == "__main__":
     # Command-line interface
-    if len(sys.argv) < 2:
-        print(json.dumps({
-            "url": None,
-            "source": None,
-            "confidence": 0,
-            "error": "Usage: python3 discover-bctc-urls-browser.py <CODE> <YEAR> <QUARTER>",
-        }))
+    if len(sys.argv) < 4:
+        print(
+            json.dumps(
+                {
+                    "results": [],
+                    "error": "Usage: python3 discover-bctc-urls-browser.py <CODE> <YEAR> <QUARTER>",
+                }
+            )
+        )
         sys.exit(1)
 
-    code = sys.argv[1].upper()
-    year = int(sys.argv[2]) if len(sys.argv) > 2 else 2025
-    quarter = sys.argv[3].upper() if len(sys.argv) > 3 else "Q4"
-
     try:
+        code = sys.argv[1].upper()
+        year = int(sys.argv[2])
+        quarter = sys.argv[3].upper()
+
         result = asyncio.run(discover_bctc_pdf(code, year, quarter))
         print(json.dumps(result, ensure_ascii=False))
+    except (ValueError, IndexError):
+        print(
+            json.dumps(
+                {
+                    "results": [],
+                    "error": "Usage: python3 discover-bctc-urls-browser.py <CODE> <YEAR> <QUARTER>",
+                }
+            )
+        )
+        sys.exit(1)
     except Exception as e:
-        print(json.dumps({
-            "url": None,
-            "source": None,
-            "confidence": 0,
-            "error": f"Script error: {str(e)}",
-        }))
+        print(
+            json.dumps(
+                {
+                    "results": [],
+                    "error": f"Script error: {str(e)}",
+                }
+            )
+        )
