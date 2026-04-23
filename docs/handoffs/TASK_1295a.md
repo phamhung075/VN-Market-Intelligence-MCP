@@ -142,3 +142,18 @@ key_findings:
 - DDD layering maintained: signalBuilders.ts imports only from domain/signals/ (no infrastructure/application)
 - CrossValidateFindingData interface was already defined in signalTypes.ts (task 1293a)
 - No breaking changes to existing signal type tests
+
+---
+
+## [QA] Review Record
+
+verdict: APPROVED
+blocking_issues: []
+non_blocking: []
+
+files_confirmed_clean:
+- /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/domain/signals/signalBuilders.ts
+- /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/__tests__/1295a-signal-builders.test.ts
+- /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/domain/signals/index.ts
+
+merge_commit: pending
