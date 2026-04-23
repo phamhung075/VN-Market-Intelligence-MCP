@@ -42,12 +42,11 @@ context: docs/handoffs/TASK_1295a.md
 - MODIFY: src/domain/signals/index.ts (barrel export builders)
 - Each builder: fluent API, enforces required fields, reuses Zod schemas (1293a)
 
-#### 1295b: Agent Spec Update (4h, documentation)
+#### 1295b: Signal Payload Quality Pattern Documentation (4h, documentation only)
 context: docs/handoffs/TASK_1295b.md
-- MODIFY: .claude/agents/01-news-scout.md (add builder import + usage)
-- MODIFY: .claude/agents/04-market-watcher.md (add builder import + usage)
-- MODIFY: docs/agent-memory/patterns/signal-payload-quality.md (prevention pattern)
-- No automated tests (manual review + agent simulator)
+- MODIFY: docs/agent-memory/patterns/signal-payload-quality.md (add Prevention: Use Typed Builders section with 3 builder examples, error handling, benefits checklist)
+- Note: Reframed to documentation-only (agents are tool-users, not code implementers; builder patterns belong in code docs, not agent specs)
+- No automated tests (documentation task)
 
 #### 1295c: Signal Quality Audit Service (4h, GREEN phase)
 context: docs/handoffs/TASK_1295c.md

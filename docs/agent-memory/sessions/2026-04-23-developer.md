@@ -68,3 +68,42 @@ before any async setup. Never add duplicate process.on('SIGTERM') handlers.
 **Pattern Documented**: signal-payload-quality.md now has full prevention checklist + usage examples for all 3 main signal types (ChainCatalyst, PriceConfirmation, UrgentNews).
 
 **Ready for**: QA review on task/1295d-integration branch
+
+---
+
+### Task 1295b: Architectural Correction — Reframe to Documentation-Only (16:10–16:25 UTC)
+- **Status**: COMPLETE ✅
+- **Issue**: Original implementation added JavaScript code examples to agent specs
+- **Root Cause**: Architectural confusion — agents are tool-users (MCP calls only), not code implementers
+
+**Correction**:
+- Agents describe "what tools to call", not "how to build helper functions"
+- Removed JavaScript builder usage examples from:
+  - .claude/agents/01-news-scout.md (84 lines removed)
+  - .claude/agents/04-market-watcher.md (60 lines removed)
+- Reverted to simple MCP tool call documentation (original format)
+- Kept pattern reference: agents link to signal-payload-quality.md for quality guidance
+
+**Key Finding**: Separation of Concerns:
+1. **Agent specs** (.claude/agents/*.md) — document MCP tool calls + workflow
+2. **Code patterns** (docs/agent-memory/patterns/*.md) — document implementation patterns for developers
+3. **Signal builders** (src/domain/signals/signalBuilders.ts) — TypeScript implementation for code layer
+
+Builders are invoked by MCP TOOLS (in src/interface/mcp/tools/), not by agents.
+Agents see builders only through tool responses, never through implementation details.
+
+**Files Changed**:
+- .claude/agents/01-news-scout.md: removed Step 4.1–4.4 builder code blocks
+- .claude/agents/04-market-watcher.md: removed Step 3.5.1–3.5.4 builder code blocks
+- TASKS.md: updated 1295b description to clarify documentation-only scope
+- New commit: fix(1295b) + message explaining architectural principle
+
+**Verification**:
+- bun test src/__tests__/1295*.test.ts: 36 pass (1295a:16 + 1295c:13 + 1295d:7) ✅
+- bun tsc --noEmit: 0 errors ✅
+- Full test suite: 6459 pass (no regressions) ✅
+- Agents specs now cleanly separate tool-usage from implementation details ✅
+
+**Lesson**: Agent specs should never contain example code for implementation patterns.
+They document MCP interfaces (tool parameters, response format), not TypeScript patterns.
+Implementation patterns belong in code docs or pattern libraries, not in agent behavior specs.
