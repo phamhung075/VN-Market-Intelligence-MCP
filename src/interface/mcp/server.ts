@@ -32,6 +32,7 @@ import { getDb } from "../../infrastructure/db/schema.js";
 import { validateWebhookRequest } from "../../infrastructure/notifiers/telegramWebhookSetup.js";
 import { insertReport } from "../../infrastructure/db/telegramReportStore.js";
 import { toolRegistry } from "./tools/registry.js";
+import { getToolsForSkills } from "./bootstrap/agentBootstrap.js";
 import { logVpsPush, type VpsPushLogEntry } from "../../infrastructure/db/vpsPushLogStore.js";
 import { upsertForeignFlow } from "../../infrastructure/db/vnstockStore.js";
 import type { ForeignFlowUpsertItem, WriteForeignFlowItem } from "../../domain/models/shared-types.js";
@@ -127,12 +128,13 @@ export async function createBunServer(
   const log = createLogger(cfg.logLevel);
 
   // ── McpServer factory — one instance per SSE session ────────────────────
-  function createMcpServerInstance(): McpServer {
+  function createMcpServerInstance(skills?: string[]): McpServer {
     const server = new McpServer(
       { name: "vn-market-intelligence", version: "1.0.0" },
       { capabilities: { tools: {} } },
     );
-    toolRegistry.forEach((fn) => fn(server));
+    const fns = skills ? getToolsForSkills(skills) : toolRegistry;
+    fns.forEach((fn) => fn(server));
     return server;
   }
 
