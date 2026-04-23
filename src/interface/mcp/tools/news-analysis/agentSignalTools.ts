@@ -29,6 +29,7 @@ import {
   type SignalType,
   type AgentSignal,
 } from "../../../../infrastructure/db/agentSignalStore.js";
+import { logSignalRejection } from "../../../../infrastructure/db/signalRejectionStore.js";
 import {
   ChainCatalystFindingDataSchema,
   PriceConfirmationFindingDataSchema,
@@ -206,6 +207,16 @@ export function registerAgentSignalTools(server: McpServer): void {
         if (!validation.valid) {
           const errorMsg = `Signal type '${args.signal_type}' has invalid or missing required fields:\n${validation.errors.join("\n")}\n\nSee TECH_1293_ROOTCAUSE.md for schema definition.`;
 
+          // Task 1293c: Log rejection to audit table
+          const payloadPreview = JSON.stringify(args.finding_data ?? {}).slice(0, 200);
+          logSignalRejection(db, {
+            from_agent: args.from_agent || "unknown",
+            signal_type: args.signal_type,
+            ...(args.stock_code !== undefined ? { stock_code: args.stock_code } : {}),
+            reason: validation.errors.join("; "),
+            payload_preview: payloadPreview,
+          });
+
           // Log to console for dev debugging
           console.error(`[agentSignalTools] Signal rejected: ${errorMsg}`);
 
@@ -214,7 +225,7 @@ export function registerAgentSignalTools(server: McpServer): void {
             content: [
               {
                 type: "text" as const,
-                text: `Error: ${errorMsg}`,
+                text: `Error: ${errorMsg} [LOGGED FOR ANALYSIS]`,
               },
             ],
             isError: true,

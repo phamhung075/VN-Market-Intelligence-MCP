@@ -224,4 +224,24 @@ export function initNewsTables(db: Database): void {
     CREATE INDEX IF NOT EXISTS idx_it_type_from_date
       ON insider_transactions(type, from_date DESC);
   `);
+
+  // ── Signal Rejections (Task 1293c) ────────────────────────────────────────
+  // Audit log for signals rejected by validation in post_agent_signal MCP tool.
+  // Helps identify agent prompt failures and validation patterns.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS signal_rejections (
+      id                INTEGER PRIMARY KEY AUTOINCREMENT,
+      from_agent        TEXT NOT NULL,
+      signal_type       TEXT NOT NULL,
+      stock_code        TEXT,
+      reason            TEXT NOT NULL,
+      payload_preview   TEXT,
+      created_at        TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_rejections_agent
+      ON signal_rejections(from_agent);
+    CREATE INDEX IF NOT EXISTS idx_rejections_created_at
+      ON signal_rejections(created_at DESC);
+  `);
 }
