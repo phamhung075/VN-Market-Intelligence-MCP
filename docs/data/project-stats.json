@@ -2,10 +2,10 @@
   "_maintained_by": "PM / system-auditor",
   "_trigger": "sprint start/end, tool/cron count change, baseline test update",
   "lastUpdated": "2026-04-23",
-  "currentSprint": 1294,
-  "previousSprint": { "number": 1293, "status": "COMPLETE", "progressTasks": "Sprint 1293: Alert signal payload schema hardening — 4 tasks (1293a–d) merged, restored 4-AND opportunity alerts" },
-  "sprintGoal": "Sprint 1294: Signal Payload Enrichment & BCTC Fallback Resilience — Restore signal chain completeness (IMF sentiment context) and improve BCTC extraction resilience (PDF timeout fallback to news context). Combines backlog items 1284 + 1267.",
-  "testBaseline": 6416,
+  "currentSprint": 1295,
+  "previousSprint": { "number": 1294, "status": "COMPLETE", "progressTasks": "Sprint 1294: Signal Payload Enrichment & BCTC Fallback Resilience — 2 tasks (1294a–b) merged, restored IMF sentiment detection + PDF timeout fallback mechanism" },
+  "sprintGoal": "Sprint 1295: Signal Payload Quality Enforcement — Typed builders for 4 signal types (ChainCatalyst, PriceConfirmation, UrgentNews, CrossValidate) enforce required fields at construction time (pre-emit validation). Monthly audit job tracks rejection rate. 4 tasks (1295a–d), 18h total.",
+  "testBaseline": 6428,
   "testBaselineTarget": 6450,
   "testFailures": 0,
   "toolCount": 105,
@@ -13,7 +13,7 @@
   "knowledgeFileCount": 15,
   "devAgentCount": 13,
   "analysisAgentCount": 9,
-  "totalTasksDone": 344,
-  "lastFixApplied": "Sprint 1293: Alert signal payload schema hardening (strict signal types + MCP validation + DB audit + domain fallbacks)",
-  "currentSprintNotes": "Sprint 1294 (2026-04-23): Two-part enrichment strategy. Task 1294a (7h): IMF sentiment detection — pure domain service to classify IMF-related news (policy vs crisis). Task 1294b (8–10h): BCTC fallback — application-layer timeout handler that queries recent signals when PDF extraction fails, maps signal hints to financial fields, inserts fallback row with extraction_method='news_inference'. Dependency: 1294a → 1294b (needs IMF sentiment populated)."
+  "totalTasksDone": 346,
+  "lastFixApplied": "Sprint 1294: Signal Payload Enrichment & BCTC Fallback Resilience (IMF sentiment domain service + PDF timeout fallback with news chain inference)",
+  "currentSprintNotes": "Idle — awaiting next sprint definition. Baseline 6428/6450 tests. Previous sprint 1294 complete with 12 test improvements (7 from 1294a + 5 from 1294b passing, 1 non-blocking parse limitation in 1294b)."
 }

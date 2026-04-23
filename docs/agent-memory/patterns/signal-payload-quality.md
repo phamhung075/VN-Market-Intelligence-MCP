@@ -41,13 +41,30 @@ Chain synthesizer accesses these fields without null guards:
 
 ---
 
-## Prevention Checklist
+## Prevention Checklist (Post-TECH-1295)
+
+### For Agent Developers (Using Builders)
+
+- [ ] Import builder from domain: `const builder = createChainCatalystBuilder()`
+- [ ] Use fluent API: `.setEventType(...).setDirection(...).setConfidence(...)`
+- [ ] Call `.build()` BEFORE posting (throws if incomplete)
+- [ ] Catch builder errors and retry with complete data
+- [ ] Do NOT post object literals directly (builders enforce type safety)
+
+### For Agent Implementers (MCP Tool Fallback)
 
 Before merging changes to agent prompt files (.claude/agents/*.md):
 - [ ] All signal_type post calls include complete finding_data
 - [ ] All numeric fields have realistic values (0.0–1.0 for confidence, not placeholder "0")
 - [ ] All enum fields (direction, event_type) use only documented values
 - [ ] At least one test case posts incomplete signal and expects MCP tool rejection
+
+### For Code Reviewers (Before Merge)
+
+Before merging changes to agent specs or signal posting code:
+- [ ] Builders used when available (1295a+)
+- [ ] MCP tool validation still in place (1293b fallback)
+- [ ] No regression in signal rejection audit metrics (1295c)
 
 Before merging changes to agentSignalTools.ts:
 - [ ] Validators exist for all enrichment chain signal types
@@ -61,16 +78,29 @@ Before merging changes to chainSynthesizer.ts:
 
 ---
 
-## Fix Procedure (TECH-1293)
+## Fix Procedure (TECH-1293 + TECH-1295)
 
-| Task | Scope | Estimate |
-|------|-------|----------|
-| 1293a | Create strict signal type interfaces (domain layer) | 4h |
-| 1293b | MCP tool validation for all chain signals | 6h |
-| 1293c | DB audit log for signal rejections | 4h |
-| 1293d | Defensive fallbacks in synthesizer | 3h |
+### Phase 1: Validation Infrastructure (TECH-1293, MERGED)
 
-See `docs/TECH_1293_ROOTCAUSE.md` for full implementation plan.
+| Task | Scope | Estimate | Status |
+|------|-------|----------|--------|
+| 1293a | Create strict signal type interfaces (domain layer) | 4h | ✅ MERGED |
+| 1293b | MCP tool validation for all chain signals | 6h | ✅ MERGED |
+| 1293c | DB audit log for signal rejections | 4h | ✅ MERGED |
+| 1293d | Defensive fallbacks in synthesizer | 3h | ✅ MERGED |
+
+See `docs/TECH_1293_ROOTCAUSE.md` for implementation details.
+
+### Phase 2: Pre-Emit Enforcement (TECH-1295, READY)
+
+| Task | Scope | Estimate | Status |
+|------|-------|----------|--------|
+| 1295a | Signal Builders (4 types, typed pre-emit) | 8h | READY |
+| 1295b | Agent Spec Updates (use builders) | 4h | READY |
+| 1295c | Signal Quality Audit Service + Job | 4h | READY |
+| 1295d | Integration Tests (builders → synthesis) | 2h | READY |
+
+See `docs/TECH_1295.md` for full implementation plan.
 
 ---
 
