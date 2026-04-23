@@ -17,6 +17,7 @@
 > Sprints 1282–1289 archived: `docs/archive/sprints-1282-1289.md` (includes data freshness monitoring tool, foreign flow circuit breaker diagnostics, insider selling sentiment fix, BCTC async queue enrichment, foreign flow fallback fetcher, parse errors root-cause fix, all merged)
 > Sprints 1290–1290 archived: `docs/archive/sprints-1290-1290.md` (includes foreign flow fallback fetcher integration into scheduler job, merged)
 > Sprints 1291–1294 archived: `docs/archive/sprints-1291-1294.md` (includes Alert signal payload schema hardening + Signal Payload Enrichment & BCTC Fallback Resilience, 6 subtasks total, all merged)
+> Sprints 1295a archived: Signal Builders completed (fluent API, 4 classes, 16 tests, DDD compliant, merged)
 
 ---
 
@@ -24,7 +25,7 @@
 
 | ID | Title | Layer | Status | Depends | Hours |
 |----|-------|-------|--------|---------|-------|
-| 1295a | Signal Builders (4 classes: Chain, Price, Urgent, Cross) | domain | Review | none | 8 |
+| 1295a | Signal Builders (4 classes: Chain, Price, Urgent, Cross) | domain | Done | none | 8 |
 | 1295b | Agent Spec Update (01-news-scout, 04-market-watcher) | docs | Todo | 1295a | 4 |
 | 1295c | Signal Quality Audit Service (monthly cron + dashboard) | application | Todo | 1295a | 4 |
 | 1295d | Integration Test (E2E: builder → MCP → DB → synthesis) | tests | Todo | 1295a, 1295b, 1295c | 2 |

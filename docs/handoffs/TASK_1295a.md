@@ -156,4 +156,4 @@ files_confirmed_clean:
 - /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/__tests__/1295a-signal-builders.test.ts
 - /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/domain/signals/index.ts
 
-merge_commit: pending
+merge_commit: 7eccc0c5
