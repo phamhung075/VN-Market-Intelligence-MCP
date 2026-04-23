@@ -27,8 +27,8 @@
 |----|-------|--------|----------|
 | 1293a | Create strict signal type interfaces (domain/signals) | Done | CRITICAL |
 | 1293b | MCP tool validation for chain signals | Review | CRITICAL |
-| 1293c | DB audit log for rejections | Review | HIGH |
-| 1293d | Defensive fallbacks in synthesizer | Review | HIGH |
+| 1293c | DB audit log for rejections | Done | HIGH |
+| 1293d | Defensive fallbacks in synthesizer | Done | HIGH |
 
 ### Task 1293a: Strict Signal Type Interfaces
 
