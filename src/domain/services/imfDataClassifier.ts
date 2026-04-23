@@ -218,6 +218,20 @@ export function classifyImfIndicators(
     };
   }
 
+  // Check if ALL indicators are stale (decay <= 0.30) → force neutral override
+  const allStale = indicators.every(
+    (ind) => calculateConfidenceDecay(ind.ageInDays) <= 0.30,
+  );
+  if (allStale) {
+    return {
+      sentiment: 0,
+      confidence: Math.min(...indicators.map((ind) => calculateConfidenceDecay(ind.ageInDays))),
+      classification: "imf_neutral",
+      reasoning: "All IMF indicators are stale (age > 60 days) — confidence too low to classify",
+      sectorImpacts: [],
+    };
+  }
+
   // Evaluate each indicator, applying confidence decay
   const ruleResults: RuleResult[] = [];
   for (const indicator of indicators) {
