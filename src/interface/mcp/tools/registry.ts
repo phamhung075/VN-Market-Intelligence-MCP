@@ -10,6 +10,7 @@
 
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
+import { registerSequentialMarketAnalysisTools } from "./analysis/sequential-market-analysis.js";
 import { registerWatchlistTools } from "./system/watchlist.js";
 import { registerReportTools } from "./financial-reports/reports.js";
 import { registerAlertTools } from "./alerts/alerts.js";
@@ -87,6 +88,7 @@ import { registerImfSignalsTool } from "./macro/imfSignals.js";
  *   3. Done — server.ts needs no changes.
  */
 export const toolRegistry: Array<(server: McpServer) => void> = [
+  registerSequentialMarketAnalysisTools, // Sequential thinking for complex market analysis
   registerWatchlistTools,
   registerReportTools,
   registerAlertTools,

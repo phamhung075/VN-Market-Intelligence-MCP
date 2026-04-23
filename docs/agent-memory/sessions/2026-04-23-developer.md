@@ -113,3 +113,11 @@ Implementation patterns belong in code docs or pattern libraries, not in agent b
 - **Finding**: `exactOptionalPropertyTypes: true` in tsconfig causes Zod optional schema fields to conflict with TS interface `?:` — fix pattern: add `| undefined` to the interface type AND use `Omit<Partial<>, 'fieldName'>` in builder classes
 - **New pattern**: IMF indicators use code-keyed `imf_indicators` table (separate from country-keyed `macro_indicators` table)
 - **Status**: Done — merged to main, 22/22 tests GREEN, tsc clean
+
+### Task 1297-fix: BCTC Discovery Script Portal URL Fix (19:30–21:00 UTC+7)
+- **Files changed**: `vps-scripts/discover-bctc-urls-browser.py` (full rewrite)
+- **Finding**: HOSE portal permanently broken (React SPA migration). HNX requires `pAction=1` + `pNhomTin='FIN_REPORT'` (single-quoted) for server-side filtering. UPCOM via `NextPageTCPHUpCoM` on hnx.vn domain (avoids invalid SSL cert on upcom.hnx.vn). PDF URL via `ArticlesFileAttach` POST → `owa.hnx.vn/ftp///cims/` path.
+- **VPS validated**: PVS+NVB Q4 2024 → real PDF URLs. VNM/FPT → informative HOSE error.
+- **Tests**: 6508 passing (baseline 6459). tsc clean. Playwright removed, pure stdlib urllib.
+- **Status**: Ready for QA
+- **Commit**: `a52c34b1`

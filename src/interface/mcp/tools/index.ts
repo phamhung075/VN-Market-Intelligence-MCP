@@ -5,6 +5,7 @@
  * Each sub-barrel declares the public contract for its module.
  *
  * Module groups:
+ *   analysis         — sequential reasoning, deep analysis chains
  *   market-data      — prices, foreign flow, technical indicators, insider
  *   financial-reports — BCTC, earnings calendar, reports
  *   news-analysis    — cascade, sentiment, search, source health
@@ -18,6 +19,7 @@
  *
  * @module interface/mcp/tools
  */
+export * from "./analysis/index.js";
 export * from "./market-data/index.js";
 export * from "./financial-reports/index.js";
 export * from "./news-analysis/index.js";
