@@ -482,3 +482,38 @@ After merge, update:
 2. Test with real stocks: `python3 /root/discover-bctc-urls-browser.py VCB 2024 Q1`
 3. Verify integration with enrich-bctc-urls.sh
 4. Monitor production logs for discovery rate improvement (expect ~95% vs previous ~60%)
+
+---
+
+## [QA] Review Record
+
+**verdict:** APPROVED
+**date_reviewed:** 2026-04-23
+**reviewer:** QA Agent (Claude Haiku)
+
+### Test Results
+- Task-specific tests: 6/6 PASS (100%)
+- Full regression: 6416 PASS / 0 FAIL (no regressions vs baseline 6410)
+- TypeScript: 0 errors, 0 warnings
+- Coverage: 76.92% functions, 80.95% lines
+
+### Compliance Verified
+- DDD layers: PASS (no infrastructure imports in application layer)
+- Security: PASS (no credentials, proper URL validation, timeouts configured)
+- Code quality: PASS (typed signatures, actionable errors, validated inputs)
+- Integration: PASS (backward compatible with enrich-bctc-urls.sh)
+
+### blocking_issues
+None.
+
+### non_blocking_issues
+None.
+
+### files_confirmed_clean
+- `/src/application/usecases/discoverBctcPdfUrlDirectApi.ts` (no violations)
+- `/src/__tests__/1289f-refinement-direct-api.test.ts` (comprehensive coverage)
+- `/vps-scripts/discover-bctc-urls-browser.py` (maintains CLI compatibility)
+- `/docs/BCTC_PORTAL_API_SPEC.md` (API documentation complete)
+
+### merge_commit
+(To be filled after merge approval)
