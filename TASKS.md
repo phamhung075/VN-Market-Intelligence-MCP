@@ -63,7 +63,7 @@
 #### 1296b: IMF Sentiment Classifier Service (10–11h total, design 3–4h + dev 10h)
 **context:** docs/handoffs/TASK_1296b.md
 **Branch:** `task/1296b-imf-classifier`
-**Status:** In Progress (Developer — task/1296b-imf-classifier)
+**Status:** Done (merged 2026-04-23)
 **Depends on:** 1296a ✓
 **Design Doc:** `docs/TECH_1296b.md` (architecture, DDD contracts, interface specs approved)
 

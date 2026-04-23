@@ -107,3 +107,9 @@ Agents see builders only through tool responses, never through implementation de
 **Lesson**: Agent specs should never contain example code for implementation patterns.
 They document MCP interfaces (tool parameters, response format), not TypeScript patterns.
 Implementation patterns belong in code docs or pattern libraries, not in agent behavior specs.
+
+### Task 1296b: IMF Sentiment Classifier Service (14:00–16:30)
+- **Files changed**: 16 files (6 created, 10 modified)
+- **Finding**: `exactOptionalPropertyTypes: true` in tsconfig causes Zod optional schema fields to conflict with TS interface `?:` — fix pattern: add `| undefined` to the interface type AND use `Omit<Partial<>, 'fieldName'>` in builder classes
+- **New pattern**: IMF indicators use code-keyed `imf_indicators` table (separate from country-keyed `macro_indicators` table)
+- **Status**: Done — merged to main, 22/22 tests GREEN, tsc clean
