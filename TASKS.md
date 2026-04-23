@@ -129,8 +129,9 @@ Investigation protocol created in: `docs/BCTC_PORTAL_FORM_INVESTIGATION.md`
 
 #### 1289g: **ESCALATED** — Investigate Portal URLs (2-3h)
 **Branch:** `task/1289g-portal-url-investigation`
-**Context:** See escalation issue at `docs/agent-memory/issues/bctc-portal-discovery-validation.md`
+**Context:** `docs/handoffs/TASK_1289g.md` (handoff complete, ready for developer assignment)
 **Depends on:** 1289f-test failure diagnosis
+**Status:** Handoff Ready — Waiting for Developer Assignment
 
 **Actions:**
 - [ ] Manually inspect HOSE portal structure using browser DevTools
