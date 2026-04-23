@@ -2,10 +2,10 @@
   "_maintained_by": "PM / system-auditor",
   "_trigger": "sprint start/end, tool/cron count change, baseline test update",
   "lastUpdated": "2026-04-23",
-  "currentSprint": 1295,
-  "previousSprint": { "number": 1294, "status": "COMPLETE", "progressTasks": "Sprint 1294: Signal Payload Enrichment & BCTC Fallback Resilience — 2 tasks (1294a–b) merged, restored IMF sentiment detection + PDF timeout fallback mechanism" },
-  "sprintGoal": "Sprint 1295: Signal Payload Quality Enforcement — Typed builders for 4 signal types (ChainCatalyst, PriceConfirmation, UrgentNews, CrossValidate) enforce required fields at construction time (pre-emit validation). Monthly audit job tracks rejection rate. 4 tasks (1295a–d), 18h total.",
-  "testBaseline": 6428,
+  "currentSprint": "idle",
+  "previousSprint": { "number": 1295, "status": "COMPLETE", "progressTasks": "Sprint 1295: Signal Payload Quality Enforcement — 4 tasks (1295a–d) merged. Signal builders (4 fluent-API classes), agent spec updates (news-scout + market-watcher), signal quality audit service (monthly cron + dashboard), E2E integration tests (53 assertions, 0 failures)." },
+  "sprintGoal": "IDLE — awaiting next sprint definition.",
+  "testBaseline": 6459,
   "testBaselineTarget": 6450,
   "testFailures": 0,
   "toolCount": 105,
@@ -13,7 +13,7 @@
   "knowledgeFileCount": 15,
   "devAgentCount": 13,
   "analysisAgentCount": 9,
-  "totalTasksDone": 346,
-  "lastFixApplied": "Sprint 1294: Signal Payload Enrichment & BCTC Fallback Resilience (IMF sentiment domain service + PDF timeout fallback with news chain inference)",
-  "currentSprintNotes": "Idle — awaiting next sprint definition. Baseline 6428/6450 tests. Previous sprint 1294 complete with 12 test improvements (7 from 1294a + 5 from 1294b passing, 1 non-blocking parse limitation in 1294b)."
+  "totalTasksDone": 350,
+  "lastFixApplied": "Sprint 1295: Signal Payload Quality Enforcement (fluent builders + monthly audit + E2E integration tests, all merged 2026-04-23)",
+  "currentSprintNotes": "IDLE. Baseline 6459/6450 tests passing (31 above target). Sprint 1295 complete: all 4 tasks merged. No scheduler changes in 1295d."
 }

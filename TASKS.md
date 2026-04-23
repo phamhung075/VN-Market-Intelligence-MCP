@@ -17,18 +17,19 @@
 > Sprints 1282–1289 archived: `docs/archive/sprints-1282-1289.md` (includes data freshness monitoring tool, foreign flow circuit breaker diagnostics, insider selling sentiment fix, BCTC async queue enrichment, foreign flow fallback fetcher, parse errors root-cause fix, all merged)
 > Sprints 1290–1290 archived: `docs/archive/sprints-1290-1290.md` (includes foreign flow fallback fetcher integration into scheduler job, merged)
 > Sprints 1291–1294 archived: `docs/archive/sprints-1291-1294.md` (includes Alert signal payload schema hardening + Signal Payload Enrichment & BCTC Fallback Resilience, 6 subtasks total, all merged)
-> Sprints 1295a archived: Signal Builders completed (fluent API, 4 classes, 16 tests, DDD compliant, merged)
+> **Sprints 1295 archived:** Signal Payload Quality Enforcement — 4 tasks merged 2026-04-23. Fluent builders (ChainCatalyst, PriceConfirmation, UrgentNews, CrossValidate), agent spec updates, monthly quality audit job, E2E integration tests (53 assertions).
+> **Sprints 1295 COMPLETE:** Signal Builders, Agent Spec Update, Signal Quality Audit, E2E Integration (all 4 tasks merged 2026-04-23)
 
 ---
 
-## Sprint 1295: Signal Payload Quality Enforcement — Typed Builders (18h total)
+## Sprint 1295: Signal Payload Quality Enforcement — Typed Builders (18h total) — COMPLETE
 
 | ID | Title | Layer | Status | Depends | Hours |
 |----|-------|-------|--------|---------|-------|
 | 1295a | Signal Builders (4 classes: Chain, Price, Urgent, Cross) | domain | Done | none | 8 |
-| 1295b | Agent Spec Update (01-news-scout, 04-market-watcher) | docs | Review | 1295a | 4 |
-| 1295c | Signal Quality Audit Service (monthly cron + dashboard) | application | Review | 1295a | 4 |
-| 1295d | Integration Test (E2E: builder → MCP → DB → synthesis) | tests | Review | 1295a, 1295b, 1295c | 2 |
+| 1295b | Agent Spec Update (01-news-scout, 04-market-watcher) | docs | Done | 1295a | 4 |
+| 1295c | Signal Quality Audit Service (monthly cron + dashboard) | application | Done | 1295a | 4 |
+| 1295d | Integration Test (E2E: builder → MCP → DB → synthesis) | tests | Done | 1295a, 1295b, 1295c | 2 |
 
 ---
 
