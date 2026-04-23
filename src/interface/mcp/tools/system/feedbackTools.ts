@@ -63,15 +63,20 @@ export function registerFeedbackTools(server: McpServer): void {
           const { sendTelegramBug } = await import("../../../../infrastructure/notifiers/telegram.js");
           const emoji = priority === "critical" ? "🚨" : priority === "high" ? "🔴" : priority === "medium" ? "🟡" : "🟢";
           const recipient = to.startsWith("@") ? to : `@${to}`;
-          const msg = [
+          // Telegram max message length: 4096 chars
+          // Reserve ~200 chars for header/footer, use remaining for detail
+          const headerFooter = [
             `${emoji} [${priority.toUpperCase()}] ${recipient}`,
             `📋 ${category}`,
             `From: ${agent}`,
-            ``,
             `${title}`,
-            detail ? `\n${detail.slice(0, 500)}` : "",
-            ``,
             `🕐 ${now.slice(0, 16).replace("T", " ")} UTC`,
+          ].join("\n");
+
+          const detailMaxChars = Math.max(1000, 4096 - headerFooter.length - 100);
+          const msg = [
+            headerFooter,
+            detail ? `\n${detail.slice(0, detailMaxChars)}` : "",
           ].filter(Boolean).join("\n");
           msgId = await sendTelegramBug(msg);
         } catch { /* best-effort */ }
