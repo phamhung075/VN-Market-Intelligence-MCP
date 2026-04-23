@@ -92,7 +92,7 @@ export async function runMonthlySignalQualityJob(
 
   // Extract rejection rate from report (format: "Rejection Rate | X.XX%")
   const rateMatch = report.match(/Rejection Rate \| (\d+\.\d+)%/);
-  const rejectionRatePercent = rateMatch ? parseFloat(rateMatch[1]) : 0;
+  const rejectionRatePercent = rateMatch && rateMatch[1] ? parseFloat(rateMatch[1]) : 0;
   const rejectionRateDecimal = rejectionRatePercent / 100;
 
   // Threshold: 2%
