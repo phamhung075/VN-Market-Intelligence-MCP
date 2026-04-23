@@ -8,7 +8,8 @@
   - **lite**: user-facing replies
 
 ### Agent Memory (`docs/agent-memory/` = lazy-load shared workbook)
-- **INDEX.md** (quick lookup, always load first, ~300 tokens) → `docs/agent-memory/INDEX.md`
+- **MCP Tools** (startup discovery, zero file reads) → `get_memory_files(agent_name, task_type)` or `search_memory_by_trigger(trigger)`
+- **Startup protocol** (routing + examples) → `docs/agent-memory/AGENT_STARTUP.md`
 - **issues/** (load only when debugging relevant bug)
 - **patterns/** (load when writing code that touches that pattern)
 - **modules/** (load when analyzing/refactoring a module)

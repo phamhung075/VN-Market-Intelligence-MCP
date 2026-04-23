@@ -15,5 +15,5 @@
   "analysisAgentCount": 9,
   "totalTasksDone": 355,
   "lastFixApplied": "Sprint 1297: Add 6 factory skills (conviction-calculator, kinh-dich-interpreter, narrative-formatter, pre-fire-validation, quality-audit-loop, signal-intelligence) + sequential-market-analysis tool + agent workflow integration (merged 2026-04-23)",
-  "currentSprintNotes": "Sprint 1298 DONE. 1298a+1298b complete. Queued: 1297b (BCTC portal fix) + 1299a. totalTasks in board: 8 (1297:3, 1298:2, 1299:3)."
+  "currentSprintNotes": "Sprint 1298 DONE. 1298a+1298b complete. Sprint 1300 created: 3 storage-layer message truncation fixes found during audit (critical/medium/low severity). Queued: 1297b (BCTC), 1299a (Tool Index), 1300a (Truncation). totalTasks in board: 10 (1297:3, 1298:2, 1299:3, 1300:2)."
 }

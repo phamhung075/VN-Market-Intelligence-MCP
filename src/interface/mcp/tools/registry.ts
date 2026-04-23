@@ -78,6 +78,7 @@ import { registerCascadeOutcomeTools } from "./news-analysis/cascadeOutcomeTools
 import { registerCycleBootstrapTool } from "./system/cycleBootstrapTool.js";
 import { registerSignalDiagnosticsTools } from "./system/signalDiagnosticsTools.js";
 import { registerImfSignalsTool } from "./macro/imfSignals.js";
+import { registerAgentMemoryTools } from "./system/agentMemoryTools.js";
 
 /**
  * Flat array of all MCP tool registration functions.
@@ -156,4 +157,5 @@ export const toolRegistry: Array<(server: McpServer) => void> = [
   registerCycleBootstrapTool,      // Task 1563: get_cycle_bootstrap (+1 tool → 101)
   registerSignalDiagnosticsTools,  // Task 1293c: get_signal_rejection_summary (+1 tool → 102)
   registerImfSignalsTool,          // Task 1296b: get_imf_signals (+1 tool → 103)
+  registerAgentMemoryTools,        // Task 1300a: get_memory_files + search_memory_by_trigger (+2 tools → 105)
 ];
