@@ -68,26 +68,43 @@ AC: all 3 new test files pass, full suite ≥6508, `bun tsc --noEmit` clean, lau
 
 ---
 
-## Sprint 1300: Storage-Layer Message Truncation Fixes (3 issues) — BACKLOG
+## Sprint 1300: Telegram Message Factory (Centralized Truncation Architecture) — BACKLOG
 
 | ID | Title | Layer | Status | Depends | Hours |
 |----|-------|-------|--------|---------|-------|
-| 1300a | Fix CRITICAL/MEDIUM truncation (runPredictionImpactChain + newsNormalizer) | domain/application | Backlog | none | 2–3 |
-| 1300b | Fix LOW truncation (policyImpactMapper) + regression suite | domain/tests | Backlog | 1300a | 1–2 |
+| 1300a (RED) | Create TelegramMessageFactory service + migrate briefing jobs | infra/application | Backlog | none | 3–4 |
+| 1300b (GREEN) | Migrate storage-layer functions to factory + full regression | domain/application | Backlog | 1300a | 2–3 |
 
-**Root Cause:** Three storage-layer functions truncate messages with hard-coded `.slice(0, N)` before DB insertion:
+**Root Cause:** 7 truncation bugs scattered across codebase — no centralized message formatting.
+
+**Storage-Layer Issues (pre-DB insertion):**
 - `runPredictionImpactChain.ts:113` — signal reasoning (500 chars) ⚠️ CRITICAL
 - `newsNormalizer.ts:854` — news summary (500 chars) ⚠️ MEDIUM
 - `policyImpactMapper.ts:233` — policy summary (80 chars) ⚠️ LOW
 
-**Fix Pattern (per feedbackTools fix commit 094b6659):**
-Dynamic length calculation replacing hard-coded limits:
+**User-Facing Issues (in briefings):**
+- `morningBriefingJob.ts:123` — alert message (60 chars) ⚠️ CRITICAL
+- `eveningSummaryJob.ts:203` — alert message (80 chars) ⚠️ CRITICAL
+- `eveningSummaryJob.ts:211` — story title (80 chars) ⚠️ CRITICAL
+- `franceSummaryJob.ts:406` — alert message (100 chars) ⚠️ CRITICAL
+
+**Solution: TelegramMessageFactory Service**
 ```typescript
-const maxLen = Math.max(minLen, LIMIT - header.length - buffer);
-const text = rawText.slice(0, maxLen);
+class TelegramMessageFactory {
+  // Singleton service for all Telegram message formatting
+  static formatAlertMessage(msg: string): string { /* smart truncation */ }
+  static formatStoryTitle(title: string): string { /* smart truncation */ }
+  static formatSignalReasoning(reasoning: string): string { /* smart truncation */ }
+  // ... one method per message type, enforces consistent rules
+}
 ```
 
-**Context:** Discovered via systematic codebase audit after fixing feedbackTools.ts truncation bug (commit 094b6659).
+**Benefits:**
+- Enforce dynamic length calculation globally (no hard-coded limits)
+- Word-break detection (truncate at space, not mid-word)
+- Diacritics handling (Vietnamese characters)
+- Easy to maintain and enhance
+- All 7 bugs fixed in one place
 
 ---
 

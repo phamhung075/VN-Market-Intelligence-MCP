@@ -1,70 +1,115 @@
-# Task 1300a: Fix CRITICAL/MEDIUM Storage-Layer Truncation (RED Phase)
+# Task 1300a: Create TelegramMessageFactory Service (RED Phase)
 
 ## Context
-Two storage-layer message truncation bugs discovered during codebase audit. Both use hard-coded `.slice(0, 500)` causing incomplete data storage before DB insertion.
+Systematic codebase audit discovered **7 truncation bugs** caused by scattered, ad-hoc message formatting with hard-coded `.slice(0, N)` limits. Solution: **centralized TelegramMessageFactory singleton service** that enforces consistent, intelligent truncation globally.
 
-## Issues to Fix
+## Architecture: TelegramMessageFactory
 
-### 1. runPredictionImpactChain.ts:113 — CRITICAL
-- **File**: `src/application/usecases/runPredictionImpactChain.ts`
-- **Line**: 113
-- **Current code**:
-  ```typescript
-  `${signal.reasoning}`.slice(0, 500);
-  ```
-- **Problem**: Signal reasoning truncated to 500 chars before storage in analysis_entries table
-- **Example impact**: "...market continues to show promising fundamenta" instead of "fundamentals"
-- **Fix**: Dynamic length calculation respecting system limits
+**File to create:** `src/infrastructure/notifiers/telegramMessageFactory.ts`
 
-### 2. newsNormalizer.ts:854 — MEDIUM
-- **File**: `src/domain/services/newsNormalizer.ts`
-- **Line**: 854
-- **Current code**:
-  ```typescript
-  const summary = rawSummary.slice(0, 500);
-  ```
-- **Problem**: News article summary truncated to 500 chars before storage
-- **Fix**: Dynamic length calculation respecting system limits
+**Purpose:** Singleton service that all briefing jobs, analysis functions, and storage layers call to format messages for Telegram.
 
-## Fix Pattern (Reference: feedbackTools.ts commit 094b6659)
+### Factory Methods (minimum)
 
-Replace hard-coded limits with:
 ```typescript
-// BEFORE
-const summary = rawSummary.slice(0, 500);
+class TelegramMessageFactory {
+  /**
+   * Format alert message for briefing output.
+   * Smart truncation: max 100 chars, break at word boundary, preserve meaning.
+   */
+  static formatAlertMessage(msg: string): string
 
-// AFTER
-const maxDetailLen = Math.max(1000, 4096 - headerFooter.length - 100);
-const summary = rawSummary.slice(0, maxDetailLen);
+  /**
+   * Format story/news title for briefing output.
+   * Smart truncation: max 100 chars, break at word boundary.
+   */
+  static formatStoryTitle(title: string): string
+
+  /**
+   * Format signal reasoning for storage in analysis_entries.
+   * Smart truncation: max 1000 chars, preserve complete thoughts.
+   */
+  static formatSignalReasoning(reasoning: string): string
+
+  /**
+   * Format news summary for storage in analysis_entries.
+   * Smart truncation: max 1000 chars, preserve context.
+   */
+  static formatNewsSummary(summary: string): string
+
+  /**
+   * Format policy summary for storage.
+   * Smart truncation: max 500 chars.
+   */
+  static formatPolicySummary(summary: string): string
+}
 ```
 
-**Rationale**:
-- Minimum 1000 chars ensures reasonable detail retention
-- Respects Telegram API 4096 char limit when applicable
-- 100-char buffer for metadata
-- Allows system to auto-scale based on context
+## Smart Truncation Rules (Shared across all methods)
 
-## Acceptance Criteria
-- [ ] runPredictionImpactChain.ts uses dynamic length calculation
-- [ ] newsNormalizer.ts uses dynamic length calculation
-- [ ] No hard-coded `.slice(0, 500)` on storage-bound text remains
-- [ ] Unit tests verify:
-  - Short text (<1000 chars) stored untruncated
-  - Long text (>limit) truncated gracefully at word boundary when possible
-  - Reasoning/summary fields contain complete meaningful text
-- [ ] `bun test` suite ≥6508 tests passing
+1. **Respect API limits:**
+   - Telegram max: 4096 chars per message (already handled by `splitMessage()`)
+   - Brief display: 60–100 chars (alert in briefing)
+   - Storage: 1000+ chars (complete reasoning/summary)
+
+2. **Word-aware truncation:**
+   - Don't cut at mid-word
+   - If `text.length > limit`, find last space before limit
+   - Append "…" only if truncated
+
+3. **Vietnamese diacritics handling:**
+   - Respect diacritical marks (à, á, ả, ã, ạ are one grapheme each)
+   - Use `Intl.Segmenter` or equivalent to count graphemes correctly
+
+4. **Pattern:**
+   ```typescript
+   static smartTruncate(text: string, maxLen: number): string {
+     if (!text || text.length <= maxLen) return text;
+     const truncated = text.slice(0, maxLen);
+     const lastSpace = truncated.lastIndexOf(' ');
+     if (lastSpace > 0) {
+       return truncated.slice(0, lastSpace) + '…';
+     }
+     return truncated + '…';
+   }
+   ```
+
+## Current Bugs Being Fixed
+
+| Bug | Location | Current | New | Type |
+|-----|----------|---------|-----|------|
+| 1 | morningBriefingJob.ts:123 | `.slice(0, 60)` | `formatAlertMessage()` | USER-FACING |
+| 2 | eveningSummaryJob.ts:203 | `.slice(0, 80)` | `formatAlertMessage()` | USER-FACING |
+| 3 | eveningSummaryJob.ts:211 | `.slice(0, 80)` | `formatStoryTitle()` | USER-FACING |
+| 4 | franceSummaryJob.ts:406 | `.slice(0, 100)` | `formatAlertMessage()` | USER-FACING |
+| 5 | runPredictionImpactChain.ts:113 | `.slice(0, 500)` | `formatSignalReasoning()` | STORAGE |
+| 6 | newsNormalizer.ts:854 | `.slice(0, 500)` | `formatNewsSummary()` | STORAGE |
+| 7 | policyImpactMapper.ts:233 | `.slice(0, 80)` | `formatPolicySummary()` | STORAGE |
+
+## Acceptance Criteria (RED Phase)
+
+- [ ] Create `src/infrastructure/notifiers/telegramMessageFactory.ts` (singleton)
+- [ ] Implement all 5 factory methods with smart truncation + Vietnamese diacritics handling
+- [ ] Create unit tests: `src/__tests__/1300a-telegram-message-factory.test.ts`
+  - [ ] Test smart word-boundary truncation
+  - [ ] Test Vietnamese diacritical mark handling
+  - [ ] Test "…" appending only when truncated
+  - [ ] Test all 5 method signatures
+- [ ] Migrate **briefing jobs only** to use factory:
+  - [ ] morningBriefingJob.ts:123 → `formatAlertMessage()`
+  - [ ] eveningSummaryJob.ts:203 → `formatAlertMessage()`
+  - [ ] eveningSummaryJob.ts:211 → `formatStoryTitle()`
+  - [ ] franceSummaryJob.ts:406 → `formatAlertMessage()`
+- [ ] Verify briefing JSON reports still valid (no schema changes)
+- [ ] `bun test` ≥6508 tests passing
 - [ ] `bun tsc --noEmit` clean
-- [ ] Existing analysis_entries queries still work (schema unchanged)
 
 ## Branch
-`task/1300a-critical-truncation-fix`
-
-## Test Files
-Update or create tests in:
-- `src/__tests__/runPredictionImpactChain.test.ts` (if exists, add truncation tests)
-- `src/__tests__/newsNormalizer.test.ts` (if exists, add truncation tests)
+`task/1300a-telegram-message-factory-red`
 
 ## Notes
-- Both issues follow same pattern as feedbackTools.ts bug (fixed in 094b6659)
-- Systematic audit found 3 truncation issues; this task covers 2 (CRITICAL + MEDIUM)
-- LOW severity issue (policyImpactMapper.ts) deferred to 1300b
+- Factory is **infrastructure layer** (handles external communication formatting)
+- **Singleton pattern** — call `TelegramMessageFactory.formatAlertMessage(msg)`
+- All methods are **static** — no instantiation needed
+- RED phase = create factory + migrate briefing jobs (user-facing high impact)
+- GREEN phase (1300b) = migrate storage-layer functions + full regression

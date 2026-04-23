@@ -83,44 +83,101 @@ What's your agent type?
 
 ---
 
-## 🔄 Update Protocol (When You Finish Work)
+## 🔄 Update Protocol (When You Finish Work) — MCP Tools
+
+**All agents use MCP tools to UPDATE memory** (no Write tool usage):
+
+### Tool 1: `append_session_record`
+
+```
+Input:  agent_name, task_name, finding?, fix?, status?, duration?
+Output: ✅ confirmation + file path
+```
+
+Call at end of session:
+```typescript
+append_session_record({
+  agent_name: "developer",
+  task_name: "Task 1300b: Memory Update Tools",
+  finding: "Agents previously used Write tool for memory updates",
+  fix: "Implemented append_session_record MCP tool for safe, validated updates",
+  status: "Ready for QA",
+  duration: "14:30–15:45 UTC"
+})
+```
+
+Creates or appends to: `sessions/YYYY-MM-DD-{agent_name}.md`
+
+### Tool 2: `update_memory_file`
+
+```
+Input:  record_type, action, filename, title, content, agents?, trigger?
+Output: ✅ confirmation + file path
+```
+
+Use to create or update issue/pattern/module files:
+```typescript
+update_memory_file({
+  record_type: "issue",
+  action: "create",
+  filename: "test-isolation-failure",
+  title: "Issue: Test Isolation Failure When Reused DB",
+  content: "Root cause: test1 creates table, test2 expects empty schema...",
+  agents: ["developer", "qa"],
+  trigger: ["testing", "db-isolation"]
+})
+```
+
+Creates: `issues/test-isolation-failure.md` with front-matter
+
+---
+
+## Legacy Update Protocol (Before MCP Tools)
 
 ### Found a bug?
-1. Check if `issues/BUGNAME.md` exists
-2. If yes → Update it (status, commit hash, new prevention tips)
-3. If no → Create new `issues/NEW-BUG.md` with:
-   - What broke
-   - Symptom
-   - Root cause
-   - Solution
-   - Prevention checklist
+Call `update_memory_file()` with:
+```typescript
+{
+  record_type: "issue",
+  action: "create",  // or "update" if exists
+  filename: "bugname",
+  title: "Issue: [Bug name]",
+  content: "What broke:\n\nSymptom:\n\nRoot cause:\n\nSolution:\n\nPrevention:",
+  agents: ["your-team"],
+  trigger: ["debugging", "bugfix"]
+}
+```
 
 ### Found a pattern?
-1. Check if `patterns/PATTERNNAME.md` exists
-2. If yes → Add example, increment recurrence count
-3. If no → Create new `patterns/PATTERN.md` with:
-   - What breaks
-   - Where it happens
-   - Example (bad + good)
-   - Prevention
-   - How to fix
+Call `update_memory_file()` with:
+```typescript
+{
+  record_type: "pattern",
+  action: "create",
+  filename: "patternname",
+  title: "Pattern: [Name]",
+  content: "What breaks:\n\nExample (bad):\n\nExample (good):\n\nPrevention:",
+  agents: ["developer"],
+  trigger: ["pattern", "prevention"]
+}
+```
 
 ### Analyzed a module?
-1. Update `modules/MODULE.md` with:
-   - What you verified (✅/⚠️/❌)
-   - Files you checked
-   - Known issues
-   - Next tasks
+Call `update_memory_file()` with:
+```typescript
+{
+  record_type: "module",
+  action: "create",  // or "update"
+  filename: "modulename",
+  title: "Module: [Name]",
+  content: "Status:\n- ✅ [verified]\n\nFiles checked:\n\nKnown issues:\n\nNext tasks:",
+  agents: ["architect", "developer"],
+  trigger: ["module-analysis"]
+}
+```
 
 ### Finished a work session?
-1. Create or append to `sessions/YYYY-MM-DD-YOURNAME.md`:
-   ```markdown
-   ### Task: [Task name] (HH:MM–HH:MM VN)
-   - **Finding**: [What you discovered]
-   - **Fix**: [What you did]
-   - **Status**: [Ready for merge / Testing / Pending]
-   - **Updated memory**: [Which files changed]
-   ```
+Call `append_session_record()` MCP tool (see above) — don't manually write files.
 
 ---
 
@@ -218,17 +275,15 @@ Total context: ~300 tokens (vs. 320 with manifest file, vs. 1,200+ before any op
 
 ## 🔧 MCP Tools Reference
 
-Two tools now available for memory discovery (Task 1300a):
+Four tools now available for agent memory (Task 1300a-b):
 
-1. **`get_memory_files(agent_name, task_type)`**
-   - Input: Your agent name + current task type
-   - Output: List of files to load + front-matter metadata
-   - Use: Dev Team agents at startup
+**Discovery Tools** (read-only):
+1. **`get_memory_files(agent_name, task_type)`** — Load files for a task
+2. **`search_memory_by_trigger(trigger)`** — Find files by trigger tag
 
-2. **`search_memory_by_trigger(trigger)`**
-   - Input: A trigger tag (e.g., "signal-validation", "db-maintenance")
-   - Output: All matching files + metadata
-   - Use: When investigating a specific topic during work
+**Update Tools** (write operations):
+3. **`append_session_record(agent_name, task_name, ...fields)`** — Log session work
+4. **`update_memory_file(record_type, action, filename, ...content)`** — Create/update issue/pattern/module
 
 ---
 
