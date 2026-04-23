@@ -48,6 +48,20 @@ context: docs/handoffs/TASK_1293d.md
 
 ---
 
+## Sprint 1291: Phase 2 Enhancement — Browser-Based BCTC PDF Discovery
+
+**Goal**: Upgrade Phase 2 BCTC enricher (Task 1289c–e) with browser automation to handle CSR portals. Current shell script (curl + grep) fails on JavaScript-rendered HTML. Replace with Playwright/Chromium on VPS to discover direct PDF URLs from HOSE/HNX/UPCOM.
+
+| ID | Title | Status | Priority |
+|----|-------|--------|----------|
+| 1289f | Browser-based BCTC PDF URL discovery script for VPS | Todo | HIGH |
+
+### Task 1289f: Browser-Based BCTC PDF Discovery Script
+
+context: docs/handoffs/TASK_1289f.md
+
+---
+
 ## Backlog
 
 | ID | Title | Priority | Notes |
