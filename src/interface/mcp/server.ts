@@ -33,6 +33,8 @@ import { validateWebhookRequest } from "../../infrastructure/notifiers/telegramW
 import { insertReport } from "../../infrastructure/db/telegramReportStore.js";
 import { toolRegistry } from "./tools/registry.js";
 import { getToolsForSkills } from "./bootstrap/agentBootstrap.js";
+import { sessionToolCache } from "../../infrastructure/cache/sessionToolCache.js";
+export { sessionToolCache } from "../../infrastructure/cache/sessionToolCache.js";
 import { logVpsPush, type VpsPushLogEntry } from "../../infrastructure/db/vpsPushLogStore.js";
 import { upsertForeignFlow } from "../../infrastructure/db/vnstockStore.js";
 import type { ForeignFlowUpsertItem, WriteForeignFlowItem } from "../../domain/models/shared-types.js";
@@ -128,13 +130,26 @@ export async function createBunServer(
   const log = createLogger(cfg.logLevel);
 
   // ── McpServer factory — one instance per SSE session ────────────────────
-  function createMcpServerInstance(skills?: string[]): McpServer {
+  function createMcpServerInstance(skills?: string[], sessionId?: string): McpServer {
     const server = new McpServer(
       { name: "vn-market-intelligence", version: "1.0.0" },
       { capabilities: { tools: {} } },
     );
     const fns = skills ? getToolsForSkills(skills) : toolRegistry;
     fns.forEach((fn) => fn(server));
+
+    // Populate session cache after tool resolution (observable-only, not on hot path).
+    // Fire-and-forget: probe server to collect registered tool names, then cache.
+    if (sessionId && skills) {
+      try {
+        const registeredToolsMap = (server as unknown as { _registeredTools?: Record<string, unknown> })._registeredTools;
+        const toolNames = registeredToolsMap ? Object.keys(registeredToolsMap) : [];
+        sessionToolCache.set(sessionId, { skills, toolNames, loadedAt: Date.now() });
+      } catch {
+        // Cache population is best-effort — never block server creation
+      }
+    }
+
     return server;
   }
 

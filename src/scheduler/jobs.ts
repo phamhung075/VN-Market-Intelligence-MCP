@@ -71,6 +71,7 @@ import { macroIndicatorRefreshJob, validateMacroFreshnessOnStartup } from './mac
 import { runForeignFlowFetcherJobCron } from './market-data/foreignFlowFetcherJob.js'
 import { runMonthlySignalQualityJob } from './audits/monthlySignalQualityJob.js'
 import { runImfIndicatorPollerJob } from './market-data/imfIndicatorPollerJob.js'
+import { trackSessionToolUsageJob } from './system/trackSessionToolUsageJob.js'
 import { getDb } from '../infrastructure/db/schema.js'
 import { recordJobRun } from '../infrastructure/db/cronJobRunStore.js'
 import type { Database } from 'bun:sqlite'
@@ -171,6 +172,8 @@ export const CRONS = {
   monthlySignalQualityAudit: Bun.env.CRON_MONTHLY_SIGNAL_QUALITY_AUDIT     ?? '0 0 1 * *',
   /** IMF indicator poller: every 6 hours — task 1296b */
   imfIndicatorPoller:        Bun.env.CRON_IMF_INDICATOR_POLLER              ?? '0 */6 * * *',
+  /** Session tool usage tracker: every 8h (matches cache TTL) — task 1299c */
+  trackSessionToolUsage:     Bun.env.CRON_TRACK_SESSION_TOOL_USAGE          ?? '0 */8 * * *',
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -770,5 +773,15 @@ export function startScheduler() {
     })
   }, { timezone: 'UTC' })
 
-  log(`[scheduler] jobs registered — ${Object.keys(CRONS).length} cron keys in CRONS map (incl. WAL checkpoint + 5 summary) + vps-watchdog + VPS health + SLA monitor + macro-refresh + imf-poller active`)
+  // Every 8h — Session tool usage tracker — task 1299c
+  // Reads sessionToolCache snapshot, aggregates per-tool session counts,
+  // writes to docs/agent-memory/modules/tool-usage-stats.json (observability).
+  cron.schedule(CRONS.trackSessionToolUsage, async () => {
+    await recordJobRun(getDb(), 'trackSessionToolUsageJob', async () => {
+      const stats = await trackSessionToolUsageJob()
+      return { rowsWritten: stats.sessionCount }
+    })
+  }, { timezone: 'UTC' })
+
+  log(`[scheduler] jobs registered — ${Object.keys(CRONS).length} cron keys in CRONS map (incl. WAL checkpoint + 5 summary) + vps-watchdog + VPS health + SLA monitor + macro-refresh + imf-poller + session-tool-usage active`)
 }

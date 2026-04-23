@@ -279,7 +279,7 @@ describe("cron-registry.json integrity", () => {
   const json = JSON.parse(readFileSync(registryPath, "utf8"));
 
   it("schedulerFileCount === 43", () => {
-    expect(json.schedulerFileCount).toBe(43);
+    expect(json.schedulerFileCount).toBe(44);
   });
 
   it("jobs array contains entry with name 'pipelineWatchdog'", () => {
