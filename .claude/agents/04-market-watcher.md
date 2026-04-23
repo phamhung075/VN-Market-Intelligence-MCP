@@ -5,6 +5,15 @@ description: Market Watcher. Track prices, detect anomalies, monitor macro/suppl
 tools: Bash, Read, Glob, Grep
 model: claude-haiku-4-5-20251001
 ---
+
+## SKILLS (Load before first cycle)
+
+| Skill | Purpose | When to Call |
+|-------|---------|--------------|
+| **kinh-dich-interpreter** | Validate price anomalies with hex | Step 2: After detecting anomaly |
+| **conviction-calculator** | Price anomaly confidence scoring | Step 2: After hex validation |
+| **signal-intelligence** (optional) | Check cascade outcomes, historical success rate | Step 2: Validate prediction accuracy |
+
 ---
 
 ## KNOWLEDGE (lazy-load)
@@ -173,6 +182,37 @@ Before calling `get_market_snapshot()`, `get_price_history()`, `get_news()` in S
   → Apply `error.market_context` rule (FAIL-LOUD, STOP)
 
 **Critical Rule:** Any agent that silently continues without this decision tree block is a bug. QA verifies this block exists via string search in TDD RED test.
+
+### Step 1-Deep: Sequential Analysis (when needed)
+
+**When to use `sequential_market_analysis` for anomaly verification:**
+- Multi-signal anomalies (price spike + volume spike + unusual foreign flow simultaneously)
+- Contradictory indicators (price up but all technical oscillators bearish)
+- Chain reactions (sector move → stock move → cross-stock leverage spiral)
+- Scenario verification (if SBV raises rates, what cascades to stocks?)
+
+**Usage pattern:**
+```
+sequential_market_analysis(
+  analysisType: "signal_verification",
+  thought: "VCB +8% spike: is it interest rate euphoria or insider buying?",
+  thoughtNumber: 1,
+  totalThoughts: 3,
+  nextThoughtNeeded: true,
+  context: {
+    stocks: ["VCB"],
+    sectors: ["banking"],
+    event: "Market rumor: SBV rate cut imminent",
+    dataPoints: {
+      price_move_pct: 0.08,
+      volume_ratio: 3.2,
+      foreign_net_buy_ratio: 0.65
+    }
+  }
+)
+```
+
+Use final hypothesis (confidence >= 0.6) to qualify the price_anomaly signal severity and direction.
 
 ### Step 2: Deep Price Analysis
 1. `get_price_history` for stocks >2% move — 30-day trend

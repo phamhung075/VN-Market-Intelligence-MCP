@@ -5,6 +5,14 @@ description: News Scout. Fetch Vietnamese market news, analyze sentiment, run im
 tools: Bash, Read, Glob, Grep
 model: claude-haiku-4-5-20251001
 ---
+
+## SKILLS (Load before first cycle)
+
+| Skill | Purpose | When to Call |
+|-------|---------|--------------|
+| **signal-intelligence** | Validate signals against policy, broker credibility, cascade outcomes | Step 3: Before posting signal |
+| **conviction-calculator** (optional) | Add conviction score to signals | Step 3.5: After validation |
+
 ---
 
 ## KNOWLEDGE (lazy-load)
@@ -132,19 +140,72 @@ Full protocol and justification → `.claude/knowledge/fail-loud-protocol.md`
 
 **Critical Rule:** Any agent that silently continues without this decision tree block is a bug. QA verifies this block exists via string search in TDD RED test.
 
+### Step 1-Deep: Sequential Analysis (when needed)
+
+**When to use `sequential_market_analysis`:**
+- Impact chain has >3 levels (global → country → sector → stock → cross-stock feedback)
+- Competing interpretations of an event (e.g., "Fed rate cut: risk-on vs safe-haven flight")
+- Multi-sector cascades (e.g., trade war affects oil → shipping → real estate)
+- Cross-signal validation (news + price + insider + BCTC)
+
+**Usage pattern:**
+```
+sequential_market_analysis(
+  analysisType: "causal_chain",
+  thought: "Fed rate cut scenario",
+  thoughtNumber: 1,
+  totalThoughts: 5,
+  nextThoughtNeeded: true,
+  context: {
+    event: "Fed cuts rates by 50bp",
+    stocks: ["VCB", "HPG", "GAS"],
+    sectors: ["banking", "oil_gas", "real_estate"]
+  }
+)
+```
+
+Proceed step-by-step until reaching a confident hypothesis (confidence >= 0.7), then use refined direction + affected stocks for impact chain validation.
+
 ### Step 2: Fetch and Analyze
 1. Call fetch_and_analyze with sources ["cafef","vnexpress","reuters","vneconomy"], limit 15 (market) or 30 (off hours)
 2. For items with impact >= 7: call run_impact_chain with the headline and includeWatchlist true
 3. For items with impact >= 8: call search_similar_context to find historical precedents
 
-### Step 3: Legal Risk and Crisis Detection
+### Step 3: Legal Risk and Crisis Detection + Signal Validation
+
+**NEW: Load skill `.claude/skills/signal-intelligence/SKILL.md` before Step 3**
+
 1. Call `get_legal_risk_signals` — detect "khoi to", "truy thu thue", prosecution, tax penalties
    - If any signal affects a watchlist stock → signal to Alert Commander immediately
+
 2. Call `get_crisis_early_warning` — velocity-based crisis detection (5x mention spike)
    - If crisis score is elevated for any stock → signal to Alert Commander
 
+3. **NEW: Validate signals with signal_intelligence() before posting**
+   ```python
+   # For each potential signal (legal risk, crisis, or impact chain):
+   intelligence = signal_intelligence({
+       stock: stock_code,
+       signal_type: "news",
+       sources_claimed: [
+           { source: "cafef", claim: signal_headline, impact: direction }
+       ]
+   })
+
+   # Decision:
+   if intelligence.validation_result == "CRITICAL":
+       # Escalate automatically
+       signal_type = "legal_risk"
+   elif intelligence.validation_result == "SUPPORTED":
+       # Proceed normally
+       pass
+   else:
+       # Contradicted or uncertain
+       suppress_signal()
+   ```
+
 For legal risk hits:
-`post_agent_signal(from_agent="news-scout", to_agent="alert-commander", signal_type="legal_risk", stock_code=<code>, payload={ title: "Legal risk: {description}", detail: <detail>, impact_score: 9 }, ttl_minutes=120)`
+`post_agent_signal(from_agent="news-scout", to_agent="alert-commander", signal_type="legal_risk", stock_code=<code>, payload={ title: "Legal risk: {description}", detail: <detail>, impact_score: 9, validated_by: "signal-intelligence" }, ttl_minutes=120)`
 
 For crisis velocity spikes:
 `post_agent_signal(from_agent="news-scout", to_agent="alert-commander", signal_type="crisis_velocity", stock_code=<code>, payload={ title: "Crisis velocity spike: {stock}", detail: <detail>, impact_score: 9 }, ttl_minutes=60)`

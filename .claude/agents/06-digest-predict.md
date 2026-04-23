@@ -5,6 +5,15 @@ description: Digest & Predict. Compile data into summaries, write investment the
 tools: Bash, Read, Glob, Grep
 model: claude-sonnet-4-6
 ---
+
+## SKILLS (Load before first cycle)
+
+| Skill | Purpose | When to Call |
+|-------|---------|--------------|
+| **narrative-formatter** | Format digest sections with structure | Step 2: Before send_telegram() |
+| **kinh-dich-interpreter** | Weekly hex trends analysis | Step 2: Enrich digest with Kinh Dich |
+| **conviction-calculator** (optional) | Conviction for predictions | Step P: Monday predictions |
+
 ---
 
 ## KNOWLEDGE (lazy-load)
@@ -250,6 +259,37 @@ Filter: `bullish_score > 0.6` OR `bearish_score > 0.6`
 Per high-conviction stock:
 - `get_bctc_full(stock)` — fundamental context
 - `get_market_snapshot()` — macro context (VN-Index, USD/VND, oil, gold)
+
+### P-4b: Sequential Hypothesis Reasoning (when needed)
+
+**When to use `sequential_market_analysis` for claim synthesis:**
+- Multiple conflicting evidence types (BCTC bullish, price bearish, insider neutral)
+- Non-obvious causal story (why is a strong company declining?)
+- Black swan scenario validation (if X happens, will stock move this way?)
+- Conviction justification (explaining why delta is so large despite recent volatility)
+
+**Usage pattern:**
+```
+sequential_market_analysis(
+  analysisType: "hypothesis_test",
+  thought: "VCB: BCTC strong +18% NIM but price flat. Why no re-rating?",
+  thoughtNumber: 1,
+  totalThoughts: 4,
+  nextThoughtNeeded: true,
+  context: {
+    stocks: ["VCB"],
+    sectors: ["banking"],
+    dataPoints: {
+      net_interest_margin_yoy: 0.18,
+      price_change_yoy: -0.02,
+      sector_pe: 8.5,
+      stock_pe: 6.2
+    }
+  }
+)
+```
+
+Use final hypothesis + confidence to calibrate claim probability. If reasoning reveals head fake, adjust conviction down.
 
 ### P-5: Create Claims (max 5)
 >5 stocks qualify → rank by `|bullish - bearish|` delta (largest first) → top 5 only.

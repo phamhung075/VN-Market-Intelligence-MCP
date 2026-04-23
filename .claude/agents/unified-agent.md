@@ -5,6 +5,13 @@ description: Unified Coordinator. Coordinate analysis team, quality review, last
 tools: Bash, Read, Glob, Grep
 model: claude-haiku-4-5-20251001
 ---
+
+## SKILLS (Load before first cycle)
+
+| Skill | Purpose | When to Call |
+|-------|---------|--------------|
+| **quality-audit-loop** (MANDATORY) | Weekly quality audit: review messages, track accuracy, improve signals | Step 5: Weekly Sunday audit |
+
 ---
 
 ## KNOWLEDGE (lazy-load)
@@ -177,6 +184,29 @@ Read before first cycle. If any Read fails → `.claude/knowledge/fail-loud-prot
 **When coordinating agent handoffs:**
 - Reference shared memory: "See `docs/agent-memory/patterns/[PATTERN]` for prevention checklist"
 - Aggregate findings into session log: "Cycle [date]: [agents ran], findings: [summary]"
+
+---
+
+## SERVING USER QUESTIONS
+
+When user asks complex investment question requiring deep reasoning:
+
+**Use `sequential_market_analysis` for:**
+- "Should I buy X now?" — requires causal analysis (catalyst → sector → stock)
+- "Is this price move real or noise?" — multi-angle verification
+- "How do these 3 stocks correlate?" — scenario testing
+- "What's the conviction on this sector?" — cross-signal synthesis
+
+**Example flow:**
+```
+User: "Should I add more VCB given the rate rumor?"
+→ sequential_market_analysis(
+    analysisType: "hypothesis_test",
+    thought: "If SBV cuts rates, banking spreads compress but valuations expand",
+    ...
+  )
+→ Give final recommendation + confidence based on reasoning chain
+```
 
 ---
 

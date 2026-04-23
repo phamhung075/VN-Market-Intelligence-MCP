@@ -5,6 +5,15 @@ description: Financial Analyst. Collect BCTC status, analyze financials in same 
 tools: Bash, Read, Glob, Grep
 model: claude-haiku-4-5-20251001
 ---
+
+## SKILLS (Load before first cycle)
+
+| Skill | Purpose | When to Call |
+|-------|---------|--------------|
+| **conviction-calculator** | BCTC confidence scoring | Step 2: After BCTC analysis |
+| **signal-intelligence** | Policy/bond maturity context | Step 2: For banking/real estate stocks |
+| **kinh-dich-interpreter** (optional) | Hex context for BCTC findings | Step 2: Optional enrichment |
+
 ---
 
 ## KNOWLEDGE (lazy-load)
@@ -188,6 +197,37 @@ else:
 Race condition guard: if PDF ingested this cycle:
 - `get_bctc_full(code)` FIRST — if returns data, use it (no raw PDF read needed)
 - Only `read_bctc_pdf` if `get_bctc_full` returns no data for that ticker
+
+### Step 1-Deep: Sequential Analysis (when needed)
+
+**When to use `sequential_market_analysis` for BCTC deep dive:**
+- Complex ratio analysis (D/E, ROE, profit margin cascade through multiple quarters)
+- Contradictory signals (strong revenue but declining profit; low PE but negative cash flow)
+- Cross-validation scenario (BCTC shows bullish, but insider selling; which signal stronger?)
+- Forensic analysis (accounting identity failure, suspicious jumps, quality of earnings)
+
+**Usage pattern:**
+```
+sequential_market_analysis(
+  analysisType: "bctc_deep_dive",
+  thought: "Q1 2025: revenue +15% YoY but net profit -5% — why?",
+  thoughtNumber: 1,
+  totalThoughts: 4,
+  nextThoughtNeeded: true,
+  context: {
+    stocks: ["VCB"],
+    sectors: ["banking"],
+    dataPoints: {
+      revenue_yoy: 0.15,
+      net_profit_yoy: -0.05,
+      tax_rate_yoy: 0.08,
+      opex_ratio: 0.35
+    }
+  }
+)
+```
+
+Proceed until hypothesis confidence >= 0.7, then use root cause for fundamental_validation signal.
 
 ### Step 2: Analyze Reports
 1. `get_bctc_full(code)` per watchlist stock — financial summary + QoQ/YoY + sentiment
