@@ -87,12 +87,81 @@ For crisis velocity spikes:
 `post_agent_signal(from_agent="news-scout", to_agent="alert-commander", signal_type="crisis_velocity", stock_code=<code>, payload={ title: "Crisis velocity spike: {stock}", detail: <detail>, impact_score: 9 }, ttl_minutes=60)`
 
 ### Step 4: Post Chain Findings (Enrichment Chain)
-For items with impact >= 7 that affect a watchlist stock, post a STRUCTURED finding:
 
-`post_agent_signal(from_agent="news-scout", to_agent="all", signal_type="chain_catalyst", stock_code=<affected_code>, payload={ title: <headline>, detail: <impact_reasoning>, impact_score: <score> }, finding_data={ "event_type": "<credit_policy|trade_war|earnings|macro|legal|crisis|sector_event>", "direction": "<bullish|bearish|neutral>", "confidence": <0.0-1.0>, "affected_stocks": [<codes>], "affected_sectors": [<sectors>], "headline": "<headline>", "source": "<cafef|vnexpress|reuters>" }, ttl_minutes=30)`
+**Import (top of agent implementation)**:
+```javascript
+const { createChainCatalystBuilder, createUrgentNewsBuilder } = require("@domain/signals/signalBuilders");
+```
 
-Also signal urgent news to Market Watcher:
-`post_agent_signal(from_agent="news-scout", to_agent="market-watcher", signal_type="urgent_news", stock_code=<affected_code>, payload={ title: <headline>, detail: <impact_reasoning>, impact_score: <score> }, ttl_minutes=120)`
+**Step 4.1: Construct Finding Using Builder**
+
+For items with impact >= 7 that affect a watchlist stock, build a STRUCTURED finding using the fluent API:
+
+```javascript
+const finding = createChainCatalystBuilder()
+  .setEventType("credit_policy")           // enum: credit_policy|trade_war|earnings|macro|legal|crisis|sector_event
+  .setDirection("bullish")                 // enum: bullish|bearish|neutral
+  .setConfidence(0.8)                      // numeric: 0.0–1.0
+  .addStock("VIC")                         // add each affected stock
+  .addStock("BID")                         // multiple calls allowed
+  .addSector("Banking")                    // add each affected sector
+  .setHeadline("Central bank policy shift") // narrative headline
+  .setSource("cafef")                      // source: cafef|vnexpress|reuters|vneconomy
+  .build();                                // throws ZodError if any required field missing
+```
+
+**Step 4.2: Error Handling**
+
+If `build()` throws, catch the error and retry with clarified narrative:
+
+```javascript
+try {
+  const finding = builder.build();
+} catch (error) {
+  // log builder error + incomplete fields
+  console.error("Builder validation failed:", error.message);
+  // Retry: enhance narrative, add missing fields, call build() again
+  // If retry fails: skip signal, submit_feedback(category="builder_failure", ...)
+}
+```
+
+**Step 4.3: Post Signal (Builder Guarantees Completeness)**
+
+Once `build()` succeeds, payload is guaranteed complete and type-safe:
+
+```javascript
+post_agent_signal(
+  from_agent="news-scout",
+  to_agent="all",
+  signal_type="chain_catalyst",
+  stock_code=<affected_code>,
+  payload={ title: <headline>, detail: <impact_reasoning>, impact_score: <score> },
+  finding_data=finding,  // builder output is pre-validated
+  ttl_minutes=30
+);
+```
+
+**Step 4.4: Signal Urgent News to Market Watcher**
+
+Use UrgentNewsBuilder for urgent news signals:
+
+```javascript
+const urgentNews = createUrgentNewsBuilder()
+  .setHeadline(<headline>)
+  .setSource("cafef")
+  .setSeverity("high")  // enum: low|medium|high|critical
+  .build();
+
+post_agent_signal(
+  from_agent="news-scout",
+  to_agent="market-watcher",
+  signal_type="urgent_news",
+  stock_code=<affected_code>,
+  payload={ title: <headline>, detail: <impact_reasoning>, impact_score: <score> },
+  finding_data=urgentNews,
+  ttl_minutes=120
+);
+```
 
 ### Step 4.5: Validate Drafts
 Before posting any signal containing price or % value:

@@ -78,6 +78,180 @@ Before merging changes to chainSynthesizer.ts:
 
 ---
 
+## Prevention: Use Typed Builders (Task 1295a+)
+
+Instead of constructing signal payloads as object literals (error-prone), use typed builders from `src/domain/signals/signalBuilders.ts`. Builders enforce complete field set at build-time, before posting to MCP tools.
+
+### Why Builders Matter
+
+Object literals allow incomplete data:
+```javascript
+// DANGEROUS: missing confidence, source, affected_sectors
+const finding = {
+  event_type: "credit_policy",
+  direction: "bullish",
+  affected_stocks: ["VIC"]
+};
+post_agent_signal(..., finding_data=finding); // MCP tool will reject
+```
+
+Builders catch incompleteness at emit time:
+```javascript
+// SAFE: builder throws if any required field is missing
+const finding = createChainCatalystBuilder()
+  .setEventType("credit_policy")
+  .setDirection("bullish")
+  .addStock("VIC")
+  // forgot .setConfidence() + .setSource()
+  .build(); // throws ZodError before posting
+```
+
+### Builder Classes (TECH-1295)
+
+| Builder Class | Required Fields | Use When |
+|---------------|-----------------|----------|
+| `ChainCatalystBuilder` | event_type, direction, confidence, affected_stocks, affected_sectors, headline, source | News Scout posts chain catalyst signals (macro/policy/earnings events) |
+| `PriceConfirmationBuilder` | price_change_pct, volume_ratio, confirms_direction, fully_priced, confidence | Market Watcher confirms price movement against catalyst direction |
+| `UrgentNewsBuilder` | headline, source, severity | News Scout signals urgent breaking news requiring immediate attention |
+| `CrossValidateBuilder` | direction, confidence, summary | Cross-validator signals contradictions/confirmations from multiple sources |
+
+### Usage Examples
+
+**Example 1: Chain Catalyst (News Scout)**
+
+```javascript
+const { createChainCatalystBuilder } = require("@domain/signals/signalBuilders");
+
+const finding = createChainCatalystBuilder()
+  .setEventType("credit_policy")                    // central bank policy shift
+  .setDirection("bullish")                           // increases borrowing ease
+  .setConfidence(0.8)                                // high conviction
+  .addStock("VIC")                                   // Bank of Investment
+  .addStock("BID")                                   // BIDV
+  .addSector("Banking")                              // entire sector affected
+  .setHeadline("SBV cuts policy rates to stimulate credit")
+  .setSource("cafef")                                // credible financial news
+  .build();                                          // validates all fields
+
+post_agent_signal(
+  from_agent="news-scout",
+  to_agent="all",
+  signal_type="chain_catalyst",
+  stock_code="VIC",
+  payload={ title: finding.headline, detail: "SBV rate cut → lower borrowing costs", impact_score: 8 },
+  finding_data=finding,
+  ttl_minutes=30
+);
+```
+
+**Example 2: Price Confirmation (Market Watcher)**
+
+```javascript
+const { createPriceConfirmationBuilder } = require("@domain/signals/signalBuilders");
+
+const confirmation = createPriceConfirmationBuilder()
+  .setPriceChangePct(3.2)                            // stock rose 3.2% intraday
+  .setVolumeRatio(2.1)                               // volume 2.1x average
+  .setConfirmsDirection(true)                        // price ↑ matches catalyst (bullish)
+  .setFullyPriced(false)                             // 60% of move unexplained (room to run)
+  .setConfidence(0.85)                               // high confidence in confirmation
+  .build();
+
+post_agent_signal(
+  from_agent="market-watcher",
+  to_agent="all",
+  signal_type="price_confirmation",
+  stock_code="VIC",
+  payload={ title: "VIC price confirms SBV catalyst", detail: "VIC +3.2%, vol 2.1x" },
+  finding_data=confirmation,
+  causal_ref=<chain_finding_id>,
+  chain_depth=2,
+  ttl_minutes=30
+);
+```
+
+**Example 3: Urgent News (News Scout)**
+
+```javascript
+const { createUrgentNewsBuilder } = require("@domain/signals/signalBuilders");
+
+const urgentNews = createUrgentNewsBuilder()
+  .setHeadline("MWG announces major M&A: acquires KKR stake")
+  .setSource("vnexpress")
+  .setSeverity("critical")                           // market-moving event
+  .build();
+
+post_agent_signal(
+  from_agent="news-scout",
+  to_agent="market-watcher",
+  signal_type="urgent_news",
+  stock_code="MWG",
+  payload={ title: "Urgent: MWG M&A announcement", detail: "Major strategic shift", impact_score: 9 },
+  finding_data=urgentNews,
+  ttl_minutes=120
+);
+```
+
+### Error Handling Pattern
+
+All builders throw `ZodError` on incomplete or invalid data. Handle gracefully:
+
+```javascript
+try {
+  const finding = createChainCatalystBuilder()
+    .setEventType("credit_policy")
+    .setDirection("bullish")
+    .setConfidence(0.8)
+    .addStock("VIC")
+    .setHeadline("SBV rate cut")
+    // forgot: .setSource(...), .addSector(...)
+    .build(); // throws ZodError
+} catch (error) {
+  if (error.name === "ZodError") {
+    // Log which fields are missing
+    console.error("Missing fields:", error.errors.map(e => e.path).join(", "));
+    // Retry with complete data or skip signal
+    submit_feedback(
+      category="builder_failure",
+      title="ChainCatalyst incomplete",
+      detail=error.message,
+      priority="high"
+    );
+  }
+}
+```
+
+### Prevention Checklist
+
+Before posting ANY signal:
+
+- [ ] Import correct builder: `createChainCatalystBuilder()` | `createPriceConfirmationBuilder()` | `createUrgentNewsBuilder()` | `createCrossValidateBuilder()`
+- [ ] Use fluent API (method chaining): `.setEventType(...).setDirection(...)`
+- [ ] Call `.build()` BEFORE `post_agent_signal()`
+- [ ] Handle `ZodError` thrown by `.build()` — do not post incomplete signals
+- [ ] Do NOT use object literals for enrichment chain payloads (chain_catalyst, price_confirmation, urgent_news, cross_validate)
+- [ ] Verify enum values match schema (event_type, direction, severity, source)
+- [ ] Numeric fields in correct range: confidence ∈ [0.0, 1.0], price_change_pct ∈ [-100, 100], volume_ratio > 0
+
+### Benefits
+
+1. **Pre-emit validation**: Agents catch missing fields before API call (fail fast)
+2. **Type safety**: TypeScript compiler ensures setter method names are correct
+3. **Clear error messages**: Zod validation reports exactly which fields are missing or invalid
+4. **Fluent API**: Method chaining encourages building complete objects
+5. **Reduced MCP tool load**: Builders filter invalid payloads before reaching post_agent_signal
+6. **Audit trail**: Failed builds can be logged separately from MCP rejections (build_failure vs signal_rejection)
+
+### Related Tasks
+
+- **TECH-1293**: MCP tool validation (fallback for non-builder signals)
+- **TECH-1295a**: Builder implementation (✅ MERGED 2026-04-22)
+- **TECH-1295b**: Agent spec updates (this task — docs)
+- **TECH-1295c**: Signal quality audit service (metrics + SLO)
+- **TECH-1295d**: Integration tests (builders → synthesis chain)
+
+---
+
 ## Fix Procedure (TECH-1293 + TECH-1295)
 
 ### Phase 1: Validation Infrastructure (TECH-1293, MERGED)
