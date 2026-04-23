@@ -148,67 +148,14 @@ Before calling `get_market_snapshot()`, `get_price_history()`, `get_news()` in S
 3. `get_energy_grid_signals` — reservoir levels, power shortage. Low reservoir → thermal benefits, hydro suffers
 4. `get_crisis_early_warning` — 5x mention rate = potential crisis
 
-> **See also:** Pattern `docs/agent-memory/patterns/signal-payload-quality.md` + design `docs/TECH_1295.md`. Task 1295a ✅ merged; 1295b updates agent specs.
-
 ### Step 3.5: Enrich Open Chain Findings
-
-**Import (top of agent implementation)**:
-```javascript
-const { createPriceConfirmationBuilder } = require("@domain/signals/signalBuilders");
-```
-
-**Step 3.5.1: Fetch Open Chain Findings**
 
 `get_open_chain_findings(minutes_back=15)`
 
-**Step 3.5.2: Build Price Confirmation Signals**
+For each checkable open finding:
+`post_agent_signal(from_agent="market-watcher", to_agent="all", signal_type="price_confirmation", stock_code=<code>, payload={ title: "<stock> price <confirms|contradicts> catalyst", detail: "<price/volume>" }, finding_data={ "price_change_pct": <num>, "volume_ratio": <vol/avg>, "confirms_direction": <bool>, "fully_priced": <bool>, "confidence": <0.0-1.0> }, causal_ref=<finding_id>, chain_depth=2, ttl_minutes=30)`
 
-For each checkable open finding, construct a price confirmation using the fluent API:
-
-```javascript
-const confirmation = createPriceConfirmationBuilder()
-  .setPriceChangePct(2.5)              // numeric: actual price change %
-  .setVolumeRatio(1.8)                 // numeric: current_volume / average_volume
-  .setConfirmsDirection(true)          // boolean: does price movement confirm catalyst direction?
-  .setFullyPriced(false)               // boolean: is entire move explained by catalyst?
-  .setConfidence(0.75)                 // numeric: 0.0–1.0, conviction that price confirms catalyst
-  .build();                            // throws if any required field missing
-```
-
-**Step 3.5.3: Error Handling**
-
-If `build()` throws, catch and retry with correct values:
-
-```javascript
-try {
-  const confirmation = builder.build();
-} catch (error) {
-  console.error("Price confirmation builder failed:", error.message);
-  // Re-fetch snapshot price, re-calculate volume ratio, retry build()
-  // If retry fails: skip this finding, log to feedback
-}
-```
-
-**Step 3.5.4: Post Confirmation Signal**
-
-Once builder validates, post with guarantee of completeness:
-
-```javascript
-post_agent_signal(
-  from_agent="market-watcher",
-  to_agent="all",
-  signal_type="price_confirmation",
-  stock_code=<code>,
-  payload={
-    title: "<stock> price <confirms|contradicts> catalyst",
-    detail: "<price/volume>"
-  },
-  finding_data=confirmation,  // builder output is pre-validated
-  causal_ref=<finding_id>,
-  chain_depth=2,
-  ttl_minutes=30
-);
-```
+> **See also:** Signal payload quality pattern → `docs/agent-memory/patterns/signal-payload-quality.md` (includes builder usage examples for code layer, not agent specs)
 
 ### Step 3.75: Validate Drafts
 Before posting any price_anomaly or price_confirmation signal:
