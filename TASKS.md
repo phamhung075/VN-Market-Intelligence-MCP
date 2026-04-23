@@ -74,7 +74,7 @@ context: docs/handoffs/TASK_1295d.md
 | 1289f-inv | Portal Form Investigation (SSC, HNX, UPCOM) | research | Done | none | 2-3 |
 | 1289f-dev | Rewrite Discovery Script (hybrid wait strategy) | vps-scripts | Done | 1289f-inv | 3-6 |
 | 1289f-test | VPS Testing + Full Backfill Validation | ops | Blocked | 1289f-dev | 1-2 |
-| 1289g | **ESCALATED:** Investigate HOSE/HNX/UPCOM Portal URLs | research | Todo | none | 2-3 |
+| 1289g | **ESCALATED:** Investigate HOSE/HNX/UPCOM Portal URLs | research | Done | none | 2-3 |
 
 ---
 
@@ -129,9 +129,9 @@ Investigation protocol created in: `docs/BCTC_PORTAL_FORM_INVESTIGATION.md`
 
 #### 1289g: **ESCALATED** — Investigate Portal URLs (2-3h)
 **Branch:** `task/1289g-portal-url-investigation`
-**Context:** `docs/handoffs/TASK_1289g.md` (handoff complete, ready for developer assignment)
+**Context:** `docs/handoffs/TASK_1289g.md` (completed)
 **Depends on:** 1289f-test failure diagnosis
-**Status:** Review — Investigation Complete, Fix Implemented
+**Status:** Done — Investigation Complete, Fix Implemented, Ready for VPS Deployment
 
 **Actions Completed:**
 - [x] Manually inspect HOSE portal structure (confirmed React SPA via curl)
@@ -139,6 +139,8 @@ Investigation protocol created in: `docs/BCTC_PORTAL_FORM_INVESTIGATION.md`
 - [x] Identified root cause: Asynchronous JavaScript rendering, insufficient wait time
 - [x] Updated script with extended wait strategy + alternative selectors
 - [x] Document findings in `docs/BCTC_PORTAL_URL_FINDINGS_2026.md`
+- [x] Commit changes to git (b78323c8)
+- [x] QA Approval: All 6 checks passed
 
 **Implementation Summary:**
 - **File Modified:** `vps-scripts/discover-bctc-urls-browser.py`
@@ -154,8 +156,9 @@ Investigation protocol created in: `docs/BCTC_PORTAL_FORM_INVESTIGATION.md`
 - [x] Investigation documented in detailed findings file
 - [x] Script updated with enhanced discovery logic
 - [x] Alternative selectors and retry logic implemented
-- [ ] Pending: ≥2 of 3 validation tests pass (VNM, BID, FPT 2024 Q4) on VPS deployment
-- [ ] After validation: Unblock 1289f-test for full historical backfill (37 stocks × 8 quarters)
+- [x] Code committed with clear commit message
+- [ ] Pending on VPS: ≥2 of 3 validation tests pass (VNM, BID, FPT 2024 Q4)
+- [ ] After VPS validation: Unblock 1289f-test for full historical backfill (37 stocks × 8 quarters)
 
 ---
 
