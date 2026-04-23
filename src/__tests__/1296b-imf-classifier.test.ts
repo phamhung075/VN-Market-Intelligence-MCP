@@ -86,7 +86,7 @@ describe("Task 1296b — IMF Classifier: AC-2 weighted sentiment", () => {
     const input: ImfClassificationInput = {
       indicators: [
         makeIndicator({ code: "NGDP_RPCH", yoyChange: 0.15, ageInDays: 3, confidence: 0.95 }),
-        makeIndicator({ code: "PCPIEPCH", yoyChange: -0.02, ageInDays: 5, confidence: 0.92, name: "EM Inflation" }),
+        makeIndicator({ code: "PCPI_EM", value: 4.5, yoyChange: 0.08, ageInDays: 5, confidence: 0.92, name: "EM Inflation" }),
       ],
       historicalBaseline: 3.0,
     };
