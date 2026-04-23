@@ -97,6 +97,12 @@ If a knowledge file Read fails: `send_telegram(channel="work")` + `submit_feedba
 - **No hot reload**: `bun --hot` / `bun --watch` FORBIDDEN. Always full launchctl kickstart.
 - **Reports**: `reports/TASK_REPORT_NNN.md` by QA after every review.
 
+### Agent Autonomy (Critical)
+- **NEVER ask user to run code, restart server, copy to VPS, or perform any operational task**. User is non-technical config admin only.
+- **ALWAYS spawn appropriate subagent instead**: `developer` (code changes), `ops` (server restarts, VPS), `qa` (testing), `pm` (Kanban), etc.
+- Subagents have full tool access to execute autonomously. User just approves/reviews, never executes.
+- If task needs execution: invoke Agent tool with `subagent_type` matching the work type. NEVER end with "user should run X".
+
 ---
 
 ## Development
