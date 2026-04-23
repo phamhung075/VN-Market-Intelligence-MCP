@@ -22,10 +22,10 @@
 | ID | Title | Layer | Status | Depends | Hours |
 |----|-------|-------|--------|---------|-------|
 | 1297a | Audit Phase II — Fail-Loud Protocol Injection (16 agents) | docs | Done | none | 2–3 |
-| 1297b | BCTC Portal URL Discovery Fix | vps-scripts | Todo | none | 4–6 |
-| 1297c | VPS Validation of BCTC Portal Fix | ops | Backlog | 1297b | 1–2 |
+| 1297b | BCTC Portal URL Discovery Fix | vps-scripts | Review | none | 4–6 |
+| 1297c | VPS Validation of BCTC Portal Fix | ops | Todo | 1297b | 1–2 |
 
-**Status:** 1297a Done (98ab4bd0). 1297b queued for Developer. 1297c blocked on 1297b.
+**Status:** 1297a Done (98ab4bd0). 1297b Review (validated locally). 1297c unblocked.
 Details → `docs/archive/TASK_DETAILS_ARCHIVE.md`
 
 ---
@@ -107,6 +107,18 @@ class TelegramMessageFactory {
 - Diacritics handling (Vietnamese characters)
 - Easy to maintain and enhance
 - All 7 bugs fixed in one place
+
+---
+
+## Sprint 1302: Domain Text Utils — Fix Recurring DDD Boundary Violation
+
+| ID | Title | Layer | Status | Depends | Hours |
+|----|-------|-------|--------|---------|-------|
+| 1302a | RED: create textUtils.ts + failing test | domain/tests | Todo | none | 1 |
+| 1302b | GREEN: update imports in newsNormalizer + policyImpactMapper, delete analysisFormatters shim | domain | Todo | 1302a | 1 |
+
+**Goal:** Eliminate 6th recurrence of domain→infra import. Move pure truncation helpers to `src/domain/services/textUtils.ts`. Delete `src/infrastructure/adapters/analysisFormatters.ts`.
+**Design:** `docs/TECH_1302.md`
 
 ---
 
