@@ -1,3 +1,8 @@
+---
+agents: unified-agent, architect
+trigger: post-merge-review, brownfield-analysis
+---
+
 # Module: chainSynthesizer.ts (verified 2026-04-23)
 
 **Status**: SAFE (defensive fallbacks implemented)

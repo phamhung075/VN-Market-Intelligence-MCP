@@ -1,3 +1,8 @@
+---
+agents: news-scout, market-watcher, alert-commander
+trigger: signal-validation, alert-firing
+---
+
 # Pattern: Signal Payload Quality Gap
 
 **recurrence**: 3x (Sprint 228+, Sprint 1293 incident)

@@ -1,3 +1,8 @@
+---
+agents: financial-analyst, developer, qa
+trigger: bctc-fetch, pdf-parsing, data-validation
+---
+
 # BCTC Data Quality Issues
 
 ## Critical Parsing Errors (2026-04-22)

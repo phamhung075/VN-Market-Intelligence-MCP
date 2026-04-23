@@ -1,3 +1,8 @@
+---
+agents: alert-commander, news-scout, market-watcher
+trigger: alert-firing, signal-validation
+---
+
 # Alert Quality Issues
 
 ## 2026-04-23 02:37 — Chain Catalyst Payload Missing 4-AND Verification Fields

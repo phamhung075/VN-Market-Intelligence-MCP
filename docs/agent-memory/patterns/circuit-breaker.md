@@ -1,3 +1,8 @@
+---
+agents: developer, ops, architect
+trigger: adding-http-fetcher, incident-response
+---
+
 # Pattern: Circuit Breaker Half-Open Oscillation
 
 **Severity:** HIGH (production stability)

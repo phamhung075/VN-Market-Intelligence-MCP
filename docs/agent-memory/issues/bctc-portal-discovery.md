@@ -1,3 +1,8 @@
+---
+agents: ops, developer
+trigger: vps-troubleshooting, bctc-fetch
+---
+
 # Issue: BCTC Portal Discovery — Playwright CSS Selector Mismatch
 
 **Status:** RESOLVED

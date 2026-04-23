@@ -407,3 +407,9 @@ Investigation successful when:
 - Expected fix completion: 2026-04-25 or 2026-04-26 (pending investigation complexity)
 
 **Next step**: Assign to Developer. Expected deliverable: Portal structure documents + findings report by 2026-04-25 EOD.
+
+### TASK 1298 / SPRINT 1298 (architect design)
+- **Module analyzed**: src/domain/models/imfIndicators.ts, src/domain/services/imfDataClassifier.ts, src/domain/services/cascadeEngine.ts (IMF_CASCADE_RULES at line 2882), src/domain/services/chainSynthesizer.ts (IMF_CONFIDENCE_MIN + IMF_CONVICTION_WEIGHT + conviction step), src/application/services/imfDataFetcher.ts, src/scheduler/market-data/imfIndicatorPollerJob.ts, src/interface/mcp/tools/macro/imfSignals.ts, src/domain/signals/signalTypes.ts (imfSentiment? Zod schema)
+- **Pattern discoveries**: All 8 FRs from REQ-1298 already implemented in sprint 1296. Sprint 1298 is test-completion only (3 GREEN test files missing: 1296b-imf-classifier.test.ts, 1296b-imf-fetcher.test.ts, 1296b-imf-integration.test.ts). MCP tool at macro/ not macro-analysis/ subfolder.
+- **Risks identified**: DB not initialized in test env (mitigation: mock or use in-memory SQLite for fetcher tests). Circuit breaker state leaks (mitigation: reset before each describe). Poller test needs 35s timeout.
+- **Status**: TECH_1298.md written. Handoffs 1298a + 1298b written. TASKS.md updated (3-task → 2-task, goal revised). project-stats.json currentSprint → 1298.

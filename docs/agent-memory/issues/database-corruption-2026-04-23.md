@@ -1,3 +1,8 @@
+---
+agents: ops, developer, system-auditor
+trigger: db-maintenance, incident-response, health-check
+---
+
 # Issue: Database Corruption — Row ID Ordering Violation
 
 **Status**: ACTIVE | **Severity**: CRITICAL | **Recurrence**: 1x | **Discovered**: 2026-04-23 13:15 VN

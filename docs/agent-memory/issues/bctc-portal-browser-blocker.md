@@ -1,3 +1,8 @@
+---
+agents: ops, developer, financial-analyst
+trigger: vps-troubleshooting, bctc-fetch, incident-response
+---
+
 # Issue: BCTC Portal Discovery Requires Browser Automation
 
 **Severity:** MEDIUM (blocks historical PDF backfill, not market-critical)  

@@ -1,3 +1,8 @@
+---
+agents: ops, developer, system-auditor
+trigger: vps-troubleshooting, incident-response
+---
+
 # Issue: BCTC Portal Discovery Script Validation Failed (2026-04-23)
 
 **Status:** ESCALATED  

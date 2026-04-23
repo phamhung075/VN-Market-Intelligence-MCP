@@ -1,3 +1,8 @@
+---
+agents: developer, architect, qa
+trigger: signal-validation, domain-refactor, test-run
+---
+
 # Module: signalBuilders.ts
 
 **Location**: `src/domain/signals/signalBuilders.ts`

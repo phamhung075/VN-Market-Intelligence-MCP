@@ -1,3 +1,8 @@
+---
+agents: developer, ops, architect
+trigger: writing-scheduler, health-check, post-merge-review
+---
+
 # Module Analysis: src/infrastructure/scheduler/
 
 **Last analyzed**: 2026-04-21 | **By**: Dev Team | **Status**: ✅ Mostly healthy, ⚠️ Timezone gaps

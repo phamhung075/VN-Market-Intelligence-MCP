@@ -6,59 +6,68 @@
 
 ## 🚀 Your Task: Load Only What You Need
 
-### Step 1: Load INDEX (REQUIRED, ~300 tokens)
+### Step 1: Load Your Agent Manifest (REQUIRED, ~70 tokens)
+
+**Dev Team agents** (po, developer, qa, architect, ops, ba, system-auditor):
 ```
-Read: .claude/agent-memory/INDEX.md
-Takes: 2 min
-Why: Tells you what exists in memory + what to load next
+Read: docs/agent-memory/manifests/YOURNAME.md
+Takes: 1 min
+Why: Tells you exactly what files to load for your task
 ```
 
-### Step 2: Load Your Role's Memory (Task-specific, +200-400 tokens)
+**Analysis Team agents** (News Scout, Financial Analyst, Market Watcher, Alert Commander, Digest, QA Responder, Unified):
+- Skip this step. Use `get_cycle_bootstrap()` MCP call instead (built-in, zero file reads).
+
+### Step 2: Load Only Files Listed in Your Manifest (+200-400 tokens)
 
 **If you're a DEV TEAM agent (po, ba, architect, pm, developer, qa, fixer, ops, market-analyst, code-janitor, system-auditor, claude-manager-helper):**
 
-Load based on your task:
-- **Fixing a bug?** → Load relevant `issues/*.md` file (e.g., `issues/WAL-checkpoint.md`)
-- **Writing new code?** → Load relevant `patterns/*.md` files (e.g., `patterns/DDD-violations.md`)
-- **Analyzing a module?** → Load `modules/MODULE.md` (e.g., `modules/scheduler.md`)
-- **Starting fresh?** → Just load INDEX + latest `sessions/YYYY-MM-DD-*.md` to see what was done recently
+1. Load `docs/agent-memory/manifests/YOURNAME.md` (your agent-specific routing)
+2. Look up your current task type in the manifest's table
+3. Load only the files listed for that task type
+4. No other files needed
 
-**If you're an ANALYSIS TEAM agent (News Scout, Financial Analyst, Market Watcher, Alert Commander, Digest, QA Responder):**
+**Example (Developer fixing a bug):**
+- Load: `manifests/developer.md`
+- Look up: "fixing-bug" row
+- Load files: `issues/WAL-checkpoint.md` + `modules/scheduler.md`
+- Done. No INDEX, no exploration, no wasted tokens.
 
-Load based on your cycle:
-- **Before analyzing stocks?** → Load `modules/scheduler.md` (recent fixes, patterns)
-- **Before writing alerts?** → Load `patterns/circuit-breaker.md` + `patterns/rate-limiter.md`
-- **Checking recent findings?** → Load latest `sessions/YYYY-MM-DD-*.md`
+**If you're an ANALYSIS TEAM agent (News Scout, Financial Analyst, Market Watcher, Alert Commander, Digest, QA Responder, Unified Coordinator):**
+
+**Do NOT load files.** Instead:
+1. Start your cycle with `get_cycle_bootstrap(agent_name="your-name")`
+2. This MCP call returns `agent_signals` + `market_context` + `system_status` in one call
+3. Use that for all your context needs
+4. Agent-memory files are for dev team only
 
 **If you're Ops, Code Janitor, or System Auditor:**
-- Load INDEX + `modules/scheduler.md` (infrastructure concerns)
-- Load `issues/WAL-checkpoint.md` (critical to operations)
-- Check `patterns/date-handling.md` (common infrastructure bug)
+- Load your manifest first: `manifests/ops.md` or `manifests/system-auditor.md`
+- Follow the table in your manifest for your task type
+- No other routing needed
 
 ---
 
-## 📋 Memory Map (Pick What You Need)
+## 📋 Agent Loading Flow (Manifest-Based)
 
 ```
-Load INDEX.md first (~300 tokens)
+START
+  ↓
+What's your agent type?
+  ├─ Analysis Team?
+  │  └─ Call get_cycle_bootstrap() [MCP, zero file reads]
+  │
+  └─ Dev Team?
+     └─ Load manifests/YOURNAME.md (~70 tokens)
         ↓
-What's your task?
-        ├─ Fixing a bug?
-        │  └─ Load issues/BUGNAME.md (~150-200 tokens)
-        │     + modules/MODULENAME.md (~100-150 tokens)
-        │
-        ├─ Writing new code?
-        │  └─ Load patterns/PATTERN.md (~100-150 tokens)
-        │     + modules/MODULENAME.md (~100-150 tokens) [if analyzing]
-        │
-        ├─ Analyzing a module?
-        │  └─ Load modules/MODULENAME.md (~150 tokens)
-        │
-        └─ Checking recent work?
-           └─ Load sessions/YYYY-MM-DD-*.md (~150-200 tokens)
+        What's your task?
+        └─ Look it up in manifest table
+           └─ Load listed files only (~200-400 tokens)
+
+        DONE. No INDEX, no exploration.
 ```
 
-**Total per task: ~400-600 tokens** (vs. 2000+ for full notebook)
+**Total per agent startup: ~270-470 tokens** (vs. ~1,700-2,700 before manifests)
 
 ---
 
@@ -105,35 +114,36 @@ What's your task?
 
 ## ⚡ Examples by Agent Type
 
-### Dev Team (Developer Starting New Feature)
+### Dev Team — Developer Starting New Scheduler Job
 ```
-1. Load: .claude/agent-memory/INDEX.md
-2. Load: .claude/agent-memory/patterns/DDD-violations.md
-3. Load: .claude/agent-memory/patterns/circuit-breaker.md
-4. Code + test
-5. Append to: sessions/2026-04-22-developer.md
-   - Task: "Add news source aggregator"
-   - Finding: "Discovered retry logic missing in news fetcher"
+1. Load: manifests/developer.md (~70 tokens)
+2. Task: "writing-scheduler" → Load patterns/date-handling.md + modules/scheduler.md
+3. Code + test
+4. Append to: sessions/2026-04-23-developer.md
+   - Task: "Add daily cache job"
+   - Finding: "Timezone handling needs UTC-explicit flags"
    - Status: "Ready for QA"
+Total context: ~370 tokens (vs. 900+ before manifests)
 ```
 
-### Analysis Team (Market Watcher)
+### Analysis Team — Market Watcher Starting Daily Cycle
 ```
-1. Load: .claude/agent-memory/INDEX.md
-2. Load: .claude/agent-memory/sessions/2026-04-22-morning.md [recent findings]
-3. Check: "CafeF had 403 error yesterday, apply retry logic"
-4. Fetch prices, check for 403s
-5. Append: "No 403s today, resilience fix working"
+1. Call: get_cycle_bootstrap(agent_name="market-watcher")
+2. Returns: agent_signals + market_context + system_status in one MCP call
+3. Fetch prices, check for anomalies using context
+4. Post to signal bus: post_agent_signal(...)
+5. Done. Zero file reads.
+Total context: ~500 tokens from MCP (vs. 1,700+ with file reads)
 ```
 
-### Ops Agent
+### Dev Team — Ops Restarting Server
 ```
-1. Load: .claude/agent-memory/INDEX.md
-2. Load: .claude/agent-memory/issues/WAL-checkpoint.md [critical]
-3. Load: .claude/agent-memory/modules/scheduler.md [current state]
-4. Check: Signal handlers on restart
-5. Health check passes
-6. Append to sessions: "All signal handlers verified, WAL clean"
+1. Load: manifests/ops.md (~70 tokens)
+2. Task: "server-restart" → Load issues/WAL-checkpoint.md + modules/scheduler.md
+3. Run: launchctl kickstart -k gui/$(id -u)/com.vn-market.mcp
+4. Verify: WAL checkpoint ran (check logs)
+5. Append: sessions/2026-04-23-ops.md "Server restart OK, WAL clean"
+Total context: ~320 tokens (vs. 1,200+ before manifests)
 ```
 
 ---
@@ -149,16 +159,25 @@ What's your task?
 
 ---
 
-## 🎯 Token Math
+## 🎯 Token Math (Manifest vs Old Approach)
 
-| Approach | Tokens | Time |
-|----------|--------|------|
-| Monolithic notebook | ~2000 | 10 min |
-| INDEX only | ~300 | 2 min |
-| INDEX + 2 task-specific files | ~600-800 | 4-5 min |
-| INDEX + session check | ~400 | 3 min |
+| Approach | Tokens | Savings |
+|----------|--------|---------|
+| **Old approach** | | |
+| INDEX.md | 300 | — |
+| + 2 task-specific files | +300 | — |
+| **Total old** | ~600 tokens | baseline |
+| | | |
+| **New approach (manifest)** | | |
+| Manifest (developer.md) | 70 | -230 |
+| + 2 task-specific files | +300 | — |
+| **Total new** | ~370 tokens | **-38% per task** |
+| | | |
+| **Per-cycle savings (5 agents)** | | |
+| Old: 5 × 600 = 3,000 | 3,000 | — |
+| New: 5 × 370 = 1,850 | 1,850 | **-1,150 tokens/cycle** |
 
-**Total savings: 60-80% of previous memory cost.**
+**Result: 35–50% savings per agent startup cycle across the team.**
 
 ---
 

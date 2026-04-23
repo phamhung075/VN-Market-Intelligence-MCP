@@ -1,6 +1,8 @@
-# Agent Memory Index — Quick Lookup Only
+# Agent Memory Index — Catalog Only
 
-> Load this first (~300 tokens). Then load only `.md` files you need for your task.
+> **Agents:** Load `docs/agent-memory/manifests/YOURNAME.md` instead of this file. See AGENT_STARTUP.md.
+>
+> **Humans:** This catalog documents all available memory files. Use for exploration/discovery only.
 > **Do NOT load everything at once.**
 
 ---
@@ -26,6 +28,10 @@
 - **[src/interface/rest/](modules/rest.md)** — SSE safety ✅, sessions ✅, rate limit ⚠️ (not yet added)
 - **[src/application/](modules/application.md)** — Error handling ✅, RAG perf ⚠️ (no caching layer)
 
+## 📋 PO Procedures (Load if: PO analyzing tasks/sprints)
+
+- **[PO: Branch Hygiene Protocol](po-branch-hygiene.md)** — Check stale branches + TASKS.md sync on every sprint analysis (PO required)
+
 ## 🔗 Sessions (Load if: checking what agent just did, avoiding duplicate work)
 
 - **[2026-04-23 BA Sprint 1296](sessions/2026-04-23-ba-sprint-1296.md)** — Infrastructure recovery (OPS validation) + IMF sentiment planning (BA research)
@@ -33,18 +39,6 @@
 - **[2026-04-21 Dev Team](sessions/2026-04-21-dev-team.md)** — Fixed aggregator guards
 - **[2026-04-20 QA](sessions/2026-04-20-qa.md)** — Fixed timezone in tests
 - **[2026-04-22 Morning Work](sessions/2026-04-22-morning.md)** — Recent work context
-
----
-
-## 🎯 Quick Start: Load by Task Type
-
-| Task | Load Files |
-|------|-----------|
-| **Fixing a bug** | INDEX.md + relevant issue file + related module file |
-| **Writing new scheduler code** | INDEX.md + `patterns/DDD-violations.md` + `patterns/date-handling.md` + `modules/scheduler.md` |
-| **Adding HTTP fetcher** | INDEX.md + `patterns/circuit-breaker.md` + `patterns/rate-limiter.md` + `patterns/SQL-injection.md` |
-| **Refactoring domain/** | INDEX.md + `modules/domain.md` + `patterns/DDD-violations.md` |
-| **Checking recent work** | INDEX.md + latest session file (e.g., `2026-04-22-morning.md`) |
 
 ---
 
@@ -66,25 +60,4 @@
 
 ---
 
-## 🎓 Examples
-
-**Dev Team starting new scheduler job:**
-```
-1. Load INDEX.md (this, ~100 tokens)
-2. Load patterns/date-handling.md (~80 tokens)
-3. Load modules/scheduler.md (~120 tokens)
-4. Start coding, check checklist for naive dates
-Total: ~300 tokens (not 2000)
-```
-
-**News Scout finding external API broke:**
-```
-1. Load INDEX.md (~100 tokens)
-2. Check sessions/2026-04-22-*.md for similar issues (~80 tokens)
-3. If new pattern: create patterns/PATTERN-NAME.md
-Total: ~180 tokens + new pattern doc
-```
-
----
-
-**Always load INDEX.md first. Then load only what your task needs.**
+**Agents: Use manifests, not this file. See `docs/agent-memory/AGENT_STARTUP.md`.**

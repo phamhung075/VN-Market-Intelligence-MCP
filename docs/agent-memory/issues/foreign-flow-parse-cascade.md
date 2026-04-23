@@ -1,3 +1,8 @@
+---
+agents: market-watcher, developer, qa
+trigger: foreign-flow-fetch, data-validation, incident-response
+---
+
 # Issue: Foreign Flow Silent Filter Cascade Bug
 
 **Fingerprint:** `db_error_recurring:foreign_flow_parse`

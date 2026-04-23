@@ -1,3 +1,8 @@
+---
+agents: developer, architect, qa
+trigger: domain-refactor, writing-code, test-run
+---
+
 # Pattern: DDD Layer Violations (Inward-only imports)
 
 **Recurrence**: 7x | **Severity**: High | **Status**: Active (strict enforcement)
