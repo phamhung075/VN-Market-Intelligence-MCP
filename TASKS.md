@@ -56,15 +56,18 @@ AC: all 3 new test files pass, full suite ≥6508, `bun tsc --noEmit` clean, lau
 
 ---
 
-## Sprint 1299: MCP Tool Context Optimization — PLANNING
+## Sprint 1299: MCP Tool Context Optimization — IN PROGRESS
 
 | ID | Title | Layer | Status | Depends | Hours |
 |----|-------|-------|--------|---------|-------|
-| 1299a | Tool Index + Reference Docs | docs/ba | Todo | none | 2–3 |
-| 1299b | Skill-Gated Loading (code + bootstrap) | interface/tests | Todo | 1299a | 3–4 |
-| 1299c | Session Memory Cache (cron + tracking) | infra/application | Todo | 1299b | 2–3 |
+| 1299a | Tool Index + SKILL_MANIFEST docs | docs | Review | none | 2–3 |
+| 1299b | Skill-Gated Bootstrap (code + tests) | interface | Todo | 1299a | 3–4 |
+| 1299c | Session Cache + Usage Tracking Cron | infra/scheduler | Todo | 1299b | 2–3 |
 
-**Goal:** Reduce default MCP tool context 65k→<30k tokens. Details → `docs/archive/TASK_DETAILS_ARCHIVE.md`
+**Goal:** 65k→<30k tokens. digest_predict trimmed to 49 tools (~29.4k ✓). TECH: `docs/TECH_1299.md`
+### 1299a context: `docs/handoffs/TASK_1299a.md`
+### 1299b context: `docs/handoffs/TASK_1299b.md`
+### 1299c context: `docs/handoffs/TASK_1299c.md`
 
 ---
 

@@ -290,3 +290,13 @@ Implementation patterns belong in code docs or pattern libraries, not in agent b
 - **Files changed**: vps-scripts/discover-bctc-urls-browser.py (validation + cleanup), removed discover-bctc-urls-browser-v2.py (byte-identical duplicate)
 - **Finding**: a52c34b1 already landed the urllib POST API. Script confirmed working via live API calls. HNX PVS Q4 2024 + NVB Q4 2024 return real PDF URLs. HOSE (VNM) returns informative error. UPCOM fallback path exercised (MCH returns no-result with correct error). Syntax clean, JSON output contract correct.
 - **Status**: Ready for QA. 1297c unblocked.
+
+
+### Task: Task 1300b: Memory Update Tools
+- **Finding**: Agents need update_memory tool
+- **Fix**: Implemented append_session_record
+- **Status**: Ready for QA
+### Task 1299a: Tool Index + SKILL_MANIFEST Docs (docs-only)
+- **Files changed**: docs/TOOL_INDEX.md (NEW), docs/SKILL_MANIFEST.md (NEW), docs/agent-memory/modules/tool-loading.md (NEW), docs/data/tool-registry.json (toolCount 107→108 fix)
+- **Finding**: tool-registry.json toolCount field was stale at 107; actual category sum = 108. All validations pass: JSON valid, digest_predict=49, _always_on=7, 0 duplicates, 41 categories.
+- **Status**: Ready for QA

@@ -1,313 +1,225 @@
 # HANDOFF — Task 1299a: Tool Index + Reference Docs
 
-**For:** BA Agent
-**Sprint:** 1299
-**Status:** Ready for work
-**Effort:** 2–3 hours
-**Depends:** None
-**Blocks:** Task 1299b (developer)
+layer: docs
+sprint: 1299
+status: Todo
+effort: 2–3h
+depends: none
+blocks: 1299b
 
 ---
 
-## Context
+## Goal
 
-All 106 MCP tools are currently loaded into every agent bootstrap (~65k tokens = 32.4% of context budget). This consumes massive reasoning capacity without corresponding value — most agents only use 10–25 of these tools per session.
-
-**Goal:** Create searchable documentation + skill-to-tool mapping so that in Task 1299b, developers can implement smart filtering.
-
-**Why BA owns this:** You know the agent workflow best. You understand which tools each analysis skill (news-scout, financial-analyst, market-watcher, etc.) actually needs. Your manifest ensures developers don't over-filter or under-filter.
+Create 3 reference documents that 1299b (code) will use as SSOT:
+1. `docs/TOOL_INDEX.md` — 107 tools × 1-line reference
+2. `docs/SKILL_MANIFEST.md` — 9 skills × tool list (JSON-parseable block)
+3. `docs/agent-memory/modules/tool-loading.md` — findings + decisions
 
 ---
 
-## Deliverables
+## Sources to read (all 3 required)
 
-### Deliverable 1: `docs/TOOL_INDEX.md` (1-liner reference)
+| Source | Purpose |
+|--------|---------|
+| `docs/data/tool-registry.json` | Canonical 107 tool names + categories |
+| `.claude/knowledge/mcp-tools.md` | Per-agent tool lists (## Tools Per Agent section) |
+| `docs/REQ_1299.md` (## Tool Inventory) | Category counts cross-check |
+| `docs/TECH_1299.md` (## digest_predict trim) | Trim decisions already made — use them |
 
-**Purpose:** Searchable reference for all 106 tools. No descriptions, just signature + output.
+---
 
-**Format:**
+## Deliverable 1: `docs/TOOL_INDEX.md`
+
+Format: one row per tool, sorted alphabetically within category groups.
+
 ```markdown
-# MCP Tool Index
+# MCP Tool Index — Sprint 1299
 
-Complete alphabetical reference for all 106 MCP tools.
+Total: 107 tools | 41 categories | Updated: 2026-04-23
 
-| Tool | Input Signature | Output Type | Category |
-|------|-----------------|-------------|----------|
-| add_to_watchlist | ticker: string, thresholds?: {...} | { id, created_at } | Watchlist |
-| answer_ask_question | question_id: string, answer: string | { id, answered_at } | Ask Queue |
-| batch_review_market_messages | ids: string[], verdict: "ok"\|"spam" | { processed, skipped } | Message Review |
-| claim_telegram_report | report_id: string | { claimed_by, created_at } | Telegram |
-| close_position | ticker: string, exit_price: number | { exit_price, pnl } | Portfolio |
-| compare_financials | tickers: string[], quarters?: string[] | ComparativeAnalysis | Financial |
-| compare_stocks | ticker1: string, ticker2: string, metrics?: string[] | ComparisonResult | Analysis |
-| ... | ... | ... | ... |
+## [Category Name] (N tools)
 
-*106 tools total. Categories: Watchlist (4), Financial (4), Alerts (5), ...*
+| Tool | Description |
+|------|-------------|
+| tool_name | ≤15 word description |
 ```
 
-**Instructions:**
-1. Extract ALL 106 tools from:
-   - `docs/data/tool-registry.json` (tool list)
-   - `.claude/knowledge/mcp-tools.md` (tool-per-agent tables)
-   - `src/interface/rest/` (live MCP tool definitions, if you can access)
-2. For each tool, write 1-liner: `Tool Name | Input Type Signature | Output Type | Category`
-   - Input: Copy from tool definition (just types, no description)
-   - Output: Copy expected return type
-   - Category: From tool-registry.json "categories"
-3. Sort alphabetically
-4. Group by category at bottom (quick lookup)
-5. Total tokens: target <10k (aim for 1-liner per tool = ~100 chars)
+Rules:
+- Description ≤ 15 words. No input/output types needed (BA knows these).
+- Group by category (use categories from tool-registry.json)
+- File total ≤ 9k tokens (each line ~80 chars → ~107 rows + headers = safe)
+- Cross-check: every tool in tool-registry.json categories must appear
 
-**Validation checklist:**
-- [ ] All 106 tools present (cross-check against tool-registry.json count)
-- [ ] Zero duplicates (grep duplicate tool names)
-- [ ] No descriptions (only type signature)
-- [ ] All categories represented (34 categories from tool-registry.json)
-- [ ] Alphabetically sorted + category index at bottom
-- [ ] Estimated token count <10k (doc should be ~2400 lines max)
-
----
-
-### Deliverable 2: `docs/SKILL_MANIFEST.md` (skill-to-tools mapping)
-
-**Purpose:** Define which tools each analysis skill (agent role) needs. Single source of truth for bootstrap filtering.
-
-**Format:**
-```markdown
-# Skill Manifest — Tool Mapping
-
-**Maintained by:** BA (Sprint 1299 + maintenance)
-**Updated:** [date]
-**Purpose:** Map analysis skills to required tools for skill-gated bootstrap loading.
-
-## Analysis Skills (9 total)
-
-### Skill: news-scout
-**Description:** Breaking news → causal chains → impact scoring
-**Tools (14 total):**
-- get_agent_signals
-- get_market_context
-- fetch_and_analyze
-- run_impact_chain
-- search_similar_context
-- get_prediction_markets
-- get_rate_limit_status
-- post_agent_signal
-- get_recent_fixes
-- submit_feedback
-- get_legal_risk_signals
-- get_crisis_early_warning
-- record_evidence_fragment
-- log_agent_work
-
-### Skill: financial-analyst
-**Description:** BCTC reports → valuation → cross-validation
-**Tools (24 total):**
-- get_cycle_bootstrap
-- get_user_positions_for_analysis
-- get_earnings_calendar
-- list_stored_pdfs
-- get_bctc_full
-- read_bctc_pdf
-- get_financial_summary
-- compare_stocks
-- ... [continue]
-
-### Skill: market-watcher
-...
-
-### Skill: kinh-dich-analyst
-...
-
-## Always-On Tools (all agents, no matter the skill)
-
-**System & Lifecycle:**
-- get_cycle_bootstrap (bootstrap itself)
-- send_telegram (communication)
-- submit_feedback (system feedback)
-- get_recent_fixes (self-healing check)
-- log_fix (dev team comms)
-
-**Rationale:** These are foundational to every agent's first step and inter-agent communication.
-
-## Tool Coverage Validation
-
-- Total tools in manifest: XXX / 106
-- Tools unused by any skill: YYY (listed below, candidates for future removal)
-- Skills with overlap (share tools): ZZZ% (expected, indicates healthy reuse)
-
-*Unused tools (for future Sprint 1302+ review):*
-- [list any tools not mentioned in any skill]
-```
-
-**Instructions:**
-1. Extract skill definitions from:
-   - `.claude/agents/*.md` (agent "Workflow" sections = skills they claim)
-   - `.claude/skills/*/SKILL.md` (skills created in Sprint 1297)
-   - `docs/IMPLEMENTATION_STATUS.md` (agent roles + responsibilities)
-2. For each of the 9 analysis skills (news-scout, financial-analyst, market-watcher, kinh-dich-analyst, macro-catalyst-scout, flow-analyst, sentiment-gauge, disclosure-auditor, consensus-builder), list:
-   - Which tools they call in their workflow
-   - Rationale (1 sentence per tool): why it's essential
-3. Identify "always-on" tools (system, logging, bootstrap)
-4. Validate:
-   - Sum of all tools = 106? (should be ≥100 with overlap)
-   - Any tools not in any skill? (candidates for future deprecation)
-   - Any skill with <5 tools? (likely incomplete)
-
-**Validation checklist:**
-- [ ] All 9 skills defined + tool lists complete
-- [ ] Always-on tools identified (≥5 tools)
-- [ ] Every tool from TOOL_INDEX.md appears in at least one skill or always-on
-- [ ] Tool duplicates counted (overlap is expected)
-- [ ] Unused tools identified (if any)
-- [ ] Manifest self-consistent (no tool listed twice in same skill)
-
----
-
-### Deliverable 3: `.claude/agents/README.md` — Update bootstrap rules
-
-**Current state:** Missing. Add section explaining skill-gated loading.
-
-**To add (after existing content):**
-```markdown
-## Skill-Gated Tool Loading (Sprint 1299)
-
-### How to declare skills
-
-When spawning an agent with limited tool context, pass `skillIds` parameter:
-
-```typescript
-// Load only tools for financial analyst
-const context = await getAgentContext({
-  sessionId: "user-session-001",
-  skillIds: ["financial-analyst"]
-});
-
-// Load tools for multiple skills
-const context = await getAgentContext({
-  sessionId: "user-session-002",
-  skillIds: ["market-watcher", "news-scout"]
-});
-
-// Legacy: load all 106 tools (not recommended)
-const context = await getAgentContext({
-  sessionId: "user-session-003"
-});
-```
-
-### Skill list
-
-Available analysis skills: `docs/SKILL_MANIFEST.md`
-
-### Why this matters
-
-- **Default:** All 106 tools = 65k tokens = 32% of context wasted
-- **Optimized:** 1–3 skills = 10–25 tools = 10–25k tokens
-- **Benefit:** 40k+ tokens freed for reasoning, message history, analysis depth
-
-### Best practices
-
-1. **Declare skills early:** In agent bootstrap, declare which skills agent will use
-2. **Combine related skills:** news-scout + market-watcher (complementary) vs news-scout + kinh-dich-analyst (overlapping, less efficient)
-3. **Always-on tools:** System tools (bootstrap, telegram, feedback) always included automatically
-4. **New tools:** If you add a new tool to manifest, update SKILL_MANIFEST.md + corresponding skill entry
+Validation before commit:
+```bash
+# Count rows (should be ≥107 data rows)
+grep -c "^| " docs/TOOL_INDEX.md
+# Check no tool appears twice
+grep "^| " docs/TOOL_INDEX.md | awk -F'|' '{print $2}' | sort | uniq -d
 ```
 
 ---
 
-### Deliverable 4: `docs/agent-memory/modules/tool-loading.md` (analysis)
+## Deliverable 2: `docs/SKILL_MANIFEST.md`
 
-**Purpose:** Record decisions, patterns, and future optimization ideas.
+Critical: must include a machine-readable JSON block that `agentBootstrap.ts` mirrors exactly.
 
-**Template:**
 ```markdown
-# Agent Memory: Tool Loading Optimization (Sprint 1299)
+# Skill Manifest — Sprint 1299
 
-**Last Updated:** 2026-04-23
-**Phase:** 1299a (index creation)
-**Owner:** BA
+Updated: 2026-04-23
+Purpose: SSOT for skill → tool mapping. Developer mirrors JSON block in agentBootstrap.ts.
 
-## Key Findings
+## JSON Manifest (machine-readable)
 
-### Skill Tool Overlap
-- **news-scout + market-watcher:** 8 shared tools (get_market_context, get_agent_signals, etc.)
-  - Implication: Loading both skills adds marginal cost (union, not sum)
-  - Recommendation: Market briefing agents should load both (complementary)
+\`\`\`json
+{
+  "news_scout":           ["tool1", "tool2", ...],
+  "financial_analyst":    ["tool1", "tool2", ...],
+  "market_watcher":       ["tool1", "tool2", ...],
+  "alert_commander":      ["tool1", "tool2", ...],
+  "digest_predict":       ["tool1", "tool2", ...],
+  "dev_team":             ["tool1", "tool2", ...],
+  "qa_responder":         ["tool1", "tool2", ...],
+  "unified_coordinator":  ["tool1", "tool2", ...],
+  "_always_on":           ["get_cycle_bootstrap", "submit_feedback", "get_recent_fixes", "log_agent_work", "send_telegram", "post_agent_signal", "get_agent_signals"]
+}
+\`\`\`
 
-- **financial-analyst + disclosure-auditor:** 6 shared tools (BCTC queries, earnings calendar)
-  - Implication: Strong dependency — can't separate these skills
-  - Recommendation: Bundle as "financial-suite" for future optimization (Sprint 1302)
+## Per-Skill Detail
 
-### Unused Tools (Candidates for Removal)
-- `get_broker_credibility` — 0 agents call this
-  - Status: Keep (broker intel may be added in future analysis)
-- `get_label_accuracy_report` — Only QA Responder calls
-  - Status: Keep (diagnostic, essential for QA)
+### news_scout (~21 tools)
+[list]
 
-### Tool Categories Most Valuable
-| Category | Agents | Usage | Why |
-|----------|--------|-------|-----|
-| Market snapshot | 7 agents | 15% of calls | Central to every analysis |
-| Alerts | 8 agents | 12% of calls | Decision trigger |
-| Financial (BCTC) | 3 agents | 8% of calls | High-value, concentrated |
-| Kinh Dich | 4 agents | 3% of calls | Niche, but powerful |
+### financial_analyst (~29 tools)
+[list]
 
-## Optimization Recommendations
+### market_watcher (~32 tools)
+[list]
 
-### Phase 1 (Implemented Sprint 1299)
-- Skill-gated loading (10–25 tools per skill)
-- Session cache (track usage patterns)
+### alert_commander (~25 tools)
+[list]
 
-### Phase 2 (Sprint 1302+)
-- Smart skill bundling (combine always-together skills)
-- Dynamic tool discovery (agent requests unexpected tool → async reload)
-- Tool deprecation (remove 0-usage tools after 6+ months)
+### digest_predict (49 tools — trimmed per TECH_1299.md)
+[list — use the exact 49 tools from TECH_1299.md ## digest_predict section]
 
-### Phase 3 (Sprint 1305+)
-- Per-agent skill profiles (store learned preferences)
-- Predictive tool preload (ML: "when agent X starts, load these tools")
+### dev_team (~16 tools)
+[list]
 
-## Decision Log
+### qa_responder (~21 tools)
+[list]
 
-**Q: Why not remove "unused" tools now?**
-A: Tools are discoverable in edge cases. Better to track usage + deprecate later. Removal = breaking change, too risky Sprint 1299.
+### unified_coordinator (~47 tools)
+[list]
 
-**Q: Why 8-hour session cache TTL?**
-A: Matches market hours + typical user session. Expires before next trading day.
+## Always-On Tools (7)
 
-**Q: Can agents request new tools mid-session?**
-A: Not yet (Sprint 1299). Future work: async reload + silent fallback.
+| Tool | Reason |
+|------|--------|
+| get_cycle_bootstrap | Opening sequence all agents |
+| submit_feedback | Error reporting mandatory |
+| get_recent_fixes | De-dup before bug reports |
+| log_agent_work | Work logging mandatory |
+| send_telegram | Reporting channel |
+| post_agent_signal | Inter-agent coordination |
+| get_agent_signals | Signal inbox |
+
+## Unused Tools (not in any skill)
+
+List tools from tool-registry.json not appearing in any skill above.
+These are candidates for future deprecation (Sprint 1302+).
+```
+
+**digest_predict MUST use exactly the 49 tools from TECH_1299.md** (3 tools already trimmed: `read_telegram_reports`, `get_agent_work_log`, `get_label_accuracy_report`).
+
+Source for all other skill tool lists: `.claude/knowledge/mcp-tools.md` → `## Tools Per Agent`.
+
+Validation:
+```bash
+# Verify JSON block is valid
+python3 -c "import json,re; txt=open('docs/SKILL_MANIFEST.md').read(); m=re.search(r'\`\`\`json(.+?)\`\`\`',txt,re.S); json.loads(m.group(1))" && echo "JSON valid"
+# Count tools in digest_predict (must be 49)
+python3 -c "import json,re; txt=open('docs/SKILL_MANIFEST.md').read(); m=re.search(r'\`\`\`json(.+?)\`\`\`',txt,re.S); d=json.loads(m.group(1)); print(len(d['digest_predict']))"
+```
+
+---
+
+## Deliverable 3: `docs/agent-memory/modules/tool-loading.md`
+
+```markdown
+---
+agents: architect, developer, ba
+trigger: tool-loading, skill-manifest, context-optimization
+---
+
+# Module: Tool Loading (Sprint 1299)
+
+Status: NEW — 2026-04-23
+
+## Design decisions
+
+- SKILL_MANIFEST lives in agentBootstrap.ts (interface layer) — NOT domain/
+- digest_predict trimmed from ~52 → 49 tools (read_telegram_reports, get_agent_work_log, get_label_accuracy_report removed)
+- always-on = 7 tools (get_cycle_bootstrap, submit_feedback, get_recent_fixes, log_agent_work, send_telegram, post_agent_signal, get_agent_signals)
+- Session cache: pure in-memory LRU, TTL 8h, max 100 sessions, NOT on SSE path
+
+## Token targets
+
+| Skill | Tools | Target tokens |
+|-------|-------|---------------|
+| news_scout | ~21 | ~12.6k |
+| digest_predict | 49 | ~29.4k |
+| unified_coordinator | ~47 | ~28.2k |
+| All skills | — | <30k ✓ |
+
+## Known issues
+
+None at creation. Verify after 1299b that import-check test passes.
+
+## Next tasks
+
+- 1299b: implement agentBootstrap.ts + server.ts modification
+- 1299c: sessionToolCache + trackSessionToolUsageJob
 ```
 
 ---
 
 ## Definition of Done
 
-- [ ] `docs/TOOL_INDEX.md` created (106 tools, <10k tokens, alphabetically sorted)
-- [ ] `docs/SKILL_MANIFEST.md` created (9 skills, all tools assigned, always-on identified)
-- [ ] `.claude/agents/README.md` updated (skill declaration rules + examples)
-- [ ] `docs/agent-memory/modules/tool-loading.md` created (findings + recommendations)
-- [ ] Validation: grep confirms all 106 tools in manifest (no gaps)
-- [ ] Validation: no tool appears in 2+ skills without reason
-- [ ] Token count confirmed: TOOL_INDEX.md <10k tokens
-- [ ] Commit message: `docs(1299a): Create tool index + skill manifest for context optimization`
-- [ ] PR reviewer: System Auditor or Architect (validate manifest completeness)
-
----
-
-## Questions for BA?
-
-1. **Skill boundaries:** News-scout can call get_legal_risk_signals + get_crisis_early_warning. Should financial-analyst also have these? → Recommend: news-scout primary, financial-analyst secondary (shared)
-
-2. **Always-on list:** Missing any critical tools? Current: [get_cycle_bootstrap, send_telegram, submit_feedback, get_recent_fixes, log_fix] → Recommend: add send_alert_digest
-
-3. **Tool version:** If a tool changes signature in future, does manifest break? → Recommend: no (manifest is late-binding, bootstrap validates against MCP server at runtime)
+- [ ] `docs/TOOL_INDEX.md` — 107 tools, grouped by category, ≤9k tokens
+- [ ] `docs/SKILL_MANIFEST.md` — 9 skills + `_always_on`, valid JSON block
+- [ ] digest_predict in manifest = exactly 49 tools (TECH_1299.md list)
+- [ ] `docs/agent-memory/modules/tool-loading.md` created with front-matter
+- [ ] JSON block validates with python3 check above
+- [ ] Commit: `docs(1299a): Create TOOL_INDEX + SKILL_MANIFEST for skill-gated loading`
 
 ---
 
 ## Links
 
-- **Requirements:** `docs/REQ_1299.md`
-- **Technical Design:** `docs/TECH_1299.md`
-- **Sprint Goal:** `SPRINT_GOAL.md`
-- **Task List:** `TASKS.md` → Sprint 1299 → Task 1299a
+- REQ: `docs/REQ_1299.md`
+- TECH: `docs/TECH_1299.md` (digest_predict trim in ## digest_predict Tool Trim section)
+- Source tool list: `.claude/knowledge/mcp-tools.md` ## Tools Per Agent
+- Source categories: `docs/data/tool-registry.json`
+
+---
+
+## [Developer] Implementation Record
+
+files_actually_modified:
+- /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/docs/data/tool-registry.json   # corrected toolCount 107→108 (off-by-one stale, category sum = 108)
+
+files_actually_created:
+- /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/docs/TOOL_INDEX.md   # 108 tools, 41 categories, alphabetical within groups
+- /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/docs/SKILL_MANIFEST.md   # 9 skills + _always_on, valid JSON block, digest_predict=49
+- /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/docs/agent-memory/modules/tool-loading.md   # front-matter + design decisions + flow + DDD risk
+
+tests_written: []   # docs-only task, no code
+
+tests_skipped: []
+
+tsc_clean: true
+full_suite_pass: true
+
+finding: tool-registry.json toolCount field was 107 but category sum = 108. Corrected. TOOL_INDEX lists 108 tools. All validations pass: JSON valid, digest_predict=49, _always_on=7, 0 duplicates.
