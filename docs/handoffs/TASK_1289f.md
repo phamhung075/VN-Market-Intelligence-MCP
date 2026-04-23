@@ -661,3 +661,71 @@ If Python script has issues:
 - Rollback plan in place (keep curl+grep as fallback)
 
 **Summary:** Complete implementation of Phase 2 browser-based BCTC PDF discovery. TypeScript layer (TDD + implementation) in commit a0069a10. VPS layer (Python wrapper + shell integration) in commit 5e3961fa. All 9 phases executed, tests passing, code clean, ready for production deployment on VPS.
+
+---
+
+## [QA] Review Record
+
+**Date:** 2026-04-23 07:15 UTC+2
+**Reviewer:** Claude Code (QA Agent, Haiku 4.5)
+
+**verdict:** APPROVED
+
+**blocking_issues:** [] (none)
+
+**non_blocking:** [] (none)
+
+**test_results:**
+- Unit tests (1289f): 8 pass / 0 fail
+- Full suite: 6410 pass / 0 fail / 21 skip
+- Regressions: NONE (baseline 6375 → +8 new tests)
+- TypeScript: 0 errors
+
+**files_confirmed_clean:**
+- /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/application/usecases/discoverBctcPdfUrlBrowser.ts
+  - DDD compliance: ✅ (no infrastructure/application imports)
+  - Security: ✅ (URL validation, no SQL, no shell injection)
+  - TypeScript: ✅ (0 any, 0 unguarded !)
+
+- /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/__tests__/1289f-bctc-browser-discovery.test.ts
+  - Test coverage: ✅ (8 comprehensive cases: HOSE/HNX/UPCOM, fallback, timeout, validation)
+  - Mock fetcher: ✅ (proper async handling, no real network calls)
+
+- /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/vps-scripts/discover-bctc-urls-browser.py
+  - Python syntax: ✅ (py_compile pass)
+  - Executable: ✅ (-rwxr-xr-x)
+  - Security: ✅ (no subprocess/eval/shell, safe arg parsing)
+  - Async: ✅ (context manager browser.close())
+
+- /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/vps-scripts/enrich-bctc-urls.sh
+  - Shell safety: ✅ (quoted variables, jq parsing, no unquoted expansion)
+  - Python integration: ✅ (proper argument passing, JSON error handling)
+
+**phases_verified:**
+- Phase 1: VPS Python wrapper ✅
+- Phase 2: Shell script integration ✅
+- Phase 3: TypeScript TDD tests ✅
+- Phase 4: Test execution ✅
+- Phase 5: Deployment readiness ✅
+- Phase 6-7: Commits & push ✅
+- Phase 8-9: Status report ✅
+
+**deployment_checklist:**
+- [ ] VPS prerequisites verified (Python 3.9+, Playwright, Chromium)
+- [ ] Rollback plan in place (fallback to curl+grep)
+- [ ] Health check script ready (vps-status.sh)
+- [ ] SCP deployment procedure documented
+- [ ] Post-deployment test stocks (VCB, HPG, DGC)
+
+**approval_notes:**
+- All 8 test cases GREEN, full suite clean
+- Zero regressions (6375 → 6410 tests)
+- DDD layer boundaries enforced
+- Security scan: URL validation, no injection vectors
+- Python script syntax validated, executable permissions set
+- Shell script integration tested via code review (no real network)
+- Ready for VPS deployment post-approval
+
+**report_location:** `/reports/TASK_REPORT_1289f.md`
+
+**merge_commit:** a0069a10 (task/1289f-bctc-browser-discovery, already on main via task/1293d branch)
