@@ -319,3 +319,37 @@ function makeLink(overrides: Partial<ChainLink>): ChainLink {
 - Check that fallback value (0.3) is appropriate (mid-range, signals degradation)
 - Verify no performance regression in conviction calculation
 
+---
+
+## [Developer] Implementation Record
+
+**files_actually_modified**:
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/domain/services/chainSynthesizer.ts` — Added extractConfidence() and extractDirection() helpers with fallback logic; integrated into synthesizeChain() conviction calculation and confidenceBreakdown
+- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/__tests__/1293d-chain-synthesizer-fallbacks.test.ts` — Created RED test suite with 15 assertions covering all fallback scenarios
+
+**tests_written**:
+- `src/__tests__/1293d-chain-synthesizer-fallbacks.test.ts` — 15 assertions, all GREEN
+  - extractConfidence helper: undefined → 0.3, valid number → clamped, string → coerced, invalid type → 0.3
+  - synthesizeChain with missing fields: conviction calculated, logs generated, synthesis continues
+  - Multiple uninitialized fields: graceful degradation with proper averaging
+  - Direction fallback: missing direction → "neutral"
+  - Invalid confidence types (object, null): handled with 0.3 penalty
+  - Backwards compatibility: existing complete chains work unchanged
+
+**tests_skipped**: None. All acceptance criteria covered.
+
+**tsc_clean**: true — zero TypeScript errors
+**full_suite_pass**: true — 32 existing chain-synthesizer tests still passing, 0 failures overall
+
+**defensive_patterns_implemented**:
+1. extractConfidence(findingData) distinguishes undefined vs legitimate 0
+2. extractDirection(findingData) defaults missing direction to "neutral"
+3. Confidence array extracted once, reused in conviction calc + confidenceBreakdown
+4. Uninitialized links tracked and logged with chain ID, stock code, link IDs, and agent names
+5. Conviction calculation remains same logic (base + bonus - penalty), just with fallback values
+6. No crashes on empty/partial chains — graceful degradation throughout
+
+**confidence_fallback_value**: 0.3 selected as mid-range that signals degradation while maintaining influence in conviction averaging
+
+**agent_memory_created**: `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/docs/agent-memory/modules/chainSynthesizer.md` — documents fallback behavior, known patterns (News Scout truncation, Market Watcher type errors), and production safety guarantees
+
