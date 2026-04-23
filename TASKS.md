@@ -73,7 +73,8 @@ context: docs/handoffs/TASK_1295d.md
 |----|-------|-------|--------|---------|-------|
 | 1289f-inv | Portal Form Investigation (SSC, HNX, UPCOM) | research | Done | none | 2-3 |
 | 1289f-dev | Rewrite Discovery Script (hybrid wait strategy) | vps-scripts | Done | 1289f-inv | 3-6 |
-| 1289f-test | VPS Testing + Full Backfill Validation | ops | Todo | 1289f-dev | 1-2 |
+| 1289f-test | VPS Testing + Full Backfill Validation | ops | Blocked | 1289f-dev | 1-2 |
+| 1289g | **ESCALATED:** Investigate HOSE/HNX/UPCOM Portal URLs | research | Todo | none | 2-3 |
 
 ---
 
@@ -116,15 +117,35 @@ Investigation protocol created in: `docs/BCTC_PORTAL_FORM_INVESTIGATION.md`
 
 #### 1289f-test: VPS Testing + Full Backfill (1-2h)
 **Branch:** None (VPS ops)
-**Context:** `docs/handoffs/TASK_1289F_VPS_VALIDATION.md`
+**Context:** `reports/TASK_DEPLOYMENT_1289f_VALIDATION.md`
+**Status:** BLOCKED — Portal URL discovery failed (0/3 tests found PDFs)
 
-**Steps:**
-- [ ] Deploy updated script to VPS
-- [ ] Test 3 stocks × 2 quarters (single discovery test)
-- [ ] Run full backfill: 37 stocks × 8 quarters
-- [ ] Monitor logs for success rate
-- [ ] Target: ≥192 PDFs discovered (80%), ≥173 downloaded (90%)
-- [ ] Report: `reports/TASK_REPORT_1289f_BACKFILL.md`
+**Test Results:**
+- VNM 2024 Q4: ❌ FAIL (0 PDFs)
+- BID 2024 Q4: ❌ FAIL (0 PDFs)
+- FPT 2024 Q4: ❌ FAIL (0 PDFs)
+
+**Blocker:** HOSE portal URL (`https://www.hsx.vn/Modules/CMS/Web/ArticleList?category=BCTC&issuerCode={CODE}`) no longer returns BCTC PDFs in discoverable DOM elements. Portal structure appears to have changed.
+
+#### 1289g: **ESCALATED** — Investigate Portal URLs (2-3h)
+**Branch:** `task/1289g-portal-url-investigation`
+**Context:** See escalation issue at `docs/agent-memory/issues/bctc-portal-discovery-validation.md`
+**Depends on:** 1289f-test failure diagnosis
+
+**Actions:**
+- [ ] Manually inspect HOSE portal structure using browser DevTools
+- [ ] Verify if category=BCTC parameter still works or needs update
+- [ ] Check if PDFs moved to different section/API
+- [ ] Test SSC official portal (congbothongtin.ssc.gov.vn) as alternative
+- [ ] Update script with correct portal URLs
+- [ ] Re-run validation tests (target: ≥2/3 success)
+- [ ] Document findings in `docs/BCTC_PORTAL_URL_FINDINGS_2026.md`
+
+**Effort Estimate:** 2-3 hours (reverse-engineer portal structure, update script, re-test)
+
+**Success Criteria:**
+- At least 2 of 3 validation tests pass (VNM, BID, FPT 2024 Q4)
+- After fix: return to 1289f-test for full backfill execution
 
 ---
 
