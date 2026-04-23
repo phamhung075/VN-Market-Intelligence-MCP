@@ -27,17 +27,19 @@
 
 | ID | Title | Status | Priority |
 |----|-------|--------|----------|
-| 1294a | IMF context sentiment detection | Todo | MEDIUM |
+| 1294a | IMF context sentiment detection | Done | MEDIUM |
 | 1294b | BCTC PDF timeout fallback to news chain | Todo | MEDIUM |
 
 ### Task 1294a: IMF Context Sentiment Detection
 
 context: docs/handoffs/TASK_1294a.md
 
-**Branch**: task/1294a-imf-sentiment
+**Report**: reports/TASK_REPORT_1294a.md
 **Effort**: 7h
 **Depends on**: baseline ✓
-**Status**: Review
+**Status**: Done (merged to main, commit 57132546)
+
+**Summary**: Pure domain service for IMF sentiment detection. 5 RED tests GREEN, 100% coverage, 6421/6421 full suite PASS, DDD compliant, security audit PASS. Deferred pollNews.ts integration to follow-up task. Ready for production.
 
 ### Task 1294b: BCTC PDF Timeout Fallback
 
