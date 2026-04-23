@@ -4,6 +4,46 @@ Archive of completed task detail sections. Active task board → `TASKS.md`.
 
 ---
 
+## Sprint 1299: MCP Tool Context Optimization — Task Details
+
+#### 1299a: Tool Index + Reference Docs (2–3h)
+**Status:** Todo (queued for BA)
+Files to create: `docs/TOOL_INDEX.md` (106 tools, 1-liner each, <10k tokens), `docs/SKILL_MANIFEST.md` (9 skills × tool list), `docs/agent-memory/modules/tool-loading.md`.
+Scope: Extract all 106 tools, write 1-line summary per tool, build skill→tools manifest, identify always-on tools (get_cycle_bootstrap, send_telegram).
+AC: TOOL_INDEX covers all 106 tools, SKILL_MANIFEST resolves all 9 skills, README.md updated with loading rules.
+
+#### 1299b: Skill-Gated Loading (code + bootstrap) (3–4h)
+**Status:** Todo (queued for Developer, depends 1299a)
+Files: `src/interface/rest/agentBootstrap.ts` (skill-aware filtering), `src/__tests__/integration-bootstrap.test.ts` (NEW).
+Scope: Refactor `getAgentContext()` to accept skill list, compute tool union from SKILL_MANIFEST, add always-on tools, backwards-compat fallback.
+AC: 1-skill agent loads ≤25 tools, no-skill agent loads all 106, bootstrap <100ms.
+
+#### 1299c: Session Memory Cache (cron + tracking) (2–3h)
+**Status:** Todo (queued for Developer, depends 1299b)
+Files: `src/infrastructure/cache/sessionToolCache.ts` (LRU, TTL 8h, max 100 sessions), `src/infrastructure/scheduler/trackSessionToolUsageJob.ts` (every 8h, outputs usage histogram).
+AC: LRU eviction + TTL tests pass, cron-registry.json updated, `docs/agent-memory/modules/tool-usage-stats.json` generated after 3 test sessions.
+
+---
+
+## Sprint 1297: Critical System Reliability & BCTC Historical Backfill — Task Details
+
+#### 1297a: Audit Phase II — Fail-Loud Protocol Injection (2–3h)
+**Status:** Done ✓ (merged 98ab4bd0)
+All 16 remaining agent files updated with fail-loud protocol sections. All 21/21 agents have section referencing `.claude/knowledge/fail-loud-protocol.md`.
+
+#### 1297b: BCTC Portal URL Discovery Fix (4–6h)
+**Status:** Todo (queued for Developer)
+Files: `vps-scripts/discover-bctc-urls-browser.py`, `docs/BCTC_PORTAL_URL_FINDINGS_2026_UPDATED.md`.
+Scope: Fix `discover_from_hose/hnx/upcom()` — urllib POST API for HNX/UPCOM, HOSE informative error. Re-test VNM/BID/FPT 2024 Q4 (≥2/3 must pass).
+AC: HOSE 200+PDF links, HNX AJAX mapped, UPCOM SSL resolved, ≥2/3 re-test pass.
+
+#### 1297c: VPS Validation of BCTC Portal Fix (1–2h)
+**Status:** Backlog (depends on 1297b)
+Scope: Deploy fixed script, re-test 3 stocks, full 37×8 historical backfill, spot-check 5 DB records.
+AC: ≥2/3 test pass, backfill complete, `reports/TASK_REPORT_1297c.md` filed.
+
+---
+
 ## Sprint 1296: Infrastructure Recovery + IMF Sentiment Integration (13.5h total) — DESIGN PHASE COMPLETE
 
 | ID | Title | Layer | Status | Depends | Hours |

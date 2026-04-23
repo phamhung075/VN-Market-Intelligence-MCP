@@ -303,3 +303,39 @@ tsc_clean: true
 full_suite_pass: true (22/22 task tests; synthesizer + cascade + signal builder regressions clean)
 
 notable_fix: exactOptionalPropertyTypes conflict — ChainCatalystFindingData.imfSentiment needs `| undefined` suffix; signalBuilders.ts needs Omit<> to exclude the optional field from Partial<>
+
+---
+
+## [QA] Review Record — Task 1298b GREEN-phase (2026-04-23)
+
+verdict: APPROVED
+blocking_issues: []
+non_blocking: []
+
+files_confirmed_clean:
+- /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/domain/services/imfDataClassifier.ts
+- /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/__tests__/1296b-imf-fetcher.test.ts
+- /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/__tests__/1296b-imf-integration.test.ts
+
+bun_test_task: 24 pass / 0 fail
+bun_test_full: 6504 pass / 7 fail (7 pre-existing, unchanged)
+tsc: 0 errors
+ddd: PASS
+merge_commit: bb9742e7
+
+---
+
+## [QA] Review Record — Task 1298a RED-phase re-check (2026-04-23)
+
+verdict: APPROVED
+blocking_issues: []
+non_blocking:
+- src/__tests__/1296b-imf-classifier.test.ts:100-111 — "all-stale" test RED as intended (GREEN phase task 1298a)
+
+files_confirmed_clean:
+- /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/__tests__/1296b-imf-classifier.test.ts
+
+bun_test: 5 pass / 1 fail (expected: multi-indicator test NOW GREEN; all-stale test STILL RED)
+tsc: 0 errors
+change_verified: line 89 code "PCPI_EM" value 4.5 yoyChange 0.08 — multi-indicator weighted average test passes
+remaining_red: line 110 expects result.classification === "imf_neutral" — stale-override logic deferred to GREEN phase
