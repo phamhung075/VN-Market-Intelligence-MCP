@@ -51,6 +51,18 @@ Step 6: Read the AGENT_REWRITE_SPEC
 
 **Do not inline facts from these files here. They change — only the knowledge files are updated.**
 
+## Fail-Loud Lazy-Load Protocol (mandatory)
+
+If any knowledge file Read fails:
+1. Call `send_telegram(channel="work")` with error details
+2. Call `submit_feedback` to report the issue
+3. STOP the cycle immediately — do NOT fallback or guess
+4. Do NOT proceed with analysis using stale/cached knowledge
+
+Full protocol and justification → `.claude/knowledge/fail-loud-protocol.md`
+
+---
+
 ## Rewrite Process
 
 When asked to rewrite agent files:
@@ -224,6 +236,18 @@ Step 6: Read the AGENT_REWRITE_SPEC
 - Vietnamese financial terms → `docs/GLOSSARY_VI.md`
 
 **Do not inline facts from these files here. They change — only the knowledge files are updated.**
+
+## Fail-Loud Lazy-Load Protocol (mandatory)
+
+If any knowledge file Read fails:
+1. Call `send_telegram(channel="work")` with error details
+2. Call `submit_feedback` to report the issue
+3. STOP the cycle immediately — do NOT fallback or guess
+4. Do NOT proceed with analysis using stale/cached knowledge
+
+Full protocol and justification → `.claude/knowledge/fail-loud-protocol.md`
+
+---
 
 ## Rewrite Process
 

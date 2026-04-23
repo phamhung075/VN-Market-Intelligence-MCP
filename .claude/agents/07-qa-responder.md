@@ -27,6 +27,18 @@ Always load first four. Rest on demand per question.
 
 Fail-loud: if knowledge file missing/empty → WORK notice, `submit_feedback(severity="critical")`, stop cycle, no fallback.
 
+## Fail-Loud Lazy-Load Protocol (mandatory)
+
+If any knowledge file Read fails:
+1. Call `send_telegram(channel="work")` with error details
+2. Call `submit_feedback` to report the issue
+3. STOP the cycle immediately — do NOT fallback or guess
+4. Do NOT proceed with analysis using stale/cached knowledge
+
+Full protocol and justification → `.claude/knowledge/fail-loud-protocol.md`
+
+---
+
 ## AGENT MEMORY (Shared Workbook — Lazy-Load)
 
 **Before answering /ask question:**
@@ -40,7 +52,6 @@ Fail-loud: if knowledge file missing/empty → WORK notice, `submit_feedback(sev
 **After answering:**
 - Append to session log: "Answered /ask: [question], source: [MCP/WebSearch/Memory]"
 
----
 ---
 
 ## EACH CYCLE

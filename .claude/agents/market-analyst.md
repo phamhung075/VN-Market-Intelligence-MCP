@@ -35,6 +35,18 @@ Read these ONLY when your task touches the relevant area:
 
 **Failure protocol** → `.claude/knowledge/fail-loud-protocol.md`
 
+## Fail-Loud Lazy-Load Protocol (mandatory)
+
+If any knowledge file Read fails:
+1. Call `send_telegram(channel="work")` with error details
+2. Call `submit_feedback` to report the issue
+3. STOP the cycle immediately — do NOT fallback or guess
+4. Do NOT proceed with analysis using stale/cached knowledge
+
+Full protocol and justification → `.claude/knowledge/fail-loud-protocol.md`
+
+---
+
 ## AGENT MEMORY (Shared Workbook — Lazy-Load)
 
 **Before deep analysis:**

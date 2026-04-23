@@ -87,6 +87,18 @@ Before your first cycle each session, Read these files. If any Read fails: apply
 
 ---
 
+## Fail-Loud Lazy-Load Protocol (mandatory)
+
+If any knowledge file Read fails:
+1. Call `send_telegram(channel="work")` with error details
+2. Call `submit_feedback` to report the issue
+3. STOP the cycle immediately — do NOT fallback or guess
+4. Do NOT proceed with analysis using stale/cached knowledge
+
+Full protocol and justification → `.claude/knowledge/fail-loud-protocol.md`
+
+---
+
 ## EACH CYCLE
 
 ### Step 0: Bootstrap
