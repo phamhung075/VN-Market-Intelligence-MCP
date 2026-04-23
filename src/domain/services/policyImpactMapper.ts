@@ -7,14 +7,14 @@
  *
  * Design rules:
  * - Zero imports from infrastructure/ or application/ (DDD: domain-only)
- *   Exception: formatAnalysisPolicySummary from infrastructure/adapters/analysisFormatters (Task 1300b fix)
+ *   truncatePolicySummary sourced from domain/services/textUtils.js (Task 1302b)
  * - No I/O, no side effects, no async
  * - DomainType sourced from bctc-schema.ts (root-level, permitted structural import)
  */
 
 import type { DomainType } from "../../../bctc-schema.js";
 import type { ImpactDirection } from "./newsNormalizer.js";
-import { formatAnalysisPolicySummary } from "../../infrastructure/adapters/analysisFormatters.js";
+import { truncatePolicySummary } from "./textUtils.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -28,7 +28,8 @@ export type PolicyType =
   | "real_estate_policy"
   | "trade_policy"
   | "monetary_policy"
-  | "legal_risk";
+  | "legal_risk"
+  | "corporate_governance";
 
 export interface PolicySignal {
   /** Category of policy document */
@@ -164,6 +165,15 @@ const POLICY_RULES: PolicyRule[] = [
     defaultDirection: "neutral",
     summaryTemplate: "Chính sách tiền tệ ảnh hưởng đến hệ thống ngân hàng",
   },
+  // Report #2587: corporate governance events (chairman dismissal, auditor change) must NOT default to monetary_policy/banking
+  {
+    policyType: "corporate_governance",
+    keywords: ["miễn nhiệm", "từ chức", "bãi miễn", "bãi bỏ chức vụ", "thay kiểm toán", "đổi kiểm toán", "công ty kiểm toán khác"],
+    sectors: ["other"],
+    stocks: [],
+    defaultDirection: "down",
+    summaryTemplate: "Thay đổi quản trị nội bộ — rủi ro quản trị doanh nghiệp",
+  },
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -226,7 +236,7 @@ export function classifyPolicy(title: string, body: string): PolicySignal | null
     if (!hasKeyword(normText, rule.keywords)) continue;
 
     const direction = resolveDirection(normText, rule);
-    const formattedBody = formatAnalysisPolicySummary(body.trim());
+    const formattedBody = truncatePolicySummary(body.trim());
 
     return {
       policyType: rule.policyType,

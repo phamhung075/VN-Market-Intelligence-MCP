@@ -125,6 +125,24 @@ class TelegramMessageFactory {
 
 ---
 
+## Sprint 1303: Backlog Drain — Bug Fixes from Telegram Reports (2026-04-24)
+
+| ID | Title | Layer | Status | Reports |
+|----|-------|-------|--------|---------|
+| 1303a | price_surge 4h bucket dedup (was 1h) | domain | Done | #2589 |
+| 1303b | Sentiment: add cost-pressure bearish keywords | domain | Done | #2588 |
+| 1303c | policyImpactMapper: add corporate_governance type | domain | Done | #2587 |
+| 1303d | Test log contamination: extend schema cleanup | infra | Done | #2590 |
+| 1303e | pipelineWatchdog + vpsProxyWatchdog: remove MARKET channel spam | scheduler | Done | #2596 |
+| 1303f | append_session_record: add content deduplication | interface | Done | SEC |
+| 1303g | UNBLOCK — VPS all-services down (prices/BCTC/news/FX/flow) | ops | Todo | #2598,2599,2604,2607 |
+| 1303h | SPRINT — BCTC PDF parser impossible figures | domain | Backlog | #2597,2608,2610 |
+| 1303i | SPRINT — Cascade rule gaps (geo/BCTC overdue/trade map) | domain | Backlog | #2595,2600,2602 |
+
+**Status:** 1303a–1303f DONE (code committed). 1303g BLOCKED on ops. 1303h–1303i queued.
+
+---
+
 ## Backlog
 
 | ID | Title | Priority | Notes |

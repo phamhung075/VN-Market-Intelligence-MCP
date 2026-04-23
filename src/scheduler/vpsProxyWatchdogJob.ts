@@ -207,18 +207,7 @@ export async function runVpsProxyWatchdog(
   if (stale.length === 0) {
     if (lastWasStale) {
       lastWasStale = false;
-      const notifyUser =
-        options.notifyUser ??
-        ((msg: string) => sendTelegramMarket(msg, { parseMode: "" }));
-      try {
-        await notifyUser(
-          "VPS data pipeline restored — all services are sending fresh data again.",
-        );
-      } catch (err) {
-        logger.error("[vps-watchdog] recovery MARKET alert failed", {
-          error: err instanceof Error ? err.message : String(err),
-        });
-      }
+      // Report #2596: recovery notification is dev-only too — WORK channel handled by notify() upstream
       return "restored";
     }
     return "ok";
@@ -260,16 +249,11 @@ export async function runVpsProxyWatchdog(
     options.notify ??
     ((msg: string) => sendTelegramWork(msg, { parseMode: "" }));
 
+  // Report #2596: VPS pipeline alerts are dev diagnostics — WORK channel only.
+  // Default notifyUser is a no-op; inject for tests. Production no longer sends to MARKET.
   const notifyUser =
     options.notifyUser ??
-    ((msg: string) => sendTelegramMarket(msg, { parseMode: "" }));
-
-  // Build human-friendly MARKET message (no SSH commands, no operator jargon)
-  const uniqueStaleServices = [...new Set(stale.map((s) => s.service))];
-  const userMessage =
-    `Data pipeline issue detected — the following VPS services have stopped sending fresh data:\n` +
-    uniqueStaleServices.map((s) => `  • ${s}`).join("\n") +
-    `\n\nMarket data may be delayed or unavailable. The dev team has been notified and is investigating.`;
+    ((_msg: string) => Promise.resolve(undefined));
 
   try {
     const ok = await notify(message);
@@ -278,13 +262,13 @@ export async function runVpsProxyWatchdog(
     }
     lastAlertAt = now.getTime();
     lastWasStale = true;
-    // Best-effort MARKET alert — failure does not change return value
+    // Call notifyUser (injectable for tests; production default is no-op)
     try {
-      await notifyUser(userMessage);
-    } catch (userErr) {
-      logger.error("[vps-watchdog] MARKET user alert failed", {
-        error: userErr instanceof Error ? userErr.message : String(userErr),
-      });
+      await notifyUser(
+        `Data pipeline issue: ${[...new Set(stale.map((s) => s.service))].join(", ")} stale`,
+      );
+    } catch {
+      // ignore
     }
     return "alert-sent";
   } catch (err) {

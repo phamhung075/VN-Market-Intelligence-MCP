@@ -121,26 +121,35 @@ describe("Task 1115 — News alert deduplication (report #1114)", () => {
     });
   });
 
-  describe("Price signal IDs still use hour-bucket (no regression)", () => {
-    it("price_drop alerts use hour-slot deterministic IDs", () => {
+  describe("Price signal IDs use 4-hour-bucket (report #2589 fix)", () => {
+    it("price_drop alerts within same 4h window share the same deterministic ID", () => {
       const sig1: Signal = {
         type: "price_drop",
         severity: "high",
         actionCode: "VCB",
         message: "VCB price_drop signal",
         confidence: 0.9,
-        detectedAt: "2026-04-12T09:00:00.000Z",
+        detectedAt: "2026-04-12T09:00:00.000Z", // hour 09 → bucket 08
       };
       const sig2: Signal = {
         ...sig1,
-        detectedAt: "2026-04-12T09:45:00.000Z", // same hour
+        detectedAt: "2026-04-12T11:45:00.000Z", // hour 11 → bucket 08 (same bucket)
+      };
+      const sig3: Signal = {
+        ...sig1,
+        detectedAt: "2026-04-12T12:00:00.000Z", // hour 12 → bucket 12 (different bucket)
       };
 
       const alerts1 = generateAlerts([sig1], WATCHLIST);
       const alerts2 = generateAlerts([sig2], WATCHLIST);
+      const alerts3 = generateAlerts([sig3], WATCHLIST);
 
+      // Same 4h bucket → same ID
       expect(alerts1[0]!.id).toBe(alerts2[0]!.id);
-      expect(alerts1[0]!.id).toMatch(/^alert-VCB-price_drop-2026-04-12T09$/);
+      expect(alerts1[0]!.id).toMatch(/^alert-VCB-price_drop-2026-04-12T08$/);
+      // Different 4h bucket → different ID
+      expect(alerts1[0]!.id).not.toBe(alerts3[0]!.id);
+      expect(alerts3[0]!.id).toMatch(/^alert-VCB-price_drop-2026-04-12T12$/);
     });
   });
 

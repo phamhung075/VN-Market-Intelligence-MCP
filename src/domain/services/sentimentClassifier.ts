@@ -193,6 +193,15 @@ const VN_BEARISH: SentimentKeyword[] = [
   { word: "economy cooling", weight: 2 },
   { word: "gdp slowing", weight: 2 },
   { word: "demand cooling", weight: 2 },
+  // Report #2588: cost-pressure phrases misclassified BULLISH due to "tăng" (w1) overpowering "áp lực" (w1)
+  // Compound phrases need weight 2 to guarantee net-bearish result
+  { word: "áp lực chi phí", weight: 2 },
+  { word: "tăng chi phí đầu vào", weight: 2 },
+  { word: "chi phí đầu vào tăng", weight: 2 },
+  { word: "chi phí tăng", weight: 2 },
+  { word: "gánh nặng chi phí", weight: 2 },
+  { word: "chi phí mua điện tăng", weight: 3 },
+  { word: "giá điện tăng", weight: 2 },
 ];
 
 /** English bullish keywords */

@@ -240,6 +240,19 @@ export function registerAgentMemoryUpdateTools(server: McpServer): void {
         let fileContent = "";
         if (existsSync(sessionFilePath)) {
           fileContent = readFileSync(sessionFilePath, "utf-8");
+          // Deduplication: skip if this exact task_name heading already exists (report #SEC-2026-04-23)
+          const taskHeading = `### Task: ${task_name}`;
+          const taskHeadingAlt = `### Task ${task_name}`;
+          if (fileContent.includes(taskHeading) || fileContent.includes(taskHeadingAlt)) {
+            return {
+              content: [
+                {
+                  type: "text" as const,
+                  text: `Skipped: task_name '${task_name}' already recorded in ${today}-${agent_name}.md`,
+                },
+              ],
+            };
+          }
           // Append with newline separator
           fileContent += "\n\n" + recordMarkdown;
         } else {

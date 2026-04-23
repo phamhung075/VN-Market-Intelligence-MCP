@@ -124,9 +124,11 @@ const PRICE_SIGNAL_TYPES: ReadonlySet<string> = new Set([
 /**
  * Generate a deterministic alert ID for price-movement signals.
  *
- * The key is `alert-{ticker}-{signalType}-{YYYY-MM-DDTHH}` (UTC hour slot).
- * This ensures the same ticker + same signal type within the same clock-hour
- * maps to one row that INSERT OR IGNORE collapses.
+ * The key is `alert-{ticker}-{signalType}-{YYYY-MM-DDTHH4}` where H4 is the
+ * UTC 4-hour bucket (00, 04, 08, 12, 16, 20). This ensures the same ticker +
+ * same signal type within the same 4-hour window maps to one row that
+ * INSERT OR IGNORE collapses — suppressing duplicate alerts for sustained
+ * moves (e.g. VHM stays +5% for 8h → max 2 alerts instead of 8).
  *
  * @param actionCode - Ticker (e.g. "SSI")
  * @param signalType - Primary signal type driving the alert
@@ -137,8 +139,10 @@ function deterministicPriceId(
   signalType: string,
   detectedAt: string,
 ): string {
-  const hourSlot = detectedAt.slice(0, 13); // "2026-04-08T04"
-  return `alert-${actionCode}-${signalType}-${hourSlot}`;
+  const hourStr = detectedAt.slice(11, 13); // "04" from "2026-04-08T04:..."
+  const bucket4h = String(Math.floor(parseInt(hourStr, 10) / 4) * 4).padStart(2, "0");
+  const dateSlot = detectedAt.slice(0, 11) + bucket4h; // "2026-04-08T04"
+  return `alert-${actionCode}-${signalType}-${dateSlot}`;
 }
 
 /**

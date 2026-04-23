@@ -229,8 +229,8 @@ export async function initDatabase(dbArg?: import("bun:sqlite").Database): Promi
 
   // Task 1489: purge test-contamination rows
   db.exec(`DELETE FROM tracked_indicators WHERE source = 'test'`);
-  // Task 1490: purge known system_logs test-contamination rows
-  db.exec(`DELETE FROM system_logs WHERE message IN ('only this appears', 'error message')`);
+  // Task 1490: purge known system_logs test-contamination rows (extended: report #2590)
+  db.exec(`DELETE FROM system_logs WHERE message IN ('only this appears', 'error message', 'check timestamp', 'warning message', 'this should appear')`);
 
   // Task 198: wire foreign flow column migration so daily_ohlcv always has all 4 columns.
   await migrateForeignFlowColumns(db);

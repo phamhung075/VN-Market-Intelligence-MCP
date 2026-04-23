@@ -22,7 +22,7 @@ import type {
   GetPipelineHealthOptions,
   PipelineHealthResult,
 } from "../application/usecases/getPipelineHealth.js";
-import { sendTelegramWork, sendTelegramMarket } from "../infrastructure/notifiers/telegram.js";
+import { sendTelegramWork } from "../infrastructure/notifiers/telegram.js";
 import { logger } from "../infrastructure/logger.js";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -80,9 +80,11 @@ export async function runPipelineWatchdog(options?: {
   const notify =
     options?.notify ??
     ((msg: string) => sendTelegramWork(msg, { parseMode: "" }));
+  // Report #2596: pipeline stale message is dev diagnostic — should NOT go to MARKET channel (user-facing).
+  // WORK channel only. notifyUser kept as injectable for tests but defaults to no-op.
   const notifyUser =
     options?.notifyUser ??
-    ((msg: string) => sendTelegramMarket(msg, { parseMode: "" }));
+    ((_msg: string) => Promise.resolve(undefined));
 
   // Step 1: call the health use case
   let health: PipelineHealthResult;
