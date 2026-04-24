@@ -36,12 +36,31 @@ import { getToolsForSkills } from "./bootstrap/agentBootstrap.js";
 import { sessionToolCache } from "../../infrastructure/cache/sessionToolCache.js";
 export { sessionToolCache } from "../../infrastructure/cache/sessionToolCache.js";
 import { logVpsPush, type VpsPushLogEntry } from "../../infrastructure/db/vpsPushLogStore.js";
-import { upsertForeignFlow } from "../../infrastructure/db/vnstockStore.js";
+import { upsertForeignFlow, runVnstockMigrations } from "../../infrastructure/db/vnstockStore.js";
 import type { ForeignFlowUpsertItem, WriteForeignFlowItem } from "../../domain/models/shared-types.js";
 import { writeForeignFlowToOhlcv } from "../../infrastructure/db/ohlcvForeignFlowStore.js";
 import { buildForeignFlowStatusResponse } from "./foreignFlowStatusHandler.js";
 import { validateForeignFlowPayload } from "../../domain/services/market-data/foreignFlowValidator.js";
 import { breakers } from "../../infrastructure/circuitBreakerRegistry.js";
+
+// Migration guard — run once per process startup, before the first upsertForeignFlow call.
+// Ensures UNIQUE(code, date) index exists on vnstock_trading_stats for production DBs
+// that were created before the index was added (FIX-1312).
+let _migrationRanForForeignFlow = false;
+function ensureForeignFlowMigration(): void {
+  if (_migrationRanForForeignFlow) return;
+  _migrationRanForForeignFlow = true;
+  try {
+    runVnstockMigrations();
+  } catch (err) {
+    // Log but don't crash the server — upsertForeignFlow has its own constraint guard
+    import("../../infrastructure/logger.js").then(({ createLogger }) => {
+      createLogger("info").warn("[push-foreign-flow] migration guard failed", {
+        error: err instanceof Error ? err.message : String(err),
+      });
+    });
+  }
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Task 1112 — Minimal multipart/form-data parser for push-bctc-pdf
@@ -859,6 +878,8 @@ export async function createBunServer(
         }
 
         // Step 5: Upsert valid items to DB with timing
+        // Guard: ensure UNIQUE(code, date) migration has run before first write
+        ensureForeignFlowMigration();
         const dbStart = Date.now();
         let upserted = 0;
         try {
