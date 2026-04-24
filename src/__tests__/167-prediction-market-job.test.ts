@@ -12,7 +12,8 @@
  *   8. Cron expression defaults to "* /30 * * * *" (every 30 min)
  */
 
-import { describe, it, expect, beforeEach, afterEach } from "bun:test";
+import { describe, it, expect, beforeEach, afterEach, afterAll } from "bun:test";
+import * as fs from "fs";
 import type { PredictionMarket } from "../domain/services/predictionSignalDetector.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -114,7 +115,13 @@ function makeMarket(overrides: Partial<PredictionMarket> = {}): PredictionMarket
 // Tests
 // ─────────────────────────────────────────────────────────────────────────────
 
+let tmpPath: string;
+
 describe("Task 167 — Prediction Market Scheduler Job", () => {
+  afterAll(() => {
+    try { fs.unlinkSync(tmpPath); } catch {}
+  });
+
   // ── 1. Module export ────────────────────────────────────────────────────────
   describe("module exports", () => {
     it("exports runPredictionMarketPoll as an async function", async () => {
@@ -452,7 +459,7 @@ describe("Task 167 — Prediction Market Scheduler Job", () => {
       async () => {
         // Simulate the launchd race: a fresh on-disk DB file with NO tables,
         // then run the cron path that resolves via the getDb() singleton.
-        const tmpPath = `/tmp/vn-market-test-race-${Date.now()}.db`;
+        tmpPath = `/tmp/vn-market-test-race-${Date.now()}.db`;
         Bun.env["DB_PATH"] = tmpPath;
 
         // Reset the schema.js singleton so the next getDb() opens tmpPath.

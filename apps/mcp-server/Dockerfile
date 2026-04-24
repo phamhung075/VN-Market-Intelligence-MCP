@@ -3,7 +3,7 @@
 # Build context: monorepo root (docker-compose.yml sets context: .)
 # ─────────────────────────────────────────────────────────────────────────────
 
-FROM oven/bun:1.3.11-debian AS base
+FROM oven/bun:1-debian AS base
 WORKDIR /app
 
 # ── Install system dependencies ───────────────────────────────────────────

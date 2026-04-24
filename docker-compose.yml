@@ -61,9 +61,6 @@ services:
       - STORAGE_DIR=/app/data/extractions
       - LOG_LEVEL=INFO
     restart: unless-stopped
-    depends_on:
-      mcp-server:
-        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5001/health"]
       interval: 30s
@@ -87,9 +84,6 @@ services:
       - EMBEDDING_CACHE_DIR=/app/data/models
       - LOG_LEVEL=INFO
     restart: unless-stopped
-    depends_on:
-      mcp-server:
-        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5002/health"]
       interval: 30s
@@ -175,9 +169,6 @@ services:
       - KINH_DICH_URL=http://kinh-dich-service:5005
       - ALERT_URL=http://alert-engine:5006
     restart: unless-stopped
-    depends_on:
-      mcp-server:
-        condition: service_healthy
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:4000/health"]
       interval: 30s

@@ -30,10 +30,10 @@
  */
 
 import type { Database } from "bun:sqlite";
-import { computeAllIndicators } from "../../domain/services/technicalIndicators.js";
-import type { DailyCandle, TechnicalIndicatorResult } from "../../domain/services/technicalIndicators.js";
 import { getDb } from "../../infrastructure/db/schema.js";
 import { logger } from "../../infrastructure/logger.js";
+import { computeTAIndicators } from "../../infrastructure/microservices/clients.js";
+import type { ComputeTAResponse } from "../../infrastructure/microservices/clients.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -42,7 +42,7 @@ import { logger } from "../../infrastructure/logger.js";
 /** Dependency-injectable params — all optional; production uses defaults. */
 export interface TaAlertScanDeps {
   db?: Database;
-  computeFn?: (candles: DailyCandle[]) => TechnicalIndicatorResult;
+  computeFn?: (code: string) => Promise<ComputeTAResponse>;
   nowFn?: () => Date;
 }
 
@@ -110,7 +110,7 @@ const INSERT_ALERT_SQL = `
  */
 export async function runTaAlertScan(deps?: TaAlertScanDeps): Promise<TaAlertScanResult> {
   const database: Database = deps?.db ?? getDb();
-  const computeFn = deps?.computeFn ?? computeAllIndicators;
+  const computeFn = deps?.computeFn ?? ((code: string) => computeTAIndicators({ code }));
   const nowFn = deps?.nowFn ?? (() => new Date());
 
   // 1. Load watchlist
@@ -141,20 +141,11 @@ export async function runTaAlertScan(deps?: TaAlertScanDeps): Promise<TaAlertSca
     scanned++;
 
     try {
-      // a. Fetch candles from local DB
-      const candleRows = database.query<CandleRow, [string]>(CANDLE_SQL).all(code);
+      // a. Call TA Service to compute indicators via HTTP
+      const taResponse = await computeFn(code);
 
-      // b. Map to DailyCandle[]
-      const candles: DailyCandle[] = candleRows.map((row) => ({
-        day: row.day,
-        close: row.close_price,
-      }));
-
-      // c. Compute indicators (injectable — replaced by mock in tests)
-      const indicators = computeFn(candles);
-
-      // d. Extract RSI
-      const rsi = indicators.rsi14;
+      // b. Extract RSI from response
+      const rsi = taResponse.rsi;
 
       // e. null RSI → skip silently (insufficient history)
       if (rsi === null) {

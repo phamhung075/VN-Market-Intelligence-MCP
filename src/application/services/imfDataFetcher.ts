@@ -188,8 +188,10 @@ export async function fetchLatestImfIndicators(): Promise<ImfIndicator[]> {
 
       const indicator = parseImfApiResponse(code, raw, name);
       if (indicator) results.push(indicator);
-    } catch {
+    } catch (err) {
       // Circuit breaker open or HTTP error — skip this indicator
+      const msg = err instanceof Error ? err.message : String(err);
+      console.warn(`[IMF Fetcher] Skipping ${key}: ${msg}`);
     }
   }
 

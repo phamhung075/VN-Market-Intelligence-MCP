@@ -47,8 +47,7 @@ export async function runImfIndicatorPollerJob(): Promise<ImfPollerJobResult> {
     const indicators = await fetchLatestImfIndicators();
 
     if (!indicators || indicators.length === 0) {
-      console.warn("[IMF Poller] No indicators fetched — circuit breaker open or API unreachable");
-      return { success: false, indicator_count: 0, error: "No indicators fetched" };
+      throw new Error("IMF circuit breaker open or API unreachable");
     }
 
     // Step 2: Store
