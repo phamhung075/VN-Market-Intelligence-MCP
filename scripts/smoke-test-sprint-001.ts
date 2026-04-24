@@ -14,9 +14,9 @@
 // Use in-memory DB for smoke test
 process.env["DB_PATH"] = ":memory:";
 
-import { parseBctcReport } from "../src/application/usecases/parseBctcReport.js";
-import { initDatabase, getDb } from "../src/infrastructure/db/schema.js";
-import { buildEmbeddingText } from "../src/domain/services/embeddingTextBuilder.js";
+import { parseBctcReport } from "../apps/mcp-server/src/application/usecases/parseBctcReport.js";
+import { initDatabase, getDb } from "../apps/mcp-server/src/infrastructure/db/schema.js";
+import { buildEmbeddingText } from "../apps/mcp-server/src/domain/services/embeddingTextBuilder.js";
 import type { FiscalPeriod } from "../bctc-schema.js";
 
 // ─── Fixture: Full 3-statement BCTC text ─────────────────────────────────────
