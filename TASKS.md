@@ -259,11 +259,34 @@ Handoff: `docs/handoffs/DDD_PHASE0.md`
 
 ---
 
-## Backlog
+## DDD Microservices — Phase 1 (2026-04-24)
 
-| ID | Title | Priority | Notes |
-|----|-------|----------|-------|
-| DDD-P1a | Phase 1a: PDF Extractor Python/FastAPI microservice | high | after P0 merged |
-| DDD-P1b | Phase 1b: RAG Service Python/FastAPI microservice | high | after P0 merged |
+| ID | Title | Layer | Status | Branch |
+|----|-------|-------|--------|--------|
+| DDD-P1a | Phase 1a: PDF Extractor Python/FastAPI microservice | infra | Done | feature/ddd-phase-1a |
+| DDD-P1b | Phase 1b: RAG Service Python/FastAPI microservice | infra | Done | feature/ddd-phase-1b |
+
+Handoffs: `docs/handoffs/DDD_PHASE1A.md`, `docs/handoffs/DDD_PHASE1B.md`
+
+---
+
+## DDD Microservices — Phase 2a (2026-04-24)
+
+| ID | Title | Layer | Status | Branch |
+|----|-------|-------|--------|--------|
+| DDD-P2a | Phase 2a: 4 TypeScript microservices (gateway/ta/macro/stock) | infra | Review | feature/ddd-phase-2a |
+
+Gate: 68 new tests GREEN (24+14+13+17). tsc clean all 4 services. mcp-server 6797/9 unchanged.
+Handoff: `docs/handoffs/DDD_PHASE2A.md`
+
+Services:
+- `apps/api-gateway/` (port 4000) — health aggregation + reverse proxy
+- `apps/technical-analysis/` (port 5003) — RSI/MACD/MA/BB
+- `apps/macro-indicators/` (port 5004) — commodity/SBV fetch + scoring
+- `apps/stock-price/` (port 5000) — 3-tier concurrent price fallback
+
+---
+
+## Backlog
 
 ---

@@ -1,3 +1,11 @@
+### DDD Phase 2a: 4 TypeScript Microservices (18:00–20:30)
+- **Files changed**: apps/api-gateway/ (17 files), apps/technical-analysis/ (15 files), apps/macro-indicators/ (14 files), apps/stock-price/ (14 files), docker-compose.yml
+- **Finding**: Task prompt specified Go but SESSION_SUMMARY_20260424.md + language decision doc say TypeScript for all logic-heavy services. Go not installed. Used TypeScript — consistent with SSOT.
+- **Finding**: Bun root-level `bun test` crashes (OOM/C++ panic) when including Python apps + TS apps together at root. Per-service `bun test` works fine. This is a pre-existing Bun 1.3.11 bug.
+- **Pattern**: All 4 services use identical DDD 4-layer structure: domain/ → application/ → infrastructure/ → interface/. Hono for HTTP, `bun:sqlite` for DB access (async dynamic import in infrastructure layer to stay compatible with Bun's SQLite in test env).
+- **Gate**: 68 new tests GREEN (24+14+13+17). tsc clean on all 4 services. mcp-server: 6797 pass / 9 fail (9 pre-existing).
+- **Status**: Ready for QA — branch feature/ddd-phase-2a
+
 ### Phase 0: DDD Monorepo Scaffold (17:30–18:42)
 - **Files changed**: apps/mcp-server/ (new workspace + symlinks), packages/shared-types/shared-db/shared-config, pnpm-workspace.yaml, docker-compose.yml, launchd/mcp-launch.sh, CLAUDE.md, dev-standards.md, restart-policy.md, docs/ARCHITECTURE.md
 - **Finding**: bctc-schema.ts at root imported as `../../../bctc-schema.js` from src/infrastructure/db/ — needs symlink at apps/mcp-server/. Docker context must be monorepo root (symlinks don't resolve in Docker build).
@@ -97,3 +105,9 @@
 - **Files changed**: src/scheduler/vpsProxyWatchdogJob.ts, src/__tests__/1319-watchdog-foreign-flow.test.ts
 - **Finding**: foreign_flow data lives in daily_ohlcv.updated_at (written by writeForeignFlowToOhlcv via UPDATE WHERE foreign_buy_vol IS NOT NULL). No separate foreign_flow table. 90-min threshold mirrors vn-foreign-flow.service cadence (60s fetch, allows multiple misses before alert).
 - **Status**: Ready for QA
+
+### Phase 1b: RAG Service extraction (13:00–17:00)
+- **Files changed**: apps/rag-service/ (28 new files), apps/mcp-server/src/infrastructure/rag/ragHttpClient.ts, docker-compose.yml
+- **Finding**: Python sentence-transformers + lancedb 0.25.3 work well together on macOS Python 3.13. `connect_async()` is the correct async API (not `connect()`). FakeEmbedder pattern (hash-based deterministic vectors) enables integration tests without model download.
+- **Pattern**: recency scoring as `similarity * decay_factor` (descending score = better) is cleaner than TS's `distance / denominator` (ascending distance = better) — both encode same preference.
+- **Status**: Ready for QA — 41 Python tests + 8 TypeScript tests, all GREEN
