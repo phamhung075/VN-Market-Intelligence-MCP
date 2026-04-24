@@ -49,7 +49,7 @@ User goal: Help traders make better decisions with complete transparency (convic
 | 1328b | Update Zod validators to accept new optional fields (agentSignalTools.ts) | interface/validation | Review | S | `docs/handoffs/TASK_1328b.md` |
 | 1328c | DB migration: ALTER TABLE agent_signals (add 3 columns) | infra/db | Review | S | `docs/handoffs/TASK_1328c.md` |
 | 1328d | Update convictionScorer: enrichDimensionScores() + use new fields | domain/services | Review | M | `docs/handoffs/TASK_1328d.md` |
-| 1328e | Format & display full conviction breakdown (6 dimensions, no truncation) in alerts | interface/telegram | Todo | M | `docs/handoffs/TASK_1328e.md` |
+| 1328e | Format & display full conviction breakdown (6 dimensions, no truncation) in alerts | interface/telegram | Done | M | `docs/handoffs/TASK_1328e.md` |
 
 **Dependencies:** 1328a → 1328b,1328c,1328d. 1328d → 1328e.
 
@@ -57,7 +57,7 @@ User goal: Help traders make better decisions with complete transparency (convic
 
 | ID | Title | Layer | Status | Size | Handoff |
 |----|-------|-------|--------|------|---------|
-| 1328f | Track suppression reasons in alertPolicyChecker (3-AND + 4-AND rules) | domain/services | Todo | M | `docs/handoffs/TASK_1328f.md` |
+| 1328f | Track suppression reasons in alertPolicyChecker (3-AND + 4-AND rules) | domain/services | Done | M | `docs/handoffs/TASK_1328f.md` |
 | 1328g | Log policy failure details to signalRejectionStore (missing_conditions, failed_rule) | infra/db | Todo | S | `docs/handoffs/TASK_1328g.md` |
 | 1328h | Implement three-channel strategy: WORK (status) / BUG (anomalies) / MARKET (user results) | cowork-agents | Todo | M | `docs/handoffs/TASK_1328h.md` |
 | 1328i | Validate Vietnamese diacritics + NFC normalization in telegram.ts (before send) | infra/telegram | Todo | S | `docs/handoffs/TASK_1328i.md` |
@@ -68,7 +68,7 @@ User goal: Help traders make better decisions with complete transparency (convic
 
 | ID | Title | Layer | Status | Size | Handoff |
 |----|-------|-------|--------|------|---------|
-| 1328j | Raise impact threshold 7→8 in mcp.config.json (reduce News Scout FP rate 8%) | config | Todo | S | — |
+| 1328j | Raise impact threshold 7→7.5 in mcp.config.json (reduce News Scout FP rate) | config | Done | S | — |
 | 1328k | Create test script: analyze 1-week signal distribution (impacts 7-8 range) | testing | Done | S | `docs/handoffs/TASK_1328k.md` |
 | 1328l | Document alert message standard format (5-section narrative: Why/Confirms/Kinh/Next/Risk) | cowork-agents | Todo | S | — |
 
