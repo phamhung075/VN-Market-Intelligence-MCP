@@ -298,6 +298,34 @@ Services:
 
 ---
 
+## Phase 3c — Scheduler Parallel Dispatch: TA + BB Alert Scans (2026-04-25)
+
+| ID | Title | Layer | Status | Branch |
+|----|-------|-------|--------|--------|
+| 3c | Phase 3c: Parallel TA + BB alert scanning | scheduler | Done | main |
+
+**Gate:** 5 new tests all GREEN (1309c test file). 6796 total suite passing.
+**Commit:** 8c33f0da
+**Performance:** Reduces alert scan cycle from ~6-10s sequential to ~3-5s concurrent (every 15 min, 02:00-08:59 UTC Mon-Fri).
+
+### Implementation
+- `NEW: src/scheduler/alerts/alertScanParallelJob.ts` — Core parallel job using `Promise.allSettled()`
+- `NEW: src/__tests__/1309c-alert-scan-parallel-job.test.ts` — 5 AC tests
+- `MODIFY: src/scheduler/jobs.ts` — Integrated into cron scheduler, replaced dual schedules
+- `MODIFY: src/__tests__/1309-bb-alert-scan-job.test.ts` — Fixed async mock signatures
+- `MODIFY: src/scheduler/alerts/bbAlertScanJob.ts` — Fixed default computeFn parameter
+
+### Details
+Executes `runTaAlertScan()` and `runBbAlertScan()` concurrently. Returns combined result with:
+- `totalScanned`, `totalFired` (sums of individual scans)
+- `taResult`, `bbResult` (individual scan results)
+- `durationMs` (total execution time)
+- `allOk` (both scans succeeded)
+
+Error isolation: if one scan fails, the other continues. Each scan counted independently.
+
+---
+
 ## Backlog
 
 ---
