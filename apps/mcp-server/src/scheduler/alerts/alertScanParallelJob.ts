@@ -90,8 +90,8 @@ export async function runAlertScanParallel(): Promise<ParallelAlertScanResult> {
     const failedScans = [taFailed && "TA", bbFailed && "BB"].filter(Boolean).join(", ");
 
     logger.warn(`[alert-scan-parallel] Failed scans: ${failedScans}`, {
-      taError: taFailed ? String(results[0].reason) : null,
-      bbError: bbFailed ? String(results[1].reason) : null,
+      taError: taFailed && results[0].status === "rejected" ? String(results[0].reason) : null,
+      bbError: bbFailed && results[1].status === "rejected" ? String(results[1].reason) : null,
       durationMs,
     });
   }

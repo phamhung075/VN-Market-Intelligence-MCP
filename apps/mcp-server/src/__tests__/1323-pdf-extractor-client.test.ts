@@ -29,13 +29,13 @@ function makeMockFetch(
   status: number,
   body: unknown,
 ): typeof fetch {
-  return async (_input: string | URL | Request, _init?: RequestInit) => {
+  return (async (_input: string | URL | Request, _init?: RequestInit) => {
     return {
       ok: status >= 200 && status < 300,
       status,
       json: async () => body,
     } as Response;
-  };
+  }) as unknown as typeof fetch;
 }
 
 // ---------------------------------------------------------------------------
@@ -83,7 +83,7 @@ describe("extractViaMicroservice", () => {
 
   it("returns null when service is unreachable (fetch throws)", async () => {
     const originalFetch = globalThis.fetch;
-    globalThis.fetch = async () => { throw new Error("ECONNREFUSED"); };
+    globalThis.fetch = (async () => { throw new Error("ECONNREFUSED"); }) as unknown as typeof fetch;
 
     try {
       const result = await extractViaMicroservice("http://example.com/doc.pdf");
@@ -130,7 +130,7 @@ describe("extractViaMicroservice", () => {
   it("defaults source_type to bctc when not provided", async () => {
     let capturedBody: string | null = null;
     const originalFetch = globalThis.fetch;
-    globalThis.fetch = async (_input: string | URL | Request, init?: RequestInit) => {
+    globalThis.fetch = (async (_input: string | URL | Request, init?: RequestInit) => {
       capturedBody = init?.body as string ?? null;
       return {
         ok: true,
@@ -143,11 +143,11 @@ describe("extractViaMicroservice", () => {
           status: "success",
         }),
       } as Response;
-    };
+    }) as unknown as typeof fetch;
 
     try {
       await extractViaMicroservice("http://example.com/doc.pdf");
-      expect(capturedBody).toContain('"source_type":"bctc"');
+      expect(capturedBody!).toContain('"source_type":"bctc"');
     } finally {
       globalThis.fetch = originalFetch;
     }
@@ -185,7 +185,7 @@ describe("checkPdfExtractorHealth", () => {
 
   it("returns false when service is unreachable", async () => {
     const originalFetch = globalThis.fetch;
-    globalThis.fetch = async () => { throw new Error("ECONNREFUSED"); };
+    globalThis.fetch = (async () => { throw new Error("ECONNREFUSED"); }) as unknown as typeof fetch;
 
     try {
       const healthy = await checkPdfExtractorHealth();

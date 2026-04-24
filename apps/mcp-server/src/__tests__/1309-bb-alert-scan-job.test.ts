@@ -54,15 +54,10 @@ function buildTestDb(): Database {
 function makeComputeFn(
   bb20: { upper: number; mid: number; lower: number } | null
 ): (code: string) => Promise<ComputeTAResponse> {
-  return async (code: string) => ({
+  return async (code: string): Promise<ComputeTAResponse> => ({
     code,
     trend: "TREN_DUNG" as const,
-    bb: bb20 ?? undefined,
-    rsi: undefined,
-    macd: undefined,
-    ma5: undefined,
-    ma20: undefined,
-    ma50: undefined,
+    ...(bb20 != null ? { bb: { upper: bb20.upper, middle: bb20.mid, lower: bb20.lower } } : {}),
   });
 }
 
@@ -314,17 +309,12 @@ describe("Task 1309 — bbAlertScanJob: Bollinger Band breakout intraday alerts"
       { upper: 55000, mid: 50000, lower: 45000 },  // HPG — 50000 inside → no alert
     ];
     let callIndex = 0;
-    const perTickerComputeFn = async (code: string) => {
+    const perTickerComputeFn = async (code: string): Promise<ComputeTAResponse> => {
       const bb20 = bbByCallOrder[callIndex++] ?? null;
       return {
         code,
         trend: "TREN_DUNG" as const,
-        bb: bb20 ?? undefined,
-        rsi: undefined,
-        macd: undefined,
-        ma5: undefined,
-        ma20: undefined,
-        ma50: undefined,
+        ...(bb20 != null ? { bb: { upper: bb20.upper, middle: bb20.mid, lower: bb20.lower } } : {}),
       };
     };
 
@@ -373,7 +363,7 @@ describe("Task 1309 — bbAlertScanJob: Bollinger Band breakout intraday alerts"
       { bb20: { upper: 86500, mid: 84000, lower: 82000 }, throws: false },
     ];
     let callIdx = 0;
-    const isolatedComputeFn = async (code: string) => {
+    const isolatedComputeFn = async (code: string): Promise<ComputeTAResponse> => {
       const spec = callOrder[callIdx++]!;
       if (spec.throws) {
         throw new Error("Mock BB computation failure for TCB");
@@ -381,12 +371,7 @@ describe("Task 1309 — bbAlertScanJob: Bollinger Band breakout intraday alerts"
       return {
         code,
         trend: "TREN_DUNG" as const,
-        bb: spec.bb20 ?? undefined,
-        rsi: undefined,
-        macd: undefined,
-        ma5: undefined,
-        ma20: undefined,
-        ma50: undefined,
+        ...(spec.bb20 != null ? { bb: { upper: spec.bb20.upper, middle: spec.bb20.mid, lower: spec.bb20.lower } } : {}),
       };
     };
 
