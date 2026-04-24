@@ -28,3 +28,13 @@ export {
   type SearchOptions,
   type AnalysisInput,
 } from "./retriever.js";
+
+export {
+  ragSearch,
+  ragIndex,
+  ragHealthCheck,
+  type RagSearchRequest,
+  type RagSearchResponse,
+  type RagIndexRequest,
+  type RagIndexResponse,
+} from "./ragHttpClient.js";
