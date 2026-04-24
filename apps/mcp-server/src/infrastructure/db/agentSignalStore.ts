@@ -123,6 +123,12 @@ export interface PostSignalInput {
    * Default: created_at if omitted.
    */
   validated_at?: string;
+  /** Task 1328c — From ChainCatalystFindingData.newsSentiment [-1.0, 1.0] */
+  newsSentiment?: number | null;
+  /** Task 1328c — From ChainCatalystFindingData.kinhDichConfidence [0, 100] */
+  kinhDichConfidence?: number | null;
+  /** Task 1328c — From ChainCatalystFindingData.agentSignalsMajority */
+  agentSignalsMajority?: "BUY" | "SELL" | "NEUTRAL" | null;
 }
 
 /**
@@ -258,6 +264,9 @@ export function postSignal(db: Database, input: PostSignalInput): number {
     signalClass = null,
     confidence_score = 50, // Task 230: default 50
     validated_at, // Task 230: optional validated_at
+    newsSentiment = null, // Task 1328c
+    kinhDichConfidence = null, // Task 1328c
+    agentSignalsMajority = null, // Task 1328c
   } = input;
 
   // Check which optional column groups exist. Fresh DBs (with all columns)
@@ -298,6 +307,16 @@ export function postSignal(db: Database, input: PostSignalInput): number {
     }
   })();
 
+  // Task 1328c — new signal context columns
+  const hasContextColumns = (() => {
+    try {
+      db.prepare("SELECT news_sentiment, kinh_dich_confidence, agent_signals_majority FROM agent_signals LIMIT 0").all();
+      return true;
+    } catch {
+      return false;
+    }
+  })();
+
   if (hasChainColumns) {
     const now = new Date().toISOString().replace("T", " ").replace(/\.\d{3}Z$/, "");
     const expires = ttlMinutes != null ? expiresAt(ttlMinutes) : null;
@@ -306,6 +325,38 @@ export function postSignal(db: Database, input: PostSignalInput): number {
     if (hasCausalRootColumns) {
       if (hasSignalClassColumn) {
         if (hasValidationColumns) {
+          if (hasContextColumns) {
+            const stmt = db.prepare(`
+              INSERT INTO agent_signals
+                (from_agent, to_agent, signal_type, stock_code, payload, status,
+                 created_at, expires_at, cycle_id, finding_data, causal_ref, chain_depth,
+                 causal_root_id, causal_root_label, signal_class, confidence_score, validated_at,
+                 news_sentiment, kinh_dich_confidence, agent_signals_majority)
+              VALUES (?, ?, ?, ?, ?, 'unread', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            `);
+            const result = stmt.run(
+              fromAgent,
+              toAgent,
+              signalType,
+              stockCode,
+              JSON.stringify(payload),
+              now,
+              expires ?? expiresAt(ttlMinutes ?? 120),
+              cycleId ?? null,
+              JSON.stringify(findingData),
+              causalRef,
+              chainDepth,
+              causalRootId,
+              causalRootLabel,
+              signalClass,
+              confidence_score,
+              validatedAtValue,
+              newsSentiment ?? null,
+              kinhDichConfidence ?? null,
+              agentSignalsMajority ?? null,
+            );
+            return Number(result.lastInsertRowid);
+          }
           const stmt = db.prepare(`
             INSERT INTO agent_signals
               (from_agent, to_agent, signal_type, stock_code, payload, status,
