@@ -24,8 +24,9 @@ services:
   # ── Phase 0: MCP Server (TypeScript/Bun) ────────────────────────────────
   mcp-server:
     build:
-      context: apps/mcp-server
-      dockerfile: Dockerfile
+      # Use monorepo root as context so bctc-schema.ts + mcp.config.json are accessible
+      context: .
+      dockerfile: apps/mcp-server/Dockerfile
     ports:
       - "3000:3000"
     volumes:

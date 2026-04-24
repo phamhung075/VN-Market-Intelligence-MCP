@@ -1,6 +1,6 @@
 # ── VN Market Intelligence MCP Server ─────────────────────────────────────
 # Runtime: Bun (oven/bun:1.3.11-slim)
-# Base: Debian slim for native module support (better-sqlite3, LanceDB)
+# Build context: monorepo root (docker-compose.yml sets context: .)
 # ─────────────────────────────────────────────────────────────────────────────
 
 FROM oven/bun:1.3.11-debian AS base
@@ -8,7 +8,6 @@ WORKDIR /app
 
 # ── Install system dependencies ───────────────────────────────────────────
 # tesseract-ocr: for OCR fallback in BCTC PDF extraction
-# python3/pip: for LanceDB native extensions (build-time only)
 RUN apt-get update && apt-get install -y \
     tesseract-ocr \
     tesseract-ocr-vie \
@@ -16,15 +15,20 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # ── Install Node dependencies ─────────────────────────────────────────────
-COPY package.json bun.lock* ./
-# Use --frozen-lockfile to ensure reproducible builds
+# Copy from apps/mcp-server since build context is monorepo root
+COPY apps/mcp-server/package.json apps/mcp-server/bun.lock* ./
 RUN bun install --frozen-lockfile 2>/dev/null || bun install
 
 # ── Copy application source ───────────────────────────────────────────────
-COPY src/ ./src/
-COPY tsconfig.json ./
-# bctc-schema.ts is referenced from src/infrastructure/db/
-COPY bctc-schema.ts* ./
+COPY apps/mcp-server/src/ ./src/
+COPY apps/mcp-server/tsconfig.json ./
+
+# bctc-schema.ts lives at monorepo root, referenced as ../../../bctc-schema.js
+# from src/infrastructure/db/ → resolves to /app/bctc-schema.ts in container
+COPY bctc-schema.ts ./
+
+# Runtime config (injected via volume mount in docker-compose, copied here as fallback)
+COPY mcp.config.json ./
 
 # ── Expose port ───────────────────────────────────────────────────────────
 EXPOSE 3000
