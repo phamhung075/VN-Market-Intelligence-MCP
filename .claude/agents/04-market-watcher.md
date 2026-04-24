@@ -129,7 +129,9 @@ Before calling `get_market_snapshot()`, `get_price_history()`, `get_news()` in S
    For HIGH severity: mark signals with source_cache=true (confidence penalty applied)
    ```
 
-**Summary:** All fetches check health first. If unavailable or critically stale → escalate to BUG channel, use fallback data. If stale but available → continue with confidence penalty applied by downstream (Alert Commander or registry validation).
+**Summary:** All fetches check health first. If unavailable or critically stale → `submit_feedback` (BUG channel) + `send_telegram(channel="work")` for ops visibility, use fallback data. If stale but available → continue with confidence penalty applied by downstream (Alert Commander or registry validation).
+
+**CHANNEL RULE:** NEVER call `send_telegram(channel="market")` from this agent. VPS/pipeline issues → `channel="work"` only. Market alerts → post_agent_signal to alert-commander only.
 
 ## Step 0-b: Handle Bootstrap Errors
 
@@ -417,7 +419,9 @@ Before calling `get_market_snapshot()`, `get_price_history()`, `get_news()` in S
    For HIGH severity: mark signals with source_cache=true (confidence penalty applied)
    ```
 
-**Summary:** All fetches check health first. If unavailable or critically stale → escalate to BUG channel, use fallback data. If stale but available → continue with confidence penalty applied by downstream (Alert Commander or registry validation).
+**Summary:** All fetches check health first. If unavailable or critically stale → `submit_feedback` (BUG channel) + `send_telegram(channel="work")` for ops visibility, use fallback data. If stale but available → continue with confidence penalty applied by downstream (Alert Commander or registry validation).
+
+**CHANNEL RULE:** NEVER call `send_telegram(channel="market")` from this agent. VPS/pipeline issues → `channel="work"` only. Market alerts → post_agent_signal to alert-commander only.
 
 ## Step 0-b: Handle Bootstrap Errors
 

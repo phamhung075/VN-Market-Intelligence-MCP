@@ -82,7 +82,13 @@ infrastructure/ (DB, HTTP clients, services)
 
 **Task 1289 (2026-04-22):** Fixed `WriteForeignFlowItem` type import in domain validator — moved type to domain/models/shared-types.ts, updated 4 files. Caught by test 1321-ddd-no-infra-imports-in-domain.test.ts. Test suite enforces this rule every run.
 
+**Task 1303h (2026-04-24):** Verified clean — extractorGuards.ts (new domain file) imports only bctc-schema type, zero infra/application imports. incomeStatementExtractor.ts + balanceSheetExtractor.ts changes add one import from ./extractorGuards.js (same domain layer) — valid. Last verified: 2026-04-24.
+
 **Task 1303i (2026-04-24):** Verified clean — cascadeEngine.ts + tradeRelationships.ts (domain) have zero infra/application imports. bctcOverdueCheckJob.ts (scheduler) imports from application (runImpactChain) + domain (WatchlistEntry) — both valid. Last verified: 2026-04-24.
+
+**Task 1304 (2026-04-24):** FIXED — newsNormalizer.ts:23 had `import { formatAnalysisNewsSummary } from "../../infrastructure/adapters/analysisFormatters.js"` (DDD violation). Swapped to `import { truncateNewsSummary } from "./textUtils.js"` (domain peer). Test 1321-ddd-no-infra-imports-in-domain.test.ts now passes. Last verified: 2026-04-24.
+
+**Task 1298c (2026-04-24):** Verified clean — test-only change (src/__tests__/1298c-imf-signal-integration.test.ts). Imports from domain/services + application/services only. Zero infrastructure imports. Last verified: 2026-04-24.
 
 ## Related
 

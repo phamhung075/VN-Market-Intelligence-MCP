@@ -71,7 +71,10 @@ export function getSeasonalContext(month: number): string {
   const key = String(month).padStart(2, "0");
   const seasonal = SEASONAL_RISKS[key];
   if (!seasonal) return "Không có rủi ro mùa vụ đặc biệt trong tháng này.";
-  return `Tháng ${month}: Rủi ro ${seasonal.risk} — ${seasonal.note}. Cổ phiếu cần theo dõi: ${seasonal.stocks.join(", ")}.`;
+  const stocksDisplay = seasonal.stocks.length <= 5
+    ? seasonal.stocks.join(", ")
+    : `${seasonal.stocks.slice(0, 5).join(", ")} +${seasonal.stocks.length - 5} more`;
+  return `Tháng ${month}: Rủi ro ${seasonal.risk} — ${seasonal.note}. Cổ phiếu cần theo dõi: ${stocksDisplay}.`;
 }
 
 // ---------------------------------------------------------------------------

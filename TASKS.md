@@ -25,7 +25,7 @@
 | ID | Title | Layer | Status |
 |----|-------|-------|--------|
 | 1297a | Fail-Loud Protocol Injection (16 agents) | agents | Done |
-| 1297b | BCTC Portal URL Discovery Fix | vps-scripts | Review |
+| 1297b | BCTC Portal URL Discovery Fix | vps-scripts | Done |
 | 1297c | VPS Validation of BCTC Portal Fix | ops | Todo (blocked on 1297b) |
 
 ### 1297b — BCTC Portal URL Discovery Fix
@@ -54,6 +54,120 @@ AC: HNX AJAX POST mapped, UPCOM same flow, HOSE informative error, ≥2/3 VNM/BI
 **Status:** 1303a–1303i DONE. WIP: 0/2.
 
 ### 1303h/1303i — DONE — details: `docs/handoffs/TASK_1303h.md`, `docs/handoffs/TASK_1303i.md`
+
+---
+
+## Sprint 1298 — IMF Sentiment Classifier: Test Coverage
+
+| ID | Title | Layer | Status |
+|----|-------|-------|--------|
+| 1298a | IMF Domain Model + Classifier + Schema Tests (RED) | test/domain | Review |
+| 1298b | IMF Fetcher + Poller Job + Cron Registry Tests (GREEN) | test/infra | Done |
+| 1298c | IMF Cascade Rules + Conviction Weight + MCP Tool Tests (GREEN) | test/signal | Review |
+
+context: `docs/TECH_1298.md` | handoffs: `docs/handoffs/TASK_1298a.md`, `TASK_1298b.md`, `TASK_1298c.md`
+note: All 8 FRs implemented in sprint 1296. This sprint = 3 missing test files only. No production code changes expected.
+
+---
+
+## Sprint 1311 — Backlog Drain: DB Schema + Sentiment + Macro (2026-04-24)
+
+| ID | Title | Layer | Status | Reports | Size |
+|----|-------|-------|--------|---------|------|
+| 1311a | Schema migration: add verdict/reviewed_at to market_messages (prod) | infra | Todo | 1265 | S |
+| 1310a | push-foreign-flow UNIQUE constraint: diagnose + fix duplicate code rows | infra | Todo | 1275,1277,1280 | S |
+| 1309a | Cascade rule gaps: Hormuz oil+aviation, govt securities, agri exclusion | domain | Todo | 1264,1268,1286 | M |
+| 1308a | Sentiment: add insider SELLING + global bearish macro patterns | domain | Todo | 1272,1278,1284 | S |
+| 1307a | Macro alerts: fix level-drift cooldown bypass + direction label in briefing | domain/scheduler | Todo | 1269,1270,1276 | S |
+
+**Escalations (route before dev):**
+- UNBLOCK 1306: HOSE price stale post-restart + PDF downloads running locally → ops
+- UNBLOCK 1305: batch_review verdict not persisting (schema migration in 1311a may resolve — confirm first)
+
+WIP: 0/2
+
+---
+
+### 1311a — Schema migration: verdict columns in market_messages
+
+**Root cause:** `verdict`, `verdict_note`, `reviewed_at` columns added to `CREATE TABLE IF NOT EXISTS market_messages` DDL but no `ALTER TABLE` guards. Production DB tables created before these columns were added → columns missing → `UPDATE` silently no-ops → `WHERE verdict IS NULL` returns same rows every loop.
+
+**Fix:** Add `ALTER TABLE` migration guards in `schema-news.ts` (same pattern as impact_score columns at line 150-155).
+
+**Files:**
+- `src/infrastructure/db/schema-news.ts:149-155` — add three `ALTER TABLE market_messages ADD COLUMN verdict/verdict_note/reviewed_at` guards in try/catch block
+- `src/__tests__/1311a-market-messages-verdict-migration.test.ts` — RED test: create table without columns, run `initNewsTables()`, assert columns exist
+
+**AC:** `batch_review_market_messages` with IDs that previously re-appeared unreviewed now stays reviewed. Test baseline +3 tests.
+
+**baseline_pass:** 6629
+
+---
+
+### 1310a — push-foreign-flow UNIQUE constraint (recurring x3)
+
+**Root cause investigation needed:** `vnstockStore.ts` uses `INSERT OR REPLACE` with `UNIQUE(code)` (no date). But `schema.ts` also creates `UNIQUE INDEX uq_vnstats_code_date ON vnstock_trading_stats(code, date)` — two competing UNIQUE constraints. When VPS sends same `code` twice in one batch, `INSERT OR REPLACE` on `(code, date)` fires conflict. But there is ALSO an implicit `UNIQUE(code)` from the original table DDL (if any). Check exact DDL in production vs schema.ts.
+
+**Files:**
+- `src/infrastructure/db/vnstockStore.ts:60-120` — audit UNIQUE constraint resolution; confirm `INSERT OR REPLACE` targets `(code, date)` not `(code)` alone; add `ON CONFLICT(code, date) DO UPDATE` explicit syntax if needed
+- `src/__tests__/1310a-push-foreign-flow-dedup.test.ts` — RED test: insert same code twice in one batch, assert no UNIQUE constraint error
+
+**AC:** VPS batch with duplicate ticker codes succeeds. No UNIQUE constraint errors in logs. Test baseline +3 tests.
+
+**baseline_pass:** 6629
+
+---
+
+### 1309a — Cascade rule gaps (Hormuz, govt securities, agriculture exclusion)
+
+**Root cause:** `cascadeEngine.ts` SECTOR_RULES last touched sprint 1303i. Three confirmed gaps from 24-report batch:
+1. Hormuz blockade → oil_gas BULLISH (BSR refinery margin) + aviation BEARISH (VJC fuel cost) missing
+2. Government market support announcement → securities sector BULLISH (SSI/VCI/VIX/VND) missing
+3. Agriculture commodity export news (coffee/rice) → should NOT cascade to real_estate (HUT); sector filter too broad
+
+**Files:**
+- `src/domain/services/cascadeEngine.ts` — add Hormuz rules (oil_gas+aviation), govt_support rules (securities), tighten agriculture sector filter
+- `src/__tests__/1309a-cascade-rule-gaps.test.ts` — RED tests: 3 scenarios (hormuz/govt/agri-exclusion)
+
+**AC:** (1) "Hormuz blockade" → BSR BULLISH + VJC BEARISH. (2) "Chính phủ hỗ trợ thị trường" → SSI/VCI BULLISH. (3) "xuất khẩu cà phê tăng" → no cascade to HUT (real_estate). Test baseline +6 tests.
+
+**baseline_pass:** 6629
+
+---
+
+### 1308a — Sentiment: insider SELLING + global bearish macro patterns
+
+**Root cause:**
+1. `leadershipSignal.ts` has `insider_sell` type but the Vietnamese text "xả hàng" (dump), "bán ra 9 triệu cổ phiếu" is not in keyword patterns → classified default BULLISH.
+2. Global bearish macro: "hạ dự báo GDP" (lower GDP forecast), "báo lỗ lớn" (report large losses), "IMF cắt giảm" (IMF cuts) → not in bearish macro keyword list → classified BULLISH.
+
+**Files:**
+- `src/domain/services/leadershipSignal.ts:115-150` — add "xả hàng", "bán ra.*triệu", "thoái vốn", "giảm sở hữu" to insider_sell detection pattern
+- `src/domain/services/sentimentAnalyzer.ts` (or equivalent) — add "hạ dự báo", "cắt giảm dự báo", "báo lỗ", "thiệt hại", "IMF.*cắt" to bearish macro patterns
+
+**AC:** "Cổ đông lớn xả hàng 9M cổ phiếu CEO" → BEARISH insider_sell. "IMF hạ dự báo GDP toàn cầu" → BEARISH macro. Test baseline +4 tests.
+
+**baseline_pass:** 6629
+
+---
+
+### 1307a — Macro alerts: level-drift cooldown bypass + briefing direction label
+
+**Root cause (two independent bugs):**
+
+**Bug 1 — Cooldown bypass:** Alert ID is `macro-{today}-{name}-{level}` (e.g. `macro-2026-04-15-usdVndRate-extreme`). When level drifts `extreme→high` on next 15-min cycle, new ID = `macro-2026-04-15-usdVndRate-high` → `alreadySentToday` check misses it → fires again. 5 alerts in 65 minutes.
+
+**Fix:** Change `alreadySentToday` LIKE pattern to `macro-{today}-{name}-%` (already does this at line 631) — but the INSERT also uses `{level}` in the id. If a new level fires, it inserts with `notified_telegram=0` initially. Fix: skip if ANY alert for this indicator was already stored today (regardless of whether notified), not just notified ones. Or: deduplicate by name+day at storage time (INSERT OR IGNORE by a partial key).
+
+**Bug 2 — Hardcoded direction:** `morningBriefingJob.ts` uses template with hardcoded "cao hơn TB" even when `direction === "below"`. Wire `levelVi` from `macroThresholds.classifyDeviation()` result which already has correct directional label.
+
+**Files:**
+- `src/scheduler/news-analysis/intelligenceCycleJob.ts:629-632` — remove `AND notified_telegram = 1` from `alreadySentToday` check; skip if ANY macro alert stored today for this indicator (regardless of sent status). Prevents level-drift (extreme→high) from creating duplicate alerts on next 15-min cycle.
+- `src/scheduler/briefings/morningBriefingJob.ts` — find macro direction label template, replace hardcoded string with dynamic `dev.levelVi` or equivalent from `classifyDeviation()` output
+
+**AC:** USD/VND alert fires max once per indicator per UTC day. Morning briefing shows "thấp hơn TB" when σ is negative. Test baseline +4 tests.
+
+**baseline_pass:** 6629
 
 ---
 

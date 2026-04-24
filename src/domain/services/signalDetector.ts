@@ -297,11 +297,14 @@ export function detectSignals(
   // ── 5. Crisis event (Task 266) ───────────────────────────────────────────
   if (context?.crisisEvent?.detected) {
     const crisis = context.crisisEvent;
+    const patternsDisplay = crisis.matchedPatterns.length <= 5
+      ? crisis.matchedPatterns.join(", ")
+      : `${crisis.matchedPatterns.slice(0, 5).join(", ")} +${crisis.matchedPatterns.length - 5} more`;
     signals.push({
       type: "crisis_event",
       severity: crisis.severity,
       actionCode,
-      message: `${actionCode} crisis detected: ${crisis.crisisType} — patterns: ${crisis.matchedPatterns.join(", ")} (velocity ${crisis.velocityRatio.toFixed(1)}×)`,
+      message: `${actionCode} crisis detected: ${crisis.crisisType} — patterns: ${patternsDisplay} (velocity ${crisis.velocityRatio.toFixed(1)}×)`,
       confidence: 0.9,
       detectedAt: now,
     });

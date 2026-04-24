@@ -209,17 +209,17 @@ export async function runTaAlertNotifier(
   const sendFn =
     deps?.sendFn ??
     (async (msg: string, opts: unknown) => {
-      const { sendTelegramMarket } = await import(
+      const { sendTelegramBug } = await import(
         "../../infrastructure/notifiers/telegram.js"
       );
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await sendTelegramMarket(msg, opts as any);
+      await sendTelegramBug(msg, opts as any);
     });
 
-  // ── FR-3: Send to market channel ──────────────────────────────────────────
+  // ── FR-3: Send to bug channel (report) ────────────────────────────────────
   try {
     await sendFn(message, {
-      persist: { from_agent: "ta-notifier", message_type: "ta_alert" },
+      parseMode: "",
     });
   } catch (err) {
     // sendFn threw — do NOT mark any rows; they will retry next cycle

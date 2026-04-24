@@ -1,7 +1,6 @@
 {
-  "scan_date": "2026-04-22T16:16:31Z",
-  "last_run": "2026-04-22T16:16:31Z",
-  "findings": [
+  "scan_date": "2026-04-24T04:10:36Z",
+  "last_run": "2026-04-24T04:10:36Z",
     {
       "fingerprint": "check-2:mcp.config.json:referenceStocks",
       "severity": "LOW",
@@ -16,6 +15,18 @@
     }
   ],
   "fixed_findings": [
+    {
+      "fingerprint": "check-3:mcp.config.json:scheduler",
+      "severity": "LOW",
+      "category": "Unused config section — dead data (resolved)",
+      "file": "mcp.config.json",
+      "line": 111,
+      "detail": "mcp.config.json 'scheduler' section (lines 111-119) with 7 cron expressions was legacy dead code never loaded by config.ts. Canonical source is src/scheduler/jobs.ts:CRONS (79 jobs). Removed entire section to eliminate stale documentation and maintenance confusion.",
+      "fix_type": "refactor",
+      "fix_commit": "b4200379",
+      "fixed_at": "2026-04-24T04:35:00Z",
+      "fix_notes": "Single-file cleanup. TypeScript compilation: PASS. Test suite: PASS (6415 tests). Shipped directly."
+    },
     {
       "fingerprint": "check-5:src/infrastructure/config.ts:clobApiUrl",
       "severity": "MEDIUM",
@@ -57,33 +68,41 @@
   "scan_checks": {
     "check-1-duplicate-classification-maps": {
       "status": "complete",
-      "items_scanned": 20,
+      "items_scanned": 25,
       "findings": 0,
-      "notes": "Record<string, { }> patterns searched. SECTOR_PEERS canonical in sectorPeers.ts. No new duplications found outside canonicals. watchlist.ts DomainTypeEnum (lines 35-55) is Zod validation enum paired with import DomainType from bctc-schema.ts (line 25) — required pattern for runtime validation, not a duplication of sector classification data. Confirmed intentional and necessary."
+      "notes": "Record<string, { }> patterns searched across all TypeScript files. SECTOR_PEERS canonical in sectorPeers.ts (EXTRACTED from graph god nodes analysis). No new duplications of sector classification data found outside canonical source. predictionCascadeMapper.ts:KEYWORD_RULES (lines 101-351) and climateImpactMapper.ts:CLIMATE_RULES (lines 104+) contain ticker arrays, but these are domain-specific business logic rules (macro event → affected sectors/stocks), not data duplication. Confirmed: not replicating SECTOR_PEERS or STOCK_CATALOG data."
     },
     "check-2-hardcoded-ticker-arrays": {
       "status": "complete",
-      "items_scanned": 35,
+      "items_scanned": 40,
       "findings": 0,
-      "notes": "Ticker arrays outside canonicals verified as business logic (muasamcong.ts contract-to-stock mapping) or test fixtures. MAJOR_CAPS in priceSourceRouter.ts (line 53) is service-specific logic for Yahoo Finance fallback eligibility, not data duplication. Confirmed: not duplicating SECTOR_PEERS or STOCK_CATALOG. No redundant ticker arrays found."
+      "notes": "Ticker array literals searched outside canonical files and tests. Found arrays in: (1) predictionCascadeMapper.ts — 15 keyword rules with ticker arrays mapping macro predictions to VN stock impacts (domain business logic, not data duplication). (2) climateImpactMapper.ts — seasonal risk calendar + climate impact rules with ticker arrays (domain business logic, not data duplication). (3) priceSourceRouter.ts:MAJOR_CAPS (line 53) — service-specific logic for Yahoo Finance fallback eligibility (not duplicating SECTOR_PEERS). All confirmed as intentional business logic, not redundant ticker lists."
     },
-    "check-3-repeated-magic-numbers": {
+    "check-3-repeated-magic-numbers-and-cron-duplication": {
       "status": "complete",
-      "items_scanned": 60,
-      "findings": 0,
-      "notes": "Cron strings verified canonical to jobs.ts (CRONS map). Timeout values (30000, 15000, 5000) in routers are service-specific logic (cache vs VPS vs Yahoo), not configuration drift. httpTimeoutMs canonical in config.ts → mcp.config.json. No identical thresholds in 3+ production files. All checks pass."
+      "items_scanned": 95,
+      "findings": 1,
+      "new_findings": [
+        {
+          "fingerprint": "check-3:mcp.config.json:scheduler",
+          "severity": "LOW",
+          "category": "Unused config section — dead data",
+          "detail": "mcp.config.json lines 111-119 contain 'scheduler' section with 7 cron expressions. These crons are NEVER used by the application. Canonical source is src/scheduler/jobs.ts:CRONS (79 jobs, all with environment variable overrides). Root cause: legacy dead code from earlier deployment strategy."
+        }
+      ],
+      "notes": "CRONS map in jobs.ts is the single canonical source for all 79 cron expressions. All are properly defined with ?? fallback pattern and environment variable overrides. However, mcp.config.json contains unused 'scheduler' section (lines 111-119) that duplicates 7 older cron expressions. These are never loaded by config.ts (no scheduler property parsed). Low-risk dead code removal candidate. Timeout/threshold values (30000ms, 15000ms, 5000ms) verified as service-specific logic (cache vs VPS vs Yahoo), not configuration drift."
     },
     "check-4-schema-duplication": {
       "status": "complete",
-      "items_scanned": 25,
+      "items_scanned": 30,
       "findings": 0,
-      "notes": "scheduler_locks dual DDL at line 43 of schedulerLockStore.ts is documented as intentional for test backwards compatibility (comment). alert_mutes DDL removed from store (comment at line 7). All other DDLs canonical to schema.ts and schema-* modules. No production inline DDL outside schema files found."
+      "notes": "All CREATE TABLE IF NOT EXISTS statements found in: (1) schema.ts and schema-*.ts modules (canonical DDL definitions). (2) schedulerLockStore.ts line 43 — intentional dual DDL for test backwards compatibility (comment documents intent). (3) alertMuteStore.ts line 7 — comment-only reference, not actual DDL. Zero production inline DDL found outside schema modules. All tables properly canonicalized."
     },
     "check-5-config-drift": {
       "status": "complete",
-      "items_scanned": 15,
+      "items_scanned": 50,
       "findings": 0,
-      "notes": "clobApiUrl, gammaApiUrl, all timeouts verified against mcp.config.json via config.ts loader (lines 545-546 show proper env override + ?? fallback pattern). All fallbacks match canonical sources. effectiveCooldownConfig verified passed from config in intelligenceCycleJob.ts. No config drift detected."
+      "notes": "All config fallback patterns verified: (1) clobApiUrl, gammaApiUrl — properly mapped with ?? fallback to https://clob.polymarket.com and https://gamma-api.polymarket.com (matches mcp.config.json). (2) All timeouts (httpTimeoutMs 15000, sscPageTimeoutMs 30000, etc.) verified against config.ts lines 469-478. (3) effectiveCooldownConfig passed from config in intelligenceCycleJob.ts at every alert suppression call. (4) Default watchlist at lines 432-445 matches market.watchlist in config.ts. Zero config drift detected. All fallbacks match canonical sources in mcp.config.json or are intentional service-specific defaults."
     }
   }
 }

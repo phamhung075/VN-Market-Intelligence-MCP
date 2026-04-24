@@ -1,29 +1,42 @@
-# Task Report 1298b — compact
+# Task Report 1298b — compact (GREEN phase: IMF Fetcher/Poller infra tests)
+date: 2026-04-24
+outcome: APPROVED
 
 changed:
-- src/domain/services/imfDataClassifier.ts:210-233 (allStale guard, 8 lines)
-- src/__tests__/1296b-imf-fetcher.test.ts (NEW, 83 lines, 4 assertions)
-- src/__tests__/1296b-imf-integration.test.ts (NEW, 232 lines, 14 assertions)
+- src/__tests__/1298b-imf-infra.test.ts (NEW, 221 lines, 11 assertions)
+- docs/data/cron-registry.json:47 (imf_indicator_poller entry added)
 
-bun test (task files): 24 pass / 0 fail
-bun test (full suite): 6504 pass / 7 fail (pre-existing, unchanged from baseline 6508 - delta accounts for +24 new task tests)
+bun test (task): 11 pass / 0 fail
+bun test (full suite): 6621 pass / 14 fail (14 pre-existing; main baseline 6594/14 — branch net +27 pass)
 tsc: 0 errors
-ddd: PASS — domain files import no infrastructure or application layers
-security: PASS — no process.env in any changed file
+ddd: PASS (test file imports application+infrastructure as expected for infra-layer tests)
+security: PASS (no process.env, no string-interpolated SQL in imfDataFetcher.ts)
 
-AC coverage:
-- AC-1 (types): covered in 1296b-imf-indicators.test.ts (previous task)
-- AC-2 (classifier logic): 1296b-imf-classifier.test.ts — allStale GREEN at line 100-111
-- AC-3 (fetcher DB roundtrip): 1296b-imf-fetcher.test.ts — store+retrieve+upsert+penalty
-- AC-4 (DB shape): 1296b-imf-fetcher.test.ts — valid ImfIndicator shape returned
-- AC-5 (cascade rules 11): 1296b-imf-integration.test.ts:40-70
-- AC-6 (20% conviction weight): 1296b-imf-integration.test.ts:74-138
-- AC-7 (poller job shape): 1296b-imf-integration.test.ts:143-175
-- AC-8 (MCP tool path): 1296b-imf-integration.test.ts:179-231
+## Coverage map
 
-allStale fix verified:
-- Guard at imfDataClassifier.ts:222-233: every(ind => calculateConfidenceDecay(ind.ageInDays) <= 0.30)
-- Returns imf_neutral with confidence = min decay of all indicators
-- Resolves RED failure from 1298a (line 110 of classifier test)
+| AC | Test | Status |
+|----|------|--------|
+| AC-4 DB roundtrip | store+retrieve correct value | PASS |
+| AC-4 upsert | second write overwrites | PASS |
+| AC-4 shape | field types + source enum | PASS |
+| AC-4 confidence penalty | factor 0.8: 0.90→0.72 | PASS |
+| AC-4 CB fallback | fetchLatestImfIndicators never throws | PASS |
+| AC-4 SQL injection | no template-literal or concat SQL | PASS |
+| AC-5 cron wiring | jobs.ts CRONS map: imfIndicatorPoller + "0 */6 * * *" | PASS |
+| AC-5 registry JSON | id, schedule, timeoutMs=30000, enabled=true | PASS |
+| AC-5 poller shape | returns {success, indicator_count} | PASS |
+| AC-5 success path | indicator_count >= 0 + sentiment defined | PASS |
+| AC-5 failure path | {success:false, error:string, indicator_count:0} | PASS |
+
+## Notes
+
+- Brownfield correction in test: handoff referenced `src/scheduler/cron-registry.ts` (does not exist).
+  Developer adapted AC-5 to read `src/scheduler/jobs.ts` (CRONS map) + `docs/data/cron-registry.json`. Correct.
+- 14 suite failures pre-existing (identical count on main).
+- Live network test: poller ran 3x, succeeded ("5 indicators stored"). CB fallback path exercised via "no-throw" assertion.
+
+## Previous TASK_REPORT_1298b content (earlier review cycle)
+
+See git history for prior report content (allStale guard review, 2026-04-23).
 
 verdict: APPROVED

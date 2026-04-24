@@ -1,5 +1,33 @@
 # Sprint Goal
 
+## Sprint 1311 — Backlog Drain: Schema Migrations + Sentiment + Macro Fixes (2026-04-24)
+
+**Goal:** Fix 7 production bugs from 24-report backlog (2026-04-14/15). All recurring-module failures addressed.
+
+**Scope:**
+
+| Task | Title | Size | Reports |
+|------|-------|------|---------|
+| 1311a | Schema migration: verdict columns in market_messages | S | 1265 |
+| 1310a | push-foreign-flow UNIQUE dedup diagnosis + fix | S | 1275,1277,1280 |
+| 1309a | Cascade gaps: Hormuz / govt securities / agri exclusion | M | 1264,1268,1286 |
+| 1308a | Sentiment: insider SELLING + global bearish macro | S | 1272,1278,1284 |
+| 1307a | Macro cooldown bypass + briefing direction label | S | 1269,1270,1276 |
+
+**Out of scope:** VPS ops (HOSE stale price, PDF local-route) → ops agent via UNBLOCK 1306. MSCI neutral rating (1279) → defer, requires product decision.
+
+**Success metrics:**
+- `batch_review_market_messages` verdict persists across loops (IDs don't re-appear)
+- No UNIQUE constraint errors in push-foreign-flow logs
+- "Xả hàng 9M cổ phiếu" → BEARISH; "IMF hạ dự báo" → BEARISH
+- Macro USD/VND fires max 1x/day; morning briefing shows correct σ direction
+- Hormuz → BSR BULLISH + VJC BEARISH; govt support → SSI/VCI BULLISH
+- Test baseline 6629 → 6649+ (20 new tests across 5 tasks)
+
+**baseline_pass:** 6629
+
+---
+
 ## Sprint 1299 — MCP Tool Context Optimization (2026-04-23)
 
 **Goal:** Reduce default MCP tool context load from 65k tokens → <30k tokens while maintaining quality and agent capability.

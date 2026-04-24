@@ -21,7 +21,7 @@ import { logger } from "../../infrastructure/logger.js";
 export async function runPatternWatch(): Promise<void> {
   try {
     const { getDb } = await import("../../infrastructure/db/schema.js");
-    const { sendTelegramMarket } = await import("../../infrastructure/notifiers/telegram.js");
+    const { sendTelegramBug } = await import("../../infrastructure/notifiers/telegram.js");
     const db = getDb();
 
     // Get watchlist codes
@@ -112,9 +112,8 @@ export async function runPatternWatch(): Promise<void> {
 
       const tickerMatch = message.match(/\b([A-Z]{2,4})\b/);
       const patternTicker: string | null = tickerMatch?.[1] ?? null;
-      await sendTelegramMarket(message, {
+      await sendTelegramBug(message, {
         parseMode: "",
-        persist: { from_agent: "pattern-watch", message_type: "pattern_watch", ticker: patternTicker },
       });
       logger.info("[patternWatch] sent weekly pattern alert", {
         matches: warnings.length,

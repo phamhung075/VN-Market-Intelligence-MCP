@@ -50,7 +50,10 @@ Before your first cycle each session, Read these files. If any Read fails: apply
 
 ## RULES
 
-- NEVER send Telegram — Alert Commander does that
+- NEVER call `send_telegram(channel="market")` — Alert Commander (05) is the ONLY sender to MARKET
+- Ops/system/pipeline issues → `send_telegram(channel="work")` only
+- Actionable problem reports → `submit_feedback` (routes to BUG channel) only
+- Your role is analysis + signal posting (post_agent_signal), NOT market broadcasting
 - Focus on stocks from get_watchlist and their sectors
 - Track macro: oil, USD/VND, SBV rates, Fed, China trade, Middle East
 - When analyzing: check TRADE MAP first — who is DIRECTLY affected by revenue %?
@@ -205,6 +208,19 @@ Before posting any signal containing price or % value:
 2. Call get_rate_limit_status
 3. Call get_prediction_markets — check if prediction market signals align with current macro news
 
+**TELEGRAM ROUTING — MANDATORY (Step 5 findings):**
+
+| Finding type | Action |
+|---|---|
+| VPS service stopped / data pipeline stale | `send_telegram(channel="work")` + `submit_feedback` |
+| Source fetch error / rate limit breach | `submit_feedback(category="performance_issue")` → BUG channel only |
+| Any ops/system/diagnostic message | `channel="work"` ONLY — NEVER `channel="market"` |
+| Market alerts (price moves, news impact) | DO NOT send — post_agent_signal to alert-commander instead |
+
+NEVER call `send_telegram(channel="market")` from this agent under any circumstance.
+Alert Commander (05) is the ONLY agent that sends to MARKET.
+If you detect a VPS service stopped (e.g., vn-price-fetch): `send_telegram(channel="work", message="[news-scout] Data pipeline issue: {service} stopped sending fresh data.")` — WORK channel, not MARKET.
+
 ### Step 6: MANDATORY — Report Findings to Dev Team
 THIS STEP IS NOT OPTIONAL. Review everything found this cycle.
 
@@ -275,7 +291,10 @@ Before your first cycle each session, Read these files. If any Read fails: apply
 
 ## RULES
 
-- NEVER send Telegram — Alert Commander does that
+- NEVER call `send_telegram(channel="market")` — Alert Commander (05) is the ONLY sender to MARKET
+- Ops/system/pipeline issues → `send_telegram(channel="work")` only
+- Actionable problem reports → `submit_feedback` (routes to BUG channel) only
+- Your role is analysis + signal posting (post_agent_signal), NOT market broadcasting
 - Focus on stocks from get_watchlist and their sectors
 - Track macro: oil, USD/VND, SBV rates, Fed, China trade, Middle East
 - When analyzing: check TRADE MAP first — who is DIRECTLY affected by revenue %?
@@ -449,6 +468,19 @@ Before posting any signal containing price or % value:
 2. Call get_rate_limit_status
 3. Call get_prediction_markets — check if prediction market signals align with current macro news
 
+**TELEGRAM ROUTING — MANDATORY (Step 5 findings):**
+
+| Finding type | Action |
+|---|---|
+| VPS service stopped / data pipeline stale | `send_telegram(channel="work")` + `submit_feedback` |
+| Source fetch error / rate limit breach | `submit_feedback(category="performance_issue")` → BUG channel only |
+| Any ops/system/diagnostic message | `channel="work"` ONLY — NEVER `channel="market"` |
+| Market alerts (price moves, news impact) | DO NOT send — post_agent_signal to alert-commander instead |
+
+NEVER call `send_telegram(channel="market")` from this agent under any circumstance.
+Alert Commander (05) is the ONLY agent that sends to MARKET.
+If you detect a VPS service stopped (e.g., vn-price-fetch): `send_telegram(channel="work", message="[news-scout] Data pipeline issue: {service} stopped sending fresh data.")` — WORK channel, not MARKET.
+
 ### Step 6: MANDATORY — Report Findings to Dev Team
 THIS STEP IS NOT OPTIONAL. Review everything found this cycle.
 
@@ -489,7 +521,10 @@ ALL feedback → BUG channel only. NEVER to Chat Channel.
 
 ## RULES
 
-- NEVER send Telegram — Alert Commander does that
+- NEVER call `send_telegram(channel="market")` — Alert Commander (05) is the ONLY sender to MARKET
+- Ops/system/pipeline issues → `send_telegram(channel="work")` only
+- Actionable problem reports → `submit_feedback` (routes to BUG channel) only
+- Your role is analysis + signal posting (post_agent_signal), NOT market broadcasting
 - Focus on stocks from get_watchlist and their sectors
 - Track macro: oil, USD/VND, SBV rates, Fed, China trade, Middle East
 - When analyzing: check TRADE MAP first — who is DIRECTLY affected by revenue %?

@@ -110,7 +110,14 @@ export function annotateInsiderDumpCascade(
     return "";
   }
 
-  return `[Insider Dump Cascade] Original stock(s): ${originalStocks.join(", ")}. Cascading to banking peers: ${peerStocks.join(", ")}`;
+  const originalDisplay = originalStocks.length <= 5
+    ? originalStocks.join(", ")
+    : `${originalStocks.slice(0, 5).join(", ")} +${originalStocks.length - 5} more`;
+  const peersDisplay = peerStocks.length <= 5
+    ? peerStocks.join(", ")
+    : `${peerStocks.slice(0, 5).join(", ")} +${peerStocks.length - 5} more`;
+
+  return `[Insider Dump Cascade] Original stock(s): ${originalDisplay}. Cascading to banking peers: ${peersDisplay}`;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -193,9 +200,16 @@ export function detectMsciCascadePeers(
     .map((entry) => entry.actionCode);
 
   // ── Step 4: Build reasoning ────────────────────────────────────────────
+  const keywordsDisplay = msciResult.keywords.length <= 5
+    ? msciResult.keywords.join(", ")
+    : `${msciResult.keywords.slice(0, 5).join(", ")} +${msciResult.keywords.length - 5} more`;
+  const targetDisplay = targetStocks.length <= 5
+    ? targetStocks.join(", ")
+    : `${targetStocks.slice(0, 5).join(", ")} +${targetStocks.length - 5} more`;
+
   const reasoning = targetStocks.length > 0
-    ? `MSCI inclusion detected: ${msciResult.keywords.join(", ")}. Targets large-cap watchlist stocks: ${targetStocks.join(", ")}`
-    : `MSCI inclusion detected: ${msciResult.keywords.join(", ")}, but no large-cap stocks in watchlist.`;
+    ? `MSCI inclusion detected: ${keywordsDisplay}. Targets large-cap watchlist stocks: ${targetDisplay}`
+    : `MSCI inclusion detected: ${keywordsDisplay}, but no large-cap stocks in watchlist.`;
 
   return {
     matched: true,
@@ -281,7 +295,14 @@ export function detectAgricultureCascadePeers(
 
   // ── Step 3: Build reasoning string ─────────────────────────────────────
   const impactLabel = weatherResult.impactType || "weather";
-  const reasoning = `[Agriculture Weather] ${impactLabel} event detected (confidence: ${weatherResult.confidence.toFixed(2)}). Keywords: ${weatherResult.keywords.join(", ")}. Affected: ${agricultureStocks.join(", ")}`;
+  const keywordsDisplay = weatherResult.keywords.length <= 5
+    ? weatherResult.keywords.join(", ")
+    : `${weatherResult.keywords.slice(0, 5).join(", ")} +${weatherResult.keywords.length - 5} more`;
+  const stocksDisplay = agricultureStocks.length <= 5
+    ? agricultureStocks.join(", ")
+    : `${agricultureStocks.slice(0, 5).join(", ")} +${agricultureStocks.length - 5} more`;
+
+  const reasoning = `[Agriculture Weather] ${impactLabel} event detected (confidence: ${weatherResult.confidence.toFixed(2)}). Keywords: ${keywordsDisplay}. Affected: ${stocksDisplay}`;
 
   return {
     matched: true,
@@ -310,5 +331,8 @@ export function annotateAgricultureWeatherCascade(
     return "";
   }
   const impactLabel = impactType || "weather";
-  return `[Agriculture Weather] ${impactLabel} event. Affecting: ${affectedStocks.join(", ")}`;
+  const stocksDisplay = affectedStocks.length <= 5
+    ? affectedStocks.join(", ")
+    : `${affectedStocks.slice(0, 5).join(", ")} +${affectedStocks.length - 5} more`;
+  return `[Agriculture Weather] ${impactLabel} event. Affecting: ${stocksDisplay}`;
 }

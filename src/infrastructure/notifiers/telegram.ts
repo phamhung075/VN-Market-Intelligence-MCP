@@ -458,12 +458,16 @@ function formatAlertMessage(alert: Alert): string {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// High-level notifiers (always route to MARKET — user-facing)
+// High-level notifiers (route to WORK — analysis/dev alerts)
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Sends a Telegram notification to the MARKET channel for a HIGH or CRITICAL alert.
+ * Sends a Telegram notification to the BUG channel for HIGH or CRITICAL alerts.
  * Silently skips LOW and MEDIUM severity alerts.
+ *
+ * HIGH/CRITICAL alerts route to BUG channel (report) with prominent severity label.
+ * Per CLAUDE.md Alert Commander exclusivity rule, only Alert Commander
+ * (05-alert-commander.md) sends user-facing alerts to MARKET.
  */
 export async function notifyTelegramAlert(
   alert: Alert,
@@ -475,6 +479,10 @@ export async function notifyTelegramAlert(
   }
 
   let text = formatAlertMessage(alert);
+
+  // Add severity label at top for HIGH/CRITICAL alerts in BUG channel
+  const severityLabel = severity === "critical" ? "🚨 CRITICAL ALERT" : "⚠️ HIGH ALERT";
+  text = `${severityLabel}\n\n${text}`;
 
   try {
     const signalType = alert.signals[0]?.type ?? "";
@@ -494,14 +502,12 @@ export async function notifyTelegramAlert(
 
   const sendOpts: SendTelegramOptions = {
     parseMode: "",
-    persist: {
-      from_agent: "alert-commander",
-      message_type: "alert",
-      ticker: alert.actionCode,
-    },
   };
   if (options.fetchFn !== undefined) sendOpts.fetchFn = options.fetchFn;
-  return sendTelegramMarket(text, sendOpts);
+
+  // Send to BUG channel (report) only, not WORK
+  const messageId = await sendTelegramBug(text, sendOpts);
+  return messageId > 0;
 }
 
 /**
