@@ -111,7 +111,7 @@
   "alerts": {
     "defaultDropPct": -3,
     "defaultRisePct": 5,
-    "defaultImpactScoreMin": 7,
+    "defaultImpactScoreMin": 7.5,
     "volumeSpikeMultiplier": 2,
     "reportFreshHours": 24,
     "severityEscalation": {
