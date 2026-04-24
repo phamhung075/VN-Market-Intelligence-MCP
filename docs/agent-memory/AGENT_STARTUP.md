@@ -2,6 +2,8 @@
 
 > **Every agent loads this on startup.** Takes ~5 min, saves tokens later.
 
+**CRITICAL: Before creating ANY file or memory record, read → `docs/agent-memory/FILE_ORGANIZATION_REFERENCE.md`**
+
 ---
 
 ## 🚀 Your Task: Load Only What You Need

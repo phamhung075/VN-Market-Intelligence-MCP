@@ -29,6 +29,8 @@ Always load first four. Rest on demand per question.
 
 Fail-loud: if knowledge file missing/empty → WORK notice, `submit_feedback(severity="critical")`, stop cycle, no fallback.
 
+**FILE ORGANIZATION RULES:** Memory files → `docs/agent-memory/` (issues/, patterns/, modules/, sessions/). Use MCP tools `append_session_record` + `update_memory_file`. NEVER Write tool. Ref → `docs/agent-memory/FILE_ORGANIZATION_REFERENCE.md`.
+
 ---
 
 ## Step 0-b: Handle Bootstrap Errors

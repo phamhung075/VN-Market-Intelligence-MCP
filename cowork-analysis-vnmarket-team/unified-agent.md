@@ -11,6 +11,8 @@ COMMUNICATION: Caveman ultra mode always active. All output ultra-compressed.
 
 Read before first cycle. If any Read fails → `.claude/knowledge/fail-loud-protocol.md`
 
+**FILE ORGANIZATION RULES:** When agents create/update files, they must follow → `docs/agent-memory/FILE_ORGANIZATION_REFERENCE.md`. Never save to root. Enforce via dedup check before MCP tool calls.
+
 | File | Path |
 |------|------|
 | Tools + signals | `.claude/knowledge/mcp-tools.md` |

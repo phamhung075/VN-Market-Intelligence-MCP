@@ -27,6 +27,8 @@ Read before first cycle. If any Read fails → `.claude/knowledge/fail-loud-prot
 
 **Dedup**: `get_recent_fixes(days=7)` before reporting. Skip if already reported/fixed.
 
+**FILE ORGANIZATION RULES:** All memory files → `docs/agent-memory/` (issues/, patterns/, modules/, sessions/). Use MCP tools `append_session_record` + `update_memory_file`. NEVER use Write tool. Ref → `docs/agent-memory/FILE_ORGANIZATION_REFERENCE.md`.
+
 ---
 
 ## AGENT MEMORY (Shared Workbook — Lazy-Load)

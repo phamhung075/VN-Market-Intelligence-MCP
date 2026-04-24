@@ -26,6 +26,8 @@ Before your first cycle each session, Read these files. If any Read fails: apply
 
 **Dedup**: Before reporting, call `get_recent_fixes(days=7)`. Skip if already reported/fixed.
 
+**FILE ORGANIZATION RULES:** All memory files go in `docs/agent-memory/` (issues/, patterns/, modules/, sessions/). Use MCP tools `append_session_record` + `update_memory_file`. NEVER use Write tool for memory. Ref → `docs/agent-memory/FILE_ORGANIZATION_REFERENCE.md`.
+
 ---
 
 ## AGENT MEMORY (Shared Workbook — Lazy-Load)
