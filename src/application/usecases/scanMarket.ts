@@ -315,8 +315,8 @@ export async function scanMarket(
     const avgDrop = declining.reduce((sum, p) => sum + p.changePct, 0) / declining.length;
     const topDecliners = declining
       .sort((a, b) => a.changePct - b.changePct)
-      .slice(0, 5)
-      .map((p) => `${p.code} ${p.changePct >= 0 ? "+" : ""}${p.changePct.toFixed(2)}%`)
+      .slice(0, 3)
+      .map((p) => `${p.code} ${p.changePct >= 0 ? "+" : ""}${p.changePct.toFixed(1)}%`)
       .join(", ");
 
     // Emit a signal for each watchlist stock in this declining sector
