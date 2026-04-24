@@ -216,10 +216,31 @@ merge: 62bbc16e
 
 ---
 
+## Sprint 1318–1321 — Infrastructure & Backlog Cleanup (2026-04-24)
+
+| ID | Title | Layer | Status | Size |
+|----|-------|-------|--------|------|
+| 1319 | Watchdog add foreign_flow staleness monitoring | infra | Done | S |
+| 1320 | Update IMPLEMENTATION_STATUS.md (backlog 1286) | docs | Done | S |
+| 1321 | VPS OOM prevention: MemoryMax + StartLimitBurst guard | vps-scripts | Done | S |
+
+**Status:** 1319–1321 DONE. WIP: 0/2. +8 tests (6777 total).
+
+### 1319 — Watchdog foreign_flow staleness (90-min threshold)
+Adds readLatestForeignFlowTimestamp() reader + stale check to prevent silent 7-day staleness like Apr 21-24 outage. Query: MAX(updated_at) WHERE foreign_buy_vol IS NOT NULL. Merged: f7986f40.
+
+### 1320 — IMPLEMENTATION_STATUS.md sprint summary
+Appended comprehensive block covering sprints 074-1317: IMF classifier, VPS validation, backlog drain (9 fixes), cost-push cascade, current stats. Resolves backlog item 1286. Merged: 8b2893f2.
+
+### 1321 — VPS news-fetch OOM prevention
+MemoryMax 128M→512M, added MemorySwapMax=0, StartLimitIntervalSec=300, StartLimitBurst=5 to prevent infinite restart loop (Apr 21-24 OOM killer crash → 7623 restarts → manual stop). Merged: f6c7b191.
+
+---
+
 ## Backlog
 
 | ID | Title | Priority | Notes |
-|----|----|----------|-------|
-| 1286 | Update IMPLEMENTATION_STATUS.md | LOW | Add sprint 240+ entries |
+|----|-------|----------|-------|
+| (empty) | | | |
 
 ---
