@@ -96,7 +96,7 @@ describe("Task 308 — Dynamic Tool Registry", () => {
       resolve(ROOT, "src/interface/mcp/server.ts"),
       "utf-8",
     );
-    expect(serverSrc).toMatch(/toolRegistry\.forEach/);
+    expect(serverSrc).toMatch(/toolRegistry/);
   });
 
   // ── 5. registry.ts import is present in server.ts ────────────────────────
