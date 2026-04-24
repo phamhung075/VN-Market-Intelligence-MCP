@@ -96,7 +96,11 @@ describe("Bug D — priceUpdateWatchdogJob uses Bun.env not process.env", () => 
 });
 
 describe("Bug B — server.ts push-prices alert persist metadata", () => {
-  it("push-prices severity alert block uses from_agent='alert-commander'", async () => {
+  // Architecture rule (CLAUDE.md): Alert Commander exclusivity — only 05-alert-commander.md
+  // calls send_telegram(channel="market") for alerts. push-prices webhook is NOT Alert Commander.
+  // Correct routing: sendTelegramWork with from_agent="push-prices", message_type="system_alert".
+
+  it("push-prices severity alert block routes to WORK channel with push-prices metadata", async () => {
     const src = await Bun.file(
       new URL("../interface/mcp/server.ts", import.meta.url).pathname
     ).text();
@@ -109,12 +113,15 @@ describe("Bug B — server.ts push-prices alert persist metadata", () => {
     const sevBlock = src.slice(sevIdx, sevIdx + 1000);
     expect(sevBlock).not.toContain('"mcp-user"');
     expect(sevBlock).not.toContain('"user_ask_reply"');
-    expect(sevBlock).toContain('"alert-commander"');
-    expect(sevBlock).toContain('"alert"');
-    expect(sevBlock).toContain("ticker:");
+    // push-prices is not Alert Commander — must NOT claim to be alert-commander
+    expect(sevBlock).not.toContain('"alert-commander"');
+    // Must route to WORK channel (sendTelegramWork) and use correct source metadata
+    expect(sevBlock).toContain("sendTelegramWork");
+    expect(sevBlock).toContain('"push-prices"');
+    expect(sevBlock).toContain('"system_alert"');
   });
 
-  it("push-prices threshold alert block uses from_agent='alert-commander'", async () => {
+  it("push-prices threshold alert block routes to WORK channel with push-prices metadata", async () => {
     const src = await Bun.file(
       new URL("../interface/mcp/server.ts", import.meta.url).pathname
     ).text();
@@ -126,9 +133,12 @@ describe("Bug B — server.ts push-prices alert persist metadata", () => {
     const threshBlock = src.slice(threshIdx, threshIdx + 1000);
     expect(threshBlock).not.toContain('"mcp-user"');
     expect(threshBlock).not.toContain('"user_ask_reply"');
-    expect(threshBlock).toContain('"alert-commander"');
-    expect(threshBlock).toContain('"alert"');
-    expect(threshBlock).toContain("ticker:");
+    // push-prices is not Alert Commander — must NOT claim to be alert-commander
+    expect(threshBlock).not.toContain('"alert-commander"');
+    // Must route to WORK channel and use correct source metadata
+    expect(threshBlock).toContain("sendTelegramWork");
+    expect(threshBlock).toContain('"push-prices"');
+    expect(threshBlock).toContain('"system_alert"');
   });
 
   it("user_ask_reply persist (ask-reply route) is untouched — still mcp-user", async () => {
