@@ -172,6 +172,8 @@ services:
       - TA_URL=http://technical-analysis:5003
       - MACRO_URL=http://macro-indicators:5004
       - STOCK_URL=http://stock-price:5000
+      - KINH_DICH_URL=http://kinh-dich-service:5005
+      - ALERT_URL=http://alert-engine:5006
     restart: unless-stopped
     depends_on:
       mcp-server:
@@ -183,6 +185,44 @@ services:
       retries: 3
       start_period: 15s
 
-  # ── Phase 2b placeholders ─────────────────────────────────────────────────
-  # kinh-dich-service:   { build: apps/kinh-dich-service,   ports: ["5005:5005"] }
-  # alert-engine:        { build: apps/alert-engine,         ports: ["5006:5006"] }
+  # ── Phase 2b: Kinh Dich Service (TypeScript/Bun) ────────────────────────
+  kinh-dich-service:
+    build:
+      context: apps/kinh-dich-service
+      dockerfile: Dockerfile
+    ports:
+      - "5005:5005"
+    volumes:
+      - ./data:/app/data
+    environment:
+      - PORT=5005
+      - DB_PATH=/app/data/market.db
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:5005/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # ── Phase 2b: Alert Engine (TypeScript/Bun) ──────────────────────────────
+  alert-engine:
+    build:
+      context: apps/alert-engine
+      dockerfile: Dockerfile
+    ports:
+      - "5006:5006"
+    volumes:
+      - ./data:/app/data
+    environment:
+      - PORT=5006
+      - DB_PATH=/app/data/market.db
+    env_file:
+      - .env
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:5006/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s

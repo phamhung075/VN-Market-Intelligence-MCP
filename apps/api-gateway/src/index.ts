@@ -14,12 +14,14 @@ const PORT = parseInt(process.env['PORT'] ?? '4000', 10);
 
 // Service URLs: configurable via environment (for docker-compose service names)
 const serviceUrls: Record<string, string> = {
-  mcp:   process.env['MCP_URL']   ?? 'http://mcp-server:3000',
-  pdf:   process.env['PDF_URL']   ?? 'http://pdf-extractor:5001',
-  rag:   process.env['RAG_URL']   ?? 'http://rag-service:5002',
-  ta:    process.env['TA_URL']    ?? 'http://technical-analysis:5003',
-  macro: process.env['MACRO_URL'] ?? 'http://macro-indicators:5004',
-  stock: process.env['STOCK_URL'] ?? 'http://stock-price:5000',
+  mcp:        process.env['MCP_URL']        ?? 'http://mcp-server:3000',
+  pdf:        process.env['PDF_URL']        ?? 'http://pdf-extractor:5001',
+  rag:        process.env['RAG_URL']        ?? 'http://rag-service:5002',
+  ta:         process.env['TA_URL']         ?? 'http://technical-analysis:5003',
+  macro:      process.env['MACRO_URL']      ?? 'http://macro-indicators:5004',
+  stock:      process.env['STOCK_URL']      ?? 'http://stock-price:5000',
+  'kinh-dich': process.env['KINH_DICH_URL'] ?? 'http://kinh-dich-service:5005',
+  alert:      process.env['ALERT_URL']      ?? 'http://alert-engine:5006',
 };
 
 const registry = new StaticServiceRegistry(serviceUrls);
