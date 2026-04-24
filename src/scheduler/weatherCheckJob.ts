@@ -139,7 +139,7 @@ export async function runWeatherCheck(opts: WeatherCheckOptions = {}): Promise<v
 
     if (highClimate.length > 0 || highEnergy.length > 0) {
       try {
-        const { sendTelegramBug } = await import(
+        const { sendTelegramMarket } = await import(
           "../infrastructure/notifiers/telegram.js"
         );
         let msg = `⚠️ CẢNH BÁO KHÍ HẬU + ĐIỆN LỰC\n`;
@@ -161,7 +161,7 @@ export async function runWeatherCheck(opts: WeatherCheckOptions = {}): Promise<v
           msg += "\n";
         }
 
-        await sendTelegramBug(msg, {
+        await sendTelegramMarket(msg, {
           parseMode: "",
         });
       } catch (err) {
