@@ -1,3 +1,11 @@
+### DDD Phase 2b: kinh-dich-service + alert-engine (20:30–22:00)
+- **Files changed**: apps/kinh-dich-service/ (14 files), apps/alert-engine/ (14 files), apps/api-gateway/src/index.ts, docker-compose.yml
+- **Finding**: hexagramLibrary.ts in mcp-server is 1028 lines of raw data — embedded minimal QUE_DATA (64 entries) directly in domain/services.ts instead of copying wholesale. This keeps the service self-contained without a file read at startup.
+- **Pattern**: Both services use same DDD 4-layer pattern as Phase 2a. Hono HTTP, bun:sqlite for SQLite. TelegramClient uses no token silently (safe for dev/test environment).
+- **Alert Engine design**: isDuplicate check runs before shouldSuppressAlert — fingerprint dedup is cheaper. CRITICAL severity bypasses cooldown but MACRO actionCode is exempt (matches existing alertCooldown.ts rule).
+- **Gate**: 42 new tests GREEN (21 per service). tsc clean all 3 updated services. Phase 2 COMPLETE.
+- **Status**: Ready for QA — branch feature/ddd-phase-2b
+
 ### DDD Phase 2a: 4 TypeScript Microservices (18:00–20:30)
 - **Files changed**: apps/api-gateway/ (17 files), apps/technical-analysis/ (15 files), apps/macro-indicators/ (14 files), apps/stock-price/ (14 files), docker-compose.yml
 - **Finding**: Task prompt specified Go but SESSION_SUMMARY_20260424.md + language decision doc say TypeScript for all logic-heavy services. Go not installed. Used TypeScript — consistent with SSOT.

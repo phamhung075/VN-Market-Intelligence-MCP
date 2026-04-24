@@ -276,6 +276,17 @@ Handoffs: `docs/handoffs/DDD_PHASE1A.md`, `docs/handoffs/DDD_PHASE1B.md`
 |----|-------|-------|--------|--------|
 | DDD-P2a | Phase 2a: 4 TypeScript microservices (gateway/ta/macro/stock) | infra | Review | feature/ddd-phase-2a |
 
+---
+
+## DDD Microservices — Phase 2b (2026-04-24)
+
+| ID | Title | Layer | Status | Branch |
+|----|-------|-------|--------|--------|
+| DDD-P2b | Phase 2b: kinh-dich-service (5005) + alert-engine (5006) | infra | Review | feature/ddd-phase-2b |
+
+Gate: 42 new tests GREEN (21 per service). tsc clean all 3 updated services. Phase 2 COMPLETE (all 6 extraction services ready).
+Commit: 91d9fdb4
+
 Gate: 68 new tests GREEN (24+14+13+17). tsc clean all 4 services. mcp-server 6797/9 unchanged.
 Handoff: `docs/handoffs/DDD_PHASE2A.md`
 
