@@ -123,6 +123,8 @@ describe("TASK-1313: channel routing enforcement", () => {
         "briefings/franceSummaryJob.ts",
         "macro/calibrationReportJob.ts",
         "portfolio/weeklyPortfolioReportJob.ts",
+        // weatherCheckJob sends climate/energy HIGH/CRITICAL alerts to MARKET (user-facing, not dev-only)
+        "weatherCheckJob.ts",
         // taAlertNotifierJob uses injected sendFn (not direct call) → not listed here
         // Alert Commander pipeline jobs write to DB; Commander dispatches to market
       ]);
