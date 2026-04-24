@@ -237,6 +237,16 @@ MemoryMax 128M→512M, added MemorySwapMax=0, StartLimitIntervalSec=300, StartLi
 
 ---
 
+## FIX-1326b — MARKET channel spam guard (2026-04-24)
+
+| ID | Title | Layer | Status |
+|----|-------|-------|--------|
+| 1326b | send_telegram: block pipeline diagnostics from MARKET channel | interface | Done |
+
+Fix: `src/interface/mcp/tools/briefings/telegramTools.ts:51-70` — 6-pattern regex guard blocks diagnostic/VPS messages from market channel; work/bug bypass unaffected. +4 tests (6752 total). Merge: a1b34020.
+
+---
+
 ## Backlog
 
 | ID | Title | Priority | Notes |

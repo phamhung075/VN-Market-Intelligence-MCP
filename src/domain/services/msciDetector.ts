@@ -103,6 +103,150 @@ export function detectMsciInclusion(
 }
 
 /**
+ * Detect MSCI watchlist keywords in seed text.
+ *
+ * Watchlist = precursor step before formal inclusion, triggers passive allocation planning.
+ *
+ * Keywords (whole-word, case-insensitive):
+ *   - "danh sách theo dõi msci" (MSCI watchlist)
+ *   - "msci watchlist"
+ *   - "xem xét nâng hạng msci" (consider MSCI upgrade)
+ *
+ * Same credibility threshold and confidence formula as detectMsciInclusion.
+ *
+ * Task 1329: MSCI watchlist cascade rules
+ */
+export function detectMsciWatchlist(
+  seedSummary: string,
+  sourceCredibility: number,
+): MsciDetectionResult {
+  if (sourceCredibility < 0.7) {
+    return { matched: false, keywords: [], context: "", confidence: 0 };
+  }
+
+  const keywords = ["danh sách theo dõi msci", "msci watchlist", "xem xét nâng hạng msci"];
+  const matchedKeywords: string[] = [];
+  const textLower = seedSummary.toLowerCase();
+
+  for (const keyword of keywords) {
+    if (findKeywordWholeWord(textLower, keyword)) {
+      matchedKeywords.push(keyword);
+    }
+  }
+
+  if (matchedKeywords.length === 0) {
+    return { matched: false, keywords: [], context: "", confidence: 0 };
+  }
+
+  const rawConfidence = (sourceCredibility * matchedKeywords.length) / 3.0;
+  const confidence = Math.min(1.0, rawConfidence);
+
+  const firstKeyword = matchedKeywords[0]!;
+  const keywordIndex = textLower.indexOf(firstKeyword);
+  const contextStart = Math.max(0, keywordIndex - 30);
+  const contextEnd = Math.min(seedSummary.length, keywordIndex + firstKeyword.length + 30);
+  const context = seedSummary.substring(contextStart, contextEnd).trim();
+
+  return { matched: true, keywords: matchedKeywords, context, confidence };
+}
+
+/**
+ * Detect MSCI exclusion keywords in seed text.
+ *
+ * Exclusion = forced selling, large passive fund outflows from Vietnam.
+ *
+ * Keywords (whole-word, case-insensitive):
+ *   - "loại khỏi msci" (removed from MSCI)
+ *   - "msci loại việt nam" (MSCI removes Vietnam)
+ *   - "bị xóa khỏi chỉ số" (deleted from index)
+ *
+ * Same credibility threshold and confidence formula as detectMsciInclusion.
+ *
+ * Task 1329: MSCI exclusion cascade rules
+ */
+export function detectMsciExclusion(
+  seedSummary: string,
+  sourceCredibility: number,
+): MsciDetectionResult {
+  if (sourceCredibility < 0.7) {
+    return { matched: false, keywords: [], context: "", confidence: 0 };
+  }
+
+  const keywords = ["loại khỏi msci", "msci loại việt nam", "bị xóa khỏi chỉ số"];
+  const matchedKeywords: string[] = [];
+  const textLower = seedSummary.toLowerCase();
+
+  for (const keyword of keywords) {
+    if (findKeywordWholeWord(textLower, keyword)) {
+      matchedKeywords.push(keyword);
+    }
+  }
+
+  if (matchedKeywords.length === 0) {
+    return { matched: false, keywords: [], context: "", confidence: 0 };
+  }
+
+  const rawConfidence = (sourceCredibility * matchedKeywords.length) / 3.0;
+  const confidence = Math.min(1.0, rawConfidence);
+
+  const firstKeyword = matchedKeywords[0]!;
+  const keywordIndex = textLower.indexOf(firstKeyword);
+  const contextStart = Math.max(0, keywordIndex - 30);
+  const contextEnd = Math.min(seedSummary.length, keywordIndex + firstKeyword.length + 30);
+  const context = seedSummary.substring(contextStart, contextEnd).trim();
+
+  return { matched: true, keywords: matchedKeywords, context, confidence };
+}
+
+/**
+ * Detect MSCI exclusion keywords in seed text.
+ *
+ * Exclusion = forced selling, large passive fund outflows from Vietnam.
+ *
+ * Keywords (whole-word, case-insensitive):
+ *   - "loại khỏi msci" (removed from MSCI)
+ *   - "msci loại việt nam" (MSCI removes Vietnam)
+ *   - "bị xóa khỏi chỉ số" (deleted from index)
+ *
+ * Same credibility threshold and confidence formula as detectMsciInclusion.
+ *
+ * Task 1329: MSCI exclusion cascade rules
+ */
+export function detectMsciExclusion(
+  seedSummary: string,
+  sourceCredibility: number,
+): MsciDetectionResult {
+  if (sourceCredibility < 0.7) {
+    return { matched: false, keywords: [], context: "", confidence: 0 };
+  }
+
+  const keywords = ["loại khỏi msci", "msci loại việt nam", "bị xóa khỏi chỉ số"];
+  const matchedKeywords: string[] = [];
+  const textLower = seedSummary.toLowerCase();
+
+  for (const keyword of keywords) {
+    if (findKeywordWholeWord(textLower, keyword)) {
+      matchedKeywords.push(keyword);
+    }
+  }
+
+  if (matchedKeywords.length === 0) {
+    return { matched: false, keywords: [], context: "", confidence: 0 };
+  }
+
+  const rawConfidence = (sourceCredibility * matchedKeywords.length) / 3.0;
+  const confidence = Math.min(1.0, rawConfidence);
+
+  const firstKeyword = matchedKeywords[0]!;
+  const keywordIndex = textLower.indexOf(firstKeyword);
+  const contextStart = Math.max(0, keywordIndex - 30);
+  const contextEnd = Math.min(seedSummary.length, keywordIndex + firstKeyword.length + 30);
+  const context = seedSummary.substring(contextStart, contextEnd).trim();
+
+  return { matched: true, keywords: matchedKeywords, context, confidence };
+}
+
+/**
  * Helper: Detect whether a keyword appears at word boundaries (whole-word match).
  *
  * For Vietnamese multi-word keywords (e.g., "nộp danh sách"):

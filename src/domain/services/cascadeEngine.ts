@@ -19,7 +19,7 @@ import type { DomainType } from "../../../bctc-schema";
 import { classifySentiment } from "./sentimentClassifier.js";
 import { classifyDeviation, deviationToDelta, type MacroStats, type MacroDeviation } from "./macroThresholds.js";
 import { detectStocksInText } from "./stockAliases.js";
-import { detectMsciInclusion } from "./msciDetector.js";
+import { detectMsciInclusion, detectMsciWatchlist, detectMsciExclusion } from "./msciDetector.js";
 import { detectAgricultureWeatherKeywords } from "./agricultureDetector.js";
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -2430,6 +2430,41 @@ export const MSCI_INCLUSION_RULES: CascadeKeywordRule[] = [
 ];
 
 /**
+ * MSCI watchlist cascade rules: News about Vietnam being added to MSCI watchlist.
+ *
+ * Business logic:
+ *   - MSCI watchlist (precursor step) = early signal for potential full inclusion
+ *   - Triggers passive fund allocation planning before formal inclusion decision
+ *   - Keywords: "danh sách theo dõi msci" (watchlist), "watchlist", "xem xét nâng hạng" (consider upgrade)
+ *   - Targets large-cap stocks (all_largecp pseudo-sector)
+ *
+ * Task 1329: MSCI watchlist cascade rules
+ */
+export const MSCI_WATCHLIST_RULES: CascadeKeywordRule[] = [
+  { key: "msci_watchlist_1", keyword: "danh sách theo dõi msci", sector: "all_largecp" },
+  { key: "msci_watchlist_2", keyword: "msci watchlist", sector: "all_largecp" },
+  { key: "msci_watchlist_3", keyword: "xem xét nâng hạng msci", sector: "all_largecp" },
+];
+
+/**
+ * MSCI exclusion cascade rules: News about Vietnam being removed from MSCI index.
+ *
+ * Business logic:
+ *   - MSCI exclusion = forced selling, large passive fund outflows
+ *   - Negative catalyst for all stocks, especially large-caps with heavy foreign ownership
+ *   - Keywords: "loại khỏi msci" (removed), "msci loại việt nam" (MSCI removes Vietnam), "bị xóa khỏi" (deleted from)
+ *   - Targets large-cap stocks (all_largecp pseudo-sector)
+ *   - Direction: bearish (opposite of inclusion)
+ *
+ * Task 1329: MSCI exclusion cascade rules
+ */
+export const MSCI_EXCLUSION_RULES: CascadeKeywordRule[] = [
+  { key: "msci_exclusion_1", keyword: "loại khỏi msci", sector: "all_largecp" },
+  { key: "msci_exclusion_2", keyword: "msci loại việt nam", sector: "all_largecp" },
+  { key: "msci_exclusion_3", keyword: "bị xóa khỏi chỉ số", sector: "all_largecp" },
+];
+
+/**
  * Agriculture weather cascade rules: Rainfall, drought, storm, cold snap events
  * trigger alerts to agriculture-domain stocks.
  *
@@ -2732,7 +2767,45 @@ export function buildCausalChain(
     entries.push(msciDomainEntry);
   }
 
-  // ── Step 2g: Non-watchlist company event confidence cap (Task 1207) ──────
+  // ── Step 2f: MSCI Watchlist Cascade (Task 1329) ────────────────────────
+  // Detect MSCI watchlist keywords + create bullish cascade entry.
+  // Watchlist = precursor to full inclusion, triggers passive allocation planning.
+  const msciWatchlistResult = detectMsciWatchlist(summaryLower, seedEntry.confidence ?? 0.6);
+  if (msciWatchlistResult.matched) {
+    const msciWatchlistEntry: CausalChainEntry = {
+      level: "domain",
+      title: "MSCI Watchlist Cascade",
+      summary: `${seedEntry.sourceTitle} — MSCI watchlist keywords detected`,
+      affectedDomains: [],  // MSCI is cross-sector
+      affectedActions: [],  // Populated by application layer
+      sentiment: "bullish",
+      impactScore: Math.round(seedEntry.impactScore * msciWatchlistResult.confidence),
+      confidence: msciWatchlistResult.confidence,
+      reasoning: `MSCI watchlist detected: ${msciWatchlistResult.keywords.join(", ")}. Precursor to full inclusion.`,
+    };
+    entries.push(msciWatchlistEntry);
+  }
+
+  // ── Step 2g: MSCI Exclusion Cascade (Task 1329) ────────────────────────
+  // Detect MSCI exclusion keywords + create bearish cascade entry.
+  // Exclusion = forced selling, large passive fund outflows from Vietnam.
+  const msciExclusionResult = detectMsciExclusion(summaryLower, seedEntry.confidence ?? 0.6);
+  if (msciExclusionResult.matched) {
+    const msciExclusionEntry: CausalChainEntry = {
+      level: "domain",
+      title: "MSCI Exclusion Cascade",
+      summary: `${seedEntry.sourceTitle} — MSCI exclusion keywords detected`,
+      affectedDomains: [],  // MSCI is cross-sector
+      affectedActions: [],  // Populated by application layer
+      sentiment: "bearish",
+      impactScore: Math.round(seedEntry.impactScore * msciExclusionResult.confidence),
+      confidence: msciExclusionResult.confidence,
+      reasoning: `MSCI exclusion detected: ${msciExclusionResult.keywords.join(", ")}. Triggers forced selling.`,
+    };
+    entries.push(msciExclusionEntry);
+  }
+
+  // ── Step 2h: Non-watchlist company event confidence cap (Task 1207) ──────
   // When a news article is about a specific company (affectedActions non-empty)
   // that is NOT in the user's watchlist, cap all domain-level confidence at 0.6.
   // Rationale: non-watchlist company noise should never generate high-confidence alerts.
