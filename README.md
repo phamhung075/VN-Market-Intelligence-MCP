@@ -33,6 +33,8 @@ YOU (investor in France)
 ```bash
 bun install
 ./scripts/git-hooks/install.sh   # one-time: pre-push runs `bun tsc --noEmit`
+# OR if git hooks are in launchd/:
+./launchd/install.sh             # one-time: install launchd agent
 ```
 
 The pre-push hook blocks pushes whose tracked code fails type-checking — most

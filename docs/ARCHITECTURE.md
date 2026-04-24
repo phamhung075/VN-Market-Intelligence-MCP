@@ -181,7 +181,7 @@ MCP server in France is geo-blocked from VN stock APIs, SSC BCTC portal, news so
 
 **Invariant: VPS liveness is owned by systemd on the Vinahost host. MCP only observes DB staleness. Nothing on the MCP side ever SSHes into VPS at runtime.**
 
-Deploy: `./deploy-vinahost.sh` (local, operator-only). Health check: `ssh root@$VINAHOST_IP /root/vps-status.sh`. Bot-guarded sources: `vps-scripts/fetch-browser.py` (Playwright/Chromium headless).
+Deploy: `./scripts/deploy-vinahost.sh` (local, operator-only). Health check: `ssh root@$VINAHOST_IP /root/vps-status.sh`. Bot-guarded sources: `vps-scripts/fetch-browser.py` (Playwright/Chromium headless).
 
 ### Price Proxy (`vn-price-fetch.service`)
 
