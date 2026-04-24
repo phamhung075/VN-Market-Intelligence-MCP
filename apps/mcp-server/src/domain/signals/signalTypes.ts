@@ -67,6 +67,15 @@ export interface ChainCatalystFindingData {
     /** Human-readable reasoning (e.g. "IMF growth forecast ↑ supports banking NIM expansion") */
     reasoning: string;
   } | undefined;
+
+  /** Aggregated news sentiment score from sentimentClassifier [-1.0, 1.0]. Optional. */
+  newsSentiment?: number | undefined;
+
+  /** Kinh Dich hexagram confidence score [0, 100]. Optional. */
+  kinhDichConfidence?: number | undefined;
+
+  /** Majority vote from agent signals: "BUY" | "SELL" | "NEUTRAL". Optional. */
+  agentSignalsMajority?: "BUY" | "SELL" | "NEUTRAL" | undefined;
 }
 
 export const ChainCatalystFindingDataSchema = z.object({
@@ -91,6 +100,9 @@ export const ChainCatalystFindingDataSchema = z.object({
     affectedSectors: z.array(z.string()),
     reasoning: z.string().min(1),
   }).optional(),
+  newsSentiment: z.number().min(-1).max(1).optional(),
+  kinhDichConfidence: z.number().min(0).max(100).optional(),
+  agentSignalsMajority: z.enum(["BUY", "SELL", "NEUTRAL"]).optional(),
 });
 
 // ── PriceConfirmationFindingData ───────────────────────────────────────────────
