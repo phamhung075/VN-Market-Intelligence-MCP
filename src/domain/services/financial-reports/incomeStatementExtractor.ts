@@ -23,6 +23,7 @@
 
 import { parseVnNumber } from "../vnNumberParser.js";
 import type { IncomeStatement } from "../../../../bctc-schema";
+import { guardFinancialField } from "./extractorGuards.js";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -525,38 +526,38 @@ export function extractIncomeStatement(rawText: string): IncomeStatement {
   }
 
   return {
-    grossRevenue: grossRevenue * m,
-    revenueDeductions: revenueDeductions * m,
-    netRevenue: netRevenue * m,
-    cogs: cogs * m,
-    grossProfit: grossProfit * m,
+    grossRevenue:         guardFinancialField(grossRevenue * m,         "grossRevenue",         grossRevenue),
+    revenueDeductions:    guardFinancialField(revenueDeductions * m,    "revenueDeductions",    revenueDeductions),
+    netRevenue:           guardFinancialField(netRevenue * m,           "netRevenue",           netRevenue),
+    cogs:                 guardFinancialField(cogs * m,                 "cogs",                 cogs),
+    grossProfit:          guardFinancialField(grossProfit * m,          "grossProfit",          grossProfit),
 
-    financialIncome: financialIncome * m,
-    financialExpenses: financialExpenses * m,
-    interestExpenses: interestExpenses * m,
-    shareOfAssociates: shareOfAssociates * m,
+    financialIncome:      guardFinancialField(financialIncome * m,      "financialIncome",      financialIncome),
+    financialExpenses:    guardFinancialField(financialExpenses * m,    "financialExpenses",    financialExpenses),
+    interestExpenses:     guardFinancialField(interestExpenses * m,     "interestExpenses",     interestExpenses),
+    shareOfAssociates:    guardFinancialField(shareOfAssociates * m,    "shareOfAssociates",    shareOfAssociates),
 
-    sellingExpenses: sellingExpenses * m,
-    adminExpenses: adminExpenses * m,
+    sellingExpenses:      guardFinancialField(sellingExpenses * m,      "sellingExpenses",      sellingExpenses),
+    adminExpenses:        guardFinancialField(adminExpenses * m,        "adminExpenses",        adminExpenses),
 
-    operatingProfit: operatingProfit * m,
-    otherIncome: otherIncome * m,
-    otherExpenses: otherExpenses * m,
-    otherProfit: otherProfit * m,
+    operatingProfit:      guardFinancialField(operatingProfit * m,      "operatingProfit",      operatingProfit),
+    otherIncome:          guardFinancialField(otherIncome * m,          "otherIncome",          otherIncome),
+    otherExpenses:        guardFinancialField(otherExpenses * m,        "otherExpenses",        otherExpenses),
+    otherProfit:          guardFinancialField(otherProfit * m,          "otherProfit",          otherProfit),
 
-    profitBeforeTax: profitBeforeTax * m,
-    incomeTaxCurrent: incomeTaxCurrent * m,
-    incomeTaxDeferred: incomeTaxDeferred * m,
-    totalIncomeTax: totalIncomeTax * m,
+    profitBeforeTax:      guardFinancialField(profitBeforeTax * m,      "profitBeforeTax",      profitBeforeTax),
+    incomeTaxCurrent:     guardFinancialField(incomeTaxCurrent * m,     "incomeTaxCurrent",     incomeTaxCurrent),
+    incomeTaxDeferred:    guardFinancialField(incomeTaxDeferred * m,    "incomeTaxDeferred",    incomeTaxDeferred),
+    totalIncomeTax:       guardFinancialField(totalIncomeTax * m,       "totalIncomeTax",       totalIncomeTax),
 
-    netProfit: netProfit * m,
-    minorityInterest: minorityInterest * m,
-    netProfitParent: netProfitParent * m,
+    netProfit:            guardFinancialField(netProfit * m,            "netProfit",            netProfit),
+    minorityInterest:     guardFinancialField(minorityInterest * m,     "minorityInterest",     minorityInterest),
+    netProfitParent:      guardFinancialField(netProfitParent * m,      "netProfitParent",      netProfitParent),
 
-    eps,          // EPS is in VND per share, NOT scaled
-    dilutedEps,   // EPS is in VND per share, NOT scaled
+    eps,           // EPS in VND/share — NOT scaled, NOT guarded
+    dilutedEps,    // EPS in VND/share — NOT scaled, NOT guarded
 
-    ebitda: ebitda * m,
-    ebit: ebit * m,
+    ebitda:               guardFinancialField(ebitda * m,               "ebitda",               ebitda),
+    ebit:                 guardFinancialField(ebit * m,                 "ebit",                 ebit),
   };
 }
