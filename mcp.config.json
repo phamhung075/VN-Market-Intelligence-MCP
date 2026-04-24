@@ -108,16 +108,6 @@
     "curatedMarketIds": []
   },
 
-  "scheduler": {
-    "intelligenceCycle": "*/15 * * * *",
-    "morningBriefing": "0 8 * * 1-5",
-    "marketOpen": "0 9 * * 1-5",
-    "marketClose": "30 15 * * 1-5",
-    "sscCheck": "0 20 * * *",
-    "eveningSummary": "0 22 * * 1-5",
-    "predictionMarketPoll": "*/30 * * * *"
-  },
-
   "alerts": {
     "defaultDropPct": -3,
     "defaultRisePct": 5,
