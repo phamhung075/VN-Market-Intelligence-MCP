@@ -68,6 +68,14 @@ export interface ConvictionInput {
    * undefined -> neutral (no reading available, maps to 0.5).
    */
   kinhDichScore?: number;
+
+  // ── New signal fields (Task 1328d) ─────────────────────────────────────────
+  /** From ChainCatalystFindingData.newsSentiment [-1.0, 1.0]. Overrides sentimentDirection when present and sentimentDirection is absent. */
+  newsSentimentScore?: number;
+  /** From ChainCatalystFindingData.kinhDichConfidence [0, 100]. Overrides kinhDichScore when present and kinhDichScore is absent. */
+  kinhDichConfidenceRaw?: number;
+  /** From ChainCatalystFindingData.agentSignalsMajority. Used as secondary cascade signal when cascadeDirection is absent. */
+  agentSignalsMajority?: "BUY" | "SELL" | "NEUTRAL";
 }
 
 /** Result of conviction scoring. */
@@ -161,7 +169,12 @@ function scoreSentiment(
   if (!direction || direction === "neutral" || !confidence) return 0.5;
   // Does sentiment agree with price direction?
   if (direction === priceDirection) return 0.5 + confidence * 0.5; // agrees
-  if (priceDirection === "neutral") return 0.5;
+  if (priceDirection === "neutral") {
+    // No price direction yet — sentiment stands on its own
+    return direction === "bullish"
+      ? 0.5 + confidence * 0.5
+      : 0.5 - confidence * 0.4;
+  }
   return 0.5 - confidence * 0.4; // disagrees - lower score
 }
 
@@ -173,7 +186,12 @@ function scoreCascade(
   if (!cascadeDir || cascadeDir === "neutral" || !cascadeConf) return 0.5;
   const cascadeSentiment = cascadeDir === "up" ? "bullish" : "bearish";
   if (cascadeSentiment === priceDirection) return 0.5 + cascadeConf * 0.5;
-  if (priceDirection === "neutral") return 0.5;
+  if (priceDirection === "neutral") {
+    // No price direction yet — cascade stands on its own
+    return cascadeDir === "up"
+      ? 0.5 + cascadeConf * 0.5
+      : 0.5 - cascadeConf * 0.4;
+  }
   return 0.5 - cascadeConf * 0.4;
 }
 
@@ -259,6 +277,49 @@ export function deriveKinhDichScore(
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Enrichment helper (Task 1328d)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Enriches a ConvictionInput with the three new signal fields.
+ * Pure function — returns new ConvictionInput, does not mutate input.
+ *
+ * Rules:
+ *   newsSentimentScore [-1,1] → sentimentDirection + sentimentConfidence
+ *     (only when sentimentDirection is not already set)
+ *   kinhDichConfidenceRaw [0,100] → kinhDichScore [-1,+1]
+ *     (only when kinhDichScore is not already set; direction from agentSignalsMajority)
+ *   agentSignalsMajority → cascadeDirection
+ *     (only when cascadeDirection is not already set)
+ */
+export function enrichDimensionScores(input: ConvictionInput): ConvictionInput {
+  const enriched = { ...input };
+
+  if (input.newsSentimentScore != null && enriched.sentimentDirection == null) {
+    enriched.sentimentDirection =
+      input.newsSentimentScore > 0.1 ? "bullish" :
+      input.newsSentimentScore < -0.1 ? "bearish" : "neutral";
+    enriched.sentimentConfidence = Math.abs(input.newsSentimentScore);
+  }
+
+  if (input.kinhDichConfidenceRaw != null && enriched.kinhDichScore == null) {
+    const sign =
+      input.agentSignalsMajority === "BUY" ? 1 :
+      input.agentSignalsMajority === "SELL" ? -1 : 0;
+    enriched.kinhDichScore = sign * (input.kinhDichConfidenceRaw / 100);
+  }
+
+  if (input.agentSignalsMajority != null && enriched.cascadeDirection == null) {
+    enriched.cascadeDirection =
+      input.agentSignalsMajority === "BUY" ? "up" :
+      input.agentSignalsMajority === "SELL" ? "down" : "neutral";
+    enriched.cascadeConfidence = 0.6;
+  }
+
+  return enriched;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Public API
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -272,32 +333,35 @@ export function deriveKinhDichScore(
  * result as passing `kinhDichScore: undefined` (maps to neutral 0.5).
  */
 export function computeConviction(input: ConvictionInput): ConvictionResult {
+  // Enrich with new signal fields (Task 1328d) — pure, no mutation
+  const enriched = enrichDimensionScores(input);
+
   // Dimension 1: Price action
-  const price = scorePriceAction(input.changePct);
+  const price = scorePriceAction(enriched.changePct);
   const priceDirection = price.direction;
 
   // Dimension 2: Volume
-  const vol = scoreVolume(input.volume, input.avgVolume);
+  const vol = scoreVolume(enriched.volume, enriched.avgVolume);
 
   // Dimension 3: Sentiment
   const sent = scoreSentiment(
-    input.sentimentDirection,
-    input.sentimentConfidence,
+    enriched.sentimentDirection,
+    enriched.sentimentConfidence,
     priceDirection,
   );
 
   // Dimension 4: Cascade
   const casc = scoreCascade(
-    input.cascadeDirection,
-    input.cascadeConfidence,
+    enriched.cascadeDirection,
+    enriched.cascadeConfidence,
     priceDirection,
   );
 
   // Dimension 5: Sector alignment
-  const sect = scoreSectorAlignment(input.changePct, input.sectorAvgPct);
+  const sect = scoreSectorAlignment(enriched.changePct, enriched.sectorAvgPct);
 
   // Dimension 6: Kinh Dich hexagram (Task 304)
-  const kd = scoreKinhDich(input.kinhDichScore);
+  const kd = scoreKinhDich(enriched.kinhDichScore);
 
   // Weighted average (6 dimensions summing to 1.0)
   const score = Math.round((
@@ -332,13 +396,13 @@ export function computeConviction(input: ConvictionInput): ConvictionResult {
 
   const agreeing = dims.length;
   const summary = agreeing >= 5
-    ? `${input.code} ${dirVi}: ${levelVi} - ${agreeing}/6 tín hiệu đồng thuận (${dims.join(", ")})`
+    ? `${enriched.code} ${dirVi}: ${levelVi} - ${agreeing}/6 tín hiệu đồng thuận (${dims.join(", ")})`
     : agreeing >= 2
-      ? `${input.code} ${dirVi}: ${levelVi} - ${dims.join(", ")} xác nhận`
-      : `${input.code}: ${levelVi} - tín hiệu mâu thuẫn, thận trọng`;
+      ? `${enriched.code} ${dirVi}: ${levelVi} - ${dims.join(", ")} xác nhận`
+      : `${enriched.code}: ${levelVi} - tín hiệu mâu thuẫn, thận trọng`;
 
   return {
-    code: input.code,
+    code: enriched.code,
     score,
     level,
     direction,
