@@ -20,7 +20,7 @@
 import type { RssItem } from "../models/shared-types.js";
 import type { DomainType } from "../../../bctc-schema.js";
 import { STOCK_CATALOG, detectStocksInText } from "./stockAliases.js";
-import { formatAnalysisNewsSummary } from "../../infrastructure/adapters/analysisFormatters.js";
+import { truncateNewsSummary } from "./textUtils.js";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Exported types
@@ -854,7 +854,7 @@ export function normalizeNews(item: RssItem): AnalysisEntry {
       : title
         ? title
         : content;
-  const summary = formatAnalysisNewsSummary(rawSummary);
+  const summary = truncateNewsSummary(rawSummary);
 
   // ── Reasoning ────────────────────────────────────────────────────────────
   const reasoningParts: string[] = [`Source: ${source || "unknown"}. Level: ${level}.`];
