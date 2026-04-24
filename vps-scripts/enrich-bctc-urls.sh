@@ -42,10 +42,15 @@ echo "$QUEUE" | jq -c '.queue[]' 2>/dev/null | while read -r ITEM; do
   YEAR=$(echo "$ITEM" | jq -r '.period_year' 2>/dev/null)
   QTR=$(echo "$ITEM"  | jq -r '.period_quarter' 2>/dev/null)
   
-  # Skip if already has source_url (don't parse queue hints)
-  SOURCE_HINTS=$(echo "$ITEM" | jq -r '.source_hints[]?' 2>/dev/null | head -1)
-  if [ -z "$SOURCE_HINTS" ]; then
-    echo "$(date -u) $CODE $YEAR-$QTR: no hints available — skip" >> "$LOG"
+  # buildQueueSourceHints (server-side) puts source_url FIRST when it is known,
+  # followed by fallback portal URLs. When source_url is null, hints[0] is the
+  # SSC fallback portal (congbothongtin.ssc.gov.vn/faces/NewsSearch).
+  # Skip items whose first hint is NOT a fallback portal — a direct URL was
+  # already discovered on the main server, no re-discovery needed.
+  # Process items whose first hint IS a fallback portal — source_url still null.
+  SOURCE_HINTS=$(echo "$ITEM" | jq -r '.source_hints[0]?' 2>/dev/null)
+  if [ -n "$SOURCE_HINTS" ] && ! echo "$SOURCE_HINTS" | grep -qF "congbothongtin.ssc.gov.vn/faces/NewsSearch"; then
+    echo "$(date -u) $CODE $YEAR-$QTR: URL already discovered ($SOURCE_HINTS) — skip" >> "$LOG"
     continue
   fi
 
