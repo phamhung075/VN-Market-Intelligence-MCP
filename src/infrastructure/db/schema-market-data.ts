@@ -48,6 +48,16 @@ export function initMarketDataTables(db: Database): void {
   `);
   try { db.exec(`ALTER TABLE market_prices ADD COLUMN exchange TEXT DEFAULT 'HOSE'`); } catch {}
 
+  // FIX-1327: Schema migration guard — clean up stale market_prices entries
+  // Keep only the last 30 days of price data for watchlist stocks
+  try {
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 3600 * 1000).toISOString();
+    db.prepare(`
+      DELETE FROM market_prices
+      WHERE updated_at < ? AND code IN (SELECT code FROM watchlist)
+    `).run(thirtyDaysAgo);
+  } catch { /* best effort */ }
+
   // ── Market Prices History ─────────────────────────────────────────────────
   db.exec(`
     CREATE TABLE IF NOT EXISTS market_prices_history (

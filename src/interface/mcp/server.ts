@@ -560,6 +560,30 @@ export async function createBunServer(
               });
             }
 
+            // ── FIX-1327: Detect stale watchlist tickers (>7 days) ────
+            // Emit WORK channel warning for each stale stock missing from recent push
+            try {
+              const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 3600 * 1000).toISOString();
+              const staleTickers = db.prepare(`
+                SELECT w.code, mp.updated_at
+                FROM watchlist w
+                LEFT JOIN market_prices mp ON w.code = mp.code
+                WHERE mp.updated_at IS NULL OR mp.updated_at < ?
+                ORDER BY w.code
+              `).all(sevenDaysAgo) as Array<{ code: string; updated_at: string | null }>;
+
+              for (const ticker of staleTickers) {
+                const lastUpdate = ticker.updated_at ? new Date(ticker.updated_at).toLocaleDateString() : "never";
+                const msg = `[push-prices] Stale watchlist ticker: ${ticker.code} (last update: ${lastUpdate})`;
+                await sendTelegramWork(msg, { parseMode: "" });
+                log.warn("[push-prices] Stale ticker detected", { code: ticker.code, lastUpdate });
+              }
+            } catch (err) {
+              log.error("[push-prices] Stale ticker detection failed", {
+                error: err instanceof Error ? err.message : String(err),
+              });
+            }
+
             const { detectSignals } = await import("../../domain/services/signalDetector.js");
             const { generateAlerts } = await import("../../domain/services/alertGenerator.js");
             const { storeAlerts } = await import("../../infrastructure/db/alertStore.js");
