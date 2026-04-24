@@ -61,8 +61,6 @@ CLAUDE.md (root — always loaded)
 │
 ├── docs/ARCHITECTURE.md (system design: folder tree, data flow, VPS price proxy + BCTC PDF proxy)
 │
-├── docs/archive/IMPLEMENTATION_STATUS.md (sprint history — reference only, moved 2026-04-25)
-│
 ├── docs/AI_TEAM_DESIGN.md (two-team architecture design)
 │
 ├── docs/GLOSSARY_VI.md (Vietnamese financial terms)
@@ -73,19 +71,7 @@ CLAUDE.md (root — always loaded)
 │
 ├── docs/data/code-janitor-known-findings.json (dedup state: fingerprints of known code findings — volatile)
 │
-├── docs/TASKS_ARCHIVE.md (index of done tasks by sprint)
-├── docs/archive/sprints-*.md (archived sprint task blocks — read-only history)
-│
-├── docs/historical/ (read-only reference, append-only — 249 task specs)
-│   ├── REQ_NNN.md (118 feature requirement specs — never delete)
-│   └── TECH_NNN.md (131 technical design specs — never delete)
-│
-└── docs/archive/ (read-only analysis/investigation/audit reports — 89 files)
-    ├── BCTC_*.md (14) — financial report investigations
-    ├── AUDIT_*.md (3) — system audits
-    ├── Investigation files (20) — INVESTIGATION_*.md, *_ANALYSIS.md
-    ├── Operational docs (28) — SPRINT_*, IMPLEMENTATION_*, SYSTEM_*, OPS_*, DEPLOYMENT_*
-    └── Other historical (24) — tool/skill inventories, blockers, architecture reviews
+└── docs/TASKS_ARCHIVE.md (index of done tasks by sprint)
 ```
 
 ## Deleted Files (merged into parents)
@@ -114,6 +100,19 @@ CLAUDE.md (root — always loaded)
 | `.claude/knowledge/ops-incident-response.md` | Ops / DevOps Lead | After incident discovery or procedure update |
 | `.claude/knowledge/vps-setup.md` | Ops / DevOps Lead | After VPS config change or new service |
 | `.claude/knowledge/*.md` (all others) | Architect / claude-manager-helper | Logic or rule change |
+
+## Archived Structure (Reference — for future reorganization)
+
+When file organization is restructured, these directories may be created:
+
+| Directory | Content | Purpose |
+|-----------|---------|---------|
+| `docs/archive/` | BCTC_*.md, AUDIT_*.md, investigation reports, operational docs | Read-only analysis/investigation archive (89 files max) |
+| `docs/historical/` | REQ_*.md, TECH_*.md | Append-only task specs (249 files) — never delete |
+
+Auto-file rules: patterns that trigger `→ docs/archive/`:
+- `*INVESTIGATION*.md`, `*_ANALYSIS.md`, `AUDIT_*.md`, `BCTC_*.md`
+- `DEPLOYMENT*.md`, `SPRINT_*`, `IMPLEMENTATION_*.md`, `SYSTEM_*.md`, `OPS_*.md`
 
 ## Drift Detection (System-Auditor)
 

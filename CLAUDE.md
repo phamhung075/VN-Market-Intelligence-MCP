@@ -49,10 +49,6 @@
 - **Microservices Architecture** (language choice, DDD pattern, monorepo, roadmap) → `docs/MICROSERVICES_DDD.md`
 - **Session Analysis** (2026-04-24 brainstorm summary) → `docs/SESSION_SUMMARY_20260424.md`
 
-**Read-only archives (organized subdirectories):**
-- Historical task specs → `docs/historical/REQ_*.md`, `docs/historical/TECH_*.md`
-- Analysis reports, investigations, audits → `docs/archive/` (BCTC_*.md, AUDIT_*.md, etc.)
-
 ---
 
 ## What this project is
@@ -128,20 +124,11 @@ If a knowledge file Read fails: `send_telegram(channel="work")` + `submit_feedba
 **`docs/data/*.json`** (volatile data, updated by agents):
 - tool-registry.json, cron-registry.json, project-stats.json, stock-classification.json
 
-**`docs/archive/`** (read-only, auto-manage):
-- BCTC_*.md, AUDIT_*.md, investigation/analysis files, deployment reports, sprint summaries
-- **Auto-file rule**: if file has "INVESTIGATION", "ANALYSIS", "AUDIT", "BCTC", "DEPLOYMENT", "SPRINT_*_", "SPRINT_*_SUMMARY", "OPS_*", "SYSTEM_*" → archive it immediately
-- Moved here 2026-04-25: 89 old files deduped from root
+### File Organization Rules (for future reorganization)
 
-**`docs/historical/`** (read-only, append-only):
-- REQ_NNN.md (all task reqs, 118 files)
-- TECH_NNN.md (all tech specs, 131 files)
-- NEVER delete or modify — canonical reference for all tasks ever assigned
-- Moved here 2026-04-25: 249 task specs from cluttered root
-
-**FILE PLACEMENT DECISION TREE** (mandatory):
+**FILE PLACEMENT DECISION TREE** (mandatory when organizing files):
 ```
-If creating a new .md file:
+If creating or reorganizing .md files:
   1. Is it logic/rules/policy? → `.claude/knowledge/`
   2. Is it core architecture/design (used weekly)? → `docs/` (ROOT ONLY)
   3. Is it session analysis/memory? → `/memory/` (auto-save via MCP tool)
@@ -151,9 +138,12 @@ If creating a new .md file:
   7. Root files only: CLAUDE.md, TASKS.md, SPRINT_GOAL.md, README.md
 ```
 
-**Enforcement** (auto-cleanup task):
-- Weekly: `find docs/*.md -not -name "ARCHITECTURE.md" -not -name "AI_TEAM_DESIGN.md" -not -name "GLOSSARY_VI.md" -not -name "MICROSERVICES_DDD.md" -not -name "SESSION_SUMMARY*" -not -name "TASKS_ARCHIVE.md" | xargs -I {} mv {} docs/archive/`
-- Violators trigger auto-commit with message "chore: enforce docs/ organization" before next work task
+**Auto-file rule** (patterns that trigger archiving):
+- `*INVESTIGATION*.md`, `*_ANALYSIS.md`, `AUDIT_*.md`, `BCTC_*.md`
+- `DEPLOYMENT*.md`, `SPRINT_*`, `IMPLEMENTATION_*.md`, `SYSTEM_*.md`, `OPS_*.md`
+
+**Enforcement** (when restructuring):
+- `find docs/*.md -not -name "ARCHITECTURE.md" -not -name "AI_TEAM_DESIGN.md" -not -name "GLOSSARY_VI.md" -not -name "MICROSERVICES_DDD.md" -not -name "SESSION_SUMMARY*" -not -name "TASKS_ARCHIVE.md" | xargs -I {} mv {} docs/archive/`
 
 ---
 
@@ -177,7 +167,7 @@ Endpoints: `GET /sse` | `POST /messages?sessionId=<id>` | `GET /health`
 
 Start feature: `Use @po agent: "I want to add [feature]. Investment goal: [why]."`
 
-Artifacts: `docs/historical/REQ_NNN.md` (BA specs) | `docs/historical/TECH_NNN.md` (Architect designs) | `reports/TASK_REPORT_NNN.md` (QA reviews) | `SPRINT_GOAL.md` (PO sprint goal)
+Artifacts: `reports/TASK_REPORT_NNN.md` (QA reviews) | `SPRINT_GOAL.md` (PO sprint goal)
 
 Claude Desktop: `{ "mcpServers": { "vn-market": { "url": "http://localhost:3000/sse" } } }`
 
