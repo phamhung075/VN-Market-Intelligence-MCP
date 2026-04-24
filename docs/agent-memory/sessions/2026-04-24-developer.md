@@ -1,3 +1,9 @@
+### Task 1328b: validator-propagation verification
+- **Files**: `apps/mcp-server/src/__tests__/1328b-validator-propagation.test.ts` (created, 105 lines)
+- **Finding**: `SIGNAL_TYPE_VALIDATORS.chain_catalyst` in `agentSignalTools.ts` already imports `ChainCatalystFindingDataSchema` by reference. Schema changes from 1328a auto-propagate — zero code changes needed. `PayloadSchema.passthrough()` is irrelevant since new fields live in `finding_data`, not the top-level payload.
+- **Pattern**: Zod schema imported by reference = changes in domain layer propagate to interface layer at import time. No glue code required.
+- **Status**: Ready for QA — branch task/1328b-validator — NO_CHANGES_NEEDED, 9 new tests GREEN
+
 ### DDD Phase 2b: kinh-dich-service + alert-engine (20:30–22:00)
 - **Files changed**: apps/kinh-dich-service/ (14 files), apps/alert-engine/ (14 files), apps/api-gateway/src/index.ts, docker-compose.yml
 - **Finding**: hexagramLibrary.ts in mcp-server is 1028 lines of raw data — embedded minimal QUE_DATA (64 entries) directly in domain/services.ts instead of copying wholesale. This keeps the service self-contained without a file read at startup.
