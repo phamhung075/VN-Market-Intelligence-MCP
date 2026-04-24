@@ -226,3 +226,20 @@ correction_vs_handoff:
 - WatchlistEntry shape: handoff said code+domain but actual interface is actionCode+domain+exchange — map fixed in bctcOverdueCheckJob and tests
 - CausalChain shape: handoff used chain.domainEntries+direction but actual is chain.entries (filter level=domain)+sentiment — tests updated
 - Taiwan escalation test: both bearish and bullish tech entries coexist (generic FDI rule also fires tech_up) — assertion changed to find() bearish specifically
+
+---
+
+## [QA] Review Record
+
+verdict: APPROVED
+blocking_issues: []
+non_blocking:
+- bctcOverdueCheckJob.ts:285 — exchange hardcoded "HOSE" (WatchlistRow has no exchange field; acceptable default for fire-and-forget context)
+
+files_confirmed_clean:
+- /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/domain/services/cascadeEngine.ts
+- /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/domain/services/tradeRelationships.ts
+- /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/scheduler/financial-reports/bctcOverdueCheckJob.ts
+- /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/__tests__/1303i-cascade-gaps.test.ts
+
+merge_commit: (fill after merge)
