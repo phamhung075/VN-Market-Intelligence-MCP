@@ -97,11 +97,91 @@ services:
       retries: 3
       start_period: 30s
 
-  # ── Phase 2a placeholders ─────────────────────────────────────────────────
-  # api-gateway:         { build: apps/api-gateway,         ports: ["4000:4000"] }
-  # stock-price:         { build: apps/stock-price,         ports: ["5000:5000"] }
-  # technical-analysis:  { build: apps/technical-analysis,  ports: ["5003:5003"] }
-  # macro-indicators:    { build: apps/macro-indicators,    ports: ["5004:5004"] }
+  # ── Phase 2a: Technical Analysis (TypeScript/Bun) ───────────────────────
+  technical-analysis:
+    build:
+      context: apps/technical-analysis
+      dockerfile: Dockerfile
+    ports:
+      - "5003:5003"
+    volumes:
+      - ./data:/app/data
+    environment:
+      - PORT=5003
+      - DB_PATH=/app/data/market.db
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:5003/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # ── Phase 2a: Macro Indicators (TypeScript/Bun) ─────────────────────────
+  macro-indicators:
+    build:
+      context: apps/macro-indicators
+      dockerfile: Dockerfile
+    ports:
+      - "5004:5004"
+    volumes:
+      - ./data:/app/data
+    environment:
+      - PORT=5004
+      - DB_PATH=/app/data/market.db
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:5004/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # ── Phase 2a: Stock Price (TypeScript/Bun) ──────────────────────────────
+  stock-price:
+    build:
+      context: apps/stock-price
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./data:/app/data
+    environment:
+      - PORT=5000
+      - DB_PATH=/app/data/market.db
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # ── Phase 2a: API Gateway (TypeScript/Bun) ──────────────────────────────
+  api-gateway:
+    build:
+      context: apps/api-gateway
+      dockerfile: Dockerfile
+    ports:
+      - "4000:4000"
+    environment:
+      - PORT=4000
+      - MCP_URL=http://mcp-server:3000
+      - PDF_URL=http://pdf-extractor:5001
+      - RAG_URL=http://rag-service:5002
+      - TA_URL=http://technical-analysis:5003
+      - MACRO_URL=http://macro-indicators:5004
+      - STOCK_URL=http://stock-price:5000
+    restart: unless-stopped
+    depends_on:
+      mcp-server:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:4000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
 
   # ── Phase 2b placeholders ─────────────────────────────────────────────────
   # kinh-dich-service:   { build: apps/kinh-dich-service,   ports: ["5005:5005"] }
