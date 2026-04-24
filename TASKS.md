@@ -13,21 +13,27 @@
 
 ---
 
-## Sprint 1296 — COMPLETE (1296a Done, 1296b impl in 1296) — details: `docs/archive/TASK_DETAILS_ARCHIVE.md`
+## Sprints 1296–1302 — COMPLETE — details: `docs/archive/TASK_DETAILS_ARCHIVE.md`
+- 1296: IMF research + classifier design | 1297a: fail-loud injection (done) | 1298: IMF test coverage (6508+ tests)
+- 1299: token reduction 65k→<30k (6590 tests) | 1300: TelegramMessageFactory (6573 tests) | 1302: textUtils.ts DDD fix (6606 tests)
+- Task 1304: newsNormalizer DDD import fix (merge 4ca649a7)
 
 ---
 
-## Sprint 1297 — IN PROGRESS (1297a Done, 1297b Review, 1297c Todo) — details: `docs/archive/TASK_DETAILS_ARCHIVE.md`
+## Sprint 1297 — IN PROGRESS (1297a Done, 1297b Review, 1297c Todo)
 
----
+| ID | Title | Layer | Status |
+|----|-------|-------|--------|
+| 1297a | Fail-Loud Protocol Injection (16 agents) | agents | Done |
+| 1297b | BCTC Portal URL Discovery Fix | vps-scripts | Review |
+| 1297c | VPS Validation of BCTC Portal Fix | ops | Todo (blocked on 1297b) |
 
-## Sprint 1298 — COMPLETE (1298a/b Done, IMF test coverage complete, 6508+ tests) — details: `docs/archive/TASK_DETAILS_ARCHIVE.md`
-
-## Sprint 1299 — COMPLETE (1299a/b/c Done, 65k→<30k token reduction, 6590 tests) — details: `docs/archive/TASK_DETAILS_ARCHIVE.md`
-
-## Sprint 1300 — COMPLETE (1300a/b Done, TelegramMessageFactory, 7 truncation bugs fixed, 6573 tests) — details: `docs/archive/TASK_DETAILS_ARCHIVE.md`
-
-## Sprint 1302 — COMPLETE (1302a/b Done, textUtils.ts, DDD violation fixed, 6606 tests) — details: `docs/archive/TASK_DETAILS_ARCHIVE.md`
+### 1297b — BCTC Portal URL Discovery Fix
+context: `docs/handoffs/TASK_1297b.md`
+branch: main (merged a52c34b1)
+layer: vps-scripts
+files_modified: `vps-scripts/discover-bctc-urls-browser.py`
+AC: HNX AJAX POST mapped, UPCOM same flow, HOSE informative error, ≥2/3 VNM/BID/FPT re-test pass on VPS
 
 ---
 
@@ -41,29 +47,13 @@
 | 1303d | Test log contamination: extend schema cleanup | infra | Done | #2590 |
 | 1303e | pipelineWatchdog + vpsProxyWatchdog: remove MARKET channel spam | scheduler | Done | #2596 |
 | 1303f | append_session_record: add content deduplication | interface | Done | SEC |
-| 1303g | UNBLOCK — VPS all-services down (prices/BCTC/news/FX/flow) | ops | Todo | #2598,2599,2604,2607 |
+| 1303g | UNBLOCK — VPS all-services down (prices/BCTC/news/FX/flow) | ops | Done | #2598,2599,2604,2607 |
 | 1303h | SPRINT — BCTC PDF parser impossible figures | domain | Done | #2597,2608,2610 |
 | 1303i | SPRINT — Cascade rule gaps (geo/BCTC overdue/trade map) | domain | Done | #2595,2600,2602 |
 
-**Status:** 1303a–1303f, 1303h, 1303i DONE. 1303g BLOCKED on ops. WIP: 0/2.
+**Status:** 1303a–1303i DONE. WIP: 0/2.
 
-### 1303h — BCTC PDF Parser Impossible Figures Guard
-context: `docs/handoffs/TASK_1303h.md`
-branch: `task/1303h-impossible-figures-guard`
-layer: domain
-depends: none
-files_create: `src/domain/services/financial-reports/extractorGuards.ts`, `src/__tests__/1303h-extractor-guards.test.ts`
-files_modify: `incomeStatementExtractor.ts` (return block), `balanceSheetExtractor.ts` (post-applyMultiplier)
-AC: `guardFinancialField(600T,...)→0 + warn`, `guardBalanceSheet` applied on BS, VNM-scale passes, `bun tsc` clean
-
-### 1303i — Cascade Rule Gaps (Geo/BCTC-Overdue/Trade-Map)
-context: `docs/handoffs/TASK_1303i.md`
-branch: `task/1303i-cascade-gaps`
-layer: domain + scheduler
-depends: none
-files_create: `src/__tests__/1303i-cascade-gaps.test.ts`
-files_modify: `cascadeEngine.ts` (Taiwan rules), `tradeRelationships.ts` (taiwan keywords + 4 profiles + 4 relevance entries), `bctcOverdueCheckJob.ts` (fire-and-forget runImpactChain)
-AC: Taiwan strait → tech "down" in chain, BCTC overdue → runImpactChain called, DHG/GMD/CTD/NKG profiles exist, `bun tsc` clean
+### 1303h/1303i — DONE — details: `docs/handoffs/TASK_1303h.md`, `docs/handoffs/TASK_1303i.md`
 
 ---
 
