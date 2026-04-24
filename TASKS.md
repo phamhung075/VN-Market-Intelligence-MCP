@@ -45,10 +45,10 @@ User goal: Help traders make better decisions with complete transparency (convic
 
 | ID | Title | Layer | Status | Size | Handoff |
 |----|-------|-------|--------|------|---------|
-| 1328a | Add signal fields: newsSentiment, kinhDichConfidence, agentSignalsMajority to signalTypes.ts | domain/signals | Todo | S | `docs/handoffs/TASK_1328a.md` |
-| 1328b | Update Zod validators to accept new optional fields (agentSignalTools.ts) | interface/validation | Todo | S | `docs/handoffs/TASK_1328b.md` |
-| 1328c | DB migration: ALTER TABLE agent_signals (add 3 columns) | infra/db | Todo | S | `docs/handoffs/TASK_1328c.md` |
-| 1328d | Update convictionScorer: enrichDimensionScores() + use new fields | domain/services | Todo | M | `docs/handoffs/TASK_1328d.md` |
+| 1328a | Add signal fields: newsSentiment, kinhDichConfidence, agentSignalsMajority to signalTypes.ts | domain/signals | Done | S | `docs/handoffs/TASK_1328a.md` |
+| 1328b | Update Zod validators to accept new optional fields (agentSignalTools.ts) | interface/validation | Review | S | `docs/handoffs/TASK_1328b.md` |
+| 1328c | DB migration: ALTER TABLE agent_signals (add 3 columns) | infra/db | Review | S | `docs/handoffs/TASK_1328c.md` |
+| 1328d | Update convictionScorer: enrichDimensionScores() + use new fields | domain/services | Review | M | `docs/handoffs/TASK_1328d.md` |
 | 1328e | Format & display full conviction breakdown (6 dimensions, no truncation) in alerts | interface/telegram | Todo | M | `docs/handoffs/TASK_1328e.md` |
 
 **Dependencies:** 1328a → 1328b,1328c,1328d. 1328d → 1328e.
