@@ -61,7 +61,7 @@ CLAUDE.md (root — always loaded)
 │
 ├── docs/ARCHITECTURE.md (system design: folder tree, data flow, VPS price proxy + BCTC PDF proxy)
 │
-├── docs/IMPLEMENTATION_STATUS.md (sprint history — reference only, not for volatile stats)
+├── docs/archive/IMPLEMENTATION_STATUS.md (sprint history — reference only, moved 2026-04-25)
 │
 ├── docs/AI_TEAM_DESIGN.md (two-team architecture design)
 │
@@ -76,13 +76,16 @@ CLAUDE.md (root — always loaded)
 ├── docs/TASKS_ARCHIVE.md (index of done tasks by sprint)
 ├── docs/archive/sprints-*.md (archived sprint task blocks — read-only history)
 │
-└── docs/historical/ (read-only reference, no maintenance required)
-    ├── docs/AGENT_REWRITE_SPEC.md (agent rewrite plan 2026-04-03 — historical)
-    ├── docs/SPRINT_039_ANALYSIS.md (sprint 039 post-mortem — historical)
-    ├── docs/SYSTEM_OPTIMIZATION_ANALYSIS.md (optimization analysis 2026-04-02 — historical)
-    ├── docs/TEST_OOM_INVESTIGATION.md (OOM investigation — historical)
-    ├── docs/CRON_JOBS.md (pointer stub → cron-jobs.md — historical redirect)
-    └── docs/REQ_NNN.md / docs/TECH_NNN.md (feature requirements + technical specs per task — historical)
+├── docs/historical/ (read-only reference, append-only — 249 task specs)
+│   ├── REQ_NNN.md (118 feature requirement specs — never delete)
+│   └── TECH_NNN.md (131 technical design specs — never delete)
+│
+└── docs/archive/ (read-only analysis/investigation/audit reports — 89 files)
+    ├── BCTC_*.md (14) — financial report investigations
+    ├── AUDIT_*.md (3) — system audits
+    ├── Investigation files (20) — INVESTIGATION_*.md, *_ANALYSIS.md
+    ├── Operational docs (28) — SPRINT_*, IMPLEMENTATION_*, SYSTEM_*, OPS_*, DEPLOYMENT_*
+    └── Other historical (24) — tool/skill inventories, blockers, architecture reviews
 ```
 
 ## Deleted Files (merged into parents)

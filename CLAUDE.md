@@ -41,14 +41,17 @@
 - Project stats (sprint number, counts) → `docs/data/project-stats.json`
 
 ### Docs (reference, rarely changes)
+**Active docs (in `docs/` root — 6 core files only):**
 - Architecture, folder tree, data flow → `docs/ARCHITECTURE.md`
-- Sprint-by-sprint implementation history → `docs/IMPLEMENTATION_STATUS.md`
 - Two-team AI architecture design → `docs/AI_TEAM_DESIGN.md`
-- Dev workflow + branch hygiene → `.claude/WORKFLOW.md`
 - Vietnamese financial terms → `docs/GLOSSARY_VI.md`
 - Historical / Done tasks → `docs/TASKS_ARCHIVE.md`
 - **Microservices Architecture** (language choice, DDD pattern, monorepo, roadmap) → `docs/MICROSERVICES_DDD.md`
 - **Session Analysis** (2026-04-24 brainstorm summary) → `docs/SESSION_SUMMARY_20260424.md`
+
+**Read-only archives (organized subdirectories):**
+- Historical task specs → `docs/historical/REQ_*.md`, `docs/historical/TECH_*.md`
+- Analysis reports, investigations, audits → `docs/archive/` (BCTC_*.md, AUDIT_*.md, etc.)
 
 ---
 
@@ -119,26 +122,38 @@ If a knowledge file Read fails: `send_telegram(channel="work")` + `submit_feedba
 **`.claude/knowledge/*.md`** (logic, rules, stable):
 - Tree map, MCP tools, cron jobs, alert policy, agent roster, DDD standards, fail-loud protocol, restart policy, incident response, VPS setup, market analysis, QA checklist
 
-**`docs/*.md`** (architecture, design, reference):
-- ARCHITECTURE.md, AI_TEAM_DESIGN.md, IMPLEMENTATION_STATUS.md, GLOSSARY_VI.md, MICROSERVICES_DDD.md, SESSION_SUMMARY_*.md
+**`docs/*.md`** (CORE ONLY — 6 active files, no clutter):
+- ARCHITECTURE.md, AI_TEAM_DESIGN.md, GLOSSARY_VI.md, MICROSERVICES_DDD.md, SESSION_SUMMARY_*.md, TASKS_ARCHIVE.md
 
 **`docs/data/*.json`** (volatile data, updated by agents):
 - tool-registry.json, cron-registry.json, project-stats.json, stock-classification.json
 
-**`docs/archive/`** (read-only task reports, analysis, old sessions):
-- ANALYST_FINDINGS_*.md, SPRINT_*_DELIVERY.md, BCTC_*.md, COWORK_REFRESH_*.md, DIAGNOSTIC_*.md, etc.
+**`docs/archive/`** (read-only, auto-manage):
+- BCTC_*.md, AUDIT_*.md, investigation/analysis files, deployment reports, sprint summaries
+- **Auto-file rule**: if file has "INVESTIGATION", "ANALYSIS", "AUDIT", "BCTC", "DEPLOYMENT", "SPRINT_*_", "SPRINT_*_SUMMARY", "OPS_*", "SYSTEM_*" → archive it immediately
+- Moved here 2026-04-25: 89 old files deduped from root
 
-**`docs/historical/`** (read-only reference, no maintenance):
-- REQ_NNN.md, TECH_NNN.md, *_ANALYSIS.md, *_INVESTIGATION.md
+**`docs/historical/`** (read-only, append-only):
+- REQ_NNN.md (all task reqs, 118 files)
+- TECH_NNN.md (all tech specs, 131 files)
+- NEVER delete or modify — canonical reference for all tasks ever assigned
+- Moved here 2026-04-25: 249 task specs from cluttered root
 
-**RULE:** If you create a document:
-1. Ask: Is it logic/rule? → `.claude/knowledge/`
-2. Ask: Is it architecture/design? → `docs/`
-3. Ask: Is it task report/analysis? → `docs/archive/`
-4. Ask: Is it volatile data? → `docs/data/` (JSON only)
-5. Never create `.md` files in root except the 4 canonical ones above.
-6. After creation, commit + update CLAUDE.md pointers if needed.
-7. After session analysis → save memory files to `/memory/` instead of creating root files.
+**FILE PLACEMENT DECISION TREE** (mandatory):
+```
+If creating a new .md file:
+  1. Is it logic/rules/policy? → `.claude/knowledge/`
+  2. Is it core architecture/design (used weekly)? → `docs/` (ROOT ONLY)
+  3. Is it session analysis/memory? → `/memory/` (auto-save via MCP tool)
+  4. Is it task report/investigation/BCTC/AUDIT? → `docs/archive/`
+  5. Is it old task spec (REQ/TECH)? → `docs/historical/`
+  6. Volatile data counts? → `docs/data/` (JSON only)
+  7. Root files only: CLAUDE.md, TASKS.md, SPRINT_GOAL.md, README.md
+```
+
+**Enforcement** (auto-cleanup task):
+- Weekly: `find docs/*.md -not -name "ARCHITECTURE.md" -not -name "AI_TEAM_DESIGN.md" -not -name "GLOSSARY_VI.md" -not -name "MICROSERVICES_DDD.md" -not -name "SESSION_SUMMARY*" -not -name "TASKS_ARCHIVE.md" | xargs -I {} mv {} docs/archive/`
+- Violators trigger auto-commit with message "chore: enforce docs/ organization" before next work task
 
 ---
 
@@ -162,7 +177,7 @@ Endpoints: `GET /sse` | `POST /messages?sessionId=<id>` | `GET /health`
 
 Start feature: `Use @po agent: "I want to add [feature]. Investment goal: [why]."`
 
-Artifacts: `docs/REQ_NNN.md` (BA) | `docs/TECH_NNN.md` (Architect) | `reports/TASK_REPORT_NNN.md` (QA) | `SPRINT_GOAL.md` (PO)
+Artifacts: `docs/historical/REQ_NNN.md` (BA specs) | `docs/historical/TECH_NNN.md` (Architect designs) | `reports/TASK_REPORT_NNN.md` (QA reviews) | `SPRINT_GOAL.md` (PO sprint goal)
 
 Claude Desktop: `{ "mcpServers": { "vn-market": { "url": "http://localhost:3000/sse" } } }`
 
