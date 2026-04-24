@@ -241,15 +241,17 @@ describe("Task 061 — News Normalizer", () => {
     expect(entry.sourceTitle).toBe("(no title)");
   });
 
-  it("summary is (title + '. ' + content) sliced to 500 chars", () => {
-    const longContent = "A".repeat(600);
+  it("summary is (title + '. ' + content) sliced to 1000 chars", () => {
+    // Use word-separated content so smartTruncate cuts at a word boundary
+    // beyond the title, not before it.
+    const longContent = "word ".repeat(240); // 1200 chars with spaces
     const item = makeItem({
       source: "cafef",
       title: "Test title",
       content: longContent,
     });
     const entry = normalizeNews(item);
-    expect(entry.summary.length).toBeLessThanOrEqual(500);
+    expect(entry.summary.length).toBeLessThanOrEqual(1001); // 1000 graphemes + optional "…"
     expect(entry.summary.startsWith("Test title. ")).toBe(true);
   });
 

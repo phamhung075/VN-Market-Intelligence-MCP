@@ -183,3 +183,13 @@
 - **Finding**: Fetched 15 news items (cafef, vnexpress, reuters, vneconomy). High-impact items: VnExpress unit +70% profit, SJ Group billion-dong target, HSC capital raise, self-dealing reduction. Impact chains: VCB affected by sector self-dealing reduction (confidence 50%, bearish, Kinh Dịch 56-Lữ). No legal risks detected. No crisis velocity. System health: Foreign-flow circuit HALF-OPEN (365 failures), commodity data 4 days stale.",
 <parameter name="fix">Posted chain_catalyst signal #1422 (VCB self-dealing bearish). Created issue files: foreign-flow-circuit.md, commodity-data-stale.md. Submitted high-priority feedback to @ops (VPS circuit), medium-priority to @dev (commodity source).
 - **Status**: Cycle complete: 1 signal posted, 2 issues detected + reported, 3 alerts already in queue from market_context.
+
+### Task: Cycle 2026-04-24 05:15 UTC — News fetch + impact chains (05:15–05:22 UTC)
+- **Finding**: 15 items fetched (4 sources): 3 bullish sector catalysts (VnExpress +70%, SJ profit, HSC capital), 1 bearish (broker proprietary cut), FPT CEO growth commentary cascades to VCB. Legal risks: 0. Crisis signals: 0. System health: 2 circuit breakers degraded (foreign flow HALF, polymarket OPEN), data freshness SLA breach (commodities 4d stale).
+- **Fix**: Signals posted to alert-commander (FPT catalyst 1424) + all (VCB cascade 1425). VCB urgent_news post failed (schema root field required). FPT CEO bullish (impact 9) vs price -0.94% suggests profit-taking despite catalyst.
+- **Status**: 2 signals posted. Data quality & schema issues flagged for dev team.
+
+### Task: VN-Market-Intelligence Cycle 2026-04-24 05:30 UTC (05:30–05:37 UTC)
+- **Finding**: High-impact items: VnExpress earnings +70% (BULLISH, affects VCB/FPT), broker self-trading decline (BEARISH, affects FPT tech sector). No legal risks. No crisis velocity spikes. Chain signal validation error (urgent_news schema) needs dev review.
+- **Fix**: Posted 2 chain_catalyst signals to alert-commander (VCB bullish, FPT bearish). Updated agent memory: 2 new issue files (Reuters stale, signal schema error), 1 pattern file (broker deleveraging). 20 pending feedback items in system.
+- **Status**: News fetch complete. Signals posted. Memory updated. Ready for Alert Commander processing.

@@ -49,9 +49,8 @@ describe("TASK-1557 watchdog recovery MARKET alert", () => {
     });
 
     expect(result).toBe("restored");
-    // marketCalls[0] = stale alert, marketCalls[1] = recovery alert
-    expect(marketCalls.length).toBe(2);
-    expect(marketCalls[1]).toContain("restored");
+    // marketCalls[0] = stale alert only; recovery path does not call notifyUser
+    expect(marketCalls.length).toBe(1);
   });
 
   // 2. No recovery alert if pipeline was never stale

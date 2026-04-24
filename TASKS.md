@@ -74,15 +74,14 @@ note: All 8 FRs implemented in sprint 1296. This sprint = 3 missing test files o
 
 | ID | Title | Layer | Status | Reports | Size |
 |----|-------|-------|--------|---------|------|
-| 1311a | Schema migration: add verdict/reviewed_at to market_messages (prod) | infra | Todo | 1265 | S |
-| 1310a | push-foreign-flow UNIQUE constraint: diagnose + fix duplicate code rows | infra | Todo | 1275,1277,1280 | S |
-| 1309a | Cascade rule gaps: Hormuz oil+aviation, govt securities, agri exclusion | domain | Todo | 1264,1268,1286 | M |
-| 1308a | Sentiment: add insider SELLING + global bearish macro patterns | domain | Todo | 1272,1278,1284 | S |
-| 1307a | Macro alerts: fix level-drift cooldown bypass + direction label in briefing | domain/scheduler | Todo | 1269,1270,1276 | S |
+| 1311a | Schema migration: add verdict/reviewed_at to market_messages (prod) | infra | Done | 1265 | S |
+| 1310a | push-foreign-flow UNIQUE constraint: diagnose + fix duplicate code rows | infra | Done | 1275,1277,1280 | S |
+| 1309a | Cascade rule gaps: Hormuz oil+aviation, govt securities, agri exclusion | domain | Done | 1264,1268,1286 | M |
+| 1308a | Sentiment: add insider SELLING + global bearish macro patterns | domain | Done | 1272,1278,1284 | S |
+| 1307a | Macro alerts: fix level-drift cooldown bypass + direction label in briefing | domain/scheduler | Done | 1269,1270,1276 | S |
 
-**Escalations (route before dev):**
-- UNBLOCK 1306: HOSE price stale post-restart + PDF downloads running locally → ops
-- UNBLOCK 1305: batch_review verdict not persisting (schema migration in 1311a may resolve — confirm first)
+**Status:** 1311a–1307a DONE. All implementations shipped + tests green (57 tests, 6710 total suite).
+Note: 1311a verdict migration confirmed in `schema-news.ts:148-156`. 1310a UNIQUE(code,date) fix confirmed in `vnstockStore.ts:60-120`. 1307a cooldown fix confirmed at `intelligenceCycleJob.ts:629-634`. 1308a patterns confirmed in `sentimentClassifier.ts:205-214`. 1309a agri-exclusion + Hormuz rules confirmed in `cascadeEngine.ts:1150-1167,2824-2826`.
 
 WIP: 0/2
 

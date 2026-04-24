@@ -36,3 +36,29 @@
 **Pattern discoveries**: New pattern documented — see `docs/agent-memory/patterns/telegram-channel-routing.md`
 
 **Status**: FIXED. No `channel="market"` exists in any analysis agent post-fix.
+
+---
+
+### SPRINT 1311 Design Verification / 2026-04-24
+
+**Trigger**: PO requested TECH design for Sprint 1311 (5 tasks: 1311a, 1307a, 1308a, 1310a, 1309a).
+
+**Finding**: All 5 tasks ALREADY COMPLETE. Implementations shipped before design call.
+
+**Verification per task**:
+
+| Task | File confirmed | Lines | Test file | Tests |
+|------|---------------|-------|-----------|-------|
+| 1311a | `schema-news.ts` | 148-156 (ALTER TABLE guards) | `1311a-schema-migration.test.ts` | 17 assertions, pass |
+| 1310a | `vnstockStore.ts` | 60-120 (UNIQUE index + dedup) | `1310a-foreign-flow-dedup.test.ts` | 21 assertions, pass |
+| 1307a | `intelligenceCycleJob.ts` | 629-634 (cooldown, no notified filter) | `1307a-macro-thresholds.test.ts` | 24 assertions, pass |
+| 1308a | `sentimentClassifier.ts` | 205-214 (bán ra + hạ dự báo) | `1308a-sentiment-patterns.test.ts` | 35 assertions, pass |
+| 1309a | `cascadeEngine.ts` | 1150-1167, 2824-2826 (agri exclusion) | `1309a-cascade-gaps.test.ts` | 40 assertions, pass |
+
+**Suite total**: 6710 pass, 11 fail (pre-existing failures unrelated to sprint 1311).
+
+**Pattern discoveries**: none new.
+
+**Risks identified**: none — all fixes confirmed in production code, tests substantive.
+
+**Status**: ALREADY_COMPLETE. TASKS.md updated to Done. No TECH doc required.

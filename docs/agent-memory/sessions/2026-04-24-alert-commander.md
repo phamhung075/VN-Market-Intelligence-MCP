@@ -251,3 +251,12 @@ This is a **monitoring situation**, not a **firing situation**. Position-danger 
 ### Task: Alert Commander Cycle 2026-04-24 05:07 (05:07-05:08 UTC)
 - **Finding**: 1 chain_catalyst signal processed (VCB, impact 5/10, confidence 50%). No firing conditions met. Market OPEN, VN-Index bullish backdrop. 3 existing MEDIUM/LOW news mentions (open context, no alert trigger).
 - **Status**: Clean cycle
+
+### Task: Cycle 2026-04-24 05:22 (05:22–05:23 UTC)
+- **Finding**: Bootstrap OK. Processed 2 chain_catalyst signals (FPT CEO bullish, VCB cascade). Legal risk: none. Crisis: none. Price alerts: none. Open alerts: 3x news_mention (MEDIUM/LOW, existing). No firing thresholds met. Market: VCB -1.91%, FPT -0.94%, macro bullish (GDP growth, banking recovery). System healthy.
+- **Status**: No actionable alerts. Signals processed, memory updated, cycle complete.
+
+### Task: Cycle 2026-04-24 05:37 — Market Hours (05:37–05:38 UTC)
+- **Finding**: Bootstrap: 2 chain_catalyst signals (VCB bullish +70% earnings, FPT bearish broker selling). Both single-source (News Scout only). 3 open news_mention alerts MEDIUM/LOW. No price alerts active. No legal risk. No crisis warnings. FPT position near stop-loss (73,600 vs 74,679) but daily drop -0.94% fails 3-AND threshold. VCB Kinh Dich 65% BUY (below 70% watchlist-opportunity threshold). FPT Kinh Dich 48% HOLD (bearish).
+- **Fix**: Suppressed both chain_catalyst signals pending verified_chain confirmation from other agents. No alerts fired this cycle. FPT position flagged for close monitoring (stop-loss near) — will escalate if singleDayDrop exceeds 5% OR sentiment drops < -0.5.
+- **Status**: Complete — zero alerts fired, monitoring active

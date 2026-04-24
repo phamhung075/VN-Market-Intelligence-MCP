@@ -224,9 +224,10 @@ describe("Task 034 — Telegram Bot Notifier", () => {
 
   it("TC-10: notifyTelegramAlert sends for HIGH severity", async () => {
     Bun.env.TELEGRAM_BOT_TOKEN = "test-token";
-    Bun.env.TELEGRAM_INFO_MARKET_GROUP_ID = "12345";
+    Bun.env.TELEGRAM_REPORT_BUG_CHANNEL_ID = "12345";
 
-    const mockFetch = mock(async () => makeResponse(200));
+    // sendTelegramBug checks messageId > 0 to return true; supply message_id in mock
+    const mockFetch = mock(async () => makeResponse(200, { ok: true, result: { message_id: 1 } }));
 
     const { notifyTelegramAlert } = _realMod;
 
@@ -238,9 +239,10 @@ describe("Task 034 — Telegram Bot Notifier", () => {
 
   it("TC-11: notifyTelegramAlert sends for CRITICAL severity", async () => {
     Bun.env.TELEGRAM_BOT_TOKEN = "test-token";
-    Bun.env.TELEGRAM_INFO_MARKET_GROUP_ID = "12345";
+    Bun.env.TELEGRAM_REPORT_BUG_CHANNEL_ID = "12345";
 
-    const mockFetch = mock(async () => makeResponse(200));
+    // sendTelegramBug checks messageId > 0 to return true; supply message_id in mock
+    const mockFetch = mock(async () => makeResponse(200, { ok: true, result: { message_id: 1 } }));
 
     const { notifyTelegramAlert } = _realMod;
 
