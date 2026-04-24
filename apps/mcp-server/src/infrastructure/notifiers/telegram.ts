@@ -175,7 +175,11 @@ async function coreSend(
 
   const parseMode = options.parseMode ?? "";
   const fetchFn = options.fetchFn ?? (globalThis.fetch as FetchFn);
-  const chunks = splitMessage(text);
+  // Normalize Vietnamese diacritics to NFC before sending.
+  // NFD (decomposed) from macOS RSS feeds renders inconsistently in Telegram clients.
+  // NFC (precomposed) is the safe form — single codepoint per character.
+  const normalizedText = text.normalize("NFC");
+  const chunks = splitMessage(normalizedText);
   let lastMessageId = 0;
 
   for (const chunk of chunks) {
