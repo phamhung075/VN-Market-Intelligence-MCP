@@ -23,11 +23,23 @@ No exceptions.
 3. Clean circuit-breaker reset — tripped state not preserved across code changes
 4. launchd supervision — `KeepAlive` + `RunAtLoad` auto-respawns within ~2-3s after kickstart
 
+## Monorepo Path (Phase 0+)
+
+Source code lives in `apps/mcp-server/src/`. All bun commands run from `apps/mcp-server/`:
+
+```bash
+cd apps/mcp-server
+bun tsc --noEmit
+bun test src/__tests__/NNN-*.test.ts
+```
+
+launchd still starts from the project root. `launchd/mcp-launch.sh` runs `bun run apps/mcp-server/src/index.ts` with CWD = project root.
+
 ## How to Apply a Code Change
 
-1. Edit code
-2. `bun tsc --noEmit` — must pass
-3. `bun test` (affected file) — must pass
+1. Edit code in `apps/mcp-server/src/`
+2. `cd apps/mcp-server && bun tsc --noEmit` — must pass
+3. `cd apps/mcp-server && bun test` (affected file) — must pass
 4. Commit + push to main
 5. `launchctl kickstart -k gui/$(id -u)/com.vn-market.mcp`
 6. `curl -s http://127.0.0.1:3000/health` — must return `{"status":"ok",...}`

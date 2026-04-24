@@ -4,7 +4,32 @@
 
 `domain` ← `application` ← `interface` ← `scheduler`. Cross-layer: inward only. `domain/` never imports `infrastructure/`.
 
-## Folder Tree
+## Monorepo Structure (Phase 0, 2026-04-24)
+
+```
+vn-market-intelligence/         ← pnpm workspace root
+├── apps/
+│   └── mcp-server/             ← TypeScript/Bun — MCP server (current monolith)
+│       ├── src/                ← all domain code (see Folder Tree below)
+│       ├── package.json        ← name: vn-market-intelligence-mcp
+│       ├── tsconfig.json
+│       ├── bunfig.toml
+│       ├── Dockerfile
+│       └── [symlinks] → mcp.config.json, docs/, scripts/, vps-scripts/, data/
+├── packages/
+│   ├── shared-types/           ← Inter-service TS contracts (Alert, Signal, etc.)
+│   ├── shared-db/              ← SQLite schema registry
+│   └── shared-config/          ← mcp.config.json loader
+├── docker-compose.yml          ← mcp-server (Phase 0), future services commented
+├── pnpm-workspace.yaml
+└── vps-scripts/                ← unchanged VPS proxy scripts
+```
+
+Future service ports: api-gateway=4000, stock-price=5000, pdf-extractor=5001, rag-service=5002, technical-analysis=5003, macro-indicators=5004, kinh-dich-service=5005, alert-engine=5006.
+
+Tests: run from `apps/mcp-server/` with `bun test`. Or from root: `pnpm test`.
+
+## Folder Tree (apps/mcp-server/src/)
 
 > Sprint 209-220: Modular Monolith refactor. Tools, services, and schedulers now organized into 10 domain module subfolders. See "Module Boundaries" section below.
 

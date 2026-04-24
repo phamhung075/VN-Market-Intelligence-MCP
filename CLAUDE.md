@@ -76,7 +76,7 @@ If a knowledge file Read fails: `send_telegram(channel="work")` + `submit_feedba
 ### Architecture
 - **DDD layering**: `domain/` never imports `infrastructure/`. Violations break the test suite.
 - Layer order: `domain` ← `application` ← `interface` ← `scheduler`. Cross-layer imports inward only.
-- **TDD**: every task starts with a failing test in `src/__tests__/NNN-*.test.ts`.
+- **TDD**: every task starts with a failing test in `apps/mcp-server/src/__tests__/NNN-*.test.ts`.
 
 ### Telegram — three channels
 - **MARKET** (`TELEGRAM_INFO_MARKET_GROUP_ID`): user alerts, briefings, digests, /ask answers. Alert Commander is ONLY regular sender. Digest Writer (06) + QA Responder (07) also send here.
@@ -86,10 +86,10 @@ If a knowledge file Read fails: `send_telegram(channel="work")` + `submit_feedba
 - **Alert Commander exclusivity**: only `05-alert-commander.md` calls `send_telegram(channel="market")` for alerts.
 
 ### Production footguns
-- **SQLite WAL checkpoint**: run daily + on SIGTERM (`src/infrastructure/db/checkpoint.ts`). Skip → unbounded WAL growth → disk fill.
+- **SQLite WAL checkpoint**: run daily + on SIGTERM (`apps/mcp-server/src/infrastructure/db/checkpoint.ts`). Skip → unbounded WAL growth → disk fill.
 - **SQL parameter binding**: all SQLite queries use parameterized bindings. Never string-interpolate user input into SQL.
-- **Circuit breaker**: wrap every external HTTP fetch (`src/infrastructure/circuitBreakerRegistry.ts`).
-- **Rate limiter**: every fetcher calls per-host rate limiter (`src/domain/services/rateLimiter.ts`) before requests.
+- **Circuit breaker**: wrap every external HTTP fetch (`apps/mcp-server/src/infrastructure/circuitBreakerRegistry.ts`).
+- **Rate limiter**: every fetcher calls per-host rate limiter (`apps/mcp-server/src/domain/services/rateLimiter.ts`) before requests.
 - **`--no-verify` forbidden**: never skip git hooks.
 - **WIP limit**: max 2 tasks In Progress in TASKS.md.
 - **Branch hygiene**: every task ends with `git checkout main`, merged branch deleted (local+remote), worktrees under `.claude/worktrees/` removed, stashes dropped. Full checklist → `.claude/WORKFLOW.md#branch-hygiene-checklist`.
@@ -144,8 +144,15 @@ If a knowledge file Read fails: `send_telegram(channel="work")` + `submit_feedba
 
 ## Development
 
+Monorepo (Phase 0): source in `apps/mcp-server/src/`. Tests run from `apps/mcp-server/`.
+
 ```bash
-bun install && bun test && bun tsc --noEmit
+# From apps/mcp-server/ (primary dev workflow):
+cd apps/mcp-server && bun install && bun test && bun tsc --noEmit
+
+# From monorepo root (pnpm workspaces):
+pnpm install && pnpm test
+
 launchctl kickstart -k gui/$(id -u)/com.vn-market.mcp  # only restart method
 curl http://localhost:3000/health                        # verify
 ```

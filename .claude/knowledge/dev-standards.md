@@ -4,14 +4,14 @@
 
 | Building | Layer | Folder |
 |----------|-------|--------|
-| Business rule / pure calculation | **domain** | `src/domain/services/` |
-| Data model / entity | **domain** | `src/domain/models/` |
-| Repository interface (port) | **domain** | `src/domain/repositories/` |
-| SQLite or LanceDB access | **infrastructure** | `src/infrastructure/db/` or `rag/` |
-| HTTP scraper / fetcher | **infrastructure** | `src/infrastructure/fetchers/` |
-| Orchestrating multiple services | **application** | `src/application/usecases/` |
-| MCP tool handler | **interface** | `src/interface/mcp/tools/` |
-| Cron job | **interface** | `src/interface/scheduler/` |
+| Business rule / pure calculation | **domain** | `apps/mcp-server/src/domain/services/` |
+| Data model / entity | **domain** | `apps/mcp-server/src/domain/models/` |
+| Repository interface (port) | **domain** | `apps/mcp-server/src/domain/repositories/` |
+| SQLite or LanceDB access | **infrastructure** | `apps/mcp-server/src/infrastructure/db/` or `rag/` |
+| HTTP scraper / fetcher | **infrastructure** | `apps/mcp-server/src/infrastructure/fetchers/` |
+| Orchestrating multiple services | **application** | `apps/mcp-server/src/application/usecases/` |
+| MCP tool handler | **interface** | `apps/mcp-server/src/interface/mcp/tools/` |
+| Cron job | **interface** | `apps/mcp-server/src/interface/scheduler/` |
 
 **Golden rule**: `domain/` has ZERO imports from `infrastructure/`.
 
@@ -43,8 +43,8 @@ return { content: [{ type: "text" as const, text: JSON.stringify(result, null, 2
 ## Test File Template
 
 ```typescript
-// src/__tests__/NNN-task-name.test.ts
-// Note: DB_PATH is set to :memory: by src/__tests__/setup.ts preload (Bun.env)
+// apps/mcp-server/src/__tests__/NNN-task-name.test.ts
+// Note: DB_PATH is set to :memory: by apps/mcp-server/src/__tests__/setup.ts preload (Bun.env)
 import { describe, it, expect } from "bun:test";
 
 describe("Task NNN — Title", () => {

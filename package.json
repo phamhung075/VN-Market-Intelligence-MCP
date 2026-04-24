@@ -4,10 +4,10 @@
   "description": "VN Market Intelligence — DDD monorepo (MCP server + microservices)",
   "private": true,
   "scripts": {
-    "test": "pnpm --filter mcp-server test",
+    "test": "pnpm --filter vn-market-intelligence-mcp test",
     "test:all": "pnpm -r test",
     "build": "pnpm -r build",
-    "check": "pnpm --filter mcp-server check"
+    "check": "pnpm --filter vn-market-intelligence-mcp check"
   },
   "packageManager": "pnpm@9.0.0",
   "engines": {
