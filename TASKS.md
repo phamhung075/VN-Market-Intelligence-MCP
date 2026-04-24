@@ -26,8 +26,8 @@
 | ID | Title | Layer | Status | Size | Handoff |
 |----|-------|-------|--------|------|---------|
 | BA-1327 | Requirement Spec: Phase 0 merge + test failure triage | spec | Done | M | `docs/REQ_1327.md` |
-| 1327a | Fix Bootstrap AC-4c: update agentFiles + projectRoot in 230-bootstrap-verify.test.ts | test | Todo | S | `docs/handoffs/TASK_1327a.md` |
-| 1327b | Fix TA Alert Scan AC-1,2,5,6,7,9: update computeFn mock to async (code:string)=>Promise<ComputeTAResponse> | test | Todo | S | `docs/handoffs/TASK_1327b.md` |
+| 1327a | Fix Bootstrap AC-4c: update agentFiles + projectRoot in 230-bootstrap-verify.test.ts | test | Review | S | `docs/handoffs/TASK_1327a.md` |
+| 1327b | Fix TA Alert Scan AC-1,2,5,6,7,9: update computeFn mock to async (code:string)=>Promise<ComputeTAResponse> | test | Review | S | `docs/handoffs/TASK_1327b.md` |
 | 1327c | Merge feature/ddd-phase-0 → main (gate: tsc clean, fail count = 15) | infra | Todo | S | `docs/handoffs/TASK_1327c.md` |
 | 1327-docker | Post-merge: docker-compose up --build + health check port 3000 | ops | Todo | S | — |
 | 1327-bun-crash | Document Bun 1.3.11 post-test panic as known non-code bug | infra | Todo | S | — |
