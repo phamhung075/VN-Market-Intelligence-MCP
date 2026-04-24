@@ -9,10 +9,13 @@ Type=simple
 ExecStart=/root/fetch-vn-news-loop.sh
 Restart=always
 RestartSec=10
+StartLimitIntervalSec=300
+StartLimitBurst=5
+MemoryMax=512M
+MemorySwapMax=0
+TasksMax=32
 StandardOutput=append:/var/log/vn-news-fetch.log
 StandardError=append:/var/log/vn-news-fetch.log
-MemoryMax=128M
-TasksMax=32
 
 [Install]
 WantedBy=multi-user.target
