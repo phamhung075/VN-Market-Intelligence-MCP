@@ -195,8 +195,8 @@ WIP: 0/2
 
 | ID | Title | Layer | Status | Size |
 |----|-------|-------|--------|------|
-| 1315a | Cascade cost-push rules + ClimateImpactMapper (RED) | domain | Review | S |
-| 1315b | Integration tests + regression (GREEN) | test | Review | S |
+| 1315a | Cascade cost-push rules + ClimateImpactMapper (RED) | domain | Done | S |
+| 1315b | Integration tests + regression (GREEN) | test | Done | S |
 
 context: `docs/TECH_1315.md` | handoffs: `docs/handoffs/TASK_1315a.md`, `docs/handoffs/TASK_1315b.md`
 branch: `task/1315-cost-push-cascade`
