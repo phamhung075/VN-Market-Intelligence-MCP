@@ -20,20 +20,18 @@
 
 ---
 
-## Sprint 1297 — IN PROGRESS (1297a Done, 1297b Review, 1297c Todo)
+## Sprint 1297 — DONE (1297a Done, 1297b Done, 1297c Done)
 
 | ID | Title | Layer | Status |
 |----|-------|-------|--------|
 | 1297a | Fail-Loud Protocol Injection (16 agents) | agents | Done |
 | 1297b | BCTC Portal URL Discovery Fix | vps-scripts | Done |
-| 1297c | VPS Validation of BCTC Portal Fix | ops | Todo (blocked on 1297b) |
+| 1297c | VPS Validation of BCTC Portal Fix | ops | Done |
 
-### 1297b — BCTC Portal URL Discovery Fix
-context: `docs/handoffs/TASK_1297b.md`
-branch: main (merged a52c34b1)
-layer: vps-scripts
-files_modified: `vps-scripts/discover-bctc-urls-browser.py`
-AC: HNX AJAX POST mapped, UPCOM same flow, HOSE informative error, ≥2/3 VNM/BID/FPT re-test pass on VPS
+### 1297c — VPS Validation (2026-04-24)
+deploy: `scp vps-scripts/discover-bctc-urls-browser.py root@125.212.251.27:/root/` (16682 bytes)
+service: `vn-bctc-fetch.service` restarted 12:50:48 +07, active (running)
+AC: HNX AJAX POST works (PVS/NVB → PDF URLs), UPCOM flow no crash, HOSE informative error (VNM/BID/FPT all HOSE → expected empty+error), report: `reports/TASK_REPORT_1297c.md`
 
 ---
 
@@ -61,12 +59,22 @@ AC: HNX AJAX POST mapped, UPCOM same flow, HOSE informative error, ≥2/3 VNM/BI
 
 | ID | Title | Layer | Status |
 |----|-------|-------|--------|
-| 1298a | IMF Domain Model + Classifier + Schema Tests (RED) | test/domain | Review |
+| 1298a | IMF Domain Model + Classifier + Schema Tests (RED) | test/domain | Done |
 | 1298b | IMF Fetcher + Poller Job + Cron Registry Tests (GREEN) | test/infra | Done |
-| 1298c | IMF Cascade Rules + Conviction Weight + MCP Tool Tests (GREEN) | test/signal | Review |
+| 1298c | IMF Cascade Rules + Conviction Weight + MCP Tool Tests (GREEN) | test/signal | Done |
 
 context: `docs/TECH_1298.md` | handoffs: `docs/handoffs/TASK_1298a.md`, `TASK_1298b.md`, `TASK_1298c.md`
 note: All 8 FRs implemented in sprint 1296. This sprint = 3 missing test files only. No production code changes expected.
+
+---
+
+## Task 1312 — BCTC enrich-bctc-urls.sh skip logic inversion fix (2026-04-24)
+
+| ID | Title | Layer | Status |
+|----|-------|-------|--------|
+| 1312 | enrich-bctc-urls.sh skip condition inverted | vps-scripts | Done |
+
+Fix: `vps-scripts/enrich-bctc-urls.sh:47–55` — was `[ -z "$SOURCE_HINTS" ]` (skip when empty = skip unenriched rows). Changed to `[ -n "$SOURCE_HINTS" ] && ! grep -qF "congbothongtin.ssc.gov.vn/faces/NewsSearch"` (skip when first hint is NOT fallback portal = skip already-enriched rows). 6742 tests pass. Branch: `task/1312-bctc-skip-logic`.
 
 ---
 

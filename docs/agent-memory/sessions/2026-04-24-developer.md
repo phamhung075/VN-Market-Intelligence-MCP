@@ -59,3 +59,8 @@
 - **Finding**: Covered-range dedup in classifySentiment() is per-polarity — bearish claim does NOT suppress bullish sub-phrase matches. Compound bearish phrases must set weight = (sum of all overlapping bullish weights) + 1 to guarantee net-bearish. "hạ dự báo tăng trưởng"(w6) needed to beat tăng trưởng(2)+dự báo tăng(3)=5.
 - **Pattern**: → docs/agent-memory/patterns/ (sentiment-compound-weight-clash.md — consider creating)
 - **Status**: Ready for QA
+
+### Task 1312: BCTC skip logic inversion fix (enrich-bctc-urls.sh) (HH:MM–HH:MM)
+- **Files changed**: `vps-scripts/enrich-bctc-urls.sh:45-55`
+- **Finding**: `buildQueueSourceHints` always returns ≥1 hint (fallback portals). Original `[ -z "$SOURCE_HINTS" ]` never true → no row ever skipped → all items re-queried every run. Correct discriminator: first hint equals SSC fallback portal URL (`congbothongtin.ssc.gov.vn/faces/NewsSearch`) ↔ source_url not yet discovered. Fixed with `! grep -qF "congbothongtin.ssc.gov.vn/faces/NewsSearch"`.
+- **Status**: Ready for QA
