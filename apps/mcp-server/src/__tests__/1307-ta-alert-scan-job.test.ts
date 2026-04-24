@@ -3,7 +3,7 @@ Bun.env["DB_PATH"] = ":memory:";
 
 import { describe, it, expect, beforeEach } from "bun:test";
 import { Database } from "bun:sqlite";
-import type { DailyCandle, TechnicalIndicatorResult } from "../domain/services/technicalIndicators.js";
+import type { ComputeTAResponse } from "../infrastructure/microservices/clients.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Minimal DDL (only tables touched by taAlertScanJob)
@@ -47,29 +47,18 @@ function buildTestDb(): Database {
 // Helper: controlled computeFn factories
 // ─────────────────────────────────────────────────────────────────────────────
 
-function makeComputeFn(rsi: number | null): (_candles: DailyCandle[]) => TechnicalIndicatorResult {
-  return (_candles: DailyCandle[]) => ({
-    ma5: null,
-    ma20: null,
-    ma50: null,
-    rsi14: rsi,
-    macd: null,
-    bb20: null,
+function makeComputeFn(rsi: number | null): (code: string) => Promise<ComputeTAResponse> {
+  return async (code: string): Promise<ComputeTAResponse> => ({
+    code,
+    trend: "TREN_DUNG" as const,
+    ...(rsi !== null ? { rsi } : {}),
   });
 }
 
-/** computeFn that throws for a specific ticker code */
-function makeThrowingComputeFn(throwForCode: string, rsiForOthers: number | null): (candles: DailyCandle[]) => TechnicalIndicatorResult {
-  let callCount = 0;
-  return (candles: DailyCandle[]) => {
-    callCount++;
-    // We use callCount to distinguish which ticker we're on, but since computeFn
-    // doesn't receive the code, the test must control the throwing via a closure
-    // that the test sets up per-ticker. Instead, we use a different approach:
-    // the test DB returns candles for all tickers (empty), so callCount tracks order.
-    void candles;
-    void callCount;
-    throw new Error(`Mock TA error for test`);
+/** computeFn that always throws — used by AC-9's per-ticker override */
+function makeThrowingComputeFn(): (code: string) => Promise<ComputeTAResponse> {
+  return async (_code: string) => {
+    throw new Error("Mock TA error for test");
   };
 }
 
@@ -263,9 +252,13 @@ describe("Task 1307 — taAlertScanJob: RSI overbought/oversold intraday alerts"
     // But since computeFn is injected and replaces real computation, we need a stateful approach.
     const rsiByCallOrder = [74.2, 71.5, 50.0]; // VCB→overbought, TCB→overbought, HPG→neutral
     let callIndex = 0;
-    const perTickerComputeFn = (_candles: DailyCandle[]): TechnicalIndicatorResult => {
+    const perTickerComputeFn = async (code: string): Promise<ComputeTAResponse> => {
       const rsi = rsiByCallOrder[callIndex++] ?? null;
-      return { ma5: null, ma20: null, ma50: null, rsi14: rsi, macd: null, bb20: null };
+      return {
+        code,
+        trend: "TREN_DUNG" as const,
+        ...(rsi !== null ? { rsi } : {}),
+      };
     };
 
     const result = await runTaAlertScan({
@@ -303,12 +296,16 @@ describe("Task 1307 — taAlertScanJob: RSI overbought/oversold intraday alerts"
       { rsi: 75.0, throws: false },
     ];
     let callIdx = 0;
-    const isolatedComputeFn = (_candles: DailyCandle[]): TechnicalIndicatorResult => {
+    const isolatedComputeFn = async (code: string): Promise<ComputeTAResponse> => {
       const spec = callOrder[callIdx++]!;
       if (spec.throws) {
         throw new Error("Mock TA computation failure for TCB");
       }
-      return { ma5: null, ma20: null, ma50: null, rsi14: spec.rsi, macd: null, bb20: null };
+      return {
+        code,
+        trend: "TREN_DUNG" as const,
+        ...(spec.rsi !== null ? { rsi: spec.rsi } : {}),
+      };
     };
 
     const result = await runTaAlertScan({
