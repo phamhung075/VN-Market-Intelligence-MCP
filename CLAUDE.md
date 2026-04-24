@@ -47,6 +47,8 @@
 - Dev workflow + branch hygiene → `.claude/WORKFLOW.md`
 - Vietnamese financial terms → `docs/GLOSSARY_VI.md`
 - Historical / Done tasks → `docs/TASKS_ARCHIVE.md`
+- **Microservices Architecture** (language choice, DDD pattern, monorepo, roadmap) → `docs/MICROSERVICES_DDD.md`
+- **Session Analysis** (2026-04-24 brainstorm summary) → `docs/SESSION_SUMMARY_20260424.md`
 
 ---
 
@@ -105,6 +107,38 @@ If a knowledge file Read fails: `send_telegram(channel="work")` + `submit_feedba
 - **ALWAYS spawn appropriate subagent instead**: `developer` (code changes), `ops` (server restarts, VPS), `qa` (testing), `pm` (Kanban), etc.
 - Subagents have full tool access to execute autonomously. User just approves/reviews, never executes.
 - If task needs execution: invoke Agent tool with `subagent_type` matching the work type. NEVER end with "user should run X".
+
+### File Organization (Canonical Locations)
+
+**Root ONLY:**
+- `CLAUDE.md` (project context)
+- `TASKS.md` (active work Kanban)
+- `SPRINT_GOAL.md` (sprint objective)
+- `README.md` (project intro)
+
+**`.claude/knowledge/*.md`** (logic, rules, stable):
+- Tree map, MCP tools, cron jobs, alert policy, agent roster, DDD standards, fail-loud protocol, restart policy, incident response, VPS setup, market analysis, QA checklist
+
+**`docs/*.md`** (architecture, design, reference):
+- ARCHITECTURE.md, AI_TEAM_DESIGN.md, IMPLEMENTATION_STATUS.md, GLOSSARY_VI.md, MICROSERVICES_DDD.md, SESSION_SUMMARY_*.md
+
+**`docs/data/*.json`** (volatile data, updated by agents):
+- tool-registry.json, cron-registry.json, project-stats.json, stock-classification.json
+
+**`docs/archive/`** (read-only task reports, analysis, old sessions):
+- ANALYST_FINDINGS_*.md, SPRINT_*_DELIVERY.md, BCTC_*.md, COWORK_REFRESH_*.md, DIAGNOSTIC_*.md, etc.
+
+**`docs/historical/`** (read-only reference, no maintenance):
+- REQ_NNN.md, TECH_NNN.md, *_ANALYSIS.md, *_INVESTIGATION.md
+
+**RULE:** If you create a document:
+1. Ask: Is it logic/rule? → `.claude/knowledge/`
+2. Ask: Is it architecture/design? → `docs/`
+3. Ask: Is it task report/analysis? → `docs/archive/`
+4. Ask: Is it volatile data? → `docs/data/` (JSON only)
+5. Never create `.md` files in root except the 4 canonical ones above.
+6. After creation, commit + update CLAUDE.md pointers if needed.
+7. After session analysis → save memory files to `/memory/` instead of creating root files.
 
 ---
 
