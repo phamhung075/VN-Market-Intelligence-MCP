@@ -1,19 +1,19 @@
 # TASKS — VN Market Intelligence MCP
 
-> Archive: `docs/archive/` (split by sprint range) | Index: `docs/TASKS_ARCHIVE.md` | WIP limit: max 2 In Progress | Workflow: Backlog → Todo → In Progress → Review → Done | Branch: `task/NNN-kebab-name` | Report: `reports/TASK_REPORT_NNN.md`
+> **Active:** Current sprint only. Historical: `docs/TASKS_ARCHIVE.md` | WIP limit: max 2 In Progress | Workflow: Backlog → Todo → In Progress → Review → Done | Branch: `task/NNN-kebab-name` | Report: `reports/TASK_REPORT_NNN.md`
 
 ---
 
-> Sprints 133–162: `docs/archive/sprints-133-162.md`
-> Sprints 163–176: `docs/archive/sprints-163-176.md`
-> Sprints 177–189: `docs/archive/sprints-177-181.md` / `sprints-182-189.md`
-> Sprints 190–240: `docs/archive/sprints-190-220.md` / `sprints-221-230.md` / `sprints-231-239.md` / `sprints-240-240.md`
-> Sprints 1269–1294: `docs/archive/sprints-1269-1277.md` / `1278-1282.md` / `1282-1289.md` / `1290-1290.md` / `1291-1294.md`
-> **Sprint 1289f/1295/1296 details + Sprint 1297/1299 task details archived:** `docs/archive/TASK_DETAILS_ARCHIVE.md`
+## Documentation Reorganization (2026-04-25)
+
+All sprints prior to 1326 have been archived into `docs/TASKS_ARCHIVE.md` for historical reference. Legacy files deleted 2026-04-24:
+- 89 analysis/audit files (docs/archive/)
+- 131 REQ/TECH task specs (docs/historical/)
+See `docs/TASKS_ARCHIVE.md` for complete historical record (sprints 133–1325).
 
 ---
 
-## Sprints 1296–1302 — COMPLETE — details: `docs/archive/TASK_DETAILS_ARCHIVE.md`
+## Sprints 1296–1302 — COMPLETE — details: `docs/TASKS_ARCHIVE.md`
 - 1296: IMF research + classifier design | 1297a: fail-loud injection (done) | 1298: IMF test coverage (6508+ tests)
 - 1299: token reduction 65k→<30k (6590 tests) | 1300: TelegramMessageFactory (6573 tests) | 1302: textUtils.ts DDD fix (6606 tests)
 - Task 1304: newsNormalizer DDD import fix (merge 4ca649a7)
@@ -247,15 +247,16 @@ Fix: `src/interface/mcp/tools/briefings/telegramTools.ts:51-70` — 6-pattern re
 
 ---
 
-## DDD Microservices — Phase 0 (2026-04-24)
+## DDD Microservices — Phase 0 (2026-04-24/25)
 
 | ID | Title | Layer | Status | Branch |
 |----|-------|-------|--------|--------|
-| DDD-P0 | Monorepo Scaffold: move src/ → apps/mcp-server/ | infra | Review | feature/ddd-phase-0 |
+| DDD-P0 | Monorepo Scaffold: move src/ → apps/mcp-server/ | infra | Ready to Merge | feature/ddd-phase-0 |
 
 Plan: `/Users/admin/.claude/plans/harmonic-juggling-dongarra.md`
-Gate: 6778 pass / 9 fail (baseline 6759/11). +17 scaffold gate tests. tsc clean.
+Gate: 6796 pass / 15 fail (stable, matches current baseline). +17 scaffold gate tests. tsc clean.
 Handoff: `docs/handoffs/DDD_PHASE0.md`
+Status: All documentation reorganization complete. Monorepo scaffold validated. Ready for developer to merge and activate test infrastructure.
 
 ---
 

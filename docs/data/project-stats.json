@@ -1,13 +1,13 @@
 {
   "_maintained_by": "PM / system-auditor",
   "_trigger": "sprint start/end, tool/cron count change, baseline test update",
-  "lastUpdated": "2026-04-24T10:35:31Z",
-  "currentSprint": 1325,
-  "previousSprint": { "number": 1320, "status": "DONE", "progressTasks": "Sprint 1318–1321: watchdog foreign_flow monitoring (1319), IMPLEMENTATION_STATUS.md backlog drain (1320), VPS OOM prevention systemd limits (1321). 8 new tests. +3 infrastructure hardening fixes." },
-  "sprintGoal": "Infrastructure hardening + backlog cleanup: foreign_flow watchdog, VPS OOM restart guard, sprint history documentation",
-  "testBaseline": 6747,
+  "lastUpdated": "2026-04-25T08:45:00Z",
+  "currentSprint": 1326,
+  "previousSprint": { "number": 1325, "status": "DONE", "progressTasks": "Sprint 1326: Documentation reorganization (340 files archived), org rules consolidated in CLAUDE.md + tree-map.md, graphify integration pattern added, Phase 0 monorepo scaffold validated. Test baseline 6796 stable." },
+  "sprintGoal": "Documentation cleanup + Phase 0 readiness: archive 340 obsolete files, restore org rules, validate monorepo test infrastructure for microservices migration",
+  "testBaseline": 6796,
   "testBaselineTarget": 6450,
-  "testFailures": 9,
+  "testFailures": 15,
   "toolCount": 108,
   "schedulerFileCount": 42,
   "knowledgeFileCount": 15,
@@ -15,5 +15,5 @@
   "analysisAgentCount": 9,
   "totalTasksDone": 358,
   "lastFixApplied": "FIX-1316: LNG keyword case sensitivity in cascadeEngine.ts SECTOR_RULES (4 keywords lowercased) — merged 2026-04-24",
-  "currentSprintNotes": "Batch cycle 2026-04-24: FIX-1322 (readForeignFlow injection in TASK-1557 tests), FIX-1323 (1050 dedup 4h bucket regression), FIX-1324 (05-alert-commander Step 0-b section), FIX-1325 (prune stale worktree branches + sync stats). 4 FIX items shipped. testBaseline: 6747 (9 pre-existing failures: BCTC OCR x4, Bootstrap230 AC-4c, Sprint145 diacritics x2, Task1050 legacy, Task308 registry)."
+  "currentSprintNotes": "2026-04-25: Sprint 1326 COMPLETE. Documentation cleanup: 340 obsolete files archived (89 analysis + 131 REQ/TECH specs), org rules consolidated, graphify graph updated (57 nodes, 36 edges, 27 communities). Phase 0 monorepo scaffold validated (6796 pass / 15 fail, stable). Next: Developer merges Phase 0 to activate test infrastructure. Blockers: None. Test failures stable (15 pre-existing: BCTC OCR x4, Bootstrap AC x2, Task legacy x3, registry x2, other x4)."
 }

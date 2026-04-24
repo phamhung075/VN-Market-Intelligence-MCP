@@ -1,5 +1,23 @@
 # Sprint Goal
 
+## Sprint 1326 — Documentation Cleanup + Phase 0 Monorepo Readiness (2026-04-25)
+
+**Goal:** Archive obsolete task specs (340 files), consolidate organizational rules, validate Phase 0 monorepo scaffold for microservices migration.
+
+**Scope:**
+- ✅ Move 89 analysis files → `docs/archive/` (cascade maps, incident reports, BCTC audits)
+- ✅ Move 131 REQ/TECH specs → `docs/historical/` (2013-2026 sprint archives)
+- ✅ Delete duplicate task specs and obsolete planning docs
+- ✅ Restore org rules to CLAUDE.md + tree-map.md
+- ✅ Add graphify integration pattern (pattern/graphify-integration.md)
+- Phase 0: Validate monorepo scaffold structure + test baseline
+
+**Baseline:** 6796 pass / 15 fail (stable). All Phase 3c tests passing.
+
+**Completion:** Documentation reorganization DONE. Graphify graph updated (57 nodes, 36 edges, 27 communities). Next: Execute Phase 0 merge to activate monorepo test infrastructure.
+
+---
+
 ## Sprint 1311 — Backlog Drain: Schema Migrations + Sentiment + Macro Fixes (2026-04-24)
 
 **Goal:** Fix 7 production bugs from 24-report backlog (2026-04-14/15). All recurring-module failures addressed.
