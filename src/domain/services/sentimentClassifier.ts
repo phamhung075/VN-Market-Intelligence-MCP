@@ -202,6 +202,16 @@ const VN_BEARISH: SentimentKeyword[] = [
   { word: "gánh nặng chi phí", weight: 2 },
   { word: "chi phí mua điện tăng", weight: 3 },
   { word: "giá điện tăng", weight: 2 },
+  // Task 1308a: Insider SELLING — "bán ra" was missing (reports 1272/1278)
+  { word: "bán ra", weight: 2 },
+  // Task 1308a: Global bearish macro patterns — misclassified BULLISH (report 1284)
+  // weight 4: beats simple "tăng trưởng" (w2) in non-compound contexts
+  { word: "hạ dự báo", weight: 4 },
+  // Compound: weight 6 ensures net-bearish even when bullish "tăng trưởng"(2)+"dự báo tăng"(3)=5 also fire
+  { word: "hạ dự báo tăng trưởng", weight: 6 },
+  { word: "cảnh báo kịch bản bất lợi", weight: 3 },
+  { word: "báo lỗ", weight: 3 },
+  { word: "tăng phòng thủ tiền mặt", weight: 3 },
 ];
 
 /** English bullish keywords */
@@ -275,6 +285,9 @@ const EN_BEARISH: SentimentKeyword[] = [
   { word: "geopolitical risk", weight: 2 },
   { word: "geopolitical tensions", weight: 2 },
   { word: "war risk", weight: 3 },
+  // Task 1308a: Global bearish macro — English patterns (report 1284)
+  { word: "risk-off", weight: 3 },
+  { word: "flight to safety", weight: 3 },
 ];
 
 /** All bullish entries in one list (longest phrases first to avoid substring conflicts). */

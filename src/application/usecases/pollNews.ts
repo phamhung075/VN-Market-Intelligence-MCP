@@ -159,6 +159,55 @@ export function detectInsiderFamilyBuying(title: string): boolean {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Insider selling detector (Task 1308a)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Detects insider / large-shareholder SELLING signals in an article title.
+ *
+ * Mirrors detectInsiderFamilyBuying() but for sell-side actions. Returns true
+ * when the title contains any selling-action keyword associated with insider or
+ * large-shareholder disposals.
+ *
+ * Patterns cover:
+ *   Vietnamese: xả hàng, bán ra, thoái vốn, dump (transliterated), bán sạch,
+ *               thoái sạch, lãnh đạo bán, nội bộ bán, đăng ký bán
+ *   English:    dump, selling, divest, divestiture, offload, sell off
+ *
+ * Exported for unit testing.
+ */
+export function detectInsiderSelling(title: string): boolean {
+  const lower = title.toLowerCase();
+
+  const SELLING_ACTION_PATTERNS = [
+    // Vietnamese
+    "xả hàng",
+    "bán ra",
+    "thoái vốn",
+    "bán sạch",
+    "thoái sạch",
+    "lãnh đạo bán",
+    "nội bộ bán",
+    "đăng ký bán",
+    "bán toàn bộ",
+    "bán hết",
+    // English
+    "dump shares",
+    "dumping shares",
+    "insider selling",
+    "executive selling",
+    "ceo selling",
+    "director selling",
+    "divest",
+    "divestiture",
+    "offload shares",
+    "sell off",
+  ];
+
+  return SELLING_ACTION_PATTERNS.some((p) => lower.includes(p));
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Signal deduplication — prevents N× news_mention spam for the same stock
 // ─────────────────────────────────────────────────────────────────────────────
 
