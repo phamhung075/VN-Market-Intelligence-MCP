@@ -17,7 +17,11 @@ import { Database } from "bun:sqlite";
 import { resolve } from "node:path";
 import { writeFileSync, mkdirSync } from "node:fs";
 
-// ── DB path (mirrors schema.ts DEFAULT_DB_PATH logic) ───────────────────────
+// ── DB path ──────────────────────────────────────────────────────────────────
+// Bun resolves import.meta.dir relative to CWD when running via relative path.
+// When invoked as `bun apps/mcp-server/scripts/analyze-signal-distribution.ts`
+// from project root, import.meta.dir = project-root/scripts (symlink flattened).
+// One level up reaches project root; data/ lives there.
 const DB_PATH =
   Bun.env["DB_PATH"] ??
   resolve(import.meta.dir, "..", "data", "market.db");
@@ -29,7 +33,7 @@ const db = new Database(DB_PATH, { readonly: true });
 interface BucketRow {
   bucket: number;
   cnt: number;
-  tickers: string | null;  // JSON array strings joined from affected_actions
+  tickers: string | null;  // GROUP_CONCAT of affected_actions JSON arrays
   levels: string | null;   // comma-separated level values
 }
 
@@ -64,7 +68,7 @@ const total = totalRow?.total ?? 0;
 const dateMin = totalRow?.date_min ?? "n/a";
 const dateMax = totalRow?.date_max ?? "n/a";
 
-// ── Query 2: total all-time (for context) ───────────────────────────────────
+// ── Query 2: all-time total (for context) ───────────────────────────────────
 const allTimeRow = db
   .prepare<{ total: number }, []>(
     `SELECT COUNT(*) AS total FROM rag_analyses WHERE impact_score IS NOT NULL`
@@ -75,8 +79,7 @@ const allTimeTotal = allTimeRow?.total ?? 0;
 
 // ── Query 3: per-bucket breakdown ───────────────────────────────────────────
 // affected_actions is stored as a JSON array e.g. '["VCB","BID"]'.
-// We extract distinct tickers via GROUP_CONCAT over json_each for rows that
-// have a non-empty array. Falls back to tags for rows without affected_actions.
+// We GROUP_CONCAT the raw JSON blobs then parse them in TypeScript.
 const bucketRows = db
   .prepare<BucketRow, []>(
     `SELECT
@@ -100,7 +103,7 @@ const bucketRows = db
   )
   .all();
 
-// ── Query 4: 7-8 range detail ────────────────────────────────────────────────
+// ── Query 4: full detail for 7-8 range ──────────────────────────────────────
 interface DetailRow {
   impact_score: number;
   level: string;
@@ -120,27 +123,32 @@ const range78Rows = db
   )
   .all();
 
-// ── Helper: parse ticker list from affected_actions JSON ────────────────────
+// ── Helper: parse tickers from GROUP_CONCAT of JSON arrays ──────────────────
 function parseTickers(tickerJson: string | null): string[] {
   if (!tickerJson) return [];
-  // GROUP_CONCAT of JSON arrays: '["VCB","BID"],["HPG"]' — flatten all
-  const parts = tickerJson.split(",");
+  // GROUP_CONCAT produces e.g.: '["VCB","BID"],["HPG"]' or plain 'VCB'
   const result = new Set<string>();
-  for (const part of parts) {
-    const trimmed = part.trim();
-    // Try JSON parse first
+  // Split on '],' boundary to separate arrays
+  const segments = tickerJson.split(/\],?\s*\[/).map((s) => {
+    // Normalise: ensure each segment is a valid JSON array
+    let t = s.trim();
+    if (!t.startsWith("[")) t = "[" + t;
+    if (!t.endsWith("]")) t = t + "]";
+    return t;
+  });
+  for (const seg of segments) {
     try {
-      const parsed = JSON.parse(trimmed);
+      const parsed = JSON.parse(seg);
       if (Array.isArray(parsed)) {
-        for (const t of parsed) if (typeof t === "string" && t.length > 0) result.add(t.toUpperCase());
-        continue;
+        for (const t of parsed) {
+          if (typeof t === "string" && t.length > 0) result.add(t.toUpperCase());
+        }
       }
     } catch {
-      // not valid JSON — treat as plain text
+      // strip brackets/quotes, add as plain string
+      const clean = seg.replace(/[\[\]"']/g, "").trim();
+      if (clean.length > 0) result.add(clean.toUpperCase());
     }
-    // Strip brackets and quotes, add as-is
-    const clean = trimmed.replace(/[\[\]"']/g, "").trim();
-    if (clean.length > 0) result.add(clean.toUpperCase());
   }
   return [...result].slice(0, 10);
 }
@@ -161,12 +169,11 @@ const count8plus = buckets.filter((b) => b.bucket >= 8).reduce((s, b) => s + b.c
 const pct7 = total > 0 ? ((count7 / total) * 100).toFixed(1) : "0.0";
 const pct8plus = total > 0 ? ((count8plus / total) * 100).toFixed(1) : "0.0";
 
-// Critical tickers to watch in bucket 7
 const CRITICAL_TICKERS = ["VNM", "VCB", "BID", "FPT", "HPG", "MBB", "TCB", "VHM", "SSI", "VIC"];
 const tickers7 = buckets.find((b) => b.bucket === 7)?.top_tickers ?? [];
 const criticalIn7 = tickers7.filter((t) => CRITICAL_TICKERS.includes(t));
 
-// Build critical tickers from full range78 rows for richer analysis
+// Tickers across full 7-8 range
 const allTickers78 = new Set<string>();
 for (const row of range78Rows) {
   for (const t of parseTickers(row.affected_actions)) allTickers78.add(t);
@@ -290,10 +297,8 @@ const report = {
   po_recommendation: recommendation,
 };
 
-// Bun resolves import.meta.dir relative to CWD when running via relative path.
-// When invoked as `bun apps/mcp-server/scripts/analyze-signal-distribution.ts`
-// from project root, import.meta.dir = project-root/scripts (Bun flattens the path).
-// One level up from that reaches project root → docs/data.
+// Bun resolves import.meta.dir to project-root/scripts when invoked via symlink.
+// One level up reaches project root → docs/data/.
 const outDir = resolve(import.meta.dir, "..", "docs", "data");
 mkdirSync(outDir, { recursive: true });
 const outPath = resolve(outDir, "signal-distribution-report.json");
