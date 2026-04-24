@@ -177,6 +177,12 @@ export interface ReparseDeps {
   fileExists: (path: string) => boolean;
   /** Read a file from disk. */
   readFile: (path: string) => Buffer;
+  /** Insert a minimal fallback record to prevent QUA_HAN status when extraction fails with low confidence. */
+  insertFallbackRecord: (payload: {
+    ticker: string;
+    year: number;
+    quarter: "Q1" | "Q2" | "Q3" | "Q4";
+  }) => Promise<void>;
 }
 
 /**
@@ -254,6 +260,30 @@ export async function reparseSingleWithOcrFallback(
         filename: payload.filename,
         cached: cached ? { pages: cached.pages, confidence: cached.confidence } : null,
       });
+
+      // ── SPRINT-1330: DA_NOP Fallback ────────────────────────────────────
+      // When extraction fails with low confidence, insert a minimal fallback record
+      // to prevent earnings calendar from showing the filing as overdue (QUA_HAN).
+      // This ensures DA_NOP status (already filed) even when content extraction fails.
+      try {
+        await deps.insertFallbackRecord({
+          ticker: payload.ticker,
+          year: yq.year,
+          quarter: yq.quarter,
+        });
+
+        logger.info("[bctc-reparse-job] inserted DA_NOP fallback record", {
+          ticker: payload.ticker,
+          period: `${yq.year}-Q${yq.quarter}`,
+          reason: "extraction failed with low confidence",
+        });
+      } catch (fallbackErr) {
+        logger.warn("[bctc-reparse-job] fallback record insert failed", {
+          ticker: payload.ticker,
+          error: fallbackErr instanceof Error ? fallbackErr.message : String(fallbackErr),
+        });
+      }
+
       return false;
     }
   }
@@ -360,6 +390,34 @@ async function makeProductionDeps(): Promise<ReparseDeps> {
     pipeline: async (params) => fetchParseAndStoreBctc(params),
     fileExists: (path: string) => existsSync(path),
     readFile: (path: string) => readFileSync(path),
+    insertFallbackRecord: async (payload) => {
+      const db = getDb();
+      const now = new Date().toISOString();
+      const sortKey = `${payload.year}-Q${payload.quarter}`;
+      const fallbackId = `fallback-${payload.ticker}-${sortKey}`;
+
+      db.prepare(`
+        INSERT INTO financial_reports (
+          id, action_code, company_name, exchange, domain,
+          period_year, period_quarter, period_type,
+          period_start, period_end, sort_key, parsed_at, extraction_confidence
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `).run(
+        fallbackId,
+        payload.ticker,
+        payload.ticker, // Use ticker as placeholder company name
+        "HOSE", // Default to HOSE
+        "other", // Default domain
+        payload.year,
+        payload.quarter,
+        `Q${payload.quarter}`,
+        `${payload.year}-01-01`,
+        `${payload.year}-12-31`,
+        sortKey,
+        now,
+        0, // Low confidence marker
+      );
+    },
   };
 }
 

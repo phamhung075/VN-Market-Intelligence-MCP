@@ -60,8 +60,8 @@ describe("FIX-1327: Detect stale watchlist tickers after push-prices batch", () 
 
     // Verify VCB is detected as stale
     expect(staleTickers.length).toBe(1);
-    expect(staleTickers[0].code).toBe("VCB");
-    expect(staleTickers[0].updated_at).toBe(staleDate);
+    expect(staleTickers[0]!.code).toBe("VCB");
+    expect(staleTickers[0]!.updated_at).toBe(staleDate);
 
     // Verify FPT is NOT detected as stale
     const notStale = staleTickers.filter((t) => t.code === "FPT");

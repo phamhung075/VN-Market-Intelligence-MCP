@@ -173,6 +173,7 @@ describe("Bug 1068 — reparseSingleWithOcrFallback unit tests", () => {
         pipeline: async (_params: unknown) => ({ id: "fake-id" }),
         fileExists: (_path: string) => true,
         readFile: (_path: string) => Buffer.from("fake-pdf"),
+        insertFallbackRecord: async () => {}, // SPRINT-1330: fallback insert (not triggered in this test)
       },
     );
 
@@ -196,6 +197,7 @@ describe("Bug 1068 — reparseSingleWithOcrFallback unit tests", () => {
         pipeline: async (_params: unknown) => null,
         fileExists: (_path: string) => true,
         readFile: (_path: string) => Buffer.from("fake-pdf"),
+        insertFallbackRecord: async () => {}, // SPRINT-1330: fallback insert
       },
     );
 
@@ -219,6 +221,7 @@ describe("Bug 1068 — reparseSingleWithOcrFallback unit tests", () => {
         pipeline: async (_params: unknown) => null,
         fileExists: (_path: string) => true,
         readFile: (_path: string) => Buffer.from("fake-pdf"),
+        insertFallbackRecord: async () => {}, // SPRINT-1330: fallback insert
       },
     );
 

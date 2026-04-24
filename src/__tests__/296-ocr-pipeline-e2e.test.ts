@@ -138,6 +138,7 @@ describe("296 OCR pipeline e2e smoke test", () => {
           },
           fileExists: (_path: string) => true,
           readFile: (_path: string) => Buffer.from("fake-pdf"),
+          insertFallbackRecord: async () => {}, // SPRINT-1330: fallback insert (not triggered in this test)
         },
       );
 
@@ -167,6 +168,7 @@ describe("296 OCR pipeline e2e smoke test", () => {
           pipeline: async () => null,
           fileExists: (_path: string) => true,
           readFile: (_path: string) => Buffer.from("fake-pdf"),
+          insertFallbackRecord: async () => {}, // SPRINT-1330: fallback insert
         },
       );
 
