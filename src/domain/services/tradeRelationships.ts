@@ -62,6 +62,10 @@ export const COUNTRY_KEYWORDS: Record<string, string[]> = {
   australia: ["australia", "australian", "úc"],
   india: ["india", "indian", "ấn độ"],
   uk: ["united kingdom", "british", "anh quốc", "london"],
+  taiwan: [
+    "taiwan", "taiwanese", "đài loan", "taipei", "tsmc",
+    "taiwan strait", "eo biển đài loan",
+  ],
 };
 
 /** Keywords that need whole-word matching (too short for substring matching). */
@@ -140,6 +144,54 @@ const TRADE_PROFILES: Record<string, StockTradeProfile> = {
     ],
     keySensitivities: ["japan", "us"],
     summaryVi: "VEA: 80% lợi nhuận từ cổ tức Honda/Toyota/Ford VN. Suy thoái ô tô Nhật/Mỹ ảnh hưởng trực tiếp.",
+  },
+  DHG: {
+    code: "DHG",
+    companyName: "Dược Hậu Giang",
+    exposures: [
+      { market: "vietnam",  revenuePct: 85, type: "export",  products: "Dược phẩm nội địa" },
+      { market: "china",    revenuePct: 40, type: "import",  products: "API/nguyên liệu dược từ TQ (~40% chi phí)" },
+      { market: "india",    revenuePct: 20, type: "import",  products: "API/nguyên liệu dược từ Ấn Độ (~20% chi phí)" },
+    ],
+    keySensitivities: ["china", "india"],
+    summaryVi: "DHG: 85% doanh thu nội địa. Phụ thuộc nhập khẩu API từ TQ (40%) và Ấn Độ (20%). TQ/Ấn Độ siết xuất khẩu dược → rủi ro chi phí.",
+  },
+  GMD: {
+    code: "GMD",
+    companyName: "Gemadept",
+    exposures: [
+      { market: "asean",   revenuePct: 25, type: "export",  products: "Vận tải biển khu vực ASEAN" },
+      { market: "china",   revenuePct: 15, type: "export",  products: "Port calls TQ" },
+      { market: "korea",   revenuePct: 5,  type: "import",  products: "Nhập thiết bị cảng từ Hàn Quốc" },
+      { market: "japan",   revenuePct: 5,  type: "import",  products: "Nhập thiết bị cảng từ Nhật" },
+      { market: "vietnam", revenuePct: 50, type: "export",  products: "Cảng nội địa, kho bãi logistics" },
+    ],
+    keySensitivities: ["asean", "china"],
+    summaryVi: "GMD: 25% ASEAN sea freight, 15% TQ port calls. Xung đột biển Đông / Đài Loan ảnh hưởng trực tiếp tuyến vận chuyển.",
+  },
+  CTD: {
+    code: "CTD",
+    companyName: "Coteccons",
+    exposures: [
+      { market: "vietnam", revenuePct: 90, type: "export",  products: "Xây dựng dân dụng và công nghiệp nội địa" },
+      { market: "china",   revenuePct: 8,  type: "import",  products: "Thép xây dựng, máy móc từ TQ" },
+      { market: "korea",   revenuePct: 2,  type: "import",  products: "Máy móc thiết bị từ Hàn Quốc" },
+    ],
+    keySensitivities: ["china"],
+    summaryVi: "CTD: 90% nội địa. Nhập vật liệu xây dựng từ TQ (8%). Ít nhạy cảm với địa chính trị, chủ yếu rủi ro chi phí thép/vật liệu.",
+  },
+  NKG: {
+    code: "NKG",
+    companyName: "Nam Kim Steel",
+    exposures: [
+      { market: "vietnam", revenuePct: 55, type: "export",  products: "Thép cuộn cán nguội, tôn mạ nội địa" },
+      { market: "asean",   revenuePct: 20, type: "export",  products: "Xuất khẩu thép sang ASEAN" },
+      { market: "eu",      revenuePct: 10, type: "export",  products: "Xuất khẩu tôn mạ sang EU (rủi ro chống bán phá giá)" },
+      { market: "china",   revenuePct: 35, type: "import",  products: "Nhập HRC coil từ TQ (~35% chi phí)" },
+      { market: "taiwan",  revenuePct: 15, type: "import",  products: "Nhập HRC coil từ Đài Loan (~15% chi phí)" },
+    ],
+    keySensitivities: ["china", "taiwan", "asean", "eu"],
+    summaryVi: "NKG: 20% ASEAN + 10% EU xuất khẩu. Nhập HRC từ TQ (35%) và Đài Loan (15%). Căng thẳng Đài Loan → gián đoạn nguồn cung HRC.",
   },
 };
 
@@ -229,6 +281,10 @@ const STOCK_RELEVANCE_KEYWORDS: Record<string, string[]> = {
   VCB: ["bank", "ngân hàng", "credit", "tín dụng", "lending", "interest rate", "lãi suất", "forex", "ngoại hối"],
   HPG: ["steel", "thép", "iron ore", "quặng", "xây dựng", "hrc", "hòa phát"],
   VEA: ["automotive", "automobile", "vehicle", "honda", "toyota", "ô tô", "xe hơi", "xe ô tô", "veam", "motor vehicle"],
+  DHG: ["dược", "pharma", "pharmaceutical", "thuốc", "api", "dược hậu giang", "dhg"],
+  GMD: ["logistics", "cảng", "vận tải biển", "container", "gemadept", "gmd", "freight"],
+  CTD: ["xây dựng", "construction", "coteccons", "ctd", "nhà thầu"],
+  NKG: ["thép", "steel", "hrc", "nam kim", "nkg", "cuộn cán nguội"],
 };
 
 /**

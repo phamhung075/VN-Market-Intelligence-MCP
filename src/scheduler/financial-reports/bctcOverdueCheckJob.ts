@@ -35,6 +35,8 @@ import {
   classifyFilingStatus,
 } from "../../domain/services/financial-reports/earningsCalendar.js";
 import { logger } from "../../infrastructure/logger.js";
+import { runImpactChain } from "../../application/usecases/runImpactChain.js";
+import type { WatchlistEntry } from "../../domain/services/cascadeEngine.js";
 
 interface RunOptions {
   /** Database connection (defaults to singleton). Override in tests. */
@@ -273,6 +275,31 @@ export async function runBctcOverdueCheck(opts: RunOptions = {}): Promise<RunRes
       overdueFound,
       stocksChecked: watchlist.length,
     });
+  }
+
+  // ── FR-3: Cascade chain per overdue ticker (fire-and-forget) ─────────────
+  if (overdueTickers.length > 0) {
+    const watchlistEntries: WatchlistEntry[] = watchlist.map((w) => ({
+      actionCode: w.code,
+      domain: w.domain as WatchlistEntry["domain"],
+      exchange: "HOSE",
+    }));
+    for (const t of overdueTickers) {
+      const seedText =
+        `BCTC filing overdue: ${t.code} has not filed Q${t.quarter}-${t.year} BCTC. ` +
+        `Deadline was ${t.deadline.toISOString().slice(0, 10)}, ${t.daysOverdue} days ago. ` +
+        `Impact: governance risk, potential earnings uncertainty.`;
+      void runImpactChain({
+        newsText: seedText,
+        watchlist: watchlistEntries,
+        ragRetriever: async () => [],
+      }).catch((err) => {
+        logger.warn("[bctcOverdueCheck] runImpactChain failed for overdue ticker", {
+          code: t.code,
+          error: err instanceof Error ? err.message : String(err),
+        });
+      });
+    }
   }
 
   return {
