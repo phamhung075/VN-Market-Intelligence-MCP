@@ -223,3 +223,40 @@ All tool, service, and scheduler files moved into 10 subfolders:
 - `src/__tests__/1181-financial-reports-persist.test.ts`: new integration test verifying financial_reports row is persisted after `fetchParseAndStoreBctc()`.
 
 **Stats:** toolCount=96, schedulerFileCount=28, totalTasksDone=253. 10/10 sprint-072 tests pass. 4190/4244 full-suite tests pass (34 pre-existing failures in unrelated sprints, 0 new regressions). TypeScript: 0 errors.
+
+---
+
+## Sprints 074–1317 Summary (2026-04-14 through 2026-04-24)
+
+**Major Milestones:**
+
+| Period | Scope | Key Deliverables |
+|--------|-------|------------------|
+| Sprint 1296 | IMF Sentiment Classifier (Phase C Finalization) | IMF domain model + 4-class sentiment classifier + 12 domain-specific cascade rules + conviction weighting for bullish direction |
+| Sprints 1297-1298 | VPS Validation + IMF Test Coverage | BCTC portal fix for HNX/UPCOM + 6573 tests covering classifier/fetcher/cascade rules/MCP integration |
+| Sprint 1303 | Backlog Drain: 9 Bug Fixes | price_surge dedup (4h→1h bucket), sentiment cost-pressure keywords, policyImpactMapper corporate_governance type, test log cleanup, VPS watchdog spam removal, session dedup, all-VPS down incident recovery, BCTC PDF parser impossible figures, cascade rule gaps (Taiwan/BCTC overdue/trade map) |
+| Sprint 1311 | DB Schema + Sentiment + Macro | verdict/reviewed_at migration to market_messages, foreign_flow UNIQUE constraint (code,date), cascade rule gaps (Hormuz oil/aviation, govt securities, agri exclusion), insider SELLING patterns, macro alert cooldown + briefing direction label |
+| Sprint 1315 | Cost-Push Cascade Rules | Logistics fuel-cost rules, utilities coal/gas input-cost rules, construction steel/cement input-cost rules, 10 sentiment patterns, climateImpactMapper commodity impact lookup |
+| FIX-1316 | LNG Keyword Case Fix | 4 keywords lowercased in cascadeEngine.ts (gas-cost rules now functional) |
+| FIX-1317 | Pre-Existing Test Noise | Task 308 regex relaxed, project-stats.json updated |
+| FIX-1319 | Watchdog Foreign Flow Monitoring | readLatestForeignFlowTimestamp() reader, 90-min staleness threshold (prevents repeat of Apr 21-24 7-day outage) |
+
+**Current Sprint Stats** (from `docs/data/project-stats.json`):
+- currentSprint: **1317**
+- testBaseline: **6769** (target 6450; 12 pre-existing failures + 7 recent)
+- toolCount: **108** (global MCP tools)
+- schedulerFileCount: **42** (all scheduler jobs)
+- totalTasksDone: **358** (cumulative)
+
+**Key Architecture Decisions:**
+- Two-team design: Analysis Cowork agents + Dev CLI cron loop with autonomous PO triage
+- VPS proxy for 5 geo-blocked services (prices, BCTC, news, FX, foreign-flow) via Vinahost Vietnam
+- DDD layering: domain ← application ← interface ← scheduler (no cross-layer violations)
+- TDD-first: RED test phase → GREEN implementation → QA review → auto-merge
+- Telegram channel separation: MARKET (user alerts) | WORK (dev status) | BUG (incident reports)
+- SQLite+RAG local: zero-latency portfolio analysis, no cloud migration
+
+**Known Issues (Being Tracked):**
+- vnstock_trading_stats 7 days stale (secondary to UNBLOCK-1318 VPS recovery; FIX-1312 migration guard in progress)
+- French summary job missing rag_analyses table (discovered during incident recovery)
+- MSCI WatchList inclusion rule (6 impact → 9 bullish macro cascade)
