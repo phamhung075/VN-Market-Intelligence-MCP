@@ -42,10 +42,10 @@
 | 1303e | pipelineWatchdog + vpsProxyWatchdog: remove MARKET channel spam | scheduler | Done | #2596 |
 | 1303f | append_session_record: add content deduplication | interface | Done | SEC |
 | 1303g | UNBLOCK — VPS all-services down (prices/BCTC/news/FX/flow) | ops | Todo | #2598,2599,2604,2607 |
-| 1303h | SPRINT — BCTC PDF parser impossible figures | domain | Todo | #2597,2608,2610 |
-| 1303i | SPRINT — Cascade rule gaps (geo/BCTC overdue/trade map) | domain | Review | #2595,2600,2602 |
+| 1303h | SPRINT — BCTC PDF parser impossible figures | domain | Done | #2597,2608,2610 |
+| 1303i | SPRINT — Cascade rule gaps (geo/BCTC overdue/trade map) | domain | Done | #2595,2600,2602 |
 
-**Status:** 1303a–1303f DONE (code committed). 1303g BLOCKED on ops. 1303h Todo. 1303i Review. WIP: 1/2.
+**Status:** 1303a–1303f, 1303h, 1303i DONE. 1303g BLOCKED on ops. WIP: 0/2.
 
 ### 1303h — BCTC PDF Parser Impossible Figures Guard
 context: `docs/handoffs/TASK_1303h.md`

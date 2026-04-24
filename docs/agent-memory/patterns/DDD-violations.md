@@ -82,6 +82,8 @@ infrastructure/ (DB, HTTP clients, services)
 
 **Task 1289 (2026-04-22):** Fixed `WriteForeignFlowItem` type import in domain validator — moved type to domain/models/shared-types.ts, updated 4 files. Caught by test 1321-ddd-no-infra-imports-in-domain.test.ts. Test suite enforces this rule every run.
 
+**Task 1303i (2026-04-24):** Verified clean — cascadeEngine.ts + tradeRelationships.ts (domain) have zero infra/application imports. bctcOverdueCheckJob.ts (scheduler) imports from application (runImpactChain) + domain (WatchlistEntry) — both valid. Last verified: 2026-04-24.
+
 ## Related
 
 - `.claude/knowledge/dev-standards.md` → DDD layering rules

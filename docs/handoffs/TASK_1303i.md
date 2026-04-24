@@ -242,4 +242,4 @@ files_confirmed_clean:
 - /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/scheduler/financial-reports/bctcOverdueCheckJob.ts
 - /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/__tests__/1303i-cascade-gaps.test.ts
 
-merge_commit: (fill after merge)
+merge_commit: 98d55917
