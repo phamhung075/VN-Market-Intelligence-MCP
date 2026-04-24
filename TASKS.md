@@ -247,10 +247,23 @@ Fix: `src/interface/mcp/tools/briefings/telegramTools.ts:51-70` — 6-pattern re
 
 ---
 
+## DDD Microservices — Phase 0 (2026-04-24)
+
+| ID | Title | Layer | Status | Branch |
+|----|-------|-------|--------|--------|
+| DDD-P0 | Monorepo Scaffold: move src/ → apps/mcp-server/ | infra | Review | feature/ddd-phase-0 |
+
+Plan: `/Users/admin/.claude/plans/harmonic-juggling-dongarra.md`
+Gate: 6778 pass / 9 fail (baseline 6759/11). +17 scaffold gate tests. tsc clean.
+Handoff: `docs/handoffs/DDD_PHASE0.md`
+
+---
+
 ## Backlog
 
 | ID | Title | Priority | Notes |
 |----|-------|----------|-------|
-| (empty) | | | |
+| DDD-P1a | Phase 1a: PDF Extractor Python/FastAPI microservice | high | after P0 merged |
+| DDD-P1b | Phase 1b: RAG Service Python/FastAPI microservice | high | after P0 merged |
 
 ---

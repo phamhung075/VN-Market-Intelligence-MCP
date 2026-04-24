@@ -1,3 +1,10 @@
+### Phase 0: DDD Monorepo Scaffold (17:30–18:42)
+- **Files changed**: apps/mcp-server/ (new workspace + symlinks), packages/shared-types/shared-db/shared-config, pnpm-workspace.yaml, docker-compose.yml, launchd/mcp-launch.sh, CLAUDE.md, dev-standards.md, restart-policy.md, docs/ARCHITECTURE.md
+- **Finding**: bctc-schema.ts at root imported as `../../../bctc-schema.js` from src/infrastructure/db/ — needs symlink at apps/mcp-server/. Docker context must be monorepo root (symlinks don't resolve in Docker build).
+- **Finding**: import.meta.dir/../.. from apps/mcp-server/src/__tests__/ resolves to apps/mcp-server/ — all root-level test assets need symlinks there.
+- **Gate**: 6778 pass, 9 fail (baseline 6759/11). +17 new scaffold gate tests. tsc clean.
+- **Status**: Ready for QA — branch feature/ddd-phase-0
+
 ### Task 1315b: Cost-push integration tests GREEN (14:00–14:20)
 - **Files changed**: `src/__tests__/1315-cascade-cost-push-integration.test.ts` (replaced 8 RED stubs with 9 assertions)
 - **Finding**: `findKeyword()` runs on lowercased text but some rule keywords have uppercase ("giá LNG tăng" — LNG uppercase). AC-3 needed lowercase keyword "giá khí đốt tăng" instead.
