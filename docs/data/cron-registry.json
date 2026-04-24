@@ -1,7 +1,7 @@
 {
   "_maintained_by": "developer",
   "_trigger": "after adding/removing scheduler file, update count + list",
-  "lastUpdated": "2026-04-23",
+  "lastUpdated": "2026-04-24",
   "schedulerFileCount": 44,
   "jobs": [
     { "schedule": "*/15 min", "name": "intelligenceCycle", "desc": "Main engine: news+prices+cascade+alerts" },
@@ -43,7 +43,8 @@
     { "schedule": "20:30 UTC daily", "name": "cascadeBacktestJob", "file": "src/scheduler/cascadeBacktestJob.ts", "desc": "Daily backtest: fills price_impact_3d/7d/outcome_correct on cascade_rule_hits rows older than 3 days using daily_ohlcv closes. Sends WORK summary." },
     { "schedule": "helper", "name": "walCheckpointAlert", "file": "src/scheduler/walCheckpointAlert.ts", "type": "helper", "desc": "WAL stuck Telegram alert helper — sends WORK channel alert when WAL checkpoint is stale (Sprint 179)" },
     { "id": "macroIndicatorRefreshJob", "schedule": "0 6 * * * (06:00 VN daily)", "filePath": "src/scheduler/macro/macroIndicatorRefreshJob.ts", "description": "Macro indicator daily refresh with SLA validation (yahoo → sbv → gso fallback)" },
-    { "schedule": "0 */8 * * *", "name": "trackSessionToolUsage", "file": "src/scheduler/system/trackSessionToolUsageJob.ts", "desc": "Aggregate session tool cache snapshot → tool-usage-stats.json (observability, 8h TTL match)" }
+    { "schedule": "0 */8 * * *", "name": "trackSessionToolUsage", "file": "src/scheduler/system/trackSessionToolUsageJob.ts", "desc": "Aggregate session tool cache snapshot → tool-usage-stats.json (observability, 8h TTL match)" },
+    { "id": "imf_indicator_poller", "schedule": "0 */6 * * *", "name": "imfIndicatorPoller", "file": "src/scheduler/market-data/imfIndicatorPollerJob.ts", "timeoutMs": 30000, "enabled": true, "desc": "IMF economic indicator poller: fetch global GDP growth/inflation/oil forecast every 6h, store in imf_indicators table, classify macro sentiment (task 1296b)" }
   ],
   "orphan": [],
   "legacy": ["newsPollerJob.ts"]
