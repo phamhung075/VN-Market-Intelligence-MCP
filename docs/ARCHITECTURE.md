@@ -4,28 +4,55 @@
 
 `domain` ← `application` ← `interface` ← `scheduler`. Cross-layer: inward only. `domain/` never imports `infrastructure/`.
 
-## Monorepo Structure (Phase 0, 2026-04-24)
+## Monorepo Structure (Phase 1a, 2026-04-24)
 
 ```
 vn-market-intelligence/         ← pnpm workspace root
 ├── apps/
-│   └── mcp-server/             ← TypeScript/Bun — MCP server (current monolith)
-│       ├── src/                ← all domain code (see Folder Tree below)
-│       ├── package.json        ← name: vn-market-intelligence-mcp
-│       ├── tsconfig.json
-│       ├── bunfig.toml
-│       ├── Dockerfile
-│       └── [symlinks] → mcp.config.json, docs/, scripts/, vps-scripts/, data/
+│   ├── mcp-server/             ← TypeScript/Bun — MCP server (current monolith)
+│   │   ├── src/                ← all domain code (see Folder Tree below)
+│   │   ├── package.json        ← name: vn-market-intelligence-mcp
+│   │   ├── tsconfig.json
+│   │   ├── bunfig.toml
+│   │   ├── Dockerfile
+│   │   └── [symlinks] → mcp.config.json, docs/, scripts/, vps-scripts/, data/
+│   └── pdf-extractor/          ← Python/FastAPI — PDF extraction microservice (Phase 1a)
+│       ├── domain/             ← models.py, repositories.py, services.py, errors.py
+│       ├── application/        ← usecases.py, dtos.py
+│       ├── infrastructure/     ← repositories.py, extraction_engine.py, config.py
+│       ├── interface/          ← handlers.py, serializers.py
+│       ├── __tests__/          ← unit/ + integration/ (pytest)
+│       ├── main.py             ← FastAPI app + dependency wiring
+│       ├── requirements.txt
+│       ├── pyproject.toml
+│       └── Dockerfile
 ├── packages/
-│   ├── shared-types/           ← Inter-service TS contracts (Alert, Signal, etc.)
+│   ├── shared-types/           ← Inter-service TS contracts (Alert, Signal, ExtractPDFRequest, etc.)
 │   ├── shared-db/              ← SQLite schema registry
 │   └── shared-config/          ← mcp.config.json loader
-├── docker-compose.yml          ← mcp-server (Phase 0), future services commented
+├── docker-compose.yml          ← mcp-server (3000) + pdf-extractor (5001, Phase 1a)
 ├── pnpm-workspace.yaml
 └── vps-scripts/                ← unchanged VPS proxy scripts
 ```
 
-Future service ports: api-gateway=4000, stock-price=5000, pdf-extractor=5001, rag-service=5002, technical-analysis=5003, macro-indicators=5004, kinh-dich-service=5005, alert-engine=5006.
+## Services
+
+| Service        | Port | Language    | Phase  | Status    |
+|----------------|------|-------------|--------|-----------|
+| mcp-server     | 3000 | TypeScript  | 0      | Running   |
+| pdf-extractor  | 5001 | Python      | 1a     | Running   |
+| rag-service    | 5002 | Python      | 1b     | Planned   |
+| api-gateway    | 4000 | TBD         | 2a     | Planned   |
+| stock-price    | 5000 | TBD         | 2a     | Planned   |
+
+## pdf-extractor (Phase 1a)
+
+DDD Python/FastAPI service for BCTC PDF extraction:
+- `POST /extract {url, source_type}` → ExtractPDFResponse
+- `GET /health` → {status: "ok", service: "pdf-extractor"}
+- pdfplumber for native table extraction; pytesseract OCR fallback
+- SQLite table: `pdf_documents` (id, url, source_type, status, extracted_at)
+- mcp-server calls via `infrastructure/fetchers/pdfExtractorClient.ts` (graceful null fallback)
 
 Tests: run from `apps/mcp-server/` with `bun test`. Or from root: `pnpm test`.
 

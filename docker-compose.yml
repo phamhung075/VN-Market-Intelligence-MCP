@@ -47,10 +47,29 @@ services:
       retries: 3
       start_period: 10s
 
-  # ── Phase 1a placeholder: PDF Extractor (Python/FastAPI) ─────────────────
-  # pdf-extractor:
-  #   build: apps/pdf-extractor
-  #   ports: ["5001:5001"]
+  # ── Phase 1a: PDF Extractor (Python/FastAPI) ─────────────────────────────
+  pdf-extractor:
+    build:
+      context: apps/pdf-extractor
+      dockerfile: Dockerfile
+    ports:
+      - "5001:5001"
+    volumes:
+      - ./data:/app/data
+    environment:
+      - DB_PATH=/app/data/pdf_extractor.db
+      - STORAGE_DIR=/app/data/extractions
+      - LOG_LEVEL=INFO
+    restart: unless-stopped
+    depends_on:
+      mcp-server:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
 
   # ── Phase 1b placeholder: RAG Service (Python/FastAPI) ───────────────────
   # rag-service:
