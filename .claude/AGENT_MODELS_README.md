@@ -69,7 +69,7 @@ qa.md
 system-auditor.md
 ```
 
-### Cowork Team (cowork-analysis-vnmarket-team/)
+### Cowork Team (cowork-workspace-team-claude-desktop/)
 ⚠️ Manual — models stored in Claude.ai workspace, not in .md files
 
 ```
