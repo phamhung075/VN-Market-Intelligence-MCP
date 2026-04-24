@@ -344,3 +344,95 @@ export function mapClimateImpact(
     confidence: severityToConfidence(event.severity),
   };
 }
+
+// ---------------------------------------------------------------------------
+// Task 1315a (FR-6): Commodity cost-push lookup
+// Pure domain lookup: commodity + direction → affected sector cost structure.
+// ZERO imports from infrastructure/ or application/.
+// Standalone — NOT imported by cascadeEngine.ts in this sprint.
+// ---------------------------------------------------------------------------
+
+export interface CostImpactMap {
+  commodity: string;
+  direction: "up" | "down";
+  domain: string;
+  costDriver: string;
+  confidence: number;
+  rationale: string;
+}
+
+const COST_IMPACT_TABLE: CostImpactMap[] = [
+  {
+    commodity: "oil", direction: "up", domain: "logistics",
+    costDriver: "fuel OPEX ~30-40%",
+    confidence: 0.72,
+    rationale: "Giá dầu tăng → chi phí xăng dầu tăng → biên lợi nhuận vận tải giảm (GMD, VVN). Oil rise → fuel surcharge → trucking/maritime margin pressure.",
+  },
+  {
+    commodity: "oil", direction: "down", domain: "logistics",
+    costDriver: "fuel OPEX ~30-40%",
+    confidence: 0.68,
+    rationale: "Giá dầu giảm → chi phí nhiên liệu giảm → biên lợi nhuận vận tải mở rộng (GMD, VVN). Oil fall → lower fuel cost → logistics margin expansion.",
+  },
+  {
+    commodity: "coal", direction: "up", domain: "utilities",
+    costDriver: "fuel COGS ~60-70% thermal",
+    confidence: 0.75,
+    rationale: "Giá than tăng → chi phí nhiên liệu điện than tăng → biên lợi nhuận POW giảm. Coal rise → thermal power COGS spike → POW margin compression.",
+  },
+  {
+    commodity: "coal", direction: "down", domain: "utilities",
+    costDriver: "fuel COGS ~60-70% thermal",
+    confidence: 0.68,
+    rationale: "Giá than giảm → chi phí nhiên liệu điện than giảm → tích cực cho POW. Coal fall → lower thermal COGS → POW margin expansion.",
+  },
+  {
+    commodity: "gas", direction: "up", domain: "utilities",
+    costDriver: "fuel COGS ~50% gas-fired",
+    confidence: 0.70,
+    rationale: "Giá khí đốt/LNG tăng → chi phí điện khí và phân phối khí tăng (HNG, điện khí). Gas rise → gas-fired plant + city gas distribution margin squeeze.",
+  },
+  {
+    commodity: "gas", direction: "down", domain: "utilities",
+    costDriver: "fuel COGS ~50% gas-fired",
+    confidence: 0.65,
+    rationale: "Giá khí đốt giảm → chi phí đầu vào giảm → tích cực cho điện khí và HNG. Gas fall → lower input cost → utilities margin expansion.",
+  },
+  {
+    commodity: "steel", direction: "up", domain: "construction",
+    costDriver: "rebar ~20-25% project COGS",
+    confidence: 0.73,
+    rationale: "Giá thép xây dựng tăng → chi phí rebar/sắt thép tăng → biên lợi nhuận nhà thầu giảm (CTD, HTI). Steel rise → fixed-price contract margin squeeze.",
+  },
+  {
+    commodity: "steel", direction: "down", domain: "construction",
+    costDriver: "rebar ~20-25% project COGS",
+    confidence: 0.65,
+    rationale: "Giá thép giảm → chi phí đầu vào hạ → biên lợi nhuận nhà thầu mở rộng (CTD, HTI). Steel fall → fixed-price contract margin expansion.",
+  },
+  {
+    commodity: "cement", direction: "up", domain: "construction",
+    costDriver: "cement ~10-15% project COGS",
+    confidence: 0.68,
+    rationale: "Giá xi măng tăng → chi phí xây dựng tăng → áp lực lên nhà thầu hợp đồng cố định (CTD, HTI). Cement rise → contractor cost pressure.",
+  },
+  {
+    commodity: "cement", direction: "down", domain: "construction",
+    costDriver: "cement ~10-15% project COGS",
+    confidence: 0.62,
+    rationale: "Giá xi măng giảm → chi phí giảm → tích cực cho nhà thầu (CTD, HTI). Cement fall → lower input cost → contractor margin improvement.",
+  },
+];
+
+/**
+ * Returns all cost impact entries matching commodity + direction.
+ * Returns empty array if no match (not an error).
+ */
+export function getCostImpactMaps(
+  commodity: string,
+  direction: "up" | "down"
+): CostImpactMap[] {
+  return COST_IMPACT_TABLE.filter(
+    (e) => e.commodity === commodity && e.direction === direction
+  );
+}

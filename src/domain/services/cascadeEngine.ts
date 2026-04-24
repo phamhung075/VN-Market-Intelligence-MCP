@@ -976,6 +976,40 @@ export const SECTOR_RULES: SectorRule[] = [
     confidence: 0.60,
     title: "USD/VND tăng — tăng giá trị xuất khẩu thép tính bằng VND",
   },
+  // ── Logistics: VN fuel-cost-specific phrases (FR-1, Task 1315a) ──────────
+  // First-match-wins: VN fuel phrases more specific than generic "giá dầu tăng".
+  // Insert BEFORE generic oil rule. GMD/VVN fuel ~30-40% trucking/maritime OPEX.
+  {
+    keywords: [
+      "chi phí xăng dầu tăng",
+      "cước nhiên liệu tăng",
+      "phí nhiên liệu tăng",
+      "giá xăng tăng",
+      "xăng dầu tăng giá",
+      "fuel surcharge",
+      "bunker fuel cost",
+      "trucking fuel cost",
+    ],
+    domain: "logistics",
+    direction: "down",
+    confidence: 0.72,
+    title: "Chi phí xăng dầu tăng — áp lực OPEX nhiên liệu cho logistics (GMD, VVN)",
+  },
+  // ── Logistics: VN fuel-cost-down (FR-2, Task 1315a) ──────────────────────
+  // Insert BEFORE generic "giá dầu giảm" rule. Symmetric inverse of FR-1.
+  {
+    keywords: [
+      "giá xăng giảm",
+      "chi phí nhiên liệu giảm",
+      "xăng dầu giảm giá",
+      "fuel cost down",
+      "bunker fuel down",
+    ],
+    domain: "logistics",
+    direction: "up",
+    confidence: 0.68,
+    title: "Chi phí xăng dầu giảm — OPEX giảm, tích cực cho logistics (GMD, VVN)",
+  },
   // ── Logistics: high oil price → cost pressure (bearish) ──────────────────
   {
     keywords: ["giá dầu tăng", "oil price rise", "crude oil up", "fuel cost"],
@@ -1026,6 +1060,53 @@ export const SECTOR_RULES: SectorRule[] = [
     direction: "up",
     confidence: 0.65,
     title: "Đầu tư công tăng — tích cực cho bất động sản khu vực hạ tầng",
+  },
+  // ── Construction: input-cost squeeze (FR-4, Task 1315a) ──────────────────
+  // Insert AFTER demand-side rules (above = "đầu tư công" → infrastructure demand).
+  // These rules target commodity price keywords — no overlap with demand rules.
+  // CTD/HTI: steel rebar ~20-25% project COGS; cement ~10-15%. Fixed-price contracts.
+  {
+    keywords: [
+      "giá thép xây dựng tăng",
+      "giá sắt thép tăng",
+      "chi phí thép tăng",
+      "thép xây dựng tăng giá",
+      "vật liệu xây dựng tăng giá",
+      "construction steel price rise",
+      "rebar price rise",
+      "steel input cost rise",
+    ],
+    domain: "construction",
+    direction: "down",
+    confidence: 0.73,
+    title: "Giá thép xây dựng tăng — thu hẹp biên lợi nhuận nhà thầu (CTD, HTI)",
+  },
+  {
+    keywords: [
+      "giá xi măng tăng",
+      "xi măng tăng giá",
+      "chi phí xi măng tăng",
+      "cement price rise",
+      "cement price up",
+    ],
+    domain: "construction",
+    direction: "down",
+    confidence: 0.68,
+    title: "Giá xi măng tăng — tăng chi phí đầu vào hợp đồng cố định (CTD, HTI)",
+  },
+  {
+    keywords: [
+      "giá thép xây dựng giảm",
+      "giá xi măng giảm",
+      "vật liệu xây dựng giảm giá",
+      "construction material cost fall",
+      "rebar price fall",
+      "cement price fall",
+    ],
+    domain: "construction",
+    direction: "up",
+    confidence: 0.65,
+    title: "Vật liệu xây dựng giảm — mở rộng biên lợi nhuận hợp đồng cố định (CTD, HTI)",
   },
   // ── Seafood / agriculture: USD/VND rate → export revenue impact ──────────
   {
@@ -1569,6 +1650,67 @@ export const SECTOR_RULES: SectorRule[] = [
     direction: "up",
     confidence: 0.65,
     title: "Chuyển đổi năng lượng — tích cực cho REE, PC1, GEG (năng lượng sạch)",
+  },
+  // ── Utilities: coal price → thermal power COGS (FR-3, Task 1315a) ─────────
+  // POW (Petrovietnam Power): coal ~60-70% fuel COGS. First utilities commodity-input rule.
+  {
+    keywords: [
+      "giá than tăng",
+      "than đá tăng giá",
+      "chi phí than tăng",
+      "giá than nhiệt điện tăng",
+      "coal price rise",
+      "coal price up",
+      "thermal coal surge",
+    ],
+    domain: "utilities",
+    direction: "down",
+    confidence: 0.75,
+    title: "Giá than tăng — chi phí nhiên liệu điện tăng (POW bị ảnh hưởng)",
+  },
+  // ── Utilities: gas price → gas-fired + city gas distribution COGS (FR-3) ──
+  // HNG (Hà Nội Gas): city gas distribution — gas is primary input cost.
+  {
+    keywords: [
+      "giá khí đốt tăng",
+      "giá LNG tăng",
+      "giá khí tự nhiên tăng",
+      "chi phí khí đốt tăng",
+      "gas price rise",
+      "LNG price rise",
+      "natural gas price up",
+      "gas price surge",
+    ],
+    domain: "utilities",
+    direction: "down",
+    confidence: 0.70,
+    title: "Giá khí đốt/LNG tăng — áp lực chi phí điện khí và phân phối khí (HNG)",
+  },
+  // ── Utilities: coal fall (FR-3) ───────────────────────────────────────────
+  {
+    keywords: [
+      "giá than giảm",
+      "than đá giảm giá",
+      "coal price fall",
+      "coal price down",
+    ],
+    domain: "utilities",
+    direction: "up",
+    confidence: 0.68,
+    title: "Giá than giảm — giảm chi phí nhiên liệu, tích cực cho điện than (POW)",
+  },
+  // ── Utilities: gas fall (FR-3) ────────────────────────────────────────────
+  {
+    keywords: [
+      "giá khí đốt giảm",
+      "giá LNG giảm",
+      "LNG price fall",
+      "gas price fall",
+    ],
+    domain: "utilities",
+    direction: "up",
+    confidence: 0.65,
+    title: "Giá khí đốt giảm — tích cực cho điện khí và phân phối khí (HNG)",
   },
 
   // ═══════════════════════════════════════════════════════════════════════════
