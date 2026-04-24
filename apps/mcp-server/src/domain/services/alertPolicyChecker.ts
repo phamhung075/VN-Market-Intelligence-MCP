@@ -64,6 +64,14 @@ export interface AlertCheckResult {
    * Only present when fire=true.
    */
   reason?: string;
+  /**
+   * Present only when fire=false. Lists which conditions failed with actual vs threshold values.
+   * Callers (infrastructure layer) are responsible for persisting this to signalRejectionStore.
+   */
+  suppressionReasons?: {
+    rule: "position_danger_3and" | "watchlist_opportunity_4and";
+    failedConditions: string[];
+  };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -96,7 +104,14 @@ export function checkPositionDanger(input: PositionDangerInput): AlertCheckResul
     return { fire: true, reason };
   }
 
-  return { fire: false };
+  const failed: string[] = [];
+  if (!cond1) failed.push("stopLossHit=false");
+  if (!cond2) failed.push(`singleDayDropPct=${singleDayDropPct.toFixed(1)} (threshold=${thresholds.singleDayDropPct})`);
+  if (!cond3) failed.push(`newsSentiment=${newsSentiment.toFixed(2)} (threshold=${thresholds.newsSentimentThreshold})`);
+  return {
+    fire: false,
+    suppressionReasons: { rule: "position_danger_3and", failedConditions: failed },
+  };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -132,5 +147,13 @@ export function checkWatchlistOpportunity(input: WatchlistOpportunityInput): Ale
     return { fire: true, reason };
   }
 
-  return { fire: false };
+  const failed: string[] = [];
+  if (!cond1) failed.push(`kinhDichConfidence=${kinhDichConfidence} (min=${thresholds.kinhDichConfidenceMin})`);
+  if (!cond2) failed.push(`kinhDichSignal=${kinhDichSignal} (expected=BUY)`);
+  if (!cond3) failed.push(`newsSentiment=${newsSentiment.toFixed(2)} (min=${thresholds.newsSentimentMin})`);
+  if (!cond4) failed.push(`agentSignalsMajority=${agentSignalsMajority} (expected=BUY)`);
+  return {
+    fire: false,
+    suppressionReasons: { rule: "watchlist_opportunity_4and", failedConditions: failed },
+  };
 }

@@ -448,7 +448,9 @@ export function loadMcpConfig(): McpConfig {
     alerts: {
       defaultDropPct: num(f, "alerts.defaultDropPct", "DEFAULT_ALERT_DROP_PCT", -3),
       defaultRisePct: num(f, "alerts.defaultRisePct", "DEFAULT_ALERT_RISE_PCT", 5),
-      defaultImpactScoreMin: num(f, "alerts.defaultImpactScoreMin", "DEFAULT_IMPACT_SCORE_MIN", 7),
+      // Task 1328j — threshold raised 7→7.5 after 1328k PO review (2026-04-25).
+      // PO chose 7.5 (not 8) to retain FPT/VIC/HPG signals. Gate: PO must re-approve before raising further.
+      defaultImpactScoreMin: num(f, "alerts.defaultImpactScoreMin", "DEFAULT_IMPACT_SCORE_MIN", 7.5),
       volumeSpikeMultiplier: num(f, "alerts.volumeSpikeMultiplier", null, 2),
       reportFreshHours: num(f, "alerts.reportFreshHours", null, 24),
       severityEscalation: {

@@ -19,6 +19,7 @@
  */
 
 import type { Alert } from "../../domain/services/alertGenerator.js";
+import type { ConvictionResult } from "../../domain/services/convictionScorer.js";
 import { detectSensitiveDates } from "../../domain/services/financial-reports/priceNewsValidator.js";
 import { createLogger } from "../logger.js";
 import { getPatternSummary } from "../../application/usecases/getPatternSummary.js";
@@ -81,6 +82,13 @@ export interface SendTelegramOptions {
 export interface NotifyOptions {
   /** Injectable fetch function for tests. Default: globalThis.fetch. */
   fetchFn?: FetchFn;
+  /**
+   * When present, appends 6-dimension conviction breakdown to HIGH/CRITICAL alert message.
+   * Block bypasses TelegramMessageFactory — no 100-grapheme truncation.
+   */
+  conviction?: ConvictionResult;
+  /** Complete risk list for conviction block. No truncation allowed. */
+  convictionRisks?: string[];
 }
 
 /**
@@ -461,6 +469,30 @@ function formatAlertMessage(alert: Alert): string {
   return `${header}\n${body}${warningLine}\n🕐 ${timestamp}`;
 }
 
+/**
+ * Format a 6-dimension conviction breakdown for Telegram output.
+ *
+ * IMPORTANT: Do NOT pass this through TelegramMessageFactory.formatAlertMessage()
+ * (100-grapheme limit). Route directly to splitMessage() → sendTelegramMarket().
+ *
+ * @param result - ConvictionResult from computeConviction()
+ * @param risks - Complete risk list (caller must pass ALL risks — no truncation)
+ */
+export function formatConvictionBlock(result: ConvictionResult, risks: string[] = []): string {
+  const d = result.dimensions;
+  const pct = (n: number) => `${Math.round(n * 100)}%`;
+  const lines = [
+    `Tại sao: ${result.summary}`,
+    `Xác nhận: Giá ${pct(d.priceAction)} | Khối lượng ${pct(d.volumeConfirmation)} | Ngành ${pct(d.sectorAlignment)}`,
+    `Kinh Dịch: ${pct(d.kinhDich)} tin cậy`,
+    `Tiếp theo: Vĩ mô ${pct(d.cascade)} | Cảm xúc ${pct(d.sentiment)}`,
+  ];
+  if (risks.length > 0) {
+    lines.push(`Rủi ro:\n${risks.map(r => `• ${r}`).join("\n")}`);
+  }
+  return lines.join("\n");
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // High-level notifiers (route to WORK — analysis/dev alerts)
 // ─────────────────────────────────────────────────────────────────────────────
@@ -487,6 +519,13 @@ export async function notifyTelegramAlert(
   // Add severity label at top for HIGH/CRITICAL alerts in BUG channel
   const severityLabel = severity === "critical" ? "🚨 CRITICAL ALERT" : "⚠️ HIGH ALERT";
   text = `${severityLabel}\n\n${text}`;
+
+  if (options.conviction) {
+    // NOTE: conviction block bypasses TelegramMessageFactory — no truncation.
+    // Path: formatConvictionBlock() → string concat → splitMessage() → sendTelegramBug()
+    const convBlock = formatConvictionBlock(options.conviction, options.convictionRisks ?? []);
+    text = `${text}\n\n${convBlock}`;
+  }
 
   try {
     const signalType = alert.signals[0]?.type ?? "";
