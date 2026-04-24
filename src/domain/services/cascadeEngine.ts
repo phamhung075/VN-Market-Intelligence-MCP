@@ -550,6 +550,7 @@ export const SECTOR_RULES: SectorRule[] = [
       "stabilization fund",
       "stock market support measures",
       "market support measures",
+      "government stock market support",
       "government-backed",
       "government support package",
       "stimulus package",
@@ -1144,6 +1145,25 @@ export const SECTOR_RULES: SectorRule[] = [
     direction: "neutral",
     confidence: 0.60,
     title: "Giá nông sản thế giới biến động — tác động đến chi phí/doanh thu nông nghiệp VN",
+  },
+
+  // ── Task 1309a: Agriculture commodity export rules ────────────────────────
+  // Coffee/rice/seafood export decline → agriculture BEARISH.
+  // These are commodity-sector articles — must NOT broadcast to real_estate/banking
+  // via market-wide path (COMMODITY_TRIGGER_DOMAINS includes "agriculture").
+  {
+    keywords: [
+      "coffee export", "coffee export decline", "cà phê xuất khẩu", "xuất khẩu cà phê",
+      "coffee export revenues", "giá cà phê xuất khẩu", "cà phê giảm",
+      "rice export", "rice export decline", "xuất khẩu gạo", "gạo xuất khẩu giảm",
+      "rice export revenues", "xuất khẩu nông sản giảm", "agriculture exports drop",
+      "vietnam agriculture exports", "nông sản xuất khẩu giảm",
+      "seafood export decline", "xuất khẩu thủy sản giảm", "thủy sản xuất khẩu giảm",
+    ],
+    domain: "agriculture",
+    direction: "down",
+    confidence: 0.72,
+    title: "Xuất khẩu nông sản/cà phê/gạo giảm — tiêu cực cho ngành nông nghiệp (GVR, VNM, ANV, MPC)",
   },
   {
     keywords: ["copper price", "giá đồng", "copper surge", "industrial metal"],
@@ -2801,7 +2821,9 @@ export function buildCausalChain(
   // via the generic "global article + high impact score → broadcast all" path.
   // Only applies when domainEntryMap is non-empty (at least one rule matched) AND
   // the article does NOT contain explicit VN market-wide signals (those override).
-  const COMMODITY_TRIGGER_DOMAINS = new Set<string>(["gold_mining", "oil_gas"]);
+  // Task 1309a: add "agriculture" — commodity-sector articles (coffee/rice/seafood export)
+  // must not broadcast to unrelated sectors (real_estate, banking) via market-wide path.
+  const COMMODITY_TRIGGER_DOMAINS = new Set<string>(["gold_mining", "oil_gas", "agriculture"]);
   const matchedDomains = Array.from(domainEntryMap.keys());
   const hasCommodityTrigger =
     matchedDomains.some((d) => COMMODITY_TRIGGER_DOMAINS.has(d));
