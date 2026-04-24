@@ -1,13 +1,13 @@
 {
   "_maintained_by": "PM / system-auditor",
   "_trigger": "sprint start/end, tool/cron count change, baseline test update",
-  "lastUpdated": "2026-04-24T12:47:00Z",
-  "currentSprint": 1321,
+  "lastUpdated": "2026-04-24T10:35:31Z",
+  "currentSprint": 1325,
   "previousSprint": { "number": 1320, "status": "DONE", "progressTasks": "Sprint 1318–1321: watchdog foreign_flow monitoring (1319), IMPLEMENTATION_STATUS.md backlog drain (1320), VPS OOM prevention systemd limits (1321). 8 new tests. +3 infrastructure hardening fixes." },
   "sprintGoal": "Infrastructure hardening + backlog cleanup: foreign_flow watchdog, VPS OOM restart guard, sprint history documentation",
-  "testBaseline": 6777,
+  "testBaseline": 6747,
   "testBaselineTarget": 6450,
-  "testFailures": 12,
+  "testFailures": 9,
   "toolCount": 108,
   "schedulerFileCount": 42,
   "knowledgeFileCount": 15,
@@ -15,5 +15,5 @@
   "analysisAgentCount": 9,
   "totalTasksDone": 358,
   "lastFixApplied": "FIX-1316: LNG keyword case sensitivity in cascadeEngine.ts SECTOR_RULES (4 keywords lowercased) — merged 2026-04-24",
-  "currentSprintNotes": "Sprint 1315 DONE (2026-04-24). Cost-push cascade: logistics/utilities/construction rules shipped. 9 integration tests green. FIX-1316 merged (LNG case). FIX-1317 in progress: fix Task 308 test assertion overly-strict regex + stale stats. testBaseline: 6762 (12 pre-existing failures: BCTC OCR x4, Bootstrap230 AC-4c, Task1050 dedup, Sprint145 diacritics x2 isolation, Task308 registry forEach — all pre-existing on main)."
+  "currentSprintNotes": "Batch cycle 2026-04-24: FIX-1322 (readForeignFlow injection in TASK-1557 tests), FIX-1323 (1050 dedup 4h bucket regression), FIX-1324 (05-alert-commander Step 0-b section), FIX-1325 (prune stale worktree branches + sync stats). 4 FIX items shipped. testBaseline: 6747 (9 pre-existing failures: BCTC OCR x4, Bootstrap230 AC-4c, Sprint145 diacritics x2, Task1050 legacy, Task308 registry)."
 }
