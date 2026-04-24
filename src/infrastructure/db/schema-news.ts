@@ -142,9 +142,21 @@ export function initNewsTables(db: Database): void {
     );
     CREATE INDEX IF NOT EXISTS idx_mm_sent_at    ON market_messages(sent_at DESC);
     CREATE INDEX IF NOT EXISTS idx_mm_from_agent ON market_messages(from_agent);
-    CREATE INDEX IF NOT EXISTS idx_mm_verdict    ON market_messages(verdict);
     CREATE INDEX IF NOT EXISTS idx_mm_ticker     ON market_messages(ticker);
   `);
+
+  // Task 1311a — verdict columns (added after initial table creation in some DBs)
+  // Must run BEFORE idx_mm_verdict creation so the column exists on pre-migration DBs.
+  for (const sql of [
+    `ALTER TABLE market_messages ADD COLUMN verdict      TEXT`,
+    `ALTER TABLE market_messages ADD COLUMN verdict_note TEXT`,
+    `ALTER TABLE market_messages ADD COLUMN reviewed_at  INTEGER`,
+  ]) {
+    try { db.exec(sql); } catch {}
+  }
+
+  // idx_mm_verdict deferred until after ALTER TABLE migration so column exists
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_mm_verdict ON market_messages(verdict)`);
 
   // Sprint 191 — impact tracking columns
   for (const sql of [
