@@ -33,6 +33,7 @@ describe("TASK-1557 watchdog recovery MARKET alert", () => {
       readPrice: STALE,
       readNews:  FRESH,
       readOhlcv: FRESH,
+      readForeignFlow: FRESH,
     });
 
     // Advance past cooldown so "ok" path runs without cooldown interference
@@ -46,6 +47,7 @@ describe("TASK-1557 watchdog recovery MARKET alert", () => {
       readPrice: FRESH,
       readNews:  FRESH,
       readOhlcv: FRESH,
+      readForeignFlow: FRESH,
     });
 
     expect(result).toBe("restored");
@@ -64,6 +66,7 @@ describe("TASK-1557 watchdog recovery MARKET alert", () => {
       readPrice: FRESH,
       readNews:  FRESH,
       readOhlcv: FRESH,
+      readForeignFlow: FRESH,
     });
 
     expect(result).toBe("ok");
@@ -83,6 +86,7 @@ describe("TASK-1557 watchdog recovery MARKET alert", () => {
       readPrice: STALE,
       readNews:  FRESH,
       readOhlcv: FRESH,
+      readForeignFlow: FRESH,
     });
 
     // Reset the flag explicitly
@@ -98,6 +102,7 @@ describe("TASK-1557 watchdog recovery MARKET alert", () => {
       readPrice: FRESH,
       readNews:  FRESH,
       readOhlcv: FRESH,
+      readForeignFlow: FRESH,
     });
 
     expect(result).toBe("ok");
