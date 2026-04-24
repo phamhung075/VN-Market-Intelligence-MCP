@@ -8,7 +8,7 @@
  */
 
 import { getDb } from "../../infrastructure/db/schema.js";
-import { sendTelegramWork, sendTelegramMarket } from "../../infrastructure/notifiers/telegram.js";
+import { sendTelegramWork } from "../../infrastructure/notifiers/telegram.js";
 import { logger } from "../../infrastructure/logger.js";
 
 // ── Constants ──────────────────────────────────────────────────────────────
@@ -66,7 +66,7 @@ export async function priceUpdateWatchdog(
       lastWasStale = false;
       const notifyUser =
         options?.notifyUser ??
-        ((msg: string) => sendTelegramMarket(msg, { parseMode: "" }));
+        ((_msg: string) => Promise.resolve(undefined));
       try {
         await notifyUser("✓ Pipeline dữ liệu đã khôi phục — dữ liệu tươi mới đang đến lại.");
       } catch (err) {
@@ -129,7 +129,7 @@ export async function priceUpdateWatchdog(
 
   const notifyUser =
     options?.notifyUser ??
-    ((msg: string) => sendTelegramMarket(msg, { parseMode: "" }));
+    ((_msg: string) => Promise.resolve(undefined));
 
   try {
     const ok = await notify(workMessage);
@@ -207,7 +207,7 @@ export function _resetWatchdogStaleFlag(): void {
  */
 async function attemptSshRestart(): Promise<string> {
   try {
-    const vinahostIp = process.env.VINAHOST_IP;
+    const vinahostIp = Bun.env.VINAHOST_IP;
     if (!vinahostIp) {
       logger.warn("[price-watchdog] VINAHOST_IP not set, skipping SSH restart");
       return "no-ip";

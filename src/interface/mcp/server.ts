@@ -632,7 +632,7 @@ export async function createBunServer(
                       const sevLabel = alert.severity === "critical" ? "NGHIÊM TRỌNG" : "QUAN TRỌNG";
                       const msg = `[${sevLabel}] ${alert.message}`;
                       await sendTelegramMarket(msg, {
-                        persist: { from_agent: "mcp-user", message_type: "user_ask_reply" },
+                        persist: { from_agent: "alert-commander", message_type: "alert", ticker: alert.actionCode },
                       });
                       // Mark as notified
                       db.prepare("UPDATE alerts SET notified_telegram = 1 WHERE id = ?").run(alert.id);
@@ -671,7 +671,7 @@ export async function createBunServer(
                   const typeLabel = t.alertType === "stop_loss" ? "CẮT LỖ" : "CHỐT LỜI";
                   const msg = `[${typeLabel}] ${t.code} đạt ngưỡng ${t.threshold.toLocaleString()} VND (hiện tại: ${t.currentPrice.toLocaleString()} VND)`;
                   await sendTelegramMarket(msg, {
-                    persist: { from_agent: "mcp-user", message_type: "user_ask_reply" },
+                    persist: { from_agent: "alert-commander", message_type: "alert", ticker: t.code },
                   });
                   log.info("[push-prices] price alert fired", { code: t.code, type: t.alertType, threshold: t.threshold });
                 }
