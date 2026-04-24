@@ -113,6 +113,29 @@ export function readLatestNewsTimestamp(): Date | null {
 }
 
 /**
+ * Most recent `daily_ohlcv.updated_at` where foreign_buy_vol is populated,
+ * as a Date, or null if no foreign-flow rows exist.
+ * The vn-foreign-flow.service writes to daily_ohlcv via UPDATE; this reader
+ * detects when that service last pushed data.
+ * Exported for tests.
+ */
+export function readLatestForeignFlowTimestamp(): Date | null {
+  try {
+    const db = getDb();
+    const row = db
+      .query<{ ts: string | null }, []>(
+        "SELECT MAX(updated_at) AS ts FROM daily_ohlcv WHERE foreign_buy_vol IS NOT NULL",
+      )
+      .get();
+    if (!row?.ts) return null;
+    const d = new Date(row.ts);
+    return isNaN(d.getTime()) ? null : d;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Most recent `daily_ohlcv.date` as a Date, or null if table empty.
  * daily_ohlcv.date is TEXT ISO date ("2026-04-21") — parse via new Date().
  * Exported for tests.
@@ -149,9 +172,10 @@ export async function runVpsProxyWatchdog(
     now?: Date;
     notify?: (message: string) => Promise<unknown>;
     notifyUser?: (message: string) => Promise<unknown>;
-    readPrice?: () => Date | null;
-    readNews?:  () => Date | null;
-    readOhlcv?: () => Date | null;
+    readPrice?:       () => Date | null;
+    readNews?:        () => Date | null;
+    readOhlcv?:       () => Date | null;
+    readForeignFlow?: () => Date | null;
   } = {},
 ): Promise<string> {
   const now = options.now ?? new Date();
@@ -162,21 +186,25 @@ export async function runVpsProxyWatchdog(
   }
 
   // Resolve readers (DI for tests, real functions in production)
-  const priceReader = options.readPrice ?? readLatestPriceTimestamp;
-  const newsReader  = options.readNews  ?? readLatestNewsTimestamp;
-  const ohlcvReader = options.readOhlcv ?? readLatestOhlcvTimestamp;
+  const priceReader       = options.readPrice       ?? readLatestPriceTimestamp;
+  const newsReader        = options.readNews        ?? readLatestNewsTimestamp;
+  const ohlcvReader       = options.readOhlcv       ?? readLatestOhlcvTimestamp;
+  const foreignFlowReader = options.readForeignFlow ?? readLatestForeignFlowTimestamp;
 
-  const latestPrice = priceReader();
-  const latestNews  = newsReader();
-  const latestOhlcv = ohlcvReader();
+  const latestPrice       = priceReader();
+  const latestNews        = newsReader();
+  const latestOhlcv       = ohlcvReader();
+  const latestForeignFlow = foreignFlowReader();
 
-  const priceAgeMs = latestPrice ? now.getTime() - latestPrice.getTime() : Infinity;
-  const newsAgeMs  = latestNews  ? now.getTime() - latestNews.getTime()  : Infinity;
+  const priceAgeMs       = latestPrice       ? now.getTime() - latestPrice.getTime()       : Infinity;
+  const newsAgeMs        = latestNews        ? now.getTime() - latestNews.getTime()        : Infinity;
   // OHLCV is daily — stale threshold 26 h
-  const ohlcvAgeMs = latestOhlcv ? now.getTime() - latestOhlcv.getTime() : Infinity;
+  const ohlcvAgeMs       = latestOhlcv       ? now.getTime() - latestOhlcv.getTime()       : Infinity;
+  const foreignFlowAgeMs = latestForeignFlow ? now.getTime() - latestForeignFlow.getTime() : Infinity;
 
-  const NEWS_STALE_MS  = STALE_THRESHOLD_MS;           // 15 min
-  const OHLCV_STALE_MS = 26 * 60 * 60 * 1000;         // 26 hours
+  const NEWS_STALE_MS         = STALE_THRESHOLD_MS;           // 45 min
+  const OHLCV_STALE_MS        = 26 * 60 * 60 * 1000;         // 26 hours
+  const FOREIGN_FLOW_STALE_MS = 90 * 60 * 1000;              // 90 minutes
 
   // Collect stale sources
   type StaleEntry = { service: string; latestStr: string; ageMin: number };
@@ -201,6 +229,13 @@ export async function runVpsProxyWatchdog(
       service: "vn-price-fetch",  // OHLCV is written by vn-price-fetch.service
       latestStr: latestOhlcv ? latestOhlcv.toISOString() : "never",
       ageMin: isFinite(ohlcvAgeMs) ? Math.round(ohlcvAgeMs / 60_000) : -1,
+    });
+  }
+  if (foreignFlowAgeMs >= FOREIGN_FLOW_STALE_MS) {
+    stale.push({
+      service: "vn-foreign-flow",
+      latestStr: latestForeignFlow ? latestForeignFlow.toISOString() : "never",
+      ageMin: isFinite(foreignFlowAgeMs) ? Math.round(foreignFlowAgeMs / 60_000) : -1,
     });
   }
 
@@ -240,8 +275,10 @@ export async function runVpsProxyWatchdog(
     `  ssh root@$VINAHOST_IP\n` +
     `  systemctl status vn-news-fetch\n` +
     `  systemctl status vn-price-fetch (OHLCV)\n` +
+    `  systemctl status vn-foreign-flow\n` +
     `  journalctl -u vn-news-fetch -n 30\n` +
     `  journalctl -u vn-price-fetch -n 30\n` +
+    `  journalctl -u vn-foreign-flow -n 30\n` +
     `\n` +
     `If units are broken, redeploy: ./deploy-vinahost.sh`;
 

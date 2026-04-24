@@ -78,3 +78,8 @@
 - **Finding**: climateImpactMapper.ts was NOT a new file — pre-existing weather mapper (Task 259). FR-6 appended to avoid overwrite. CostImpactMap uses `domain: string` not `DomainType` to keep the append self-contained without adding imports to the file header.
 - **Finding**: bun-types `it.todo(label)` requires 2 args (label + fn) — single-arg form fails tsc. Used `expect(false).toBe(true)` stubs instead, which are valid RED idiom.
 - **Status**: Ready for QA
+
+### Task 1319: watchdog foreign_flow staleness (09:20–09:35)
+- **Files changed**: src/scheduler/vpsProxyWatchdogJob.ts, src/__tests__/1319-watchdog-foreign-flow.test.ts
+- **Finding**: foreign_flow data lives in daily_ohlcv.updated_at (written by writeForeignFlowToOhlcv via UPDATE WHERE foreign_buy_vol IS NOT NULL). No separate foreign_flow table. 90-min threshold mirrors vn-foreign-flow.service cadence (60s fetch, allows multiple misses before alert).
+- **Status**: Ready for QA
