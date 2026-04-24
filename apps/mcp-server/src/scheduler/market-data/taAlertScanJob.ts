@@ -148,7 +148,7 @@ export async function runTaAlertScan(deps?: TaAlertScanDeps): Promise<TaAlertSca
       const rsi = taResponse.rsi;
 
       // e. null RSI → skip silently (insufficient history)
-      if (rsi === null) {
+      if (rsi == null) {
         continue;
       }
 
