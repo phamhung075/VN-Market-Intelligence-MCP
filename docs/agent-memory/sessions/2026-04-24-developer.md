@@ -1,3 +1,11 @@
+### Task 1315b: Cost-push integration tests GREEN (14:00–14:20)
+- **Files changed**: `src/__tests__/1315-cascade-cost-push-integration.test.ts` (replaced 8 RED stubs with 9 assertions)
+- **Finding**: `findKeyword()` runs on lowercased text but some rule keywords have uppercase ("giá LNG tăng" — LNG uppercase). AC-3 needed lowercase keyword "giá khí đốt tăng" instead.
+- **Finding**: `SentimentResult` has no `.score` field — only `direction`, `confidence`, `keywords`. Handoff AC-5 spec was wrong.
+- **Finding**: `WatchlistEntry` requires `{ actionCode, domain, exchange }` — handoff used `{ ticker, domain }` (wrong field name).
+- **Finding**: `matchedRules` is `MatchedRule[]` (array with `.key` = "domain_direction"), not a Record. `chain.entries` domain entries accessed via `affectedDomains.includes()` + `level === "domain"`.
+- **Status**: Ready for QA
+
 ### Task 1298c: IMF signal integration GREEN tests (10:00–10:20)
 - **Files changed**: `src/__tests__/1298c-imf-signal-integration.test.ts` (NEW, 309 lines)
 - **Finding**: `synthesizeChain` requires >= 2 links (returns null if < 2). All conviction tests need a 2-link chain.
@@ -63,4 +71,10 @@
 ### Task 1312: BCTC skip logic inversion fix (enrich-bctc-urls.sh) (HH:MM–HH:MM)
 - **Files changed**: `vps-scripts/enrich-bctc-urls.sh:45-55`
 - **Finding**: `buildQueueSourceHints` always returns ≥1 hint (fallback portals). Original `[ -z "$SOURCE_HINTS" ]` never true → no row ever skipped → all items re-queried every run. Correct discriminator: first hint equals SSC fallback portal URL (`congbothongtin.ssc.gov.vn/faces/NewsSearch`) ↔ source_url not yet discovered. Fixed with `! grep -qF "congbothongtin.ssc.gov.vn/faces/NewsSearch"`.
+- **Status**: Ready for QA
+
+### Task 1315a: RED phase — cost-push cascade rules (09:00–09:45)
+- **Files changed**: cascadeEngine.ts (+3 rule blocks FR-1..FR-4), sentimentClassifier.ts (+10 patterns FR-5), climateImpactMapper.ts (+FR-6 appended), 1315-cascade-cost-push-integration.test.ts (8 RED stubs)
+- **Finding**: climateImpactMapper.ts was NOT a new file — pre-existing weather mapper (Task 259). FR-6 appended to avoid overwrite. CostImpactMap uses `domain: string` not `DomainType` to keep the append self-contained without adding imports to the file header.
+- **Finding**: bun-types `it.todo(label)` requires 2 args (label + fn) — single-arg form fails tsc. Used `expect(false).toBe(true)` stubs instead, which are valid RED idiom.
 - **Status**: Ready for QA
