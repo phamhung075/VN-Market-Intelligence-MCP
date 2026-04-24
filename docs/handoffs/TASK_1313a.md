@@ -259,3 +259,24 @@ decisions:
 - "vpsProxyWatchdogJob.ts dead import of sendTelegramMarket: NOT a violation (never called), but flagged for cleanup in separate task"
 
 brownfield_scan_clean: true
+
+---
+
+## [QA] Review Record
+
+verdict: APPROVED
+blocking_issues: []
+non_blocking:
+- src/scheduler/vpsProxyWatchdogJob.ts:35 — dead sendTelegramMarket import, mark for cleanup (not a routing violation)
+
+files_confirmed_clean:
+- /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/__tests__/1313-channel-routing-enforcement.test.ts
+
+bun_test_task: 6 pass / 0 fail
+bun_test_full: 6715 pass / 11 fail (all pre-existing)
+tsc: 0 errors
+ddd: SKIP (test-only change)
+violation_detection_verified: true (injected sendTelegramMarket( into pipelineWatchdogJob.ts → Test 1 + Test 3 both failed; reverted → 6/6 green)
+whitelist_audit: all 5 allowed callers confirmed, taAlertNotifierJob uses injected fn (correct), vpsProxyWatchdogJob dead import only (correct)
+
+merge_commit: b9104e98

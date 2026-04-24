@@ -212,6 +212,15 @@ const VN_BEARISH: SentimentKeyword[] = [
   { word: "cảnh báo kịch bản bất lợi", weight: 3 },
   { word: "báo lỗ", weight: 3 },
   { word: "tăng phòng thủ tiền mặt", weight: 3 },
+  // Task 1315a: Cost-push compound patterns (FR-5)
+  // Weight 3: beats generic "tăng"(w1)+"chi phí"(w2) in mixed text.
+  // Weight 4 (compound): net-bearish even with "tăng mạnh"(w2) co-firing.
+  { word: "giá đầu vào tăng", weight: 3 },
+  { word: "chi phí nguyên liệu tăng", weight: 3 },
+  { word: "giá than tăng gây áp lực", weight: 4 },
+  { word: "giá khí đốt tăng gây áp lực", weight: 4 },
+  { word: "giá xăng tăng gây áp lực", weight: 4 },
+  { word: "vật liệu xây dựng tăng giá", weight: 3 },
 ];
 
 /** English bullish keywords */
@@ -288,6 +297,11 @@ const EN_BEARISH: SentimentKeyword[] = [
   // Task 1308a: Global bearish macro — English patterns (report 1284)
   { word: "risk-off", weight: 3 },
   { word: "flight to safety", weight: 3 },
+  // Task 1315a: English cost-push patterns (FR-5)
+  { word: "cost-push", weight: 3 },
+  { word: "input cost inflation", weight: 3 },
+  { word: "commodity cost pressure", weight: 3 },
+  { word: "margin compression", weight: 2 },
 ];
 
 /** All bullish entries in one list (longest phrases first to avoid substring conflicts). */

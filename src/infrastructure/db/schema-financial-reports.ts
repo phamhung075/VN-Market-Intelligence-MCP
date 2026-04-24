@@ -153,7 +153,6 @@ export function initFinancialReportsTables(db: Database): void {
       UNIQUE(code, date)
     )
   `);
-  db.exec(`CREATE INDEX IF NOT EXISTS idx_vnstats_code_date ON vnstock_trading_stats(code, date)`);
 
   db.exec(`
     CREATE TABLE IF NOT EXISTS vnstock_events (

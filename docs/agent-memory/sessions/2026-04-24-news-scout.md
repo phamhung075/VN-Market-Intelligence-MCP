@@ -193,3 +193,13 @@
 - **Finding**: High-impact items: VnExpress earnings +70% (BULLISH, affects VCB/FPT), broker self-trading decline (BEARISH, affects FPT tech sector). No legal risks. No crisis velocity spikes. Chain signal validation error (urgent_news schema) needs dev review.
 - **Fix**: Posted 2 chain_catalyst signals to alert-commander (VCB bullish, FPT bearish). Updated agent memory: 2 new issue files (Reuters stale, signal schema error), 1 pattern file (broker deleveraging). 20 pending feedback items in system.
 - **Status**: News fetch complete. Signals posted. Memory updated. Ready for Alert Commander processing.
+
+### Task: News Scout Cycle 2026-04-24 06:20 UTC (06:20–06:25)
+- **Finding**: Fetched 15 items: 4x impact≥8 (VnExpress+70%, SJ Group growth, HSC capital, broker self-trade cut), 2x impact=7 (gold crash, FPT CEO bullish). Legal risk: none. Crisis: none. Foreign selling 1.7T + broker self-trading cut = macro bearish despite GDP +10% target bullish signal.
+- **Fix**: Posted 2 signals: (1) FPT CEO bullish chain_catalyst, (2) FPT mixed sentiment price_anomaly to Alert Commander. Signal 3 (macro) failed schema validation.
+- **Status**: 2 signals posted. HOSE prices critically stale (28d), Reuters RSS stopped (5h).
+
+### Task: Cycle 2026-04-24 06:30–06:40 (Market Open) (06:30–06:40)
+- **Finding**: 15 items fetched (cafef/vnexpress/reuters/vneconomy). High-impact (≥7): 5 items. Watchlist-relevant: FPT bullish (CEO tech vision) + bearish (proprietary trader selling, liquidity signal). VCB market-wide positive cascade from GDP 10% target narrative. VnExpress Q1 profit +70% (impact 8, no stock mapping detected). SJS billion-dong profit target (impact 8, SJS not in watchlist). Silver ETF liquidating 140 tons (precious metals flow as liquidity proxy — pattern gap identified).
+- **Fix**: Posted 2 structured signals: FPT bullish macro (id 1435) + bearish price anomaly (id 1436). Both routed to Alert Commander + broadcast. Conflicting FPT signals intentional — allow Alert Commander to synthesize.
+- **Status**: Cycle Complete: 2 signals posted, 0 legal risks, 0 crisis warnings, 18/18 rate sources ready

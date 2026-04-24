@@ -79,9 +79,6 @@ function createTestDb(withUniqueConstraint = true): Database {
     `);
   }
 
-  // Create the supporting index (as in schema-financial-reports.ts)
-  db.exec(`CREATE INDEX IF NOT EXISTS idx_vnstats_code_date ON vnstock_trading_stats(code, date)`);
-
   return db;
 }
 
