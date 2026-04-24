@@ -37,6 +37,55 @@
 
 ---
 
+## Sprint 1328 — Cowork Communication Overhaul (Planned)
+
+User goal: Help traders make better decisions with complete transparency (conviction math + full risks, no truncation)
+
+### Phase 1: Signal Payload Completeness + Conviction Visibility (4-6 hours)
+
+| ID | Title | Layer | Status | Size | Handoff |
+|----|-------|-------|--------|------|---------|
+| 1328a | Add signal fields: newsSentiment, kinhDichConfidence, agentSignalsMajority to signalTypes.ts | domain/signals | Todo | S | `docs/handoffs/TASK_1328a.md` |
+| 1328b | Update Zod validators to accept new optional fields (agentSignalTools.ts) | interface/validation | Todo | S | `docs/handoffs/TASK_1328b.md` |
+| 1328c | DB migration: ALTER TABLE agent_signals (add 3 columns) | infra/db | Todo | S | `docs/handoffs/TASK_1328c.md` |
+| 1328d | Update convictionScorer: enrichDimensionScores() + use new fields | domain/services | Todo | M | `docs/handoffs/TASK_1328d.md` |
+| 1328e | Format & display full conviction breakdown (6 dimensions, no truncation) in alerts | interface/telegram | Todo | M | `docs/handoffs/TASK_1328e.md` |
+
+**Dependencies:** 1328a → 1328b,1328c,1328d. 1328d → 1328e.
+
+### Phase 2: Suppression Transparency + Diacritics Validation (4-5 hours)
+
+| ID | Title | Layer | Status | Size | Handoff |
+|----|-------|-------|--------|------|---------|
+| 1328f | Track suppression reasons in alertPolicyChecker (3-AND + 4-AND rules) | domain/services | Todo | M | `docs/handoffs/TASK_1328f.md` |
+| 1328g | Log policy failure details to signalRejectionStore (missing_conditions, failed_rule) | infra/db | Todo | S | `docs/handoffs/TASK_1328g.md` |
+| 1328h | Implement three-channel strategy: WORK (status) / BUG (anomalies) / MARKET (user results) | cowork-agents | Todo | M | `docs/handoffs/TASK_1328h.md` |
+| 1328i | Validate Vietnamese diacritics + NFC normalization in telegram.ts (before send) | infra/telegram | Todo | S | `docs/handoffs/TASK_1328i.md` |
+
+**Dependencies:** 1328d, 1328f → 1328g. 1328g → 1328h. All in parallel → 1328i.
+
+### Phase 3: Impact Threshold Tuning + Message Format (2-3 hours)
+
+| ID | Title | Layer | Status | Size | Handoff |
+|----|-------|-------|--------|------|---------|
+| 1328j | Raise impact threshold 7→8 in mcp.config.json (reduce News Scout FP rate 8%) | config | Todo | S | — |
+| 1328k | Create test script: analyze 1-week signal distribution (impacts 7-8 range) | testing | Todo | S | `docs/handoffs/TASK_1328k.md` |
+| 1328l | Document alert message standard format (5-section narrative: Why/Confirms/Kinh/Next/Risk) | cowork-agents | Todo | S | — |
+
+**Dependencies:** 1328h, 1328i complete → 1328j (deploy with testing). 1328j depends on 1328k verification.
+
+**Success Criteria:**
+- ✅ Signal payloads include all 3 new fields (newsSentiment, kinhDichConfidence, agentSignalsMajority)
+- ✅ 4-AND watchlist-opportunity rule fires when conditions met
+- ✅ Every alert shows 6-dimension conviction breakdown in full sentences
+- ✅ Every alert lists complete risks (no ellipsis, no truncation)
+- ✅ Suppressed signals logged to WORK channel with reasons
+- ✅ Three channels working (WORK/BUG/MARKET with clear purposes)
+- ✅ Vietnamese diacritics validated + NFC normalized
+- ✅ News Scout noise reduced 35% → ~27% (8 percentage point drop)
+
+---
+
 ## Backlog
 
 ---
