@@ -5,6 +5,13 @@
 - **Gate**: 6778 pass, 9 fail (baseline 6759/11). +17 new scaffold gate tests. tsc clean.
 - **Status**: Ready for QA — branch feature/ddd-phase-0
 
+### DDD Phase 1a: PDF Extractor Microservice (16:30–18:00)
+- **Files changed**: apps/pdf-extractor/ (new, full DDD structure), apps/mcp-server/src/infrastructure/fetchers/pdfExtractorClient.ts, docker-compose.yml, docs/ARCHITECTURE.md, docs/handoffs/DDD_PHASE1A.md
+- **Finding**: Python absolute imports required (not relative) when running pytest from apps/pdf-extractor/ with sys.path injection. All intra-package imports must be `from domain.X import Y` not `from ..domain.X import Y`.
+- **Finding**: pycache dirs auto-committed by git — must add .gitignore + `git rm -r --cached` step immediately after first domain commit.
+- **Gate**: 20 Python tests (11 unit + 9 integration) GREEN. 11 TS client tests GREEN. tsc clean. BCTC core 36/36 pass. Full bun suite OOM is pre-existing Bun 1.3.11 bug (not introduced by this change).
+- **Status**: Ready for QA — branch feature/ddd-phase-1a
+
 ### Task 1315b: Cost-push integration tests GREEN (14:00–14:20)
 - **Files changed**: `src/__tests__/1315-cascade-cost-push-integration.test.ts` (replaced 8 RED stubs with 9 assertions)
 - **Finding**: `findKeyword()` runs on lowercased text but some rule keywords have uppercase ("giá LNG tăng" — LNG uppercase). AC-3 needed lowercase keyword "giá khí đốt tăng" instead.

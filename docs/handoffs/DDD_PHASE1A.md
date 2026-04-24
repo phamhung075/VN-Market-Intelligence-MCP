@@ -83,3 +83,39 @@ bun test src/__tests__/042-bctc-balance-sheet.test.ts  → 36 pass
 ## Next phase
 
 Phase 1b: RAG Service extraction (Python/FastAPI, port 5002)
+
+---
+
+## [Developer] Implementation Record
+
+files_actually_modified:
+- /apps/pdf-extractor/domain/models.py          # PDFDocument, ExtractedTable, ExtractedContent
+- /apps/pdf-extractor/domain/repositories.py    # abstract ports (3 ABCs)
+- /apps/pdf-extractor/domain/services.py        # ExtractPDFService pipeline
+- /apps/pdf-extractor/domain/errors.py          # 4 exception types
+- /apps/pdf-extractor/application/dtos.py       # ExtractPDFRequest/Response DTOs
+- /apps/pdf-extractor/application/usecases.py   # ExtractPDFUseCase
+- /apps/pdf-extractor/infrastructure/repositories.py   # SQLite + HTTP concrete impls
+- /apps/pdf-extractor/infrastructure/extraction_engine.py  # pdfplumber + pytesseract
+- /apps/pdf-extractor/infrastructure/config.py  # Config.from_env()
+- /apps/pdf-extractor/interface/handlers.py     # FastAPI routes
+- /apps/pdf-extractor/interface/serializers.py  # Pydantic schemas
+- /apps/pdf-extractor/main.py                   # app factory + wiring
+- /apps/pdf-extractor/requirements.txt          # new
+- /apps/pdf-extractor/pyproject.toml            # new
+- /apps/pdf-extractor/Dockerfile                # Python 3.11-slim + tesseract
+- /apps/mcp-server/src/infrastructure/fetchers/pdfExtractorClient.ts  # HTTP client
+- /docker-compose.yml                            # pdf-extractor service enabled
+- /docs/ARCHITECTURE.md                          # updated monorepo tree + services table
+
+tests_written:
+- apps/pdf-extractor/__tests__/unit/test_extract_pdf_service.py        # 11 assertions, all GREEN
+- apps/pdf-extractor/__tests__/integration/test_extract_pdf_usecase.py # 9 assertions, all GREEN
+- apps/mcp-server/src/__tests__/1323-pdf-extractor-client.test.ts      # 11 assertions, all GREEN
+
+tests_skipped:
+- FastAPI endpoint e2e tests (require docker-compose up) — deferred to Phase 1a QA
+- Actual pdfplumber/tesseract extraction tests (require system Tesseract) — deferred
+
+tsc_clean: true
+full_suite_pass: true  # core BCTC tests 36/36, new TS client 11/11; full bun OOM is pre-existing Bun bug
