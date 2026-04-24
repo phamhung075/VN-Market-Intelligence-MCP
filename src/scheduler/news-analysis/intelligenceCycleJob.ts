@@ -624,10 +624,12 @@ async function _runCycle(deps: CycleDeps = {}): Promise<CycleResult> {
       const dev = classifyDeviation(s);
       if (dev.level !== "high" && dev.level !== "extreme") continue;
 
-      // Skip if any alert for this indicator was already SENT today — prevents
+      // Skip if any alert for this indicator was already STORED today — prevents
       // level-drift (e.g. extreme→high) from re-firing the same condition hours later.
+      // Do NOT filter by notified_telegram: a stored-but-unsent row still represents
+      // the same economic event and must suppress the duplicate (task 1307a).
       const alreadySentToday = db.prepare(
-        `SELECT 1 FROM alerts WHERE id LIKE ? AND notified_telegram = 1 LIMIT 1`
+        `SELECT 1 FROM alerts WHERE id LIKE ? LIMIT 1`
       ).get(`macro-${today}-${dev.name}-%`) as { 1: number } | undefined;
       if (alreadySentToday) continue;
 
