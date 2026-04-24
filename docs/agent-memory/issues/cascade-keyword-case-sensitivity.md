@@ -1,7 +1,7 @@
 # Issue: Cascade keyword case sensitivity (findKeyword)
 
 **Discovered**: Task 1315b (2026-04-24)
-**Status**: Known — tests must work around it
+**Status**: FIXED — Task 1316b (2026-04-24) lowercased 4 LNG keywords in SECTOR_RULES directly
 
 ## Root cause
 
@@ -23,10 +23,8 @@ Any SECTOR_RULE keyword with uppercase letters fails silently on lowercased text
 - `"giá LNG tăng"` → fails (LNG uppercase), use `"giá khí đốt tăng"` instead
 - `"LNG price rise"` → fails, use `"gas price rise"` instead
 
-## Prevention
+## Fix Applied (Task 1316b, 2026-04-24)
 
-When writing tests that trigger a specific SECTOR_RULE keyword, always verify
-the keyword is all-lowercase (or the text is NOT lowercased before findKeyword).
-
-If fixing: lowercase `kw` inside `findKeyword` before `text.includes(kw.toLowerCase())`.
-But this is a production change — requires its own task + test.
+Lowercased 4 LNG keyword strings in SECTOR_RULES (cascadeEngine.ts:1676,1680,1706,1707).
+Prevention going forward: all SECTOR_RULE keywords must be all-lowercase strings.
+`findKeyword` operates on `summaryLower` — uppercase keywords silently never match.

@@ -1673,11 +1673,11 @@ export const SECTOR_RULES: SectorRule[] = [
   {
     keywords: [
       "giá khí đốt tăng",
-      "giá LNG tăng",
+      "giá lng tăng",
       "giá khí tự nhiên tăng",
       "chi phí khí đốt tăng",
       "gas price rise",
-      "LNG price rise",
+      "lng price rise",
       "natural gas price up",
       "gas price surge",
     ],
@@ -1703,8 +1703,8 @@ export const SECTOR_RULES: SectorRule[] = [
   {
     keywords: [
       "giá khí đốt giảm",
-      "giá LNG giảm",
-      "LNG price fall",
+      "giá lng giảm",
+      "lng price fall",
       "gas price fall",
     ],
     domain: "utilities",
