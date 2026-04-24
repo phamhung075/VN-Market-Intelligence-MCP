@@ -71,10 +71,31 @@ services:
       retries: 3
       start_period: 15s
 
-  # ── Phase 1b placeholder: RAG Service (Python/FastAPI) ───────────────────
-  # rag-service:
-  #   build: apps/rag-service
-  #   ports: ["5002:5002"]
+  # ── Phase 1b: RAG Service (Python/FastAPI) ──────────────────────────────
+  rag-service:
+    build:
+      context: apps/rag-service
+      dockerfile: Dockerfile
+    ports:
+      - "5002:5002"
+    volumes:
+      # Shared LanceDB + model cache with mcp-server
+      - ./data:/app/data
+    environment:
+      - LANCEDB_PATH=/app/data/lancedb
+      - DB_PATH=/app/data/rag_service.db
+      - EMBEDDING_CACHE_DIR=/app/data/models
+      - LOG_LEVEL=INFO
+    restart: unless-stopped
+    depends_on:
+      mcp-server:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
   # ── Phase 2a placeholders ─────────────────────────────────────────────────
   # api-gateway:         { build: apps/api-gateway,         ports: ["4000:4000"] }
