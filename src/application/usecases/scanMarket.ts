@@ -313,10 +313,9 @@ export async function scanMarket(
 
     const sectorName = SECTOR_NAME_VI[domain] ?? domain;
     const avgDrop = declining.reduce((sum, p) => sum + p.changePct, 0) / declining.length;
-    const topDecliners = declining
+    const allDecliners = declining
       .sort((a, b) => a.changePct - b.changePct)
-      .slice(0, 3)
-      .map((p) => `${p.code} ${p.changePct >= 0 ? "+" : ""}${p.changePct.toFixed(1)}%`)
+      .map((p) => `${p.code} ${p.changePct >= 0 ? "+" : ""}${p.changePct.toFixed(2)}%`)
       .join(", ");
 
     // Emit a signal for each watchlist stock in this declining sector
@@ -328,7 +327,7 @@ export async function scanMarket(
         type: "price_drop",
         severity: avgDrop <= -1.5 ? "high" : "medium",
         actionCode: price.code,
-        message: `⚠️ Ngành ${sectorName} giảm đồng loạt (${declining.length} mã, TB ${avgDrop.toFixed(2)}%): ${topDecliners}`,
+        message: `⚠️ Ngành ${sectorName} giảm đồng loạt (${declining.length} mã, TB ${avgDrop.toFixed(2)}%): ${allDecliners}`,
         confidence: Math.min(0.9, declining.length / 5),
         detectedAt: new Date().toISOString(),
       });
