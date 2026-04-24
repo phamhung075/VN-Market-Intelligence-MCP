@@ -78,6 +78,19 @@ Fix: `vps-scripts/enrich-bctc-urls.sh:47–55` — was `[ -z "$SOURCE_HINTS" ]` 
 
 ---
 
+## Sprint 1313 — Channel Routing Regression Guard (2026-04-24)
+
+| ID | Title | Layer | Status | Size |
+|----|-------|-------|--------|------|
+| 1313a | Add channel-enforcement integration tests + audit routing paths | test | Done | S |
+
+**Status:** 1313a DONE. 6 new tests (all GREEN, 6715 total suite). Prevents recurring routing violations via static-analysis guards.
+Note: Test 1 validates watchdog jobs never send to 'market'. Test 2 validates server.ts errors→'work'. Test 3 whitelists legitimate 'market' callers (briefing jobs only). Merge commit: b9104e98.
+
+WIP: 0/2
+
+---
+
 ## Sprint 1311 — Backlog Drain: DB Schema + Sentiment + Macro (2026-04-24)
 
 | ID | Title | Layer | Status | Reports | Size |
