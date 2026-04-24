@@ -260,3 +260,17 @@ This is a **monitoring situation**, not a **firing situation**. Position-danger 
 - **Finding**: Bootstrap: 2 chain_catalyst signals (VCB bullish +70% earnings, FPT bearish broker selling). Both single-source (News Scout only). 3 open news_mention alerts MEDIUM/LOW. No price alerts active. No legal risk. No crisis warnings. FPT position near stop-loss (73,600 vs 74,679) but daily drop -0.94% fails 3-AND threshold. VCB Kinh Dich 65% BUY (below 70% watchlist-opportunity threshold). FPT Kinh Dich 48% HOLD (bearish).
 - **Fix**: Suppressed both chain_catalyst signals pending verified_chain confirmation from other agents. No alerts fired this cycle. FPT position flagged for close monitoring (stop-loss near) — will escalate if singleDayDrop exceeds 5% OR sentiment drops < -0.5.
 - **Status**: Complete — zero alerts fired, monitoring active
+
+### Task: Alert Commander Cycle 2026-04-24 06:23 UTC (06:15–06:24 UTC)
+- **Finding**: 3 signals processed: 1 price_anomaly (FPT SL), 1 chain_catalyst (CEO bullish), 1 price_anomaly (mixed sentiment). FPT price 73,500 VND below SL floor 74,679 but intraday drop -1.08% fails 3-AND threshold. No legal/crisis alerts. 3 open system alerts (2 FPT, 1 VCB) remain MEDIUM/LOW. 0 new Telegram sends.
+- **Fix**: Recorded SL floor breach edge case in ALERT-QUALITY.md. All signals suppressed per strict alert-policy thresholds.
+- **Status**: Complete — cycle clean, zero actionable alerts.
+
+### Task: Alert Commander Cycle 2026-04-24 06:40 UTC (06:40–06:42 UTC)
+- **Finding**: Bootstrap: 3 agent signals. Market hours. Watchlist: VCB (+3.53%), FPT (N/A price, position below stop-loss). Legal/crisis: none. Price alerts: none active.
+- **Fix**: Signal processing: 3 suppressed (position-danger fails singleDayDrop condition; chain catalyst contradicted by price; broker selling sector-wide). Zero alerts meet firing thresholds.
+- **Status**: Cycle complete — 0 alerts fired, 3 suppressions, 0 MARKET messages sent. Position-aware FPT monitoring: stop-loss floor breached but multi-condition rule fails. Awaiting next signal cycle.
+
+### Task: 2026-04-24 06:52 Cycle (Market Hours)
+- **Finding**: Bootstrap OK. Agent signals: 0. Legal risk: 0. Crisis: 0. Price alerts: 0. Open alerts: 4 news_mention (digested, not fired). No actionable issues.
+- **Status**: Clean

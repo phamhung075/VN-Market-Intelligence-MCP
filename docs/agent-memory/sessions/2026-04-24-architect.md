@@ -62,3 +62,10 @@
 **Risks identified**: none — all fixes confirmed in production code, tests substantive.
 
 **Status**: ALREADY_COMPLETE. TASKS.md updated to Done. No TECH doc required.
+
+### TASK 1315 / SPRINT 1315 (design)
+- **Module analyzed**: cascadeEngine.ts (lines 960-1050, 1550-1610), sentimentClassifier.ts (lines 180-303), bctc-schema.ts (DomainType)
+- **Pattern discoveries**: First-match-wins ordering documented in all 3 new cascade blocks; climateImpactMapper.ts standalone pattern (not imported by cascadeEngine — circular dep prevention)
+- **Risks identified**: VN diacritics copy error (medium probability) — mitigated by verbatim copy in handoff; insertion-order error mitigated by surrounding context anchors not line numbers
+- **Domain tag verification**: `utilities` confirmed covers POW + HNG (bctc-schema.ts line 34); `logistics` covers GMD/VVN (line 40); `construction` covers CTD/HTI (line 43)
+- **Status**: TECH doc + handoffs ready. TASKS.md updated. project-stats.json currentSprint=1315.

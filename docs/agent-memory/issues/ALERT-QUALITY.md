@@ -34,3 +34,16 @@ trigger: alert-firing, signal-validation
 **Impact:** Without these fields, Alert Commander cannot verify 4-AND criteria → valid opportunities suppressed. Workaround: Add explicit 4-AND validation call to signal detection (News Scout / Market Watcher pre-flight check before posting).
 
 **Assigned to:** News Scout (01) & Market Watcher (04) payload schema update + Alert Commander signal parser enhancement.
+
+
+**Issue**: FPT position stop-loss floor (74,679) breached by current price (73,500, -1.58% gap) but intraday drop only -1.08%.
+
+**Observation**: Market Watcher correctly flagged SL approach at 06:18. By 06:22, price crossed below floor. However, 3-AND rule requires `singleDayDrop > 5%` to trigger position-danger alert. Intraday movement (-1.08%) suggests gap-down at session open or multi-day accumulated loss.
+
+**Recommendation**: Future SL breach detection should distinguish:
+- Intraday crash (gap, panic sell) → trigger on <5% threshold
+- Accumulated loss over 2-3 days → use cumulative % loss, not single-day drop
+
+**Current Action**: Suppressed alert per strict 3-AND rule. Monitor next cycle.
+
+**Tags**: #position-danger, #sl-breach, #threshold-edge-case
