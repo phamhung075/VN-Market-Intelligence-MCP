@@ -27,7 +27,7 @@ import { loadConfig } from "../../infrastructure/config.js";
 import { createLogger } from "../../infrastructure/logger.js";
 import { SseSessionManager } from "./transport.js";
 import { handleTelegramCommand } from "../../infrastructure/notifiers/telegramCommands.js";
-import { sendTelegramMarket } from "../../infrastructure/notifiers/telegram.js";
+import { sendTelegramMarket, sendTelegramWork } from "../../infrastructure/notifiers/telegram.js";
 import { getDb } from "../../infrastructure/db/schema.js";
 import { validateWebhookRequest } from "../../infrastructure/notifiers/telegramWebhookSetup.js";
 import { insertReport } from "../../infrastructure/db/telegramReportStore.js";
@@ -631,8 +631,8 @@ export async function createBunServer(
                     try {
                       const sevLabel = alert.severity === "critical" ? "NGHIÊM TRỌNG" : "QUAN TRỌNG";
                       const msg = `[${sevLabel}] ${alert.message}`;
-                      await sendTelegramMarket(msg, {
-                        persist: { from_agent: "mcp-user", message_type: "user_ask_reply" },
+                      await sendTelegramWork(msg, {
+                        persist: { from_agent: "push-prices", message_type: "system_alert" },
                       });
                       // Mark as notified
                       db.prepare("UPDATE alerts SET notified_telegram = 1 WHERE id = ?").run(alert.id);
@@ -670,8 +670,8 @@ export async function createBunServer(
 
                   const typeLabel = t.alertType === "stop_loss" ? "CẮT LỖ" : "CHỐT LỜI";
                   const msg = `[${typeLabel}] ${t.code} đạt ngưỡng ${t.threshold.toLocaleString()} VND (hiện tại: ${t.currentPrice.toLocaleString()} VND)`;
-                  await sendTelegramMarket(msg, {
-                    persist: { from_agent: "mcp-user", message_type: "user_ask_reply" },
+                  await sendTelegramWork(msg, {
+                    persist: { from_agent: "push-prices", message_type: "system_alert" },
                   });
                   log.info("[push-prices] price alert fired", { code: t.code, type: t.alertType, threshold: t.threshold });
                 }
