@@ -12,7 +12,7 @@ ANALYSIS TEAM (Claude Cowork — 8 agents, cloud)
 DEV TEAM (Claude Code CLI — local cron, every 1h)
   Reads BUG → auto-fixes → pushes to main
   → WORK: fix-shipped notices, sprint summaries
-  → Server restarts via launchctl kickstart (hot reload FORBIDDEN)
+  → Server restarts via docker-compose (hot reload FORBIDDEN, all 9 services restart in lockstep)
 ```
 
 **Note:** `TELEGRAM_CHAT_ID` / `TELEGRAM_REPORT_ID` are deleted. No legacy aliases, no shims.
@@ -50,7 +50,7 @@ Note: System Improver (07 old) merged into Unified Coordinator.
 1. Agent calls `submit_feedback(severity, title, detail, agent="{name}")` → BUG channel
 2. Dev Team reads within 1h
 3. Fix → commit → push → delete report
-4. Restart: `launchctl kickstart -k gui/$(id -u)/com.vn-market.mcp`
+4. Restart: `docker-compose down && docker-compose up -d && sleep 5`
 
 ## Dev Team (Claude Code CLI Cron — hourly)
 
@@ -70,7 +70,7 @@ Cost optimization: exit immediately if no reports | FIX NOW before SPRINT TASK |
 
 ## MCP Server
 
-Tool count → `docs/data/tool-registry.json`. Bun, supervised by launchd. SQLite + LanceDB. Telegram Bot API. Cloudflare tunnel for public access.
+Tool count → `docs/data/tool-registry.json`. 9 Docker microservices (TypeScript/Bun + Python/FastAPI). Shared SQLite database. Telegram Bot API. Cloudflare tunnel for public access. VPS proxy in Vietnam for geo-blocked sources.
 
 Scheduled jobs → `.claude/knowledge/cron-jobs.md`
 Tool list → `.claude/knowledge/mcp-tools.md`

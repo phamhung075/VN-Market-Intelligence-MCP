@@ -31,15 +31,17 @@ YOU (investor in France)
 ### Step 1: Install Dependencies
 
 ```bash
-bun install
-./scripts/git-hooks/install.sh   # one-time: pre-push runs `bun tsc --noEmit`
-# OR if git hooks are in launchd/:
-./launchd/install.sh             # one-time: install launchd agent
+# From monorepo root
+pnpm install
+
+# From mcp-server only
+cd apps/mcp-server && bun install
+
+# Git hooks (one-time)
+./scripts/git-hooks/install.sh   # pre-push runs `bun tsc --noEmit`
 ```
 
-The pre-push hook blocks pushes whose tracked code fails type-checking — most
-often because tracked code imports a file the developer forgot to `git add`
-(the bug class that broke main in Loop #20 Slice 1).
+The pre-push hook blocks pushes whose tracked code fails type-checking.
 
 ### Step 2: Configure Environment
 
@@ -48,72 +50,62 @@ cp .env.example .env
 # Edit .env with your values:
 #   TELEGRAM_BOT_TOKEN=your_bot_token
 #   TELEGRAM_INFO_MARKET_GROUP_ID=-100xxxxxxxxxx   # User-facing market alerts/briefings
-#   TELEGRAM_INFO_WORK_CHANNEL_ID=-100xxxxxxxxxx   # Dev/analysis status, refresh asks
-#   TELEGRAM_REPORT_BUG_CHANNEL_ID=-100xxxxxxxxxx  # Analysis -> dev bug reports
+#   TELEGRAM_INFO_WORK_CHANNEL_ID=-100xxxxxxxxxx   # Dev/analysis status
+#   TELEGRAM_REPORT_BUG_CHANNEL_ID=-100xxxxxxxxxx  # Bug reports
 #   TELEGRAM_ENABLED=true
-#   CLOUDFLARE_TOKEN=your_tunnel_token
+#   VINAHOST_IP=125.212.251.27
+#   VINAHOST_PASSWORD=your_password
+#   VPS_PUSH_API_KEY=your_key
 ```
 
-### Step 3: Start the MCP Server
+### Step 3: Start All 9 Microservices via Docker
 
-**Hot reload is forbidden in this project. The only allowed restart command is:**
+**The only allowed restart method is docker-compose** (deterministic state, all 9 services restart in lockstep):
 
 ```bash
-launchctl kickstart -k gui/$(id -u)/com.vn-market.mcp
+docker-compose down
+docker-compose up -d
+sleep 5
+curl http://localhost:3000/health | jq .
 ```
 
-Install the launchd agent first (see Step 3b below), then use that command exclusively. Do NOT use `./start.sh`, `bun --hot`, `bun --watch`, `nodemon`, `pm2`, or any other live-reload mechanism.
-
-For development iteration, edit code, then run `launchctl kickstart -k gui/$(id -u)/com.vn-market.mcp` to apply changes with a clean restart.
-
-`./start.sh` — DEPRECATED. Use launchctl kickstart instead. Do not run directly against a launchd-supervised instance.
-
-Verify:
-```bash
-curl http://localhost:3000/health
-# {"status":"ok","toolCount":N}  ← live count from docs/data/tool-registry.json
+**Expected response:**
+```json
+{
+  "status": "ok",
+  "tools": 112,
+  "jobs": 50
+}
 ```
 
-#### Step 3b: Install the macOS launchd agent (required for production)
+Hot reload is **FORBIDDEN**. Do NOT use `bun --hot`, `bun --watch`, `nodemon`, `pm2`, or any live-reload mechanism.
 
-Install the launchd agent that lives under `launchd/` before running the server:
+For development:
+1. Edit code in `apps/mcp-server/src/`
+2. Run tests: `cd apps/mcp-server && bun test`
+3. Restart all services: `docker-compose down && docker-compose up -d && sleep 5`
 
+### Microservices Overview
+
+| Service | Port | Purpose |
+|---------|------|---------|
+| **mcp-server** | 3000 | Claude MCP gateway (112 tools) |
+| **api-gateway** | 4000 | Routing + health aggregation |
+| **stock-price** | 5010→5000 | Price aggregation (3-tier fallback) |
+| **pdf-extractor** | 5001 | BCTC PDF parsing |
+| **rag-service** | 5002 | Embeddings + semantic search |
+| **technical-analysis** | 5003 | RSI/MACD/MA/BB indicators |
+| **macro-indicators** | 5004 | SBV FX + commodity prices |
+| **kinh-dich-service** | 5005 | Hexagram readings |
+| **alert-engine** | 5006 | Signal evaluation |
+
+All services share SQLite database at `data/market.db`.
+
+Check service health:
 ```bash
-./launchd/install.sh
-```
-
-First-time only — macOS Full Disk Access grant: because the project lives
-under `~/Documents/`, the LaunchAgent-spawned bash is blocked by macOS
-TCC unless you explicitly allow it. Open
-**System Settings → Privacy & Security → Full Disk Access**, click `+`,
-press `Cmd+Shift+G`, paste each of the following, and toggle on:
-
-- `/bin/bash`
-- `/Users/<you>/.bun/bin/bun`
-
-Then re-run `./launchd/install.sh`.
-
-What the agent provides:
-
-| Event | Behavior |
-|---|---|
-| Mac reboot / re-login | auto-starts via `RunAtLoad=true` |
-| Bun process crash | auto-restarts within `ThrottleInterval=10s` |
-| `launchctl kickstart -k gui/$(id -u)/com.vn-market.mcp` | the ONLY allowed restart method |
-
-**Hot reload is forbidden.** `bun --hot`, `bun --watch`, `./start.sh`, `nodemon`, `pm2`, and all other live-reload mechanisms are banned. Always use `launchctl kickstart -k` to restart. For maintenance downtime use `launchctl unload -w ~/Library/LaunchAgents/com.vn-market.mcp.plist`.
-
-```bash
-# Status
-launchctl list | grep com.vn-market.mcp
-tail -f /tmp/vn-market-mcp.log
-
-# Restart
-launchctl kickstart -k gui/$(id -u)/com.vn-market.mcp
-
-# Stop / start
-launchctl unload -w ~/Library/LaunchAgents/com.vn-market.mcp.plist
-launchctl load   -w ~/Library/LaunchAgents/com.vn-market.mcp.plist
+docker-compose ps           # All services status
+docker-compose logs -f      # Live logs
+docker-compose logs mcp-server --tail 50  # MCP logs only
 ```
 
 ### Step 4: Start Cloudflare Tunnel
@@ -180,17 +172,18 @@ You don't need to do anything daily. The system runs autonomously:
 
 | Situation | What to Do |
 |-----------|-----------|
-| **Server down (launchd-supervised)** | `launchctl kickstart -k gui/$(id -u)/com.vn-market.mcp` |
-| **Server down (no launchd installed yet)** | Install launchd first: `./launchd/install.sh`, then use kickstart |
-| **Server flapping after deploy** | `tail -50 /tmp/vn-market-mcp.log` to see the crash, fix, then kickstart |
+| **Services down** | `docker-compose down && docker-compose up -d && sleep 5` |
+| **Service flapping after deploy** | `docker-compose logs mcp-server --tail 50` to see errors, fix, then restart |
+| **Database locked (WAL bloat)** | `rm -f data/market.db-wal data/market.db-shm` then restart Docker |
+| **Port conflict (e.g., 5000 in use)** | `lsof -i :5000` to find process; docker-compose.yml remaps to 5010 |
 | **Tunnel down** | `cloudflared tunnel run --token ...` |
-| **Agent file updated by Dev Team** | You'll get a Chat Channel message. Copy new `.md` content into Cowork. |
-| **Want to ask a question** | Use Claude Desktop (connected to MCP server) |
+| **Agent file updated by Dev Team** | You'll get a WORK Channel message. Copy new `.md` content into Cowork. |
+| **Want to ask a question** | Use Claude Desktop (connected to MCP server via localhost:3000) |
 | **Want to add a stock** | Tell Claude Desktop: "Add HPG to watchlist" |
-| **Want to change watchlist** | Edit `mcp.config.json` -> `market.watchlist`, restart server |
-| **Bad fix by Dev Team** | `git log --oneline -5` then `git revert <commit>` then kickstart the launchd agent |
+| **Want to change watchlist** | Edit `mcp.config.json` -> `market.watchlist`, restart Docker |
+| **Bad fix by Dev Team** | `git log --oneline -5` then `git revert <commit>` then restart Docker |
 
-## 62 MCP Tools (Sprint 034)
+## 112 MCP Tools (Phase 3 Complete)
 
 | Category | Count | Examples |
 |----------|-------|---------|

@@ -1,71 +1,178 @@
 # Server Restart Policy
 
-**Load when:** deploy, restart, hot reload, scheduler changes, code deploy, post-merge verification.
+**Load when:** deploy, restart, infrastructure changes, code deploy, post-merge verification.
+
+---
 
 ## Only Allowed Restart Command
 
 ```bash
-launchctl kickstart -k gui/$(id -u)/com.vn-market.mcp
+cd $PROJECT_ROOT && docker-compose down && docker-compose up -d && sleep 5
 ```
 
-No exceptions.
+No exceptions. All 9 microservices restart in lockstep.
+
+---
 
 ## Banned Mechanisms
 
-`./start.sh` | `bun --hot` | `bun --watch` | `nodemon` | `pm2` | `forever` | `node --watch` | any hot/live/fast reload — ALL FORBIDDEN.
+`bun --hot` | `bun --watch` | `nodemon` | `pm2` | `forever` | `node --watch` | any hot/live/fast reload — ALL FORBIDDEN in containers.
 
-`./start.sh` is deprecated — still exists but must not run against a launchd-supervised instance (would spawn a second process fighting the supervised one).
+Manual launchctl commands — DEPRECATED (old monolithic server was decommissioned 2026-04-25).
 
-## Why launchctl Only
+---
 
-1. Deterministic state — clean process, no half-loaded modules, no stale closures
-2. Clean SQLite state — circuit breaker registry + WAL checkpoint initialized at startup; hot reload skips this
-3. Clean circuit-breaker reset — tripped state not preserved across code changes
-4. launchd supervision — `KeepAlive` + `RunAtLoad` auto-respawns within ~2-3s after kickstart
+## Why Docker-Compose Only
 
-## Monorepo Path (Phase 0+)
+1. **Deterministic state** — all 9 services restart clean, no half-loaded modules, no stale closures
+2. **Clean SQLite state** — single shared database, circuit breaker registry + WAL checkpoint initialized at startup
+3. **Service isolation** — failure in one service doesn't pollute another
+4. **Lockstep restart** — data consistency across price fetch, BCTC parser, RAG indexer, etc.
+5. **Easy health check** — `docker-compose ps` shows all 9 services' status
 
-Source code lives in `apps/mcp-server/src/`. All bun commands run from `apps/mcp-server/`:
+---
 
-```bash
-cd apps/mcp-server
-bun tsc --noEmit
-bun test src/__tests__/NNN-*.test.ts
+## Microservices Architecture (Phase 3 — Current)
+
+**9 Docker services** + **Shared SQLite database**:
+
+```
+MCP Server (port 3000)          TypeScript/Bun
+├─ API Gateway (port 4000)      TypeScript/Bun
+├─ Stock Price (port 5000)      TypeScript/Bun
+├─ PDF Extractor (port 5001)    Python/FastAPI
+├─ RAG Service (port 5002)      Python/FastAPI
+├─ Technical Analysis (port 5003) TypeScript/Bun
+├─ Macro Indicators (port 5004) TypeScript/Bun
+├─ Kinh Dich Service (port 5005) TypeScript/Bun
+└─ Alert Engine (port 5006)     TypeScript/Bun
+
+Shared Database: /data/market.db (SQLite)
+VPS Data Pipeline: Vinahost VPS → zenmidi.com → docker-compose services
 ```
 
-launchd still starts from the project root. `launchd/mcp-launch.sh` runs `bun run apps/mcp-server/src/index.ts` with CWD = project root.
+---
 
 ## How to Apply a Code Change
 
-1. Edit code in `apps/mcp-server/src/`
-2. `cd apps/mcp-server && bun tsc --noEmit` — must pass
-3. `cd apps/mcp-server && bun test` (affected file) — must pass
+1. Edit code in `apps/mcp-server/src/` (or relevant service directory)
+2. Run tests: `cd apps/mcp-server && bun test` — must pass
+3. TypeScript check: `bun tsc --noEmit` — must pass
 4. Commit + push to main
-5. `launchctl kickstart -k gui/$(id -u)/com.vn-market.mcp`
-6. `curl -s http://127.0.0.1:3000/health` — must return `{"status":"ok",...}`
+5. Restart all services:
+   ```bash
+   cd $PROJECT_ROOT
+   docker-compose down
+   docker-compose up -d
+   sleep 5
+   curl http://localhost:3000/health
+   ```
+6. Verify response: `{"status":"ok","tools":112,"jobs":50}`
 
-## QA Validation After Sprint Merge
+---
 
-1. `launchctl list | grep com.vn-market.mcp` — non-zero PID = running
-2. `curl -s http://127.0.0.1:3000/health` — returns `{"status":"ok","toolCount":N}`
-3. `tail -20 /tmp/vn-market-mcp.log` — no crash loop, no startup errors
+## Docker-Compose Health Checks
 
-If `toolCount` drops or health errors → diagnose from logs before marking sprint done.
+### Verify All Services Running
 
-## If launchctl Fails
+```bash
+docker-compose ps
+# Expected: 9 services showing "Up ... (healthy)"
+```
 
-1. Check loaded: `launchctl list | grep com.vn-market.mcp`
-2. Not loaded → `launchctl load -w ~/Library/LaunchAgents/com.vn-market.mcp.plist` then retry
-3. Plist missing → `./launchd/install.sh` (one-time, requires Full Disk Access for `/bin/bash` + `~/.bun/bin/bun`)
-4. Check logs: `tail -50 /tmp/vn-market-mcp.log`
-5. Do NOT fall back to `./start.sh` or `bun --hot` — fix launchd instead
-6. If blocked → report to WORK channel, await operator. Do not leave server under forbidden mechanism.
+### Check Individual Service Logs
+
+```bash
+# MCP Server logs
+docker-compose logs mcp-server -f
+
+# PDF Extractor logs
+docker-compose logs pdf-extractor -f
+
+# All services
+docker-compose logs -f
+```
+
+### Full System Restart
+
+```bash
+docker-compose down    # Stop all services gracefully
+docker-compose up -d   # Start all services in background
+sleep 5                # Wait for health checks to pass
+docker-compose ps      # Verify all healthy
+```
+
+---
+
+## QA Validation After Code Merge
+
+1. `docker-compose ps` — all 9 services showing "Up ... (healthy)"
+2. `curl -s http://localhost:3000/health` — returns `{"status":"ok","tools":112,"jobs":50}`
+3. `docker-compose logs mcp-server --tail 30` — no crash, no startup errors
+4. `sqlite3 /path/to/data/market.db "SELECT COUNT(*) FROM market_prices WHERE updated_at > datetime('now', '-5 minutes');"` — recent data ingestion ✓
+
+If health endpoint fails or tool count drops → diagnose from logs before marking sprint done.
+
+---
+
+## If Docker-Compose Fails
+
+1. **Service won't start:**
+   ```bash
+   docker-compose logs mcp-server --tail 50
+   # Check for OOM, port conflicts, missing volume mounts
+   ```
+
+2. **Port conflict (e.g., 5000 in use):**
+   ```bash
+   lsof -i :5000  # Find what's using port 5000
+   # May be macOS ControlCenter; docker-compose.yml maps it to 5010
+   ```
+
+3. **Database locked:**
+   ```bash
+   # SQLite WAL file may be stale
+   rm -f data/market.db-wal data/market.db-shm
+   docker-compose down && docker-compose up -d
+   ```
+
+4. **Memory/CPU exhausted:**
+   ```bash
+   docker stats  # Monitor resource usage
+   docker-compose down  # Free up resources
+   ```
+
+5. **VPS data not flowing:**
+   ```bash
+   # Check if VPS services are pushing data
+   ssh root@$VINAHOST_IP "tail -20 /var/log/vn-price-fetch.log"
+   # Verify local endpoint receiving: curl http://localhost:3000/health
+   ```
+
+---
+
+## Migration from launchctl (2026-04-25)
+
+**Old system (deprecated):**
+- Monolithic Bun server on macOS via launchctl
+- Command: `launchctl kickstart -k gui/$(id -u)/com.vn-market.mcp`
+
+**New system (current):**
+- 9-service microservices architecture on Docker
+- Command: `docker-compose down && docker-compose up -d`
+
+**All code migrated.** Old launchctl plist removed from system.
+
+---
 
 ## Reference
 
 | Item | Value |
 |------|-------|
-| launchd label | `com.vn-market.mcp` |
-| plist path | `~/Library/LaunchAgents/com.vn-market.mcp.plist` |
-| Log file | `/tmp/vn-market-mcp.log` |
-| Installer | `./launchd/install.sh` |
+| Restart command | `docker-compose down && docker-compose up -d` |
+| Config file | `docker-compose.yml` |
+| Database path | `/path/to/project/data/market.db` |
+| MCP port | 3000 (internal) |
+| Health endpoint | `http://localhost:3000/health` |
+| Logs command | `docker-compose logs -f` |
+| Status check | `docker-compose ps` |

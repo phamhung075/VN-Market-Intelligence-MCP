@@ -93,13 +93,13 @@ If a knowledge file Read fails: `send_telegram(channel="work")` + `submit_feedba
 - **`--no-verify` forbidden**: never skip git hooks.
 - **WIP limit**: max 2 tasks In Progress in TASKS.md.
 - **Branch hygiene**: every task ends with `git checkout main`, merged branch deleted (local+remote), worktrees under `.claude/worktrees/` removed, stashes dropped. Full checklist → `.claude/WORKFLOW.md#branch-hygiene-checklist`.
-- **Server restart — launchctl ONLY**: `launchctl kickstart -k gui/$(id -u)/com.vn-market.mcp`. NEVER `./start.sh`, `bun --hot`, `bun --watch`, `nodemon`, `pm2`, `forever`, or any hot-reload tool. Non-negotiable — deterministic state reset, no half-loaded modules, no zombie watchers. Full guide → `.claude/knowledge/restart-policy.md`.
+- **Server restart — docker-compose ONLY**: `cd $PROJECT && docker-compose down && docker-compose up -d`. NEVER manual Bun restarts, `bun --hot`, `bun --watch`, `nodemon`, `pm2`, `forever`, or any hot-reload tool. Non-negotiable — deterministic state reset, all 9 microservices restart in lockstep, no orphaned processes. Full guide → `.claude/knowledge/restart-policy.md`.
 - **VPS proxies (five services)**: VN stock APIs, SSC BCTC portal, news sources, SBV FX rates, and foreign flow data are geo-blocked from France. Vinahost VPS Vietnam (`$VINAHOST_IP`) runs five systemd services: `vn-price-fetch.service` (prices, 60s), `vn-bctc-fetch.service` (BCTC PDFs, 6h), `vn-news-fetch.service` (10 news sources, 226 items/15min), `vn-sbv-fetch.service` (SBV FX rates, 30min), `vn-foreign-flow.service` (foreign buy/sell, 60s). Deploy: `./scripts/deploy-vinahost.sh`. Health check: `ssh root@$VINAHOST_IP /root/vps-status.sh`. Bot-guarded sources: `vps-scripts/fetch-browser.py` (Playwright/Chromium). Never add SSH logic to Bun schedulers. `vpsProxyWatchdogJob.ts` observe-only. Full design → `docs/ARCHITECTURE.md#vps-proxy-geo-block-workaround`.
 
 ### Methodology
 - **Kanban**: `TASKS.md` = active work only (Backlog/Todo/In Progress/Review). Done tasks → `docs/TASKS_ARCHIVE.md`. Never re-add archived tasks to TASKS.md.
 - **Auto-merge**: Dev team auto-merges to main, commits separately for rollback.
-- **No hot reload**: `bun --hot` / `bun --watch` FORBIDDEN. Always full launchctl kickstart.
+- **No hot reload**: `bun --hot` / `bun --watch` FORBIDDEN in containers. Always full `docker-compose down && docker-compose up -d` restart.
 - **Reports**: `reports/TASK_REPORT_NNN.md` by QA after every review.
 
 ### Agent Autonomy (Critical)
@@ -153,8 +153,9 @@ cd apps/mcp-server && bun install && bun test && bun tsc --noEmit
 # From monorepo root (pnpm workspaces):
 pnpm install && pnpm test
 
-launchctl kickstart -k gui/$(id -u)/com.vn-market.mcp  # only restart method
-curl http://localhost:3000/health                        # verify
+# Restart all microservices:
+docker-compose down && docker-compose up -d
+sleep 5 && curl http://localhost:3000/health            # verify
 ```
 
 Endpoints: `GET /sse` | `POST /messages?sessionId=<id>` | `GET /health`

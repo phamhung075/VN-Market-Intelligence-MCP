@@ -106,91 +106,97 @@ No user impact (prices queued locally during outage).
 
 ---
 
-## Playbook 2: Server Process (launchd) Down
+## Playbook 2: Docker Microservices Down
 
 **Symptoms:**
-- `launchctl list | grep com.vn-market.mcp` returns empty
+- `docker-compose ps` shows service(s) not "Up"
 - OR `curl http://localhost:3000/health` fails
-- OR Ops agent reports launchd inactive
+- OR Ops agent reports service unhealthy
 
 **Response Time:** 5 min
 
-### Step 1: Verify Process Status
+### Step 1: Verify Docker Status
 
 ```bash
-launchctl list | grep com.vn-market.mcp
-ps aux | grep bun | grep -v grep
+docker-compose ps
+docker-compose ps mcp-server
 ```
 
-**Expected:** Non-zero PID running
+**Expected:** All services showing "Up ... (healthy)"
 
-**If empty:** Process crashed or launchd unloaded
+**If not Up:** Service crashed or failed health check
 
-### Step 2: Check Recent Crashes
+### Step 2: Check Recent Errors
 
 ```bash
-tail -100 /tmp/vn-market-mcp.log | grep -i "error\|fatal\|crashed"
+docker-compose logs mcp-server --tail 50
+docker-compose logs -f  # All services
 ```
 
 **Common crash reasons:**
-- Database locked (another process accessing)
-- Out of memory
-- Port 3000 already in use
+- Database locked (WAL file stale)
+- Out of memory (OOM)
+- Port conflict (another process on 3000/5000/5001/etc)
 - Bad config (missing .env variable)
+- Circuit breaker open (external service down)
 
-### Step 3: Restart Server
+### Step 3: Restart Services
 
 ```bash
 # ONLY allowed restart method
-launchctl kickstart -k gui/$(id -u)/com.vn-market.mcp
-sleep 3
-curl -s http://localhost:3000/health
+cd $PROJECT_ROOT
+docker-compose down
+docker-compose up -d
+sleep 5
+curl -s http://localhost:3000/health | jq .
 ```
 
 **Expected response:**
 ```json
 {
   "status": "ok",
-  "toolCount": 101,
-  "uptime": "2.5s"
+  "tools": 112,
+  "jobs": 50
 }
 ```
 
 ### Step 4: If Restart Fails
 
-**Is launchd still loaded?**
+**Check what's preventing shutdown:**
 ```bash
-launchctl list | grep com.vn-market.mcp
+docker-compose logs --tail 30
+docker ps -a  # See all containers, even stopped ones
 ```
 
-If empty:
+**If container won't start due to port conflict:**
 ```bash
-launchctl load -w ~/Library/LaunchAgents/com.vn-market.mcp.plist
-sleep 2
-launchctl kickstart -k gui/$(id -u)/com.vn-market.mcp
+lsof -i :3000
+lsof -i :5000
+# Kill the blocking process or remap port in docker-compose.yml
 ```
 
-**If plist missing:**
+**If database locked:**
 ```bash
-./launchd/install.sh
-# Requires Full Disk Access (System Preferences → Security → Full Disk Access)
+rm -f data/market.db-wal data/market.db-shm
+docker-compose up -d
+sleep 5
 ```
 
 **Check logs for startup errors:**
 ```bash
-tail -50 /tmp/vn-market-mcp.log
+docker-compose logs mcp-server --tail 50
 ```
 
 ### Step 5: Report Status
 
 ```
-🔴 Server Recovered: launchd
+🔴 Services Recovered: Docker
 
-Status: active ✅ PID 2845
-Downtime: 8 min (06:52-07:00 UTC)
-Root cause: Database lock (circuit breaker tripped)
-Action: launchctl kickstart + auto-recovery
-Health: All 101 tools loaded ✅
+Status: All 9 services up ✅
+Downtime: 3 min (06:52-06:55 UTC)
+Root cause: Database WAL lock (cleaned + restart)
+Action: docker-compose down && up + WAL cleanup
+Health: All 112 tools loaded, 50 cron jobs active ✅
 
 VPS services maintained local queues. No data lost.
 ```

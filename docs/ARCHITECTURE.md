@@ -4,55 +4,81 @@
 
 `domain` ← `application` ← `interface` ← `scheduler`. Cross-layer: inward only. `domain/` never imports `infrastructure/`.
 
-## Monorepo Structure (Phase 1a, 2026-04-24)
+## Monorepo Structure (Phase 3 Complete, 2026-04-25)
 
 ```
 vn-market-intelligence/         ← pnpm workspace root
 ├── apps/
-│   ├── mcp-server/             ← TypeScript/Bun — MCP server (current monolith)
-│   │   ├── src/                ← all domain code (see Folder Tree below)
-│   │   ├── package.json        ← name: vn-market-intelligence-mcp
-│   │   ├── tsconfig.json
-│   │   ├── bunfig.toml
+│   ├── mcp-server/             ← TypeScript/Bun — MCP gateway (port 3000)
+│   │   ├── src/                ← domain code + scheduler + microservice clients
 │   │   ├── Dockerfile
-│   │   └── [symlinks] → mcp.config.json, docs/, scripts/, vps-scripts/, data/
-│   └── pdf-extractor/          ← Python/FastAPI — PDF extraction microservice (Phase 1a)
-│       ├── domain/             ← models.py, repositories.py, services.py, errors.py
-│       ├── application/        ← usecases.py, dtos.py
-│       ├── infrastructure/     ← repositories.py, extraction_engine.py, config.py
-│       ├── interface/          ← handlers.py, serializers.py
-│       ├── __tests__/          ← unit/ + integration/ (pytest)
-│       ├── main.py             ← FastAPI app + dependency wiring
-│       ├── requirements.txt
-│       ├── pyproject.toml
-│       └── Dockerfile
+│   │   └── package.json
+│   ├── api-gateway/            ← TypeScript/Bun — routing layer (port 4000)
+│   ├── stock-price/            ← TypeScript/Bun — price aggregation (port 5000, mapped 5010)
+│   ├── pdf-extractor/          ← Python/FastAPI — PDF parsing (port 5001)
+│   ├── rag-service/            ← Python/FastAPI — embeddings + search (port 5002)
+│   ├── technical-analysis/     ← TypeScript/Bun — TA indicators (port 5003)
+│   ├── macro-indicators/       ← TypeScript/Bun — macro snapshot (port 5004)
+│   ├── kinh-dich-service/      ← TypeScript/Bun — hexagram readings (port 5005)
+│   └── alert-engine/           ← TypeScript/Bun — signal evaluation (port 5006)
+├── docker-compose.yml          ← All 9 services + shared /data volume
 ├── packages/
-│   ├── shared-types/           ← Inter-service TS contracts (Alert, Signal, ExtractPDFRequest, etc.)
-│   ├── shared-db/              ← SQLite schema registry
+│   ├── shared-types/           ← Inter-service TS contracts
+│   ├── shared-db/              ← SQLite schema
 │   └── shared-config/          ← mcp.config.json loader
-├── docker-compose.yml          ← mcp-server (3000) + pdf-extractor (5001, Phase 1a)
-├── pnpm-workspace.yaml
-└── vps-scripts/                ← unchanged VPS proxy scripts
+└── vps-scripts/                ← 7 systemd services on Vinahost VPS
 ```
 
-## Services
+## Services (Phase 3 — Production)
 
-| Service        | Port | Language    | Phase  | Status    |
-|----------------|------|-------------|--------|-----------|
-| mcp-server     | 3000 | TypeScript  | 0      | Running   |
-| pdf-extractor  | 5001 | Python      | 1a     | Running   |
-| rag-service    | 5002 | Python      | 1b     | Planned   |
-| api-gateway    | 4000 | TBD         | 2a     | Planned   |
-| stock-price    | 5000 | TBD         | 2a     | Planned   |
+| Service | Port | Language | Status |
+|---------|------|----------|--------|
+| mcp-server | 3000 | TypeScript/Bun | ✅ Running |
+| api-gateway | 4000 | TypeScript/Bun | ✅ Running |
+| stock-price | 5010:5000 | TypeScript/Bun | ✅ Running |
+| pdf-extractor | 5001 | Python/FastAPI | ✅ Running |
+| rag-service | 5002 | Python/FastAPI | ✅ Running |
+| technical-analysis | 5003 | TypeScript/Bun | ✅ Running |
+| macro-indicators | 5004 | TypeScript/Bun | ✅ Running |
+| kinh-dich-service | 5005 | TypeScript/Bun | ✅ Running |
+| alert-engine | 5006 | TypeScript/Bun | ✅ Running |
 
-## pdf-extractor (Phase 1a)
+**Shared:** SQLite database at `data/market.db` (mounted to all services)
 
-DDD Python/FastAPI service for BCTC PDF extraction:
-- `POST /extract {url, source_type}` → ExtractPDFResponse
-- `GET /health` → {status: "ok", service: "pdf-extractor"}
-- pdfplumber for native table extraction; pytesseract OCR fallback
-- SQLite table: `pdf_documents` (id, url, source_type, status, extracted_at)
-- mcp-server calls via `infrastructure/fetchers/pdfExtractorClient.ts` (graceful null fallback)
+**Restart:** `docker-compose down && docker-compose up -d` (all 9 services restart in lockstep)
+
+## Microservices Communication
+
+```
+VPS (Vinahost Vietnam)                  Local Docker
+    │                                      │
+    ├─ vn-price-fetch.service       →   API Gateway (4000)
+    ├─ vn-bctc-fetch.service        →   PDF Extractor (5001)
+    ├─ vn-news-fetch.service        →   RAG Service (5002)
+    ├─ vn-sbv-fetch.service         →   Macro Indicators (5004)
+    └─ vn-foreign-flow.service      →   MCP Server (3000)
+                ↓ (zenmidi.com bridge)
+    MCP Server (3000)
+        ├─ HTTP → Stock Price (5000)
+        ├─ HTTP → Technical Analysis (5003)
+        ├─ HTTP → Macro Indicators (5004)
+        ├─ HTTP → Kinh Dich (5005)
+        ├─ HTTP → Alert Engine (5006)
+        ├─ HTTP → PDF Extractor (5001)
+        └─ HTTP → RAG Service (5002)
+```
+
+## Service Implementation Notes
+
+- **MCP Server**: 112 tools, 50 cron jobs, HTTP clients to 8 other services
+- **API Gateway**: Central routing, health aggregation, load balancing
+- **Stock Price**: 3-tier price fallback (VPS bridge → exchange APIs → fallback)
+- **PDF Extractor**: pdfplumber + Tesseract OCR for BCTC financial statements
+- **RAG Service**: sentence-transformers embeddings + LanceDB semantic search
+- **Technical Analysis**: RSI, MACD, Bollinger Bands, moving averages
+- **Macro Indicators**: SBV FX rates, commodity prices, trend analysis
+- **Kinh Dich Service**: Hexagram readings, trading signals, confidence scoring
+- **Alert Engine**: Multi-source signal evaluation, verified chain synthesis
 
 Tests: run from `apps/mcp-server/` with `bun test`. Or from root: `pnpm test`.
 

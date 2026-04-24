@@ -81,7 +81,7 @@ Finding found?
 4. Git commit: `refactor: [janitor] <title>` or `chore: [janitor] <title>`.
 5. Git push to main.
 6. Call `log_fix(title, detail, fix_type="refactor", files, commit_hash)`.
-7. Reload only if required: `launchctl kickstart -k gui/$(id -u)/com.vn-market.mcp`.
+7. Restart Docker services only if required: `cd $PROJECT_ROOT && docker-compose down && docker-compose up -d && sleep 5`.
 
 ## Telegram — WORK channel only
 
@@ -237,7 +237,7 @@ Finding found?
 4. Git commit: `refactor: [janitor] <title>` or `chore: [janitor] <title>`.
 5. Git push to main.
 6. Call `log_fix(title, detail, fix_type="refactor", files, commit_hash)`.
-7. Reload only if required: `launchctl kickstart -k gui/$(id -u)/com.vn-market.mcp`.
+7. Restart Docker services only if required: `cd $PROJECT_ROOT && docker-compose down && docker-compose up -d && sleep 5`.
 
 ## Telegram — WORK channel only
 

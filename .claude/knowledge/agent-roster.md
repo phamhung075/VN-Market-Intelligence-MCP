@@ -85,5 +85,5 @@ ANALYSIS TEAM (Cowork, 7 agents, cloud)
 DEV TEAM (Claude Code CLI, local cron, every 1h)
   Reads BUG → auto-fixes → pushes to main
   → WORK: fix-shipped notices, sprint summaries
-  → Restart: launchctl kickstart only (no hot reload)
+  → Restart: docker-compose down && docker-compose up -d (no hot reload, deterministic state)
 ```

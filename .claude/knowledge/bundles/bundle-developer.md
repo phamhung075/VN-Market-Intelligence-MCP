@@ -103,10 +103,10 @@ Full reference → `.claude/WORKFLOW.md#branch-hygiene-checklist`
 ## Restart Command
 
 ```bash
-launchctl kickstart -k gui/$(id -u)/com.vn-market.mcp
+cd $PROJECT_ROOT && docker-compose down && docker-compose up -d && sleep 5
 ```
 
-No other restart mechanism is allowed.
+No other restart mechanism is allowed. All 9 microservices restart in deterministic lockstep.
 
 ---
 

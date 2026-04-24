@@ -59,7 +59,7 @@ CLAUDE.md (root — always loaded)
 │
 ├── .claude/knowledge/fail-loud-protocol.md (failure handling: 5-step protocol — inlined in agents by design)
 │
-├── .claude/knowledge/restart-policy.md (server restart: launchctl only, banned mechanisms, QA validation)
+├── .claude/knowledge/restart-policy.md (server restart: docker-compose only, 9 microservices, banned mechanisms, QA validation)
 │
 ├── .claude/WORKFLOW.md (dev workflow: branch hygiene, merge checklist)
 │
