@@ -62,6 +62,44 @@ export function logSignalRejection(
 }
 
 /**
+ * Log a policy suppression event (alert fired=false) to the audit table.
+ *
+ * Re-uses signal_rejections with signal_type="policy_suppressed".
+ * The `reason` column stores JSON-serialized failed_conditions array.
+ *
+ * NOTE: getSignalRejectionSummary() will include these rows in its count.
+ * Callers that want only validation failures should add:
+ *   WHERE signal_type != 'policy_suppressed'
+ *
+ * @param db - Database instance
+ * @param params - Suppression details from AlertCheckResult.suppressionReasons
+ */
+export function logPolicySuppression(
+  db: Database,
+  params: {
+    from_agent: string;
+    stock_code?: string | null;
+    rule: "position_danger_3and" | "watchlist_opportunity_4and";
+    failed_conditions: string[];
+    payload_preview?: string;
+  },
+): void {
+  const reason = JSON.stringify(params.failed_conditions);
+  const stmt = db.prepare(`
+    INSERT INTO signal_rejections
+      (from_agent, signal_type, stock_code, reason, payload_preview, created_at)
+    VALUES (?, ?, ?, ?, ?, datetime('now'))
+  `);
+  stmt.run(
+    params.from_agent,
+    "policy_suppressed",
+    params.stock_code ?? null,
+    reason,
+    params.payload_preview ?? null,
+  );
+}
+
+/**
  * Get rejection count summary by agent for a time window.
  *
  * Used by get_signal_rejection_summary MCP tool for diagnostics.
