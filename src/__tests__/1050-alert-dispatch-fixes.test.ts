@@ -167,7 +167,7 @@ describe("Issue 2 — price_surge deterministic dedup ID (Task 1050)", () => {
     };
     const signalB = {
       ...signalA,
-      detectedAt: "2026-04-08T05:00:00.000Z", // next hour → different bucket
+      detectedAt: "2026-04-08T08:00:00.000Z", // 4h bucket 08 vs bucket 04
     };
 
     const alerts1 = generateAlerts([signalA], [{ actionCode: "SSI" }]);
