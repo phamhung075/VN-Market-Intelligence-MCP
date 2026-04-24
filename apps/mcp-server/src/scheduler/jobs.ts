@@ -60,6 +60,7 @@ import { runPipelineWatchdog } from './pipelineWatchdogJob.js'
 import { runFranceSummary } from './briefings/franceSummaryJob.js'
 import { runTaAlertScan } from './market-data/taAlertScanJob.js'
 import { runBbAlertScan } from './alerts/bbAlertScanJob.js'
+import { runAlertScanParallel } from './alerts/alertScanParallelJob.js'
 import { runTaAlertNotifierCron } from './market-data/taAlertNotifierJob.js'
 import { runOhlcvStartupProbe } from './market-data/ohlcvStartupProbe.js'
 import { runOhlcvDailyAggregator } from './market-data/ohlcvDailyAggregatorJob.js'
@@ -644,29 +645,20 @@ export function startScheduler() {
     })
   }, { timezone: 'UTC' })
 
-  // Every 15 min during VN market hours (02:00-08:59 UTC, Mon-Fri) — TA alert scan — task 1307
-  // Scans watchlist RSI(14). Writes ta_overbought/ta_oversold rows to alerts table.
+  // Every 15 min during VN market hours (02:00-08:59 UTC, Mon-Fri) — Parallel alert scan — tasks 1307+1309
+  // Runs TA and BB alert scans in parallel. Both scan watchlist for technical breakouts.
+  // - TA: RSI(14) overbought/oversold (task 1307) → ta_overbought/ta_oversold alerts
+  // - BB: BB20 upper/lower breakouts (task 1309) → ta_bb_breakout_up/ta_bb_breakout_down alerts
+  // Parallel execution reduces cycle time: ~3-5s vs 6-10s sequential.
   // No direct Telegram — Alert Commander dispatches via readUnnotifiedAlerts().
+  // Task 1309c: Scheduler Dispatch Refactoring
   cron.schedule(CRONS.taAlertScan, async () => {
-    await recordJobRun(getDb(), 'taAlertScanJob', async () => {
-      const result = await runTaAlertScan()
-      if (result.fired > 0) {
-        log(`[ta-alert-scan] scanned=${result.scanned} fired=${result.fired}`)
+    await recordJobRun(getDb(), 'alertScanParallelJob', async () => {
+      const result = await runAlertScanParallel()
+      if (result.totalFired > 0) {
+        log(`[alert-scan-parallel] ta_scanned=${result.taResult?.scanned ?? 0} ta_fired=${result.taResult?.fired ?? 0}, bb_scanned=${result.bbResult?.scanned ?? 0} bb_fired=${result.bbResult?.fired ?? 0}, total_fired=${result.totalFired} [${result.durationMs}ms]`)
       }
-      return { rowsWritten: result.fired }
-    })
-  }, { timezone: 'UTC' })
-
-  // Every 15 min during VN market hours (02:00-08:59 UTC, Mon-Fri) — BB alert scan — task 1309
-  // Scans watchlist BB20 upper/lower breakouts. Writes ta_bb_breakout_up/ta_bb_breakout_down rows.
-  // No direct Telegram — Alert Commander dispatches via readUnnotifiedAlerts().
-  cron.schedule(CRONS.bbAlertScan, async () => {
-    await recordJobRun(getDb(), 'bbAlertScanJob', async () => {
-      const result = await runBbAlertScan()
-      if (result.fired > 0) {
-        log(`[bb-alert-scan] scanned=${result.scanned} fired=${result.fired}`)
-      }
-      return { rowsWritten: result.fired }
+      return { rowsWritten: result.totalFired }
     })
   }, { timezone: 'UTC' })
 

@@ -31,8 +31,8 @@
  */
 
 import type { Database } from "bun:sqlite";
-import { computeAllIndicators } from "../../domain/services/technicalIndicators.js";
-import type { DailyCandle, TechnicalIndicatorResult } from "../../domain/services/technicalIndicators.js";
+import { computeTAIndicators } from "../../infrastructure/microservices/clients.js";
+import type { ComputeTAResponse } from "../../infrastructure/microservices/clients.js";
 import { getDb } from "../../infrastructure/db/schema.js";
 import { logger } from "../../infrastructure/logger.js";
 
@@ -43,7 +43,7 @@ import { logger } from "../../infrastructure/logger.js";
 /** Dependency-injectable params — all optional; production uses defaults. */
 export interface BbAlertScanDeps {
   db?: Database;
-  computeFn?: (candles: DailyCandle[]) => TechnicalIndicatorResult;
+  computeFn?: (code: string) => Promise<ComputeTAResponse>;
   nowFn?: () => Date;
 }
 
@@ -111,7 +111,7 @@ const INSERT_ALERT_SQL = `
  */
 export async function runBbAlertScan(deps?: BbAlertScanDeps): Promise<BbAlertScanResult> {
   const database: Database = deps?.db ?? getDb();
-  const computeFn = deps?.computeFn ?? computeAllIndicators;
+  const computeFn = deps?.computeFn ?? ((code: string) => computeTAIndicators({ code }));
   const nowFn = deps?.nowFn ?? (() => new Date());
 
   // 1. Load watchlist
@@ -142,39 +142,33 @@ export async function runBbAlertScan(deps?: BbAlertScanDeps): Promise<BbAlertSca
     scanned++;
 
     try {
-      // a. Fetch candles from local DB
+      // a. Fetch candles from local DB to get latest close price
       const candleRows = database.query<CandleRow, [string]>(CANDLE_SQL).all(code);
 
-      // b. Skip if no candle data (no close price available)
+      // b. Skip if no candle data
       if (candleRows.length === 0) {
         continue;
       }
 
-      // c. Map to DailyCandle[]
-      const candles: DailyCandle[] = candleRows.map((row) => ({
-        day: row.day,
-        close: row.close_price,
-      }));
-
-      // d. Extract latest close price
-      const lastCandle = candles[candles.length - 1];
+      // c. Extract latest close price
+      const lastCandle = candleRows[candleRows.length - 1];
       if (lastCandle === undefined) {
         continue;
       }
-      const close = Math.round(lastCandle.close);
+      const close = Math.round(lastCandle.close_price);
 
-      // e. Compute indicators (injectable — replaced by mock in tests)
-      const indicators = computeFn(candles);
+      // d. Call TA microservice to compute indicators (async, via HTTP)
+      const indicators = await computeFn(code);
 
-      // f. Extract BB20
-      const bb20 = indicators.bb20;
+      // e. Extract BB20 bands
+      const bb20 = indicators.bb;
 
-      // g. null BB20 → skip silently (insufficient history — < 20 candles)
-      if (bb20 === null) {
+      // f. null/undefined BB20 → skip silently (insufficient history — < 20 candles)
+      if (!bb20) {
         continue;
       }
 
-      // h. Determine alert type
+      // g. Determine alert type
       let alertType: string;
       let message: string;
 
@@ -189,13 +183,13 @@ export async function runBbAlertScan(deps?: BbAlertScanDeps): Promise<BbAlertSca
         continue;
       }
 
-      // i. Cooldown check — skip if same (code, alertType) fired within last 4h
+      // h. Cooldown check — skip if same (code, alertType) fired within last 4h
       const cooldownRow = cooldownStmt.get(alertType, code, cooldownCutoff);
       if ((cooldownRow?.cnt ?? 0) > 0) {
         continue;
       }
 
-      // j. Build alert payload
+      // i. Build alert payload
       const triggeredAt = nowFn().toISOString();
       const signalsJson = JSON.stringify([
         {
@@ -209,10 +203,10 @@ export async function runBbAlertScan(deps?: BbAlertScanDeps): Promise<BbAlertSca
       const affectedActionsJson = JSON.stringify([{ code }]);
       const id = crypto.randomUUID();
 
-      // k. Insert alert (no INSERT OR IGNORE — cooldown enforced above)
+      // j. Insert alert (no INSERT OR IGNORE — cooldown enforced above)
       insertStmt.run(id, triggeredAt, "warning", signalsJson, affectedActionsJson, message);
 
-      // l. Count the fired alert
+      // k. Count the fired alert
       fired++;
     } catch (err) {
       logger.warn(`[bbAlertScan] error ticker=${code}`, {

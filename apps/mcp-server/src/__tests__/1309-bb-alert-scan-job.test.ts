@@ -3,7 +3,7 @@ Bun.env["DB_PATH"] = ":memory:";
 
 import { describe, it, expect, beforeEach } from "bun:test";
 import { Database } from "bun:sqlite";
-import type { DailyCandle, TechnicalIndicatorResult } from "../domain/services/technicalIndicators.js";
+import type { ComputeTAResponse } from "../infrastructure/microservices/clients.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Minimal DDL (only tables touched by bbAlertScanJob)
@@ -53,14 +53,16 @@ function buildTestDb(): Database {
 
 function makeComputeFn(
   bb20: { upper: number; mid: number; lower: number } | null
-): (_candles: DailyCandle[]) => TechnicalIndicatorResult {
-  return (_candles: DailyCandle[]) => ({
-    ma5: null,
-    ma20: null,
-    ma50: null,
-    rsi14: null,
-    macd: null,
-    bb20,
+): (code: string) => Promise<ComputeTAResponse> {
+  return async (code: string) => ({
+    code,
+    trend: "TREN_DUNG" as const,
+    bb: bb20 ?? undefined,
+    rsi: undefined,
+    macd: undefined,
+    ma5: undefined,
+    ma20: undefined,
+    ma50: undefined,
   });
 }
 
@@ -312,9 +314,18 @@ describe("Task 1309 — bbAlertScanJob: Bollinger Band breakout intraday alerts"
       { upper: 55000, mid: 50000, lower: 45000 },  // HPG — 50000 inside → no alert
     ];
     let callIndex = 0;
-    const perTickerComputeFn = (_candles: DailyCandle[]): TechnicalIndicatorResult => {
+    const perTickerComputeFn = async (code: string) => {
       const bb20 = bbByCallOrder[callIndex++] ?? null;
-      return { ma5: null, ma20: null, ma50: null, rsi14: null, macd: null, bb20 };
+      return {
+        code,
+        trend: "TREN_DUNG" as const,
+        bb: bb20 ?? undefined,
+        rsi: undefined,
+        macd: undefined,
+        ma5: undefined,
+        ma20: undefined,
+        ma50: undefined,
+      };
     };
 
     const result = await runBbAlertScan({
@@ -362,12 +373,21 @@ describe("Task 1309 — bbAlertScanJob: Bollinger Band breakout intraday alerts"
       { bb20: { upper: 86500, mid: 84000, lower: 82000 }, throws: false },
     ];
     let callIdx = 0;
-    const isolatedComputeFn = (_candles: DailyCandle[]): TechnicalIndicatorResult => {
+    const isolatedComputeFn = async (code: string) => {
       const spec = callOrder[callIdx++]!;
       if (spec.throws) {
         throw new Error("Mock BB computation failure for TCB");
       }
-      return { ma5: null, ma20: null, ma50: null, rsi14: null, macd: null, bb20: spec.bb20 };
+      return {
+        code,
+        trend: "TREN_DUNG" as const,
+        bb: spec.bb20 ?? undefined,
+        rsi: undefined,
+        macd: undefined,
+        ma5: undefined,
+        ma20: undefined,
+        ma50: undefined,
+      };
     };
 
     const result = await runBbAlertScan({
