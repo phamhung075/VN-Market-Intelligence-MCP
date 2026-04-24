@@ -423,13 +423,24 @@ export function upsertForeignFlow(
   }
 
   // Normalise holding_ratio before any DB calls (mutates a local copy).
-  const normalised = items.map((item) => {
+  const normalisedRaw = items.map((item) => {
     const ratio =
       item.holding_ratio != null && item.holding_ratio > 1.0
         ? item.holding_ratio / 100
         : item.holding_ratio;
     return { ...item, holding_ratio: ratio };
   });
+
+  // Deduplicate by (code, date) — last occurrence wins (most recent VPS value).
+  // VPS vn-foreign-flow service occasionally sends duplicate ticker codes in a
+  // single payload. Without dedup the SQLite transaction hits the UNIQUE(code, date)
+  // constraint on the second row and throws "UNIQUE constraint failed".
+  const dedupMap = new Map<string, typeof normalisedRaw[0]>();
+  for (const item of normalisedRaw) {
+    const key = `${item.code}\0${item.date ?? ""}`;
+    dedupMap.set(key, item); // overwrite → last value wins
+  }
+  const normalised = Array.from(dedupMap.values());
 
   let affected = 0;
 
