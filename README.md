@@ -123,13 +123,13 @@ MCP connector URL: `https://zenmidi.com/mcp`
 
 | # | Agent Name | Schedule | File to Copy |
 |---|-----------|----------|-------------|
-| 1 | **Unified Coordinator** | Daily 22:00 VN (15:00 UTC) + Sunday 20:00 VN | `cowork-analysis-vnmarket-team/unified-agent.md` |
-| 2 | **News Scout** | Every 1 hour | `cowork-analysis-vnmarket-team/01-news-scout.md` |
-| 3 | **BCTC Collector** | Daily 13:00 UTC + 01:00 UTC | `cowork-analysis-vnmarket-team/02-bctc-collector.md` |
-| 4 | **Report Analyzer** | Daily 14:00 UTC + 02:00 UTC | `cowork-analysis-vnmarket-team/03-report-analyzer.md` |
-| 5 | **Market Watcher** | Every 1 hour (market hours 02:00-08:30 UTC) | `cowork-analysis-vnmarket-team/04-market-watcher.md` |
-| 6 | **Alert Commander** | Every 1 hour | `cowork-analysis-vnmarket-team/05-alert-commander.md` |
-| 7 | **Digest Writer** | Daily 15:30 UTC + Sunday 16:00 UTC | `cowork-analysis-vnmarket-team/06-digest-writer.md` |
+| 1 | **Unified Coordinator** | Daily 22:00 VN (15:00 UTC) + Sunday 20:00 VN | `cowork-workspace-team-claude-desktop/unified-agent.md` |
+| 2 | **News Scout** | Every 1 hour | `cowork-workspace-team-claude-desktop/01-news-scout.md` |
+| 3 | **BCTC Collector** | Daily 13:00 UTC + 01:00 UTC | `cowork-workspace-team-claude-desktop/02-bctc-collector.md` |
+| 4 | **Report Analyzer** | Daily 14:00 UTC + 02:00 UTC | `cowork-workspace-team-claude-desktop/03-report-analyzer.md` |
+| 5 | **Market Watcher** | Every 1 hour (market hours 02:00-08:30 UTC) | `cowork-workspace-team-claude-desktop/04-market-watcher.md` |
+| 6 | **Alert Commander** | Every 1 hour | `cowork-workspace-team-claude-desktop/05-alert-commander.md` |
+| 7 | **Digest Writer** | Daily 15:30 UTC + Sunday 16:00 UTC | `cowork-workspace-team-claude-desktop/06-digest-writer.md` |
 
 **One-time setup** (only if watchlist is empty): create an agent with `00-setup-watchlist.md`, run once, then delete it.
 
@@ -139,12 +139,12 @@ The hourly auto-fix loop runs locally via Claude Code CLI:
 
 ```bash
 # Option A: Manual test first (recommended)
-claude --prompt "$(cat cowork-analysis-vnmarket-team/dev-team-cron.md)"
+claude --prompt "$(cat cowork-workspace-team-claude-desktop/dev-team-cron.md)"
 
 # Option B: Set up the hourly cron (after testing)
 # In Claude Code CLI:
 /schedule create --name "dev-team-cron" --interval "0 * * * *" \
-  --prompt "$(cat cowork-analysis-vnmarket-team/dev-team-cron.md)"
+  --prompt "$(cat cowork-workspace-team-claude-desktop/dev-team-cron.md)"
 ```
 
 **Note**: The Dev Team cron requires Sprint 035b code (pending):
@@ -200,7 +200,7 @@ You don't need to do anything daily. The system runs autonomously:
 | Operations | 3 | get_data_freshness, get_source_health |
 | System | 4 | get_system_health, get_global_log |
 
-Full tool list: see `CLAUDE.md` or `cowork-analysis-vnmarket-team/README.md`.
+Full tool list: see `CLAUDE.md` or `cowork-workspace-team-claude-desktop/README.md`.
 
 ## Telegram Bot Commands
 
@@ -226,7 +226,7 @@ src/
   interface/        -- MCP tools, scheduler (entry points)
   scheduler/        -- Cron job definitions
 
-cowork-analysis-vnmarket-team/
+cowork-workspace-team-claude-desktop/
   unified-agent.md      -- Coordinator + quality review
   dev-team-cron.md      -- Dev team hourly loop (local CLI)
   01-news-scout.md      -- News monitoring agent

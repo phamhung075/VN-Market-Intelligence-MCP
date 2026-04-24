@@ -75,7 +75,7 @@ try {
 } catch { /* best-effort — trade analysis will work without seed data */ }
 
 // ── 2. Bun HTTP server + SSE transport ────────────────────────────────────
-const srv = await createBunServer({ port: cfg.port });
+const srv = await createBunServer({ port: cfg.port, host: cfg.host });
 log.info("[bootstrap] MCP server ready", { port: srv.port });
 log.info("[bootstrap] Endpoints", {
   sse: `http://127.0.0.1:${srv.port}/sse`,

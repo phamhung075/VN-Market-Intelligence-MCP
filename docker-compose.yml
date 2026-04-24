@@ -36,6 +36,7 @@ services:
       - ./mcp.config.json:/app/mcp.config.json:ro
     environment:
       - NODE_ENV=production
+      - HOST=0.0.0.0
       - DB_PATH=/app/data/market.db
     env_file:
       - .env

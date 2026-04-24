@@ -15,7 +15,7 @@
 | 6 | Digest & Predict | `06-digest-predict.md` | Daily/weekly digests + Monday prediction synthesis | Daily 22:30 VN / Monday 07:30 VN / Weekly Sunday / Monthly 1st |
 | 7 | QA Responder | `07-qa-responder.md` | Answer /ask queue FIFO → MARKET | Every 12 min via askQueueCheck |
 
-Coordinator: `cowork-analysis-vnmarket-team/unified-agent.md`
+Coordinator: `cowork-workspace-team-claude-desktop/unified-agent.md`
 
 ## Dev Team (Claude Code CLI — local cron)
 

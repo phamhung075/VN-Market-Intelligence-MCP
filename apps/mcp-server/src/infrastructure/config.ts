@@ -241,6 +241,7 @@ export interface McpConfig {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export interface AppConfig {
+  host: string;
   port: number;
   dbPath: string;
   logLevel: LogLevel;
@@ -636,6 +637,7 @@ export function loadConfig(): AppConfig {
   const fresh = loadMcpConfig();
   return {
     port: fresh.server.port,
+    host: fresh.server.host,
     dbPath: fresh.data.dbPath,
     logLevel: fresh.server.logLevel,
     telegramBotToken: fresh.telegram.botToken,

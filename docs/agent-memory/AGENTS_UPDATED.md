@@ -6,7 +6,7 @@
 
 ## Summary
 
-All agent definition files (`.claude/agents/*.md` and `cowork-analysis-vnmarket-team/*.md`) have been updated to include **AGENT MEMORY** sections that point agents to the lazy-load shared workbook at `.claude/agent-memory/`.
+All agent definition files (`.claude/agents/*.md` and `cowork-workspace-team-claude-desktop/*.md`) have been updated to include **AGENT MEMORY** sections that point agents to the lazy-load shared workbook at `.claude/agent-memory/`.
 
 Each agent now loads:
 1. `AGENT_STARTUP.md` for protocol overview (~5 min read)
@@ -28,7 +28,7 @@ Each agent now loads:
 | **Claude Manager Helper** | `claude-manager-helper.md` | ✅ Updated | Added AGENT MEMORY section for monitoring memory structure health + INDEX.md size |
 | **Code Janitor** | `code-janitor.md` | ✅ Updated | Added AGENT MEMORY section for tracking hardcoding pattern recurrence |
 
-### Analysis Team Agents (Cowork — `cowork-analysis-vnmarket-team/`)
+### Analysis Team Agents (Cowork — `cowork-workspace-team-claude-desktop/`)
 
 | Agent | File | Status | What Changed |
 |-------|------|--------|--------------|
@@ -151,8 +151,8 @@ Agents will automatically use the new system on next run. No further action need
 - `.claude/agents/system-auditor.md` ✅
 - `.claude/agents/claude-manager-helper.md` ✅
 - `.claude/agents/code-janitor.md` ✅
-- `cowork-analysis-vnmarket-team/01-news-scout.md` ✅
-- `cowork-analysis-vnmarket-team/02-financial-analyst.md` ✅
+- `cowork-workspace-team-claude-desktop/01-news-scout.md` ✅
+- `cowork-workspace-team-claude-desktop/02-financial-analyst.md` ✅
 
 **Not updated yet (low priority):**
 - `ba.md`, `pm.md`, `po.md`, `qa.md`, `fixer.md`, `market-analyst.md`, `idea-forge.md`, `cowork-refactory-expert.md`, `04-market-watcher.md`, `05-alert-commander.md`, `06-digest-predict.md`, `07-qa-responder.md`, `00-setup-watchlist.md`, `unified-agent.md`

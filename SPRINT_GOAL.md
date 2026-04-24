@@ -1,5 +1,32 @@
 # Sprint Goal
 
+## Sprint 1327 — Phase 0 Merge + Test Infrastructure Stabilization (2026-04-25)
+
+**Goal:** Merge Phase 0 monorepo scaffold to main, activate new test infrastructure, triage + fix pre-existing test failures for stable baseline.
+
+**Vision:** Phase 0 is complete (branch ready, 6796 tests passing). Merging unblocks Phases 1-3 microservices extraction. Stabilizing pre-existing failures improves test confidence and baseline tracking.
+
+**Scope:**
+- IN: Merge `feature/ddd-phase-0` to main + verify docker-compose build
+- IN: Triage pre-existing failures (15 tests), categorize by root cause
+- IN: Fix critical failures (if <2h work per fix); defer architectural (BCTC OCR, bootstrap AC, registry) to Sprint 1328+
+- IN: Investigate Bun test crash (memory/resource issue, post-test-run panic)
+- OUT: Full Phase 1 microservices extraction (Phase 1a/1b already done; Phase 2a/2b in review)
+
+**Success Metrics:**
+- Phase 0 merged to main, docker-compose starts all 9 services without errors
+- Test baseline tracked: baseline_current = 6796, baseline_target = 6450 (legacy), failures = 15 (categorized)
+- Pre-existing failures categorized by component (BCTC x4, Bootstrap x2, Task Legacy x3, Registry x2, Other x4)
+- Bun crash diagnosed (memory pressure, Bun bug, or resource exhaustion)
+
+**Size:** M (5-6h total: 1h merge+verify, 2h triage+categorization, 2-3h fixes)
+
+**Blockers:** None. Phase 0 branch ready.
+
+**Next Agent:** BA (write Requirement Spec for triage + fix plan)
+
+---
+
 ## Sprint 1326 — Documentation Cleanup + Phase 0 Monorepo Readiness (2026-04-25)
 
 **Goal:** Archive obsolete task specs (340 files), consolidate organizational rules, validate Phase 0 monorepo scaffold for microservices migration.
