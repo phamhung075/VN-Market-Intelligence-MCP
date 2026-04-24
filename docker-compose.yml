@@ -1,0 +1,67 @@
+version: "3.9"
+
+# ── VN Market Intelligence — DDD Microservices ──────────────────────────────
+#
+# Phase 0: mcp-server only (existing monolith moved to apps/mcp-server/).
+# Phase 1: pdf-extractor (port 5001) + rag-service (port 5002) added.
+# Phase 2: stock-price (5000), technical-analysis (5003), macro-indicators (5004),
+#          kinh-dich-service (5005), alert-engine (5006), api-gateway (4000) added.
+#
+# Service port map:
+#   mcp-server          3000
+#   api-gateway         4000  (Phase 2a)
+#   stock-price         5000  (Phase 2a)
+#   pdf-extractor       5001  (Phase 1a)
+#   rag-service         5002  (Phase 1b)
+#   technical-analysis  5003  (Phase 2a)
+#   macro-indicators    5004  (Phase 2a)
+#   kinh-dich-service   5005  (Phase 2b)
+#   alert-engine        5006  (Phase 2b)
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+
+  # ── Phase 0: MCP Server (TypeScript/Bun) ────────────────────────────────
+  mcp-server:
+    build:
+      context: apps/mcp-server
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    volumes:
+      # Mount data directory for SQLite + LanceDB persistence
+      - ./data:/app/data
+      # Mount config
+      - ./mcp.config.json:/app/mcp.config.json:ro
+    environment:
+      - NODE_ENV=production
+      - DB_PATH=/app/data/market.db
+    env_file:
+      - .env
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # ── Phase 1a placeholder: PDF Extractor (Python/FastAPI) ─────────────────
+  # pdf-extractor:
+  #   build: apps/pdf-extractor
+  #   ports: ["5001:5001"]
+
+  # ── Phase 1b placeholder: RAG Service (Python/FastAPI) ───────────────────
+  # rag-service:
+  #   build: apps/rag-service
+  #   ports: ["5002:5002"]
+
+  # ── Phase 2a placeholders ─────────────────────────────────────────────────
+  # api-gateway:         { build: apps/api-gateway,         ports: ["4000:4000"] }
+  # stock-price:         { build: apps/stock-price,         ports: ["5000:5000"] }
+  # technical-analysis:  { build: apps/technical-analysis,  ports: ["5003:5003"] }
+  # macro-indicators:    { build: apps/macro-indicators,    ports: ["5004:5004"] }
+
+  # ── Phase 2b placeholders ─────────────────────────────────────────────────
+  # kinh-dich-service:   { build: apps/kinh-dich-service,   ports: ["5005:5005"] }
+  # alert-engine:        { build: apps/alert-engine,         ports: ["5006:5006"] }
