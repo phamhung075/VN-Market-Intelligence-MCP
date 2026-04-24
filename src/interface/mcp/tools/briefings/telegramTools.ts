@@ -47,6 +47,28 @@ export function registerTelegramTools(server: McpServer): void {
         .describe("The message text to send. Plain text recommended (no Markdown) to avoid parse errors."),
     },
     async ({ channel, message }) => {
+      // MARKET spam guard: reject pipeline diagnostics + system notifications
+      const pipelinePatterns = [
+        /pipeline.*(issue|detected|restored)/i,
+        /services?.*(stopped|fresh)/i,
+        /phát hiện lỗi pipeline/i,
+        /đã khôi phục/i,
+        /stale.*min.*market/i,
+        /vps.*(error|failed|down|outage)/i,
+      ];
+      const isDiagnostic = pipelinePatterns.some((p) => p.test(message));
+
+      if (channel === "market" && isDiagnostic) {
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: "Diagnostic content blocked from MARKET channel. Use channel='work' for pipeline/VPS status messages.",
+            },
+          ],
+        };
+      }
+
       try {
         if (channel === "market") {
           const success = await sendTelegramMarket(message, {
