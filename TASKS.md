@@ -17,111 +17,17 @@
 
 ---
 
-## Sprint 1297: Critical System Reliability & BCTC Historical Backfill — IN PROGRESS
-
-| ID | Title | Layer | Status | Depends | Hours |
-|----|-------|-------|--------|---------|-------|
-| 1297a | Audit Phase II — Fail-Loud Protocol Injection (16 agents) | docs | Done | none | 2–3 |
-| 1297b | BCTC Portal URL Discovery Fix | vps-scripts | Review | none | 4–6 |
-| 1297c | VPS Validation of BCTC Portal Fix | ops | Todo | 1297b | 1–2 |
-
-**Status:** 1297a Done (98ab4bd0). 1297b Review (validated locally). 1297c unblocked.
-Details → `docs/archive/TASK_DETAILS_ARCHIVE.md`
+## Sprint 1297 — IN PROGRESS (1297a Done, 1297b Review, 1297c Todo) — details: `docs/archive/TASK_DETAILS_ARCHIVE.md`
 
 ---
 
-## Sprint 1298: IMF Sentiment Classifier — Test Completion (5–7h total) — Todo
+## Sprint 1298 — COMPLETE (1298a/b Done, IMF test coverage complete, 6508+ tests) — details: `docs/archive/TASK_DETAILS_ARCHIVE.md`
 
-| ID | Title | Layer | Status | Depends | Hours |
-|----|-------|-------|--------|---------|-------|
-| 1298a | RED: verify imf-indicators.test + write imf-classifier.test (AC-2 deep) | tests | Done | none | 2–3 |
-| 1298b | GREEN: write imf-fetcher.test (AC-4) + imf-integration.test (AC-5/6/7/8) | tests | Done | 1298a | 3–4 |
+## Sprint 1299 — COMPLETE (1299a/b/c Done, 65k→<30k token reduction, 6590 tests) — details: `docs/archive/TASK_DETAILS_ARCHIVE.md`
 
-**Goal:** Complete test coverage for all 8 ACs. All 8 FRs already implemented in sprint 1296. Test-only sprint.
+## Sprint 1300 — COMPLETE (1300a/b Done, TelegramMessageFactory, 7 truncation bugs fixed, 6573 tests) — details: `docs/archive/TASK_DETAILS_ARCHIVE.md`
 
-### 1298a — RED phase
-context: `docs/handoffs/TASK_1298a.md`
-branch: `task/1298a-red-tests`
-verify: `src/__tests__/1296b-imf-indicators.test.ts` all green
-create: `src/__tests__/1296b-imf-classifier.test.ts` (AC-2: banking≈0.45, export≈0.35, stale<0.60, contraction<-0.3, multi-weighted, all-stale→imf_neutral)
-AC: both test files green, `bun tsc --noEmit` clean
-
-### 1298b — GREEN phase
-context: `docs/handoffs/TASK_1298b.md`
-branch: `task/1298b-green-imf-integration-tests` (TBD)
-depends: 1298a merged
-create: `src/__tests__/1296b-imf-fetcher.test.ts` (AC-4: HTTP mock, DB roundtrip, circuit breaker fallback)
-create: `src/__tests__/1296b-imf-integration.test.ts` (AC-5: cascade rules len=11 | AC-6: conviction weight | AC-7: scheduler shape | AC-8: MCP tool shape)
-AC: all 3 new test files pass, full suite ≥6508, `bun tsc --noEmit` clean, launchctl restart verified
-
----
-
-## Sprint 1299: MCP Tool Context Optimization — IN PROGRESS
-
-| ID | Title | Layer | Status | Depends | Hours |
-|----|-------|-------|--------|---------|-------|
-| 1299a | Tool Index + SKILL_MANIFEST docs | docs | Review | none | 2–3 |
-| 1299b | Skill-Gated Bootstrap (code + tests) | interface | Todo | 1299a | 3–4 |
-| 1299c | Session Cache + Usage Tracking Cron | infra/scheduler | Todo | 1299b | 2–3 |
-
-**Goal:** 65k→<30k tokens. digest_predict trimmed to 49 tools (~29.4k ✓). TECH: `docs/TECH_1299.md`
-### 1299a context: `docs/handoffs/TASK_1299a.md`
-### 1299b context: `docs/handoffs/TASK_1299b.md`
-### 1299c context: `docs/handoffs/TASK_1299c.md`
-
----
-
-## Sprint 1300: Telegram Message Factory (Centralized Truncation Architecture) — COMPLETE
-
-| ID | Title | Layer | Status | Depends | Hours |
-|----|-------|-------|--------|---------|-------|
-| 1300a (RED) | Create TelegramMessageFactory service + migrate briefing jobs | infra/application | Done | none | 3–4 |
-| 1300b (GREEN) | Migrate storage-layer functions to factory + full regression | domain/application | Done | 1300a | 2–3 |
-
-**Status:** Both phases complete. All 7 truncation bugs fixed. Factory operational. 6573 tests passing.
-
-**Root Cause:** 7 truncation bugs scattered across codebase — no centralized message formatting.
-
-**Storage-Layer Issues (pre-DB insertion):**
-- `runPredictionImpactChain.ts:113` — signal reasoning (500 chars) ⚠️ CRITICAL
-- `newsNormalizer.ts:854` — news summary (500 chars) ⚠️ MEDIUM
-- `policyImpactMapper.ts:233` — policy summary (80 chars) ⚠️ LOW
-
-**User-Facing Issues (in briefings):**
-- `morningBriefingJob.ts:123` — alert message (60 chars) ⚠️ CRITICAL
-- `eveningSummaryJob.ts:203` — alert message (80 chars) ⚠️ CRITICAL
-- `eveningSummaryJob.ts:211` — story title (80 chars) ⚠️ CRITICAL
-- `franceSummaryJob.ts:406` — alert message (100 chars) ⚠️ CRITICAL
-
-**Solution: TelegramMessageFactory Service**
-```typescript
-class TelegramMessageFactory {
-  // Singleton service for all Telegram message formatting
-  static formatAlertMessage(msg: string): string { /* smart truncation */ }
-  static formatStoryTitle(title: string): string { /* smart truncation */ }
-  static formatSignalReasoning(reasoning: string): string { /* smart truncation */ }
-  // ... one method per message type, enforces consistent rules
-}
-```
-
-**Benefits:**
-- Enforce dynamic length calculation globally (no hard-coded limits)
-- Word-break detection (truncate at space, not mid-word)
-- Diacritics handling (Vietnamese characters)
-- Easy to maintain and enhance
-- All 7 bugs fixed in one place
-
----
-
-## Sprint 1302: Domain Text Utils — Fix Recurring DDD Boundary Violation
-
-| ID | Title | Layer | Status | Depends | Hours |
-|----|-------|-------|--------|---------|-------|
-| 1302a | RED: create textUtils.ts + failing test | domain/tests | Todo | none | 1 |
-| 1302b | GREEN: update imports in newsNormalizer + policyImpactMapper, delete analysisFormatters shim | domain | Todo | 1302a | 1 |
-
-**Goal:** Eliminate 6th recurrence of domain→infra import. Move pure truncation helpers to `src/domain/services/textUtils.ts`. Delete `src/infrastructure/adapters/analysisFormatters.ts`.
-**Design:** `docs/TECH_1302.md`
+## Sprint 1302 — COMPLETE (1302a/b Done, textUtils.ts, DDD violation fixed, 6606 tests) — details: `docs/archive/TASK_DETAILS_ARCHIVE.md`
 
 ---
 
@@ -136,10 +42,28 @@ class TelegramMessageFactory {
 | 1303e | pipelineWatchdog + vpsProxyWatchdog: remove MARKET channel spam | scheduler | Done | #2596 |
 | 1303f | append_session_record: add content deduplication | interface | Done | SEC |
 | 1303g | UNBLOCK — VPS all-services down (prices/BCTC/news/FX/flow) | ops | Todo | #2598,2599,2604,2607 |
-| 1303h | SPRINT — BCTC PDF parser impossible figures | domain | Backlog | #2597,2608,2610 |
-| 1303i | SPRINT — Cascade rule gaps (geo/BCTC overdue/trade map) | domain | Backlog | #2595,2600,2602 |
+| 1303h | SPRINT — BCTC PDF parser impossible figures | domain | Todo | #2597,2608,2610 |
+| 1303i | SPRINT — Cascade rule gaps (geo/BCTC overdue/trade map) | domain | Review | #2595,2600,2602 |
 
-**Status:** 1303a–1303f DONE (code committed). 1303g BLOCKED on ops. 1303h–1303i queued.
+**Status:** 1303a–1303f DONE (code committed). 1303g BLOCKED on ops. 1303h Todo. 1303i Review. WIP: 1/2.
+
+### 1303h — BCTC PDF Parser Impossible Figures Guard
+context: `docs/handoffs/TASK_1303h.md`
+branch: `task/1303h-impossible-figures-guard`
+layer: domain
+depends: none
+files_create: `src/domain/services/financial-reports/extractorGuards.ts`, `src/__tests__/1303h-extractor-guards.test.ts`
+files_modify: `incomeStatementExtractor.ts` (return block), `balanceSheetExtractor.ts` (post-applyMultiplier)
+AC: `guardFinancialField(600T,...)→0 + warn`, `guardBalanceSheet` applied on BS, VNM-scale passes, `bun tsc` clean
+
+### 1303i — Cascade Rule Gaps (Geo/BCTC-Overdue/Trade-Map)
+context: `docs/handoffs/TASK_1303i.md`
+branch: `task/1303i-cascade-gaps`
+layer: domain + scheduler
+depends: none
+files_create: `src/__tests__/1303i-cascade-gaps.test.ts`
+files_modify: `cascadeEngine.ts` (Taiwan rules), `tradeRelationships.ts` (taiwan keywords + 4 profiles + 4 relevance entries), `bctcOverdueCheckJob.ts` (fire-and-forget runImpactChain)
+AC: Taiwan strait → tech "down" in chain, BCTC overdue → runImpactChain called, DHG/GMD/CTD/NKG profiles exist, `bun tsc` clean
 
 ---
 

@@ -21,6 +21,7 @@
  */
 
 import { parseVnNumber } from "../vnNumberParser.js";
+import { guardBalanceSheet } from "./extractorGuards.js";
 import type {
   BalanceSheet,
   CurrentAssets,
@@ -601,5 +602,5 @@ export function extractBalanceSheet(rawText: string): BalanceSheet {
     }
   }
 
-  return applyMultiplier(raw, effectiveMultiplier);
+  return guardBalanceSheet(applyMultiplier(raw, effectiveMultiplier));
 }

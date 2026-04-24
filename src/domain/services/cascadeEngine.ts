@@ -1334,6 +1334,38 @@ export const SECTOR_RULES: SectorRule[] = [
     title: "Gián đoạn Hormuz/Trung Đông — xuất khẩu sữa VNM sang Trung Đông bị ảnh hưởng, chi phí logistics tăng (VNM bearish)",
   },
 
+  // ── Taiwan / semiconductor DE-ESCALATION (before escalation — first match wins) ──
+  {
+    keywords: [
+      "taiwan peace", "taiwan talks", "taiwan de-escalation", "cross-strait dialogue",
+      "taiwan strait reopen", "taiwan ceasefire", "đài loan hòa dịu", "hạ nhiệt eo biển đài loan",
+    ],
+    domain: "tech",
+    direction: "up",
+    confidence: 0.80,
+    title: "Hạ nhiệt eo biển Đài Loan — chuỗi cung ứng bán dẫn phục hồi, tích cực tech/FPT",
+  },
+  {
+    keywords: [
+      "taiwan peace", "taiwan talks", "taiwan de-escalation", "cross-strait dialogue",
+      "taiwan strait reopen", "đài loan hòa dịu", "hạ nhiệt eo biển đài loan",
+    ],
+    domain: "securities",
+    direction: "up",
+    confidence: 0.75,
+    title: "Hạ nhiệt Đài Loan — risk-on, dòng vốn quay lại thị trường mới nổi",
+  },
+  {
+    keywords: [
+      "taiwan peace", "taiwan talks", "taiwan de-escalation", "cross-strait dialogue",
+      "taiwan strait reopen", "đài loan hòa dịu",
+    ],
+    domain: "retail",
+    direction: "up",
+    confidence: 0.68,
+    title: "Hạ nhiệt Đài Loan — chi phí linh kiện điện tử giảm, tích cực bán lẻ điện máy",
+  },
+
   // ── Geopolitical DE-ESCALATION (MUST be before escalation — first match wins) ──
   // When news contains BOTH "war" and "peace", de-escalation wins because
   // peace/ceasefire keywords are checked first.
@@ -1416,6 +1448,39 @@ export const SECTOR_RULES: SectorRule[] = [
     direction: "up",
     confidence: 0.75,
     title: "Rủi ro địa chính trị — vàng tăng do nhu cầu trú ẩn (safe haven)",
+  },
+
+  // ── Taiwan / semiconductor ESCALATION ──────────────────────────────────────
+  {
+    keywords: [
+      "taiwan strait", "taiwan military", "taiwan conflict", "taiwan invasion",
+      "china taiwan", "tsmc disruption", "semiconductor supply", "taiwan blockade",
+      "eo biển đài loan", "đài loan", "xung đột đài loan", "phong tỏa đài loan",
+    ],
+    domain: "tech",
+    direction: "down",
+    confidence: 0.80,
+    title: "Căng thẳng eo biển Đài Loan — gián đoạn chuỗi cung ứng bán dẫn (bearish tech/FPT)",
+  },
+  {
+    keywords: [
+      "taiwan strait", "taiwan military", "taiwan conflict", "china taiwan",
+      "tsmc disruption", "eo biển đài loan", "đài loan căng thẳng",
+    ],
+    domain: "securities",
+    direction: "down",
+    confidence: 0.75,
+    title: "Căng thẳng Đài Loan — risk-off toàn cầu, dòng vốn rút khỏi thị trường mới nổi",
+  },
+  {
+    keywords: [
+      "taiwan strait", "taiwan military", "taiwan conflict", "tsmc disruption",
+      "semiconductor supply", "eo biển đài loan", "đài loan",
+    ],
+    domain: "retail",
+    direction: "down",
+    confidence: 0.68,
+    title: "Căng thẳng Đài Loan — chi phí linh kiện điện tử tăng, tác động bán lẻ điện máy",
   },
 
   // ── FDI / foreign investment ───────────────────────────────────────────────
