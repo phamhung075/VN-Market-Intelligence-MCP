@@ -175,3 +175,10 @@ sqlite3 apps/mcp-server/data/db.sqlite ".schema" | head -20
 - Docker status: triggered by test failures or manual request
 - Database: WAL checkpoint daily + on SIGTERM
 - Disk: monitored as part of health checks
+
+## Step 0-b: Handle Bootstrap Errors
+
+If `get_memory_files` or `search_memory_by_trigger` returns an error or empty result:
+1. Send `send_telegram(channel="work", message="[ops] bootstrap failed: <error>")`.
+2. Call `submit_feedback` with error details.
+3. STOP. Do NOT proceed with the task cycle. Do NOT fallback or guess.

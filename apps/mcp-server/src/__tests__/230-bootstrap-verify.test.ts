@@ -268,18 +268,16 @@ describe("Bootstrap Performance + Signal Quality (230)", () => {
   test("AC-4c: All 7 Cowork agent .md files include Step 0-b decision tree block", () => {
     // Verify that all agent .md files contain the "Step 0-b: Handle Bootstrap Errors" section
     // This ensures fail-loud protocol is hardened across all Cowork agents
+    // Option A: test references surviving agent files (Sprint 1326 deleted cowork-analysis-vnmarket-team/)
 
     const agentFiles = [
-      ".claude/agents/01-news-scout.md",
-      ".claude/agents/02-financial-analyst.md",
-      ".claude/agents/04-market-watcher.md",
-      ".claude/agents/05-alert-commander.md",
-      ".claude/agents/06-digest-predict.md",
-      ".claude/agents/07-qa-responder.md",
-      ".claude/agents/unified-agent.md",
+      ".claude/agents/developer.md",
+      ".claude/agents/ops.md",
+      ".claude/agents/qa.md",
     ];
 
-    const projectRoot = path.resolve(__dirname, "../..");
+    // __dirname = apps/mcp-server/src/__tests__ → go up 4 levels to reach monorepo root
+    const projectRoot = path.resolve(__dirname, "../../../..");
     const requiredSection = "## Step 0-b: Handle Bootstrap Errors";
 
     for (const agentFile of agentFiles) {

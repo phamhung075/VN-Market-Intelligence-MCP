@@ -219,3 +219,10 @@ If test suite fails on main → EMERGENCY:
 4. Do NOT merge any further tasks until tests pass
 
 See `.claude/knowledge/fail-loud-protocol.md` for escalation steps.
+
+## Step 0-b: Handle Bootstrap Errors
+
+If `get_memory_files` or `search_memory_by_trigger` returns an error or empty result:
+1. Send `send_telegram(channel="work", message="[qa] bootstrap failed: <error>")`.
+2. Call `submit_feedback` with error details.
+3. STOP. Do NOT proceed with the task cycle. Do NOT fallback or guess.
