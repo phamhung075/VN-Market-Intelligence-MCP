@@ -188,7 +188,7 @@ export async function fetchParseAndStoreBctc(
     pdfTextOverride,
     insertAnalysisFn,
     pdfUrl,
-    enableBctcFallback = true,
+    enableBctcFallback = false,
   } = params;
 
   const tag = `[fetchParseAndStoreBctc] ${actionCode} ${year}-${quarter}`;
@@ -341,13 +341,9 @@ export async function fetchParseAndStoreBctc(
       if (fallbackResult.fallback && fallbackResult.report) {
         return fallbackResult.report;
       }
-      // Fallback was attempted but rejected — return object indicating fallback was skipped
+      // Fallback was attempted but rejected — return null
       logger.warn(`${tag} PDF extraction fallback rejected: ${fallbackResult.reason}`);
-      return {
-        fallback: false,
-        reason: fallbackResult.reason,
-        hints: fallbackResult.hints,
-      } as any;
+      return null;
     }
     // No error (empty override or OCR miss) — clean abort
     logger.warn(`${tag} PDF extraction yielded empty text — aborting`);
