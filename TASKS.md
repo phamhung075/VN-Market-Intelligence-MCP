@@ -23,6 +23,7 @@
 - **fix-1293c:** Signal rejection time-filtering — Done (SQLite datetime() replaces JS ISO cutoff, 3 regression tests restored)
 - **fix-1328e:** notifyTelegramAlert BUG channel routing — Done (coreSend("bug") direct, rebased onto watchdog null-fix, 12/12 pass)
 - **fix-bctc-ocr:** BCTC OCR fallback hardening — Done (fallback disabled by default, null on rejection, contamination reverted, merged 1e366b66)
+- **fix-watchdog-recovery:** Null foreign-flow timestamp treated as fresh — Done (3 tests pass, APPROVED, report 2026-04-25)
 
 ---
 
