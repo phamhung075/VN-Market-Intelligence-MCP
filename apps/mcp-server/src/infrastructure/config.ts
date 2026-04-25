@@ -189,6 +189,16 @@ export interface FeaturesConfig {
    * Set to false to re-enable SSC polling once the portal is fixed.
    */
   disableSscPolling: boolean;
+  /**
+   * Task 1281-fix: When false, the local MCP server will NOT attempt to download
+   * BCTC PDFs directly from Vietnamese exchange portals (SSC/HOSE/HNX/UPCOM).
+   * Default: false — VPS-only architecture. The Vinahost VPS (vn-bctc-fetch.service)
+   * is the sole source of BCTC PDFs; the local server receives them via push endpoint.
+   *
+   * Set to true ONLY on the VPS itself (where geo-block does not apply).
+   * Override via env var: ENABLE_LOCAL_BCTC_FETCH=true
+   */
+  enableLocalBctcFetch: boolean;
 }
 
 /** Alert policy thresholds for the two narrowed alert types (Sprint 054). */
@@ -596,8 +606,15 @@ export function loadMcpConfig(): McpConfig {
     })(),
     features: (() => {
       const ft = (get(f, "features") ?? {}) as Record<string, unknown>;
+      // ENABLE_LOCAL_BCTC_FETCH env var override (task 1281-fix)
+      const envLocalBctc = Bun.env["ENABLE_LOCAL_BCTC_FETCH"];
+      const enableLocalBctcFetch =
+        envLocalBctc === "true" || envLocalBctc === "1" ? true
+        : envLocalBctc === "false" || envLocalBctc === "0" ? false
+        : boolVal(ft, "enableLocalBctcFetch", false);
       return {
         disableSscPolling: boolVal(ft, "disableSscPolling", true),
+        enableLocalBctcFetch,
       } satisfies FeaturesConfig;
     })(),
   };
