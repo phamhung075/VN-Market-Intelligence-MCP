@@ -152,10 +152,12 @@ export function initNewsTables(db: Database): void {
 
   // Task 1311a — verdict columns (added after initial table creation in some DBs)
   // Must run BEFORE idx_mm_verdict creation so the column exists on pre-migration DBs.
+  // FIX-1265: reviewed_at must be TEXT (not INTEGER) to match the CREATE TABLE DDL
+  // and to ensure datetime('now') stores as a TEXT string on all DB lineages.
   for (const sql of [
     `ALTER TABLE market_messages ADD COLUMN verdict      TEXT`,
     `ALTER TABLE market_messages ADD COLUMN verdict_note TEXT`,
-    `ALTER TABLE market_messages ADD COLUMN reviewed_at  INTEGER`,
+    `ALTER TABLE market_messages ADD COLUMN reviewed_at  TEXT`,
   ]) {
     try { db.exec(sql); } catch {}
   }
