@@ -49,8 +49,8 @@ const WATCHLIST = [
   // Aviation — BEARISH on supply shock (fuel costs up)
   { actionCode: "VJC", domain: "aviation" as const, exchange: "HOSE" },
   { actionCode: "HVN", domain: "aviation" as const, exchange: "HOSE" },
-  // Logistics — BEARISH on supply shock (route disruption + fuel cost)
-  { actionCode: "BSR", domain: "logistics" as const, exchange: "UPCOM" },
+  // Oil gas — BSR (Binh Son Refinery) is oil_gas, not logistics (FIX-1264)
+  { actionCode: "BSR", domain: "oil_gas" as const, exchange: "UPCOM" },
   { actionCode: "GMD", domain: "logistics" as const, exchange: "HOSE" },
   // Securities — BEARISH on risk-off market sentiment
   { actionCode: "SSI", domain: "securities" as const, exchange: "HOSE" },
@@ -71,17 +71,19 @@ describe("Task 1264 — Hormuz blockade cascade: VJC + BSR coverage", () => {
     expect(vjcImpact?.impactDirection).toBe("down");
   });
 
-  it("Hormuz blockade → BSR (logistics) impacted with BEARISH direction", () => {
+  // FIX-1264: BSR is Binh Son Refinery (oil_gas), NOT logistics.
+  // Hormuz blockade = oil price spike = upstream oil companies benefit = BULLISH.
+  it("Hormuz blockade → BSR (oil_gas refinery) impacted with BULLISH direction", () => {
     const entry = makeEntry(
-      "Strait of Hormuz blockade disrupts shipping routes",
-      "hormuz strait blockade causes oil supply shock, disrupting global shipping logistics.",
+      "Strait of Hormuz blockade disrupts oil supply",
+      "hormuz strait blockade causes oil supply shock, crude oil price surges.",
     );
     const chain = buildCausalChain(entry, WATCHLIST);
 
-    // BSR should appear in watchlistImpacts with direction "down" (BEARISH)
+    // BSR should appear in watchlistImpacts with direction "up" (BULLISH)
     const bsrImpact = chain.watchlistImpacts.find((w) => w.actionCode === "BSR");
     expect(bsrImpact).toBeDefined();
-    expect(bsrImpact?.impactDirection).toBe("down");
+    expect(bsrImpact?.impactDirection).toBe("up");
   });
 
   it("Hormuz blockade → both VJC and BSR appear in cascade chain", () => {
