@@ -399,9 +399,17 @@ export async function runMorningBriefing(
     }
     } // end dedup check
   } catch (err) {
-    logger.error("[morning-briefing] unhandled error in briefing cycle", {
-      error: err instanceof Error ? err.message : String(err),
-    });
+    const errMsg = err instanceof Error ? err.message : String(err);
+    logger.error("[morning-briefing] unhandled error in briefing cycle", { error: errMsg });
+    // Notify WORK channel — do NOT fall back to stale cached briefing (task 1290)
+    try {
+      const { sendTelegramWork } = await import(
+        "../../infrastructure/notifiers/telegram.js"
+      );
+      await sendTelegramWork(
+        `morningBriefingJob failed — assembleBriefing error: ${errMsg}`,
+      );
+    } catch { /* best effort — Telegram itself may be unavailable */ }
   } finally {
     isRunning = false;
   }

@@ -243,7 +243,7 @@ export function registerMarketMessageTools(server: McpServer): void {
     "review_market_message",
     "Label a MARKET channel message as 'signal' (actionable intelligence) or 'noise' (low-value). Idempotent — calling twice overwrites the previous verdict.",
     {
-      id: z.number().int().min(1),
+      id: z.coerce.number().int().min(1),
       verdict: z.enum(["signal", "noise"]),
       note: z.string().optional(),
     },
