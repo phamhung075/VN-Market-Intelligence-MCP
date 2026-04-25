@@ -24,6 +24,18 @@
 
 ---
 
+## Review (QA Re-Check)
+
+| ID | Title | Layer | Branch | Status | Report |
+|----|-------|-------|--------|--------|--------|
+| 1328e-fix | notifyTelegramAlert: route HIGH/CRITICAL alerts to BUG channel, not MARKET | infra/telegram | `task/fix-1328e-telegram` | Review | Fix applied |
+
+**Root Cause:** notifyTelegramAlert violates Alert Commander exclusivity rule — server infrastructure scheduler must not send to MARKET channel.
+
+**Fix:** Line 552 changed from `sendTelegramMarket()` to `sendTelegramBug()`, line 525 comment updated. Tests: 12/12 pass, tsc clean.
+
+---
+
 ## Backlog
 
 ---
