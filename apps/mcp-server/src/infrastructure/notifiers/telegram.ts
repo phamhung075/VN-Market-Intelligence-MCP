@@ -522,7 +522,7 @@ export async function notifyTelegramAlert(
 
   if (options.conviction) {
     // NOTE: conviction block bypasses TelegramMessageFactory — no truncation.
-    // Path: formatConvictionBlock() → string concat → splitMessage() → sendTelegramMarket()
+    // Path: formatConvictionBlock() → string concat → splitMessage() → sendTelegramBug()
     const convBlock = formatConvictionBlock(options.conviction, options.convictionRisks ?? []);
     text = `${text}\n\n${convBlock}`;
   }
