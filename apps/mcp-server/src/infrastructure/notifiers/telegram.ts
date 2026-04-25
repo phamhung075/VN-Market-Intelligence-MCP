@@ -522,7 +522,7 @@ export async function notifyTelegramAlert(
 
   if (options.conviction) {
     // NOTE: conviction block bypasses TelegramMessageFactory — no truncation.
-    // Path: formatConvictionBlock() → string concat → splitMessage() → sendTelegramBug()
+    // Path: formatConvictionBlock() → string concat → splitMessage() → sendTelegramMarket()
     const convBlock = formatConvictionBlock(options.conviction, options.convictionRisks ?? []);
     text = `${text}\n\n${convBlock}`;
   }
@@ -548,9 +548,9 @@ export async function notifyTelegramAlert(
   };
   if (options.fetchFn !== undefined) sendOpts.fetchFn = options.fetchFn;
 
-  // Send to BUG channel (report) only, not WORK
-  const messageId = await sendTelegramBug(text, sendOpts);
-  return messageId > 0;
+  // Send to MARKET channel for HIGH/CRITICAL alerts with conviction blocks
+  const sent = await sendTelegramMarket(text, sendOpts);
+  return sent;
 }
 
 /**

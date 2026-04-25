@@ -124,11 +124,11 @@ export interface PostSignalInput {
    */
   validated_at?: string;
   /** Task 1328c — From ChainCatalystFindingData.newsSentiment [-1.0, 1.0] */
-  newsSentiment?: number | null;
+  newsSentiment?: number;
   /** Task 1328c — From ChainCatalystFindingData.kinhDichConfidence [0, 100] */
-  kinhDichConfidence?: number | null;
+  kinhDichConfidence?: number;
   /** Task 1328c — From ChainCatalystFindingData.agentSignalsMajority */
-  agentSignalsMajority?: "BUY" | "SELL" | "NEUTRAL" | null;
+  agentSignalsMajority?: "BUY" | "SELL" | "NEUTRAL";
 }
 
 /**
