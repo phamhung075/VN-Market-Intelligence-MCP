@@ -75,3 +75,64 @@ describe("Task 1329a — CRONS.walCheckpoint default value", () => {
     expect(CRONS.walCheckpoint).toBe("*/30 * * * *");
   });
 });
+
+// ── registerShutdownHook (1329c) ──────────────────────────────────────────────
+
+describe("Task 1329c — registerShutdownHook settle delay", () => {
+  it("waits at least 200ms before process.exit on SIGTERM", async () => {
+    const { registerShutdownHook } = await import("../infrastructure/db/checkpoint.js");
+
+    const exitCalls: number[] = [];
+    const originalExit = process.exit;
+    // @ts-ignore — spy
+    process.exit = (code: number) => { exitCalls.push(code); };
+
+    const sleepTimes: number[] = [];
+    const originalSleep = Bun.sleep;
+    // @ts-ignore — spy
+    Bun.sleep = (ms: number) => { sleepTimes.push(ms); return Promise.resolve(); };
+
+    registerShutdownHook();
+    process.emit("SIGTERM");
+
+    // Allow microtask queue to drain
+    await new Promise(r => setTimeout(r, 10));
+
+    expect(sleepTimes).toContain(200);
+    expect(exitCalls).toContain(0);
+
+    // Restore
+    process.exit = originalExit;
+    // @ts-ignore
+    Bun.sleep = originalSleep;
+  });
+});
+
+// ── backupDatabase ────────────────────────────────────────────────────────────
+
+describe("Task 1329a — backupDatabase", () => {
+  it("does not throw when source path does not exist", async () => {
+    const { backupDatabase } = await import("../infrastructure/db/checkpoint.js");
+    const silentLog = { info: () => {}, error: () => {}, debug: () => {} } as never;
+
+    // Should resolve without throwing (Bun.write of missing/empty src is safe)
+    await expect(
+      backupDatabase("/tmp/nonexistent-1329a-test.db", silentLog),
+    ).resolves.toBeUndefined();
+  });
+
+  it("calls Bun.write with dbPath + '.backup' as destination", async () => {
+    const { backupDatabase } = await import("../infrastructure/db/checkpoint.js");
+    const silentLog = { info: () => {}, error: () => {}, debug: () => {} } as never;
+    const writeSpy = spyOn(Bun, "write").mockImplementation(async () => 0);
+
+    const dbPath = "/tmp/test-1329a.db";
+    await backupDatabase(dbPath, silentLog);
+
+    const firstArg = writeSpy.mock.calls[0]?.[0];
+    // BunFile has a .name property set to the path
+    expect((firstArg as { name?: string }).name).toBe(dbPath + ".backup");
+
+    writeSpy.mockRestore();
+  });
+});
