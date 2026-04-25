@@ -112,17 +112,15 @@ export function getSignalRejectionSummary(
   db: Database,
   hours: number = 24,
 ): Record<string, number> {
-  const cutoff = new Date(Date.now() - hours * 3600000).toISOString();
-
   const rows = db
     .prepare(`
       SELECT from_agent, COUNT(*) as count
       FROM signal_rejections
-      WHERE created_at >= ?
+      WHERE created_at >= datetime('now', '-' || ? || ' hours')
       GROUP BY from_agent
       ORDER BY count DESC
     `)
-    .all(cutoff) as Array<{ from_agent: string; count: number }>;
+    .all(hours) as Array<{ from_agent: string; count: number }>;
 
   const summary: Record<string, number> = {};
   rows.forEach((row) => {
@@ -148,15 +146,13 @@ export function getSignalRejectionDetails(
   from_agent: string,
   hours: number = 24,
 ): SignalRejection[] {
-  const cutoff = new Date(Date.now() - hours * 3600000).toISOString();
-
   return db
     .prepare(`
       SELECT *
       FROM signal_rejections
-      WHERE from_agent = ? AND created_at >= ?
+      WHERE from_agent = ? AND created_at >= datetime('now', '-' || ? || ' hours')
       ORDER BY created_at DESC
       LIMIT 50
     `)
-    .all(from_agent, cutoff) as SignalRejection[];
+    .all(from_agent, hours) as SignalRejection[];
 }
