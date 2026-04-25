@@ -23,7 +23,7 @@ import { normalizeNews } from "../../domain/services/newsNormalizer.js";
 import { isVnRelevant } from "../../domain/services/vnRelevanceFilter.js";
 import { scoreMacroIndicator } from "../../domain/services/macroIndicatorScorer.js";
 import { buildCausalChain } from "../../domain/services/cascadeEngine.js";
-import { detectStocksInText, tickerWholeWordMatch } from "../../domain/services/stockAliases.js";
+import { detectStocksInText, tickerWholeWordMatch, stripSourceAttributionSuffix } from "../../domain/services/stockAliases.js";
 import { generateAlerts } from "../../domain/services/alertGenerator.js";
 import { storeAlerts } from "../../infrastructure/db/alertStore.js";
 import { getDb } from "../../infrastructure/db/schema.js";
@@ -714,7 +714,9 @@ export async function pollNews(options: PollNewsOptions = {}): Promise<PollNewsR
           // This prevents generic macro news from triggering alerts for every stock in every sector.
           const sourceUrl = entry.sourceUrl.toLowerCase();
           const sourceTrusted = highTrustSources.some((s) => sourceUrl.includes(s));
-          const titleAndSummary = `${entry.sourceTitle} ${entry.summary}`.toLowerCase();
+          // FIX-1333: strip " - SOURCE" attribution suffix before ticker matching
+          const strippedTitle = stripSourceAttributionSuffix(entry.sourceTitle);
+          const titleAndSummary = `${strippedTitle} ${entry.summary}`.toLowerCase();
           // FIX-1304: use whole-word boundary match to prevent prefix collisions
           // e.g. "BID" must NOT fire on "Bidiphar" (BID is a leading substring)
           const tickerMatch = tickerWholeWordMatch(titleAndSummary, impact.actionCode);

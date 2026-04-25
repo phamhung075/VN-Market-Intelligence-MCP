@@ -790,3 +790,37 @@ function isAlphanumeric(ch: string): boolean {
 export function tickerWholeWordMatch(text: string, ticker: string): boolean {
   return isWordBoundaryMatch(text, ticker.toLowerCase());
 }
+
+/**
+ * Strip news-source attribution suffix from a headline.
+ *
+ * News aggregators (MSN, Reuters, Bloomberg, etc.) append " - SOURCE" at the
+ * end of syndicated headlines. This suffix is a standalone uppercase token
+ * that collides with VN stock tickers (e.g. "- MSN" fires Masan Group alert).
+ *
+ * Rule: strip trailing " - TOKEN" when TOKEN is either:
+ *   a) A short alpha-only token (2–5 chars, covers most VN/short sources), OR
+ *   b) A known news-source name (covers longer sources like Reuters, Bloomberg)
+ *
+ * Does NOT strip:
+ *   - Generic English words not in the known-sources list ("BUSINESS", "MARKETS")
+ *   - Tokens containing digits (preserves index names like "VN30")
+ *   - " - TOKEN" patterns that appear mid-headline (only last occurrence via $)
+ *
+ * @param headline - raw article title as stored (not yet lowercased)
+ * @returns headline with attribution suffix removed, trimmed
+ */
+const KNOWN_NEWS_SOURCES = /^(Reuters|Bloomberg|AFP|AP|BBC|CNN|CNBC|FT|WSJ|NYT|SCMP|VNExpress|Cafef|Dantri|Vneconomy|Investing|Marketwatch|Kitco|Nasdaq|Barrons)$/i;
+
+export function stripSourceAttributionSuffix(headline: string): string {
+  if (!headline) return headline;
+  const match = headline.match(/ - ([A-Za-z]+)$/);
+  if (!match) return headline;
+  const token: string = match[1] ?? "";
+  if (!token) return headline;
+  // Strip if token is a known source name OR is a short alpha-only code (2-5 chars, no digits)
+  if (KNOWN_NEWS_SOURCES.test(token) || (token.length >= 2 && token.length <= 5)) {
+    return headline.slice(0, headline.length - match[0].length).trimEnd();
+  }
+  return headline;
+}
