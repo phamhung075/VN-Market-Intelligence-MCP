@@ -23,7 +23,7 @@ import { normalizeNews } from "../../domain/services/newsNormalizer.js";
 import { isVnRelevant } from "../../domain/services/vnRelevanceFilter.js";
 import { scoreMacroIndicator } from "../../domain/services/macroIndicatorScorer.js";
 import { buildCausalChain } from "../../domain/services/cascadeEngine.js";
-import { detectStocksInText } from "../../domain/services/stockAliases.js";
+import { detectStocksInText, tickerWholeWordMatch } from "../../domain/services/stockAliases.js";
 import { generateAlerts } from "../../domain/services/alertGenerator.js";
 import { storeAlerts } from "../../infrastructure/db/alertStore.js";
 import { getDb } from "../../infrastructure/db/schema.js";
@@ -715,7 +715,9 @@ export async function pollNews(options: PollNewsOptions = {}): Promise<PollNewsR
           const sourceUrl = entry.sourceUrl.toLowerCase();
           const sourceTrusted = highTrustSources.some((s) => sourceUrl.includes(s));
           const titleAndSummary = `${entry.sourceTitle} ${entry.summary}`.toLowerCase();
-          const tickerMatch = titleAndSummary.includes(impact.actionCode.toLowerCase());
+          // FIX-1304: use whole-word boundary match to prevent prefix collisions
+          // e.g. "BID" must NOT fire on "Bidiphar" (BID is a leading substring)
+          const tickerMatch = tickerWholeWordMatch(titleAndSummary, impact.actionCode);
           const aliasMatch = tickerMatch
             ? false // short-circuit: ticker already matched, skip alias scan
             : detectStocksInText(titleAndSummary, [impact.actionCode]).length > 0;

@@ -768,3 +768,25 @@ function isAlphanumeric(ch: string): boolean {
     (code >= 97 && code <= 122)    // a-z
   );
 }
+
+/**
+ * Whole-word ticker match for direct mentions in article text.
+ *
+ * Returns true only when `ticker` (case-insensitive) appears in `text`
+ * surrounded by non-alphanumeric characters (or string boundaries).
+ *
+ * This prevents prefix collisions such as "BID" matching "Bidiphar":
+ *   tickerWholeWordMatch("bidiphar muốn chào bán", "BID") → false
+ *   tickerWholeWordMatch("cổ phiếu bid tăng mạnh", "BID") → true
+ *
+ * Edge-case safety:
+ *   - Tickers with digits (VN30, HNX30) work because isAlphanumeric covers 0-9.
+ *   - Punctuation boundaries (parentheses, commas, dots) are treated as
+ *     non-alphanumeric, so "(bid)" correctly matches.
+ *
+ * @param text   - lowercased article title + summary
+ * @param ticker - stock code (e.g. "BID", "FPT") — case-insensitive
+ */
+export function tickerWholeWordMatch(text: string, ticker: string): boolean {
+  return isWordBoundaryMatch(text, ticker.toLowerCase());
+}
