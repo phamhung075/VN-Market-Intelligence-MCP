@@ -22,6 +22,7 @@
 - **1328:** Cowork communication overhaul — Done (signal payload fields, conviction scorer, suppression transparency, 3-channel strategy, impact threshold tuning)
 - **fix-1293c:** Signal rejection time-filtering — Done (SQLite datetime() replaces JS ISO cutoff, 3 regression tests restored)
 - **fix-1328e:** notifyTelegramAlert BUG channel routing — Done (coreSend("bug") direct, rebased onto watchdog null-fix, 12/12 pass)
+- **fix-bctc-ocr:** BCTC OCR fallback hardening — Done (fallback disabled by default, null on rejection, contamination reverted, merged 1e366b66)
 
 ---
 
