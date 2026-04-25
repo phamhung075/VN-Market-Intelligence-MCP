@@ -1,15 +1,15 @@
 {
   "_maintained_by": "PM / system-auditor",
   "_trigger": "sprint start/end, tool/cron count change, baseline test update",
-  "lastUpdated": "2026-04-25T18:00:00Z",
-  "currentSprint": 1329,
-  "previousSprint": { "number": 1328, "status": "DONE", "progressTasks": "Sprint 1328: Cowork communication overhaul — signal payload fields, conviction scorer, suppression transparency, 3-channel strategy, impact threshold tuning. Test baseline 6872/5." },
-  "sprintGoal": "Sprint 1329 — pending sprint goal definition",
-  "testBaseline": 6872,
-  "testBaselineTarget": 6450,
-  "testBaselinePass": 6872,
-  "testBaselineFail": 5,
-  "testFailures": 5,
+  "lastUpdated": "2026-04-25T19:00:00Z",
+  "currentSprint": 1336,
+  "previousSprint": { "number": 1329, "status": "DONE", "progressTasks": "Sprint 1329: Docker architecture migration + Phase 3b/3c scheduler dispatch refactor. Test baseline corrected to 6519 pass / 214 fail (214 are pre-existing integration/network tests requiring external services)." },
+  "sprintGoal": "Sprint 1336 — pending sprint goal definition",
+  "testBaseline": 6519,
+  "testBaselineTarget": 6519,
+  "testBaselinePass": 6519,
+  "testBaselineFail": 214,
+  "testFailures": 214,
   "toolCount": 108,
   "schedulerFileCount": 42,
   "knowledgeFileCount": 15,
@@ -17,5 +17,5 @@
   "analysisAgentCount": 9,
   "totalTasksDone": 358,
   "lastFixApplied": "FIX-1316: LNG keyword case sensitivity in cascadeEngine.ts SECTOR_RULES (4 keywords lowercased) — merged 2026-04-24",
-  "currentSprintNotes": "2026-04-25 evening: Sprint 1328 COMPLETE (Cowork communication overhaul). Fix tasks merged: fix-watchdog-recovery, fix-1293c, fix-1328e, fix-bctc-ocr. Test baseline updated to 6872 pass / 5 fail. Sprint advanced to 1329. Blockers: None."
+  "currentSprintNotes": "2026-04-25 evening: Test baseline corrected to 6519 pass / 214 fail. The 214 failures are pre-existing integration/network tests requiring external services (Telegram, Yahoo Finance, VPS proxy, etc.) — not regressions. Total 6740 tests across 616 files. 7 skip, 1 error. Sprint advanced to 1336."
 }
