@@ -24,6 +24,7 @@
 - **fix-1328e:** notifyTelegramAlert BUG channel routing — Done (coreSend("bug") direct, rebased onto watchdog null-fix, 12/12 pass)
 - **fix-bctc-ocr:** BCTC OCR fallback hardening — Done (fallback disabled by default, null on rejection, contamination reverted, merged 1e366b66)
 - **fix-watchdog-recovery:** Null foreign-flow timestamp treated as fresh — Done (3 tests pass, APPROVED, report 2026-04-25)
+- **1329e:** scoreImfMacro() + WEIGHTS rescaling to 7 dimensions — Done (13 new tests pass, WEIGHTS sum=1.0000 exact, merged 5347ee19)
 
 ---
 
