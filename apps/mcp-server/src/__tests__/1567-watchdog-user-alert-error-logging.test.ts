@@ -34,6 +34,7 @@ describe("TASK-1567: watchdog user alert failure logging", () => {
       readPrice: STALE,
       readNews: FRESH,
       readOhlcv: FRESH,
+      readForeignFlow: FRESH,
     });
 
     // Return value should still be "alert-sent" (notifyUser failure is best-effort, silently ignored)
@@ -54,6 +55,7 @@ describe("TASK-1567: watchdog user alert failure logging", () => {
       readPrice: STALE,
       readNews: FRESH,
       readOhlcv: FRESH,
+      readForeignFlow: FRESH,
     });
 
     // Advance past cooldown and set stale to false (recovery)
@@ -70,6 +72,7 @@ describe("TASK-1567: watchdog user alert failure logging", () => {
       readPrice: FRESH,
       readNews: FRESH,
       readOhlcv: FRESH,
+      readForeignFlow: FRESH,
     });
 
     expect(result).toBe("restored");
