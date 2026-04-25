@@ -11,10 +11,10 @@ import { describe, it, expect, mock } from "bun:test";
 // ── 1. Cron schedule assertion ─────────────────────────────────────────────
 
 describe("CRONS.walCheckpoint", () => {
-  it("defaults to every-6h cron pattern '0 */6 * * *'", async () => {
+  it("defaults to every-30min cron pattern '*/30 * * * *'", async () => {
     // Import after env is clean (no override set)
     const { CRONS } = await import("../scheduler/jobs.js");
-    expect(CRONS.walCheckpoint).toBe("0 */6 * * *");
+    expect(CRONS.walCheckpoint).toBe("*/30 * * * *");
   });
 });
 
@@ -41,7 +41,7 @@ describe("runWalCheckpoint", () => {
       },
     };
 
-    runWalCheckpoint(fakeDeps);
+    runWalCheckpoint('FULL', fakeDeps);
 
     // Must NOT use warn for the stuck-WAL case
     expect(warnSpy).not.toHaveBeenCalled();
@@ -71,7 +71,7 @@ describe("runWalCheckpoint", () => {
       },
     };
 
-    runWalCheckpoint(fakeDeps);
+    runWalCheckpoint('FULL', fakeDeps);
 
     expect(errorSpy).not.toHaveBeenCalled();
   });
