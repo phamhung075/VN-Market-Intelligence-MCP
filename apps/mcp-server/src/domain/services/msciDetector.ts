@@ -124,7 +124,17 @@ export function detectMsciWatchlist(
     return { matched: false, keywords: [], context: "", confidence: 0 };
   }
 
-  const keywords = ["danh sách theo dõi msci", "msci watchlist", "xem xét nâng hạng msci"];
+  // Fix-1279: expanded keyword set to catch all WatchList inclusion phrases
+  // "vào watchlist msci" — the exact phrase in the misclassified article
+  // "msci em watchlist" — common English-Vietnamese hybrid form
+  const keywords = [
+    "danh sách theo dõi msci",
+    "msci watchlist",
+    "xem xét nâng hạng msci",
+    "vào watchlist msci",
+    "watchlist msci",
+    "msci em watchlist",
+  ];
   const matchedKeywords: string[] = [];
   const textLower = seedSummary.toLowerCase();
 
