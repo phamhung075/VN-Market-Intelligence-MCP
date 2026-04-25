@@ -72,7 +72,10 @@ export class Tier2VnDirectLegacyFetcher implements PriceFetcherPort {
 // ─── Tier 3: SQLite cache ────────────────────────────────────────────────────
 
 export class Tier3CacheFetcher implements PriceFetcherPort {
-  constructor(private readonly dbPath: string) {}
+  constructor(
+    private readonly dbPath: string,
+    private readonly ownDbPath: string = dbPath,
+  ) {}
 
   async fetchPrice(code: string): Promise<PriceQuote | null> {
     const start = Date.now();
@@ -103,7 +106,10 @@ export class Tier3CacheFetcher implements PriceFetcherPort {
 // ─── SQLite Price History Repository ────────────────────────────────────────
 
 export class SQLitePriceHistoryRepository implements PriceHistoryPort {
-  constructor(private readonly dbPath: string) {}
+  constructor(
+    private readonly dbPath: string,
+    private readonly ownDbPath: string = dbPath,
+  ) {}
 
   async getHistory(code: string, days: number): Promise<DailyOHLCV[]> {
     try {
@@ -142,9 +148,14 @@ export class SQLitePriceHistoryRepository implements PriceHistoryPort {
   async saveQuote(quote: PriceQuote): Promise<void> {
     try {
       const { Database } = await import('bun:sqlite');
-      const db = new Database(this.dbPath, { create: false });
+      // Write to own isolated DB, NOT market.db
+      const db = new Database(this.ownDbPath, { create: true });
       db.run(
-        `INSERT OR IGNORE INTO market_prices (code, price, volume, fetched_at)
+        `CREATE TABLE IF NOT EXISTS market_prices_cache
+         (code TEXT, price REAL, volume REAL, fetched_at TEXT)`,
+      );
+      db.run(
+        `INSERT INTO market_prices_cache (code, price, volume, fetched_at)
          VALUES (?, ?, ?, ?)`,
         [quote.code, quote.price, quote.volume, quote.fetchedAt],
       );

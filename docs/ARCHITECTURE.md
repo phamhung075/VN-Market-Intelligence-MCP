@@ -43,7 +43,12 @@ vn-market-intelligence/         ← pnpm workspace root
 | kinh-dich-service | 5005 | TypeScript/Bun | ✅ Running |
 | alert-engine | 5006 | TypeScript/Bun | ✅ Running |
 
-**Shared:** SQLite database at `data/market.db` (mounted to all services)
+**Database isolation (single-writer):**
+- `market.db` — WRITE: mcp-server only | READ: technical-analysis, macro-indicators, kinh-dich-service (readonly:true)
+- `alert_engine.db` — WRITE: alert-engine only (local alert cache; results POST to mcp-server)
+- `stock_price.db` — WRITE: stock-price Tier3 cache only (results POST to mcp-server /api/push-prices)
+- `pdf_extractor.db` — WRITE: pdf-extractor only (isolated, no sharing)
+- `rag_service.db` — WRITE: rag-service only (isolated, no sharing)
 
 **Restart:** `docker-compose down && docker-compose up -d` (all 9 services restart in lockstep)
 

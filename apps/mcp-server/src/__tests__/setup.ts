@@ -10,3 +10,4 @@
  * invariant at the earliest possible point — before any module import.
  */
 Bun.env["DB_PATH"] = ":memory:";
+Bun.env["STOCK_PRICE_DB_PATH"] = "/tmp/test_stock_price.db";

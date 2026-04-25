@@ -18,7 +18,7 @@ import { createRouter } from './interface/handlers.js';
 
 const config = loadConfig();
 
-const db = new Database(config.dbPath, { create: true });
+const db = new Database(config.ownDbPath, { create: true });
 initAlertTables(db);
 
 const alertRepo = new SQLiteAlertRepository(db);

@@ -104,6 +104,7 @@ services:
     environment:
       - PORT=5003
       - DB_PATH=/app/data/market.db
+      - DB_READONLY=true                     # documentation signal; code opens readonly:true
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:5003/health"]
@@ -124,6 +125,7 @@ services:
     environment:
       - PORT=5004
       - DB_PATH=/app/data/market.db
+      - DB_READONLY=true                     # documentation signal; code opens readonly:true
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:5004/health"]
@@ -143,7 +145,8 @@ services:
       - ./data:/app/data
     environment:
       - PORT=5000
-      - DB_PATH=/app/data/market.db
+      - DB_PATH=/app/data/market.db          # kept: Tier1/2 fallback still reads market for history
+      - STOCK_PRICE_DB_PATH=/app/data/stock_price.db   # write target: isolated from market.db
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:5000/health"]
@@ -189,6 +192,7 @@ services:
     environment:
       - PORT=5005
       - DB_PATH=/app/data/market.db
+      - DB_READONLY=true                     # documentation signal; code opens readonly:true
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:5005/health"]
@@ -208,7 +212,8 @@ services:
       - ./data:/app/data
     environment:
       - PORT=5006
-      - DB_PATH=/app/data/market.db
+      - ALERT_ENGINE_DB_PATH=/app/data/alert_engine.db   # write target: isolated from market.db
+      # DB_PATH removed — alert-engine no longer reads market.db
     env_file:
       - .env
     restart: unless-stopped
