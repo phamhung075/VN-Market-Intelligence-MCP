@@ -30,8 +30,9 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      # Mount data directory for SQLite + LanceDB persistence
-      - ./data:/app/data
+      # Named volume — stays inside Docker VM filesystem (no macOS virtualisation boundary)
+      # Prevents Virtualization.VirtualMachine from holding fd on market.db-shm across stops.
+      - market_data:/app/data
       # Mount config
       - ./mcp.config.json:/app/mcp.config.json:ro
     environment:
@@ -56,7 +57,7 @@ services:
     ports:
       - "5001:5001"
     volumes:
-      - ./data:/app/data
+      - market_data:/app/data
     environment:
       - DB_PATH=/app/data/pdf_extractor.db
       - STORAGE_DIR=/app/data/extractions
@@ -78,7 +79,7 @@ services:
       - "5002:5002"
     volumes:
       # Shared LanceDB + model cache with mcp-server
-      - ./data:/app/data
+      - market_data:/app/data
     environment:
       - LANCEDB_PATH=/app/data/lancedb
       - DB_PATH=/app/data/rag_service.db
@@ -100,7 +101,7 @@ services:
     ports:
       - "5003:5003"
     volumes:
-      - ./data:/app/data
+      - market_data:/app/data
     environment:
       - PORT=5003
       - DB_PATH=/app/data/market.db
@@ -121,7 +122,7 @@ services:
     ports:
       - "5004:5004"
     volumes:
-      - ./data:/app/data
+      - market_data:/app/data
     environment:
       - PORT=5004
       - DB_PATH=/app/data/market.db
@@ -142,7 +143,7 @@ services:
     ports:
       - "5010:5000"
     volumes:
-      - ./data:/app/data
+      - market_data:/app/data
     environment:
       - PORT=5000
       - DB_PATH=/app/data/market.db          # kept: Tier1/2 fallback still reads market for history
@@ -188,7 +189,7 @@ services:
     ports:
       - "5005:5005"
     volumes:
-      - ./data:/app/data
+      - market_data:/app/data
     environment:
       - PORT=5005
       - DB_PATH=/app/data/market.db
@@ -209,7 +210,7 @@ services:
     ports:
       - "5006:5006"
     volumes:
-      - ./data:/app/data
+      - market_data:/app/data
     environment:
       - PORT=5006
       - ALERT_ENGINE_DB_PATH=/app/data/alert_engine.db   # write target: isolated from market.db
@@ -223,3 +224,12 @@ services:
       timeout: 10s
       retries: 3
       start_period: 10s
+
+# ── Named volumes ─────────────────────────────────────────────────────────────
+# market_data: replaces ./data bind-mount to eliminate macOS virtualisation
+# boundary (Virtualization.VirtualMachine fd hold on market.db-shm → torn SHM
+# write → SQLite "malformed disk image" on container crash).
+# Data lives entirely inside the Docker VM filesystem — durable across stops.
+volumes:
+  market_data:
+    driver: local
