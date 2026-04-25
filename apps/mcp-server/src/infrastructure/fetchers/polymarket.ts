@@ -89,36 +89,41 @@ function parseOutcomePrices(v: unknown): { yes: number; no: number } {
 // Default HTTP fetch implementation (real network)
 // ---------------------------------------------------------------------------
 
-/**
- * Default PolyFetchFn using Bun.fetch with a browser User-Agent.
- * Times out after 15 seconds.
- */
-const defaultFetchFn: PolyFetchFn = async (url: string): Promise<string> => {
-  // Sprint 053 / report 1028: route through the polymarket circuit breaker
-  // so consecutive timeouts open the circuit and stop the cycle-overlap
-  // floods. The CB was registered in circuitBreakerRegistry but never
-  // wired into the actual fetch path.
-  return breakers.polymarket.execute(async () => {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15_000);
-    try {
-      const response = await fetch(url, {
-        signal: controller.signal,
-        headers: {
-          "User-Agent":
-            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
-          Accept: "application/json",
-        },
-      });
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status} from ${url}`);
-      }
-      return await response.text();
-    } finally {
-      clearTimeout(timeoutId);
+/** Shared HTTP fetch helper — no circuit breaker wrapping. */
+async function rawFetch(url: string): Promise<string> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 15_000);
+  try {
+    const response = await fetch(url, {
+      signal: controller.signal,
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+        Accept: "application/json",
+      },
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status} from ${url}`);
     }
-  });
-};
+    return await response.text();
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+/**
+ * Default PolyFetchFn — plain rawFetch with no circuit breaker wrapping.
+ * The circuit breaker is applied explicitly around the Gamma step inside
+ * fetchPolymarkets, so CLOB failures (geo-blocked 403) never count against
+ * the polymarket circuit breaker. Task 1337.
+ */
+const defaultFetchFn: PolyFetchFn = (url: string): Promise<string> => rawFetch(url);
+
+/**
+ * Default CLOB PolyFetchFn — same as defaultFetchFn (raw fetch, no CB).
+ * Kept as a separate reference for clarity and independent test injection.
+ */
+const defaultClobFetchFn: PolyFetchFn = (url: string): Promise<string> => rawFetch(url);
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -182,14 +187,25 @@ function isRelevant(market: ClobMarket, config: PredictionMarketsConfig): boolea
  *   5. Merge CLOB + Gamma → PredictionMarket[]
  *   6. Filter to relevant markets only (keyword or curated)
  *
- * @param config   - Prediction markets configuration
- * @param fetchFn  - Injected HTTP function (defaults to real Bun fetch). Override in tests.
- * @returns        - Array of relevant, enriched prediction markets. Never throws.
+ * @param config       - Prediction markets configuration
+ * @param fetchFn      - Injected HTTP function for Gamma (CB-wrapped in production). Override in tests.
+ * @param clobFetchFn  - Optional injected HTTP function for CLOB only.
+ *                       When omitted, falls back to fetchFn so existing single-fetchFn
+ *                       tests continue to work unchanged. In production this defaults to
+ *                       defaultClobFetchFn (raw, no CB). Task 1337.
+ * @returns            - Array of relevant, enriched prediction markets. Never throws.
  */
 export async function fetchPolymarkets(
   config: PredictionMarketsConfig,
   fetchFn: PolyFetchFn = defaultFetchFn,
+  clobFetchFn?: PolyFetchFn,
 ): Promise<PredictionMarket[]> {
+  // Task 1337: resolve clobFetchFn — use explicit override when provided; when
+  // running in production (fetchFn === defaultFetchFn) use the CB-bypassing raw
+  // fetcher; otherwise (test injection) fall back to fetchFn so existing tests
+  // that pass a single mock continue to exercise both CLOB and Gamma paths.
+  const resolvedClobFetch: PolyFetchFn =
+    clobFetchFn ?? (fetchFn === defaultFetchFn ? defaultClobFetchFn : fetchFn);
   const fetchedAt = new Date().toISOString();
 
   // Step 1 — fetch CLOB (best-effort).
@@ -203,7 +219,9 @@ export async function fetchPolymarkets(
   let clobMarkets: ClobMarket[] = [];
   try {
     const clobUrl = `${config.clobApiUrl}/markets?closed=false&limit=${config.maxMarketsPerPoll}`;
-    const raw = await fetchFn(clobUrl);
+    // Task 1337: use resolvedClobFetch (raw fetch, no CB) so a geo-blocked 403
+    // does not increment the polymarket circuit breaker counter.
+    const raw = await resolvedClobFetch(clobUrl);
     const parsed: unknown = JSON.parse(raw);
     const arr = Array.isArray(parsed)
       ? parsed
@@ -227,11 +245,15 @@ export async function fetchPolymarkets(
     await new Promise((resolve) => setTimeout(resolve, config.rateLimitDelayMs));
   }
 
-  // Step 3 — fetch Gamma for enrichment
+  // Step 3 — fetch Gamma for enrichment (CB-protected)
+  // Task 1337: circuit breaker is applied here explicitly around the Gamma call,
+  // not inside the fetch function. This ensures:
+  //   - CLOB 403 failures never count against the CB (clobFetchFn is raw)
+  //   - Gamma is the real source of truth and is correctly CB-guarded
   let gammaMap = new Map<string, GammaMarket>();
   try {
     const gammaUrl = `${config.gammaApiUrl}/markets?closed=false&active=true&limit=${config.maxMarketsPerPoll}`;
-    const raw = await fetchFn(gammaUrl);
+    const raw = await breakers.polymarket.execute(() => fetchFn(gammaUrl));
     const parsed: unknown = JSON.parse(raw);
     // Gamma API may return a bare array or { data: [...] } envelope
     const gammaArr = Array.isArray(parsed)

@@ -204,6 +204,12 @@ export function initMacroTables(db: Database): void {
   try { db.exec(`ALTER TABLE prediction_signals ADD COLUMN outcome_price_change REAL`); } catch {}
 
   // ── Tracked Indicators (Task 1489) ────────────────────────────────────────
+  // Idempotent migration: add hour_bucket to existing production DBs that were
+  // created before the column was introduced. Must run BEFORE the CREATE TABLE
+  // statement so that if the table already exists the column is present when
+  // the UNIQUE constraint and trigger are evaluated at startup.
+  try { db.exec(`ALTER TABLE tracked_indicators ADD COLUMN hour_bucket TEXT`); } catch { /* column already exists */ }
+
   db.exec(`
     CREATE TABLE IF NOT EXISTS tracked_indicators (
       id           INTEGER PRIMARY KEY AUTOINCREMENT,
