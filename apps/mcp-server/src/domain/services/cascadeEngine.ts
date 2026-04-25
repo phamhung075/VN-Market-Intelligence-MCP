@@ -2375,6 +2375,19 @@ function isMarketWide(
     return true;
   }
 
+  // (d) Analyst / CEO bearish market-warning pattern.
+  // "điều chỉnh sâu", "rất sâu và đau", "cảnh báo nhà đầu tư" are analyst-sourced
+  // bearish market warnings that must broadcast regardless of impactScore threshold.
+  // Note: NFD strips combining diacritics but NOT the d-with-stroke (đ, U+0111),
+  // which is a precomposed base character with no Unicode decomposition.
+  // Patterns use đ directly to match the NFD-normalised text.
+  const ANALYST_WARNING_PATTERNS = [
+    "đieu chinh sau",      // điều chỉnh sâu — deep correction
+    "rat sau va đau",      // rất sâu và đau — very deep and painful
+    "canh bao nha đau tu", // cảnh báo nhà đầu tư — investor warning
+  ];
+  if (ANALYST_WARNING_PATTERNS.some((p) => normText.includes(p))) return true;
+
   return false;
 }
 
@@ -3124,9 +3137,25 @@ export function buildCausalChain(
   // Domains already covered by cascade rules (broadcast only extends these)
   const alreadyCoveredDomains = new Set<string>(matchedDomains);
 
+  // Task 1334: analyst-warning articles bypass the impactScore gate — they are
+  // quality signals regardless of their numeric score (e.g. CEO warnings at score 4).
+  // Note: đ (U+0111) survives NFD normalization — use it directly in patterns.
+  const ANALYST_WARNING_PATTERNS_BROADCAST = [
+    "đieu chinh sau",
+    "rat sau va đau",
+    "canh bao nha đau tu",
+  ];
+  const seedNormForBroadcast = seedTextForBroadcast
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "")
+    .toLowerCase();
+  const hasAnalystWarningPattern = ANALYST_WARNING_PATTERNS_BROADCAST.some((p) =>
+    seedNormForBroadcast.includes(p),
+  );
+
   if (
     isMarketWide(seedTextForBroadcast.toLowerCase(), seedEntry.level, seedEntry.impactScore, effectiveBroadcastMin) &&
-    seedEntry.impactScore >= effectiveBroadcastMin
+    (seedEntry.impactScore >= effectiveBroadcastMin || hasAnalystWarningPattern)
   ) {
     // Compute the set of action codes already covered — no double broadcast
     const alreadyCoveredCodes = new Set(
