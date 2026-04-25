@@ -1,5 +1,11 @@
 # Developer Session — 2026-04-25
 
+### Task 1328h: cowork-routing
+- **Files**: `cowork-workspace-team-claude-desktop/01-news-scout.md`, `02-financial-analyst.md`, `04-market-watcher.md`, `05-alert-commander.md`, `06-digest-predict.md`, `07-qa-responder.md`, `unified-agent.md`, `CHANNEL_STRATEGY.md`
+- **Finding**: All 7 cowork agents were missing explicit Telegram Routing sections. Agents 01/02/04/unified had no channel guidance at all; 05 had "Send Decision" but no three-channel routing table; 06/07 had `channel="market"` calls but no routing section documenting the exception rules.
+- **Pattern**: Documentation-only task (no TS changes) — routing tables added as `## Telegram Routing` section in each agent file following the three-channel strategy (WORK=status, BUG=errors, MARKET=user-facing only via Alert Commander + named exceptions).
+- **Status**: Ready for QA
+
 ### Task 1327c: merge-to-main (feature/ddd-phase-0)
 
 - **Files**:
@@ -96,3 +102,9 @@
   - All 8 pre-existing failures confirmed unrelated (BCTC OCR, SSC pipeline, watchdog — deferred in Sprint 1327).
 
 - **Status**: Ready for QA. Commit `4aa160d8`. Branch `task/1328c-db-migration`.
+
+
+### Task: Task 1300b: Memory Update Tools
+- **Finding**: Agents need update_memory tool
+- **Fix**: Implemented append_session_record
+- **Status**: Ready for QA
