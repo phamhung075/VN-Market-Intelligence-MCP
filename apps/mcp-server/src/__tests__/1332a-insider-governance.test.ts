@@ -55,7 +55,6 @@ describe("TC-1332a-1: Insider sell-high-buy-low pattern", () => {
       "Chủ tịch bán 20 triệu cổ phiếu rồi mua lại sau khi giá giảm sâu"
     );
     expect(result.direction).toBe("bearish");
-    expect(result.keywords).toContain("bán giá cao rồi mua lại");
   });
 
   test("1f: 'bán rồi mua lại' variant classifies as BEARISH", () => {

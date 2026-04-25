@@ -239,6 +239,16 @@ const VN_BEARISH: SentimentKeyword[] = [
   { word: "giá khí đốt tăng gây áp lực", weight: 4 },
   { word: "giá xăng tăng gây áp lực", weight: 4 },
   { word: "vật liệu xây dựng tăng giá", weight: 3 },
+  // Task 1332b: Insider governance — sell-high-buy-low pattern
+  // "Chủ tịch bán 88 triệu cổ phiếu giá cao rồi mua lại khi giá giảm"
+  // Governance red flag: insider extracted value at peak, re-entered at lower price.
+  // Weight 4: must beat incidental "mua lại" (bullish +1) + "giảm" (bearish +1) already scored.
+  // Compound phrase longest-first sort suppresses shorter "mua lại" sub-match.
+  { word: "bán giá cao rồi mua lại", weight: 4 },
+  // Weight 3: standalone re-buy-after-drop phrase, confirms sell-high pattern context.
+  { word: "mua lại khi giá giảm", weight: 3 },
+  // Weight 3: "sold then re-bought" without explicit price qualifier — covers headline variants.
+  { word: "bán rồi mua lại", weight: 3 },
 ];
 
 /** English bullish keywords */
