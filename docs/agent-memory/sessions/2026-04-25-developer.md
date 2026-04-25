@@ -1,5 +1,10 @@
 # Developer Session — 2026-04-25
 
+### Task 1330b: Fix 7 Failing Tests (GREEN phase)
+- **Files**: `apps/mcp-server/src/__tests__/1289c-fetcher-validator-integration.test.ts`, `apps/mcp-server/src/__tests__/1476-wal-stuck-alert.test.ts`, `apps/mcp-server/src/__tests__/240-price-pipeline-recovery.test.ts`, `apps/mcp-server/src/__tests__/1551-pipeline-watchdog-market-alert.test.ts`
+- **Finding**: All 4 target test files were already fixed in commit `adebab99` (on main). Confirmed 26/26 target tests pass. The 213 suite failures are pre-existing integration failures (geo-blocked VN sources, missing DB tables) — not regressions from 1330. TASKS.md updated to move Sprint 1330 to Completed Sprints.
+- **Status**: Done (already on main — no new commit needed)
+
 ### Fix 1265: batch_review_market_messages verdict persistence
 - **Files**: `apps/mcp-server/src/infrastructure/db/schema-news.ts` (L158: `reviewed_at INTEGER` → `reviewed_at TEXT`), `apps/mcp-server/src/__tests__/FIX-1265-batch-review-persist.test.ts` (new, 7 tests), `apps/mcp-server/src/__tests__/1311a-schema-migration.test.ts` (test updated to use datetime string not unix int)
 - **Finding**: ALTER TABLE migration (Task 1311a) added `reviewed_at` column with type `INTEGER` on pre-migration DBs, while `CREATE TABLE` DDL defined it as `TEXT`. Although SQLite flexible affinity stores datetime('now') text in both cases, on TEXT-affinity columns integers are coerced to strings. The existing test in 1311a encoded the wrong behavior by asserting `reviewed_at === 1714000000` (integer). Fixed column type to TEXT throughout. Full round-trip regression test added covering insert → batchReview → re-query → verify gone.

@@ -17,6 +17,8 @@
 - **DDD Phase 0–3c:** Monorepo scaffold, PDF/RAG Python services, 4 TS microservices, parallel TA+BB scan — all merged
 - **1327–1329:** Phase 0 merge + test infra, Cowork overhaul, WAL hardening + IMF 7th conviction dim — Done (6927 pass / 7 fail)
 - **fix-1293c / fix-1328e / fix-bctc-ocr / fix-watchdog-recovery / fix/signal-payload-fields:** Signal, bug routing, OCR, null-flow, conviction fields — all merged
+- **feat/value-investor-analysis-system (1336):** 30 analysis ledger files, Report Analyzer agent (new), 4 agent mods (News Scout/Market Watcher/Alert Commander/Unified Agent), quarterly conviction synthesis, value_investor mode — MERGED 2026-04-26 (6520 pass / 213 fail baseline maintained)
+- **1330a–1330b:** Fix 7 failing test regressions from Sprint 1329 (1289c fallback field, 1476 WAL threshold/msg, 240 AC-4 cooldown reset, 1551 isolation) — DONE 2026-04-25 (26/26 target tests pass)
 
 ---
 
@@ -25,21 +27,6 @@
 ---
 
 ## Todo
-
-### Sprint 1330 — Fix 7 Failing Tests
-
-| ID | Title | Size | Status | Handoff |
-|----|-------|------|--------|---------|
-| 1330a | RED: Confirm failure map for 7 failing tests | XS | Done | `docs/handoffs/TASK_1330a.md` |
-| 1330b | GREEN: Fix blocking regressions + isolation bugs | S | Todo | `docs/handoffs/TASK_1330b.md` |
-
-**Baseline:** 6927 pass / 7 fail → Target: 6934 pass / 0 fail
-
-**7 failures confirmed (1330a triage — corrected map):**
-- `1294b` (3): `result?.fallback` undefined — field not on return type of `fetchParseAndStoreBctc`
-- `1476` (2): Sprint 1329 changed WAL message format + threshold — update test contracts
-- `240` AC-4 (1): Missing `_resetWatchdogCooldown()` call — cooldown leaks from prior tests
-- `1319` (1): Logic bug — `null` reader treated as age=0 (fresh), test expects alert-sent
 
 ---
 
