@@ -294,18 +294,34 @@ export async function downloadAndExtractPdf(
 
     return result;
   } catch (err) {
+    // FIX-1267: re-throw CircuitOpenError so callers (fetchParseAndStoreBctc)
+    // can detect the open circuit and log/handle it explicitly instead of
+    // treating it as a silent empty-text result.
     if (err instanceof CircuitOpenError) {
-      logger.debug("[pdf] circuit open — skipping PDF download", { url });
-    } else {
-      // Task 1294b: Re-throw timeout errors so they can be handled by fallback logic
-      if (err instanceof Error && err.name === 'TimeoutError') {
+      throw err;
+    }
+
+    if (err instanceof Error) {
+      const axiosCode = (err as Error & { code?: string }).code;
+
+      // FIX-1267: axios timeout errors carry code='ECONNABORTED' or code='ETIMEDOUT'
+      // (not name='TimeoutError' as previously checked). Re-throw so the circuit
+      // breaker failure is visible to callers and the fallback path can fire.
+      if (axiosCode === "ECONNABORTED" || axiosCode === "ETIMEDOUT") {
         throw err;
       }
-      logger.error("[pdf] failed to download or extract PDF", {
-        url,
-        error: err instanceof Error ? err.message : String(err),
-      });
+
+      // Task 1294b (legacy): keep re-throwing native TimeoutError too, for
+      // environments that use the fetch API instead of axios.
+      if (err.name === "TimeoutError") {
+        throw err;
+      }
     }
+
+    logger.error("[pdf] failed to download or extract PDF", {
+      url,
+      error: err instanceof Error ? err.message : String(err),
+    });
     return { text: "", confidence: 0 };
   }
 }

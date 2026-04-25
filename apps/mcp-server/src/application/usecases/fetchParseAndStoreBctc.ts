@@ -239,8 +239,16 @@ export async function fetchParseAndStoreBctc(
       );
       rawText = extraction.text;
     } catch (err) {
-      // downloadAndExtractPdf normally doesn't throw, but if it does (e.g., in tests),
-      // capture it for later fallback decision
+      if (err instanceof CircuitOpenError) {
+        // FIX-1267: breaker is OPEN — SSC is currently blocked due to sustained
+        // failures. Do not retry. The VPS (vn-bctc-fetch.service) is the
+        // authoritative source; it will push the PDF when SSC is reachable.
+        logger.warn(`${tag} SSC circuit is OPEN — PDF fetch skipped. PDF will be pushed by VPS when SSC recovers.`);
+        return null;
+      }
+      // FIX-1267: timeout errors (ECONNABORTED / ETIMEDOUT) are now re-thrown by
+      // downloadAndExtractPdf so they land here as extractionError, enabling the
+      // news-chain fallback path below.
       extractionError = err instanceof Error ? err : new Error(String(err));
       rawText = "";
     }
