@@ -211,7 +211,8 @@
     "maxAlertsPerStockPerDay": 3,
     "dedupWindowMinutes": 60,
     "groupWindowMinutes": 15,
-    "neverSuppressSeverity": ["critical"]
+    "neverSuppressSeverity": ["critical"],
+    "macroCooldownMinutes": 360
   },
 
   "adaptiveThresholds": {

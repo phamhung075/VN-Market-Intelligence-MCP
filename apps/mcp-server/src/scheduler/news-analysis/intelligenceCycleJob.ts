@@ -838,11 +838,23 @@ async function _runCycle(deps: CycleDeps = {}): Promise<CycleResult> {
       // Apply cooldown: suppress same stock+signal combo within the configured window.
       // Prevents VEA getting 6 alerts in 2 hours for unrelated articles.
       // cooldownMinutes is read from mcp.config.json `alertQuality.cooldownMinutes` (Task 1281).
+      // Task 1276: MACRO alerts use macroCooldownMinutes (default 360 = 6h) — USD/VND and
+      // commodity deviations are persistent conditions that must not fire every 15-min cycle.
       const { shouldSuppressAlert } = await import("../../domain/services/alertCooldown.js");
-      const effectiveCooldownConfig = deps.cooldownConfig ?? {
+      const baseCooldownConfig = deps.cooldownConfig ?? {
         cooldownMinutes: mcpConfig.alertQuality.cooldownMinutes,
         maxAlertsPerStockPerDay: mcpConfig.alertQuality.maxAlertsPerStockPerDay,
       };
+      const macroCooldownMinutes = mcpConfig.alertQuality.macroCooldownMinutes;
+      const macroCooldownConfig = deps.cooldownConfig ?? {
+        cooldownMinutes: macroCooldownMinutes,
+        maxAlertsPerStockPerDay: mcpConfig.alertQuality.maxAlertsPerStockPerDay,
+      };
+
+      // Task 1276: history query window must cover the macro cooldown window (6h + 1h buffer).
+      // Previous 2h window was shorter than the 6h cooldown — MACRO alerts always appeared
+      // "no recent history" and fired every 15-min cycle regardless of the cooldown config.
+      const historyWindowHours = Math.ceil(macroCooldownMinutes / 60) + 1;
       let recentAlertHistory: Array<{ stocks: string; signalTypes: string; triggeredAt: string }> = [];
       if (deps.getRecentAlertHistoryFn) {
         try { recentAlertHistory = await deps.getRecentAlertHistoryFn(); } catch { /* best-effort */ }
@@ -852,8 +864,8 @@ async function _runCycle(deps: CycleDeps = {}): Promise<CycleResult> {
           const db = getCooldownDb();
           const rows = db.prepare(
             `SELECT affected_actions_json, signals_json, triggered_at
-             FROM alerts WHERE triggered_at > datetime('now', '-2 hours')`
-          ).all() as Array<{ affected_actions_json: string; signals_json: string; triggered_at: string }>;
+             FROM alerts WHERE triggered_at > datetime('now', ? || ' hours')`
+          ).all(`-${historyWindowHours}`) as Array<{ affected_actions_json: string; signals_json: string; triggered_at: string }>;
           recentAlertHistory = rows.map((r) => ({
             stocks: r.affected_actions_json ? JSON.parse(r.affected_actions_json)?.[0]?.code ?? "" : "",
             signalTypes: r.signals_json ? JSON.parse(r.signals_json).map((s: { type: string }) => s.type).join(",") : "",
@@ -867,9 +879,9 @@ async function _runCycle(deps: CycleDeps = {}): Promise<CycleResult> {
       // alerts in the same cycle can see siblings that were just sent —
       // prevents the "10 volume_spike alerts in 5 min for FPT/VCB/VNM" burst.
       for (const alert of unnotifiedAlerts) {
-        // Check cooldown — same stock + same signal type within cooldown window → skip.
-        // MACRO alerts are sustained conditions requiring full cooldown enforcement
-        // (no severity-based bypasses). Pass severity unchanged.
+        // Check cooldown — MACRO alerts use the 6h macro cooldown; all others use standard 30-min.
+        const isMacroAlert = alert.actionCode === "MACRO";
+        const effectiveCooldownConfig = isMacroAlert ? macroCooldownConfig : baseCooldownConfig;
         const suppress = shouldSuppressAlert(
           { stocks: [alert.actionCode], signalTypes: alert.signals.map((s) => s.type), severity: alert.severity, actionCode: alert.actionCode },
           recentAlertHistory,

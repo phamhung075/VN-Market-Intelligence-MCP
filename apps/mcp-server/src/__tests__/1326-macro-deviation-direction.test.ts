@@ -33,12 +33,14 @@ describe("classifyDeviation — direction-aware Vietnamese labels", () => {
   });
 
   // TC-3: above-mean high → label contains "cao bất thường"
+  // Task 1270: 50 VND guard raised 10→50. Use stdDev=20, deviation=55 VND
+  // so absolute guard passes (55 > 50) and zScore=2.75 → high.
   it("TC-3: above-mean high → summary contains 'cao bất thường'", () => {
     const result = classifyDeviation({
       name: "usdVndRate",
-      current: 26364,   // zScore = (26364 - 26333) / 12 ≈ +2.58 → high, above
+      current: 26388,   // 55 VND above mean; zScore = 55/20 = 2.75 → high, above
       mean: 26333,
-      stdDev: 12,
+      stdDev: 20,
       sampleCount: 30,
     });
     expect(result.level).toBe("high");
@@ -50,9 +52,9 @@ describe("classifyDeviation — direction-aware Vietnamese labels", () => {
   it("TC-4: below-mean high → summary contains 'thấp bất thường'", () => {
     const result = classifyDeviation({
       name: "usdVndRate",
-      current: 26302,   // zScore = (26302 - 26333) / 12 ≈ -2.58 → high, below
+      current: 26278,   // 55 VND below mean; zScore = -55/20 = -2.75 → high, below
       mean: 26333,
-      stdDev: 12,
+      stdDev: 20,
       sampleCount: 30,
     });
     expect(result.level).toBe("high");
@@ -64,9 +66,9 @@ describe("classifyDeviation — direction-aware Vietnamese labels", () => {
   it("TC-5: above-mean extreme → summary contains 'cực cao'", () => {
     const result = classifyDeviation({
       name: "usdVndRate",
-      current: 26375,   // zScore = (26375 - 26333) / 12 = +3.5 → extreme, above
+      current: 26408,   // 75 VND above mean; zScore = 75/20 = 3.75 → extreme, above
       mean: 26333,
-      stdDev: 12,
+      stdDev: 20,
       sampleCount: 30,
     });
     expect(result.level).toBe("extreme");
@@ -78,9 +80,9 @@ describe("classifyDeviation — direction-aware Vietnamese labels", () => {
   it("TC-6: below-mean extreme → summary contains 'cực thấp'", () => {
     const result = classifyDeviation({
       name: "usdVndRate",
-      current: 26291,   // zScore = (26291 - 26333) / 12 = -3.5 → extreme, below
+      current: 26258,   // 75 VND below mean; zScore = -75/20 = -3.75 → extreme, below
       mean: 26333,
-      stdDev: 12,
+      stdDev: 20,
       sampleCount: 30,
     });
     expect(result.level).toBe("extreme");

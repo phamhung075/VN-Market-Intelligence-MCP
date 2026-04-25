@@ -134,7 +134,9 @@ export function classifyDeviation(stats: MacroStats): MacroDeviation {
   // (e.g., SBV FX rates oscillate ±2-3 VND daily)
   // This prevents false-positive CRITICAL alerts on economically meaningless moves.
   const absDeviation = Math.abs(current - mean);
-  const minAbsDeviation = name.toLowerCase().includes("vnd") ? 10 : 0;
+  // Task 1270: raised from 10 → 50 VND (≈0.2% of 26,100 base).
+  // 50 VND is the minimum economically observable move in the USD/VND SBV fix rate.
+  const minAbsDeviation = name.toLowerCase().includes("vnd") ? 50 : 0;
 
   // If absolute deviation is below the threshold, downgrade level significantly
   // to cap at "elevated" maximum (prevents high/extreme false positives)

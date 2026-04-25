@@ -42,15 +42,17 @@ describe("1269: Macro Direction Label — above/below mean distinction", () => {
   });
 
   // TC-3: High Above
-  // current: 26364, mean: 26333, stdDev: 12
-  // zScore: +2.58 → high, above
+  // Task 1270: 50 VND minimum guard raised from 10→50. Use stdDev=20 so
+  // 55 VND deviation (>50 VND guard) still lands in "high" zone (2.75σ).
+  // current: 26388, mean: 26333, stdDev: 20
+  // deviation: 55 VND (> 50 VND guard), zScore: +2.75 → high, above
   // expected_label: "cao bất thường"
   it("TC-3: high above → summary contains 'cao bất thường'", () => {
     const result = classifyDeviation({
       name: "usdVndRate",
-      current: 26364,
+      current: 26388,
       mean: 26333,
-      stdDev: 12,
+      stdDev: 20,
       sampleCount: 30,
     });
     expect(result.level).toBe("high");
@@ -58,17 +60,16 @@ describe("1269: Macro Direction Label — above/below mean distinction", () => {
     expect(result.summary).toContain("cao bất thường");
   });
 
-  // TC-4: High Below (FAILS without fix)
-  // current: 26302, mean: 26333, stdDev: 12
-  // zScore: -2.58 → high, below
+  // TC-4: High Below (FAILS without direction-label fix)
+  // current: 26278, mean: 26333, stdDev: 20
+  // deviation: -55 VND (> 50 VND guard), zScore: -2.75 → high, below
   // expected_label: "thấp bất thường"
-  // actual_label (BUG): "cao bất thường"
   it("TC-4: high below → summary contains 'thấp bất thường'", () => {
     const result = classifyDeviation({
       name: "usdVndRate",
-      current: 26302,
+      current: 26278,
       mean: 26333,
-      stdDev: 12,
+      stdDev: 20,
       sampleCount: 30,
     });
     expect(result.level).toBe("high");
@@ -77,15 +78,15 @@ describe("1269: Macro Direction Label — above/below mean distinction", () => {
   });
 
   // TC-5: Extreme Above
-  // current: 26375, mean: 26333, stdDev: 12
-  // zScore: +3.5 → extreme, above
+  // current: 26408, mean: 26333, stdDev: 20
+  // deviation: 75 VND (> 50 VND guard), zScore: +3.75 → extreme, above
   // expected_label: "cực cao"
   it("TC-5: extreme above → summary contains 'cực cao'", () => {
     const result = classifyDeviation({
       name: "usdVndRate",
-      current: 26375,
+      current: 26408,
       mean: 26333,
-      stdDev: 12,
+      stdDev: 20,
       sampleCount: 30,
     });
     expect(result.level).toBe("extreme");
@@ -93,17 +94,16 @@ describe("1269: Macro Direction Label — above/below mean distinction", () => {
     expect(result.summary).toContain("cực cao");
   });
 
-  // TC-6: Extreme Below (FAILS without fix)
-  // current: 26291, mean: 26333, stdDev: 12
-  // zScore: -3.5 → extreme, below
+  // TC-6: Extreme Below (FAILS without direction-label fix)
+  // current: 26258, mean: 26333, stdDev: 20
+  // deviation: -75 VND (> 50 VND guard), zScore: -3.75 → extreme, below
   // expected_label: "cực thấp"
-  // actual_label (BUG): "cực cao"
   it("TC-6: extreme below → summary contains 'cực thấp'", () => {
     const result = classifyDeviation({
       name: "usdVndRate",
-      current: 26291,
+      current: 26258,
       mean: 26333,
-      stdDev: 12,
+      stdDev: 20,
       sampleCount: 30,
     });
     expect(result.level).toBe("extreme");

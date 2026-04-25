@@ -28,10 +28,10 @@ describe("Task 1270 — USD/VND minimum absolute deviation guard", () => {
   });
 
   /**
-   * AC-2: Verify that 10 VND absolute deviation DOES trigger HIGH alert
-   * (the minimum threshold should be ~10 VND to avoid false positives)
+   * AC-2: Task 1270 raised the minimum from 10 → 50 VND.
+   * 10 VND (0.038% of 26,334) is a micro-oscillation — must NOT trigger HIGH.
    */
-  it("AC-2: 10 VND deviation should trigger HIGH alert", () => {
+  it("AC-2: 10 VND deviation should NOT trigger HIGH or EXTREME (below 50 VND minimum)", () => {
     const result = classifyDeviation({
       name: "usdVndRate",
       current: 26324,    // 10 VND below mean
@@ -40,8 +40,9 @@ describe("Task 1270 — USD/VND minimum absolute deviation guard", () => {
       sampleCount: 30,
     });
 
-    // 10 VND is meaningful enough to trigger HIGH or EXTREME
-    expect(["high", "extreme"]).toContain(result.level);
+    // 10 VND < 50 VND minimum → capped at elevated
+    expect(result.level).not.toBe("high");
+    expect(result.level).not.toBe("extreme");
   });
 
   /**

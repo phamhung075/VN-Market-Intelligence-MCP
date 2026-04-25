@@ -85,7 +85,9 @@ describe("1307a AC-4 — direction-aware Vietnamese labels", () => {
   });
 
   it("extreme below → summary contains 'cực thấp' not 'cực cao'", () => {
-    const r = classifyDeviation({ name: "usdVndRate", current: 26291, mean: 26333, stdDev: 12, sampleCount: 30 });
+    // 26273 = 60 VND below mean 26333 — above 50 VND guard, so extreme fires
+    // Task 1270: guard raised 10→50 VND; test updated to use deviation >= 50 VND
+    const r = classifyDeviation({ name: "usdVndRate", current: 26273, mean: 26333, stdDev: 12, sampleCount: 30 });
     expect(r.direction).toBe("below");
     expect(r.summary).toContain("cực thấp");
     expect(r.summary).not.toContain("cực cao");

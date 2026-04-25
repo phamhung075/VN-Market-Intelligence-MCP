@@ -214,6 +214,13 @@ export interface AlertQualityConfig {
   groupWindowMinutes: number;
   /** Severity levels that are never suppressed. Default: ["critical"]. */
   neverSuppressSeverity: string[];
+  /**
+   * Cooldown (minutes) specifically for macro_deviation / macro_high_volatility alerts.
+   * SBV FX and commodity rates are persistent conditions — a 6h window prevents
+   * the same macro signal from firing every 15-min cycle. Task 1276.
+   * Default: 360 (6 hours).
+   */
+  macroCooldownMinutes: number;
 }
 
 export interface McpConfig {
@@ -584,6 +591,7 @@ export function loadMcpConfig(): McpConfig {
         dedupWindowMinutes: numVal(aq, "dedupWindowMinutes", 60),
         groupWindowMinutes: numVal(aq, "groupWindowMinutes", 15),
         neverSuppressSeverity: arrVal(aq, "neverSuppressSeverity", ["critical"]),
+        macroCooldownMinutes: numVal(aq, "macroCooldownMinutes", 360),
       } satisfies AlertQualityConfig;
     })(),
     features: (() => {
