@@ -965,6 +965,12 @@ async function _assembleBriefingImpl(
   let topConviction: DailyBriefing["topConviction"] = null;
   try {
     const { computeConviction } = await import("../../domain/services/convictionScorer.js");
+    const { getImfMacroScoreForConviction } = await import("../services/imfConvictionBridge.js");
+
+    // Dimension 7: IMF macro — hoist outside loop (same value for all stocks in briefing)
+    let briefingImfScore: number | undefined;
+    try { briefingImfScore = getImfMacroScoreForConviction(db); } catch { /* best-effort */ }
+
     let bestScore = 0;
 
     for (const stock of watchlistRows) {
@@ -972,6 +978,7 @@ async function _assembleBriefingImpl(
       const result = computeConviction({
         code: stock.code,
         changePct: stock.change_pct,
+        ...(briefingImfScore !== undefined ? { imfMacroScore: briefingImfScore } : {}),
       });
       if (result.score > bestScore && result.level !== "weak") {
         bestScore = result.score;

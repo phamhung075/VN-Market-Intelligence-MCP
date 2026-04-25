@@ -24,7 +24,6 @@
 - **fix-1328e:** notifyTelegramAlert BUG channel routing — Done (coreSend("bug") direct, rebased onto watchdog null-fix, 12/12 pass)
 - **fix-bctc-ocr:** BCTC OCR fallback hardening — Done (fallback disabled by default, null on rejection, contamination reverted, merged 1e366b66)
 - **fix-watchdog-recovery:** Null foreign-flow timestamp treated as fresh — Done (3 tests pass, APPROVED, report 2026-04-25)
-- **1329e:** scoreImfMacro() + WEIGHTS rescaling to 7 dimensions — Done (13 new tests pass, WEIGHTS sum=1.0000 exact, merged 5347ee19)
 
 ---
 
@@ -44,10 +43,10 @@
 | ARCH-1329 | Architecture design | done | Architect | — | — | — | TECH: `docs/TECH_1329.md` + 7 handoffs |
 | 1329a | WAL: checkpoint mode param + 30min cron + nightly backup | Done | QA | — | 1329b,1329c | — | Merged fdd3abf4. 1329c contamination stripped. |
 | 1329b | WAL: size sentinel — 5k warn / 10k critical + disk guard | Done | QA | — | 1329c,1329d | 1329a | Merged 06fa6f89. 10/10 tests pass. WORK channel confirmed. |
-| 1329c | WAL: shutdown 200ms settle before process.exit | Review | Developer | `task/1329b-wal-sentinel` | 1329d | 1329b | Rebase onto 1329b. `checkpoint.ts` only. Merge 3rd. Commit 5c82dace on 1329b branch. |
-| 1329d | IMF: ConvictionInput/Result type extension (7th dim) | todo | Developer | `task/1329b-imf-conviction-dimension` | 1329e | 1329c | Start after WAL batch merges. `convictionScorer.ts` types only. |
-| 1329e | IMF: scoreImfMacro() + WEIGHTS rescale to 7 dims | todo | Developer | `task/1329b-imf-conviction-dimension` | 1329f | 1329d | Updates 2 existing test expected values (R1). |
-| 1329f | IMF: new imfConvictionBridge.ts (application/services) | todo | Developer | `task/1329b-imf-conviction-dimension` | 1329g | 1329e | DB read + classify → sentiment score. Application layer. |
-| 1329g | IMF: wire bridge into scanMarket + assembleBriefing + portfolioTools | todo | Developer | `task/1329b-imf-conviction-dimension` | — | 1329f | Final task in sprint. 3 call-site injections. |
+| 1329c | WAL: shutdown 200ms settle before process.exit | Done | QA | — | 1329d | 1329b | Merged with 1329b batch. |
+| 1329d | IMF: ConvictionInput/Result type extension (7th dim) | Done | QA | — | 1329e | 1329c | Merged with 1329g batch. |
+| 1329e | IMF: scoreImfMacro() + WEIGHTS rescale to 7 dims | Done | QA | — | 1329f | 1329d | Merged with 1329g batch. |
+| 1329f | IMF: new imfConvictionBridge.ts (application/services) | Done | QA | — | 1329g | 1329e | Merged with 1329g batch. |
+| 1329g | IMF: wire bridge into scanMarket + assembleBriefing + portfolioTools | Done | QA | — | — | 1329f | Merged 7388f427. 6905 pass, 0 new fails, tsc 0 errors. |
 
 ---

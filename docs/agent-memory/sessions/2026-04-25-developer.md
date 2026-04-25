@@ -114,6 +114,11 @@
 - **Fix**: Implemented append_session_record
 - **Status**: Ready for QA
 
+### Task 1329b: wal-sentinel
+- **Files**: `apps/mcp-server/src/scheduler/walCheckpointAlert.ts` (two-tier thresholds: 5k WARNING / 10k CRITICAL, replaces 50k single-threshold), `apps/mcp-server/src/infrastructure/db/checkpoint.ts` (added `checkWalFileSize()` — disk size guard, fires WORK alert at >10 MB WARNING / >40 MB CRITICAL), `apps/mcp-server/src/scheduler/jobs.ts` (added `checkWalFileSize` import + call before `runWalCheckpoint`), `apps/mcp-server/src/__tests__/1329b-wal-sentinel.test.ts` (10 new tests)
+- **Finding**: `checkpoint.ts` and `jobs.ts` were already committed on this branch by 1329a/1329c parallel sessions. `checkWalFileSize` was inserted into the same file that 1329a already modified — no conflict. walCheckpointAlert.ts was the only file that needed threshold logic change. Pre-existing failure count: 12 on main, 10 on this branch (improvement). Bun 1.3.11 C++ panic is a known OOM issue unrelated to this task.
+- **Status**: Ready for QA. Commit `255f8898`. Branch `task/1329b-wal-sentinel`.
+
 ### Task 1329a: wal-checkpoint-freq
 - **Files**: `apps/mcp-server/src/infrastructure/db/checkpoint.ts` (mode param + backupDatabase already in HEAD via 1329c parallel commit), `apps/mcp-server/src/scheduler/jobs.ts` (cron default `0 */6` → `*/30`, mode-aware handler with isOffHours logic), `apps/mcp-server/src/__tests__/1329a-wal-hardening.test.ts` (7 new tests), `apps/mcp-server/src/__tests__/1447-checkpoint-restart-mode.test.ts` (updated 5 calls from old single-arg to `runWalCheckpoint('TRUNCATE', deps)`)
 - **Finding**: `checkpoint.ts` and 1329a test file were already committed by the parallel 1329c agent on branch `task/1329b-wal-sentinel`. Task 1329a committed the remaining jobs.ts + 1447 fix in commit `64e6f509`. 8 tests pass, 0 fail. 0 TS errors.
