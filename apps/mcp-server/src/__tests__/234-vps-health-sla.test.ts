@@ -369,28 +369,25 @@ describe("Task 234 — VPS Health & SLA Monitoring", () => {
   // AC-10: circuit breaker wraps HTTP
   // ─────────────────────────────────────────────────────────────────────────────
 
-  it("AC-10: vpsHealthPoller uses circuit breaker for each HTTP call", async () => {
-    // Given: vpsHealthPoller.pollOneService() or pollVpsServiceHealth()
-    // When: HTTP request made to VPS endpoint
-    // Then:
-    //   - circuitBreakerRegistry.getOrCreateBreaker(url) called before fetch
-    //   - breaker.execute(() => fetch(...)) wraps the HTTP call
-    //   - if circuit open, returns healthStatus='unreachable' without calling VPS
-    //   - prevents cascading failures if VPS partially down
+  it("AC-10: vpsServiceHealthJob is fail-open — does NOT reuse polymarket circuit breaker", async () => {
+    // FIX BUG 2: The old code reused breakers.polymarket for VPS health checks,
+    // causing cross-contamination: a polymarket trip would block all 5 VPS health checks.
+    // Health checks must be fail-open — they should always run and record "unreachable"
+    // rather than being silently blocked by an unrelated circuit breaker.
+    //
+    // After the fix: no circuit breaker wraps VPS health checks.
+    // Freshness checks are local DB queries that cannot cascade-fail.
 
-    // Circuit breaker is applied at the scheduler job layer (vpsServiceHealthJob.ts)
-    // which wraps all VPS endpoint fetches. Domain layer is intentionally simple (FetchFn injectable).
-    // Verified in vpsServiceHealthJob.ts where breaker.execute() wraps fetch calls.
-
-    // Check that vpsServiceHealthJob uses circuit breaker
     const fs = await import("fs/promises");
     const path = await import("path");
 
     const jobPath = path.join(import.meta.dir, "../scheduler/system/vpsServiceHealthJob.ts");
     const content = await fs.readFile(jobPath, "utf-8");
 
-    expect(content).toContain("breakers.polymarket");
-    expect(content).toContain("breaker.execute");
+    // Must NOT assign or execute the polymarket breaker for VPS health
+    expect(content).not.toMatch(/=\s*breakers\.polymarket/);
+    // Must NOT import circuitBreakerRegistry (health checks are fail-open)
+    expect(content).not.toContain("circuitBreakerRegistry");
   });
 
   // ─────────────────────────────────────────────────────────────────────────────

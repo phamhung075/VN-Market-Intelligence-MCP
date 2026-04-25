@@ -1,10 +1,16 @@
 /**
- * VPS Service Health Polling Job — Task 234
+ * VPS Service Health Polling Job — Task 234 (fixed)
  *
- * Scheduler layer: polls all 5 VPS services every 5 minutes.
+ * Scheduler layer: checks all 5 VPS services every 5 minutes.
  * Stores results in vps_service_health table with timestamps.
  *
- * Circuit breaker wraps each poll to prevent cascading failures.
+ * FIX BUG 1: Replaced localhost:5001-5005 HTTP health checks with
+ *            data-freshness queries against local SQLite tables.
+ *
+ * FIX BUG 2: Removed reuse of breakers.polymarket for VPS health checks.
+ *            Health checks are fail-open — no circuit breaker is needed.
+ *            A failing health check should record "unreachable", not be
+ *            silently blocked by an unrelated polymarket circuit breaker.
  *
  * DDD Layer: interface/scheduler — may import from domain + infrastructure.
  *
@@ -13,48 +19,30 @@
 
 import type { Database } from "bun:sqlite";
 import {
-  pollVpsServiceHealth,
-  type VpsServiceConfig,
-  DEFAULT_VPS_SERVICES,
+  checkAllVpsServiceFreshness,
+  type FreshnessConfig,
+  DEFAULT_FRESHNESS_CONFIGS,
 } from "../../domain/services/vpsHealthPoller.js";
-import { breakers } from "../../infrastructure/circuitBreakerRegistry.js";
 
 /**
- * Runs VPS health polling and records results to database.
+ * Runs VPS health freshness checks and records results to database.
  *
- * @param db Database instance (injectable for testing)
- * @param services Service configurations (defaults to DEFAULT_VPS_SERVICES)
- * @returns Count of health records inserted
+ * No circuit breaker wraps this — health checks must always run and
+ * record their result (fail-open).  A stuck polymarket breaker must
+ * never block VPS health reporting.
+ *
+ * @param db       Database instance (injectable for testing)
+ * @param configs  Freshness configurations (defaults to DEFAULT_FRESHNESS_CONFIGS)
+ * @returns        Count of health records polled and stored
  */
 export async function runVpsServiceHealthJob(
   db: Database,
-  services: VpsServiceConfig[] = DEFAULT_VPS_SERVICES,
+  configs: FreshnessConfig[] = DEFAULT_FRESHNESS_CONFIGS,
 ): Promise<{ polled: number; stored: number }> {
-  let fetchCount = 0;
+  const nowIso = new Date().toISOString();
 
-  // Injectable fetch function with circuit breaker protection
-  const protectedFetch = async (
-    url: string,
-    options?: { signal?: AbortSignal; timeout?: number }
-  ): Promise<Response> => {
-    // Use a generic circuit breaker for VPS endpoint polling
-    const breaker = breakers.polymarket; // Reuse existing breaker for now
-    fetchCount++;
-
-    return breaker.execute(async () => {
-      const fetchOptions: any = {};
-      if (options?.signal) {
-        fetchOptions.signal = options.signal;
-      }
-      if (options?.timeout) {
-        fetchOptions.timeout = options.timeout;
-      }
-      return fetch(url, fetchOptions);
-    });
-  };
-
-  // Poll all services
-  const results = await pollVpsServiceHealth(protectedFetch, services);
+  // Data-freshness checks — synchronous, no external HTTP calls
+  const results = checkAllVpsServiceFreshness(db, configs, nowIso);
 
   // Insert results into vps_service_health table
   let stored = 0;
@@ -96,7 +84,7 @@ export async function runVpsServiceHealthJob(
 /**
  * Public entry point for cron scheduler.
  *
- * Defaults to production database + default service configs.
+ * Defaults to production database + default freshness configs.
  */
 export async function runVpsHealthPolling(): Promise<void> {
   try {

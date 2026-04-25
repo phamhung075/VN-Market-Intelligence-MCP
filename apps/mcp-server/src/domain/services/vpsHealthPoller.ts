@@ -1,26 +1,24 @@
 /**
- * Domain Service — VPS Health Poller
+ * Domain Service — VPS Health Poller (data-freshness edition)
  *
- * Pure business logic for polling VPS service health.
- * No I/O or infrastructure imports — accepts injectable fetch function.
+ * Pure business logic for measuring VPS service health via data freshness.
+ * The VPS at $VINAHOST_IP pushes data (prices, news, foreign flow, SBV rates)
+ * on fixed schedules but does NOT expose HTTP health endpoints.
  *
- * Task 234: Polls 5 VPS service endpoints and returns health status + metrics.
+ * Health = data freshness: "did the VPS push recently?"
+ *
+ * FIX: Replaced localhost:5001-5005 HTTP health checks (BUG 1) with
+ *      per-service DB freshness queries.  No fetch function is needed.
+ *
+ * Accepts an injectable Database so it remains a pure domain service
+ * (no direct infrastructure imports from domain layer).
  *
  * @module domain/services/vpsHealthPoller
  */
 
-/**
- * Result of polling a single VPS service.
- */
-export interface HealthPollResult {
-  serviceName: ServiceName;
-  healthStatus: HealthStatus;
-  responseTimeMs: number;
-  polledAt: string; // ISO 8601 timestamp
-  errorMessage?: string;
-  lastSuccessfulRun?: string; // ISO 8601 timestamp of last healthy poll
-  uptimeSeconds?: number; // Duration since last successful run
-}
+import type { Database } from "bun:sqlite";
+
+// ─── types ────────────────────────────────────────────────────────────────────
 
 /**
  * VPS service names — exactly 5 services.
@@ -38,161 +36,222 @@ export type ServiceName =
 export type HealthStatus = "healthy" | "unhealthy" | "unreachable";
 
 /**
- * VPS service endpoint configuration.
+ * Result of checking a single VPS service's data freshness.
  */
-export interface VpsServiceConfig {
-  name: ServiceName;
-  url: string;
-  timeoutMs: number;
-  description: string;
+export interface HealthPollResult {
+  serviceName: ServiceName;
+  healthStatus: HealthStatus;
+  /** Always 0 for freshness checks — retained for schema compatibility. */
+  responseTimeMs: number;
+  polledAt: string; // ISO 8601 timestamp
+  errorMessage?: string;
+  lastSuccessfulRun?: string; // ISO 8601 timestamp of last fresh row
+  uptimeSeconds?: number;
 }
 
 /**
- * Timeout threshold (ms) for considering a service "unhealthy".
+ * Configuration for a single VPS service freshness check.
+ *
+ * "passive" services (vn-bctc-fetch) have no reliable DB table to query;
+ * they always return healthy.
  */
-const UNHEALTHY_THRESHOLD_MS = 10000;
+export interface FreshnessConfig {
+  serviceName: ServiceName;
+  description: string;
+  /** SQL that returns { latest_at: string | null } — the most-recent push timestamp. */
+  latestTimestampSql?: string;
+  /** How stale (ms) before the service is considered unhealthy. */
+  maxAgeMs?: number;
+  /** When true, no DB check is performed — always returns "healthy". */
+  passive?: boolean;
+}
+
+// ─── default freshness configs ────────────────────────────────────────────────
 
 /**
- * Default VPS service endpoints.
+ * Data-freshness thresholds per VPS service.
+ *
+ *  vn-price-fetch   — market_prices.updated_at        stale > 5 min
+ *  vn-news-fetch    — market_messages.sent_at          stale > 20 min
+ *  vn-foreign-flow  — vnstock_trading_stats.fetched_at stale > 5 min
+ *  vn-sbv-fetch     — sbv_rates.fetched_at             stale > 35 min
+ *  vn-bctc-fetch    — passive (6 h cadence, no realtime table)
  */
-export const DEFAULT_VPS_SERVICES: VpsServiceConfig[] = [
+export const DEFAULT_FRESHNESS_CONFIGS: FreshnessConfig[] = [
   {
-    name: "vn-price-fetch",
-    url: "http://localhost:5001/health",
-    timeoutMs: 5000,
+    serviceName: "vn-price-fetch",
     description: "Market prices (HOSE/HNX/UPCOM)",
+    latestTimestampSql: `SELECT MAX(updated_at) AS latest_at FROM market_prices`,
+    maxAgeMs: 5 * 60_000, // 5 minutes
   },
   {
-    name: "vn-bctc-fetch",
-    url: "http://localhost:5002/health",
-    timeoutMs: 5000,
-    description: "BCTC financial reports",
-  },
-  {
-    name: "vn-news-fetch",
-    url: "http://localhost:5003/health",
-    timeoutMs: 5000,
+    serviceName: "vn-news-fetch",
     description: "News and events",
+    latestTimestampSql: `SELECT MAX(sent_at) AS latest_at FROM market_messages`,
+    maxAgeMs: 20 * 60_000, // 20 minutes
   },
   {
-    name: "vn-sbv-fetch",
-    url: "http://localhost:5004/health",
-    timeoutMs: 5000,
-    description: "SBV FX rates",
-  },
-  {
-    name: "vn-foreign-flow",
-    url: "http://localhost:5005/health",
-    timeoutMs: 5000,
+    serviceName: "vn-foreign-flow",
     description: "Foreign buy/sell flows",
+    latestTimestampSql: `SELECT MAX(fetched_at) AS latest_at FROM vnstock_trading_stats`,
+    maxAgeMs: 5 * 60_000, // 5 minutes
+  },
+  {
+    serviceName: "vn-sbv-fetch",
+    description: "SBV FX rates",
+    latestTimestampSql: `SELECT MAX(fetched_at) AS latest_at FROM sbv_rates`,
+    maxAgeMs: 35 * 60_000, // 35 minutes
+  },
+  {
+    serviceName: "vn-bctc-fetch",
+    description: "BCTC financial reports (passive — 6 h cadence)",
+    passive: true,
   },
 ];
 
-/**
- * Type for injectable fetch function.
- *
- * Must support abort signal for timeouts.
- */
-export type FetchFn = (
-  url: string,
-  options?: { signal?: AbortSignal; timeout?: number }
-) => Promise<Response>;
+// ─── core check ───────────────────────────────────────────────────────────────
 
 /**
- * Polls a single VPS service.
+ * Checks data freshness for a single VPS service.
  *
- * @param config Service configuration
- * @param fetchFn Fetch function (injectable for testing)
- * @returns HealthPollResult with status + timing
+ * Pure function — no side effects beyond a single read-only DB query.
+ * Never throws; returns "unreachable" on DB errors (fail-open).
+ *
+ * @param db       Injected database (domain service never imports infra directly)
+ * @param config   Freshness configuration for this service
+ * @param nowIso   Current time as ISO string (injectable for deterministic tests)
+ * @returns        HealthPollResult with freshness-based status
  */
-export async function pollOneService(
-  config: VpsServiceConfig,
-  fetchFn: FetchFn,
-): Promise<HealthPollResult> {
-  const startMs = Date.now();
-  const polledAt = new Date().toISOString();
+export function checkServiceFreshness(
+  db: Database,
+  config: FreshnessConfig,
+  nowIso: string,
+): HealthPollResult {
+  const polledAt = nowIso;
 
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), config.timeoutMs);
-
-    let response: Response;
-    try {
-      response = await fetchFn(config.url, {
-        signal: controller.signal,
-      });
-    } finally {
-      clearTimeout(timeoutId);
-    }
-
-    const responseTimeMs = Date.now() - startMs;
-
-    if (!response.ok) {
-      return {
-        serviceName: config.name,
-        healthStatus: "unhealthy",
-        responseTimeMs,
-        polledAt,
-        errorMessage: `HTTP ${response.status}`,
-      };
-    }
-
-    // Check response time threshold
-    if (responseTimeMs > UNHEALTHY_THRESHOLD_MS) {
-      return {
-        serviceName: config.name,
-        healthStatus: "unhealthy",
-        responseTimeMs,
-        polledAt,
-        errorMessage: `Response time ${responseTimeMs}ms exceeds threshold ${UNHEALTHY_THRESHOLD_MS}ms`,
-      };
-    }
-
+  // Passive services — always healthy, no DB query needed
+  if (config.passive) {
     return {
-      serviceName: config.name,
+      serviceName: config.serviceName,
       healthStatus: "healthy",
-      responseTimeMs,
+      responseTimeMs: 0,
       polledAt,
     };
-  } catch (err) {
-    const responseTimeMs = Date.now() - startMs;
-    const isTimeout =
-      err instanceof Error && err.name === "AbortError";
-    const isNetworkError =
-      err instanceof Error &&
-      (err.message.includes("ECONNREFUSED") ||
-        err.message.includes("ENOTFOUND") ||
-        err.message.includes("Network"));
+  }
+
+  try {
+    const row = db
+      .query<{ latest_at: string | null }, []>(config.latestTimestampSql!)
+      .get();
+
+    if (!row || row.latest_at === null) {
+      return {
+        serviceName: config.serviceName,
+        healthStatus: "unreachable",
+        responseTimeMs: 0,
+        polledAt,
+        errorMessage: "No data rows found — VPS has not pushed yet",
+      };
+    }
+
+    const latestMs = new Date(row.latest_at).getTime();
+    const nowMs = new Date(nowIso).getTime();
+    const ageMs = nowMs - latestMs;
+
+    if (ageMs > config.maxAgeMs!) {
+      const ageSec = Math.round(ageMs / 1000);
+      const thresholdSec = Math.round(config.maxAgeMs! / 1000);
+      return {
+        serviceName: config.serviceName,
+        healthStatus: "unhealthy",
+        responseTimeMs: 0,
+        polledAt,
+        lastSuccessfulRun: row.latest_at,
+        uptimeSeconds: ageSec,
+        errorMessage: `Data stale: last push ${ageSec}s ago (threshold ${thresholdSec}s)`,
+      };
+    }
 
     return {
-      serviceName: config.name,
-      healthStatus: "unreachable",
-      responseTimeMs,
+      serviceName: config.serviceName,
+      healthStatus: "healthy",
+      responseTimeMs: 0,
       polledAt,
-      errorMessage: isTimeout
-        ? `Timeout (>${config.timeoutMs}ms)`
-        : isNetworkError
-          ? "Network unreachable"
-          : err instanceof Error
-            ? err.message
-            : "Unknown error",
+      lastSuccessfulRun: row.latest_at,
+    };
+  } catch (err) {
+    return {
+      serviceName: config.serviceName,
+      healthStatus: "unreachable",
+      responseTimeMs: 0,
+      polledAt,
+      errorMessage:
+        err instanceof Error ? err.message : "Unknown DB error",
     };
   }
 }
 
+// ─── all-services runner ──────────────────────────────────────────────────────
+
 /**
- * Polls all 5 VPS services in parallel.
+ * Checks all 5 VPS services using data-freshness queries.
  *
- * @param services Service configurations (defaults to DEFAULT_VPS_SERVICES)
- * @param fetchFn Fetch function (injectable for testing)
- * @returns Array of 5 HealthPollResult objects (one per service)
+ * Never throws — returns partial results even if individual checks fail.
  *
- * Never throws — returns partial results even if some polls fail.
+ * @param db       Injected database
+ * @param configs  Freshness configurations (defaults to DEFAULT_FRESHNESS_CONFIGS)
+ * @param nowIso   Current time as ISO string (defaults to Date.now())
+ * @returns        Array of 5 HealthPollResult objects
+ */
+export function checkAllVpsServiceFreshness(
+  db: Database,
+  configs: FreshnessConfig[] = DEFAULT_FRESHNESS_CONFIGS,
+  nowIso: string = new Date().toISOString(),
+): HealthPollResult[] {
+  return configs.map((cfg) => checkServiceFreshness(db, cfg, nowIso));
+}
+
+// ─── legacy compatibility exports ─────────────────────────────────────────────
+// These retain the old names so any other callers still compile.
+
+/**
+ * @deprecated FetchFn was used by the old HTTP-polling design.
+ * Kept as a type alias for backward compatibility with existing tests.
+ */
+export type FetchFn = (
+  url: string,
+  options?: { signal?: AbortSignal; timeout?: number },
+) => Promise<Response>;
+
+/**
+ * @deprecated Use FreshnessConfig instead.
+ */
+export type VpsServiceConfig = FreshnessConfig;
+
+/**
+ * @deprecated Use DEFAULT_FRESHNESS_CONFIGS instead.
+ * Kept to avoid breaking existing imports until callers are migrated.
+ */
+export const DEFAULT_VPS_SERVICES: FreshnessConfig[] = DEFAULT_FRESHNESS_CONFIGS;
+
+/**
+ * @deprecated Use checkAllVpsServiceFreshness instead.
+ * Stub that delegates to the freshness-based runner.
  */
 export async function pollVpsServiceHealth(
-  fetchFn: FetchFn,
-  services: VpsServiceConfig[] = DEFAULT_VPS_SERVICES,
+  _fetchFn: unknown,
+  configs: FreshnessConfig[] = DEFAULT_FRESHNESS_CONFIGS,
+  db?: Database,
 ): Promise<HealthPollResult[]> {
-  const polls = services.map((svc) => pollOneService(svc, fetchFn));
-  return Promise.all(polls);
+  if (!db) {
+    // If no db provided return unreachable for all — can't do freshness without DB
+    return configs.map((cfg) => ({
+      serviceName: cfg.serviceName,
+      healthStatus: "unreachable" as HealthStatus,
+      responseTimeMs: 0,
+      polledAt: new Date().toISOString(),
+      errorMessage: "No database provided to legacy pollVpsServiceHealth",
+    }));
+  }
+  return checkAllVpsServiceFreshness(db, configs);
 }
