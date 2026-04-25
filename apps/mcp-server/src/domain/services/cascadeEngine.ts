@@ -2293,6 +2293,91 @@ export const SECTOR_RULES: SectorRule[] = [
     confidence: 0.62,
     title: "Nhà đầu tư cá nhân mua ròng — thanh khoản tăng hỗ trợ hoạt động ngân hàng (retail_netbuy_banking)",
   },
+  // ── FR-1: VPBankS/OKX → VPB (parent) + TCB (peer) BULLISH (Sprint 1335) ──
+  // Must come BEFORE FR-3 — first-match-wins. vpbanks+okx article hits FR-1 first.
+  {
+    keywords: [
+      "vpbanks",
+      "vp bank securities",
+      "vpbank securities",
+      "tăng vốn vpbanks",
+      "vpbanks tăng vốn",
+      "vpbanks.*okx",
+      "okx.*vpbanks",
+    ],
+    domain: "banking",
+    direction: "up",
+    confidence: 0.88,
+    requireAnyKeyword: [
+      "tăng vốn",
+      "vốn",
+      "hợp tác",
+      "partnership",
+      "okx",
+      "crypto",
+      "digital asset",
+      "tài sản số",
+    ],
+    title:
+      "VPBankS tăng vốn/hợp tác OKX — VPB (công ty mẹ) và TCB (chiến lược tương đồng) hưởng lợi trực tiếp",
+    affected_actions: [
+      { code: "VPB", direction: "up" },
+      { code: "TCB", direction: "up" },
+    ],
+  },
+  // ── FR-3: banking NEUTRAL for crypto/digital-asset headlines (Sprint 1335) ──
+  // Comes AFTER FR-1 — pure okx-only/generic crypto articles land here (no vpbanks keyword).
+  {
+    keywords: [
+      "okx",
+      "crypto custody",
+      "lưu ký tài sản số",
+      "tài sản số vietnam",
+      "sàn tiền mã hóa",
+    ],
+    domain: "banking",
+    direction: "neutral",
+    confidence: 0.65,
+    title:
+      "Crypto partnership/lưu ký tài sản số — ngân hàng truyền thống không có chiến lược digital-asset: tác động trung lập",
+  },
+  // ── FR-2: crypto/digital-asset custody → securities brokers BULLISH (Sprint 1335) ──
+  {
+    keywords: [
+      "okx",
+      "crypto custody",
+      "lưu ký tài sản số",
+      "tài sản số",
+      "digital asset vietnam",
+      "tiền mã hóa hợp pháp",
+      "crypto hợp pháp",
+      "sàn tiền mã hóa",
+      "hợp tác crypto",
+      "crypto partnership",
+      "tài sản kỹ thuật số",
+      "lưu ký crypto",
+    ],
+    domain: "securities",
+    direction: "up",
+    confidence: 0.72,
+    requireAnyKeyword: [
+      "chứng khoán",
+      "securities",
+      "vpbanks",
+      "môi giới",
+      "broker",
+      "lưu ký",
+      "custody",
+    ],
+    title:
+      "Hợp tác crypto/lưu ký tài sản số — tín hiệu cạnh tranh/cơ hội mới cho CTCK (SSI/VCI/VIX/VND)",
+    affected_actions: [
+      { code: "SSI", direction: "up" },
+      { code: "VCI", direction: "up" },
+      { code: "VIX", direction: "up" },
+      { code: "VND", direction: "up" },
+    ],
+  },
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════
