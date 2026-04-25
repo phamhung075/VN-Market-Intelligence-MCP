@@ -58,15 +58,76 @@ Read before first cycle:
 | `legal_risk` | CRITICAL, send now |
 | `crisis_velocity` | Evaluate urgency |
 
-### Step 4: Send Decision
+### Step 4: Route Decision to Appropriate Channel
 
-**CRITICAL / legal / crisis**: SEND NOW
+Signals flow to different destinations based on conviction + rules:
 
-**position-danger (3-AND) / watchlist-opportunity (4-AND)**: SEND NOW
+#### 4a: MARKET Channel (User-Facing Alerts)
 
-**Verified chain (conviction ≥0.6)**: SEND NOW
+**When to send:** CRITICAL / legal / crisis → SEND NOW. position-danger (3-AND) / watchlist-opportunity (4-AND) → SEND NOW. Verified chain (conviction ≥0.6) → SEND NOW.
 
 **Pre-send validation**: cross-check price from `get_market_snapshot()` — divergence >5% = discard + re-fetch. Max 2 attempts.
+
+Format: 5-section narrative (complete sentences, no truncation). Load `.claude/knowledge/alert-message-format.md` for full template.
+
+```
+{EMOJI} {CODE} — {ACTION} [{CONVICTION}% xác tín]
+
+WHY?
+{Catalyst description, 1-2 sentences}
+Tin tức: {News headline or source}
+
+CONFIRMS? {N}/{TOTAL} tín hiệu:
+• Giá: {conviction}% — {Full explanation why}
+• Khối lượng: {conviction}% — {Full explanation why}
+• Tin tức: {conviction}% — {Full explanation why}
+• Vĩ mô: {conviction}% — {Full explanation why}
+• Ngành: {conviction}% — {Full explanation why}
+• Kinh Dịch: {conviction}% — {Full explanation why}
+
+KINH DỊCH:
+{Hex name} — {Meaning in Vietnamese}
+Thời gian: {Days to reversal} ngày
+Quẻ kế: {Next hexagram}
+
+NEXT?
+{Reassessment trigger in complete sentence}
+Thời gian: {Days} ngày
+
+RISK:
+• {Full risk statement 1 in complete sentence}
+• {Full risk statement 2 in complete sentence}
+• {Full risk statement 3 in complete sentence}
+
+POSITION:
+{Position impact or action recommendation in complete sentence}
+```
+
+`send_telegram(channel="market", message=...)`
+
+#### 4b: WORK Channel (Agent Activity Log)
+
+Every cycle, report status:
+```
+[Alert Commander] {HH:MM} UTC — {N} signals reviewed
+  Fired: {X} alerts ({conviction}% conviction min)
+  Suppressed: {Y} (conviction low / duplicate / insufficient conditions)
+  Next: {NEXT_RUN_TIME}
+```
+
+`send_telegram(channel="work", message=...)`
+
+#### 4c: BUG Channel (Errors Only)
+
+If error occurs, report immediately:
+```
+[Alert Commander] ⚠️ {SEVERITY}
+  Issue: {Error description}
+  Impact: {Which signals blocked}
+  Status: {Retrying / Blocking}
+```
+
+`send_telegram(channel="bug", message=...)`
 
 ### Step 5: Session Log
 
@@ -77,6 +138,18 @@ Append to `docs/agent-memory/sessions/YYYY-MM-DD-alert-commander.md`:
 - **Alerts fired**: N
 - **MARKET messages**: M
 ```
+
+---
+
+## Telegram Routing
+
+| Content Type | Channel | Notes |
+|---|---|---|
+| User-facing market alerts (position-danger, watchlist-opportunity, crisis, legal) | `market` | EXCLUSIVE sender for main alerts. Full 5-section narrative, Vietnamese, no truncation. |
+| Cycle status (signals reviewed, fired, suppressed) | `work` | Every cycle, caveman ultra mode |
+| Errors, validation failures, retry exhaustion | `bug` | Immediately on detection |
+
+**Exclusivity rule**: Alert Commander is the ONLY cowork agent that sends main alerts to `market`. QA Responder (/ask answers) and Digest & Predict (briefings) are the only two exceptions.
 
 ---
 
