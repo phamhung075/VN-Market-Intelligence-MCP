@@ -1,5 +1,10 @@
 # Developer Session — 2026-04-25
 
+### Task 1329c: wal-shutdown-settle
+- **Files**: `apps/mcp-server/src/infrastructure/db/checkpoint.ts` (L113: shutdown callback `async`, L120: `await Bun.sleep(200)` added), `apps/mcp-server/src/__tests__/1329a-wal-hardening.test.ts` (1329c describe block appended)
+- **Finding**: Parallel task 1329a had already replaced the test file with its own content when the 1329c session ran. Appended 1329c's describe block to the shared file rather than overwriting. Commit landed on `task/1329b-wal-sentinel` (parallel branch active) — PM should note for rebase sequence.
+- **Status**: Ready for QA. Commit `5c82dace`. Branch `task/1329b-wal-sentinel`.
+
 ### Task 1328h: cowork-routing
 - **Files**: `cowork-workspace-team-claude-desktop/01-news-scout.md`, `02-financial-analyst.md`, `04-market-watcher.md`, `05-alert-commander.md`, `06-digest-predict.md`, `07-qa-responder.md`, `unified-agent.md`, `CHANNEL_STRATEGY.md`
 - **Finding**: All 7 cowork agents were missing explicit Telegram Routing sections. Agents 01/02/04/unified had no channel guidance at all; 05 had "Send Decision" but no three-channel routing table; 06/07 had `channel="market"` calls but no routing section documenting the exception rules.
@@ -108,3 +113,8 @@
 - **Finding**: Agents need update_memory tool
 - **Fix**: Implemented append_session_record
 - **Status**: Ready for QA
+
+### Task 1329a: wal-checkpoint-freq
+- **Files**: `apps/mcp-server/src/infrastructure/db/checkpoint.ts` (mode param + backupDatabase already in HEAD via 1329c parallel commit), `apps/mcp-server/src/scheduler/jobs.ts` (cron default `0 */6` → `*/30`, mode-aware handler with isOffHours logic), `apps/mcp-server/src/__tests__/1329a-wal-hardening.test.ts` (7 new tests), `apps/mcp-server/src/__tests__/1447-checkpoint-restart-mode.test.ts` (updated 5 calls from old single-arg to `runWalCheckpoint('TRUNCATE', deps)`)
+- **Finding**: `checkpoint.ts` and 1329a test file were already committed by the parallel 1329c agent on branch `task/1329b-wal-sentinel`. Task 1329a committed the remaining jobs.ts + 1447 fix in commit `64e6f509`. 8 tests pass, 0 fail. 0 TS errors.
+- **Status**: Ready for QA. Commit `64e6f509`. Branch `task/1329b-wal-sentinel`.
