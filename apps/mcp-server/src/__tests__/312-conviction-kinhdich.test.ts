@@ -21,37 +21,38 @@ import {
 describe("Task 304 — Conviction scorer 6th dimension (kinhDich at 15%)", () => {
   // ─── Weight invariant ───────────────────────────────────────────────────────
 
-  it("WEIGHTS sums to exactly 1.0 across all 6 dimensions", () => {
+  // Updated for Task 1329e: 7th dimension (imfMacro) added, all 6 weights rescaled × 0.90
+  it("WEIGHTS sums to exactly 1.0 across all 7 dimensions", () => {
     const sum = Object.values(WEIGHTS).reduce((s, v) => s + v, 0);
     expect(sum).toBeCloseTo(1.0, 10);
   });
 
-  it("WEIGHTS has exactly 6 keys", () => {
-    expect(Object.keys(WEIGHTS).length).toBe(6);
+  it("WEIGHTS has exactly 7 keys", () => {
+    expect(Object.keys(WEIGHTS).length).toBe(7);
   });
 
-  it("WEIGHTS.kinhDich is 0.15", () => {
-    expect(WEIGHTS.kinhDich).toBe(0.15);
+  it("WEIGHTS.kinhDich is 0.1350 (was 0.15, rescaled × 0.90 for Task 1329e)", () => {
+    expect(WEIGHTS.kinhDich).toBeCloseTo(0.1350, 10);
   });
 
-  it("WEIGHTS.priceAction is 0.2550", () => {
-    expect(WEIGHTS.priceAction).toBeCloseTo(0.2550, 10);
+  it("WEIGHTS.priceAction is 0.2293 (was 0.2550, rescaled × 0.90, adjusted for exact sum)", () => {
+    expect(WEIGHTS.priceAction).toBeCloseTo(0.2293, 10);
   });
 
-  it("WEIGHTS.volumeConfirmation is 0.2125", () => {
-    expect(WEIGHTS.volumeConfirmation).toBeCloseTo(0.2125, 10);
+  it("WEIGHTS.volumeConfirmation is 0.1913 (was 0.2125, rescaled × 0.90)", () => {
+    expect(WEIGHTS.volumeConfirmation).toBeCloseTo(0.1913, 10);
   });
 
-  it("WEIGHTS.sentiment is 0.1275", () => {
-    expect(WEIGHTS.sentiment).toBeCloseTo(0.1275, 10);
+  it("WEIGHTS.sentiment is 0.1148 (was 0.1275, rescaled × 0.90)", () => {
+    expect(WEIGHTS.sentiment).toBeCloseTo(0.1148, 10);
   });
 
-  it("WEIGHTS.cascade is 0.1275", () => {
-    expect(WEIGHTS.cascade).toBeCloseTo(0.1275, 10);
+  it("WEIGHTS.cascade is 0.1148 (was 0.1275, rescaled × 0.90)", () => {
+    expect(WEIGHTS.cascade).toBeCloseTo(0.1148, 10);
   });
 
-  it("WEIGHTS.sectorAlignment is 0.1275", () => {
-    expect(WEIGHTS.sectorAlignment).toBeCloseTo(0.1275, 10);
+  it("WEIGHTS.sectorAlignment is 0.1148 (was 0.1275, rescaled × 0.90)", () => {
+    expect(WEIGHTS.sectorAlignment).toBeCloseTo(0.1148, 10);
   });
 
   // ─── scoreKinhDich helper ───────────────────────────────────────────────────

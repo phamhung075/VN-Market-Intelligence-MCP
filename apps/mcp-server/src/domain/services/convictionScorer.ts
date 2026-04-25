@@ -128,14 +128,26 @@ export interface ConvictionResult {
  *   sectorAlignment:    0.15 x 0.85 = 0.1275
  *   kinhDich:           0.15 (fixed)
  *   Sum:                              1.0000
+ *
+ * Task 1329: 7th dimension (imfMacro) added at 0.10.
+ * Previous 6 weights each scaled by 0.90 proportionally:
+ *   priceAction:        0.2550 x 0.90 = 0.2295 → 0.2293 (adjusted for exact sum)
+ *   volumeConfirmation: 0.2125 x 0.90 = 0.19125 → 0.1913
+ *   sentiment:          0.1275 x 0.90 = 0.11475 → 0.1148
+ *   cascade:            0.1275 x 0.90 = 0.11475 → 0.1148
+ *   sectorAlignment:    0.1275 x 0.90 = 0.11475 → 0.1148
+ *   kinhDich:           0.1500 x 0.90 = 0.1350
+ *   imfMacro:           0.1000 (new)
+ *   Sum: 0.2293+0.1913+0.1148+0.1148+0.1148+0.1350+0.1000 = 1.0000
  */
 export const WEIGHTS = {
-  priceAction: 0.2550,
-  volumeConfirmation: 0.2125,
-  sentiment: 0.1275,
-  cascade: 0.1275,
-  sectorAlignment: 0.1275,
-  kinhDich: 0.1500,
+  priceAction:        0.2293,
+  volumeConfirmation: 0.1913,
+  sentiment:          0.1148,
+  cascade:            0.1148,
+  sectorAlignment:    0.1148,
+  kinhDich:           0.1350,
+  imfMacro:           0.1000,
 } as const;
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -237,6 +249,17 @@ function scoreSectorAlignment(
  * Formula: 0.5 + score * 0.5, clamped to [0, 1].
  */
 export function scoreKinhDich(score: number | undefined): number {
+  if (score == null) return 0.5;
+  return Math.max(0, Math.min(1, 0.5 + score * 0.5));
+}
+
+/**
+ * Maps an imfMacroScore [-1, +1] to a dimension score [0, 1].
+ * undefined/null -> 0.5 (neutral — no fresh IMF data available).
+ * Formula: 0.5 + score * 0.5, clamped to [0, 1].
+ * Same formula as scoreKinhDich (Task 304) — consistent scoring convention.
+ */
+export function scoreImfMacro(score: number | undefined): number {
   if (score == null) return 0.5;
   return Math.max(0, Math.min(1, 0.5 + score * 0.5));
 }
@@ -374,17 +397,18 @@ export function computeConviction(input: ConvictionInput): ConvictionResult {
   // Dimension 6: Kinh Dich hexagram (Task 304)
   const kd = scoreKinhDich(enriched.kinhDichScore);
 
-  // Dimension 7: IMF macro (Task 1329) — neutral until 1329e wires in scoring
-  const imfMacro = scoreKinhDich(enriched.imfMacroScore);
+  // Dimension 7: IMF macro (Task 1329)
+  const imf = scoreImfMacro(enriched.imfMacroScore);
 
-  // Weighted average (6 dimensions summing to 1.0 — 1329e will add imfMacro weight)
+  // Weighted average (7 dimensions summing to 1.0)
   const score = Math.round((
     price.score * WEIGHTS.priceAction +
-    vol * WEIGHTS.volumeConfirmation +
-    sent * WEIGHTS.sentiment +
-    casc * WEIGHTS.cascade +
-    sect * WEIGHTS.sectorAlignment +
-    kd * WEIGHTS.kinhDich
+    vol        * WEIGHTS.volumeConfirmation +
+    sent       * WEIGHTS.sentiment +
+    casc       * WEIGHTS.cascade +
+    sect       * WEIGHTS.sectorAlignment +
+    kd         * WEIGHTS.kinhDich +
+    imf        * WEIGHTS.imfMacro
   ) * 100) / 100;
 
   // Classification
@@ -397,7 +421,7 @@ export function computeConviction(input: ConvictionInput): ConvictionResult {
   // Overall direction (from price — "gia phan anh tat ca")
   const direction = priceDirection;
 
-  // Vietnamese summary - count signals > 0.6 across all 6 dimensions
+  // Vietnamese summary - count signals > 0.6 across all 7 dimensions
   const levelVi = LEVEL_VI[level];
   const dirVi = direction === "bullish" ? "Tăng" : direction === "bearish" ? "Giảm" : "Trung tính";
   const dims = [];
@@ -407,10 +431,11 @@ export function computeConviction(input: ConvictionInput): ConvictionResult {
   if (casc > 0.6) dims.push("vĩ mô");
   if (sect > 0.6) dims.push("ngành");
   if (kd > 0.6) dims.push("kinh dịch");
+  if (imf > 0.6) dims.push("imf vĩ mô");
 
   const agreeing = dims.length;
   const summary = agreeing >= 5
-    ? `${enriched.code} ${dirVi}: ${levelVi} - ${agreeing}/6 tín hiệu đồng thuận (${dims.join(", ")})`
+    ? `${enriched.code} ${dirVi}: ${levelVi} - ${agreeing}/7 tín hiệu đồng thuận (${dims.join(", ")})`
     : agreeing >= 2
       ? `${enriched.code} ${dirVi}: ${levelVi} - ${dims.join(", ")} xác nhận`
       : `${enriched.code}: ${levelVi} - tín hiệu mâu thuẫn, thận trọng`;
@@ -427,7 +452,7 @@ export function computeConviction(input: ConvictionInput): ConvictionResult {
       cascade: Math.round(casc * 100) / 100,
       sectorAlignment: Math.round(sect * 100) / 100,
       kinhDich: Math.round(kd * 100) / 100,
-      imfMacro: Math.round(imfMacro * 100) / 100,
+      imfMacro: Math.round(imf * 100) / 100,
     },
     summary,
   };
