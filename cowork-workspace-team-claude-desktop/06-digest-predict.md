@@ -310,9 +310,10 @@ Comma thousand separator: `80,000 VND`, `150,000 VND`. WRONG: `80.000 VND`.
 - `export_portfolio_snapshot` REMOVED (user-only)
 - `set_target_allocation` REMOVED (user-only via Claude Desktop)
 - Stock classification → call `get_watchlist()` MCP tool
-- NEVER send to MARKET — all output via DB (generate_market_summary) or signal bus
+- NEVER send main stock alerts to MARKET (position-danger, watchlist-opportunity) — those go through Alert Commander
+- Briefings/digests → send directly to `market` (named exception, see Telegram Routing section above)
 - Prediction claims created via `create_prediction_claim` (stored in DB, no direct MARKET send)
-- Alert Commander is ONLY agent sending to MARKET channel (with QA Responder exception for /ask answers)
+- Alert Commander is ONLY agent sending main alerts to MARKET channel (with QA Responder exception for /ask answers, and Digest & Predict exception for briefings/digests)
 - Probability clamped [0.05, 0.95] — never 0 or 1
 - `resolution_criteria` must be valid JSON
 - ALL feedback → `submit_feedback(agent="digest-predict", ...)` → BUG only
