@@ -10,7 +10,7 @@
  *   - `checkWalFileSize()` — disk-size sentinel, fires WORK alert at 10/40 MB
  *   - `registerShutdownHook()` — checkpoint on SIGTERM/SIGINT before exit
  *
- * Scheduled daily at 03:00 GMT+7 via cron in jobs.ts.
+ * Scheduled every 30min via cron in jobs.ts.
  *
  * Layer: infrastructure/db
  */
