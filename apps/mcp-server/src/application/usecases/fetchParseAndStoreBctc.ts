@@ -322,17 +322,17 @@ export async function fetchParseAndStoreBctc(
     }
   }
 
-  // Task 1294b: When PDF extraction returns empty text AND fallback is enabled,
-  // try the news chain fallback. This handles both explicit timeout errors and
-  // timeout situations detected during OCR attempts.
+  // Task 1294b: When a real PDF timeout error occurred AND fallback is enabled,
+  // try the news chain fallback. Empty text from pdfTextOverride='' or OCR miss
+  // without a timeout error is a clean abort — return null directly.
   if (!rawText || rawText.trim().length === 0) {
-    // Detect timeout errors early: if fallback is disabled and we have an error, throw it
-    if (extractionError && !enableBctcFallback) {
-      throw extractionError;
-    }
-
-    if (enableBctcFallback) {
-      logger.info(`${tag} PDF extraction failed — attempting news chain fallback`);
+    // Only attempt news-chain fallback when there was an actual extraction error
+    // (i.e. a timeout thrown by the PDF download/parse step).
+    if (extractionError) {
+      if (!enableBctcFallback) {
+        throw extractionError;
+      }
+      logger.info(`${tag} PDF timeout — attempting news chain fallback`);
       const fallbackResult = await tryNewsChainFallback(
         actionCode,
         year,
@@ -349,7 +349,7 @@ export async function fetchParseAndStoreBctc(
         hints: fallbackResult.hints,
       } as any;
     }
-    // Fallback is disabled
+    // No error (empty override or OCR miss) — clean abort
     logger.warn(`${tag} PDF extraction yielded empty text — aborting`);
     return null;
   }
@@ -378,6 +378,13 @@ export async function fetchParseAndStoreBctc(
   report.source.publishedAt = doc.publishedAt || report.source.parsedAt;
   const normFilename = normaliseFilename(doc.url, actionCode, year, quarter);
   report.source.pdfPath = join(process.cwd(), "data", "pdfs", normFilename);
+
+  // Task 1294b: Overwrite extraction_method to 'ocr_pdf' on any pre-existing
+  // fallback row (news_inference). This handles the case where storeReport
+  // skipped the INSERT due to zero-confidence but a prior fallback row exists.
+  getDb().prepare(
+    "UPDATE financial_reports SET extraction_method = 'ocr_pdf' WHERE action_code = ? AND sort_key = ?",
+  ).run(actionCode, `${year}-${quarter}`);
 
   // ── Step 4: Embed into LanceDB ────────────────────────────────────────────
   logger.info(`${tag} step 4: inserting analysis into LanceDB`);
