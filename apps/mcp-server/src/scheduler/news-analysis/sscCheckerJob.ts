@@ -15,6 +15,7 @@ import { checkSscReports } from "../../application/usecases/checkSscReports.js";
 import { logger } from "../../infrastructure/logger.js";
 import { getDb } from "../../infrastructure/db/schema.js";
 import { recordJobRun } from "../../infrastructure/db/cronJobRunStore.js";
+import { mcpConfig } from "../../infrastructure/config.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Concurrency guard
@@ -34,6 +35,15 @@ let isRunning = false;
  * Skips the check if a previous invocation is still running.
  */
 export async function runSscCheck(): Promise<void> {
+  // Task 1281-fix: VPS-only architecture guard.
+  // The local server (France IP) must NOT attempt to download BCTC PDFs directly.
+  // All BCTC acquisition is handled exclusively by vn-bctc-fetch.service on the
+  // Vinahost VPS (Vietnam IP). Skipping prevents x5 "Network timeout" errors at startup.
+  if (!mcpConfig.features.enableLocalBctcFetch) {
+    logger.debug("[ssc-check] ENABLE_LOCAL_BCTC_FETCH=false — skipping (VPS-only mode)");
+    return;
+  }
+
   if (isRunning) {
     logger.warn("[ssc-check] previous cycle still running — skipped");
     return;
