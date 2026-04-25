@@ -223,6 +223,13 @@ const VN_BEARISH: SentimentKeyword[] = [
   { word: "cảnh báo kịch bản bất lợi", weight: 3 },
   { word: "báo lỗ", weight: 3 },
   { word: "tăng phòng thủ tiền mặt", weight: 3 },
+  // Fix-1292: forced-sell phrases — margin call / block trade forced sell → BEARISH
+  { word: "bị ép bán", weight: 3 },
+  { word: "ép bán", weight: 2 },
+  // Fix-1302: loss-amount phrases — "khoản lỗ X tỷ" → BEARISH
+  { word: "khoản lỗ", weight: 2 },
+  // Fix-1297: standalone cash-defense phrase (supplements "tăng phòng thủ tiền mặt")
+  { word: "phòng thủ tiền mặt", weight: 2 },
   // Task 1315a: Cost-push compound patterns (FR-5)
   // Weight 3: beats generic "tăng"(w1)+"chi phí"(w2) in mixed text.
   // Weight 4 (compound): net-bearish even with "tăng mạnh"(w2) co-firing.
