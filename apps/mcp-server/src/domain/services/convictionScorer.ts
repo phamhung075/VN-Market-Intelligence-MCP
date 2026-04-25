@@ -3,7 +3,7 @@
  *
  * Core philosophy: "Tin tức có thể giả nhưng giá phản ánh tất cả"
  *
- * Cross-validates 6 independent signal dimensions to produce a conviction
+ * Cross-validates 7 independent signal dimensions to produce a conviction
  * score [0, 1]. When multiple independent signals agree, conviction is high.
  * When they disagree, conviction is low — suggesting manipulation or noise.
  *
@@ -14,6 +14,7 @@
  *   4. Cascade       — does the macro cascade support this direction?
  *   5. Sector        — is the whole sector moving or just this stock?
  *   6. Kinh Dich     — what does the hexagram reading indicate? (Task 304)
+ *   7. IMF macro     — what do IMF economic indicators say? (imfMacroScore)
  *
  * Conviction levels:
  *   >= 0.8  CONVICTION  — all signals align, very high confidence
@@ -76,6 +77,14 @@ export interface ConvictionInput {
   kinhDichConfidenceRaw?: number;
   /** From ChainCatalystFindingData.agentSignalsMajority. Used as secondary cascade signal when cascadeDirection is absent. */
   agentSignalsMajority?: "BUY" | "SELL" | "NEUTRAL";
+
+  // Dimension 7: IMF macro economic signal (Task 1329)
+  /**
+   * IMF macro sentiment score in [-1, +1].
+   * Injected by the caller via imfConvictionBridge.getImfMacroScoreForConviction().
+   * undefined -> neutral (no fresh IMF data, maps to 0.5).
+   */
+  imfMacroScore?: number;
 }
 
 /** Result of conviction scoring. */
@@ -96,6 +105,8 @@ export interface ConvictionResult {
     sectorAlignment: number;
     /** Kinh Dich hexagram dimension score [0, 1]. 0.5 = neutral/no reading. */
     kinhDich: number;
+    /** IMF macro dimension score [0, 1]. 0.5 = neutral/no fresh data. */
+    imfMacro: number;
   };
   /** Vietnamese summary */
   summary: string;
@@ -324,13 +335,13 @@ export function enrichDimensionScores(input: ConvictionInput): ConvictionInput {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Computes a conviction score from 6 independent signal dimensions.
+ * Computes a conviction score from 7 independent signal dimensions.
  *
  * @param input - Signal dimensions (all optional - missing = neutral)
  * @returns ConvictionResult with score, level, direction, per-dimension breakdown
  *
- * Backward compatible: callers that do not pass `kinhDichScore` receive the same
- * result as passing `kinhDichScore: undefined` (maps to neutral 0.5).
+ * Backward compatible: callers that do not pass `kinhDichScore` or `imfMacroScore`
+ * receive the same result as passing them as undefined (maps to neutral 0.5).
  */
 export function computeConviction(input: ConvictionInput): ConvictionResult {
   // Enrich with new signal fields (Task 1328d) — pure, no mutation
@@ -363,7 +374,10 @@ export function computeConviction(input: ConvictionInput): ConvictionResult {
   // Dimension 6: Kinh Dich hexagram (Task 304)
   const kd = scoreKinhDich(enriched.kinhDichScore);
 
-  // Weighted average (6 dimensions summing to 1.0)
+  // Dimension 7: IMF macro (Task 1329) — neutral until 1329e wires in scoring
+  const imfMacro = scoreKinhDich(enriched.imfMacroScore);
+
+  // Weighted average (6 dimensions summing to 1.0 — 1329e will add imfMacro weight)
   const score = Math.round((
     price.score * WEIGHTS.priceAction +
     vol * WEIGHTS.volumeConfirmation +
@@ -413,6 +427,7 @@ export function computeConviction(input: ConvictionInput): ConvictionResult {
       cascade: Math.round(casc * 100) / 100,
       sectorAlignment: Math.round(sect * 100) / 100,
       kinhDich: Math.round(kd * 100) / 100,
+      imfMacro: Math.round(imfMacro * 100) / 100,
     },
     summary,
   };

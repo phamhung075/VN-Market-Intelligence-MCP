@@ -4,7 +4,7 @@
  * AC-304:
  * - Given kinhDichReadings row for VNM with confidence=0.72 and
  *   trading_signal='MUA (tich cuc)', dimensions.kinhDich ≈ 0.86
- * - dimensions contains exactly 6 keys
+ * - dimensions contains exactly 7 keys (6 original + imfMacro from Task 1329d)
  * - sum of WEIGHTS equals exactly 1.00
  * - When no kinhdich_readings row exists, dimensions.kinhDich equals 0.5
  * - computeConviction without kinhDichScore = same as kinhDichScore: undefined
@@ -136,10 +136,11 @@ describe("Task 304 — Conviction scorer 6th dimension (kinhDich at 15%)", () =>
     expect(result.dimensions.kinhDich).toBeCloseTo(0.86, 2);
   });
 
-  it("AC-304: dimensions contains exactly 6 keys", () => {
+  it("AC-304: dimensions contains exactly 7 keys (6 original + imfMacro from Task 1329d)", () => {
     const result = computeConviction({ code: "VNM" });
     expect(Object.keys(result.dimensions).sort()).toEqual([
       "cascade",
+      "imfMacro",
       "kinhDich",
       "priceAction",
       "sectorAlignment",

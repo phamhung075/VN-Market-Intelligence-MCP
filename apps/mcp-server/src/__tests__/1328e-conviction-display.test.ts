@@ -26,6 +26,7 @@ function makeConvictionResult(overrides: Partial<ConvictionResult> = {}): Convic
       cascade: 0.65,
       sectorAlignment: 0.80,
       kinhDich: 0.72,
+      imfMacro: 0.50,
     },
     summary: "VNM Tăng: Khá chắc chắn - giá, KL xác nhận",
     ...overrides,
