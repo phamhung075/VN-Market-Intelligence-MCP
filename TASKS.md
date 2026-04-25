@@ -30,3 +30,23 @@
 ## Backlog
 
 ---
+
+## Todo
+
+### Sprint 1329 — WAL Hardening + IMF Conviction Dimension
+
+**Execution Strategy:** WAL batch (1329a→1329b→1329c, merge sequence enforced). Code-dev 1329b+1329c in parallel while 1329a reviews. IMF batch starts after WAL merges.
+
+| ID | Task | Status | Owner | Branch | Blocks | Dependencies | Notes |
+|----|------|--------|-------|--------|--------|--------------|-------|
+| BA-1329 | Requirement Spec: WAL Hardening + IMF Conviction Dimension | done | BA | — | — | — | REQ: `docs/REQ_1329.md` |
+| ARCH-1329 | Architecture design | done | Architect | — | — | — | TECH: `docs/TECH_1329.md` + 7 handoffs |
+| 1329a | WAL: checkpoint mode param + 30min cron + nightly backup | Review | Developer | `task/1329b-wal-sentinel` | 1329b,1329c | — | Merge FIRST. `checkpoint.ts` + `jobs.ts`. Lines 370-375 cron handler. |
+| 1329b | WAL: size sentinel — 5k warn / 10k critical + disk guard | todo | Developer | `task/1329a-wal-hardening` | 1329c,1329d | 1329a | Rebase onto 1329a. `walCheckpointAlert.ts` + `checkpoint.ts`. Code-dev parallel w/ 1329c. |
+| 1329c | WAL: shutdown 200ms settle before process.exit | Review | Developer | `task/1329b-wal-sentinel` | 1329d | 1329b | Rebase onto 1329b. `checkpoint.ts` only. Merge 3rd. Commit 5c82dace on 1329b branch. |
+| 1329d | IMF: ConvictionInput/Result type extension (7th dim) | todo | Developer | `task/1329b-imf-conviction-dimension` | 1329e | 1329c | Start after WAL batch merges. `convictionScorer.ts` types only. |
+| 1329e | IMF: scoreImfMacro() + WEIGHTS rescale to 7 dims | todo | Developer | `task/1329b-imf-conviction-dimension` | 1329f | 1329d | Updates 2 existing test expected values (R1). |
+| 1329f | IMF: new imfConvictionBridge.ts (application/services) | todo | Developer | `task/1329b-imf-conviction-dimension` | 1329g | 1329e | DB read + classify → sentiment score. Application layer. |
+| 1329g | IMF: wire bridge into scanMarket + assembleBriefing + portfolioTools | todo | Developer | `task/1329b-imf-conviction-dimension` | — | 1329f | Final task in sprint. 3 call-site injections. |
+
+---
