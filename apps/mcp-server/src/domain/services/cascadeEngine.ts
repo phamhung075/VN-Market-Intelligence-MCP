@@ -537,6 +537,20 @@ export interface SectorRule {
   title: string;
   /** Optional: explicitly map rule to specific tickers (Task 1264) */
   affected_actions?: { code: string; direction: ImpactDirection }[];
+  /**
+   * Optional exclusion guard (FIX-1298/1299): if ANY of these keywords appear
+   * in the article summary, the rule is skipped — even if a trigger keyword matched.
+   * Use to prevent broad keyword rules from firing on unrelated contexts
+   * (e.g., "geopolitical" in Fed/monetary articles should not trigger oil_gas cascade).
+   */
+  excludeKeywords?: string[];
+  /**
+   * Optional co-occurrence requirement (FIX-1298/1299): when set, the rule
+   * only fires if AT LEAST ONE of these keywords is ALSO present in the article.
+   * Use to narrow broad rules: e.g., coal/minerals rule only fires when oil/energy
+   * context is also present.
+   */
+  requireAnyKeyword?: string[];
 }
 
 export const SECTOR_RULES: SectorRule[] = [
@@ -884,20 +898,30 @@ export const SECTOR_RULES: SectorRule[] = [
     confidence: 0.80,
     title: "Giá thép giảm — tiêu cực cho doanh nghiệp thép",
   },
-  // ── Coal / Mining → oil_gas (energy sector) ─────────────────────────────
+  // ── Coal / Mining → utilities (thermal power, energy sector) ─────────────
+  // FIX-1299: Changed domain from "oil_gas" to "utilities".
+  // Coal/minerals business news directly affects thermal power companies (e.g., POW —
+  // Petrovietnam Power, where coal is ~60-70% of fuel COGS). BSR is Binh Son Refinery
+  // (crude oil refinery) — it has NO exposure to coal or minerals prices.
+  // Using domain "utilities" means: (a) coal articles cascade to thermal power correctly,
+  // (b) COMMODITY_TRIGGER_DOMAINS includes "utilities" so market-wide broadcast is
+  // restricted — BSR (oil_gas domain) is NOT in alreadyCoveredDomains → skipped.
+  // NOTE: "giá than", "giá than tăng", "giá than giảm" are intentionally OMITTED here —
+  // they are handled by the more-specific Task 1315a rules below (lines ~1710) with
+  // correct directional signals. This rule handles broader coal/mining context only.
   {
-    keywords: ["kinh doanh than", "coal mining", "than đá", "coal price", "giá than", "khoáng sản", "mineral mining"],
-    domain: "oil_gas",
+    keywords: ["kinh doanh than", "coal mining", "than đá", "coal price", "khoáng sản", "mineral mining"],
+    domain: "utilities",
     direction: "up",
     confidence: 0.75,
-    title: "Than/khoáng sản — tích cực cho ngành năng lượng",
+    title: "Than/khoáng sản — tích cực cho ngành điện/năng lượng (POW hưởng lợi từ giá than cao)",
   },
   {
-    keywords: ["giá than giảm", "coal price drop", "coal price fall", "than đá giảm"],
-    domain: "oil_gas",
+    keywords: ["coal price drop", "coal price fall", "than đá giảm"],
+    domain: "utilities",
     direction: "down",
     confidence: 0.70,
-    title: "Giá than giảm — tiêu cực cho doanh nghiệp than/năng lượng",
+    title: "Giá than giảm — tiêu cực cho doanh nghiệp than, giảm chi phí cho điện than (POW)",
   },
   // ── Large infrastructure projects → aviation + logistics + construction ──
   {
@@ -1546,12 +1570,30 @@ export const SECTOR_RULES: SectorRule[] = [
   },
 
   // ── Geopolitical ESCALATION (after de-escalation — only fires if no peace keyword matched) ──
+  // FIX-1298: This rule uses broad keywords ("geopolitical", "conflict") that can match
+  // Fed/monetary policy articles (e.g., "geopolitical uncertainty drives Fed rate cut appeal").
+  // Guard: requireAnyKeyword ensures oil/energy context must be present.
+  // Guard: excludeKeywords skips the rule when article is primarily about monetary policy
+  // (Fed, FOMC, central bank, lãi suất) without oil/energy substance.
   {
     keywords: ["war", "conflict", "geopolitical", "middle east", "chiến tranh", "xung đột", "iran attack", "iran strike", "iran war", "strait of hormuz", "military strike"],
     domain: "oil_gas",
     direction: "up",
     confidence: 0.78,
     title: "Rủi ro địa chính trị — đẩy giá dầu lên (supply disruption)",
+    // Must contain oil/energy context to cascade to oil_gas domain.
+    requireAnyKeyword: [
+      "oil", "dầu", "crude", "petroleum", "energy", "năng lượng",
+      "opec", "gas", "khí đốt", "refinery", "nhà máy lọc dầu",
+      "hormuz", "suez",
+    ],
+    // Skip if article is about monetary policy / Fed with no oil substance.
+    excludeKeywords: [
+      "federal reserve", "fed chair", "fed funds", "fomc", "fed rate",
+      "monetary policy", "ngân hàng trung ương", "central bank",
+      "rate cut", "interest rate", "lãi suất", "net worth",
+      "gold selling", "gold reserve",
+    ],
   },
   {
     keywords: ["war", "conflict", "geopolitical", "middle east", "strait of hormuz"],
@@ -2650,6 +2692,14 @@ export function buildCausalChain(
     if (triggeredDomains.has(rule.domain)) continue; // first match wins
     const matchedKeyword = findKeyword(summaryLower, rule.keywords);
     if (matchedKeyword !== null) {
+      // FIX-1298/1299: excludeKeywords guard — skip rule if any exclusion term present
+      if (rule.excludeKeywords && findKeyword(summaryLower, rule.excludeKeywords) !== null) {
+        continue;
+      }
+      // FIX-1298/1299: requireAnyKeyword guard — skip rule unless at least one co-occurrence term present
+      if (rule.requireAnyKeyword && findKeyword(summaryLower, rule.requireAnyKeyword) === null) {
+        continue;
+      }
       triggeredDomains.set(rule.domain, { rule, matchedKeyword });
     }
   }
@@ -3055,7 +3105,10 @@ export function buildCausalChain(
   // the article does NOT contain explicit VN market-wide signals (those override).
   // Task 1309a: add "agriculture" — commodity-sector articles (coffee/rice/seafood export)
   // must not broadcast to unrelated sectors (real_estate, banking) via market-wide path.
-  const COMMODITY_TRIGGER_DOMAINS = new Set<string>(["gold_mining", "oil_gas", "agriculture"]);
+  // FIX-1299: add "utilities" — coal/minerals articles cascade to utilities (thermal power),
+  // not oil_gas. Adding utilities here restricts broadcast so BSR (oil refinery) is not
+  // reached when coal/minerals news has no oil/energy context.
+  const COMMODITY_TRIGGER_DOMAINS = new Set<string>(["gold_mining", "oil_gas", "agriculture", "utilities"]);
   const matchedDomains = Array.from(domainEntryMap.keys());
   const hasCommodityTrigger =
     matchedDomains.some((d) => COMMODITY_TRIGGER_DOMAINS.has(d));
