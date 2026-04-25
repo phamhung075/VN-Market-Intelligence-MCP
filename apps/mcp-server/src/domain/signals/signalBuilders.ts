@@ -30,6 +30,7 @@ import {
 /**
  * Fluent API interface for building ChainCatalyst signals.
  * Requires: event_type, direction, confidence, affected_stocks, affected_sectors, headline, source
+ * Optional (Task SIGNAL-PAYLOAD-MISSING-FIELDS): newsSentiment, kinhDichConfidence, agentSignalsMajority
  */
 export interface ChainCatalystBuilder {
   setEventType(
@@ -48,12 +49,22 @@ export interface ChainCatalystBuilder {
   addSector(sector: string): this;
   setHeadline(headline: string): this;
   setSource(source: string): this;
+  /** Aggregated news sentiment score [-1.0, 1.0]. Used by Alert Commander 4-AND conviction validation. */
+  setNewsSentiment(score: number): this;
+  /** Kinh Dich hexagram confidence [0, 100]. Used by Alert Commander 4-AND conviction validation. */
+  setKinhDichConfidence(score: number): this;
+  /** Majority vote from agent signals: "BUY" | "SELL" | "NEUTRAL". Used by Alert Commander 4-AND conviction validation. */
+  setAgentSignalsMajority(majority: "BUY" | "SELL" | "NEUTRAL"): this;
   build(): ChainCatalystFindingData;
 }
 
 class ChainCatalystBuilderImpl implements ChainCatalystBuilder {
   // Use Omit to exclude optional imfSentiment — builders don't set IMF context
-  private data: Omit<Partial<ChainCatalystFindingData>, "imfSentiment"> = {
+  private data: Omit<Partial<ChainCatalystFindingData>, "imfSentiment"> & {
+    newsSentiment?: number;
+    kinhDichConfidence?: number;
+    agentSignalsMajority?: "BUY" | "SELL" | "NEUTRAL";
+  } = {
     affected_stocks: [],
     affected_sectors: [],
   };
@@ -103,6 +114,21 @@ class ChainCatalystBuilderImpl implements ChainCatalystBuilder {
 
   setSource(source: string): this {
     this.data.source = source;
+    return this;
+  }
+
+  setNewsSentiment(score: number): this {
+    this.data.newsSentiment = score;
+    return this;
+  }
+
+  setKinhDichConfidence(score: number): this {
+    this.data.kinhDichConfidence = score;
+    return this;
+  }
+
+  setAgentSignalsMajority(majority: "BUY" | "SELL" | "NEUTRAL"): this {
+    this.data.agentSignalsMajority = majority;
     return this;
   }
 
