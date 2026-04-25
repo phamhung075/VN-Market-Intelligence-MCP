@@ -108,6 +108,17 @@ const VN_BULLISH: SentimentKeyword[] = [
   { word: "nộp danh sách", weight: 1.0 },
   { word: "đáp ứng tiêu chí", weight: 0.9 },
   { word: "chỉ số msci", weight: 0.8 },
+  // Fix-1279: MSCI WatchList inclusion — tier-1 macro catalyst
+  // "vào WatchList MSCI" = precursor to full EM inclusion, triggers $2-5B ETF inflows
+  // Weight 3.0: strong enough to dominate neutral text and produce BULLISH direction
+  { word: "vào watchlist msci", weight: 3.0 },
+  { word: "watchlist msci", weight: 3.0 },
+  { word: "msci em watchlist", weight: 3.0 },
+  { word: "msci watchlist", weight: 3.0 },
+  { word: "vào danh sách theo dõi msci", weight: 3.0 },
+  { word: "nâng hạng thị trường", weight: 3.0 },
+  { word: "msci nâng hạng", weight: 3.0 },
+  { word: "msci em", weight: 2.5 },
 ];
 
 /** Vietnamese bearish keywords */
