@@ -125,7 +125,8 @@ describe("TASK-1313: channel routing enforcement", () => {
         "portfolio/weeklyPortfolioReportJob.ts",
         // weatherCheckJob sends climate/energy HIGH/CRITICAL alerts to MARKET (user-facing, not dev-only)
         "weatherCheckJob.ts",
-        // taAlertNotifierJob uses injected sendFn (not direct call) → not listed here
+        // taAlertNotifierJob delivers user-facing TA alerts via default sendFn — correct MARKET routing per fix/1296
+        "market-data/taAlertNotifierJob.ts",
         // Alert Commander pipeline jobs write to DB; Commander dispatches to market
       ]);
 
