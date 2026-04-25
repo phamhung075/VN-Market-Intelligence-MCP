@@ -269,6 +269,13 @@ export function postSignal(db: Database, input: PostSignalInput): number {
     agentSignalsMajority = null, // Task 1328c
   } = input;
 
+  // 1334: Normalize sentinel values — agents may post "unknown" for market-wide signals.
+  // "unknown" / "" / undefined all mean "no specific stock" → NULL in agent_signals.
+  // This prevents chain grouping by getChainFindings() from collecting all market-wide
+  // signals into a fake "unknown" stock bucket.
+  const resolvedStockCode: string | null =
+    !stockCode || stockCode === "unknown" ? null : stockCode;
+
   // Check which optional column groups exist. Fresh DBs (with all columns)
   // always hit the full path; legacy DBs with only the base schema still work.
   const hasChainColumns = (() => {
@@ -338,7 +345,7 @@ export function postSignal(db: Database, input: PostSignalInput): number {
               fromAgent,
               toAgent,
               signalType,
-              stockCode,
+              resolvedStockCode,
               JSON.stringify(payload),
               now,
               expires ?? expiresAt(ttlMinutes ?? 120),
@@ -368,7 +375,7 @@ export function postSignal(db: Database, input: PostSignalInput): number {
             fromAgent,
             toAgent,
             signalType,
-            stockCode,
+            resolvedStockCode,
             JSON.stringify(payload),
             now,
             expires ?? expiresAt(ttlMinutes ?? 120),
@@ -395,7 +402,7 @@ export function postSignal(db: Database, input: PostSignalInput): number {
           fromAgent,
           toAgent,
           signalType,
-          stockCode,
+          resolvedStockCode,
           JSON.stringify(payload),
           now,
           expires ?? expiresAt(ttlMinutes ?? 120),
@@ -422,7 +429,7 @@ export function postSignal(db: Database, input: PostSignalInput): number {
           fromAgent,
           toAgent,
           signalType,
-          stockCode,
+          resolvedStockCode,
           JSON.stringify(payload),
           now,
           expires ?? expiresAt(ttlMinutes ?? 120),
@@ -449,7 +456,7 @@ export function postSignal(db: Database, input: PostSignalInput): number {
         fromAgent,
         toAgent,
         signalType,
-        stockCode,
+        resolvedStockCode,
         JSON.stringify(payload),
         now,
         expires ?? expiresAt(ttlMinutes ?? 120),
@@ -476,7 +483,7 @@ export function postSignal(db: Database, input: PostSignalInput): number {
         fromAgent,
         toAgent,
         signalType,
-        stockCode,
+        resolvedStockCode,
         JSON.stringify(payload),
         now,
         expires ?? expiresAt(ttlMinutes ?? 120),
@@ -500,7 +507,7 @@ export function postSignal(db: Database, input: PostSignalInput): number {
       fromAgent,
       toAgent,
       signalType,
-      stockCode,
+      resolvedStockCode,
       JSON.stringify(payload),
       now,
       expires ?? expiresAt(ttlMinutes ?? 120),
@@ -527,7 +534,7 @@ export function postSignal(db: Database, input: PostSignalInput): number {
       fromAgent,
       toAgent,
       signalType,
-      stockCode,
+      resolvedStockCode,
       JSON.stringify(payload),
       expiresAt(ttlMinutes ?? 120),
       confidence_score,
@@ -546,7 +553,7 @@ export function postSignal(db: Database, input: PostSignalInput): number {
     fromAgent,
     toAgent,
     signalType,
-    stockCode,
+    resolvedStockCode,
     JSON.stringify(payload),
     expiresAt(ttlMinutes ?? 120),
   );
