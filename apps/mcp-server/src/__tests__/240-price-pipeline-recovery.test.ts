@@ -153,11 +153,15 @@ describe("SPRINT 240: Price Pipeline Recovery", () => {
   // AC-4: Watchdog Staleness Detection
   // ──────────────────────────────────────────────────────────────────────────
   test("AC-4: watchdog detects staleness >6h during market hours", async () => {
-    const { priceUpdateWatchdog } = await import(
+    const { priceUpdateWatchdog, _resetWatchdogCooldown } = await import(
       "../scheduler/market-data/priceUpdateWatchdogJob.js"
     ).catch(() => ({
       priceUpdateWatchdog: async () => "alert-sent",
+      _resetWatchdogCooldown: () => undefined,
     }));
+
+    // Reset cooldown to allow alert to fire (mirrors AC-5 pattern)
+    _resetWatchdogCooldown?.();
 
     // Stub readPrice to return 8h-old timestamp (relative to market hours reference)
     const marketHours = new Date("2026-04-21T06:00:00Z"); // Tuesday 06:00 UTC (market hours)

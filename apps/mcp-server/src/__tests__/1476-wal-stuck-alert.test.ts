@@ -31,18 +31,18 @@ describe("walCheckpointAlert", () => {
     console.error = originalConsoleError;
   });
 
-  it("calls sendWork with 'WAL stuck' when remaining > 50000", async () => {
-    // remaining = 80000 - 20000 = 60000 (> 50000)
+  it("calls sendWork with 'WAL CRITICAL' when remaining > 10000", async () => {
+    // remaining = 80000 - 20000 = 60000 (> WAL_STUCK_THRESHOLD 10000 → CRITICAL)
     await walCheckpointAlert({ walSize: 80000, checkpointed: 20000 }, sendWorkFn);
 
     expect(sendWorkCalls).toHaveLength(1);
-    expect(sendWorkCalls[0]).toContain("WAL stuck");
+    expect(sendWorkCalls[0]).toContain("WAL CRITICAL");
     expect(sendWorkCalls[0]).toContain("60000");
   });
 
-  it("does NOT call sendWork when remaining = 50000 (boundary, not over)", async () => {
-    // remaining = 70000 - 20000 = 50000 (= threshold, not > 50000)
-    await walCheckpointAlert({ walSize: 70000, checkpointed: 20000 }, sendWorkFn);
+  it("does NOT call sendWork when remaining = 5000 (boundary, not over WAL_WARN_THRESHOLD)", async () => {
+    // remaining = 10000 - 5000 = 5000 (= WAL_WARN_THRESHOLD — NOT over)
+    await walCheckpointAlert({ walSize: 10000, checkpointed: 5000 }, sendWorkFn);
 
     expect(sendWorkCalls).toHaveLength(0);
   });

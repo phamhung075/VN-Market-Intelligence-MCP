@@ -200,8 +200,8 @@ export async function runVpsProxyWatchdog(
   const newsAgeMs        = latestNews        ? now.getTime() - latestNews.getTime()        : Infinity;
   // OHLCV is daily — stale threshold 26 h
   const ohlcvAgeMs       = latestOhlcv       ? now.getTime() - latestOhlcv.getTime()       : Infinity;
-  // null = service has never written data (e.g. fresh deploy or test DB) — treat as fresh, not stale
-  const foreignFlowAgeMs = latestForeignFlow ? now.getTime() - latestForeignFlow.getTime() : 0;
+  // null = service has never written data (e.g. fresh deploy or empty DB) — treat as stale (Infinity), not fresh
+  const foreignFlowAgeMs = latestForeignFlow ? now.getTime() - latestForeignFlow.getTime() : Infinity;
 
   const NEWS_STALE_MS         = STALE_THRESHOLD_MS;           // 45 min
   const OHLCV_STALE_MS        = 26 * 60 * 60 * 1000;         // 26 hours

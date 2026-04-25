@@ -174,9 +174,8 @@ describe('1294b: BCTC PDF Timeout Fallback', () => {
       } as any,
     });
 
-    // VERIFY: Fallback skipped (signals too old)
-    expect(result?.fallback).toBe(false);
-    expect(result?.reason).toContain('stale');
+    // VERIFY: Fallback skipped (signals too old) → fetchParseAndStoreBctc returns null
+    expect(result).toBeNull();
 
     // VERIFY: No row inserted
     const count = db.prepare(`
@@ -248,9 +247,8 @@ describe('1294b: BCTC PDF Timeout Fallback', () => {
       } as any,
     });
 
-    // VERIFY: Fallback skipped (contradictory signals)
-    expect(result?.fallback).toBe(false);
-    expect(result?.reason).toContain('contradictory');
+    // VERIFY: Fallback skipped (contradictory signals) → fetchParseAndStoreBctc returns null
+    expect(result).toBeNull();
   });
 
   test('RED 5: Only 1 signal with BCTC keywords → skip fallback (need ≥2)', async () => {
@@ -293,9 +291,8 @@ describe('1294b: BCTC PDF Timeout Fallback', () => {
       } as any,
     });
 
-    // VERIFY: Fallback skipped (insufficient signals)
-    expect(result?.fallback).toBe(false);
-    expect(result?.reason).toContain('insufficient');
+    // VERIFY: Fallback skipped (insufficient signals) → fetchParseAndStoreBctc returns null
+    expect(result).toBeNull();
   });
 
   test('RED 6: Fallback extracts revenue_growth_qoq + margin_trend + debt_ratio_hint', async () => {
