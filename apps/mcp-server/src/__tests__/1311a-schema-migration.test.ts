@@ -62,17 +62,22 @@ describe("1311a: market_messages verdict column migration", () => {
   });
 
   it("verdict columns accept values (UPDATE persists)", () => {
+    // FIX-1265: reviewed_at must be TEXT (datetime string), not INTEGER.
+    // Using datetime('now') matches the actual production usage in
+    // reviewMarketMessage() and batchReviewMarketMessages().
     db.exec(`
       UPDATE market_messages
-      SET verdict = 'good', verdict_note = 'accurate', reviewed_at = 1714000000
+      SET verdict = 'good', verdict_note = 'accurate', reviewed_at = datetime('now')
       WHERE from_agent = 'test-agent'
     `);
     const row = db.query(
       "SELECT verdict, verdict_note, reviewed_at FROM market_messages WHERE from_agent = 'test-agent'"
-    ).get() as { verdict: string; verdict_note: string; reviewed_at: number };
+    ).get() as { verdict: string; verdict_note: string; reviewed_at: string };
     expect(row.verdict).toBe("good");
     expect(row.verdict_note).toBe("accurate");
-    expect(row.reviewed_at).toBe(1714000000);
+    // reviewed_at must be a TEXT datetime string, e.g. "2026-04-25 07:00:00"
+    expect(typeof row.reviewed_at).toBe("string");
+    expect(row.reviewed_at).toMatch(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/);
   });
 
   it("migration is idempotent (second initNewsTables call does not throw)", () => {
