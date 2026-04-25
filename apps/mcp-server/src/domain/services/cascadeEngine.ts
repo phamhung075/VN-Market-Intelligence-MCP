@@ -1232,13 +1232,19 @@ export const SECTOR_RULES: SectorRule[] = [
   // Coffee/rice/seafood export decline → agriculture BEARISH.
   // These are commodity-sector articles — must NOT broadcast to real_estate/banking
   // via market-wide path (COMMODITY_TRIGGER_DOMAINS includes "agriculture").
+  // FIX-1286: added "cà phê và gạo", "hụt hơi", "giá cà phê", "giá gạo",
+  // "nông sản xuất khẩu", "gạo xuất khẩu" so that Vietnamese-language
+  // headlines with reversed word order ("Xuất khẩu cà phê và gạo hụt hơi")
+  // still match this rule and trigger the commodity broadcast exclusion guard.
   {
     keywords: [
       "coffee export", "coffee export decline", "cà phê xuất khẩu", "xuất khẩu cà phê",
       "coffee export revenues", "giá cà phê xuất khẩu", "cà phê giảm",
+      "cà phê và gạo", "giá cà phê", "hụt hơi",
       "rice export", "rice export decline", "xuất khẩu gạo", "gạo xuất khẩu giảm",
       "rice export revenues", "xuất khẩu nông sản giảm", "agriculture exports drop",
       "vietnam agriculture exports", "nông sản xuất khẩu giảm",
+      "nông sản xuất khẩu", "giá gạo", "gạo xuất khẩu",
       "seafood export decline", "xuất khẩu thủy sản giảm", "thủy sản xuất khẩu giảm",
     ],
     domain: "agriculture",
