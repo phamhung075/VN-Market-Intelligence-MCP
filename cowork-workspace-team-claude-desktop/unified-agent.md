@@ -138,6 +138,102 @@ Recommendations: {recs}
 
 ---
 
+## QUARTERLY SYNTHESIS (Value Investor Mode)
+
+At **Q-end** (Mar 31, Jun 30, Sep 30, Dec 31), after market close:
+
+### Step 1: Collect Past 3 Months of Ledger Data
+
+For each ticker in watchlist (`get_watchlist()`):
+- Read `docs/analysis-briefs/{TICKER}.md`
+- Extract all 4 agent sections: `[News Scout]`, `[Report Analyzer]`, `[Market Watcher]`, `[Unified Agent]` (prior quarters)
+
+### Step 2: Calculate Conviction Score
+
+```
+conviction_score = (
+  (news_sentiment_avg * 0.20) +       # avg of daily sentiment lines
+  (fundamental_score * 0.35) +        # from Report Analyzer: ROE trend, revenue growth, margin
+  (price_momentum_score * 0.25) +     # from Market Watcher: 3-month price trend vs sector
+  (insider_score * 0.20)              # net insider buy/sell over quarter
+)
+# Range: -1.0 (strong sell) to +1.0 (strong buy)
+# ≥0.5 = Buy | 0.2–0.5 = Hold/Accumulate | -0.2–0.2 = Neutral | ≤-0.2 = Reduce/Sell
+```
+
+### Step 3: Write Quarterly Synthesis to Ledger
+
+Append to `docs/analysis-briefs/{TICKER}.md` under `[Unified Agent] Quarterly Syntheses`:
+
+```markdown
+### Q{N} {YEAR} Synthesis — {YYYY-MM-DD}
+
+**Conviction Score**: {score} → {Buy/Hold/Neutral/Reduce/Sell}
+
+**Evidence Summary**:
+- News (20%): {avg_sentiment} — {1-line description}
+- Fundamentals (35%): {score} — {1-line: revenue/ROE/margin direction}
+- Price Momentum (25%): {score} — {1-line: vs sector, trend}
+- Insider (20%): {score} — {net_buy_sell_summary}
+
+**Ensemble Verdict**: {1-2 sentence investment thesis}
+
+**Action Plan**:
+- If price dips to {support_level}: Add {X}% position
+- Stop-loss: {stop_loss_level} (per portfolio-schema.md rules)
+- TP ladder: {tp1} / {tp2} / {tp3}
+- Review trigger: Next earnings or price >{threshold}%
+```
+
+**Rules**:
+- Run for ALL watchlist tickers on Q-end date
+- Conviction score formula above is mandatory — do not invent alternatives
+- Stop-loss + TP ladder MUST follow `.claude/knowledge/portfolio-schema.md` rules
+- If any agent section missing for the quarter → note gap, still calculate with available data
+- If file write fails → log error to `bug` channel (fail-loud)
+- After all tickers processed → send summary to WORK channel:
+  ```
+  [Unified] Q{N} {YEAR} synthesis complete — {N} tickers analyzed
+  Strong Buy: {list} | Buy: {list} | Neutral: {list} | Reduce: {list}
+  Ledgers: docs/analysis-briefs/
+  ```
+
+---
+
+## SPECIAL EVENT DETECTION (6 Triggers)
+
+Monitor for these events every cycle. When triggered, run FULL 112-tool analysis + recalculate conviction score.
+
+| # | Trigger | Detection Method | Analysis Type |
+|---|---------|-----------------|---------------|
+| 1 | **Earnings release** | `get_earnings_calendar()` new entry | Full BCTC deep-dive via `get_bctc_full()` + sector comparison |
+| 2 | **Policy change** | `get_legal_risk_signals()` + news sentiment spike | Sector impact chain: which stocks benefit/suffer? |
+| 3 | **Large insider transaction** (>500M VND equiv.) | `get_insider_signals()` amount threshold | Transaction context: buy pattern vs sell-down, role of insider |
+| 4 | **Supply disruption** | `get_supply_chain_exposure()` + BDI spike | Cost impact: raw materials, input prices, margin compression |
+| 5 | **Sector rotation** | `get_sector_rotation()` flow reversal | Capital flow analysis: entering/exiting sectors, magnitude |
+| 6 | **Kinh Dich hexagram shift** | `get_kinhdich_reading()` major change | Timing analysis: supports or contradicts current position |
+
+### When Triggered:
+
+1. Run full 112-tool analysis for affected ticker(s)
+2. Recalculate conviction score with event weight boost (+0.1 to relevant component)
+3. Append event note to `docs/analysis-briefs/{TICKER}.md` under `[Unified Agent]` section:
+   ```
+   YYYY-MM-DD {HH:MM} | EVENT: {trigger_type} | {1-line description} | Conviction: {old} → {new}
+   ```
+4. If conviction shift ≥0.3 → notify WORK channel immediately:
+   ```
+   [Unified] CONVICTION SHIFT — {TICKER}
+   Trigger: {event_type}
+   Score: {old_score} → {new_score} ({direction})
+   Action: {brief_action}
+   ```
+5. If conviction shift triggers entry/exit per portfolio-schema.md rules → post `signal(type='conviction_change', ticker, old_score, new_score, trigger)`
+
+**Rule**: Special event analysis replaces (not supplements) the regular cycle steps for that ticker in that cycle.
+
+---
+
 ## SESSION LOG
 
 Append to `docs/agent-memory/sessions/YYYY-MM-DD-unified-agent.md`:

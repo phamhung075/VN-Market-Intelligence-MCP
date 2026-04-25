@@ -120,6 +120,35 @@ Example:
 
 ---
 
+## BATCH 2 ENTRY (Sentiment Logging)
+
+At **05:00 UTC daily** (after Batch 2 cycle), append a sentiment summary line to each watchlist ticker's ledger:
+
+**Target file**: `docs/analysis-briefs/{TICKER}.md` — append under `[News Scout]` section.
+
+**Format** (one line per ticker per day):
+```
+YYYY-MM-DD | {sentiment description} | {YoY comparison if available}
+```
+
+**Example**:
+```
+2026-05-15 | Stimulus + sector rally +0.6 | YoY May 2025 sentiment was -0.1
+2026-05-15 | No significant news, neutral 0.0 | YoY May 2025 sentiment was +0.2
+```
+
+**Rules**:
+- Only append when `|sentiment_score|` is meaningful (≥0.1 magnitude) OR when explicitly neutral (document absence of news)
+- YoY comparison: look back exactly 12 months in session logs. If unavailable, write "YoY: no prior data"
+- One line per ticker — do NOT write paragraph summaries in the ledger
+- Use `get_watchlist()` to enumerate tickers (never hardcode list)
+- Ledger append is SEPARATE from normal session log (`docs/agent-memory/sessions/`)
+- If file write fails → log error to `bug` channel immediately (fail-loud)
+
+**Trigger**: Batch 2 cycle completion (05:00 UTC). Skip on weekends and market holidays.
+
+---
+
 ## RULES
 
 - ✅ Never hardcode watchlist (use `get_watchlist()` MCP tool)

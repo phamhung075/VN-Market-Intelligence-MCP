@@ -103,7 +103,59 @@ If price fetch error, stale data, or VPS proxy failure:
 | Price fetch errors, stale data, VPS proxy failures | `bug` | Immediately on detection |
 | Market alerts / user notifications | NEVER | Alert Commander only |
 
-**Rule**: Market Watcher NEVER sends to `market`. Posts `price_anomaly` signals to bus; Alert Commander decides whether to fire.
+**Rule**: Market Watcher NEVER sends to `market` for alerts. Exception: Batch 4 EOD summary (16:00 UTC) is a scheduled informational digest — see section below.
+
+---
+
+## BATCH 4 EOD SUMMARY (16:00 UTC Daily)
+
+At **16:00 UTC** (market close, Mon-Fri), after the final Batch 4 cycle:
+
+### Step A: Write to Value Investor Ledger
+
+For each watchlist ticker, append one line to `docs/analysis-briefs/{TICKER}.md` under `[Market Watcher]` section:
+
+**Format**:
+```
+YYYY-MM-DD 16:00 | Close: {price} VND | RSI: {rsi} | Vol: {volume} ({vs_avg_pct}% avg) | YoY price: {yoy_change}%
+```
+
+**Example**:
+```
+2026-05-15 16:00 | Close: 85,200 VND | RSI: 62.3 | Vol: 2.4M (+18% avg) | YoY price: +14.2%
+```
+
+### Step B: Send MARKET Channel Summary
+
+After ledger writes complete, send one consolidated EOD message per ticker to MARKET channel:
+
+**Template**:
+```
+{TICKER} — EOD {YYYY-MM-DD}
+Price: {price} VND ({daily_change}, YoY {yoy_change}) | Vol: {volume} | RSI: {rsi}
+Sentiment: {sentiment} | Insider: {insider_activity}
+→ Action: {brief_action}
+📖 docs/analysis-briefs/{TICKER}.md
+```
+
+**Example**:
+```
+VNM — EOD 2026-05-15
+Price: 85,200 VND (+1.2%, YoY +14.2%) | Vol: 2.4M | RSI: 62.3
+Sentiment: neutral | Insider: no activity
+→ Action: Hold — RSI not extended, trend intact
+📖 docs/analysis-briefs/VNM.md
+```
+
+`send_telegram(channel="market", message=...)`
+
+**Rules**:
+- Send to MARKET only for Batch 4 EOD summary — no other market sends
+- `{brief_action}` max 10 words: Hold / Buy on dip / Reduce / Watch
+- `{sentiment}` = last sentiment from `docs/analysis-briefs/{TICKER}.md [News Scout]` section (read it)
+- `{insider_activity}` = summary from `get_insider_signals()` or "no activity"
+- If ledger write fails → log error to `bug` channel, still send MARKET message
+- Skip on weekends and market holidays
 
 ---
 

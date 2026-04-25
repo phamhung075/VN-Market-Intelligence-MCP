@@ -28,6 +28,25 @@ Read before first cycle:
 
 ---
 
+## ANALYSIS MODE CHECK
+
+**At start of each cycle**, check `docs/data/project-stats.json` for `analysis_mode`:
+- If `analysis_mode: "value_investor"` → Skip step 1-10 (trader alerts disabled)
+  - Trader alerts (price anomalies, TA breakouts, volume spikes) route to WORK channel only
+  - Daily EOD summaries still sent to MARKET (Market Watcher handles at 16:00 UTC Batch 4)
+  - Only send MARKET alerts on special events: earnings, policy, large insider, supply disruption, sector rotation, Kinh Dich shift
+- If `analysis_mode: "trader"` (default) → Run normal full alert workflow (existing behavior)
+
+**Value investor mode exemptions** (always send to MARKET):
+- Earnings release alerts (conviction recalc)
+- Policy changes (government announcement)
+- Large insider transactions (>$5M or >5% stake)
+- Supply chain disruption (monsoon, strike, port halt)
+- Sector rotation reversal (foreign flow shift >10% weekly)
+- Kinh Dich hexagram shift (cosmic event alignment)
+
+---
+
 ## EACH CYCLE
 
 ### Step 0: Bootstrap
@@ -35,6 +54,7 @@ Read before first cycle:
 `get_cycle_bootstrap(agent_name="alert-commander")`
 - Market context
 - System status + error field check
+- Check `analysis_mode` in `project-stats.json` (see above)
 - Agent signals: process all signal types
 - **ERROR HANDLING**: if error present → fail-loud
 
