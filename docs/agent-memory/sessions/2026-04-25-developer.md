@@ -1,5 +1,16 @@
 # Developer Session — 2026-04-25
 
+### Fix 1265: batch_review_market_messages verdict persistence
+- **Files**: `apps/mcp-server/src/infrastructure/db/schema-news.ts` (L158: `reviewed_at INTEGER` → `reviewed_at TEXT`), `apps/mcp-server/src/__tests__/FIX-1265-batch-review-persist.test.ts` (new, 7 tests), `apps/mcp-server/src/__tests__/1311a-schema-migration.test.ts` (test updated to use datetime string not unix int)
+- **Finding**: ALTER TABLE migration (Task 1311a) added `reviewed_at` column with type `INTEGER` on pre-migration DBs, while `CREATE TABLE` DDL defined it as `TEXT`. Although SQLite flexible affinity stores datetime('now') text in both cases, on TEXT-affinity columns integers are coerced to strings. The existing test in 1311a encoded the wrong behavior by asserting `reviewed_at === 1714000000` (integer). Fixed column type to TEXT throughout. Full round-trip regression test added covering insert → batchReview → re-query → verify gone.
+- **Status**: Ready for QA. Commit `7b37c2d2`. Branch `fix/batch-review-persist`.
+
+
+### Fix 1270/1276: USD/VND alert quality
+- **Files**: `apps/mcp-server/src/domain/services/macroThresholds.ts` (L137: minAbsDeviation 10→50), `apps/mcp-server/src/infrastructure/config.ts` (AlertQualityConfig + macroCooldownMinutes field), `mcp.config.json` (macroCooldownMinutes:360), `apps/mcp-server/src/scheduler/news-analysis/intelligenceCycleJob.ts` (step E: MACRO uses 6h cooldown, history query widened 2h→7h), `src/__tests__/FIX-1270-usdvnd-alert-quality.test.ts` (new), `1270`/`1269`/`1326`/`1307a` tests updated for 50 VND guard
+- **Finding**: Three root causes. (1) 50 VND threshold: `minAbsDeviation` was 10 VND — 2.8 VND at σ=0.76 still returned "elevated" (not high/extreme), so no alert fired. But 10 VND would fire (zScore -13σ). Raised to 50 VND. (2) Cooldown history window was 2h but macro cooldown config was 30min — mismatch meant MACRO alerts could not be suppressed across cycles. Widened history to macroCooldownMinutes+1h=7h. (3) MACRO alerts now use separate 6h config from `alertQuality.macroCooldownMinutes`. (4) Tests in 1269/1326/1307a used stdDev=12 with 31-42 VND deviations — below new 50 VND guard. Updated to stdDev=20 + 55/75 VND deviations.
+- **Status**: Ready for QA. Commit `952e011c`. Branch `fix/usdvnd-alert-quality`.
+
 ### Task 1329c: wal-shutdown-settle
 - **Files**: `apps/mcp-server/src/infrastructure/db/checkpoint.ts` (L113: shutdown callback `async`, L120: `await Bun.sleep(200)` added), `apps/mcp-server/src/__tests__/1329a-wal-hardening.test.ts` (1329c describe block appended)
 - **Finding**: Parallel task 1329a had already replaced the test file with its own content when the 1329c session ran. Appended 1329c's describe block to the shared file rather than overwriting. Commit landed on `task/1329b-wal-sentinel` (parallel branch active) — PM should note for rebase sequence.
