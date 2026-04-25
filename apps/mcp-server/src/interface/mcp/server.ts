@@ -541,7 +541,21 @@ export async function createBunServer(
         } catch { /* best effort */ }
 
         log.info("[push-prices] updated prices + OHLCV + ticks", { count, source: "vps-proxy" });
-        logVpsPush({ service: "prices", itemsCount: count, status: "ok" });
+        // FIX-1274: logVpsPush wrapped in try/catch — a log-write failure must NEVER
+        // return HTTP 400 to the VPS. If logVpsPush throws (e.g., vps_push_log is
+        // missing extended columns added by schema migrations that haven't run yet on
+        // this restart), the VPS would receive 400, increment its FAILURE_COUNT, and
+        // enter exponential backoff (300s → 600s). After ~19 consecutive 400 responses
+        // the accumulated backoff reaches ~2 hours — matching the "Gia co phieu: 2.0h
+        // ago" symptom. market_prices is already written above; a missing log row is
+        // far less harmful than triggering VPS backoff.
+        try {
+          logVpsPush({ service: "prices", itemsCount: count, status: "ok" });
+        } catch (logErr) {
+          log.warn("[push-prices] logVpsPush failed (non-fatal) — market_prices written, VPS gets 200", {
+            error: logErr instanceof Error ? logErr.message : String(logErr),
+          });
+        }
         res.writeHead(200, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ ok: true, updated: count }));
 
