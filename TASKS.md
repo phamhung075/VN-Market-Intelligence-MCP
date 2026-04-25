@@ -43,7 +43,7 @@
 | ARCH-1329 | Architecture design | done | Architect | — | — | — | TECH: `docs/TECH_1329.md` + 7 handoffs |
 | 1329a | WAL: checkpoint mode param + 30min cron + nightly backup | Done | QA | — | 1329b,1329c | — | Merged fdd3abf4. 1329c contamination stripped. |
 | 1329b | WAL: size sentinel — 5k warn / 10k critical + disk guard | Done | QA | — | 1329c,1329d | 1329a | Merged 06fa6f89. 10/10 tests pass. WORK channel confirmed. |
-| 1329c | WAL: shutdown 200ms settle before process.exit | Done | QA | — | 1329d | 1329b | Merged with 1329b batch. |
+| 1329c | WAL: shutdown 200ms settle before process.exit | Done | QA | — | 1329d | 1329b | Merged via 1329b branch (commit 5c82dace). Verified on main: async shutdown + await Bun.sleep(200). 8/8 tests pass, 0 tsc errors. |
 | 1329d | IMF: ConvictionInput/Result type extension (7th dim) | Done | QA | — | 1329e | 1329c | Merged with 1329g batch. |
 | 1329e | IMF: scoreImfMacro() + WEIGHTS rescale to 7 dims | Done | QA | — | 1329f | 1329d | Merged with 1329g batch. |
 | 1329f | IMF: new imfConvictionBridge.ts (application/services) | Done | QA | — | 1329g | 1329e | Merged with 1329g batch. |

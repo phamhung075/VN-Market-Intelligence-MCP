@@ -119,6 +119,11 @@
 - **Finding**: `checkpoint.ts` and `jobs.ts` were already committed on this branch by 1329a/1329c parallel sessions. `checkWalFileSize` was inserted into the same file that 1329a already modified — no conflict. walCheckpointAlert.ts was the only file that needed threshold logic change. Pre-existing failure count: 12 on main, 10 on this branch (improvement). Bun 1.3.11 C++ panic is a known OOM issue unrelated to this task.
 - **Status**: Ready for QA. Commit `255f8898`. Branch `task/1329b-wal-sentinel`.
 
+### Task 1329g: imf-wire
+- **Files**: `apps/mcp-server/src/application/usecases/scanMarket.ts` (import + hoist imfMacroScore before loop + inject into convictionInput), `apps/mcp-server/src/application/usecases/assembleBriefing.ts` (dynamic import + hoist + spread-conditional inject), `apps/mcp-server/src/interface/mcp/tools/portfolio/portfolioTools.ts` (static import + hoist + inject), `apps/mcp-server/src/__tests__/1329b-imf-conviction-dimension.test.ts` (4 new tests in Task 1329g describe)
+- **Finding**: Handoff had wrong import path for assembleBriefing.ts — `../../services/` should be `../services/` (assembleBriefing is in application/usecases, bridge is in application/services). Also `exactOptionalPropertyTypes: true` forbids passing `undefined` as a value for optional field — used spread conditional `...(x !== undefined ? { field: x } : {})` pattern. All 8 pre-existing failures confirmed unrelated.
+- **Status**: Ready for QA. Commit `7388f427`. Branch `task/1329b-imf-conviction-dimension`.
+
 ### Task 1329a: wal-checkpoint-freq
 - **Files**: `apps/mcp-server/src/infrastructure/db/checkpoint.ts` (mode param + backupDatabase already in HEAD via 1329c parallel commit), `apps/mcp-server/src/scheduler/jobs.ts` (cron default `0 */6` → `*/30`, mode-aware handler with isOffHours logic), `apps/mcp-server/src/__tests__/1329a-wal-hardening.test.ts` (7 new tests), `apps/mcp-server/src/__tests__/1447-checkpoint-restart-mode.test.ts` (updated 5 calls from old single-arg to `runWalCheckpoint('TRUNCATE', deps)`)
 - **Finding**: `checkpoint.ts` and 1329a test file were already committed by the parallel 1329c agent on branch `task/1329b-wal-sentinel`. Task 1329a committed the remaining jobs.ts + 1447 fix in commit `64e6f509`. 8 tests pass, 0 fail. 0 TS errors.
