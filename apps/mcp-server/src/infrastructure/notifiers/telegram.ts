@@ -548,9 +548,10 @@ export async function notifyTelegramAlert(
   };
   if (options.fetchFn !== undefined) sendOpts.fetchFn = options.fetchFn;
 
-  // Send to MARKET channel for HIGH/CRITICAL alerts with conviction blocks
-  const sent = await sendTelegramMarket(text, sendOpts);
-  return sent;
+  // Send to BUG channel for HIGH/CRITICAL alerts (per docstring + test contract).
+  // Use coreSend directly to bypass dedup/persist side-effects from sendTelegramBug.
+  const result = await coreSend("bug", text, sendOpts);
+  return result.ok;
 }
 
 /**
