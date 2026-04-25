@@ -57,7 +57,7 @@ describe("Task 1447/1458 — checkpoint TRUNCATE mode", () => {
 
   it("(a) uses TRUNCATE mode, not PASSIVE or RESTART", () => {
     mockQueryReturn = { busy: 0, log: 500, checkpointed: 500 };
-    runWalCheckpoint(deps);
+    runWalCheckpoint('TRUNCATE', deps);
     expect(queryCalls.length).toBe(1);
     expect(queryCalls[0]).toContain("TRUNCATE");
     expect(queryCalls[0]).not.toContain("RESTART");
@@ -66,7 +66,7 @@ describe("Task 1447/1458 — checkpoint TRUNCATE mode", () => {
 
   it("(b) returns { walSize, checkpointed } from PRAGMA result", () => {
     mockQueryReturn = { busy: 0, log: 800, checkpointed: 750 };
-    const result = runWalCheckpoint(deps);
+    const result = runWalCheckpoint('TRUNCATE', deps);
     expect(result.walSize).toBe(800);
     expect(result.checkpointed).toBe(750);
   });
@@ -74,7 +74,7 @@ describe("Task 1447/1458 — checkpoint TRUNCATE mode", () => {
   it("(c) logs ERROR when remaining frames > 10000", () => {
     // log=12000, checkpointed=500 → remaining=11500 > 10000
     mockQueryReturn = { busy: 1, log: 12000, checkpointed: 500 };
-    runWalCheckpoint(deps);
+    runWalCheckpoint('TRUNCATE', deps);
     expect(errorCalls.length).toBeGreaterThan(0);
     const errorMsg = errorCalls[0]?.msg ?? "";
     expect(errorMsg).toContain("WAL stuck");
@@ -82,13 +82,13 @@ describe("Task 1447/1458 — checkpoint TRUNCATE mode", () => {
 
   it("(c2) does NOT warn when remaining frames <= 1000", () => {
     mockQueryReturn = { busy: 0, log: 1200, checkpointed: 1200 };
-    runWalCheckpoint(deps);
+    runWalCheckpoint('TRUNCATE', deps);
     expect(warnCalls.length).toBe(0);
   });
 
   it("(d) returns zeros when query returns null (error fallback)", () => {
     mockQueryReturn = null;
-    const result = runWalCheckpoint(deps);
+    const result = runWalCheckpoint('TRUNCATE', deps);
     expect(result.walSize).toBe(0);
     expect(result.checkpointed).toBe(0);
   });

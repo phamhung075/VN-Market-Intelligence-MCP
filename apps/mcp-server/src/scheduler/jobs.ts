@@ -33,7 +33,7 @@ import { runMorningBriefing } from './briefings/morningBriefingJob.js'
 import { runEveningSummary } from './briefings/eveningSummaryJob.js'
 import { runIntelligenceCycle } from './news-analysis/intelligenceCycleJob.js'
 import { registerSummaryJobs } from './summaryJobs.js'
-import { runWalCheckpoint, registerShutdownHook } from '../infrastructure/db/checkpoint.js'
+import { runWalCheckpoint, registerShutdownHook, backupDatabase, checkWalFileSize } from '../infrastructure/db/checkpoint.js'
 import { walCheckpointAlert } from './walCheckpointAlert.js'
 import { runPatternWatch } from './news-analysis/patternWatchJob.js'
 import { runDailyAudit, runWeeklyAudit, runDailyAuditIfStale } from './news-analysis/dataAuditJob.js'
@@ -101,8 +101,8 @@ export const CRONS = {
   bctcQueueEnricher:      Bun.env.CRON_BCTC_QUEUE_ENRICHER        ?? '*/15 * * * *',
   /** /ask queue check: every 12 min — signal 07-qa-responder when pending (task 1074) */
   askQueueCheck:          Bun.env.CRON_ASK_QUEUE_CHECK             ?? '*/12 * * * *',
-  /** SQLite WAL checkpoint: every 6h (task 1464 — was daily 20:00 UTC, busy readers blocked TRUNCATE causing 497MB WAL) */
-  walCheckpoint:          Bun.env.CRON_WAL_CHECKPOINT             ?? '0 */6 * * *',
+  /** SQLite WAL checkpoint: every 30min FULL (live hours) + TRUNCATE+backup at 03-05 UTC (task 1329a) */
+  walCheckpoint:          Bun.env.CRON_WAL_CHECKPOINT             ?? '*/30 * * * *',
   /** Periodic summary — daily: 22:30 every day (task 1023) */
   summaryDaily:           Bun.env.CRON_SUMMARY_DAILY              ?? '30 22 * * *',
   /** Periodic summary — weekly: 23:00 every Sunday (task 1023) */
@@ -365,12 +365,21 @@ export function startScheduler() {
     })
   }, { timezone: 'Asia/Ho_Chi_Minh' })
 
-  // 03:00 GMT+7 (20:00 UTC) — WAL checkpoint (task 140, 1458)
-  // Note: 20:00 UTC = 03:00 GMT+7 (ICT). Overridable via CRON_WAL_CHECKPOINT env var.
+  // Every 30min — WAL checkpoint (task 1329a)
+  // FULL mode during live hours; TRUNCATE + backup during off-hours 03:00-05:00 UTC.
+  // Overridable via CRON_WAL_CHECKPOINT env var.
   cron.schedule(CRONS.walCheckpoint, async () => {
     await recordJobRun(getDb(), 'walCheckpointJob', async () => {
-      const walResult = runWalCheckpoint()
-      await walCheckpointAlert(walResult)
+      const hour = new Date().getUTCHours();
+      // Off-hours 03:00-05:00 UTC: TRUNCATE + backup. Live hours: FULL (non-blocking).
+      const isOffHours = hour >= 3 && hour < 5;
+      const mode = isOffHours ? 'TRUNCATE' : 'FULL';
+      await checkWalFileSize(Bun.env.DB_PATH ?? 'market.db');
+      const walResult = runWalCheckpoint(mode);
+      await walCheckpointAlert(walResult);
+      if (isOffHours) {
+        await backupDatabase(Bun.env.DB_PATH ?? 'market.db');
+      }
     })
   })
 
