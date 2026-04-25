@@ -15,6 +15,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { getDb, initDatabase } from "../../../../infrastructure/db/schema.js";
 import { computeConviction, deriveKinhDichScore } from "../../../../domain/services/convictionScorer.js";
+import { getImfMacroScoreForConviction } from "../../../../application/services/imfConvictionBridge.js";
 import { getSectorPeers, SECTOR_NAME_VI } from "../../../../domain/services/sectorPeers.js";
 import { buildPositionLine, buildActionNote } from "../../../../domain/services/decisionNoteSynthesizer.js";
 import { listOpenPositions } from "../../../../infrastructure/db/positionStore.js";
@@ -311,6 +312,10 @@ export function registerPortfolioTools(server: McpServer): void {
           } catch { /* kinhdich_readings may not exist */ }
         }
 
+        // Dimension 7: IMF macro — hoist outside watchlist loop (same value per tool call)
+        let portfolioImfScore: number | undefined;
+        try { portfolioImfScore = getImfMacroScoreForConviction(db); } catch { /* best-effort */ }
+
         // ── 7. Build conviction results — ZERO db.query() calls inside this loop ──
         const results: {
           code: string;
@@ -346,6 +351,11 @@ export function registerPortfolioTools(server: McpServer): void {
               kdRow.trading_signal,
               kdRow.confidence ?? undefined,
             );
+          }
+
+          // Dimension 7: IMF macro — inject pre-hoisted score
+          if (portfolioImfScore !== undefined) {
+            input.imfMacroScore = portfolioImfScore;
           }
 
           const conviction = computeConviction(input);

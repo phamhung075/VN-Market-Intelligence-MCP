@@ -80,3 +80,28 @@ describe("Task 1329e — scoreImfMacro() + WEIGHTS", () => {
     expect(Object.keys(result.dimensions).length).toBe(7);
   });
 });
+
+describe("Task 1329g — IMF wire-up: computeConviction receives imfMacroScore at call sites", () => {
+  it("computeConviction with imfMacroScore from bridge returns valid result", () => {
+    // Bridge returns 0 on empty DB — simulate that here as a unit test
+    const result = computeConviction({ code: "VNM", changePct: 2.0, imfMacroScore: 0 });
+    // scoreImfMacro(0) = 0.5 + 0 * 0.5 = 0.5
+    expect(result.dimensions.imfMacro).toBe(0.5);
+    expect(typeof result.score).toBe("number");
+  });
+
+  it("positive imfMacroScore lifts dimensions.imfMacro above 0.5", () => {
+    const result = computeConviction({ code: "VNM", changePct: 2.0, imfMacroScore: 0.4 });
+    expect(result.dimensions.imfMacro).toBeGreaterThan(0.5);
+  });
+
+  it("negative imfMacroScore pulls dimensions.imfMacro below 0.5", () => {
+    const result = computeConviction({ code: "VNM", changePct: 2.0, imfMacroScore: -0.4 });
+    expect(result.dimensions.imfMacro).toBeLessThan(0.5);
+  });
+
+  it("imfMacroScore undefined (not passed) gives neutral 0.5 — matches call sites that skip bridge", () => {
+    const result = computeConviction({ code: "VNM", changePct: 2.0 });
+    expect(result.dimensions.imfMacro).toBe(0.5);
+  });
+});

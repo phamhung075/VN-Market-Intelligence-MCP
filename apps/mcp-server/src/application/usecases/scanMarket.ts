@@ -24,6 +24,7 @@ import { logger } from "../../infrastructure/logger.js";
 import { validatePriceNews, type PriceAction, type NewsSentiment } from "../../domain/services/financial-reports/priceNewsValidator.js";
 import { classifySentiment } from "../../domain/services/sentimentClassifier.js";
 import { computeConviction, type ConvictionInput } from "../../domain/services/convictionScorer.js";
+import { getImfMacroScoreForConviction } from "../services/imfConvictionBridge.js";
 import {
   getContextStocksForWatchlist,
   computeSectorAverage,
@@ -470,6 +471,12 @@ export async function scanMarket(
   }
 
   // ── Step 5c: Conviction scoring — cross-validate all signals per stock ───
+  // Dimension 7: IMF macro — hoist outside loop (same value for all stocks per scan cycle)
+  let imfMacroScore: number | undefined;
+  try {
+    imfMacroScore = getImfMacroScoreForConviction(getDb());
+  } catch { /* best-effort — neutral if bridge fails */ }
+
   for (const price of prices) {
     const domain = codeToDomain.get(price.code);
     const sectorAvg = domain && domain !== "other" ? sectorAverages.get(domain) ?? undefined : undefined;
@@ -501,6 +508,10 @@ export async function scanMarket(
         convictionInput.sentimentConfidence = sent.confidence;
       }
     } catch { /* best-effort */ }
+
+    if (imfMacroScore !== undefined) {
+      convictionInput.imfMacroScore = imfMacroScore;
+    }
 
     const conviction = computeConviction(convictionInput);
 
