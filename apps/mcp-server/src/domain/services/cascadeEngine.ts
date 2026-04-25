@@ -572,10 +572,13 @@ export const SECTOR_RULES: SectorRule[] = [
   {
     keywords: [
       "stabilization fund",
+      "stock market support measures",   // FIX-1268: English exact phrase from article titles
       "market support measures",
+      "government stock market support", // FIX-1268: English variant
       "quỹ bình ổn",
       "bình ổn thị trường",
       "chính phủ hỗ trợ thị trường",
+      "hỗ trợ thị trường chứng khoán",  // FIX-1268: Vietnamese stock-market specific phrase
       "gói kích thích",
       "gói hỗ trợ",
     ],
@@ -1312,6 +1315,9 @@ export const SECTOR_RULES: SectorRule[] = [
       "phong tỏa eo biển hormuz",
       "phong tỏa hormuz",
       "eo biển hormuz bị phong tỏa",
+      // FIX-1264: article uses "eo hormuz" (without "biển") — add both short variants
+      "eo hormuz bị phong tỏa",
+      "hormuz bị phong tỏa",
       "hormuz blockade",
       "strait of hormuz blocked",
       "strait of hormuz blockade",
@@ -1332,11 +1338,13 @@ export const SECTOR_RULES: SectorRule[] = [
     domain: "oil_gas",
     direction: "up",
     confidence: 0.88,
-    title: "Gián đoạn nguồn cung dầu (Hormuz/Suez/OPEC) — giá dầu tăng mạnh, tích cực cho PVD, PVS, GAS",
+    title: "Gián đoạn nguồn cung dầu (Hormuz/Suez/OPEC) — giá dầu tăng mạnh, tích cực cho PVD, PVS, GAS, BSR",
     affected_actions: [
       { code: "PVD", direction: "up" },
       { code: "PVS", direction: "up" },
       { code: "GAS", direction: "up" },
+      // FIX-1264: BSR (Binh Son Refinery) is oil_gas — Hormuz blockade = oil price up = BULLISH
+      { code: "BSR", direction: "up" },
     ],
   },
 
@@ -1345,6 +1353,9 @@ export const SECTOR_RULES: SectorRule[] = [
     keywords: [
       "phong tỏa eo biển hormuz",
       "phong tỏa hormuz",
+      // FIX-1264: article uses "eo hormuz" (without "biển") — add both short variants
+      "eo hormuz bị phong tỏa",
+      "hormuz bị phong tỏa",
       "hormuz blockade",
       "strait of hormuz blocked",
       "strait of hormuz blockade",
@@ -1392,7 +1403,7 @@ export const SECTOR_RULES: SectorRule[] = [
     confidence: 0.82,
     title: "Gián đoạn nguồn cung dầu — tuyến vận tải bị gián đoạn, chi phí tăng (GMD, PHP chịu áp lực)",
     affected_actions: [
-      { code: "BSR", direction: "down" },
+      // FIX-1264: BSR removed — BSR is Binh Son Refinery (oil_gas), not logistics
       { code: "GMD", direction: "down" },
       { code: "PHP", direction: "down" },
     ],
