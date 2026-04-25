@@ -14,16 +14,9 @@
 - **1317:** Task308 test regex + project-stats sync
 - **1318–1321:** Watchdog foreign_flow staleness, VPS OOM guard
 - **1326b:** MARKET channel spam guard
-- **DDD Phase 0:** Monorepo scaffold — merged
-- **DDD Phase 1a/1b:** PDF Extractor + RAG Service Python/FastAPI — done
-- **DDD Phase 2a/2b:** 4 TS microservices + kinh-dich + alert-engine — done
-- **Phase 3c:** Parallel TA + BB alert scan (Promise.allSettled) — merged 8c33f0da
-- **1327:** Phase 0 merge + test infrastructure stabilization — Done (1327b,1327c done; 1327a review; 1327-docker deferred)
-- **1328:** Cowork communication overhaul — Done (signal payload fields, conviction scorer, suppression transparency, 3-channel strategy, impact threshold tuning)
-- **fix-1293c:** Signal rejection time-filtering — Done (SQLite datetime() replaces JS ISO cutoff, 3 regression tests restored)
-- **fix-1328e:** notifyTelegramAlert BUG channel routing — Done (coreSend("bug") direct, rebased onto watchdog null-fix, 12/12 pass)
-- **fix-bctc-ocr:** BCTC OCR fallback hardening — Done (fallback disabled by default, null on rejection, contamination reverted, merged 1e366b66)
-- **fix-watchdog-recovery:** Null foreign-flow timestamp treated as fresh — Done (3 tests pass, APPROVED, report 2026-04-25)
+- **DDD Phase 0–3c:** Monorepo scaffold, PDF/RAG Python services, 4 TS microservices, parallel TA+BB scan — all merged
+- **1327–1329:** Phase 0 merge + test infra, Cowork overhaul, WAL hardening + IMF 7th conviction dim — Done (6927 pass / 7 fail)
+- **fix-1293c / fix-1328e / fix-bctc-ocr / fix-watchdog-recovery / fix/signal-payload-fields:** Signal, bug routing, OCR, null-flow, conviction fields — all merged
 
 ---
 
@@ -33,20 +26,23 @@
 
 ## Todo
 
-### Sprint 1329 — WAL Hardening + IMF Conviction Dimension
+### Sprint 1330 — Fix 7 Failing Tests
 
-**Execution Strategy:** WAL batch (1329a→1329b→1329c, merge sequence enforced). Code-dev 1329b+1329c in parallel while 1329a reviews. IMF batch starts after WAL merges.
+| ID | Title | Size | Status | Handoff |
+|----|-------|------|--------|---------|
+| 1330a | RED: Confirm failure map for 7 failing tests | XS | Done | `docs/handoffs/TASK_1330a.md` |
+| 1330b | GREEN: Fix blocking regressions + isolation bugs | S | Todo | `docs/handoffs/TASK_1330b.md` |
 
-| ID | Task | Status | Owner | Branch | Blocks | Dependencies | Notes |
-|----|------|--------|-------|--------|--------|--------------|-------|
-| BA-1329 | Requirement Spec: WAL Hardening + IMF Conviction Dimension | done | BA | — | — | — | REQ: `docs/REQ_1329.md` |
-| ARCH-1329 | Architecture design | done | Architect | — | — | — | TECH: `docs/TECH_1329.md` + 7 handoffs |
-| 1329a | WAL: checkpoint mode param + 30min cron + nightly backup | Done | QA | — | 1329b,1329c | — | Merged fdd3abf4. 1329c contamination stripped. |
-| 1329b | WAL: size sentinel — 5k warn / 10k critical + disk guard | Done | QA | — | 1329c,1329d | 1329a | Merged 06fa6f89. 10/10 tests pass. WORK channel confirmed. |
-| 1329c | WAL: shutdown 200ms settle before process.exit | Done | QA | — | 1329d | 1329b | Merged via 1329b branch (commit 5c82dace). Verified on main: async shutdown + await Bun.sleep(200). 8/8 tests pass, 0 tsc errors. |
-| 1329d | IMF: ConvictionInput/Result type extension (7th dim) | Done | QA | — | 1329e | 1329c | Merged with 1329g batch. |
-| 1329e | IMF: scoreImfMacro() + WEIGHTS rescale to 7 dims | Done | QA | — | 1329f | 1329d | Merged with 1329g batch. |
-| 1329f | IMF: new imfConvictionBridge.ts (application/services) | Done | QA | — | 1329g | 1329e | Merged with 1329g batch. |
-| 1329g | IMF: wire bridge into scanMarket + assembleBriefing + portfolioTools | Done | QA | — | — | 1329f | Merged 7388f427. 6905 pass, 0 new fails, tsc 0 errors. |
+**Baseline:** 6927 pass / 7 fail → Target: 6934 pass / 0 fail
+
+**7 failures confirmed (1330a triage — corrected map):**
+- `1294b` (3): `result?.fallback` undefined — field not on return type of `fetchParseAndStoreBctc`
+- `1476` (2): Sprint 1329 changed WAL message format + threshold — update test contracts
+- `240` AC-4 (1): Missing `_resetWatchdogCooldown()` call — cooldown leaks from prior tests
+- `1319` (1): Logic bug — `null` reader treated as age=0 (fresh), test expects alert-sent
+
+---
+
+## In Progress
 
 ---
