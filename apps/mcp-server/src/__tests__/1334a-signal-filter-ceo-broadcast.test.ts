@@ -20,6 +20,7 @@ import { Database } from "bun:sqlite";
 import { postSignal } from "../infrastructure/db/agentSignalStore.js";
 import { buildCausalChain } from "../domain/services/cascadeEngine.js";
 import type { AnalysisEntry } from "../domain/services/newsNormalizer.js";
+import type { WatchlistEntry } from "../domain/services/cascadeEngine.js";
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
@@ -70,7 +71,6 @@ describe("Task 1334a-A — postSignal stock_code sentinel normalisation", () => 
       fromAgent: "market-watcher",
       toAgent: "alert-commander",
       signalType: "urgent_news",
-      stockCode: undefined,
       payload: { title: "VN-Index falls" },
       ttlMinutes: 60,
     });
@@ -146,10 +146,10 @@ const DSC_ARTICLE: AnalysisEntry = {
   createdAt: new Date().toISOString(),
 };
 
-const WATCHLIST = [
-  { actionCode: "VCB", domain: "banking" as const, exchange: "HOSE" },
-  { actionCode: "VNM", domain: "consumer_goods" as const, exchange: "HOSE" },
-  { actionCode: "SSI", domain: "securities" as const, exchange: "HOSE" },
+const WATCHLIST: WatchlistEntry[] = [
+  { actionCode: "VCB", domain: "banking", exchange: "HOSE" },
+  { actionCode: "VNM", domain: "retail", exchange: "HOSE" },
+  { actionCode: "SSI", domain: "securities", exchange: "HOSE" },
 ];
 
 describe("Task 1334a-B — CEO bearish warning market-wide broadcast", () => {
@@ -167,7 +167,7 @@ describe("Task 1334a-B — CEO bearish warning market-wide broadcast", () => {
 
     const vcbImpact = chain.watchlistImpacts.find((w) => w.actionCode === "VCB");
     expect(vcbImpact).toBeDefined();
-    expect(vcbImpact!.impactDirection).toBe("negative"); // RED: not present
+    expect(vcbImpact!.impactDirection).toBe("down"); // RED: not present
   });
 
   it("broadcast cascade entry reasoning contains analyst-warning marker", () => {
@@ -178,7 +178,7 @@ describe("Task 1334a-B — CEO bearish warning market-wide broadcast", () => {
     );
     expect(entries.length).toBeGreaterThan(0);
     // Reasoning must cite the analyst-warning cascade path
-    expect(entries[0].reasoning).toMatch(
+    expect(entries[0]!.reasoning).toMatch(
       /analyst.warning.*cascade|market-wide cascade/i
     ); // RED
   });
