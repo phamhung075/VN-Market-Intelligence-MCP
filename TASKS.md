@@ -21,18 +21,7 @@
 - **1327:** Phase 0 merge + test infrastructure stabilization — Done (1327b,1327c done; 1327a review; 1327-docker deferred)
 - **1328:** Cowork communication overhaul — Done (signal payload fields, conviction scorer, suppression transparency, 3-channel strategy, impact threshold tuning)
 - **fix-1293c:** Signal rejection time-filtering — Done (SQLite datetime() replaces JS ISO cutoff, 3 regression tests restored)
-
----
-
-## Review (QA Re-Check)
-
-| ID | Title | Layer | Branch | Status | Report |
-|----|-------|-------|--------|--------|--------|
-| 1328e-fix | notifyTelegramAlert: route HIGH/CRITICAL alerts to BUG channel, not MARKET | infra/telegram | `task/fix-1328e-telegram` | Review | Fix applied |
-
-**Root Cause:** notifyTelegramAlert violates Alert Commander exclusivity rule — server infrastructure scheduler must not send to MARKET channel.
-
-**Fix:** Line 552 changed from `sendTelegramMarket()` to `sendTelegramBug()`, line 525 comment updated. Tests: 12/12 pass, tsc clean.
+- **fix-1328e:** notifyTelegramAlert BUG channel routing — Done (coreSend("bug") direct, rebased onto watchdog null-fix, 12/12 pass)
 
 ---
 
