@@ -64,6 +64,23 @@ export function runVnstockMigrations(): void {
   // UNIQUE constraint — causing "ON CONFLICT clause does not match any
   // PRIMARY KEY or UNIQUE constraint" errors on every push-foreign-flow call.
   try {
+    // Dedup BEFORE creating the UNIQUE index.
+    // When the `date` column was added via ALTER TABLE DEFAULT '1970-01-01',
+    // every pre-existing row got the same date. This produces N duplicate
+    // (code, '1970-01-01') pairs. CREATE UNIQUE INDEX fails on duplicates.
+    // Fix: keep only the row with the highest id per (code, date) — that row
+    // has the most recent fetched_at value (largest autoincrement).
+    // Safe to run on clean DBs (DELETE affects 0 rows when no duplicates exist).
+    db.exec(`
+      DELETE FROM vnstock_trading_stats
+      WHERE id NOT IN (
+        SELECT MAX(id)
+        FROM vnstock_trading_stats
+        GROUP BY code, date
+      )
+    `);
+    logger.info("[vnstock-store] dedup vnstock_trading_stats (code, date) complete");
+
     db.exec(
       `CREATE UNIQUE INDEX IF NOT EXISTS uq_vnstats_code_date ON vnstock_trading_stats(code, date)`,
     );
