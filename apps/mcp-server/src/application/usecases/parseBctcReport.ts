@@ -197,7 +197,7 @@ function storeReport(
       balance_sheet_json, income_stmt_json, cash_flow_json, ratios_json,
       yoy_delta_json, qoq_delta_json,
       market_data_json, embedding_text, notes_raw_text,
-      validation_status, validation_notes
+      validation_status, validation_notes, extraction_method
     ) VALUES (
       $id, $actionCode, $companyName, $exchange, $domain,
       $periodYear, $periodQuarter, $periodType, $periodStart, $periodEnd, $sortKey,
@@ -213,7 +213,7 @@ function storeReport(
       $balanceSheetJson, $incomeStmtJson, $cashFlowJson, $ratiosJson,
       $yoyDeltaJson, $qoqDeltaJson,
       $marketDataJson, $embeddingText, $notesRawText,
-      $validationStatus, $validationNotes
+      $validationStatus, $validationNotes, $extractionMethod
     )
   `);
 
@@ -287,6 +287,7 @@ function storeReport(
     $notesRawText: report.notesRawText,
     $validationStatus: validationStatus,
     $validationNotes: validationNotes,
+    $extractionMethod: 'ocr_pdf',
   });
 }
 

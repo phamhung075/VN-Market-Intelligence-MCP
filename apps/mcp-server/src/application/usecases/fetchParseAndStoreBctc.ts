@@ -322,17 +322,17 @@ export async function fetchParseAndStoreBctc(
     }
   }
 
-  // Task 1294b: When PDF extraction returns empty text AND fallback is enabled,
-  // try the news chain fallback. This handles both explicit timeout errors and
-  // timeout situations detected during OCR attempts.
+  // Task 1294b: When a real PDF timeout error occurred AND fallback is enabled,
+  // try the news chain fallback. Empty text from pdfTextOverride='' or OCR miss
+  // without a timeout error is a clean abort — return null directly.
   if (!rawText || rawText.trim().length === 0) {
-    // Detect timeout errors early: if fallback is disabled and we have an error, throw it
-    if (extractionError && !enableBctcFallback) {
-      throw extractionError;
-    }
-
-    if (enableBctcFallback) {
-      logger.info(`${tag} PDF extraction failed — attempting news chain fallback`);
+    // Only attempt news-chain fallback when there was an actual extraction error
+    // (i.e. a timeout thrown by the PDF download/parse step).
+    if (extractionError) {
+      if (!enableBctcFallback) {
+        throw extractionError;
+      }
+      logger.info(`${tag} PDF timeout — attempting news chain fallback`);
       const fallbackResult = await tryNewsChainFallback(
         actionCode,
         year,
@@ -345,7 +345,7 @@ export async function fetchParseAndStoreBctc(
       logger.warn(`${tag} PDF extraction fallback rejected: ${fallbackResult.reason}`);
       return null;
     }
-    // Fallback is disabled
+    // No error (empty override or OCR miss) — clean abort
     logger.warn(`${tag} PDF extraction yielded empty text — aborting`);
     return null;
   }
