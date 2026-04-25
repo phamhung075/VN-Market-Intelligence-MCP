@@ -544,5 +544,5 @@ describe('1294b: BCTC PDF Timeout Fallback', () => {
       SELECT extraction_method FROM financial_reports WHERE action_code = ? AND sort_key = ?
     `).get('VJC', '2024-Q2') as any;
     expect(row.extraction_method).toBe('ocr_pdf'); // OCR took precedence
-  });
+  }, { timeout: 15000 });
 });

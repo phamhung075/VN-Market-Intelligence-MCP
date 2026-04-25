@@ -188,7 +188,7 @@ export async function fetchParseAndStoreBctc(
     pdfTextOverride,
     insertAnalysisFn,
     pdfUrl,
-    enableBctcFallback = true,
+    enableBctcFallback = false,
   } = params;
 
   const tag = `[fetchParseAndStoreBctc] ${actionCode} ${year}-${quarter}`;
@@ -341,13 +341,9 @@ export async function fetchParseAndStoreBctc(
       if (fallbackResult.fallback && fallbackResult.report) {
         return fallbackResult.report;
       }
-      // Fallback was attempted but rejected — return object indicating fallback was skipped
+      // Fallback was attempted but rejected — return null
       logger.warn(`${tag} PDF extraction fallback rejected: ${fallbackResult.reason}`);
-      return {
-        fallback: false,
-        reason: fallbackResult.reason,
-        hints: fallbackResult.hints,
-      } as any;
+      return null;
     }
     // Fallback is disabled
     logger.warn(`${tag} PDF extraction yielded empty text — aborting`);
@@ -378,6 +374,22 @@ export async function fetchParseAndStoreBctc(
   report.source.publishedAt = doc.publishedAt || report.source.parsedAt;
   const normFilename = normaliseFilename(doc.url, actionCode, year, quarter);
   report.source.pdfPath = join(process.cwd(), "data", "pdfs", normFilename);
+
+  // Task 1294b: If an existing row exists (from fallback), update extraction_method to 'ocr_pdf'
+  // This handles the case where fallback was inserted, then OCR succeeds on retry.
+  const db = getDb();
+  try {
+    db.prepare(`
+      UPDATE financial_reports
+      SET extraction_method = 'ocr_pdf'
+      WHERE action_code = ? AND sort_key = ?
+    `).run(actionCode, period.sortKey);
+    logger.info(`${tag} stamped extraction_method='ocr_pdf'`);
+  } catch (err) {
+    logger.warn(`${tag} failed to stamp extraction_method`, {
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
 
   // ── Step 4: Embed into LanceDB ────────────────────────────────────────────
   logger.info(`${tag} step 4: inserting analysis into LanceDB`);

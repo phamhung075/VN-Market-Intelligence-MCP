@@ -20,6 +20,7 @@
 - **Phase 3c:** Parallel TA + BB alert scan (Promise.allSettled) — merged 8c33f0da
 - **1327:** Phase 0 merge + test infrastructure stabilization — Done (1327b,1327c done; 1327a review; 1327-docker deferred)
 - **1328:** Cowork communication overhaul — Done (signal payload fields, conviction scorer, suppression transparency, 3-channel strategy, impact threshold tuning)
+- **fix-1293c:** Signal rejection time-filtering — Done (SQLite datetime() replaces JS ISO cutoff, 3 regression tests restored)
 
 ---
 
