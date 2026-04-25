@@ -209,14 +209,14 @@ export async function runTaAlertNotifier(
   const sendFn =
     deps?.sendFn ??
     (async (msg: string, opts: unknown) => {
-      const { sendTelegramBug } = await import(
+      const { sendTelegramMarket } = await import(
         "../../infrastructure/notifiers/telegram.js"
       );
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await sendTelegramBug(msg, opts as any);
+      await sendTelegramMarket(msg, opts as any);
     });
 
-  // ── FR-3: Send to bug channel (report) ────────────────────────────────────
+  // ── FR-3: Send to MARKET channel (user-facing TA alerts) ─────────────────
   try {
     await sendFn(message, {
       parseMode: "",
