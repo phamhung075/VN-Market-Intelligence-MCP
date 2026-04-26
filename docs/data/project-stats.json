@@ -1,13 +1,13 @@
 {
   "_maintained_by": "PM / system-auditor",
   "_trigger": "sprint start/end, tool/cron count change, baseline test update",
-  "lastUpdated": "2026-04-26T23:15:00Z",
+  "lastUpdated": "2026-04-27T00:00:00Z",
   "currentSprint": 1343,
   "previousSprint": { "number": 1342, "status": "DONE", "progressTasks": "Sprint 1342b: Implemented DB integrity check job. Sprints 1330-1342 all merged. Baseline stable: 6520 pass / 213 fail." },
   "sprintGoal": "Sprint 1343 — CRITICAL: Fix BCTC PDF pipeline. Ops diagnosed 4 blockers: HOSE React migration broke PDF discovery, VPS skip feedback missing, watchlist lost to 2 tickers (was 30), Q4 reports stale. Restore watchlist + fix PDF discovery + add VPS skip endpoint.",
-  "testBaseline": 6520,
-  "testBaselineTarget": 6520,
-  "testBaselinePass": 6520,
+  "testBaseline": 6536,
+  "testBaselineTarget": 6536,
+  "testBaselinePass": 6536,
   "testBaselineFail": 213,
   "testFailures": 213,
   "toolCount": 108,
@@ -21,5 +21,5 @@
   "briefingArchiveQI": 0,
   "briefingArchiveQII": 0,
   "lastFixApplied": "FIX-1316: LNG keyword case sensitivity in cascadeEngine.ts SECTOR_RULES (4 keywords lowercased) — merged 2026-04-24",
-  "currentSprintNotes": "2026-04-25 evening: Test baseline corrected to 6519 pass / 214 fail. The 214 failures are pre-existing integration/network tests requiring external services (Telegram, Yahoo Finance, VPS proxy, etc.) — not regressions. Total 6740 tests across 616 files. 7 skip, 1 error. Sprint advanced to 1336. Value Investor Analysis System initialized: 30 ledger files created, 4 cowork agents modified for daily batch logging + quarterly synthesis."
+  "currentSprintNotes": "2026-04-27: Sprint 1343a–1343c complete. 1343a (Watchlist restore + Q4 2025 backfill) merged 2026-04-26 (+12 tests). 1343b (HOSE PDF RED tests) + 1343c (HOSE PDF implementation) merged as single commit (+4 tests, all GREEN). Baseline now 6536 pass / 213 fail. Remaining 1343d–1343e for VPS skip endpoint + QA."
 }

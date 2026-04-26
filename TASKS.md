@@ -30,9 +30,9 @@
 
 | ID | Title | Size | Status |
 |----|-------|------|--------|
-| 1343a | Watchlist restore + Q4 2025 backfill | S | Todo |
-| 1343b | HOSE PDF discovery (RED tests) | S | Todo |
-| 1343c | HOSE PDF discovery (implementation) | M | Todo |
+| 1343a | Watchlist restore + Q4 2025 backfill | S | Done |
+| 1343b | HOSE PDF discovery (RED tests) | S | Done |
+| 1343c | HOSE PDF discovery (implementation) | M | Done |
 | 1343d | VPS skip endpoint + fetch-bctc.sh | S | Todo |
 | 1343e | Integration test + QA | S | Todo |
 
