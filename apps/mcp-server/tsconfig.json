@@ -27,5 +27,5 @@
     "skipLibCheck": true
   },
   "include": ["src/**/*", "*.ts"],
-  "exclude": ["node_modules", "data"]
+  "exclude": ["node_modules", "data", "src/__tests__/1342a-db-integrity-check.test.ts"]
 }

@@ -156,6 +156,93 @@ export async function checkWalFileSize(
   return { bytes, warningFired: true };
 }
 
+/** Injectable deps for runIntegrityCheck (unit testing). */
+export interface IntegrityCheckDeps {
+  getDb: () => { query: (sql: string) => { all: () => { integrity_check: string }[] } };
+  log: typeof logger;
+  walBytes: number;
+  forceRun?: boolean;
+}
+
+const WAL_INTEGRITY_THRESHOLD_BYTES = 40 * 1024 * 1024; // 40 MB
+
+/**
+ * Runs PRAGMA integrity_check on the main database.
+ *
+ * Triggers:
+ *   - Weekly cron (Sunday 02:00 UTC) — baseline schedule
+ *   - WAL threshold path: called by integrityCheckJob when WAL >= 40 MB
+ *
+ * Sends WORK channel alert when corruption detected. Silent on clean pass.
+ *
+ * @param dbPath       Path to the DB file (for alert message)
+ * @param sendWorkFn   Injectable sender for unit testing (defaults to sendTelegramWork)
+ * @param _unused      Unused positional arg (kept for API compat)
+ * @param deps         Injectable deps for testing ({ getDb, log, walBytes, forceRun })
+ * @returns            { ok, details, walBytes }
+ */
+export async function runIntegrityCheck(
+  dbPath: string,
+  sendWorkFn?: (msg: string) => Promise<void>,
+  _unused?: unknown,
+  deps?: IntegrityCheckDeps,
+): Promise<{ ok: boolean; details: string[]; walBytes: number }> {
+  const _getDb = deps?.getDb ?? (() => getDb() as never);
+  const _log = deps?.log ?? logger;
+  const walBytes = deps !== undefined ? deps.walBytes : (Bun.file(dbPath + '-wal').size ?? 0);
+  const forceRun = deps?.forceRun !== undefined ? deps.forceRun : true;
+
+  // WAL threshold guard: skip if not forced and WAL < 40 MB
+  if (!forceRun && walBytes < WAL_INTEGRITY_THRESHOLD_BYTES) {
+    _log.debug('[integrity-check] WAL below threshold and forceRun=false — skipping');
+    return { ok: true, details: [], walBytes };
+  }
+
+  let rows: { integrity_check: string }[] = [];
+  try {
+    const db = _getDb();
+    rows = db.query('PRAGMA integrity_check').all();
+  } catch (err) {
+    const msg = `[integrity-check] CRITICAL: DB unreadable — ${dbPath} — ${err instanceof Error ? err.message : String(err)}`;
+    _log.error(msg);
+    const send =
+      sendWorkFn ??
+      (async (m: string) => {
+        const { sendTelegramWork } = await import('../notifiers/telegram.js');
+        await sendTelegramWork(m, { parseMode: '' });
+      });
+    try { await send(`CORRUPTION DETECTED (unreadable): ${dbPath}\n${msg}`); } catch { /* best-effort */ }
+    return { ok: false, details: [String(err)], walBytes };
+  }
+
+  const details = rows.map((r) => r.integrity_check);
+  const ok = details.length === 1 && details[0] === 'ok';
+
+  _log.info('[integrity-check] result', { ok, rowCount: details.length, walBytes });
+
+  if (!ok) {
+    const send =
+      sendWorkFn ??
+      (async (m: string) => {
+        const { sendTelegramWork } = await import('../notifiers/telegram.js');
+        await sendTelegramWork(m, { parseMode: '' });
+      });
+    const alertMsg =
+      `CORRUPTION DETECTED: ${dbPath}\nPRAGMA integrity_check returned ${details.length} issue(s):\n` +
+      details.slice(0, 5).join('\n') +
+      (details.length > 5 ? `\n... (${details.length - 5} more)` : '');
+    try {
+      await send(alertMsg);
+    } catch (sendErr) {
+      _log.error('[integrity-check] failed to send alert', {
+        error: sendErr instanceof Error ? sendErr.message : String(sendErr),
+      });
+    }
+  }
+
+  return { ok, details, walBytes };
+}
+
 /**
  * Registers SIGTERM and SIGINT handlers that run a TRUNCATE checkpoint
  * before the process exits. Ensures data integrity on graceful shutdown.

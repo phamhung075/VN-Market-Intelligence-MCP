@@ -33,7 +33,8 @@ import { runMorningBriefing } from './briefings/morningBriefingJob.js'
 import { runEveningSummary } from './briefings/eveningSummaryJob.js'
 import { runIntelligenceCycle } from './news-analysis/intelligenceCycleJob.js'
 import { registerSummaryJobs } from './summaryJobs.js'
-import { runWalCheckpoint, registerShutdownHook, backupDatabase, checkWalFileSize } from '../infrastructure/db/checkpoint.js'
+import { runWalCheckpoint, registerShutdownHook, backupDatabase, checkWalFileSize, runIntegrityCheck } from '../infrastructure/db/checkpoint.js'
+import { runIntegrityCheckJob } from './integrityCheckJob.js'
 import { walCheckpointAlert } from './walCheckpointAlert.js'
 import { runPatternWatch } from './news-analysis/patternWatchJob.js'
 import { runDailyAudit, runWeeklyAudit, runDailyAuditIfStale } from './news-analysis/dataAuditJob.js'
@@ -175,6 +176,8 @@ export const CRONS = {
   imfIndicatorPoller:        Bun.env.CRON_IMF_INDICATOR_POLLER              ?? '0 */6 * * *',
   /** Session tool usage tracker: every 8h (matches cache TTL) — task 1299c */
   trackSessionToolUsage:     Bun.env.CRON_TRACK_SESSION_TOOL_USAGE          ?? '0 */8 * * *',
+  /** DB integrity check: weekly Sunday 02:00 UTC + WAL >= 40MB threshold — task 1342 */
+  integrityCheck:            Bun.env.CRON_DB_INTEGRITY_CHECK                 ?? '0 2 * * 0',
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -781,6 +784,20 @@ export function startScheduler() {
     await recordJobRun(getDb(), 'trackSessionToolUsageJob', async () => {
       const stats = await trackSessionToolUsageJob()
       return { rowsWritten: stats.sessionCount }
+    })
+  }, { timezone: 'UTC' })
+
+  // Sunday 02:00 UTC — DB integrity check — task 1342
+  // Runs PRAGMA integrity_check on market.db weekly.
+  // Also fires opportunistically when WAL >= 40 MB (integrityCheckJob handles threshold).
+  // Alert sent to WORK channel when corruption detected; silent on clean pass.
+  cron.schedule(CRONS.integrityCheck, async () => {
+    await recordJobRun(getDb(), 'integrityCheckJob', async () => {
+      const result = await runIntegrityCheckJob(Bun.env.DB_PATH ?? 'market.db', true)
+      if (result && !result.ok) {
+        log(`[integrity-check] CORRUPTION DETECTED — ${result.details.length} issue(s)`)
+      }
+      return { rowsWritten: result ? (result.ok ? 0 : 1) : 0 }
     })
   }, { timezone: 'UTC' })
 
