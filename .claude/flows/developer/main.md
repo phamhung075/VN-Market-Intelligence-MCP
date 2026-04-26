@@ -45,13 +45,7 @@ REPEAT per acceptance criterion
 - Module → `docs/agent-memory/modules/MODULE.md`
 - Session → `docs/agent-memory/sessions/YYYY-MM-DD-developer.md`
 
-**Notify PM + QA**:
-```
-Task NNN ready for review.
-CHANGED=[src/foo.ts:40-55, src/__tests__/NNN.test.ts]
-NEW_PASS=23 tests
-Handoff: docs/handoffs/TASK_NNN.md
-Branch: task/NNN-kebab
-```
-
 **Update TASKS.md**: In Progress → Review
+
+**Spawn `qa`**:
+> Task [NNN]. Handoff: docs/handoffs/TASK_NNN.md. Branch: task/NNN-kebab. Implementation complete: CHANGED=[src/foo.ts:40-55, src/__tests__/NNN.test.ts], NEW_PASS=23. Run full QA pipeline.

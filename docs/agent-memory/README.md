@@ -18,7 +18,7 @@
 ## 📁 Structure
 
 ```
-.claude/agent-memory/
+docs/agent-memory/
 ├── INDEX.md                    # ← START HERE (always load)
 ├── issues/
 │   ├── WAL-checkpoint.md       # Bug: WAL unbounded growth (FIXED)

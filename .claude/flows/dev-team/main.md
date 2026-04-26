@@ -16,34 +16,48 @@ Launch `po`. Return EXACTLY ONE of:
 
 `BATCH([{type, id, title, desc, size?, files, baseline_pass}])`
 
-- **FIX**: ≤10 lines ≤3 files no new types — skip BA+Arch+PM
+- **FIX**: ≤10 lines ≤3 files no new types — skip planning
 - **SPRINT-S**: ≤30 lines ≤5 files 1 domain
 - **SPRINT-M**: multi-domain or 1 new interface
 - **SPRINT-L**: arch change or new service
 - **UNBLOCK**: blocker + `route_to` agent
-- Priority: recurring bugs → UNBLOCK → S → M/L
+- Priority: recurring bugs → UNBLOCK → FIX → S → M/L
 
 ---
 
-## Step 2: Execute (WIP ≤ 2)
+## Step 2: Planning (sequential, one-time per sprint)
 
-**FIX**
-`developer` → `qa` → [`fixer` → `qa`]* → notify work
+**FIX** → skip to Step 3
 
-**SPRINT-S**
-`architect` (design + TASKS.md) → per task: `developer` → `qa` → [`fixer` → `qa`]* → notify work
+**SPRINT-S** → `architect` (design + handoffs) → `pm` (TASKS.md breakdown) → Step 3
 
-**SPRINT-M/L**
-`ba` → `architect` → `pm` → per task: `developer` → `qa` → [`fixer` → `qa`]* → L: post-merge `architect` review → notify work
+**SPRINT-M/L** → `ba` → PO approves → `architect` → `pm` → Step 3
+  - L only: `architect` post-merge review after last task merged
 
-**UNBLOCK**
-`{route_to}` → notify work
+**UNBLOCK** → `{route_to}` → notify work → EXIT
 
 ---
 
-## Step 3: Scan
+## Step 3: Execution (parallel lanes, WIP ≤ 2)
 
-`read_telegram_reports(status="new")` — new? → Step 1. None → EXIT
+Launch up to 2 independent tasks concurrently:
+
+```
+Lane A │ developer → qa → [fixer → qa]* → APPROVED → merge
+Lane B │ developer → qa → [fixer → qa]* → APPROVED → merge
+         ↑ starts as soon as a slot is free + task has no pending deps
+```
+
+- **Dependency unblock**: QA Done on task N → immediately queue next unblocked Todo task (don't wait for lane to drain)
+- **Fixer ceiling**: max 2 rounds → still failing → escalate to `architect`, open new task, STOP lane
+- **Per task**: developer reads `docs/handoffs/TASK_NNN.md` → implements TDD → qa reviews → merge on APPROVED → notify work
+
+---
+
+## Step 4: Scan
+
+After each task merged: `read_telegram_reports(status="new")` — new? → Step 1.
+All tasks Done + no new work → EXIT
 
 ---
 

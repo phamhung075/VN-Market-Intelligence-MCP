@@ -3,9 +3,11 @@ agents: developer, ops, architect
 trigger: writing-scheduler, health-check, post-merge-review
 ---
 
-# Module Analysis: src/infrastructure/scheduler/
+# Module Analysis: apps/mcp-server/src/scheduler/
 
-**Last analyzed**: 2026-04-21 | **By**: Dev Team | **Status**: ✅ Mostly healthy, ⚠️ Timezone gaps
+> ⚠️ **Path updated 2026-04-26**: Old path `src/infrastructure/scheduler/` was deleted in modular monolith refactor (sprints 209-220). Jobs now live in `apps/mcp-server/src/scheduler/` with subdirs: `alerts/`, `audits/`, `briefings/`, `financial-reports/`, `macro/`, `market-data/`, `news-analysis/`, `portfolio/`, `system/`.
+
+**Last analyzed**: 2026-04-21 (paths updated 2026-04-26) | **By**: Dev Team | **Status**: ✅ Mostly healthy, ⚠️ Timezone gaps
 
 ---
 
@@ -22,46 +24,40 @@ trigger: writing-scheduler, health-check, post-merge-review
 
 ## Jobs scanned
 
-### `ohlcvDailyAggregatorJob.ts`
+### `market-data/ohlcvDailyAggregatorJob.ts`
 - ✅ Non-null guards added (ff55779)
 - ✅ Signal handler verified
 - ⚠️ Uses naive `new Date()` at line 42 → should be explicit UTC
 
-### `newsSourcePollerJob.ts`
-- ✅ Circuit breaker + rate limiter in place
-- ✅ Error escalation to Telegram working
-- ✅ Timezone: explicit UTC (`new Date().toISOString()`)
-
-### `dailyMaintenanceJob.ts`
-- ✅ WAL checkpoint + signal handler confirmed
-- ✅ Timestamp logging: explicit UTC
-- ✅ Cron schedule correct (00:00 VN daily)
-
-### `priceHistoryBackfillJob.ts`
-- ⚠️ Naive `new Date()` at line 156 → batch aggregation boundary
-- ✅ Null guards in place (learned from aggregator fix)
-
-### `foreignFlowPollerJob.ts`
+### `market-data/foreignFlowFetcherJob.ts` *(was `foreignFlowPollerJob.ts`)*
 - ✅ Rate limiter enforced per exchange
 - ✅ Timezone: UTC (`moment.utc()`)
 - ✅ No WAL concerns (read-only fetches)
+
+### `walCheckpointAlert.ts`
+- ✅ WAL checkpoint + signal handler confirmed
+- ✅ Timestamp logging: explicit UTC
+
+### `vpsProxyWatchdogJob.ts`
+- ⚠️ Naive `new Date()` at line 28 → should be explicit UTC
+
+> ℹ️ `newsSourcePollerJob.ts`, `dailyMaintenanceJob.ts`, `priceHistoryBackfillJob.ts` — **no longer exist** at these names. Functionality likely absorbed into `news-analysis/` or `market-data/` subdirs. Verify before referencing.
 
 ---
 
 ## Known issues (what to check before modifying)
 
-1. **Timezone offsets** — 3 jobs still use naive dates
-   - File: `ohlcvDailyAggregatorJob.ts` (line 42)
-   - File: `priceHistoryBackfillJob.ts` (line 156)
+1. **Timezone offsets** — jobs still using naive dates
+   - File: `market-data/ohlcvDailyAggregatorJob.ts` (line 42)
    - File: `vpsProxyWatchdogJob.ts` (line 28)
    - **Fix**: Replace `new Date()` → `new Date().toISOString().split('T')[0]` or moment.utc()
 
 2. **Signal handler coverage** — new jobs must add SIGTERM handling
-   - Check: All job files import from `src/infrastructure/db/checkpoint.ts`
+   - Check: All job files import from `src/infrastructure/db/checkpoint.ts` (verify path post-refactor)
    - Test: `kill -SIGTERM` and verify `.db-wal` is clean
 
 3. **Rate limiter not documented** — foreign flow job limits per exchange, but not obvious in code
-   - Location: `foreignFlowPollerJob.ts` line 89
+   - Location: `market-data/foreignFlowFetcherJob.ts`
    - Comment needed: `// Rate limit per exchange prevents IP ban`
 
 ---
@@ -98,6 +94,6 @@ logger.info(`Job started: ${now}`);
 ---
 
 **Related files**:
-- `src/infrastructure/scheduler/` (all job definitions)
-- `.claude/agent-memory/issues/WAL-checkpoint.md` (signal handler context)
+- `apps/mcp-server/src/scheduler/` (all job definitions — 50 files across 8 subdirs)
+- `docs/agent-memory/issues/WAL-checkpoint.md` (signal handler context)
 - `.claude/knowledge/cron-jobs.md` (scheduler architecture)

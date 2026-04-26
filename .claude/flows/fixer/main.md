@@ -40,9 +40,5 @@ Needs: public API change | >2 files | breaks other tests → **ESCALATE to PM**:
 
 **Update memory**: repeated pattern → `issues/BUGNAME.md` | prevention → `patterns/PATTERN.md` | session log
 
-**Notify QA**:
-```
-Task NNN fixes complete.
-Tests: N pass / 0 fail | tsc: clean ✓
-Handoff: docs/handoffs/TASK_NNN.md [Fixer] Fix Record
-```
+**Spawn `qa`**:
+> Task [NNN] fixes complete. Handoff: docs/handoffs/TASK_NNN.md [Fixer] Fix Record added. Tests: N pass / 0 fail, tsc clean. Re-run QA pipeline.

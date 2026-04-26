@@ -42,21 +42,17 @@ blocks: []
 - **Knowledge needed:** `.claude/knowledge/dev-standards.md` + others
 ```
 
-**3c. Notify Developer**:
-```
-Task NNN ready for dev.
-Handoff: docs/handoffs/TASK_NNN.md
-Branch: task/NNN-kebab-name
-```
+**3c. Spawn `developer`** (≤ 2 concurrent for independent tasks):
+> Task [NNN]. Handoff: docs/handoffs/TASK_NNN.md. Branch: task/NNN-kebab-name. Implement per TDD workflow.
 
-**4.** Assign first task → status `pending`
+**4.** Set task status → `in_progress`
 
 **5. Monitor** (every cycle):
 - Blocked tasks → escalate to owner
 - WIP > 2 → escalate to PO/Architect
 - Test failures → escalate to QA
-- Task → Review → notify QA
-- QA Done → Done → unblock Backlog → move to Todo
+- Task → Review → **spawn `qa`**: Task [NNN] ready for review. Branch: task/NNN-kebab-name. Handoff: docs/handoffs/TASK_NNN.md.
+- QA Done → Done → unblock Backlog → move to Todo → **spawn `developer`** for next unblocked task
 
 ## Blocker Escalation
-- Dep not done → task owner | Test failing → QA | Knowledge Read fail → fail-loud STOP | Arch unclear → Architect
+- Dep not done → task owner | Test failing → QA | Knowledge Read fail → fail-loud STOP | Arch unclear → **spawn `architect`**

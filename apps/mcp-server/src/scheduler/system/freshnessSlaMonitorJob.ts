@@ -52,23 +52,23 @@ export function querySignalAges(
     .query<AgeRow, [number, number, number, number, number]>(
       `SELECT
         'price' as signal_type,
-        CAST((? - CAST((SELECT MAX(created_at) FROM market_prices) as INTEGER)) / 60 AS INTEGER) as age_minutes
+        CAST((? - CAST(strftime('%s', (SELECT MAX(updated_at) FROM market_prices)) AS INTEGER)) / 60 AS INTEGER) as age_minutes
       UNION ALL
       SELECT
         'bctc' as signal_type,
-        CAST((? - CAST((SELECT MAX(created_at) FROM financial_reports) as INTEGER)) / 60 AS INTEGER) as age_minutes
+        CAST((? - CAST(strftime('%s', (SELECT MAX(parsed_at) FROM financial_reports)) AS INTEGER)) / 60 AS INTEGER) as age_minutes
       UNION ALL
       SELECT
         'news' as signal_type,
-        CAST((? - CAST((SELECT MAX(created_at) FROM news) as INTEGER)) / 60 AS INTEGER) as age_minutes
+        CAST((? - CAST(strftime('%s', (SELECT MAX(created_at) FROM rag_analyses)) AS INTEGER)) / 60 AS INTEGER) as age_minutes
       UNION ALL
       SELECT
         'sbv_fx' as signal_type,
-        CAST((? - CAST((SELECT MAX(fetched_at) FROM sbv_rates) as INTEGER)) / 60 AS INTEGER) as age_minutes
+        CAST((? - CAST(strftime('%s', (SELECT MAX(fetched_at) FROM sbv_rates)) AS INTEGER)) / 60 AS INTEGER) as age_minutes
       UNION ALL
       SELECT
         'foreign_flow' as signal_type,
-        CAST((? - CAST((SELECT MAX(updated_at) FROM daily_ohlcv WHERE foreign_buy_vol IS NOT NULL) as INTEGER)) / 60 AS INTEGER) as age_minutes`
+        CAST((? - CAST(strftime('%s', (SELECT MAX(updated_at) FROM daily_ohlcv WHERE foreign_buy_vol IS NOT NULL)) AS INTEGER)) / 60 AS INTEGER) as age_minutes`
     )
     .all(now, now, now, now, now) as AgeRow[];
 

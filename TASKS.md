@@ -22,6 +22,19 @@
 - **1338:** Retrospective documentation for sprints 1330–1337 (SPRINT_GOAL.md, project-stats.json validation tests, sprint history consolidation) — DONE 2026-04-26
 - **1339a:** RED phase — 10 failing tests for PriceConfirmation catalyst correlation fields — APPROVED + merged 2026-04-26 (merge commit: 6f617113)
 - **1339b:** GREEN phase — implement PriceConfirmation catalyst correlation fields (signalTypes + signalBuilders) — APPROVED + merged 2026-04-26 (merge commit: 7b9de84c)
+- **1342b:** GREEN phase — implement DB integrity check job (runIntegrityCheck + integrityCheckJob.ts + CRONS.integrityCheck) — APPROVED + merged 2026-04-26 (merge commit: e93149fc)
+
+---
+
+## Active Sprint: 1343
+
+| ID | Title | Size | Status |
+|----|-------|------|--------|
+| 1343a | Watchlist restore + Q4 2025 backfill | S | Todo |
+| 1343b | HOSE PDF discovery (RED tests) | S | Todo |
+| 1343c | HOSE PDF discovery (implementation) | M | Todo |
+| 1343d | VPS skip endpoint + fetch-bctc.sh | S | Todo |
+| 1343e | Integration test + QA | S | Todo |
 
 ---
 

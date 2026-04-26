@@ -1,6 +1,6 @@
 # Agent Memory Index — Catalog Only
 
-> **Agents:** Load `docs/agent-memory/manifests/YOURNAME.md` instead of this file. See AGENT_STARTUP.md.
+> **Agents:** Call `get_memory_files(agent_name, task_type)` MCP tool — do NOT read this file or manifests. See AGENT_STARTUP.md.
 >
 > **Humans:** This catalog documents all available memory files. Use for exploration/discovery only.
 > **Do NOT load everything at once.**
@@ -66,4 +66,4 @@
 
 ---
 
-**Agents: Use manifests, not this file. See `docs/agent-memory/AGENT_STARTUP.md`.**
+**Agents: Use `get_memory_files()` MCP tool, not this file or manifests. See `docs/agent-memory/AGENT_STARTUP.md`.**

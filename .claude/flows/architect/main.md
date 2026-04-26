@@ -50,4 +50,5 @@ Rule: existing interface covers need → extend, never duplicate.
 - **Scan clean:** true ✓
 ```
 
-**5.** Notify PM → task ready for breakdown
+**5.** **Spawn `pm`**:
+> Task [NNN]. Handoff: docs/handoffs/TASK_NNN.md. Architect design complete, break down into atomic tasks and create developer handoffs.

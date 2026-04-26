@@ -40,4 +40,5 @@ feature priority | VN term translation | data source availability | historical v
 | BA-NNN | Requirement: [Feature Name] | pending | BA | — | — |
   Context: [brief memo with FR list, blockers, edge cases, DDD layers]
 ```
-PO approves → BA Done → create Architect task
+PO approves → BA Done → **spawn `architect`**:
+> Task [NNN]. Handoff: docs/handoffs/TASK_NNN.md. BA spec approved, run brownfield analysis and produce technical design.

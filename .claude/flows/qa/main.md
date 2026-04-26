@@ -41,9 +41,14 @@ verdict: APPROVED | CHANGES_REQUESTED
 **Full** (new tool/domain service/security): test results, DDD, security, code quality, blockers, merge commit.
 
 ## Approval
-**APPROVED**: append `[QA] Review Record` to handoff → `git merge` → `git branch -d` → notify PM (Review → Done → unblock downstream)
-**CHANGES_REQUESTED**: append blocking issues (file:line) → notify Developer → TASKS.md Review → In Progress
-**ARCHITECT_REVIEW_NEEDED**: return to Architect → re-run pipeline after approval
+**APPROVED**: append `[QA] Review Record` → `git merge` → `git branch -d` → **spawn `pm`**:
+> Task [NNN] merged. Mark Done, unblock downstream tasks, spawn next developer if Todo tasks available.
+
+**CHANGES_REQUESTED**: append blocking issues (file:line) → check fixer round count in handoff:
+- round < 2 → **spawn `fixer`**: Task [NNN]. Handoff: docs/handoffs/TASK_NNN.md. [QA] issues listed, apply minimum fixes.
+- round ≥ 2 → **spawn `architect`**: Task [NNN] fixer ceiling hit. Handoff: docs/handoffs/TASK_NNN.md. Root-cause and redesign needed.
+
+**ARCHITECT_REVIEW_NEEDED**: **spawn `architect`**: Task [NNN] needs pre-merge review. Handoff: docs/handoffs/TASK_NNN.md. Re-run QA pipeline after.
 
 ## Emergency
 Tests fail on main → revert breaking commit → `send_telegram(channel="bug")` → open Backlog task → no merges until green

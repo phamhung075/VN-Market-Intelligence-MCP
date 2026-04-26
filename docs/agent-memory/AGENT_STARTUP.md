@@ -217,7 +217,7 @@ Total context: ~500 tokens from MCP (vs. 1,700+ with file reads)
 1. Call: get_memory_files("ops", "server-restart")
    → Returns: ["issues/WAL-checkpoint.md", "modules/scheduler.md"]
 2. Load those files (~300 tokens)
-3. Run: launchctl kickstart -k gui/$(id -u)/com.vn-market.mcp
+3. Run: docker-compose restart mcp-server  # Docker since 2026-04-25 (Sprint 1336)
 4. Verify: WAL checkpoint ran (check logs)
 5. Append: sessions/2026-04-23-ops.md "Server restart OK, WAL clean"
 Total context: ~300 tokens (vs. 320 with manifest file, vs. 1,200+ before any optimization)
