@@ -40,10 +40,14 @@ Handoffs: `docs/handoffs/TASK_1338a.md` | `docs/handoffs/TASK_1338b.md`
 
 ## In Progress
 
+---
+
+## Review
+
 ### 1338a — Write failing validation tests (branch: task/1338a-sprint-goal-validation-test)
 
 | ID | Title | Size | Owner | Status |
 |----|-------|------|-------|--------|
-| 1338a | Write failing validation tests (SPRINT_GOAL.md refs ≥1338, currentSprint=1338) | S | Developer | In Progress |
+| 1338a | Write failing validation tests (SPRINT_GOAL.md refs ≥1338, currentSprint=1338) | S | Developer | Review |
 
 ---
