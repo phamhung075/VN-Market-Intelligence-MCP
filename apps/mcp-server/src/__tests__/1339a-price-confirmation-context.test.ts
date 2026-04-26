@@ -67,55 +67,37 @@ describe("Task 1339a — PriceConfirmation catalyst correlation fields (RED)", (
 
   it("6. builder exposes setCatalystStockCode setter returning this", () => {
     const builder = createPriceConfirmationBuilder();
-    // TypeScript will error here in RED phase — cast to any to force runtime failure instead
-    const result = (builder as unknown as Record<string, (v: string) => unknown>).setCatalystStockCode("HPG");
+    const result = builder.setCatalystStockCode("HPG");
     expect(result).toBe(builder);
   });
 
   it("7. builder exposes setCatalystDirection setter returning this", () => {
     const builder = createPriceConfirmationBuilder();
-    const result = (builder as unknown as Record<string, (v: string) => unknown>).setCatalystDirection("SELL");
+    const result = builder.setCatalystDirection("SELL");
     expect(result).toBe(builder);
   });
 
   it("8. builder exposes setTimeToPriceMove setter returning this", () => {
     const builder = createPriceConfirmationBuilder();
-    const result = (builder as unknown as Record<string, (v: number) => unknown>).setTimeToPriceMove(6);
+    const result = builder.setTimeToPriceMove(6);
     expect(result).toBe(builder);
   });
 
   it("9. builder round-trip with all 8 fields preserves new fields in output", () => {
-    const output = (createPriceConfirmationBuilder() as unknown as Record<string, (v: unknown) => unknown>)
-      ["setPriceChangePct"](2.5) as ReturnType<typeof createPriceConfirmationBuilder>;
+    const built = createPriceConfirmationBuilder()
+      .setPriceChangePct(2.5)
+      .setVolumeRatio(1.8)
+      .setConfirmsDirection(true)
+      .setFullyPriced(false)
+      .setConfidence(0.75)
+      .setCatalystStockCode("VIC")
+      .setCatalystDirection("BUY")
+      .setTimeToPriceMove(2)
+      .build();
 
-    // Chain using cast to access methods that don't exist yet
-    const b = createPriceConfirmationBuilder() as unknown as {
-      setPriceChangePct(v: number): unknown;
-      setVolumeRatio(v: number): unknown;
-      setConfirmsDirection(v: boolean): unknown;
-      setFullyPriced(v: boolean): unknown;
-      setConfidence(v: number): unknown;
-      setCatalystStockCode(v: string): unknown;
-      setCatalystDirection(v: string): unknown;
-      setTimeToPriceMove(v: number): unknown;
-      build(): Record<string, unknown>;
-    };
-
-    const result = b
-      .setPriceChangePct(2.5) as typeof b;
-    const result2 = (result as typeof b)
-      .setVolumeRatio(1.8) as typeof b;
-    const result3 = result2.setConfirmsDirection(true) as typeof b;
-    const result4 = result3.setFullyPriced(false) as typeof b;
-    const result5 = result4.setConfidence(0.75) as typeof b;
-    const result6 = result5.setCatalystStockCode("VIC") as typeof b;
-    const result7 = result6.setCatalystDirection("BUY") as typeof b;
-    const result8 = result7.setTimeToPriceMove(2) as typeof b;
-    const built = result8.build();
-
-    expect(built["catalyst_stock_code"]).toBe("VIC");
-    expect(built["catalyst_direction"]).toBe("BUY");
-    expect(built["time_to_price_move"]).toBe(2);
+    expect(built.catalyst_stock_code).toBe("VIC");
+    expect(built.catalyst_direction).toBe("BUY");
+    expect(built.time_to_price_move).toBe(2);
   });
 
   it("10. builder round-trip without new fields still succeeds (backward compat)", () => {

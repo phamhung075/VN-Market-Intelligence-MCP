@@ -128,6 +128,15 @@ export interface PriceConfirmationFindingData {
 
   /** Confidence in the price confirmation, range [0.0, 1.0]. */
   confidence: number;
+
+  /** Stock ticker that triggered the originating catalyst signal (e.g. "VCB"). */
+  catalyst_stock_code?: string;
+
+  /** Direction of the originating catalyst signal. */
+  catalyst_direction?: "BUY" | "SELL" | "NEUTRAL";
+
+  /** Hours elapsed from catalyst event to confirmed price move (must be >= 0). */
+  time_to_price_move?: number;
 }
 
 export const PriceConfirmationFindingDataSchema = z.object({
@@ -136,6 +145,9 @@ export const PriceConfirmationFindingDataSchema = z.object({
   confirms_direction: z.boolean(),
   fully_priced: z.boolean(),
   confidence: z.number().min(0).max(1),
+  catalyst_stock_code: z.string().min(2).optional(),
+  catalyst_direction: z.enum(["BUY", "SELL", "NEUTRAL"]).optional(),
+  time_to_price_move: z.number().min(0).optional(),
 });
 
 // ── UrgentNewsFindingData ──────────────────────────────────────────────────────
