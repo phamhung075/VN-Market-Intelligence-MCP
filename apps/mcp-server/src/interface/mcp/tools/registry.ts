@@ -43,6 +43,7 @@ import { registerSentimentTrendTools } from "./news-analysis/sentimentTrendTools
 import { registerTelegramReportTools } from "./briefings/telegramReportTools.js";
 import { registerChangelogTools } from "./briefings/changelogTools.js";
 import { registerBctcFullTools } from "./financial-reports/bctcFullTools.js";
+import { registerBctcSkipTool } from "./financial-reports/bctcSkipTool.js";
 import { registerMarketContextTools } from "./market-data/marketContextTools.js";
 import { registerAgentSignalTools } from "./news-analysis/agentSignalTools.js";
 import { registerCascadeMetricsTools } from "./news-analysis/cascadeMetricsTools.js";
@@ -170,4 +171,5 @@ export const toolRegistry: Array<(server: McpServer) => void> = [
   registerNewsDebugTriggerTool,         // FIX-VPS-DEBUG-TRIGGERS: trigger_news_vps_fetch (+1 → 111)
   registerSbvDebugTriggerTool,          // FIX-VPS-DEBUG-TRIGGERS: trigger_sbv_vps_fetch (+1 → 112)
   registerForeignFlowDebugTriggerTool,  // FIX-VPS-DEBUG-TRIGGERS: trigger_foreign_flow_vps_fetch (+1 → 113)
+  registerBctcSkipTool,                 // Task 1343d: bctc_skip_queue_item (+1 → 114)
 ];

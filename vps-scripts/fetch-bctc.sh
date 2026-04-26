@@ -5,6 +5,7 @@
 
 API_URL="__MCP_BASE__/api/push-bctc-pdf"
 QUEUE_URL="__MCP_BASE__/api/bctc-fetch-queue"
+SKIP_URL="__MCP_BASE__/api/bctc-skip"
 API_KEY="__API_KEY__"
 LOG="/var/log/vn-bctc-fetch.log"
 MAX_PDF_BYTES=52428800   # 50 MB
@@ -75,6 +76,17 @@ echo "$QUEUE" | jq -c '.queue[]? // empty' 2>/dev/null | while read -r ITEM; do
   if [ "$FETCHED" = "0" ]; then
     echo "$(date -u) $CODE $YEAR-$QTR: all hints exhausted — skip" >> "$LOG"
     rm -f "$TMP_PDF"
+
+    # Report SKIP back to MCP so attempts counter is incremented and
+    # status transitions pending → skipped (prevents infinite retry loops)
+    curl -s --connect-timeout 10 --max-time 15 \
+      -X POST "$SKIP_URL" \
+      -H "X-API-Key: $API_KEY" \
+      -H "Content-Type: application/json" \
+      -H "User-Agent: VN-Market-VPS-Proxy/1.0" \
+      -d "{\"action_code\":\"$CODE\",\"period_year\":$YEAR,\"period_quarter\":\"$QTR\",\"skip_reason\":\"all hints exhausted (404 or invalid URL)\"}" \
+      >> "$LOG" 2>&1 || true
+
     continue
   fi
 
