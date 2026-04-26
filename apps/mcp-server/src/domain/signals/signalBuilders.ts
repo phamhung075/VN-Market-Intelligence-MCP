@@ -55,15 +55,24 @@ export interface ChainCatalystBuilder {
   setKinhDichConfidence(score: number): this;
   /** Majority vote from agent signals: "BUY" | "SELL" | "NEUTRAL". Used by Alert Commander 4-AND conviction validation. */
   setAgentSignalsMajority(majority: "BUY" | "SELL" | "NEUTRAL"): this;
+  /** Stock ticker that triggered the originating cascade event (e.g. "VCB"). For cascade enrichment traceability. */
+  setCatalystStockCode(code: string): this;
+  /** Directional bias of the originating cascade catalyst signal. */
+  setCatalystDirection(direction: "bullish" | "bearish" | "neutral"): this;
+  /** Hours elapsed from catalyst event to confirmed price move (must be >= 0). */
+  setTimeToPriceMove(hours: number): this;
   build(): ChainCatalystFindingData;
 }
 
 class ChainCatalystBuilderImpl implements ChainCatalystBuilder {
-  // Use Omit to exclude optional imfSentiment — builders don't set IMF context
-  private data: Omit<Partial<ChainCatalystFindingData>, "imfSentiment"> & {
+  // Use Omit to exclude optional fields that need explicit typing under exactOptionalPropertyTypes
+  private data: Omit<Partial<ChainCatalystFindingData>, "imfSentiment" | "catalyst_stock_code" | "catalyst_direction" | "time_to_price_move"> & {
     newsSentiment?: number;
     kinhDichConfidence?: number;
     agentSignalsMajority?: "BUY" | "SELL" | "NEUTRAL";
+    catalyst_stock_code?: string;
+    catalyst_direction?: "bullish" | "bearish" | "neutral";
+    time_to_price_move?: number;
   } = {
     affected_stocks: [],
     affected_sectors: [],
@@ -129,6 +138,21 @@ class ChainCatalystBuilderImpl implements ChainCatalystBuilder {
 
   setAgentSignalsMajority(majority: "BUY" | "SELL" | "NEUTRAL"): this {
     this.data.agentSignalsMajority = majority;
+    return this;
+  }
+
+  setCatalystStockCode(code: string): this {
+    this.data.catalyst_stock_code = code;
+    return this;
+  }
+
+  setCatalystDirection(direction: "bullish" | "bearish" | "neutral"): this {
+    this.data.catalyst_direction = direction;
+    return this;
+  }
+
+  setTimeToPriceMove(hours: number): this {
+    this.data.time_to_price_move = hours;
     return this;
   }
 

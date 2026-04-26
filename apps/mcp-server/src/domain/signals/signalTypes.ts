@@ -76,6 +76,15 @@ export interface ChainCatalystFindingData {
 
   /** Majority vote from agent signals: "BUY" | "SELL" | "NEUTRAL". Optional. */
   agentSignalsMajority?: "BUY" | "SELL" | "NEUTRAL" | undefined;
+
+  /** Stock ticker that triggered the originating cascade event (e.g. "VCB"). Optional. */
+  catalyst_stock_code?: string | undefined;
+
+  /** Directional bias of the originating cascade catalyst signal. Optional. */
+  catalyst_direction?: "bullish" | "bearish" | "neutral" | undefined;
+
+  /** Hours elapsed from catalyst event to confirmed price move (must be >= 0). Optional. */
+  time_to_price_move?: number | undefined;
 }
 
 export const ChainCatalystFindingDataSchema = z.object({
@@ -103,6 +112,9 @@ export const ChainCatalystFindingDataSchema = z.object({
   newsSentiment: z.number().min(-1).max(1).optional(),
   kinhDichConfidence: z.number().min(0).max(100).optional(),
   agentSignalsMajority: z.enum(["BUY", "SELL", "NEUTRAL"]).optional(),
+  catalyst_stock_code: z.string().min(2).optional(),
+  catalyst_direction: z.enum(["bullish", "bearish", "neutral"]).optional(),
+  time_to_price_move: z.number().min(0).optional(),
 });
 
 // ── PriceConfirmationFindingData ───────────────────────────────────────────────
