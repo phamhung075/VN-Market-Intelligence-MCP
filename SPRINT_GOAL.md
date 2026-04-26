@@ -1,26 +1,14 @@
 # Sprint Goal
 
-## Sprint 1338 — Retrospective Documentation: Sprints 1330–1337 (2026-04-25)
+## Sprint 1340 — Planning Ready (2026-04-26)
 
-**Goal:** Consolidate Vision/Scope/Success for Sprints 1330–1337. Update project-stats.json. Unblock Sprint 1339 planning.
+**Status:** Blocker resolved. Working tree cleaned. Ready for sprint planning.
 
-**Vision:** Eight consecutive sprints (1330–1337) delivered the Value Investor System foundation, SQLite integrity hardening, signal enrichment, and infrastructure resilience. This retrospective locks those deliverables into institutional memory so the next sprint starts from a verified baseline.
-
-**Scope:**
-- IN: Write failing tests (1338a) that enforce SPRINT_GOAL.md + project-stats.json invariants
-- IN: Rewrite SPRINT_GOAL.md top section with consolidated 1330-1337 retrospective
-- IN: Update project-stats.json (currentSprint=1338, sprintGoal, previousSprint, lastUpdated)
-- OUT: New domain logic, new MCP tools, infrastructure changes
-
-**Success Metrics:**
-- `currentSprint === 1338` in project-stats.json
-- SPRINT_GOAL.md first H2 references sprint >= 1338
-- 1338a test suite: 4/4 pass
-- Test baseline stable (6520 pass / 213 fail — no regressions)
-
-**Size:** S (documentation only, ~1h)
-
-**Blockers:** None.
+**Current State:**
+- `currentSprint === 1340` in project-stats.json (awaiting sprint kickoff)
+- Working tree clean: stale archive docs deleted, knowledge references updated
+- All 359 cleanup commits merged to main
+- No WIP tasks blocking new sprint
 
 ---
 
