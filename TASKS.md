@@ -23,6 +23,7 @@
 - **1339a:** RED phase — 10 failing tests for PriceConfirmation catalyst correlation fields — APPROVED + merged 2026-04-26 (merge commit: 6f617113)
 - **1339b:** GREEN phase — implement PriceConfirmation catalyst correlation fields (signalTypes + signalBuilders) — APPROVED + merged 2026-04-26 (merge commit: 7b9de84c)
 - **1342b:** GREEN phase — implement DB integrity check job (runIntegrityCheck + integrityCheckJob.ts + CRONS.integrityCheck) — APPROVED + merged 2026-04-26 (merge commit: e93149fc)
+- **1343a–1343e:** BCTC PDF pipeline recovery — watchlist restore (30 tickers), HOSE PDF discovery (multi-source SSC/cafef/vietstock), VPS skip endpoint (no infinite retry), fetch-bctc.sh update, integration test (6/6 pass) — APPROVED + merged 2026-04-27
 
 ---
 
@@ -33,8 +34,8 @@
 | 1343a | Watchlist restore + Q4 2025 backfill | S | Done |
 | 1343b | HOSE PDF discovery (RED tests) | S | Done |
 | 1343c | HOSE PDF discovery (implementation) | M | Done |
-| 1343d | VPS skip endpoint + fetch-bctc.sh | S | Todo |
-| 1343e | Integration test + QA | S | Todo |
+| 1343d | VPS skip endpoint + fetch-bctc.sh | S | Done |
+| 1343e | Integration test + QA | S | Done |
 
 ---
 
