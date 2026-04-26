@@ -56,14 +56,6 @@ agent:
         fail_loud: true
       - path: docs/data/code-janitor-known-findings.json
         fail_loud: true
-    lazy_load:
-      - path: docs/agent-memory/patterns/
-        trigger: pattern_check
-        fail_loud: false
-      - path: docs/agent-memory/issues/
-        trigger: known_violations
-        fail_loud: false
-
   flow:
     default: .claude/flows/code-janitor/main.md
     catalog:

@@ -57,11 +57,6 @@ agent:
         fail_loud: true
       - path: .claude/knowledge/fail-loud-protocol.md
         fail_loud: true
-    lazy_load:
-      - path: docs/agent-memory/issues/
-        trigger: recurring_bug_check
-        fail_loud: false
-
   flow:
     default: .claude/flows/fixer/main.md
     catalog:

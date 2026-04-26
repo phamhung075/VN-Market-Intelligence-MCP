@@ -9,7 +9,7 @@ Atomic tasks in TASKS.md | `docs/handoffs/TASK_NNN.md` per task | Developer noti
 ---
 
 **1. Read context**
-TASKS.md (task numbering) | Architect proposal | module memory `docs/agent-memory/modules/`
+TASKS.md (task numbering) | Architect proposal | `docs/agent-memory/sessions/LATEST.md`
 
 **2. Atomic tasks** — each must be: single file/fn group | clear AC | ~2h agent work | deps explicit
 
@@ -42,17 +42,21 @@ blocks: []
 - **Knowledge needed:** `.claude/knowledge/dev-standards.md` + others
 ```
 
-**3c. Spawn `developer`** (≤ 2 concurrent for independent tasks):
-> Task [NNN]. Handoff: docs/handoffs/TASK_NNN.md. Branch: task/NNN-kebab-name. Implement per TDD workflow.
+**3c.** Update TASKS.md (status → pending) → return task list with dependency tiers:
+```
+## RETURN
+DONE: Tasks broken down, handoffs created for NNN-a, NNN-b, NNN-c
+TASKS:
+  tier1 (parallel): NNN-a [files: src/foo.ts], NNN-b [files: src/bar.ts]
+  tier2 (after tier1): NNN-c [depends_on: NNN-a, files: src/baz.ts]
+HANDOFF: docs/handoffs/TASK_NNN-a.md, docs/handoffs/TASK_NNN-b.md, docs/handoffs/TASK_NNN-c.md
+PIPELINE: continue
+```
 
-**4.** Set task status → `in_progress`
+**4.** Set task status → `in_progress` when developer picks up
 
 **5. Monitor** (every cycle):
-- Blocked tasks → escalate to owner
-- WIP > 2 → escalate to PO/Architect
-- Test failures → escalate to QA
-- Task → Review → **spawn `qa`**: Task [NNN] ready for review. Branch: task/NNN-kebab-name. Handoff: docs/handoffs/TASK_NNN.md.
-- QA Done → Done → unblock Backlog → move to Todo → **spawn `developer`** for next unblocked task
-
-## Blocker Escalation
-- Dep not done → task owner | Test failing → QA | Knowledge Read fail → fail-loud STOP | Arch unclear → **spawn `architect`**
+- Blocked tasks → return `PIPELINE: blocked | NEXT: architect | [reason]`
+- WIP > 2 → hold, return `PIPELINE: blocked | NEXT: po | WIP limit exceeded`
+- Task → Review → return `NEXT: qa | review Task NNN branch task/NNN-kebab`
+- QA Done → Done → unblock next → return `NEXT: developer | implement Task NNN+1`

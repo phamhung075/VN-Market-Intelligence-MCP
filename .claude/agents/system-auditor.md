@@ -65,10 +65,6 @@ agent:
       - path: .claude/knowledge/mcp-tools.md
         trigger: tool_health_check
         fail_loud: false
-      - path: docs/agent-memory/issues/
-        trigger: dedup_check
-        fail_loud: false
-
   flow:
     default: .claude/flows/system-auditor/main.md
     catalog:

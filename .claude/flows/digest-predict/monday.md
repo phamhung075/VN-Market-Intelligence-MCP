@@ -45,15 +45,8 @@ Horizon:
 ```
 `create_prediction_claim(stock, claim_text, probability, horizon_days, resolution_criteria)`
 
-**P-6. Memory**
-Pattern → `docs/agent-memory/patterns/PREDICTION-PATTERN.md`
-Drift → `docs/agent-memory/issues/CALIBRATION-DRIFT.md`
-Session `docs/agent-memory/sessions/YYYY-MM-DD-digest-predict.md`:
-```
-### Prediction Cycle (Monday HH:MM UTC)
-- Calibration: [status], delta: [value]
-- Claims: [N], horizons: [5d:X, 10d:Y, 20d:Z] | Avg: [%] | Dampening: [yes/no]
-```
+**P-6. Session log**
+`append_session_record(agent_name="digest-predict", task_name="Monday Predictions", finding="Calibration: [status], delta: [value]. Claims: [N]. Dampening: [yes/no].", status="Complete")`
 
 **P-7.** `log_agent_work(summary="Created {N} claims for {TICKERS}. Horizons: {5d:X,10d:Y,20d:Z}. Avg: {avg}. Dampening: {yes/no}.")`
 

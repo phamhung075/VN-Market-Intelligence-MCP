@@ -30,9 +30,7 @@ Finding found?
 `send_telegram(channel="bug")`: "Found N DRY violations, proposed M backlog tasks"
 
 ## Memory + State (every scan)
-- Hardcoding pattern → `docs/agent-memory/patterns/HARDCODING_PATTERN.md`
-- DRY violation → `docs/agent-memory/issues/DRY_VIOLATION.md`
-- Session log `docs/agent-memory/sessions/YYYY-MM-DD-janitor.md`:
+- Session log via `append_session_record(agent_name="code-janitor", task_name="Scan NNN", ...)`:
 ```
 ### Scan NNN (HH:MM–HH:MM)
 - Checks: [which] | Findings: N new, M recurrent | Action: shipped X | backlog Y | clean

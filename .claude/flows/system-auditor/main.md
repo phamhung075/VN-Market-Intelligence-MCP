@@ -43,7 +43,7 @@ sqlite3 apps/mcp-server/data/db.sqlite "PRAGMA integrity_check;"  # must = "ok"
 
 ## Anomaly Reporting
 
-Known (in `docs/agent-memory/issues/` within 7 days) → skip.
+Known (already reported to Telegram BUG within 7 days — check recent sessions) → skip.
 New:
 ```
 ## Anomaly: [Name]

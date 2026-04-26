@@ -38,7 +38,13 @@ Needs: public API change | >2 files | breaks other tests → **ESCALATE to PM**:
 - **Verification:** bun test PASS, tsc clean ✓
 ```
 
-**Update memory**: repeated pattern → `issues/BUGNAME.md` | prevention → `patterns/PATTERN.md` | session log
+**Append session log**: `append_session_record(agent_name="fixer", task_name="Task NNN", fix=..., status="Ready for QA")`
 
-**Spawn `qa`**:
-> Task [NNN] fixes complete. Handoff: docs/handoffs/TASK_NNN.md [Fixer] Fix Record added. Tests: N pass / 0 fail, tsc clean. Re-run QA pipeline.
+Update TASKS.md → return:
+```
+## RETURN
+DONE: Fixes applied — N issues resolved, tests pass, tsc clean (see [Fixer] Fix Record in handoff)
+NEXT: qa | re-run full QA pipeline on branch task/NNN-kebab
+HANDOFF: docs/handoffs/TASK_NNN.md
+PIPELINE: continue
+```

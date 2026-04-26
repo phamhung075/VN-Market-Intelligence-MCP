@@ -134,8 +134,6 @@ agent:
   memory:
     session_log: docs/agent-memory/sessions/YYYY-MM-DD-digest-predict.md
     append_every_cycle: true
-    patterns: docs/agent-memory/patterns/PREDICTION-PATTERN.md
-    issues: docs/agent-memory/issues/CALIBRATION-DRIFT.md
 
   inter_agent:
     receives_from:

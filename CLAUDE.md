@@ -27,9 +27,20 @@ Agent defines who receives next. Full routing rules → `/dispatch`
 
 ## Agent Chaining Protocol
 
-**Main terminal = entry spawner only.** Spawn the entry agent, then stop. Never re-orchestrate.
+**Main terminal = permanent switch.** Sub-agents cannot spawn each other — Claude Code blocks it. Main terminal stays alive, reads each agent's return value, and spawns the next agent with full context.
 
-Each agent **must** spawn the next agent directly after completing its work — not just send Telegram.
+### How it works
+
+```
+main terminal
+  ├─ spawn agent A  ←─ waits for return
+  │     A does work, returns: "DONE: [what was done] | NEXT: [what is needed]"
+  ├─ reads return → decides next agent from pipeline map
+  ├─ spawn agent B with prompt built from A's return
+  │     B does work, returns: "DONE: [...] | NEXT: [...]"
+  ├─ reads return → spawns agent C ...
+  └─ until return is "DONE: pipeline complete" → idle
+```
 
 ### Pipeline Map
 
@@ -43,15 +54,40 @@ UNBLOCK  {route_to} ──► done
 
 ### Rules
 
-1. **"Notify X"** anywhere in a flow file = **spawn X agent**, passing task ID + handoff file path
-2. **Never terminate** without either spawning next OR sending idle: `send_telegram(work, "Done: NNN [brief]")`
-3. **Parallel slots**: `pm` spawns ≤ 2 `developer` agents concurrently for independent tasks
-4. **Fixer ceiling**: 2 rounds max → still failing → spawn `architect`, open new task, EXIT lane
-5. **Entry agent for user requests** = the Spawn column above; for cron = `po` (full triage)
+1. **Every agent must end its response with a structured return block** (see template below)
+2. **Main terminal reads the return block** to decide next agent + build its prompt
+3. **Main terminal never exits** until it receives `PIPELINE: complete` or `PIPELINE: blocked`
+4. **Parallel by default**: spawn multiple agents in ONE message whenever tasks have no shared files/deps — Claude Code executes them concurrently
+5. **Fixer ceiling**: 2 rounds max → still failing → main terminal spawns `architect`, opens new task
 
-### Spawn Prompt Template
+### Parallel Spawn Rule
 
-When spawning the next agent, pass:
 ```
-Task [NNN]. Handoff: docs/handoffs/TASK_NNN.md. [One sentence: what previous agent did and what you must do next.]
+Independent tasks (different files, no deps) → spawn ALL in one message:
+  Agent(developer, task A) + Agent(developer, task B)  ← runs concurrently
+
+Dependent tasks → spawn sequentially:
+  Agent(developer, task A) → read return → Agent(developer, task B)
+
+Same pipeline stage, no conflict → always parallel:
+  Agent(qa, task A) + Agent(qa, task B)  ← fine
+  Agent(fixer, task A) + Agent(fixer, task B)  ← fine
+```
+
+### Agent Return Template
+
+Every agent ends with:
+```
+## RETURN
+DONE: [one sentence: what was completed]
+NEXT: [agent name] | [one sentence: what it must do]
+HANDOFF: docs/handoffs/TASK_NNN.md
+PIPELINE: continue | complete | blocked
+```
+
+### Main Terminal Spawn Template
+
+When spawning next agent, use return block to build the prompt:
+```
+Task [NNN]. Handoff: docs/handoffs/TASK_NNN.md. [Previous agent DONE sentence]. [NEXT sentence — what you must do now.]
 ```

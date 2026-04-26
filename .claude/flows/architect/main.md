@@ -1,7 +1,7 @@
 # Architect — Main Flow
 
 ## Input
-BA spec or user requirement, `TASKS.md` task number, recent module memory
+BA spec or user requirement, `TASKS.md` task number, `docs/agent-memory/sessions/LATEST.md`
 
 ## Output
 `[Architect] Brownfield Findings` appended to `docs/handoffs/TASK_NNN.md` | PM notified
@@ -11,10 +11,8 @@ BA spec or user requirement, `TASKS.md` task number, recent module memory
 ## Brownfield Protocol
 
 **1. Check recent TECH context**
-```bash
-grep -l "$(basename <primary_affected_file>)" docs/agent-memory/modules/*.md 2>/dev/null | head -3
-```
-Found < 7 days → use as start, verify recent changes only. Not found → full index.
+Check `docs/agent-memory/sessions/LATEST.md` for recent work on affected files.
+Found recent session → use as start, verify changes only. Not found → full index.
 
 **2. Index codebase**
 ```bash
@@ -50,5 +48,11 @@ Rule: existing interface covers need → extend, never duplicate.
 - **Scan clean:** true ✓
 ```
 
-**5.** **Spawn `pm`**:
-> Task [NNN]. Handoff: docs/handoffs/TASK_NNN.md. Architect design complete, break down into atomic tasks and create developer handoffs.
+**5.** Update TASKS.md status → return:
+```
+## RETURN
+DONE: Technical design complete, brownfield findings written to docs/handoffs/TASK_NNN.md
+NEXT: pm | break design into atomic tasks and create developer handoffs
+HANDOFF: docs/handoffs/TASK_NNN.md
+PIPELINE: continue
+```

@@ -25,39 +25,64 @@ Launch `po`. Return EXACTLY ONE of:
 
 ---
 
-## Step 2: Planning (sequential, one-time per sprint)
+## Step 2: Planning loop (sequential by nature — each needs previous output)
 
 **FIX** → skip to Step 3
 
-**SPRINT-S** → `architect` (design + handoffs) → `pm` (TASKS.md breakdown) → Step 3
+**SPRINT-S**:
+1. Spawn `architect` → read return
+2. Spawn `pm` → read return (contains task list + deps) → Step 3
 
-**SPRINT-M/L** → `ba` → PO approves → `architect` → `pm` → Step 3
-  - L only: `architect` post-merge review after last task merged
+**SPRINT-M/L**:
+1. Spawn `ba` → read return
+2. Spawn `architect` → read return
+3. Spawn `pm` → read return → Step 3
+   - L only: after last merge → spawn `architect` post-merge review
 
-**UNBLOCK** → `{route_to}` → notify work → EXIT
+**UNBLOCK** → spawn `{route_to}` → read return → `send_telegram(work, "Unblocked: [brief]")` → EXIT
 
 ---
 
-## Step 3: Execution (parallel lanes, WIP ≤ 2)
+## Step 3: Execution loop (parallel where possible)
 
-Launch up to 2 independent tasks concurrently:
+Read `pm` return to get task list + dependency map. Then:
 
+**Group tasks by dependency tier:**
 ```
-Lane A │ developer → qa → [fixer → qa]* → APPROVED → merge
-Lane B │ developer → qa → [fixer → qa]* → APPROVED → merge
-         ↑ starts as soon as a slot is free + task has no pending deps
+Tier 1: tasks with no deps → spawn ALL developers in one message (parallel)
+Tier 2: tasks that depend on Tier 1 → spawn after Tier 1 Done
+Tier 3: tasks that depend on Tier 2 → etc.
 ```
 
-- **Dependency unblock**: QA Done on task N → immediately queue next unblocked Todo task (don't wait for lane to drain)
-- **Fixer ceiling**: max 2 rounds → still failing → escalate to `architect`, open new task, STOP lane
-- **Per task**: developer reads `docs/handoffs/TASK_NNN.md` → implements TDD → qa reviews → merge on APPROVED → notify work
+**Per tier — main terminal spawns all independent tasks together:**
+```
+# Example: Tier 1 has task A and task B (no shared files, no deps)
+→ ONE message: Agent(developer, task A) + Agent(developer, task B)
+→ Read both returns
+
+# QA for completed tasks — also parallel if different branches:
+→ ONE message: Agent(qa, task A) + Agent(qa, task B)
+→ Read both returns
+
+# Fixer if needed — parallel per task:
+→ ONE message: Agent(fixer, task A) + Agent(fixer, task B)
+```
+
+**Conflict check before parallel spawn** (main terminal must verify):
+- Different files → ✅ parallel
+- Same file modified by both → ❌ sequential
+- Task B `depends_on` Task A → ❌ sequential (wait for A Done)
+- Same test suite → ⚠️ parallel ok if different test files
+
+**After each tier completes:**
+- Spawn `pm` to update TASKS.md + unblock next tier → read return → spawn next tier
 
 ---
 
 ## Step 4: Scan
 
-After each task merged: `read_telegram_reports(status="new")` — new? → Step 1.
-All tasks Done + no new work → EXIT
+After all tasks Done: `read_telegram_reports(status="new")` — new? → Step 1.
+No new work → `send_telegram(work, "Dev loop idle.")` → EXIT
 
 ---
 

@@ -39,13 +39,14 @@ REPEAT per acceptance criterion
 - **Full suite:** N pass / 0 fail ✓
 ```
 
-**Update agent memory** (before QA):
-- Bug → `docs/agent-memory/issues/BUGNAME.md`
-- Pattern → `docs/agent-memory/patterns/PATTERN.md`
-- Module → `docs/agent-memory/modules/MODULE.md`
-- Session → `docs/agent-memory/sessions/YYYY-MM-DD-developer.md`
+**Append session log** (before QA):
+`append_session_record(agent_name="developer", task_name="Task NNN: ...", finding=..., status="Ready for QA")`
 
-**Update TASKS.md**: In Progress → Review
-
-**Spawn `qa`**:
-> Task [NNN]. Handoff: docs/handoffs/TASK_NNN.md. Branch: task/NNN-kebab. Implementation complete: CHANGED=[src/foo.ts:40-55, src/__tests__/NNN.test.ts], NEW_PASS=23. Run full QA pipeline.
+**Update TASKS.md**: In Progress → Review → return:
+```
+## RETURN
+DONE: Implementation complete — CHANGED=[src/foo.ts:40-55, src/__tests__/NNN.test.ts], NEW_PASS=23, tsc clean
+NEXT: qa | run full QA pipeline on branch task/NNN-kebab
+HANDOFF: docs/handoffs/TASK_NNN.md
+PIPELINE: continue
+```

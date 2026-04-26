@@ -41,14 +41,33 @@ verdict: APPROVED | CHANGES_REQUESTED
 **Full** (new tool/domain service/security): test results, DDD, security, code quality, blockers, merge commit.
 
 ## Approval
-**APPROVED**: append `[QA] Review Record` → `git merge` → `git branch -d` → **spawn `pm`**:
-> Task [NNN] merged. Mark Done, unblock downstream tasks, spawn next developer if Todo tasks available.
+**APPROVED**: append `[QA] Review Record` → `git merge` → `git branch -d` → return:
+```
+## RETURN
+DONE: Task NNN merged, branch deleted, all tests green
+NEXT: pm | mark Task NNN done, unblock downstream, queue next developer task
+HANDOFF: docs/handoffs/TASK_NNN.md
+PIPELINE: continue
+```
 
-**CHANGES_REQUESTED**: append blocking issues (file:line) → check fixer round count in handoff:
-- round < 2 → **spawn `fixer`**: Task [NNN]. Handoff: docs/handoffs/TASK_NNN.md. [QA] issues listed, apply minimum fixes.
-- round ≥ 2 → **spawn `architect`**: Task [NNN] fixer ceiling hit. Handoff: docs/handoffs/TASK_NNN.md. Root-cause and redesign needed.
+**CHANGES_REQUESTED**: append issues (file:line) → check fixer round count in handoff → return:
+```
+## RETURN
+DONE: QA review complete — N issues found (see [QA] Review Record in handoff)
+NEXT: fixer | apply minimum fixes to listed issues      ← round < 2
+NEXT: architect | fixer ceiling hit, root-cause needed  ← round ≥ 2
+HANDOFF: docs/handoffs/TASK_NNN.md
+PIPELINE: continue
+```
 
-**ARCHITECT_REVIEW_NEEDED**: **spawn `architect`**: Task [NNN] needs pre-merge review. Handoff: docs/handoffs/TASK_NNN.md. Re-run QA pipeline after.
+**ARCHITECT_REVIEW_NEEDED** → return:
+```
+## RETURN
+DONE: QA flagged architectural issue before merge
+NEXT: architect | review Task NNN before merge, then re-run QA
+HANDOFF: docs/handoffs/TASK_NNN.md
+PIPELINE: continue
+```
 
 ## Emergency
 Tests fail on main → revert breaking commit → `send_telegram(channel="bug")` → open Backlog task → no merges until green
