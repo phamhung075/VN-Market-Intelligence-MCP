@@ -26,16 +26,21 @@ if [ -z "$QUEUE" ]; then
   exit 1
 fi
 
-TOTAL=$(echo "$QUEUE" | jq '.total')
+TOTAL=$(echo "$QUEUE" | jq '.total // 0' 2>/dev/null)
+# Guard: if jq parse fails or returns empty/non-numeric, treat as 0
+if ! echo "$TOTAL" | grep -qE '^[0-9]+$'; then
+  echo "$(date -u) WARN: malformed JSON from MCP (TOTAL='$TOTAL') — skipping" >> "$LOG"
+  exit 0
+fi
 echo "$(date -u) Queue: $TOTAL items pending" >> "$LOG"
 
-if [ "$TOTAL" = "0" ] || [ "$TOTAL" = "null" ]; then
+if [ "$TOTAL" = "0" ]; then
   echo "$(date -u) Nothing to fetch — exit" >> "$LOG"
   exit 0
 fi
 
 # Step 2: Process each queue item
-echo "$QUEUE" | jq -c '.queue[]' | while read -r ITEM; do
+echo "$QUEUE" | jq -c '.queue[]? // empty' 2>/dev/null | while read -r ITEM; do
   CODE=$(echo "$ITEM"    | jq -r '.action_code')
   YEAR=$(echo "$ITEM"    | jq -r '.period_year')
   QTR=$(echo "$ITEM"     | jq -r '.period_quarter')

@@ -324,10 +324,16 @@ export async function diagnose_foreign_flow_circuit_breaker(): Promise<{
 
   // Reset timeout info (only if open)
   if (stats.state === "open") {
-    const RESET_TIMEOUT_MS = 30_000; // Match foreignFlow breaker config
-    const remainingMs = Math.max(0, RESET_TIMEOUT_MS);
+    const resetTimeoutMs = stats.resetTimeoutMs;
+    let remainingMs = resetTimeoutMs;
+    if (stats.openedAt) {
+      const elapsedMs = Date.now() - new Date(stats.openedAt).getTime();
+      remainingMs = Math.max(0, resetTimeoutMs - elapsedMs);
+    }
     const remainingSec = Math.round(remainingMs / 1000);
-    lines.push(`Will auto-transition to half-open in ${remainingMs}ms (~${remainingSec}s)`);
+    lines.push(
+      `Will auto-transition to half-open in ~${remainingSec}s (resetTimeout: ${resetTimeoutMs / 1000}s)`,
+    );
   }
 
   return {
