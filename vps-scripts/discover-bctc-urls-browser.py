@@ -324,7 +324,89 @@ def discover_from_upcom(code: str, year: int, quarter: str) -> Optional[Dict[str
 
 SSC_BASE = "https://congbothongtin.ssc.gov.vn"
 SSC_SEARCH = f"{SSC_BASE}/faces/NewsSearch"
+SSC_HOSE_PAGE = f"{SSC_BASE}/faces/Action/SanGiaoDiv.xhtml"
 _SSC_MIN_BYTES = 50_000
+
+
+def discover_from_hose_ssc(code: str, year: int, quarter: str) -> Optional[Dict[str, Any]]:
+    """
+    Query SSC portal with exchange=HOSE parameter to confirm document existence
+    for HOSE-listed stocks.
+
+    HOSE PDFs are not directly discoverable (portal uses ADF/PPR links, no raw PDF
+    URLs). This function serves as a confirmation step: if SSC shows the document
+    exists for this HOSE-listed ticker, we return a result with url=None so the
+    caller knows the report was filed even if no PDF URL is available.
+
+    Portal: congbothongtin.ssc.gov.vn/faces/Action/SanGiaoDiv.xhtml
+    Exchange filter param: exchange=HOSE (alongside keyword + type=BCTC + year).
+    """
+    url = (
+        f"{SSC_HOSE_PAGE}?"
+        f"keyword={urllib.parse.quote(code)}"
+        f"&type=BCTC"
+        f"&year={year}"
+        f"&exchange=HOSE"
+    )
+    try:
+        html = _http_get(url, headers=_BOT_HEADERS, timeout=20)
+    except Exception as e:
+        print(f"  [HOSE-SSC] fetch error: {e}", file=sys.stderr)
+        return None
+
+    if len(html) < _SSC_MIN_BYTES:
+        # Also try the generic NewsSearch endpoint with exchange=HOSE
+        fallback_url = (
+            f"{SSC_SEARCH}?"
+            f"keyword={urllib.parse.quote(code)}"
+            f"&type=BCTC"
+            f"&year={year}"
+            f"&exchange=HOSE"
+        )
+        try:
+            html = _http_get(fallback_url, headers=_BOT_HEADERS, timeout=20)
+        except Exception as e:
+            print(f"  [HOSE-SSC] fallback fetch error: {e}", file=sys.stderr)
+            return None
+
+    if len(html) < _SSC_MIN_BYTES:
+        print(f"  [HOSE-SSC] short response ({len(html)} bytes)", file=sys.stderr)
+        return None
+
+    x17f = re.search(r'class="x17f[^"]*"[^>]*>(.*?)</table>', html, re.DOTALL)
+    if not x17f:
+        return None
+
+    rows = re.findall(r'<tr[^>]*role="row"[^>]*>(.*?)</tr>', x17f.group(1), re.DOTALL)
+    code_upper = code.upper()
+
+    for row in rows:
+        cells = re.findall(r"<td[^>]*>(.*?)</td>", row, re.DOTALL)
+        if len(cells) < 7:
+            continue
+        ticker = html_lib.unescape(re.sub(r"<[^>]+>", "", cells[2])).strip().upper()
+        title = html_lib.unescape(re.sub(r"<[^>]+>", "", cells[3])).strip()
+
+        if ticker != code_upper:
+            continue
+        if matches_quarter_and_year(title, quarter, year):
+            print(f"  [HOSE-SSC] confirmed ticker={ticker} title={title[:80]}", file=sys.stderr)
+            return {
+                "url": None,
+                "source": "HOSE-SSC",
+                "confidence": 0.55,
+                "page_title": title,
+            }
+        if quarter.upper() == "Q4" and matches_annual(title, year):
+            print(f"  [HOSE-SSC] confirmed annual ticker={ticker} title={title[:80]}", file=sys.stderr)
+            return {
+                "url": None,
+                "source": "HOSE-SSC",
+                "confidence": 0.55,
+                "page_title": title,
+            }
+
+    return None
 
 
 def discover_from_ssc(code: str, year: int, quarter: str) -> Optional[Dict[str, Any]]:
@@ -381,8 +463,10 @@ def discover_bctc_pdf(code: str, year: int, quarter: str) -> Dict[str, Any]:
     """
     Discover BCTC PDF URL.
 
-    Order: HNX → UPCOM → SSC (confirmation only, no PDF URL).
-    HOSE stocks are NOT discoverable via automated scraping (portal broken).
+    Order: HNX → UPCOM → HOSE-SSC (exchange=HOSE filter) → SSC generic
+    (last two are confirmation only, no PDF URL).
+    HOSE stocks: PDF URLs not directly discoverable (ADF portal), but existence
+    is confirmed via SSC portal with exchange=HOSE parameter.
     """
     code = code.upper()
     quarter = quarter.upper()
@@ -402,7 +486,19 @@ def discover_bctc_pdf(code: str, year: int, quarter: str) -> Dict[str, Any]:
         results.append(result)
         return {"results": results, "error": None}
 
-    # 3. SSC confirmation (no PDF URL — HOSE or other)
+    # 3. HOSE-SSC confirmation (exchange=HOSE filter on SSC portal, no PDF URL)
+    result = discover_from_hose_ssc(code, year, quarter)
+    if result:
+        return {
+            "results": [],
+            "error": (
+                f"Document found on SSC/HOSE ({result['page_title'][:60]}) "
+                f"but no direct PDF URL available for {code} {year} {quarter}. "
+                f"HOSE portal does not expose raw PDF links for automated download."
+            ),
+        }
+
+    # 4. Generic SSC confirmation (no exchange filter — catches remaining cases)
     result = discover_from_ssc(code, year, quarter)
     if result:
         # Document exists but we can't get the PDF URL

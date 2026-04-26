@@ -137,8 +137,8 @@ describe("FIX-1281 — BCTC VPS-only guard", () => {
     expect(guardShouldSkip(true)).toBe(false);   // VPS: do not skip
   });
 
-  // ── AC-6: bctcQueueEnricher skips SSC lookups (already implemented) ───────
-  it("AC-6: bctcQueueEnricherJob marks NULL source_url items as skipped (no SSC calls)", async () => {
+  // ── AC-6: bctcQueueEnricher is a no-op for NULL source_url items ──────────
+  it("AC-6: bctcQueueEnricherJob leaves NULL source_url items as pending (awaiting VPS discovery)", async () => {
     const { Database } = await import("bun:sqlite");
     const db = new Database(":memory:");
     db.exec(`
@@ -156,22 +156,21 @@ describe("FIX-1281 — BCTC VPS-only guard", () => {
       )
     `);
 
-    // Insert items with NULL source_url (awaiting VPS push)
+    // Insert items with NULL source_url (awaiting VPS discovery)
     db.prepare("INSERT INTO bctc_vps_queue (action_code, period_year, period_quarter) VALUES (?, ?, ?)").run("VCB", 2025, "Q4");
     db.prepare("INSERT INTO bctc_vps_queue (action_code, period_year, period_quarter) VALUES (?, ?, ?)").run("FPT", 2025, "Q4");
 
     const { runBctcQueueEnricherJob } = await import("../../src/scheduler/financial-reports/bctcQueueEnricherJob.js");
     const result = await runBctcQueueEnricherJob({ db, batchSize: 10 });
 
-    // Should process items but make no SSC calls — items are skipped
-    expect(result.itemsProcessed).toBe(2);
+    // Job is a no-op: items without source_url must stay pending for VPS to discover
+    expect(result.itemsProcessed).toBe(0);
     expect(result.urlsPopulated).toBe(0);
-    // partialFailures = skipped count (expected behavior in VPS-only mode)
-    expect(result.partialFailures).toBe(2);
+    expect(result.partialFailures).toBe(0);
 
-    // Verify items are marked skipped (not failed)
+    // Verify items remain pending (NOT skipped — that would block VPS re-discovery)
     const items = db.prepare("SELECT status FROM bctc_vps_queue").all() as { status: string }[];
-    expect(items.every((i) => i.status === "skipped")).toBe(true);
+    expect(items.every((i) => i.status === "pending")).toBe(true);
   });
 
   // ── AC-7: No direct SSC HTTP calls in production src (non-test files) ─────

@@ -1,15 +1,12 @@
 /**
- * Task 1287a — BCTC Queue Enricher Tests (UPDATED for Task 1288c hotfix)
+ * Task 1287a — BCTC Queue Enricher Tests (UPDATED for Bug-2 fix)
  *
- * HOTFIX (Task 1288c, 2026-04-22):
- * Main server no longer enriches BCTC queue items from SSC.
- * Items with source_url = NULL are marked as 'skipped'.
- * VPS (Vietnam) is the ONLY source of BCTC queue data.
+ * Previous hotfix (Task 1288c) marked items with source_url=NULL as 'skipped',
+ * which permanently blocked VPS re-discovery. That was wrong.
  *
- * Root cause: Main server in France cannot fetch from SSC (geo-blocked).
- * This caused recurring timeouts every 15 minutes.
- *
- * New behavior: Skip items without source_url, let VPS push complete items.
+ * Correct behavior: Items with source_url=NULL must remain 'pending' so the
+ * VPS service can discover and push the PDF URL. The enricher job is a no-op
+ * for these items — it neither skips nor processes them.
  */
 
 Bun.env["DB_PATH"] = ":memory:";
@@ -110,30 +107,34 @@ describe("Task 1287a — BCTC Queue Enricher (Hotfix 1288c)", () => {
   });
 
   // ──────────────────────────────────────────────────────────────────────────
-  // TC-2: Items with NULL source_url are marked as 'skipped'
+  // TC-2: Items with NULL source_url remain 'pending' (awaiting VPS discovery)
   // ──────────────────────────────────────────────────────────────────────────
 
-  it("marks items with source_url=NULL as 'skipped' (awaiting VPS push)", async () => {
+  it("leaves items with source_url=NULL as 'pending' (awaiting VPS discovery)", async () => {
     insertQueueItem(testDb, "VCB", 2025, "Q1", null);
     insertQueueItem(testDb, "FPT", 2025, "Q1", null);
     insertQueueItem(testDb, "HPG", 2025, "Q1", null);
 
     const result = await runBctcQueueEnricherJob({ db: testDb });
 
-    expect(result.itemsProcessed).toBe(3);
-    expect(result.partialFailures).toBe(3); // All skipped
+    // Job is a no-op for items without source_url
+    expect(result.itemsProcessed).toBe(0);
+    expect(result.partialFailures).toBe(0);
 
+    // All items must remain pending — NOT skipped
+    const pending = getQueueItems(testDb, "pending");
+    expect(pending.length).toBe(3);
     const skipped = getQueueItems(testDb, "skipped");
-    expect(skipped.length).toBe(3);
-    expect(skipped.every((i) => i.source_url === null)).toBe(true);
+    expect(skipped.length).toBe(0);
   });
 
   // ──────────────────────────────────────────────────────────────────────────
   // TC-3: Items with existing source_url are ignored
   // ──────────────────────────────────────────────────────────────────────────
 
-  it("ignores items that already have source_url", async () => {
-    // One with URL (should be ignored), one without (should be skipped)
+  it("ignores items that already have source_url (no-op for both paths)", async () => {
+    // One with URL (should stay pending, waiting for something else to process it),
+    // one without (should also stay pending, waiting for VPS discovery)
     insertQueueItem(
       testDb,
       "VCB",
@@ -145,23 +146,23 @@ describe("Task 1287a — BCTC Queue Enricher (Hotfix 1288c)", () => {
 
     const result = await runBctcQueueEnricherJob({ db: testDb });
 
-    expect(result.itemsProcessed).toBe(1); // Only FPT processed
-    expect(result.partialFailures).toBe(1); // FPT skipped
+    // Job is a no-op: items with source_url await downstream processing,
+    // items without source_url await VPS discovery
+    expect(result.itemsProcessed).toBe(0);
+    expect(result.partialFailures).toBe(0);
 
     const skipped = getQueueItems(testDb, "skipped");
-    expect(skipped.length).toBe(1);
-    expect(skipped[0]?.action_code).toBe("FPT");
+    expect(skipped.length).toBe(0);
 
     const pending = getQueueItems(testDb, "pending");
-    expect(pending.length).toBe(1);
-    expect(pending[0]?.action_code).toBe("VCB");
+    expect(pending.length).toBe(2);
   });
 
   // ──────────────────────────────────────────────────────────────────────────
   // TC-4: Batch dequeue limit (max 20 per run)
   // ──────────────────────────────────────────────────────────────────────────
 
-  it("respects batch dequeue limit (20 items max per run)", async () => {
+  it("is a no-op regardless of queue size — all items stay pending", async () => {
     // Insert 100 items with NULL source_url
     for (let i = 1; i <= 100; i++) {
       insertQueueItem(testDb, `CODE${String(i).padStart(3, "0")}`, 2025, "Q1", null);
@@ -169,57 +170,60 @@ describe("Task 1287a — BCTC Queue Enricher (Hotfix 1288c)", () => {
 
     const result = await runBctcQueueEnricherJob({ db: testDb });
 
-    expect(result.itemsProcessed).toBe(20);
-    expect(result.partialFailures).toBe(20); // All skipped
+    // No items processed — job is a no-op for null source_url items
+    expect(result.itemsProcessed).toBe(0);
+    expect(result.partialFailures).toBe(0);
 
     const skipped = getQueueItems(testDb, "skipped");
-    expect(skipped.length).toBe(20);
+    expect(skipped.length).toBe(0);
 
     const stillPending = getQueueItems(testDb, "pending");
-    expect(stillPending.length).toBe(80); // Remaining items still pending
+    expect(stillPending.length).toBe(100);
   });
 
   // ──────────────────────────────────────────────────────────────────────────
   // TC-5: Idempotency — re-run does not re-skip already-skipped items
   // ──────────────────────────────────────────────────────────────────────────
 
-  it("is idempotent — re-running does not re-process skipped items", async () => {
+  it("is idempotent — re-running leaves items unchanged", async () => {
     insertQueueItem(testDb, "VCB", 2025, "Q1", null);
 
     // First run
     const result1 = await runBctcQueueEnricherJob({ db: testDb });
-    expect(result1.itemsProcessed).toBe(1);
+    expect(result1.itemsProcessed).toBe(0);
 
     // Second run on same data
     const result2 = await runBctcQueueEnricherJob({ db: testDb });
-    expect(result2.itemsProcessed).toBe(0); // No more items to process
+    expect(result2.itemsProcessed).toBe(0);
 
+    // Item stays pending across multiple runs
+    const pending = getQueueItems(testDb, "pending");
+    expect(pending.length).toBe(1);
     const skipped = getQueueItems(testDb, "skipped");
-    expect(skipped.length).toBe(1);
+    expect(skipped.length).toBe(0);
   });
 
   // ──────────────────────────────────────────────────────────────────────────
   // TC-6: Mixed queue state (some pending, some skipped, some with URLs)
   // ──────────────────────────────────────────────────────────────────────────
 
-  it("handles mixed queue state correctly", async () => {
-    insertQueueItem(testDb, "VCB", 2025, "Q1", null); // Will be skipped
-    insertQueueItem(testDb, "FPT", 2025, "Q1", "https://ssc.gov.vn/fpt.pdf"); // Has URL, ignored
-    insertQueueItem(testDb, "HPG", 2025, "Q1", null); // Will be skipped
-    insertQueueItem(testDb, "TCB", 2024, "Q4", null); // Will be skipped
+  it("handles mixed queue state correctly — all pending items remain pending", async () => {
+    insertQueueItem(testDb, "VCB", 2025, "Q1", null); // awaiting VPS discovery
+    insertQueueItem(testDb, "FPT", 2025, "Q1", "https://ssc.gov.vn/fpt.pdf"); // has URL, still pending
+    insertQueueItem(testDb, "HPG", 2025, "Q1", null); // awaiting VPS discovery
+    insertQueueItem(testDb, "TCB", 2024, "Q4", null); // awaiting VPS discovery
 
     const result = await runBctcQueueEnricherJob({ db: testDb });
 
-    expect(result.itemsProcessed).toBe(3); // VCB, HPG, TCB
-    expect(result.partialFailures).toBe(3); // All skipped
+    // No-op: nothing is processed or skipped
+    expect(result.itemsProcessed).toBe(0);
+    expect(result.partialFailures).toBe(0);
 
     const skipped = getQueueItems(testDb, "skipped");
-    expect(skipped.length).toBe(3);
-    expect(skipped.map((i) => i.action_code).sort()).toEqual(["HPG", "TCB", "VCB"]);
+    expect(skipped.length).toBe(0);
 
     const pending = getQueueItems(testDb, "pending");
-    expect(pending.length).toBe(1);
-    expect(pending[0]?.action_code).toBe("FPT");
+    expect(pending.length).toBe(4);
   });
 
   // ──────────────────────────────────────────────────────────────────────────

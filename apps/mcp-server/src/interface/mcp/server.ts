@@ -1330,6 +1330,14 @@ export async function createBunServer(
 
         const missing = watchlistCodes.filter((c) => !existing.has(c));
 
+        // Revive stale skipped rows so VPS can reattempt discovery.
+        // INSERT OR IGNORE would silently ignore existing 'skipped' rows, leaving
+        // them permanently blocked. The UPDATE runs first to reset them to 'pending'.
+        db.prepare(
+          `UPDATE bctc_vps_queue SET status='pending'
+           WHERE status='skipped' AND source_url IS NULL`,
+        ).run();
+
         // Upsert queue rows for missing tickers
         const insertStmt = db.prepare(
           `INSERT OR IGNORE INTO bctc_vps_queue (action_code, period_year, period_quarter) VALUES (?, ?, ?)`,
