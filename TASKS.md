@@ -19,6 +19,7 @@
 - **fix-1293c / fix-1328e / fix-bctc-ocr / fix-watchdog-recovery / fix/signal-payload-fields:** Signal, bug routing, OCR, null-flow, conviction fields — all merged
 - **feat/value-investor-analysis-system (1336):** 30 analysis ledger files, Report Analyzer agent (new), 4 agent mods (News Scout/Market Watcher/Alert Commander/Unified Agent), quarterly conviction synthesis, value_investor mode — MERGED 2026-04-26 (6520 pass / 213 fail baseline maintained)
 - **1330a–1330b:** Fix 7 failing test regressions from Sprint 1329 (1289c fallback field, 1476 WAL threshold/msg, 240 AC-4 cooldown reset, 1551 isolation) — DONE 2026-04-25 (26/26 target tests pass)
+- **1338:** Retrospective documentation for sprints 1330–1337 (SPRINT_GOAL.md, project-stats.json validation tests, sprint history consolidation) — DONE 2026-04-26
 
 ---
 
@@ -28,25 +29,9 @@
 
 ## Todo
 
-### Sprint 1338 — Retrospective Documentation: Sprints 1330–1337
-
-| ID | Title | Size | Owner |
-|----|-------|------|-------|
-| 1338b | Update SPRINT_GOAL.md retrospective + project-stats.json currentSprint=1338 | S | Developer |
-
-Handoffs: `docs/handoffs/TASK_1338a.md` | `docs/handoffs/TASK_1338b.md`
-
 ---
 
 ## In Progress
-
-### 1338a — Write failing validation tests (branch: task/1338a-sprint-goal-validation-test)
-
-| ID | Title | Size | Owner | Status |
-|----|-------|------|-------|--------|
-| 1338a | Write failing validation tests (SPRINT_GOAL.md refs ≥1338, currentSprint=1338) | S | Developer | In Progress |
-
-**Blocking issue:** `src/__tests__/1338-sprint-goal-retrospective.test.ts:20` — TS2345: `firstH2![1]` typed as `string | undefined` under `noUncheckedIndexedAccess: true`. Fix: change to `firstH2![1]!` then re-run `bun tsc --noEmit`. Report: `reports/TASK_REPORT_1338a.md`
 
 ---
 
