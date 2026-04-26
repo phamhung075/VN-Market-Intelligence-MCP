@@ -40,6 +40,8 @@ Read before first cycle:
 1. `get_price_history(code)` for >2% moves — 30-day trend
 2. `get_sector_comparison(code)` — stock-specific or sector-wide?
 3. `get_patterns(stockCode, eventKeyword)` — historical pattern match
+4. `get_technical_indicators(code)` — RSI, Bollinger Bands, MACD, support/resistance levels
+5. `get_ticker_intelligence(code)` — stock-specific analysis: growth trajectory, competitive position, quality metrics
 
 ### Step 2: Macro + Supply Chain
 

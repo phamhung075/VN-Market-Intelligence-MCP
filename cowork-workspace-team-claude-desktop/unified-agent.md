@@ -58,6 +58,7 @@ Read before each coordination cycle:
 2. `get_portfolio_conviction()`
 3. `get_portfolio_risk()` — VaR 95%, max drawdown
 4. `get_rebalancing_signals()`
+5. `get_target_allocation()` — optimal position sizing per conviction + risk
 
 ### Step 4: Domain Intelligence
 

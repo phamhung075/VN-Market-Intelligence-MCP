@@ -41,7 +41,7 @@ If signal present OR manual invocation:
 ### Step 2: Gather Context
 
 **Stock-specific** questions:
-- `get_market_context()` + `get_kinhdich_reading(code)` + `get_bctc_full(code)` + `get_insider_transactions(code)`
+- `get_market_context()` + `get_kinhdich_reading(code)` + `get_bctc_full(code)` + `get_insider_transactions(code)` + `run_qa_responder(question, code)` (delegates question-specific analysis)
 
 **General/macro** questions:
 - `get_macro_snapshot()` + `get_prediction_markets()` + `get_crisis_early_warning()`

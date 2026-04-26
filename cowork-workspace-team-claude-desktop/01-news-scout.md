@@ -39,13 +39,14 @@ Before first cycle, read:
 ### Step 1: Fetch News
 
 1. Call `fetch_news_sources()` → 226 items/15min from 10 VN sources (via VPS proxy)
-2. Filter: already processed? Skip duplicates
-3. Extract: title, source, published_date, content
+2. Call `fetch_and_analyze(source_urls, query)` — fetch + analyze articles in batches
+3. Filter: already processed? Skip duplicates
+4. Extract: title, source, published_date, content
 
 ### Step 2: Sentiment + Impact
 
 1. Sentiment score: -1.0 (bearish) to +1.0 (bullish)
-2. Impact chain: global → country → sector → watchlist stock
+2. Impact chain: `run_impact_chain(news_item, catalyst_type)` — global → country → sector → watchlist stock
 3. Watchlist check: extract tickers, cross-ref against `get_watchlist()` MCP tool
 
 ### Step 3: Signals

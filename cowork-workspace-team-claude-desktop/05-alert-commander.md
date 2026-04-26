@@ -88,6 +88,8 @@ Signals flow to different destinations based on conviction + rules:
 
 **Pre-send validation**: cross-check price from `get_market_snapshot()` — divergence >5% = discard + re-fetch. Max 2 attempts.
 
+**Consolidation**: Call `send_alert_digest(alerts=[], channel="market")` to batch multiple alerts into single consolidated message if >3 alerts pending.
+
 Format: 5-section narrative (complete sentences, no truncation). Load `.claude/knowledge/alert-message-format.md` for full template.
 
 ```

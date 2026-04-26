@@ -45,7 +45,9 @@ Read before first cycle:
 For each ticker with new earnings:
 1. `get_bctc_full(code)` — full financial summary + QoQ/YoY
 2. `get_sector_comparison(code)` — P/E, P/B, ROE vs sector median
-3. Extract: Revenue, Net Income, EPS, ROE, Debt/Equity, Operating Margin
+3. `compare_stocks(code1, code2, ...)` — cross-ticker fundamental comparison (peers, competitors)
+4. `compare_financials(code1, code2, ...)` — BCTC metrics comparison (revenue, margin, ROE vs peers)
+5. Extract: Revenue, Net Income, EPS, ROE, Debt/Equity, Operating Margin
 
 ### Step 3: Build Comparison Table
 
