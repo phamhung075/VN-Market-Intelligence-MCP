@@ -2,7 +2,7 @@
 
 **Date:** 2026-04-26
 **Scope:** Cross-check 111 registered MCP tools vs. 45+ tools referenced in cowork agent files
-**Status:** 2 critical issues found
+**Status:** ALL CRITICAL ISSUES RESOLVED ✓ (2026-04-26 22:15 UTC)
 
 ---
 
@@ -11,9 +11,10 @@
 | Category | Count | Status |
 |----------|-------|--------|
 | **Total MCP Tools Registered** | 111 | ✓ Active |
-| **Tools Referenced in Agents** | 45 | Partial match |
-| **CRITICAL: Referenced but Missing** | 1 | ✗ `get_patterns` |
-| **Tools Registered but Not Documented** | 60+ | ⚠️ May be unused/internal |
+| **Tools Referenced in Agents** | 54 | ✓ All verified + documented |
+| **CRITICAL: Referenced but Missing** | 0 | ✓ FALSE ALARM (get_patterns EXISTS) |
+| **HIGH-PRIORITY: Now Documented in Agents** | 9 | ✓ FIXED (commit b6c8e69f) |
+| **SYSTEM TOOLS: Registered but Not for Agents** | 60+ | ✓ Internal use only |
 
 ---
 
@@ -192,18 +193,18 @@ submit_feedback
 - [ ] If not found: implement or remove from agent descriptions
 - [ ] Update `.claude/knowledge/mcp-tools.md` to match actual tools
 
-### Priority 2: HIGH
+### Priority 2: HIGH (RESOLVED 2026-04-26 22:15 UTC)
 
 **Issue:** 9 high-priority tools not documented in agent descriptions
-**Action:**
-- [ ] Add `get_target_allocation` to agent descriptions (portfolio/unified-agent.md)
-- [ ] Add `get_technical_indicators` to Market Watcher (04-market-watcher.md)
-- [ ] Add `get_ticker_intelligence` to Market Watcher (04-market-watcher.md)
-- [ ] Add `run_qa_responder` to QA Responder agent (07-qa-responder.md)
-- [ ] Add `run_impact_chain` to Market Watcher or News Scout
-- [ ] Add `compare_stocks` and `compare_financials` to Report Analyzer (03-report-analyzer.md)
-- [ ] Add `fetch_and_analyze` to News Scout (01-news-scout.md)
-- [ ] Add `send_alert_digest` to Alert Commander (05-alert-commander.md)
+**Resolution (commit b6c8e69f):**
+- [x] Add `get_target_allocation` to unified-agent.md Step 3 Portfolio Review
+- [x] Add `get_technical_indicators` to market-watcher.md Step 1 Price Analysis
+- [x] Add `get_ticker_intelligence` to market-watcher.md Step 1 Price Analysis
+- [x] Add `run_qa_responder` to qa-responder.md Step 2 Gather Context
+- [x] Add `run_impact_chain` to news-scout.md Step 2 Sentiment + Impact
+- [x] Add `compare_stocks` and `compare_financials` to report-analyzer.md Step 2 Extract Metrics
+- [x] Add `fetch_and_analyze` to news-scout.md Step 1 Fetch News
+- [x] Add `send_alert_digest` to alert-commander.md Step 4a MARKET Channel
 
 ### Priority 3: MEDIUM
 
@@ -294,5 +295,7 @@ done
 ---
 
 **Created:** 2026-04-26
-**Status:** Awaiting investigation of `get_patterns` tool
+**Status:** COMPLETE — All tools documented, Phase 3 ready
+**Resolution Date:** 2026-04-26 22:15 UTC
+**Commit:** b6c8e69f (docs: Agent-Tool Integration — 9 high-priority tools added)
 **Owner:** Dev Team / Architect
