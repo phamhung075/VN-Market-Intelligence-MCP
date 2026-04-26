@@ -1,63 +1,41 @@
-# TASK REPORT — Sprint 111 (Tasks 1337 + 1338)
+# Task Report: 1337 — infra-db-cb-fixes
+date: 2026-04-26
+outcome: APPROVED
 
-**Date:** 2026-04-16
-**Branch:** `task/1337-1338-test-isolation` → merged to `main`
-**Reviewer:** QA agent
+## Changes Reviewed
 
----
+| File | Change |
+|------|--------|
+| `apps/mcp-server/src/infrastructure/db/schema-macro.ts` | Idempotent `ALTER TABLE tracked_indicators ADD COLUMN hour_bucket TEXT` migration guard (try/catch before CREATE TABLE IF NOT EXISTS) |
+| `apps/mcp-server/src/infrastructure/circuitBreakerRegistry.ts` | `foreignFlow` breaker `resetTimeoutMs` raised 30 000 ms → 300 000 ms (5 min) to stop half-open probe thrash caused by repeated 422 failures |
+| `apps/mcp-server/src/infrastructure/fetchers/polymarket.ts` | CLOB fetch now uses `resolvedClobFetch` (raw, no CB); Gamma path keeps `breakers.polymarket.execute()`. Prevents geo-blocked 403s from tripping the polymarket breaker. |
+| `apps/mcp-server/src/__tests__/1337-infra-db-cb-fixes.test.ts` | 7 new tests covering all three issues |
 
-## Summary
+## Test Results
+- Unit tests (1337 file): 7 pass / 0 fail
+- Full suite: 6527 pass / 213 fail (213 pre-existing; no regressions introduced)
+- TypeScript: 0 errors
 
-| # | Check | Result |
-|---|-------|--------|
-| 1 | TypeScript `bun tsc --noEmit` | PASS (0 errors) |
-| 2 | Production source changes | NONE (test files only) |
-| 3 | DDD compliance (`domain/` imports) | PASS |
-| 4 | Security (`process.env` in prod src) | PASS |
-| 5 | `297-foreign-flow-fix.test.ts` — 5/5 pass | PASS |
-| 6 | `297` DB_PATH at line 10 before imports | PASS |
-| 7 | `296` OCR `it()` timeout = 30000ms | PASS |
-| 8 | `296` fails fast at 30s (not 8+ min hang) | PASS |
-| 9 | Full suite — 4910 pass, 20 skip, 1 fail | PASS |
+## DDD Compliance: PASS
+No domain imports in infrastructure files. No upward layer violations. All modified files are in `infrastructure/` layer — correct placement.
 
----
+## Security: PASS
+- No `process.env` usage (all `Bun.env`)
+- No hardcoded credentials or API keys
+- All SQL uses parameterized bindings (no changes to query logic)
 
-## Task Details
+## Code Quality Notes
+- Migration guard pattern (try/catch on ALTER TABLE) is consistent with existing patterns in `schema-macro.ts`
+- `resolvedClobFetch` resolution logic is well-commented and handles three cases: explicit injection, production default, and legacy single-fetchFn test compatibility
+- `foreignFlow` CB comment updated with task reference (1337) explaining the reason for the change
 
-### Task 1337 — 297-foreign-flow-fix DB isolation
+## Issues Found
+### Blocking
+(none)
 
-**Root cause:** `process.env["DB_PATH"]` was set after imports, so the DB singleton was already initialized with the shared on-disk DB before the in-memory override could take effect. Concurrent tests inserting the same ticker caused UNIQUE constraint violations.
+### Non-Blocking
+(none)
 
-**Fix:** Moved `process.env["DB_PATH"] = ":memory:";` to line 10, before all imports. Added `afterAll(closeDb)` to release the singleton after the test file completes.
-
-**Result:** 5/5 tests pass, no UNIQUE constraint errors.
-
-### Task 1338 — 296-ocr-pipeline-e2e timeout cap
-
-**Root cause:** OCR `it()` had no explicit timeout, so Bun used the default (which allowed the tesseract process to run for 8+ minutes on a 61-page VNM PDF before the suite was forcibly killed).
-
-**Fix:** Added `30_000` (30s) as the third argument to the `it()` call. The OCR test now times out cleanly at ~30s with `this test timed out after 30000ms` — the dangling tesseract process is killed by Bun automatically.
-
-**Result:** 1 expected timeout failure at 30s, no hang.
-
----
-
-## Full Suite Result (post-merge on main)
-
-```
-4910 pass | 20 skip | 1 fail
-Ran 4931 tests across 370 files [58.77s]
-```
-
-The 1 fail is test 296 OCR timeout — expected and acceptable per task specification.
-
-Note: Bun runtime crash at process exit (`panic: A C++ exception occurred`) is a known Bun 1.3.11 bug unrelated to this task. All 4910 tests completed successfully before the crash.
-
----
-
-## Files Changed
-
-- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/__tests__/297-foreign-flow-fix.test.ts` — DB_PATH moved to line 10 + afterAll(closeDb) added
-- `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/src/__tests__/296-ocr-pipeline-e2e.test.ts` — explicit 30s timeout on OCR it()
-
-**Verdict: APPROVED — merged.**
+## Merge Status
+- Merged to main: commit `798d1b7d`
+- Branch `task/infra-db-cb-fixes` deleted (local)
