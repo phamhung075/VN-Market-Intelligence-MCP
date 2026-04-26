@@ -2,9 +2,9 @@
   "_maintained_by": "developer",
   "_trigger": "after adding/removing MCP tool, update count + list",
   "_live_check": "curl -s http://127.0.0.1:3000/health | jq .toolCount",
-  "lastUpdated": "2026-04-23",
-  "toolCount": 108,
-  "_note": "2026-04-23: Task 1299a audit found category sum = 108 (toolCount was off-by-one stale at 107). 2026-04-23: Task 1300a (get_memory_files, search_memory_by_trigger) + Task 1300b (append_session_record, update_memory_file) added → 108. 2026-04-22: system-auditor sync. 2026-04-21: get_vps_service_health + get_sla_status (Task 234) added → 104.",
+  "lastUpdated": "2026-04-26",
+  "toolCount": 109,
+  "_note": "2026-04-26: FIX-BCTC-DEBUG-TRIGGER added trigger_bctc_vps_fetch → 109. 2026-04-23: Task 1299a audit found category sum = 108 (toolCount was off-by-one stale at 107). 2026-04-23: Task 1300a (get_memory_files, search_memory_by_trigger) + Task 1300b (append_session_record, update_memory_file) added → 108. 2026-04-22: system-auditor sync. 2026-04-21: get_vps_service_health + get_sla_status (Task 234) added → 104.",
   "categories": [
     { "name": "Watchlist", "count": 4, "tools": ["add_to_watchlist", "remove_from_watchlist", "get_watchlist", "update_thresholds"] },
     { "name": "Financial Reports", "count": 4, "tools": ["get_financial_summary", "compare_financials", "list_stored_pdfs", "read_bctc_pdf"] },
@@ -46,7 +46,8 @@
     { "name": "Market Message Review", "count": 4, "tools": ["get_unreviewed_market_messages", "review_market_message", "get_market_message_digest", "batch_review_market_messages"] },
     { "name": "Ticker Intelligence", "count": 1, "tools": ["get_ticker_intelligence"] },
     { "name": "Technical Analysis", "count": 1, "tools": ["get_technical_indicators"] },
-    { "name": "Agent Memory", "count": 4, "tools": ["get_memory_files", "search_memory_by_trigger", "append_session_record", "update_memory_file"] }
+    { "name": "Agent Memory", "count": 4, "tools": ["get_memory_files", "search_memory_by_trigger", "append_session_record", "update_memory_file"] },
+    { "name": "BCTC Debug", "count": 1, "tools": ["trigger_bctc_vps_fetch"] }
   ],
   "renamed": {
     "get_system_health": "get_system_status",

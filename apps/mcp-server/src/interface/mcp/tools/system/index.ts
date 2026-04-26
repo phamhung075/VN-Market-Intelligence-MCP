@@ -12,3 +12,4 @@ export { registerCycleBootstrapTool } from "./cycleBootstrapTool.js";
 export { registerVpsHealthTools } from "./vpsHealthTools.js";
 export { registerSlaStatusTools } from "./slaStatusTools.js";
 export { registerSignalDiagnosticsTools } from "./signalDiagnosticsTools.js";
+export { registerBctcDebugTriggerTool } from "./bctcDebugTriggerTool.js";

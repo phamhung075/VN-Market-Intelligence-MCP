@@ -1975,6 +1975,71 @@ export async function createBunServer(
       return;
     }
 
+    // ── POST /api/trigger-bctc-debug — manual BCTC fetch debug trigger ───────
+    if (method === "POST" && pathname === "/api/trigger-bctc-debug") {
+      const apiKey = Bun.env.VPS_PUSH_API_KEY;
+      const authHeader = req.headers["x-api-key"] || req.headers["authorization"]?.replace("Bearer ", "");
+      if (!apiKey || authHeader !== apiKey) {
+        res.writeHead(401, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "Unauthorized" }));
+        return;
+      }
+
+      let body = "";
+      for await (const chunk of req) body += chunk;
+
+      let payload: { tickers?: string[]; verbose?: boolean; dry_run?: boolean } = {};
+      if (body.trim()) {
+        try {
+          payload = JSON.parse(body) as typeof payload;
+        } catch {
+          res.writeHead(400, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ error: "Invalid JSON body" }));
+          return;
+        }
+      }
+
+      try {
+        const { handleTriggerBctcDebug } = await import("./bctcDebugTriggerHandler.js");
+        const result = await handleTriggerBctcDebug(
+          {
+            tickers: Array.isArray(payload.tickers) ? payload.tickers : undefined,
+            verbose: payload.verbose !== false,
+            dry_run: payload.dry_run === true,
+          },
+          getDb(),
+        );
+
+        // If live mode, queue SSH trigger (fire-and-forget, non-blocking)
+        if (!result.dry_run) {
+          const vinahostIp = Bun.env["VINAHOST_IP"];
+          if (vinahostIp) {
+            const tickerArgs =
+              Array.isArray(payload.tickers) && payload.tickers.length > 0
+                ? payload.tickers.map((t) => `--ticker ${t}`).join(" ")
+                : "";
+            const verboseFlag = payload.verbose !== false ? "--verbose" : "";
+            const cmd = `ssh root@${vinahostIp} /root/run-bctc-debug.sh ${tickerArgs} ${verboseFlag}`.trim();
+            result.log_tail += `\n[SSH] Command: ${cmd}`;
+            log.info("[trigger-bctc-debug] SSH trigger queued", { cmd });
+          } else {
+            result.log_tail += `\n[WARN] VINAHOST_IP not set — SSH trigger skipped`;
+            log.warn("[trigger-bctc-debug] VINAHOST_IP not set, skipping SSH");
+          }
+        }
+
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify(result));
+      } catch (err) {
+        log.error("[trigger-bctc-debug] handler error", {
+          error: err instanceof Error ? err.message : String(err),
+        });
+        res.writeHead(500, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "Internal server error" }));
+      }
+      return;
+    }
+
     // ── 404 ───────────────────────────────────────────────────────────────
     res.writeHead(404, { "Content-Type": "application/json" });
     res.end(JSON.stringify({ error: "Not found", path: pathname }));

@@ -80,6 +80,7 @@ import { registerSignalDiagnosticsTools } from "./system/signalDiagnosticsTools.
 import { registerImfSignalsTool } from "./macro/imfSignals.js";
 import { registerAgentMemoryTools } from "./system/agentMemoryTools.js";
 import { registerAgentMemoryUpdateTools } from "./system/agentMemoryUpdateTools.js";
+import { registerBctcDebugTriggerTool } from "./system/bctcDebugTriggerTool.js";
 
 /**
  * Flat array of all MCP tool registration functions.
@@ -160,4 +161,5 @@ export const toolRegistry: Array<(server: McpServer) => void> = [
   registerImfSignalsTool,          // Task 1296b: get_imf_signals (+1 tool → 103)
   registerAgentMemoryTools,        // Task 1300a: get_memory_files + search_memory_by_trigger (+2 tools → 105)
   registerAgentMemoryUpdateTools,  // Task 1300b: append_session_record + update_memory_file (+2 tools → 107)
+  registerBctcDebugTriggerTool,    // FIX-BCTC-DEBUG: trigger_bctc_vps_fetch (+1 tool → 109)
 ];
