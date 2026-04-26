@@ -153,6 +153,9 @@ export interface PriceConfirmationBuilder {
   setConfirmsDirection(confirms: boolean): this;
   setFullyPriced(fully_priced: boolean): this;
   setConfidence(confidence: number): this;
+  setCatalystStockCode(code: string): this;
+  setCatalystDirection(direction: "BUY" | "SELL" | "NEUTRAL"): this;
+  setTimeToPriceMove(hours: number): this;
   build(): PriceConfirmationFindingData;
 }
 
@@ -184,8 +187,23 @@ class PriceConfirmationBuilderImpl implements PriceConfirmationBuilder {
     return this;
   }
 
+  setCatalystStockCode(code: string): this {
+    this.data.catalyst_stock_code = code;
+    return this;
+  }
+
+  setCatalystDirection(direction: "BUY" | "SELL" | "NEUTRAL"): this {
+    this.data.catalyst_direction = direction;
+    return this;
+  }
+
+  setTimeToPriceMove(hours: number): this {
+    this.data.time_to_price_move = hours;
+    return this;
+  }
+
   build(): PriceConfirmationFindingData {
-    return PriceConfirmationFindingDataSchema.parse(this.data);
+    return PriceConfirmationFindingDataSchema.parse(this.data) as PriceConfirmationFindingData;
   }
 }
 
