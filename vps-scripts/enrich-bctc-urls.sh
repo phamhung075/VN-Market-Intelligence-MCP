@@ -27,17 +27,22 @@ if [ -z "$QUEUE" ]; then
   exit 1
 fi
 
-TOTAL=$(echo "$QUEUE" | jq '.total' 2>/dev/null)
+TOTAL=$(echo "$QUEUE" | jq '.total // 0' 2>/dev/null)
+# Guard: if jq parse fails or returns empty/non-numeric, treat as 0
+if ! echo "$TOTAL" | grep -qE '^[0-9]+$'; then
+  echo "$(date -u) WARN: malformed JSON from MCP (TOTAL='$TOTAL') — skipping" >> "$LOG"
+  exit 0
+fi
 echo "$(date -u) Queue: $TOTAL items pending (skip_enrichment=true)" >> "$LOG"
 
-if [ "$TOTAL" = "0" ] || [ "$TOTAL" = "null" ]; then
+if [ "$TOTAL" = "0" ]; then
   echo "$(date -u) Nothing to enrich — exit" >> "$LOG"
   exit 0
 fi
 
 # Step 2: For each queue item, try to discover PDF URLs
 ENRICHED=0
-echo "$QUEUE" | jq -c '.queue[]' 2>/dev/null | while read -r ITEM; do
+echo "$QUEUE" | jq -c '.queue[]? // empty' 2>/dev/null | while read -r ITEM; do
   CODE=$(echo "$ITEM" | jq -r '.action_code' 2>/dev/null)
   YEAR=$(echo "$ITEM" | jq -r '.period_year' 2>/dev/null)
   QTR=$(echo "$ITEM"  | jq -r '.period_quarter' 2>/dev/null)
@@ -58,9 +63,9 @@ echo "$QUEUE" | jq -c '.queue[]' 2>/dev/null | while read -r ITEM; do
   echo "$(date -u) $CODE $YEAR-$QTR: discovering with Playwright/Chromium..." >> "$LOG"
   DISCOVERY_JSON=$(python3 /root/discover-bctc-urls-browser.py "$CODE" "$YEAR" "$QTR" 2>/dev/null || echo '{"results":[],"error":"discovery failed"}')
 
-  PDF_URL=$(echo "$DISCOVERY_JSON" | jq -r '.results[0].url // empty' 2>/dev/null)
-  SOURCE=$(echo "$DISCOVERY_JSON" | jq -r '.results[0].source // empty' 2>/dev/null)
-  CONFIDENCE=$(echo "$DISCOVERY_JSON" | jq -r '.results[0].confidence // 0' 2>/dev/null)
+  PDF_URL=$(echo "$DISCOVERY_JSON" | jq -r '(.results[0].url) // empty' 2>/dev/null || echo '')
+  SOURCE=$(echo "$DISCOVERY_JSON" | jq -r '(.results[0].source) // empty' 2>/dev/null || echo '')
+  CONFIDENCE=$(echo "$DISCOVERY_JSON" | jq -r '(.results[0].confidence) // 0' 2>/dev/null || echo '0')
   
   # If no PDF found, skip this item
   if [ -z "$PDF_URL" ]; then

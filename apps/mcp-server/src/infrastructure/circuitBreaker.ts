@@ -36,6 +36,10 @@ export interface CircuitBreakerStats {
   state: CircuitState;
   /** ISO timestamp of last failure, or null if no failure recorded */
   lastFailure: string | null;
+  /** ISO timestamp when the circuit was opened, or null if not open */
+  openedAt: string | null;
+  /** Configured reset timeout in milliseconds (open → half-open) */
+  resetTimeoutMs: number;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -134,6 +138,8 @@ export class CircuitBreaker {
       successes: this._successes,
       state: this._state,
       lastFailure: this._lastFailureAt ? this._lastFailureAt.toISOString() : null,
+      openedAt: this._state === "open" && this._openedAt ? this._openedAt.toISOString() : null,
+      resetTimeoutMs: this.config.resetTimeoutMs,
     };
   }
 
@@ -147,6 +153,7 @@ export class CircuitBreaker {
     if (elapsed >= this.config.resetTimeoutMs) {
       this._state = "half-open";
       this._halfOpenSuccesses = 0;
+      this._openedAt = null;
     }
   }
 
