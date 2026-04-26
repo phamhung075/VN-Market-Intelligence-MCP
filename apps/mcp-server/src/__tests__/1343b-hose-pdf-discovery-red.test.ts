@@ -111,7 +111,8 @@ describe("1343b — HOSE PDF Discovery", () => {
     });
 
     expect(result.source).toBeDefined();
-    expect(["ssc", "cafef", "vietstock"]).toContain(result.source);
+    expect(result.source).not.toBeNull();
+    expect(["ssc", "cafef", "vietstock"]).toContain(result.source as string);
   });
 
   // Test 4: Return empty gracefully if all sources fail

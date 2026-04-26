@@ -118,7 +118,12 @@ export async function runBctcQueueEnricherJob(opts: {
 
       if (discovery.urls.length > 0) {
         // Write the first (most authoritative) PDF URL
-        updateStmt.run(discovery.urls[0], item.id);
+        const firstUrl = discovery.urls[0];
+        if (firstUrl === undefined) {
+          result.partialFailures++;
+          continue;
+        }
+        updateStmt.run(firstUrl, item.id);
         result.urlsPopulated++;
 
         logger.debug("[bctcQueueEnricher] source_url populated", {

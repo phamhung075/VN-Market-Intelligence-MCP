@@ -208,7 +208,9 @@ describe("Task 1287a — BCTC Queue Enricher (Task 1343c: active discovery)", ()
     expect(result.partialFailures).toBe(1);
 
     // Item stays pending — no source_url written
-    const item = getQueueItems(testDb)[0];
+    const items = getQueueItems(testDb);
+    expect(items.length).toBeGreaterThan(0);
+    const item = items[0]!;
     expect(item.source_url).toBeNull();
     expect(item.status).toBe("pending");
     // No skipped items

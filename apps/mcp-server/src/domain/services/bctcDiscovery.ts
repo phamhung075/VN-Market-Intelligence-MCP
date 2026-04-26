@@ -149,6 +149,7 @@ function extractCafefUrls(html: string, ticker: string): string[] {
   PDF_HREF_RE.lastIndex = 0;
   while ((match = PDF_HREF_RE.exec(html)) !== null) {
     const href = match[1];
+    if (href === undefined) continue;
     const absolute = href.startsWith("http") ? href : `${CAFEF_BASE}${href}`;
     urls.push(absolute);
   }
@@ -165,6 +166,7 @@ function extractVietstockUrls(html: string, ticker: string): string[] {
   let match: RegExpExecArray | null;
   while ((match = re.exec(html)) !== null) {
     const href = match[1];
+    if (href === undefined) continue;
     const absolute = href.startsWith("http") ? href : `${VIETSTOCK_BASE}${href}`;
     urls.push(absolute);
   }
