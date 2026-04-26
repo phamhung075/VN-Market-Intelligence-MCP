@@ -4,6 +4,40 @@ MCP server (TypeScript/Bun) — real-time VN stock intelligence (HOSE/HNX/UPCOM)
 
 ---
 
+## Prerequisites — Must Be True Before Any Agent Runs
+
+### 1. User Session Required When PO Has No Tasks
+
+PO cannot self-initiate if TASKS.md is empty AND no Telegram reports exist.
+In that case: **ask the user for a session goal** before spawning PO.
+
+```
+User provides: goal / priority / context
+→ Main terminal passes to PO as session prompt
+→ PO uses it to initiate sprint
+```
+
+If PO returns `PIPELINE: idle` (nothing to do) → stop, ask user what to work on next.
+
+### 2. BCTC Pipeline Must Be Operational for Financial Analysis
+
+Before any agent analyzes financial data (BCTC quarterly reports), verify:
+
+```
+VPS (Singapore)
+  └─ downloads BCTC PDFs from geo-blocked VN sources
+       └─ sends to MCP server
+            └─ PDF → text extraction (pdf-parse + OCR)
+                 └─ text available to agents via get_bctc_full() MCP tool
+```
+
+**Check health before spawning financial agents:**
+- `ops` → `get_vps_service_health()` — VPS reachable and fetching
+- `ops` → `list_stored_pdfs()` — PDFs present for target tickers
+- If broken → spawn `ops` to fix VPS pipeline before analysis proceeds
+
+---
+
 ## Switch — User Request → Agent
 
 Spawn the matching agent. Never do the work yourself.
