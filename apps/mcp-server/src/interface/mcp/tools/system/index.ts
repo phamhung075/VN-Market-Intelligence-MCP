@@ -13,3 +13,7 @@ export { registerVpsHealthTools } from "./vpsHealthTools.js";
 export { registerSlaStatusTools } from "./slaStatusTools.js";
 export { registerSignalDiagnosticsTools } from "./signalDiagnosticsTools.js";
 export { registerBctcDebugTriggerTool } from "./bctcDebugTriggerTool.js";
+export { registerPriceDebugTriggerTool } from "./priceDebugTriggerTool.js";
+export { registerNewsDebugTriggerTool } from "./newsDebugTriggerTool.js";
+export { registerSbvDebugTriggerTool } from "./sbvDebugTriggerTool.js";
+export { registerForeignFlowDebugTriggerTool } from "./foreignFlowDebugTriggerTool.js";

@@ -81,6 +81,10 @@ import { registerImfSignalsTool } from "./macro/imfSignals.js";
 import { registerAgentMemoryTools } from "./system/agentMemoryTools.js";
 import { registerAgentMemoryUpdateTools } from "./system/agentMemoryUpdateTools.js";
 import { registerBctcDebugTriggerTool } from "./system/bctcDebugTriggerTool.js";
+import { registerPriceDebugTriggerTool } from "./system/priceDebugTriggerTool.js";
+import { registerNewsDebugTriggerTool } from "./system/newsDebugTriggerTool.js";
+import { registerSbvDebugTriggerTool } from "./system/sbvDebugTriggerTool.js";
+import { registerForeignFlowDebugTriggerTool } from "./system/foreignFlowDebugTriggerTool.js";
 
 /**
  * Flat array of all MCP tool registration functions.
@@ -161,5 +165,9 @@ export const toolRegistry: Array<(server: McpServer) => void> = [
   registerImfSignalsTool,          // Task 1296b: get_imf_signals (+1 tool → 103)
   registerAgentMemoryTools,        // Task 1300a: get_memory_files + search_memory_by_trigger (+2 tools → 105)
   registerAgentMemoryUpdateTools,  // Task 1300b: append_session_record + update_memory_file (+2 tools → 107)
-  registerBctcDebugTriggerTool,    // FIX-BCTC-DEBUG: trigger_bctc_vps_fetch (+1 tool → 109)
+  registerBctcDebugTriggerTool,         // FIX-BCTC-DEBUG: trigger_bctc_vps_fetch (+1 tool → 109)
+  registerPriceDebugTriggerTool,        // FIX-VPS-DEBUG-TRIGGERS: trigger_price_vps_fetch (+1 → 110)
+  registerNewsDebugTriggerTool,         // FIX-VPS-DEBUG-TRIGGERS: trigger_news_vps_fetch (+1 → 111)
+  registerSbvDebugTriggerTool,          // FIX-VPS-DEBUG-TRIGGERS: trigger_sbv_vps_fetch (+1 → 112)
+  registerForeignFlowDebugTriggerTool,  // FIX-VPS-DEBUG-TRIGGERS: trigger_foreign_flow_vps_fetch (+1 → 113)
 ];
