@@ -29,16 +29,32 @@ mock.module("../infrastructure/notifiers/telegram.js", () => ({
   },
 }));
 
-// DB imports needed to satisfy dynamic imports inside runMorningBriefing
+// DB: use the real schema module functions so that downstream test files in the
+// same Bun worker are not poisoned by a stub getDb() that returns a plain object
+// instead of a Database instance. mock.module() is worker-scoped in Bun 1.x —
+// once set it is never cleared. Delegating to the real implementations ensures
+// that any subsequent test file calling initDatabase() still gets a proper DB.
+import {
+  getDb as _realGetDb,
+  initDatabase as _realInitDatabase,
+  closeDb as _realCloseDb,
+  ensureCustomAlertRulesTable as _realEnsureCustomAlertRulesTable,
+  migrateForeignFlowColumns as _realMigrateForeignFlowColumns,
+} from "../infrastructure/db/schema.js";
 mock.module("../infrastructure/db/schema.js", () => ({
-  getDb: () => ({
-    query: () => ({ get: () => null }),
-    prepare: () => ({ run: () => {} }),
-  }),
+  getDb: _realGetDb,
+  initDatabase: _realInitDatabase,
+  closeDb: _realCloseDb,
+  ensureCustomAlertRulesTable: _realEnsureCustomAlertRulesTable,
+  migrateForeignFlowColumns: _realMigrateForeignFlowColumns,
 }));
 
+// marketMessageStore: use real implementation for same reason as schema.js above.
+// A stub `insertMarketMessage: () => 1` breaks test 1265 which calls the real
+// batchReviewMarketMessages on a returned integer ID instead of a UUID string.
+import { insertMarketMessage as _realInsertMarketMessage } from "../infrastructure/db/marketMessageStore.js";
 mock.module("../infrastructure/db/marketMessageStore.js", () => ({
-  insertMarketMessage: () => 1,
+  insertMarketMessage: _realInsertMarketMessage,
 }));
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────

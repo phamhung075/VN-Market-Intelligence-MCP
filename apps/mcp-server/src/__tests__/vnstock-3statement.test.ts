@@ -229,4 +229,7 @@ describe("vnstock cash flow store", () => {
 
 afterAll(() => {
   closeDb();
+  // Restore DB_PATH to :memory: so subsequent test files in the same Bun worker
+  // are not contaminated by the temp-file path set at module load (line 17).
+  Bun.env["DB_PATH"] = ":memory:";
 });
