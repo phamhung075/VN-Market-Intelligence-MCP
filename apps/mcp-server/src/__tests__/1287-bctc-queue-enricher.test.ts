@@ -1,12 +1,13 @@
 /**
- * Task 1287a — BCTC Queue Enricher Tests (UPDATED for Bug-2 fix)
+ * Task 1287a — BCTC Queue Enricher Tests (UPDATED for Task 1343c)
  *
- * Previous hotfix (Task 1288c) marked items with source_url=NULL as 'skipped',
- * which permanently blocked VPS re-discovery. That was wrong.
+ * Task 1343c re-enables active URL discovery via discoverHosePdfUrls().
+ * The previous hotfix (Task 1288c) had disabled all discovery (no-op behavior).
+ * This file reflects the NEW behavior: items with source_url=NULL are now
+ * processed — discovery is attempted and source_url is written on success.
  *
- * Correct behavior: Items with source_url=NULL must remain 'pending' so the
- * VPS service can discover and push the PDF URL. The enricher job is a no-op
- * for these items — it neither skips nor processes them.
+ * All HTTP calls use injectable mock fetch functions (discoverOptions)
+ * to avoid real network calls and geo-blocking.
  */
 
 Bun.env["DB_PATH"] = ":memory:";
@@ -19,12 +20,32 @@ import { initDatabase, closeDb } from "../infrastructure/db/schema.js";
 import { runBctcQueueEnricherJob } from "../scheduler/financial-reports/bctcQueueEnricherJob.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Helper Functions
+// Mock fetch helpers
 // ─────────────────────────────────────────────────────────────────────────────
 
-/**
- * Insert a test queue item directly into the database.
- */
+/** SSC mock that returns one PDF URL. */
+function mockSscSuccess(ticker: string) {
+  return async (_url: string, _timeout: number): Promise<string> => {
+    return JSON.stringify({
+      data: [{ fileUrl: `https://iboard-query.ssc.vn/static/${ticker.toLowerCase()}-bctc.pdf` }],
+    });
+  };
+}
+
+/** Any-source mock that always fails (network error). */
+async function mockFetchFail(_url: string, _timeout: number): Promise<string> {
+  throw new Error("Connection refused (geo-blocked)");
+}
+
+/** Any-source mock that returns no PDFs. */
+async function mockFetchEmpty(_url: string, _timeout: number): Promise<string> {
+  return JSON.stringify({ data: [] });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Helpers
+// ─────────────────────────────────────────────────────────────────────────────
+
 function insertQueueItem(
   db: Database,
   code: string,
@@ -40,33 +61,21 @@ function insertQueueItem(
   stmt.run(code, year, quarter, "pending", sourceUrl);
 }
 
-/**
- * Query all queue items by status.
- */
 function getQueueItems(
   db: Database,
   status?: string,
-): Array<{
-  action_code: string;
-  status: string;
-  source_url: string | null;
-}> {
+): Array<{ action_code: string; status: string; source_url: string | null }> {
   const query = status
     ? `SELECT action_code, status, source_url FROM bctc_vps_queue WHERE status = ? ORDER BY action_code`
     : `SELECT action_code, status, source_url FROM bctc_vps_queue ORDER BY action_code`;
-
-  return (
-    status
-      ? db.query(query).all(status)
-      : db.query(query).all()
-  ) as any[];
+  return (status ? db.query(query).all(status) : db.query(query).all()) as any[];
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tests
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe("Task 1287a — BCTC Queue Enricher (Hotfix 1288c)", () => {
+describe("Task 1287a — BCTC Queue Enricher (Task 1343c: active discovery)", () => {
   let testDb: Database;
 
   beforeEach(async () => {
@@ -93,143 +102,150 @@ describe("Task 1287a — BCTC Queue Enricher (Hotfix 1288c)", () => {
     closeDb();
   });
 
-  // ──────────────────────────────────────────────────────────────────────────
   // TC-1: Empty queue — no-op
-  // ──────────────────────────────────────────────────────────────────────────
-
   it("returns empty result when no pending queue items", async () => {
     const result = await runBctcQueueEnricherJob({ db: testDb });
-
     expect(result.itemsProcessed).toBe(0);
     expect(result.urlsPopulated).toBe(0);
     expect(result.timeoutFailures).toBe(0);
     expect(result.partialFailures).toBe(0);
   });
 
-  // ──────────────────────────────────────────────────────────────────────────
-  // TC-2: Items with NULL source_url remain 'pending' (awaiting VPS discovery)
-  // ──────────────────────────────────────────────────────────────────────────
-
-  it("leaves items with source_url=NULL as 'pending' (awaiting VPS discovery)", async () => {
+  // TC-2: Items with NULL source_url get discovery attempted;
+  //       on success, source_url is populated and items remain 'pending'
+  it("populates source_url when SSC discovery succeeds", async () => {
     insertQueueItem(testDb, "VCB", 2025, "Q1", null);
     insertQueueItem(testDb, "FPT", 2025, "Q1", null);
     insertQueueItem(testDb, "HPG", 2025, "Q1", null);
 
-    const result = await runBctcQueueEnricherJob({ db: testDb });
+    const result = await runBctcQueueEnricherJob({
+      db: testDb,
+      discoverOptions: {
+        _fetchSsc: mockSscSuccess("VCB"),
+        _fetchCafef: mockFetchEmpty,
+        _fetchVietstock: mockFetchEmpty,
+      },
+    });
 
-    // Job is a no-op for items without source_url
-    expect(result.itemsProcessed).toBe(0);
+    expect(result.itemsProcessed).toBe(3);
+    expect(result.urlsPopulated).toBe(3);
     expect(result.partialFailures).toBe(0);
 
-    // All items must remain pending — NOT skipped
+    // All items should now have a source_url
+    const items = getQueueItems(testDb);
+    for (const item of items) {
+      expect(item.source_url).not.toBeNull();
+      expect(item.source_url).toMatch(/\.pdf$/i);
+    }
+    // Items remain 'pending' — VPS will fetch the PDF
     const pending = getQueueItems(testDb, "pending");
     expect(pending.length).toBe(3);
+    // No items were skipped
     const skipped = getQueueItems(testDb, "skipped");
     expect(skipped.length).toBe(0);
   });
 
-  // ──────────────────────────────────────────────────────────────────────────
-  // TC-3: Items with existing source_url are ignored
-  // ──────────────────────────────────────────────────────────────────────────
-
-  it("ignores items that already have source_url (no-op for both paths)", async () => {
-    // One with URL (should stay pending, waiting for something else to process it),
-    // one without (should also stay pending, waiting for VPS discovery)
-    insertQueueItem(
-      testDb,
-      "VCB",
-      2025,
-      "Q1",
-      "https://ssc.gov.vn/vcb-existing.pdf"
-    );
+  // TC-3: Items that already have source_url are ignored (query filters them out)
+  it("ignores items that already have source_url", async () => {
+    insertQueueItem(testDb, "VCB", 2025, "Q1", "https://ssc.gov.vn/vcb-existing.pdf");
     insertQueueItem(testDb, "FPT", 2025, "Q1", null);
 
-    const result = await runBctcQueueEnricherJob({ db: testDb });
+    const result = await runBctcQueueEnricherJob({
+      db: testDb,
+      discoverOptions: {
+        _fetchSsc: mockSscSuccess("FPT"),
+        _fetchCafef: mockFetchEmpty,
+        _fetchVietstock: mockFetchEmpty,
+      },
+    });
 
-    // Job is a no-op: items with source_url await downstream processing,
-    // items without source_url await VPS discovery
-    expect(result.itemsProcessed).toBe(0);
-    expect(result.partialFailures).toBe(0);
+    // Only FPT (null source_url) is processed
+    expect(result.itemsProcessed).toBe(1);
+    expect(result.urlsPopulated).toBe(1);
 
-    const skipped = getQueueItems(testDb, "skipped");
-    expect(skipped.length).toBe(0);
+    const vcb = getQueueItems(testDb).find(i => i.action_code === "VCB");
+    expect(vcb?.source_url).toBe("https://ssc.gov.vn/vcb-existing.pdf");
 
-    const pending = getQueueItems(testDb, "pending");
-    expect(pending.length).toBe(2);
+    const fpt = getQueueItems(testDb).find(i => i.action_code === "FPT");
+    expect(fpt?.source_url).toMatch(/\.pdf$/i);
   });
 
-  // ──────────────────────────────────────────────────────────────────────────
-  // TC-4: Batch dequeue limit (max 20 per run)
-  // ──────────────────────────────────────────────────────────────────────────
-
-  it("is a no-op regardless of queue size — all items stay pending", async () => {
-    // Insert 100 items with NULL source_url
-    for (let i = 1; i <= 100; i++) {
+  // TC-4: Batch dequeue limit (max 20 per run) — uses default batchSize=20
+  it("respects batchSize — only processes up to batchSize items", async () => {
+    for (let i = 1; i <= 30; i++) {
       insertQueueItem(testDb, `CODE${String(i).padStart(3, "0")}`, 2025, "Q1", null);
     }
 
-    const result = await runBctcQueueEnricherJob({ db: testDb });
+    const result = await runBctcQueueEnricherJob({
+      db: testDb,
+      batchSize: 20,
+      discoverOptions: {
+        _fetchSsc: mockSscSuccess("CODE"),
+        _fetchCafef: mockFetchEmpty,
+        _fetchVietstock: mockFetchEmpty,
+      },
+    });
 
-    // No items processed — job is a no-op for null source_url items
-    expect(result.itemsProcessed).toBe(0);
-    expect(result.partialFailures).toBe(0);
-
-    const skipped = getQueueItems(testDb, "skipped");
-    expect(skipped.length).toBe(0);
-
-    const stillPending = getQueueItems(testDb, "pending");
-    expect(stillPending.length).toBe(100);
+    // Only 20 of 30 items should be processed in one pass
+    expect(result.itemsProcessed).toBe(20);
   });
 
-  // ──────────────────────────────────────────────────────────────────────────
-  // TC-5: Idempotency — re-run does not re-skip already-skipped items
-  // ──────────────────────────────────────────────────────────────────────────
-
-  it("is idempotent — re-running leaves items unchanged", async () => {
+  // TC-5: All discovery fails — items remain pending, partialFailures incremented
+  it("leaves items pending when all discovery sources fail", async () => {
     insertQueueItem(testDb, "VCB", 2025, "Q1", null);
 
-    // First run
-    const result1 = await runBctcQueueEnricherJob({ db: testDb });
-    expect(result1.itemsProcessed).toBe(0);
+    const result = await runBctcQueueEnricherJob({
+      db: testDb,
+      discoverOptions: {
+        _fetchSsc: mockFetchFail,
+        _fetchCafef: mockFetchFail,
+        _fetchVietstock: mockFetchFail,
+      },
+    });
 
-    // Second run on same data
-    const result2 = await runBctcQueueEnricherJob({ db: testDb });
+    expect(result.itemsProcessed).toBe(1);
+    expect(result.urlsPopulated).toBe(0);
+    expect(result.partialFailures).toBe(1);
+
+    // Item stays pending — no source_url written
+    const item = getQueueItems(testDb)[0];
+    expect(item.source_url).toBeNull();
+    expect(item.status).toBe("pending");
+    // No skipped items
+    const skipped = getQueueItems(testDb, "skipped");
+    expect(skipped.length).toBe(0);
+  });
+
+  // TC-6: Idempotency — re-running on already-populated items doesn't process them again
+  it("is idempotent — items with source_url are not re-processed", async () => {
+    insertQueueItem(testDb, "VCB", 2025, "Q1", null);
+
+    // First run — populates source_url
+    const result1 = await runBctcQueueEnricherJob({
+      db: testDb,
+      discoverOptions: {
+        _fetchSsc: mockSscSuccess("VCB"),
+        _fetchCafef: mockFetchEmpty,
+        _fetchVietstock: mockFetchEmpty,
+      },
+    });
+    expect(result1.itemsProcessed).toBe(1);
+    expect(result1.urlsPopulated).toBe(1);
+
+    // Second run — source_url already populated, item excluded by WHERE clause
+    const result2 = await runBctcQueueEnricherJob({
+      db: testDb,
+      discoverOptions: {
+        _fetchSsc: mockSscSuccess("VCB"),
+        _fetchCafef: mockFetchEmpty,
+        _fetchVietstock: mockFetchEmpty,
+      },
+    });
     expect(result2.itemsProcessed).toBe(0);
-
-    // Item stays pending across multiple runs
-    const pending = getQueueItems(testDb, "pending");
-    expect(pending.length).toBe(1);
-    const skipped = getQueueItems(testDb, "skipped");
-    expect(skipped.length).toBe(0);
+    expect(result2.urlsPopulated).toBe(0);
   });
 
-  // ──────────────────────────────────────────────────────────────────────────
-  // TC-6: Mixed queue state (some pending, some skipped, some with URLs)
-  // ──────────────────────────────────────────────────────────────────────────
-
-  it("handles mixed queue state correctly — all pending items remain pending", async () => {
-    insertQueueItem(testDb, "VCB", 2025, "Q1", null); // awaiting VPS discovery
-    insertQueueItem(testDb, "FPT", 2025, "Q1", "https://ssc.gov.vn/fpt.pdf"); // has URL, still pending
-    insertQueueItem(testDb, "HPG", 2025, "Q1", null); // awaiting VPS discovery
-    insertQueueItem(testDb, "TCB", 2024, "Q4", null); // awaiting VPS discovery
-
-    const result = await runBctcQueueEnricherJob({ db: testDb });
-
-    // No-op: nothing is processed or skipped
-    expect(result.itemsProcessed).toBe(0);
-    expect(result.partialFailures).toBe(0);
-
-    const skipped = getQueueItems(testDb, "skipped");
-    expect(skipped.length).toBe(0);
-
-    const pending = getQueueItems(testDb, "pending");
-    expect(pending.length).toBe(4);
-  });
-
-  // ──────────────────────────────────────────────────────────────────────────
   // TC-7: Graceful handling of DB query errors
-  // ──────────────────────────────────────────────────────────────────────────
-
   it("returns empty result if query fails", async () => {
     const badDb = {
       query: () => {
