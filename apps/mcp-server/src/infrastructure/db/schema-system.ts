@@ -354,7 +354,12 @@ export function initSystemTables(db: Database): void {
       ON signal_quality_audit(source_fallback, signal_type, ticker)
   `);
 
-  // ── VPS Service Health (Task 234) ──────────────────────────────────────────
+  // ── VPS Service Health (Task 234, updated Bug 2 fix) ──────────────────────
+  // 'idle' added to health_status CHECK: market-hours-only services
+  // (vn-price-fetch, vn-foreign-flow) return 'idle' outside trading window.
+  // SQLite CHECK constraints cannot be altered; we must DROP + re-CREATE.
+  // Safe because CREATE TABLE IF NOT EXISTS skips on existing DBs — we use
+  // a migration guard to recreate only when the old constraint is present.
   db.exec(`
     CREATE TABLE IF NOT EXISTS vps_service_health (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -363,7 +368,7 @@ export function initSystemTables(db: Database): void {
       ),
       polled_at TEXT NOT NULL DEFAULT (datetime('now')),
       health_status TEXT NOT NULL CHECK(
-        health_status IN ('healthy', 'unhealthy', 'unreachable')
+        health_status IN ('healthy', 'unhealthy', 'unreachable', 'idle')
       ),
       response_time_ms INTEGER,
       last_successful_run TEXT,
@@ -371,6 +376,43 @@ export function initSystemTables(db: Database): void {
       error_message TEXT
     )
   `);
+
+  // Migration: if the table already existed with the old CHECK (no 'idle'),
+  // recreate it.  We detect this by attempting to insert a test 'idle' row
+  // and rolling it back.  If it throws, the schema is old — migrate.
+  try {
+    db.exec(`
+      BEGIN;
+      INSERT INTO vps_service_health
+        (service_name, polled_at, health_status, response_time_ms)
+        VALUES ('vn-price-fetch', datetime('now'), 'idle', 0);
+      ROLLBACK;
+    `);
+  } catch {
+    // Old CHECK constraint — recreate table preserving existing rows
+    db.exec(`
+      ALTER TABLE vps_service_health RENAME TO vps_service_health_old;
+      CREATE TABLE vps_service_health (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        service_name TEXT NOT NULL CHECK(
+          service_name IN ('vn-price-fetch', 'vn-bctc-fetch', 'vn-news-fetch', 'vn-sbv-fetch', 'vn-foreign-flow')
+        ),
+        polled_at TEXT NOT NULL DEFAULT (datetime('now')),
+        health_status TEXT NOT NULL CHECK(
+          health_status IN ('healthy', 'unhealthy', 'unreachable', 'idle')
+        ),
+        response_time_ms INTEGER,
+        last_successful_run TEXT,
+        uptime_seconds INTEGER,
+        error_message TEXT
+      );
+      INSERT INTO vps_service_health
+        SELECT id, service_name, polled_at, health_status,
+               response_time_ms, last_successful_run, uptime_seconds, error_message
+        FROM vps_service_health_old;
+      DROP TABLE vps_service_health_old;
+    `);
+  }
   db.exec(`
     CREATE INDEX IF NOT EXISTS idx_vps_health_service_polled
       ON vps_service_health(service_name, polled_at DESC)

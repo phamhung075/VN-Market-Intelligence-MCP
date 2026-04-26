@@ -32,6 +32,9 @@ function querySignalAges(db: Database): Record<string, number> {
     age_minutes: number;
   }
 
+  // BUG 3 FIX:
+  //   sbv_fx       — correct table: sbv_rates (fetched_at).
+  //   foreign_flow — correct table: daily_ohlcv WHERE foreign_buy_vol IS NOT NULL (updated_at).
   const rows = db
     .query<AgeRow, [number, number, number, number, number]>(
       `SELECT
@@ -48,11 +51,11 @@ function querySignalAges(db: Database): Record<string, number> {
       UNION ALL
       SELECT
         'sbv_fx' as signal_type,
-        CAST((? - CAST((SELECT MAX(created_at) FROM macro_sbv_rates) as INTEGER)) / 60 AS INTEGER) as age_minutes
+        CAST((? - CAST((SELECT MAX(fetched_at) FROM sbv_rates) as INTEGER)) / 60 AS INTEGER) as age_minutes
       UNION ALL
       SELECT
         'foreign_flow' as signal_type,
-        CAST((? - CAST((SELECT MAX(fetched_at) FROM vnstock_trading_stats) as INTEGER)) / 60 AS INTEGER) as age_minutes`
+        CAST((? - CAST((SELECT MAX(updated_at) FROM daily_ohlcv WHERE foreign_buy_vol IS NOT NULL) as INTEGER)) / 60 AS INTEGER) as age_minutes`
     )
     .all(now, now, now, now, now) as AgeRow[];
 

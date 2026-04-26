@@ -91,9 +91,16 @@ function formatHealthTable(records: HealthRecord[]): string {
   const healthyCount = records.filter((r) => r.health_status === "healthy").length;
   const unhealthyCount = records.filter((r) => r.health_status === "unhealthy").length;
   const unreachableCount = records.filter((r) => r.health_status === "unreachable").length;
+  const idleCount = records.filter((r) => r.health_status === "idle").length;
 
-  lines.push(`Summary: ${healthyCount} healthy, ${unhealthyCount} unhealthy, ${unreachableCount} unreachable`);
+  const summaryParts = [`${healthyCount} healthy`];
+  if (idleCount > 0) summaryParts.push(`${idleCount} idle (market closed)`);
+  if (unhealthyCount > 0) summaryParts.push(`${unhealthyCount} unhealthy`);
+  if (unreachableCount > 0) summaryParts.push(`${unreachableCount} unreachable`);
 
+  lines.push(`Summary: ${summaryParts.join(", ")}`);
+
+  // idle is NOT an alert condition — only unhealthy/unreachable trigger the alert line
   if (unreachableCount > 0 || unhealthyCount > 0) {
     const problems = [];
     if (unreachableCount > 0) problems.push(`${unreachableCount} unreachable`);

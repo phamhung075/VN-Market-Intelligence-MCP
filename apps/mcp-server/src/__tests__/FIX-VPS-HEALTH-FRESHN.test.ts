@@ -69,42 +69,48 @@ describe("FIX-VPS-HEALTH-FRESHN — data-freshness health checks", () => {
   });
 
   // ── vn-price-fetch: healthy if market_prices updated within 5 min ───────────
+  // NOTE: vn-price-fetch is marketHoursOnly — tests use a fixed market-hours
+  // timestamp (2026-04-27 05:02 UTC = Monday inside 02:00-08:30 UTC window)
+  // so the market-hours guard does not suppress the freshness check.
 
   it("vn-price-fetch: healthy when market_prices has a row updated within 5 minutes", () => {
+    // Insert a row 2 minutes before the fixed "now" timestamp
     db.prepare(`
       INSERT INTO market_prices (code, price, change_amt, change_pct, volume, updated_at, exchange)
       VALUES (?, ?, ?, ?, ?, ?, ?)
-    `).run("VNM", 80000, 0, 0, 100000, minutesAgoIso(2), "HOSE");
+    `).run("VNM", 80000, 0, 0, 100000, "2026-04-27T05:00:00.000Z", "HOSE");
 
     const config = DEFAULT_FRESHNESS_CONFIGS.find(
       (c) => c.serviceName === "vn-price-fetch",
     )!;
-    const result = checkServiceFreshness(db, config, nowIso());
+    const result = checkServiceFreshness(db, config, "2026-04-27T05:02:00.000Z");
 
     expect(result.healthStatus).toBe("healthy");
     expect(result.serviceName).toBe("vn-price-fetch");
   });
 
   it("vn-price-fetch: unhealthy when market_prices last update is older than 5 minutes", () => {
+    // Row is 10 minutes old relative to fixed "now"
     db.prepare(`
       INSERT INTO market_prices (code, price, change_amt, change_pct, volume, updated_at, exchange)
       VALUES (?, ?, ?, ?, ?, ?, ?)
-    `).run("VNM", 80000, 0, 0, 100000, minutesAgoIso(10), "HOSE");
+    `).run("VNM", 80000, 0, 0, 100000, "2026-04-27T04:52:00.000Z", "HOSE");
 
     const config = DEFAULT_FRESHNESS_CONFIGS.find(
       (c) => c.serviceName === "vn-price-fetch",
     )!;
-    const result = checkServiceFreshness(db, config, nowIso());
+    const result = checkServiceFreshness(db, config, "2026-04-27T05:02:00.000Z");
 
     expect(result.healthStatus).toBe("unhealthy");
     expect(result.errorMessage).toBeDefined();
   });
 
-  it("vn-price-fetch: unreachable when market_prices table has no rows", () => {
+  it("vn-price-fetch: unreachable when market_prices table has no rows (during market hours)", () => {
     const config = DEFAULT_FRESHNESS_CONFIGS.find(
       (c) => c.serviceName === "vn-price-fetch",
     )!;
-    const result = checkServiceFreshness(db, config, nowIso());
+    // Use a market-hours timestamp so the guard does not return idle
+    const result = checkServiceFreshness(db, config, "2026-04-27T05:00:00.000Z");
 
     expect(result.healthStatus).toBe("unreachable");
   });
@@ -139,32 +145,34 @@ describe("FIX-VPS-HEALTH-FRESHN — data-freshness health checks", () => {
     expect(result.healthStatus).toBe("unhealthy");
   });
 
-  // ── vn-foreign-flow: healthy if vnstock_trading_stats updated within 5 min ──
+  // ── vn-foreign-flow: healthy if daily_ohlcv (foreign_buy_vol) updated within 5 min ──
+  // NOTE: vn-foreign-flow is marketHoursOnly — tests use fixed market-hours timestamps.
+  // BUG 1 FIX: was vnstock_trading_stats; correct table is daily_ohlcv (foreign_buy_vol / updated_at).
 
-  it("vn-foreign-flow: healthy when vnstock_trading_stats has a row within 5 minutes", () => {
+  it("vn-foreign-flow: healthy when daily_ohlcv has a foreign_buy_vol row within 5 minutes", () => {
     db.prepare(`
-      INSERT INTO vnstock_trading_stats (code, date, fetched_at, created_at)
-      VALUES (?, ?, ?, ?)
-    `).run("VNM", "2026-04-25", minutesAgoIso(2), nowIso());
+      INSERT INTO daily_ohlcv (code, date, close, updated_at, foreign_buy_vol)
+      VALUES (?, ?, ?, ?, ?)
+    `).run("VNM", "2026-04-27", 80000, "2026-04-27T05:00:00.000Z", 1000000);
 
     const config = DEFAULT_FRESHNESS_CONFIGS.find(
       (c) => c.serviceName === "vn-foreign-flow",
     )!;
-    const result = checkServiceFreshness(db, config, nowIso());
+    const result = checkServiceFreshness(db, config, "2026-04-27T05:02:00.000Z");
 
     expect(result.healthStatus).toBe("healthy");
   });
 
-  it("vn-foreign-flow: unhealthy when vnstock_trading_stats last row is older than 5 minutes", () => {
+  it("vn-foreign-flow: unhealthy when daily_ohlcv foreign_buy_vol row is older than 5 minutes", () => {
     db.prepare(`
-      INSERT INTO vnstock_trading_stats (code, date, fetched_at, created_at)
-      VALUES (?, ?, ?, ?)
-    `).run("VNM", "2026-04-25", minutesAgoIso(10), nowIso());
+      INSERT INTO daily_ohlcv (code, date, close, updated_at, foreign_buy_vol)
+      VALUES (?, ?, ?, ?, ?)
+    `).run("VNM", "2026-04-27", 80000, "2026-04-27T05:05:00.000Z", 1000000);
 
     const config = DEFAULT_FRESHNESS_CONFIGS.find(
       (c) => c.serviceName === "vn-foreign-flow",
     )!;
-    const result = checkServiceFreshness(db, config, nowIso());
+    const result = checkServiceFreshness(db, config, "2026-04-27T05:15:00.000Z");
 
     expect(result.healthStatus).toBe("unhealthy");
   });
@@ -248,17 +256,22 @@ describe("FIX-VPS-HEALTH-FRESHN — data-freshness health checks", () => {
   // ── checkServiceFreshness does not throw on DB error (fail-open) ─────────────
 
   it("checkServiceFreshness returns unreachable (not throws) when DB query fails", () => {
-    // Use a closed DB to simulate query failure
+    // Use a closed DB to simulate query failure.
+    // Use a fixed market-hours timestamp so the marketHoursOnly guard does not
+    // short-circuit to "idle" before the DB query runs.
     const closedDb = new Database(":memory:");
     closedDb.close();
 
     const config = DEFAULT_FRESHNESS_CONFIGS.find(
       (c) => c.serviceName === "vn-price-fetch",
     )!;
+    const marketNow = "2026-04-27T05:00:00.000Z";
 
     // Must not throw — health checks are fail-open
-    expect(() => checkServiceFreshness(closedDb, config, nowIso())).not.toThrow();
-    const result = checkServiceFreshness(new Database(":memory:"), config, nowIso());
+    expect(() => checkServiceFreshness(closedDb, config, marketNow)).not.toThrow();
+    const emptyDb = new Database(":memory:");
+    initDatabase(emptyDb);
+    const result = checkServiceFreshness(emptyDb, config, marketNow);
     // No rows → unreachable
     expect(result.healthStatus).toBe("unreachable");
   });

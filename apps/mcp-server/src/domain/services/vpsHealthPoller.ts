@@ -32,8 +32,11 @@ export type ServiceName =
 
 /**
  * Health status classification.
+ *
+ * idle — market is closed (outside Mon-Fri 02:00-08:30 UTC); staleness check
+ *        is suppressed for price + foreign-flow services.  Not an alert condition.
  */
-export type HealthStatus = "healthy" | "unhealthy" | "unreachable";
+export type HealthStatus = "healthy" | "unhealthy" | "unreachable" | "idle";
 
 /**
  * Result of checking a single VPS service's data freshness.
@@ -54,6 +57,11 @@ export interface HealthPollResult {
  *
  * "passive" services (vn-bctc-fetch) have no reliable DB table to query;
  * they always return healthy.
+ *
+ * "marketHoursOnly" services (vn-price-fetch, vn-foreign-flow) only push
+ * data during VN market hours (Mon-Fri 09:00-15:30 ICT = 02:00-08:30 UTC).
+ * Outside that window the service is expected to be silent — staleness is not
+ * a fault, so we return "idle" instead of "unhealthy"/"unreachable".
  */
 export interface FreshnessConfig {
   serviceName: ServiceName;
@@ -64,6 +72,11 @@ export interface FreshnessConfig {
   maxAgeMs?: number;
   /** When true, no DB check is performed — always returns "healthy". */
   passive?: boolean;
+  /**
+   * When true, staleness is only evaluated during VN market hours
+   * (Mon-Fri 02:00-08:30 UTC).  Outside that window the check returns "idle".
+   */
+  marketHoursOnly?: boolean;
 }
 
 // ─── default freshness configs ────────────────────────────────────────────────
@@ -71,11 +84,19 @@ export interface FreshnessConfig {
 /**
  * Data-freshness thresholds per VPS service.
  *
- *  vn-price-fetch   — market_prices.updated_at        stale > 5 min
- *  vn-news-fetch    — market_messages.sent_at          stale > 20 min
- *  vn-foreign-flow  — vnstock_trading_stats.fetched_at stale > 5 min
- *  vn-sbv-fetch     — sbv_rates.fetched_at             stale > 35 min
+ *  vn-price-fetch   — market_prices.updated_at                            stale > 5 min  (market hours only)
+ *  vn-news-fetch    — market_messages.sent_at                             stale > 20 min
+ *  vn-foreign-flow  — daily_ohlcv WHERE foreign_buy_vol IS NOT NULL       stale > 5 min  (market hours only)
+ *  vn-sbv-fetch     — sbv_rates.fetched_at                                stale > 35 min
  *  vn-bctc-fetch    — passive (6 h cadence, no realtime table)
+ *
+ * BUG FIX (Bug 1): vn-foreign-flow was incorrectly querying
+ *   vnstock_trading_stats.fetched_at.  Foreign-flow VPS push writes to
+ *   daily_ohlcv (columns: foreign_buy_vol, updated_at).
+ *
+ * BUG FIX (Bug 2): vn-price-fetch and vn-foreign-flow are market-hours-only
+ *   services.  Outside Mon-Fri 02:00-08:30 UTC the staleness check is
+ *   suppressed and the status is reported as "idle".
  */
 export const DEFAULT_FRESHNESS_CONFIGS: FreshnessConfig[] = [
   {
@@ -83,6 +104,7 @@ export const DEFAULT_FRESHNESS_CONFIGS: FreshnessConfig[] = [
     description: "Market prices (HOSE/HNX/UPCOM)",
     latestTimestampSql: `SELECT MAX(updated_at) AS latest_at FROM market_prices`,
     maxAgeMs: 5 * 60_000, // 5 minutes
+    marketHoursOnly: true,
   },
   {
     serviceName: "vn-news-fetch",
@@ -93,8 +115,11 @@ export const DEFAULT_FRESHNESS_CONFIGS: FreshnessConfig[] = [
   {
     serviceName: "vn-foreign-flow",
     description: "Foreign buy/sell flows",
-    latestTimestampSql: `SELECT MAX(fetched_at) AS latest_at FROM vnstock_trading_stats`,
+    // BUG 1 FIX: was vnstock_trading_stats.fetched_at — wrong table.
+    // VPS foreign-flow push writes to daily_ohlcv (foreign_buy_vol / updated_at).
+    latestTimestampSql: `SELECT MAX(updated_at) AS latest_at FROM daily_ohlcv WHERE foreign_buy_vol IS NOT NULL`,
     maxAgeMs: 5 * 60_000, // 5 minutes
+    marketHoursOnly: true,
   },
   {
     serviceName: "vn-sbv-fetch",
@@ -109,6 +134,31 @@ export const DEFAULT_FRESHNESS_CONFIGS: FreshnessConfig[] = [
   },
 ];
 
+// ─── market-hours helper ──────────────────────────────────────────────────────
+
+/**
+ * Returns true when the given ISO timestamp falls within VN market hours:
+ * Monday-Friday, 02:00-08:30 UTC (= 09:00-15:30 ICT).
+ *
+ * Accepts an ISO string so it is deterministically testable without mocking
+ * the global clock.
+ *
+ * @param nowIso  ISO 8601 timestamp string representing "now"
+ */
+export function isVnMarketHoursAt(nowIso: string): boolean {
+  const d = new Date(nowIso);
+  const utcDay = d.getUTCDay(); // 0=Sun … 6=Sat
+  const utcHour = d.getUTCHours();
+  const utcMinute = d.getUTCMinutes();
+
+  const isWeekday = utcDay >= 1 && utcDay <= 5;
+  // Open: 02:00 UTC (inclusive), close: 08:30 UTC (exclusive)
+  const afterOpen = utcHour >= 2;
+  const beforeClose = utcHour < 8 || (utcHour === 8 && utcMinute < 30);
+
+  return isWeekday && afterOpen && beforeClose;
+}
+
 // ─── core check ───────────────────────────────────────────────────────────────
 
 /**
@@ -116,6 +166,10 @@ export const DEFAULT_FRESHNESS_CONFIGS: FreshnessConfig[] = [
  *
  * Pure function — no side effects beyond a single read-only DB query.
  * Never throws; returns "unreachable" on DB errors (fail-open).
+ *
+ * Market-hours guard (Bug 2 fix):
+ *   Services with marketHoursOnly=true return "idle" when nowIso falls
+ *   outside Mon-Fri 02:00-08:30 UTC.  "idle" is NOT an alert condition.
  *
  * @param db       Injected database (domain service never imports infra directly)
  * @param config   Freshness configuration for this service
@@ -134,6 +188,16 @@ export function checkServiceFreshness(
     return {
       serviceName: config.serviceName,
       healthStatus: "healthy",
+      responseTimeMs: 0,
+      polledAt,
+    };
+  }
+
+  // Market-hours guard — return idle when market is closed (Bug 2 fix)
+  if (config.marketHoursOnly && !isVnMarketHoursAt(nowIso)) {
+    return {
+      serviceName: config.serviceName,
+      healthStatus: "idle",
       responseTimeMs: 0,
       polledAt,
     };
