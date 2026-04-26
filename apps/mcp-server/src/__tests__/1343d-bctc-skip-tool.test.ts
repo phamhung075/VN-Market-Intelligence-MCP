@@ -103,7 +103,7 @@ describe("Task 1343d — bctc_skip_queue_item MCP Tool", () => {
       skip_reason: "404 not found",
     }) as { content: Array<{ type: string; text: string }> };
 
-    const payload = JSON.parse(result.content[0].text) as {
+    const payload = JSON.parse(result.content[0]!.text) as {
       success: boolean;
       updates: { status: string; attempts_incremented: boolean };
     };
@@ -124,7 +124,7 @@ describe("Task 1343d — bctc_skip_queue_item MCP Tool", () => {
       period_quarter: "Q3",
     }) as { content: Array<{ type: string; text: string }> };
 
-    const payload = JSON.parse(result.content[0].text) as {
+    const payload = JSON.parse(result.content[0]!.text) as {
       success: boolean;
       message: string;
     };
@@ -144,7 +144,7 @@ describe("Task 1343d — bctc_skip_queue_item MCP Tool", () => {
       skip_reason: "malformed URL",
     }) as { content: Array<{ type: string; text: string }> };
 
-    const payload = JSON.parse(result.content[0].text) as {
+    const payload = JSON.parse(result.content[0]!.text) as {
       success: boolean;
       message: string;
     };
