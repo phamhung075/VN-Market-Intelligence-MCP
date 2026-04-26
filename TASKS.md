@@ -20,6 +20,7 @@
 - **feat/value-investor-analysis-system (1336):** 30 analysis ledger files, Report Analyzer agent (new), 4 agent mods (News Scout/Market Watcher/Alert Commander/Unified Agent), quarterly conviction synthesis, value_investor mode — MERGED 2026-04-26 (6520 pass / 213 fail baseline maintained)
 - **1330a–1330b:** Fix 7 failing test regressions from Sprint 1329 (1289c fallback field, 1476 WAL threshold/msg, 240 AC-4 cooldown reset, 1551 isolation) — DONE 2026-04-25 (26/26 target tests pass)
 - **1338:** Retrospective documentation for sprints 1330–1337 (SPRINT_GOAL.md, project-stats.json validation tests, sprint history consolidation) — DONE 2026-04-26
+- **1339a:** RED phase — 10 failing tests for PriceConfirmation catalyst correlation fields — APPROVED + merged 2026-04-26 (merge commit: 6f617113)
 
 ---
 
@@ -40,9 +41,5 @@
 ---
 
 ## Review
-
-### Sprint 1339 — Price Confirmation Signal Context Enhancement
-
-- **1339a** `task/1339a-price-confirmation-context-red` — RED phase complete. 10 failing tests written. Branch: `task/1339a-price-confirmation-context-red`. Handoff: `docs/handoffs/TASK_1339a.md`.
 
 ---
