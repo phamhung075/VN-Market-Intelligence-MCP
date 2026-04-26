@@ -103,43 +103,14 @@ export async function runBctcQueueEnricherJob(opts: {
     return result;
   }
 
-  // ── HOTFIX: Skip enrichment entirely ──
-  // Main server (France IP) cannot fetch from SSC (geo-blocked).
-  // VPS (Vietnam) is the ONLY source of BCTC queue items.
-  // Items without source_url should be skipped here and backfilled by VPS.
-  //
-  // Action: Mark these items as skipped (not failed) so they don't block the queue.
-  // VPS will push complete items with source_url already populated.
+  // Items with source_url IS NULL are awaiting VPS discovery.
+  // They must remain 'pending' so the VPS service can attempt discovery and fetch.
+  // Do NOT mark them as skipped — that would kill them permanently.
+  // Nothing to do here: return early and let VPS populate source_url via push.
 
-  const skipUrl = db.prepare(
-    `UPDATE bctc_vps_queue SET status = 'skipped' WHERE id = ? AND source_url IS NULL`,
-  );
-
-  for (const item of queueItems) {
-    result.itemsProcessed++;
-    result.partialFailures++; // Count as skipped (not failed)
-
-    try {
-      skipUrl.run(item.id);
-      logger.debug("[bctcQueueEnricher] Skipped item (awaiting VPS push)", {
-        code: item.action_code,
-        reason: "Main server cannot query SSC from France IP",
-      });
-    } catch (err) {
-      logger.warn("[bctcQueueEnricher] Failed to skip item", {
-        id: item.id,
-        error: err instanceof Error ? err.message : String(err),
-      });
-    }
-  }
-
-  // ── Log summary ──
-  if (result.itemsProcessed > 0) {
-    logger.info("[bctcQueueEnricher] batch complete (all skipped, awaiting VPS)", {
-      itemsProcessed: result.itemsProcessed,
-      skippedAwaitingVps: result.partialFailures,
-    });
-  }
+  logger.debug("[bctcQueueEnricher] no-op: items await VPS discovery", {
+    itemsAwaitingVps: queueItems.length,
+  });
 
   return result;
 }
