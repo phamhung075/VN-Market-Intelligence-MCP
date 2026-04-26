@@ -44,6 +44,10 @@ export function querySignalAges(
     age_minutes: number;
   }
 
+  // Table mapping (corrected from original wrong names):
+  //   sbv_fx       — sbv_rates.fetched_at
+  //   foreign_flow — daily_ohlcv.updated_at WHERE foreign_buy_vol IS NOT NULL
+  //                  (VPS pushes foreign flow into daily_ohlcv, not a separate table)
   const rows = db
     .query<AgeRow, [number, number, number, number, number]>(
       `SELECT
@@ -60,11 +64,11 @@ export function querySignalAges(
       UNION ALL
       SELECT
         'sbv_fx' as signal_type,
-        CAST((? - CAST((SELECT MAX(created_at) FROM macro_sbv_rates) as INTEGER)) / 60 AS INTEGER) as age_minutes
+        CAST((? - CAST((SELECT MAX(fetched_at) FROM sbv_rates) as INTEGER)) / 60 AS INTEGER) as age_minutes
       UNION ALL
       SELECT
         'foreign_flow' as signal_type,
-        CAST((? - CAST((SELECT MAX(created_at) FROM foreign_flow) as INTEGER)) / 60 AS INTEGER) as age_minutes`
+        CAST((? - CAST((SELECT MAX(updated_at) FROM daily_ohlcv WHERE foreign_buy_vol IS NOT NULL) as INTEGER)) / 60 AS INTEGER) as age_minutes`
     )
     .all(now, now, now, now, now) as AgeRow[];
 

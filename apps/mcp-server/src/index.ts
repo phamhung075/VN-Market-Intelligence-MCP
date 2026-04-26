@@ -121,7 +121,7 @@ log.info("[bootstrap] Scheduler started — cron jobs active");
 // ── 4. Background OCR for unprocessed PDFs ────────────────────────────────
 setTimeout(async () => {
   try {
-    const { readdirSync } = await import("node:fs");
+    const { mkdirSync, readdirSync } = await import("node:fs");
     const { resolve, join } = await import("node:path");
     const { extractAndStorePdfPages, isOcrAvailable } = await import("./infrastructure/fetchers/pdfOcrWorker.js");
 
@@ -131,6 +131,8 @@ setTimeout(async () => {
     }
 
     const pdfDir = resolve(process.cwd(), "data", "pdfs");
+    // Ensure the PDF directory exists on a fresh named volume (no-op if already present).
+    mkdirSync(pdfDir, { recursive: true });
     const pdfs = readdirSync(pdfDir).filter(f => f.endsWith(".pdf"));
     log.info("[bootstrap] checking PDFs for OCR extraction", { count: pdfs.length });
 
