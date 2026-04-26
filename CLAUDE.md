@@ -33,6 +33,7 @@
 - Code janitor scan checklist, canonical sources, output contract → `.claude/knowledge/janitor-procedures.md`
 - Market analysis: cascade framework, trade maps, macro matrix, BCTC checklist → `.claude/knowledge/market-analysis.md`
 - QA review checklist: TDD/DDD/TS/security, task report template → `.claude/knowledge/qa-checklist.md`
+- Bug reporting via MCP: automatic dedup within 4h, stored in SQLite → `.claude/knowledge/bug-reporting-via-mcp.md`
 
 ### Volatile Data (`docs/data/*.json` = counts/lists, agents update during work)
 - Tool registry (tool list + count) → `docs/data/tool-registry.json`
