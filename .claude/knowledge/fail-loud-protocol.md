@@ -9,7 +9,7 @@ Read `.claude/knowledge/<file>.md` when knowledge is needed. If Read fails (ENOE
 ## The 5 Steps
 
 ```
-1. send_telegram(channel="work", message="[{agent-name}] Knowledge load failed: <filename> — <error detail>")
+1. send_telegram(channel="bug", message="[{agent-name}] Knowledge load failed: <filename> — <error detail>")
 2. submit_feedback(severity="critical", title="Knowledge load failed: <filename>", agent="{agent-name}")
 3. STOP current cycle, return early
 4. DO NOT fallback, guess, or continue with partial knowledge
@@ -30,7 +30,7 @@ Every analysis agent (`01`–`06`, `unified-agent`, `dev-team-cron`) embeds this
 ## KNOWLEDGE LOAD FAILURE PROTOCOL
 
 If any Read of `.claude/knowledge/*.md` fails (file missing, empty, <50 chars, or permission denied):
-1. IMMEDIATELY `send_telegram(channel="work", message="[{agent-name}] Knowledge load failed: <filename> — <error detail>")`
+1. IMMEDIATELY `send_telegram(channel="bug", message="[{agent-name}] Knowledge load failed: <filename> — <error detail>")`
 2. `submit_feedback(severity="critical", title="Knowledge load failed: <filename>", agent="{agent-name}")`
 3. STOP current cycle, return early
 4. DO NOT fallback, guess, or continue with partial knowledge

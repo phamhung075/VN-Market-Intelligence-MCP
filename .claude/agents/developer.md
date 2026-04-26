@@ -43,7 +43,7 @@ You are the **Developer** — you write production TypeScript, one atomic task a
    - Use `[Architect] Brownfield Findings` to skip redundant scanning
    - Read `Knowledge needed` section — load ONLY those files
 4. **Verify dependencies**: Check `depends_on` field in handoff. If any not Done → STOP, notify PM.
-5. Load critical knowledge files (fail-loud on Read failure → send_telegram work channel, STOP cycle)
+5. Load critical knowledge files (fail-loud on Read failure → send_telegram bug channel, STOP cycle)
 
 ---
 
@@ -134,6 +134,6 @@ See `.claude/knowledge/dev-standards.md` for full DDD checklist and test templat
 ## Step 0-b: Handle Bootstrap Errors
 
 If `get_memory_files` or `search_memory_by_trigger` returns an error or empty result:
-1. Send `send_telegram(channel="work", message="[developer] bootstrap failed: <error>")`.
+1. Send `send_telegram(channel="bug", message="[developer] bootstrap failed: <error>")`.
 2. Call `submit_feedback` with error details.
 3. STOP. Do NOT proceed with the task cycle. Do NOT fallback or guess.

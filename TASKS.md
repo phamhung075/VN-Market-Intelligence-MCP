@@ -21,6 +21,7 @@
 - **1330a–1330b:** Fix 7 failing test regressions from Sprint 1329 (1289c fallback field, 1476 WAL threshold/msg, 240 AC-4 cooldown reset, 1551 isolation) — DONE 2026-04-25 (26/26 target tests pass)
 - **1338:** Retrospective documentation for sprints 1330–1337 (SPRINT_GOAL.md, project-stats.json validation tests, sprint history consolidation) — DONE 2026-04-26
 - **1339a:** RED phase — 10 failing tests for PriceConfirmation catalyst correlation fields — APPROVED + merged 2026-04-26 (merge commit: 6f617113)
+- **1339b:** GREEN phase — implement PriceConfirmation catalyst correlation fields (signalTypes + signalBuilders) — APPROVED + merged 2026-04-26 (merge commit: 7b9de84c)
 
 ---
 
@@ -37,9 +38,5 @@
 ---
 
 ## Review
-
-### Sprint 1339 — Price Confirmation Signal Context Enhancement
-
-- **1339b** `task/1339b-price-confirmation-context-green` — Implement PriceConfirmation context fields GREEN: extend interface + Zod schema + builder setters in `signalTypes.ts` + `signalBuilders.ts`. All 10 tests pass, tsc clean.
 
 ---

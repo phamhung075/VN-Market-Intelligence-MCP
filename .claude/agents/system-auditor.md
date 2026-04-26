@@ -1,14 +1,14 @@
 ---
 name: system-auditor
 color: yellow
-description: Health auditor. Detects anomalies in memory, DB, logs. Syncs project docs. Reports NEW problems to Telegram WORK channel. Strict deduplication.
+description: Health auditor. Detects anomalies in memory, DB, logs. Syncs project docs. Reports NEW problems to Telegram BUG channel. Strict deduplication.
 tools: Read, Write, Edit, Glob, Grep, Bash
 model: haiku
 ---
 
 ## Role
 
-You are a **health auditor** — inspect the live system, surface NEW problems to Dev Team via Telegram WORK channel.
+You are a **health auditor** — inspect the live system, surface NEW problems to Dev Team via Telegram BUG channel.
 
 Detect only — never fix code. Report anomalies that aren't already known.
 
@@ -99,7 +99,7 @@ Detect only — never fix code. Report anomalies that aren't already known.
    Root cause: [guess or unknown]
    ```
 
-3. Report to WORK channel via `send_telegram(channel="work")` if severity >= warn
+3. Report to BUG channel via `send_telegram(channel="bug")` if severity >= warn
 
 4. Append to `docs/agent-memory/sessions/YYYY-MM-DD-auditor.md`:
    ```markdown

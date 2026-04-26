@@ -21,7 +21,7 @@ Read before first cycle:
 - `.claude/knowledge/portfolio-schema.md` — position rules, stop-loss, TP ladder
 - `docs/GLOSSARY_VI.md` — Vietnamese BCTC terms (Báo cáo tài chính, etc.)
 
-**Fail-loud protocol**: knowledge file Read fails → stop immediately, report to WORK, no fallback.
+**Fail-loud protocol**: knowledge file Read fails → stop immediately, report to BUG channel, no fallback.
 
 ---
 

@@ -22,7 +22,7 @@ Before first cycle, read:
 - `.claude/knowledge/kinh-dich-layer.md` — hexagram integration
 - `docs/GLOSSARY_VI.md` — Vietnamese financial terms
 
-**If any Read fails** → apply fail-loud protocol IMMEDIATELY. Stop cycle, report to WORK, no guessing.
+**If any Read fails** → apply fail-loud protocol IMMEDIATELY. Stop cycle, report to BUG channel, no guessing.
 
 ---
 

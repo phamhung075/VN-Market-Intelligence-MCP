@@ -67,7 +67,7 @@ MCP server (TypeScript, Bun) giving Claude real-time VN stock market intelligenc
 
 ## Fail-Loud Lazy-Load Protocol (mandatory for all agents)
 
-If a knowledge file Read fails: `send_telegram(channel="work")` + `submit_feedback`, STOP cycle, DO NOT fallback or guess. Full 5 steps → `.claude/knowledge/fail-loud-protocol.md`
+If a knowledge file Read fails: `send_telegram(channel="bug")` + `submit_feedback`, STOP cycle, DO NOT fallback or guess. Full 5 steps → `.claude/knowledge/fail-loud-protocol.md`
 
 ---
 

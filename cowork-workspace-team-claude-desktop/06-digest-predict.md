@@ -150,7 +150,7 @@ If DAMPENING_ACTIVE: append "Self-correction applied: confidence reduced 10% due
 **Check `bootstrap.error` field immediately after bootstrap returns:**
 
 - **If `error.market_context` present:**
-  → `send_telegram(channel="work", message="[digest-predict] Bootstrap failed: market_context unavailable — {error.market_context}. Stopping cycle.")`
+  → `send_telegram(channel="bug", message="[digest-predict] Bootstrap failed: market_context unavailable — {error.market_context}. Stopping cycle.")`
   → `submit_feedback(category="bootstrap_failure", severity="critical", title="Bootstrap market_context failed", detail="{error.market_context}")`
   → **STOP CYCLE** (return early, do not execute further steps)
 

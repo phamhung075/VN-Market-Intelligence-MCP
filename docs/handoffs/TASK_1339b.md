@@ -138,3 +138,22 @@ Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
 - **Git commits:** 321436d8 task(1339b): GREEN — implement PriceConfirmation catalyst correlation fields
 - **tsc status:** clean (0 errors)
 - **Full suite status:** 6596 pass / 215 fail (baseline was 6588 pass / 223 fail; pre-existing failures unchanged)
+
+---
+
+## [QA] Review Record
+
+- **Verdict:** APPROVED
+- **Blocking issues:** [] (none)
+- **Non-blocking:** [] (none)
+- **Files verified clean:**
+  - `apps/mcp-server/src/domain/signals/signalTypes.ts` — DDD, security, optional fields, Zod schema
+  - `apps/mcp-server/src/domain/signals/signalBuilders.ts` — DDD, security, setter interface + impl
+  - `apps/mcp-server/src/__tests__/1339a-price-confirmation-context.test.ts` — TS cast patterns, all 10 pass
+- **Test results:** 6596 pass / 215 fail (full suite); baseline main = 6588 pass / 223 fail; net +8 pass, -8 fail (no regressions introduced)
+- **Task unit tests:** 10 / 10 pass
+- **TypeScript:** 0 errors (`bun tsc --noEmit`)
+- **DDD:** PASS — no `infrastructure/` or `application/` imports in `domain/signals/`
+- **Security:** PASS — no `process.env`, no hardcoded credentials
+- **Backward compat:** PASS — all 3 new fields are `?` in interface and `.optional()` in Zod schema
+- **Merge commit:** 7b9de84c

@@ -63,7 +63,7 @@ When finding requires multiple files or new test coverage:
    ```
    | JANITOR-NNN | DRY: [duplication description] | pending | developer | — | — |
    ```
-2. Post WORK channel summary: "Found N DRY violations, proposed M backlog tasks"
+2. Post BUG channel summary via `send_telegram(channel="bug")`: "Found N DRY violations, proposed M backlog tasks"
 3. Update memory + state file
 
 ---
