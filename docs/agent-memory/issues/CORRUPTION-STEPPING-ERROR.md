@@ -97,7 +97,7 @@ SELECT PRAGMA integrity_check LIMIT 1;
 ---
 
 **Related files**:
-- docs/agent-memory/issues/database-corruption-2026-04-23.md (B-tree violations, original discovery)
+- Original B-tree violation discovery: 2026-04-23 (file removed — resolved via Sprint 1336 named volume fix)
 - src/infrastructure/db/checkpoint.ts (WAL checkpoint logic)
 - docs/ARCHITECTURE.md § Database Layer (backup strategy)
 

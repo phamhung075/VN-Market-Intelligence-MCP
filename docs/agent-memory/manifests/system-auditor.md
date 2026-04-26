@@ -5,11 +5,11 @@
 | Task Type | Load |
 |-----------|------|
 | health-audit, anomaly-detection | issues/[RECURRING].md (if applicable) |
-| db-check, memory-sync | issues/WAL-checkpoint.md |
+| db-check, memory-sync | modules/scheduler.md |
 | doc-sync, dedup | sessions/LATEST.md |
 
 **Load sequence:**
-1. Load `issues/WAL-checkpoint.md` (critical for DB health)
+1. Load `modules/scheduler.md` (checkpoint state + signal handlers)
 2. Load LATEST session (see recent fixes to avoid duplicate reports)
 3. Load other issue files only if you detect anomalies matching known patterns
 

@@ -39,7 +39,7 @@ When creating a new `.md` file, use this decision tree:
 | `docs/` (root) | 6 core docs | Read weekly | Stable, rarely change |
 | `docs/data/` | Volatile counts (JSON) | Read/write during work | Agents update via MCP |
 | `docs/archive/` | Investigation/audit reports | Read-only | Auto-file, never delete |
-| `docs/historical/` | Task specs (REQ/TECH) | Read-only | Append-only, 249 files |
+| `docs/historical/` | Task specs (REQ/TECH) | Read-only | Append-only, 0 files (cleaned 2026-04-26) |
 | `docs/agent-memory/` | Shared analysis workbook | Lazy-load | Agent MCP tools manage |
 | `.claude/knowledge/` | Logic & rules | Read-heavy | Stable, update on policy change |
 | `.claude/skills/` | CLI skills (Caveman, etc.) | Read-only | Never delete |
@@ -61,13 +61,13 @@ If created in root by mistake → auto-moved to archive/ before next work task.
 
 ## What's in Each Archive
 
-**`docs/historical/` (249 files — never touch)**
+**`docs/historical/` (0 files (cleaned 2026-04-26) — never touch)**
 - REQ_006 through REQ_1422 (118 files) — all feature requirements ever assigned
 - TECH_006 through TECH_1422 (131 files) — all technical specs ever written
 - Canonical reference for task context and design decisions
 - No deletion, no modification
 
-**`docs/archive/` (89 files — read-only reference)**
+**`docs/archive/` (0 files (cleaned 2026-04-26) — read-only reference)**
 - BCTC_*.md (14) — PDF extraction investigations
 - AUDIT_*.md (3) — system audits
 - Investigation/analysis files (20) — findings, root causes, discoveries

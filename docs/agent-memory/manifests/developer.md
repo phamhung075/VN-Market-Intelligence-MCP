@@ -8,7 +8,7 @@
 | adding-http-fetcher | patterns/circuit-breaker.md, patterns/rate-limiter.md, patterns/SQL-injection.md |
 | fixing-bug | issues/[BUGNAME].md, modules/[MODULENAME].md (see handoff) |
 | domain-refactor | modules/domain.md, patterns/DDD-violations.md |
-| infrastructure-refactor | modules/scheduler.md, issues/WAL-checkpoint.md |
+| infrastructure-refactor | modules/scheduler.md |
 | starting-fresh | sessions/LATEST.md |
 
 **Load sequence:**

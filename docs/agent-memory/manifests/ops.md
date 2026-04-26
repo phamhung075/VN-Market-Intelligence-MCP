@@ -4,17 +4,17 @@
 
 | Task Type | Load |
 |-----------|------|
-| health-check, vps-status | issues/WAL-checkpoint.md, modules/scheduler.md |
-| incident-response | issues/[RELEVANT].md (e.g., WAL-checkpoint.md) |
-| server-restart, db-maintenance | issues/WAL-checkpoint.md |
+| health-check, vps-status | modules/scheduler.md |
+| incident-response | issues/[RELEVANT].md |
+| server-restart, db-maintenance | modules/scheduler.md |
 
 **Load sequence:**
-1. Load `issues/WAL-checkpoint.md` (critical on every restart)
-2. Load `modules/scheduler.md` (shows recent signal handler changes)
-3. If incident, load relevant issue file
+1. Load `modules/scheduler.md` (signal handler + checkpoint state)
+2. If incident, load relevant issue file from `issues/`
+3. Check `sessions/LATEST.md` for recent context
 
-**Total load cost:** 50–100 tokens (manifest) + 150–250 tokens (issues + modules)
+**Total load cost:** 50–100 tokens (manifest) + 150–250 tokens (modules + session)
 
 ---
 
-**Notes:** WAL checkpoint is non-negotiable on every restart. Always load it.
+**Notes:** WAL checkpoint is implemented and stable (`src/infrastructure/db/checkpoint.ts`). No issue file — it's resolved.

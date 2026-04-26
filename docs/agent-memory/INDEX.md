@@ -9,24 +9,30 @@
 
 ## 📋 Issues (Load if: fixing a bug, analyzing infrastructure)
 
-- **[WAL Checkpoint](issues/WAL-checkpoint.md)** — Unbounded WAL growth on SIGTERM (FIXED, recur=3x)
-- **[Timezone Test Failures](issues/timezone-offsets.md)** — CI tests fail due to DST handling (FIXED, recur=1x)
-- **[Null Guards in Aggregator](issues/aggregator-guards.md)** — Array access without null check (FIXED, recur=1x)
+- **[BCTC Quality](issues/BCTC-QUALITY.md)** — PDF extraction errors, VNM/VEA anomalies
+- **[BCTC Portal Discovery](issues/bctc-portal-discovery.md)** — React SPA blocker (resolved via Playwright)
+- **[Foreign Flow Circuit](issues/foreign-flow-circuit.md)** — Circuit breaker recurring HALF-OPEN
+- **[Foreign Flow Parse Cascade](issues/foreign-flow-parse-cascade.md)** — 3,739 silent filter errors
+- **[Alert Quality](issues/ALERT-QUALITY.md)** — Missing 4-AND verification fields in payloads
+- **[Corruption Stepping Error](issues/CORRUPTION-STEPPING-ERROR.md)** — B-tree stepping error (distinct from prior PRAGMA failure)
+- **[Signal Schema Urgent News](issues/signal-schema-urgent-news-error.md)** — `root` field missing in urgent_news
+- **[Source Quality](issues/source-quality.md)** — Reuters/Trading Economics RSS outages
+- **[Memory Stale](issues/MEMORY-STALE.md)** — Agent memory files out of sync
 
 ## 🔴 Error Patterns (Load if: writing infrastructure, SQL, scheduler, or domain code)
 
 - **[DDD Layer Violations](patterns/DDD-violations.md)** — domain/ imports infrastructure/ (recur=7x)
-- **[SQL Injection](patterns/SQL-injection.md)** — String interpolation in queries (recur=0x, strict)
 - **[Missing Circuit Breaker](patterns/circuit-breaker.md)** — HTTP fetches without isolation (recur=2x)
-- **[Rate Limiter Skipped](patterns/rate-limiter.md)** — External calls without throttle (recur=1x)
-- **[Naive Dates](patterns/date-handling.md)** — `new Date()` instead of explicit UTC (recur=3x)
+- **[Telegram Channel Routing](patterns/telegram-channel-routing.md)** — Wrong channel routing bugs
+- **[Signal Payload Quality](patterns/signal-payload-quality.md)** — Missing fields in signal payloads
+- **[Python DDD Absolute Imports](patterns/python-ddd-absolute-imports.md)** — Use absolute not relative imports
 
 ## 📊 Module Analyses (Load if: analyzing, refactoring, or extending a module)
 
-- **[src/domain/](modules/domain.md)** — Layer boundary ✅, DDD scoping ✅, type coverage ⚠️ (8 files need @type)
-- **[src/infrastructure/scheduler/](modules/scheduler.md)** — Signals ✅, WAL ✅, timezone ⚠️ (3 crons use naive dates)
-- **[src/interface/rest/](modules/rest.md)** — SSE safety ✅, sessions ✅, rate limit ⚠️ (not yet added)
-- **[src/application/](modules/application.md)** — Error handling ✅, RAG perf ⚠️ (no caching layer)
+- **[Scheduler](modules/scheduler.md)** — Signal handlers, WAL checkpoint, cron jobs state
+- **[Chain Synthesizer](modules/chainSynthesizer.md)** — Cascade chain construction logic
+- **[Signal Builders](modules/signalBuilders.md)** — ChainCatalyst, PriceConfirmation, UrgentNews, CrossValidate
+- **[Tool Loading](modules/tool-loading.md)** — MCP tool registry, bootstrap sequence
 
 ## 📋 PO Procedures (Load if: PO analyzing tasks/sprints)
 
@@ -34,11 +40,11 @@
 
 ## 🔗 Sessions (Load if: checking what agent just did, avoiding duplicate work)
 
-- **[2026-04-23 BA Sprint 1296](sessions/2026-04-23-ba-sprint-1296.md)** — Infrastructure recovery (OPS validation) + IMF sentiment planning (BA research)
-- **[2026-04-23 BA Sprint 1295](sessions/2026-04-23-ba-sprint-planning.md)** — Signal builders + IMF backlog analysis
-- **[2026-04-21 Dev Team](sessions/2026-04-21-dev-team.md)** — Fixed aggregator guards
-- **[2026-04-20 QA](sessions/2026-04-20-qa.md)** — Fixed timezone in tests
-- **[2026-04-22 Morning Work](sessions/2026-04-22-morning.md)** — Recent work context
+- **[LATEST](sessions/LATEST.md)** — Most recent session (always load this first)
+- **[2026-04-26 Developer](sessions/2026-04-26-developer.md)** — Task 1339b PriceConfirmation fields
+- **[2026-04-26 QA](sessions/2026-04-26-qa.md)** — Task 1300b QA review
+- **[2026-04-26 Ops](sessions/2026-04-26-ops.md)** — Latest ops health check
+- **[2026-04-23 BA Sprint 1296](sessions/2026-04-23-ba-sprint-1296.md)** — IMF sentiment planning
 
 ---
 

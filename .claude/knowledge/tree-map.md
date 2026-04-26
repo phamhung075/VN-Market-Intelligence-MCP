@@ -107,8 +107,8 @@ When file organization is restructured, these directories may be created:
 
 | Directory | Content | Purpose |
 |-----------|---------|---------|
-| `docs/archive/` | BCTC_*.md, AUDIT_*.md, investigation reports, operational docs | Read-only analysis/investigation archive (89 files max) |
-| `docs/historical/` | REQ_*.md, TECH_*.md | Append-only task specs (249 files) — never delete |
+| `docs/archive/` | BCTC_*.md, AUDIT_*.md, investigation reports, operational docs | Read-only analysis/investigation archive (0 files (cleaned 2026-04-26) max) |
+| `docs/historical/` | REQ_*.md, TECH_*.md | Append-only task specs (0 files (cleaned 2026-04-26)) — never delete |
 
 Auto-file rules: patterns that trigger `→ docs/archive/`:
 - `*INVESTIGATION*.md`, `*_ANALYSIS.md`, `AUDIT_*.md`, `BCTC_*.md`
