@@ -24,7 +24,7 @@ If PO returns `PIPELINE: idle` (nothing to do) → stop, ask user what to work o
 Before any agent analyzes financial data (BCTC quarterly reports), verify:
 
 ```
-VPS (Singapore)
+VPS (Vietnam — Vinahost)
   └─ downloads BCTC PDFs from geo-blocked VN sources
        └─ sends to MCP server
             └─ PDF → text extraction (pdf-parse + OCR)
