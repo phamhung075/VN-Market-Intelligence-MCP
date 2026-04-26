@@ -30,10 +30,6 @@
 
 ## Todo
 
-### Sprint 1339 — Price Confirmation Signal Context Enhancement
-
-- **1339b** `task/1339b-price-confirmation-context-green` — Implement PriceConfirmation context fields GREEN: extend interface + Zod schema + builder setters in `signalTypes.ts` + `signalBuilders.ts`. All 10 tests pass, tsc clean.
-
 ---
 
 ## In Progress
@@ -41,5 +37,9 @@
 ---
 
 ## Review
+
+### Sprint 1339 — Price Confirmation Signal Context Enhancement
+
+- **1339b** `task/1339b-price-confirmation-context-green` — Implement PriceConfirmation context fields GREEN: extend interface + Zod schema + builder setters in `signalTypes.ts` + `signalBuilders.ts`. All 10 tests pass, tsc clean.
 
 ---
