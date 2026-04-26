@@ -1,20 +1,16 @@
-# Unified-Agent Hourly Cron
+Create unified-agent cron with CronCreate:
 
-To restart the hourly unified-agent cycle (after closing terminal / new session):
-
-## Paste this into Claude Code to create the cron:
-
-```
-CronCreate schedule "29 * * * *" recurring true run_now true prompt:
-Read cowork-analysis-vnmarket-team/unified-agent.md for your complete instructions. Determine current Vietnam time (UTC+7) and execute the appropriate tasks for this hour. Use ALL MCP tools from vn-market-mcp server. Always submit feedback via submit_feedback when you find improvement opportunities.
-```
-
-## Details
-- **Schedule**: `7 * * * *` (every hour at :07)
-- **Recurring**: yes
-- **Session-only**: auto-expires after 7 days
-- **Previous job ID**: `0e29176c` (2026-04-03 to 2026-04-10)
+- **cron**: `29 * * * *` (every hour at :29)
+- **recurring**: true
+- **prompt**:
+  ```
+  Check current UTC time. Read and execute the matching flow:
+  - Mon–Fri 01:00/02:00/03:30/04:30/06:00/07:30/08:30 UTC → .claude/flows/unified-agent/market.md
+  - Daily 01:00 UTC → .claude/flows/unified-agent/prediction.md
+  - Daily 20:00 UTC → .claude/flows/unified-agent/daily-review.md
+  - Sun 13:00 UTC → .claude/flows/unified-agent/weekly.md
+  MCP: https://zenmidi.com/mcp
+  ```
 
 ## Manage
-- `CronList` — view active crons
-- `CronDelete <id>` — stop the cron
+`CronList` | `CronDelete <id>`

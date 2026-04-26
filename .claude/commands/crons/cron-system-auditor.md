@@ -1,11 +1,11 @@
-Re-create the system-auditor cron job (token-optimized). Use CronCreate with:
+Create system-auditor cron with CronCreate:
 
-- cron: `0 16 * * *` (1x/day = 23:00 VN)
-- prompt:
+- **cron**: `0 16 * * *` (daily 16:00 UTC = 23:00 VN)
+- **recurring**: true
+- **prompt**:
   ```
-  Launch system-auditor subagent (subagent_type=system-auditor). Run full audit per your agent definition.
+  Launch subagent (subagent_type=system-auditor). Read and execute .claude/flows/system-auditor/main.md
   ```
 
-Agent `.md` has full instructions + early-exit guard (skips doc sync if 0 commits in 24h, skips bloat if CLAUDE.md < 120 lines). Model: sonnet.
-
-State file: `docs/data/system-auditor-known-issues.json` — delete to force full re-report.
+## Manage
+`CronList` | `CronDelete <id>`
