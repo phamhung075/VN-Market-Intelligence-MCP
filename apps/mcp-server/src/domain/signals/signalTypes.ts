@@ -179,12 +179,24 @@ export interface UrgentNewsFindingData {
 
   /** Severity level of the news: low, medium, high, or critical. */
   severity: "low" | "medium" | "high" | "critical";
+
+  /** Optional: ticker of the stock that triggered the cascade chain. Min 2 chars. */
+  catalyst_stock_code?: string;
+
+  /** Optional: directional bias of the catalyst event. */
+  catalyst_direction?: "bullish" | "bearish" | "neutral";
+
+  /** Optional: estimated hours from catalyst event to observable price movement. */
+  time_to_price_move?: number;
 }
 
 export const UrgentNewsFindingDataSchema = z.object({
   headline: z.string().min(1),
   source: z.string().min(1),
   severity: z.enum(["low", "medium", "high", "critical"]),
+  catalyst_stock_code: z.string().min(2).optional(),
+  catalyst_direction: z.enum(["bullish", "bearish", "neutral"]).optional(),
+  time_to_price_move: z.number().min(0).optional(),
 });
 
 // ── CrossValidateFindingData ───────────────────────────────────────────────────

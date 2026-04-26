@@ -245,11 +245,18 @@ export interface UrgentNewsBuilder {
   setHeadline(headline: string): this;
   setSource(source: string): this;
   setSeverity(severity: "low" | "medium" | "high" | "critical"): this;
+  setCatalystStockCode(code: string): this;
+  setCatalystDirection(direction: "bullish" | "bearish" | "neutral"): this;
+  setTimeToPriceMove(hours: number): this;
   build(): UrgentNewsFindingData;
 }
 
 class UrgentNewsBuilderImpl implements UrgentNewsBuilder {
-  private data: Partial<UrgentNewsFindingData> = {};
+  private data: Omit<Partial<UrgentNewsFindingData>, "catalyst_stock_code" | "catalyst_direction" | "time_to_price_move"> & {
+    catalyst_stock_code?: string;
+    catalyst_direction?: "bullish" | "bearish" | "neutral";
+    time_to_price_move?: number;
+  } = {};
 
   setHeadline(headline: string): this {
     this.data.headline = headline;
@@ -266,8 +273,23 @@ class UrgentNewsBuilderImpl implements UrgentNewsBuilder {
     return this;
   }
 
+  setCatalystStockCode(code: string): this {
+    this.data.catalyst_stock_code = code;
+    return this;
+  }
+
+  setCatalystDirection(direction: "bullish" | "bearish" | "neutral"): this {
+    this.data.catalyst_direction = direction;
+    return this;
+  }
+
+  setTimeToPriceMove(hours: number): this {
+    this.data.time_to_price_move = hours;
+    return this;
+  }
+
   build(): UrgentNewsFindingData {
-    return UrgentNewsFindingDataSchema.parse(this.data);
+    return UrgentNewsFindingDataSchema.parse(this.data) as UrgentNewsFindingData;
   }
 }
 
