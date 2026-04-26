@@ -28,8 +28,28 @@
 
 ## Todo
 
+### Sprint 1338 — Retrospective Documentation: Sprints 1330–1337
+
+| ID | Title | Size | Owner |
+|----|-------|------|-------|
+| 1338b | Update SPRINT_GOAL.md retrospective + project-stats.json currentSprint=1338 | S | Developer |
+
+Handoffs: `docs/handoffs/TASK_1338a.md` | `docs/handoffs/TASK_1338b.md`
+
 ---
 
 ## In Progress
+
+### 1338a — Write failing validation tests (branch: task/1338a-sprint-goal-validation-test)
+
+| ID | Title | Size | Owner | Status |
+|----|-------|------|-------|--------|
+| 1338a | Write failing validation tests (SPRINT_GOAL.md refs ≥1338, currentSprint=1338) | S | Developer | In Progress |
+
+**Blocking issue:** `src/__tests__/1338-sprint-goal-retrospective.test.ts:20` — TS2345: `firstH2![1]` typed as `string | undefined` under `noUncheckedIndexedAccess: true`. Fix: change to `firstH2![1]!` then re-run `bun tsc --noEmit`. Report: `reports/TASK_REPORT_1338a.md`
+
+---
+
+## Review
 
 ---
