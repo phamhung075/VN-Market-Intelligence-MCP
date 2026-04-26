@@ -132,27 +132,51 @@ describe("Bug 1 — bctc_fetch_queue: revive skipped rows before insert", () => 
 });
 
 // ---------------------------------------------------------------------------
-// Bug 2: bctcQueueEnricherJob must NOT mark items as skipped
+// Bug 2: bctcQueueEnricherJob must NOT mark items as skipped (Task 1343c)
+//
+// Task 1343c re-enables active discovery. Items are processed (discovery
+// attempted) but must never be permanently 'skipped'. If discovery fails,
+// they stay 'pending' for VPS retry. All tests use injectable mock fetchers
+// to avoid real network calls from France (geo-blocked).
 // ---------------------------------------------------------------------------
 
+/** Failing fetch mock — simulates geo-block / network error */
+async function mockFail(_url: string, _timeout: number): Promise<string> {
+  throw new Error("ECONNREFUSED (mock)");
+}
+
+/** SSC mock returning one PDF URL */
+function mockSscPdf(pdfUrl: string) {
+  return async (_url: string, _timeout: number): Promise<string> =>
+    JSON.stringify({ data: [{ fileUrl: pdfUrl }] });
+}
+
 describe("Bug 2 — bctcQueueEnricherJob: items with source_url=NULL must stay pending", () => {
-  it("leaves pending items with source_url=NULL as pending after job run", async () => {
+  it("leaves pending items with source_url=NULL as pending after job run (discovery fails)", async () => {
     const db = makeDb();
     const id1 = insertRow(db, "VNM", "pending", null);
     const id2 = insertRow(db, "ACB", "pending", null);
 
-    await runBctcQueueEnricherJob({ db, batchSize: 10 });
+    await runBctcQueueEnricherJob({
+      db,
+      batchSize: 10,
+      discoverOptions: { _fetchSsc: mockFail, _fetchCafef: mockFail, _fetchVietstock: mockFail },
+    });
 
     // Items must NOT be set to 'skipped' — they must remain 'pending'
     expect(getStatus(db, id1)).toBe("pending");
     expect(getStatus(db, id2)).toBe("pending");
   });
 
-  it("does not increment attempts on no-op pass", async () => {
+  it("does not increment attempts field", async () => {
     const db = makeDb();
     insertRow(db, "VNM", "pending", null);
 
-    await runBctcQueueEnricherJob({ db, batchSize: 10 });
+    await runBctcQueueEnricherJob({
+      db,
+      batchSize: 10,
+      discoverOptions: { _fetchSsc: mockFail, _fetchCafef: mockFail, _fetchVietstock: mockFail },
+    });
 
     const row = db
       .prepare("SELECT attempts FROM bctc_vps_queue WHERE action_code = 'VNM'")
@@ -160,18 +184,35 @@ describe("Bug 2 — bctcQueueEnricherJob: items with source_url=NULL must stay p
     expect(row.attempts).toBe(0);
   });
 
-  it("returns itemsProcessed=0 when items have no source_url (nothing to do)", async () => {
+  it("processes items and populates source_url on discovery success", async () => {
     const db = makeDb();
     insertRow(db, "VNM", "pending", null);
     insertRow(db, "ACB", "pending", null);
 
-    const result = await runBctcQueueEnricherJob({ db, batchSize: 10 });
+    const result = await runBctcQueueEnricherJob({
+      db,
+      batchSize: 10,
+      discoverOptions: {
+        _fetchSsc: mockSscPdf("https://iboard-query.ssc.vn/static/test.pdf"),
+        _fetchCafef: mockFail,
+        _fetchVietstock: mockFail,
+      },
+    });
 
-    // With the fix: job should not process these items at all (or process=0)
-    // The job's purpose was to enrich items that already have source_url — items
-    // without source_url need VPS discovery first, so they should be left alone.
-    expect(result.itemsProcessed).toBe(0);
-    expect(result.partialFailures).toBe(0);
+    // Both items processed and URLs populated
+    expect(result.itemsProcessed).toBe(2);
+    expect(result.urlsPopulated).toBe(2);
+
+    // No items permanently skipped — they remain pending
+    const pendingRows = db
+      .query("SELECT COUNT(*) as c FROM bctc_vps_queue WHERE status = 'pending'")
+      .get() as { c: number };
+    expect(pendingRows.c).toBe(2);
+    // source_url now set
+    const vnm = db
+      .prepare("SELECT source_url FROM bctc_vps_queue WHERE action_code = 'VNM'")
+      .get() as { source_url: string };
+    expect(vnm.source_url).toMatch(/\.pdf$/i);
   });
 
   it("does not touch rows with status != pending", async () => {
@@ -179,7 +220,11 @@ describe("Bug 2 — bctcQueueEnricherJob: items with source_url=NULL must stay p
     const doneId = insertRow(db, "BID", "done", null);
     const failedId = insertRow(db, "HPG", "failed", null);
 
-    await runBctcQueueEnricherJob({ db, batchSize: 10 });
+    await runBctcQueueEnricherJob({
+      db,
+      batchSize: 10,
+      discoverOptions: { _fetchSsc: mockFail, _fetchCafef: mockFail, _fetchVietstock: mockFail },
+    });
 
     expect(getStatus(db, doneId)).toBe("done");
     expect(getStatus(db, failedId)).toBe("failed");

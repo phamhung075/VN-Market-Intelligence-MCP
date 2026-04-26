@@ -137,8 +137,8 @@ describe("FIX-1281 — BCTC VPS-only guard", () => {
     expect(guardShouldSkip(true)).toBe(false);   // VPS: do not skip
   });
 
-  // ── AC-6: bctcQueueEnricher is a no-op for NULL source_url items ──────────
-  it("AC-6: bctcQueueEnricherJob leaves NULL source_url items as pending (awaiting VPS discovery)", async () => {
+  // ── AC-6: bctcQueueEnricher attempts discovery and keeps items 'pending' ────
+  it("AC-6: bctcQueueEnricherJob leaves NULL source_url items as pending after discovery attempt", async () => {
     const { Database } = await import("bun:sqlite");
     const db = new Database(":memory:");
     db.exec(`
@@ -156,17 +156,27 @@ describe("FIX-1281 — BCTC VPS-only guard", () => {
       )
     `);
 
-    // Insert items with NULL source_url (awaiting VPS discovery)
+    // Insert items with NULL source_url
     db.prepare("INSERT INTO bctc_vps_queue (action_code, period_year, period_quarter) VALUES (?, ?, ?)").run("VCB", 2025, "Q4");
     db.prepare("INSERT INTO bctc_vps_queue (action_code, period_year, period_quarter) VALUES (?, ?, ?)").run("FPT", 2025, "Q4");
 
     const { runBctcQueueEnricherJob } = await import("../../src/scheduler/financial-reports/bctcQueueEnricherJob.js");
-    const result = await runBctcQueueEnricherJob({ db, batchSize: 10 });
 
-    // Job is a no-op: items without source_url must stay pending for VPS to discover
-    expect(result.itemsProcessed).toBe(0);
+    // Task 1343c: discovery is active. Use failing mocks so discovery returns empty
+    // (simulates geo-blocked environment). Items must stay 'pending', never 'skipped'.
+    async function mockFail(_url: string, _timeout: number): Promise<string> {
+      throw new Error("ECONNREFUSED (mock)");
+    }
+    const result = await runBctcQueueEnricherJob({
+      db,
+      batchSize: 10,
+      discoverOptions: { _fetchSsc: mockFail, _fetchCafef: mockFail, _fetchVietstock: mockFail },
+    });
+
+    // Discovery was attempted for both items
+    expect(result.itemsProcessed).toBe(2);
+    // No URLs found (all sources mocked to fail)
     expect(result.urlsPopulated).toBe(0);
-    expect(result.partialFailures).toBe(0);
 
     // Verify items remain pending (NOT skipped — that would block VPS re-discovery)
     const items = db.prepare("SELECT status FROM bctc_vps_queue").all() as { status: string }[];
