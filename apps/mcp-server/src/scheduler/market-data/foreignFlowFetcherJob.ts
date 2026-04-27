@@ -16,7 +16,7 @@
 
 import { logger } from "../../infrastructure/logger.js";
 import { recordJobRun } from "../../infrastructure/db/cronJobRunStore.js";
-import { fetchForeignFlowWithFallback } from "../../infrastructure/fetchers/foreignFlowFetcher.js";
+import { fetchForeignFlowWithFallback, type CacheStore } from "../../infrastructure/fetchers/foreignFlowFetcher.js";
 import { getDb } from "../../infrastructure/db/schema.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -58,6 +58,7 @@ export async function runForeignFlowFetcherJob(
   overrides?: {
     now?: () => Date;
     fetchFn?: (url: string, opts?: any) => Promise<Response>;
+    cacheStore?: CacheStore;
   },
 ): Promise<ForeignFlowFetcherJobResult> {
   const now = overrides?.now ?? (() => new Date());

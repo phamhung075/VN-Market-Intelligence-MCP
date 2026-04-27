@@ -197,7 +197,7 @@ describe("Task 1352b — Case 4: unexpected error catch path", () => {
     // This exercises the double-dynamic-import path the architect flagged.
 
     const { runForeignFlowFetcherJob } = await import(
-      "../scheduler/market-data/foreignFlowFetcherJob.js?test=C4"
+      "../scheduler/market-data/foreignFlowFetcherJob.js"
     );
 
     // Must not throw
@@ -244,7 +244,7 @@ describe("Task 1352b — Case 5: runForeignFlowFetcherJobCron recordJobRun wirin
     }));
 
     const { runForeignFlowFetcherJobCron } = await import(
-      "../scheduler/market-data/foreignFlowFetcherJob.js?test=C5"
+      "../scheduler/market-data/foreignFlowFetcherJob.js"
     );
 
     // Run the cron wrapper — it will call getDb() and recordJobRun internally
