@@ -72,6 +72,20 @@ let lastSuccessCache: ForeignFlowCache | null = null;
 /** When primary came back online (for recovery logging). */
 let lastRecoveryAt: string | null = null;
 
+/**
+ * Log-spam guard: tracks the last CB state that was logged.
+ *
+ * When the circuit breaker is OPEN, it stays open for up to 5 minutes before
+ * transitioning to half-open. Without this guard, the 60s cron would emit
+ * "circuit breaker open, skipping primary" and "all fallbacks exhausted" on
+ * every single call — 3 warn lines/minute × N hours = severe log noise.
+ *
+ * Contract: log the "open, skipping primary" warn ONCE when the state
+ * transitions to open; suppress it on all subsequent calls while it remains
+ * open. Reset when the breaker closes or is manually reset.
+ */
+let lastLoggedOpenState: boolean = false;
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Implementation
 // ─────────────────────────────────────────────────────────────────────────────
@@ -129,18 +143,23 @@ export async function fetchForeignFlowWithFallback(
           cachedAt: timestamp,
         };
 
-        // Log recovery if previously down
+        // Log recovery if previously down; reset the log-spam guard
         if (breakers.foreignFlow.stats.state === "closed" && lastRecoveryAt !== timestamp) {
           lastRecoveryAt = timestamp;
+          lastLoggedOpenState = false; // allow next open-state to log again
           logger.info("[fallback] primary endpoint recovered", { timestamp });
         }
 
         return { changes, timestamp, source: "primary" };
       }
     } else {
-      logger.warn("[fallback] circuit breaker open, skipping primary", {
-        failures: breakers.foreignFlow.stats.failures,
-      });
+      // Log ONCE per open-state entry — suppress repeat warn every 60s
+      if (!lastLoggedOpenState) {
+        lastLoggedOpenState = true;
+        logger.warn("[fallback] circuit breaker OPEN — skipping primary (will not repeat until state changes)", {
+          failures: breakers.foreignFlow.stats.failures,
+        });
+      }
     }
   } catch (err) {
     // Primary failed — proceed to fallback
@@ -224,9 +243,13 @@ export async function fetchForeignFlowWithFallback(
   // Strategy 4: All fallbacks exhausted — return empty with warning
   // ───────────────────────────────────────────────────────────────────────────
 
-  logger.warn("[fallback] all fallback sources exhausted, returning empty", {
-    timestamp,
-  });
+  // Suppress repeat "exhausted" warn when CB is stuck open — already logged once
+  // on the first open-state call. Only log when not already guarded.
+  if (!lastLoggedOpenState) {
+    logger.warn("[fallback] all fallback sources exhausted, returning empty", {
+      timestamp,
+    });
+  }
 
   return {
     changes: 0,
@@ -383,6 +406,14 @@ function isValidForeignFlowItem(item: unknown): item is WriteForeignFlowItem {
 export function resetFallbackCache(): void {
   lastSuccessCache = null;
   lastRecoveryAt = null;
+}
+
+/**
+ * Reset the log-spam guard (test-only + called after CB manual reset).
+ * Allows the next CB open-state entry to emit a warn log again.
+ */
+export function resetLogSpamGuard(): void {
+  lastLoggedOpenState = false;
 }
 
 /**
