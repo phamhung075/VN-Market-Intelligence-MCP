@@ -57,12 +57,12 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff |
 |---------|-------|----------|------|-------|---------|
-| 1352-BCTC-LOG | Commit OCR health logging implementation from stash | MEDIUM | FIX | Developer | docs/handoffs/TASK_1352_BCTC_LOG.md |
 
 ## Done
 
 | Task ID | Title | Merged | Reports |
 |---------|-------|--------|---------|
+| 1352-BCTC-LOG | OCR health logging startup visibility + per-file retry + low-char warnings | main 2026-04-27 | reports/TASK_REPORT_1352c.md |
 | 1346a | Remove test stub from production scheduler | main 2026-04-27 | reports/TASK_REPORT_1346a.md — closes 1323 |
 | 1346b | Fix push-foreign-flow UNIQUE constraint | main 2026-04-27 | reports/TASK_REPORT_1346b.md — closes 1310, 1312 |
 | 1346c-b | NER suffix wiring + feedback retry + unknown stock_code | main 2026-04-27 | reports/TASK_REPORT_1346c-b.md — closes 1311, 1317, 1313 |

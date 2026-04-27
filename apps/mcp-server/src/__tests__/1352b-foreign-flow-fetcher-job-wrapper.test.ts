@@ -33,10 +33,21 @@ import {
   fetchForeignFlowWithFallback,
   resetFallbackCache,
   resetCircuitBreaker,
+  resetLogSpamGuard,
 } from "../infrastructure/fetchers/foreignFlowFetcher.js";
 import { breakers } from "../infrastructure/circuitBreakerRegistry.js";
 import { initDatabase, closeDb, getDb } from "../infrastructure/db/schema.js";
 import type { WriteForeignFlowItem } from "../domain/models/shared-types.js";
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Real-module captures — imported BEFORE any mock.module() call so they hold
+// the genuine implementations. Used in teardown to repair the module registry
+// for worker-sibling test files. Pattern: FIX-1290-briefing-no-stale.test.ts.
+// ─────────────────────────────────────────────────────────────────────────────
+const _realFetchForeignFlowWithFallback = fetchForeignFlowWithFallback;
+const _realResetFallbackCache = resetFallbackCache;
+const _realResetCircuitBreaker = resetCircuitBreaker;
+const _realResetLogSpamGuard = resetLogSpamGuard;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Test Data Builders
@@ -263,5 +274,31 @@ describe("Task 1352b — Case 5: runForeignFlowFetcherJobCron recordJobRun wirin
     expect(row!.job_name).toBe("foreignFlowFetcherJob");
     expect(row!.status).toBe("success");
     expect(row!.rows_written).toBe(7);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Teardown — restore mocked modules to real implementations
+//
+// mock.module() in Bun 1.x is worker-scoped and permanent for the process
+// lifetime. Any file that runs in the same Bun worker after this one will
+// inherit these mock registrations. We repair the registry here by
+// re-registering the real implementations captured at file top-level,
+// ensuring worker-siblings see genuine modules rather than our test stubs.
+// ─────────────────────────────────────────────────────────────────────────────
+describe("Task 1352b — teardown: restore foreignFlowFetcher module registry", () => {
+  afterAll(() => {
+    mock.module("../infrastructure/fetchers/foreignFlowFetcher.js", () => ({
+      fetchForeignFlowWithFallback: _realFetchForeignFlowWithFallback,
+      resetFallbackCache: _realResetFallbackCache,
+      resetCircuitBreaker: _realResetCircuitBreaker,
+      resetLogSpamGuard: _realResetLogSpamGuard,
+    }));
+  });
+
+  it("teardown guard: real foreignFlowFetcher.js captured", () => {
+    expect(typeof _realFetchForeignFlowWithFallback).toBe("function");
+    expect(typeof _realResetFallbackCache).toBe("function");
+    expect(typeof _realResetCircuitBreaker).toBe("function");
   });
 });
