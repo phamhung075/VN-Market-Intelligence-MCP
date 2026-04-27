@@ -18,8 +18,8 @@
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { writeFileSync, readFileSync, existsSync } from "fs";
-import { resolve } from "path";
+import { writeFileSync, readFileSync, existsSync, mkdirSync } from "fs";
+import { resolve, dirname } from "path";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types & Constants
@@ -363,7 +363,8 @@ export function registerAgentMemoryUpdateTools(server: McpServer): void {
           }
         }
 
-        // Write to file
+        // Ensure parent directory exists before writing
+        mkdirSync(dirname(filePath), { recursive: true });
         writeFileSync(filePath, fileContent, "utf-8");
 
         return {
