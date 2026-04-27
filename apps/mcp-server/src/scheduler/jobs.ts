@@ -49,6 +49,7 @@ import { runVpsProxyWatchdog } from './vpsProxyWatchdogJob.js'
 import { runBctcOverdueCheck } from './financial-reports/bctcOverdueCheckJob.js'
 import { runBctcReparseJob } from './financial-reports/bctcReparseJob.js'
 import { runBctcQueueEnricherJob } from './financial-reports/bctcQueueEnricherJob.js'
+import { runBctcPdfPullJob } from './financial-reports/bctcPdfPullJob.js'
 import { runAskQueueCheck } from './system/askQueueCheckJob.js'
 import { runCronHealthAlert } from './alerts/cronHealthAlertJob.js'
 import { runEvidenceAccumulatorJob } from './news-analysis/evidenceAccumulatorJob.js'
@@ -100,6 +101,8 @@ export const CRONS = {
   bctcReparseJob:         Bun.env.CRON_BCTC_REPARSE_JOB           ?? '30 9 * * *',
   /** BCTC queue enricher: every 15 min (task 1287) */
   bctcQueueEnricher:      Bun.env.CRON_BCTC_QUEUE_ENRICHER        ?? '*/15 * * * *',
+  /** BCTC PDF pull: every 30 min — MCP downloads PDFs from VPS cache (feat/bctc-pull-pdf) */
+  bctcPdfPull:            Bun.env.CRON_BCTC_PDF_PULL               ?? '*/30 * * * *',
   /** /ask queue check: every 12 min — signal 07-qa-responder when pending (task 1074) */
   askQueueCheck:          Bun.env.CRON_ASK_QUEUE_CHECK             ?? '*/12 * * * *',
   /** SQLite WAL checkpoint: every 30min FULL (live hours) + TRUNCATE+backup at 03-05 UTC (task 1329a) */
@@ -457,6 +460,16 @@ export function startScheduler() {
     await recordJobRun(getDb(), 'bctcQueueEnricherJob', async () => {
       const result = await runBctcQueueEnricherJob()
       return { rowsWritten: result.urlsPopulated }
+    })
+  }, { timezone: 'Asia/Ho_Chi_Minh' })
+
+  // Every 30 min — BCTC PDF pull job (feat/bctc-pull-pdf)
+  // Downloads PDFs from VPS cache for bctc_vps_queue items with VPS source_url.
+  // Requires VPS_PUSH_API_KEY env var.
+  cron.schedule(CRONS.bctcPdfPull, async () => {
+    await recordJobRun(getDb(), 'bctcPdfPullJob', async () => {
+      const result = await runBctcPdfPullJob()
+      return { rowsWritten: result.downloaded }
     })
   }, { timezone: 'Asia/Ho_Chi_Minh' })
 

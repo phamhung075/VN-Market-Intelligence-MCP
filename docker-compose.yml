@@ -48,6 +48,9 @@ services:
       # via Playwright (Python subprocess). Returns JSON: {results:[{url,source,confidence}], error}.
       # Endpoint: GET /proxy/bctc-discover/:ticker?year=YYYY&quarter=Q
       - BCTC_DISCOVER_URL=http://125.212.251.27:8765/proxy/bctc-discover
+      # VPS PDF pull endpoint — authenticated download of cached PDFs.
+      # Endpoint: GET /bctc-files/:code/:filename  (X-API-Key header required).
+      # VPS_PUSH_API_KEY is read from .env via env_file below — do NOT duplicate value here.
     env_file:
       - .env
     restart: unless-stopped
