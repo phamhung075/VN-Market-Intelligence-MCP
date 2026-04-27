@@ -1,23 +1,19 @@
 #!/bin/bash
-# BCTC PDF Proxy — auto-deployed
-# Pulls fetch queue from MCP, downloads PDFs from SSC/HOSE/HNX/UPCOM,
-# pushes each to MCP.  Same auth pattern as fetch-prices.sh.
+set -euo pipefail
 
-API_URL="__MCP_BASE__/api/push-bctc-pdf"
-QUEUE_URL="__MCP_BASE__/api/bctc-fetch-queue"
-SKIP_URL="__MCP_BASE__/api/bctc-skip"
-API_KEY="__API_KEY__"
+API_URL="https://zenmidi.com/api/push-bctc-pdf"
+QUEUE_URL="https://zenmidi.com/api/bctc-fetch-queue?skip_enrichment=true"
+API_KEY="38955a0a253435cdaa44f5a705ad925d1ec756585a66fe5494dcd867b6d34197"
 LOG="/var/log/vn-bctc-fetch.log"
-MAX_PDF_BYTES=52428800   # 50 MB
+MAX_PDF_BYTES=52428800
 
-# Log rotation
 LOG_SIZE=$(stat -c%s "$LOG" 2>/dev/null || echo 0)
 if [ "$LOG_SIZE" -gt 10485760 ]; then mv "$LOG" "$LOG.old"; fi
 
-echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) === BCTC START ===" >> "$LOG"
+echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) === BCTC FETCH START ===" >> "$LOG"
 
 # Step 1: Pull queue
-QUEUE=$(curl -s --connect-timeout 10 --max-time 15 \
+QUEUE=$(curl -s --connect-timeout 30 --max-time 120 \
   "$QUEUE_URL" \
   -H "X-API-Key: $API_KEY" \
   -H "User-Agent: VN-Market-VPS-Proxy/1.0")
@@ -27,80 +23,126 @@ if [ -z "$QUEUE" ]; then
   exit 1
 fi
 
-TOTAL=$(echo "$QUEUE" | jq '.total // 0' 2>/dev/null)
-# Guard: if jq parse fails or returns empty/non-numeric, treat as 0
-if ! echo "$TOTAL" | grep -qE '^[0-9]+$'; then
-  echo "$(date -u) WARN: malformed JSON from MCP (TOTAL='$TOTAL') — skipping" >> "$LOG"
-  exit 0
-fi
+TOTAL=$(echo "$QUEUE" | jq -r '.total // "null"')
 echo "$(date -u) Queue: $TOTAL items pending" >> "$LOG"
 
-if [ "$TOTAL" = "0" ]; then
-  echo "$(date -u) Nothing to fetch — exit" >> "$LOG"
+if [ "$TOTAL" = "0" ] || [ "$TOTAL" = "null" ] || [ -z "$TOTAL" ]; then
+  echo "$(date -u) Nothing to fetch -- exit" >> "$LOG"
   exit 0
 fi
 
 # Step 2: Process each queue item
-echo "$QUEUE" | jq -c '.queue[]? // empty' 2>/dev/null | while read -r ITEM; do
-  CODE=$(echo "$ITEM"    | jq -r '.action_code')
-  YEAR=$(echo "$ITEM"    | jq -r '.period_year')
-  QTR=$(echo "$ITEM"     | jq -r '.period_quarter')
-  HINTS=$(echo "$ITEM"   | jq -r '.source_hints[]' 2>/dev/null)
+echo "$QUEUE" | jq -c '.queue[]' | while IFS= read -r ITEM; do
+  CODE=$(echo "$ITEM" | jq -r '.action_code')
+  YEAR=$(echo "$ITEM" | jq -r '.period_year')
+  QTR=$(echo "$ITEM"  | jq -r '.period_quarter')
 
-  TMP_PDF=$(mktemp /tmp/bctc_XXXXXX.pdf)
-  FETCHED=0
-  FETCH_URL=""
+  echo "$(date -u) $CODE $QTR/$YEAR: running discovery..." >> "$LOG"
 
-  # Try each hint URL in order
-  for HINT_URL in $HINTS; do
-    HTTP_CODE=$(curl -s -o "$TMP_PDF" -w "%{http_code}" \
-      --connect-timeout 15 --max-time 120 \
-      --max-filesize "$MAX_PDF_BYTES" \
-      -L \
-      -H "User-Agent: VN-Market-Intelligence/1.0" \
-      "$HINT_URL")
+  # Use discover-bctc-urls-browser.py for smart PDF discovery
+  DISCOVERY=$(python3 /root/discover-bctc-urls-browser.py "$CODE" "$YEAR" "$QTR" 2>>"$LOG" \
+    || echo '{"results":[],"error":"discovery script error"}')
 
-    if [ "$HTTP_CODE" = "200" ]; then
-      FSIZE=$(stat -c%s "$TMP_PDF" 2>/dev/null || echo 0)
-      MIME=$(file --mime-type -b "$TMP_PDF" 2>/dev/null || echo "")
-      if [ "$FSIZE" -gt 1024 ] && echo "$MIME" | grep -q "pdf"; then
-        FETCHED=1
-        FETCH_URL="$HINT_URL"
-        echo "$(date -u) $CODE $YEAR-$QTR: downloaded ${FSIZE}B from $HINT_URL" >> "$LOG"
-        break
-      fi
-    fi
-    echo "$(date -u) $CODE $YEAR-$QTR: hint failed HTTP=$HTTP_CODE url=$HINT_URL" >> "$LOG"
-  done
+  # Extract local_path (PDF already on disk from discovery) and proxy URL
+  LOCAL_PATH=$(echo "$DISCOVERY" | python3 -c "
+import sys, json
+try:
+    d = json.load(sys.stdin)
+    results = d.get('results', [])
+    print(results[0].get('local_path', '') if results else '')
+except Exception:
+    print('')
+" 2>/dev/null || echo "")
 
-  if [ "$FETCHED" = "0" ]; then
-    echo "$(date -u) $CODE $YEAR-$QTR: all hints exhausted — skip" >> "$LOG"
-    rm -f "$TMP_PDF"
+  PDF_URL=$(echo "$DISCOVERY" | python3 -c "
+import sys, json
+try:
+    d = json.load(sys.stdin)
+    results = d.get('results', [])
+    print(results[0]['url'] if results else '')
+except Exception:
+    print('')
+" 2>/dev/null || echo "")
 
-    # Report SKIP back to MCP so attempts counter is incremented and
-    # status transitions pending → skipped (prevents infinite retry loops)
-    curl -s --connect-timeout 10 --max-time 15 \
-      -X POST "$SKIP_URL" \
-      -H "X-API-Key: $API_KEY" \
-      -H "Content-Type: application/json" \
-      -H "User-Agent: VN-Market-VPS-Proxy/1.0" \
-      -d "{\"action_code\":\"$CODE\",\"period_year\":$YEAR,\"period_quarter\":\"$QTR\",\"skip_reason\":\"all hints exhausted (404 or invalid URL)\"}" \
-      >> "$LOG" 2>&1 || true
-
+  if [ -z "$PDF_URL" ]; then
+    DISC_ERR=$(echo "$DISCOVERY" | python3 -c "
+import sys, json
+try:
+    d = json.load(sys.stdin)
+    print(d.get('error') or '')
+except Exception:
+    print('')
+" 2>/dev/null || echo "")
+    echo "$(date -u) $CODE $QTR/$YEAR: SKIP -- no PDF found (${DISC_ERR:-no error details})" >> "$LOG"
     continue
   fi
 
-  # Step 3: Push PDF to MCP
-  RESP=$(curl -s --connect-timeout 10 --max-time 30 \
-    -X POST "$API_URL" \
+  echo "$(date -u) $CODE $QTR/$YEAR: discovered PDF at $PDF_URL" >> "$LOG"
+
+  # Use local_path if available (already downloaded by discovery script)
+  # This avoids re-downloading via proxy which requires auth
+  TMP_PDF=$(mktemp /tmp/bctc_XXXXXX.pdf)
+
+  if [ -n "$LOCAL_PATH" ] && [ -f "$LOCAL_PATH" ]; then
+    echo "$(date -u) $CODE $QTR/$YEAR: using local file $LOCAL_PATH" >> "$LOG"
+    cp "$LOCAL_PATH" "$TMP_PDF"
+  else
+    echo "$(date -u) $CODE $QTR/$YEAR: downloading from $PDF_URL" >> "$LOG"
+    HTTP_CODE=$(curl -s -L -o "$TMP_PDF" -w "%{http_code}" \
+      --connect-timeout 30 --max-time 120 \
+      -H "User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/124.0.0.0 Safari/537.36" \
+      -H "Referer: https://hnx.vn/" \
+      "$PDF_URL" 2>/dev/null || echo "000")
+
+    if [ "$HTTP_CODE" != "200" ]; then
+      echo "$(date -u) $CODE $QTR/$YEAR: SKIP -- download failed HTTP=$HTTP_CODE" >> "$LOG"
+      rm -f "$TMP_PDF"
+      continue
+    fi
+  fi
+
+  PDF_SIZE=$(stat -c%s "$TMP_PDF" 2>/dev/null || echo 0)
+
+  if [ "$PDF_SIZE" -lt 1000 ]; then
+    echo "$(date -u) $CODE $QTR/$YEAR: SKIP -- PDF too small (${PDF_SIZE}B)" >> "$LOG"
+    rm -f "$TMP_PDF"
+    continue
+  fi
+
+  if [ "$PDF_SIZE" -gt "$MAX_PDF_BYTES" ]; then
+    echo "$(date -u) $CODE $QTR/$YEAR: SKIP -- PDF too large (${PDF_SIZE}B > 50MB)" >> "$LOG"
+    rm -f "$TMP_PDF"
+    continue
+  fi
+
+  if ! file "$TMP_PDF" 2>/dev/null | grep -q "PDF"; then
+    echo "$(date -u) $CODE $QTR/$YEAR: SKIP -- not a valid PDF (size=${PDF_SIZE}B)" >> "$LOG"
+    rm -f "$TMP_PDF"
+    continue
+  fi
+
+  echo "$(date -u) $CODE $QTR/$YEAR: pushing PDF (${PDF_SIZE}B)..." >> "$LOG"
+
+  PUSH_RESPONSE=$(curl -s -w "\n%{http_code}" \
+    -X POST \
     -H "X-API-Key: $API_KEY" \
-    -H "User-Agent: VN-Market-VPS-Proxy/1.0" \
     -F "action_code=$CODE" \
     -F "period_year=$YEAR" \
     -F "period_quarter=$QTR" \
-    -F "source_url=$FETCH_URL" \
-    -F "pdf=@$TMP_PDF;type=application/pdf")
+    -F "source_url=$PDF_URL" \
+    -F "pdf=@$TMP_PDF" \
+    "$API_URL" 2>&1)
 
-  echo "$(date -u) $CODE $YEAR-$QTR: push → $RESP" >> "$LOG"
+  PUSH_CODE=$(echo "$PUSH_RESPONSE" | tail -1)
+  PUSH_BODY=$(echo "$PUSH_RESPONSE" | head -1)
+
+  if [ "$PUSH_CODE" = "200" ]; then
+    echo "$(date -u) $CODE $QTR/$YEAR: SUCCESS (HTTP 200) -- $PUSH_BODY" >> "$LOG"
+  else
+    echo "$(date -u) $CODE $QTR/$YEAR: PUSH FAILED (HTTP $PUSH_CODE) -- $PUSH_BODY" >> "$LOG"
+  fi
+
   rm -f "$TMP_PDF"
 done
+
+echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) === BCTC FETCH COMPLETE ===" >> "$LOG"
