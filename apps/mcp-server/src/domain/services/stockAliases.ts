@@ -413,6 +413,8 @@ export const STOCK_CATALOG: Record<string, StockCatalogEntry> = {
     companyName: "VietJet Air",
     aliases: [
       "vietjet", "vietjet air", "vietjet aviation",
+      // Fix 1322: two-word form "Viet Jet" normalises to "viet jet" (space)
+      "viet jet", "viet jet air",
       "công ty cổ phần hàng không vietjet",
       "cong ty cp hang khong vietjet",
       "hang khong vietjet", "hàng không vietjet",

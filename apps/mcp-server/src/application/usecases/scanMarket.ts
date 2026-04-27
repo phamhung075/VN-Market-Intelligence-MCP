@@ -96,32 +96,53 @@ function getWatchlistEntries(): WatchlistItem[] {
 /**
  * Compute the average daily volume for a stock from its price history.
  *
- * Uses the last 20 rows (ordered by fetched_at DESC).
- * Returns 0 if fewer than 5 rows are available — this suppresses
- * `volume_spike` detection (detectSignals.ts line 176: `if (avgVolume > 0)`).
+ * Fix 1320: excludes today's open session from the rolling average.
+ * Uses MAX(volume) per closed calendar day (substr(fetched_at,1,10) < todayUtc),
+ * then averages the last 20 such days. This matches the pattern in server.ts
+ * (lines 677–686) that already uses a date-exclusion WHERE clause.
+ *
+ * Returns 0 if fewer than 5 closed days are available — suppresses
+ * `volume_spike` detection (detectSignals.ts: `if (avgVolume > 0)`).
+ *
+ * @param code      - Stock ticker code
+ * @param todayUtc  - ISO date string "YYYY-MM-DD" to exclude (default: today UTC).
+ *                    Injectable for deterministic tests.
  */
-function getAvgVolumeSync(code: string): number {
+export function getAvgVolumeSync(code: string, todayUtc?: string): number {
   const MIN_HISTORY_ROWS = 5;
   const HISTORY_LIMIT = 20;
 
+  const today = todayUtc ?? new Date().toISOString().split("T")[0];
+
   try {
     const db = getDb();
-    const rows = db
-      .query<{ volume: number }, [string, number]>(
-        `SELECT volume
-         FROM market_prices_history
-         WHERE code = ?
-         ORDER BY fetched_at DESC
-         LIMIT ?`,
+    const row = db
+      .query<{ avg_vol: number | null }, [string, string, number]>(
+        `SELECT AVG(day_vol) as avg_vol FROM (
+           SELECT MAX(volume) as day_vol
+           FROM market_prices_history
+           WHERE code = ? AND substr(fetched_at, 1, 10) < ?
+           GROUP BY substr(fetched_at, 1, 10)
+           ORDER BY substr(fetched_at, 1, 10) DESC
+           LIMIT ?
+         )`,
       )
-      .all(code, HISTORY_LIMIT);
+      .get(code, today, HISTORY_LIMIT);
 
-    if (rows.length < MIN_HISTORY_ROWS) {
+    // Count closed days to enforce the MIN_HISTORY_ROWS guard
+    const countRow = db
+      .query<{ cnt: number }, [string, string]>(
+        `SELECT COUNT(DISTINCT substr(fetched_at, 1, 10)) as cnt
+         FROM market_prices_history
+         WHERE code = ? AND substr(fetched_at, 1, 10) < ?`,
+      )
+      .get(code, today);
+
+    if (!countRow || countRow.cnt < MIN_HISTORY_ROWS) {
       return 0; // sparse history → suppress volume_spike
     }
 
-    const sum = rows.reduce((acc, r) => acc + (r.volume ?? 0), 0);
-    return sum / rows.length;
+    return row?.avg_vol ?? 0;
   } catch {
     return 0;
   }
