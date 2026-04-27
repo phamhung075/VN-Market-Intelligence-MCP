@@ -24,6 +24,7 @@
 - **1339b:** GREEN phase — implement PriceConfirmation catalyst correlation fields (signalTypes + signalBuilders) — APPROVED + merged 2026-04-26 (merge commit: 7b9de84c)
 - **1342b:** GREEN phase — implement DB integrity check job (runIntegrityCheck + integrityCheckJob.ts + CRONS.integrityCheck) — APPROVED + merged 2026-04-26 (merge commit: e93149fc)
 - **1343a–1343e:** BCTC PDF pipeline recovery — watchlist restore (30 tickers), HOSE PDF discovery (multi-source SSC/cafef/vietstock), VPS skip endpoint (no infinite retry), fetch-bctc.sh update, integration test (6/6 pass) — APPROVED + merged 2026-04-27
+- **1345b:** BCTC financial validation rules — validate_financial_figures() Python+TS, confidence_financial field, schema migration, Telegram bug alert, 15 new tests (12 Python + 3 TS), audit confirms VNM/VEA corruption — DONE 2026-04-27 (branch: task/1345b-bctc-financial-validation)
 
 ---
 
