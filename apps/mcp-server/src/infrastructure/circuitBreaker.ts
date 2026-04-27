@@ -16,6 +16,7 @@
  */
 
 import { logger } from "./logger.js";
+import { logCircuitBreakerTransition } from "./observability/circuitBreakerLogger.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -161,6 +162,15 @@ export class CircuitBreaker {
         resetTimeoutMs: this.config.resetTimeoutMs,
         elapsed,
       });
+      logCircuitBreakerTransition({
+        timestamp: new Date().toISOString(),
+        job: this.name,
+        state_old: "open",
+        state_new: "half-open",
+        reason: "reset_timeout_elapsed",
+        reset_timeout_ms: this.config.resetTimeoutMs,
+        metrics: { elapsed },
+      });
     }
   }
 
@@ -178,6 +188,14 @@ export class CircuitBreaker {
         logger.info("[circuitBreaker] state changed HALF_OPEN→CLOSED", {
           name: this.name,
           halfOpenMaxAttempts: this.config.halfOpenMaxAttempts,
+        });
+        logCircuitBreakerTransition({
+          timestamp: new Date().toISOString(),
+          job: this.name,
+          state_old: "half-open",
+          state_new: "closed",
+          reason: "half_open_probes_passed",
+          metrics: { halfOpenMaxAttempts: this.config.halfOpenMaxAttempts },
         });
       }
     } else {
@@ -204,6 +222,8 @@ export class CircuitBreaker {
   }
 
   private _openCircuit(): void {
+    const prevState: "closed" | "half-open" =
+      this._state === "half-open" ? "half-open" : "closed";
     this._state = "open";
     this._openedAt = new Date();
     this._halfOpenSuccesses = 0;
@@ -211,6 +231,19 @@ export class CircuitBreaker {
       name: this.name,
       failureThreshold: this.config.failureThreshold,
       consecutiveFailures: this._consecutiveFailures,
+    });
+    logCircuitBreakerTransition({
+      timestamp: this._openedAt.toISOString(),
+      job: this.name,
+      state_old: prevState,
+      state_new: "open",
+      reason: "error_threshold_exceeded",
+      error_count: this._consecutiveFailures,
+      reset_timeout_ms: this.config.resetTimeoutMs,
+      metrics: {
+        failureThreshold: this.config.failureThreshold,
+        totalFailures: this._failures,
+      },
     });
   }
 }
