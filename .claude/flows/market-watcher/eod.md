@@ -11,6 +11,7 @@ Ledger entries in `docs/analysis-briefs/{TICKER}.md` | MARKET EOD summary
 **A. Ledger** — per ticker, if `docs/analysis-briefs/{TICKER}.md` does not exist → create it first:
 ```markdown
 # {TICKER} — Analysis Ledger {YEAR}
+**Sector**: {domain} | **Exchange**: {exchange}
 
 ## [Report Analyzer] Fundamentals & Valuation
 

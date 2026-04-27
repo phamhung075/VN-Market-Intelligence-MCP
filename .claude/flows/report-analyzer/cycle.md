@@ -36,6 +36,7 @@ Metrics: Revenue, Net Income, EPS, ROE, Debt/Equity, Operating Margin
 If `docs/analysis-briefs/{TICKER}.md` does not exist → create it first:
 ```markdown
 # {TICKER} — Analysis Ledger {YEAR}
+**Sector**: {domain} | **Exchange**: {exchange}
 
 ## [Report Analyzer] Fundamentals & Valuation
 

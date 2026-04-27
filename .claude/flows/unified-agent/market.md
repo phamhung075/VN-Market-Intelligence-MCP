@@ -50,6 +50,7 @@ On trigger: full analysis → recalculate conviction (+0.1 boost) →
 If `docs/analysis-briefs/{TICKER}.md` does not exist → create it first:
 ```markdown
 # {TICKER} — Analysis Ledger {YEAR}
+**Sector**: {domain} | **Exchange**: {exchange}
 
 ## [Report Analyzer] Fundamentals & Valuation
 

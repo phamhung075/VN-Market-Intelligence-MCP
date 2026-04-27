@@ -46,6 +46,7 @@ Crisis → `post_agent_signal(type="crisis_velocity", severity=...)`
 Per ticker `get_watchlist()` → if `docs/analysis-briefs/{TICKER}.md` does not exist → create it first:
 ```markdown
 # {TICKER} — Analysis Ledger {YEAR}
+**Sector**: {domain} | **Exchange**: {exchange}
 
 ## [Report Analyzer] Fundamentals & Valuation
 

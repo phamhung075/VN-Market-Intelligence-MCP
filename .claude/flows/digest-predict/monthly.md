@@ -29,6 +29,7 @@ conviction_score = (news_sentiment_avg * 0.20) + (fundamental_score * 0.35) +
 **3. Ledger entry** — if `docs/analysis-briefs/{TICKER}.md` does not exist → create it first:
 ```markdown
 # {TICKER} — Analysis Ledger {YEAR}
+**Sector**: {domain} | **Exchange**: {exchange}
 
 ## [Report Analyzer] Fundamentals & Valuation
 
