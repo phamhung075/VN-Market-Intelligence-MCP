@@ -112,7 +112,7 @@ export function getAvgVolumeSync(code: string, todayUtc?: string): number {
   const MIN_HISTORY_ROWS = 5;
   const HISTORY_LIMIT = 20;
 
-  const today = todayUtc ?? new Date().toISOString().split("T")[0];
+  const today = todayUtc ?? new Date().toISOString().substring(0, 10);
 
   try {
     const db = getDb();
