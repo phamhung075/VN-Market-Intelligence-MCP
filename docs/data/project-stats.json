@@ -1,13 +1,13 @@
 {
   "_maintained_by": "PM / system-auditor",
   "_trigger": "sprint start/end, tool/cron count change, baseline test update",
-  "lastUpdated": "2026-04-27T18:45:00Z",
-  "currentSprint": 1351,
-  "previousSprint": { "number": 1350, "status": "DONE", "progressTasks": "Sprint 1350: Test baseline restoration — 73 failing tests fixed. Baseline: 7568 pass / 0 fail." },
-  "sprintGoal": "Sprint 1351 — Scheduler test coverage phase 1: vpsProxyWatchdogJob + weatherCheckJob gap tests",
-  "testBaseline": 7598,
-  "testBaselineTarget": 7598,
-  "testBaselinePass": 7598,
+  "lastUpdated": "2026-04-27T23:59:00Z",
+  "currentSprint": 1352,
+  "previousSprint": { "number": 1351, "status": "DONE", "progressTasks": "Sprint 1351: Scheduler test coverage phase 1 — vpsProxyWatchdogJob + weatherCheckJob gap tests. +16 new tests. Baseline: 7598 pass / 0 fail." },
+  "sprintGoal": "Sprint 1352 — Scheduler job wrappers: macro marketscan + foreign flow fetcher test coverage",
+  "testBaseline": 7652,
+  "testBaselineTarget": 7652,
+  "testBaselinePass": 7652,
   "testBaselineFail": 0,
   "testFailures": 0,
   "toolCount": 108,
@@ -20,6 +20,6 @@
   "briefingFilesCreated": 30,
   "briefingArchiveQI": 0,
   "briefingArchiveQII": 0,
-  "lastFixApplied": "Sprint 1351 COMPLETE: scheduler test coverage phase 1 — 1351b (vpsProxyWatchdogJob: 8 gap tests) + 1351c (weatherCheckJob: 8 gap tests). +16 new tests. New baseline: 7598 pass / 0 new fail — merged 2026-04-27",
-  "currentSprintNotes": "2026-04-27 SPRINT 1351 COMPLETE: 16 new scheduler gap tests (8+8). isTyphoonSeason boundaries, concurrency guard, outer error catch, zero-signal path, reservoir averaging (weatherCheckJob); Reuters/TE staleness, restored path, notify-throws, _resetWatchdogStaleFlag (vpsProxyWatchdogJob). Baseline: 7598 pass / 0 new fail."
+  "lastFixApplied": "Sprint 1352 COMPLETE: scheduler job wrapper tests — 1352a (macro marketscan job wrappers) + 1352b (foreign flow fetcher job wrapper). New baseline: 7652 pass / 0 new fail — merged 2026-04-27",
+  "currentSprintNotes": "2026-04-27 SPRINT 1352 COMPLETE: scheduler job wrapper test coverage for macro marketscan + foreign flow fetcher. BCTC PDF extraction pipeline fixes + OCR health logging. Baseline: 7652 pass / 0 new fail."
 }
