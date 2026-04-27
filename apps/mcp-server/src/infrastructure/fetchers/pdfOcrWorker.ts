@@ -12,6 +12,12 @@
  *   - FR-3: Pages < 10 chars are silently skipped — no row inserted
  *   - FR-3: Completeness threshold changed to 50%/3 (was 80%/5)
  *   - FR-4: isOcrAvailable() result cached at module level
+ *
+ * Task 1352c fixes applied:
+ *   - Log OCR availability (tesseract + pdftoppm) at first isOcrAvailable() call
+ *   - Per-page error logging with [ocr] page N failed: <reason>
+ *   - Low-char page logging with [ocr] page N low-char: N chars
+ *   - ocrStats returned from extractAndStorePdfPages: pagesProcessed, pagesSkipped, pagesLowChar, avgConfidence
  */
 
 import { execFile, execSync, spawn } from "node:child_process";
@@ -30,14 +36,24 @@ let _ocrAvailableCache: boolean | null = null;
 
 export function isOcrAvailable(): boolean {
   if (_ocrAvailableCache !== null) return _ocrAvailableCache;
+  let pdftoppmAvailable = false;
+  let tesseractAvailable = false;
   try {
     // Synchronous availability check — cached after first call
     execSync("which pdftoppm", { stdio: "ignore" });
+    pdftoppmAvailable = true;
     execSync("which tesseract", { stdio: "ignore" });
+    tesseractAvailable = true;
     _ocrAvailableCache = true;
   } catch {
     _ocrAvailableCache = false;
   }
+  // Task 1352c: log availability at startup so operators can diagnose missing tools
+  logger.info("[ocr] tesseract available: " + String(tesseractAvailable) + ", pdftoppm: " + String(pdftoppmAvailable), {
+    tesseract: tesseractAvailable,
+    pdftoppm: pdftoppmAvailable,
+    ocrAvailable: _ocrAvailableCache,
+  });
   return _ocrAvailableCache;
 }
 
@@ -128,13 +144,22 @@ async function ocrOnePage(tmpPdf: string, page: number, dpi: number = 200): Prom
  *   - No duplicate insert in catch block
  *
  * Task 1290 / FR-1: Added optional dpi parameter for high-DPI retry on low-confidence extracts.
+ * Task 1352c: Returns ocrStats with pagesProcessed, pagesSkipped, pagesLowChar, avgConfidence.
+ *             Per-page errors logged with [ocr] page N failed. Low-char pages logged with [ocr] page N low-char.
  */
+export type OcrStats = {
+  pagesProcessed: number;
+  pagesSkipped: number;
+  pagesLowChar: number;
+  avgConfidence: number;
+};
+
 export async function extractAndStorePdfPages(
   pdfPath: string,
   filename: string,
   actionCode?: string,
   dpi: number = 200,
-): Promise<{ pages: number; totalChars: number }> {
+): Promise<{ pages: number; totalChars: number; ocrStats: OcrStats }> {
   const db = getDb();
 
   // Already fully extracted? Check page count matches total
@@ -151,7 +176,7 @@ export async function extractAndStorePdfPages(
     const threshold = Math.max(expectedPages * 0.5, 3);
     if (expectedPages === 0 || existing.c >= threshold) {
       logger.info("[pdfOcr] already extracted", { filename, pages: existing.c, expected: expectedPages });
-      return { pages: existing.c, totalChars: 0 };
+      return { pages: existing.c, totalChars: 0, ocrStats: { pagesProcessed: existing.c, pagesSkipped: 0, pagesLowChar: 0, avgConfidence: 0 } };
     }
     // Incomplete extraction — delete partial and re-extract
     logger.info("[pdfOcr] incomplete extraction detected, re-extracting", { filename, have: existing.c, expected: expectedPages });
@@ -160,7 +185,7 @@ export async function extractAndStorePdfPages(
 
   if (!isOcrAvailable()) {
     logger.warn("[pdfOcr] tesseract/pdftoppm not available");
-    return { pages: 0, totalChars: 0 };
+    return { pages: 0, totalChars: 0, ocrStats: { pagesProcessed: 0, pagesSkipped: 0, pagesLowChar: 0, avgConfidence: 0 } };
   }
 
   // Get page count (execFile is async)
@@ -186,35 +211,63 @@ export async function extractAndStorePdfPages(
 
   let extractedPages = 0;
   let totalChars = 0;
+  // Task 1352c: ocrStats tracking
+  let pagesSkipped = 0;
+  let pagesLowChar = 0;
+  const pageConfidences: number[] = [];
   const maxPages = Math.min(totalPages, 80);
 
   for (let page = 1; page <= maxPages; page++) {
+    let pageText = "";
+    let pageError: string | null = null;
     try {
-      const pageText = await ocrOnePage(tmpPdf, page, dpi);
-      // Task 292 / FR-3: only insert rows for pages with >= 10 chars
-      // Pages with < 10 chars are silently skipped — no row inserted.
-      if (pageText.length >= 10) {
-        const confidence = pageText.length > 50 ? 0.8 : 0.5;
-        insert.run(filename, page, pageText, confidence, ac);
-        extractedPages++;
-        totalChars += pageText.length;
-      }
-      // else: sparse or blank page — skip silently
+      pageText = await ocrOnePage(tmpPdf, page, dpi);
+    } catch (err) {
+      pageError = err instanceof Error ? err.message : String(err);
+    }
 
-      if (page % 10 === 0) {
-        logger.info("[pdfOcr] progress", { filename, page, of: maxPages, chars: totalChars });
-      }
-    } catch {
-      // Error on a page: skip silently. Do NOT insert an empty row.
+    if (pageError !== null) {
+      // Task 1352c: per-page error logging
+      logger.warn("[ocr] page " + String(page) + " failed: " + pageError, { filename, page, reason: pageError });
+      pagesSkipped++;
+    } else if (pageText.length === 0) {
+      // Empty result from OCR (blank page or timeout) — count as skipped
+      pagesSkipped++;
+    } else if (pageText.length < 10) {
+      // Task 1352c: low-char page logging (< 10 chars, not worth inserting)
+      logger.warn("[ocr] page " + String(page) + " low-char: " + String(pageText.length) + " chars, confidence: 0", {
+        filename,
+        page,
+        chars: pageText.length,
+        confidence: 0,
+      });
+      pagesLowChar++;
+    } else {
+      // Task 292 / FR-3: only insert rows for pages with >= 10 chars
+      const confidence = pageText.length > 50 ? 0.8 : 0.5;
+      insert.run(filename, page, pageText, confidence, ac);
+      extractedPages++;
+      totalChars += pageText.length;
+      pageConfidences.push(confidence);
+    }
+
+    if (page % 10 === 0) {
+      logger.info("[pdfOcr] progress", { filename, page, of: maxPages, chars: totalChars });
     }
 
     // Yield to the event loop between pages to keep server responsive
     await new Promise(r => setTimeout(r, 2000));
   }
 
+  const avgConfidence = pageConfidences.length === 0
+    ? 0
+    : pageConfidences.reduce((a, b) => a + b, 0) / pageConfidences.length;
+
+  const ocrStats: OcrStats = { pagesProcessed: extractedPages, pagesSkipped, pagesLowChar, avgConfidence };
+
   try { rmSync(tmpDir, { recursive: true }); } catch { /* ignore */ }
-  logger.info("[pdfOcr] done", { filename, extractedPages, totalChars });
-  return { pages: extractedPages, totalChars };
+  logger.info("[pdfOcr] done", { filename, extractedPages, totalChars, ocrStats });
+  return { pages: extractedPages, totalChars, ocrStats };
 }
 
 /**
