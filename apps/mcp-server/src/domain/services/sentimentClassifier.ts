@@ -162,6 +162,10 @@ const VN_BEARISH: SentimentKeyword[] = [
   { word: "vỡ nợ", weight: 2 },
   { word: "phá sản", weight: 2 },
   { word: "thua lỗ", weight: 2 },
+  // Fix 1321: standalone loss — "VIX Q1 lợi nhuận lỗ 63% giảm" → bearish
+  { word: "lỗ", weight: 2 },
+  // Fix 1321: explicit negative profit — stronger signal
+  { word: "lợi nhuận âm", weight: 3 },
   { word: "giảm", weight: 1 },
   // Task 1241: Geopolitical escalation — must classify BEARISH, not default to BULLISH/neutral
   { word: "phong tỏa thương mại", weight: 3 },
@@ -511,7 +515,7 @@ export function classifySentiment(text: string): SentimentResult {
     return { direction: "neutral", confidence: 0, keywords: [] };
   }
 
-  const lower = text.toLowerCase();
+  const lower = text.normalize("NFC").toLowerCase();
   let bullishScore = 0;
   let bearishScore = 0;
   const triggeredKeywords: string[] = [];
