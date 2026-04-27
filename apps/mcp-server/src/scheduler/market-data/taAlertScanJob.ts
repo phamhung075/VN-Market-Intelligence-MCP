@@ -34,6 +34,7 @@ import { getDb } from "../../infrastructure/db/schema.js";
 import { logger } from "../../infrastructure/logger.js";
 import { computeTAIndicators } from "../../infrastructure/microservices/clients.js";
 import type { ComputeTAResponse } from "../../infrastructure/microservices/clients.js";
+import { recordJobMetrics } from "../../infrastructure/observability/jobMetrics.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -113,6 +114,9 @@ export async function runTaAlertScan(deps?: TaAlertScanDeps): Promise<TaAlertSca
   const computeFn = deps?.computeFn ?? ((code: string) => computeTAIndicators({ code }));
   const nowFn = deps?.nowFn ?? (() => new Date());
 
+  const cycleStart = Date.now();
+  let cycleErrors = 0;
+
   // 1. Load watchlist
   let watchlist: WatchlistRow[];
   try {
@@ -121,6 +125,7 @@ export async function runTaAlertScan(deps?: TaAlertScanDeps): Promise<TaAlertSca
     logger.warn("[taAlertScan] failed to read watchlist", {
       error: err instanceof Error ? err.message : String(err),
     });
+    recordJobMetrics("taAlertScan", Date.now() - cycleStart, 1, 0);
     return { scanned: 0, fired: 0 };
   }
 
@@ -197,9 +202,11 @@ export async function runTaAlertScan(deps?: TaAlertScanDeps): Promise<TaAlertSca
       logger.warn(`[taAlertScan] error ticker=${code}`, {
         error: err instanceof Error ? err.message : String(err),
       });
+      cycleErrors++;
       // scanned already incremented; continue to next ticker
     }
   }
 
+  recordJobMetrics("taAlertScan", Date.now() - cycleStart, cycleErrors, fired);
   return { scanned, fired };
 }

@@ -17,6 +17,7 @@ import { freshnessSlaChecker, detectStartupStaleData } from "../../domain/servic
 import { sendTelegramWork } from "../../infrastructure/notifiers/telegram.js";
 import type { Database } from "bun:sqlite";
 import { logger } from "../../infrastructure/logger.js";
+import { recordJobMetrics } from "../../infrastructure/observability/jobMetrics.js";
 
 
 /**
@@ -44,11 +45,15 @@ async function telegramCallback(
 export async function macroIndicatorRefreshJob(): Promise<void> {
   const db = getDb();
   const startTime = Date.now();
+  let jobErrorCount = 0;
+  let jobSuccessCount = 0;
 
   try {
     // Call macro-service microservice
     const snapshot = await getMacroSnapshot();
     const durationMs = Date.now() - startTime;
+
+    jobSuccessCount = 1;
 
     // Log result to WORK channel
     const msg = `Macro refresh OK — VN-Index: ${snapshot.vnIndex.toFixed(0)}, Brent: $${snapshot.brentPrice.toFixed(2)}, Gold: $${snapshot.goldPrice.toFixed(0)} [${durationMs}ms]`;
@@ -62,11 +67,14 @@ export async function macroIndicatorRefreshJob(): Promise<void> {
     }
   } catch (err) {
     const durationMs = Date.now() - startTime;
+    jobErrorCount = 1;
     const errorMsg = err instanceof Error ? err.message : String(err);
     logger.error(`[macro-refresh-job] fatal error: ${errorMsg}`);
     await sendTelegramWork(
       `Macro refresh FAILED [${durationMs}ms] — ${errorMsg}`,
     );
+  } finally {
+    recordJobMetrics("macroRefresh", Date.now() - startTime, jobErrorCount, jobSuccessCount);
   }
 }
 

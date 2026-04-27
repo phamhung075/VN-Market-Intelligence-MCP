@@ -35,6 +35,7 @@ import { computeTAIndicators } from "../../infrastructure/microservices/clients.
 import type { ComputeTAResponse } from "../../infrastructure/microservices/clients.js";
 import { getDb } from "../../infrastructure/db/schema.js";
 import { logger } from "../../infrastructure/logger.js";
+import { recordJobMetrics } from "../../infrastructure/observability/jobMetrics.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -114,6 +115,9 @@ export async function runBbAlertScan(deps?: BbAlertScanDeps): Promise<BbAlertSca
   const computeFn = deps?.computeFn ?? ((code: string) => computeTAIndicators({ code }));
   const nowFn = deps?.nowFn ?? (() => new Date());
 
+  const cycleStart = Date.now();
+  let cycleErrors = 0;
+
   // 1. Load watchlist
   let watchlist: WatchlistRow[];
   try {
@@ -122,6 +126,7 @@ export async function runBbAlertScan(deps?: BbAlertScanDeps): Promise<BbAlertSca
     logger.warn("[bbAlertScan] failed to read watchlist", {
       error: err instanceof Error ? err.message : String(err),
     });
+    recordJobMetrics("bbAlertScan", Date.now() - cycleStart, 1, 0);
     return { scanned: 0, fired: 0 };
   }
 
@@ -212,9 +217,11 @@ export async function runBbAlertScan(deps?: BbAlertScanDeps): Promise<BbAlertSca
       logger.warn(`[bbAlertScan] error ticker=${code}`, {
         error: err instanceof Error ? err.message : String(err),
       });
+      cycleErrors++;
       // scanned already incremented; continue to next ticker
     }
   }
 
+  recordJobMetrics("bbAlertScan", Date.now() - cycleStart, cycleErrors, fired);
   return { scanned, fired };
 }
