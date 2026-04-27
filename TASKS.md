@@ -32,6 +32,7 @@
 - **1349a:** Remove dead scheduler config block from mcp.config.json — APPROVED + merged 2026-04-27
 - **1349b:** Circuit breaker state logging + metrics (circuitBreakerLogger.ts) — 11/11 tests pass, QA TS fix applied (noUncheckedIndexedAccess non-null assertions) — APPROVED + merged 2026-04-27
 - **1349d:** BCTC validation edge cases — 7 new tests (VAL-07–VAL-10), hard ratio>5.0 threshold, QA TS fix applied — APPROVED + merged 2026-04-27
+- **1349e:** Job cycle timings + ops metrics (jobMetrics.ts) — 10/10 tests pass, 100% coverage, wired into taAlertScanJob/bbAlertScanJob/macroIndicatorRefreshJob — APPROVED + merged 2026-04-27
 
 ---
 
@@ -69,5 +70,6 @@
 | 1349a | Remove dead scheduler config block from mcp.config.json | main 2026-04-27 | reports/TASK_REPORT_1349a.md |
 | 1349b | Circuit breaker state logging + metrics (circuitBreakerLogger.ts) | main 2026-04-27 | reports/TASK_REPORT_1349b.md |
 | 1349d | BCTC validation edge cases (VAL-07–VAL-10) + QA TS fix | main 2026-04-27 | reports/TASK_REPORT_1349d.md |
+| 1349e | Job cycle timings + ops metrics (jobMetrics.ts) | main 2026-04-27 | reports/TASK_REPORT_1349e.md |
 
 ---
