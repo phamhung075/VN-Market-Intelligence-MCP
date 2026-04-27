@@ -25,27 +25,7 @@
 - **1342b:** GREEN phase — implement DB integrity check job (runIntegrityCheck + integrityCheckJob.ts + CRONS.integrityCheck) — APPROVED + merged 2026-04-26 (merge commit: e93149fc)
 - **1343a–1343e:** BCTC PDF pipeline recovery — watchlist restore (30 tickers), HOSE PDF discovery (multi-source SSC/cafef/vietstock), VPS skip endpoint (no infinite retry), fetch-bctc.sh update, integration test (6/6 pass) — APPROVED + merged 2026-04-27
 - **1344a–1344c:** Sprint 1344 — Fix 9 pre-existing test failures (6536→7371 pass, 213→0 fail) — ALL MERGED 2026-04-27
-- **1345b:** BCTC financial validation rules — validate_financial_figures() Python+TS, confidence_financial field, schema migration, Telegram bug alert, 15 new tests (12 Python + 3 TS), audit confirms VNM/VEA corruption — APPROVED + merged 2026-04-27
-
----
-
-## Active Sprint: 1345 (News + Analysis Pipeline Hardening + Data Quality)
-
-| Task ID | Title | Status | Owner | Priority | Notes |
-|---------|-------|--------|-------|----------|-------|
-| BA-1345 | Requirement Spec for Sprint 1345 Vision | pending | BA | HIGH | News pipeline (Reuters/TE), BCTC extraction audit, Polymarket fix, VN-Index cascade |
-
----
-
-## Backlog
-
-| Task ID | Title | Status | Owner | Priority | Notes |
-|---------|-------|--------|-------|----------|-------|
-| 1345a | Reuters + TE fallback sources | backlog | Developer | HIGH | Infrastructure hardening, ≥2 fallback sources required |
-| 1345b | BCTC extraction confidence audit | backlog | Developer | HIGH | Validation quality, confidence scoring, low-conf skip alerts |
-| 1345c | Polymarket staleness fix + fetch schedule | backlog | Ops | MEDIUM | 26-day stale data, ≥2x daily refresh |
-| 1345d | VN-Index cascade breadth fix | backlog | Developer | MEDIUM | Broadcast to MARKET channel, not just VIC |
-| 1345e | Integration test + dashboard validation | backlog | QA | MEDIUM | All 7371 baseline tests pass, zero regressions |
+- **1345a–1345e:** Sprint 1345 — News + Analysis Pipeline Hardening + Data Quality — Reuters/TE VPS systemd + newsapi fallback, BCTC financial validation (VNM/VEA), Polymarket 24h staleness guard, VN-Index cascade MARKET broadcast, integration pipeline + TSC fix (B1-B4) — APPROVED + merged 2026-04-27 (7355 pass / 73 pre-existing fail / 0 regression)
 
 ---
 
