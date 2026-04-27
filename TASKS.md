@@ -80,5 +80,6 @@
 | 1350a | Fix 73 failing tests: mock.module leak + watchdog reader injection + stale sprint assertions | main 2026-04-27 | reports/TASK_REPORT_1350a.md |
 | 1351b | Gap-fill tests for vpsProxyWatchdogJob: Reuters/TE staleness + restored + notify-throws + _resetWatchdogStaleFlag | main 2026-04-27 | reports/TASK_REPORT_1351b.md |
 | 1351c | Gap-fill tests for weatherCheckJob: isTyphoonSeason boundaries + concurrency guard + error catch + zero-signal + reservoir averaging | main 2026-04-27 | reports/TASK_REPORT_1351c.md |
+| 1353b | priceUpdateWatchdogJob _resetSshCooldown export + 8 gap tests (SSH cooldown, null readPrice, notify failures, boundary hours) | main 2026-04-27 | reports/TASK_REPORT_1353b.md |
 
 ---
