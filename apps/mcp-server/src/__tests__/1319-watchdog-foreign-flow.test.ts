@@ -15,9 +15,11 @@ const OFF_NOW    = new Date("2026-04-23T15:00:00Z");
 
 /** Helpers: inject fresh reader for all other sources */
 const freshReaders = (now: Date) => ({
-  readPrice: () => new Date(now.getTime() - 5 * 60_000),  // 5 min ago
-  readNews:  () => new Date(now.getTime() - 5 * 60_000),
-  readOhlcv: () => new Date(now.getTime() - 5 * 60_000),
+  readPrice:   () => new Date(now.getTime() - 5 * 60_000),  // 5 min ago
+  readNews:    () => new Date(now.getTime() - 5 * 60_000),
+  readOhlcv:   () => new Date(now.getTime() - 5 * 60_000),
+  readReuters: () => new Date(now.getTime() - 5 * 60_000),  // prevent infinite staleness
+  readTe:      () => new Date(now.getTime() - 5 * 60_000),  // prevent infinite staleness
 });
 
 describe("TASK-1319 watchdog foreign_flow staleness", () => {

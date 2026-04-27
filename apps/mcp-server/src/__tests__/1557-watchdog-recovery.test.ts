@@ -14,6 +14,10 @@ const MARKET_NOW = new Date("2026-04-22T03:30:00Z");
 const FRESH = () => new Date(MARKET_NOW.getTime() - 5 * 60_000);   // 5 min ago — fresh
 const STALE = (): null => null;                                      // no data — stale
 
+// Fresh readers for Reuters/TE — prevent infinite staleness when DB has no tables
+const readReuters = FRESH;
+const readTe = FRESH;
+
 describe("TASK-1557 watchdog recovery MARKET alert", () => {
   beforeEach(() => {
     _resetWatchdogCooldown();
@@ -34,6 +38,8 @@ describe("TASK-1557 watchdog recovery MARKET alert", () => {
       readNews:  FRESH,
       readOhlcv: FRESH,
       readForeignFlow: FRESH,
+      readReuters,
+      readTe,
     });
 
     // Advance past cooldown so "ok" path runs without cooldown interference
@@ -48,6 +54,8 @@ describe("TASK-1557 watchdog recovery MARKET alert", () => {
       readNews:  FRESH,
       readOhlcv: FRESH,
       readForeignFlow: FRESH,
+      readReuters,
+      readTe,
     });
 
     expect(result).toBe("restored");
@@ -67,6 +75,8 @@ describe("TASK-1557 watchdog recovery MARKET alert", () => {
       readNews:  FRESH,
       readOhlcv: FRESH,
       readForeignFlow: FRESH,
+      readReuters,
+      readTe,
     });
 
     expect(result).toBe("ok");
@@ -87,6 +97,8 @@ describe("TASK-1557 watchdog recovery MARKET alert", () => {
       readNews:  FRESH,
       readOhlcv: FRESH,
       readForeignFlow: FRESH,
+      readReuters,
+      readTe,
     });
 
     // Reset the flag explicitly
@@ -103,6 +115,8 @@ describe("TASK-1557 watchdog recovery MARKET alert", () => {
       readNews:  FRESH,
       readOhlcv: FRESH,
       readForeignFlow: FRESH,
+      readReuters,
+      readTe,
     });
 
     expect(result).toBe("ok");

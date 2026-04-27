@@ -13,7 +13,8 @@ Bun.env["DB_PATH"] = ":memory:";
  * Related report IDs: [1116, 1117]
  */
 
-import { describe, it, expect, mock, beforeEach } from "bun:test";
+import { describe, it, expect, mock, beforeEach, afterEach } from "bun:test";
+import { initDatabase, getDb, closeDb } from "../infrastructure/db/schema.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Mocks
@@ -21,6 +22,7 @@ import { describe, it, expect, mock, beforeEach } from "bun:test";
 
 const telegramBugMessages: string[] = [];
 
+// Telegram mock stays — it's safe (no module registry contamination)
 mock.module("../infrastructure/notifiers/telegram.js", () => ({
   sendTelegramWork: (msg: string) => {
     return Promise.resolve(true);
@@ -33,86 +35,15 @@ mock.module("../infrastructure/notifiers/telegram.js", () => ({
   sendTelegram: () => Promise.resolve(true),
 }));
 
-mock.module("../infrastructure/db/schema.js", () => {
-  const { Database } = require("bun:sqlite");
-  const db = new Database(":memory:");
-  // Minimal financial_reports schema matching what storeReport() expects
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS financial_reports (
-      id TEXT PRIMARY KEY,
-      action_code TEXT NOT NULL,
-      company_name TEXT NOT NULL DEFAULT '',
-      exchange TEXT NOT NULL DEFAULT 'HOSE',
-      domain TEXT NOT NULL DEFAULT 'other',
-      period_year INTEGER NOT NULL,
-      period_quarter INTEGER,
-      period_type TEXT NOT NULL,
-      period_start TEXT,
-      period_end TEXT,
-      sort_key TEXT,
-      ssc_url TEXT,
-      pdf_path TEXT,
-      published_at TEXT,
-      parsed_at TEXT,
-      audit_status TEXT,
-      auditor TEXT,
-      extraction_confidence REAL DEFAULT 1.0,
-      net_revenue REAL,
-      gross_profit REAL,
-      operating_profit REAL,
-      ebitda REAL,
-      profit_before_tax REAL,
-      net_profit REAL,
-      eps REAL,
-      diluted_eps REAL,
-      total_assets REAL,
-      current_assets REAL,
-      cash REAL,
-      inventory REAL,
-      total_liabilities REAL,
-      short_term_debt REAL,
-      long_term_debt REAL,
-      equity_total REAL,
-      operating_cf REAL,
-      investing_cf REAL,
-      financing_cf REAL,
-      capex REAL,
-      free_cash_flow REAL,
-      gross_margin_pct REAL,
-      operating_margin_pct REAL,
-      net_margin_pct REAL,
-      roe REAL,
-      roa REAL,
-      current_ratio REAL,
-      debt_to_equity REAL,
-      net_debt_to_ebitda REAL,
-      pe REAL,
-      pb REAL,
-      balance_sheet_json TEXT,
-      income_stmt_json TEXT,
-      cash_flow_json TEXT,
-      ratios_json TEXT,
-      yoy_delta_json TEXT,
-      qoq_delta_json TEXT,
-      market_data_json TEXT,
-      embedding_text TEXT,
-      notes_raw_text TEXT,
-      validation_status TEXT DEFAULT 'pending',
-      validation_notes TEXT,
-      extraction_method TEXT DEFAULT 'ocr_pdf',
-      extraction_source_note TEXT,
-      revenue_growth_qoq REAL DEFAULT 0.0,
-      margin_trend REAL DEFAULT 0.0,
-      debt_ratio_hint REAL DEFAULT 0.0,
-      ocr_confidence REAL,
-      confidence_financial REAL
-    )
-  `);
-  return {
-    getDb: () => db,
-    initDatabase: () => Promise.resolve(),
-    closeDb: () => {},
-  };
+// Use real initDatabase() which creates all tables including financial_reports
+beforeEach(async () => {
+  telegramBugMessages.length = 0;
+  closeDb();
+  await initDatabase();
+});
+
+afterEach(() => {
+  closeDb();
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -170,10 +101,6 @@ const TEST_PERIOD: FiscalPeriod = {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("Task 1345b — BCTC Financial Validation (MCP server)", () => {
-
-  beforeEach(() => {
-    telegramBugMessages.length = 0;
-  });
 
   /**
    * Test 1: parseBctcReport stores report with validation_status='low_confidence'

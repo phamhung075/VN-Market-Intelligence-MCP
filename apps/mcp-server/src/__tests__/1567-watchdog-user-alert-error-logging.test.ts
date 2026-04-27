@@ -14,6 +14,10 @@ const MARKET_NOW = new Date("2026-04-22T03:30:00Z");
 const FRESH = () => new Date(MARKET_NOW.getTime() - 5 * 60_000);   // 5 min ago — fresh
 const STALE = (): null => null;                                      // no data — stale
 
+// Fresh readers for Reuters/TE — prevent infinite staleness when DB has no tables
+const readReuters = FRESH;
+const readTe = FRESH;
+
 describe("TASK-1567: watchdog user alert failure logging", () => {
   beforeEach(() => {
     _resetWatchdogCooldown();
@@ -35,6 +39,8 @@ describe("TASK-1567: watchdog user alert failure logging", () => {
       readNews: FRESH,
       readOhlcv: FRESH,
       readForeignFlow: FRESH,
+      readReuters,
+      readTe,
     });
 
     // Return value should still be "alert-sent" (notifyUser failure is best-effort, silently ignored)
@@ -56,6 +62,8 @@ describe("TASK-1567: watchdog user alert failure logging", () => {
       readNews: FRESH,
       readOhlcv: FRESH,
       readForeignFlow: FRESH,
+      readReuters,
+      readTe,
     });
 
     // Advance past cooldown and set stale to false (recovery)
@@ -73,6 +81,8 @@ describe("TASK-1567: watchdog user alert failure logging", () => {
       readNews: FRESH,
       readOhlcv: FRESH,
       readForeignFlow: FRESH,
+      readReuters,
+      readTe,
     });
 
     expect(result).toBe("restored");
