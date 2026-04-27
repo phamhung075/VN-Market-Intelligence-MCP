@@ -85,6 +85,12 @@ export interface PredictionMarketsConfig {
   relevantKeywords: string[];
   /** Explicitly curated market IDs to always include regardless of keyword match. */
   curatedMarketIds: string[];
+  /**
+   * Hours after which prediction_markets.fetched_at is considered stale.
+   * If MAX(fetched_at) is older than this, signal detection is skipped and
+   * a Telegram bug alert is sent (once per 24h). Default: 24.
+   */
+  staleThresholdHours: number;
 }
 
 export interface NewsMentionConfig {
