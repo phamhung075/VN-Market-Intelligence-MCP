@@ -82,5 +82,7 @@
 | 1351c | Gap-fill tests for weatherCheckJob: isTyphoonSeason boundaries + concurrency guard + error catch + zero-signal + reservoir averaging | main 2026-04-27 | reports/TASK_REPORT_1351c.md |
 | 1353a | imfIndicatorPollerJob DI overload (ImfPollerOptions) + 8 gap tests (empty fetch, circuit-breaker error, storeFn wiring, indicator_count, classifyFn I/O, 3x throw absorption) | main 2026-04-28 | reports/TASK_REPORT_1353a.md |
 | 1353b | priceUpdateWatchdogJob _resetSshCooldown export + 8 gap tests (SSH cooldown, null readPrice, notify failures, boundary hours) | main 2026-04-28 | reports/TASK_REPORT_1353b.md |
+| 1354a | parallelServiceDispatcherJob DispatcherDeps DI + 8 gap-fill tests (all-ok, TA fail, all-fail, weekday heartbeat, weekend no-heartbeat, empty watchlist, getDb throws) | main 2026-04-28 | reports/TASK_REPORT_1354a.md |
+| 1354b | freshnessSlaMonitorJob helper unit tests — 8 cases (SLA-1–SLA-8): getPriorBreaches, isEscalationCooldownActive, recordSlaBreach, recordSlaRecovery, markEscalationSent — in-memory DB, TS fix applied (TS2532 undefined guards) | main 2026-04-28 | — |
 
 ---
