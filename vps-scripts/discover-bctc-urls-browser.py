@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-BCTC PDF URL discovery — Task 1297 fixed version with fallback to unfiltered search.
+BCTC PDF URL discovery — fix/bctc-ssc-newsearch edition.
 
-Portal investigation findings (2026-04-24):
+Portal investigation findings (2026-04-26):
 
 HOSE (hsx.vn):
   - Old ArticleList?category=BCTC endpoint → 404 (portal migrated to React SPA).
@@ -28,27 +28,45 @@ UPCOM (hnx.vn):
   - Same ArticlesFileAttach for PDF.
   - Stocks: VEA, MCH, ... (Unlisted Market)
 
-SSC (congbothongtin.ssc.gov.vn):
-  - Non-browser UA → returns full SSR HTML (~92 KB) with x17f table.
-  - Table shows 15 most recent BCTC docs across ALL companies (no filtering).
-  - No direct PDF URLs (ADF PPR links only).
-  - Useful as fallback: confirms document existence but no PDF URL.
+SSC (congbothongtin.ssc.gov.vn) — fix/bctc-ssc-newsearch:
+  - SanGiaoDiv.xhtml → HTTP 404 (endpoint removed as of 2026-04-26). DROPPED.
+  - NewsSearch (no .xhtml extension) → HTTP 200, Oracle ADF page (~84 KB).
+    Plain HTTP GET with non-browser UA returns only JS splash (~7 KB) — not useful.
+    Playwright required to fully render the Oracle ADF app.
+  - Playwright workflow (confirmed working 2026-04-26):
+    1. GET /faces/NewsSearch → networkidle
+    2. Fill pt9:it8112::content (ticker input)
+    3. Click "Tìm kiếm" button → wait 4 s
+    4. Parse <tr role="row"> cells: col[2]=ticker, col[5]=title, col[6]=date
+    5. Click download icon (last-cell <a>) for matched row → expect_download
+    6. File served as application/octet-stream with Content-Disposition filename
+    7. Save to /root/bctc-cache/<CODE>/<filename>
+    8. Return stable URL: http://<VPS_IP>:<PORT>/bctc-files/<CODE>/<filename>
+  - VPS proxy endpoint (vps-proxy-server.js):
+    GET /bctc-files/:code/:filename → serves /root/bctc-cache/<code>/<filename>
+  - No direct stable PDF URL exists — all downloads are session-bound POST triggers.
+  - PDF confirmed for VCB Q4 2025: 18.9 MB, filename includes date+ticker+title.
 
 Usage:
     python3 discover-bctc-urls-browser.py VNM 2024 Q4
-Output (success):
+Output (HNX/UPCOM success):
     {"results": [{"url": "https://owa.hnx.vn/...", "source": "HNX", "confidence": 0.9}], "error": null}
-Output (HOSE stock — no PDF discoverable):
-    {"results": [], "error": "HOSE portal broken: PDF URLs not discoverable for VNM 2024 Q4. Use SSC queue."}
+Output (HOSE stock — downloaded via SSC NewsSearch Playwright):
+    {"results": [{"url": "http://125.212.251.27:8765/bctc-files/VCB/20260131-VCB-BCTC-Q4-2025.pdf",
+                  "source": "SSC-NewsSearch", "confidence": 0.92}], "error": null}
+Output (not found):
+    {"results": [], "error": "No PDF found for VNM 2024 Q4..."}
 """
 
 import sys
 import json
+import os
 import re
 import html as html_lib
 import urllib.request
 import urllib.parse
 import ssl
+import asyncio
 from typing import Optional, Dict, Any, List
 
 # ---------------------------------------------------------------------------
@@ -319,140 +337,269 @@ def discover_from_upcom(code: str, year: int, quarter: str) -> Optional[Dict[str
 
 
 # ---------------------------------------------------------------------------
-# SSC portal — non-browser UA, parse x17f table (listing confirmation only)
+# SSC portal — Playwright-based NewsSearch (fix/bctc-ssc-newsearch)
+#
+# SanGiaoDiv.xhtml was removed from the SSC portal → HTTP 404 as of 2026-04-26.
+# NewsSearch (congbothongtin.ssc.gov.vn/faces/NewsSearch) returns HTTP 200 and
+# works, but requires Playwright: the page is an Oracle ADF app that returns
+# only a 7 KB JS splash via plain HTTP GET.
+#
+# Workflow (confirmed 2026-04-26 on VPS):
+#   1. Playwright loads /faces/NewsSearch → networkidle (~84 KB rendered page)
+#   2. Fill #pt9:it8112::content with ticker symbol
+#   3. Click "Tìm kiếm" button → 4 s wait for ADF AJAX refresh
+#   4. Parse <tr role="row"> table: col[2]=ticker, col[5]=title, col[6]=date
+#   5. Match row against (quarter, year) using existing text-matching helpers
+#   6. Click download icon (last-cell <a>) for matched row → expect_download
+#   7. PDF served as application/octet-stream; filename in Content-Disposition
+#   8. Save to /root/bctc-cache/<CODE>/<sanitised_filename>
+#   9. Return stable proxy URL: http://<VPS_IP>:<PORT>/bctc-files/<CODE>/<filename>
+#      (served by vps-proxy-server.js GET /bctc-files/:code/:filename)
 # ---------------------------------------------------------------------------
 
 SSC_BASE = "https://congbothongtin.ssc.gov.vn"
-SSC_SEARCH = f"{SSC_BASE}/faces/NewsSearch"
-SSC_HOSE_PAGE = f"{SSC_BASE}/faces/Action/SanGiaoDiv.xhtml"
-_SSC_MIN_BYTES = 50_000
+SSC_SEARCH_URL = f"{SSC_BASE}/faces/NewsSearch"
+
+# VPS proxy URL for serving cached BCTC PDFs.
+# Can be overridden via VPS_PROXY_BCTC_BASE env var (useful for testing).
+_VPS_PROXY_BCTC_BASE = os.environ.get(
+    "VPS_PROXY_BCTC_BASE",
+    "http://125.212.251.27:8765/bctc-files",
+)
+
+# Directory on VPS where downloaded PDFs are stored.
+_BCTC_CACHE_DIR = os.environ.get("BCTC_CACHE_DIR", "/root/bctc-cache")
+
+
+def _sanitise_filename(name: str) -> str:
+    """
+    Sanitise a filename for safe use in URLs and filesystem paths.
+    Replaces spaces with hyphens, strips non-ASCII chars, collapses runs of dots.
+    """
+    # Normalise: strip leading/trailing whitespace
+    name = name.strip()
+    # Replace spaces and unsafe chars with hyphens
+    name = re.sub(r"[\s/\\:*?\"<>|]+", "-", name)
+    # Remove non-ASCII (Vietnamese diacritics in filenames from SSC)
+    name = name.encode("ascii", errors="ignore").decode("ascii")
+    # Collapse multiple hyphens/dots
+    name = re.sub(r"-{2,}", "-", name)
+    name = re.sub(r"\.{2,}", ".", name)
+    return name.strip("-")
+
+
+async def _ssc_newsearch_playwright(
+    code: str,
+    year: int,
+    quarter: str,
+    prefer_consolidated: bool = True,
+) -> Optional[Dict[str, Any]]:
+    """
+    Use Playwright to search SSC NewsSearch and download the matching BCTC PDF.
+
+    Args:
+        code: Ticker symbol (upper-case), e.g. "VCB"
+        year: Report year, e.g. 2025
+        quarter: Quarter string, e.g. "Q4"
+        prefer_consolidated: If True, prefer "Hợp nhất" (consolidated) report
+            over "Mẹ" (parent/standalone) when both appear.
+
+    Returns:
+        Result dict with stable proxy URL, or None on failure.
+    """
+    try:
+        from playwright.async_api import async_playwright
+    except ImportError:
+        print("  [SSC-NS] playwright not available — skipping", file=sys.stderr)
+        return None
+
+    cache_dir = os.path.join(_BCTC_CACHE_DIR, code.upper())
+    os.makedirs(cache_dir, exist_ok=True)
+
+    async with async_playwright() as pw:
+        browser = await pw.chromium.launch(
+            args=["--no-sandbox", "--disable-dev-shm-usage"]
+        )
+        ctx = await browser.new_context(
+            user_agent=(
+                "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+                "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+            ),
+            accept_downloads=True,
+        )
+        page = await ctx.new_page()
+
+        try:
+            print(f"  [SSC-NS] Loading {SSC_SEARCH_URL}", file=sys.stderr)
+            await page.goto(SSC_SEARCH_URL, timeout=30_000, wait_until="networkidle")
+            await page.wait_for_timeout(2_000)
+
+            # Fill the ticker input field (Oracle ADF id convention adds ::content suffix)
+            ticker_sel = "#pt9\\:it8112\\:\\:content"
+            ticker_el = await page.query_selector(ticker_sel)
+            if not ticker_el:
+                print(f"  [SSC-NS] ticker input not found (selector={ticker_sel})", file=sys.stderr)
+                return None
+            await ticker_el.fill(code.upper())
+
+            # Click "Tìm kiếm" (search) button
+            search_btn = None
+            for btn in await page.query_selector_all("button, a"):
+                txt = (await btn.text_content() or "").strip()
+                if "Tìm kiếm" in txt:
+                    search_btn = btn
+                    break
+            if not search_btn:
+                print("  [SSC-NS] search button not found", file=sys.stderr)
+                return None
+
+            await search_btn.click()
+            await page.wait_for_timeout(4_000)
+
+            # Parse result rows
+            html_content = await page.content()
+            rows_html = re.findall(
+                r'<tr[^>]*role="row"[^>]*>(.*?)</tr>', html_content, re.DOTALL
+            )
+            print(f"  [SSC-NS] rows found: {len(rows_html)}", file=sys.stderr)
+
+            if not rows_html:
+                print("  [SSC-NS] no rows returned for ticker", file=sys.stderr)
+                return None
+
+            # Find matching row: prefer quarterly over annual, consolidated over parent
+            target_idx: Optional[int] = None
+            annual_idx: Optional[int] = None
+            code_upper = code.upper()
+
+            for i, row_html in enumerate(rows_html):
+                cells = re.findall(r"<td[^>]*>(.*?)</td>", row_html, re.DOTALL)
+                if len(cells) < 6:
+                    continue
+                ticker_cell = html_lib.unescape(re.sub(r"<[^>]+>", "", cells[2])).strip().upper()
+                title = html_lib.unescape(re.sub(r"<[^>]+>", "", cells[5])).strip()
+                report_type = html_lib.unescape(re.sub(r"<[^>]+>", "", cells[3])).strip()
+
+                if ticker_cell != code_upper:
+                    continue
+
+                is_consolidated = "Hợp nhất" in report_type or "hợp nhất" in title.lower()
+
+                print(f"    row {i}: type={report_type[:40]!r} title={title[:60]!r}", file=sys.stderr)
+
+                if matches_quarter_and_year(title, quarter, year):
+                    if target_idx is None:
+                        target_idx = i
+                        print(f"  [SSC-NS] MATCH row {i}: {title[:80]}", file=sys.stderr)
+                    elif prefer_consolidated and is_consolidated:
+                        target_idx = i
+                        print(f"  [SSC-NS] BETTER MATCH (consolidated) row {i}: {title[:80]}", file=sys.stderr)
+                    if prefer_consolidated and is_consolidated:
+                        # Consolidated quarterly is the best possible match — stop
+                        break
+
+                elif quarter.upper() == "Q4" and matches_annual(title, year):
+                    if annual_idx is None:
+                        annual_idx = i
+                        print(f"  [SSC-NS] ANNUAL MATCH row {i}: {title[:80]}", file=sys.stderr)
+
+            # Fall back to annual match for Q4
+            if target_idx is None and annual_idx is not None:
+                target_idx = annual_idx
+
+            if target_idx is None:
+                print(
+                    f"  [SSC-NS] no match for {code} {year} {quarter} in {len(rows_html)} rows",
+                    file=sys.stderr,
+                )
+                return None
+
+            # Click the download icon for the matched row
+            download_icons = await page.query_selector_all("tr[role='row'] td:last-child a")
+            if target_idx >= len(download_icons):
+                print(
+                    f"  [SSC-NS] row {target_idx} has no download icon (only {len(download_icons)} icons)",
+                    file=sys.stderr,
+                )
+                return None
+
+            icon = download_icons[target_idx]
+            icon_id = await icon.get_attribute("id") or f"row_{target_idx}"
+            print(f"  [SSC-NS] clicking download icon: {icon_id}", file=sys.stderr)
+
+            async with page.expect_download(timeout=60_000) as dl_info:
+                await icon.click()
+            dl = await dl_info.value
+
+            raw_filename = dl.suggested_filename or f"{code}-bctc-{quarter}-{year}.pdf"
+            safe_filename = _sanitise_filename(raw_filename)
+            if not safe_filename.lower().endswith(".pdf"):
+                safe_filename += ".pdf"
+
+            dest_path = os.path.join(cache_dir, safe_filename)
+            await dl.save_as(dest_path)
+
+            file_size = os.path.getsize(dest_path) if os.path.exists(dest_path) else 0
+            print(
+                f"  [SSC-NS] downloaded {safe_filename} ({file_size:,} bytes) → {dest_path}",
+                file=sys.stderr,
+            )
+
+            if file_size < 1_000:
+                print(f"  [SSC-NS] file too small ({file_size} bytes) — likely error page", file=sys.stderr)
+                try:
+                    os.remove(dest_path)
+                except OSError:
+                    pass
+                return None
+
+            # Return stable proxy URL
+            proxy_url = f"{_VPS_PROXY_BCTC_BASE}/{urllib.parse.quote(code.upper())}/{urllib.parse.quote(safe_filename)}"
+            return {
+                "url": proxy_url,
+                "source": "SSC-NewsSearch",
+                "confidence": 0.92,
+                "page_title": raw_filename,
+                "local_path": dest_path,
+            }
+
+        except Exception as exc:
+            print(f"  [SSC-NS] error: {exc}", file=sys.stderr)
+            return None
+        finally:
+            await browser.close()
 
 
 def discover_from_hose_ssc(code: str, year: int, quarter: str) -> Optional[Dict[str, Any]]:
     """
-    Query SSC portal with exchange=HOSE parameter to confirm document existence
-    for HOSE-listed stocks.
+    Discover BCTC PDF for HOSE-listed stocks via SSC NewsSearch portal.
 
-    HOSE PDFs are not directly discoverable (portal uses ADF/PPR links, no raw PDF
-    URLs). This function serves as a confirmation step: if SSC shows the document
-    exists for this HOSE-listed ticker, we return a result with url=None so the
-    caller knows the report was filed even if no PDF URL is available.
+    Uses Playwright to fully render the Oracle ADF page, search by ticker,
+    download the matched PDF to VPS cache, and return a stable proxy URL.
 
-    Portal: congbothongtin.ssc.gov.vn/faces/Action/SanGiaoDiv.xhtml
-    Exchange filter param: exchange=HOSE (alongside keyword + type=BCTC + year).
+    SanGiaoDiv.xhtml was removed from the SSC portal (HTTP 404 since 2026-04-26).
+    Plain HTTP GET to NewsSearch returns only the JS splash (~7 KB) — not useful.
+    Playwright is required to interact with the Oracle ADF application.
+
+    Returns result with stable proxy URL, or None if not found / Playwright fails.
     """
-    url = (
-        f"{SSC_HOSE_PAGE}?"
-        f"keyword={urllib.parse.quote(code)}"
-        f"&type=BCTC"
-        f"&year={year}"
-        f"&exchange=HOSE"
-    )
     try:
-        html = _http_get(url, headers=_BOT_HEADERS, timeout=20)
-    except Exception as e:
-        print(f"  [HOSE-SSC] fetch error: {e}", file=sys.stderr)
+        result = asyncio.run(_ssc_newsearch_playwright(code, year, quarter))
+        return result
+    except Exception as exc:
+        print(f"  [HOSE-SSC] asyncio.run error: {exc}", file=sys.stderr)
         return None
-
-    if len(html) < _SSC_MIN_BYTES:
-        # Also try the generic NewsSearch endpoint with exchange=HOSE
-        fallback_url = (
-            f"{SSC_SEARCH}?"
-            f"keyword={urllib.parse.quote(code)}"
-            f"&type=BCTC"
-            f"&year={year}"
-            f"&exchange=HOSE"
-        )
-        try:
-            html = _http_get(fallback_url, headers=_BOT_HEADERS, timeout=20)
-        except Exception as e:
-            print(f"  [HOSE-SSC] fallback fetch error: {e}", file=sys.stderr)
-            return None
-
-    if len(html) < _SSC_MIN_BYTES:
-        print(f"  [HOSE-SSC] short response ({len(html)} bytes)", file=sys.stderr)
-        return None
-
-    x17f = re.search(r'class="x17f[^"]*"[^>]*>(.*?)</table>', html, re.DOTALL)
-    if not x17f:
-        return None
-
-    rows = re.findall(r'<tr[^>]*role="row"[^>]*>(.*?)</tr>', x17f.group(1), re.DOTALL)
-    code_upper = code.upper()
-
-    for row in rows:
-        cells = re.findall(r"<td[^>]*>(.*?)</td>", row, re.DOTALL)
-        if len(cells) < 7:
-            continue
-        ticker = html_lib.unescape(re.sub(r"<[^>]+>", "", cells[2])).strip().upper()
-        title = html_lib.unescape(re.sub(r"<[^>]+>", "", cells[3])).strip()
-
-        if ticker != code_upper:
-            continue
-        if matches_quarter_and_year(title, quarter, year):
-            print(f"  [HOSE-SSC] confirmed ticker={ticker} title={title[:80]}", file=sys.stderr)
-            return {
-                "url": None,
-                "source": "HOSE-SSC",
-                "confidence": 0.55,
-                "page_title": title,
-            }
-        if quarter.upper() == "Q4" and matches_annual(title, year):
-            print(f"  [HOSE-SSC] confirmed annual ticker={ticker} title={title[:80]}", file=sys.stderr)
-            return {
-                "url": None,
-                "source": "HOSE-SSC",
-                "confidence": 0.55,
-                "page_title": title,
-            }
-
-    return None
 
 
 def discover_from_ssc(code: str, year: int, quarter: str) -> Optional[Dict[str, Any]]:
     """
-    Query SSC with non-browser UA to get SSR HTML.
-    Returns document-existence confirmation with NO pdf_url (ADF portal has no direct links).
-    Server does NOT filter by keyword/year; we parse the 15 most-recent rows client-side.
+    Generic SSC fallback for any exchange listing (non-Playwright).
+
+    NOTE: This path only works when Playwright is available (same as hose_ssc above).
+    Kept for backward compatibility — delegates to the same Playwright implementation.
+    Returns document existence confirmation with proxy URL, or None if not found.
     """
-    url = (f"{SSC_SEARCH}?"
-           f"keyword={urllib.parse.quote(code)}&type=BCTC&year={year}")
-    try:
-        html = _http_get(url, headers=_BOT_HEADERS, timeout=20)
-    except Exception as e:
-        print(f"  [SSC] fetch error: {e}", file=sys.stderr)
-        return None
-
-    if len(html) < _SSC_MIN_BYTES:
-        print(f"  [SSC] short response ({len(html)} bytes)", file=sys.stderr)
-        return None
-
-    x17f = re.search(r'class="x17f[^"]*"[^>]*>(.*?)</table>', html, re.DOTALL)
-    if not x17f:
-        return None
-
-    rows = re.findall(r'<tr[^>]*role="row"[^>]*>(.*?)</tr>', x17f.group(1), re.DOTALL)
-    code_upper = code.upper()
-
-    for row in rows:
-        cells = re.findall(r"<td[^>]*>(.*?)</td>", row, re.DOTALL)
-        if len(cells) < 7:
-            continue
-        ticker = html_lib.unescape(re.sub(r"<[^>]+>", "", cells[2])).strip().upper()
-        title = html_lib.unescape(re.sub(r"<[^>]+>", "", cells[3])).strip()
-
-        if ticker != code_upper:
-            continue
-        if matches_quarter_and_year(title, quarter, year):
-            print(f"  [SSC] confirmed ticker={ticker} title={title[:80]}", file=sys.stderr)
-            return {
-                "url": None,
-                "source": "SSC",
-                "confidence": 0.60,
-                "page_title": title,
-            }
-
-    return None
+    return discover_from_hose_ssc(code, year, quarter)
 
 
 # ---------------------------------------------------------------------------
@@ -463,10 +610,16 @@ def discover_bctc_pdf(code: str, year: int, quarter: str) -> Dict[str, Any]:
     """
     Discover BCTC PDF URL.
 
-    Order: HNX → UPCOM → HOSE-SSC (exchange=HOSE filter) → SSC generic
-    (last two are confirmation only, no PDF URL).
-    HOSE stocks: PDF URLs not directly discoverable (ADF portal), but existence
-    is confirmed via SSC portal with exchange=HOSE parameter.
+    Order:
+      1. HNX  — POST API, direct PDF URL (owa.hnx.vn)
+      2. UPCOM — POST API, direct PDF URL (owa.hnx.vn)
+      3. SSC NewsSearch via Playwright — downloads PDF to VPS cache, returns
+         stable proxy URL (http://<VPS_IP>:8765/bctc-files/<CODE>/<filename>)
+         Covers HOSE-listed stocks and any HNX/UPCOM not found via POST API.
+
+    fix/bctc-ssc-newsearch:
+      SanGiaoDiv.xhtml (old HOSE-SSC filter endpoint) removed — was HTTP 404.
+      SSC NewsSearch Playwright now provides real PDF URLs, not just confirmation.
     """
     code = code.upper()
     quarter = quarter.upper()
@@ -486,37 +639,21 @@ def discover_bctc_pdf(code: str, year: int, quarter: str) -> Dict[str, Any]:
         results.append(result)
         return {"results": results, "error": None}
 
-    # 3. HOSE-SSC confirmation (exchange=HOSE filter on SSC portal, no PDF URL)
+    # 3. SSC NewsSearch via Playwright
+    #    Downloads PDF to /root/bctc-cache/<CODE>/ and returns a stable proxy URL.
+    #    Works for any exchange listing visible on congbothongtin.ssc.gov.vn.
     result = discover_from_hose_ssc(code, year, quarter)
-    if result:
-        return {
-            "results": [],
-            "error": (
-                f"Document found on SSC/HOSE ({result['page_title'][:60]}) "
-                f"but no direct PDF URL available for {code} {year} {quarter}. "
-                f"HOSE portal does not expose raw PDF links for automated download."
-            ),
-        }
-
-    # 4. Generic SSC confirmation (no exchange filter — catches remaining cases)
-    result = discover_from_ssc(code, year, quarter)
-    if result:
-        # Document exists but we can't get the PDF URL
-        return {
-            "results": [],
-            "error": (
-                f"Document found on SSC ({result['page_title'][:60]}) "
-                f"but no direct PDF URL available for {code} {year} {quarter}. "
-                f"HOSE portal is inaccessible for automated PDF discovery."
-            ),
-        }
+    if result and result.get("url"):
+        results.append(result)
+        return {"results": results, "error": None}
 
     return {
         "results": [],
         "error": (
             f"No PDF found for {code} {year} {quarter}. "
-            f"If HOSE-listed: portal is broken. "
-            f"If HNX/UPCOM: check if report was filed in the expected window."
+            f"HNX/UPCOM POST API returned no match. "
+            f"SSC NewsSearch Playwright: either not found or download failed. "
+            f"Check VPS logs for details."
         ),
     }
 

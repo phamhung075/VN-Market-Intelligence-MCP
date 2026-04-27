@@ -20,6 +20,14 @@
  *       { results: [{url, source, confidence, page_title}], error: string|null }
  *     → timeout: 120s (Playwright browser automation takes time)
  *
+ *   GET /bctc-files/:code/:filename
+ *     → serves /root/bctc-cache/<code>/<filename> as application/pdf
+ *     → fix/bctc-ssc-newsearch: SSC NewsSearch Playwright downloads PDFs here;
+ *       Python script returns http://<VPS_IP>:8765/bctc-files/<CODE>/<filename>
+ *       as a stable URL that can be stored in bctc_vps_queue.source_url.
+ *     → Auth: X-API-Key required (same as other endpoints)
+ *     → Dir configurable via BCTC_CACHE_DIR env var (default: /root/bctc-cache)
+ *
  * Health:
  *   GET /health → 200 { ok: true, service: "vps-proxy" }
  *
@@ -42,6 +50,8 @@
 
 const http = require("http");
 const https = require("https");
+const fs = require("fs");
+const path = require("path");
 const { spawn } = require("child_process");
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -63,6 +73,17 @@ const SSC_PROXY_PREFIX = "/proxy/ssc-iboard";
  * Path pattern: /proxy/bctc-discover/:ticker
  */
 const BCTC_DISCOVER_PREFIX = "/proxy/bctc-discover/";
+
+/**
+ * Static file serving for cached BCTC PDFs.
+ * Path pattern: /bctc-files/:code/:filename
+ * Files are stored at BCTC_CACHE_DIR/<code>/<filename> by the Python script.
+ * fix/bctc-ssc-newsearch: SSC NewsSearch Playwright downloads PDFs here.
+ */
+const BCTC_FILES_PREFIX = "/bctc-files/";
+
+/** Root directory for BCTC PDF cache. Configurable via env var. */
+const BCTC_CACHE_DIR = process.env.BCTC_CACHE_DIR || "/root/bctc-cache";
 
 /** Absolute path to the Python discovery script on the VPS. */
 const BCTC_DISCOVER_SCRIPT =
@@ -213,6 +234,7 @@ async function handleRequest(req, res) {
       upstreams: {
         ssc_iboard: IBOARD_UPSTREAM,
         bctc_discover: BCTC_DISCOVER_SCRIPT,
+        bctc_cache: BCTC_CACHE_DIR,
       },
     });
   }
@@ -302,6 +324,65 @@ async function handleRequest(req, res) {
     return;
   }
 
+  // BCTC file serving
+  //   Incoming: /bctc-files/<CODE>/<filename>
+  //   Serves:   BCTC_CACHE_DIR/<code>/<filename> (PDF downloaded by Python script)
+  //   fix/bctc-ssc-newsearch: SSC NewsSearch Playwright downloads PDFs here.
+  if (url.startsWith(BCTC_FILES_PREFIX)) {
+    // Strip prefix: /bctc-files/VCB/some-file.pdf → VCB/some-file.pdf
+    const subPath = url.slice(BCTC_FILES_PREFIX.length).split("?")[0];
+    // Decode percent-encoding (ticker and filename from Python urllib.parse.quote)
+    let decodedSubPath;
+    try {
+      decodedSubPath = decodeURIComponent(subPath);
+    } catch (_e) {
+      return jsonResponse(res, 400, { error: "Invalid URL encoding", path: url });
+    }
+
+    // Security: path must be <CODE>/<filename>, no directory traversal
+    const parts = decodedSubPath.split("/").filter(Boolean);
+    if (parts.length !== 2) {
+      return jsonResponse(res, 400, { error: "Path must be /bctc-files/<code>/<filename>" });
+    }
+    const [codeSegment, filenameSegment] = parts;
+
+    // Validate: ticker is uppercase letters+digits (3-10 chars)
+    if (!/^[A-Z0-9]{1,10}$/i.test(codeSegment)) {
+      return jsonResponse(res, 400, { error: "Invalid ticker in path", code: codeSegment });
+    }
+    // Validate: filename must end with .pdf, no path separators
+    if (!/\.pdf$/i.test(filenameSegment) || filenameSegment.includes("/") || filenameSegment.includes("..")) {
+      return jsonResponse(res, 400, { error: "Filename must be a .pdf, no traversal", filename: filenameSegment });
+    }
+
+    const filePath = path.join(BCTC_CACHE_DIR, codeSegment.toUpperCase(), filenameSegment);
+
+    // Ensure resolved path is still inside BCTC_CACHE_DIR (defence-in-depth)
+    const resolvedCache = path.resolve(BCTC_CACHE_DIR);
+    const resolvedFile = path.resolve(filePath);
+    if (!resolvedFile.startsWith(resolvedCache + path.sep)) {
+      log("WARN", `Path traversal attempt blocked: ${resolvedFile}`);
+      return jsonResponse(res, 403, { error: "Forbidden" });
+    }
+
+    if (!fs.existsSync(resolvedFile)) {
+      log("WARN", `BCTC file not found: ${resolvedFile}`);
+      return jsonResponse(res, 404, { error: "File not found", code: codeSegment, filename: filenameSegment });
+    }
+
+    const stat = fs.statSync(resolvedFile);
+    log("INFO", `BCTC file serve: ${resolvedFile} (${stat.size}B)`);
+    res.writeHead(200, {
+      "Content-Type": "application/pdf",
+      "Content-Length": stat.size,
+      "Content-Disposition": `attachment; filename="${filenameSegment}"`,
+      "Cache-Control": "public, max-age=86400",
+      "X-Proxy-Source": "bctc-cache",
+    });
+    fs.createReadStream(resolvedFile).pipe(res);
+    return;
+  }
+
   // Unknown route
   jsonResponse(res, 404, { error: "Not found", path: url });
 }
@@ -323,8 +404,10 @@ server.listen(PORT, "0.0.0.0", () => {
   log("INFO", `VPS proxy server listening on 0.0.0.0:${PORT}`);
   log("INFO", `SSC iboard proxy: GET /proxy/ssc-iboard/dcm/financials/ticker/:ticker`);
   log("INFO", `BCTC discover:    GET /proxy/bctc-discover/:ticker?year=YYYY&quarter=Q`);
+  log("INFO", `BCTC files:       GET /bctc-files/:code/:filename (serves cached PDFs)`);
   log("INFO", `Health check:     GET /health`);
   log("INFO", `BCTC script path: ${BCTC_DISCOVER_SCRIPT}`);
+  log("INFO", `BCTC cache dir:   ${BCTC_CACHE_DIR}`);
   if (!API_KEY) {
     log("WARN", "VPS_API_KEY is not set — proxy accepts all requests (insecure)");
   }
