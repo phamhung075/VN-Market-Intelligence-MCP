@@ -31,6 +31,14 @@
 
 ## Todo
 
+| Task ID | Title | Priority | Type | Owner | Related Reports |
+|---------|-------|----------|------|-------|-----------------|
+| 1346a | Remove test stub from production scheduler | CRITICAL | FIX | Developer | 1323 |
+| ~~1346b~~ | ~~Fix push-foreign-flow UNIQUE constraint~~ | ~~HIGH~~ | ~~FIX~~ | ~~Developer~~ | 1310, 1312 — DONE 2026-04-27 |
+| 1346c | Alert quality: volume spike + NER/sentiment bugs | HIGH | FIX | Developer | 1320, 1311, 1321, 1322 |
+| 1346d | PDF circuit breaker + BUG channel retry + unknown stock_code | HIGH | FIX | Developer/Ops | 1316, 1317, 1313 |
+| 1346e | Cascade gap: DSC + VPBankS/OKX → market-wide impact | MEDIUM | BACKLOG | BA | 1314, 1315 |
+
 ---
 
 ## In Progress
@@ -38,5 +46,9 @@
 ---
 
 ## Review
+
+| Task ID | Title | Branch | Report |
+|---------|-------|--------|--------|
+| 1346b | Fix push-foreign-flow UNIQUE constraint | task/1346b-foreign-flow-upsert | reports/TASK_REPORT_1346b.md |
 
 ---
