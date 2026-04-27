@@ -39,6 +39,10 @@ services:
       - NODE_ENV=production
       - HOST=0.0.0.0
       - DB_PATH=/app/data/market.db
+      # Route SSC iboard API calls through VPS (Vietnam IP, no geo-block).
+      # iboard-query.ssc.vn is NXDOMAIN from France/Docker.
+      # VPS proxy server: vps-scripts/vps-proxy-server.js (port 8765, systemd vn-vps-proxy.service).
+      - SSC_IBOARD_BASE_URL=http://125.212.251.27:8765/proxy/ssc-iboard
     env_file:
       - .env
     restart: unless-stopped

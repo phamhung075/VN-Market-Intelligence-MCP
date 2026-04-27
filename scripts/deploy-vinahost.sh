@@ -218,17 +218,57 @@ systemctl --no-pager -l status vn-bctc-enrich.timer | head -12
 ENRICHEOF
 
 
+# ── 8. VPS HTTP Proxy Server (SSC iboard geo-block fix) ─────────────────────
+echo ""
+echo "Deploying VPS HTTP proxy server (SSC iboard, port 8765)..."
+$SCP vps-scripts/vps-proxy-server.js ${VH_USER}@${VH_IP}:/root/vps-proxy-server.js
+$SCP vps-scripts/vn-vps-proxy.service ${VH_USER}@${VH_IP}:/etc/systemd/system/vn-vps-proxy.service
+
+$SSH << 'PROXYEOF'
+set -e
+chmod +x /root/vps-proxy-server.js
+
+# Write VPS_API_KEY to EnvironmentFile if not already present
+if [ ! -f /etc/vn-market.env ]; then
+  touch /etc/vn-market.env
+  chmod 600 /etc/vn-market.env
+fi
+if ! grep -q "VPS_API_KEY" /etc/vn-market.env 2>/dev/null; then
+  if [ -n "${VPS_PUSH_API_KEY:-}" ]; then
+    echo "VPS_API_KEY=${VPS_PUSH_API_KEY}" >> /etc/vn-market.env
+  fi
+fi
+
+systemctl daemon-reload
+systemctl enable vn-vps-proxy.service
+systemctl restart vn-vps-proxy.service
+sleep 2
+
+# Health check
+HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" --connect-timeout 5 http://localhost:8765/health)
+if [ "$HTTP_CODE" = "200" ]; then
+  echo "VPS proxy server healthy (HTTP 200)"
+else
+  echo "WARN: VPS proxy health check returned HTTP $HTTP_CODE"
+fi
+
+echo "=== vn-vps-proxy status ==="
+systemctl --no-pager -l status vn-vps-proxy.service | head -12
+PROXYEOF
+
+
 echo ""
 echo "══════════════════════════════════════════"
-echo " Deploy complete — Vinahost Vietnam owns all 7 services"
+echo " Deploy complete — Vinahost Vietnam owns all 8 services"
 echo ""
 echo " Price proxy:        systemctl status vn-price-fetch"
 echo " BCTC proxy:         systemctl status vn-bctc-fetch"
-echo " BCTC URL enricher:  systemctl status vn-bctc-enrich.timer ← NEW"
+echo " BCTC URL enricher:  systemctl status vn-bctc-enrich.timer"
 echo " News RSS proxy:     systemctl status vn-news-fetch"
 echo " SBV/FX proxy:       systemctl status vn-sbv-fetch"
 echo " Foreign flow proxy: systemctl status vn-foreign-flow"
 echo " OHLCV backfill:     systemctl status vn-ohlcv-backfill.timer"
+echo " VPS HTTP proxy:     systemctl status vn-vps-proxy ← NEW (SSC iboard, :8765)"
 echo ""
-echo " Logs: /var/log/vn-{price,bctc,bctc-enrich,news,sbv,foreign-flow,ohlcv-backfill}.log"
+echo " Logs: /var/log/vn-{price,bctc,bctc-enrich,news,sbv,foreign-flow,ohlcv-backfill,vps-proxy}.log"
 echo "══════════════════════════════════════════"
