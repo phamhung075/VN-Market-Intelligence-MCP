@@ -71,7 +71,7 @@ describe("Task 1349b — logCircuitBreakerTransition", () => {
 
     spy.mockRestore();
     expect(lines.length).toBeGreaterThanOrEqual(1);
-    const parsed = JSON.parse(lines[lines.length - 1]);
+    const parsed = JSON.parse(lines[lines.length - 1]!);
     expect(parsed.level).toBe("INFO");
     expect(parsed.type).toBe("CB_TRANSITION");
   });
@@ -91,7 +91,7 @@ describe("Task 1349b — logCircuitBreakerTransition", () => {
     });
 
     spy.mockRestore();
-    const parsed = JSON.parse(lines[lines.length - 1]);
+    const parsed = JSON.parse(lines[lines.length - 1]!);
     expect(parsed.timestamp).toBe("2026-04-27T10:00:00.000Z");
     expect(parsed.job).toBe("pdfDownload");
     expect(parsed.state_old).toBe("closed");
@@ -116,7 +116,7 @@ describe("Task 1349b — logCircuitBreakerTransition", () => {
     });
 
     spy.mockRestore();
-    const parsed = JSON.parse(lines[lines.length - 1]);
+    const parsed = JSON.parse(lines[lines.length - 1]!);
     expect(parsed.state_old).toBe("closed");
     expect(parsed.state_new).toBe("open");
     expect(parsed.error_count).toBe(5);
@@ -139,7 +139,7 @@ describe("Task 1349b — logCircuitBreakerTransition", () => {
     });
 
     spy.mockRestore();
-    const parsed = JSON.parse(lines[lines.length - 1]);
+    const parsed = JSON.parse(lines[lines.length - 1]!);
     expect(parsed.state_old).toBe("open");
     expect(parsed.state_new).toBe("half-open");
     expect(parsed.reason).toBe("reset_timeout_elapsed");
@@ -160,7 +160,7 @@ describe("Task 1349b — logCircuitBreakerTransition", () => {
     });
 
     spy.mockRestore();
-    const parsed = JSON.parse(lines[lines.length - 1]);
+    const parsed = JSON.parse(lines[lines.length - 1]!);
     expect(parsed.state_old).toBe("half-open");
     expect(parsed.state_new).toBe("closed");
     expect(parsed.reason).toBe("half_open_probes_passed");
@@ -184,7 +184,7 @@ describe("Task 1349b — logCircuitBreakerTransition", () => {
     });
 
     spy.mockRestore();
-    const parsed = JSON.parse(lines[lines.length - 1]);
+    const parsed = JSON.parse(lines[lines.length - 1]!);
     expect(parsed.error_count).toBe(3);
     expect(parsed.reset_timeout_ms).toBe(60_000);
     expect(parsed.metrics.consecutiveFailures).toBe(3);
@@ -223,7 +223,7 @@ describe("Task 1349b — CircuitBreaker emits CB_TRANSITION logs", () => {
       try { return JSON.parse(l).type === "CB_TRANSITION"; } catch { return false; }
     });
     expect(cbLines.length).toBeGreaterThanOrEqual(1);
-    const transition = JSON.parse(cbLines[0]);
+    const transition = JSON.parse(cbLines[0]!);
     expect(transition.state_old).toBe("closed");
     expect(transition.state_new).toBe("open");
   });
@@ -248,7 +248,7 @@ describe("Task 1349b — CircuitBreaker emits CB_TRANSITION logs", () => {
       try { return JSON.parse(l).type === "CB_TRANSITION"; } catch { return false; }
     });
     expect(cbLines.length).toBeGreaterThanOrEqual(1);
-    const transition = JSON.parse(cbLines[0]);
+    const transition = JSON.parse(cbLines[0]!);
     expect(transition.state_old).toBe("open");
     expect(transition.state_new).toBe("half-open");
   });
