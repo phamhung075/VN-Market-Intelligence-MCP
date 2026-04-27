@@ -18,18 +18,18 @@
 import { logger } from '../logger.js';
 
 const BASE_URLS = {
-  gateway: process.env.GATEWAY_URL ?? 'http://localhost:4000',
-  stockPrice: process.env.STOCK_PRICE_URL ?? 'http://localhost:5000',
-  pdfExtractor: process.env.PDF_EXTRACTOR_URL ?? 'http://localhost:5001',
-  rag: process.env.RAG_SERVICE_URL ?? 'http://localhost:5002',
-  ta: process.env.TA_SERVICE_URL ?? 'http://localhost:5003',
-  macro: process.env.MACRO_SERVICE_URL ?? 'http://localhost:5004',
-  kinhDich: process.env.KINH_DICH_URL ?? 'http://localhost:5005',
-  alertEngine: process.env.ALERT_ENGINE_URL ?? 'http://localhost:5006',
+  gateway: Bun.env.GATEWAY_URL ?? 'http://localhost:4000',
+  stockPrice: Bun.env.STOCK_PRICE_URL ?? 'http://localhost:5000',
+  pdfExtractor: Bun.env.PDF_EXTRACTOR_URL ?? 'http://localhost:5001',
+  rag: Bun.env.RAG_SERVICE_URL ?? 'http://localhost:5002',
+  ta: Bun.env.TA_SERVICE_URL ?? 'http://localhost:5003',
+  macro: Bun.env.MACRO_SERVICE_URL ?? 'http://localhost:5004',
+  kinhDich: Bun.env.KINH_DICH_URL ?? 'http://localhost:5005',
+  alertEngine: Bun.env.ALERT_ENGINE_URL ?? 'http://localhost:5006',
 };
 
-const TIMEOUT_MS = parseInt(process.env.MICROSERVICE_TIMEOUT_MS ?? '10000');
-const RETRY_COUNT = parseInt(process.env.MICROSERVICE_RETRY_COUNT ?? '2');
+const TIMEOUT_MS = parseInt(Bun.env.MICROSERVICE_TIMEOUT_MS ?? '10000');
+const RETRY_COUNT = parseInt(Bun.env.MICROSERVICE_RETRY_COUNT ?? '2');
 
 interface FetchOptions extends RequestInit {
   timeout?: number;
