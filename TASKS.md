@@ -34,6 +34,7 @@
 - **1349d:** BCTC validation edge cases — 7 new tests (VAL-07–VAL-10), hard ratio>5.0 threshold, QA TS fix applied — APPROVED + merged 2026-04-27
 - **1349e:** Job cycle timings + ops metrics (jobMetrics.ts) — 10/10 tests pass, 100% coverage, wired into taAlertScanJob/bbAlertScanJob/macroIndicatorRefreshJob — APPROVED + merged 2026-04-27
 - **1350a:** Fix 73 failing tests (mock.module schema leak + missing watchdog reader injections + stale sprint assertions) — 5 test files only, 26/26 targeted tests pass, 7568 pass / 0 fail full suite — APPROVED + merged 2026-04-27
+- **1351b:** Gap-fill tests for vpsProxyWatchdogJob — Reuters/TE staleness, restored path, notify-throws, _resetWatchdogStaleFlag — 8/8 tests pass, 7598 pass / 0 new fail full suite — APPROVED + merged 2026-04-27
 
 ---
 
@@ -75,5 +76,6 @@
 | 1349c | Scheduler.md path corrections (docs/agent-memory/modules/scheduler.md) | main 2026-04-27 | — |
 | 1349f | Integration QA — Sprint 1349 observability (11/11 pass, 7471 baseline) | main 2026-04-27 | reports/TASK_REPORT_1349f.md |
 | 1350a | Fix 73 failing tests: mock.module leak + watchdog reader injection + stale sprint assertions | main 2026-04-27 | reports/TASK_REPORT_1350a.md |
+| 1351b | Gap-fill tests for vpsProxyWatchdogJob: Reuters/TE staleness + restored + notify-throws + _resetWatchdogStaleFlag | main 2026-04-27 | reports/TASK_REPORT_1351b.md |
 
 ---
