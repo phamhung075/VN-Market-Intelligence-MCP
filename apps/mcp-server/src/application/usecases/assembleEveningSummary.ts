@@ -22,6 +22,7 @@ import { logger } from "../../infrastructure/logger.js";
 import type { BriefingAlert, TopStory, TaSignal, GlobalSnapshot } from "./assembleBriefing.js";
 import { defaultComputeTa } from "./assembleBriefing.js";
 import type { BriefingPredictionSignal } from "../../infrastructure/db/predictionStore.js";
+import { getRecentPredictionSignals as _getRecentPredictionSignals } from "../../infrastructure/db/predictionStore.js";
 import type { PortfolioPnlResult } from "../../domain/services/portfolioPnlCalculator.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -658,7 +659,7 @@ async function _assembleEveningSummaryImpl(
   try {
     const signalsFn =
       options.getPredictionSignalsFn ??
-      (await import("../../infrastructure/db/predictionStore.js")).getRecentPredictionSignals;
+      _getRecentPredictionSignals;
     const allSignals = await signalsFn(db, 24);
     const stored = allSignals.length;
     predictionDiag = { stored };
