@@ -1,15 +1,15 @@
 {
   "_maintained_by": "PM / system-auditor",
   "_trigger": "sprint start/end, tool/cron count change, baseline test update",
-  "lastUpdated": "2026-04-27T00:00:00Z",
-  "currentSprint": 1344,
-  "previousSprint": { "number": 1342, "status": "DONE", "progressTasks": "Sprint 1342b: Implemented DB integrity check job. Sprints 1330-1342 all merged. Baseline stable: 6520 pass / 213 fail." },
-  "sprintGoal": "Sprint 1344 — Fix 9 pre-existing test failures",
-  "testBaseline": 6536,
-  "testBaselineTarget": 6536,
-  "testBaselinePass": 6536,
-  "testBaselineFail": 213,
-  "testFailures": 213,
+  "lastUpdated": "2026-04-27T14:00:00Z",
+  "currentSprint": 1345,
+  "previousSprint": { "number": 1344, "status": "DONE", "progressTasks": "Sprint 1344a–1344c: Fix 9 pre-existing test failures (6536→7371 pass, 213→0 fail). All merged 2026-04-27." },
+  "sprintGoal": "Sprint 1345 — News + Analysis Pipeline Hardening + Data Quality",
+  "testBaseline": 7371,
+  "testBaselineTarget": 7371,
+  "testBaselinePass": 7371,
+  "testBaselineFail": 0,
+  "testFailures": 0,
   "toolCount": 108,
   "schedulerFileCount": 42,
   "knowledgeFileCount": 15,
@@ -21,5 +21,5 @@
   "briefingArchiveQI": 0,
   "briefingArchiveQII": 0,
   "lastFixApplied": "FIX-1316: LNG keyword case sensitivity in cascadeEngine.ts SECTOR_RULES (4 keywords lowercased) — merged 2026-04-24",
-  "currentSprintNotes": "2026-04-27: Sprint 1343a–1343c complete. 1343a (Watchlist restore + Q4 2025 backfill) merged 2026-04-26 (+12 tests). 1343b (HOSE PDF RED tests) + 1343c (HOSE PDF implementation) merged as single commit (+4 tests, all GREEN). Baseline now 6536 pass / 213 fail. Remaining 1343d–1343e for VPS skip endpoint + QA."
+  "currentSprintNotes": "2026-04-27 SPRINT 1345 INITIATED: Infrastructure + data quality hardening. Open issues: Reuters/TE outage (50 consecutive failures), BCTC extraction corruption audit (VNM/VEA impossible figures), Polymarket stale (26 days), VN-Index cascade incomplete. BA spec pending."
 }

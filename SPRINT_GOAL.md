@@ -1,67 +1,65 @@
 # Sprint Goal
 
-## Sprint 1343 — BCTC PDF Pipeline Recovery (2026-04-26)
+## Sprint 1345 — News + Analysis Pipeline Hardening + Data Quality (2026-04-27)
 
-**Status:** RED - Critical operational blocker. Initiated by ops diagnostic.
+**Status:** GREEN - Infrastructure + data quality sprint. Autonomous initiation by PO.
 
-**Critical Issues (ops 2026-04-26):**
+**Background:**
+Sprint 1344 COMPLETE (7371 pass / 0 fail). BCTC pipeline recovered (1343), critical infrastructure bugs fixed (foreignFlow CB, python3). Remaining operational issues require hardening.
 
-1. **HOSE Portal React SPA Migration** — PDF discovery returns 0 results for all HOSE-listed tickers (BID, EIB, FPT, VCB, HPG, VNM, etc.). The old direct-URL pattern no longer works.
-2. **VPS Skip Feedback Loop Broken** — `fetch-bctc.sh` on VPS never reports SKIP (PDF not found) back to MCP → `bctc_vps_queue.attempts` stays 0 → infinite retry loop every 6h with zero output.
-3. **Watchlist Data Loss** — Post-microservices migration: only 2 tickers in DB (FPT, VCB) vs. 30 before. 28 tickers missing Q4/2025 reports.
-4. **Missing Q4 Reports** — 28 tickers have no 2025 Q4 financial data (critical for value-investor analysis mode).
+**Confirmed Open Issues (live verified 2026-04-27):**
+
+1. **Reuters + Trading Economics Outage (HIGH)** — 50 consecutive failures (7h), news data pipeline stale. Impact: morning/evening briefing signal degradation.
+2. **VNM/VEA BCTC Extraction Corruption (HIGH)** — Impossible financial figures (VNM: Assets 957T << Equity 18,829T; VEA: Operating margin 330%, Total Liab=0). PDF OCR quality issue or data corruption.
+3. **Polymarket API Stale (MEDIUM)** — Markets data fetchedAt=2026-04-01 (26 days old). Prediction market alerts unreliable.
+4. **VN-Index Cascade Incomplete (MEDIUM)** — Cascades only to VIC, no market-wide broadcast fix found. Sector alerts missing context.
 
 **Vision:**
-Restore the BCTC financial data pipeline to full operational capacity. Enable value-investor analysis system (Sprint 1336) to function with complete watchlist coverage and current financial reports.
+Harden news ingestion, validate BCTC extraction quality, restore stale external APIs, and fix cascade routing to prevent analysis pipeline degradation.
 
 **Scope:**
 
 | Task ID | Title | Layer | Size | Owner |
 |---------|-------|-------|------|-------|
-| 1343a | Watchlist restore + Q4 backfill | DB/CLI | S | Developer |
-| 1343b | HOSE PDF discovery fix (RED tests) | Domain/Test | S | Developer |
-| 1343c | HOSE PDF discovery fix (implementation) | Fetcher | M | Developer |
-| 1343d | VPS skip endpoint + fetch-bctc.sh update | API/Ops | S | Developer |
-| 1343e | Integration test + QA | Test | S | QA |
+| 1345a | Reuters + TE fallback sources | Infrastructure | M | Ops/Developer |
+| 1345b | BCTC extraction confidence audit | Domain/Test | M | Developer |
+| 1345c | Polymarket staleness fix + fetch schedule | API | S | Ops |
+| 1345d | VN-Index cascade breadth fix | Domain | S | Developer |
+| 1345e | Integration test + dashboard validation | Test | S | QA |
 
 **Success Metrics:**
-- Watchlist has 30 tickers in DB (restored from migration loss)
-- HOSE PDF discovery returns valid URLs for BID, EIB, FPT, VCB, HPG, VNM, etc. (7 test cases)
-- `bctc_vps_queue.attempts` increments on SKIP events (POST `/api/bctc-skip` called)
-- All 30 tickers have Q4/2025 reports fetched via BCTC + VPS pipeline
-- No infinite retry loops in logs (attempt count properly tracks)
+- News pipeline has ≥2 fallback sources for Reuters + TE (no 7h blackouts)
+- BCTC extraction reports confidence scores in logs; low-confidence (≤0.3) skipped with alert
+- Polymarket refresh runs ≥2x daily; fetchedAt within 24h
+- VN-Index cascade broadcasts to MARKET channel (not just VIC)
+- All 7371 baseline tests pass; zero regressions
 
-**Blockers:** None. Ready to spawn developer.
+**Blockers:** None. Ready to spawn BA for spec.
 
-**Next Agent:** Developer (execute 1343a–1343d in parallel, then QA for 1343e)
+**Next Agent:** BA (write requirement spec for SPRINT_GOAL.md)
 
 ---
 
-## Retrospective: Sprint 1338–1342
+## Retrospective: Sprint 1343–1344
 
-**1338:** Documentation cleanup — 359 stale handoff docs deleted, knowledge references updated.
+**1343:** BCTC PDF pipeline recovery — watchlist restore (30 tickers), HOSE PDF discovery (multi-source), VPS skip endpoint, integration test. All merged 2026-04-27.
 
-**1339:** PriceConfirmation catalyst correlation fields — RED tests + GREEN implementation (market-data microservice).
+**1344:** Fix 9 pre-existing test failures (6536→7371 pass, 213→0 fail). Baseline elevated. All merged 2026-04-27.
 
-**1340:** (Current) Awaiting sprint initialization.
-
-**1341a–1341b:** Catalyst context fields + UrgentNews signal type.
-
-**1342a–1342b:** DB integrity check job (RED + GREEN phases).
-
-All merged to main. Baseline stable: 6520 pass / 213 fail.
+Cumulative: 358 tasks completed, infrastructure stable.
 
 ---
 
 **Decision Log:**
-- Why not cafef.vn or vietstock.vn as fallback? → Prefer SSC API if available; fallback sources added in 1343c if needed.
-- Why restore 30 tickers vs. audit missing ones? → Ops dashboard shows 30-ticker baseline was intentional (user watchlist). Restore from git history or config.
-- Why POST /api/bctc-skip not retry in fetch-bctc.sh? → Skip endpoint marks status='skipped' so fetch-bctc.sh doesn't loop on that ticker again.
+- Why not immediately repair Reuters/TE manually? → Root cause unclear (API outage vs. credential issue). BA spec will define investigation scope.
+- Why BCTC audit vs. skip low-confidence? → Already skipping zero-confidence; need visibility into confidence distribution and extraction quality improvement.
+- Why Polymarket staleness is MEDIUM not HIGH? → Prediction market is secondary signal; news + price are primary. But 26 days stale is unacceptable.
+- Why cascade breadth in this sprint? → Related to data quality; small scope (S task) with high impact (market-wide alerts).
 
 ---
 
-**Size Estimate:** M (8–10h total: 1h watchlist restore, 2h PDF discovery RED, 2–3h discovery implementation, 1h VPS endpoint, 1h integration test + QA)
+**Size Estimate:** M (10–12h: 2h TE investigation + fallback, 3h BCTC audit + reporting, 1h Polymarket fix, 1h cascade fix, 2h testing)
 
-**Priority:** CRITICAL (data pipeline broken, value-investor system non-functional, 28 tickers stale)
+**Priority:** HIGH (news pipeline blackout, data integrity validation, stale external APIs)
 
-**Dependencies:** None. No blockers on other sprints.
+**Dependencies:** None. Ready to proceed independently.
