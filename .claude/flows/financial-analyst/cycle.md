@@ -10,7 +10,9 @@ Bootstrap (market context 24h, earnings calendar, stored PDFs)
 
 **0. Bootstrap** `get_cycle_bootstrap(agent_name="financial-analyst")`
 - Check: `cross_validate`
-- `error` → fail-loud, STOP
+- `market_context` error → fail-loud, STOP immediately
+- `agent_signals` error only → log warning to WORK, continue with zero signals
+- Any other error → fail-loud, STOP
 
 **1. BCTC status**
 `get_earnings_calendar()` | `list_stored_pdfs()` → missing reports for watchlist stocks
@@ -39,6 +41,7 @@ New PDF CRITICAL → broadcast signal immediately
 ```
 
 **5c. BUG on error**:
+Before sending: `get_recent_fixes(limit=20)` — if same module/issue in recent fixes → **skip, do not re-report**.
 ```
 [Financial Analyst] ⚠️ SEVERITY
   Issue: ... | Impact: stocks | Status: Retrying/Blocked

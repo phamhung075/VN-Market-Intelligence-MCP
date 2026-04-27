@@ -10,7 +10,9 @@ Bootstrap (market context 24h, system status, agent signals)
 
 **0. Bootstrap** `get_cycle_bootstrap(agent_name="news-scout")`
 - Check: `cross_validate` | `suppress` | `chain_catalyst`
-- `error` → fail-loud, STOP
+- `market_context` error → fail-loud, STOP immediately
+- `agent_signals` error only → log warning to WORK, continue with zero signals
+- Any other error → fail-loud, STOP
 
 **1. Fetch** `fetch_and_analyze(source_urls, query)` — 226 items/15min via VPS proxy
 Filter duplicates → extract title/source/published_date/content
@@ -37,6 +39,7 @@ Crisis → `post_agent_signal(type="crisis_velocity", severity=...)`
 ```
 
 **6. BUG on error**:
+Before sending to BUG channel: `get_recent_fixes(limit=20)` — if issue already fixed (matching title/module in recent fixes) → **skip, do not re-report**.
 ```
 [News Scout] ⚠️ SEVERITY
   Issue: ... | Impact: ... | Status: Retrying/Blocked

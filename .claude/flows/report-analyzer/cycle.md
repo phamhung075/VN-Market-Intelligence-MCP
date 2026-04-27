@@ -10,7 +10,9 @@ Bootstrap | `get_earnings_calendar()` new releases today
 ---
 
 **0. Bootstrap** `get_cycle_bootstrap(agent_name="report-analyzer")`
-- `error` → fail-loud, STOP
+- `market_context` error → fail-loud, STOP immediately
+- `agent_signals` error only → log warning to WORK, continue
+- Any other error → fail-loud, STOP
 
 **1. Earnings detection** `get_earnings_calendar()`
 - No new earnings → go to session log only (step 5), STOP further analysis
@@ -67,6 +69,7 @@ Partial data → `N/A` | write fails → BUG channel immediately
 ```
 
 **5c. BUG on error**:
+Before sending: `get_recent_fixes(limit=20)` — if same module/issue in recent fixes → **skip, do not re-report**.
 ```
 [Report Analyzer] ⚠️ SEVERITY
   Issue: ... | Impact: stocks | Status: Retrying/Blocked

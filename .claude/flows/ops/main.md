@@ -68,3 +68,4 @@ sqlite3 apps/mcp-server/data/db.sqlite "PRAGMA integrity_check;"  # must = "ok"
 3. Attempt recovery per section above
 4. Fails → Escalate
 5. Document → append to incident log
+6. **After successful recovery**: if a `telegram_reports` ID triggered this incident → `log_fix(title=..., related_feedback_id=ID, commit_hash="ops-recovery")` + `process_telegram_report(id=ID, delete_telegram_message=true)`

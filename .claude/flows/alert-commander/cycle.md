@@ -9,7 +9,9 @@ MARKET alerts (user-facing) | WORK cycle status | BUG on error
 **0. Bootstrap**
 `get_cycle_bootstrap(agent_name="alert-commander")`
 - `analysis_mode=value_investor` → skip trader alerts (→ Value Investor Mode)
-- `error` → fail-loud, STOP
+- `market_context` error → fail-loud, STOP immediately
+- `agent_signals` error only → log warning to WORK, continue with zero signals
+- Any other error → fail-loud, STOP
 
 **1. Context**
 `get_market_context(hours_back=6)` | `get_alerts(type="price")`
@@ -42,6 +44,7 @@ Fired: X | Suppressed: Y | Next: TIME
 ```
 
 **4c. BUG channel** (errors only)
+Before sending: `get_recent_fixes(limit=20)` — if same module/issue in recent fixes → **skip, do not re-report**.
 ```
 [Alert Commander] ⚠️ SEVERITY
 Issue: ... | Impact: ... | Status: Retrying/Blocking

@@ -10,10 +10,12 @@ Conviction shifts posted | issues filed | WORK heartbeat | `docs/analysis-briefs
 
 **0. Bootstrap** `get_cycle_bootstrap(agent_name="unified-agent")`
 - Check: `urgent_news` | `cross_validate` | `suppress`
-- `error` → fail-loud, STOP
+- `market_context` error → fail-loud, STOP immediately
+- `agent_signals` error only → log warning to WORK, continue with zero signals
+- Any other error → fail-loud, STOP
 
 **1. System health**
-`get_system_status()` | `get_rate_limit_status()` | `get_recent_fixes(days=2)` + `read_telegram_reports(status="new")`
+`get_system_status()` | `get_rate_limit_status()` | `get_recent_fixes(days=2)` + `read_telegram_reports(status="new", limit=50, unclaimed_only=false)`
 Stale reports: unclaimed >4h (critical) | >24h (medium) | >48h (low) → escalate to WORK
 
 **2. Market intelligence**

@@ -8,6 +8,11 @@ Up to 5 prediction claims created | WORK notified | session log
 
 ---
 
+**0. Bootstrap** `get_cycle_bootstrap(agent_name="digest-predict")`
+- `market_context` error → fail-loud, STOP immediately — no predictions without market context
+- `agent_signals` error only → log warning to WORK, continue (predictions use evidence, not signals)
+- Any other error → fail-loud, STOP
+
 **P-0. Self-assessment** `get_calibration_report()`
 - "No calibration data" → proceed normally
 - "degrading" AND `trend_delta > 0.05` → `DAMPENING_ACTIVE=true`, apply `final_confidence = min(0.95, max(0.05, computed * 0.90))`
