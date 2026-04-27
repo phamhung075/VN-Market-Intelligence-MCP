@@ -12,7 +12,7 @@
  *   3. Validate response size >= MIN_PDF_BYTES (10 240) — existing guard.
  *   4. Save to data/pdfs/<TICKER>_<YEAR>_Q<QUARTER>.pdf.
  *   5. Update bctc_vps_queue status to 'done'.
- *   6. Trigger PDF text extraction pipeline (fire-and-forget; errors logged only).
+ *   6. Await PDF text extraction pipeline (Bug 1352a fix; errors logged, non-fatal).
  *
  * All I/O (fetch, save, extraction trigger) is injectable so tests run without
  * real network, real file system, or real DB writes.
@@ -63,7 +63,8 @@ export interface BctcPdfPullDeps {
 
   /**
    * Trigger the PDF text extraction pipeline for a successfully saved PDF.
-   * Called fire-and-forget — errors are caught and logged, never re-thrown.
+   * Bug 1352a: now awaited before the queue row is marked done.
+   * Errors are caught by the caller and logged; they are never re-thrown.
    */
   triggerExtraction: (params: {
     actionCode: string;
@@ -300,24 +301,29 @@ export async function runBctcPdfPullJob(opts: {
       filePath,
     });
 
-    // ── 5. Mark done ───────────────────────────────────────────────────────
-    updateDone.run(row.id);
-    result.downloaded++;
-
-    // ── 6. Trigger extraction (fire-and-forget) ────────────────────────────
-    deps
-      .triggerExtraction({
+    // ── 5. Trigger extraction (await — ensures text is stored before done) ────
+    // Bug 1352a: was fire-and-forget; MCP tools called immediately after
+    // runBctcPdfPullJob saw empty text because OCR had not completed yet.
+    try {
+      await deps.triggerExtraction({
         actionCode: row.action_code,
         year: row.period_year,
         quarter: row.period_quarter,
         filePath,
-      })
-      .catch((err) => {
-        logger.warn("[bctcPdfPull] extraction trigger failed (non-fatal)", {
-          ticker: row.action_code,
-          error: err instanceof Error ? err.message : String(err),
-        });
       });
+    } catch (err) {
+      // Extraction failure is non-fatal — PDF is saved, mark done regardless.
+      // The bctcReparseJob will re-attempt extraction on the next daily cycle.
+      logger.warn("[bctcPdfPull] extraction trigger failed (non-fatal)", {
+        ticker: row.action_code,
+        filePath,
+        error: err instanceof Error ? err.message : String(err),
+      });
+    }
+
+    // ── 6. Mark done — extraction has completed (or failed non-fatally) ───
+    updateDone.run(row.id);
+    result.downloaded++;
   }
 
   logger.info("[bctcPdfPull] cycle complete", {
