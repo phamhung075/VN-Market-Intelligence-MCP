@@ -202,6 +202,13 @@ export function _resetWatchdogStaleFlag(): void {
 }
 
 /**
+ * Test-only: Reset SSH attempt timer for test isolation.
+ */
+export function _resetSshCooldown(): void {
+  lastSshAttemptAt = 0;
+}
+
+/**
  * Attempt SSH restart of vn-price-fetch service on VINAHOST.
  * Non-blocking with 30s timeout. Returns status string for logging.
  */
