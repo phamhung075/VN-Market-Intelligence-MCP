@@ -55,7 +55,9 @@
 
 ## Review
 
-(empty)
+| Task ID | Title | Priority | Type | Owner | Handoff |
+|---------|-------|----------|------|-------|---------|
+| 1352-BCTC-LOG | Commit OCR health logging implementation from stash | MEDIUM | FIX | Developer | docs/handoffs/TASK_1352_BCTC_LOG.md |
 
 ## Done
 
