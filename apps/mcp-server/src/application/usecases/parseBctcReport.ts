@@ -26,6 +26,7 @@ import { computeFinancialRatios } from "../../domain/services/financial-reports/
 import { computePeriodDelta } from "../../domain/services/financial-reports/periodDeltaComputer.js";
 import type { FinancialMetrics } from "../../domain/services/financial-reports/periodDeltaComputer.js";
 import { validateFinancialReport } from "../../domain/services/financial-reports/bctcValidator.js";
+import { validateFinancialFigures } from "../../domain/services/financial-reports/financialFiguresValidator.js";
 import { getDb, initDatabase } from "../../infrastructure/db/schema.js";
 import { logger } from "../../infrastructure/logger.js";
 
@@ -153,6 +154,7 @@ function storeReport(
   validationStatus: string,
   validationNotes: string | null,
   extractionConfidence: number,
+  confidenceFinancial?: number,
 ): void {
   // 1196: Guard — all-zero extraction produces no usable data; skip insert entirely.
   if (extractionConfidence === 0) {
@@ -180,6 +182,28 @@ function storeReport(
     });
   }
 
+  // 1345b: Financial validation confidence gate.
+  // composite_confidence = min(extractionConfidence, confidenceFinancial)
+  // When composite <= 0.3: mark low_confidence, send bug alert, skip conviction signal.
+  const compositeConfidence = confidenceFinancial !== undefined
+    ? Math.min(extractionConfidence, confidenceFinancial)
+    : extractionConfidence;
+
+  if (confidenceFinancial !== undefined && compositeConfidence <= 0.3) {
+    validationStatus = "low_confidence";
+    const financialMsg =
+      `[BCTC-1345b] Low financial confidence (composite=${compositeConfidence.toFixed(2)}, ` +
+      `financial=${confidenceFinancial.toFixed(2)}) — conviction signal skipped for ` +
+      `${report.actionCode} ${report.period.year}-${report.period.periodType ?? ""}. ` +
+      `Check for OCR corruption (VNM/VEA pattern: assets<equity or margin>100%).`;
+    logger.warn(financialMsg);
+    void import("../../infrastructure/notifiers/telegram.js").then(({ sendTelegramBug }) => {
+      sendTelegramBug(financialMsg).catch(() => {});
+    });
+    // NOTE: we still INSERT the record (for audit trail) but with low_confidence status.
+    // Conviction signals are NOT generated — enforced by callers checking validation_status.
+  }
+
   const db = getDb();
   const stmt = db.prepare(`
     INSERT OR REPLACE INTO financial_reports (
@@ -197,7 +221,8 @@ function storeReport(
       balance_sheet_json, income_stmt_json, cash_flow_json, ratios_json,
       yoy_delta_json, qoq_delta_json,
       market_data_json, embedding_text, notes_raw_text,
-      validation_status, validation_notes, extraction_method
+      validation_status, validation_notes, extraction_method,
+      ocr_confidence, confidence_financial
     ) VALUES (
       $id, $actionCode, $companyName, $exchange, $domain,
       $periodYear, $periodQuarter, $periodType, $periodStart, $periodEnd, $sortKey,
@@ -213,7 +238,8 @@ function storeReport(
       $balanceSheetJson, $incomeStmtJson, $cashFlowJson, $ratiosJson,
       $yoyDeltaJson, $qoqDeltaJson,
       $marketDataJson, $embeddingText, $notesRawText,
-      $validationStatus, $validationNotes, $extractionMethod
+      $validationStatus, $validationNotes, $extractionMethod,
+      $ocrConfidence, $confidenceFinancial
     )
   `);
 
@@ -288,6 +314,8 @@ function storeReport(
     $validationStatus: validationStatus,
     $validationNotes: validationNotes,
     $extractionMethod: 'ocr_pdf',
+    $ocrConfidence: extractionConfidence,
+    $confidenceFinancial: confidenceFinancial ?? null,
   });
 }
 
@@ -395,7 +423,23 @@ export async function parseBctcReport(
   // ── Step 5: Compute extraction confidence ────────────────────────────────
   const extractionConfidence = computeConfidence(balanceSheet, incomeStatement, cashFlow);
 
-  // ── Step 5b: Validate the extracted data (Task 132) ──────────────────────
+  // ── Step 5b: Financial figures validation (Task 1345b) ───────────────────
+  // Pure domain function — checks accounting identity and business-norm rules.
+  // operatingMargin = operatingProfit / netRevenue (ratio, not %)
+  const operatingMarginRatio =
+    incomeStatement.netRevenue !== 0
+      ? incomeStatement.operatingProfit / incomeStatement.netRevenue
+      : null;
+
+  const confidenceFinancial = validateFinancialFigures({
+    totalAssets: balanceSheet.totalAssets || null,
+    totalEquity: balanceSheet.equity.total || null,
+    totalLiabilities: balanceSheet.totalLiabilities || null,
+    operatingMargin: operatingMarginRatio,
+    netRevenue: incomeStatement.netRevenue || null,
+  });
+
+  // ── Step 5d: Validate the extracted data (Task 132) ──────────────────────
   const validation = validateFinancialReport({
     balanceSheet: {
       totalAssets: balanceSheet.totalAssets,
@@ -480,7 +524,7 @@ export async function parseBctcReport(
   const db = getDb();
 
   try {
-    storeReport(report, validationStatus, validationNotes, extractionConfidence);
+    storeReport(report, validationStatus, validationNotes, extractionConfidence, confidenceFinancial);
   } catch (err) {
     throw new Error(
       `storeReport failed: ${err instanceof Error ? err.message : String(err)}`,

@@ -30,7 +30,13 @@ class ExtractedTableDTO:
 
 @dataclass
 class ExtractPDFResponse:
-    """Output contract: returned by ExtractPDFUseCase and serialized to JSON."""
+    """Output contract: returned by ExtractPDFUseCase and serialized to JSON.
+
+    confidence_financial: score from validate_financial_figures() in [0.0, 1.0].
+      1.0 when no financial figures are parsed at extraction time (default).
+      Downstream parsers that resolve actual figures should update this field.
+      composite_confidence = min(ocr_confidence, confidence_financial) for signal gating.
+    """
 
     document_id: str
     tables: list[ExtractedTableDTO]
@@ -38,6 +44,7 @@ class ExtractPDFResponse:
     ocr_confidence: float
     extraction_time_ms: int
     status: Literal["success", "failed"]
+    confidence_financial: float = 1.0
 
     def to_json(self) -> dict:
         return asdict(self)
