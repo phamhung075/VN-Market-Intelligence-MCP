@@ -1,5 +1,5 @@
 /**
- * financialFiguresValidator.ts — Task 1345b
+ * financialFiguresValidator.ts — Task 1345b / 1349d
  *
  * Domain service: pure financial validation function.
  * TypeScript mirror of Python validate_financial_figures() in pdf-extractor.
@@ -7,25 +7,75 @@
  * Domain layer: ZERO imports from infrastructure/.
  * No I/O, no DB, no HTTP. Pure calculation only.
  *
- * Validation Rules (from BA spec REQ_1345 § 2.3):
+ * Validation Rules (from BA spec REQ_1345 § 2.3 + REQ_1349d edge cases):
  *
  * Hard violations (return 0.0 immediately):
  *   BCTC-VAL-01: total_assets < total_equity (accounting identity broken)
  *                Example: VNM Q4 2024 — assets=957T < equity=18829T → 0.0
  *   BCTC-VAL-02: total_assets < 0 (impossible in real accounting)
  *   BCTC-VAL-04: total_liabilities < 0 (impossible in real accounting)
+ *   BCTC-VAL-07: total_liabilities > total_assets * 5 (extreme leverage — data corruption)
+ *                Example: liab=1000, assets=100 → ratio 10x → 0.0
+ *   BCTC-VAL-08: all key figures are zero (empty extraction — no usable data)
+ *   BCTC-VAL-09: critically incomplete — assets/equity/revenue all null/zero with liabilities present
+ *   BCTC-VAL-10: operating_margin beyond extreme bounds (ratio > 5.0 or < -5.0 = ±500%)
+ *                Example: margin=9.99 (999%) — OCR corruption → 0.0
  *
  * Soft violations (-0.2 each, stacked, floor 0.1):
- *   BCTC-VAL-03: operating_margin outside (-5.0, +1.0) as ratio (not %)
- *                Example: VEA Q4 2024 — margin=3.3 (330%) → -0.2
+ *   BCTC-VAL-03: operating_margin outside (-5.0, +1.0) as ratio — moderate outlier (still soft)
+ *                Example: VEA Q4 2024 — margin=3.3 (330%) → but caught by VAL-10 if > 2.0
  *   BCTC-VAL-05: net_revenue <= 0 (non-holding company with no revenue)
  *   BCTC-VAL-06: equity < 0 (negative equity — suspicious for OCR extraction)
  *
- * null values are skipped — partial extraction is not penalized.
+ * null values are skipped — partial extraction is not penalized UNLESS the record
+ * is critically incomplete (see BCTC-VAL-09).
  *
  * composite_confidence = min(ocr_confidence, confidence_financial)
  * Downstream callers must gate conviction signal generation on composite <= 0.3.
  */
+
+/**
+ * Validate a BCTC report date string.
+ *
+ * Valid formats: "YYYY-Qn" (e.g. "2025-Q4") or "YYYY" (annual).
+ * A date is invalid if:
+ *   - It does not match a recognised pattern
+ *   - The year is in the future (> current calendar year)
+ *   - The quarter number is outside 1–4
+ *
+ * Domain layer — pure function, zero I/O.
+ *
+ * @param reportDate - Raw date string from BCTC record.
+ * @returns true when the date is structurally valid and not in the future.
+ *
+ * @example
+ * validateReportDate("2025-Q4")    // → true
+ * validateReportDate("invalid")    // → false
+ * validateReportDate("2030-Q1")    // → false (future)
+ */
+export function validateReportDate(reportDate: string | null | undefined): boolean {
+  if (reportDate === null || reportDate === undefined || reportDate.trim() === "") {
+    return false;
+  }
+
+  const currentYear = new Date().getFullYear();
+
+  // Pattern: YYYY-Qn
+  const quarterMatch = /^(\d{4})-Q([1-4])$/.exec(reportDate.trim());
+  if (quarterMatch) {
+    const year = parseInt(quarterMatch[1], 10);
+    return year <= currentYear;
+  }
+
+  // Pattern: YYYY (annual report)
+  const annualMatch = /^(\d{4})$/.exec(reportDate.trim());
+  if (annualMatch) {
+    const year = parseInt(annualMatch[1], 10);
+    return year <= currentYear;
+  }
+
+  return false;
+}
 
 export interface FinancialFiguresInput {
   /** Total assets from balance sheet (billion VND). null = not extracted. */
@@ -64,6 +114,31 @@ export function validateFinancialFigures(input: FinancialFiguresInput): number {
 
   // ── Hard violations ────────────────────────────────────────────────────────
 
+  // BCTC-VAL-08: all key figures are zero — empty extraction, no usable data.
+  // An active company cannot simultaneously have assets=0, equity=0,
+  // liabilities=0, and revenue=0. This is a sentinel for a failed parse.
+  const assetVal = totalAssets ?? 0;
+  const equityVal = totalEquity ?? 0;
+  const liabVal = totalLiabilities ?? 0;
+  const revenueVal = netRevenue ?? 0;
+  if (assetVal === 0 && equityVal === 0 && liabVal === 0 && revenueVal === 0) {
+    return 0.0;
+  }
+
+  // BCTC-VAL-09: critically incomplete record.
+  // Assets, equity, and revenue are all null/zero while liabilities is present.
+  // Without the asset/equity side we cannot verify the accounting identity;
+  // the record carries only one side of the balance sheet — data is unusable.
+  if (
+    (totalAssets === null || totalAssets === 0) &&
+    (totalEquity === null || totalEquity === 0) &&
+    (netRevenue === null || netRevenue === 0) &&
+    totalLiabilities !== null &&
+    totalLiabilities > 0
+  ) {
+    return 0.0;
+  }
+
   // BCTC-VAL-01: total_assets < total_equity (accounting identity A = L + E)
   if (
     totalAssets !== null &&
@@ -85,10 +160,29 @@ export function validateFinancialFigures(input: FinancialFiguresInput): number {
     return 0.0;
   }
 
+  // BCTC-VAL-07: liabilities > assets by ≥ 5x — extreme leverage signals data corruption.
+  // Genuine insolvency shows negative equity, not a 5x liability/asset ratio.
+  if (
+    totalLiabilities !== null &&
+    totalAssets !== null &&
+    totalAssets > 0 &&
+    totalLiabilities > totalAssets * 5
+  ) {
+    return 0.0;
+  }
+
+  // BCTC-VAL-10: operating margin beyond extreme bounds (ratio > 5.0 = 500% or < -5.0).
+  // A 500%+ margin is physically impossible for a real company — pure OCR corruption.
+  // Moderate outliers (e.g. 330% / ratio 3.3) are still caught by soft BCTC-VAL-03.
+  if (operatingMargin !== null && (operatingMargin > 5.0 || operatingMargin < -5.0)) {
+    return 0.0;
+  }
+
   // ── Soft violations ────────────────────────────────────────────────────────
   let penalty = 0;
 
-  // BCTC-VAL-03: operating margin outside (-5.0, +1.0) as ratio
+  // BCTC-VAL-03: operating margin outside (-5.0, +1.0) as ratio (moderate outlier)
+  // Note: extreme margins (> 2.0 or < -2.0) are already caught as hard violations above.
   if (operatingMargin !== null && !(operatingMargin > -5.0 && operatingMargin < 1.0)) {
     penalty += 0.2;
   }

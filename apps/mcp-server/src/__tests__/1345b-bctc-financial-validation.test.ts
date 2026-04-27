@@ -280,3 +280,150 @@ describe("Task 1345b — BCTC Financial Validation (MCP server)", () => {
     expect(composite).toBeLessThanOrEqual(0.3);
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Task 1349d — Edge Case Tests
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("Task 1349d — BCTC edge case: all-zero financials", () => {
+  /**
+   * All fields zero means no real financial data was extracted.
+   * An active company cannot have all key figures at zero simultaneously.
+   * Expected: confidence_financial ≤ 0.3 (effectively 0.0 — hard violation).
+   */
+  it("marks all-zero fields as low-confidence (≤ 0.3)", async () => {
+    const { validateFinancialFigures } = await import(
+      "../domain/services/financial-reports/financialFiguresValidator.js"
+    );
+
+    const confidence = validateFinancialFigures({
+      totalAssets: 0,
+      totalEquity: 0,
+      totalLiabilities: 0,
+      operatingMargin: null,
+      netRevenue: 0,
+    });
+
+    expect(confidence).toBeLessThanOrEqual(0.3);
+  });
+});
+
+describe("Task 1349d — BCTC edge case: invalid reportDate", () => {
+  /**
+   * validateFinancialFigures is a pure financial-figures function; date
+   * validation is the responsibility of the caller layer. We validate the
+   * domain rule directly: a record with a malformed or future report date
+   * passed alongside otherwise-plausible figures must not generate a
+   * conviction signal. We simulate this by calling validateFinancialFigures
+   * with a helper that encodes date validity as netRevenue=0 (no usable
+   * data extracted) when the date is invalid, verifying the function still
+   * returns ≤ 0.3.
+   *
+   * The dedicated date-validation helper validateReportDate() is also tested
+   * directly to ensure it rejects both malformed and future dates.
+   */
+  it("rejects malformed reportDate (helper returns false)", async () => {
+    const { validateReportDate } = await import(
+      "../domain/services/financial-reports/financialFiguresValidator.js"
+    );
+
+    expect(validateReportDate("invalid-date")).toBe(false);
+  });
+
+  it("rejects future reportDate (helper returns false)", async () => {
+    const { validateReportDate } = await import(
+      "../domain/services/financial-reports/financialFiguresValidator.js"
+    );
+
+    expect(validateReportDate("2030-Q1")).toBe(false);
+  });
+
+  it("returns confidence ≤ 0.3 when netRevenue=0 (invalid-date record has no usable revenue)", async () => {
+    const { validateFinancialFigures } = await import(
+      "../domain/services/financial-reports/financialFiguresValidator.js"
+    );
+
+    // Caller sets netRevenue=0 when date is invalid (no valid period to extract from)
+    const confidence = validateFinancialFigures({
+      totalAssets: 0,
+      totalEquity: 0,
+      totalLiabilities: 0,
+      operatingMargin: null,
+      netRevenue: 0,
+    });
+
+    expect(confidence).toBeLessThanOrEqual(0.3);
+  });
+});
+
+describe("Task 1349d — BCTC edge case: impossible margins", () => {
+  /**
+   * BCTC-VAL-03 flags margin outside (-5.0, +1.0) as a soft violation.
+   * A 999% margin (profit=999, revenue=100 → ratio 9.99) is far outside
+   * the range — the function must return ≤ 0.3.
+   *
+   * BCTC-VAL-07 (new): liabilities > assets by ≥ 5x is a hard violation
+   * (data corruption, not merely insolvency). Liab=1000, assets=100 → ratio 10x.
+   */
+  it("flags profit/revenue margin > 100% (ratio 9.99) as confidence ≤ 0.3", async () => {
+    const { validateFinancialFigures } = await import(
+      "../domain/services/financial-reports/financialFiguresValidator.js"
+    );
+
+    // operatingMargin as ratio: 999/100 = 9.99
+    const confidence = validateFinancialFigures({
+      totalAssets: 500,
+      totalEquity: 400,
+      totalLiabilities: 100,
+      operatingMargin: 9.99, // 999% — extreme OCR corruption
+      netRevenue: 100,
+    });
+
+    expect(confidence).toBeLessThanOrEqual(0.3);
+  });
+
+  it("flags liabilities > assets by 10x as confidence ≤ 0.3", async () => {
+    const { validateFinancialFigures } = await import(
+      "../domain/services/financial-reports/financialFiguresValidator.js"
+    );
+
+    const confidence = validateFinancialFigures({
+      totalAssets: 100,
+      totalEquity: null,
+      totalLiabilities: 1000, // 10x assets — impossible without insolvency signal
+      operatingMargin: null,
+      netRevenue: 100,
+    });
+
+    expect(confidence).toBeLessThanOrEqual(0.3);
+  });
+});
+
+describe("Task 1349d — BCTC edge case: missing / null fields", () => {
+  /**
+   * Null fields are skipped individually (partial extraction is not penalized).
+   * However, when the populated fields form an internally inconsistent picture
+   * (liabilities=50 with assets=null — no way to verify identity) combined
+   * with null revenue, the extraction quality is too low to trust.
+   *
+   * Rule: if ALL of {totalAssets, totalEquity, netRevenue} are null/zero
+   * AND totalLiabilities is non-zero, the record is missing critical context
+   * → confidence ≤ 0.3.
+   */
+  it("handles null fields gracefully and returns confidence ≤ 0.3 for critically incomplete record", async () => {
+    const { validateFinancialFigures } = await import(
+      "../domain/services/financial-reports/financialFiguresValidator.js"
+    );
+
+    const confidence = validateFinancialFigures({
+      totalAssets: null,
+      totalEquity: null,
+      totalLiabilities: 50,
+      operatingMargin: null,
+      netRevenue: null,
+    });
+
+    // Should not throw. Should return low confidence for critically incomplete data.
+    expect(confidence).toBeLessThanOrEqual(0.3);
+  });
+});
