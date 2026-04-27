@@ -59,3 +59,9 @@ Close: 27,200 VND (+2.3% daily, +6.8% YoY) | RSI: 61 | Volume: 2.4M (+8% vs 20d 
 YoY comparison (May 20 2025): Price was 25,500 → gain of 6.8% over year
 Sentiment: +0.1 (steady, no strong drivers) | Insider: no activity
 Summary: Banking sector modestly firm. Stable returns, blue-chip safety profile.
+
+---
+
+### 2026-04-27 · EOD
+**2026-04-27 16:00** | Close: 60,600 VND (-3.50%) | RSI: N/A (insufficient data) | Volume: 1.19M | Sentiment: Stable (57% bullish)
+Banking sector pressure. VCB declining with broader market weakness. No insider activity detected.

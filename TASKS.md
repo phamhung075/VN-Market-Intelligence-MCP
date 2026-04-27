@@ -71,5 +71,7 @@
 | 1349b | Circuit breaker state logging + metrics (circuitBreakerLogger.ts) | main 2026-04-27 | reports/TASK_REPORT_1349b.md |
 | 1349d | BCTC validation edge cases (VAL-07–VAL-10) + QA TS fix | main 2026-04-27 | reports/TASK_REPORT_1349d.md |
 | 1349e | Job cycle timings + ops metrics (jobMetrics.ts) | main 2026-04-27 | reports/TASK_REPORT_1349e.md |
+| 1349c | Scheduler.md path corrections (docs/agent-memory/modules/scheduler.md) | main 2026-04-27 | — |
+| 1349f | Integration QA — Sprint 1349 observability (11/11 pass, 7471 baseline) | main 2026-04-27 | reports/TASK_REPORT_1349f.md |
 
 ---
