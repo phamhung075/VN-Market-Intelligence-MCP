@@ -183,6 +183,12 @@ export interface ReparseDeps {
     year: number;
     quarter: "Q1" | "Q2" | "Q3" | "Q4";
   }) => Promise<void>;
+  /**
+   * Bug 1352a: Run high-DPI (300 DPI) OCR retry for pages with confidence < 0.3.
+   * Calls extractAndStorePdfPagesWithRetry under the hood.
+   * Optional — when not injected, the high-DPI retry is skipped.
+   */
+  extractHighDpiRetry?: (filePath: string, filename: string, actionCode: string) => Promise<void>;
 }
 
 /**
@@ -261,30 +267,66 @@ export async function reparseSingleWithOcrFallback(
         cached: cached ? { pages: cached.pages, confidence: cached.confidence } : null,
       });
 
-      // ── SPRINT-1330: DA_NOP Fallback ────────────────────────────────────
-      // When extraction fails with low confidence, insert a minimal fallback record
-      // to prevent earnings calendar from showing the filing as overdue (QUA_HAN).
-      // This ensures DA_NOP status (already filed) even when content extraction fails.
-      try {
-        await deps.insertFallbackRecord({
-          ticker: payload.ticker,
-          year: yq.year,
-          quarter: yq.quarter,
+      // ── Bug 1352a: DPI 300 retry for low-confidence pages ───────────────
+      // When OCR cache confidence < 0.3, attempt a high-DPI re-extraction.
+      // extractAndStorePdfPagesWithRetry already handles DPI 200 → DPI 300 logic.
+      if (deps.extractHighDpiRetry) {
+        logger.info("[bctc-reparse-job] attempting DPI 300 retry for low-confidence extract", {
+          filename: payload.filename,
+          cachedConfidence: cached?.confidence ?? null,
         });
-
-        logger.info("[bctc-reparse-job] inserted DA_NOP fallback record", {
-          ticker: payload.ticker,
-          period: `${yq.year}-Q${yq.quarter}`,
-          reason: "extraction failed with low confidence",
-        });
-      } catch (fallbackErr) {
-        logger.warn("[bctc-reparse-job] fallback record insert failed", {
-          ticker: payload.ticker,
-          error: fallbackErr instanceof Error ? fallbackErr.message : String(fallbackErr),
-        });
+        try {
+          await deps.extractHighDpiRetry(payload.filePath, payload.filename, payload.ticker);
+          // Re-check cache after high-DPI run
+          const retried = deps.getOcrCache(payload.filename);
+          if (retried !== null && retried.confidence >= 0.3 && retried.text.trim().length >= 100) {
+            rawText = retried.text;
+            logger.info("[bctc-reparse-job] DPI 300 retry succeeded", {
+              filename: payload.filename,
+              confidence: retried.confidence,
+              chars: retried.text.length,
+            });
+          } else {
+            logger.warn("[bctc-reparse-job] DPI 300 retry still too low confidence", {
+              filename: payload.filename,
+              confidence: retried?.confidence ?? null,
+            });
+          }
+        } catch (retryErr) {
+          logger.warn("[bctc-reparse-job] DPI 300 retry threw", {
+            filename: payload.filename,
+            error: retryErr instanceof Error ? retryErr.message : String(retryErr),
+          });
+        }
       }
 
-      return false;
+      // If DPI 300 retry succeeded, rawText is now populated — fall through to pipeline.
+      // If not, insert DA_NOP fallback and return false.
+      if (rawText === null) {
+        // ── SPRINT-1330: DA_NOP Fallback ──────────────────────────────────
+        // When extraction fails with low confidence (even after DPI 300 retry),
+        // insert a minimal fallback record to prevent QUA_HAN in the earnings calendar.
+        try {
+          await deps.insertFallbackRecord({
+            ticker: payload.ticker,
+            year: yq.year,
+            quarter: yq.quarter,
+          });
+
+          logger.info("[bctc-reparse-job] inserted DA_NOP fallback record", {
+            ticker: payload.ticker,
+            period: `${yq.year}-Q${yq.quarter}`,
+            reason: "extraction failed with low confidence",
+          });
+        } catch (fallbackErr) {
+          logger.warn("[bctc-reparse-job] fallback record insert failed", {
+            ticker: payload.ticker,
+            error: fallbackErr instanceof Error ? fallbackErr.message : String(fallbackErr),
+          });
+        }
+
+        return false;
+      }
     }
   }
 
@@ -384,12 +426,18 @@ async function makeProductionDeps(): Promise<ReparseDeps> {
   const { fetchParseAndStoreBctc } = await import(
     "../../application/usecases/fetchParseAndStoreBctc.js"
   );
+  const { extractAndStorePdfPagesWithRetry } = await import(
+    "../../infrastructure/fetchers/pdfOcrWorker.js"
+  );
   return {
     extractText: async (buf: Buffer) => extractPdfText(buf),
     getOcrCache: (filename: string) => getCachedPdfText(filename),
     pipeline: async (params) => fetchParseAndStoreBctc(params),
     fileExists: (path: string) => existsSync(path),
     readFile: (path: string) => readFileSync(path),
+    extractHighDpiRetry: async (filePath: string, filename: string, actionCode: string) => {
+      await extractAndStorePdfPagesWithRetry(filePath, filename, actionCode);
+    },
     insertFallbackRecord: async (payload) => {
       const db = getDb();
       const now = new Date().toISOString();
