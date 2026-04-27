@@ -43,8 +43,6 @@
 
 | Task ID | Title | Developer | Reports | Handoff |
 |---------|-------|-----------|---------|---------|
-| 1346c-a | Alert quality: volume spike + sentiment negation + VJC alias | Dev A | 1320, 1321, 1322 | docs/handoffs/TASK_1346c-a.md |
-| 1346c-b | NER suffix wiring + feedback retry + unknown stock_code | Dev B | 1311, 1317, 1313 | docs/handoffs/TASK_1346c-b.md |
 | 1346d | PDF circuit breaker concurrent race fix | Dev C | 1316 | docs/handoffs/TASK_1346d.md |
 
 ---
@@ -59,5 +57,7 @@
 | Task ID | Title | Merged | Reports |
 |---------|-------|--------|---------|
 | 1346b | Fix push-foreign-flow UNIQUE constraint | main 2026-04-27 | reports/TASK_REPORT_1346b.md — closes 1310, 1312 |
+| 1346c-b | NER suffix wiring + feedback retry + unknown stock_code | main 2026-04-27 | reports/TASK_REPORT_1346c-b.md — closes 1311, 1317, 1313 |
+| 1346c-a | Alert quality: volume spike + sentiment negation + VJC alias | main 2026-04-27 | reports/TASK_REPORT_1346c-a.md — closes 1320, 1321, 1322 |
 
 ---
