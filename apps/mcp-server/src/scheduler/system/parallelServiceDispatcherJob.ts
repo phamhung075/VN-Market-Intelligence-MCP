@@ -22,8 +22,26 @@ import {
   getGatewayHealth,
   getMarketHexagram,
 } from '../../infrastructure/microservices/clients.js';
+import type {
+  ComputeTARequest,
+  ComputeTAResponse,
+  MacroSnapshotResponse,
+  HealthStatus,
+  KinhDichReadingResponse,
+} from '../../infrastructure/microservices/clients.js';
 import { sendTelegramWork } from '../../infrastructure/notifiers/telegram.js';
 import { getDb } from '../../infrastructure/db/schema.js';
+import type { Database } from 'bun:sqlite';
+
+export interface DispatcherDeps {
+  computeTAFn?:    (req: ComputeTARequest) => Promise<ComputeTAResponse>;
+  getMacroFn?:     () => Promise<MacroSnapshotResponse>;
+  getGatewayFn?:   () => Promise<HealthStatus>;
+  getKinhDichFn?:  () => Promise<KinhDichReadingResponse>;
+  sendTelegramFn?: (msg: string) => Promise<void>;
+  getDbFn?:        () => Database;
+  nowFn?:          () => Date;
+}
 
 export interface DispatcherResult {
   timestamp: string;
@@ -40,9 +58,18 @@ export interface DispatcherResult {
  * Dispatch calls to multiple microservices in parallel.
  * Each service call is isolated — failure of one doesn't block others.
  */
-export async function runParallelServiceDispatcher(): Promise<DispatcherResult> {
+export async function runParallelServiceDispatcher(deps?: DispatcherDeps): Promise<DispatcherResult> {
   const timestamp = new Date().toISOString();
-  const db = getDb();
+
+  const _computeTA    = deps?.computeTAFn   ?? computeTAIndicators;
+  const _getMacro     = deps?.getMacroFn    ?? getMacroSnapshot;
+  const _getGateway   = deps?.getGatewayFn  ?? getGatewayHealth;
+  const _getKinhDich  = deps?.getKinhDichFn ?? getMarketHexagram;
+  const _sendTelegram = deps?.sendTelegramFn ?? sendTelegramWork;
+  const _getDb        = deps?.getDbFn       ?? getDb;
+  const _now          = deps?.nowFn         ?? (() => new Date());
+
+  const db = _getDb();
 
   // Collect all pending tickers to scan
   const watchlist = db.query<{ code: string }, []>("SELECT code FROM watchlist LIMIT 10").all();
@@ -56,7 +83,7 @@ export async function runParallelServiceDispatcher(): Promise<DispatcherResult> 
       try {
         const taResults = [];
         for (const code of tickers.slice(0, 5)) {
-          const result = await computeTAIndicators({ code });
+          const result = await _computeTA({ code });
           taResults.push(result);
         }
         return { status: 'ok' as const, duration: Date.now() - t0, count: taResults.length };
@@ -69,7 +96,7 @@ export async function runParallelServiceDispatcher(): Promise<DispatcherResult> 
     (async () => {
       const t0 = Date.now();
       try {
-        const snapshot = await getMacroSnapshot();
+        const snapshot = await _getMacro();
         return {
           status: 'ok' as const,
           duration: Date.now() - t0,
@@ -84,7 +111,7 @@ export async function runParallelServiceDispatcher(): Promise<DispatcherResult> 
     (async () => {
       const t0 = Date.now();
       try {
-        const health = await getGatewayHealth();
+        const health = await _getGateway();
         return {
           status: 'ok' as const,
           duration: Date.now() - t0,
@@ -99,7 +126,7 @@ export async function runParallelServiceDispatcher(): Promise<DispatcherResult> 
     (async () => {
       const t0 = Date.now();
       try {
-        const reading = await getMarketHexagram();
+        const reading = await _getKinhDich();
         return {
           status: 'ok' as const,
           duration: Date.now() - t0,
@@ -143,11 +170,11 @@ export async function runParallelServiceDispatcher(): Promise<DispatcherResult> 
     });
 
     // Send brief Telegram notification on weekday mornings (optional heartbeat)
-    const now = new Date();
+    const now = _now();
     const isWeekday = now.getUTCDay() !== 0 && now.getUTCDay() !== 6;
     if (isWeekday && now.getUTCHours() === 1) {
       // ~08:00 GMT+7
-      await sendTelegramWork(
+      await _sendTelegram(
         `[dispatcher] Microservices online: TA (${serviceResults.ta.duration}ms), Macro (${serviceResults.macro.duration}ms), Gateway (${serviceResults.gateway.duration}ms)`,
       );
     }
@@ -161,7 +188,7 @@ export async function runParallelServiceDispatcher(): Promise<DispatcherResult> 
       services: serviceResults,
     });
 
-    await sendTelegramWork(
+    await _sendTelegram(
       `[dispatcher-alert] Services DOWN: ${failedServices}\n${JSON.stringify(serviceResults, null, 2)}`,
     );
   }
