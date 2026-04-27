@@ -1,0 +1,21 @@
+[Unit]
+Description=TradingEconomics macro indicators proxy — push VN macro data to zenmidi MCP
+Documentation=https://github.com/phamhung075/VN-Market-Intelligence-MCP
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/root/fetch-tradingeconomics-loop.sh
+Restart=always
+RestartSec=10
+StartLimitIntervalSec=300
+StartLimitBurst=5
+MemoryMax=512M
+MemorySwapMax=0
+TasksMax=32
+StandardOutput=append:/var/log/vn-tradingeconomics-fetch.log
+StandardError=append:/var/log/vn-tradingeconomics-fetch.log
+
+[Install]
+WantedBy=multi-user.target

@@ -31,6 +31,33 @@ import { logger } from "../../infrastructure/logger.js";
 import { globalSourceTracker } from "../../interface/mcp/tools/news-analysis/sourceHealthTools.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Constants — Reuters/TE fallback chain (Task 1345a)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Reuters VPS push runs hourly. 90 min allows one missed cycle before
+ * the newsapi fallback activates. Mirrors REUTERS_STALE_MS in vpsProxyWatchdogJob.ts.
+ */
+const REUTERS_STALE_MS = 90 * 60 * 1000;
+
+/**
+ * Minimum interval between "all sources dark" Telegram bug alerts.
+ * One alert per 4-hour window — prevents alert flood during sustained outage.
+ */
+const ALL_DARK_ALERT_COOLDOWN_MS = 4 * 60 * 60 * 1000;
+
+/** Module-level dedup timer for all-sources-dark alert. */
+let _lastAllDarkAlertAt = 0;
+
+/**
+ * Test-only reset for the all-sources-dark dedup timer.
+ * @internal
+ */
+export function _resetAllDarkAlert(): void {
+  _lastAllDarkAlertAt = 0;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Types
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -80,11 +107,17 @@ export type RagRetriever = (
 /**
  * Options for pollNews.
  *
- * @param limit      - Max items per source to process (default 20)
- * @param fetchers   - Injectable fetcher overrides for testing
- * @param db         - Injectable bun:sqlite Database (defaults to getDb())
- * @param ragRetriever - Injectable RAG retriever (defaults to no-op in production)
- * @param watchlist  - Watchlist entries used for cascade + alert generation
+ * @param limit              - Max items per source to process (default 20)
+ * @param fetchers           - Injectable fetcher overrides for testing
+ * @param db                 - Injectable bun:sqlite Database (defaults to getDb())
+ * @param ragRetriever       - Injectable RAG retriever (defaults to no-op in production)
+ * @param watchlist          - Watchlist entries used for cascade + alert generation
+ * @param reutersLastPushTs  - Optional: last known Reuters VPS push timestamp.
+ *                             When provided and older than REUTERS_STALE_MS (90 min),
+ *                             the newsapi fallback fetcher is activated. Task 1345a.
+ * @param onAllSourcesDark   - Optional: callback fired when all sources return 0 items.
+ *                             Deduped per 4h window (module-level `_lastAllDarkAlertAt`).
+ *                             Defaults to a Telegram bug channel alert. Task 1345a.
  */
 export interface PollNewsOptions {
   limit?: number;
@@ -92,6 +125,10 @@ export interface PollNewsOptions {
   db?: Database;
   ragRetriever?: RagRetriever;
   watchlist?: WatchlistEntry[];
+  /** Last Reuters VPS push timestamp — activates newsapi fallback if stale >90 min. Task 1345a. */
+  reutersLastPushTs?: Date | null;
+  /** All-sources-dark alert callback (injectable for tests). Task 1345a. */
+  onAllSourcesDark?: (message: string) => Promise<void>;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -308,6 +345,27 @@ async function defaultTradingEconomicsFetcher(): Promise<RssItem[]> {
   return breakers.tradingEconomics.execute(() => fetchTradingEconomicsStream());
 }
 
+/**
+ * NewsAPI.org fallback fetcher — activated when Reuters VPS push is stale >90 min.
+ * Returns [] immediately when no API key configured (stub path). Task 1345a.
+ */
+async function defaultNewsApiFetcher(): Promise<RssItem[]> {
+  try {
+    const { breakers } = await import("../../infrastructure/circuitBreakerRegistry.js");
+    const { fetchNewsApi } = await import("../../infrastructure/fetchers/newsapi.js");
+    const { loadMcpConfig } = await import("../../infrastructure/config.js");
+    const cfg = loadMcpConfig();
+    const newsapiCfg = (cfg as unknown as Record<string, unknown>)?.newsSources as
+      | { newsapi?: { apiKey?: string; enabled?: boolean } }
+      | undefined;
+    const apiKey = newsapiCfg?.newsapi?.apiKey ?? "";
+    const enabled = newsapiCfg?.newsapi?.enabled ?? false;
+    return breakers.newsapi.execute(() => fetchNewsApi({ apiKey, enabled }));
+  } catch {
+    return [];
+  }
+}
+
 async function defaultRagRetriever(
   query: string,
   options?: { k?: number },
@@ -461,7 +519,15 @@ export async function pollNews(options: PollNewsOptions = {}): Promise<PollNewsR
     cafef: true, vnexpress: true, reuters: true, vneconomy: true,
     tradingeconomics: true, vietstock: true, vietnambiz: true,
     vnbusiness: true, tuoitre: true, nhandan: true, nld: true,
+    newsapi: true,
   };
+
+  // ── Task 1345a: Reuters fallback chain ───────────────────────────────────
+  // If reutersLastPushTs is provided and is stale >90 min, activate the newsapi
+  // fallback fetcher so we have international news coverage during VPS downtime.
+  const reutersTs = options.reutersLastPushTs ?? null;
+  const reutersAgeMs = reutersTs ? Date.now() - reutersTs.getTime() : Infinity;
+  const reutersIsStale = reutersAgeMs >= REUTERS_STALE_MS;
 
   // Resolve fetchers — local sources get defaults; VPS-only sources are
   // injected when provided and skipped during scheduled runs.
@@ -474,6 +540,15 @@ export async function pollNews(options: PollNewsOptions = {}): Promise<PollNewsR
     vneconomy:        options.fetchers?.vneconomy        ?? defaultVnEconomyFetcher,
     tradingeconomics: options.fetchers?.tradingeconomics ?? defaultTradingEconomicsFetcher,
   };
+  // Task 1345a: add newsapi fetcher when Reuters is stale OR caller explicitly injects it
+  if (reutersIsStale || options.fetchers?.newsapi !== undefined) {
+    resolvedFetchers["newsapi"] = options.fetchers?.newsapi ?? defaultNewsApiFetcher;
+    if (reutersIsStale) {
+      logger.info("[pollNews] Reuters VPS push stale — activating newsapi fallback fetcher", {
+        reutersAgeMinutes: Math.round(reutersAgeMs / 60_000),
+      });
+    }
+  }
   // VPS-push-only keys: only add if the caller provided them
   const vpsOnlyKeys = ["vietstock", "vietnambiz", "vnbusiness", "tuoitre", "nhandan", "nld"] as const;
   for (const key of vpsOnlyKeys) {
@@ -551,6 +626,31 @@ export async function pollNews(options: PollNewsOptions = {}): Promise<PollNewsR
   }
 
   const fetched = allItems.length;
+
+  // ── Task 1345a: All-sources-dark detection ───────────────────────────────
+  // When every fetcher returned 0 items, send a single Telegram bug alert.
+  // Deduped to one alert per 4-hour window to prevent alert flood.
+  if (allItems.length === 0) {
+    const now = Date.now();
+    if (now - _lastAllDarkAlertAt >= ALL_DARK_ALERT_COOLDOWN_MS) {
+      _lastAllDarkAlertAt = now;
+      const darkMsg =
+        "[pollNews] All news sources returned 0 items — possible VPS/network outage. " +
+        `Sources checked: ${Object.keys(resolvedFetchers).join(", ")}`;
+      logger.warn(darkMsg);
+      try {
+        if (options.onAllSourcesDark) {
+          await options.onAllSourcesDark(darkMsg);
+        } else {
+          // Production default: send to Telegram bug channel
+          const { sendTelegramBug } = await import("../../infrastructure/notifiers/telegram.js");
+          await sendTelegramBug(darkMsg, { parseMode: "" });
+        }
+      } catch {
+        // Best-effort — alert failure must not abort the cycle
+      }
+    }
+  }
 
   // ── Step 1c: VN relevance pre-filter (Task 1247) ─────────────────────────
   // Discard non-VN articles (sports, US personal finance, entertainment) that

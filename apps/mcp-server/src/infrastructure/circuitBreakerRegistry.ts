@@ -65,6 +65,20 @@ export const breakers = {
     failureThreshold: 5,
     resetTimeoutMs: 300_000, // 5 minutes
   }),
+  /**
+   * NewsAPI.org fallback fetcher.
+   * Task 1345a: Activated when VPS Reuters push is absent >90 min.
+   * Back off after 5 failures, 5 min reset to avoid burning free-tier quota.
+   */
+  newsapi: new CircuitBreaker("newsapi", {
+    failureThreshold: 5,
+    resetTimeoutMs: 300_000, // 5 minutes
+  }),
+  /**
+   * MarketWatch RSS fallback fetcher.
+   * Task 1345a: Independent of Reuters and NewsAPI breakers.
+   */
+  marketwatch: new CircuitBreaker("marketwatch"),
 } as const;
 
 export type BreakerName = keyof typeof breakers;
