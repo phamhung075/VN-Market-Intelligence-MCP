@@ -114,6 +114,29 @@ if (webhookRegistered) {
   log.info("[bootstrap] Telegram webhook skipped (TELEGRAM_WEBHOOK_URL not set or no token)");
 }
 
+// ── 3b. pdf-extractor microservice health check (Task 1352b) ─────────────
+// Non-fatal: logs warn if service unavailable, never crashes the server.
+// pybctc runs in Docker and may not be reachable in development environments.
+try {
+  const { checkPdfExtractorHealth } = await import("./infrastructure/fetchers/pdfExtractorClient.js");
+  const pdfExtractorOk = await checkPdfExtractorHealth();
+  if (pdfExtractorOk) {
+    log.info("[bootstrap] pdf-extractor health check OK", {
+      available: true,
+      endpoint: Bun.env.PDF_EXTRACTOR_URL ?? "http://localhost:5001",
+      mode: "microservice primary (pybctc tables)",
+    });
+  } else {
+    log.warn("[bootstrap] pdf-extractor unavailable — OCR fallback only", {
+      available: false,
+      endpoint: Bun.env.PDF_EXTRACTOR_URL ?? "http://localhost:5001",
+      fallback: "OCR (pdftoppm + tesseract)",
+    });
+  }
+} catch {
+  log.warn("[bootstrap] pdf-extractor health check failed — continuing without it");
+}
+
 // ── 4. Cron scheduler ─────────────────────────────────────────────────────
 startScheduler();
 log.info("[bootstrap] Scheduler started — cron jobs active");
