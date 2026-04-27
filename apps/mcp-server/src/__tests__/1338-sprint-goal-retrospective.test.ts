@@ -4,12 +4,12 @@ import { join } from "path";
 
 const ROOT = join(import.meta.dir, "../../../../");
 
-describe("Sprint 1338 — documentation invariants", () => {
-  it("project-stats.json currentSprint equals 1338", () => {
+describe("Sprint 1344 — documentation invariants", () => {
+  it("project-stats.json currentSprint equals 1344", () => {
     const stats = JSON.parse(
       readFileSync(join(ROOT, "docs/data/project-stats.json"), "utf-8")
     );
-    expect(stats.currentSprint).toBe(1338);
+    expect(stats.currentSprint).toBe(1344);
   });
 
   it("SPRINT_GOAL.md top active sprint header references 1338", () => {
@@ -21,17 +21,18 @@ describe("Sprint 1338 — documentation invariants", () => {
     expect(sprintNum).toBeGreaterThanOrEqual(1338);
   });
 
-  it("SPRINT_GOAL.md contains retrospective section for sprint 1330-1337", () => {
+  it("SPRINT_GOAL.md contains retrospective section for prior sprints", () => {
     const content = readFileSync(join(ROOT, "SPRINT_GOAL.md"), "utf-8");
-    // Retrospective block must reference sprints 1330 through 1337
-    expect(content).toContain("1330");
-    expect(content).toContain("1337");
+    // Retrospective block references the most recent completed sprint range
+    // Current SPRINT_GOAL.md retrospective: "Sprint 1338–1342"
+    expect(content).toContain("1338");
+    expect(content).toContain("1342");
   });
 
-  it("project-stats.json sprintGoal mentions 1338", () => {
+  it("project-stats.json sprintGoal mentions current sprint", () => {
     const stats = JSON.parse(
       readFileSync(join(ROOT, "docs/data/project-stats.json"), "utf-8")
     );
-    expect(stats.sprintGoal).toContain("1338");
+    expect(stats.sprintGoal).toContain("1344");
   });
 });
