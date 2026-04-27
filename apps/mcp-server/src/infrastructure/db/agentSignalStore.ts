@@ -806,6 +806,8 @@ export function getChainFindings(
            finding_data, causal_ref, chain_depth, created_at
     FROM agent_signals
     WHERE cycle_id = ?
+      AND stock_code IS NOT NULL
+      AND stock_code != 'unknown'
     ORDER BY chain_depth ASC, id ASC
   `);
   const rows = stmt.all(cycleId) as RawChainRow[];
@@ -1008,4 +1010,34 @@ export function getOpenChainFindings(
   `);
   const rows = stmt.all(cutoff) as RawChainRow[];
   return rows.map(deserializeChainRow);
+}
+
+// ── migrateUnknownStockCodes ──────────────────────────────────────────────────
+
+/**
+ * Bug 1313: One-time migration helper — converts pre-1334 sentinel rows.
+ *
+ * Before task 1334, agents posted `stockCode: "unknown"` for market-wide signals.
+ * Task 1334 added application-level normalization in postSignal(), but existing DB
+ * rows still carry the literal string "unknown".
+ *
+ * This function NULLs those rows so getChainFindings() (which now filters
+ * `AND stock_code IS NOT NULL`) correctly excludes them from chain grouping.
+ *
+ * Safe to run multiple times (idempotent). Call once at job startup or via a
+ * dedicated migration script before intelligence-cycle-job begins.
+ *
+ * @param db - Active bun:sqlite Database connection
+ */
+export function migrateUnknownStockCodes(db: Database): Promise<void> {
+  return new Promise((resolve, reject) => {
+    try {
+      db.prepare(
+        `UPDATE agent_signals SET stock_code = NULL WHERE stock_code = 'unknown'`,
+      ).run();
+      resolve();
+    } catch (err) {
+      reject(err);
+    }
+  });
 }

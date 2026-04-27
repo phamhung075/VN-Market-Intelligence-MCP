@@ -17,6 +17,56 @@ import { z } from "zod";
 import { logger } from "../../../../infrastructure/logger.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Bug 1317: Retry helper for transient Telegram API failures
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Retry a function up to `maxRetries` times on transient errors.
+ *
+ * Transient errors: ECONNRESET, ETIMEDOUT, HTTP 429 (rate limit), HTTP 503.
+ * Non-transient errors (e.g. invalid token, 401, 404) fail immediately.
+ *
+ * Exported for unit testing.
+ *
+ * @param fn         - Async function to execute
+ * @param maxRetries - Number of retries after first failure (1 = 2 total attempts)
+ * @param delayMs    - Delay in milliseconds between attempts
+ */
+export async function retryOnTransient<T>(
+  fn: () => Promise<T>,
+  maxRetries: number,
+  delayMs: number,
+): Promise<T> {
+  let lastError: Error | undefined;
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (e) {
+      lastError = e as Error;
+      const msg = e instanceof Error ? e.message : String(e);
+      const isTransient =
+        msg.includes("ECONNRESET") ||
+        msg.includes("ETIMEDOUT") ||
+        msg.includes("429") ||
+        msg.includes("503");
+
+      if (!isTransient || attempt === maxRetries) {
+        throw e;
+      }
+
+      logger.warn("[feedback] Telegram send failed, retrying...", {
+        attempt: attempt + 1,
+        error: msg,
+        delayMs,
+      });
+
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+    }
+  }
+  throw lastError ?? new Error("retryOnTransient: unknown error");
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Tool registration
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -78,8 +128,9 @@ export function registerFeedbackTools(server: McpServer): void {
             headerFooter,
             detail ? `\n${detail.slice(0, detailMaxChars)}` : "",
           ].filter(Boolean).join("\n");
-          msgId = await sendTelegramBug(msg);
-        } catch { /* best-effort */ }
+          // Bug 1317: retry once with 2s delay on transient Telegram API failures.
+          msgId = await retryOnTransient(() => sendTelegramBug(msg), 1, 2000);
+        } catch { /* best-effort after retry */ }
 
         // BUG channel is for problems/hotfix only — never cross-post to MARKET
 

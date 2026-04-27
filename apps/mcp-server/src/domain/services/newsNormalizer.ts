@@ -19,7 +19,7 @@
 
 import type { RssItem } from "../models/shared-types.js";
 import type { DomainType } from "../../../bctc-schema.js";
-import { STOCK_CATALOG, detectStocksInText } from "./stockAliases.js";
+import { STOCK_CATALOG, detectStocksInText, stripSourceAttributionSuffix } from "./stockAliases.js";
 import { truncateNewsSummary } from "./textUtils.js";
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -780,8 +780,12 @@ export function normalizeNews(item: RssItem): AnalysisEntry {
     detectDomains(combinedLower);
 
   // ── Stock ticker extraction ──────────────────────────────────────────────
+  // Bug 1311: strip source attribution suffix (e.g. " - MSN", " - Reuters") from
+  // title BEFORE NER so attribution tokens are never treated as stock tickers.
+  // Only the title carries the suffix; content field does not.
+  const cleanTitle = stripSourceAttributionSuffix(title);
   // Use original case (tickers are uppercase)
-  const affectedActions = extractStockTickers(title + " " + content);
+  const affectedActions = extractStockTickers(cleanTitle + " " + content);
 
   // ── Level classification ─────────────────────────────────────────────────
   const level = classifyLevel(
