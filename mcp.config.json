@@ -293,5 +293,15 @@
       "sbv_rates": 120,
       "foreign_flow": 60
     }
+  },
+
+  "newsSources": {
+    "newsapi": {
+      "apiKey": "",
+      "enabled": false
+    },
+    "marketwatch": {
+      "enabled": true
+    }
   }
 }
