@@ -8,11 +8,19 @@ WORKDIR /app
 
 # ── Install system dependencies ───────────────────────────────────────────
 # tesseract-ocr: for OCR fallback in BCTC PDF extraction
+# python3 + python3-pip: required by vnstockBridge.ts which spawns python3 -c
+#   to call the vnstock library (VCI backend for prices / financials / events)
 RUN apt-get update && apt-get install -y \
     tesseract-ocr \
     tesseract-ocr-vie \
     curl \
+    python3 \
+    python3-pip \
     && rm -rf /var/lib/apt/lists/*
+
+# ── Install Python dependencies ───────────────────────────────────────────
+# vnstock: VN stock data via VCI backend (spawned by vnstockBridge.ts)
+RUN pip3 install --no-cache-dir --break-system-packages vnstock
 
 # ── Install Node dependencies ─────────────────────────────────────────────
 # Copy from apps/mcp-server since build context is monorepo root
