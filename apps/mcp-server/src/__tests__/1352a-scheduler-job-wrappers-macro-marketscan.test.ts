@@ -50,6 +50,81 @@ import { isTradingSession as _realIsTradingSession } from "../infrastructure/fet
 import { scanMarket as _realScanMarket } from "../application/usecases/scanMarket.js";
 import { recordJobRun as _realRecordJobRun } from "../infrastructure/db/cronJobRunStore.js";
 import { logger as _realLogger } from "../infrastructure/logger.js";
+import type { MarketScanResult, ScanMarketOptions } from "../application/usecases/scanMarket.js";
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Snapshot real implementations BEFORE any mock.module() call.
+//
+// Bun's ESM live bindings: import { fn as alias } creates a live binding.
+// When mock.module() updates the export, the alias reflects the new value.
+// By immediately copying into a const snapshot, we freeze the real value
+// before any mock can change the live binding.
+// ─────────────────────────────────────────────────────────────────────────────
+const _frozenRealScanMarket = _realScanMarket;
+const _frozenRealIsTradingSession = _realIsTradingSession;
+const _frozenRealGetMacroSnapshot = _realGetMacroSnapshot;
+const _frozenRealRecordJobRun = _realRecordJobRun;
+const _frozenRealFreshnessSlaChecker = _realFreshnessSlaChecker;
+const _frozenRealDetectStartupStaleData = _realDetectStartupStaleData;
+const _frozenRealRecordJobMetrics = _realRecordJobMetrics;
+const _frozenRealSendTelegramWork = _realSendTelegramWork;
+const _frozenRealSendTelegramMarket = _realSendTelegramMarket;
+const _frozenRealSendTelegramBug = _realSendTelegramBug;
+const _frozenRealNotifyTelegramAlert = _realNotifyTelegramAlert;
+const _frozenRealNotifyTelegramDocument = _realNotifyTelegramDocument;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Top-level mutable mock factories
+//
+// mock.module() is worker-scoped and permanent. Calling it inside it() blocks
+// is safe for isolation within the file, but when Bun runs files in parallel
+// (shared ESM registry), the mock set in one test can race with another file's
+// imports. The fix: call mock.module() ONCE at the top level with a mutable
+// factory variable. Per-test behaviour is controlled by updating the variable,
+// not by re-calling mock.module(). This ensures a stable mock is in place from
+// the start and avoids the mid-test re-registration race.
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Group A mutable factories
+let _getMacroSnapshotImpl: () => Promise<unknown> = _frozenRealGetMacroSnapshot;
+let _sendTelegramWorkCapture: ((msg: string) => void) | null = null;
+let _recordJobMetricsCapture: ((job: string, d: number, e: number, s: number) => void) | null = null;
+let _detectStartupStaleDataImpl: () => Promise<void> = async () => {};
+let _freshnessSlaCheckerImpl: () => Promise<boolean> = async () => true;
+
+mock.module("../infrastructure/microservices/clients.js", () => ({
+  getMacroSnapshot: async () => _getMacroSnapshotImpl(),
+}));
+mock.module("../infrastructure/notifiers/telegram.js", () => ({
+  sendTelegramWork: async (msg: string) => {
+    _sendTelegramWorkCapture?.(msg);
+    return true;
+  },
+  sendTelegramMarket: async () => true,
+  sendTelegramBug: async () => true,
+  notifyTelegramAlert: async () => true,
+  notifyTelegramDocument: async () => true,
+}));
+mock.module("../infrastructure/observability/jobMetrics.js", () => ({
+  recordJobMetrics: (job: string, d: number, e: number, s: number) => {
+    _recordJobMetricsCapture?.(job, d, e, s);
+  },
+}));
+mock.module("../domain/services/macroIndicatorSla.js", () => ({
+  freshnessSlaChecker: async (...args: unknown[]) => _freshnessSlaCheckerImpl(),
+  detectStartupStaleData: async (...args: unknown[]) => _detectStartupStaleDataImpl(),
+}));
+
+// Group B mutable factories
+let _isTradingSessionImpl: () => boolean = _frozenRealIsTradingSession;
+let _scanMarketImpl: (opts?: ScanMarketOptions) => Promise<MarketScanResult> = _frozenRealScanMarket;
+
+mock.module("../infrastructure/fetchers/hose.js", () => ({
+  isTradingSession: () => _isTradingSessionImpl(),
+}));
+mock.module("../application/usecases/scanMarket.js", () => ({
+  scanMarket: async (opts?: ScanMarketOptions) => _scanMarketImpl(opts),
+}));
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Group A — macroIndicatorRefreshJob
@@ -71,36 +146,16 @@ describe("Task 1352a — Group A: macroIndicatorRefreshJob wrapper", () => {
     closeDb();
   });
 
-  // Restore contaminating mocks immediately after each test completes.
-  // mock.module() is worker-scoped+permanent; restoring here prevents sibling
-  // files in the same worker from receiving stale mock implementations before
-  // the outer teardown describe fires.
-  afterEach(() => {
-    mock.module("../infrastructure/notifiers/telegram.js", () => ({
-      sendTelegramWork: _realSendTelegramWork,
-      sendTelegramMarket: _realSendTelegramMarket,
-      sendTelegramBug: _realSendTelegramBug,
-      notifyTelegramAlert: _realNotifyTelegramAlert,
-      notifyTelegramDocument: _realNotifyTelegramDocument,
-    }));
-    mock.module("../infrastructure/microservices/clients.js", () => ({
-      getMacroSnapshot: _realGetMacroSnapshot,
-    }));
-    mock.module("../domain/services/macroIndicatorSla.js", () => ({
-      freshnessSlaChecker: _realFreshnessSlaChecker,
-      detectStartupStaleData: _realDetectStartupStaleData,
-    }));
-    mock.module("../infrastructure/observability/jobMetrics.js", () => ({
-      recordJobMetrics: _realRecordJobMetrics,
-    }));
-  });
-
+  // Reset mutable mock factories to safe defaults before each test.
+  // No mock.module() calls inside tests — all behaviour is controlled via the
+  // top-level mutable variables set up at file evaluation time.
   beforeEach(() => {
     sendWorkCalls = [];
     recordMetricsCalls = [];
     detectStartupCalls = 0;
     detectStartupShouldReject = false;
-    getMacroSnapshotImpl = async () => ({
+    // Reset mutable factory vars to default (success path)
+    _getMacroSnapshotImpl = async () => ({
       vnIndex: 1250,
       brentPrice: 85.5,
       goldPrice: 2300,
@@ -116,29 +171,25 @@ describe("Task 1352a — Group A: macroIndicatorRefreshJob wrapper", () => {
         aviationSector: 0.3,
       },
     });
+    _sendTelegramWorkCapture = (msg) => { sendWorkCalls.push(msg); };
+    _recordJobMetricsCapture = (job, d, e, s) => {
+      recordMetricsCalls.push([job, d, e, s]);
+    };
+    _freshnessSlaCheckerImpl = async () => true;
+    _detectStartupStaleDataImpl = async () => {};
+  });
+
+  afterEach(() => {
+    // Reset mutable factory vars to real implementations after each test.
+    _getMacroSnapshotImpl = _frozenRealGetMacroSnapshot;
+    _sendTelegramWorkCapture = null;
+    _recordJobMetricsCapture = null;
+    _freshnessSlaCheckerImpl = async () => true;
+    _detectStartupStaleDataImpl = async () => {};
   });
 
   it("A-1: Telegram WORK message sent on getMacroSnapshot success with correct values", async () => {
-    mock.module("../infrastructure/microservices/clients.js", () => ({
-      getMacroSnapshot: async () => getMacroSnapshotImpl(),
-    }));
-    mock.module("../infrastructure/notifiers/telegram.js", () => ({
-      sendTelegramWork: async (msg: string) => {
-        sendWorkCalls.push(msg);
-        return true;
-      },
-      sendTelegramMarket: async () => true,
-      sendTelegramBug: async () => true,
-      notifyTelegramAlert: async () => true,
-      notifyTelegramDocument: async () => true,
-    }));
-    mock.module("../infrastructure/observability/jobMetrics.js", () => ({
-      recordJobMetrics: () => {},
-    }));
-    mock.module("../domain/services/macroIndicatorSla.js", () => ({
-      freshnessSlaChecker: async () => true,
-      detectStartupStaleData: async () => {},
-    }));
+    // _getMacroSnapshotImpl and _sendTelegramWorkCapture set in beforeEach
 
     const { macroIndicatorRefreshJob } = await import(
       "../scheduler/macro/macroIndicatorRefreshJob.js"
@@ -156,30 +207,7 @@ describe("Task 1352a — Group A: macroIndicatorRefreshJob wrapper", () => {
   });
 
   it("A-2: recordJobMetrics called in finally block on success with correct args", async () => {
-    mock.module("../infrastructure/microservices/clients.js", () => ({
-      getMacroSnapshot: async () => getMacroSnapshotImpl(),
-    }));
-    mock.module("../infrastructure/notifiers/telegram.js", () => ({
-      sendTelegramWork: async () => true,
-      sendTelegramMarket: async () => true,
-      sendTelegramBug: async () => true,
-      notifyTelegramAlert: async () => true,
-      notifyTelegramDocument: async () => true,
-    }));
-    mock.module("../infrastructure/observability/jobMetrics.js", () => ({
-      recordJobMetrics: (
-        job: string,
-        durationMs: number,
-        errorCount: number,
-        successCount: number,
-      ) => {
-        recordMetricsCalls.push([job, durationMs, errorCount, successCount]);
-      },
-    }));
-    mock.module("../domain/services/macroIndicatorSla.js", () => ({
-      freshnessSlaChecker: async () => true,
-      detectStartupStaleData: async () => {},
-    }));
+    // _getMacroSnapshotImpl and _recordJobMetricsCapture set in beforeEach
 
     const { macroIndicatorRefreshJob } = await import(
       "../scheduler/macro/macroIndicatorRefreshJob.js"
@@ -198,35 +226,8 @@ describe("Task 1352a — Group A: macroIndicatorRefreshJob wrapper", () => {
   });
 
   it("A-3: recordJobMetrics called with error counts when getMacroSnapshot throws", async () => {
-    mock.module("../infrastructure/microservices/clients.js", () => ({
-      getMacroSnapshot: async () => {
-        throw new Error("microservice down");
-      },
-    }));
-    mock.module("../infrastructure/notifiers/telegram.js", () => ({
-      sendTelegramWork: async (msg: string) => {
-        sendWorkCalls.push(msg);
-        return true;
-      },
-      sendTelegramMarket: async () => true,
-      sendTelegramBug: async () => true,
-      notifyTelegramAlert: async () => true,
-      notifyTelegramDocument: async () => true,
-    }));
-    mock.module("../infrastructure/observability/jobMetrics.js", () => ({
-      recordJobMetrics: (
-        job: string,
-        durationMs: number,
-        errorCount: number,
-        successCount: number,
-      ) => {
-        recordMetricsCalls.push([job, durationMs, errorCount, successCount]);
-      },
-    }));
-    mock.module("../domain/services/macroIndicatorSla.js", () => ({
-      freshnessSlaChecker: async () => true,
-      detectStartupStaleData: async () => {},
-    }));
+    // Override getMacroSnapshot to throw
+    _getMacroSnapshotImpl = async () => { throw new Error("microservice down"); };
 
     const { macroIndicatorRefreshJob } = await import(
       "../scheduler/macro/macroIndicatorRefreshJob.js"
@@ -258,28 +259,13 @@ describe("Task 1352a — Group A: macroIndicatorRefreshJob wrapper", () => {
       consoleErrorCalls.push(args.map(String).join(" "));
     };
 
-    mock.module("../infrastructure/microservices/clients.js", () => ({
-      getMacroSnapshot: async () => getMacroSnapshotImpl(),
-    }));
-    mock.module("../infrastructure/notifiers/telegram.js", () => ({
-      sendTelegramWork: async () => true,
-      sendTelegramMarket: async () => true,
-      sendTelegramBug: async () => true,
-      notifyTelegramAlert: async () => true,
-      notifyTelegramDocument: async () => true,
-    }));
-    mock.module("../infrastructure/observability/jobMetrics.js", () => ({
-      recordJobMetrics: () => {},
-    }));
-    mock.module("../domain/services/macroIndicatorSla.js", () => ({
-      freshnessSlaChecker: async () => true,
-      detectStartupStaleData: async () => {
-        detectStartupCalls++;
-        if (detectStartupShouldReject) {
-          throw new Error("stale detection failed");
-        }
-      },
-    }));
+    // Override detectStartupStaleData to count calls and optionally throw
+    _detectStartupStaleDataImpl = async () => {
+      detectStartupCalls++;
+      if (detectStartupShouldReject) {
+        throw new Error("stale detection failed");
+      }
+    };
 
     try {
       const { validateMacroFreshnessOnStartup } = await import(
@@ -316,43 +302,38 @@ describe("Task 1352a — Group B: runMarketScan concurrency guard and session sk
     closeDb();
   });
 
-  // Restore contaminating mocks immediately after each test completes.
+  // Reset mutable mock factories to safe defaults before/after each test.
+  // NO mock.module() calls inside tests — all behaviour controlled via top-level
+  // mutable variables, preventing parallel-worker contamination.
+  beforeEach(() => {
+    _isTradingSessionImpl = _frozenRealIsTradingSession;
+    _scanMarketImpl = _frozenRealScanMarket;
+  });
+
   afterEach(() => {
-    mock.module("../application/usecases/scanMarket.js", () => ({
-      scanMarket: _realScanMarket,
-    }));
-    mock.module("../infrastructure/fetchers/hose.js", () => ({
-      isTradingSession: _realIsTradingSession,
-    }));
+    _isTradingSessionImpl = _frozenRealIsTradingSession;
+    _scanMarketImpl = _frozenRealScanMarket;
   });
 
   it("B-1: Concurrency guard — second call while first is running is skipped", async () => {
     const warnMessages: string[] = [];
 
     // Spy on real logger.warn via object mutation — NO mock.module needed.
-    // _realLogger is the same object reference that marketScanJob.ts holds,
-    // so mutating .warn here affects what the job sees when it calls logger.warn().
     const origWarn = _realLogger.warn;
     _realLogger.warn = (msg: string, ...args: unknown[]) => { warnMessages.push(msg); };
 
     // External resolve handle for the first scan to remain pending
-    let resolveFirst!: (value: { scanned: number; signals: number; alerts: number }) => void;
-    const firstDone = new Promise<{ scanned: number; signals: number; alerts: number }>(
-      (res) => { resolveFirst = res; },
-    );
+    let resolveFirst!: (value: MarketScanResult) => void;
+    const firstDone = new Promise<MarketScanResult>((res) => { resolveFirst = res; });
 
     let scanCallCount = 0;
 
-    mock.module("../application/usecases/scanMarket.js", () => ({
-      scanMarket: async () => {
-        scanCallCount++;
-        return firstDone;
-      },
-    }));
-    mock.module("../infrastructure/fetchers/hose.js", () => ({
-      isTradingSession: () => true,
-    }));
-    // Real cronJobRunStore + real DB — no mock needed, pass-through matches real behaviour.
+    // Configure mutable factory: increment count and wait for firstDone
+    _scanMarketImpl = async (_opts?: ScanMarketOptions) => {
+      scanCallCount++;
+      return firstDone;
+    };
+    _isTradingSessionImpl = () => true;
 
     try {
       const { runMarketScan } = await import(
@@ -374,7 +355,6 @@ describe("Task 1352a — Group B: runMarketScan concurrency guard and session sk
       resolveFirst({ scanned: 5, signals: 2, alerts: 0 });
       await firstCall;
     } finally {
-      // Restore logger method immediately — no mock.module contamination to clean up.
       _realLogger.warn = origWarn;
     }
   });
@@ -387,15 +367,11 @@ describe("Task 1352a — Group B: runMarketScan concurrency guard and session sk
     const origDebug = _realLogger.debug;
     _realLogger.debug = (msg: string, ...args: unknown[]) => { debugMessages.push(msg); };
 
-    mock.module("../application/usecases/scanMarket.js", () => ({
-      scanMarket: async () => {
-        scanCallCount++;
-        return { scanned: 0, signals: 0, alerts: 0 };
-      },
-    }));
-    mock.module("../infrastructure/fetchers/hose.js", () => ({
-      isTradingSession: () => false,
-    }));
+    _isTradingSessionImpl = () => false; // closed market
+    _scanMarketImpl = async (_opts?: ScanMarketOptions) => {
+      scanCallCount++;
+      return { scanned: 0, signals: 0, alerts: 0 };
+    };
     // B-2: isTradingSession=false → returns before getDb()/recordJobRun — no DB needed.
 
     try {
@@ -410,7 +386,6 @@ describe("Task 1352a — Group B: runMarketScan concurrency guard and session sk
       // Debug log about market being closed
       expect(debugMessages.some((m) => m.includes("market closed"))).toBe(true);
     } finally {
-      // Restore logger method immediately — no mock.module contamination to clean up.
       _realLogger.debug = origDebug;
     }
   });
@@ -418,19 +393,15 @@ describe("Task 1352a — Group B: runMarketScan concurrency guard and session sk
   it("B-3: isRunning flag resets to false after error — second call proceeds", async () => {
     let scanCallCount = 0;
 
-    // Silence logger.error noise during this test via object mutation — NO mock.module needed.
+    // Silence logger.error noise — object mutation, NO mock.module needed.
     const origError = _realLogger.error;
     _realLogger.error = (_msg: string, ..._args: unknown[]) => {};
 
-    mock.module("../application/usecases/scanMarket.js", () => ({
-      scanMarket: async () => {
-        scanCallCount++;
-        throw new Error("DB error");
-      },
-    }));
-    mock.module("../infrastructure/fetchers/hose.js", () => ({
-      isTradingSession: () => true,
-    }));
+    _isTradingSessionImpl = () => true;
+    _scanMarketImpl = async (_opts?: ScanMarketOptions) => {
+      scanCallCount++;
+      throw new Error("DB error");
+    };
     // Real cronJobRunStore + real DB — recordJobRun swallows fn errors (same as prod).
 
     try {
@@ -446,7 +417,6 @@ describe("Task 1352a — Group B: runMarketScan concurrency guard and session sk
       await runMarketScan("open");
       expect(scanCallCount).toBe(2);
     } finally {
-      // Restore logger method immediately — no mock.module contamination to clean up.
       _realLogger.error = origError;
     }
   });
@@ -470,33 +440,33 @@ describe("Task 1352a — Group B: runMarketScan concurrency guard and session sk
 describe("Task 1352a — teardown: restore module registry for worker-siblings", () => {
   afterAll(() => {
     mock.module("../infrastructure/notifiers/telegram.js", () => ({
-      sendTelegramWork: _realSendTelegramWork,
-      sendTelegramMarket: _realSendTelegramMarket,
-      sendTelegramBug: _realSendTelegramBug,
-      notifyTelegramAlert: _realNotifyTelegramAlert,
-      notifyTelegramDocument: _realNotifyTelegramDocument,
+      sendTelegramWork: _frozenRealSendTelegramWork,
+      sendTelegramMarket: _frozenRealSendTelegramMarket,
+      sendTelegramBug: _frozenRealSendTelegramBug,
+      notifyTelegramAlert: _frozenRealNotifyTelegramAlert,
+      notifyTelegramDocument: _frozenRealNotifyTelegramDocument,
     }));
     mock.module("../infrastructure/microservices/clients.js", () => ({
-      getMacroSnapshot: _realGetMacroSnapshot,
+      getMacroSnapshot: _frozenRealGetMacroSnapshot,
     }));
     mock.module("../domain/services/macroIndicatorSla.js", () => ({
-      freshnessSlaChecker: _realFreshnessSlaChecker,
-      detectStartupStaleData: _realDetectStartupStaleData,
+      freshnessSlaChecker: _frozenRealFreshnessSlaChecker,
+      detectStartupStaleData: _frozenRealDetectStartupStaleData,
     }));
     mock.module("../infrastructure/observability/jobMetrics.js", () => ({
-      recordJobMetrics: _realRecordJobMetrics,
+      recordJobMetrics: _frozenRealRecordJobMetrics,
     }));
     mock.module("../infrastructure/fetchers/hose.js", () => ({
-      isTradingSession: _realIsTradingSession,
+      isTradingSession: _frozenRealIsTradingSession,
     }));
     mock.module("../application/usecases/scanMarket.js", () => ({
-      scanMarket: _realScanMarket,
+      scanMarket: _frozenRealScanMarket,
     }));
   });
 
   it("teardown guard: real implementations captured", () => {
-    expect(typeof _realSendTelegramWork).toBe("function");
-    expect(typeof _realGetMacroSnapshot).toBe("function");
-    expect(typeof _realIsTradingSession).toBe("function");
+    expect(typeof _frozenRealSendTelegramWork).toBe("function");
+    expect(typeof _frozenRealGetMacroSnapshot).toBe("function");
+    expect(typeof _frozenRealIsTradingSession).toBe("function");
   });
 });

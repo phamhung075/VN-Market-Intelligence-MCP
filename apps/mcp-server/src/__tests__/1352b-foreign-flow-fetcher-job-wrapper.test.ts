@@ -35,19 +35,43 @@ import {
   resetCircuitBreaker,
   resetLogSpamGuard,
 } from "../infrastructure/fetchers/foreignFlowFetcher.js";
-import { breakers } from "../infrastructure/circuitBreakerRegistry.js";
 import { initDatabase, closeDb, getDb } from "../infrastructure/db/schema.js";
 import type { WriteForeignFlowItem } from "../domain/models/shared-types.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Real-module captures — imported BEFORE any mock.module() call so they hold
-// the genuine implementations. Used in teardown to repair the module registry
-// for worker-sibling test files. Pattern: FIX-1290-briefing-no-stale.test.ts.
+// the genuine implementations. Snapshot before mock.module() is called so
+// Bun's ESM live binding update cannot overwrite these const values.
 // ─────────────────────────────────────────────────────────────────────────────
-const _realFetchForeignFlowWithFallback = fetchForeignFlowWithFallback;
-const _realResetFallbackCache = resetFallbackCache;
-const _realResetCircuitBreaker = resetCircuitBreaker;
-const _realResetLogSpamGuard = resetLogSpamGuard;
+const _frozenFetchForeignFlowWithFallback = fetchForeignFlowWithFallback;
+const _frozenResetFallbackCache = resetFallbackCache;
+const _frozenResetCircuitBreaker = resetCircuitBreaker;
+const _frozenResetLogSpamGuard = resetLogSpamGuard;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Top-level mutable mock factory for foreignFlowFetcher.js
+//
+// mock.module() is called ONCE at top level so all parallel files that import
+// foreignFlowFetcher.js get the stable delegating wrapper. Per-test behaviour
+// is controlled by updating _fetchForeignFlowImpl, not by re-calling
+// mock.module() — which would race with parallel file imports.
+// ─────────────────────────────────────────────────────────────────────────────
+type FetchForeignFlowResult = {
+  source: "primary" | "cache" | "sse" | "none";
+  changes: number;
+  timestamp: string;
+  warning?: string;
+};
+
+let _fetchForeignFlowImpl: (opts?: unknown) => Promise<FetchForeignFlowResult> =
+  _frozenFetchForeignFlowWithFallback as unknown as (opts?: unknown) => Promise<FetchForeignFlowResult>;
+
+mock.module("../infrastructure/fetchers/foreignFlowFetcher.js", () => ({
+  fetchForeignFlowWithFallback: async (opts?: unknown) => _fetchForeignFlowImpl(opts),
+  resetFallbackCache: () => _frozenResetFallbackCache(),
+  resetCircuitBreaker: async () => _frozenResetCircuitBreaker(),
+  resetLogSpamGuard: () => _frozenResetLogSpamGuard(),
+}));
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Test Data Builders
@@ -95,11 +119,13 @@ describe("Task 1352b — runForeignFlowFetcherJob wrapper (Cases 1-3)", () => {
   });
 
   beforeEach(async () => {
+    _fetchForeignFlowImpl = _frozenFetchForeignFlowWithFallback as unknown as (opts?: unknown) => Promise<FetchForeignFlowResult>;
     resetFallbackCache();
     await resetCircuitBreaker();
   });
 
   afterEach(async () => {
+    _fetchForeignFlowImpl = _frozenFetchForeignFlowWithFallback as unknown as (opts?: unknown) => Promise<FetchForeignFlowResult>;
     resetFallbackCache();
     await resetCircuitBreaker();
   });
@@ -186,26 +212,24 @@ describe("Task 1352b — runForeignFlowFetcherJob wrapper (Cases 1-3)", () => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Suite: Case 4 — Unexpected error catch path (mock.module required)
+// Suite: Case 4 — Unexpected error catch path
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("Task 1352b — Case 4: unexpected error catch path", () => {
-  it("Case 4: fetchForeignFlowWithFallback throws — catch path returns structured result, does not re-throw", async () => {
-    // Replace the fetcher module BEFORE importing the job module.
-    // Cache-bust with ?test=C4 so Bun treats this as a fresh module instance
-    // with the mocked dependency in place.
-    mock.module("../infrastructure/fetchers/foreignFlowFetcher.js", () => ({
-      fetchForeignFlowWithFallback: async () => {
-        throw new Error("registry corrupted");
-      },
-      resetFallbackCache: () => {},
-      resetCircuitBreaker: async () => {},
-      resetLogSpamGuard: () => {},
-    }));
+  afterEach(() => {
+    // Restore the mutable delegate to the real frozen implementation
+    _fetchForeignFlowImpl = _frozenFetchForeignFlowWithFallback as unknown as (opts?: unknown) => Promise<FetchForeignFlowResult>;
+  });
 
+  it("Case 4: fetchForeignFlowWithFallback throws — catch path returns structured result, does not re-throw", async () => {
+    // Mutate the delegate variable — top-level mock.module() wrapper calls this,
+    // so the job module sees the throwing function without a new mock.module() call.
     // circuitBreakerRegistry is dynamically imported inside the catch block —
-    // use the real registry (it returns 'closed' by default, no need to mock it).
+    // the real registry is used (returns 'closed' by default).
     // This exercises the double-dynamic-import path the architect flagged.
+    _fetchForeignFlowImpl = async () => {
+      throw new Error("registry corrupted");
+    };
 
     const { runForeignFlowFetcherJob } = await import(
       "../scheduler/market-data/foreignFlowFetcherJob.js"
@@ -236,23 +260,21 @@ describe("Task 1352b — Case 5: runForeignFlowFetcherJobCron recordJobRun wirin
   });
 
   afterAll(() => {
+    _fetchForeignFlowImpl = _frozenFetchForeignFlowWithFallback as unknown as (opts?: unknown) => Promise<FetchForeignFlowResult>;
     closeDb();
   });
 
   it("Case 5: cron wrapper writes rows_written=7 to cron_job_runs for foreignFlowFetcherJob", async () => {
-    // Replace the fetcher so runForeignFlowFetcherJob (called internally by
-    // runForeignFlowFetcherJobCron with no overrides) returns a controlled result.
-    mock.module("../infrastructure/fetchers/foreignFlowFetcher.js", () => ({
-      fetchForeignFlowWithFallback: async () => ({
-        source: "primary" as const,
-        changes: 7,
-        timestamp: "2026-04-27T10:00:00Z",
-        warning: undefined,
-      }),
-      resetFallbackCache: () => {},
-      resetCircuitBreaker: async () => {},
-      resetLogSpamGuard: () => {},
-    }));
+    // Mutate the delegate variable so runForeignFlowFetcherJobCron (which calls
+    // runForeignFlowFetcherJob with no overrides) returns a controlled result.
+    // The top-level mock.module() wrapper delegates to _fetchForeignFlowImpl,
+    // so no new mock.module() call is needed — safe for parallel workers.
+    _fetchForeignFlowImpl = async () => ({
+      source: "primary" as const,
+      changes: 7,
+      timestamp: "2026-04-27T10:00:00Z",
+      warning: undefined,
+    });
 
     const { runForeignFlowFetcherJobCron } = await import(
       "../scheduler/market-data/foreignFlowFetcherJob.js"
@@ -288,17 +310,20 @@ describe("Task 1352b — Case 5: runForeignFlowFetcherJobCron recordJobRun wirin
 // ─────────────────────────────────────────────────────────────────────────────
 describe("Task 1352b — teardown: restore foreignFlowFetcher module registry", () => {
   afterAll(() => {
+    // Restore the mutable delegate and the top-level mock.module() wrapper
+    // to the real frozen implementations captured at file top-level.
+    _fetchForeignFlowImpl = _frozenFetchForeignFlowWithFallback as unknown as (opts?: unknown) => Promise<FetchForeignFlowResult>;
     mock.module("../infrastructure/fetchers/foreignFlowFetcher.js", () => ({
-      fetchForeignFlowWithFallback: _realFetchForeignFlowWithFallback,
-      resetFallbackCache: _realResetFallbackCache,
-      resetCircuitBreaker: _realResetCircuitBreaker,
-      resetLogSpamGuard: _realResetLogSpamGuard,
+      fetchForeignFlowWithFallback: _frozenFetchForeignFlowWithFallback,
+      resetFallbackCache: _frozenResetFallbackCache,
+      resetCircuitBreaker: _frozenResetCircuitBreaker,
+      resetLogSpamGuard: _frozenResetLogSpamGuard,
     }));
   });
 
   it("teardown guard: real foreignFlowFetcher.js captured", () => {
-    expect(typeof _realFetchForeignFlowWithFallback).toBe("function");
-    expect(typeof _realResetFallbackCache).toBe("function");
-    expect(typeof _realResetCircuitBreaker).toBe("function");
+    expect(typeof _frozenFetchForeignFlowWithFallback).toBe("function");
+    expect(typeof _frozenResetFallbackCache).toBe("function");
+    expect(typeof _frozenResetCircuitBreaker).toBe("function");
   });
 });

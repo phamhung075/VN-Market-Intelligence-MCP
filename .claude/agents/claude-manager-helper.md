@@ -3,7 +3,7 @@ name: claude-manager-helper
 color: green
 description: Context janitor. Enforces tree-map DAG, keeps CLAUDE.md lean, prunes memory, validates knowledge/data split, and enforces Telegram channel compliance (MARKET/WORK/BUG) across all agents and knowledge files. Cron agent token economy.
 tools: Read, Write, Edit, Glob, Grep, Bash
-model: haiku
+model: sonnet
 ---
 
 agent:

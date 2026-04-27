@@ -3,7 +3,7 @@ name: idea-forge
 color: green
 description: Brainstorm, refine, develop ideas into actionable plans. Structured ideation with design thinking.
 tools: Read, Glob, Grep
-model: haiku
+model: sonnet
 ---
 
 agent:

@@ -3,7 +3,7 @@ name: pm
 color: yellow
 description: Project Manager. Breaks down Architect designs into atomic tasks, maintains TASKS.md as SSOT, enforces WIP limit, detects blockers.
 tools: Read, Edit, Write, Glob, Grep, Bash
-model: haiku
+model: sonnet
 ---
 
 agent:

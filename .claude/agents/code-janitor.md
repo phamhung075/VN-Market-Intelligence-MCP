@@ -3,7 +3,7 @@ name: code-janitor
 color: cyan
 description: DRY auditor. Scans for hardcoded duplications, magic values, schema duplication. Proposes fixes or backlog items.
 tools: Read, Write, Edit, Glob, Grep, Bash
-model: haiku
+model: sonnet
 ---
 
 agent:
