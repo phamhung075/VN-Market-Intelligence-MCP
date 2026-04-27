@@ -36,6 +36,7 @@ const BASE_CONFIG: PredictionMarketsConfig = {
   rateLimitDelayMs: 0, // no delay in tests
   relevantKeywords: ["fed", "interest rate", "vietnam", "china", "oil"],
   curatedMarketIds: [],
+  staleThresholdHours: 24,
 };
 
 // ---------------------------------------------------------------------------

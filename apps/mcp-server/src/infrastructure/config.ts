@@ -85,6 +85,8 @@ export interface PredictionMarketsConfig {
   relevantKeywords: string[];
   /** Explicitly curated market IDs to always include regardless of keyword match. */
   curatedMarketIds: string[];
+  /** Max age (hours) before market data is considered stale. Default: 24 */
+  staleThresholdHours: number;
 }
 
 export interface NewsMentionConfig {
@@ -572,6 +574,7 @@ export function loadMcpConfig(): McpConfig {
         rateLimitDelayMs: numVal(pm, "rateLimitDelayMs", 500),
         relevantKeywords: arrVal(pm, "relevantKeywords", DEFAULT_PREDICTION_KEYWORDS),
         curatedMarketIds: arrVal(pm, "curatedMarketIds", []),
+        staleThresholdHours: numVal(pm, "staleThresholdHours", 24),
       };
     })(),
     alertPolicy: (() => {

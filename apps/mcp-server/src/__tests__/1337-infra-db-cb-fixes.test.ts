@@ -137,6 +137,7 @@ describe("Issue 3 — Polymarket CLOB fetch bypasses circuit breaker", () => {
       volumeSpikeThresholdUsd: 50000,
       minUniqueWallets: 10,
       whaleTradeThresholdUsd: 10000,
+      staleThresholdHours: 24,
     };
 
     // clobFetchFn throws 403 — must NOT touch the circuit breaker
@@ -174,6 +175,7 @@ describe("Issue 3 — Polymarket CLOB fetch bypasses circuit breaker", () => {
       volumeSpikeThresholdUsd: 50000,
       minUniqueWallets: 10,
       whaleTradeThresholdUsd: 10000,
+      staleThresholdHours: 24,
     };
 
     // gammaFetchFn that always throws — goes through CB

@@ -28,6 +28,7 @@ import type {
   PredictionMarket,
   PredictionSignal,
   PredictionSignalConfig,
+  RecentSentimentEntry,
 } from "../../domain/services/predictionSignalDetector.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -490,5 +491,40 @@ export async function runPredictionMarketPoll(
     });
   } finally {
     _isRunning = false;
+  }
+}
+
+/**
+ * Check if prediction market data is stale.
+ * Returns { isStale, ageHours } based on the most recent fetched_at timestamp.
+ * If the table is empty, ageHours is Infinity and isStale is true.
+ */
+export function checkStaleness(
+  db: Database,
+  thresholdHours: number,
+): { isStale: boolean; ageHours: number } {
+  try {
+    const row = db.prepare(
+      "SELECT MAX(fetched_at) as latestFetch FROM prediction_markets"
+    ).get() as { latestFetch: string | null } | undefined;
+
+    if (!row || !row.latestFetch) {
+      return { isStale: true, ageHours: Infinity };
+    }
+
+    const fetchedTime = new Date(row.latestFetch).getTime();
+    const now = Date.now();
+    const ageMs = now - fetchedTime;
+    const ageHours = ageMs / (1000 * 60 * 60);
+
+    return {
+      isStale: ageHours > thresholdHours,
+      ageHours,
+    };
+  } catch (err) {
+    logger.error("[prediction-market-job] checkStaleness failed", {
+      error: String(err),
+    });
+    return { isStale: true, ageHours: Infinity };
   }
 }
