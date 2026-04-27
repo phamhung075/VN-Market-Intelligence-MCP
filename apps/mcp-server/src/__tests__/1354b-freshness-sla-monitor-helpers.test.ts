@@ -83,8 +83,10 @@ describe("1354b — freshnessSlaMonitorJob helper unit tests", () => {
     const result = getPriorBreaches(db);
 
     expect(result.length).toBe(1);
-    expect(result[0].signalType).toBe("price");
-    expect(result[0].status).toBe("breach_open");
+    const first = result[0];
+    expect(first).toBeDefined();
+    expect(first!.signalType).toBe("price");
+    expect(first!.status).toBe("breach_open");
   });
 
   it("SLA-3: isEscalationCooldownActive returns false when no escalation has been sent", () => {
@@ -164,6 +166,8 @@ describe("1354b — freshnessSlaMonitorJob helper unit tests", () => {
 
     // Still only one row, status still 'recovered'
     expect(rows.length).toBe(1);
-    expect(rows[0].status).toBe("recovered");
+    const firstRow = rows[0];
+    expect(firstRow).toBeDefined();
+    expect(firstRow!.status).toBe("recovered");
   });
 });
