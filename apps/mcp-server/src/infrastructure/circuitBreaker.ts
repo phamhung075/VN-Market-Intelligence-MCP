@@ -15,6 +15,8 @@
  * @module infrastructure/circuitBreaker
  */
 
+import { logger } from "./logger.js";
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
 // ─────────────────────────────────────────────────────────────────────────────
@@ -154,6 +156,11 @@ export class CircuitBreaker {
       this._state = "half-open";
       this._halfOpenSuccesses = 0;
       this._openedAt = null;
+      logger.info("[circuitBreaker] state changed OPEN→HALF_OPEN", {
+        name: this.name,
+        resetTimeoutMs: this.config.resetTimeoutMs,
+        elapsed,
+      });
     }
   }
 
@@ -168,6 +175,10 @@ export class CircuitBreaker {
         this._consecutiveFailures = 0;
         this._halfOpenSuccesses = 0;
         this._openedAt = null;
+        logger.info("[circuitBreaker] state changed HALF_OPEN→CLOSED", {
+          name: this.name,
+          halfOpenMaxAttempts: this.config.halfOpenMaxAttempts,
+        });
       }
     } else {
       // closed — reset consecutive failure streak
@@ -196,5 +207,10 @@ export class CircuitBreaker {
     this._state = "open";
     this._openedAt = new Date();
     this._halfOpenSuccesses = 0;
+    logger.warn("[circuitBreaker] state changed CLOSED→OPEN", {
+      name: this.name,
+      failureThreshold: this.config.failureThreshold,
+      consecutiveFailures: this._consecutiveFailures,
+    });
   }
 }
