@@ -26,6 +26,7 @@
 - **1343a–1343e:** BCTC PDF pipeline recovery — watchlist restore (30 tickers), HOSE PDF discovery (multi-source SSC/cafef/vietstock), VPS skip endpoint (no infinite retry), fetch-bctc.sh update, integration test (6/6 pass) — APPROVED + merged 2026-04-27
 - **1344a–1344c:** Sprint 1344 — Fix 9 pre-existing test failures (6536→7371 pass, 213→0 fail) — ALL MERGED 2026-04-27
 - **1345a–1345e:** Sprint 1345 — News + Analysis Pipeline Hardening + Data Quality — Reuters/TE VPS systemd + newsapi fallback, BCTC financial validation (VNM/VEA), Polymarket 24h staleness guard, VN-Index cascade MARKET broadcast, integration pipeline + TSC fix (B1-B4) — APPROVED + merged 2026-04-27 (7355 pass / 73 pre-existing fail / 0 regression)
+- **1347a–1347b:** Sprint 1347 — Test DB isolation (1347a: clean 2537 leaked rows) + stock-classification.json coverage expansion (1347b: 5→30 tickers, all tradeExposure populated, 8/8 tests pass) — APPROVED + merged 2026-04-27 (7423 pass / 73 pre-existing fail / 0 regression) — closes report 1319
 
 ---
 
@@ -59,5 +60,7 @@
 | 1346b | Fix push-foreign-flow UNIQUE constraint | main 2026-04-27 | reports/TASK_REPORT_1346b.md — closes 1310, 1312 |
 | 1346c-b | NER suffix wiring + feedback retry + unknown stock_code | main 2026-04-27 | reports/TASK_REPORT_1346c-b.md — closes 1311, 1317, 1313 |
 | 1346c-a | Alert quality: volume spike + sentiment negation + VJC alias | main 2026-04-27 | reports/TASK_REPORT_1346c-a.md — closes 1320, 1321, 1322 |
+| 1347a | Test DB isolation guard + clean 2537 leaked rows | main 2026-04-27 | (merge(1347b) commit 428bc1bd) |
+| 1347b | Stock classification coverage expansion: 5→30 tickers | main 2026-04-27 | reports/TASK_REPORT_1347b.md — closes 1319 |
 
 ---
