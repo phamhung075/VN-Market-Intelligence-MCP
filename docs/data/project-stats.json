@@ -2,12 +2,12 @@
   "_maintained_by": "PM / system-auditor",
   "_trigger": "sprint start/end, tool/cron count change, baseline test update",
   "lastUpdated": "2026-04-28T00:00:00Z",
-  "currentSprint": 1354,
-  "previousSprint": { "number": 1353, "status": "DONE", "progressTasks": "Sprint 1353: Scheduler gap tests — imfIndicatorPollerJob + priceUpdateWatchdogJob. +16 new tests. Baseline: 7673 pass / 0 fail." },
-  "sprintGoal": "Sprint 1354 — Scheduler gap tests: parallelServiceDispatcherJob + freshnessSlaMonitorJob (16 new tests)",
-  "testBaseline": 7703,
-  "testBaselineTarget": 7703,
-  "testBaselinePass": 7703,
+  "currentSprint": 1355,
+  "previousSprint": { "number": 1354, "status": "DONE", "progressTasks": "Sprint 1354: Scheduler gap tests — parallelServiceDispatcherJob + freshnessSlaMonitorJob. +16 new tests. Baseline: 7703 pass / 0 fail." },
+  "sprintGoal": "Sprint 1355 — Scheduler gap tests: monthlySignalQualityJob + davPharmacyJob (16 new tests)",
+  "testBaseline": 7737,
+  "testBaselineTarget": 7737,
+  "testBaselinePass": 7737,
   "testBaselineFail": 0,
   "testFailures": 0,
   "toolCount": 108,
@@ -20,6 +20,6 @@
   "briefingFilesCreated": 30,
   "briefingArchiveQI": 0,
   "briefingArchiveQII": 0,
-  "lastFixApplied": "Sprint 1354 COMPLETE: scheduler gap tests — 1354a (parallelServiceDispatcherJob DispatcherDeps DI + 8 tests) + 1354b (freshnessSlaMonitorJob helper unit tests + 8 tests). New baseline: 7703 pass / 0 fail — merged 2026-04-28",
-  "currentSprintNotes": "2026-04-28 SPRINT 1354 COMPLETE: 16 gap tests merged for parallelServiceDispatcherJob + freshnessSlaMonitorJob. Baseline: 7703 pass / 0 fail."
+  "lastFixApplied": "Sprint 1355 COMPLETE: scheduler gap tests — 1355a (monthlySignalQualityJob 8 gap tests) + 1355b (davPharmacyJob 8 gap tests). New baseline: 7737 pass / 0 fail — merged 2026-04-28",
+  "currentSprintNotes": "2026-04-28 SPRINT 1355 COMPLETE: 16 gap tests merged for monthlySignalQualityJob + davPharmacyJob. Baseline: 7737 pass / 0 fail."
 }
