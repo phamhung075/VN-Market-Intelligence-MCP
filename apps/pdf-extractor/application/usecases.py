@@ -64,6 +64,7 @@ class ExtractPDFUseCase:
                 ocr_confidence=content.ocr_confidence,
                 extraction_time_ms=content.extraction_time_ms,
                 status="success",
+                confidence_financial=content.confidence_financial,
             )
 
         except PDFProcessingError:

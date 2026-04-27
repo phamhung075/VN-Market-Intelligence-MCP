@@ -54,6 +54,15 @@ class ExtractedContent:
       0.8  — OCR fallback used (moderate confidence)
       0.3  — partial text only (low confidence)
       0.0  — nothing extracted
+
+    confidence_financial in [0.0, 1.0]:
+      Score from validate_financial_figures() — accounting identity checks.
+      1.0  — all 6 rules pass
+      0.0  — hard violation (e.g. assets < equity as in VNM Q4 2024 corruption)
+      0.1+ — soft violations stacked (e.g. margin > 1.0 as in VEA Q4 2024)
+
+    composite_confidence = min(ocr_confidence, confidence_financial)
+    Downstream consumers should use composite to decide on signal generation.
     """
 
     document_id: str
@@ -61,3 +70,4 @@ class ExtractedContent:
     text_content: str
     ocr_confidence: float
     extraction_time_ms: int
+    confidence_financial: float = 1.0

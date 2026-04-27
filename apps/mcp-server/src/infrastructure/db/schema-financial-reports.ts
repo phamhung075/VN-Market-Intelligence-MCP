@@ -61,6 +61,14 @@ export function initFinancialReportsTables(db: Database): void {
 
     // Add index for fallback signal lookups
     db.exec(`CREATE INDEX IF NOT EXISTS idx_fr_extraction_method ON financial_reports(action_code, extraction_method, parsed_at)`);
+
+    // ── Task 1345b: financial validation confidence columns ──────────────────
+    if (!colNames.has("ocr_confidence")) {
+      db.exec("ALTER TABLE financial_reports ADD COLUMN ocr_confidence REAL");
+    }
+    if (!colNames.has("confidence_financial")) {
+      db.exec("ALTER TABLE financial_reports ADD COLUMN confidence_financial REAL");
+    }
   } catch {
     // fresh DB — CREATE TABLE already included the columns
   }
