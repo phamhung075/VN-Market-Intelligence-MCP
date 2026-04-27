@@ -84,5 +84,7 @@
 | 1353b | priceUpdateWatchdogJob _resetSshCooldown export + 8 gap tests (SSH cooldown, null readPrice, notify failures, boundary hours) | main 2026-04-28 | reports/TASK_REPORT_1353b.md |
 | 1354a | parallelServiceDispatcherJob DispatcherDeps DI + 8 gap-fill tests (all-ok, TA fail, all-fail, weekday heartbeat, weekend no-heartbeat, empty watchlist, getDb throws) | main 2026-04-28 | reports/TASK_REPORT_1354a.md |
 | 1354b | freshnessSlaMonitorJob helper unit tests — 8 cases (SLA-1–SLA-8): getPriorBreaches, isEscalationCooldownActive, recordSlaBreach, recordSlaRecovery, markEscalationSent — in-memory DB, TS fix applied (TS2532 undefined guards) | main 2026-04-28 | — |
+| 1355a | monthlySignalQualityJob 8 gap tests (MSQ-1–MSQ-8): normal path, partial/all insert fail, fetch reject, empty signals, aggregation key, durationMs, sequencing | main 2026-04-28 | — |
+| 1355b | davPharmacyJob 8 gap tests (DAV-1–DAV-8): normal path, partial/all insert fail, fetch reject, empty approvals, null stock_code, durationMs, init sequencing — mock.module strategy, zero production changes | main 2026-04-28 | — |
 
 ---
