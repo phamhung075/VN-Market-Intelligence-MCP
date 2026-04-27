@@ -159,7 +159,7 @@ import type { FiscalPeriod } from "../../bctc-schema.js";
 const TEST_PERIOD: FiscalPeriod = {
   year: 2024,
   quarter: 4,
-  periodType: "Q",
+  periodType: "Q4",
   startDate: "2024-10-01",
   endDate: "2024-12-31",
   sortKey: "2024-Q4",
