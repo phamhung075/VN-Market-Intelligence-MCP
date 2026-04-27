@@ -36,7 +36,7 @@
 |---------|-------|----------|------|-------|-----------------|
 | 1346a | Remove test stub from production scheduler | CRITICAL | FIX | Developer | 1323 |
 | ~~1346b~~ | ~~Fix push-foreign-flow UNIQUE constraint~~ | ~~HIGH~~ | ~~FIX~~ | ~~Developer~~ | 1310, 1312 — DONE 2026-04-27 |
-| 1346e | Cascade gap: DSC + VPBankS/OKX → market-wide impact | MEDIUM | BACKLOG | BA | 1314, 1315 |
+| ~~1346e~~ | ~~Cascade gap: DSC + VPBankS/OKX → market-wide impact~~ | ~~MEDIUM~~ | ~~BACKLOG~~ | ~~BA~~ | 1314, 1315 — closed by 1348a |
 
 ---
 
@@ -62,5 +62,6 @@
 | 1346c-a | Alert quality: volume spike + sentiment negation + VJC alias | main 2026-04-27 | reports/TASK_REPORT_1346c-a.md — closes 1320, 1321, 1322 |
 | 1347a | Test DB isolation guard + clean 2537 leaked rows | main 2026-04-27 | (merge(1347b) commit 428bc1bd) |
 | 1347b | Stock classification coverage expansion: 5→30 tickers | main 2026-04-27 | reports/TASK_REPORT_1347b.md — closes 1319 |
+| 1348a | Cascade brokerage/banking competitive signals (BK-1 + FR-3 affected_actions) | main 2026-04-27 | reports/TASK_REPORT_1348a.md — closes 1314, 1315 |
 
 ---
