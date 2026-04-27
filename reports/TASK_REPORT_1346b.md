@@ -1,8 +1,9 @@
 # Task Report: 1346b — Fix push-foreign-flow UNIQUE Constraint
 
-**Status:** DONE
-**Branch:** task/1346b-foreign-flow-upsert
+**Status:** APPROVED
+**Branch:** task/1346b-foreign-flow-upsert (merged to main)
 **Date:** 2026-04-27
+**QA:** PASS
 
 ---
 
@@ -79,3 +80,32 @@ Two compounding issues:
 - [x] Circuit breaker properly counts and trips on sustained DB failures
 - [x] `reset_foreign_flow_circuit_breaker()` tool available for operator recovery
 - [x] All 7355 baseline tests pass (73 pre-existing unrelated failures)
+
+---
+
+## QA Review — 2026-04-27
+
+### Test Results
+- Targeted suite (9 tests): 9/9 pass — 0 fail
+- Full suite: 7355 pass / 73 fail (pre-existing baseline, 0 regression)
+- TypeScript: 0 errors (bun tsc --noEmit)
+
+### DDD Compliance: PASS
+- domain/models/shared-types.ts — no infrastructure imports
+- foreignFlowTools.ts is interface layer — infrastructure imports permitted
+- vnstockStore.ts is infrastructure layer — domain imports permitted
+
+### Security: PASS
+- No process.env usage in changed files
+- All SQL uses parameterized queries (bun:sqlite prepared statements)
+- No hardcoded secrets or credentials
+
+### Issues Found
+#### Blocking
+None.
+
+#### Non-Blocking
+- Pre-existing `any` generics in vnstockStore.ts prepare<any,...> calls (lines 311, 343, 376, 607, 654, 707) — not introduced by this task, tracked separately.
+
+### Merge Status
+APPROVED — merged to main. Telegram reports 1310 and 1312 closed.

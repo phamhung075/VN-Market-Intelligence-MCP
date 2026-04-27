@@ -35,13 +35,17 @@
 |---------|-------|----------|------|-------|-----------------|
 | 1346a | Remove test stub from production scheduler | CRITICAL | FIX | Developer | 1323 |
 | ~~1346b~~ | ~~Fix push-foreign-flow UNIQUE constraint~~ | ~~HIGH~~ | ~~FIX~~ | ~~Developer~~ | 1310, 1312 — DONE 2026-04-27 |
-| 1346c | Alert quality: volume spike + NER/sentiment bugs | HIGH | FIX | Developer | 1320, 1311, 1321, 1322 |
-| 1346d | PDF circuit breaker + BUG channel retry + unknown stock_code | HIGH | FIX | Developer/Ops | 1316, 1317, 1313 |
 | 1346e | Cascade gap: DSC + VPBankS/OKX → market-wide impact | MEDIUM | BACKLOG | BA | 1314, 1315 |
 
 ---
 
 ## In Progress
+
+| Task ID | Title | Developer | Reports | Handoff |
+|---------|-------|-----------|---------|---------|
+| 1346c-a | Alert quality: volume spike + sentiment negation + VJC alias | Dev A | 1320, 1321, 1322 | docs/handoffs/TASK_1346c-a.md |
+| 1346c-b | NER suffix wiring + feedback retry + unknown stock_code | Dev B | 1311, 1317, 1313 | docs/handoffs/TASK_1346c-b.md |
+| 1346d | PDF circuit breaker concurrent race fix | Dev C | 1316 | docs/handoffs/TASK_1346d.md |
 
 ---
 
@@ -49,6 +53,11 @@
 
 | Task ID | Title | Branch | Report |
 |---------|-------|--------|--------|
-| 1346b | Fix push-foreign-flow UNIQUE constraint | task/1346b-foreign-flow-upsert | reports/TASK_REPORT_1346b.md |
+
+## Done
+
+| Task ID | Title | Merged | Reports |
+|---------|-------|--------|---------|
+| 1346b | Fix push-foreign-flow UNIQUE constraint | main 2026-04-27 | reports/TASK_REPORT_1346b.md — closes 1310, 1312 |
 
 ---
