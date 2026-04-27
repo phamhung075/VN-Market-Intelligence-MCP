@@ -218,10 +218,11 @@ systemctl --no-pager -l status vn-bctc-enrich.timer | head -12
 ENRICHEOF
 
 
-# ── 8. VPS HTTP Proxy Server (SSC iboard geo-block fix) ─────────────────────
+# ── 8. VPS HTTP Proxy Server (BCTC Playwright discover, port 8765) ──────────
 echo ""
-echo "Deploying VPS HTTP proxy server (SSC iboard, port 8765)..."
+echo "Deploying VPS HTTP proxy server (BCTC Playwright + SSC iboard, port 8765)..."
 $SCP vps-scripts/vps-proxy-server.js ${VH_USER}@${VH_IP}:/root/vps-proxy-server.js
+$SCP vps-scripts/discover-bctc-urls-browser.py ${VH_USER}@${VH_IP}:/root/discover-bctc-urls-browser.py
 $SCP vps-scripts/vn-vps-proxy.service ${VH_USER}@${VH_IP}:/etc/systemd/system/vn-vps-proxy.service
 
 $SSH << 'PROXYEOF'
@@ -268,7 +269,7 @@ echo " News RSS proxy:     systemctl status vn-news-fetch"
 echo " SBV/FX proxy:       systemctl status vn-sbv-fetch"
 echo " Foreign flow proxy: systemctl status vn-foreign-flow"
 echo " OHLCV backfill:     systemctl status vn-ohlcv-backfill.timer"
-echo " VPS HTTP proxy:     systemctl status vn-vps-proxy ← NEW (SSC iboard, :8765)"
+echo " VPS HTTP proxy:     systemctl status vn-vps-proxy (BCTC Playwright + SSC iboard, :8765)"
 echo ""
 echo " Logs: /var/log/vn-{price,bctc,bctc-enrich,news,sbv,foreign-flow,ohlcv-backfill,vps-proxy}.log"
 echo "══════════════════════════════════════════"

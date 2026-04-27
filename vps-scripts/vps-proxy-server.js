@@ -1,16 +1,24 @@
 #!/usr/bin/env node
 /**
- * VPS HTTP Proxy Server — fix/bctc-ssc-vps-proxy
+ * VPS HTTP Proxy Server — fix/bctc-playwright-enrichment
  *
  * Lightweight Node.js HTTP server running on Vinahost Vietnam VPS.
- * Provides a single proxy endpoint that forwards iboard-query.ssc.vn
- * API calls from the geo-blocked MCP server (France/Docker) through
- * the VPS (Vietnam IP, no geo-block).
+ * Provides proxy endpoints for VN financial portals that are geo-blocked
+ * or unreachable from France/Docker.
  *
- * Endpoint:
+ * Endpoints:
+ *
  *   GET /proxy/ssc-iboard/dcm/financials/ticker/:ticker
  *     → forwards to https://iboard-query.ssc.vn/dcm/financials/ticker/:ticker
  *     → returns the JSON response verbatim
+ *     NOTE: iboard-query.ssc.vn is NXDOMAIN as of 2026-04-27 (dead domain).
+ *     Endpoint kept for forward-compatibility if domain is restored.
+ *
+ *   GET /proxy/bctc-discover/:ticker?year=YYYY&quarter=Q
+ *     → runs: python3 /root/discover-bctc-urls-browser.py <TICKER> <YEAR> Q<Q>
+ *     → returns the Python script JSON output:
+ *       { results: [{url, source, confidence, page_title}], error: string|null }
+ *     → timeout: 120s (Playwright browser automation takes time)
  *
  * Health:
  *   GET /health → 200 { ok: true, service: "vps-proxy" }
@@ -34,6 +42,7 @@
 
 const http = require("http");
 const https = require("https");
+const { spawn } = require("child_process");
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Config
@@ -47,6 +56,20 @@ const IBOARD_UPSTREAM = "https://iboard-query.ssc.vn";
 
 /** Allowed proxy prefix path. Only this path is proxied. */
 const SSC_PROXY_PREFIX = "/proxy/ssc-iboard";
+
+/**
+ * Playwright-based BCTC discovery endpoint.
+ * Runs discover-bctc-urls-browser.py as a subprocess.
+ * Path pattern: /proxy/bctc-discover/:ticker
+ */
+const BCTC_DISCOVER_PREFIX = "/proxy/bctc-discover/";
+
+/** Absolute path to the Python discovery script on the VPS. */
+const BCTC_DISCOVER_SCRIPT =
+  process.env.BCTC_DISCOVER_SCRIPT || "/root/discover-bctc-urls-browser.py";
+
+/** Timeout for the Python subprocess in milliseconds (2 minutes). */
+const BCTC_DISCOVER_TIMEOUT_MS = 120_000;
 
 const BROWSER_UA =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
@@ -112,6 +135,70 @@ function log(level, msg, extra) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// BCTC discover subprocess helper
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Run discover-bctc-urls-browser.py as a child process.
+ *
+ * @param {string} ticker  - Stock ticker symbol (e.g. "VCB")
+ * @param {number} year    - Report year (e.g. 2025)
+ * @param {string} quarter - Quarter string with Q prefix (e.g. "Q4")
+ * @returns {Promise<object>} - Parsed JSON output from the Python script
+ */
+function runBctcDiscoverScript(ticker, year, quarter) {
+  return new Promise((resolve, reject) => {
+    const args = [BCTC_DISCOVER_SCRIPT, ticker.toUpperCase(), String(year), quarter.toUpperCase()];
+
+    log("INFO", `BCTC discover: python3 ${args.join(" ")}`);
+
+    const proc = spawn("python3", args, {
+      timeout: BCTC_DISCOVER_TIMEOUT_MS,
+      env: { ...process.env, PYTHONUNBUFFERED: "1" },
+    });
+
+    const stdoutChunks = [];
+    const stderrChunks = [];
+
+    proc.stdout.on("data", (chunk) => stdoutChunks.push(chunk));
+    proc.stderr.on("data", (chunk) => stderrChunks.push(chunk));
+
+    const timer = setTimeout(() => {
+      proc.kill("SIGTERM");
+      reject(new Error(`Script timeout after ${BCTC_DISCOVER_TIMEOUT_MS}ms`));
+    }, BCTC_DISCOVER_TIMEOUT_MS);
+
+    proc.on("close", (code) => {
+      clearTimeout(timer);
+
+      const stdout = Buffer.concat(stdoutChunks).toString("utf8").trim();
+      const stderr = Buffer.concat(stderrChunks).toString("utf8").trim();
+
+      if (stderr) {
+        log("INFO", `BCTC discover stderr: ${stderr.slice(0, 500)}`);
+      }
+
+      if (code !== 0 && !stdout) {
+        reject(new Error(`Script exited with code ${code}`));
+        return;
+      }
+
+      try {
+        const parsed = JSON.parse(stdout);
+        resolve(parsed);
+      } catch (err) {
+        reject(new Error(`Script output is not valid JSON: ${stdout.slice(0, 200)}`));
+      }
+    });
+
+    proc.on("error", (err) => {
+      clearTimeout(timer);
+      reject(err);
+    });
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Request handler
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -123,7 +210,10 @@ async function handleRequest(req, res) {
     return jsonResponse(res, 200, {
       ok: true,
       service: "vps-proxy",
-      upstreams: { ssc_iboard: IBOARD_UPSTREAM },
+      upstreams: {
+        ssc_iboard: IBOARD_UPSTREAM,
+        bctc_discover: BCTC_DISCOVER_SCRIPT,
+      },
     });
   }
 
@@ -162,6 +252,56 @@ async function handleRequest(req, res) {
     return;
   }
 
+  // BCTC Playwright discovery
+  //   Incoming: /proxy/bctc-discover/<TICKER>?year=2025&quarter=4
+  //   Action:   python3 /root/discover-bctc-urls-browser.py <TICKER> <YEAR> Q<QUARTER>
+  //   Returns:  { results: [{url, source, confidence, page_title}], error }
+  if (url.startsWith(BCTC_DISCOVER_PREFIX)) {
+    // Extract ticker from path: /proxy/bctc-discover/VCB → VCB
+    const pathPart = url.slice(BCTC_DISCOVER_PREFIX.length); // "VCB?year=2025&quarter=4"
+    const [tickerRaw, queryString] = pathPart.split("?");
+    const ticker = (tickerRaw || "").split("/")[0].trim().toUpperCase();
+
+    if (!ticker || !/^[A-Z0-9]{1,10}$/.test(ticker)) {
+      return jsonResponse(res, 400, { error: "Invalid ticker", ticker });
+    }
+
+    // Parse query params
+    const params = new URLSearchParams(queryString || "");
+    const yearStr = params.get("year") || String(new Date().getFullYear());
+    const quarterRaw = params.get("quarter") || "4";
+    const year = parseInt(yearStr, 10);
+    const quarter = `Q${quarterRaw.replace(/^Q/i, "")}`;
+
+    if (isNaN(year) || year < 2000 || year > 2100) {
+      return jsonResponse(res, 400, { error: "Invalid year", year: yearStr });
+    }
+
+    log("INFO", `BCTC discover: ticker=${ticker} year=${year} quarter=${quarter}`);
+
+    try {
+      const result = await runBctcDiscoverScript(ticker, year, quarter);
+      const payload = JSON.stringify(result);
+      res.writeHead(200, {
+        "Content-Type": "application/json",
+        "Content-Length": Buffer.byteLength(payload),
+        "X-Proxy-Source": "vps-playwright",
+      });
+      res.end(payload);
+      const urlCount = Array.isArray(result.results) ? result.results.length : 0;
+      log("INFO", `BCTC discover OK: ticker=${ticker} results=${urlCount}`);
+    } catch (err) {
+      log("ERROR", `BCTC discover FAIL: ticker=${ticker}`, { error: err.message });
+      // Return a valid JSON error response (not 502) so the MCP server can
+      // distinguish "VPS reachable but no PDF found" from "VPS unreachable".
+      jsonResponse(res, 200, {
+        results: [],
+        error: `Script error: ${err.message}`,
+      });
+    }
+    return;
+  }
+
   // Unknown route
   jsonResponse(res, 404, { error: "Not found", path: url });
 }
@@ -182,7 +322,9 @@ const server = http.createServer((req, res) => {
 server.listen(PORT, "0.0.0.0", () => {
   log("INFO", `VPS proxy server listening on 0.0.0.0:${PORT}`);
   log("INFO", `SSC iboard proxy: GET /proxy/ssc-iboard/dcm/financials/ticker/:ticker`);
+  log("INFO", `BCTC discover:    GET /proxy/bctc-discover/:ticker?year=YYYY&quarter=Q`);
   log("INFO", `Health check:     GET /health`);
+  log("INFO", `BCTC script path: ${BCTC_DISCOVER_SCRIPT}`);
   if (!API_KEY) {
     log("WARN", "VPS_API_KEY is not set — proxy accepts all requests (insecure)");
   }
