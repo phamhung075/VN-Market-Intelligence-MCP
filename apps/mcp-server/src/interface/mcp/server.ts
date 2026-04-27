@@ -970,13 +970,16 @@ export async function createBunServer(
           return;
         }
 
-        // Step 5: Upsert valid items to DB with timing
-        // Guard: ensure UNIQUE(code, date) migration has run before first write
+        // Step 5: Upsert valid items to DB with timing.
+        // Guard: ensure UNIQUE(code, date) migration has run before first write.
+        // Wrap in breakers.foreignFlow.execute() so DB failures increment the
+        // circuit breaker failure counter (previously the bare try/catch swallowed
+        // errors without notifying the breaker — FIX: foreign-flow-unique-constraint).
         ensureForeignFlowMigration();
         const dbStart = Date.now();
         let upserted = 0;
         try {
-          upserted = upsertForeignFlow(validItems);
+          upserted = await breakers.foreignFlow.execute(async () => upsertForeignFlow(validItems));
         } catch (dbErr) {
           dbTimeMs = Date.now() - dbStart;
           const errMsg = dbErr instanceof Error ? dbErr.message : String(dbErr);
