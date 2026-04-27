@@ -9,13 +9,18 @@
  *   via discoverHosePdfUrls() (SSC iboard → cafef.vn → vietstock.vn).
  *   All HTTP calls are injectable for testability. Geo-blocking avoided by
  *   using the iboard JSON API (not the legacy Oracle ADF SPA).
+ * - fix/bctc-url-enrichment (2026-04-27): Extended WHERE clause to also capture
+ *   items with source_url = 'MISSING' or source_url LIKE '/test-%' (placeholder
+ *   values left in DB by earlier bad runs). Added SSC_IBOARD_BASE_URL env comment.
  *
  * Design:
- * - Dequeues max 20 items with source_url = NULL per run (HOSE tickers).
+ * - Dequeues max 20 items with source_url = NULL or a placeholder value per run.
  * - Calls discoverHosePdfUrls() for each item.
  * - On success: writes source_url to DB so VPS can fetch.
  * - On failure / empty: leaves item pending (VPS will retry later).
  * - Idempotent and resilient. No circuit-breaker dependency.
+ * - Set SSC_IBOARD_BASE_URL env var to route iboard API calls through a VPS proxy
+ *   when running from a geo-blocked region (iboard-query.ssc.vn is NXDOMAIN outside VN).
  *
  * @module scheduler/financial-reports/bctcQueueEnricherJob
  */
@@ -78,6 +83,12 @@ export async function runBctcQueueEnricherJob(opts: {
   };
 
   // ── Query items awaiting enrichment ──────────────────────────────────────
+  //
+  // Treats the following source_url values as "needs enrichment":
+  //   - NULL (never populated)
+  //   - 'MISSING' (placeholder written by earlier bad runs)
+  //   - '/test-...' (placeholder written by test-seeding scripts)
+  //
   let queueItems: Array<{ id: number; action_code: string }> = [];
 
   try {
@@ -85,7 +96,12 @@ export async function runBctcQueueEnricherJob(opts: {
       .query<{ id: number; action_code: string }, [number]>(
         `SELECT id, action_code
          FROM bctc_vps_queue
-         WHERE source_url IS NULL AND status = 'pending'
+         WHERE (
+           source_url IS NULL
+           OR source_url = 'MISSING'
+           OR source_url LIKE '/test-%'
+         )
+         AND status = 'pending'
          ORDER BY created_at ASC
          LIMIT ?`,
       )

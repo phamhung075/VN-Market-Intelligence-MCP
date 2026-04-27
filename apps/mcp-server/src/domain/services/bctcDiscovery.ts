@@ -5,15 +5,27 @@
  * (quarterly financial reports) for tickers listed on the HOSE exchange.
  *
  * Strategy order (fail-fast with graceful fallback):
- *   1. SSC iboard API (iboard.ssc.vn) — preferred, fastest
- *   2. cafef.vn scraper — fallback 1
- *   3. vietstock.vn scraper — fallback 2
+ *   1. SSC iboard JSON API — preferred, fastest.
+ *      Base URL: SSC_IBOARD_BASE_URL env var (default: https://iboard-query.ssc.vn).
+ *      Set SSC_IBOARD_BASE_URL to a VPS-side proxy endpoint when running from a
+ *      geo-blocked region (France) that cannot resolve iboard-query.ssc.vn.
+ *   2. cafef.vn document JSON API (s.cafef.vn) — fallback 1.
+ *      Uses the JSON API endpoint, NOT HTML scraping (the .chn pages return 404
+ *      and the financial-docs sections are JS-rendered).
+ *   3. vietstock.vn HTML scraper — fallback 2 (rarely succeeds; all content JS-rendered).
  *
  * Design:
  * - Accepts injectable HTTP fetch functions for full testability (ports pattern).
  * - All network calls are guarded with per-source timeouts (default 5 s).
  * - Unknown/fake tickers return { urls: [], source: null, fallbackUrls: [], fallbackSource: null }.
- * - Domain layer only — uses globalThis.fetch (Bun native); zero infrastructure imports.
+ * - Domain layer only — reads Bun.env for config; zero infrastructure imports.
+ *
+ * 2026-04-27 FIX (branch fix/bctc-url-enrichment):
+ *   - Added SSC_IBOARD_BASE_URL env override so VPS proxy can be used for
+ *     iboard API calls (iboard-query.ssc.vn is NXDOMAIN from France).
+ *   - Replaced cafef HTML scraper with s.cafef.vn JSON API (FinanceInfo endpoint).
+ *     The /[ticker]/bao-cao-tai-chinh.chn pattern returned HTTP 404; the financial
+ *     docs section on cafef renders entirely via JavaScript — no static PDF hrefs.
  *
  * @module domain/services/bctcDiscovery
  */
@@ -57,8 +69,31 @@ export interface DiscoverOptions {
 // Constants
 // ─────────────────────────────────────────────────────────────────────────────
 
-const SSC_IBOARD_BASE = "https://iboard-query.ssc.vn";
+/**
+ * Resolve the SSC iboard API base URL at call time.
+ *
+ * Reads SSC_IBOARD_BASE_URL env var on every invocation so that:
+ *   1. Tests can override Bun.env["SSC_IBOARD_BASE_URL"] after module import.
+ *   2. Production can hot-swap the proxy without restarting (env reload).
+ *
+ * Default: https://iboard-query.ssc.vn
+ * Override: SSC_IBOARD_BASE_URL=https://vps-proxy.example.com/iboard
+ */
+function getSscIboardBase(): string {
+  return (typeof Bun !== "undefined" ? Bun.env["SSC_IBOARD_BASE_URL"] : undefined) ??
+    "https://iboard-query.ssc.vn";
+}
+
+/**
+ * Base URL for the cafef.vn static/API subdomain.
+ * The s.cafef.vn FinanceInfo JSON API returns document metadata including
+ * PDF download URLs — unlike the .chn pages which are JS-rendered or 404.
+ */
+const CAFEF_API_BASE = "https://s.cafef.vn";
+
+/** cafef.vn main domain — used for resolving relative PDF URLs. */
 const CAFEF_BASE = "https://cafef.vn";
+
 const VIETSTOCK_BASE = "https://finance.vietstock.vn";
 
 const BROWSER_UA =
@@ -105,11 +140,11 @@ async function fetchWithTimeout(url: string, timeoutMs: number): Promise<string>
 /**
  * Extracts PDF URLs from the SSC iboard JSON API response.
  *
- * The iboard API at https://iboard-query.ssc.vn/dcm/financials/ticker/<TICKER>
+ * The iboard API at <SSC_IBOARD_BASE>/dcm/financials/ticker/<TICKER>
  * returns a JSON array of disclosure documents, each with a `fileUrl` field
  * pointing to a downloadable PDF. Filters for BCTC (annual/quarterly reports).
  */
-function extractSscUrls(raw: string, ticker: string): string[] {
+function extractSscUrls(raw: string, _ticker: string): string[] {
   try {
     const data = JSON.parse(raw) as unknown;
 
@@ -120,6 +155,7 @@ function extractSscUrls(raw: string, ticker: string): string[] {
         ? ((data as Record<string, unknown>).data as unknown[])
         : [];
 
+    const iboardBase = getSscIboardBase();
     const urls: string[] = [];
     for (const item of items) {
       if (typeof item !== "object" || item === null) continue;
@@ -127,7 +163,7 @@ function extractSscUrls(raw: string, ticker: string): string[] {
       const fileUrl = rec.fileUrl ?? rec.file_url ?? rec.url ?? rec.pdfUrl;
       if (typeof fileUrl === "string" && fileUrl.toLowerCase().endsWith(".pdf")) {
         // Normalise to absolute URL
-        const absolute = fileUrl.startsWith("http") ? fileUrl : `${SSC_IBOARD_BASE}${fileUrl}`;
+        const absolute = fileUrl.startsWith("http") ? fileUrl : `${iboardBase}${fileUrl}`;
         urls.push(absolute);
       }
     }
@@ -139,15 +175,48 @@ function extractSscUrls(raw: string, ticker: string): string[] {
 }
 
 /**
- * Extracts PDF URLs from cafef.vn HTML response.
- * Looks for anchor hrefs ending in .pdf.
+ * Extracts PDF URLs from the s.cafef.vn FinanceInfo JSON API response.
+ *
+ * The API returns a JSON object with a `Data` array. Each item may contain
+ * a `Url` field with a relative or absolute PDF path.
+ *
+ * Note: The old cafef HTML scraper targeted /[ticker]/bao-cao-tai-chinh.chn
+ * which returns HTTP 404. The financial docs section is JS-rendered (no static
+ * PDF hrefs in the initial HTML). This JSON API approach is more reliable.
  */
-function extractCafefUrls(html: string, ticker: string): string[] {
+function extractCafefUrls(raw: string, _ticker: string): string[] {
   const urls: string[] = [];
+
+  // Strategy A: Parse as JSON API response (s.cafef.vn FinanceInfo endpoint)
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    const data: unknown[] = Array.isArray(parsed)
+      ? parsed
+      : (parsed as Record<string, unknown>)?.Data instanceof Array
+        ? ((parsed as Record<string, unknown>).Data as unknown[])
+        : (parsed as Record<string, unknown>)?.data instanceof Array
+          ? ((parsed as Record<string, unknown>).data as unknown[])
+          : [];
+
+    for (const item of data) {
+      if (typeof item !== "object" || item === null) continue;
+      const rec = item as Record<string, unknown>;
+      const urlField = rec.Url ?? rec.url ?? rec.FileUrl ?? rec.fileUrl ?? rec.PdfUrl ?? rec.pdfUrl;
+      if (typeof urlField === "string" && urlField.toLowerCase().endsWith(".pdf")) {
+        const absolute = urlField.startsWith("http") ? urlField : `${CAFEF_BASE}${urlField}`;
+        urls.push(absolute);
+      }
+    }
+
+    if (urls.length > 0) return urls;
+  } catch {
+    // Not JSON — fall through to HTML href scraping
+  }
+
+  // Strategy B: HTML href scraping (legacy fallback for static pages)
   let match: RegExpExecArray | null;
-  // Reset lastIndex
   PDF_HREF_RE.lastIndex = 0;
-  while ((match = PDF_HREF_RE.exec(html)) !== null) {
+  while ((match = PDF_HREF_RE.exec(raw)) !== null) {
     const href = match[1];
     if (href === undefined) continue;
     const absolute = href.startsWith("http") ? href : `${CAFEF_BASE}${href}`;
@@ -179,6 +248,11 @@ function extractVietstockUrls(html: string, ticker: string): string[] {
 
 /**
  * Try to find PDF URLs via the SSC iboard JSON API.
+ *
+ * The base URL is resolved at call time from SSC_IBOARD_BASE_URL env var.
+ * When running geo-blocked (France), set SSC_IBOARD_BASE_URL to a VPS proxy
+ * that forwards /dcm/financials/ticker/<TICKER> to iboard-query.ssc.vn.
+ *
  * Returns empty array on any error (network, parse, HTTP error).
  */
 async function tryFetchSsc(
@@ -186,7 +260,8 @@ async function tryFetchSsc(
   timeout: number,
   fetchFn: HttpFetchFn,
 ): Promise<string[]> {
-  const url = `${SSC_IBOARD_BASE}/dcm/financials/ticker/${encodeURIComponent(ticker.toUpperCase())}`;
+  const base = getSscIboardBase();
+  const url = `${base}/dcm/financials/ticker/${encodeURIComponent(ticker.toUpperCase())}`;
   try {
     const raw = await fetchFn(url, timeout);
     return extractSscUrls(raw, ticker);
@@ -196,7 +271,15 @@ async function tryFetchSsc(
 }
 
 /**
- * Try to find PDF URLs from cafef.vn financial reports page.
+ * Try to find PDF URLs from cafef.vn via the s.cafef.vn FinanceInfo JSON API.
+ *
+ * Endpoint: https://s.cafef.vn/Candles/FinanceInfo.ashx?symbol=<TICKER>&type=5
+ * type=5 = financial reports (BCTC).
+ *
+ * The old HTML page approach (/[ticker]/bao-cao-tai-chinh.chn) returned HTTP 404.
+ * The financial docs section on cafef is fully JS-rendered — no static PDF hrefs.
+ * This API endpoint returns JSON with direct PDF download URLs.
+ *
  * Returns empty array on any error.
  */
 async function tryFetchCafef(
@@ -204,11 +287,12 @@ async function tryFetchCafef(
   timeout: number,
   fetchFn: HttpFetchFn,
 ): Promise<string[]> {
-  // cafef ticker pages use lowercase
-  const url = `${CAFEF_BASE}/${ticker.toLowerCase()}/bao-cao-tai-chinh.chn`;
+  const symbol = ticker.toUpperCase();
+  // type=5 = BCTC / financial disclosure documents
+  const url = `${CAFEF_API_BASE}/Candles/FinanceInfo.ashx?symbol=${encodeURIComponent(symbol)}&type=5&PageIndex=1&PageSize=10`;
   try {
-    const html = await fetchFn(url, timeout);
-    return extractCafefUrls(html, ticker);
+    const raw = await fetchFn(url, timeout);
+    return extractCafefUrls(raw, ticker);
   } catch {
     return [];
   }
