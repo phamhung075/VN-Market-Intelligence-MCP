@@ -26,7 +26,19 @@ conviction_score = (news_sentiment_avg * 0.20) + (fundamental_score * 0.35) +
 # ≥0.5=Buy | 0.2–0.5=Hold | -0.2–0.2=Neutral | ≤-0.2=Reduce/Sell
 ```
 
-**3. Ledger entry** `docs/analysis-briefs/{TICKER}.md` [Unified Agent] Quarterly Syntheses:
+**3. Ledger entry** — if `docs/analysis-briefs/{TICKER}.md` does not exist → create it first:
+```markdown
+# {TICKER} — Analysis Ledger {YEAR}
+
+## [Report Analyzer] Fundamentals & Valuation
+
+## [News Scout] Headlines & Sentiment
+
+## [Market Watcher] Price, Volume, Technicals
+
+## [Unified Agent] Quarterly Syntheses
+```
+Append `docs/analysis-briefs/{TICKER}.md` [Unified Agent] Quarterly Syntheses:
 ```markdown
 ### Q{N} {YEAR} Synthesis — YYYY-MM-DD
 

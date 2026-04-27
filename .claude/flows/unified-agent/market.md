@@ -47,6 +47,19 @@ unified-agent loop clean (HH:MM UTC): all green.
 | Kinh Dich shift | `get_kinhdich_reading()` major change |
 
 On trigger: full analysis → recalculate conviction (+0.1 boost) →
+If `docs/analysis-briefs/{TICKER}.md` does not exist → create it first:
+```markdown
+# {TICKER} — Analysis Ledger {YEAR}
+
+## [Report Analyzer] Fundamentals & Valuation
+
+## [News Scout] Headlines & Sentiment
+
+## [Market Watcher] Price, Volume, Technicals
+
+## [Unified Agent] Quarterly Syntheses
+```
+Append:
 ```
 docs/analysis-briefs/{TICKER}.md:
 YYYY-MM-DD HH:MM | EVENT: {type} | {1-line} | Conviction: {old} → {new}
