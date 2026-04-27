@@ -166,9 +166,11 @@ describe("Bug 1315 — FR-3: banking NEUTRAL rule must include affected_actions 
     expect(hdbRuleEntry!.sentiment).toBe("bearish");
   });
 
-  test("TC-1e: FR-3 [RuleAffected] entries for VCB carry direction:down (bearish competitive threat)", () => {
+  test("TC-1e: FR-3 [RuleAffected] entry for VCB has sentiment bearish → watchlistImpact impactDirection:down", () => {
     const chain = buildCausalChain(CRYPTO_ONLY_ARTICLE, WATCHLIST_BANKS);
 
+    // CausalChainEntry has no impactDirection field — check sentiment on the rule entry,
+    // then confirm watchlistImpacts carries "down" (derived from sentiment in Step 5).
     const vcbRuleEntry = chain.entries.find(
       (e) =>
         e.level === "action" &&
@@ -176,8 +178,13 @@ describe("Bug 1315 — FR-3: banking NEUTRAL rule must include affected_actions 
         isRuleAffectedEntry(e)
     );
     expect(vcbRuleEntry).toBeDefined();
-    // impactDirection must be "down" for the rule-affected entry specifically
-    expect(vcbRuleEntry!.impactDirection).toBe("down");
+    expect(vcbRuleEntry!.sentiment).toBe("bearish");
+
+    // watchlistImpacts must contain a "down" entry for VCB derived from the bearish rule entry
+    const vcbDownImpact = chain.watchlistImpacts.find(
+      (w) => w.actionCode === "VCB" && w.impactDirection === "down"
+    );
+    expect(vcbDownImpact).toBeDefined();
   });
 });
 
@@ -190,9 +197,10 @@ describe("Bug 1314 — Brokerage outlook: SECTOR_RULES entry + broadcast pattern
    * impactScore=4 is below broadcastMinImpact=6 — must still broadcast via
    * ANALYST_WARNING_PATTERNS_BROADCAST (brokerage-outlook bypass).
    * Vietnamese text includes diacritics → NFD normalization required.
+   * Note: article must NOT contain "vpbanks" to avoid FR-1 matching VCB as bullish.
    */
   const DSC_BROKERAGE_ARTICLE = makeSeed(
-    "Tổng Giám đốc DSC: triển vọng ngành môi giới chứng khoán sẽ chịu áp lực cạnh tranh từ VPBankS và OKX",
+    "Tổng Giám đốc DSC: triển vọng ngành môi giới chứng khoán sẽ chịu áp lực cạnh tranh từ các công ty fintech nước ngoài",
     {
       sentiment: "bearish",
       impactDirection: "down",

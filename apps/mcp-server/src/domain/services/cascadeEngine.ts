@@ -2327,6 +2327,8 @@ export const SECTOR_RULES: SectorRule[] = [
   },
   // ── FR-3: banking NEUTRAL for crypto/digital-asset headlines (Sprint 1335) ──
   // Comes AFTER FR-1 — pure okx-only/generic crypto articles land here (no vpbanks keyword).
+  // Bug 1315: affected_actions added — VCB/BID/EIB/HDB have no digital-asset strategy and
+  // face competitive pressure from VPBankS/OKX → bearish (direction: "down").
   {
     keywords: [
       "okx",
@@ -2340,6 +2342,12 @@ export const SECTOR_RULES: SectorRule[] = [
     confidence: 0.65,
     title:
       "Crypto partnership/lưu ký tài sản số — ngân hàng truyền thống không có chiến lược digital-asset: tác động trung lập",
+    affected_actions: [
+      { code: "VCB", direction: "down" },
+      { code: "BID", direction: "down" },
+      { code: "EIB", direction: "down" },
+      { code: "HDB", direction: "down" },
+    ],
   },
   // ── FR-2: crypto/digital-asset custody → securities brokers BULLISH (Sprint 1335) ──
   {
@@ -2376,6 +2384,38 @@ export const SECTOR_RULES: SectorRule[] = [
       { code: "VCI", direction: "up" },
       { code: "VIX", direction: "up" },
       { code: "VND", direction: "up" },
+    ],
+  },
+  // ── BK-1: Brokerage-outlook → securities sector bearish (Bug 1314) ──────────
+  // CEO/analyst outlooks on brokerage sector, VPBankS competitive pressure, and
+  // brokerage commission/margin compression signals cascade to securities domain.
+  // Keywords use NFD-stripped Vietnamese so pattern matching is diacritic-agnostic.
+  // Domain: "securities" — does not trigger banking (brokerage-only scope).
+  {
+    keywords: [
+      "triển vọng ngành môi giới",
+      "trien vong nganh moi gioi",
+      "triển vọng môi giới chứng khoán",
+      "trien vong moi gioi chung khoan",
+      "áp lực cạnh tranh môi giới",
+      "ap luc canh tranh moi gioi",
+      "brokerage outlook",
+      "brokerage competitive pressure",
+      "phí môi giới giảm",
+      "phi moi gioi giam",
+      "cạnh tranh môi giới",
+      "canh tranh moi gioi",
+    ],
+    domain: "securities",
+    direction: "down",
+    confidence: 0.72,
+    title:
+      "Triển vọng ngành môi giới chịu áp lực — CTCK truyền thống (SSI/VCI/VIX/VND) bị ảnh hưởng cạnh tranh từ VPBankS/OKX",
+    affected_actions: [
+      { code: "SSI", direction: "down" },
+      { code: "VCI", direction: "down" },
+      { code: "VIX", direction: "down" },
+      { code: "VND", direction: "down" },
     ],
   },
 ];
@@ -2466,10 +2506,15 @@ function isMarketWide(
   // Note: NFD strips combining diacritics but NOT the d-with-stroke (đ, U+0111),
   // which is a precomposed base character with no Unicode decomposition.
   // Patterns use đ directly to match the NFD-normalised text.
+  // Bug 1314: brokerage-outlook patterns added — CEO/analyst warnings about brokerage
+  // sector competitive pressure must also bypass impactScore gate (same logic as above).
   const ANALYST_WARNING_PATTERNS = [
-    "đieu chinh sau",      // điều chỉnh sâu — deep correction
-    "rat sau va đau",      // rất sâu và đau — very deep and painful
-    "canh bao nha đau tu", // cảnh báo nhà đầu tư — investor warning
+    "đieu chinh sau",          // điều chỉnh sâu — deep correction
+    "rat sau va đau",          // rất sâu và đau — very deep and painful
+    "canh bao nha đau tu",     // cảnh báo nhà đầu tư — investor warning
+    "trien vong nganh moi gioi",   // triển vọng ngành môi giới — brokerage sector outlook
+    "ap luc canh tranh moi gioi",  // áp lực cạnh tranh môi giới — brokerage competitive pressure
+    "canh tranh moi gioi",         // cạnh tranh môi giới — brokerage competition
   ];
   if (ANALYST_WARNING_PATTERNS.some((p) => normText.includes(p))) return true;
 
@@ -3225,10 +3270,15 @@ export function buildCausalChain(
   // Task 1334: analyst-warning articles bypass the impactScore gate — they are
   // quality signals regardless of their numeric score (e.g. CEO warnings at score 4).
   // Note: đ (U+0111) survives NFD normalization — use it directly in patterns.
+  // Bug 1314: brokerage-outlook patterns added — must stay in sync with ANALYST_WARNING_PATTERNS
+  // in isMarketWide() above. Both arrays gate the same bypass logic at different call sites.
   const ANALYST_WARNING_PATTERNS_BROADCAST = [
     "đieu chinh sau",
     "rat sau va đau",
     "canh bao nha đau tu",
+    "trien vong nganh moi gioi",   // triển vọng ngành môi giới
+    "ap luc canh tranh moi gioi",  // áp lực cạnh tranh môi giới
+    "canh tranh moi gioi",         // cạnh tranh môi giới
   ];
   const seedNormForBroadcast = seedTextForBroadcast
     .normalize("NFD")
