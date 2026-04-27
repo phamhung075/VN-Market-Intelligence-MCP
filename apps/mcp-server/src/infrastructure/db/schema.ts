@@ -33,6 +33,7 @@ import { initPortfolioTables } from "./schema-portfolio.js";
 import { initBriefingsTables } from "./schema-briefings.js";
 import { initMacroTables } from "./schema-macro.js";
 import { initSystemTables } from "./schema-system.js";
+import { seedWatchlist, backfillBctcQ4 } from "./seedWatchlist.js";
 
 /**
  * Default DB path — resolved to absolute path at module load time.
@@ -186,6 +187,15 @@ export async function initDatabase(dbArg?: import("bun:sqlite").Database): Promi
         }
       }
     } catch { /* config not available — skip seeding */ }
+  }
+
+  // ── Task 1343a: Restore 30-ticker watchlist + Q4 2025 BCTC backfill ─────────
+  // Upserts the canonical 30-ticker watchlist (idempotent) and enqueues any
+  // missing Q4 2025 BCTC fetches. Runs always (not just on empty table) so
+  // post-migration DBs with partial data get restored to full 30-ticker state.
+  if (!isTestEnv) {
+    seedWatchlist(db);
+    backfillBctcQ4(db);
   }
 
   // ── Post-init migrations ───────────────────────────────────────────────────
