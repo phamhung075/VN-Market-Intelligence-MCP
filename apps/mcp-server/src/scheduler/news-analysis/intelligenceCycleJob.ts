@@ -121,6 +121,13 @@ export interface CycleDeps {
    * Signature matches the in-memory history format used by shouldSuppressAlert.
    */
   getRecentAlertHistoryFn?: () => Promise<Array<{ stocks: string; signalTypes: string; triggeredAt: string }>>;
+  /**
+   * Task 1345d — Injectable market summary sender for test isolation.
+   * When provided, used instead of the real `sendTelegramMarket` for the
+   * market-wide cascade pre-pass summary in step E.
+   * In production, defaults to the real `sendTelegramMarket` import.
+   */
+  sendMarketFn?: (text: string, opts?: Record<string, unknown>) => Promise<boolean>;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -873,6 +880,63 @@ async function _runCycle(deps: CycleDeps = {}): Promise<CycleResult> {
           }));
         } catch { /* best-effort */ }
       }
+
+      // ── Step E pre-pass (Task 1345d): market-wide cascade summary ──────────
+      // Before routing each alert individually to the BUG channel, check whether
+      // this batch contains a market-wide cascade event. If >= 2 distinct stocks
+      // each have a signal message containing "market-wide cascade", compose a
+      // Vietnamese summary and send it once to the MARKET channel.
+      //
+      // This is ADDITIVE — the per-stock loop below is unchanged.
+      // sendMarketFn is injected in tests; defaults to real sendTelegramMarket.
+      try {
+        /** All alerts that carry at least one market-wide cascade signal. */
+        const cascadeAlerts = unnotifiedAlerts.filter((a) =>
+          a.signals.some((s) => s.message?.includes("market-wide cascade")),
+        );
+        /** De-duplicated list of affected stock codes. */
+        const distinctCodes = [...new Set(cascadeAlerts.map((a) => a.actionCode))];
+
+        if (distinctCodes.length >= 2) {
+          // Severity: critical if any cascade alert is critical, else high.
+          const hasCritical = cascadeAlerts.some((a) => a.severity === "critical");
+          const summaryLevel = hasCritical ? "CRITICAL" : "HIGH";
+
+          const summaryMsg =
+            `[VN-Index] Tác động toàn thị trường — ${summaryLevel}\n` +
+            `Cổ phiếu bị ảnh hưởng: ${distinctCodes.join(", ")}\n` +
+            `Nguồn: market-wide cascade event`;
+
+          /** Resolve the market send function (injected in tests, real in prod). */
+          const resolvedSendMarket: (text: string, opts?: Record<string, unknown>) => Promise<boolean> =
+            deps.sendMarketFn ??
+            (async (text, opts) => {
+              const { sendTelegramMarket } = await import(
+                "../../infrastructure/notifiers/telegram.js"
+              );
+              return sendTelegramMarket(text, opts ?? {});
+            });
+
+          await resolvedSendMarket(summaryMsg, {
+            persist: {
+              from_agent: "intelligence-cycle",
+              message_type: "market_wide_cascade",
+            },
+          });
+
+          logger.info("[intelligence-cycle] step E pre-pass — market-wide cascade summary sent", {
+            distinctCodes,
+            summaryLevel,
+            cascadeCount: cascadeAlerts.length,
+          });
+        }
+      } catch (cascadeErr) {
+        // Non-fatal: market summary failure must not abort the per-stock loop.
+        logger.warn("[intelligence-cycle] step E pre-pass — market summary send failed (non-fatal)", {
+          error: cascadeErr instanceof Error ? cascadeErr.message : String(cascadeErr),
+        });
+      }
+      // ────────────────────────────────────────────────────────────────────────
 
       // Send each alert individually with cooldown check.
       // The history snapshot is mutated after each send so back-to-back
