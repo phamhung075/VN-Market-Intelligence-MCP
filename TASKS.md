@@ -29,6 +29,8 @@
 - **1347a–1347b:** Sprint 1347 — Test DB isolation (1347a: clean 2537 leaked rows) + stock-classification.json coverage expansion (1347b: 5→30 tickers, all tradeExposure populated, 8/8 tests pass) — APPROVED + merged 2026-04-27 (7423 pass / 73 pre-existing fail / 0 regression) — closes report 1319
 - **1348a–1348e:** Sprint 1348 — Cascade brokerage/banking competitive signals (1348a: BA spec + design + implementation + test + QA) — Scope refactored: 1348a single integrated task (BK-1 brokerage sentiment routing + FR-3 competitive threat signals with affected_actions wiring) — APPROVED + merged 2026-04-27 (7371 pass / 0 fail baseline restored)
 - **1346a–1346d:** Sprint 1346 — Alert Quality & Reliability Hardening (1346a: remove test stub, 1346b: fix UNIQUE constraint, 1346c-a/c-b: alert quality fixes, 1346d: PDF circuit breaker race fix) — ALL APPROVED + merged 2026-04-27 (7371 pass / 0 fail maintained)
+- **1349a:** Remove dead scheduler config block from mcp.config.json — APPROVED + merged 2026-04-27
+- **1349d:** BCTC validation edge cases — 7 new tests (VAL-07–VAL-10), hard ratio>5.0 threshold, QA TS fix applied — APPROVED + merged 2026-04-27
 
 ---
 
@@ -63,5 +65,7 @@
 | 1347b | Stock classification coverage expansion: 5→30 tickers | main 2026-04-27 | reports/TASK_REPORT_1347b.md — closes 1319 |
 | 1348a | Cascade brokerage/banking competitive signals (BK-1 + FR-3 affected_actions) | main 2026-04-27 | reports/TASK_REPORT_1348a.md — closes 1314, 1315 |
 | 1346d | PDF circuit breaker concurrent race fix + state-change logging | main 2026-04-27 | reports/TASK_REPORT_1346d.md — closes 1316 |
+| 1349a | Remove dead scheduler config block from mcp.config.json | main 2026-04-27 | reports/TASK_REPORT_1349a.md |
+| 1349d | BCTC validation edge cases (VAL-07–VAL-10) + QA TS fix | main 2026-04-27 | reports/TASK_REPORT_1349d.md |
 
 ---

@@ -63,14 +63,14 @@ export function validateReportDate(reportDate: string | null | undefined): boole
   // Pattern: YYYY-Qn
   const quarterMatch = /^(\d{4})-Q([1-4])$/.exec(reportDate.trim());
   if (quarterMatch) {
-    const year = parseInt(quarterMatch[1], 10);
+    const year = parseInt(quarterMatch[1] ?? "0", 10);
     return year <= currentYear;
   }
 
   // Pattern: YYYY (annual report)
   const annualMatch = /^(\d{4})$/.exec(reportDate.trim());
   if (annualMatch) {
-    const year = parseInt(annualMatch[1], 10);
+    const year = parseInt(annualMatch[1] ?? "0", 10);
     return year <= currentYear;
   }
 
