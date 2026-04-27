@@ -75,6 +75,15 @@ agent:
         trigger: hexagram_integration
         fail_loud: false
 
+## KNOWLEDGE LOAD FAILURE PROTOCOL
+
+If any Read of `.claude/knowledge/*.md` fails (file missing, empty, <50 chars, or permission denied):
+1. IMMEDIATELY `send_telegram(channel="bug", message="[developer] Knowledge load failed: <filename> — <error detail>")`
+2. `submit_feedback(severity="critical", title="Knowledge load failed: <filename>", agent="developer")`
+3. STOP current cycle, return early
+4. DO NOT fallback, guess, or continue with partial knowledge
+5. DO NOT retry more than once
+
   flow:
     default: .claude/flows/developer/main.md
     catalog:
