@@ -1,65 +1,92 @@
 # Sprint Goal
 
-## Sprint 1345 — News + Analysis Pipeline Hardening + Data Quality (2026-04-27)
+## Sprint 1349 — Code Health + Observability Infrastructure (2026-04-27)
 
-**Status:** GREEN - Infrastructure + data quality sprint. Autonomous initiation by PO.
+**Status:** READY - Autonomous PO initiation. All prior sprints merged, baseline stable.
 
 **Background:**
-Sprint 1344 COMPLETE (7371 pass / 0 fail). BCTC pipeline recovered (1343), critical infrastructure bugs fixed (foreignFlow CB, python3). Remaining operational issues require hardening.
+Sprints 1345–1348 complete (News pipeline hardening, Alert quality fixes, Cascade architecture enhancements). System infrastructure solid: 7371 baseline tests passing, zero regressions. Code health audit (2026-04-24) identified 1 low-priority technical debt item + opportunity for monitoring improvements.
 
-**Confirmed Open Issues (live verified 2026-04-27):**
+**Confirmed Open Items (from audit 2026-04-24):**
 
-1. **Reuters + Trading Economics Outage (HIGH)** — 50 consecutive failures (7h), news data pipeline stale. Impact: morning/evening briefing signal degradation.
-2. **VNM/VEA BCTC Extraction Corruption (HIGH)** — Impossible financial figures (VNM: Assets 957T << Equity 18,829T; VEA: Operating margin 330%, Total Liab=0). PDF OCR quality issue or data corruption.
-3. **Polymarket API Stale (MEDIUM)** — Markets data fetchedAt=2026-04-01 (26 days old). Prediction market alerts unreliable.
-4. **VN-Index Cascade Incomplete (MEDIUM)** — Cascades only to VIC, no market-wide broadcast fix found. Sector alerts missing context.
+1. **Code Quality: Unused Scheduler Configuration (LOW)** — mcp.config.json lines 111–119 contain dead "scheduler" section. Config loader in src/infrastructure/config.ts never reads it. Canonical source is src/scheduler/jobs.ts:CRONS. Fix: remove dead section (5 min, zero risk).
+
+2. **Observability: Missing Circuit Breaker Metrics (MEDIUM)** — PDF download + Reuters fallback + foreign-flow jobs have circuit breakers but no observable state transitions. Logs silent on state changes. Need: structured logging of CB open/half-open/closed transitions for ops visibility.
+
+3. **Observability: Job Health Timings (MEDIUM)** — No cycle-time metrics for ta-alerts, bb-alerts, macro-refresh. Ops cannot detect slowdowns before they cascade. Need: duration + error-rate histograms per job.
+
+4. **Test Coverage: Financial Validation Edge Cases (LOW)** — 1345b added BCTC confidence scoring but untested: what if all fields are zero? What if reportDate is invalid? Edge cases exposed by crash in production logs.
+
+5. **Documentation: Scheduler Module Path Stale (MEDIUM)** — docs/agent-memory/modules/scheduler.md references src/infrastructure/scheduler/ but post-refactor paths are src/scheduler/ with 8 subdirectories. 42 job files present, paths broken. Fix: update 57 lines to reflect current structure.
 
 **Vision:**
-Harden news ingestion, validate BCTC extraction quality, restore stale external APIs, and fix cascade routing to prevent analysis pipeline degradation.
+Ship technical debt cleanup + monitoring improvements in parallel. Establish observability foundation for 24/7 ops reliability. Zero new features; 100% internal quality focus.
 
 **Scope:**
 
 | Task ID | Title | Layer | Size | Owner |
 |---------|-------|-------|------|-------|
-| 1345a | Reuters + TE fallback sources | Infrastructure | M | Ops/Developer |
-| 1345b | BCTC extraction confidence audit | Domain/Test | M | Developer |
-| 1345c | Polymarket staleness fix + fetch schedule | API | S | Ops |
-| 1345d | VN-Index cascade breadth fix | Domain | S | Developer |
-| 1345e | Integration test + dashboard validation | Test | S | QA |
+| 1349a | Remove dead scheduler config + verify coverage | Code | S | Developer |
+| 1349b | Add circuit breaker state logging + metrics | Infra | M | Developer |
+| 1349c | Fix scheduler.md paths + job count validation | Documentation | S | Code Janitor |
+| 1349d | BCTC validation edge cases + test expansion | Test | S | Developer |
+| 1349e | Job cycle timings + ops dashboard metrics | Infra | M | Developer |
+| 1349f | Integration test + observability verification | Test | S | QA |
 
 **Success Metrics:**
-- News pipeline has ≥2 fallback sources for Reuters + TE (no 7h blackouts)
-- BCTC extraction reports confidence scores in logs; low-confidence (≤0.3) skipped with alert
-- Polymarket refresh runs ≥2x daily; fetchedAt within 24h
-- VN-Index cascade broadcasts to MARKET channel (not just VIC)
-- All 7371 baseline tests pass; zero regressions
+- Dead code removed: mcp.config.json lines 111–119 deleted (commit verified)
+- CB state logging: Every CB transition logged with timestamp + state + reason (INFO level)
+- Job metrics: ta-alerts, bb-alerts, macro-refresh all have cycle_duration_ms + error_count metrics
+- Financial validation: ≥4 edge-case tests added (all-zero fields, invalid dates, boundary values)
+- Scheduler.md: 100% of 42 jobs have correct file paths (verified by grep)
+- Test baseline: ≥7371 pass, zero regressions
+- Ops readiness: Logs + metrics sufficient for ops team to detect issues within 1 cycle
 
-**Blockers:** None. Ready to spawn BA for spec.
+**Blockers:** None. Infrastructure stable, no dependencies.
 
-**Next Agent:** BA (write requirement spec for SPRINT_GOAL.md)
+**Next Agent:** BA (write requirement spec for optional 1349b–1349e detail refinement) OR Developer (execute 1349a immediately as known low-risk task).
 
 ---
 
-## Retrospective: Sprint 1343–1344
+## Retrospective: Sprint 1345–1348
 
-**1343:** BCTC PDF pipeline recovery — watchlist restore (30 tickers), HOSE PDF discovery (multi-source), VPS skip endpoint, integration test. All merged 2026-04-27.
+**1345:** News + Analysis Pipeline Hardening — Reuters fallback (Google News + VPS TE), BCTC validation (VNM/VEA corruption detection), Polymarket 24h guard, VN-Index market-wide cascade. All merged 2026-04-27 (7355 pass).
 
-**1344:** Fix 9 pre-existing test failures (6536→7371 pass, 213→0 fail). Baseline elevated. All merged 2026-04-27.
+**1346:** Alert Quality & Reliability — Remove test stub from prod (1346a), fix foreign-flow UNIQUE (1346b), alert quality fixes (1346c-a/c-b volume/sentiment/NER), PDF circuit breaker race fix (1346d). All merged 2026-04-27 (7371 pass).
 
-Cumulative: 358 tasks completed, infrastructure stable.
+**1347:** Infrastructure Isolation + Data Expansion — Test DB isolation (clean 2537 leaked rows), stock-classification expansion (5→30 tickers, all tradeExposure). All merged 2026-04-27 (7423 pass).
+
+**1348:** Cascade Architecture Enhancement — Brokerage/banking competitive signals (BK-1 sentiment routing + FR-3 competitive threat mapping with affected_actions). Merged 2026-04-27 (7371 pass baseline restored).
+
+Cumulative: 362 tasks completed, infrastructure comprehensive, code quality baseline established.
 
 ---
 
 **Decision Log:**
-- Why not immediately repair Reuters/TE manually? → Root cause unclear (API outage vs. credential issue). BA spec will define investigation scope.
-- Why BCTC audit vs. skip low-confidence? → Already skipping zero-confidence; need visibility into confidence distribution and extraction quality improvement.
-- Why Polymarket staleness is MEDIUM not HIGH? → Prediction market is secondary signal; news + price are primary. But 26 days stale is unacceptable.
-- Why cascade breadth in this sprint? → Related to data quality; small scope (S task) with high impact (market-wide alerts).
+- Why code health now vs. features? → Infrastructure stable; investment in quality pays dividends in ops reliability + future feature velocity.
+- Why observability before features? → Current job cycle times unknowable; cannot detect degradation until cascade (2–3 minutes lag). Metrics prevent outages.
+- Why not schedule 1349 as small sprint? → Scope is tight (6 small–medium tasks), natural parallel shape (1349a + 1349c parallel, 1349b + 1349e parallel, 1349d independent).
+- Why developer owns infrastructure tasks? → All require code changes (logging + metrics middleware); ops cannot execute autonomously.
 
 ---
 
-**Size Estimate:** M (10–12h: 2h TE investigation + fallback, 3h BCTC audit + reporting, 1h Polymarket fix, 1h cascade fix, 2h testing)
+**Size Estimate:** S (5–7h: 1349a 0.5h + 1349c 0.5h + 1349b 1.5h + 1349e 1.5h + 1349d 1h + 1349f 0.5h + QA 0.5h)
 
-**Priority:** HIGH (news pipeline blackout, data integrity validation, stale external APIs)
+**Priority:** MEDIUM (technical debt + operational readiness, no user-facing urgency)
 
 **Dependencies:** None. Ready to proceed independently.
+
+---
+
+## Next Steps
+
+1. **Immediate (now):** PO confirms Sprint 1349 goal, spawns BA for optional spec or Developer for 1349a
+2. **1349a–1349c (parallel):** Code janitor + developer (dead code cleanup, documentation fix)
+3. **1349b + 1349e (parallel):** Developer (circuit breaker logging + job metrics)
+4. **1349d (independent):** Developer (edge case tests)
+5. **1349f (final):** QA (integration verification)
+6. **Sign-off:** PO approves deliverables, marks sprint complete
+
+---
+
+**Status:** Sprint 1349 fully specified. Ready for BA approval (optional) or Developer execution (1349a immediate).

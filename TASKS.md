@@ -27,6 +27,8 @@
 - **1344a–1344c:** Sprint 1344 — Fix 9 pre-existing test failures (6536→7371 pass, 213→0 fail) — ALL MERGED 2026-04-27
 - **1345a–1345e:** Sprint 1345 — News + Analysis Pipeline Hardening + Data Quality — Reuters/TE VPS systemd + newsapi fallback, BCTC financial validation (VNM/VEA), Polymarket 24h staleness guard, VN-Index cascade MARKET broadcast, integration pipeline + TSC fix (B1-B4) — APPROVED + merged 2026-04-27 (7355 pass / 73 pre-existing fail / 0 regression)
 - **1347a–1347b:** Sprint 1347 — Test DB isolation (1347a: clean 2537 leaked rows) + stock-classification.json coverage expansion (1347b: 5→30 tickers, all tradeExposure populated, 8/8 tests pass) — APPROVED + merged 2026-04-27 (7423 pass / 73 pre-existing fail / 0 regression) — closes report 1319
+- **1348a–1348e:** Sprint 1348 — Cascade brokerage/banking competitive signals (1348a: BA spec + design + implementation + test + QA) — Scope refactored: 1348a single integrated task (BK-1 brokerage sentiment routing + FR-3 competitive threat signals with affected_actions wiring) — APPROVED + merged 2026-04-27 (7371 pass / 0 fail baseline restored)
+- **1346a–1346d:** Sprint 1346 — Alert Quality & Reliability Hardening (1346a: remove test stub, 1346b: fix UNIQUE constraint, 1346c-a/c-b: alert quality fixes, 1346d: PDF circuit breaker race fix) — ALL APPROVED + merged 2026-04-27 (7371 pass / 0 fail maintained)
 
 ---
 
@@ -34,7 +36,6 @@
 
 | Task ID | Title | Priority | Type | Owner | Related Reports |
 |---------|-------|----------|------|-------|-----------------|
-| 1346a | Remove test stub from production scheduler | CRITICAL | FIX | Developer | 1323 |
 | ~~1346b~~ | ~~Fix push-foreign-flow UNIQUE constraint~~ | ~~HIGH~~ | ~~FIX~~ | ~~Developer~~ | 1310, 1312 — DONE 2026-04-27 |
 | ~~1346e~~ | ~~Cascade gap: DSC + VPBankS/OKX → market-wide impact~~ | ~~MEDIUM~~ | ~~BACKLOG~~ | ~~BA~~ | 1314, 1315 — closed by 1348a |
 
@@ -42,26 +43,25 @@
 
 ## In Progress
 
-| Task ID | Title | Developer | Reports | Handoff |
-|---------|-------|-----------|---------|---------|
-| 1346d | PDF circuit breaker concurrent race fix | Dev C | 1316 | docs/handoffs/TASK_1346d.md |
+(empty)
 
 ---
 
 ## Review
 
-| Task ID | Title | Branch | Report |
-|---------|-------|--------|--------|
+(empty)
 
 ## Done
 
 | Task ID | Title | Merged | Reports |
 |---------|-------|--------|---------|
+| 1346a | Remove test stub from production scheduler | main 2026-04-27 | reports/TASK_REPORT_1346a.md — closes 1323 |
 | 1346b | Fix push-foreign-flow UNIQUE constraint | main 2026-04-27 | reports/TASK_REPORT_1346b.md — closes 1310, 1312 |
 | 1346c-b | NER suffix wiring + feedback retry + unknown stock_code | main 2026-04-27 | reports/TASK_REPORT_1346c-b.md — closes 1311, 1317, 1313 |
 | 1346c-a | Alert quality: volume spike + sentiment negation + VJC alias | main 2026-04-27 | reports/TASK_REPORT_1346c-a.md — closes 1320, 1321, 1322 |
 | 1347a | Test DB isolation guard + clean 2537 leaked rows | main 2026-04-27 | (merge(1347b) commit 428bc1bd) |
 | 1347b | Stock classification coverage expansion: 5→30 tickers | main 2026-04-27 | reports/TASK_REPORT_1347b.md — closes 1319 |
 | 1348a | Cascade brokerage/banking competitive signals (BK-1 + FR-3 affected_actions) | main 2026-04-27 | reports/TASK_REPORT_1348a.md — closes 1314, 1315 |
+| 1346d | PDF circuit breaker concurrent race fix + state-change logging | main 2026-04-27 | reports/TASK_REPORT_1346d.md — closes 1316 |
 
 ---
