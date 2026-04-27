@@ -40,9 +40,14 @@ services:
       - HOST=0.0.0.0
       - DB_PATH=/app/data/market.db
       # Route SSC iboard API calls through VPS (Vietnam IP, no geo-block).
-      # iboard-query.ssc.vn is NXDOMAIN from France/Docker.
+      # iboard-query.ssc.vn is NXDOMAIN (dead domain) as of 2026-04-27.
+      # SSC_IBOARD_BASE_URL kept as fallback in case domain is restored.
       # VPS proxy server: vps-scripts/vps-proxy-server.js (port 8765, systemd vn-vps-proxy.service).
       - SSC_IBOARD_BASE_URL=http://125.212.251.27:8765/proxy/ssc-iboard
+      # Primary BCTC PDF discovery endpoint — VPS runs discover-bctc-urls-browser.py
+      # via Playwright (Python subprocess). Returns JSON: {results:[{url,source,confidence}], error}.
+      # Endpoint: GET /proxy/bctc-discover/:ticker?year=YYYY&quarter=Q
+      - BCTC_DISCOVER_URL=http://125.212.251.27:8765/proxy/bctc-discover
     env_file:
       - .env
     restart: unless-stopped
