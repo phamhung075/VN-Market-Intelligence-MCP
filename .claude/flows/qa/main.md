@@ -41,10 +41,17 @@ verdict: APPROVED | CHANGES_REQUESTED
 **Full** (new tool/domain service/security): test results, DDD, security, code quality, blockers, merge commit.
 
 ## Approval
-**APPROVED**: append `[QA] Review Record` → `git merge` → `git branch -d` → return:
+**APPROVED**: append `[QA] Review Record` → merge + push + clean → return:
+```bash
+git checkout main
+git merge --no-ff task/NNN-kebab-description -m "merge(NNN): <title>"
+git push origin main
+git branch -d task/NNN-kebab-description
+git push origin --delete task/NNN-kebab-description 2>/dev/null || true  # ignore if no remote
+```
 ```
 ## RETURN
-DONE: Task NNN merged, branch deleted, all tests green
+DONE: Task NNN merged, pushed to main, branch deleted locally + remote, all tests green
 NEXT: pm | mark Task NNN done, unblock downstream, queue next developer task
 HANDOFF: docs/handoffs/TASK_NNN.md
 PIPELINE: continue

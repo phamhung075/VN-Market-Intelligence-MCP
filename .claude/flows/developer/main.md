@@ -10,7 +10,10 @@ Code + tests on `task/NNN-*` branch | `[Developer] Implementation Record` in han
 
 **Pre-code checklist**
 1. Confirm task status in TASKS.md
-2. `git checkout task/NNN-kebab-description`
+2. Branch setup — run exactly one of:
+   - Branch exists: `git checkout task/NNN-kebab-description && git status` — verify clean, on correct branch
+   - Branch missing: `git checkout main && git pull origin main && git checkout -b task/NNN-kebab-description`
+   - VERIFY: `git branch --show-current` must equal `task/NNN-kebab-description` before touching any file
 3. Read `docs/handoffs/TASK_NNN.md` first — use `files_to_read/modify/create` directly, skip redundant scanning
 4. `depends_on` not Done → STOP, notify PM
 5. Load knowledge files (fail-loud → `send_telegram(channel="bug")`, STOP)

@@ -5,6 +5,36 @@ trigger: design, sprint-start
 
 # Architect Session — 2026-04-27
 
+## Sprint 1352 — Scheduler Test Coverage Phase 2
+
+### Brownfield Audit
+
+Searched `apps/mcp-server/src/__tests__/` for all 5 scheduler job names. Extensive existing coverage found, but all tests target use-case and domain layers. The scheduler wrapper functions themselves are untested in all 5 cases.
+
+| Job | Existing tests | Gap |
+|-----|----------------|-----|
+| macroIndicatorRefreshJob | 239a (10 cases), 239c (8 cases) | Job function never called; telegramCallback, recordJobMetrics finally, error path untested |
+| marketScanJob | 103 (10 cases), 1076 (7 cases), 1420 (2 cases) | runMarketScan() never called; isRunning guard and isTradingSession skip path untested |
+| sscCheckerJob | 104 (9 cases), FIX-1281 (8 cases) | runSscCheck() never called; isRunning concurrency guard untested |
+| foreignFlowFetcherJob | 1290a (8 cases) | runForeignFlowFetcherJob() never called; fallbackActivated flag, cbState reading, cron wrapper untested |
+| freshnessSlaMonitorJob | 234 (12 cases) | runFreshnessSlaMonitor() orchestration never called end-to-end; querySignalAges DB query untested |
+
+### Tasks Created
+
+- **TASK_1352a**: macroIndicatorRefreshJob wrapper (4 cases) + marketScanJob concurrency guard (3 cases) = 7 tests
+- **TASK_1352b**: foreignFlowFetcherJob wrapper (5 cases)
+- **TASK_1352c**: freshnessSlaMonitorJob end-to-end (5 cases) + sscCheckerJob concurrency guard (1 case) = 6 tests
+
+Total: 18 new test cases across 3 new test files.
+
+### Risk Flags
+- `foreignFlowFetcherJob` does dynamic `import("circuitBreakerRegistry")` twice — potential side effects in tests.
+- `querySignalAges` uses 5-table UNION ALL — must use `initDatabase()` in tests.
+- `macroIndicatorRefreshJob` uses module-level imports not injectable via parameters — requires `mock.module()` in Bun.
+
+---
+
+
 ## Sprint 1344 — Fix 9 Pre-existing Test Failures
 
 ### Task: design-1344

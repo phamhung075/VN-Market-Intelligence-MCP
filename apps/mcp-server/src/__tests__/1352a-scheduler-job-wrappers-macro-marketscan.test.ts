@@ -86,7 +86,7 @@ describe("Task 1352a — Group A: macroIndicatorRefreshJob wrapper", () => {
     }));
 
     const { macroIndicatorRefreshJob } = await import(
-      "../scheduler/macro/macroIndicatorRefreshJob.js?test=A1"
+      "../scheduler/macro/macroIndicatorRefreshJob.js"
     );
     await macroIndicatorRefreshJob();
 
@@ -132,12 +132,14 @@ describe("Task 1352a — Group A: macroIndicatorRefreshJob wrapper", () => {
     }));
 
     const { macroIndicatorRefreshJob } = await import(
-      "../scheduler/macro/macroIndicatorRefreshJob.js?test=A2"
+      "../scheduler/macro/macroIndicatorRefreshJob.js"
     );
     await macroIndicatorRefreshJob();
 
     expect(recordMetricsCalls.length).toBe(1);
-    const [job, durationMs, errorCount, successCount] = recordMetricsCalls[0];
+    const callArgs = recordMetricsCalls[0];
+    expect(callArgs).toBeDefined();
+    const [job, durationMs, errorCount, successCount] = callArgs!;
     expect(job).toBe("macroRefresh");
     expect(typeof durationMs).toBe("number");
     expect(durationMs).toBeGreaterThanOrEqual(0);
@@ -182,7 +184,7 @@ describe("Task 1352a — Group A: macroIndicatorRefreshJob wrapper", () => {
     }));
 
     const { macroIndicatorRefreshJob } = await import(
-      "../scheduler/macro/macroIndicatorRefreshJob.js?test=A3"
+      "../scheduler/macro/macroIndicatorRefreshJob.js"
     );
 
     // Must not throw
@@ -195,7 +197,9 @@ describe("Task 1352a — Group A: macroIndicatorRefreshJob wrapper", () => {
 
     // recordJobMetrics called with errorCount=1, successCount=0
     expect(recordMetricsCalls.length).toBe(1);
-    const [job, durationMs, errorCount, successCount] = recordMetricsCalls[0];
+    const callArgs = recordMetricsCalls[0];
+    expect(callArgs).toBeDefined();
+    const [job, durationMs, errorCount, successCount] = callArgs!;
     expect(job).toBe("macroRefresh");
     expect(typeof durationMs).toBe("number");
     expect(errorCount).toBe(1);
@@ -239,7 +243,7 @@ describe("Task 1352a — Group A: macroIndicatorRefreshJob wrapper", () => {
 
     try {
       const { validateMacroFreshnessOnStartup } = await import(
-        "../scheduler/macro/macroIndicatorRefreshJob.js?test=A4"
+        "../scheduler/macro/macroIndicatorRefreshJob.js"
       );
 
       // Case 1: detectStartupStaleData resolves — must not throw
@@ -309,7 +313,7 @@ describe("Task 1352a — Group B: runMarketScan concurrency guard and session sk
     }));
 
     const { runMarketScan } = await import(
-      "../scheduler/market-data/marketScanJob.js?test=B1"
+      "../scheduler/market-data/marketScanJob.js"
     );
 
     // Start first scan — do NOT await yet (holds isRunning = true)
@@ -363,7 +367,7 @@ describe("Task 1352a — Group B: runMarketScan concurrency guard and session sk
     }));
 
     const { runMarketScan } = await import(
-      "../scheduler/market-data/marketScanJob.js?test=B2"
+      "../scheduler/market-data/marketScanJob.js"
     );
 
     await runMarketScan("open");
@@ -411,7 +415,7 @@ describe("Task 1352a — Group B: runMarketScan concurrency guard and session sk
     }));
 
     const { runMarketScan } = await import(
-      "../scheduler/market-data/marketScanJob.js?test=B3"
+      "../scheduler/market-data/marketScanJob.js"
     );
 
     // First call — scanMarket throws, recordJobRun swallows, finally resets isRunning
