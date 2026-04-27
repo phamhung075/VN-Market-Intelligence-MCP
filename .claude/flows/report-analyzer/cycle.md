@@ -33,6 +33,18 @@ Metrics: Revenue, Net Income, EPS, ROE, Debt/Equity, Operating Margin
 
 **4. Signal + ledger**
 `post_agent_signal(type="fundamental_validation", beat_miss="beat|miss|in-line")`
+If `docs/analysis-briefs/{TICKER}.md` does not exist → create it first:
+```markdown
+# {TICKER} — Analysis Ledger {YEAR}
+
+## [Report Analyzer] Fundamentals & Valuation
+
+## [News Scout] Headlines & Sentiment
+
+## [Market Watcher] Price, Volume, Technicals
+
+## [Unified Agent] Quarterly Syntheses
+```
 Append `docs/analysis-briefs/{TICKER}.md` [Report Analyzer]:
 ```markdown
 ### {TICKER} Q{N} {YEAR} — Released YYYY-MM-DD

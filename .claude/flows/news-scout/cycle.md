@@ -43,7 +43,19 @@ Crisis → `post_agent_signal(type="crisis_velocity", severity=...)`
 ```
 
 ## Batch 2 Sentiment Log (05:00 UTC daily)
-Per ticker `get_watchlist()` → append to `docs/analysis-briefs/{TICKER}.md` [News Scout]:
+Per ticker `get_watchlist()` → if `docs/analysis-briefs/{TICKER}.md` does not exist → create it first:
+```markdown
+# {TICKER} — Analysis Ledger {YEAR}
+
+## [Report Analyzer] Fundamentals & Valuation
+
+## [News Scout] Headlines & Sentiment
+
+## [Market Watcher] Price, Volume, Technicals
+
+## [Unified Agent] Quarterly Syntheses
+```
+Then append to `docs/analysis-briefs/{TICKER}.md` [News Scout]:
 ```
 YYYY-MM-DD | {sentiment description} | YoY: {comparison or "no prior data"}
 ```

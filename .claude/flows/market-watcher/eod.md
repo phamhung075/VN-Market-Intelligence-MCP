@@ -8,7 +8,19 @@ Ledger entries in `docs/analysis-briefs/{TICKER}.md` | MARKET EOD summary
 
 ---
 
-**A. Ledger** — per ticker, append `docs/analysis-briefs/{TICKER}.md` [Market Watcher]:
+**A. Ledger** — per ticker, if `docs/analysis-briefs/{TICKER}.md` does not exist → create it first:
+```markdown
+# {TICKER} — Analysis Ledger {YEAR}
+
+## [Report Analyzer] Fundamentals & Valuation
+
+## [News Scout] Headlines & Sentiment
+
+## [Market Watcher] Price, Volume, Technicals
+
+## [Unified Agent] Quarterly Syntheses
+```
+Then append `docs/analysis-briefs/{TICKER}.md` [Market Watcher]:
 ```
 YYYY-MM-DD 16:00 | Close: {price} VND | RSI: {rsi} | Vol: {volume} ({vs_avg_pct}% avg) | YoY: {yoy_change}%
 ```
