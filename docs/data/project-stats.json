@@ -1,13 +1,13 @@
 {
   "_maintained_by": "PM / system-auditor",
   "_trigger": "sprint start/end, tool/cron count change, baseline test update",
-  "lastUpdated": "2026-04-27T15:30:00Z",
-  "currentSprint": 1349,
-  "previousSprint": { "number": 1348, "status": "DONE", "progressTasks": "Sprint 1348a: Cascade brokerage/banking competitive signals (BK-1 sentiment routing + FR-3 competitive threat mapping). Merged 2026-04-27." },
-  "sprintGoal": "Sprint 1349 — Code Health + Observability Infrastructure",
-  "testBaseline": 7471,
-  "testBaselineTarget": 7471,
-  "testBaselinePass": 7471,
+  "lastUpdated": "2026-04-27T16:30:00Z",
+  "currentSprint": 1350,
+  "previousSprint": { "number": 1349, "status": "DONE", "progressTasks": "Sprint 1349: Code health + observability (1349a–1349f). All 6 tasks done. Baseline: 7471 pass / 0 fail." },
+  "sprintGoal": "Sprint 1350 — Test baseline restoration: 73 failing tests fixed",
+  "testBaseline": 7568,
+  "testBaselineTarget": 7568,
+  "testBaselinePass": 7568,
   "testBaselineFail": 0,
   "testFailures": 0,
   "toolCount": 108,
@@ -20,6 +20,6 @@
   "briefingFilesCreated": 30,
   "briefingArchiveQI": 0,
   "briefingArchiveQII": 0,
-  "lastFixApplied": "FIX-1348a: Cascade brokerage/banking competitive signals (BK-1 + FR-3 affected_actions wiring) — merged 2026-04-27",
-  "currentSprintNotes": "2026-04-27 SPRINT 1349 COMPLETE: Code health + observability. All 6 tasks done: 1349a (dead config removal), 1349b (CB logging 11/11), 1349c (scheduler.md paths verified 51 files), 1349d (BCTC edge cases VAL-07–VAL-10), 1349e (job metrics 10/10), 1349f (integration QA 11/11). Baseline: 7471 pass / 0 fail. schedulerFileCount corrected to 51."
+  "lastFixApplied": "FIX-1350a: mock.module schema contamination + missing watchdog reader injections + stale sprint assertions — 73 failures fixed, new baseline 7568 pass / 0 fail — merged 2026-04-27",
+  "currentSprintNotes": "2026-04-27 SPRINT 1350a COMPLETE: 73 failing tests fixed. Root causes: sticky mock.module(schema) in 1345b poisoned 65 tests across 10 files; missing readReuters/readTe injections in 3 watchdog test files (5 tests); stale hardcoded sprint 1344 in 1338 (3 tests). Fix: test-only changes to 5 files. New baseline: 7568 pass / 0 fail."
 }
