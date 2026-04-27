@@ -18,7 +18,11 @@ import {
   storeImfIndicators,
 } from "../../application/services/imfDataFetcher.js";
 import { classifyImfIndicators } from "../../domain/services/imfDataClassifier.js";
-import type { ImfClassificationOutput } from "../../domain/models/imfIndicators.js";
+import type {
+  ImfIndicator,
+  ImfClassificationInput,
+  ImfClassificationOutput,
+} from "../../domain/models/imfIndicators.js";
 
 // ── Job result type ───────────────────────────────────────────────────────────
 
@@ -27,6 +31,14 @@ export interface ImfPollerJobResult {
   indicator_count: number;
   sentiment?: ImfClassificationOutput;
   error?: string;
+}
+
+// ── DI options ───────────────────────────────────────────────────────────────
+
+export interface ImfPollerOptions {
+  fetchFn?: () => Promise<ImfIndicator[]>;
+  storeFn?: (indicators: ImfIndicator[]) => Promise<void>;
+  classifyFn?: (input: ImfClassificationInput) => ImfClassificationOutput;
 }
 
 // ── Job implementation ────────────────────────────────────────────────────────
@@ -39,22 +51,27 @@ export interface ImfPollerJobResult {
  * 3. Classify overall market sentiment
  * 4. Return structured result for cron-registry observability
  *
+ * @param options - Optional DI overrides for fetch/store/classify (test seam)
  * @returns ImfPollerJobResult — success flag + indicator count + classification
  */
-export async function runImfIndicatorPollerJob(): Promise<ImfPollerJobResult> {
+export async function runImfIndicatorPollerJob(options?: ImfPollerOptions): Promise<ImfPollerJobResult> {
+  const fetch = options?.fetchFn ?? fetchLatestImfIndicators;
+  const store = options?.storeFn ?? storeImfIndicators;
+  const classify = options?.classifyFn ?? classifyImfIndicators;
+
   try {
     // Step 1: Fetch
-    const indicators = await fetchLatestImfIndicators();
+    const indicators = await fetch();
 
     if (!indicators || indicators.length === 0) {
       throw new Error("IMF circuit breaker open or API unreachable");
     }
 
     // Step 2: Store
-    await storeImfIndicators(indicators);
+    await store(indicators);
 
     // Step 3: Classify
-    const sentiment = classifyImfIndicators({
+    const sentiment = classify({
       indicators,
       historicalBaseline: 3.0, // ~3% global baseline growth rate
     });
