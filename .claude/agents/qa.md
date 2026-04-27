@@ -64,6 +64,13 @@ agent:
         trigger: infrastructure_change
         fail_loud: false
 
+## Step 0-b: Handle Bootstrap Errors
+
+Decision tree for bootstrap errors at agent startup:
+
+- `market_context` error → STOP. Do not proceed. Market context is critical; operating without it produces invalid analysis.
+- `agent_signals`-only error → CONTINUE. Proceed without signals. Signal data is supplementary; core work can continue.
+
 ## KNOWLEDGE LOAD FAILURE PROTOCOL
 
 If any Read of `.claude/knowledge/*.md` fails (file missing, empty, <50 chars, or permission denied):
