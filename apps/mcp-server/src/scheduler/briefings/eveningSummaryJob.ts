@@ -46,23 +46,52 @@ export function isVnIndexFresh(
 // ─────────────────────────────────────────────────────────────────────────────
 // DB-level same-day dedup guard
 // Prevents spam when the server restarts near 22:30 and the cron re-fires.
+//
+// Quality-aware: if the most recent evening-summary row sent today has stale
+// vnIndex data (content contains " (cũ)" — written by formatEveningSummaryLines
+// when isVnIndexFresh() is false), the slot is re-opened so the job can retry
+// once fresh data is available.
 // ─────────────────────────────────────────────────────────────────────────────
 
-function alreadySentToday(db: import("bun:sqlite").Database): boolean {
+/**
+ * Returns true when a valid (fresh-data) evening summary has already been sent
+ * today, false otherwise.
+ *
+ * "Valid" means the persisted message content does NOT contain the stale-data
+ * marker " (cũ)" that formatEveningSummaryLines appends when vnIndex.fetchedAt
+ * is more than 25 hours before the send time.
+ *
+ * Exported as `alreadySentTodayForTest` for unit-test access only — production
+ * code uses the `alreadySentToday` alias below.
+ */
+export function alreadySentTodayForTest(
+  db: import("bun:sqlite").Database,
+): boolean {
   try {
     const row = db
-      .prepare<{ cnt: number }, []>(
-        `SELECT COUNT(*) AS cnt
+      .prepare<{ content: string } | null, []>(
+        `SELECT content
          FROM market_messages
          WHERE from_agent = 'evening-summary'
-           AND sent_at >= date('now')`,
+           AND sent_at >= date('now')
+         ORDER BY sent_at DESC
+         LIMIT 1`,
       )
       .get();
-    return (row?.cnt ?? 0) > 0;
+
+    if (!row) return false; // no row today — allow run
+
+    // If the stored content carries the stale-data marker, the prior run used
+    // stale vnIndex data. Re-open the slot so a retry can produce a fresh report.
+    const wasStale = row.content.includes(" (cũ)");
+    return !wasStale;
   } catch {
     return false; // fail-open: don't suppress if DB check fails
   }
 }
+
+/** Internal alias used by the production code path. */
+const alreadySentToday = alreadySentTodayForTest;
 
 /** Reset concurrency guard — exported for test isolation. */
 export function resetEveningSummaryGuard(): void {
