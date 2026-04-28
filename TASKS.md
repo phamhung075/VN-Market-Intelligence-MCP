@@ -54,7 +54,7 @@
 | 1395a | alertBatchGrouper.ts + server.ts send loop replacement + 11 tests | MEDIUM | feature | developer | docs/handoffs/TASK_1395a.md |
 | 1396 | [UX] GAS digest shows two price_drop %s with same reference price — add intra-day progression label to distinguish incremental drops | LOW | ux | ba | market-group |
 | 1397a | [DATA] Create vnIndexRefreshJob.ts — fetch VNINDEX via fetchVnIndex() + storeMarketPrices() | HIGH | feature | developer | | DONE 2026-04-28 |
-| 1397b | [DATA] Register vnIndexRefresh cron in jobs.ts (CRONS key + import + startScheduler block) | HIGH | feature | developer |
+| 1397b | [DATA] Register vnIndexRefresh cron in jobs.ts (CRONS key + import + startScheduler block) | HIGH | feature | developer | | DONE 2026-04-28 |
 | 1397c | [DATA] Test file: 5 cases VIR-1–VIR-5 for runVnIndexRefreshJob (mock.module stubs) | HIGH | test | developer | | DONE 2026-04-28 |
 | JANITOR-004 | DRY: COMPANY_SHORT_NAME in watchlist.ts duplicates STOCK_CATALOG display names | LOW | refactor | developer |
 | JANITOR-005 | DRY: historicalBaseline 3.0 magic number duplicated in 3 IMF files | LOW | refactor | developer |
