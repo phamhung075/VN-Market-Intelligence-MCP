@@ -111,7 +111,14 @@ export async function runOhlcvDailyAggregator(
       continue;  // Skip ticker if any price component is missing
     }
 
-    const volume = count;
+    // Volume: MAX(volume) across intraday ticks.
+    // market_prices_history.volume is the cumulative traded volume reported by the
+    // exchange at each snapshot — the maximum value is the end-of-day total.
+    // Bug fix (Task 1390): COUNT(*) was used before, which counted poll ticks not shares.
+    const volRow = db.prepare(
+      "SELECT MAX(volume) as max_vol FROM market_prices_history WHERE code = ? AND fetched_at >= ? AND fetched_at < ?"
+    ).get(code, windowStart, windowEnd) as { max_vol: number | null } | undefined;
+    const volume = volRow?.max_vol ?? 0;
 
     // Upsert into daily_ohlcv
     db.prepare(
