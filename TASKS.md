@@ -48,7 +48,7 @@
 
 | Task ID | Title | Priority | Type | Owner |
 |---------|-------|----------|------|-------|
-| 1393 | [BUG] VRE volume_spike alert fires every ~65s without dedup — 21 identical alerts in 25min close window | HIGH | bug | developer | market-group |
+| 1393 | [BUG] VRE volume_spike alert fires every ~65s without dedup — 21 identical alerts in 25min close window | HIGH | bug | developer | market-group | DONE 2026-04-28 |
 | 1394 | [BUG] alert-digest count mismatch — digest reports 73 alerts, DB has 98 in same 24h window | MEDIUM | bug | developer | market-group | DONE 2026-04-28 |
 | 1395 | [QUALITY] Sector-drop alerts: same message sent per watchlist ticker (8x banking, 4x real-estate) — add digest grouping by message text | MEDIUM | quality | ba | market-group |
 | 1396 | [UX] GAS digest shows two price_drop %s with same reference price — add intra-day progression label to distinguish incremental drops | LOW | ux | ba | market-group |
