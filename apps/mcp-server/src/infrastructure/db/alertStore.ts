@@ -201,3 +201,29 @@ export function readUnnotifiedAlerts(
 export function markAlertNotified(alertId: string, db: Database = getDb()): void {
   db.prepare("UPDATE alerts SET notified_telegram = 1 WHERE id = ?").run(alertId);
 }
+
+/**
+ * Returns true when the alert with `alertId` already exists in the DB AND has
+ * `notified_telegram = 1`. Use this in push-prices and similar inline send
+ * paths to guard against re-sending on every VPS push (~65 s cadence).
+ *
+ * Background: `storeAlerts` uses INSERT OR IGNORE so duplicate rows are
+ * silently skipped at the DB layer, but the in-memory Alert object is still
+ * returned by `generateAlerts` and would be re-sent on every push without
+ * this guard. Task 1393.
+ *
+ * @param alertId - The deterministic ID from `alertGenerator.chooseAlertId`
+ * @param db      - SQLite Database connection (defaults to singleton `getDb()`)
+ * @returns `true` → skip send; `false` → proceed with send
+ */
+export function shouldSkipAlreadyNotifiedAlert(
+  alertId: string,
+  db: Database = getDb(),
+): boolean {
+  const row = db
+    .prepare<{ notified_telegram: number }, [string]>(
+      "SELECT notified_telegram FROM alerts WHERE id = ? LIMIT 1",
+    )
+    .get(alertId);
+  return row !== null && row !== undefined && row.notified_telegram === 1;
+}
