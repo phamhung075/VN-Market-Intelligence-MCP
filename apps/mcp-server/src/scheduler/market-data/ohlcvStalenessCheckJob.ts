@@ -6,6 +6,7 @@
 // Complements ohlcvStartupProbe (boot-time). This covers mid-day VPS outage.
 
 import { Database } from "bun:sqlite";
+import { VN_OFFSET_MS } from "../../domain/services/timeConstants.js";
 
 export interface OhlcvStalenessCheckDeps {
   db?: Database;
@@ -20,7 +21,7 @@ export interface OhlcvStalenessCheckResult {
   sent: boolean;
 }
 
-const VN_OFFSET_MS = 7 * 60 * 60 * 1000; // UTC+7
+
 
 function vnDateString(nowMs: number): string {
   return new Date(nowMs + VN_OFFSET_MS).toISOString().slice(0, 10);

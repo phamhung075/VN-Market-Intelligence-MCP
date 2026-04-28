@@ -11,6 +11,7 @@
 import { mkdirSync, appendFile, existsSync, statSync, renameSync, unlinkSync, appendFileSync } from "node:fs";
 import { resolve, dirname, basename, join } from "node:path";
 import type { LogLevel } from "./config.js";
+import { VN_OFFSET_MS } from "../domain/services/timeConstants.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -133,9 +134,6 @@ const LEVEL_WEIGHT: Record<LogLevel, number> = {
 
 const LOG_DIR = resolve(process.cwd(), "data", "logs");
 const GLOBAL_LOG = resolve(LOG_DIR, "global.log");
-
-/** Vietnam time offset (UTC+7) */
-const VN_OFFSET_MS = 7 * 3600_000;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // File helpers
