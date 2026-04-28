@@ -63,10 +63,15 @@ export const breakers = {
    * Task 1388: halfOpenMaxAttempts=1 — single successful probe closes circuit.
    * After the underlying DB error is fixed, the very next half-open probe auto-closes
    * without needing a second success (avoids overnight "stuck OPEN" requiring manual reset).
+   * Task 1407: Increased resetTimeoutMs from 5 min to 10 min. The CB entered
+   * HALF_OPEN every 5 min and immediately re-opened because the probe failed
+   * against the same unreachable endpoint (off-hours). 10 min backoff reduces
+   * thrash frequency. Off-hours failures are now also prevented by the market-hours
+   * gate in foreignFlowFetcherJob.ts.
    */
   foreignFlow: new CircuitBreaker("foreignFlow", {
     failureThreshold: 5,
-    resetTimeoutMs: 300_000, // 5 minutes
+    resetTimeoutMs: 600_000, // 10 minutes
     halfOpenMaxAttempts: 1,  // 1 probe sufficient — faster auto-recovery
   }),
   /**

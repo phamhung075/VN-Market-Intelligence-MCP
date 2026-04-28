@@ -83,15 +83,13 @@ describe("Issue 1 — tracked_indicators hour_bucket idempotent migration", () =
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("Issue 2 — foreignFlow circuit breaker resetTimeoutMs", () => {
-  it("foreignFlow breaker has resetTimeoutMs of 300_000 (5 minutes)", async () => {
+  it("foreignFlow breaker has resetTimeoutMs of 600_000 (10 minutes, Task 1407 backoff increase)", async () => {
     const { breakers } = await import("../infrastructure/circuitBreakerRegistry.js");
-    // Access the private config via stats inspection:
-    // After opening the circuit the breaker stays open until resetTimeoutMs elapses.
-    // We verify the config by checking that the breaker does NOT auto-transition
-    // to half-open after 30s (old value), i.e. its resetTimeoutMs > 30_000.
-    // The simplest reliable check is to read the config field via (breaker as any).
+    // Task 1407: resetTimeoutMs increased from 5 min (300_000) to 10 min (600_000) to
+    // reduce HALF_OPEN probe thrash. Off-hours failures are prevented by the market-hours
+    // gate in foreignFlowFetcherJob.ts. This test was previously asserting 300_000.
     const cb = breakers.foreignFlow as unknown as { config: { resetTimeoutMs: number } };
-    expect(cb.config.resetTimeoutMs).toBe(300_000);
+    expect(cb.config.resetTimeoutMs).toBe(600_000);
   });
 });
 
