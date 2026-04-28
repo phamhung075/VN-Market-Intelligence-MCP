@@ -4,6 +4,7 @@ import {
   groupAlertsBySignalSeverity,
   formatBatchGroupMessage,
 } from "../domain/services/alertBatchGrouper.js";
+import type { AlertBatchGroup } from "../domain/services/alertBatchGrouper.js";
 import type { Alert } from "../domain/services/alertGenerator.js";
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
@@ -47,10 +48,11 @@ describe("Task 1395 — alertBatchGrouper", () => {
       const alerts = tickers.map((t, i) => makeAlert(`id${i}`, t, "price_drop", "high"));
       const groups = groupAlertsBySignalSeverity(alerts);
       expect(groups).toHaveLength(1);
-      expect(groups[0].signalType).toBe("price_drop");
-      expect(groups[0].severity).toBe("high");
-      expect(groups[0].tickers).toHaveLength(8);
-      expect(groups[0].tickers).toEqual(tickers);
+      const g0 = groups[0] as AlertBatchGroup;
+      expect(g0.signalType).toBe("price_drop");
+      expect(g0.severity).toBe("high");
+      expect(g0.tickers).toHaveLength(8);
+      expect(g0.tickers).toEqual(tickers);
     });
 
     it("T2 — price_drop/high x2 + volume_spike/high x1 → 2 groups", () => {
@@ -84,9 +86,10 @@ describe("Task 1395 — alertBatchGrouper", () => {
       const alerts = [makeAlert("a1", "VCB", "price_drop", "high")];
       const groups = groupAlertsBySignalSeverity(alerts);
       expect(groups).toHaveLength(1);
-      expect(groups[0].tickers).toHaveLength(1);
-      expect(groups[0].tickers[0]).toBe("VCB");
-      expect(groups[0].alertIds[0]).toBe("a1");
+      const g0 = groups[0] as AlertBatchGroup;
+      expect(g0.tickers).toHaveLength(1);
+      expect(g0.tickers[0]).toBe("VCB");
+      expect(g0.alertIds[0]).toBe("a1");
     });
 
     it("T5 — empty input → empty array", () => {
@@ -98,7 +101,8 @@ describe("Task 1395 — alertBatchGrouper", () => {
       const alerts = [makeAlert("a1", "VCB", null, "high")];
       const groups = groupAlertsBySignalSeverity(alerts);
       expect(groups).toHaveLength(1);
-      expect(groups[0].signalType).toBe("unknown");
+      const g0 = groups[0] as AlertBatchGroup;
+      expect(g0.signalType).toBe("unknown");
     });
   });
 
