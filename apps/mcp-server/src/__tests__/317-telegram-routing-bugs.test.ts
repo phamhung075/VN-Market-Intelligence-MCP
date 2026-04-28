@@ -103,8 +103,9 @@ describe("Bug B — server.ts push-prices alert persist metadata", () => {
   // Correct routing: sendTelegramWork with from_agent="push-prices", message_type="system_alert".
 
   it("push-prices severity alert block routes to WORK channel with push-prices metadata", async () => {
+    // Task 1406a: push-prices logic moved to pushPricesHandler.ts — read the handler file
     const src = await Bun.file(
-      new URL("../interface/mcp/server.ts", import.meta.url).pathname
+      new URL("../interface/mcp/routes/pushPricesHandler.ts", import.meta.url).pathname
     ).text();
 
     // Anchor: alertBatchGrouper.js import is unique to the push-prices batch alert block
@@ -125,8 +126,9 @@ describe("Bug B — server.ts push-prices alert persist metadata", () => {
   });
 
   it("push-prices threshold alert block routes to WORK channel with push-prices metadata", async () => {
+    // Task 1406a: push-prices logic moved to pushPricesHandler.ts — read the handler file
     const src = await Bun.file(
-      new URL("../interface/mcp/server.ts", import.meta.url).pathname
+      new URL("../interface/mcp/routes/pushPricesHandler.ts", import.meta.url).pathname
     ).text();
 
     // Anchor: CẮT LỖ / CHỐT LỜI labels are unique to the threshold alert block

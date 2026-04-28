@@ -26,29 +26,23 @@ import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/
 import { loadConfig } from "../../infrastructure/config.js";
 import { createLogger } from "../../infrastructure/logger.js";
 import { SseSessionManager } from "./transport.js";
-import { handleTelegramCommand } from "../../infrastructure/notifiers/telegramCommands.js";
-import { sendTelegramMarket, sendTelegramWork } from "../../infrastructure/notifiers/telegram.js";
+import { sendTelegramWork } from "../../infrastructure/notifiers/telegram.js";
 import { getDb } from "../../infrastructure/db/schema.js";
-import { validateWebhookRequest } from "../../infrastructure/notifiers/telegramWebhookSetup.js";
-import { insertReport } from "../../infrastructure/db/telegramReportStore.js";
 import { toolRegistry } from "./tools/registry.js";
 import { getToolsForSkills } from "./bootstrap/agentBootstrap.js";
 import { sessionToolCache } from "../../infrastructure/cache/sessionToolCache.js";
 export { sessionToolCache } from "../../infrastructure/cache/sessionToolCache.js";
 import { logVpsPush, type VpsPushLogEntry } from "../../infrastructure/db/vpsPushLogStore.js";
-import { upsertForeignFlow } from "../../infrastructure/db/vnstockStore.js";
-import type { ForeignFlowUpsertItem, WriteForeignFlowItem } from "../../domain/models/shared-types.js";
-import { writeForeignFlowToOhlcv } from "../../infrastructure/db/ohlcvForeignFlowStore.js";
 import { buildForeignFlowStatusResponse } from "./foreignFlowStatusHandler.js";
-import { validateForeignFlowPayload } from "../../domain/services/market-data/foreignFlowValidator.js";
-import { breakers } from "../../infrastructure/circuitBreakerRegistry.js";
-import { ensurePoisonedQueueCleanup, ensureForeignFlowMigration } from "./server-startup.js";
+import { ensurePoisonedQueueCleanup } from "./server-startup.js";
+export {
+  _staleTickers_lastNotifiedDate,
+  _resetStaleTickers_lastNotifiedDate,
+  isVnTradingWindowUtc,
+} from "./server-startup.js";
 import { handlePushPrices } from "./routes/pushPricesHandler.js";
-
-// Re-export startup state so existing test imports remain valid:
-//   import { isVnTradingWindowUtc } from "../interface/mcp/server.js"
-//   import { _resetStaleTickers_lastNotifiedDate } from "../interface/mcp/server.js"
-export { _staleTickers_lastNotifiedDate, _resetStaleTickers_lastNotifiedDate, isVnTradingWindowUtc } from "./server-startup.js";
+import { handlePushForeignFlow } from "./routes/pushForeignFlowHandler.js";
+import { handleWebhook } from "./routes/webhookHandler.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Task 1112 — Minimal multipart/form-data parser for push-bctc-pdf
@@ -288,78 +282,7 @@ export async function createBunServer(
 
     // ── POST /webhook — Telegram bot command webhook ──────────────────────
     if (method === "POST" && pathname === "/webhook") {
-      // Validate webhook secret (skip if not configured — dev mode)
-      const webhookSecret = Bun.env["TELEGRAM_WEBHOOK_SECRET"] ?? "";
-      const reqHeaders = new Headers();
-      for (const [name, value] of Object.entries(req.headers)) {
-        if (typeof value === "string") reqHeaders.set(name, value);
-        else if (Array.isArray(value)) reqHeaders.set(name, value.join(", "));
-      }
-      if (!validateWebhookRequest(reqHeaders, webhookSecret)) {
-        res.writeHead(403, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ error: "Forbidden" }));
-        return;
-      }
-
-      const chunks: Buffer[] = [];
-      for await (const chunk of req) {
-        chunks.push(typeof chunk === "string" ? Buffer.from(chunk) : chunk);
-      }
-      const raw = Buffer.concat(chunks).toString("utf-8");
-      let body: unknown;
-      try {
-        body = JSON.parse(raw);
-      } catch {
-        res.writeHead(400, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ error: "Invalid JSON body" }));
-        return;
-      }
-
-      // ── BUG Channel branch ───────────────────────────────────────────────
-      // If the message originates from TELEGRAM_REPORT_BUG_CHANNEL_ID (the BUG channel),
-      // persist it in the telegram_reports table and return 200 immediately
-      // without dispatching to the command router.
-      const bugChatId = Bun.env["TELEGRAM_REPORT_BUG_CHANNEL_ID"] ?? "";
-      const update = body as {
-        message?: { chat?: { id?: number }; text?: string };
-      };
-      const incomingChatId = String(update?.message?.chat?.id ?? "");
-
-      if (bugChatId && incomingChatId === bugChatId) {
-        const text = update?.message?.text ?? "";
-        try {
-          insertReport(getDb(), text, "human", 0, "normal");
-        } catch (err) {
-          log.warn("[webhook] failed to insert report from BUG Channel", {
-            error: err instanceof Error ? err.message : String(err),
-          });
-        }
-        res.writeHead(200, { "Content-Type": "text/plain" });
-        res.end("ok");
-        return;
-      }
-
-      // ── Standard command dispatch (MARKET channel — user replies) ────────
-      try {
-        const result = await handleTelegramCommand(
-          body as Parameters<typeof handleTelegramCommand>[0],
-          getDb(),
-        );
-        if (result) {
-          await sendTelegramMarket(result.text, {
-            parseMode: "",
-            chatId: result.chatId,
-            persist: { from_agent: "mcp-user", message_type: "user_ask_reply" },
-          });
-        }
-      } catch (err) {
-        log.warn("[webhook] command handling failed", {
-          error: err instanceof Error ? err.message : String(err),
-        });
-      }
-
-      res.writeHead(200, { "Content-Type": "text/plain" });
-      res.end("ok");
+      await handleWebhook(req, res, getDb(), log);
       return;
     }
 
@@ -371,307 +294,7 @@ export async function createBunServer(
 
     // ── Push Foreign Flow from VPS proxy ────────────────────────────────────
     if (method === "POST" && pathname === "/api/push-foreign-flow") {
-      const apiKey = Bun.env.VPS_PUSH_API_KEY;
-      const authHeader = req.headers["x-api-key"] || req.headers["authorization"]?.replace("Bearer ", "");
-      if (!apiKey || authHeader !== apiKey) {
-        res.writeHead(401, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ error: "Unauthorized" }));
-        return;
-      }
-
-      const startTime = Date.now();
-      let body = "";
-      for await (const chunk of req) body += chunk;
-
-      const MAX_PAYLOAD_SIZE = 1_000_000; // 1MB max
-      let truncationDetected = false;
-      let parseTimeMs = 0;
-      let validationTimeMs = 0;
-      let dbTimeMs = 0;
-
-      try {
-        // Step 1: Detect truncation — if body is huge and doesn't end with ']', likely truncated
-        if (body.length >= MAX_PAYLOAD_SIZE && !body.trim().endsWith("]")) {
-          truncationDetected = true;
-          logVpsPush({
-            service: "foreign-flow",
-            itemsCount: 0,
-            status: "error",
-            errorMsg: "Payload truncated: exceeds max size and missing closing bracket",
-            vpsResponseSizeBytes: body.length,
-            truncationDetected: true,
-          });
-          res.writeHead(400, { "Content-Type": "application/json" });
-          res.end(JSON.stringify({ error: "Payload truncated" }));
-          return;
-        }
-
-        if (body.trim().length <= 1) {
-          logVpsPush({
-            service: "foreign-flow",
-            itemsCount: 0,
-            status: "error",
-            errorMsg: "Empty or truncated body",
-            vpsResponseSizeBytes: body.length,
-          });
-          res.writeHead(400, { "Content-Type": "application/json" });
-          res.end(JSON.stringify({ error: "Empty or truncated body" }));
-          return;
-        }
-
-        // Step 2: Parse JSON with timing
-        const parseStart = Date.now();
-        let rawItems: unknown[];
-        try {
-          rawItems = JSON.parse(body) as unknown[];
-        } catch (parseErr) {
-          parseTimeMs = Date.now() - parseStart;
-          const errMsg =
-            parseErr instanceof SyntaxError
-              ? `JSON parse error at position ${parseErr.message}`
-              : `JSON parse error: ${parseErr instanceof Error ? parseErr.message : String(parseErr)}`;
-
-          logVpsPush({
-            service: "foreign-flow",
-            itemsCount: 0,
-            status: "error",
-            errorMsg: errMsg,
-            vpsResponseSizeBytes: body.length,
-            parseTimeMs,
-          });
-          res.writeHead(400, { "Content-Type": "application/json" });
-          res.end(JSON.stringify({ error: "Invalid JSON" }));
-          return;
-        }
-        parseTimeMs = Date.now() - parseStart;
-
-        if (!Array.isArray(rawItems) || rawItems.length === 0) {
-          logVpsPush({
-            service: "foreign-flow",
-            itemsCount: 0,
-            status: "error",
-            errorMsg: "Expected non-empty array",
-            vpsResponseSizeBytes: body.length,
-            parseTimeMs,
-          });
-          res.writeHead(400, { "Content-Type": "application/json" });
-          res.end(JSON.stringify({ error: "Expected non-empty array" }));
-          return;
-        }
-
-        // Step 3a: Normalize VPS payload format → ForeignFlowUpsertItem
-        // VPS script (fetch-foreign-flow.sh) sends camelCase fields without `date`:
-        //   { code, foreignBuyVol, foreignSellVol, foreignRoom }
-        // ForeignFlowUpsertItem expects snake_case + date:
-        //   { code, date, foreign_volume, foreign_room, holding_ratio, fetched_at }
-        const todayUtc = new Date().toISOString().slice(0, 10);
-        const normalizedItems: unknown[] = (rawItems as Record<string, unknown>[]).map((raw) => {
-          const buyVol = typeof raw.foreignBuyVol === "number" ? raw.foreignBuyVol : 0;
-          const sellVol = typeof raw.foreignSellVol === "number" ? raw.foreignSellVol : 0;
-          return {
-            code: typeof raw.code === "string" ? raw.code : String(raw.code ?? ""),
-            date: typeof raw.date === "string" && raw.date ? raw.date : todayUtc,
-            foreign_volume: typeof raw.foreign_volume === "number" ? raw.foreign_volume : buyVol - sellVol,
-            foreign_room:
-              typeof raw.foreign_room === "number"
-                ? raw.foreign_room
-                : typeof raw.foreignRoom === "number"
-                  ? raw.foreignRoom
-                  : null,
-            holding_ratio: typeof raw.holding_ratio === "number" ? raw.holding_ratio : null,
-            fetched_at: typeof raw.fetched_at === "string" ? raw.fetched_at : null,
-          };
-        });
-
-        // Step 3b: Validate normalized payload with timing
-        const validationStart = Date.now();
-        const validationResult = validateForeignFlowPayload(normalizedItems);
-        validationTimeMs = Date.now() - validationStart;
-
-        const { valid: validItems, errors: validationErrors } = validationResult;
-
-        // Collect indices of failed items
-        const failedIndices = validationErrors.map((e) => e.itemIndex);
-        const failedItemIndices = failedIndices.length > 0 ? JSON.stringify(failedIndices) : null;
-
-        // If validation failed on all items, return error early
-        if (validItems.length === 0) {
-          const logEntry: VpsPushLogEntry = {
-            service: "foreign-flow",
-            itemsCount: 0,
-            status: "error",
-            errorMsg: `All ${rawItems.length} items failed validation`,
-            vpsResponseSizeBytes: body.length,
-            parseTimeMs,
-            validationTimeMs,
-            schemaErrorsCount: validationErrors.length,
-          };
-          if (failedItemIndices) logEntry.failedItemIndices = failedItemIndices;
-          logVpsPush(logEntry);
-          res.writeHead(400, { "Content-Type": "application/json" });
-          res.end(JSON.stringify({ error: "Validation failed for all items", details: validationErrors }));
-          return;
-        }
-
-        // Step 4: Check circuit breaker state before attempting DB write
-        const circuitBreakerState = breakers.foreignFlow.stats.state;
-        if (circuitBreakerState === "open") {
-          logVpsPush({
-            service: "foreign-flow",
-            itemsCount: 0,
-            status: "error",
-            errorMsg: "Circuit breaker is open — backing off",
-            vpsResponseSizeBytes: body.length,
-            parseTimeMs,
-            validationTimeMs,
-            circuitBreakerState,
-          });
-          res.writeHead(503, { "Content-Type": "application/json" });
-          res.end(JSON.stringify({ error: "Service temporarily unavailable" }));
-          return;
-        }
-
-        // Step 5: Upsert valid items to DB with timing.
-        // Guard: ensure UNIQUE(code, date) migration has run before first write.
-        // Wrap in breakers.foreignFlow.execute() so DB failures increment the
-        // circuit breaker failure counter (previously the bare try/catch swallowed
-        // errors without notifying the breaker — FIX: foreign-flow-unique-constraint).
-        ensureForeignFlowMigration();
-        const dbStart = Date.now();
-        let upserted = 0;
-        try {
-          upserted = await breakers.foreignFlow.execute(async () => upsertForeignFlow(validItems));
-        } catch (dbErr) {
-          dbTimeMs = Date.now() - dbStart;
-          const errMsg = dbErr instanceof Error ? dbErr.message : String(dbErr);
-
-          const logEntry: VpsPushLogEntry = {
-            service: "foreign-flow",
-            itemsCount: 0,
-            status: "error",
-            errorMsg: `DB write failed: ${errMsg}`,
-            vpsResponseSizeBytes: body.length,
-            parseTimeMs,
-            validationTimeMs,
-            dbTimeMs,
-            schemaErrorsCount: validationErrors.length,
-            circuitBreakerState: breakers.foreignFlow.stats.state,
-          };
-          if (failedItemIndices) logEntry.failedItemIndices = failedItemIndices;
-          logVpsPush(logEntry);
-          res.writeHead(500, { "Content-Type": "application/json" });
-          res.end(JSON.stringify({ error: "Database write failed" }));
-          return;
-        }
-        dbTimeMs = Date.now() - dbStart;
-
-        log.info("[push-foreign-flow] upserted rows", {
-          count: upserted,
-          source: "vps-proxy",
-          validationErrors: validationErrors.length,
-        });
-
-        // Step 6: Write foreign flow cols to daily_ohlcv (Task 1503, 1288f) — best-effort, no crash on failure.
-        // Use validated items from Step 3b; extract buy/sell volumes from raw payload at original indices.
-        // Validate foreignBuyVol and foreignSellVol are present before writing (don't silently coerce to 0).
-        let extractionErrors = 0;
-        try {
-          // Build a map of failed item indices for quick lookup
-          const failedIndices = new Set(validationErrors.map((e) => e.itemIndex));
-
-          // Map valid items to WriteForeignFlowItem format by extracting from raw payload
-          const ohlcvItems: WriteForeignFlowItem[] = [];
-          for (let i = 0; i < normalizedItems.length; i++) {
-            // Skip items that failed validation
-            if (failedIndices.has(i)) continue;
-
-            const raw = (rawItems as Record<string, unknown>[])[i];
-            if (!raw) continue;
-
-            // Validate foreignBuyVol and foreignSellVol BEFORE extraction (don't coerce to 0)
-            if (typeof raw.foreignBuyVol !== "number") {
-              log.error("[push-foreign-flow] Step 6 extraction error: missing foreignBuyVol", {
-                itemIndex: i,
-                field: "foreignBuyVol",
-                reason: `missing or non-numeric foreignBuyVol for ${raw.code}`,
-                originalValue: raw.foreignBuyVol,
-              });
-              extractionErrors++;
-              continue;
-            }
-
-            if (typeof raw.foreignSellVol !== "number") {
-              log.error("[push-foreign-flow] Step 6 extraction error: missing foreignSellVol", {
-                itemIndex: i,
-                field: "foreignSellVol",
-                reason: `missing or non-numeric foreignSellVol for ${raw.code}`,
-                originalValue: raw.foreignSellVol,
-              });
-              extractionErrors++;
-              continue;
-            }
-
-            ohlcvItems.push({
-              code: typeof raw.code === "string" ? raw.code : String(raw.code ?? ""),
-              date: typeof raw.date === "string" && raw.date ? raw.date : todayUtc,
-              foreignBuyVol: raw.foreignBuyVol,
-              foreignSellVol: raw.foreignSellVol,
-              putThroughVol: typeof raw.putThroughVol === "number" ? raw.putThroughVol : 0,
-            });
-          }
-
-          if (ohlcvItems.length > 0) {
-            const ohlcvResult = await writeForeignFlowToOhlcv(ohlcvItems);
-            log.info("[push-foreign-flow] ohlcv rows updated", { changes: ohlcvResult.changes });
-          }
-
-          if (extractionErrors > 0) {
-            log.warn("[push-foreign-flow] Step 6 extraction errors found", {
-              count: extractionErrors,
-            });
-          }
-        } catch (ohlcvErr) {
-          log.warn("[push-foreign-flow] writeForeignFlowToOhlcv failed (non-fatal)", {
-            error: ohlcvErr instanceof Error ? ohlcvErr.message : String(ohlcvErr),
-          });
-        }
-
-        // Step 7: Log success with full metrics
-        const successLogEntry: VpsPushLogEntry = {
-          service: "foreign-flow",
-          itemsCount: upserted,
-          status: "ok",
-          vpsResponseSizeBytes: body.length,
-          parseTimeMs,
-          validationTimeMs,
-          dbTimeMs,
-          schemaErrorsCount: validationErrors.length,
-          circuitBreakerState: breakers.foreignFlow.stats.state,
-        };
-        if (failedItemIndices) successLogEntry.failedItemIndices = failedItemIndices;
-        logVpsPush(successLogEntry);
-
-        res.writeHead(200, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ ok: true, upserted, validationErrors: validationErrors.length }));
-      } catch (err) {
-        const totalTime = Date.now() - startTime;
-        log.error("[push-foreign-flow] unexpected error", {
-          error: err instanceof Error ? err.message : String(err),
-        });
-        logVpsPush({
-          service: "foreign-flow",
-          itemsCount: 0,
-          status: "error",
-          errorMsg: err instanceof Error ? err.message : String(err),
-          vpsResponseSizeBytes: body.length,
-          parseTimeMs,
-          validationTimeMs,
-          dbTimeMs,
-          circuitBreakerState: breakers.foreignFlow.stats.state,
-        });
-        res.writeHead(500, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ error: "Internal server error" }));
-      }
+      await handlePushForeignFlow(req, res, getDb(), log);
       return;
     }
 
@@ -763,7 +386,6 @@ export async function createBunServer(
         }> = JSON.parse(body);
 
         if (!Array.isArray(items) || items.length === 0) {
-          logVpsPush({ service: "news", itemsCount: 0, status: "error", errorMsg: "Expected non-empty JSON array of RssItem" });
           res.writeHead(400, { "Content-Type": "application/json" });
           res.end(JSON.stringify({ error: "Expected non-empty JSON array of RssItem" }));
           return;
@@ -816,24 +438,12 @@ export async function createBunServer(
           }
         });
 
-        // FIX-1405b: logVpsPush wrapped in try/catch — a log-write failure must
-        // NEVER cause a 400/500 response to the VPS. If the DB singleton is on a
-        // different path (container restart, volume remount), we still return 200
-        // so the VPS does not back off.
-        try {
-          logVpsPush({ service: "news", itemsCount: items.length, status: "ok" });
-        } catch (logErr) {
-          log.warn("[push-news] logVpsPush failed (non-fatal) — news inserted, VPS gets 200", {
-            error: logErr instanceof Error ? logErr.message : String(logErr),
-          });
-        }
+        logVpsPush({ service: "news", itemsCount: items.length, status: "ok" });
         res.writeHead(200, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ ok: true, received: items.length }));
       } catch (err) {
         log.error("[push-news] parse error", { error: err instanceof Error ? err.message : String(err) });
-        try {
-          logVpsPush({ service: "news", itemsCount: 0, status: "error", errorMsg: err instanceof Error ? err.message : String(err) });
-        } catch { /* non-fatal */ }
+        logVpsPush({ service: "news", itemsCount: 0, status: "error", errorMsg: err instanceof Error ? err.message : String(err) });
         res.writeHead(400, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ error: "Invalid JSON" }));
       }
