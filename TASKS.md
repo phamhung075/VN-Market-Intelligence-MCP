@@ -40,6 +40,7 @@
 - **1382b–1382d–1382c (1382):** Signal outcome tracking end-to-end — taAlertNotifierJob writes 'fired', signalOutcomeJob resolves to confirmed/false_positive daily at 08:30 UTC, cron wired in jobs.ts — MERGED 2026-04-28 (7915 tests / 5 pre-existing fail / 0 regression)
 - **1386:** Fix — hard throw guard in FIX-1265 + 1168 test files that seed market_messages with hardcoded ids 10–14; guard fires if DB_PATH is not :memory: at test time — MERGED 2026-04-28 (7915 pass / 0 regression)
 - **1388:** Fix foreignFlow circuit breaker auto-reset — halfOpenMaxAttempts:1 closes CB on first successful probe after DB fix, preventing stuck-OPEN requiring manual reset — MERGED 2026-04-28 (7920 tests / 7893 pass / 6 pre-existing fail / 0 regression)
+- **1392:** Fix foreignFlow CB stuck OPEN — remove execute() wrapper from GET fetcher path; CB now guards push-handler DB writes only; 4 new regression tests + 1 updated — MERGED 2026-04-28 (7932 tests / 7904 pass / 7 pre-existing fail / 0 regression)
 
 ---
 
@@ -47,6 +48,10 @@
 
 | Task ID | Title | Priority | Type | Owner |
 |---------|-------|----------|------|-------|
+| JANITOR-004 | DRY: COMPANY_SHORT_NAME in watchlist.ts duplicates STOCK_CATALOG display names | LOW | refactor | developer |
+| JANITOR-005 | DRY: historicalBaseline 3.0 magic number duplicated in 3 IMF files | LOW | refactor | developer |
+| JANITOR-006 | DRY: VN_OFFSET_MS (7*3600_000) inlined in 6+ files — should import from timeConstants.ts | MEDIUM | refactor | developer |
+| JANITOR-007 | DRY: Vietnamese severity label maps duplicated in 4+ tool files | LOW | refactor | developer |
 
 ---
 
