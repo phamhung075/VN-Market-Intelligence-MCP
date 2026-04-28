@@ -19,6 +19,7 @@ import { describe, it, expect, beforeEach, afterEach } from "bun:test";
 import { Database } from "bun:sqlite";
 import { mkdirSync, rmSync, existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import { VN_OFFSET_MS } from "../domain/services/timeConstants.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Test DB helpers
@@ -134,7 +135,7 @@ function cleanupReportsDir() {
 
 function midnightVietnamUtc(): string {
   const now = new Date();
-  const vnNow = new Date(now.getTime() + 7 * 3600_000);
+  const vnNow = new Date(now.getTime() + VN_OFFSET_MS);
   const midnight = new Date(
     Date.UTC(
       vnNow.getUTCFullYear(),
@@ -145,13 +146,13 @@ function midnightVietnamUtc(): string {
       0,
       0,
     ) -
-      7 * 3600_000,
+      VN_OFFSET_MS,
   );
   return midnight.toISOString();
 }
 
 function todayVietnam(): string {
-  const vnNow = new Date(new Date().getTime() + 7 * 3600_000);
+  const vnNow = new Date(new Date().getTime() + VN_OFFSET_MS);
   const y = vnNow.getUTCFullYear();
   const m = String(vnNow.getUTCMonth() + 1).padStart(2, "0");
   const d = String(vnNow.getUTCDate()).padStart(2, "0");

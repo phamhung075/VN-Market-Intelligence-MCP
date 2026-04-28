@@ -10,6 +10,7 @@ Bun.env["DB_PATH"] = ":memory:";
 Bun.env["DB_PATH"] = ":memory:";
 import { describe, it, expect, beforeEach } from "bun:test";
 import { Database } from "bun:sqlite";
+import { VN_OFFSET_MS } from "../domain/services/timeConstants.js";
 import type { EveningSummary } from "../application/usecases/assembleEveningSummary.js";
 import { runEveningSummary, resetEveningSummaryGuard } from "../scheduler/briefings/eveningSummaryJob.js";
 
@@ -18,7 +19,7 @@ import { runEveningSummary, resetEveningSummaryGuard } from "../scheduler/briefi
 // ─────────────────────────────────────────────────────────────────────────────
 
 function todayVietnam(): string {
-  const vnNow = new Date(new Date().getTime() + 7 * 3600_000);
+  const vnNow = new Date(new Date().getTime() + VN_OFFSET_MS);
   const y = vnNow.getUTCFullYear();
   const m = String(vnNow.getUTCMonth() + 1).padStart(2, "0");
   const d = String(vnNow.getUTCDate()).padStart(2, "0");

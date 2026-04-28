@@ -14,6 +14,7 @@ import { describe, it, expect, beforeEach, afterEach } from "bun:test";
 import { Database } from "bun:sqlite";
 import { mkdirSync, rmSync, existsSync } from "node:fs";
 import { join } from "node:path";
+import { VN_OFFSET_MS } from "../domain/services/timeConstants.js";
 import { pollNews } from "../application/usecases/pollNews.js";
 import { assembleEveningSummary } from "../application/usecases/assembleEveningSummary.js";
 import type { RssItem } from "../infrastructure/fetchers/rss.js";
@@ -24,7 +25,7 @@ import type { RssItem } from "../infrastructure/fetchers/rss.js";
 
 function midnightVietnamAsUtc(): string {
   const now = new Date();
-  const vnNow = new Date(now.getTime() + 7 * 3600_000);
+  const vnNow = new Date(now.getTime() + VN_OFFSET_MS);
   const midnight = new Date(
     Date.UTC(
       vnNow.getUTCFullYear(),
@@ -35,7 +36,7 @@ function midnightVietnamAsUtc(): string {
       0,
       0,
     ) -
-      7 * 3600_000,
+      VN_OFFSET_MS,
   );
   return midnight.toISOString();
 }
