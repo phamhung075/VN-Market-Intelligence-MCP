@@ -88,6 +88,8 @@ export async function runBctcQueueEnricherJob(opts: {
   //   - NULL (never populated)
   //   - 'MISSING' (placeholder written by earlier bad runs)
   //   - '/test-...' (placeholder written by test-seeding scripts)
+  //   - 'https://congbothongtin.ssc.gov.vn/test...' (stub seeded before VPS
+  //     resolves real URLs — FIX 1405b)
   //
   let queueItems: Array<{ id: number; action_code: string }> = [];
 
@@ -100,6 +102,7 @@ export async function runBctcQueueEnricherJob(opts: {
            source_url IS NULL
            OR source_url = 'MISSING'
            OR source_url LIKE '/test-%'
+           OR source_url LIKE 'https://congbothongtin.ssc.gov.vn/test%'
          )
          AND status = 'pending'
          ORDER BY created_at ASC

@@ -41,97 +41,14 @@ import type { ForeignFlowUpsertItem, WriteForeignFlowItem } from "../../domain/m
 import { writeForeignFlowToOhlcv } from "../../infrastructure/db/ohlcvForeignFlowStore.js";
 import { buildForeignFlowStatusResponse } from "./foreignFlowStatusHandler.js";
 import { validateForeignFlowPayload } from "../../domain/services/market-data/foreignFlowValidator.js";
-import { VN_OFFSET_MS } from "../../domain/services/timeConstants.js";
 import { breakers } from "../../infrastructure/circuitBreakerRegistry.js";
+import { ensurePoisonedQueueCleanup, ensureForeignFlowMigration } from "./server-startup.js";
+import { handlePushPrices } from "./routes/pushPricesHandler.js";
 
-/** ISO date string (YYYY-MM-DD) of the last stale-ticker WORK notification. Reset daily. */
-export let _staleTickers_lastNotifiedDate = "";
-/** Setter for test isolation — allows resetting the cooldown between test cases. */
-export function _resetStaleTickers_lastNotifiedDate(): void {
-  _staleTickers_lastNotifiedDate = "";
-}
-
-/**
- * Returns true only during VN trading hours: 02:00–08:59 UTC, Mon–Fri.
- * Used to suppress change_pct alerts outside the intraday window (Task 1380).
- */
-export function isVnTradingWindowUtc(now: Date = new Date()): boolean {
-  const day = now.getUTCDay(); // 0=Sun, 6=Sat
-  if (day === 0 || day === 6) return false;
-  const h = now.getUTCHours();
-  return h >= 2 && h <= 8;
-}
-
-// Migration guard — run once per process startup, before the first upsertForeignFlow call.
-// Ensures UNIQUE(code, date) index exists on vnstock_trading_stats for production DBs
-// that were created before the index was added (FIX-1312).
-let _migrationRanForForeignFlow = false;
-function ensureForeignFlowMigration(): void {
-  if (_migrationRanForForeignFlow) return;
-  _migrationRanForForeignFlow = true;
-  try {
-    runVnstockMigrations();
-  } catch (err) {
-    // Log but don't crash the server — upsertForeignFlow has its own constraint guard
-    import("../../infrastructure/logger.js").then(({ createLogger }) => {
-      createLogger("info").warn("[push-foreign-flow] migration guard failed", {
-        error: err instanceof Error ? err.message : String(err),
-      });
-    });
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// FIX-BCTC-SIZE-GUARD — One-time cleanup: reset 4 poisoned 'done' queue entries
-//
-// These 4 fake PDFs (459-byte test payloads) were marked 'done' before the
-// 10 KB size guard existed. They will never be retried without this reset.
-// ─────────────────────────────────────────────────────────────────────────────
-
-const POISONED_BCTC_ENTRIES = [
-  { action_code: "BID", period_year: 2025, period_quarter: "Q4", filename: "BID_2025_Q4.pdf" },
-  { action_code: "BSR", period_year: 2025, period_quarter: "Q4", filename: "BSR_2025_Q4.pdf" },
-  { action_code: "DGC", period_year: 2025, period_quarter: "Q4", filename: "DGC_2025_Q4.pdf" },
-  { action_code: "TEST", period_year: 2025, period_quarter: "Q4", filename: "test.pdf" },
-] as const;
-
-let _poisonedQueueCleanupRan = false;
-function ensurePoisonedQueueCleanup(): void {
-  if (_poisonedQueueCleanupRan) return;
-  _poisonedQueueCleanupRan = true;
-  const _log = createLogger("info");
-  try {
-    const db = getDb();
-    const { resolve } = require("node:path") as typeof import("node:path");
-    const { rmSync, existsSync } = require("node:fs") as typeof import("node:fs");
-    const pdfDir = resolve(process.cwd(), "data", "pdfs");
-
-    for (const entry of POISONED_BCTC_ENTRIES) {
-      // Step 1: reset queue status → pending
-      db.prepare(
-        `UPDATE bctc_vps_queue
-         SET status = 'pending', attempts = 0, last_attempt = NULL
-         WHERE action_code = ? AND period_year = ? AND period_quarter = ?`,
-      ).run(entry.action_code, entry.period_year, entry.period_quarter);
-
-      // Step 2: delete pdf_extracted_text rows
-      db.prepare(`DELETE FROM pdf_extracted_text WHERE filename = ?`).run(entry.filename);
-
-      // Step 3: delete corrupt PDF file from disk
-      const pdfPath = resolve(pdfDir, entry.filename);
-      if (existsSync(pdfPath)) {
-        rmSync(pdfPath, { force: true });
-        _log.info("[bctc-poison-cleanup] deleted corrupt PDF", { path: pdfPath });
-      }
-    }
-
-    _log.info("[bctc-poison-cleanup] reset 4 poisoned bctc_vps_queue entries to pending");
-  } catch (err) {
-    _log.warn("[bctc-poison-cleanup] cleanup failed (non-fatal)", {
-      error: err instanceof Error ? err.message : String(err),
-    });
-  }
-}
+// Re-export startup state so existing test imports remain valid:
+//   import { isVnTradingWindowUtc } from "../interface/mcp/server.js"
+//   import { _resetStaleTickers_lastNotifiedDate } from "../interface/mcp/server.js"
+export { _staleTickers_lastNotifiedDate, _resetStaleTickers_lastNotifiedDate, isVnTradingWindowUtc } from "./server-startup.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Task 1112 — Minimal multipart/form-data parser for push-bctc-pdf
@@ -448,6 +365,12 @@ export async function createBunServer(
 
     // ── Push Prices from VPS proxy ────────────────────────────────────────
     if (method === "POST" && pathname === "/api/push-prices") {
+      await handlePushPrices(req, res, getDb(), log);
+      return;
+    }
+
+    // ── Push Prices STUB — removed block below ────────────────────────────
+    if (false as boolean && method === "POST" && pathname === "/api/push-prices-stub-removed") {
       const apiKey = Bun.env.VPS_PUSH_API_KEY;
       const authHeader = req.headers["x-api-key"] || req.headers["authorization"]?.replace("Bearer ", "");
       if (!apiKey || authHeader !== apiKey) {
@@ -1250,6 +1173,7 @@ export async function createBunServer(
         }> = JSON.parse(body);
 
         if (!Array.isArray(items) || items.length === 0) {
+          logVpsPush({ service: "news", itemsCount: 0, status: "error", errorMsg: "Expected non-empty JSON array of RssItem" });
           res.writeHead(400, { "Content-Type": "application/json" });
           res.end(JSON.stringify({ error: "Expected non-empty JSON array of RssItem" }));
           return;
@@ -1302,12 +1226,24 @@ export async function createBunServer(
           }
         });
 
-        logVpsPush({ service: "news", itemsCount: items.length, status: "ok" });
+        // FIX-1405b: logVpsPush wrapped in try/catch — a log-write failure must
+        // NEVER cause a 400/500 response to the VPS. If the DB singleton is on a
+        // different path (container restart, volume remount), we still return 200
+        // so the VPS does not back off.
+        try {
+          logVpsPush({ service: "news", itemsCount: items.length, status: "ok" });
+        } catch (logErr) {
+          log.warn("[push-news] logVpsPush failed (non-fatal) — news inserted, VPS gets 200", {
+            error: logErr instanceof Error ? logErr.message : String(logErr),
+          });
+        }
         res.writeHead(200, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ ok: true, received: items.length }));
       } catch (err) {
         log.error("[push-news] parse error", { error: err instanceof Error ? err.message : String(err) });
-        logVpsPush({ service: "news", itemsCount: 0, status: "error", errorMsg: err instanceof Error ? err.message : String(err) });
+        try {
+          logVpsPush({ service: "news", itemsCount: 0, status: "error", errorMsg: err instanceof Error ? err.message : String(err) });
+        } catch { /* non-fatal */ }
         res.writeHead(400, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ error: "Invalid JSON" }));
       }

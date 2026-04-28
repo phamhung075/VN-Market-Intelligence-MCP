@@ -109,8 +109,12 @@ export const DEFAULT_FRESHNESS_CONFIGS: FreshnessConfig[] = [
   {
     serviceName: "vn-news-fetch",
     description: "News and events",
-    latestTimestampSql: `SELECT MAX(sent_at) AS latest_at FROM market_messages`,
-    maxAgeMs: 20 * 60_000, // 20 minutes
+    // FIX-1405b: VPS news items land in rag_analyses (via pollNews pipeline),
+    // NOT in market_messages (which is the internal agent signal channel).
+    // Using rag_analyses.created_at gives a true picture of freshness.
+    // Threshold raised to 30 min to match the documented SLA.
+    latestTimestampSql: `SELECT MAX(created_at) AS latest_at FROM rag_analyses`,
+    maxAgeMs: 30 * 60_000, // 30 minutes — matches SLA
   },
   {
     serviceName: "vn-foreign-flow",
