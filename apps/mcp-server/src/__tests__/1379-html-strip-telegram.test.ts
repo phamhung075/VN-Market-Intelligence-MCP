@@ -19,7 +19,7 @@ const mod = await import(
 
 const { sendTelegramMarket } = mod as typeof import("../infrastructure/notifiers/telegram.js");
 
-function makeFetch(capture: { body: string }): typeof fetch {
+function makeFetch(capture: { body: string }): (_url: string, init?: RequestInit) => Promise<Response> {
   return async (_url: string, init?: RequestInit) => {
     capture.body = init?.body as string ?? "";
     return new Response(JSON.stringify({ result: { message_id: 1 } }), {
