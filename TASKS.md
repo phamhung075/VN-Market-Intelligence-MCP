@@ -104,5 +104,6 @@
 | 1402 | FIX: resolve stranded agent_feedback rows 73/76/77 (status new→resolved) — bctcReparseJob disk-scan fallback unblocked | main 2026-04-28 | reports/TASK_REPORT_1402.md |
 | 1403 | FIX: vnstock_trading_stats UNIQUE(code) autoindex rebuilt to UNIQUE(code,date) + vps_service_health idle CHECK migration guard fixed; 9/9 new tests + QA TS fix (noUncheckedIndexedAccess non-null assertions) | main 2026-04-28 | reports/TASK_REPORT_1403.md |
 | 1406 | FIX: vps_service_health CHECK constraint regression tests — REG-1 idle INSERT succeeds, REG-2 healthy/unhealthy/unreachable accepted, REG-3 invalid value rejected; 3/3 tests pass | main 2026-04-28 | reports/TASK_REPORT_1406.md |
+| 1408 | FIX: startup-catchup skips eveningSummaryJob when valid report exists — eveningReportIsValid() checks vnIndex.fetchedAt within 25h AND newsCount > 0; reportCheckFn param added to shouldRunCatchup(); 6 new tests | main 2026-04-28 | reports/TASK_REPORT_1408.md |
 
 ---
