@@ -110,7 +110,7 @@ export async function runSignalOutcomeJob(
 
     // Baseline price: 30-min window around created_at
     const baseline = db
-      .query<PriceRow, [string, string]>(
+      .query<PriceRow, [string, string, string]>(
         `SELECT AVG(price) AS avg_price
            FROM market_prices_history
           WHERE code = ?
@@ -123,7 +123,7 @@ export async function runSignalOutcomeJob(
     // Note: SQLite datetime() does not accept combined modifiers like '+4 hours 30 minutes'
     // Use '+270 minutes' (4h30m) for the upper bound.
     const resolution = db
-      .query<PriceRow, [string, string]>(
+      .query<PriceRow, [string, string, string]>(
         `SELECT AVG(price) AS avg_price
            FROM market_prices_history
           WHERE code = ?
