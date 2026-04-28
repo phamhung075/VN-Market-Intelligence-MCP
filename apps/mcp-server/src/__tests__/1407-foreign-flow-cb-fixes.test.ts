@@ -16,7 +16,7 @@ Bun.env["DB_PATH"] = ":memory:";
 
 import { describe, it, expect, beforeEach, afterEach } from "bun:test";
 import { isVnTradingWindow } from "../domain/services/tradingWindow.js";
-import { runForeignFlowFetcherJob } from "../scheduler/market-data/foreignFlowFetcherJob.js";
+import { runForeignFlowFetcherJob, runForeignFlowFetcherJobCron } from "../scheduler/market-data/foreignFlowFetcherJob.js";
 import { breakers } from "../infrastructure/circuitBreakerRegistry.js";
 import { reset_foreign_flow_circuit_breaker } from "../interface/mcp/tools/market-data/foreignFlowTools.js";
 
@@ -51,7 +51,7 @@ describe("FIX 1 — isVnTradingWindow: gate coverage", () => {
   });
 });
 
-describe("FIX 1 — runForeignFlowFetcherJob: CB not accumulated outside trading window", () => {
+describe("FIX 1 — runForeignFlowFetcherJobCron: market-hours gate prevents off-hours execution", () => {
   beforeEach(() => {
     breakers.foreignFlow.reset();
   });
@@ -60,35 +60,37 @@ describe("FIX 1 — runForeignFlowFetcherJob: CB not accumulated outside trading
     breakers.foreignFlow.reset();
   });
 
-  it("outside trading window: CB failure count stays 0 even when fetch would fail", async () => {
-    // We call runForeignFlowFetcherJob (the inner function, not the cron wrapper)
-    // with a now() that is outside the trading window and a fetchFn that would fail.
-    // The cron wrapper runForeignFlowFetcherJobCron() guards on isVnTradingWindow(),
-    // but runForeignFlowFetcherJob itself does not — it delegates to fetchForeignFlowWithFallback.
-    // The cron-level gate is what we test via isVnTradingWindow() coverage above.
-    // Here we verify that when market is open, the CB does track failures properly.
+  it("outside trading window: cron wrapper returns immediately without touching the CB", async () => {
+    // Task 1392 architectural note: breakers.foreignFlow wraps DB writes in the push handler,
+    // NOT the fetcher HTTP call. The market-hours gate in runForeignFlowFetcherJobCron() prevents
+    // the entire job body (including recordJobRun) from executing outside VN market hours.
+    // This ensures off-hours probe failures do NOT accumulate in the CB.
 
-    const failingFetch = async (_url: string) => {
-      throw new Error("simulated VPS unreachable");
-    };
+    const outsideWindowNow = () => new Date("2026-04-28T01:00:00Z"); // Mon 01:00 UTC (pre-market)
+    expect(isVnTradingWindow(outsideWindowNow())).toBe(false);
 
-    // During trading window: failures should reach CB
-    const insideWindowNow = () => new Date("2026-04-28T04:00:00Z"); // Mon 04:00 UTC
-    expect(isVnTradingWindow(insideWindowNow())).toBe(true);
-
-    // Even with fallback strategy, CB is only incremented by the execute() call.
-    // fetchForeignFlowWithFallback catches the error and falls through to cache/SSE/none.
-    // So we must verify the CB failure count increments on primary failure.
     const failuresBefore = breakers.foreignFlow.stats.failures;
 
-    await runForeignFlowFetcherJob({
-      now: insideWindowNow,
-      fetchFn: failingFetch,
-    });
+    // runForeignFlowFetcherJobCron should return early — no fetch, no CB involvement
+    await runForeignFlowFetcherJobCron(outsideWindowNow);
 
-    // CB should have recorded at least one failure (primary attempted and failed)
     const failuresAfter = breakers.foreignFlow.stats.failures;
-    expect(failuresAfter).toBeGreaterThan(failuresBefore);
+    // CB failure count must not increase (early return, no CB execute() called)
+    expect(failuresAfter).toBe(failuresBefore);
+  });
+
+  it("outside trading window: cron returns void without throwing", async () => {
+    const saturdayNow = () => new Date("2026-04-26T04:00:00Z"); // Saturday UTC
+    expect(isVnTradingWindow(saturdayNow())).toBe(false);
+
+    // Must not throw — just returns early
+    let threw = false;
+    try {
+      await runForeignFlowFetcherJobCron(saturdayNow);
+    } catch {
+      threw = true;
+    }
+    expect(threw).toBe(false);
   });
 });
 

@@ -85,7 +85,7 @@ describe("FIX — diagnose tool: correct reset timeout and time-to-half-open", (
     breakers.foreignFlow.reset();
   });
 
-  it("diagnose open CB: shows 5 minutes (300s) not 30 seconds", async () => {
+  it("diagnose open CB: shows 10 minutes (600s) not 30 seconds (Task 1407: increased from 5 min)", async () => {
     const cb = breakers.foreignFlow;
     for (let i = 0; i < 5; i++) {
       try {
@@ -99,12 +99,12 @@ describe("FIX — diagnose tool: correct reset timeout and time-to-half-open", (
     const result = await diagnose_foreign_flow_circuit_breaker();
     const text = result.content[0]!.text;
 
-    // Must NOT show 30s — that was the bug
+    // Must NOT show 30s — that was the original bug
     expect(text).not.toContain("30s");
     expect(text).not.toContain("30000ms");
-    // Must show ~5 min (300s range)
-    // The remaining time will be close to 300s since we just opened it
-    expect(text).toMatch(/29[0-9]s|300s|5 min/);
+    // Task 1407: resetTimeoutMs increased from 5 min (300_000) to 10 min (600_000).
+    // The remaining time will be close to 600s since we just opened it.
+    expect(text).toMatch(/59[0-9]s|600s|10 min/);
   });
 
   it("diagnose open CB: time-to-half-open decreases as time passes (openedAt used)", async () => {
