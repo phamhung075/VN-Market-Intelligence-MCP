@@ -52,22 +52,15 @@ function makeMacroAlert(id: string): Alert {
 
 describe("Task 1285 — macro_deviation cooldown bypass fix", () => {
   // ─────────────────────────────────────────────────────────────────────────
-  // AC-1: alert with notified_telegram=0 in history window IS suppressed
-  //
-  // Scenario: cycle N sent the alert but Telegram delivery failed
-  // (notified_telegram stays 0). In cycle N+1, the same alert appears again as
-  // unnotified. The cooldown history now includes notified_telegram=0 rows, so
-  // `shouldSuppressAlert` finds the previous attempt and suppresses.
+  // AC-1 (updated by Task 1383): MACRO alert with cooldown history still reaches
+  // sendAlertsFn. Step A2.5 INSERT OR IGNORE is the dedup guard; step E must
+  // always attempt to send whatever readUnnotifiedAlerts returns for MACRO.
   // ─────────────────────────────────────────────────────────────────────────
-  it("AC-1: alert with notified_telegram=0 in history (failed send) is suppressed in next cycle", async () => {
+  it("AC-1: MACRO alert with cooldown history still reaches sendAlertsFn (task 1383 fix)", async () => {
     resetCycleGuard();
 
     const sendLog: Alert[] = [];
     const markLog: string[] = [];
-
-    // Simulate: the MACRO alert was attempted 10 minutes ago (within 30-min window)
-    // but its send failed — so notified_telegram=0. The real DB query (without
-    // notified_telegram filter) would return it; we inject it via getRecentAlertHistoryFn.
     const tenMinAgo = new Date(Date.now() - 10 * 60_000).toISOString();
 
     const deps: CycleDeps = {
@@ -89,8 +82,7 @@ describe("Task 1285 — macro_deviation cooldown bypass fix", () => {
         cooldownMinutes: 30,
         maxAlertsPerStockPerDay: 10,
       },
-      // getRecentAlertHistoryFn simulates what the broadened SQL query returns:
-      // the same alert attempt (notified_telegram=0, 10 min ago) IS included.
+      // History has a previous MACRO attempt — but MACRO now bypasses shouldSuppressAlert.
       getRecentAlertHistoryFn: async () => [
         {
           stocks: "MACRO",
@@ -103,10 +95,9 @@ describe("Task 1285 — macro_deviation cooldown bypass fix", () => {
     const result = await runIntelligenceCycle(deps);
     expect(result).not.toBeNull();
 
-    // The alert must be suppressed — sendAlertsFn should NOT be called
-    expect(sendLog.length).toBe(0);
-    // markAlertNotified IS called (suppressed alerts are still marked to prevent
-    // step E from processing them again in subsequent cycles)
+    // Task 1383: MACRO bypasses cooldown — sendAlertsFn MUST be called
+    expect(sendLog.length).toBe(1);
+    // markAlertNotified called after successful send
     expect(markLog.length).toBe(1);
     expect(markLog[0]).toBe("macro-2026-04-15-vnindex-high");
   });
@@ -127,9 +118,9 @@ describe("Task 1285 — macro_deviation cooldown bypass fix", () => {
     const markLog: string[] = [];
     let callCount = 0;
 
-    const alert1 = makeMacroAlert("macro-2026-04-15-vnindex-high-a");
-    const alert2 = makeMacroAlert("macro-2026-04-15-vnindex-high-b");
-    // alert2 has a different id but same stock+signal type
+    const alert1 = makeMacroAlert("macro-2026-04-15-brentCrudeUSD-extreme");
+    const alert2 = makeMacroAlert("macro-2026-04-15-goldUSDPerOz-extreme");
+    // Two different indicators — step A2.5 dedup allows both; step E must send both.
 
     const deps: CycleDeps = {
       isMarketHoursFn: () => true,
@@ -144,11 +135,6 @@ describe("Task 1285 — macro_deviation cooldown bypass fix", () => {
       markAlertNotifiedFn: async (id: string) => { markLog.push(id); },
       sendAlertsFn: async (alerts: Alert[]) => {
         callCount++;
-        if (callCount === 1) {
-          // First call: Telegram fails — return 0 (no send)
-          return 0;
-        }
-        // Should never reach here — second alert must be suppressed by in-memory history
         sendLog.push(...alerts);
         return alerts.length;
       },
@@ -156,23 +142,15 @@ describe("Task 1285 — macro_deviation cooldown bypass fix", () => {
         cooldownMinutes: 30,
         maxAlertsPerStockPerDay: 10,
       },
-      // No recent history — history starts empty this cycle
       getRecentAlertHistoryFn: async () => [],
     };
 
     const result = await runIntelligenceCycle(deps);
     expect(result).not.toBeNull();
 
-    // sendAlertsFn called exactly once (for alert1); alert2 suppressed by in-memory state
-    expect(callCount).toBe(1);
-    // The second alert must NOT have been sent
-    expect(sendLog.length).toBe(0);
-    // Only alert2 (suppressed by cooldown) is marked notified.
-    // alert1 send failed (sent=0) so markAlertNotified is NOT called for it —
-    // it stays notified_telegram=0 so the next cycle can retry the send.
-    // The in-memory history append (regardless of sent count) is what blocks
-    // same-cycle siblings, not markAlertNotified.
-    expect(markLog.length).toBe(1);
-    expect(markLog[0]).toBe("macro-2026-04-15-vnindex-high-b");
+    // Task 1383: MACRO bypasses cooldown — both alerts must reach sendAlertsFn
+    expect(callCount).toBe(2);
+    expect(sendLog.length).toBe(2);
+    expect(markLog.length).toBe(2);
   });
 });

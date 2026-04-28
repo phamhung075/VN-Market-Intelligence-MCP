@@ -943,10 +943,13 @@ async function _runCycle(deps: CycleDeps = {}): Promise<CycleResult> {
       // alerts in the same cycle can see siblings that were just sent —
       // prevents the "10 volume_spike alerts in 5 min for FPT/VCB/VNM" burst.
       for (const alert of unnotifiedAlerts) {
-        // Check cooldown — MACRO alerts use the 6h macro cooldown; all others use standard 30-min.
+        // Check cooldown — MACRO alerts bypass shouldSuppressAlert entirely:
+        // step A2.5 INSERT OR IGNORE already guarantees at most one alert per
+        // indicator per day, so cooldown would only prevent the first (and only)
+        // send attempt. Task 1383: macro CRITICAL alerts stuck notified_telegram=0.
         const isMacroAlert = alert.actionCode === "MACRO";
         const effectiveCooldownConfig = isMacroAlert ? macroCooldownConfig : baseCooldownConfig;
-        const suppress = shouldSuppressAlert(
+        const suppress = isMacroAlert ? false : shouldSuppressAlert(
           { stocks: [alert.actionCode], signalTypes: alert.signals.map((s) => s.type), severity: alert.severity, actionCode: alert.actionCode },
           recentAlertHistory,
           effectiveCooldownConfig,

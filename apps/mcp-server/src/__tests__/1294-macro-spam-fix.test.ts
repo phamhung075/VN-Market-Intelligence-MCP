@@ -150,14 +150,11 @@ describe("Task 1294 — macro_deviation spam fix", () => {
 
     await runIntelligenceCycle(deps);
 
-    // alert1 (critical) is sent — not suppressed (CRITICAL bypass still applies for non-MACRO,
-    // but for MACRO both are critical here so first fires, second is suppressed by in-memory history)
-    // First call sends alert1 → appended to in-memory history
-    // Second alert2: same stock "MACRO" + same signal "macro_deviation" → suppressed by in-memory cooldown
-    expect(callCount).toBe(1);
-    expect(sendLog).toHaveLength(1);
-    expect(sendLog[0]!.id).toBe("macro-2026-04-15-usdVndRate-extreme");
-    // alert2 is suppressed and marked notified (no send)
+    // Task 1383: MACRO alerts bypass shouldSuppressAlert entirely in step E.
+    // Both alerts reach sendAlertsFn (step A2.5 already prevents usdVndOfficial insertion,
+    // but step E no longer suppresses MACRO by cooldown regardless).
+    expect(callCount).toBe(2);
+    expect(sendLog).toHaveLength(2);
     expect(markLog).toContain("macro-2026-04-15-usdVndRate-extreme");
     expect(markLog).toContain("macro-2026-04-15-usdVndOfficial-extreme");
   });
