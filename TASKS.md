@@ -35,13 +35,15 @@
 - **1349e:** Job cycle timings + ops metrics (jobMetrics.ts) — 10/10 tests pass, 100% coverage, wired into taAlertScanJob/bbAlertScanJob/macroIndicatorRefreshJob — APPROVED + merged 2026-04-27
 - **1350a:** Fix 73 failing tests (mock.module schema leak + missing watchdog reader injections + stale sprint assertions) — 5 test files only, 26/26 targeted tests pass, 7568 pass / 0 fail full suite — APPROVED + merged 2026-04-27
 - **1351b–1351c:** Sprint 1351 — Scheduler test coverage phase 1: vpsProxyWatchdogJob gap tests (1351b: 8 tests) + weatherCheckJob gap tests (1351c: 8 tests) — 16 new tests total, 7598 pass / 0 new fail full suite — ALL APPROVED + merged 2026-04-27
-- **1352–1355b:** Scheduler gap-fill wave 2 — BCTC-LOG OCR visibility, imfIndicatorPollerJob DI (1353a), priceUpdateWatchdogJob SSH cooldown (1353b), parallelServiceDispatcherJob DI (1354a), freshnessSlaMonitorJob helpers (1354b), monthlySignalQualityJob (1355a), davPharmacyJob mock.module (1355b) — ALL MERGED 2026-04-28 (7737 pass / 0 fail)
-- **fix/317+1288:** Fix 3 pre-existing test failures (317-telegram-routing x2, 1288-foreign-flow-fallback) + 6 TypeScript errors (1348a AnalysisLevel/DomainType, 1352b exactOptionalPropertyTypes) — MERGED 2026-04-28 (7739 pass / 1 intentional RED 1294b / 0 TS errors)
-- **1358a+1358b:** bctcOverdueCheckJob 8 gap tests (OVD-1–OVD-8) + bctcQueueEnricherJob 8 gap tests (ENR-1–ENR-8) — QA fix applied (mock.module contamination + DiscoverOptions cast) — MERGED 2026-04-28 (7756 pass / 0 fail / 0 TS errors)
+- **1352–1358b:** Scheduler gap-fill wave 2 (1353a–1356b: 6 jobs DI + 48 gap tests), fix/317+1288 (TS errors + 3 test failures), 1357 (1294b RED fix), 1358a+1358b (bctcOverdueCheck + bctcQueueEnricher 16 gap tests) — ALL MERGED 2026-04-28 (7756 pass / 0 fail / 0 TS errors)
 
 ---
 
 ## Todo
+
+| Task ID | Title | Priority | Type | Owner |
+|---------|-------|----------|------|-------|
+| 1359a | vpsServiceHealthJob + walCheckpointAlert gap tests (16 tests) | HIGH | Test | Developer |
 
 ---
 
@@ -60,19 +62,10 @@
 
 | Task ID | Title | Merged | Reports |
 |---------|-------|--------|---------|
-| 1351b | Gap-fill tests for vpsProxyWatchdogJob: 8 gap tests | main 2026-04-27 | reports/TASK_REPORT_1351b.md |
-| 1351c | Gap-fill tests for weatherCheckJob: 8 gap tests | main 2026-04-27 | reports/TASK_REPORT_1351c.md |
-| 1353a | imfIndicatorPollerJob DI overload + 8 gap tests | main 2026-04-28 | reports/TASK_REPORT_1353a.md |
-| 1353b | priceUpdateWatchdogJob _resetSshCooldown + 8 gap tests | main 2026-04-28 | reports/TASK_REPORT_1353b.md |
-| 1354a | parallelServiceDispatcherJob DispatcherDeps DI + 8 gap tests | main 2026-04-28 | reports/TASK_REPORT_1354a.md |
-| 1354b | freshnessSlaMonitorJob helper unit tests — 8 cases | main 2026-04-28 | — |
-| 1355a | monthlySignalQualityJob 8 gap tests (MSQ-1–MSQ-8) | main 2026-04-28 | reports/TASK_REPORT_1355a.md |
-| 1355b | davPharmacyJob 8 gap tests (DAV-1–DAV-8), mock.module strategy | main 2026-04-28 | — |
-| 1356a | patternWatchJob 8 gap tests (PWJ-1–PWJ-8), mock.module strategy | main 2026-04-28 | reports/TASK_REPORT_1356a.md |
+| 1356a | patternWatchJob 8 gap tests (PWJ-1–PWJ-8) | main 2026-04-28 | reports/TASK_REPORT_1356a.md |
 | 1356b | trackSessionToolUsageJob gap tests (8 cases, constructor DI) | main 2026-04-28 | reports/TASK_REPORT_1356b.md |
-| fix/317+1288 | Fix 3 pre-existing test failures (317 notifyUser x2, 1288 fallback) + TS errors (1348a/1352b) | main 2026-04-28 | — |
-| 1357 | FIX: 1294b RED-8 resolved — intentional RED test fixed, 0 fail restored | main 2026-04-28 | — |
 | 1358a | bctcOverdueCheckJob 8 gap tests (OVD-1–OVD-8) | main 2026-04-28 | — |
-| 1358b | bctcQueueEnricherJob 8 gap tests (ENR-1–ENR-8), QA fix: mock.module contamination + DiscoverOptions cast | main 2026-04-28 | — |
+| 1358b | bctcQueueEnricherJob 8 gap tests (ENR-1–ENR-8) | main 2026-04-28 | — |
+| 1359b | macroOutlierGuard + signalClassWeighter + forecastConfidenceScore + periodDeltaComputer unit tests (32 tests) | main 2026-04-28 | reports/TASK_REPORT_1359b.md |
 
 ---
