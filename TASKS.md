@@ -39,6 +39,7 @@
 - **stale-tickers:** Remove 5 invalid watchlist tickers (VDC/BDI/DLC/JSH/SIS) + validateSeedTickers() startup warn + live DB purge (5 rows deleted) — MERGED 2026-04-28 (7880 pass / 5 pre-existing fail / 0 regression)
 - **1382b–1382d–1382c (1382):** Signal outcome tracking end-to-end — taAlertNotifierJob writes 'fired', signalOutcomeJob resolves to confirmed/false_positive daily at 08:30 UTC, cron wired in jobs.ts — MERGED 2026-04-28 (7915 tests / 5 pre-existing fail / 0 regression)
 - **1386:** Fix — hard throw guard in FIX-1265 + 1168 test files that seed market_messages with hardcoded ids 10–14; guard fires if DB_PATH is not :memory: at test time — MERGED 2026-04-28 (7915 pass / 0 regression)
+- **1388:** Fix foreignFlow circuit breaker auto-reset — halfOpenMaxAttempts:1 closes CB on first successful probe after DB fix, preventing stuck-OPEN requiring manual reset — MERGED 2026-04-28 (7920 tests / 7893 pass / 6 pre-existing fail / 0 regression)
 
 ---
 
@@ -79,5 +80,6 @@
 | 1382d | Create signalOutcomeJob.ts — daily post-close resolver (runSignalOutcomeJob + AC-1–AC-8 tests) | main 2026-04-28 | reports/TASK_REPORT_1382d.md |
 | 1382c | Register signalOutcomeJob cron in jobs.ts + AC-9 integration test | main 2026-04-28 | reports/TASK_REPORT_1382c.md |
 | 1382 | PARENT: Signal outcome tracking wired end-to-end (fired→confirmed/false_positive) | main 2026-04-28 | reports/TASK_REPORT_1382c.md |
+| 1388 | Fix foreignFlow CB auto-reset — halfOpenMaxAttempts:1 (single probe closes after DB fix) — 5 new tests | main 2026-04-28 | reports/TASK_REPORT_1388.md |
 
 ---
