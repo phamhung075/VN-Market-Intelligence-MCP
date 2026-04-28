@@ -64,6 +64,7 @@ import { runTaAlertScan } from './market-data/taAlertScanJob.js'
 import { runBbAlertScan } from './alerts/bbAlertScanJob.js'
 import { runAlertScanParallel } from './alerts/alertScanParallelJob.js'
 import { runTaAlertNotifierCron } from './market-data/taAlertNotifierJob.js'
+import { runSignalOutcomeJobCron } from './alerts/signalOutcomeJob.js'
 import { runOhlcvStartupProbe } from './market-data/ohlcvStartupProbe.js'
 import { runOhlcvDailyAggregator } from './market-data/ohlcvDailyAggregatorJob.js'
 import { runOhlcvStalenessCheck } from './market-data/ohlcvStalenessCheckJob.js'
@@ -151,6 +152,8 @@ export const CRONS = {
   bbAlertScan:            Bun.env.CRON_BB_ALERT_SCAN                  ?? '*/15 2-8 * * 1-5',
   /** taAlertNotifier — deliver unnotified TA alerts to market channel every 15min VN market hours (task 1314) */
   taAlertNotifier:        Bun.env.CRON_TA_ALERT_NOTIFIER               ?? '*/15 2-8 * * 1-5',
+  /** signalOutcomeJob — resolve agent_signals outcomes daily at 08:30 UTC (task 1382) */
+  signalOutcomeJob:       Bun.env.CRON_SIGNAL_OUTCOME_JOB               ?? '30 8 * * 1-5',
   /** ohlcvDailyAggregator — aggregate intraday ticks into daily_ohlcv at 15:00 UTC (22:00 VN) Mon-Fri (task 1375, Sprint 130)
    *  Shifted from 16:00 → 15:00 UTC: runs 30 min before eveningSummary (15:30 UTC = 22:30 VN),
    *  ensuring taSummary is populated in the evening report. */
@@ -696,6 +699,11 @@ export function startScheduler() {
       log(`[ta-alert-notifier] sent=${result.sent}`)
     }
   }, { timezone: 'UTC' })
+
+  // 08:30 UTC Mon-Fri — Signal outcome resolver — task 1382
+  // Resolves agent_signals with outcome='fired' or NULL after VN market close.
+  // Compares entry price vs resolution price; marks confirmed or false_positive.
+  cron.schedule(CRONS.signalOutcomeJob, () => { runSignalOutcomeJobCron().catch(console.error); }, { timezone: 'UTC' })
 
   // 15:00 UTC (22:00 VN) Mon-Fri — OHLCV daily aggregator — task 1375, Sprint 130
   // Shifted from 16:00 → 15:00 UTC so aggregation runs 30 min before eveningSummary (15:30 UTC).

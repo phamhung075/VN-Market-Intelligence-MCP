@@ -217,5 +217,10 @@ describe("Task 1382d — signalOutcomeJob", () => {
     expect(getOutcome(db, id)).toBe("confirmed");
   });
 
-  // AC-9 is wired by 1382c (cron registration). Not included here.
+  // AC-9: CRONS.signalOutcomeJob key present in jobs.ts (task 1382c)
+  it("AC-9: CRONS.signalOutcomeJob key present in jobs.ts", async () => {
+    const { CRONS } = await import('../scheduler/jobs.js');
+    expect(CRONS.signalOutcomeJob).toBeDefined();
+    expect(typeof CRONS.signalOutcomeJob).toBe('string');
+  });
 });
