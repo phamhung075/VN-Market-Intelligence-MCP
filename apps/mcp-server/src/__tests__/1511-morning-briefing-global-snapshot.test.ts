@@ -167,4 +167,62 @@ describe("1511 briefing-global-snapshot", () => {
     expect(msg).toContain("VIX");
     expect(msg).toContain("S&P500");
   });
+
+  // AC-6: formatGlobalSnapshotSection renders ↑ arrows when current > prev
+  test("AC-6: formatGlobalSnapshotSection shows ↑ when current > prev", async () => {
+    const { formatGlobalSnapshotSection } = await import("../scheduler/briefings/morningBriefingJob.js");
+    const snap = {
+      vix: 20.0, dxy: 105.0, sp500: 5200.0, hangSeng: 18000.0,
+      fetchedAt: "2026-04-28T07:00:00Z",
+      prevVix: 18.5, prevDxy: 104.3, prevSp500: 5120.0, prevHangSeng: 17500.0,
+    };
+    const lines = formatGlobalSnapshotSection(snap);
+    expect(lines.find((l) => l.includes("VIX"))).toContain("↑");
+    expect(lines.find((l) => l.includes("DXY"))).toContain("↑");
+    expect(lines.find((l) => l.includes("S&P500"))).toContain("↑");
+    expect(lines.find((l) => l.includes("Hang Seng"))).toContain("↑");
+  });
+
+  // AC-7: formatGlobalSnapshotSection renders ↓ arrows when current < prev
+  test("AC-7: formatGlobalSnapshotSection shows ↓ when current < prev", async () => {
+    const { formatGlobalSnapshotSection } = await import("../scheduler/briefings/morningBriefingJob.js");
+    const snap = {
+      vix: 17.0, dxy: 103.0, sp500: 5000.0, hangSeng: 17000.0,
+      fetchedAt: "2026-04-28T07:00:00Z",
+      prevVix: 18.5, prevDxy: 104.3, prevSp500: 5120.0, prevHangSeng: 17500.0,
+    };
+    const lines = formatGlobalSnapshotSection(snap);
+    expect(lines.find((l) => l.includes("VIX"))).toContain("↓");
+    expect(lines.find((l) => l.includes("DXY"))).toContain("↓");
+    expect(lines.find((l) => l.includes("S&P500"))).toContain("↓");
+    expect(lines.find((l) => l.includes("Hang Seng"))).toContain("↓");
+  });
+
+  // AC-8: formatGlobalSnapshotSection renders no arrow when prev absent
+  test("AC-8: formatGlobalSnapshotSection shows no arrow when prev fields absent", async () => {
+    const { formatGlobalSnapshotSection } = await import("../scheduler/briefings/morningBriefingJob.js");
+    const snap = { vix: 18.5, dxy: 104.3, sp500: 5120.75, hangSeng: 17250.0, fetchedAt: "2026-04-28T07:00:00Z" };
+    const lines = formatGlobalSnapshotSection(snap);
+    for (const line of lines.slice(1)) {
+      expect(line).not.toContain("↑");
+      expect(line).not.toContain("↓");
+    }
+  });
+
+  // AC-9: assembleBriefing populates prev* fields when two commodity_prices rows exist
+  test("AC-9: assembleBriefing populates prev* fields when two rows exist", async () => {
+    db.exec(`
+      INSERT INTO commodity_prices (source, vix, dxy, sp500, hang_seng, fetched_at)
+      VALUES ('yahoo_prev', 18.0, 103.5, 5050.0, 17000.0, '2026-04-27T07:00:00Z');
+      INSERT INTO commodity_prices (source, vix, dxy, sp500, hang_seng, fetched_at)
+      VALUES ('yahoo', 19.5, 104.8, 5200.0, 17500.0, '2026-04-28T07:00:00Z');
+    `);
+    const { assembleBriefing } = await import("../application/usecases/assembleBriefing.js");
+    const briefing = await assembleBriefing({ db, pollNewsFn: async () => {}, fetchVnIndexFn: async () => null });
+    expect(briefing.globalSnapshot).toBeDefined();
+    expect(briefing.globalSnapshot!.prevVix).toBeCloseTo(18.0);
+    expect(briefing.globalSnapshot!.prevDxy).toBeCloseTo(103.5);
+    expect(briefing.globalSnapshot!.prevSp500).toBeCloseTo(5050.0);
+    expect(briefing.globalSnapshot!.prevHangSeng).toBeCloseTo(17000.0);
+  });
 });

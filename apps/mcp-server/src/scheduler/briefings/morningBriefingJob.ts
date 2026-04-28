@@ -29,18 +29,27 @@ import { logger } from "../../infrastructure/logger.js";
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
+ * Returns " ↑" / " ↓" / "" depending on direction vs previous value.
+ * Returns "" when prev is undefined or zero (no baseline to compare).
+ */
+function deltaArrow(current: number, prev: number | undefined): string {
+  if (prev === undefined || prev === 0) return "";
+  return current > prev ? " ↑" : current < prev ? " ↓" : "";
+}
+
+/**
  * Format the commodities section as an array of lines.
- * Renders up to 5 items as "  Name: value unit".
+ * Renders up to 5 items as "  Name: value unit ↑/↓".
  * Returns an empty array when the list is empty.
  * Exported for unit testing (task 1434/1435).
  */
 export function formatCommoditiesSection(
-  commodities: { indicator: string; value: number; unit: string; dataPoints: number }[],
+  commodities: { indicator: string; value: number; unit: string; dataPoints: number; previousValue?: number }[],
 ): string[] {
   if (commodities.length === 0) return [];
   const lines: string[] = ["📦 Hàng hóa:"];
   for (const c of commodities.slice(0, 5)) {
-    lines.push(`  ${c.indicator}: ${c.value} ${c.unit}`.trimEnd());
+    lines.push(`  ${c.indicator}: ${c.value} ${c.unit}${deltaArrow(c.value, c.previousValue)}`.trimEnd());
   }
   return lines;
 }
@@ -51,15 +60,15 @@ export function formatCommoditiesSection(
  * Exported for unit testing (task 1511b).
  */
 export function formatGlobalSnapshotSection(
-  snap: { vix: number; dxy: number; sp500: number; hangSeng: number; fetchedAt: string }
+  snap: { vix: number; dxy: number; sp500: number; hangSeng: number; fetchedAt: string; prevVix?: number; prevDxy?: number; prevSp500?: number; prevHangSeng?: number }
 ): string[] {
   if (!snap) return [];
   return [
     "🌐 Thị trường toàn cầu:",
-    `  VIX: ${snap.vix.toFixed(2)}`,
-    `  DXY: ${snap.dxy.toFixed(2)}`,
-    `  S&P500: ${Math.round(snap.sp500)}`,
-    `  Hang Seng: ${Math.round(snap.hangSeng)}`,
+    `  VIX: ${snap.vix.toFixed(2)}${deltaArrow(snap.vix, snap.prevVix)}`,
+    `  DXY: ${snap.dxy.toFixed(2)}${deltaArrow(snap.dxy, snap.prevDxy)}`,
+    `  S&P500: ${Math.round(snap.sp500)}${deltaArrow(snap.sp500, snap.prevSp500)}`,
+    `  Hang Seng: ${Math.round(snap.hangSeng)}${deltaArrow(snap.hangSeng, snap.prevHangSeng)}`,
   ];
 }
 
@@ -112,7 +121,7 @@ export function formatBriefingMessage(briefing: DailyBriefing): string {
     lines.push("📰 Tin quan trọng:");
     for (const s of briefing.topStories.slice(0, 3)) {
       const sentIcon = s.sentiment === "bullish" ? "🟢" : s.sentiment === "bearish" ? "🔴" : "⚪";
-      lines.push(`  ${sentIcon} ${s.title.slice(0, 70)}`);
+      lines.push(`  ${sentIcon} ${TelegramMessageFactory.formatStoryTitle(s.title)}`);
     }
   }
 

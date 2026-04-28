@@ -12,7 +12,7 @@ Bun.env["DB_PATH"] = ":memory:"
 // formatCommoditiesSection.
 
 import { describe, it, expect } from "bun:test"
-import { formatBriefingMessage } from "../scheduler/briefings/morningBriefingJob.js"
+import { formatBriefingMessage, formatCommoditiesSection } from "../scheduler/briefings/morningBriefingJob.js"
 import type { DailyBriefing } from "../application/usecases/assembleBriefing.js"
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -123,6 +123,42 @@ describe("Task 1434 — morning briefing commodity values (RED -> GREEN in 1435)
     // Per-commodity names must appear instead
     expect(msg).toContain("Dầu Brent")
     expect(msg).toContain("Vàng")
+  })
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // T5: previousValue present and lower → ↑ arrow shown
+  // ─────────────────────────────────────────────────────────────────────────
+  it("T5: commodity with previousValue lower than value — shows ↑ arrow", () => {
+    const lines = formatCommoditiesSection([
+      { indicator: "brent_crude_usd", value: 102.36, unit: "$/bbl", dataPoints: 5, previousValue: 98.0 },
+    ])
+    const line = lines.find((l) => l.includes("brent_crude_usd"))!
+    expect(line).toContain("↑")
+    expect(line).not.toContain("↓")
+  })
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // T6: previousValue present and higher → ↓ arrow shown
+  // ─────────────────────────────────────────────────────────────────────────
+  it("T6: commodity with previousValue higher than value — shows ↓ arrow", () => {
+    const lines = formatCommoditiesSection([
+      { indicator: "gold_usd_oz", value: 1900.0, unit: "$/oz", dataPoints: 3, previousValue: 2000.0 },
+    ])
+    const line = lines.find((l) => l.includes("gold_usd_oz"))!
+    expect(line).toContain("↓")
+    expect(line).not.toContain("↑")
+  })
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // T7: previousValue absent → no arrow shown
+  // ─────────────────────────────────────────────────────────────────────────
+  it("T7: commodity without previousValue — no arrow shown", () => {
+    const lines = formatCommoditiesSection([
+      { indicator: "wti_crude_usd", value: 78.5, unit: "$/bbl", dataPoints: 2 },
+    ])
+    const line = lines.find((l) => l.includes("wti_crude_usd"))!
+    expect(line).not.toContain("↑")
+    expect(line).not.toContain("↓")
   })
 
 })

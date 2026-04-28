@@ -52,6 +52,14 @@ export interface GlobalSnapshot {
   sp500: number;
   hangSeng: number;
   fetchedAt: string;
+  /** Previous row's VIX — for delta arrow display. */
+  prevVix?: number;
+  /** Previous row's DXY — for delta arrow display. */
+  prevDxy?: number;
+  /** Previous row's S&P500 — for delta arrow display. */
+  prevSp500?: number;
+  /** Previous row's Hang Seng — for delta arrow display. */
+  prevHangSeng?: number;
 }
 
 /** One top story from rag_analyses. */
@@ -210,7 +218,7 @@ export interface DailyBriefing {
   /** Sensitive dates / upcoming events affecting the market */
   sensitiveWarnings: string[];
   /** Auto-tracked commodity indicators discovered from news */
-  trackedCommodities: { indicator: string; value: number; unit: string; dataPoints: number }[];
+  trackedCommodities: { indicator: string; value: number; unit: string; dataPoints: number; previousValue?: number }[];
   /** Unresolved HIGH/CRITICAL alerts from previous session (not yet read) */
   unresolvedAlerts: BriefingAlert[];
   /** Top conviction signal — cross-validated strongest signal for today */
@@ -907,15 +915,22 @@ async function _assembleBriefingImpl(
   } catch { /* best-effort */ }
 
   // ── Step 9: Auto-tracked commodities ────────────────────────────────────────
-  let trackedCommodities: { indicator: string; value: number; unit: string; dataPoints: number }[] = [];
+  let trackedCommodities: { indicator: string; value: number; unit: string; dataPoints: number; previousValue?: number }[] = [];
   try {
-    const { listTrackedIndicators } = await import("../../infrastructure/db/commodityTracker.js");
-    trackedCommodities = listTrackedIndicators().map((t) => ({
-      indicator: t.indicator,
-      value: t.value,
-      unit: t.unit,
-      dataPoints: t.dataPoints,
-    }));
+    const { listTrackedIndicators, getIndicatorHistory } = await import("../../infrastructure/db/commodityTracker.js");
+    trackedCommodities = listTrackedIndicators().map((t) => {
+      // Fetch last 2 values for this indicator to compute delta direction.
+      // history[0] = latest, history[1] = previous (ordered DESC).
+      const history = getIndicatorHistory(t.indicator, 2);
+      const previousValue = history.length >= 2 ? history[1].value : undefined;
+      return {
+        indicator: t.indicator,
+        value: t.value,
+        unit: t.unit,
+        dataPoints: t.dataPoints,
+        ...(previousValue !== undefined ? { previousValue } : {}),
+      };
+    });
   } catch { /* best-effort */ }
 
   // ── Step 10: Auto-resolve stale low/medium alerts (72h) ──────────────────
@@ -1224,6 +1239,9 @@ async function _assembleBriefingImpl(
     const cpRow = db.prepare<CpRow, []>(
       `SELECT vix, dxy, sp500, hang_seng, fetched_at FROM commodity_prices ORDER BY fetched_at DESC LIMIT 1`
     ).get();
+    const cpRowPrev = db.prepare<CpRow, []>(
+      `SELECT vix, dxy, sp500, hang_seng, fetched_at FROM commodity_prices ORDER BY fetched_at DESC LIMIT 1 OFFSET 1`
+    ).get();
     if (cpRow && (cpRow.vix !== 0 || cpRow.dxy !== 0 || cpRow.sp500 !== 0 || cpRow.hang_seng !== 0)) {
       globalSnapshot = {
         vix: cpRow.vix,
@@ -1231,6 +1249,12 @@ async function _assembleBriefingImpl(
         sp500: cpRow.sp500,
         hangSeng: cpRow.hang_seng,
         fetchedAt: cpRow.fetched_at,
+        ...(cpRowPrev ? {
+          prevVix: cpRowPrev.vix,
+          prevDxy: cpRowPrev.dxy,
+          prevSp500: cpRowPrev.sp500,
+          prevHangSeng: cpRowPrev.hang_seng,
+        } : {}),
       };
     }
   } catch { /* best-effort: commodity_prices may not exist in all envs */ }
