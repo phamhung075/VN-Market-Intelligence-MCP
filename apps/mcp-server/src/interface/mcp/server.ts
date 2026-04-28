@@ -50,6 +50,17 @@ export function _resetStaleTickers_lastNotifiedDate(): void {
   _staleTickers_lastNotifiedDate = "";
 }
 
+/**
+ * Returns true only during VN trading hours: 02:00–08:59 UTC, Mon–Fri.
+ * Used to suppress change_pct alerts outside the intraday window (Task 1380).
+ */
+export function isVnTradingWindowUtc(now: Date = new Date()): boolean {
+  const day = now.getUTCDay(); // 0=Sun, 6=Sat
+  if (day === 0 || day === 6) return false;
+  const h = now.getUTCHours();
+  return h >= 2 && h <= 8;
+}
+
 // Migration guard — run once per process startup, before the first upsertForeignFlow call.
 // Ensures UNIQUE(code, date) index exists on vnstock_trading_stats for production DBs
 // that were created before the index was added (FIX-1312).
@@ -667,6 +678,10 @@ export async function createBunServer(
                 error: err instanceof Error ? err.message : String(err),
               });
             }
+
+            // Task 1380: suppress change_pct alerts outside VN trading window (02:00–08:59 UTC, Mon–Fri).
+            // Pre-open pushes arrive with stale ref_price producing phantom % readings (GAS alert 316).
+            if (!isVnTradingWindowUtc()) return;
 
             const { detectSignals } = await import("../../domain/services/signalDetector.js");
             const { generateAlerts } = await import("../../domain/services/alertGenerator.js");
