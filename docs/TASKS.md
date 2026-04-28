@@ -72,7 +72,7 @@ Tasks created from MARKET channel review: 32 messages, 2026-04-27–28.
 |------|-------|--------|-------|--------|
 | TASK-1377 | [BUG] alert-digest job fires twice per day for same date — duplicate digests (ids 309+310, 2026-04-27, 4h apart, 25 vs 26 alerts) | pending | developer | market-group |
 | TASK-1378 | [BUG] VCB price_drop alert fires twice in same digest — bare price_drop duplicates price_drop+volume_spike composite | done | qa | market-group |
-| TASK-1379 | [BUG] Raw HTML tag `<br/>` leaking into Telegram message content (id 324, GAS user_ask_reply 2026-04-28) | pending | developer | market-group |
+| TASK-1379 | [BUG] Raw HTML tag `<br/>` leaking into Telegram message content (id 324, GAS user_ask_reply 2026-04-28) | done | qa | market-group |
 | TASK-1380 | [BUG] alert_engine pre-open phantom — change_pct alerts fire during pre-open window (00:00–02:00 UTC) against inconsistent reference price; no VPS/data issue (GAS feed confirmed fresh, log_fix id 193) — fix: suppress change_pct alerts outside VN trading window (02:00–09:00 UTC) or validate reference price matches prior session close before firing | pending | developer | market-group |
 
 ### MEDIUM Priority
