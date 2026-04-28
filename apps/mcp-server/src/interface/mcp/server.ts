@@ -43,6 +43,13 @@ import { buildForeignFlowStatusResponse } from "./foreignFlowStatusHandler.js";
 import { validateForeignFlowPayload } from "../../domain/services/market-data/foreignFlowValidator.js";
 import { breakers } from "../../infrastructure/circuitBreakerRegistry.js";
 
+/** ISO date string (YYYY-MM-DD) of the last stale-ticker WORK notification. Reset daily. */
+export let _staleTickers_lastNotifiedDate = "";
+/** Setter for test isolation — allows resetting the cooldown between test cases. */
+export function _resetStaleTickers_lastNotifiedDate(): void {
+  _staleTickers_lastNotifiedDate = "";
+}
+
 // Migration guard — run once per process startup, before the first upsertForeignFlow call.
 // Ensures UNIQUE(code, date) index exists on vnstock_trading_stats for production DBs
 // that were created before the index was added (FIX-1312).
@@ -630,22 +637,30 @@ export async function createBunServer(
             }
 
             // ── FIX-1327: Detect stale watchlist tickers (>7 days) ────
-            // Emit WORK channel warning for each stale stock missing from recent push
+            // Rate-limited to ONE aggregated WORK message per calendar day (UTC).
+            // Avoids WORK channel spam when tickers have never been updated.
             try {
-              const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 3600 * 1000).toISOString();
-              const staleTickers = db.prepare(`
-                SELECT w.code, mp.updated_at
-                FROM watchlist w
-                LEFT JOIN market_prices mp ON w.code = mp.code
-                WHERE mp.updated_at IS NULL OR mp.updated_at < ?
-                ORDER BY w.code
-              `).all(sevenDaysAgo) as Array<{ code: string; updated_at: string | null }>;
+              const todayUtc = new Date().toISOString().slice(0, 10);
+              if (_staleTickers_lastNotifiedDate !== todayUtc) {
+                const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 3600 * 1000).toISOString();
+                const staleTickers = db.prepare(`
+                  SELECT w.code, mp.updated_at
+                  FROM watchlist w
+                  LEFT JOIN market_prices mp ON w.code = mp.code
+                  WHERE mp.updated_at IS NULL OR mp.updated_at < ?
+                  ORDER BY w.code
+                `).all(sevenDaysAgo) as Array<{ code: string; updated_at: string | null }>;
 
-              for (const ticker of staleTickers) {
-                const lastUpdate = ticker.updated_at ? new Date(ticker.updated_at).toLocaleDateString() : "never";
-                const msg = `[push-prices] Stale watchlist ticker: ${ticker.code} (last update: ${lastUpdate})`;
-                await sendTelegramWork(msg, { parseMode: "" });
-                log.warn("[push-prices] Stale ticker detected", { code: ticker.code, lastUpdate });
+                if (staleTickers.length > 0) {
+                  const lines = staleTickers.map((t) => {
+                    const lastUpdate = t.updated_at ? new Date(t.updated_at).toLocaleDateString() : "never";
+                    return `  • ${t.code} (last update: ${lastUpdate})`;
+                  });
+                  const msg = `[push-prices] ${staleTickers.length} stale watchlist tickers (>7d no update):\n${lines.join("\n")}`;
+                  await sendTelegramWork(msg, { parseMode: "" });
+                  log.warn("[push-prices] Stale tickers notified", { codes: staleTickers.map((t) => t.code) });
+                  _staleTickers_lastNotifiedDate = todayUtc;
+                }
               }
             } catch (err) {
               log.error("[push-prices] Stale ticker detection failed", {
