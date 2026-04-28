@@ -33,6 +33,11 @@
 
 // Must be set before importing schema module so module-level DB_PATH is picked up.
 Bun.env["DB_PATH"] = ":memory:";
+// Safety guard: abort immediately if DB_PATH was overridden to a real file path.
+// This test seeds rows with hardcoded ids 10-14 and must never run against production.
+if (Bun.env["DB_PATH"] !== ":memory:") {
+  throw new Error(`[1168] DB_PATH must be ':memory:' in tests, got: ${Bun.env["DB_PATH"]}`);
+}
 
 import { describe, it, expect, beforeEach, afterEach, afterAll } from "bun:test";
 import { initDatabase, getDb, closeDb } from "../infrastructure/db/schema.js";
