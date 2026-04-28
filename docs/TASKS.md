@@ -18,6 +18,14 @@ _Last updated: 2026-04-28 by PO (market-group flow, cycle 3)_
 
 ---
 
+## Sprint 1395 — Done
+
+| Task | Title | Status | Agent | Source |
+|------|-------|--------|-------|--------|
+| 1395a | alertBatchGrouper — group push-prices alerts by (signal_type, severity) | done | developer | po |
+
+---
+
 ## Sprint 1361 — Done
 
 | Task | Title | Status | Agent | Source |
