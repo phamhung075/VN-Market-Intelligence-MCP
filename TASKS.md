@@ -36,6 +36,7 @@
 - **1350a:** Fix 73 failing tests (mock.module schema leak + missing watchdog reader injections + stale sprint assertions) — 5 test files only, 26/26 targeted tests pass, 7568 pass / 0 fail full suite — APPROVED + merged 2026-04-27
 - **1351b–1351c:** Sprint 1351 — Scheduler test coverage phase 1: vpsProxyWatchdogJob gap tests (1351b: 8 tests) + weatherCheckJob gap tests (1351c: 8 tests) — 16 new tests total, 7598 pass / 0 new fail full suite — ALL APPROVED + merged 2026-04-27
 - **1352–1358b:** Scheduler gap-fill wave 2 (1353a–1356b: 6 jobs DI + 48 gap tests), fix/317+1288 (TS errors + 3 test failures), 1357 (1294b RED fix), 1358a+1358b (bctcOverdueCheck + bctcQueueEnricher 16 gap tests) — ALL MERGED 2026-04-28 (7756 pass / 0 fail / 0 TS errors)
+- **stale-tickers:** Remove 5 invalid watchlist tickers (VDC/BDI/DLC/JSH/SIS) + validateSeedTickers() startup warn + live DB purge (5 rows deleted) — MERGED 2026-04-28 (7880 pass / 5 pre-existing fail / 0 regression)
 
 ---
 
@@ -43,6 +44,8 @@
 
 | Task ID | Title | Priority | Type | Owner |
 |---------|-------|----------|------|-------|
+| 1382d | Create signalOutcomeJob.ts — daily post-close resolver (runSignalOutcomeJob + AC-1–AC-8 tests) | high | feat | developer |
+| 1382c | Register signalOutcomeJob cron in jobs.ts + AC-9 integration test (~4 lines) — depends on 1382b + 1382d | high | feat | developer |
 
 ---
 
@@ -70,5 +73,8 @@
 | 1360a | marketContextBuilder unit tests (16 tests, in-memory SQLite, pure domain service) | main 2026-04-28 | reports/TASK_REPORT_1360a.md |
 | 1360b | priceNewsValidator unit tests (24 tests, 100% coverage, pure domain function) | main 2026-04-28 | reports/TASK_REPORT_1360b.md |
 | 1360 | Morning briefing bug fixes — formatStoryTitle + delta arrows (↑/↓) for global markets + commodities | main 2026-04-28 | reports/TASK_REPORT_1360.md |
+| 1361 | 48h purge for telegram_reports (deleteOldReports + D-10 in dataAuditJob) — 29 new tests | main 2026-04-28 | reports/TASK_REPORT_1361.md |
+| 1362 | FIX-1327 stale-ticker WORK alerts rate-limited to one aggregated daily message | main 2026-04-28 | reports/TASK_REPORT_1362.md |
+| 1382b | Wire taAlertNotifierJob to write 'fired' outcome on agent_signals after dispatch | main 2026-04-28 | reports/TASK_REPORT_1382b.md |
 
 ---
