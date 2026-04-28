@@ -2,17 +2,24 @@
  * seedWatchlist.ts — Task 1343a: Watchlist restore + Q4 2025 backfill
  *
  * Provides two idempotent functions:
- *   - seedWatchlist(db)     — inserts 30 tickers (10 sectors) via UPSERT
+ *   - seedWatchlist(db)     — inserts 25 tickers (10 sectors) via UPSERT
  *   - backfillBctcQ4(db)    — enqueues bctc_vps_queue for tickers missing Q4 2025
  *
  * Both functions are pure SQLite operations with no side effects beyond DB writes.
  * Safe to call multiple times (idempotent).
+ *
+ * Removed (stale/invalid — bgapidatafeed.vps.com.vn returns [] for all):
+ *   VDC  — UPCOM securities  (delisted/inactive)
+ *   BDI  — HNX agriculture   (Baltic Dry Index — not a VN stock, seed data error)
+ *   DLC  — UPCOM agriculture (delisted/inactive)
+ *   JSH  — HNX utilities     (delisted/inactive)
+ *   SIS  — HOSE tech         (delisted/inactive)
  */
 
 import type { Database } from "bun:sqlite";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Watchlist seed data — 30 tickers, 10 sectors (Sprint 054 user config)
+// Watchlist seed data — 25 tickers, 10 sectors (Sprint 054 user config)
 // Default thresholds: dropPct=-3, risePct=5, impactScore=5
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -47,10 +54,8 @@ export const WATCHLIST_SEED: WatchlistSeedEntry[] = [
   { code: "ACV", exchange: "UPCOM", domain: "aviation" },
   // Tech
   { code: "FPT", exchange: "HOSE",  domain: "tech" },
-  { code: "SIS", exchange: "HOSE",  domain: "tech" },
   // Securities
   { code: "VCI", exchange: "HOSE",  domain: "securities" },
-  { code: "VDC", exchange: "UPCOM", domain: "securities" },
   { code: "SSI", exchange: "HOSE",  domain: "securities" },
   { code: "HCM", exchange: "HOSE",  domain: "securities" },
   // Pharma
@@ -59,10 +64,7 @@ export const WATCHLIST_SEED: WatchlistSeedEntry[] = [
   // Utilities
   { code: "POW", exchange: "HOSE",  domain: "utilities" },
   { code: "PPC", exchange: "HOSE",  domain: "utilities" },
-  { code: "JSH", exchange: "HNX",   domain: "utilities" },
-  // Agriculture
-  { code: "BDI", exchange: "HNX",   domain: "agriculture" },
-  { code: "DLC", exchange: "UPCOM", domain: "agriculture" },
+  // Agriculture — BDI (Baltic Dry Index) and DLC removed (not VN stocks or delisted)
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -70,7 +72,7 @@ export const WATCHLIST_SEED: WatchlistSeedEntry[] = [
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Upserts 30 watchlist tickers with default alert thresholds.
+ * Upserts 25 watchlist tickers with default alert thresholds.
  * Uses ON CONFLICT(code) DO UPDATE to be idempotent.
  *
  * Default thresholds (from Sprint 054 user config):
@@ -121,4 +123,31 @@ export function backfillBctcQ4(db: Database): void {
         AND period_type = 'Q4'
     )
   `).run();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// validateSeedTickers
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Warns (via console.warn) for any seeded ticker that has no market_prices row.
+ * Call once at startup after seedWatchlist() to surface bad seed data early.
+ * Non-fatal — does not throw.
+ */
+export function validateSeedTickers(db: Database): void {
+  const seedCodes = WATCHLIST_SEED.map((e) => e.code);
+  const placeholders = seedCodes.map(() => "?").join(",");
+  const missing = db.prepare(`
+    SELECT code FROM watchlist
+    WHERE code IN (${placeholders})
+      AND code NOT IN (SELECT code FROM market_prices WHERE updated_at IS NOT NULL)
+  `).all(...seedCodes) as { code: string }[];
+
+  if (missing.length > 0) {
+    const codes = missing.map((r) => r.code).join(", ");
+    console.warn(
+      `[seedWatchlist] WARN: ${missing.length} seeded ticker(s) have no market_prices data — ` +
+      `possible delisted/inactive: ${codes}`
+    );
+  }
 }

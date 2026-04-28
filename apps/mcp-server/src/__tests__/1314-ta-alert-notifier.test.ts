@@ -51,7 +51,47 @@ function makeDb(): Database {
     )
   `);
 
+  db.run(`
+    CREATE TABLE IF NOT EXISTS agent_signals (
+      id           INTEGER PRIMARY KEY AUTOINCREMENT,
+      from_agent   TEXT NOT NULL,
+      to_agent     TEXT NOT NULL,
+      signal_type  TEXT NOT NULL,
+      stock_code   TEXT,
+      payload      TEXT NOT NULL DEFAULT '{}',
+      status       TEXT NOT NULL DEFAULT 'unread',
+      created_at   TEXT NOT NULL DEFAULT (datetime('now')),
+      expires_at   TEXT NOT NULL,
+      outcome      TEXT,
+      outcome_at   TEXT,
+      outcome_detail TEXT
+    )
+  `);
+
   return db;
+}
+
+// ── agent_signals seed helper ─────────────────────────────────────────────────
+
+interface SignalSeed {
+  id?: number;
+  stockCode: string;
+  signalType: string;
+  createdAt?: string; // SQLite datetime string, defaults to 'now'
+  outcome?: string | null;
+}
+
+function seedSignal(db: Database, seed: SignalSeed): number {
+  const { stockCode, signalType, createdAt, outcome = null } = seed;
+  const createdAtValue = createdAt ?? new Date().toISOString().replace("T", " ").replace(/\.\d{3}Z$/, "");
+  const result = db.run(
+    `INSERT INTO agent_signals
+       (from_agent, to_agent, signal_type, stock_code, payload, status,
+        created_at, expires_at, outcome)
+     VALUES ('market-watcher', 'alert-commander', ?, ?, '{}', 'unread', ?, datetime('now', '+2 hours'), ?)`,
+    [signalType, stockCode, createdAtValue, outcome],
+  );
+  return Number(result.lastInsertRowid);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -449,6 +489,133 @@ describe("Task 1314/1315 — taAlertNotifierJob", () => {
 
       expect(calls[0]).toContain("quá bán");
       expect(calls[0]).toContain("HPG");
+    });
+  });
+
+  // ── Task 1382b — agent_signals 'fired' outcome wiring ────────────────────
+
+  describe("AC-B1: Writes 'fired' outcome to agent_signals after successful send", () => {
+    it("matching signal_type=price_anomaly row gets outcome='fired'", async () => {
+      const db = makeDb();
+      seedAlert(db, {
+        id: "alert-b1-vcb",
+        signalType: "ta_overbought",
+        code: "VCB",
+        message: "VCB: RSI(14) = 74.2 — quá mua",
+      });
+      const sigId = seedSignal(db, { stockCode: "VCB", signalType: "price_anomaly" });
+      const { sendFn } = makeNoopSendFn();
+
+      await runTaAlertNotifier({ db, sendFn });
+
+      const row = db
+        .query<{ outcome: string | null }, [number]>(
+          "SELECT outcome FROM agent_signals WHERE id = ?",
+        )
+        .get(sigId);
+      expect(row?.outcome).toBe("fired");
+    });
+
+    it("matching signal_type=urgent_news row gets outcome='fired'", async () => {
+      const db = makeDb();
+      seedAlert(db, {
+        id: "alert-b1-hpg",
+        signalType: "ta_oversold",
+        code: "HPG",
+        message: "HPG: RSI(14) = 27.8 — quá bán",
+      });
+      const sigId = seedSignal(db, { stockCode: "HPG", signalType: "urgent_news" });
+      const { sendFn } = makeNoopSendFn();
+
+      await runTaAlertNotifier({ db, sendFn });
+
+      const row = db
+        .query<{ outcome: string | null }, [number]>(
+          "SELECT outcome FROM agent_signals WHERE id = ?",
+        )
+        .get(sigId);
+      expect(row?.outcome).toBe("fired");
+    });
+  });
+
+  describe("AC-B2: Does NOT overwrite signals with outcome already set", () => {
+    it("signal with outcome='suppressed' is not changed to 'fired'", async () => {
+      const db = makeDb();
+      seedAlert(db, {
+        id: "alert-b2-vcb",
+        signalType: "ta_overbought",
+        code: "VCB",
+        message: "VCB: RSI(14) = 74.2 — quá mua",
+      });
+      const sigId = seedSignal(db, {
+        stockCode: "VCB",
+        signalType: "price_anomaly",
+        outcome: "suppressed",
+      });
+      const { sendFn } = makeNoopSendFn();
+
+      await runTaAlertNotifier({ db, sendFn });
+
+      const row = db
+        .query<{ outcome: string | null }, [number]>(
+          "SELECT outcome FROM agent_signals WHERE id = ?",
+        )
+        .get(sigId);
+      expect(row?.outcome).toBe("suppressed");
+    });
+  });
+
+  describe("AC-B3: Does NOT touch signals older than 4 hours", () => {
+    it("signal created 5 hours ago is not marked 'fired'", async () => {
+      const db = makeDb();
+      seedAlert(db, {
+        id: "alert-b3-fpt",
+        signalType: "ta_overbought",
+        code: "FPT",
+        message: "FPT: RSI(14) = 73.0 — quá mua",
+      });
+      // created_at 5 hours ago — outside the -4h window
+      const fiveHoursAgo = new Date(Date.now() - 5 * 3_600_000)
+        .toISOString()
+        .replace("T", " ")
+        .replace(/\.\d{3}Z$/, "");
+      const sigId = seedSignal(db, {
+        stockCode: "FPT",
+        signalType: "price_anomaly",
+        createdAt: fiveHoursAgo,
+      });
+      const { sendFn } = makeNoopSendFn();
+
+      await runTaAlertNotifier({ db, sendFn });
+
+      const row = db
+        .query<{ outcome: string | null }, [number]>(
+          "SELECT outcome FROM agent_signals WHERE id = ?",
+        )
+        .get(sigId);
+      expect(row?.outcome).toBeNull();
+    });
+  });
+
+  describe("AC-B4: Does NOT call recordOutcome when sendFn throws", () => {
+    it("signal outcome stays NULL when sendFn throws", async () => {
+      const db = makeDb();
+      seedAlert(db, {
+        id: "alert-b4-mwg",
+        signalType: "ta_overbought",
+        code: "MWG",
+        message: "MWG: RSI(14) = 76.0 — quá mua",
+      });
+      const sigId = seedSignal(db, { stockCode: "MWG", signalType: "price_anomaly" });
+
+      await runTaAlertNotifier({ db, sendFn: makeThrowingSendFn() });
+
+      const row = db
+        .query<{ outcome: string | null }, [number]>(
+          "SELECT outcome FROM agent_signals WHERE id = ?",
+        )
+        .get(sigId);
+      expect(row?.outcome).toBeNull();
     });
   });
 });
