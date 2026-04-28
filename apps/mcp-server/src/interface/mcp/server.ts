@@ -42,8 +42,9 @@ import { writeForeignFlowToOhlcv } from "../../infrastructure/db/ohlcvForeignFlo
 import { buildForeignFlowStatusResponse } from "./foreignFlowStatusHandler.js";
 import { validateForeignFlowPayload } from "../../domain/services/market-data/foreignFlowValidator.js";
 import { breakers } from "../../infrastructure/circuitBreakerRegistry.js";
-import { ensurePoisonedQueueCleanup, ensureForeignFlowMigration } from "./server-startup.js";
+import { ensurePoisonedQueueCleanup, ensureForeignFlowMigration, _staleTickers_lastNotifiedDate, _setStaleTickers_lastNotifiedDate, isVnTradingWindowUtc } from "./server-startup.js";
 import { handlePushPrices } from "./routes/pushPricesHandler.js";
+import { VN_OFFSET_MS } from "../../domain/services/timeConstants.js";
 
 // Re-export startup state so existing test imports remain valid:
 //   import { isVnTradingWindowUtc } from "../interface/mcp/server.js"
@@ -594,7 +595,7 @@ export async function createBunServer(
                   const msg = `[push-prices] ${staleTickers.length} stale watchlist tickers (>7d no update):\n${lines.join("\n")}`;
                   await sendTelegramWork(msg, { parseMode: "" });
                   log.warn("[push-prices] Stale tickers notified", { codes: staleTickers.map((t) => t.code) });
-                  _staleTickers_lastNotifiedDate = todayUtc;
+                  _setStaleTickers_lastNotifiedDate(todayUtc);
                 }
               }
             } catch (err) {
