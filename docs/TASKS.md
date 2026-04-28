@@ -2,7 +2,7 @@
 
 Active sprint board. Completed tasks → `docs/TASKS_ARCHIVE.md`.
 
-_Last updated: 2026-04-28 by PO (market-group flow)_
+_Last updated: 2026-04-28 by PO (market-group flow, cycle 3)_
 
 ---
 
@@ -73,7 +73,7 @@ Tasks created from MARKET channel review: 32 messages, 2026-04-27–28.
 | TASK-1377 | [BUG] alert-digest job fires twice per day for same date — duplicate digests (ids 309+310, 2026-04-27, 4h apart, 25 vs 26 alerts) | pending | developer | market-group |
 | TASK-1378 | [BUG] VCB price_drop alert fires twice in same digest — bare price_drop duplicates price_drop+volume_spike composite | done | qa | market-group |
 | TASK-1379 | [BUG] Raw HTML tag `<br/>` leaking into Telegram message content (id 324, GAS user_ask_reply 2026-04-28) | done | qa | market-group |
-| TASK-1380 | [BUG] alert_engine pre-open phantom — change_pct alerts fire during pre-open window (00:00–02:00 UTC) against inconsistent reference price; no VPS/data issue (GAS feed confirmed fresh, log_fix id 193) — fix: suppress change_pct alerts outside VN trading window (02:00–09:00 UTC) or validate reference price matches prior session close before firing | pending | developer | market-group |
+| TASK-1380 | [BUG] alert_engine pre-open phantom — change_pct alerts fire during pre-open window (00:00–02:00 UTC) against inconsistent reference price; no VPS/data issue (GAS feed confirmed fresh, log_fix id 193) — fix: suppress change_pct alerts outside VN trading window (02:00–09:00 UTC) or validate reference price matches prior session close before firing | done | qa | market-group |
 
 ### MEDIUM Priority
 
@@ -87,6 +87,7 @@ Tasks created from MARKET channel review: 32 messages, 2026-04-27–28.
 | Task | Title | Status | Agent | Source |
 |------|-------|--------|-------|--------|
 | TASK-1383 | [UX] user_ask_reply messages use inconsistent format — some emoji-bullet, some tabular (id 311 EOD vs id 316 BCTC reply) — standardize template per message_type | pending | ba | market-group |
+| TASK-1384 | [QUALITY] VRE price_surge fires twice within 25 min for 50 VND price delta (30,250 → 30,300) — add minimum absolute price delta guard between consecutive price_surge alerts for same ticker (suggested: <0.5% or <100 VND within same session) | pending | ba | market-group |
 
 ---
 
@@ -149,3 +150,5 @@ Reports marked processed — resolved, informational, or OPS status updates:
 | 2653 | FPT portfolio risk — PO noted, decision deferred to user |
 | 2615 | HSC IFCI — backlog idea, not actionable this sprint |
 | 787 | Test fixture rows (Report A/B, Report 1/2, ghost seeds) — bulk cleaned |
+| 2657 | Duplicate of TASK-1380 (GAS pre-open phantom alert, alert_engine change_pct, log_fix id 193) |
+| 2658 | Duplicate of TASK-1365 (post_agent_signal root field schema gap, chain_catalyst/cross_validate/urgent_news) |
