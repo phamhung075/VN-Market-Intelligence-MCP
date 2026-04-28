@@ -24,6 +24,7 @@
  *   taAlertNotifier       every 15min VN market hours  (task 1314) ✓
  *   startupCatchup (morning)  30s after boot if 01:00 UTC passed  (task 1430) ✓
  *   startupCatchup (evening)  30s after boot if 15:30 UTC passed  (task 1430) ✓
+ *   vnIndexRefresh        every 5 min VN market hours  (task 1397) ✓
  */
 
 import cron from 'node-cron'
@@ -70,6 +71,7 @@ import { runOhlcvDailyAggregator } from './market-data/ohlcvDailyAggregatorJob.j
 import { runOhlcvStalenessCheck } from './market-data/ohlcvStalenessCheckJob.js'
 import { priceUpdateWatchdog } from './market-data/priceUpdateWatchdogJob.js'
 import { runVpsHealthPolling } from './system/vpsServiceHealthJob.js'
+import { runVnIndexRefreshJob } from './market-data/vnIndexRefreshJob.js'
 import { runFreshnessSlaMonitorJob } from './system/freshnessSlaMonitorJob.js'
 import { macroIndicatorRefreshJob, validateMacroFreshnessOnStartup } from './macro/index.js'
 import { runForeignFlowFetcherJobCron } from './market-data/foreignFlowFetcherJob.js'
@@ -170,6 +172,8 @@ export const CRONS = {
   priceUpdateWatchdog:    Bun.env.CRON_PRICE_UPDATE_WATCHDOG             ?? '*/10 2-8 * * 1-5',
   /** vpsServiceHealth — VPS service health polling every 5 min (task 234) */
   vpsServiceHealth:       Bun.env.CRON_VPS_SERVICE_HEALTH                 ?? '*/5 * * * *',
+  /** vnIndexRefresh — VNINDEX upsert every 5 min during VN market hours — task 1397 */
+  vnIndexRefresh:         Bun.env.CRON_VN_INDEX_REFRESH                   ?? '*/5 2-8 * * 1-5',
   /** freshnessSlaMonitor — data freshness SLA check every 30 min (task 234) */
   freshnessSlaMonitor:    Bun.env.CRON_FRESHNESS_SLA_MONITOR              ?? '*/30 * * * *',
   /** macroIndicatorRefreshJob — daily macro indicator refresh at 06:00 GMT+7 (task 239) */
@@ -756,6 +760,16 @@ export function startScheduler() {
   cron.schedule(CRONS.vpsServiceHealth, async () => {
     await recordJobRun(getDb(), 'vpsServiceHealthJob', async () => {
       await runVpsHealthPolling()
+    })
+  }, { timezone: 'UTC' })
+
+  // Every 5 min during VN market hours (02:00-08:59 UTC, Mon-Fri) — VN-Index refresh — task 1397
+  // Fetches VNINDEX directly from VnDirect vnmarket_prices API (not via VPS).
+  // Ensures market_prices.VNINDEX stays fresh regardless of VPS push payload.
+  cron.schedule(CRONS.vnIndexRefresh, async () => {
+    await recordJobRun(getDb(), 'vnIndexRefreshJob', async () => {
+      const result = await runVnIndexRefreshJob()
+      return { rowsWritten: result.stored }
     })
   }, { timezone: 'UTC' })
 
