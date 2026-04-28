@@ -22,6 +22,7 @@
 import type { Database } from "bun:sqlite";
 import { logger } from "../../infrastructure/logger.js";
 import { recordJobRun } from "../../infrastructure/db/cronJobRunStore.js";
+import { recordOutcome } from "../../infrastructure/db/agentSignalStore.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -244,6 +245,38 @@ export async function runTaAlertNotifier(
         `[taAlertNotifierJob] UPDATE failed for alert id=${row.id}`,
         { error: err instanceof Error ? err.message : String(err) },
       );
+    }
+  }
+
+  // ── FR-5: Write 'fired' outcome on matching agent_signals rows ───────────
+  // Filters: outcome IS NULL, stock_code IN batch tickers, created_at >= -4h,
+  // signal_type IN ('price_anomaly', 'urgent_news')
+  const batchCodes = batch
+    .map((r) => extractCode(r.affected_actions_json))
+    .filter((c) => c !== "(unknown)");
+
+  if (batchCodes.length > 0) {
+    const placeholders = batchCodes.map(() => "?").join(", ");
+    interface SignalIdRow { id: number }
+    const signalRows = database
+      .prepare<SignalIdRow, string[]>(
+        `SELECT id FROM agent_signals
+          WHERE outcome IS NULL
+            AND stock_code IN (${placeholders})
+            AND created_at >= datetime('now', '-4 hours')
+            AND signal_type IN ('price_anomaly', 'urgent_news')`,
+      )
+      .all(...batchCodes);
+
+    for (const sigRow of signalRows) {
+      try {
+        recordOutcome(database, sigRow.id, "fired", "dispatched by taAlertNotifierJob");
+      } catch (err) {
+        logger.warn(
+          `[taAlertNotifierJob] recordOutcome failed for signal id=${sigRow.id}`,
+          { error: err instanceof Error ? err.message : String(err) },
+        );
+      }
     }
   }
 
