@@ -71,5 +71,8 @@
 | 1356a | patternWatchJob 8 gap tests (PWJ-1–PWJ-8), mock.module strategy | main 2026-04-28 | reports/TASK_REPORT_1356a.md |
 | 1356b | trackSessionToolUsageJob gap tests (8 cases, constructor DI) | main 2026-04-28 | reports/TASK_REPORT_1356b.md |
 | fix/317+1288 | Fix 3 pre-existing test failures (317 notifyUser x2, 1288 fallback) + TS errors (1348a/1352b) | main 2026-04-28 | — |
+| 1357 | FIX: 1294b RED-8 resolved — intentional RED test fixed, 0 fail restored | main 2026-04-28 | — |
+| 1358a | bctcOverdueCheckJob 8 gap tests (OVD-1–OVD-8) | main 2026-04-28 | — |
+| 1358b | bctcQueueEnricherJob 8 gap tests (ENR-1–ENR-8), QA fix: mock.module contamination + DiscoverOptions cast | main 2026-04-28 | — |
 
 ---
