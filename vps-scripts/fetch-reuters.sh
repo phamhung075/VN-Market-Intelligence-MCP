@@ -21,8 +21,14 @@ REUTERS_PUSH_URL="${REUTERS_PUSH_URL:-__MCP_BASE__/api/push-reuters}"
 API_KEY="${API_KEY:-__API_KEY__}"
 LOG="/var/log/vn-reuters.log"
 
-# Reuters Markets RSS feed (publicly accessible from VPS)
-RSS_URL="https://feeds.reuters.com/reuters/businessNews"
+# Reuters RSS feeds — tried in order until one returns non-empty XML.
+# businessNews is deprecated/geo-blocked; fallback list covers top/world/asia.
+RSS_URLS=(
+  "https://feeds.reuters.com/reuters/topNews"
+  "https://feeds.reuters.com/Reuters/worldNews"
+  "https://feeds.reuters.com/reuters/asiaNews"
+  "https://feeds.reuters.com/reuters/businessNews"
+)
 
 # Log rotation — keep under 10 MB
 LOG_SIZE=$(stat -c%s "$LOG" 2>/dev/null || echo 0)
@@ -30,13 +36,24 @@ if [ "$LOG_SIZE" -gt 10485760 ]; then mv "$LOG" "$LOG.old"; fi
 
 echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) === REUTERS START ===" >> "$LOG"
 
-# Fetch RSS feed
-RSS_XML=$(curl -s --connect-timeout 15 --max-time 30 \
-  "$RSS_URL" \
-  -H "User-Agent: Mozilla/5.0 (compatible; VNMarket/1.0)")
+# Fetch RSS feed — try each URL until we get a non-empty XML response
+RSS_XML=""
+RSS_URL_USED=""
+for RSS_URL in "${RSS_URLS[@]}"; do
+  RSS_XML=$(curl -s --connect-timeout 15 --max-time 30 \
+    "$RSS_URL" \
+    -H "User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" \
+    -H "Accept: application/rss+xml, application/xml, text/xml, */*")
+  if [ -n "$RSS_XML" ]; then
+    RSS_URL_USED="$RSS_URL"
+    echo "$(date -u) INFO: fetched from $RSS_URL" >> "$LOG"
+    break
+  fi
+  echo "$(date -u) WARN: empty response from $RSS_URL — trying next" >> "$LOG"
+done
 
 if [ -z "$RSS_XML" ]; then
-  echo "$(date -u) FAIL: empty response from Reuters RSS ($RSS_URL)" >> "$LOG"
+  echo "$(date -u) FAIL: all Reuters RSS URLs returned empty body" >> "$LOG"
   exit 1
 fi
 

@@ -105,7 +105,8 @@
       "fed", "china", "oil", "tariff", "asean", "vietnam",
       "interest rate", "war", "sanctions", "trade", "inflation", "currency"
     ],
-    "curatedMarketIds": []
+    "curatedMarketIds": [],
+    "staleThresholdHours": 24
   },
 
   "alerts": {

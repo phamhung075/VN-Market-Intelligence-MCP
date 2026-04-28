@@ -55,6 +55,23 @@ export interface PredictionMarketPollOptions {
   signalConfig?: PredictionSignalConfig;
   /** Telegram send override (injectable for tests — suppresses real sends). */
   telegramFn?: (msg: string) => Promise<void>;
+  /**
+   * Override staleness threshold in hours (injectable for tests).
+   * Set to 0 to force stale state immediately without waiting.
+   * Default: reads from loadMcpConfig().predictionMarkets.staleThresholdHours (24).
+   */
+  staleThresholdHours?: number;
+  /**
+   * Test-only spy injected in place of detectPredictionSignals.
+   * Allows tests to verify whether signal detection was called or skipped.
+   */
+  _signalDetectorSpy?: (
+    current: PredictionMarket[],
+    previous: PredictionMarket[],
+    config: PredictionSignalConfig,
+    hasRecentNews: Set<string>,
+    recentSentiments: unknown[],
+  ) => PredictionSignal[];
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -62,6 +79,24 @@ export interface PredictionMarketPollOptions {
 // ─────────────────────────────────────────────────────────────────────────────
 
 let _isRunning = false;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Staleness alert cooldown (24h dedup — follows vpsProxyWatchdogJob.ts pattern)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Unix ms timestamp of the last staleness Telegram bug alert sent. 0 = never. */
+let _lastStalenessAlertAt = 0;
+
+/** 24-hour cooldown between repeated staleness alerts (ms). */
+const STALENESS_ALERT_COOLDOWN_MS = 24 * 3600 * 1000;
+
+/**
+ * Test-only: reset the in-module staleness alert cooldown timer.
+ * Calling this between test cases ensures cooldown state does not leak.
+ */
+export function _resetStalenessAlertCooldown(): void {
+  _lastStalenessAlertAt = 0;
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -117,6 +152,45 @@ function loadPreviousSnapshot(db: Database): PredictionMarket[] {
       error: String(err),
     });
     return [];
+  }
+}
+
+/**
+ * Check whether the prediction_markets data is stale by comparing
+ * MAX(fetched_at) against the given threshold.
+ *
+ * Uses ISO 8601 timestamps stored in the `fetched_at` column.
+ *
+ * @param db           - SQLite database handle
+ * @param thresholdHours - Maximum acceptable age in hours (e.g. 24)
+ * @returns `{ isStale: true,  ageHours: Infinity }` when the table is empty.
+ *          `{ isStale: boolean, ageHours: number }` when rows exist.
+ */
+export function checkStaleness(
+  db: Database,
+  thresholdHours: number,
+): { isStale: boolean; ageHours: number } {
+  try {
+    const row = db
+      .prepare(`SELECT MAX(fetched_at) AS max_fetched_at FROM prediction_markets`)
+      .get() as { max_fetched_at: string | null } | undefined;
+
+    const maxFetchedAt = row?.max_fetched_at ?? null;
+
+    if (maxFetchedAt === null) {
+      return { isStale: true, ageHours: Infinity };
+    }
+
+    const ageMs = Date.now() - new Date(maxFetchedAt).getTime();
+    const ageHours = ageMs / (3600 * 1000);
+
+    return { isStale: ageHours > thresholdHours, ageHours };
+  } catch (err) {
+    logger.warn("[prediction-market-job] checkStaleness query failed", {
+      error: String(err),
+    });
+    // Fail-safe: treat as stale so signal detection is suppressed
+    return { isStale: true, ageHours: Infinity };
   }
 }
 
@@ -265,12 +339,14 @@ export function buildTelegramMessage(signal: PredictionSignal): string {
  * Execute one prediction market poll cycle.
  *
  * All heavy dependencies are injectable for testing:
- *   - `enabled` — boolean flag (default: from config)
- *   - `fetchFn` — replace with mock to avoid real HTTP
- *   - `db`      — in-memory SQLite for tests
- *   - `previousMarkets` — pre-load previous snapshot (skips DB lookup)
- *   - `signalConfig`    — override detection thresholds
- *   - `telegramFn`      — suppress or capture Telegram sends in tests
+ *   - `enabled`            — boolean flag (default: from config)
+ *   - `fetchFn`            — replace with mock to avoid real HTTP
+ *   - `db`                 — in-memory SQLite for tests
+ *   - `previousMarkets`    — pre-load previous snapshot (skips DB lookup)
+ *   - `signalConfig`       — override detection thresholds
+ *   - `telegramFn`         — suppress or capture Telegram sends in tests
+ *   - `staleThresholdHours`— override staleness threshold (0 = always stale)
+ *   - `_signalDetectorSpy` — spy on signal detection calls in tests
  *
  * The function NEVER throws. All errors are caught and logged.
  */
@@ -369,10 +445,82 @@ export async function runPredictionMarketPoll(
       return;
     }
 
+    // ── Step 5b: staleness guard ──────────────────────────────────────────
+    // Resolve threshold: opts injection (tests) > config > hardcoded default.
+    let staleThresholdHours = opts.staleThresholdHours;
+    if (staleThresholdHours === undefined) {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const cfgMod = await import("../../infrastructure/config.js" as any);
+        const cfg = (cfgMod as { loadMcpConfig?: () => { predictionMarkets?: { staleThresholdHours?: number } } }).loadMcpConfig?.() ?? {};
+        staleThresholdHours = (cfg as { predictionMarkets?: { staleThresholdHours?: number } }).predictionMarkets?.staleThresholdHours ?? 24;
+      } catch {
+        staleThresholdHours = 24;
+      }
+    }
+
+    const stalenessResult = checkStaleness(db, staleThresholdHours);
+    if (stalenessResult.isStale) {
+      const ageLabel =
+        stalenessResult.ageHours === Infinity
+          ? "vô hạn (bảng trống)"
+          : `${stalenessResult.ageHours.toFixed(1)}h`;
+
+      logger.warn(
+        `[prediction-market-job] prediction_markets stale (age: ${ageLabel}) — skipping signal detection`,
+      );
+
+      const now = Date.now();
+      if (now - _lastStalenessAlertAt > STALENESS_ALERT_COOLDOWN_MS) {
+        _lastStalenessAlertAt = now;
+        const alertMsg =
+          `[POLYMARKET] DU LIEU STALE\n` +
+          `prediction_markets.fetched_at qua cu: ${ageLabel}\n` +
+          `Nguong: ${staleThresholdHours}h\n` +
+          `fetchPolymarkets() that bai — fallback sang cache.\n` +
+          `Kiem tra: ket noi mang, CORS, API Polymarket con hoat dong.`;
+
+        try {
+          if (opts.telegramFn) {
+            await opts.telegramFn(alertMsg);
+          } else {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const notifierMod = await import("../../infrastructure/notifiers/telegram.js" as any);
+            await (notifierMod as { sendTelegramBug?: (msg: string) => Promise<void>; sendTelegram?: (msg: string) => Promise<void> }).sendTelegramBug?.(alertMsg)
+              ?? (notifierMod as { sendTelegram: (msg: string) => Promise<void> }).sendTelegram(alertMsg);
+          }
+        } catch (err) {
+          logger.error("[prediction-market-job] staleness Telegram alert failed", {
+            error: String(err),
+          });
+        }
+      } else {
+        logger.debug(
+          "[prediction-market-job] staleness alert suppressed by 24h cooldown",
+        );
+      }
+
+      // Fail-fast: skip signal detection on stale data
+      return;
+    }
+
     // ── Step 6: detect signals ────────────────────────────────────────────
-    const { detectPredictionSignals } = await import(
-      "../../domain/services/predictionSignalDetector.js"
-    );
+    let detectPredictionSignals: (
+      current: PredictionMarket[],
+      previous: PredictionMarket[],
+      config: PredictionSignalConfig,
+      hasRecentNews: Set<string>,
+      recentSentiments: unknown[],
+    ) => PredictionSignal[];
+
+    if (opts._signalDetectorSpy) {
+      detectPredictionSignals = opts._signalDetectorSpy;
+    } else {
+      const detectorMod = await import(
+        "../../domain/services/predictionSignalDetector.js"
+      );
+      detectPredictionSignals = detectorMod.detectPredictionSignals;
+    }
 
     let signalConfig: PredictionSignalConfig;
     if (opts.signalConfig) {

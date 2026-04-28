@@ -85,7 +85,11 @@ export interface PredictionMarketsConfig {
   relevantKeywords: string[];
   /** Explicitly curated market IDs to always include regardless of keyword match. */
   curatedMarketIds: string[];
-  /** Max age (hours) before market data is considered stale. Default: 24 */
+  /**
+   * Hours after which prediction_markets.fetched_at is considered stale.
+   * If MAX(fetched_at) is older than this, signal detection is skipped and
+   * a Telegram bug alert is sent (once per 24h). Default: 24.
+   */
   staleThresholdHours: number;
 }
 
@@ -574,7 +578,6 @@ export function loadMcpConfig(): McpConfig {
         rateLimitDelayMs: numVal(pm, "rateLimitDelayMs", 500),
         relevantKeywords: arrVal(pm, "relevantKeywords", DEFAULT_PREDICTION_KEYWORDS),
         curatedMarketIds: arrVal(pm, "curatedMarketIds", []),
-        staleThresholdHours: numVal(pm, "staleThresholdHours", 24),
       };
     })(),
     alertPolicy: (() => {
