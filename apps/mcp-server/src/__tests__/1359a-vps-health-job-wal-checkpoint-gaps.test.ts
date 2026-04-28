@@ -139,8 +139,7 @@ describe("Task 1359a — vpsServiceHealthJob gap tests (VHJ)", () => {
       const stmt = realPrepare(sql);
       if (sql.includes("INSERT INTO vps_service_health")) {
         const realRun = stmt.run.bind(stmt);
-        // @ts-expect-error — stub replaces run
-        stmt.run = (...args: unknown[]) => {
+        stmt.run = (...args: Parameters<typeof stmt.run>) => {
           callCount++;
           if (callCount === 1) throw new Error("simulated INSERT failure");
           return realRun(...args);

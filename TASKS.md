@@ -43,7 +43,6 @@
 
 | Task ID | Title | Priority | Type | Owner |
 |---------|-------|----------|------|-------|
-| 1359a | vpsServiceHealthJob + walCheckpointAlert gap tests (16 tests) | HIGH | Test | Developer |
 
 ---
 
@@ -66,6 +65,7 @@
 | 1356b | trackSessionToolUsageJob gap tests (8 cases, constructor DI) | main 2026-04-28 | reports/TASK_REPORT_1356b.md |
 | 1358a | bctcOverdueCheckJob 8 gap tests (OVD-1–OVD-8) | main 2026-04-28 | — |
 | 1358b | bctcQueueEnricherJob 8 gap tests (ENR-1–ENR-8) | main 2026-04-28 | — |
+| 1359a | vpsServiceHealthJob + walCheckpointAlert gap tests (16 tests) | main 2026-04-28 | reports/TASK_REPORT_1359a.md |
 | 1359b | macroOutlierGuard + signalClassWeighter + forecastConfidenceScore + periodDeltaComputer unit tests (32 tests) | main 2026-04-28 | reports/TASK_REPORT_1359b.md |
 
 ---
