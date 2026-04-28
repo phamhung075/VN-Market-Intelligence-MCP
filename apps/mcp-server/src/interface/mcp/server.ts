@@ -767,30 +767,40 @@ export async function createBunServer(
                 storeAlerts(alerts, db);
                 log.info("[push-prices] alerts stored", { count: alerts.length });
 
-                // Send HIGH/CRITICAL alerts to Telegram immediately.
-                // Guard: skip if the alert was already sent on a prior push
-                // (INSERT OR IGNORE deduplicates the DB row but the in-memory
-                // alert object is regenerated every push — task 1393).
-                for (const alert of alerts) {
-                  if (alert.severity === "high" || alert.severity === "critical") {
-                    if (shouldSkipAlreadyNotifiedAlert(alert.id, db)) {
-                      log.debug("[push-prices] alert already notified — skipped", { id: alert.id });
-                      continue;
+                // Send HIGH/CRITICAL alerts to Telegram immediately — grouped by
+                // (signal_type, severity) to avoid N identical messages per push.
+                // Guard: skip already-notified alerts before grouping (task 1393/1395a).
+                const { groupAlertsBySignalSeverity, formatBatchGroupMessage } =
+                  await import("../../domain/services/alertBatchGrouper.js");
+
+                const notifiable = alerts.filter(
+                  (a) =>
+                    (a.severity === "high" || a.severity === "critical") &&
+                    !shouldSkipAlreadyNotifiedAlert(a.id, db),
+                );
+
+                const groups = groupAlertsBySignalSeverity(notifiable);
+
+                for (const group of groups) {
+                  try {
+                    const msg = formatBatchGroupMessage(group);
+                    await sendTelegramWork(msg, {
+                      persist: { from_agent: "push-prices", message_type: "system_alert" },
+                    });
+                    // Mark all alerts in the group as notified
+                    for (const id of group.alertIds) {
+                      db.prepare("UPDATE alerts SET notified_telegram = 1 WHERE id = ?").run(id);
                     }
-                    try {
-                      const sevLabel = alert.severity === "critical" ? "NGHIÊM TRỌNG" : "QUAN TRỌNG";
-                      const msg = `[${sevLabel}] ${alert.message}`;
-                      await sendTelegramWork(msg, {
-                        persist: { from_agent: "push-prices", message_type: "system_alert" },
-                      });
-                      // Mark as notified
-                      db.prepare("UPDATE alerts SET notified_telegram = 1 WHERE id = ?").run(alert.id);
-                      log.info("[push-prices] Telegram alert sent", { id: alert.id, severity: alert.severity });
-                    } catch (tgErr) {
-                      log.warn("[push-prices] Telegram send failed", {
-                        error: tgErr instanceof Error ? tgErr.message : String(tgErr),
-                      });
-                    }
+                    log.info("[push-prices] batch alert sent", {
+                      signalType: group.signalType,
+                      severity:   group.severity,
+                      count:      group.tickers.length,
+                    });
+                  } catch (tgErr) {
+                    // No IDs marked — consistent with existing per-alert error policy (EC-4)
+                    log.warn("[push-prices] Telegram batch send failed", {
+                      error: tgErr instanceof Error ? tgErr.message : String(tgErr),
+                    });
                   }
                 }
               }

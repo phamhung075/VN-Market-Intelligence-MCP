@@ -107,8 +107,9 @@ describe("Bug B — server.ts push-prices alert persist metadata", () => {
       new URL("../interface/mcp/server.ts", import.meta.url).pathname
     ).text();
 
-    // Anchor: the NGHIÊM TRỌNG / QUAN TRỌNG severity label is unique to the push-prices alert block
-    const sevIdx = src.indexOf("NGHIÊM TRỌNG");
+    // Anchor: alertBatchGrouper.js import is unique to the push-prices batch alert block
+    // (NGHIÊM TRỌNG / QUAN TRỌNG labels moved to domain service in task 1395a)
+    const sevIdx = src.indexOf("alertBatchGrouper.js");
     expect(sevIdx).toBeGreaterThan(0);
 
     // Check 1000-char window around the severity alert send
