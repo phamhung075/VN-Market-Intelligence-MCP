@@ -60,10 +60,14 @@ export const breakers = {
    * Task 1566: Detect sustained database write failures; back off after 5 failures.
    * Task 1337: Increased resetTimeoutMs from 30s to 5 minutes to prevent half-open
    * probe thrash caused by repeated 422 failures flooding the log.
+   * Task 1388: halfOpenMaxAttempts=1 — single successful probe closes circuit.
+   * After the underlying DB error is fixed, the very next half-open probe auto-closes
+   * without needing a second success (avoids overnight "stuck OPEN" requiring manual reset).
    */
   foreignFlow: new CircuitBreaker("foreignFlow", {
     failureThreshold: 5,
     resetTimeoutMs: 300_000, // 5 minutes
+    halfOpenMaxAttempts: 1,  // 1 probe sufficient — faster auto-recovery
   }),
   /**
    * NewsAPI.org fallback fetcher.
