@@ -180,8 +180,8 @@ describe("Task 1403 Bug 1 — UNIQUE(code) autoindex vs ON CONFLICT(code,date)",
       .query<{ date: string }, []>("SELECT date FROM vnstock_trading_stats WHERE code='FPT' ORDER BY date")
       .all();
     expect(rows.length).toBe(2);
-    expect(rows[0].date).toBe("2026-04-27");
-    expect(rows[1].date).toBe("2026-04-28");
+    expect(rows[0]!.date).toBe("2026-04-27");
+    expect(rows[1]!.date).toBe("2026-04-28");
   });
 
   it("B1-4: after fix, repeated push of same code+date updates in place (no duplicate)", () => {
@@ -198,7 +198,7 @@ describe("Task 1403 Bug 1 — UNIQUE(code) autoindex vs ON CONFLICT(code,date)",
       )
       .all();
     expect(rows.length).toBe(1);
-    expect(rows[0].foreign_volume).toBe(2_000_000);
+    expect(rows[0]!.foreign_volume).toBe(2_000_000);
   });
 });
 
