@@ -2,7 +2,7 @@
 
 Active sprint board. Completed tasks → `docs/TASKS_ARCHIVE.md`.
 
-_Last updated: 2026-04-28 by PO (market-group flow, cycle 3)_
+_Last updated: 2026-04-28 by QA (task 1400 pass 3 merged)_
 
 ---
 
@@ -18,11 +18,11 @@ _Last updated: 2026-04-28 by PO (market-group flow, cycle 3)_
 
 ---
 
-## Sprint 1400 — In Progress
+## Sprint 1400 — Done
 
 | Task | Title | Status | Agent | Source |
 |------|-------|--------|-------|--------|
-| 1400 | Centralise VN_OFFSET_MS into timeConstants.ts | in-progress (pass 1 merged, pass 2 pending) | developer | code-janitor |
+| 1400 | Centralise VN_OFFSET_MS into timeConstants.ts | done | developer | code-janitor |
 
 ---
 
