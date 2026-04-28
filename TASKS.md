@@ -38,6 +38,7 @@
 - **1352–1358b:** Scheduler gap-fill wave 2 (1353a–1356b: 6 jobs DI + 48 gap tests), fix/317+1288 (TS errors + 3 test failures), 1357 (1294b RED fix), 1358a+1358b (bctcOverdueCheck + bctcQueueEnricher 16 gap tests) — ALL MERGED 2026-04-28 (7756 pass / 0 fail / 0 TS errors)
 - **stale-tickers:** Remove 5 invalid watchlist tickers (VDC/BDI/DLC/JSH/SIS) + validateSeedTickers() startup warn + live DB purge (5 rows deleted) — MERGED 2026-04-28 (7880 pass / 5 pre-existing fail / 0 regression)
 - **1382b–1382d–1382c (1382):** Signal outcome tracking end-to-end — taAlertNotifierJob writes 'fired', signalOutcomeJob resolves to confirmed/false_positive daily at 08:30 UTC, cron wired in jobs.ts — MERGED 2026-04-28 (7915 tests / 5 pre-existing fail / 0 regression)
+- **1386:** Fix — hard throw guard in FIX-1265 + 1168 test files that seed market_messages with hardcoded ids 10–14; guard fires if DB_PATH is not :memory: at test time — MERGED 2026-04-28 (7915 pass / 0 regression)
 
 ---
 
