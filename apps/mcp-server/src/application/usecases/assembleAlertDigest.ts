@@ -186,16 +186,19 @@ export async function assembleAlertDigest(
 ): Promise<AlertDigest> {
   const db = options.db ?? (await initDatabase(), getDb());
 
-  const since24h = new Date(Date.now() - 24 * 3_600_000).toISOString();
-
+  // Use unixepoch() arithmetic instead of a JS ISO string so the comparison is
+  // format-agnostic: alerts stored as "YYYY-MM-DD HH:MM:SS" (SQLite datetime('now'))
+  // and alerts stored as "YYYY-MM-DDTHH:MM:SS.mmmZ" (JS toISOString()) are both
+  // matched correctly. A plain string comparison fails because ' ' < 'T' in ASCII,
+  // causing same-day SQLite-format rows to be silently excluded (Task 1394).
   const rows = db
     .prepare(
       `SELECT id, triggered_at, severity, message, affected_actions_json
        FROM alerts
-       WHERE triggered_at >= ?
+       WHERE unixepoch(triggered_at) >= unixepoch('now') - 86400
        ORDER BY triggered_at DESC`,
     )
-    .all(since24h) as AlertRow[];
+    .all() as AlertRow[];
 
   const totalCount = rows.length;
   const criticalCount = rows.filter((r) => r.severity === "critical").length;
