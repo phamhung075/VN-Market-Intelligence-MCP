@@ -18,6 +18,7 @@ import { logger } from "../../infrastructure/logger.js";
 import { recordJobRun } from "../../infrastructure/db/cronJobRunStore.js";
 import { fetchForeignFlowWithFallback, type CacheStore } from "../../infrastructure/fetchers/foreignFlowFetcher.js";
 import { getDb } from "../../infrastructure/db/schema.js";
+import { isVnTradingWindow } from "../../domain/services/tradingWindow.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -136,9 +137,20 @@ export async function runForeignFlowFetcherJob(
  * Wraps runForeignFlowFetcherJob in recordJobRun for observability.
  * Used by jobs.ts at every minute (CRON_FOREIGN_FLOW_FETCH).
  *
+ * @param now - Injectable clock for testing the market-hours gate (default: real clock).
+ *
  * Returns void (result logged internally)
  */
-export async function runForeignFlowFetcherJobCron(): Promise<void> {
+export async function runForeignFlowFetcherJobCron(now?: () => Date): Promise<void> {
+  // Gate: VPS only pushes foreign flow data during VN market hours (02:00–08:59 UTC Mon–Fri).
+  // Skip the circuit-breaker execute() call entirely outside the trading window to prevent
+  // the CB from accumulating off-hours failures against an intentionally quiet endpoint.
+  const clockNow = now ?? (() => new Date());
+  if (!isVnTradingWindow(clockNow())) {
+    logger.debug('[foreign-flow-job] outside VN trading window — skipping fetch');
+    return;
+  }
+
   const database = getDb();
 
   await recordJobRun(database, 'foreignFlowFetcherJob', async () => {

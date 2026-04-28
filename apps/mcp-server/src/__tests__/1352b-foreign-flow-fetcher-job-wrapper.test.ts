@@ -279,8 +279,10 @@ describe("Task 1352b — Case 5: runForeignFlowFetcherJobCron recordJobRun wirin
       "../scheduler/market-data/foreignFlowFetcherJob.js"
     );
 
-    // Run the cron wrapper — it will call getDb() and recordJobRun internally
-    await runForeignFlowFetcherJobCron();
+    // Run the cron wrapper with a clock inside VN trading window (Mon 04:00 UTC)
+    // so the market-hours gate does not short-circuit. Task 1407: gate is injectable.
+    const insideWindow = () => new Date("2026-04-27T04:00:00Z");
+    await runForeignFlowFetcherJobCron(insideWindow);
 
     // Query the real in-memory DB to verify the row was written
     const db = getDb();
