@@ -45,7 +45,6 @@
 |---------|-------|----------|------|-------|-----------------|
 | ~~1346b~~ | ~~Fix push-foreign-flow UNIQUE constraint~~ | ~~HIGH~~ | ~~FIX~~ | ~~Developer~~ | 1310, 1312 — DONE 2026-04-27 |
 | ~~1346e~~ | ~~Cascade gap: DSC + VPBankS/OKX → market-wide impact~~ | ~~MEDIUM~~ | ~~BACKLOG~~ | ~~BA~~ | 1314, 1315 — closed by 1348a |
-| 1356b | trackSessionToolUsageJob gap tests (8 cases, constructor DI) | HIGH | TEST | Developer | docs/handoffs/TASK_1356b.md |
 
 ---
 
@@ -73,5 +72,6 @@
 | 1355a | monthlySignalQualityJob 8 gap tests (MSQ-1–MSQ-8) | main 2026-04-28 | reports/TASK_REPORT_1355a.md |
 | 1355b | davPharmacyJob 8 gap tests (DAV-1–DAV-8), mock.module strategy | main 2026-04-28 | — |
 | 1356a | patternWatchJob 8 gap tests (PWJ-1–PWJ-8), mock.module strategy | main 2026-04-28 | reports/TASK_REPORT_1356a.md |
+| 1356b | trackSessionToolUsageJob gap tests (8 cases, constructor DI) | main 2026-04-28 | reports/TASK_REPORT_1356b.md |
 
 ---
