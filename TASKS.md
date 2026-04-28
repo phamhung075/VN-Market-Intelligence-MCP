@@ -69,5 +69,6 @@
 | 1359b | macroOutlierGuard + signalClassWeighter + forecastConfidenceScore + periodDeltaComputer unit tests (32 tests) | main 2026-04-28 | reports/TASK_REPORT_1359b.md |
 | 1360a | marketContextBuilder unit tests (16 tests, in-memory SQLite, pure domain service) | main 2026-04-28 | reports/TASK_REPORT_1360a.md |
 | 1360b | priceNewsValidator unit tests (24 tests, 100% coverage, pure domain function) | main 2026-04-28 | reports/TASK_REPORT_1360b.md |
+| 1360 | Morning briefing bug fixes — formatStoryTitle + delta arrows (↑/↓) for global markets + commodities | main 2026-04-28 | reports/TASK_REPORT_1360.md |
 
 ---

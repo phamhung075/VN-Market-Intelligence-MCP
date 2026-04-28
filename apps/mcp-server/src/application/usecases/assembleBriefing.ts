@@ -922,7 +922,7 @@ async function _assembleBriefingImpl(
       // Fetch last 2 values for this indicator to compute delta direction.
       // history[0] = latest, history[1] = previous (ordered DESC).
       const history = getIndicatorHistory(t.indicator, 2);
-      const previousValue = history.length >= 2 ? history[1].value : undefined;
+      const previousValue = history.length >= 2 ? history[1]?.value : undefined;
       return {
         indicator: t.indicator,
         value: t.value,
