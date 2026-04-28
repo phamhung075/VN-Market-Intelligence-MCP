@@ -13,7 +13,7 @@
  *
  * Exports:
  *   AuditFinding       — result interface for each check
- *   runDailyAudit()    — D-1 through D-10 checks, < 5s
+ *   runDailyAudit()    — D-1 through D-11 checks, < 5s
  *   runWeeklyAudit()   — daily + W-1 through W-7, < 30s
  */
 
@@ -22,6 +22,7 @@ import { existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { getCurrentDeadline } from "../../domain/services/financial-reports/earningsCalendar.js";
 import { recordJobRun } from "../../infrastructure/db/cronJobRunStore.js";
+import { deleteOldReports } from "../../infrastructure/db/telegramReportStore.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -675,7 +676,29 @@ function runDailyChecks(db: Database): AuditFinding[] {
     });
   }
 
-  // D-10: Row count snapshot (7 major tables) + row count drop detection (task 1086)
+  // D-10: Purge old telegram_reports (>48h)
+  try {
+    const removed = deleteOldReports(db, 48);
+    findings.push({
+      table: "telegram_reports",
+      check: "old_report_purge",
+      severity: "info",
+      rowsAffected: removed,
+      action: removed > 0 ? "auto_cleaned" : "none",
+      detail: `Removed ${removed} telegram_reports older than 48h`,
+    });
+  } catch (err) {
+    findings.push({
+      table: "telegram_reports",
+      check: "old_report_purge",
+      severity: "info",
+      rowsAffected: 0,
+      action: "none",
+      detail: `Skipped: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+
+  // D-11: Row count snapshot (7 major tables) + row count drop detection (task 1086)
   //
   // Read previous audit's row counts from audit_state so we can detect drops.
   // A row count decrease in financial_reports (or any major table) may indicate
@@ -695,7 +718,7 @@ function runDailyChecks(db: Database): AuditFinding[] {
         detail: `${tableName} has ${cnt.toLocaleString("vi-VN")} rows`,
       });
 
-      // D-10b (task 1086): detect row count drop vs previous audit
+      // D-11b (task 1086): detect row count drop vs previous audit
       const prevCount = previousCounts.get(tableName);
       if (prevCount !== undefined && cnt < prevCount) {
         const dropped = prevCount - cnt;
@@ -1064,6 +1087,9 @@ async function maybeSendTelegram(
  * @param db          - Optional injected Database (for testing). Defaults to getDb() singleton.
  * @param telegramFn  - Optional injected Telegram send function (for testing).
  * @returns Promise<AuditFinding[]>
+ *
+ * Steps: D-1 (zero_price_rows) through D-11 (row_count_snapshot).
+ * D-10 purges telegram_reports older than 48 h.
  */
 export async function runDailyAudit(
   db?: Database,

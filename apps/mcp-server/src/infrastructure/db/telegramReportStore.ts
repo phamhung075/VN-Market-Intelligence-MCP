@@ -270,3 +270,19 @@ export function listNewReportsUnclaimed(db: Database): TelegramReport[] {
     )
     .all();
 }
+
+/**
+ * Deletes telegram_reports rows older than `olderThanHours` hours.
+ * Removes both 'new' and 'processed' rows — old reports have no value.
+ *
+ * @param db             - SQLite database instance
+ * @param olderThanHours - Age threshold in hours (default: 48)
+ * @returns              Number of rows deleted
+ */
+export function deleteOldReports(db: Database, olderThanHours = 48): number {
+  const cutoff = Math.floor(Date.now() / 1000) - olderThanHours * 3600;
+  const result = db
+    .prepare(`DELETE FROM telegram_reports WHERE created_at < ?`)
+    .run(cutoff);
+  return result.changes;
+}

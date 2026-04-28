@@ -17,6 +17,7 @@ import {
   listNewReports,
   markProcessed,
   getReport as getReportById,
+  deleteOldReports,
 } from "../infrastructure/db/telegramReportStore.js";
 import { initDatabase, getDb, closeDb } from "../infrastructure/db/index.js";
 
@@ -250,5 +251,91 @@ describe("Task 226 — getReportById (point lookup)", () => {
   it("returns null for a non-existent id", () => {
     const row = getReportById(db, 99999);
     expect(row).toBeNull();
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 6. deleteOldReports — purge path (Task 1361)
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("Task 1361 — deleteOldReports (purge path)", () => {
+  let db: Database;
+
+  beforeEach(async () => { closeDb(); await initDatabase(); db = getDb(); });
+
+  it("deletes rows with created_at older than 48 hours and returns correct count", () => {
+    const now = Math.floor(Date.now() / 1000);
+    const oldTimestamp = now - 49 * 3600; // 49 hours ago — beyond the 48h cutoff
+
+    db.prepare(
+      "INSERT INTO telegram_reports (text, from_agent, message_id, priority, status, created_at) VALUES (?, ?, ?, ?, ?, ?)"
+    ).run("Old report 1", "agent", 0, "normal", "new", oldTimestamp);
+    db.prepare(
+      "INSERT INTO telegram_reports (text, from_agent, message_id, priority, status, created_at) VALUES (?, ?, ?, ?, ?, ?)"
+    ).run("Old report 2", "agent", 0, "normal", "processed", oldTimestamp - 3600);
+
+    const removed = deleteOldReports(db, 48);
+    expect(removed).toBe(2);
+  });
+
+  it("does NOT delete rows newer than 48 hours", () => {
+    const now = Math.floor(Date.now() / 1000);
+    const recentTimestamp = now - 47 * 3600; // 47 hours ago — within the 48h cutoff
+
+    db.prepare(
+      "INSERT INTO telegram_reports (text, from_agent, message_id, priority, status, created_at) VALUES (?, ?, ?, ?, ?, ?)"
+    ).run("Recent report", "agent", 0, "normal", "new", recentTimestamp);
+
+    const removed = deleteOldReports(db, 48);
+    expect(removed).toBe(0);
+
+    // Row should still be present
+    const rows = listNewReports(db);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]!.text).toBe("Recent report");
+  });
+
+  it("deletes old rows but preserves recent ones", () => {
+    const now = Math.floor(Date.now() / 1000);
+    const oldTimestamp = now - 72 * 3600;    // 72 hours ago
+    const recentTimestamp = now - 24 * 3600; // 24 hours ago
+
+    db.prepare(
+      "INSERT INTO telegram_reports (text, from_agent, message_id, priority, status, created_at) VALUES (?, ?, ?, ?, ?, ?)"
+    ).run("Old report", "agent", 0, "normal", "new", oldTimestamp);
+    db.prepare(
+      "INSERT INTO telegram_reports (text, from_agent, message_id, priority, status, created_at) VALUES (?, ?, ?, ?, ?, ?)"
+    ).run("Recent report", "agent", 0, "normal", "new", recentTimestamp);
+
+    const removed = deleteOldReports(db, 48);
+    expect(removed).toBe(1);
+
+    const remaining = listNewReports(db);
+    expect(remaining).toHaveLength(1);
+    expect(remaining[0]!.text).toBe("Recent report");
+  });
+
+  it("returns 0 when no rows exist", () => {
+    const removed = deleteOldReports(db, 48);
+    expect(removed).toBe(0);
+  });
+
+  it("returns 0 when all rows are within the cutoff window", () => {
+    insertReport(db, "Fresh report", "agent", 0, "normal");
+    const removed = deleteOldReports(db, 48);
+    expect(removed).toBe(0);
+  });
+
+  it("respects a custom olderThanHours threshold", () => {
+    const now = Math.floor(Date.now() / 1000);
+    const twoHoursAgo = now - 2 * 3600;
+
+    db.prepare(
+      "INSERT INTO telegram_reports (text, from_agent, message_id, priority, status, created_at) VALUES (?, ?, ?, ?, ?, ?)"
+    ).run("Hour-old report", "agent", 0, "normal", "new", twoHoursAgo);
+
+    // With a 1-hour cutoff, the 2h-old row should be deleted
+    const removed = deleteOldReports(db, 1);
+    expect(removed).toBe(1);
   });
 });
