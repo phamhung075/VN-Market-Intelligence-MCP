@@ -137,7 +137,7 @@ describe("Task 1277 — OHLCV guard checks (6 test cases)", () => {
     expect(rows[0].high).toBe(85000);
     expect(rows[0].low).toBe(80000);
     expect(rows[0].close).toBe(83000);
-    expect(rows[0].volume).toBe(3);
+    expect(rows[0].volume).toBe(100); // MAX(volume) — all ticks use default volume=100
   });
 
   // ───────────────────────────────────────────────────────────────────────────

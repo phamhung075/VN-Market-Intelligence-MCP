@@ -140,7 +140,7 @@ describe("Task 1358 — ohlcvDailyAggregatorJob (RED phase, all fail until 1359)
     expect(fpt.high).toBe(95000);
     expect(fpt.low).toBe(88000);
     expect(fpt.close).toBe(88000); // TICK_3 is latest for FPT
-    expect(fpt.volume).toBe(3);
+    expect(fpt.volume).toBe(100); // MAX(volume) — all ticks use default volume=100
 
     // VCB row
     const vcb = rows.find(r => r.code === "VCB")!;
@@ -150,7 +150,7 @@ describe("Task 1358 — ohlcvDailyAggregatorJob (RED phase, all fail until 1359)
     expect(vcb.high).toBe(85000);
     expect(vcb.low).toBe(80000);
     expect(vcb.close).toBe(83000);
-    expect(vcb.volume).toBe(3);
+    expect(vcb.volume).toBe(100); // MAX(volume) — all ticks use default volume=100
   });
 
   // ───────────────────────────────────────────────────────────────────────────
@@ -205,7 +205,7 @@ describe("Task 1358 — ohlcvDailyAggregatorJob (RED phase, all fail until 1359)
     // Verify first-run close
     const afterRun1 = db.prepare("SELECT close, volume FROM daily_ohlcv WHERE code = ? AND date = ?").get("VCB", VN_DATE) as { close: number; volume: number } | undefined;
     expect(afterRun1?.close).toBe(82000);
-    expect(afterRun1?.volume).toBe(2);
+    expect(afterRun1?.volume).toBe(100); // MAX(volume) — both ticks use default volume=100
 
     // Add a later tick (price = 85000 at TICK_3, later fetched_at)
     addTick(db, "VCB", 85000, TICK_3);
@@ -225,8 +225,8 @@ describe("Task 1358 — ohlcvDailyAggregatorJob (RED phase, all fail until 1359)
 
     // Close updated to latest tick price
     expect(allRows[0]!.close).toBe(85000);
-    // Volume reflects total 3 ticks
-    expect(allRows[0]!.volume).toBe(3);
+    // Volume = MAX(volume) across all 3 ticks — all use default volume=100
+    expect(allRows[0]!.volume).toBe(100);
   });
 
   // ───────────────────────────────────────────────────────────────────────────
