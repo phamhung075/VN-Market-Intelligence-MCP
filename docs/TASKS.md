@@ -80,7 +80,7 @@ Tasks created from MARKET channel review: 32 messages, 2026-04-27–28.
 | Task | Title | Status | Agent | Source |
 |------|-------|--------|-------|--------|
 | TASK-1381 | [QUALITY] volume_spike alerts repeating for same 7 tickers (PPC/POW/NKG/HVN/HSG/GVR/DHG) on consecutive days with zero news — add day-cooldown dedup or raise threshold from 5x to 8x | pending | ba | market-group |
-| TASK-1382 | [QUALITY] Signal outcome tracking broken — 90% alert outcomes "unknown", 0 confirmed signals across all agents in 7-day window — wire record_signal_outcome() into alert lifecycle | pending | developer | market-group |
+| TASK-1382 | [QUALITY] Signal outcome tracking broken — 90% alert outcomes "unknown", 0 confirmed signals across all agents in 7-day window — wire record_signal_outcome() into alert lifecycle | done | qa | market-group |
 
 ### LOW Priority
 
