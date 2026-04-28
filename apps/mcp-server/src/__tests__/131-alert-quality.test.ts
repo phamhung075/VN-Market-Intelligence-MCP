@@ -4,7 +4,7 @@ Bun.env["DB_PATH"] = ":memory:";
  * Task 131 — Alert Quality System
  *
  * Tests for:
- *   1. Alert cooldown (suppress repeats within window, respect daily cap, pass critical)
+ *   1. Alert cooldown (suppress repeats within window, respect daily cap; critical bypasses daily cap but NOT signal overlap — Task 1378)
  *   2. Alert deduplication (fingerprint hash, skip same event from multiple sources)
  *   3. Alert grouping (merge related alerts, max severity, human-readable message)
  *   4. Integration: alertGenerator → cooldown → dedup → grouped output
@@ -115,17 +115,33 @@ describe("Task 131 — Alert Cooldown", () => {
     expect(shouldSuppressAlert(alert, todayAlerts, config)).toBe(false);
   });
 
-  it("never suppresses CRITICAL severity alerts", () => {
-    // Even if cooldown and daily limit would suppress, critical always passes
+  it("suppresses CRITICAL when signal type overlaps a recently sent alert (Task 1378 fix)", () => {
+    // A composite critical alert that shares price_drop with an already-sent alert
+    // must be suppressed — it is a duplicate, not a genuinely new event.
+    const recentMs = Date.now() - 2 * 60_000; // 2 min ago — inside 30-min window
+    const recentAlerts = [
+      { stocks: "VCB", signalTypes: "price_drop", triggeredAt: new Date(recentMs).toISOString() },
+    ];
+    const criticalAlert = {
+      stocks: ["VCB"],
+      signalTypes: ["price_drop"],
+      severity: "critical" as const,
+    };
+    expect(shouldSuppressAlert(criticalAlert, recentAlerts, config)).toBe(true);
+  });
+
+  it("does NOT suppress CRITICAL when signal types are genuinely new (Task 1378 fix)", () => {
+    // Critical alert with a brand-new signal type — no overlap with history → must fire
+    // even if the daily cap would otherwise block it.
     const today = new Date();
     const recentAlerts = Array.from({ length: 10 }, (_, i) => {
       const d = new Date(today);
       d.setHours(6 + i, 0, 0, 0);
-      return { stocks: "VCB", signalTypes: "price_drop", triggeredAt: d.toISOString() };
+      return { stocks: "VCB", signalTypes: "volume_spike", triggeredAt: d.toISOString() };
     });
     const criticalAlert = {
       stocks: ["VCB"],
-      signalTypes: ["price_drop"],
+      signalTypes: ["price_drop"], // no overlap with volume_spike history
       severity: "critical" as const,
     };
     expect(shouldSuppressAlert(criticalAlert, recentAlerts, config)).toBe(false);

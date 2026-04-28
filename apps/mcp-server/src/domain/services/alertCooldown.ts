@@ -6,7 +6,8 @@
  *   1. Same stock + signal type fired within the cooldown window
  *   2. Stock has already reached the maximum alerts per day
  *
- * CRITICAL severity alerts are never suppressed.
+ * CRITICAL severity alerts bypass the daily cap but are still suppressed on
+ * signal-type overlap (to prevent composite duplicates — Task 1378).
  *
  * No I/O — accepts the recent-alert history as a plain array.
  */
@@ -52,8 +53,11 @@ function isToday(isoDate: string): boolean {
  * Decide whether the incoming alert should be suppressed.
  *
  * @param alert        - The candidate alert (stocks + signalTypes arrays).
- *                       If `severity` is "critical" the alert always passes,
- *                       EXCEPT for MACRO alerts which require normal cooldown.
+ *                       CRITICAL severity alerts bypass the daily cap but NOT
+ *                       signal-overlap suppression. A composite critical alert
+ *                       that shares a sub-signal with a recently sent alert is
+ *                       still suppressed (Task 1378 fix). MACRO alerts always
+ *                       use the full cooldown including daily cap.
  * @param recentAlerts - Persisted alert history (any time range; function
  *                       filters internally by window / today).
  * @param config       - Cooldown settings. Falls back to DEFAULT_CONFIG.
@@ -64,10 +68,6 @@ export function shouldSuppressAlert(
   recentAlerts: Array<{ stocks: string; signalTypes: string; triggeredAt: string }>,
   config?: CooldownConfig,
 ): boolean {
-  // CRITICAL severity is never suppressed — EXCEPT MACRO alerts, which are
-  // sustained conditions requiring normal cooldown enforcement.
-  if (alert.severity === "critical" && alert.actionCode !== "MACRO") return false;
-
   const cfg = config ?? DEFAULT_CONFIG;
   const now = Date.now();
   const cooldownMs = cfg.cooldownMinutes * 60_000;
@@ -83,8 +83,16 @@ export function shouldSuppressAlert(
       // Check if any signal type overlaps
       const recentTypes = recent.signalTypes.split(",").map((s) => s.trim());
       const hasOverlap = alert.signalTypes.some((t) => recentTypes.includes(t));
+      // Suppress when there is overlap — even for CRITICAL severity.
+      // A composite critical alert that shares a sub-signal with an already-sent
+      // alert is a duplicate, not a genuinely new event (Task 1378).
+      // MACRO alerts are always subject to cooldown (pre-existing rule).
       if (hasOverlap) return true;
     }
+
+    // ── CRITICAL bypass: only when no overlap found above ───────────────────
+    // Non-MACRO critical alerts with genuinely new signal types always fire.
+    if (alert.severity === "critical" && alert.actionCode !== "MACRO") continue;
 
     // ── Rule 2: daily cap ───────────────────────────────────────────────────
     const todayCount = recentAlerts.filter(
