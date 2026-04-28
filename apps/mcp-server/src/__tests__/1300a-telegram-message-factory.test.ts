@@ -111,6 +111,51 @@ describe("TelegramMessageFactory — Vietnamese diacritics handling", () => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Task 1389 — quote-boundary truncation
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("TelegramMessageFactory — quote-boundary truncation (Task 1389)", () => {
+  it("does not cut inside an open Vietnamese quote", () => {
+    // Real bug: 'Vinhomes báo lãi quý 1 hơn 25.600 tỷ, "vô…'
+    // Truncation landed inside the opening " — must back up before it.
+    // The boundary (100 graphemes) falls inside "vô tiền khoáng hậu",
+    // so the result must not contain an unclosed " just before the ellipsis.
+    const msg =
+      'Vinhomes báo lãi quý 1 hơn 25.600 tỷ, "vô tiền khoáng hậu khi báo cáo kết quả bất ngờ vượt trội mọi dự báo thị trường" theo đánh giá';
+    const result = TelegramMessageFactory.formatAlertMessage(msg);
+    // Must still end with "…" (was truncated)
+    expect(result.endsWith("…")).toBe(true);
+    // The text before "…" must have balanced double-quotes (even count)
+    const beforeEllipsis = result.slice(0, -"…".length);
+    const quoteCount = (beforeEllipsis.match(/"/g) ?? []).length;
+    expect(quoteCount % 2).toBe(0);
+  });
+
+  it("truncates before the opening quote when cut falls inside quotes", () => {
+    // Craft a string where the 100-grapheme boundary falls between " and the closing "
+    // "word ".repeat(18) = 90 chars, then add '"quoted text here"' to push past 100
+    const prefix = "word ".repeat(18).trimEnd(); // 89 chars
+    const msg = prefix + ' "quoted phrase that goes on and on beyond the limit"';
+    const result = TelegramMessageFactory.formatAlertMessage(msg);
+    // Must still be truncated
+    expect(result.endsWith("…")).toBe(true);
+    // The text before "…" must have balanced double-quotes
+    const beforeEllipsis = result.slice(0, -"…".length);
+    const quoteCount = (beforeEllipsis.match(/"/g) ?? []).length;
+    expect(quoteCount % 2).toBe(0);
+  });
+
+  it("does not affect text where no quote spans the truncation boundary", () => {
+    // Quoted text fully before the truncation point — should be left intact
+    const msg = '"Good news" VNM tăng mạnh ' + "abc ".repeat(25);
+    const result = TelegramMessageFactory.formatAlertMessage(msg);
+    expect(result.endsWith("…")).toBe(true);
+    // The opening quote is in the first 11 chars — well before truncation
+    expect(result.startsWith('"Good news"')).toBe(true);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Method: formatAlertMessage (max 100)
 // ─────────────────────────────────────────────────────────────────────────────
 
