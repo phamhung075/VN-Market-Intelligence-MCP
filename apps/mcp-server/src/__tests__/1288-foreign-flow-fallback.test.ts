@@ -242,11 +242,10 @@ describe("Task 1288a — Foreign Flow Fallback", () => {
       expect(fetchForeignFlowWithFallback).toBeDefined();
 
       if (fetchForeignFlowWithFallback) {
-        // Use a 3000ms timeout in the mock to test fallback behavior
-        // without conflicting with the test framework's 5000ms timeout
+        // Force primary failure so fallback (cache) activates
         const result = await fetchForeignFlowWithFallback({
           now: () => now,
-          fetchFn: makeFetchFn({ timeoutMs: 3000 }),
+          fetchFn: makeFetchFn({ shouldFail: true }),
           cacheStore: cache,
           sseMessageBus: messageBus,
         });

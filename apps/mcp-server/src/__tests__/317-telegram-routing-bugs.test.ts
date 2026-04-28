@@ -7,12 +7,13 @@
  */
 
 import { describe, it, expect } from "bun:test";
-import { priceUpdateWatchdog, _resetWatchdogStaleFlag } from "../scheduler/market-data/priceUpdateWatchdogJob.js";
+import { priceUpdateWatchdog, _resetWatchdogStaleFlag, _resetWatchdogCooldown } from "../scheduler/market-data/priceUpdateWatchdogJob.js";
 
 describe("Bug A — priceUpdateWatchdogJob notifyUser default is no-op", () => {
   it("recovery path: injected notifyUser fires, but omitting it still returns 'restored' (no crash)", async () => {
     // Prime lastWasStale = true: run a stale cycle with injected callbacks
     _resetWatchdogStaleFlag();
+    _resetWatchdogCooldown();
     const marketTime = new Date("2026-04-22T04:00:00Z"); // Tuesday, market hours
     const stalePrice = new Date("2026-04-21T20:00:00Z"); // 32h old
 
@@ -47,6 +48,7 @@ describe("Bug A — priceUpdateWatchdogJob notifyUser default is no-op", () => {
 
   it("stale alert path: omitting notifyUser returns 'alert-sent' without throwing", async () => {
     _resetWatchdogStaleFlag();
+    _resetWatchdogCooldown();
     const marketTime = new Date("2026-04-22T05:00:00Z");
     const stalePrice = new Date("2026-04-21T20:00:00Z"); // 33h old
 
