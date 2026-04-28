@@ -155,9 +155,19 @@ export async function runBbAlertScan(deps?: BbAlertScanDeps): Promise<BbAlertSca
         continue;
       }
 
-      // c. Extract latest close price
+      // c. Extract latest close price — reject stale candles (not from today).
+      // Task 1391 fix: the candle query groups by calendar date; if the most
+      // recent row is from a previous day the price is stale and embedding it
+      // in the alert message produces an inverted-direction report at dispatch
+      // time (FPT message id 335: 73,100 -0.41% sent when live price was 74,400 +1.36%).
+      // Use real wall clock (not nowFn) — candles stored with datetime('now').
       const lastCandle = candleRows[candleRows.length - 1];
       if (lastCandle === undefined) {
+        continue;
+      }
+      const todayUtc = new Date().toISOString().slice(0, 10);
+      if (lastCandle.day !== todayUtc) {
+        // Candle is from a previous session — skip to avoid stale price in message
         continue;
       }
       const close = Math.round(lastCandle.close_price);
