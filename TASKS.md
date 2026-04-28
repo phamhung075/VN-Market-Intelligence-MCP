@@ -67,6 +67,7 @@
 | 1358b | bctcQueueEnricherJob 8 gap tests (ENR-1–ENR-8) | main 2026-04-28 | — |
 | 1359a | vpsServiceHealthJob + walCheckpointAlert gap tests (16 tests) | main 2026-04-28 | reports/TASK_REPORT_1359a.md |
 | 1359b | macroOutlierGuard + signalClassWeighter + forecastConfidenceScore + periodDeltaComputer unit tests (32 tests) | main 2026-04-28 | reports/TASK_REPORT_1359b.md |
+| 1360a | marketContextBuilder unit tests (16 tests, in-memory SQLite, pure domain service) | main 2026-04-28 | reports/TASK_REPORT_1360a.md |
 | 1360b | priceNewsValidator unit tests (24 tests, 100% coverage, pure domain function) | main 2026-04-28 | reports/TASK_REPORT_1360b.md |
 
 ---
