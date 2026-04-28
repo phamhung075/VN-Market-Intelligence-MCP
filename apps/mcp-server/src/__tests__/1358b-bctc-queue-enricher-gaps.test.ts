@@ -22,7 +22,7 @@ import { Database as SqliteDatabase } from "bun:sqlite";
 import type { Database } from "bun:sqlite";
 import { initDatabase, closeDb } from "../infrastructure/db/schema.js";
 import { runBctcQueueEnricherJob } from "../scheduler/financial-reports/bctcQueueEnricherJob.js";
-import type { HttpFetchFn } from "../domain/services/bctcDiscovery.js";
+import type { HttpFetchFn, DiscoverOptions } from "../domain/services/bctcDiscovery.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Mock fetch helpers
@@ -192,7 +192,7 @@ describe("Task 1358b — bctcQueueEnricherJob gap tests (ENR-1 through ENR-8)", 
 
     const result = await runBctcQueueEnricherJob({
       db: testDb,
-      discoverOptions: timeoutDiscoverOptions as Parameters<typeof runBctcQueueEnricherJob>[0]["discoverOptions"],
+      discoverOptions: timeoutDiscoverOptions as DiscoverOptions,
     });
 
     expect(result.timeoutFailures).toBe(1);
@@ -221,7 +221,7 @@ describe("Task 1358b — bctcQueueEnricherJob gap tests (ENR-1 through ENR-8)", 
 
     const result = await runBctcQueueEnricherJob({
       db: testDb,
-      discoverOptions: networkDiscoverOptions as Parameters<typeof runBctcQueueEnricherJob>[0]["discoverOptions"],
+      discoverOptions: networkDiscoverOptions as DiscoverOptions,
     });
 
     expect(result.partialFailures).toBe(1);
