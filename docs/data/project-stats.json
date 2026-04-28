@@ -1,15 +1,15 @@
 {
   "_maintained_by": "PM / system-auditor",
   "_trigger": "sprint start/end, tool/cron count change, baseline test update",
-  "lastUpdated": "2026-04-28T22:00:00Z",
-  "currentSprint": 1360,
-  "previousSprint": { "number": 1360, "status": "DONE", "progressTasks": "1360a: marketContextBuilder unit tests (16 tests, in-memory SQLite, pure domain service). 1360b: priceNewsValidator unit tests (24 tests, 100% coverage, pure domain function). Baseline: 7865 pass / 0 fail / 0 TS errors." },
-  "sprintGoal": "Sprint 1361 — next sprint TBD.",
-  "testBaseline": 7865,
-  "testBaselineTarget": 7865,
-  "testBaselinePass": 7865,
-  "testBaselineFail": 0,
-  "testFailures": 0,
+  "lastUpdated": "2026-04-28",
+  "currentSprint": 1401,
+  "previousSprint": { "number": 1400, "status": "DONE", "progressTasks": "1400: VN_OFFSET_MS DRY centralisation — pass 1 (timeConstants.ts + 3 files), pass 2 (7 production files), pass 3 (7 test files). All inline 7*3600_000 occurrences removed. Baseline: 7926 pass / 17 fail." },
+  "sprintGoal": "Sprint 1401 — BCTC Pipeline Blocker Recovery. 4 tasks: delete 44 placeholder queue rows (1401), resolve 3 stranded feedback rows (1402), restart vn-foreign-flow VPS service (1403), diagnose+fix vn-news-fetch 0-item issue (1404).",
+  "testBaseline": 7926,
+  "testBaselineTarget": 7926,
+  "testBaselinePass": 7926,
+  "testBaselineFail": 17,
+  "testFailures": 17,
   "toolCount": 108,
   "schedulerFileCount": 51,
   "knowledgeFileCount": 15,
@@ -20,6 +20,6 @@
   "briefingFilesCreated": 30,
   "briefingArchiveQI": 0,
   "briefingArchiveQII": 0,
-  "lastFixApplied": "Sprint 1360: 1360a (16 unit tests: marketContextBuilder) + 1360b (24 unit tests: priceNewsValidator). Baseline: 7865 pass / 0 fail — merged 2026-04-28.",
-  "currentSprintNotes": "2026-04-28 Sprint 1360 DONE. 1360a+1360b merged. 40 new domain unit tests. Baseline updated to 7865."
+  "lastFixApplied": "Sprint 1400: VN_OFFSET_MS centralised into timeConstants.ts across all 3 passes (prod + test files). Baseline: 7926 pass / 17 fail — merged 2026-04-28.",
+  "currentSprintNotes": "Pass 3 of VN_OFFSET_MS DRY (1400) in progress"
 }
