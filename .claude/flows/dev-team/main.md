@@ -1,7 +1,7 @@
 # Dev Team — Cron Orchestration Flow
 
 ## Input
-`read_telegram_reports(status="new")` | TASKS.md | git log (last 30 commits)
+`read_telegram_reports(status="new")` | TASKS.md | git log (last 30 commits) | `git branch` (stale branch audit)
 
 ## Output
 Tasks executed → TASKS.md updated → WORK notified
@@ -10,7 +10,13 @@ Tasks executed → TASKS.md updated → WORK notified
 
 ## Step 1: PO Triage
 
-Launch `po`. Return EXACTLY ONE of:
+Launch `po`. Triage inputs:
+- `read_telegram_reports(status="new")`
+- TASKS.md
+- `git log --oneline -30`
+- `git branch` — list all branches; flag any non-main branch as a **CLEAN** task if it has 0 unmerged commits (`git log main..<branch> --oneline` returns empty) or is a stale worktree branch
+
+Return EXACTLY ONE of:
 
 `NOTHING` → `send_telegram(work, "Dev loop idle.")` → EXIT
 
@@ -21,7 +27,8 @@ Launch `po`. Return EXACTLY ONE of:
 - **SPRINT-M**: multi-domain or 1 new interface
 - **SPRINT-L**: arch change or new service
 - **UNBLOCK**: blocker + `route_to` agent
-- Priority: recurring bugs → UNBLOCK → FIX → S → M/L
+- **CLEAN**: stale branch list to delete + worktrees to remove → route to `qa`
+- Priority: recurring bugs → UNBLOCK → FIX → CLEAN → S → M/L
 
 ---
 
@@ -40,6 +47,17 @@ Launch `po`. Return EXACTLY ONE of:
    - L only: after last merge → spawn `architect` post-merge review
 
 **UNBLOCK** → spawn `{route_to}` → read return → `send_telegram(work, "Unblocked: [brief]")` → EXIT
+
+**CLEAN** → spawn `qa` with branch list → qa runs:
+```
+for each branch:
+  unmerged=$(git log main..<branch> --oneline | wc -l)
+  if unmerged == 0: git branch -d <branch>
+  if worktree: git worktree remove --force <path> && git branch -D <branch>
+  if unmerged > 0: report to WORK — "Branch <name> has N unmerged commits — manual review needed"
+git push origin --prune  # clean up remote refs
+```
+→ EXIT
 
 ---
 
@@ -81,8 +99,10 @@ Tier 3: tasks that depend on Tier 2 → etc.
 
 ## Step 4: Scan
 
-After all tasks Done: `read_telegram_reports(status="new")` — new? → Step 1.
-No new work → `send_telegram(work, "Dev loop idle.")` → EXIT
+After all tasks Done:
+1. `git branch` — any non-main branches remain? → add CLEAN batch → Step 1.
+2. `read_telegram_reports(status="new")` — new? → Step 1.
+3. Nothing → `send_telegram(work, "Dev loop idle.")` → EXIT
 
 ---
 

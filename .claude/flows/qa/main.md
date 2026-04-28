@@ -46,6 +46,11 @@ verdict: APPROVED | CHANGES_REQUESTED
 git checkout main
 git merge --no-ff task/NNN-kebab-description -m "merge(NNN): <title>"
 git push origin main
+# Clean branch — handle worktrees explicitly:
+worktree_path=$(git worktree list --porcelain | grep -A1 "branch refs/heads/task/NNN" | grep "worktree" | awk '{print $2}')
+if [ -n "$worktree_path" ]; then
+  git worktree remove --force "$worktree_path"
+fi
 git branch -d task/NNN-kebab-description
 git push origin --delete task/NNN-kebab-description 2>/dev/null || true  # ignore if no remote
 ```

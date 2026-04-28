@@ -72,7 +72,7 @@ agent:
       - name: main
         path: .claude/flows/po/main.md
         trigger: self_initiated_or_ba_complete_or_qa_signoff
-        input: [project-stats.json, TASKS.md, SPRINT_GOAL.md]
+        input: [project-stats.json, TASKS.md, SPRINT_GOAL.md, git-branch-list]
         output: SPRINT_GOAL.md↑ + TASKS.md↑ | spec approved/rejected
 
   memory:
