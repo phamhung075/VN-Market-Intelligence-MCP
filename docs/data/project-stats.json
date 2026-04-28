@@ -1,13 +1,13 @@
 {
   "_maintained_by": "PM / system-auditor",
   "_trigger": "sprint start/end, tool/cron count change, baseline test update",
-  "lastUpdated": "2026-04-28T18:00:00Z",
-  "currentSprint": 1358,
-  "previousSprint": { "number": 1358, "status": "DONE", "progressTasks": "1358a+1358b: 16 gap tests merged. QA fix: mock.module contamination removed + DiscoverOptions cast. Baseline: 7756 pass / 0 fail." },
-  "sprintGoal": "Sprint 1359 — next sprint TBD.",
-  "testBaseline": 7756,
-  "testBaselineTarget": 7756,
-  "testBaselinePass": 7756,
+  "lastUpdated": "2026-04-28T20:00:00Z",
+  "currentSprint": 1359,
+  "previousSprint": { "number": 1359, "status": "DONE", "progressTasks": "1359a: vpsServiceHealthJob + walCheckpointAlert 16 gap tests. 1359b: macroOutlierGuard + signalClassWeighter + forecastConfidenceScore + periodDeltaComputer 32 unit tests. Baseline: 7803 pass / 0 fail. Note: 1 flake (1338-sprint-goal-retrospective.test.ts) = dirty working-tree state (SPRINT_GOAL.md overwritten by PO), not a code defect." },
+  "sprintGoal": "Sprint 1360 — next sprint TBD.",
+  "testBaseline": 7803,
+  "testBaselineTarget": 7803,
+  "testBaselinePass": 7803,
   "testBaselineFail": 0,
   "testFailures": 0,
   "toolCount": 108,
@@ -20,6 +20,6 @@
   "briefingFilesCreated": 30,
   "briefingArchiveQI": 0,
   "briefingArchiveQII": 0,
-  "lastFixApplied": "QA-1358: mock.module contamination fix in 1358a + DiscoverOptions cast in 1358b. Baseline: 7756 pass / 0 fail — merged 2026-04-28.",
-  "currentSprintNotes": "2026-04-28 Sprint 1358 DONE. 1358a+1358b merged. QA fixed 2 issues before merge. Baseline updated to 7756."
+  "lastFixApplied": "Sprint 1359: 1359a (16 gap tests: vpsServiceHealthJob + walCheckpointAlert) + 1359b (32 unit tests: macroOutlierGuard + signalClassWeighter + forecastConfidenceScore + periodDeltaComputer). Baseline: 7803 pass / 0 fail — merged 2026-04-28.",
+  "currentSprintNotes": "2026-04-28 Sprint 1359 DONE. 1359a+1359b merged. 48 new gap/unit tests. Baseline updated to 7803. 1 pre-existing flake (1338-sprint-goal-retrospective.test.ts) = dirty working-tree state, not a code defect."
 }
