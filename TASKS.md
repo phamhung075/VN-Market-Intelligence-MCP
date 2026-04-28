@@ -50,9 +50,12 @@
 |---------|-------|----------|------|-------|
 | 1393 | [BUG] VRE volume_spike alert fires every ~65s without dedup — 21 identical alerts in 25min close window | HIGH | bug | developer | market-group | DONE 2026-04-28 |
 | 1394 | [BUG] alert-digest count mismatch — digest reports 73 alerts, DB has 98 in same 24h window | MEDIUM | bug | developer | market-group | DONE 2026-04-28 |
-| 1395 | [QUALITY] Sector-drop alerts: same message sent per watchlist ticker (8x banking, 4x real-estate) — add digest grouping by message text | MEDIUM | quality | ba | market-group |
+| 1395 | [QUALITY] Sector-drop alerts: same message sent per watchlist ticker (8x banking, 4x real-estate) — add digest grouping by message text | MEDIUM | quality | ba | market-group | Architect design complete — decomposed to 1395a |
+| 1395a | alertBatchGrouper.ts + server.ts send loop replacement + 11 tests | MEDIUM | feature | developer | docs/handoffs/TASK_1395a.md |
 | 1396 | [UX] GAS digest shows two price_drop %s with same reference price — add intra-day progression label to distinguish incremental drops | LOW | ux | ba | market-group |
-| 1397 | [DATA] evening-summary report vnIndex.fetchedAt stale by 10 days (2026-04-18) — investigate vn_index_cache refresh job | HIGH | data | developer | market-group |
+| 1397a | [DATA] Create vnIndexRefreshJob.ts — fetch VNINDEX via fetchVnIndex() + storeMarketPrices() | HIGH | feature | developer | | DONE 2026-04-28 |
+| 1397b | [DATA] Register vnIndexRefresh cron in jobs.ts (CRONS key + import + startScheduler block) | HIGH | feature | developer |
+| 1397c | [DATA] Test file: 5 cases VIR-1–VIR-5 for runVnIndexRefreshJob (mock.module stubs) | HIGH | test | developer | | DONE 2026-04-28 |
 | JANITOR-004 | DRY: COMPANY_SHORT_NAME in watchlist.ts duplicates STOCK_CATALOG display names | LOW | refactor | developer |
 | JANITOR-005 | DRY: historicalBaseline 3.0 magic number duplicated in 3 IMF files | LOW | refactor | developer |
 | JANITOR-006 | DRY: VN_OFFSET_MS (7*3600_000) inlined in 6+ files — should import from timeConstants.ts | MEDIUM | refactor | developer |
