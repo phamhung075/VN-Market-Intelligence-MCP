@@ -6,6 +6,7 @@
 import { Database } from "bun:sqlite";
 import { getDb } from "../../infrastructure/db/schema.js";
 import { sendTelegramWork } from "../../infrastructure/notifiers/telegram.js";
+import { VN_OFFSET_MS } from "../../domain/services/timeConstants.js";
 
 export interface OhlcvAggregatorDeps {
   db?: () => Database;
@@ -20,7 +21,6 @@ export interface OhlcvAggregatorResult {
   sent: boolean;
 }
 
-const VN_OFFSET_MS = 7 * 60 * 60 * 1000; // UTC+7
 
 /**
  * Compute VN midnight in UTC for the given nowMs.

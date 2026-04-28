@@ -15,3 +15,6 @@ export const MS_PER_HOUR = 60 * 60 * 1000;
 
 /** Milliseconds in one minute (60 * 1000) */
 export const MS_PER_MINUTE = 60 * 1000;
+
+/** Vietnam timezone offset in milliseconds (UTC+7 = 7 * 3600_000) */
+export const VN_OFFSET_MS = 7 * 3600_000;
