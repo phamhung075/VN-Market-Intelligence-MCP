@@ -98,5 +98,6 @@
 | 1377 | Fix alert-digest double-send — replace in-memory _lastDigestSentDate with DB-backed alreadySentToday() against cron_job_runs; 2 new dedup tests | main 2026-04-28 | reports/TASK_REPORT_1377.md |
 | 1391 | FIX: bbAlertScanJob stale-candle guard — skip ticker when lastCandle.day != today; prevents inverted-direction alert messages (FPT msg 335); 3 new tests | main 2026-04-28 | reports/TASK_REPORT_1391.md |
 | 1401 | FIX: eveningSummaryJob dedup guard now allows retry when prior report used stale vnIndex data (content contains " (cũ)"); 4 new tests | main 2026-04-28 | reports/TASK_REPORT_1401-dedup-guard.md |
+| 1405 | feat: formatAlertDigest price-drop qualifier — (lũy kế)/(+thêm) labels for incremental and cumulative price_drop entries; 5 new tests (TC-1–TC-5) | main 2026-04-28 | reports/TASK_REPORT_1405.md |
 
 ---
