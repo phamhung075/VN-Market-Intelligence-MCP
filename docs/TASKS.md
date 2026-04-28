@@ -88,6 +88,7 @@ Tasks created from MARKET channel review: 32 messages, 2026-04-27–28.
 |------|-------|--------|-------|--------|
 | TASK-1383 | [UX] user_ask_reply messages use inconsistent format — some emoji-bullet, some tabular (id 311 EOD vs id 316 BCTC reply) — standardize template per message_type | pending | ba | market-group |
 | TASK-1384 | [QUALITY] VRE price_surge fires twice within 25 min for 50 VND price delta (30,250 → 30,300) — add minimum absolute price delta guard between consecutive price_surge alerts for same ticker (suggested: <0.5% or <100 VND within same session) | pending | ba | market-group |
+| TASK-1389 | [UX] Alert summary cuts messages mid-word/mid-quote — "Cảnh báo gần nhất" digest truncates at raw char limit leaving broken text (e.g. "Vinhomes báo lãi quý 1 hơn 25.600 tỷ, "vô…"). Fix: truncate at word boundary, never inside a quoted string, append "…" only after a complete word | done | qa | user |
 
 ---
 
