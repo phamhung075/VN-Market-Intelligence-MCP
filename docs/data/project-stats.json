@@ -1,15 +1,15 @@
 {
   "_maintained_by": "PM / system-auditor",
   "_trigger": "sprint start/end, tool/cron count change, baseline test update",
-  "lastUpdated": "2026-04-28T02:00:00Z",
-  "currentSprint": 1356,
-  "previousSprint": { "number": 1355, "status": "DONE", "progressTasks": "Sprint 1355: Scheduler gap tests — monthlySignalQualityJob + davPharmacyJob. +16 new tests. Baseline: 7737 pass / 0 fail." },
-  "sprintGoal": "fix/317+1288 — 3 pre-existing test failures resolved + 6 TS errors cleared. New baseline: 7739 pass / 1 intentional RED (1294b) / 0 TS errors.",
-  "testBaseline": 7739,
-  "testBaselineTarget": 7739,
-  "testBaselinePass": 7739,
-  "testBaselineFail": 1,
-  "testFailures": 1,
+  "lastUpdated": "2026-04-28T10:00:00Z",
+  "currentSprint": 1358,
+  "previousSprint": { "number": 1357, "status": "DONE", "progressTasks": "FIX-1357: 1294b RED-8 now green. New baseline: 7761 pass / 0 fail." },
+  "sprintGoal": "Sprint 1358 — bctcOverdueCheckJob (1358a) + bctcQueueEnricherJob (1358b) gap tests. DI via RunOptions/discoverOptions.",
+  "testBaseline": 7761,
+  "testBaselineTarget": 7761,
+  "testBaselinePass": 7761,
+  "testBaselineFail": 0,
+  "testFailures": 0,
   "toolCount": 108,
   "schedulerFileCount": 51,
   "knowledgeFileCount": 15,
@@ -20,6 +20,6 @@
   "briefingFilesCreated": 30,
   "briefingArchiveQI": 0,
   "briefingArchiveQII": 0,
-  "lastFixApplied": "fix/317+1288: 3 pre-existing test failures (317 notifyUser x2, 1288 foreign-flow fallback) + 6 TS errors (1348a AnalysisLevel/DomainType + 1352b exactOptionalPropertyTypes) — merged 2026-04-28. New baseline: 7739 pass / 1 intentional RED (1294b) / 0 TS errors.",
-  "currentSprintNotes": "2026-04-28 fix/317+1288 MERGED: 3 pre-existing failures fixed. testBaselineFail=1 is intentional (1294b OCR overwrite RED, out of scope). TS: 0 errors."
+  "lastFixApplied": "FIX-1357: 1294b RED-8 resolved. Baseline: 7761 pass / 0 fail — merged 2026-04-28.",
+  "currentSprintNotes": "2026-04-28 Sprint 1358 started. 1358a (bctcOverdueCheckJob) + 1358b (bctcQueueEnricherJob) in Todo. testBaselineFail=0."
 }

@@ -44,8 +44,8 @@
 
 | Task ID | Title | Priority | Type | Owner | Related Reports |
 |---------|-------|----------|------|-------|-----------------|
-| ~~1346b~~ | ~~Fix push-foreign-flow UNIQUE constraint~~ | ~~HIGH~~ | ~~FIX~~ | ~~Developer~~ | 1310, 1312 — DONE 2026-04-27 |
-| ~~1346e~~ | ~~Cascade gap: DSC + VPBankS/OKX → market-wide impact~~ | ~~MEDIUM~~ | ~~BACKLOG~~ | ~~BA~~ | 1314, 1315 — closed by 1348a |
+| 1358a | bctcOverdueCheckJob: 8 gap tests, DI via RunOptions | MEDIUM | TEST | Developer | docs/handoffs/TASK_1358a.md |
+| 1358b | bctcQueueEnricherJob: 8 gap tests, DI via discoverOptions | MEDIUM | TEST | Developer | docs/handoffs/TASK_1358b.md |
 
 ---
 
