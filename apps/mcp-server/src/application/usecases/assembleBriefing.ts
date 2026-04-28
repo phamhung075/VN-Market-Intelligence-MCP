@@ -18,6 +18,7 @@ import type { Database } from "bun:sqlite";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { logger } from "../../infrastructure/logger.js";
+import { VN_OFFSET_MS } from "../../domain/services/timeConstants.js";
 import type { BriefingPredictionSignal } from "../../infrastructure/db/predictionStore.js";
 import { generateSparkline } from "../../domain/services/sparkline.js";
 import {
@@ -367,7 +368,7 @@ interface FiledAtRow {
 function midnightVietnamAsUtc(): string {
   const now = new Date();
   // Shift to Vietnam clock
-  const vnNow = new Date(now.getTime() + 7 * 3600_000);
+  const vnNow = new Date(now.getTime() + VN_OFFSET_MS);
   // Construct midnight in Vietnam as UTC
   const midnight = new Date(
     Date.UTC(
@@ -379,7 +380,7 @@ function midnightVietnamAsUtc(): string {
       0,
       0,
     ) -
-      7 * 3600_000,
+      VN_OFFSET_MS,
   );
   return midnight.toISOString();
 }
@@ -388,7 +389,7 @@ function midnightVietnamAsUtc(): string {
  * Returns today's date in Vietnam timezone as a YYYY-MM-DD string.
  */
 function todayVietnam(): string {
-  const vnNow = new Date(new Date().getTime() + 7 * 3600_000);
+  const vnNow = new Date(new Date().getTime() + VN_OFFSET_MS);
   const y = vnNow.getUTCFullYear();
   const m = String(vnNow.getUTCMonth() + 1).padStart(2, "0");
   const d = String(vnNow.getUTCDate()).padStart(2, "0");

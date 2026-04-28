@@ -19,6 +19,7 @@ import type { Database } from "bun:sqlite";
 import { readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { logger } from "../../infrastructure/logger.js";
+import { VN_OFFSET_MS } from "../../domain/services/timeConstants.js";
 
 // ── Interfaces ────────────────────────────────────────────────────────────────
 
@@ -109,9 +110,8 @@ export async function getPipelineHealth(
   const reportsDir = options.reportsDir ?? join(process.cwd(), "reports");
 
   // ── GMT+7 day boundary ─────────────────────────────────────────────────────
-  const OFFSET_MS = 7 * 3600 * 1000;
   const todayStartUtcMs =
-    Math.floor((nowMs + OFFSET_MS) / 86_400_000) * 86_400_000 - OFFSET_MS;
+    Math.floor((nowMs + VN_OFFSET_MS) / 86_400_000) * 86_400_000 - VN_OFFSET_MS;
   const yesterdayStartUtcMs = todayStartUtcMs - 86_400_000;
   const todayStartIso = new Date(todayStartUtcMs).toISOString();
   const yesterdayStartIso = new Date(yesterdayStartUtcMs).toISOString();

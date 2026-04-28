@@ -21,6 +21,7 @@ import { Database } from "bun:sqlite";
 import { existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { getCurrentDeadline } from "../../domain/services/financial-reports/earningsCalendar.js";
+import { VN_OFFSET_MS } from "../../domain/services/timeConstants.js";
 import { recordJobRun } from "../../infrastructure/db/cronJobRunStore.js";
 import { deleteOldReports } from "../../infrastructure/db/telegramReportStore.js";
 
@@ -213,7 +214,7 @@ function insertFeedbackIfNew(db: Database, finding: AuditFinding): void {
 
 function formatTimestampGMT7(): string {
   const now = new Date();
-  const gmt7 = new Date(now.getTime() + 7 * 3600_000);
+  const gmt7 = new Date(now.getTime() + VN_OFFSET_MS);
   const yyyy = gmt7.getUTCFullYear();
   const mm = String(gmt7.getUTCMonth() + 1).padStart(2, "0");
   const dd = String(gmt7.getUTCDate()).padStart(2, "0");

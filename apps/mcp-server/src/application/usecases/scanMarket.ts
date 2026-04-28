@@ -14,6 +14,7 @@
  */
 
 import { detectSignals } from "../../domain/services/signalDetector.js";
+import { VN_OFFSET_MS } from "../../domain/services/timeConstants.js";
 import type { MarketSnapshot } from "../../domain/services/signalDetector.js";
 import { generateAlerts } from "../../domain/services/alertGenerator.js";
 import { storeAlerts } from "../../infrastructure/db/alertStore.js";
@@ -548,7 +549,7 @@ export async function scanMarket(
     // Store conviction history (task 150)
     try {
       const db = getDb();
-      const vnNow = new Date(Date.now() + 7 * 3600_000);
+      const vnNow = new Date(Date.now() + VN_OFFSET_MS);
       const dateStr = `${vnNow.getUTCFullYear()}-${String(vnNow.getUTCMonth() + 1).padStart(2, "0")}-${String(vnNow.getUTCDate()).padStart(2, "0")}`;
       db.prepare(`INSERT OR REPLACE INTO conviction_history (symbol, date, peak_score, dominant_signal, created_at)
         VALUES (?, ?, ?, ?, ?)`).run(price.code, dateStr, conviction.score, conviction.direction, new Date().toISOString());

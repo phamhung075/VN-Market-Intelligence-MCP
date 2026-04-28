@@ -18,6 +18,7 @@
 
 import type { Database } from "bun:sqlite";
 import { logger } from "../../infrastructure/logger.js";
+import { VN_OFFSET_MS } from "../../domain/services/timeConstants.js";
 import {
   isSchedulerLockFresh,
   acquireSchedulerLock,
@@ -140,7 +141,7 @@ function fmtVndSigned(n: number): string {
  * Returns the current week's Monday and Sunday as DD/MM strings (Vietnam time).
  */
 function currentWeekRange(): { weekStart: string; weekEnd: string } {
-  const now = new Date(Date.now() + 7 * 3600_000); // shift to Vietnam clock
+  const now = new Date(Date.now() + VN_OFFSET_MS); // shift to Vietnam clock
   const dayOfWeek = now.getUTCDay(); // 0=Sun, 1=Mon, ..., 6=Sat
   // Days back to Monday
   const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;

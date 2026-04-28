@@ -41,6 +41,7 @@ import type { ForeignFlowUpsertItem, WriteForeignFlowItem } from "../../domain/m
 import { writeForeignFlowToOhlcv } from "../../infrastructure/db/ohlcvForeignFlowStore.js";
 import { buildForeignFlowStatusResponse } from "./foreignFlowStatusHandler.js";
 import { validateForeignFlowPayload } from "../../domain/services/market-data/foreignFlowValidator.js";
+import { VN_OFFSET_MS } from "../../domain/services/timeConstants.js";
 import { breakers } from "../../infrastructure/circuitBreakerRegistry.js";
 
 /** ISO date string (YYYY-MM-DD) of the last stale-ticker WORK notification. Reset daily. */
@@ -494,7 +495,7 @@ export async function createBunServer(
         `);
 
         const now = new Date().toISOString();
-        const vnDate = new Date(Date.now() + 7 * 3600_000).toISOString().slice(0, 10);
+        const vnDate = new Date(Date.now() + VN_OFFSET_MS).toISOString().slice(0, 10);
         let count = 0;
         for (const p of prices) {
           if (!p.code || p.price == null) continue;
