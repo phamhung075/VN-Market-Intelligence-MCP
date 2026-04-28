@@ -129,6 +129,8 @@ export interface PollNewsOptions {
   reutersLastPushTs?: Date | null;
   /** All-sources-dark alert callback (injectable for tests). Task 1345a. */
   onAllSourcesDark?: (message: string) => Promise<void>;
+  /** Clock override for testing the 4h cooldown boundary. Task 1398. */
+  nowMs?: () => number;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -627,13 +629,31 @@ export async function pollNews(options: PollNewsOptions = {}): Promise<PollNewsR
 
   const fetched = allItems.length;
 
-  // ── Task 1345a: All-sources-dark detection ───────────────────────────────
+  // ── Task 1345a / 1398: All-sources-dark detection ───────────────────────
   // When every fetcher returned 0 items, send a single Telegram bug alert.
-  // Deduped to one alert per 4-hour window to prevent alert flood.
+  // Deduped to one alert per 4-hour window. Task 1398 adds a DB-backed guard
+  // (via cron_job_runs) that persists the last-sent timestamp across restarts,
+  // preventing re-alert floods when the server restarts during a sustained outage.
   if (allItems.length === 0) {
-    const now = Date.now();
-    if (now - _lastAllDarkAlertAt >= ALL_DARK_ALERT_COOLDOWN_MS) {
+    const now = options.nowMs?.() ?? Date.now();
+    // DB-backed last-sent: read MAX(started_at) for the cooldown key
+    const dbRow = (() => {
+      try {
+        return db.prepare(
+          `SELECT MAX(started_at) AS ts FROM cron_job_runs WHERE job_name = 'pollNews_all_sources_dark'`,
+        ).get() as { ts: string | null } | undefined;
+      } catch { return undefined; }
+    })();
+    const dbLastMs = dbRow?.ts ? new Date(dbRow.ts).getTime() : 0;
+    const lastSentMs = Math.max(_lastAllDarkAlertAt, dbLastMs);
+    if (now - lastSentMs >= ALL_DARK_ALERT_COOLDOWN_MS) {
       _lastAllDarkAlertAt = now;
+      // Persist send timestamp to DB so cross-restart cooldown is enforced (Task 1398)
+      try {
+        db.prepare(
+          `INSERT INTO cron_job_runs (job_name, started_at, status) VALUES ('pollNews_all_sources_dark', strftime('%Y-%m-%dT%H:%M:%SZ','now'), 'success')`,
+        ).run();
+      } catch { /* best-effort — table may not exist in legacy DBs */ }
       const darkMsg =
         "[pollNews] All news sources returned 0 items — possible VPS/network outage. " +
         `Sources checked: ${Object.keys(resolvedFetchers).join(", ")}`;
