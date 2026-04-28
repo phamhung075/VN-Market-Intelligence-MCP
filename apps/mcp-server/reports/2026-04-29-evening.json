@@ -1,0 +1,27 @@
+{
+  "date": "2026-04-29",
+  "topAlerts": [],
+  "topStories": [],
+  "watchlistMovers": [],
+  "predictionSignals": [],
+  "predictionDiag": {
+    "stored": 0
+  },
+  "taDiag": {
+    "tickersWithSignal": 0,
+    "tickersBelowThreshold": 0,
+    "ohlcvRowsMin": 0,
+    "ohlcvRowsMax": 0
+  },
+  "taSummary": [],
+  "newsCount": 0,
+  "generatedAt": "2026-04-28T21:28:13.404Z",
+  "vnIndex": {
+    "close": 1300,
+    "change": 15,
+    "changePct": 1.17,
+    "fetchedAt": "2026-04-18T15:30:00.000Z"
+  },
+  "portfolioPnl": null,
+  "foreignFlowMovers": []
+}
