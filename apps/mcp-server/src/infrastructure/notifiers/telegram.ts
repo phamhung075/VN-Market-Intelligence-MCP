@@ -21,6 +21,7 @@
 import type { Alert } from "../../domain/services/alertGenerator.js";
 import type { ConvictionResult } from "../../domain/services/convictionScorer.js";
 import { detectSensitiveDates } from "../../domain/services/financial-reports/priceNewsValidator.js";
+import { VN_OFFSET_MS } from "../../domain/services/timeConstants.js";
 import { createLogger } from "../logger.js";
 import { getPatternSummary } from "../../application/usecases/getPatternSummary.js";
 import { getDb } from "../db/index.js";
@@ -449,7 +450,7 @@ function formatAlertMessage(alert: Alert): string {
   const stockCode = alert.actionCode;
 
   const now = new Date(alert.createdAt);
-  const gmt7 = new Date(now.getTime() + 7 * 60 * 60 * 1000);
+  const gmt7 = new Date(now.getTime() + VN_OFFSET_MS);
   const dd = String(gmt7.getUTCDate()).padStart(2, "0");
   const mm = String(gmt7.getUTCMonth() + 1).padStart(2, "0");
   const hh = String(gmt7.getUTCHours()).padStart(2, "0");
