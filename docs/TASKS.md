@@ -2,7 +2,15 @@
 
 Active sprint board. Completed tasks → `docs/TASKS_ARCHIVE.md`.
 
-_Last updated: 2026-04-28 by QA (task 1400 pass 3 merged)_
+_Last updated: 2026-04-28 by QA (task 1407 merged — foreignFlow CB three-fix)_
+
+---
+
+## Sprint 1407 — Done
+
+| Task | Title | Status | Agent | Source |
+|------|-------|--------|-------|--------|
+| 1407 | foreignFlow CB: market-hours gate + reset tool + 10min HALF_OPEN backoff | done | developer | qa |
 
 ---
 
