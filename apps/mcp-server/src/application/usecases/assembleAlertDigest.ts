@@ -132,6 +132,23 @@ function severityWeight(severity: string): number {
 }
 
 /**
+ * Returns true when the message is a price_drop entry.
+ * Detection: presence of "Giá giảm" substring (case-sensitive).
+ */
+function isPriceDrop(msg: string): boolean {
+  return msg.includes("Giá giảm");
+}
+
+/**
+ * Returns true when the message represents a cumulative price move.
+ * Detection: "lũy kế" or "luy ke" (ASCII transliteration), case-insensitive.
+ */
+function isCumulative(msg: string): boolean {
+  const lower = msg.toLowerCase();
+  return lower.includes("lũy kế") || lower.includes("luy ke");
+}
+
+/**
  * Build the formatted Vietnamese digest text from the computed data.
  */
 export function formatAlertDigest(
@@ -158,8 +175,22 @@ export function formatAlertDigest(
   for (const block of stockBlocks) {
     const label = block.code === "(khac)" ? "(khac)" : block.code;
     lines.push(`${label} — ${block.count} cảnh báo:`);
+    let priceDropSeen = false;
     for (const msg of block.topMessages) {
-      lines.push(`  - ${msg}`);
+      let prefix = "";
+      if (isCumulative(msg)) {
+        // Cumulative entry — always labelled; does NOT consume the "first drop" slot
+        prefix = "(lũy kế) ";
+      } else if (isPriceDrop(msg)) {
+        if (priceDropSeen) {
+          // Second or later incremental price_drop in this block
+          prefix = "(+thêm) ";
+        } else {
+          // First incremental price_drop — no prefix, but mark seen
+          priceDropSeen = true;
+        }
+      }
+      lines.push(`  - ${prefix}${msg}`);
     }
     if (block.overflow > 0) {
       lines.push(`  (và ${block.overflow} cảnh báo khác)`);

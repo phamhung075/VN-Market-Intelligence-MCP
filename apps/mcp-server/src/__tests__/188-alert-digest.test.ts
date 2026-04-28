@@ -451,6 +451,138 @@ describe("Task 188 — Daily Alert Digest", () => {
     await expect(runAlertDigest(mockDigest)).resolves.toBeUndefined();
   });
 
+  // ── TC-1: Single price_drop — no qualifier ────────────────────────────────
+  it("TC-1: single price_drop alert renders without any qualifier", async () => {
+    const actions = JSON.stringify([{ code: "GAS" }]);
+    seedAlert(db, {
+      affected_actions_json: actions,
+      severity: "high",
+      message: "Giá giảm ↓1.2% (45.500 → 44.954 VND)",
+    });
+
+    const digest = await assembleAlertDigest({ db });
+
+    expect(digest.text).toContain("Giá giảm ↓1.2%");
+    expect(digest.text).not.toContain("(+thêm)");
+    expect(digest.text).not.toContain("(lũy kế)");
+  });
+
+  // ── TC-2: Two incremental price_drop — second gets (+thêm) ────────────────
+  it("TC-2: two incremental price_drop alerts — second rendered entry gets (+thêm)", async () => {
+    const actions = JSON.stringify([{ code: "GAS" }]);
+    const baseTime = Date.now();
+    // Alert A is older (triggered 5 min before Alert B)
+    seedAlert(db, {
+      affected_actions_json: actions,
+      severity: "high",
+      message: "Giá giảm ↓1.2% (45.500 → 44.954 VND)",
+      triggered_at: new Date(baseTime - 5 * 60_000).toISOString(),
+    });
+    // Alert B is newer
+    seedAlert(db, {
+      affected_actions_json: actions,
+      severity: "high",
+      message: "Giá giảm ↓2.4% (44.954 → 43.866 VND)",
+      triggered_at: new Date(baseTime).toISOString(),
+    });
+
+    const digest = await assembleAlertDigest({ db });
+
+    // Most recent (↓2.4%) is rendered first — no qualifier
+    expect(digest.text).toContain("  - Giá giảm ↓2.4%");
+    // Older (↓1.2%) is rendered second — gets (+thêm)
+    expect(digest.text).toContain("  - (+thêm) Giá giảm ↓1.2%");
+    expect(digest.text).not.toContain("(lũy kế)");
+  });
+
+  // ── TC-3: Cumulative price_drop message — gets (lũy kế) ───────────────────
+  it("TC-3: cumulative price_drop message is prefixed with (lũy kế)", async () => {
+    const actions = JSON.stringify([{ code: "GAS" }]);
+    const baseTime = Date.now();
+    seedAlert(db, {
+      affected_actions_json: actions,
+      severity: "high",
+      message: "Giá giảm ↓1.2% (45.500 → 44.954 VND)",
+      triggered_at: new Date(baseTime - 60_000).toISOString(),
+    });
+    seedAlert(db, {
+      affected_actions_json: actions,
+      severity: "high",
+      message: "Giá giảm ↓3.6% lũy kế từ mở cửa (45.500 → 43.866 VND)",
+      triggered_at: new Date(baseTime).toISOString(),
+    });
+
+    const digest = await assembleAlertDigest({ db });
+
+    expect(digest.text).toContain("(lũy kế) Giá giảm ↓3.6%");
+    // Non-cumulative message has no qualifier
+    expect(digest.text).toContain("  - Giá giảm ↓1.2%");
+    expect(digest.text).not.toContain("(+thêm)");
+  });
+
+  // ── TC-4: Mixed alert types — only price_drop lines labelled ──────────────
+  it("TC-4: mixed types in same block — (+thêm) appears exactly once, volume_spike unlabelled", async () => {
+    const actions = JSON.stringify([{ code: "GAS" }]);
+    const baseTime = Date.now();
+    // Oldest price_drop
+    seedAlert(db, {
+      affected_actions_json: actions,
+      severity: "high",
+      message: "Giá giảm ↓1.2% (45.500 → 44.954 VND)",
+      triggered_at: new Date(baseTime - 10 * 60_000).toISOString(),
+    });
+    // Mid price_drop
+    seedAlert(db, {
+      affected_actions_json: actions,
+      severity: "high",
+      message: "Giá giảm ↓2.4% (44.954 → 43.866 VND)",
+      triggered_at: new Date(baseTime - 5 * 60_000).toISOString(),
+    });
+    // Volume spike (medium severity — sorts after both high-severity drops)
+    seedAlert(db, {
+      affected_actions_json: actions,
+      severity: "medium",
+      message: "KL bất thường 3.2× TB (1.200.000 / TB 375.000)",
+      triggered_at: new Date(baseTime).toISOString(),
+    });
+
+    const digest = await assembleAlertDigest({ db });
+
+    // Count occurrences of "(+thêm)" — must be exactly 1
+    const matches = digest.text.match(/\(\+thêm\)/g);
+    expect(matches).not.toBeNull();
+    expect(matches!.length).toBe(1);
+
+    // The volume_spike line must have no qualifier prefix
+    const vLine = digest.text.split("\n").find((l) => l.includes("KL bất thường"));
+    expect(vLine).toBeDefined();
+    expect(vLine).not.toContain("(+thêm)");
+    expect(vLine).not.toContain("(lũy kế)");
+  });
+
+  // ── TC-5 (regression): Non-price_drop-only block — no qualifiers added ────
+  it("TC-5: price_surge-only block has no qualifiers", async () => {
+    const actions = JSON.stringify([{ code: "FPT" }]);
+    const baseTime = Date.now();
+    seedAlert(db, {
+      affected_actions_json: actions,
+      severity: "high",
+      message: "Giá tăng ↑1.5% (50.000 → 50.750 VND)",
+      triggered_at: new Date(baseTime - 5 * 60_000).toISOString(),
+    });
+    seedAlert(db, {
+      affected_actions_json: actions,
+      severity: "high",
+      message: "Giá tăng ↑3.0% (50.000 → 51.500 VND)",
+      triggered_at: new Date(baseTime).toISOString(),
+    });
+
+    const digest = await assembleAlertDigest({ db });
+
+    expect(digest.text).not.toContain("(+thêm)");
+    expect(digest.text).not.toContain("(lũy kế)");
+  });
+
   // ── 16: stockBlocks are sorted by count DESC ─────────────────────────────
   it("stockBlocks are sorted by alert count DESC", async () => {
     const vcbActions = JSON.stringify([{ code: "VCB" }]);
