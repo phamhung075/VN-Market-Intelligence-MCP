@@ -88,5 +88,6 @@
 | 1388 | Fix foreignFlow CB auto-reset — halfOpenMaxAttempts:1 (single probe closes after DB fix) — 5 new tests | main 2026-04-28 | reports/TASK_REPORT_1388.md |
 | 1390 | Fix OHLCV volume bug — MAX(volume) not COUNT(*) of ticks; 3 new regression tests + 2 updated assertions | main 2026-04-28 | reports/TASK_REPORT_1390.md |
 | 1377 | Fix alert-digest double-send — replace in-memory _lastDigestSentDate with DB-backed alreadySentToday() against cron_job_runs; 2 new dedup tests | main 2026-04-28 | reports/TASK_REPORT_1377.md |
+| 1391 | FIX: bbAlertScanJob stale-candle guard — skip ticker when lastCandle.day != today; prevents inverted-direction alert messages (FPT msg 335); 3 new tests | main 2026-04-28 | reports/TASK_REPORT_1391.md |
 
 ---
