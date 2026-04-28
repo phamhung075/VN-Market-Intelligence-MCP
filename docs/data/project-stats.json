@@ -1,15 +1,15 @@
 {
   "_maintained_by": "PM / system-auditor",
   "_trigger": "sprint start/end, tool/cron count change, baseline test update",
-  "lastUpdated": "2026-04-28T00:00:00Z",
+  "lastUpdated": "2026-04-28T02:00:00Z",
   "currentSprint": 1356,
   "previousSprint": { "number": 1355, "status": "DONE", "progressTasks": "Sprint 1355: Scheduler gap tests — monthlySignalQualityJob + davPharmacyJob. +16 new tests. Baseline: 7737 pass / 0 fail." },
-  "sprintGoal": "Sprint 1356 — Scheduler gap tests: patternWatchJob + trackSessionToolUsageJob (16 new tests)",
-  "testBaseline": 7753,
-  "testBaselineTarget": 7753,
-  "testBaselinePass": 7753,
-  "testBaselineFail": 0,
-  "testFailures": 0,
+  "sprintGoal": "fix/317+1288 — 3 pre-existing test failures resolved + 6 TS errors cleared. New baseline: 7739 pass / 1 intentional RED (1294b) / 0 TS errors.",
+  "testBaseline": 7739,
+  "testBaselineTarget": 7739,
+  "testBaselinePass": 7739,
+  "testBaselineFail": 1,
+  "testFailures": 1,
   "toolCount": 108,
   "schedulerFileCount": 51,
   "knowledgeFileCount": 15,
@@ -20,6 +20,6 @@
   "briefingFilesCreated": 30,
   "briefingArchiveQI": 0,
   "briefingArchiveQII": 0,
-  "lastFixApplied": "Sprint 1356 COMPLETE: scheduler gap tests — 1356a (patternWatchJob 8 gap tests) + 1356b (trackSessionToolUsageJob 8 gap tests). New baseline: 7753 pass / 0 fail — merged 2026-04-28",
-  "currentSprintNotes": "2026-04-28 SPRINT 1356 COMPLETE: 16 gap tests merged for patternWatchJob + trackSessionToolUsageJob. Baseline: 7753 pass / 0 fail."
+  "lastFixApplied": "fix/317+1288: 3 pre-existing test failures (317 notifyUser x2, 1288 foreign-flow fallback) + 6 TS errors (1348a AnalysisLevel/DomainType + 1352b exactOptionalPropertyTypes) — merged 2026-04-28. New baseline: 7739 pass / 1 intentional RED (1294b) / 0 TS errors.",
+  "currentSprintNotes": "2026-04-28 fix/317+1288 MERGED: 3 pre-existing failures fixed. testBaselineFail=1 is intentional (1294b OCR overwrite RED, out of scope). TS: 0 errors."
 }

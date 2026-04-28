@@ -36,6 +36,7 @@
 - **1350a:** Fix 73 failing tests (mock.module schema leak + missing watchdog reader injections + stale sprint assertions) — 5 test files only, 26/26 targeted tests pass, 7568 pass / 0 fail full suite — APPROVED + merged 2026-04-27
 - **1351b–1351c:** Sprint 1351 — Scheduler test coverage phase 1: vpsProxyWatchdogJob gap tests (1351b: 8 tests) + weatherCheckJob gap tests (1351c: 8 tests) — 16 new tests total, 7598 pass / 0 new fail full suite — ALL APPROVED + merged 2026-04-27
 - **1352–1355b:** Scheduler gap-fill wave 2 — BCTC-LOG OCR visibility, imfIndicatorPollerJob DI (1353a), priceUpdateWatchdogJob SSH cooldown (1353b), parallelServiceDispatcherJob DI (1354a), freshnessSlaMonitorJob helpers (1354b), monthlySignalQualityJob (1355a), davPharmacyJob mock.module (1355b) — ALL MERGED 2026-04-28 (7737 pass / 0 fail)
+- **fix/317+1288:** Fix 3 pre-existing test failures (317-telegram-routing x2, 1288-foreign-flow-fallback) + 6 TypeScript errors (1348a AnalysisLevel/DomainType, 1352b exactOptionalPropertyTypes) — MERGED 2026-04-28 (7739 pass / 1 intentional RED 1294b / 0 TS errors)
 
 ---
 
@@ -73,5 +74,6 @@
 | 1355b | davPharmacyJob 8 gap tests (DAV-1–DAV-8), mock.module strategy | main 2026-04-28 | — |
 | 1356a | patternWatchJob 8 gap tests (PWJ-1–PWJ-8), mock.module strategy | main 2026-04-28 | reports/TASK_REPORT_1356a.md |
 | 1356b | trackSessionToolUsageJob gap tests (8 cases, constructor DI) | main 2026-04-28 | reports/TASK_REPORT_1356b.md |
+| fix/317+1288 | Fix 3 pre-existing test failures (317 notifyUser x2, 1288 fallback) + TS errors (1348a/1352b) | main 2026-04-28 | — |
 
 ---
