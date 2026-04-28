@@ -50,6 +50,12 @@ function graphemeSlice(text: string, maxGraphemes: number): string {
 /**
  * Core smart-truncation logic shared by all factory methods.
  *
+ * Rules (in order):
+ *  1. Word-boundary: backtrack to last space before the grapheme limit.
+ *  2. Quote-boundary: if the cut point falls inside an open `"..."` pair,
+ *     backtrack further to before the opening `"`.
+ *  3. Append "…" only when actually truncated.
+ *
  * @param text     Input string (may be empty/undefined)
  * @param maxLen   Maximum number of graphemes to allow
  * @returns        Possibly-truncated string, "…" appended iff truncated
@@ -61,10 +67,24 @@ function smartTruncate(text: string, maxLen: number): string {
   // Slice to maxLen graphemes, then backtrack to word boundary
   const sliced = graphemeSlice(text, maxLen);
   const lastSpace = sliced.lastIndexOf(" ");
-  if (lastSpace > 0) {
-    return sliced.slice(0, lastSpace) + "…";
+  let candidate = lastSpace > 0 ? sliced.slice(0, lastSpace) : sliced;
+
+  // Quote-boundary: if candidate ends with or contains an unclosed " (Vietnamese "…")
+  // check whether the cut falls inside an open double-quote pair.
+  const openIdx = candidate.lastIndexOf('"');
+  if (openIdx !== -1) {
+    // Count quotes in the candidate; if odd, we're inside an open quote
+    const quoteCount = (candidate.match(/"/g) ?? []).length;
+    if (quoteCount % 2 !== 0) {
+      // Truncate before the unmatched opening quote
+      const beforeQuote = candidate.slice(0, openIdx).trimEnd();
+      if (beforeQuote.length > 0) {
+        candidate = beforeQuote;
+      }
+    }
   }
-  return sliced + "…";
+
+  return candidate + "…";
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
