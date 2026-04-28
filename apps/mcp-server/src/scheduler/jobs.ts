@@ -368,9 +368,14 @@ export function startScheduler() {
   }, { timezone: 'Asia/Ho_Chi_Minh' })
 
   // 21:00 — Alert digest (weekdays Mon-Fri only) — task 188
+  // DB-backed dedup guard: runAlertDigest receives the same db instance so it
+  // can check cron_job_runs for a success row from an earlier run today.
+  // recordJobRun writes the success row after the callback completes, so a
+  // second invocation (e.g. after a server restart) finds the row and skips.
+  // task 1377.
   cron.schedule(CRONS.alertDigest, async () => {
     await recordJobRun(getDb(), 'alertDigestJob', async () => {
-      await runAlertDigest()
+      await runAlertDigest(undefined, getDb())
     })
   }, { timezone: 'Asia/Ho_Chi_Minh' })
 

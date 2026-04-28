@@ -5,27 +5,52 @@
  * Registered in `jobs.ts` at 21:00 Asia/Ho_Chi_Minh weekdays (0 21 * * 1-5).
  *
  * Steps:
- *   1. Assemble the 24h alert digest.
- *   2. If Telegram is configured, send the digest text via the notifier.
- *   3. If Telegram is not configured, log a notice and skip sending.
+ *   1. DB-backed dedup: if cron_job_runs already has a success row for
+ *      alertDigestJob today, skip entirely (survives server restarts).
+ *   2. Assemble the 24h alert digest.
+ *   3. If Telegram is configured, send the digest text via the notifier.
+ *   4. If Telegram is not configured, log a notice and skip sending.
  *
- * A concurrency guard prevents a second invocation from starting while the
- * previous digest is still assembling.
+ * Two guards prevent duplicate sends:
+ *   - DB guard (primary): checks cron_job_runs for today's success row.
+ *   - In-memory concurrency guard: prevents overlap within the same process.
  *
  * Layer: interface/scheduler — imports from application/usecases and
  * infrastructure/notifiers only.
  */
 
+import type { Database } from "bun:sqlite";
 import type { AlertDigest } from "../../application/usecases/assembleAlertDigest.js";
 import { logger } from "../../infrastructure/logger.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Concurrency guard
+// Guards
 // ─────────────────────────────────────────────────────────────────────────────
 
 let _running = false;
-/** Date string of last digest sent — prevents duplicates on restart/re-trigger. */
-let _lastDigestSentDate = "";
+
+/**
+ * DB-backed dedup: returns true when a success row for alertDigestJob exists
+ * in cron_job_runs for today's UTC date. Fail-open: if the table is missing
+ * or the query throws, returns false so the digest proceeds rather than being
+ * silently suppressed.
+ */
+function alreadySentToday(db: Database): boolean {
+  try {
+    const row = db
+      .prepare<{ cnt: number }, []>(
+        `SELECT COUNT(*) AS cnt
+         FROM cron_job_runs
+         WHERE job_name = 'alertDigestJob'
+           AND status   = 'success'
+           AND started_at >= date('now')`,
+      )
+      .get();
+    return (row?.cnt ?? 0) > 0;
+  } catch {
+    return false; // fail-open: do not suppress when guard cannot run
+  }
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Public API
@@ -38,13 +63,25 @@ let _lastDigestSentDate = "";
  * `assembleAlertDigest` in tests, which would trigger DB dependencies).
  * In production the default `digestFn` dynamically imports `assembleAlertDigest`.
  *
+ * Accepts an optional `db` for testing the DB-backed dedup guard. In
+ * production `jobs.ts` passes `getDb()` via the `recordJobRun` wrapper,
+ * so the success row is written after each successful send.
+ *
  * @param digestFn - Optional override for the digest function (injectable for tests)
+ * @param db       - Optional DB instance for the dedup guard (injectable for tests)
  */
 export async function runAlertDigest(
   digestFn?: () => Promise<AlertDigest>,
+  db?: Database,
 ): Promise<void> {
   if (_running) {
     logger.warn("[alertDigestJob] already running — skipping");
+    return;
+  }
+
+  // DB-backed dedup: primary guard — survives server restarts
+  if (db && alreadySentToday(db)) {
+    logger.debug("[alertDigestJob] digest already sent today (DB guard) — skipping");
     return;
   }
 
@@ -77,12 +114,6 @@ export async function runAlertDigest(
       return;
     }
 
-    // Daily dedup: don't send the same date's digest twice
-    if (_lastDigestSentDate === digest.date) {
-      logger.debug("[alertDigestJob] digest already sent today — skipping");
-      return;
-    }
-
     // Attempt to send via Telegram if configured
     try {
       const { sendTelegram } = await import(
@@ -95,7 +126,6 @@ export async function runAlertDigest(
           "[alertDigestJob] (Telegram chua duoc cau hinh) — digest not sent",
         );
       } else {
-        _lastDigestSentDate = digest.date;
         logger.info("[alertDigestJob] digest sent via Telegram");
       }
     } catch (telegramErr) {

@@ -276,6 +276,87 @@ describe("Task 188 — Daily Alert Digest", () => {
   });
 
   // ── 12: Concurrency guard ────────────────────────────────────────────────
+  it("DB dedup guard: skips send when cron_job_runs already has a success row for today", async () => {
+    const { runAlertDigest } = await import("../scheduler/alerts/alertDigestJob.js");
+
+    // Set up a DB with cron_job_runs containing a success row for alertDigestJob today
+    const dedupDb = new Database(":memory:");
+    dedupDb.exec(`
+      CREATE TABLE IF NOT EXISTS cron_job_runs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        job_name TEXT NOT NULL,
+        started_at TEXT NOT NULL,
+        finished_at TEXT,
+        status TEXT NOT NULL DEFAULT 'running',
+        rows_written INTEGER,
+        error_msg TEXT,
+        duration_ms INTEGER
+      )
+    `);
+    dedupDb.exec(`
+      INSERT INTO cron_job_runs (job_name, started_at, status)
+      VALUES ('alertDigestJob', datetime('now'), 'success')
+    `);
+
+    let digestCalled = false;
+    const mockDigest = () => {
+      digestCalled = true;
+      return Promise.resolve<AlertDigest>({
+        date: new Date().toISOString().slice(0, 10),
+        totalCount: 5,
+        criticalCount: 1,
+        highCount: 2,
+        stockBlocks: [],
+        text: "test",
+        generatedAt: new Date().toISOString(),
+      });
+    };
+
+    await runAlertDigest(mockDigest, dedupDb);
+
+    expect(digestCalled).toBe(false);
+    dedupDb.close();
+  });
+
+  it("DB dedup guard: proceeds when no success row exists for today", async () => {
+    const { runAlertDigest } = await import("../scheduler/alerts/alertDigestJob.js");
+
+    // Empty cron_job_runs — no prior run today
+    const freshDb = new Database(":memory:");
+    freshDb.exec(`
+      CREATE TABLE IF NOT EXISTS cron_job_runs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        job_name TEXT NOT NULL,
+        started_at TEXT NOT NULL,
+        finished_at TEXT,
+        status TEXT NOT NULL DEFAULT 'running',
+        rows_written INTEGER,
+        error_msg TEXT,
+        duration_ms INTEGER
+      )
+    `);
+
+    let digestCalled = false;
+    const mockDigest = () => {
+      digestCalled = true;
+      return Promise.resolve<AlertDigest>({
+        date: new Date().toISOString().slice(0, 10),
+        totalCount: 0,
+        criticalCount: 0,
+        highCount: 0,
+        stockBlocks: [],
+        text: "Không có cảnh báo",
+        generatedAt: new Date().toISOString(),
+      });
+    };
+
+    await runAlertDigest(mockDigest, freshDb);
+
+    // totalCount=0 → skips Telegram but digest was still called
+    expect(digestCalled).toBe(true);
+    freshDb.close();
+  });
+
   it("concurrency guard skips second invocation if first is still running", async () => {
     const { runAlertDigest } = await import("../scheduler/alerts/alertDigestJob.js");
 
