@@ -273,7 +273,6 @@ describe("Task 1352b — Case 5: runForeignFlowFetcherJobCron recordJobRun wirin
       source: "primary" as const,
       changes: 7,
       timestamp: "2026-04-27T10:00:00Z",
-      warning: undefined,
     });
 
     const { runForeignFlowFetcherJobCron } = await import(

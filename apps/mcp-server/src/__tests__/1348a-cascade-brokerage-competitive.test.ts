@@ -22,7 +22,8 @@ import {
   buildCausalChain,
   type WatchlistEntry,
 } from "../domain/services/cascadeEngine.js";
-import type { AnalysisEntry } from "../domain/services/newsNormalizer.js";
+import type { AnalysisEntry, AnalysisLevel } from "../domain/services/newsNormalizer.js";
+import type { DomainType } from "../../bctc-schema.js";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -32,8 +33,8 @@ function makeSeed(
     impactScore?: number;
     sentiment?: "bullish" | "bearish" | "neutral";
     impactDirection?: "up" | "down" | "neutral";
-    level?: "company" | "sector" | "country" | "global";
-    affectedDomains?: string[];
+    level?: AnalysisLevel;
+    affectedDomains?: DomainType[];
   } = {}
 ): AnalysisEntry {
   return {
@@ -43,10 +44,10 @@ function makeSeed(
     sourceType: "news" as const,
     publishedAt: "2026-04-27T09:00:00Z",
     summary,
-    level: (opts.level ?? "country") as const,
-    sentiment: (opts.sentiment ?? "bearish") as const,
+    level: opts.level ?? "country",
+    sentiment: opts.sentiment ?? "bearish",
     impactScore: opts.impactScore ?? 4,
-    impactDirection: (opts.impactDirection ?? "down") as const,
+    impactDirection: opts.impactDirection ?? "down",
     confidence: 0.75,
     timeHorizon: "short" as const,
     reasoning: "test seed 1348a",
