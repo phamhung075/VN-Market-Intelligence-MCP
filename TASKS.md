@@ -35,6 +35,7 @@
 - **1349e:** Job cycle timings + ops metrics (jobMetrics.ts) — 10/10 tests pass, 100% coverage, wired into taAlertScanJob/bbAlertScanJob/macroIndicatorRefreshJob — APPROVED + merged 2026-04-27
 - **1350a:** Fix 73 failing tests (mock.module schema leak + missing watchdog reader injections + stale sprint assertions) — 5 test files only, 26/26 targeted tests pass, 7568 pass / 0 fail full suite — APPROVED + merged 2026-04-27
 - **1351b–1351c:** Sprint 1351 — Scheduler test coverage phase 1: vpsProxyWatchdogJob gap tests (1351b: 8 tests) + weatherCheckJob gap tests (1351c: 8 tests) — 16 new tests total, 7598 pass / 0 new fail full suite — ALL APPROVED + merged 2026-04-27
+- **1352–1355b:** Scheduler gap-fill wave 2 — BCTC-LOG OCR visibility, imfIndicatorPollerJob DI (1353a), priceUpdateWatchdogJob SSH cooldown (1353b), parallelServiceDispatcherJob DI (1354a), freshnessSlaMonitorJob helpers (1354b), monthlySignalQualityJob (1355a), davPharmacyJob mock.module (1355b) — ALL MERGED 2026-04-28 (7737 pass / 0 fail)
 
 ---
 
@@ -44,6 +45,7 @@
 |---------|-------|----------|------|-------|-----------------|
 | ~~1346b~~ | ~~Fix push-foreign-flow UNIQUE constraint~~ | ~~HIGH~~ | ~~FIX~~ | ~~Developer~~ | 1310, 1312 — DONE 2026-04-27 |
 | ~~1346e~~ | ~~Cascade gap: DSC + VPBankS/OKX → market-wide impact~~ | ~~MEDIUM~~ | ~~BACKLOG~~ | ~~BA~~ | 1314, 1315 — closed by 1348a |
+| 1356b | trackSessionToolUsageJob gap tests (8 cases, constructor DI) | HIGH | TEST | Developer | docs/handoffs/TASK_1356b.md |
 
 ---
 
@@ -62,29 +64,14 @@
 
 | Task ID | Title | Merged | Reports |
 |---------|-------|--------|---------|
-| 1352-BCTC-LOG | OCR health logging startup visibility + per-file retry + low-char warnings | main 2026-04-27 | reports/TASK_REPORT_1352c.md |
-| 1346a | Remove test stub from production scheduler | main 2026-04-27 | reports/TASK_REPORT_1346a.md — closes 1323 |
-| 1346b | Fix push-foreign-flow UNIQUE constraint | main 2026-04-27 | reports/TASK_REPORT_1346b.md — closes 1310, 1312 |
-| 1346c-b | NER suffix wiring + feedback retry + unknown stock_code | main 2026-04-27 | reports/TASK_REPORT_1346c-b.md — closes 1311, 1317, 1313 |
-| 1346c-a | Alert quality: volume spike + sentiment negation + VJC alias | main 2026-04-27 | reports/TASK_REPORT_1346c-a.md — closes 1320, 1321, 1322 |
-| 1347a | Test DB isolation guard + clean 2537 leaked rows | main 2026-04-27 | (merge(1347b) commit 428bc1bd) |
-| 1347b | Stock classification coverage expansion: 5→30 tickers | main 2026-04-27 | reports/TASK_REPORT_1347b.md — closes 1319 |
-| 1348a | Cascade brokerage/banking competitive signals (BK-1 + FR-3 affected_actions) | main 2026-04-27 | reports/TASK_REPORT_1348a.md — closes 1314, 1315 |
-| 1346d | PDF circuit breaker concurrent race fix + state-change logging | main 2026-04-27 | reports/TASK_REPORT_1346d.md — closes 1316 |
-| 1349a | Remove dead scheduler config block from mcp.config.json | main 2026-04-27 | reports/TASK_REPORT_1349a.md |
-| 1349b | Circuit breaker state logging + metrics (circuitBreakerLogger.ts) | main 2026-04-27 | reports/TASK_REPORT_1349b.md |
-| 1349d | BCTC validation edge cases (VAL-07–VAL-10) + QA TS fix | main 2026-04-27 | reports/TASK_REPORT_1349d.md |
-| 1349e | Job cycle timings + ops metrics (jobMetrics.ts) | main 2026-04-27 | reports/TASK_REPORT_1349e.md |
-| 1349c | Scheduler.md path corrections (docs/agent-memory/modules/scheduler.md) | main 2026-04-27 | — |
-| 1349f | Integration QA — Sprint 1349 observability (11/11 pass, 7471 baseline) | main 2026-04-27 | reports/TASK_REPORT_1349f.md |
-| 1350a | Fix 73 failing tests: mock.module leak + watchdog reader injection + stale sprint assertions | main 2026-04-27 | reports/TASK_REPORT_1350a.md |
-| 1351b | Gap-fill tests for vpsProxyWatchdogJob: Reuters/TE staleness + restored + notify-throws + _resetWatchdogStaleFlag | main 2026-04-27 | reports/TASK_REPORT_1351b.md |
-| 1351c | Gap-fill tests for weatherCheckJob: isTyphoonSeason boundaries + concurrency guard + error catch + zero-signal + reservoir averaging | main 2026-04-27 | reports/TASK_REPORT_1351c.md |
-| 1353a | imfIndicatorPollerJob DI overload (ImfPollerOptions) + 8 gap tests (empty fetch, circuit-breaker error, storeFn wiring, indicator_count, classifyFn I/O, 3x throw absorption) | main 2026-04-28 | reports/TASK_REPORT_1353a.md |
-| 1353b | priceUpdateWatchdogJob _resetSshCooldown export + 8 gap tests (SSH cooldown, null readPrice, notify failures, boundary hours) | main 2026-04-28 | reports/TASK_REPORT_1353b.md |
-| 1354a | parallelServiceDispatcherJob DispatcherDeps DI + 8 gap-fill tests (all-ok, TA fail, all-fail, weekday heartbeat, weekend no-heartbeat, empty watchlist, getDb throws) | main 2026-04-28 | reports/TASK_REPORT_1354a.md |
-| 1354b | freshnessSlaMonitorJob helper unit tests — 8 cases (SLA-1–SLA-8): getPriorBreaches, isEscalationCooldownActive, recordSlaBreach, recordSlaRecovery, markEscalationSent — in-memory DB, TS fix applied (TS2532 undefined guards) | main 2026-04-28 | — |
-| 1355a | monthlySignalQualityJob 8 gap tests (MSQ-1–MSQ-8): normal path, partial/all insert fail, fetch reject, empty signals, aggregation key, durationMs, sequencing | main 2026-04-28 | reports/TASK_REPORT_1355a.md |
-| 1355b | davPharmacyJob 8 gap tests (DAV-1–DAV-8): normal path, partial/all insert fail, fetch reject, empty approvals, null stock_code, durationMs, init sequencing — mock.module strategy, zero production changes | main 2026-04-28 | — |
+| 1351b | Gap-fill tests for vpsProxyWatchdogJob: 8 gap tests | main 2026-04-27 | reports/TASK_REPORT_1351b.md |
+| 1351c | Gap-fill tests for weatherCheckJob: 8 gap tests | main 2026-04-27 | reports/TASK_REPORT_1351c.md |
+| 1353a | imfIndicatorPollerJob DI overload + 8 gap tests | main 2026-04-28 | reports/TASK_REPORT_1353a.md |
+| 1353b | priceUpdateWatchdogJob _resetSshCooldown + 8 gap tests | main 2026-04-28 | reports/TASK_REPORT_1353b.md |
+| 1354a | parallelServiceDispatcherJob DispatcherDeps DI + 8 gap tests | main 2026-04-28 | reports/TASK_REPORT_1354a.md |
+| 1354b | freshnessSlaMonitorJob helper unit tests — 8 cases | main 2026-04-28 | — |
+| 1355a | monthlySignalQualityJob 8 gap tests (MSQ-1–MSQ-8) | main 2026-04-28 | reports/TASK_REPORT_1355a.md |
+| 1355b | davPharmacyJob 8 gap tests (DAV-1–DAV-8), mock.module strategy | main 2026-04-28 | — |
+| 1356a | patternWatchJob 8 gap tests (PWJ-1–PWJ-8), mock.module strategy | main 2026-04-28 | reports/TASK_REPORT_1356a.md |
 
 ---
