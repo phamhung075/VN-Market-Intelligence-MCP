@@ -187,7 +187,10 @@ async function coreSend(
   // NFD (decomposed) from macOS RSS feeds renders inconsistently in Telegram clients.
   // NFC (precomposed) is the safe form — single codepoint per character.
   const normalizedText = text.normalize("NFC");
-  const chunks = splitMessage(normalizedText);
+  // Strip HTML tags that may leak from agent-generated content (Task 1379).
+  // Telegram plain-text mode does not render HTML; raw tags appear verbatim to users.
+  const strippedText = normalizedText.replace(/<[^>]*>/g, "");
+  const chunks = splitMessage(strippedText);
   let lastMessageId = 0;
 
   for (const chunk of chunks) {
