@@ -685,7 +685,7 @@ export async function createBunServer(
 
             const { detectSignals } = await import("../../domain/services/signalDetector.js");
             const { generateAlerts } = await import("../../domain/services/alertGenerator.js");
-            const { storeAlerts } = await import("../../infrastructure/db/alertStore.js");
+            const { storeAlerts, shouldSkipAlreadyNotifiedAlert } = await import("../../infrastructure/db/alertStore.js");
             const { checkPriceAlerts } = await import("../../domain/services/priceAlertChecker.js");
 
             const signals: Array<import("../../domain/services/signalDetector.js").Signal> = [];
@@ -767,9 +767,16 @@ export async function createBunServer(
                 storeAlerts(alerts, db);
                 log.info("[push-prices] alerts stored", { count: alerts.length });
 
-                // Send HIGH/CRITICAL alerts to Telegram immediately
+                // Send HIGH/CRITICAL alerts to Telegram immediately.
+                // Guard: skip if the alert was already sent on a prior push
+                // (INSERT OR IGNORE deduplicates the DB row but the in-memory
+                // alert object is regenerated every push — task 1393).
                 for (const alert of alerts) {
                   if (alert.severity === "high" || alert.severity === "critical") {
+                    if (shouldSkipAlreadyNotifiedAlert(alert.id, db)) {
+                      log.debug("[push-prices] alert already notified — skipped", { id: alert.id });
+                      continue;
+                    }
                     try {
                       const sevLabel = alert.severity === "critical" ? "NGHIÊM TRỌNG" : "QUAN TRỌNG";
                       const msg = `[${sevLabel}] ${alert.message}`;
