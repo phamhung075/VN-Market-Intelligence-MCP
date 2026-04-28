@@ -35,6 +35,9 @@ services:
       - market_data:/app/data
       # Mount config
       - ./mcp.config.json:/app/mcp.config.json:ro
+      # Reports bind mount — ensures eveningSummaryJob output is visible on host and persists
+      # across container restarts. MCP tools + Claude agents read from this path.
+      - ./apps/mcp-server/reports:/app/reports
     environment:
       - NODE_ENV=production
       - HOST=0.0.0.0
