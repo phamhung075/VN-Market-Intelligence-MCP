@@ -37,8 +37,8 @@ import type { ForeignFlowUpsertItem } from "../../domain/models/shared-types.js"
  * were created before the `date` column was added to vnstock_trading_stats.
  * Called from index.ts after initDatabase(). Safe to call multiple times.
  */
-export function runVnstockMigrations(): void {
-  const db = getDb();
+export function runVnstockMigrations(injectedDb?: ReturnType<typeof getDb>): void {
+  const db = injectedDb ?? getDb();
   try {
     const cols = db
       .query<{ name: string }, []>("PRAGMA table_info(vnstock_trading_stats)")
@@ -55,6 +55,126 @@ export function runVnstockMigrations(): void {
     logger.warn("[vnstock-store] trading_stats date-column migration skipped", {
       error: err instanceof Error ? err.message : String(err),
     });
+  }
+
+  // Migration: remove stale UNIQUE(code) single-column constraint if present.
+  //
+  // Background: old production DBs have UNIQUE(code) in the original DDL, which
+  // manifests as sqlite_autoindex_vnstock_trading_stats_1. A later migration added
+  // uq_vnstats_code_date (UNIQUE on (code, date)) via CREATE UNIQUE INDEX.
+  //
+  // With both constraints in place, upsertForeignFlow's
+  //   ON CONFLICT(code, date) DO UPDATE SET …
+  // cannot handle UNIQUE(code) violations — SQLite fires the autoindex constraint
+  // first, throwing "UNIQUE constraint failed: vnstock_trading_stats.code" on every
+  // push that sends a ticker already present with any date.
+  //
+  // SQLite does not support DROP CONSTRAINT. The only fix is table rebuild:
+  //   RENAME → CREATE (UNIQUE(code,date) only) → INSERT SELECT → DROP old → done.
+  // Guard: only run when the DDL contains UNIQUE(code) as a standalone constraint.
+  try {
+    const ddlRow = db
+      .query<{ sql: string }, []>(
+        "SELECT sql FROM sqlite_master WHERE type='table' AND name='vnstock_trading_stats'",
+      )
+      .get();
+
+    if (!ddlRow) {
+      logger.debug(
+        "[vnstock-store] vnstock_trading_stats not found, skipping UNIQUE(code) constraint check",
+      );
+    } else {
+      const ddl = ddlRow.sql;
+      // Detect old UNIQUE(code) single-column constraint in DDL body.
+      // Must NOT match UNIQUE(code, date) — only the bare UNIQUE(code) form.
+      const hasUniqueCodeOnly =
+        /UNIQUE\s*\(\s*code\s*\)/.test(ddl) && !/UNIQUE\s*\(\s*code\s*,\s*date\s*\)/.test(ddl);
+
+      if (hasUniqueCodeOnly) {
+        logger.warn(
+          "[vnstock-store] detected UNIQUE(code) without UNIQUE(code,date) in DDL — rebuilding table",
+        );
+
+        // Dedup first so the new UNIQUE(code,date) index doesn't hit duplicates
+        db.exec(`
+          DELETE FROM vnstock_trading_stats
+          WHERE id NOT IN (
+            SELECT MAX(id) FROM vnstock_trading_stats GROUP BY code, date
+          )
+        `);
+
+        // Build column list from actual old-table columns so the INSERT SELECT
+        // works regardless of which optional columns exist in the old schema.
+        const existingCols = db
+          .query<{ name: string }, []>("PRAGMA table_info(vnstock_trading_stats)")
+          .all()
+          .map((c) => c.name);
+
+        const canonicalCols = [
+          "id",
+          "code",
+          "foreign_room",
+          "foreign_volume",
+          "current_holding_ratio",
+          "max_holding_ratio",
+          "avg_volume_2w",
+          "high_52w",
+          "low_52w",
+          "pct_from_high_52w",
+          "pct_from_low_52w",
+          "fetched_at",
+          "created_at",
+          "date",
+        ];
+        const sharedCols = canonicalCols.filter((c) => existingCols.includes(c));
+        const colList = sharedCols.join(", ");
+
+        db.exec(
+          `ALTER TABLE vnstock_trading_stats RENAME TO vnstock_trading_stats_old_uq_code`,
+        );
+        db.exec(`
+          CREATE TABLE vnstock_trading_stats (
+            id                    INTEGER PRIMARY KEY AUTOINCREMENT,
+            code                  TEXT NOT NULL,
+            foreign_room          INTEGER,
+            foreign_volume        INTEGER,
+            current_holding_ratio REAL,
+            max_holding_ratio     REAL,
+            avg_volume_2w         INTEGER,
+            high_52w              REAL,
+            low_52w               REAL,
+            pct_from_high_52w     REAL,
+            pct_from_low_52w      REAL,
+            fetched_at            TEXT NOT NULL DEFAULT (datetime('now')),
+            created_at            TEXT NOT NULL DEFAULT (datetime('now')),
+            date                  TEXT NOT NULL DEFAULT '1970-01-01',
+            UNIQUE(code, date)
+          )
+        `);
+        db.exec(
+          `INSERT INTO vnstock_trading_stats (${colList}) SELECT ${colList} FROM vnstock_trading_stats_old_uq_code`,
+        );
+        db.exec(`DROP TABLE vnstock_trading_stats_old_uq_code`);
+
+        // Reset module-level cache — new schema has date column
+        _tradingStatsHasDateColumn = null;
+
+        logger.info("[vnstock-store] vnstock_trading_stats rebuilt with UNIQUE(code, date) only");
+      }
+    }
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (msg.includes("no such table")) {
+      logger.debug(
+        "[vnstock-store] vnstock_trading_stats not found, skipping UNIQUE(code) rebuild",
+      );
+    } else {
+      logger.error("[vnstock-store] UNIQUE(code) constraint rebuild FAILED", {
+        error: msg,
+        remediation: "Manual fix: DROP TABLE vnstock_trading_stats; run initDatabase() to recreate",
+      });
+      throw err;
+    }
   }
 
   // Migration: ensure UNIQUE(code, date) index exists for ON CONFLICT(code, date)

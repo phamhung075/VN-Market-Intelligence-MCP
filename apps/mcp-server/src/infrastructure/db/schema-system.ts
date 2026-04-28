@@ -377,41 +377,48 @@ export function initSystemTables(db: Database): void {
     )
   `);
 
-  // Migration: if the table already existed with the old CHECK (no 'idle'),
-  // recreate it.  We detect this by attempting to insert a test 'idle' row
-  // and rolling it back.  If it throws, the schema is old — migrate.
-  try {
-    db.exec(`
-      BEGIN;
-      INSERT INTO vps_service_health
-        (service_name, polled_at, health_status, response_time_ms)
-        VALUES ('vn-price-fetch', datetime('now'), 'idle', 0);
-      ROLLBACK;
-    `);
-  } catch {
-    // Old CHECK constraint — recreate table preserving existing rows
-    db.exec(`
-      ALTER TABLE vps_service_health RENAME TO vps_service_health_old;
-      CREATE TABLE vps_service_health (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        service_name TEXT NOT NULL CHECK(
-          service_name IN ('vn-price-fetch', 'vn-bctc-fetch', 'vn-news-fetch', 'vn-sbv-fetch', 'vn-foreign-flow')
-        ),
-        polled_at TEXT NOT NULL DEFAULT (datetime('now')),
-        health_status TEXT NOT NULL CHECK(
-          health_status IN ('healthy', 'unhealthy', 'unreachable', 'idle')
-        ),
-        response_time_ms INTEGER,
-        last_successful_run TEXT,
-        uptime_seconds INTEGER,
-        error_message TEXT
-      );
-      INSERT INTO vps_service_health
-        SELECT id, service_name, polled_at, health_status,
-               response_time_ms, last_successful_run, uptime_seconds, error_message
-        FROM vps_service_health_old;
-      DROP TABLE vps_service_health_old;
-    `);
+  // Migration guard: if the table already existed with the old CHECK (no 'idle'),
+  // recreate it.
+  //
+  // Why not BEGIN/INSERT/ROLLBACK via exec():
+  //   Bun's db.exec() silently swallows the inner CHECK constraint error from
+  //   the INSERT — exec() itself succeeds, the guard never throws, and the
+  //   migration never runs.  (Confirmed in live DB 2026-04-28.)
+  //
+  // Fix: read the DDL from sqlite_master and check whether the health_status
+  // CHECK already contains 'idle'. If not, the schema is old — migrate.
+  {
+    const ddlRow = db
+      .query<{ sql: string }, []>(
+        "SELECT sql FROM sqlite_master WHERE type='table' AND name='vps_service_health'",
+      )
+      .get();
+
+    if (ddlRow && !ddlRow.sql.includes("'idle'")) {
+      // Old CHECK constraint — recreate table preserving existing rows
+      db.exec(`
+        ALTER TABLE vps_service_health RENAME TO vps_service_health_old;
+        CREATE TABLE vps_service_health (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          service_name TEXT NOT NULL CHECK(
+            service_name IN ('vn-price-fetch', 'vn-bctc-fetch', 'vn-news-fetch', 'vn-sbv-fetch', 'vn-foreign-flow')
+          ),
+          polled_at TEXT NOT NULL DEFAULT (datetime('now')),
+          health_status TEXT NOT NULL CHECK(
+            health_status IN ('healthy', 'unhealthy', 'unreachable', 'idle')
+          ),
+          response_time_ms INTEGER,
+          last_successful_run TEXT,
+          uptime_seconds INTEGER,
+          error_message TEXT
+        );
+        INSERT INTO vps_service_health
+          SELECT id, service_name, polled_at, health_status,
+                 response_time_ms, last_successful_run, uptime_seconds, error_message
+          FROM vps_service_health_old;
+        DROP TABLE vps_service_health_old;
+      `);
+    }
   }
   db.exec(`
     CREATE INDEX IF NOT EXISTS idx_vps_health_service_polled
