@@ -16,6 +16,7 @@
  */
 
 import type { SentimentDirection } from "../sentimentClassifier.js";
+import { VN_OFFSET_MS } from "../timeConstants.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -306,7 +307,7 @@ const SENSITIVE_EVENTS: SensitiveEvent[] = [
 export function detectSensitiveDates(date?: Date): string[] {
   const d = date ?? new Date();
   // Convert to GMT+7
-  const gmt7 = new Date(d.getTime() + 7 * 60 * 60 * 1000);
+  const gmt7 = new Date(d.getTime() + VN_OFFSET_MS);
 
   return SENSITIVE_EVENTS
     .filter((e) => e.isNear(gmt7))

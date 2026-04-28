@@ -24,6 +24,7 @@
 
 import { logger } from "../../infrastructure/logger.js";
 import { mcpConfig } from "../../infrastructure/config.js";
+import { VN_OFFSET_MS } from "../../domain/services/timeConstants.js";
 import type { PollNewsResult } from "../../application/usecases/pollNews.js";
 import type { SscDocument } from "../../infrastructure/fetchers/ssc.js";
 import type { Alert } from "../../domain/services/alertGenerator.js";
@@ -187,7 +188,7 @@ export function resetCycleGuard(): void {
 export function isMarketHours(now?: Date): boolean {
   const date = now ?? new Date();
   // Shift to GMT+7 using UTC arithmetic
-  const gmt7 = new Date(date.getTime() + 7 * 60 * 60 * 1000);
+  const gmt7 = new Date(date.getTime() + VN_OFFSET_MS);
   const dayOfWeek = gmt7.getUTCDay(); // 0=Sun, 1=Mon, ..., 5=Fri, 6=Sat
   const hour = gmt7.getUTCHours();
   const minute = gmt7.getUTCMinutes();

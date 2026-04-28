@@ -20,6 +20,7 @@ import { logger } from "../logger.js";
 import { getDb } from "../db/schema.js";
 import type { HttpClient } from "./ssc.js";
 import { globalRateLimiter } from "../../domain/services/rateLimiter.js";
+import { VN_OFFSET_MS } from "../../domain/services/timeConstants.js";
 
 // Re-export HttpClient so consumers can import it directly from this module.
 export type { HttpClient } from "./ssc.js";
@@ -53,7 +54,7 @@ const VNDIRECT_MAX_PAGE_SIZE = 100;
  */
 export function isTradingSession(now?: Date): boolean {
   const date = now ?? new Date();
-  const gmt7 = new Date(date.getTime() + 7 * 60 * 60 * 1000);
+  const gmt7 = new Date(date.getTime() + VN_OFFSET_MS);
   const dayOfWeek = gmt7.getUTCDay(); // 0=Sun … 6=Sat
   if (dayOfWeek < 1 || dayOfWeek > 5) return false;
   const totalMinutes = gmt7.getUTCHours() * 60 + gmt7.getUTCMinutes();

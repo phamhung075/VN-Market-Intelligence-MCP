@@ -58,7 +58,7 @@
 | 1397c | [DATA] Test file: 5 cases VIR-1–VIR-5 for runVnIndexRefreshJob (mock.module stubs) | HIGH | test | developer | | DONE 2026-04-28 |
 | JANITOR-004 | DRY: COMPANY_SHORT_NAME in watchlist.ts duplicates STOCK_CATALOG display names | LOW | refactor | developer |
 | JANITOR-005 | DRY: historicalBaseline 3.0 magic number duplicated in 3 IMF files | LOW | refactor | developer |
-| JANITOR-006 | DRY: VN_OFFSET_MS (7*3600_000) inlined in 6+ files — should import from timeConstants.ts | MEDIUM | refactor | developer |
+| JANITOR-006 | DRY: VN_OFFSET_MS (7*3600_000) inlined in 6+ files — should import from timeConstants.ts | MEDIUM | refactor | developer | | DONE 2026-04-28 |
 | JANITOR-007 | DRY: Vietnamese severity label maps duplicated in 4+ tool files | LOW | refactor | developer |
 
 ---

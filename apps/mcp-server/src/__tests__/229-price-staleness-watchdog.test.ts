@@ -2,6 +2,7 @@
 Bun.env["DB_PATH"] = ":memory:";
 
 import { describe, it, expect, beforeEach } from "bun:test";
+import { VN_OFFSET_MS } from "../domain/services/timeConstants.js";
 import {
   priceUpdateWatchdog,
   isVnMarketHoursUtc,
@@ -26,7 +27,7 @@ const SATURDAY_04H = new Date("2026-04-26T04:00:00Z");
 const FRESH = () => new Date(MARKET_NOW.getTime() - 3 * 60 * 60 * 1000); // 3h old
 
 // Stale price (>6h old)
-const STALE = () => new Date(MARKET_NOW.getTime() - 7 * 60 * 60 * 1000); // 7h old
+const STALE = () => new Date(MARKET_NOW.getTime() - VN_OFFSET_MS); // 7h old
 
 describe("Price Staleness Watchdog (229)", () => {
   beforeEach(() => {
