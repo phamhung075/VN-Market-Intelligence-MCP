@@ -11,6 +11,7 @@ Bun.env["DB_PATH"] = ":memory:";
 
 import { describe, it, expect } from "bun:test";
 import { Database } from "bun:sqlite";
+import { VN_OFFSET_MS } from "../domain/services/timeConstants.js";
 import { runOhlcvStalenessCheck } from "../scheduler/market-data/ohlcvStalenessCheckJob.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -54,7 +55,6 @@ function seedOhlcvRow(db: Database, code: string, date: string): void {
 
 /** Returns VN date string (YYYY-MM-DD) for a given UTC epoch ms */
 function vnDateOf(nowMs: number): string {
-  const VN_OFFSET_MS = 7 * 60 * 60 * 1000;
   return new Date(nowMs + VN_OFFSET_MS).toISOString().slice(0, 10);
 }
 

@@ -20,6 +20,7 @@ import { describe, it, expect, beforeEach, afterEach } from "bun:test";
 import { Database } from "bun:sqlite";
 import { mkdirSync, rmSync, existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import { VN_OFFSET_MS } from "../domain/services/timeConstants.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Test DB helpers
@@ -153,7 +154,7 @@ function cleanupBriefingsDir() {
 function midnightVietnamUtc(): string {
   const now = new Date();
   // Vietnam is UTC+7, so midnight VN = 17:00 UTC previous day
-  const vnNow = new Date(now.getTime() + 7 * 3600_000);
+  const vnNow = new Date(now.getTime() + VN_OFFSET_MS);
   const midnight = new Date(
     Date.UTC(
       vnNow.getUTCFullYear(),
@@ -164,7 +165,7 @@ function midnightVietnamUtc(): string {
       0,
       0,
     ) -
-      7 * 3600_000,
+      VN_OFFSET_MS,
   );
   return midnight.toISOString();
 }
@@ -321,7 +322,7 @@ describe("Task 101 — Morning Briefing Job", () => {
       expect(briefing.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
 
       // Should be today's Vietnam date
-      const vnNow = new Date(new Date().getTime() + 7 * 3600_000);
+      const vnNow = new Date(new Date().getTime() + VN_OFFSET_MS);
       const expectedDate = `${vnNow.getUTCFullYear()}-${String(vnNow.getUTCMonth() + 1).padStart(2, "0")}-${String(vnNow.getUTCDate()).padStart(2, "0")}`;
       expect(briefing.date).toBe(expectedDate);
     });
