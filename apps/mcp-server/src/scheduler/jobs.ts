@@ -25,6 +25,7 @@
  *   startupCatchup (morning)  30s after boot if 01:00 UTC passed  (task 1430) ✓
  *   startupCatchup (evening)  30s after boot if 15:30 UTC passed  (task 1430) ✓
  *   vnIndexRefresh        every 5 min VN market hours  (task 1397) ✓
+ *   foreignFlowCbReset    60s after boot (configurable)            (task 1404) ✓
  */
 
 import cron from 'node-cron'
@@ -80,6 +81,7 @@ import { runImfIndicatorPollerJob } from './market-data/imfIndicatorPollerJob.js
 import { trackSessionToolUsageJob } from './system/trackSessionToolUsageJob.js'
 import { getDb } from '../infrastructure/db/schema.js'
 import { recordJobRun } from '../infrastructure/db/cronJobRunStore.js'
+import { breakers } from '../infrastructure/circuitBreakerRegistry.js'
 import type { Database } from 'bun:sqlite'
 
 export const CRONS = {
@@ -306,6 +308,45 @@ export async function runCalibrationReportWithDb(
   await recordJobRun(db, 'calibrationReportJob', fn)
 }
 
+/**
+ * scheduleForeignFlowCbReset — Task 1404
+ *
+ * After a container restart the foreignFlow circuit breaker is always CLOSED
+ * (in-memory state). However if the VPS pushes a batch BEFORE `runVnstockMigrations`
+ * has run (or while the DB is briefly locked during startup), 5 consecutive
+ * upsertForeignFlow failures can trip the breaker to OPEN.
+ *
+ * This helper schedules a one-shot reset of `breakers.foreignFlow` after a
+ * configurable delay (default 60 s). By T+60 s all startup migrations are
+ * guaranteed to have completed, so the reset gives the VPS a fair chance at
+ * its first successful push.
+ *
+ * Exported for testability. In tests, pass delayMs=0 and a custom CircuitBreaker
+ * instance so the state check and reset operate on the same object.
+ *
+ * @param delayMs   Milliseconds after startup before reset fires (default: 60_000)
+ * @param cb        Circuit breaker to check and reset (default: breakers.foreignFlow)
+ * @returns         The setTimeout handle (for teardown in tests)
+ */
+export function scheduleForeignFlowCbReset(
+  delayMs: number = parseInt(Bun.env.FOREIGN_FLOW_CB_RESET_DELAY_MS ?? '60000', 10),
+  cb: { stats: { state: string }; reset: () => void } = breakers.foreignFlow,
+): ReturnType<typeof setTimeout> {
+  return setTimeout(() => {
+    try {
+      const stateBefore = cb.stats.state;
+      if (stateBefore !== 'closed') {
+        cb.reset();
+        log(`[foreign-flow-cb] startup reset fired (was ${stateBefore}) — breaker now CLOSED`);
+      } else {
+        log('[foreign-flow-cb] startup reset: breaker already CLOSED — no-op');
+      }
+    } catch (err) {
+      log(`[foreign-flow-cb] startup reset error: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }, delayMs);
+}
+
 export function startScheduler() {
   // Idempotency guard — survives bun --hot module reloads.
   // Without this, every hot reload re-runs startScheduler() and stacks a
@@ -327,6 +368,13 @@ export function startScheduler() {
   void runOhlcvStartupProbe().then((r) => {
     if (r.sent) log(`[ohlcv-probe] sparse tickers: ${r.sparseTickers.map(t => t.code).join(', ')}`)
   }).catch(console.error)
+
+  // Startup CB reset — task 1404
+  // Resets breakers.foreignFlow after FOREIGN_FLOW_CB_RESET_DELAY_MS (default 60s).
+  // Ensures that if the VPS pushed a batch before migrations completed and tripped
+  // the CB to OPEN, it recovers automatically after startup is stable — without
+  // waiting the full 5-minute resetTimeoutMs.
+  scheduleForeignFlowCbReset()
 
   // 08:00 — Morning briefing (weekdays Mon-Fri only) — task 101
   cron.schedule(CRONS.morningBriefing, async () => {
