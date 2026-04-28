@@ -99,5 +99,8 @@
 | 1391 | FIX: bbAlertScanJob stale-candle guard — skip ticker when lastCandle.day != today; prevents inverted-direction alert messages (FPT msg 335); 3 new tests | main 2026-04-28 | reports/TASK_REPORT_1391.md |
 | 1401 | FIX: eveningSummaryJob dedup guard now allows retry when prior report used stale vnIndex data (content contains " (cũ)"); 4 new tests | main 2026-04-28 | reports/TASK_REPORT_1401-dedup-guard.md |
 | 1405 | feat: formatAlertDigest price-drop qualifier — (lũy kế)/(+thêm) labels for incremental and cumulative price_drop entries; 5 new tests (TC-1–TC-5) | main 2026-04-28 | reports/TASK_REPORT_1405.md |
+| 1401-db | FIX: delete 46 bctc_vps_queue placeholder/stale rows (2 literal placeholder URLs + 44 NULL+pending+0-attempt) — 0 blocking rows remain, 8 clean done rows preserved | main 2026-04-28 | reports/TASK_REPORT_1401.md |
+| 1402 | FIX: resolve stranded agent_feedback rows 73/76/77 (status new→resolved) — bctcReparseJob disk-scan fallback unblocked | main 2026-04-28 | reports/TASK_REPORT_1402.md |
+| 1403 | FIX: vnstock_trading_stats UNIQUE(code) autoindex rebuilt to UNIQUE(code,date) + vps_service_health idle CHECK migration guard fixed; 9/9 new tests + QA TS fix (noUncheckedIndexedAccess non-null assertions) | main 2026-04-28 | reports/TASK_REPORT_1403.md |
 
 ---
