@@ -116,56 +116,45 @@ export async function fetchForeignFlowWithFallback(
   timestamp = timestamp.replace(/\.000Z$/, 'Z');
 
   // ───────────────────────────────────────────────────────────────────────────
-  // Strategy 1: Try primary VPS endpoint (circuit breaker wrapped)
+  // Strategy 1: Try primary VPS endpoint (direct — no CB wrapping)
+  //
+  // Task 1392 fix: breakers.foreignFlow guards DB writes in the push handler
+  // (POST /api/push-foreign-flow in server.ts) only. The VPS is push-only —
+  // there is no /foreign-flow GET endpoint. Wrapping this GET probe in
+  // execute() caused every half-open probe to hit 404 → _onFailure() →
+  // CB permanently stuck OPEN. CB state is intentionally not read here.
   // ───────────────────────────────────────────────────────────────────────────
 
   try {
-    const { breakers } = await import("../circuitBreakerRegistry.js");
+    const result = await fetchPrimaryVpsEndpoint(
+      overrides?.fetchFn ?? fetch,
+      5000, // timeout: 5 seconds
+    );
 
-    // If circuit is not open, attempt primary fetch
-    if (breakers.foreignFlow.stats.state !== "open") {
-      const result = await breakers.foreignFlow.execute(async () => {
-        return await fetchPrimaryVpsEndpoint(
-          overrides?.fetchFn ?? fetch,
-          5000, // timeout: 5 seconds
-        );
-      });
+    if (result && result.length > 0) {
+      // Primary succeeded: write to DB and cache the result
+      const { writeForeignFlowToOhlcv } = await import("../db/ohlcvForeignFlowStore.js");
+      const { changes } = await writeForeignFlowToOhlcv(result);
 
-      if (result && result.length > 0) {
-        // Primary succeeded: write to DB and cache the result
-        const { writeForeignFlowToOhlcv } = await import("../db/ohlcvForeignFlowStore.js");
-        const { changes } = await writeForeignFlowToOhlcv(result);
+      lastSuccessCache = {
+        timestamp,
+        changes,
+        data: result,
+        cachedAt: timestamp,
+      };
 
-        lastSuccessCache = {
-          timestamp,
-          changes,
-          data: result,
-          cachedAt: timestamp,
-        };
-
-        // Log recovery if previously down; reset the log-spam guard
-        if (breakers.foreignFlow.stats.state === "closed" && lastRecoveryAt !== timestamp) {
-          lastRecoveryAt = timestamp;
-          lastLoggedOpenState = false; // allow next open-state to log again
-          logger.info("[fallback] primary endpoint recovered", { timestamp });
-        }
-
-        return { changes, timestamp, source: "primary" };
+      if (lastRecoveryAt !== timestamp) {
+        lastRecoveryAt = timestamp;
+        lastLoggedOpenState = false;
+        logger.info("[fallback] primary endpoint recovered", { timestamp });
       }
-    } else {
-      // Log ONCE per open-state entry — suppress repeat warn every 60s
-      if (!lastLoggedOpenState) {
-        lastLoggedOpenState = true;
-        logger.warn("[fallback] circuit breaker OPEN — skipping primary (will not repeat until state changes)", {
-          failures: breakers.foreignFlow.stats.failures,
-        });
-      }
+
+      return { changes, timestamp, source: "primary" };
     }
   } catch (err) {
-    // Primary failed — proceed to fallback
+    // Primary failed — proceed to fallback (does not affect CB)
     const errMsg = err instanceof Error ? err.message : String(err);
 
-    // Log validation errors with special handling for diagnostics
     if (errMsg.includes("validation failed")) {
       logger.warn("[fallback] VPS payload schema validation failed", {
         error: errMsg,

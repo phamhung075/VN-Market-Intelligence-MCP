@@ -303,12 +303,15 @@ describe("Task 1288a — Foreign Flow Fallback", () => {
   });
 
   describe("4. Fallback respects circuit breaker state", () => {
-    it("skips primary endpoint when circuit breaker is open", async () => {
-      // RED test: verify implementation skips primary when circuit is open
+    it("GET fetcher always attempts primary endpoint regardless of CB state (Task 1392)", async () => {
+      // Task 1392 fix: breakers.foreignFlow no longer controls the GET fetcher.
+      // The CB guards DB writes in the push handler only. The GET path always
+      // attempts the primary endpoint and falls through to cache/SSE/none on
+      // failure — CB state is intentionally ignored here.
       let fetchForeignFlowWithFallback: ((opts: unknown) => Promise<ForeignFlowFetchResult>) | undefined;
 
       try {
-        // @ts-ignore Dynamic import of not-yet-implemented module
+        // @ts-ignore Dynamic import
         const mod = await import("../infrastructure/fetchers/foreignFlowFetcher.js");
         fetchForeignFlowWithFallback = (mod as Record<string, unknown>)
           .fetchForeignFlowWithFallback as ((opts: unknown) => Promise<ForeignFlowFetchResult>) | undefined;
@@ -319,29 +322,22 @@ describe("Task 1288a — Foreign Flow Fallback", () => {
       // Assertion 1: function exists
       expect(fetchForeignFlowWithFallback).toBeDefined();
 
-      // Assertion 2: when circuit is open, implementation uses fallback not primary
       if (fetchForeignFlowWithFallback) {
         let primaryCalled = false;
-        const trackingFetch: FetchFn = async (url: string) => {
+        const trackingFetch: FetchFn = async (_url: string) => {
           primaryCalled = true;
           throw new Error("Primary failed");
         };
 
-        // Manually open the breaker
+        // Manually open the breaker via push path
         for (let i = 0; i < 5; i++) {
           try {
-            await breaker.execute(async () => {
-              throw new Error("fail");
-            });
-          } catch {
-            // Expected
-          }
+            await breaker.execute(async () => { throw new Error("fail"); });
+          } catch { /* Expected */ }
         }
-
-        // Verify circuit is open
         expect(breaker.state).toBe("open");
 
-        // Try to fetch with open circuit — should use fallback not primary
+        // Fetch — primary IS called even when CB is open (GET path ignores CB)
         try {
           await fetchForeignFlowWithFallback({
             now: () => new Date(),
@@ -349,12 +345,10 @@ describe("Task 1288a — Foreign Flow Fallback", () => {
             cacheStore: cache,
             sseMessageBus: messageBus,
           });
-        } catch {
-          // May fail if no fallback
-        }
+        } catch { /* May fail if no fallback */ }
 
-        // Primary should not have been called
-        expect(primaryCalled).toBe(false);
+        // Primary was called — CB state does not block the GET path
+        expect(primaryCalled).toBe(true);
       }
     });
   });
