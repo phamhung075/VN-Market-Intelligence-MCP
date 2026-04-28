@@ -18,6 +18,14 @@ _Last updated: 2026-04-28 by PO (market-group flow, cycle 3)_
 
 ---
 
+## Sprint 1398 — Done
+
+| Task | Title | Status | Agent | Source |
+|------|-------|--------|-------|--------|
+| 1398 | pollNews all-sources-dark DB-backed cooldown — persist last-alert timestamp across server restarts | done | developer | qa |
+
+---
+
 ## Sprint 1395 — Done
 
 | Task | Title | Status | Agent | Source |
