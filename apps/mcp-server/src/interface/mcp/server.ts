@@ -26,11 +26,8 @@ import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/
 import { loadConfig } from "../../infrastructure/config.js";
 import { createLogger } from "../../infrastructure/logger.js";
 import { SseSessionManager } from "./transport.js";
-import { handleTelegramCommand } from "../../infrastructure/notifiers/telegramCommands.js";
-import { sendTelegramMarket, sendTelegramWork } from "../../infrastructure/notifiers/telegram.js";
+import { sendTelegramWork } from "../../infrastructure/notifiers/telegram.js";
 import { getDb } from "../../infrastructure/db/schema.js";
-import { validateWebhookRequest } from "../../infrastructure/notifiers/telegramWebhookSetup.js";
-import { insertReport } from "../../infrastructure/db/telegramReportStore.js";
 import { toolRegistry } from "./tools/registry.js";
 import { getToolsForSkills } from "./bootstrap/agentBootstrap.js";
 import { sessionToolCache } from "../../infrastructure/cache/sessionToolCache.js";
@@ -45,6 +42,7 @@ export {
 } from "./server-startup.js";
 import { handlePushPrices } from "./routes/pushPricesHandler.js";
 import { handlePushForeignFlow } from "./routes/pushForeignFlowHandler.js";
+import { handleWebhook } from "./routes/webhookHandler.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Task 1112 — Minimal multipart/form-data parser for push-bctc-pdf
@@ -284,78 +282,7 @@ export async function createBunServer(
 
     // ── POST /webhook — Telegram bot command webhook ──────────────────────
     if (method === "POST" && pathname === "/webhook") {
-      // Validate webhook secret (skip if not configured — dev mode)
-      const webhookSecret = Bun.env["TELEGRAM_WEBHOOK_SECRET"] ?? "";
-      const reqHeaders = new Headers();
-      for (const [name, value] of Object.entries(req.headers)) {
-        if (typeof value === "string") reqHeaders.set(name, value);
-        else if (Array.isArray(value)) reqHeaders.set(name, value.join(", "));
-      }
-      if (!validateWebhookRequest(reqHeaders, webhookSecret)) {
-        res.writeHead(403, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ error: "Forbidden" }));
-        return;
-      }
-
-      const chunks: Buffer[] = [];
-      for await (const chunk of req) {
-        chunks.push(typeof chunk === "string" ? Buffer.from(chunk) : chunk);
-      }
-      const raw = Buffer.concat(chunks).toString("utf-8");
-      let body: unknown;
-      try {
-        body = JSON.parse(raw);
-      } catch {
-        res.writeHead(400, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ error: "Invalid JSON body" }));
-        return;
-      }
-
-      // ── BUG Channel branch ───────────────────────────────────────────────
-      // If the message originates from TELEGRAM_REPORT_BUG_CHANNEL_ID (the BUG channel),
-      // persist it in the telegram_reports table and return 200 immediately
-      // without dispatching to the command router.
-      const bugChatId = Bun.env["TELEGRAM_REPORT_BUG_CHANNEL_ID"] ?? "";
-      const update = body as {
-        message?: { chat?: { id?: number }; text?: string };
-      };
-      const incomingChatId = String(update?.message?.chat?.id ?? "");
-
-      if (bugChatId && incomingChatId === bugChatId) {
-        const text = update?.message?.text ?? "";
-        try {
-          insertReport(getDb(), text, "human", 0, "normal");
-        } catch (err) {
-          log.warn("[webhook] failed to insert report from BUG Channel", {
-            error: err instanceof Error ? err.message : String(err),
-          });
-        }
-        res.writeHead(200, { "Content-Type": "text/plain" });
-        res.end("ok");
-        return;
-      }
-
-      // ── Standard command dispatch (MARKET channel — user replies) ────────
-      try {
-        const result = await handleTelegramCommand(
-          body as Parameters<typeof handleTelegramCommand>[0],
-          getDb(),
-        );
-        if (result) {
-          await sendTelegramMarket(result.text, {
-            parseMode: "",
-            chatId: result.chatId,
-            persist: { from_agent: "mcp-user", message_type: "user_ask_reply" },
-          });
-        }
-      } catch (err) {
-        log.warn("[webhook] command handling failed", {
-          error: err instanceof Error ? err.message : String(err),
-        });
-      }
-
-      res.writeHead(200, { "Content-Type": "text/plain" });
-      res.end("ok");
+      await handleWebhook(req, res, getDb(), log);
       return;
     }
 
