@@ -54,7 +54,7 @@
 
 - [ ] All 5 sections present (Tại sao / Xác nhận / Kinh Dịch / Tiếp theo / Rủi ro)
 - [ ] Section 5 (Rủi ro) has no `"..."`, no `"và nhiều hơn nữa"` truncation phrases
-- [ ] Conviction block did NOT pass through `TelegramMessageFactory.formatAlertMessage()` (100-grapheme limit destroys narrative)
+- [ ] Conviction block did NOT pass through `TelegramMessageFactory.formatAlertMessage()` (400-grapheme limit — raised from 100 on 2026-04-29)
 - [ ] Vietnamese text uses full diacritics — no ASCII approximations
 - [ ] Conviction block displayed only for HIGH or CRITICAL severity (not LOW/MEDIUM)
 - [ ] Minimum 2 risks listed for HIGH; minimum 3 for CRITICAL

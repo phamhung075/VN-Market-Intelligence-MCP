@@ -8,6 +8,9 @@
  *   - "…" appended iff truncated
  *   - all 5 method signatures
  *   - edge cases: empty string, exact-limit, under-limit
+ *
+ * NOTE (hotfix 2026-04-29): formatAlertMessage limit raised 100→400 graphemes.
+ * Test strings updated accordingly.
  */
 
 import { describe, it, expect } from "bun:test";
@@ -36,24 +39,23 @@ describe("TelegramMessageFactory — smartTruncate (via formatAlertMessage)", ()
   });
 
   it("does NOT append … when text fits exactly in limit", () => {
-    // 100-char ASCII string (exactly at limit)
-    const exact = "a".repeat(100);
+    // 400-char ASCII string (exactly at limit)
+    const exact = "a".repeat(400);
     expect(TelegramMessageFactory.formatAlertMessage(exact)).toBe(exact);
     expect(TelegramMessageFactory.formatAlertMessage(exact)).not.toContain("…");
   });
 
   it("appends … when truncated", () => {
-    const long = "a".repeat(150);
+    const long = "a".repeat(500);
     const result = TelegramMessageFactory.formatAlertMessage(long);
     expect(result.endsWith("…")).toBe(true);
   });
 
   it("truncates at word boundary (last space before limit)", () => {
-    // Build a string: "word1 word2 word3 ... wordN" that exceeds 100 chars
-    // Last space before char 100 should be respected
+    // Build a string that exceeds 400 chars with word boundaries
     const base = "Hello world this is a test message with many words to check boundary truncation logic here end";
-    // Pad to exceed 100 chars
-    const long = base + " extrapadding to go over one hundred characters definitely";
+    // Repeat to exceed 400 chars
+    const long = (base + " ").repeat(5);
     const result = TelegramMessageFactory.formatAlertMessage(long);
     expect(result.endsWith("…")).toBe(true);
     // Result (minus "…") should not break mid-word — last char before "…" should be end of a word
@@ -70,12 +72,12 @@ describe("TelegramMessageFactory — smartTruncate (via formatAlertMessage)", ()
   });
 
   it("handles single long word with no spaces (falls back to hard cut)", () => {
-    const noSpace = "x".repeat(200);
+    const noSpace = "x".repeat(500);
     const result = TelegramMessageFactory.formatAlertMessage(noSpace);
     expect(result.endsWith("…")).toBe(true);
-    // Length of result is 101 graphemes ("x"*100 + "…")
+    // Length of result is 401 graphemes ("x"*400 + "…")
     // The "…" itself is one grapheme
-    expect(countGraphemes(result)).toBeLessThanOrEqual(101);
+    expect(countGraphemes(result)).toBeLessThanOrEqual(401);
   });
 });
 
@@ -92,9 +94,9 @@ describe("TelegramMessageFactory — Vietnamese diacritics handling", () => {
   });
 
   it("truncates Vietnamese text at word boundary, not mid-diacritic", () => {
-    // Build a >100 grapheme Vietnamese string
+    // Build a >400 grapheme Vietnamese string
     const viWord = "chứng khoán "; // 12 graphemes
-    const viLong = viWord.repeat(10); // 120 graphemes
+    const viLong = viWord.repeat(40); // 480 graphemes
     const result = TelegramMessageFactory.formatAlertMessage(viLong.trim());
     expect(result.endsWith("…")).toBe(true);
     // The char before "…" should not be a diacritical fragment
@@ -116,12 +118,11 @@ describe("TelegramMessageFactory — Vietnamese diacritics handling", () => {
 
 describe("TelegramMessageFactory — quote-boundary truncation (Task 1389)", () => {
   it("does not cut inside an open Vietnamese quote", () => {
-    // Real bug: 'Vinhomes báo lãi quý 1 hơn 25.600 tỷ, "vô…'
-    // Truncation landed inside the opening " — must back up before it.
-    // The boundary (100 graphemes) falls inside "vô tiền khoáng hậu",
-    // so the result must not contain an unclosed " just before the ellipsis.
-    const msg =
-      'Vinhomes báo lãi quý 1 hơn 25.600 tỷ, "vô tiền khoáng hậu khi báo cáo kết quả bất ngờ vượt trội mọi dự báo thị trường" theo đánh giá';
+    // Real bug: truncation lands inside an opening " — must back up before it.
+    // Build a string where the 400-grapheme boundary falls inside a quoted phrase.
+    // Prefix: 390 chars of padding, then a quoted phrase that pushes past 400.
+    const prefix = "word ".repeat(78).trimEnd(); // 389 chars
+    const msg = prefix + ' "vô tiền khoáng hậu khi báo cáo kết quả bất ngờ vượt trội mọi dự báo thị trường" theo đánh giá';
     const result = TelegramMessageFactory.formatAlertMessage(msg);
     // Must still end with "…" (was truncated)
     expect(result.endsWith("…")).toBe(true);
@@ -132,10 +133,10 @@ describe("TelegramMessageFactory — quote-boundary truncation (Task 1389)", () 
   });
 
   it("truncates before the opening quote when cut falls inside quotes", () => {
-    // Craft a string where the 100-grapheme boundary falls between " and the closing "
-    // "word ".repeat(18) = 90 chars, then add '"quoted text here"' to push past 100
-    const prefix = "word ".repeat(18).trimEnd(); // 89 chars
-    const msg = prefix + ' "quoted phrase that goes on and on beyond the limit"';
+    // Craft a string where the 400-grapheme boundary falls between " and the closing "
+    // "word ".repeat(78) = 390 chars, then add '"quoted text here"' to push past 400
+    const prefix = "word ".repeat(78).trimEnd(); // 389 chars
+    const msg = prefix + ' "quoted phrase that goes on and on beyond the four hundred grapheme limit"';
     const result = TelegramMessageFactory.formatAlertMessage(msg);
     // Must still be truncated
     expect(result.endsWith("…")).toBe(true);
@@ -147,7 +148,7 @@ describe("TelegramMessageFactory — quote-boundary truncation (Task 1389)", () 
 
   it("does not affect text where no quote spans the truncation boundary", () => {
     // Quoted text fully before the truncation point — should be left intact
-    const msg = '"Good news" VNM tăng mạnh ' + "abc ".repeat(25);
+    const msg = '"Good news" VNM tăng mạnh ' + "abc ".repeat(100);
     const result = TelegramMessageFactory.formatAlertMessage(msg);
     expect(result.endsWith("…")).toBe(true);
     // The opening quote is in the first 11 chars — well before truncation
@@ -156,17 +157,17 @@ describe("TelegramMessageFactory — quote-boundary truncation (Task 1389)", () 
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Method: formatAlertMessage (max 100)
+// Method: formatAlertMessage (max 400)
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("TelegramMessageFactory.formatAlertMessage", () => {
-  it("returns ≤100 graphemes (excluding ellipsis)", () => {
-    const long = "Alert ".repeat(30); // ~180 graphemes
+  it("returns ≤400 graphemes (excluding ellipsis)", () => {
+    const long = "Alert ".repeat(100); // ~600 graphemes
     const result = TelegramMessageFactory.formatAlertMessage(long.trim());
     const withoutEllipsis = result.endsWith("…")
       ? result.slice(0, -"…".length)
       : result;
-    expect(countGraphemes(withoutEllipsis)).toBeLessThanOrEqual(100);
+    expect(countGraphemes(withoutEllipsis)).toBeLessThanOrEqual(400);
   });
 
   it("does not mutate short messages", () => {
