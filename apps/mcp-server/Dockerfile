@@ -7,12 +7,14 @@ FROM oven/bun:1-debian AS base
 WORKDIR /app
 
 # ── Install system dependencies ───────────────────────────────────────────
-# tesseract-ocr: for OCR fallback in BCTC PDF extraction
+# tesseract-ocr: for OCR fallback in BCTC PDF extraction (scanned PDFs)
+# poppler-utils: provides pdftoppm required by pdfOcrWorker for page rendering
 # python3 + python3-pip: required by vnstockBridge.ts which spawns python3 -c
 #   to call the vnstock library (VCI backend for prices / financials / events)
 RUN apt-get update && apt-get install -y \
     tesseract-ocr \
     tesseract-ocr-vie \
+    poppler-utils \
     curl \
     python3 \
     python3-pip \

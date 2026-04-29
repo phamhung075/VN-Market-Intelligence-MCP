@@ -129,6 +129,28 @@ describe("Task 1019 — parseYearQuarterFromFilename()", () => {
   it("returns null for unrecognised filenames", () => {
     expect(parseYearQuarterFromFilename("random-report.pdf")).toBeNull();
   });
+
+  // Bug fix: YYYYMMDD prefix was matching partial year "0130" instead of "2025"
+  // from filenames like "20260130-VCB-CBTT-&-BCTC-Hop-nhat-Q4.2025.pdf"
+  it("parses YYYYMMDD-TICKER-...-Q4.2025.pdf without year confusion (bug fix)", () => {
+    expect(
+      parseYearQuarterFromFilename("20260130-VCB-CBTT-&-BCTC-Hop-nhat-Q4.2025.pdf"),
+    ).toEqual({ year: 2025, quarter: "Q4" });
+  });
+
+  it("parses Vietnamese Quy-4-2025 pattern (FPT style)", () => {
+    expect(
+      parseYearQuarterFromFilename("20260126-FPT-BCTC-hop-nhat-Quy-4-2025.pdf"),
+    ).toEqual({ year: 2025, quarter: "Q4" });
+  });
+
+  it("parses YYYYMMDD prefix with Quy-1-nam-YYYY trailing year (VCB Q1 style)", () => {
+    expect(
+      parseYearQuarterFromFilename(
+        "20250429-VCB-Bao-cao-tai-chinh-hop-nhat-Quy-1-nam-2025_signed.pdf",
+      ),
+    ).toEqual({ year: 2025, quarter: "Q1" });
+  });
 });
 
 describe("Task 1019 — runBctcReparseJob() happy path", () => {

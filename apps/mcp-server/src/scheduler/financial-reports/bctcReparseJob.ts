@@ -140,11 +140,15 @@ export function parseYearQuarterFromFilename(
     if (quarter !== null) return { year, quarter };
   }
 
-  // Explicit "Q1".."Q4" token near a 4-digit year
-  const qMatch = filename.match(/Q([1-4])[^\d]*(\d{4})|(\d{4})[^\d]*Q([1-4])/i);
-  if (qMatch) {
-    const qDigit = qMatch[1] ?? qMatch[4];
-    const yearStr = qMatch[2] ?? qMatch[3];
+  // Tier 2: Q-token (Qn or Vietnamese "Quy-n") near a plausible year (1990-2099).
+  // Bug fix: restrict year match to 1990-2099 to avoid matching partial YYYYMMDD
+  // prefixes (e.g. "20260130-VCB-...Q4.2025.pdf" was matching "0130" as year=130).
+  // Also handles Vietnamese "Quy-4-2025" and "Quy-1-nam-2025" patterns.
+  const qRe = /(?:Q(?:uy[-_\s]?)?)([1-4])[^\d]*((19|20)\d{2})|((19|20)\d{2})[^\d]*(?:Q(?:uy[-_\s]?)?)([1-4])/gi;
+  let qm: RegExpExecArray | null;
+  while ((qm = qRe.exec(filename)) !== null) {
+    const qDigit = qm[1] ?? qm[6];
+    const yearStr = qm[2] ?? qm[4];
     if (qDigit && yearStr) {
       return {
         year: parseInt(yearStr, 10),
@@ -152,6 +156,25 @@ export function parseYearQuarterFromFilename(
       };
     }
   }
+
+  // Tier 3: YYYYMMDD prefix (e.g. "20250429-VCB-...Quy-1-nam-2025_signed.pdf").
+  // When tiers 1+2 fail, infer quarter from the month in the leading YYYYMMDD.
+  // Prefer any explicit 20XX year found later in the filename over the prefix year.
+  const yyyymmdd = filename.match(/^(20\d{2})(0[1-9]|1[0-2])\d{2}/);
+  if (yyyymmdd) {
+    const prefixYear = parseInt(yyyymmdd[1]!, 10);
+    const month = parseInt(yyyymmdd[2]!, 10);
+    let quarter: "Q1" | "Q2" | "Q3" | "Q4";
+    if (month <= 3) quarter = "Q1";
+    else if (month <= 6) quarter = "Q2";
+    else if (month <= 9) quarter = "Q3";
+    else quarter = "Q4";
+    // Use any explicit later year (e.g. "2025" in "20250429-VCB-...-2025_signed.pdf")
+    const laterYearMatch = filename.match(/[^0-9](20\d{2})[^0-9]/);
+    const year = laterYearMatch ? parseInt(laterYearMatch[1]!, 10) : prefixYear;
+    return { year, quarter };
+  }
+
   return null;
 }
 
