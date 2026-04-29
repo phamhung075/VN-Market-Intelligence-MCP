@@ -12,7 +12,6 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff |
 |---------|-------|----------|------|-------|---------|
-| 1396 | [UX] GAS digest: add intra-day progression label to distinguish incremental price_drop %s | LOW | ux | ba | — |
 
 ---
 
@@ -32,6 +31,9 @@
 
 | Task ID | Title | Merged | Reports |
 |---------|-------|--------|---------|
+| 1415b | QA sign-off: VCB BCTC bank page-pair parser — contains-based separator + page-pair merge. 16 hotfix tests + 8053 total pass. total_liabilities Q1=1,904,318,782 Q4=2,214,393,069 confirmed. total_assets out of scope (ADR). | 2026-04-29 | reports/TASK_REPORT_1415b.md |
+| hotfix-vcb-parser-fixer | Fix extractNumber fallback year filter + expand detectUnitMultiplier scan window + B-3a/B-3b real OCR fixtures + banking-label fallback | 2026-04-29 | docs/handoffs/TASK_hotfix_vcb_parser_fixer.md |
+| hotfix-vcb-parser | VCB bank BCTC parser — unit header + year filter (partial, B-1/B-2 open) | 2026-04-29 | reports/TASK_REPORT_hotfix_vcb_parser.md |
 | 1395a | alertBatchGrouper wired to pushPricesHandler — batch sends replace per-alert loop | 2026-04-29 | reports/TASK_REPORT_1395a.md |
 | JANITOR-004 | DRY: replace COMPANY_SHORT_NAME with getCompanyName (STOCK_CATALOG SSOT) | 2026-04-29 | — |
 | JANITOR-005 | DRY: extract IMF_HISTORICAL_BASELINE=3.0 to imfIndicators.ts, 3 callers updated | 2026-04-29 | — |
@@ -50,5 +52,6 @@
 | 1406e | Decompose jobs.ts (967 lines) → cronConfig.ts + startupHelpers.ts + startScheduler.ts + 15-line barrel | 2026-04-29 | reports/TASK_REPORT_1406f.md |
 | 1406f | QA sign-off: 8043 tests pass, 0 TS errors, all structural targets met | 2026-04-29 | reports/TASK_REPORT_1406f.md |
 | 1413b | foreignFlow CB self-heal fix: early-return guard removed, CircuitOpenError→503+Retry-After, 15 regression tests | 2026-04-29 | reports/TASK_REPORT_1413b.md |
+| 1396 | [UX] GAS digest: (+HH:MM) ICT intraday progression label replaces (+thêm) — 11 tests, 8093 total | 2026-04-29 | reports/TASK_REPORT_1396.md |
 
 ---
