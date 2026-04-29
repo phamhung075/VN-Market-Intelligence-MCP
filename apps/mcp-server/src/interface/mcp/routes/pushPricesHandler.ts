@@ -265,7 +265,7 @@ export async function handlePushPrices(
 
         const { detectSignals } = await import("../../../domain/services/signalDetector.js");
         const { generateAlerts } = await import("../../../domain/services/alertGenerator.js");
-        const { storeAlerts } = await import("../../../infrastructure/db/alertStore.js");
+        const { storeAlerts, shouldSkipAlreadyNotifiedAlert } = await import("../../../infrastructure/db/alertStore.js");
         const { checkPriceAlerts } = await import("../../../domain/services/priceAlertChecker.js");
 
         const signals: Array<import("../../../domain/services/signalDetector.js").Signal> = [];
@@ -347,23 +347,41 @@ export async function handlePushPrices(
             storeAlerts(alerts, db);
             log.info("[push-prices] alerts stored", { count: alerts.length });
 
-            // Send HIGH/CRITICAL alerts to Telegram immediately
-            for (const alert of alerts) {
-              if (alert.severity === "high" || alert.severity === "critical") {
-                try {
-                  const sevLabel = alert.severity === "critical" ? "NGHIÊM TRỌNG" : "QUAN TRỌNG";
-                  const msg = `[${sevLabel}] ${alert.message}`;
-                  await sendTelegramWork(msg, {
-                    persist: { from_agent: "push-prices", message_type: "system_alert" },
-                  });
-                  // Mark as notified
-                  db.prepare("UPDATE alerts SET notified_telegram = 1 WHERE id = ?").run(alert.id);
-                  log.info("[push-prices] Telegram alert sent", { id: alert.id, severity: alert.severity });
-                } catch (tgErr) {
-                  log.warn("[push-prices] Telegram send failed", {
-                    error: tgErr instanceof Error ? tgErr.message : String(tgErr),
-                  });
+            // Send HIGH/CRITICAL alerts to Telegram — grouped by (signal_type, severity)
+            const { groupAlertsBySignalSeverity, formatBatchGroupMessage } =
+              await import("../../domain/services/alertBatchGrouper.js");
+
+            // Step 1 — filter to notifiable (high/critical, dedup guard applied per-alert)
+            const notifiable = alerts.filter(
+              (a) =>
+                (a.severity === "high" || a.severity === "critical") &&
+                !shouldSkipAlreadyNotifiedAlert(a.id, db),
+            );
+
+            // Step 2 — group by (signal_type, severity)
+            const groups = groupAlertsBySignalSeverity(notifiable);
+
+            // Step 3 — one Telegram send per group
+            for (const group of groups) {
+              try {
+                const msg = formatBatchGroupMessage(group);
+                await sendTelegramWork(msg, {
+                  persist: { from_agent: "push-prices", message_type: "system_alert" },
+                });
+                // Mark all alerts in the group as notified
+                for (const id of group.alertIds) {
+                  db.prepare("UPDATE alerts SET notified_telegram = 1 WHERE id = ?").run(id);
                 }
+                log.info("[push-prices] batch alert sent", {
+                  signalType: group.signalType,
+                  severity:   group.severity,
+                  count:      group.tickers.length,
+                });
+              } catch (tgErr) {
+                // No IDs marked — consistent with existing per-alert error policy (EC-4)
+                log.warn("[push-prices] Telegram batch send failed", {
+                  error: tgErr instanceof Error ? tgErr.message : String(tgErr),
+                });
               }
             }
           }
