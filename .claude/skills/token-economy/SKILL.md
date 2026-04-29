@@ -132,3 +132,60 @@ Compressed:
 - NEVER modify: `.py`, `.js`, `.ts`, `.json`, `.yaml`, `.yml`, `.toml`, `.env`, `.lock`, `.css`, `.html`, `.xml`, `.sql`, `.sh`
 - Mixed content: compress ONLY prose sections
 - Never compress `FILE.original.md` (skip it)
+
+---
+
+## Part 3 — Agent Pipeline Compression Policy (ULTRA / FULL / LITE)
+
+Governs how agents compress outputs when passing context to downstream agents. Reduces token consumption ~75% on long pipeline chains.
+
+### Three Tiers
+
+| Tier | Alias | Reduction | When to use | Format rules |
+|------|-------|-----------|-------------|--------------|
+| ULTRA | caveman | ~75% | Inter-agent pings, blocker escalations, WIP state changes | `KEY: value` pairs or 1-line imperative only. No prose, no headers, no bullets. |
+| FULL | handoff | ~40% | Task handoff files, RETURN blocks, architect design docs, knowledge files | Structured Markdown, bullets/tables, no narrative padding. Max 400 words per handoff body. |
+| LITE | summary | ~20% | Session logs, sprint retros, PM status updates to user | Flowing prose OK. Max 3 sentences per point. No filler. |
+
+### Decision Matrix
+
+| Signal type | Tier |
+|---|---|
+| Agent ping / status check | ULTRA |
+| Blocker escalation | ULTRA |
+| WIP state change | ULTRA |
+| Agent RETURN block | FULL |
+| Task handoff file | FULL |
+| Architect design doc | FULL |
+| Knowledge file (permanent SSOT) | FULL |
+| TASKS.md Done row | LITE |
+| Sprint session log append | LITE |
+| Completed Sprints summary line | LITE |
+| User-facing status report | LITE |
+| Sprint retrospective | LITE |
+
+### Explicit Tier Signal
+
+For non-standard cases, prefix the message:
+
+```
+[ULTRA] STATUS: done.
+[FULL] ## Handoff ...
+[LITE] Sprint 1409 closed. All tasks merged.
+```
+
+### RETURN Block Format (FULL tier)
+
+```
+## RETURN
+DONE: [one sentence — what was completed]
+NEXT: [agent name] | [one sentence — what it must do]
+HANDOFF: docs/handoffs/TASK_NNN.md
+PIPELINE: continue | complete | blocked
+```
+
+Rules: DONE ≤20 words, past tense. NEXT = agent name + task. PIPELINE: `complete` only when full sprint goal achieved.
+
+### Enforcement
+
+Agents violating compression (e.g. pasting full file contents into RETURN block) flagged by PO at sign-off. Repeat violations → architect review of agent prompt.
