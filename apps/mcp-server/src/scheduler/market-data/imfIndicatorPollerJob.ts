@@ -23,6 +23,7 @@ import type {
   ImfClassificationInput,
   ImfClassificationOutput,
 } from "../../domain/models/imfIndicators.js";
+import { IMF_HISTORICAL_BASELINE } from "../../domain/models/imfIndicators.js";
 
 // ── Job result type ───────────────────────────────────────────────────────────
 
@@ -73,7 +74,7 @@ export async function runImfIndicatorPollerJob(options?: ImfPollerOptions): Prom
     // Step 3: Classify
     const sentiment = classify({
       indicators,
-      historicalBaseline: 3.0, // ~3% global baseline growth rate
+      historicalBaseline: IMF_HISTORICAL_BASELINE,
     });
 
     console.info(

@@ -79,6 +79,13 @@ export type ImfIndicatorKey = keyof typeof IMF_INDICATORS;
  * @param ageInDays - Number of days since publication
  * @returns Confidence multiplier in range [0.30, 0.95]
  */
+/**
+ * IMF global growth historical baseline (%).
+ * ~3% reflects long-run IMF world GDP growth consensus.
+ * Used by classifyImfIndicators() callers as the default historicalBaseline.
+ */
+export const IMF_HISTORICAL_BASELINE = 3.0;
+
 export function calculateConfidenceDecay(ageInDays: number): number {
   if (ageInDays <= 7) return 0.95;   // Fresh: 95%
   if (ageInDays <= 14) return 0.85;  // Recent: 85%

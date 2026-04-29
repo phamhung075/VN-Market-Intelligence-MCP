@@ -25,6 +25,7 @@
 import type { Database } from "bun:sqlite";
 import { classifyImfIndicators } from "../../domain/services/imfDataClassifier.js";
 import type { ImfIndicator } from "../../domain/models/imfIndicators.js";
+import { IMF_HISTORICAL_BASELINE } from "../../domain/models/imfIndicators.js";
 
 /** Default staleness window in hours (configurable via env) */
 const IMF_STALENESS_HOURS = Number(Bun.env.IMF_STALENESS_HOURS ?? 24);
@@ -83,7 +84,7 @@ export function getImfMacroScoreForConviction(db: Database): number {
 
     const result = classifyImfIndicators({
       indicators,
-      historicalBaseline: 3.0, // IMF global growth baseline (%), consistent with imfIndicatorPollerJob.ts:59
+      historicalBaseline: IMF_HISTORICAL_BASELINE,
     });
 
     return result.sentiment;

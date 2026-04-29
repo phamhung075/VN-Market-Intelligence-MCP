@@ -19,6 +19,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { getLatestImfIndicators } from "../../../../application/services/imfDataFetcher.js";
 import { classifyImfIndicators } from "../../../../domain/services/imfDataClassifier.js";
+import { IMF_HISTORICAL_BASELINE } from "../../../../domain/models/imfIndicators.js";
 import { logger } from "../../../../infrastructure/logger.js";
 
 // ── Tool registration ─────────────────────────────────────────────────────────
@@ -63,7 +64,7 @@ export function registerImfSignalsTool(server: McpServer): void {
         // Classify macro sentiment
         const classification = classifyImfIndicators({
           indicators,
-          historicalBaseline: 3.0,
+          historicalBaseline: IMF_HISTORICAL_BASELINE,
         });
 
         const response = {
