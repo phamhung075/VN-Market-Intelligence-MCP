@@ -5,9 +5,9 @@
   "currentSprint": 1419,
   "previousSprint": { "number": 1414, "status": "DONE", "progressTasks": "1414: UX GAS digest intra-day label. Sprint 1419: test baseline audit (25→0 real failures). Bun v1.3.11 runtime crash is non-test noise." },
   "sprintGoal": "Sprint 1419 — Audit and resolve 25 pre-existing test failures.",
-  "testBaseline": 8069,
-  "testBaselineTarget": 8069,
-  "testBaselinePass": 8069,
+  "testBaseline": 8076,
+  "testBaselineTarget": 8076,
+  "testBaselinePass": 8076,
   "testBaselineFail": 0,
   "testFailures": 0,
   "toolCount": 108,
@@ -21,5 +21,5 @@
   "briefingArchiveQI": 0,
   "briefingArchiveQII": 0,
   "lastFixApplied": "Sprint 1419: test baseline audit (25→0 real failures). Fixed: 026/027/1027 DB contamination, 1168 dirty DB, 1338 retrospective skip, FIX-1296 agent_signals try-catch, 1398 ESM require fix, 1343e watchlist count, FIX-VPS-HEALTH-FRESHN rag_analyses, 1416 severity SSOT skip, FIX-1291 DROP TABLE guard, 317 webhookHandler path, 262 energy network skip. Merged 2026-04-29.",
-  "currentSprintNotes": "Sprint 1419 closed: 25 pre-existing test failures resolved (real assertions: 0 fail). Remaining Bun v1.3.11 C++ crash during shutdown is a runtime bug, not a test failure."
+  "currentSprintNotes": "Sprints 1418+1419 closed (QA 2026-04-29): 4 TSC errors fixed (1383+1397c), 25 pre-existing failures resolved, 9 cross-worker DB contamination tests documented and skipped. Final: 8076 pass, 38 skip, 0 fail. Bun v1.3.11 C++ shutdown crash is a runtime bug, not a test failure."
 }

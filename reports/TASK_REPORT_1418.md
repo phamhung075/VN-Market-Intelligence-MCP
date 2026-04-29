@@ -1,4 +1,33 @@
-# Task Report: 1418+1419 — Diacritics Wave 6
+# Task Report: 1418 — Fix TSC Errors in 1383 + 1397c Test Files (QA 2026-04-29)
+# (Historical: original 1418 = Diacritics Wave 6 signed off 2026-04-18, see below)
+
+date: 2026-04-29
+outcome: APPROVED
+
+## QA Sign-off (2026-04-29)
+
+### Test Results
+- Targeted (1383): 10 passed / 0 failed
+- Targeted (1397c): 5 passed / 0 failed
+- Full suite: 8076 passed / 0 failed / 38 skipped
+- TypeScript: 0 errors
+
+### What Was Fixed by Developer (commit 4a2a30a2)
+- `1383-macro-alert-dispatch.test.ts`: added missing `duplicates`/`errors` fields to `PollNewsResult` mock objects
+- `1397c-vn-index-refresh.test.ts`: added non-null assertion on `_storeCalls[0]`
+
+### Additional QA Fixes Applied
+- Added missing `afterEach` import to `026-hose-prices.test.ts` and `027-hnx-prices.test.ts`
+- Added missing `beforeEach, afterEach` imports to `1027-inline-schema-removal.test.ts`
+  (these 3 files were modified by 1419 but had the imports omitted, causing 4 TSC errors)
+
+### DDD Compliance: PASS
+### Security: PASS
+### Merge Status: APPROVED — committed 2026-04-29
+
+---
+
+# Historical Record: 1418 — Diacritics Wave 6 (original)
 
 date: 2026-04-18
 outcome: APPROVED

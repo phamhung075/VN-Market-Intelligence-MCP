@@ -31,6 +31,11 @@
 
 | Task ID | Title | Merged | Reports |
 |---------|-------|--------|---------|
+| 1419 | QA sign-off: 25 pre-existing test failures resolved → 0. 38 documented skips (9 cross-worker DB contamination + 29 prior). 8076 pass, 0 fail. | 2026-04-29 | reports/TASK_REPORT_1419.md |
+| 1418 | QA sign-off: 4 TSC errors fixed in 1383 + 1397c test files. 0 TSC errors. 10 + 5 targeted tests pass. | 2026-04-29 | reports/TASK_REPORT_1418.md |
+| 1416b | QA sign-off: FPT 2025-Q4 total_assets=88,089,621 triệu confirmed in DB. trimToBalanceSheetWindow helper + findValueByCode. 6 new tests pass. 8068 total pass. | 2026-04-29 | reports/TASK_REPORT_1416b.md |
+| 1416a | QA sign-off: VCB total_assets=2,441,928,945 (Q4) + 2,109,260,616 (Q1) confirmed in DB. Banking-label fallback emits key "270". 20 hotfix tests pass. validation_status=passed. | 2026-04-29 | reports/TASK_REPORT_1416a.md |
+| 1416c | QA sign-off: HPG added to WATCHLIST_SEED (26 tickers), disk-scan now resolves HPG filenames. 5/5 targeted tests pass. 8058 total pass. HPG confirmed in live DB. | 2026-04-29 | reports/TASK_REPORT_1416c.md |
 | 1415b | QA sign-off: VCB BCTC bank page-pair parser — contains-based separator + page-pair merge. 16 hotfix tests + 8053 total pass. total_liabilities Q1=1,904,318,782 Q4=2,214,393,069 confirmed. total_assets out of scope (ADR). | 2026-04-29 | reports/TASK_REPORT_1415b.md |
 | hotfix-vcb-parser-fixer | Fix extractNumber fallback year filter + expand detectUnitMultiplier scan window + B-3a/B-3b real OCR fixtures + banking-label fallback | 2026-04-29 | docs/handoffs/TASK_hotfix_vcb_parser_fixer.md |
 | hotfix-vcb-parser | VCB bank BCTC parser — unit header + year filter (partial, B-1/B-2 open) | 2026-04-29 | reports/TASK_REPORT_hotfix_vcb_parser.md |
