@@ -126,6 +126,21 @@ Tasks created from MARKET channel review: 32 messages, 2026-04-27–28.
 
 ---
 
+## Sprint 1423 — Trần Ngọc Báu Macro Framework (Phase 1)
+
+WIP limit: max 3 tasks In Progress simultaneously.
+Parallelizable: 1423a + 1423b + 1423c (no shared files). 1423e independent. 1423d depends on 1423a + 1423b + 1423c.
+
+| Task | Title | Status | Agent | Source |
+|------|-------|--------|-------|--------|
+| TASK-1423a | Add US10Y yield (^TNX) to Yahoo Finance fetcher + commodity_prices column | todo | developer | architect |
+| TASK-1423b | FRED API fetcher for Fed Funds Rate → tracked_indicators | todo | developer | architect |
+| TASK-1423c | Carry Trade Signal domain service (pure function, all 3 regime branches, unit tests) | todo | developer | architect |
+| TASK-1423d | Surface [Thien Thoi] section in get_macro_snapshot — DXY + US10Y + Carry + Liquidity regime | todo | developer | architect |
+| TASK-1423e | get_macro_calendar MCP tool — static GSO/PMI/FOMC calendar, 60d window | done | developer | qa |
+
+---
+
 ## Backlog — Triaged 2026-04-29
 
 New bugs from channel scan (2026-04-28/29 messages). Cross-referenced against existing tasks.
