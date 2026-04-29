@@ -5,9 +5,9 @@
   "currentSprint": 1426,
   "previousSprint": { "number": 1425, "status": "DONE", "progressTasks": "Sprint 1425: Housekeeping — stats sync, ghost dir cleanup, hardcoded count fix, VN_INDEX_FRESHNESS_MS DRY constant. Merged 2026-04-29." },
   "sprintGoal": "Sprint 1426: Báu Phase 2 — Dinh Gia (asset valuation) section in get_macro_snapshot.",
-  "testBaseline": 8281,
-  "testBaselineTarget": 8281,
-  "testBaselinePass": 8225,
+  "testBaseline": 8302,
+  "testBaselineTarget": 8302,
+  "testBaselinePass": 8246,
   "testBaselineFail": 18,
   "testFailures": 18,
   "toolCount": 113,
@@ -15,11 +15,11 @@
   "knowledgeFileCount": 22,
   "devAgentCount": 13,
   "analysisAgentCount": 9,
-  "totalTasksDone": 366,
+  "totalTasksDone": 368,
   "analysisMode": "value_investor",
   "briefingFilesCreated": 30,
   "briefingArchiveQI": 0,
   "briefingArchiveQII": 0,
-  "lastFixApplied": "Sprint 1426c DONE: Dinh Gia section in get_macro_snapshot for Báu Phase 2. 16 new tests (9 unit + 7 integration) all pass. 8281 total, 8225 pass, 18 pre-existing fail. Merged 2026-04-29.",
-  "currentSprintNotes": "Sprint 1426 DONE 2026-04-29: formatDinhGia() in interface layer (macroTools.ts), computeYieldSpreadSignal() pure domain service. CHEAP/FAIRLY_VALUED/EXPENSIVE labels. Section order: [Thien Thoi] → [Dinh Gia] → [Commodity Prices]. TSC 0 errors."
+  "lastFixApplied": "Tasks 1776+1407b DONE: vnstock ANSI stripping + circuit breaker (13 tests); SLA market-hours gate for price+foreign_flow (8 tests). 1352c regression fixed (market-hours now injection). 8302 total, 8246 pass, 18 pre-existing fail. Merged 2026-04-29.",
+  "currentSprintNotes": "Tasks 1776+1407b QA APPROVED 2026-04-29. 1776: stripAnsiAndDetectJunk + circuit breaker in vnstockBridge.ts + syncVnstockData.ts. 1407b: market-hours gate in freshnessSlaMonitorJob.ts. 1352c A-2 updated to inject market-hours now. TSC 0 errors."
 }

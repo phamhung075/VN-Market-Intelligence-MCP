@@ -43,5 +43,7 @@
 | 1423e | get_macro_calendar targeted MCP tool tests | 2026-04-29 | reports/TASK_REPORT_1423ac.md |
 | 1423f | Add Max Deposit Rate line to get_macro_snapshot SBV section | 2026-04-29 | — |
 | 1426c | Dinh Gia section in get_macro_snapshot for Báu Phase 2 | 2026-04-29 | reports/TASK_REPORT_1426c.md |
+| 1776 | vnstock ANSI escape sequence handling + circuit breaker | 2026-04-29 | reports/TASK_REPORT_1776.md |
+| 1407b | SLA monitor: skip price+foreign_flow escalations outside market hours | 2026-04-29 | reports/TASK_REPORT_1407b.md |
 
 ---
