@@ -41,6 +41,31 @@ import type {
 } from "../../../bctc-schema.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Banking sector — operatingProfit proxy constant (Task 1424a)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Vietnamese credit institutions (HOSE/HNX) whose BCTC income statements use a
+ * different structural position for operating profit.  The OCR extractor sets
+ * `operatingProfit = 0` for these tickers because the label
+ * "Lợi nhuận thuần từ hoạt động kinh doanh" does not appear in the standard
+ * position expected by the regex.
+ *
+ * When `operatingProfit === 0` AND `netProfit !== 0`, `parseBctcReport` uses
+ * `netProfit` as a proxy for the operating margin validation check only.
+ * The stored `operating_profit` column value is NOT altered — it remains 0
+ * (accurate to the OCR extraction).
+ *
+ * Source of truth: .claude/knowledge/stock-classification.md (sector=banking).
+ * Developer must sync this set against that file on each update.
+ */
+const BANKING_TICKERS = new Set([
+  "VCB", "BID", "CTG", "MBB", "TCB", "VPB", "ACB", "STB",
+  "HDB", "TPB", "MSB", "SSB", "OCB", "VIB", "BAB", "ABB",
+  "NAB", "SGB", "PGB", "KLB",
+]);
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Input / Output types
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -439,12 +464,24 @@ export async function parseBctcReport(
   // ── Step 5: Compute extraction confidence ────────────────────────────────
   const extractionConfidence = computeConfidence(balanceSheet, incomeStatement, cashFlow);
 
-  // ── Step 5b: Financial figures validation (Task 1345b) ───────────────────
+  // ── Step 5b: Financial figures validation (Task 1345b / 1424a) ──────────
   // Pure domain function — checks accounting identity and business-norm rules.
   // operatingMargin = operatingProfit / netRevenue (ratio, not %)
+  //
+  // Banking proxy (Task 1424a): Vietnamese credit institutions report zero
+  // operatingProfit in OCR extraction because the line label differs structurally.
+  // When the ticker is a known bank AND operatingProfit===0 AND netProfit!==0,
+  // use netProfit as a proxy for the margin validation check ONLY.
+  // The stored operating_profit column value is NOT modified.
+  const isBank = BANKING_TICKERS.has(actionCode);
+  const effectiveOperatingProfit =
+    isBank && incomeStatement.operatingProfit === 0 && incomeStatement.netProfit !== 0
+      ? incomeStatement.netProfit
+      : incomeStatement.operatingProfit;
+
   const operatingMarginRatio =
     incomeStatement.netRevenue !== 0
-      ? incomeStatement.operatingProfit / incomeStatement.netRevenue
+      ? effectiveOperatingProfit / incomeStatement.netRevenue
       : null;
 
   const confidenceFinancial = validateFinancialFigures({
