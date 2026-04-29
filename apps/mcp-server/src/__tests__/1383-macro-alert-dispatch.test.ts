@@ -67,7 +67,7 @@ describe("Task 1383 — CRITICAL macro alert bypasses cooldown suppression", () 
         return alerts.length;
       },
       getRecentAlertHistoryFn: async () => staleHistory,
-      pollNewsFn: async () => ({ fetched: 0, inserted: 0, alerts: [] }),
+      pollNewsFn: async () => ({ fetched: 0, inserted: 0, duplicates: 0, alerts: 0, errors: 0 }),
       fetchPricesFn: async () => 0,
       runImpactChainFn: async () => 0,
       getWatchlistCodesFn: async () => [],
@@ -117,7 +117,7 @@ describe("Task 1383 — CRITICAL macro alert bypasses cooldown suppression", () 
         return alerts.length;
       },
       getRecentAlertHistoryFn: async () => [], // no history → no suppression
-      pollNewsFn: async () => ({ fetched: 0, inserted: 0, alerts: [] }),
+      pollNewsFn: async () => ({ fetched: 0, inserted: 0, duplicates: 0, alerts: 0, errors: 0 }),
       fetchPricesFn: async () => 0,
       runImpactChainFn: async () => 0,
       getWatchlistCodesFn: async () => [],

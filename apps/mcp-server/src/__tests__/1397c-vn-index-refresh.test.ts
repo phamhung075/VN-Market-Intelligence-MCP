@@ -132,9 +132,9 @@ describe("Task 1397c — runVnIndexRefreshJob", () => {
     await runVnIndexRefreshJob();
 
     expect(_storeCalls).toHaveLength(1);
-    const captured = _storeCalls[0];
+    const captured = _storeCalls[0]!;
     expect(captured).toHaveLength(1);
-    expect(captured[0].code).toBe("VNINDEX");
+    expect(captured[0]!.code).toBe("VNINDEX");
   });
 
   // ── VIR-5: storeMarketPrices call count = 0 when all codes skipped ───────
