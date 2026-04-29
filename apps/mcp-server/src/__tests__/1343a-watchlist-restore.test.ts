@@ -4,8 +4,8 @@
  * Tests for seedWatchlist() and backfillBctcQ4() against an in-memory SQLite DB.
  *
  * Acceptance criteria:
- *   - watchlist table has exactly 25 rows after seed
- *   - All 25 tickers have exchange and domain filled
+ *   - watchlist table has exactly 26 rows after seed (HPG added 1416c)
+ *   - All 26 tickers have exchange and domain filled
  *   - Alert thresholds match Sprint 054 defaults (dropPct=-3, risePct=5, impactScore=5)
  *   - seedWatchlist is idempotent (calling twice still yields 25 rows)
  *   - backfillBctcQ4 enqueues all watchlist tickers missing Q4 2025 financial_reports
@@ -87,8 +87,8 @@ describe("Task 1343a — Watchlist Restore + Q4 2025 Backfill", () => {
 
   // ── WATCHLIST_SEED constant ────────────────────────────────────────────────
 
-  it("WATCHLIST_SEED contains exactly 25 entries", () => {
-    expect(WATCHLIST_SEED).toHaveLength(25);
+  it("WATCHLIST_SEED contains exactly 26 entries (HPG added in task 1416c)", () => {
+    expect(WATCHLIST_SEED).toHaveLength(26);
   });
 
   it("WATCHLIST_SEED covers 9 expected sectors (agriculture emptied after BDI/DLC removal)", () => {
@@ -117,10 +117,10 @@ describe("Task 1343a — Watchlist Restore + Q4 2025 Backfill", () => {
 
   // ── seedWatchlist ──────────────────────────────────────────────────────────
 
-  it("seedWatchlist inserts exactly 25 rows into watchlist", () => {
+  it("seedWatchlist inserts exactly 26 rows into watchlist (HPG added in task 1416c)", () => {
     seedWatchlist(db);
     const { cnt } = db.prepare("SELECT COUNT(*) AS cnt FROM watchlist").get() as { cnt: number };
-    expect(cnt).toBe(25);
+    expect(cnt).toBe(26);
   });
 
   it("seedWatchlist sets default thresholds: drop=-3, rise=5, impact=5", () => {
@@ -142,7 +142,7 @@ describe("Task 1343a — Watchlist Restore + Q4 2025 Backfill", () => {
       .prepare("SELECT code, exchange, domain FROM watchlist")
       .all() as { code: string; exchange: string; domain: string }[];
 
-    expect(rows).toHaveLength(25);
+    expect(rows).toHaveLength(26);
     for (const row of rows) {
       expect(row.exchange).toBeTruthy();
       expect(row.domain).toBeTruthy();
@@ -150,11 +150,11 @@ describe("Task 1343a — Watchlist Restore + Q4 2025 Backfill", () => {
     }
   });
 
-  it("seedWatchlist is idempotent: calling twice still yields 25 rows", () => {
+  it("seedWatchlist is idempotent: calling twice still yields 26 rows", () => {
     seedWatchlist(db);
     seedWatchlist(db);
     const { cnt } = db.prepare("SELECT COUNT(*) AS cnt FROM watchlist").get() as { cnt: number };
-    expect(cnt).toBe(25);
+    expect(cnt).toBe(26);
   });
 
   it("seedWatchlist includes expected tickers from each sector", () => {
@@ -183,14 +183,14 @@ describe("Task 1343a — Watchlist Restore + Q4 2025 Backfill", () => {
 
   // ── backfillBctcQ4 ─────────────────────────────────────────────────────────
 
-  it("backfillBctcQ4 enqueues all 25 tickers when none have Q4 2025 reports", () => {
+  it("backfillBctcQ4 enqueues all 26 tickers when none have Q4 2025 reports (HPG added 1416c)", () => {
     seedWatchlist(db);
     backfillBctcQ4(db);
 
     const { cnt } = db
       .prepare("SELECT COUNT(*) AS cnt FROM bctc_vps_queue WHERE period_year = 2025 AND period_quarter = 'Q4'")
       .get() as { cnt: number };
-    expect(cnt).toBe(25);
+    expect(cnt).toBe(26);
   });
 
   it("backfillBctcQ4 skips tickers that already have a Q4 2025 financial_report", () => {
@@ -209,8 +209,8 @@ describe("Task 1343a — Watchlist Restore + Q4 2025 Backfill", () => {
     const { cnt } = db
       .prepare("SELECT COUNT(*) AS cnt FROM bctc_vps_queue WHERE period_year = 2025 AND period_quarter = 'Q4'")
       .get() as { cnt: number };
-    // 25 watchlist - 2 already have reports = 23 enqueued
-    expect(cnt).toBe(23);
+    // 26 watchlist - 2 already have reports = 24 enqueued (HPG added 1416c)
+    expect(cnt).toBe(24);
 
     // FPT and VCB must NOT be in the queue
     const fptRow = db
@@ -247,7 +247,7 @@ describe("Task 1343a — Watchlist Restore + Q4 2025 Backfill", () => {
     const { cnt } = db
       .prepare("SELECT COUNT(*) AS cnt FROM bctc_vps_queue WHERE period_year = 2025 AND period_quarter = 'Q4'")
       .get() as { cnt: number };
-    expect(cnt).toBe(25);
+    expect(cnt).toBe(26);
   });
 });
 
@@ -313,7 +313,7 @@ describe("Task stale-tickers — validateSeedTickers startup check", () => {
     console.warn = original;
 
     expect(warnings.length).toBe(1);
-    expect(warnings[0]).toContain("25 seeded ticker(s) have no market_prices data");
+    expect(warnings[0]).toContain("26 seeded ticker(s) have no market_prices data");
     expect(warnings[0]).toContain("possible delisted/inactive");
   });
 
@@ -332,7 +332,7 @@ describe("Task stale-tickers — validateSeedTickers startup check", () => {
     console.warn = original;
 
     expect(warnings.length).toBe(1);
-    expect(warnings[0]).toContain("23 seeded ticker(s) have no market_prices data");
+    expect(warnings[0]).toContain("24 seeded ticker(s) have no market_prices data");
     expect(warnings[0]).not.toContain("VCB");
     expect(warnings[0]).not.toContain("FPT");
   });

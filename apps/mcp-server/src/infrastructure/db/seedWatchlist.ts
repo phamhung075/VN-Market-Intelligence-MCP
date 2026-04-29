@@ -47,6 +47,7 @@ export const WATCHLIST_SEED: WatchlistSeedEntry[] = [
   { code: "VHM", exchange: "HOSE",  domain: "real_estate" },
   { code: "D2D", exchange: "HOSE",  domain: "real_estate" },
   // Steel
+  { code: "HPG", exchange: "HOSE",  domain: "steel" },
   { code: "HSG", exchange: "HOSE",  domain: "steel" },
   { code: "NKG", exchange: "HOSE",  domain: "steel" },
   // Aviation
