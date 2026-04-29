@@ -75,16 +75,26 @@ export function ensureForeignFlowMigration(): void {
 // ─────────────────────────────────────────────────────────────────────────────
 // FIX-BCTC-SIZE-GUARD — One-time cleanup: reset 4 poisoned 'done' queue entries
 //
-// These 4 fake PDFs (459-byte test payloads) were marked 'done' before the
-// 10 KB size guard existed. They will never be retried without this reset.
+// Migration complete (2026-04-26): all 4 poisoned PDFs (459-byte test payloads)
+// were deleted and their queue rows re-enqueued. BSR and DGC have since been
+// successfully downloaded as real PDFs from VPS.
+//
+// IMPORTANT: This list must remain empty. Adding entries here causes the cleanup
+// to run on every container restart (ensurePoisonedQueueCleanup's _poisonedQueueCleanupRan
+// guard is process-scoped, not persistent), which resets 'done' rows back to
+// 'pending' and creates an infinite re-download loop.
+//
+// Task 1413d (2026-04-29): emptied list after diagnosing BSR/DGC stuck-pending
+// root cause — cleanup was resetting them to 'pending' on every restart despite
+// their PDFs being successfully downloaded.
 // ─────────────────────────────────────────────────────────────────────────────
 
-export const POISONED_BCTC_ENTRIES = [
-  { action_code: "BID", period_year: 2025, period_quarter: "Q4", filename: "BID_2025_Q4.pdf" },
-  { action_code: "BSR", period_year: 2025, period_quarter: "Q4", filename: "BSR_2025_Q4.pdf" },
-  { action_code: "DGC", period_year: 2025, period_quarter: "Q4", filename: "DGC_2025_Q4.pdf" },
-  { action_code: "TEST", period_year: 2025, period_quarter: "Q4", filename: "test.pdf" },
-] as const;
+export const POISONED_BCTC_ENTRIES: ReadonlyArray<{
+  action_code: string;
+  period_year: number;
+  period_quarter: string;
+  filename: string;
+}> = [];
 
 let _poisonedQueueCleanupRan = false;
 
