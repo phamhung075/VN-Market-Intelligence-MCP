@@ -55,8 +55,11 @@ log_diagnostic() {
 }
 
 # Log rotation — keep under 10 MB
+# Source shared constants (LOG_ROTATE_BYTES) from vps-lib.sh
+# shellcheck source=/root/vps-lib.sh
+[ -f /root/vps-lib.sh ] && LOG_ROTATE_BYTES=$(grep '^LOG_ROTATE_BYTES=' /root/vps-lib.sh | cut -d= -f2) || LOG_ROTATE_BYTES=10485760
 LOG_SIZE=$(stat -c%s "$LOG" 2>/dev/null || echo 0)
-if [ "$LOG_SIZE" -gt 10485760 ]; then
+if [ "$LOG_SIZE" -gt $LOG_ROTATE_BYTES ]; then
   mv "$LOG" "$LOG.old"
   log_diagnostic "INFO" "Log rotated (was $LOG_SIZE bytes)"
 fi

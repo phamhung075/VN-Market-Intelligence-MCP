@@ -7,6 +7,11 @@
 # Format:   2026-04-13T20:00:00Z [PRICE ] INFO  Step 2: VN stocks 60 items (1234ms)
 # ═══════════════════════════════════════════════════════════════════════════
 
+# ── Shared constant — 10 MB log rotation cap ─────────────────────────────
+# All vps-scripts source this file to access LOG_ROTATE_BYTES rather than
+# inlining the magic number. Change the value here to affect all scripts.
+LOG_ROTATE_BYTES=10485760
+
 VPS_SERVICE="${1:-unknown}"
 VPS_LOG="${2:-/var/log/vps-unknown.log}"
 VPS_START_TS=$(date -u +%s)
@@ -15,7 +20,7 @@ VPS_START_TS=$(date -u +%s)
 _rotate_log() {
   local size
   size=$(stat -c%s "$VPS_LOG" 2>/dev/null || echo 0)
-  if [ "$size" -gt 10485760 ]; then
+  if [ "$size" -gt "$LOG_ROTATE_BYTES" ]; then
     mv "$VPS_LOG" "${VPS_LOG}.old"
   fi
 }
