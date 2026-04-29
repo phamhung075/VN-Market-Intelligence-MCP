@@ -226,23 +226,17 @@ describe("Task 026 — HOSE Market Data Fetcher", () => {
   // ---------------------------------------------------------------------------
 
   describe("storeMarketPrices() + getAvgVolume()", () => {
-    beforeAll(async () => {
-      // Use isolated test DB
+    beforeEach(async () => {
+      // Reset DB for every test to guard against cross-test singleton contamination:
+      // other test files calling closeDb() between our tests would leave _db=null.
+      // Calling closeDb() + initDatabase() guarantees a fresh schema each time.
       Bun.env["DB_PATH"] = ":memory:";
-      // initDatabase() creates market_prices_history (with exchange column)
-      // via canonical schema.ts — no separate inline DDL needed.
+      closeDb();
       await initDatabase();
     });
 
-    afterAll(() => {
+    afterEach(() => {
       closeDb();
-    });
-
-    beforeEach(() => {
-      // Wipe history between tests for full isolation
-      const db = getDb();
-      db.exec("DELETE FROM market_prices_history");
-      db.exec("DELETE FROM market_prices");
     });
 
     // ── 13. Store prices and verify they persist ─────────────────────────────

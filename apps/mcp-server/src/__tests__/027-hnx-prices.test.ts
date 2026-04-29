@@ -340,31 +340,16 @@ describe("Task 027 — HNX + UPCOM Market Data Fetcher", () => {
   // ---------------------------------------------------------------------------
 
   describe("store + retrieve with exchange column", () => {
-    beforeAll(async () => {
-      await initDatabase();
-      const db = getDb();
-      // Ensure market_prices_history exists (created lazily in hose.ts)
-      db.exec(`
-        CREATE TABLE IF NOT EXISTS market_prices_history (
-          code       TEXT NOT NULL,
-          price      REAL NOT NULL,
-          volume     REAL NOT NULL,
-          fetched_at TEXT NOT NULL,
-          PRIMARY KEY (code, fetched_at)
-        );
-        CREATE INDEX IF NOT EXISTS idx_mph_code_fetched
-          ON market_prices_history(code, fetched_at DESC);
-      `);
-    });
-
-    afterAll(() => {
+    beforeEach(async () => {
+      // Reset DB for every test to guard against cross-test singleton contamination.
+      // The stale CREATE TABLE IF NOT EXISTS (without exchange column) below is
+      // superseded by initDatabase() which creates the table with exchange column.
       closeDb();
+      await initDatabase();
     });
 
-    beforeEach(() => {
-      const db = getDb();
-      db.exec("DELETE FROM market_prices");
-      db.exec("DELETE FROM market_prices_history");
+    afterEach(() => {
+      closeDb();
     });
 
     it("stores HNX price and retrieves correct exchange tag", async () => {

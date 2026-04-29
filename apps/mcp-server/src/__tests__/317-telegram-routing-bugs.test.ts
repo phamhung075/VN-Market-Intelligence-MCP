@@ -147,8 +147,10 @@ describe("Bug B — server.ts push-prices alert persist metadata", () => {
   });
 
   it("user_ask_reply persist (ask-reply route) is untouched — still mcp-user", async () => {
+    // Task 1406a-c: ask-reply route was extracted from server.ts to webhookHandler.ts.
+    // The test now reads webhookHandler.ts where the /ask reply persist block lives.
     const src = await Bun.file(
-      new URL("../interface/mcp/server.ts", import.meta.url).pathname
+      new URL("../interface/mcp/routes/webhookHandler.ts", import.meta.url).pathname
     ).text();
 
     // The /ask reply route should still have mcp-user (correct for that context)

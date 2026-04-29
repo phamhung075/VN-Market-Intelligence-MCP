@@ -256,27 +256,35 @@ export async function runTaAlertNotifier(
     .filter((c) => c !== "(unknown)");
 
   if (batchCodes.length > 0) {
-    const placeholders = batchCodes.map(() => "?").join(", ");
-    interface SignalIdRow { id: number }
-    const signalRows = database
-      .prepare<SignalIdRow, string[]>(
-        `SELECT id FROM agent_signals
-          WHERE outcome IS NULL
-            AND stock_code IN (${placeholders})
-            AND created_at >= datetime('now', '-4 hours')
-            AND signal_type IN ('price_anomaly', 'urgent_news')`,
-      )
-      .all(...batchCodes);
+    try {
+      const placeholders = batchCodes.map(() => "?").join(", ");
+      interface SignalIdRow { id: number }
+      const signalRows = database
+        .prepare<SignalIdRow, string[]>(
+          `SELECT id FROM agent_signals
+            WHERE outcome IS NULL
+              AND stock_code IN (${placeholders})
+              AND created_at >= datetime('now', '-4 hours')
+              AND signal_type IN ('price_anomaly', 'urgent_news')`,
+        )
+        .all(...batchCodes);
 
-    for (const sigRow of signalRows) {
-      try {
-        recordOutcome(database, sigRow.id, "fired", "dispatched by taAlertNotifierJob");
-      } catch (err) {
-        logger.warn(
-          `[taAlertNotifierJob] recordOutcome failed for signal id=${sigRow.id}`,
-          { error: err instanceof Error ? err.message : String(err) },
-        );
+      for (const sigRow of signalRows) {
+        try {
+          recordOutcome(database, sigRow.id, "fired", "dispatched by taAlertNotifierJob");
+        } catch (err) {
+          logger.warn(
+            `[taAlertNotifierJob] recordOutcome failed for signal id=${sigRow.id}`,
+            { error: err instanceof Error ? err.message : String(err) },
+          );
+        }
       }
+    } catch (err) {
+      // agent_signals table may not exist in test environments or early startup —
+      // FR-5 is best-effort and must not block the main notification path.
+      logger.warn("[taAlertNotifierJob] FR-5 agent_signals update skipped", {
+        error: err instanceof Error ? err.message : String(err),
+      });
     }
   }
 

@@ -14,13 +14,14 @@
 import { describe, it, expect, beforeEach } from "bun:test";
 import { Database } from "bun:sqlite";
 import { pollNews, _resetAllDarkAlert } from "../application/usecases/pollNews.js";
+import { initDatabase } from "../infrastructure/db/schema.js";
 
 const ALL_DARK_COOLDOWN_MS = 4 * 60 * 60 * 1000;
 
 function makeDb(): Database {
-  const { Database: BunDatabase } = require("bun:sqlite");
-  const db: Database = new BunDatabase(":memory:");
-  const { initDatabase } = require("../infrastructure/db/schema.js");
+  const db = new Database(":memory:");
+  // initDatabase accepts an optional db argument to support isolated test DBs.
+  // Use top-level import instead of require() to avoid ESM/CJS interop issues in full suite.
   initDatabase(db);
   return db;
 }

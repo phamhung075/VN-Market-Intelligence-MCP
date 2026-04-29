@@ -25,12 +25,17 @@ import {
 // Test setup — use isolated :memory: DB
 // ---------------------------------------------------------------------------
 
-beforeAll(async () => {
+// Note: initDatabase is called in beforeEach (not beforeAll) to guard against
+// cross-test contamination — other test files calling closeDb() would leave _db=null,
+// causing storeMarketPrices/getAvgVolume to see a fresh empty DB.
+
+beforeEach(async () => {
   Bun.env["DB_PATH"] = ":memory:";
+  closeDb();
   await initDatabase();
 });
 
-afterAll(() => {
+afterEach(() => {
   closeDb();
 });
 

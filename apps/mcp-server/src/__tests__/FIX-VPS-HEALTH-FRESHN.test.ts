@@ -117,11 +117,14 @@ describe("FIX-VPS-HEALTH-FRESHN — data-freshness health checks", () => {
 
   // ── vn-news-fetch: healthy if market_messages created within 20 min ──────────
 
-  it("vn-news-fetch: healthy when market_messages has a row created within 20 minutes", () => {
+  it("vn-news-fetch: healthy when rag_analyses has a row created within 30 minutes", () => {
+    // FIX-1405b: vn-news-fetch now queries rag_analyses.created_at (not market_messages).
+    // VPS news items land in rag_analyses via the pollNews pipeline.
+    // rag_analyses schema: id TEXT PK, created_at TEXT, level TEXT NOT NULL, ...
     db.prepare(`
-      INSERT INTO market_messages (from_agent, message_type, ticker, content, sent_at)
-      VALUES (?, ?, ?, ?, ?)
-    `).run("vps-news", "news", "VNM", "test content", minutesAgoIso(5));
+      INSERT INTO rag_analyses (id, created_at, level)
+      VALUES (?, ?, ?)
+    `).run("test-row-1", minutesAgoIso(5), "news");
 
     const config = DEFAULT_FRESHNESS_CONFIGS.find(
       (c) => c.serviceName === "vn-news-fetch",
@@ -131,11 +134,13 @@ describe("FIX-VPS-HEALTH-FRESHN — data-freshness health checks", () => {
     expect(result.healthStatus).toBe("healthy");
   });
 
-  it("vn-news-fetch: unhealthy when market_messages last row is older than 20 minutes", () => {
+  it("vn-news-fetch: unhealthy when rag_analyses last row is older than 30 minutes", () => {
+    // FIX-1405b: vn-news-fetch now queries rag_analyses.created_at (not market_messages).
+    // Threshold is 30 minutes (SLA raised from 20 min in FIX-1405b).
     db.prepare(`
-      INSERT INTO market_messages (from_agent, message_type, ticker, content, sent_at)
-      VALUES (?, ?, ?, ?, ?)
-    `).run("vps-news", "news", "VNM", "test content", minutesAgoIso(25));
+      INSERT INTO rag_analyses (id, created_at, level)
+      VALUES (?, ?, ?)
+    `).run("test-row-2", minutesAgoIso(35), "news");
 
     const config = DEFAULT_FRESHNESS_CONFIGS.find(
       (c) => c.serviceName === "vn-news-fetch",

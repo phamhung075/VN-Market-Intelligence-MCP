@@ -43,8 +43,11 @@ import type { ForeignFlowUpsertItem } from "../domain/models/shared-types.js";
  */
 function setupLegacyDbWithDuplicates(): void {
   closeDb();
-  // After closeDb(), getDb() returns a fresh :memory: DB (no tables yet)
+  // After closeDb(), getDb() returns a fresh :memory: DB (no tables yet).
+  // Guard: DROP first in case initDatabase() was called by a previous test file
+  // in the same Bun worker (module-level DB singleton is shared across test files).
   const db = getDb();
+  db.exec(`DROP TABLE IF EXISTS vnstock_trading_stats`);
 
   // Recreate the table as it looked BEFORE the UNIQUE constraint was added
   db.exec(`
@@ -92,6 +95,7 @@ function setupLegacyDbWithDuplicates(): void {
 function setupModernDb(): void {
   closeDb();
   const db = getDb();
+  db.exec(`DROP TABLE IF EXISTS vnstock_trading_stats`);
 
   db.exec(`
     CREATE TABLE vnstock_trading_stats (

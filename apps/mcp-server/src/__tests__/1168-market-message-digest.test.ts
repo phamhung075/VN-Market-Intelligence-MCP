@@ -124,12 +124,12 @@ const { handleGetMarketMessageDigest, handleBatchReviewMarketMessages } = toolsM
 // ─────────────────────────────────────────────────────────────────────────────
 
 beforeEach(async () => {
+  // closeDb() first to guard against contamination: if another test file in the
+  // same Bun worker left _db non-null with rows, initDatabase() would reuse it.
+  closeDb();
   await initDatabase();
 });
 afterEach(() => {
-  closeDb();
-});
-afterAll(() => {
   closeDb();
 });
 
