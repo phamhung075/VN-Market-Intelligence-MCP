@@ -40,7 +40,7 @@
 | 1409a | AUDIT: Trim SPRINT_GOAL.md to ≤30 lines | 2026-04-29 | — |
 | 1409b | AUDIT: Archive old sprint prose from TASKS.md to docs/TASKS_ARCHIVE.md | 2026-04-29 | — |
 | 1409c | AUDIT: Create .claude/knowledge/agent-spawn-template.md | 2026-04-29 | — |
-| 1409d | AUDIT: Create .claude/knowledge/token-economy.md — 3-tier compression policy | 2026-04-29 | — |
+| 1409d | AUDIT: Create .claude/knowledge/token-economy.md — 3-tier compression policy (renamed to agent-comms-policy.md by task 1411) | 2026-04-29 | — |
 | 1409e | AUDIT: Delete docs/agent-memory/modules/test-module-memory.md (ghost file) | 2026-04-29 | — |
 | 1409f | AUDIT: Update project-stats.json — currentSprintNotes + lastUpdated + knowledgeFileCount | 2026-04-29 | — |
 | 1406a | Extract pushPricesHandler.ts + server-startup.ts from server.ts | 2026-04-29 | reports/TASK_REPORT_1406f.md |

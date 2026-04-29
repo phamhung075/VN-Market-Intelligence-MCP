@@ -49,6 +49,8 @@ CLAUDE.md (root — always loaded)
 │
 ├── .claude/knowledge/qa-checklist.md (TDD/DDD/TS/security/data integrity checklist, MCP tool rules, task report template)
 │
+├── .claude/knowledge/agent-comms-policy.md (agent-to-agent comms: 3-tier compression ULTRA/FULL/LITE, token economy policy)
+│
 ├── .claude/knowledge/fail-loud-protocol.md (failure handling: 5-step protocol — inlined in agents by design)
 │
 ├── .claude/knowledge/restart-policy.md (server restart: docker-compose only, 9 microservices, banned mechanisms, QA validation)
