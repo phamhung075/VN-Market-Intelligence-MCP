@@ -54,6 +54,8 @@ services:
       # VPS PDF pull endpoint — authenticated download of cached PDFs.
       # Endpoint: GET /bctc-files/:code/:filename  (X-API-Key header required).
       # VPS_PUSH_API_KEY is read from .env via env_file below — do NOT duplicate value here.
+      # Docker service hostname for pdf-extractor microservice (replaces localhost:5001 fallback).
+      - PDF_EXTRACTOR_URL=http://pdf-extractor:5001
     env_file:
       - .env
     restart: unless-stopped

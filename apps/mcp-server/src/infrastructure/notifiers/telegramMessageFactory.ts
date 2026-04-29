@@ -97,10 +97,10 @@ export class TelegramMessageFactory {
 
   /**
    * Format alert message for briefing output.
-   * Smart truncation: max 100 graphemes, word-boundary aware.
+   * Smart truncation: max 400 graphemes, word-boundary aware.
    */
   static formatAlertMessage(msg: string): string {
-    return smartTruncate(msg, 100);
+    return smartTruncate(msg, 400);
   }
 
   /**

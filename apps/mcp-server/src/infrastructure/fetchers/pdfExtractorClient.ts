@@ -6,7 +6,7 @@
  * is unavailable (returns null so callers can fall through to the
  * existing in-process extraction path).
  *
- * Endpoint: POST http://localhost:5001/extract
+ * Endpoint: POST http://pdf-extractor:5001/extract (Docker) or http://localhost:5001/extract (local dev)
  *
  * Layer: infrastructure — may use HTTP, never imports from domain/.
  */
@@ -14,8 +14,10 @@
 import { logger } from "../logger.js";
 
 // Base URL is configurable via environment variable so tests can override it.
+// In Docker: set PDF_EXTRACTOR_URL=http://pdf-extractor:5001 in docker-compose.yml.
+// In local dev: defaults to http://localhost:5001.
 export const PDF_EXTRACTOR_BASE_URL =
-  process.env.PDF_EXTRACTOR_URL ?? "http://localhost:5001";
+  Bun.env.PDF_EXTRACTOR_URL ?? "http://localhost:5001";
 
 export interface PdfExtractorResult {
   documentId: string;
