@@ -13,6 +13,15 @@ Up to 5 prediction claims created | WORK notified | session log
 - `agent_signals` error only → log warning to WORK, continue (predictions use evidence, not signals)
 - Any other error → fail-loud, STOP
 
+**0b. Regime guard** (from bootstrap, zero extra tool calls)
+Parse `get_macro_snapshot` text block in bootstrap:
+```
+REGIME = "Global Liquidity: X" → TIGHTENING | EASING | NEUTRAL
+```
+If `get_macro_snapshot` not in bootstrap → call it once now.
+`REGIME=TIGHTENING` → `DAMPENING_ACTIVE=true` (regardless of calibration) + append to P-8 WORK: `"Thiên Thời TIGHTENING — xác suất tự động giảm 10%."`
+Note: does NOT skip predictions entirely — predictions are still useful in TIGHTENING, but with lower confidence.
+
 **P-0. Self-assessment** `get_calibration_report()`
 - "No calibration data" → proceed normally
 - "degrading" AND `trend_delta > 0.05` → `DAMPENING_ACTIVE=true`, apply `final_confidence = min(0.95, max(0.05, computed * 0.90))`

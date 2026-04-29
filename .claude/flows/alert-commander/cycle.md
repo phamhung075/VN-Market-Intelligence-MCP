@@ -13,6 +13,16 @@ MARKET alerts (user-facing) | WORK cycle status | BUG on error
 - `agent_signals` error only → log warning to WORK, continue with zero signals
 - Any other error → fail-loud, STOP
 
+**0b. Macro calendar + regime extraction**
+`get_macro_calendar()` → extract `pivot_window_active = (pivotWindowWarning != null)`
+Parse `get_macro_snapshot` text block already in bootstrap:
+```
+REGIME       = "Global Liquidity: X"    → TIGHTENING | EASING | NEUTRAL
+CARRY_REGIME = "VND Carry Spread" line  → HOT_MONEY_INFLOW | NEUTRAL | FII_OUTFLOW_RISK
+CARRY_SPREAD = numeric value parsed from "VND Carry Spread: +X.XX%"
+```
+If `get_macro_snapshot` not in bootstrap context → call it once now.
+
 **1. Context**
 `get_market_context(hours_back=6)` | `get_alerts(type="price")`
 
@@ -21,11 +31,16 @@ MARKET alerts (user-facing) | WORK cycle status | BUG on error
 `get_crisis_early_warning()` threshold exceeded → mark CRITICAL
 
 **3. Signal Matrix**
+Base thresholds (NEUTRAL): `verified_chain` conviction ≥ 0.80 | `urgent_news` conviction ≥ 0.60
+Regime-conditioned adjustments:
+- `TIGHTENING`: verified_chain ≥ 0.85 | bullish urgent_news ≥ 0.75
+- `EASING`: verified_chain ≥ 0.75 | urgent_news ≥ 0.55
+- `NEUTRAL`: base thresholds (0.80 / 0.60)
 
 | Signal | Condition | Action |
 |--------|-----------|--------|
-| `verified_chain` | conviction ≥ 0.8 | CRITICAL |
-| `urgent_news` | conviction ≥ 0.6 | MARKET |
+| `verified_chain` | conviction ≥ regime threshold | CRITICAL |
+| `urgent_news` | conviction ≥ regime threshold | MARKET |
 | `price_anomaly` | confirmed via `get_alerts` | CRITICAL |
 | `legal_risk` | any | CRITICAL now |
 | `crisis_velocity` | any | CRITICAL now |
@@ -35,6 +50,15 @@ Pre-send: `get_market_snapshot()` — divergence > 5% → discard, max 2 attempt
 - > 3 pending → `send_alert_digest(alerts=[], channel="market")`
 - ≤ 3 → `send_telegram(channel="market")` per alert
 Format: `.claude/knowledge/alert-message-format.md` (Vietnamese, full diacritics)
+
+Append regime caveat to each MARKET alert (Vietnamese):
+- `TIGHTENING` + bullish signal:
+  `"Lưu ý: Tín hiệu mua trong môi trường thắt chặt (TIGHTENING). Thiên thời bất lợi — yêu cầu xác nhận chuỗi cao hơn."`
+- `CARRY_REGIME=HOT_MONEY_INFLOW` + `CARRY_SPREAD > 3%`:
+  `"⚠️ Dòng tiền nóng cao — carry spread hấp dẫn. Rủi ro đảo chiều FII nếu carry thu hẹp."`
+- `pivot_window_active=true`:
+  `"📅 Cửa sổ pivot chính sách — dữ liệu GSO/SBV sắp công bố."`
+
 After: `mark_alert_read()` + `record_signal_outcome(..., "fired")`
 
 **4b. WORK channel** (every cycle)
@@ -56,17 +80,24 @@ Issue: ... | Impact: ... | Status: Retrying/Blocking
 ### Alert Cycle (HH:MM–HH:MM UTC)
 - Signals: [count by type]
 - Fired: N | Suppressed: M | MARKET: X
+- Regime: REGIME | Carry: CARRY_REGIME (CARRY_SPREAD%) | Pivot window: pivot_window_active
 ```
 
 ---
 
 ## Firing Rules
 
-**position-danger** (all 3): `stopLossHit=true` + `singleDayDrop>5%` + `newsSentiment<-0.5`
-**watchlist-opportunity** (all 4): `kinhDichConfidence≥70` + `kinhDichSignal=BUY` + `newsSentiment≥0.3` + `agentsMajority=BUY`
+**position-danger**:
+- `NEUTRAL/EASING` (all 3): `stopLossHit=true` + `singleDayDrop>5%` + `newsSentiment<-0.5`
+- `TIGHTENING` (2/3 sufficient): any two of the above — credit buffer thinner, earlier exit warranted
+**watchlist-opportunity**:
+- `TIGHTENING`: `kinhDichConfidence≥80` + `kinhDichSignal=BUY` + `newsSentiment≥0.5` + `agentsMajority=BUY`
+- `EASING`: `kinhDichConfidence≥65` + `kinhDichSignal=BUY` + `newsSentiment≥0.3` + `agentsMajority=BUY`
+- `NEUTRAL`: `kinhDichConfidence≥70` + `kinhDichSignal=BUY` + `newsSentiment≥0.3` + `agentsMajority=BUY`
 **CRITICAL always**: `verified_chain` | `legal_risk` | `crisis_velocity`
 
 ## Value Investor Mode
 
 `analysis_mode=value_investor` → skip trader alerts → route to WORK.
+`REGIME=TIGHTENING` → additionally suppress growth-story plays (PE > 20 + no dividend yield) → route to WORK with note: `"TIGHTENING regime — ưu tiên Tốt Gỗ/cổ tức, tránh tăng trưởng PE cao"`
 Always MARKET regardless: earnings release | gov policy change | large insider (>$5M or >5% stake) | supply chain disruption | sector rotation reversal (foreign flow >10%/week) | Kinh Dich shift
