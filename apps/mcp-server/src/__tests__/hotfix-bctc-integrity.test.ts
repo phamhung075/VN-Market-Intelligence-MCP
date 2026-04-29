@@ -270,9 +270,9 @@ describe("hotfix-bctc-integrity — Bug 2: failures are not silently swallowed",
       deps,
     );
 
-    expect(fallbackTicker).toBe("FPT");
-    expect(fallbackYear).toBe(2025);
-    expect(fallbackQuarter).toBe("Q1");
+    expect(fallbackTicker as unknown as string).toBe("FPT");
+    expect(fallbackYear as unknown as number).toBe(2025);
+    expect(fallbackQuarter as unknown as string).toBe("Q1");
   });
 
   it("does not call insertFallbackRecord for VCB when extraction succeeds", async () => {
