@@ -19,6 +19,7 @@ import {
 } from "../../../../infrastructure/db/pharmaStore.js";
 import { getDb, initDatabase } from "../../../../infrastructure/db/schema.js";
 import { logger } from "../../../../infrastructure/logger.js";
+import { SEVERITY_VI } from "./severityLabels.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Formatting helpers
@@ -33,13 +34,6 @@ const EVENT_TYPE_LABEL: Record<string, string> = {
   fdi_pharma: "FDI / M&A Dược phẩm",
 };
 
-/** Map severity to Vietnamese emoji-free label. */
-const SEVERITY_LABEL: Record<string, string> = {
-  low: "[THẤP]",
-  medium: "[TRUNG BÌNH]",
-  high: "[CAO]",
-  critical: "[NGHIÊM TRỌNG]",
-};
 
 /**
  * Format a single pharma event row as a text block.
@@ -47,7 +41,7 @@ const SEVERITY_LABEL: Record<string, string> = {
 export function formatEvent(row: PharmaEventRecord): string {
   const lines: string[] = [];
   const typeLabel = EVENT_TYPE_LABEL[row.event_type] ?? row.event_type;
-  const severityLabel = SEVERITY_LABEL[row.severity] ?? row.severity.toUpperCase();
+  const severityLabel = `[${SEVERITY_VI[row.severity] ?? row.severity.toUpperCase()}]`;
   const date = row.created_at.slice(0, 10);
 
   lines.push(`${severityLabel} ${typeLabel} | ${date}`);

@@ -14,6 +14,7 @@ import {
   analyzeCreditFlow,
   type CreditData,
 } from "../../../../domain/services/creditFlowAnalyzer.js";
+import { SEVERITY_VI } from "./severityLabels.js";
 import { getDb, initDatabase } from "../../../../infrastructure/db/schema.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -143,13 +144,6 @@ export async function getCreditFlowSignalHandler(
 
   const signal = analyzeCreditFlow(current, previous);
 
-  const severityLabel: Record<string, string> = {
-    critical: "NGHIÊM TRỌNG",
-    high: "QUAN TRỌNG",
-    medium: "LƯU Ý",
-    low: "THÔNG TIN",
-  };
-
   const dirLabel =
     signal.direction === "up"
       ? "TÍCH CỰC"
@@ -159,7 +153,7 @@ export async function getCreditFlowSignalHandler(
 
   const lines: string[] = [
     `TÍN DỤNG BẤT ĐỘNG SẢN — PHÂN TÍCH TÁC ĐỘNG`,
-    `Mức độ: ${severityLabel[signal.severity] ?? signal.severity}`,
+    `Mức độ: ${SEVERITY_VI[signal.severity] ?? signal.severity}`,
     `Xu hướng: ${dirLabel}`,
     `Độ tin cậy: ${(signal.confidence * 100).toFixed(0)}%`,
     "",

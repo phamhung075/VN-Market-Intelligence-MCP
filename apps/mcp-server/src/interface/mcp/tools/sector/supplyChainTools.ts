@@ -26,6 +26,7 @@ import {
 } from "../../../../domain/services/supplyChainAnalyzer.js";
 import { classifyDeviation } from "../../../../domain/services/macroThresholds.js";
 import type { SupplyChainEvent } from "../../../../domain/services/supplyChainEventDetector.js";
+import { SEVERITY_VI } from "./severityLabels.js";
 import type { ShippingIndex } from "../../../../infrastructure/fetchers/shippingIndex.js";
 
 // ---------------------------------------------------------------------------
@@ -70,13 +71,7 @@ export function buildSupplyChainExposureOutput(
 
   // ── Section 2: Disruption event ──────────────────────────────────────────
   if (event) {
-    const sevMap: Record<string, string> = {
-      critical: "NGHIÊM TRỌNG",
-      high: "QUAN TRỌNG",
-      medium: "LƯU Ý",
-      low: "THẤP",
-    };
-    lines.push(`\nSỰ KIỆN GIÁN ĐOẠN [${sevMap[event.severity] ?? event.severity.toUpperCase()}]:`);
+    lines.push(`\nSỰ KIỆN GIÁN ĐOẠN [${SEVERITY_VI[event.severity] ?? event.severity.toUpperCase()}]:`);
     lines.push(`  Loại: ${event.eventType}`);
     lines.push(`  Mô tả: ${event.description}`);
     lines.push(`  Tuyến đường bị ảnh hưởng: ${event.affectedRoutes.join(", ")}`);

@@ -17,6 +17,7 @@ import {
   type InsiderPosition,
   type LeadershipSignal,
 } from "../../../../domain/services/leadershipSignal.js";
+import { SEVERITY_VI } from "./severityLabels.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Handler (exported for direct testing)
@@ -69,13 +70,6 @@ export async function getInsiderSignalsHandler(
     };
   }
 
-  const severityLabel: Record<string, string> = {
-    critical: "NGHIÊM TRỌNG",
-    high: "QUAN TRỌNG",
-    medium: "LƯU Ý",
-    low: "THÔNG TIN",
-  };
-
   const lines: string[] = [
     `TÍN HIỆU LÃNH ĐẠO / GIAO DỊCH NỘI BỘ — ${input.code}`,
     `Tổng số tín hiệu: ${signals.length}`,
@@ -83,7 +77,7 @@ export async function getInsiderSignalsHandler(
   ];
 
   for (const s of signals) {
-    lines.push(`[${severityLabel[s.severity] ?? s.severity}] ${s.type.toUpperCase()}`);
+    lines.push(`[${SEVERITY_VI[s.severity] ?? s.severity}] ${s.type.toUpperCase()}`);
     lines.push(`  Lãnh đạo: ${s.insiderName} (${s.position})`);
     lines.push(`  Xu hướng: ${s.direction === "up" ? "TĂNG" : s.direction === "down" ? "GIẢM" : "TRUNG TÍNH"}`);
     lines.push(`  Độ tin cậy: ${(s.confidence * 100).toFixed(0)}%`);

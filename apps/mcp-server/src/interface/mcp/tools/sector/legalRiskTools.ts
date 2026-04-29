@@ -14,6 +14,7 @@ import { Database } from "bun:sqlite";
 import { getDb } from "../../../../infrastructure/db/schema.js";
 import { logger } from "../../../../infrastructure/logger.js";
 import { detectLegalRisk } from "../../../../domain/services/legalRiskDetector.js";
+import { SEVERITY_VI } from "./severityLabels.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Internal types
@@ -83,10 +84,7 @@ function formatAlerts(rows: AlertRow[]): string {
 
   const lines: string[] = [`Tìm thấy ${rows.length} tín hiệu rủi ro pháp lý:\n`];
   for (const row of rows) {
-    const severityLabel =
-      row.severity === "critical" ? "NGHIÊM TRỌNG" :
-      row.severity === "high" ? "QUAN TRỌNG" :
-      row.severity === "medium" ? "LƯU Ý" : "THẤP";
+    const severityLabel = SEVERITY_VI[row.severity] ?? row.severity.toUpperCase();
 
     lines.push(`[${severityLabel}] ${row.triggered_at.slice(0, 16)}`);
     if (row.message) lines.push(`  ${row.message}`);
