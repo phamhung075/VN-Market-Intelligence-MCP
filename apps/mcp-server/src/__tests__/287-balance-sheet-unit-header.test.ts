@@ -307,4 +307,24 @@ TỔNG CỘNG NGUỒN VỐN                              56.000.000
       expect(bs.totalAssets).toBe(56_000_000);
     });
   });
+
+  // ── Year-in-legal-reference guard (fallback loop) ────────────────────────
+  describe("year guard in extractNumber fallback loop", () => {
+    it("does NOT return a year from a legal reference as a financial value", () => {
+      // Line has only one number token: the year 2017 from a legal reference.
+      // It must not be returned as a financial value; the field should fall
+      // through to 0 (not found).
+      const text = `
+Đơn vị tính: Triệu đồng
+Thực hiện theo Nghị định 93/2017/NĐ-CP của Chính phủ
+TỔNG CỘNG TÀI SẢN                                56.000.000
+TỔNG CỘNG NGUỒN VỐN                              56.000.000
+`;
+      const bs = extractBalanceSheet(text);
+      // Cash line matches no pattern, so cash = 0, not 2017
+      expect(bs.currentAssets.cash).toBe(0);
+      // totalAssets must be the real value, not 2017
+      expect(bs.totalAssets).toBe(56_000_000);
+    });
+  });
 });

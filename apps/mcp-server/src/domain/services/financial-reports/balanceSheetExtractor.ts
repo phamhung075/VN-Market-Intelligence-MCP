@@ -62,10 +62,18 @@ function extractNumber(line: string): number | null {
     return val;
   }
 
-  // Fallback: return the last parseable number (even if small)
+  // Fallback: return the last parseable number (even if small).
+  // Apply a targeted year guard: skip a token only when it is a BARE 4-digit
+  // integer with no thousands separators (e.g. "2017" from "93/2017/NĐ-CP").
+  // A Vietnamese-formatted number like "2.000" has a period separator and is
+  // NOT a bare year literal — it must NOT be blocked here.
+  const BARE_YEAR = /^\d{4}$/;
   for (let i = tokens.length - 1; i >= 0; i--) {
-    const val = parseVnNumber(tokens[i]!);
-    if (val !== null) return val;
+    const token = tokens[i]!;
+    const val = parseVnNumber(token);
+    if (val === null) continue;
+    if (Number.isInteger(val) && val >= 1990 && val <= 2030 && BARE_YEAR.test(token)) continue;
+    return val;
   }
   return null;
 }
@@ -139,8 +147,10 @@ function detectUnitMultiplier(lines: string[]): number {
   }
 
   // Fallback: OCR text may garble diacritics or lack the formal "Đơn vị tính"
-  // prefix. Scan first ~50 lines for any unit hint (report #1088 slice a).
-  const head = lines.slice(0, 50);
+  // prefix. Scan first ~200 lines for any unit hint (report #1088 slice a).
+  // VCB BCTCs have a 5-page cover letter; "(Triệu VND)" appears ~line 307 of
+  // extracted text, so 50 was insufficient — expanded to 200.
+  const head = lines.slice(0, 200);
   // Also matches "(Triệu VND)" — bank BCTCs use this column header format
   const P_TRIEU_LOOSE = /tri[eệ]u\s*[đd][oồ]ng|trieu\s*dong|tri[eệ]u\s*VND/i;
   const P_TY_LOOSE = /t[yỷ]\s*[đd][oồ]ng|ty\s*dong/i;
