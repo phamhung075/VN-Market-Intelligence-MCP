@@ -467,8 +467,8 @@ describe("Task 188 — Daily Alert Digest", () => {
     expect(digest.text).not.toContain("(lũy kế)");
   });
 
-  // ── TC-2: Two incremental price_drop — second gets (+thêm) ────────────────
-  it("TC-2: two incremental price_drop alerts — second rendered entry gets (+thêm)", async () => {
+  // ── TC-2: Two incremental price_drop — second gets (+HH:MM) ICT ─────────────
+  it("TC-2: two incremental price_drop alerts — second rendered entry gets (+HH:MM) ICT label", async () => {
     const actions = JSON.stringify([{ code: "GAS" }]);
     const baseTime = Date.now();
     // Alert A is older (triggered 5 min before Alert B)
@@ -490,9 +490,10 @@ describe("Task 188 — Daily Alert Digest", () => {
 
     // Most recent (↓2.4%) is rendered first — no qualifier
     expect(digest.text).toContain("  - Giá giảm ↓2.4%");
-    // Older (↓1.2%) is rendered second — gets (+thêm)
-    expect(digest.text).toContain("  - (+thêm) Giá giảm ↓1.2%");
+    // Older (↓1.2%) is rendered second — gets (+HH:MM) ICT time label
+    expect(digest.text).toMatch(/  - \(\+\d{2}:\d{2}\) Giá giảm ↓1\.2%/);
     expect(digest.text).not.toContain("(lũy kế)");
+    expect(digest.text).not.toContain("(+thêm)");
   });
 
   // ── TC-3: Cumulative price_drop message — gets (lũy kế) ───────────────────
@@ -548,15 +549,17 @@ describe("Task 188 — Daily Alert Digest", () => {
 
     const digest = await assembleAlertDigest({ db });
 
-    // Count occurrences of "(+thêm)" — must be exactly 1
-    const matches = digest.text.match(/\(\+thêm\)/g);
-    expect(matches).not.toBeNull();
-    expect(matches!.length).toBe(1);
+    // Second incremental price_drop gets (+HH:MM) ICT label — exactly 1 time-label
+    const timeMatches = digest.text.match(/\(\+\d{2}:\d{2}\)/g);
+    expect(timeMatches).not.toBeNull();
+    expect(timeMatches!.length).toBe(1);
+    // No legacy (+thêm) label — time is always available from seeded triggered_at
+    expect(digest.text).not.toContain("(+thêm)");
 
     // The volume_spike line must have no qualifier prefix
     const vLine = digest.text.split("\n").find((l) => l.includes("KL bất thường"));
     expect(vLine).toBeDefined();
-    expect(vLine).not.toContain("(+thêm)");
+    expect(vLine).not.toContain("(+");
     expect(vLine).not.toContain("(lũy kế)");
   });
 

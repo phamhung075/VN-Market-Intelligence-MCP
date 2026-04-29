@@ -30,7 +30,7 @@ function makeBlock(
   messages: string[],
   overflow = 0,
 ): StockAlertBlock {
-  return { code, count, topMessages: messages, overflow };
+  return { code, count, topMessages: messages, topTriggeredAt: [], overflow };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

@@ -44,6 +44,12 @@ export interface StockAlertBlock {
   count: number;
   /** Up to 3 message strings from the most recent alerts. */
   topMessages: string[];
+  /**
+   * triggered_at value (raw SQLite or ISO string) for each entry in topMessages,
+   * same index. Empty string "" when the source row has no triggered_at.
+   * Used by formatAlertDigest to render (+HH:MM) ICT on incremental price_drop lines.
+   */
+  topTriggeredAt: string[];
   /** Number of additional alerts beyond the top 3. Zero when count <= 3. */
   overflow: number;
 }
@@ -149,6 +155,26 @@ function isCumulative(msg: string): boolean {
 }
 
 /**
+ * Convert a raw triggered_at string (SQLite "YYYY-MM-DD HH:MM:SS" or ISO
+ * "YYYY-MM-DDTHH:MM:SS.mmmZ") to a zero-padded HH:MM string in Vietnam
+ * Standard Time (ICT, UTC+7).
+ *
+ * Returns null when the input is empty, null, or produces an invalid Date.
+ */
+function toIctHHMM(raw: string | undefined | null): string | null {
+  if (!raw) return null;
+  // SQLite datetime() stores "YYYY-MM-DD HH:MM:SS" without T or Z.
+  // Append "Z" only when the string has no timezone indicator.
+  const normalised = /[TZ+]/.test(raw) ? raw : raw.replace(" ", "T") + "Z";
+  const d = new Date(normalised);
+  if (isNaN(d.getTime())) return null;
+  const ict = new Date(d.getTime() + 7 * 3_600_000);
+  const hh = String(ict.getUTCHours()).padStart(2, "0");
+  const mm = String(ict.getUTCMinutes()).padStart(2, "0");
+  return `${hh}:${mm}`;
+}
+
+/**
  * Build the formatted Vietnamese digest text from the computed data.
  */
 export function formatAlertDigest(
@@ -176,15 +202,18 @@ export function formatAlertDigest(
     const label = block.code === "(khac)" ? "(khac)" : block.code;
     lines.push(`${label} — ${block.count} cảnh báo:`);
     let priceDropSeen = false;
-    for (const msg of block.topMessages) {
+    for (let i = 0; i < block.topMessages.length; i++) {
+      const msg = block.topMessages[i]!;
       let prefix = "";
       if (isCumulative(msg)) {
         // Cumulative entry — always labelled; does NOT consume the "first drop" slot
         prefix = "(lũy kế) ";
       } else if (isPriceDrop(msg)) {
         if (priceDropSeen) {
-          // Second or later incremental price_drop in this block
-          prefix = "(+thêm) ";
+          // Second or later incremental price_drop — show ICT time or fall back
+          const raw = block.topTriggeredAt[i] ?? "";
+          const ict = toIctHHMM(raw);
+          prefix = ict !== null ? `(+${ict}) ` : "(+thêm) ";
         } else {
           // First incremental price_drop — no prefix, but mark seen
           priceDropSeen = true;
@@ -271,11 +300,13 @@ export async function assembleAlertDigest(
       const top3 = sorted.slice(0, 3);
       const overflow = sorted.length - top3.length;
       const topMessages = top3.map((a) => a.message ?? "(không có nội dung)");
+      const topTriggeredAt = top3.map((a) => a.triggered_at ?? "");
 
       return {
         code,
         count: alerts.length,
         topMessages,
+        topTriggeredAt,
         overflow,
       };
     })
