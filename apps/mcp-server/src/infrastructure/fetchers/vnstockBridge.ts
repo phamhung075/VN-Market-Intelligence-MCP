@@ -144,6 +144,49 @@ export interface VnstockRatioSummary {
 }
 
 // ---------------------------------------------------------------------------
+// ANSI / junk detection helper (exported for unit tests)
+// ---------------------------------------------------------------------------
+
+/** Result of stripping ANSI and checking whether stdout is valid JSON. */
+export interface JunkCheckResult {
+  /** True when the cleaned output cannot be JSON (ANSI pollution, non-JSON prefix, etc.). */
+  junk: boolean;
+  /** True when the value is empty or the literal string "null" — caller should return null. */
+  isNull: boolean;
+  /** The cleaned (ANSI-stripped) string, ready for JSON.parse. Empty when junk/isNull. */
+  cleaned: string;
+}
+
+/**
+ * Strip ANSI escape sequences and Unicode box-drawing characters that vnstock's
+ * `rich` progress bar emits to stdout, then validate that what remains looks
+ * like JSON before passing it to JSON.parse.
+ *
+ * Exported so unit tests can exercise the logic without spawning Python.
+ */
+export function stripAnsiAndDetectJunk(raw: string, label: string): JunkCheckResult {
+  // Strip ESC sequences (colors, cursor moves) and Unicode box-drawing / Braille ranges
+  // used by the `rich` library's progress bar and spinner components.
+  const ANSI_RE = /\x1b\[[0-9;]*[mGKHF]|[\u2500-\u257F\u2800-\u28FF\u256A-\u2593]/g;
+  const cleaned = raw.replace(ANSI_RE, "").trim();
+
+  // Empty or literal "null" — legitimate empty result, not junk.
+  if (!cleaned || cleaned === "null") {
+    return { junk: false, isNull: true, cleaned: "" };
+  }
+
+  // First non-whitespace char must be '{' or '[' for valid JSON.
+  if (cleaned[0] !== "{" && cleaned[0] !== "[") {
+    logger.warn(`[vnstock:${label}] non-JSON stdout — possible rate-limit or ANSI output`, {
+      preview: cleaned.slice(0, 120),
+    });
+    return { junk: true, isNull: false, cleaned: "" };
+  }
+
+  return { junk: false, isNull: false, cleaned };
+}
+
+// ---------------------------------------------------------------------------
 // Python helper: run script and parse JSON
 // ---------------------------------------------------------------------------
 
@@ -203,8 +246,9 @@ async function runPython<T>(script: string, label: string): Promise<T | null> {
     }
 
     const trimmed = stdout.trim();
-    if (!trimmed || trimmed === "null") return null;
-    return JSON.parse(trimmed) as T;
+    const check = stripAnsiAndDetectJunk(trimmed, label);
+    if (check.isNull || check.junk) return null;
+    return JSON.parse(check.cleaned) as T;
   } catch (err) {
     logger.warn(`[vnstock:${label}] error`, {
       error: err instanceof Error ? err.message : String(err),
