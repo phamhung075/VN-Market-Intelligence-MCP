@@ -4,3 +4,9 @@ export {
   type CarryTradeSignal,
   type CarryTradeRegime,
 } from "./carryTradeSignal.js";
+export {
+  computeMarketEarningYield,
+  type TickerPE,
+  type MarketEarningYieldResult,
+  type MarketEarningYieldRefused,
+} from "./marketEarningYield.js";

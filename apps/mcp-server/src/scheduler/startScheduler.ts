@@ -46,7 +46,7 @@ import { priceUpdateWatchdog } from './market-data/priceUpdateWatchdogJob.js'
 import { runVpsHealthPolling } from './system/vpsServiceHealthJob.js'
 import { runVnIndexRefreshJob } from './market-data/vnIndexRefreshJob.js'
 import { runFreshnessSlaMonitorJob } from './system/freshnessSlaMonitorJob.js'
-import { macroIndicatorRefreshJob, validateMacroFreshnessOnStartup } from './macro/index.js'
+import { macroIndicatorRefreshJob, validateMacroFreshnessOnStartup, runMarketEarningYieldJob } from './macro/index.js'
 import { runForeignFlowFetcherJobCron } from './market-data/foreignFlowFetcherJob.js'
 import { runMonthlySignalQualityJob } from './audits/monthlySignalQualityJob.js'
 import { runImfIndicatorPollerJob } from './market-data/imfIndicatorPollerJob.js'
@@ -611,6 +611,17 @@ export function startScheduler() {
         log(`[integrity-check] CORRUPTION DETECTED — ${result.details.length} issue(s)`)
       }
       return { rowsWritten: result ? (result.ok ? 0 : 1) : 0 }
+    })
+  }, { timezone: 'UTC' })
+
+  // Weekdays 09:30 UTC (16:30 VN) — Market earning yield computation — task 1426a
+  // Báu Phase 2 (Dinh Gia): aggregates PE from vnstock_financials, computes market-wide
+  // median PE and earnings yield, writes two rows to tracked_indicators.
+  // Fires after market close so intraday prices are fully settled.
+  // Coverage guard: skips DB write if < 70% of watchlist tickers have valid PE.
+  cron.schedule(CRONS.marketEarningYield, async () => {
+    await recordJobRun(getDb(), 'marketEarningYieldJob', async () => {
+      await runMarketEarningYieldJob()
     })
   }, { timezone: 'UTC' })
 
