@@ -1,6 +1,6 @@
 {
-  "scan_date": "2026-04-29T10:00:00Z",
-  "last_run": "2026-04-29T10:00:00Z",
+  "scan_date": "2026-04-27T10:00:00Z",
+  "last_run": "2026-04-27T10:00:00Z",
   "findings": [
     {
       "fingerprint": "check-2:mcp.config.json:referenceStocks",
@@ -16,6 +16,17 @@
     }
   ],
   "fixed_findings": [
+    {
+      "fingerprint": "check-1:interface/mcp/tools/alerts/alertCheckTools.ts:SEVERITY_VI",
+      "severity": "LOW",
+      "category": "Duplicate inline severity label map (resolved)",
+      "file": "apps/mcp-server/src/interface/mcp/tools/alerts/alertCheckTools.ts",
+      "detail": "Local SEVERITY_VI const (ASCII values: NGHIEM TRONG/QUAN TRONG/LUU Y/THAP) duplicated the canonical SEVERITY_VI in sector/severityLabels.ts (diacritics: NGHIEM TRỌNG/QUAN TRỌNG/LƯU Ý/THẤP). formatAlertVi() is private and only used in the no-op registerAlertCheckTools. Replaced inline const with import from ../sector/severityLabels.js. Also corrects the ASCII fallback to use proper Vietnamese diacritics.",
+      "fix_type": "refactor",
+      "fix_commit": "pending",
+      "fixed_at": "2026-04-27T10:00:00Z",
+      "fix_notes": "JANITOR-009. Single-file cleanup. Test 176: PASS. TSC: no new errors. Shipped directly."
+    },
     {
       "fingerprint": "check-1:interface/mcp/tools/system/watchlist.ts:COMPANY_SHORT_NAME",
       "severity": "LOW",
@@ -113,27 +124,28 @@
   "scan_checks": {
     "check-1-duplicate-classification-maps": {
       "status": "complete",
-      "items_scanned": 25,
-      "findings": 0,
-      "notes": "Record<string, { }> patterns searched across all TypeScript files. SECTOR_PEERS canonical in sectorPeers.ts. No new duplications of sector classification data found outside canonical source. predictionCascadeMapper.ts:KEYWORD_RULES and climateImpactMapper.ts:CLIMATE_RULES contain ticker arrays but are domain-specific business logic rules, not data duplication. Confirmed: not replicating SECTOR_PEERS or STOCK_CATALOG data."
+      "items_scanned": 27,
+      "findings": 1,
+      "findings_shipped": 1,
+      "notes": "JANITOR-009 found and fixed: alertCheckTools.ts had inline SEVERITY_VI (ASCII values) duplicating severityLabels.ts canonical (diacritics). Fixed by replacing inline const with import. seedWatchlist.ts WATCHLIST_SEED is the canonical default-watchlist source (mcp.config.json delegates to it). No other classification map duplications found."
     },
     "check-2-hardcoded-ticker-arrays": {
       "status": "complete",
       "items_scanned": 40,
       "findings": 0,
-      "notes": "Ticker array literals searched outside canonical files and tests. Found arrays in: (1) predictionCascadeMapper.ts — 15 keyword rules with ticker arrays mapping macro predictions to VN stock impacts (domain business logic, not data duplication). (2) climateImpactMapper.ts — seasonal risk calendar + climate impact rules with ticker arrays (domain business logic, not data duplication). (3) priceSourceRouter.ts:MAJOR_CAPS — service-specific logic for Yahoo Finance fallback eligibility (not duplicating SECTOR_PEERS). All confirmed as intentional business logic, not redundant ticker lists."
+      "notes": "Ticker array literals searched outside canonical files and tests. predictionCascadeMapper.ts:KEYWORD_RULES, climateImpactMapper.ts:CLIMATE_RULES, priceSourceRouter.ts:MAJOR_CAPS all confirmed as intentional business logic. seedWatchlist.ts WATCHLIST_SEED is canonical. balanceSheetExtractor.ts item codes (100-440) are VN accounting standard codes, not stock tickers."
     },
     "check-3-repeated-magic-numbers-and-cron-duplication": {
       "status": "complete",
-      "items_scanned": 110,
+      "items_scanned": 115,
       "findings": 0,
-      "notes": "JANITOR-005 fixed: IMF_HISTORICAL_BASELINE now in imfIndicators.ts. JANITOR-008 fixed: LOG_ROTATE_BYTES now in vps-lib.sh. All remaining cron expressions use CRONS map in cronConfig.ts with env-overridable ?? pattern. No new magic number duplications detected."
+      "notes": "balanceSheetExtractor.ts uses year range guards (1990-2030 and 2020-2030) inline twice each — these are single-file internal helpers, different semantics (full year vs recent year), not cross-file duplication. JANITOR-005 and JANITOR-008 previously fixed IMF and VPS constants. No new cross-file magic number duplications detected."
     },
     "check-4-schema-duplication": {
       "status": "complete",
       "items_scanned": 35,
       "findings": 0,
-      "notes": "All CREATE TABLE IF NOT EXISTS statements in schema.ts and schema-*.ts (canonical). schedulerLockStore.ts dual DDL intentional for test backwards compatibility. Zero production inline DDL outside schema modules."
+      "notes": "predictionMarketJob.ts line 395 contains a comment referencing CREATE TABLE IF NOT EXISTS (not actual DDL). alertMuteStore.ts and schedulerLockStore.ts have DDL comments in JSDoc blocks only. Zero production inline DDL outside schema modules."
     },
     "check-5-config-drift": {
       "status": "complete",

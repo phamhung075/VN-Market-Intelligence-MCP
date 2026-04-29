@@ -28,6 +28,7 @@ import { detectSignals } from "../../../../domain/services/signalDetector.js";
 import type { MarketSnapshot } from "../../../../domain/services/signalDetector.js";
 import { generateAlerts } from "../../../../domain/services/alertGenerator.js";
 import type { Alert } from "../../../../domain/services/alertGenerator.js";
+import { SEVERITY_VI } from "../sector/severityLabels.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -54,17 +55,6 @@ interface WatchlistRow {
   alert_rise_pct: number;
   alert_impact_min: number;
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Severity labels (Vietnamese)
-// ─────────────────────────────────────────────────────────────────────────────
-
-const SEVERITY_VI: Record<string, string> = {
-  critical: "NGHIEM TRONG",
-  high: "QUAN TRONG",
-  medium: "LUU Y",
-  low: "THAP",
-};
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Formatting helpers
