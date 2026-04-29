@@ -12,7 +12,6 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff |
 |---------|-------|----------|------|-------|---------|
-| JANITOR-010 | DRY: extract VN_INDEX_FRESHNESS_MS=25h to timeConstants.ts — two callers inline same value | low | chore | developer | — |
 
 ---
 
@@ -31,6 +30,11 @@
 
 | Task ID | Title | Merged | Reports |
 |---------|-------|--------|---------|
+| 1425a | Sync project-stats.json toolCount=113 + schedulerFileCount=44 to registry SSoTs | 2026-04-29 | — |
+| 1425b | Remove hardcoded REQ/TECH file counts from docs-organization.md | 2026-04-29 | — |
+| 1425c | Delete ghost dirs docs/agent-memory + corrupt DB backups (~281MB) + .fuse_hidden* | 2026-04-29 | — |
+| JANITOR-010 | DRY: extract VN_INDEX_FRESHNESS_MS=25h to timeConstants.ts | 2026-04-29 | — |
+| 1424a | BCTC confidence=0 false positive: VAL-01 unit-scale guard + banking operatingMargin proxy | 2026-04-29 | reports/TASK_REPORT_1424a.md |
 | hotfix-bctc-parser2 | BCTC parser: DIG/SHB case mismatch + FPT unit scale + DGC/BSR phantom confidence | 2026-04-29 | reports/TASK_REPORT_hotfix_bctc_parser2.md |
 | 1423a | Add US 10Y Yield (^TNX) to Yahoo Finance fetcher + schema column | 2026-04-29 | docs/handoffs/TASK_1423a.md |
 | 1423b | FRED API fetcher for Fed Funds Rate → tracked_indicators | 2026-04-29 | reports/TASK_REPORT_1423b.md |

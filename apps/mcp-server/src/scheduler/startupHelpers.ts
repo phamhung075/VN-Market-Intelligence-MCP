@@ -16,6 +16,7 @@ import { runBaseRateComputationJob } from './macro/baseRateComputationJob.js'
 import { runPredictionResolutionJob } from './macro/predictionResolutionJob.js'
 import { runCalibrationReportJob } from './macro/calibrationReportJob.js'
 import { recordJobRun } from '../infrastructure/db/cronJobRunStore.js'
+import { VN_INDEX_FRESHNESS_MS } from '../domain/services/timeConstants.js'
 import { breakers } from '../infrastructure/circuitBreakerRegistry.js'
 import type { Database } from 'bun:sqlite'
 import { existsSync, readFileSync } from 'node:fs'
@@ -69,7 +70,7 @@ export function eveningReportIsValid(
     if (!fetchedAt) return false
 
     const ageMs = nowMs - new Date(fetchedAt).getTime()
-    const vnIndexFresh = ageMs < 25 * 3600 * 1000
+    const vnIndexFresh = ageMs < VN_INDEX_FRESHNESS_MS
 
     const newsCount = report.newsCount ?? 0
 

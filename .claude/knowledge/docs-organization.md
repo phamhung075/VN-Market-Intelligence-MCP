@@ -61,9 +61,9 @@ If created in root by mistake → auto-moved to archive/ before next work task.
 
 ## What's in Each Archive
 
-**`docs/historical/` (0 files (cleaned 2026-04-26) — never touch)**
-- REQ_006 through REQ_1422 (118 files) — all feature requirements ever assigned
-- TECH_006 through TECH_1422 (131 files) — all technical specs ever written
+**`docs/historical/` (see docs/data/project-stats.json for current counts — never touch)**
+- REQ_NNN — all feature requirements ever assigned (count volatile, increments each sprint)
+- TECH_NNN — all technical specs ever written (count volatile, increments each sprint)
 - Canonical reference for task context and design decisions
 - No deletion, no modification
 

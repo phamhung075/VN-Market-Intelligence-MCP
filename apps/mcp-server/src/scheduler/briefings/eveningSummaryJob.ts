@@ -18,6 +18,7 @@ import {
   SECTOR_NAME_VI,
 } from "../../domain/services/sectorPeers.js";
 import { formatPnlSection } from "../../domain/services/portfolioPnlCalculator.js";
+import { VN_INDEX_FRESHNESS_MS } from "../../domain/services/timeConstants.js";
 import { TelegramMessageFactory } from "../../infrastructure/notifiers/telegramMessageFactory.js";
 import { formatGlobalSnapshotSection } from "./morningBriefingJob.js";
 import type { GlobalSnapshot } from "../../application/usecases/assembleBriefing.js";
@@ -40,7 +41,7 @@ export function isVnIndexFresh(
   fetchedAt: string,
   nowMs: number = Date.now(),
 ): boolean {
-  return nowMs - new Date(fetchedAt).getTime() < 25 * 3600 * 1000;
+  return nowMs - new Date(fetchedAt).getTime() < VN_INDEX_FRESHNESS_MS;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
