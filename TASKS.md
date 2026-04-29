@@ -18,7 +18,6 @@
 | JANITOR-005 | DRY: historicalBaseline 3.0 magic number duplicated in 3 IMF files | LOW | refactor | developer | — |
 | JANITOR-007 | DRY: Vietnamese severity label maps duplicated in 4+ tool files | LOW | refactor | developer | — |
 | JANITOR-008 | DRY: 10485760 log-rotation constant inlined in 10 vps-scripts/*.sh — vps-lib.sh:_rotate_log() already owns this but is never sourced | LOW | refactor | developer | — |
-| 1409a | AUDIT: Trim SPRINT_GOAL.md to ≤30 lines | HIGH | chore | claude-manager-helper | docs/handoffs/TASK_1409a.md |
 
 ---
 
@@ -26,11 +25,6 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Started |
 |---------|-------|----------|------|-------|---------|---------|
-| 1409b | AUDIT: Archive old sprint prose from TASKS.md to docs/TASKS_ARCHIVE.md | HIGH | chore | claude-manager-helper | docs/handoffs/TASK_1409b.md | 2026-04-29 |
-| 1409c | AUDIT: Create .claude/knowledge/agent-spawn-template.md | MEDIUM | chore | claude-manager-helper | docs/handoffs/TASK_1409c.md | 2026-04-29 |
-| 1409d | AUDIT: Create .claude/knowledge/token-economy.md — 3-tier compression policy | HIGH | docs | developer | docs/handoffs/TASK_1409d.md | 2026-04-29 |
-| 1409e | AUDIT: Delete docs/agent-memory/modules/test-module-memory.md (ghost file) | HIGH | chore | claude-manager-helper | docs/handoffs/TASK_1409e.md | 2026-04-29 |
-| 1409f | AUDIT: Update project-stats.json — currentSprintNotes + lastUpdated + knowledgeFileCount | HIGH | chore | claude-manager-helper | docs/handoffs/TASK_1409f.md | 2026-04-29 |
 
 ---
 
@@ -43,6 +37,12 @@
 
 | Task ID | Title | Merged | Reports |
 |---------|-------|--------|---------|
+| 1409a | AUDIT: Trim SPRINT_GOAL.md to ≤30 lines | 2026-04-29 | — |
+| 1409b | AUDIT: Archive old sprint prose from TASKS.md to docs/TASKS_ARCHIVE.md | 2026-04-29 | — |
+| 1409c | AUDIT: Create .claude/knowledge/agent-spawn-template.md | 2026-04-29 | — |
+| 1409d | AUDIT: Create .claude/knowledge/token-economy.md — 3-tier compression policy | 2026-04-29 | — |
+| 1409e | AUDIT: Delete docs/agent-memory/modules/test-module-memory.md (ghost file) | 2026-04-29 | — |
+| 1409f | AUDIT: Update project-stats.json — currentSprintNotes + lastUpdated + knowledgeFileCount | 2026-04-29 | — |
 | 1406a | Extract pushPricesHandler.ts + server-startup.ts from server.ts | 2026-04-29 | reports/TASK_REPORT_1406f.md |
 | 1406b | Extract pushForeignFlowHandler.ts from server.ts | 2026-04-29 | reports/TASK_REPORT_1406f.md |
 | 1406c | Extract webhookHandler.ts from server.ts — server.ts ≤1600 lines achieved | 2026-04-29 | reports/TASK_REPORT_1406f.md |

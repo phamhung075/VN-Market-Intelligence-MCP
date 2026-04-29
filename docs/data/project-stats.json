@@ -12,7 +12,7 @@
   "testFailures": 17,
   "toolCount": 108,
   "schedulerFileCount": 51,
-  "knowledgeFileCount": 17,
+  "knowledgeFileCount": 23,
   "devAgentCount": 13,
   "analysisAgentCount": 9,
   "totalTasksDone": 366,
@@ -21,5 +21,5 @@
   "briefingArchiveQI": 0,
   "briefingArchiveQII": 0,
   "lastFixApplied": "Sprint 1400: VN_OFFSET_MS centralised into timeConstants.ts across all 3 passes (prod + test files). Baseline: 7926 pass / 17 fail — merged 2026-04-28.",
-  "currentSprintNotes": "Sprint 1409 Audit Remediation: 6 tasks — SPRINT_GOAL.md truncate, TASKS.md Done archive, agent-spawn-template.md create, token-economy.md create, ghost file delete, stats sync."
+  "currentSprintNotes": "Sprint 1409 closed. All 6 audit tasks done."
 }
