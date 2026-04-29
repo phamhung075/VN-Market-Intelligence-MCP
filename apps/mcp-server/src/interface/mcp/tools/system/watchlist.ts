@@ -21,6 +21,7 @@ import { z } from "zod";
 
 import { getDb, initDatabase } from "../../../../infrastructure/db/schema.js";
 import { getSectorPeers, SECTOR_NAME_VI } from "../../../../domain/services/sectorPeers.js";
+import { getCompanyName } from "../../../../domain/services/stockAliases.js";
 import { tradingWindowLabel } from "../../../../domain/services/tradingWindow.js";
 import type { DomainType } from "../../../../../bctc-schema.js";
 
@@ -101,51 +102,6 @@ interface WatchlistRow {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Short company name lookup for suggestion display
-// ─────────────────────────────────────────────────────────────────────────────
-
-/**
- * Well-known short names for display in peer suggestions.
- * Falls back to the ticker code if no mapping is defined.
- */
-const COMPANY_SHORT_NAME: Record<string, string> = {
-  // Banking
-  VCB: "Vietcombank", BID: "BIDV", CTG: "VietinBank", TCB: "Techcombank",
-  MBB: "MB Bank", VPB: "VPBank", ACB: "ACB", STB: "Sacombank",
-  HDB: "HDBank", TPB: "TPBank",
-  // Tech
-  FPT: "FPT", CMG: "CMC", ELC: "Elcom", SAM: "SAM Holdings",
-  // Real estate
-  VIC: "Vingroup", VHM: "Vinhomes", NVL: "Novaland", KDH: "Khang Dien",
-  DXG: "Dat Xanh", NLG: "Nam Long", PDR: "Phat Dat", HDG: "Ha Do",
-  // Steel
-  HPG: "Hoa Phat", HSG: "Hoa Sen", NKG: "Nam Kim", TIS: "Thai Nguyen Steel", POM: "Pomina",
-  // Oil & Gas
-  GAS: "PV Gas", PLX: "Petrolimex", PVD: "PVDrilling", PVS: "PVS", BSR: "Binh Son", OIL: "PV Oil",
-  // Aviation
-  HVN: "Vietnam Airlines", VJC: "Vietjet", ACV: "ACV", SCS: "Saigon Cargo",
-  // Retail
-  MWG: "The Gioi Di Dong", FRT: "FPT Retail", DGW: "Digiworld",
-  PNJ: "PNJ", VNM: "Vinamilk", MSN: "Masan",
-  // Securities
-  SSI: "SSI", VND: "VNDirect", HCM: "HCM", VCI: "Viet Capital", SHS: "SHS", MBS: "MBS",
-  // Utilities
-  REE: "REE Corp", PC1: "PC1", POW: "PV Power", GEG: "Gia Lai Elec", BCG: "Bamboo Capital", NT2: "NT2",
-  // Agriculture
-  VHC: "Vinh Hoan", ANV: "Nam Viet", HAG: "Hoang Anh Gia Lai", HNG: "HNG", ASM: "ASM", DBC: "Dabaco",
-  // Insurance
-  BVH: "Bao Viet", PVI: "PVI", BMI: "Bao Minh", MIG: "MIG",
-  // Pharma
-  DHG: "DHG Pharma", IMP: "Imexpharm", DMC: "Domesco", TRA: "Traphaco", DBD: "Binh Dinh Pharma",
-  // Logistics
-  GMD: "Gemadept", VTP: "Viettel Post", VOS: "VOS", STG: "Sotrans", HAH: "Hai An",
-  // Gold mining
-  // (PNJ already in retail)
-  // Automotive
-  VEA: "VEAM", HAX: "Hang Xanh Auto", CTF: "City Auto", TMT: "TMT Auto", SMA: "Saigon Auto Parts",
-};
-
-// ─────────────────────────────────────────────────────────────────────────────
 // Pure helper — exported for testing
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -183,7 +139,7 @@ export function buildPeerSuggestionText(
 
   const sectorName = stripDiacritics(SECTOR_NAME_VI[domain] ?? domain);
   const peerLines = peers.map((p) => {
-    const name = COMPANY_SHORT_NAME[p.code] ?? p.code;
+    const name = getCompanyName(p.code) ?? p.code;
     return `  ${p.code} (${name})`;
   });
 
