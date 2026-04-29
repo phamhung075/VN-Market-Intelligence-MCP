@@ -42,5 +42,6 @@
 | 1423d | Extend get_macro_snapshot with [Global Macro Inputs — Thien Thoi] section | 2026-04-29 | reports/TASK_REPORT_1423d.md |
 | 1423e | get_macro_calendar targeted MCP tool tests | 2026-04-29 | reports/TASK_REPORT_1423ac.md |
 | 1423f | Add Max Deposit Rate line to get_macro_snapshot SBV section | 2026-04-29 | — |
+| 1426c | Dinh Gia section in get_macro_snapshot for Báu Phase 2 | 2026-04-29 | reports/TASK_REPORT_1426c.md |
 
 ---
