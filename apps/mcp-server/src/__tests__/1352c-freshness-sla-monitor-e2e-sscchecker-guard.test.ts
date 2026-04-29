@@ -129,7 +129,10 @@ describe("Task 1352c — Group A: runFreshnessSlaMonitor() end-to-end", () => {
     insertSourceRows(db, minutesAgo(15), "a2");
 
     const { spy, calls } = makeEscalateSpy();
-    const result = await runFreshnessSlaMonitor(db, spy);
+    // Pass a market-hours `now` so the 1407b market-hours gate does not suppress
+    // price escalation. Monday 2026-04-27T04:00Z is inside 02:00–08:59 UTC window.
+    const marketHoursNow = new Date("2026-04-27T04:00:00.000Z");
+    const result = await runFreshnessSlaMonitor(db, spy, undefined, marketHoursNow);
 
     expect(result.breaches).toBe(1);
     expect(result.escalations).toBe(1);
