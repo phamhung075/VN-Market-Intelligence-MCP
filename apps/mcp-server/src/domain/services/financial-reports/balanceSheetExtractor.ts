@@ -475,7 +475,7 @@ function parseSplitBlockBalanceSheet(lines: string[]): Record<string, number> | 
           const sum = liab + eq;
           const mismatch = Math.abs(sum - grandTotal) / grandTotal;
           if (mismatch < 0.01 && liab > eq) {
-            return { "300": liab, "400": eq, "440": grandTotal };
+            return { "270": grandTotal, "300": liab, "400": eq, "440": grandTotal };
           }
         }
       }

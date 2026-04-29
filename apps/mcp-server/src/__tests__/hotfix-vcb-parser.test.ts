@@ -337,6 +337,131 @@ Nghị định số 93/2017/NĐ-CP do Chính phủ ban hành
     });
   });
 
+  // ── Task 1416a: banking-label fallback must emit key "270" (total_assets) ──
+
+  describe("1416a: banking-label fallback emits key '270' so total_assets is correct", () => {
+    // Banking-format split-block text — codeSet.size === 0 path.
+    //
+    // Requirements to reach the banking-label fallback inside parseSplitBlockBalanceSheet:
+    //   1. A page-boundary separator must exist at line >= 10 (page-pair strategy).
+    //      We use a second "Báo cáo tình hình tài chính" line as the separator.
+    //   2. Label block (before separator) must contain TONG NO PHAI TRA / VON CHU SO HUU
+    //      label text but NO item codes (no standalone 3-digit integers, no "(NNN =")
+    //      so codeSet.size === 0 after the label scan.
+    //   3. Value block (after separator) must contain the three large numbers.
+    //
+    // Note: "TỔNG CỘNG NGUỒN VỐN" matches PAGE_BOUNDARY in extractSplitBlockAll
+    // so it must NOT appear in the label block (it would split the page early).
+    // The label text uses "TỔNG NỢ PHẢI TRẢ" / "VỐN CHỦ SỞ HỮU" instead (no inline codes).
+    // Banking-format split-block: codeSet.size === 0 path.
+    //
+    // Uses the VCB Q4 inline-header format so the text is NOT split by
+    // PAGE_BOUNDARY in extractSplitBlockAll (no "NGUON VON" / "Báo cáo..." repeat).
+    // The date+unit separator ("Thuyết 31/12/2025..." / "minh Triệu VND Triệu VND")
+    // at position >= 10 satisfies parseSplitBlockBalanceSheet's separator check.
+    // Label block has TỔNG NỢ PHẢI TRẢ / VỐN CHỦ SỞ HỮU but NO item codes (100–440).
+    // Uses diacritic-free OCR form matching the hasBankLabels regex:
+    //   /TONG\s*(NO|NỢ)\s*(PHAI|PHẢI)\s*(TRA|TRẢ)/ requires ASCII "TONG NO PHAI TRA"
+    //   /TONG\s*(VON|VỐN)\s*(CHU|CHỦ)\s*(SO|SỞ)\s*(HUU|HỮU)/ requires ASCII "TONG VON CHU SO HUU"
+    // Real VCB OCR output often strips diacritics on label lines.
+    const BANKING_SPLIT_BLOCK = `
+TONG NO PHAI TRA
+TONG VON CHU SO HUU
+Tong cong nguon von
+Thuyet minh so 1
+Thuyet minh so 2
+Thuyet minh so 3
+Thuyet minh so 4
+Thuyet minh so 5
+Thuyet minh so 6
+Thuyet minh so 7
+Thuyet minh so 8
+Thuyet minh so 9
+Thuyet minh so 10
+Thuyet minh so 11
+Thuyet 31/12/2025 31/12/2024
+minh Trieu VND Trieu VND
+2.214.393.069
+204.941.834
+2.419.334.903
+`;
+
+    it("totalAssets equals totalLiabilitiesAndEquity (accounting identity for banks)", () => {
+      const bs = extractBalanceSheet(BANKING_SPLIT_BLOCK);
+      expect(bs.totalAssets).toBe(bs.totalLiabilitiesAndEquity);
+    });
+
+    it("totalAssets is the grand total (not a sub-item)", () => {
+      const bs = extractBalanceSheet(BANKING_SPLIT_BLOCK);
+      expect(bs.totalAssets).toBe(2_419_334_903);
+    });
+
+    it("findValue fallback is suppressed — totalAssets does not pick a wrong sub-value", () => {
+      // Inject a P_TOTAL_ASSETS-matching line that would return the wrong sub-value
+      // if findValue were reached. The split-block path must win.
+      // Same inline-header structure with a decoy "Tong cong tai san" line.
+      // findValue on P_TOTAL_ASSETS would return 35_202_546 from that line if
+      // split-block "270" key were not present.
+      const textWithDecoyLine = `
+TONG NO PHAI TRA
+TONG VON CHU SO HUU
+Tong cong tai san  35.202.546  30.000.000
+Thuyet minh so 1
+Thuyet minh so 2
+Thuyet minh so 3
+Thuyet minh so 4
+Thuyet minh so 5
+Thuyet minh so 6
+Thuyet minh so 7
+Thuyet minh so 8
+Thuyet minh so 9
+Thuyet minh so 10
+Thuyet minh so 11
+Thuyet 31/12/2025 31/12/2024
+minh Trieu VND Trieu VND
+2.214.393.069
+204.941.834
+2.419.334.903
+`;
+      const bs = extractBalanceSheet(textWithDecoyLine);
+      // findValue on "Tổng cộng tài sản" would return 35_202_546 (first large number on that line).
+      // The split-block path produces key "270" = 2_419_334_903 and wins.
+      expect(bs.totalAssets).toBe(2_419_334_903);
+      expect(bs.totalAssets).not.toBe(35_202_546);
+    });
+
+    it("regression: VCB Q4 inline-header format — totalAssets now equals totalLiabilitiesAndEquity", () => {
+      // This is the existing VCB_Q4_INLINE_HEADER fixture (B-3a).
+      // After 1416a fix: totalAssets must equal totalLiabilitiesAndEquity (2_109_260_616).
+      // Before 1416a fix: totalAssets was 0 for this path because key "270" was absent.
+      // Uses same inline-header structure with no-diacritics OCR form.
+      const VCB_Q4_FOR_ASSETS = `
+TONG NO PHAI TRA
+TONG VON CHU SO HUU
+Tong cong nguon von
+Thuyet minh so 1
+Thuyet minh so 2
+Thuyet minh so 3
+Thuyet minh so 4
+Thuyet minh so 5
+Thuyet minh so 6
+Thuyet minh so 7
+Thuyet minh so 8
+Thuyet minh so 9
+Thuyet minh so 10
+Thuyet minh so 11
+Thuyet 31/12/2025 31/12/2024
+minh Trieu VND Trieu VND
+1.904.318.782
+204.941.834
+2.109.260.616
+`;
+      const bs = extractBalanceSheet(VCB_Q4_FOR_ASSETS);
+      expect(bs.totalAssets).toBe(bs.totalLiabilitiesAndEquity);
+      expect(bs.totalAssets).toBe(2_109_260_616);
+    });
+  });
+
   // ── Bug 2: Year values must not be captured as financial figures ──────────
 
   describe("Bug 2: year values (1990–2030) excluded from financial extraction", () => {
