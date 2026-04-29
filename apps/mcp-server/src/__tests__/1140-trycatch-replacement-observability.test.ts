@@ -5,7 +5,7 @@ import { describe, it, expect } from 'bun:test'
 import { readFileSync } from 'fs'
 import { join } from 'path'
 
-const JOBS_TS = join(import.meta.dir, '../../src/scheduler/jobs.ts')
+const JOBS_TS = join(import.meta.dir, '../../src/scheduler/startScheduler.ts')
 
 describe('Task 1140 — try/catch replacement with recordJobRun', () => {
   const src = readFileSync(JOBS_TS, 'utf8')

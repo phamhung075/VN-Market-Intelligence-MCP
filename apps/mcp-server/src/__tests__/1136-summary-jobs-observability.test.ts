@@ -22,7 +22,7 @@ const summaryJobsSrc = readFileSync(
 );
 
 const jobsSrc = readFileSync(
-  join(SRC_ROOT, "jobs.ts"),
+  join(SRC_ROOT, "startScheduler.ts"),
   "utf-8",
 );
 

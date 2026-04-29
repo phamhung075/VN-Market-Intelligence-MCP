@@ -289,8 +289,8 @@ describe("Task 103 — Market Scan Use Case + Job", () => {
     const { fileURLToPath } = await import("node:url");
 
     const dir = dirname(fileURLToPath(import.meta.url));
-    const jobsPath = resolve(dir, "../scheduler/jobs.ts");
-    const jobsSource = readFileSync(jobsPath, "utf8");
+    const configPath = resolve(dir, "../scheduler/cronConfig.ts");
+    const jobsSource = readFileSync(configPath, "utf8");
 
     // Market open: 09:00 weekdays
     expect(jobsSource).toContain("0 9 * * 1-5");

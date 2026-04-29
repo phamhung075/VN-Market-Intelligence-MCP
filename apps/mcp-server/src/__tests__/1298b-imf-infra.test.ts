@@ -153,14 +153,16 @@ describe("AC-4: imfDataFetcher production safety", () => {
 // ── AC-5: Cron Registration ───────────────────────────────────────────────────
 
 describe("AC-5: imfIndicatorPoller cron registration", () => {
-  it("jobs.ts CRONS map contains imfIndicatorPoller with 6h schedule", () => {
-    const jobsPath = path.resolve("src/scheduler/jobs.ts");
-    const source = readFileSync(jobsPath, "utf-8");
+  it("cronConfig.ts CRONS map contains imfIndicatorPoller with 6h schedule", () => {
+    const configPath = path.resolve("src/scheduler/cronConfig.ts");
+    const configSource = readFileSync(configPath, "utf-8");
+    const schedulerPath = path.resolve("src/scheduler/startScheduler.ts");
+    const schedulerSource = readFileSync(schedulerPath, "utf-8");
 
-    expect(source).toContain("imfIndicatorPoller");
-    expect(source).toContain("0 */6 * * *");
-    // Confirm the job is wired to runImfIndicatorPollerJob
-    expect(source).toContain("runImfIndicatorPollerJob");
+    expect(configSource).toContain("imfIndicatorPoller");
+    expect(configSource).toContain("0 */6 * * *");
+    // Confirm the job is wired to runImfIndicatorPollerJob in startScheduler
+    expect(schedulerSource).toContain("runImfIndicatorPollerJob");
   });
 
   it("cron-registry.json contains imf_indicator_poller entry with required fields", () => {

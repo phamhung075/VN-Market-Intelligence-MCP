@@ -6,7 +6,7 @@ import { readFileSync } from "fs";
 import { resolve } from "path";
 
 const JOBS_TS = readFileSync(
-  resolve(import.meta.dir, "../scheduler/jobs.ts"),
+  resolve(import.meta.dir, "../scheduler/startScheduler.ts"),
   "utf-8",
 );
 

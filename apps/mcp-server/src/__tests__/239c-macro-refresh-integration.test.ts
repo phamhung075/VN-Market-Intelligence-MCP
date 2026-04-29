@@ -84,9 +84,9 @@ describe("Task 239c — macro-refresh-integration", () => {
   // ──────────────────────────────────────────────────────────────────────────
   // AC-5: src/scheduler/jobs.ts imports macroIndicatorRefreshJob
   // ──────────────────────────────────────────────────────────────────────────
-  test("AC-5: jobs.ts imports macroIndicatorRefreshJob + validateMacroFreshnessOnStartup", async () => {
+  test("AC-5: startScheduler.ts imports macroIndicatorRefreshJob + validateMacroFreshnessOnStartup", async () => {
     const jobsContent = await Bun.file(
-      `${import.meta.dir}/../..` + "/src/scheduler/jobs.ts"
+      `${import.meta.dir}/../..` + "/src/scheduler/startScheduler.ts"
     ).text();
 
     expect(jobsContent).toContain("macroIndicatorRefreshJob");
@@ -94,27 +94,30 @@ describe("Task 239c — macro-refresh-integration", () => {
   });
 
   // ──────────────────────────────────────────────────────────────────────────
-  // AC-6: src/scheduler/jobs.ts registers CRON_MACRO_INDICATOR_REFRESH at 06:00 GMT+7
+  // AC-6: scheduler registers CRON_MACRO_INDICATOR_REFRESH at 06:00 GMT+7
   // ──────────────────────────────────────────────────────────────────────────
-  test("AC-6: jobs.ts registers cron job for macroIndicatorRefreshJob at 06:00 GMT+7", async () => {
-    const jobsContent = await Bun.file(
-      `${import.meta.dir}/../..` + "/src/scheduler/jobs.ts"
+  test("AC-6: startScheduler.ts registers cron job for macroIndicatorRefreshJob at 06:00 GMT+7", async () => {
+    const schedulerContent = await Bun.file(
+      `${import.meta.dir}/../..` + "/src/scheduler/startScheduler.ts"
+    ).text();
+    const configContent = await Bun.file(
+      `${import.meta.dir}/../..` + "/src/scheduler/cronConfig.ts"
     ).text();
 
-    // Verify cron expression exists
-    expect(jobsContent).toContain("0 6 * * *");
+    // Verify cron expression exists in config
+    expect(configContent).toContain("0 6 * * *");
 
-    // Verify registration pattern (cron.schedule or similar)
-    expect(jobsContent).toContain("cron.schedule");
-    expect(jobsContent).toContain("macroIndicatorRefreshJob");
+    // Verify registration pattern in startScheduler
+    expect(schedulerContent).toContain("cron.schedule");
+    expect(schedulerContent).toContain("macroIndicatorRefreshJob");
   });
 
   // ──────────────────────────────────────────────────────────────────────────
   // AC-7: validateMacroFreshnessOnStartup() called on startup (before first 06:00 run)
   // ──────────────────────────────────────────────────────────────────────────
-  test("AC-7: jobs.ts calls validateMacroFreshnessOnStartup() on scheduler startup", async () => {
+  test("AC-7: startScheduler.ts calls validateMacroFreshnessOnStartup() on scheduler startup", async () => {
     const jobsContent = await Bun.file(
-      `${import.meta.dir}/../..` + "/src/scheduler/jobs.ts"
+      `${import.meta.dir}/../..` + "/src/scheduler/startScheduler.ts"
     ).text();
 
     // Verify the startup function is called

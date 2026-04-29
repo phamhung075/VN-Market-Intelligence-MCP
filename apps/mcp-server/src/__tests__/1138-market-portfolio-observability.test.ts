@@ -6,7 +6,7 @@ import { readFileSync } from "fs"
 import { join } from "path"
 
 const jobsSource = readFileSync(
-  join(import.meta.dir, "../../src/scheduler/jobs.ts"),
+  join(import.meta.dir, "../../src/scheduler/startScheduler.ts"),
   "utf8",
 )
 
