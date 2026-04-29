@@ -1,5 +1,29 @@
 # Sprint Goal
 
+## Sprint 1777 — VPS Price Pipeline Restoration (2026-04-29)
+
+**Status:** IN PROGRESS
+
+**Vision:** Restore live price and foreign-flow data ingestion so evening reports are no longer empty and TA/alert signals resume.
+
+**Root cause (triage findings):**
+- VPS price push stopped at 2026-04-24 08:59 (5 days dark). No `prices` entries in `vps_push_log` since then.
+- `foreign-flow` circuit breaker opened on 2026-04-24 15:53 due to UNIQUE constraint failure in `vnstock_trading_stats`. CB remained OPEN and suppressed all subsequent foreign-flow pushes.
+- `daily_ohlcv` has 0 rows for 2026-04-25 through 2026-04-29, causing empty evening reports, zero TA signals, and zero watchlist movers.
+- VN Index cache is empty (0 rows in `vn_index_cache`); evening reports show stale hardcoded value from 2026-04-18.
+
+**Scope:**
+- IN: VPS SSH diagnosis + service restart (ops); foreign-flow CB reset + UNIQUE constraint guard (developer)
+- OUT: new features, vnstock-sync pipeline (working), BCTC pipeline (separate)
+
+**Success Metric:** `vps_push_log` shows `prices` entries dated 2026-04-29+; `daily_ohlcv` populated for 2026-04-29; evening report `ohlcvRowsMin > 0`.
+
+**Tasks:**
+- 1777a — VPS price pipeline dark: ops diagnose + restore VPS push service
+- 1777b — foreign-flow CB stuck OPEN: reset circuit breaker + add UNIQUE constraint guard
+
+---
+
 ## Sprint 1416 — BCTC confidence failures + HPG disk-scan skip (2026-04-29)
 
 **Status:** CLOSED — VCB/FPT confidence restored, HPG disk-scan fixed. 8076 tests pass.

@@ -12,7 +12,6 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff |
 |---------|-------|----------|------|-------|---------|
-| 1777a | VPS price pipeline dark since 2026-04-24 — diagnose + restore VPS price/foreign-flow push | critical | UNBLOCK | ops | — |
 
 ---
 
@@ -20,6 +19,7 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Started |
 |---------|-------|----------|------|-------|---------|---------|
+| 1777a | VPS price pipeline dark since 2026-04-24 — diagnose + restore VPS price/foreign-flow push | critical | UNBLOCK | ops | — | 2026-04-29 |
 
 ---
 
