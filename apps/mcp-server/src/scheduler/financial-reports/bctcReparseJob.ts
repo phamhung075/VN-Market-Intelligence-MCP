@@ -338,7 +338,7 @@ export async function reparseSingleWithOcrFallback(
 
           logger.info("[bctc-reparse-job] inserted DA_NOP fallback record", {
             ticker: payload.ticker,
-            period: `${yq.year}-Q${yq.quarter}`,
+            period: `${yq.year}-${yq.quarter}`,
             reason: "extraction failed with low confidence",
           });
         } catch (fallbackErr) {
@@ -502,7 +502,7 @@ async function makeProductionDeps(): Promise<ReparseDeps> {
     insertFallbackRecord: async (payload) => {
       const db = getDb();
       const now = new Date().toISOString();
-      const sortKey = `${payload.year}-Q${payload.quarter}`;
+      const sortKey = `${payload.year}-${payload.quarter.startsWith('Q') ? payload.quarter : `Q${payload.quarter}`}`;
       const fallbackId = `fallback-${payload.ticker}-${sortKey}`;
 
       db.prepare(`
@@ -519,7 +519,7 @@ async function makeProductionDeps(): Promise<ReparseDeps> {
         "other", // Default domain
         payload.year,
         payload.quarter,
-        `Q${payload.quarter}`,
+        payload.quarter.startsWith('Q') ? payload.quarter : `Q${payload.quarter}`,
         `${payload.year}-01-01`,
         `${payload.year}-12-31`,
         sortKey,
