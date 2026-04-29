@@ -1,18 +1,18 @@
 {
   "_maintained_by": "PM / system-auditor",
   "_trigger": "sprint start/end, tool/cron count change, baseline test update",
-  "lastUpdated": "2026-04-28",
-  "currentSprint": 1401,
-  "previousSprint": { "number": 1400, "status": "DONE", "progressTasks": "1400: VN_OFFSET_MS DRY centralisation — pass 1 (timeConstants.ts + 3 files), pass 2 (7 production files), pass 3 (7 test files). All inline 7*3600_000 occurrences removed. Baseline: 7926 pass / 17 fail." },
-  "sprintGoal": "Sprint 1401 — BCTC Pipeline Blocker Recovery. 4 tasks: delete 44 placeholder queue rows (1401), resolve 3 stranded feedback rows (1402), restart vn-foreign-flow VPS service (1403), diagnose+fix vn-news-fetch 0-item issue (1404).",
-  "testBaseline": 7926,
-  "testBaselineTarget": 7926,
-  "testBaselinePass": 7926,
+  "lastUpdated": "2026-04-29",
+  "currentSprint": 1409,
+  "previousSprint": { "number": 1408, "status": "DONE", "progressTasks": "1408: startup-catchup skips eveningSummaryJob when valid report exists — eveningReportIsValid() checks vnIndex.fetchedAt within 25h AND newsCount > 0; 6 new tests. Baseline: 7926 pass / 17 fail." },
+  "sprintGoal": "Sprint 1409 — Audit Remediation. 6 tasks: SPRINT_GOAL.md truncate (1409a), TASKS.md Done archive (1409b), CLAUDE.md spawn template extract (1409c), token-economy.md SSOT create (1409d), ghost files delete (1409e), project-stats.json sync (1409f).",
+  "testBaseline": 7913,
+  "testBaselineTarget": 7913,
+  "testBaselinePass": 7913,
   "testBaselineFail": 17,
   "testFailures": 17,
   "toolCount": 108,
   "schedulerFileCount": 51,
-  "knowledgeFileCount": 15,
+  "knowledgeFileCount": 17,
   "devAgentCount": 13,
   "analysisAgentCount": 9,
   "totalTasksDone": 366,
@@ -21,5 +21,5 @@
   "briefingArchiveQI": 0,
   "briefingArchiveQII": 0,
   "lastFixApplied": "Sprint 1400: VN_OFFSET_MS centralised into timeConstants.ts across all 3 passes (prod + test files). Baseline: 7926 pass / 17 fail — merged 2026-04-28.",
-  "currentSprintNotes": "Pass 3 of VN_OFFSET_MS DRY (1400) in progress"
+  "currentSprintNotes": "Sprint 1409 Audit Remediation: 6 tasks — SPRINT_GOAL.md truncate, TASKS.md Done archive, agent-spawn-template.md create, token-economy.md create, ghost file delete, stats sync."
 }
