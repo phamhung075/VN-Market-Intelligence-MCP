@@ -101,8 +101,9 @@ Tier 3: tasks that depend on Tier 2 → etc.
 
 After all tasks Done:
 1. `git branch` — any non-main branches remain? → add CLEAN batch → Step 1.
-2. `read_telegram_reports(status="new")` — new? → Step 1.
-3. Nothing → `send_telegram(work, "Dev loop idle.")` → EXIT
+2. `read_telegram_reports(status="new")` — new reports (not yet actioned)? → Step 1.
+3. Mark all actioned reports processed: `process_telegram_report(id)` for each handled report.
+4. Nothing → `send_telegram(work, "Dev loop idle.")` → EXIT
 
 ---
 
