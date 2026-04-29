@@ -99,6 +99,72 @@ function lineMatches(line: string, pattern: RegExp): boolean {
  */
 const LOOKAHEAD_LINES = 3;
 
+/**
+ * Find a value by BCTC item code.
+ *
+ * Task 1416b: FPT Q4-2025 OCR produces two forms of code-bearing lines:
+ *
+ *   Form A (code-prefix): the line STARTS with the code, followed by the
+ *   value — e.g. "270 88.089.621.779.862". The label is on a separate line.
+ *
+ *   Form B (code-inline): the code appears mid-line after the label and
+ *   Thuyết minh reference, followed by the current-period value and
+ *   (optionally) the prior-period value — e.g.
+ *   "TONG CỘNG NGUON VỐN (440=300+400) 440 88.089.621.779.862 71.999..."
+ *   or "D. VỐN CHỦ SỞ HỮU 400 43.751.466.292.590 35.727..."
+ *   These lines are matched even when findValue fails due to uppercase
+ *   Vietnamese diacritics not being covered by the /i flag.
+ *
+ * Strategy:
+ *   1. Try Form A: line starts with "<code><non-digit>".
+ *   2. Try Form B: line contains " <code> " (space-delimited) followed
+ *      by a large number; the code must be preceded by a non-digit.
+ *
+ * The row-code guard applies in both cases.
+ * Returns 0 if no matching line is found.
+ */
+function findValueByCode(lines: string[], code: number): number {
+  const codeStr = String(code);
+  // Form A: line starts with the code followed by a non-digit separator
+  const prefixPattern = new RegExp(`^${codeStr}(?:\\s+|[^\\d])`, "");
+  // Form B: code appears mid-line, preceded and followed by non-digits
+  const inlinePattern = new RegExp(`(?:^|\\D)${codeStr}(?:\\s+|[^\\d])`, "");
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+
+    // Form A
+    if (prefixPattern.test(trimmed)) {
+      const rest = trimmed.slice(codeStr.length).trim();
+      const val = extractNumber(rest);
+      if (val === null) continue;
+      if (Number.isInteger(val) && val >= 10 && val <= 990 && val % 10 === 0) continue;
+      return val;
+    }
+
+    // Form B: only for 3-digit grand total codes to avoid false positives
+    // (codes like 270, 300, 440 are unique enough; sub-item codes like 110
+    // could match year fragments or other numbers).
+    // Match " <code> <value>" where the code is surrounded by whitespace.
+    // e.g. "TONG CỘNG NGUON VỐN (440=300+400) 440 88.089.621.779.862 ..."
+    //       → code token " 440 " → value is first large number after it
+    if (code >= 270) {
+      // Find the last occurrence of " <code> " (space-bounded) in the line
+      const spaceCodePattern = new RegExp(`\\s${codeStr}\\s`);
+      const match = spaceCodePattern.exec(trimmed);
+      if (match) {
+        const afterCode = trimmed.slice(match.index + match[0].length);
+        const val = extractNumber(afterCode);
+        if (val === null) continue;
+        if (Number.isInteger(val) && val >= 10 && val <= 990 && val % 10 === 0) continue;
+        return val;
+      }
+    }
+  }
+  return 0;
+}
+
 function findValue(lines: string[], pattern: RegExp): number {
   for (let i = 0; i < lines.length; i++) {
     if (lineMatches(lines[i]!, pattern)) {
@@ -622,6 +688,51 @@ function extractSplitBlockAll(fullText: string): Record<string, number> | null {
   return foundAny ? merged : null;
 }
 
+// ---------------------------------------------------------------------------
+// Task 1416b — Balance-sheet window detector
+// ---------------------------------------------------------------------------
+
+/**
+ * Trim a multi-page OCR text to the balance-sheet section only.
+ *
+ * Prevents findValue from matching patterns in thuyết minh / subsidiary
+ * tables that appear after the balance sheet in long consolidated PDFs.
+ *
+ * Returns the original array unchanged when no anchor is found (unknown
+ * format — existing behaviour is preserved).
+ *
+ * Task 1416b: fixes FPT Q4-2025 where pages 42-46 (thuyết minh) shadowed
+ * the correct total_assets value on page 5.
+ */
+function trimToBalanceSheetWindow(lines: string[]): string[] {
+  const P_BS_ANCHOR =
+    /[Mm][aẫâ][ụu]\s*[Ss][ốo]\s*B\s*0[12]|[Bb][áa]o\s+c[áa]o\s+t[iì]nh\s+h[iì]nh\s+t[àa]i\s+ch[ií]nh/i;
+  const P_BS_END =
+    /[Tt]huy[ếe]t\s+minh\s+(?:b[áa]o\s+c[áa]o|c[áa]c\s+ch[ỉi]\s+ti[eê]u)|[Bb][áa]o\s+c[áa]o\s+k[ếe]t\s+qu[ảa]|[Ll][ưu]u\s+chuy[ểe]n\s+ti[ềe]n\s+t[ệe]/i;
+  const MIN_BS_LINES = 80;
+
+  let windowStart = -1;
+  for (let i = 0; i < lines.length; i++) {
+    if (P_BS_ANCHOR.test(lines[i]!)) {
+      windowStart = i;
+      break;
+    }
+  }
+  if (windowStart === -1) return lines; // unknown format — no change
+
+  let windowEnd = -1;
+  for (let i = windowStart + MIN_BS_LINES; i < lines.length; i++) {
+    if (P_BS_END.test(lines[i]!)) {
+      windowEnd = i;
+      break;
+    }
+  }
+
+  return windowEnd === -1
+    ? lines.slice(windowStart)
+    : lines.slice(windowStart, windowEnd);
+}
+
 /**
  * Extract a BalanceSheet from raw Vietnamese financial report text.
  *
@@ -634,7 +745,11 @@ function extractSplitBlockAll(fullText: string): Record<string, number> | null {
 export function extractBalanceSheet(rawText: string): BalanceSheet {
   // Task 287 — FR-3 partial: NFC normalization (resolves NFD decomposition artifacts)
   const normalized = rawText.normalize("NFC");
-  const lines = normalized.split("\n");
+  // Task 1416b — scope findValue calls to the balance-sheet window only.
+  // extractSplitBlockAll continues to receive the full text (handles its own
+  // page-splitting internally).
+  const allLines = normalized.split("\n");
+  const lines = trimToBalanceSheetWindow(allLines);
 
   // Task 287 — FR-1: detect unit multiplier BEFORE any findValue calls
   const multiplier = detectUnitMultiplier(lines);
@@ -642,35 +757,61 @@ export function extractBalanceSheet(rawText: string): BalanceSheet {
   // Task 1120 — split-block override: try to parse consolidated PDFs where
   // all labels appear in one block and all values appear 60+ lines later
   const sbMap = extractSplitBlockAll(normalized);
-  // Helper: prefer split-block value if available, else fall back to findValue
-  const fv = (pattern: RegExp, sbKey?: string): number => {
-    if (sbKey && sbMap && sbMap[sbKey] !== undefined) return sbMap[sbKey]!;
-    return findValue(lines, pattern);
+  // Helper: prefer split-block value if available, else fall back to findValue.
+  // Task 1416b: when both fail (sbKey miss + findValue returns 0), try
+  // findValueByCode as a tertiary strategy — handles FPT Q4-2025 OCR format
+  // where the BCTC item code and value appear on the same line ("270 88.089…")
+  // but the Vietnamese label is on a completely separate, non-adjacent line.
+  //
+  // Safety check: if sbMap returns a value for a key but findValueByCode returns
+  // a value that is MORE THAN 10× larger, the sbMap value is likely from a
+  // thuyết minh section (e.g. a prior-period or subsidiary value). In that case,
+  // trust findValueByCode instead. This protects against FPT Q4-2025 page 3
+  // where extractSplitBlockAll parses deep thuyết minh pages and returns
+  // wrong values for codes like 440 that appear inline in those pages.
+  const fv = (pattern: RegExp, sbKey?: string, codeNum?: number): number => {
+    const fromLabel = findValue(lines, pattern);
+    const fromCode = codeNum !== undefined ? findValueByCode(lines, codeNum) : 0;
+
+    if (sbKey && sbMap && sbMap[sbKey] !== undefined) {
+      const sbVal = sbMap[sbKey]!;
+      // Cross-check: if a code-based lookup finds a value much larger than sbMap,
+      // the sbMap value is suspect (likely from thuyết minh, not the balance sheet).
+      const candidate = fromLabel !== 0 ? fromLabel : fromCode;
+      if (candidate !== 0 && Math.abs(candidate) > Math.abs(sbVal) * 10) {
+        // sbMap value is implausibly small — fall through to label/code result
+      } else {
+        return sbVal;
+      }
+    }
+
+    if (fromLabel !== 0) return fromLabel;
+    return fromCode;
   };
 
   // --- Current assets ---
   const currentAssets: CurrentAssets = {
-    cash: fv(P_CASH, "110"),
-    shortTermInvestments: fv(P_SHORT_TERM_INVESTMENTS, "120"),
-    accountsReceivable: fv(P_ACCOUNTS_RECEIVABLE, "130"),
-    inventory: fv(P_INVENTORY, "140"),
-    otherCurrentAssets: fv(P_OTHER_CURRENT_ASSETS, "150"),
-    total: fv(P_CURRENT_ASSETS_TOTAL, "100"),
+    cash: fv(P_CASH, "110", 110),
+    shortTermInvestments: fv(P_SHORT_TERM_INVESTMENTS, "120", 120),
+    accountsReceivable: fv(P_ACCOUNTS_RECEIVABLE, "130", 130),
+    inventory: fv(P_INVENTORY, "140", 140),
+    otherCurrentAssets: fv(P_OTHER_CURRENT_ASSETS, "150", 150),
+    total: fv(P_CURRENT_ASSETS_TOTAL, "100", 100),
   };
 
   // --- Non-current assets ---
   const nonCurrentAssets: NonCurrentAssets = {
-    longTermReceivables: fv(P_LONG_TERM_RECEIVABLES, "210"),
-    fixedAssets: fv(P_FIXED_ASSETS, "220"),
-    investmentProperty: fv(P_INVESTMENT_PROPERTY, "230"),
-    longTermInvestments: fv(P_LONG_TERM_INVESTMENTS, "250"),
-    goodwill: fv(P_GOODWILL, "269"),
-    otherLongTermAssets: fv(P_OTHER_LONG_TERM_ASSETS, "260"),
-    total: fv(P_NON_CURRENT_ASSETS_TOTAL, "200"),
+    longTermReceivables: fv(P_LONG_TERM_RECEIVABLES, "210", 210),
+    fixedAssets: fv(P_FIXED_ASSETS, "220", 220),
+    investmentProperty: fv(P_INVESTMENT_PROPERTY, "230", 230),
+    longTermInvestments: fv(P_LONG_TERM_INVESTMENTS, "250", 250),
+    goodwill: fv(P_GOODWILL, "269", 269),
+    otherLongTermAssets: fv(P_OTHER_LONG_TERM_ASSETS, "260", 260),
+    total: fv(P_NON_CURRENT_ASSETS_TOTAL, "200", 200),
   };
 
   // --- Total assets ---
-  let totalAssets = fv(P_TOTAL_ASSETS, "270");
+  let totalAssets = fv(P_TOTAL_ASSETS, "270", 270);
   // Fallback: compute from sub-totals if explicit total not found
   if (totalAssets === 0 && (currentAssets.total > 0 || nonCurrentAssets.total > 0)) {
     totalAssets = currentAssets.total + nonCurrentAssets.total;
@@ -678,25 +819,25 @@ export function extractBalanceSheet(rawText: string): BalanceSheet {
 
   // --- Current liabilities ---
   const currentLiabilities: CurrentLiabilities = {
-    shortTermDebt: fv(P_SHORT_TERM_DEBT, "311"),
-    accountsPayable: fv(P_ACCOUNTS_PAYABLE, "311"),
-    advancesFromCustomers: fv(P_ADVANCES_FROM_CUSTOMERS, "312"),
-    taxPayable: fv(P_TAX_PAYABLE, "313"),
-    payablesToEmployees: fv(P_PAYABLES_TO_EMPLOYEES, "314"),
-    otherCurrentLiabilities: fv(P_OTHER_CURRENT_LIABILITIES, "319"),
-    total: fv(P_CURRENT_LIABILITIES, "310"),
+    shortTermDebt: fv(P_SHORT_TERM_DEBT, "311", 311),
+    accountsPayable: fv(P_ACCOUNTS_PAYABLE, "311", 311),
+    advancesFromCustomers: fv(P_ADVANCES_FROM_CUSTOMERS, "312", 312),
+    taxPayable: fv(P_TAX_PAYABLE, "313", 313),
+    payablesToEmployees: fv(P_PAYABLES_TO_EMPLOYEES, "314", 314),
+    otherCurrentLiabilities: fv(P_OTHER_CURRENT_LIABILITIES, "319", 319),
+    total: fv(P_CURRENT_LIABILITIES, "310", 310),
   };
 
   // --- Long-term liabilities ---
   const longTermLiabilities: LongTermLiabilities = {
-    longTermDebt: fv(P_LONG_TERM_DEBT, "334"),
-    deferredTaxLiabilities: fv(P_DEFERRED_TAX_LIABILITIES, "337"),
-    otherLongTermLiabilities: fv(P_OTHER_LONG_TERM_LIABILITIES, "338"),
-    total: fv(P_LONG_TERM_LIABILITIES, "330"),
+    longTermDebt: fv(P_LONG_TERM_DEBT, "334", 334),
+    deferredTaxLiabilities: fv(P_DEFERRED_TAX_LIABILITIES, "337", 337),
+    otherLongTermLiabilities: fv(P_OTHER_LONG_TERM_LIABILITIES, "338", 338),
+    total: fv(P_LONG_TERM_LIABILITIES, "330", 330),
   };
 
   // --- Total liabilities ---
-  let totalLiabilities = fv(P_TOTAL_LIABILITIES, "300");
+  let totalLiabilities = fv(P_TOTAL_LIABILITIES, "300", 300);
   // If explicit total equals a sub-total (because regex matched the sub-total line first),
   // fall back to sum of current + long-term
   if (totalLiabilities === 0 && (currentLiabilities.total > 0 || longTermLiabilities.total > 0)) {
@@ -705,17 +846,36 @@ export function extractBalanceSheet(rawText: string): BalanceSheet {
 
   // --- Equity ---
   const equity: Equity = {
-    shareCapital: fv(P_SHARE_CAPITAL, "411"),
-    sharePremium: fv(P_SHARE_PREMIUM, "412"),
-    treasuryShares: fv(P_TREASURY_SHARES, "419"),
-    retainedEarnings: fv(P_RETAINED_EARNINGS, "421"),
-    otherEquityFunds: fv(P_OTHER_EQUITY_FUNDS, "418"),
-    minorityInterest: fv(P_MINORITY_INTEREST, "429"),
-    total: fv(P_EQUITY_TOTAL, "400"),
+    shareCapital: fv(P_SHARE_CAPITAL, "411", 411),
+    sharePremium: fv(P_SHARE_PREMIUM, "412", 412),
+    treasuryShares: fv(P_TREASURY_SHARES, "419", 419),
+    retainedEarnings: fv(P_RETAINED_EARNINGS, "421", 421),
+    otherEquityFunds: fv(P_OTHER_EQUITY_FUNDS, "418", 418),
+    minorityInterest: fv(P_MINORITY_INTEREST, "429", 429),
+    total: fv(P_EQUITY_TOTAL, "400", 400),
   };
 
   // --- Grand total ---
-  const totalLiabilitiesAndEquity = fv(P_TOTAL_LIABILITIES_AND_EQUITY, "440");
+  const totalLiabilitiesAndEquity = fv(P_TOTAL_LIABILITIES_AND_EQUITY, "440", 440);
+
+  // Task 1416b: final fallback for totalLiabilities when direct extraction fails
+  // but both the grand total and equity total are known (e.g. FPT Q4-2025 where
+  // the liabilities value block is interleaved in a column that findValue cannot
+  // reach, but the grand total line is extractable inline).
+  // Trigger when: totalLiabilities is zero OR implausibly small compared to
+  // totalLiabilitiesAndEquity (ratio < 0.001 signals a bad match like "2").
+  const liabPlausible =
+    totalLiabilities > 0 &&
+    totalLiabilitiesAndEquity > 0 &&
+    totalLiabilities / totalLiabilitiesAndEquity >= 0.001;
+  if (
+    !liabPlausible &&
+    totalLiabilitiesAndEquity > 0 &&
+    equity.total > 0 &&
+    totalLiabilitiesAndEquity > equity.total
+  ) {
+    totalLiabilities = totalLiabilitiesAndEquity - equity.total;
+  }
 
   const raw: BalanceSheet = {
     currentAssets,
