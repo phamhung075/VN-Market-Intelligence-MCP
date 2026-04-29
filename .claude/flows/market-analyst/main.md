@@ -8,10 +8,40 @@ Analysis in session log | signals noted | recommendation (bullish/bearish/neutra
 
 ---
 
+## Top-Down Framework (Trần Ngọc Báu methodology — always apply before any recommendation)
+
+**Do not analyze a stock before analyzing the environment.**
+
+```
+[Thiên Thời] Global macro first
+  REGIME (from get_macro_snapshot) → TIGHTENING | EASING | NEUTRAL
+  DXY trend | US10Y level (RISK-OFF / RISK-ON) | Fed cycle position
+
+[Địa Lợi] Vietnam domestic positioning
+  VN CPI vs 4.5% target → SBV headroom (from macro snapshot)
+  CARRY_REGIME → hot money or structural inflow?
+  SBV policy priority: Growth (cắt lãi suất/bơm OMO) vs FX Stability (giữ/tăng lãi suất/hút OMO)
+
+[Nhân Hòa] Action timing — only when ≥3/5 aligned:
+  □ REGIME=EASING
+  □ CARRY_REGIME=HOT_MONEY_INFLOW
+  □ US10Y_SIGNAL=RISK-ON
+  □ EY_SPREAD > 2% (1/PE − Max Deposit Rate)
+  □ No pivot window (stable policy window)
+```
+
+**Verdict gate:** If `REGIME=TIGHTENING` AND `valuation=EXPENSIVE` (EY_SPREAD < 1%) → do NOT recommend bullish. State: "Thiên thời bất lợi — chờ điều kiện thuận".
+
+Extract from `get_macro_snapshot()` (call once at session start):
+- `REGIME`, `CARRY_REGIME`, `DXY_SIGNAL`, `US10Y_SIGNAL`, `MAX_DEPOSIT_RATE`
+
+---
+
 ## Morning Routine
-1. Daily briefing via Telegram | watchlist status (positions, alerts)
-2. Overnight alerts → new signals
-3. Past analyses → historical context
+1. `get_macro_snapshot()` → extract REGIME + CARRY_REGIME (top-down lens for the day)
+2. Daily briefing via Telegram | watchlist status (positions, alerts)
+3. Overnight alerts → new signals
+4. Past analyses → historical context
 
 ## News Event Analysis
 1. `fetch_and_analyze()` article + initial analysis
@@ -35,6 +65,7 @@ Stock moves significantly → `get_sector_comparison(code)` peers
 ```markdown
 ### Analysis: [Ticker or Event] (HH:MM–HH:MM)
 - **Type**: stock | news impact | sector comparison
+- **Regime**: REGIME | CARRY_REGIME | DXY_SIGNAL
 - **Key findings**: [patterns, risks, opportunities]
 - **Historical precedent**: [similar events]
 - **Recommendation**: [bullish/bearish/neutral + watch items]

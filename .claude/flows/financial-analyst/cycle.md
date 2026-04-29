@@ -14,6 +14,14 @@ Bootstrap (market context 24h, earnings calendar, stored PDFs)
 - `agent_signals` error only → log warning to WORK, continue with zero signals
 - Any other error → fail-loud, STOP
 
+**0b. Regime extraction** (from bootstrap `market_context`, zero extra tool calls)
+Parse `get_macro_snapshot` text block already in bootstrap:
+```
+REGIME      = "Global Liquidity: X"    → TIGHTENING | EASING | NEUTRAL
+MAX_DEPOSIT_RATE = "[SBV Central Bank Rates]" block → "Max Deposit Rate: X.XX%"
+```
+If `get_macro_snapshot` not in bootstrap context → call it once now.
+
 **1. BCTC status**
 `get_earnings_calendar()` | `list_stored_pdfs()` → missing reports for watchlist stocks
 New PDF CRITICAL → broadcast signal immediately
@@ -21,17 +29,47 @@ New PDF CRITICAL → broadcast signal immediately
 **2. Analyze** per watchlist stock `get_watchlist()`:
 `get_bctc_full(code)` | `get_sector_comparison(code)` PE/PB/ROE vs median | `get_kinhdich_reading(code)` confirms/contradicts?
 
+After `get_bctc_full(code)` returns stock PE (individual stock ratio, not sector median):
+- Compute `EARNING_YIELD = 1 / PE`
+- `EY_SPREAD = EARNING_YIELD - MAX_DEPOSIT_RATE`
+- Classify:
+  - `EY_SPREAD > 3%` → CHEAP
+  - `1% ≤ EY_SPREAD ≤ 3%` → FAIR
+  - `0% ≤ EY_SPREAD < 1%` → EXPENSIVE
+  - `EY_SPREAD < 0%` → AVOID
+- Rate-sensitive sector (realty | construction | consumer_finance) + `REGIME=TIGHTENING` → `rate_sensitive_headwind=true`
+- `valuation_verdict=AVOID` → do NOT post bullish signal (any regime — bonds/deposits beat equity)
+- `REGIME=TIGHTENING` + `valuation_verdict=EXPENSIVE` → do NOT post bullish signal
+
+G-Bond regime change check (Pillar 5.2):
+- `get_bond_maturity_calendar()` → if G-Bond 10Y yield available: compute `GBOND_SPREAD = EARNING_YIELD - gbond_10y_yield`
+  - `GBOND_SPREAD < 0` (G-Bond yield > Earning Yield) → set `gbond_regime_signal=true`, log: "G-Bond ưu thế hơn equity — nguy cơ chuyển chế độ"
+  - Downgrade FAIR verdict → EXPENSIVE when `gbond_regime_signal=true`
+- If G-Bond yield not available → log data gap in session log, skip check
+
 **3. Insider + legal**
 `get_insider_signals()` buy/sell patterns | `get_legal_risk_signals()` prosecution/tax/court
 
 **4. Chain validation**
 `get_open_chain_findings(minutes_back=30)` → BCTC confirm/contradict catalyst?
-`post_agent_signal(type="fundamental_validation", ticker=..., validation_result=...)`
+`post_agent_signal(type="fundamental_validation", ticker=..., validation_result=...)`:
+```json
+{
+  "finding_data": {
+    "ey_spread": 0.028,
+    "valuation_verdict": "<CHEAP|FAIR|EXPENSIVE|AVOID>",
+    "regime": "<TIGHTENING|EASING|NEUTRAL>",
+    "rate_sensitive_headwind": false,
+    "gbond_regime_signal": false
+  }
+}
+```
 
 **5. Session log** `docs/agent-memory/sessions/YYYY-MM-DD-financial-analyst.md`:
 ```
 ### Analysis Cycle (HH:MM–HH:MM)
 - Stocks: N | Critical findings: [list] | Chain validations: M
+- Regime: REGIME | Max Deposit Rate: X.XX% | Valuation flags: [TICKER=verdict,...]
 ```
 
 **5b. WORK**:

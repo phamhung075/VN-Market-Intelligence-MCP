@@ -14,6 +14,14 @@ Bootstrap (market context 24h, system status, agent signals)
 - `agent_signals` error only → log warning to WORK, continue with zero signals
 - Any other error → fail-loud, STOP
 
+**0b. Regime extraction** (from bootstrap `market_context`, zero extra tool calls)
+Parse `get_macro_snapshot` text block already in bootstrap:
+```
+REGIME      = "Global Liquidity: X"       → TIGHTENING | EASING | NEUTRAL
+CARRY_REGIME = "VND Carry Spread" line    → HOT_MONEY_INFLOW | NEUTRAL | FII_OUTFLOW_RISK
+```
+If `get_macro_snapshot` not in bootstrap context → call it once now.
+
 **1. Fetch** `fetch_and_analyze(source_urls, query)` — 226 items/15min via VPS proxy
 Filter duplicates → extract title/source/published_date/content
 
@@ -21,6 +29,23 @@ Filter duplicates → extract title/source/published_date/content
 - Score: -1.0 (bearish) to +1.0 (bullish)
 - `run_impact_chain(news_item, catalyst_type)` — global → country → sector → watchlist
 - `get_watchlist()` — cross-ref extracted tickers
+
+PMI leading indicator detection:
+- Extract Vietnam Manufacturing PMI value from news (S&P Global, published 2nd–3rd of each month)
+- If PMI < 50 AND previous month PMI also < 50 → set `gdp_warning_signal=true` in signal `finding_data`
+  → Post `chain_catalyst` with `event_type="macro"`, `direction="bearish"`, note: "PMI < 50 hai tháng liên tiếp — cảnh báo GDP quý tới (lead: 6-8 tuần)"
+- If PMI > 52 after prior < 50 → set `gdp_recovery_signal=true`, post bullish `chain_catalyst`
+- Store last PMI value in session log for next cycle comparison
+
+Commodity → CPI → Policy chain:
+- Brent crude: if price up >5% vs prior month → append to `chain_catalyst`: `"Dầu tăng mạnh → áp lực CPI → SBV có thể thắt chặt"`, set `cpi_pressure_risk=true`
+- Gold spike >3% in week → append `"Vàng tăng — tín hiệu dân cư tìm nơi trú ẩn, thoát VND asset"` to `urgent_news` for banking/BVH watchlist stocks
+
+Apply regime multiplier to `impact_score` before posting:
+- `TIGHTENING + bearish` → score × 1.3 | `TIGHTENING + bullish` → score × 0.7
+- `EASING + bullish` → score × 1.2 | `EASING + bearish` → score × 0.8
+- `NEUTRAL` → no change
+- `CARRY_REGIME=HOT_MONEY_INFLOW` + carry spread parsed > 3% → set `hot_money_risk=true` for FII-related news
 
 **3. Signals**
 
@@ -37,7 +62,11 @@ Watchlist hit (breaking news) → `post_agent_signal`:
   "finding_data": {
     "headline": "<news headline text>",
     "source": "<cafef|vnexpress|reuters|...>",
-    "severity": "<low|medium|high|critical>"
+    "severity": "<low|medium|high|critical>",
+    "regime": "<TIGHTENING|EASING|NEUTRAL>",
+    "regime_adjusted_score": 7.0,
+    "hot_money_risk": false,
+    "cpi_pressure_risk": false
   }
 }
 ```
@@ -59,7 +88,11 @@ Crisis / macro catalyst (triggers enrichment chain) → `post_agent_signal`:
     "affected_stocks": ["<TICKER1>", "<TICKER2>"],
     "affected_sectors": ["<sector1>"],
     "headline": "<news headline text>",
-    "source": "<cafef|vnexpress|reuters|...>"
+    "source": "<cafef|vnexpress|reuters|...>",
+    "regime": "<TIGHTENING|EASING|NEUTRAL>",
+    "regime_adjusted_score": 9.0,
+    "hot_money_risk": false,
+    "gdp_warning_signal": false
   }
 }
 ```
@@ -67,7 +100,7 @@ Crisis / macro catalyst (triggers enrichment chain) → `post_agent_signal`:
 **4. Session log** `docs/agent-memory/sessions/YYYY-MM-DD-news-scout.md`:
 ```
 ### Cycle (HH:MM–HH:MM)
-- Items: N | Impacts: M | Signals: [types]
+- Items: N | Impacts: M | Signals: [types] | Regime: REGIME | Carry: CARRY_REGIME
 ```
 
 **5. WORK**:

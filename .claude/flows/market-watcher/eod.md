@@ -8,6 +8,10 @@ Ledger entries in `docs/analysis-briefs/{TICKER}.md` | MARKET EOD summary
 
 ---
 
+**0. Bootstrap** `get_cycle_bootstrap(agent_name="market-watcher")`
+- `market_context` error → fail-loud, STOP
+- Parse `get_macro_snapshot` text: `REGIME` + `CARRY_REGIME` (same as cycle.md step 0b)
+
 **A. Ledger** — per ticker, if `docs/analysis-briefs/{TICKER}.md` does not exist → create it first:
 ```markdown
 # {TICKER} — Analysis Ledger {YEAR}
@@ -39,6 +43,9 @@ Sentiment: {sentiment} | Insider: {insider_activity}
 
 Rules:
 - `{brief_action}` max 10 words: Hold / Buy on dip / Reduce / Watch
+  - `REGIME=TIGHTENING` + action=`Buy on dip` → append `"(Thiên thời bất lợi — xác nhận trước khi mua)"`
+  - `REGIME=EASING` + action=`Buy on dip` → append `"(Thiên thời thuận — carry tích cực)"`
+  - `REGIME=TIGHTENING` + action=`Reduce` → append `"(Thiên thời bất lợi — ưu tiên phòng thủ)"`
 - `{sentiment}` = last [News Scout] entry
 - `{insider_activity}` = `get_insider_signals()` or "no activity"
 - Skip weekends + market holidays

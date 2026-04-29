@@ -43,9 +43,106 @@ import {
   storeCashFlow,
   markFetched,
 } from "../../infrastructure/db/vnstockStore.js";
+import { sendTelegramWork } from "../../infrastructure/notifiers/telegram.js";
 
 // Inter-request delay to stay well within 60 req/min
 const DELAY_MS = 1500;
+
+// ---------------------------------------------------------------------------
+// Circuit breaker — exported for unit tests
+// ---------------------------------------------------------------------------
+
+/** Per-code-per-type circuit breaker entry. */
+export interface CbEntry {
+  failures: number;
+  openedAt: number | null;
+}
+
+/** Map keyed by `${code}:${type}`. */
+export type CbStateMap = Record<string, CbEntry>;
+
+/** Thresholds. */
+const FAIL_THRESHOLD = 3;
+const RESET_MS = 2 * 60 * 60 * 1000; // 2 hours
+const COOLDOWN_MS = 60 * 60 * 1000;  // 60 min between bulk alerts
+
+/** Module-level circuit breaker state (persists across syncVnstockData() calls). */
+const _globalCbState: CbStateMap = {};
+/** Timestamp of last bulk-failure Telegram alert (module-level, avoids spam). */
+let _lastVnstockAlertAt = 0;
+
+/** Factory — creates a fresh state map (used by unit tests to get clean slate). */
+export function makeCbState(): CbStateMap {
+  return {};
+}
+
+/** Ensure the entry for a key exists in the map. */
+function ensureEntry(state: CbStateMap, code: string, type: string): CbEntry {
+  const key = `${code}:${type}`;
+  if (!state[key]) {
+    state[key] = { failures: 0, openedAt: null };
+  }
+  return state[key]!;
+}
+
+/**
+ * Returns true if the circuit is open (too many consecutive failures)
+ * AND the reset window has not expired.
+ */
+export function isCircuitOpen(state: CbStateMap, code: string, type: string): boolean {
+  const entry = state[`${code}:${type}`];
+  if (!entry || entry.openedAt === null) return false;
+  if (Date.now() - entry.openedAt >= RESET_MS) return false; // expired — treat as closed
+  return true;
+}
+
+/**
+ * Record a null/failed fetch for a code+type.
+ * Opens the circuit after `threshold` consecutive failures.
+ */
+export function recordFailure(
+  state: CbStateMap,
+  code: string,
+  type: string,
+  threshold = FAIL_THRESHOLD,
+): void {
+  const entry = ensureEntry(state, code, type);
+  entry.failures += 1;
+  if (entry.openedAt === null && entry.failures >= threshold) {
+    entry.openedAt = Date.now();
+  }
+}
+
+/**
+ * Record a successful fetch for a code+type — resets the circuit.
+ */
+export function recordSuccess(state: CbStateMap, code: string, type: string): void {
+  const key = `${code}:${type}`;
+  state[key] = { failures: 0, openedAt: null };
+}
+
+/**
+ * Returns true if a bulk-failure Telegram alert should be fired:
+ *   - >= 10 codes have at least one open circuit across the given types
+ *   - lastAlertAt is more than COOLDOWN_MS ago (or 0)
+ */
+export function shouldFireBulkAlert(
+  state: CbStateMap,
+  codes: string[],
+  types: string[],
+  lastAlertAt: number,
+): boolean {
+  if (Date.now() - lastAlertAt < COOLDOWN_MS) return false;
+  const openCount = codes.filter((code) =>
+    types.some((type) => isCircuitOpen(state, code, type)),
+  ).length;
+  return openCount >= 10;
+}
+
+/** Exposed for unit tests to reset module-level alert timestamp. */
+export function resetLastAlertAt(): void {
+  _lastVnstockAlertAt = 0;
+}
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -60,38 +157,74 @@ async function syncStock(code: string): Promise<number> {
 
   // Financials / income statement (6h staleness)
   if (isStale(code, "financials", 360)) {
-    const fin = await fetchVnstockFinancials(code);
-    if (fin) storeFinancials(fin);
-    else markFetched(code, "financials", 30); // empty/timeout: retry in 30min, not 6h
-    calls++;
-    await sleep(DELAY_MS);
+    if (isCircuitOpen(_globalCbState, code, "financials")) {
+      logger.debug("[vnstock-sync] circuit open — skipping financials", { code });
+    } else {
+      const fin = await fetchVnstockFinancials(code);
+      if (fin) {
+        storeFinancials(fin);
+        recordSuccess(_globalCbState, code, "financials");
+      } else {
+        markFetched(code, "financials", 30); // empty/timeout: retry in 30min, not 6h
+        recordFailure(_globalCbState, code, "financials");
+      }
+      calls++;
+      await sleep(DELAY_MS);
+    }
   }
 
   // Balance sheet (6h staleness — same cadence as income statement)
   if (isStale(code, "balance_sheet", 360)) {
-    const bs = await fetchVnstockBalanceSheet(code);
-    if (bs) storeBalanceSheet(bs);
-    else markFetched(code, "balance_sheet", 30); // empty/timeout: retry in 30min
-    calls++;
-    await sleep(DELAY_MS);
+    if (isCircuitOpen(_globalCbState, code, "balance_sheet")) {
+      logger.debug("[vnstock-sync] circuit open — skipping balance_sheet", { code });
+    } else {
+      const bs = await fetchVnstockBalanceSheet(code);
+      if (bs) {
+        storeBalanceSheet(bs);
+        recordSuccess(_globalCbState, code, "balance_sheet");
+      } else {
+        markFetched(code, "balance_sheet", 30); // empty/timeout: retry in 30min
+        recordFailure(_globalCbState, code, "balance_sheet");
+      }
+      calls++;
+      await sleep(DELAY_MS);
+    }
   }
 
   // Cash flow (6h staleness — same cadence as income statement)
   if (isStale(code, "cash_flow", 360)) {
-    const cf = await fetchVnstockCashFlow(code);
-    if (cf) storeCashFlow(cf);
-    else markFetched(code, "cash_flow", 30); // empty/timeout: retry in 30min
-    calls++;
-    await sleep(DELAY_MS);
+    if (isCircuitOpen(_globalCbState, code, "cash_flow")) {
+      logger.debug("[vnstock-sync] circuit open — skipping cash_flow", { code });
+    } else {
+      const cf = await fetchVnstockCashFlow(code);
+      if (cf) {
+        storeCashFlow(cf);
+        recordSuccess(_globalCbState, code, "cash_flow");
+      } else {
+        markFetched(code, "cash_flow", 30); // empty/timeout: retry in 30min
+        recordFailure(_globalCbState, code, "cash_flow");
+      }
+      calls++;
+      await sleep(DELAY_MS);
+    }
   }
 
   // Trading stats (2h staleness)
   if (isStale(code, "trading_stats", 120)) {
-    const stats = await fetchVnstockTradingStats(code);
-    if (stats) storeTradingStats(stats);
-    else markFetched(code, "trading_stats");
-    calls++;
-    await sleep(DELAY_MS);
+    if (isCircuitOpen(_globalCbState, code, "trading_stats")) {
+      logger.debug("[vnstock-sync] circuit open — skipping trading_stats", { code });
+    } else {
+      const stats = await fetchVnstockTradingStats(code);
+      if (stats) {
+        storeTradingStats(stats);
+        recordSuccess(_globalCbState, code, "trading_stats");
+      } else {
+        markFetched(code, "trading_stats");
+        recordFailure(_globalCbState, code, "trading_stats");
+      }
+      calls++;
+      await sleep(DELAY_MS);
+    }
   }
 
   // Officers (24h staleness)
@@ -208,6 +341,20 @@ export async function syncVnstockData(codes: string[]): Promise<number> {
     stocks: codes.length,
     totalApiCalls: totalCalls,
   });
+
+  // Bulk-failure circuit breaker alert: fire once per hour if >= 10 codes are
+  // blocked for financial data types (signal of API-wide rate-limit or ANSI pollution).
+  const financialTypes = ["financials", "balance_sheet", "cash_flow"];
+  if (shouldFireBulkAlert(_globalCbState, codes, financialTypes, _lastVnstockAlertAt)) {
+    _lastVnstockAlertAt = Date.now();
+    const affectedTypes = financialTypes
+      .filter((t) => codes.some((c) => isCircuitOpen(_globalCbState, c, t)))
+      .join(", ");
+    await sendTelegramWork(
+      `[VNSTOCK] Financial data circuit breaker open — vnstock API may be returning non-JSON (ANSI/rate-limit). Types affected: ${affectedTypes}. Will auto-retry in 2h. Check: python3 -c "from vnstock import Vnstock; print('ok')"`,
+    );
+    logger.warn("[vnstock-sync] bulk circuit breaker alert sent", { affectedTypes });
+  }
 
   return totalCalls;
 }

@@ -23,8 +23,8 @@ Bootstrap | `get_earnings_calendar()` new releases today
 Metrics: Revenue, Net Income, EPS, ROE, Debt/Equity, Operating Margin
 
 **3. Comparison table**:
-| Metric | Current Q | vs Prior Q | vs YoY |
-|--------|-----------|------------|--------|
+| Metric | Current Q | vs Prior Q* | vs YoY Same Q† |
+|--------|-----------|-------------|----------------|
 | Revenue (VND bn) | ... | +/- % | +/- % |
 | Net Income (VND bn) | ... | +/- % | +/- % |
 | EPS (VND) | ... | +/- % | +/- % |
@@ -32,6 +32,10 @@ Metrics: Revenue, Net Income, EPS, ROE, Debt/Equity, Operating Margin
 | Debt/Equity | ... | +/- | +/- |
 | Operating Margin (%) | ... | +/- pp | +/- pp |
 | P/E (x) | ... | sector median | — |
+
+*\*"vs Prior Q" is secondary — seasonal bias (Q1 always lower than Q4). Do NOT use as primary verdict signal.*
+*†"vs YoY Same Q" is the primary comparison — avoids seasonal distortion. Use for beat/miss verdict.*
+*If Q1 reported: compare vs Q1 prior year only. "Below Q4" is expected, not a miss.*
 
 **4. Signal + ledger**
 `post_agent_signal(type="fundamental_validation", beat_miss="beat|miss|in-line")`
