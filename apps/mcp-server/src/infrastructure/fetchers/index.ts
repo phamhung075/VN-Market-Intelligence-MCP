@@ -92,3 +92,9 @@ export {
   storePolymarketSnapshot,
   type PolyFetchFn,
 } from "./polymarket.js";
+
+// ── Task 1423b: FRED API Fed Funds Rate fetcher ────────────────────────────────
+export {
+  fetchFedFundsRate,
+  type FredHttpClient,
+} from "./fredApi.js";
