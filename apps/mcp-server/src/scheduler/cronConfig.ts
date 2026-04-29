@@ -112,4 +112,6 @@ export const CRONS = {
   trackSessionToolUsage:     Bun.env.CRON_TRACK_SESSION_TOOL_USAGE          ?? '0 */8 * * *',
   /** DB integrity check: weekly Sunday 02:00 UTC + WAL >= 40MB threshold — task 1342 */
   integrityCheck:            Bun.env.CRON_DB_INTEGRITY_CHECK                 ?? '0 2 * * 0',
+  /** Market earning yield (Báu Phase 2): daily 09:30 UTC (16:30 VN) weekdays — task 1426a */
+  marketEarningYield:        Bun.env.CRON_MARKET_EARNING_YIELD               ?? '30 9 * * 1-5',
 }
