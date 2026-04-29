@@ -56,6 +56,22 @@ Active board → `TASKS.md`
 - **1350a:** Fix 73 failing tests (mock.module schema leak + missing watchdog reader injections + stale sprint assertions) — 5 test files only, 26/26 targeted tests pass, 7568 pass / 0 fail full suite — APPROVED + merged 2026-04-27
 - **1351b–1351c:** Sprint 1351 — Scheduler test coverage phase 1: vpsProxyWatchdogJob gap tests (1351b: 8 tests) + weatherCheckJob gap tests (1351c: 8 tests) — 16 new tests total, 7598 pass / 0 new fail full suite — ALL APPROVED + merged 2026-04-27
 - **1352–1408:** Scheduler gap-fill wave 2 (1353a–1358b: 6 jobs + 48 gap tests), stale-tickers purge, signal outcome tracking end-to-end (1382b/c/d), foreignFlow CB auto-reset + stuck-OPEN fix (1388/1392), OHLCV volume bug (1390), alert-digest double-send dedup (1377), bbAlertScan stale-candle guard (1391), eveningSummaryJob dedup guard (1401), formatAlertDigest price-drop qualifier (1405), bctcQueueEnricher placeholder URL catch (1405b), DB row cleanup (1401-db/1402/1403/1406), startup-catchup evening guard (1408) — ALL MERGED 2026-04-28 (7926 pass / 17 pre-existing fail / 0 regression)
+- **1406a–1406f:** server.ts decomposition — pushPricesHandler.ts + server-startup.ts + pushForeignFlowHandler.ts + webhookHandler.ts extracted; jobs.ts (967 lines) → cronConfig.ts + startupHelpers.ts + startScheduler.ts; server.ts ≤1600 lines achieved. QA sign-off: 8043 tests pass, 0 TS errors — MERGED 2026-04-29
+- **1395a:** alertBatchGrouper wired to pushPricesHandler — batch sends replace per-alert loop — MERGED 2026-04-29
+- **1413b:** foreignFlow CB self-heal fix — early-return guard removed, CircuitOpenError→503+Retry-After, 15 regression tests — MERGED 2026-04-29
+- **1396:** GAS digest (+HH:MM) ICT intraday progression label replaces (+thêm) — 11 tests, 8093 total — MERGED 2026-04-29
+- **JANITOR-004/005/007/008:** DRY cleanups — COMPANY_SHORT_NAME→getCompanyName (STOCK_CATALOG SSOT), IMF_HISTORICAL_BASELINE=3.0 extracted to imfIndicators.ts, Vietnamese severity label map→severityLabels.ts, LOG_ROTATE_BYTES constant in vps-lib.sh — MERGED 2026-04-29
+- **1409a–1409f:** AUDIT sprint — SPRINT_GOAL.md trimmed ≤30 lines, TASKS.md Done archived, agent-spawn-template.md created, ULTRA/FULL/LITE merged into token-economy SKILL.md, ghost test-module-memory.md deleted, project-stats.json updated — MERGED 2026-04-29
+- **hotfix-vcb-parser + hotfix-vcb-parser-fixer:** VCB bank BCTC parser — unit header + year filter, extractNumber fallback year filter, detectUnitMultiplier scan window expanded, B-3a/B-3b real OCR fixtures, banking-label fallback — MERGED 2026-04-29
+- **1415b:** VCB BCTC bank page-pair parser — contains-based separator + page-pair merge. 16 hotfix tests + 8053 total pass. total_liabilities Q1=1,904,318,782 Q4=2,214,393,069 confirmed — MERGED 2026-04-29
+- **1416a:** VCB total_assets=2,441,928,945 (Q4) + 2,109,260,616 (Q1) confirmed. Banking-label fallback emits key "270". 20 hotfix tests pass. validation_status=passed — MERGED 2026-04-29
+- **1416b:** FPT 2025-Q4 total_assets=88,089,621 triệu confirmed. trimToBalanceSheetWindow helper + findValueByCode — MERGED 2026-04-29
+- **1416c:** HPG added to WATCHLIST_SEED (26 tickers), disk-scan resolves HPG filenames. 5/5 targeted tests pass. HPG confirmed in live DB — MERGED 2026-04-29
+- **1418:** 4 TSC errors fixed in 1383 + 1397c test files. 0 TSC errors. 10 + 5 targeted tests pass — MERGED 2026-04-29
+- **1419:** 25 pre-existing test failures resolved → 0. 38 documented skips. 8076 pass, 0 fail — MERGED 2026-04-29
+- **1420:** Sprint housekeeping — close 1416, open 1420, sync project-stats.json — MERGED 2026-04-29
+- **1421:** QQ1 double-prefix fixed at 2 guard sites (sort_key + period_type) in bctcReparseJob.ts. 20 targeted tests pass. 8090 total pass — MERGED 2026-04-29
+- **1422:** BA brownfield check — VCB Mẫu B02a/TCTD-HN total_assets already resolved by 1415b+1416a. DB confirmed total_assets=2,441,928,945 (Q4) + 2,109,260,616 (Q1), validation_status=passed, 0% mismatch. No implementation needed — CLOSED 2026-04-29
 
 ---
 
