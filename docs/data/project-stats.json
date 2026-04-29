@@ -5,9 +5,9 @@
   "currentSprint": 1426,
   "previousSprint": { "number": 1425, "status": "DONE", "progressTasks": "Sprint 1425: Housekeeping — stats sync, ghost dir cleanup, hardcoded count fix, VN_INDEX_FRESHNESS_MS DRY constant. Merged 2026-04-29." },
   "sprintGoal": "Sprint 1426: Báu Phase 2 — Dinh Gia (asset valuation) section in get_macro_snapshot.",
-  "testBaseline": 8302,
-  "testBaselineTarget": 8302,
-  "testBaselinePass": 8246,
+  "testBaseline": 8314,
+  "testBaselineTarget": 8314,
+  "testBaselinePass": 8258,
   "testBaselineFail": 18,
   "testFailures": 18,
   "toolCount": 113,
@@ -20,6 +20,6 @@
   "briefingFilesCreated": 30,
   "briefingArchiveQI": 0,
   "briefingArchiveQII": 0,
-  "lastFixApplied": "Tasks 1776+1407b DONE: vnstock ANSI stripping + circuit breaker (13 tests); SLA market-hours gate for price+foreign_flow (8 tests). 1352c regression fixed (market-hours now injection). 8302 total, 8246 pass, 18 pre-existing fail. Merged 2026-04-29.",
-  "currentSprintNotes": "Tasks 1776+1407b QA APPROVED 2026-04-29. 1776: stripAnsiAndDetectJunk + circuit breaker in vnstockBridge.ts + syncVnstockData.ts. 1407b: market-hours gate in freshnessSlaMonitorJob.ts. 1352c A-2 updated to inject market-hours now. TSC 0 errors."
+  "lastFixApplied": "Task 1777b DONE: foreign-flow dedup + CB self-healing regression tests (12 tests). No prod code change — existing ON CONFLICT + CB already correct. 8314 total, 8258 pass, 18 pre-existing fail. Merged 2026-04-29.",
+  "currentSprintNotes": "Task 1777b QA APPROVED 2026-04-29. 12 regression tests added in 1777b-foreign-flow-dedup.test.ts covering: duplicate push idempotency, 100x stress, CB self-healing (OPEN→HALF_OPEN→CLOSED), autoindex schema guard, multi-ticker dedup. TSC 0 errors."
 }
