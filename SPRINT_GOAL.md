@@ -1,19 +1,28 @@
 # Sprint Goal
 
-## Sprint 1409 — Audit Remediation (2026-04-28)
+## Sprint 1416 — BCTC confidence failures + HPG disk-scan skip (2026-04-29)
 
-**Status:** CLOSED — All 6 audit tasks completed.
-
----
-
-## Sprint 1412 — alertBatchGrouper + JANITOR DRY Cleanup (2026-04-29)
-
-**Status:** CLOSED — alertBatchGrouper implemented; JANITOR batches 004/005/007/008 complete.
+**Status:** CLOSED — VCB/FPT confidence restored, HPG disk-scan fixed. 8076 tests pass.
 
 ---
 
-## Sprint 1414 — UX: GAS digest intra-day progression label (2026-04-29)
+## Sprint 1419 — Test baseline audit (2026-04-29)
+
+**Status:** CLOSED — 25 pre-existing failures resolved, 0 fail, 8076 pass.
+
+---
+
+## Sprint 1420 — QQ1 double-prefix fix + housekeeping (2026-04-29)
 
 **Status:** ACTIVE
 
-**Goal:** [UX] GAS digest intra-day progression label (task 1396).
+**Goal:** Fix QQ1 double-prefix in insertFallbackRecord (1421) + sprint housekeeping.
+
+**Tasks:**
+- 1420 (MEDIUM): Sprint housekeeping — close 1416, open 1420, sync stats
+- 1421 (HIGH): Fix QQ1 double-prefix bug in insertFallbackRecord
+
+**Acceptance criteria:**
+- SPRINT_GOAL.md updated and within 30-line cap
+- project-stats.json currentSprint=1420
+- 1421 fix merged with no test regression

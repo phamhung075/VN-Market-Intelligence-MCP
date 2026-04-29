@@ -12,6 +12,8 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff |
 |---------|-------|----------|------|-------|---------|
+| 1420 | Sprint housekeeping — close 1416, open 1420, sync project-stats.json | MEDIUM | chore | claude-manager-helper | — |
+| 1421 | Fix QQ1 double-prefix in insertFallbackRecord | HIGH | bug | developer | — |
 
 ---
 
