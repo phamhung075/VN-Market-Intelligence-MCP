@@ -18,6 +18,7 @@ import type { WriteForeignFlowItem } from "../../../domain/models/shared-types.j
 import { writeForeignFlowToOhlcv } from "../../../infrastructure/db/ohlcvForeignFlowStore.js";
 import { validateForeignFlowPayload } from "../../../domain/services/market-data/foreignFlowValidator.js";
 import { breakers } from "../../../infrastructure/circuitBreakerRegistry.js";
+import { CircuitOpenError } from "../../../infrastructure/circuitBreaker.js";
 import { ensureForeignFlowMigration } from "../server-startup.js";
 
 export async function handlePushForeignFlow(
@@ -166,23 +167,14 @@ export async function handlePushForeignFlow(
       return;
     }
 
-    // Step 4: Check circuit breaker state before attempting DB write
-    const circuitBreakerState = breakers.foreignFlow.stats.state;
-    if (circuitBreakerState === "open") {
-      logVpsPush({
-        service: "foreign-flow",
-        itemsCount: 0,
-        status: "error",
-        errorMsg: "Circuit breaker is open — backing off",
-        vpsResponseSizeBytes: body.length,
-        parseTimeMs,
-        validationTimeMs,
-        circuitBreakerState,
-      });
-      res.writeHead(503, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ error: "Service temporarily unavailable" }));
-      return;
-    }
+    // Step 4: (guard removed — Task 1413b)
+    // The early-return on state === "open" was intentionally removed.
+    // Checking state BEFORE calling execute() bypasses the CB's own
+    // _checkTimeout() / HALF_OPEN promotion mechanism, keeping the CB
+    // permanently OPEN even after the reset window elapses.
+    // execute() calls _checkTimeout() internally — if the timeout has
+    // elapsed it promotes OPEN→HALF_OPEN and allows the write as a probe.
+    // CircuitOpenError is now caught in the catch block below.
 
     // Step 5: Upsert valid items to DB with timing.
     // Guard: ensure UNIQUE(code, date) migration has run before first write.
@@ -196,6 +188,36 @@ export async function handlePushForeignFlow(
       upserted = await breakers.foreignFlow.execute(async () => upsertForeignFlow(validItems));
     } catch (dbErr) {
       dbTimeMs = Date.now() - dbStart;
+
+      // CB is OPEN and reset timeout has NOT elapsed — return 503 with Retry-After
+      // so the VPS knows when to retry rather than backing off indefinitely.
+      if (dbErr instanceof CircuitOpenError) {
+        const cbStats = breakers.foreignFlow.stats;
+        const retryAfterSec = cbStats.openedAt
+          ? Math.max(
+              Math.ceil((cbStats.resetTimeoutMs - (Date.now() - new Date(cbStats.openedAt).getTime())) / 1000),
+              60,
+            )
+          : Math.ceil(cbStats.resetTimeoutMs / 1000);
+        logVpsPush({
+          service: "foreign-flow",
+          itemsCount: 0,
+          status: "error",
+          errorMsg: "Circuit breaker OPEN — backing off",
+          vpsResponseSizeBytes: body.length,
+          parseTimeMs,
+          validationTimeMs,
+          dbTimeMs,
+          circuitBreakerState: cbStats.state,
+        });
+        res.writeHead(503, {
+          "Content-Type": "application/json",
+          "Retry-After": String(retryAfterSec),
+        });
+        res.end(JSON.stringify({ error: "Service temporarily unavailable", retryAfterSec }));
+        return;
+      }
+
       const errMsg = dbErr instanceof Error ? dbErr.message : String(dbErr);
 
       const logEntry: VpsPushLogEntry = {

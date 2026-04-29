@@ -153,7 +153,9 @@ describe("1406b — handlePushForeignFlow", () => {
     if (typeof cb["_state"] !== "undefined") cb["_state"] = "closed";
 
     expect(mockRes.statusCode).toBe(503);
-    expect(JSON.parse(mockRes.body)).toEqual({ error: "Service temporarily unavailable" });
+    // Task 1413b: body now includes retryAfterSec (Retry-After header value)
+    const parsed503 = JSON.parse(mockRes.body);
+    expect(parsed503.error).toBe("Service temporarily unavailable");
   });
 
   it("(d) returns 200 and upserts valid foreign flow items", async () => {
