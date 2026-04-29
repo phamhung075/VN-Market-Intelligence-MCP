@@ -14,10 +14,6 @@
 |---------|-------|----------|------|-------|---------|
 | 1395a | alertBatchGrouper.ts + server.ts send loop replacement + 11 tests | MEDIUM | feature | developer | docs/handoffs/TASK_1395a.md |
 | 1396 | [UX] GAS digest: add intra-day progression label to distinguish incremental price_drop %s | LOW | ux | ba | — |
-| JANITOR-004 | DRY: COMPANY_SHORT_NAME in watchlist.ts duplicates STOCK_CATALOG display names | LOW | refactor | developer | — |
-| JANITOR-005 | DRY: historicalBaseline 3.0 magic number duplicated in 3 IMF files | LOW | refactor | developer | — |
-| JANITOR-007 | DRY: Vietnamese severity label maps duplicated in 4+ tool files | LOW | refactor | developer | — |
-| JANITOR-008 | DRY: 10485760 log-rotation constant inlined in 10 vps-scripts/*.sh — vps-lib.sh:_rotate_log() already owns this but is never sourced | LOW | refactor | developer | — |
 
 ---
 
@@ -37,6 +33,10 @@
 
 | Task ID | Title | Merged | Reports |
 |---------|-------|--------|---------|
+| JANITOR-004 | DRY: replace COMPANY_SHORT_NAME with getCompanyName (STOCK_CATALOG SSOT) | 2026-04-29 | — |
+| JANITOR-005 | DRY: extract IMF_HISTORICAL_BASELINE=3.0 to imfIndicators.ts, 3 callers updated | 2026-04-29 | — |
+| JANITOR-007 | DRY: Vietnamese severity label map extracted to severityLabels.ts, 5 files updated | 2026-04-29 | — |
+| JANITOR-008 | DRY: LOG_ROTATE_BYTES constant in vps-lib.sh, 10 scripts sourced | 2026-04-29 | — |
 | 1409a | AUDIT: Trim SPRINT_GOAL.md to ≤30 lines | 2026-04-29 | — |
 | 1409b | AUDIT: Archive old sprint prose from TASKS.md to docs/TASKS_ARCHIVE.md | 2026-04-29 | — |
 | 1409c | AUDIT: Create .claude/knowledge/agent-spawn-template.md | 2026-04-29 | — |
