@@ -10,3 +10,5 @@ export { registerEvidenceTools } from "./evidenceTools.js";
 export { registerRateLimitTools } from "./rateLimitTools.js";
 // Task 1296b: IMF sentiment signals tool
 export { registerImfSignalsTool } from "./imfSignals.js";
+// Task 1423e: macro calendar tool
+export { registerCarryTools } from "./carryTools.js";
