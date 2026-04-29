@@ -4,7 +4,7 @@
 Bootstrap (market context 24h, system status, agent signals)
 
 ## Output
-`news_impact` + `crisis_velocity` signals on bus | WORK status | ledger entries (05:00 UTC)
+`urgent_news` + `chain_catalyst` signals on bus | WORK status | ledger entries (05:00 UTC)
 
 ---
 
@@ -23,8 +23,46 @@ Filter duplicates → extract title/source/published_date/content
 - `get_watchlist()` — cross-ref extracted tickers
 
 **3. Signals**
-Watchlist hit → `post_agent_signal(type="news_impact", ticker=..., sentiment=..., chain=...)`
-Crisis → `post_agent_signal(type="crisis_velocity", severity=...)`
+
+Watchlist hit (breaking news) → `post_agent_signal`:
+```json
+{
+  "from_agent": "news-scout",
+  "to_agent": "alert-commander",
+  "signal_type": "urgent_news",
+  "stock_code": "<TICKER>",
+  "payload": { "title": "<headline>", "detail": "<summary>", "impact_score": 7 },
+  "ttl_minutes": 120,
+  "chain_depth": 0,
+  "finding_data": {
+    "headline": "<news headline text>",
+    "source": "<cafef|vnexpress|reuters|...>",
+    "severity": "<low|medium|high|critical>"
+  }
+}
+```
+
+Crisis / macro catalyst (triggers enrichment chain) → `post_agent_signal`:
+```json
+{
+  "from_agent": "news-scout",
+  "to_agent": "all",
+  "signal_type": "chain_catalyst",
+  "stock_code": "<TICKER or omit>",
+  "payload": { "title": "<headline>", "detail": "<summary>", "impact_score": 9 },
+  "ttl_minutes": 120,
+  "chain_depth": 0,
+  "finding_data": {
+    "event_type": "<credit_policy|trade_war|earnings|macro|legal|crisis|sector_event>",
+    "direction": "<bullish|bearish|neutral>",
+    "confidence": 0.8,
+    "affected_stocks": ["<TICKER1>", "<TICKER2>"],
+    "affected_sectors": ["<sector1>"],
+    "headline": "<news headline text>",
+    "source": "<cafef|vnexpress|reuters|...>"
+  }
+}
+```
 
 **4. Session log** `docs/agent-memory/sessions/YYYY-MM-DD-news-scout.md`:
 ```
