@@ -46,4 +46,15 @@ None.
 ## Merge Status
 Merged to main via `merge(1395a): alertBatchGrouper — group push-prices alerts by (signal_type, severity)`
 Branch `task/1395a-alert-batch-grouper` deleted.
-TASKS.md updated — Sprint 1395 / 1395a: done.
+docs/TASKS.md updated — Sprint 1395 / 1395a: done.
+
+## QA Re-verification (2026-04-29)
+
+Re-run requested after developer wired alertBatchGrouper into pushPricesHandler (feat commit 34598b48).
+
+- bun test 1395: 11 pass / 0 fail (same as prior run)
+- Full suite: 8008 pass / 26 fail (26 pre-existing, 0 new — baseline regression confirmed)
+- TSC: 1 new error found and fixed by QA — import path `../../domain/services/alertBatchGrouper.js` corrected to `../../../domain/services/alertBatchGrouper.js` (handler is 3 levels deep from src/, not 2)
+- Remaining 7 TSC errors: all pre-existing (1383 x2, 1397c x2, hotfix-bctc-integrity x3)
+- Spot-check passed: import present, per-alert loop replaced by batch-group loop, stop-loss/take-profit section untouched
+- root TASKS.md updated — 1395a moved to Done

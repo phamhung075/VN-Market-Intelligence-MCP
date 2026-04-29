@@ -12,7 +12,6 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff |
 |---------|-------|----------|------|-------|---------|
-| 1395a | alertBatchGrouper.ts + server.ts send loop replacement + 11 tests | MEDIUM | feature | developer | docs/handoffs/TASK_1395a.md |
 | 1396 | [UX] GAS digest: add intra-day progression label to distinguish incremental price_drop %s | LOW | ux | ba | — |
 
 ---
@@ -33,6 +32,7 @@
 
 | Task ID | Title | Merged | Reports |
 |---------|-------|--------|---------|
+| 1395a | alertBatchGrouper wired to pushPricesHandler — batch sends replace per-alert loop | 2026-04-29 | reports/TASK_REPORT_1395a.md |
 | JANITOR-004 | DRY: replace COMPANY_SHORT_NAME with getCompanyName (STOCK_CATALOG SSOT) | 2026-04-29 | — |
 | JANITOR-005 | DRY: extract IMF_HISTORICAL_BASELINE=3.0 to imfIndicators.ts, 3 callers updated | 2026-04-29 | — |
 | JANITOR-007 | DRY: Vietnamese severity label map extracted to severityLabels.ts, 5 files updated | 2026-04-29 | — |

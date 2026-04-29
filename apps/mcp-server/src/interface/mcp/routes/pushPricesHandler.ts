@@ -349,7 +349,7 @@ export async function handlePushPrices(
 
             // Send HIGH/CRITICAL alerts to Telegram — grouped by (signal_type, severity)
             const { groupAlertsBySignalSeverity, formatBatchGroupMessage } =
-              await import("../../domain/services/alertBatchGrouper.js");
+              await import("../../../domain/services/alertBatchGrouper.js");
 
             // Step 1 — filter to notifiable (high/critical, dedup guard applied per-alert)
             const notifiable = alerts.filter(
