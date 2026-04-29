@@ -517,11 +517,19 @@ export function extractIncomeStatement(rawText: string): IncomeStatement {
   let m = multiplier;
 
   // Task 1119: Magnitude inference (ported from balanceSheetExtractor).
-  // If netRevenue exceeds 1 billion (after applying declared multiplier),
-  // the values are almost certainly raw VND (đồng), not triệu.
+  // If netRevenue exceeds 1 billion triệu after multiplier, the values are
+  // almost certainly raw VND (đồng), not triệu or tỷ.
   // VN listed companies have net revenue in triệu between ~1,000 and ~200,000,000.
   // 1 triệu đồng = 1,000,000 đồng — divide raw VND by 1,000,000.
-  if (m === 1 && netRevenue * m > 1_000_000_000) {
+  //
+  // Bug 2 fix: the original guard only fired when m === 1 (triệu declared).
+  // When m === 1000 (tỷ declared) but OCR extracted raw VND integers, the
+  // scaled result becomes astronomically large (e.g. FPT: 14,324,284,500 × 1000
+  // = 14,324,284,500,000 triệu — 14 quadrillion). Apply the same inference for
+  // any multiplier when the scaled netRevenue exceeds 1e14 triệu.
+  if (netRevenue * m > 1e14) {
+    m = 0.000001;
+  } else if (m === 1 && netRevenue > 1_000_000_000) {
     m = 0.000001;
   }
 

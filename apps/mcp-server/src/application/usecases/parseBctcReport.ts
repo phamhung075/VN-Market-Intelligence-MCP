@@ -107,7 +107,23 @@ function computeConfidence(
   ];
 
   const nonZeroCount = keyFields.filter((v) => v !== 0).length;
-  return nonZeroCount / keyFields.length;
+  const rawConfidence = nonZeroCount / keyFields.length;
+
+  // Bug 3 fix: when ALL three core financial fields are zero, the extraction
+  // produced no meaningful data regardless of how many ancillary fields are
+  // non-zero (e.g. cash flow sub-fields from an unrelated text fragment).
+  // Cap confidence at 0.05 to prevent phantom confidence scores (DGC: 63%,
+  // BSR: 13%) on effectively empty reports.
+  const coreFieldsAllZero =
+    bs.totalAssets === 0 &&
+    is.netRevenue === 0 &&
+    is.netProfit === 0;
+
+  if (coreFieldsAllZero) {
+    return Math.min(rawConfidence, 0.05);
+  }
+
+  return rawConfidence;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
