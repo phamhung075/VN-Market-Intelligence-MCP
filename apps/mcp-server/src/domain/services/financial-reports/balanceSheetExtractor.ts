@@ -147,10 +147,10 @@ function detectUnitMultiplier(lines: string[]): number {
   }
 
   // Fallback: OCR text may garble diacritics or lack the formal "Đơn vị tính"
-  // prefix. Scan first ~200 lines for any unit hint (report #1088 slice a).
-  // VCB BCTCs have a 5-page cover letter; "(Triệu VND)" appears ~line 307 of
-  // extracted text, so 50 was insufficient — expanded to 200.
-  const head = lines.slice(0, 200);
+  // prefix. Scan first ~400 lines for any unit hint (report #1088 slice a).
+  // VCB BCTCs have a 5-page cover letter; "(Triệu VND)" appears at line ~343 of
+  // extracted text, so 50 was insufficient — expanded to 400 for safety margin.
+  const head = lines.slice(0, 400);
   // Also matches "(Triệu VND)" — bank BCTCs use this column header format
   const P_TRIEU_LOOSE = /tri[eệ]u\s*[đd][oồ]ng|trieu\s*dong|tri[eệ]u\s*VND/i;
   const P_TY_LOOSE = /t[yỷ]\s*[đd][oồ]ng|ty\s*dong/i;
