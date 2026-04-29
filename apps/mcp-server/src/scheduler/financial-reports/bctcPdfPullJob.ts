@@ -121,15 +121,56 @@ async function makeProductionDeps(): Promise<BctcPdfPullDeps> {
     },
 
     triggerExtraction: async (params): Promise<void> => {
-      // Lazy-import the reparse use-case to avoid loading LanceDB at module init.
-      // The reparse job already knows how to handle a stranded PDF from a file path.
-      const { runBctcReparseJob } = await import("./bctcReparseJob.js");
-      await runBctcReparseJob({
-        reparseFn: async (payload) => {
-          // We only want to trigger extraction for this specific file;
-          // the reparse job will handle text extraction and pipeline call.
-          return payload.filePath === params.filePath;
-        },
+      // Bug 1 fix: the previous implementation passed a stub reparseFn that
+      // returned payload.filePath === params.filePath without doing any actual
+      // extraction. runBctcReparseJob marked feedback rows as 'resolved' with
+      // zero work done, causing cross-ticker contamination on the next daily cycle.
+      //
+      // Correct approach: OCR the PDF directly, then call fetchParseAndStoreBctc
+      // with pdfTextOverride so the file:// URL never reaches axios (Bug 2 fix).
+      const { extractAndStorePdfPagesWithRetry, getCachedPdfText } = await import(
+        "../../infrastructure/fetchers/pdfOcrWorker.js"
+      );
+      const { fetchParseAndStoreBctc } = await import(
+        "../../application/usecases/fetchParseAndStoreBctc.js"
+      );
+      const { logger } = await import("../../infrastructure/logger.js");
+
+      const quarter = params.quarter.startsWith("Q")
+        ? (params.quarter as "Q1" | "Q2" | "Q3" | "Q4")
+        : (`Q${params.quarter}` as "Q1" | "Q2" | "Q3" | "Q4");
+      const filename = `${params.actionCode}_${params.year}_${quarter}.pdf`;
+
+      // Step 1: populate OCR cache for this specific file
+      try {
+        await extractAndStorePdfPagesWithRetry(params.filePath, filename, params.actionCode);
+      } catch (err) {
+        logger.warn("[bctcPdfPull] OCR extraction failed (non-fatal)", {
+          ticker: params.actionCode,
+          filePath: params.filePath,
+          error: err instanceof Error ? err.message : String(err),
+        });
+      }
+
+      // Step 2: read cached text and call pipeline with pdfTextOverride
+      // This avoids passing a file:// URL to fetchParseAndStoreBctc which would
+      // reach axios and silently fail (Bug 2).
+      const cached = getCachedPdfText(filename);
+      if (!cached || cached.text.trim().length < 100) {
+        logger.warn("[bctcPdfPull] OCR cache empty after extraction — pipeline skipped", {
+          ticker: params.actionCode,
+          filename,
+          confidence: cached?.confidence ?? null,
+        });
+        return;
+      }
+
+      await fetchParseAndStoreBctc({
+        actionCode: params.actionCode,
+        year: params.year,
+        quarter,
+        pdfTextOverride: cached.text,
+        pdfUrl: `file://${params.filePath}`,
       });
     },
   };

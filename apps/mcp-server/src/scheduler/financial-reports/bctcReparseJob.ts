@@ -432,7 +432,45 @@ async function makeProductionDeps(): Promise<ReparseDeps> {
   return {
     extractText: async (buf: Buffer) => extractPdfText(buf),
     getOcrCache: (filename: string) => getCachedPdfText(filename),
-    pipeline: async (params) => fetchParseAndStoreBctc(params),
+    pipeline: async (params) => {
+      // Bug 2 fix: when pdfUrl is a file:// URL, axios (used by
+      // downloadAndExtractPdf) cannot handle it and silently returns
+      // { text: "", confidence: 0 }. This caused FPT and any ticker whose
+      // PDF was on disk but not yet extracted to return null with no error log.
+      //
+      // If the caller already supplied pdfTextOverride, pass through directly —
+      // reparseSingleWithOcrFallback always sets this when extraction succeeded,
+      // so the file:// URL in pdfUrl is only there for source.pdfPath stamping.
+      //
+      // If pdfTextOverride is absent but pdfUrl is a file:// URL (legacy callers
+      // or edge cases), read and extract the file locally before calling the
+      // pipeline so the download step is bypassed.
+      if (!params.pdfTextOverride && params.pdfUrl?.startsWith("file://")) {
+        const localPath = params.pdfUrl.replace(/^file:\/\//, "");
+        if (existsSync(localPath)) {
+          try {
+            const buf = readFileSync(localPath);
+            const { text, confidence } = await extractPdfText(buf);
+            if (text.trim().length >= 100 && confidence >= 0.3) {
+              return fetchParseAndStoreBctc({ ...params, pdfTextOverride: text });
+            }
+          } catch (err) {
+            logger.warn("[bctc-reparse-job] local file read failed in pipeline dep", {
+              localPath,
+              error: err instanceof Error ? err.message : String(err),
+            });
+          }
+          // Local read failed or text too short — let fetchParseAndStoreBctc
+          // attempt its own OCR fallback using the file path context.
+          // It will return null if OCR also fails, which is the correct outcome.
+        } else {
+          logger.warn("[bctc-reparse-job] file:// path does not exist in pipeline dep", {
+            pdfUrl: params.pdfUrl,
+          });
+        }
+      }
+      return fetchParseAndStoreBctc(params);
+    },
     fileExists: (path: string) => existsSync(path),
     readFile: (path: string) => readFileSync(path),
     extractHighDpiRetry: async (filePath: string, filename: string, actionCode: string) => {
