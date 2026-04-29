@@ -295,6 +295,9 @@ function formatMacroSnapshot(
       `  Refinancing Rate:  ${r.refinancingRatePct.toFixed(2)}%`,
     );
     lines.push(
+      `  Max Deposit Rate:  ${r.maxDepositRatePct.toFixed(2)}%`,
+    );
+    lines.push(
       `  USD/VND Official: ${r.usdVndOfficial.toLocaleString("en-US", {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
