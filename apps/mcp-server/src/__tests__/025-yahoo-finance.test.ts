@@ -235,6 +235,7 @@ describe("Task 025 — Yahoo Finance Commodity Fetcher", () => {
         copper_usd REAL NOT NULL DEFAULT 0,
         silver_usd_per_oz REAL NOT NULL DEFAULT 0,
         jpy_vnd_rate REAL NOT NULL DEFAULT 0,
+        us10y_yield REAL NOT NULL DEFAULT 0,
         fetched_at TEXT NOT NULL
       );
       CREATE TABLE commodity_prices_history (
@@ -252,6 +253,7 @@ describe("Task 025 — Yahoo Finance Commodity Fetcher", () => {
         copper_usd REAL NOT NULL DEFAULT 0,
         silver_usd_per_oz REAL NOT NULL DEFAULT 0,
         jpy_vnd_rate REAL NOT NULL DEFAULT 0,
+        us10y_yield REAL NOT NULL DEFAULT 0,
         fetched_at TEXT NOT NULL
       );
       -- Sprint 052 (backlog 921): storeCommoditySnapshot now mirrors brent/gold into market_prices
@@ -277,14 +279,14 @@ describe("Task 025 — Yahoo Finance Commodity Fetcher", () => {
     const snap1: CommoditySnapshot = {
       brentCrudeUSD: 80.0, goldUSDPerOz: 2300.0, usdVndRate: 25000.0,
       vix: 0, sp500: 0, shanghaiComp: 0, hangSeng: 0, dxy: 0,
-      cnyVndRate: 0, copperUSD: 0, silverUSDPerOz: 0, jpyVndRate: 0,
+      cnyVndRate: 0, copperUSD: 0, silverUSDPerOz: 0, jpyVndRate: 0, us10yYield: 0,
       fetchedAt: "2026-03-28T08:00:00.000Z",
     };
 
     const snap2: CommoditySnapshot = {
       brentCrudeUSD: 85.0, goldUSDPerOz: 2400.0, usdVndRate: 25200.0,
       vix: 0, sp500: 0, shanghaiComp: 0, hangSeng: 0, dxy: 0,
-      cnyVndRate: 0, copperUSD: 0, silverUSDPerOz: 0, jpyVndRate: 0,
+      cnyVndRate: 0, copperUSD: 0, silverUSDPerOz: 0, jpyVndRate: 0, us10yYield: 0,
       fetchedAt: "2026-03-28T09:00:00.000Z",
     };
 
@@ -326,6 +328,7 @@ describe("Task 025 — Yahoo Finance Commodity Fetcher", () => {
         copper_usd REAL NOT NULL DEFAULT 0,
         silver_usd_per_oz REAL NOT NULL DEFAULT 0,
         jpy_vnd_rate REAL NOT NULL DEFAULT 0,
+        us10y_yield REAL NOT NULL DEFAULT 0,
         fetched_at TEXT NOT NULL
       );
       CREATE TABLE commodity_prices_history (
@@ -343,6 +346,7 @@ describe("Task 025 — Yahoo Finance Commodity Fetcher", () => {
         copper_usd REAL NOT NULL DEFAULT 0,
         silver_usd_per_oz REAL NOT NULL DEFAULT 0,
         jpy_vnd_rate REAL NOT NULL DEFAULT 0,
+        us10y_yield REAL NOT NULL DEFAULT 0,
         fetched_at TEXT NOT NULL
       );
       -- Sprint 052 (backlog 921): storeCommoditySnapshot now mirrors brent/gold into market_prices
@@ -368,14 +372,14 @@ describe("Task 025 — Yahoo Finance Commodity Fetcher", () => {
     const snap1: CommoditySnapshot = {
       brentCrudeUSD: 80.0, goldUSDPerOz: 2300.0, usdVndRate: 25000.0,
       vix: 0, sp500: 0, shanghaiComp: 0, hangSeng: 0, dxy: 0,
-      cnyVndRate: 0, copperUSD: 0, silverUSDPerOz: 0, jpyVndRate: 0,
+      cnyVndRate: 0, copperUSD: 0, silverUSDPerOz: 0, jpyVndRate: 0, us10yYield: 0,
       fetchedAt: "2026-03-28T08:00:00.000Z",
     };
 
     const snap2: CommoditySnapshot = {
       brentCrudeUSD: 85.0, goldUSDPerOz: 2400.0, usdVndRate: 25200.0,
       vix: 0, sp500: 0, shanghaiComp: 0, hangSeng: 0, dxy: 0,
-      cnyVndRate: 0, copperUSD: 0, silverUSDPerOz: 0, jpyVndRate: 0,
+      cnyVndRate: 0, copperUSD: 0, silverUSDPerOz: 0, jpyVndRate: 0, us10yYield: 0,
       fetchedAt: "2026-03-28T09:00:00.000Z",
     };
 
@@ -411,7 +415,8 @@ describe("Task 025 — Yahoo Finance Commodity Fetcher", () => {
         shanghai_comp REAL NOT NULL DEFAULT 0, hang_seng REAL NOT NULL DEFAULT 0,
         dxy REAL NOT NULL DEFAULT 0, cny_vnd_rate REAL NOT NULL DEFAULT 0,
         copper_usd REAL NOT NULL DEFAULT 0, silver_usd_per_oz REAL NOT NULL DEFAULT 0,
-        jpy_vnd_rate REAL NOT NULL DEFAULT 0, fetched_at TEXT NOT NULL
+        jpy_vnd_rate REAL NOT NULL DEFAULT 0, us10y_yield REAL NOT NULL DEFAULT 0,
+        fetched_at TEXT NOT NULL
       );
       CREATE TABLE commodity_prices_history (
         id INTEGER PRIMARY KEY AUTOINCREMENT, source TEXT NOT NULL,
@@ -421,7 +426,8 @@ describe("Task 025 — Yahoo Finance Commodity Fetcher", () => {
         shanghai_comp REAL NOT NULL DEFAULT 0, hang_seng REAL NOT NULL DEFAULT 0,
         dxy REAL NOT NULL DEFAULT 0, cny_vnd_rate REAL NOT NULL DEFAULT 0,
         copper_usd REAL NOT NULL DEFAULT 0, silver_usd_per_oz REAL NOT NULL DEFAULT 0,
-        jpy_vnd_rate REAL NOT NULL DEFAULT 0, fetched_at TEXT NOT NULL
+        jpy_vnd_rate REAL NOT NULL DEFAULT 0, us10y_yield REAL NOT NULL DEFAULT 0,
+        fetched_at TEXT NOT NULL
       );
       CREATE TABLE market_prices (
         code TEXT PRIMARY KEY, price REAL, change_amt REAL, change_pct REAL, volume REAL, updated_at TEXT
@@ -440,7 +446,7 @@ describe("Task 025 — Yahoo Finance Commodity Fetcher", () => {
     storeCommoditySnapshot({
       brentCrudeUSD: 96.51, goldUSDPerOz: 4793.5, usdVndRate: 26320.0,
       vix: 0, sp500: 0, shanghaiComp: 0, hangSeng: 0, dxy: 0,
-      cnyVndRate: 0, copperUSD: 0, silverUSDPerOz: 0, jpyVndRate: 0,
+      cnyVndRate: 0, copperUSD: 0, silverUSDPerOz: 0, jpyVndRate: 0, us10yYield: 0,
       fetchedAt: "2026-04-10T08:00:00.000Z",
     }, db);
 

@@ -47,7 +47,7 @@ const YAHOO_API_BASE =
   Bun.env["YAHOO_FINANCE_API_URL"] ??
   "https://query1.finance.yahoo.com/v8/finance/chart";
 
-/** The 12 commodity/index symbols fetched on every call. */
+/** The 13 commodity/index symbols fetched on every call. */
 const SYMBOLS = {
   // existing
   brent:  "BZ=F",
@@ -63,6 +63,8 @@ const SYMBOLS = {
   copper:   "HG=F",       // Copper futures (USD/lb)
   silver:   "SI=F",       // Silver futures (USD/oz)
   jpyVnd:   "JPYVND=X",  // JPY/VND exchange rate
+  // Task 1423a — US 10-year Treasury yield
+  us10y:    "^TNX",       // CBOE 10-Year Treasury Note Yield Index (% annualised)
 } as const;
 
 /** Source identifier written to SQLite rows. */
@@ -106,6 +108,9 @@ export interface CommoditySnapshot {
   silverUSDPerOz: number;
   /** JPY to VND exchange rate. 0 if unavailable. */
   jpyVndRate: number;
+  // ── Task 1423a ─────────────────────────────────────────────────────────────
+  /** US 10-year Treasury yield (% annualised, ^TNX). 0 if unavailable. */
+  us10yYield: number;
 }
 
 // ---------------------------------------------------------------------------
@@ -237,11 +242,12 @@ export async function fetchYahooFinancePrices(
     apiBase,
   });
 
-  // Fetch all 12 symbols concurrently (FR-3)
+  // Fetch all 13 symbols concurrently (FR-3 + Task 1423a)
   const [
     brentResult, goldResult, usdVndResult,
     vixResult, sp500Result, shanghaiResult, hangSengResult,
     dxyResult, cnyVndResult, copperResult, silverResult, jpyVndResult,
+    us10yResult,
   ] = await Promise.allSettled([
     fetchSymbolPrice(SYMBOLS.brent,    client, apiBase),
     fetchSymbolPrice(SYMBOLS.gold,     client, apiBase),
@@ -255,6 +261,7 @@ export async function fetchYahooFinancePrices(
     fetchSymbolPrice(SYMBOLS.copper,   client, apiBase),
     fetchSymbolPrice(SYMBOLS.silver,   client, apiBase),
     fetchSymbolPrice(SYMBOLS.jpyVnd,   client, apiBase),
+    fetchSymbolPrice(SYMBOLS.us10y,    client, apiBase),
   ]);
 
   const brentCrudeUSD =
@@ -290,15 +297,17 @@ export async function fetchYahooFinancePrices(
     silverResult.status === "fulfilled" && silverResult.value !== null ? silverResult.value : 0;
   const jpyVndRate =
     jpyVndResult.status === "fulfilled" && jpyVndResult.value !== null ? jpyVndResult.value : 0;
+  const us10yYield =
+    us10yResult.status === "fulfilled" && us10yResult.value !== null ? us10yResult.value : 0;
 
-  // Return null ONLY when ALL 12 fields are 0 (FR-3 business rule)
+  // Return null ONLY when ALL 13 fields are 0 (FR-3 business rule + Task 1423a)
   if (
     brentCrudeUSD === 0 && goldUSDPerOz === 0 && usdVndRate === 0 &&
     vix === 0 && sp500 === 0 && shanghaiComp === 0 && hangSeng === 0 &&
     dxy === 0 && cnyVndRate === 0 && copperUSD === 0 && silverUSDPerOz === 0 &&
-    jpyVndRate === 0
+    jpyVndRate === 0 && us10yYield === 0
   ) {
-    logger.warn("[yahooFinance] all 12 symbols returned 0 — no data parsed", { apiBase });
+    logger.warn("[yahooFinance] all 13 symbols returned 0 — no data parsed", { apiBase });
     return null;
   }
 
@@ -318,6 +327,8 @@ export async function fetchYahooFinancePrices(
     copperUSD,
     silverUSDPerOz,
     jpyVndRate,
+    // Task 1423a
+    us10yYield,
   };
 
   logger.info("[yahooFinance] fetched commodity prices", {
@@ -333,6 +344,7 @@ export async function fetchYahooFinancePrices(
     copperUSD,
     silverUSDPerOz,
     jpyVndRate,
+    us10yYield,
     fetchedAt,
   });
 
@@ -363,8 +375,8 @@ export function storeCommoditySnapshot(
     INSERT OR REPLACE INTO commodity_prices
       (source, brent_crude_usd, gold_usd_per_oz, usd_vnd_rate,
        vix, sp500, shanghai_comp, hang_seng, dxy, cny_vnd_rate,
-       copper_usd, silver_usd_per_oz, jpy_vnd_rate, fetched_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+       copper_usd, silver_usd_per_oz, jpy_vnd_rate, us10y_yield, fetched_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
   // Sprint 052 / backlog 921: yahooFinance is the single source of truth for
@@ -385,8 +397,8 @@ export function storeCommoditySnapshot(
     INSERT INTO commodity_prices_history
       (source, brent_crude_usd, gold_usd_per_oz, usd_vnd_rate,
        vix, sp500, shanghai_comp, hang_seng, dxy, cny_vnd_rate,
-       copper_usd, silver_usd_per_oz, jpy_vnd_rate, fetched_at)
-    SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+       copper_usd, silver_usd_per_oz, jpy_vnd_rate, us10y_yield, fetched_at)
+    SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
     WHERE NOT EXISTS (
       SELECT 1 FROM commodity_prices_history
       WHERE source = ? AND strftime('%Y-%m-%d %H', fetched_at) = strftime('%Y-%m-%d %H', ?)
@@ -408,6 +420,7 @@ export function storeCommoditySnapshot(
       snapshot.copperUSD,
       snapshot.silverUSDPerOz,
       snapshot.jpyVndRate,
+      snapshot.us10yYield,
       snapshot.fetchedAt,
     );
     appendHistory.run(
@@ -424,6 +437,7 @@ export function storeCommoditySnapshot(
       snapshot.copperUSD,
       snapshot.silverUSDPerOz,
       snapshot.jpyVndRate,
+      snapshot.us10yYield,
       snapshot.fetchedAt,
       // dedup WHERE bindings
       SOURCE,
