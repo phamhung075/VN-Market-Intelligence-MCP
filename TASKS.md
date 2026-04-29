@@ -49,5 +49,6 @@
 | 1406d | server-startup.ts done (part of 1406a) | 2026-04-29 | reports/TASK_REPORT_1406f.md |
 | 1406e | Decompose jobs.ts (967 lines) → cronConfig.ts + startupHelpers.ts + startScheduler.ts + 15-line barrel | 2026-04-29 | reports/TASK_REPORT_1406f.md |
 | 1406f | QA sign-off: 8043 tests pass, 0 TS errors, all structural targets met | 2026-04-29 | reports/TASK_REPORT_1406f.md |
+| 1413b | foreignFlow CB self-heal fix: early-return guard removed, CircuitOpenError→503+Retry-After, 15 regression tests | 2026-04-29 | reports/TASK_REPORT_1413b.md |
 
 ---
