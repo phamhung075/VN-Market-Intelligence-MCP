@@ -30,6 +30,7 @@ import {
 } from "../../../../infrastructure/fetchers/sbv.js";
 import { getDb, initDatabase } from "../../../../infrastructure/db/schema.js";
 import { computeCarryTradeSignal } from "../../../../domain/services/macro/carryTradeSignal.js";
+import { computeYieldSpreadSignal } from "../../../../domain/services/macro/yieldSpreadSignal.js";
 import { logger } from "../../../../infrastructure/logger.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -235,6 +236,63 @@ export function formatThienThoi(inputs: ThienThoiInputs): string[] {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Dinh Gia — Asset Valuation inputs
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Pre-computed inputs for the [Dinh Gia — Asset Valuation] display block.
+ * All required values must be > 0; callers set them to 0 when unavailable
+ * (formatDinhGia will then render "unavailable").
+ */
+export interface DinhGiaInputs {
+  /** Market earnings yield (%) — e.g. 7.32 means 7.32% p.a. */
+  earningYield: number;
+  /** Median P/E across watchlist tickers — e.g. 13.65 */
+  medianPE: number;
+  /** SBV max deposit rate (%) — e.g. 5.50 means 5.50% p.a. */
+  depositRate: number;
+  /** Number of tickers with valid PE — e.g. 28 */
+  coverageCount: number;
+  /** Total watchlist size used as denominator — e.g. 30 */
+  totalWatchlist: number;
+  /** "YYYY-QN" string of the latest financial period seen — e.g. "2024-Q4" */
+  dataAsOf: string;
+}
+
+/**
+ * Format the [Dinh Gia — Asset Valuation] block.
+ *
+ * Returns an array of lines (no trailing blank line — caller appends).
+ * Shows "unavailable" when earningYield or depositRate is 0.
+ */
+export function formatDinhGia(inputs: DinhGiaInputs): string[] {
+  const lines: string[] = ["[Dinh Gia — Asset Valuation]"];
+
+  if (inputs.earningYield === 0 || inputs.depositRate === 0) {
+    lines.push("  unavailable");
+    return lines;
+  }
+
+  const signal = computeYieldSpreadSignal(inputs.earningYield, inputs.depositRate);
+  const spreadSign = signal.spread >= 0 ? "+" : "";
+
+  const coverageSuffix =
+    inputs.coverageCount > 0 && inputs.totalWatchlist > 0
+      ? `, coverage: ${inputs.coverageCount}/${inputs.totalWatchlist}`
+      : "";
+
+  lines.push(
+    `  Market Earning Yield:  ${inputs.earningYield.toFixed(2)}% (median P/E: ${inputs.medianPE.toFixed(2)}${coverageSuffix})`,
+  );
+  lines.push(`  Max Deposit Rate:      ${inputs.depositRate.toFixed(2)}%`);
+  lines.push(
+    `  Yield Spread:          ${spreadSign}${signal.spread.toFixed(2)}% — ${signal.label}`,
+  );
+
+  return lines;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Output formatter
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -244,11 +302,14 @@ export function formatThienThoi(inputs: ThienThoiInputs): string[] {
  * @param snapshot    - Assembled macro snapshot (commodity + rates).
  * @param thienThoi   - Optional pre-computed Thien Thoi inputs; omitted in
  *                      legacy/test paths that do not supply DB data.
+ * @param dinhGia     - Optional pre-computed Dinh Gia (asset valuation) inputs;
+ *                      section is omitted when undefined.
  * @returns Multi-line text suitable for MCP tool output.
  */
 function formatMacroSnapshot(
   snapshot: MacroSnapshotResponse,
   thienThoi?: ThienThoiInputs,
+  dinhGia?: DinhGiaInputs,
 ): string {
   const lines: string[] = [
     "=== Macro Snapshot ===",
@@ -259,6 +320,12 @@ function formatMacroSnapshot(
   // ── Thien Thoi block (appears FIRST, before commodity) ───────────────────
   if (thienThoi) {
     lines.push(...formatThienThoi(thienThoi));
+    lines.push("");
+  }
+
+  // ── Dinh Gia block (after Thien Thoi, before Commodity Prices) ───────────
+  if (dinhGia) {
+    lines.push(...formatDinhGia(dinhGia));
     lines.push("");
   }
 
@@ -399,11 +466,17 @@ export function registerMacroTools(server: McpServer): void {
        * or inject a mock HttpClient, or pass null to simulate fetch failure.
        */
       _testSbvClient: z.any().optional(),
+      /**
+       * Test-only: inject a DinhGiaInputs object directly (bypasses DB reads).
+       * Pass null to simulate DB read failure (section shows "unavailable").
+       */
+      _testDinhGiaInputs: z.any().optional(),
     },
     async (args) => {
-      const { _testCommodityClient, _testSbvClient } = args as {
+      const { _testCommodityClient, _testSbvClient, _testDinhGiaInputs } = args as {
         _testCommodityClient?: unknown;
         _testSbvClient?: unknown;
+        _testDinhGiaInputs?: unknown;
       };
 
       const fetchedAt = new Date().toISOString();
@@ -496,6 +569,65 @@ export function registerMacroTools(server: McpServer): void {
           // thienThoi remains undefined — formatMacroSnapshot skips the block
         }
 
+        // ── Query DB for Dinh Gia inputs (or use test injection) ─────────────
+        let dinhGiaInputs: DinhGiaInputs | undefined;
+
+        // null explicitly passed → simulate DB failure (section omitted)
+        if (_testDinhGiaInputs === null) {
+          // dinhGiaInputs remains undefined
+        } else if (
+          typeof _testDinhGiaInputs === "object" &&
+          _testDinhGiaInputs !== null &&
+          "earningYield" in _testDinhGiaInputs
+        ) {
+          // Pre-resolved DinhGiaInputs injected (test shortcut)
+          dinhGiaInputs = _testDinhGiaInputs as DinhGiaInputs;
+        } else {
+          // Production path — read from DB
+          try {
+            await initDatabase();
+            const db = getDb();
+
+            const eyRow = db
+              .query<{ value: number }, []>(
+                `SELECT value FROM tracked_indicators
+                 WHERE indicator = 'market_earning_yield' AND source = 'bau_phase2'
+                 ORDER BY fetched_at DESC LIMIT 1`,
+              )
+              .get();
+
+            const peRow = db
+              .query<{ value: number }, []>(
+                `SELECT value FROM tracked_indicators
+                 WHERE indicator = 'market_median_pe' AND source = 'bau_phase2'
+                 ORDER BY fetched_at DESC LIMIT 1`,
+              )
+              .get();
+
+            const sbvRow = db
+              .query<{ max_deposit_rate_pct: number }, []>(
+                `SELECT max_deposit_rate_pct FROM sbv_rates ORDER BY effective_date DESC LIMIT 1`,
+              )
+              .get();
+
+            if (eyRow && peRow && sbvRow) {
+              dinhGiaInputs = {
+                earningYield: eyRow.value,
+                medianPE: peRow.value,
+                depositRate: sbvRow.max_deposit_rate_pct,
+                coverageCount: 0,
+                totalWatchlist: 30,
+                dataAsOf: "",
+              };
+            }
+          } catch (dbErr) {
+            logger.warn("[get_macro_snapshot] Dinh Gia DB query failed — section omitted", {
+              error: dbErr instanceof Error ? dbErr.message : String(dbErr),
+            });
+            // dinhGiaInputs remains undefined — formatMacroSnapshot skips the block
+          }
+        }
+
         // ── Assemble + format ────────────────────────────────────────────────
         const snapshot: MacroSnapshotResponse = {
           commodity,
@@ -503,7 +635,7 @@ export function registerMacroTools(server: McpServer): void {
           fetchedAt,
         };
 
-        const text = formatMacroSnapshot(snapshot, thienThoi);
+        const text = formatMacroSnapshot(snapshot, thienThoi, dinhGiaInputs);
 
         return {
           content: [{ type: "text" as const, text }],
