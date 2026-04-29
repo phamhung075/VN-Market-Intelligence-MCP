@@ -124,6 +124,46 @@ Tasks created from MARKET channel review: 32 messages, 2026-04-27–28.
 
 ---
 
+---
+
+## Backlog — Triaged 2026-04-29
+
+New bugs from channel scan (2026-04-28/29 messages). Cross-referenced against existing tasks.
+
+### Already covered by existing tasks (no new task needed)
+| Existing Task | Bug | Status |
+|---|---|---|
+| TASK-1362 | foreignFlow CB recurring OPEN | pending (ARCH REVIEW) |
+| TASK-1363 | BCTC queue url=MISSING + SKIP endpoint | pending (ARCH REVIEW) |
+| TASK-1364 | Sentiment "xả hàng"/"bán ra" → BULLISH misclassification | pending (ARCH REVIEW) |
+| TASK-1365 | post_agent_signal `root` field schema gap | pending (ARCH REVIEW) |
+| TASK-1367 | Signal outcome tracking broken — 0 confirmed outcomes | pending |
+| TASK-1368 | Macro σ thresholds too tight (FX/Gold false positives) | pending |
+| TASK-1369 | BCTC_overdue no conviction penalty cascade | pending |
+| TASK-1371 | Reuters RSS dead — replace source | pending |
+| TASK-1372 | TradingEconomics API key missing on VPS | pending |
+| TASK-1380 | Pre-open phantom alerts (change_pct outside 02:00–09:00 UTC) | **done** |
+| TASK-1384 | VRE alert dedup — same alert 24× per day post-1395a fix | pending |
+
+### NEW tasks — HIGH Priority
+
+| Task | Title | Status | Agent | Source |
+|------|-------|--------|-------|--------|
+| TASK-1422 | [BUG] pollNews 0 items persistent — vn-news-fetch crash-looping, no cooldown guard, fires every 15min with identical message | pending | ops | telegram:#2641,2643,2644,2648,2659,2662,2663,2664,2666,2667,2671,2672 |
+| TASK-1423 | [BUG] Macro CRITICAL alerts stuck notified_telegram=0 — Brent +5.38σ and Gold -5.39σ fired at 06:23 UTC, never dispatched to Telegram | pending | developer | telegram:#2661 |
+| TASK-1424 | [BUG] push-bctc-pdf min size guard too small — 100B threshold accepts 459B synthetic test PDFs; raise to ≥10KB to reject placeholder/test PDFs | pending | developer | telegram:#2623 |
+
+### NEW tasks — MEDIUM Priority
+
+| Task | Title | Status | Agent | Source |
+|------|-------|--------|-------|--------|
+| TASK-1425 | [BUG] vps_service_health CHECK constraint rejects "idle" status — INSERT fails every 5min for price/foreign-flow outside market hours; add "idle" to allowed values | pending | developer | telegram:#2669 |
+| TASK-1426 | [BUG] 5 stale watchlist tickers never get price data (VDC, BDI, DLC, JSH, SIS) — bgapidatafeed returns empty for these; WARN flood every 60s in logs — verify listing status, remove or fix | pending | ba | telegram:#2660 |
+| TASK-1427 | [BUG] BCTC OCR confidence=0 recurring for VNM/BSR — assets<equity or margin>100% corruption pattern; conviction signal silently skipped — needs extraction validation fix | pending | developer | telegram:#2642,2647,2665 |
+| TASK-1428 | [UX] TA indicators show "only 2 candles available" in morning briefing — RSI/MACD require 35+ candles; price history pipeline needs backfill or rolling window fix | pending | ba | market-group:#342 |
+
+---
+
 ## Notes on Recurrent Issues
 
 ### TASK-1362 — Foreign Flow Circuit Breaker (ARCH REVIEW)
