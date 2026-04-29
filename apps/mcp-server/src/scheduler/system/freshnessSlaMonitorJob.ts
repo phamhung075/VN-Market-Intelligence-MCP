@@ -15,6 +15,7 @@
 import type { Database } from "bun:sqlite";
 import {
   checkDataFreshnessSla,
+  isVnMarketHours,
   type SignalType,
 } from "../../domain/services/freshnessSlaChecker.js";
 
@@ -211,24 +212,36 @@ export function markEscalationSent(
 }
 
 /**
+ * Signal types that are only active during VN market hours.
+ * Outside 02:00–08:59 UTC Mon–Fri, data staleness for these sources is
+ * expected (VPS does not push updates when the market is closed).
+ * Breaches are still recorded for audit purposes — only escalation is suppressed.
+ */
+const MARKET_HOURS_ONLY_SIGNALS: SignalType[] = ["price", "foreign_flow"];
+
+/**
  * Runs the data freshness SLA monitor job.
  *
  * @param db Database instance (injectable for testing)
  * @param escalateToCommander Escalation callback (injectable for testing)
+ * @param injectedSignalAges Optional pre-computed signal ages (for testing; omit in production)
+ * @param now Current time override (for testing; omit in production)
  * @returns Job result summary
  */
 export async function runFreshnessSlaMonitor(
   db: Database,
   escalateToCommander: EscalationCallback,
+  injectedSignalAges?: Record<SignalType, number>,
+  now: Date = new Date(),
 ): Promise<{ breaches: number; recoveries: number; escalations: number }> {
-  // Query current signal ages
-  const signalAges = querySignalAges(db);
+  // Query current signal ages (or use injected ages for testing)
+  const signalAges = injectedSignalAges ?? querySignalAges(db);
 
   // Get prior breaches for recovery detection
   const priorBreaches = getPriorBreaches(db);
 
   // Check freshness SLAs
-  const slaCheck = checkDataFreshnessSla(signalAges, undefined, priorBreaches);
+  const slaCheck = checkDataFreshnessSla(signalAges, undefined, priorBreaches, now);
 
   let breaches = 0;
   let recoveries = 0;
@@ -244,6 +257,15 @@ export async function runFreshnessSlaMonitor(
       breach.thresholdMinutes,
       breach.severity!
     );
+
+    // Gate: price + foreign_flow are market-hours-only sources.
+    // Outside market hours, staleness is expected — do not escalate.
+    if (MARKET_HOURS_ONLY_SIGNALS.includes(breach.signalType) && !isVnMarketHours(now)) {
+      console.debug(
+        `[sla-monitor] off-hours: skipping escalation for ${breach.signalType} (expected stale outside market hours)`
+      );
+      continue;
+    }
 
     // Check cooldown and escalate if not active
     if (!isEscalationCooldownActive(db, breach.signalType)) {
