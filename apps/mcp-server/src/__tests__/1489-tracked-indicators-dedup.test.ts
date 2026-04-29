@@ -35,6 +35,7 @@ function makeSnapshot(overrides: Partial<CommoditySnapshot> = {}): CommoditySnap
     copperUSD: 4.2,
     silverUSDPerOz: 28,
     jpyVndRate: 165,
+    us10yYield: 0,
     fetchedAt: new Date().toISOString(),
     ...overrides,
   };

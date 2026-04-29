@@ -122,6 +122,10 @@ export function initMacroTables(db: Database): void {
     try { db.exec(`ALTER TABLE commodity_prices_history ADD COLUMN ${col} REAL NOT NULL DEFAULT 0`); } catch {}
   }
 
+  // Task 1423a migration: +1 col for US 10-year Treasury yield
+  try { db.exec(`ALTER TABLE commodity_prices ADD COLUMN us10y_yield REAL NOT NULL DEFAULT 0`); } catch {}
+  try { db.exec(`ALTER TABLE commodity_prices_history ADD COLUMN us10y_yield REAL NOT NULL DEFAULT 0`); } catch {}
+
   // ── SBV Rates (Task 028/1497) ─────────────────────────────────────────────
   db.exec(`
     CREATE TABLE IF NOT EXISTS sbv_rates (

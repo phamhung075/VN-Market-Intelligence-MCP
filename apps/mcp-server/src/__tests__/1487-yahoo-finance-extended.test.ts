@@ -80,6 +80,7 @@ function makeTestDb(): Database {
       copper_usd        REAL NOT NULL DEFAULT 0,
       silver_usd_per_oz REAL NOT NULL DEFAULT 0,
       jpy_vnd_rate      REAL NOT NULL DEFAULT 0,
+      us10y_yield       REAL NOT NULL DEFAULT 0,
       fetched_at        TEXT NOT NULL
     );
     CREATE TABLE commodity_prices_history (
@@ -97,6 +98,7 @@ function makeTestDb(): Database {
       copper_usd        REAL NOT NULL DEFAULT 0,
       silver_usd_per_oz REAL NOT NULL DEFAULT 0,
       jpy_vnd_rate      REAL NOT NULL DEFAULT 0,
+      us10y_yield       REAL NOT NULL DEFAULT 0,
       fetched_at        TEXT NOT NULL
     );
     CREATE TABLE market_prices (
@@ -165,7 +167,7 @@ describe("Task 1487 — Yahoo Finance Extended 12-symbol (RED)", () => {
       brentCrudeUSD: 82.5, goldUSDPerOz: 2341.8, usdVndRate: 25100.0,
       vix: 18.5, sp500: 5300.0, shanghaiComp: 3320.0, hangSeng: 17800.0,
       dxy: 104.2, cnyVndRate: 3510.0, copperUSD: 4.65, silverUSDPerOz: 29.1,
-      jpyVndRate: 165.0, fetchedAt: "2026-04-19T08:00:00.000Z",
+      jpyVndRate: 165.0, us10yYield: 0, fetchedAt: "2026-04-19T08:00:00.000Z",
     };
 
     storeCommoditySnapshot(snap, db);
@@ -259,7 +261,7 @@ describe("Task 1487 — Yahoo Finance Extended 12-symbol (RED)", () => {
       brentCrudeUSD: 82.5, goldUSDPerOz: 2341.8, usdVndRate: 25100.0,
       vix: 18.5, sp500: 5300.0, shanghaiComp: 3320.0, hangSeng: 17800.0,
       dxy: 104.2, cnyVndRate: 3510.0, copperUSD: 4.65, silverUSDPerOz: 29.1,
-      jpyVndRate: 165.0, fetchedAt: "2026-04-19T08:00:00.000Z",
+      jpyVndRate: 165.0, us10yYield: 0, fetchedAt: "2026-04-19T08:00:00.000Z",
     };
 
     // Replicate the assembly logic — will fail until runImpactChain.ts is extended
