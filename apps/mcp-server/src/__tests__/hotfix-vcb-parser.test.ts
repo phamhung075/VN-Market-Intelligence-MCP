@@ -219,15 +219,15 @@ describe("Hotfix — VCB bank BCTC parser", () => {
     });
   });
 
-  // ── B-3: Split-block with "Triệu VND" separator and prose contamination ──
+  // ── B-3a: VCB Q4 real OCR format — inline multi-column date/unit header ──
 
-  describe("B-3: split-block with Triệu VND separator and prose contamination", () => {
-    // VCB-style split-block: labels block first, then 30+ filler lines,
-    // then "31/3/2025 / Triệu VND" separator, then value block, then prose
-    // containing decree "93/2017/NĐ-CP" that previously caused total_liabilities=93.
-    const VCB_B3_SPLIT_BLOCK_PROSE_CONTAMINATION = `
+  describe("B-3a: VCB Q4 real OCR format — inline multi-column date/unit header", () => {
+    // VCB Q4: date and unit appear mid-line in a merged OCR column header.
+    // "Thuyết 31/12/2025 31/12/2024" and "minh Triệu VND Triệu VND" are
+    // single OCR lines — no standalone DD/MM/YYYY line ever exists.
+    // The old anchored DATE_PATTERN never matched; contains-based search does.
+    const VCB_Q4_INLINE_HEADER = `
 BẢNG CÂN ĐỐI KẾ TOÁN HỢP NHẤT
-Tại ngày 31 tháng 3 năm 2025
 
 NỢ PHẢI TRẢ (300 = 310 + 330)
 300
@@ -255,18 +255,8 @@ Thuyết minh số 17
 Thuyết minh số 18
 Thuyết minh số 19
 Thuyết minh số 20
-Thuyết minh số 21
-Thuyết minh số 22
-Thuyết minh số 23
-Thuyết minh số 24
-Thuyết minh số 25
-Thuyết minh số 26
-Thuyết minh số 27
-Thuyết minh số 28
-Thuyết minh số 29
-Thuyết minh số 30
-31/3/2025
-Triệu VND
+Thuyết 31/12/2025 31/12/2024
+minh Triệu VND Triệu VND
 1.904.318.782
 204.941.834
 2.109.260.616
@@ -274,34 +264,76 @@ Các khoản nợ phải trả được ghi nhận theo giá trị hợp lý
 Nghị định số 93/2017/NĐ-CP do Chính phủ ban hành
 `;
 
-    it("routes to split-block parser (not findValue) when separator is 'Triệu VND'", () => {
-      const bs = extractBalanceSheet(VCB_B3_SPLIT_BLOCK_PROSE_CONTAMINATION);
-      // Must NOT be 93 (decree number from prose)
+    it("routes to split-block parser when date and unit are inline (not standalone)", () => {
+      const bs = extractBalanceSheet(VCB_Q4_INLINE_HEADER);
       expect(bs.totalLiabilities).not.toBe(93);
-      // Must NOT be 1 (single-digit from prose)
       expect(bs.equity.total).not.toBe(1);
-      // Must be in plausible range for a large bank
       expect(bs.totalLiabilities).toBeGreaterThan(10_000);
       expect(bs.equity.total).toBeGreaterThan(10_000);
     });
 
-    it("extracts correct total_liabilities from value block (not prose)", () => {
-      const bs = extractBalanceSheet(VCB_B3_SPLIT_BLOCK_PROSE_CONTAMINATION);
-      // Exact value: 1,904,318,782 million VND
+    it("extracts correct total_liabilities for VCB Q4 inline header format", () => {
+      const bs = extractBalanceSheet(VCB_Q4_INLINE_HEADER);
       expect(bs.totalLiabilities).toBe(1_904_318_782);
     });
 
-    it("extracts correct equity_total from value block (not prose)", () => {
-      const bs = extractBalanceSheet(VCB_B3_SPLIT_BLOCK_PROSE_CONTAMINATION);
-      // Exact value: 204,941,834 million VND
+    it("extracts correct equity_total for VCB Q4 inline header format", () => {
+      const bs = extractBalanceSheet(VCB_Q4_INLINE_HEADER);
       expect(bs.equity.total).toBe(204_941_834);
     });
+  });
 
-    it("gap of 35+ lines between labels and values does not cause fallback to findValue", () => {
-      const bs = extractBalanceSheet(VCB_B3_SPLIT_BLOCK_PROSE_CONTAMINATION);
-      // If findValue were used, 93 would appear as total_liabilities
-      // The correct value proves split-block path was taken
-      expect(bs.totalLiabilities).toBeGreaterThan(1_000_000_000);
+  // ── B-3b: VCB Q1 real OCR format — labels-only page + values-only page ──
+
+  describe("B-3b: VCB Q1 real OCR format — labels-only page + values-only page", () => {
+    // VCB Q1: labels on one page (separated by "Báo cáo tình hình tài chính" header),
+    // values on the next. Date appears only in Vietnamese prose on the labels page.
+    // extractSplitBlockAll detects the labels-only page (has item codes, zero monetary
+    // values) and concatenates it with the following values page.
+    const VCB_Q1_PAGE_PAIR = `
+Báo cáo tình hình tài chính hợp nhất
+tại ngày 31 tháng 3 năm 2025
+
+NỢ PHẢI TRẢ (300 = 310 + 330)
+300
+VỐN CHỦ SỞ HỮU (400 = 410 + 430)
+400
+TỔNG CỘNG NGUỒN VỐN (440 = 300 + 400)
+440
+Thuyết minh số 1
+Thuyết minh số 2
+Thuyết minh số 3
+Thuyết minh số 4
+Thuyết minh số 5
+Thuyết minh số 6
+Thuyết minh số 7
+Thuyết minh số 8
+Thuyết minh số 9
+Thuyết minh số 10
+Báo cáo tình hình tài chính hợp nhất
+1.904.318.782
+204.941.834
+2.109.260.616
+Các khoản nợ phải trả được ghi nhận theo giá trị hợp lý
+Nghị định số 93/2017/NĐ-CP do Chính phủ ban hành
+`;
+
+    it("routes to split-block parser when labels and values are on separate pages", () => {
+      const bs = extractBalanceSheet(VCB_Q1_PAGE_PAIR);
+      expect(bs.totalLiabilities).not.toBe(93);
+      expect(bs.equity.total).not.toBe(1);
+      expect(bs.totalLiabilities).toBeGreaterThan(10_000);
+      expect(bs.equity.total).toBeGreaterThan(10_000);
+    });
+
+    it("extracts correct total_liabilities for VCB Q1 page-pair format", () => {
+      const bs = extractBalanceSheet(VCB_Q1_PAGE_PAIR);
+      expect(bs.totalLiabilities).toBe(1_904_318_782);
+    });
+
+    it("extracts correct equity_total for VCB Q1 page-pair format", () => {
+      const bs = extractBalanceSheet(VCB_Q1_PAGE_PAIR);
+      expect(bs.equity.total).toBe(204_941_834);
     });
   });
 

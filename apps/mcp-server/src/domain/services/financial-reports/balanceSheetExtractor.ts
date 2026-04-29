@@ -304,13 +304,22 @@ const P_TOTAL_LIABILITIES_AND_EQUITY = /t[ổo]ng\s+(?:c[ộo]ng\s+)?ngu[ồo]n\
  *
  * Split-block format: All labels appear first, then standalone item codes
  * (100–440 as standalone integers), then "Thuyết minh" notes, then a
- * date + unit header (e.g. "31/12/2025\nVND" or "31/3/2025\nTriệu VND"),
- * then the actual monetary values in the same order as the item codes.
+ * date + unit header, then the actual monetary values in the same order
+ * as the item codes.
+ *
+ * Three supported date/unit header formats:
+ *   - VNM standalone: "31/12/2025" on its own line, "Triệu VND" on next line
+ *   - VCB Q4 inline: "Thuyết 31/12/2025 31/12/2024" mid-line,
+ *     "minh Triệu VND Triệu VND" on the next line (multi-column OCR header)
+ *   - VCB Q1 page-pair: labels on one page, values on the next page;
+ *     extractSplitBlockAll detects the labels-only page and concatenates
+ *     the two pages before calling this function.
  *
  * Strategy:
- *   1. Find the date + unit separator line (both parts within 5 lines).
- *      Date variants: 31/12/20xx (year-end) or 31/3/20xx / 1/1/20xx (quarterly).
- *      Unit variants: bare "VND", "Triệu VND", "(Triệu VND)", "TRIỆU VND".
+ *   1. Find the date + unit separator using contains-based search (not anchored).
+ *      Date: any line that contains \d{1,2}\/\d{1,2}\/20\d\d anywhere.
+ *      Unit: the same line OR any of the next 5 lines contains "Triệu VND" or "VND".
+ *      separatorIdx points to the line where the unit is confirmed.
  *   2. Require separator to be at least 20 lines in (confirms split-block)
  *   3. Extract ordered item codes from the labels block (standalone 2-3 digit
  *      integers in [100, 440] range, also detect inline codes like "(200 = ...)")
@@ -321,18 +330,25 @@ const P_TOTAL_LIABILITIES_AND_EQUITY = /t[ổo]ng\s+(?:c[ộo]ng\s+)?ngu[ồo]n\
  */
 function parseSplitBlockBalanceSheet(lines: string[]): Record<string, number> | null {
   // Step 1: Find the date + unit separator.
-  // Date variants: 31/12/20xx (year-end), 31/3/20xx, 1/1/20xx (quarterly bank BCTCs)
-  // Unit variants: "VND", "Triệu VND", "(Triệu VND)", "TRIỆU VND"
-  const DATE_PATTERN = /^\d{1,2}\/\d{1,2}\/20\d\d$/;
-  const UNIT_PATTERN = /^[\(\s]*(tri[eệ]u\s+)?VND[\s\)]*$/i;
+  // Contains-based: matches "31/12/2025" anywhere in a line (e.g., mid-column header).
+  // This handles VCB Q4 where date and unit appear on the same OCR-merged line.
+  const DATE_CONTAINS = /\d{1,2}\/\d{1,2}\/20\d\d/;
+  // Contains-based: matches "Triệu VND" or bare "VND" (not preceded by / or digits
+  // to avoid matching decree fractions like "93/2017/NĐ-CP").
+  const UNIT_CONTAINS = /tri[eệ]u\s+VND|(?<![\/\d])VND(?!\d)/i;
 
   let separatorIdx = -1;
   for (let i = 0; i < lines.length - 5; i++) {
-    const line = lines[i]!.trim();
-    if (DATE_PATTERN.test(line)) {
-      // Look for unit header within next 5 lines
+    const line = lines[i]!;
+    if (DATE_CONTAINS.test(line)) {
+      // Check if unit declaration is on the same line (VCB Q4 single-line header)
+      if (UNIT_CONTAINS.test(line)) {
+        separatorIdx = i;
+        break;
+      }
+      // Look for unit header within next 5 lines (VNM standalone two-line header)
       for (let j = i + 1; j <= Math.min(i + 5, lines.length - 1); j++) {
-        if (UNIT_PATTERN.test(lines[j]!.trim())) {
+        if (UNIT_CONTAINS.test(lines[j]!)) {
           separatorIdx = j;
           break;
         }
@@ -341,8 +357,27 @@ function parseSplitBlockBalanceSheet(lines: string[]): Record<string, number> | 
     }
   }
 
-  // Step 2: Require separator at position ≥ 20 (confirms split-block)
-  if (separatorIdx < 20) return null;
+  // Step 1b: Fallback separator for VCB Q1 page-pair format.
+  // When labels and values are on separate pages (no date+unit separator present),
+  // the merged text contains a second "Báo cáo tình hình tài chính" line at the
+  // page boundary. Use that as the separator if Step 1 found nothing.
+  if (separatorIdx < 20) {
+    const PAGE_BOUNDARY_PAT = /[Bb][aá]o\s+c[aá]o\s+t[iì]nh\s+h[iì]nh\s+t[aà]i\s+ch[ií]nh/;
+    // The first occurrence is always at index 0 (page title). We need the second.
+    let boundaryCount = 0;
+    for (let i = 0; i < lines.length; i++) {
+      if (PAGE_BOUNDARY_PAT.test(lines[i]!)) {
+        boundaryCount++;
+        if (boundaryCount === 2 && i >= 10) {
+          separatorIdx = i;
+          break;
+        }
+      }
+    }
+  }
+
+  // Step 2: Require separator at position ≥ 10 (relaxed for page-pair; usual threshold is 20)
+  if (separatorIdx < 10) return null;
 
   const labelLines = lines.slice(0, separatorIdx);
   const valueLines = lines.slice(separatorIdx + 1);
@@ -383,7 +418,70 @@ function parseSplitBlockBalanceSheet(lines: string[]): Record<string, number> | 
     }
   }
 
-  if (codeSet.size === 0) return null;
+  // Step 3b: Banking-label fallback for VCB/bank BCTCs that use no item codes.
+  // Vietnamese banking BCTCs (Mẫu B02a/TCTD-HN) omit the 100-440 code scheme.
+  // When no codes are found, detect the three grand-total label lines and derive
+  // codes 300/400/440 from the last three large numbers in the value block.
+  //
+  // Structure of VCB page 2 value block:
+  //   - Single-column period-1 sub-items
+  //   - A second-period date+unit header (31/12/2024 / Triệu VND)
+  //   - Single-column period-2 sub-items
+  //   - Two-column lines with BOTH periods' values (including the grand totals)
+  // We must process the full value block (do NOT stop at the second period header)
+  // and collect first-column values from every numeric line. The last 3 are the
+  // total_liabilities, total_equity, and grand_total of the current period.
+  if (codeSet.size === 0) {
+    const hasBankLabels = labelLines.some(l => {
+      const t = l.replace(/\s+/g, " ").toUpperCase();
+      return /TONG\s*(NO|NỢ)\s*(PHAI|PHẢI)\s*(TRA|TRẢ)|TONG\s*(VON|VỐN)\s*(CHU|CHỦ)\s*(SO|SỞ)\s*(HUU|HỮU)/i.test(t);
+    });
+    if (!hasBankLabels) return null;
+
+    // Collect first-column values from the full value block.
+    // Skip prose lines (starting with a letter). For two-column lines
+    // (e.g. "2.214.393.069 1.889.664.354") take only the first number.
+    const bankValues: number[] = [];
+    for (const line of valueLines) {
+      const trimmed = line.trim();
+      if (!trimmed || /^[A-Za-zÀ-ỹ\(\[]/.test(trimmed)) continue;
+      // Take the first large number token on the line
+      const firstToken = trimmed.match(/^\-?[\d.,]+/);
+      if (!firstToken) continue;
+      const cleaned = firstToken[0].replace(/\s+/g, "");
+      const val = parseVnNumber(cleaned);
+      if (val === null) continue;
+      if (Number.isInteger(val) && Math.abs(val) <= 9999) continue;
+      if (val >= 2020 && val <= 2030) continue;
+      bankValues.push(val);
+    }
+
+    if (bankValues.length < 3) return null;
+
+    // Find the accounting triple: grandTotal ≈ liabilities + equity (within 1%).
+    // Strategy: the grand total is the largest value. Among the remaining values
+    // (in document order), liabilities comes before equity and liabilities > equity
+    // for Vietnamese banks. We search for the best-matching triple starting from
+    // the largest value as candidate grand total.
+    const sorted = [...bankValues].sort((a, b) => b - a);
+    for (const grandTotal of sorted) {
+      // Find a liabilities + equity pair that sums within 1% of grandTotal
+      for (let i = 0; i < bankValues.length; i++) {
+        const liab = bankValues[i]!;
+        if (liab <= 0 || liab >= grandTotal) continue;
+        for (let j = i + 1; j < bankValues.length; j++) {
+          const eq = bankValues[j]!;
+          if (eq <= 0 || eq >= grandTotal) continue;
+          const sum = liab + eq;
+          const mismatch = Math.abs(sum - grandTotal) / grandTotal;
+          if (mismatch < 0.01 && liab > eq) {
+            return { "300": liab, "400": eq, "440": grandTotal };
+          }
+        }
+      }
+    }
+    return null;
+  }
 
   // Sort numerically — this matches the order values appear in the value block
   const codes = [...codeSet].sort((a, b) => a - b);
@@ -480,10 +578,34 @@ function extractSplitBlockAll(fullText: string): Record<string, number> | null {
   }
   pages.push(lines.slice(pageStart).join("\n"));
 
+  // Detect labels-only pages (have item codes 100–440, zero monetary values)
+  // and merge them with the following page before parsing.
+  // This handles VCB Q1 where labels and values are on physically separate pages
+  // with no separator line between them.
+  const mergedPages: string[] = [];
+  for (let i = 0; i < pages.length; i++) {
+    const pageLines = pages[i]!.split("\n");
+    const hasItemCodes = pageLines.some(
+      l => /^\s*(100|110|120|130|140|150|200|210|220|230|250|260|270|300|310|330|400|410|430|440)\s*$/.test(l)
+        || /\(\d{3}\s*=/.test(l)
+    );
+    const hasMonetaryValues = pageLines.some(l => {
+      const tokens = l.match(/[\d.,]{7,}/g); // 7+ char numeric token = at least 1,000,000
+      return tokens !== null && tokens.length > 0;
+    });
+    if (hasItemCodes && !hasMonetaryValues && i + 1 < pages.length) {
+      // Labels-only page: concatenate with the next page (page-pair strategy)
+      mergedPages.push(pages[i]! + "\n" + pages[i + 1]!);
+      i++; // skip next page — already consumed
+    } else {
+      mergedPages.push(pages[i]!);
+    }
+  }
+
   const merged: Record<string, number> = {};
   let foundAny = false;
 
-  for (const pageText of pages) {
+  for (const pageText of mergedPages) {
     const pageLines = pageText.split("\n");
     const result = parseSplitBlockBalanceSheet(pageLines);
     if (result) {
