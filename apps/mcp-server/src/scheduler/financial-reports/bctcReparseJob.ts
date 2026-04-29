@@ -412,11 +412,17 @@ export async function scanDiskForStrandedPdfs(
 
   for (const filename of files) {
     const upper = filename.toUpperCase();
+    // Bug 1 fix: codes from the watchlist DB may be lowercase or mixed-case
+    // (e.g. "dig", "Shb"). The regex is tested against the uppercased filename,
+    // so the code itself must also be uppercased when building the pattern.
     const matched = codes.find((c) => {
-      const re = new RegExp(`(^|[^A-Z])${c}([^A-Z]|$)`);
+      const cu = c.toUpperCase();
+      const re = new RegExp(`(^|[^A-Z])${cu}([^A-Z]|$)`);
       return re.test(upper);
     });
     if (!matched) continue;
+    // Normalise ticker to uppercase so downstream callers receive a consistent value
+    const ticker = matched.toUpperCase();
 
     const yq = parseYearQuarterFromFilename(filename);
     if (!yq) continue;
@@ -427,12 +433,12 @@ export async function scanDiskForStrandedPdfs(
         `SELECT COUNT(*) AS cnt FROM financial_reports
          WHERE action_code = ? AND period_year = ? AND period_type = ?`,
       )
-      .get(matched, yq.year, yq.quarter) as { cnt: number };
+      .get(ticker, yq.year, yq.quarter) as { cnt: number };
 
     if ((filed?.cnt ?? 0) > 0) continue;
 
     stranded.push({
-      ticker: matched,
+      ticker,
       filename,
       filePath: join(resolvedPdfDir, filename),
     });
