@@ -304,11 +304,13 @@ const P_TOTAL_LIABILITIES_AND_EQUITY = /t[ổo]ng\s+(?:c[ộo]ng\s+)?ngu[ồo]n\
  *
  * Split-block format: All labels appear first, then standalone item codes
  * (100–440 as standalone integers), then "Thuyết minh" notes, then a
- * "31/12/2025\nVND" header, then the actual monetary values in the same
- * order as the item codes.
+ * date + unit header (e.g. "31/12/2025\nVND" or "31/3/2025\nTriệu VND"),
+ * then the actual monetary values in the same order as the item codes.
  *
  * Strategy:
- *   1. Find the "31/12/2025 VND" separator line (both parts within 5 lines)
+ *   1. Find the date + unit separator line (both parts within 5 lines).
+ *      Date variants: 31/12/20xx (year-end) or 31/3/20xx / 1/1/20xx (quarterly).
+ *      Unit variants: bare "VND", "Triệu VND", "(Triệu VND)", "TRIỆU VND".
  *   2. Require separator to be at least 20 lines in (confirms split-block)
  *   3. Extract ordered item codes from the labels block (standalone 2-3 digit
  *      integers in [100, 440] range, also detect inline codes like "(200 = ...)")
@@ -318,15 +320,19 @@ const P_TOTAL_LIABILITIES_AND_EQUITY = /t[ổo]ng\s+(?:c[ộo]ng\s+)?ngu[ồo]n\
  * Returns null if not split-block format (normal inline format should be used).
  */
 function parseSplitBlockBalanceSheet(lines: string[]): Record<string, number> | null {
-  // Step 1: Find the "31/12/2025 VND" separator
-  // It appears as two separate lines within a few lines of each other
+  // Step 1: Find the date + unit separator.
+  // Date variants: 31/12/20xx (year-end), 31/3/20xx, 1/1/20xx (quarterly bank BCTCs)
+  // Unit variants: "VND", "Triệu VND", "(Triệu VND)", "TRIỆU VND"
+  const DATE_PATTERN = /^\d{1,2}\/\d{1,2}\/20\d\d$/;
+  const UNIT_PATTERN = /^[\(\s]*(tri[eệ]u\s+)?VND[\s\)]*$/i;
+
   let separatorIdx = -1;
   for (let i = 0; i < lines.length - 5; i++) {
     const line = lines[i]!.trim();
-    if (/31\/12\/20\d\d/.test(line)) {
-      // Look for "VND" within next 5 lines
+    if (DATE_PATTERN.test(line)) {
+      // Look for unit header within next 5 lines
       for (let j = i + 1; j <= Math.min(i + 5, lines.length - 1); j++) {
-        if (/^VND\s*$/.test(lines[j]!.trim())) {
+        if (UNIT_PATTERN.test(lines[j]!.trim())) {
           separatorIdx = j;
           break;
         }
