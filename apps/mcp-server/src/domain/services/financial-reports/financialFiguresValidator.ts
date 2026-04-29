@@ -12,6 +12,10 @@
  * Hard violations (return 0.0 immediately):
  *   BCTC-VAL-01: total_assets < total_equity (accounting identity broken)
  *                Example: VNM Q4 2024 — assets=957T < equity=18829T → 0.0
+ *                Guard: when equity/assets ratio >= UNIT_SCALE_RATIO_THRESHOLD (500),
+ *                equity is likely in raw VND while assets are in tỷ (OCR unit mismatch).
+ *                In that case, apply soft penalty (+0.2) instead of hard fail.
+ *   BCTC-VAL-01-SCALE: unit-scale artefact soft penalty (+0.2)
  *   BCTC-VAL-02: total_assets < 0 (impossible in real accounting)
  *   BCTC-VAL-04: total_liabilities < 0 (impossible in real accounting)
  *   BCTC-VAL-07: total_liabilities > total_assets * 5 (extreme leverage — data corruption)
@@ -33,6 +37,31 @@
  * composite_confidence = min(ocr_confidence, confidence_financial)
  * Downstream callers must gate conviction signal generation on composite <= 0.3.
  */
+
+/**
+ * Threshold for detecting a unit-scale mismatch in VAL-01.
+ *
+ * When equity / assets >= this value, the OCR extractor likely left equity in
+ * raw VND (e.g. 18,829,000,000,000) while assets are normalised to tỷ (e.g. 1,000).
+ * The legitimate maximum equity/assets ratio for any real company is ≈ 0.99;
+ * a ratio ≥ 500 is impossible under Vietnamese accounting standards and can only
+ * arise from a unit-normalisation failure in the extractor.
+ *
+ * Derivation:
+ *   - 1 tỷ = 10^9 VND, so a mismatch produces a ratio of ~1,000×.
+ *   - Setting threshold at 500 provides a 2× safety margin below 1,000.
+ *   - The VNM test fixture (957 vs 18829, ratio ≈ 19.7) is well below 500,
+ *     so it continues to trigger the hard-fail path (genuine accounting violation).
+ *
+ * @example
+ * // Unit-scale artefact: equity=600000 (raw VND), assets=1000 (tỷ) → ratio 600 > 500
+ * // → soft penalty BCTC-VAL-01-SCALE (+0.2), NOT hard fail
+ *
+ * @example
+ * // Genuine violation: equity=18829 (tỷ), assets=957 (tỷ) → ratio ≈ 19.7 < 500
+ * // → hard fail, returns 0.0
+ */
+const UNIT_SCALE_RATIO_THRESHOLD = 500;
 
 /**
  * Validate a BCTC report date string.
@@ -139,15 +168,28 @@ export function validateFinancialFigures(input: FinancialFiguresInput): number {
     return 0.0;
   }
 
+  // Penalty accumulator — declared here so BCTC-VAL-01-SCALE (soft path) can
+  // contribute before the remaining hard-violation checks.
+  let penalty = 0;
+
   // BCTC-VAL-01: total_assets < total_equity (accounting identity A = L + E)
-  if (
-    totalAssets !== null &&
-    totalEquity !== null &&
-    totalAssets > 0 &&
-    totalEquity > 0 &&
-    totalAssets < totalEquity
-  ) {
-    return 0.0;
+  //
+  // Scale-check guard (BCTC-VAL-01-SCALE):
+  //   When equity/assets >= UNIT_SCALE_RATIO_THRESHOLD (500), equity is likely
+  //   in raw VND while assets are in tỷ — OCR unit-normalisation failure.
+  //   Apply a soft penalty (+0.2) instead of hard-failing to avoid false positives.
+  //
+  //   When ratio ≤ 500 AND assets < equity → genuine accounting violation → 0.0.
+  if (totalAssets !== null && totalEquity !== null && totalAssets > 0 && totalEquity > 0) {
+    const equityToAssetsRatio = totalEquity / totalAssets;
+    if (equityToAssetsRatio >= UNIT_SCALE_RATIO_THRESHOLD) {
+      // Unit-scale artefact: equity appears in raw VND, assets in tỷ.
+      // Bypass hard fail — record a soft penalty instead.
+      penalty += 0.2; // BCTC-VAL-01-SCALE
+    } else if (totalAssets < totalEquity) {
+      // Genuine accounting identity violation — hard fail.
+      return 0.0;
+    }
   }
 
   // BCTC-VAL-02: negative total assets (physically impossible)
@@ -179,7 +221,7 @@ export function validateFinancialFigures(input: FinancialFiguresInput): number {
   }
 
   // ── Soft violations ────────────────────────────────────────────────────────
-  let penalty = 0;
+  // (penalty accumulator declared above near BCTC-VAL-01-SCALE)
 
   // BCTC-VAL-03: operating margin outside (-5.0, +1.0) as ratio (moderate outlier)
   // Note: extreme margins (> 2.0 or < -2.0) are already caught as hard violations above.
