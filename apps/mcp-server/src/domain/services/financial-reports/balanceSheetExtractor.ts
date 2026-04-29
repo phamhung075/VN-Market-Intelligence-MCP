@@ -50,11 +50,15 @@ function extractNumber(line: string): number | null {
   const tokens = trimmed.match(/\(?\-?[\d.,]+\)?/g);
   if (!tokens || tokens.length === 0) return null;
 
-  // Try to find the first large number (skip item codes)
+  // Try to find the first large number (skip item codes and year values)
   for (const token of tokens) {
     const val = parseVnNumber(token);
     if (val === null) continue;
     if (Number.isInteger(val) && val >= 0 && val <= 999) continue;
+    // Skip calendar years (1990–2030) — these appear as column headers in
+    // bank BCTCs (e.g. "31/12/2025 VND") and must not be treated as financial
+    // values. Bug confirmed: Assets (35.202.546) ≠ Liabilities (2.017) + Equity (2.025)
+    if (Number.isInteger(val) && val >= 1990 && val <= 2030) continue;
     return val;
   }
 
@@ -137,7 +141,8 @@ function detectUnitMultiplier(lines: string[]): number {
   // Fallback: OCR text may garble diacritics or lack the formal "Đơn vị tính"
   // prefix. Scan first ~50 lines for any unit hint (report #1088 slice a).
   const head = lines.slice(0, 50);
-  const P_TRIEU_LOOSE = /tri[eệ]u\s*[đd][oồ]ng|trieu\s*dong/i;
+  // Also matches "(Triệu VND)" — bank BCTCs use this column header format
+  const P_TRIEU_LOOSE = /tri[eệ]u\s*[đd][oồ]ng|trieu\s*dong|tri[eệ]u\s*VND/i;
   const P_TY_LOOSE = /t[yỷ]\s*[đd][oồ]ng|ty\s*dong/i;
   const P_NGHIN_LOOSE = /ngh?[iì]n\s*[đd][oồ]ng|nghin\s*dong|1[.,]?000\s*[đd][oồ]ng/i;
   const P_DONG_ONLY = /[đd][oồ]ng|VND/i;
@@ -158,8 +163,10 @@ function detectUnitMultiplier(lines: string[]): number {
     }
   }
 
+  // Sentinel -2: no unit declaration found at all. Caller will apply
+  // magnitude-based inference (same path as -1 bare đồng).
   console.warn("[balanceSheetExtractor] No unit header found; defaulting multiplier to 1.");
-  return 1;
+  return -2;
 }
 
 // ---------------------------------------------------------------------------
@@ -585,10 +592,15 @@ export function extractBalanceSheet(rawText: string): BalanceSheet {
 
   // Task 287 — FR-1: apply unit multiplier (converts tỷ → triệu when needed)
   // Task 1088a — magnitude inference when unit header missing or bare "đồng".
-  // Sentinel -1 means "bare đồng found, infer from numbers".
-  // Default 1 with very large totalAssets also triggers inference.
+  // Sentinels:
+  //   -1 = bare "đồng/VND" found without qualifier → infer from magnitude
+  //   -2 = no unit declaration found at all → infer from magnitude
+  //    1 = EXPLICITLY detected "triệu" → do NOT override with magnitude inference
+  //       (large banks legitimately have totalAssets > 1_000_000_000 triệu)
+  // Hotfix VCB: only apply magnitude inference for sentinels, never for explicit
+  // triệu/tỷ detection (multiplier > 0).
   let effectiveMultiplier = multiplier;
-  if (multiplier === -1 || (multiplier === 1 && totalAssets > 1_000_000_000)) {
+  if (multiplier === -1 || multiplier === -2) {
     // Values are likely in raw VND (đồng). VN listed companies have
     // totalAssets in triệu from ~100,000 to ~100,000,000. If raw totalAssets
     // exceeds 1 billion, it's almost certainly in đồng.
@@ -596,8 +608,8 @@ export function extractBalanceSheet(rawText: string): BalanceSheet {
     if (totalAssets > 1_000_000_000) {
       effectiveMultiplier = 0.000001;
       console.warn("[balanceSheetExtractor] Inferred raw VND (đồng) from magnitude; applying ÷1,000,000.");
-    } else if (multiplier === -1) {
-      // Bare "đồng" header but small numbers — might be triệu already
+    } else {
+      // Sentinel but small numbers — treat as triệu already
       effectiveMultiplier = 1;
     }
   }
