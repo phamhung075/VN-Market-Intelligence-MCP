@@ -28,6 +28,8 @@ import {
   fetchSbvRates,
   type SbvMacroSnapshot,
 } from "../../../../infrastructure/fetchers/sbv.js";
+import { getDb, initDatabase } from "../../../../infrastructure/db/schema.js";
+import { computeCarryTradeSignal } from "../../../../domain/services/macro/carryTradeSignal.js";
 import { logger } from "../../../../infrastructure/logger.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -99,21 +101,166 @@ function currencySignal(usdVnd: number): string {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Thien Thoi — Global Liquidity Regime inputs
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Pre-computed inputs for the [Thien Thoi] display block.
+ * All values are 0 when the underlying data is unavailable.
+ */
+export interface ThienThoiInputs {
+  /** Current DXY level (0 = unavailable). */
+  dxy: number;
+  /** 30-day mean DXY from commodity_prices_history (0 = no history). */
+  dxy30dMean: number;
+  /** US 10-year Treasury yield % (0 = unavailable). */
+  us10yYield: number;
+  /** VND max deposit rate % — used as vndRate in carry computation. */
+  vndDepositRate: number;
+  /** US Fed Funds rate % — from tracked_indicators or 5.33 fallback. */
+  fedFundsRate: number;
+  /** True when fedFundsRate is the static fallback (no DB row found). */
+  fedFundsRateIsEstimate: boolean;
+}
+
+/**
+ * Derive the DXY trend label and signal for the Thien Thoi block.
+ *
+ * @param dxy      - Current DXY level.
+ * @param mean30d  - 30-day rolling mean DXY (0 if no history).
+ */
+function dxyLabel(dxy: number, mean30d: number): string {
+  if (mean30d === 0) return "USD STABLE";
+  const diffPct = ((dxy - mean30d) / mean30d) * 100;
+  if (diffPct > 2) return "USD STRENGTHENING -> EM pressure";
+  if (diffPct < -2) return "USD WEAKENING -> EM tailwind";
+  return "USD STABLE";
+}
+
+/**
+ * Derive the US 10Y yield label for the Thien Thoi block.
+ *
+ * @param yield10y - US 10-year Treasury yield %.
+ */
+function us10yLabel(yield10y: number): string {
+  if (yield10y > 4.5) return "RISK-OFF threshold — PE compression signal";
+  if (yield10y < 4.0) return "RISK-ON — equity multiple expansion";
+  return "NEUTRAL";
+}
+
+/**
+ * Majority-vote Global Liquidity label from three sub-signals.
+ *
+ * Tightening signals: DXY strengthening + US10Y > 4.5% + carry FII_OUTFLOW_RISK
+ * Easing signals:     DXY weakening + US10Y < 4.0% + carry HOT_MONEY_INFLOW
+ * Otherwise:          NEUTRAL
+ */
+function globalLiquidityLabel(
+  dxySig: string,
+  yield10y: number,
+  carryRegime: string,
+): string {
+  let tight = 0;
+  let ease = 0;
+
+  if (dxySig.includes("STRENGTHENING")) tight++;
+  if (dxySig.includes("WEAKENING")) ease++;
+
+  if (yield10y > 4.5) tight++;
+  else if (yield10y < 4.0) ease++;
+
+  if (carryRegime === "FII_OUTFLOW_RISK") tight++;
+  else if (carryRegime === "HOT_MONEY_INFLOW") ease++;
+
+  if (tight > ease && tight >= 2) return "TIGHTENING";
+  if (ease > tight && ease >= 2) return "EASING";
+  return "NEUTRAL";
+}
+
+/**
+ * Format the [Global Macro Inputs — Thien Thoi] block.
+ *
+ * Returns an array of lines (no trailing blank line — caller appends).
+ * All zero values are shown as "unavailable" per the handoff spec.
+ */
+export function formatThienThoi(inputs: ThienThoiInputs): string[] {
+  const lines: string[] = ["[Global Macro Inputs — Thien Thoi]"];
+
+  // ── DXY ───────────────────────────────────────────────────────────────────
+  if (inputs.dxy === 0) {
+    lines.push("  DXY:              unavailable");
+  } else {
+    const dxySig = dxyLabel(inputs.dxy, inputs.dxy30dMean);
+    lines.push(`  DXY:              ${inputs.dxy.toFixed(2)} — ${dxySig}`);
+  }
+
+  // ── US 10Y Yield ──────────────────────────────────────────────────────────
+  if (inputs.us10yYield === 0) {
+    lines.push("  US 10Y Yield:     unavailable");
+  } else {
+    lines.push(
+      `  US 10Y Yield:     ${inputs.us10yYield.toFixed(2)}% — ${us10yLabel(inputs.us10yYield)}`,
+    );
+  }
+
+  // ── Fed Funds Rate ────────────────────────────────────────────────────────
+  const fedLabel = inputs.fedFundsRateIsEstimate ? " (est.)" : " (FRED)";
+  if (inputs.fedFundsRate === 0) {
+    lines.push("  Fed Funds Rate:   unavailable");
+  } else {
+    lines.push(
+      `  Fed Funds Rate:   ${inputs.fedFundsRate.toFixed(2)}%${fedLabel}`,
+    );
+  }
+
+  // ── VND Carry Spread ──────────────────────────────────────────────────────
+  if (inputs.vndDepositRate === 0 || inputs.fedFundsRate === 0) {
+    lines.push("  VND Carry Spread: unavailable");
+    lines.push("  Global Liquidity: NEUTRAL");
+    return lines;
+  }
+
+  const carry = computeCarryTradeSignal(inputs.vndDepositRate, inputs.fedFundsRate);
+  const spreadSign = carry.carrySpread >= 0 ? "+" : "";
+  lines.push(
+    `  VND Carry Spread: ${spreadSign}${carry.carrySpread.toFixed(2)}% (VND ${inputs.vndDepositRate}% - Fed ${inputs.fedFundsRate}%) — ${carry.regime}`,
+  );
+
+  // ── Global Liquidity ──────────────────────────────────────────────────────
+  const dxySig = inputs.dxy === 0 ? "USD STABLE" : dxyLabel(inputs.dxy, inputs.dxy30dMean);
+  const liquidity = globalLiquidityLabel(dxySig, inputs.us10yYield, carry.regime);
+  lines.push(`  Global Liquidity: ${liquidity}`);
+
+  return lines;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Output formatter
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
  * Format the MacroSnapshotResponse into a human-readable text block.
  *
- * @param snapshot - Assembled macro snapshot (commodity + rates).
+ * @param snapshot    - Assembled macro snapshot (commodity + rates).
+ * @param thienThoi   - Optional pre-computed Thien Thoi inputs; omitted in
+ *                      legacy/test paths that do not supply DB data.
  * @returns Multi-line text suitable for MCP tool output.
  */
-function formatMacroSnapshot(snapshot: MacroSnapshotResponse): string {
+function formatMacroSnapshot(
+  snapshot: MacroSnapshotResponse,
+  thienThoi?: ThienThoiInputs,
+): string {
   const lines: string[] = [
     "=== Macro Snapshot ===",
     `Generated: ${snapshot.fetchedAt}`,
     "",
   ];
+
+  // ── Thien Thoi block (appears FIRST, before commodity) ───────────────────
+  if (thienThoi) {
+    lines.push(...formatThienThoi(thienThoi));
+    lines.push("");
+  }
 
   // ── Commodity Prices ──────────────────────────────────────────────────────
   lines.push("[Commodity Prices]");
@@ -305,6 +452,47 @@ export function registerMacroTools(server: McpServer): void {
           sbvPromise,
         ]);
 
+        // ── Query DB for Thien Thoi inputs ───────────────────────────────────
+        let thienThoi: ThienThoiInputs | undefined;
+        try {
+          await initDatabase();
+          const db = getDb();
+
+          // Fed Funds Rate from tracked_indicators (latest FRED row)
+          const fedRow = db
+            .query<{ value: number }, []>(
+              `SELECT value FROM tracked_indicators
+               WHERE indicator = 'fed_funds_rate'
+               ORDER BY id DESC LIMIT 1`,
+            )
+            .get();
+          const fedFundsRate = fedRow ? fedRow.value : 5.33;
+          const fedFundsRateIsEstimate = !fedRow;
+
+          // DXY 30d mean from commodity_prices_history
+          const dxyMeanRow = db
+            .query<{ mean30d: number }, []>(
+              `SELECT AVG(dxy) AS mean30d FROM commodity_prices_history
+               WHERE fetched_at >= datetime('now', '-30 days') AND dxy > 0`,
+            )
+            .get();
+          const dxy30dMean = dxyMeanRow?.mean30d ?? 0;
+
+          thienThoi = {
+            dxy: commodity?.dxy ?? 0,
+            dxy30dMean,
+            us10yYield: commodity?.us10yYield ?? 0,
+            vndDepositRate: rates?.maxDepositRatePct ?? 0,
+            fedFundsRate,
+            fedFundsRateIsEstimate,
+          };
+        } catch (dbErr) {
+          logger.warn("[get_macro_snapshot] Thien Thoi DB query failed — section omitted", {
+            error: dbErr instanceof Error ? dbErr.message : String(dbErr),
+          });
+          // thienThoi remains undefined — formatMacroSnapshot skips the block
+        }
+
         // ── Assemble + format ────────────────────────────────────────────────
         const snapshot: MacroSnapshotResponse = {
           commodity,
@@ -312,7 +500,7 @@ export function registerMacroTools(server: McpServer): void {
           fetchedAt,
         };
 
-        const text = formatMacroSnapshot(snapshot);
+        const text = formatMacroSnapshot(snapshot, thienThoi);
 
         return {
           content: [{ type: "text" as const, text }],
