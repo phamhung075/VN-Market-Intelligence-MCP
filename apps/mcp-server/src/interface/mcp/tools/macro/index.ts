@@ -12,3 +12,5 @@ export { registerRateLimitTools } from "./rateLimitTools.js";
 export { registerImfSignalsTool } from "./imfSignals.js";
 // Task 1423e: macro calendar tool
 export { registerCarryTools } from "./carryTools.js";
+// Task 1426b: yield spread signal tool (Báu Phase 2 — Dinh Gia)
+export { registerDinhGiaTools } from "./dinhGiaTools.js";
