@@ -376,6 +376,18 @@ const DOMAIN_KEYWORD_MAP: Record<DomainType, string[]> = {
     "renewable energy",
     "điện sạch",
   ],
+  machinery: [
+    "máy móc",
+    "công nghiệp",
+    "cơ khí",
+    "machinery",
+    "industrial",
+    "manufacturing",
+    "dag",
+    "da nang rubber",
+    "cao su đà nẵng",
+    "thiết bị công nghiệp",
+  ],
   pharmaceutical: [
     "dược phẩm",
     "pharmaceutical",
