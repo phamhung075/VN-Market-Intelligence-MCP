@@ -1,10 +1,10 @@
 Bun.env["DB_PATH"] = ":memory:";
 
 /**
- * Task 1798 — Trading Economics Playwright/Chromium Scraper
+ * Task 1798 — Trading Economics Puppeteer/Chromium Scraper
  *
  * Tests for:
- *   - Playwright browser is NOT launched in tests (fully mocked)
+ *   - Puppeteer browser is NOT launched in tests (fully mocked)
  *   - Structured MacroIndicators[] returned from mocked page content
  *   - 6-hour cache: second call within 6h returns cached data (no browser launch)
  *   - Cache miss after 6h: triggers re-scrape

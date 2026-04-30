@@ -14,8 +14,9 @@ WORKDIR /app
 # openssh-client: required by sshExec.ts (restart_vps_service MCP tool) which
 #   calls ssh binary via Bun.spawn to run systemctl commands on the Vinahost VPS.
 # chromium + chromium system deps: required by tradingEconomicsChromium.ts which
-#   uses playwright-core to scrape the JS-rendered Trading Economics indicators page.
-RUN apt-get update && apt-get install -y \
+#   uses puppeteer-core to scrape the JS-rendered Trading Economics indicators page.
+# Note: base image is Debian trixie (13) — libasound2 renamed to libasound2t64.
+RUN apt-get update && apt-get install -y --no-install-recommends \
     tesseract-ocr \
     tesseract-ocr-vie \
     poppler-utils \
@@ -24,17 +25,19 @@ RUN apt-get update && apt-get install -y \
     python3-pip \
     openssh-client \
     chromium \
+    chromium-driver \
+    fonts-liberation \
     libnss3 \
     libatk-bridge2.0-0 \
     libdrm2 \
     libxkbcommon0 \
     libgbm1 \
-    libasound2 \
+    libasound2t64 \
     && rm -rf /var/lib/apt/lists/*
 
-# Set Playwright to use the system Chromium instead of downloading its own binary.
-# This avoids a ~300 MB download during image build and uses the already-installed
-# chromium package above.
+# Tell puppeteer-core not to download its own Chromium binary — use the system one.
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+# Path used by both the scraper and any legacy Playwright references.
 ENV PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium
 
 # ── Prepare SSH directory ──────────────────────────────────────────────────
