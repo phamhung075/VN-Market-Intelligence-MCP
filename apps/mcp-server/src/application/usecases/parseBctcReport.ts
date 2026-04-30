@@ -28,6 +28,11 @@ import type { FinancialMetrics } from "../../domain/services/financial-reports/p
 import { validateFinancialReport } from "../../domain/services/financial-reports/bctcValidator.js";
 import { validateFinancialFigures } from "../../domain/services/financial-reports/financialFiguresValidator.js";
 import { getDb, initDatabase } from "../../infrastructure/db/schema.js";
+import {
+  isBctcSignalDebounced,
+  recordBctcSignalSent,
+  BCTC_SIGNAL_DEBOUNCE_HOURS,
+} from "../../infrastructure/db/bctcSignalDebounce.js";
 import { logger } from "../../infrastructure/logger.js";
 
 import type {
@@ -238,9 +243,17 @@ function storeReport(
       `${report.actionCode} ${report.period.year}-${report.period.periodType ?? ""}. ` +
       `Check for OCR corruption (VNM/VEA pattern: assets<equity or margin>100%).`;
     logger.warn(financialMsg);
-    void import("../../infrastructure/notifiers/telegram.js").then(({ sendTelegramBug }) => {
-      sendTelegramBug(financialMsg).catch(() => {});
-    });
+
+    // Task 1792 — DB-backed per-ticker+quarter debounce (1h cooldown).
+    // Prevents the same bug report firing 10× in a retry loop.
+    const periodKey = `${report.period.year}-${report.period.periodType ?? ""}`;
+    const db = getDb();
+    if (!isBctcSignalDebounced(db, report.actionCode, periodKey, BCTC_SIGNAL_DEBOUNCE_HOURS)) {
+      recordBctcSignalSent(db, report.actionCode, periodKey);
+      void import("../../infrastructure/notifiers/telegram.js").then(({ sendTelegramBug }) => {
+        sendTelegramBug(financialMsg).catch(() => {});
+      });
+    }
     // NOTE: we still INSERT the record (for audit trail) but with low_confidence status.
     // Conviction signals are NOT generated — enforced by callers checking validation_status.
   }

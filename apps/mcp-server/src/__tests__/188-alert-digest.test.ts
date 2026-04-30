@@ -586,6 +586,101 @@ describe("Task 188 — Daily Alert Digest", () => {
     expect(digest.text).not.toContain("(lũy kế)");
   });
 
+  // ── 17 (Task 1791): intra-digest identical message dedup ─────────────────
+
+  it("Task 1791: 24 identical messages for same ticker → topMessages has 1 unique entry", async () => {
+    const actions = JSON.stringify([{ code: "VRE" }]);
+    const repeatedMsg = "VRE volume spike 3.3× average (1,645,840 vs avg 495,750)";
+
+    for (let i = 0; i < 24; i++) {
+      seedAlert(db, {
+        affected_actions_json: actions,
+        severity: "high",
+        message: repeatedMsg,
+        triggered_at: new Date(Date.now() - i * 60_000).toISOString(),
+      });
+    }
+
+    const digest = await assembleAlertDigest({ db });
+
+    const block = digest.stockBlocks.find((b) => b.code === "VRE");
+    expect(block).toBeDefined();
+    // Raw count is preserved
+    expect(block!.count).toBe(24);
+    // topMessages contains only 1 unique entry (all 24 are identical)
+    expect(block!.topMessages.length).toBe(1);
+    expect(block!.topMessages[0]).toBe(repeatedMsg);
+    // Digest text contains the message only once
+    const occurrences = digest.text.split(repeatedMsg).length - 1;
+    expect(occurrences).toBe(1);
+  });
+
+  it("Task 1791: mixed unique+duplicate messages — dedup keeps unique first, drops dupes", async () => {
+    const actions = JSON.stringify([{ code: "HPG" }]);
+    const msgA = "HPG volume spike 3.3× average";
+    const msgB = "HPG price drop ↓2.0%";
+
+    // 5× msgA + 2× msgB = 7 raw alerts
+    for (let i = 0; i < 5; i++) {
+      seedAlert(db, {
+        affected_actions_json: actions,
+        severity: "high",
+        message: msgA,
+        triggered_at: new Date(Date.now() - (i + 10) * 60_000).toISOString(),
+      });
+    }
+    for (let i = 0; i < 2; i++) {
+      seedAlert(db, {
+        affected_actions_json: actions,
+        severity: "high",
+        message: msgB,
+        triggered_at: new Date(Date.now() - i * 60_000).toISOString(),
+      });
+    }
+
+    const digest = await assembleAlertDigest({ db });
+
+    const block = digest.stockBlocks.find((b) => b.code === "HPG");
+    expect(block).toBeDefined();
+    expect(block!.count).toBe(7);
+    // Only 2 unique messages exist, so topMessages has 2
+    expect(block!.topMessages.length).toBe(2);
+    expect(block!.topMessages).toContain(msgA);
+    expect(block!.topMessages).toContain(msgB);
+  });
+
+  it("Task 1791: overflow reflects unique-deduplicated count, not raw count", async () => {
+    const actions = JSON.stringify([{ code: "MWG" }]);
+    const [msgA, msgB, msgC, msgD] = ["MWG alert A", "MWG alert B", "MWG alert C", "MWG alert D"] as const;
+
+    // 10 copies of A, 1 each of B/C/D = 4 unique messages, 13 raw
+    for (let i = 0; i < 10; i++) {
+      seedAlert(db, {
+        affected_actions_json: actions,
+        severity: "medium",
+        message: msgA,
+        triggered_at: new Date(Date.now() - (i + 10) * 60_000).toISOString(),
+      });
+    }
+    for (const msg of [msgB, msgC, msgD]) {
+      seedAlert(db, {
+        affected_actions_json: actions,
+        severity: "medium",
+        message: msg,
+        triggered_at: new Date(Date.now() - 60_000).toISOString(),
+      });
+    }
+
+    const digest = await assembleAlertDigest({ db });
+
+    const block = digest.stockBlocks.find((b) => b.code === "MWG");
+    expect(block).toBeDefined();
+    expect(block!.count).toBe(13); // raw total preserved
+    // 4 unique messages → top 3 shown, 1 overflow (unique-based)
+    expect(block!.topMessages.length).toBe(3);
+    expect(block!.overflow).toBe(1);
+  });
+
   // ── 16: stockBlocks are sorted by count DESC ─────────────────────────────
   it("stockBlocks are sorted by alert count DESC", async () => {
     const vcbActions = JSON.stringify([{ code: "VCB" }]);

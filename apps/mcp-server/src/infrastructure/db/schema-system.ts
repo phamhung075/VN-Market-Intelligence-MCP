@@ -425,6 +425,23 @@ export function initSystemTables(db: Database): void {
       ON vps_service_health(service_name, polled_at DESC)
   `);
 
+  // ── BCTC Signal Debounce (Task 1792) ─────────────────────────────────────
+  // Per-ticker+quarter cooldown for the [BCTC-1345b] low-confidence alert.
+  // Prevents the same bug report firing 10× in 1 minute when a retry loop
+  // re-evaluates the same ticker+quarter in rapid succession.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS bctc_signal_debounce (
+      action_code  TEXT NOT NULL,
+      period_key   TEXT NOT NULL,
+      sent_at      TEXT NOT NULL DEFAULT (datetime('now')),
+      PRIMARY KEY (action_code, period_key)
+    )
+  `);
+  db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_bctc_signal_debounce_sent
+      ON bctc_signal_debounce(action_code, period_key, sent_at DESC)
+  `);
+
   // ── SLA Breach Audit (Task 234) ───────────────────────────────────────────
   db.exec(`
     CREATE TABLE IF NOT EXISTS sla_breach_audit (
