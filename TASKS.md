@@ -33,6 +33,9 @@
 
 | Task ID | Title | Merged | Reports |
 |---------|-------|--------|---------|
+| 1799 | Stats + docs sync — archive 1777/hotfix-bctc-parser2, add 1797/1798 Done rows, sync stats | 2026-04-30 | — |
+| 1798 | Trading Economics Chromium scraper | 2026-04-30 | — |
+| 1797 | NewsAPI 90-req/day rate-limit guard | 2026-04-30 | — |
 | 1797+1798 | NewsAPI 90 req/day guard + Trading Economics Playwright/Chromium scraper with 6h cache | 2026-04-30 | reports/TASK_REPORT_1797_1798.md |
 | fetch-source-issues | fix: vnstock concurrency (sequential await), disabled-source health tracker, TE deploy key guard | 2026-04-30 | reports/TASK_REPORT_fetch_fix.md |
 | 1796a | Archive closed sprints in SPRINT_GOAL.md (under 30 lines) | 2026-04-30 | — |
