@@ -12,7 +12,6 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff |
 |---------|-------|----------|------|-------|---------|
-| 1795 | Docker rebuild to activate restart_vps_service — run `docker-compose up -d --build mcp-server` to unblock 1777a | critical | UNBLOCK | ops | — |
 
 ---
 
@@ -20,7 +19,6 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Started |
 |---------|-------|----------|------|-------|---------|---------|
-| 1777a | VPS price pipeline dark since 2026-04-24 — diagnose + restore VPS price/foreign-flow push [BLOCKED: needs Docker rebuild to activate restart_vps_service] | critical | UNBLOCK | ops | — | 2026-04-29 |
 
 ---
 
@@ -35,6 +33,15 @@
 
 | Task ID | Title | Merged | Reports |
 |---------|-------|--------|---------|
+| 1796a | Archive closed sprints in SPRINT_GOAL.md (under 30 lines) | 2026-04-30 | — |
+| 1796b | Trim CLAUDE.md to under 120 lines — extract Agent Chaining Protocol to .claude/knowledge/agent-chaining-protocol.md | 2026-04-30 | — |
+| 1796c | Delete ghost dirs docs/agent-memory/modules/, issues/, patterns/ | 2026-04-30 | — |
+| 1796d | Delete stale DB backups data/market.db.fresh-* + data/market.db.pre-repair-* + harden .gitignore | 2026-04-30 | — |
+| 1796e | Add DAG entry DRC sector=machinery to docs/data/stock-classification.json | 2026-04-30 | — |
+| 1796f | Add machinery sector to sectorPeers.ts + unit test | 2026-04-30 | — |
+| 1796g | Sync project-stats.json (sprint=1796, done=399, pass=8466, fail=0) | 2026-04-30 | — |
+| 1777a | VPS price/foreign-flow pipeline restored — 374 pushes/24h, 0 errors; idle status correct (market closed); resolved by Sprint 1795 Docker rebuild | 2026-04-30 | — |
+| 1795 | Docker rebuild to activate restart_vps_service — mcp-server rebuilt, SSH layer baked in, toolCount=122 healthy | 2026-04-30 | — |
 | 1425a | Sync project-stats.json toolCount=113 + schedulerFileCount=44 to registry SSoTs | 2026-04-29 | — |
 | 1425b | Remove hardcoded REQ/TECH file counts from docs-organization.md | 2026-04-29 | — |
 | 1425c | Delete ghost dirs docs/agent-memory + corrupt DB backups (~281MB) + .fuse_hidden* | 2026-04-29 | — |
