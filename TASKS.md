@@ -65,5 +65,7 @@
 | 1785 | France summary change_pct: prev-close-to-close reference; formatPct(null) → N/A | 2026-04-30 | reports/TASK_REPORT_1785.md |
 | 1787 | GVR sector fix: oil_gas → agriculture (Vietnam Rubber Group) | 2026-04-30 | reports/TASK_REPORT_1787.md |
 | 1789 | getDeadlineForQuarter DST bug: replace local setDate() with Date.UTC() + setUTCDate() — standard Q4=2026-03-31, banking Q4=2026-04-15 | 2026-04-30 | reports/TASK_REPORT_1789.md |
+| 1790 | alertDigestJob dedup guard: replace `if (db && alreadySentToday(db))` with `effectiveDb = db ?? getDb()` — guard always fires | 2026-04-30 | reports/TASK_REPORT_1790.md |
+| 1791 | assembleAlertDigest intra-digest dedup: Set<string> dedup on message before top-3 slice; overflow reflects unique count | 2026-04-30 | reports/TASK_REPORT_1791.md |
 
 ---
