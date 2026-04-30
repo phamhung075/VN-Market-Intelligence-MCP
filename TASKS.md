@@ -52,5 +52,6 @@
 | 1407b | SLA monitor: skip price+foreign_flow escalations outside market hours | 2026-04-29 | reports/TASK_REPORT_1407b.md |
 | 1778 | BCTC vnstock junk response guard — Strategy A only in extractCafefUrls, 28 stuck tickers unblocked | 2026-04-30 | reports/TASK_REPORT_1778.md |
 | 1779a | sshExec infrastructure layer — Bun.spawn args array, 15s timeout, 7 tests | 2026-04-30 | reports/TASK_REPORT_1779a.md |
+| 1779b | restart_vps_service MCP tool — three-layer allowlist handler, registry entry, 8 tests | 2026-04-30 | reports/TASK_REPORT_1779b.md |
 
 ---
