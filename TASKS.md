@@ -57,6 +57,7 @@
 | 1779c | SSH key mount + known_hosts seeding — docker-compose :ro mount, entrypoint.sh ssh-keyscan fail-loud | 2026-04-30 | reports/TASK_REPORT_1779c.md |
 | 1779 | VPS SSH restart pipeline (parent) — sshExec + restart_vps_service MCP tool + Docker SSH key mount | 2026-04-30 | — |
 | JANITOR-011 | DRY: extract ANSI+box-drawing regex to domain/utils/ansiUtils.ts — 3 inline copies removed | 2026-04-30 | reports/TASK_REPORT_JANITOR011.md |
+| 1781 | classifyFilingStatus off-by-one: deadline day now SAP_DEN not QUA_HAN — calendar-date UTC comparison | 2026-04-30 | reports/TASK_REPORT_1781.md |
 | 1782 | BCTC enricher Q1-2026: seed queue at startup + park exhausted rows as url_not_found after 5 attempts | 2026-04-30 | reports/TASK_REPORT_1782.md |
 
 ---
