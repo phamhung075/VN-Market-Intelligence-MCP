@@ -1,8 +1,8 @@
 /**
- * Infrastructure — Trading Economics Playwright/Chromium Scraper
+ * Infrastructure — Trading Economics Puppeteer/Chromium Scraper
  *
  * Scrapes https://tradingeconomics.com/vietnam/indicators using a headless
- * Chromium browser (Playwright) because the page is a React SPA — plain
+ * Chromium browser (puppeteer-core) because the page is a React SPA — plain
  * HTTP/cheerio only returns skeleton HTML with no indicator values.
  *
  * Design decisions:
@@ -59,7 +59,7 @@ export interface TeCacheEntry {
  * Dependency injection interface for testability.
  *
  * @property scrape    - Function that does the actual browser scrape.
- *                       In production this uses Playwright; in tests it is mocked.
+ *                       In production this uses Puppeteer; in tests it is mocked.
  * @property cachePath - Override for the JSON cache file path (default /app/data/te-cache.json).
  */
 export interface TeChromiumDeps {
@@ -108,36 +108,30 @@ function cacheAgeMs(entry: TeCacheEntry): number {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Production Playwright scraper (lazy-loaded to avoid import errors when
-// playwright-core is not installed — callers that inject deps never reach this)
+// Production Puppeteer scraper (lazy-loaded to avoid import errors when
+// puppeteer-core is not installed — callers that inject deps never reach this)
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Launches a headless Chromium instance via Playwright and extracts the three
- * key macro indicators from the Trading Economics Vietnam indicators page.
+ * Launches a headless Chromium instance via puppeteer-core and extracts the
+ * three key macro indicators from the Trading Economics Vietnam indicators page.
  *
  * Selector strategy:
- *   1. Wait for `table.table` or `div[data-field]` (≤ 20 s timeout).
+ *   1. Wait for `table.table` (≤ 15 s timeout).
  *   2. Walk rows looking for GDP Growth Rate, Inflation Rate, Interest Rate.
  *   3. Extract the numeric value from the adjacent cell.
  *
  * This function is never called in tests (deps.scrape is mocked).
  */
 export async function playwrightScrape(url: string): Promise<MacroIndicators> {
-  // Dynamic import so TypeScript does not require playwright to be installed
-  // at compile time — the Docker image installs it at build time.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { chromium } = (await import("playwright-core")) as any;
+  // Dynamic import so TypeScript does not require puppeteer-core to be
+  // installed at compile time — the Docker image installs it at build time.
+  const puppeteer = (await import("puppeteer-core")).default;
 
-  // Honour the system Chromium path set in the Docker image via the
-  // PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH env var, so playwright-core uses the
-  // already-installed system package instead of downloading its own binary.
-  const executablePath =
-    Bun.env["PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH"] ?? undefined;
-
-  const browser = await chromium.launch({
+  const browser = await puppeteer.launch({
+    executablePath:
+      Bun.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH ?? "/usr/bin/chromium",
     headless: true,
-    executablePath,
     args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"],
   });
 
@@ -151,24 +145,18 @@ export async function playwrightScrape(url: string): Promise<MacroIndicators> {
   };
 
   try {
-    const context = await browser.newContext({
-      userAgent:
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-      extraHTTPHeaders: {
-        "Accept-Language": "en-US,en;q=0.9",
-        Accept:
-          "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
-      },
-    });
+    const page = await browser.newPage();
 
-    const page = await context.newPage();
+    await page.setUserAgent(
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    );
 
     logger.info("[te-chromium] launching Chromium scrape", { url });
-    await page.goto(url, { waitUntil: "domcontentloaded", timeout: 30_000 });
+    await page.goto(url, { waitUntil: "networkidle2", timeout: 30_000 });
 
     // Wait for the indicators table to appear
     try {
-      await page.waitForSelector("table.table, div[data-field]", { timeout: 20_000 });
+      await page.waitForSelector("table.table", { timeout: 15_000 });
     } catch {
       logger.warn("[te-chromium] timeout waiting for indicators table");
     }
@@ -244,7 +232,7 @@ export async function playwrightScrape(url: string): Promise<MacroIndicators> {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Fetches Vietnam macro indicators via Playwright/Chromium with a 6-hour cache.
+ * Fetches Vietnam macro indicators via Puppeteer/Chromium with a 6-hour cache.
  *
  * Cache strategy:
  *   - Cache age < 6h  → return cached data (no browser launch)
@@ -253,7 +241,7 @@ export async function playwrightScrape(url: string): Promise<MacroIndicators> {
  *   - Scrape failure + cache ≥ 12h → return null
  *   - Scrape failure + no cache    → return null
  *
- * @param deps - Injectable scraper and cache path (default: production Playwright + /app/data/te-cache.json)
+ * @param deps - Injectable scraper and cache path (default: production Puppeteer + /app/data/te-cache.json)
  * @returns MacroIndicators on success, null on total failure
  */
 export async function fetchTradingEconomicsChromium(
