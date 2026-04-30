@@ -593,6 +593,36 @@ export async function pollNews(options: PollNewsOptions = {}): Promise<PollNewsR
     tradingeconomics: "Trading Economics",
   };
 
+  // Sources that return [] immediately when unconfigured (no API key / enabled:false).
+  // When these return empty, check config before recording a failure — if they are
+  // disabled/unconfigured, record "disabled" status instead of incrementing the
+  // failure counter (which produced false "8 consecutive failures" WARNs).
+  const STUB_CAPABLE_KEYS = new Set(["newsapi"]);
+
+  // Lazily resolve newsapi config once per pollNews call — only needed when newsapi
+  // is in the active result set. Reads synchronously from the already-loaded mcpConfig
+  // singleton to avoid dynamic imports in the hot path.
+  let _newsapiConfiguredCache: boolean | null = null;
+  function isNewsapiConfigured(): boolean {
+    if (_newsapiConfiguredCache !== null) return _newsapiConfiguredCache;
+    try {
+      // mcpConfig is a module-level singleton (already loaded at startup) — safe to import
+      // synchronously by accessing the already-resolved module cache via a direct path.
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const configModule = require("../../infrastructure/config.js") as
+        { mcpConfig?: Record<string, unknown> };
+      const cfg = configModule.mcpConfig;
+      const newsapiCfg = (cfg as Record<string, unknown> | undefined)?.newsSources as
+        | { newsapi?: { apiKey?: string; enabled?: boolean } }
+        | undefined;
+      _newsapiConfiguredCache =
+        Boolean(newsapiCfg?.newsapi?.enabled) && Boolean(newsapiCfg?.newsapi?.apiKey);
+    } catch {
+      _newsapiConfiguredCache = false;
+    }
+    return _newsapiConfiguredCache;
+  }
+
   for (const { name, result } of sourceResults) {
     const displayName = SOURCE_DISPLAY_NAMES[name] ?? name;
     if (result.status === "fulfilled") {
@@ -603,6 +633,12 @@ export async function pollNews(options: PollNewsOptions = {}): Promise<PollNewsR
         // a geo-block or timeout (Reuters/Google News pattern) — recording
         // success in that case produces false-OK in the source health table.
         globalSourceTracker.recordSuccess(displayName);
+      } else if (STUB_CAPABLE_KEYS.has(name) && !isNewsapiConfigured()) {
+        // Source is explicitly disabled or has no API key — not a failure.
+        // Record "disabled" so the health table shows the true reason rather
+        // than accumulating consecutive-failure counts (Task fix/fetch-source-issues).
+        globalSourceTracker.recordDisabled(displayName);
+        logger.debug(`[pollNews] ${name} skipped — disabled or no API key configured`, { source: name });
       } else {
         // Fulfilled with 0 items — record as transient failure in the health
         // tracker (so source health shows "degraded" instead of "OK") but do

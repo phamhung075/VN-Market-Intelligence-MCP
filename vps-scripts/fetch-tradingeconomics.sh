@@ -10,6 +10,13 @@ TE_API_KEY="__TE_API_KEY__"
 LOG="/var/log/vn-tradingeconomics-fetch.log"
 COUNTRY="VN"
 
+# Guard: exit gracefully when TE_API_KEY was never substituted by deploy script.
+# Prevents 401 flood and misleading "consecutive failures" in health monitor.
+if [ -z "$TE_API_KEY" ] || [ "$TE_API_KEY" = "__TE_API_KEY__" ]; then
+  echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) SKIP: TE_API_KEY not configured — set TRADING_ECONOMICS_API_KEY in .env and redeploy" >> "$LOG"
+  exit 0
+fi
+
 # Log rotation (10 MB cap)
 # Source shared constants (LOG_ROTATE_BYTES) from vps-lib.sh
 # shellcheck source=/root/vps-lib.sh
