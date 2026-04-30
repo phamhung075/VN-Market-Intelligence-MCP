@@ -127,6 +127,36 @@ export function backfillBctcQ4(db: Database): void {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// backfillBctcQ1_2026
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Enqueues Q1 2026 BCTC fetch for all watchlist tickers that do not yet have a
+ * financial_reports row for period_year=2026, period_type='Q1'.
+ *
+ * Task 1782: The detectTargetQuarter() gate in /api/bctc-fetch-queue returns
+ * Q4-2025 for months 1–4, so Q1-2026 rows are never auto-seeded until May 1.
+ * This backfill bypasses that gate and seeds Q1-2026 unconditionally at startup.
+ *
+ * Uses INSERT OR IGNORE so existing queue entries (in any status) are untouched.
+ * The UNIQUE(action_code, period_year, period_quarter) constraint prevents duplicates.
+ */
+export function backfillBctcQ1_2026(db: Database): void {
+  db.prepare(`
+    INSERT OR IGNORE INTO bctc_vps_queue
+      (action_code, period_year, period_quarter, status, attempts)
+    SELECT w.code, 2026, 'Q1', 'pending', 0
+    FROM watchlist w
+    WHERE w.code NOT IN (
+      SELECT DISTINCT action_code
+      FROM financial_reports
+      WHERE period_year = 2026
+        AND period_type = 'Q1'
+    )
+  `).run();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // validateSeedTickers
 // ─────────────────────────────────────────────────────────────────────────────
 

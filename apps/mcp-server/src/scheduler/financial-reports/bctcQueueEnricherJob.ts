@@ -42,6 +42,15 @@ const DEFAULT_BATCH_SIZE = 20;
 /** Per-ticker discovery timeout (ms). Conservative to avoid stalling the cron. */
 const DISCOVERY_TIMEOUT_MS = 5_000;
 
+/**
+ * Maximum number of enrichment attempts before a no-URL row is marked
+ * 'url_not_found'. This prevents rows with perpetually-empty discovery results
+ * from blocking the queue indefinitely (Task 1782).
+ *
+ * At 15-min cron intervals, 5 attempts = ~75 min before a row is parked.
+ */
+const MAX_ENRICH_ATTEMPTS = 5;
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
 // ─────────────────────────────────────────────────────────────────────────────
@@ -91,12 +100,12 @@ export async function runBctcQueueEnricherJob(opts: {
   //   - 'https://congbothongtin.ssc.gov.vn/test...' (stub seeded before VPS
   //     resolves real URLs — FIX 1405b)
   //
-  let queueItems: Array<{ id: number; action_code: string }> = [];
+  let queueItems: Array<{ id: number; action_code: string; attempts: number }> = [];
 
   try {
     queueItems = db
-      .query<{ id: number; action_code: string }, [number]>(
-        `SELECT id, action_code
+      .query<{ id: number; action_code: string; attempts: number }, [number]>(
+        `SELECT id, action_code, attempts
          FROM bctc_vps_queue
          WHERE (
            source_url IS NULL
@@ -120,9 +129,17 @@ export async function runBctcQueueEnricherJob(opts: {
     return result;
   }
 
-  // ── Prepare update statement ──────────────────────────────────────────────
+  // ── Prepare update statements ─────────────────────────────────────────────
   const updateStmt = db.prepare<void, [string, number]>(
     `UPDATE bctc_vps_queue SET source_url = ? WHERE id = ?`,
+  );
+  // Task 1782: increment attempts on every no-URL run so the max-attempts gate
+  // can fire and mark exhausted rows as 'url_not_found'.
+  const incrementAttemptsStmt = db.prepare<void, [number]>(
+    `UPDATE bctc_vps_queue SET attempts = attempts + 1 WHERE id = ?`,
+  );
+  const markUrlNotFoundStmt = db.prepare<void, [number]>(
+    `UPDATE bctc_vps_queue SET status = 'url_not_found', attempts = attempts + 1 WHERE id = ?`,
   );
 
   // ── Discover URLs for each item ───────────────────────────────────────────
@@ -151,10 +168,23 @@ export async function runBctcQueueEnricherJob(opts: {
           url: discovery.urls[0],
         });
       } else {
-        // No URL found — leave pending for VPS retry
-        logger.debug("[bctcQueueEnricher] no URLs found, leaving pending", {
-          ticker: item.action_code,
-        });
+        // No URL found — increment attempts and optionally park the row.
+        // Task 1782: rows that have already been attempted MAX_ENRICH_ATTEMPTS
+        // times are marked 'url_not_found' so they stop blocking the queue.
+        // Rows below the threshold stay 'pending' for the next cron cycle.
+        if (item.attempts >= MAX_ENRICH_ATTEMPTS) {
+          markUrlNotFoundStmt.run(item.id);
+          logger.warn("[bctcQueueEnricher] no URL after max attempts — marking url_not_found", {
+            ticker: item.action_code,
+            attempts: item.attempts,
+          });
+        } else {
+          incrementAttemptsStmt.run(item.id);
+          logger.debug("[bctcQueueEnricher] no URLs found, leaving pending", {
+            ticker: item.action_code,
+            attempts: item.attempts + 1,
+          });
+        }
         result.partialFailures++;
       }
     } catch (err) {
@@ -166,6 +196,9 @@ export async function runBctcQueueEnricherJob(opts: {
       } else {
         result.partialFailures++;
       }
+
+      // On error, still increment attempts so exhausted-error rows also park.
+      incrementAttemptsStmt.run(item.id);
 
       logger.warn("[bctcQueueEnricher] discovery error", {
         ticker: item.action_code,
