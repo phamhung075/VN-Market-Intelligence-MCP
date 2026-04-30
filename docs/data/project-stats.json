@@ -2,9 +2,9 @@
   "_maintained_by": "PM / system-auditor",
   "_trigger": "sprint start/end, tool/cron count change, baseline test update",
   "lastUpdated": "2026-05-01",
-  "currentSprint": 1800,
-  "previousSprint": { "number": 1796, "status": "DONE", "progressTasks": "Sprint 1796: Housekeeping — archive sprints, trim CLAUDE.md, ghost dirs, DB backups, DAG machinery sector, sectorPeers fix." },
-  "sprintGoal": "Sprint 1799: Stats + docs sync — archive 1777/hotfix-bctc-parser2, add 1797/1798 Done rows, sync stats",
+  "currentSprint": 1801,
+  "previousSprint": { "number": 1800, "status": "DONE", "progressTasks": "Sprint 1800: Root cleanup — broken bunfig.toml fixed, ghost files deleted, .gitignore hardened." },
+  "sprintGoal": "Sprint 1801: DRY — extract duplicated Puppeteer launch config in tradingEconomicsChromium.ts into shared helper",
   "testBaseline": 8441,
   "testBaselineTarget": 8441,
   "testBaselinePass": 8441,
@@ -21,5 +21,5 @@
   "briefingArchiveQI": 0,
   "briefingArchiveQII": 0,
   "lastFixApplied": "Task 1777b DONE: foreign-flow dedup + CB self-healing regression tests (12 tests). No prod code change — existing ON CONFLICT + CB already correct. 8314 total, 8258 pass, 18 pre-existing fail. Merged 2026-04-29.",
-  "currentSprintNotes": "Task 1777b QA APPROVED 2026-04-29. 12 regression tests added in 1777b-foreign-flow-dedup.test.ts covering: duplicate push idempotency, 100x stress, CB self-healing (OPEN→HALF_OPEN→CLOSED), autoindex schema guard, multi-ticker dedup. TSC 0 errors."
+  "currentSprintNotes": "Sprint 1800 DONE 2026-05-01. Root bunfig.toml restored (was broken by ghost-file deletion), .gitignore hardened to block *.toml.bak + ghost dirs. totalTasksDone=403. Sprint 1801 planned: Puppeteer launch config DRY (JANITOR-011, low priority)."
 }
