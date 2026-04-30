@@ -137,7 +137,25 @@ export async function playwrightScrape(url: string): Promise<MacroIndicators> {
     executablePath:
       Bun.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH ?? "/usr/bin/chromium",
     headless: true,
-    args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"],
+    args: [
+      "--no-sandbox",
+      "--disable-setuid-sandbox",
+      "--disable-dev-shm-usage",      // use /tmp instead of /dev/shm (Docker default 64MB is too small)
+      "--disable-gpu",
+      "--no-first-run",
+      "--no-zygote",                  // avoids zygote process crash in Docker
+      // NOTE: --single-process is intentionally omitted — it causes TargetCloseError
+      // on Chromium 147 when page.content() is called after domcontentloaded on SPAs.
+      "--disable-extensions",
+      "--disable-background-networking",
+      "--disable-default-apps",
+      "--disable-sync",
+      "--disable-translate",
+      "--hide-scrollbars",
+      "--metrics-recording-only",
+      "--mute-audio",
+      "--safebrowsing-disable-auto-update",
+    ],
   });
 
   const fetchedAt = new Date().toISOString();
@@ -157,11 +175,13 @@ export async function playwrightScrape(url: string): Promise<MacroIndicators> {
     );
 
     logger.info("[te-chromium] launching Chromium scrape", { url });
-    await page.goto(url, { waitUntil: "networkidle2", timeout: 30_000 });
+    // domcontentloaded is faster and more stable on heavy SPAs than networkidle2.
+    // waitForSelector below handles the "page is ready" signal.
+    await page.goto(url, { waitUntil: "domcontentloaded", timeout: 30_000 });
 
     // Wait for the indicators table to appear
     try {
-      await page.waitForSelector("table.table", { timeout: 15_000 });
+      await page.waitForSelector("table.table", { timeout: 20_000 });
     } catch {
       logger.warn("[te-chromium] timeout waiting for indicators table");
     }
@@ -500,7 +520,25 @@ export async function playwrightScrapeNews(url: string): Promise<string> {
     executablePath:
       Bun.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH ?? "/usr/bin/chromium",
     headless: true,
-    args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"],
+    args: [
+      "--no-sandbox",
+      "--disable-setuid-sandbox",
+      "--disable-dev-shm-usage",      // use /tmp instead of /dev/shm (Docker default 64MB is too small)
+      "--disable-gpu",
+      "--no-first-run",
+      "--no-zygote",                  // avoids zygote process crash in Docker
+      // NOTE: --single-process is intentionally omitted — it causes TargetCloseError
+      // on Chromium 147 when page.content() is called after domcontentloaded on SPAs.
+      "--disable-extensions",
+      "--disable-background-networking",
+      "--disable-default-apps",
+      "--disable-sync",
+      "--disable-translate",
+      "--hide-scrollbars",
+      "--metrics-recording-only",
+      "--mute-audio",
+      "--safebrowsing-disable-auto-update",
+    ],
   });
 
   try {
@@ -511,7 +549,9 @@ export async function playwrightScrapeNews(url: string): Promise<string> {
     );
 
     logger.info("[te-chromium-news] launching Chromium scrape", { url });
-    await page.goto(url, { waitUntil: "networkidle2", timeout: 30_000 });
+    // domcontentloaded is faster and more stable on heavy SPAs than networkidle2.
+    // waitForSelector below handles the "page is ready" signal.
+    await page.goto(url, { waitUntil: "domcontentloaded", timeout: 30_000 });
 
     try {
       await page.waitForSelector("ul#stream li.te-stream-item", { timeout: 20_000 });

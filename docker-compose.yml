@@ -27,6 +27,7 @@ services:
       # Use monorepo root as context so bctc-schema.ts + mcp.config.json are accessible
       context: .
       dockerfile: apps/mcp-server/Dockerfile
+    shm_size: '256mb'   # Chromium needs > 64MB default for renderer stability
     ports:
       - "3000:3000"
     volumes:
