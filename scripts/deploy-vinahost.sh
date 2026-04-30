@@ -24,6 +24,12 @@ for VAR in VINAHOST_IP VINAHOST_PASSWORD VPS_PUSH_API_KEY; do
   if [ -z "${!VAR}" ]; then echo "ERROR: $VAR not set in .env"; exit 1; fi
 done
 
+# TRADING_ECONOMICS_API_KEY is optional — script exits gracefully if absent.
+# Warn here so the operator knows the service will be skipped.
+if [ -z "${TRADING_ECONOMICS_API_KEY:-}" ]; then
+  echo "WARN: TRADING_ECONOMICS_API_KEY not set — fetch-tradingeconomics.sh will be deployed but will exit gracefully (no API calls)"
+fi
+
 VH_USER="${VINAHOST_USERNAME:-root}"
 VH_IP="$VINAHOST_IP"
 MCP_BASE="https://zenmidi.com"
@@ -218,7 +224,30 @@ systemctl --no-pager -l status vn-bctc-enrich.timer | head -12
 ENRICHEOF
 
 
-# ── 8. VPS HTTP Proxy Server (BCTC Playwright discover, port 8765) ──────────
+# ── 8. Trading Economics macro indicator proxy ──────────────────────────────
+echo ""
+echo "Deploying Trading Economics macro proxy (hourly)..."
+TMP=$(mktemp)
+sed -e "s|__MCP_BASE__|${MCP_BASE}|g" \
+    -e "s|__API_KEY__|${VPS_PUSH_API_KEY}|g" \
+    -e "s|__TE_API_KEY__|${TRADING_ECONOMICS_API_KEY:-}|g" \
+    vps-scripts/fetch-tradingeconomics.sh > "$TMP"
+$SCP "$TMP" ${VH_USER}@${VH_IP}:/root/fetch-tradingeconomics.sh
+$SCP vps-scripts/vn-tradingeconomics-fetch.service ${VH_USER}@${VH_IP}:/etc/systemd/system/vn-tradingeconomics-fetch.service
+rm "$TMP"
+
+$SSH << 'TEEOF'
+set -e
+chmod +x /root/fetch-tradingeconomics.sh
+systemctl daemon-reload
+systemctl enable vn-tradingeconomics-fetch.service
+systemctl restart vn-tradingeconomics-fetch.service
+sleep 2
+echo "=== vn-tradingeconomics-fetch status ==="
+systemctl --no-pager -l status vn-tradingeconomics-fetch.service | head -12
+TEEOF
+
+# ── 9. VPS HTTP Proxy Server (BCTC Playwright discover, port 8765) ──────────
 echo ""
 echo "Deploying VPS HTTP proxy server (BCTC Playwright + SSC iboard, port 8765)..."
 $SCP vps-scripts/vps-proxy-server.js ${VH_USER}@${VH_IP}:/root/vps-proxy-server.js
@@ -260,7 +289,7 @@ PROXYEOF
 
 echo ""
 echo "══════════════════════════════════════════"
-echo " Deploy complete — Vinahost Vietnam owns all 8 services"
+echo " Deploy complete — Vinahost Vietnam owns all 9 services"
 echo ""
 echo " Price proxy:        systemctl status vn-price-fetch"
 echo " BCTC proxy:         systemctl status vn-bctc-fetch"
@@ -269,7 +298,8 @@ echo " News RSS proxy:     systemctl status vn-news-fetch"
 echo " SBV/FX proxy:       systemctl status vn-sbv-fetch"
 echo " Foreign flow proxy: systemctl status vn-foreign-flow"
 echo " OHLCV backfill:     systemctl status vn-ohlcv-backfill.timer"
+echo " Trading Economics:  systemctl status vn-tradingeconomics-fetch"
 echo " VPS HTTP proxy:     systemctl status vn-vps-proxy (BCTC Playwright + SSC iboard, :8765)"
 echo ""
-echo " Logs: /var/log/vn-{price,bctc,bctc-enrich,news,sbv,foreign-flow,ohlcv-backfill,vps-proxy}.log"
+echo " Logs: /var/log/vn-{price,bctc,bctc-enrich,news,sbv,foreign-flow,ohlcv-backfill,tradingeconomics-fetch,vps-proxy}.log"
 echo "══════════════════════════════════════════"

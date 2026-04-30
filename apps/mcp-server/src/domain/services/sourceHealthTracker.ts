@@ -20,8 +20,16 @@
 // Types
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** Classification of a source's current operational state. */
-export type SourceStatus = "ok" | "degraded" | "down";
+/**
+ * Classification of a source's current operational state.
+ *
+ * - "ok"       — fetching successfully
+ * - "degraded" — 1–4 consecutive failures
+ * - "down"     — 5+ consecutive failures
+ * - "disabled" — source has no API key or is explicitly disabled in config;
+ *                not a failure, failure counter is never incremented.
+ */
+export type SourceStatus = "ok" | "degraded" | "down" | "disabled";
 
 /**
  * Health snapshot for a single data source.
@@ -166,6 +174,26 @@ export class SourceHealthTracker {
       lastSuccessAt: existing.lastSuccessAt,
       consecutiveFailures,
       lastErrorMessage: error,
+    };
+    this.registry.set(source, updated);
+  }
+
+  /**
+   * Mark a source as explicitly disabled (no API key / `enabled: false` in config).
+   *
+   * Does NOT increment `consecutiveFailures` — being unconfigured is not a failure.
+   * Idempotent: calling it multiple times keeps the same disabled record.
+   *
+   * @param source - Source identifier.
+   */
+  recordDisabled(source: string): void {
+    const existing = this.registry.get(source) ?? this.defaultRecord(source);
+    const updated: SourceHealth = {
+      source,
+      status: "disabled",
+      lastSuccessAt: existing.lastSuccessAt,
+      consecutiveFailures: 0,
+      lastErrorMessage: null,
     };
     this.registry.set(source, updated);
   }

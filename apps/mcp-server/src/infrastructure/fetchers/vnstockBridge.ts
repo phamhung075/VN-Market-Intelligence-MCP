@@ -385,7 +385,7 @@ export async function fetchVnstockPrices(
   days = 3,
 ): Promise<VnstockPrice[]> {
   if (codes.length === 0) return [];
-  const result = await runPython<VnstockPrice[]>(PRICE_SCRIPT(codes, days), "prices");
+  const result = await runPythonWithBackoff<VnstockPrice[]>(PRICE_SCRIPT(codes, days), "prices");
   if (result) {
     logger.info("[vnstock] fetched prices", { requested: codes.length, received: result.length });
   }
@@ -916,17 +916,23 @@ export interface VnstockFullSnapshot {
   cashFlow: VnstockCashFlow | null;
 }
 
+/**
+ * Fetch all data for one stock sequentially to avoid concurrent rate-limit floods.
+ *
+ * The old Promise.all([7 calls]) fired 7 Python subprocesses simultaneously.
+ * With 30 watchlist tickers that became up to 210 concurrent VCI requests,
+ * causing the RATE_LIMITED WARNs observed on D2D, VCB, CTG.
+ * Sequential execution keeps the per-ticker cost at 7 serial calls but
+ * eliminates the burst. Latency is acceptable — this runs in a background job.
+ */
 export async function fetchVnstockSnapshot(code: string): Promise<VnstockFullSnapshot> {
-  const [prices, financials, tradingStats, officers, shareholders, balanceSheet, cashFlow] =
-    await Promise.all([
-      fetchVnstockPrices([code]),
-      fetchVnstockFinancials(code),
-      fetchVnstockTradingStats(code),
-      fetchVnstockOfficers(code),
-      fetchVnstockShareholders(code),
-      fetchVnstockBalanceSheet(code),
-      fetchVnstockCashFlow(code),
-    ]);
+  const prices = await fetchVnstockPrices([code]);
+  const financials = await fetchVnstockFinancials(code);
+  const tradingStats = await fetchVnstockTradingStats(code);
+  const officers = await fetchVnstockOfficers(code);
+  const shareholders = await fetchVnstockShareholders(code);
+  const balanceSheet = await fetchVnstockBalanceSheet(code);
+  const cashFlow = await fetchVnstockCashFlow(code);
 
   return {
     price: prices[0] ?? null,
