@@ -193,8 +193,22 @@ export function formatForeignFlowSection(
 ): string[] {
   if (movers.length === 0) return [];
 
-  const lines: string[] = ["", `Khối ngoại (top ${movers.length}):`];
-  for (const m of movers) {
+  // BUG-1: Stale guard — when all entries carry zero values the pipeline is dark.
+  // Render an unavailability notice instead of meaningless "0.000k" lines.
+  const allZero = movers.every(
+    (m) => m.foreignNetVol === 0 && m.foreignBuyVol === 0 && m.foreignSellVol === 0,
+  );
+  if (allZero) {
+    return ["", "Khối ngoại: Dữ liệu không khả dụng (pipeline tạm dừng)"];
+  }
+
+  // BUG-2: Sort by |net_flow| descending — biggest movers first.
+  const sorted = [...movers].sort(
+    (a, b) => Math.abs(b.foreignNetVol) - Math.abs(a.foreignNetVol),
+  );
+
+  const lines: string[] = ["", `Khối ngoại (top ${sorted.length}):`];
+  for (const m of sorted) {
     const direction = m.foreignNetVol >= 0 ? "mua ròng" : "bán ròng";
     const netK = (Math.abs(m.foreignNetVol) / 1000).toFixed(3);
     const buyK = (m.foreignBuyVol / 1000).toFixed(3);
