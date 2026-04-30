@@ -31,6 +31,7 @@ import * as fs from "fs";
 import * as path from "path";
 import { logger } from "../logger.js";
 import type { MacroIndicators } from "./tradingEconomics.js";
+import type { LaunchOptions } from "puppeteer-core";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Constants
@@ -47,6 +48,50 @@ const STALE_CACHE_MAX_MS = 12 * 60 * 60 * 1000;
 
 /** Default cache file path inside Docker data volume. */
 const DEFAULT_CACHE_FILE = "/app/data/te-cache.json";
+
+/**
+ * Realistic browser User-Agent used for all Trading Economics Chromium requests.
+ * Centralised here so both playwrightScrape() and playwrightScrapeNews() stay in sync.
+ */
+export const TE_USER_AGENT =
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
+
+/**
+ * Returns the shared Puppeteer launch config for all Trading Economics Chromium scrapers.
+ *
+ * The 13 flags are the hardened set for headless Chromium inside Docker:
+ *   - no-sandbox / disable-setuid-sandbox : required when running as root in Docker
+ *   - disable-dev-shm-usage              : Docker default /dev/shm 64 MB is too small
+ *   - disable-gpu / no-first-run / no-zygote : stability under constrained container env
+ *   - NOTE: --single-process is intentionally omitted — it causes TargetCloseError
+ *     on Chromium 147 when page.content() is called after domcontentloaded on SPAs.
+ */
+export function buildChromiumLaunchConfig(): LaunchOptions {
+  return {
+    executablePath:
+      Bun.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH ?? "/usr/bin/chromium",
+    headless: true,
+    args: [
+      "--no-sandbox",
+      "--disable-setuid-sandbox",
+      "--disable-dev-shm-usage",      // use /tmp instead of /dev/shm (Docker default 64MB is too small)
+      "--disable-gpu",
+      "--no-first-run",
+      "--no-zygote",                  // avoids zygote process crash in Docker
+      // NOTE: --single-process is intentionally omitted — it causes TargetCloseError
+      // on Chromium 147 when page.content() is called after domcontentloaded on SPAs.
+      "--disable-extensions",
+      "--disable-background-networking",
+      "--disable-default-apps",
+      "--disable-sync",
+      "--disable-translate",
+      "--hide-scrollbars",
+      "--metrics-recording-only",
+      "--mute-audio",
+      "--safebrowsing-disable-auto-update",
+    ],
+  };
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -133,30 +178,7 @@ export async function playwrightScrape(url: string): Promise<MacroIndicators> {
   // installed at compile time — the Docker image installs it at build time.
   const puppeteer = (await import("puppeteer-core")).default;
 
-  const browser = await puppeteer.launch({
-    executablePath:
-      Bun.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH ?? "/usr/bin/chromium",
-    headless: true,
-    args: [
-      "--no-sandbox",
-      "--disable-setuid-sandbox",
-      "--disable-dev-shm-usage",      // use /tmp instead of /dev/shm (Docker default 64MB is too small)
-      "--disable-gpu",
-      "--no-first-run",
-      "--no-zygote",                  // avoids zygote process crash in Docker
-      // NOTE: --single-process is intentionally omitted — it causes TargetCloseError
-      // on Chromium 147 when page.content() is called after domcontentloaded on SPAs.
-      "--disable-extensions",
-      "--disable-background-networking",
-      "--disable-default-apps",
-      "--disable-sync",
-      "--disable-translate",
-      "--hide-scrollbars",
-      "--metrics-recording-only",
-      "--mute-audio",
-      "--safebrowsing-disable-auto-update",
-    ],
-  });
+  const browser = await puppeteer.launch(buildChromiumLaunchConfig());
 
   const fetchedAt = new Date().toISOString();
   const nullResult: MacroIndicators = {
@@ -170,9 +192,7 @@ export async function playwrightScrape(url: string): Promise<MacroIndicators> {
   try {
     const page = await browser.newPage();
 
-    await page.setUserAgent(
-      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-    );
+    await page.setUserAgent(TE_USER_AGENT);
 
     logger.info("[te-chromium] launching Chromium scrape", { url });
     // domcontentloaded is faster and more stable on heavy SPAs than networkidle2.
@@ -516,37 +536,12 @@ function newsCacheAgeMs(entry: TeNewsCacheEntry): number {
 export async function playwrightScrapeNews(url: string): Promise<string> {
   const puppeteer = (await import("puppeteer-core")).default;
 
-  const browser = await puppeteer.launch({
-    executablePath:
-      Bun.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH ?? "/usr/bin/chromium",
-    headless: true,
-    args: [
-      "--no-sandbox",
-      "--disable-setuid-sandbox",
-      "--disable-dev-shm-usage",      // use /tmp instead of /dev/shm (Docker default 64MB is too small)
-      "--disable-gpu",
-      "--no-first-run",
-      "--no-zygote",                  // avoids zygote process crash in Docker
-      // NOTE: --single-process is intentionally omitted — it causes TargetCloseError
-      // on Chromium 147 when page.content() is called after domcontentloaded on SPAs.
-      "--disable-extensions",
-      "--disable-background-networking",
-      "--disable-default-apps",
-      "--disable-sync",
-      "--disable-translate",
-      "--hide-scrollbars",
-      "--metrics-recording-only",
-      "--mute-audio",
-      "--safebrowsing-disable-auto-update",
-    ],
-  });
+  const browser = await puppeteer.launch(buildChromiumLaunchConfig());
 
   try {
     const page = await browser.newPage();
 
-    await page.setUserAgent(
-      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-    );
+    await page.setUserAgent(TE_USER_AGENT);
 
     logger.info("[te-chromium-news] launching Chromium scrape", { url });
     // domcontentloaded is faster and more stable on heavy SPAs than networkidle2.
