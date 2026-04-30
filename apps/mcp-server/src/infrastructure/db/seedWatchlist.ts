@@ -32,7 +32,8 @@ export interface WatchlistSeedEntry {
 export const WATCHLIST_SEED: WatchlistSeedEntry[] = [
   // Oil & Gas
   { code: "GAS", exchange: "HOSE",  domain: "oil_gas" },
-  { code: "GVR", exchange: "HOSE",  domain: "oil_gas" },
+  // Agriculture / Rubber
+  { code: "GVR", exchange: "HOSE",  domain: "agriculture" }, // Vietnam Rubber Group — cao su, not petroleum
   // Banking
   { code: "VCB", exchange: "HOSE",  domain: "banking" },
   { code: "BID", exchange: "HOSE",  domain: "banking" },

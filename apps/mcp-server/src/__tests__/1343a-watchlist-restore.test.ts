@@ -91,7 +91,7 @@ describe("Task 1343a — Watchlist Restore + Q4 2025 Backfill", () => {
     expect(WATCHLIST_SEED).toHaveLength(26);
   });
 
-  it("WATCHLIST_SEED covers 9 expected sectors (agriculture emptied after BDI/DLC removal)", () => {
+  it("WATCHLIST_SEED covers 10 expected sectors (agriculture restored via GVR — task 1787)", () => {
     const domains = new Set(WATCHLIST_SEED.map((e) => e.domain));
     expect(domains).toContain("oil_gas");
     expect(domains).toContain("banking");
@@ -102,9 +102,9 @@ describe("Task 1343a — Watchlist Restore + Q4 2025 Backfill", () => {
     expect(domains).toContain("securities");
     expect(domains).toContain("pharma");
     expect(domains).toContain("utilities");
-    // agriculture has no active seeded tickers (BDI = Baltic Dry Index, DLC delisted)
-    expect(domains).not.toContain("agriculture");
-    expect(domains.size).toBe(9);
+    // agriculture restored: GVR (Vietnam Rubber Group) correctly classified here (task 1787)
+    expect(domains).toContain("agriculture");
+    expect(domains.size).toBe(10);
   });
 
   it("WATCHLIST_SEED has HOSE and UPCOM entries (HNX removed with JSH and BDI)", () => {
