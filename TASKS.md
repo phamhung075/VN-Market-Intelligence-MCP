@@ -56,5 +56,6 @@
 | 1779b | restart_vps_service MCP tool — three-layer allowlist handler, registry entry, 8 tests | 2026-04-30 | reports/TASK_REPORT_1779b.md |
 | 1779c | SSH key mount + known_hosts seeding — docker-compose :ro mount, entrypoint.sh ssh-keyscan fail-loud | 2026-04-30 | reports/TASK_REPORT_1779c.md |
 | 1779 | VPS SSH restart pipeline (parent) — sshExec + restart_vps_service MCP tool + Docker SSH key mount | 2026-04-30 | — |
+| JANITOR-011 | DRY: extract ANSI+box-drawing regex to domain/utils/ansiUtils.ts — 3 inline copies removed | 2026-04-30 | reports/TASK_REPORT_JANITOR011.md |
 
 ---
