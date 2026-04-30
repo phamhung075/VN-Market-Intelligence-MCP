@@ -83,20 +83,29 @@ export function getDeadlineForQuarter(year: number, quarter: 1 | 2 | 3 | 4, doma
 
   // Q4 = annual report: 90 days after fiscal year end (standard) / 105 days (banking/insurance)
   // Q1-Q3 = quarterly report: 30 days (standard) / 45 days (banking/insurance)
+  //
+  // IMPORTANT: Use UTC-based arithmetic (Date.UTC + setUTCDate) throughout.
+  // new Date(ISO_STRING) produces a UTC-midnight Date, but setDate() operates in
+  // local time, which causes DST transitions (e.g. Europe/Paris spring-forward) to
+  // shift the result by 1 hour, yielding the wrong calendar date in toISOString().
+  // Example bug (Task 1789): Paris TZ, Dec 31 + 105 days via setDate → 2026-04-14T23:00Z
+  // (correct: 2026-04-15T00:00Z = Apr 15). Fix: setUTCDate on a Date.UTC anchor.
   if (quarter === 4) {
     // Annual: Dec 31 + 90 days = Mar 31 next year (standard), +105 days = Apr 15 (extended)
-    const qEnd = new Date(`${year}-12-31`);
-    qEnd.setDate(qEnd.getDate() + (extended ? 105 : 90));
+    const qEnd = new Date(Date.UTC(year, 11, 31)); // Dec 31 UTC midnight
+    qEnd.setUTCDate(qEnd.getUTCDate() + (extended ? 105 : 90));
     return qEnd;
   }
 
-  const quarterEndDates: Record<number, string> = {
-    1: `${year}-03-31`,
-    2: `${year}-06-30`,
-    3: `${year}-09-30`,
+  // Quarter-end month/day (UTC midnight) for Q1–Q3
+  const quarterEndUTC: Record<number, [month: number, day: number]> = {
+    1: [2, 31],  // Mar 31 (month index 2 = March)
+    2: [5, 30],  // Jun 30 (month index 5 = June)
+    3: [8, 30],  // Sep 30 (month index 8 = September)
   };
-  const qEnd = new Date(quarterEndDates[quarter]!);
-  qEnd.setDate(qEnd.getDate() + (extended ? 45 : 30));
+  const [month, day] = quarterEndUTC[quarter]!;
+  const qEnd = new Date(Date.UTC(year, month, day));
+  qEnd.setUTCDate(qEnd.getUTCDate() + (extended ? 45 : 30));
   return qEnd;
 }
 
