@@ -1,7 +1,7 @@
 {
   "_maintained_by": "market-analyst / PO",
   "_trigger": "watchlist change, sector reclassification, trade exposure update",
-  "lastUpdated": "2026-04-27",
+  "lastUpdated": "2026-04-30",
   "watchlist": [
     { "ticker": "VNM", "company": "Vinamilk", "sector": "Agriculture / Dairy", "exchange": "HOSE", "warning": null },
     { "ticker": "FPT", "company": "FPT Corp", "sector": "Tech / IT outsourcing", "exchange": "HOSE", "warning": null },
@@ -33,7 +33,8 @@
     { "ticker": "DGC", "company": "Duc Giang Chemicals", "sector": "Chemicals / Phosphate", "exchange": "HOSE", "warning": null },
     { "ticker": "VJC", "company": "VietJet Air", "sector": "Aviation / Low-cost carrier", "exchange": "HOSE", "warning": null },
     { "ticker": "GEX", "company": "Gelex Group", "sector": "Utilities / Electrical equipment", "exchange": "HOSE", "warning": null },
-    { "ticker": "BSR", "company": "Binh Son Refinery", "sector": "Oil & gas / Refinery", "exchange": "UPCOM", "warning": null }
+    { "ticker": "BSR", "company": "Binh Son Refinery", "sector": "Oil & gas / Refinery", "exchange": "UPCOM", "warning": null },
+    { "ticker": "DAG", "company": "Da Nang Rubber Group", "sector": "Machinery / Industrial", "exchange": "HOSE", "warning": null }
   ],
   "tradeExposure": {
     "VNM": { "Vietnam": 82, "Middle East": 8, "ASEAN": 5, "US": 3, "China": 2 },

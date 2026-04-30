@@ -6,6 +6,8 @@ data/
 *.db
 *.db-shm
 *.db-wal
+*.fresh-*
+*.pre-repair-*
 dist/
 .claude/worktrees
 reports/*-evening.json
