@@ -651,23 +651,23 @@ describe("Task 188 — Daily Alert Digest", () => {
 
   it("Task 1791: overflow reflects unique-deduplicated count, not raw count", async () => {
     const actions = JSON.stringify([{ code: "MWG" }]);
-    const msgs = ["MWG alert A", "MWG alert B", "MWG alert C", "MWG alert D"];
+    const [msgA, msgB, msgC, msgD] = ["MWG alert A", "MWG alert B", "MWG alert C", "MWG alert D"] as const;
 
     // 10 copies of A, 1 each of B/C/D = 4 unique messages, 13 raw
     for (let i = 0; i < 10; i++) {
       seedAlert(db, {
         affected_actions_json: actions,
         severity: "medium",
-        message: msgs[0],
+        message: msgA,
         triggered_at: new Date(Date.now() - (i + 10) * 60_000).toISOString(),
       });
     }
-    for (let j = 1; j < 4; j++) {
+    for (const msg of [msgB, msgC, msgD]) {
       seedAlert(db, {
         affected_actions_json: actions,
         severity: "medium",
-        message: msgs[j],
-        triggered_at: new Date(Date.now() - j * 60_000).toISOString(),
+        message: msg,
+        triggered_at: new Date(Date.now() - 60_000).toISOString(),
       });
     }
 
