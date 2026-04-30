@@ -9,19 +9,13 @@
   },
   "taDiag": {
     "tickersWithSignal": 0,
-    "tickersBelowThreshold": 0,
+    "tickersBelowThreshold": 47,
     "ohlcvRowsMin": 0,
     "ohlcvRowsMax": 0
   },
   "taSummary": [],
   "newsCount": 0,
-  "generatedAt": "2026-04-29T21:27:58.685Z",
-  "vnIndex": {
-    "close": 1300,
-    "change": 15,
-    "changePct": 1.17,
-    "fetchedAt": "2026-04-18T15:30:00.000Z"
-  },
+  "generatedAt": "2026-04-29T23:22:09.506Z",
   "portfolioPnl": null,
   "foreignFlowMovers": []
 }

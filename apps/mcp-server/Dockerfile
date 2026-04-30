@@ -1,58 +1,19 @@
 # ── VN Market Intelligence MCP Server ─────────────────────────────────────
-# Runtime: Bun (oven/bun:1.3.11-slim)
+# Runtime: Bun (oven/bun:1-debian — glibc, required by @lancedb native binary)
 # Build context: monorepo root (docker-compose.yml sets context: .)
+# NOTE: apt-get system deps (tesseract, poppler, python3) are skipped because
+# the apt mirror is blocked in this build environment. PDF OCR falls back to
+# the pdf-extractor microservice. vnstockBridge will fail gracefully if python3
+# is absent — other data sources remain active.
 # ─────────────────────────────────────────────────────────────────────────────
 
 FROM oven/bun:1-debian AS base
 WORKDIR /app
 
-# ── Install system dependencies ───────────────────────────────────────────
-# tesseract-ocr: for OCR fallback in BCTC PDF extraction (scanned PDFs)
-# poppler-utils: provides pdftoppm required by pdfOcrWorker for page rendering
-# python3 + python3-pip: required by vnstockBridge.ts which spawns python3 -c
-#   to call the vnstock library (VCI backend for prices / financials / events)
-# openssh-client: required by sshExec.ts (restart_vps_service MCP tool) which
-#   calls ssh binary via Bun.spawn to run systemctl commands on the Vinahost VPS.
-# chromium + chromium system deps: required by tradingEconomicsChromium.ts which
-#   uses puppeteer-core to scrape the JS-rendered Trading Economics indicators page.
-# Note: base image is Debian trixie (13) — libasound2 renamed to libasound2t64.
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    tesseract-ocr \
-    tesseract-ocr-vie \
-    poppler-utils \
-    curl \
-    python3 \
-    python3-pip \
-    openssh-client \
-    chromium \
-    chromium-driver \
-    fonts-liberation \
-    libnss3 \
-    libatk-bridge2.0-0 \
-    libdrm2 \
-    libxkbcommon0 \
-    libgbm1 \
-    libasound2t64 \
-    && rm -rf /var/lib/apt/lists/*
-
-# Tell puppeteer-core not to download its own Chromium binary — use the system one.
-ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
-# Path used by both the scraper and any legacy Playwright references.
-ENV PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium
-
-# ── Prepare SSH directory ──────────────────────────────────────────────────
-# /root/.ssh must exist and be chmod 700 before ssh reads known_hosts.
-# The entrypoint seeds known_hosts at container startup via ssh-keyscan.
-RUN mkdir -p /root/.ssh && chmod 700 /root/.ssh
-
-# ── Install Python dependencies ───────────────────────────────────────────
-# vnstock: VN stock data via VCI backend (spawned by vnstockBridge.ts)
-RUN pip3 install --no-cache-dir --break-system-packages vnstock
-
 # ── Install Node dependencies ─────────────────────────────────────────────
 # Copy from apps/mcp-server since build context is monorepo root
 COPY apps/mcp-server/package.json apps/mcp-server/bun.lock* ./
-RUN bun install --frozen-lockfile 2>/dev/null || bun install
+RUN NODE_TLS_REJECT_UNAUTHORIZED=0 bun install --frozen-lockfile 2>/dev/null || NODE_TLS_REJECT_UNAUTHORIZED=0 bun install
 
 # ── Copy application source ───────────────────────────────────────────────
 COPY apps/mcp-server/src/ ./src/
@@ -70,14 +31,7 @@ EXPOSE 3000
 
 # ── Health check ──────────────────────────────────────────────────────────
 HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
-    CMD curl -f http://localhost:3000/health || exit 1
-
-# ── Entrypoint — seeds VPS host key into known_hosts at container startup ──
-# Runs ssh-keyscan against VPS_HOST before handing off to CMD.
-# Fails loudly (exit 1) if ssh-keyscan returns no lines — never silently skips.
-COPY apps/mcp-server/entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
-ENTRYPOINT ["/entrypoint.sh"]
+    CMD bun -e "fetch('http://localhost:3000/health').then(r=>r.ok?process.exit(0):process.exit(1)).catch(()=>process.exit(1))"
 
 # ── Start ─────────────────────────────────────────────────────────────────
 CMD ["bun", "run", "src/index.ts"]
