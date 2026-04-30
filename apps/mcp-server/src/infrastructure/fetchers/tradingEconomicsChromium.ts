@@ -5,13 +5,18 @@
  * Chromium browser (puppeteer-core) because the page is a React SPA — plain
  * HTTP/cheerio only returns skeleton HTML with no indicator values.
  *
+ * Also scrapes https://tradingeconomics.com/vietnam/news for the news feed
+ * (Task 1799) — same SPA pattern, requires Puppeteer.
+ *
  * Design decisions:
  *   - 6-hour result cache persisted to JSON (default /app/data/te-cache.json)
  *     to avoid hammering the site.
  *   - On scrape failure: returns cached data if < 12h old, else returns null.
- *   - The `scrape` function is injected (TeChromiumDeps) so tests mock it
- *     without launching a real browser.
- *   - Never throws — all errors are caught and result in null.
+ *   - News cache TTL: 30 minutes (default /app/data/te-news-cache.json).
+ *   - On news scrape failure: serves stale cache up to 2h, else returns [].
+ *   - The `scrape` function is injected (TeChromiumDeps / TeNewsDeps) so tests
+ *     mock it without launching a real browser.
+ *   - Never throws — all errors are caught and result in null / [].
  *   - Stealth headers: realistic User-Agent + Accept-Language.
  *
  * Returns MacroIndicators matching the existing tradingEconomics.ts interface
@@ -299,5 +304,323 @@ export async function fetchTradingEconomicsChromium(
       error: outerErr instanceof Error ? outerErr.message : String(outerErr),
     });
     return null;
+  }
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
+// Task 1799 — Vietnam News Feed scraper
+// ═════════════════════════════════════════════════════════════════════════════
+
+/** Target URL for the Vietnam news feed page. */
+const TE_NEWS_URL = "https://tradingeconomics.com/vietnam/news";
+
+/** Base URL used to resolve relative hrefs from the news page. */
+const TE_BASE_URL = "https://tradingeconomics.com";
+
+/** News cache TTL: re-scrape after 30 minutes (news is more time-sensitive). */
+const NEWS_CACHE_TTL_MS = 30 * 60 * 1000;
+
+/** Stale-news fallback: serve cache up to 2 hours after expiry on failure. */
+const NEWS_STALE_CACHE_MAX_MS = 2 * 60 * 60 * 1000;
+
+/** Default cache file path for news feed. */
+const DEFAULT_NEWS_CACHE_FILE = "/app/data/te-news-cache.json";
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Types
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * A single news item scraped from tradingeconomics.com/vietnam/news.
+ */
+export interface TENewsItem {
+  title: string;
+  /** Full URL: https://tradingeconomics.com + href */
+  url: string;
+  summary: string;
+  /** Raw string from page e.g. "2 hours ago" */
+  date: string;
+  /** e.g. "GDP", "Inflation", "Trade" */
+  category: string;
+  source: "trading_economics";
+}
+
+/** Persisted news cache record. */
+export interface TeNewsCacheEntry {
+  cachedAt: string;
+  data: TENewsItem[];
+}
+
+/**
+ * Dependency injection interface for the news fetcher.
+ *
+ * @property scrape    - Returns raw page HTML (mocked in tests).
+ * @property cachePath - Override for the JSON cache file path.
+ */
+export interface TeNewsDeps {
+  scrape: (url: string) => Promise<string>;
+  cachePath?: string;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Exported pure helpers (also used in tests)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Parse a relative date string (e.g. "2 hours ago", "3 days ago", "1 week ago",
+ * "30 minutes ago") into an ISO 8601 UTC string.
+ *
+ * Returns the current time ISO string for any unrecognised format.
+ */
+export function parseRelativeDate(raw: string): string {
+  const s = raw.trim().toLowerCase();
+  const now = Date.now();
+
+  // Pattern: "<n> <unit> ago"
+  const match = s.match(/^(\d+)\s+(minute|minutes|hour|hours|day|days|week|weeks)\s+ago$/);
+  if (match) {
+    const n = parseInt(match[1]!, 10);
+    const unit = match[2]!;
+    let ms = 0;
+    if (unit.startsWith("minute")) ms = n * 60 * 1000;
+    else if (unit.startsWith("hour"))   ms = n * 3600 * 1000;
+    else if (unit.startsWith("day"))    ms = n * 24 * 3600 * 1000;
+    else if (unit.startsWith("week"))   ms = n * 7 * 24 * 3600 * 1000;
+    return new Date(now - ms).toISOString();
+  }
+
+  // Fallback: return current time
+  return new Date(now).toISOString();
+}
+
+/**
+ * Extract TENewsItem[] from raw page HTML using cheerio.
+ *
+ * Selector map:
+ *   Container : ul#stream li.te-stream-item
+ *   Title+link: .te-stream-title-div a
+ *   Summary   : span.te-stream-item-description
+ *   Date      : small.te-stream-date
+ *   Category  : a.badge.te-stream-category
+ *
+ * Exported for unit testing.
+ */
+export function extractTeNewsItems(html: string, limit: number): TENewsItem[] {
+  // cheerio is already a project dependency (used in playwrightScrape above)
+  // Synchronous load — safe to call from non-async contexts.
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const cheerio = require("cheerio") as typeof import("cheerio");
+  const $ = cheerio.load(html);
+
+  const items: TENewsItem[] = [];
+
+  $("ul#stream li.te-stream-item").each((_idx: number, el: unknown) => {
+    if (items.length >= limit) return false; // break
+
+    const $el = $(el as never);
+
+    const titleAnchor = $el.find(".te-stream-title-div a").first();
+    const title = titleAnchor.text().trim();
+    if (!title) return; // skip malformed items
+
+    const href = titleAnchor.attr("href") ?? "";
+    const url = href.startsWith("http") ? href : `${TE_BASE_URL}${href}`;
+
+    const summary = $el.find("span.te-stream-item-description").first().text().trim();
+    const date    = $el.find("small.te-stream-date").first().text().trim();
+    const category = $el.find("a.badge.te-stream-category").first().text().trim();
+
+    items.push({
+      title,
+      url,
+      summary,
+      date,
+      category,
+      source: "trading_economics",
+    });
+  });
+
+  return items;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// News cache helpers
+// ─────────────────────────────────────────────────────────────────────────────
+
+function readNewsCache(cachePath: string): TeNewsCacheEntry | null {
+  try {
+    const raw = fs.readFileSync(cachePath, "utf-8");
+    const parsed = JSON.parse(raw) as Partial<TeNewsCacheEntry>;
+    if (
+      typeof parsed.cachedAt === "string" &&
+      Array.isArray(parsed.data)
+    ) {
+      return parsed as TeNewsCacheEntry;
+    }
+  } catch {
+    // File missing or corrupt
+  }
+  return null;
+}
+
+function writeNewsCache(entry: TeNewsCacheEntry, cachePath: string): void {
+  try {
+    const dir = path.dirname(cachePath);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    const tmp = `${cachePath}.tmp`;
+    fs.writeFileSync(tmp, JSON.stringify(entry), "utf-8");
+    fs.renameSync(tmp, cachePath);
+  } catch (err) {
+    logger.warn("[te-chromium-news] failed to write news cache", {
+      cachePath,
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
+}
+
+function newsCacheAgeMs(entry: TeNewsCacheEntry): number {
+  return Date.now() - new Date(entry.cachedAt).getTime();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Production Puppeteer scraper for news page
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Launches a headless Chromium instance and returns the raw page HTML for
+ * tradingeconomics.com/vietnam/news.
+ *
+ * Waits for ul#stream li.te-stream-item (timeout 20 s).
+ * This function is never called in tests (deps.scrape is mocked).
+ */
+export async function playwrightScrapeNews(url: string): Promise<string> {
+  const puppeteer = (await import("puppeteer-core")).default;
+
+  const browser = await puppeteer.launch({
+    executablePath:
+      Bun.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH ?? "/usr/bin/chromium",
+    headless: true,
+    args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"],
+  });
+
+  try {
+    const page = await browser.newPage();
+
+    await page.setUserAgent(
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    );
+
+    logger.info("[te-chromium-news] launching Chromium scrape", { url });
+    await page.goto(url, { waitUntil: "networkidle2", timeout: 30_000 });
+
+    try {
+      await page.waitForSelector("ul#stream li.te-stream-item", { timeout: 20_000 });
+    } catch {
+      logger.warn("[te-chromium-news] timeout waiting for news stream — proceeding with current HTML");
+    }
+
+    return page.content();
+  } finally {
+    await browser.close();
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Public API — news
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Fetches Vietnam news from tradingeconomics.com/vietnam/news via
+ * Puppeteer/Chromium with a 30-minute cache.
+ *
+ * Cache strategy:
+ *   - Cache age < 30 min → return cached data (no browser launch)
+ *   - Cache age >= 30 min → attempt fresh scrape; update cache on success
+ *   - Scrape failure + cache < 2h → return stale cache
+ *   - Scrape failure + cache >= 2h → return []
+ *   - Scrape failure + no cache   → return []
+ *
+ * On success, calls sourceHealthTracker.recordSuccess('tradingEconomics').
+ * On failure, calls sourceHealthTracker.recordFailure('tradingEconomics', reason).
+ *
+ * @param limit - Maximum number of items to return (default 20)
+ * @param deps  - Injectable scraper and cache path
+ * @returns     - Array of TENewsItem, never throws
+ */
+export async function fetchTradingEconomicsNews(
+  limit = 20,
+  deps?: Partial<TeNewsDeps>,
+): Promise<TENewsItem[]> {
+  const cachePath = deps?.cachePath ?? DEFAULT_NEWS_CACHE_FILE;
+  const scrape = deps?.scrape ?? playwrightScrapeNews;
+
+  try {
+    // ── Check cache ──────────────────────────────────────────────────────────
+    const cached = readNewsCache(cachePath);
+    if (cached !== null) {
+      const ageMs = newsCacheAgeMs(cached);
+      if (ageMs < NEWS_CACHE_TTL_MS) {
+        logger.debug("[te-chromium-news] returning cached news", {
+          ageMinutes: Math.round(ageMs / 60_000),
+          itemCount: cached.data.length,
+        });
+        return cached.data.slice(0, limit);
+      }
+    }
+
+    // ── Attempt fresh scrape ─────────────────────────────────────────────────
+    try {
+      const html = await scrape(TE_NEWS_URL);
+      const items = extractTeNewsItems(html, limit);
+      const entry: TeNewsCacheEntry = {
+        cachedAt: new Date().toISOString(),
+        data: items,
+      };
+      writeNewsCache(entry, cachePath);
+
+      // Health tracking — success
+      try {
+        const { globalSourceTracker } = await import(
+          "../../interface/mcp/tools/news-analysis/sourceHealthTools.js"
+        );
+        globalSourceTracker.recordSuccess("tradingEconomics");
+      } catch { /* health tracking is best-effort */ }
+
+      logger.info("[te-chromium-news] scraped news", { itemCount: items.length });
+      return items;
+    } catch (scrapeErr) {
+      const errorMsg = scrapeErr instanceof Error ? scrapeErr.message : String(scrapeErr);
+      logger.warn("[te-chromium-news] scrape failed", { error: errorMsg });
+
+      // Health tracking — failure
+      try {
+        const { globalSourceTracker } = await import(
+          "../../interface/mcp/tools/news-analysis/sourceHealthTools.js"
+        );
+        globalSourceTracker.recordFailure("tradingEconomics", errorMsg);
+      } catch { /* health tracking is best-effort */ }
+
+      // Fall back to stale cache if < 2h old
+      if (cached !== null) {
+        const ageMs = newsCacheAgeMs(cached);
+        if (ageMs < NEWS_STALE_CACHE_MAX_MS) {
+          logger.warn("[te-chromium-news] returning stale news cache after scrape failure", {
+            ageMinutes: Math.round(ageMs / 60_000),
+          });
+          return cached.data.slice(0, limit);
+        }
+        logger.warn("[te-chromium-news] stale news cache too old — returning []", {
+          ageHours: Math.round(ageMs / 3_600_000),
+        });
+      }
+
+      return [];
+    }
+  } catch (outerErr) {
+    // Safety net — this function must never throw
+    logger.error("[te-chromium-news] unexpected error", {
+      error: outerErr instanceof Error ? outerErr.message : String(outerErr),
+    });
+    return [];
   }
 }
