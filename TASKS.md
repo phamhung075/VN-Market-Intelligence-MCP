@@ -12,6 +12,7 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff |
 |---------|-------|----------|------|-------|---------|
+| JANITOR-012 | DRY/fix: DAG misclassified as pharma — should be machinery; reclassify in seedWatchlist.ts | low | JANITOR | code-janitor | — |
 
 ---
 
@@ -62,5 +63,6 @@
 | 1783 | Morning bulletin: hide/mask foreign flow section when data stale; fix top-5 sort to |net_flow| desc | 2026-04-30 | reports/TASK_REPORT_1783.md |
 | 1784 | Sector alerts: render as sector-level not per-ticker; deduplicate in morning bulletin | 2026-04-30 | reports/TASK_REPORT_1784.md |
 | 1785 | France summary change_pct: prev-close-to-close reference; formatPct(null) → N/A | 2026-04-30 | reports/TASK_REPORT_1785.md |
+| 1787 | GVR sector fix: oil_gas → agriculture (Vietnam Rubber Group) | 2026-04-30 | reports/TASK_REPORT_1787.md |
 
 ---
