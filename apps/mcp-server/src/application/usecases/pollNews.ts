@@ -648,11 +648,17 @@ export async function pollNews(options: PollNewsOptions = {}): Promise<PollNewsR
     const lastSentMs = Math.max(_lastAllDarkAlertAt, dbLastMs);
     if (now - lastSentMs >= ALL_DARK_ALERT_COOLDOWN_MS) {
       _lastAllDarkAlertAt = now;
-      // Persist send timestamp to DB so cross-restart cooldown is enforced (Task 1398)
+      // Persist send timestamp to DB so cross-restart cooldown is enforced (Task 1398).
+      // FIX Task 1793: store `now` (from nowMs injection) not SQLite strftime('now').
+      // Using strftime('now') stored the real wall clock, which diverged from the
+      // `now` used in the comparison whenever nowMs was injected (tests or future
+      // clock overrides). A fake-future nowMs + real-clock DB row meant the stored
+      // timestamp looked ancient from the fake clock's perspective → cooldown bypassed.
+      const nowIso = new Date(now).toISOString();
       try {
         db.prepare(
-          `INSERT INTO cron_job_runs (job_name, started_at, status) VALUES ('pollNews_all_sources_dark', strftime('%Y-%m-%dT%H:%M:%SZ','now'), 'success')`,
-        ).run();
+          `INSERT INTO cron_job_runs (job_name, started_at, status) VALUES ('pollNews_all_sources_dark', ?, 'success')`,
+        ).run(nowIso);
       } catch { /* best-effort — table may not exist in legacy DBs */ }
       const darkMsg =
         "[pollNews] All news sources returned 0 items — possible VPS/network outage. " +
