@@ -60,8 +60,9 @@ export const WATCHLIST_SEED: WatchlistSeedEntry[] = [
   { code: "VCI", exchange: "HOSE",  domain: "securities" },
   { code: "SSI", exchange: "HOSE",  domain: "securities" },
   { code: "HCM", exchange: "HOSE",  domain: "securities" },
+  // Machinery
+  { code: "DAG", exchange: "HOSE",  domain: "machinery" }, // Da Nang Rubber Group — industrial/machinery
   // Pharma
-  { code: "DAG", exchange: "HOSE",  domain: "pharma" },
   { code: "DHG", exchange: "HOSE",  domain: "pharma" },
   // Utilities
   { code: "POW", exchange: "HOSE",  domain: "utilities" },

@@ -12,7 +12,7 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff |
 |---------|-------|----------|------|-------|---------|
-| JANITOR-012 | DRY/fix: DAG misclassified as pharma — should be machinery; reclassify in seedWatchlist.ts | low | JANITOR | code-janitor | — |
+| 1795 | Docker rebuild to activate restart_vps_service — run `docker-compose up -d --build mcp-server` to unblock 1777a | critical | UNBLOCK | ops | — |
 
 ---
 
@@ -67,6 +67,7 @@
 | 1789 | getDeadlineForQuarter DST bug: replace local setDate() with Date.UTC() + setUTCDate() — standard Q4=2026-03-31, banking Q4=2026-04-15 | 2026-04-30 | reports/TASK_REPORT_1789.md |
 | 1790 | alertDigestJob dedup guard: replace `if (db && alreadySentToday(db))` with `effectiveDb = db ?? getDb()` — guard always fires | 2026-04-30 | reports/TASK_REPORT_1790.md |
 | 1791 | assembleAlertDigest intra-digest dedup: Set<string> dedup on message before top-3 slice; overflow reflects unique count | 2026-04-30 | reports/TASK_REPORT_1791.md |
+| JANITOR-012 | DRY/fix: DAG sector pharma→machinery (Da Nang Rubber Group — industrial/machinery) | 2026-04-30 | — |
 | 1792 | BCTC conviction signal debounce: DB-backed per-ticker+quarter 1h cooldown — 10 rapid retries → 1 bug alert (bctcSignalDebounce.ts + bctc_signal_debounce table) | 2026-04-30 | reports/TASK_REPORT_1792.md |
 | 1793 | pollNews all-sources-dark cooldown persists across restarts: INSERT now stores nowMs() clock instead of SQLite strftime('now') — clock mismatch fixed | 2026-04-30 | reports/TASK_REPORT_1793.md |
 | 1786 | Earnings conflict detection: earningsConflictDetector.ts domain service + postSignal wiring — conflict warning appended to payload.detail when two chain_catalyst earnings signals differ | 2026-04-30 | reports/TASK_REPORT_1786.md |

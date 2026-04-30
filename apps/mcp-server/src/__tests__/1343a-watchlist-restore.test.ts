@@ -91,7 +91,7 @@ describe("Task 1343a — Watchlist Restore + Q4 2025 Backfill", () => {
     expect(WATCHLIST_SEED).toHaveLength(26);
   });
 
-  it("WATCHLIST_SEED covers 10 expected sectors (agriculture restored via GVR — task 1787)", () => {
+  it("WATCHLIST_SEED covers 11 expected sectors (agriculture restored via GVR — task 1787; machinery added — JANITOR-012)", () => {
     const domains = new Set(WATCHLIST_SEED.map((e) => e.domain));
     expect(domains).toContain("oil_gas");
     expect(domains).toContain("banking");
@@ -104,7 +104,9 @@ describe("Task 1343a — Watchlist Restore + Q4 2025 Backfill", () => {
     expect(domains).toContain("utilities");
     // agriculture restored: GVR (Vietnam Rubber Group) correctly classified here (task 1787)
     expect(domains).toContain("agriculture");
-    expect(domains.size).toBe(10);
+    // machinery: DAG = Da Nang Rubber Group — industrial/machinery (JANITOR-012)
+    expect(domains).toContain("machinery");
+    expect(domains.size).toBe(11);
   });
 
   it("WATCHLIST_SEED has HOSE and UPCOM entries (HNX removed with JSH and BDI)", () => {
