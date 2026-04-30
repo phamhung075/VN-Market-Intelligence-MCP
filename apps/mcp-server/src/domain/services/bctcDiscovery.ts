@@ -89,40 +89,13 @@ export interface DiscoverOptions {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// ANSI / junk detection (mirrors vnstockBridge.stripAnsiAndDetectJunk —
-// duplicated here because domain layer cannot import from infrastructure)
+// ANSI / junk detection — single source of truth in domain/utils/ansiUtils
+// Re-exported here so existing callers (tests, extractors) continue to work.
 // ─────────────────────────────────────────────────────────────────────────────
 
-export interface JunkCheckResult {
-  /** True when the cleaned output cannot be JSON (box-drawing, ANSI, non-JSON prefix). */
-  junk: boolean;
-  /** True when the value is empty — caller should treat as null/no-result. */
-  isNull: boolean;
-  /** The cleaned (ANSI-stripped) string, ready for JSON.parse. Empty when junk/isNull. */
-  cleaned: string;
-}
-
-/**
- * Strip ANSI escape sequences and Unicode box-drawing characters (emitted by
- * the vnstock `rich` progress bar), then validate that the remainder looks
- * like JSON before passing to JSON.parse.
- *
- * Exported so unit tests can exercise the logic in isolation.
- */
-export function stripAnsiJunk(raw: string): JunkCheckResult {
-  const ANSI_RE = /\x1b\[[0-9;]*[mGKHF]|[\u2500-\u257F\u2800-\u28FF\u256A-\u2593]/g;
-  const cleaned = raw.replace(ANSI_RE, "").trim();
-
-  if (!cleaned || cleaned === "null") {
-    return { junk: false, isNull: true, cleaned: "" };
-  }
-
-  if (cleaned[0] !== "{" && cleaned[0] !== "[") {
-    return { junk: true, isNull: false, cleaned: "" };
-  }
-
-  return { junk: false, isNull: false, cleaned };
-}
+export type { JunkCheckResult } from "../utils/ansiUtils.js";
+export { stripAnsiJunk } from "../utils/ansiUtils.js";
+import { stripAnsiJunk } from "../utils/ansiUtils.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Constants
