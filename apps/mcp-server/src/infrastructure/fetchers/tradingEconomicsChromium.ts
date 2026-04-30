@@ -144,7 +144,8 @@ export async function playwrightScrape(url: string): Promise<MacroIndicators> {
       "--disable-gpu",
       "--no-first-run",
       "--no-zygote",                  // avoids zygote process crash in Docker
-      "--single-process",             // run in single process (less memory, more stable in Docker)
+      // NOTE: --single-process is intentionally omitted — it causes TargetCloseError
+      // on Chromium 147 when page.content() is called after domcontentloaded on SPAs.
       "--disable-extensions",
       "--disable-background-networking",
       "--disable-default-apps",
@@ -526,7 +527,8 @@ export async function playwrightScrapeNews(url: string): Promise<string> {
       "--disable-gpu",
       "--no-first-run",
       "--no-zygote",                  // avoids zygote process crash in Docker
-      "--single-process",             // run in single process (less memory, more stable in Docker)
+      // NOTE: --single-process is intentionally omitted — it causes TargetCloseError
+      // on Chromium 147 when page.content() is called after domcontentloaded on SPAs.
       "--disable-extensions",
       "--disable-background-networking",
       "--disable-default-apps",
