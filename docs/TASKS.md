@@ -2,7 +2,15 @@
 
 Active sprint board. Completed tasks → `docs/TASKS_ARCHIVE.md`.
 
-_Last updated: 2026-04-28 by QA (task 1407 merged — foreignFlow CB three-fix)_
+_Last updated: 2026-04-30 by developer (task 1796 — SSOT stats sync toolCount=122, tasks=392)_
+
+---
+
+## Sprint 1796 — Done
+
+| Task | Title | Status | Agent | Source |
+|------|-------|--------|-------|--------|
+| 1796 | Sync stale SSOT stats files — toolCount=122, testBaseline=8463, tasks=392, sprint=1795 | done | developer | pm |
 
 ---
 
