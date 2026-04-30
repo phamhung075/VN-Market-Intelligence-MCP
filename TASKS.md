@@ -19,7 +19,7 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Started |
 |---------|-------|----------|------|-------|---------|---------|
-| 1777a | VPS price pipeline dark since 2026-04-24 — diagnose + restore VPS price/foreign-flow push | critical | UNBLOCK | ops | — | 2026-04-29 |
+| 1777a | VPS price pipeline dark since 2026-04-24 — diagnose + restore VPS price/foreign-flow push [BLOCKED: needs Docker rebuild to activate restart_vps_service] | critical | UNBLOCK | ops | — | 2026-04-29 |
 
 ---
 
@@ -51,6 +51,7 @@
 | 1776 | vnstock ANSI escape sequence handling + circuit breaker | 2026-04-29 | reports/TASK_REPORT_1776.md |
 | 1407b | SLA monitor: skip price+foreign_flow escalations outside market hours | 2026-04-29 | reports/TASK_REPORT_1407b.md |
 | 1778 | BCTC vnstock junk response guard — Strategy A only in extractCafefUrls, 28 stuck tickers unblocked | 2026-04-30 | reports/TASK_REPORT_1778.md |
+| 1780 | vnstock BCTC fetcher: exponential backoff + box-drawing rate-limit detection | 2026-04-30 | reports/TASK_REPORT_1780.md |
 | 1779a | sshExec infrastructure layer — Bun.spawn args array, 15s timeout, 7 tests | 2026-04-30 | reports/TASK_REPORT_1779a.md |
 | 1779b | restart_vps_service MCP tool — three-layer allowlist handler, registry entry, 8 tests | 2026-04-30 | reports/TASK_REPORT_1779b.md |
 | 1779c | SSH key mount + known_hosts seeding — docker-compose :ro mount, entrypoint.sh ssh-keyscan fail-loud | 2026-04-30 | reports/TASK_REPORT_1779c.md |
