@@ -11,6 +11,8 @@ WORKDIR /app
 # poppler-utils: provides pdftoppm required by pdfOcrWorker for page rendering
 # python3 + python3-pip: required by vnstockBridge.ts which spawns python3 -c
 #   to call the vnstock library (VCI backend for prices / financials / events)
+# openssh-client: required by sshExec.ts (restart_vps_service MCP tool) which
+#   calls ssh binary via Bun.spawn to run systemctl commands on the Vinahost VPS.
 RUN apt-get update && apt-get install -y \
     tesseract-ocr \
     tesseract-ocr-vie \
@@ -18,7 +20,13 @@ RUN apt-get update && apt-get install -y \
     curl \
     python3 \
     python3-pip \
+    openssh-client \
     && rm -rf /var/lib/apt/lists/*
+
+# ── Prepare SSH directory ──────────────────────────────────────────────────
+# /root/.ssh must exist and be chmod 700 before ssh reads known_hosts.
+# The entrypoint seeds known_hosts at container startup via ssh-keyscan.
+RUN mkdir -p /root/.ssh && chmod 700 /root/.ssh
 
 # ── Install Python dependencies ───────────────────────────────────────────
 # vnstock: VN stock data via VCI backend (spawned by vnstockBridge.ts)
@@ -46,6 +54,13 @@ EXPOSE 3000
 # ── Health check ──────────────────────────────────────────────────────────
 HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
     CMD curl -f http://localhost:3000/health || exit 1
+
+# ── Entrypoint — seeds VPS host key into known_hosts at container startup ──
+# Runs ssh-keyscan against VPS_HOST before handing off to CMD.
+# Fails loudly (exit 1) if ssh-keyscan returns no lines — never silently skips.
+COPY apps/mcp-server/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+ENTRYPOINT ["/entrypoint.sh"]
 
 # ── Start ─────────────────────────────────────────────────────────────────
 CMD ["bun", "run", "src/index.ts"]

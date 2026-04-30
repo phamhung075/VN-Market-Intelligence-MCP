@@ -38,6 +38,12 @@ services:
       # Reports bind mount — ensures eveningSummaryJob output is visible on host and persists
       # across container restarts. MCP tools + Claude agents read from this path.
       - ./apps/mcp-server/reports:/app/reports
+      # SSH private key — mounted read-only at /run/secrets/vps_ssh_key (matches DEFAULT_KEY_PATH
+      # in sshExec.ts). Override path with VPS_SSH_KEY_PATH env var if key lives elsewhere.
+      # Key must be chmod 0600 on the host; SSH rejects keys with wider permissions.
+      # To verify inside a running container:
+      #   docker exec mcp-server ls -la /run/secrets/vps_ssh_key
+      - ~/.ssh/id_rsa:/run/secrets/vps_ssh_key:ro
     environment:
       - NODE_ENV=production
       - HOST=0.0.0.0
@@ -56,6 +62,13 @@ services:
       # VPS_PUSH_API_KEY is read from .env via env_file below — do NOT duplicate value here.
       # Docker service hostname for pdf-extractor microservice (replaces localhost:5001 fallback).
       - PDF_EXTRACTOR_URL=http://pdf-extractor:5001
+      # VPS SSH access — used by sshExec.ts (restart_vps_service MCP tool).
+      # VPS_HOST: IP of Vinahost VPS (Vietnam, geo-block bypass).
+      # VPS_SSH_USER: SSH login user on the VPS (typically root).
+      # VPS_SSH_KEY_PATH: path inside container to the mounted SSH private key.
+      - VPS_HOST=125.212.251.27
+      - VPS_SSH_USER=root
+      - VPS_SSH_KEY_PATH=/run/secrets/vps_ssh_key
     env_file:
       - .env
     restart: unless-stopped
