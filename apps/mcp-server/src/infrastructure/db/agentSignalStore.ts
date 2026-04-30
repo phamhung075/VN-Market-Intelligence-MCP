@@ -25,6 +25,7 @@
  */
 
 import type { Database } from "bun:sqlite";
+import { detectEarningsConflict } from "../../domain/services/earningsConflictDetector.js";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -275,6 +276,26 @@ export function postSignal(db: Database, input: PostSignalInput): number {
   // signals into a fake "unknown" stock bucket.
   const resolvedStockCode: string | null =
     !stockCode || stockCode === "unknown" ? null : stockCode;
+
+  // Task 1786: Earnings conflict detection.
+  // For chain_catalyst signals with event_type = "earnings", check whether a prior
+  // signal for the same ticker already carries a different growth figure. If so,
+  // append a conflict warning to payload.detail — does NOT block posting.
+  if (signalType === "chain_catalyst" && resolvedStockCode) {
+    const eventType = (findingData as Record<string, unknown>)["event_type"];
+    if (eventType === "earnings") {
+      const detail = (payload as Record<string, unknown>)["detail"];
+      const warning = detectEarningsConflict(
+        db,
+        resolvedStockCode,
+        typeof detail === "string" ? detail : undefined,
+      );
+      if (warning) {
+        (payload as Record<string, unknown>)["detail"] =
+          typeof detail === "string" ? `${detail} — ${warning}` : warning;
+      }
+    }
+  }
 
   // Check which optional column groups exist. Fresh DBs (with all columns)
   // always hit the full path; legacy DBs with only the base schema still work.
