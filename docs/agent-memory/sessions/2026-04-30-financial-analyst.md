@@ -1,45 +1,65 @@
-# Financial Analyst — Session 2026-04-30 00:00 UTC
+# Financial Analyst — Session Log 2026-04-30
 
-## Analysis Cycle (21:59–22:15 UTC, 2026-04-29)
+**Cycle**: `20260430-2200` (Daily 22:00 UTC)  
+**Timestamp**: 2026-04-30 22:11–22:13 UTC
 
-**Stocks Analyzed:** 6 (VCB, FPT, HPG, GAS, VHM, VIC)
-**BCTC Data Available:** VCB (Q4), FPT (Q4), HPG (Q4) — 3 recently filed
-**Critical Findings:**
-- VCB: Premium valuation, deteriorating sentiment (-3.00 slope)
-- FPT: Sector discount, strong momentum (+1.10 slope), 100% Kinh Dich confidence
-- HPG: BCTC data quality issues (zero revenue extract)
-- GAS/VHM/VIC: No BCTC data yet
+---
 
-**Regime Analysis:**
-- Global Liquidity: NEUTRAL with headwinds
-- Max Deposit Rate: 4.50% (refinancing)
-- Currency Pressure: HIGH (USD/VND 26,355)
-- No G-Bond 10Y yield available (only corporate bond data)
+## Bootstrap Status
 
-**Valuation Verdicts:**
-| Stock | EY_SPREAD | Verdict | Notes |
-|-------|-----------|---------|-------|
-| VCB | +2.59% | FAIR | PE premium, sentiment declining |
-| FPT | +2.75% | FAIR | PE discount, strong fundamentals, bullish sentiment |
+✅ **market_context**: OK (18 open alerts, 10 analyses)  
+✅ **agent_signals**: OK (7 chain findings)  
+✅ **system_status**: OK (healthy)  
 
-**Deadline Watch:**
-- 28 overdue on Q4-2025 filings (deadline was 31/03/2026 or 15/04/2026)
-- FPT, HPG, VCB filed 2026-04-29 ✓
-- VCB Q1-2025 already available from prior cycles
+---
 
-**Fundamental Validation Signals Posted:**
-- Signal #1801: VCB (cycle=20260429-2200)
-- Signal #1802: FPT (cycle=20260429-2200)
+## Regime
 
-## Data Quality Notes
-- BCTC extraction had contamination issues (fixed 2026-04-29 06:10, but may affect older Q1/Q2 data)
-- HPG/FPT newly extracted files show parsing anomalies (zero revenue, inflated ratios)
-- No insider trading signals detected for VCB/FPT
-- No legal risk signals in 30-day window
-- No open chain findings in last 30 minutes
+- **Liquidity**: NEUTRAL
+- **Max Deposit**: 5.00%
+- **Oil/Gold**: HIGH (supports energy, risk-off)
 
-## Next Steps
-- Monitor remaining 25 overdue BCTC filings for new entries
-- Re-analyze HPG, GAS, VHM, VIC when BCTC data arrives
-- Cross-validate sector medians as more Q4-2025 reports file
-- Track Kinh Dich transitions (FPT may shift from Tiệm→Kiển if macro deteriorates)
+---
+
+## Analysis Summary
+
+### VCB (Banking) — Signal 1961
+- **PE**: 14.1 (+57% vs sector) → PREMIUM
+- **Valuation**: EY=7.09%, EY_SPREAD=2.09% → **FAIR**
+- **Verdict**: Fair valuation. Monitor EASING cycle (33 banks cut deposit rates).
+
+### FPT (Tech) — Signal 1962
+- **PE**: 13.8 (-20% vs sector) → DISCOUNT
+- **ROE**: 28.3% (+166% above sector) → EXCEPTIONAL
+- **Sentiment**: TĂNG (+0.49), momentum +1.48%
+- **Verdict**: **CHEAP** — bullish on profitability + discount + momentum.
+
+### VHM (Real Estate) — Signal 1963
+- **PE**: 12.6 (-35% vs sector), **ROE**: 19% (+201%) → fundamentally FAIR
+- **Price Action**: -3.31% (sector -5.1% on VIC)
+- **BCTC Data**: EXTRACTION FAILED (Q1 due TODAY, no PDF)
+- **Verdict**: **HOLD** — fundamentals sound but sector distress overrides. No bullish signal.
+
+---
+
+## Critical Issues
+
+🔴 **BUG FILED (msg_id=1791)**:
+- FPT Q4: ROE corruption (32740124.4%)
+- HPG Q4: Revenue=0 (parsing fail)
+- VCB Q1: No data despite PDF
+- VHM Q1: Missing from queue (due TODAY)
+
+---
+
+## Signals Posted: 3
+
+| ID | Stock | Verdict |
+|----|-------|---------|
+| 1961 | VCB | FAIR |
+| 1962 | FPT | CHEAP |
+| 1963 | VHM | FAIR (HOLD) |
+
+---
+
+**Status**: CYCLE_COMPLETE | BUG_FILED | ALERT_COMMANDER_HANDOFF
