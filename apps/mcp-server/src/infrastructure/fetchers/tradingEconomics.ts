@@ -279,3 +279,65 @@ export function storeMacroIndicators(
     country: indicators.country,
   });
 }
+
+// ---------------------------------------------------------------------------
+// Public API — fetchMacroIndicatorsWithFallback
+// ---------------------------------------------------------------------------
+
+/**
+ * Fetches macro indicators with a two-tier fallback strategy:
+ *
+ *   1. Playwright/Chromium scraper (JS-rendered page, accurate values)
+ *   2. Cheerio HTTP scraper (fast, but returns skeleton HTML on the live site)
+ *
+ * The Chromium scraper is tried first because Trading Economics renders its
+ * indicator table via React — plain HTTP returns no values. The cheerio path
+ * is retained as a fallback for environments where Playwright is not available
+ * (e.g. dev machines without chromium installed) or when the browser crashes.
+ *
+ * @param httpClient - Optional injectable HTTP client for the cheerio fallback.
+ * @returns MacroIndicators — never throws; null fields on total failure.
+ */
+export async function fetchMacroIndicatorsWithFallback(
+  httpClient?: HttpClient,
+): Promise<MacroIndicators> {
+  const fetchedAt = new Date().toISOString();
+  const nullResult: MacroIndicators = {
+    country: "vietnam",
+    cpi: null,
+    gdpGrowth: null,
+    interestRate: null,
+    fetchedAt,
+  };
+
+  // ── Tier 1: Playwright/Chromium (JS-rendered page) ────────────────────────
+  try {
+    const { fetchTradingEconomicsChromium } = await import(
+      "./tradingEconomicsChromium.js"
+    );
+    const chromiumResult = await fetchTradingEconomicsChromium();
+    if (
+      chromiumResult !== null &&
+      (chromiumResult.cpi !== null ||
+        chromiumResult.gdpGrowth !== null ||
+        chromiumResult.interestRate !== null)
+    ) {
+      logger.info("[tradingEconomics] using Chromium scraper result", {
+        cpi: chromiumResult.cpi,
+        gdpGrowth: chromiumResult.gdpGrowth,
+        interestRate: chromiumResult.interestRate,
+      });
+      return chromiumResult;
+    }
+    logger.warn(
+      "[tradingEconomics] Chromium scraper returned null/empty — falling back to cheerio",
+    );
+  } catch (err) {
+    logger.warn("[tradingEconomics] Chromium scraper unavailable — falling back to cheerio", {
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
+
+  // ── Tier 2: Cheerio HTTP scraper (fallback) ───────────────────────────────
+  return fetchMacroIndicators(httpClient);
+}

@@ -68,9 +68,18 @@ export {
 // ── Task 024: Trading Economics macro indicator scraper ────────────────────────
 export {
   fetchMacroIndicators,
+  fetchMacroIndicatorsWithFallback,
   storeMacroIndicators,
   type MacroIndicators,
 } from "./tradingEconomics.js";
+
+// ── Task 1798: Trading Economics Playwright/Chromium scraper ──────────────────
+export {
+  fetchTradingEconomicsChromium,
+  playwrightScrape,
+  type TeChromiumDeps,
+  type TeCacheEntry,
+} from "./tradingEconomicsChromium.js";
 
 // ── Task 025: Yahoo Finance commodity fetcher ──────────────────────────────────
 export {
