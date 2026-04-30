@@ -61,5 +61,6 @@
 | 1782 | BCTC enricher Q1-2026: seed queue at startup + park exhausted rows as url_not_found after 5 attempts | 2026-04-30 | reports/TASK_REPORT_1782.md |
 | 1783 | Morning bulletin: hide/mask foreign flow section when data stale; fix top-5 sort to |net_flow| desc | 2026-04-30 | reports/TASK_REPORT_1783.md |
 | 1784 | Sector alerts: render as sector-level not per-ticker; deduplicate in morning bulletin | 2026-04-30 | reports/TASK_REPORT_1784.md |
+| 1785 | France summary change_pct: prev-close-to-close reference; formatPct(null) → N/A | 2026-04-30 | reports/TASK_REPORT_1785.md |
 
 ---
