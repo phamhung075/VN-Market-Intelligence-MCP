@@ -297,8 +297,25 @@ export async function assembleAlertDigest(
         return b.triggered_at.localeCompare(a.triggered_at);
       });
 
-      const top3 = sorted.slice(0, 3);
-      const overflow = sorted.length - top3.length;
+      // Deduplicate by message string before slicing (Task 1791).
+      // Within a single digest window the same alert fires many times with
+      // an identical message (e.g. "VRE volume spike 3.3×" × 24).
+      // We keep the first occurrence of each unique message (which is the
+      // highest-severity / most-recent entry because `sorted` is ordered by
+      // severity DESC then triggered_at DESC).
+      // Raw count is preserved; overflow is derived from unique count.
+      const seen = new Set<string>();
+      const deduplicated: AlertRow[] = [];
+      for (const a of sorted) {
+        const key = a.message ?? "(không có nội dung)";
+        if (!seen.has(key)) {
+          seen.add(key);
+          deduplicated.push(a);
+        }
+      }
+
+      const top3 = deduplicated.slice(0, 3);
+      const overflow = deduplicated.length - top3.length;
       const topMessages = top3.map((a) => a.message ?? "(không có nội dung)");
       const topTriggeredAt = top3.map((a) => a.triggered_at ?? "");
 
