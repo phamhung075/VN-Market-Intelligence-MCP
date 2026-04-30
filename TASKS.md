@@ -69,5 +69,8 @@
 | 1791 | assembleAlertDigest intra-digest dedup: Set<string> dedup on message before top-3 slice; overflow reflects unique count | 2026-04-30 | reports/TASK_REPORT_1791.md |
 | 1792 | BCTC conviction signal debounce: DB-backed per-ticker+quarter 1h cooldown — 10 rapid retries → 1 bug alert (bctcSignalDebounce.ts + bctc_signal_debounce table) | 2026-04-30 | reports/TASK_REPORT_1792.md |
 | 1793 | pollNews all-sources-dark cooldown persists across restarts: INSERT now stores nowMs() clock instead of SQLite strftime('now') — clock mismatch fixed | 2026-04-30 | reports/TASK_REPORT_1793.md |
+| 1786 | Earnings conflict detection: earningsConflictDetector.ts domain service + postSignal wiring — conflict warning appended to payload.detail when two chain_catalyst earnings signals differ | 2026-04-30 | reports/TASK_REPORT_1786.md |
+| 1788 | HCM ticker false positive fix: GEOGRAPHIC_CONTEXT_MAP look-behind guard in newsNormalizer.ts — TP.HCM / TP HCM / TPHCM no longer extract HCM ticker | 2026-04-30 | reports/TASK_REPORT_1788.md |
+| 1794 | EOD Vol+RSI populated: WatchlistMover.volume from market_prices SQL + rsi14 threaded from taSummary; formatMoversSection fmtMoverLine renders Vol: X.XM and RSI: X.X | 2026-04-30 | reports/TASK_REPORT_1794.md |
 
 ---
