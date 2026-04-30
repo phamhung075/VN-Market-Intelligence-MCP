@@ -42,6 +42,7 @@ export type DomainType =
   | 'automotive'       // VEA (VEAM — Honda/Toyota/Ford JV), SVC, HHS
   | 'construction'     // HHV, CTD, VCG, HBC — infrastructure CAPEX (task 250)
   | 'energy'           // GEG, REE, PC1 — renewable energy projects (task 250)
+  | 'machinery'        // DAG — Da Nang Rubber Group, industrial machinery (task 1796f)
   | 'other'
 
 // ═══════════════════════════════════════════════════════════════════════════

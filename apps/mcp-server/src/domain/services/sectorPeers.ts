@@ -168,6 +168,9 @@ const SECTOR_PEERS: Record<DomainType, { code: string; exchange: string }[]> = {
     { code: "PC1", exchange: "HOSE" },
     { code: "BCG", exchange: "HOSE" },
   ],
+  machinery: [
+    { code: "DAG", exchange: "HOSE" },  // Da Nang Rubber Group — máy móc / công nghiệp
+  ],
   pharmaceutical: [
     { code: "DHG", exchange: "HOSE" },
     { code: "IMP", exchange: "HOSE" },
@@ -201,6 +204,7 @@ export const SECTOR_NAME_VI: Record<DomainType, string> = {
   automotive: "Ô tô & Cơ khí",
   construction: "Xây dựng & Hạ tầng",
   energy: "Năng lượng tái tạo",
+  machinery: "Máy móc / Công nghiệp",
   pharmaceutical: "Dược phẩm (mở rộng)",
   other: "Khác",
 };
