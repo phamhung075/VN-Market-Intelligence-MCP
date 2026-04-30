@@ -82,6 +82,10 @@ export interface WatchlistMover {
   price: number;
   /** Exchange: HOSE | HNX | UPCOM */
   exchange: string;
+  /** Trading volume for the day — from market_prices.volume or daily_ohlcv.volume. undefined when unavailable. */
+  volume?: number;
+  /** RSI(14) value — threaded from taSummary after TA computation. null when insufficient candles, undefined when not yet computed. */
+  rsi14?: number | null;
 }
 
 /**
@@ -216,6 +220,7 @@ interface WatchlistMoverRow {
   exchange: string | null;
   price: number | null;
   change_pct: number | null;
+  volume: number | null;
 }
 
 interface WatchlistCodeRow {
@@ -536,6 +541,7 @@ async function _assembleEveningSummaryImpl(
         SELECT
           t.code,
           t.close AS today_close,
+          t.volume AS today_volume,
           CASE
             WHEN y.close IS NOT NULL AND y.close <> 0
             THEN (t.close - y.close) * 100.0 / y.close
@@ -550,7 +556,8 @@ async function _assembleEveningSummaryImpl(
       SELECT w.code,
              ${exchangeExpr} AS exchange,
              COALESCE(mp.price, oc.today_close) AS price,
-             COALESCE(mp.change_pct, oc.computed_pct) AS change_pct
+             COALESCE(mp.change_pct, oc.computed_pct) AS change_pct,
+             COALESCE(mp.volume, oc.today_volume) AS volume
       FROM watchlist w
       LEFT JOIN market_prices mp ON mp.code = w.code
                                  AND mp.updated_at >= datetime('now', '-3 days')
@@ -562,7 +569,8 @@ async function _assembleEveningSummaryImpl(
       SELECT w.code,
              ${exchangeExpr} AS exchange,
              mp.price,
-             mp.change_pct
+             mp.change_pct,
+             mp.volume
       FROM watchlist w
       LEFT JOIN market_prices mp ON mp.code = w.code
                                  AND mp.updated_at >= datetime('now', '-3 days')
@@ -572,11 +580,14 @@ async function _assembleEveningSummaryImpl(
 
   const moverRows = db.prepare<WatchlistMoverRow, []>(moverSql).all();
 
+  // Build initial movers — volume threaded from query; rsi14 will be patched after TA step
   const watchlistMovers: WatchlistMover[] = moverRows.map((row) => ({
     code: row.code,
     changePct: row.change_pct ?? 0,
     price: row.price ?? 0,
     exchange: row.exchange ?? "HOSE",
+    ...(row.volume != null ? { volume: row.volume } : {}),
+    rsi14: null, // populated after taSummary is computed below
   }));
 
   // ── Step 4: TA signals ────────────────────────────────────────────────────
@@ -611,6 +622,20 @@ async function _assembleEveningSummaryImpl(
       ohlcvRowsMin: rowCounts.length > 0 ? Math.min(...rowCounts) : 0,
       ohlcvRowsMax: rowCounts.length > 0 ? Math.max(...rowCounts) : 0,
     };
+
+    // ── Thread RSI-14 from taSummary into watchlistMovers ────────────────
+    // taSummary is keyed by code; movers default to rsi14=null (set above).
+    // When a signal exists for a mover's code, copy its rsi14 value.
+    if (signals.length > 0) {
+      const rsiMap = new Map<string, number | null>(
+        signals.map((s) => [s.code, s.rsi14]),
+      );
+      for (const mover of watchlistMovers) {
+        if (rsiMap.has(mover.code)) {
+          mover.rsi14 = rsiMap.get(mover.code) ?? null;
+        }
+      }
+    }
   } catch (err) {
     logger.warn("[assembleEveningSummary] TA step failed", {
       error: err instanceof Error ? err.message : String(err),
