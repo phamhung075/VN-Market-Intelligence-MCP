@@ -20,6 +20,7 @@
 | Task ID | Title | Priority | Type | Owner | Handoff | Started |
 |---------|-------|----------|------|-------|---------|---------|
 | 1777a | VPS price pipeline dark since 2026-04-24 — diagnose + restore VPS price/foreign-flow push [BLOCKED: needs Docker rebuild to activate restart_vps_service] | critical | UNBLOCK | ops | — | 2026-04-29 |
+| 1784 | Sector alerts: render as sector-level not per-ticker; deduplicate in morning bulletin | medium | FIX | developer | — | 2026-04-30 |
 
 ---
 
@@ -59,5 +60,6 @@
 | JANITOR-011 | DRY: extract ANSI+box-drawing regex to domain/utils/ansiUtils.ts — 3 inline copies removed | 2026-04-30 | reports/TASK_REPORT_JANITOR011.md |
 | 1781 | classifyFilingStatus off-by-one: deadline day now SAP_DEN not QUA_HAN — calendar-date UTC comparison | 2026-04-30 | reports/TASK_REPORT_1781.md |
 | 1782 | BCTC enricher Q1-2026: seed queue at startup + park exhausted rows as url_not_found after 5 attempts | 2026-04-30 | reports/TASK_REPORT_1782.md |
+| 1783 | Morning bulletin: hide/mask foreign flow section when data stale; fix top-5 sort to |net_flow| desc | 2026-04-30 | reports/TASK_REPORT_1783.md |
 
 ---
