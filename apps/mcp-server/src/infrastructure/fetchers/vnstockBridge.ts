@@ -19,6 +19,7 @@
  */
 
 import { logger } from "../logger.js";
+import { ANSI_JUNK_RE, ANSI_ESCAPE_RE, BOX_DRAWING_RE } from "../../domain/utils/ansiUtils.js";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -167,8 +168,7 @@ export interface JunkCheckResult {
 export function stripAnsiAndDetectJunk(raw: string, label: string): JunkCheckResult {
   // Strip ESC sequences (colors, cursor moves) and Unicode box-drawing / Braille ranges
   // used by the `rich` library's progress bar and spinner components.
-  const ANSI_RE = /\x1b\[[0-9;]*[mGKHF]|[\u2500-\u257F\u2800-\u28FF\u256A-\u2593]/g;
-  const cleaned = raw.replace(ANSI_RE, "").trim();
+  const cleaned = raw.replace(ANSI_JUNK_RE, "").trim();
 
   // Empty or literal "null" — legitimate empty result, not junk.
   if (!cleaned || cleaned === "null") {
@@ -191,14 +191,6 @@ export function stripAnsiAndDetectJunk(raw: string, label: string): JunkCheckRes
 // ---------------------------------------------------------------------------
 
 /**
- * Box-drawing Unicode ranges used by vnstock's `rich` progress bar.
- * These are emitted to stdout when the VCI API rate-limits or blocks.
- * Distinct from generic Python error text (which has no box-drawing chars).
- */
-// U+2500–U+257F = Box Drawing block (covers ─ │ ╭ ╮ ╰ ╯ and all variants)
-const BOX_DRAWING_RE = /[\u2500-\u257F]/;
-
-/**
  * Returns true when the raw Python stdout looks like a vnstock rate-limit
  * response — i.e. it contains box-drawing characters from the `rich` UI.
  *
@@ -209,8 +201,8 @@ const BOX_DRAWING_RE = /[\u2500-\u257F]/;
  */
 export function isRateLimitResponse(raw: string): boolean {
   if (!raw || raw.trim() === "null") return false;
-  // Strip ANSI escapes first, then check for box-drawing content
-  const stripped = raw.replace(/\x1b\[[0-9;]*[mGKHF]/g, "");
+  // Strip ANSI escape sequences only (keep box-drawing chars so we can detect them)
+  const stripped = raw.replace(ANSI_ESCAPE_RE, "");
   return BOX_DRAWING_RE.test(stripped);
 }
 
