@@ -187,6 +187,56 @@ export function stripAnsiAndDetectJunk(raw: string, label: string): JunkCheckRes
 }
 
 // ---------------------------------------------------------------------------
+// Rate-limit detection and exponential backoff (Task 1780)
+// ---------------------------------------------------------------------------
+
+/**
+ * Box-drawing Unicode ranges used by vnstock's `rich` progress bar.
+ * These are emitted to stdout when the VCI API rate-limits or blocks.
+ * Distinct from generic Python error text (which has no box-drawing chars).
+ */
+// U+2500–U+257F = Box Drawing block (covers ─ │ ╭ ╮ ╰ ╯ and all variants)
+const BOX_DRAWING_RE = /[\u2500-\u257F]/;
+
+/**
+ * Returns true when the raw Python stdout looks like a vnstock rate-limit
+ * response — i.e. it contains box-drawing characters from the `rich` UI.
+ *
+ * Distinct from generic errors (AttributeError, etc.) which are NOT rate-limit.
+ * Empty or "null" strings are NOT rate-limit (they are legitimate null results).
+ *
+ * Exported for unit tests.
+ */
+export function isRateLimitResponse(raw: string): boolean {
+  if (!raw || raw.trim() === "null") return false;
+  // Strip ANSI escapes first, then check for box-drawing content
+  const stripped = raw.replace(/\x1b\[[0-9;]*[mGKHF]/g, "");
+  return BOX_DRAWING_RE.test(stripped);
+}
+
+/** Options for calcBackoffMs. */
+export interface BackoffOptions {
+  baseMs: number;
+  jitterMs: number;
+  maxMs: number;
+}
+
+/**
+ * Exponential backoff with random jitter.
+ * Formula: min(baseMs * 2^attempt + rand(0, jitterMs), maxMs)
+ *
+ * Exported for unit tests.
+ */
+export function calcBackoffMs(attempt: number, opts: BackoffOptions): number {
+  const exponential = opts.baseMs * Math.pow(2, attempt);
+  const jitter = Math.random() * opts.jitterMs;
+  return Math.min(exponential + jitter, opts.maxMs);
+}
+
+const BACKOFF_OPTS: BackoffOptions = { baseMs: 2_000, jitterMs: 1_000, maxMs: 30_000 };
+const MAX_RATE_LIMIT_RETRIES = 3;
+
+// ---------------------------------------------------------------------------
 // Python helper: run script and parse JSON
 // ---------------------------------------------------------------------------
 
@@ -246,6 +296,14 @@ async function runPython<T>(script: string, label: string): Promise<T | null> {
     }
 
     const trimmed = stdout.trim();
+
+    // Detect rate-limit (box-drawing) response BEFORE generic junk check.
+    // Rate-limit = VCI is throttling us → back off and retry (handled by caller loop).
+    // Generic junk (non-JSON text) = Python error → no point retrying immediately.
+    if (isRateLimitResponse(trimmed)) {
+      return "RATE_LIMITED" as unknown as T;
+    }
+
     const check = stripAnsiAndDetectJunk(trimmed, label);
     if (check.isNull || check.junk) return null;
     return JSON.parse(check.cleaned) as T;
@@ -255,6 +313,41 @@ async function runPython<T>(script: string, label: string): Promise<T | null> {
     });
     return null;
   }
+}
+
+/** Sentinel returned by runPython when the VCI API returns a rate-limit response. */
+const RATE_LIMITED = "RATE_LIMITED" as const;
+
+/**
+ * Wraps runPython with exponential backoff on RATE_LIMITED responses.
+ * On each rate-limit detection, logs WARN with {label, attempt, wait_ms}
+ * and waits before retrying. Gives up after MAX_RATE_LIMIT_RETRIES.
+ */
+async function runPythonWithBackoff<T>(script: string, label: string): Promise<T | null> {
+  for (let attempt = 0; attempt <= MAX_RATE_LIMIT_RETRIES; attempt++) {
+    const result = await runPython<T | typeof RATE_LIMITED>(script, label);
+
+    if (result !== RATE_LIMITED) {
+      return result as T | null;
+    }
+
+    // Rate-limited — log and back off (unless this was the last attempt)
+    if (attempt < MAX_RATE_LIMIT_RETRIES) {
+      const wait_ms = Math.round(calcBackoffMs(attempt, BACKOFF_OPTS));
+      logger.warn(`[vnstock:${label}] RATE_LIMITED — backing off before retry`, {
+        label,
+        attempt,
+        wait_ms,
+      });
+      await new Promise((resolve) => setTimeout(resolve, wait_ms));
+    } else {
+      logger.warn(`[vnstock:${label}] RATE_LIMITED — max retries exhausted, giving up`, {
+        label,
+        attempts: MAX_RATE_LIMIT_RETRIES + 1,
+      });
+    }
+  }
+  return null;
 }
 
 // ---------------------------------------------------------------------------
@@ -370,7 +463,7 @@ except Exception as e:
 `;
 
 export async function fetchVnstockFinancials(code: string): Promise<VnstockFinancials | null> {
-  const result = await runPython<VnstockFinancials>(FINANCE_SCRIPT(code), `finance:${code}`);
+  const result = await runPythonWithBackoff<VnstockFinancials>(FINANCE_SCRIPT(code), `finance:${code}`);
   if (result) {
     logger.info("[vnstock] fetched financials", {
       code, year: result.yearReport, quarter: result.quarter,
@@ -414,7 +507,7 @@ except Exception as e:
 `;
 
 export async function fetchVnstockTradingStats(code: string): Promise<VnstockTradingStats | null> {
-  const result = await runPython<VnstockTradingStats>(TRADING_STATS_SCRIPT(code), `stats:${code}`);
+  const result = await runPythonWithBackoff<VnstockTradingStats>(TRADING_STATS_SCRIPT(code), `stats:${code}`);
   if (result) {
     logger.info("[vnstock] fetched trading stats", {
       code, foreignRoom: result.foreignRoom, high52w: result.high52w,
@@ -691,7 +784,7 @@ except Exception as e:
 `;
 
 export async function fetchVnstockBalanceSheet(code: string): Promise<VnstockBalanceSheet | null> {
-  const result = await runPython<VnstockBalanceSheet>(BALANCE_SHEET_SCRIPT(code), `balance_sheet:${code}`);
+  const result = await runPythonWithBackoff<VnstockBalanceSheet>(BALANCE_SHEET_SCRIPT(code), `balance_sheet:${code}`);
   if (result) {
     logger.info("[vnstock] fetched balance sheet", {
       code, year: result.yearReport, quarter: result.quarter,
@@ -750,7 +843,7 @@ except Exception as e:
 `;
 
 export async function fetchVnstockCashFlow(code: string): Promise<VnstockCashFlow | null> {
-  const result = await runPython<VnstockCashFlow>(CASH_FLOW_SCRIPT(code), `cash_flow:${code}`);
+  const result = await runPythonWithBackoff<VnstockCashFlow>(CASH_FLOW_SCRIPT(code), `cash_flow:${code}`);
   if (result) {
     logger.info("[vnstock] fetched cash flow", {
       code, year: result.yearReport, quarter: result.quarter,
