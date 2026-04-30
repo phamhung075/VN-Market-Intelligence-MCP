@@ -200,12 +200,24 @@ export function classifyFilingStatus(today: Date, input: ClassifyInput): FilingS
     return { status: "DA_NOP", filingDate };
   }
 
-  const todayMs = today.getTime();
-  const deadlineMs = deadline.getTime();
-  const diffMs = deadlineMs - todayMs;
-  const daysUntilDeadline = Math.floor(diffMs / MS_PER_DAY);
+  // Compare calendar dates (YYYY-MM-DD) to avoid time-of-day bias.
+  // Raw millisecond subtraction causes off-by-one: a UTC-midnight deadline
+  // becomes negative once any wall-clock time has elapsed on the same day.
+  const todayDate = today.toISOString().slice(0, 10);
+  const deadlineDate = deadline.toISOString().slice(0, 10);
+  const todayUTC = Date.UTC(
+    parseInt(todayDate.slice(0, 4), 10),
+    parseInt(todayDate.slice(5, 7), 10) - 1,
+    parseInt(todayDate.slice(8, 10), 10),
+  );
+  const deadlineUTC = Date.UTC(
+    parseInt(deadlineDate.slice(0, 4), 10),
+    parseInt(deadlineDate.slice(5, 7), 10) - 1,
+    parseInt(deadlineDate.slice(8, 10), 10),
+  );
+  const daysUntilDeadline = Math.round((deadlineUTC - todayUTC) / MS_PER_DAY);
 
-  // Rule 2: overdue
+  // Rule 2: overdue — deadline calendar date is strictly before today calendar date
   if (daysUntilDeadline < 0) {
     return { status: "QUA_HAN", daysUntilDeadline };
   }
