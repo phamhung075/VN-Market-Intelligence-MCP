@@ -16,6 +16,10 @@
 
 import type { RssItem } from "./rss.js";
 import { logger } from "../logger.js";
+import {
+  checkNewsApiLimit,
+  incrementNewsApiCount,
+} from "./newsapiRateLimit.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Constants
@@ -76,6 +80,19 @@ export async function fetchNewsApi(config: NewsApiConfig): Promise<RssItem[]> {
     return [];
   }
 
+  // ── Daily rate-limit guard (100 req/day free tier, capped at 90) ──────────
+  // Also enforces a 30-minute minimum interval between calls so a 15-min
+  // intelligence cycle cannot exceed 48 calls/day.
+  const todayDate = new Date().toISOString().slice(0, 10); // "YYYY-MM-DD"
+  const limitCheck = checkNewsApiLimit(todayDate);
+  if (!limitCheck.allowed) {
+    logger.warn("[newsapi] skipping fetch — rate limit guard", {
+      reason: limitCheck.reason,
+      count: limitCheck.count,
+    });
+    return [];
+  }
+
   const query = config.query ?? DEFAULT_QUERY;
   const url = new URL(NEWSAPI_URL);
   url.searchParams.set("q", query);
@@ -122,6 +139,11 @@ export async function fetchNewsApi(config: NewsApiConfig): Promise<RssItem[]> {
       }));
 
     logger.info("[newsapi] fetched articles", { count: items.length });
+
+    // Persist the call — increment daily counter regardless of result count
+    // so failed API responses still consume a quota slot.
+    incrementNewsApiCount(todayDate);
+
     return items;
   } catch (err) {
     logger.error("[newsapi] fetch failed", {

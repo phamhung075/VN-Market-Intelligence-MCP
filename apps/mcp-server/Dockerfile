@@ -13,6 +13,8 @@ WORKDIR /app
 #   to call the vnstock library (VCI backend for prices / financials / events)
 # openssh-client: required by sshExec.ts (restart_vps_service MCP tool) which
 #   calls ssh binary via Bun.spawn to run systemctl commands on the Vinahost VPS.
+# chromium + chromium system deps: required by tradingEconomicsChromium.ts which
+#   uses playwright-core to scrape the JS-rendered Trading Economics indicators page.
 RUN apt-get update && apt-get install -y \
     tesseract-ocr \
     tesseract-ocr-vie \
@@ -21,7 +23,19 @@ RUN apt-get update && apt-get install -y \
     python3 \
     python3-pip \
     openssh-client \
+    chromium \
+    libnss3 \
+    libatk-bridge2.0-0 \
+    libdrm2 \
+    libxkbcommon0 \
+    libgbm1 \
+    libasound2 \
     && rm -rf /var/lib/apt/lists/*
+
+# Set Playwright to use the system Chromium instead of downloading its own binary.
+# This avoids a ~300 MB download during image build and uses the already-installed
+# chromium package above.
+ENV PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium
 
 # ── Prepare SSH directory ──────────────────────────────────────────────────
 # /root/.ssh must exist and be chmod 700 before ssh reads known_hosts.
