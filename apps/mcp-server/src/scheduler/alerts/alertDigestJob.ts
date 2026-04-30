@@ -22,6 +22,7 @@
 import type { Database } from "bun:sqlite";
 import type { AlertDigest } from "../../application/usecases/assembleAlertDigest.js";
 import { logger } from "../../infrastructure/logger.js";
+import { getDb } from "../../infrastructure/db/schema.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Guards
@@ -63,12 +64,14 @@ function alreadySentToday(db: Database): boolean {
  * `assembleAlertDigest` in tests, which would trigger DB dependencies).
  * In production the default `digestFn` dynamically imports `assembleAlertDigest`.
  *
- * Accepts an optional `db` for testing the DB-backed dedup guard. In
- * production `jobs.ts` passes `getDb()` via the `recordJobRun` wrapper,
- * so the success row is written after each successful send.
+ * Accepts an optional `db` for testing the DB-backed dedup guard. When
+ * omitted the production DB is resolved via `getDb()`. The guard always runs
+ * regardless of whether `db` is supplied — the old `if (db && ...)` pattern
+ * was a bug: when `db` was undefined the guard was skipped entirely, allowing
+ * the digest to fire multiple times in the same UTC day.
  *
  * @param digestFn - Optional override for the digest function (injectable for tests)
- * @param db       - Optional DB instance for the dedup guard (injectable for tests)
+ * @param db       - Optional DB instance for the dedup guard; falls back to getDb()
  */
 export async function runAlertDigest(
   digestFn?: () => Promise<AlertDigest>,
@@ -79,8 +82,12 @@ export async function runAlertDigest(
     return;
   }
 
-  // DB-backed dedup: primary guard — survives server restarts
-  if (db && alreadySentToday(db)) {
+  // DB-backed dedup: primary guard — survives server restarts.
+  // Always resolves a DB instance: injected db takes priority (tests / callers
+  // that already hold a handle), falling back to getDb() in production.
+  // The guard is unconditional — it never depends on db being truthy.
+  const effectiveDb = db ?? getDb();
+  if (alreadySentToday(effectiveDb)) {
     logger.debug("[alertDigestJob] digest already sent today (DB guard) — skipping");
     return;
   }
