@@ -15,11 +15,11 @@
   "knowledgeFileCount": 22,
   "devAgentCount": 13,
   "analysisAgentCount": 9,
-  "totalTasksDone": 403,
+  "totalTasksDone": 404,
   "analysisMode": "value_investor",
   "briefingFilesCreated": 30,
   "briefingArchiveQI": 0,
   "briefingArchiveQII": 0,
-  "lastFixApplied": "Task 1777b DONE: foreign-flow dedup + CB self-healing regression tests (12 tests). No prod code change — existing ON CONFLICT + CB already correct. 8314 total, 8258 pass, 18 pre-existing fail. Merged 2026-04-29.",
-  "currentSprintNotes": "Sprint 1800 DONE 2026-05-01. Root bunfig.toml restored (was broken by ghost-file deletion), .gitignore hardened to block *.toml.bak + ghost dirs. totalTasksDone=403. Sprint 1801 planned: Puppeteer launch config DRY (JANITOR-011, low priority)."
+  "lastFixApplied": "JANITOR-011b DONE: extract buildChromiumLaunchConfig() + TE_USER_AGENT — DRY in tradingEconomicsChromium.ts. 29 tests pass. Merged 2026-05-01.",
+  "currentSprintNotes": "Sprint 1801 DONE 2026-05-01. Puppeteer launch config DRY complete — buildChromiumLaunchConfig() + TE_USER_AGENT extracted, both scrapers use shared helpers. totalTasksDone=404."
 }

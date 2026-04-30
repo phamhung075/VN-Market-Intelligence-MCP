@@ -12,7 +12,6 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff |
 |---------|-------|----------|------|-------|---------|
-| JANITOR-011 | DRY: extract duplicated Puppeteer launch config (User-Agent, args, executablePath fallback) in tradingEconomicsChromium.ts | low | refactor | developer | — |
 
 ---
 
@@ -34,6 +33,7 @@
 
 | Task ID | Title | Merged | Reports |
 |---------|-------|--------|---------|
+| JANITOR-011b | DRY: extract buildChromiumLaunchConfig() + TE_USER_AGENT in tradingEconomicsChromium.ts | 2026-05-01 | — |
 | 1800 | Fix TargetCloseError on Chromium SPA pages — --single-process removal, shm_size 256mb, domcontentloaded | 2026-04-30 | reports/TASK_REPORT_1800.md |
 | te-chromium-news | Trading Economics Chromium news fetcher — fetchTradingEconomicsNews(), 30-min cache, teChromiumNews pollNews slot | 2026-04-30 | reports/TASK_REPORT_te_chromium_news.md |
 | te-chromium-fix | Trading Economics Chromium: playwright-core→puppeteer-core, Debian trixie Dockerfile fixes | 2026-04-30 | reports/TASK_REPORT_te_chromium_fix.md |
