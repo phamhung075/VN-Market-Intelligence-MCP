@@ -85,6 +85,8 @@ export interface SourceFetchers {
   reuters?: () => Promise<RssItem[]>;
   vneconomy?: () => Promise<RssItem[]>;
   tradingeconomics?: () => Promise<RssItem[]>;
+  /** Task 1799: Trading Economics Vietnam news feed via Chromium scraper. */
+  teChromiumNews?: () => Promise<RssItem[]>;
   // VPS-push-only sources (no local fetcher — data arrives via POST /api/push-news)
   vietstock?: () => Promise<RssItem[]>;
   vietnambiz?: () => Promise<RssItem[]>;
@@ -348,6 +350,35 @@ async function defaultTradingEconomicsFetcher(): Promise<RssItem[]> {
 }
 
 /**
+ * Task 1799: Trading Economics Vietnam news feed via Chromium scraper.
+ *
+ * Maps TENewsItem → RssItem so the item flows through the standard
+ * normalizeNews → cascade → alert pipeline unchanged.
+ *
+ * Field mapping:
+ *   title    → title
+ *   url      → url
+ *   summary  → content
+ *   date     → publishedAt (relative-date parsed to ISO)
+ *   category → appended to content as "[category]"
+ *   source   → "tradingeconomics" (matches SOURCE_DISPLAY_NAMES key)
+ */
+async function defaultTeChromiumNewsFetcher(): Promise<RssItem[]> {
+  const { breakers } = await import("../../infrastructure/circuitBreakerRegistry.js");
+  const { fetchTradingEconomicsNews, parseRelativeDate } = await import(
+    "../../infrastructure/fetchers/tradingEconomicsChromium.js"
+  );
+  const items = await breakers.tradingEconomics.execute(() => fetchTradingEconomicsNews(20));
+  return items.map((item) => ({
+    title:       item.title,
+    url:         item.url,
+    content:     item.category ? `${item.summary} [${item.category}]` : item.summary,
+    publishedAt: parseRelativeDate(item.date),
+    source:      "tradingeconomics",
+  } satisfies RssItem));
+}
+
+/**
  * NewsAPI.org fallback fetcher — activated when Reuters VPS push is stale >90 min.
  * Returns [] immediately when no API key configured (stub path). Task 1345a.
  */
@@ -519,7 +550,7 @@ export async function pollNews(options: PollNewsOptions = {}): Promise<PollNewsR
   // Known keys — local sources with defaults + named VPS-only sources
   const knownKeys: Record<string, true> = {
     cafef: true, vnexpress: true, reuters: true, vneconomy: true,
-    tradingeconomics: true, vietstock: true, vietnambiz: true,
+    tradingeconomics: true, teChromiumNews: true, vietstock: true, vietnambiz: true,
     vnbusiness: true, tuoitre: true, nhandan: true, nld: true,
     newsapi: true,
   };
@@ -541,6 +572,8 @@ export async function pollNews(options: PollNewsOptions = {}): Promise<PollNewsR
     reuters:          options.fetchers?.reuters          ?? defaultReutersFetcher,
     vneconomy:        options.fetchers?.vneconomy        ?? defaultVnEconomyFetcher,
     tradingeconomics: options.fetchers?.tradingeconomics ?? defaultTradingEconomicsFetcher,
+    // Task 1799: TE Vietnam news feed via Chromium scraper (separate source slot)
+    teChromiumNews:   options.fetchers?.teChromiumNews   ?? defaultTeChromiumNewsFetcher,
   };
   // Task 1345a: add newsapi fetcher when Reuters is stale OR caller explicitly injects it
   if (reutersIsStale || options.fetchers?.newsapi !== undefined) {
@@ -591,6 +624,8 @@ export async function pollNews(options: PollNewsOptions = {}): Promise<PollNewsR
     vnexpress: "VnExpress RSS",
     vneconomy: "VnEconomy RSS",
     tradingeconomics: "Trading Economics",
+    // Task 1799: Chromium-scraped news feed (distinct slot from RSS tradingeconomics)
+    teChromiumNews: "Trading Economics News",
   };
 
   // Sources that return [] immediately when unconfigured (no API key / enabled:false).

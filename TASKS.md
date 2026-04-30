@@ -12,6 +12,7 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff |
 |---------|-------|----------|------|-------|---------|
+| JANITOR-011 | DRY: extract duplicated Puppeteer launch config (User-Agent, args, executablePath fallback) in tradingEconomicsChromium.ts | low | refactor | developer | — |
 
 ---
 
@@ -33,6 +34,7 @@
 
 | Task ID | Title | Merged | Reports |
 |---------|-------|--------|---------|
+| 1800 | Fix broken root bunfig.toml + delete ghost files + harden .gitignore | 2026-05-01 | — |
 | te-chromium-fix | Trading Economics Chromium: playwright-core→puppeteer-core, Debian trixie Dockerfile fixes | 2026-04-30 | reports/TASK_REPORT_te_chromium_fix.md |
 | 1799 | Stats + docs sync — archive 1777/hotfix-bctc-parser2, add 1797/1798 Done rows, sync stats | 2026-04-30 | — |
 | 1798 | Trading Economics Chromium scraper | 2026-04-30 | — |
