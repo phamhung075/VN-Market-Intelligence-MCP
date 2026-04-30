@@ -88,6 +88,7 @@ import { registerSbvDebugTriggerTool } from "./system/sbvDebugTriggerTool.js";
 import { registerForeignFlowDebugTriggerTool } from "./system/foreignFlowDebugTriggerTool.js";
 import { registerCarryTools } from "./macro/carryTools.js";
 import { registerDinhGiaTools } from "./macro/dinhGiaTools.js";
+import { registerVpsServiceRestartTool } from "./system/vpsServiceRestartTool.js";
 
 /**
  * Flat array of all MCP tool registration functions.
@@ -176,4 +177,5 @@ export const toolRegistry: Array<(server: McpServer) => void> = [
   registerBctcSkipTool,                 // Task 1343d: bctc_skip_queue_item (+1 → 114)
   registerCarryTools,                   // Task 1423e: get_macro_calendar (+1 → 115)
   registerDinhGiaTools,                 // Task 1426b: get_yield_spread_signal (+1 → 116)
+  registerVpsServiceRestartTool,        // Task 1779b: restart_vps_service (+1 → 117)
 ];
