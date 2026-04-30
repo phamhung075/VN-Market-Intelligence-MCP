@@ -27,6 +27,9 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff |
 |---------|-------|----------|------|-------|---------|
+
+---
+
 ## Done
 
 | Task ID | Title | Merged | Reports |
@@ -47,5 +50,6 @@
 | 1777b | foreign-flow dedup + CB self-healing regression tests (12 tests, no prod code change) | 2026-04-29 | reports/TASK_REPORT_1777b.md |
 | 1776 | vnstock ANSI escape sequence handling + circuit breaker | 2026-04-29 | reports/TASK_REPORT_1776.md |
 | 1407b | SLA monitor: skip price+foreign_flow escalations outside market hours | 2026-04-29 | reports/TASK_REPORT_1407b.md |
+| 1778 | BCTC vnstock junk response guard — Strategy A only in extractCafefUrls, 28 stuck tickers unblocked | 2026-04-30 | reports/TASK_REPORT_1778.md |
 
 ---
