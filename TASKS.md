@@ -33,6 +33,8 @@
 
 | Task ID | Title | Merged | Reports |
 |---------|-------|--------|---------|
+| 1797+1798 | NewsAPI 90 req/day guard + Trading Economics Playwright/Chromium scraper with 6h cache | 2026-04-30 | reports/TASK_REPORT_1797_1798.md |
+| fetch-source-issues | fix: vnstock concurrency (sequential await), disabled-source health tracker, TE deploy key guard | 2026-04-30 | reports/TASK_REPORT_fetch_fix.md |
 | 1796a | Archive closed sprints in SPRINT_GOAL.md (under 30 lines) | 2026-04-30 | — |
 | 1796b | Trim CLAUDE.md to under 120 lines — extract Agent Chaining Protocol to .claude/knowledge/agent-chaining-protocol.md | 2026-04-30 | — |
 | 1796c | Delete ghost dirs docs/agent-memory/modules/, issues/, patterns/ | 2026-04-30 | — |
