@@ -109,19 +109,49 @@ function fmtThousands(n: number): string {
 }
 
 /**
+ * Format a trading volume as a compact human-readable string.
+ * >= 1_000_000 → "X.XM", >= 1_000 → "X.XK", otherwise raw rounded number.
+ * Examples: 7_000_000 → "7.0M", 500_000 → "500.0K", 1_200 → "1.2K"
+ */
+function fmtVolume(v: number): string {
+  if (v >= 1_000_000) return `${(v / 1_000_000).toFixed(1)}M`;
+  if (v >= 1_000) return `${(v / 1_000).toFixed(1)}K`;
+  return String(Math.round(v));
+}
+
+/** Mover entry accepted by formatMoversSection. volume and rsi14 are optional. */
+type MoverEntry = {
+  code: string;
+  changePct: number;
+  volume?: number;
+  rsi14?: number | null;
+};
+
+/**
+ * Format a single mover ticker line: "CODE: +X.XX% | Vol: Y | RSI: Z"
+ * Vol is "N/A" when volume is undefined. RSI is "N/A" when rsi14 is null/undefined.
+ */
+function fmtMoverLine(prefix: string, m: MoverEntry): string {
+  const sign = m.changePct >= 0 ? "+" : "";
+  const volStr = m.volume != null ? fmtVolume(m.volume) : "N/A";
+  const rsiStr = m.rsi14 != null ? m.rsi14.toFixed(1) : "N/A";
+  return `${prefix}${m.code}: ${sign}${m.changePct.toFixed(2)}% | Vol: ${volStr} | RSI: ${rsiStr}`;
+}
+
+/**
  * Formats watchlistMovers into sector-grouped + flat lines.
  * Exported for unit-test isolation (Task 1424 / 1425).
  *
- * @param movers - WatchlistMover[] sorted |changePct| DESC (from assembleEveningSummary)
+ * @param movers - MoverEntry[] sorted |changePct| DESC (from assembleEveningSummary)
  * @returns string[] — ready to push onto the message lines array
  */
 export function formatMoversSection(
-  movers: { code: string; changePct: number }[],
+  movers: MoverEntry[],
 ): string[] {
   if (movers.length === 0) return [];
 
   // Group by domain
-  const sectorMap = new Map<string, { code: string; changePct: number }[]>();
+  const sectorMap = new Map<string, MoverEntry[]>();
   for (const m of movers) {
     const profile = getStockProfile(m.code);
     const domain = profile?.domain ?? "other";
@@ -130,8 +160,8 @@ export function formatMoversSection(
   }
 
   // Split: multi-mover sectors (>=2, not "other") vs single-mover
-  const multiSectors: { domain: string; movers: { code: string; changePct: number }[]; avgPct: number }[] = [];
-  const singleMovers: { code: string; changePct: number }[] = [];
+  const multiSectors: { domain: string; movers: MoverEntry[]; avgPct: number }[] = [];
+  const singleMovers: MoverEntry[] = [];
 
   for (const [domain, domainMovers] of sectorMap.entries()) {
     if (domain !== "other" && domainMovers.length >= 2) {
@@ -146,8 +176,7 @@ export function formatMoversSection(
   if (multiSectors.length === 0) {
     const lines: string[] = ["", "Biến động giá:"];
     for (const m of singleMovers) {
-      const sign = m.changePct >= 0 ? "+" : "";
-      lines.push(`  ${m.code}: ${sign}${m.changePct.toFixed(2)}%`);
+      lines.push(fmtMoverLine("  ", m));
     }
     return lines;
   }
@@ -161,8 +190,7 @@ export function formatMoversSection(
     const sign = sector.avgPct >= 0 ? "+" : "";
     lines.push(`  ${sectorLabel} (+${sector.movers.length} cp): avg ${sign}${sector.avgPct.toFixed(2)}%`);
     for (const m of sector.movers.slice(0, 5)) {
-      const mSign = m.changePct >= 0 ? "+" : "";
-      lines.push(`    ${m.code}: ${mSign}${m.changePct.toFixed(2)}%`);
+      lines.push(fmtMoverLine("    ", m));
     }
   }
 
@@ -170,8 +198,7 @@ export function formatMoversSection(
   if (singleMovers.length > 0) {
     lines.push("", "Biến động giá:");
     for (const m of singleMovers) {
-      const sign = m.changePct >= 0 ? "+" : "";
-      lines.push(`  ${m.code}: ${sign}${m.changePct.toFixed(2)}%`);
+      lines.push(fmtMoverLine("  ", m));
     }
   }
 

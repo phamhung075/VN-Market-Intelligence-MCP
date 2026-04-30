@@ -501,6 +501,40 @@ const CURRENCY_CONTEXT_MAP: Map<string, string[]> = new Map([
   ],
 ]);
 
+/**
+ * Geographic-context exclusion map — Task 1788.
+ *
+ * Certain VN stock tickers share their code with Vietnamese city / province
+ * abbreviations. When those abbreviations appear in text, Pattern 2 extracts
+ * the code as a false-positive ticker alert.
+ *
+ * Key: uppercase ticker code.
+ * Value: lowercase substrings that, when found in the 10-character window
+ *        IMMEDIATELY BEFORE the matched token (look-behind), indicate the
+ *        token is a geographic reference, not a stock ticker.
+ *
+ * Example (Task 1788):
+ *   "TP.HCM" → dot is a \b boundary → Pattern 2 extracts "HCM"
+ *   "TP HCM" → space is a \b boundary → Pattern 2 extracts "HCM"
+ *   "TPHCM"  → H starts a new word at boundary → Pattern 2 extracts "HCM"
+ *
+ * Pattern 1 (parenthetical "HCM") is NOT guarded — "(HCM)" always means
+ * the securities company ticker.
+ *
+ * Look-behind window: 10 chars (covers "tphcm ", "tp.hcm", "tp hcm" etc.)
+ */
+const GEOGRAPHIC_CONTEXT_MAP: Map<string, string[]> = new Map([
+  [
+    "HCM",
+    [
+      "tp.hcm", "tp hcm", "tphcm",
+      "tp.", "tp ",
+      "thành phố hồ chí minh", "thanh pho ho chi minh",
+      "thành phố hcm", "thanh pho hcm",
+    ],
+  ],
+]);
+
 // ═══════════════════════════════════════════════════════════════════════════
 // Classification helpers
 // ═══════════════════════════════════════════════════════════════════════════
@@ -561,6 +595,16 @@ function extractStockTickers(text: string): string[] {
       const windowEnd = Math.min(text.length, matchStart + code.length + 40);
       const window = text.slice(windowStart, windowEnd).toLowerCase();
       if (currencyContextTokens.some((tok) => window.includes(tok))) continue;
+    }
+
+    // Geographic-context guard: check 10-char look-behind window (Task 1788)
+    // Prevents "TP.HCM", "TP HCM", "TPHCM" from firing the HCM ticker alert.
+    const geographicPrefixes = GEOGRAPHIC_CONTEXT_MAP.get(code);
+    if (geographicPrefixes) {
+      const matchStart = m.index ?? 0;
+      const lookBehindStart = Math.max(0, matchStart - 10);
+      const lookBehindWindow = text.slice(lookBehindStart, matchStart + code.length).toLowerCase();
+      if (geographicPrefixes.some((prefix) => lookBehindWindow.includes(prefix))) continue;
     }
 
     found.push(code);
