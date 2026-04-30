@@ -66,6 +66,11 @@ export interface FranceSummaryResult {
   foreignFlowMovers?: ForeignFlowMover[]
   /** Upcoming BCTC filing deadlines for watchlist stocks (Task 1519). */
   upcomingDeadlines?: BctcDeadlineRow[]
+  /**
+   * Raw mover rows (Task 1785) — exposed for tests to assert change_pct values.
+   * change_pct is prev-close-to-close, or null when no previous session row exists.
+   */
+  movers?: MoverRow[]
 }
 
 /** Options for runFranceSummary (injectable for TDD). */
@@ -151,31 +156,58 @@ const SEVERITY_CASE = `
 /**
  * Fetches top 3 price movers by ABS(change_pct) descending.
  * Only watchlist tickers are considered (INNER JOIN watchlist).
- * Reads from daily_ohlcv (close-open)/open*100 for the latest date.
- * This avoids the 0% delta problem from consecutive 60s VPS push ticks
- * that share the same price value.
+ *
+ * Task 1785 fix: change_pct = (today.close - yesterday.close) / yesterday.close * 100
+ * This matches the session-over-session % used in morningBriefing, EOD, and alerts.
+ * The previous implementation used (close - open) / open * 100 (intraday only).
+ *
+ * Date selection: picks the latest date that has at least one watchlist ticker
+ * with a computable prev-close change (> 0.1%). Falls back to MAX(date) when none.
+ *
+ * When yesterday's close is missing, change_pct is NULL; formatPct renders "N/A".
+ *
  * Returns [] on any DB error (per-query isolation).
  */
 function fetchTopMovers(db: Database): MoverRow[] {
   try {
     return db
       .prepare<MoverRow, []>(`
-        SELECT
-          o.code                                   AS code,
-          o.close                                  AS price,
-          (o.close - o.open) / o.open * 100.0      AS change_pct
-        FROM daily_ohlcv o
-        INNER JOIN watchlist w ON w.code = o.code
-        WHERE o.date = COALESCE(
-            (SELECT o2.date FROM daily_ohlcv o2
-             INNER JOIN watchlist w2 ON w2.code = o2.code
-             WHERE o2.open != 0 AND o2.open IS NOT NULL
-               AND ABS(o2.close - o2.open) / o2.open * 100.0 > 0.1
-             ORDER BY o2.date DESC LIMIT 1),
+        WITH latest_date AS (
+          SELECT COALESCE(
+            (
+              SELECT t.date
+              FROM daily_ohlcv t
+              INNER JOIN watchlist w ON w.code = t.code
+              INNER JOIN daily_ohlcv y
+                ON y.code = t.code
+               AND y.date = (SELECT MAX(d2.date) FROM daily_ohlcv d2 WHERE d2.code = t.code AND d2.date < t.date)
+              WHERE y.close IS NOT NULL AND y.close != 0
+                AND ABS((t.close - y.close) / y.close * 100.0) > 0.1
+              ORDER BY t.date DESC
+              LIMIT 1
+            ),
             (SELECT MAX(date) FROM daily_ohlcv)
-          )
-          AND o.open != 0
-        ORDER BY ABS((o.close - o.open) / o.open * 100.0) DESC
+          ) AS date
+        ),
+        ohlcv_change AS (
+          SELECT
+            t.code,
+            t.close AS price,
+            CASE
+              WHEN y.close IS NOT NULL AND y.close != 0
+              THEN (t.close - y.close) / y.close * 100.0
+              ELSE NULL
+            END AS change_pct
+          FROM daily_ohlcv t
+          INNER JOIN watchlist w ON w.code = t.code
+          JOIN latest_date ld ON t.date = ld.date
+          LEFT JOIN daily_ohlcv y
+            ON y.code = t.code
+           AND y.date = (SELECT MAX(d2.date) FROM daily_ohlcv d2 WHERE d2.code = t.code AND d2.date < t.date)
+        )
+        SELECT code, price, change_pct
+        FROM ohlcv_change
+        ORDER BY ABS(COALESCE(change_pct, 0)) DESC
         LIMIT 3
       `)
       .all()
@@ -305,9 +337,9 @@ function formatDateVI(d: Date): string {
   return `${dd}/${mm}/${yyyy}`
 }
 
-/** Formats change_pct with sign (e.g. +3.5% or -5.2%). */
+/** Formats change_pct with sign (e.g. +3.5% or -5.2%). Returns "N/A" for null. */
 function formatPct(pct: number | null): string {
-  if (pct == null) return "n/a"
+  if (pct == null) return "N/A"
   const sign = pct >= 0 ? "+" : ""
   return `${sign}${pct.toFixed(2)}%`
 }
@@ -565,7 +597,7 @@ export async function runFranceSummary(opts: FranceSummaryOptions = {}): Promise
   // DB-level same-day dedup guard (FR-2)
   // Fail-open: if check throws, proceed with send.
   if (alreadySentToday(resolvedDb)) {
-    return { sent: false, moverCount: 0, alertCount: 0, alerts: [], taSignals: [], vnIndex: null, globalSnapshot: null, foreignFlowMovers: [], upcomingDeadlines: [] }
+    return { sent: false, moverCount: 0, alertCount: 0, alerts: [], taSignals: [], vnIndex: null, globalSnapshot: null, foreignFlowMovers: [], upcomingDeadlines: [], movers: [] }
   }
 
   // Resolve send function — default: sendTelegramMarket (MARKET channel)
@@ -828,7 +860,7 @@ export async function runFranceSummary(opts: FranceSummaryOptions = {}): Promise
     foreignFlowMovers.length === 0 &&
     upcomingDeadlines.length === 0
   ) {
-    return { sent: false, moverCount: 0, alertCount: 0, alerts: [], taSignals: [], vnIndex: null, globalSnapshot: null, foreignFlowMovers: [], upcomingDeadlines: [] }
+    return { sent: false, moverCount: 0, alertCount: 0, alerts: [], taSignals: [], vnIndex: null, globalSnapshot: null, foreignFlowMovers: [], upcomingDeadlines: [], movers: [] }
   }
 
   const dateStr = formatDateVI(nowFn())
@@ -836,11 +868,11 @@ export async function runFranceSummary(opts: FranceSummaryOptions = {}): Promise
 
   try {
     await resolvedSend(message)
-    return { sent: true, moverCount: movers.length, alertCount: alerts.length, alerts, taSignals, vnIndex, globalSnapshot, foreignFlowMovers, upcomingDeadlines }
+    return { sent: true, moverCount: movers.length, alertCount: alerts.length, alerts, taSignals, vnIndex, globalSnapshot, foreignFlowMovers, upcomingDeadlines, movers }
   } catch (err) {
     logger.warn("[franceSummaryJob] Telegram send failed", {
       error: err instanceof Error ? err.message : String(err),
     })
-    return { sent: false, moverCount: movers.length, alertCount: alerts.length, alerts, taSignals, vnIndex, globalSnapshot, foreignFlowMovers, upcomingDeadlines }
+    return { sent: false, moverCount: movers.length, alertCount: alerts.length, alerts, taSignals, vnIndex, globalSnapshot, foreignFlowMovers, upcomingDeadlines, movers }
   }
 }
