@@ -89,6 +89,42 @@ export interface DiscoverOptions {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// ANSI / junk detection (mirrors vnstockBridge.stripAnsiAndDetectJunk —
+// duplicated here because domain layer cannot import from infrastructure)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface JunkCheckResult {
+  /** True when the cleaned output cannot be JSON (box-drawing, ANSI, non-JSON prefix). */
+  junk: boolean;
+  /** True when the value is empty — caller should treat as null/no-result. */
+  isNull: boolean;
+  /** The cleaned (ANSI-stripped) string, ready for JSON.parse. Empty when junk/isNull. */
+  cleaned: string;
+}
+
+/**
+ * Strip ANSI escape sequences and Unicode box-drawing characters (emitted by
+ * the vnstock `rich` progress bar), then validate that the remainder looks
+ * like JSON before passing to JSON.parse.
+ *
+ * Exported so unit tests can exercise the logic in isolation.
+ */
+export function stripAnsiJunk(raw: string): JunkCheckResult {
+  const ANSI_RE = /\x1b\[[0-9;]*[mGKHF]|[\u2500-\u257F\u2800-\u28FF\u256A-\u2593]/g;
+  const cleaned = raw.replace(ANSI_RE, "").trim();
+
+  if (!cleaned || cleaned === "null") {
+    return { junk: false, isNull: true, cleaned: "" };
+  }
+
+  if (cleaned[0] !== "{" && cleaned[0] !== "[") {
+    return { junk: true, isNull: false, cleaned: "" };
+  }
+
+  return { junk: false, isNull: false, cleaned };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Constants
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -184,8 +220,10 @@ async function fetchWithTimeout(url: string, timeoutMs: number): Promise<string>
  * pointing to a downloadable PDF. Filters for BCTC (annual/quarterly reports).
  */
 function extractSscUrls(raw: string, _ticker: string): string[] {
+  const check = stripAnsiJunk(raw);
+  if (check.junk || check.isNull) return [];
   try {
-    const data = JSON.parse(raw) as unknown;
+    const data = JSON.parse(check.cleaned) as unknown;
 
     // iboard returns { data: [...] } or an array directly
     const items: unknown[] = Array.isArray(data)
@@ -227,29 +265,33 @@ function extractCafefUrls(raw: string, _ticker: string): string[] {
   const urls: string[] = [];
 
   // Strategy A: Parse as JSON API response (s.cafef.vn FinanceInfo endpoint)
-  try {
-    const parsed = JSON.parse(raw) as unknown;
-    const data: unknown[] = Array.isArray(parsed)
-      ? parsed
-      : (parsed as Record<string, unknown>)?.Data instanceof Array
-        ? ((parsed as Record<string, unknown>).Data as unknown[])
-        : (parsed as Record<string, unknown>)?.data instanceof Array
-          ? ((parsed as Record<string, unknown>).data as unknown[])
-          : [];
+  // NOTE: junk guard only gates JSON.parse — must NOT return early so Strategy B can run.
+  const check = stripAnsiJunk(raw);
+  if (!check.junk && !check.isNull) {
+    try {
+      const parsed = JSON.parse(check.cleaned) as unknown;
+      const data: unknown[] = Array.isArray(parsed)
+        ? parsed
+        : (parsed as Record<string, unknown>)?.Data instanceof Array
+          ? ((parsed as Record<string, unknown>).Data as unknown[])
+          : (parsed as Record<string, unknown>)?.data instanceof Array
+            ? ((parsed as Record<string, unknown>).data as unknown[])
+            : [];
 
-    for (const item of data) {
-      if (typeof item !== "object" || item === null) continue;
-      const rec = item as Record<string, unknown>;
-      const urlField = rec.Url ?? rec.url ?? rec.FileUrl ?? rec.fileUrl ?? rec.PdfUrl ?? rec.pdfUrl;
-      if (typeof urlField === "string" && urlField.toLowerCase().endsWith(".pdf")) {
-        const absolute = urlField.startsWith("http") ? urlField : `${CAFEF_BASE}${urlField}`;
-        urls.push(absolute);
+      for (const item of data) {
+        if (typeof item !== "object" || item === null) continue;
+        const rec = item as Record<string, unknown>;
+        const urlField = rec.Url ?? rec.url ?? rec.FileUrl ?? rec.fileUrl ?? rec.PdfUrl ?? rec.pdfUrl;
+        if (typeof urlField === "string" && urlField.toLowerCase().endsWith(".pdf")) {
+          const absolute = urlField.startsWith("http") ? urlField : `${CAFEF_BASE}${urlField}`;
+          urls.push(absolute);
+        }
       }
-    }
 
-    if (urls.length > 0) return urls;
-  } catch {
-    // Not JSON — fall through to HTML href scraping
+      if (urls.length > 0) return urls;
+    } catch {
+      // Not JSON — fall through to HTML href scraping
+    }
   }
 
   // Strategy B: HTML href scraping (legacy fallback for static pages)
@@ -314,8 +356,10 @@ interface VpsPlaywrightResponse {
  * (document confirmed to exist but no direct PDF link available).
  */
 function extractVpsPlaywrightUrls(raw: string): string[] {
+  const check = stripAnsiJunk(raw);
+  if (check.junk || check.isNull) return [];
   try {
-    const parsed = JSON.parse(raw) as VpsPlaywrightResponse;
+    const parsed = JSON.parse(check.cleaned) as VpsPlaywrightResponse;
     if (!parsed || !Array.isArray(parsed.results)) return [];
 
     return parsed.results
