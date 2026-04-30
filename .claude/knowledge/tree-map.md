@@ -20,6 +20,8 @@ CLAUDE.md (root — always loaded)
 │
 ├── .claude/knowledge/tree-map.md ← THIS FILE
 │
+├── .claude/knowledge/agent-chaining-protocol.md (chaining rules: pipeline maps, return templates, parallel spawn rules, fixer ceiling)
+│
 ├── .claude/knowledge/mcp-tools.md (tool logic: per-agent mapping, signal types, renamed tools, mandatory patterns)
 │   └── docs/data/tool-registry.json (tool list + count — volatile)
 │
