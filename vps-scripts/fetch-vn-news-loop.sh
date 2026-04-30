@@ -2,6 +2,10 @@
 # VN News RSS Proxy — forever loop for systemd
 # Runs every 15 minutes with human-like delays between sources.
 # 15min cycle: news sites update every 10-30min, more frequent = higher block risk.
+#
+# timeout 600: kills hung fetch-vn-news.sh runs (Playwright/Chromium can hang
+# indefinitely without this guard, causing systemd to see a non-zero exit and
+# trigger the Restart= policy — visible as the 41m uptime restart loop).
 
 set -u
 
@@ -15,10 +19,6 @@ _hb() {
 while true; do
   CYCLE=$(( CYCLE + 1 ))
   _hb "running"
-  /root/fetch-vn-news.sh
-  EXIT=$?
-  if [ $EXIT -ne 0 ]; then
-    echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) [NEWS  ] ERROR fetch-vn-news.sh exited code=$EXIT" >> "$LOG"
-  fi
+  timeout 600 /root/fetch-vn-news.sh || echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) [NEWS  ] WARN  fetch-vn-news timed out or failed (exit=$?)" >> "$LOG"
   sleep 900   # 15 minutes
 done

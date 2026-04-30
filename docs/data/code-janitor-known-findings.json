@@ -1,7 +1,22 @@
 {
-  "scan_date": "2026-04-27T10:00:00Z",
-  "last_run": "2026-04-27T10:00:00Z",
+  "scan_date": "2026-04-27T11:00:00Z",
+  "last_run": "2026-04-27T11:00:00Z",
   "findings": [
+    {
+      "fingerprint": "check-3:infrastructure/fetchers/tradingEconomicsChromium.ts:puppeteer-launch-config",
+      "severity": "LOW",
+      "category": "Magic number / repeated constant — duplicated browser launch config",
+      "file": "apps/mcp-server/src/infrastructure/fetchers/tradingEconomicsChromium.ts",
+      "lines": "136-141 and 499-504",
+      "detail": "playwrightScrape() and playwrightScrapeNews() both inline identical Puppeteer launch config: executablePath fallback '/usr/bin/chromium', User-Agent string 'Mozilla/5.0...Chrome/120.0.0.0', and args array ['--no-sandbox','--disable-setuid-sandbox','--disable-dev-shm-usage']. Any change to browser launch config requires two edits. Fix: extract to shared constants or a createBrowser() helper at the top of the file.",
+      "canonical_source": "none yet — extraction needed",
+      "risk": "MEDIUM — one edit changes behaviour, the other doesn't. Silent divergence possible.",
+      "discovered_at": "2026-04-27T11:00:00Z",
+      "status": "proposed",
+      "backlog_task": "JANITOR-011",
+      "ship_directly": false,
+      "reason_not_shipped": "playwrightScrape/playwrightScrapeNews are never called in tests (always mocked via DI). Duplicated lines are inside the un-tested production-only code paths. Constraint: ship only when covered by existing tests."
+    },
     {
       "fingerprint": "check-2:mcp.config.json:referenceStocks",
       "severity": "LOW",

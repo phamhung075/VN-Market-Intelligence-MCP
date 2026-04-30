@@ -122,6 +122,17 @@ print(json.dumps(items[:max_items]))
 fetch_browser() {
   local SOURCE="$1" URL="$2" MAX="${3:-20}"
   local T0 RESULT DUR
+
+  # RAM guard: Chromium needs ~400 MB free to avoid OOM kill.
+  # If available RAM < 400 MB, fall back to plain curl RSS fetch.
+  local FREE_MB
+  FREE_MB=$(awk '/^MemAvailable:/ {print int($2/1024)}' /proc/meminfo 2>/dev/null || echo 999)
+  if [ "$FREE_MB" -lt 400 ]; then
+    echo "$(TS) [NEWS  ] WARN  source=$SOURCE BROWSER skipped (free=${FREE_MB}MB < 400MB) — falling back to curl" >> "$LOG"
+    RESULT=$(fetch_rss "$SOURCE" "$URL" "$MAX")
+    echo "$RESULT"; return
+  fi
+
   T0=$(date -u +%s%3N)
   RESULT=$(python3 /root/fetch-browser.py "$SOURCE" "$URL" "$MAX" 2>> "$LOG")
   DUR=$(( $(date -u +%s%3N) - T0 ))
