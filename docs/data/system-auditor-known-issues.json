@@ -78,14 +78,14 @@
     {
       "fingerprint": "db_stale:macro_indicators",
       "first_seen": "2026-04-20",
-      "last_reported": "2026-04-20",
-      "note": "macro_indicators.fetched_at=2025-03-01 for Vietnam — 413+ days stale (threshold: >30 days)"
+      "last_reported": "2026-05-01",
+      "note": "macro_indicators.fetched_at MAX=2025-03-01 — 426 days stale (threshold: >30 days). Re-reported 2026-05-01: unchanged."
     },
     {
       "fingerprint": "db_noise:system_logs_error_ratio",
       "first_seen": "2026-04-20",
-      "last_reported": "2026-04-20",
-      "note": "100% of 95,136 system_logs are error/warn level — no info-level logs, logger config suspect"
+      "last_reported": "2026-05-01",
+      "note": "info=27 out of 108,497 total system_logs (error=44,867 / warn=63,603) — 0.02% info, logger config still suspect. Re-reported 2026-05-01."
     },
     {
       "fingerprint": "db_error_top:reuters_failed_to_fetch_rss_fee",
@@ -140,6 +140,42 @@
       "first_seen": "2026-04-24",
       "last_reported": "2026-04-24",
       "note": "agent-memory/modules/scheduler.md references src/infrastructure/scheduler/ (no longer exists after modular refactor; now src/scheduler/)"
+    },
+    {
+      "fingerprint": "db_empty:market_prices_and_history",
+      "first_seen": "2026-05-01",
+      "last_reported": "2026-05-01",
+      "note": "market_prices=0 rows, market_prices_history=0 rows. daily_ohlcv=219 rows only. Price pipeline not writing to market_prices table — possible schema migration or VPS push stopped."
+    },
+    {
+      "fingerprint": "doc_missing:SPRINT_GOAL.md",
+      "first_seen": "2026-05-01",
+      "last_reported": "2026-05-01",
+      "note": "docs/SPRINT_GOAL.md does not exist. File is referenced in auditor checklist and tree-map. Sprint 1810 has no goal documented."
+    },
+    {
+      "fingerprint": "knowledge_empty_list:tool_registry_tools_array",
+      "first_seen": "2026-05-01",
+      "last_reported": "2026-05-01",
+      "note": "docs/data/tool-registry.json has toolCount=122 but tools=[] (empty array). List-level drift check impossible — PM/Developer should repopulate tools array."
+    },
+    {
+      "fingerprint": "agent_missing:notebooks_directory",
+      "first_seen": "2026-05-01",
+      "last_reported": "2026-05-01",
+      "note": "docs/agent-memory/notebooks/ directory does not exist. MEMORY.md entry feedback_agent_notebook.md claims all 22 agents have notebook files at that path. Agents reading notebooks will silently fail or create stale state."
+    },
+    {
+      "fingerprint": "stats_drift:scheduler_file_count",
+      "first_seen": "2026-05-01",
+      "last_reported": "2026-05-01",
+      "note": "cron-registry.json and project-stats.json both declare schedulerFileCount=44. Actual *Job.ts/*job.ts files = 49. Actual .ts files excluding jobs.ts = 57. Gap of 5+ job files unregistered in cron-registry (cron-registry jobs list has 41 entries)."
+    },
+    {
+      "fingerprint": "stats_drift:test_baseline",
+      "first_seen": "2026-05-01",
+      "last_reported": "2026-05-01",
+      "note": "project-stats.json testBaseline=8524 / testBaselinePass=8501. TASKS.md Done row Sprint 1807-open references 8672 total / 8592 pass. Sprint 1806c references 8562 total. project-stats is at least 2 sprint-cycles behind."
     }
   ]
 }

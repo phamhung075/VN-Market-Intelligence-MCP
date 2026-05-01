@@ -1,7 +1,22 @@
 {
-  "scan_date": "2026-04-27T11:30:00Z",
-  "last_run": "2026-04-27T11:30:00Z",
+  "scan_date": "2026-04-27T16:30:00Z",
+  "last_run": "2026-04-27T16:30:00Z",
   "findings": [
+    {
+      "fingerprint": "check-1:domain/services/financial-reports:detectUnitMultiplier-diverged",
+      "severity": "MEDIUM",
+      "category": "Duplicate helper function — detectUnitMultiplier private copy in incomeStatementExtractor.ts",
+      "file": "apps/mcp-server/src/domain/services/financial-reports/incomeStatementExtractor.ts",
+      "lines": "392-412",
+      "detail": "detectUnitMultiplier() is defined privately in both balanceSheetExtractor.ts (lines 204-246) and incomeStatementExtractor.ts (lines 392-412). The income statement copy is a stale port: it scans only 50 lines (vs 400 in balance sheet), is missing the '(Triệu VND)' bank BCTC column-header pattern, missing the nghìn đồng fallback, and missing magnitude-inference sentinels (-1/-2). Bank BCTC income statements will silently use the wrong multiplier (or default to 1 when the correct answer is 1000) in any PDF where the unit header appears after line 50. extractNumber() and LOOKAHEAD_LINES = 3 are also duplicated across all three extractors (balanceSheet, incomeStatement, cashFlow); the income statement version adds scientific-notation support (Task 1810a) absent from the other two.",
+      "canonical_source": "none yet — extraction to extractorHelpers.ts needed",
+      "risk": "MEDIUM — bank BCTC income statement extraction silently under-converts values when unit header is late in the PDF (post line 50). Silent divergence; no test failure.",
+      "discovered_at": "2026-04-27T14:00:00Z",
+      "status": "proposed",
+      "backlog_task": "JANITOR-014",
+      "ship_directly": false,
+      "reason_not_shipped": "Requires extracting shared helpers into a new file (extractorHelpers.ts) and updating all three extractor imports. Three-file change minimum. Constraint: ship only when single-file mechanical."
+    },
     {
       "fingerprint": "check-1:interface/mcp/tools/news-analysis/agentSignalTools.ts:SignalTypeEnum",
       "severity": "LOW",
@@ -31,6 +46,36 @@
       "backlog_task": "JANITOR-011",
       "ship_directly": false,
       "reason_not_shipped": "playwrightScrape/playwrightScrapeNews are never called in tests (always mocked via DI). Duplicated lines are inside the un-tested production-only code paths. Constraint: ship only when covered by existing tests."
+    },
+    {
+      "fingerprint": "check-2:infrastructure/fetchers/sscInsider.ts:parseVnNumber-private-copy",
+      "severity": "LOW",
+      "category": "Duplicate helper function — private parseVnNumber in sscInsider.ts and muasamcong.ts",
+      "file": "apps/mcp-server/src/infrastructure/fetchers/sscInsider.ts and muasamcong.ts",
+      "lines": "sscInsider.ts:44-48, muasamcong.ts:121-125",
+      "detail": "Both sscInsider.ts and muasamcong.ts define a private parseVnNumber(s: string): number that uses simple dot-replace logic, returns 0 on NaN (vs null in canonical), and does not handle parentheses-negatives, scientific notation, or format disambiguation. The canonical implementation is domain/services/vnNumberParser.ts:parseVnNumber (Task 1810a updated with sci-notation support). The private copies diverge silently: any improvement to canonical vnNumberParser does not propagate. Fix: import parseVnNumber from canonical and adapt callers to handle null (currently 0 is used as a sentinel for 'no value'). Note: return type change (null vs 0) requires caller audit.",
+      "canonical_source": "apps/mcp-server/src/domain/services/vnNumberParser.ts:parseVnNumber",
+      "risk": "LOW — both private copies are functionally correct for their current input domain (no parentheses, no sci-notation in SSC/muasamcong HTML). Divergence risk grows as formats evolve.",
+      "discovered_at": "2026-04-27T16:30:00Z",
+      "status": "proposed",
+      "backlog_task": "JANITOR-016",
+      "ship_directly": false,
+      "reason_not_shipped": "Two-file change plus return-type adaptation (number → number|null) in each caller. Constraint: ship only when single-file mechanical."
+    },
+    {
+      "fingerprint": "check-3:infrastructure/fetchers:BROWSER_UA-18-files",
+      "severity": "LOW",
+      "category": "Magic number / repeated constant — BROWSER_UA string hardcoded in 18 source files",
+      "file": "apps/mcp-server/src/infrastructure/fetchers/ (18 files) + application/services/imfDataFetcher.ts + application/usecases/fetchParseAndStoreBctc.ts + domain/services/bctcDiscovery.ts",
+      "lines": "various",
+      "detail": "The string 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36' is hardcoded inline in 18 production source files. Some files define a local BROWSER_UA const (sbvCircular.ts, sscInsider.ts, congbao.ts, muasamcong.ts), others inline the string directly in fetch headers. Any User-Agent rotation (bot detection, version update) requires 18 edits across 3 layers. Fix: extract to infrastructure/http/browserHeaders.ts as BROWSER_UA constant and import from there.",
+      "canonical_source": "none yet — extraction to infrastructure/http/browserHeaders.ts needed",
+      "risk": "LOW — uniform string is currently consistent (no silent divergence). Maintenance risk: 18-file fan-out on any UA update.",
+      "discovered_at": "2026-04-27T16:30:00Z",
+      "status": "proposed",
+      "backlog_task": "JANITOR-017",
+      "ship_directly": false,
+      "reason_not_shipped": "18-file change across 3 architectural layers. Constraint: ship only when single-file mechanical."
     },
     {
       "fingerprint": "check-2:mcp.config.json:referenceStocks",
@@ -154,34 +199,38 @@
   "scan_checks": {
     "check-1-duplicate-classification-maps": {
       "status": "complete",
-      "items_scanned": 27,
-      "findings": 1,
-      "findings_shipped": 1,
-      "notes": "JANITOR-009 found and fixed: alertCheckTools.ts had inline SEVERITY_VI (ASCII values) duplicating severityLabels.ts canonical (diacritics). Fixed by replacing inline const with import. seedWatchlist.ts WATCHLIST_SEED is the canonical default-watchlist source (mcp.config.json delegates to it). No other classification map duplications found."
+      "items_scanned": 10,
+      "scope": "diff HEAD~3..HEAD (10 changed files, 5 production)",
+      "findings": 0,
+      "notes": "financialFiguresValidator.ts:detectUnitMismatch is a new export — no duplication. extractorGuards.ts:GUARD_MAX tightened (500T→2T) — single canonical location, no duplication. incomeStatementExtractor.ts changes extend existing private functions (known JANITOR-014/015). No new classification map duplication in diff scope."
     },
     "check-2-hardcoded-ticker-arrays": {
       "status": "complete",
-      "items_scanned": 40,
-      "findings": 0,
-      "notes": "Ticker array literals searched outside canonical files and tests. predictionCascadeMapper.ts:KEYWORD_RULES, climateImpactMapper.ts:CLIMATE_RULES, priceSourceRouter.ts:MAJOR_CAPS all confirmed as intentional business logic. seedWatchlist.ts WATCHLIST_SEED is canonical. balanceSheetExtractor.ts item codes (100-440) are VN accounting standard codes, not stock tickers."
+      "items_scanned": 10,
+      "scope": "diff HEAD~3..HEAD (10 changed files, 5 production)",
+      "findings": 1,
+      "notes": "Two private parseVnNumber copies found in sscInsider.ts and muasamcong.ts — pre-existing, not in diff, discovered as new finding JANITOR-016. No ticker array duplication in diff scope."
     },
     "check-3-repeated-magic-numbers-and-cron-duplication": {
       "status": "complete",
-      "items_scanned": 115,
-      "findings": 0,
-      "notes": "balanceSheetExtractor.ts uses year range guards (1990-2030 and 2020-2030) inline twice each — these are single-file internal helpers, different semantics (full year vs recent year), not cross-file duplication. JANITOR-005 and JANITOR-008 previously fixed IMF and VPS constants. No new cross-file magic number duplications detected."
+      "items_scanned": 10,
+      "scope": "diff HEAD~3..HEAD (10 changed files, 5 production)",
+      "findings": 1,
+      "notes": "BROWSER_UA string (Chrome/131 Mac) found in 18 source files — pre-existing, not in diff, logged as JANITOR-017. parseBctcReport.ts:0.1 fallback confidence is new but single-use (no cross-file duplication). extractorGuards.ts:GUARD_MAX=2T is single canonical constant. No new cron string duplication in diff."
     },
     "check-4-schema-duplication": {
       "status": "complete",
-      "items_scanned": 35,
+      "items_scanned": 10,
+      "scope": "diff HEAD~3..HEAD (10 changed files, 5 production)",
       "findings": 0,
-      "notes": "predictionMarketJob.ts line 395 contains a comment referencing CREATE TABLE IF NOT EXISTS (not actual DDL). alertMuteStore.ts and schedulerLockStore.ts have DDL comments in JSDoc blocks only. Zero production inline DDL outside schema modules."
+      "notes": "Zero CREATE TABLE or inline DDL in any changed file."
     },
     "check-5-config-drift": {
       "status": "complete",
-      "items_scanned": 55,
+      "items_scanned": 10,
+      "scope": "diff HEAD~3..HEAD (10 changed files, 5 production)",
       "findings": 0,
-      "notes": "All config fallback patterns verified. clobApiUrl, gammaApiUrl properly mapped. Timeouts verified against config.ts. effectiveCooldownConfig passed from config in intelligenceCycleJob.ts at every alert suppression call. Zero config drift detected."
+      "notes": "No ?? fallback patterns in changed files. detectUnitMismatch threshold (1000) is domain logic, not config-driven. No config drift in diff scope."
     }
   }
 }
