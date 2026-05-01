@@ -72,13 +72,16 @@ Watchlist hit (breaking news) → `post_agent_signal`:
 ```
 
 Crisis / macro catalyst (triggers enrichment chain) → `post_agent_signal`:
+<!-- regime is read from bootstrap macro snapshot by alert-commander, not from signal finding_data.
+     ChainCatalystFindingDataSchema is strict (no .passthrough()) — extra fields are silently stripped.
+     Include regime context in payload.detail instead. -->
 ```json
 {
   "from_agent": "news-scout",
   "to_agent": "all",
   "signal_type": "chain_catalyst",
   "stock_code": "<TICKER or omit>",
-  "payload": { "title": "<headline>", "detail": "<summary>", "impact_score": 9 },
+  "payload": { "title": "<headline>", "detail": "<summary> | regime=<REGIME> regime_adj_score=<N>", "impact_score": 9 },
   "ttl_minutes": 120,
   "chain_depth": 0,
   "finding_data": {
@@ -89,8 +92,6 @@ Crisis / macro catalyst (triggers enrichment chain) → `post_agent_signal`:
     "affected_sectors": ["<sector1>"],
     "headline": "<news headline text>",
     "source": "<cafef|vnexpress|reuters|...>",
-    "regime": "<TIGHTENING|EASING|NEUTRAL>",
-    "regime_adjusted_score": 9.0,
     "hot_money_risk": false,
     "gdp_warning_signal": false
   }
