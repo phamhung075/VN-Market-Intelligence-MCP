@@ -1,0 +1,10 @@
+[Market Watcher] 03:02 UTC — 31 stocks monitored
+  Anomalies: 2 (VIC -5.10%, VRE +4.87%) | Volume spikes: 0 (insufficient intraday data) | Chain confirms: 0 | Next: 03:15 UTC (13 min)
+
+Regime: NEUTRAL (2.0σ threshold)
+Signals Posted: 2 (IDs 2006, 2007 — VIC, VRE price_anomalies)
+FX Pressure (HIGH): USD/VND 26,355 — Real estate sector flagged
+Carry Risk: FII_OUTFLOW_RISK (VND carry -0.33%)
+Data Quality: VIC/VRE price history flat (validation pending) — realized moves correctly posted
+
+Status: PIPELINE ACTIVE ✓
