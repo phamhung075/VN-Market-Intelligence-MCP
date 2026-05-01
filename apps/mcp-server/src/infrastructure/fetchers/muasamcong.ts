@@ -10,6 +10,8 @@
  * Never throws: returns [] on any error.
  */
 
+import { parseVnNumber } from "../../domain/services/vnNumberParser.js";
+
 const MUASAMCONG_URL =
   "https://muasamcong.mpi.gov.vn/web/guest/home-page-new-ver2/-/thauthau/ket-qua-chon-nha-thau";
 
@@ -116,15 +118,6 @@ function classifyContract(title: string): ContractCategory {
 }
 
 /**
- * Parse a Vietnamese number string (e.g. "1.500.000.000.000") to a number.
- */
-function parseVnNumber(s: string): number {
-  const cleaned = s.replace(/\./g, "").replace(/,/g, ".").trim();
-  const n = parseFloat(cleaned);
-  return Number.isNaN(n) ? 0 : n;
-}
-
-/**
  * Parse HTML table rows into PublicContract objects.
  * Expects a <table class="table-result"> with columns:
  *   [title, value, agency, winner, awardDate]
@@ -170,7 +163,7 @@ function parseContractsFromHtml(html: string): PublicContract[] {
     if (!title || /tên gói thầu|gói thầu/i.test(title) && valueRaw === "") continue;
     if (!title.trim()) continue;
 
-    const value = parseVnNumber(valueRaw);
+    const value = parseVnNumber(valueRaw) ?? 0;
     const category = classifyContract(title);
     const relatedStocks = mapContractToStocks(title);
 

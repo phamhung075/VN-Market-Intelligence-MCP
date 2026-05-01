@@ -8,6 +8,8 @@
  * Never throws: returns [] on any error.
  */
 
+import { parseVnNumber } from "../../domain/services/vnNumberParser.js";
+
 const SSC_INSIDER_URL =
   "https://congbothongtin.ssc.gov.vn/faces/oracle/webcenter/portalapp/pages/giaodichnoibo/ketquagiaodich.jspx";
 
@@ -37,15 +39,6 @@ export interface HttpClient {
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
 // ─────────────────────────────────────────────────────────────────────────────
-
-/**
- * Parse a Vietnamese number string (dots as thousand separators).
- */
-function parseVnNumber(s: string): number {
-  const cleaned = s.replace(/\./g, "").replace(/,/g, ".").trim();
-  const n = parseFloat(cleaned);
-  return Number.isNaN(n) ? 0 : n;
-}
 
 /**
  * Normalise transaction type from Vietnamese text.
@@ -102,9 +95,9 @@ function parseInsiderHtml(html: string): RawInsiderRow[] {
       insiderName: cells[1]!,
       position: cells[2]!,
       type: parseType(cells[3]!),
-      registeredVolume: parseVnNumber(cells[4]!),
-      executedVolume: parseVnNumber(cells[5]!),
-      price: parseVnNumber(cells[6]!),
+      registeredVolume: parseVnNumber(cells[4]!) ?? 0,
+      executedVolume: parseVnNumber(cells[5]!) ?? 0,
+      price: parseVnNumber(cells[6]!) ?? 0,
       fromDate: cells[7]!,
       toDate: cells[8]!,
     };
