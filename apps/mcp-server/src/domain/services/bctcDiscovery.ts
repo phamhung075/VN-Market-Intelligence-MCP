@@ -144,42 +144,11 @@ const CAFEF_BASE = "https://cafef.vn";
 
 const VIETSTOCK_BASE = "https://finance.vietstock.vn";
 
-const BROWSER_UA =
-  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
-
 /**
  * Regex patterns for extracting PDF URLs from HTML responses.
  * Matches .pdf links that contain BCTC / financial report indicators.
  */
 const PDF_HREF_RE = /href=["']([^"']*\.pdf)["']/gi;
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Default HTTP fetch helpers (production path)
-// ─────────────────────────────────────────────────────────────────────────────
-
-/**
- * Wraps globalThis.fetch with timeout via AbortController.
- * Returns the response body as text. Throws on HTTP error or timeout.
- */
-async function fetchWithTimeout(url: string, timeoutMs: number): Promise<string> {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
-  try {
-    const res = await globalThis.fetch(url, {
-      signal: controller.signal,
-      headers: {
-        "User-Agent": BROWSER_UA,
-        Accept: "application/json, text/html, */*",
-      },
-    });
-    if (!res.ok) {
-      throw new Error(`HTTP ${res.status} from ${url}`);
-    }
-    return res.text();
-  } finally {
-    clearTimeout(timer);
-  }
-}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Per-source extraction helpers
@@ -481,16 +450,31 @@ export async function discoverHosePdfUrls(
   const year = options.year ?? new Date().getFullYear();
   const quarter = options.quarter ?? "Q4";
 
-  // Resolve fetch functions (production or injected test doubles)
-  const fetchVpsPlaywright = options._fetchVpsPlaywright ?? fetchWithTimeout;
-  const fetchSsc = options._fetchSsc ?? fetchWithTimeout;
-  const fetchCafef = options._fetchCafef ?? fetchWithTimeout;
-  const fetchVietstock = options._fetchVietstock ?? fetchWithTimeout;
+  // Resolve fetch functions — must be supplied by caller (no inline default).
+  // Production callers wire bctcHttpFetch from infrastructure/fetchers/bctcHttpFetcher.ts.
+  // Test callers supply stubs via _fetchVpsPlaywright / _fetchSsc / _fetchCafef / _fetchVietstock.
+  //
+  // _fetchVpsPlaywright is optional: strategy 0 only runs when BCTC_DISCOVER_URL is set,
+  // so tests that exercise only strategies 1–3 may omit it.
+  // _fetchSsc / _fetchCafef / _fetchVietstock are always required.
+  const fetchVpsPlaywright = options._fetchVpsPlaywright;
+  const fetchSsc           = options._fetchSsc;
+  const fetchCafef         = options._fetchCafef;
+  const fetchVietstock     = options._fetchVietstock;
+
+  if (!fetchSsc || !fetchCafef || !fetchVietstock) {
+    throw new Error(
+      "[bctcDiscovery] fetch functions must be supplied via DiscoverOptions. " +
+      "Use bctcHttpFetch from infrastructure/fetchers/bctcHttpFetcher.ts as the production default.",
+    );
+  }
 
   // ── Strategy 0: VPS Playwright endpoint ─────────────────────────────────
-  // Only runs when BCTC_DISCOVER_URL is configured.
+  // Only runs when BCTC_DISCOVER_URL is configured AND a fetch function is supplied.
   // Runs discover-bctc-urls-browser.py on the VPS as a subprocess.
-  const vpsUrls = await tryFetchVpsPlaywright(ticker, year, quarter, timeout, fetchVpsPlaywright);
+  const vpsUrls = fetchVpsPlaywright
+    ? await tryFetchVpsPlaywright(ticker, year, quarter, timeout, fetchVpsPlaywright)
+    : [];
   if (vpsUrls.length > 0) {
     // Best-effort fallback from SSC
     const sscUrls = await tryFetchSsc(ticker, timeout, fetchSsc);

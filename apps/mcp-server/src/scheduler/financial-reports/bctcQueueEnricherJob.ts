@@ -32,6 +32,7 @@ import {
   discoverHosePdfUrls,
   type DiscoverOptions,
 } from "../../domain/services/bctcDiscovery.js";
+import { bctcHttpFetch } from "../../infrastructure/fetchers/bctcHttpFetcher.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Constants
@@ -149,6 +150,10 @@ export async function runBctcQueueEnricherJob(opts: {
     try {
       const discovery = await discoverHosePdfUrls(item.action_code, {
         timeout: DISCOVERY_TIMEOUT_MS,
+        _fetchVpsPlaywright: bctcHttpFetch,
+        _fetchSsc:           bctcHttpFetch,
+        _fetchCafef:         bctcHttpFetch,
+        _fetchVietstock:     bctcHttpFetch,
         ...opts.discoverOptions,
       });
 

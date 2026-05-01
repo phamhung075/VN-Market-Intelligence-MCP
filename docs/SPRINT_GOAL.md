@@ -1,17 +1,18 @@
-# Sprint 1812 — Goal
+# Sprint 1813 — Goal
 
 **Status:** IN PROGRESS | **Opened:** 2026-05-01
 
 ## Goals
-1. **JANITOR SSOT audit** — verify JANITOR-009 and JANITOR-013 contracts already in place
-2. **Audit tests** — 1812-janitor-ssot-audit.test.ts locks SSOT exports permanently
-3. **DDD violation logged** — bctcDiscovery.ts violation queued for Sprint 1813
+1. **DDD fix** — extract `fetchWithTimeout` and `BROWSER_UA` from `domain/services/bctcDiscovery.ts` to infrastructure
+2. **New adapter** — `infrastructure/fetchers/bctcHttpFetcher.ts` provides `bctcHttpFetch: HttpFetchFn`
+3. **Scheduler wired** — `bctcQueueEnricherJob.ts` supplies `bctcHttpFetch` as production default for all four strategies
+4. **Guard test** — 1813-bctc-ddd.test.ts: throws when no fetch functions supplied
 
 ## Success Criteria
-- JANITOR-009/013 confirmed resolved via passing audit tests
-- project-stats.json Sprint 1812 actuals
-- bctcDiscovery.ts DDD violation documented in backlog for Sprint 1813
-- zero new regressions (baseline: 8622 pass / 23 fail)
+- `BROWSER_UA` and `fetchWithTimeout` removed from domain layer
+- `bun tsc --noEmit` clean
+- `bun test --filter "1813-bctc-ddd"` 1 pass
+- zero new regressions (baseline: 8622 pass)
 
 ---
 
@@ -19,6 +20,7 @@
 
 | Sprint | Result |
 |--------|--------|
+| 1812 — JANITOR SSOT audit + DDD violation documented | DONE — 2026-05-01. 8626 pass / 35 fail (all pre-existing). tasks=429 |
 | 1811 — DRY: JANITOR-014/015/016/017 | Merged — 8622 pass / 23 fail. tasks=428 |
 | 1810 — BCTC fixes (1810a/1810b/1810c) | tasks=428 |
 | 1809 — SBV_NORMAL fixture fix | 8501 pass / 23 fail. tasks=427 |

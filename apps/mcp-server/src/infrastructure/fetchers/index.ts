@@ -107,3 +107,6 @@ export {
   fetchFedFundsRate,
   type FredHttpClient,
 } from "./fredApi.js";
+
+// ── Sprint 1813: BCTC discovery HTTP fetch adapter ────────────────────────────
+export { bctcHttpFetch } from "./bctcHttpFetcher.js";
