@@ -160,14 +160,22 @@ export function parseYearQuarterFromFilename(
   // Tier 3: YYYYMMDD prefix (e.g. "20250429-VCB-...Quy-1-nam-2025_signed.pdf").
   // When tiers 1+2 fail, infer quarter from the month in the leading YYYYMMDD.
   // Prefer any explicit 20XX year found later in the filename over the prefix year.
+  //
+  // Bug 1810b: YYYYMMDD in VPS-style filenames is the *publication* date, not the
+  // period-end date. Q1 reports (Jan–Mar) are published in April (SSC deadline ~Apr 30).
+  // Month 4 must map to Q1, not Q2 — align with detectTargetQuarter() boundaries:
+  //   months 1–4  → Q1 (Q1 report published Jan–Apr)
+  //   months 5–7  → Q2
+  //   months 8–10 → Q3
+  //   months 11–12 → Q4
   const yyyymmdd = filename.match(/^(20\d{2})(0[1-9]|1[0-2])\d{2}/);
   if (yyyymmdd) {
     const prefixYear = parseInt(yyyymmdd[1]!, 10);
     const month = parseInt(yyyymmdd[2]!, 10);
     let quarter: "Q1" | "Q2" | "Q3" | "Q4";
-    if (month <= 3) quarter = "Q1";
-    else if (month <= 6) quarter = "Q2";
-    else if (month <= 9) quarter = "Q3";
+    if (month <= 4) quarter = "Q1";
+    else if (month <= 7) quarter = "Q2";
+    else if (month <= 10) quarter = "Q3";
     else quarter = "Q4";
     // Use any explicit later year (e.g. "2025" in "20250429-VCB-...-2025_signed.pdf")
     const laterYearMatch = filename.match(/[^0-9](20\d{2})[^0-9]/);
