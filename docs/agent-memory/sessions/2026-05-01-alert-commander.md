@@ -301,3 +301,83 @@
 
 ### End-of-Day Note
 Last Alert Commander cycle for 2026-05-01. All watchlist stocks tracked; real estate sector requires monitoring for cascade into credit/financial sector risk next trading week.
+
+---
+
+## Alert Cycle 16:03–16:04 UTC (Session #311)
+
+**Timestamp:** 2026-05-01 16:03:16 UTC  
+**Market Status:** VN Market CLOSED (off-hours off-schedule cycle, 2h interval)
+
+### Macro Regime
+- **Global Liquidity:** NEUTRAL
+- **VND Carry Spread:** -0.33% (VND 5.00% < Fed 5.33%) → **FII_OUTFLOW_RISK persists**
+- **USD/VND:** 26,355 (elevated, market-closed valuation)
+- **Commodities:** Brent $107.80/bbl (down) | Gold $4,654.30/oz (elevated, risk-off signal)
+- **SBV Rates:** Overnight 3.00% | Refinancing 4.50% | Max deposit 5.00%
+- **Pivot Window:** False — no policy event window flagged
+
+### Signal Processing
+
+| ID | Type | Stock | Confidence | Impact | Decision | Reason |
+|----|------|-------|------------|--------|----------|--------|
+| 2068 | chain_catalyst | — | 50% | 9 | SUPPRESSED | Below 0.75 threshold (NEUTRAL regime); FII capital flight risk flagged but insufficient conviction |
+| 2069 | chain_catalyst | — | 50% | 8 | SUPPRESSED | Below 0.75 threshold (NEUTRAL regime); currency pressure chain (USD/VND 26,355) signals rotation but confidence too low |
+| 2070 | urgent_news | HVN | 50% | 7 | SUPPRESSED | Below 0.60 threshold (NEUTRAL regime); HVN double pressure (FII outflow + USD headwind) valid but confidence unmet |
+
+### Risk Assessment
+- **Legal Risk:** None detected (query returned no signals)
+- **Crisis Signals:** None detected; all reputation scores safe
+- **Open Price Alerts:** 9 tracked (7 banking HIGH -1.63% avg, VIC MEDIUM -5.10%, HVN LOW news_mention)
+- **System Status:** Nominal — bootstrap successful, all queries responsive
+
+### Price Action Context (as of market close 08:59 UTC)
+- **Energy:** GAS +2.31% (Brent support)
+- **Aviation:** HVN +0.89% (despite emergency-mode CEO letter + FII pressure)
+- **Real Estate:** VIC -5.10%, VRE +4.87% (retail REIT rotation)
+- **Banking:** Sector -1.63% (carry trade + rate concerns)
+- **Tech:** FPT +1.48% (sustained strength)
+
+### Signal Detail Analysis
+1. **Signal #2068 — FII Capital Flight Risk (Impact 9)**
+   - Condition: Khối ngoại bán ròng 14 tỷ USD HOSE stocks despite VN-Index +180pts
+   - Divergence: Strong bearish reversal pattern (flows opposite to price)
+   - Carry context: -0.33% spread confirms outflow pressure active
+   - Confidence: 50% insufficient for 0.75 NEUTRAL threshold
+   - Assessment: Valid macro catalyst but conviction too low; requires confirmation from verified_chain or crisis velocity
+
+2. **Signal #2069 — Currency Pressure Chain (Impact 8)**
+   - Condition: USD/VND 26,355 (vs SBV 26,138) creates exporter/importer divergence
+   - Affected tickers: Bullish HPG/HSG/GVR (exporters) | Bearish HVN/ACV (importers)
+   - Fed carry: 5.33% sustains outflow pressure
+   - Confidence: 50% insufficient for 0.75 NEUTRAL threshold
+   - Assessment: Valid sector rotation signal; requires stronger confidence to escalate
+
+3. **Signal #2070 — HVN Urgent News (Impact 7)**
+   - Condition: Vietnam Airlines under compound stress (FII outflow + currency headwind)
+   - Evidence: Chairman emergency-response letter signals C-suite concern
+   - Macro backdrop: HVN directly exposed to both carry trade unwinding AND fuel cost inflation (USD-priced)
+   - Confidence: 50% insufficient for 0.60 NEUTRAL threshold
+   - Assessment: Valid bearish signal for aviation sector; confidence metrics below floor despite fundamental concerns
+
+### Output
+- **WORK channel:** Status report sent ✓ (16:03 UTC — 3 signals, 0 fired, 3 suppressed)
+- **MARKET channel:** No alerts fired (all confidence below regime thresholds)
+- **BUG channel:** No errors
+- **Session Log:** ID 311 completed
+- **Signal Outcomes:** All three signals recorded as suppressed
+
+### Analysis Summary
+1. **Confidence Floor Persistence:** Third consecutive 2h cycle with 50% confidence bootstrap signals; suggests agents are capturing macro catalysts but below conviction threshold
+2. **FII Outflow Risk Confirmed:** 14T VND net selling despite index rally + -0.33% carry spread = dual bearish divergence; no CRITICAL escalation yet but risk accumulating
+3. **HVN Case Study:** Double-pressure play (carry + currency) is textbook emerging-market crisis scenario, yet insufficient confidence to trigger MARKET alert; price action (+0.89%) disconnects from fundamental concern
+4. **Carry Regime Duration:** FII_OUTFLOW_RISK persisting across entire May 1 trading day; May Day holiday (May 2) may accelerate unwind if negative sentiment carries through
+
+### Summary
+- **Fired:** 0 | **Suppressed:** 3 | **Outcome:** Cycle complete
+- **Regime context:** NEUTRAL liquidity + persistent FII_OUTFLOW_RISK carry stress; VND carry spread at -0.33% indicates capital flight mechanism active; no CRITICAL threshold breaches (legal/crisis clean)
+- **Watchlist Status:** Banking sector (-1.63%), real estate (VIC -5.10%, VRE +4.87% rotation), aviation (HVN under pressure), energy (GAS resilient) — all tracked
+- **Next cycle:** 2026-05-01 18:03 UTC (off-hours 2h schedule); market hours resume 2026-05-02 02:00 UTC
+
+### Off-Hours Summary
+May 1 off-hours cycles (01:37, 05:07, 16:03 UTC) all show pattern: macro catalysts (FII outflow, carry pressure, currency divergence) flagged by agents but confidence floor not met. Real estate sector stress (VIC -5.10%) developing; potential cascade into banking/credit sector if FII acceleration continues. No legal/crisis signals detected. Market awaiting earnings season and May policy decisions to resolve macro uncertainty.
