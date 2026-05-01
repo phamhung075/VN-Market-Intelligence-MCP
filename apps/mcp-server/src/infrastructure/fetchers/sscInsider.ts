@@ -9,12 +9,10 @@
  */
 
 import { parseVnNumber } from "../../domain/services/vnNumberParser.js";
+import { BROWSER_UA } from "./browserHeaders.js";
 
 const SSC_INSIDER_URL =
   "https://congbothongtin.ssc.gov.vn/faces/oracle/webcenter/portalapp/pages/giaodichnoibo/ketquagiaodich.jspx";
-
-const BROWSER_UA =
-  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types

@@ -18,6 +18,7 @@
 import { getDb } from "../../infrastructure/db/schema.js";
 import { breakers } from "../../infrastructure/circuitBreakerRegistry.js";
 import { globalRateLimiter } from "../../domain/services/rateLimiter.js";
+import { BROWSER_UA } from "../../infrastructure/fetchers/browserHeaders.js";
 import {
   calculateConfidenceDecay,
   IMF_INDICATORS,
@@ -174,8 +175,7 @@ export async function fetchLatestImfIndicators(): Promise<ImfIndicator[]> {
         const url = buildImfApiUrl(code);
         const response = await fetch(url, {
           headers: {
-            "User-Agent":
-              "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+            "User-Agent": BROWSER_UA,
             Accept: "application/json",
           },
           signal: AbortSignal.timeout(15_000),

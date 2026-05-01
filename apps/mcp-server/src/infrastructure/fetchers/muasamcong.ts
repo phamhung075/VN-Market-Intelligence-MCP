@@ -11,12 +11,10 @@
  */
 
 import { parseVnNumber } from "../../domain/services/vnNumberParser.js";
+import { BROWSER_UA } from "./browserHeaders.js";
 
 const MUASAMCONG_URL =
   "https://muasamcong.mpi.gov.vn/web/guest/home-page-new-ver2/-/thauthau/ket-qua-chon-nha-thau";
-
-const BROWSER_UA =
-  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
