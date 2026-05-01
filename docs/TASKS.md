@@ -40,6 +40,7 @@
 
 | Task ID | Title | Merged | Reports |
 |---------|-------|--------|---------|
+| 1815 | FIX: BCTC-VAL-01-POSITION — VNM Q4-2025 false-zero confidence. When assets<equity (ratio<500) AND netRevenue>assets×30, apply soft penalty (−0.2) instead of hard fail. 3 new tests green (8539 pass total). | 2026-05-02 | reports/TASK_REPORT_1815.md |
 | JANITOR-018 | DDD fix: bctcDiscovery.ts — extract fetchWithTimeout + BROWSER_UA to infrastructure/fetchers/bctcHttpFetcher.ts; wire bctcHttpFetch at scheduler call site; guard throws when no fetchers supplied. 1813-bctc-ddd.test.ts passes. | 2026-05-01 | — |
 | JANITOR-014 / 014a–014e | DRY: extract shared extractor helpers — create extractorHelpers.ts (014a), migrate balanceSheet (014b), incomeStatement (014c), cashFlow (014d) extractors; full verification (014e). Zero private copies remain. 46 tests pass, 1 pre-existing fail unchanged. | 2026-05-01 | docs/reports/TASK_REPORT_JANITOR-014.md |
 | JANITOR-017 | DRY: BROWSER_UA string extracted to shared infrastructure/http/browserHeaders.ts — eliminates 18 inline hardcoded UA strings; any UA rotation now requires 1 edit. | 2026-05-01 | — |
