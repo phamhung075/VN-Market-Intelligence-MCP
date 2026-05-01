@@ -26,6 +26,7 @@ import {
   getSignalEffectiveness,
   getOpenChainFindings,
   computeCycleId,
+  SignalTypeSchema,
   type SignalType,
   type AgentSignal,
 } from "../../../../infrastructure/db/agentSignalStore.js";
@@ -40,16 +41,7 @@ import {
 
 // ── Zod schemas ─────────────────────────────────────────────────────────────
 
-const SignalTypeEnum = z.enum([
-  "urgent_news",
-  "price_anomaly",
-  "cross_validate",
-  "suppress",
-  "chain_catalyst",
-  "fundamental_validation",
-  "price_confirmation",
-  "verified_chain",
-]);
+// SignalTypeSchema imported from agentSignalStore — single source of truth.
 
 const OutcomeEnum = z.enum([
   "fired",
@@ -176,7 +168,7 @@ export function registerAgentSignalTools(server: McpServer): void {
         .describe(
           "Name of the receiving agent or 'all' for broadcast (e.g. 'alert-commander')",
         ),
-      signal_type: SignalTypeEnum.describe(
+      signal_type: SignalTypeSchema.describe(
         "Signal classification: urgent_news | price_anomaly | cross_validate | suppress | chain_catalyst | fundamental_validation | price_confirmation | verified_chain",
       ),
       stock_code: z

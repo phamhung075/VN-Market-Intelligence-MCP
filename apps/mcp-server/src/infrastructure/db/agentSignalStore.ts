@@ -25,20 +25,28 @@
  */
 
 import type { Database } from "bun:sqlite";
+import { z } from "zod";
 import { detectEarningsConflict } from "../../domain/services/earningsConflictDetector.js";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
+/**
+ * Zod schema for valid signal types (SSOT — imported by agentSignalTools).
+ * Derived TypeScript union below keeps the rest of the file unchanged.
+ */
+export const SignalTypeSchema = z.enum([
+  "urgent_news",
+  "price_anomaly",
+  "cross_validate",
+  "suppress",
+  "chain_catalyst",
+  "fundamental_validation",
+  "price_confirmation",
+  "verified_chain",
+]);
+
 /** Valid signal types that agents can exchange (includes enrichment chain types). */
-export type SignalType =
-  | "urgent_news"
-  | "price_anomaly"
-  | "cross_validate"
-  | "suppress"
-  | "chain_catalyst"
-  | "fundamental_validation"
-  | "price_confirmation"
-  | "verified_chain";
+export type SignalType = z.infer<typeof SignalTypeSchema>;
 
 /** Outcome values for a signal once it has been processed. */
 export type SignalOutcome = "fired" | "suppressed" | "confirmed" | "false_positive";
