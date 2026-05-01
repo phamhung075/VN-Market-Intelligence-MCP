@@ -98,7 +98,7 @@ export function getDb(): Database {
   // Ensure data directory exists — skip for the special `:memory:` path
   if (dbPath !== ":memory:") {
     const dir = dirname(dbPath);
-    mkdirSync(dir, { recursive: true });
+    try { mkdirSync(dir, { recursive: true }); } catch (e: any) { if (e.code !== "EEXIST") throw e; }
   }
 
   _db = new Database(dbPath);
