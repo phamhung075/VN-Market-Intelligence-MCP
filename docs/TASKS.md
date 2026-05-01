@@ -2,7 +2,15 @@
 
 Active sprint board. Completed tasks → `docs/TASKS_ARCHIVE.md`.
 
-_Last updated: 2026-05-01 by developer (task 1803 — TA candle guard pending annotation)_
+_Last updated: 2026-04-30 by developer (task 1804c — get_price_history queries daily_ohlcv)_
+
+---
+
+## Sprint 1804c — Done
+
+| Task | Title | Status | Agent | Source |
+|------|-------|--------|-------|--------|
+| 1804c | Fix get_price_history: query daily_ohlcv instead of 24h-pruned market_prices_history | done | developer | pm |
 
 ---
 

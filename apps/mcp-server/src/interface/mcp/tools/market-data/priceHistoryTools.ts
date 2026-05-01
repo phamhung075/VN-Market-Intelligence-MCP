@@ -4,10 +4,13 @@
  * Interface layer: registers the `get_price_history` MCP tool.
  *
  * Tool registered:
- *   1. get_price_history — queries `market_prices_history` table for a given
- *      stock code over N days and returns a formatted Vietnamese-friendly text
- *      table with per-row price data plus period statistics (min, max, avg,
- *      return %).
+ *   1. get_price_history — queries `daily_ohlcv` table for a given stock code
+ *      over N days and returns a formatted Vietnamese-friendly text table with
+ *      per-row OHLCV data plus period statistics (min, max, avg, return %).
+ *
+ *   NOTE (Task 1804c): Changed from `market_prices_history` (24h rolling
+ *   intraday ticks) to `daily_ohlcv` (permanent daily candles). The old table
+ *   was pruned on every VPS push so a days=30 query only returned 24h of data.
  *
  * DB injection:
  *   The second argument `_db` accepts a `bun:sqlite` Database instance.
@@ -26,13 +29,15 @@ import { logger } from "../../../../infrastructure/logger.js";
 // Types
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** A single row read from `market_prices_history`. */
+/** A single row read from `daily_ohlcv`. */
 interface PriceRow {
   code: string;
-  price: number;
+  date: string;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
   volume: number;
-  fetched_at: string;
-  exchange: string | null;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -110,17 +115,17 @@ export function formatPriceHistory(code: string, days: number, rows: PriceRow[])
   for (let i = 0; i < rows.length; i++) {
     const row = rows[i];
     if (!row) continue;
-    const dateStr = toDateStr(row.fetched_at);
-    const priceStr = formatPrice(row.price);
+    const dateStr = toDateStr(row.date);
+    const priceStr = formatPrice(row.close);
     const volumeStr = formatVolume(row.volume);
 
     // Change vs previous (older) row — row i+1 is the previous day
     let changeStr = "-";
     const prevRow = rows[i + 1];
     if (prevRow !== undefined) {
-      const prev = prevRow.price;
+      const prev = prevRow.close;
       if (prev > 0) {
-        const pct = ((row.price - prev) / prev) * 100;
+        const pct = ((row.close - prev) / prev) * 100;
         const sign = pct >= 0 ? "+" : "";
         changeStr = `${sign}${pct.toFixed(2)}%`;
       }
@@ -134,7 +139,7 @@ export function formatPriceHistory(code: string, days: number, rows: PriceRow[])
   lines.push("-".repeat(52));
 
   // ── Statistics ─────────────────────────────────────────────────────────
-  const prices = rows.map((r) => r.price);
+  const prices = rows.map((r) => r.close);
   const minPrice = Math.min(...prices);
   const maxPrice = Math.max(...prices);
   const avgPrice = prices.reduce((a, b) => a + b, 0) / prices.length;
@@ -142,8 +147,8 @@ export function formatPriceHistory(code: string, days: number, rows: PriceRow[])
   // Period return: oldest row → newest row (rows[0] is newest, rows[last] is oldest)
   const newestRow = rows[0];
   const oldestRow = rows[rows.length - 1];
-  const newestPrice = newestRow?.price ?? 0;
-  const oldestPrice = oldestRow?.price ?? 0;
+  const newestPrice = newestRow?.close ?? 0;
+  const oldestPrice = oldestRow?.close ?? 0;
   const periodReturn = formatReturn(oldestPrice, newestPrice);
 
   lines.push(
@@ -170,8 +175,8 @@ export function registerPriceHistoryTools(
 ): void {
   server.tool(
     "get_price_history",
-    "Get price history for a stock over N days. Returns daily OHLC-like data with min/max/avg/return stats. " +
-      "Queries the local market_prices_history table which is populated by the intelligence cycle fetcher.",
+    "Get price history for a stock over N days. Returns daily OHLCV data with min/max/avg/return stats. " +
+      "Queries the daily_ohlcv table which holds permanent daily candles (not the 24h-pruned intraday ticks).",
     {
       actionCode: z
         .string()
@@ -198,19 +203,15 @@ export function registerPriceHistoryTools(
         }
 
         // ── Query ───────────────────────────────────────────────────────────
-        const cutoff = new Date(
-          Date.now() - lookbackDays * 24 * 60 * 60 * 1000,
-        ).toISOString();
-
         const rows = db
-          .query<PriceRow, [string, string]>(
-            `SELECT code, price, volume, fetched_at, exchange
-               FROM market_prices_history
+          .query<PriceRow, [string, number]>(
+            `SELECT code, date, open, high, low, close, volume
+               FROM daily_ohlcv
               WHERE code = ?
-                AND fetched_at >= ?
-              ORDER BY fetched_at DESC`,
+                AND date >= date('now', '-' || ? || ' days')
+              ORDER BY date DESC`,
           )
-          .all(code, cutoff);
+          .all(code, lookbackDays);
 
         // ── Format ──────────────────────────────────────────────────────────
         const text = formatPriceHistory(code, lookbackDays, rows);

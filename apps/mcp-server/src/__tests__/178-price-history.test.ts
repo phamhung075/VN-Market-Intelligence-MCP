@@ -2,7 +2,9 @@
  * Task 178 — get_price_history MCP tool
  *
  * Tests the priceHistoryTools registration and output format.
- * Uses an in-memory SQLite database with seeded market_prices_history rows.
+ * Uses an in-memory SQLite database with seeded daily_ohlcv rows.
+ *
+ * Task 1804c: Updated to use daily_ohlcv instead of market_prices_history.
  */
 
 import { describe, it, expect, beforeEach, afterEach } from "bun:test";
@@ -14,16 +16,18 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 function buildInMemoryDb(): Database {
   const db = new Database(":memory:");
   db.exec(`
-    CREATE TABLE market_prices_history (
-      code       TEXT NOT NULL,
-      price      REAL NOT NULL,
-      volume     REAL NOT NULL,
-      fetched_at TEXT NOT NULL,
-      exchange   TEXT DEFAULT 'HOSE',
-      PRIMARY KEY (code, fetched_at)
+    CREATE TABLE daily_ohlcv (
+      code    TEXT NOT NULL,
+      date    TEXT NOT NULL,
+      open    REAL NOT NULL DEFAULT 0,
+      high    REAL NOT NULL DEFAULT 0,
+      low     REAL NOT NULL DEFAULT 0,
+      close   REAL NOT NULL,
+      volume  REAL NOT NULL DEFAULT 0,
+      PRIMARY KEY (code, date)
     );
-    CREATE INDEX idx_mph_code_fetched
-      ON market_prices_history(code, fetched_at DESC);
+    CREATE INDEX idx_daily_ohlcv_code_date
+      ON daily_ohlcv(code, date DESC);
   `);
   return db;
 }
@@ -31,13 +35,13 @@ function buildInMemoryDb(): Database {
 function seedHistory(
   db: Database,
   code: string,
-  rows: Array<{ price: number; volume: number; fetched_at: string; exchange?: string }>,
+  rows: Array<{ close: number; volume: number; date: string; open?: number; high?: number; low?: number }>,
 ) {
   const ins = db.prepare(
-    "INSERT OR REPLACE INTO market_prices_history (code, price, volume, fetched_at, exchange) VALUES (?, ?, ?, ?, ?)",
+    "INSERT OR REPLACE INTO daily_ohlcv (code, date, open, high, low, close, volume) VALUES (?, ?, ?, ?, ?, ?, ?)",
   );
   for (const r of rows) {
-    ins.run(code, r.price, r.volume, r.fetched_at, r.exchange ?? "HOSE");
+    ins.run(code, r.date, r.open ?? r.close, r.high ?? r.close, r.low ?? r.close, r.close, r.volume);
   }
 }
 
@@ -84,15 +88,13 @@ describe("Task 178 — get_price_history MCP tool", () => {
   });
 
   it("returns a formatted table with price rows for a known stock", async () => {
-    // Sprint 053 / 1021: use dates relative to `now` so the 7-day window
-    // always covers them regardless of when the test runs. Hard-coded
-    // 2026-04-01 dates drifted outside the window as the clock moved on.
-    const iso = (daysAgo: number) =>
-      new Date(Date.now() - daysAgo * 24 * 3600 * 1000).toISOString();
+    // Use dates relative to `now` so the 7-day window always covers them.
+    const dateStr = (daysAgo: number) =>
+      new Date(Date.now() - daysAgo * 24 * 3600 * 1000).toISOString().slice(0, 10);
     seedHistory(db, "VCB", [
-      { price: 85000, volume: 1200000, fetched_at: iso(1) },
-      { price: 84000, volume: 900000,  fetched_at: iso(2) },
-      { price: 83500, volume: 800000,  fetched_at: iso(3) },
+      { close: 85000, volume: 1200000, date: dateStr(1) },
+      { close: 84000, volume: 900000,  date: dateStr(2) },
+      { close: 83500, volume: 800000,  date: dateStr(3) },
     ]);
 
     const result = await callTool(server, "get_price_history", {
@@ -115,12 +117,12 @@ describe("Task 178 — get_price_history MCP tool", () => {
   });
 
   it("computes correct period return % between first and last entry", async () => {
-    const iso = (daysAgo: number) =>
-      new Date(Date.now() - daysAgo * 24 * 3600 * 1000).toISOString();
-    // oldest price 80000, newest price 84000 → return +5.00%
+    const dateStr = (daysAgo: number) =>
+      new Date(Date.now() - daysAgo * 24 * 3600 * 1000).toISOString().slice(0, 10);
+    // oldest close 80000, newest close 84000 → return +5.00%
     seedHistory(db, "VNM", [
-      { price: 84000, volume: 500000, fetched_at: iso(1) },
-      { price: 80000, volume: 400000, fetched_at: iso(8) },
+      { close: 84000, volume: 500000, date: dateStr(1) },
+      { close: 80000, volume: 400000, date: dateStr(8) },
     ]);
 
     const result = await callTool(server, "get_price_history", {
@@ -148,11 +150,11 @@ describe("Task 178 — get_price_history MCP tool", () => {
   it("limits results to the requested days window", async () => {
     // Seed 10 rows spanning 10 days
     const rows = Array.from({ length: 10 }, (_, i) => ({
-      price: 50000 + i * 100,
+      close: 50000 + i * 100,
       volume: 100000,
-      fetched_at: new Date(
+      date: new Date(
         Date.UTC(2026, 2, 23 + i), // 2026-03-23 to 2026-04-01
-      ).toISOString(),
+      ).toISOString().slice(0, 10),
     }));
     seedHistory(db, "FPT", rows);
 
@@ -172,7 +174,7 @@ describe("Task 178 — get_price_history MCP tool", () => {
 
   it("defaults to 7 days when 'days' param is omitted", async () => {
     seedHistory(db, "VCB", [
-      { price: 85000, volume: 1000000, fetched_at: "2026-04-01T00:00:00.000Z" },
+      { close: 85000, volume: 1000000, date: "2026-04-01" },
     ]);
 
     // Omit `days` — should not throw
@@ -184,11 +186,11 @@ describe("Task 178 — get_price_history MCP tool", () => {
   });
 
   it("shows negative period return correctly", async () => {
-    const iso = (daysAgo: number) =>
-      new Date(Date.now() - daysAgo * 24 * 3600 * 1000).toISOString();
+    const dateStr = (daysAgo: number) =>
+      new Date(Date.now() - daysAgo * 24 * 3600 * 1000).toISOString().slice(0, 10);
     seedHistory(db, "HPG", [
-      { price: 28000, volume: 2000000, fetched_at: iso(1) },
-      { price: 30000, volume: 1500000, fetched_at: iso(5) },
+      { close: 28000, volume: 2000000, date: dateStr(1) },
+      { close: 30000, volume: 1500000, date: dateStr(5) },
     ]);
 
     const result = await callTool(server, "get_price_history", {
