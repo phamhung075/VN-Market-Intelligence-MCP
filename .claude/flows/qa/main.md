@@ -28,6 +28,8 @@ New domain service / MCP tool / cross-service HTTP / DDD refactor → request Ar
 
 ## Task Report
 
+Write to `reports/TASK_REPORT_NNN.md` — never `apps/mcp-server/reports/` or `docs/reports/`.
+
 **Compact** (fix, ≤3 files):
 ```markdown
 ## Task Report NNN

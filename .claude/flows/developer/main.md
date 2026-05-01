@@ -17,6 +17,8 @@ Code + tests on `task/NNN-*` branch | `[Developer] Implementation Record` in han
 3. Read `docs/handoffs/TASK_NNN.md` first — use `files_to_read/modify/create` directly, skip redundant scanning
 4. `depends_on` not Done → STOP, notify PM
 5. Load knowledge files (fail-loud → `send_telegram(channel="bug")`, STOP)
+6. **Before creating any new file** → look up canonical location in `.claude/knowledge/docs-organization.md` table.
+   Quick ref: source→`apps/mcp-server/src/` | tests→`apps/mcp-server/src/__tests__/` | reports→`reports/` | handoffs→`docs/handoffs/` | never at root.
 
 **TDD workflow**
 ```

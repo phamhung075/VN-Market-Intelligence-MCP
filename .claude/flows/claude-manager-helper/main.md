@@ -21,6 +21,16 @@ Groups:
 
 **ALL empty → "No changes. Skip." EXIT.**
 
+## Pass 0: File Location Audit (ALWAYS runs — not skippable)
+Detect files created in wrong locations. Auto-move violations:
+```bash
+ls *.md | grep -vE "^(CLAUDE|README)\.md$"                                  # root .md violations
+find . -name "TASK_REPORT_*.md" -not -path "./reports/*" -not -path "./.claude/worktrees/*"
+find apps/mcp-server -name "*.md" -not -path "*/node_modules/*" -not -name "README.md"
+find . -name "*-session*.md" -not -path "./docs/agent-memory/sessions/*" -not -path "./.claude/*"
+```
+For each violation → move to correct location per `.claude/knowledge/docs-organization.md` → log in Pass 10 report.
+
 ## Pass 1: Tree-Map Integrity
 **SKIP IF** `GROUP_KNOWLEDGE` empty.
 Verify nodes exist | check orphans | dependency direction (no child→parent)
@@ -64,6 +74,7 @@ Issues → `architect` subagent + `reports/TOOL_AGENT_AUDIT_<YYYY-MM-DD>.md` + B
 ## Pass 10: Report
 ```
 Pre-check:      N groups (or "no changes — exited")
+Pass 0 Location:   OK | N moved (file → correct path)
 Pass 1 Tree-map:   OK | SKIPPED | N fixed
 Pass 2 JSON drift: OK | SKIPPED | N updated
 Pass 3 Dangling:   OK | SKIPPED | N repaired
