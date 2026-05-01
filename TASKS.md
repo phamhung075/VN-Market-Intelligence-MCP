@@ -12,6 +12,10 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Blocked by |
 |---------|-------|----------|------|-------|---------|------------|
+| JANITOR-014 | DRY: extract shared extractor helpers (extractNumber, LOOKAHEAD_LINES, stripDiacritics, detectUnitMultiplier) into extractorHelpers.ts — balance sheet, income statement, and cash flow extractors all define private copies; income statement detectUnitMultiplier is missing 400-line scan, (Triệu VND) pattern, nghìn fallback, and magnitude sentinels present in balance sheet version | medium | refactor | developer | — | — |
+| JANITOR-015 | DRY: detectUnitMultiplier divergence — incomeStatementExtractor.ts copy scans only 50 lines (vs 400), missing (Triệu VND) bank BCTC pattern, missing nghìn đồng fallback, and missing magnitude-inference sentinels (-1/-2); bank BCTC income statements will silently use wrong multiplier | medium | fix | developer | — | JANITOR-014 |
+| JANITOR-016 | DRY: private parseVnNumber copies in sscInsider.ts and muasamcong.ts diverge from canonical vnNumberParser.ts — private copies use simpler dot-replace logic, return 0 on NaN (vs null), and do not handle parentheses-negatives, scientific notation, or format disambiguation; replace both with import of canonical parseVnNumber | low | refactor | developer | — | — |
+| JANITOR-017 | DRY: BROWSER_UA string (Mozilla/5.0 Macintosh Chrome/131) hardcoded inline in 18 source files — any UA rotation requires 18 edits; extract to a shared infrastructure constant (e.g. infrastructure/http/browserHeaders.ts) | low | refactor | developer | — | — |
 
 ---
 
@@ -40,6 +44,9 @@
 
 | Task ID | Title | Merged | Reports |
 |---------|-------|--------|---------|
+| 1810a | FIX: BCTC income statement — sci-notation guard in vnNumberParser, GUARD_MAX 500T→2T, multi-field magnitude sentinel, HPG short-pattern fallback; FPT Q4 + HPG Q4 fixtures. 33 tests pass. | 2026-05-01 | reports/TASK_REPORT_1810a.md |
+| 1810c | VNM Q4-2025 unit scale mismatch fix — detectUnitMismatch() in financialFiguresValidator.ts; unit cross-check in parseBctcReport.ts Step 5b; low_confidence=0.1 when totalAssets/netRevenue ratio >1000×. 5 tests pass. | 2026-05-01 | reports/TASK_REPORT_1810c.md |
+| 1810b | VCB Q1-2026: Q1 period year parsing fix — Tier 3 month boundary in bctcReparseJob.ts corrected to publication-window mapping (month ≤ 4 → Q1). 7 new tests pass. | 2026-05-01 | — |
 | 1809a | FIX: 089-tool-macro.test.ts SBV_NORMAL fixture — add 4 missing fields (discountRatePct, maxDepositRatePct, maxLendingRatePct, interbankOvernightPct). 16 pass, 0 fail. 23 pre-existing failures unchanged. | 2026-05-01 | — |
 | 1808 | FIX: chain_catalyst bypass Step 3 threshold gate — route unconditionally to Step 3c in alert-commander cycle.md | 2026-05-01 | — |
 | 1807-open | Open Sprint 1807 — QA final sweep, stats baseline updated (8672/8592/42), SPRINT_GOAL.md advanced | 2026-04-30 | — |
@@ -52,72 +59,8 @@
 | 1805b-2 | alert-commander.md — add chain_catalyst to signals.consumes + inter_agent.receives_from | 2026-05-01 | — |
 | 1805b-1 | alert-commander cycle.md — chain_catalyst thresholds, signal matrix row, Step 3c block, Step 4a caveats, Step 5 log template | 2026-05-01 | — |
 | 1805a | Clean up stale testBaselineFail field — zero'd, all pre-existing failures resolved since Sprint 1419 | 2026-05-01 | — |
-| 1804a | SPRINT_GOAL.md shows Sprint 1804 active, Sprint 1803 in Closed table | 2026-05-01 | — |
-| 1804b | deploy-vinahost.sh correct service count (9), no stale Vultr/reuters refs | 2026-05-01 | — |
-| 1804c | priceHistoryTools.ts queries daily_ohlcv not market_prices_history; 178-price-history tests pass | 2026-05-01 | — |
-| 1804d-A | Add PriceAnomalyFindingData Zod schema + register price_anomaly in SIGNAL_TYPE_VALIDATORS | 2026-05-01 | docs/handoffs/TASK_1804d-A.md |
-| 1804d-B | computeConfidenceBoost() pure domain service in domain/services/confidenceBoost.ts | 2026-05-01 | docs/handoffs/TASK_1804d-B.md |
-| 1804d-C | getPriceAnomalySignals() exported from agentSignalStore.ts | 2026-05-01 | docs/handoffs/TASK_1804d-C.md |
-| 1804d-MW | market-watcher cycle.md has move_sigma in price_anomaly finding_data template | 2026-05-01 | docs/handoffs/TASK_1804d-MW.md |
-| 1804d-AC | alert-commander cycle.md has Step 3b price-validation override | 2026-05-01 | docs/handoffs/TASK_1804d-AC.md |
-| 1804d-E | 1804-price-validation-override.test.ts — 10 tests pass | 2026-05-01 | — |
-| 1802-stats-sync | Sprint 1801 close-out doc sync — SPRINT_GOAL + project-stats advanced to 1802 | 2026-05-01 | — |
-| JANITOR-011b | DRY: extract buildChromiumLaunchConfig() + TE_USER_AGENT in tradingEconomicsChromium.ts | 2026-05-01 | — |
-| 1800 | Fix TargetCloseError on Chromium SPA pages — --single-process removal, shm_size 256mb, domcontentloaded | 2026-04-30 | reports/TASK_REPORT_1800.md |
-| te-chromium-news | Trading Economics Chromium news fetcher — fetchTradingEconomicsNews(), 30-min cache, teChromiumNews pollNews slot | 2026-04-30 | reports/TASK_REPORT_te_chromium_news.md |
-| te-chromium-fix | Trading Economics Chromium: playwright-core→puppeteer-core, Debian trixie Dockerfile fixes | 2026-04-30 | reports/TASK_REPORT_te_chromium_fix.md |
-| 1799 | Stats + docs sync — archive 1777/hotfix-bctc-parser2, add 1797/1798 Done rows, sync stats | 2026-04-30 | — |
-| 1798 | Trading Economics Chromium scraper | 2026-04-30 | — |
-| 1797 | NewsAPI 90-req/day rate-limit guard | 2026-04-30 | — |
-| 1797+1798 | NewsAPI 90 req/day guard + Trading Economics Playwright/Chromium scraper with 6h cache | 2026-04-30 | reports/TASK_REPORT_1797_1798.md |
-| fetch-source-issues | fix: vnstock concurrency (sequential await), disabled-source health tracker, TE deploy key guard | 2026-04-30 | reports/TASK_REPORT_fetch_fix.md |
-| 1796a | Archive closed sprints in SPRINT_GOAL.md (under 30 lines) | 2026-04-30 | — |
-| 1796b | Trim CLAUDE.md to under 120 lines — extract Agent Chaining Protocol to .claude/knowledge/agent-chaining-protocol.md | 2026-04-30 | — |
-| 1796c | Delete ghost dirs docs/agent-memory/modules/, issues/, patterns/ | 2026-04-30 | — |
-| 1796d | Delete stale DB backups data/market.db.fresh-* + data/market.db.pre-repair-* + harden .gitignore | 2026-04-30 | — |
-| 1796e | Add DAG entry DRC sector=machinery to docs/data/stock-classification.json | 2026-04-30 | — |
-| 1796f | Add machinery sector to sectorPeers.ts + unit test | 2026-04-30 | — |
-| 1796g | Sync project-stats.json (sprint=1796, done=399, pass=8466, fail=0) | 2026-04-30 | — |
-| 1777a | VPS price/foreign-flow pipeline restored — 374 pushes/24h, 0 errors; idle status correct (market closed); resolved by Sprint 1795 Docker rebuild | 2026-04-30 | — |
-| 1795 | Docker rebuild to activate restart_vps_service — mcp-server rebuilt, SSH layer baked in, toolCount=122 healthy | 2026-04-30 | — |
-| 1425a | Sync project-stats.json toolCount=113 + schedulerFileCount=44 to registry SSoTs | 2026-04-29 | — |
-| 1425b | Remove hardcoded REQ/TECH file counts from docs-organization.md | 2026-04-29 | — |
-| 1425c | Delete ghost dirs docs/agent-memory + corrupt DB backups (~281MB) + .fuse_hidden* | 2026-04-29 | — |
-| JANITOR-010 | DRY: extract VN_INDEX_FRESHNESS_MS=25h to timeConstants.ts | 2026-04-29 | — |
-| 1424a | BCTC confidence=0 false positive: VAL-01 unit-scale guard + banking operatingMargin proxy | 2026-04-29 | reports/TASK_REPORT_1424a.md |
-| hotfix-bctc-parser2 | BCTC parser: DIG/SHB case mismatch + FPT unit scale + DGC/BSR phantom confidence | 2026-04-29 | reports/TASK_REPORT_hotfix_bctc_parser2.md |
-| 1423a | Add US 10Y Yield (^TNX) to Yahoo Finance fetcher + schema column | 2026-04-29 | docs/handoffs/TASK_1423a.md |
-| 1423b | FRED API fetcher for Fed Funds Rate → tracked_indicators | 2026-04-29 | reports/TASK_REPORT_1423b.md |
-| 1423c | wire get_carry_trade_signal MCP tool (carryTools.ts) + 1423c/1423d test suites | 2026-04-29 | reports/TASK_REPORT_1423ac.md |
-| 1423d | Extend get_macro_snapshot with [Global Macro Inputs — Thien Thoi] section | 2026-04-29 | reports/TASK_REPORT_1423d.md |
-| 1423e | get_macro_calendar targeted MCP tool tests | 2026-04-29 | reports/TASK_REPORT_1423ac.md |
-| 1423f | Add Max Deposit Rate line to get_macro_snapshot SBV section | 2026-04-29 | — |
-| 1426c | Dinh Gia section in get_macro_snapshot for Báu Phase 2 | 2026-04-29 | reports/TASK_REPORT_1426c.md |
-| 1777b | foreign-flow dedup + CB self-healing regression tests (12 tests, no prod code change) | 2026-04-29 | reports/TASK_REPORT_1777b.md |
-| 1776 | vnstock ANSI escape sequence handling + circuit breaker | 2026-04-29 | reports/TASK_REPORT_1776.md |
-| 1407b | SLA monitor: skip price+foreign_flow escalations outside market hours | 2026-04-29 | reports/TASK_REPORT_1407b.md |
-| 1778 | BCTC vnstock junk response guard — Strategy A only in extractCafefUrls, 28 stuck tickers unblocked | 2026-04-30 | reports/TASK_REPORT_1778.md |
-| 1780 | vnstock BCTC fetcher: exponential backoff + box-drawing rate-limit detection | 2026-04-30 | reports/TASK_REPORT_1780.md |
-| 1779a | sshExec infrastructure layer — Bun.spawn args array, 15s timeout, 7 tests | 2026-04-30 | reports/TASK_REPORT_1779a.md |
-| 1779b | restart_vps_service MCP tool — three-layer allowlist handler, registry entry, 8 tests | 2026-04-30 | reports/TASK_REPORT_1779b.md |
-| 1779c | SSH key mount + known_hosts seeding — docker-compose :ro mount, entrypoint.sh ssh-keyscan fail-loud | 2026-04-30 | reports/TASK_REPORT_1779c.md |
-| 1779 | VPS SSH restart pipeline (parent) — sshExec + restart_vps_service MCP tool + Docker SSH key mount | 2026-04-30 | — |
-| JANITOR-011 | DRY: extract ANSI+box-drawing regex to domain/utils/ansiUtils.ts — 3 inline copies removed | 2026-04-30 | reports/TASK_REPORT_JANITOR011.md |
-| 1781 | classifyFilingStatus off-by-one: deadline day now SAP_DEN not QUA_HAN — calendar-date UTC comparison | 2026-04-30 | reports/TASK_REPORT_1781.md |
-| 1782 | BCTC enricher Q1-2026: seed queue at startup + park exhausted rows as url_not_found after 5 attempts | 2026-04-30 | reports/TASK_REPORT_1782.md |
-| 1783 | Morning bulletin: hide/mask foreign flow section when data stale; fix top-5 sort to |net_flow| desc | 2026-04-30 | reports/TASK_REPORT_1783.md |
-| 1784 | Sector alerts: render as sector-level not per-ticker; deduplicate in morning bulletin | 2026-04-30 | reports/TASK_REPORT_1784.md |
-| 1785 | France summary change_pct: prev-close-to-close reference; formatPct(null) → N/A | 2026-04-30 | reports/TASK_REPORT_1785.md |
-| 1787 | GVR sector fix: oil_gas → agriculture (Vietnam Rubber Group) | 2026-04-30 | reports/TASK_REPORT_1787.md |
-| 1789 | getDeadlineForQuarter DST bug: replace local setDate() with Date.UTC() + setUTCDate() — standard Q4=2026-03-31, banking Q4=2026-04-15 | 2026-04-30 | reports/TASK_REPORT_1789.md |
-| 1790 | alertDigestJob dedup guard: replace `if (db && alreadySentToday(db))` with `effectiveDb = db ?? getDb()` — guard always fires | 2026-04-30 | reports/TASK_REPORT_1790.md |
-| 1791 | assembleAlertDigest intra-digest dedup: Set<string> dedup on message before top-3 slice; overflow reflects unique count | 2026-04-30 | reports/TASK_REPORT_1791.md |
-| JANITOR-012 | DRY/fix: DAG sector pharma→machinery (Da Nang Rubber Group — industrial/machinery) | 2026-04-30 | — |
-| 1792 | BCTC conviction signal debounce: DB-backed per-ticker+quarter 1h cooldown — 10 rapid retries → 1 bug alert (bctcSignalDebounce.ts + bctc_signal_debounce table) | 2026-04-30 | reports/TASK_REPORT_1792.md |
-| 1793 | pollNews all-sources-dark cooldown persists across restarts: INSERT now stores nowMs() clock instead of SQLite strftime('now') — clock mismatch fixed | 2026-04-30 | reports/TASK_REPORT_1793.md |
-| 1786 | Earnings conflict detection: earningsConflictDetector.ts domain service + postSignal wiring — conflict warning appended to payload.detail when two chain_catalyst earnings signals differ | 2026-04-30 | reports/TASK_REPORT_1786.md |
-| 1788 | HCM ticker false positive fix: GEOGRAPHIC_CONTEXT_MAP look-behind guard in newsNormalizer.ts — TP.HCM / TP HCM / TPHCM no longer extract HCM ticker | 2026-04-30 | reports/TASK_REPORT_1788.md |
 | 1803 | TA candle guard — "TA: en attente (N/35 bougies)" annotation when history insufficient; candlesAvailable on ComputeTAResponse; taAlertScanJob log line; 5 tests pass | 2026-05-01 | — |
-| 1794 | EOD Vol+RSI populated: WatchlistMover.volume from market_prices SQL + rsi14 threaded from taSummary; formatMoversSection fmtMoverLine renders Vol: X.XM and RSI: X.X | 2026-04-30 | reports/TASK_REPORT_1794.md |
+| 1804a–1804d-E | Sprint 1804 — deploy-vinahost.sh fix, priceHistoryTools daily_ohlcv, PriceAnomalyFindingData schema, computeConfidenceBoost(), getPriceAnomalySignals(), market-watcher + alert-commander wiring, 10 tests | 2026-05-01 | docs/handoffs/TASK_1804d-*.md |
+| 1777–1802 | Sprints 1777–1802 archived — see docs/TASKS_ARCHIVE.md | 2026-04-30 | — |
 
 ---

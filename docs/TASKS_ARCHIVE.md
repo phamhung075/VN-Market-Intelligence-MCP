@@ -21,6 +21,7 @@ Active board → `TASKS.md`
 | [sprints-025-034.md](archive/sprints-025-034.md) | 025–034 | 2026-04-01 → 04-02 | Sector rotation, correlation, performance attribution, rebalancing, rate limiter, Telegram commands |
 | [sprints-004-006.md](archive/sprints-004-006.md) | 004–006 | Foundation | RSS, watchlist, signals, alerts, HOSE/HNX fetchers, pattern matcher, scheduler |
 | [standalone-tasks.md](archive/standalone-tasks.md) | — | 2026-04-08 → 04-12 | Bug fixes, janitor cleanups, VPS proxy, cascade rules, DDL dedup |
+| inline | 1777–1802 | 2026-04-30 | VPS SSH restart pipeline (1779a/b/c), classifyFilingStatus off-by-one (1781), BCTC enricher Q1-2026 seed (1782), morning bulletin foreign-flow masking (1783), sector alerts dedup (1784), France summary change_pct (1785), earnings conflict detection (1786), GVR sector fix (1787), HCM ticker false positive (1788), getDeadlineForQuarter DST bug (1789), alertDigestJob dedup guard (1790), assembleAlertDigest intra-digest dedup (1791), BCTC conviction signal debounce (1792), pollNews all-sources-dark cooldown (1793), EOD Vol+RSI (1794), JANITOR-011/012, VPS pipeline restored (1777a), Docker rebuild (1795), 1796a–g janitor sweep, 1797 NewsAPI guard, 1798 TE Chromium scraper, te-chromium-fix, te-chromium-news, 1799–1803 stats+docs sync. |
 
 ---
 
