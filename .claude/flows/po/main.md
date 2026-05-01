@@ -1,14 +1,14 @@
 # Product Owner — Main Flow
 
 ## Input
-TASKS.md blockers | `docs/data/project-stats.json` | latest `reports/TASK_REPORT_*.md`
+docs/TASKS.md blockers | `docs/data/project-stats.json` | latest `reports/TASK_REPORT_*.md`
 
 ## Output
-`SPRINT_GOAL.md` vision | BA task in TASKS.md | sprint sign-off
+`docs/SPRINT_GOAL.md` vision | BA task in docs/TASKS.md | sprint sign-off
 
 ---
 
-**Pre-check**: TASKS.md blocked tasks waiting for PO → handle first
+**Pre-check**: docs/TASKS.md blocked tasks waiting for PO → handle first
 
 ## Step 0 — Channel Audit (MANDATORY, runs before everything)
 
@@ -40,9 +40,9 @@ For each message, scan for these failure signals:
 
 Before opening a new bug task, verify the issue wasn't already fixed:
 
-**1. Check TASKS.md** — search for the same module/ticker/tool name in Done tasks:
+**1. Check docs/TASKS.md** — search for the same module/ticker/tool name in Done tasks:
 ```
-grep -i "<keyword>" TASKS.md
+grep -i "<keyword>" docs/TASKS.md
 ```
 If a matching Done task exists → the fix was merged. Suspect **deploy gap** (see below).
 
@@ -71,7 +71,7 @@ get_recent_fixes()    ← last N fixes logged by ops — was this one applied?
 
 ---
 
-**If 1+ issues found**: create bug/correction tasks in TASKS.md (with correct root-cause label) before proceeding to sprint planning.
+**If 1+ issues found**: create bug/correction tasks in docs/TASKS.md (with correct root-cause label) before proceeding to sprint planning.
 
 **If clean**: proceed to No-Task Guard.
 
@@ -86,7 +86,7 @@ Issues: [list with root-cause: new/regression/deploy-gap/premature-close] | CLEA
 ## No-Task Guard
 
 Before doing anything, check:
-1. TASKS.md — any pending/in-progress tasks? → handle those first
+1. docs/TASKS.md — any pending/in-progress tasks? → handle those first
 2. `read_telegram_reports(status="new")` — any user requests? → handle those first
 3. Both empty → **cannot self-initiate** → return:
 ```
@@ -103,7 +103,7 @@ Main terminal will ask the user for input before re-spawning PO.
 
 **2.** Highest-impact: reliability (failing tests, footguns) | coverage (missing signals) | UX (useless alerts) | architecture (DDD debt)
 
-**3.** Write `SPRINT_GOAL.md`:
+**3.** Write `docs/SPRINT_GOAL.md`:
 ```markdown
 # Sprint NNN Goal
 
@@ -124,8 +124,8 @@ OUT: [what we're NOT doing]
 ```
 ## RETURN
 DONE: Sprint NNN goal written, BA task created
-NEXT: ba | write requirement spec for SPRINT_GOAL.md
-HANDOFF: SPRINT_GOAL.md
+NEXT: ba | write requirement spec for docs/SPRINT_GOAL.md
+HANDOFF: docs/SPRINT_GOAL.md
 PIPELINE: continue
 ```
 
@@ -136,5 +136,5 @@ Read `docs/REQ_NNN.md` — matches vision? AC clear? blockers answerable?
 
 ## When QA Signals Sprint Complete
 Read `reports/SPRINT_REPORT_NNN.md` + smoke test (MCP tool call or market output)
-- **Approve** → update TASKS.md + `SPRINT_GOAL.md` → return `PIPELINE: complete`
+- **Approve** → update docs/TASKS.md + `docs/SPRINT_GOAL.md` → return `PIPELINE: complete`
 - **Reject** → open Backlog tasks → return `NEXT: ba | new spec for remaining issues`

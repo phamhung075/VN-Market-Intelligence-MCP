@@ -16,7 +16,7 @@ Groups:
 - `GROUP_KNOWLEDGE` = `.claude/knowledge/*.md` | `docs/data/*.json` | `docs/*.md`
 - `GROUP_AGENTS` = `.claude/agents/*.md` | `cowork-workspace-team-claude-desktop/*.md`
 - `GROUP_TOOLS` = `apps/mcp-server/src/interface/mcp/tools/*.ts`
-- `GROUP_ROOT` = `CLAUDE.md` | `TASKS.md` | `SPRINT_GOAL.md`
+- `GROUP_ROOT` = `CLAUDE.md` | `docs/TASKS.md` | `docs/SPRINT_GOAL.md`
 - `GROUP_MEMORY` = `memory/MEMORY.md`
 
 **ALL empty → "No changes. Skip." EXIT.**
@@ -39,8 +39,8 @@ All pointer targets exist | follow tree-map paths | summaries present.
 > 120 lines → move bloat to knowledge/docs.
 
 ## Pass 5: Size Caps
-**SKIP IF** `GROUP_ROOT` empty OR (TASKS.md ≤ 80 AND SPRINT_GOAL.md ≤ 30).
-TASKS.md > 80 → archive Done. SPRINT_GOAL.md > 30 → delete old goals.
+**SKIP IF** `GROUP_ROOT` empty OR (docs/TASKS.md ≤ 80 AND docs/SPRINT_GOAL.md ≤ 30).
+docs/TASKS.md > 80 → archive Done. docs/SPRINT_GOAL.md > 30 → delete old goals.
 
 ## Pass 6: Memory Hygiene
 **SKIP IF** `GROUP_MEMORY` + `GROUP_KNOWLEDGE` both empty.

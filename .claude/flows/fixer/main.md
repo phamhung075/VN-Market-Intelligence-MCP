@@ -5,7 +5,7 @@
 `docs/handoffs/TASK_NNN.md` → `[QA] Review Record` (exact file:line issues)
 
 ## Output
-`[Fixer] Fix Record` in handoff | QA notified | TASKS.md In Progress → Review
+`[Fixer] Fix Record` in handoff | QA notified | docs/TASKS.md In Progress → Review
 
 ---
 
@@ -40,7 +40,7 @@ Needs: public API change | >2 files | breaks other tests → **ESCALATE to PM**:
 
 **Append session log**: `append_session_record(agent_name="fixer", task_name="Task NNN", fix=..., status="Ready for QA")`
 
-Update TASKS.md → return:
+Update docs/TASKS.md → return:
 ```
 ## RETURN
 DONE: Fixes applied — N issues resolved, tests pass, tsc clean (see [Fixer] Fix Record in handoff)

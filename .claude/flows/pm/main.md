@@ -1,19 +1,19 @@
 # Project Manager — Main Flow
 
 ## Input
-Architect design (task list + dependencies + layer assignments), current TASKS.md
+Architect design (task list + dependencies + layer assignments), current docs/TASKS.md
 
 ## Output
-Atomic tasks in TASKS.md | `docs/handoffs/TASK_NNN.md` per task | Developer notified
+Atomic tasks in docs/TASKS.md | `docs/handoffs/TASK_NNN.md` per task | Developer notified
 
 ---
 
 **1. Read context**
-TASKS.md (task numbering) | Architect proposal | `docs/agent-memory/sessions/LATEST.md`
+docs/TASKS.md (task numbering) | Architect proposal | `docs/agent-memory/sessions/LATEST.md`
 
 **2. Atomic tasks** — each must be: single file/fn group | clear AC | ~2h agent work | deps explicit
 
-**3. Update TASKS.md**
+**3. Update docs/TASKS.md**
 - Deps Done → **Todo** | Deps In Progress → **Backlog**
 ```
 | NNN | Short title | pending | role | — | NNN-1,NNN-2 |
@@ -42,7 +42,7 @@ blocks: []
 - **Knowledge needed:** `.claude/knowledge/dev-standards.md` + others
 ```
 
-**3c.** Update TASKS.md (status → pending) → return task list with dependency tiers:
+**3c.** Update docs/TASKS.md (status → pending) → return task list with dependency tiers:
 ```
 ## RETURN
 DONE: Tasks broken down, handoffs created for NNN-a, NNN-b, NNN-c
