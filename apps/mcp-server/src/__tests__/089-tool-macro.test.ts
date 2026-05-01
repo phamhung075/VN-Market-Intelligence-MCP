@@ -41,6 +41,10 @@ interface CommoditySnapshot {
 interface SbvMacroSnapshot {
   overnightRatePct: number;
   refinancingRatePct: number;
+  discountRatePct: number;
+  maxDepositRatePct: number;
+  maxLendingRatePct: number;
+  interbankOvernightPct: number;
   usdVndOfficial: number;
   fetchedAt: string;
 }
@@ -104,6 +108,10 @@ const COMMODITY_NORMAL: CommoditySnapshot = {
 const SBV_NORMAL: SbvMacroSnapshot = {
   overnightRatePct: 5.0,
   refinancingRatePct: 4.5,
+  discountRatePct: 4.5,
+  maxDepositRatePct: 5.0,
+  maxLendingRatePct: 9.0,
+  interbankOvernightPct: 4.8,
   usdVndOfficial: 25452.0,
   fetchedAt: new Date().toISOString(),
 };

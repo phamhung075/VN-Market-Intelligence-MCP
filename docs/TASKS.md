@@ -2,7 +2,15 @@
 
 Active sprint board. Completed tasks → `docs/TASKS_ARCHIVE.md`.
 
-_Last updated: 2026-04-30 by developer (task 1806b — fix 1294b RED-8 fallback stale-signal behavior)_
+_Last updated: 2026-05-01 by developer (task 1809a — fix SBV_NORMAL fixture missing 4 fields)_
+
+---
+
+## Sprint 1809a — Done
+
+| Task | Title | Status | Agent | Source |
+|------|-------|--------|-------|--------|
+| 1809a | Fix SBV_NORMAL fixture in 089-tool-macro.test.ts — add discountRatePct+3 fields from Sprint 1423f | done | developer | pm |
 
 ---
 
