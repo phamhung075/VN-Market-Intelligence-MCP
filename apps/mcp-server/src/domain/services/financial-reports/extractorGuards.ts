@@ -7,8 +7,8 @@ import type { BalanceSheet } from "../../../../bctc-schema";
 /** Deepest plausible negative equity / loss for any VN listed company */
 export const GUARD_MIN = -10_000_000_000_000;   // −10T triệu
 
-/** ~43× VCB total assets — physically impossible ceiling */
-export const GUARD_MAX = 500_000_000_000_000;   // 500T triệu
+/** 10× VCB annual revenue ceiling — physically impossible for any VN listed company */
+export const GUARD_MAX = 2_000_000_000_000;     // 2T triệu
 
 // ---------------------------------------------------------------------------
 // guardFinancialField

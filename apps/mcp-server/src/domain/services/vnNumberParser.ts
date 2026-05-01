@@ -45,6 +45,13 @@ export function parseVnNumber(input: string): number | null {
     if (s === "") return null;
   }
 
+  // Scientific notation guard — must come before Vietnamese/English format detection.
+  // PDF extraction sometimes produces raw VND values in sci notation (e.g. "1.23e14").
+  if (/^[\d.]+[eE][+-]?\d+$/.test(s)) {
+    const result = parseFloat(s);
+    return isNaN(result) ? null : (negative ? -result : result);
+  }
+
   // Determine format: Vietnamese (dot=thousands, comma=decimal) vs English (comma=thousands, dot=decimal)
   const hasComma = s.includes(",");
   const hasDot = s.includes(".");

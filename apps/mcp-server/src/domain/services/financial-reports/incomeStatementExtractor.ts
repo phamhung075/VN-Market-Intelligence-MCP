@@ -42,8 +42,9 @@ function extractNumber(line: string): number | null {
   const trimmed = line.trim();
   if (!trimmed) return null;
 
-  // Find all number-like tokens on the line
-  const tokens = trimmed.match(/\(?\-?[\d.,]+\)?/g);
+  // Find all number-like tokens on the line.
+  // Task 1810a: extended to capture scientific notation (e.g. "1.23e14") from OCR output.
+  const tokens = trimmed.match(/\(?\-?[\d.,]+(?:[eE][+-]?\d+)?\)?/g);
   if (!tokens || tokens.length === 0) return null;
 
   // Try to find the first large number (skip item codes)
@@ -238,7 +239,7 @@ function extractColumnNumber(line: string, colIndex: number): number | null {
   const trimmed = line.trim();
   if (!trimmed) return null;
 
-  const tokens = trimmed.match(/\(?\-?[\d.,]+\)?/g);
+  const tokens = trimmed.match(/\(?\-?[\d.,]+(?:[eE][+-]?\d+)?\)?/g);
   if (!tokens) return null;
 
   const largeNumbers: number[] = [];
@@ -522,14 +523,17 @@ export function extractIncomeStatement(rawText: string): IncomeStatement {
   // VN listed companies have net revenue in triệu between ~1,000 and ~200,000,000.
   // 1 triệu đồng = 1,000,000 đồng — divide raw VND by 1,000,000.
   //
-  // Bug 2 fix: the original guard only fired when m === 1 (triệu declared).
-  // When m === 1000 (tỷ declared) but OCR extracted raw VND integers, the
-  // scaled result becomes astronomically large (e.g. FPT: 14,324,284,500 × 1000
-  // = 14,324,284,500,000 triệu — 14 quadrillion). Apply the same inference for
-  // any multiplier when the scaled netRevenue exceeds 1e14 triệu.
-  if (netRevenue * m > 1e14) {
+  // Task 1810a (Fix A): Use the maximum of all core revenue/profit fields as the
+  // sentinel instead of netRevenue alone. This catches cases where netRevenue OCR
+  // produces a sci-notation token that inflates only one field while others look normal.
+  const allRawFields = [netRevenue, cogs, grossProfit, operatingProfit, profitBeforeTax, netProfit].filter(
+    (v): v is number => v !== null && !isNaN(v) && v > 0,
+  );
+  const sentinel = allRawFields.length > 0 ? Math.max(...allRawFields) : netRevenue;
+
+  if (sentinel * m > 1e14) {
     m = 0.000001;
-  } else if (m === 1 && netRevenue > 1_000_000_000) {
+  } else if (m === 1 && sentinel > 1_000_000_000) {
     m = 0.000001;
   }
 

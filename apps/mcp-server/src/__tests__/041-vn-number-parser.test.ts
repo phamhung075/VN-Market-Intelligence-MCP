@@ -106,3 +106,20 @@ describe("parseVnNumber", () => {
     expect(parseVnNumber("12,5")).toBe(12.5);
   });
 });
+
+// ---------------------------------------------------------------------------
+// Task 1810a — Scientific notation support
+// ---------------------------------------------------------------------------
+describe("parseVnNumber — scientific notation", () => {
+  it("parses positive sci notation: '1.23e12' → 1.23e12", () => {
+    expect(parseVnNumber("1.23e12")).toBeCloseTo(1.23e12);
+  });
+
+  it("parses negative sci notation: '-4.5e9' → -4.5e9", () => {
+    expect(parseVnNumber("-4.5e9")).toBeCloseTo(-4.5e9);
+  });
+
+  it("parses sci notation with explicit + exponent: '9.99e+10' → 9.99e10", () => {
+    expect(parseVnNumber("9.99e+10")).toBeCloseTo(9.99e10);
+  });
+});
