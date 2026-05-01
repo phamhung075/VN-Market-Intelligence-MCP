@@ -1,7 +1,22 @@
 {
-  "scan_date": "2026-04-27T11:00:00Z",
-  "last_run": "2026-04-27T11:00:00Z",
+  "scan_date": "2026-04-27T11:30:00Z",
+  "last_run": "2026-04-27T11:30:00Z",
   "findings": [
+    {
+      "fingerprint": "check-1:interface/mcp/tools/news-analysis/agentSignalTools.ts:SignalTypeEnum",
+      "severity": "LOW",
+      "category": "Duplicate classification maps — SignalTypeEnum re-lists SignalType union",
+      "file": "apps/mcp-server/src/interface/mcp/tools/news-analysis/agentSignalTools.ts",
+      "lines": "43-52",
+      "detail": "SignalTypeEnum (z.enum with 8 values) in agentSignalTools.ts is an exact re-listing of the SignalType TypeScript union (lines 33-41) in agentSignalStore.ts. Adding a new signal type requires two edits: the union in store and the z.enum in tools. Fix: export a SignalTypeZodEnum from agentSignalStore.ts derived from SignalType values (or a const array), and import it in agentSignalTools.ts instead of re-declaring.",
+      "canonical_source": "apps/mcp-server/src/infrastructure/db/agentSignalStore.ts:SignalType (lines 33-41)",
+      "risk": "MEDIUM — new signal type added only in one place silently breaks MCP tool validation.",
+      "discovered_at": "2026-04-27T11:30:00Z",
+      "status": "proposed",
+      "backlog_task": "JANITOR-013",
+      "ship_directly": false,
+      "reason_not_shipped": "Two-file change: agentSignalStore.ts needs a new export, agentSignalTools.ts needs an import replacement. Constraint: ship only when single-file mechanical."
+    },
     {
       "fingerprint": "check-3:infrastructure/fetchers/tradingEconomicsChromium.ts:puppeteer-launch-config",
       "severity": "LOW",
