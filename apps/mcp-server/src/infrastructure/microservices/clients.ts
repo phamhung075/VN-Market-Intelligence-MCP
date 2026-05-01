@@ -87,7 +87,10 @@ export interface ComputeTAResponse {
     middle: number;
     lower: number;
   };
-  trend: 'TANG' | 'GIAM' | 'TREN_DUNG';
+  trend: 'TANG' | 'GIAM' | 'TREN_DUNG' | 'NEUTRAL';
+  /** Number of candles available when the TA service computed indicators.
+   * Present when rsi/macd are absent (insufficient history guard). */
+  candlesAvailable?: number;
 }
 
 export async function computeTAIndicators(req: ComputeTARequest): Promise<ComputeTAResponse> {

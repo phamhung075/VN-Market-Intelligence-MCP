@@ -133,6 +133,7 @@ function formatReport(code: string, candles: DailyCandle[], lookbackDays: number
       `Tìm thấy ${candles.length} nến (cần tối thiểu 35 cho MACD).`,
     );
     lines.push(`Vui lòng thử lại sau khi có thêm dữ liệu lịch sử.`);
+    lines.push(`TA: en attente (${candles.length}/35 bougies)`);
     return lines.join("\n");
   }
 

@@ -152,8 +152,12 @@ export async function runTaAlertScan(deps?: TaAlertScanDeps): Promise<TaAlertSca
       // b. Extract RSI from response
       const rsi = taResponse.rsi;
 
-      // e. null RSI → skip silently (insufficient history)
+      // e. null RSI → skip with pending annotation (insufficient history)
       if (rsi == null) {
+        const available = taResponse.candlesAvailable;
+        if (available !== undefined) {
+          logger.info(`[taAlertScan] TA pending for ${code}: ${available}/35 candles`);
+        }
         continue;
       }
 
