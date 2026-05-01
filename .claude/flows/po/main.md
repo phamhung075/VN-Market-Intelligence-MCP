@@ -10,6 +10,79 @@ TASKS.md blockers | `docs/data/project-stats.json` | latest `reports/TASK_REPORT
 
 **Pre-check**: TASKS.md blocked tasks waiting for PO → handle first
 
+## Step 0 — Channel Audit (MANDATORY, runs before everything)
+
+Read the last 10 messages from each channel and evaluate as the **user** (not as an agent):
+
+```
+read_telegram_reports(channel="market", limit=10)
+read_telegram_reports(channel="work",   limit=10)
+read_telegram_reports(channel="bug",    limit=10)
+```
+
+For each message, scan for these failure signals:
+
+| Signal | Description | Action |
+|--------|-------------|--------|
+| **N/A values** | Any field showing `N/A`, `null`, `undefined`, `—`, or `0.0` where real data is expected | Open bug task → `ops` |
+| **Bug / error** | Stack traces, `ERROR`, `FAILED`, tool call errors, MCP exceptions | Open bug task → `ops` or `developer` |
+| **Content mismatch** | Message topic doesn't match the channel (e.g. market alert in WORK, build output in MARKET) | Flag in session log, spawn `claude-manager-helper` if pattern is recurring |
+| **Cowork doing wrong thing** | Agent reports completing work that contradicts the sprint goal or doesn't match what was asked | Open correction task → `ba` for re-spec |
+| **Silent period** | A channel has had 0 messages in >2h during market hours | Flag as potential pipeline failure → `ops` |
+
+**Evaluate from the user's perspective:**
+- Would the user understand this message?
+- Does the output reflect what was actually asked?
+- Are signals actionable or just noise?
+- Are agents reporting progress on the right tasks?
+
+### Step 0-b — Cross-check issues against fix history (MANDATORY if any issue found)
+
+Before opening a new bug task, verify the issue wasn't already fixed:
+
+**1. Check TASKS.md** — search for the same module/ticker/tool name in Done tasks:
+```
+grep -i "<keyword>" TASKS.md
+```
+If a matching Done task exists → the fix was merged. Suspect **deploy gap** (see below).
+
+**2. Check git log** — last 20 commits for a fix on the same module:
+```
+git log --oneline -20 -- <affected file or path>
+```
+If a fix commit exists but the bug still shows in channel → **container not rebuilt**.
+
+**3. Check container state** — is the running server actually on the latest code?
+```
+get_system_status()   ← compare reported version/build-time vs latest git commit timestamp
+get_recent_fixes()    ← last N fixes logged by ops — was this one applied?
+```
+
+**Decision matrix:**
+
+| Git has fix? | Container current? | Action |
+|---|---|---|
+| No | — | New bug — open task → `developer` |
+| Yes | Yes | Regression — open task, tag `regression`, priority HIGH |
+| Yes | No | Deploy gap — open task → `ops`: rebuild container (`docker compose up -d --build`) |
+| Done task exists, no git fix | — | Task was closed prematurely — reopen it, priority HIGH |
+
+**Never open a duplicate bug task.** Always resolve the root cause (regression vs deploy gap) first.
+
+---
+
+**If 1+ issues found**: create bug/correction tasks in TASKS.md (with correct root-cause label) before proceeding to sprint planning.
+
+**If clean**: proceed to No-Task Guard.
+
+**Append to session log:**
+```
+Channel audit: MARKET(N msgs, X issues) | WORK(N msgs, X issues) | BUG(N msgs, X issues)
+Issues: [list with root-cause: new/regression/deploy-gap/premature-close] | CLEAN
+```
+
+---
+
 ## No-Task Guard
 
 Before doing anything, check:

@@ -32,6 +32,20 @@ REPEAT per acceptance criterion
 3. `bun tsc --noEmit` — 0 errors
 4. `git add -p && git commit` — format per dev-standards.md
 
+**Doc update + graphify** (after code passes, before QA):
+1. Identify related docs touched by this task — check:
+   - `docs/analysis-briefs/` for any ticker/sector mentioned in the task
+   - `docs/handoffs/` — update the current handoff only
+   - `.claude/knowledge/` — update any knowledge file whose domain was changed (e.g. mcp-tools.md if MCP tool added, cron-jobs.md if scheduler changed)
+   - `WORK.md` / `docs/WORK.md` — append a one-liner summary of what changed
+2. Edit each found doc to reflect the new behaviour/API/schema — keep changes minimal and factual
+3. Run graphify incremental update on changed docs:
+   ```
+   /graphify docs --update --no-viz
+   ```
+   This rebuilds only the changed nodes in `graphify-out/graph.json` — do NOT run full `/graphify` (too slow).
+4. Skip this step entirely if: no docs are impacted (pure test refactor, fixture-only change)
+
 **Append to handoff** (before QA):
 ```markdown
 ## [Developer] Implementation Record
@@ -40,6 +54,8 @@ REPEAT per acceptance criterion
 - **Git commits:** [hash message]
 - **tsc status:** clean ✓
 - **Full suite:** N pass / 0 fail ✓
+- **Docs updated:** [path — what changed] | NONE if no docs impacted
+- **Graphify:** updated ✓ | skipped (no docs impacted)
 ```
 
 **Append session log** (before QA):
