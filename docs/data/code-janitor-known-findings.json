@@ -1,6 +1,6 @@
 {
-  "scan_date": "2026-04-27T16:30:00Z",
-  "last_run": "2026-04-27T16:30:00Z",
+  "scan_date": "2026-05-01T10:00:00Z",
+  "last_run": "2026-05-01T10:00:00Z",
   "findings": [
     {
       "fingerprint": "check-1:domain/services/financial-reports:detectUnitMultiplier-diverged",
@@ -48,21 +48,6 @@
       "reason_not_shipped": "playwrightScrape/playwrightScrapeNews are never called in tests (always mocked via DI). Duplicated lines are inside the un-tested production-only code paths. Constraint: ship only when covered by existing tests."
     },
     {
-      "fingerprint": "check-2:infrastructure/fetchers/sscInsider.ts:parseVnNumber-private-copy",
-      "severity": "LOW",
-      "category": "Duplicate helper function — private parseVnNumber in sscInsider.ts and muasamcong.ts",
-      "file": "apps/mcp-server/src/infrastructure/fetchers/sscInsider.ts and muasamcong.ts",
-      "lines": "sscInsider.ts:44-48, muasamcong.ts:121-125",
-      "detail": "Both sscInsider.ts and muasamcong.ts define a private parseVnNumber(s: string): number that uses simple dot-replace logic, returns 0 on NaN (vs null in canonical), and does not handle parentheses-negatives, scientific notation, or format disambiguation. The canonical implementation is domain/services/vnNumberParser.ts:parseVnNumber (Task 1810a updated with sci-notation support). The private copies diverge silently: any improvement to canonical vnNumberParser does not propagate. Fix: import parseVnNumber from canonical and adapt callers to handle null (currently 0 is used as a sentinel for 'no value'). Note: return type change (null vs 0) requires caller audit.",
-      "canonical_source": "apps/mcp-server/src/domain/services/vnNumberParser.ts:parseVnNumber",
-      "risk": "LOW — both private copies are functionally correct for their current input domain (no parentheses, no sci-notation in SSC/muasamcong HTML). Divergence risk grows as formats evolve.",
-      "discovered_at": "2026-04-27T16:30:00Z",
-      "status": "proposed",
-      "backlog_task": "JANITOR-016",
-      "ship_directly": false,
-      "reason_not_shipped": "Two-file change plus return-type adaptation (number → number|null) in each caller. Constraint: ship only when single-file mechanical."
-    },
-    {
       "fingerprint": "check-3:infrastructure/fetchers:BROWSER_UA-18-files",
       "severity": "LOW",
       "category": "Magic number / repeated constant — BROWSER_UA string hardcoded in 18 source files",
@@ -91,6 +76,17 @@
     }
   ],
   "fixed_findings": [
+    {
+      "fingerprint": "check-2:infrastructure/fetchers/sscInsider.ts:parseVnNumber-private-copy",
+      "severity": "LOW",
+      "category": "Duplicate helper function — private parseVnNumber in sscInsider.ts and muasamcong.ts (resolved)",
+      "file": "apps/mcp-server/src/infrastructure/fetchers/sscInsider.ts and muasamcong.ts",
+      "detail": "Both sscInsider.ts and muasamcong.ts had private parseVnNumber(s: string): number copies using simple dot-replace logic that diverged silently from the canonical vnNumberParser.ts. Both files now import parseVnNumber from canonical domain/services/vnNumberParser.js. Callers adapted to treat null return as 0 sentinel. 249-ssc-insider.test.ts: 15 pass. 248-muasamcong.test.ts: 8 pass.",
+      "fix_type": "refactor",
+      "fix_commit": "6e2cca53",
+      "fixed_at": "2026-05-01T00:00:00Z",
+      "fix_notes": "JANITOR-016. Two-file change on feat/janitor-016-parsevnnumber-dry branch. Both test suites pass. Shipped directly."
+    },
     {
       "fingerprint": "check-1:interface/mcp/tools/alerts/alertCheckTools.ts:SEVERITY_VI",
       "severity": "LOW",
@@ -199,38 +195,38 @@
   "scan_checks": {
     "check-1-duplicate-classification-maps": {
       "status": "complete",
-      "items_scanned": 10,
-      "scope": "diff HEAD~3..HEAD (10 changed files, 5 production)",
+      "items_scanned": 5,
+      "scope": "diff HEAD~3..HEAD (14 changed files, 5 production TS)",
       "findings": 0,
-      "notes": "financialFiguresValidator.ts:detectUnitMismatch is a new export — no duplication. extractorGuards.ts:GUARD_MAX tightened (500T→2T) — single canonical location, no duplication. incomeStatementExtractor.ts changes extend existing private functions (known JANITOR-014/015). No new classification map duplication in diff scope."
+      "notes": "Record<string,> in extractors are runtime result accumulators — not classification maps. extractorHelpers.ts is the new canonical SSOT (JANITOR-014 shipped). No new classification map duplication in diff scope."
     },
     "check-2-hardcoded-ticker-arrays": {
       "status": "complete",
-      "items_scanned": 10,
-      "scope": "diff HEAD~3..HEAD (10 changed files, 5 production)",
-      "findings": 1,
-      "notes": "Two private parseVnNumber copies found in sscInsider.ts and muasamcong.ts — pre-existing, not in diff, discovered as new finding JANITOR-016. No ticker array duplication in diff scope."
+      "items_scanned": 5,
+      "scope": "diff HEAD~3..HEAD (14 changed files, 5 production TS)",
+      "findings": 0,
+      "notes": "JANITOR-016 shipped (commit 6e2cca53): private parseVnNumber copies removed from sscInsider.ts and muasamcong.ts. Both now import from canonical vnNumberParser.js. No new ticker array duplication found."
     },
     "check-3-repeated-magic-numbers-and-cron-duplication": {
       "status": "complete",
-      "items_scanned": 10,
-      "scope": "diff HEAD~3..HEAD (10 changed files, 5 production)",
-      "findings": 1,
-      "notes": "BROWSER_UA string (Chrome/131 Mac) found in 18 source files — pre-existing, not in diff, logged as JANITOR-017. parseBctcReport.ts:0.1 fallback confidence is new but single-use (no cross-file duplication). extractorGuards.ts:GUARD_MAX=2T is single canonical constant. No new cron string duplication in diff."
+      "items_scanned": 5,
+      "scope": "diff HEAD~3..HEAD (14 changed files, 5 production TS)",
+      "findings": 0,
+      "notes": "No new cron string or magic number duplication in diff. JANITOR-017 (BROWSER_UA 18-file fan-out) remains open backlog — pre-existing, not in diff. LOOKAHEAD_LINES=3 is now single canonical constant in extractorHelpers.ts (JANITOR-014 shipped)."
     },
     "check-4-schema-duplication": {
       "status": "complete",
-      "items_scanned": 10,
-      "scope": "diff HEAD~3..HEAD (10 changed files, 5 production)",
+      "items_scanned": 5,
+      "scope": "diff HEAD~3..HEAD (14 changed files, 5 production TS)",
       "findings": 0,
       "notes": "Zero CREATE TABLE or inline DDL in any changed file."
     },
     "check-5-config-drift": {
       "status": "complete",
-      "items_scanned": 10,
-      "scope": "diff HEAD~3..HEAD (10 changed files, 5 production)",
+      "items_scanned": 5,
+      "scope": "diff HEAD~3..HEAD (14 changed files, 5 production TS)",
       "findings": 0,
-      "notes": "No ?? fallback patterns in changed files. detectUnitMismatch threshold (1000) is domain logic, not config-driven. No config drift in diff scope."
+      "notes": "No ?? fallback patterns in changed files. No config drift in diff scope."
     }
   }
 }
