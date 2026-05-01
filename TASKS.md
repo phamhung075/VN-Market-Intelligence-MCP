@@ -33,6 +33,16 @@
 
 | Task ID | Title | Merged | Reports |
 |---------|-------|--------|---------|
+| 1805a | Clean up stale testBaselineFail field — zero'd, all pre-existing failures resolved since Sprint 1419 | 2026-05-01 | — |
+| 1804a | SPRINT_GOAL.md shows Sprint 1804 active, Sprint 1803 in Closed table | 2026-05-01 | — |
+| 1804b | deploy-vinahost.sh correct service count (9), no stale Vultr/reuters refs | 2026-05-01 | — |
+| 1804c | priceHistoryTools.ts queries daily_ohlcv not market_prices_history; 178-price-history tests pass | 2026-05-01 | — |
+| 1804d-A | Add PriceAnomalyFindingData Zod schema + register price_anomaly in SIGNAL_TYPE_VALIDATORS | 2026-05-01 | docs/handoffs/TASK_1804d-A.md |
+| 1804d-B | computeConfidenceBoost() pure domain service in domain/services/confidenceBoost.ts | 2026-05-01 | docs/handoffs/TASK_1804d-B.md |
+| 1804d-C | getPriceAnomalySignals() exported from agentSignalStore.ts | 2026-05-01 | docs/handoffs/TASK_1804d-C.md |
+| 1804d-MW | market-watcher cycle.md has move_sigma in price_anomaly finding_data template | 2026-05-01 | docs/handoffs/TASK_1804d-MW.md |
+| 1804d-AC | alert-commander cycle.md has Step 3b price-validation override | 2026-05-01 | docs/handoffs/TASK_1804d-AC.md |
+| 1804d-E | 1804-price-validation-override.test.ts — 10 tests pass | 2026-05-01 | — |
 | 1802-stats-sync | Sprint 1801 close-out doc sync — SPRINT_GOAL + project-stats advanced to 1802 | 2026-05-01 | — |
 | JANITOR-011b | DRY: extract buildChromiumLaunchConfig() + TE_USER_AGENT in tradingEconomicsChromium.ts | 2026-05-01 | — |
 | 1800 | Fix TargetCloseError on Chromium SPA pages — --single-process removal, shm_size 256mb, domcontentloaded | 2026-04-30 | reports/TASK_REPORT_1800.md |
