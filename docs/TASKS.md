@@ -2,7 +2,15 @@
 
 Active sprint board. Completed tasks → `docs/TASKS_ARCHIVE.md`.
 
-_Last updated: 2026-04-30 by developer (task 1804c — get_price_history queries daily_ohlcv)_
+_Last updated: 2026-04-30 by developer (task 1806a — fix stale 1347b lastUpdated assertion)_
+
+---
+
+## Sprint 1806a — Done
+
+| Task | Title | Status | Agent | Source |
+|------|-------|--------|-------|--------|
+| 1806a | Fix stale test assertion in 1347b: update lastUpdated to 2026-04-30 | done | developer | pm |
 
 ---
 
