@@ -12,8 +12,7 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Blocked by |
 |---------|-------|----------|------|-------|---------|------------|
-| JANITOR-014 | DRY: extract shared extractor helpers (extractNumber, LOOKAHEAD_LINES, stripDiacritics, detectUnitMultiplier) into extractorHelpers.ts — balance sheet, income statement, and cash flow extractors all define private copies; income statement detectUnitMultiplier is missing 400-line scan, (Triệu VND) pattern, nghìn fallback, and magnitude sentinels present in balance sheet version | medium | refactor | developer | — | — |
-| JANITOR-015 | DRY: detectUnitMultiplier divergence — incomeStatementExtractor.ts copy scans only 50 lines (vs 400), missing (Triệu VND) bank BCTC pattern, missing nghìn đồng fallback, and missing magnitude-inference sentinels (-1/-2); bank BCTC income statements will silently use wrong multiplier | medium | fix | developer | — | JANITOR-014 |
+| JANITOR-015 | DRY: detectUnitMultiplier divergence — resolved by JANITOR-014c (canonical 400-line version now used in incomeStatementExtractor). Mark done after JANITOR-014e passes. | medium | fix | developer | — | — |
 | JANITOR-016 | DRY: private parseVnNumber copies in sscInsider.ts and muasamcong.ts diverge from canonical vnNumberParser.ts — private copies use simpler dot-replace logic, return 0 on NaN (vs null), and do not handle parentheses-negatives, scientific notation, or format disambiguation; replace both with import of canonical parseVnNumber | low | refactor | developer | — | — |
 | JANITOR-017 | DRY: BROWSER_UA string (Mozilla/5.0 Macintosh Chrome/131) hardcoded inline in 18 source files — any UA rotation requires 18 edits; extract to a shared infrastructure constant (e.g. infrastructure/http/browserHeaders.ts) | low | refactor | developer | — | — |
 
@@ -44,6 +43,8 @@
 
 | Task ID | Title | Merged | Reports |
 |---------|-------|--------|---------|
+| JANITOR-014 / 014a–014e | DRY: extract shared extractor helpers — create extractorHelpers.ts (014a), migrate balanceSheet (014b), incomeStatement (014c), cashFlow (014d) extractors; full verification (014e). Zero private copies remain. 46 tests pass, 1 pre-existing fail unchanged. | 2026-05-01 | docs/reports/TASK_REPORT_JANITOR-014.md |
+| JANITOR-015 | DRY: detectUnitMultiplier divergence resolved — canonical 400-line version now used in incomeStatementExtractor via extractorHelpers.ts import (JANITOR-014c). | 2026-05-01 | — |
 | 1810a | FIX: BCTC income statement — sci-notation guard in vnNumberParser, GUARD_MAX 500T→2T, multi-field magnitude sentinel, HPG short-pattern fallback; FPT Q4 + HPG Q4 fixtures. 33 tests pass. | 2026-05-01 | reports/TASK_REPORT_1810a.md |
 | 1810c | VNM Q4-2025 unit scale mismatch fix — detectUnitMismatch() in financialFiguresValidator.ts; unit cross-check in parseBctcReport.ts Step 5b; low_confidence=0.1 when totalAssets/netRevenue ratio >1000×. 5 tests pass. | 2026-05-01 | reports/TASK_REPORT_1810c.md |
 | 1810b | VCB Q1-2026: Q1 period year parsing fix — Tier 3 month boundary in bctcReparseJob.ts corrected to publication-window mapping (month ≤ 4 → Q1). 7 new tests pass. | 2026-05-01 | — |
