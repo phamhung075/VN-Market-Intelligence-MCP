@@ -38,7 +38,7 @@ Group all modified/untracked files into logical categories. Skip `.DS_Store` —
 | Session logs | `docs(sessions)` | `docs/agent-memory/sessions/` |
 | Tasks / archive | `chore(tasks)` | `docs/TASKS.md`, `docs/TASKS_ARCHIVE.md` |
 | Data / stats | `chore(data)` | `docs/data/*.json` |
-| Reports / handoffs | `docs(reports)` | `apps/mcp-server/reports/`, `docs/handoffs/`, `docs/execution-logs/` |
+| Reports / handoffs | `docs(reports)` | `reports/`, `docs/reports/`, `docs/handoffs/`, `docs/execution-logs/` |
 | Source code | `feat` / `fix` / `refactor` | `apps/`, `src/` |
 | Config / lock | `chore(config)` | `*.lock`, `*.json` config |
 
