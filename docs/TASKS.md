@@ -2,7 +2,15 @@
 
 Active sprint board. Completed tasks → `docs/TASKS_ARCHIVE.md`.
 
-_Last updated: 2026-04-30 by developer (task 1806a — fix stale 1347b lastUpdated assertion)_
+_Last updated: 2026-04-30 by developer (task 1806b — fix 1294b RED-8 fallback stale-signal behavior)_
+
+---
+
+## Sprint 1806b — Done
+
+| Task | Title | Status | Agent | Source |
+|------|-------|--------|-------|--------|
+| 1806b | Fix 1294b RED-8: replace hardcoded dates with dynamic relative timestamps; reset BCTC_FALLBACK_SIGNAL_MAX_AGE_DAYS after RED-3 to prevent env bleed | done | developer | pm |
 
 ---
 

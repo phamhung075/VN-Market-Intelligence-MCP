@@ -3,6 +3,10 @@
  *
  * RED tests only — GREEN implementation in fetchParseAndStoreBctc.ts + signalToBctcMapper.ts
  * Run: bun test 1294b-bctc-fallback.test.ts
+ *
+ * Note: signal created_at timestamps use dynamic relative dates so tests remain
+ * valid regardless of wall-clock date. BCTC_FALLBACK_SIGNAL_MAX_AGE_DAYS is
+ * reset after each test that mutates it to prevent env bleed.
  */
 
 import { describe, test, expect, beforeAll, afterAll } from 'bun:test';
@@ -12,9 +16,22 @@ import type { Database } from 'bun:sqlite';
 
 let db: Database;
 
+// Dynamic helpers — produce timestamps relative to now so tests never go stale
+function hoursAgo(h: number): string {
+  return new Date(Date.now() - h * 60 * 60 * 1000).toISOString();
+}
+function daysAgo(d: number): string {
+  return new Date(Date.now() - d * 24 * 60 * 60 * 1000).toISOString();
+}
+function daysFromNow(d: number): string {
+  return new Date(Date.now() + d * 24 * 60 * 60 * 1000).toISOString();
+}
+
 beforeAll(async () => {
   // Use in-memory DB for tests
   Bun.env['DB_PATH'] = ':memory:';
+  // Default window large enough for all "recent" signals
+  Bun.env['BCTC_FALLBACK_SIGNAL_MAX_AGE_DAYS'] = '30';
   db = getDb();
   await initDatabase(db);
 });
@@ -46,8 +63,8 @@ describe('1294b: BCTC PDF Timeout Fallback', () => {
         source: 'reuters',
         newsSentiment: 0.6,
       }),
-      '2026-04-23T10:00:00Z',
-      '2026-04-30T23:59:59Z'
+      hoursAgo(2),
+      daysFromNow(7)
     );
 
     // SETUP: Insert second signal (≥2 required for fallback)
@@ -67,8 +84,8 @@ describe('1294b: BCTC PDF Timeout Fallback', () => {
         fully_priced: false,
         confidence: 0.75,
       }),
-      '2026-04-23T11:00:00Z',
-      '2026-04-30T23:59:59Z'
+      hoursAgo(1),
+      daysFromNow(7)
     );
 
     // MOCK: fetchParseAndStoreBctc with PDF timeout error
@@ -135,7 +152,7 @@ describe('1294b: BCTC PDF Timeout Fallback', () => {
     Bun.env['BCTC_FALLBACK_SIGNAL_MAX_AGE_DAYS'] = '7';
 
     // SETUP: Insert old signal (created 10 days ago)
-    const tenDaysAgo = new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString();
+    const tenDaysAgo = daysAgo(10);
     db.prepare(`
       INSERT INTO agent_signals (from_agent, to_agent, signal_type, stock_code, payload, finding_data, created_at, expires_at)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
@@ -182,6 +199,9 @@ describe('1294b: BCTC PDF Timeout Fallback', () => {
       SELECT COUNT(*) as cnt FROM financial_reports WHERE action_code = ? AND sort_key = ?
     `).get('NVL', '2024-Q1') as { cnt: number };
     expect(count.cnt).toBe(0);
+
+    // Restore default window so subsequent tests are not affected
+    Bun.env['BCTC_FALLBACK_SIGNAL_MAX_AGE_DAYS'] = '30';
   });
 
   test('RED 4: Contradictory signals (bullish + bearish) → skip fallback', async () => {
@@ -205,8 +225,8 @@ describe('1294b: BCTC PDF Timeout Fallback', () => {
         source: 'vnexpress',
         newsSentiment: 0.6,
       }),
-      '2026-04-23T10:00:00Z',
-      '2026-04-30T23:59:59Z'
+      hoursAgo(3),
+      daysFromNow(7)
     );
 
     db.prepare(`
@@ -228,8 +248,8 @@ describe('1294b: BCTC PDF Timeout Fallback', () => {
         source: 'cafef',
         newsSentiment: -0.4,
       }),
-      '2026-04-23T11:00:00Z',
-      '2026-04-30T23:59:59Z'
+      hoursAgo(2),
+      daysFromNow(7)
     );
 
     const result = await fetchParseAndStoreBctc({
@@ -272,8 +292,8 @@ describe('1294b: BCTC PDF Timeout Fallback', () => {
         source: 'reuters',
         newsSentiment: 0.6,
       }),
-      '2026-04-23T10:00:00Z',
-      '2026-04-30T23:59:59Z'
+      hoursAgo(1),
+      daysFromNow(7)
     );
 
     const result = await fetchParseAndStoreBctc({
@@ -316,8 +336,8 @@ describe('1294b: BCTC PDF Timeout Fallback', () => {
         source: 'vnexpress',
         newsSentiment: 0.7,
       }),
-      '2026-04-23T10:00:00Z',
-      '2026-04-30T23:59:59Z'
+      hoursAgo(2),
+      daysFromNow(7)
     );
 
     db.prepare(`
@@ -339,8 +359,8 @@ describe('1294b: BCTC PDF Timeout Fallback', () => {
         source: 'cafef',
         newsSentiment: 0.5,
       }),
-      '2026-04-23T11:00:00Z',
-      '2026-04-30T23:59:59Z'
+      hoursAgo(1),
+      daysFromNow(7)
     );
 
     const result = await fetchParseAndStoreBctc({
@@ -397,8 +417,8 @@ describe('1294b: BCTC PDF Timeout Fallback', () => {
         source: 'reuters',
         newsSentiment: 0.6,
       }),
-      '2026-04-23T10:00:00Z',
-      '2026-04-30T23:59:59Z'
+      hoursAgo(2),
+      daysFromNow(7)
     );
 
     db.prepare(`
@@ -420,8 +440,8 @@ describe('1294b: BCTC PDF Timeout Fallback', () => {
         source: 'cafef',
         newsSentiment: 0.5,
       }),
-      '2026-04-23T11:00:00Z',
-      '2026-04-30T23:59:59Z'
+      hoursAgo(1),
+      daysFromNow(7)
     );
 
     const result = await fetchParseAndStoreBctc({
@@ -473,8 +493,8 @@ describe('1294b: BCTC PDF Timeout Fallback', () => {
         source: 'reuters',
         newsSentiment: 0.6,
       }),
-      '2026-04-23T10:00:00Z',
-      '2026-04-30T23:59:59Z'
+      hoursAgo(2),
+      daysFromNow(7)
     );
 
     db.prepare(`
@@ -496,8 +516,8 @@ describe('1294b: BCTC PDF Timeout Fallback', () => {
         source: 'cafef',
         newsSentiment: 0.5,
       }),
-      '2026-04-23T11:00:00Z',
-      '2026-04-30T23:59:59Z'
+      hoursAgo(1),
+      daysFromNow(7)
     );
 
     // FIRST CALL: PDF times out → fallback inserted
