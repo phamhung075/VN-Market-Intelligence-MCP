@@ -1,6 +1,6 @@
 # Sprint Goal
 
-## Sprint 1806 — Idle
+## Sprint 1807 — Idle
 **Status:** ACTIVE
 **Vision:** Awaiting next backlog items.
 **Success Metric:** —
@@ -25,3 +25,4 @@
 | 1804 — Price-validation override + VIC/VRE history + deploy cleanup | 2026-05-01 | price-validation override live, VIC/VRE 30d history fixed, deploy script cleaned. tasks=415. |
 | 1803 — TA candle guard | 2026-05-01 | Guard added: TA alerts skip candles with insufficient history. Tests pass. |
 | 1805 — chain_catalyst firing matrix | 2026-05-01 | chain_catalyst live in alert-commander firing matrix; news-scout Zod fix; QA approved. tasks=421. |
+| 1806 — DRY + test fixes + stats sync | 2026-04-30 | SignalTypeSchema DRY, 1347b/1294b tests fixed, project-stats synced. tasks=425. 8672 tests / 8592 pass / 42 fail (pre-existing). |
