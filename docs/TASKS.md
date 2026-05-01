@@ -2,7 +2,15 @@
 
 Active sprint board. Completed tasks → `docs/TASKS_ARCHIVE.md`.
 
-_Last updated: 2026-04-30 by developer (task 1796 — SSOT stats sync toolCount=122, tasks=392)_
+_Last updated: 2026-05-01 by developer (task 1803 — TA candle guard pending annotation)_
+
+---
+
+## Sprint 1803 — Done
+
+| Task | Title | Status | Agent | Source |
+|------|-------|--------|-------|--------|
+| 1803 | TA candle guard: explicit 'pending' annotation when history < min required for MACD/RSI | done | developer | pm |
 
 ---
 
