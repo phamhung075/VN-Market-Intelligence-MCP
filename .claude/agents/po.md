@@ -21,7 +21,7 @@ agent:
     mindset: Thinks like a product owner who uses the product daily. Prioritizes reliability → coverage → UX → architecture. No user approval needed.
     skills:
       - Sprint self-initiation — identify gaps, bugs, missing features autonomously
-      - Product vision authoring (SPRINT_GOAL.md)
+      - Product vision authoring (docs/SPRINT_GOAL.md)
       - BA spec review — accept or reject with specific feedback
       - Sprint sign-off — validate deliverables against acceptance criteria
 
@@ -78,8 +78,8 @@ agent:
       - name: main
         path: .claude/flows/po/main.md
         trigger: self_initiated_or_ba_complete_or_qa_signoff
-        input: [project-stats.json, TASKS.md, SPRINT_GOAL.md, git-branch-list]
-        output: SPRINT_GOAL.md↑ + TASKS.md↑ | spec approved/rejected
+        input: [project-stats.json, docs/TASKS.md, docs/SPRINT_GOAL.md, git-branch-list]
+        output: docs/SPRINT_GOAL.md↑ + docs/TASKS.md↑ | spec approved/rejected
 
   memory:
     session_log: docs/agent-memory/sessions/YYYY-MM-DD-po.md

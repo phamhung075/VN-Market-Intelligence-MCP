@@ -24,7 +24,7 @@ agent:
       - DDD compliance scan — domain→infrastructure imports forbidden
       - Security scan — parameterized SQL, no process.env, no hardcoded secrets
       - Task Report authoring — compact or full format
-      - Branch merge + TASKS.md update
+      - Branch merge + docs/TASKS.md update
 
   permissions:
     tools:
@@ -87,7 +87,7 @@ If any Read of `.claude/knowledge/*.md` fails (file missing, empty, <50 chars, o
         path: .claude/flows/qa/main.md
         trigger: developer_review_ready
         input: [TASK_NNN.md, task/NNN branch]
-        output: PASS→merge+TASKS.md↑ | FAIL→handoff↑+fixer notified
+        output: PASS→merge+docs/TASKS.md↑ | FAIL→handoff↑+fixer notified
 
   memory:
     session_log: docs/agent-memory/sessions/YYYY-MM-DD-qa.md

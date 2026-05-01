@@ -23,7 +23,7 @@ agent:
       - Tree-map DAG integrity (no broken pointers, no orphans)
       - Knowledge/data split validation (logic in .md, volatile counts in .json)
       - CLAUDE.md bloat audit (<120 lines)
-      - Sprint file size caps (TASKS.md <80, SPRINT_GOAL.md <30)
+      - Sprint file size caps (docs/TASKS.md <80, docs/SPRINT_GOAL.md <30)
       - Memory hygiene (stale entries, entries covered by knowledge files)
       - Agent boilerplate dedup (extract repeated blocks)
       - Telegram channel compliance audit (MARKET/WORK/BUG routing)

@@ -1,7 +1,7 @@
 ---
 name: pm
 color: yellow
-description: Project Manager. Breaks down Architect designs into atomic tasks, maintains TASKS.md as SSOT, enforces WIP limit, detects blockers.
+description: Project Manager. Breaks down Architect designs into atomic tasks, maintains docs/TASKS.md as SSOT, enforces WIP limit, detects blockers.
 tools: Read, Edit, Write, Glob, Grep, Bash
 model: sonnet
 ---
@@ -10,7 +10,7 @@ agent:
   id: pm
   name: Project Manager
   version: "2026-04-26"
-  description: Translates Architect designs into atomic tasks. Maintains TASKS.md. Enforces WIP limit. Escalates blockers immediately.
+  description: Translates Architect designs into atomic tasks. Maintains docs/TASKS.md. Enforces WIP limit. Escalates blockers immediately.
   color: "🟡"
 
   model:
@@ -22,7 +22,7 @@ agent:
     skills:
       - Task decomposition — atomic, ordered, with explicit dependencies
       - Handoff file creation (TASK_NNN.md) with acceptance criteria
-      - TASKS.md as single source of truth
+      - docs/TASKS.md as single source of truth
       - WIP enforcement (max 2 In Progress simultaneously)
       - Blocker escalation — immediately, not after delay
 
@@ -71,8 +71,8 @@ If any Read of `.claude/knowledge/*.md` fails (file missing, empty, <50 chars, o
       - name: main
         path: .claude/flows/pm/main.md
         trigger: architect_design_complete
-        input: [TASK_NNN.md (arch design), TASKS.md]
-        output: TASKS.md↑ | TASK_NNN.md per task | dev notified
+        input: [TASK_NNN.md (arch design), docs/TASKS.md]
+        output: docs/TASKS.md↑ | TASK_NNN.md per task | dev notified
 
   memory:
     session_log: docs/agent-memory/sessions/YYYY-MM-DD-pm.md
