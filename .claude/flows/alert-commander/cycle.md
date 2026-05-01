@@ -31,16 +31,17 @@ If `get_macro_snapshot` not in bootstrap context → call it once now.
 `get_crisis_early_warning()` threshold exceeded → mark CRITICAL
 
 **3. Signal Matrix**
-Base thresholds (NEUTRAL): `verified_chain` conviction ≥ 0.80 | `urgent_news` conviction ≥ 0.60
+Base thresholds (NEUTRAL): `verified_chain` conviction ≥ 0.80 | `urgent_news` conviction ≥ 0.60 | `chain_catalyst` conviction ≥ 0.75
 Regime-conditioned adjustments:
-- `TIGHTENING`: verified_chain ≥ 0.85 | bullish urgent_news ≥ 0.75
-- `EASING`: verified_chain ≥ 0.75 | urgent_news ≥ 0.55
-- `NEUTRAL`: base thresholds (0.80 / 0.60)
+- `TIGHTENING`: verified_chain ≥ 0.85 | bullish urgent_news ≥ 0.75 | chain_catalyst ≥ 0.85
+- `EASING`: verified_chain ≥ 0.75 | urgent_news ≥ 0.55 | chain_catalyst ≥ 0.70
+- `NEUTRAL`: base thresholds (0.80 / 0.60 / 0.75)
 
 | Signal | Condition | Action |
 |--------|-----------|--------|
 | `verified_chain` | conviction ≥ regime threshold | CRITICAL |
 | `urgent_news` | conviction ≥ regime threshold | MARKET |
+| `chain_catalyst` | confidence ≥ regime threshold | CRITICAL or MARKET |
 | `price_anomaly` | confirmed via `get_alerts` | CRITICAL |
 | `legal_risk` | any | CRITICAL now |
 | `crisis_velocity` | any | CRITICAL now |
@@ -56,6 +57,19 @@ For each signal where conviction < regime_threshold:
   4. Log: `"[Override] [TICKER] confidence boosted {original}→0.75 (price_anomaly move_sigma={N}, impact={M})"`
   5. Call `record_signal_outcome(original_signal_id, "confirmed", "price-validation override")`
 
+**3c. chain_catalyst processing**
+For each `chain_catalyst` signal from signal bus:
+  1. Read `finding_data.confidence`, `finding_data.direction`, `finding_data.event_type`, `finding_data.affected_stocks`
+  2. Apply regime threshold (see Step 3 matrix): confidence ≥ threshold → proceed
+  3. Direction routing:
+     - `bearish` → CRITICAL alert (position-danger)
+     - `bullish` + earnings event_type → MARKET alert (watchlist-opportunity)
+     - `bullish` + macro/trade_war event_type → MARKET alert with regime caveat
+     - `neutral` → WORK channel only, do not fire MARKET
+  4. Conflict check: call `get_agent_signals(signal_type="chain_catalyst", stock_code=affected_stock)` — if two signals for same ticker have conflicting `direction` → append conflict warning from `payload.detail` (earningsConflictDetector sets this)
+  5. Log: `"[ChainCatalyst] [TICKER] event={event_type} dir={direction} conf={confidence:.2f} → {CRITICAL|MARKET|suppressed}"`
+  6. Call `record_signal_outcome(signal_id, "fired"|"suppressed", reason)`
+
 **4a. MARKET channel**
 Pre-send: `get_market_snapshot()` — divergence > 5% → discard, max 2 attempts
 - > 3 pending → `send_alert_digest(alerts=[], channel="market")`
@@ -69,6 +83,10 @@ Append regime caveat to each MARKET alert (Vietnamese):
   `"⚠️ Dòng tiền nóng cao — carry spread hấp dẫn. Rủi ro đảo chiều FII nếu carry thu hẹp."`
 - `pivot_window_active=true`:
   `"📅 Cửa sổ pivot chính sách — dữ liệu GSO/SBV sắp công bố."`
+- `chain_catalyst` + `TIGHTENING` + `bullish`:
+  `"Lưu ý: Xúc tác chuỗi trong môi trường thắt chặt — xác nhận thêm trước khi hành động."`
+- `chain_catalyst` + `bearish` (any regime):
+  `"Cảnh báo: Xúc tác tiêu cực được phát hiện — kiểm tra danh mục ngay."`
 
 After: `mark_alert_read()` + `record_signal_outcome(..., "fired")`
 
@@ -91,6 +109,7 @@ Issue: ... | Impact: ... | Status: Retrying/Blocking
 ### Alert Cycle (HH:MM–HH:MM UTC)
 - Signals: [count by type]
 - Fired: N | Suppressed: M | MARKET: X
+- ChainCatalyst: N fired | M suppressed | event_types: [list]
 - Regime: REGIME | Carry: CARRY_REGIME (CARRY_SPREAD%) | Pivot window: pivot_window_active
 ```
 
