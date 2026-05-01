@@ -259,6 +259,9 @@ export function registerAgentMemoryUpdateTools(server: McpServer): void {
           fileContent = recordMarkdown;
         }
 
+        // Ensure parent directory exists before writing
+        mkdirSync(dirname(sessionFilePath), { recursive: true });
+
         // Write to file
         writeFileSync(sessionFilePath, fileContent, "utf-8");
 
