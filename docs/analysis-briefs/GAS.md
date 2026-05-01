@@ -9,4 +9,11 @@
 
 ## [Market Watcher] Price, Volume, Technicals
 
+## [Market Watcher] Price, Volume, Technicals
+
+### 2026-05-01 · EOD
+**2026-05-01 16:00** | Close: 75,200 VND (+2.31% daily) | RSI: N/A | Volume: avg vol | Sentiment: Bullish
+Oil & gas sector strength continues. GAS outperforming amid positive retail gas pricing environment. Insider: no activity
+Action: Hold / Monitor upside
+
 ## [Unified Agent] Quarterly Syntheses

@@ -22,6 +22,11 @@
 Close: 141,200 VND (-5.23%) | Vol: standard | Sentiment: Sector weakness
 Real estate major decline. Strong bearish pressure across sector. VHM leading downside momentum.
 
+### 2026-05-01 16:00
+Close: 146,000 VND (-3.31%) | Vol: avg | Sentiment: Bearish
+Real estate continued weakness. VHM holding losses from 4/27. Seasonal "Sell in May" pressuring sector. Insider: no activity
+Action: Reduce / Monitor support levels
+
 ---
 
 ## [Insider Tracker] Management Activity

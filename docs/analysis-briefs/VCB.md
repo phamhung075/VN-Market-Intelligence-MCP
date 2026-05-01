@@ -65,3 +65,8 @@ Summary: Banking sector modestly firm. Stable returns, blue-chip safety profile.
 ### 2026-04-27 · EOD
 **2026-04-27 16:00** | Close: 60,600 VND (-3.50%) | RSI: N/A (insufficient data) | Volume: 1.19M | Sentiment: Stable (57% bullish)
 Banking sector pressure. VCB declining with broader market weakness. No insider activity detected.
+
+### 2026-05-01 · EOD
+**2026-05-01 16:00** | Close: 59,800 VND (+0.00% daily, -1.32% YoY) | RSI: N/A | Volume: 643.1K | Sentiment: Bearish
+Banking sector HIGH ALERT: 7-stock coordinated pulldown (avg -1.63%). VCB stable but sector headwind material. Insider: no activity
+Action: Hold / Watch sector pressure
