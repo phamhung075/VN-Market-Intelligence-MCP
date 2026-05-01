@@ -9,30 +9,16 @@
 
 import { parseVnNumber } from "../vnNumberParser.js";
 import type { CashFlowStatement } from "../../../../bctc-schema";
+import { extractNumber } from "./extractorHelpers.js";
 
 // ---------------------------------------------------------------------------
 // Helpers (same pattern as balanceSheetExtractor)
 // ---------------------------------------------------------------------------
 
-/** Extract the last number on a line using parseVnNumber. */
-function extractNumber(line: string): number | null {
-  const trimmed = line.trim();
-  if (!trimmed) return null;
-
-  const match = trimmed.match(/(\(?\-?[\d.,]+\)?)[\s]*$/);
-  if (!match || !match[1]) return null;
-  return parseVnNumber(match[1]);
-}
-
-/** Case-insensitive check if a line contains a keyword pattern. */
-function lineMatches(line: string, pattern: RegExp): boolean {
-  return pattern.test(line);
-}
-
 /** Find the first line matching a pattern and extract its number. Returns 0 if not found. */
 function findValue(lines: string[], pattern: RegExp): number {
   for (const line of lines) {
-    if (lineMatches(line, pattern)) {
+    if (pattern.test(line)) {
       const val = extractNumber(line);
       if (val !== null) return val;
     }

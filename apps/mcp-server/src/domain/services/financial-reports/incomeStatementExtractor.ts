@@ -24,56 +24,11 @@
 import { parseVnNumber } from "../vnNumberParser.js";
 import type { IncomeStatement } from "../../../../bctc-schema";
 import { guardFinancialField } from "./extractorGuards.js";
+import { LOOKAHEAD_LINES, extractNumber, stripDiacritics, detectUnitMultiplier } from "./extractorHelpers.js";
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-/**
- * Extract all number tokens from a line and return the first "large" one
- * (skipping BCTC item codes which are small integers like 01, 10, 20).
- * Falls back to the last number on the line if no large number found.
- *
- * Task 1114: OCR PDFs often have multi-column layouts where the current
- * period value is NOT the last number. Extracting the first large number
- * gets the "current period" column in most Vietnamese BCTC formats.
- */
-function extractNumber(line: string): number | null {
-  const trimmed = line.trim();
-  if (!trimmed) return null;
-
-  // Find all number-like tokens on the line.
-  // Task 1810a: extended to capture scientific notation (e.g. "1.23e14") from OCR output.
-  const tokens = trimmed.match(/\(?\-?[\d.,]+(?:[eE][+-]?\d+)?\)?/g);
-  if (!tokens || tokens.length === 0) return null;
-
-  // Try to find the first large number (skip item codes)
-  for (const token of tokens) {
-    const val = parseVnNumber(token);
-    if (val === null) continue;
-    // Skip small integers that are likely BCTC item codes (01, 02, 10, 20, etc.)
-    if (Number.isInteger(val) && val >= 0 && val <= 999) continue;
-    return val;
-  }
-
-  // Fallback: return the last parseable number (even if small)
-  for (let i = tokens.length - 1; i >= 0; i--) {
-    const val = parseVnNumber(tokens[i]!);
-    if (val !== null) return val;
-  }
-  return null;
-}
-
-/**
- * Strip Vietnamese diacritics from a string, producing ASCII-only text.
- * Used to build fallback lines for corrupted pdf-parse output.
- */
-function stripDiacritics(text: string): string {
-  return text
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "") // remove combining diacritical marks
-    .replace(/[đĐ]/g, (c) => (c === "đ" ? "d" : "D")); // handle đ/Đ separately
-}
 
 /**
  * Find the first line matching a primary pattern; if no match, try the ASCII
@@ -89,7 +44,6 @@ function stripDiacritics(text: string): string {
  * @param fallback      - Regex pattern for ASCII text (diacritics removed)
  * @returns Extracted number, or 0 if not found.
  */
-const LOOKAHEAD_LINES = 3;
 
 function findValue(
   primaryLines: string[],
@@ -382,36 +336,6 @@ function parseSplitBlockIncomeStatement(
 }
 
 // ---------------------------------------------------------------------------
-// Task 1114 — Unit detection (ported from balanceSheetExtractor)
-// ---------------------------------------------------------------------------
-
-/**
- * Detect unit multiplier from PDF header. Same logic as balanceSheetExtractor
- * so both statements in the same report use consistent units.
- */
-function detectUnitMultiplier(lines: string[]): number {
-  const P_UNIT_TRIEU = /[đd][oơ]n\s+v[iị]\s+(t[íi]nh|:)\s*:?\s*(tri[eệ]u|trieu)/i;
-  const P_UNIT_TY = /[đd][oơ]n\s+v[iị]\s+(t[íi]nh|:)\s*:?\s*t[yỷ]/i;
-
-  for (const line of lines) {
-    if (P_UNIT_TRIEU.test(line)) return 1;
-    if (P_UNIT_TY.test(line)) return 1000;
-  }
-
-  // Loose fallback on first ~50 lines
-  const head = lines.slice(0, 50);
-  const P_TRIEU_LOOSE = /tri[eệ]u\s*[đd][oồ]ng|trieu\s*dong/i;
-  const P_TY_LOOSE = /t[yỷ]\s*[đd][oồ]ng|ty\s*dong/i;
-
-  for (const line of head) {
-    if (P_TRIEU_LOOSE.test(line)) return 1;
-    if (P_TY_LOOSE.test(line)) return 1000;
-  }
-
-  return 1; // default: assume triệu
-}
-
-// ---------------------------------------------------------------------------
 // Main extractor
 // ---------------------------------------------------------------------------
 
@@ -515,7 +439,6 @@ export function extractIncomeStatement(rawText: string): IncomeStatement {
 
   // Task 1114: unit conversion (tỷ → triệu). EPS stays in VND (not scaled).
   const multiplier = detectUnitMultiplier(primaryLines);
-  let m = multiplier;
 
   // Task 1119: Magnitude inference (ported from balanceSheetExtractor).
   // If netRevenue exceeds 1 billion triệu after multiplier, the values are
@@ -530,6 +453,15 @@ export function extractIncomeStatement(rawText: string): IncomeStatement {
     (v): v is number => v !== null && !isNaN(v) && v > 0,
   );
   const sentinel = allRawFields.length > 0 ? Math.max(...allRawFields) : netRevenue;
+
+  // JANITOR-014c: resolve sentinels (-1 bare đồng, -2 no unit found) before
+  // the 1e14 guard. The canonical detectUnitMultiplier returns -1/-2 where the
+  // old income statement version returned 1 as default. We resolve sentinels
+  // here using the same magnitude heuristic as balanceSheetExtractor.
+  let m = multiplier;
+  if (m === -1 || m === -2) {
+    m = sentinel > 1_000_000_000 ? 0.000001 : 1;
+  }
 
   if (sentinel * m > 1e14) {
     m = 0.000001;

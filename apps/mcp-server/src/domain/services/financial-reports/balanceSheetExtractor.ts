@@ -22,6 +22,7 @@
 
 import { parseVnNumber } from "../vnNumberParser.js";
 import { guardBalanceSheet } from "./extractorGuards.js";
+import { LOOKAHEAD_LINES, extractNumber, detectUnitMultiplier } from "./extractorHelpers.js";
 import type {
   BalanceSheet,
   CurrentAssets,
@@ -34,49 +35,6 @@ import type {
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-/**
- * Extract all number tokens from a line and return the first "large" one
- * (skipping BCTC item codes which are small integers like 01, 10, 20).
- * Falls back to the last number on the line if no large number found.
- *
- * Task 1114: OCR PDFs often have multi-column layouts where the current
- * period value is NOT the last number.
- */
-function extractNumber(line: string): number | null {
-  const trimmed = line.trim();
-  if (!trimmed) return null;
-
-  const tokens = trimmed.match(/\(?\-?[\d.,]+\)?/g);
-  if (!tokens || tokens.length === 0) return null;
-
-  // Try to find the first large number (skip item codes and year values)
-  for (const token of tokens) {
-    const val = parseVnNumber(token);
-    if (val === null) continue;
-    if (Number.isInteger(val) && val >= 0 && val <= 999) continue;
-    // Skip calendar years (1990–2030) — these appear as column headers in
-    // bank BCTCs (e.g. "31/12/2025 VND") and must not be treated as financial
-    // values. Bug confirmed: Assets (35.202.546) ≠ Liabilities (2.017) + Equity (2.025)
-    if (Number.isInteger(val) && val >= 1990 && val <= 2030) continue;
-    return val;
-  }
-
-  // Fallback: return the last parseable number (even if small).
-  // Apply a targeted year guard: skip a token only when it is a BARE 4-digit
-  // integer with no thousands separators (e.g. "2017" from "93/2017/NĐ-CP").
-  // A Vietnamese-formatted number like "2.000" has a period separator and is
-  // NOT a bare year literal — it must NOT be blocked here.
-  const BARE_YEAR = /^\d{4}$/;
-  for (let i = tokens.length - 1; i >= 0; i--) {
-    const token = tokens[i]!;
-    const val = parseVnNumber(token);
-    if (val === null) continue;
-    if (Number.isInteger(val) && val >= 1990 && val <= 2030 && BARE_YEAR.test(token)) continue;
-    return val;
-  }
-  return null;
-}
 
 /**
  * Case-insensitive check if a line contains a keyword pattern.
@@ -97,7 +55,6 @@ function lineMatches(line: string, pattern: RegExp): boolean {
  *
  * Task 1114: Look-ahead for OCR text where numbers appear on separate lines.
  */
-const LOOKAHEAD_LINES = 3;
 
 /**
  * Find a value by BCTC item code.
@@ -184,65 +141,6 @@ function findValue(lines: string[], pattern: RegExp): number {
     }
   }
   return 0;
-}
-
-// ---------------------------------------------------------------------------
-// Task 287 — FR-1: Unit header detection
-// ---------------------------------------------------------------------------
-
-/**
- * Scan PDF lines for a unit-declaration header and return the appropriate
- * multiplier to convert reported values to triệu đồng (million VND).
- *
- * - "Đơn vị tính: Triệu đồng" → multiplier = 1  (already in triệu)
- * - "Đơn vị tính: Tỷ đồng"    → multiplier = 1000 (1 tỷ = 1000 triệu)
- * - Not found                  → multiplier = 1  (default; caller logs warning)
- *
- * @param lines - Array of lines from the NFC-normalized rawText.
- * @returns Numeric multiplier (1 or 1000).
- */
-function detectUnitMultiplier(lines: string[]): number {
-  const P_UNIT_TRIEU =
-    /[đd][oơ]n\s+v[iị]\s+(t[íi]nh|:)\s*:?\s*(tri[eệ]u|trieu)/i;
-  const P_UNIT_TY =
-    /[đd][oơ]n\s+v[iị]\s+(t[íi]nh|:)\s*:?\s*t[yỷ]/i;
-
-  for (const line of lines) {
-    if (P_UNIT_TRIEU.test(line)) return 1;
-    if (P_UNIT_TY.test(line)) return 1000;
-  }
-
-  // Fallback: OCR text may garble diacritics or lack the formal "Đơn vị tính"
-  // prefix. Scan first ~400 lines for any unit hint (report #1088 slice a).
-  // VCB BCTCs have a 5-page cover letter; "(Triệu VND)" appears at line ~343 of
-  // extracted text, so 50 was insufficient — expanded to 400 for safety margin.
-  const head = lines.slice(0, 400);
-  // Also matches "(Triệu VND)" — bank BCTCs use this column header format
-  const P_TRIEU_LOOSE = /tri[eệ]u\s*[đd][oồ]ng|trieu\s*dong|tri[eệ]u\s*VND/i;
-  const P_TY_LOOSE = /t[yỷ]\s*[đd][oồ]ng|ty\s*dong/i;
-  const P_NGHIN_LOOSE = /ngh?[iì]n\s*[đd][oồ]ng|nghin\s*dong|1[.,]?000\s*[đd][oồ]ng/i;
-  const P_DONG_ONLY = /[đd][oồ]ng|VND/i;
-
-  for (const line of head) {
-    if (P_TRIEU_LOOSE.test(line)) return 1;
-    if (P_TY_LOOSE.test(line)) return 1000;
-    if (P_NGHIN_LOOSE.test(line)) return 0.001; // nghìn đồng → /1000 to get triệu
-  }
-
-  // Last resort: bare "đồng" or "VND" without qualifier → raw VND.
-  // Return a sentinel (-1) so the caller can apply magnitude-based inference
-  // after extraction, when we know the actual numbers.
-  for (const line of head) {
-    if (P_DONG_ONLY.test(line)) {
-      console.warn("[balanceSheetExtractor] Found bare 'đồng/VND' without triệu/tỷ prefix; will infer from magnitude.");
-      return -1; // sentinel: magnitude inference needed
-    }
-  }
-
-  // Sentinel -2: no unit declaration found at all. Caller will apply
-  // magnitude-based inference (same path as -1 bare đồng).
-  console.warn("[balanceSheetExtractor] No unit header found; defaulting multiplier to 1.");
-  return -2;
 }
 
 // ---------------------------------------------------------------------------
