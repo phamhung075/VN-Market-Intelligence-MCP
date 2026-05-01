@@ -30,21 +30,21 @@ Agent files → `.claude/agents/*.md` | Flows → `.claude/flows/{agent}/{flow}.
 
 | From | To | Mechanism | Action |
 |------|----|-----------|--------|
-| PO | BA | caveman | writes `SPRINT_GOAL.md`, creates BA task in `TASKS.md` |
-| BA | Architect | caveman | req spec in `TASKS.md`, creates Architect task |
+| PO | BA | caveman | writes `docs/SPRINT_GOAL.md`, creates BA task in `docs/TASKS.md` |
+| BA | Architect | caveman | req spec in `docs/TASKS.md`, creates Architect task |
 | Architect | PM | caveman | `[Architect]` section in `docs/handoffs/TASK_NNN.md` |
-| PM | Developer | caveman | creates `docs/handoffs/TASK_NNN.md`, TASKS.md → Todo |
-| Developer | QA | caveman | `[Developer]` section in handoff, TASKS.md → Review |
-| QA | Developer/Fixer | caveman | `[QA] Review Record` in handoff, TASKS.md → In Progress |
-| QA | PM | caveman | TASKS.md → Done, branch merged |
-| Fixer | QA | caveman | `[Fixer] Fix Record` in handoff, TASKS.md → Review |
+| PM | Developer | caveman | creates `docs/handoffs/TASK_NNN.md`, docs/TASKS.md → Todo |
+| Developer | QA | caveman | `[Developer]` section in handoff, docs/TASKS.md → Review |
+| QA | Developer/Fixer | caveman | `[QA] Review Record` in handoff, docs/TASKS.md → In Progress |
+| QA | PM | caveman | docs/TASKS.md → Done, branch merged |
+| Fixer | QA | caveman | `[Fixer] Fix Record` in handoff, docs/TASKS.md → Review |
 
 **Ops — Infra Lane** (parallel to dev chain, triggered by any agent or user)
 
 | From | To | Mechanism | Action |
 |------|----|-----------|--------|
 | any agent / user | ops | bug channel / dispatch | infra anomaly, VPS failure, Docker issue |
-| ops | pm | caveman | infra fix requires new dev task → create TASKS.md entry |
+| ops | pm | caveman | infra fix requires new dev task → create docs/TASKS.md entry |
 | ops | developer | caveman | fix needs code change → hand off with context |
 | ops | work channel | send_telegram | fix applied, service restored |
 
@@ -86,7 +86,7 @@ Full protocol → `.claude/knowledge/fail-loud-protocol.md`
 | DDD: `domain/` never imports `infrastructure/` | `.claude/knowledge/dev-standards.md` |
 | Restart: `docker-compose down && docker-compose up -d` ONLY | `.claude/knowledge/restart-policy.md` |
 | Never ask user to run code — spawn subagent | |
-| WIP: max 2 tasks In Progress in `TASKS.md` | |
+| WIP: max 2 tasks In Progress in `docs/TASKS.md` | |
 | SQL: parameterized bindings only | |
 | VN sources: always via Vinahost VPS proxy | `docs/ARCHITECTURE.md` |
 

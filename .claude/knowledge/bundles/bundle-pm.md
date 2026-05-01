@@ -18,7 +18,7 @@ If any Read of `.claude/knowledge/*.md` fails (file missing, empty, <50 chars, o
 ## Critical Rules
 
 - **WIP limit**: max 2 tasks In Progress at any time — HARD LIMIT
-- **TASKS.md ≤ 80 lines** always. Done sprints → `docs/archive/sprints-NNN-NNN.md` immediately after merge.
+- **docs/TASKS.md ≤ 80 lines** always. Done sprints → `docs/archive/sprints-NNN-NNN.md` immediately after merge.
 - **Recurring bug escalation**: if same file has ≥2 prior fix commits → DO NOT assign to Developer → block + call Architect
 
 ---

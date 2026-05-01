@@ -9,7 +9,7 @@ Also supports compressing natural language memory files into caveman format via 
 
 ### When to apply
 
-Writing or editing: docs, changelogs, task descriptions, progress notes, reports, TASKS.md entries.
+Writing or editing: docs, changelogs, task descriptions, progress notes, reports, docs/TASKS.md entries.
 
 ### 15 Techniques
 
@@ -158,7 +158,7 @@ Governs how agents compress outputs when passing context to downstream agents. R
 | Task handoff file | FULL |
 | Architect design doc | FULL |
 | Knowledge file (permanent SSOT) | FULL |
-| TASKS.md Done row | LITE |
+| docs/TASKS.md Done row | LITE |
 | Sprint session log append | LITE |
 | Completed Sprints summary line | LITE |
 | User-facing status report | LITE |

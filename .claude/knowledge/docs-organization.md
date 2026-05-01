@@ -25,10 +25,8 @@ When creating a new `.md` file, use this decision tree:
 ├─ Is it volatile data (counts, JSON)?
 │  └→ docs/data/*.json (update via MCP tool)
 │
-└─ Root files only (4 canonical):
+└─ Root files only (2 canonical):
    ├─ CLAUDE.md (project context)
-   ├─ TASKS.md (active Kanban)
-   ├─ SPRINT_GOAL.md (sprint objective)
    └─ README.md (project intro)
 ```
 
@@ -52,7 +50,7 @@ Files with these patterns **automatically** go to `docs/archive/`:
 - `AUDIT_*.md`
 - `BCTC_*.md`
 - `DEPLOYMENT*.md`
-- `SPRINT_*` (except active SPRINT_GOAL.md)
+- `SPRINT_*` (except active docs/SPRINT_GOAL.md)
 - `IMPLEMENTATION_*.md`
 - `SYSTEM_*.md`
 - `OPS_*.md`
@@ -75,13 +73,16 @@ If created in root by mistake → auto-moved to archive/ before next work task.
 - Other historical (24) — tool inventories, blocker analyses, architecture reviews
 - Moved 2026-04-25 from cluttered root
 
-**`docs/` ROOT (6 files — active use)**
+**`docs/` ROOT (9 files — active use)**
 1. `ARCHITECTURE.md` — folder tree, data flow, VPS proxies
 2. `AI_TEAM_DESIGN.md` — two-team architecture (Analysis + Dev)
 3. `MICROSERVICES_DDD.md` — language choice, DDD pattern, monorepo structure
 4. `GLOSSARY_VI.md` — Vietnamese financial terms
 5. `SESSION_SUMMARY_20260424.md` — current session notes
 6. `TASKS_ARCHIVE.md` — done task index by sprint
+7. `SPRINT_GOAL.md` — current sprint vision (≤30 lines, PO-owned)
+8. `WORK.md` — agent work log (News Scout, PO, QA cycle summaries)
+9. `TASKS.md` — active sprint Kanban (≤80 lines, PM-owned)
 
 ## Examples
 
@@ -107,13 +108,16 @@ If created in root by mistake → auto-moved to archive/ before next work task.
 # What's currently in docs/ root?
 ls -1 docs/*.md
 
-# Should be exactly these 6:
+# Should be exactly these 9:
 # ARCHITECTURE.md
 # AI_TEAM_DESIGN.md
 # MICROSERVICES_DDD.md
 # GLOSSARY_VI.md
 # SESSION_SUMMARY_*.md
 # TASKS_ARCHIVE.md
+# SPRINT_GOAL.md
+# WORK.md
+# TASKS.md
 
 # If you see others, they belong in archive/ or historical/
 ```
@@ -128,7 +132,10 @@ find docs/*.md \
   -not -name "GLOSSARY_VI.md" \
   -not -name "MICROSERVICES_DDD.md" \
   -not -name "SESSION_SUMMARY*" \
-  -not -name "TASKS_ARCHIVE.md" | \
+  -not -name "TASKS_ARCHIVE.md" \
+  -not -name "SPRINT_GOAL.md" \
+  -not -name "WORK.md" \
+  -not -name "TASKS.md" | \
   xargs -I {} mv {} docs/archive/
 ```
 
