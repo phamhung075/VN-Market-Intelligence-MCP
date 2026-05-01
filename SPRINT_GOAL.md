@@ -1,9 +1,9 @@
 # Sprint Goal
 
-## Sprint 1801 — Puppeteer Launch Config DRY (next)
+## Sprint 1802 — idle (awaiting next backlog items)
 **Status:** PLANNED
-**Vision:** Extract duplicated Puppeteer launch config (User-Agent, args, executablePath fallback) in tradingEconomicsChromium.ts into a shared helper. Low priority, no blocker.
-**Success Metric:** Single launch-config helper, no inline duplication, tests green.
+**Vision:** No active sprint. Awaiting backlog prioritization.
+**Success Metric:** n/a
 
 ---
 
@@ -21,3 +21,4 @@
 | hotfix-bctc-parser2 — 3 critical BCTC parser bugs | 2026-04-29 | DIG/SHB case + FPT unit scale + DGC/BSR phantom confidence fixed. Merged. |
 | 1799 — Stats + docs sync | 2026-04-30 | Archive 1777/hotfix-bctc-parser2, add 1797/1798 Done rows, stats synced (tasks=402, tests=8441). |
 | 1800 — Root cleanup + bunfig fix | 2026-05-01 | Broken bunfig.toml fixed, ghost files deleted, .gitignore hardened. tasks=403. |
+| 1801 — Puppeteer launch config DRY | 2026-05-01 | buildChromiumLaunchConfig() + TE_USER_AGENT extracted, both scrapers use shared helpers. tasks=404. |

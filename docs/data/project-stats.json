@@ -2,9 +2,9 @@
   "_maintained_by": "PM / system-auditor",
   "_trigger": "sprint start/end, tool/cron count change, baseline test update",
   "lastUpdated": "2026-05-01",
-  "currentSprint": 1801,
-  "previousSprint": { "number": 1800, "status": "DONE", "progressTasks": "Sprint 1800: Root cleanup — broken bunfig.toml fixed, ghost files deleted, .gitignore hardened." },
-  "sprintGoal": "Sprint 1801: DRY — extract duplicated Puppeteer launch config in tradingEconomicsChromium.ts into shared helper",
+  "currentSprint": 1802,
+  "previousSprint": { "number": 1801, "status": "DONE", "progressTasks": "Sprint 1801: Puppeteer launch config DRY — buildChromiumLaunchConfig() + TE_USER_AGENT extracted, both scrapers use shared helpers." },
+  "sprintGoal": "Sprint 1802: idle — awaiting next backlog items",
   "testBaseline": 8441,
   "testBaselineTarget": 8441,
   "testBaselinePass": 8441,
@@ -21,5 +21,5 @@
   "briefingArchiveQI": 0,
   "briefingArchiveQII": 0,
   "lastFixApplied": "JANITOR-011b DONE: extract buildChromiumLaunchConfig() + TE_USER_AGENT — DRY in tradingEconomicsChromium.ts. 29 tests pass. Merged 2026-05-01.",
-  "currentSprintNotes": "Sprint 1801 DONE 2026-05-01. Puppeteer launch config DRY complete — buildChromiumLaunchConfig() + TE_USER_AGENT extracted, both scrapers use shared helpers. totalTasksDone=404."
+  "currentSprintNotes": "Sprint 1802 started 2026-05-01. Idle — awaiting next backlog items."
 }

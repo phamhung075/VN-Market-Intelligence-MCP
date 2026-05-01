@@ -33,6 +33,7 @@
 
 | Task ID | Title | Merged | Reports |
 |---------|-------|--------|---------|
+| 1802-stats-sync | Sprint 1801 close-out doc sync — SPRINT_GOAL + project-stats advanced to 1802 | 2026-05-01 | — |
 | JANITOR-011b | DRY: extract buildChromiumLaunchConfig() + TE_USER_AGENT in tradingEconomicsChromium.ts | 2026-05-01 | — |
 | 1800 | Fix TargetCloseError on Chromium SPA pages — --single-process removal, shm_size 256mb, domcontentloaded | 2026-04-30 | reports/TASK_REPORT_1800.md |
 | te-chromium-news | Trading Economics Chromium news fetcher — fetchTradingEconomicsNews(), 30-min cache, teChromiumNews pollNews slot | 2026-04-30 | reports/TASK_REPORT_te_chromium_news.md |
