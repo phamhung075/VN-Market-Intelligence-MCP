@@ -54,6 +54,9 @@ Move > adaptive sigma_threshold | volume spike > volume_multiplier | VaR breach 
 ```json
 {
   "finding_data": {
+    "move_sigma": "<abs(price_change_pct) / (dailyStdDev * 100)>",
+    "move_pct": "<price_change_pct>",
+    "price_change_pct": "<price_change_pct>",
     "regime": "<TIGHTENING|EASING|NEUTRAL>",
     "adjusted_threshold": "1.5σ",
     "fx_pressure": false,
@@ -61,6 +64,7 @@ Move > adaptive sigma_threshold | volume spike > volume_multiplier | VaR breach 
   }
 }
 ```
+Note: `move_sigma = abs(price_change_pct) / (dailyStdDev * 100)` where `dailyStdDev` is the rolling 30-day standard deviation of daily returns (fraction, e.g. 0.015 for 1.5%) already computed in step 1 via `get_price_history`. Both `move_pct` and `price_change_pct` carry the same signed percentage value; `move_pct` is the canonical field consumed by downstream agents (financial-analyst, alert-commander), and `price_change_pct` is kept for legacy compatibility.
 
 **5. Session log** `docs/agent-memory/sessions/YYYY-MM-DD-market-watcher.md`:
 ```
