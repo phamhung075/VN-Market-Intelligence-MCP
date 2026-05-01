@@ -26,7 +26,7 @@ import { computeFinancialRatios } from "../../domain/services/financial-reports/
 import { computePeriodDelta } from "../../domain/services/financial-reports/periodDeltaComputer.js";
 import type { FinancialMetrics } from "../../domain/services/financial-reports/periodDeltaComputer.js";
 import { validateFinancialReport } from "../../domain/services/financial-reports/bctcValidator.js";
-import { validateFinancialFigures } from "../../domain/services/financial-reports/financialFiguresValidator.js";
+import { validateFinancialFigures, detectUnitMismatch } from "../../domain/services/financial-reports/financialFiguresValidator.js";
 import { getDb, initDatabase } from "../../infrastructure/db/schema.js";
 import {
   isBctcSignalDebounced,
@@ -497,13 +497,23 @@ export async function parseBctcReport(
       ? effectiveOperatingProfit / incomeStatement.netRevenue
       : null;
 
-  const confidenceFinancial = validateFinancialFigures({
-    totalAssets: balanceSheet.totalAssets || null,
-    totalEquity: balanceSheet.equity.total || null,
-    totalLiabilities: balanceSheet.totalLiabilities || null,
-    operatingMargin: operatingMarginRatio,
-    netRevenue: incomeStatement.netRevenue || null,
-  });
+  // Task 1810c: cross-statement unit scale guard.
+  // When totalAssets and netRevenue differ by >1000x the two extractors disagree
+  // on scale (e.g. BS in triệu, IS in raw VND). validateFinancialFigures would
+  // then compute an impossible operatingMargin and hard-fail to 0.0, silencing
+  // the signal. Return 0.1 (low_confidence) instead so the record is stored.
+  const confidenceFinancial = detectUnitMismatch(
+    balanceSheet.totalAssets || null,
+    incomeStatement.netRevenue || null,
+  )
+    ? 0.1
+    : validateFinancialFigures({
+        totalAssets: balanceSheet.totalAssets || null,
+        totalEquity: balanceSheet.equity.total || null,
+        totalLiabilities: balanceSheet.totalLiabilities || null,
+        operatingMargin: operatingMarginRatio,
+        netRevenue: incomeStatement.netRevenue || null,
+      });
 
   // ── Step 5d: Validate the extracted data (Task 132) ──────────────────────
   const validation = validateFinancialReport({

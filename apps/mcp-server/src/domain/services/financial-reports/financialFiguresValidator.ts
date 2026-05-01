@@ -120,6 +120,28 @@ export interface FinancialFiguresInput {
 }
 
 /**
+ * Detect a cross-statement unit scale mismatch (Task 1810c).
+ *
+ * Returns true when totalAssets and netRevenue differ by more than 1000x,
+ * which is physically impossible for a real company and signals that one
+ * extractor left its values in a different scale (e.g. raw VND vs triệu).
+ *
+ * Domain layer — pure function, zero I/O.
+ *
+ * @param totalAssets - Balance sheet total assets (triệu VND). null = not extracted.
+ * @param netRevenue  - Income statement net revenue (triệu VND). null = not extracted.
+ * @returns true when a unit mismatch is detected.
+ */
+export function detectUnitMismatch(
+  totalAssets: number | null,
+  netRevenue: number | null,
+): boolean {
+  if (totalAssets === null || netRevenue === null || totalAssets === 0 || netRevenue === 0) return false;
+  const ratio = totalAssets > netRevenue ? totalAssets / netRevenue : netRevenue / totalAssets;
+  return ratio > 1000;
+}
+
+/**
  * Validate extracted BCTC financial figures against accounting rules.
  *
  * Returns a confidence score in [0.0, 1.0]:
