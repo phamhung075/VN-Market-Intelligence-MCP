@@ -21,6 +21,7 @@ import { getDb } from "../db/schema.js";
 import type { HttpClient } from "./ssc.js";
 import { globalRateLimiter } from "../../domain/services/rateLimiter.js";
 import { VN_OFFSET_MS } from "../../domain/services/timeConstants.js";
+import { BROWSER_UA } from "./browserHeaders.js";
 
 // Re-export HttpClient so consumers can import it directly from this module.
 export type { HttpClient } from "./ssc.js";
@@ -174,8 +175,7 @@ async function makeDefaultHttpClient(): Promise<HttpClient> {
     async get(url: string): Promise<string> {
       const response = await axios.get<string>(url, {
         headers: {
-          "User-Agent":
-            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+          "User-Agent": BROWSER_UA,
           Accept: "application/json",
         },
         timeout: 5_000,
@@ -381,8 +381,7 @@ export async function fetchVnIndex(
     const url = `${VNDIRECT_VNMARKET_URL}?sort=date&q=code:${encodeURIComponent(indexCode)}&size=1&page=1`;
     const response = await fetch(url, {
       headers: {
-        "User-Agent":
-          "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
+        "User-Agent": BROWSER_UA,
         Accept: "application/json",
       },
       signal: controller.signal,
@@ -460,8 +459,7 @@ async function fetchFromCafef(
   try {
     const response = await fetch(CAFEF_BANGGIA_URL, {
       headers: {
-        "User-Agent":
-          "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
+        "User-Agent": BROWSER_UA,
         Accept: "application/json",
       },
       signal: controller.signal,
@@ -539,8 +537,7 @@ export async function fetchFromVnDirectStockPrices(
 
     const response = await fetch(url, {
       headers: {
-        "User-Agent":
-          "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
+        "User-Agent": BROWSER_UA,
         Accept: "application/json",
       },
       signal: controller.signal,

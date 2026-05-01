@@ -11,6 +11,7 @@ import { parseRssFeed, type RssItem } from "./rss.js";
 import type { HttpClient } from "./ssc.js";
 import { logger } from "../logger.js";
 import { globalRateLimiter } from "../../domain/services/rateLimiter.js";
+import { BROWSER_UA } from "./browserHeaders.js";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -37,8 +38,7 @@ async function makeDefaultHttpClient(): Promise<HttpClient> {
     async get(url: string): Promise<string> {
       const response = await axios.get<string>(url, {
         headers: {
-          "User-Agent":
-            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+          "User-Agent": BROWSER_UA,
           Accept: "application/rss+xml, text/xml, application/xml, */*",
         },
         timeout: 15_000,

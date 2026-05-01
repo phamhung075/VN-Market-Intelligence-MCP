@@ -27,6 +27,7 @@ import { writeFileSync, mkdirSync } from "node:fs";
 import { basename, join } from "node:path";
 
 import { listSscDocuments } from "../../infrastructure/fetchers/ssc.js";
+import { BROWSER_UA } from "../../infrastructure/fetchers/browserHeaders.js";
 import { downloadAndExtractPdf } from "../../infrastructure/fetchers/pdf.js";
 import { breakers } from "../../infrastructure/circuitBreakerRegistry.js";
 import { CircuitOpenError } from "../../infrastructure/circuitBreaker.js";
@@ -288,8 +289,7 @@ export async function fetchParseAndStoreBctc(
               responseType: "arraybuffer",
               timeout: 60_000,
               headers: {
-                "User-Agent":
-                  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+                "User-Agent": BROWSER_UA,
               },
             }),
           );

@@ -76,7 +76,7 @@ If any Read of `.claude/knowledge/*.md` fails (file missing, empty, <50 chars, o
           - docs/data/code-janitor-known-findings.json
         output:
           - Direct fix committed (if single-file mechanical)
-          - OR backlog task added to TASKS.md
+          - OR backlog task added to docs/TASKS.md
           - Session log + state file updated
 
   memory:

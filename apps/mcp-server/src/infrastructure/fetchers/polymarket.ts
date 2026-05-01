@@ -23,6 +23,7 @@ import { getDb } from "../db/schema.js";
 import type { PredictionMarketsConfig } from "../config.js";
 import type { PredictionMarket } from "../../domain/services/predictionSignalDetector.js";
 import { breakers } from "../circuitBreakerRegistry.js";
+import { BROWSER_UA } from "./browserHeaders.js";
 
 // ---------------------------------------------------------------------------
 // Public types
@@ -97,8 +98,7 @@ async function rawFetch(url: string): Promise<string> {
     const response = await fetch(url, {
       signal: controller.signal,
       headers: {
-        "User-Agent":
-          "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+        "User-Agent": BROWSER_UA,
         Accept: "application/json",
       },
     });

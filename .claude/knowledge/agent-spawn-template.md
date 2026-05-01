@@ -63,7 +63,7 @@ Agent return block received from architect:
 ```
 ## RETURN
 DONE: Architect completed design for Sprint 1409 with 6 tasks across 2 tiers.
-NEXT: pm | Create handoff files for all 6 tasks and update TASKS.md.
+NEXT: pm | Create handoff files for all 6 tasks and update docs/TASKS.md.
 HANDOFF: docs/handoffs/TASK_1409-arch.md
 PIPELINE: continue
 ```
@@ -71,7 +71,7 @@ PIPELINE: continue
 Main terminal builds the pm spawn prompt:
 
 ```
-Task 1409. Handoff: docs/handoffs/TASK_1409-arch.md. Architect completed design for Sprint 1409 with 6 tasks across 2 tiers. Create handoff files for all 6 tasks and update TASKS.md.
+Task 1409. Handoff: docs/handoffs/TASK_1409-arch.md. Architect completed design for Sprint 1409 with 6 tasks across 2 tiers. Create handoff files for all 6 tasks and update docs/TASKS.md.
 ```
 
 Why sequential: pm must read the architect handoff before it can create the 6 task files. The handoff does not exist until architect finishes.
@@ -103,7 +103,7 @@ Why parallel: each task writes to a different file (different knowledge files, d
 
 - Always source the previous agent's DONE sentence verbatim from its RETURN block.
 - The NEXT sentence is the NEXT line of the previous RETURN block, re-addressed to the new agent.
-- Include the handoff file path so the receiving agent has full context without re-reading TASKS.md.
+- Include the handoff file path so the receiving agent has full context without re-reading docs/TASKS.md.
 
 ---
 

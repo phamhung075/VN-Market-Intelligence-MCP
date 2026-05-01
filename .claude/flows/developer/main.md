@@ -9,7 +9,7 @@ Code + tests on `task/NNN-*` branch | `[Developer] Implementation Record` in han
 ---
 
 **Pre-code checklist**
-1. Confirm task status in TASKS.md
+1. Confirm task status in docs/TASKS.md
 2. Branch setup — run exactly one of:
    - Branch exists: `git checkout task/NNN-kebab-description && git status` — verify clean, on correct branch
    - Branch missing: `git checkout main && git pull origin main && git checkout -b task/NNN-kebab-description`
@@ -37,7 +37,7 @@ REPEAT per acceptance criterion
    - `docs/analysis-briefs/` for any ticker/sector mentioned in the task
    - `docs/handoffs/` — update the current handoff only
    - `.claude/knowledge/` — update any knowledge file whose domain was changed (e.g. mcp-tools.md if MCP tool added, cron-jobs.md if scheduler changed)
-   - `WORK.md` / `docs/WORK.md` — append a one-liner summary of what changed
+   - `docs/WORK.md` — append a one-liner summary of what changed
 2. Edit each found doc to reflect the new behaviour/API/schema — keep changes minimal and factual
 3. Run graphify incremental update on changed docs:
    ```
@@ -61,7 +61,7 @@ REPEAT per acceptance criterion
 **Append session log** (before QA):
 `append_session_record(agent_name="developer", task_name="Task NNN: ...", finding=..., status="Ready for QA")`
 
-**Update TASKS.md**: In Progress → Review → return:
+**Update docs/TASKS.md**: In Progress → Review → return:
 ```
 ## RETURN
 DONE: Implementation complete — CHANGED=[src/foo.ts:40-55, src/__tests__/NNN.test.ts], NEW_PASS=23, tsc clean

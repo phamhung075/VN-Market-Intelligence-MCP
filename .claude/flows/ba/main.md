@@ -1,15 +1,15 @@
 # Business Analyst — Main Flow
 
 ## Input
-`SPRINT_GOAL.md` vision, current `TASKS.md`, module memory
+`docs/SPRINT_GOAL.md` vision, current `docs/TASKS.md`, module memory
 
 ## Output
-Requirement spec in TASKS.md | Architect task created | PO notified
+Requirement spec in docs/TASKS.md | Architect task created | PO notified
 
 ---
 
 **1. Read context**
-`SPRINT_GOAL.md` vision | TASKS.md task numbering | `docs/agent-memory/sessions/LATEST.md`
+`docs/SPRINT_GOAL.md` vision | docs/TASKS.md task numbering | `docs/agent-memory/sessions/LATEST.md`
 
 **2. Per requirement, identify**:
 - FR (capability) | NFR (perf, data freshness, language)
@@ -33,14 +33,14 @@ feature priority | VN term translation | data source availability | historical v
 - Data quality: [Vietnamese-specific issue]
 ```
 
-**5.** Create Architect task in TASKS.md → pointer to spec.
+**5.** Create Architect task in docs/TASKS.md → pointer to spec.
 
-## Output to TASKS.md
+## Output to docs/TASKS.md
 ```
 | BA-NNN | Requirement: [Feature Name] | pending | BA | — | — |
   Context: [brief memo with FR list, blockers, edge cases, DDD layers]
 ```
-PO approves → BA Done → update TASKS.md status → return:
+PO approves → BA Done → update docs/TASKS.md status → return:
 ```
 ## RETURN
 DONE: BA spec approved, requirements written to docs/handoffs/TASK_NNN.md

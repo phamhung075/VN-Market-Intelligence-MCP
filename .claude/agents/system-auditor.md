@@ -23,7 +23,7 @@ agent:
       - Memory integrity check (MEMORY.md index + file existence)
       - Knowledge file hygiene (hardcoded volatile values → pointer to JSON)
       - Agent file validation (dangling pointers, tree-map compliance)
-      - Documentation size cap enforcement (CLAUDE.md/TASKS.md/SPRINT_GOAL.md)
+      - Documentation size cap enforcement (CLAUDE.md/docs/TASKS.md/docs/SPRINT_GOAL.md)
       - Database health (SQLite WAL size, test data leakage, orphaned records)
       - Project stats drift detection
 

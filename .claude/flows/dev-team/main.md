@@ -1,10 +1,10 @@
 # Dev Team — Cron Orchestration Flow
 
 ## Input
-`read_telegram_reports(status="new")` | TASKS.md | git log (last 30 commits) | `git branch` (stale branch audit)
+`read_telegram_reports(status="new")` | docs/TASKS.md | git log (last 30 commits) | `git branch` (stale branch audit)
 
 ## Output
-Tasks executed → TASKS.md updated → WORK notified
+Tasks executed → docs/TASKS.md updated → WORK notified
 
 ---
 
@@ -12,7 +12,7 @@ Tasks executed → TASKS.md updated → WORK notified
 
 Launch `po`. Triage inputs:
 - `read_telegram_reports(status="new")`
-- TASKS.md
+- docs/TASKS.md
 - `git log --oneline -30`
 - `git branch` — list all branches; flag any non-main branch as a **CLEAN** task if it has 0 unmerged commits (`git log main..<branch> --oneline` returns empty) or is a stale worktree branch
 
@@ -93,7 +93,7 @@ Tier 3: tasks that depend on Tier 2 → etc.
 - Same test suite → ⚠️ parallel ok if different test files
 
 **After each tier completes:**
-- Spawn `pm` to update TASKS.md + unblock next tier → read return → spawn next tier
+- Spawn `pm` to update docs/TASKS.md + unblock next tier → read return → spawn next tier
 
 ---
 
@@ -109,7 +109,7 @@ After all tasks Done:
 
 ## Invariants
 
-- WIP ≤ 2 | TASKS.md ≤ 80 lines | project-stats.json updated each sprint
+- WIP ≤ 2 | docs/TASKS.md ≤ 80 lines | project-stats.json updated each sprint
 - Docker restart: after final sprint merge only
 - Branch deleted by QA post-merge
 - notify work at: fix shipped | sprint complete | blocker resolved | idle

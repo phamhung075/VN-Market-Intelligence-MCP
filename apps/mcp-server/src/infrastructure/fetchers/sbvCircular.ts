@@ -17,6 +17,7 @@ import * as cheerio from "cheerio";
 import { logger } from "../logger.js";
 import { globalRateLimiter } from "../../domain/services/rateLimiter.js";
 import { breakers } from "../circuitBreakerRegistry.js";
+import { BROWSER_UA } from "./browserHeaders.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -38,9 +39,6 @@ export interface SbvCircular {
 const BASE_URL = "https://www.sbv.gov.vn";
 const CIRCULARS_URL = `${BASE_URL}/webcenter/portal/vi/menu/trangchu/vbpq/ttnh`;
 const HOST = "sbv.gov.vn";
-
-const BROWSER_UA =
-  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // HTTP client interface

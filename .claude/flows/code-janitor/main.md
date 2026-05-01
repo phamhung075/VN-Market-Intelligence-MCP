@@ -13,7 +13,7 @@ Direct fixes committed | Backlog tasks created | `docs/data/code-janitor-known-f
 Finding found?
   YES → single-file, mechanical, covered by existing tests?
     YES → ship directly (fix + test + commit + log fix)
-    NO  → add to TASKS.md backlog
+    NO  → add to docs/TASKS.md backlog
   NO  → write Clean Areas section
 ```
 

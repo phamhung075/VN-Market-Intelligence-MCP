@@ -79,7 +79,7 @@ agent:
       - name: main
         path: .claude/flows/architect/main.md
         trigger: after_ba_spec_approved
-        input: [TASK_NNN.md, SPRINT_GOAL.md]
+        input: [TASK_NNN.md, docs/SPRINT_GOAL.md]
         output: handoff↑ (brownfield+design) | pm notified
 
   memory:

@@ -18,6 +18,7 @@ import * as cheerio from "cheerio";
 import { logger } from "../logger.js";
 import { globalRateLimiter } from "../../domain/services/rateLimiter.js";
 import { breakers } from "../circuitBreakerRegistry.js";
+import { BROWSER_UA } from "./browserHeaders.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -39,9 +40,6 @@ export interface PolicyDocument {
 const BASE_URL = "https://congbao.chinhphu.vn";
 const SEARCH_URL = `${BASE_URL}/noi-dung-van-ban-so`;
 const HOST = "congbao.chinhphu.vn";
-
-const BROWSER_UA =
-  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // HTTP client interface (injectable for tests)

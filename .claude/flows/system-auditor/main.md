@@ -1,7 +1,7 @@
 # System Auditor — Main Flow
 
 ## Input
-Git diff (last 24h), CLAUDE.md, TASKS.md, memory/MEMORY.md
+Git diff (last 24h), CLAUDE.md, docs/TASKS.md, memory/MEMORY.md
 
 ## Output
 Fixed stale entries | BUG report for NEW anomalies | session log
@@ -13,7 +13,7 @@ Fixed stale entries | BUG report for NEW anomalies | session log
 git log --since="24h" --oneline  # 0 commits → skip doc sync pass
 ```
 Last audit < 12h AND no new commits → EXIT.
-No changes in CLAUDE.md/TASKS.md → EXIT.
+No changes in CLAUDE.md/docs/TASKS.md → EXIT.
 
 ## Checklist
 
@@ -30,8 +30,8 @@ No changes in CLAUDE.md/TASKS.md → EXIT.
 
 **4. Size caps**:
 - `CLAUDE.md` > 120 lines → move bloat to knowledge files
-- `TASKS.md` > 80 lines → archive Done to `docs/archive/`
-- `SPRINT_GOAL.md` > 30 lines → delete old goals
+- `docs/TASKS.md` > 80 lines → archive Done to `docs/archive/`
+- `docs/SPRINT_GOAL.md` > 30 lines → delete old goals
 
 **5. DB health**:
 ```bash

@@ -4,7 +4,7 @@
 Telegram MARKET channel unreviewed messages + server live data
 
 ## Output
-Quality/anomaly tasks in TASKS.md | ops handoff if VPS validation needed | messages reviewed
+Quality/anomaly tasks in docs/TASKS.md | ops handoff if VPS validation needed | messages reviewed
 
 ---
 

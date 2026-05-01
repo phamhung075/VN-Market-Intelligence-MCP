@@ -12,6 +12,7 @@
 import { logger } from "../logger.js";
 import { globalRateLimiter } from "../../domain/services/rateLimiter.js";
 import { CircuitBreaker } from "../circuitBreaker.js";
+import { BROWSER_UA } from "./browserHeaders.js";
 
 // Per-source circuit breakers (module-level singletons)
 const nchmfBreaker = new CircuitBreaker("nchmf.gov.vn");
@@ -73,8 +74,7 @@ async function makeDefaultHttpClient(): Promise<WeatherHttpClient> {
     async get(url: string): Promise<string> {
       const response = await axios.get<string>(url, {
         headers: {
-          "User-Agent":
-            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+          "User-Agent": BROWSER_UA,
           Accept: "text/html, */*",
         },
         timeout: 15_000,

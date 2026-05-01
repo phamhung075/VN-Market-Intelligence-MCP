@@ -71,8 +71,8 @@ agent:
       - name: main
         path: .claude/flows/ba/main.md
         trigger: after_po_sprint_goal_approved
-        input: [SPRINT_GOAL.md, TASKS.md]
-        output: TASKS.md↑ (spec+blockers) | architect task created
+        input: [docs/SPRINT_GOAL.md, docs/TASKS.md]
+        output: docs/TASKS.md↑ (spec+blockers) | architect task created
 
   memory:
     session_log: docs/agent-memory/sessions/YYYY-MM-DD-ba.md

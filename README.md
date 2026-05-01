@@ -240,8 +240,8 @@ cowork-workspace-team-claude-desktop/
 docs/                   -- Requirement specs + technical designs
 reports/                -- QA task reports + sprint reports
 CLAUDE.md               -- Full architecture context
-TASKS.md                -- Kanban board
-SPRINT_GOAL.md          -- Current sprint vision
+docs/TASKS.md           -- Kanban board
+docs/SPRINT_GOAL.md     -- Current sprint vision
 mcp.config.json         -- Central configuration
 ```
 

@@ -1,7 +1,7 @@
 # Architect — Main Flow
 
 ## Input
-BA spec or user requirement, `TASKS.md` task number, `docs/agent-memory/sessions/LATEST.md`
+BA spec or user requirement, `docs/TASKS.md` task number, `docs/agent-memory/sessions/LATEST.md`
 
 ## Output
 `[Architect] Brownfield Findings` appended to `docs/handoffs/TASK_NNN.md` | PM notified
@@ -48,7 +48,7 @@ Rule: existing interface covers need → extend, never duplicate.
 - **Scan clean:** true ✓
 ```
 
-**5.** Update TASKS.md status → return:
+**5.** Update docs/TASKS.md status → return:
 ```
 ## RETURN
 DONE: Technical design complete, brownfield findings written to docs/handoffs/TASK_NNN.md
