@@ -45,6 +45,17 @@ Regime-conditioned adjustments:
 | `legal_risk` | any | CRITICAL now |
 | `crisis_velocity` | any | CRITICAL now |
 
+**3b. Price-validation override** (runs only when signal.confidence < regime_threshold)
+
+For each signal where conviction < regime_threshold:
+  1. Call `get_agent_signals` filtered for `signal_type="price_anomaly"` AND `stock_code=signal.stockCode` AND not expired (within 120 min)
+  2. Parse `finding_data.move_sigma` from each hit
+  3. If any hit has `move_sigma >= 4.0` AND `payload.impact_score >= 6`:
+     → set `effective_confidence = 0.75`, add annotation `"price-validated override"`
+     → escalate as if threshold met
+  4. Log: `"[Override] [TICKER] confidence boosted {original}→0.75 (price_anomaly move_sigma={N}, impact={M})"`
+  5. Call `record_signal_outcome(original_signal_id, "confirmed", "price-validation override")`
+
 **4a. MARKET channel**
 Pre-send: `get_market_snapshot()` — divergence > 5% → discard, max 2 attempts
 - > 3 pending → `send_alert_digest(alerts=[], channel="market")`
