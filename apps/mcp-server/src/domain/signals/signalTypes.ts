@@ -224,6 +224,37 @@ export const CrossValidateFindingDataSchema = z.object({
   summary: z.string().min(1),
 });
 
+// ── PriceAnomalyFindingData ────────────────────────────────────────────────────
+
+/**
+ * Finding data for price_anomaly signals posted by Market Watcher.
+ *
+ * Describes a statistically significant price move (in sigma units) that
+ * exceeds the rolling standard-deviation threshold for the stock's regime.
+ * All 4 fields are required and validated at parse time.
+ */
+export interface PriceAnomalyFindingData {
+  /** Raw price move as a percentage (positive = up, negative = down). */
+  move_pct: number;
+
+  /** Move expressed in standard-deviation (sigma) units relative to rolling window. */
+  move_sigma: number;
+
+  /** Reference price used for the sigma calculation (VND, million scale). */
+  ref_price: number;
+
+  /** Rolling window in trading days used for the sigma calculation (must be >= 1). */
+  window_days: number;
+}
+
+export const PriceAnomalyFindingDataSchema = z.object({
+  move_pct: z.number(),
+  move_sigma: z.number(),
+  ref_price: z.number(),
+  window_days: z.number().int().positive(),
+});
+export type PriceAnomalyFindingDataInferred = z.infer<typeof PriceAnomalyFindingDataSchema>;
+
 // ── Index exports ──────────────────────────────────────────────────────────────
 
 /**
@@ -235,4 +266,5 @@ export const SignalSchemas = {
   PriceConfirmation: PriceConfirmationFindingDataSchema,
   UrgentNews: UrgentNewsFindingDataSchema,
   CrossValidate: CrossValidateFindingDataSchema,
+  PriceAnomaly: PriceAnomalyFindingDataSchema,
 } as const;

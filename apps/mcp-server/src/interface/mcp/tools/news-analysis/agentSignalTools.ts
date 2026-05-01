@@ -35,6 +35,7 @@ import {
   PriceConfirmationFindingDataSchema,
   UrgentNewsFindingDataSchema,
   CrossValidateFindingDataSchema,
+  PriceAnomalyFindingDataSchema,
 } from "../../../../domain/signals/signalTypes.js";
 
 // ── Zod schemas ─────────────────────────────────────────────────────────────
@@ -79,6 +80,7 @@ const SIGNAL_TYPE_VALIDATORS = {
   price_confirmation: PriceConfirmationFindingDataSchema,
   urgent_news: UrgentNewsFindingDataSchema,
   cross_validate: CrossValidateFindingDataSchema,
+  price_anomaly: PriceAnomalyFindingDataSchema,
 } as const;
 
 /**
