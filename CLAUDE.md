@@ -8,7 +8,7 @@ MCP server (TypeScript/Bun) — real-time VN stock intelligence (HOSE/HNX/UPCOM)
 
 ### 1. User Session Required When PO Has No Tasks
 
-PO cannot self-initiate if TASKS.md is empty AND no Telegram reports exist.
+PO cannot self-initiate if docs/TASKS.md is empty AND no Telegram reports exist.
 In that case: **ask the user for a session goal** before spawning PO.
 
 ```
