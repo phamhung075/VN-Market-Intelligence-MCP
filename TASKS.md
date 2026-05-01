@@ -40,6 +40,7 @@
 
 | Task ID | Title | Merged | Reports |
 |---------|-------|--------|---------|
+| 1808 | FIX: chain_catalyst bypass Step 3 threshold gate — route unconditionally to Step 3c in alert-commander cycle.md | 2026-05-01 | — |
 | 1807-open | Open Sprint 1807 — QA final sweep, stats baseline updated (8672/8592/42), SPRINT_GOAL.md advanced | 2026-04-30 | — |
 | 1806c | Sync project-stats.json — sprint=1806, testBaseline=8562, testBaselinePass=8527, testBaselineFail=35, totalTasksDone=425 | 2026-05-01 | — |
 | 1806b | (resolved pre-existing failures — see currentSprintNotes) | 2026-05-01 | — |

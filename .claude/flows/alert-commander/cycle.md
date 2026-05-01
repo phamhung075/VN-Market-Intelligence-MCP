@@ -31,6 +31,9 @@ If `get_macro_snapshot` not in bootstrap context → call it once now.
 `get_crisis_early_warning()` threshold exceeded → mark CRITICAL
 
 **3. Signal Matrix**
+
+> Note: `chain_catalyst` signals are NOT evaluated at this table — they are routed unconditionally to Step 3c. Step 3c applies the threshold. Do not suppress chain_catalyst here.
+
 Base thresholds (NEUTRAL): `verified_chain` conviction ≥ 0.80 | `urgent_news` conviction ≥ 0.60 | `chain_catalyst` conviction ≥ 0.75
 Regime-conditioned adjustments:
 - `TIGHTENING`: verified_chain ≥ 0.85 | bullish urgent_news ≥ 0.75 | chain_catalyst ≥ 0.85
@@ -41,7 +44,7 @@ Regime-conditioned adjustments:
 |--------|-----------|--------|
 | `verified_chain` | conviction ≥ regime threshold | CRITICAL |
 | `urgent_news` | conviction ≥ regime threshold | MARKET |
-| `chain_catalyst` | confidence ≥ regime threshold | CRITICAL or MARKET |
+| `chain_catalyst` | — | → route to Step 3c (do NOT evaluate threshold here) |
 | `price_anomaly` | confirmed via `get_alerts` | CRITICAL |
 | `legal_risk` | any | CRITICAL now |
 | `crisis_velocity` | any | CRITICAL now |
@@ -56,6 +59,8 @@ For each signal where conviction < regime_threshold:
      → escalate as if threshold met
   4. Log: `"[Override] [TICKER] confidence boosted {original}→0.75 (price_anomaly move_sigma={N}, impact={M})"`
   5. Call `record_signal_outcome(original_signal_id, "confirmed", "price-validation override")`
+
+> WARNING: chain_catalyst signals MUST reach Step 3c. If a chain_catalyst signal appears in the bootstrap, do NOT suppress it at the Step 3 matrix table — pass it directly to Step 3c regardless of confidence score. Step 3c applies the threshold.
 
 **3c. chain_catalyst processing**
 For each `chain_catalyst` signal from signal bus:
