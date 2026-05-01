@@ -1,27 +1,204 @@
 {
   "date": "2026-05-01",
-  "topAlerts": [],
-  "topStories": [],
-  "watchlistMovers": [],
+  "topAlerts": [
+    {
+      "severity": "high",
+      "message": "VPB alert [HIGH]: price_drop — ⚠️ Ngành Ngân hàng giảm đồng loạt (3 mã, TB -1.63%): TCB -2.17%, VPB -1.85%, STB -0.88%",
+      "stocks": [
+        "VPB"
+      ]
+    },
+    {
+      "severity": "high",
+      "message": "VCB alert [HIGH]: price_drop — ⚠️ Ngành Ngân hàng giảm đồng loạt (3 mã, TB -1.63%): TCB -2.17%, VPB -1.85%, STB -0.88%",
+      "stocks": [
+        "VCB"
+      ]
+    },
+    {
+      "severity": "high",
+      "message": "MBB alert [HIGH]: price_drop — ⚠️ Ngành Ngân hàng giảm đồng loạt (3 mã, TB -1.63%): TCB -2.17%, VPB -1.85%, STB -0.88%",
+      "stocks": [
+        "MBB"
+      ]
+    },
+    {
+      "severity": "high",
+      "message": "EIB alert [HIGH]: price_drop — ⚠️ Ngành Ngân hàng giảm đồng loạt (3 mã, TB -1.63%): TCB -2.17%, VPB -1.85%, STB -0.88%",
+      "stocks": [
+        "EIB"
+      ]
+    },
+    {
+      "severity": "high",
+      "message": "CTG alert [HIGH]: price_drop — ⚠️ Ngành Ngân hàng giảm đồng loạt (3 mã, TB -1.63%): TCB -2.17%, VPB -1.85%, STB -0.88%",
+      "stocks": [
+        "CTG"
+      ]
+    }
+  ],
+  "topStories": [
+    {
+      "title": "Kinh tế Mỹ tăng tốc",
+      "level": "global",
+      "sentiment": "bullish",
+      "impactScore": 10
+    },
+    {
+      "title": "Giá vàng hôm nay 1-5: Bật tăng mạnh mẽ sau chuỗi ngày lao dốc",
+      "level": "global",
+      "sentiment": "neutral",
+      "impactScore": 10
+    },
+    {
+      "title": "FTSE Russell confirms Vietnam's market status upgrade to secondary emerging from Sept 21 - Theinvestor",
+      "level": "country",
+      "sentiment": "bullish",
+      "impactScore": 10
+    },
+    {
+      "title": "Giá vàng hồi mạnh khi giá dầu và USD quay đầu giảm, SPDR Gold Trust vẫn bán tháo",
+      "level": "global",
+      "sentiment": "bearish",
+      "impactScore": 10
+    },
+    {
+      "title": "Chứng khoán Mỹ tăng bùng nổ phiên cuối tháng, giá dầu sụt mạnh sau khi vượt 126 USD/thùng",
+      "level": "global",
+      "sentiment": "bullish",
+      "impactScore": 10
+    }
+  ],
+  "watchlistMovers": [
+    {
+      "code": "VIC",
+      "changePct": -5.1,
+      "price": 214000,
+      "exchange": "HOSE",
+      "volume": 578620,
+      "rsi14": null
+    },
+    {
+      "code": "VRE",
+      "changePct": 4.87,
+      "price": 32299.999999999996,
+      "exchange": "HOSE",
+      "volume": 1693910,
+      "rsi14": null
+    },
+    {
+      "code": "VHM",
+      "changePct": -3.31,
+      "price": 146000,
+      "exchange": "HOSE",
+      "volume": 699060,
+      "rsi14": null
+    },
+    {
+      "code": "GAS",
+      "changePct": 2.31,
+      "price": 75200,
+      "exchange": "HOSE",
+      "volume": 126860,
+      "rsi14": null
+    },
+    {
+      "code": "GVR",
+      "changePct": 2.12,
+      "price": 33700,
+      "exchange": "HOSE",
+      "volume": 404730,
+      "rsi14": null
+    },
+    {
+      "code": "VPB",
+      "changePct": -1.85,
+      "price": 26500,
+      "exchange": "HOSE",
+      "volume": 1879150,
+      "rsi14": null
+    },
+    {
+      "code": "FPT",
+      "changePct": 1.48,
+      "price": 75500,
+      "exchange": "HOSE",
+      "volume": 916300,
+      "rsi14": null
+    }
+  ],
   "predictionSignals": [],
   "predictionDiag": {
     "stored": 0
   },
   "taDiag": {
     "tickersWithSignal": 0,
-    "tickersBelowThreshold": 0,
+    "tickersBelowThreshold": 31,
     "ohlcvRowsMin": 0,
-    "ohlcvRowsMax": 0
+    "ohlcvRowsMax": 7
   },
   "taSummary": [],
-  "newsCount": 0,
-  "generatedAt": "2026-05-01T09:13:13.863Z",
+  "newsCount": 71,
+  "generatedAt": "2026-05-01T15:30:00.727Z",
   "vnIndex": {
-    "close": 1300,
-    "change": 15,
-    "changePct": 1.17,
-    "fetchedAt": "2026-04-18T15:30:00.000Z"
+    "close": 1854.1,
+    "change": -22,
+    "changePct": -1.16,
+    "fetchedAt": "2026-05-01T08:59:16.323Z"
   },
-  "portfolioPnl": null,
-  "foreignFlowMovers": []
+  "portfolioPnl": {
+    "items": [
+      {
+        "code": "FPT",
+        "shares": 5000,
+        "avgPrice": 80300,
+        "currentPrice": 75500,
+        "pnlAmount": -24000000,
+        "pnlPct": -5.9775840597758405
+      }
+    ],
+    "totalPnlAmount": -24000000,
+    "totalPnlPct": -5.9775840597758405
+  },
+  "foreignFlowMovers": [
+    {
+      "code": "ACB",
+      "foreignNetVol": 0,
+      "foreignBuyVol": 0,
+      "foreignSellVol": 0
+    },
+    {
+      "code": "ACV",
+      "foreignNetVol": 0,
+      "foreignBuyVol": 0,
+      "foreignSellVol": 0
+    },
+    {
+      "code": "ANV",
+      "foreignNetVol": 0,
+      "foreignBuyVol": 0,
+      "foreignSellVol": 0
+    },
+    {
+      "code": "ASM",
+      "foreignNetVol": 0,
+      "foreignBuyVol": 0,
+      "foreignSellVol": 0
+    },
+    {
+      "code": "BID",
+      "foreignNetVol": 0,
+      "foreignBuyVol": 0,
+      "foreignSellVol": 0
+    }
+  ],
+  "globalSnapshot": {
+    "vix": 16.7,
+    "dxy": 97.867,
+    "sp500": 7251.06,
+    "hangSeng": 25776.53,
+    "fetchedAt": "2026-05-01T15:00:22.668Z"
+  },
+  "lastPriceUpdate": "2026-05-01T15:00:22.668Z",
+  "lastNewsUpdate": "2026-05-01T14:08:46.026Z"
 }
