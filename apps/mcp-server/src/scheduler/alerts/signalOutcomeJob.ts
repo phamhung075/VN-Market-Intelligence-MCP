@@ -83,13 +83,16 @@ export async function runSignalOutcomeJob(
 ): Promise<SignalOutcomeJobResult> {
   const db: Database = deps?.db ?? getDb();
 
-  // Pending signals within the 2-day window
+  // Pending signals: outcome IS NULL (unresolved) or 'fired' (needs upgrade).
+  // No time-window filter — outcome IS NULL / 'fired' is the scope limiter.
+  // A time-window based on datetime('now') would silently exclude rows whose
+  // created_at was inserted with a fixed historical timestamp (e.g. in tests),
+  // causing evaluated=0 for every injected signal.
   const rows = db
     .query<SignalRow, []>(
       `SELECT id, signal_type, stock_code, payload, created_at
          FROM agent_signals
         WHERE (outcome IS NULL OR outcome = 'fired')
-          AND created_at >= datetime('now', '-2 days')
         ORDER BY id ASC`,
     )
     .all();
