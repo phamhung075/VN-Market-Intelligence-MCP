@@ -201,7 +201,9 @@ export function validateFinancialFigures(input: FinancialFiguresInput): number {
   //   in raw VND while assets are in tỷ — OCR unit-normalisation failure.
   //   Apply a soft penalty (+0.2) instead of hard-failing to avoid false positives.
   //
-  //   When ratio ≤ 500 AND assets < equity → genuine accounting violation → 0.0.
+  //   When ratio ≤ 500 AND assets < equity AND netRevenue > assets*30 → positional
+  //   extraction error (e.g. VNM Q4-2025 sub-total row picked instead of grand total)
+  //   → soft penalty (BCTC-VAL-01-POSITION). Otherwise → genuine violation → 0.0.
   if (totalAssets !== null && totalEquity !== null && totalAssets > 0 && totalEquity > 0) {
     const equityToAssetsRatio = totalEquity / totalAssets;
     if (equityToAssetsRatio >= UNIT_SCALE_RATIO_THRESHOLD) {
@@ -209,8 +211,20 @@ export function validateFinancialFigures(input: FinancialFiguresInput): number {
       // Bypass hard fail — record a soft penalty instead.
       penalty += 0.2; // BCTC-VAL-01-SCALE
     } else if (totalAssets < totalEquity) {
-      // Genuine accounting identity violation — hard fail.
-      return 0.0;
+      // BCTC-VAL-01-POSITION: assets < equity but revenue >> assets (>30×).
+      // When netRevenue exceeds 30× totalAssets, the assets figure is almost
+      // certainly a sub-total extracted from the wrong balance-sheet row
+      // (e.g. VNM Q4-2025: extractor picks current-assets sub-total ~957 tỷ
+      // instead of grand total ~60,000 tỷ while revenue is correctly ~63,645 tỷ).
+      // A real company cannot have revenue 30× its total assets — this is a
+      // positional extraction error, not a genuine accounting identity violation.
+      // Apply a soft penalty instead of hard-failing so the record is stored.
+      if (netRevenue !== null && totalAssets > 0 && netRevenue > totalAssets * 30) {
+        penalty += 0.2; // BCTC-VAL-01-POSITION
+      } else {
+        // Genuine accounting identity violation — hard fail.
+        return 0.0;
+      }
     }
   }
 
