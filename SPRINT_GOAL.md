@@ -1,9 +1,9 @@
 # Sprint Goal
 
-## Sprint 1804 — Alert price-validation override + VIC/VRE data diagnosis
+## Sprint 1806 — Idle
 **Status:** ACTIVE
-**Vision:** Fix alert price-validation so overrides are respected; diagnose why VIC/VRE price data is stale or missing.
-**Success Metric:** Alert override accepted without false-positive rejection; VIC/VRE prices fresh in DB.
+**Vision:** Awaiting next backlog items.
+**Success Metric:** —
 
 ---
 
@@ -22,4 +22,6 @@
 | 1799 — Stats + docs sync | 2026-04-30 | Archive 1777/hotfix-bctc-parser2, add 1797/1798 Done rows, stats synced (tasks=402, tests=8441). |
 | 1800 — Root cleanup + bunfig fix | 2026-05-01 | Broken bunfig.toml fixed, ghost files deleted, .gitignore hardened. tasks=403. |
 | 1801 — Puppeteer launch config DRY | 2026-05-01 | buildChromiumLaunchConfig() + TE_USER_AGENT extracted, both scrapers use shared helpers. tasks=404. |
+| 1804 — Price-validation override + VIC/VRE history + deploy cleanup | 2026-05-01 | price-validation override live, VIC/VRE 30d history fixed, deploy script cleaned. tasks=415. |
 | 1803 — TA candle guard | 2026-05-01 | Guard added: TA alerts skip candles with insufficient history. Tests pass. |
+| 1805 — chain_catalyst firing matrix | 2026-05-01 | chain_catalyst live in alert-commander firing matrix; news-scout Zod fix; QA approved. tasks=421. |

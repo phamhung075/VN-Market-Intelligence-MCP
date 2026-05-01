@@ -8,6 +8,14 @@
 
 ---
 
+## Backlog
+
+| Task ID | Title | Priority | Type | Owner | Handoff | Blocked by |
+|---------|-------|----------|------|-------|---------|------------|
+| JANITOR-013 | DRY: SignalTypeEnum in agentSignalTools.ts duplicates SignalType union in agentSignalStore.ts — export z.enum from store, remove inline re-definition | low | refactor | developer | — | — |
+
+---
+
 ## Todo
 
 | Task ID | Title | Priority | Type | Owner | Handoff |
@@ -33,6 +41,10 @@
 
 | Task ID | Title | Merged | Reports |
 |---------|-------|--------|---------|
+| 1805b-4 | QA: verify chain_catalyst firing matrix — all static checks PASS; 3/3 trace cases correct; 8 pre-existing test failures (1294b/1349c/1347b), 0 regressions from Sprint 1805 | 2026-05-01 | — |
+| 1805b-3 | news-scout cycle.md — remove regime/regime_adjusted_score from chain_catalyst finding_data; move to payload.detail | 2026-05-01 | — |
+| 1805b-2 | alert-commander.md — add chain_catalyst to signals.consumes + inter_agent.receives_from | 2026-05-01 | — |
+| 1805b-1 | alert-commander cycle.md — chain_catalyst thresholds, signal matrix row, Step 3c block, Step 4a caveats, Step 5 log template | 2026-05-01 | — |
 | 1805a | Clean up stale testBaselineFail field — zero'd, all pre-existing failures resolved since Sprint 1419 | 2026-05-01 | — |
 | 1804a | SPRINT_GOAL.md shows Sprint 1804 active, Sprint 1803 in Closed table | 2026-05-01 | — |
 | 1804b | deploy-vinahost.sh correct service count (9), no stale Vultr/reuters refs | 2026-05-01 | — |
