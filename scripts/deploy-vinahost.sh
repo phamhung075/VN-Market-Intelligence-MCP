@@ -1,18 +1,20 @@
 #!/bin/bash
 # ═══════════════════════════════════════════════════════════════════════════
-# Vinahost VPS Deploy — All 6 VN data proxy services
+# Vinahost VPS Deploy — All 9 VN data proxy services
 # Usage: ./deploy-vinahost.sh
 #
 # Deploys to Vinahost Vietnam ($VINAHOST_IP) — in-country, no geo-block.
-# Identical service set as Vultr Singapore, but with better latency to VN APIs.
 #
 # Services installed:
-#   vn-price-fetch.service    — stock prices (VPS + CafeF + Yahoo) every 60s
-#   vn-bctc-fetch.service     — BCTC PDF queue every 6h
-#   vn-news-fetch.service     — CafeF/VnExpress/VnEconomy RSS every 15m
-#   vn-sbv-fetch.service      — Vietcombank FX rates every 30m
-#   vn-foreign-flow.service   — foreign flow from VPS API every 60s
-#   vn-ohlcv-backfill.timer   — OHLCV backfill poller every 30m (oneshot)
+#   vn-price-fetch.service          — stock prices (VPS + CafeF + Yahoo) every 60s
+#   vn-bctc-fetch.service           — BCTC PDF queue every 6h
+#   vn-news-fetch.service           — CafeF/VnExpress/VnEconomy RSS every 15m
+#   vn-sbv-fetch.service            — Vietcombank FX rates every 30m
+#   vn-foreign-flow.service         — foreign flow from VPS API every 60s
+#   vn-ohlcv-backfill.timer         — OHLCV backfill poller every 30m (oneshot)
+#   vn-bctc-enrich.timer            — BCTC URL enricher every 6h
+#   vn-tradingeconomics-fetch.service — Trading Economics macro indicators every 1h
+#   vn-vps-proxy.service            — HTTP proxy server (BCTC Playwright + SSC iboard, :8765)
 # ═══════════════════════════════════════════════════════════════════════════
 
 set -e
