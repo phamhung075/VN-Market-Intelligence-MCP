@@ -354,3 +354,41 @@ describe("AC-16: source is always 'trading_economics'", () => {
     expect(items.every((i) => i.source === "trading_economics")).toBe(true);
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// AC-17: "Target closed" → retry succeeds (1815c)
+// ─────────────────────────────────────────────────────────────────────────────
+describe("AC-17: fetchTradingEconomicsNews retries once on 'Target closed'", () => {
+  it("returns fresh data when first scrape throws Target closed and second succeeds", async () => {
+    const tmpDir = makeTmpDir();
+    const cachePath = path.join(tmpDir, "te-news-cache-retry.json");
+    // No cache — forces a scrape attempt
+
+    let callCount = 0;
+    const deps: TeNewsDeps = {
+      scrape: async () => {
+        callCount++;
+        if (callCount === 1) throw new Error("Protocol error (Runtime.callFunctionOn): Target closed");
+        return makeSampleHtml(1);
+      },
+      cachePath,
+    };
+
+    const result = await fetchTradingEconomicsNews(20, deps);
+    expect(callCount).toBe(2);
+    expect(result[0]?.title).toBe("Vietnam GDP grows 1%");
+  });
+
+  it("returns [] when both attempts throw Target closed", async () => {
+    const tmpDir = makeTmpDir();
+    const cachePath = path.join(tmpDir, "te-news-cache-retry2.json");
+
+    const deps: TeNewsDeps = {
+      scrape: async () => { throw new Error("Protocol error (Runtime.callFunctionOn): Target closed"); },
+      cachePath,
+    };
+
+    const result = await fetchTradingEconomicsNews(20, deps);
+    expect(result).toEqual([]);
+  });
+});

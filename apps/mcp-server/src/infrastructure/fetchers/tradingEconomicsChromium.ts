@@ -603,9 +603,17 @@ export async function fetchTradingEconomicsNews(
       }
     }
 
-    // ── Attempt fresh scrape ─────────────────────────────────────────────────
+    // ── Attempt fresh scrape (retry once on "Target closed" crash) ───────────
     try {
-      const html = await scrape(TE_NEWS_URL);
+      let html: string;
+      try {
+        html = await scrape(TE_NEWS_URL);
+      } catch (firstErr) {
+        const msg = firstErr instanceof Error ? firstErr.message : String(firstErr);
+        if (!msg.includes("Target closed")) throw firstErr;
+        logger.warn("[te-chromium-news] Target closed — re-initialising browser and retrying");
+        html = await scrape(TE_NEWS_URL);
+      }
       const items = extractTeNewsItems(html, limit);
       const entry: TeNewsCacheEntry = {
         cachedAt: new Date().toISOString(),
