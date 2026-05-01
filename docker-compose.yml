@@ -38,7 +38,7 @@ services:
       - ./mcp.config.json:/app/mcp.config.json:ro
       # Reports bind mount — ensures eveningSummaryJob output is visible on host and persists
       # across container restarts. MCP tools + Claude agents read from this path.
-      - ./apps/mcp-server/reports:/app/reports
+      - ./reports:/app/reports
       # SSH private key — mounted read-only at /run/secrets/vps_ssh_key (matches DEFAULT_KEY_PATH
       # in sshExec.ts). Override path with VPS_SSH_KEY_PATH env var if key lives elsewhere.
       # Key must be chmod 0600 on the host; SSH rejects keys with wider permissions.
