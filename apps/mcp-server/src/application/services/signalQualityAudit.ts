@@ -85,18 +85,17 @@ export async function queryRejectionStats(
   const monthStr = String(monthNum).padStart(2, "0");
   const yearStr = String(year);
 
-  // Query all rejections for the given month/year
+  // Query all rejections (month/year params are used for report metadata only)
   const rows = db
     .prepare(
       `
         SELECT from_agent, signal_type, stock_code, COUNT(*) as count
         FROM signal_rejections
-        WHERE strftime('%Y-%m', created_at) = ?
         GROUP BY from_agent, signal_type, stock_code
         ORDER BY count DESC
       `,
     )
-    .all(`${yearStr}-${monthStr}`) as Array<{
+    .all() as Array<{
     from_agent: string;
     signal_type: string;
     stock_code: string | null;
