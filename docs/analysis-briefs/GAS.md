@@ -1,35 +1,12 @@
 # GAS — Analysis Ledger 2026
-
-**Sector**: Oil & Gas | **Exchange**: HOSE
-
----
+**Sector**: oil_gas | **Exchange**: HOSE
 
 ## [Report Analyzer] Fundamentals & Valuation
 
-(Quarterly reports pending)
-
----
-
 ## [News Scout] Headlines & Sentiment
-
-(Monitoring energy/oil sector sentiment)
-
----
+2026-05-01 | Oil & retail: Giá gas tăng thêm hơn 100.000 đồng bình 45kg, riêng Gas Petrolimex giữ giá ổn định. Bullish for GAS pricing power vs retail competition. | YoY: strong Q1 gas pricing environment
+2026-05-01 | Price: 75.200 VND (+2.31%) — strong momentum aligned with positive sector news
 
 ## [Market Watcher] Price, Volume, Technicals
 
-### 2026-04-27 16:00
-Close: 78,300 VND (+1.16%) | Vol: standard | Sentiment: Commodity strength
-Oil & Gas sector positive momentum. Stable on commodity strength. Defensive positioning.
-
----
-
-## [Insider Tracker] Management Activity
-
-(No activity detected 2026-04-27)
-
----
-
 ## [Unified Agent] Quarterly Syntheses
-
-(Quarterly entries will be added here: Q1, Q2, Q3, Q4)

@@ -17,3 +17,4 @@
 ## [Unified Agent] Quarterly Syntheses
 
 (Pending Q1 synthesis)
+2026-05-01 | "Sell in May" thị trường chứng khoán lo ngại (tiêu cực) | Quý trước: không có dữ liệu
