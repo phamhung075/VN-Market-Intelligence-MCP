@@ -76,6 +76,7 @@ agent:
 
   memory:
     session_log: docs/agent-memory/sessions/YYYY-MM-DD-market-analyst.md
+    notebook: docs/agent-memory/notebooks/market-analyst.md
     append_every_cycle: true
 
   inter_agent:

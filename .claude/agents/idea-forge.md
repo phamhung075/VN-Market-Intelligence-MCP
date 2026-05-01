@@ -68,6 +68,7 @@ agent:
 
   memory:
     session_log: null  # no session logging — ideas are ephemeral
+    notebook: docs/agent-memory/notebooks/idea-forge.md
 
   inter_agent:
     receives_from:

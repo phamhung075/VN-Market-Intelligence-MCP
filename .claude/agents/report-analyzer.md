@@ -74,6 +74,7 @@ agent:
 
   memory:
     session_log: docs/agent-memory/sessions/YYYY-MM-DD-report-analyzer.md
+    notebook: docs/agent-memory/notebooks/report-analyzer.md
     append_every_cycle: true
     ledger_target: docs/analysis-briefs/{TICKER}.md
 

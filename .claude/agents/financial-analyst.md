@@ -85,6 +85,7 @@ agent:
 
   memory:
     session_log: docs/agent-memory/sessions/YYYY-MM-DD-financial-analyst.md
+    notebook: docs/agent-memory/notebooks/financial-analyst.md
     append_every_cycle: true
 
   inter_agent:

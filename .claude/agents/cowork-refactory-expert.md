@@ -83,6 +83,7 @@ agent:
 
   memory:
     session_log: docs/agent-memory/sessions/YYYY-MM-DD-refactory.md
+    notebook: docs/agent-memory/notebooks/cowork-refactory-expert.md
     append_every_cycle: true
 
   inter_agent:

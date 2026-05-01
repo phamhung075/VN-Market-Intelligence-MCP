@@ -114,6 +114,7 @@ agent:
 
   memory:
     session_log: docs/agent-memory/sessions/YYYY-MM-DD-unified-agent.md
+    notebook: docs/agent-memory/notebooks/unified-agent.md
     append_every_cycle: true
 
   inter_agent:

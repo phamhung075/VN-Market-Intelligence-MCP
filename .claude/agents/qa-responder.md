@@ -86,6 +86,7 @@ agent:
 
   memory:
     session_log: docs/agent-memory/sessions/YYYY-MM-DD-qa-responder.md
+    notebook: docs/agent-memory/notebooks/qa-responder.md
     append_every_cycle: true
 
   inter_agent:

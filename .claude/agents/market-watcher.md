@@ -102,6 +102,7 @@ agent:
 
   memory:
     session_log: docs/agent-memory/sessions/YYYY-MM-DD-market-watcher.md
+    notebook: docs/agent-memory/notebooks/market-watcher.md
     append_every_cycle: true
     ledger_target: docs/analysis-briefs/{TICKER}.md
 

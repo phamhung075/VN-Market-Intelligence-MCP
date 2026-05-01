@@ -96,6 +96,7 @@ agent:
 
   memory:
     session_log: docs/agent-memory/sessions/YYYY-MM-DD-alert-commander.md
+    notebook: docs/agent-memory/notebooks/alert-commander.md
     append_every_cycle: true
 
   inter_agent:

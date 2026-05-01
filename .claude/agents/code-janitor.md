@@ -81,6 +81,7 @@ If any Read of `.claude/knowledge/*.md` fails (file missing, empty, <50 chars, o
 
   memory:
     session_log: docs/agent-memory/sessions/YYYY-MM-DD-janitor.md
+    notebook: docs/agent-memory/notebooks/code-janitor.md
     append_every_cycle: true
 
   inter_agent:

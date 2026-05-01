@@ -66,6 +66,12 @@ agent:
         trigger: watchlist_context
         fail_loud: false
 
+  mcp_tools:
+    - read_telegram_reports     # channel audit — MARKET/WORK/BUG last 10 messages
+    - get_agent_work_log        # verify agent activity matches sprint goal
+    - send_telegram             # bug escalation to BUG channel
+    - log_agent_work            # session log append
+
   flow:
     default: .claude/flows/po/main.md
     catalog:
@@ -77,6 +83,7 @@ agent:
 
   memory:
     session_log: docs/agent-memory/sessions/YYYY-MM-DD-po.md
+    notebook: docs/agent-memory/notebooks/po.md
     append_every_cycle: true
 
   inter_agent:

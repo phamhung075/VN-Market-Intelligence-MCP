@@ -91,6 +91,7 @@ If any Read of `.claude/knowledge/*.md` fails (file missing, empty, <50 chars, o
 
   memory:
     session_log: docs/agent-memory/sessions/YYYY-MM-DD-qa.md
+    notebook: docs/agent-memory/notebooks/qa.md
     append_every_cycle: true
 
   inter_agent:

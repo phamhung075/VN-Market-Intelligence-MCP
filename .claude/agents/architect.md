@@ -84,6 +84,7 @@ agent:
 
   memory:
     session_log: docs/agent-memory/sessions/YYYY-MM-DD-architect.md
+    notebook: docs/agent-memory/notebooks/architect.md
     append_every_cycle: true
 
   inter_agent:
