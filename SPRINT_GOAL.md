@@ -1,6 +1,6 @@
 # Sprint Goal
 
-## Sprint 1807 — Idle
+## Sprint 1810 — Open
 **Status:** ACTIVE
 **Vision:** Awaiting next backlog items.
 **Success Metric:** —
@@ -26,3 +26,6 @@
 | 1803 — TA candle guard | 2026-05-01 | Guard added: TA alerts skip candles with insufficient history. Tests pass. |
 | 1805 — chain_catalyst firing matrix | 2026-05-01 | chain_catalyst live in alert-commander firing matrix; news-scout Zod fix; QA approved. tasks=421. |
 | 1806 — DRY + test fixes + stats sync | 2026-04-30 | SignalTypeSchema DRY, 1347b/1294b tests fixed, project-stats synced. tasks=425. 8672 tests / 8592 pass / 42 fail (pre-existing). |
+| 1807 — Idle | 2026-04-30 | No backlog items. Sprint opened and closed without tasks. |
+| 1808 — chain_catalyst routing fix | 2026-05-01 | chain_catalyst bypasses Step 3 threshold gate, routes unconditionally to Step 3c. QA approved. tasks=426. |
+| 1809 — SBV_NORMAL fixture fix | 2026-05-01 | 089-tool-macro.test.ts: 4 missing fields added. 16 pass, 0 fail. Full suite 8501 pass / 23 fail (all pre-existing). tasks=427. |
