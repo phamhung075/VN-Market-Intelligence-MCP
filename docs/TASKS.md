@@ -53,7 +53,8 @@
 | 1806c | Sync project-stats.json — sprint=1806, testBaseline=8562, testBaselinePass=8527, testBaselineFail=35, totalTasksDone=425 | 2026-05-01 | — |
 | 1806b | (resolved pre-existing failures — see currentSprintNotes) | 2026-05-01 | — |
 | 1806a | (resolved pre-existing failures — see currentSprintNotes) | 2026-05-01 | — |
-| JANITOR-013 | DRY: export SignalTypeSchema from agentSignalStore — remove duplicate z.enum in agentSignalTools | 2026-04-30 | — |
+| JANITOR-013 | DRY: export SignalTypeSchema from agentSignalStore — remove duplicate z.enum in agentSignalTools. verified — SSOT already in place | 2026-05-01 | — |
+| JANITOR-009 | DRY: SEVERITY_VI canonical map in severityLabels.ts — no inline copy in alertCheckTools. verified — SSOT already in place | 2026-05-01 | — |
 | 1805b-4 | QA: verify chain_catalyst firing matrix — all static checks PASS; 3/3 trace cases correct; 8 pre-existing test failures (1294b/1349c/1347b), 0 regressions from Sprint 1805 | 2026-05-01 | — |
 | 1805b-3 | news-scout cycle.md — remove regime/regime_adjusted_score from chain_catalyst finding_data; move to payload.detail | 2026-05-01 | — |
 | 1805b-2 | alert-commander.md — add chain_catalyst to signals.consumes + inter_agent.receives_from | 2026-05-01 | — |
