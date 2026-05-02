@@ -15,11 +15,11 @@
   "knowledgeFileCount": 22,
   "devAgentCount": 13,
   "analysisAgentCount": 9,
-  "totalTasksDone": 469,
+  "totalTasksDone": 470,
   "analysisMode": "value_investor",
   "briefingFilesCreated": 30,
   "briefingArchiveQI": 0,
   "briefingArchiveQII": 0,
-  "lastFixApplied": "1825a DONE: Sprint 1825 activated, orphan files committed. totalTasksDone=469. 2026-05-02.",
+  "lastFixApplied": "1825b DONE: GSO HTML parser — parseGsoHtml regex extractor replaces JSON.parse(HTML). 12 pass / 0 fail. totalTasksDone=470. 2026-05-02.",
   "currentSprintNotes": "Sprint 1825 active — GSO HTML parser (Source 3 real data), vnstock backoff observability"
 }
