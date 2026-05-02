@@ -56,6 +56,8 @@ const DELAY_MS = 1500;
 export interface CbEntry {
   failures: number;
   openedAt: number | null;
+  /** Number of times the circuit has opened (not reset by success, increments each open). */
+  consecutiveOpens: number;
 }
 
 /** Map keyed by `${code}:${type}`. */
@@ -80,9 +82,18 @@ export function makeCbState(): CbStateMap {
 function ensureEntry(state: CbStateMap, code: string, type: string): CbEntry {
   const key = `${code}:${type}`;
   if (!state[key]) {
-    state[key] = { failures: 0, openedAt: null };
+    state[key] = { failures: 0, openedAt: null, consecutiveOpens: 0 };
   }
   return state[key]!;
+}
+
+/**
+ * Effective reset window for a circuit: exponential backoff per consecutive opens.
+ * consecutiveOpens=1 → 2h, 2 → 4h, ≥3 → 8h (cap).
+ */
+function effectiveResetMs(entry: CbEntry): number {
+  const multiplier = Math.min(Math.pow(2, (entry.consecutiveOpens ?? 1) - 1), 4);
+  return RESET_MS * multiplier;
 }
 
 /**
@@ -92,7 +103,7 @@ function ensureEntry(state: CbStateMap, code: string, type: string): CbEntry {
 export function isCircuitOpen(state: CbStateMap, code: string, type: string): boolean {
   const entry = state[`${code}:${type}`];
   if (!entry || entry.openedAt === null) return false;
-  if (Date.now() - entry.openedAt >= RESET_MS) return false; // expired — treat as closed
+  if (Date.now() - entry.openedAt >= effectiveResetMs(entry)) return false;
   return true;
 }
 
@@ -110,15 +121,29 @@ export function recordFailure(
   entry.failures += 1;
   if (entry.openedAt === null && entry.failures >= threshold) {
     entry.openedAt = Date.now();
+    entry.consecutiveOpens = (entry.consecutiveOpens ?? 0) + 1;
   }
 }
 
 /**
  * Record a successful fetch for a code+type — resets the circuit.
+ * consecutiveOpens resets to 0 so next failure starts from 2h backoff again.
  */
 export function recordSuccess(state: CbStateMap, code: string, type: string): void {
   const key = `${code}:${type}`;
-  state[key] = { failures: 0, openedAt: null };
+  state[key] = { failures: 0, openedAt: null, consecutiveOpens: 0 };
+}
+
+/**
+ * Returns the number of codes that have at least one open circuit across the given types.
+ * Used to build the WORK-channel message with the affected ticker count.
+ */
+export function countOpenCircuits(
+  state: CbStateMap,
+  codes: string[],
+  types: string[],
+): number {
+  return codes.filter((code) => types.some((type) => isCircuitOpen(state, code, type))).length;
 }
 
 /**
@@ -347,13 +372,15 @@ export async function syncVnstockData(codes: string[]): Promise<number> {
   const financialTypes = ["financials", "balance_sheet", "cash_flow"];
   if (shouldFireBulkAlert(_globalCbState, codes, financialTypes, _lastVnstockAlertAt)) {
     _lastVnstockAlertAt = Date.now();
+    const openCount = countOpenCircuits(_globalCbState, codes, financialTypes);
     const affectedTypes = financialTypes
       .filter((t) => codes.some((c) => isCircuitOpen(_globalCbState, c, t)))
       .join(", ");
+    const ts = new Date().toISOString();
     await sendTelegramWork(
-      `[VNSTOCK] Financial data circuit breaker open — vnstock API may be returning non-JSON (ANSI/rate-limit). Types affected: ${affectedTypes}. Will auto-retry in 2h. Check: python3 -c "from vnstock import Vnstock; print('ok')"`,
+      `[VNSTOCK] vnstock rate-limit: ${openCount} tickers circuit-open at ${ts}. Types: ${affectedTypes}. Will auto-retry (2h→4h→8h backoff). Check: python3 -c "from vnstock import Vnstock; print('ok')"`,
     );
-    logger.warn("[vnstock-sync] bulk circuit breaker alert sent", { affectedTypes });
+    logger.warn("[vnstock-sync] bulk circuit breaker alert sent", { openCount, affectedTypes });
   }
 
   return totalCalls;

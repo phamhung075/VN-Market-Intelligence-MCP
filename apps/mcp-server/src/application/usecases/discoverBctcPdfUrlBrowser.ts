@@ -10,6 +10,9 @@
 
 import { chromiumFetchPage } from "../../infrastructure/fetchers/chromiumPageFetcher.js";
 
+/** Default navigation timeout for all three exchange portals (HOSE / HNX / UPCOM). */
+const BROWSER_FETCH_TIMEOUT_MS = 30_000;
+
 interface BrowserDiscoveryResult {
   url: string | null;
   source: "HOSE" | "HNX" | "UPCOM" | null;
@@ -49,7 +52,7 @@ async function tryHoseBrowser(
 ): Promise<BrowserDiscoveryResult> {
   try {
     const portalUrl = `https://www.hsx.vn/Modules/CMS/Web/ArticleList?category=BCTC&issuerCode=${code}`;
-    const html = await fetcher(portalUrl, 30000);
+    const html = await fetcher(portalUrl, BROWSER_FETCH_TIMEOUT_MS);
 
     // Match PDF links with quarter/year in nearby text
     const lines = html.split("\n");
@@ -97,7 +100,7 @@ async function tryHnxBrowser(
 ): Promise<BrowserDiscoveryResult> {
   try {
     const portalUrl = `https://hnx.vn/cong-bo-thong-tin/cong-ty-co-phan.html?StockCode=${code}`;
-    const html = await fetcher(portalUrl, 30000);
+    const html = await fetcher(portalUrl, BROWSER_FETCH_TIMEOUT_MS);
 
     const lines = html.split("\n");
     for (let i = 0; i < lines.length; i++) {
@@ -144,7 +147,7 @@ async function tryUpcomBrowser(
 ): Promise<BrowserDiscoveryResult> {
   try {
     const portalUrl = `https://upcom.hnx.vn/cong-bo-thong-tin/cong-ty-co-phan.html?StockCode=${code}`;
-    const html = await fetcher(portalUrl, 30000);
+    const html = await fetcher(portalUrl, BROWSER_FETCH_TIMEOUT_MS);
 
     const lines = html.split("\n");
     for (let i = 0; i < lines.length; i++) {
@@ -214,6 +217,6 @@ function isValidPdfUrl(url: string): boolean {
  *
  * Task 1822d-a: No VPS HTTP proxy call. Playwright runs on the local server.
  */
-async function defaultBrowserFetcher(url: string, timeout = 30000): Promise<string> {
+async function defaultBrowserFetcher(url: string, timeout = BROWSER_FETCH_TIMEOUT_MS): Promise<string> {
   return chromiumFetchPage(url, timeout);
 }

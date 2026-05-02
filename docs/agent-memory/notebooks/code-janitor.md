@@ -1,6 +1,6 @@
 # Code Janitor Notebook
 
-## Last updated: 2026-05-02
+## Last updated: 2026-05-02 (scan 2, 09:00 VN)
 
 ## State summary
 
@@ -15,6 +15,7 @@
 | JANITOR-009 | SEVERITY_VI diacritics copy in alertCheckTools.ts | pending |
 | JANITOR-014 | detectUnitMultiplier + LOOKAHEAD_LINES + extractNumber — extracted to extractorHelpers.ts | c77dde79 / 830a4962 |
 | JANITOR-016 | Private parseVnNumber copies in sscInsider.ts + muasamcong.ts | 6e2cca53 |
+| JANITOR-021 | BROWSER_FETCH_TIMEOUT_MS (30000) inlined 4x in discoverBctcPdfUrlBrowser.ts | b33d6856 |
 
 ### Open backlog
 
