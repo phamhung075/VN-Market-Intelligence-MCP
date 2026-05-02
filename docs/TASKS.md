@@ -12,6 +12,7 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Blocked by |
 |---------|-------|----------|------|-------|---------|------------|
+| JANITOR-023 | DRY: extract CLAUDE_BIN shared constant — smartCompactSpawner.ts + qaResponderSpawner.ts each define identical `const CLAUDE_BIN = "/Users/admin/.local/bin/claude"`. Extract to infrastructure/agents/agentConstants.ts and import in both spawners. | low | refactor | developer | — | — |
 
 ---
 
@@ -28,6 +29,7 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Started |
 |---------|-------|----------|------|-------|---------|---------|
+| 1828c | SPRINT-S: consecutive-error observability for Reuters RSS + tradingEconomics; AC-R-1..6 + AC-TE-1..6. | High | SPRINT-S | developer | qa | — |
 
 ---
 
