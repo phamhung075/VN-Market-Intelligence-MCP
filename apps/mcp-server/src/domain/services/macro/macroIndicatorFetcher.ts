@@ -140,10 +140,15 @@ export async function fetchAndStoreMacroIndicators(
 
   // ──────────────────────────────────────────────────────────────────────────
   // Source 3: GSO (General Statistics Office)
+  // Requires GSO_VPS_ENDPOINT env var — GSO HTML is not parseable as JSON without
+  // a VPS curl proxy. Skip explicitly when no endpoint is configured.
   // ──────────────────────────────────────────────────────────────────────────
+  if (!Bun.env.GSO_VPS_ENDPOINT) {
+    console.log("gso: skipped (no curl endpoint configured)");
+  } else
   try {
     const result = (await circuitBreaker.wrap(async () => {
-      return httpClient.get("https://gso.vn/");
+      return httpClient.get(Bun.env.GSO_VPS_ENDPOINT as string);
     })) as string;
 
     if (result && typeof result === "string") {

@@ -150,6 +150,7 @@ describe("Task 239a — macro-indicator-refresh (RED phase)", () => {
   // AC-3: SBV HTTP 401 Unauthorized → automatically fallback to GSO without throwing
   // ──────────────────────────────────────────────────────────────────────────
   test("AC-3: SBV HTTP 401 Unauthorized → fallback to GSO without throwing", async () => {
+    Bun.env.GSO_VPS_ENDPOINT = "https://gso.vn/";
     const mockHttpClient: MockHttpClient = {
       get: async (url: string) => {
         if (url.includes("yahoo")) {
@@ -198,6 +199,7 @@ describe("Task 239a — macro-indicator-refresh (RED phase)", () => {
     expect(result.success).toBe(true);
     expect(result.sourceUsed).toBe("gso");
     expect(result.indicatorCount).toBeGreaterThan(0);
+    delete Bun.env.GSO_VPS_ENDPOINT;
   });
 
   // ──────────────────────────────────────────────────────────────────────────
@@ -464,6 +466,53 @@ describe("Task 239a — macro-indicator-refresh (RED phase)", () => {
 
     // All 3 sources should be attempted in fallback chain
     expect(rateLimiterCalls).toBe(3);
+  });
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // AC-11: GSO skip — no GSO_VPS_ENDPOINT → skipped, no HTTP fetch attempted
+  // ──────────────────────────────────────────────────────────────────────────
+  test("AC-11: GSO skipped when GSO_VPS_ENDPOINT not set → no HTTP fetch, no all-failed noise", async () => {
+    delete Bun.env.GSO_VPS_ENDPOINT;
+    let gsoFetchAttempted = false;
+
+    const mockHttpClient: MockHttpClient = {
+      get: async (url: string) => {
+        if (url.includes("yahoo")) throw new Error("yahoo fail");
+        if (url.includes("sbv")) throw new Error("sbv fail");
+        gsoFetchAttempted = true;
+        return "<html>not json</html>"; // should never reach here
+      },
+      post: async () => ({ status: 200, body: "" }),
+    };
+
+    const mockCircuitBreaker: MockCircuitBreaker = {
+      wrap: async (fn: () => Promise<unknown>) => fn(),
+    };
+
+    const mockRateLimiter: MockRateLimiter = {
+      checkLimit: async () => undefined,
+    };
+
+    const { fetchAndStoreMacroIndicators } = await import(
+      "../application/usecases/macroIndicatorFetcher.js"
+    ).catch(() => ({
+      fetchAndStoreMacroIndicators: async () => ({
+        success: false,
+        sourceUsed: null,
+        indicatorCount: 0,
+      }),
+    }));
+
+    const result: FetchResult = await fetchAndStoreMacroIndicators(
+      db,
+      mockHttpClient,
+      mockCircuitBreaker,
+      mockRateLimiter
+    );
+
+    expect(gsoFetchAttempted).toBe(false);
+    expect(result.success).toBe(false);
+    expect(result.sourceUsed).toBeNull();
   });
 
   // ──────────────────────────────────────────────────────────────────────────
