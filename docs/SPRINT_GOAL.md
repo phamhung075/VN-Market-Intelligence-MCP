@@ -1,6 +1,6 @@
-# Sprint 1813 — Goal
+## Sprint 1816 — Active
 
-**Status:** IN PROGRESS | **Opened:** 2026-05-01
+**Status:** IN PROGRESS | **Opened:** 2026-05-02
 
 ## Goals
 1. **DDD fix** — extract `fetchWithTimeout` and `BROWSER_UA` from `domain/services/bctcDiscovery.ts` to infrastructure
