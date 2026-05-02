@@ -1,19 +1,17 @@
-## Sprint 1824 — Active
+## Sprint 1825 — Active
 
 **Status:** TODO | **Opened:** 2026-05-02
 
 ## Goals
 
-- Resolve 105 pre-existing test failures introduced by 1822d-a (Playwright BCTC migration)
-- Replace GSO curl dependency with native bun fetch (eliminate VPS_ENDPOINT guard as runtime workaround)
-- vnstock circuit-breaker hardening follow-up if any edge cases surface from 1823b backoff
-- te-chromium circuit-breaker observability: WORK alert coverage audit post-1823d
+- GSO HTML parser — Source 3 returns real data instead of JSON.parse error
+- Observe vnstock exponential backoff in production
 
 ## Success Criteria
 
-- Full test suite passes with 0 failures (105 pre-existing resolved)
+- GSO macro fetch Source 3 returns parsed data (no JSON.parse error)
+- vnstock backoff behaves correctly under production load
 - `bun tsc --noEmit` clean
-- GSO macro fetch works without `GSO_VPS_ENDPOINT` env guard
 
 ---
 
@@ -21,6 +19,7 @@
 
 | Sprint | Result |
 |--------|--------|
+| 1824 — agent-memory manifests, GSO native fetch, deploy market-hours guard, orphan cleanup | DONE — 2026-05-02. 8582 pass / 0 fail. totalTasksDone=468 |
 | 1823 — vnstock backoff + te-chromium circuit breaker + GSO skip guard | DONE — 2026-05-02. 1823b+1823c+1823d merged. 8582 pass / 0 fail. totalTasksDone=462 |
 | 1822 — VPS Playwright removal + BCTC migration to Docker + test fixes | DONE — 2026-05-02. 1822a–1822g merged. 8565 pass / 0 fail. totalTasksDone=458 |
 | 1821 — pollNews cold-start retry + smart_compact MCP tool | DONE — 2026-05-02. 1821a + 1821b + 1821c merged. 8565 pass / 0 fail. totalTasksDone=450 |

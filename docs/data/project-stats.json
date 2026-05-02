@@ -2,9 +2,9 @@
   "_maintained_by": "PM / system-auditor",
   "_trigger": "sprint start/end, tool/cron count change, baseline test update",
   "lastUpdated": "2026-05-02",
-  "currentSprint": 1824,
+  "currentSprint": 1825,
   "previousSprint": { "number": 1824, "status": "DONE", "summary": "agent-memory manifests, GSO native fetch, deploy market-hours guard, orphan cleanup. totalTasksDone=468." },
-  "sprintGoal": "Sprint 1825 — TBD",
+  "sprintGoal": "Sprint 1825 — GSO HTML parser + vnstock backoff observability",
   "testBaseline": 8582,
   "testBaselineTarget": 8582,
   "testBaselinePass": 8582,
@@ -15,11 +15,11 @@
   "knowledgeFileCount": 22,
   "devAgentCount": 13,
   "analysisAgentCount": 9,
-  "totalTasksDone": 468,
+  "totalTasksDone": 469,
   "analysisMode": "value_investor",
   "briefingFilesCreated": 30,
   "briefingArchiveQI": 0,
   "briefingArchiveQII": 0,
-  "lastFixApplied": "1824 DONE: Sprint 1824 tasks complete. totalTasksDone=468. 2026-05-02.",
-  "currentSprintNotes": "Sprint 1824 complete — agent-memory manifests, GSO native fetch, deploy market-hours guard, orphan cleanup"
+  "lastFixApplied": "1825a DONE: Sprint 1825 activated, orphan files committed. totalTasksDone=469. 2026-05-02.",
+  "currentSprintNotes": "Sprint 1825 active — GSO HTML parser (Source 3 real data), vnstock backoff observability"
 }
