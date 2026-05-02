@@ -146,7 +146,7 @@ function isPriceStale(updatedAt: string | null): boolean {
 // Section builders (private)
 // ─────────────────────────────────────────────────────────────────────────────
 
-function buildWatchlistSection(db: Database): string {
+export function buildWatchlistSection(db: Database): string {
   const lines: string[] = [
     "=== WATCHLIST & PRICES ===",
     `Trading window: ${tradingWindowLabel()}`,
@@ -192,7 +192,7 @@ function buildWatchlistSection(db: Database): string {
   return lines.join("\n");
 }
 
-function buildMacroSection(db: Database): string {
+export function buildMacroSection(db: Database): string {
   const lines: string[] = ["=== MACRO ==="];
   const found: string[] = [];
 
@@ -264,7 +264,7 @@ function buildMacroSection(db: Database): string {
   return lines.join("\n");
 }
 
-function buildAlertsSection(db: Database, since: string, hoursBack: number): string {
+export function buildAlertsSection(db: Database, since: string, hoursBack: number): string {
   const lines: string[] = [`=== OPEN ALERTS (${hoursBack}h) ===`];
 
   let rows: AlertRow[];
@@ -302,7 +302,7 @@ function buildAlertsSection(db: Database, since: string, hoursBack: number): str
   return lines.join("\n");
 }
 
-function buildAnalysisSection(db: Database, since: string, hoursBack: number): string {
+export function buildAnalysisSection(db: Database, since: string, hoursBack: number): string {
   const lines: string[] = [`=== RECENT ANALYSIS (${hoursBack}h) ===`];
 
   let rows: AnalysisRow[];
