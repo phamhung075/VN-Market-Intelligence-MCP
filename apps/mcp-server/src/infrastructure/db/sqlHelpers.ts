@@ -1,12 +1,7 @@
 /**
  * SQL utility helpers for building parameterised query fragments.
+ * Re-exports from domain/utils/sqlHelpers for DDD compliance:
+ *   domain services import from domain/utils/sqlHelpers directly,
+ *   infrastructure/application/interface layers import from here.
  */
-
-/**
- * Returns a comma-separated placeholder string for SQLite IN-clauses.
- * @example sqlInClause(3) → "?, ?, ?"
- */
-export function sqlInClause(n: number): string {
-  if (n < 1) throw new RangeError(`sqlInClause requires n ≥ 1, got ${n}`);
-  return Array(n).fill("?").join(", ");
-}
+export { sqlInClause } from "../../domain/utils/sqlHelpers.js";

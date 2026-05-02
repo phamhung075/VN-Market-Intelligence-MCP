@@ -18,8 +18,7 @@
 
 import type { Database } from "bun:sqlite";
 import { tradingWindowLabel } from "./tradingWindow.js";
-// TODO(ddd): move sqlInClause to a shared util — domain should not import infrastructure
-import { sqlInClause } from "../../infrastructure/db/sqlHelpers.js";
+import { sqlInClause } from "../utils/sqlHelpers.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SQLite row types
