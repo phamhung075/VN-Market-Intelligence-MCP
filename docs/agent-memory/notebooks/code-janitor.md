@@ -1,6 +1,6 @@
 # Code Janitor Notebook
 
-## Last updated: 2026-05-01
+## Last updated: 2026-05-02
 
 ## State summary
 
@@ -23,6 +23,7 @@
 | JANITOR-011 | Puppeteer launch config dup in tradingEconomicsChromium.ts | No test coverage on affected paths |
 | JANITOR-013 | SignalTypeEnum re-lists SignalType union (two-file change) | Two-file change |
 | JANITOR-017 | BROWSER_UA string in 18 source files (18-file fan-out) | 18-file fan-out across 3 layers |
+| JANITOR-020 | MACRO_CODES + section-builder logic parallel impl in marketContextBuilder.ts vs marketContextTools.ts | Two-file change; marketContextTools.ts must delegate to domain builder |
 
 ### Managed (monitored by tests)
 
@@ -32,8 +33,7 @@
 
 ## Notes for next scan
 
-- JANITOR-016 branch `feat/janitor-016-parsevnnumber-dry` is ready to merge
-- extractorHelpers.ts is the canonical SSOT for BCTC extractor shared helpers
-- Next scan: watch for any new private number-parsing copies in infrastructure/fetchers
-- JANITOR-011: unblockable until puppeteer paths get integration test coverage
+- JANITOR-020: Task 1563 (Sprint 226) created marketContextBuilder.ts as DDD extraction — but marketContextTools.ts was never updated to use it. Good candidate when a developer touches either file.
 - JANITOR-013: small two-file change — good candidate if a developer is already touching agentSignalStore.ts
+- JANITOR-011: unblockable until puppeteer paths get integration test coverage
+- Next scan: watch for any new private number-parsing copies in infrastructure/fetchers
