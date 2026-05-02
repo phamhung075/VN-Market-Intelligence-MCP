@@ -18,6 +18,7 @@ import type { Database } from "bun:sqlite";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { logger } from "../../infrastructure/logger.js";
+import { sqlInClause } from "../../infrastructure/db/sqlHelpers.js";
 import { VN_OFFSET_MS } from "../../domain/services/timeConstants.js";
 import type { BriefingPredictionSignal } from "../../infrastructure/db/predictionStore.js";
 import { generateSparkline } from "../../domain/services/sparkline.js";
@@ -407,7 +408,7 @@ function queryInsiderRecent(
 ): InsiderBriefingRow[] {
   if (watchlistCodes.length === 0) return [];
   const since24h = new Date(Date.now() - 24 * 3600_000).toISOString();
-  const placeholders = watchlistCodes.map(() => "?").join(", ");
+  const placeholders = sqlInClause(watchlistCodes.length);
   const rows = db
     .prepare<InsiderTransactionRow, (string | number)[]>(`
       SELECT code, type, executed_volume, insider_name, from_date
@@ -438,7 +439,7 @@ function queryForeignFlowSummary(
   watchlistCodes: string[],
 ): ForeignFlowBriefingRow[] {
   if (watchlistCodes.length === 0) return [];
-  const placeholders = watchlistCodes.map(() => "?").join(", ");
+  const placeholders = sqlInClause(watchlistCodes.length);
   const rows = db
     .prepare<VnstatsRow, (string | number)[]>(`
       SELECT code,
@@ -502,7 +503,7 @@ function queryEvidenceTopScores(
   watchlistCodes: string[],
 ): EvidenceScoreBriefingRow[] {
   if (watchlistCodes.length === 0) return [];
-  const placeholders = watchlistCodes.map(() => "?").join(", ");
+  const placeholders = sqlInClause(watchlistCodes.length);
   const rows = db
     .prepare<EvidenceScoreRow, (string | number)[]>(`
       SELECT stock AS code,

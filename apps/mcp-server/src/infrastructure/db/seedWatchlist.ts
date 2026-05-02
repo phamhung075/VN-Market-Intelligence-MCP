@@ -17,6 +17,7 @@
  */
 
 import type { Database } from "bun:sqlite";
+import { sqlInClause } from "./sqlHelpers.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Watchlist seed data — 25 tickers, 10 sectors (Sprint 054 user config)
@@ -169,7 +170,7 @@ export function backfillBctcQ1_2026(db: Database): void {
  */
 export function validateSeedTickers(db: Database): void {
   const seedCodes = WATCHLIST_SEED.map((e) => e.code);
-  const placeholders = seedCodes.map(() => "?").join(",");
+  const placeholders = sqlInClause(seedCodes.length);
   const missing = db.prepare(`
     SELECT code FROM watchlist
     WHERE code IN (${placeholders})

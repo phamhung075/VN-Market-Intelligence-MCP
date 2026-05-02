@@ -22,6 +22,7 @@
  */
 
 import type { Database } from "bun:sqlite";
+import { sqlInClause } from "./sqlHelpers.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -148,7 +149,7 @@ export function getInsiderTransactionsFiltered(
   const params: (string | number)[] = [];
 
   if (codes && codes.length > 0) {
-    const placeholders = codes.map(() => "?").join(", ");
+    const placeholders = sqlInClause(codes.length);
     conditions.push(`code IN (${placeholders})`);
     params.push(...codes);
   }

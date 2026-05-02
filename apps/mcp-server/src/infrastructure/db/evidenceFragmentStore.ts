@@ -15,6 +15,7 @@
  */
 
 import type { Database } from "bun:sqlite";
+import { sqlInClause } from "./sqlHelpers.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -185,7 +186,7 @@ export function getEvidenceFragments(
   const params: (string | number)[] = [stock, cutoff];
 
   if (options.evidenceTypes && options.evidenceTypes.length > 0) {
-    const placeholders = options.evidenceTypes.map(() => "?").join(", ");
+    const placeholders = sqlInClause(options.evidenceTypes.length);
     conditions.push(`evidence_type IN (${placeholders})`);
     params.push(...options.evidenceTypes);
   }
