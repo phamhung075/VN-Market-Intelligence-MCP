@@ -42,6 +42,7 @@
 
 | Task ID | Title | Merged | Reports |
 |---------|-------|--------|---------|
+| 1823d | FIX: te-chromium crash-loop circuit breaker — 3-strike limit on "Target closed", WORK alert fires once at threshold, auto-recovery on success. 5 new AC tests. 8582 pass / 0 fail. | 2026-05-02 | reports/TASK_REPORT_1823d.md |
 | 1823c | FIX: GSO macro skip guard — log skip when GSO_VPS_ENDPOINT unset; eliminates noisy HTML parse errors on macro refresh cycle. 11 pass / 0 fail. | 2026-05-02 | reports/TASK_REPORT_1823c.md |
 | 1823b | FIX: vnstock circuit-breaker exponential backoff (2h→4h→8h) + WORK channel notification with open-circuit ticker count and timestamp. 8 pass / 0 fail. | 2026-05-02 | reports/TASK_REPORT_1823b.md |
 | 1822g | CLEAN: delete stale task/1822a-news-fetcher-fixes branch (0 unmerged commits); commit orphan session/handoff/report files from today's sprint activity. | 2026-05-02 | — |
