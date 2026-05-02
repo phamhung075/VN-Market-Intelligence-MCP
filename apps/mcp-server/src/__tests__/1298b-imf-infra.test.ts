@@ -166,7 +166,7 @@ describe("AC-5: imfIndicatorPoller cron registration", () => {
   });
 
   it("cron-registry.json contains imf_indicator_poller entry with required fields", () => {
-    const registryPath = path.resolve("docs/data/cron-registry.json");
+    const registryPath = path.resolve(import.meta.dir, "../../../../docs/data/cron-registry.json");
     const source = readFileSync(registryPath, "utf-8");
     const registry = JSON.parse(source) as { jobs: Array<Record<string, unknown>> };
 

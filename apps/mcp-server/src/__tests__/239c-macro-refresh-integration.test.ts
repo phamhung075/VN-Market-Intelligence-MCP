@@ -48,7 +48,7 @@ describe("Task 239c — macro-refresh-integration", () => {
   // ──────────────────────────────────────────────────────────────────────────
   test("AC-3: cron-registry.json has valid JSON with macroIndicatorRefreshJob entry", async () => {
     const registryContent = await Bun.file(
-      `${import.meta.dir}/../..` + "/docs/data/cron-registry.json"
+      `${import.meta.dir}/../../../../docs/data/cron-registry.json`
     ).text();
 
     const registry = JSON.parse(registryContent) as {
@@ -73,7 +73,7 @@ describe("Task 239c — macro-refresh-integration", () => {
   // ──────────────────────────────────────────────────────────────────────────
   test("AC-4: cron-registry.json schedulerFileCount is at least 38", async () => {
     const registryContent = await Bun.file(
-      `${import.meta.dir}/../..` + "/docs/data/cron-registry.json"
+      `${import.meta.dir}/../../../../docs/data/cron-registry.json`
     ).text();
 
     const registry = JSON.parse(registryContent) as { schedulerFileCount: number };

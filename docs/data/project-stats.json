@@ -2,7 +2,7 @@
   "_maintained_by": "PM / system-auditor",
   "_trigger": "sprint start/end, tool/cron count change, baseline test update",
   "lastUpdated": "2026-05-02",
-  "currentSprint": "1815d",
+  "currentSprint": 1816,
   "previousSprint": { "number": 1814, "status": "DONE", "progressTasks": "Sprint 1814: 5 FIX tasks — GUARD_MAX, signalQualityAudit, signalOutcomeJob, agentMemoryTools fixtures, sessions dir. 8536 pass, 13 fail. tasks=434." },
   "sprintGoal": "Sprint 1815 DONE — 1815 BCTC-VAL-01-POSITION fix + 1815c TE-Chromium retry fix + 1815d docker healthcheck curl→bun. 8647 pass, 19 fail (pre-existing). tasks=437.",
   "testBaseline": 8647,
