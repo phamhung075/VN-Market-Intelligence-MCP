@@ -1,10 +1,10 @@
-## Sprint 1822 — Active
+## Sprint 1823 — Active
 
 **Status:** TODO | **Opened:** 2026-05-02
 
 ## Goals
 
-TBD — sprint 1821 closed cleanly. Next PO triage will populate goals.
+TBD — sprint 1822 closed cleanly. Next PO triage will populate goals.
 
 ## Success Criteria
 
@@ -17,6 +17,7 @@ TBD — sprint 1821 closed cleanly. Next PO triage will populate goals.
 
 | Sprint | Result |
 |--------|--------|
+| 1822 — VPS Playwright removal + BCTC migration to Docker + test fixes | DONE — 2026-05-02. 1822a–1822g merged. 8565 pass / 0 fail. totalTasksDone=458 |
 | 1821 — pollNews cold-start retry + smart_compact MCP tool | DONE — 2026-05-02. 1821a + 1821b + 1821c merged. 8565 pass / 0 fail. totalTasksDone=450 |
 | 1820 — JANITOR-020 sqlInClause DRY completion | DONE — 2026-05-02. 1819a + JANITOR-020 merged. 8558 pass / 0 fail. totalTasksDone=448 |
 | JANITOR-019 — sqlInClause DRY (019a+019b+019c) | DONE — 2026-05-02. 8558 pass / 0 fail. tasks=446 |
