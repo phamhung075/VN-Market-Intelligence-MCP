@@ -5,9 +5,9 @@
   "currentSprint": 1832,
   "previousSprint": { "number": 1831, "status": "DONE", "summary": "CLEAN: commit orphans, close Sprint 1830, advance to Sprint 1832. 8602 pass / 0 fail. totalTasksDone=484." },
   "sprintGoal": "Sprint 1832 — TBD",
-  "testBaseline": 8602,
-  "testBaselineTarget": 8602,
-  "testBaselinePass": 8602,
+  "testBaseline": 8608,
+  "testBaselineTarget": 8608,
+  "testBaselinePass": 8608,
   "testBaselineFail": 0,
   "testFailures": 0,
   "toolCount": 122,
@@ -15,11 +15,11 @@
   "knowledgeFileCount": 25,
   "devAgentCount": 13,
   "analysisAgentCount": 9,
-  "totalTasksDone": 484,
+  "totalTasksDone": 485,
   "analysisMode": "value_investor",
   "briefingFilesCreated": 30,
   "briefingArchiveQI": 0,
   "briefingArchiveQII": 0,
-  "lastFixApplied": "1832a DONE: CLEAN — commit orphans, close Sprint 1831, advance to Sprint 1832. 2026-05-02.",
-  "currentSprintNotes": "Sprint 1832 — opened. Backlog empty; awaiting PO signal scan."
+  "lastFixApplied": "1832b DONE: FIX pollNews zero-check — exclude CB-open/disabled sources from all-dark denominator. BUG 2727+2728 resolved. 2026-05-02.",
+  "currentSprintNotes": "Sprint 1832 — 1832b merged. BUG 2727+2728 false-alarm pattern eliminated."
 }
