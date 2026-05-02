@@ -8,7 +8,7 @@ DRY_RUN=false
 [ -f "$(dirname "$0")/../.env" ] && source "$(dirname "$0")/../.env" 2>/dev/null || true
 
 # Diff detection
-if [ -n "${FAKE_DIFF:-}" ]; then
+if [ "${FAKE_DIFF+x}" = "x" ]; then
   DIFF_OUTPUT="$FAKE_DIFF"
 else
   DIFF_OUTPUT=$(git diff HEAD~1 --name-only 2>/dev/null || { echo "WARN: git diff failed — skipping VPS deploy" >&2; echo ""; })
