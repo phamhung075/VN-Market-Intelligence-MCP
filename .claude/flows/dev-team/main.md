@@ -107,6 +107,28 @@ After all tasks Done:
 
 ---
 
+## Step 4.5: Proactive Compact Checkpoint
+
+Run this **after Step 4 exits cleanly and before re-entering Step 1** (i.e., when more work exists):
+
+```
+if ctx > 25%:
+  1. log_agent_work(tag="sprint-boundary", state=current_sprint_id)
+  2. Write: docs/agent-memory/notebooks/main.md (current tier, next sprint intent)
+  3. send_telegram(work, "Sprint boundary — offloaded state, ctx at N%")
+  4. Return
+     → stop-context-advisor.sh fires automatically on every response end
+     → ctx >40%: osascript types /compact into main terminal (iTerm2 only)
+     → ctx 30-40%: injects decision:block warning
+     → ctx <30%: no action needed, hook exits silently
+```
+
+After compact, resume from Step 1 using the Resume Protocol in smart-compact-protocol.md.
+
+**If ctx ≤ 25%:** skip — proceed directly to Step 1.
+
+---
+
 ## Invariants
 
 - WIP ≤ 2 | docs/TASKS.md ≤ 80 lines | project-stats.json updated each sprint
