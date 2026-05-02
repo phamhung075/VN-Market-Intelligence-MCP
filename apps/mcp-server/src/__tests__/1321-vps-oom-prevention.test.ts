@@ -14,12 +14,12 @@ describe("1321: VPS OOM prevention — systemd unit configuration", () => {
     expect(unitContent).toContain("MemorySwapMax=0");
   });
 
-  it("RED: StartLimitIntervalSec=300 present (5-min restart window)", () => {
-    expect(unitContent).toContain("StartLimitIntervalSec=300");
+  it("RED: StartLimitIntervalSec=0 in [Unit] (disables restart limit entirely — Sprint 1822b)", () => {
+    expect(unitContent).toContain("StartLimitIntervalSec=0");
   });
 
-  it("RED: StartLimitBurst=5 present (max 5 restarts in 5-min window)", () => {
-    expect(unitContent).toContain("StartLimitBurst=5");
+  it("GREEN: No StartLimitBurst directive (removed — unlimited restarts via StartLimitIntervalSec=0)", () => {
+    expect(unitContent).not.toContain("StartLimitBurst=");
   });
 
   it("GREEN: RestartSec=10 unchanged (10s between restart attempts)", () => {
@@ -34,14 +34,22 @@ describe("1321: VPS OOM prevention — systemd unit configuration", () => {
     expect(unitContent).toContain("ExecStart=/root/fetch-vn-news-loop.sh");
   });
 
-  it("GREEN: Order of settings matches systemd convention (Restart before limits, limits before logging)", () => {
-    const restartIdx = unitContent.indexOf("Restart=");
+  it("GREEN: StartLimitIntervalSec=0 is in [Unit] section (before [Service])", () => {
+    const unitSectionIdx = unitContent.indexOf("[Unit]");
+    const serviceSectionIdx = unitContent.indexOf("[Service]");
     const startLimitIdx = unitContent.indexOf("StartLimitIntervalSec=");
+
+    // StartLimitIntervalSec must appear after [Unit] and before [Service]
+    expect(startLimitIdx).toBeGreaterThan(unitSectionIdx);
+    expect(startLimitIdx).toBeLessThan(serviceSectionIdx);
+  });
+
+  it("GREEN: Order within [Service] — Restart before MemoryMax before StandardOutput", () => {
+    const restartIdx = unitContent.indexOf("Restart=");
     const memoryIdx = unitContent.indexOf("MemoryMax=");
     const stdoutIdx = unitContent.indexOf("StandardOutput=");
 
-    expect(restartIdx).toBeLessThan(startLimitIdx);
-    expect(startLimitIdx).toBeLessThan(memoryIdx);
+    expect(restartIdx).toBeLessThan(memoryIdx);
     expect(memoryIdx).toBeLessThan(stdoutIdx);
   });
 });
