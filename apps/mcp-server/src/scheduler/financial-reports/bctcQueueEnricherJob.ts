@@ -174,6 +174,8 @@ export async function runBctcQueueEnricherJob(opts: {
         });
       } else {
         // No URL found.
+        logger.warn(`[bctcQueueEnricher] 0 URLs found for ticker ${item.action_code} — scrape may be stale or source unavailable`);
+
         // Task 1782: rows that have already been attempted MAX_ENRICH_ATTEMPTS
         // times are marked 'url_not_found' so they stop blocking the queue.
         // Rows below the threshold stay 'pending' for the next cron cycle.
@@ -222,6 +224,10 @@ export async function runBctcQueueEnricherJob(opts: {
         error: msg,
       });
     }
+  }
+
+  if (result.itemsProcessed > 0 && result.urlsPopulated === 0) {
+    logger.warn(`[bctcQueueEnricher] 0 URLs populated across all ${result.itemsProcessed} item(s) — all sources may be unavailable or geo-blocked`);
   }
 
   return result;
