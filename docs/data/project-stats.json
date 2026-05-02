@@ -3,8 +3,8 @@
   "_trigger": "sprint start/end, tool/cron count change, baseline test update",
   "lastUpdated": "2026-05-02",
   "currentSprint": 1824,
-  "previousSprint": { "number": 1823, "status": "DONE", "summary": "vnstock exponential backoff, GSO skip guard, te-chromium circuit breaker. 8582 pass / 0 fail. totalTasksDone=462." },
-  "sprintGoal": "Sprint 1824 — resolve 105 pre-existing failures + GSO curl→bun fetch",
+  "previousSprint": { "number": 1824, "status": "DONE", "summary": "agent-memory manifests, GSO native fetch, deploy market-hours guard, orphan cleanup. totalTasksDone=468." },
+  "sprintGoal": "Sprint 1825 — TBD",
   "testBaseline": 8582,
   "testBaselineTarget": 8582,
   "testBaselinePass": 8582,
@@ -15,11 +15,11 @@
   "knowledgeFileCount": 22,
   "devAgentCount": 13,
   "analysisAgentCount": 9,
-  "totalTasksDone": 462,
+  "totalTasksDone": 468,
   "analysisMode": "value_investor",
   "briefingFilesCreated": 30,
   "briefingArchiveQI": 0,
   "briefingArchiveQII": 0,
-  "lastFixApplied": "1823 DONE: Sprint 1823 tasks complete. totalTasksDone=462. 8582 pass / 0 fail. 2026-05-02.",
-  "currentSprintNotes": "Sprint 1823 complete 2026-05-02. Tasks: 1823a-ops, 1823b, 1823c, 1823d (4 tasks). 8582 pass / 0 fail. toolCount 123, schedulerFileCount 49."
+  "lastFixApplied": "1824 DONE: Sprint 1824 tasks complete. totalTasksDone=468. 2026-05-02.",
+  "currentSprintNotes": "Sprint 1824 complete — agent-memory manifests, GSO native fetch, deploy market-hours guard, orphan cleanup"
 }
