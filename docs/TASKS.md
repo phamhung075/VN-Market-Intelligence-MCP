@@ -29,7 +29,6 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Started |
 |---------|-------|----------|------|-------|---------|---------|
-| 1828c | SPRINT-S: consecutive-error observability for Reuters RSS + tradingEconomics; AC-R-1..6 + AC-TE-1..6. | High | SPRINT-S | developer | qa | — |
 
 ---
 
@@ -44,6 +43,7 @@
 
 | Task ID | Title | Merged | Reports |
 |---------|-------|--------|---------|
+| 1828c | SPRINT-S: Reuters RSS + tradingEconomics consecutive-error observability; WORK alert at ≥10 failures; AC-R-1..6 + AC-TE-1..6. 12 pass / 0 fail. | 2026-05-02 | reports/TASK_REPORT_1828c.md |
 | 1828d | DOCS: trim docs/SPRINT_GOAL.md to ≤30 lines (keep last 5 closed sprints). | 2026-05-02 | — |
 | 1828b | FIX: sync project-stats.json knowledgeFileCount to actual count. | 2026-05-02 | — |
 | 1828a | CLEAN: commit orphans, close Sprint 1827, advance to Sprint 1828. | 2026-05-02 | — |
