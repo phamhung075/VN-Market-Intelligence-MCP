@@ -18,6 +18,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { getDb, initDatabase } from "../../../../infrastructure/db/schema.js";
+import { sqlInClause } from "../../../../infrastructure/db/sqlHelpers.js";
 import { logger } from "../../../../infrastructure/logger.js";
 import {
   getSectorPeers,
@@ -91,7 +92,7 @@ function fetchVnstockFinancials(codes: string[]): Map<string, VnstockFinancialsR
 
   if (!tableCheck) return map;
 
-  const placeholders = codes.map(() => "?").join(", ");
+  const placeholders = sqlInClause(codes.length);
   try {
     // Get latest row per code by (year_report DESC, quarter DESC)
     const rows = db
@@ -131,7 +132,7 @@ function fetchMarketPrices(codes: string[]): Map<string, MarketPriceRow> {
   const map = new Map<string, MarketPriceRow>();
   if (codes.length === 0) return map;
 
-  const placeholders = codes.map(() => "?").join(", ");
+  const placeholders = sqlInClause(codes.length);
   try {
     const rows = db
       .query<MarketPriceRow, string[]>(
@@ -165,7 +166,7 @@ function fetchTradingStats(codes: string[]): Map<string, TradingStatsRow> {
 
   if (!tableCheck) return map;
 
-  const placeholders = codes.map(() => "?").join(", ");
+  const placeholders = sqlInClause(codes.length);
   try {
     const rows = db
       .query<TradingStatsRow, string[]>(

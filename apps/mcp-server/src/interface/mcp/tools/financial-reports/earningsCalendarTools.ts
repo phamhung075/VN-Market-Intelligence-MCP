@@ -24,6 +24,7 @@ import { z } from "zod";
 import type { Database } from "bun:sqlite";
 
 import { getDb, initDatabase } from "../../../../infrastructure/db/schema.js";
+import { sqlInClause } from "../../../../infrastructure/db/sqlHelpers.js";
 import { logger } from "../../../../infrastructure/logger.js";
 import {
   getCurrentDeadline,
@@ -102,7 +103,7 @@ function loadWatchlist(db: Database): WatchlistRow[] {
 function loadFilings(db: Database, codes: string[]): FilingRow[] {
   if (codes.length === 0) return [];
   try {
-    const placeholders = codes.map(() => "?").join(", ");
+    const placeholders = sqlInClause(codes.length);
     return db
       .query<FilingRow, string[]>(
         `SELECT action_code, period_year, period_quarter, published_at

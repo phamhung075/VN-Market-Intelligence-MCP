@@ -14,6 +14,7 @@
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { getDb, initDatabase } from "../../../../infrastructure/db/schema.js";
+import { sqlInClause } from "../../../../infrastructure/db/sqlHelpers.js";
 import { computeConviction, deriveKinhDichScore } from "../../../../domain/services/convictionScorer.js";
 import { getImfMacroScoreForConviction } from "../../../../application/services/imfConvictionBridge.js";
 import { getSectorPeers, SECTOR_NAME_VI } from "../../../../domain/services/sectorPeers.js";
@@ -172,7 +173,7 @@ export function registerPortfolioTools(server: McpServer): void {
         // Fallback: fill any missing codes from DB (stale but better than nothing)
         const missingCodes = codes.filter((c) => !priceMap.has(c));
         if (missingCodes.length > 0) {
-          const placeholders = missingCodes.map(() => "?").join(", ");
+          const placeholders = sqlInClause(missingCodes.length);
           try {
             const dbRows = db
               .query<PriceRow & { updated_at?: string }, string[]>(
@@ -203,7 +204,7 @@ export function registerPortfolioTools(server: McpServer): void {
 
         if (allPeerCodes.size > 0) {
           const peerCodeList = Array.from(allPeerCodes);
-          const placeholders = peerCodeList.map(() => "?").join(", ");
+          const placeholders = sqlInClause(peerCodeList.length);
           try {
             const peerRows = db
               .query<{ code: string; change_pct: number }, string[]>(
@@ -265,7 +266,7 @@ export function registerPortfolioTools(server: McpServer): void {
         // ── 5. Batch: conviction history — single query for all codes ──
         const convictionTrendMap = new Map<string, number[]>();
         if (codes.length > 0) {
-          const placeholders = codes.map(() => "?").join(", ");
+          const placeholders = sqlInClause(codes.length);
           try {
             const histRows = db
               .query<ConvictionHistoryRow, string[]>(
@@ -293,7 +294,7 @@ export function registerPortfolioTools(server: McpServer): void {
         // ── 6. Batch: hexagram readings — single query for all codes ──
         const hexagramMap = new Map<string, HexagramBatchRow>();
         if (codes.length > 0) {
-          const placeholders = codes.map(() => "?").join(", ");
+          const placeholders = sqlInClause(codes.length);
           try {
             const hexRows = db
               .query<HexagramBatchRow, string[]>(

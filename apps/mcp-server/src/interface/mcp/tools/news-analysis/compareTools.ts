@@ -17,6 +17,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { getDb, initDatabase } from "../../../../infrastructure/db/schema.js";
+import { sqlInClause } from "../../../../infrastructure/db/sqlHelpers.js";
 import { logger } from "../../../../infrastructure/logger.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -57,7 +58,7 @@ interface ConvictionRow {
  */
 function fetchPrices(codes: string[]): Map<string, PriceRow> {
   const db = getDb();
-  const placeholders = codes.map(() => "?").join(", ");
+  const placeholders = sqlInClause(codes.length);
   const rows = db
     .query<PriceRow, string[]>(
       `SELECT code, price, change_pct FROM market_prices WHERE code IN (${placeholders})`,
@@ -79,7 +80,7 @@ function fetchPrices(codes: string[]): Map<string, PriceRow> {
  */
 function fetchFinancials(codes: string[]): Map<string, FinancialRow> {
   const db = getDb();
-  const placeholders = codes.map(() => "?").join(", ");
+  const placeholders = sqlInClause(codes.length);
 
   // Get latest pe, roe, net_revenue per stock
   const latestRows = db
@@ -191,7 +192,7 @@ function fetchConviction(codes: string[]): Map<string, number> {
 
   if (!tableCheck) return map;
 
-  const placeholders = codes.map(() => "?").join(", ");
+  const placeholders = sqlInClause(codes.length);
   try {
     const rows = db
       .query<ConvictionRow, string[]>(

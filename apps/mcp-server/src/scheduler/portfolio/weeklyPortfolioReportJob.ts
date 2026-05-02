@@ -18,6 +18,7 @@
 
 import type { Database } from "bun:sqlite";
 import { logger } from "../../infrastructure/logger.js";
+import { sqlInClause } from "../../infrastructure/db/sqlHelpers.js";
 import { VN_OFFSET_MS } from "../../domain/services/timeConstants.js";
 import {
   isSchedulerLockFresh,
@@ -181,7 +182,7 @@ export function computeWeekSummary(db: Database, codes: string[]): WeekSummary {
     .slice(0, 10);
 
   // Get all snapshots for these codes in the last 7 days
-  const placeholders = codes.map(() => "?").join(", ");
+  const placeholders = sqlInClause(codes.length);
   const rows = db
     .prepare<SnapshotRow, string[]>(`
       SELECT code, date, current_price, avg_price, shares
@@ -408,7 +409,7 @@ export async function runWeeklyPortfolioReport(
         const sevenDaysAgo = new Date(Date.now() - 7 * 86_400_000)
           .toISOString()
           .slice(0, 10);
-        const placeholders = codes.map(() => "?").join(", ");
+        const placeholders = sqlInClause(codes.length);
         const earliest = db
           .prepare<{ code: string; current_price: number | null; avg_price: number }, string[]>(`
             SELECT code, MIN(current_price) AS current_price, avg_price

@@ -23,6 +23,7 @@ import { join } from "node:path";
 import { getCurrentDeadline } from "../../domain/services/financial-reports/earningsCalendar.js";
 import { VN_OFFSET_MS } from "../../domain/services/timeConstants.js";
 import { recordJobRun } from "../../infrastructure/db/cronJobRunStore.js";
+import { sqlInClause } from "../../infrastructure/db/sqlHelpers.js";
 import { deleteOldReports } from "../../infrastructure/db/telegramReportStore.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -879,7 +880,7 @@ async function runWeeklyChecks(db: Database, getCountFn: GetCountFn): Promise<Au
   // W-5: Outlier tracked_indicators values (table may not exist)
   try {
     const indicatorRows = db.prepare(
-      `SELECT indicator, value FROM tracked_indicators WHERE indicator IN (${Object.keys(INDICATOR_RANGES).map(() => "?").join(",")})`
+      `SELECT indicator, value FROM tracked_indicators WHERE indicator IN (${sqlInClause(Object.keys(INDICATOR_RANGES).length)})`
     ).all(...Object.keys(INDICATOR_RANGES)) as Array<{ indicator: string; value: number }>;
 
     const outliers: Array<{ indicator: string; value: number; range: typeof INDICATOR_RANGES[string] }> = [];

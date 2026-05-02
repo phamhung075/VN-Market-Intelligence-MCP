@@ -21,6 +21,7 @@
 
 import type { Database } from "bun:sqlite";
 import { logger } from "../../infrastructure/logger.js";
+import { sqlInClause } from "../../infrastructure/db/sqlHelpers.js";
 import { recordJobRun } from "../../infrastructure/db/cronJobRunStore.js";
 import { recordOutcome } from "../../infrastructure/db/agentSignalStore.js";
 
@@ -257,7 +258,7 @@ export async function runTaAlertNotifier(
 
   if (batchCodes.length > 0) {
     try {
-      const placeholders = batchCodes.map(() => "?").join(", ");
+      const placeholders = sqlInClause(batchCodes.length);
       interface SignalIdRow { id: number }
       const signalRows = database
         .prepare<SignalIdRow, string[]>(

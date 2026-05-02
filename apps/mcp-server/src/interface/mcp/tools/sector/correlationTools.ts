@@ -26,6 +26,7 @@ import {
   diversificationGrade,
 } from "../../../../domain/services/correlationCalculator.js";
 import { getDb, initDatabase } from "../../../../infrastructure/db/schema.js";
+import { sqlInClause } from "../../../../infrastructure/db/sqlHelpers.js";
 import { logger } from "../../../../infrastructure/logger.js";
 
 // ---------------------------------------------------------------------------
@@ -79,7 +80,7 @@ function loadPriceHistory(
     .slice(0, 10); // "YYYY-MM-DD"
 
   // Build parameterised IN clause
-  const placeholders = codes.map(() => "?").join(", ");
+  const placeholders = sqlInClause(codes.length);
 
   let rows: PriceRow[];
   try {
