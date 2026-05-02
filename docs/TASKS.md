@@ -12,6 +12,15 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Blocked by |
 |---------|-------|----------|------|-------|---------|------------|
+| 1833c | FIX: bctcQueueEnricherJob silent 0-item runs — VPS healthy, root cause is URL discovery returning 0 results per ticker with no warning. Add WARNING log when URL count=0 per ticker per run; verify enricher scraping against congbao.chinhphu.vn for new quarterly filings. | P1-CRITICAL | BUG | developer | — | — |
+| 1833g | FIX: te-chromium-news Playwright crash loop on VPS — "Target closed" Protocol error → crash → restart every 20-40s, confirmed root cause. Two sub-fixes: (1) add circuit breaker / max-restart-per-hour limit on VPS to cap CPU/RAM bleed; (2) permanently disable Reuters RSS + Trading Economics legacy sources (58+ consecutive failures, never succeeded). RSS layer fully operational (90 pushes/24h, 0 errors) — SLA breach is Chromium-only. | P1-CRITICAL | BUG | developer | — | — |
+| 1833h | FIX: freshnessSlaMonitorJob — make market-hours-aware so SLA alerts do not fire during non-trading days/hours. Foreign flow false alarm confirmed. Ref TASK-1407. | P2-HIGH | BUG | developer | — | — |
+| 1833i | FIX: vnstock job-level concurrency rate-limit — ACV, VDC, ACB, VCI all affected (wider than initially reported). Root cause: concurrent balance_sheet/cash_flow/finance/stats fetches across tickers collectively exceed API rate cap; per-ticker retry backoff insufficient. Fixes: (1) add global rate limiter across all concurrent ticker+endpoint combos (max N req/min); (2) surface `NOT NULL constraint failed: vnstock_officers.code` as data quality alert (currently silently swallowed) so affected ticker is identifiable. | P2-HIGH | BUG | developer | — | — |
+| 1833e | FIX: vnstock-sync NOT NULL constraint on vnstock_officers.code — add null-check / schema guard before insert. Recurring error. Note: surfacing as data quality alert now part of 1833i scope. | P3-MEDIUM | BUG | developer | — | — |
+| 1833k | FIX: Trading Economics Chromium scraper — 114 consecutive failures. Investigate Playwright executable path config (/usr/bin/chromium) + anti-bot detection mitigation. | P3-MEDIUM | BUG | developer | — | — |
+| 1833f | FIX: vn-news-fetch stale heartbeat — service reports unhealthy despite 90 pushes/24h. Fix heartbeat timestamp update so monitoring reflects reality. | P4-LOW | BUG | ops | — | — |
+| 1833l | FIX: Yahoo Finance 404 on unknown symbol — identify delisted/renamed ticker, add graceful 404 handling to prevent log noise. | P4-LOW | BUG | developer | — | — |
+| 1833b | FIX: semble-search notebook missing + devAgentCount drift in project-stats.json | LOW | FIX | developer | — | — |
 
 ---
 
@@ -19,7 +28,6 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Blocked by |
 |---------|-------|----------|------|-------|---------|------------|
-
 ---
 
 ---
@@ -42,6 +50,9 @@
 
 | Task ID | Title | Merged | Reports |
 |---------|-------|--------|---------|
+| 1833a | DRY: marketContextTools.ts — delegate 4 section builders to marketContextBuilder.ts. -397 lines (502→105). 8718 pass / 1 pre-existing fail. | 2026-05-03 | — |
+| 1833d | CLOSED (false alarm): foreign-flow 2026-05-01 gap — Vietnam Labor Day, market closed. 31h gap is expected (holiday + weekend). VPS service correctly idle. Note: SLA monitor market-hours blindness tracked as 1833h. | 2026-05-02 | — |
+| 1833j | CLOSED (false alarm): ohlcv-daily-aggregator missing run 2026-05-02 — Saturday, market closed, job correctly skipped. Last run 2026-05-01 15:00 UTC correct. 7 rows / 31 tickers consistent with trading calendar. TA readiness resumes Monday 2026-05-05. | 2026-05-02 | — |
 | 1832b | FIX: pollNews zero-check excludes CB-open/disabled sources — suppresses BUG 2727+2728 false alarms. 5 new AC pass. 8608 pass / 0 fail. | 2026-05-02 | reports/TASK_REPORT_1832b.md |
 | 1832a | CLEAN: commit orphans, close Sprint 1831, advance to Sprint 1832 | 2026-05-02 | — |
 | 1831a | CLEAN: close Sprint 1830, advance to 1831, commit orphans, prune remote branches | 2026-05-02 | — |
