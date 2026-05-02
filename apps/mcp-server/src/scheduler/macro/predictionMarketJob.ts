@@ -23,6 +23,7 @@
 
 import { logger } from "../../infrastructure/logger.js";
 import { getDb, initDatabase } from "../../infrastructure/db/schema.js";
+import { sqlInClause } from "../../infrastructure/db/sqlHelpers.js";
 import type { Database } from "bun:sqlite";
 import type {
   PredictionMarket,
@@ -574,7 +575,7 @@ export async function runPredictionMarketPoll(
             `SELECT market_id, signal_type FROM prediction_signals
              WHERE detected_at > datetime('now', '-2 hours')
                AND severity IN ('high', 'critical')
-               AND id NOT IN (${signals.map(() => "?").join(",")})`,
+               AND id NOT IN (${sqlInClause(signals.length)})`,
           )
           .all(
             ...signals.map((s) => {

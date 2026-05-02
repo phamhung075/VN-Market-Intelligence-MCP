@@ -19,6 +19,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 
 import { getDb, initDatabase } from "../../../../infrastructure/db/schema.js";
+import { sqlInClause } from "../../../../infrastructure/db/sqlHelpers.js";
 import {
   computeRebalancing,
   formatRebalancingReport,
@@ -158,7 +159,7 @@ export function registerRebalancingTools(server: McpServer): void {
         const priceMap = new Map<string, number>();
 
         try {
-          const placeholders = codes.map(() => "?").join(", ");
+          const placeholders = sqlInClause(codes.length);
           const priceRows = db
             .query<PriceRow, string[]>(
               `SELECT code, price FROM market_prices WHERE code IN (${placeholders})`,

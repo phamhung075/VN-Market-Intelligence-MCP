@@ -31,6 +31,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { getDb, initDatabase } from "../../../../infrastructure/db/schema.js";
+import { sqlInClause } from "../../../../infrastructure/db/sqlHelpers.js";
 import {
   computeAttribution,
   type AlertInput,
@@ -268,7 +269,7 @@ export function registerPerformanceTools(server: McpServer): void {
 
         if (stockCodes.size > 0) {
           const codes = Array.from(stockCodes);
-          const placeholders = codes.map(() => "?").join(",");
+          const placeholders = sqlInClause(codes.length);
 
           const priceRows = db
             .prepare<PriceRow, string[]>(`

@@ -27,6 +27,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
 import { getDb, initDatabase } from "../../../../infrastructure/db/schema.js";
+import { sqlInClause } from "../../../../infrastructure/db/sqlHelpers.js";
 import {
   getTargetWeights,
 } from "../../../../infrastructure/db/targetAllocationStore.js";
@@ -123,7 +124,7 @@ export function registerTargetAllocationTools(server: McpServer): void {
         if (positionRows.length > 0) {
           try {
             const codes = positionRows.map((p) => p.code);
-            const placeholders = codes.map(() => "?").join(", ");
+            const placeholders = sqlInClause(codes.length);
             const priceRows = db
               .query<PriceRow, string[]>(
                 `SELECT code, price FROM market_prices WHERE code IN (${placeholders})`,

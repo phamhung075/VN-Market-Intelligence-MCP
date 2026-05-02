@@ -20,6 +20,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 
 import { getDb, initDatabase } from "../../../../infrastructure/db/schema.js";
+import { sqlInClause } from "../../../../infrastructure/db/sqlHelpers.js";
 import { tradingWindowLabel } from "../../../../domain/services/tradingWindow.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -229,7 +230,7 @@ function buildMacroSection(db: ReturnType<typeof getDb>): string {
 
   // Query known macro codes from market_prices
   try {
-    const placeholders = MACRO_CODES.map(() => "?").join(", ");
+    const placeholders = sqlInClause(MACRO_CODES.length);
     const rows = db
       .prepare(
         `SELECT code, price, change_pct, updated_at

@@ -15,6 +15,7 @@ Bun.env["DB_PATH"] = ":memory:";
 import { describe, it, expect, beforeEach, afterEach } from "bun:test";
 import { Database } from "bun:sqlite";
 import { closeDb, getDb } from "../infrastructure/db/schema.js";
+import { sqlInClause } from "../infrastructure/db/sqlHelpers.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // In-memory DB setup
@@ -109,7 +110,7 @@ function batchFetchConvictionHistory(
   const result = new Map<string, number[]>();
   if (codes.length === 0) return result;
 
-  const placeholders = codes.map(() => "?").join(", ");
+  const placeholders = sqlInClause(codes.length);
   try {
     const rows = db
       .query<ConvictionHistoryRow, string[]>(
@@ -158,7 +159,7 @@ function batchFetchHexagramReadings(
   const result = new Map<string, HexagramBatchRow>();
   if (codes.length === 0) return result;
 
-  const placeholders = codes.map(() => "?").join(", ");
+  const placeholders = sqlInClause(codes.length);
   try {
     const rows = db
       .query<HexagramBatchRow & { rn: number }, string[]>(
@@ -192,7 +193,7 @@ function batchFetchPeerPrices(
   const result = new Map<string, number>();
   if (peerCodes.length === 0) return result;
 
-  const placeholders = peerCodes.map(() => "?").join(", ");
+  const placeholders = sqlInClause(peerCodes.length);
   try {
     const rows = db
       .query<{ code: string; change_pct: number }, string[]>(

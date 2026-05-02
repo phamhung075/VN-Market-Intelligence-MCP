@@ -20,6 +20,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 
 import { getDb, initDatabase } from "../../../../infrastructure/db/schema.js";
+import { sqlInClause } from "../../../../infrastructure/db/sqlHelpers.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SQLite row types (subsets used in each tool)
@@ -413,7 +414,7 @@ export function registerAlertTools(server: McpServer): void {
           const priceMap = new Map<string, number>();
           if (codes.length > 0) {
             try {
-              const placeholders = codes.map(() => "?").join(", ");
+              const placeholders = sqlInClause(codes.length);
               const priceRows = db
                 .query<PriceRow, string[]>(
                   `SELECT code, price FROM market_prices WHERE code IN (${placeholders})`,

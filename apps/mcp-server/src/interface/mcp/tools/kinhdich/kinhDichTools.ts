@@ -18,6 +18,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { getDb, initDatabase } from "../../../../infrastructure/db/schema.js";
+import { sqlInClause } from "../../../../infrastructure/db/sqlHelpers.js";
 import { getSectorPeers } from "../../../../domain/services/sectorPeers.js";
 import type { DomainType } from "../../../../../bctc-schema.js";
 import { logger } from "../../../../infrastructure/logger.js";
@@ -249,7 +250,7 @@ export function computeSectorScore(code: string): number {
     // Intersect with codes that actually have prices in market_prices
     let peerCodes: string[] = [];
     if (peerCodesFromDomain.length > 0) {
-      const placeholders = peerCodesFromDomain.map(() => "?").join(", ");
+      const placeholders = sqlInClause(peerCodesFromDomain.length);
       const available = db
         .query<{ code: string }, string[]>(
           `SELECT DISTINCT code FROM market_prices
@@ -271,7 +272,7 @@ export function computeSectorScore(code: string): number {
 
     if (peerCodes.length === 0) return 0.0;
 
-    const placeholders2 = peerCodes.map(() => "?").join(", ");
+    const placeholders2 = sqlInClause(peerCodes.length);
     const peerPrices = db
       .query<{ change_pct: number | null }, string[]>(
         `SELECT change_pct FROM market_prices WHERE code IN (${placeholders2})`,
@@ -312,7 +313,7 @@ export function computeMacroScore(): number {
   try {
     const db = getDb();
     const indicators = ["brent_crude_usd", "gold_usd_oz", "wti_crude_usd"];
-    const placeholders = indicators.map(() => "?").join(", ");
+    const placeholders = sqlInClause(indicators.length);
 
     const rows = db
       .query<

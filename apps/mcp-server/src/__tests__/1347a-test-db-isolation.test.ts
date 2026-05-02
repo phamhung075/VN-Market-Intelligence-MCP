@@ -35,6 +35,7 @@ import {
   listNewReports,
 } from "../infrastructure/db/telegramReportStore.js";
 import { initDatabase, getDb, closeDb } from "../infrastructure/db/index.js";
+import { sqlInClause } from "../infrastructure/db/sqlHelpers.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -197,7 +198,7 @@ describe("Task 1347a — Production DB: no fixture pollution", () => {
     const prodDb = new Database(PRODUCTION_DB, { readonly: true });
     try {
       // Build a query that counts rows matching any of the known fixture patterns
-      const placeholders = FIXTURE_PATTERNS.map(() => "?").join(", ");
+      const placeholders = sqlInClause(FIXTURE_PATTERNS.length);
       const count = prodDb
         .query<{ c: number }, string[]>(
           `SELECT COUNT(*) as c FROM telegram_reports WHERE text IN (${placeholders})`,
@@ -221,7 +222,7 @@ describe("Task 1347a — Production DB: no fixture pollution", () => {
     try {
       // Short fixture texts that appear verbatim in test files
       const shortPatterns = ["First", "Second", "Third", "test", "ping"];
-      const placeholders = shortPatterns.map(() => "?").join(", ");
+      const placeholders = sqlInClause(shortPatterns.length);
       const count = prodDb
         .query<{ c: number }, string[]>(
           `SELECT COUNT(*) as c FROM telegram_reports WHERE text IN (${placeholders}) AND status='new'`,

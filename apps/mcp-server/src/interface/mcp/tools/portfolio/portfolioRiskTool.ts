@@ -16,6 +16,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 
 import { getDb, initDatabase } from "../../../../infrastructure/db/schema.js";
+import { sqlInClause } from "../../../../infrastructure/db/sqlHelpers.js";
 import {
   computePortfolioRisk,
   type PortfolioRiskResult,
@@ -186,7 +187,7 @@ export function registerPortfolioRiskTool(server: McpServer): void {
 
         // ── 3. Load price history for each position ───────────────────────────
         const codes = positions.map((p) => p.code);
-        const placeholders = codes.map(() => "?").join(", ");
+        const placeholders = sqlInClause(codes.length);
         const cutoffDate = new Date(
           Date.now() - days * 24 * 60 * 60 * 1000,
         ).toISOString();
