@@ -19,12 +19,12 @@ import { resolve } from "path";
 import { getPendingAskQuestions } from "../db/askQueueStore.js";
 import { getDb } from "../db/schema.js";
 import type { Database } from "bun:sqlite";
+import { CLAUDE_BIN } from "./agentConstants.js";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
 const PROJECT_ROOT = resolve(import.meta.dir, "../../..");
 const AGENT_FILE = resolve(PROJECT_ROOT, "cowork-analysis-vnmarket-team/07-qa-responder.md");
-const CLAUDE_BIN = "/Users/admin/.local/bin/claude";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
