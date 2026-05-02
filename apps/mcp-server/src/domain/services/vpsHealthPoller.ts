@@ -109,11 +109,31 @@ export const DEFAULT_FRESHNESS_CONFIGS: FreshnessConfig[] = [
   {
     serviceName: "vn-news-fetch",
     description: "News and events",
-    // FIX-1405b: VPS news items land in rag_analyses (via pollNews pipeline),
-    // NOT in market_messages (which is the internal agent signal channel).
-    // Using rag_analyses.created_at gives a true picture of freshness.
-    // Threshold raised to 30 min to match the documented SLA.
-    latestTimestampSql: `SELECT MAX(created_at) AS latest_at FROM rag_analyses`,
+    // FIX-1833f: Heartbeat uses MAX of vps_push_log.pushed_at and rag_analyses.created_at.
+    //
+    // Root cause: the previous query (rag_analyses.created_at only) caused
+    // false-unhealthy when the VPS pushed 90+ times/day but all articles were
+    // duplicates: no new rows were inserted into rag_analyses, so the freshness
+    // check returned "unhealthy" even though vn-news-fetch was actively pushing.
+    //
+    // Fix: take MAX across both tables.
+    //   - vps_push_log.pushed_at updates on every successful HTTP push,
+    //     regardless of deduplication — this is the true heartbeat.
+    //   - rag_analyses.created_at is retained as a fallback so existing
+    //     observability tests (which only seed rag_analyses) still pass.
+    //
+    // Result: healthy = either a recent push OR a recent rag insert,
+    //         unhealthy = both sources stale beyond 30-min SLA.
+    latestTimestampSql: `
+      SELECT MAX(latest_at) AS latest_at FROM (
+        SELECT MAX(pushed_at) AS latest_at
+          FROM vps_push_log
+         WHERE service = 'news' AND status = 'ok'
+        UNION ALL
+        SELECT MAX(created_at) AS latest_at
+          FROM rag_analyses
+      )
+    `,
     maxAgeMs: 30 * 60_000, // 30 minutes — matches SLA
   },
   {
