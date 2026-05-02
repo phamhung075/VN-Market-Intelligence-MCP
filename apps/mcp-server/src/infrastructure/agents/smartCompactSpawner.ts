@@ -16,10 +16,9 @@
 import { readFileSync, writeFileSync, readdirSync, statSync } from "fs";
 import { resolve, join } from "path";
 import { homedir } from "os";
+import { CLAUDE_BIN } from "./agentConstants.js";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
-
-const CLAUDE_BIN = "/Users/admin/.local/bin/claude";
 const MAX_TURN_CHARS = 500; // max chars per turn (user or assistant)
 const MAX_TURNS = 60; // max turns retained for compaction prompt
 const CLAUDE_PROJECTS = join(homedir(), ".claude", "projects");
