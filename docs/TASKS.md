@@ -29,7 +29,6 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Started |
 |---------|-------|----------|------|-------|---------|---------|
-| 1829b | NEXT: TBD — Sprint 1829 first task | medium | chore | developer | — | 2026-05-02 |
 
 ---
 
@@ -44,6 +43,7 @@
 
 | Task ID | Title | Merged | Reports |
 |---------|-------|--------|---------|
+| 1829b | FIX: te-chromium CB counter persisted to /app/data/te-chromium-cb-state.json — survives Docker restarts. 4 new AC pass. 8602 pass / 0 fail. | 2026-05-02 | reports/TASK_REPORT_1829b.md |
 | 1829a | CLEAN: close Sprint 1828, advance to Sprint 1829, update project-stats.json (currentSprint=1829, totalTasksDone=479). | 2026-05-02 | — |
 | 1828c | SPRINT-S: Reuters RSS + tradingEconomics consecutive-error observability; WORK alert at ≥10 failures; AC-R-1..6 + AC-TE-1..6. 12 pass / 0 fail. | 2026-05-02 | reports/TASK_REPORT_1828c.md |
 | 1828d | DOCS: trim docs/SPRINT_GOAL.md to ≤30 lines (keep last 5 closed sprints). | 2026-05-02 | — |

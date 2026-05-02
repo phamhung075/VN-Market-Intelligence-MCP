@@ -5,9 +5,9 @@
   "currentSprint": 1829,
   "previousSprint": { "number": 1828, "status": "DONE", "summary": "Reuters RSS + tradingEconomics consecutive-error observability (WORK alert at >=10 errors) + knowledgeFileCount sync. totalTasksDone=479." },
   "sprintGoal": "Sprint 1829 — TBD",
-  "testBaseline": 8582,
-  "testBaselineTarget": 8582,
-  "testBaselinePass": 8582,
+  "testBaseline": 8602,
+  "testBaselineTarget": 8602,
+  "testBaselinePass": 8602,
   "testBaselineFail": 0,
   "testFailures": 0,
   "toolCount": 122,
@@ -15,11 +15,11 @@
   "knowledgeFileCount": 25,
   "devAgentCount": 13,
   "analysisAgentCount": 9,
-  "totalTasksDone": 479,
+  "totalTasksDone": 480,
   "analysisMode": "value_investor",
   "briefingFilesCreated": 30,
   "briefingArchiveQI": 0,
   "briefingArchiveQII": 0,
-  "lastFixApplied": "1829a DONE: CLEAN — sprint advanced to 1829, stats updated. 2026-05-02.",
-  "currentSprintNotes": "Sprint 1829 opened — TBD"
+  "lastFixApplied": "1829b DONE: te-chromium CB counter persisted to file — survives Docker restarts. 8602 pass / 0 fail. 2026-05-02.",
+  "currentSprintNotes": "Sprint 1829 — 1829b merged. te-chromium CB state persisted across Docker restarts."
 }
