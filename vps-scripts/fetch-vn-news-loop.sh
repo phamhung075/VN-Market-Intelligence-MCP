@@ -3,7 +3,7 @@
 # Runs every 15 minutes with human-like delays between sources.
 # 15min cycle: news sites update every 10-30min, more frequent = higher block risk.
 #
-# timeout 600: kills hung fetch-vn-news.sh runs (Playwright/Chromium can hang
+# timeout 600: kills hung fetch-vn-news.sh runs (network/curl can hang
 # indefinitely without this guard, causing systemd to see a non-zero exit and
 # trigger the Restart= policy — visible as the 41m uptime restart loop).
 

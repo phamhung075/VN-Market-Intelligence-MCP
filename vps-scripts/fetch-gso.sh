@@ -1,8 +1,9 @@
 #!/bin/bash
 # GSO Macro Indicators Proxy — auto-deployed
 # Fetches VN macro indicators from General Statistics Office (gso.gov.vn)
-# via Playwright browser automation and pushes to MCP server via POST /api/push-gso.
+# and pushes to MCP server via POST /api/push-gso.
 # Runs hourly from vn-gso-fetch.service.
+# NOTE: Playwright/fetch-browser.py removed (VPS too lite for Chromium).
 
 API_URL="__MCP_BASE__/api/push-gso"
 API_KEY="__API_KEY__"
@@ -19,17 +20,11 @@ if [ "$LOG_SIZE" -gt $LOG_ROTATE_BYTES ]; then mv "$LOG" "$LOG.old"; fi
 
 echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) === GSO START ===" >> "$LOG"
 
-# Use Playwright to fetch GSO data (geo-blocked from outside VN)
+# Playwright/Chromium removed — VPS too lite to run headless browser.
+# GSO data fetch currently disabled; pushes empty payload to keep fetched_at fresh.
 FETCHED_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-
-GSO_JSON=$(python3 "$SCRIPT_DIR/fetch-browser.py" \
-  --url "https://www.gso.gov.vn/en/" \
-  --extract-gso-macro 2>/dev/null)
-
-if [ -z "$GSO_JSON" ]; then
-  echo "$(date -u) WARN: fetch-browser.py returned empty; falling back to static indicators" >> "$LOG"
-  GSO_JSON=""
-fi
+GSO_JSON=""
+echo "$(date -u) INFO: GSO browser fetch disabled (Playwright removed); pushing empty payload" >> "$LOG"
 
 # Parse indicators from GSO_JSON (output: name=value pairs, one per line)
 RESULTS=()
