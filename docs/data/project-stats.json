@@ -5,9 +5,9 @@
   "currentSprint": 1816,
   "previousSprint": { "number": 1814, "status": "DONE", "progressTasks": "Sprint 1814: 5 FIX tasks — GUARD_MAX, signalQualityAudit, signalOutcomeJob, agentMemoryTools fixtures, sessions dir. 8536 pass, 13 fail. tasks=434." },
   "sprintGoal": "Sprint 1815 DONE — 1815 BCTC-VAL-01-POSITION fix + 1815c TE-Chromium retry fix + 1815d docker healthcheck curl→bun. 8647 pass, 19 fail (pre-existing). tasks=437.",
-  "testBaseline": 8427,
-  "testBaselineTarget": 8427,
-  "testBaselinePass": 8427,
+  "testBaseline": 8432,
+  "testBaselineTarget": 8432,
+  "testBaselinePass": 8432,
   "testBaselineFail": 110,
   "testFailures": 110,
   "toolCount": 122,
@@ -15,11 +15,11 @@
   "knowledgeFileCount": 22,
   "devAgentCount": 13,
   "analysisAgentCount": 9,
-  "totalTasksDone": 438,
+  "totalTasksDone": 439,
   "analysisMode": "value_investor",
   "briefingFilesCreated": 30,
   "briefingArchiveQI": 0,
   "briefingArchiveQII": 0,
-  "lastFixApplied": "1816a DONE: sprint doc invariants — currentSprint numeric, SPRINT_GOAL.md header, cron-registry path fixes (239c, 1298b), scheduler.md. 8427 pass / 110 fail. QA approved 2026-05-02.",
-  "currentSprintNotes": "Sprint 1816a closed 2026-05-02. 1816a: sprint doc invariants — currentSprint=1816 (numeric), SPRINT_GOAL.md updated, cron-registry path fixes in 239c+1298b tests, scheduler.md module memory created. 54 target tests pass. 110 failures are pre-existing baseline."
+  "lastFixApplied": "1816c DONE: Dockerfile add python3+python3-pip+vnstock — vnstockBridge subprocess fix. 8432 pass / 110 fail. QA approved 2026-05-02.",
+  "currentSprintNotes": "Sprint 1816c closed 2026-05-02. 1816c: mcp-server Dockerfile now installs python3+python3-pip via apt and vnstock via pip3. vnstockBridge.ts spawns python3 subprocess for VCI data. 5 tests GREEN. 110 failures are pre-existing baseline."
 }
