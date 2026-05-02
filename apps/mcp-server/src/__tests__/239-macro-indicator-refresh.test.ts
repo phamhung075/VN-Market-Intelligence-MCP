@@ -469,9 +469,11 @@ describe("Task 239a — macro-indicator-refresh (RED phase)", () => {
   });
 
   // ──────────────────────────────────────────────────────────────────────────
-  // AC-11: GSO skip — no GSO_VPS_ENDPOINT → skipped, no HTTP fetch attempted
+  // AC-11: GSO fetch attempted even when GSO_VPS_ENDPOINT is unset.
+  //        Non-JSON response (HTML) causes JSON.parse to throw; circuit-breaker
+  //        catches it and the all-failed graceful path is returned.
   // ──────────────────────────────────────────────────────────────────────────
-  test("AC-11: GSO skipped when GSO_VPS_ENDPOINT not set → no HTTP fetch, no all-failed noise", async () => {
+  test("AC-11: GSO fetch attempted when GSO_VPS_ENDPOINT unset → non-JSON response falls through to all-failed gracefully", async () => {
     delete Bun.env.GSO_VPS_ENDPOINT;
     let gsoFetchAttempted = false;
 
@@ -480,7 +482,7 @@ describe("Task 239a — macro-indicator-refresh (RED phase)", () => {
         if (url.includes("yahoo")) throw new Error("yahoo fail");
         if (url.includes("sbv")) throw new Error("sbv fail");
         gsoFetchAttempted = true;
-        return "<html>not json</html>"; // should never reach here
+        return "<html>not json</html>"; // fetch happens, but parse fails
       },
       post: async () => ({ status: 200, body: "" }),
     };
@@ -510,7 +512,9 @@ describe("Task 239a — macro-indicator-refresh (RED phase)", () => {
       mockRateLimiter
     );
 
-    expect(gsoFetchAttempted).toBe(false);
+    // Fetch IS attempted (no silent skip), but HTML response fails JSON.parse
+    expect(gsoFetchAttempted).toBe(true);
+    // All-failed path: graceful, no throw
     expect(result.success).toBe(false);
     expect(result.sourceUsed).toBeNull();
   });
