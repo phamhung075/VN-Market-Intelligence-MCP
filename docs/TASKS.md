@@ -42,6 +42,8 @@
 
 | Task ID | Title | Merged | Reports |
 |---------|-------|--------|---------|
+| 1824e | FIX: GSO macro — remove VPS_ENDPOINT skip guard, Source 3 fetch attempted natively with graceful fallback. 11 pass / 0 fail. | 2026-05-02 | reports/TASK_REPORT_1824e.md |
+| 1824d | FIX: create agent-memory manifest fixtures — ops.md + WAL-checkpoint.md for 1300a tests. 5 pass / 0 fail. | 2026-05-02 | reports/TASK_REPORT_1824d.md |
 | 1824c | CHORE: advance SPRINT_GOAL.md to Sprint 1824, sync project-stats.json (currentSprint=1824, previousSprint=1823 DONE). | 2026-05-02 | — |
 | 1824b | CLEAN: remove stale apps/mcp-server/docs/agent-memory/ orphan tree (12 files) + apps/mcp-server/reports/ (1 file). Zero source references. tsc clean. | 2026-05-02 | — |
 | 1824a | FIX: verify-deploy-price-fetch.sh market-hours guard — skip freshness check off-hours (weekends + outside 09:00–15:15 VT); systemctl is-active only check. Config-only, tsc clean. | 2026-05-02 | — |
