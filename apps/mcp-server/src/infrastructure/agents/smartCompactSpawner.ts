@@ -43,7 +43,7 @@ function getLatestSession(): string | null {
       .filter(f => f.endsWith(".jsonl"))
       .map(f => ({ name: f, mtime: statSync(join(dir, f)).mtimeMs }))
       .sort((a, b) => b.mtime - a.mtime);
-    return files.length > 0 ? join(dir, files[0].name) : null;
+    return files.length > 0 ? join(dir, files[0]!.name) : null;
   } catch {
     return null;
   }
