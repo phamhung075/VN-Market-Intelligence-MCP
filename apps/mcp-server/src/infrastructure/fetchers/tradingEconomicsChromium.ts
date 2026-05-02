@@ -396,12 +396,15 @@ export interface TeNewsCacheEntry {
  *
  * @property scrape         - Returns raw page HTML (mocked in tests).
  * @property cachePath      - Override for the JSON cache file path.
+ * @property cbStatePath    - Override for the CB state file path (default: TE_CB_STATE_PATH).
+ *                            Inject a temp-dir path in tests to stay isolated.
  * @property onCircuitOpen  - Callback fired once when crash-loop threshold is crossed.
  *                            Defaults to a Telegram WORK alert in production.
  */
 export interface TeNewsDeps {
   scrape: (url: string) => Promise<string>;
   cachePath?: string;
+  cbStatePath?: string;
   onCircuitOpen?: (message: string) => Promise<void>;
 }
 
@@ -495,24 +498,72 @@ export function extractTeNewsItems(html: string, limit: number): TENewsItem[] {
 // scrape resets the counter.  The first time the lock engages, onCircuitOpen
 // is fired (default: Telegram WORK alert) so the ops team is notified once,
 // not on every subsequent locked call.
+//
+// Sprint 1829b: CB state is now persisted to a JSON file so the counter
+// survives Docker container restarts.  The default path is TE_CB_STATE_PATH
+// but callers (and tests) can inject an alternate path via deps.cbStatePath.
 // ─────────────────────────────────────────────────────────────────────────────
 
 const TE_CHROMIUM_MAX_CONSECUTIVE_FAILURES = 3;
 
-/** Consecutive top-level scrape failures involving "Target closed". */
-let _teChromiumConsecutiveFailures = 0;
-/** True once the WORK alert has been sent for the current locked period. */
-let _teChromiumAlertSent = false;
+/** Default path for the persisted circuit-breaker state file. */
+export const TE_CB_STATE_PATH = "/app/data/te-chromium-cb-state.json";
+
+/** Shape of the persisted CB state file. */
+export interface TeCbState {
+  consecutiveErrors: number;
+  alertSent: boolean;
+}
+
+function loadCbState(statePath: string): TeCbState {
+  try {
+    const raw = fs.readFileSync(statePath, "utf-8");
+    const parsed = JSON.parse(raw) as Partial<TeCbState>;
+    if (
+      typeof parsed.consecutiveErrors === "number" &&
+      typeof parsed.alertSent === "boolean"
+    ) {
+      return parsed as TeCbState;
+    }
+  } catch {
+    // File missing or corrupt — start fresh
+  }
+  return { consecutiveErrors: 0, alertSent: false };
+}
+
+function saveCbState(state: TeCbState, statePath: string): void {
+  try {
+    const dir = path.dirname(statePath);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    const tmp = `${statePath}.tmp`;
+    fs.writeFileSync(tmp, JSON.stringify(state), "utf-8");
+    fs.renameSync(tmp, statePath);
+  } catch (err) {
+    logger.warn("[te-chromium] failed to write CB state", {
+      statePath,
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
+}
 
 /**
- * Reset the module-level crash-loop counter.
- * Exported for test isolation only — do NOT call from production code.
+ * Reset the crash-loop counter and wipe the persisted state file.
+ * Exported for test isolation — do NOT call from production code.
+ *
+ * @param statePath - Override state file path (default: TE_CB_STATE_PATH).
  * @internal
  */
-export function resetTeChromiumFailureCounter(): void {
-  _teChromiumConsecutiveFailures = 0;
-  _teChromiumAlertSent = false;
+export function resetTeChromiumFailureCounter(statePath?: string): void {
+  const p = statePath ?? TE_CB_STATE_PATH;
+  saveCbState({ consecutiveErrors: 0, alertSent: false }, p);
 }
+
+/**
+ * @deprecated Alias for resetTeChromiumFailureCounter — kept for backwards
+ * compatibility with existing test imports.
+ * @internal
+ */
+export const resetTeChromiumCb = resetTeChromiumFailureCounter;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // News cache helpers
@@ -618,6 +669,7 @@ export async function fetchTradingEconomicsNews(
   deps?: Partial<TeNewsDeps>,
 ): Promise<TENewsItem[]> {
   const cachePath = deps?.cachePath ?? DEFAULT_NEWS_CACHE_FILE;
+  const cbStatePath = deps?.cbStatePath ?? TE_CB_STATE_PATH;
   const scrape = deps?.scrape ?? playwrightScrapeNews;
 
   try {
@@ -635,12 +687,16 @@ export async function fetchTradingEconomicsNews(
     }
 
     // ── Crash-loop guard: skip browser launch when circuit is locked ─────────
-    if (_teChromiumConsecutiveFailures >= TE_CHROMIUM_MAX_CONSECUTIVE_FAILURES) {
-      if (!_teChromiumAlertSent) {
-        _teChromiumAlertSent = true;
+    // Load state from file on each check so restarts don't reset the count.
+    const cbState = loadCbState(cbStatePath);
+
+    if (cbState.consecutiveErrors >= TE_CHROMIUM_MAX_CONSECUTIVE_FAILURES) {
+      if (!cbState.alertSent) {
+        cbState.alertSent = true;
+        saveCbState(cbState, cbStatePath);
         const alertMsg =
           `[te-chromium-news] Chromium crash loop detected — ` +
-          `${_teChromiumConsecutiveFailures} consecutive "Target closed" failures. ` +
+          `${cbState.consecutiveErrors} consecutive "Target closed" failures. ` +
           `Browser scrape suspended. Manual inspection required.`;
         logger.warn(alertMsg);
         try {
@@ -663,26 +719,17 @@ export async function fetchTradingEconomicsNews(
     // ── Attempt fresh scrape (retry once on "Target closed" crash) ───────────
     try {
       let html: string;
-      let targetClosedOnFirst = false;
       try {
         html = await scrape(TE_NEWS_URL);
       } catch (firstErr) {
         const msg = firstErr instanceof Error ? firstErr.message : String(firstErr);
         if (!msg.includes("Target closed")) throw firstErr;
-        targetClosedOnFirst = true;
         logger.warn("[te-chromium-news] Target closed — re-initialising browser and retrying");
         html = await scrape(TE_NEWS_URL);
       }
-      // Scrape succeeded (with or without retry) — reset crash-loop counter
-      if (targetClosedOnFirst) {
-        // Partial recovery: the first attempt crashed but the second succeeded.
-        // Reset counter so a single flaky launch does not accumulate toward lock.
-        _teChromiumConsecutiveFailures = 0;
-        _teChromiumAlertSent = false;
-      } else {
-        _teChromiumConsecutiveFailures = 0;
-        _teChromiumAlertSent = false;
-      }
+      // Scrape succeeded (with or without inner retry) — reset CB state
+      saveCbState({ consecutiveErrors: 0, alertSent: false }, cbStatePath);
+
       const items = extractTeNewsItems(html, limit);
       const entry: TeNewsCacheEntry = {
         cachedAt: new Date().toISOString(),
@@ -704,11 +751,14 @@ export async function fetchTradingEconomicsNews(
       const errorMsg = scrapeErr instanceof Error ? scrapeErr.message : String(scrapeErr);
       logger.warn("[te-chromium-news] scrape failed", { error: errorMsg });
 
-      // Increment crash-loop counter only for "Target closed" failures
+      // Increment crash-loop counter only for "Target closed" failures;
+      // persist immediately so the count survives container restarts.
       if (errorMsg.includes("Target closed")) {
-        _teChromiumConsecutiveFailures++;
+        const state = loadCbState(cbStatePath);
+        state.consecutiveErrors++;
+        saveCbState(state, cbStatePath);
         logger.warn("[te-chromium-news] Target closed failure counted toward crash-loop threshold", {
-          consecutiveFailures: _teChromiumConsecutiveFailures,
+          consecutiveFailures: state.consecutiveErrors,
           threshold: TE_CHROMIUM_MAX_CONSECUTIVE_FAILURES,
         });
       }
