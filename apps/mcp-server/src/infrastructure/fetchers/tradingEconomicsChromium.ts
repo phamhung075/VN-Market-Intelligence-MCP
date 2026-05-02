@@ -394,12 +394,15 @@ export interface TeNewsCacheEntry {
 /**
  * Dependency injection interface for the news fetcher.
  *
- * @property scrape    - Returns raw page HTML (mocked in tests).
- * @property cachePath - Override for the JSON cache file path.
+ * @property scrape         - Returns raw page HTML (mocked in tests).
+ * @property cachePath      - Override for the JSON cache file path.
+ * @property onCircuitOpen  - Callback fired once when crash-loop threshold is crossed.
+ *                            Defaults to a Telegram WORK alert in production.
  */
 export interface TeNewsDeps {
   scrape: (url: string) => Promise<string>;
   cachePath?: string;
+  onCircuitOpen?: (message: string) => Promise<void>;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -481,6 +484,34 @@ export function extractTeNewsItems(html: string, limit: number): TENewsItem[] {
   });
 
   return items;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Crash-loop guard — prevents infinite "Target closed" browser launch storms
+//
+// After TE_CHROMIUM_MAX_CONSECUTIVE_FAILURES top-level scrape failures that
+// involve a "Target closed" error, the scraper is locked: subsequent calls
+// return [] immediately without launching Chromium.  A single successful
+// scrape resets the counter.  The first time the lock engages, onCircuitOpen
+// is fired (default: Telegram WORK alert) so the ops team is notified once,
+// not on every subsequent locked call.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const TE_CHROMIUM_MAX_CONSECUTIVE_FAILURES = 3;
+
+/** Consecutive top-level scrape failures involving "Target closed". */
+let _teChromiumConsecutiveFailures = 0;
+/** True once the WORK alert has been sent for the current locked period. */
+let _teChromiumAlertSent = false;
+
+/**
+ * Reset the module-level crash-loop counter.
+ * Exported for test isolation only — do NOT call from production code.
+ * @internal
+ */
+export function resetTeChromiumFailureCounter(): void {
+  _teChromiumConsecutiveFailures = 0;
+  _teChromiumAlertSent = false;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -603,16 +634,54 @@ export async function fetchTradingEconomicsNews(
       }
     }
 
+    // ── Crash-loop guard: skip browser launch when circuit is locked ─────────
+    if (_teChromiumConsecutiveFailures >= TE_CHROMIUM_MAX_CONSECUTIVE_FAILURES) {
+      if (!_teChromiumAlertSent) {
+        _teChromiumAlertSent = true;
+        const alertMsg =
+          `[te-chromium-news] Chromium crash loop detected — ` +
+          `${_teChromiumConsecutiveFailures} consecutive "Target closed" failures. ` +
+          `Browser scrape suspended. Manual inspection required.`;
+        logger.warn(alertMsg);
+        try {
+          const notify = deps?.onCircuitOpen;
+          if (notify) {
+            await notify(alertMsg);
+          } else {
+            const { sendTelegramWork } = await import("../notifiers/telegram.js");
+            await sendTelegramWork(alertMsg, { parseMode: "" });
+          }
+        } catch { /* alert failure must not abort */ }
+      }
+      // Return stale cache or [] — do not launch browser
+      if (cached !== null) {
+        return cached.data.slice(0, limit);
+      }
+      return [];
+    }
+
     // ── Attempt fresh scrape (retry once on "Target closed" crash) ───────────
     try {
       let html: string;
+      let targetClosedOnFirst = false;
       try {
         html = await scrape(TE_NEWS_URL);
       } catch (firstErr) {
         const msg = firstErr instanceof Error ? firstErr.message : String(firstErr);
         if (!msg.includes("Target closed")) throw firstErr;
+        targetClosedOnFirst = true;
         logger.warn("[te-chromium-news] Target closed — re-initialising browser and retrying");
         html = await scrape(TE_NEWS_URL);
+      }
+      // Scrape succeeded (with or without retry) — reset crash-loop counter
+      if (targetClosedOnFirst) {
+        // Partial recovery: the first attempt crashed but the second succeeded.
+        // Reset counter so a single flaky launch does not accumulate toward lock.
+        _teChromiumConsecutiveFailures = 0;
+        _teChromiumAlertSent = false;
+      } else {
+        _teChromiumConsecutiveFailures = 0;
+        _teChromiumAlertSent = false;
       }
       const items = extractTeNewsItems(html, limit);
       const entry: TeNewsCacheEntry = {
@@ -634,6 +703,15 @@ export async function fetchTradingEconomicsNews(
     } catch (scrapeErr) {
       const errorMsg = scrapeErr instanceof Error ? scrapeErr.message : String(scrapeErr);
       logger.warn("[te-chromium-news] scrape failed", { error: errorMsg });
+
+      // Increment crash-loop counter only for "Target closed" failures
+      if (errorMsg.includes("Target closed")) {
+        _teChromiumConsecutiveFailures++;
+        logger.warn("[te-chromium-news] Target closed failure counted toward crash-loop threshold", {
+          consecutiveFailures: _teChromiumConsecutiveFailures,
+          threshold: TE_CHROMIUM_MAX_CONSECUTIVE_FAILURES,
+        });
+      }
 
       // Health tracking — failure
       try {
