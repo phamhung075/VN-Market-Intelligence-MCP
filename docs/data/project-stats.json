@@ -15,11 +15,11 @@
   "knowledgeFileCount": 25,
   "devAgentCount": 13,
   "analysisAgentCount": 9,
-  "totalTasksDone": 481,
+  "totalTasksDone": 482,
   "analysisMode": "value_investor",
   "briefingFilesCreated": 30,
   "briefingArchiveQI": 0,
   "briefingArchiveQII": 0,
-  "lastFixApplied": "1830-clean DONE: advance to Sprint 1830. 8602 pass / 0 fail. 2026-05-02.",
-  "currentSprintNotes": "Sprint 1830 — opened. JANITOR-023 queued in progress."
+  "lastFixApplied": "1830a DONE: JANITOR-023 extract CLAUDE_BIN to agentConstants.ts. tsc clean, 2 pass / 0 fail. 2026-05-02.",
+  "currentSprintNotes": "Sprint 1830 — 1830a merged. JANITOR-023 complete."
 }

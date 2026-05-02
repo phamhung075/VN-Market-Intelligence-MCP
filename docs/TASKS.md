@@ -28,7 +28,6 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Started |
 |---------|-------|----------|------|-------|---------|---------|
-| 1830a (JANITOR-023) | DRY: extract CLAUDE_BIN shared constant — smartCompactSpawner.ts + qaResponderSpawner.ts each define identical `const CLAUDE_BIN = "/Users/admin/.local/bin/claude"`. Extract to infrastructure/agents/agentConstants.ts and import in both spawners. | low | refactor | developer | — | 2026-05-02 |
 
 ---
 
@@ -43,6 +42,7 @@
 
 | Task ID | Title | Merged | Reports |
 |---------|-------|--------|---------|
+| 1830a (JANITOR-023) | DRY: extract CLAUDE_BIN to agentConstants.ts, import in smartCompactSpawner + qaResponderSpawner. tsc clean, 2 pass / 0 fail. | 2026-05-02 | reports/TASK_REPORT_1830a.md |
 | 1830-clean | CLEAN: advance to Sprint 1830, update project-stats.json (currentSprint=1830, totalTasksDone=481). | 2026-05-02 | — |
 | 1829b | FIX: te-chromium CB counter persisted to /app/data/te-chromium-cb-state.json — survives Docker restarts. 4 new AC pass. 8602 pass / 0 fail. | 2026-05-02 | reports/TASK_REPORT_1829b.md |
 | 1829a | CLEAN: close Sprint 1828, advance to Sprint 1829, update project-stats.json (currentSprint=1829, totalTasksDone=479). | 2026-05-02 | — |
