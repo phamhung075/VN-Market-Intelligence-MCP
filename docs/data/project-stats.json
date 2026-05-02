@@ -2,9 +2,9 @@
   "_maintained_by": "PM / system-auditor",
   "_trigger": "sprint start/end, tool/cron count change, baseline test update",
   "lastUpdated": "2026-05-02",
-  "currentSprint": 1825,
-  "previousSprint": { "number": 1824, "status": "DONE", "summary": "agent-memory manifests, GSO native fetch, deploy market-hours guard, orphan cleanup. totalTasksDone=468." },
-  "sprintGoal": "Sprint 1825 — GSO HTML parser + vnstock backoff observability",
+  "currentSprint": 1826,
+  "previousSprint": { "number": 1825, "status": "DONE", "summary": "GSO HTML parser + vnstock backoff. totalTasksDone=470." },
+  "sprintGoal": "Sprint 1826 — GSO HTML parser observability + regex coverage for alternate GSO table layouts",
   "testBaseline": 8582,
   "testBaselineTarget": 8582,
   "testBaselinePass": 8582,
@@ -15,11 +15,11 @@
   "knowledgeFileCount": 22,
   "devAgentCount": 13,
   "analysisAgentCount": 9,
-  "totalTasksDone": 470,
+  "totalTasksDone": 471,
   "analysisMode": "value_investor",
   "briefingFilesCreated": 30,
   "briefingArchiveQI": 0,
   "briefingArchiveQII": 0,
-  "lastFixApplied": "1825b DONE: GSO HTML parser — parseGsoHtml regex extractor replaces JSON.parse(HTML). 12 pass / 0 fail. totalTasksDone=470. 2026-05-02.",
-  "currentSprintNotes": "Sprint 1825 active — GSO HTML parser (Source 3 real data), vnstock backoff observability"
+  "lastFixApplied": "1826a DONE: CLEAN commit orphan files, close Sprint 1825, advance to Sprint 1826. totalTasksDone=471. 2026-05-02.",
+  "currentSprintNotes": "Sprint 1826 active — GSO HTML parser observability (log raw excerpt on parse fail), regex coverage for alternate GSO table layouts"
 }

@@ -1,16 +1,16 @@
-## Sprint 1825 — Active
+## Sprint 1826 — Active
 
 **Status:** TODO | **Opened:** 2026-05-02
 
 ## Goals
 
-- GSO HTML parser — Source 3 returns real data instead of JSON.parse error
-- Observe vnstock exponential backoff in production
+- GSO HTML parser observability — log raw excerpt on parse fail
+- Regex coverage for alternate GSO table layouts
 
 ## Success Criteria
 
-- GSO macro fetch Source 3 returns parsed data (no JSON.parse error)
-- vnstock backoff behaves correctly under production load
+- GSO parse failures emit raw excerpt to logs for diagnosis
+- Regex handles at least 2 alternate GSO table layout variants
 - `bun tsc --noEmit` clean
 
 ---
@@ -19,6 +19,7 @@
 
 | Sprint | Result |
 |--------|--------|
+| 1825 — GSO HTML parser + vnstock backoff | DONE — 2026-05-02. 8582 pass / 0 fail. totalTasksDone=470 |
 | 1824 — agent-memory manifests, GSO native fetch, deploy market-hours guard, orphan cleanup | DONE — 2026-05-02. 8582 pass / 0 fail. totalTasksDone=468 |
 | 1823 — vnstock backoff + te-chromium circuit breaker + GSO skip guard | DONE — 2026-05-02. 1823b+1823c+1823d merged. 8582 pass / 0 fail. totalTasksDone=462 |
 | 1822 — VPS Playwright removal + BCTC migration to Docker + test fixes | DONE — 2026-05-02. 1822a–1822g merged. 8565 pass / 0 fail. totalTasksDone=458 |
