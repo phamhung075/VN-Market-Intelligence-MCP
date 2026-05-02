@@ -15,11 +15,11 @@
   "knowledgeFileCount": 25,
   "devAgentCount": 14,
   "analysisAgentCount": 9,
-  "totalTasksDone": 488,
+  "totalTasksDone": 489,
   "analysisMode": "value_investor",
   "briefingFilesCreated": 30,
   "briefingArchiveQI": 0,
   "briefingArchiveQII": 0,
-  "lastFixApplied": "1833a DONE: DRY marketContextTools.ts — delegate 4 section builders to marketContextBuilder.ts, -397 lines, 8718 pass / 1 pre-existing fail. 2026-05-03.",
+  "lastFixApplied": "1833f DONE: vn-news-fetch stale heartbeat — latestTimestampSql now MAX across vps_push_log.pushed_at + rag_analyses.created_at. 8721 pass / 1 pre-existing fail (1331a). 2026-05-02.",
   "currentSprintNotes": "Sprint 1833 — starting fresh. Semble integrated as preferred code search tool."
 }
