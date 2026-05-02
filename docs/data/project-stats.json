@@ -15,11 +15,11 @@
   "knowledgeFileCount": 25,
   "devAgentCount": 13,
   "analysisAgentCount": 9,
-  "totalTasksDone": 473,
+  "totalTasksDone": 474,
   "analysisMode": "value_investor",
   "briefingFilesCreated": 30,
   "briefingArchiveQI": 0,
   "briefingArchiveQII": 0,
-  "lastFixApplied": "1827b DONE: sync knowledgeFileCount=25 (was 22) + toolCount=122 (was 123) in project-stats.json and tool-registry.json. 2026-05-02.",
-  "currentSprintNotes": "Sprint 1827 active — sync knowledgeFileCount + tool-registry toolCount + create missing 18 agent notebooks"
+  "lastFixApplied": "1827c DONE: scaffold 19 missing agent notebooks in docs/agent-memory/notebooks/. totalTasksDone=474. 2026-05-02.",
+  "currentSprintNotes": "Sprint 1827 complete — knowledgeFileCount synced, toolCount synced, 19 agent notebooks created"
 }
