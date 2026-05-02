@@ -24,6 +24,21 @@ import { logger } from "../logger.js";
 import { globalRateLimiter } from "../../domain/services/rateLimiter.js";
 import { BROWSER_UA } from "./browserHeaders.js";
 
+// ── Consecutive-error observability (Task 1828c) ──────────────────────────
+const REUTERS_ERROR_THRESHOLD = 10;
+let _reutersConsecutiveErrors = 0;
+let _reutersAlertSent = false;
+
+/** Reset counter for test isolation — do NOT call from production code. */
+export function resetReutersErrorCounter(): void {
+  _reutersConsecutiveErrors = 0;
+  _reutersAlertSent = false;
+}
+
+export interface ReutersDeps {
+  onAlert?: (message: string) => Promise<void>;
+}
+
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
@@ -140,7 +155,7 @@ async function tryFetchFeed(
  *                     Inject a mock in tests to avoid real network calls.
  * @returns Promise resolving to an array of RssItem (empty on total failure).
  */
-export async function fetchReuters(httpClient?: HttpClient): Promise<RssItem[]> {
+export async function fetchReuters(httpClient?: HttpClient, deps?: ReutersDeps): Promise<RssItem[]> {
   // Rate limit guard — skip if called too soon (test mode bypasses via injected httpClient)
   if (!httpClient && !globalRateLimiter.canCall("news.google.com")) {
     logger.debug("[reuters] rate-limited — skipping fetch", {
@@ -160,6 +175,8 @@ export async function fetchReuters(httpClient?: HttpClient): Promise<RssItem[]> 
     client,
   );
   if (primaryItems.length > 0) {
+    _reutersConsecutiveErrors = 0;
+    _reutersAlertSent = false;
     return primaryItems;
   }
 
@@ -173,10 +190,26 @@ export async function fetchReuters(httpClient?: HttpClient): Promise<RssItem[]> 
     client,
   );
   if (secondaryItems.length > 0) {
+    _reutersConsecutiveErrors = 0;
+    _reutersAlertSent = false;
     return secondaryItems;
   }
 
   // Step 3: total failure — return empty array
   logger.warn("[reuters] all RSS sources failed — returning empty array");
+  _reutersConsecutiveErrors++;
+  if (_reutersConsecutiveErrors >= REUTERS_ERROR_THRESHOLD && !_reutersAlertSent) {
+    _reutersAlertSent = true;
+    const alertMsg =
+      `reuters RSS: ${_reutersConsecutiveErrors} consecutive errors — source may be down.`;
+    try {
+      if (deps?.onAlert) {
+        await deps.onAlert(alertMsg);
+      } else {
+        const { sendTelegramWork } = await import("../notifiers/telegram.js");
+        await sendTelegramWork(alertMsg);
+      }
+    } catch { /* alert failure must not abort fetch */ }
+  }
   return [];
 }
