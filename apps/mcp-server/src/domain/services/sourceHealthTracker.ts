@@ -232,4 +232,15 @@ export class SourceHealthTracker {
   isDown(source: string): boolean {
     return this.getHealth(source).consecutiveFailures >= DOWN_THRESHOLD;
   }
+
+  /**
+   * Clear all tracked sources, resetting the registry to an empty state.
+   *
+   * @internal — test-only. Clears all accumulated failure/success state so
+   * tests that share the same SourceHealthTracker singleton (via globalThis)
+   * can start from a clean baseline.
+   */
+  _reset(): void {
+    this.registry.clear();
+  }
 }
