@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * VPS HTTP Proxy Server — fix/bctc-playwright-enrichment
+ * VPS HTTP Proxy Server
  *
  * Lightweight Node.js HTTP server running on Vinahost Vietnam VPS.
  * Provides proxy endpoints for VN financial portals that are geo-blocked
@@ -14,17 +14,10 @@
  *     NOTE: iboard-query.ssc.vn is NXDOMAIN as of 2026-04-27 (dead domain).
  *     Endpoint kept for forward-compatibility if domain is restored.
  *
- *   GET /proxy/bctc-discover/:ticker?year=YYYY&quarter=Q
- *     → runs: python3 /root/discover-bctc-urls-browser.py <TICKER> <YEAR> Q<Q>
- *     → returns the Python script JSON output:
- *       { results: [{url, source, confidence, page_title}], error: string|null }
- *     → timeout: 120s (Playwright browser automation takes time)
- *
  *   GET /bctc-files/:code/:filename
  *     → serves /root/bctc-cache/<code>/<filename> as application/pdf
- *     → fix/bctc-ssc-newsearch: SSC NewsSearch Playwright downloads PDFs here;
- *       Python script returns http://<VPS_IP>:8765/bctc-files/<CODE>/<filename>
- *       as a stable URL that can be stored in bctc_vps_queue.source_url.
+ *     → PDFs are downloaded by mcp-server BCTC discovery (task 1822d-a);
+ *       URL stored in bctc_vps_queue.source_url as http://<VPS_IP>:8765/bctc-files/<CODE>/<filename>
  *     → Auth: X-API-Key required (same as other endpoints)
  *     → Dir configurable via BCTC_CACHE_DIR env var (default: /root/bctc-cache)
  *
@@ -52,7 +45,6 @@ const http = require("http");
 const https = require("https");
 const fs = require("fs");
 const path = require("path");
-const { spawn } = require("child_process");
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Config
@@ -68,29 +60,14 @@ const IBOARD_UPSTREAM = "https://iboard-query.ssc.vn";
 const SSC_PROXY_PREFIX = "/proxy/ssc-iboard";
 
 /**
- * Playwright-based BCTC discovery endpoint.
- * Runs discover-bctc-urls-browser.py as a subprocess.
- * Path pattern: /proxy/bctc-discover/:ticker
- */
-const BCTC_DISCOVER_PREFIX = "/proxy/bctc-discover/";
-
-/**
  * Static file serving for cached BCTC PDFs.
  * Path pattern: /bctc-files/:code/:filename
- * Files are stored at BCTC_CACHE_DIR/<code>/<filename> by the Python script.
- * fix/bctc-ssc-newsearch: SSC NewsSearch Playwright downloads PDFs here.
+ * Files are stored at BCTC_CACHE_DIR/<code>/<filename> by mcp-server BCTC discovery.
  */
 const BCTC_FILES_PREFIX = "/bctc-files/";
 
 /** Root directory for BCTC PDF cache. Configurable via env var. */
 const BCTC_CACHE_DIR = process.env.BCTC_CACHE_DIR || "/root/bctc-cache";
-
-/** Absolute path to the Python discovery script on the VPS. */
-const BCTC_DISCOVER_SCRIPT =
-  process.env.BCTC_DISCOVER_SCRIPT || "/root/discover-bctc-urls-browser.py";
-
-/** Timeout for the Python subprocess in milliseconds (2 minutes). */
-const BCTC_DISCOVER_TIMEOUT_MS = 120_000;
 
 const BROWSER_UA =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
@@ -156,70 +133,6 @@ function log(level, msg, extra) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// BCTC discover subprocess helper
-// ─────────────────────────────────────────────────────────────────────────────
-
-/**
- * Run discover-bctc-urls-browser.py as a child process.
- *
- * @param {string} ticker  - Stock ticker symbol (e.g. "VCB")
- * @param {number} year    - Report year (e.g. 2025)
- * @param {string} quarter - Quarter string with Q prefix (e.g. "Q4")
- * @returns {Promise<object>} - Parsed JSON output from the Python script
- */
-function runBctcDiscoverScript(ticker, year, quarter) {
-  return new Promise((resolve, reject) => {
-    const args = [BCTC_DISCOVER_SCRIPT, ticker.toUpperCase(), String(year), quarter.toUpperCase()];
-
-    log("INFO", `BCTC discover: python3 ${args.join(" ")}`);
-
-    const proc = spawn("python3", args, {
-      timeout: BCTC_DISCOVER_TIMEOUT_MS,
-      env: { ...process.env, PYTHONUNBUFFERED: "1" },
-    });
-
-    const stdoutChunks = [];
-    const stderrChunks = [];
-
-    proc.stdout.on("data", (chunk) => stdoutChunks.push(chunk));
-    proc.stderr.on("data", (chunk) => stderrChunks.push(chunk));
-
-    const timer = setTimeout(() => {
-      proc.kill("SIGTERM");
-      reject(new Error(`Script timeout after ${BCTC_DISCOVER_TIMEOUT_MS}ms`));
-    }, BCTC_DISCOVER_TIMEOUT_MS);
-
-    proc.on("close", (code) => {
-      clearTimeout(timer);
-
-      const stdout = Buffer.concat(stdoutChunks).toString("utf8").trim();
-      const stderr = Buffer.concat(stderrChunks).toString("utf8").trim();
-
-      if (stderr) {
-        log("INFO", `BCTC discover stderr: ${stderr.slice(0, 500)}`);
-      }
-
-      if (code !== 0 && !stdout) {
-        reject(new Error(`Script exited with code ${code}`));
-        return;
-      }
-
-      try {
-        const parsed = JSON.parse(stdout);
-        resolve(parsed);
-      } catch (err) {
-        reject(new Error(`Script output is not valid JSON: ${stdout.slice(0, 200)}`));
-      }
-    });
-
-    proc.on("error", (err) => {
-      clearTimeout(timer);
-      reject(err);
-    });
-  });
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
 // Request handler
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -233,7 +146,6 @@ async function handleRequest(req, res) {
       service: "vps-proxy",
       upstreams: {
         ssc_iboard: IBOARD_UPSTREAM,
-        bctc_discover: BCTC_DISCOVER_SCRIPT,
         bctc_cache: BCTC_CACHE_DIR,
       },
     });
@@ -274,60 +186,9 @@ async function handleRequest(req, res) {
     return;
   }
 
-  // BCTC Playwright discovery
-  //   Incoming: /proxy/bctc-discover/<TICKER>?year=2025&quarter=4
-  //   Action:   python3 /root/discover-bctc-urls-browser.py <TICKER> <YEAR> Q<QUARTER>
-  //   Returns:  { results: [{url, source, confidence, page_title}], error }
-  if (url.startsWith(BCTC_DISCOVER_PREFIX)) {
-    // Extract ticker from path: /proxy/bctc-discover/VCB → VCB
-    const pathPart = url.slice(BCTC_DISCOVER_PREFIX.length); // "VCB?year=2025&quarter=4"
-    const [tickerRaw, queryString] = pathPart.split("?");
-    const ticker = (tickerRaw || "").split("/")[0].trim().toUpperCase();
-
-    if (!ticker || !/^[A-Z0-9]{1,10}$/.test(ticker)) {
-      return jsonResponse(res, 400, { error: "Invalid ticker", ticker });
-    }
-
-    // Parse query params
-    const params = new URLSearchParams(queryString || "");
-    const yearStr = params.get("year") || String(new Date().getFullYear());
-    const quarterRaw = params.get("quarter") || "4";
-    const year = parseInt(yearStr, 10);
-    const quarter = `Q${quarterRaw.replace(/^Q/i, "")}`;
-
-    if (isNaN(year) || year < 2000 || year > 2100) {
-      return jsonResponse(res, 400, { error: "Invalid year", year: yearStr });
-    }
-
-    log("INFO", `BCTC discover: ticker=${ticker} year=${year} quarter=${quarter}`);
-
-    try {
-      const result = await runBctcDiscoverScript(ticker, year, quarter);
-      const payload = JSON.stringify(result);
-      res.writeHead(200, {
-        "Content-Type": "application/json",
-        "Content-Length": Buffer.byteLength(payload),
-        "X-Proxy-Source": "vps-playwright",
-      });
-      res.end(payload);
-      const urlCount = Array.isArray(result.results) ? result.results.length : 0;
-      log("INFO", `BCTC discover OK: ticker=${ticker} results=${urlCount}`);
-    } catch (err) {
-      log("ERROR", `BCTC discover FAIL: ticker=${ticker}`, { error: err.message });
-      // Return a valid JSON error response (not 502) so the MCP server can
-      // distinguish "VPS reachable but no PDF found" from "VPS unreachable".
-      jsonResponse(res, 200, {
-        results: [],
-        error: `Script error: ${err.message}`,
-      });
-    }
-    return;
-  }
-
   // BCTC file serving
   //   Incoming: /bctc-files/<CODE>/<filename>
-  //   Serves:   BCTC_CACHE_DIR/<code>/<filename> (PDF downloaded by Python script)
-  //   fix/bctc-ssc-newsearch: SSC NewsSearch Playwright downloads PDFs here.
+  //   Serves:   BCTC_CACHE_DIR/<code>/<filename> (PDF downloaded by mcp-server BCTC discovery)
   if (url.startsWith(BCTC_FILES_PREFIX)) {
     // Strip prefix: /bctc-files/VCB/some-file.pdf → VCB/some-file.pdf
     const subPath = url.slice(BCTC_FILES_PREFIX.length).split("?")[0];
@@ -403,10 +264,8 @@ const server = http.createServer((req, res) => {
 server.listen(PORT, "0.0.0.0", () => {
   log("INFO", `VPS proxy server listening on 0.0.0.0:${PORT}`);
   log("INFO", `SSC iboard proxy: GET /proxy/ssc-iboard/dcm/financials/ticker/:ticker`);
-  log("INFO", `BCTC discover:    GET /proxy/bctc-discover/:ticker?year=YYYY&quarter=Q`);
   log("INFO", `BCTC files:       GET /bctc-files/:code/:filename (serves cached PDFs)`);
   log("INFO", `Health check:     GET /health`);
-  log("INFO", `BCTC script path: ${BCTC_DISCOVER_SCRIPT}`);
   log("INFO", `BCTC cache dir:   ${BCTC_CACHE_DIR}`);
   if (!API_KEY) {
     log("WARN", "VPS_API_KEY is not set — proxy accepts all requests (insecure)");

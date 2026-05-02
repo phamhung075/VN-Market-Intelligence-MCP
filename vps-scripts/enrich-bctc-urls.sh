@@ -62,13 +62,14 @@ echo "$QUEUE" | jq -c '.queue[]? // empty' 2>/dev/null | while read -r ITEM; do
     continue
   fi
 
-  # Step 2a: Try Playwright browser automation (handles JavaScript-rendered portals)
-  echo "$(date -u) $CODE $YEAR-$QTR: discovering with Playwright/Chromium..." >> "$LOG"
-  DISCOVERY_JSON=$(python3 /root/discover-bctc-urls-browser.py "$CODE" "$YEAR" "$QTR" 2>/dev/null || echo '{"results":[],"error":"discovery failed"}')
-
-  PDF_URL=$(echo "$DISCOVERY_JSON" | jq -r '(.results[0].url) // empty' 2>/dev/null || echo '')
-  SOURCE=$(echo "$DISCOVERY_JSON" | jq -r '(.results[0].source) // empty' 2>/dev/null || echo '')
-  CONFIDENCE=$(echo "$DISCOVERY_JSON" | jq -r '(.results[0].confidence) // 0' 2>/dev/null || echo '0')
+  # BCTC discovery is now handled locally by mcp-server (task 1822d-a).
+  # This script only posts back URLs that were already enriched server-side.
+  # If we reach here, source_hints[0] is the SSC fallback portal and no direct
+  # URL is available from the VPS side — skip silently.
+  echo "$(date -u) $CODE $YEAR-$QTR: no VPS-side discovery (handled by mcp-server) — skip" >> "$LOG"
+  PDF_URL=''
+  SOURCE=''
+  CONFIDENCE='0'
   
   # If no PDF found, skip this item
   if [ -z "$PDF_URL" ]; then
