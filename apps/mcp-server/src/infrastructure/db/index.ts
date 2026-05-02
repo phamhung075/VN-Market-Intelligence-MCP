@@ -3,3 +3,4 @@
  */
 export { getDb, initDatabase, closeDb } from "./schema.js";
 export { storeAlerts } from "./alertStore.js";
+export { sqlInClause } from "./sqlHelpers.js";
