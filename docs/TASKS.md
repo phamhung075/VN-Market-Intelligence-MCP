@@ -12,7 +12,6 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Blocked by |
 |---------|-------|----------|------|-------|---------|------------|
-| JANITOR-020 | DRY: MACRO_CODES array + AnalysisRow/AlertCountRow/LastCycleRow interfaces + section-builder logic duplicated between marketContextBuilder.ts (domain) and marketContextTools.ts (interface). Fix: marketContextTools.ts should import and delegate to marketContextBuilder.ts instead of reimplementing. | P2 | refactor | developer | — | — |
 
 ---
 
@@ -43,6 +42,8 @@
 
 | Task ID | Title | Merged | Reports |
 |---------|-------|--------|---------|
+| JANITOR-020 | DRY: export AnalysisRow/AlertCountRow/LastCycleRow/MACRO_CODES from marketContextBuilder, delete duplicates in marketContextTools. Net -29 lines. DDD compliant. 29 pass / 0 fail. | 2026-05-02 | reports/TASK_REPORT_JANITOR-020.md |
+| 1819a | FIX: advance currentSprint to integer 1820 in project-stats.json + update SPRINT_GOAL.md active header. QA: 1338 test (3 pass / 0 fail / 1 skip). | 2026-05-02 | — |
 | JANITOR-019d | DRY: replace remaining `.map(() => "?").join(` in `sectorRotationTools.ts` + `bctcDebugTriggerHandler.ts` with `sqlInClause()`. grep clean. 8556 pass / 2 fail (pre-existing doc invariants, unrelated). | 2026-05-02 | — |
 | JANITOR-019 | DRY: `sqlInClause` — architect spec complete; decomposed into 019a/019b/019c | 2026-05-02 | — |
 | 1815d | FIX: docker-compose.yml mcp-server healthcheck — replace curl (not in Bun container PATH) with bun fetch. 8647 pass / 19 fail (all pre-existing). | 2026-05-02 | reports/TASK_REPORT_1815d.md |
