@@ -19,6 +19,8 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Blocked by |
 |---------|-------|----------|------|-------|---------|------------|
+| 1822d-a | FEAT: Migrate BCTC Playwright discovery to local mcp-server Docker — new `chromiumPageFetcher.ts` infra helper, replace `defaultBrowserFetcher` VPS call with local Puppeteer, add SSC NewsSearch local path | HIGH | feat | developer | docs/handoffs/TASK_1822d-a.md | — |
+| 1822d-b | CHORE: Remove VPS Playwright scripts — delete `discover-bctc-urls-browser.py`, remove `/proxy/bctc-discover/` handler from `vps-proxy-server.js` | HIGH | chore | developer | docs/handoffs/TASK_1822d-b.md | 1822d-a |
 
 ---
 
@@ -42,6 +44,7 @@
 
 | Task ID | Title | Merged | Reports |
 |---------|-------|--------|---------|
+| 1822c | FIX: Remove Playwright/Chromium from VPS news fetch scripts — fetch-browser.py deleted, fetch_rss fallback for vneconomy, empty-payload fallback for GSO, stale comment updated. | 2026-05-02 | reports/TASK_REPORT_1822c.md |
 | 1822b | FIX: VPS systemd StartLimitBurst — set StartLimitIntervalSec=0 in vn-news-fetch.service, vn-reuters-fetch.service, vn-tradingeconomics-fetch.service. Prevents StartLimitHit after 5 Playwright crashes in 5 min. Config-only, tsc clean. Pending VPS deploy via deploy-vps-proxy.sh. | 2026-05-02 | reports/TASK_REPORT_1822b.md |
 | 1821b | Wire smartCompactSpawner as MCP tool `smart_compact` (tool #118) — smartCompactTool.ts, barrel export, registry entry, 2 smoke tests. tsc clean, 8565 pass / 0 fail. | 2026-05-02 | reports/TASK_REPORT_1821b.md |
 | 1821c | CHORE: advance SPRINT_GOAL.md active header to Sprint 1821, archive Sprint 1820 in closed sprints table. | 2026-05-02 | — |
