@@ -18,6 +18,8 @@
 
 import type { Database } from "bun:sqlite";
 import { tradingWindowLabel } from "./tradingWindow.js";
+// TODO(ddd): move sqlInClause to a shared util — domain should not import infrastructure
+import { sqlInClause } from "../../infrastructure/db/sqlHelpers.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SQLite row types
@@ -196,7 +198,7 @@ function buildMacroSection(db: Database): string {
   const found: string[] = [];
 
   try {
-    const placeholders = MACRO_CODES.map(() => "?").join(", ");
+    const placeholders = sqlInClause(MACRO_CODES.length);
     const rows = db
       .prepare(
         `SELECT code, price, change_pct, updated_at
