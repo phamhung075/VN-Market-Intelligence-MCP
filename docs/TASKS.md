@@ -42,6 +42,7 @@
 
 | Task ID | Title | Merged | Reports |
 |---------|-------|--------|---------|
+| 1824f | CLEAN: commit orphan untracked files + delete stale remote branch task/1824a-deploy-market-hours-guard. tsc clean. | 2026-05-02 | — |
 | 1824e | FIX: GSO macro — remove VPS_ENDPOINT skip guard, Source 3 fetch attempted natively with graceful fallback. 11 pass / 0 fail. | 2026-05-02 | reports/TASK_REPORT_1824e.md |
 | 1824d | FIX: create agent-memory manifest fixtures — ops.md + WAL-checkpoint.md for 1300a tests. 5 pass / 0 fail. | 2026-05-02 | reports/TASK_REPORT_1824d.md |
 | 1824c | CHORE: advance SPRINT_GOAL.md to Sprint 1824, sync project-stats.json (currentSprint=1824, previousSprint=1823 DONE). | 2026-05-02 | — |
