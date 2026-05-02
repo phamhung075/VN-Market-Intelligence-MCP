@@ -1,7 +1,22 @@
 {
-  "scan_date": "2026-05-01T10:00:00Z",
-  "last_run": "2026-05-01T10:00:00Z",
+  "scan_date": "2026-05-02T00:00:00Z",
+  "last_run": "2026-05-02T00:00:00Z",
   "findings": [
+    {
+      "fingerprint": "check-2:domain/services/marketContextBuilder.ts:MACRO_CODES-parallel-impl",
+      "severity": "MEDIUM",
+      "category": "Duplicate constant + interfaces + section-builder logic — MACRO_CODES in marketContextBuilder.ts and marketContextTools.ts",
+      "file": "apps/mcp-server/src/domain/services/marketContextBuilder.ts and apps/mcp-server/src/interface/mcp/tools/market-data/marketContextTools.ts",
+      "lines": "79-85 (builder) / 82-88 (tools)",
+      "detail": "MACRO_CODES (13-element const array), AnalysisRow, AlertCountRow, LastCycleRow interfaces, and all five section-builder functions (watchlist, macro, alerts, analysis, system) are implemented independently in both files. marketContextBuilder.ts (Task 1563, Sprint 226) was introduced as the DDD-correct extraction of this logic — but marketContextTools.ts was never updated to delegate to it. The same SQL queries, the same ?? 'neutral' and ?? '(no title)' fallbacks, and the same formatPriceChange / parseAffectedCodes / parseSignalTypes helpers exist in both files. Any change to market context formatting requires two edits. Fix: marketContextTools.ts registerMarketContextTools handler should call buildMarketContextText() and buildSystemStatusText() from marketContextBuilder.ts instead of calling its own local section builders.",
+      "canonical_source": "apps/mcp-server/src/domain/services/marketContextBuilder.ts:buildMarketContextText + buildSystemStatusText",
+      "risk": "MEDIUM — market context output can silently diverge between tool path (registerMarketContextTools) and domain path (getCycleBootstrap). Any format fix applied in one file is missed by the other.",
+      "discovered_at": "2026-05-02T00:00:00Z",
+      "status": "proposed",
+      "backlog_task": "JANITOR-020",
+      "ship_directly": false,
+      "reason_not_shipped": "Two-file change: marketContextTools.ts must replace 5 local section builders with calls to imported domain functions. Constraint: ship only when single-file mechanical."
+    },
     {
       "fingerprint": "check-1:domain/services/financial-reports:detectUnitMultiplier-diverged",
       "severity": "MEDIUM",
@@ -195,38 +210,38 @@
   "scan_checks": {
     "check-1-duplicate-classification-maps": {
       "status": "complete",
-      "items_scanned": 5,
-      "scope": "diff HEAD~3..HEAD (14 changed files, 5 production TS)",
+      "items_scanned": 21,
+      "scope": "diff HEAD~3..HEAD (21 production TS files)",
       "findings": 0,
-      "notes": "Record<string,> in extractors are runtime result accumulators — not classification maps. extractorHelpers.ts is the new canonical SSOT (JANITOR-014 shipped). No new classification map duplication in diff scope."
+      "notes": "Record<string,> in changed files are runtime accumulators (priceHistory, resolvedTargets, priceMap) or domain-logic overrides (codeSectorOverride built from watchlist.domain — not a static dup of SECTOR_PEERS). severityIcon in alerts.ts maps severity keys to bracket-labels [HIGH] etc., not to Vietnamese display names — not a dup of SEVERITY_VI. No classification map duplication found."
     },
     "check-2-hardcoded-ticker-arrays": {
       "status": "complete",
-      "items_scanned": 5,
-      "scope": "diff HEAD~3..HEAD (14 changed files, 5 production TS)",
-      "findings": 0,
-      "notes": "JANITOR-016 shipped (commit 6e2cca53): private parseVnNumber copies removed from sscInsider.ts and muasamcong.ts. Both now import from canonical vnNumberParser.js. No new ticker array duplication found."
+      "items_scanned": 21,
+      "scope": "diff HEAD~3..HEAD (21 production TS files)",
+      "findings": 1,
+      "notes": "JANITOR-020 proposed: MACRO_CODES (13-element const) defined identically in marketContextBuilder.ts:79 and marketContextTools.ts:82. Also: AnalysisRow, AlertCountRow, LastCycleRow interfaces and all 5 section-builder functions duplicated between the same two files. Two-file change — backlog task created."
     },
     "check-3-repeated-magic-numbers-and-cron-duplication": {
       "status": "complete",
-      "items_scanned": 5,
-      "scope": "diff HEAD~3..HEAD (14 changed files, 5 production TS)",
+      "items_scanned": 21,
+      "scope": "diff HEAD~3..HEAD (21 production TS files)",
       "findings": 0,
-      "notes": "No new cron string or magic number duplication in diff. JANITOR-017 (BROWSER_UA 18-file fan-out) remains open backlog — pre-existing, not in diff. LOOKAHEAD_LINES=3 is now single canonical constant in extractorHelpers.ts (JANITOR-014 shipped)."
+      "notes": "predictionMarketJob.ts lines 536+542: volumeSpikeThresholdUsd: 50000 appears in config-load branch (with ?? fallback) and catch branch (hardcoded). This is a defensive catch pattern — both branches produce the same value intentionally. Not a divergence risk. No new cron string duplication. JANITOR-011 and JANITOR-017 remain open pre-existing backlog."
     },
     "check-4-schema-duplication": {
       "status": "complete",
-      "items_scanned": 5,
-      "scope": "diff HEAD~3..HEAD (14 changed files, 5 production TS)",
+      "items_scanned": 21,
+      "scope": "diff HEAD~3..HEAD (21 production TS files)",
       "findings": 0,
-      "notes": "Zero CREATE TABLE or inline DDL in any changed file."
+      "notes": "Zero CREATE TABLE or inline DDL in any changed file. infrastructure/db/sqlHelpers.ts is a re-export barrel (not a copy) — correctly verified."
     },
     "check-5-config-drift": {
       "status": "complete",
-      "items_scanned": 5,
-      "scope": "diff HEAD~3..HEAD (14 changed files, 5 production TS)",
+      "items_scanned": 21,
+      "scope": "diff HEAD~3..HEAD (21 production TS files)",
       "findings": 0,
-      "notes": "No ?? fallback patterns in changed files. No config drift in diff scope."
+      "notes": "?? fallbacks in changed files are all runtime sentinels (unknown, N/A, empty string, map default) not config fallbacks. No mcp.config.json key drift detected."
     }
   }
 }

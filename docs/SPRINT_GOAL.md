@@ -1,14 +1,13 @@
-## Sprint 1821 — Active
+## Sprint 1822 — Active
 
 **Status:** TODO | **Opened:** 2026-05-02
 
 ## Goals
-1. **pollNews cold-start retry** — ensure pollNews job recovers gracefully on cold-start failure
-2. **smartCompactSpawner wire** — wire smartCompactSpawner into the scheduler so it runs on schedule
+
+TBD — sprint 1821 closed cleanly. Next PO triage will populate goals.
 
 ## Success Criteria
-- pollNews cold-start retry logic implemented and tested
-- smartCompactSpawner registered in scheduler
+
 - Full test suite passes with no new failures
 - `bun tsc --noEmit` clean
 
@@ -18,6 +17,7 @@
 
 | Sprint | Result |
 |--------|--------|
+| 1821 — pollNews cold-start retry + smart_compact MCP tool | DONE — 2026-05-02. 1821a + 1821b + 1821c merged. 8565 pass / 0 fail. totalTasksDone=450 |
 | 1820 — JANITOR-020 sqlInClause DRY completion | DONE — 2026-05-02. 1819a + JANITOR-020 merged. 8558 pass / 0 fail. totalTasksDone=448 |
 | JANITOR-019 — sqlInClause DRY (019a+019b+019c) | DONE — 2026-05-02. 8558 pass / 0 fail. tasks=446 |
 | 1818a — TS2532 fix in smartCompactSpawner | DONE — 2026-05-02. 8554 pass / 0 fail. tasks=443 |

@@ -42,6 +42,9 @@
 
 | Task ID | Title | Merged | Reports |
 |---------|-------|--------|---------|
+| 1822g | CLEAN: delete stale task/1822a-news-fetcher-fixes branch (0 unmerged commits); commit orphan session/handoff/report files from today's sprint activity. | 2026-05-02 | — |
+| 1822f | FIX: distinguish set-but-empty FAKE_DIFF from unset in maybe-deploy-vps.sh — [ "${FAKE_DIFF+x}" = "x" ] replaces [ -n "${FAKE_DIFF:-}" ]. 7/7 tests pass. | 2026-05-02 | — |
+| 1822e | FIX: Align 1321-vps-oom-prevention.test.ts assertions with Sprint 1822b config — StartLimitIntervalSec=0 now in [Unit] section. 9 pass / 0 fail. | 2026-05-02 | — |
 | 1822d-b | CHORE: Remove all Playwright/Chromium scripts from VPS — discover-bctc-urls-browser.py deleted, /proxy/bctc-discover/ handler removed from vps-proxy-server.js. Discovery fully migrated to mcp-server Docker. | 2026-05-02 | reports/TASK_REPORT_1822d-b.md |
 | 1822d-a | FEAT: Migrate BCTC Playwright discovery from VPS to local mcp-server Docker — chromiumPageFetcher.ts, discoverBctcPdfUrlBrowser defaultBrowserFetcher updated, 2 smoke tests. 8445 pass / 105 fail (all pre-existing). | 2026-05-02 | reports/TASK_REPORT_1822d-a.md |
 | 1822c | FIX: Remove Playwright/Chromium from VPS news fetch scripts — fetch-browser.py deleted, fetch_rss fallback for vneconomy, empty-payload fallback for GSO, stale comment updated. | 2026-05-02 | reports/TASK_REPORT_1822c.md |
