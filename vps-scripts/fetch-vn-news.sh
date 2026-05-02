@@ -116,32 +116,6 @@ print(json.dumps(items[:max_items]))
 }
 
 # ── Fetch all sources ─────────────────────────────────────────────────────
-# ── Headless browser fetch (for bot-guarded URLs) ────────────────────────
-# Uses Playwright + Chromium — heavier but bypasses JS challenges.
-# Falls back to [] on timeout or parse failure (logged to stderr → log file).
-fetch_browser() {
-  local SOURCE="$1" URL="$2" MAX="${3:-20}"
-  local T0 RESULT DUR
-
-  # RAM guard: Chromium needs ~400 MB free to avoid OOM kill.
-  # If available RAM < 400 MB, fall back to plain curl RSS fetch.
-  local FREE_MB
-  FREE_MB=$(awk '/^MemAvailable:/ {print int($2/1024)}' /proc/meminfo 2>/dev/null || echo 999)
-  if [ "$FREE_MB" -lt 400 ]; then
-    echo "$(TS) [NEWS  ] WARN  source=$SOURCE BROWSER skipped (free=${FREE_MB}MB < 400MB) — falling back to curl" >> "$LOG"
-    RESULT=$(fetch_rss "$SOURCE" "$URL" "$MAX")
-    echo "$RESULT"; return
-  fi
-
-  T0=$(date -u +%s%3N)
-  RESULT=$(python3 /root/fetch-browser.py "$SOURCE" "$URL" "$MAX" 2>> "$LOG")
-  DUR=$(( $(date -u +%s%3N) - T0 ))
-  local CNT
-  CNT=$(echo "$RESULT" | jq 'length' 2>/dev/null || echo 0)
-  echo "$(TS) [NEWS  ] INFO  source=$SOURCE BROWSER http=- dur=${DUR}ms items=$CNT url=$URL" >> "$LOG"
-  echo "$RESULT"
-}
-
 echo "$(TS) [NEWS  ] INFO  Step 1: fetching all RSS sources" >> "$LOG"
 
 # Tier 1 — Finance/Stock specific (2-4s between same-site, 3-6s between different sites)
@@ -153,7 +127,7 @@ VNEXPRESS_JSON=$(fetch_rss "vnexpress"   "https://vnexpress.net/rss/kinh-doanh.r
 human_delay 3 6
 VNECON1_JSON=$(fetch_rss   "vneconomy"   "https://vneconomy.vn/chung-khoan.rss")
 human_delay 2 4
-VNECON2_JSON=$(fetch_browser "vneconomy" "https://vneconomy.vn/tai-chinh.rss")
+VNECON2_JSON=$(fetch_rss "vneconomy" "https://vneconomy.vn/tai-chinh.rss")
 human_delay 3 6
 VSTOCK1_JSON=$(fetch_rss   "vietstock"   "https://vietstock.vn/830/chung-khoan/co-phieu.rss")
 human_delay 2 4
