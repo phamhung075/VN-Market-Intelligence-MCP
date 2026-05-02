@@ -204,22 +204,42 @@ function parseGsoHtml(html: string): Record<string, number | undefined> {
 
   const data: Record<string, number | undefined> = {};
 
-  // CPI: number following "CPI" or Vietnamese label within 80 chars
-  const cpiMatch = html.match(
+  // ── CPI ──────────────────────────────────────────────────────────────────
+  // Variant A: label then number (original)
+  const cpiA = html.match(
     /(?:CPI|Ch[iỉ]\s*s[oố]\s*gi[aá]\s*ti[eê]u\s*d[uù]ng)[^0-9]{0,80}([\d]+[.,][\d]+)/i,
   );
-  if (cpiMatch?.[1]) {
-    const v = toFloat(cpiMatch[1]);
+  // Variant 1: number before label (adjacent td/th or sibling cell)
+  const cpiV1 = html.match(
+    /([\d]+[.,][\d]+)\s*(?:%|&nbsp;)?\s*(?:<[^>]+>)*\s*(?:CPI|ch[iỉ]\s*s[oố]\s*gi[aá])/i,
+  );
+  const cpiRaw = cpiA?.[1] ?? cpiV1?.[1];
+  if (cpiRaw) {
+    const v = toFloat(cpiRaw);
     if (v !== undefined && v >= 90 && v <= 130) data.cpi = v;
   }
 
-  // GDP growth: number following "GDP" or Vietnamese growth label
-  const gdpMatch = html.match(
+  // ── GDP ──────────────────────────────────────────────────────────────────
+  // Variant A: label then number (original)
+  const gdpA = html.match(
     /(?:GDP|t[aă]ng\s*tr[ưu][oờ]ng\s*GDP|t[oố]c\s*[dđ][oộ]\s*t[aă]ng)[^0-9]{0,80}([\d]+[.,][\d]+)/i,
   );
-  if (gdpMatch?.[1]) {
-    const v = toFloat(gdpMatch[1]);
+  // Variant 2: data-value attribute near a GDP label
+  const gdpV2 = html.match(
+    /data-value="([\d.,]+)"[^>]*>(?:[^<]*GDP|[^<]*t[aă]ng\s*tr[ưu][oờ]ng)/i,
+  );
+  const gdpRaw = gdpA?.[1] ?? gdpV2?.[1];
+  if (gdpRaw) {
+    const v = toFloat(gdpRaw);
     if (v !== undefined && v >= -5 && v <= 20) data.gdp_growth = v;
+  }
+
+  // ── Observability ─────────────────────────────────────────────────────────
+  const indicatorCount = Object.keys(data).filter((k) => data[k] !== undefined).length;
+  if (indicatorCount === 0) {
+    console.error(
+      `gso: parse failed — no CPI/GDP patterns matched. Raw excerpt (500 chars): ${html.slice(0, 500)}`,
+    );
   }
 
   return data;

@@ -569,6 +569,150 @@ describe("Task 239a — macro-indicator-refresh (RED phase)", () => {
   });
 
   // ──────────────────────────────────────────────────────────────────────────
+  // AC-12a: Opaque HTML → console.error called with parse-failure message
+  // ──────────────────────────────────────────────────────────────────────────
+  test("AC-12a: opaque GSO HTML → console.error emits 'no CPI/GDP patterns matched'", async () => {
+    Bun.env.GSO_VPS_ENDPOINT = "https://gso.vn/";
+    const errorMessages: string[] = [];
+    const origError = console.error;
+    console.error = (...args: unknown[]) => { errorMessages.push(String(args[0])); };
+
+    const mockHttpClient: MockHttpClient = {
+      get: async (url: string) => {
+        if (url.includes("yahoo")) throw new Error("yahoo fail");
+        if (url.includes("sbv")) throw new Error("sbv fail");
+        return "<html><body>Trang chu GSO</body></html>";
+      },
+      post: async () => ({ status: 200, body: "" }),
+    };
+
+    const mockCircuitBreaker: MockCircuitBreaker = {
+      wrap: async (fn: () => Promise<unknown>) => fn(),
+    };
+
+    const mockRateLimiter: MockRateLimiter = {
+      checkLimit: async () => undefined,
+    };
+
+    const { fetchAndStoreMacroIndicators } = await import(
+      "../domain/services/macro/macroIndicatorFetcher.js"
+    ).catch(() => ({
+      fetchAndStoreMacroIndicators: async () => ({
+        success: false,
+        sourceUsed: null,
+        indicatorCount: 0,
+      }),
+    }));
+
+    await fetchAndStoreMacroIndicators(
+      db,
+      mockHttpClient,
+      mockCircuitBreaker,
+      mockRateLimiter
+    );
+
+    // restore console.error BEFORE assertions
+    console.error = origError;
+    delete Bun.env.GSO_VPS_ENDPOINT;
+
+    expect(errorMessages.some((m) => m.includes("no CPI/GDP patterns matched"))).toBe(true);
+  });
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // AC-12b: Variant 1 — number before CPI label → success=true, sourceUsed=gso
+  // ──────────────────────────────────────────────────────────────────────────
+  test("AC-12b: GSO Variant 1 HTML (number before label) → success=true, sourceUsed=gso", async () => {
+    Bun.env.GSO_VPS_ENDPOINT = "https://gso.vn/";
+    // HTML fixture: number in <td> before <th>CPI</th>
+    const html = "<table><tr><td>103.45</td><th>CPI</th></tr></table>";
+
+    const mockHttpClient: MockHttpClient = {
+      get: async (url: string) => {
+        if (url.includes("yahoo")) throw new Error("yahoo fail");
+        if (url.includes("sbv")) throw new Error("sbv fail");
+        return html;
+      },
+      post: async () => ({ status: 200, body: "" }),
+    };
+
+    const mockCircuitBreaker: MockCircuitBreaker = {
+      wrap: async (fn: () => Promise<unknown>) => fn(),
+    };
+
+    const mockRateLimiter: MockRateLimiter = {
+      checkLimit: async () => undefined,
+    };
+
+    const { fetchAndStoreMacroIndicators } = await import(
+      "../domain/services/macro/macroIndicatorFetcher.js"
+    ).catch(() => ({
+      fetchAndStoreMacroIndicators: async () => ({
+        success: false,
+        sourceUsed: null,
+        indicatorCount: 0,
+      }),
+    }));
+
+    const result: FetchResult = await fetchAndStoreMacroIndicators(
+      db,
+      mockHttpClient,
+      mockCircuitBreaker,
+      mockRateLimiter
+    );
+
+    delete Bun.env.GSO_VPS_ENDPOINT;
+
+    expect(result.success).toBe(true);
+    expect(result.sourceUsed).toBe("gso");
+  });
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // AC-12c: Variant 2 — data-value attr near GDP → indicatorCount >= 1
+  // ──────────────────────────────────────────────────────────────────────────
+  test("AC-12c: GSO Variant 2 HTML (data-value near GDP) → indicatorCount >= 1", async () => {
+    Bun.env.GSO_VPS_ENDPOINT = "https://gso.vn/";
+    const html = '<td><span data-value="6.93">GDP tăng trưởng</span></td>';
+
+    const mockHttpClient: MockHttpClient = {
+      get: async (url: string) => {
+        if (url.includes("yahoo")) throw new Error("yahoo fail");
+        if (url.includes("sbv")) throw new Error("sbv fail");
+        return html;
+      },
+      post: async () => ({ status: 200, body: "" }),
+    };
+
+    const mockCircuitBreaker: MockCircuitBreaker = {
+      wrap: async (fn: () => Promise<unknown>) => fn(),
+    };
+
+    const mockRateLimiter: MockRateLimiter = {
+      checkLimit: async () => undefined,
+    };
+
+    const { fetchAndStoreMacroIndicators } = await import(
+      "../domain/services/macro/macroIndicatorFetcher.js"
+    ).catch(() => ({
+      fetchAndStoreMacroIndicators: async () => ({
+        success: false,
+        sourceUsed: null,
+        indicatorCount: 0,
+      }),
+    }));
+
+    const result: FetchResult = await fetchAndStoreMacroIndicators(
+      db,
+      mockHttpClient,
+      mockCircuitBreaker,
+      mockRateLimiter
+    );
+
+    delete Bun.env.GSO_VPS_ENDPOINT;
+
+    expect(result.indicatorCount).toBeGreaterThanOrEqual(1);
+  });
+
+  // ──────────────────────────────────────────────────────────────────────────
   // AC-10: Startup stale-data detection: alert includes "STALE" tag if > 24h old
   // ──────────────────────────────────────────────────────────────────────────
   test("AC-10: Startup stale-data detection: if macro table data > 24h old, alert includes STALE tag", async () => {
