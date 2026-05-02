@@ -1,49 +1,43 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-05-02 | **ctx at checkpoint:** ~43%
+**Written:** 2026-05-02 | **ctx at checkpoint:** ~20%
 
 ## Completed this session
 
 | Sprint | Tasks | Result |
 |--------|-------|--------|
-| 1822e | VPS OOM test assertions aligned to StartLimitIntervalSec=0 | 9 pass |
-| 1822f | maybe-deploy-vps.sh: set-empty FAKE_DIFF fix | 7 pass |
-| 1822g | Stale branch + orphan file commits | clean |
-| 1822h | project-stats.json + SPRINT_GOAL.md synced to Sprint 1823 | doc sync |
-| 1823a | ops: vnIndex staleness false alarm; vn-news-fetch unhealthy diagnosed | no code |
-| 1823b | vnstock circuit-breaker: exponential backoff 2h→4h→8h + WORK notification | 8 pass |
-| 1823c | GSO macro: skip guard when GSO_VPS_ENDPOINT unset | 11 pass |
-| 1823d | te-chromium crash-loop CB: 3-strike limit, WORK alert, auto-recovery | 5 pass |
-| 1824a | verify-deploy-price-fetch.sh: market-hours guard (off-hours skip freshness) | shell only |
-| 1824b | stale apps/mcp-server/docs/agent-memory/ tree deleted (13 files) | clean |
-| 1824c | SPRINT_GOAL.md → Sprint 1824 active, project-stats.json synced | doc sync |
-| 1824d | agent-memory manifests scaffold: ops.md + WAL-checkpoint.md fixtures | 5 pass |
-| 1824e | GSO macro: GSO_VPS_ENDPOINT skip guard removed, native fetch + graceful fallback | 11 pass |
-| 1824f | Stale remote branch pruned, orphan files confirmed clean | clean |
+| 1830-clean | CLEAN: orphan files + sprint advance to 1830 | clean |
+| 1830a | JANITOR-023: extract CLAUDE_BIN to agentConstants.ts, import in smartCompactSpawner + qaResponderSpawner | tsc clean |
 
 ## Current baseline
 
-- **8582 pass / 0 fail**
-- totalTasksDone=468, toolCount=123
-- currentSprint=1824, SPRINT_GOAL.md active = Sprint 1824
+- **8602 pass / 0 fail**
+- totalTasksDone=482, toolCount=122, knowledgeFileCount=25
+- currentSprint=1830, SPRINT_GOAL.md active = Sprint 1830
 - Branch: main only, clean, pushed to origin
 
 ## Architecture state
 
 - VPS (Vinahost): zero Playwright — curl-only (prices, BCTC PDF download, VN news RSS, SBV, foreign flow)
-- Main server (mcp-server Docker): all Playwright — teChromiumNews + BCTC URL discovery (chromiumPageFetcher.ts)
-- te-chromium: crash-loop CB active (3-strike → WORK alert → auto-recovery)
+- Main server (mcp-server Docker): all Playwright — teChromiumNews + BCTC URL discovery
+- te-chromium: crash-loop CB active (3-strike → WORK alert → auto-recovery). Counter file-persisted at `/app/data/te-chromium-cb-state.json` — survives Docker restarts (Sprint 1829b)
 - vnstock: exponential backoff CB active (2h→4h→8h)
-- GSO macro: fetches natively (no VPS proxy needed), fails gracefully via all-failed path
+- GSO macro: parseGsoHtml with Variant A/1/2 regex + console.error on parse fail (graceful fallback)
+- Reuters RSS: consecutive-error CB active (≥10 → one-shot WORK alert → reset on success)
+- tradingEconomics RSS: consecutive-error CB active (same pattern)
+- agentConstants.ts: CLAUDE_BIN extracted to infrastructure/agents/agentConstants.ts (Sprint 1830a)
 
 ## Known state
 
 - No pre-existing test failures on main (0 fail baseline)
-- GSO macro will always hit all-failed path in prod until a real GSO parser is implemented — acceptable
-- LanceDB/RAG tests: environment-pinned OOM (Bun 1.3.11), not fixable in code
+- GSO macro will hit all-failed path until real GSO HTML structure confirmed (geo-blocked from France)
+- Reuters RSS: chronic consecutive errors in prod — observable via 1828c
+- tradingEconomics RSS: chronic consecutive errors in prod — observable via 1828c
+- LanceDB/RAG OOM: environment-pinned (Bun 1.3.11 C++ crash), not fixable in code
+- te-chromium crash loop: ongoing pre-existing; CB persists across restarts (1829b)
 
-## Next sprint intent (1825)
+## Next sprint intent (1831)
 
 1. Any new BUG/WORK channel signals
-2. GSO HTML parser (if GSO macro data becomes required)
-3. vnstock rate-limit monitoring follow-up (observe 1823b backoff in production)
+2. Reuters RSS / tradingEconomics: if WORK alerts fire in production, investigate source health
+3. Backlog is empty — PO should check MARKET/WORK/BUG for new signals
