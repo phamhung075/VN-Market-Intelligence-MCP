@@ -32,6 +32,7 @@ import type { DomainType } from "../../../../../bctc-schema.js";
 import { fetchHosePrices, type MarketPrice } from "../../../../infrastructure/fetchers/hose.js";
 import { fetchHnxPrices, fetchUpcomPrices } from "../../../../infrastructure/fetchers/hnx.js";
 import { tradingWindowLabel } from "../../../../domain/services/tradingWindow.js";
+import { sqlInClause } from "../../../../domain/utils/sqlHelpers.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Internal types
@@ -228,7 +229,7 @@ export async function getSectorRotationReport(db: Database): Promise<string> {
   // We fetch all history rows for the codes we have current prices for,
   // then pick the closest snapshot to 1d and 5d ago.
   const codes = currentPrices.map((r) => r.code);
-  const codesPlaceholder = codes.map(() => "?").join(", ");
+  const codesPlaceholder = sqlInClause(codes.length);
 
   let historyRows: PriceHistoryRow[] = [];
   try {

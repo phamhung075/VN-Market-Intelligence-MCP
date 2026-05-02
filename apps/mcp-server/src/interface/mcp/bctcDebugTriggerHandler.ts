@@ -13,6 +13,7 @@
  */
 
 import type { Database } from "bun:sqlite";
+import { sqlInClause } from "../../domain/utils/sqlHelpers.js";
 
 export interface TriggerBctcDebugOptions {
   tickers: string[] | undefined;
@@ -59,7 +60,7 @@ export async function handleTriggerBctcDebug(
   const params: string[] = [];
 
   if (tickerFilter) {
-    const placeholders = tickerFilter.map(() => "?").join(", ");
+    const placeholders = sqlInClause(tickerFilter.length);
     query += ` AND action_code IN (${placeholders})`;
     params.push(...tickerFilter);
   }
