@@ -5,9 +5,9 @@
   "currentSprint": 1823,
   "previousSprint": { "number": 1822, "status": "DONE", "progressTasks": "1822a–1822g DONE — VPS Playwright removal + BCTC migration to Docker + test fixes. 8565 pass / 0 fail. tasks=458." },
   "sprintGoal": "Sprint 1823 — TBD",
-  "testBaseline": 8565,
-  "testBaselineTarget": 8565,
-  "testBaselinePass": 8565,
+  "testBaseline": 8582,
+  "testBaselineTarget": 8582,
+  "testBaselinePass": 8582,
   "testBaselineFail": 0,
   "testFailures": 0,
   "toolCount": 123,
@@ -15,11 +15,11 @@
   "knowledgeFileCount": 22,
   "devAgentCount": 13,
   "analysisAgentCount": 9,
-  "totalTasksDone": 458,
+  "totalTasksDone": 462,
   "analysisMode": "value_investor",
   "briefingFilesCreated": 30,
   "briefingArchiveQI": 0,
   "briefingArchiveQII": 0,
-  "lastFixApplied": "1822h DONE: sync project-stats.json + SPRINT_GOAL.md to Sprint 1823. totalTasksDone=458. 8565 pass / 0 fail. 2026-05-02.",
-  "currentSprintNotes": "Sprint 1822 complete 2026-05-02. Tasks: 1822a–1822g. VPS Playwright/Chromium removal (1822b/1822c/1822d-b), BCTC discovery migrated to mcp-server Docker (1822d-a), VPS systemd StartLimitBurst fix (1822b), test alignment fixes (1822e/1822f). toolCount 123, schedulerFileCount 49."
+  "lastFixApplied": "1823 DONE: Sprint 1823 tasks complete. totalTasksDone=462. 8582 pass / 0 fail. 2026-05-02.",
+  "currentSprintNotes": "Sprint 1823 complete 2026-05-02. Tasks: 1823a-ops, 1823b, 1823c, 1823d (4 tasks). 8582 pass / 0 fail. toolCount 123, schedulerFileCount 49."
 }
