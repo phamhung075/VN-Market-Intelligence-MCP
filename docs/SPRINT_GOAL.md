@@ -18,6 +18,8 @@
 
 ## Closed Sprints
 
+> Full history: docs/TASKS_ARCHIVE.md
+
 | Sprint | Result |
 |--------|--------|
 | 1827 — Sync project-stats.json knowledgeFileCount + tool-registry.json toolCount + create missing agent notebooks | DONE — 2026-05-02. 8582 pass / 0 fail. totalTasksDone=474 |
@@ -25,5 +27,3 @@
 | 1825 — GSO HTML parser + vnstock backoff | DONE — 2026-05-02. 8582 pass / 0 fail. totalTasksDone=470 |
 | 1824 — agent-memory manifests, GSO native fetch, deploy market-hours guard, orphan cleanup | DONE — 2026-05-02. 8582 pass / 0 fail. totalTasksDone=468 |
 | 1823 — vnstock backoff + te-chromium circuit breaker + GSO skip guard | DONE — 2026-05-02. 1823b+1823c+1823d merged. 8582 pass / 0 fail. totalTasksDone=462 |
-| 1822 — VPS Playwright removal + BCTC migration to Docker + test fixes | DONE — 2026-05-02. 1822a–1822g merged. 8565 pass / 0 fail. totalTasksDone=458 |
-| 1821 — pollNews cold-start retry + smart_compact MCP tool | DONE — 2026-05-02. 1821a + 1821b + 1821c merged. 8565 pass / 0 fail. totalTasksDone=450 |
