@@ -1,9 +1,14 @@
 /**
  * Task 1289f: Browser-based BCTC PDF URL discovery using Playwright
  *
- * Runs on VPS with Chromium to handle JavaScript-rendered portals.
- * Used by: bctc-historical-downloader.sh via Python wrapper
+ * Task 1822d-a: Migrated Playwright execution from VPS to local mcp-server Docker.
+ * The defaultBrowserFetcher now uses chromiumFetchPage (infrastructure/fetchers)
+ * instead of calling the VPS HTTP proxy endpoint.
+ *
+ * Used by: bctcReparseJob and any usecase that needs PDF URL discovery.
  */
+
+import { chromiumFetchPage } from "../../infrastructure/fetchers/chromiumPageFetcher.js";
 
 interface BrowserDiscoveryResult {
   url: string | null;
@@ -202,25 +207,13 @@ function isValidPdfUrl(url: string): boolean {
   return true;
 }
 
+/**
+ * Default browser fetcher — uses local Playwright/Chromium (mcp-server Docker).
+ * Replaces the former plain-HTTP fetch; handles JavaScript-rendered portals
+ * (hsx.vn, hnx.vn, upcom.hnx.vn) that return skeleton HTML without a real browser.
+ *
+ * Task 1822d-a: No VPS HTTP proxy call. Playwright runs on the local server.
+ */
 async function defaultBrowserFetcher(url: string, timeout = 30000): Promise<string> {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeout);
-
-  try {
-    const response = await fetch(url, {
-      signal: controller.signal,
-      headers: {
-        "User-Agent": "VN-Market-Intelligence/1.0 (+https://github.com/phamhung075/VN-Market-Intelligence-MCP)",
-        Accept: "text/html,application/xhtml+xml,*/*",
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-    }
-
-    return await response.text();
-  } finally {
-    clearTimeout(timeoutId);
-  }
+  return chromiumFetchPage(url, timeout);
 }
