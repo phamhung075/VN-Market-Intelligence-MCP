@@ -42,6 +42,7 @@
 
 | Task ID | Title | Merged | Reports |
 |---------|-------|--------|---------|
+| 1821c | CHORE: advance SPRINT_GOAL.md active header to Sprint 1821, archive Sprint 1820 in closed sprints table. | 2026-05-02 | — |
 | 1821a | FIX: pollNews teChromiumNews cold-start retry — sleep 2s + retry once on empty result. 5 new tests (AC-1..5). 8563 pass / 0 fail. | 2026-05-02 | reports/TASK_REPORT_1821a.md |
 | JANITOR-020 | DRY: export AnalysisRow/AlertCountRow/LastCycleRow/MACRO_CODES from marketContextBuilder, delete duplicates in marketContextTools. Net -29 lines. DDD compliant. 29 pass / 0 fail. | 2026-05-02 | reports/TASK_REPORT_JANITOR-020.md |
 | 1819a | FIX: advance currentSprint to integer 1820 in project-stats.json + update SPRINT_GOAL.md active header. QA: 1338 test (3 pass / 0 fail / 1 skip). | 2026-05-02 | — |
