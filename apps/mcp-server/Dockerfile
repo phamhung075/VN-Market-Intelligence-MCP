@@ -1,9 +1,10 @@
 # ── VN Market Intelligence MCP Server ─────────────────────────────────────
 # Runtime: Bun (oven/bun:1-debian — glibc, required by @lancedb native binary)
 # Build context: monorepo root (docker-compose.yml sets context: .)
-# NOTE: tesseract, poppler, python3 are skipped — PDF OCR falls back to the
-# pdf-extractor microservice. vnstockBridge will fail gracefully if python3
-# is absent — other data sources remain active.
+# NOTE: tesseract and poppler are skipped — PDF OCR falls back to the
+# pdf-extractor microservice.
+# python3 + vnstock are REQUIRED: vnstockBridge.ts spawns python3 subprocess
+# to call the VCI backend for prices, financials, officers, and news.
 # Chromium is installed via apt (Debian trixie package) for puppeteer-core
 # scraping of tradingeconomics.com (React SPA, requires real browser).
 # ─────────────────────────────────────────────────────────────────────────────
@@ -11,8 +12,9 @@
 FROM oven/bun:1-debian AS base
 WORKDIR /app
 
-# ── System dependencies — Chromium for Puppeteer ────────────────────────
+# ── System dependencies — Chromium for Puppeteer + Python3 for vnstock ──
 # Debian trixie ships chromium 147.x at /usr/bin/chromium.
+# python3 + python3-pip required by vnstockBridge.ts (subprocess calls to VCI).
 # DEBIAN_FRONTEND=noninteractive prevents apt from prompting during build.
 # --no-install-recommends keeps image size minimal.
 RUN apt-get update -qq && \
@@ -21,7 +23,12 @@ RUN apt-get update -qq && \
       chromium-common \
       fonts-liberation \
       libxss1 \
+      python3 \
+      python3-pip \
     && rm -rf /var/lib/apt/lists/*
+
+# ── Python packages — vnstock for VCI backend data ───────────────────────
+RUN pip3 install --break-system-packages --no-cache-dir vnstock
 
 # ── Install Node dependencies ─────────────────────────────────────────────
 # Copy from apps/mcp-server since build context is monorepo root
