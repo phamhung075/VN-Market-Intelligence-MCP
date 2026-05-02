@@ -42,6 +42,7 @@
 
 | Task ID | Title | Merged | Reports |
 |---------|-------|--------|---------|
+| 1831a | CLEAN: close Sprint 1830, advance to 1831, commit orphans, prune remote branches | 2026-05-02 | — |
 | 1830a (JANITOR-023) | DRY: extract CLAUDE_BIN to agentConstants.ts, import in smartCompactSpawner + qaResponderSpawner. tsc clean, 2 pass / 0 fail. | 2026-05-02 | reports/TASK_REPORT_1830a.md |
 | 1830-clean | CLEAN: advance to Sprint 1830, update project-stats.json (currentSprint=1830, totalTasksDone=481). | 2026-05-02 | — |
 | 1829b | FIX: te-chromium CB counter persisted to /app/data/te-chromium-cb-state.json — survives Docker restarts. 4 new AC pass. 8602 pass / 0 fail. | 2026-05-02 | reports/TASK_REPORT_1829b.md |

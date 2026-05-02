@@ -2,9 +2,9 @@
   "_maintained_by": "PM / system-auditor",
   "_trigger": "sprint start/end, tool/cron count change, baseline test update",
   "lastUpdated": "2026-05-02",
-  "currentSprint": 1830,
-  "previousSprint": { "number": 1829, "status": "DONE", "summary": "te-chromium CB counter persisted to file — survives Docker restarts. totalTasksDone=481." },
-  "sprintGoal": "Sprint 1830 — TBD",
+  "currentSprint": 1831,
+  "previousSprint": { "number": 1830, "status": "DONE", "summary": "JANITOR-023: extract CLAUDE_BIN to agentConstants.ts. 8602 pass / 0 fail. totalTasksDone=483." },
+  "sprintGoal": "Sprint 1831 — TBD",
   "testBaseline": 8602,
   "testBaselineTarget": 8602,
   "testBaselinePass": 8602,
@@ -15,11 +15,11 @@
   "knowledgeFileCount": 25,
   "devAgentCount": 13,
   "analysisAgentCount": 9,
-  "totalTasksDone": 482,
+  "totalTasksDone": 483,
   "analysisMode": "value_investor",
   "briefingFilesCreated": 30,
   "briefingArchiveQI": 0,
   "briefingArchiveQII": 0,
-  "lastFixApplied": "1830a DONE: JANITOR-023 extract CLAUDE_BIN to agentConstants.ts. tsc clean, 2 pass / 0 fail. 2026-05-02.",
-  "currentSprintNotes": "Sprint 1830 — 1830a merged. JANITOR-023 complete."
+  "lastFixApplied": "1831a DONE: CLEAN — close Sprint 1830, advance to 1831, commit orphans, prune remote branches. 2026-05-02.",
+  "currentSprintNotes": "Sprint 1831 — opened. Backlog empty; awaiting PO signal scan."
 }
