@@ -21,6 +21,20 @@ import { logger } from "../logger.js";
 import { globalRateLimiter } from "../../domain/services/rateLimiter.js";
 import { BROWSER_UA } from "./browserHeaders.js";
 
+// ── Consecutive-error observability (Task 1828c) ──────────────────────────
+const TE_STREAM_ERROR_THRESHOLD = 10;
+let _teStreamConsecutiveErrors = 0;
+let _teStreamAlertSent = false;
+
+export function resetTeStreamErrorCounter(): void {
+  _teStreamConsecutiveErrors = 0;
+  _teStreamAlertSent = false;
+}
+
+export interface TeStreamDeps {
+  onAlert?: (message: string) => Promise<void>;
+}
+
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
@@ -128,6 +142,7 @@ async function tryFetchFeed(
  */
 export async function fetchTradingEconomicsStream(
   httpClient?: HttpClient,
+  deps?: TeStreamDeps,
 ): Promise<RssItem[]> {
   // Rate limit guard — skip if called too soon (test mode bypasses via injected httpClient)
   if (!httpClient && !globalRateLimiter.canCall("tradingeconomics-rss")) {
@@ -143,19 +158,45 @@ export async function fetchTradingEconomicsStream(
 
   // Step 1: MarketWatch top stories
   const feed1 = await tryFetchFeed(MW_RSS_URL, TE_SOURCE, client);
-  if (feed1.length > 0) return feed1;
+  if (feed1.length > 0) {
+    _teStreamConsecutiveErrors = 0;
+    _teStreamAlertSent = false;
+    return feed1;
+  }
 
   // Step 2: Google News — global economy / central banks / inflation
   logger.info("[te-rss] Feed 1 empty or failed — trying Feed 2 (GNEWS_MACRO)");
   const feed2 = await tryFetchFeed(GNEWS_MACRO_URL, TE_SOURCE, client);
-  if (feed2.length > 0) return feed2;
+  if (feed2.length > 0) {
+    _teStreamConsecutiveErrors = 0;
+    _teStreamAlertSent = false;
+    return feed2;
+  }
 
   // Step 3: Google News — financial markets / commodities / USD-VND
   logger.info("[te-rss] Feed 2 empty or failed — trying Feed 3 (GNEWS_MARKETS)");
   const feed3 = await tryFetchFeed(GNEWS_MARKETS_URL, TE_SOURCE, client);
-  if (feed3.length > 0) return feed3;
+  if (feed3.length > 0) {
+    _teStreamConsecutiveErrors = 0;
+    _teStreamAlertSent = false;
+    return feed3;
+  }
 
   // All three failed
   logger.warn("[te-rss] all RSS sources failed — returning empty array");
+  _teStreamConsecutiveErrors++;
+  if (_teStreamConsecutiveErrors >= TE_STREAM_ERROR_THRESHOLD && !_teStreamAlertSent) {
+    _teStreamAlertSent = true;
+    const alertMsg =
+      `tradingEconomics: ${_teStreamConsecutiveErrors} consecutive fetch failures — CB not yet tripped. Consider manual check.`;
+    try {
+      if (deps?.onAlert) {
+        await deps.onAlert(alertMsg);
+      } else {
+        const { sendTelegramWork } = await import("../notifiers/telegram.js");
+        await sendTelegramWork(alertMsg);
+      }
+    } catch { /* alert failure must not abort fetch */ }
+  }
   return [];
 }
