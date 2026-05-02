@@ -42,6 +42,8 @@
 
 | Task ID | Title | Merged | Reports |
 |---------|-------|--------|---------|
+| 1823c | FIX: GSO macro skip guard — log skip when GSO_VPS_ENDPOINT unset; eliminates noisy HTML parse errors on macro refresh cycle. 11 pass / 0 fail. | 2026-05-02 | reports/TASK_REPORT_1823c.md |
+| 1823b | FIX: vnstock circuit-breaker exponential backoff (2h→4h→8h) + WORK channel notification with open-circuit ticker count and timestamp. 8 pass / 0 fail. | 2026-05-02 | reports/TASK_REPORT_1823b.md |
 | 1822g | CLEAN: delete stale task/1822a-news-fetcher-fixes branch (0 unmerged commits); commit orphan session/handoff/report files from today's sprint activity. | 2026-05-02 | — |
 | 1822f | FIX: distinguish set-but-empty FAKE_DIFF from unset in maybe-deploy-vps.sh — [ "${FAKE_DIFF+x}" = "x" ] replaces [ -n "${FAKE_DIFF:-}" ]. 7/7 tests pass. | 2026-05-02 | — |
 | 1822e | FIX: Align 1321-vps-oom-prevention.test.ts assertions with Sprint 1822b config — StartLimitIntervalSec=0 now in [Unit] section. 9 pass / 0 fail. | 2026-05-02 | — |
