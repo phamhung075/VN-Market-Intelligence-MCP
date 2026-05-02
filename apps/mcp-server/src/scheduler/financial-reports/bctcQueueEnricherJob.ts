@@ -173,21 +173,31 @@ export async function runBctcQueueEnricherJob(opts: {
           url: discovery.urls[0],
         });
       } else {
-        // No URL found — increment attempts and optionally park the row.
+        // No URL found.
         // Task 1782: rows that have already been attempted MAX_ENRICH_ATTEMPTS
         // times are marked 'url_not_found' so they stop blocking the queue.
         // Rows below the threshold stay 'pending' for the next cron cycle.
+        //
+        // Fix (FIX-BCTC-PIPELINE Bug 2): do NOT increment attempts on the very
+        // first pass (attempts === 0). A source_url=NULL row with attempts=0 has
+        // never had a successful network-level discovery attempt; incrementing on
+        // the first miss would penalise rows that are simply new. Only rows that
+        // have already been tried at least once (attempts > 0) are incremented.
         if (item.attempts >= MAX_ENRICH_ATTEMPTS) {
           markUrlNotFoundStmt.run(item.id);
           logger.warn("[bctcQueueEnricher] no URL after max attempts — marking url_not_found", {
             ticker: item.action_code,
             attempts: item.attempts,
           });
-        } else {
+        } else if (item.attempts > 0) {
           incrementAttemptsStmt.run(item.id);
           logger.debug("[bctcQueueEnricher] no URLs found, leaving pending", {
             ticker: item.action_code,
             attempts: item.attempts + 1,
+          });
+        } else {
+          logger.debug("[bctcQueueEnricher] no URLs found on first pass, leaving pending at 0", {
+            ticker: item.action_code,
           });
         }
         result.partialFailures++;
@@ -202,8 +212,10 @@ export async function runBctcQueueEnricherJob(opts: {
         result.partialFailures++;
       }
 
-      // On error, still increment attempts so exhausted-error rows also park.
-      incrementAttemptsStmt.run(item.id);
+      // Do NOT increment attempts on error when source_url was never set.
+      // Only increment when discovery actually reached the network and returned
+      // no URL (handled in the else branch above). This keeps NULL-url rows
+      // at attempts=0 until a real network-level discovery attempt completes.
 
       logger.warn("[bctcQueueEnricher] discovery error", {
         ticker: item.action_code,

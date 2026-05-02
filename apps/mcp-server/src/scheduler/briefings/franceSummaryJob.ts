@@ -195,7 +195,9 @@ function fetchTopMovers(db: Database): MoverRow[] {
             t.close AS price,
             CASE
               WHEN y.close IS NOT NULL AND y.close != 0
-              THEN (t.close - y.close) / y.close * 100.0
+                THEN (t.close - y.close) / y.close * 100.0
+              WHEN t.open IS NOT NULL AND t.open != 0
+                THEN (t.close - t.open) / t.open * 100.0
               ELSE NULL
             END AS change_pct
           FROM daily_ohlcv t
