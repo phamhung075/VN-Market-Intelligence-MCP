@@ -467,6 +467,13 @@ export function extractIncomeStatement(rawText: string): IncomeStatement {
     m = 0.000001;
   } else if (m === 1 && sentinel > 1_000_000_000) {
     m = 0.000001;
+  } else if (m > 1 && sentinel > 1_000_000_000) {
+    // PDF header declares a unit multiplier (e.g. tỷ = 1000) but OCR values are
+    // already raw VND integers (e.g. 14,324,284,500 đồng). Applying the multiplier
+    // would produce quadrillions. Detect by: multiplier > 1 AND sentinel > 1e9
+    // (realistic tỷ values fit in a few thousand, not billions).
+    // Correct action: divide by 1,000,000 to convert raw VND → triệu.
+    m = 0.000001;
   }
 
   return {
