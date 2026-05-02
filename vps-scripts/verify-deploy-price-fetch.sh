@@ -15,6 +15,23 @@
 
 set -u
 
+# ── Market-hours guard ───────────────────────────────────────────────────────
+# HOSE/HNX/UPCOM trade Mon–Fri 09:00–15:15 VT (UTC+7).
+# Outside those hours fresh price data will never arrive; skip the freshness
+# loop and only verify that the systemd service is active.
+VN_HOUR=$(TZ=Asia/Ho_Chi_Minh date +%H)
+VN_DOW=$(TZ=Asia/Ho_Chi_Minh date +%u)   # 1=Mon … 7=Sun
+VN_MIN=$(TZ=Asia/Ho_Chi_Minh date +%M)
+VN_TIME_NUM=$((10#$VN_HOUR * 60 + 10#$VN_MIN))  # minutes since midnight
+MARKET_OPEN=540    # 09:00 = 540 min
+MARKET_CLOSE=915   # 15:15 = 915 min
+if [ "$VN_DOW" -ge 6 ] || [ "$VN_TIME_NUM" -lt "$MARKET_OPEN" ] || [ "$VN_TIME_NUM" -gt "$MARKET_CLOSE" ]; then
+  echo "Market closed (VT $(TZ=Asia/Ho_Chi_Minh date '+%H:%M') DOW=$VN_DOW) — skipping freshness check."
+  systemctl is-active --quiet vn-price-fetch && echo "✓ vn-price-fetch is active" && exit 0
+  echo "✗ vn-price-fetch is NOT active"; exit 1
+fi
+# ── End market-hours guard ───────────────────────────────────────────────────
+
 HEALTH_INTERVAL=5      # Check every 5 seconds
 HEALTH_MAX_ATTEMPTS=6  # 6 attempts × 5s = 30 seconds total
 STALE_THRESHOLD=120    # Must have data <2 minutes old
