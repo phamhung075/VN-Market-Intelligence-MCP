@@ -268,7 +268,7 @@ export async function playwrightScrape(url: string): Promise<MacroIndicators> {
 
     return result;
   } finally {
-    await browser.close();
+    try { await browser.close(); } catch { /* ignore teardown errors on crashed browser */ }
   }
 }
 
@@ -556,7 +556,7 @@ export async function playwrightScrapeNews(url: string): Promise<string> {
 
     return page.content();
   } finally {
-    await browser.close();
+    try { await browser.close(); } catch { /* ignore teardown errors on crashed browser */ }
   }
 }
 

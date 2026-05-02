@@ -140,7 +140,7 @@ export interface FetchersConfig {
   ssc: SscFetcherConfig;
   hose: { apiBase: string; maxPageSize: number; avgVolumeWindow: number };
   hnx: { apiBase: string };
-  rss: { cafef: string; vnexpress: string; reuters: string; apNews: string };
+  rss: { cafef: string; vnexpress: string };
   tradingEconomics: { baseUrl: string; indicatorsPath: string };
   yahooFinance: { baseUrl: string; symbols: { brentCrude: string; gold: string; usdVnd: string } };
   sbv: { baseUrl: string; ratesPath: string; fxPath: string };
@@ -514,8 +514,6 @@ export function loadMcpConfig(): McpConfig {
       rss: {
         cafef: str(f, "fetchers.rss.cafef", null, "https://cafef.vn/rss/trang-chu.rss"),
         vnexpress: str(f, "fetchers.rss.vnexpress", null, "https://vnexpress.net/rss/kinh-doanh.rss"),
-        reuters: str(f, "fetchers.rss.reuters", null, "https://www.reutersagency.com/feed/?best-topics=business-finance&post_type=best"),
-        apNews: str(f, "fetchers.rss.apNews", null, "https://rsshub.app/apnews/topics/business"),
       },
       tradingEconomics: {
         baseUrl: str(f, "fetchers.tradingEconomics.baseUrl", "TRADING_ECONOMICS_BASE_URL", "https://tradingeconomics.com"),
