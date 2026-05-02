@@ -20,7 +20,7 @@ describe("1299b: agentBootstrap — skill-gated loading", () => {
 
   it("TC-1: agentBootstrap.ts has NO domain/ or infrastructure/ imports (DDD guard)", () => {
     const src = readFileSync(
-      join(process.cwd(), "src/interface/mcp/bootstrap/agentBootstrap.ts"),
+      join(import.meta.dir, "../interface/mcp/bootstrap/agentBootstrap.ts"),
       "utf8"
     );
     expect(src).not.toMatch(/from\s+['"].*\.\.\/(\.\.\/)*domain/);

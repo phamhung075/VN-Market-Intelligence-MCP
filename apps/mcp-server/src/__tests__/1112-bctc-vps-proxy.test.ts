@@ -7,6 +7,7 @@
 
 import { describe, test, expect, beforeEach } from "bun:test";
 import { Database } from "bun:sqlite";
+import path from "path";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DDL helper — mirrors schema.ts bctc_vps_queue block
@@ -231,7 +232,7 @@ describe("Task 1112 — BCTC VPS Proxy", () => {
     const { Glob } = await import("bun");
     const glob = new Glob("**/*.ts");
     let found = false;
-    for await (const file of glob.scan({ cwd: "src", absolute: true })) {
+    for await (const file of glob.scan({ cwd: path.resolve(import.meta.dir, ".."), absolute: true })) {
       if (file.includes("__tests__")) continue; // skip test files
       const content = await Bun.file(file).text();
       if (content.includes("139.180.185.18") || content.includes("sshpass") || content.includes("VULTR_PASSWORD")) {

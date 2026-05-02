@@ -176,7 +176,7 @@ describe("Task 1004 — VN Policy Cascade Rules", () => {
 
   // AC-11: DDD — zero infrastructure imports
   test("AC-11: cascadeEngine.ts has zero infrastructure imports", async () => {
-    const file = Bun.file("src/domain/services/cascadeEngine.ts");
+    const file = Bun.file(import.meta.dir + "/../domain/services/cascadeEngine.ts");
     const content = await file.text();
     const infraImports = content.match(/from\s+["'].*infrastructure/g);
     expect(infraImports).toBeNull();

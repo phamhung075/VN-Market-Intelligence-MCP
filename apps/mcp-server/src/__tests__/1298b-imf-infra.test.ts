@@ -136,7 +136,7 @@ describe("AC-4: imfDataFetcher production safety", () => {
 
   it("SQL injection check: no string-interpolated SQL in imfDataFetcher.ts", () => {
     const filePath = path.resolve(
-      "src/application/services/imfDataFetcher.ts"
+      import.meta.dir, "../application/services/imfDataFetcher.ts"
     );
     const source = readFileSync(filePath, "utf-8");
 
@@ -154,9 +154,9 @@ describe("AC-4: imfDataFetcher production safety", () => {
 
 describe("AC-5: imfIndicatorPoller cron registration", () => {
   it("cronConfig.ts CRONS map contains imfIndicatorPoller with 6h schedule", () => {
-    const configPath = path.resolve("src/scheduler/cronConfig.ts");
+    const configPath = path.resolve(import.meta.dir, "../scheduler/cronConfig.ts");
     const configSource = readFileSync(configPath, "utf-8");
-    const schedulerPath = path.resolve("src/scheduler/startScheduler.ts");
+    const schedulerPath = path.resolve(import.meta.dir, "../scheduler/startScheduler.ts");
     const schedulerSource = readFileSync(schedulerPath, "utf-8");
 
     expect(configSource).toContain("imfIndicatorPoller");

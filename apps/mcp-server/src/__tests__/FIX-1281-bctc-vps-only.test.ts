@@ -10,6 +10,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from "bun:test";
+import path from "path";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -189,7 +190,7 @@ describe("FIX-1281 — BCTC VPS-only guard", () => {
     const glob = new Glob("**/*.ts");
     const problematicFiles: string[] = [];
 
-    for await (const file of glob.scan({ cwd: "src", absolute: true })) {
+    for await (const file of glob.scan({ cwd: path.resolve(import.meta.dir, ".."), absolute: true })) {
       // Skip test files and the fetchers/ directory (where SSC calls are legitimate)
       if (file.includes("__tests__")) continue;
       if (file.includes("/fetchers/")) continue;
