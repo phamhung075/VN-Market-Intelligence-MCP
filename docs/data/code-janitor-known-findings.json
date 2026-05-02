@@ -1,6 +1,6 @@
 {
-  "scan_date": "2026-05-02T00:00:00Z",
-  "last_run": "2026-05-02T00:00:00Z",
+  "scan_date": "2026-05-02T09:00:00Z",
+  "last_run": "2026-05-02T09:00:00Z",
   "findings": [
     {
       "fingerprint": "check-2:domain/services/marketContextBuilder.ts:MACRO_CODES-parallel-impl",
@@ -91,6 +91,17 @@
     }
   ],
   "fixed_findings": [
+    {
+      "fingerprint": "check-3:application/usecases/discoverBctcPdfUrlBrowser.ts:BROWSER_FETCH_TIMEOUT_MS",
+      "severity": "LOW",
+      "category": "Magic number repeated 4x within single file (resolved)",
+      "file": "apps/mcp-server/src/application/usecases/discoverBctcPdfUrlBrowser.ts",
+      "detail": "30000 (ms) was inlined on lines 52, 100, 147, and 217 (tryHoseBrowser, tryHnxBrowser, tryUpcomBrowser, defaultBrowserFetcher). Extracted to BROWSER_FETCH_TIMEOUT_MS = 30_000 constant at file top. Any timeout change now requires one edit.",
+      "fix_type": "refactor",
+      "fix_commit": "b33d6856",
+      "fixed_at": "2026-05-02T09:00:00Z",
+      "fix_notes": "JANITOR-021. Single-file change. 8 tests pass (1289f-bctc-browser-discovery). Shipped directly."
+    },
     {
       "fingerprint": "check-2:infrastructure/fetchers/sscInsider.ts:parseVnNumber-private-copy",
       "severity": "LOW",
@@ -210,38 +221,38 @@
   "scan_checks": {
     "check-1-duplicate-classification-maps": {
       "status": "complete",
-      "items_scanned": 21,
-      "scope": "diff HEAD~3..HEAD (21 production TS files)",
+      "items_scanned": 2,
+      "scope": "diff HEAD~15..HEAD (2 new production TS files: discoverBctcPdfUrlBrowser.ts, chromiumPageFetcher.ts)",
       "findings": 0,
-      "notes": "Record<string,> in changed files are runtime accumulators (priceHistory, resolvedTargets, priceMap) or domain-logic overrides (codeSectorOverride built from watchlist.domain — not a static dup of SECTOR_PEERS). severityIcon in alerts.ts maps severity keys to bracket-labels [HIGH] etc., not to Vietnamese display names — not a dup of SEVERITY_VI. No classification map duplication found."
+      "notes": "No Record<string,> keyed on ticker symbols. No sector/exchange/display-name classification maps. Clean."
     },
     "check-2-hardcoded-ticker-arrays": {
       "status": "complete",
-      "items_scanned": 21,
-      "scope": "diff HEAD~3..HEAD (21 production TS files)",
-      "findings": 1,
-      "notes": "JANITOR-020 proposed: MACRO_CODES (13-element const) defined identically in marketContextBuilder.ts:79 and marketContextTools.ts:82. Also: AnalysisRow, AlertCountRow, LastCycleRow interfaces and all 5 section-builder functions duplicated between the same two files. Two-file change — backlog task created."
+      "items_scanned": 2,
+      "scope": "diff HEAD~15..HEAD (2 new production TS files)",
+      "findings": 0,
+      "notes": "No uppercase ticker literals. discoverBctcPdfUrlBrowser.ts uses a `code` parameter, not hardcoded tickers. Clean."
     },
     "check-3-repeated-magic-numbers-and-cron-duplication": {
       "status": "complete",
-      "items_scanned": 21,
-      "scope": "diff HEAD~3..HEAD (21 production TS files)",
-      "findings": 0,
-      "notes": "predictionMarketJob.ts lines 536+542: volumeSpikeThresholdUsd: 50000 appears in config-load branch (with ?? fallback) and catch branch (hardcoded). This is a defensive catch pattern — both branches produce the same value intentionally. Not a divergence risk. No new cron string duplication. JANITOR-011 and JANITOR-017 remain open pre-existing backlog."
+      "items_scanned": 2,
+      "scope": "diff HEAD~15..HEAD (2 new production TS files)",
+      "findings": 1,
+      "notes": "JANITOR-021 shipped: 30000 ms timeout was inlined 4× in discoverBctcPdfUrlBrowser.ts (lines 52, 100, 147, 217). Extracted to BROWSER_FETCH_TIMEOUT_MS = 30_000. Commit b33d6856."
     },
     "check-4-schema-duplication": {
       "status": "complete",
-      "items_scanned": 21,
-      "scope": "diff HEAD~3..HEAD (21 production TS files)",
+      "items_scanned": 2,
+      "scope": "diff HEAD~15..HEAD (2 new production TS files)",
       "findings": 0,
-      "notes": "Zero CREATE TABLE or inline DDL in any changed file. infrastructure/db/sqlHelpers.ts is a re-export barrel (not a copy) — correctly verified."
+      "notes": "Zero CREATE TABLE or inline DDL in either file. Clean."
     },
     "check-5-config-drift": {
       "status": "complete",
-      "items_scanned": 21,
-      "scope": "diff HEAD~3..HEAD (21 production TS files)",
+      "items_scanned": 2,
+      "scope": "diff HEAD~15..HEAD (2 new production TS files)",
       "findings": 0,
-      "notes": "?? fallbacks in changed files are all runtime sentinels (unknown, N/A, empty string, map default) not config fallbacks. No mcp.config.json key drift detected."
+      "notes": "No ?? fallback patterns in either file. Clean."
     }
   }
 }
