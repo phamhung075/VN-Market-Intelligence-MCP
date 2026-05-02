@@ -10,9 +10,9 @@
   "testBaselinePass": 8582,
   "testBaselineFail": 0,
   "testFailures": 0,
-  "toolCount": 123,
+  "toolCount": 122,
   "schedulerFileCount": 49,
-  "knowledgeFileCount": 22,
+  "knowledgeFileCount": 25,
   "devAgentCount": 13,
   "analysisAgentCount": 9,
   "totalTasksDone": 473,
@@ -20,6 +20,6 @@
   "briefingFilesCreated": 30,
   "briefingArchiveQI": 0,
   "briefingArchiveQII": 0,
-  "lastFixApplied": "1827a DONE: CLEAN commit orphan files, close Sprint 1826, advance to Sprint 1827. totalTasksDone=473. 2026-05-02.",
+  "lastFixApplied": "1827b DONE: sync knowledgeFileCount=25 (was 22) + toolCount=122 (was 123) in project-stats.json and tool-registry.json. 2026-05-02.",
   "currentSprintNotes": "Sprint 1827 active — sync knowledgeFileCount + tool-registry toolCount + create missing 18 agent notebooks"
 }
