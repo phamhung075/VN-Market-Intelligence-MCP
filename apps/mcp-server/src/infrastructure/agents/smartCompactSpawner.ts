@@ -20,6 +20,8 @@ import { homedir } from "os";
 // ── Constants ─────────────────────────────────────────────────────────────────
 
 const CLAUDE_BIN = "/Users/admin/.local/bin/claude";
+const MAX_TURN_CHARS = 500; // max chars per turn (user or assistant)
+const MAX_TURNS = 60; // max turns retained for compaction prompt
 const CLAUDE_PROJECTS = join(homedir(), ".claude", "projects");
 const PROJECT_KEY = "-Users-admin-Documents-Hung---works-----PROJET---labo-VN-Market-Intelligence-MCP";
 const MEMORY_DIR = join(homedir(), ".claude", "projects", PROJECT_KEY);
@@ -62,7 +64,7 @@ function extractTurns(jsonlPath: string): string {
           ?.filter((c: any) => c.type === "text")
           .map((c: any) => c.text)
           .join(" ")
-          .slice(0, 500); // truncate long messages
+          .slice(0, MAX_TURN_CHARS);
         if (text) turns.push(`USER: ${text}`);
       }
       if (entry.type === "assistant" && entry.message?.role === "assistant") {
@@ -70,7 +72,7 @@ function extractTurns(jsonlPath: string): string {
           ?.filter((c: any) => c.type === "text")
           .map((c: any) => c.text)
           .join(" ")
-          .slice(0, 500);
+          .slice(0, MAX_TURN_CHARS);
         if (text) turns.push(`ASSISTANT: ${text}`);
       }
     } catch {
@@ -78,7 +80,7 @@ function extractTurns(jsonlPath: string): string {
     }
   }
 
-  return turns.slice(-60).join("\n"); // last 60 turns max
+  return turns.slice(-MAX_TURNS).join("\n");
 }
 
 // ── spawnSmartCompact ─────────────────────────────────────────────────────────
