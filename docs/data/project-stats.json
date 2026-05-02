@@ -15,11 +15,11 @@
   "knowledgeFileCount": 22,
   "devAgentCount": 13,
   "analysisAgentCount": 9,
-  "totalTasksDone": 471,
+  "totalTasksDone": 472,
   "analysisMode": "value_investor",
   "briefingFilesCreated": 30,
   "briefingArchiveQI": 0,
   "briefingArchiveQII": 0,
-  "lastFixApplied": "1826a DONE: CLEAN commit orphan files, close Sprint 1825, advance to Sprint 1826. totalTasksDone=471. 2026-05-02.",
+  "lastFixApplied": "1826b DONE: GSO HTML parser observability + Variant 1/2 regex + console.error on parse fail; AC-12a/b/c. 15 pass / 0 fail. totalTasksDone=472. 2026-05-02.",
   "currentSprintNotes": "Sprint 1826 active — GSO HTML parser observability (log raw excerpt on parse fail), regex coverage for alternate GSO table layouts"
 }
