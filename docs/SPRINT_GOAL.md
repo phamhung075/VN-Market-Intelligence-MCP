@@ -1,17 +1,17 @@
-## Sprint 1827 — Active
+## Sprint 1828 — Active
 
 **Status:** TODO | **Opened:** 2026-05-02
 
 ## Goals
 
-- Sync project-stats.json knowledgeFileCount (22→26) + tool-registry.json toolCount (122→123)
-- Create missing agent notebooks (18 of 22 agents)
+- Reuters RSS + tradingEconomics consecutive-error observability (WORK alert at >= 10 errors)
+- knowledgeFileCount sync
 
 ## Success Criteria
 
-- project-stats.json knowledgeFileCount matches actual .claude/knowledge/*.md count
-- tool-registry.json toolCount matches project-stats.json toolCount
-- All 22 agent notebooks present in docs/agent-memory/notebooks/
+- Consecutive-error counter for Reuters RSS and tradingEconomics fetchers
+- WORK channel alert fires when consecutive errors reach threshold (>=10)
+- project-stats.json knowledgeFileCount accurate
 - `bun tsc --noEmit` clean
 
 ---
@@ -20,6 +20,7 @@
 
 | Sprint | Result |
 |--------|--------|
+| 1827 — Sync project-stats.json knowledgeFileCount + tool-registry.json toolCount + create missing agent notebooks | DONE — 2026-05-02. 8582 pass / 0 fail. totalTasksDone=474 |
 | 1826 — GSO HTML parser observability + regex variants 1 & 2 | DONE — 2026-05-02. 8582 pass / 0 fail. totalTasksDone=472 |
 | 1825 — GSO HTML parser + vnstock backoff | DONE — 2026-05-02. 8582 pass / 0 fail. totalTasksDone=470 |
 | 1824 — agent-memory manifests, GSO native fetch, deploy market-hours guard, orphan cleanup | DONE — 2026-05-02. 8582 pass / 0 fail. totalTasksDone=468 |
