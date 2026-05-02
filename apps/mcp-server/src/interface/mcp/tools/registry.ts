@@ -89,6 +89,7 @@ import { registerForeignFlowDebugTriggerTool } from "./system/foreignFlowDebugTr
 import { registerCarryTools } from "./macro/carryTools.js";
 import { registerDinhGiaTools } from "./macro/dinhGiaTools.js";
 import { registerVpsServiceRestartTool } from "./system/vpsServiceRestartTool.js";
+import { registerSmartCompactTool } from "./system/smartCompactTool.js";
 
 /**
  * Flat array of all MCP tool registration functions.
@@ -178,4 +179,5 @@ export const toolRegistry: Array<(server: McpServer) => void> = [
   registerCarryTools,                   // Task 1423e: get_macro_calendar (+1 → 115)
   registerDinhGiaTools,                 // Task 1426b: get_yield_spread_signal (+1 → 116)
   registerVpsServiceRestartTool,        // Task 1779b: restart_vps_service (+1 → 117)
+  registerSmartCompactTool,             // Task 1821b: smart_compact (+1 → 118)
 ];
