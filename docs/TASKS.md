@@ -12,13 +12,16 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Blocked by |
 |---------|-------|----------|------|-------|---------|------------|
+| JANITOR-020 | DRY: MACRO_CODES array + AnalysisRow/AlertCountRow/LastCycleRow interfaces + section-builder logic duplicated between marketContextBuilder.ts (domain) and marketContextTools.ts (interface). Fix: marketContextTools.ts should import and delegate to marketContextBuilder.ts instead of reimplementing. | P2 | refactor | developer | — | — |
 
 ---
 
 ## Todo
 
-| Task ID | Title | Priority | Type | Owner | Handoff |
-|---------|-------|----------|------|-------|---------|
+| Task ID | Title | Priority | Type | Owner | Handoff | Blocked by |
+|---------|-------|----------|------|-------|---------|------------|
+
+---
 
 ---
 
@@ -40,6 +43,8 @@
 
 | Task ID | Title | Merged | Reports |
 |---------|-------|--------|---------|
+| JANITOR-019d | DRY: replace remaining `.map(() => "?").join(` in `sectorRotationTools.ts` + `bctcDebugTriggerHandler.ts` with `sqlInClause()`. grep clean. 8556 pass / 2 fail (pre-existing doc invariants, unrelated). | 2026-05-02 | — |
+| JANITOR-019 | DRY: `sqlInClause` — architect spec complete; decomposed into 019a/019b/019c | 2026-05-02 | — |
 | 1815d | FIX: docker-compose.yml mcp-server healthcheck — replace curl (not in Bun container PATH) with bun fetch. 8647 pass / 19 fail (all pre-existing). | 2026-05-02 | reports/TASK_REPORT_1815d.md |
 | 1815c | FIX: tradingEconomicsChromium.ts — retry-on-Target-closed Playwright crash. +9 lines, 2 new tests (AC-17). 8646 pass / 19 fail (all pre-existing). | 2026-05-02 | reports/TASK_REPORT_1815c.md |
 | 1815 | FIX: BCTC-VAL-01-POSITION — VNM Q4-2025 false-zero confidence. When assets<equity (ratio<500) AND netRevenue>assets×30, apply soft penalty (−0.2) instead of hard fail. 3 new tests green (8539 pass total). | 2026-05-02 | reports/TASK_REPORT_1815.md |
