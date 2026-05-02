@@ -40,6 +40,7 @@
 
 | Task ID | Title | Merged | Reports |
 |---------|-------|--------|---------|
+| 1815d | FIX: docker-compose.yml mcp-server healthcheck — replace curl (not in Bun container PATH) with bun fetch. 8647 pass / 19 fail (all pre-existing). | 2026-05-02 | reports/TASK_REPORT_1815d.md |
 | 1815c | FIX: tradingEconomicsChromium.ts — retry-on-Target-closed Playwright crash. +9 lines, 2 new tests (AC-17). 8646 pass / 19 fail (all pre-existing). | 2026-05-02 | reports/TASK_REPORT_1815c.md |
 | 1815 | FIX: BCTC-VAL-01-POSITION — VNM Q4-2025 false-zero confidence. When assets<equity (ratio<500) AND netRevenue>assets×30, apply soft penalty (−0.2) instead of hard fail. 3 new tests green (8539 pass total). | 2026-05-02 | reports/TASK_REPORT_1815.md |
 | JANITOR-018 | DDD fix: bctcDiscovery.ts — extract fetchWithTimeout + BROWSER_UA to infrastructure/fetchers/bctcHttpFetcher.ts; wire bctcHttpFetch at scheduler call site; guard throws when no fetchers supplied. 1813-bctc-ddd.test.ts passes. | 2026-05-01 | — |
