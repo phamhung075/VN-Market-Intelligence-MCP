@@ -28,7 +28,7 @@ import { generateAlerts } from "../../domain/services/alertGenerator.js";
 import { storeAlerts } from "../../infrastructure/db/alertStore.js";
 import { getDb } from "../../infrastructure/db/schema.js";
 import { logger } from "../../infrastructure/logger.js";
-import { globalSourceTracker } from "../../interface/mcp/tools/news-analysis/sourceHealthTools.js";
+import { globalSourceTracker, _resetGlobalSourceTracker } from "../../interface/mcp/tools/news-analysis/sourceHealthTools.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Constants — Reuters/TE fallback chain (Task 1345a)
@@ -50,11 +50,18 @@ const ALL_DARK_ALERT_COOLDOWN_MS = 4 * 60 * 60 * 1000;
 let _lastAllDarkAlertAt = 0;
 
 /**
- * Test-only reset for the all-sources-dark dedup timer.
+ * Test-only reset for the all-sources-dark dedup timer and source health tracker.
+ *
+ * Clears both the module-level cooldown timestamp and the globalSourceTracker
+ * accumulated failure state, so tests that call this in beforeEach start with
+ * a clean slate for both the dark-alert dedup and the active-source CB check
+ * (Task 1832b).
+ *
  * @internal
  */
 export function _resetAllDarkAlert(): void {
   _lastAllDarkAlertAt = 0;
+  _resetGlobalSourceTracker();
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -684,6 +691,22 @@ export async function pollNews(options: PollNewsOptions = {}): Promise<PollNewsR
     return _newsapiConfiguredCache;
   }
 
+  // ── Task 1832b: Active-source count snapshot (pre-fetch-loop state) ─────
+  // Snapshot which sources are expected to be functional BEFORE the health-update
+  // loop below calls recordFailure/recordSuccess for this cycle's results.
+  // Using pre-loop state ensures a single failed cycle does not immediately
+  // remove a source from the active count — it takes DOWN_THRESHOLD (5)
+  // consecutive failures before a source is classified as CB-open.
+  // This also avoids cross-test state pollution in the full test suite where
+  // multiple pollNews calls accumulate recordFailure counts within the same
+  // Bun process (the tracker is a globalThis singleton).
+  const activeSourceCount = sourceResults.filter(({ name }) => {
+    const displayName = SOURCE_DISPLAY_NAMES[name] ?? name;
+    if (STUB_CAPABLE_KEYS.has(name) && !isNewsapiConfigured()) return false; // disabled
+    if (globalSourceTracker.isDown(displayName)) return false; // CB-open (5+ prior failures)
+    return true;
+  }).length;
+
   for (const { name, result } of sourceResults) {
     const displayName = SOURCE_DISPLAY_NAMES[name] ?? name;
     if (result.status === "fulfilled") {
@@ -731,7 +754,10 @@ export async function pollNews(options: PollNewsOptions = {}): Promise<PollNewsR
   // Deduped to one alert per 4-hour window. Task 1398 adds a DB-backed guard
   // (via cron_job_runs) that persists the last-sent timestamp across restarts,
   // preventing re-alert floods when the server restarts during a sustained outage.
-  if (allItems.length === 0) {
+  // Task 1832b: only fire when at least one source is expected to be functional
+  // (activeSourceCount > 0). If all sources are CB-open or disabled, the zero
+  // result is expected behaviour — not an outage.
+  if (allItems.length === 0 && activeSourceCount > 0) {
     const now = options.nowMs?.() ?? Date.now();
     // DB-backed last-sent: read MAX(started_at) for the cooldown key
     const dbRow = (() => {
@@ -759,7 +785,8 @@ export async function pollNews(options: PollNewsOptions = {}): Promise<PollNewsR
       } catch { /* best-effort — table may not exist in legacy DBs */ }
       const darkMsg =
         "[pollNews] All news sources returned 0 items — possible VPS/network outage. " +
-        `Sources checked: ${Object.keys(resolvedFetchers).join(", ")}`;
+        `Sources checked: ${Object.keys(resolvedFetchers).join(", ")} ` +
+        `(active: ${activeSourceCount}/${sourceResults.length})`;
       logger.warn(darkMsg);
       try {
         if (options.onAllSourcesDark) {

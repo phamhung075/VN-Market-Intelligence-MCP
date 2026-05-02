@@ -54,6 +54,30 @@ globalSourceTracker.seedKnownSources([
   "Trading Economics",
 ]);
 
+/**
+ * Test-only reset for the global source health tracker.
+ *
+ * Clears all accumulated failure/success state from the globalSourceTracker
+ * singleton. The existing object reference is preserved (no replacement) so
+ * all code that imports `globalSourceTracker` sees the cleared state.
+ *
+ * Called by pollNews._resetAllDarkAlert so that any test using that hook
+ * also gets clean source-health state between tests.
+ *
+ * @internal — do NOT call from production paths.
+ */
+export function _resetGlobalSourceTracker(): void {
+  globalSourceTracker._reset();
+  // Re-seed known sources so getAllHealth() returns rows immediately after reset.
+  globalSourceTracker.seedKnownSources([
+    "CafeF RSS",
+    "VnExpress RSS",
+    "VnEconomy RSS",
+    "Reuters RSS",
+    "Trading Economics",
+  ]);
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Vietnamese status labels
 // ─────────────────────────────────────────────────────────────────────────────
