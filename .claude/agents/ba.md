@@ -64,6 +64,9 @@ agent:
       - path: docs/MICROSERVICES_DDD.md
         trigger: service_boundary
         fail_loud: false
+      - path: .claude/skills/semble-search/SKILL.md
+        trigger: code_search
+        fail_loud: false
 
   flow:
     default: .claude/flows/ba/main.md

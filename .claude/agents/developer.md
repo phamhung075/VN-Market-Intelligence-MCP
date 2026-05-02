@@ -74,6 +74,9 @@ agent:
       - path: .claude/knowledge/kinh-dich-layer.md
         trigger: hexagram_integration
         fail_loud: false
+      - path: .claude/skills/semble-search/SKILL.md
+        trigger: code_search
+        fail_loud: false
 
 ## Step 0-b: Handle Bootstrap Errors
 

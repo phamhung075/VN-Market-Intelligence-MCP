@@ -2,9 +2,9 @@
   "_maintained_by": "PM / system-auditor",
   "_trigger": "sprint start/end, tool/cron count change, baseline test update",
   "lastUpdated": "2026-05-02",
-  "currentSprint": 1832,
-  "previousSprint": { "number": 1831, "status": "DONE", "summary": "CLEAN: commit orphans, close Sprint 1830, advance to Sprint 1832. 8602 pass / 0 fail. totalTasksDone=484." },
-  "sprintGoal": "Sprint 1832 — TBD",
+  "currentSprint": 1833,
+  "previousSprint": { "number": 1832, "status": "DONE", "summary": "Integrate semble semantic code search — add semble-search agent + skill, wire lazy_load into 6 agents, update dev-standards. 8608 pass / 0 fail. totalTasksDone=486." },
+  "sprintGoal": "Sprint 1833 — TBD",
   "testBaseline": 8608,
   "testBaselineTarget": 8608,
   "testBaselinePass": 8608,
@@ -15,11 +15,11 @@
   "knowledgeFileCount": 25,
   "devAgentCount": 13,
   "analysisAgentCount": 9,
-  "totalTasksDone": 485,
+  "totalTasksDone": 486,
   "analysisMode": "value_investor",
   "briefingFilesCreated": 30,
   "briefingArchiveQI": 0,
   "briefingArchiveQII": 0,
-  "lastFixApplied": "1832b DONE: FIX pollNews zero-check — exclude CB-open/disabled sources from all-dark denominator. BUG 2727+2728 resolved. 2026-05-02.",
-  "currentSprintNotes": "Sprint 1832 — 1832b merged. BUG 2727+2728 false-alarm pattern eliminated."
+  "lastFixApplied": "1833a DONE: integrate semble semantic code search — semble-search agent + skill, lazy_load wired into 6 agents, dev-standards updated. 2026-05-02.",
+  "currentSprintNotes": "Sprint 1833 — starting fresh. Semble integrated as preferred code search tool."
 }

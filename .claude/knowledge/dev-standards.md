@@ -1,5 +1,20 @@
 # Developer Standards
 
+## Code Search — Preferred Tools
+
+| Task | Tool |
+|------|------|
+| Find how a function/class/API works | `semble-search` agent |
+| Locate callers, usages, implementations | `semble-search` agent |
+| Discover related code patterns | `semble-search` agent |
+| Exhaustive literal / regex match | `Grep` |
+| Read a specific known file | `Read` |
+| Find files by name pattern | `Glob` |
+
+Use `semble search` (CLI) for all semantic/exploratory questions. Load skill → `.claude/skills/semble-search/SKILL.md` when `code_search` context is needed. Do not grep blindly when intent-based search answers it in one call.
+
+---
+
 ## DDD Layer Rules
 
 | Building | Layer | Folder |

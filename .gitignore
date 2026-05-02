@@ -11,5 +11,6 @@ data/
 *.corrupt-*
 dist/
 .claude/worktrees
+.claude/scheduled_tasks.lock
 reports/*-evening.json
 /__pycache__/

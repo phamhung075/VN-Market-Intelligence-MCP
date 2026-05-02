@@ -56,6 +56,10 @@ agent:
         fail_loud: true
       - path: docs/data/code-janitor-known-findings.json
         fail_loud: true
+    lazy_load:
+      - path: .claude/skills/semble-search/SKILL.md
+        trigger: code_search
+        fail_loud: false
 ## KNOWLEDGE LOAD FAILURE PROTOCOL
 
 If any Read of `.claude/knowledge/*.md` fails (file missing, empty, <50 chars, or permission denied):

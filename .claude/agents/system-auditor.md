@@ -65,6 +65,9 @@ agent:
       - path: .claude/knowledge/mcp-tools.md
         trigger: tool_health_check
         fail_loud: false
+      - path: .claude/skills/semble-search/SKILL.md
+        trigger: code_search
+        fail_loud: false
 ## KNOWLEDGE LOAD FAILURE PROTOCOL
 
 If any Read of `.claude/knowledge/*.md` fails (file missing, empty, <50 chars, or permission denied):

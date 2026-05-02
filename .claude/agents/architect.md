@@ -72,6 +72,9 @@ agent:
       - path: docs/MICROSERVICES_DDD.md
         trigger: design
         fail_loud: false
+      - path: .claude/skills/semble-search/SKILL.md
+        trigger: code_search
+        fail_loud: false
 
   flow:
     default: .claude/flows/architect/main.md
