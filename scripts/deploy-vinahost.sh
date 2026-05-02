@@ -114,17 +114,12 @@ sed -e "s|__MCP_BASE__|${MCP_BASE}|g" \
     vps-scripts/fetch-vn-news.sh > "$TMP"
 $SCP "$TMP" ${VH_USER}@${VH_IP}:/root/fetch-vn-news.sh
 $SCP vps-scripts/fetch-vn-news-loop.sh ${VH_USER}@${VH_IP}:/root/fetch-vn-news-loop.sh
-$SCP vps-scripts/fetch-browser.py ${VH_USER}@${VH_IP}:/root/fetch-browser.py
 $SCP vps-scripts/vn-news-fetch.service ${VH_USER}@${VH_IP}:/etc/systemd/system/vn-news-fetch.service
 rm "$TMP"
 
 $SSH << 'NEWSEOF'
 set -e
-apt-get install -y -qq python3 python3-pip > /dev/null 2>&1
-# Install Playwright + Chromium for bot-guarded RSS sources (e.g. vneconomy/tai-chinh.rss)
-pip3 install playwright --break-system-packages -q 2>/dev/null || pip3 install playwright -q
-python3 -m playwright install chromium --with-deps > /dev/null 2>&1
-chmod +x /root/fetch-vn-news.sh /root/fetch-vn-news-loop.sh /root/fetch-browser.py
+chmod +x /root/fetch-vn-news.sh /root/fetch-vn-news-loop.sh
 systemctl daemon-reload
 systemctl enable vn-news-fetch.service
 systemctl restart vn-news-fetch.service
@@ -253,7 +248,6 @@ TEEOF
 echo ""
 echo "Deploying VPS HTTP proxy server (BCTC Playwright + SSC iboard, port 8765)..."
 $SCP vps-scripts/vps-proxy-server.js ${VH_USER}@${VH_IP}:/root/vps-proxy-server.js
-$SCP vps-scripts/discover-bctc-urls-browser.py ${VH_USER}@${VH_IP}:/root/discover-bctc-urls-browser.py
 $SCP vps-scripts/vn-vps-proxy.service ${VH_USER}@${VH_IP}:/etc/systemd/system/vn-vps-proxy.service
 
 $SSH << 'PROXYEOF'

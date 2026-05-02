@@ -3,13 +3,13 @@ Description=TradingEconomics macro indicators proxy — push VN macro data to ze
 Documentation=https://github.com/phamhung075/VN-Market-Intelligence-MCP
 After=network-online.target
 Wants=network-online.target
+StartLimitIntervalSec=0
 
 [Service]
 Type=simple
 ExecStart=/root/fetch-tradingeconomics-loop.sh
 Restart=always
 RestartSec=10
-StartLimitIntervalSec=0
 MemoryMax=512M
 MemorySwapMax=0
 TasksMax=32
