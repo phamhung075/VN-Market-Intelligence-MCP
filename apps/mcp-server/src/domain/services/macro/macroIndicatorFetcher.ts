@@ -140,19 +140,19 @@ export async function fetchAndStoreMacroIndicators(
 
   // ──────────────────────────────────────────────────────────────────────────
   // Source 3: GSO (General Statistics Office)
-  // Attempts fetch unconditionally. GSO_VPS_ENDPOINT overrides the default URL
-  // (useful in tests). If the response is not JSON, JSON.parse throws and the
-  // catch block captures lastError; the all-failed path below handles it.
+  // Fetches HTML from GSO_VPS_ENDPOINT (or default gso.gov.vn) and parses CPI
+  // and GDP growth using regex. If no patterns match, falls through to the
+  // all-failed path without throwing.
   // ──────────────────────────────────────────────────────────────────────────
   try {
     const gsoUrl = Bun.env.GSO_VPS_ENDPOINT ?? "https://www.gso.gov.vn/";
-    const result = (await circuitBreaker.wrap(async () => {
+    const html = (await circuitBreaker.wrap(async () => {
       return httpClient.get(gsoUrl);
     })) as string;
 
-    if (result && typeof result === "string") {
-      const data = JSON.parse(result) as MacroData;
-      const indicatorCount = Object.keys(data).length;
+    if (html && typeof html === "string") {
+      const data = parseGsoHtml(html);
+      const indicatorCount = Object.keys(data).filter((k) => data[k] !== undefined).length;
 
       if (indicatorCount > 0) {
         storeIndicators(db, data, fetchedAt);
@@ -184,6 +184,45 @@ export async function fetchAndStoreMacroIndicators(
     fetchedAt,
     error: lastError || "All sources failed",
   };
+}
+
+/**
+ * Parses CPI and GDP growth from GSO HTML using regex patterns.
+ *
+ * Matches Vietnamese labels ("Chỉ số giá tiêu dùng", "tăng trưởng GDP") or
+ * English abbreviations (CPI, GDP). Numbers are extracted from within 80 chars
+ * after the label. Values outside plausible ranges are discarded.
+ *
+ * @param html Raw HTML string from GSO website
+ * @returns Record with cpi and/or gdp_growth (only keys with valid values present)
+ */
+function parseGsoHtml(html: string): Record<string, number | undefined> {
+  const toFloat = (raw: string): number | undefined => {
+    const n = parseFloat(raw.replace(",", "."));
+    return isNaN(n) ? undefined : n;
+  };
+
+  const data: Record<string, number | undefined> = {};
+
+  // CPI: number following "CPI" or Vietnamese label within 80 chars
+  const cpiMatch = html.match(
+    /(?:CPI|Ch[iỉ]\s*s[oố]\s*gi[aá]\s*ti[eê]u\s*d[uù]ng)[^0-9]{0,80}([\d]+[.,][\d]+)/i,
+  );
+  if (cpiMatch?.[1]) {
+    const v = toFloat(cpiMatch[1]);
+    if (v !== undefined && v >= 90 && v <= 130) data.cpi = v;
+  }
+
+  // GDP growth: number following "GDP" or Vietnamese growth label
+  const gdpMatch = html.match(
+    /(?:GDP|t[aă]ng\s*tr[ưu][oờ]ng\s*GDP|t[oố]c\s*[dđ][oộ]\s*t[aă]ng)[^0-9]{0,80}([\d]+[.,][\d]+)/i,
+  );
+  if (gdpMatch?.[1]) {
+    const v = toFloat(gdpMatch[1]);
+    if (v !== undefined && v >= -5 && v <= 20) data.gdp_growth = v;
+  }
+
+  return data;
 }
 
 /**

@@ -469,11 +469,9 @@ describe("Task 239a — macro-indicator-refresh (RED phase)", () => {
   });
 
   // ──────────────────────────────────────────────────────────────────────────
-  // AC-11: GSO fetch attempted even when GSO_VPS_ENDPOINT is unset.
-  //        Non-JSON response (HTML) causes JSON.parse to throw; circuit-breaker
-  //        catches it and the all-failed graceful path is returned.
+  // AC-11a: Opaque GSO HTML (no CPI/GDP patterns) → graceful all-failed
   // ──────────────────────────────────────────────────────────────────────────
-  test("AC-11: GSO fetch attempted when GSO_VPS_ENDPOINT unset → non-JSON response falls through to all-failed gracefully", async () => {
+  test("AC-11a: GSO returns opaque HTML with no CPI/GDP patterns → graceful all-failed", async () => {
     delete Bun.env.GSO_VPS_ENDPOINT;
     let gsoFetchAttempted = false;
 
@@ -482,7 +480,7 @@ describe("Task 239a — macro-indicator-refresh (RED phase)", () => {
         if (url.includes("yahoo")) throw new Error("yahoo fail");
         if (url.includes("sbv")) throw new Error("sbv fail");
         gsoFetchAttempted = true;
-        return "<html>not json</html>"; // fetch happens, but parse fails
+        return "<html><body>Trang chủ GSO</body></html>";
       },
       post: async () => ({ status: 200, body: "" }),
     };
@@ -512,11 +510,62 @@ describe("Task 239a — macro-indicator-refresh (RED phase)", () => {
       mockRateLimiter
     );
 
-    // Fetch IS attempted (no silent skip), but HTML response fails JSON.parse
     expect(gsoFetchAttempted).toBe(true);
-    // All-failed path: graceful, no throw
     expect(result.success).toBe(false);
-    expect(result.sourceUsed).toBeNull();
+  });
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // AC-11b: GSO HTML contains CPI + GDP patterns → sourceUsed=gso, stored in DB
+  // ──────────────────────────────────────────────────────────────────────────
+  test("AC-11b: GSO HTML contains CPI+GDP patterns → success=true, sourceUsed=gso, DB row stored", async () => {
+    Bun.env.GSO_VPS_ENDPOINT = "https://gso.vn/";
+
+    const mockHttpClient: MockHttpClient = {
+      get: async (url: string) => {
+        if (url.includes("yahoo")) throw new Error("yahoo fail");
+        if (url.includes("sbv")) throw new Error("sbv fail");
+        return "<html><body><td>CPI</td><td>103.45</td><td>GDP</td><td>6.93</td></body></html>";
+      },
+      post: async () => ({ status: 200, body: "" }),
+    };
+
+    const mockCircuitBreaker: MockCircuitBreaker = {
+      wrap: async (fn: () => Promise<unknown>) => fn(),
+    };
+
+    const mockRateLimiter: MockRateLimiter = {
+      checkLimit: async () => undefined,
+    };
+
+    const { fetchAndStoreMacroIndicators } = await import(
+      "../application/usecases/macroIndicatorFetcher.js"
+    ).catch(() => ({
+      fetchAndStoreMacroIndicators: async () => ({
+        success: false,
+        sourceUsed: null,
+        indicatorCount: 0,
+      }),
+    }));
+
+    const result: FetchResult = await fetchAndStoreMacroIndicators(
+      db,
+      mockHttpClient,
+      mockCircuitBreaker,
+      mockRateLimiter
+    );
+
+    expect(result.success).toBe(true);
+    expect(result.sourceUsed).toBe("gso");
+    expect(result.indicatorCount).toBeGreaterThanOrEqual(1);
+
+    const row = db
+      .prepare("SELECT cpi, gdp_growth FROM macro_indicators WHERE country = ?")
+      .get("VN") as { cpi: number; gdp_growth: number } | undefined;
+    expect(row).toBeTruthy();
+    expect(row?.cpi).toBeCloseTo(103.45, 2);
+    expect(row?.gdp_growth).toBeCloseTo(6.93, 2);
+
+    delete Bun.env.GSO_VPS_ENDPOINT;
   });
 
   // ──────────────────────────────────────────────────────────────────────────
