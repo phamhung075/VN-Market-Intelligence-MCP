@@ -22,6 +22,8 @@ import { z } from "zod";
 import { getDb, initDatabase } from "../../../../infrastructure/db/schema.js";
 import { sqlInClause } from "../../../../infrastructure/db/sqlHelpers.js";
 import { tradingWindowLabel } from "../../../../domain/services/tradingWindow.js";
+import type { AnalysisRow, AlertCountRow, LastCycleRow } from "../../../../domain/services/marketContextBuilder.js";
+import { MACRO_CODES } from "../../../../domain/services/marketContextBuilder.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SQLite row types
@@ -55,37 +57,6 @@ interface AlertRow {
   affected_actions_json: string | null;
   message: string | null;
 }
-
-interface AnalysisRow {
-  id: string;
-  created_at: string;
-  level: string;
-  source_title: string | null;
-  sentiment: string | null;
-  impact_score: number | null;
-  impact_direction: string | null;
-  summary: string | null;
-}
-
-interface AlertCountRow {
-  cnt: number;
-}
-
-interface LastCycleRow {
-  triggered_at: string;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Known macro indicator codes (from commodity_prices / yahooFinance fetcher)
-// ─────────────────────────────────────────────────────────────────────────────
-
-const MACRO_CODES = [
-  "BRENT", "WTI", "GOLD", "SILVER", "COPPER",
-  "WHEAT", "COFFEE", "RUBBER",
-  "USD_VND", "USD_INDEX",
-  "VN_CPI", "VN_GDP",
-  "BTC",
-] as const;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Formatting helpers

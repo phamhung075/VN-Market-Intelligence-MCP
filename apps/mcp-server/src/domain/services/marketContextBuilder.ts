@@ -53,7 +53,7 @@ interface AlertRow {
   message: string | null;
 }
 
-interface AnalysisRow {
+export interface AnalysisRow {
   id: string;
   created_at: string;
   level: string;
@@ -64,11 +64,11 @@ interface AnalysisRow {
   summary: string | null;
 }
 
-interface AlertCountRow {
+export interface AlertCountRow {
   cnt: number;
 }
 
-interface LastCycleRow {
+export interface LastCycleRow {
   triggered_at: string;
 }
 
@@ -76,7 +76,7 @@ interface LastCycleRow {
 // Known macro indicator codes
 // ─────────────────────────────────────────────────────────────────────────────
 
-const MACRO_CODES = [
+export const MACRO_CODES = [
   "BRENT", "WTI", "GOLD", "SILVER", "COPPER",
   "WHEAT", "COFFEE", "RUBBER",
   "USD_VND", "USD_INDEX",
