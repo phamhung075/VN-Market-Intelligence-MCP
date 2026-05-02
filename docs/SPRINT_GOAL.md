@@ -1,15 +1,19 @@
-## Sprint 1823 — Active
+## Sprint 1824 — Active
 
 **Status:** TODO | **Opened:** 2026-05-02
 
 ## Goals
 
-TBD — sprint 1822 closed cleanly. Next PO triage will populate goals.
+- Resolve 105 pre-existing test failures introduced by 1822d-a (Playwright BCTC migration)
+- Replace GSO curl dependency with native bun fetch (eliminate VPS_ENDPOINT guard as runtime workaround)
+- vnstock circuit-breaker hardening follow-up if any edge cases surface from 1823b backoff
+- te-chromium circuit-breaker observability: WORK alert coverage audit post-1823d
 
 ## Success Criteria
 
-- Full test suite passes with no new failures
+- Full test suite passes with 0 failures (105 pre-existing resolved)
 - `bun tsc --noEmit` clean
+- GSO macro fetch works without `GSO_VPS_ENDPOINT` env guard
 
 ---
 
@@ -17,6 +21,7 @@ TBD — sprint 1822 closed cleanly. Next PO triage will populate goals.
 
 | Sprint | Result |
 |--------|--------|
+| 1823 — vnstock backoff + te-chromium circuit breaker + GSO skip guard | DONE — 2026-05-02. 1823b+1823c+1823d merged. 8582 pass / 0 fail. totalTasksDone=462 |
 | 1822 — VPS Playwright removal + BCTC migration to Docker + test fixes | DONE — 2026-05-02. 1822a–1822g merged. 8565 pass / 0 fail. totalTasksDone=458 |
 | 1821 — pollNews cold-start retry + smart_compact MCP tool | DONE — 2026-05-02. 1821a + 1821b + 1821c merged. 8565 pass / 0 fail. totalTasksDone=450 |
 | 1820 — JANITOR-020 sqlInClause DRY completion | DONE — 2026-05-02. 1819a + JANITOR-020 merged. 8558 pass / 0 fail. totalTasksDone=448 |

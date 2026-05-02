@@ -42,6 +42,7 @@
 
 | Task ID | Title | Merged | Reports |
 |---------|-------|--------|---------|
+| 1824c | CHORE: advance SPRINT_GOAL.md to Sprint 1824, sync project-stats.json (currentSprint=1824, previousSprint=1823 DONE). | 2026-05-02 | — |
 | 1824b | CLEAN: remove stale apps/mcp-server/docs/agent-memory/ orphan tree (12 files) + apps/mcp-server/reports/ (1 file). Zero source references. tsc clean. | 2026-05-02 | — |
 | 1823d | FIX: te-chromium crash-loop circuit breaker — 3-strike limit on "Target closed", WORK alert fires once at threshold, auto-recovery on success. 5 new AC tests. 8582 pass / 0 fail. | 2026-05-02 | reports/TASK_REPORT_1823d.md |
 | 1823c | FIX: GSO macro skip guard — log skip when GSO_VPS_ENDPOINT unset; eliminates noisy HTML parse errors on macro refresh cycle. 11 pass / 0 fail. | 2026-05-02 | reports/TASK_REPORT_1823c.md |
