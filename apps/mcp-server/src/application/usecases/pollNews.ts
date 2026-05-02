@@ -133,6 +133,11 @@ export interface PollNewsOptions {
   onAllSourcesDark?: (message: string) => Promise<void>;
   /** Clock override for testing the 4h cooldown boundary. Task 1398. */
   nowMs?: () => number;
+  /**
+   * Sleep function injectable for tests (default: 2000 ms real sleep).
+   * Used by the teChromiumNews 0-item cold-start retry. Task 1821a.
+   */
+  sleepMs?: (ms: number) => Promise<void>;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -595,6 +600,27 @@ export async function pollNews(options: PollNewsOptions = {}): Promise<PollNewsR
     if (!(k in knownKeys) && fn !== undefined) {
       resolvedFetchers[k] = fn;
     }
+  }
+
+  // ── Task 1821a: teChromiumNews 0-item cold-start retry ──────────────────
+  // Playwright cold-launch occasionally returns 0 items on the first call
+  // (browser not yet warmed up). Wrap the teChromiumNews fetcher so that
+  // a fulfilled-but-empty result triggers a single 2-second sleep + retry.
+  // Only teChromiumNews gets this treatment — other sources are unaffected.
+  const _realSleep = (ms: number): Promise<void> =>
+    new Promise((resolve) => setTimeout(resolve, ms));
+  const sleep = options.sleepMs ?? _realSleep;
+
+  const TE_CHROMIUM_KEY = "teChromiumNews";
+  if (resolvedFetchers[TE_CHROMIUM_KEY] !== undefined) {
+    const originalFetcher = resolvedFetchers[TE_CHROMIUM_KEY]!;
+    resolvedFetchers[TE_CHROMIUM_KEY] = async (): Promise<RssItem[]> => {
+      const firstResult = await originalFetcher();
+      if (firstResult.length > 0) return firstResult;
+      // Cold-start empty result — wait and retry once
+      await sleep(2000);
+      return originalFetcher();
+    };
   }
 
   // ── Step 1: Fetch all active sources in parallel with health tracking ───
