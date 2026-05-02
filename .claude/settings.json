@@ -1,6 +1,6 @@
 {
   "hooks": {
-    "PreToolUse": [
+"PreToolUse": [
       {
         "matcher": "Glob|Grep",
         "hooks": [

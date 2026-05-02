@@ -175,7 +175,49 @@
       "fingerprint": "stats_drift:test_baseline",
       "first_seen": "2026-05-01",
       "last_reported": "2026-05-01",
-      "note": "project-stats.json testBaseline=8524 / testBaselinePass=8501. TASKS.md Done row Sprint 1807-open references 8672 total / 8592 pass. Sprint 1806c references 8562 total. project-stats is at least 2 sprint-cycles behind."
+      "note": "project-stats.json testBaseline=8524 / testBaselinePass=8501. TASKS.md Done row Sprint 1807-open references 8672 total / 8592 pass. Sprint 1806c references 8562 total. project-stats is at least 2 sprint-cycles behind.",
+      "status": "resolved",
+      "resolved": "2026-05-01 second cycle — project-stats.json now shows testBaseline=8582 matching TASKS.md entries."
+    },
+    {
+      "fingerprint": "doc_missing:SPRINT_GOAL.md",
+      "first_seen": "2026-05-01",
+      "last_reported": "2026-05-01",
+      "note": "docs/SPRINT_GOAL.md does not exist. File is referenced in auditor checklist and tree-map. Sprint 1810 has no goal documented.",
+      "status": "resolved",
+      "resolved": "2026-05-01 second cycle — file now exists at docs/SPRINT_GOAL.md (48 lines). New size-cap violation raised separately."
+    },
+    {
+      "fingerprint": "agent_missing:notebooks_directory",
+      "first_seen": "2026-05-01",
+      "last_reported": "2026-05-01",
+      "note": "docs/agent-memory/notebooks/ directory does not exist. MEMORY.md entry feedback_agent_notebook.md claims all 22 agents have notebook files at that path. Agents reading notebooks will silently fail or create stale state.",
+      "status": "resolved",
+      "resolved": "2026-05-01 second cycle — directory now exists with 4 files. Partial resolution; replaced by notebooks_incomplete:only_4_of_22_agents."
+    },
+    {
+      "fingerprint": "stats_drift:knowledge_file_count",
+      "first_seen": "2026-05-01",
+      "last_reported": "2026-05-01",
+      "note": "project-stats.json knowledgeFileCount=22 but actual .claude/knowledge/*.md count = 26 files. Gap of 4 unregistered knowledge files added since last sync (smart-compact-protocol.md, agent-notebook-protocol.md, agent-spawn-template.md, and others). PM or developer should update project-stats.json."
+    },
+    {
+      "fingerprint": "notebooks_incomplete:only_4_of_22_agents",
+      "first_seen": "2026-05-01",
+      "last_reported": "2026-05-01",
+      "note": "docs/agent-memory/notebooks/ exists but contains only 4 files (claude-manager-helper.md, code-janitor.md, main.md, po.md). MEMORY.md feedback_agent_notebook.md claims all 22 agents have notebook files. 18 agent notebooks absent. Additionally: main.md is not a valid agent name — likely a stray file. Agents will silently skip notebook load or create empty state."
+    },
+    {
+      "fingerprint": "stats_drift:tool_registry_lags_project_stats",
+      "first_seen": "2026-05-01",
+      "last_reported": "2026-05-01",
+      "note": "tool-registry.json toolCount=122 (lastUpdated 2026-04-30). project-stats.json toolCount=123 (lastUpdated 2026-05-02). Registry not updated after smart_compact MCP tool addition in Sprint 1821b. Developer should sync tool-registry.json toolCount and categories."
+    },
+    {
+      "fingerprint": "doc_oversized:SPRINT_GOAL.md",
+      "first_seen": "2026-05-01",
+      "last_reported": "2026-05-01",
+      "note": "docs/SPRINT_GOAL.md is 48 lines vs 30-line cap. Contains active sprint header + 20 closed sprint rows. Old sprint rows should be archived to docs/archive/ or TASKS_ARCHIVE.md to bring file within cap."
     }
   ]
 }
