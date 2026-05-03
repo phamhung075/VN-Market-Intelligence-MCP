@@ -41,7 +41,7 @@ beforeEach(async () => {
 
 describe("Task 265 — Mention Velocity Store", () => {
   it("records a mention and retrieves velocity", () => {
-    const hour = "2026-04-03T10:00:00.000Z";
+    const hour = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
     recordMention(db, { code: "VNM", hour, mentionCount: 5, negativeCount: 2, sourceCount: 2 });
     const velocity = getVelocity(db, "VNM", hour);
     expect(velocity).not.toBeNull();
@@ -51,7 +51,7 @@ describe("Task 265 — Mention Velocity Store", () => {
   });
 
   it("upserts: second insert for same code+hour increments counts", () => {
-    const hour = "2026-04-03T10:00:00.000Z";
+    const hour = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
     recordMention(db, { code: "VNM", hour, mentionCount: 3, negativeCount: 1, sourceCount: 1 });
     recordMention(db, { code: "VNM", hour, mentionCount: 2, negativeCount: 1, sourceCount: 1 });
     const velocity = getVelocity(db, "VNM", hour);
@@ -59,7 +59,7 @@ describe("Task 265 — Mention Velocity Store", () => {
   });
 
   it("returns null for unknown code", () => {
-    const velocity = getVelocity(db, "UNKNOWN", "2026-04-03T10:00:00.000Z");
+    const velocity = getVelocity(db, "UNKNOWN", new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString());
     expect(velocity).toBeNull();
   });
 
@@ -81,7 +81,7 @@ describe("Task 265 — Mention Velocity Store", () => {
   });
 
   it("stores different codes independently", () => {
-    const hour = "2026-04-03T10:00:00.000Z";
+    const hour = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
     recordMention(db, { code: "VNM", hour, mentionCount: 5, negativeCount: 0, sourceCount: 1 });
     recordMention(db, { code: "FPT", hour, mentionCount: 3, negativeCount: 1, sourceCount: 1 });
     expect(getVelocity(db, "VNM", hour)!.mentionCount).toBe(5);

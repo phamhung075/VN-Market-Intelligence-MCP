@@ -75,6 +75,17 @@ function closeOnOrAfter(
 }
 
 /**
+ * Compute the benchmark return percentage from a candle array.
+ * Returns (last.close - first.close) / first.close, or null when fewer than 2 candles.
+ */
+function computeBenchmarkReturn(candles: DailyCandle[]): number | null {
+  if (candles.length < 2) return null;
+  const first = candles[0]!.close;
+  const last = candles[candles.length - 1]!.close;
+  return (last - first) / first;
+}
+
+/**
  * Compute population standard deviation of a number array.
  * Returns 0 when the array has fewer than 2 elements.
  */
@@ -321,12 +332,7 @@ export function runBacktestEngine(input: BacktestEngineInput): BacktestReport {
   }
 
   // ── Benchmark return ──────────────────────────────────────────────────────
-  let benchmarkReturnPct: number | null = null;
-  if (benchmarkCandles.length >= 2) {
-    const first = benchmarkCandles[0]!.close;
-    const last = benchmarkCandles[benchmarkCandles.length - 1]!.close;
-    benchmarkReturnPct = (last - first) / first;
-  }
+  const benchmarkReturnPct = computeBenchmarkReturn(benchmarkCandles);
 
   // ── byTicker summary ──────────────────────────────────────────────────────
   const tickerMap = new Map<string, TradeRecord[]>();
@@ -369,12 +375,7 @@ function buildEmptyReport(
   benchmarkCandles: DailyCandle[],
   warnings: string[],
 ): BacktestReport {
-  let benchmarkReturnPct: number | null = null;
-  if (benchmarkCandles.length >= 2) {
-    const first = benchmarkCandles[0]!.close;
-    const last = benchmarkCandles[benchmarkCandles.length - 1]!.close;
-    benchmarkReturnPct = (last - first) / first;
-  }
+  const benchmarkReturnPct = computeBenchmarkReturn(benchmarkCandles);
 
   return {
     strategy: params.strategy,
