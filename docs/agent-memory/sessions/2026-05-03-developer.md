@@ -15,3 +15,8 @@
   - 5 test files updated + 1 new test file (21 tests)
 - **Test result**: 8686 pass, ~4-5 pre-existing failures (Task 265 × 3, Sprint 145 × 1)
 - **Status**: Committed, pipeline-state → qa
+
+### Task: Vault infrastructure overhaul — note-properties, agent-base, batch frontmatter, remote triggers
+- **Finding**: 1516 WIKI files had no frontmatter. Agent files had 4 identical blocks × 7 = heavy duplication. compact skill shadowed built-in /compact command.
+- **Fix**: Created note-properties + agent-base skills. Ran Python batch: 1486 files got frontmatter. Slimmed all 7 agents via base: reference. Renamed compact→pre-compact to unblock /compact. Deployed 2 remote triggers (monthly maintenance + daily raw inbox). Updated CLAUDE.md + note-properties for WIKI/ paths.
+- **Status**: Idle — ready for /compact

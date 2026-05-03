@@ -1,3 +1,63 @@
+## Sprint 1844 — IN PROGRESS
+
+**Status:** IN_PROGRESS | **Started:** 2026-05-04
+
+## Goal
+
+Backtest result retrieval + clean. Expose historical backtest runs via MCP tools so the user can compare strategy performance across time, and commit all orphan files accumulated since Sprint 1843.
+
+## Scope
+
+IN:
+- `get_backtest_runs` MCP tool (#124) — list all stored runs for a strategy (wraps `IBacktestResultRepository.getRunsByStrategy()`)
+- `get_backtest_run` MCP tool (#125) — retrieve a single run by ID (wraps a new `getRunById()` repo method)
+- Clean: commit all orphan files + update project-stats.json to Sprint 1844 baseline
+
+OUT: U-5 prediction calibration (gated until 2026-05-10), new strategies, schema changes, health-dashboard backtest widget (deferred — retrieval tools must land first).
+
+## Success Metric
+
+- `get_backtest_runs("combined-high-confidence")` returns structured list of all saved runs
+- `get_backtest_run(<id>)` returns the full report for a single run
+- tsc clean, DDD golden rule satisfied
+- 0 orphan untracked files after clean task
+- test baseline >= 8804 pass / <= 1 fail (1331a intentional only)
+
+---
+
+## Sprint 1843 — DONE
+
+**Status:** DONE | **Closed:** 2026-05-03
+
+## Goals
+
+Backtest strategy completeness + test baseline hardening.
+
+## Done
+
+- 1843a — combined-high-confidence real strategy: taComputation.ts (EMA/RSI), buildCombinedHighConfidenceStrategy factory, computeTADirectionMap helper, 24 tests pass.
+- 1843b — Fix 4 pre-existing test failures (265 x3 stale-date + 1332 x1 pollNews mock injection) + benchmarkReturnPct DRY.
+- 1843c — Restore apps/mcp-server/docs symlink to git tracking.
+
+---
+
+## Sprint 1842 — DONE
+
+**Status:** DONE | **Closed:** 2026-05-03
+
+## Goals
+
+U-8 Portfolio Backtesting Engine — full stack.
+
+## Done
+
+- 1842b — OHLCV backfill + 3 repository interfaces + SQLite implementations.
+- 1842c — VNSignalAdapter: VI→EN signal normalizer wired into Kinh Dich write path.
+- 1842d — BacktestEngine domain service + run_backtest MCP tool #120.
+- 1842e — Phase 3: Sharpe ratio, VNI benchmark, confidence-weighted sizing, result persistence, combined-high-confidence stub.
+
+---
+
 ## Sprint 1841 — DONE
 
 **Status:** DONE | **Closed:** 2026-05-03

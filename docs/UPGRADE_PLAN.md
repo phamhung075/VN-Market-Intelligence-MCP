@@ -16,7 +16,7 @@
 | U-5 | Prediction Calibration Feedback Loop    | 2    | SPRINT-M | PENDING    | TBD (needs 1 week of live data) |
 | U-6 | RAG Service Utilization Audit + Wiring  | 2    | SPRINT-M | DONE        | 1840a |
 | U-7 | Agent Notebook Population Protocol      | 2    | SPRINT-S | DONE        | 1839b |
-| U-8 | Portfolio Backtesting Engine            | 3    | SPRINT-L | PENDING    | TBD   |
+| U-8 | Portfolio Backtesting Engine            | 3    | SPRINT-L | DONE        | 1842  |
 | U-9 | Read-Only Health Dashboard              | 3    | SPRINT-M | DONE        | 1841a |
 | U-10| Quarterly BCTC Batch Sweep             | 3    | SPRINT-M | DONE        | 1841b |
 
@@ -148,7 +148,7 @@ Add a weekly calibration step to the `digest-predict` flow. Step reads the accur
 
 | Field       | Value |
 |-------------|-------|
-| Status      | IN_PROGRESS |
+| Status      | DONE |
 | Sprint      | 1840a |
 | Size        | SPRINT-M |
 | Dependency  | None |
@@ -193,8 +193,8 @@ Update each agent's flow file to write notebook on cycle end (observations, cali
 
 | Field       | Value |
 |-------------|-------|
-| Status      | PENDING |
-| Sprint      | TBD |
+| Status      | DONE |
+| Sprint      | 1842 |
 | Size        | SPRINT-L |
 | Dependency  | Architect design required |
 

@@ -1,11 +1,11 @@
 {
   "_maintained_by": "every agent at RETURN via agent-chaining-protocol",
-  "status": "idle",
-  "currentSprint": 1843,
-  "activeTaskId": null,
-  "nextAgent": null,
-  "nextPrompt": null,
-  "updatedAt": "2026-05-03T22:30:00.000Z",
-  "updatedBy": "qa",
-  "lastCompleted": "Sprint 1843 complete: 1843c symlink fix. All 3 tasks done."
+  "status": "in_progress",
+  "currentSprint": 1844,
+  "activeTaskId": "1844-clean",
+  "nextAgent": "developer",
+  "nextPrompt": "Sprint 1844 — Clean task. Commit all orphan files accumulated since Sprint 1843. Files to stage and commit:\n- .claude/knowledge/mcp-tools.md (modified)\n- .claude/commands/check-rules.md (new)\n- .claude/skills/audit-mcp-tools/ (new skill directory)\n- apps/mcp-server/reports/ (new directory)\n- docs/REQ_1843.md (new)\n- docs/agent-memory/sessions/2026-05-03-alert-commander.md (new)\n- docs/agent-memory/sessions/2026-05-03-market-watcher.md (new)\n- docs/agent-memory/sessions/2026-05-03-qa-responder.md (new)\n- docs/agent-memory/sessions/2026-05-04-news-scout.md (new)\n- docs/agent-memory/modules/tool-usage-stats.json (modified)\n- docs/agent-memory/notebooks/ba.md (modified)\n- docs/agent-memory/notebooks/pm.md (modified)\n- docs/agent-memory/notebooks/po.md (modified)\n- docs/agent-memory/sessions/2026-05-03-po.md (modified)\n- docs/data/project-stats.json (modified — Sprint 1844 baseline)\n- docs/handoffs/ARCH_1843.md (new)\n- docs/handoffs/QA_REPORT_1843c.md (new)\n- docs/handoffs/TASK_1843a.md (new)\n- docs/handoffs/TASK_1843b.md (new)\n- docs/handoffs/TASK_1843c.md (new)\n- docs/SPRINT_GOAL.md (modified — Sprint 1844 active)\n- docs/TASKS.md (modified — Sprint 1844 tasks added)\n- docs/UPGRADE_PLAN.md (modified)\n- docs/pipeline-state.json (this file)\n- reports/TASK_REPORT_1842.md (new)\n- .claude/scheduled_tasks.lock (deleted — confirm intentional before staging)\n\nCommit message: 'chore(sprint): close Sprint 1843, open Sprint 1844 — advance baseline to 8804/1, commit orphan files'\n\nDo NOT delete .claude/scheduled_tasks.lock without checking if it is actively used by a running process.\n\nAfter clean commit: update docs/TASKS.md to move 1844-clean to Done, then update pipeline-state.json:\n- activeTaskId: BA-1844\n- nextAgent: ba\n- nextPrompt: 'Write requirement spec for Sprint 1844 per docs/SPRINT_GOAL.md. Output: docs/REQ_1844.md. Two MCP tools: get_backtest_runs (list runs by strategy) and get_backtest_run (retrieve by ID). Also spec IBacktestResultRepository.getRunById() new repo method. Follow BA spec format with AC per tool. Notify PO when ready for review.'",
+  "updatedAt": "2026-05-04T00:00:00.000Z",
+  "updatedBy": "po",
+  "lastCompleted": "Sprint 1843 complete: 1843a+1843b+1843c. 8804 pass / 1 intentional fail (1331a)."
 }
