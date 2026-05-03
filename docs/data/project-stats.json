@@ -10,7 +10,7 @@
   "testBaselinePass": 8539,
   "testBaselineFail": 0,
   "testFailures": 0,
-  "toolCount": 121,
+  "toolCount": 122,
   "schedulerFileCount": 50,
   "knowledgeFileCount": 25,
   "devAgentCount": 14,
@@ -20,6 +20,6 @@
   "briefingFilesCreated": 30,
   "briefingArchiveQI": 0,
   "briefingArchiveQII": 0,
-  "lastFixApplied": "1841b DONE: U-10 BCTC batch sweep — bctcBatchSweepJob (0 9 25 1,4,7,10 *) + run_bctc_batch_sweep MCP tool. 19 tests pass. 8873 pass / 4 pre-existing fail. tsc clean. 2026-05-03.",
-  "currentSprintNotes": "Sprint 1841 DONE — 2026-05-03. U-9 health dashboard + U-10 BCTC batch sweep. totalTasksDone=506."
+  "lastFixApplied": "1844a DONE: backtest retrieval tools — getAllRuns() + get_backtest_runs (#121) + get_backtest_run (#122). 14 tests pass. tsc clean. 2026-05-04.",
+  "currentSprintNotes": "Sprint 1844 DONE — 2026-05-04. Backtest retrieval tools #121 + #122. totalTasksDone=507."
 }
