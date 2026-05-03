@@ -108,6 +108,9 @@ ARCHITECT CORRECTION: BA spec said `STOCK_PRICE_DB_PATH` is undefined in local t
 
 | Task ID | Title | Merged | Reports |
 |---------|-------|--------|---------|
+| 1842d | SPRINT-M: BacktestEngine domain service + run_backtest MCP tool #120 — pure computation engine, strategyRegistry (kinh-dich-high-confidence/all), runBacktest use case with IRepo injection + in-memory mutex, Zod MCP tool. 12/12 AC pass. 8765 pass / 4 pre-existing fail (265 x3 + 1332 x1). tsc clean. DDD golden rule satisfied. | 2026-05-03 | docs/handoffs/TASK_1842d.md |
+| 1842c | SPRINT-M: VNSignalAdapter — VI→EN signal normalizer wired into Kinh Dich write path. Merged 2026-05-03. | 2026-05-03 | docs/handoffs/TASK_1842c.md |
+| 1842b | SPRINT-M: OHLCV backfill + 3 backtesting repository interfaces (IBacktestSignalRepository, IBacktestPriceRepository, IBacktestResultRepository) + SQLite implementations. Merged 2026-05-03. | 2026-05-03 | docs/handoffs/TASK_1842b.md |
 | 1841b | SPRINT-M: U-10 BCTC Batch Sweep — bctcBatchSweepJob (0 9 25 1,4,7,10 *), run_bctc_batch_sweep MCP tool, isEarningsSeason() pure fn, max 5 concurrent, per-ticker isolation, MARKET digest on completion. 19 tests pass. 8873 pass / 4 pre-existing fail. tsc clean. | 2026-05-03 | docs/handoffs/TASK_1841b.md |
 | 1841a | SPRINT-M: U-9 Health Dashboard — GET /health-dashboard in api-gateway, self-contained HTML, auto-refresh 60s, 8 services, bug fix health_checker.ts kinh-dich+alert entries. 13 tests pass. 8870 pass / 4 pre-existing fail. tsc clean. | 2026-05-03 | docs/handoffs/TASK_1841a.md |
 | 1840a | SPRINT-M: U-6 RAG Wiring — pollNews→insertAnalysis (non-fatal injectable dep), news-scout + financial-analyst flows wired with search_similar_context. 3/3 tests pass. 8703 pass / 3 pre-existing Task-265 fail. tsc clean. | 2026-05-03 | docs/handoffs/TASK_1840a.md |
