@@ -205,6 +205,22 @@ async function fetchSymbolPrice(
 
     return price;
   } catch (err) {
+    // 404 → unknown or delisted ticker — warn with a clear skip message, no stack trace
+    const status =
+      err != null &&
+      typeof err === "object" &&
+      "response" in err &&
+      err.response != null &&
+      typeof err.response === "object" &&
+      "status" in err.response
+        ? (err.response as { status: unknown }).status
+        : undefined;
+
+    if (status === 404) {
+      logger.warn(`[yahooFinance] Ticker ${symbol} not found (404) — skipping`);
+      return null;
+    }
+
     logger.warn("[yahooFinance] HTTP request failed for symbol", {
       symbol,
       url,
