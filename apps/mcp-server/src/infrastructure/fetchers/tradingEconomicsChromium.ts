@@ -57,6 +57,22 @@ export const TE_USER_AGENT =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 
 /**
+ * URL patterns to block via Puppeteer request interception.
+ * Drops analytics, tag managers and tracking pixels to reduce fingerprinting
+ * surface and page-load time.
+ *
+ * Task 1834b — anti-bot hardening.
+ */
+export const TE_BLOCKED_PATTERNS: string[] = [
+  "**/google-analytics.com/**",
+  "**/googletagmanager.com/**",
+  "**/doubleclick.net/**",
+  "**/facebook.com/tr/**",
+  "**/hotjar.com/**",
+  "**/mixpanel.com/**",
+];
+
+/**
  * Returns the shared Puppeteer launch config for all Trading Economics Chromium scrapers.
  *
  * The 13 flags are the hardened set for headless Chromium inside Docker:
@@ -89,7 +105,15 @@ export function buildChromiumLaunchConfig(): LaunchOptions {
       "--metrics-recording-only",
       "--mute-audio",
       "--safebrowsing-disable-auto-update",
+      // Task 1834b — anti-bot hardening
+      "--disable-blink-features=AutomationControlled",
+      "--disable-infobars",
     ],
+    // Task 1834b — randomised viewport avoids fixed-size bot fingerprint
+    defaultViewport: {
+      width: 1280 + Math.floor(Math.random() * 200),
+      height: 800 + Math.floor(Math.random() * 200),
+    },
   };
 }
 
@@ -193,6 +217,25 @@ export async function playwrightScrape(url: string): Promise<MacroIndicators> {
     const page = await browser.newPage();
 
     await page.setUserAgent(TE_USER_AGENT);
+
+    // Task 1834b — block analytics/tracking requests to reduce fingerprint surface
+    await page.setRequestInterception(true);
+    page.on("request", (req) => {
+      const reqUrl = req.url();
+      const shouldBlock = TE_BLOCKED_PATTERNS.some((pat) => {
+        // Convert glob-style "**/<host>/**" to a simple hostname check
+        const host = pat.replace(/^\*\*\//, "").replace(/\/\*\*$/, "");
+        return reqUrl.includes(host);
+      });
+      if (shouldBlock) {
+        req.abort().catch(() => { /* ignore abort errors */ });
+      } else {
+        req.continue().catch(() => { /* ignore continue errors */ });
+      }
+    });
+
+    // Task 1834b — random human-like delay before navigation
+    await new Promise<void>((r) => setTimeout(r, 500 + Math.floor(Math.random() * 1000)));
 
     logger.info("[te-chromium] launching Chromium scrape", { url });
     // domcontentloaded is faster and more stable on heavy SPAs than networkidle2.
@@ -636,6 +679,24 @@ export async function playwrightScrapeNews(url: string): Promise<string> {
     const page = await browser.newPage();
 
     await page.setUserAgent(TE_USER_AGENT);
+
+    // Task 1834b — block analytics/tracking requests to reduce fingerprint surface
+    await page.setRequestInterception(true);
+    page.on("request", (req) => {
+      const reqUrl = req.url();
+      const shouldBlock = TE_BLOCKED_PATTERNS.some((pat) => {
+        const host = pat.replace(/^\*\*\//, "").replace(/\/\*\*$/, "");
+        return reqUrl.includes(host);
+      });
+      if (shouldBlock) {
+        req.abort().catch(() => { /* ignore abort errors */ });
+      } else {
+        req.continue().catch(() => { /* ignore continue errors */ });
+      }
+    });
+
+    // Task 1834b — random human-like delay before navigation
+    await new Promise<void>((r) => setTimeout(r, 500 + Math.floor(Math.random() * 1000)));
 
     logger.info("[te-chromium-news] launching Chromium scrape", { url });
     // domcontentloaded is faster and more stable on heavy SPAs than networkidle2.
