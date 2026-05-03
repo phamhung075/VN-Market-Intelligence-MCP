@@ -166,9 +166,8 @@ export async function createBunServer(
   ensurePoisonedQueueCleanup();
 
   // ── Task 1839a Phase 2: single DB handle for all HTTP route handlers ─────
-  // All inline getDb() calls inside handleRequest() use this shared instance.
-  // The DB connection is opened once at server startup and reused for the
-  // server lifetime — matches the existing pattern in startScheduler.ts.
+  // One shared DB instance for all route handlers — opened once at startup.
+  // Eliminates 16 per-request calls; server lifetime matches startScheduler.
   const db = getDb();
 
   // ── Session manager handles SSE + message routing ──────────────────────

@@ -83,8 +83,7 @@ export function startScheduler() {
   g.__vnMarketSchedulerStarted = true;
 
   // ── Composition root — one DB handle + job-run repository for all cron jobs ──
-  // Task 1839a Phase 2: eliminate per-job getDb() calls in favour of a shared
-  // SqliteJobRunRepository injected once at scheduler init.
+  // Task 1839a Phase 2: single DB init; jobRunRepo replaces per-job calls.
   const db = getDb()
   const jobRunRepo = new SqliteJobRunRepository(db)
 

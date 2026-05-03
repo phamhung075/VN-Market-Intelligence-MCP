@@ -1,10 +1,10 @@
 {
   "_maintained_by": "every agent at RETURN via agent-chaining-protocol",
-  "status": "idle",
-  "currentSprint": 1838,
-  "activeTaskId": null,
-  "nextAgent": null,
-  "nextPrompt": null,
-  "updatedAt": "2026-05-03T11:00:00Z",
-  "updatedBy": "qa"
+  "status": "in_progress",
+  "currentSprint": 1839,
+  "activeTaskId": "1839a",
+  "nextAgent": "qa",
+  "nextPrompt": "Task 1839a QA: verify repository pattern Phase 2 migration. Branch: task/1839a-phase2-server-migration. Handoff: docs/handoffs/TASK_1839a.md.\n\nVerify:\n1. Run: cd apps/mcp-server && bun test src/__tests__/1839a-phase2-job-run-repository.test.ts — must: 8 pass, 0 fail\n2. Run full suite: cd apps/mcp-server && bun test — must: >=8686 pass, 0 new failures beyond pre-existing Task 265 = 3\n3. Run: tsc --noEmit — must exit 0\n4. Check: grep -c 'getDb()' apps/mcp-server/src/interface/mcp/server.ts — must return 1\n5. Check: grep -c 'getDb()' apps/mcp-server/src/scheduler/startScheduler.ts — must return 1\n6. Verify AC-1 through AC-11 in handoff\n7. Confirm IJobRunRepository.ts exists in domain/repositories/\n8. Confirm SqliteJobRunRepository.ts exists in infrastructure/db/repositories/",
+  "updatedAt": "2026-05-03T13:00:00.000Z",
+  "updatedBy": "developer"
 }
