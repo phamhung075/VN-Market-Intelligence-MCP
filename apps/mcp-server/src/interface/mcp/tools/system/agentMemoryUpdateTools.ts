@@ -20,6 +20,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { writeFileSync, readFileSync, existsSync, mkdirSync } from "fs";
 import { resolve, dirname } from "path";
+import { getProjectRoot } from "../../../../infrastructure/projectRoot.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types & Constants
@@ -185,7 +186,7 @@ const UpdateMemoryFileSchema = {
 };
 
 export function registerAgentMemoryUpdateTools(server: McpServer): void {
-  const memoryDir = resolve(process.cwd(), "docs/agent-memory");
+  const memoryDir = resolve(getProjectRoot(), "docs/agent-memory");
 
   // ─────────────────────────────────────────────────────────────────────────
   // Tool 1: append_session_record

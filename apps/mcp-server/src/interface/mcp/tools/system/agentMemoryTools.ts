@@ -22,6 +22,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { readFileSync, readdirSync, statSync } from "fs";
 import { resolve, join } from "path";
+import { getProjectRoot } from "../../../../infrastructure/projectRoot.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -181,7 +182,7 @@ const SearchMemoryByTriggerSchema = {
 };
 
 export function registerAgentMemoryTools(server: McpServer): void {
-  const memoryDir = resolve(process.cwd(), "docs/agent-memory");
+  const memoryDir = resolve(getProjectRoot(), "docs/agent-memory");
 
   // ─────────────────────────────────────────────────────────────────────────
   // Tool 1: get_memory_files

@@ -14,6 +14,7 @@
 import { writeFileSync, mkdirSync } from "fs";
 import { join, dirname } from "path";
 import { sessionToolCache, type SessionToolCache } from "../../infrastructure/cache/sessionToolCache.js";
+import { getProjectRoot } from "../../infrastructure/projectRoot.js";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -31,7 +32,7 @@ export interface ToolUsageStats {
 // ── Constants ─────────────────────────────────────────────────────────────────
 
 const OUTPUT_PATH = join(
-  process.cwd(),
+  getProjectRoot(),
   "docs/agent-memory/modules/tool-usage-stats.json"
 );
 

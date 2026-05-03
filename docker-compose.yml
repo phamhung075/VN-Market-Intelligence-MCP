@@ -39,6 +39,9 @@ services:
       # Reports bind mount — ensures eveningSummaryJob output is visible on host and persists
       # across container restarts. MCP tools + Claude agents read from this path.
       - ./reports:/app/reports
+      # Agent memory bind mount — session records, patterns, modules written by MCP tools
+      # must persist on host and survive container restarts.
+      - ./docs/agent-memory:/app/docs/agent-memory
       # SSH private key — mounted read-only at /run/secrets/vps_ssh_key (matches DEFAULT_KEY_PATH
       # in sshExec.ts). Override path with VPS_SSH_KEY_PATH env var if key lives elsewhere.
       # Key must be chmod 0600 on the host; SSH rejects keys with wider permissions.

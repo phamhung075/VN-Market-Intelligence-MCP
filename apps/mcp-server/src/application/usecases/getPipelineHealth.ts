@@ -18,6 +18,7 @@
 import type { Database } from "bun:sqlite";
 import { readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
+import { getProjectRoot } from "../../infrastructure/projectRoot.js";
 import { logger } from "../../infrastructure/logger.js";
 import { VN_OFFSET_MS } from "../../domain/services/timeConstants.js";
 
@@ -107,7 +108,7 @@ export async function getPipelineHealth(
     })());
 
   const nowMs = options.nowMs ?? Date.now();
-  const reportsDir = options.reportsDir ?? join(process.cwd(), "reports");
+  const reportsDir = options.reportsDir ?? join(getProjectRoot(), "reports");
 
   // ── GMT+7 day boundary ─────────────────────────────────────────────────────
   const todayStartUtcMs =
