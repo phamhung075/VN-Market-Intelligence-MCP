@@ -37,6 +37,11 @@ UNBLOCK  {route_to} ──► done
 3. **Main terminal never exits** until it receives `PIPELINE: complete` or `PIPELINE: blocked`
 4. **Parallel by default**: spawn multiple agents in ONE message whenever tasks have no shared files/deps — Claude Code executes them concurrently
 5. **Fixer ceiling**: 2 rounds max → still failing → main terminal spawns `architect`, opens new task
+6. **Pipeline-state write is mandatory at every RETURN**: Every agent MUST write `docs/pipeline-state.json` before returning control to main terminal.
+   - If handing off to next agent: set `status: "in_progress"`, populate `nextAgent`, `nextPrompt` (full spawn prompt — verbatim), `activeTaskId`, `updatedAt` (ISO8601 now), `updatedBy` (your agent id).
+   - If sprint/pipeline is complete (PM or QA, no next agent): set `status: "idle"`, `nextAgent: null`, `nextPrompt: null`.
+   - The write is non-optional. An agent that returns without writing this file breaks post-compact resume for the entire session.
+   - **Stale-state recovery**: if `updatedAt` is >24h old AND `status` is `"in_progress"`, main terminal treats the state as crashed and resets to `idle`. Agents must write accurate timestamps.
 
 ## Parallel Spawn Rule
 
@@ -61,6 +66,9 @@ DONE: [one sentence: what was completed]
 NEXT: [agent name] | [one sentence: what it must do]
 HANDOFF: docs/handoffs/TASK_NNN.md
 PIPELINE: continue | complete | blocked
+PIPELINE_STATE_WRITE: Write docs/pipeline-state.json NOW before this response ends.
+  - If PIPELINE=continue: status="in_progress", nextAgent=<name>, nextPrompt=<full spawn prompt>, activeTaskId=<NNN>, updatedAt=<ISO8601>, updatedBy=<your-agent-id>
+  - If PIPELINE=complete: status="idle", nextAgent=null, nextPrompt=null, activeTaskId=<NNN>, updatedAt=<ISO8601>, updatedBy=<your-agent-id>
 ```
 
 ## Main Terminal Spawn Template

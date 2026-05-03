@@ -6,9 +6,17 @@ MCP server (TypeScript/Bun) — real-time VN stock intelligence (HOSE/HNX/UPCOM)
 
 ## Prerequisites — Must Be True Before Any Agent Runs
 
-### 1. User Session Required When PO Has No Tasks
+### 1. Pipeline Resume — Check Before Asking User
 
-PO cannot self-initiate if docs/TASKS.md is empty AND no Telegram reports exist.
+**Step 1 — Read `docs/pipeline-state.json`:**
+
+- If the file exists AND `status == "in_progress"` AND `nextAgent` is present AND `updatedAt` is less than 24 hours ago → **immediately spawn `nextAgent` with `nextPrompt` as the full prompt. Do NOT ask the user anything. Do NOT check TASKS.md.**
+- If the file exists AND `status == "in_progress"` AND `updatedAt` is more than 24 hours ago → treat as stale crash. Write `status: "idle"` to the file. Fall through to Step 2.
+- If the file does not exist, OR `status == "idle"` → fall through to Step 2.
+
+**Step 2 — User Session Gate (existing logic):**
+
+PO cannot self-initiate if `docs/TASKS.md` is empty AND no Telegram reports exist.
 In that case: **ask the user for a session goal** before spawning PO.
 
 ```
@@ -56,6 +64,12 @@ Spawn the matching agent. Never do the work yourself.
 | organize / cleanup | `claude-manager-helper` |
 
 Agent defines who receives next. Full routing rules → `/dispatch`
+
+---
+
+## Code Search — Semble First
+
+Dev-team agents (`developer`, `architect`, `ba`, `fixer`, `code-janitor`, `system-auditor`) have both Semble and default tools available. **Prefer Semble for exploration; use Grep/Glob only for exhaustive or exact matching.** Full decision guide → `.claude/skills/semble-search/SKILL.md`
 
 ---
 
