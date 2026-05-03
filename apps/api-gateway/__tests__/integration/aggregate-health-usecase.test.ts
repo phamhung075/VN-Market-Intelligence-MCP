@@ -38,7 +38,7 @@ describe('AggregateHealthUseCase (integration)', () => {
     const result = await useCase.execute();
 
     expect(result.status).toBe('ok');
-    expect(Object.keys(result.services)).toHaveLength(6);
+    expect(Object.keys(result.services)).toHaveLength(8);
     expect(result.checkedAt).toBeTruthy();
   });
 

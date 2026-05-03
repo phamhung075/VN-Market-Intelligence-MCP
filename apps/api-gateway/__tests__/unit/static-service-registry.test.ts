@@ -8,16 +8,16 @@ import { describe, it, expect } from 'bun:test';
 import { StaticServiceRegistry } from '../../src/infrastructure/health_checker.js';
 
 describe('StaticServiceRegistry', () => {
-  it('returns all 6 services', () => {
+  it('returns all 8 services', () => {
     const registry = new StaticServiceRegistry({});
     const services = registry.getAllServices();
-    expect(services).toHaveLength(6);
+    expect(services).toHaveLength(8);
   });
 
-  it('returns service names: mcp, pdf, rag, ta, macro, stock', () => {
+  it('returns service names: mcp, pdf, rag, ta, macro, stock, kinh-dich, alert', () => {
     const registry = new StaticServiceRegistry({});
     const names = registry.getAllServices().map((s) => s.name).sort();
-    expect(names).toEqual(['macro', 'mcp', 'pdf', 'rag', 'stock', 'ta']);
+    expect(names).toEqual(['alert', 'kinh-dich', 'macro', 'mcp', 'pdf', 'rag', 'stock', 'ta']);
   });
 
   it('uses custom URLs from config', () => {
