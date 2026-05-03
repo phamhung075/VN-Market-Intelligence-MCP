@@ -108,6 +108,8 @@ ARCHITECT CORRECTION: BA spec said `STOCK_PRICE_DB_PATH` is undefined in local t
 
 | Task ID | Title | Merged | Reports |
 |---------|-------|--------|---------|
+| 1841b | SPRINT-M: U-10 BCTC Batch Sweep — bctcBatchSweepJob (0 9 25 1,4,7,10 *), run_bctc_batch_sweep MCP tool, isEarningsSeason() pure fn, max 5 concurrent, per-ticker isolation, MARKET digest on completion. 19 tests pass. 8873 pass / 4 pre-existing fail. tsc clean. | 2026-05-03 | docs/handoffs/TASK_1841b.md |
+| 1841a | SPRINT-M: U-9 Health Dashboard — GET /health-dashboard in api-gateway, self-contained HTML, auto-refresh 60s, 8 services, bug fix health_checker.ts kinh-dich+alert entries. 13 tests pass. 8870 pass / 4 pre-existing fail. tsc clean. | 2026-05-03 | docs/handoffs/TASK_1841a.md |
 | 1840a | SPRINT-M: U-6 RAG Wiring — pollNews→insertAnalysis (non-fatal injectable dep), news-scout + financial-analyst flows wired with search_similar_context. 3/3 tests pass. 8703 pass / 3 pre-existing Task-265 fail. tsc clean. | 2026-05-03 | docs/handoffs/TASK_1840a.md |
 | 1839b | SPRINT-S: U-7 Agent Notebook Population Protocol — 10 agent flow files updated (Step 0b + end-of-cycle write), 5 notebooks seeded (developer, qa, ops, architect, fixer). | 2026-05-03 | docs/handoffs/TASK_1839b.md |
 | 1839a | SPRINT-M: U-4 Phase 2 — server.ts 16 getDb() → 1 init + startScheduler.ts 41 recordJobRun(getDb()) → jobRunRepo.wrapRun(). IJobRunRepository domain port + SqliteJobRunRepository adapter. 8 new tests pass. 8696 pass / 3 pre-existing fail. tsc clean. | 2026-05-03 | docs/handoffs/TASK_1839a.md |

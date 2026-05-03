@@ -17,8 +17,8 @@
 | U-6 | RAG Service Utilization Audit + Wiring  | 2    | SPRINT-M | DONE        | 1840a |
 | U-7 | Agent Notebook Population Protocol      | 2    | SPRINT-S | DONE        | 1839b |
 | U-8 | Portfolio Backtesting Engine            | 3    | SPRINT-L | PENDING    | TBD   |
-| U-9 | Read-Only Health Dashboard              | 3    | SPRINT-M | PENDING    | TBD   |
-| U-10| Quarterly BCTC Batch Sweep             | 3    | SPRINT-M | PENDING    | TBD   |
+| U-9 | Read-Only Health Dashboard              | 3    | SPRINT-M | DONE        | 1841a |
+| U-10| Quarterly BCTC Batch Sweep             | 3    | SPRINT-M | DONE        | 1841b |
 
 ---
 
@@ -215,8 +215,8 @@ New MCP tool: `run_backtest(strategy, start_date, end_date)`. Replays historical
 
 | Field       | Value |
 |-------------|-------|
-| Status      | PENDING |
-| Sprint      | TBD |
+| Status      | DONE |
+| Sprint      | 1841a |
 | Size        | SPRINT-M |
 | Dependency  | None |
 
@@ -237,8 +237,8 @@ Single HTML endpoint served by api-gateway at `/health-dashboard`. Auto-refreshe
 
 | Field       | Value |
 |-------------|-------|
-| Status      | PENDING |
-| Sprint      | TBD |
+| Status      | DONE |
+| Sprint      | 1841b |
 | Size        | SPRINT-M |
 | Dependency  | BCTC pipeline operational (VPS health check required) |
 

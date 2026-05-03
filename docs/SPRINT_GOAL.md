@@ -1,23 +1,15 @@
-## Sprint 1835 — Active
+## Sprint 1841 — DONE
 
-**Status:** IN PROGRESS | **Opened:** 2026-05-03
+**Status:** DONE | **Closed:** 2026-05-03
 
 ## Goals
 
-Investigate Trading Economics Chromium executable path configuration. Anti-bot hardening (stealth args, UA, route interception) shipped in 1834b — remaining work is to confirm Playwright finds the correct Chromium binary at /usr/bin/chromium inside the Docker container.
+U-9 health dashboard in api-gateway + U-10 BCTC batch sweep.
 
-## Scope
+## Done
 
-IN:
-- 1833k — TE Chromium executable path investigation: confirm Playwright resolves /usr/bin/chromium correctly inside Docker; fix path config if misconfigured [P3]
-
-OUT: New features, new data sources, architecture changes, further anti-bot work (covered by 1834b)
-
-## Success Criteria
-
-- Playwright `executablePath` resolves without error inside mcp-server container
-- TE Chromium scraper completes at least one successful fetch after path fix
-- All existing tests pass (baseline: 8763)
+- 1841a — U-9: GET /health-dashboard, self-contained HTML, auto-refresh 60s, 8 services, health_checker.ts bug fix. 13 tests pass.
+- 1841b — U-10: bctcBatchSweepJob cron + run_bctc_batch_sweep MCP tool, isEarningsSeason(), max 5 concurrent, failure isolation. 19 tests pass.
 
 ---
 
@@ -27,6 +19,7 @@ OUT: New features, new data sources, architecture changes, further anti-bot work
 
 | Sprint | Result |
 |--------|--------|
+| 1840 — U-6 RAG wiring — pollNews→insertAnalysis + news-scout/financial-analyst flows wired with search_similar_context | DONE — 2026-05-03. 8703 pass / 3 pre-existing fail. totalTasksDone=504 |
 | 1834 — TE Chromium anti-bot hardening — stealth args, randomised viewport, route interception, human-like nav delay | DONE — 2026-05-03. 8763 pass / 0 fail. totalTasksDone=495 |
 | 1833 — Pipeline reliability: te-chromium CB, vnstock rate limiter, freshness SLA market-hours, officers NOT NULL guard, DRY marketContextTools | DONE — 2026-05-03. 8763 pass / 0 fail. totalTasksDone=494 |
 | 1832 — Integrate semble semantic code search — add semble-search agent + skill, wire lazy_load into 6 agents, update dev-standards | DONE — 2026-05-02. 8608 pass / 0 fail. totalTasksDone=486 |
