@@ -25,7 +25,6 @@
 | Task ID | Title | Priority | Type | Owner | Handoff | Blocked by |
 |---------|-------|----------|------|-------|---------|------------|
 | 1833g | FIX: te-chromium CB hour-window reset + exponential backoff + disable Reuters RSS / Trading Economics legacy in resolvedFetchers + seedKnownSources. 4 files, ~118 lines, 8 ACs. | P1-CRITICAL | BUG | qa | [TASK_1833g.md](tasks/TASK_1833g.md) | Done |
-| 1833h | FIX: freshnessSlaMonitorJob — isVnMarketHours blindness to weekends/holidays. Add isVnTradingDay(). 3 files, ~116 lines, 15 ACs. | P2-HIGH | BUG | developer | [TASK_1833h.md](tasks/TASK_1833h.md) | — |
 | 1833i | FIX: vnstock global rate limiter + officers NOT NULL alert — sliding-window 50 RPM limiter in vnstockBridge.ts; null-code filter in storeOfficers(); NOT NULL catch + de-duped WORK Telegram in syncVnstockData.ts. Closes 1833e. 3 files + 2 test files, ~68 lines net added. 8 ACs. | P2-HIGH | BUG | developer | [TASK_1833i.md](tasks/TASK_1833i.md) | — |
 ---
 
@@ -49,6 +48,7 @@
 
 | Task ID | Title | Merged | Reports |
 |---------|-------|--------|---------|
+| 1833h | FIX: freshnessSlaMonitorJob — isVnMarketHours blindness to weekends/holidays. Added isVnTradingDay(), VN_PUBLIC_HOLIDAYS, 6 new test cases MH-9..MH-14. 14/14 pass, 8763 / 0 fail. | 2026-05-02 | reports/TASK_REPORT_1833h.md |
 | 1833e | CLOSED by 1833i — null-code guard + NOT NULL alert for vnstock_officers.code absorbed into 1833i scope. | 2026-05-02 | — |
 | 1833a | DRY: marketContextTools.ts — delegate 4 section builders to marketContextBuilder.ts. -397 lines (502→105). 8718 pass / 1 pre-existing fail. | 2026-05-03 | — |
 | 1833d | CLOSED (false alarm): foreign-flow 2026-05-01 gap — Vietnam Labor Day, market closed. 31h gap is expected (holiday + weekend). VPS service correctly idle. Note: SLA monitor market-hours blindness tracked as 1833h. | 2026-05-02 | — |

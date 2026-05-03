@@ -15,11 +15,11 @@
   "knowledgeFileCount": 25,
   "devAgentCount": 14,
   "analysisAgentCount": 9,
-  "totalTasksDone": 491,
+  "totalTasksDone": 492,
   "analysisMode": "value_investor",
   "briefingFilesCreated": 30,
   "briefingArchiveQI": 0,
   "briefingArchiveQII": 0,
-  "lastFixApplied": "1833g DONE: te-chromium CB hour-window reset + exponential backoff + disable Reuters RSS / TE legacy from resolvedFetchers. 11 new tests. 8619 pass / 1 pre-existing fail (1331a). 2026-05-03.",
+  "lastFixApplied": "1833h DONE: freshnessSlaMonitorJob — isVnTradingDay() guard + VN_PUBLIC_HOLIDAYS. 6 new MH-9..MH-14 tests. 8763 / 0 fail (1 pre-existing 1331a). 2026-05-02.",
   "currentSprintNotes": "Sprint 1833 — starting fresh. Semble integrated as preferred code search tool."
 }
