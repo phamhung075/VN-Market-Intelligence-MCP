@@ -12,11 +12,8 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Blocked by |
 |---------|-------|----------|------|-------|---------|------------|
-| 1833c | FIX: bctcQueueEnricherJob silent 0-item runs — VPS healthy, root cause is URL discovery returning 0 results per ticker with no warning. Add WARNING log when URL count=0 per ticker per run; verify enricher scraping against congbao.chinhphu.vn for new quarterly filings. | P1-CRITICAL | BUG | developer | 2026-05-02 | Done |
+| 1834b | SPRINT-S: TE Chromium anti-bot hardening | P2-HIGH | SPRINT-S | developer | — | — |
 | 1833k | FIX: Trading Economics Chromium scraper — 114 consecutive failures. Investigate Playwright executable path config (/usr/bin/chromium) + anti-bot detection mitigation. | P3-MEDIUM | BUG | developer | — | — |
-| 1833f | FIX: vn-news-fetch stale heartbeat — service reports unhealthy despite 90 pushes/24h. Fix heartbeat timestamp update so monitoring reflects reality. | P4-LOW | BUG | ops | 2026-05-02 | Done |
-| 1833l | FIX: Yahoo Finance 404 on unknown symbol — identify delisted/renamed ticker, add graceful 404 handling to prevent log noise. | P4-LOW | BUG | developer | 2026-05-03 | Done |
-| 1833b | FIX: semble-search notebook missing + devAgentCount drift in project-stats.json | LOW | FIX | developer | — | — |
 
 ---
 
@@ -24,7 +21,7 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Blocked by |
 |---------|-------|----------|------|-------|---------|------------|
-| 1833g | FIX: te-chromium CB hour-window reset + exponential backoff + disable Reuters RSS / Trading Economics legacy in resolvedFetchers + seedKnownSources. 4 files, ~118 lines, 8 ACs. | P1-CRITICAL | BUG | qa | [TASK_1833g.md](tasks/TASK_1833g.md) | Done |
+
 ---
 
 ---
@@ -47,6 +44,7 @@
 
 | Task ID | Title | Merged | Reports |
 |---------|-------|--------|---------|
+| 1833g | FIX: te-chromium CB hour-window reset + exponential backoff + disable Reuters RSS / Trading Economics legacy in resolvedFetchers + seedKnownSources. 4 files, ~118 lines, 8 ACs. | 2026-05-03 | docs/tasks/TASK_1833g.md |
 | 1833i | FIX: vnstock global rate limiter (50 RPM) + officers NOT NULL guard + DQ alert. VnstockRateLimiter sliding-window; storeOfficers null-code filter; syncVnstockData NOT NULL catch + 24h/ticker Telegram de-dup. 18 new tests pass. 8757 / 0 fail. Closes 1833e. | 2026-05-03 | reports/TASK_REPORT_1833i.md |
 | 1833h | FIX: freshnessSlaMonitorJob — isVnMarketHours blindness to weekends/holidays. Added isVnTradingDay(), VN_PUBLIC_HOLIDAYS, 6 new test cases MH-9..MH-14. 14/14 pass, 8763 / 0 fail. | 2026-05-02 | reports/TASK_REPORT_1833h.md |
 | 1833e | CLOSED by 1833i — null-code guard + NOT NULL alert for vnstock_officers.code absorbed into 1833i scope. | 2026-05-02 | — |
