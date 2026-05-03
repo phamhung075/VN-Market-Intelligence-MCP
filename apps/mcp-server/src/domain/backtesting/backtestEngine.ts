@@ -75,6 +75,17 @@ function closeOnOrAfter(
 }
 
 /**
+ * Compute the benchmark return percentage from a candle array.
+ * Returns (last.close - first.close) / first.close, or null when fewer than 2 candles.
+ */
+function computeBenchmarkReturn(candles: DailyCandle[]): number | null {
+  if (candles.length < 2) return null;
+  const first = candles[0]!.close;
+  const last = candles[candles.length - 1]!.close;
+  return (last - first) / first;
+}
+
+/**
  * Compute population standard deviation of a number array.
  * Returns 0 when the array has fewer than 2 elements.
  */

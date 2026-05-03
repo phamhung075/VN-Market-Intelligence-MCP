@@ -59,7 +59,7 @@ describe("Task 265 — Mention Velocity Store", () => {
   });
 
   it("returns null for unknown code", () => {
-    const velocity = getVelocity(db, "UNKNOWN", "2026-04-03T10:00:00.000Z");
+    const velocity = getVelocity(db, "UNKNOWN", new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString());
     expect(velocity).toBeNull();
   });
 

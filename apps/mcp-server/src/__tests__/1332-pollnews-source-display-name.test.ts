@@ -1,6 +1,7 @@
 Bun.env["DB_PATH"] = ":memory:";
 import { describe, it, expect, beforeEach } from "bun:test";
 import { Database } from "bun:sqlite";
+import { _resetGlobalSourceTracker } from "../interface/mcp/tools/news-analysis/sourceHealthTools.js";
 
 // ── Helper: build minimal DB with all tables pollNews needs ──────────────────
 
@@ -71,6 +72,10 @@ function buildPollNewsTestDb(): Database {
   return db;
 }
 
+beforeEach(() => {
+  _resetGlobalSourceTracker();
+});
+
 describe("Task 1332 — pollNews SOURCE_DISPLAY_NAMES: health tracked under display name", () => {
   beforeEach(() => {
     const { _resetGlobalSourceTracker } = require("../interface/mcp/tools/news-analysis/sourceHealthTools.js");
@@ -78,6 +83,8 @@ describe("Task 1332 — pollNews SOURCE_DISPLAY_NAMES: health tracked under disp
   });
 
   // TC-1: when reuters fetcher succeeds, globalSourceTracker records success under "Reuters RSS"
+  // 30 000 ms timeout — TC-1 always runs first and triggers RAG embedding
+  // model cold-start (~400 MB load, ~8-12 s). Subsequent TCs are warm.
   it("TC-1: pollNews with reuters returning items → records success under 'Reuters RSS'", async () => {
     const { pollNews } = await import("../application/usecases/pollNews.js");
     const { globalSourceTracker } = await import(
@@ -96,6 +103,7 @@ describe("Task 1332 — pollNews SOURCE_DISPLAY_NAMES: health tracked under disp
       db,
       watchlist: [],
       ragRetriever: async () => [],
+      sleepMs: async () => {},
       fetchers: {
         reuters: async () => [{
           title: "Vietnam economy news",
@@ -108,6 +116,7 @@ describe("Task 1332 — pollNews SOURCE_DISPLAY_NAMES: health tracked under disp
         vnexpress: async () => [],
         vneconomy: async () => [],
         tradingeconomics: async () => [],
+        teChromiumNews: async () => [],
       },
     });
 
@@ -117,7 +126,7 @@ describe("Task 1332 — pollNews SOURCE_DISPLAY_NAMES: health tracked under disp
     expect(reutersHealth.consecutiveFailures).toBe(0);
 
     db.close();
-  });
+  }, 30_000);
 
   // TC-2: when cafef fetcher returns empty array, globalSourceTracker records failure under "CafeF RSS"
   it("TC-2: pollNews with cafef returning [] → incrementes consecutiveFailures under 'CafeF RSS'", async () => {
@@ -135,12 +144,14 @@ describe("Task 1332 — pollNews SOURCE_DISPLAY_NAMES: health tracked under disp
       db,
       watchlist: [],
       ragRetriever: async () => [],
+      sleepMs: async () => {},
       fetchers: {
         reuters: async () => [],
         cafef: async () => [], // empty — triggers recordFailure path
         vnexpress: async () => [],
         vneconomy: async () => [],
         tradingeconomics: async () => [],
+        teChromiumNews: async () => [],
       },
     });
 
@@ -173,6 +184,7 @@ describe("Task 1332 — pollNews SOURCE_DISPLAY_NAMES: health tracked under disp
       db,
       watchlist: [],
       ragRetriever: async () => [],
+      sleepMs: async () => {},
       fetchers: {
         reuters: async () => [{
           title: "Vietnam economy news",
@@ -185,6 +197,7 @@ describe("Task 1332 — pollNews SOURCE_DISPLAY_NAMES: health tracked under disp
         vnexpress: async () => [],
         vneconomy: async () => [],
         tradingeconomics: async () => [],
+        teChromiumNews: async () => [],
       },
     });
 
@@ -211,12 +224,14 @@ describe("Task 1332 — pollNews SOURCE_DISPLAY_NAMES: health tracked under disp
       db,
       watchlist: [],
       ragRetriever: async () => [],
+      sleepMs: async () => {},
       fetchers: {
         reuters: async () => [],
         cafef: async () => [],
         vnexpress: async () => [],
         vneconomy: async () => [],
         tradingeconomics: async () => [],
+        teChromiumNews: async () => [],
         // "unknown_source_xyz" has no entry in SOURCE_DISPLAY_NAMES
         // so it should fall back to the raw key
         unknown_source_xyz: async () => [{
