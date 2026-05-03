@@ -19,14 +19,14 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Blocked by |
 |---------|-------|----------|------|-------|---------|------------|
-| 1845a | CLEAN: commit 5 orphan untracked files (REQ_1844.md, ARCH_1844.md, TASK_1844a.md, 2x session logs) + 8 modified files; update SPRINT_GOAL.md 1844→DONE; advance project-stats.json to Sprint 1845 baseline (currentSprint=1845, toolCount=125) | HIGH | CLEAN | developer | — | — |
-| 1845b | FIX: worktree ENOENT — `apps/mcp-server/data/` git-ignored, missing in fresh worktrees → 106 test failures (Task 105, 1322, LanceDB). Add `mkdir -p` in `apps/mcp-server/src/__tests__/setup.ts` for required subdirs so tests self-create the directory structure. Verify: full suite in a fresh worktree shows 0 ENOENT failures. | HIGH | FIX | developer | — | 1845a |
 | 1845c | SYNC: tool-registry.json missing get_backtest_runs (#121) + get_backtest_run (#122) from Sprint 1844. Add both tool entries under Backtesting category. Update toolCount=125 in project-stats.json + tool-registry.json. tsc clean not required (JSON only). | HIGH | SYNC | developer | — | 1845a |
 | 1845d | DRY: benchmarkReturnPct computation duplicated in backtestEngine.ts — exists in both runBacktestEngine() and buildEmptyReport(). Extract to single private helper. 0 new tests needed — existing 24 backtesting tests must still pass. tsc clean required. | MEDIUM | DRY | developer | — | 1845a |
 ## Done
 
 | Task ID | Title | Priority | Type | Owner | Report | Completed |
 |---------|-------|----------|------|-------|--------|-----------|
+| 1845b | FIX: worktree ENOENT — apps/mcp-server/data/ git-ignored → 106 test failures in fresh worktrees. setup.ts preload creates 7 subdirs via mkdirSync({ recursive: true }) anchored to import.meta.dir. | HIGH | FIX | developer | reports/TASK_REPORT_1845b.md | 2026-05-03 |
+| 1845a | CLEAN: commit 5 orphan untracked files + 8 modified files; advance project-stats.json to Sprint 1845 baseline (currentSprint=1845, toolCount=125) | HIGH | CLEAN | developer | — | 2026-05-04 |
 | 1844a | SPRINT-M: Backtest retrieval tools — getAllRuns() repo method + get_backtest_runs (#121) + get_backtest_run (#122) MCP tools + 14 tests. 7 files total. | HIGH | FEATURE | developer | reports/TASK_REPORT_1844a.md | 2026-05-04 |
 | ARCH-1844 | DESIGN: Architecture for Sprint 1844 — get_backtest_runs (#121) + get_backtest_run (#122) MCP tools + getAllRuns() repo method. BLK-1 resolved (slots #121/#122), BLK-2 resolved (Option A: explicit getAllRuns()), BLK-3 resolved (extend backtestTools.ts). 7-file change plan, 13-test plan, 5-item risk register. | HIGH | DESIGN | architect | docs/handoffs/ARCH_1844.md | 2026-05-03 |
 | BA-1844 | SPEC: Requirements spec for Sprint 1844 — get_backtest_runs MCP tool (#124) + get_backtest_run MCP tool (#125) + IBacktestResultRepository status (getRunById already exists; getAllRuns() needed for all-strategy list). 3 blockers: tool slot gap, getAllRuns() interface design, file organisation. | HIGH | SPEC | ba | docs/REQ_1844.md | 2026-05-03 |
