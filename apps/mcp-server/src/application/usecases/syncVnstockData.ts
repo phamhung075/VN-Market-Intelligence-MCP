@@ -73,6 +73,15 @@ const _globalCbState: CbStateMap = {};
 /** Timestamp of last bulk-failure Telegram alert (module-level, avoids spam). */
 let _lastVnstockAlertAt = 0;
 
+/** Per-ticker timestamp of last NOT NULL officers alert — de-dup per 24h. */
+const _officersNullAlertAt = new Map<string, number>();
+export const OFFICERS_NULL_ALERT_COOLDOWN_MS = 24 * 60 * 60 * 1000;
+
+/** Exposed for unit tests to reset the NOT NULL alert de-dup map. */
+export function resetOfficersNullAlertAt(): void {
+  _officersNullAlertAt.clear();
+}
+
 /** Factory — creates a fresh state map (used by unit tests to get clean slate). */
 export function makeCbState(): CbStateMap {
   return {};
@@ -255,8 +264,28 @@ async function syncStock(code: string): Promise<number> {
   // Officers (24h staleness)
   if (isStale(code, "officers", 1440)) {
     const officers = await fetchVnstockOfficers(code);
-    if (officers.length > 0) storeOfficers(code, officers);
-    else markFetched(code, "officers"); // back off even on empty/timeout
+    if (officers.length > 0) {
+      try {
+        storeOfficers(code, officers);
+      } catch (officersErr) {
+        const msg = officersErr instanceof Error ? officersErr.message : String(officersErr);
+        logger.error("[vnstock-sync] storeOfficers NOT NULL violation", { code, error: msg });
+        // Do NOT call markFetched — force retry next cycle
+        const lastSent = _officersNullAlertAt.get(code) ?? 0;
+        if (Date.now() - lastSent >= OFFICERS_NULL_ALERT_COOLDOWN_MS) {
+          _officersNullAlertAt.set(code, Date.now());
+          try {
+            await sendTelegramWork(
+              `[DQ ALERT] vnstock_officers.code NOT NULL for ${code} — row skipped, manual check needed. Error: ${msg}`
+            );
+          } catch (tgErr) {
+            logger.error("[vnstock-sync] failed to send NOT NULL alert", { code, error: String(tgErr) });
+          }
+        }
+      }
+    } else {
+      markFetched(code, "officers"); // back off even on empty/timeout
+    }
     calls++;
     await sleep(DELAY_MS);
   }

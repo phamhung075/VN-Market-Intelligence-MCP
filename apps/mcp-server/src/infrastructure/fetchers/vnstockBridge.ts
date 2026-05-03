@@ -187,6 +187,45 @@ export function stripAnsiAndDetectJunk(raw: string, label: string): JunkCheckRes
 }
 
 // ---------------------------------------------------------------------------
+// Global rate limiter — 50 RPM sliding window (Task 1833i)
+// ---------------------------------------------------------------------------
+
+export const GLOBAL_RATE_LIMIT_RPM = 50;
+
+/**
+ * Sliding-window rate limiter.
+ * All Python subprocesses must call acquire() before spawning.
+ * At most `rpm` slots available per `windowMs` milliseconds.
+ */
+export class VnstockRateLimiter {
+  private readonly rpm: number;
+  private readonly windowMs: number;
+  private readonly slots: number[] = [];
+
+  constructor(rpm: number, windowMs = 60_000) {
+    this.rpm = rpm;
+    this.windowMs = windowMs;
+  }
+
+  async acquire(): Promise<void> {
+    while (true) {
+      const now = Date.now();
+      while (this.slots.length > 0 && now - this.slots[0]! >= this.windowMs) {
+        this.slots.shift();
+      }
+      if (this.slots.length < this.rpm) {
+        this.slots.push(now);
+        return;
+      }
+      const waitMs = this.windowMs - (now - this.slots[0]!);
+      await new Promise<void>((resolve) => setTimeout(resolve, waitMs + 1));
+    }
+  }
+}
+
+const _rateLimiter = new VnstockRateLimiter(GLOBAL_RATE_LIMIT_RPM);
+
+// ---------------------------------------------------------------------------
 // Rate-limit detection and exponential backoff (Task 1780)
 // ---------------------------------------------------------------------------
 
@@ -237,6 +276,7 @@ const PYTHON_TIMEOUT_MS = 45_000;
 
 async function runPython<T>(script: string, label: string): Promise<T | null> {
   try {
+    await _rateLimiter.acquire();
     const proc = Bun.spawn(["python3", "-c", script], {
       stdout: "pipe",
       stderr: "pipe",
