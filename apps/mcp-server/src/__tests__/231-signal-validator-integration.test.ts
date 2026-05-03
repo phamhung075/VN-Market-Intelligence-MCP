@@ -15,6 +15,8 @@ import { scanMarket } from "../application/usecases/scanMarket.js";
 import { getDb, closeDb } from "../infrastructure/db/schema.js";
 import type { MarketPrice } from "../infrastructure/fetchers/hose.js";
 import { Database } from "bun:sqlite";
+import { SqliteWatchlistRepository } from "../infrastructure/db/repositories/SqliteWatchlistRepository.js";
+import { SqliteMarketPriceRepository } from "../infrastructure/db/repositories/SqliteMarketPriceRepository.js";
 
 function setupTestDb(): Database {
   (Bun.env as Record<string, string>)["DB_PATH"] = ":memory:";
@@ -116,6 +118,14 @@ function wipeTables(db: Database) {
 describe("Task 231: Signal Validator Integration", () => {
   let db: Database;
 
+  function makeDeps(fetchPrices?: (codes: string[]) => Promise<MarketPrice[]>) {
+    return {
+      watchlistRepo: new SqliteWatchlistRepository(db),
+      marketPriceRepo: new SqliteMarketPriceRepository(db),
+      ...(fetchPrices ? { fetchPrices } : {}),
+    };
+  }
+
   beforeAll(() => {
     db = setupTestDb();
   });
@@ -138,9 +148,7 @@ describe("Task 231: Signal Validator Integration", () => {
       createMockPrice("VCB", 50, 50, 500),
     ];
 
-    const result = await scanMarket({
-      fetchPrices: async () => mockPrices,
-    });
+    const result = await scanMarket(makeDeps(async () => mockPrices));
 
     expect(result).toHaveProperty("scanned");
     expect(result).toHaveProperty("signals");
@@ -162,9 +170,7 @@ describe("Task 231: Signal Validator Integration", () => {
       db.prepare("DELETE FROM alerts").run();
     } catch {}
 
-    const result = await scanMarket({
-      fetchPrices: async () => mockPrices,
-    });
+    const result = await scanMarket(makeDeps(async () => mockPrices));
 
     // Should detect at least one signal for VNM (price_drop)
     expect(result.signals).toBeGreaterThan(0);
@@ -199,9 +205,7 @@ describe("Task 231: Signal Validator Integration", () => {
       db.prepare("DELETE FROM alerts").run();
     } catch {}
 
-    const result = await scanMarket({
-      fetchPrices: async () => mockPrices,
-    });
+    const result = await scanMarket(makeDeps(async () => mockPrices));
 
     expect(result.signals).toBeGreaterThan(0);
     expect(result.alerts).toBeGreaterThan(0);
@@ -239,9 +243,7 @@ describe("Task 231: Signal Validator Integration", () => {
       db.prepare("DELETE FROM alerts").run();
     } catch {}
 
-    const result = await scanMarket({
-      fetchPrices: async () => mockPrices,
-    });
+    const result = await scanMarket(makeDeps(async () => mockPrices));
 
     // Should detect signals
     expect(result.signals).toBeGreaterThan(0);
@@ -262,9 +264,7 @@ describe("Task 231: Signal Validator Integration", () => {
       db.exec("DELETE FROM alerts");
     } catch {}
 
-    const result = await scanMarket({
-      fetchPrices: async () => mockPrices,
-    });
+    const result = await scanMarket(makeDeps(async () => mockPrices));
 
     // Should generate signal and alert
     expect(result.signals).toBeGreaterThan(0);
@@ -300,9 +300,7 @@ describe("Task 231: Signal Validator Integration", () => {
       db.prepare("DELETE FROM alerts WHERE action_code = ?").run("VNM");
     } catch {}
 
-    const result = await scanMarket({
-      fetchPrices: async () => mockPrices,
-    });
+    const result = await scanMarket(makeDeps(async () => mockPrices));
 
     // Should detect signal and create alert (price_drop is valid)
     expect(result.signals).toBeGreaterThan(0);
@@ -322,9 +320,7 @@ describe("Task 231: Signal Validator Integration", () => {
       db.prepare("DELETE FROM alerts").run();
     } catch {}
 
-    const result = await scanMarket({
-      fetchPrices: async () => mockPrices,
-    });
+    const result = await scanMarket(makeDeps(async () => mockPrices));
 
     // Should complete without error
     expect(result).toHaveProperty("scanned");
@@ -347,9 +343,7 @@ describe("Task 231: Signal Validator Integration", () => {
       createMockPrice("VNM", 88, 100, 1000),
     ];
 
-    const result = await scanMarket({
-      fetchPrices: async () => mockPrices,
-    });
+    const result = await scanMarket(makeDeps(async () => mockPrices));
 
     const alerts = db
       .query<any, []>(`SELECT * FROM alerts`)

@@ -2,12 +2,14 @@
  * Market Scan Use Case — Task 103
  *
  * Orchestrates the market open/close price-scan pipeline:
- *   1. Read all watchlist stock codes from SQLite
+ *   1. Read all watchlist stock codes from SQLite (via injected repo)
  *   2. Fetch live prices (HOSE) — injectable for tests
  *   3. Persist fetched prices to market_prices + market_prices_history
  *   4. Compute avgVolume from history (suppress if < 5 rows)
  *   5. Run detectSignals for price_drop / price_surge / volume_spike only
  *   6. Generate and persist alerts for affected watchlist stocks
+ *
+ * Task 1838b: migrated to ScanMarketDeps injection pattern.
  *
  * Layer: application/usecases
  * May import from domain/ and infrastructure/ — must not contain raw HTTP calls.
@@ -18,7 +20,6 @@ import { VN_OFFSET_MS } from "../../domain/services/timeConstants.js";
 import type { MarketSnapshot } from "../../domain/services/signalDetector.js";
 import { generateAlerts } from "../../domain/services/alertGenerator.js";
 import { storeAlerts } from "../../infrastructure/db/alertStore.js";
-import { getDb } from "../../infrastructure/db/schema.js";
 import { storeMarketPrices } from "../../infrastructure/fetchers/hose.js";
 import type { MarketPrice } from "../../infrastructure/fetchers/hose.js";
 import { logger } from "../../infrastructure/logger.js";
@@ -33,6 +34,11 @@ import {
   SECTOR_NAME_VI,
 } from "../../domain/services/sectorPeers.js";
 import type { DomainType } from "../../../bctc-schema";
+import { getDb } from "../../infrastructure/db/schema.js";
+import type {
+  IWatchlistRepository,
+  IMarketPriceRepository,
+} from "../../domain/repositories/index.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -51,8 +57,13 @@ export interface MarketScanResult {
 /** Injectable price fetcher — defaults to `fetchHosePrices` in production */
 export type PriceFetcher = (codes: string[]) => Promise<MarketPrice[]>;
 
-/** Options for `scanMarket` — all optional for easy testing */
-export interface ScanMarketOptions {
+/**
+ * Dependencies for `scanMarket`.
+ * Pass real adapters in production, mocks in tests.
+ */
+export interface ScanMarketDeps {
+  watchlistRepo: IWatchlistRepository;
+  marketPriceRepo: IMarketPriceRepository;
   /**
    * Override the price fetcher — defaults to `fetchHosePrices`.
    * Inject a mock in tests to avoid network calls.
@@ -64,55 +75,18 @@ export interface ScanMarketOptions {
 // Helpers
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** A watchlist entry with the shape expected by generateAlerts + sector context. */
-interface WatchlistItem {
-  actionCode: string;
-  domain: DomainType;
-}
-
-/**
- * Read all stock codes + domains from the watchlist table.
- * Returns an empty array if the table is empty or missing.
- */
-function getWatchlistEntries(): WatchlistItem[] {
-  try {
-    const db = getDb();
-    const rows = db
-      .query<{ code: string; domain: string }, []>(
-        "SELECT code, domain FROM watchlist",
-      )
-      .all();
-    return rows.map((r) => ({
-      actionCode: r.code,
-      domain: (r.domain || "other") as DomainType,
-    }));
-  } catch (err) {
-    logger.warn("[scanMarket] failed to read watchlist", {
-      error: err instanceof Error ? err.message : String(err),
-    });
-    return [];
-  }
-}
-
 /**
  * Compute the average daily volume for a stock from its price history.
  *
- * Fix 1320: excludes today's open session from the rolling average.
- * Uses MAX(volume) per closed calendar day (substr(fetched_at,1,10) < todayUtc),
- * then averages the last 20 such days. This matches the pattern in server.ts
- * (lines 677–686) that already uses a date-exclusion WHERE clause.
- *
- * Returns 0 if fewer than 5 closed days are available — suppresses
- * `volume_spike` detection (detectSignals.ts: `if (avgVolume > 0)`).
+ * Task 1320: excludes today's open session from the rolling average.
+ * Backward-compat export for tests that call this function directly.
  *
  * @param code      - Stock ticker code
  * @param todayUtc  - ISO date string "YYYY-MM-DD" to exclude (default: today UTC).
- *                    Injectable for deterministic tests.
  */
 export function getAvgVolumeSync(code: string, todayUtc?: string): number {
   const MIN_HISTORY_ROWS = 5;
   const HISTORY_LIMIT = 20;
-
   const today = todayUtc ?? new Date().toISOString().substring(0, 10);
 
   try {
@@ -130,7 +104,6 @@ export function getAvgVolumeSync(code: string, todayUtc?: string): number {
       )
       .get(code, today, HISTORY_LIMIT);
 
-    // Count closed days to enforce the MIN_HISTORY_ROWS guard
     const countRow = db
       .query<{ cnt: number }, [string, string]>(
         `SELECT COUNT(DISTINCT substr(fetched_at, 1, 10)) as cnt
@@ -140,13 +113,19 @@ export function getAvgVolumeSync(code: string, todayUtc?: string): number {
       .get(code, today);
 
     if (!countRow || countRow.cnt < MIN_HISTORY_ROWS) {
-      return 0; // sparse history → suppress volume_spike
+      return 0;
     }
 
     return row?.avg_vol ?? 0;
   } catch {
     return 0;
   }
+}
+
+/** A watchlist entry with the shape expected by generateAlerts + sector context. */
+interface WatchlistItem {
+  actionCode: string;
+  domain: DomainType;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -156,16 +135,28 @@ export function getAvgVolumeSync(code: string, todayUtc?: string): number {
 /**
  * Run one complete market scan cycle (open or close).
  *
- * @param options - Injectable fetcher for testing; defaults to real HOSE fetcher
- * @returns       Summary counts: scanned, signals, alerts
+ * @param deps - Repository dependencies + optional price fetcher
+ * @returns    Summary counts: scanned, signals, alerts
  */
 export async function scanMarket(
-  options: ScanMarketOptions = {},
+  deps: ScanMarketDeps,
 ): Promise<MarketScanResult> {
   const result: MarketScanResult = { scanned: 0, signals: 0, alerts: 0 };
 
   // ── Step 1: Read watchlist ───────────────────────────────────────────────
-  const watchlistEntries = getWatchlistEntries();
+  let watchlistEntries: WatchlistItem[];
+  try {
+    const rows = deps.watchlistRepo.getAll();
+    watchlistEntries = rows.map((r) => ({
+      actionCode: r.code,
+      domain: (r.domain || "other") as DomainType,
+    }));
+  } catch (err) {
+    logger.warn("[scanMarket] failed to read watchlist", {
+      error: err instanceof Error ? err.message : String(err),
+    });
+    watchlistEntries = [];
+  }
 
   if (watchlistEntries.length === 0) {
     logger.debug("[scanMarket] watchlist is empty — nothing to scan");
@@ -179,7 +170,7 @@ export async function scanMarket(
 
   try {
     const fetcher: PriceFetcher =
-      options.fetchPrices ??
+      deps.fetchPrices ??
       (async (c) => {
         const { fetchHosePrices } = await import(
           "../../infrastructure/fetchers/hose.js"
@@ -217,7 +208,7 @@ export async function scanMarket(
     try {
       const contextCodes = contextStocks.map((c) => c.code);
       const fetcher: PriceFetcher =
-        options.fetchPrices ??
+        deps.fetchPrices ??
         (async (c) => {
           const { fetchHosePrices } = await import(
             "../../infrastructure/fetchers/hose.js"
@@ -276,9 +267,10 @@ export async function scanMarket(
 
   // ── Step 4–5: Build snapshots + detect signals ────────────────────────────
   const allSignals: ReturnType<typeof detectSignals> = [];
+  const today = new Date().toISOString().substring(0, 10);
 
   for (const price of prices) {
-    const avgVolume = getAvgVolumeSync(price.code);
+    const avgVolume = deps.marketPriceRepo.getAvgVolume(price.code, today, 20, 5);
 
     const snapshot: MarketSnapshot = {
       actionCode: price.code,
@@ -367,24 +359,13 @@ export async function scanMarket(
   // Cross-validate news sentiment against actual price action.
   // "Tin tức có thể giả nhưng giá phản ánh tất cả"
   try {
-    const db = getDb();
     for (const price of prices) {
       // Get recent news sentiment for this stock from rag_analyses
-      let recentTitles: { source_title: string }[] = [];
-      try {
-        recentTitles = db
-          .query<{ source_title: string }, [string]>(
-            `SELECT source_title FROM rag_analyses
-             WHERE affected_actions LIKE '%' || ? || '%'
-               AND created_at > datetime('now', '-4 hours')
-             ORDER BY created_at DESC LIMIT 10`,
-          )
-          .all(price.code);
-      } catch { /* table may not exist yet */ }
+      const recentNews = deps.marketPriceRepo.getRecentNewsTitles(price.code, 4, 10);
 
-      if (recentTitles.length === 0) {
+      if (recentNews.length === 0) {
         // Check volume anomaly without news
-        const avgVol = getAvgVolumeSync(price.code);
+        const avgVol = deps.marketPriceRepo.getAvgVolume(price.code, today, 20, 5);
         const priceAction: PriceAction = {
           code: price.code,
           changePct: price.changePct,
@@ -407,20 +388,20 @@ export async function scanMarket(
       }
 
       // Aggregate sentiment from recent titles
-      const allText = recentTitles.map((r) => r.source_title).join(". ");
+      const allText = recentNews.map((r) => r.sourceTitle).join(". ");
       const sentiment = classifySentiment(allText);
 
       const priceAction: PriceAction = {
         code: price.code,
         changePct: price.changePct,
         volume: price.volume,
-        avgVolume: getAvgVolumeSync(price.code),
+        avgVolume: deps.marketPriceRepo.getAvgVolume(price.code, today, 20, 5),
       };
       const newsSentiment: NewsSentiment = {
         code: price.code,
         direction: sentiment.direction,
         confidence: sentiment.confidence,
-        articleCount: recentTitles.length,
+        articleCount: recentNews.length,
       };
 
       const validation = validatePriceNews(priceAction, newsSentiment);
@@ -496,6 +477,7 @@ export async function scanMarket(
   // Dimension 7: IMF macro — hoist outside loop (same value for all stocks per scan cycle)
   let imfMacroScore: number | undefined;
   try {
+    const { getDb } = await import("../../infrastructure/db/schema.js");
     imfMacroScore = getImfMacroScoreForConviction(getDb());
   } catch { /* best-effort — neutral if bridge fails */ }
 
@@ -503,7 +485,7 @@ export async function scanMarket(
     const domain = codeToDomain.get(price.code);
     const sectorAvg = domain && domain !== "other" ? sectorAverages.get(domain) ?? undefined : undefined;
 
-    const avgVol = getAvgVolumeSync(price.code);
+    const avgVol = deps.marketPriceRepo.getAvgVolume(price.code, today, 20, 5);
     const convictionInput: ConvictionInput = {
       code: price.code,
       changePct: price.changePct,
@@ -514,17 +496,9 @@ export async function scanMarket(
 
     // Enrich conviction with sentiment from recent news about this stock
     try {
-      const db = getDb();
-      const recentTitles = db
-        .query<{ source_title: string }, [string]>(
-          `SELECT source_title FROM rag_analyses
-           WHERE affected_actions LIKE '%' || ? || '%'
-             AND created_at > datetime('now', '-4 hours')
-           LIMIT 5`,
-        )
-        .all(price.code);
-      if (recentTitles.length > 0) {
-        const allText = recentTitles.map((r) => r.source_title).join(". ");
+      const recentNews = deps.marketPriceRepo.getRecentNewsTitles(price.code, 4, 5);
+      if (recentNews.length > 0) {
+        const allText = recentNews.map((r) => r.sourceTitle).join(". ");
         const sent = classifySentiment(allText);
         convictionInput.sentimentDirection = sent.direction;
         convictionInput.sentimentConfidence = sent.confidence;
@@ -548,11 +522,15 @@ export async function scanMarket(
 
     // Store conviction history (task 150)
     try {
-      const db = getDb();
       const vnNow = new Date(Date.now() + VN_OFFSET_MS);
       const dateStr = `${vnNow.getUTCFullYear()}-${String(vnNow.getUTCMonth() + 1).padStart(2, "0")}-${String(vnNow.getUTCDate()).padStart(2, "0")}`;
-      db.prepare(`INSERT OR REPLACE INTO conviction_history (symbol, date, peak_score, dominant_signal, created_at)
-        VALUES (?, ?, ?, ?, ?)`).run(price.code, dateStr, conviction.score, conviction.direction, new Date().toISOString());
+      deps.marketPriceRepo.upsertConvictionHistory({
+        symbol: price.code,
+        date: dateStr,
+        peakScore: conviction.score,
+        dominantSignal: conviction.direction,
+        createdAt: new Date().toISOString(),
+      });
     } catch { /* conviction_history table may not exist */ }
   }
 
@@ -562,6 +540,7 @@ export async function scanMarket(
 
   if (alerts.length > 0) {
     try {
+      const { getDb } = await import("../../infrastructure/db/schema.js");
       storeAlerts(alerts, getDb());
       logger.info("[scanMarket] alerts stored", {
         count: alerts.length,
