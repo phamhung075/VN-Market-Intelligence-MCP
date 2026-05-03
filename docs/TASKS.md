@@ -94,6 +94,7 @@ ARCHITECT CORRECTION: BA spec said `STOCK_PRICE_DB_PATH` is undefined in local t
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Started |
 |---------|-------|----------|------|-------|---------|---------|
+| 1842e | Backtest Phase 3: Sharpe ratio + VNI benchmark + confidence-weighted sizing + result persistence + combined-high-confidence strategy | P1 | SPRINT-S | developer | docs/handoffs/TASK_1842e.md | 2026-05-03 |
 
 ---
 

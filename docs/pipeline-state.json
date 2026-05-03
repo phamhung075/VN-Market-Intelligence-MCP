@@ -3,9 +3,9 @@
   "status": "in_progress",
   "currentSprint": 1842,
   "activeTaskId": "1842e",
-  "nextAgent": "developer",
-  "nextPrompt": "Task 1842e — Sharpe ratio + VNI benchmark + confidence-weighted allocation (Phase 3). Handoff: docs/handoffs/TASK_1842d.md (context). Previous task 1842d merged to main. Implement Phase 3 enhancements to the BacktestEngine: (1) Sharpe ratio computation with annualisation (sqrt(252)), (2) VNI benchmark return via IBacktestPriceRepository.getCandles('VNINDEX', ...) with graceful null fallback, (3) confidence-weighted position sizing replacing equal-weight allocation. Architecture reference: docs/architecture/1842a-backtesting-engine.md Section 3.3+. Branch: task/1842e-backtest-phase3.",
-  "updatedAt": "2026-05-03T18:45:00.000Z",
-  "updatedBy": "qa",
-  "lastCompleted": "1842d — BacktestEngine domain service + run_backtest MCP tool #120 merged to main. 12/12 AC tests pass, tsc clean, DDD golden rule satisfied."
+  "nextAgent": "qa",
+  "nextPrompt": "Review Task 1842e — Backtest Phase 3: Full Metrics + Benchmark.\n\nHandoff: docs/handoffs/TASK_1842e.md\n\nVerify:\n1. bun test src/__tests__/1842e-backtest-phase3.test.ts → 10/10 pass, 0 fail\n2. bun test (full suite) → 0 new failures\n3. tsc --noEmit → clean\n4. All 10 ACs tagged as passing in test output\n\nFiles changed:\n- apps/mcp-server/src/domain/backtesting/backtestEngine.ts — confidence-weighted position sizing, positionWeight on TradeRecord\n- apps/mcp-server/src/domain/backtesting/models.ts — positionWeight field added to TradeRecord\n- apps/mcp-server/src/domain/backtesting/strategyRegistry.ts — combined-high-confidence description updated\n- apps/mcp-server/src/__tests__/1842e-backtest-phase3.test.ts — NEW, 10 ACs\n\nSprint 1842 is complete after this QA pass.",
+  "updatedAt": "2026-05-03T20:00:00.000Z",
+  "updatedBy": "developer",
+  "lastCompleted": "1842e — Backtest Phase 3: Sharpe ratio, VNI benchmark, confidence-weighted sizing, result persistence. 10/10 AC tests pass, tsc clean, DDD golden rule satisfied."
 }
