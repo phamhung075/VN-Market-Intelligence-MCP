@@ -27,6 +27,7 @@ import { runWeatherCheck } from './weatherCheckJob.js'
 import { runDavPharmacyCheck } from './davPharmacyJob.js'
 import { runVpsProxyWatchdog } from './vpsProxyWatchdogJob.js'
 import { runBctcOverdueCheck } from './financial-reports/bctcOverdueCheckJob.js'
+import { runBctcBatchSweepJob } from './financial-reports/bctcBatchSweepJob.js'
 import { runBctcReparseJob } from './financial-reports/bctcReparseJob.js'
 import { runBctcQueueEnricherJob } from './financial-reports/bctcQueueEnricherJob.js'
 import { runBctcPdfPullJob } from './financial-reports/bctcPdfPullJob.js'
@@ -257,6 +258,16 @@ export function startScheduler() {
       return { rowsWritten: result.downloaded }
     })
   }, { timezone: 'Asia/Ho_Chi_Minh' })
+
+  // 09:00 UTC on 25th of Jan/Apr/Jul/Oct — BCTC batch sweep (task 1841b)
+  // Triggers during earnings season: fetches BCTC data for all 30 watchlist tickers.
+  // isEarningsSeason() gate is evaluated inside runBctcBatchSweepJob() — cron
+  // fires monthly but no-ops outside season months.
+  cron.schedule(CRONS.bctcBatchSweep, async () => {
+    await jobRunRepo.wrapRun('bctcBatchSweepJob', async () => {
+      await runBctcBatchSweepJob()
+    })
+  }, { timezone: 'UTC' })
 
   // Startup catch-up: if server restarts after 08:00 GMT+7 (01:00 UTC) or
   // 22:30 GMT+7 (15:30 UTC) without morning briefing / evening summary having

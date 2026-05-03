@@ -90,6 +90,7 @@ import { registerCarryTools } from "./macro/carryTools.js";
 import { registerDinhGiaTools } from "./macro/dinhGiaTools.js";
 import { registerVpsServiceRestartTool } from "./system/vpsServiceRestartTool.js";
 import { registerSmartCompactTool } from "./system/smartCompactTool.js";
+import { registerBctcBatchSweepTool } from "./financial-reports/bctcBatchSweepTool.js";
 
 /**
  * Flat array of all MCP tool registration functions.
@@ -180,4 +181,5 @@ export const toolRegistry: Array<(server: McpServer) => void> = [
   registerDinhGiaTools,                 // Task 1426b: get_yield_spread_signal (+1 → 116)
   registerVpsServiceRestartTool,        // Task 1779b: restart_vps_service (+1 → 117)
   registerSmartCompactTool,             // Task 1821b: smart_compact (+1 → 118)
+  registerBctcBatchSweepTool,           // Task 1841b: run_bctc_batch_sweep (+1 → 119)
 ];

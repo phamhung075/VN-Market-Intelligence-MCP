@@ -110,6 +110,8 @@ export const CRONS = {
   imfIndicatorPoller:        Bun.env.CRON_IMF_INDICATOR_POLLER              ?? '0 */6 * * *',
   /** Session tool usage tracker: every 8h (matches cache TTL) — task 1299c */
   trackSessionToolUsage:     Bun.env.CRON_TRACK_SESSION_TOOL_USAGE          ?? '0 */8 * * *',
+  /** BCTC batch sweep: 09:00 UTC on the 25th of Jan, Apr, Jul, Oct (task 1841b) */
+  bctcBatchSweep:            Bun.env.CRON_BCTC_BATCH_SWEEP                  ?? '0 9 25 1,4,7,10 *',
   /** DB integrity check: weekly Sunday 02:00 UTC + WAL >= 40MB threshold — task 1342 */
   integrityCheck:            Bun.env.CRON_DB_INTEGRITY_CHECK                 ?? '0 2 * * 0',
   /** Market earning yield (Báu Phase 2): daily 09:30 UTC (16:30 VN) weekdays — task 1426a */
