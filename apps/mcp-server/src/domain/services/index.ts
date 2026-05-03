@@ -118,6 +118,7 @@ export {
   checkSignalSla,
   classifySeverity,
   isVnMarketHours,
+  isVnTradingDay,
   getSlaThreshold,
   DEFAULT_SLA_CONFIG,
 } from "./freshnessSlaChecker.js";

@@ -86,12 +86,49 @@ export const DEFAULT_SLA_CONFIG: SignalSlaConfig[] = [
 ];
 
 /**
+ * VN public holidays — fixed Gregorian dates (YYYY-MM-DD in VN timezone).
+ * Update annually per official decree. Entries must cover the current calendar year.
+ */
+const VN_PUBLIC_HOLIDAYS: ReadonlySet<string> = new Set([
+  // New Year's Day
+  "2026-01-01",
+  // Hung Kings Commemoration
+  "2026-04-07",
+  // Liberation Day + Labour Day
+  "2026-04-30", "2026-05-01",
+  // National Day
+  "2026-09-02",
+  // Tet 2026 (provisional)
+  "2026-01-27", "2026-01-28", "2026-01-29", "2026-01-30",
+  "2026-01-31", "2026-02-01", "2026-02-02",
+]);
+
+function toVnDateString(now: Date): string {
+  const vnMs = now.getTime() + 7 * 60 * 60 * 1000;
+  const vnDate = new Date(vnMs);
+  const y = vnDate.getUTCFullYear();
+  const m = String(vnDate.getUTCMonth() + 1).padStart(2, "0");
+  const d = String(vnDate.getUTCDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+export function isVnTradingDay(now: Date = new Date()): boolean {
+  const vnMs = now.getTime() + 7 * 60 * 60 * 1000;
+  const vnDate = new Date(vnMs);
+  const dayOfWeek = vnDate.getUTCDay(); // 0=Sun, 6=Sat
+  if (dayOfWeek === 0 || dayOfWeek === 6) return false;
+  return !VN_PUBLIC_HOLIDAYS.has(toVnDateString(now));
+}
+
+/**
  * Determines if current time is within VN market hours (09:00-15:00 UTC+7).
  *
  * @param now Current date/time
- * @returns true if between 09:00-15:00 VN time (= 02:00-08:00 UTC)
+ * @returns true if between 09:00-15:00 VN time (= 02:00-08:00 UTC), on a VN trading day
  */
 export function isVnMarketHours(now: Date = new Date()): boolean {
+  if (!isVnTradingDay(now)) return false;
+
   // VN time = UTC + 7 hours
   // Market hours: 09:00-15:00 VN = 02:00-08:00 UTC
   const utcHour = now.getUTCHours();
