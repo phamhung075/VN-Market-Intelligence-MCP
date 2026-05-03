@@ -71,11 +71,13 @@ export const strategyRegistry: Record<string, StrategyDefinition> = {
   "combined-high-confidence": {
     id: "combined-high-confidence",
     description:
-      "Kinh Dich BUY signals where both hexagram reading and TA confirm direction. " +
-      "Phase 3 strategy — currently behaves identically to kinh-dich-high-confidence.",
+      "Kinh Dich BUY/SELL signals with confidence >= 0.7 " +
+      "(combined strategy stub — full TA confirmation logic is out of scope for Sprint 1842).",
     minConfidence: 0.7,
     holdDays: 5,
     signalFilter(row: RawSignalRow): BacktestSignal | null {
+      // Same filter logic as kinh-dich-high-confidence.
+      // Full TA-combined signal logic (TA confirmation required) is a future sprint item.
       if (row.direction !== "BUY" && row.direction !== "SELL") return null;
       if (row.confidence < 0.7) return null;
       return row;

@@ -28,6 +28,13 @@ export interface TradeRecord {
   /** Return as fraction, e.g. 0.05 = +5% */
   returnPct: number;
   confidence: number;
+  /**
+   * Confidence-weighted portfolio allocation for this trade.
+   * weight = confidence / sum(all open confidences on entry date).
+   * Falls back to equal-weight (1/N) when all confidences are 0.
+   * Single position: 1.0.
+   */
+  positionWeight: number;
 }
 
 export type TradeLog = TradeRecord[];

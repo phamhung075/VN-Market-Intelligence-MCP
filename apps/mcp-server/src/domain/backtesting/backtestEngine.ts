@@ -1,11 +1,18 @@
 /**
- * backtestEngine.ts — Task 1842d
+ * backtestEngine.ts — Task 1842d / 1842e
  *
  * Pure domain computation service — ZERO I/O, ZERO DB imports.
  * Takes injected data (signals, price lookup function) and computes metrics.
  *
  * Entry rule: T+1 open after signal date (avoids look-ahead bias).
  * Exit rule:  5 trading days after entry, OR an opposing signal — whichever first.
+ *
+ * Phase 3 (1842e):
+ * - Sharpe ratio from equity curve (population stddev, annualised sqrt(252))
+ * - Confidence-weighted position sizing:
+ *     weight[ticker] = confidence[ticker] / sum(all open confidences on entry date)
+ *     Fallback: equal-weight (1/N) when all confidences are 0.
+ *     Single position: weight = 1.0.
  *
  * Layer: domain/backtesting — depends only on domain interfaces, never on infrastructure.
  */
@@ -122,6 +129,10 @@ export function runBacktestEngine(input: BacktestEngineInput): BacktestReport {
     tickerSignals.set(key, existing);
   }
 
+  // ── Pending trade type (before positionWeight is assigned) ──────────────────
+  type PendingTrade = Omit<TradeRecord, "positionWeight">;
+  const pendingTrades: PendingTrade[] = [];
+
   for (const [ticker, sigs] of tickerSignals) {
     const candles = priceRepo.getCandles(ticker, params.startDate, addCalendarDays(params.endDate, 14));
 
@@ -134,11 +145,10 @@ export function runBacktestEngine(input: BacktestEngineInput): BacktestReport {
     const sorted = [...sigs].sort((a, b) => a.timestamp.localeCompare(b.timestamp));
 
     // Track open positions to detect opposing signals
-    // Key = entry date, value = direction
     let openPosition: { entryDate: string; entryPrice: number; direction: "BUY" | "SELL"; confidence: number } | null =
       null;
 
-    const holdDays = 5; // configurable in Phase 3 via StrategyDefinition.holdDays
+    const holdDays = 5; // configurable via StrategyDefinition.holdDays in future
 
     for (const sig of sorted) {
       const signalDate = toDateStr(sig.timestamp);
@@ -165,7 +175,7 @@ export function runBacktestEngine(input: BacktestEngineInput): BacktestReport {
               ? (exitPrice - openPosition.entryPrice) / openPosition.entryPrice
               : (openPosition.entryPrice - exitPrice) / openPosition.entryPrice;
 
-          trades.push({
+          pendingTrades.push({
             ticker,
             entryDate: openPosition.entryDate,
             exitDate: entryCandle.date,
@@ -207,7 +217,7 @@ export function runBacktestEngine(input: BacktestEngineInput): BacktestReport {
               ? (exitPrice - pos.entryPrice) / pos.entryPrice
               : (pos.entryPrice - exitPrice) / pos.entryPrice;
 
-          trades.push({
+          pendingTrades.push({
             ticker,
             entryDate: pos.entryDate,
             exitDate: exitCandle.date,
@@ -225,6 +235,36 @@ export function runBacktestEngine(input: BacktestEngineInput): BacktestReport {
     }
   }
 
+  // ── Confidence-weighted position sizing ───────────────────────────────────
+  // Group trades by entryDate, compute weight per trade within each group.
+  // weight[ticker] = confidence[ticker] / sum(all confidences on that date)
+  // Fallback: equal-weight (1/N) when all confidences on that date are 0.
+  // Single position: weight = 1.0.
+  const entryDateGroups = new Map<string, PendingTrade[]>();
+  for (const t of pendingTrades) {
+    const group = entryDateGroups.get(t.entryDate) ?? [];
+    group.push(t);
+    entryDateGroups.set(t.entryDate, group);
+  }
+
+  for (const [, group] of entryDateGroups) {
+    const sumConf = group.reduce((s, t) => s + t.confidence, 0);
+    const n = group.length;
+    for (const t of group) {
+      (t as TradeRecord).positionWeight =
+        n === 1
+          ? 1.0
+          : sumConf === 0
+            ? 1 / n
+            : t.confidence / sumConf;
+    }
+  }
+
+  // All pending trades now have positionWeight assigned — cast to full TradeRecord
+  for (const t of pendingTrades) {
+    trades.push(t as TradeRecord);
+  }
+
   // ── No trades warning ─────────────────────────────────────────────────────
   if (trades.length === 0) {
     warnings.push(
@@ -234,22 +274,24 @@ export function runBacktestEngine(input: BacktestEngineInput): BacktestReport {
   }
 
   // ── Compute portfolio metrics ─────────────────────────────────────────────
-  // Equal-weight portfolio: each trade contributes 1/N of the portfolio on its entry date.
-  // Simplified: compute average return across all completed trades.
+  // Confidence-weighted portfolio return: each trade contributes positionWeight * returnPct.
+  // positionWeight is assigned above — sums to 1.0 within each entry date group.
+  // totalReturnPct = sum over all exit events of (positionWeight * returnPct).
+  // When all trades have equal weight (kinh-dich-all), this reduces to the simple average.
   const totalReturnPct =
-    trades.reduce((sum, t) => sum + t.returnPct, 0) / trades.length;
+    trades.reduce((sum, t) => sum + t.positionWeight * t.returnPct, 0);
 
   const winCount = trades.filter((t) => t.returnPct > 0).length;
   const winRate = trades.length > 0 ? winCount / trades.length : 0;
 
   // ── Equity curve + drawdown ───────────────────────────────────────────────
   // Build a daily equity curve across all trade return dates.
-  // Simplified: sort trades by exit date, accumulate returns.
+  // Sort trades by exit date, accumulate confidence-weighted returns.
   const sortedByExit = [...trades].sort((a, b) => a.exitDate.localeCompare(b.exitDate));
   let equity = 1.0;
   const equityCurve: number[] = [equity];
   for (const t of sortedByExit) {
-    equity *= 1 + t.returnPct / trades.length; // weighted contribution
+    equity *= 1 + t.positionWeight * t.returnPct; // confidence-weighted contribution
     equityCurve.push(equity);
   }
 
