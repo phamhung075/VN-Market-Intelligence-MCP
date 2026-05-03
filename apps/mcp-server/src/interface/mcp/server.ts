@@ -165,6 +165,11 @@ export async function createBunServer(
   // FIX-BCTC-SIZE-GUARD: reset 4 poisoned 'done' queue entries once at startup
   ensurePoisonedQueueCleanup();
 
+  // ── Task 1839a Phase 2: single DB handle for all HTTP route handlers ─────
+  // One shared DB instance for all route handlers — opened once at startup.
+  // Eliminates 16 per-request calls; server lifetime matches startScheduler.
+  const db = getDb();
+
   // ── Session manager handles SSE + message routing ──────────────────────
   const sessions = new SseSessionManager(createMcpServerInstance, log);
 
@@ -282,19 +287,19 @@ export async function createBunServer(
 
     // ── POST /webhook — Telegram bot command webhook ──────────────────────
     if (method === "POST" && pathname === "/webhook") {
-      await handleWebhook(req, res, getDb(), log);
+      await handleWebhook(req, res, db, log);
       return;
     }
 
     // ── Push Prices from VPS proxy ────────────────────────────────────────
     if (method === "POST" && pathname === "/api/push-prices") {
-      await handlePushPrices(req, res, getDb(), log);
+      await handlePushPrices(req, res, db, log);
       return;
     }
 
     // ── Push Foreign Flow from VPS proxy ────────────────────────────────────
     if (method === "POST" && pathname === "/api/push-foreign-flow") {
-      await handlePushForeignFlow(req, res, getDb(), log);
+      await handlePushForeignFlow(req, res, db, log);
       return;
     }
 
@@ -304,7 +309,6 @@ export async function createBunServer(
       const authHeader =
         (req.headers["x-api-key"] as string | undefined) ||
         (req.headers["authorization"] as string | undefined)?.replace("Bearer ", "");
-      const db = getDb();
       const result = buildForeignFlowStatusResponse({
         db,
         apiKey,
@@ -325,7 +329,6 @@ export async function createBunServer(
         return;
       }
       try {
-        const db = getDb();
         // Watchlist stocks (user's portfolio)
         const rows = db.prepare("SELECT code FROM watchlist ORDER BY code").all() as { code: string }[];
         const watchlistCodes = rows.map((r) => r.code);
@@ -408,8 +411,7 @@ export async function createBunServer(
           try {
             const { pollNews } = await import("../../application/usecases/pollNews.js");
             const { recordJobRun } = await import("../../infrastructure/db/cronJobRunStore.js");
-            const { getDb } = await import("../../infrastructure/db/schema.js");
-            await recordJobRun(getDb(), "pollNewsJob", async () => {
+            await recordJobRun(db, "pollNewsJob", async () => {
               const result = await pollNews({
                 fetchers: {
                   // Build a fetcher for every key present in bySource.
@@ -527,8 +529,6 @@ export async function createBunServer(
         return;
       }
       try {
-        const db = getDb();
-
         // Get current reporting period (most recent quarter)
         const now = new Date();
         const currentYear = now.getFullYear();
@@ -737,8 +737,6 @@ export async function createBunServer(
           return;
         }
 
-        const db = getDb();
-
         // Check if already done
         const existingRow = db.prepare(
           `SELECT status FROM bctc_vps_queue WHERE action_code = ? AND period_year = ? AND period_quarter = ?`,
@@ -851,10 +849,9 @@ export async function createBunServer(
           return;
         }
 
-        const db = getDb();
         const stmt = db.prepare(
-          `UPDATE bctc_vps_queue 
-           SET source_url = ? 
+          `UPDATE bctc_vps_queue
+           SET source_url = ?
            WHERE action_code = ? AND period_year = ? AND period_quarter = ? AND source_url IS NULL`
         );
         const result = stmt.run(sourceUrl, actionCode, periodYear, periodQuarter);
@@ -917,7 +914,6 @@ export async function createBunServer(
           return;
         }
 
-        const db = getDb();
         const now = new Date().toISOString();
         const stmt = db.prepare(`
           INSERT OR REPLACE INTO daily_ohlcv (code, date, open, high, low, close, volume, updated_at)
@@ -961,7 +957,6 @@ export async function createBunServer(
         return;
       }
       try {
-        const db = getDb();
         const row = db.prepare<{ id: number }, []>(
           "SELECT id FROM ohlcv_backfill_queue WHERE done = 0 LIMIT 1"
         ).get();
@@ -985,7 +980,6 @@ export async function createBunServer(
         return;
       }
       try {
-        const db = getDb();
         db.prepare(
           "UPDATE ohlcv_backfill_queue SET done = 1 WHERE done = 0"
         ).run();
@@ -1015,7 +1009,6 @@ export async function createBunServer(
         const payload = JSON.parse(body) as { items?: unknown };
         const rawItems = Array.isArray(payload?.items) ? payload.items : [];
 
-        const db = getDb();
         const stmt = db.prepare(`
           INSERT OR IGNORE INTO rag_analyses
             (id, created_at, level, source_url, source_title, source_type,
@@ -1106,7 +1099,6 @@ export async function createBunServer(
           (i) => typeof i.name === "string" && i.name in TE_COLUMN_MAP && typeof i.value === "number"
         );
 
-        const db = getDb();
         const now = new Date().toISOString();
 
         if (known.length === 0) {
@@ -1191,7 +1183,6 @@ export async function createBunServer(
         (i) => typeof i.name === "string" && i.name in GSO_ALLOWED_COLS && typeof i.value === "number"
       );
 
-      const db = getDb();
       const now = new Date().toISOString();
 
       // INSERT OR IGNORE to create row if absent (preserves existing columns)
@@ -1251,7 +1242,7 @@ export async function createBunServer(
             verbose: payload.verbose !== false,
             dry_run: payload.dry_run === true,
           },
-          getDb(),
+          db,
         );
 
         // If live mode, queue SSH trigger (fire-and-forget, non-blocking)

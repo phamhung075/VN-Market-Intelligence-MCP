@@ -6,3 +6,4 @@ export { SqliteMarketPriceRepository } from "./SqliteMarketPriceRepository.js";
 export { SqliteVnstockRepository } from "./SqliteVnstockRepository.js";
 export { SqliteKinhDichScoreRepository } from "./SqliteKinhDichScoreRepository.js";
 export { SqliteHexagramRepository } from "./SqliteHexagramRepository.js";
+export { SqliteJobRunRepository } from "./SqliteJobRunRepository.js";

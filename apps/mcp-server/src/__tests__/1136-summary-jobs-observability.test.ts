@@ -62,14 +62,16 @@ describe("Task 1136 — summaryJobs.ts observability wrap", () => {
   });
 });
 
-describe("Task 1136 — jobs.ts imports", () => {
+describe("Task 1136 — jobs.ts imports (Phase 2 updated)", () => {
   it("imports getDb from infrastructure/db/schema in jobs.ts", () => {
+    // getDb() is still used once at the composition root in startScheduler()
     expect(jobsSrc).toContain("../infrastructure/db/schema.js");
     expect(jobsSrc).toMatch(/import\s*\{[^}]*getDb[^}]*\}/);
   });
 
-  it("imports recordJobRun from cronJobRunStore in jobs.ts", () => {
-    expect(jobsSrc).toContain("../infrastructure/db/cronJobRunStore.js");
-    expect(jobsSrc).toMatch(/import\s*\{[^}]*recordJobRun[^}]*\}/);
+  it("imports SqliteJobRunRepository from repositories in jobs.ts (Phase 2 pattern)", () => {
+    // Task 1839a Phase 2: recordJobRun import replaced by SqliteJobRunRepository
+    expect(jobsSrc).toContain("SqliteJobRunRepository");
+    expect(jobsSrc).toMatch(/import\s*\{[^}]*SqliteJobRunRepository[^}]*\}/);
   });
 });
