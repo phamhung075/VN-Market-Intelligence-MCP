@@ -1,11 +1,11 @@
 {
   "_maintained_by": "every agent at RETURN via agent-chaining-protocol",
-  "status": "in_progress",
-  "currentSprint": 1842,
-  "activeTaskId": "1842e",
-  "nextAgent": "qa",
-  "nextPrompt": "Review Task 1842e — Backtest Phase 3: Full Metrics + Benchmark.\n\nHandoff: docs/handoffs/TASK_1842e.md\n\nVerify:\n1. bun test src/__tests__/1842e-backtest-phase3.test.ts → 10/10 pass, 0 fail\n2. bun test (full suite) → 0 new failures\n3. tsc --noEmit → clean\n4. All 10 ACs tagged as passing in test output\n\nFiles changed:\n- apps/mcp-server/src/domain/backtesting/backtestEngine.ts — confidence-weighted position sizing, positionWeight on TradeRecord\n- apps/mcp-server/src/domain/backtesting/models.ts — positionWeight field added to TradeRecord\n- apps/mcp-server/src/domain/backtesting/strategyRegistry.ts — combined-high-confidence description updated\n- apps/mcp-server/src/__tests__/1842e-backtest-phase3.test.ts — NEW, 10 ACs\n\nSprint 1842 is complete after this QA pass.",
-  "updatedAt": "2026-05-03T20:00:00.000Z",
-  "updatedBy": "developer",
-  "lastCompleted": "1842e — Backtest Phase 3: Sharpe ratio, VNI benchmark, confidence-weighted sizing, result persistence. 10/10 AC tests pass, tsc clean, DDD golden rule satisfied."
+  "status": "idle",
+  "currentSprint": 1843,
+  "activeTaskId": null,
+  "nextAgent": null,
+  "nextPrompt": null,
+  "updatedAt": "2026-05-03T19:30:00.000Z",
+  "updatedBy": "qa",
+  "lastCompleted": "QA 1843b APPROVED — merge(1843b) committed to main. 265-velocity: 11/11 pass. 1332-pollnews: Bun/LanceDB C++ panic is pre-existing on main (identical crash). Suite: 8779 pass / 2 pre-existing fail (improved from 5 on main). tsc: 0 errors. DDD: clean. Branch task/1843b-fix-test-failures-dry-cleanup merged."
 }

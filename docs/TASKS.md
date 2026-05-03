@@ -19,6 +19,8 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Blocked by |
 |---------|-------|----------|------|-------|---------|------------|
+| 1843a | SPRINT-M: combined-high-confidence strategy — taComputation.ts (pure EMA/RSI), buildCombinedHighConfidenceStrategy factory, computeTADirectionMap helper, test suite AC-CHC-3/4/5 + taComputation unit tests | HIGH | FEATURE | DEVELOPER | docs/handoffs/TASK_1843a.md | — |
+| 1843c | SPRINT-S: Restore apps/mcp-server/docs symlink (Phase 0 monorepo scaffold test failure — RISK-6 from ARCH_1843) | MEDIUM | FIX | DEVELOPER | docs/handoffs/TASK_1843c.md | — |
 
 ---
 
@@ -94,7 +96,6 @@ ARCHITECT CORRECTION: BA spec said `STOCK_PRICE_DB_PATH` is undefined in local t
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Started |
 |---------|-------|----------|------|-------|---------|---------|
-| 1842e | Backtest Phase 3: Sharpe ratio + VNI benchmark + confidence-weighted sizing + result persistence + combined-high-confidence strategy | P1 | SPRINT-S | developer | docs/handoffs/TASK_1842e.md | 2026-05-03 |
 
 ---
 
@@ -109,6 +110,10 @@ ARCHITECT CORRECTION: BA spec said `STOCK_PRICE_DB_PATH` is undefined in local t
 
 | Task ID | Title | Merged | Reports |
 |---------|-------|--------|---------|
+| 1843b | SPRINT-S: Fix 4 pre-existing test failures (265 x3 date prune + 1332 x1 singleton isolation) + computeBenchmarkReturn reorder DRY. 11/11 pass (265). 1332 crash is pre-existing Bun/LanceDB native panic (identical on main). Suite: 8779 pass / 2 pre-existing fail (vs 5 on main). tsc clean. DDD: no domain→infra violations in changed files. | 2026-05-03 | reports/TASK_REPORT_1843b.md |
+| ARCH-1843 | DESIGN: Architecture for Sprint 1843 — Option A chosen (factory closure, no interface change). taComputation.ts design, buildCombinedHighConfidenceStrategy factory, computeTADirectionMap application helper, DDD layer map, risk register (RISK-1 resolved, RISK-2..6 flagged). File-level change plan for 9 files. | 2026-05-03 | docs/handoffs/ARCH_1843.md |
+| BA-1843 | SPEC: Requirements spec for Sprint 1843 — combined-high-confidence real strategy (EMA/RSI + Kinh Dich agreement gate), fix 4 pre-existing test failures (265 x3 + 1332 x1), benchmarkReturnPct DRY cleanup. RISK-1 identified (signalFilter signature incompatible with multi-row TA pre-computation — Architect must choose Option A/B/C). 3 PO blockers listed. | 2026-05-03 | docs/REQ_1843.md |
+| 1842e | SPRINT-S: Backtest Phase 3 — Sharpe ratio (population stddev, sqrt(252)), VNI benchmark comparison, confidence-weighted position sizing (w=conf/sum, 1/N fallback), result persistence via IBacktestResultRepository.saveRun() in try/catch, combined-high-confidence strategy stub. 10/10 AC pass. 8775 pass / 4 pre-existing fail (265 x3 + 1332 x1). tsc clean. DDD golden rule satisfied. Sprint 1842 complete. | 2026-05-03 | docs/handoffs/TASK_1842e.md |
 | 1842d | SPRINT-M: BacktestEngine domain service + run_backtest MCP tool #120 — pure computation engine, strategyRegistry (kinh-dich-high-confidence/all), runBacktest use case with IRepo injection + in-memory mutex, Zod MCP tool. 12/12 AC pass. 8765 pass / 4 pre-existing fail (265 x3 + 1332 x1). tsc clean. DDD golden rule satisfied. | 2026-05-03 | docs/handoffs/TASK_1842d.md |
 | 1842c | SPRINT-M: VNSignalAdapter — VI→EN signal normalizer wired into Kinh Dich write path. Merged 2026-05-03. | 2026-05-03 | docs/handoffs/TASK_1842c.md |
 | 1842b | SPRINT-M: OHLCV backfill + 3 backtesting repository interfaces (IBacktestSignalRepository, IBacktestPriceRepository, IBacktestResultRepository) + SQLite implementations. Merged 2026-05-03. | 2026-05-03 | docs/handoffs/TASK_1842b.md |
