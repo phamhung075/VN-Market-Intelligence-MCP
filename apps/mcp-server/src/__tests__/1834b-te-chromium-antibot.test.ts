@@ -63,4 +63,13 @@ describe("1834b — TE Chromium anti-bot hardening", () => {
   it("AC-7: TE_BLOCKED_PATTERNS.length >= 4", () => {
     expect(TE_BLOCKED_PATTERNS.length).toBeGreaterThanOrEqual(4);
   });
+
+  // AC-8: executablePath resolves to PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH env var
+  //       or falls back to /usr/bin/chromium — must never be undefined.
+  //       Task 1833k — Chromium executable path config verification.
+  it("AC-8: executablePath equals Bun.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH ?? '/usr/bin/chromium'", () => {
+    const config = buildChromiumLaunchConfig();
+    const expected = Bun.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH ?? "/usr/bin/chromium";
+    expect(config.executablePath).toBe(expected);
+  });
 });
