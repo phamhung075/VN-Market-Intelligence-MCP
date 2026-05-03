@@ -30,3 +30,4 @@ export * from "./macro/index.js";
 export * from "./sector/index.js";
 export * from "./kinhdich/index.js";
 export * from "./system/index.js";
+export * from "./backtesting/index.js";

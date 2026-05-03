@@ -1,11 +1,11 @@
 {
   "_maintained_by": "every agent at RETURN via agent-chaining-protocol",
-  "status": "idle",
-  "currentSprint": 1841,
-  "activeTaskId": null,
-  "nextAgent": null,
-  "nextPrompt": null,
-  "updatedAt": "2026-05-03T18:00:00.000Z",
-  "updatedBy": "qa",
-  "lastCompleted": "1841b — Sprint 1841 complete. U-9 health dashboard + U-10 BCTC batch sweep DONE. totalTasksDone=506."
+  "status": "in_progress",
+  "currentSprint": 1842,
+  "activeTaskId": "1842d",
+  "nextAgent": "qa",
+  "nextPrompt": "Task 1842d. Handoff: docs/handoffs/TASK_1842d.md. Review BacktestEngine domain service + run_backtest MCP tool #120. Verify: 12/12 AC tests pass (bun test src/__tests__/1842d-backtest-engine.test.ts), tsc --noEmit clean, tool #120 registered in registry.ts, DDD golden rule enforced (backtestEngine.ts has zero infrastructure imports). Branch: task/1842d-backtest-engine-mcp-tool.",
+  "updatedAt": "2026-05-03T16:40:00.000Z",
+  "updatedBy": "developer",
+  "lastCompleted": "1842d — BacktestEngine domain service + run_backtest MCP tool #120. 12/12 tests pass, tsc clean. Branch: task/1842d-backtest-engine-mcp-tool."
 }
