@@ -290,3 +290,53 @@ PIPELINE_STATE_WRITE: [confirm written]
 - `getAvgVolumeSync` kept as a named export for backward compat with test 1320 (calls it directly with `(code, todayUtc)`).
 - The scan pipeline's getDb() calls for `storeAlerts` and `getImfMacroScoreForConviction` use dynamic import pattern — still acceptable as infrastructure calls within the application layer. Full elimination is Phase 3.
 - Pre-existing failures (Task 265 Mention Velocity Store × 3, Sprint 145 diacritics timeout × 1) were present before this sprint.
+
+---
+
+## [QA] Review Record
+
+**Date:** 2026-05-03
+**Reviewer:** qa
+**Outcome:** APPROVED — merged to main
+
+### AC Verification Results
+
+| AC | Result | Notes |
+|----|--------|-------|
+| AC-1 | PASS | 5 domain interface files + barrel in domain/repositories/ |
+| AC-2 | PASS | IVnstockRepository has documented pragmatic infra import (design R-1); other 4 interfaces clean |
+| AC-3 | PASS | infrastructure/db/repositories/index.ts exports all 5 adapters |
+| AC-4 | PASS | All 5 adapters use `implements` keyword |
+| AC-5 | PASS | scanMarket() uses ScanMarketDeps; getAvgVolumeSync kept as backward-compat re-export (not scan logic) |
+| AC-6 | PASS | computeSentimentScore, computeFundamentalsScore, computePriceScore, computeForeignFlowScore, computeSectorScore, computeHaoScores all use default-param injection |
+| AC-7 | PASS | marketScanJob.ts wires SqliteWatchlistRepository + SqliteMarketPriceRepository at scanMarket call site |
+| AC-8 | PASS | 1838b-repository-adapters.test.ts exists, 21 tests, all pass |
+| AC-9 | PASS | 302-kinhdich-differentiation-smoke.test.ts: 22 tests pass (3 files run together) |
+| AC-10 | PASS | 278-kinhdich-allzero-differentiation.test.ts: pass |
+| AC-11 | PASS | 21 tests in 1838b-repository-adapters.test.ts, all pass (exceeds 10 minimum) |
+| AC-12 | PASS | 8799 pass, 4 fail (all pre-existing: Task 265 x3, Task 1331a x1) |
+| AC-13 | PASS | QA fixed 2 TSC errors before merge: (1) 1352a test mock signature (opts?→deps), (2) SqliteHexagramRepository exactOptionalPropertyTypes via conditional spread |
+| AC-14 | PASS | server.ts not in branch diff |
+
+### Test Results
+
+- 1838b-specific: 21/21 pass
+- 103-job-market-scan + 302-kinhdich-differentiation-smoke + 278-kinhdich-allzero: 22/22 pass
+- 1352a-scheduler-job-wrappers: 29/29 pass (after QA TSC fix)
+- Full suite: 8799 pass / 4 fail (all pre-existing)
+- TypeScript: 0 errors (`bun tsc --noEmit` clean after QA fixes)
+
+### QA Fixes Applied
+
+Two TypeScript errors found and fixed by QA before merge:
+
+1. `1352a-scheduler-job-wrappers-macro-marketscan.test.ts` — mock function signature `(opts?: ScanMarketDeps)` changed to `(deps: ScanMarketDeps)` to match the now-required parameter
+2. `SqliteHexagramRepository.ts` — `null ?? undefined` pattern replaced with conditional spread `...(val != null ? { field: val } : {})` to satisfy `exactOptionalPropertyTypes: true`
+
+### Merge
+
+- Branch: task/1838b-repository-pattern-phase1 merged to main (--no-ff)
+- Branch deleted post-merge
+- totalTasksDone: 500 → 501
+- UPGRADE_PLAN.md U-4: DEFERRED → IN_PROGRESS (Phase 1 done, Phase 2 pending)
+- pipeline-state.json: status=idle, nextAgent=null

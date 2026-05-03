@@ -1,10 +1,10 @@
 {
   "_maintained_by": "every agent at RETURN via agent-chaining-protocol",
-  "status": "in_progress",
+  "status": "idle",
   "currentSprint": 1838,
-  "activeTaskId": "1838b",
-  "nextAgent": "qa",
-  "nextPrompt": "Task 1838b implementation complete. Branch: task/1838b-repository-pattern-phase1. Verify 14 ACs in docs/handoffs/TASK_1838b.md. Run: cd apps/mcp-server && bun test src/__tests__/1838b-repository-adapters.test.ts (21 tests). Run full bun test (expect >= 8539 pass, 0 new failures). Pre-existing failures: Task 265 Mention Velocity Store x3 and Sprint 145 diacritics timeout x1 are NOT regressions. Confirm server.ts NOT modified (AC-14).",
-  "updatedAt": "2026-05-03T13:00:00Z",
-  "updatedBy": "developer"
+  "activeTaskId": null,
+  "nextAgent": null,
+  "nextPrompt": null,
+  "updatedAt": "2026-05-03T11:00:00Z",
+  "updatedBy": "qa"
 }

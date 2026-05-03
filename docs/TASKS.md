@@ -108,6 +108,8 @@ ARCHITECT CORRECTION: BA spec said `STOCK_PRICE_DB_PATH` is undefined in local t
 
 | Task ID | Title | Merged | Reports |
 |---------|-------|--------|---------|
+| 1838b | SPRINT-L: U-4 Phase 1 — 5 domain interfaces + 5 SQLite adapters + scanMarket.ts ScanMarketDeps injection + kinhDichTools.ts default-param injection + marketScanJob.ts wired. 21 new tests. 8799 pass. tsc clean. | 2026-05-03 | docs/handoffs/TASK_1838b.md |
+| 1838a | SPRINT-GATE: U-4 Architect design — repository pattern for getDb() refactor. 302 files analyzed, 5 interfaces designed, phased migration strategy, risk assessment. AC-1..7 complete. | 2026-05-03 | docs/handoffs/TASK_1838a.md |
 | 1837a | SPRINT-S: Pipeline-state persistence fix — docs/pipeline-state.json + CLAUDE.md two-step pipeline-resume gate + agent-chaining-protocol.md Rule 6 + PIPELINE_STATE_WRITE in Return Template. 3/3 tests pass. | 2026-05-03 | docs/handoffs/TASK_1837a.md |
 | 1836c | SPRINT-M: U-3 GitHub Actions CI pipeline — .github/workflows/ci.yml; push+PR triggers on main; oven-sh/setup-bun@v2 bun-version-file: .tool-versions; timeout-minutes: 15; --frozen-lockfile; actions/cache@v4; step summary. 6 workflow tests pass. 8539 pass / 105 pre-existing fail. | 2026-05-03 | docs/handoffs/TASK_1836c.md |
 | 1836b | SPRINT-S: U-2 Fix 3 pre-existing failing tests — AC-17 sleepMs injection + TEST-3 resolved. 8539 pass / 0 fail baseline (pre-existing failures in worktree context). testBaselineFail=0. | 2026-05-03 | docs/handoffs/TASK_1836b.md |
