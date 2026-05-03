@@ -12,10 +12,10 @@
 | U-1 | Bun Runtime Upgrade                     | 1    | SPRINT-S | DONE        | 1836  |
 | U-2 | Fix 3 Pre-Existing Failing Tests        | 1    | SPRINT-S | DONE        | 1836  |
 | U-3 | GitHub Actions CI Pipeline              | 1    | SPRINT-M | DONE        | 1836  |
-| U-4 | getDb() Repository Pattern Refactor     | 1    | SPRINT-L | IN_PROGRESS | 1838b (Phase 1 done) |
+| U-4 | getDb() Repository Pattern Refactor     | 1    | SPRINT-L | DONE        | 1838b (Phase 1), 1839a (Phase 2) |
 | U-5 | Prediction Calibration Feedback Loop    | 2    | SPRINT-M | PENDING    | TBD   |
 | U-6 | RAG Service Utilization Audit + Wiring  | 2    | SPRINT-M | PENDING    | TBD   |
-| U-7 | Agent Notebook Population Protocol      | 2    | SPRINT-S | PENDING    | TBD   |
+| U-7 | Agent Notebook Population Protocol      | 2    | SPRINT-S | IN_PROGRESS | 1839b |
 | U-8 | Portfolio Backtesting Engine            | 3    | SPRINT-L | PENDING    | TBD   |
 | U-9 | Read-Only Health Dashboard              | 3    | SPRINT-M | PENDING    | TBD   |
 | U-10| Quarterly BCTC Batch Sweep             | 3    | SPRINT-M | PENDING    | TBD   |
@@ -99,10 +99,10 @@ Create `.github/workflows/ci.yml`. On push and PR to `main`: checkout code, inst
 
 | Field       | Value |
 |-------------|-------|
-| Status      | IN_PROGRESS |
-| Sprint      | 1838b (Phase 1 DONE), Phase 2 pending |
+| Status      | DONE |
+| Sprint      | 1838b (Phase 1), 1839a (Phase 2) |
 | Size        | SPRINT-L |
-| Dependency  | Architect design complete (1838a). Phase 1 merged 2026-05-03. Phase 2 = full startScheduler.ts migration + remaining callers. |
+| Dependency  | Architect design complete (1838a). Phase 1 merged 2026-05-03. Phase 2 merged 2026-05-03. |
 
 **Problem**
 `getDb()` has 224 dependency edges — the most connected node in the codebase (per graph report). Domain code reaches directly into SQLite infrastructure, violating DDD rule: `domain/` must have zero imports from `infrastructure/`. This creates tight coupling, makes unit testing difficult, and risks cascading failures on schema changes.
@@ -170,8 +170,8 @@ Audit which agents currently call `search_similar_context`. Wire it into News Sc
 
 | Field       | Value |
 |-------------|-------|
-| Status      | PENDING |
-| Sprint      | TBD |
+| Status      | IN_PROGRESS |
+| Sprint      | 1839b |
 | Size        | SPRINT-S |
 | Dependency  | None |
 

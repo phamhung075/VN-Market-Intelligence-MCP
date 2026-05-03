@@ -12,6 +12,7 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Blocked by |
 |---------|-------|----------|------|-------|---------|------------|
+| 1839b | U-7: Agent Notebook Population Protocol — 10 flow files + 5 notebooks seeded | P1 | ENHANCEMENT | developer | docs/handoffs/TASK_1839b.md | — |
 
 ---
 
@@ -108,6 +109,7 @@ ARCHITECT CORRECTION: BA spec said `STOCK_PRICE_DB_PATH` is undefined in local t
 
 | Task ID | Title | Merged | Reports |
 |---------|-------|--------|---------|
+| 1839a | SPRINT-M: U-4 Phase 2 — server.ts 16 getDb() → 1 init + startScheduler.ts 41 recordJobRun(getDb()) → jobRunRepo.wrapRun(). IJobRunRepository domain port + SqliteJobRunRepository adapter. 8 new tests pass. 8696 pass / 3 pre-existing fail. tsc clean. | 2026-05-03 | docs/handoffs/TASK_1839a.md |
 | 1838b | SPRINT-L: U-4 Phase 1 — 5 domain interfaces + 5 SQLite adapters + scanMarket.ts ScanMarketDeps injection + kinhDichTools.ts default-param injection + marketScanJob.ts wired. 21 new tests. 8799 pass. tsc clean. | 2026-05-03 | docs/handoffs/TASK_1838b.md |
 | 1838a | SPRINT-GATE: U-4 Architect design — repository pattern for getDb() refactor. 302 files analyzed, 5 interfaces designed, phased migration strategy, risk assessment. AC-1..7 complete. | 2026-05-03 | docs/handoffs/TASK_1838a.md |
 | 1837a | SPRINT-S: Pipeline-state persistence fix — docs/pipeline-state.json + CLAUDE.md two-step pipeline-resume gate + agent-chaining-protocol.md Rule 6 + PIPELINE_STATE_WRITE in Return Template. 3/3 tests pass. | 2026-05-03 | docs/handoffs/TASK_1837a.md |
