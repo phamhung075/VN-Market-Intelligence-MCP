@@ -1,5 +1,5 @@
 Bun.env["DB_PATH"] = ":memory:";
-import { describe, it, expect } from "bun:test";
+import { describe, it, expect, beforeEach } from "bun:test";
 import { Database } from "bun:sqlite";
 
 // ── Helper: build minimal DB with all tables pollNews needs ──────────────────
@@ -72,6 +72,11 @@ function buildPollNewsTestDb(): Database {
 }
 
 describe("Task 1332 — pollNews SOURCE_DISPLAY_NAMES: health tracked under display name", () => {
+  beforeEach(() => {
+    const { _resetGlobalSourceTracker } = require("../interface/mcp/tools/news-analysis/sourceHealthTools.js");
+    _resetGlobalSourceTracker();
+  });
+
   // TC-1: when reuters fetcher succeeds, globalSourceTracker records success under "Reuters RSS"
   it("TC-1: pollNews with reuters returning items → records success under 'Reuters RSS'", async () => {
     const { pollNews } = await import("../application/usecases/pollNews.js");

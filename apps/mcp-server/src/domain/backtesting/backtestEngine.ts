@@ -85,6 +85,18 @@ function stddev(values: number[]): number {
   return Math.sqrt(variance);
 }
 
+/**
+ * Compute benchmark return percentage from candle data.
+ * Returns null if insufficient data (fewer than 2 candles).
+ * Otherwise returns (last close - first close) / first close.
+ */
+function computeBenchmarkReturn(candles: DailyCandle[]): number | null {
+  if (candles.length < 2) return null;
+  const first = candles[0]!.close;
+  const last = candles[candles.length - 1]!.close;
+  return (last - first) / first;
+}
+
 // ---------------------------------------------------------------------------
 // Main engine
 // ---------------------------------------------------------------------------
@@ -321,12 +333,7 @@ export function runBacktestEngine(input: BacktestEngineInput): BacktestReport {
   }
 
   // ── Benchmark return ──────────────────────────────────────────────────────
-  let benchmarkReturnPct: number | null = null;
-  if (benchmarkCandles.length >= 2) {
-    const first = benchmarkCandles[0]!.close;
-    const last = benchmarkCandles[benchmarkCandles.length - 1]!.close;
-    benchmarkReturnPct = (last - first) / first;
-  }
+  const benchmarkReturnPct = computeBenchmarkReturn(benchmarkCandles);
 
   // ── byTicker summary ──────────────────────────────────────────────────────
   const tickerMap = new Map<string, TradeRecord[]>();
@@ -369,12 +376,7 @@ function buildEmptyReport(
   benchmarkCandles: DailyCandle[],
   warnings: string[],
 ): BacktestReport {
-  let benchmarkReturnPct: number | null = null;
-  if (benchmarkCandles.length >= 2) {
-    const first = benchmarkCandles[0]!.close;
-    const last = benchmarkCandles[benchmarkCandles.length - 1]!.close;
-    benchmarkReturnPct = (last - first) / first;
-  }
+  const benchmarkReturnPct = computeBenchmarkReturn(benchmarkCandles);
 
   return {
     strategy: params.strategy,
