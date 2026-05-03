@@ -1,5 +1,5 @@
 # ── VN Market Intelligence MCP Server ─────────────────────────────────────
-# Runtime: Bun (oven/bun:1-debian — glibc, required by @lancedb native binary)
+# Runtime: Bun (oven/bun:1.3.13-debian — glibc, required by @lancedb native binary)
 # Build context: monorepo root (docker-compose.yml sets context: .)
 # NOTE: tesseract and poppler are skipped — PDF OCR falls back to the
 # pdf-extractor microservice.
@@ -9,7 +9,7 @@
 # scraping of tradingeconomics.com (React SPA, requires real browser).
 # ─────────────────────────────────────────────────────────────────────────────
 
-FROM oven/bun:1-debian AS base
+FROM oven/bun:1.3.13-debian AS base
 WORKDIR /app
 
 # ── System dependencies — Chromium for Puppeteer + Python3 for vnstock ──
