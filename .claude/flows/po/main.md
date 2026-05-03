@@ -8,8 +8,7 @@ docs/TASKS.md blockers | `docs/data/project-stats.json` | latest `reports/TASK_R
 
 ---
 
-**Pre-check — Resolve project root**
-Run `git rev-parse --show-toplevel` and store as `$PROJECT_ROOT`. Use this prefix for ALL file writes in this session. Never use bare relative paths like `docs/...` — always `$PROJECT_ROOT/docs/...`.
+**Pre-check — Resolve project root** → run skill: `.claude/skills/project-root/SKILL.md`
 
 **Pre-check**: `$PROJECT_ROOT/docs/TASKS.md` blocked tasks waiting for PO → handle first
 
