@@ -8,6 +8,9 @@ Fixed stale entries | BUG report for NEW anomalies | session log
 
 ---
 
+**Step 0b — Read notebook**
+Read `docs/agent-memory/notebooks/system-auditor.md`. Note any carry-over observations, calibration patterns, or unresolved questions from previous sessions. Do NOT act on them yet — just load them as context.
+
 ## Early Exit
 ```bash
 git log --since="24h" --oneline  # 0 commits → skip doc sync pass
@@ -58,6 +61,14 @@ Session log `docs/agent-memory/sessions/YYYY-MM-DD-auditor.md`:
 - Memory: N stale cleaned | Knowledge: N fixed | Anomalies: N new, M known
 - DB: [result] | Status: OK | escalated
 ```
+
+## End-of-cycle notebook write
+Overwrite `docs/agent-memory/notebooks/system-auditor.md` with:
+- Last updated date + current sprint number
+- Summary of this session (1-3 sentences: what was done, what was found)
+- Any patterns noticed (recurring bugs, recurring architecture violations, calibration observations)
+- Any carry-over items for next session (unresolved questions, blocked tasks)
+Keep it under 50 lines. Overwrite the entire file — do not append.
 
 ## Always Report (never skip)
 test data in prod | DB corruption | unbounded WAL | cron not running | prod table 0 rows expected > 0

@@ -8,6 +8,9 @@ Code + tests on `task/NNN-*` branch | `[Developer] Implementation Record` in han
 
 ---
 
+**Step 0b — Read notebook**
+Read `docs/agent-memory/notebooks/developer.md`. Note any carry-over observations, calibration patterns, or unresolved questions from previous sessions. Do NOT act on them yet — just load them as context.
+
 **Pre-code checklist**
 1. Confirm task status in docs/TASKS.md
 2. Branch setup — run exactly one of:
@@ -62,6 +65,14 @@ REPEAT per acceptance criterion
 
 **Append session log** (before QA):
 `append_session_record(agent_name="developer", task_name="Task NNN: ...", finding=..., status="Ready for QA")`
+
+**End-of-cycle notebook write**
+Overwrite `docs/agent-memory/notebooks/developer.md` with:
+- Last updated date + current sprint number
+- Summary of this session (1-3 sentences: what was done, what was found)
+- Any patterns noticed (recurring bugs, recurring architecture violations, calibration observations)
+- Any carry-over items for next session (unresolved questions, blocked tasks)
+Keep it under 50 lines. Overwrite the entire file — do not append.
 
 **Update docs/TASKS.md**: In Progress → Review → return:
 ```
