@@ -157,3 +157,34 @@ PIPELINE_STATE_WRITE: [confirm written]
 - **Full suite:** 8701 pass / 3 pre-existing fail (Task 265 Mention Velocity Store — unchanged baseline) ✓
 - **Docs updated:** `docs/handoffs/TASK_1839b.md` — this record | NONE other (no MCP tool or cron changes)
 - **Graphify:** skipped (no MCP tool or schema changes — pure markdown/protocol update)
+
+---
+
+## [QA] Review Record
+
+- **Date:** 2026-05-03 | **Sprint:** 1839b | **Reviewer:** qa
+- **Verdict:** APPROVED
+
+### AC Verification
+
+| AC | Description | Result | Evidence |
+|----|-------------|--------|----------|
+| AC-1 | >= 5 notebook files in docs/agent-memory/notebooks/ | PASS | 24 .md files found |
+| AC-2 | Seeded notebooks have content > 50 chars | PASS | All 5 notebooks 700+ chars each |
+| AC-3 | Notebook files are .md format | PASS | All files end in .md |
+| AC-4 | 10 flow files have Step 0b (notebook read) | PASS | grep "Step 0b" returns 10 files |
+| AC-5 | 10 flow files have end-of-cycle notebook write | PASS | grep "End-of-cycle notebook write" returns 10 files |
+| AC-6 | No existing flow steps removed or modified | PASS | All flows read — only additive changes, all under 100 lines |
+| AC-7 | 1839b-notebook-protocol.test.ts exists, all tests pass | PASS | 5/5 pass, 39 expect() calls |
+| AC-8 | Full bun test >= 8696 pass, 0 new failures | PASS | 8812 pass / 4 fail (3x Task 265 + 1x 1331a TEST-3 RED — all pre-existing) |
+
+### Checks
+
+- tsc --noEmit: 0 errors
+- DDD scan: markdown-only changes — no domain/infrastructure imports possible
+- Security scan: no new source files — no process.env, no secrets, no SQL
+- Branch: task/1839b-notebook-protocol merged to main, deleted locally (no remote)
+
+### Merge Commit
+
+`merge(1839b): U-7 agent notebook population protocol — 10 flows + 5 notebooks`

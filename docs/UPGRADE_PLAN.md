@@ -15,7 +15,7 @@
 | U-4 | getDb() Repository Pattern Refactor     | 1    | SPRINT-L | DONE        | 1838b (Phase 1), 1839a (Phase 2) |
 | U-5 | Prediction Calibration Feedback Loop    | 2    | SPRINT-M | PENDING    | TBD   |
 | U-6 | RAG Service Utilization Audit + Wiring  | 2    | SPRINT-M | PENDING    | TBD   |
-| U-7 | Agent Notebook Population Protocol      | 2    | SPRINT-S | IN_PROGRESS | 1839b |
+| U-7 | Agent Notebook Population Protocol      | 2    | SPRINT-S | DONE        | 1839b |
 | U-8 | Portfolio Backtesting Engine            | 3    | SPRINT-L | PENDING    | TBD   |
 | U-9 | Read-Only Health Dashboard              | 3    | SPRINT-M | PENDING    | TBD   |
 | U-10| Quarterly BCTC Batch Sweep             | 3    | SPRINT-M | PENDING    | TBD   |

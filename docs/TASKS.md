@@ -12,7 +12,6 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Blocked by |
 |---------|-------|----------|------|-------|---------|------------|
-| 1839b | U-7: Agent Notebook Population Protocol — 10 flow files + 5 notebooks seeded | P1 | ENHANCEMENT | developer | docs/handoffs/TASK_1839b.md | — |
 
 ---
 

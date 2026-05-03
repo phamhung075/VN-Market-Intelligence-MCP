@@ -15,11 +15,11 @@
   "knowledgeFileCount": 25,
   "devAgentCount": 14,
   "analysisAgentCount": 9,
-  "totalTasksDone": 502,
+  "totalTasksDone": 503,
   "analysisMode": "value_investor",
   "briefingFilesCreated": 30,
   "briefingArchiveQI": 0,
   "briefingArchiveQII": 0,
   "lastFixApplied": "1836c DONE: GitHub Actions CI pipeline created — .github/workflows/ci.yml, oven-sh/setup-bun@v2, bun-version-file: .tool-versions, timeout-minutes: 15, --frozen-lockfile, actions/cache@v4. 6 workflow tests pass. 8539 pass / 0 fail baseline. 2026-05-03.",
-  "currentSprintNotes": "Sprint 1839 OPEN — 2026-05-03. U-4 Phase 2: server.ts (16 getDb() calls) + startScheduler.ts (41 calls) migration. New: IJobRunRepository + SqliteJobRunRepository. U-7: 10 agent flow files get notebook read/write steps; 5 notebooks seeded with real content."
+  "currentSprintNotes": "Sprint 1839 COMPLETE — 2026-05-03. U-4 Phase 2: server.ts + startScheduler.ts migrated (1839a, DONE). U-7: 10 agent flow files updated + 5 notebooks seeded (1839b, DONE). 8812 pass / 0 new fail. totalTasksDone=503."
 }

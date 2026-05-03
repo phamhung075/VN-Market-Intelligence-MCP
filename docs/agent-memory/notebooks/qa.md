@@ -4,12 +4,13 @@
 
 ## Last session summary
 
-QA review of task 1839b (U-7 notebook protocol). Flow files updated and notebooks seeded. Test suite: 5 assertions GREEN. tsc: 0 errors. DDD: markdown-only changes, no layer violations possible. Verdict: APPROVED.
+QA review of task 1839b (U-7 notebook protocol). Verified all 8 ACs: 24 notebooks exist, 5 seeded notebooks have real content (700+ chars each), 10 flow files each gained Step 0b + end-of-cycle write, no existing steps removed. Test suite: 5 assertions GREEN (8812 total pass). tsc: 0 errors. 4 failures all pre-existing (3x Task 265 + 1x 1331a TEST-3 RED). Merged to main, branch deleted. Sprint 1839 complete.
 
 ## Known patterns / preferences
 
 - Bun v1.3.11 had a known C++ panic crash on large test suites (macOS x64). Upgraded to v1.3.13 in Sprint 1836 (U-1). If developers report unexpectedly high failure counts, check Bun version first.
 - Pre-existing failures (as of Sprint 1836 baseline): ZERO. U-2 fixed all 3 pre-existing failures. Baseline is now 8799+ pass / 0 fail. Any failure is a real regression.
+- Exception: 1331a TEST-3 (RED) and 3x Task 265 (Mention Velocity Store) are known pre-existing failures — confirmed not caused by any 1839x task.
 - Always verify AC-by-AC: do not bulk-approve. Each acceptance criterion in the handoff must be ticked with evidence (test name, line count, etc.).
 - DDD check is non-negotiable even for "small" fixes: `grep -r "from.*infrastructure" <modified_domain_files>` must return nothing.
 - `docs/data/` is in `.gitignore` — if project-stats.json is updated, confirm `git add -f` was used.
@@ -19,5 +20,5 @@ QA review of task 1839b (U-7 notebook protocol). Flow files updated and notebook
 
 ## Carry-over for next session
 
-- Sprint 1839 tasks still in progress. Confirm all 1839b ACs before marking sprint complete.
+- Sprint 1839 complete. All U-4 + U-7 tasks merged. Next sprint planning is PO's responsibility.
 - Next sprint may include U-5 (prediction calibration) — review calibration tool signatures before QA of that sprint.
