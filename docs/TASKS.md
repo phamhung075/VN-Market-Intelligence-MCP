@@ -19,13 +19,13 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Blocked by |
 |---------|-------|----------|------|-------|---------|------------|
-| 1844-clean | CLEAN: commit all orphan files (handoffs, session logs, reports, skill), advance project-stats.json to Sprint 1844 baseline (currentSprint=1844, testBaseline=8804, testBaselineFail=1, totalTasksDone=513) | HIGH | CLEAN | developer | — | — |
 | BA-1844 | SPEC: Requirements spec for Sprint 1844 — get_backtest_runs MCP tool + get_backtest_run MCP tool + IBacktestResultRepository.getRunById() | HIGH | SPEC | ba | docs/REQ_1844.md | 1844-clean |
 
 ## Done
 
 | Task ID | Title | Priority | Type | Owner | Report | Completed |
 |---------|-------|----------|------|-------|--------|-----------|
+| 1844-clean | CLEAN: commit all orphan files (handoffs, session logs, reports, skill), advance project-stats.json to Sprint 1844 baseline (currentSprint=1844, testBaseline=8804, testBaselineFail=1, totalTasksDone=513) | HIGH | CLEAN | developer | — | 2026-05-03 |
 | 1843c | SPRINT-S: Restore apps/mcp-server/docs symlink (Phase 0 monorepo scaffold test failure — RISK-6 from ARCH_1843) | MEDIUM | FIX | DEVELOPER | reports/TASK_REPORT_1843c.md | 2026-05-03 |
 
 ---
