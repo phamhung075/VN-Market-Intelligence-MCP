@@ -579,13 +579,17 @@ export async function pollNews(options: PollNewsOptions = {}): Promise<PollNewsR
   // Unknown future VPS keys are passed through as-is from the caller.
   // Use a Record<string, ...> accumulator to avoid exactOptionalPropertyTypes issues.
   const resolvedFetchers: Record<string, () => Promise<RssItem[]>> = {
-    cafef:            options.fetchers?.cafef            ?? defaultCafefFetcher,
-    vnexpress:        options.fetchers?.vnexpress        ?? defaultVnExpressFetcher,
-    reuters:          options.fetchers?.reuters          ?? defaultReutersFetcher,
-    vneconomy:        options.fetchers?.vneconomy        ?? defaultVnEconomyFetcher,
-    tradingeconomics: options.fetchers?.tradingeconomics ?? defaultTradingEconomicsFetcher,
+    cafef:          options.fetchers?.cafef          ?? defaultCafefFetcher,
+    vnexpress:      options.fetchers?.vnexpress      ?? defaultVnExpressFetcher,
+    vneconomy:      options.fetchers?.vneconomy      ?? defaultVnEconomyFetcher,
     // Task 1799: TE Vietnam news feed via Chromium scraper (separate source slot)
-    teChromiumNews:   options.fetchers?.teChromiumNews   ?? defaultTeChromiumNewsFetcher,
+    teChromiumNews: options.fetchers?.teChromiumNews ?? defaultTeChromiumNewsFetcher,
+    // Sprint 1833g: reuters (RSS) and tradingeconomics (legacy stream) are
+    // permanently disabled from the default resolved set.
+    // They remain in SourceFetchers so callers can inject them for tests or
+    // one-off overrides, but they will never fire in scheduled production runs.
+    ...(options.fetchers?.reuters !== undefined && { reuters: options.fetchers.reuters }),
+    ...(options.fetchers?.tradingeconomics !== undefined && { tradingeconomics: options.fetchers.tradingeconomics }),
   };
   // Task 1345a: add newsapi fetcher when Reuters is stale OR caller explicitly injects it
   if (reutersIsStale || options.fetchers?.newsapi !== undefined) {

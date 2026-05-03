@@ -406,6 +406,12 @@ export interface TeNewsDeps {
   cachePath?: string;
   cbStatePath?: string;
   onCircuitOpen?: (message: string) => Promise<void>;
+  /**
+   * Injectable sleep function for exponential backoff before the inner Chromium
+   * retry. Defaults to real setTimeout. Inject a no-op in tests for isolation.
+   * Sprint 1833g.
+   */
+  sleepMs?: (ms: number) => Promise<void>;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -513,6 +519,12 @@ export const TE_CB_STATE_PATH = "/app/data/te-chromium-cb-state.json";
 export interface TeCbState {
   consecutiveErrors: number;
   alertSent: boolean;
+  /**
+   * Timestamp (ms since epoch) when the current 1-hour failure window started.
+   * Used to reset consecutiveErrors when a new hour begins (max 3/hour semantics).
+   * Sprint 1833g.
+   */
+  lastFailureWindowStartMs: number;
 }
 
 function loadCbState(statePath: string): TeCbState {
@@ -528,7 +540,7 @@ function loadCbState(statePath: string): TeCbState {
   } catch {
     // File missing or corrupt — start fresh
   }
-  return { consecutiveErrors: 0, alertSent: false };
+  return { consecutiveErrors: 0, alertSent: false, lastFailureWindowStartMs: 0 };
 }
 
 function saveCbState(state: TeCbState, statePath: string): void {
@@ -555,7 +567,7 @@ function saveCbState(state: TeCbState, statePath: string): void {
  */
 export function resetTeChromiumFailureCounter(statePath?: string): void {
   const p = statePath ?? TE_CB_STATE_PATH;
-  saveCbState({ consecutiveErrors: 0, alertSent: false }, p);
+  saveCbState({ consecutiveErrors: 0, alertSent: false, lastFailureWindowStartMs: 0 }, p);
 }
 
 /**
@@ -717,6 +729,7 @@ export async function fetchTradingEconomicsNews(
     }
 
     // ── Attempt fresh scrape (retry once on "Target closed" crash) ───────────
+    const _sleepFn = deps?.sleepMs ?? ((ms: number) => new Promise<void>((r) => setTimeout(r, ms)));
     try {
       let html: string;
       try {
@@ -724,11 +737,19 @@ export async function fetchTradingEconomicsNews(
       } catch (firstErr) {
         const msg = firstErr instanceof Error ? firstErr.message : String(firstErr);
         if (!msg.includes("Target closed")) throw firstErr;
-        logger.warn("[te-chromium-news] Target closed — re-initialising browser and retrying");
+        // Load CB state to compute backoff based on current failure count
+        const stateForBackoff = loadCbState(cbStatePath);
+        const backoffMs = Math.min(5_000 * Math.pow(2, stateForBackoff.consecutiveErrors), 60_000);
+        logger.warn("[te-chromium-news] Target closed — applying exponential backoff before retry", {
+          backoffMs,
+          consecutiveErrors: stateForBackoff.consecutiveErrors,
+        });
+        await _sleepFn(backoffMs);
+        logger.warn("[te-chromium-news] re-initialising browser and retrying after backoff");
         html = await scrape(TE_NEWS_URL);
       }
       // Scrape succeeded (with or without inner retry) — reset CB state
-      saveCbState({ consecutiveErrors: 0, alertSent: false }, cbStatePath);
+      saveCbState({ consecutiveErrors: 0, alertSent: false, lastFailureWindowStartMs: 0 }, cbStatePath);
 
       const items = extractTeNewsItems(html, limit);
       const entry: TeNewsCacheEntry = {
@@ -753,8 +774,15 @@ export async function fetchTradingEconomicsNews(
 
       // Increment crash-loop counter only for "Target closed" failures;
       // persist immediately so the count survives container restarts.
+      // Sprint 1833g: apply hour-window reset — if >1 hour has passed since the
+      // window started, reset the counter so max 3 failures/hour is enforced.
       if (errorMsg.includes("Target closed")) {
         const state = loadCbState(cbStatePath);
+        const now = Date.now();
+        if (now - state.lastFailureWindowStartMs > 3_600_000) {
+          state.consecutiveErrors = 0;
+          state.lastFailureWindowStartMs = now;
+        }
         state.consecutiveErrors++;
         saveCbState(state, cbStatePath);
         logger.warn("[te-chromium-news] Target closed failure counted toward crash-loop threshold", {

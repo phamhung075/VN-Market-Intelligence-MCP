@@ -30,6 +30,9 @@ function makeTmpDir(): string {
   return fs.mkdtempSync(path.join(os.tmpdir(), "te-1823d-test-"));
 }
 
+/** No-op sleep injected in tests to bypass real exponential backoff waits (Sprint 1833g). */
+const noopSleep: TeNewsDeps["sleepMs"] = async (_ms: number): Promise<void> => { /* instant */ };
+
 function makeHtml(): string {
   return `<html><body><ul id="stream">
     <li class="te-stream-item">
@@ -82,12 +85,12 @@ describe("AC-1: te-chromium crash loop — scrape bypassed after max failures", 
     // We need ceil(MAX_CONSECUTIVE_FAILURES / 1) top-level calls to trip the counter.
     // MAX_CONSECUTIVE_FAILURES = 3 top-level failures → circuit locks
     for (let i = 0; i < 3; i++) {
-      await fetchTradingEconomicsNews(20, { scrape: alwaysFail, cachePath, cbStatePath, onCircuitOpen: mockAlert });
+      await fetchTradingEconomicsNews(20, { scrape: alwaysFail, cachePath, cbStatePath, onCircuitOpen: mockAlert, sleepMs: noopSleep });
     }
 
     const countBeforeLock = scrapeCallCount;
     // Next call should be blocked — scrape should NOT be called again
-    await fetchTradingEconomicsNews(20, { scrape: alwaysFail, cachePath, cbStatePath, onCircuitOpen: mockAlert });
+    await fetchTradingEconomicsNews(20, { scrape: alwaysFail, cachePath, cbStatePath, onCircuitOpen: mockAlert, sleepMs: noopSleep });
 
     expect(scrapeCallCount).toBe(countBeforeLock); // no additional scrape call
   });
@@ -116,10 +119,10 @@ describe("AC-2: te-chromium crash loop — success resets counter", () => {
     };
 
     for (let i = 0; i < 2; i++) {
-      await fetchTradingEconomicsNews(20, { scrape: mixedScrape, cachePath, cbStatePath });
+      await fetchTradingEconomicsNews(20, { scrape: mixedScrape, cachePath, cbStatePath, sleepMs: noopSleep });
     }
     // 1 success — resets counter
-    await fetchTradingEconomicsNews(20, { scrape: mixedScrape, cachePath, cbStatePath });
+    await fetchTradingEconomicsNews(20, { scrape: mixedScrape, cachePath, cbStatePath, sleepMs: noopSleep });
 
     // After the success counter is reset to 0.
     // A fresh failure on a separate (empty) cache path should invoke scrape.
@@ -128,7 +131,7 @@ describe("AC-2: te-chromium crash loop — success resets counter", () => {
       extraCalls++;
       throw new Error("Target closed");
     };
-    await fetchTradingEconomicsNews(20, { scrape: oneMoreFail, cachePath: freshCachePath, cbStatePath });
+    await fetchTradingEconomicsNews(20, { scrape: oneMoreFail, cachePath: freshCachePath, cbStatePath, sleepMs: noopSleep });
 
     expect(extraCalls).toBeGreaterThan(0); // scrape was invoked — circuit not locked
   });
@@ -152,7 +155,7 @@ describe("AC-3: te-chromium crash loop — WORK alert fires once at threshold", 
 
     // 3 top-level failures to trip + 2 extra calls while locked
     for (let i = 0; i < 5; i++) {
-      await fetchTradingEconomicsNews(20, { scrape: alwaysFail, cachePath, cbStatePath, onCircuitOpen: mockAlert });
+      await fetchTradingEconomicsNews(20, { scrape: alwaysFail, cachePath, cbStatePath, onCircuitOpen: mockAlert, sleepMs: noopSleep });
     }
 
     expect(workAlerts.length).toBe(1); // fired exactly once
@@ -204,13 +207,13 @@ describe("AC-5: resetTeChromiumFailureCounter resets the persisted counter", () 
 
     // Trip the circuit
     for (let i = 0; i < 3; i++) {
-      await fetchTradingEconomicsNews(20, { scrape: alwaysFail, cachePath, cbStatePath });
+      await fetchTradingEconomicsNews(20, { scrape: alwaysFail, cachePath, cbStatePath, sleepMs: noopSleep });
     }
 
     resetTeChromiumFailureCounter(cbStatePath);
 
     const countBeforeReset = scrapeCallCount;
-    await fetchTradingEconomicsNews(20, { scrape: alwaysFail, cachePath, cbStatePath });
+    await fetchTradingEconomicsNews(20, { scrape: alwaysFail, cachePath, cbStatePath, sleepMs: noopSleep });
     expect(scrapeCallCount).toBeGreaterThan(countBeforeReset); // scrape was called again
   });
 });
