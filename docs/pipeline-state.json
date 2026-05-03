@@ -1,11 +1,11 @@
 {
   "_maintained_by": "every agent at RETURN via agent-chaining-protocol",
-  "status": "in_progress",
+  "status": "idle",
   "currentSprint": 1845,
-  "activeTaskId": "1845a",
-  "nextAgent": "developer",
-  "nextPrompt": "Sprint 1845 is open. Execute tasks in order: 1845a (CLEAN) → 1845b (worktree ENOENT fix) → 1845c (tool-registry sync) → 1845d (benchmarkReturnPct DRY). Start with 1845a: commit all orphan untracked files (docs/REQ_1844.md, docs/handoffs/ARCH_1844.md, docs/handoffs/TASK_1844a.md, docs/agent-memory/sessions/2026-05-03-unified-agent.md, docs/agent-memory/sessions/2026-05-04-market-watcher.md) plus the 8 modified files (CLAUDE.md, apps/mcp-server/reports/2026-05-04-evening.json, docs/agent-memory/modules/tool-usage-stats.json, docs/agent-memory/notebooks/ba.md, docs/agent-memory/notebooks/pm.md, docs/agent-memory/sessions/2026-05-03-alert-commander.md, docs/agent-memory/sessions/2026-05-03-developer.md, docs/agent-memory/sessions/2026-05-04-news-scout.md). Update SPRINT_GOAL.md to mark Sprint 1844 DONE (add Goal/Scope/Done text under the 1844 DONE header). Advance project-stats.json: currentSprint=1845, toolCount=125. Then proceed to 1845b without waiting. Full task specs in docs/TASKS.md.",
+  "activeTaskId": null,
+  "nextAgent": null,
+  "nextPrompt": null,
   "updatedAt": "2026-05-03T00:00:00.000Z",
-  "updatedBy": "po",
-  "lastCompleted": "Sprint 1844 DONE — get_backtest_runs (#121) + get_backtest_run (#122) + getAllRuns() repo method. 14 tests pass. tsc clean. totalTasksDone=514."
+  "updatedBy": "qa",
+  "lastCompleted": "Sprint 1845 complete — 1845a CLEAN + 1845b FIX + 1845c SYNC + 1845d DRY all DONE. 2026-05-03."
 }

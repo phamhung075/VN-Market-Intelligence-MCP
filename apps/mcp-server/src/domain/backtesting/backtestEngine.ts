@@ -96,18 +96,6 @@ function stddev(values: number[]): number {
   return Math.sqrt(variance);
 }
 
-/**
- * Compute benchmark return percentage from candle data.
- * Returns null if insufficient data (fewer than 2 candles).
- * Otherwise returns (last close - first close) / first close.
- */
-function computeBenchmarkReturn(candles: DailyCandle[]): number | null {
-  if (candles.length < 2) return null;
-  const first = candles[0]!.close;
-  const last = candles[candles.length - 1]!.close;
-  return (last - first) / first;
-}
-
 // ---------------------------------------------------------------------------
 // Main engine
 // ---------------------------------------------------------------------------

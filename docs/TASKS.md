@@ -19,11 +19,14 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Blocked by |
 |---------|-------|----------|------|-------|---------|------------|
-| 1845d | DRY: benchmarkReturnPct computation duplicated in backtestEngine.ts — exists in both runBacktestEngine() and buildEmptyReport(). Extract to single private helper. 0 new tests needed — existing 24 backtesting tests must still pass. tsc clean required. | MEDIUM | DRY | developer | — | 1845a |
+
+---
+
 ## Done
 
 | Task ID | Title | Priority | Type | Owner | Report | Completed |
 |---------|-------|----------|------|-------|--------|-----------|
+| 1845d | DRY: benchmarkReturnPct computation duplicated in backtestEngine.ts — extract to single private helper. Pre-existing duplicate from 1843b merge resolved; 46 backtesting tests pass, tsc clean. | MEDIUM | DRY | developer | reports/TASK_REPORT_1845d.md | 2026-05-03 |
 | 1845c | SYNC: tool-registry.json — added get_backtest_runs (#121) + get_backtest_run (#122). Backtesting count 1→3, toolCount 123→125. JSON-only. | HIGH | SYNC | developer | reports/TASK_REPORT_1845c.md | 2026-05-03 |
 | 1845b | FIX: worktree ENOENT — apps/mcp-server/data/ git-ignored → 106 test failures in fresh worktrees. setup.ts preload creates 7 subdirs via mkdirSync({ recursive: true }) anchored to import.meta.dir. | HIGH | FIX | developer | reports/TASK_REPORT_1845b.md | 2026-05-03 |
 | 1845a | CLEAN: commit 5 orphan untracked files + 8 modified files; advance project-stats.json to Sprint 1845 baseline (currentSprint=1845, toolCount=125) | HIGH | CLEAN | developer | — | 2026-05-04 |
