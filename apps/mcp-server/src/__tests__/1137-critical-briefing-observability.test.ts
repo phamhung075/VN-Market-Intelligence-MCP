@@ -10,32 +10,35 @@ const JOBS_TS = readFileSync(
   "utf-8",
 );
 
-describe("Task 1137 — Critical briefing/cycle jobs wrapped with recordJobRun", () => {
-  it("morningBriefingJob call site uses recordJobRun", () => {
-    // Pattern A: recordJobRun(getDb(), 'morningBriefingJob', async () => {
+describe("Task 1137 — Critical briefing/cycle jobs wrapped with observability", () => {
+  // Task 1839a Phase 2: recordJobRun(getDb(), ...) replaced by jobRunRepo.wrapRun(...)
+  // The invariant is preserved: each job must be wrapped for observability.
+
+  it("morningBriefingJob call site uses jobRunRepo.wrapRun", () => {
+    // Phase 2 pattern: jobRunRepo.wrapRun('morningBriefingJob', async () => {
     const match = JOBS_TS.match(
-      /recordJobRun\s*\(\s*getDb\s*\(\s*\)\s*,\s*['"]morningBriefingJob['"]/,
+      /jobRunRepo\.wrapRun\s*\(\s*['"]morningBriefingJob['"]/,
     );
     expect(match).not.toBeNull();
   });
 
-  it("intelligenceCycleJob call site uses recordJobRun", () => {
+  it("intelligenceCycleJob call site uses jobRunRepo.wrapRun", () => {
     const match = JOBS_TS.match(
-      /recordJobRun\s*\(\s*getDb\s*\(\s*\)\s*,\s*['"]intelligenceCycleJob['"]/,
+      /jobRunRepo\.wrapRun\s*\(\s*['"]intelligenceCycleJob['"]/,
     );
     expect(match).not.toBeNull();
   });
 
-  it("eveningSummaryJob call site uses recordJobRun", () => {
+  it("eveningSummaryJob call site uses jobRunRepo.wrapRun", () => {
     const match = JOBS_TS.match(
-      /recordJobRun\s*\(\s*getDb\s*\(\s*\)\s*,\s*['"]eveningSummaryJob['"]/,
+      /jobRunRepo\.wrapRun\s*\(\s*['"]eveningSummaryJob['"]/,
     );
     expect(match).not.toBeNull();
   });
 
-  it("alertDigestJob call site uses recordJobRun", () => {
+  it("alertDigestJob call site uses jobRunRepo.wrapRun", () => {
     const match = JOBS_TS.match(
-      /recordJobRun\s*\(\s*getDb\s*\(\s*\)\s*,\s*['"]alertDigestJob['"]/,
+      /jobRunRepo\.wrapRun\s*\(\s*['"]alertDigestJob['"]/,
     );
     expect(match).not.toBeNull();
   });

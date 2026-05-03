@@ -11,70 +11,70 @@ const jobsSource = readFileSync(
 )
 
 describe("Task 1138 — market/portfolio/prediction jobs observability", () => {
-  it("patternWatch callback wraps runPatternWatch with recordJobRun", () => {
-    // The callback must call recordJobRun, not a bare await runPatternWatch()
+  // Task 1839a Phase 2: recordJobRun(getDb(), ...) replaced by jobRunRepo.wrapRun(...)
+
+  it("patternWatch callback wraps runPatternWatch with jobRunRepo.wrapRun", () => {
     const match = jobsSource.match(
-      /CRONS\.patternWatch[\s\S]*?recordJobRun\(getDb\(\),\s*['"]patternWatchJob['"]/,
+      /CRONS\.patternWatch[\s\S]*?jobRunRepo\.wrapRun\s*\(\s*['"]patternWatchJob['"]/,
     )
     expect(match).not.toBeNull()
   })
 
-  it("weeklyPortfolioReport callback wraps runWeeklyPortfolioReport with recordJobRun", () => {
+  it("weeklyPortfolioReport callback wraps runWeeklyPortfolioReport with jobRunRepo.wrapRun", () => {
     const match = jobsSource.match(
-      /CRONS\.weeklyPortfolioReport[\s\S]*?recordJobRun\(getDb\(\),\s*['"]weeklyPortfolioReportJob['"]/,
+      /CRONS\.weeklyPortfolioReport[\s\S]*?jobRunRepo\.wrapRun\s*\(\s*['"]weeklyPortfolioReportJob['"]/,
     )
     expect(match).not.toBeNull()
   })
 
-  it("predictionMarketPoll callback wraps runPredictionMarketPoll with recordJobRun", () => {
+  it("predictionMarketPoll callback wraps runPredictionMarketPoll with jobRunRepo.wrapRun", () => {
     const match = jobsSource.match(
-      /CRONS\.predictionMarketPoll[\s\S]*?recordJobRun\(getDb\(\),\s*['"]predictionMarketPollJob['"]/,
+      /CRONS\.predictionMarketPoll[\s\S]*?jobRunRepo\.wrapRun\s*\(\s*['"]predictionMarketPollJob['"]/,
     )
     expect(match).not.toBeNull()
   })
 
-  it("predictionOutcome callback wraps runPredictionOutcomeCheck with recordJobRun", () => {
+  it("predictionOutcome callback wraps runPredictionOutcomeCheck with jobRunRepo.wrapRun", () => {
     const match = jobsSource.match(
-      /CRONS\.predictionOutcome[\s\S]*?recordJobRun\(getDb\(\),\s*['"]predictionOutcomeJob['"]/,
+      /CRONS\.predictionOutcome[\s\S]*?jobRunRepo\.wrapRun\s*\(\s*['"]predictionOutcomeJob['"]/,
     )
     expect(match).not.toBeNull()
   })
 
-  it("patternWatch does not have a bare await runPatternWatch() without recordJobRun wrapper", () => {
-    // Find the patternWatch cron block
+  it("patternWatch does not have a bare await runPatternWatch() without wrapRun wrapper", () => {
     const blockMatch = jobsSource.match(
       /cron\.schedule\(CRONS\.patternWatch[\s\S]*?\}\s*,\s*\{[^}]*\}\s*\)/,
     )
     expect(blockMatch).not.toBeNull()
     const block = blockMatch![0]
-    // Must contain recordJobRun
-    expect(block).toContain("recordJobRun")
+    // Must contain jobRunRepo.wrapRun (observability preserved via Phase 2 pattern)
+    expect(block).toContain("jobRunRepo.wrapRun")
   })
 
-  it("weeklyPortfolioReport does not have a bare await without recordJobRun wrapper", () => {
+  it("weeklyPortfolioReport does not have a bare await without wrapRun wrapper", () => {
     const blockMatch = jobsSource.match(
       /cron\.schedule\(CRONS\.weeklyPortfolioReport[\s\S]*?\}\s*,\s*\{[^}]*\}\s*\)/,
     )
     expect(blockMatch).not.toBeNull()
     const block = blockMatch![0]
-    expect(block).toContain("recordJobRun")
+    expect(block).toContain("jobRunRepo.wrapRun")
   })
 
-  it("predictionMarketPoll does not have a bare await without recordJobRun wrapper", () => {
+  it("predictionMarketPoll does not have a bare await without wrapRun wrapper", () => {
     const blockMatch = jobsSource.match(
       /cron\.schedule\(CRONS\.predictionMarketPoll[\s\S]*?\}\s*,\s*\{[^}]*\}\s*\)/,
     )
     expect(blockMatch).not.toBeNull()
     const block = blockMatch![0]
-    expect(block).toContain("recordJobRun")
+    expect(block).toContain("jobRunRepo.wrapRun")
   })
 
-  it("predictionOutcome does not have a bare await without recordJobRun wrapper", () => {
+  it("predictionOutcome does not have a bare await without wrapRun wrapper", () => {
     const blockMatch = jobsSource.match(
       /cron\.schedule\(CRONS\.predictionOutcome[\s\S]*?\}\s*,\s*\{[^}]*timezone[^}]*\}\s*\)/,
     )
     expect(blockMatch).not.toBeNull()
     const block = blockMatch![0]
-    expect(block).toContain("recordJobRun")
+    expect(block).toContain("jobRunRepo.wrapRun")
   })
 })

@@ -12,3 +12,4 @@ export * from "./IMarketPriceRepository.js";
 export * from "./IVnstockRepository.js";
 export * from "./IKinhDichScoreRepository.js";
 export * from "./IHexagramRepository.js";
+export * from "./IJobRunRepository.js";

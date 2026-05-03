@@ -7,19 +7,20 @@ import { join } from 'path'
 
 const JOBS_TS = join(import.meta.dir, '../../src/scheduler/startScheduler.ts')
 
-describe('Task 1140 — try/catch replacement with recordJobRun', () => {
+describe('Task 1140 — try/catch replacement with observability wrapper (Phase 2)', () => {
   const src = readFileSync(JOBS_TS, 'utf8')
+  // Task 1839a Phase 2: recordJobRun(getDb(), ...) replaced by jobRunRepo.wrapRun(...)
 
-  it('bctcOverdueCheckJob uses recordJobRun wrapper', () => {
-    expect(src).toContain("recordJobRun(getDb(), 'bctcOverdueCheckJob'")
+  it('bctcOverdueCheckJob uses jobRunRepo.wrapRun wrapper', () => {
+    expect(src).toContain("jobRunRepo.wrapRun('bctcOverdueCheckJob'")
   })
 
-  it('vpsProxyWatchdogJob uses recordJobRun wrapper', () => {
-    expect(src).toContain("recordJobRun(getDb(), 'vpsProxyWatchdogJob'")
+  it('vpsProxyWatchdogJob uses jobRunRepo.wrapRun wrapper', () => {
+    expect(src).toContain("jobRunRepo.wrapRun('vpsProxyWatchdogJob'")
   })
 
-  it('cronHealthAlertJob uses recordJobRun wrapper', () => {
-    expect(src).toContain("recordJobRun(getDb(), 'cronHealthAlertJob'")
+  it('cronHealthAlertJob uses jobRunRepo.wrapRun wrapper', () => {
+    expect(src).toContain("jobRunRepo.wrapRun('cronHealthAlertJob'")
   })
 
   it('AC-4: no standalone try/catch remains for bctcOverdueCheck', () => {
