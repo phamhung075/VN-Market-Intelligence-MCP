@@ -241,3 +241,42 @@ AC-17 tests ran in <300ms total for the full file (vs. >10s before). TEST-1/2/3/
 | AC-4 | PASS — 1331a file unchanged, all 4 tests passing |
 | AC-5 | PASS — `testBaselineFail=0` in project-stats.json |
 | AC-6 | N/A — TEST-3 was not deleted (it was already passing) |
+
+---
+
+## [QA] Review Record — 2026-05-03
+
+**Outcome: APPROVED — MERGED to main**
+
+### Pre-merge checks
+
+| Check | Result |
+|-------|--------|
+| Branch diff scope | PASS — only `1799-te-chromium-news.test.ts` (+2 lines) and `docs/data/project-stats.json` modified. No production code touched. |
+| Assertion integrity | PASS — both AC-17 blocks retain all original `expect()` calls. No `.skip`, no removed assertions. `expect(callCount).toBe(2)`, `expect(result[0]?.title).toBe(...)`, `expect(result).toEqual([])` all present. |
+| `sleepMs` injection correctness | PASS — `TeNewsDeps.sleepMs?: (ms: number) => Promise<void>` already typed as optional; no type change needed. Production code at line 793 uses `deps?.sleepMs ?? real setTimeout`. No-op `async () => {}` bypass is correct. |
+| 1331a file | PASS — TEST-3 not deleted (Architect finding confirmed: `setup.ts` sets `STOCK_PRICE_DB_PATH=/tmp/test_stock_price.db`; all 4 tests pass). |
+| `testBaselineFail` field | PASS — `docs/data/project-stats.json` has `testBaselineFail: 0`. |
+| DDD compliance | PASS — test files only (interface layer). Zero production code changes. |
+| Security | PASS — no credentials, no `process.env`, no hardcoded secrets. |
+| TypeScript | PASS — `bun tsc --noEmit` = 0 errors. |
+
+### Test run on task branch (pre-merge)
+
+```
+1799-te-chromium-news.test.ts (isolated): 21 pass, 0 fail [299ms]
+Full suite: 8655 pass, 0 fail
+AC-17 tests: <300ms each (vs ~5000ms before fix)
+```
+
+### Rebase note
+
+Branch was based on `36a6c7ab` (pre-1836a). Rebased onto main (`dbe77cc3`) before merge. Conflict in `project-stats.json` resolved: 1836b test values (`8655 pass / 0 fail`) applied; `totalTasksDone: 497` from 1836a retained.
+
+### Merge commit
+
+`merge(1836b): fix 2 AC-17 failing tests — sleepMs injection + confirm 0 failures`
+
+Branch `task/1836b-fix-failing-tests` deleted (local; was not pushed to remote).
+
+**QA agent:** claude-sonnet-4-6 | 2026-05-03
