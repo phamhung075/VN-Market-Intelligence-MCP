@@ -390,6 +390,14 @@ export function storeTradingStats(s: VnstockTradingStats, date?: string): void {
 }
 
 export function storeOfficers(code: string, officers: VnstockOfficer[]): void {
+  const valid = officers.filter((o) => !!o.code);
+  const dropped = officers.length - valid.length;
+  if (dropped > 0) {
+    logger.warn(
+      `[vnstock-store] storeOfficers: dropped ${dropped} row(s) with null/empty code for ticker ${code}`,
+      { code, dropped }
+    );
+  }
   const db = getDb();
   const now = new Date().toISOString();
   const stmt = db.prepare(
@@ -397,7 +405,7 @@ export function storeOfficers(code: string, officers: VnstockOfficer[]): void {
      VALUES (?, ?, ?, ?, ?, ?)`,
   );
   const insertAll = db.transaction(() => {
-    for (const o of officers) {
+    for (const o of valid) {
       stmt.run(o.code, o.name, o.position, o.ownPercent, o.quantity, now);
     }
   });
