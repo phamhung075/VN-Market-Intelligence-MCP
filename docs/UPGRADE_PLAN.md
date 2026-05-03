@@ -255,6 +255,26 @@ Earnings calendar trigger detects new quarterly filings. Auto-runs full 30-ticke
 
 ---
 
+## Out-of-Plan Fixes
+
+### Fix 1837a: Pipeline-state Persistence
+
+| Field       | Value |
+|-------------|-------|
+| Status      | DONE |
+| Sprint      | 1837 |
+| Size        | SPRINT-S |
+
+**Problem**
+After `/compact`, the main terminal loses all pipeline state. Agent RETURN blocks live only in conversation context. Compaction replaces messages with a summary — RETURN blocks disappear. Main terminal re-evaluates CLAUDE.md prerequisites, hits the `TASKS.md empty` gate, and asks the user for confirmation instead of resuming the active sprint.
+
+**Fix**
+- `docs/pipeline-state.json` created: durable pipeline state store written by every agent at RETURN.
+- `CLAUDE.md` precondition block rewritten: Step 1 reads pipeline-state.json before TASKS.md gate. Stale >24h fallback present.
+- `agent-chaining-protocol.md` Rule 6 added: mandatory pipeline-state write at every RETURN. PIPELINE_STATE_WRITE added to Agent Return Template.
+
+---
+
 ## Appendix — Prioritization Rationale
 
 Tier 1 addresses the test infrastructure before adding features. A CI system with a crashing test runner is not CI. Order within Tier 1:

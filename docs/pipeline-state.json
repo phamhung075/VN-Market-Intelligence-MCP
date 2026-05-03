@@ -1,10 +1,10 @@
 {
   "_maintained_by": "every agent at RETURN via agent-chaining-protocol",
-  "status": "in_progress",
+  "status": "idle",
   "currentSprint": 1837,
   "activeTaskId": "1837a",
-  "nextAgent": "developer",
-  "nextPrompt": "Task 1837a. Handoff: docs/handoffs/TASK_1837a.md. Architect has completed design. Implement all three deliverables: (1) create docs/pipeline-state.json with the architect-specified initial content, (2) edit CLAUDE.md precondition block to the architect-specified exact wording, (3) edit .claude/knowledge/agent-chaining-protocol.md Rules section (add Rule 6) and Return Template (add PIPELINE_STATE_WRITE step) to the architect-specified exact wording. All changes are MD/JSON only — no code. See [Architect] Brownfield Findings section in handoff for exact text.",
-  "updatedAt": "2026-05-03T00:00:00Z",
-  "updatedBy": "architect"
+  "nextAgent": null,
+  "nextPrompt": null,
+  "updatedAt": "2026-05-03T10:30:00Z",
+  "updatedBy": "qa"
 }

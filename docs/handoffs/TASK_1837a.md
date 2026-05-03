@@ -269,3 +269,43 @@ PIPELINE_STATE_WRITE: Write docs/pipeline-state.json NOW before this response en
 - For CLAUDE.md: the replaced section is lines 7–20 (from `### 1. User Session Required...` through `...ask user what to work on next.`). Use exact wording from Section 3 above.
 - For `agent-chaining-protocol.md`: Rule 6 appends to the existing numbered list (after line 40). The Return Template block replacement is lines 58–63.
 - After implementing, update `docs/pipeline-state.json` to `nextAgent: "qa"` and write the correct nextPrompt for QA to verify ACs 1–10.
+
+---
+
+## [QA] Review Record
+
+**Date:** 2026-05-03
+**Reviewer:** qa
+**Branch:** task/1837a-pipeline-state-fix
+**Commit:** 4702764d
+**Outcome:** APPROVED — merged to main
+
+### Test Results
+
+- Unit tests (1837a suite): 3 pass / 0 fail
+- TypeScript: not applicable (no production TS files changed — AC-9)
+
+### AC Verification
+
+| AC | Description | Result |
+|----|-------------|--------|
+| AC-1 | `docs/pipeline-state.json` exists with all required fields (status, currentSprint, activeTaskId, nextAgent, nextPrompt, updatedAt, updatedBy) | PASS |
+| AC-2 | status is one of "in_progress" or "idle" | PASS — status="in_progress" (valid enum) |
+| AC-3 | updatedAt is valid ISO 8601 date string | PASS — "2026-05-03T10:00:00Z" |
+| AC-4 | CLAUDE.md precondition block checks pipeline-state.json BEFORE TASKS.md empty gate | PASS — Step 1 reads file, Step 2 is TASKS.md gate |
+| AC-5 | agent-chaining-protocol.md Rule 6 present: mandatory write at every RETURN | PASS |
+| AC-6 | Agent Return Template includes PIPELINE_STATE_WRITE step | PASS |
+| AC-7 | Rule 6 specifies PM writes status=idle on sprint complete | PASS |
+| AC-8 | Rule 6 specifies QA writes status=idle on pipeline complete | PASS |
+| AC-9 | No new TypeScript production files — only JSON + MD changes + 1 test file | PASS |
+| AC-10 | pipeline-state.json has nextAgent=qa with correct QA spawn nextPrompt | PASS |
+
+### DDD Compliance: PASS (no production code changed)
+
+### Security: PASS (no secrets, no process.env, no SQL)
+
+### Merge Status
+
+Merged to main via `git merge --no-ff task/1837a-pipeline-state-fix`. Branch deleted.
+`docs/pipeline-state.json` set to `status: "idle"`, `nextAgent: null`, `updatedBy: "qa"`.
+`totalTasksDone` incremented to 500.
