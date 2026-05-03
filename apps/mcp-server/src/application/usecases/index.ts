@@ -36,7 +36,7 @@ export type { PollNewsResult, PollNewsOptions, SourceFetchers } from "./pollNews
 
 // Task 103: Market open/close scan use case
 export { scanMarket } from "./scanMarket.js";
-export type { MarketScanResult, ScanMarketOptions, PriceFetcher } from "./scanMarket.js";
+export type { MarketScanResult, ScanMarketDeps, PriceFetcher } from "./scanMarket.js";
 
 // Task 104: SSC nightly report check (20:00 GMT+7)
 export { checkSscReports } from "./checkSscReports.js";

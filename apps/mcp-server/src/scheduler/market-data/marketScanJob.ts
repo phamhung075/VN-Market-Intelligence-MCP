@@ -15,6 +15,8 @@ import { logger } from "../../infrastructure/logger.js";
 import { isTradingSession } from "../../infrastructure/fetchers/hose.js";
 import { getDb } from "../../infrastructure/db/schema.js";
 import { recordJobRun } from "../../infrastructure/db/cronJobRunStore.js";
+import { SqliteWatchlistRepository } from "../../infrastructure/db/repositories/SqliteWatchlistRepository.js";
+import { SqliteMarketPriceRepository } from "../../infrastructure/db/repositories/SqliteMarketPriceRepository.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Concurrency guard
@@ -53,7 +55,10 @@ export async function runMarketScan(label: "open" | "close"): Promise<void> {
     const db = getDb();
     // recordJobRun never re-throws — errors are captured in cron_job_runs.error_msg
     await recordJobRun(db, `marketScanJob:${label}`, async () => {
-      const result = await scanMarket();
+      const result = await scanMarket({
+        watchlistRepo: new SqliteWatchlistRepository(db),
+        marketPriceRepo: new SqliteMarketPriceRepository(db),
+      });
       logger.info(
         `[market-scan:${label}] complete — ` +
           `scanned: ${result.scanned}, ` +

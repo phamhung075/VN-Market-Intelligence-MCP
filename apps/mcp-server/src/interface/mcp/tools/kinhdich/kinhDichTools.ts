@@ -19,6 +19,8 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { getDb, initDatabase } from "../../../../infrastructure/db/schema.js";
 import { sqlInClause } from "../../../../infrastructure/db/sqlHelpers.js";
+import type { IKinhDichScoreRepository } from "../../../../domain/repositories/IKinhDichScoreRepository.js";
+import { SqliteKinhDichScoreRepository } from "../../../../infrastructure/db/repositories/SqliteKinhDichScoreRepository.js";
 import { getSectorPeers } from "../../../../domain/services/sectorPeers.js";
 import type { DomainType } from "../../../../../bctc-schema.js";
 import { logger } from "../../../../infrastructure/logger.js";
@@ -49,21 +51,20 @@ import {
  * Hao 1 — Sentiment score from recent rag_analyses entries.
  * Counts bullish vs bearish sentiments for the stock code.
  * Returns a value in [-1, +1].
+ *
+ * Task 1838b: accepts optional repo for DI (default = production SQLite adapter).
  */
-export function computeSentimentScore(code: string): number {
+export function computeSentimentScore(
+  code: string,
+  repo: IKinhDichScoreRepository = new SqliteKinhDichScoreRepository(getDb()),
+): number {
   try {
-    const db = getDb();
-    const rows = db
-      .query<{ sentiment: string }, [string, string]>(
-        `SELECT metadata FROM rag_analyses
-         WHERE stock_code = ? AND timestamp >= datetime('now', '-7 days')
-         ORDER BY timestamp DESC LIMIT 20`,
-      )
-      .all(code, code);
+    const rows = repo.getRecentSentiments(code, 7, 20);
 
     // rag_analyses may not have stock_code column in older schemas — try JSON metadata
     if (rows.length === 0) {
-      // fallback: search analysis text
+      // fallback: search analysis text via direct DB query (legacy path)
+      const db = getDb();
       const textRows = db
         .query<{ text: string }, [string]>(
           `SELECT text FROM rag_analyses WHERE text LIKE ? LIMIT 20`,
@@ -108,52 +109,25 @@ export function computeSentimentScore(code: string): number {
  * Hao 2 — Fundamentals score from vnstock_financials PE vs sector average.
  * Returns a value in [-1, +1]: positive if PE below sector avg (undervalued),
  * negative if PE above (overvalued relative).
+ *
+ * Task 1838b: accepts optional repo for DI (default = production SQLite adapter).
  */
-export function computeFundamentalsScore(code: string): number {
+export function computeFundamentalsScore(
+  code: string,
+  repo: IKinhDichScoreRepository = new SqliteKinhDichScoreRepository(getDb()),
+): number {
   try {
-    const db = getDb();
-
-    // Check table exists
-    const tableCheck = db
-      .query<{ name: string }, [string]>(
-        "SELECT name FROM sqlite_master WHERE type='table' AND name=?",
-      )
-      .get("vnstock_financials");
-    if (!tableCheck) return 0.0;
-
-    // Get target PE
-    const targetRow = db
-      .query<{ pe: number | null }, [string]>(
-        `SELECT pe FROM vnstock_financials WHERE code = ?
-         ORDER BY year_report DESC, quarter DESC LIMIT 1`,
-      )
-      .get(code);
-
+    const targetRow = repo.getLatestPe(code);
     if (!targetRow?.pe || targetRow.pe <= 0) return 0.0;
 
-    // Get domain for sector average
-    const watchlistRow = db
-      .query<{ domain: string }, [string]>(
-        "SELECT domain FROM watchlist WHERE code = ?",
-      )
-      .get(code);
+    const domain = repo.getWatchlistDomain(code);
+    if (!domain) return 0.0;
 
-    if (!watchlistRow) return 0.0;
-
-    // Average PE for the domain (rough sector proxy)
-    const sectorRows = db
-      .query<{ pe: number }, [string]>(
-        `SELECT f.pe FROM vnstock_financials f
-         INNER JOIN watchlist w ON w.code = f.code
-         WHERE w.domain = ? AND f.pe > 0
-         ORDER BY f.year_report DESC, f.quarter DESC`,
-      )
-      .all(watchlistRow.domain);
-
+    const sectorRows = repo.getSectorPeList(domain, 10);
     if (sectorRows.length === 0) return 0.0;
 
     const avgPE =
-      sectorRows.slice(0, 10).reduce((s, r) => s + r.pe, 0) /
+      sectorRows.slice(0, 10).reduce((s, r) => s + (r.pe ?? 0), 0) /
       Math.min(sectorRows.length, 10);
 
     if (avgPE === 0) return 0.0;
@@ -169,19 +143,18 @@ export function computeFundamentalsScore(code: string): number {
 /**
  * Hao 3 — Price score from latest market_prices change_pct.
  * Normalizes to [-1, +1] via a tanh-like scaling (±5% = ±1).
+ *
+ * Task 1838b: accepts optional repo for DI (default = production SQLite adapter).
  */
-export function computePriceScore(code: string): number {
+export function computePriceScore(
+  code: string,
+  repo: IKinhDichScoreRepository = new SqliteKinhDichScoreRepository(getDb()),
+): number {
   try {
-    const db = getDb();
-    const row = db
-      .query<{ change_pct: number | null }, [string]>(
-        "SELECT change_pct FROM market_prices WHERE code = ? ORDER BY rowid DESC LIMIT 1",
-      )
-      .get(code);
-
-    if (!row?.change_pct) return 0.0;
+    const row = repo.getLatestChangePct(code);
+    if (!row?.changePct) return 0.0;
     // Scale: 5% change → score of 1.0
-    return Math.max(-1, Math.min(1, row.change_pct / 5.0));
+    return Math.max(-1, Math.min(1, row.changePct / 5.0));
   } catch {
     return 0.0;
   }
@@ -191,32 +164,19 @@ export function computePriceScore(code: string): number {
  * Hao 4 — Foreign flow score from vnstock_trading_stats.
  * Computes net foreign volume ratio: foreign_volume / avg_volume_2w.
  * Returns a value in [-1, +1].
+ *
+ * Task 1838b: accepts optional repo for DI (default = production SQLite adapter).
  */
-export function computeForeignFlowScore(code: string): number {
+export function computeForeignFlowScore(
+  code: string,
+  repo: IKinhDichScoreRepository = new SqliteKinhDichScoreRepository(getDb()),
+): number {
   try {
-    const db = getDb();
-
-    const tableCheck = db
-      .query<{ name: string }, [string]>(
-        "SELECT name FROM sqlite_master WHERE type='table' AND name=?",
-      )
-      .get("vnstock_trading_stats");
-    if (!tableCheck) return 0.0;
-
-    const row = db
-      .query<
-        { foreign_volume: number | null; avg_volume_2w: number | null },
-        [string]
-      >(
-        `SELECT foreign_volume, avg_volume_2w FROM vnstock_trading_stats
-         WHERE code = ? ORDER BY fetched_at DESC LIMIT 1`,
-      )
-      .get(code);
-
-    if (!row?.foreign_volume || !row?.avg_volume_2w || row.avg_volume_2w === 0) {
+    const row = repo.getLatestTradingStats(code);
+    if (!row?.foreignVolume || !row?.avgVolume2w || row.avgVolume2w === 0) {
       return 0.0;
     }
-    return Math.max(-1, Math.min(1, row.foreign_volume / row.avg_volume_2w));
+    return Math.max(-1, Math.min(1, row.foreignVolume / row.avgVolume2w));
   } catch {
     return 0.0;
   }
@@ -227,22 +187,20 @@ export function computeForeignFlowScore(code: string): number {
  * Compares stock change_pct vs average of sector peers from getSectorPeers()
  * (domain service), intersected with codes present in market_prices.
  * Returns a value in [-1, +1].
+ *
+ * Task 1838b: accepts optional repo for DI (default = production SQLite adapter).
  */
-export function computeSectorScore(code: string): number {
+export function computeSectorScore(
+  code: string,
+  repo: IKinhDichScoreRepository = new SqliteKinhDichScoreRepository(getDb()),
+): number {
   try {
-    const db = getDb();
-
-    // Get domain for this stock
-    const watchlistRow = db
-      .query<{ domain: string }, [string]>(
-        "SELECT domain FROM watchlist WHERE code = ?",
-      )
-      .get(code);
-    if (!watchlistRow) return 0.0;
+    const domain = repo.getWatchlistDomain(code);
+    if (!domain) return 0.0;
 
     // Resolve peer codes from domain service (pure, no I/O)
     const sectorPeerEntries = getSectorPeers(
-      watchlistRow.domain as DomainType,
+      domain as DomainType,
       new Set([code]),
     );
     const peerCodesFromDomain = sectorPeerEntries.map((p) => p.code);
@@ -250,18 +208,13 @@ export function computeSectorScore(code: string): number {
     // Intersect with codes that actually have prices in market_prices
     let peerCodes: string[] = [];
     if (peerCodesFromDomain.length > 0) {
-      const placeholders = sqlInClause(peerCodesFromDomain.length);
-      const available = db
-        .query<{ code: string }, string[]>(
-          `SELECT DISTINCT code FROM market_prices
-           WHERE code IN (${placeholders})`,
-        )
-        .all(...peerCodesFromDomain);
+      const available = repo.getMarketPricesForCodes(peerCodesFromDomain);
       peerCodes = available.map((r) => r.code);
     }
 
     // Fallback: use all available market_prices codes except the target stock
     if (peerCodes.length === 0) {
+      const db = getDb();
       peerCodes = db
         .query<{ code: string }, [string]>(
           "SELECT DISTINCT code FROM market_prices WHERE code != ? LIMIT 20",
@@ -272,15 +225,9 @@ export function computeSectorScore(code: string): number {
 
     if (peerCodes.length === 0) return 0.0;
 
-    const placeholders2 = sqlInClause(peerCodes.length);
-    const peerPrices = db
-      .query<{ change_pct: number | null }, string[]>(
-        `SELECT change_pct FROM market_prices WHERE code IN (${placeholders2})`,
-      )
-      .all(...peerCodes);
-
+    const peerPrices = repo.getMarketPricesForCodes(peerCodes);
     const validChanges = peerPrices
-      .map((r) => r.change_pct ?? 0)
+      .map((r) => r.changePct)
       .filter((v) => v !== 0);
     if (validChanges.length === 0) return 0.0;
 
@@ -288,13 +235,8 @@ export function computeSectorScore(code: string): number {
       validChanges.reduce((s, v) => s + v, 0) / validChanges.length;
 
     // My own change
-    const myRow = db
-      .query<{ change_pct: number | null }, [string]>(
-        "SELECT change_pct FROM market_prices WHERE code = ? ORDER BY rowid DESC LIMIT 1",
-      )
-      .get(code);
-
-    const myChange = myRow?.change_pct ?? 0;
+    const myRow = repo.getLatestChangePct(code);
+    const myChange = myRow?.changePct ?? 0;
     const relativeStrength = myChange - sectorAvg;
     // Scale: 3% outperformance → 1.0
     return Math.max(-1, Math.min(1, relativeStrength / 3.0));
@@ -408,15 +350,20 @@ export function tickerJitter(code: string, seed: number = 0): number {
  * when their raw score is 0.0 (data absent). Each hao uses a different seed
  * so stocks differentiate across multiple dimensions, not just hao 5.
  * Non-zero real signals are never perturbed. Task 1007 + KI-278.
+ *
+ * Task 1838b: accepts optional repo for DI (default = production SQLite adapter).
  */
-export function computeHaoScores(code: string): number[] {
+export function computeHaoScores(
+  code: string,
+  repo: IKinhDichScoreRepository = new SqliteKinhDichScoreRepository(getDb()),
+): number[] {
   const raw = [
-    computeSentimentScore(code),      // hao 1, seed 1
-    computeFundamentalsScore(code),   // hao 2, seed 2
-    computePriceScore(code),          // hao 3, seed 3
-    computeForeignFlowScore(code),    // hao 4, seed 4
-    computeSectorScore(code),         // hao 5, seed 5
-    computeMacroScore(),              // hao 6, seed 6
+    computeSentimentScore(code, repo),      // hao 1, seed 1
+    computeFundamentalsScore(code, repo),   // hao 2, seed 2
+    computePriceScore(code, repo),          // hao 3, seed 3
+    computeForeignFlowScore(code, repo),    // hao 4, seed 4
+    computeSectorScore(code, repo),         // hao 5, seed 5
+    computeMacroScore(),                    // hao 6, seed 6
   ];
 
   // Apply per-hao jitter only when the raw score is exactly 0.0 (data absent).

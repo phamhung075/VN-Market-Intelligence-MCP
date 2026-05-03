@@ -24,6 +24,8 @@ import { Database } from "bun:sqlite";
 import { getDb, closeDb } from "../infrastructure/db/schema.js";
 import { scanMarket } from "../application/usecases/scanMarket.js";
 import type { MarketPrice } from "../infrastructure/fetchers/hose.js";
+import { SqliteWatchlistRepository } from "../infrastructure/db/repositories/SqliteWatchlistRepository.js";
+import { SqliteMarketPriceRepository } from "../infrastructure/db/repositories/SqliteMarketPriceRepository.js";
 
 const ROOT = resolve(import.meta.dir, "../..");
 
@@ -87,6 +89,14 @@ function setupTestDb(): Database {
 }
 
 const db = setupTestDb();
+
+function makeDeps(fetchPrices?: (codes: string[]) => Promise<MarketPrice[]>) {
+  return {
+    watchlistRepo: new SqliteWatchlistRepository(db),
+    marketPriceRepo: new SqliteMarketPriceRepository(db),
+    ...(fetchPrices ? { fetchPrices } : {}),
+  };
+}
 
 beforeEach(() => {
   try { db.exec("DELETE FROM alerts"); } catch (_) { /* ok */ }
@@ -209,9 +219,7 @@ describe("Task 1076 — Market Scan Noise Retirement", () => {
 
     // Runtime: call scanMarket with a -5% drop (at default signal detector threshold).
     // Telegram send invariant is verified statically by the source-check tests above.
-    const result = await scanMarket({
-      fetchPrices: async () => [FIVE_PCT_DROP],
-    });
+    const result = await scanMarket(makeDeps(async () => [FIVE_PCT_DROP]));
 
     // The scan should have processed VCB
     expect(result.scanned).toBe(1);
@@ -228,9 +236,7 @@ describe("Task 1076 — Market Scan Noise Retirement", () => {
   it("3% price drop (below threshold): no signal fires, no alert stored, no Telegram", async () => {
     addWatchlistEntry("VCB");
 
-    const result = await scanMarket({
-      fetchPrices: async () => [THREE_PCT_DROP],
-    });
+    const result = await scanMarket(makeDeps(async () => [THREE_PCT_DROP]));
 
     expect(result.scanned).toBe(1);
     // -3% is below the default -5% threshold, so no price_drop signal fires
@@ -249,9 +255,7 @@ describe("Task 1076 — Market Scan Noise Retirement", () => {
     // Add enough history so avgVolume is computed (needs ≥ 5 rows)
     addHistoryRows("FPT", 1_000_000, 10);
 
-    const result = await scanMarket({
-      fetchPrices: async () => [VOLUME_SPIKE_ONLY],
-    });
+    const result = await scanMarket(makeDeps(async () => [VOLUME_SPIKE_ONLY]));
 
     expect(result.scanned).toBe(1);
 
@@ -267,9 +271,7 @@ describe("Task 1076 — Market Scan Noise Retirement", () => {
   it("heartbeat move (0.5%): no alert generated, no Telegram call", async () => {
     addWatchlistEntry("VNM");
 
-    const result = await scanMarket({
-      fetchPrices: async () => [HEARTBEAT_MOVE],
-    });
+    const result = await scanMarket(makeDeps(async () => [HEARTBEAT_MOVE]));
 
     expect(result.scanned).toBe(1);
     // A 0.5% move is below the 5% price_surge threshold and above the -3% price_drop threshold
@@ -288,9 +290,7 @@ describe("Task 1076 — Market Scan Noise Retirement", () => {
   it("scanMarket result structure: scanned/signals/alerts counts are returned, no Telegram side effect", async () => {
     addWatchlistEntry("VCB");
 
-    const result = await scanMarket({
-      fetchPrices: async () => [THREE_PCT_DROP],
-    });
+    const result = await scanMarket(makeDeps(async () => [THREE_PCT_DROP]));
 
     // The return value is still the MarketScanResult shape (unchanged)
     expect(result).toHaveProperty("scanned");

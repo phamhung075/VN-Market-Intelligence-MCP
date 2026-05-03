@@ -12,7 +12,19 @@ import { getDb, closeDb } from "../infrastructure/db/schema.js";
 import { scanMarket } from "../application/usecases/scanMarket.js";
 import type { MarketScanResult } from "../application/usecases/scanMarket.js";
 import type { MarketPrice } from "../infrastructure/fetchers/hose.js";
+import { SqliteWatchlistRepository } from "../infrastructure/db/repositories/SqliteWatchlistRepository.js";
+import { SqliteMarketPriceRepository } from "../infrastructure/db/repositories/SqliteMarketPriceRepository.js";
 import { Database } from "bun:sqlite";
+
+/** Build production-like deps backed by the current test in-memory DB. */
+function makeDeps(fetchPrices?: (codes: string[]) => Promise<MarketPrice[]>) {
+  const db = getDb();
+  return {
+    watchlistRepo: new SqliteWatchlistRepository(db),
+    marketPriceRepo: new SqliteMarketPriceRepository(db),
+    ...(fetchPrices ? { fetchPrices } : {}),
+  };
+}
 
 // ---------------------------------------------------------------------------
 // Test DB helpers — wipe all relevant tables before each test
@@ -179,7 +191,7 @@ describe("Task 103 — Market Scan Use Case + Job", () => {
   it("returns { scanned:0, signals:0, alerts:0 } on empty watchlist", async () => {
     const mockFetcher = async (_codes: string[]) => [];
 
-    const result: MarketScanResult = await scanMarket({ fetchPrices: mockFetcher });
+    const result: MarketScanResult = await scanMarket(makeDeps(mockFetcher));
     expect(result.scanned).toBe(0);
     expect(result.signals).toBe(0);
     expect(result.alerts).toBe(0);
@@ -193,7 +205,7 @@ describe("Task 103 — Market Scan Use Case + Job", () => {
 
     const mockFetcher = async (_codes: string[]) => [PRICE_DROP_MOCK];
 
-    const result: MarketScanResult = await scanMarket({ fetchPrices: mockFetcher });
+    const result: MarketScanResult = await scanMarket(makeDeps(mockFetcher));
     expect(result.scanned).toBe(1);
     expect(result.signals).toBeGreaterThanOrEqual(1);
     expect(result.alerts).toBeGreaterThanOrEqual(1);
@@ -210,7 +222,7 @@ describe("Task 103 — Market Scan Use Case + Job", () => {
 
     const mockFetcher = async (_codes: string[]) => [VOLUME_SPIKE_MOCK];
 
-    const result: MarketScanResult = await scanMarket({ fetchPrices: mockFetcher });
+    const result: MarketScanResult = await scanMarket(makeDeps(mockFetcher));
     expect(result.scanned).toBe(1);
     expect(result.signals).toBeGreaterThanOrEqual(1);
     expect(result.alerts).toBeGreaterThanOrEqual(1);
@@ -227,7 +239,7 @@ describe("Task 103 — Market Scan Use Case + Job", () => {
 
     const mockFetcher = async (_codes: string[]) => [VOLUME_SPIKE_MOCK];
 
-    const result: MarketScanResult = await scanMarket({ fetchPrices: mockFetcher });
+    const result: MarketScanResult = await scanMarket(makeDeps(mockFetcher));
     // No price signal (0% change) + no volume spike (avgVolume=0) → 0 signals
     expect(result.signals).toBe(0);
     expect(result.alerts).toBe(0);
@@ -243,7 +255,7 @@ describe("Task 103 — Market Scan Use Case + Job", () => {
       throw new Error("Network error");
     };
 
-    const result: MarketScanResult = await scanMarket({ fetchPrices: mockFetcher });
+    const result: MarketScanResult = await scanMarket(makeDeps(mockFetcher));
     expect(result.scanned).toBe(0);
     expect(result.signals).toBe(0);
     expect(result.alerts).toBe(0);
@@ -257,7 +269,7 @@ describe("Task 103 — Market Scan Use Case + Job", () => {
 
     const mockFetcher = async (_codes: string[]) => [PRICE_DROP_MOCK];
 
-    await scanMarket({ fetchPrices: mockFetcher });
+    await scanMarket(makeDeps(mockFetcher));
 
     const rows = db
       .query("SELECT * FROM alerts WHERE affected_actions_json LIKE '%VCB%'")
@@ -273,7 +285,7 @@ describe("Task 103 — Market Scan Use Case + Job", () => {
 
     const mockFetcher = async (_codes: string[]) => [NORMAL_PRICE_MOCK];
 
-    const result: MarketScanResult = await scanMarket({ fetchPrices: mockFetcher });
+    const result: MarketScanResult = await scanMarket(makeDeps(mockFetcher));
     expect(result.scanned).toBe(1);
     expect(result.signals).toBe(0);
     expect(result.alerts).toBe(0);
@@ -318,7 +330,7 @@ describe("Task 103 — Market Scan Use Case + Job", () => {
       return [];
     };
 
-    await scanMarket({ fetchPrices: mockFetcher });
+    await scanMarket(makeDeps(mockFetcher));
     expect(capturedCodes).toContain("VCB");
     expect(capturedCodes).toContain("HPG");
     expect(capturedCodes.length).toBe(2);

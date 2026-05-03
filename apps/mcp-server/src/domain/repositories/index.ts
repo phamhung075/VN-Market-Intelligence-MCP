@@ -4,10 +4,11 @@
  * Defines the interfaces (ports) that infrastructure adapters must implement.
  * The domain layer depends only on these interfaces — never on concrete adapters.
  *
- * Populated by future tasks:
- *   - Task 002: IWatchlistRepository, IAlertRepository, IFinancialReportRepository
- *   - Task 012: IRagRepository (LanceDB vector store port)
+ * Task 1838b: Phase 1 repository pattern — 5 interfaces added.
  */
 
-// Re-export all repository interfaces as they are implemented
-export {};
+export * from "./IWatchlistRepository.js";
+export * from "./IMarketPriceRepository.js";
+export * from "./IVnstockRepository.js";
+export * from "./IKinhDichScoreRepository.js";
+export * from "./IHexagramRepository.js";
