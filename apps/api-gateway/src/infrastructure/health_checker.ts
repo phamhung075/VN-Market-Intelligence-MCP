@@ -59,11 +59,13 @@ export class StaticServiceRegistry {
 function buildServiceConfigs(urls: Record<string, string>) {
   const timeout = 2000;
   return {
-    mcp: { name: 'mcp', baseUrl: urls['mcp'] ?? 'http://mcp-server:3000', healthPath: '/health', timeoutMs: timeout },
-    pdf: { name: 'pdf', baseUrl: urls['pdf'] ?? 'http://pdf-extractor:5001', healthPath: '/health', timeoutMs: timeout },
-    rag: { name: 'rag', baseUrl: urls['rag'] ?? 'http://rag-service:5002', healthPath: '/health', timeoutMs: timeout },
-    ta:  { name: 'ta',  baseUrl: urls['ta']  ?? 'http://technical-analysis:5003', healthPath: '/health', timeoutMs: timeout },
-    macro: { name: 'macro', baseUrl: urls['macro'] ?? 'http://macro-indicators:5004', healthPath: '/health', timeoutMs: timeout },
-    stock: { name: 'stock', baseUrl: urls['stock'] ?? 'http://stock-price:5000', healthPath: '/health', timeoutMs: timeout },
+    mcp:        { name: 'mcp',        baseUrl: urls['mcp']        ?? 'http://mcp-server:3000',          healthPath: '/health', timeoutMs: timeout },
+    pdf:        { name: 'pdf',        baseUrl: urls['pdf']        ?? 'http://pdf-extractor:5001',       healthPath: '/health', timeoutMs: timeout },
+    rag:        { name: 'rag',        baseUrl: urls['rag']        ?? 'http://rag-service:5002',         healthPath: '/health', timeoutMs: timeout },
+    ta:         { name: 'ta',         baseUrl: urls['ta']         ?? 'http://technical-analysis:5003',  healthPath: '/health', timeoutMs: timeout },
+    macro:      { name: 'macro',      baseUrl: urls['macro']      ?? 'http://macro-indicators:5004',    healthPath: '/health', timeoutMs: timeout },
+    stock:      { name: 'stock',      baseUrl: urls['stock']      ?? 'http://stock-price:5000',         healthPath: '/health', timeoutMs: timeout },
+    'kinh-dich': { name: 'kinh-dich', baseUrl: urls['kinh-dich'] ?? 'http://kinh-dich-service:5005',  healthPath: '/health', timeoutMs: timeout },
+    alert:      { name: 'alert',      baseUrl: urls['alert']      ?? 'http://alert-engine:5006',        healthPath: '/health', timeoutMs: timeout },
   } as Record<string, { name: string; baseUrl: string; healthPath: string; timeoutMs: number }>;
 }
