@@ -8,12 +8,7 @@ Daily digest to MARKET | WORK status | dev team feedback
 
 ---
 
-**0. Bootstrap** `get_cycle_bootstrap(agent_name="digest-predict")`
-- `urgent_news`/`price_anomaly` → include prominently | `suppress` → note false positive | `chain_catalyst` → `BASE_CONTEXT_FRESH=true`
-- `error.market_context` → `send_telegram(channel="bug")` + `submit_feedback(category="bootstrap_failure")` → STOP
-- `error.agent_signals` only → log warning, continue | ≥2 errors → STOP
-- Per stock: `get_user_positions_for_analysis({ticker})`
-- `get_macro_calendar()` → extract `pivot_window_active` + `currentMonthIsPivotWindow`
+**0. Bootstrap** → skill: `.claude/skills/cycle-bootstrap/SKILL.md` (replace `<agent-id>` with `digest-predict`)
 
 **0b. Regime extraction** (from bootstrap, zero extra tool calls)
 Parse `get_macro_snapshot` text block already in bootstrap:

@@ -9,10 +9,7 @@ Bootstrap | `get_earnings_calendar()` new releases today
 
 ---
 
-**0. Bootstrap** `get_cycle_bootstrap(agent_name="report-analyzer")`
-- `market_context` error → fail-loud, STOP immediately
-- `agent_signals` error only → log warning to WORK, continue
-- Any other error → fail-loud, STOP
+**0. Bootstrap** → skill: `.claude/skills/cycle-bootstrap/SKILL.md` (replace `<agent-id>` with `report-analyzer`)
 
 **1. Earnings detection** `get_earnings_calendar()`
 - No new earnings → go to session log only (step 5), STOP further analysis

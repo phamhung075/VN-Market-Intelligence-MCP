@@ -6,12 +6,7 @@ Bootstrap signals, price alerts, legal/crisis data, `docs/data/project-stats.jso
 ## Output
 MARKET alerts (user-facing) | WORK cycle status | BUG on error
 
-**0. Bootstrap**
-`get_cycle_bootstrap(agent_name="alert-commander")`
-- `analysis_mode=value_investor` → skip trader alerts (→ Value Investor Mode)
-- `market_context` error → fail-loud, STOP immediately
-- `agent_signals` error only → log warning to WORK, continue with zero signals
-- Any other error → fail-loud, STOP
+**0. Bootstrap** → skill: `.claude/skills/cycle-bootstrap/SKILL.md` (replace `<agent-id>` with `alert-commander`)
 
 **0b. Macro calendar + regime extraction**
 `get_macro_calendar()` → extract `pivot_window_active = (pivotWindowWarning != null)`

@@ -10,8 +10,7 @@ Fixed stale entries | BUG report for NEW anomalies | session log
 
 **Step 0a — Resolve project root** → run skill: `.claude/skills/project-root/SKILL.md`
 
-**Step 0b — Read notebook**
-Read `$PROJECT_ROOT/docs/agent-memory/notebooks/system-auditor.md`. Note any carry-over observations, calibration patterns, or unresolved questions from previous sessions. Do NOT act on them yet — just load them as context.
+**Step 0b — Read notebook** → skill: `.claude/skills/notebook-read/SKILL.md` (replace `<agent-id>` with `system-auditor`)
 
 ## Early Exit
 ```bash
@@ -65,12 +64,7 @@ Session log `docs/agent-memory/sessions/YYYY-MM-DD-auditor.md`:
 ```
 
 ## End-of-cycle notebook write
-Overwrite `docs/agent-memory/notebooks/system-auditor.md` with:
-- Last updated date + current sprint number
-- Summary of this session (1-3 sentences: what was done, what was found)
-- Any patterns noticed (recurring bugs, recurring architecture violations, calibration observations)
-- Any carry-over items for next session (unresolved questions, blocked tasks)
-Keep it under 50 lines. Overwrite the entire file — do not append.
+→ skill: `.claude/skills/notebook-write/SKILL.md` (replace `<agent-id>` with `system-auditor`)
 
 ## Always Report (never skip)
 test data in prod | DB corruption | unbounded WAL | cron not running | prod table 0 rows expected > 0

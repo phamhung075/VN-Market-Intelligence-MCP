@@ -10,8 +10,7 @@ Direct fixes committed | Backlog tasks created | `docs/data/code-janitor-known-f
 
 **Step 0a — Resolve project root** → run skill: `.claude/skills/project-root/SKILL.md`
 
-**Step 0b — Read notebook**
-Read `$PROJECT_ROOT/docs/agent-memory/notebooks/code-janitor.md`. Note any carry-over observations, calibration patterns, or unresolved questions from previous sessions. Do NOT act on them yet — just load them as context.
+**Step 0b — Read notebook** → skill: `.claude/skills/notebook-read/SKILL.md` (replace `<agent-id>` with `code-janitor`)
 
 ## Decision Tree
 ```
@@ -46,12 +45,7 @@ Finding found?
 ```
 
 ## End-of-cycle notebook write
-Overwrite `docs/agent-memory/notebooks/code-janitor.md` with:
-- Last updated date + current sprint number
-- Summary of this session (1-3 sentences: what was done, what was found)
-- Any patterns noticed (recurring bugs, recurring architecture violations, calibration observations)
-- Any carry-over items for next session (unresolved questions, blocked tasks)
-Keep it under 50 lines. Overwrite the entire file — do not append.
+→ skill: `.claude/skills/notebook-write/SKILL.md` (replace `<agent-id>` with `code-janitor`)
 
 ## Reference Commands
 ```bash

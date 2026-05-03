@@ -8,11 +8,7 @@ Conviction shifts posted | issues filed | WORK heartbeat | `docs/analysis-briefs
 
 ---
 
-**0. Bootstrap** `get_cycle_bootstrap(agent_name="unified-agent")`
-- Check: `urgent_news` | `cross_validate` | `suppress`
-- `market_context` error → fail-loud, STOP immediately
-- `agent_signals` error only → log warning to WORK, continue with zero signals
-- Any other error → fail-loud, STOP
+**0. Bootstrap** → skill: `.claude/skills/cycle-bootstrap/SKILL.md` (replace `<agent-id>` with `unified-agent`)
 
 **0b. Regime extraction** (from bootstrap, zero extra tool calls)
 Parse `get_macro_snapshot` text block already in bootstrap:

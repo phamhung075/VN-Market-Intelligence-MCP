@@ -8,11 +8,7 @@ Bootstrap (market context 24h, earnings calendar, stored PDFs)
 
 ---
 
-**0. Bootstrap** `get_cycle_bootstrap(agent_name="financial-analyst")`
-- Check: `cross_validate`
-- `market_context` error → fail-loud, STOP immediately
-- `agent_signals` error only → log warning to WORK, continue with zero signals
-- Any other error → fail-loud, STOP
+**0. Bootstrap** → skill: `.claude/skills/cycle-bootstrap/SKILL.md` (replace `<agent-id>` with `financial-analyst`)
 
 **0b. Regime extraction** (from bootstrap `market_context`, zero extra tool calls)
 Parse `get_macro_snapshot` text block already in bootstrap:

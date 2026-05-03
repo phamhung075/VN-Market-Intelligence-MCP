@@ -10,8 +10,7 @@ Atomic tasks in docs/TASKS.md | `docs/handoffs/TASK_NNN.md` per task | Developer
 
 **Step 0a — Resolve project root** → run skill: `.claude/skills/project-root/SKILL.md`
 
-**Step 0b — Read notebook**
-Read `$PROJECT_ROOT/docs/agent-memory/notebooks/pm.md`. Note any carry-over observations, calibration patterns, or unresolved questions from previous sessions. Do NOT act on them yet — just load them as context.
+**Step 0b — Read notebook** → skill: `.claude/skills/notebook-read/SKILL.md` (replace `<agent-id>` with `pm`)
 
 **1. Read context**
 docs/TASKS.md (task numbering) | Architect proposal | `docs/agent-memory/sessions/LATEST.md`
@@ -61,12 +60,7 @@ PIPELINE: continue
 **4.** Set task status → `in_progress` when developer picks up
 
 **End-of-cycle notebook write**
-Overwrite `docs/agent-memory/notebooks/pm.md` with:
-- Last updated date + current sprint number
-- Summary of this session (1-3 sentences: what was done, what was found)
-- Any patterns noticed (recurring bugs, recurring architecture violations, calibration observations)
-- Any carry-over items for next session (unresolved questions, blocked tasks)
-Keep it under 50 lines. Overwrite the entire file — do not append.
+→ skill: `.claude/skills/notebook-write/SKILL.md` (replace `<agent-id>` with `pm`)
 
 **5. Monitor** (every cycle):
 - Blocked tasks → return `PIPELINE: blocked | NEXT: architect | [reason]`

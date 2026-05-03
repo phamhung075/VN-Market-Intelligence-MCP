@@ -9,11 +9,7 @@ Bootstrap (market context 24h, agent signals) | watchlist prices
 
 ---
 
-**0. Bootstrap** `get_cycle_bootstrap(agent_name="market-watcher")`
-- Check: `urgent_news` | `cross_validate` | `suppress`
-- `market_context` error → fail-loud, STOP immediately
-- `agent_signals` error only → log warning to WORK, continue with zero signals
-- Any other error → fail-loud, STOP
+**0. Bootstrap** → skill: `.claude/skills/cycle-bootstrap/SKILL.md` (replace `<agent-id>` with `market-watcher`)
 
 **0b. Regime extraction + adaptive thresholds** (from bootstrap, zero extra tool calls)
 Parse `get_macro_snapshot` text block already in bootstrap:

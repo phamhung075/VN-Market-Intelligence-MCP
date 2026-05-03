@@ -8,10 +8,7 @@ Up to 5 prediction claims created | WORK notified | session log
 
 ---
 
-**0. Bootstrap** `get_cycle_bootstrap(agent_name="digest-predict")`
-- `market_context` error → fail-loud, STOP immediately — no predictions without market context
-- `agent_signals` error only → log warning to WORK, continue (predictions use evidence, not signals)
-- Any other error → fail-loud, STOP
+**0. Bootstrap** → skill: `.claude/skills/cycle-bootstrap/SKILL.md` (replace `<agent-id>` with `digest-predict`)
 
 **0b. Regime guard** (from bootstrap, zero extra tool calls)
 Parse `get_macro_snapshot` text block in bootstrap:
