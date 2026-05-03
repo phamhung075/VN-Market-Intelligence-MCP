@@ -114,6 +114,13 @@ export type RagRetriever = (
 ) => Promise<SearchResult[]>;
 
 /**
+ * Injectable function signature for inserting a news article into LanceDB.
+ * Defaults to the real `insertAnalysis` from retriever.ts when not provided.
+ * Task 1840a.
+ */
+export type InsertAnalysisFn = (entry: import("../../infrastructure/rag/retriever.js").AnalysisInput) => Promise<void>;
+
+/**
  * Options for pollNews.
  *
  * @param limit              - Max items per source to process (default 20)
@@ -145,6 +152,12 @@ export interface PollNewsOptions {
    * Used by the teChromiumNews 0-item cold-start retry. Task 1821a.
    */
   sleepMs?: (ms: number) => Promise<void>;
+  /**
+   * Injectable RAG insert function (defaults to real insertAnalysis from retriever.ts).
+   * Wrap call is non-fatal — errors are logged but do not abort the poll cycle.
+   * Task 1840a.
+   */
+  ragInsert?: InsertAnalysisFn;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -554,6 +567,11 @@ export async function pollNews(options: PollNewsOptions = {}): Promise<PollNewsR
   const limit = options.limit ?? 20;
   const db = options.db ?? getDb();
   const retriever: RagRetriever = options.ragRetriever ?? defaultRagRetriever;
+  // Task 1840a: resolve RAG insert function — default is lazy-loaded real implementation
+  const ragInsertFn: InsertAnalysisFn = options.ragInsert ?? (async (entry) => {
+    const { insertAnalysis } = await import("../../infrastructure/rag/retriever.js");
+    return insertAnalysis(entry);
+  });
 
   // Resolve watchlist (injected or loaded from DB)
   const watchlist: WatchlistEntry[] =
@@ -860,6 +878,33 @@ export async function pollNews(options: PollNewsOptions = {}): Promise<PollNewsR
     if (wasInserted) {
       inserted++;
       newEntries.push(entry);
+
+      // Task 1840a: embed newly inserted article into LanceDB (non-fatal).
+      // Awaited so the embed completes within the same async call as the SQLite
+      // insert — mirrors the pattern in fetchParseAndStoreBctc.ts (step 4).
+      try {
+        const { randomUUID } = await import("node:crypto");
+        const level = entry.affectedActions.length > 0 ? "action" : "domain";
+        const actionCode = entry.affectedActions[0]?.toLowerCase();
+        const tags = [
+          "news",
+          (item.source ?? "unknown").toLowerCase(),
+          ...entry.affectedActions.map((c) => c.toLowerCase()),
+        ];
+        await ragInsertFn({
+          id: randomUUID(),
+          level,
+          title: entry.sourceTitle,
+          summary: entry.summary,
+          tags,
+          ...(actionCode !== undefined && { actionCode }),
+        });
+      } catch (err) {
+        logger.warn("[pollNews] ragInsert failed (non-fatal)", {
+          error: err instanceof Error ? err.message : String(err),
+          title: entry.sourceTitle?.slice(0, 80),
+        });
+      }
     } else {
       // Only count as duplicate if the item had a non-empty URL
       // (empty-URL items are always inserted, so they never reach this branch

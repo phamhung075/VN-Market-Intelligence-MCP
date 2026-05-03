@@ -47,6 +47,13 @@ G-Bond regime change check (Pillar 5.2):
   - Downgrade FAIR verdict → EXPENSIVE when `gbond_regime_signal=true`
 - If G-Bond yield not available → log data gap in session log, skip check
 
+**2b. Historical BCTC context** `search_similar_context(query=<ticker>+" "+<quarter_summary>, action_code=<ticker>, k=3, recency_days=365)`
+- Call once per stock after `get_bctc_full(code)` returns
+- Query: ticker + brief summary (e.g. "VCB Q1 2026 lợi nhuận tăng")
+- If results returned: prepend to analysis context — "N similar past analyses: <title> (<date>), ..."
+- If no results: skip, continue without historical context
+- Non-fatal: if tool errors, log and continue
+
 **3. Insider + legal**
 `get_insider_signals()` buy/sell patterns | `get_legal_risk_signals()` prosecution/tax/court
 

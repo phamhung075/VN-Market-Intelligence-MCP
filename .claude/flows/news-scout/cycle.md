@@ -25,6 +25,13 @@ If `get_macro_snapshot` not in bootstrap context → call it once now.
 **1. Fetch** `fetch_and_analyze(source_urls, query)` — 226 items/15min via VPS proxy
 Filter duplicates → extract title/source/published_date/content
 
+**1b. Historical context** `search_similar_context(query=<main_news_theme>, k=3)`
+- Call once per high-impact item (impactScore ≥ 6) before scoring
+- Use the article title or main theme as query (e.g. "VCB lợi nhuận quý 1")
+- If results returned: prepend to analysis context — "N similar past events: <title> (<date>), ..."
+- If no results (LanceDB empty): skip, continue without historical context
+- Non-fatal: if tool errors, log and continue
+
 **2. Sentiment + impact**
 - Score: -1.0 (bearish) to +1.0 (bullish)
 - `run_impact_chain(news_item, catalyst_type)` — global → country → sector → watchlist
