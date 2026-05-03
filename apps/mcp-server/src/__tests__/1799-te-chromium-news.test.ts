@@ -372,6 +372,7 @@ describe("AC-17: fetchTradingEconomicsNews retries once on 'Target closed'", () 
         return makeSampleHtml(1);
       },
       cachePath,
+      sleepMs: async () => {},
     };
 
     const result = await fetchTradingEconomicsNews(20, deps);
@@ -386,6 +387,7 @@ describe("AC-17: fetchTradingEconomicsNews retries once on 'Target closed'", () 
     const deps: TeNewsDeps = {
       scrape: async () => { throw new Error("Protocol error (Runtime.callFunctionOn): Target closed"); },
       cachePath,
+      sleepMs: async () => {},
     };
 
     const result = await fetchTradingEconomicsNews(20, deps);
