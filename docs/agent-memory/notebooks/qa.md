@@ -1,10 +1,10 @@
 # QA — Notebook
 
-**Last updated:** 2026-05-03 | **Sprint:** 1839b
+**Last updated:** 2026-05-03 | **Sprint:** 1843
 
 ## Last session summary
 
-QA review of task 1839b (U-7 notebook protocol). Verified all 8 ACs: 24 notebooks exist, 5 seeded notebooks have real content (700+ chars each), 10 flow files each gained Step 0b + end-of-cycle write, no existing steps removed. Test suite: 5 assertions GREEN (8812 total pass). tsc: 0 errors. 4 failures all pre-existing (3x Task 265 + 1x 1331a TEST-3 RED). Merged to main, branch deleted. Sprint 1839 complete.
+QA review of task 1843a (combined-high-confidence strategy with TA confirmation). taComputation.ts (computeEMA/computeRSI/deriveTADirection) + buildCombinedHighConfidenceStrategy factory + computeTADirectionMap helper. 24/24 targeted tests pass. Full suite: 8799 pass / 6 fail (all pre-existing). tsc: 0 errors. DDD: clean. Committed to main 3a931cb5.
 
 ## Known patterns / preferences
 
@@ -20,5 +20,6 @@ QA review of task 1839b (U-7 notebook protocol). Verified all 8 ACs: 24 notebook
 
 ## Carry-over for next session
 
-- Sprint 1839 complete. All U-4 + U-7 tasks merged. Next sprint planning is PO's responsibility.
-- Next sprint may include U-5 (prediction calibration) — review calibration tool signatures before QA of that sprint.
+- Sprint 1843: 1843a DONE. 1843c (Phase 0 docs symlink restore) remains in Todo — pre-existing failure visible in test suite.
+- Pre-existing failure set (6 as of 1843a): Task 265 x3, Task 1332 x1 (chromium), Task 1331a TEST-3, Phase 0 docs symlink. Task 265 + 1332 have been partially worked by 1843b; some still fail intermittently.
+- worktree-vs-main draft divergence pattern noted: always compare diff before merging if developer left unstaged changes on main working tree.
