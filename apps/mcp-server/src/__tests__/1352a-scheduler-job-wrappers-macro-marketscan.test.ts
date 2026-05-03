@@ -117,13 +117,13 @@ mock.module("../domain/services/macroIndicatorSla.js", () => ({
 
 // Group B mutable factories
 let _isTradingSessionImpl: () => boolean = _frozenRealIsTradingSession;
-let _scanMarketImpl: (opts?: ScanMarketDeps) => Promise<MarketScanResult> = _frozenRealScanMarket;
+let _scanMarketImpl: (deps: ScanMarketDeps) => Promise<MarketScanResult> = _frozenRealScanMarket;
 
 mock.module("../infrastructure/fetchers/hose.js", () => ({
   isTradingSession: () => _isTradingSessionImpl(),
 }));
 mock.module("../application/usecases/scanMarket.js", () => ({
-  scanMarket: async (opts?: ScanMarketDeps) => _scanMarketImpl(opts),
+  scanMarket: async (deps: ScanMarketDeps) => _scanMarketImpl(deps),
 }));
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -329,7 +329,7 @@ describe("Task 1352a — Group B: runMarketScan concurrency guard and session sk
     let scanCallCount = 0;
 
     // Configure mutable factory: increment count and wait for firstDone
-    _scanMarketImpl = async (_opts?: ScanMarketDeps) => {
+    _scanMarketImpl = async (_deps: ScanMarketDeps) => {
       scanCallCount++;
       return firstDone;
     };
@@ -368,7 +368,7 @@ describe("Task 1352a — Group B: runMarketScan concurrency guard and session sk
     _realLogger.debug = (msg: string, ...args: unknown[]) => { debugMessages.push(msg); };
 
     _isTradingSessionImpl = () => false; // closed market
-    _scanMarketImpl = async (_opts?: ScanMarketDeps) => {
+    _scanMarketImpl = async (_deps: ScanMarketDeps) => {
       scanCallCount++;
       return { scanned: 0, signals: 0, alerts: 0 };
     };
@@ -398,7 +398,7 @@ describe("Task 1352a — Group B: runMarketScan concurrency guard and session sk
     _realLogger.error = (_msg: string, ..._args: unknown[]) => {};
 
     _isTradingSessionImpl = () => true;
-    _scanMarketImpl = async (_opts?: ScanMarketDeps) => {
+    _scanMarketImpl = async (_deps: ScanMarketDeps) => {
       scanCallCount++;
       throw new Error("DB error");
     };

@@ -73,12 +73,12 @@ export class SqliteHexagramRepository implements IHexagramRepository {
         bienQueNumber: row.bien_que_number,
         haoStates: row.hao_states,
         rawScores: row.raw_scores,
-        nguHanhDynamic: row.ngu_hanh_dynamic ?? undefined,
-        tradingSignal: row.trading_signal ?? undefined,
-        confidence: row.confidence ?? undefined,
-        actionNote: row.action_note ?? undefined,
-        source: (row.source as 'manual' | 'cycle' | null) ?? undefined,
-      };
+        ...(row.ngu_hanh_dynamic != null ? { nguHanhDynamic: row.ngu_hanh_dynamic } : {}),
+        ...(row.trading_signal != null ? { tradingSignal: row.trading_signal } : {}),
+        ...(row.confidence != null ? { confidence: row.confidence } : {}),
+        ...(row.action_note != null ? { actionNote: row.action_note } : {}),
+        ...(row.source != null ? { source: row.source as 'manual' | 'cycle' } : {}),
+      } as KinhDichReadingRow;
     } catch {
       return null;
     }
@@ -163,12 +163,12 @@ export class SqliteHexagramRepository implements IHexagramRepository {
         bienQueNumber: r.bien_que_number,
         haoStates: r.hao_states,
         rawScores: r.raw_scores,
-        nguHanhDynamic: r.ngu_hanh_dynamic ?? undefined,
-        tradingSignal: r.trading_signal ?? undefined,
-        confidence: r.confidence ?? undefined,
-        actionNote: r.action_note ?? undefined,
-        source: (r.source as 'manual' | 'cycle' | null) ?? undefined,
-      }));
+        ...(r.ngu_hanh_dynamic != null ? { nguHanhDynamic: r.ngu_hanh_dynamic } : {}),
+        ...(r.trading_signal != null ? { tradingSignal: r.trading_signal } : {}),
+        ...(r.confidence != null ? { confidence: r.confidence } : {}),
+        ...(r.action_note != null ? { actionNote: r.action_note } : {}),
+        ...(r.source != null ? { source: r.source as 'manual' | 'cycle' } : {}),
+      } as KinhDichReadingRow));
     } catch {
       return [];
     }
