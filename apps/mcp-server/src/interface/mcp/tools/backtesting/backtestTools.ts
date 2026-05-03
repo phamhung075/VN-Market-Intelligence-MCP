@@ -39,7 +39,7 @@ export function registerBacktestTools(server: McpServer): void {
           "Strategy ID to backtest. " +
             "'kinh-dich-high-confidence' = Kinh Dich BUY/SELL signals with confidence >= 0.7. " +
             "'kinh-dich-all' = all Kinh Dich BUY/SELL signals regardless of confidence. " +
-            "'combined-high-confidence' = Kinh Dich + TA confirmation (Phase 3, currently alias for high-confidence).",
+            "'combined-high-confidence' = Kinh Dich high-confidence signals confirmed by TA direction (EMA-12/26 cross + RSI-14). BUY only when TA is BULLISH; SELL only when TA is BEARISH.",
         ),
       start_date: z
         .string()
