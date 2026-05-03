@@ -5,7 +5,7 @@
   "activeTaskId": null,
   "nextAgent": null,
   "nextPrompt": null,
-  "updatedAt": "2026-05-03T20:30:00.000Z",
+  "updatedAt": "2026-05-03T22:30:00.000Z",
   "updatedBy": "qa",
-  "lastCompleted": "QA 1843a APPROVED — 24/24 targeted tests pass. Full suite 8799 pass / 6 fail (all pre-existing: 265x3 + 1332x1 + 1331a-TEST3 + Phase0-symlink). tsc: 0 errors. DDD: clean. Committed to main 3a931cb5. Sprint 1843 todo: 1843c (docs symlink) remains."
+  "lastCompleted": "Sprint 1843 complete: 1843c symlink fix. All 3 tasks done."
 }

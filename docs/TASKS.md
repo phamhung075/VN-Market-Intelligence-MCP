@@ -19,7 +19,12 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Blocked by |
 |---------|-------|----------|------|-------|---------|------------|
-| 1843c | SPRINT-S: Restore apps/mcp-server/docs symlink (Phase 0 monorepo scaffold test failure — RISK-6 from ARCH_1843) | MEDIUM | FIX | DEVELOPER | docs/handoffs/TASK_1843c.md | — |
+
+## Done
+
+| Task ID | Title | Priority | Type | Owner | Report | Completed |
+|---------|-------|----------|------|-------|--------|-----------|
+| 1843c | SPRINT-S: Restore apps/mcp-server/docs symlink (Phase 0 monorepo scaffold test failure — RISK-6 from ARCH_1843) | MEDIUM | FIX | DEVELOPER | reports/TASK_REPORT_1843c.md | 2026-05-03 |
 
 ---
 
