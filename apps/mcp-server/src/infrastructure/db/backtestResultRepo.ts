@@ -98,6 +98,21 @@ export class SqliteBacktestResultRepository implements IBacktestResultRepository
     }
   }
 
+  /** Retrieve all runs across all strategies, most-recent-first. */
+  getAllRuns(limit: number): BacktestRunRecord[] {
+    try {
+      const rows = this.db
+        .prepare(
+          `SELECT * FROM backtest_runs ORDER BY run_at DESC LIMIT ?`,
+        )
+        .all(limit) as BacktestRunRow[];
+
+      return rows.map(rowToRecord);
+    } catch {
+      return [];
+    }
+  }
+
   /** Retrieve a single run by ID. */
   getRunById(id: string): BacktestRunRecord | null {
     try {

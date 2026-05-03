@@ -39,4 +39,7 @@ export interface IBacktestResultRepository {
 
   /** Retrieve a single run by ID. */
   getRunById(id: string): BacktestRunRecord | null;
+
+  /** Retrieve all runs across all strategies, most-recent-first. */
+  getAllRuns(limit: number): BacktestRunRecord[];
 }
