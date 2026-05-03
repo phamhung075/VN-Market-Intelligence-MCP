@@ -2,9 +2,9 @@
   "_maintained_by": "PM / system-auditor",
   "_trigger": "sprint start/end, tool/cron count change, baseline test update",
   "lastUpdated": "2026-05-03",
-  "currentSprint": 1839,
-  "previousSprint": { "number": 1838, "status": "DONE", "summary": "U-4 Phase 1 — 5 domain interfaces + 5 SQLite adapters + scanMarket.ts + kinhDichTools.ts migrated. 21 new tests. 8799 pass / 0 new fail. totalTasksDone=501." },
-  "sprintGoal": "U-4 Phase 2: server.ts + startScheduler.ts repository migration. U-7: Agent Notebook Population Protocol — 10 flow files + 5 notebooks seeded.",
+  "currentSprint": 1840,
+  "previousSprint": { "number": 1839, "status": "DONE", "summary": "U-4 Phase 2: server.ts + startScheduler.ts migrated. U-7: 10 agent flow files + 5 notebooks seeded. 8812 pass / 0 new fail. totalTasksDone=503." },
+  "sprintGoal": "U-6: RAG Service Utilization Audit + Wiring — audit pollNews/impact-chain/cowork agent paths, wire insertAnalysis on news ingest, wire search_similar_context in News Scout + Financial Analyst flows.",
   "testBaseline": 8539,
   "testBaselineTarget": 8539,
   "testBaselinePass": 8539,
@@ -15,11 +15,11 @@
   "knowledgeFileCount": 25,
   "devAgentCount": 14,
   "analysisAgentCount": 9,
-  "totalTasksDone": 503,
+  "totalTasksDone": 504,
   "analysisMode": "value_investor",
   "briefingFilesCreated": 30,
   "briefingArchiveQI": 0,
   "briefingArchiveQII": 0,
-  "lastFixApplied": "1836c DONE: GitHub Actions CI pipeline created — .github/workflows/ci.yml, oven-sh/setup-bun@v2, bun-version-file: .tool-versions, timeout-minutes: 15, --frozen-lockfile, actions/cache@v4. 6 workflow tests pass. 8539 pass / 0 fail baseline. 2026-05-03.",
-  "currentSprintNotes": "Sprint 1839 COMPLETE — 2026-05-03. U-4 Phase 2: server.ts + startScheduler.ts migrated (1839a, DONE). U-7: 10 agent flow files updated + 5 notebooks seeded (1839b, DONE). 8812 pass / 0 new fail. totalTasksDone=503."
+  "lastFixApplied": "1840a DONE: U-6 RAG wiring — pollNews.ts wired to insertAnalysis (non-fatal injectable dep), news-scout + financial-analyst agent flows + tool permissions updated with search_similar_context. 3/3 tests pass. 8703 pass / 3 pre-existing Task-265 fail. tsc clean. 2026-05-03.",
+  "currentSprintNotes": "Sprint 1840 DONE — 2026-05-03. U-6 RAG wiring complete. totalTasksDone=504."
 }

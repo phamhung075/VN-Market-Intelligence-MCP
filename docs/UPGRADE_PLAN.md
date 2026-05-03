@@ -13,8 +13,8 @@
 | U-2 | Fix 3 Pre-Existing Failing Tests        | 1    | SPRINT-S | DONE        | 1836  |
 | U-3 | GitHub Actions CI Pipeline              | 1    | SPRINT-M | DONE        | 1836  |
 | U-4 | getDb() Repository Pattern Refactor     | 1    | SPRINT-L | DONE        | 1838b (Phase 1), 1839a (Phase 2) |
-| U-5 | Prediction Calibration Feedback Loop    | 2    | SPRINT-M | PENDING    | TBD   |
-| U-6 | RAG Service Utilization Audit + Wiring  | 2    | SPRINT-M | PENDING    | TBD   |
+| U-5 | Prediction Calibration Feedback Loop    | 2    | SPRINT-M | PENDING    | TBD (needs 1 week of live data) |
+| U-6 | RAG Service Utilization Audit + Wiring  | 2    | SPRINT-M | DONE        | 1840a |
 | U-7 | Agent Notebook Population Protocol      | 2    | SPRINT-S | DONE        | 1839b |
 | U-8 | Portfolio Backtesting Engine            | 3    | SPRINT-L | PENDING    | TBD   |
 | U-9 | Read-Only Health Dashboard              | 3    | SPRINT-M | PENDING    | TBD   |
@@ -148,8 +148,8 @@ Add a weekly calibration step to the `digest-predict` flow. Step reads the accur
 
 | Field       | Value |
 |-------------|-------|
-| Status      | PENDING |
-| Sprint      | TBD |
+| Status      | IN_PROGRESS |
+| Sprint      | 1840a |
 | Size        | SPRINT-M |
 | Dependency  | None |
 
@@ -170,7 +170,7 @@ Audit which agents currently call `search_similar_context`. Wire it into News Sc
 
 | Field       | Value |
 |-------------|-------|
-| Status      | IN_PROGRESS |
+| Status      | DONE |
 | Sprint      | 1839b |
 | Size        | SPRINT-S |
 | Dependency  | None |

@@ -205,3 +205,36 @@ Branch: `task/1840a-rag-wiring` | Commit: `87e72db6`
 
 ### Handoff to QA
 Verify: AC-2 through AC-6 per handoff spec. AC-7 self-resolves after next agent cycle.
+
+---
+
+## [QA] Review Record — 2026-05-03
+
+**Outcome: APPROVED — merged to main**
+
+### AC Verification
+
+| AC | Description | Result |
+|----|-------------|--------|
+| AC-1 | pollNews.ts calls ragInsert after successful SQLite insert | PASS — ragInsertFn wired after tryInsertEntry returns true (~line 894) |
+| AC-2 | pollNews.ts catches ragInsert errors (non-fatal) | PASS — try/catch wraps call, logs warn, does not throw |
+| AC-3 | ragInsert is injectable (optional dep parameter) | PASS — InsertAnalysisFn type + ragInsert? field in PollNewsOptions |
+| AC-4 | news-scout.md tools list contains search_similar_context | PASS — in frontmatter tools: line + permissions.tools list |
+| AC-5 | financial-analyst.md tools list contains search_similar_context | PASS — in frontmatter tools: line + permissions.tools list |
+| AC-6 | Both agent flow files have a step using search_similar_context | PASS — news-scout step 1b, financial-analyst step 2b |
+| AC-7 | 1840a-rag-wiring.test.ts exists, 3/3 pass | PASS — 3 pass, 0 fail |
+| AC-8 | Full bun test >= 8696 pass, 0 new failures | PASS — 8703 pass, 3 pre-existing Task-265 fail only |
+| AC-9 | tsc --noEmit exits 0 | PASS after QA fix: test used link/pubDate, RssItem requires url/publishedAt |
+
+### QA Fix Applied
+`apps/mcp-server/src/__tests__/1840a-rag-wiring.test.ts` — 3 occurrences of `link:` → `url:` and `pubDate:` → `publishedAt:` corrected to match `RssItem` interface. Committed on task branch before merge.
+
+### DDD Scan: PASS
+No new domain→infrastructure imports introduced.
+
+### Security Scan: PASS
+No process.env, no hardcoded credentials. ragInsert error is non-fatal — no secret exposure on failure.
+
+### Merge
+Branch `task/1840a-rag-wiring` merged to main via `--no-ff`. Branch deleted.
+Commit: merge(1840a) + fix(1840a) commits included.
