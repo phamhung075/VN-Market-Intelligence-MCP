@@ -26,8 +26,8 @@ const noopSleep = async (_ms: number): Promise<void> => {};
 function makeNewsItem(overrides: Partial<RssItem> = {}): RssItem {
   return {
     title: "VCB tăng trưởng lợi nhuận quý 1",
-    link: `https://cafef.vn/vcb-tang-truong-${Date.now()}.htm`,
-    pubDate: new Date().toISOString(),
+    url: `https://cafef.vn/vcb-tang-truong-${Date.now()}.htm`,
+    publishedAt: new Date().toISOString(),
     source: "cafef",
     content: "Ngân hàng VCB ghi nhận lợi nhuận trước thuế tăng 15% so với cùng kỳ.",
     ...overrides,
@@ -78,7 +78,7 @@ describe("Task 1840a — pollNews RAG wiring", () => {
       throw new Error("LanceDB unavailable");
     };
 
-    const item = makeNewsItem({ link: `https://cafef.vn/test-nonfatal-${Date.now()}.htm` });
+    const item = makeNewsItem({ url: `https://cafef.vn/test-nonfatal-${Date.now()}.htm` });
 
     // Must not throw — non-fatal
     await expect(
@@ -100,7 +100,7 @@ describe("Task 1840a — pollNews RAG wiring", () => {
     };
 
     const item = makeNewsItem({
-      link: `https://cafef.vn/vcb-detail-${Date.now()}.htm`,
+      url: `https://cafef.vn/vcb-detail-${Date.now()}.htm`,
       title: "VCB tăng trưởng lợi nhuận quý 1",
       source: "cafef",
     });
