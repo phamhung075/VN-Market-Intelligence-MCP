@@ -19,7 +19,7 @@
 | 1833e | FIX: vnstock-sync NOT NULL constraint on vnstock_officers.code — add null-check / schema guard before insert. Recurring error. Note: surfacing as data quality alert now part of 1833i scope. | P3-MEDIUM | BUG | developer | — | — |
 | 1833k | FIX: Trading Economics Chromium scraper — 114 consecutive failures. Investigate Playwright executable path config (/usr/bin/chromium) + anti-bot detection mitigation. | P3-MEDIUM | BUG | developer | — | — |
 | 1833f | FIX: vn-news-fetch stale heartbeat — service reports unhealthy despite 90 pushes/24h. Fix heartbeat timestamp update so monitoring reflects reality. | P4-LOW | BUG | ops | 2026-05-02 | Done |
-| 1833l | FIX: Yahoo Finance 404 on unknown symbol — identify delisted/renamed ticker, add graceful 404 handling to prevent log noise. | P4-LOW | BUG | developer | — | — |
+| 1833l | FIX: Yahoo Finance 404 on unknown symbol — identify delisted/renamed ticker, add graceful 404 handling to prevent log noise. | P4-LOW | BUG | developer | 2026-05-03 | Done |
 | 1833b | FIX: semble-search notebook missing + devAgentCount drift in project-stats.json | LOW | FIX | developer | — | — |
 
 ---
