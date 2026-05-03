@@ -52,6 +52,9 @@ const targetClosedScrape: TeNewsDeps["scrape"] = async () => {
   throw new Error("Protocol error (Runtime.callFunctionOn): Target closed");
 };
 
+/** No-op sleep injected in tests to bypass real exponential backoff waits (Sprint 1833g). */
+const noopSleep: TeNewsDeps["sleepMs"] = async (_ms: number): Promise<void> => { /* instant */ };
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Reset shared state before each test
 // ─────────────────────────────────────────────────────────────────────────────
@@ -80,6 +83,7 @@ describe("AC-CB-persist-1: cold start — no state file → counter starts at 0"
       scrape: targetClosedScrape,
       cachePath,
       cbStatePath,
+      sleepMs: noopSleep,
     });
 
     // File should now exist with consecutiveErrors = 1 (started from 0)
@@ -100,6 +104,7 @@ describe("AC-CB-persist-2: after N failures, state file reflects count", () => {
         scrape: targetClosedScrape,
         cachePath,
         cbStatePath,
+        sleepMs: noopSleep,
       });
     }
 
@@ -120,6 +125,7 @@ describe("AC-CB-persist-3: success resets state file", () => {
         scrape: targetClosedScrape,
         cachePath,
         cbStatePath,
+        sleepMs: noopSleep,
       });
     }
 
@@ -150,8 +156,9 @@ describe("AC-CB-persist-3: success resets state file", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 describe("AC-CB-persist-4: pre-existing state file is loaded and accumulated", () => {
   it("starts from pre-existing count of 2 and increments to 3 after one more failure", async () => {
-    // Simulate the state left by a previous container instance
-    const preExisting: TeCbState = { consecutiveErrors: 2, alertSent: false };
+    // Simulate the state left by a previous container instance.
+    // Omit lastFailureWindowStartMs to test backward-compat loading (old file format).
+    const preExisting: Omit<TeCbState, "lastFailureWindowStartMs"> = { consecutiveErrors: 2, alertSent: false };
     fs.mkdirSync(path.dirname(cbStatePath), { recursive: true });
     fs.writeFileSync(cbStatePath, JSON.stringify(preExisting), "utf-8");
 
@@ -169,6 +176,7 @@ describe("AC-CB-persist-4: pre-existing state file is loaded and accumulated", (
       cachePath,
       cbStatePath,
       onCircuitOpen: mockAlert,
+      sleepMs: noopSleep,
     });
 
     const state = readCbState(cbStatePath);
@@ -181,6 +189,7 @@ describe("AC-CB-persist-4: pre-existing state file is loaded and accumulated", (
       cachePath,
       cbStatePath,
       onCircuitOpen: mockAlert,
+      sleepMs: noopSleep,
     });
     expect(scrapeCallCount).toBe(countBeforeLock); // no additional scrape
 

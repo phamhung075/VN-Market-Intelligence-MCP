@@ -46,12 +46,14 @@ export const globalSourceTracker: SourceHealthTracker =
 // Pre-seed the 5 known news sources so get_system_status / get_source_health
 // return rows immediately on a fresh process — before the first pollNews
 // tick has fired. The names match what pollNews uses in its sourceEntries.
+// Sprint 1833g: Reuters RSS and Trading Economics (legacy stream) removed from
+// default seeds — both sources are permanently disabled in pollNews resolvedFetchers.
+// Trading Economics News (Chromium scraper) remains active.
 globalSourceTracker.seedKnownSources([
   "CafeF RSS",
   "VnExpress RSS",
   "VnEconomy RSS",
-  "Reuters RSS",
-  "Trading Economics",
+  "Trading Economics News",
 ]);
 
 /**
@@ -69,12 +71,12 @@ globalSourceTracker.seedKnownSources([
 export function _resetGlobalSourceTracker(): void {
   globalSourceTracker._reset();
   // Re-seed known sources so getAllHealth() returns rows immediately after reset.
+  // Sprint 1833g: Reuters RSS and Trading Economics (legacy) removed from seeds.
   globalSourceTracker.seedKnownSources([
     "CafeF RSS",
     "VnExpress RSS",
     "VnEconomy RSS",
-    "Reuters RSS",
-    "Trading Economics",
+    "Trading Economics News",
   ]);
 }
 
