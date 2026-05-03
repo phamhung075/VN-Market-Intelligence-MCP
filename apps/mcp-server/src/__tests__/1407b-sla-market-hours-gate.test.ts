@@ -44,6 +44,15 @@ const OFF_HOURS_DATE = new Date("2026-04-27T00:30:00.000Z");
 // Monday 2026-04-27 04:00 UTC = market hours (02:00–08:59 UTC)
 const MARKET_HOURS_DATE = new Date("2026-04-27T04:00:00.000Z");
 
+// Saturday 2026-04-25 04:00 UTC = VN time 11:00 (market window hours but weekend)
+const WEEKEND_MARKET_WINDOW = new Date("2026-04-25T04:00:00.000Z");
+
+// Friday 2026-05-01 04:00 UTC = VN time 11:00 (market window hours but public holiday)
+const LABOUR_DAY_2026 = new Date("2026-05-01T04:00:00.000Z");
+
+// Monday 2026-05-04 04:00 UTC = first trading day after Labour Day holiday
+const FIRST_DAY_AFTER_HOLIDAY = new Date("2026-05-04T04:00:00.000Z");
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Schema helper — mirrors sla_breach_audit DDL from schema-system.ts exactly
 // ─────────────────────────────────────────────────────────────────────────────
@@ -314,5 +323,126 @@ describe("1407b — SLA monitor market-hours gate", () => {
       .get();
     expect(row!.status).toBe("recovered");
     expect(row!.recovered_at).not.toBeNull();
+  });
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // MH-9: WEEKEND + price breach → escalation NOT called
+  // ───────────────────────────────────────────────────────────────────────────
+
+  it("MH-9: weekend (Saturday) + price stale 15 min → escalation NOT called", async () => {
+    const { spy, calls } = makeEscalateSpy();
+
+    const result = await runFreshnessSlaMonitor(
+      db,
+      spy,
+      staleAges("price", 15),
+      WEEKEND_MARKET_WINDOW
+    );
+
+    expect(result.breaches).toBe(1);
+    expect(result.escalations).toBe(0);
+    expect(calls.length).toBe(0);
+    expect(auditCount(db, "price")).toBe(1);
+  });
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // MH-10: WEEKEND + foreign_flow breach → escalation NOT called
+  // ───────────────────────────────────────────────────────────────────────────
+
+  it("MH-10: weekend (Saturday) + foreign_flow stale 15 min → escalation NOT called", async () => {
+    const { spy, calls } = makeEscalateSpy();
+
+    const result = await runFreshnessSlaMonitor(
+      db,
+      spy,
+      staleAges("foreign_flow", 15),
+      WEEKEND_MARKET_WINDOW
+    );
+
+    expect(result.breaches).toBe(1);
+    expect(result.escalations).toBe(0);
+    expect(calls.length).toBe(0);
+    expect(auditCount(db, "foreign_flow")).toBe(1);
+  });
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // MH-11: WEEKEND + bctc breach → escalation IS called (24/7 signal)
+  // ───────────────────────────────────────────────────────────────────────────
+
+  it("MH-11: weekend (Saturday) + bctc stale 400 min → escalation IS called (24/7 source)", async () => {
+    const { spy, calls } = makeEscalateSpy();
+
+    // bctc off-hours threshold = 360 min; 400 > 360 → breach
+    const result = await runFreshnessSlaMonitor(
+      db,
+      spy,
+      staleAges("bctc", 400),
+      WEEKEND_MARKET_WINDOW
+    );
+
+    expect(result.breaches).toBe(1);
+    expect(result.escalations).toBe(1);
+    expect(calls.length).toBe(1);
+    expect(calls[0]!.signalType).toBe("bctc");
+  });
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // MH-12: LABOUR_DAY + price breach → escalation NOT called
+  // ───────────────────────────────────────────────────────────────────────────
+
+  it("MH-12: Labour Day 2026-05-01 + price stale 15 min → escalation NOT called", async () => {
+    const { spy, calls } = makeEscalateSpy();
+
+    const result = await runFreshnessSlaMonitor(
+      db,
+      spy,
+      staleAges("price", 15),
+      LABOUR_DAY_2026
+    );
+
+    expect(result.breaches).toBe(1);
+    expect(result.escalations).toBe(0);
+    expect(calls.length).toBe(0);
+    expect(auditCount(db, "price")).toBe(1);
+  });
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // MH-13: LABOUR_DAY + foreign_flow breach → escalation NOT called
+  // ───────────────────────────────────────────────────────────────────────────
+
+  it("MH-13: Labour Day 2026-05-01 + foreign_flow stale 15 min → escalation NOT called", async () => {
+    const { spy, calls } = makeEscalateSpy();
+
+    const result = await runFreshnessSlaMonitor(
+      db,
+      spy,
+      staleAges("foreign_flow", 15),
+      LABOUR_DAY_2026
+    );
+
+    expect(result.breaches).toBe(1);
+    expect(result.escalations).toBe(0);
+    expect(calls.length).toBe(0);
+    expect(auditCount(db, "foreign_flow")).toBe(1);
+  });
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // MH-14: FIRST_DAY_AFTER_HOLIDAY + price breach → escalation IS called
+  // ───────────────────────────────────────────────────────────────────────────
+
+  it("MH-14: first trading day after holiday (2026-05-04) + price stale 15 min → escalation IS called", async () => {
+    const { spy, calls } = makeEscalateSpy();
+
+    const result = await runFreshnessSlaMonitor(
+      db,
+      spy,
+      staleAges("price", 15),
+      FIRST_DAY_AFTER_HOLIDAY
+    );
+
+    expect(result.breaches).toBe(1);
+    expect(result.escalations).toBe(1);
+    expect(calls.length).toBe(1);
+    expect(calls[0]!.signalType).toBe("price");
   });
 });
