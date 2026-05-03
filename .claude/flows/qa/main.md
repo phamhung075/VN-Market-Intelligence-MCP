@@ -8,6 +8,9 @@ Task report | APPROVED merge or CHANGES_REQUESTED with exact file:line issues
 
 ---
 
+**Step 0b — Read notebook**
+Read `docs/agent-memory/notebooks/qa.md`. Note any carry-over observations, calibration patterns, or unresolved questions from previous sessions. Do NOT act on them yet — just load them as context.
+
 ## Smart-Skip
 - Test-only change → skip DDD + security. Run: unit + regression + tsc.
 - String literal only → skip DDD + security. Run: full suite + tsc.
@@ -82,6 +85,14 @@ NEXT: architect | review Task NNN before merge, then re-run QA
 HANDOFF: docs/handoffs/TASK_NNN.md
 PIPELINE: continue
 ```
+
+## End-of-cycle notebook write
+Overwrite `docs/agent-memory/notebooks/qa.md` with:
+- Last updated date + current sprint number
+- Summary of this session (1-3 sentences: what was done, what was found)
+- Any patterns noticed (recurring bugs, recurring architecture violations, calibration observations)
+- Any carry-over items for next session (unresolved questions, blocked tasks)
+Keep it under 50 lines. Overwrite the entire file — do not append.
 
 ## Emergency
 Tests fail on main → revert breaking commit → `send_telegram(channel="bug")` → open Backlog task → no merges until green

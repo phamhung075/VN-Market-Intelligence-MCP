@@ -8,6 +8,9 @@ Requirement spec in docs/TASKS.md | Architect task created | PO notified
 
 ---
 
+**Step 0b — Read notebook**
+Read `docs/agent-memory/notebooks/ba.md`. Note any carry-over observations, calibration patterns, or unresolved questions from previous sessions. Do NOT act on them yet — just load them as context.
+
 **1. Read context**
 `docs/SPRINT_GOAL.md` vision | docs/TASKS.md task numbering | `docs/agent-memory/sessions/LATEST.md`
 
@@ -40,6 +43,14 @@ feature priority | VN term translation | data source availability | historical v
 | BA-NNN | Requirement: [Feature Name] | pending | BA | — | — |
   Context: [brief memo with FR list, blockers, edge cases, DDD layers]
 ```
+**End-of-cycle notebook write**
+Overwrite `docs/agent-memory/notebooks/ba.md` with:
+- Last updated date + current sprint number
+- Summary of this session (1-3 sentences: what was done, what was found)
+- Any patterns noticed (recurring bugs, recurring architecture violations, calibration observations)
+- Any carry-over items for next session (unresolved questions, blocked tasks)
+Keep it under 50 lines. Overwrite the entire file — do not append.
+
 PO approves → BA Done → update docs/TASKS.md status → return:
 ```
 ## RETURN

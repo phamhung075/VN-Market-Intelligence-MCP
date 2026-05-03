@@ -1,26 +1,23 @@
 # QA — Notebook
 
-**Last updated:** 2026-05-03 | **Sprint:** 1834
-
-## Current state
-
-Sprint 1834b merged and closed. Baseline is now 8763 pass / 3 pre-existing fail.
+**Last updated:** 2026-05-03 | **Sprint:** 1839b
 
 ## Last session summary
 
-**Task 1834b — TE Chromium anti-bot hardening**
-- Regression investigation: developer reported 8534 pass / 103 failures. Confirmed this was a Bun crash artifact mid-run (panic C++ exception). Actual result on task branch: 8764 pass / 2 fail.
-- 1834b tests: 7/7 pass.
-- Pre-existing failures confirmed on main (same 3 tests): AC-17 Target-closed retry timeouts (5000ms) + Task 1331a STOCK_PRICE_DB_PATH env check.
-- TSC: 0 errors.
-- DDD: task file is in infrastructure/fetchers/ — correct layer.
-- Security: no process.env, no hardcoded secrets.
-- Merge: no-ff to main. Push: OK.
-- Baseline updated: 8763 pass, totalTasksDone=495.
-- Worktree + task branch cleaned up.
+QA review of task 1839b (U-7 notebook protocol). Flow files updated and notebooks seeded. Test suite: 5 assertions GREEN. tsc: 0 errors. DDD: markdown-only changes, no layer violations possible. Verdict: APPROVED.
 
 ## Known patterns / preferences
 
-- Bun v1.3.11 has a known C++ panic crash on large test suites (macOS x64). When developers report high failure counts, always re-run the suite — the actual fail count is in the "N pass / N fail" summary line before the crash, not the "(fail)" lines after the panic.
-- Pre-existing failures: AC-17 Target-closed (2 tests, timeout-based), Task 1331a STOCK_PRICE_DB_PATH (env config, intentional RED test). These 3 are stable pre-existing failures, do not block merges.
-- docs/data/ is in .gitignore — always use `git add -f` for project-stats.json.
+- Bun v1.3.11 had a known C++ panic crash on large test suites (macOS x64). Upgraded to v1.3.13 in Sprint 1836 (U-1). If developers report unexpectedly high failure counts, check Bun version first.
+- Pre-existing failures (as of Sprint 1836 baseline): ZERO. U-2 fixed all 3 pre-existing failures. Baseline is now 8799+ pass / 0 fail. Any failure is a real regression.
+- Always verify AC-by-AC: do not bulk-approve. Each acceptance criterion in the handoff must be ticked with evidence (test name, line count, etc.).
+- DDD check is non-negotiable even for "small" fixes: `grep -r "from.*infrastructure" <modified_domain_files>` must return nothing.
+- `docs/data/` is in `.gitignore` — if project-stats.json is updated, confirm `git add -f` was used.
+- Task report format: Compact for fix/≤3 files, Full for new tool/domain service/security change.
+- Check pre-existing fail count matches expected BEFORE approving. If test count differs by more than 10, ask developer to recount.
+- tsc must be 0 errors — even 1 warning-level type error is a blocker if it touches production code paths.
+
+## Carry-over for next session
+
+- Sprint 1839 tasks still in progress. Confirm all 1839b ACs before marking sprint complete.
+- Next sprint may include U-5 (prediction calibration) — review calibration tool signatures before QA of that sprint.

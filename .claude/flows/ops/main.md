@@ -8,6 +8,9 @@ Service restored | BUG channel report | WORK escalation if unresolvable
 
 ---
 
+**Step 0b — Read notebook**
+Read `docs/agent-memory/notebooks/ops.md`. Note any carry-over observations, calibration patterns, or unresolved questions from previous sessions. Do NOT act on them yet — just load them as context.
+
 ## Escalate Immediately (do not attempt)
 - VPS SSH timeout × 3 → network partition
 - `docker-compose down` fails + services stuck
@@ -61,6 +64,14 @@ NEVER: `bun --hot` | `bun --watch` | `nodemon` | `pm2` | manual Bun restarts
 ls -lh apps/mcp-server/data/db.sqlite*            # WAL < 10MB normal, >50MB = flag
 sqlite3 apps/mcp-server/data/db.sqlite "PRAGMA integrity_check;"  # must = "ok"
 ```
+
+## End-of-cycle notebook write
+Overwrite `docs/agent-memory/notebooks/ops.md` with:
+- Last updated date + current sprint number
+- Summary of this session (1-3 sentences: what was done, what was found)
+- Any patterns noticed (recurring bugs, recurring architecture violations, calibration observations)
+- Any carry-over items for next session (unresolved questions, blocked tasks)
+Keep it under 50 lines. Overwrite the entire file — do not append.
 
 ## Incident Protocol
 1. Diagnose — Docker/VPS/DB/network?
