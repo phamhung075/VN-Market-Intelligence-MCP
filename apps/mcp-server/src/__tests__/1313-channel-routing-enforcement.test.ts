@@ -130,6 +130,8 @@ describe("TASK-1313: channel routing enforcement", () => {
         // Alert Commander pipeline jobs write to DB; Commander dispatches to market
         // intelligenceCycleJob sends market-wide cascade summary to MARKET channel (Task 1345d)
         "news-analysis/intelligenceCycleJob.ts",
+        // bctcBatchSweepJob sends completion digest to MARKET channel after earnings season sweep (Task 1841b)
+        "financial-reports/bctcBatchSweepJob.ts",
       ]);
 
       const allTs = getAllTsFiles(SCHEDULER_DIR);
