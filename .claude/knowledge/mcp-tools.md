@@ -62,6 +62,17 @@ After signal action (Alert Commander only):
 record_signal_outcome(signal_id, "fired"|"suppressed"|"confirmed"|"false_positive")
 ```
 
+## Claude-Native Agent Tools
+
+Tools injected by the MCP client — not registered by the server, not in tool-registry.json.
+
+| Tool | Used by | Purpose |
+|------|---------|---------|
+| `mcp__semble__search` | developer, architect, ba, fixer, code-janitor, system-auditor | Semantic code search by intent or symbol |
+| `mcp__semble__find_related` | same | Discover structurally similar code after a search result |
+
+Decision guide → `.claude/skills/semble-search/SKILL.md`
+
 ## Inter-Agent Signal Types
 
 | Signal | From | To | When |

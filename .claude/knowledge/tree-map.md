@@ -53,6 +53,8 @@ CLAUDE.md (root — always loaded)
 │
 ├── .claude/skills/token-economy/SKILL.md Part 3 (agent-to-agent comms: 3-tier compression ULTRA/FULL/LITE — merged into skill, no separate knowledge file)
 │
+├── .claude/skills/semble-search/SKILL.md (code search decision guide: when Semble vs Grep/Glob/Read)
+│
 ├── .claude/knowledge/fail-loud-protocol.md (failure handling: 5-step protocol — inlined in agents by design)
 │
 ├── .claude/knowledge/restart-policy.md (server restart: docker-compose only, 9 microservices, banned mechanisms, QA validation)
