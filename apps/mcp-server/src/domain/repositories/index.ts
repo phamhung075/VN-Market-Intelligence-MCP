@@ -13,3 +13,6 @@ export * from "./IVnstockRepository.js";
 export * from "./IKinhDichScoreRepository.js";
 export * from "./IHexagramRepository.js";
 export * from "./IJobRunRepository.js";
+export * from "./IBacktestSignalRepository.js";
+export * from "./IBacktestPriceRepository.js";
+export * from "./IBacktestResultRepository.js";
