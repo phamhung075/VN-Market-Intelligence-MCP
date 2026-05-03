@@ -5,9 +5,9 @@
   "currentSprint": 1834,
   "previousSprint": { "number": 1833, "status": "DONE", "summary": "vnstock global rate limiter + officers NOT NULL guard + freshness SLA market-hours fix + te-chromium CB backoff. 8757 pass / 0 fail. totalTasksDone=494." },
   "sprintGoal": "TE Chromium anti-bot hardening",
-  "testBaseline": 8757,
-  "testBaselineTarget": 8757,
-  "testBaselinePass": 8757,
+  "testBaseline": 8763,
+  "testBaselineTarget": 8763,
+  "testBaselinePass": 8763,
   "testBaselineFail": 0,
   "testFailures": 0,
   "toolCount": 122,
@@ -15,11 +15,11 @@
   "knowledgeFileCount": 25,
   "devAgentCount": 14,
   "analysisAgentCount": 9,
-  "totalTasksDone": 494,
+  "totalTasksDone": 495,
   "analysisMode": "value_investor",
   "briefingFilesCreated": 30,
   "briefingArchiveQI": 0,
   "briefingArchiveQII": 0,
-  "lastFixApplied": "1833i DONE: vnstock global rate limiter (50 RPM) + officers NOT NULL guard + DQ alert. 18 new tests pass. 8757 / 0 fail. 2026-05-03.",
-  "currentSprintNotes": "Sprint 1834 — TE Chromium anti-bot hardening. 1 task queued: 1834b."
+  "lastFixApplied": "1834b DONE: TE Chromium anti-bot hardening — stealth args, UA, route interception, nav delay. 7 new tests pass. 8763 / 3 pre-existing fail. 2026-05-03.",
+  "currentSprintNotes": "Sprint 1834 complete — TE Chromium anti-bot hardening. totalTasksDone=495."
 }

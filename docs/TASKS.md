@@ -12,7 +12,6 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Blocked by |
 |---------|-------|----------|------|-------|---------|------------|
-| 1834b | SPRINT-S: TE Chromium anti-bot hardening | P2-HIGH | SPRINT-S | developer | — | — |
 | 1833k | FIX: Trading Economics Chromium scraper — 114 consecutive failures. Investigate Playwright executable path config (/usr/bin/chromium) + anti-bot detection mitigation. | P3-MEDIUM | BUG | developer | — | — |
 
 ---
@@ -44,6 +43,7 @@
 
 | Task ID | Title | Merged | Reports |
 |---------|-------|--------|---------|
+| 1834b | SPRINT-S: TE Chromium anti-bot hardening — stealth args (disable-blink AutomationControlled), randomised viewport, route interception (analytics/tracking blocked), human-like nav delay. 7 AC tests pass. 8763 pass / 3 pre-existing fail. | 2026-05-03 | reports/TASK_REPORT_1834b.md |
 | 1833g | FIX: te-chromium CB hour-window reset + exponential backoff + disable Reuters RSS / Trading Economics legacy in resolvedFetchers + seedKnownSources. 4 files, ~118 lines, 8 ACs. | 2026-05-03 | docs/tasks/TASK_1833g.md |
 | 1833i | FIX: vnstock global rate limiter (50 RPM) + officers NOT NULL guard + DQ alert. VnstockRateLimiter sliding-window; storeOfficers null-code filter; syncVnstockData NOT NULL catch + 24h/ticker Telegram de-dup. 18 new tests pass. 8757 / 0 fail. Closes 1833e. | 2026-05-03 | reports/TASK_REPORT_1833i.md |
 | 1833h | FIX: freshnessSlaMonitorJob — isVnMarketHours blindness to weekends/holidays. Added isVnTradingDay(), VN_PUBLIC_HOLIDAYS, 6 new test cases MH-9..MH-14. 14/14 pass, 8763 / 0 fail. | 2026-05-02 | reports/TASK_REPORT_1833h.md |
