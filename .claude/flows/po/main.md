@@ -8,7 +8,10 @@ docs/TASKS.md blockers | `docs/data/project-stats.json` | latest `reports/TASK_R
 
 ---
 
-**Pre-check**: docs/TASKS.md blocked tasks waiting for PO → handle first
+**Pre-check — Resolve project root**
+Run `git rev-parse --show-toplevel` and store as `$PROJECT_ROOT`. Use this prefix for ALL file writes in this session. Never use bare relative paths like `docs/...` — always `$PROJECT_ROOT/docs/...`.
+
+**Pre-check**: `$PROJECT_ROOT/docs/TASKS.md` blocked tasks waiting for PO → handle first
 
 ## Step 0 — Channel Audit (MANDATORY, runs before everything)
 

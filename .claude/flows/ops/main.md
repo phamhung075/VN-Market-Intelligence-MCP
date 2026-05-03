@@ -8,8 +8,11 @@ Service restored | BUG channel report | WORK escalation if unresolvable
 
 ---
 
+**Step 0a — Resolve project root**
+Run `git rev-parse --show-toplevel` and store as `$PROJECT_ROOT`. Use this prefix for ALL file writes in this session. Never use bare relative paths like `docs/...` — always `$PROJECT_ROOT/docs/...`.
+
 **Step 0b — Read notebook**
-Read `docs/agent-memory/notebooks/ops.md`. Note any carry-over observations, calibration patterns, or unresolved questions from previous sessions. Do NOT act on them yet — just load them as context.
+Read `$PROJECT_ROOT/docs/agent-memory/notebooks/ops.md`. Note any carry-over observations, calibration patterns, or unresolved questions from previous sessions. Do NOT act on them yet — just load them as context.
 
 ## Escalate Immediately (do not attempt)
 - VPS SSH timeout × 3 → network partition

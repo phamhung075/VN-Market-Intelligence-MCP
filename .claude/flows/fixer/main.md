@@ -9,8 +9,11 @@
 
 ---
 
+**Step 0a — Resolve project root**
+Run `git rev-parse --show-toplevel` and store as `$PROJECT_ROOT`. Use this prefix for ALL file writes in this session. Never use bare relative paths like `docs/...` — always `$PROJECT_ROOT/docs/...`.
+
 **Step 0b — Read notebook**
-Read `docs/agent-memory/notebooks/fixer.md`. Note any carry-over observations, calibration patterns, or unresolved questions from previous sessions. Do NOT act on them yet — just load them as context.
+Read `$PROJECT_ROOT/docs/agent-memory/notebooks/fixer.md`. Note any carry-over observations, calibration patterns, or unresolved questions from previous sessions. Do NOT act on them yet — just load them as context.
 
 **Trigger**:
 1. Read `[QA] Review Record` → extract file:line refs → go DIRECTLY there

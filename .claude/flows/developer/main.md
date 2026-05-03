@@ -8,8 +8,11 @@ Code + tests on `task/NNN-*` branch | `[Developer] Implementation Record` in han
 
 ---
 
+**Step 0a — Resolve project root**
+Run `git rev-parse --show-toplevel` and store as `$PROJECT_ROOT`. Use this prefix for ALL file writes in this session (session logs, notebooks, handoffs, TASKS.md, pipeline-state.json). Never use bare relative paths like `docs/...` — always `$PROJECT_ROOT/docs/...`.
+
 **Step 0b — Read notebook**
-Read `docs/agent-memory/notebooks/developer.md`. Note any carry-over observations, calibration patterns, or unresolved questions from previous sessions. Do NOT act on them yet — just load them as context.
+Read `$PROJECT_ROOT/docs/agent-memory/notebooks/developer.md`. Note any carry-over observations, calibration patterns, or unresolved questions from previous sessions. Do NOT act on them yet — just load them as context.
 
 **Pre-code checklist**
 1. Confirm task status in docs/TASKS.md

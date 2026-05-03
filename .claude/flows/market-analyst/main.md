@@ -8,8 +8,11 @@ Analysis in session log | signals noted | recommendation (bullish/bearish/neutra
 
 ---
 
+**Step 0a — Resolve project root**
+Run `git rev-parse --show-toplevel` and store as `$PROJECT_ROOT`. Use this prefix for ALL file writes in this session. Never use bare relative paths like `docs/...` — always `$PROJECT_ROOT/docs/...`.
+
 **Step 0b — Read notebook**
-Read `docs/agent-memory/notebooks/market-analyst.md`. Note any carry-over observations, calibration patterns, or unresolved questions from previous sessions. Do NOT act on them yet — just load them as context.
+Read `$PROJECT_ROOT/docs/agent-memory/notebooks/market-analyst.md`. Note any carry-over observations, calibration patterns, or unresolved questions from previous sessions. Do NOT act on them yet — just load them as context.
 
 ## Top-Down Framework (Trần Ngọc Báu methodology — always apply before any recommendation)
 

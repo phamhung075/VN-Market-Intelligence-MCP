@@ -71,6 +71,32 @@ PIPELINE_STATE_WRITE: Write docs/pipeline-state.json NOW before this response en
   - If PIPELINE=complete: status="idle", nextAgent=null, nextPrompt=null, activeTaskId=<NNN>, updatedAt=<ISO8601>, updatedBy=<your-agent-id>
 ```
 
+## Absolute Path Rule (MANDATORY)
+
+**All file writes must use absolute paths anchored to the project root.**
+
+Never construct paths relative to CWD — agents frequently edit files in subdirectories (`apps/mcp-server/`) which shifts the implicit CWD and causes writes to land in the wrong location (e.g. `apps/mcp-server/docs/` instead of `docs/`).
+
+**Before any file write, resolve the project root:**
+
+```bash
+PROJECT_ROOT=$(git rev-parse --show-toplevel)
+```
+
+Then construct all paths from `$PROJECT_ROOT`:
+
+```
+# WRONG — resolves against current CWD
+docs/agent-memory/sessions/2026-05-03-developer.md
+
+# CORRECT — absolute path derived from git root
+$PROJECT_ROOT/docs/agent-memory/sessions/2026-05-03-developer.md
+```
+
+This applies to ALL file writes: session logs, handoffs, pipeline-state.json, task reports, notebooks, TASKS.md, etc.
+
+---
+
 ## Main Terminal Spawn Template
 
 When spawning next agent, use return block to build the prompt:
