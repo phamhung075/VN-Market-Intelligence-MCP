@@ -19,7 +19,6 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Blocked by |
 |---------|-------|----------|------|-------|---------|------------|
-| 1843a | SPRINT-M: combined-high-confidence strategy — taComputation.ts (pure EMA/RSI), buildCombinedHighConfidenceStrategy factory, computeTADirectionMap helper, test suite AC-CHC-3/4/5 + taComputation unit tests | HIGH | FEATURE | DEVELOPER | docs/handoffs/TASK_1843a.md | — |
 | 1843c | SPRINT-S: Restore apps/mcp-server/docs symlink (Phase 0 monorepo scaffold test failure — RISK-6 from ARCH_1843) | MEDIUM | FIX | DEVELOPER | docs/handoffs/TASK_1843c.md | — |
 
 ---
@@ -110,6 +109,7 @@ ARCHITECT CORRECTION: BA spec said `STOCK_PRICE_DB_PATH` is undefined in local t
 
 | Task ID | Title | Merged | Reports |
 |---------|-------|--------|---------|
+| 1843a | SPRINT-M: combined-high-confidence strategy — taComputation.ts (pure EMA/RSI), buildCombinedHighConfidenceStrategy factory, computeTADirectionMap helper, 24 tests (AC-CHC-3/4/5 + EMA/RSI/direction unit tests). 24/24 pass. 8799 pass / 6 pre-existing fail. tsc clean. DDD golden rule satisfied. | 2026-05-03 | reports/TASK_REPORT_1843a.md |
 | 1843b | SPRINT-S: Fix 4 pre-existing test failures (265 x3 date prune + 1332 x1 singleton isolation) + computeBenchmarkReturn reorder DRY. 11/11 pass (265). 1332 crash is pre-existing Bun/LanceDB native panic (identical on main). Suite: 8779 pass / 2 pre-existing fail (vs 5 on main). tsc clean. DDD: no domain→infra violations in changed files. | 2026-05-03 | reports/TASK_REPORT_1843b.md |
 | ARCH-1843 | DESIGN: Architecture for Sprint 1843 — Option A chosen (factory closure, no interface change). taComputation.ts design, buildCombinedHighConfidenceStrategy factory, computeTADirectionMap application helper, DDD layer map, risk register (RISK-1 resolved, RISK-2..6 flagged). File-level change plan for 9 files. | 2026-05-03 | docs/handoffs/ARCH_1843.md |
 | BA-1843 | SPEC: Requirements spec for Sprint 1843 — combined-high-confidence real strategy (EMA/RSI + Kinh Dich agreement gate), fix 4 pre-existing test failures (265 x3 + 1332 x1), benchmarkReturnPct DRY cleanup. RISK-1 identified (signalFilter signature incompatible with multi-row TA pre-computation — Architect must choose Option A/B/C). 3 PO blockers listed. | 2026-05-03 | docs/REQ_1843.md |

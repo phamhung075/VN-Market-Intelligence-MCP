@@ -5,7 +5,7 @@
   "activeTaskId": null,
   "nextAgent": null,
   "nextPrompt": null,
-  "updatedAt": "2026-05-03T19:30:00.000Z",
+  "updatedAt": "2026-05-03T20:30:00.000Z",
   "updatedBy": "qa",
-  "lastCompleted": "QA 1843b APPROVED — merge(1843b) committed to main. 265-velocity: 11/11 pass. 1332-pollnews: Bun/LanceDB C++ panic is pre-existing on main (identical crash). Suite: 8779 pass / 2 pre-existing fail (improved from 5 on main). tsc: 0 errors. DDD: clean. Branch task/1843b-fix-test-failures-dry-cleanup merged."
+  "lastCompleted": "QA 1843a APPROVED — 24/24 targeted tests pass. Full suite 8799 pass / 6 fail (all pre-existing: 265x3 + 1332x1 + 1331a-TEST3 + Phase0-symlink). tsc: 0 errors. DDD: clean. Committed to main 3a931cb5. Sprint 1843 todo: 1843c (docs symlink) remains."
 }
