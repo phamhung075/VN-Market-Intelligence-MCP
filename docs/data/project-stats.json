@@ -4,7 +4,7 @@
   "lastUpdated": "2026-05-04",
   "currentSprint": 1844,
   "previousSprint": { "number": 1843, "status": "DONE", "summary": "Sprint 1843: combined-high-confidence real strategy (TA+KinhDich agreement gate, 24 tests), fix 4 pre-existing failures (265 x3 + 1332 x1), benchmarkReturnPct DRY, docs symlink fix. 8804 pass / 1 intentional fail (1331a RED guard). totalTasksDone=513." },
-  "sprintGoal": "Sprint 1844 IN_PROGRESS — backtest result retrieval MCP tools (get_backtest_runs + get_backtest_run) + orphan file clean.",
+  "sprintGoal": "Sprint 1844 DONE — backtest result retrieval MCP tools (get_backtest_runs #121 + get_backtest_run #122). 14 tests pass. tsc clean.",
   "testBaseline": 8804,
   "testBaselineTarget": 8804,
   "testBaselinePass": 8804,
@@ -15,11 +15,11 @@
   "knowledgeFileCount": 25,
   "devAgentCount": 14,
   "analysisAgentCount": 9,
-  "totalTasksDone": 513,
+  "totalTasksDone": 514,
   "analysisMode": "value_investor",
   "briefingFilesCreated": 30,
   "briefingArchiveQI": 0,
   "briefingArchiveQII": 0,
-  "lastFixApplied": "1843c DONE: Restore apps/mcp-server/docs symlink to git tracking. Sprint 1843 complete. 8804 pass / 1 intentional fail (1331a RED guard). tsc clean. 2026-05-03.",
-  "currentSprintNotes": "Sprint 1844 START — 2026-05-04. Backtest retrieval MCP tools (get_backtest_runs/get_backtest_run) + IBacktestResultRepository.getRunById(). BA spec next. U-5 gated until 2026-05-10."
+  "lastFixApplied": "1844a DONE: backtest retrieval tools — getAllRuns() + get_backtest_runs (#121) + get_backtest_run (#122). 14 tests pass. tsc clean. 2026-05-04.",
+  "currentSprintNotes": "Sprint 1844 DONE — 2026-05-04. Backtest retrieval tools #121 + #122. totalTasksDone=514."
 }

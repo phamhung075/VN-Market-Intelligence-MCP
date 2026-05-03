@@ -1,10 +1,11 @@
 /**
- * backtestTools.ts — Task 1842d
+ * backtestTools.ts — Task 1842d / Task 1844a
  *
  * MCP tool #120: run_backtest
+ * MCP tool #121: get_backtest_runs
+ * MCP tool #122: get_backtest_run
  *
- * Registers the run_backtest tool on an McpServer instance.
- * Tool slot #120 — confirmed unregistered before this task.
+ * Registers backtest tools on an McpServer instance.
  *
  * Layer: interface/mcp/tools — imports application use case + infrastructure impls.
  * Must NOT import infrastructure directly for domain logic; delegates to runBacktest.
@@ -21,6 +22,12 @@ import { SqliteBacktestResultRepository } from "../../../../infrastructure/db/ba
 import { runBacktest } from "../../../../application/usecases/runBacktest.js";
 import { BacktestStrategyNotFoundError } from "../../../../domain/backtesting/strategyRegistry.js";
 
+const STRATEGY_VALUES = [
+  "kinh-dich-high-confidence",
+  "kinh-dich-all",
+  "combined-high-confidence",
+] as const;
+
 export function registerBacktestTools(server: McpServer): void {
   server.tool(
     "run_backtest",
@@ -30,11 +37,7 @@ export function registerBacktestTools(server: McpServer): void {
       "Only 1 backtest can run at a time per server instance.",
     {
       strategy: z
-        .enum([
-          "kinh-dich-high-confidence",
-          "kinh-dich-all",
-          "combined-high-confidence",
-        ])
+        .enum(STRATEGY_VALUES)
         .describe(
           "Strategy ID to backtest. " +
             "'kinh-dich-high-confidence' = Kinh Dich BUY/SELL signals with confidence >= 0.7. " +
@@ -105,6 +108,115 @@ export function registerBacktestTools(server: McpServer): void {
             {
               type: "text" as const,
               text: JSON.stringify({ error: `Backtest failed: ${message}` }, null, 2),
+            },
+          ],
+        };
+      }
+    },
+  );
+}
+
+export function registerBacktestQueryTools(server: McpServer): void {
+  // Tool #121: get_backtest_runs — list recent backtest runs (summaries, no result_json)
+  server.tool(
+    "get_backtest_runs",
+    "List recent backtest runs stored in the database. " +
+      "Returns run summaries (id, strategy, dates, metrics) without the full result JSON. " +
+      "Filter by strategy or retrieve all strategies. Sorted most-recent-first.",
+    {
+      strategy: z
+        .enum(STRATEGY_VALUES)
+        .optional()
+        .describe(
+          "Optional strategy filter. If omitted, returns runs for all strategies.",
+        ),
+      limit: z
+        .number()
+        .int()
+        .min(1)
+        .max(50)
+        .default(10)
+        .describe("Maximum number of runs to return (1–50). Default: 10."),
+    },
+    async ({ strategy, limit }) => {
+      try {
+        const db = getDb();
+        const repo = new SqliteBacktestResultRepository(db);
+
+        const runs = strategy
+          ? repo.getRunsByStrategy(strategy, limit)
+          : repo.getAllRuns(limit);
+
+        if (runs.length === 0) {
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: JSON.stringify({ error: "No backtest runs found" }, null, 2),
+              },
+            ],
+          };
+        }
+
+        // Omit resultJson — too large for a listing view
+        const summaries = runs.map(({ resultJson: _omit, ...summary }) => summary);
+
+        return {
+          content: [{ type: "text" as const, text: JSON.stringify(summaries, null, 2) }],
+        };
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: JSON.stringify({ error: message }, null, 2),
+            },
+          ],
+        };
+      }
+    },
+  );
+
+  // Tool #122: get_backtest_run — retrieve a single run by ID (full record including result_json)
+  server.tool(
+    "get_backtest_run",
+    "Retrieve a single backtest run by its UUID, including the full result JSON with per-trade detail. " +
+      "Use get_backtest_runs first to discover run IDs.",
+    {
+      id: z
+        .string()
+        .min(1)
+        .describe("UUID of the backtest run to retrieve."),
+    },
+    async ({ id }) => {
+      try {
+        const db = getDb();
+        const repo = new SqliteBacktestResultRepository(db);
+
+        const run = repo.getRunById(id);
+
+        if (!run) {
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: JSON.stringify({ error: `Backtest run not found: ${id}` }, null, 2),
+              },
+            ],
+          };
+        }
+
+        return {
+          content: [{ type: "text" as const, text: JSON.stringify(run, null, 2) }],
+        };
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: JSON.stringify({ error: message }, null, 2),
             },
           ],
         };
