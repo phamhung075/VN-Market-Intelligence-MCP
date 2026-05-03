@@ -19,12 +19,13 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Blocked by |
 |---------|-------|----------|------|-------|---------|------------|
-| BA-1844 | SPEC: Requirements spec for Sprint 1844 — get_backtest_runs MCP tool + get_backtest_run MCP tool + IBacktestResultRepository.getRunById() | HIGH | SPEC | ba | docs/REQ_1844.md | 1844-clean |
-
 ## Done
 
 | Task ID | Title | Priority | Type | Owner | Report | Completed |
 |---------|-------|----------|------|-------|--------|-----------|
+| 1844a | SPRINT-M: Backtest retrieval tools — getAllRuns() repo method + get_backtest_runs (#121) + get_backtest_run (#122) MCP tools + 14 tests. 7 files total. | HIGH | FEATURE | developer | reports/TASK_REPORT_1844a.md | 2026-05-04 |
+| ARCH-1844 | DESIGN: Architecture for Sprint 1844 — get_backtest_runs (#121) + get_backtest_run (#122) MCP tools + getAllRuns() repo method. BLK-1 resolved (slots #121/#122), BLK-2 resolved (Option A: explicit getAllRuns()), BLK-3 resolved (extend backtestTools.ts). 7-file change plan, 13-test plan, 5-item risk register. | HIGH | DESIGN | architect | docs/handoffs/ARCH_1844.md | 2026-05-03 |
+| BA-1844 | SPEC: Requirements spec for Sprint 1844 — get_backtest_runs MCP tool (#124) + get_backtest_run MCP tool (#125) + IBacktestResultRepository status (getRunById already exists; getAllRuns() needed for all-strategy list). 3 blockers: tool slot gap, getAllRuns() interface design, file organisation. | HIGH | SPEC | ba | docs/REQ_1844.md | 2026-05-03 |
 | 1844-clean | CLEAN: commit all orphan files (handoffs, session logs, reports, skill), advance project-stats.json to Sprint 1844 baseline (currentSprint=1844, testBaseline=8804, testBaselineFail=1, totalTasksDone=513) | HIGH | CLEAN | developer | — | 2026-05-03 |
 | 1843c | SPRINT-S: Restore apps/mcp-server/docs symlink (Phase 0 monorepo scaffold test failure — RISK-6 from ARCH_1843) | MEDIUM | FIX | DEVELOPER | reports/TASK_REPORT_1843c.md | 2026-05-03 |
 

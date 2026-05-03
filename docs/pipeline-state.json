@@ -1,11 +1,11 @@
 {
   "_maintained_by": "every agent at RETURN via agent-chaining-protocol",
-  "status": "in_progress",
+  "status": "idle",
   "currentSprint": 1844,
-  "activeTaskId": "BA-1844",
-  "nextAgent": "ba",
-  "nextPrompt": "Write requirement spec for Sprint 1844 per docs/SPRINT_GOAL.md. Output: docs/REQ_1844.md. Two MCP tools: get_backtest_runs (list runs by strategy) and get_backtest_run (retrieve by ID). Also spec IBacktestResultRepository.getRunById() new repo method. Follow BA spec format with AC per tool. Hand off to Architect when done.",
-  "updatedAt": "2026-05-03T00:00:00.000Z",
-  "updatedBy": "developer",
-  "lastCompleted": "Sprint 1844 1844-clean complete: 27 orphan files committed, scheduled_tasks.lock confirmed untracked (intentional deletion), pipeline advanced to BA-1844."
+  "activeTaskId": null,
+  "nextAgent": null,
+  "nextPrompt": null,
+  "updatedAt": "2026-05-04T00:00:00.000Z",
+  "updatedBy": "qa",
+  "lastCompleted": "Sprint 1844 DONE — Task 1844a APPROVED and merged to main. get_backtest_runs (#121) + get_backtest_run (#122) + getAllRuns() repo method. 14 tests pass, tsc clean, DDD compliant, security clean. totalTasksDone=514."
 }
