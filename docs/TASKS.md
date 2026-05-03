@@ -19,6 +19,10 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Blocked by |
 |---------|-------|----------|------|-------|---------|------------|
+| 1845a | CLEAN: commit 5 orphan untracked files (REQ_1844.md, ARCH_1844.md, TASK_1844a.md, 2x session logs) + 8 modified files; update SPRINT_GOAL.md 1844→DONE; advance project-stats.json to Sprint 1845 baseline (currentSprint=1845, toolCount=125) | HIGH | CLEAN | developer | — | — |
+| 1845b | FIX: worktree ENOENT — `apps/mcp-server/data/` git-ignored, missing in fresh worktrees → 106 test failures (Task 105, 1322, LanceDB). Add `mkdir -p` in `apps/mcp-server/src/__tests__/setup.ts` for required subdirs so tests self-create the directory structure. Verify: full suite in a fresh worktree shows 0 ENOENT failures. | HIGH | FIX | developer | — | 1845a |
+| 1845c | SYNC: tool-registry.json missing get_backtest_runs (#121) + get_backtest_run (#122) from Sprint 1844. Add both tool entries under Backtesting category. Update toolCount=125 in project-stats.json + tool-registry.json. tsc clean not required (JSON only). | HIGH | SYNC | developer | — | 1845a |
+| 1845d | DRY: benchmarkReturnPct computation duplicated in backtestEngine.ts — exists in both runBacktestEngine() and buildEmptyReport(). Extract to single private helper. 0 new tests needed — existing 24 backtesting tests must still pass. tsc clean required. | MEDIUM | DRY | developer | — | 1845a |
 ## Done
 
 | Task ID | Title | Priority | Type | Owner | Report | Completed |

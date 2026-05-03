@@ -67,12 +67,6 @@ Agent defines who receives next. Full routing rules → `/dispatch`
 
 ---
 
-## Code Search — Semble First
-
-Dev-team agents (`developer`, `architect`, `ba`, `fixer`, `code-janitor`, `system-auditor`) have both Semble and default tools available. **Prefer Semble for exploration; use Grep/Glob only for exhaustive or exact matching.** Full decision guide → `.claude/skills/semble-search/SKILL.md`
-
----
-
 ## Agent Chaining Protocol
 
 Full protocol → `.claude/knowledge/agent-chaining-protocol.md`

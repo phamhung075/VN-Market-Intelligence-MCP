@@ -1,29 +1,34 @@
-## Sprint 1844 — IN PROGRESS
+## Sprint 1845 — IN PROGRESS
 
-**Status:** IN_PROGRESS | **Started:** 2026-05-04
+**Status:** IN_PROGRESS | **Started:** 2026-05-03
 
 ## Goal
 
-Backtest result retrieval + clean. Expose historical backtest runs via MCP tools so the user can compare strategy performance across time, and commit all orphan files accumulated since Sprint 1843.
+Sprint 1844 clean + worktree test isolation fix + tool-registry SSOT sync. Eliminate the 106-test failure gap that hits every worktree, commit orphan files accumulated since Sprint 1844, and sync tool-registry.json to the true toolCount of 125.
 
 ## Scope
 
 IN:
-- `get_backtest_runs` MCP tool (#124) — list all stored runs for a strategy (wraps `IBacktestResultRepository.getRunsByStrategy()`)
-- `get_backtest_run` MCP tool (#125) — retrieve a single run by ID (wraps a new `getRunById()` repo method)
-- Clean: commit all orphan files + update project-stats.json to Sprint 1844 baseline
+- Clean: commit 5 orphan untracked files + 8 modified files from Sprint 1844 cycle
+- Fix: `apps/mcp-server/data/` dir absent in worktrees → 106 test ENOENT failures; add `mkdir -p` in test setup so tests self-create the dir
+- Sync: tool-registry.json missing `get_backtest_runs` (#121) + `get_backtest_run` (#122); update to toolCount=125
+- DRY: `benchmarkReturnPct` computation duplicated in `backtestEngine.ts` (QA flag from 1844a review)
 
-OUT: U-5 prediction calibration (gated until 2026-05-10), new strategies, schema changes, health-dashboard backtest widget (deferred — retrieval tools must land first).
+OUT: U-5 prediction calibration (gated until 2026-05-10), new MCP tools, schema changes, new strategies.
 
 ## Success Metric
 
-- `get_backtest_runs("combined-high-confidence")` returns structured list of all saved runs
-- `get_backtest_run(<id>)` returns the full report for a single run
-- tsc clean, DDD golden rule satisfied
 - 0 orphan untracked files after clean task
+- Worktree full-suite run shows same pass count as main (no ENOENT failures)
+- tool-registry.json toolCount = 125, both new tools registered
+- benchmarkReturnPct computed in one place only
 - test baseline >= 8804 pass / <= 1 fail (1331a intentional only)
 
 ---
+
+## Sprint 1844 — DONE
+
+**Status:** DONE | **Closed:** 2026-05-04
 
 ## Sprint 1843 — DONE
 

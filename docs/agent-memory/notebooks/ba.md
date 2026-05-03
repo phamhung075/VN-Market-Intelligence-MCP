@@ -1,29 +1,30 @@
 # BA — Notebook
 
-**Last updated:** 2026-05-03 | **Sprint:** 1843
+**Last updated:** 2026-05-03 | **Sprint:** 1844
 
 ## Current state
 
-Sprint 1843 spec complete. Handed off to Architect.
+Sprint 1844 spec complete. Handed off to Architect. ARCH-1844 in Backlog.
 
 ## Last session summary
 
-Wrote REQ_1843.md for Sprint 1843. Three deliverables:
-1. combined-high-confidence real strategy — EMA/RSI + Kinh Dich agreement gate
-2. Fix 4 pre-existing test failures (265 x3, 1332 x1)
-3. benchmarkReturnPct DRY cleanup in backtestEngine.ts
+Wrote REQ_1844.md for Sprint 1844. Three deliverables:
+1. get_backtest_runs MCP tool (#124) — list runs by strategy (or all strategies)
+2. get_backtest_run MCP tool (#125) — retrieve single run by UUID with full resultJson
+3. IBacktestResultRepository.getRunById() — already fully implemented in both interface
+   and SQLite adapter from Sprint 1842b. No code change needed for this deliverable.
 
-Key finding: strategyRegistry.ts signalFilter is synchronous single-row; EMA/RSI needs
-N candles per ticker. This is RISK-1 — the Architect must pick one of three design
-options (closure factory / enrichSignals hook / taDirection field on signal row) before
-coding starts. Identified this by reading backtestSignalRepo.ts and technical-analysis
-domain models.
+Key finding: getRunsByStrategy() requires a strategy string — there is no "list all"
+path in the existing interface. FR-1-2 (list all strategies) requires a new getAllRuns()
+method. Recommended Option A: explicit getAllRuns(limit) on the interface. Flagged as
+BLK-2.
 
-Task 1332 failure is likely test isolation (globalSourceTracker singleton); pollNews.ts
-already has SOURCE_DISPLAY_NAMES wiring in place.
+Tool slot gap: last registered tool is #120. Sprint goal says #124/#125 but slots
+121-123 are unregistered. Flagged as BLK-1 for Architect to resolve.
 
-Task 265 failures — exact cause unknown without live bun test output. Noted potential
-missing overload for getReputation(db, code) with no date arg (test line 151).
+backtestResultRepo.ts getRunById() implementation confirmed correct: .get(id), null on
+miss, catch block returns null (not throw). The tool layer must convert null to the
+not-found error content block — repo itself does not throw.
 
 ## Known patterns / preferences
 
@@ -33,3 +34,9 @@ missing overload for getReputation(db, code) with no date arg (test line 151).
 - globalSourceTracker is a globalThis singleton — test isolation issues are common in
   news pipeline tests; check for _resetGlobalSourceTracker() calls in beforeEach
 - OHLCV date column is TEXT YYYY-MM-DD (string-sortable, no Date parsing needed)
+- U-4 injection pattern: getDb() called inside tool handler, not at module scope
+- Error format in all MCP tools: { error: '...' } JSON content block, never throw
+- benchmarkReturn and sharpeRatio are nullable in BacktestRunRecord — always serialise
+  as null not undefined
+- backtestResultRepo.ts getRunById() catch block returns null (not throw) — tool layer
+  must handle null explicitly
