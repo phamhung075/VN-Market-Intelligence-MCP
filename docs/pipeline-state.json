@@ -1,10 +1,10 @@
 {
   "_maintained_by": "every agent at RETURN via agent-chaining-protocol",
-  "status": "idle",
-  "currentSprint": 1839,
-  "activeTaskId": null,
-  "nextAgent": null,
-  "nextPrompt": null,
-  "updatedAt": "2026-05-03T13:00:00.000Z",
-  "updatedBy": "qa"
+  "status": "in_progress",
+  "currentSprint": 1840,
+  "activeTaskId": "1840a",
+  "nextAgent": "qa",
+  "nextPrompt": "Sprint 1840 / Task 1840a — RAG Wiring QA. Developer implementation is complete. Branch: task/1840a-rag-wiring, commit 87e72db6.\n\nVerify all ACs from docs/handoffs/TASK_1840a.md:\n- AC-2: pollNews.ts calls insertAnalysis for each ingested news article — check implementation + test\n- AC-3: news-scout agent flow includes search_similar_context step — check .claude/flows/news-scout/cycle.md and .claude/agents/news-scout.md tools list\n- AC-4: financial-analyst agent flow includes search_similar_context step — check .claude/flows/financial-analyst/cycle.md and .claude/agents/financial-analyst.md tools list\n- AC-5: bun test >= 8812 pass, 0 new failures (note: 3 pre-existing Task-265 failures exist on main — do not count as regressions)\n- AC-6: test file apps/mcp-server/src/__tests__/1840a-rag-wiring.test.ts passes 3/3 — confirms ragInsert called per article, non-fatal, correct payload\n- AC-7: no action needed — self-resolves after next agent cycle\n\nOn pass: merge branch, write pipeline-state status=idle.",
+  "updatedAt": "2026-05-03T15:00:00.000Z",
+  "updatedBy": "developer"
 }

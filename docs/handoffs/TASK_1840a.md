@@ -173,3 +173,35 @@ the instrumentation does not capture MCP tool calls made by cowork agents. Verif
 - Do NOT add RAG calls to every tool — target only high-frequency paths (pollNews) and
   the two cowork agents explicitly mentioned in U-6 ACs.
 - Do NOT refactor LanceDB schema — out of scope.
+
+---
+
+## [Developer] Implementation Record — 2026-05-03
+
+Branch: `task/1840a-rag-wiring` | Commit: `87e72db6`
+
+### Fix A — pollNews → insertAnalysis
+- File: `apps/mcp-server/src/application/usecases/pollNews.ts`
+- Added `InsertAnalysisFn` type and `ragInsert?` field to `PollNewsOptions`
+- Resolved `ragInsertFn` at function top — defaults to lazy-imported real `insertAnalysis`
+- Wired after `tryInsertEntry` returns `true` in the per-article loop
+- Non-fatal: wrapped in try/catch, logs `[pollNews] ragInsert failed (non-fatal)` on error
+- Tags: `["news", item.source, ...affectedActions]`; level = "action" if tickers present else "domain"
+
+### Fix B — news-scout agent
+- File: `.claude/agents/news-scout.md` — added `mcp__vn-market__search_similar_context` to frontmatter `tools:` line and to `permissions.tools` list
+- File: `.claude/flows/news-scout/cycle.md` — added step **1b** before sentiment scoring
+
+### Fix C — financial-analyst agent
+- File: `.claude/agents/financial-analyst.md` — added `mcp__vn-market__search_similar_context` to frontmatter `tools:` line and to `permissions.tools` list
+- File: `.claude/flows/financial-analyst/cycle.md` — added step **2b** after `get_bctc_full` call
+
+### Tests
+- File: `apps/mcp-server/src/__tests__/1840a-rag-wiring.test.ts`
+- AC-1: ragInsert called once per inserted article — PASS
+- AC-2: pollNews does not throw when ragInsert throws — PASS
+- AC-3: ragInsert payload has correct title, summary, tags including source — PASS
+- Full suite: 8704 pass, 3 pre-existing Task-265 failures (confirmed on main), 0 new failures
+
+### Handoff to QA
+Verify: AC-2 through AC-6 per handoff spec. AC-7 self-resolves after next agent cycle.
