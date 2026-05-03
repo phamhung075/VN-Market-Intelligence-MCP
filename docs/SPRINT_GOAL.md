@@ -1,41 +1,23 @@
-## Sprint 1833 — Active
+## Sprint 1835 — Active
 
-**Status:** IN PROGRESS | **Opened:** 2026-05-02
+**Status:** IN PROGRESS | **Opened:** 2026-05-03
 
 ## Goals
 
-Restore pipeline reliability across three active data feed failures (BCTC queue starvation, news Chromium crash loop, vnstock rate-limit). Close two false alarms (foreign-flow holiday gap, ohlcv Saturday skip). Add observability and circuit protection to prevent silent failures recurring. Two carry-over DRY/hygiene tasks in parallel.
+Investigate Trading Economics Chromium executable path configuration. Anti-bot hardening (stealth args, UA, route interception) shipped in 1834b — remaining work is to confirm Playwright finds the correct Chromium binary at /usr/bin/chromium inside the Docker container.
 
 ## Scope
 
 IN:
-- 1833c — bctcQueueEnricherJob silent 0-item runs: add WARNING log on 0 URLs found, verify congbao scraping [P1]
-- 1833g — te-chromium-news Playwright crash loop: circuit breaker on VPS + disable dead sources (Reuters RSS, TE legacy) [P1]
-- 1833h — Make freshnessSlaMonitorJob market-hours-aware (TASK-1407) [P2]
-- 1833i — vnstock global rate limiter across all concurrent ticker+endpoint combos; surface officers NOT NULL as data quality alert [P2]
-- 1833e — Null-check guard for vnstock_officers.code before INSERT [P3]
-- 1833k — Fix Trading Economics Chromium path config + anti-bot mitigation [P3]
-- 1833f — Fix vn-news-fetch heartbeat timestamp so monitoring reflects reality [P4]
-- 1833l — Graceful 404 handling for Yahoo Finance unknown symbol [P4]
-- 1833a — DRY: marketContextTools.ts delegate to marketContextBuilder.ts (carry-over)
-- 1833b — semble-search notebook + devAgentCount sync (carry-over)
-- 1833d — CLOSED: false alarm (Vietnam Labor Day 2026-05-01, foreign flow gap expected)
-- 1833j — CLOSED: false alarm (Saturday 2026-05-02, ohlcv skip correct)
+- 1833k — TE Chromium executable path investigation: confirm Playwright resolves /usr/bin/chromium correctly inside Docker; fix path config if misconfigured [P3]
 
-OUT: New features, new data sources, architecture changes
+OUT: New features, new data sources, architecture changes, further anti-bot work (covered by 1834b)
 
 ## Success Criteria
 
-- bctcQueueEnricherJob logs URL count per ticker per run; 0-result runs produce WARNING not silent pass
-- te-chromium-news crash loop stopped by circuit breaker (max restarts/hour enforced on VPS)
-- Reuters RSS + Trading Economics legacy sources disabled (58+ consecutive failures, never succeeded)
-- freshnessSlaMonitorJob does not alert on non-trading days/hours
-- vnstock global rate limiter prevents ACV/VDC/ACB/VCI concurrent fetches from tripping API cap
-- `NOT NULL constraint failed: vnstock_officers.code` surfaced as data quality WORK alert with ticker identified
-- Trading Economics Chromium failures drop from 114 to 0
-- vn-news-fetch health endpoint returns healthy when push rate > 0
-- Yahoo Finance 404 handled gracefully without log noise
-- All existing tests pass (baseline: 8608)
+- Playwright `executablePath` resolves without error inside mcp-server container
+- TE Chromium scraper completes at least one successful fetch after path fix
+- All existing tests pass (baseline: 8763)
 
 ---
 
@@ -45,6 +27,8 @@ OUT: New features, new data sources, architecture changes
 
 | Sprint | Result |
 |--------|--------|
+| 1834 — TE Chromium anti-bot hardening — stealth args, randomised viewport, route interception, human-like nav delay | DONE — 2026-05-03. 8763 pass / 0 fail. totalTasksDone=495 |
+| 1833 — Pipeline reliability: te-chromium CB, vnstock rate limiter, freshness SLA market-hours, officers NOT NULL guard, DRY marketContextTools | DONE — 2026-05-03. 8763 pass / 0 fail. totalTasksDone=494 |
 | 1832 — Integrate semble semantic code search — add semble-search agent + skill, wire lazy_load into 6 agents, update dev-standards | DONE — 2026-05-02. 8608 pass / 0 fail. totalTasksDone=486 |
 | 1831 — CLEAN: commit orphans, close Sprint 1830, advance to Sprint 1832 | DONE — 2026-05-02. 8602 pass / 0 fail. totalTasksDone=484 |
 | 1830 — JANITOR-023: extract CLAUDE_BIN to agentConstants.ts | DONE — 2026-05-02. 8602 pass / 0 fail. totalTasksDone=483 |

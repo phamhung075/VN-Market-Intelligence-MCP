@@ -12,7 +12,7 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Blocked by |
 |---------|-------|----------|------|-------|---------|------------|
-| 1833k | FIX: Trading Economics Chromium scraper — 114 consecutive failures. Investigate Playwright executable path config (/usr/bin/chromium) + anti-bot detection mitigation. | P3-MEDIUM | BUG | developer | — | — |
+| 1833k | FIX: Trading Economics Chromium scraper — investigate Playwright executable path config (/usr/bin/chromium inside Docker container). Anti-bot hardening complete (1834b). | P3-MEDIUM | BUG | developer | — | — |
 
 ---
 
