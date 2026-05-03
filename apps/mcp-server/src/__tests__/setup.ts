@@ -8,6 +8,29 @@
  * Individual test files are responsible for their own beforeEach / afterEach
  * setup (closeDb + initDatabase). This preload only enforces the DB_PATH
  * invariant at the earliest possible point — before any module import.
+ *
+ * Also ensures apps/mcp-server/data/ subdirectories exist. The entire data/
+ * tree is git-ignored so fresh worktrees start without it, causing ENOENT
+ * when tests or infrastructure code try to create files inside data/.
  */
+import fs from "node:fs";
+import path from "node:path";
+
+// Anchor to apps/mcp-server/ regardless of where bun test is invoked from.
+// import.meta.dir = apps/mcp-server/src/__tests__
+const DATA_ROOT = path.resolve(import.meta.dir, "../../data");
+
+for (const subdir of [
+  "",          // data/ itself
+  "pdfs",
+  "lancedb",
+  "models",
+  "briefings",
+  "reports",
+  "exports",
+]) {
+  fs.mkdirSync(path.join(DATA_ROOT, subdir), { recursive: true });
+}
+
 Bun.env["DB_PATH"] = ":memory:";
 Bun.env["STOCK_PRICE_DB_PATH"] = "/tmp/test_stock_price.db";
