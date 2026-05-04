@@ -1,33 +1,34 @@
 # PO Notebook
 
-## Last updated: 2026-05-03 (Sprint 1845 kickoff)
+## Last updated: 2026-05-03 (Sprint 1846 kickoff)
 
-## Current sprint: 1845
+## Current sprint: 1846
 
 ### State at session start
 
-- Baseline: 8804 pass / 1 intentional fail (1331a RED guard), totalTasksDone=514, toolCount=123 (needs sync to 125)
-- Sprint 1844 DONE: get_backtest_runs (#121) + get_backtest_run (#122) + getAllRuns() repo method. 14 tests pass.
-- pipeline-state.json: in_progress (developer → 1845a CLEAN first)
-- UPGRADE_PLAN.md: all Tier 1+2+3 items DONE. U-5 gated until 2026-05-10.
-- Orphan files: 5 untracked + 8 modified need committing in 1845a
+- Baseline: 8804 pass / 1 intentional fail (1331a RED guard), totalTasksDone=514, toolCount=125
+- Sprint 1845 DONE: 1845a CLEAN + 1845b ENOENT fix + 1845c tool-registry sync + 1845d DRY
+- pipeline-state.json: idle at session start → updated to in_progress for Sprint 1846
+- UPGRADE_PLAN.md: all 10 Tier 1+2+3 items DONE. U-5 gated until 2026-05-10.
 
 ### Channel audit (2026-05-03 session)
 
-Evaluated via QA session logs (Telegram MCP not directly accessible):
-- MARKET: clean cycle — 4 signals fired (PNJ Q1 beat, securities sector stress, PLX contrarian, FII outflow). No N/A in signal data.
-- WORK: alert-commander off-hours cycles clean. GAS/ACV alerts correct.
+Evaluated via 2026-05-04 session logs (Telegram MCP not directly accessible):
+- MARKET: clean — signals 2206-2214 fired correctly, HSG corporate action identified, GAS surge alerted, VN-Index 1860 note. No N/A in signal data. 4 tickers missing price data (BDI/DLC/SIS/JSH) — pre-existing data gap.
+- WORK: alert commander cycle status sent each cycle. Suppression logic correct (chain_catalyst 50% conf suppressed at NEUTRAL 75% threshold). No channel routing errors.
 - BUG: zero escalations.
 Result: CLEAN
 
-### Sprint 1845 decision
+### Sprint 1846 decision
 
-UPGRADE_PLAN exhausted except U-5 (gated 2026-05-10). Three concrete items ready:
+UPGRADE_PLAN exhausted (U-5 gated). Backlog was empty. Identified product gap in backtesting feature:
 
-1. CLEAN (1845a) — 5 orphan untracked files + 8 modified files need committing after Sprint 1844.
-2. Worktree ENOENT fix (1845b) — QA flagged in 1844a session: apps/mcp-server/data/ is git-ignored, absent in worktrees, causes 106 test ENOENT failures every time a developer or QA agent uses a worktree. Fix: add mkdir -p in test setup. Scope SPRINT-S.
-3. tool-registry.json SSOT sync (1845c) — Sprint 1844 added tools #121 and #122 but tool-registry.json was not updated. toolCount shows 123 in both project-stats.json and tool-registry.json but true count is 125. SSOT drift is a data integrity violation.
-4. benchmarkReturnPct DRY (1845d) — QA non-blocking note from 1844a: computation duplicated in two places inside backtestEngine.ts. Small, no new tests needed.
+**Missing CRUD operations after 4 sprints building the engine:**
+1. No way to delete stale runs — table grows unbounded, no `deleteRun()` in interface
+2. No CSV export — `get_backtest_run` returns raw JSON; analysis agents need tabular trade data
+3. No strategy comparison — analyst must call `run_backtest` 3x and mentally diff; a compare tool closes this
+
+Sprint scope: 1846a CLEAN + BA-1846 spec (3 tools: #123/#124/#125) + UPGRADE_PLAN Tier 4
 
 ### Test baseline tracking
 
@@ -35,15 +36,21 @@ UPGRADE_PLAN exhausted except U-5 (gated 2026-05-10). Three concrete items ready
 |--------|------|------|------|
 | 1843 close | 8804 | 1 (intentional) | 2026-05-03 |
 | 1844 close | 8804 | 1 (intentional) | 2026-05-04 |
-| 1845 target | 8804+ | <=1 (1331a only) | — |
+| 1845 close | 8804 | 1 (intentional) | 2026-05-03 |
+| 1846 target | 8804+N | <=1 (1331a only) | — |
 
 ### Patterns observed
 
-- UPGRADE_PLAN is now a 10-item completed list. After U-5 unblocks (2026-05-10), the plan should be extended with a Backtest Expansion section or a new artifact.
-- Worktree failures are not regressions — they are an infrastructure gap. Fix is O(5 lines) in setup.ts.
-- SSOT drift on tool-registry.json is a recurring risk after every sprint that adds tools. Consider adding tool-registry sync to QA checklist.
-- 1331a RED guard: intentional single-writer constraint test. Never fix.
+- Every sprint accumulates orphan session/report files → CLEAN task is structural, not optional. Consider whether agent flows should auto-commit at cycle end.
+- Backtesting feature gap (delete/export/compare) was visible immediately after Sprint 1844 retrieval tools landed. Pattern: retrieval without lifecycle management is incomplete.
+- 4 watchlist tickers (BDI, DLC, SIS, JSH/VDC) persistently missing price data. Pre-existing. Not a code bug — these may be delisted or low-liquidity. Flag for watchlist audit post-U-5.
+- UPGRADE_PLAN.md needs a Tier 4 "Post-Plan" section. Plan reads as complete with no forward vision — adds cognitive overhead for PO to re-derive scope from scratch each sprint.
 
 ### U-5 gate reminder
 
-Do NOT plan U-5 before 2026-05-10. First Monday prediction cycle expected 2026-05-05. Check calibration report on 2026-05-10 — if get_calibration_report() shows >= 5 outcomes recorded, U-5 is unblocked.
+Do NOT plan U-5 before 2026-05-10. First Monday prediction cycle ran 2026-05-04: 4 claims filed (BID bullish 5d, FPT bearish 10d, VIC bullish 20d, GAS bullish 20d). Check get_calibration_report() on 2026-05-10 — if >= 5 outcomes recorded, U-5 is unblocked.
+
+### toolCount projection
+
+- Current: 125 (tools #120-122 in backtesting)
+- Sprint 1846 target: 128 (add #123 delete_backtest_run, #124 export_backtest_run_csv, #125 compare_backtest_runs)

@@ -19,6 +19,8 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Blocked by |
 |---------|-------|----------|------|-------|---------|------------|
+| 1846a | CLEAN: commit orphan session/report/skill files accumulated since Sprint 1845 (tool-usage-stats.json, 3 session logs, check-rules.md, audit-mcp-tools/SKILL.md, TASK_REPORT_1842.md); advance project-stats.json to Sprint 1846 baseline (currentSprint=1846) | HIGH | CLEAN | developer | — | — |
+| BA-1846 | SPEC: Requirements spec for Sprint 1846 — delete_backtest_run (#123) + export_backtest_run_csv (#124) + compare_backtest_runs (#125) MCP tools; deleteRun() interface extension; UPGRADE_PLAN.md Tier 4 section | HIGH | SPEC | ba | docs/REQ_1846.md | — |
 
 ---
 

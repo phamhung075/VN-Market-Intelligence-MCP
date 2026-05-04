@@ -1,10 +1,10 @@
 {
   "_maintained_by": "PM / system-auditor",
   "_trigger": "sprint start/end, tool/cron count change, baseline test update",
-  "lastUpdated": "2026-05-04",
-  "currentSprint": 1845,
-  "previousSprint": { "number": 1844, "status": "DONE", "summary": "Sprint 1844: backtest result retrieval MCP tools (get_backtest_runs #121 + get_backtest_run #122) + getAllRuns() repo method. 14 tests pass. tsc clean. totalTasksDone=514." },
-  "sprintGoal": "Sprint 1845 IN PROGRESS — clean orphan files, worktree ENOENT fix, tool-registry SSOT sync, benchmarkReturnPct DRY.",
+  "lastUpdated": "2026-05-03",
+  "currentSprint": 1846,
+  "previousSprint": { "number": 1845, "status": "DONE", "summary": "Sprint 1845: clean orphan files + worktree ENOENT fix + tool-registry SSOT sync (toolCount=125) + benchmarkReturnPct DRY. All ACs pass. totalTasksDone=514." },
+  "sprintGoal": "Sprint 1846 IN PROGRESS — backtest lifecycle completeness (delete/export/compare tools + UPGRADE_PLAN Tier 4).",
   "testBaseline": 8804,
   "testBaselineTarget": 8804,
   "testBaselinePass": 8804,
@@ -20,6 +20,6 @@
   "briefingFilesCreated": 30,
   "briefingArchiveQI": 0,
   "briefingArchiveQII": 0,
-  "lastFixApplied": "1845a CLEAN: commit orphan files, advance to Sprint 1845 baseline. currentSprint=1845, toolCount=125. 2026-05-04.",
-  "currentSprintNotes": "Sprint 1845 OPEN — 2026-05-04. Clean + worktree fix + tool-registry sync + benchmarkReturnPct DRY."
+  "lastFixApplied": "1846a CLEAN: commit orphan files, advance to Sprint 1846 baseline. currentSprint=1846, toolCount=125. 2026-05-03.",
+  "currentSprintNotes": "Sprint 1846 OPEN — 2026-05-03. Backtest lifecycle: delete_backtest_run (#123) + export_backtest_run_csv (#124) + compare_backtest_runs (#125) + UPGRADE_PLAN Tier 4."
 }

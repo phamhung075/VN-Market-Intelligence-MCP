@@ -1,6 +1,36 @@
-## Sprint 1845 — IN PROGRESS
+## Sprint 1846 — IN PROGRESS
 
 **Status:** IN_PROGRESS | **Started:** 2026-05-03
+
+## Goal
+
+Backtest lifecycle completeness — delete, export, compare. Three missing MCP tools close the CRUD gap in the backtesting feature: `delete_backtest_run` (#123), `export_backtest_run_csv` (#124), `compare_backtest_runs` (#125). Plus sprint clean and UPGRADE_PLAN forward extension.
+
+## Scope
+
+IN:
+- Clean: commit orphan session/report files accumulated since Sprint 1845
+- Feature: delete_backtest_run MCP tool (#123) — purge stale runs by ID; adds deleteRun() to IBacktestResultRepository + SQLite adapter
+- Feature: export_backtest_run_csv MCP tool (#124) — convert trades[] from a stored run into CSV text for tabular analysis
+- Feature: compare_backtest_runs MCP tool (#125) — side-by-side metric delta for 2–3 run IDs (return, drawdown, Sharpe, winRate, tradeCount)
+- Docs: UPGRADE_PLAN.md Tier 4 section — backtest expansion roadmap + U-5 gate status
+
+OUT: U-5 prediction calibration (gated 2026-05-10), new strategies, schema changes, UI changes
+
+## Success Metric
+
+- 3 new MCP tools registered and tested (toolCount = 128)
+- deleteRun() in IBacktestResultRepository interface + SqliteBacktestResultRepository
+- export returns valid CSV with header row + one row per trade
+- compare accepts 2–3 run IDs and returns structured delta object
+- 0 orphan untracked files after clean task
+- test baseline >= 8804 pass / <= 1 fail
+
+---
+
+## Sprint 1845 — DONE
+
+**Status:** DONE | **Closed:** 2026-05-03
 
 ## Goal
 
