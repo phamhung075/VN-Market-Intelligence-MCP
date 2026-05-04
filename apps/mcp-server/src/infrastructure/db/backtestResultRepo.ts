@@ -132,4 +132,14 @@ export class SqliteBacktestResultRepository implements IBacktestResultRepository
       return null;
     }
   }
+
+  /** Delete a run by ID. Returns true if a row was deleted, false if not found or on error. */
+  deleteRun(id: string): boolean {
+    try {
+      const result = this.db.prepare("DELETE FROM backtest_runs WHERE id = ?").run(id);
+      return result.changes > 0;
+    } catch {
+      return false;
+    }
+  }
 }

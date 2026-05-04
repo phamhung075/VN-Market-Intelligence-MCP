@@ -42,4 +42,7 @@ export interface IBacktestResultRepository {
 
   /** Retrieve all runs across all strategies, most-recent-first. */
   getAllRuns(limit: number): BacktestRunRecord[];
+
+  /** Delete a run by ID. Returns true if a row was deleted, false if not found or on error. */
+  deleteRun(id: string): boolean;
 }

@@ -91,7 +91,7 @@ import { registerDinhGiaTools } from "./macro/dinhGiaTools.js";
 import { registerVpsServiceRestartTool } from "./system/vpsServiceRestartTool.js";
 import { registerSmartCompactTool } from "./system/smartCompactTool.js";
 import { registerBctcBatchSweepTool } from "./financial-reports/bctcBatchSweepTool.js";
-import { registerBacktestTools, registerBacktestQueryTools } from "./backtesting/index.js";
+import { registerBacktestTools, registerBacktestQueryTools, registerBacktestLifecycleTools } from "./backtesting/index.js";
 
 /**
  * Flat array of all MCP tool registration functions.
@@ -185,4 +185,5 @@ export const toolRegistry: Array<(server: McpServer) => void> = [
   registerBctcBatchSweepTool,           // Task 1841b: run_bctc_batch_sweep (+1 → 119)
   registerBacktestTools,                // Task 1842d: run_backtest (+1 → 120)
   registerBacktestQueryTools,           // Task 1844a: get_backtest_runs (#121) + get_backtest_run (#122) (+2 → 122)
+  registerBacktestLifecycleTools,       // Task 1846b: delete_backtest_run (#123) + export_backtest_run_csv (#124) + compare_backtest_runs (#125) (+3 → 125)
 ];
