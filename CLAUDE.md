@@ -46,6 +46,37 @@ VPS (Vietnam — Vinahost)
 
 ---
 
+## Lazy-Load — Memory & Tools on Demand Only
+
+**Do NOT load all context on init.** Token overhead of full system spec is ~81k (40% of budget). Instead:
+
+### Memory Files (Indexed in MEMORY.md)
+
+- **Load only:** MEMORY.md index (2.4k tokens) — pointers to relevant memories.
+- **Defer loading:** Individual memory files until explicitly accessed or clearly relevant to the task.
+- **Pattern:** When user references a prior decision or project context, read the specific memory file by name, do not preload all 30+ memories.
+
+### MCP Tools (130+ tools available)
+
+- **Load only:** Agent-specific tool specs when agent is spawned (e.g., `po` gets PO routing, `ops` gets infrastructure diagnostics).
+- **Defer loading:** Full MCP tool catalog (46.5k tokens) until a specific tool is needed.
+- **Pattern:** If agent doesn't use a tool set (e.g., `po` doesn't need `get_vps_service_health`), don't inject it.
+
+### Agent Docs (22 custom agents)
+
+- **Load only:** Agent docs for agents in active rotation (current sprint agents + next expected agent).
+- **Defer loading:** Agent metadata until needed for routing decisions.
+
+### CLAUDE.md Files (Nested instructions)
+
+- **Root:** This file (mandatory at init).
+- **Global:** `~/.claude/CLAUDE.md` (injected by harness, mandatory).
+- **Project nested:** `CLAUDE.md` (this file) + skill-specific CLAUDE.md files lazy-load on `/skill` invocation only.
+
+**Goal:** Keep working context under 100k tokens so context margin stays above 20%.
+
+---
+
 ## Switch — User Request → Agent
 
 Spawn the matching agent. Never do the work yourself.
