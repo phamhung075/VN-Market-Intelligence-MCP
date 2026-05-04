@@ -98,6 +98,21 @@ export class SqliteBacktestResultRepository implements IBacktestResultRepository
     }
   }
 
+  /** Retrieve all runs across all strategies, most-recent-first. */
+  getAllRuns(limit: number): BacktestRunRecord[] {
+    try {
+      const rows = this.db
+        .prepare(
+          `SELECT * FROM backtest_runs ORDER BY run_at DESC LIMIT ?`,
+        )
+        .all(limit) as BacktestRunRow[];
+
+      return rows.map(rowToRecord);
+    } catch {
+      return [];
+    }
+  }
+
   /** Retrieve a single run by ID. */
   getRunById(id: string): BacktestRunRecord | null {
     try {
@@ -115,6 +130,16 @@ export class SqliteBacktestResultRepository implements IBacktestResultRepository
       return rowToRecord(row);
     } catch {
       return null;
+    }
+  }
+
+  /** Delete a run by ID. Returns true if a row was deleted, false if not found or on error. */
+  deleteRun(id: string): boolean {
+    try {
+      const result = this.db.prepare("DELETE FROM backtest_runs WHERE id = ?").run(id);
+      return result.changes > 0;
+    } catch {
+      return false;
     }
   }
 }
