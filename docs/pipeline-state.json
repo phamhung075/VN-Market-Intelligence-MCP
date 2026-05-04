@@ -1,11 +1,11 @@
 {
   "_maintained_by": "every agent at RETURN via agent-chaining-protocol",
-  "status": "in_progress",
+  "status": "idle",
   "currentSprint": 1846,
-  "activeTaskId": "BA-1846",
-  "nextAgent": "ba",
-  "nextPrompt": "Sprint 1846 is open. Your task is BA-1846 SPEC.\n\nWrite docs/REQ_1846.md — requirements spec for Sprint 1846:\n- delete_backtest_run MCP tool (#123): purge a stored run by ID; adds deleteRun() to IBacktestResultRepository interface + SqliteBacktestResultRepository adapter\n- export_backtest_run_csv MCP tool (#124): convert trades[] from a stored run into CSV text (header row + one row per trade)\n- compare_backtest_runs MCP tool (#125): side-by-side metric delta for 2–3 run IDs (return, drawdown, Sharpe, winRate, tradeCount)\n- UPGRADE_PLAN.md Tier 4 section: backtest expansion roadmap + U-5 gate status\n\nTarget toolCount after sprint: 128. Identify blockers and interface design decisions for Architect.",
-  "updatedAt": "2026-05-03T00:00:00.000Z",
-  "updatedBy": "developer",
-  "lastCompleted": "Sprint 1846 1846a CLEAN — orphan files committed, project-stats.json advanced to currentSprint=1846, toolCount=125. 2026-05-03."
+  "activeTaskId": null,
+  "nextAgent": null,
+  "nextPrompt": null,
+  "updatedAt": "2026-05-03T12:00:00.000Z",
+  "updatedBy": "qa",
+  "lastCompleted": "Sprint 1846 DONE — 1846b APPROVED and merged to main. delete_backtest_run (#123) + export_backtest_run_csv (#124) + compare_backtest_runs (#125). toolCount=128. 2026-05-03."
 }

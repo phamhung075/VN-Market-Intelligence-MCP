@@ -19,7 +19,6 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Blocked by |
 |---------|-------|----------|------|-------|---------|------------|
-| BA-1846 | SPEC: Requirements spec for Sprint 1846 — delete_backtest_run (#123) + export_backtest_run_csv (#124) + compare_backtest_runs (#125) MCP tools; deleteRun() interface extension; UPGRADE_PLAN.md Tier 4 section | HIGH | SPEC | ba | docs/REQ_1846.md | — |
 
 ---
 
@@ -27,6 +26,8 @@
 
 | Task ID | Title | Priority | Type | Owner | Report | Completed |
 |---------|-------|----------|------|-------|--------|-----------|
+| ARCH-1846 | DESIGN: Architecture for Sprint 1846 — delete_backtest_run (#123) + export_backtest_run_csv (#124) + compare_backtest_runs (#125) + IBacktestResultRepository.deleteRun(). BLK-1 Option C (equity curve recompute on demand), BLK-2 new backtestLifecycleTools.ts, BLK-3 leave get_backtest_run as-is. 6-file change plan, 19-test plan, 7-item risk register. | HIGH | DESIGN | architect | docs/handoffs/ARCH_1846.md | 2026-05-03 |
+| BA-1846 | SPEC: Requirements spec for Sprint 1846 — delete_backtest_run (#123) + export_backtest_run_csv (#124) + compare_backtest_runs (#125) MCP tools; deleteRun() interface extension. 3 blockers: BLK-1 equity curve storage, BLK-2 file split, BLK-3 UUID consistency. | HIGH | SPEC | ba | docs/REQ_1846.md | 2026-05-03 |
 | 1846a | CLEAN: commit orphan session/report/skill files accumulated since Sprint 1845; advance project-stats.json to Sprint 1846 baseline (currentSprint=1846, toolCount=125) | HIGH | CLEAN | developer | — | 2026-05-03 |
 | 1845d | DRY: benchmarkReturnPct computation duplicated in backtestEngine.ts — extract to single private helper. Pre-existing duplicate from 1843b merge resolved; 46 backtesting tests pass, tsc clean. | MEDIUM | DRY | developer | reports/TASK_REPORT_1845d.md | 2026-05-03 |
 | 1845c | SYNC: tool-registry.json — added get_backtest_runs (#121) + get_backtest_run (#122). Backtesting count 1→3, toolCount 123→125. JSON-only. | HIGH | SYNC | developer | reports/TASK_REPORT_1845c.md | 2026-05-03 |
@@ -126,6 +127,7 @@ ARCHITECT CORRECTION: BA spec said `STOCK_PRICE_DB_PATH` is undefined in local t
 
 | Task ID | Title | Merged | Reports |
 |---------|-------|--------|---------|
+| 1846b | SPRINT-M: Backtest lifecycle tools — deleteRun() domain port + SQLite impl + backtestLifecycleTools.ts (delete #123 + export_csv #124 + compare #125) + barrel + registry wiring + 19 tests. toolCount=128. | 2026-05-03 | reports/TASK_REPORT_1846b.md |
 | 1843a | SPRINT-M: combined-high-confidence strategy — taComputation.ts (pure EMA/RSI), buildCombinedHighConfidenceStrategy factory, computeTADirectionMap helper, 24 tests (AC-CHC-3/4/5 + EMA/RSI/direction unit tests). 24/24 pass. 8799 pass / 6 pre-existing fail. tsc clean. DDD golden rule satisfied. | 2026-05-03 | reports/TASK_REPORT_1843a.md |
 | 1843b | SPRINT-S: Fix 4 pre-existing test failures (265 x3 date prune + 1332 x1 singleton isolation) + computeBenchmarkReturn reorder DRY. 11/11 pass (265). 1332 crash is pre-existing Bun/LanceDB native panic (identical on main). Suite: 8779 pass / 2 pre-existing fail (vs 5 on main). tsc clean. DDD: no domain→infra violations in changed files. | 2026-05-03 | reports/TASK_REPORT_1843b.md |
 | ARCH-1843 | DESIGN: Architecture for Sprint 1843 — Option A chosen (factory closure, no interface change). taComputation.ts design, buildCombinedHighConfidenceStrategy factory, computeTADirectionMap application helper, DDD layer map, risk register (RISK-1 resolved, RISK-2..6 flagged). File-level change plan for 9 files. | 2026-05-03 | docs/handoffs/ARCH_1843.md |
