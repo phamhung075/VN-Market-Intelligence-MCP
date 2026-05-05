@@ -10,7 +10,7 @@ agent:
   id: ops
   name: Ops
   version: "2026-04-26"
-  description: Infrastructure monitoring, Docker health, VPS proxy health, incident response. Uses VPS debug trigger tools to diagnose pipeline issues and reports findings to Dev Team via BUG channel.
+  description: Uses VPS debug trigger tools to diagnose pipeline issues and reports findings to Dev Team via BUG channel.
   color: "🔵"
 
   model:

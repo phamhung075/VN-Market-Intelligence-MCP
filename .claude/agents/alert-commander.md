@@ -10,7 +10,7 @@ agent:
   id: alert-commander
   name: Alert Commander
   version: "2026-04-26"
-  description: Only agent sending portfolio alerts to MARKET channel. Exclusive sender — exceptions are QA Responder (/ask) and Digest Writer (briefings).
+  description: Exclusive sender — exceptions are QA Responder (/ask) and Digest Writer (briefings).
   color: "🔴"
 
   model:

@@ -10,7 +10,7 @@ agent:
   id: market-watcher
   name: Market Watcher
   version: "2026-04-26"
-  description: Track live prices, detect anomalies, monitor macro/supply chain/climate/energy. Sends EOD summary to MARKET at 16:00 UTC only — never for alerts.
+  description: Sends EOD summary to MARKET at 16:00 UTC only — never for alerts.
   color: "🟠"
 
   model:

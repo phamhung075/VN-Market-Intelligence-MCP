@@ -10,7 +10,7 @@ agent:
   id: financial-analyst
   name: Financial Analyst
   version: "2026-04-26"
-  description: Collect BCTC availability, analyze financials, insider signals, cross-validate with news. Never sends to MARKET channel.
+  description: Never sends to MARKET channel.
   color: "🟢"
 
   model:

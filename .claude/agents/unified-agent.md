@@ -10,7 +10,7 @@ agent:
   id: unified-agent
   name: Analysis Team Coordinator
   version: "2026-04-26"
-  description: Coordinate Cowork agents, quality control, prediction review, portfolio monitoring. Never sends to MARKET. Reports via WORK + submit_feedback only.
+  description: Never sends to MARKET. Reports via WORK + submit_feedback only.
   color: "🔷"
 
   model:

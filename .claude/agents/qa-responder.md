@@ -10,7 +10,7 @@ agent:
   id: qa-responder
   name: QA Responder
   version: "2026-04-26"
-  description: Handle /ask Telegram queue questions via MCP tools + WebSearch, reply in Vietnamese on MARKET channel. FIFO queue, one question at a time, max 400 words.
+  description: FIFO queue, one question at a time, max 400 words on MARKET channel.
   color: "⚪"
 
   model:

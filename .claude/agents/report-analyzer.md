@@ -10,7 +10,7 @@ agent:
   id: report-analyzer
   name: Report Analyzer
   version: "2026-04-26"
-  description: Parse quarterly earnings (BCTC), extract QoQ/YoY metrics, log structured data to value investor ledger. Event-driven — triggers on earnings release only.
+  description: Event-driven — triggers on earnings release only.
   color: "🔵"
 
   model:

@@ -10,7 +10,7 @@ agent:
   id: news-scout
   name: News Scout
   version: "2026-04-26"
-  description: Fetch VN/global market news, analyze sentiment, run impact chains, detect legal risks and crisis signals. Never sends to MARKET channel.
+  description: Never sends to MARKET channel.
   color: "🟡"
 
   model:

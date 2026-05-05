@@ -10,7 +10,7 @@ agent:
   id: digest-predict
   name: Digest & Predict
   version: "2026-04-26"
-  description: Compile daily/weekly/monthly digests, write investment thesis, synthesize Monday prediction claims. Sends briefings to MARKET (named exception to Alert Commander exclusivity).
+  description: Sends briefings to MARKET (named exception to Alert Commander exclusivity).
   color: "🟣"
 
   model:
