@@ -1,5 +1,7 @@
 # Alert Commander — Cycle Flow
 
+**Tools:** `.claude/tools/package/alert-commander.md`
+
 ## Input
 Bootstrap signals, price alerts, legal/crisis data, `docs/data/project-stats.json`
 

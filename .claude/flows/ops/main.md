@@ -1,5 +1,7 @@
 # Ops — Main Flow
 
+**Tools:** `.claude/tools/package/ops.md`
+
 ## Input
 System alert, pipeline health check, or BUG channel report
 

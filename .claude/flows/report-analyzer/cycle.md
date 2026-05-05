@@ -1,4 +1,7 @@
 # Report Analyzer — Cycle Flow
+
+**Tools:** `.claude/tools/package/report-analyzer.md`
+
 > Event-driven: only runs when new earnings detected.
 
 ## Input

@@ -1,5 +1,7 @@
 # Ops — VPS Flow
 
+**Tools:** `.claude/tools/package/ops.md`
+
 ## Input
 VPS unreachable, systemd service failed, geo-blocked fetch not running
 

@@ -1,5 +1,7 @@
 # Unified Agent — Weekly Review Flow (Sunday 13:00 UTC)
 
+**Tools:** `.claude/tools/package/unified-agent.md`
+
 ## Input
 `read_telegram_reports(status="all")` | signal/cascade/prediction metrics
 

@@ -1,5 +1,7 @@
 # Unified Agent — Market Cycle Flow
 
+**Tools:** `.claude/tools/package/unified-agent.md`
+
 ## Input
 Bootstrap (market context 24h, system status, agent signals)
 

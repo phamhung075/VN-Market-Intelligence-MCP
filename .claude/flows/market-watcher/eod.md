@@ -1,5 +1,7 @@
 # Market Watcher — EOD Flow (16:00 UTC)
 
+**Tools:** `.claude/tools/package/market-watcher.md`
+
 ## Input
 `get_watchlist()` | EOD prices + RSI + volume
 

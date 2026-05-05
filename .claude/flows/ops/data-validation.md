@@ -1,5 +1,7 @@
 # Ops — Data Validation Flow
 
+**Tools:** `.claude/tools/package/ops.md`
+
 ## Input
 Ticker list + service list from PO (via main terminal handoff)
 Format: `tickers=[...] services=[price|news|foreign-flow|bctc|sbv]`

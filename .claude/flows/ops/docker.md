@@ -1,5 +1,7 @@
 # Ops — Docker Flow
 
+**Tools:** `.claude/tools/package/ops.md`
+
 ## Input
 Container down, restart loop, unhealthy health check, service unreachable
 

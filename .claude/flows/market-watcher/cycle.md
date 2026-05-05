@@ -1,4 +1,7 @@
 # Market Watcher — Cycle Flow
+
+**Tools:** `.claude/tools/package/market-watcher.md`
+
 > Thresholds → `watch_thresholds` in YAML.
 
 ## Input

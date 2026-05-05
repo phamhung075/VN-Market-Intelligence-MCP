@@ -1,5 +1,7 @@
 # Ops — DB Health Flow
 
+**Tools:** `.claude/tools/package/ops.md`
+
 ## Input
 SQLite WAL overflow, integrity check failure, slow queries, DB corruption suspicion
 

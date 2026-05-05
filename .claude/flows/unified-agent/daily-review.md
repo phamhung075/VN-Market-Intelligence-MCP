@@ -1,5 +1,7 @@
 # Unified Agent — Daily Review Flow (20:00 UTC)
 
+**Tools:** `.claude/tools/package/unified-agent.md`
+
 ## Input
 Day's coordination data | BUG channel reports
 

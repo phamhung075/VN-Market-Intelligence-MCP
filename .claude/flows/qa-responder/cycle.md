@@ -1,5 +1,7 @@
 # QA Responder — Cycle Flow
 
+**Tools:** `.claude/tools/package/qa-responder.md`
+
 ## Input
 `get_pending_ask_questions()` FIFO queue
 

@@ -1,5 +1,7 @@
 # Digest & Predict — Weekly Digest Flow (Sunday 16:00 UTC)
 
+**Tools:** `.claude/tools/package/digest-predict.md`
+
 ## Input
 Weekly market data | agent signals | prediction accuracy | system feedback
 

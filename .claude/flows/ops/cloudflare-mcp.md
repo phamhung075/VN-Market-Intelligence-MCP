@@ -1,5 +1,7 @@
 # Ops — Cloudflare MCP Tunnel Path Flow
 
+**Tools:** `.claude/tools/package/ops.md`
+
 ## Input
 Claude Desktop cannot connect to MCP server via Cloudflare Tunnel URL with path prefix. SSE opens but POST fails. Reports: "cannot connect on cloudflare" or MCP health unavailable.
 

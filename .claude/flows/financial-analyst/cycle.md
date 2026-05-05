@@ -1,5 +1,7 @@
 # Financial Analyst — Cycle Flow
 
+**Tools:** `.claude/tools/package/financial-analyst.md`
+
 ## Input
 Bootstrap (market context 24h, earnings calendar, stored PDFs)
 

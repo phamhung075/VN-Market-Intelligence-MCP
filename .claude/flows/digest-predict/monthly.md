@@ -1,5 +1,7 @@
 # Digest & Predict — Monthly/Quarterly Flow (1st of month)
 
+**Tools:** `.claude/tools/package/digest-predict.md`
+
 ## Input
 BCTC full data | macro snapshot | portfolio risk | quarterly ledger entries
 

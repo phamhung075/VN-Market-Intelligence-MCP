@@ -1,5 +1,7 @@
 # Digest & Predict — Monday Prediction Flow (00:30 UTC)
 
+**Tools:** `.claude/tools/package/digest-predict.md`
+
 ## Input
 `get_calibration_report()` | watchlist evidence summaries
 

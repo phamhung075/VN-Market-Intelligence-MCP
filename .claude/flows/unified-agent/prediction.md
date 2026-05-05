@@ -1,5 +1,7 @@
 # Unified Agent — Prediction Review Flow (01:00 UTC)
 
+**Tools:** `.claude/tools/package/unified-agent.md`
+
 ## Input
 `get_prediction_markets()` open claims
 

@@ -1,5 +1,7 @@
 # Ops — BCTC Extraction Diagnostic Flow
 
+**Tools:** `.claude/tools/package/ops.md`
+
 Triggered when: BCTC extraction suspected broken, `get_bctc_full` returns empty, `list_stored_pdfs` shows no data, or BUG report about BCTC pipeline.
 
 Full runbook: `.claude/knowledge/bctc-extraction-runbook.md`

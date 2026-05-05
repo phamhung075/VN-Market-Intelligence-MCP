@@ -1,5 +1,7 @@
 # News Scout — Cycle Flow
 
+**Tools:** `.claude/tools/package/news-scout.md`
+
 ## Input
 Bootstrap (market context 24h, system status, agent signals)
 

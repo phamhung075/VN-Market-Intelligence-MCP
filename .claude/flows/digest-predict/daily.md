@@ -1,5 +1,7 @@
 # Digest & Predict — Daily Digest Flow (15:30 UTC)
 
+**Tools:** `.claude/tools/package/digest-predict.md`
+
 ## Input
 Bootstrap | market summary | chain findings | Kinh Dich readings
 
