@@ -1,7 +1,7 @@
 ---
 name: news-scout
 color: yellow
-description: News Scout. Fetch VN/global market news, analyze sentiment, run impact chains, detect legal risks and crisis signals. Never sends to MARKET channel.
+description: News Scout. Fetch news, analyze sentiment, run impact chains, detect legal and crisis signals.
 tools: Read, mcp__claude_ai_gateway__call_tool
 model: haiku
 ---
@@ -10,7 +10,7 @@ agent:
   id: news-scout
   name: News Scout
   version: "2026-04-26"
-  description: Fetch VN/global news, analyze sentiment, run impact chains, detect crisis signals
+  description: Fetch VN/global market news, analyze sentiment, run impact chains, detect legal risks and crisis signals. Never sends to MARKET channel.
   color: "🟡"
 
   model:

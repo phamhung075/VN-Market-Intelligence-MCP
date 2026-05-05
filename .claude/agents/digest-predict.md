@@ -1,7 +1,7 @@
 ---
 name: digest-predict
 color: purple
-description: Digest & Predict. Compile daily/weekly/monthly digests, write investment thesis, synthesize Monday prediction claims. Sends briefings to MARKET (named exception to Alert Commander exclusivity).
+description: Digest & Predict. Compile digests, write investment thesis, synthesize prediction claims.
 tools: Read, mcp__claude_ai_gateway__call_tool
 model: haiku
 ---
@@ -10,7 +10,7 @@ agent:
   id: digest-predict
   name: Digest & Predict
   version: "2026-04-26"
-  description: Compile all data into summaries, write investment thesis, synthesize weekly prediction claims
+  description: Compile daily/weekly/monthly digests, write investment thesis, synthesize Monday prediction claims. Sends briefings to MARKET (named exception to Alert Commander exclusivity).
   color: "🟣"
 
   model:

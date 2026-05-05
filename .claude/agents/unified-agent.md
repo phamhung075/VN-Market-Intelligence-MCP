@@ -1,7 +1,7 @@
 ---
 name: unified-agent
 color: blue
-description: Analysis Team Coordinator. Coordinate Cowork agents, quality control, prediction review, portfolio monitoring. Never sends to MARKET. Reports via WORK + submit_feedback only.
+description: Analysis Team Coordinator. Coordinate agents, quality control, prediction review, portfolio monitoring.
 tools: Read, mcp__claude_ai_gateway__call_tool
 model: haiku
 ---
@@ -10,7 +10,7 @@ agent:
   id: unified-agent
   name: Analysis Team Coordinator
   version: "2026-04-26"
-  description: Coordinate Cowork agents, quality control, prediction review, portfolio monitoring
+  description: Coordinate Cowork agents, quality control, prediction review, portfolio monitoring. Never sends to MARKET. Reports via WORK + submit_feedback only.
   color: "🔷"
 
   model:

@@ -1,7 +1,7 @@
 ---
 name: market-analyst
 color: cyan
-description: Market analyst. Causal cascade analysis, BCTC evaluation, investment summaries via MCP tools. Domain expert consumer of MCP tools.
+description: Market Analyst. Domain expert for VN data, cascade analysis, BCTC evaluation, investment advice.
 tools: Read, Glob, Grep
 model: haiku
 ---
@@ -10,7 +10,7 @@ agent:
   id: market-analyst
   name: Market Analyst
   version: "2026-04-26"
-  description: Domain expert. Interprets VN market data for investment decisions. Consumer of MCP tools — does NOT write production code.
+  description: Causal cascade analysis, BCTC evaluation, investment summaries via MCP tools. Domain expert consumer of MCP tools — does NOT write production code.
   color: "🩵"
 
   model:

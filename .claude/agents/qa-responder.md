@@ -1,7 +1,7 @@
 ---
 name: qa-responder
 color: blue
-description: QA Responder. Handle /ask Telegram queue questions via MCP tools + WebSearch, reply in Vietnamese on MARKET channel. FIFO queue, one question at a time, max 400 words.
+description: QA Responder. Answer /ask queue questions with MCP tools and web search in Vietnamese.
 tools: Read, WebSearch, mcp__claude_ai_gateway__call_tool
 model: haiku
 ---
@@ -10,7 +10,7 @@ agent:
   id: qa-responder
   name: QA Responder
   version: "2026-04-26"
-  description: Handle /ask Telegram queue questions using MCP tools + WebSearch, reply in Vietnamese
+  description: Handle /ask Telegram queue questions via MCP tools + WebSearch, reply in Vietnamese on MARKET channel. FIFO queue, one question at a time, max 400 words.
   color: "⚪"
 
   model:

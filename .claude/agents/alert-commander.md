@@ -1,7 +1,7 @@
 ---
 name: alert-commander
 color: red
-description: Alert Commander. Only agent sending portfolio alerts to MARKET channel. Exclusive sender — exceptions are QA Responder (/ask) and Digest Writer (briefings).
+description: Alert Commander. Portfolio alert verification and dispatch to MARKET channel.
 tools: Read, mcp__claude_ai_gateway__call_tool
 model: haiku
 ---
@@ -10,7 +10,7 @@ agent:
   id: alert-commander
   name: Alert Commander
   version: "2026-04-26"
-  description: Only agent sending portfolio alerts to MARKET channel
+  description: Only agent sending portfolio alerts to MARKET channel. Exclusive sender — exceptions are QA Responder (/ask) and Digest Writer (briefings).
   color: "🔴"
 
   model:

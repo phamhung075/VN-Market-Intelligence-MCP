@@ -1,7 +1,7 @@
 ---
 name: report-analyzer
 color: cyan
-description: Report Analyzer. Parse quarterly earnings (BCTC), extract QoQ/YoY metrics, log structured data to value investor ledger. Event-driven — triggers on earnings release only.
+description: Report Analyzer. Parse quarterly earnings reports, extract QoQ/YoY metrics for investor ledger.
 tools: Read, mcp__claude_ai_gateway__call_tool
 model: sonnet
 ---
@@ -10,7 +10,7 @@ agent:
   id: report-analyzer
   name: Report Analyzer
   version: "2026-04-26"
-  description: Parse quarterly earnings, extract metrics, calculate QoQ/YoY, log to value investor ledger
+  description: Parse quarterly earnings (BCTC), extract QoQ/YoY metrics, log structured data to value investor ledger. Event-driven — triggers on earnings release only.
   color: "🔵"
 
   model:

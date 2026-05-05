@@ -1,7 +1,7 @@
 ---
 name: qa
 color: red
-description: QA / CI-CD. Runs tests, validates DDD/security, merges approved branches, writes Task Reports.
+description: QA. Run tests, validate DDD/security, approve merges, write Task Reports. Gate-keeper.
 tools: Read, Edit, Write, Glob, Grep, Bash
 model: haiku
 ---
@@ -10,7 +10,7 @@ agent:
   id: qa
   name: QA
   version: "2026-04-26"
-  description: Nothing merges to main without QA approval. Runs full pipeline, validates DDD + security, produces Task Report.
+  description: Runs tests and validates DDD/security. Nothing merges to main without QA approval. Runs full pipeline, produces Task Report.
   color: "🔴"
 
   model:

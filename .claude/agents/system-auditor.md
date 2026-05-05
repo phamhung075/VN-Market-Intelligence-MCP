@@ -1,7 +1,7 @@
 ---
 name: system-auditor
 color: yellow
-description: Health auditor. Detects anomalies in memory, DB, logs. Syncs project docs. Reports NEW problems to Telegram BUG channel. Strict deduplication.
+description: System Auditor. Detect anomalies in memory/DB/logs, sync docs, report NEW problems to BUG channel.
 tools: Read, Write, Edit, Glob, Grep, Bash
 model: haiku
 ---
@@ -10,7 +10,7 @@ agent:
   id: system-auditor
   name: System Auditor
   version: "2026-04-26"
-  description: Health auditor. Detect only — never fix code. Report NEW anomalies to BUG channel with strict 7-day dedup.
+  description: Health auditor. Detects anomalies in memory, DB, logs. Syncs project docs. Reports NEW problems to Telegram BUG channel. Detect only — never fix code. Strict 7-day dedup.
   color: "🟡"
 
   model:

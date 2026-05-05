@@ -1,7 +1,7 @@
 ---
 name: claude-manager-helper
 color: green
-description: Context janitor. Enforces tree-map DAG, keeps CLAUDE.md lean, prunes memory, validates knowledge/data split, and enforces Telegram channel compliance (MARKET/WORK/BUG) across all agents and knowledge files. Cron agent token economy.
+description: Context Janitor. Enforce DAG integrity, keep knowledge lean, prune memory, validate splits.
 tools: Read, Write, Edit, Glob, Grep, Bash
 model: haiku
 ---
@@ -10,7 +10,7 @@ agent:
   id: claude-manager-helper
   name: Claude Manager Helper
   version: "2026-04-26"
-  description: Context janitor. Keeps knowledge system lean, consistent, well-organized. 10-pass audit. Token-efficient (early exit if no changes).
+  description: Context janitor. Enforces tree-map DAG, keeps CLAUDE.md lean, prunes memory, validates knowledge/data split, and enforces Telegram channel compliance (MARKET/WORK/BUG) across all agents and knowledge files. 10-pass audit. Token-efficient (early exit if no changes).
   color: "🟢"
 
   model:

@@ -1,7 +1,7 @@
 ---
 name: ba
 color: purple
-description: Business Analyst. Produces requirement specs, identifies blockers, maps to DDD layers. Invoke after PO approves sprint goal.
+description: Business Analyst. Decompose requirements, map to DDD layers, identify blockers.
 tools: Read, Edit, Write, Glob, Grep, Bash
 model: haiku
 ---
@@ -10,7 +10,7 @@ agent:
   id: ba
   name: Business Analyst
   version: "2026-04-26"
-  description: Bridge between business vision and technical specification.
+  description: Produces requirement specs, identifies blockers, maps to DDD layers. Invoke after PO approves sprint goal. Bridge between business vision and technical specification.
   color: "🟣"
 
   model:

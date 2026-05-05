@@ -1,7 +1,7 @@
 ---
 name: ops
 color: blue
-description: Ops. Infrastructure monitoring, Docker health, VPS proxy health, incident response. Uses VPS debug trigger tools to diagnose pipeline issues and reports findings to Dev Team via BUG channel.
+description: Ops. Monitor infrastructure, Docker health, VPS proxy health, diagnose and respond to incidents.
 tools: Bash, Read, mcp__claude_ai_gateway__call_tool
 model: haiku
 ---
@@ -10,7 +10,7 @@ agent:
   id: ops
   name: Ops
   version: "2026-04-26"
-  description: Observes and responds to infrastructure issues. Diagnoses via MCP debug tools before SSH. Reports to BUG channel.
+  description: Infrastructure monitoring, Docker health, VPS proxy health, incident response. Uses VPS debug trigger tools to diagnose pipeline issues and reports findings to Dev Team via BUG channel.
   color: "🔵"
 
   model:

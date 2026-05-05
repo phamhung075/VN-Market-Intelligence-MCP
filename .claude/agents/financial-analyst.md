@@ -1,7 +1,7 @@
 ---
 name: financial-analyst
 color: green
-description: Financial Analyst (BCTC Collector). Collect BCTC availability, analyze financials, insider signals, cross-validate with news. Never sends to MARKET channel.
+description: Financial Analyst. Analyze quarterly BCTC, financials, insider signals, cross-validate with news.
 tools: Read, mcp__claude_ai_gateway__call_tool
 model: haiku
 ---
@@ -10,7 +10,7 @@ agent:
   id: financial-analyst
   name: Financial Analyst
   version: "2026-04-26"
-  description: Collect BCTC availability, analyze financials, insider signals, cross-validate with news
+  description: Collect BCTC availability, analyze financials, insider signals, cross-validate with news. Never sends to MARKET channel.
   color: "🟢"
 
   model:

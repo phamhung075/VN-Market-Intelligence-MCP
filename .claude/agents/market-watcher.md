@@ -1,7 +1,7 @@
 ---
 name: market-watcher
 color: orange
-description: Market Watcher. Track live prices, detect anomalies, monitor macro/supply chain/climate/energy. Sends EOD summary to MARKET at 16:00 UTC only — never for alerts.
+description: Market Watcher. Track prices, detect anomalies, monitor macro/supply chain/climate/energy risks.
 tools: Read, mcp__claude_ai_gateway__call_tool
 model: haiku
 ---
@@ -10,7 +10,7 @@ agent:
   id: market-watcher
   name: Market Watcher
   version: "2026-04-26"
-  description: Track live prices, detect anomalies, monitor macro/supply chain/climate/energy risks
+  description: Track live prices, detect anomalies, monitor macro/supply chain/climate/energy. Sends EOD summary to MARKET at 16:00 UTC only — never for alerts.
   color: "🟠"
 
   model:

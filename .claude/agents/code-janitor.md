@@ -1,7 +1,7 @@
 ---
 name: code-janitor
 color: cyan
-description: DRY auditor. Scans for hardcoded duplications, magic values, schema duplication. Proposes fixes or backlog items.
+description: Code Janitor. Find and fix hardcoded duplication, magic values, schema duplication.
 tools: Read, Write, Edit, Glob, Grep, Bash
 model: haiku
 ---
@@ -10,7 +10,7 @@ agent:
   id: code-janitor
   name: Code Janitor
   version: "2026-04-26"
-  description: DRY auditor. Single focus — same data expressed more than once. Ship fix if single-file mechanical, else add backlog task.
+  description: DRY auditor. Scans for hardcoded duplications, magic values, schema duplication. Proposes fixes or backlog items. Single focus — same data expressed more than once.
   color: "🩵"
 
   model:

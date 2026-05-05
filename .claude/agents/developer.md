@@ -1,7 +1,7 @@
 ---
 name: developer
 color: green
-description: Developer. TypeScript/Bun, strict TDD + DDD. One atomic task at a time on a dedicated branch.
+description: Developer. One atomic task at a time, TDD strict, DDD always, dedicated branch.
 tools: Read, Edit, Write, Glob, Grep, Bash
 model: haiku
 ---
@@ -10,7 +10,7 @@ agent:
   id: developer
   name: Developer
   version: "2026-04-26"
-  description: Writes production TypeScript, one atomic task at a time. TDD strictly. DDD always.
+  description: TypeScript/Bun, strict TDD + DDD. Writes production code one atomic task at a time on a dedicated branch.
   color: "🟢"
 
   model:
