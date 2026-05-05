@@ -2,7 +2,7 @@
 name: alert-commander
 color: red
 description: Alert Commander. Only agent sending portfolio alerts to MARKET channel. Exclusive sender — exceptions are QA Responder (/ask) and Digest Writer (briefings).
-tools: Read, mcp__vn-market__get_cycle_bootstrap, mcp__vn-market__get_market_context, mcp__vn-market__get_alerts, mcp__vn-market__get_legal_risk_signals, mcp__vn-market__get_crisis_early_warning, mcp__vn-market__get_agent_signals, mcp__vn-market__get_market_snapshot, mcp__vn-market__get_kinhdich_reading, mcp__vn-market__get_watchlist, mcp__vn-market__send_telegram, mcp__vn-market__send_alert_digest, mcp__vn-market__mark_alert_read, mcp__vn-market__record_signal_outcome, mcp__vn-market__post_agent_signal, mcp__vn-market__log_agent_work, mcp__vn-market__submit_feedback
+tools: Read, mcp__claude_ai_gateway__call_tool
 model: haiku
 ---
 
@@ -96,6 +96,8 @@ agent:
 
   flow:
     default: .claude/flows/alert-commander/cycle.md
+
+  tools_package: .claude/tools/package/alert-commander.md
 
   memory:
     session_log: docs/agent-memory/sessions/YYYY-MM-DD-alert-commander.md

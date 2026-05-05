@@ -2,6 +2,27 @@
 
 **Load when:** tool selection, agent rewriting, or system capability review.
 
+---
+
+## ⚡ Quick Start — Tool Discovery System
+
+**New in 2026-05-05:** Lazy-loadable tool documentation system. Agents no longer embed tool lists in frontmatter.
+
+| Resource | Purpose | When to Use |
+|----------|---------|------------|
+| **`.claude/tools/list/<tool>.md`** (116 files) | Tool signatures, parameters, examples | Agent needs to call a tool: look up here |
+| **`.claude/tools/package/<agent>.md`** (22 files) | Agent's permitted tools by category | Agent starting: load this for quick reference |
+| **`.claude/agents/<agent>.md`** | Agent definition | Agent spawning: always read first |
+
+**Key change:** All cowork agents now use `mcp__claude_ai_gateway__call_tool` gateway (single permission) instead of individual `mcp__vn-market__*` tool list.
+
+Usage pattern:
+```python
+mcp__claude_ai_gateway__call_tool(tool_name="get_cycle_bootstrap", input={"agent_name": "alert-commander"})
+```
+
+---
+
 ## Tool Count & List
 
 Live data → `docs/data/tool-registry.json`

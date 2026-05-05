@@ -1,5 +1,7 @@
 # Cowork Refactory Expert — Main Flow
 
+**Tools:** `.claude/tools/package/cowork-refactory-expert.md`
+
 ## Input
 Live system state (tools, crons, Telegram commands)
 

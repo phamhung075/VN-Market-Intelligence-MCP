@@ -2,7 +2,7 @@
 name: report-analyzer
 color: cyan
 description: Report Analyzer. Parse quarterly earnings (BCTC), extract QoQ/YoY metrics, log structured data to value investor ledger. Event-driven — triggers on earnings release only.
-tools: Read, mcp__vn-market__get_cycle_bootstrap, mcp__vn-market__get_earnings_calendar, mcp__vn-market__get_bctc_full, mcp__vn-market__get_sector_comparison, mcp__vn-market__compare_stocks, mcp__vn-market__compare_financials, mcp__vn-market__post_agent_signal, mcp__vn-market__log_agent_work, mcp__vn-market__send_telegram, mcp__vn-market__submit_feedback
+tools: Read, mcp__claude_ai_gateway__call_tool
 model: sonnet
 ---
 
@@ -74,6 +74,8 @@ agent:
 
   flow:
     default: .claude/flows/report-analyzer/cycle.md
+
+  tools_package: .claude/tools/package/report-analyzer.md
 
   memory:
     session_log: docs/agent-memory/sessions/YYYY-MM-DD-report-analyzer.md

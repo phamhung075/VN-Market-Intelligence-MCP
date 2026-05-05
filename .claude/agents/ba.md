@@ -79,6 +79,8 @@ agent:
         input: [docs/SPRINT_GOAL.md, docs/TASKS.md]
         output: docs/TASKS.md↑ (spec+blockers) | architect task created
 
+  tools_package: .claude/tools/package/ba.md
+
   memory:
     session_log: docs/agent-memory/sessions/YYYY-MM-DD-ba.md
     notebook: docs/agent-memory/notebooks/ba.md

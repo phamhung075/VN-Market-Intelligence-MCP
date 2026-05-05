@@ -1,5 +1,7 @@
 # PO — Market Group Analysis Flow
 
+**Tools:** `.claude/tools/package/po.md`
+
 ## Input
 Telegram MARKET channel unreviewed messages + server live data
 

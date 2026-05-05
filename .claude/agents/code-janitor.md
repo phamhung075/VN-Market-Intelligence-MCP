@@ -85,6 +85,8 @@ If any Read of `.claude/knowledge/*.md` fails (file missing, empty, <50 chars, o
           - OR backlog task added to docs/TASKS.md
           - Session log + state file updated
 
+  tools_package: .claude/tools/package/code-janitor.md
+
   memory:
     session_log: docs/agent-memory/sessions/YYYY-MM-DD-janitor.md
     notebook: docs/agent-memory/notebooks/code-janitor.md

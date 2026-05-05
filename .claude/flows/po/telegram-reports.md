@@ -1,5 +1,7 @@
 # PO — Telegram Reports Flow
 
+**Tools:** `.claude/tools/package/po.md`
+
 ## Input
 `read_telegram_reports(status="new")` — user requests, bug reports, feature ideas
 

@@ -83,6 +83,8 @@ agent:
           - .claude/agents/*.yaml updated to match live system
           - Paste-ready Cowork refresh prompt provided to user
 
+  tools_package: .claude/tools/package/cowork-refactory-expert.md
+
   memory:
     session_log: docs/agent-memory/sessions/YYYY-MM-DD-refactory.md
     notebook: docs/agent-memory/notebooks/cowork-refactory-expert.md

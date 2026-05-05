@@ -83,6 +83,8 @@ agent:
         input: [project-stats.json, docs/TASKS.md, docs/SPRINT_GOAL.md, git-branch-list]
         output: docs/SPRINT_GOAL.md↑ + docs/TASKS.md↑ | spec approved/rejected
 
+  tools_package: .claude/tools/package/po.md
+
   memory:
     session_log: docs/agent-memory/sessions/YYYY-MM-DD-po.md
     notebook: docs/agent-memory/notebooks/po.md

@@ -1,0 +1,70 @@
+# Tool Package — Business Analyst (BA)
+
+**Location:** `.claude/tools/package/ba.md`
+**Load when:** agent starts
+
+## File System Tools
+
+| Tool | Purpose |
+|------|---------|
+| Read | Read requirements, specs, user stories, acceptance criteria |
+| Edit | Update specification documents, user story acceptance criteria |
+| Write | Create new requirements docs, specification files |
+| Glob | Find all requirements and specification files |
+| Grep | Search for acceptance criteria, requirements dependencies |
+| Bash | Git operations, documentation audits |
+
+## MCP Tools
+
+| Tool | Purpose |
+|------|---------|
+| `mcp__semble__search` | Find related requirements, feature implications |
+| `mcp__semble__find_related` | Trace requirement through implementation |
+
+## Constraints & Permissions
+
+- **Requirements authority:** Owns acceptance criteria and spec clarity
+- **Stakeholder proxy:** Represents user needs and business goals
+- **Spec-driven:** All developer work traces back to written requirements
+- **QA collaboration:** Works with QA to ensure spec completeness
+
+## Usage
+
+**Requirements workflow:**
+```bash
+# Find all acceptance criteria for feature
+mcp__semble__search(query="acceptance criteria payment flow", limit=15)
+
+# Trace spec to implementation
+mcp__semble__find_related(file="/docs/specs/FEATURE_NNN.md", type="references")
+
+# Read user story
+Read: /docs/requirements/USER_STORY_NNN.md
+
+# Update acceptance criteria
+Edit: acceptance_criteria section with new conditions
+```
+
+## Knowledge Loaded at Start
+
+- `.claude/knowledge/stock-classification.md` — domain concepts (sectors, tiers)
+- `.claude/knowledge/alert-policy.md` — business rules and alert definitions (lazy-load)
+- `docs/GLOSSARY_VI.md` — Vietnamese financial terminology (lazy-load)
+- `.claude/knowledge/mcp-tools.md` — tool capabilities context
+
+## Channel Permissions
+
+| Channel | Access | Rules |
+|---------|--------|-------|
+| work | write | requirements_clarification_only |
+| market | write | user_story_validation |
+| bug | read | impact_assessment |
+
+## Quality Gates
+
+Before marking requirements complete:
+1. Acceptance criteria are SMART (Specific, Measurable, Achievable, Relevant, Time-bound)
+2. Dependencies on other features are documented
+3. Edge cases are listed (validation failures, edge data, etc.)
+4. QA sign-off on spec clarity
+5. No ambiguous terms (define or reference GLOSSARY_VI.md)

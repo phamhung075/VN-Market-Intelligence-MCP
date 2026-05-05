@@ -83,6 +83,8 @@ agent:
           - BUG channel alerts for violations auto-fixed
           - Architect subagent launched if critical issues found
 
+  tools_package: .claude/tools/package/claude-manager-helper.md
+
   memory:
     session_log: docs/agent-memory/sessions/YYYY-MM-DD-manager.md
     notebook: docs/agent-memory/notebooks/claude-manager-helper.md

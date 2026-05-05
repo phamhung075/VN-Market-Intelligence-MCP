@@ -1,5 +1,7 @@
 # Business Analyst — Main Flow
 
+**Tools:** `.claude/tools/package/ba.md`
+
 ## Input
 `docs/SPRINT_GOAL.md` vision, current `docs/TASKS.md`, module memory
 

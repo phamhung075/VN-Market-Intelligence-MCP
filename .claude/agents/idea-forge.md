@@ -68,6 +68,8 @@ agent:
         output:
           - Structured plan (My Understanding / Clarifications / Ideas / Trade-offs / Next Step)
 
+  tools_package: .claude/tools/package/idea-forge.md
+
   memory:
     session_log: null  # no session logging — ideas are ephemeral
     notebook: docs/agent-memory/notebooks/idea-forge.md

@@ -1,0 +1,224 @@
+# Tool Package — Unified Agent
+
+**Location:** `.claude/tools/package/unified-agent.md`
+**Load when:** Agent starts, before first MCP call
+**Last Updated:** 2026-05-05
+
+## How to Invoke Tools
+
+All VN Market MCP tools are accessed via the `mcp__claude_ai_gateway__call_tool` gateway:
+
+```
+mcp__claude_ai_gateway__call_tool(tool_name="<tool_name>", input={...})
+```
+
+For detailed parameters and return signatures: `.claude/tools/list/<tool_name>.md`
+
+---
+
+## Tools — Unified Agent
+
+### Bootstrap & Diagnostics
+| Tool | Purpose | Key Params |
+|------|---------|-----------|
+| `get_cycle_bootstrap` | Fetch signals + market context + system status in parallel | `agent_name: "unified-agent"` |
+| `get_system_status` | Database, source health, data freshness, recent errors | — |
+| `get_rate_limit_status` | API rate limits across all services | — |
+| `get_recent_fixes` | Recent bug fixes and system repairs | `limit?: number` |
+
+### Market Intelligence
+| Tool | Purpose | Key Params |
+|------|---------|-----------|
+| `get_market_context` | Market snapshot, trading window, VN-Index status | — |
+| `get_market_snapshot` | Price, volume, sector sentiment, trading halt status | — |
+| `read_telegram_reports` | Unread Telegram messages and reports | — |
+
+### Financial Analysis
+| Tool | Purpose | Key Params |
+|------|---------|-----------|
+| `get_earnings_calendar` | Filing deadlines and status for all watchlist stocks | — |
+| `get_kinhdich_reading` | Hexagram reading for specific stock | `ticker: string` |
+| `get_bctc_full` | Comprehensive BCTC snapshot + comparison + sentiment trend | `ticker: string, period?: string` |
+| `get_watchlist` | Current watchlist tickers and metadata | — |
+
+### Prediction & Sentiment
+| Tool | Purpose | Key Params |
+|------|---------|-----------|
+| `get_prediction_markets` | Market-wide prediction accuracy by signal type | — |
+| `get_sentiment_trend` | Aggregate sentiment across news and analysis | — |
+
+### Risk & Signal Analysis
+| Tool | Purpose | Key Params |
+|------|---------|-----------|
+| `get_legal_risk_signals` | Legal/prosecution/tax penalty risks | — |
+| `get_crisis_early_warning` | Crisis velocity, mention spikes, severity trends | — |
+| `get_supply_chain_exposure` | Supply chain risk scores and concentration | — |
+| `get_climate_risk_signals` | Climate-related risks by sector and ticker | — |
+| `get_energy_grid_signals` | Power supply/demand, stability, import dependence | — |
+| `get_insider_signals` | Insider trading activity and positions | — |
+| `get_alert_accuracy` | Alert firing accuracy and false positive rate | — |
+| `get_signal_effectiveness` | Signal accuracy across all agents | — |
+
+### Portfolio & Position Management
+| Tool | Purpose | Key Params |
+|------|---------|-----------|
+| `get_positions` | Current portfolio positions | — |
+| `get_portfolio_conviction` | Portfolio alignment with signal confidence | — |
+| `get_portfolio_risk` | Portfolio VaR, concentration, correlation risks | — |
+| `get_rebalancing_signals` | Recommended portfolio adjustments | — |
+| `get_target_allocation` | Target asset allocation by sector/ticker | — |
+| `get_user_positions_for_analysis` | Positions formatted for financial analysis | — |
+
+### Performance & Metrics
+| Tool | Purpose | Key Params |
+|------|---------|-----------|
+| `get_unreviewed_market_messages` | Unreviewed market intelligence messages | — |
+| `get_cascade_metrics` | Inter-agent signal cascade success rate | — |
+| `get_prediction_accuracy` | Prediction model accuracy metrics | — |
+
+### Inter-Agent Communication
+| Tool | Purpose | Key Params |
+|------|---------|-----------|
+| `post_agent_signal` | Post signal to inter-agent bus | `signal_type: string, payload: object, confidence: number` |
+
+### Logging & Feedback
+| Tool | Purpose | Key Params |
+|------|---------|-----------|
+| `log_agent_work` | Log cycle activity and decisions | `action: string, context: object, signal_ids?: string[]` |
+| `send_telegram` | Send message to Telegram channel | `message: string, channel: "market" \| "work" \| "bug"` |
+| `submit_feedback` | Submit feature request or bug report | `severity: "critical" \| "high" \| "medium" \| "low", title: string` |
+
+---
+
+## Channel Permissions
+
+| Channel | Write | Rules |
+|---------|-------|-------|
+| **market** | ✅ | Market synthesis, coordinated signals |
+| **work** | ✅ | Cycle completion |
+| **bug** | ✅ | Errors only |
+
+---
+
+## Example Invocation
+
+### Opening Sequence (Required)
+
+```typescript
+// Step 0: Bootstrap
+const bootstrap = await mcp__claude_ai_gateway__call_tool(
+  tool_name="get_cycle_bootstrap",
+  input={ agent_name: "unified-agent" }
+);
+
+// Check system health
+const systemStatus = await mcp__claude_ai_gateway__call_tool(
+  tool_name="get_system_status",
+  input={}
+);
+
+if (systemStatus.any_critical_errors) {
+  // Escalate to ops before proceeding
+  return;
+}
+```
+
+### Synthesizing Market Intel
+
+```typescript
+// Get market overview
+const market = await mcp__claude_ai_gateway__call_tool(
+  tool_name="get_market_context",
+  input={}
+);
+
+const sentiment = await mcp__claude_ai_gateway__call_tool(
+  tool_name="get_sentiment_trend",
+  input={}
+);
+
+const predictions = await mcp__claude_ai_gateway__call_tool(
+  tool_name="get_prediction_markets",
+  input={}
+);
+
+// Synthesize into coherent market picture
+```
+
+### Portfolio Analysis
+
+```typescript
+// Get full portfolio picture
+const positions = await mcp__claude_ai_gateway__call_tool(
+  tool_name="get_positions",
+  input={}
+);
+
+const conviction = await mcp__claude_ai_gateway__call_tool(
+  tool_name="get_portfolio_conviction",
+  input={}
+);
+
+const risk = await mcp__claude_ai_gateway__call_tool(
+  tool_name="get_portfolio_risk",
+  input={}
+);
+
+const rebalancing = await mcp__claude_ai_gateway__call_tool(
+  tool_name="get_rebalancing_signals",
+  input={}
+);
+
+// Determine if rebalance needed
+if (risk.var_95 > 0.15) {
+  // Portfolio risk too high - consider adjustment
+}
+```
+
+### Checking Signal Performance
+
+```typescript
+// Monitor cascade effectiveness
+const cascadeMetrics = await mcp__claude_ai_gateway__call_tool(
+  tool_name="get_cascade_metrics",
+  input={}
+);
+
+const alertAccuracy = await mcp__claude_ai_gateway__call_tool(
+  tool_name="get_alert_accuracy",
+  input={}
+);
+
+const signalEffectiveness = await mcp__claude_ai_gateway__call_tool(
+  tool_name="get_signal_effectiveness",
+  input={}
+);
+
+// Identify which agents are performing well and which need review
+```
+
+### Reviewing Unread Messages
+
+```typescript
+// Check for new intelligence
+const telegramReports = await mcp__claude_ai_gateway__call_tool(
+  tool_name="read_telegram_reports",
+  input={}
+);
+
+const unreviewed = await mcp__claude_ai_gateway__call_tool(
+  tool_name="get_unreviewed_market_messages",
+  input={}
+);
+
+// Process and act on critical messages
+```
+
+---
+
+## Related Documentation
+
+- **All Tools Index:** `.claude/tools/list/README.md`
+- **MCP Logic:** `.claude/knowledge/mcp-tools.md`
+- **Signal Types:** `.claude/knowledge/mcp-tools.md` → "Inter-Agent Signal Types"
+- **Fail-Loud Protocol:** `.claude/knowledge/fail-loud-protocol.md`

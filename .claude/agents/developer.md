@@ -105,6 +105,8 @@ If any Read of `.claude/knowledge/*.md` fails (file missing, empty, <50 chars, o
         input: [TASK_NNN.md, task/NNN branch]
         output: impl committed | tests pass | handoff↑ | qa notified
 
+  tools_package: .claude/tools/package/developer.md
+
   memory:
     session_log: docs/agent-memory/sessions/YYYY-MM-DD-developer.md
     notebook: docs/agent-memory/notebooks/developer.md

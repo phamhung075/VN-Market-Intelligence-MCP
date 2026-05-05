@@ -2,7 +2,7 @@
 name: news-scout
 color: yellow
 description: News Scout. Fetch VN/global market news, analyze sentiment, run impact chains, detect legal risks and crisis signals. Never sends to MARKET channel.
-tools: Read, mcp__vn-market__get_cycle_bootstrap, mcp__vn-market__fetch_and_analyze, mcp__vn-market__get_watchlist, mcp__vn-market__run_impact_chain, mcp__vn-market__search_similar_context, mcp__vn-market__post_agent_signal, mcp__vn-market__log_agent_work, mcp__vn-market__send_telegram, mcp__vn-market__submit_feedback
+tools: Read, mcp__claude_ai_gateway__call_tool
 model: haiku
 ---
 
@@ -86,6 +86,8 @@ agent:
 
   flow:
     default: .claude/flows/news-scout/cycle.md
+
+  tools_package: .claude/tools/package/news-scout.md
 
   memory:
     session_log: docs/agent-memory/sessions/YYYY-MM-DD-news-scout.md

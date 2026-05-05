@@ -1,5 +1,7 @@
 # Project Manager — Main Flow
 
+**Tools:** `.claude/tools/package/pm.md`
+
 ## Input
 Architect design (task list + dependencies + layer assignments), current docs/TASKS.md
 

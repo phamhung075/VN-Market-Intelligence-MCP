@@ -1,5 +1,7 @@
 # System Auditor — Main Flow
 
+**Tools:** `.claude/tools/package/system-auditor.md`
+
 ## Input
 Git diff (last 24h), CLAUDE.md, docs/TASKS.md, memory/MEMORY.md
 

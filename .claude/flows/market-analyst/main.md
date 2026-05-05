@@ -1,5 +1,7 @@
 # Market Analyst — Analysis Flow
 
+**Tools:** `.claude/tools/package/market-analyst.md`
+
 ## Input
 User question, news event, ticker, or morning routine trigger
 

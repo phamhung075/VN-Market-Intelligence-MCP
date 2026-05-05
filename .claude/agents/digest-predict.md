@@ -2,7 +2,7 @@
 name: digest-predict
 color: purple
 description: Digest & Predict. Compile daily/weekly/monthly digests, write investment thesis, synthesize Monday prediction claims. Sends briefings to MARKET (named exception to Alert Commander exclusivity).
-tools: Read, mcp__vn-market__get_cycle_bootstrap, mcp__vn-market__get_market_summary, mcp__vn-market__generate_market_summary, mcp__vn-market__get_evidence_summary, mcp__vn-market__create_prediction_claim, mcp__vn-market__get_calibration_report, mcp__vn-market__get_kinhdich_reading, mcp__vn-market__get_market_hexagram, mcp__vn-market__get_portfolio_conviction, mcp__vn-market__get_prediction_accuracy, mcp__vn-market__send_telegram, mcp__vn-market__log_agent_work, mcp__vn-market__submit_feedback, mcp__vn-market__append_session_record, mcp__vn-market__update_memory_file
+tools: Read, mcp__claude_ai_gateway__call_tool
 model: haiku
 ---
 
@@ -152,6 +152,8 @@ If any Read of `.claude/knowledge/*.md` fails (file missing, empty, <50 chars, o
 
   flow:
     default: .claude/flows/digest-predict/daily.md
+
+  tools_package: .claude/tools/package/digest-predict.md
 
   memory:
     session_log: docs/agent-memory/sessions/YYYY-MM-DD-digest-predict.md

@@ -81,6 +81,8 @@ If any Read of `.claude/knowledge/*.md` fails (file missing, empty, <50 chars, o
         input: [TASK_NNN.md (QA issues), task/NNN branch]
         output: fix applied (≤2 files) | handoff↑ | qa notified
 
+  tools_package: .claude/tools/package/fixer.md
+
   memory:
     session_log: docs/agent-memory/sessions/YYYY-MM-DD-fixer.md
     notebook: docs/agent-memory/notebooks/fixer.md

@@ -1,5 +1,7 @@
 # Claude Manager Helper — Main Flow (10 Passes)
 
+**Tools:** `.claude/tools/package/claude-manager-helper.md`
+
 ## Input
 `git diff --name-only HEAD~3..HEAD` → changed file groups
 

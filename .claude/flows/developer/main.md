@@ -1,5 +1,7 @@
 # Developer — Main Flow
 
+**Tools:** `.claude/tools/package/developer.md`
+
 ## Input
 `docs/handoffs/TASK_NNN.md` with `[Architect] Brownfield Findings`
 

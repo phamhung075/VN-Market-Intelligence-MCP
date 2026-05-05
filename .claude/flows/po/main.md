@@ -1,5 +1,7 @@
 # Product Owner — Main Flow
 
+**Tools:** `.claude/tools/package/po.md`
+
 ## Input
 docs/TASKS.md blockers | `docs/data/project-stats.json` | latest `reports/TASK_REPORT_*.md`
 

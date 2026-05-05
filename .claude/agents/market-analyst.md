@@ -88,6 +88,8 @@ agent:
           - Investment recommendation (bullish/bearish/neutral)
           - Session log entry appended
 
+  tools_package: .claude/tools/package/market-analyst.md
+
   memory:
     session_log: docs/agent-memory/sessions/YYYY-MM-DD-market-analyst.md
     notebook: docs/agent-memory/notebooks/market-analyst.md

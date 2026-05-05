@@ -1,6 +1,30 @@
 
 ---
-## [News Scout] 05:52 UTC — 20 items analyzed, 5 signals attempted
+## [Digest & Predict] 2026-05-05 21:32 UTC — DAILY digest ABORTED (bootstrap unreachable)
+
+**Trigger**: scheduled `vn-digest-writer` (daily 15:30 UTC slot, fired ~6h late at 21:32 UTC).
+**Flow**: `.claude/flows/digest-predict/daily.md` step 0 (cycle-bootstrap).
+**Status**: STOPPED at step 0 per fail-loud protocol. No digest sent. No predictions emitted. No Telegram traffic on `market` or `bug` channels.
+
+**Blocker — MCP unreachable from scheduler runtime**:
+- `https://zenmidi.com/mcp` → DNS resolves to `127.0.0.1`, port 443 connection refused.
+- Project `.mcp.json` is `{"mcpServers": {}}` — no servers registered for the gateway.
+- Tried `call_tool` against candidate server names {`zenmidi`, `vn-mcp`, `vn-market-intelligence`, `market-intelligence`, `default`, `meta`}: all returned `unknown server`.
+- Consequence: `get_cycle_bootstrap`, `get_market_summary`, `send_telegram`, and `submit_feedback` are all unreachable. Cannot even fail-loud to `bug` channel via Telegram.
+
+**Pipeline state**: `docs/pipeline-state.json` was `idle` at run start (last update 2026-05-05 06:30 UTC by `dev-team-cron`). Not modified by this run — no agent chained.
+
+**Notes / reasonable choices made autonomously**:
+- Did NOT fabricate Nhân Hòa score, regime signals, VN-Index level, FX/commodity values, Kinh Dịch hexagrams, or chain findings. The flow is built around real market context; synthetic numbers would corrupt the prediction track record and violate `cycle-bootstrap/SKILL.md` ("stale context produces worse signals than silence").
+- Did NOT spawn `ops` — interdiction allows it, but no agent-spawn mechanism is wired into a cowork scheduled-task runtime; the dispatch table in `CLAUDE.md` assumes an interactive PO loop. Recording the blocker in WORK.md is the only sink reachable here.
+- Did NOT touch `pipeline-state.json` — keeping it `idle` is correct; this run made no progress toward any task.
+
+**Next action required (for next live human/PO cycle)**:
+1. Verify `zenmidi.com/mcp` is actually serving from the runtime that hosts the scheduler (not just from a developer workstation).
+2. Either populate `.mcp.json` with the correct server entry for the VN MCP, or wire the scheduled-task runtime to the same gateway the interactive cowork session uses.
+3. Re-run the daily flow once bootstrap responds; the Mon-prediction window is missed for this week unless the Monday flow ran independently.
+
+
 - **Fired**: 1 (GAS price_anomaly signal_id=1654 ✓)
 - **Pending Schema Fix**: 4 (VIC, FPT chain_catalyst; HPG cross_validate; Gold urgent_news)
 - **Watchlist hits**: 8 stocks across 5 sectors

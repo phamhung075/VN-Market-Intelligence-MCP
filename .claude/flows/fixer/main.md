@@ -1,4 +1,7 @@
 # Fixer — Main Flow
+
+**Tools:** `.claude/tools/package/fixer.md`
+
 > Activates ONLY on QA CHANGES_REQUESTED.
 
 ## Input

@@ -1,5 +1,7 @@
 # QA — Main Flow
 
+**Tools:** `.claude/tools/package/qa.md`
+
 ## Input
 `docs/handoffs/TASK_NNN.md` with `[Developer] Implementation Record`, branch `task/NNN-*`
 

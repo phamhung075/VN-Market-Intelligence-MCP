@@ -1,5 +1,7 @@
 # Code Janitor — Main Flow
 
+**Tools:** `.claude/tools/package/code-janitor.md`
+
 ## Input
 Codebase diff (last 3 commits) or full scan trigger
 

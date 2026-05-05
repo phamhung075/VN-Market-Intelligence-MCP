@@ -107,6 +107,8 @@ If any Read of `.claude/knowledge/*.md` fails (file missing, empty, <50 chars, o
         input: [TASK_NNN.md, task/NNN branch]
         output: PASS→merge+docs/TASKS.md↑ | FAIL→handoff↑+fixer notified
 
+  tools_package: .claude/tools/package/qa.md
+
   memory:
     session_log: docs/agent-memory/sessions/YYYY-MM-DD-qa.md
     notebook: docs/agent-memory/notebooks/qa.md

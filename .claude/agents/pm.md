@@ -90,6 +90,8 @@ If any Read of `.claude/knowledge/*.md` fails (file missing, empty, <50 chars, o
         input: [TASK_NNN.md (arch design), docs/TASKS.md]
         output: docs/TASKS.md↑ | TASK_NNN.md per task | dev notified
 
+  tools_package: .claude/tools/package/pm.md
+
   memory:
     session_log: docs/agent-memory/sessions/YYYY-MM-DD-pm.md
     notebook: docs/agent-memory/notebooks/pm.md

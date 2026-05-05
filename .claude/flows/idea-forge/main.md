@@ -1,5 +1,7 @@
 # Idea Forge — Main Flow
 
+**Tools:** `.claude/tools/package/idea-forge.md`
+
 ## Input
 User idea (feature, problem, or brainstorm prompt)
 

@@ -87,6 +87,8 @@ agent:
         input: [TASK_NNN.md, docs/SPRINT_GOAL.md]
         output: handoff↑ (brownfield+design) | pm notified
 
+  tools_package: .claude/tools/package/architect.md
+
   memory:
     session_log: docs/agent-memory/sessions/YYYY-MM-DD-architect.md
     notebook: docs/agent-memory/notebooks/architect.md

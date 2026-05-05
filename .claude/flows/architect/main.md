@@ -1,5 +1,7 @@
 # Architect — Main Flow
 
+**Tools:** `.claude/tools/package/architect.md`
+
 ## Input
 BA spec or user requirement, `docs/TASKS.md` task number, `docs/agent-memory/sessions/LATEST.md`
 

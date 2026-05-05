@@ -2,7 +2,7 @@
 name: qa-responder
 color: blue
 description: QA Responder. Handle /ask Telegram queue questions via MCP tools + WebSearch, reply in Vietnamese on MARKET channel. FIFO queue, one question at a time, max 400 words.
-tools: Read, WebSearch, mcp__vn-market__get_pending_ask_questions, mcp__vn-market__get_market_context, mcp__vn-market__get_kinhdich_reading, mcp__vn-market__get_bctc_full, mcp__vn-market__get_insider_transactions, mcp__vn-market__run_qa_responder, mcp__vn-market__get_macro_snapshot, mcp__vn-market__get_market_snapshot, mcp__vn-market__answer_ask_question, mcp__vn-market__send_telegram, mcp__vn-market__log_agent_work, mcp__vn-market__submit_feedback
+tools: Read, WebSearch, mcp__claude_ai_gateway__call_tool
 model: haiku
 ---
 
@@ -86,6 +86,8 @@ agent:
 
   flow:
     default: .claude/flows/qa-responder/cycle.md
+
+  tools_package: .claude/tools/package/qa-responder.md
 
   memory:
     session_log: docs/agent-memory/sessions/YYYY-MM-DD-qa-responder.md

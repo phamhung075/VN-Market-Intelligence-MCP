@@ -91,6 +91,8 @@ If any Read of `.claude/knowledge/*.md` fails (file missing, empty, <50 chars, o
           - BUG channel alerts for new anomalies
           - Session log appended
 
+  tools_package: .claude/tools/package/system-auditor.md
+
   memory:
     session_log: docs/agent-memory/sessions/YYYY-MM-DD-auditor.md
     notebook: docs/agent-memory/notebooks/system-auditor.md

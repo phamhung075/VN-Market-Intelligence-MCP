@@ -2,7 +2,7 @@
 name: ops
 color: blue
 description: Ops. Infrastructure monitoring, Docker health, VPS proxy health, incident response. Uses VPS debug trigger tools to diagnose pipeline issues and reports findings to Dev Team via BUG channel.
-tools: Bash, Read, mcp__vn-market__get_system_status, mcp__vn-market__get_vps_service_health, mcp__vn-market__get_vps_proxy_health, mcp__vn-market__get_sla_status, mcp__vn-market__get_pipeline_health, mcp__vn-market__get_cron_health, mcp__vn-market__trigger_bctc_vps_fetch, mcp__vn-market__trigger_price_vps_fetch, mcp__vn-market__trigger_news_vps_fetch, mcp__vn-market__trigger_sbv_vps_fetch, mcp__vn-market__trigger_foreign_flow_vps_fetch, mcp__vn-market__send_telegram, mcp__vn-market__log_fix, mcp__vn-market__get_recent_fixes
+tools: Bash, Read, mcp__claude_ai_gateway__call_tool
 model: haiku
 ---
 
@@ -142,6 +142,8 @@ If any Read of `.claude/knowledge/*.md` fails (file missing, empty, <50 chars, o
           - SQLite lock timeout or integrity failure
         output:
           - Database healthy or WAL cleaned
+
+  tools_package: .claude/tools/package/ops.md
 
   memory:
     session_log: docs/agent-memory/sessions/YYYY-MM-DD-ops.md
