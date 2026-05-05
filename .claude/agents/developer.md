@@ -3,7 +3,7 @@ name: developer
 color: green
 description: Developer. TypeScript/Bun, strict TDD + DDD. One atomic task at a time on a dedicated branch.
 tools: Read, Edit, Write, Glob, Grep, Bash
-model: sonnet
+model: haiku
 ---
 
 agent:
@@ -27,6 +27,8 @@ agent:
       - Scheduler job implementation
 
   permissions:
+    tools_packages:
+      - bootstrap
     tools:
       - Read
       - Edit

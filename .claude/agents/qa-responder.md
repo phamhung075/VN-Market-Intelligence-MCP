@@ -3,7 +3,7 @@ name: qa-responder
 color: blue
 description: QA Responder. Handle /ask Telegram queue questions via MCP tools + WebSearch, reply in Vietnamese on MARKET channel. FIFO queue, one question at a time, max 400 words.
 tools: Read, WebSearch, mcp__vn-market__get_pending_ask_questions, mcp__vn-market__get_market_context, mcp__vn-market__get_kinhdich_reading, mcp__vn-market__get_bctc_full, mcp__vn-market__get_insider_transactions, mcp__vn-market__run_qa_responder, mcp__vn-market__get_macro_snapshot, mcp__vn-market__get_market_snapshot, mcp__vn-market__answer_ask_question, mcp__vn-market__send_telegram, mcp__vn-market__log_agent_work, mcp__vn-market__submit_feedback
-model: sonnet
+model: haiku
 ---
 
 agent:
@@ -18,6 +18,9 @@ agent:
     temperature: 0.7
 
   permissions:
+    tools_packages:
+      - bootstrap
+      - qa-responder
     tools:
       - get_pending_ask_questions
       - get_market_context

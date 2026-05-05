@@ -390,6 +390,15 @@ export function storeTradingStats(s: VnstockTradingStats, date?: string): void {
 }
 
 export function storeOfficers(code: string, officers: VnstockOfficer[]): void {
+  // Guard: ensure officers is actually an array (not null, undefined, or other type)
+  if (!officers || !Array.isArray(officers)) {
+    logger.warn(
+      `[vnstock-store] storeOfficers: officers is not an array for ticker ${code}`,
+      { code, officersType: typeof officers, isArray: Array.isArray(officers) }
+    );
+    markFetched(code, "officers");
+    return;
+  }
   const valid = officers.filter((o) => !!o.code);
   const dropped = officers.length - valid.length;
   if (dropped > 0) {

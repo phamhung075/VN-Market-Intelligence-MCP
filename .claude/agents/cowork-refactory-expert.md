@@ -3,7 +3,7 @@ name: cowork-refactory-expert
 color: yellow
 description: Rewrites cowork agent .md files by reading live system state. Single source of truth for MCP tool surface.
 tools: Read, Edit, Write, Glob, Grep, Bash
-model: sonnet
+model: haiku
 ---
 
 agent:
@@ -27,6 +27,8 @@ agent:
       - Cowork refresh prompt generation (paste-ready for user)
 
   permissions:
+    tools_packages:
+      - bootstrap
     tools:
       - Read
       - Edit

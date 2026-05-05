@@ -1,0 +1,240 @@
+================================================================================
+CLOUDFLARE CONFIGURATION UPDATE — NGINX REVERSE PROXY
+================================================================================
+Date: 2026-05-05
+Domain: zenmidi.com
+Status: READY FOR DEPLOYMENT
+
+================================================================================
+WHAT CHANGED
+================================================================================
+
+Your nginx reverse proxy is now live on ports 80/443. 
+
+BEFORE (Current):
+  Cloudflare → zenmidi.com → localhost:3000/4000 (direct)
+
+AFTER (Target):
+  Cloudflare → zenmidi.com → nginx:80/443 → routing → mcp-server:3000 or api-gateway:4000
+
+================================================================================
+EXACT CLOUDFLARE SETTINGS NEEDED
+================================================================================
+
+1. DNS RECORD (Step 1)
+   Location: Cloudflare Dashboard → DNS
+   ---
+   Name:          zenmidi.com (or @)
+   Type:          A
+   IPv4:          [YOUR_SERVER_PUBLIC_IP]  ← CRITICAL: Replace with your actual IP
+   TTL:           Auto (3600)
+   Proxy status:  Proxied (orange cloud)
+   
+   Examples of [YOUR_SERVER_PUBLIC_IP]:
+   - 203.0.113.45 (if using public VPS)
+   - 139.180.185.18 (if using Vultr)
+   - Contact hosting provider if unsure
+
+2. SSL/TLS MODE (Step 2)
+   Location: Cloudflare Dashboard → SSL/TLS
+   ---
+   Encryption mode: Full (strict)
+   
+   This ensures:
+   - Client → Cloudflare: HTTPS (Cloudflare's cert)
+   - Cloudflare → nginx: HTTPS (your cert)
+
+3. ORIGIN CERTIFICATE (Step 3)
+   Location: Cloudflare Dashboard → SSL/TLS → Origin Server
+   ---
+   Action: Create Certificate
+   - Domains: zenmidi.com, *.zenmidi.com
+   - Validity: 15 years
+   - Copy certificate → /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/ssl/cert.pem
+   - Copy private key → /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/ssl/key.pem
+   - Reload nginx: docker-compose exec nginx nginx -s reload
+
+4. PATH ROUTING (Step 4 - Optional)
+   Location: Cloudflare Dashboard → Rules → Page Rules
+   ---
+   Option A: Cache Everything
+     URL: zenmidi.com/vn-market/*
+     Action: Cache Level = Cache Everything
+   
+   Option B: Bypass Cache (Recommended for API)
+     URL: zenmidi.com/*
+     Action: Cache Level = Bypass
+   
+   Recommendation: Use Option B (Bypass) to avoid caching dynamic API responses.
+
+5. CLOUDFLARE HEADERS (Step 5 - Automatic)
+   Location: Cloudflare Dashboard → Rules
+   ---
+   No action needed. Cloudflare automatically sends:
+   - CF-Connecting-IP
+   - CF-IPCountry
+   
+   nginx is already configured to receive and use these headers.
+
+================================================================================
+ALTERNATIVE: CLOUDFLARE TUNNEL (If Private Network)
+================================================================================
+
+If your server is NOT publicly accessible:
+
+Location: Cloudflare Dashboard → Access → Tunnels
+
+Steps:
+1. Create tunnel named "vn-market-tunnel"
+2. Choose Docker
+3. Copy tunnel token
+4. Run: docker run -d --name cloudflared cloudflare/cloudflared:latest tunnel run --token [TOKEN]
+5. Configure routing: zenmidi.com → http://localhost
+
+Benefits:
+- No need for public IP
+- Automatic SSL handling
+- Encrypted tunnel to Cloudflare edge
+
+================================================================================
+NGINX CONFIGURATION STATUS
+================================================================================
+
+Your nginx is ALREADY CORRECTLY CONFIGURED. No changes needed to nginx.conf.
+
+Current routing:
+  /vn-market/* → mcp-server:3000
+  /            → api-gateway:4000
+  /health      → nginx (internal)
+
+Files:
+  - Config: /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/nginx.conf
+  - Certificates: /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/ssl/
+  - Docker Compose: /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/docker-compose.yml
+
+================================================================================
+TESTING
+================================================================================
+
+Before Cloudflare changes:
+  curl http://localhost/health
+  curl https://localhost/health -k
+
+After Cloudflare changes:
+  nslookup zenmidi.com
+  curl https://zenmidi.com/health
+  curl https://zenmidi.com/vn-market/health
+
+Expected: All return "nginx healthy" with 200 OK status.
+
+================================================================================
+TROUBLESHOOTING
+================================================================================
+
+Problem: "Origin Unreachable" in Cloudflare
+Fix:
+  1. Verify A record IPv4 is correct (not localhost)
+  2. Check firewall allows port 443 inbound
+  3. Verify nginx is running: docker-compose ps nginx
+  4. Test locally: curl https://localhost/health
+
+Problem: SSL Certificate Error (Browser)
+Fix:
+  1. Ensure you uploaded Cloudflare origin cert (not self-signed)
+  2. Verify SSL mode is "Full (strict)"
+  3. Wait 5 minutes for DNS to propagate
+  4. Clear browser cache
+
+Problem: Headers Missing
+Fix:
+  1. Verify DNS is "Proxied" (orange cloud, not gray)
+  2. Wait 5 minutes for DNS propagation
+  3. Check logs: docker-compose logs nginx
+
+================================================================================
+DOCUMENTATION FILES
+================================================================================
+
+You have three guides:
+
+1. CLOUDFLARE_UPDATE.md (Detailed)
+   - Complete explanation of each step
+   - SSL certificate upgrade options
+   - Architecture diagrams
+   - Troubleshooting guide
+
+2. CLOUDFLARE_QUICK_SETUP.md (Copy/Paste)
+   - Quick reference for copy-paste values
+   - Method 1 (DNS) vs Method 2 (Tunnel)
+   - Checklist format
+
+3. CLOUDFLARE_DASHBOARD_STEPS.md (Visual Guide)
+   - Step-by-step UI walkthrough
+   - Field-by-field instructions
+   - Testing after each step
+
+Start with: CLOUDFLARE_QUICK_SETUP.md (fastest)
+Refer to: CLOUDFLARE_UPDATE.md (details)
+Follow: CLOUDFLARE_DASHBOARD_STEPS.md (UI walkthrough)
+
+================================================================================
+QUICK CHECKLIST
+================================================================================
+
+[ ] Choose: Public IP (Method 1) or Private Network (Method 2)?
+[ ] Step 1: Update A record IPv4 in Cloudflare DNS
+[ ] Step 2: Set SSL mode to "Full (strict)" in Cloudflare
+[ ] Step 3A: Generate Cloudflare origin certificate
+[ ] Step 3B: Copy certificate to ssl/cert.pem
+[ ] Step 3C: Copy private key to ssl/key.pem
+[ ] Step 3D: Reload nginx (docker-compose exec nginx nginx -s reload)
+[ ] Step 4: Create caching rules (optional, can skip)
+[ ] Step 5: Verify Cloudflare headers (no action, just verify)
+[ ] Test: nslookup zenmidi.com
+[ ] Test: curl https://zenmidi.com/health
+[ ] Test: curl https://zenmidi.com/vn-market/health
+[ ] Monitor: docker-compose logs nginx -f
+
+================================================================================
+YOUR NEXT STEPS (IN ORDER)
+================================================================================
+
+1. Read: CLOUDFLARE_QUICK_SETUP.md (5 minutes)
+2. Decide: Public IP or Private Network?
+3. Follow: CLOUDFLARE_DASHBOARD_STEPS.md (15 minutes)
+4. Test: Run test commands above (5 minutes)
+5. Monitor: Watch logs and Cloudflare dashboard
+
+Total time: ~30 minutes
+
+================================================================================
+KEY FILES YOU'LL NEED
+================================================================================
+
+Project Root: /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP
+
+Edit these files:
+  - ssl/cert.pem (paste Cloudflare certificate here)
+  - ssl/key.pem (paste Cloudflare private key here)
+
+Reference these files:
+  - nginx.conf (already correct, no changes needed)
+  - docker-compose.yml (no changes needed)
+  - NGINX_DEPLOYMENT_SUMMARY.md (for nginx context)
+
+================================================================================
+SUPPORT
+================================================================================
+
+If stuck:
+1. Check CLOUDFLARE_UPDATE.md troubleshooting section
+2. Review nginx logs: docker-compose logs nginx -f
+3. Check Cloudflare dashboard for errors
+4. Verify firewall allows ports 80, 443 inbound
+
+All documentation is in this directory.
+
+================================================================================
+LAST UPDATED: 2026-05-05
+STATUS: READY TO DEPLOY
+================================================================================

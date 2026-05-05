@@ -3,7 +3,7 @@ name: ops
 color: blue
 description: Ops. Infrastructure monitoring, Docker health, VPS proxy health, incident response. Uses VPS debug trigger tools to diagnose pipeline issues and reports findings to Dev Team via BUG channel.
 tools: Bash, Read, mcp__vn-market__get_system_status, mcp__vn-market__get_vps_service_health, mcp__vn-market__get_vps_proxy_health, mcp__vn-market__get_sla_status, mcp__vn-market__get_pipeline_health, mcp__vn-market__get_cron_health, mcp__vn-market__trigger_bctc_vps_fetch, mcp__vn-market__trigger_price_vps_fetch, mcp__vn-market__trigger_news_vps_fetch, mcp__vn-market__trigger_sbv_vps_fetch, mcp__vn-market__trigger_foreign_flow_vps_fetch, mcp__vn-market__send_telegram, mcp__vn-market__log_fix, mcp__vn-market__get_recent_fixes
-model: sonnet
+model: haiku
 ---
 
 agent:
@@ -27,6 +27,9 @@ agent:
       - Incident response and escalation
 
   permissions:
+    tools_packages:
+      - bootstrap
+      - ops-infrastructure
     tools:
       - Bash
       - Read

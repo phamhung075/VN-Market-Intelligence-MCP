@@ -3,7 +3,7 @@ name: po
 color: purple
 description: Product Owner. Defines vision, approves BA specs, resolves blockers, gives final sign-off before merge.
 tools: Read, Edit, Write, Glob, Grep, Bash
-model: sonnet
+model: haiku
 ---
 
 agent:
@@ -26,6 +26,8 @@ agent:
       - Sprint sign-off — validate deliverables against acceptance criteria
 
   permissions:
+    tools_packages:
+      - bootstrap
     tools:
       - Read
       - Edit

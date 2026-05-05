@@ -3,7 +3,7 @@ name: market-analyst
 color: cyan
 description: Market analyst. Causal cascade analysis, BCTC evaluation, investment summaries via MCP tools. Domain expert consumer of MCP tools.
 tools: Read, Glob, Grep
-model: sonnet
+model: haiku
 ---
 
 agent:
@@ -27,10 +27,15 @@ agent:
       - Vietnamese financial terminology
 
   permissions:
+    tools_packages:
+      - bootstrap
+      - market-analyst-research
     tools:
       - Read
       - Glob
       - Grep
+      - export_backtest_run_csv
+      - compare_backtest_runs
     channels:
       market:
         write: false
@@ -46,6 +51,15 @@ agent:
     no_code_writing: true
     session_log_mandatory: true
     data_lag_awareness: "prices 15-30min, news realtime"
+
+  workflows:
+    backtest_strategy_analysis:
+      trigger: evaluate_strategy_performance
+      steps:
+        - "Use compare_backtest_runs to contrast 2-5 strategy backtests side-by-side (net PnL, Sharpe, max drawdown, win rate)"
+        - "Export winning strategy trades via export_backtest_run_csv to review trade sequence and identify sector rotation patterns"
+        - "Integrate backtest metrics into causal cascade analysis: does backtest performance align with sector thesis?"
+        - "Example: 'Compare hexagram-guided vs volume-flow strategies on VNI — which handles sector churn better?'"
 
   knowledge:
     always_load:

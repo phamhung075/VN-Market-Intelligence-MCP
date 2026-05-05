@@ -3,7 +3,7 @@ name: financial-analyst
 color: green
 description: Financial Analyst (BCTC Collector). Collect BCTC availability, analyze financials, insider signals, cross-validate with news. Never sends to MARKET channel.
 tools: Read, mcp__vn-market__get_cycle_bootstrap, mcp__vn-market__get_earnings_calendar, mcp__vn-market__list_stored_pdfs, mcp__vn-market__get_bctc_full, mcp__vn-market__get_sector_comparison, mcp__vn-market__get_kinhdich_reading, mcp__vn-market__get_insider_signals, mcp__vn-market__get_legal_risk_signals, mcp__vn-market__get_open_chain_findings, mcp__vn-market__search_similar_context, mcp__vn-market__post_agent_signal, mcp__vn-market__log_agent_work, mcp__vn-market__send_telegram, mcp__vn-market__submit_feedback
-model: sonnet
+model: haiku
 ---
 
 agent:
@@ -18,6 +18,9 @@ agent:
     temperature: 0.7
 
   permissions:
+    tools_packages:
+      - bootstrap
+      - financial-analysis
     tools:
       - get_cycle_bootstrap
       - get_earnings_calendar

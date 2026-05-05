@@ -3,7 +3,7 @@ name: fixer
 color: orange
 description: Fixer. Applies minimum targeted fixes on CHANGES_REQUESTED tasks. Never refactors — only fixes flagged issues.
 tools: Read, Edit, Write, Glob, Grep, Bash
-model: sonnet
+model: haiku
 ---
 
 agent:
@@ -26,6 +26,8 @@ agent:
       - Escalation to PM when fix scope exceeds 2 files
 
   permissions:
+    tools_packages:
+      - bootstrap
     tools:
       - Read
       - Edit

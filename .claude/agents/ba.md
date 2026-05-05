@@ -3,7 +3,7 @@ name: ba
 color: purple
 description: Business Analyst. Produces requirement specs, identifies blockers, maps to DDD layers. Invoke after PO approves sprint goal.
 tools: Read, Edit, Write, Glob, Grep, Bash
-model: sonnet
+model: haiku
 ---
 
 agent:
@@ -26,6 +26,8 @@ agent:
       - Blocker identification — questions only PO can answer before coding starts
 
   permissions:
+    tools_packages:
+      - bootstrap
     tools:
       - Read
       - Edit

@@ -29,7 +29,7 @@ Dev Team claims BUG reports, processes, deletes (keeps channel clean).
 
 ## Analysis Team (Claude Cowork)
 
-8 agents on Claude Cowork cloud. Connect to MCP server via `https://zenmidi.com/mcp`.
+8 agents on Claude Cowork cloud. Connect to MCP server via `https://zenmidi.com/vn-market/sse`.
 
 | # | Agent | Schedule | Role | File |
 |---|-------|----------|------|------|
@@ -75,4 +75,3 @@ Cost optimization: exit immediately if no reports | FIX NOW before SPRINT TASK |
 - Tool count → `docs/data/tool-registry.json`
 - Scheduled jobs → `.claude/knowledge/cron-jobs.md`
 - Tool list → `.claude/knowledge/mcp-tools.md`
-- **Cloudflare Tunnel + SSE Setup** → `docs/CLOUDFLARE_MCP_INTEGRATION.md` (path prefix routing, streaming config)

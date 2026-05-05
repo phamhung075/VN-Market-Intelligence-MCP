@@ -3,7 +3,7 @@ name: idea-forge
 color: green
 description: Brainstorm, refine, develop ideas into actionable plans. Structured ideation with design thinking.
 tools: Read, Glob, Grep
-model: sonnet
+model: haiku
 ---
 
 agent:
@@ -26,6 +26,8 @@ agent:
       - Connection to existing VN Market Intelligence system (domain services, DDD fit, sprint implications)
 
   permissions:
+    tools_packages:
+      - bootstrap
     tools:
       - Read
       - Glob

@@ -1,0 +1,168 @@
+================================================================================
+                    CLOUDFLARE TUNNEL DOCUMENTATION
+                          FILE PATHS (ABSOLUTE)
+================================================================================
+
+PROJECT ROOT DIRECTORY:
+/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP
+
+CONFIGURATION FILES (Referenced):
+─────────────────────────────────────────────────────────────────────────────
+~/.cloudflared/config.yml
+  └─ Your Cloudflare Tunnel routes configuration
+
+~/.cloudflared/vn-market-mcp.json
+  └─ Tunnel credentials (do not edit)
+
+/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/docker-compose.yml
+  └─ Docker service definitions (cloudflared service listed)
+
+/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/nginx.conf
+  └─ Nginx reverse proxy configuration (path rewriting rules)
+
+DOCUMENTATION FILES (Created):
+─────────────────────────────────────────────────────────────────────────────
+
+1. /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/README_TUNNEL_CONFIGURATION.md
+   Master reference document with complete audit report
+
+2. /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/TUNNEL_QUICK_REFERENCE.md
+   One-page cheat sheet for quick lookup and troubleshooting
+
+3. /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/TUNNEL_VISUAL_SUMMARY.txt
+   Visual summary with ASCII boxes and formatting
+
+4. /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/TUNNEL_CONFIG_AUDIT.md
+   Detailed technical audit report
+
+5. /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/TUNNEL_CONFIG_SUMMARY.md
+   Traffic flow guide and architecture explanation
+
+6. /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/TUNNEL_CLOUDFLARE_DASHBOARD_GUIDE.md
+   Step-by-step Cloudflare dashboard navigation guide
+
+7. /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/TUNNEL_DOCS_INDEX.md
+   Navigation guide to help find the right document
+
+8. /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/TUNNEL_AUDIT_COMPLETE.txt
+   Executive summary and audit results
+
+9. /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/TUNNEL_FILES_MANIFEST.txt
+   Description of all documentation files
+
+10. /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/TUNNEL_FILE_PATHS.txt
+    This file - absolute paths for all documentation
+
+SHORTHAND FOR QUICK REFERENCE:
+─────────────────────────────────────────────────────────────────────────────
+
+PROJECT_ROOT=/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP
+
+Quick access in terminal:
+
+cd "$PROJECT_ROOT"
+
+View config file:
+cat ~/.cloudflared/config.yml
+
+View docker-compose (cloudflared service):
+cat docker-compose.yml | grep -A 10 "cloudflared:"
+
+View nginx routing:
+cat nginx.conf | grep -A 50 "Cloudflare routing"
+
+View documentation files:
+ls -la TUNNEL_*.{md,txt} README_TUNNEL*.md
+
+Read specific document (macOS/Linux):
+open README_TUNNEL_CONFIGURATION.md
+cat TUNNEL_QUICK_REFERENCE.md
+less TUNNEL_CONFIG_AUDIT.md
+
+TESTING COMMANDS WITH ABSOLUTE PATHS:
+─────────────────────────────────────────────────────────────────────────────
+
+Check tunnel status:
+docker-compose -f /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/docker-compose.yml ps | grep cloudflared
+
+View tunnel logs:
+docker-compose -f /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/docker-compose.yml logs cloudflared
+
+Read Cloudflare config:
+cat ~/.cloudflared/config.yml
+
+Check credentials:
+ls -la ~/.cloudflared/
+
+================================================================================
+                         QUICK NAVIGATION
+================================================================================
+
+START HERE:
+  cat /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/TUNNEL_VISUAL_SUMMARY.txt
+
+FOR QUICK REFERENCE:
+  cat /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/TUNNEL_QUICK_REFERENCE.md
+
+FOR COMPLETE DETAILS:
+  cat /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/README_TUNNEL_CONFIGURATION.md
+
+FOR NAVIGATION HELP:
+  cat /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/TUNNEL_DOCS_INDEX.md
+
+FOR CLOUDFLARE DASHBOARD:
+  cat /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/TUNNEL_CLOUDFLARE_DASHBOARD_GUIDE.md
+
+================================================================================
+                          ENVIRONMENT INFO
+================================================================================
+
+Project Location:
+  /Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP
+
+Home Directory:
+  /Users/admin
+
+Cloudflare Config Directory:
+  /Users/admin/.cloudflared
+
+Cloudflare Tunnel Name:
+  vn-market-mcp
+
+Domain:
+  zenmidi.com
+
+================================================================================
+                           FILE SUMMARY
+================================================================================
+
+Total Documentation Files: 10
+Total Lines: ~1,500+
+Total Size: ~45 KB
+Total Coverage: All aspects of Cloudflare Tunnel configuration
+
+All files are plain text (.txt) or Markdown (.md) - fully portable and
+easy to read in any text editor or terminal.
+
+================================================================================
+                        RECOMMENDED READING
+================================================================================
+
+First Read (5 minutes):
+  1. TUNNEL_VISUAL_SUMMARY.txt
+
+Second Read (5 minutes):
+  2. TUNNEL_QUICK_REFERENCE.md
+
+Third Read (15 minutes):
+  3. README_TUNNEL_CONFIGURATION.md
+
+Total Time: 25 minutes for complete understanding
+
+================================================================================
+
+Generated: 2026-05-05
+Status: All documentation complete and accessible
+Next: Read TUNNEL_VISUAL_SUMMARY.txt to get started
+
+================================================================================

@@ -3,7 +3,7 @@ name: news-scout
 color: yellow
 description: News Scout. Fetch VN/global market news, analyze sentiment, run impact chains, detect legal risks and crisis signals. Never sends to MARKET channel.
 tools: Read, mcp__vn-market__get_cycle_bootstrap, mcp__vn-market__fetch_and_analyze, mcp__vn-market__get_watchlist, mcp__vn-market__run_impact_chain, mcp__vn-market__search_similar_context, mcp__vn-market__post_agent_signal, mcp__vn-market__log_agent_work, mcp__vn-market__send_telegram, mcp__vn-market__submit_feedback
-model: sonnet
+model: haiku
 ---
 
 agent:
@@ -18,6 +18,9 @@ agent:
     temperature: 0.7
 
   permissions:
+    tools_packages:
+      - bootstrap
+      - news-analysis
     tools:
       - get_cycle_bootstrap
       - fetch_and_analyze

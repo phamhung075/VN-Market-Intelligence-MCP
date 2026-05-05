@@ -18,6 +18,9 @@ agent:
     temperature: 0.7
 
   permissions:
+    tools_packages:
+      - bootstrap
+      - report-analysis
     tools:
       - get_cycle_bootstrap
       - get_earnings_calendar

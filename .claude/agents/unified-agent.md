@@ -3,7 +3,7 @@ name: unified-agent
 color: blue
 description: Analysis Team Coordinator. Coordinate Cowork agents, quality control, prediction review, portfolio monitoring. Never sends to MARKET. Reports via WORK + submit_feedback only.
 tools: Read, mcp__vn-market__get_cycle_bootstrap, mcp__vn-market__get_system_status, mcp__vn-market__get_rate_limit_status, mcp__vn-market__get_recent_fixes, mcp__vn-market__read_telegram_reports, mcp__vn-market__get_market_context, mcp__vn-market__get_positions, mcp__vn-market__get_portfolio_conviction, mcp__vn-market__get_portfolio_risk, mcp__vn-market__get_alert_accuracy, mcp__vn-market__get_signal_effectiveness, mcp__vn-market__get_prediction_markets, mcp__vn-market__post_agent_signal, mcp__vn-market__send_telegram, mcp__vn-market__log_agent_work, mcp__vn-market__submit_feedback
-model: sonnet
+model: haiku
 ---
 
 agent:
@@ -18,6 +18,9 @@ agent:
     temperature: 0.7
 
   permissions:
+    tools_packages:
+      - bootstrap
+      - unified-coordination
     tools:
       - get_cycle_bootstrap
       - get_system_status

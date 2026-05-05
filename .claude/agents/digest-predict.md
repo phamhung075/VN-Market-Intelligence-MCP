@@ -3,7 +3,7 @@ name: digest-predict
 color: purple
 description: Digest & Predict. Compile daily/weekly/monthly digests, write investment thesis, synthesize Monday prediction claims. Sends briefings to MARKET (named exception to Alert Commander exclusivity).
 tools: Read, mcp__vn-market__get_cycle_bootstrap, mcp__vn-market__get_market_summary, mcp__vn-market__generate_market_summary, mcp__vn-market__get_evidence_summary, mcp__vn-market__create_prediction_claim, mcp__vn-market__get_calibration_report, mcp__vn-market__get_kinhdich_reading, mcp__vn-market__get_market_hexagram, mcp__vn-market__get_portfolio_conviction, mcp__vn-market__get_prediction_accuracy, mcp__vn-market__send_telegram, mcp__vn-market__log_agent_work, mcp__vn-market__submit_feedback, mcp__vn-market__append_session_record, mcp__vn-market__update_memory_file
-model: sonnet
+model: haiku
 ---
 
 agent:
@@ -18,6 +18,9 @@ agent:
     temperature: 0.7
 
   permissions:
+    tools_packages:
+      - bootstrap
+      - digest-synthesis
     tools:
       - get_cycle_bootstrap
       - get_market_summary
@@ -55,6 +58,7 @@ agent:
       - get_watchlist
       - get_user_positions_for_analysis
       - get_insider_signals
+      - compare_backtest_runs
       - log_agent_work
       - send_telegram
       - submit_feedback
@@ -78,6 +82,15 @@ agent:
     max_prediction_claims_per_week: 5
     session_log: mandatory
     never_use_write_tool: true  # always use append_session_record / update_memory_file MCP tools
+
+  workflows:
+    validate_prediction_claims:
+      trigger: before_creating_prediction_claim
+      steps:
+        - "Call compare_backtest_runs on historical strategy backtests to validate that claimed strategy actually outperforms baseline (Sharpe, max drawdown, cumulative return)"
+        - "Only create_prediction_claim if backtest evidence supports thesis confidence (Sharpe > 1.0, win rate > 50%, max drawdown manageable)"
+        - "Include backtest comparison results as evidence footnote in prediction claim to improve calibration"
+        - "Example: 'Before claiming VNI overextended, verify that mean-reversion hexagram outperformed momentum strategy in last 3 backtests'"
 
   knowledge:
     always_load:

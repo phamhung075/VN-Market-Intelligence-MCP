@@ -1,30 +1,34 @@
 # BA — Notebook
 
-**Last updated:** 2026-05-03 | **Sprint:** 1844
+**Last updated:** 2026-05-03 | **Sprint:** 1846
 
 ## Current state
 
-Sprint 1844 spec complete. Handed off to Architect. ARCH-1844 in Backlog.
+Sprint 1846 spec complete. Handed off to Architect. ARCH-1846 in Backlog.
 
 ## Last session summary
 
-Wrote REQ_1844.md for Sprint 1844. Three deliverables:
-1. get_backtest_runs MCP tool (#124) — list runs by strategy (or all strategies)
-2. get_backtest_run MCP tool (#125) — retrieve single run by UUID with full resultJson
-3. IBacktestResultRepository.getRunById() — already fully implemented in both interface
-   and SQLite adapter from Sprint 1842b. No code change needed for this deliverable.
+Wrote REQ_1846.md for Sprint 1846. Four deliverables:
+1. delete_backtest_run MCP tool (#123) — purge a stored run by UUID
+2. export_backtest_run_csv MCP tool (#124) — convert trades[] from resultJson to CSV
+3. compare_backtest_runs MCP tool (#125) — side-by-side metrics for 2–5 run IDs
+4. IBacktestResultRepository.deleteRun(id): boolean — new interface method + SQLite impl
 
-Key finding: getRunsByStrategy() requires a strategy string — there is no "list all"
-path in the existing interface. FR-1-2 (list all strategies) requires a new getAllRuns()
-method. Recommended Option A: explicit getAllRuns(limit) on the interface. Flagged as
-BLK-2.
+Key finding: equityCurve is computed locally in backtestEngine.ts (number[]) but is NOT
+serialised into BacktestReport or resultJson. This blocks includeEquityCurve=true in
+export_backtest_run_csv. Flagged as BLK-1 with 3 options for Architect.
 
-Tool slot gap: last registered tool is #120. Sprint goal says #124/#125 but slots
-121-123 are unregistered. Flagged as BLK-1 for Architect to resolve.
+BacktestReport.trades confirmed fields: ticker, entryDate, exitDate, entryPrice,
+exitPrice, direction, returnPct, confidence, positionWeight.
+holdDays is not stored — must be derived from exitDate minus entryDate in ms / 86_400_000.
 
-backtestResultRepo.ts getRunById() implementation confirmed correct: .get(id), null on
-miss, catch block returns null (not throw). The tool layer must convert null to the
-not-found error content block — repo itself does not throw.
+deleteRun() SQLite pattern: DELETE WHERE id=?, check stmt.run().changes >= 1.
+Consistent with existing error-return-null pattern (catch returns false, not throw).
+
+backtestTools.ts currently ~226 lines (tools #120, #121, #122). Sprint 1846 adds 3 more.
+File split decision deferred to Architect (BLK-2).
+
+Tool slots confirmed free: #123, #124, #125.
 
 ## Known patterns / preferences
 
@@ -40,3 +44,5 @@ not-found error content block — repo itself does not throw.
   as null not undefined
 - backtestResultRepo.ts getRunById() catch block returns null (not throw) — tool layer
   must handle null explicitly
+- deleteRun() should follow same pattern: catch returns false (not throw)
+- equityCurve is NOT in resultJson — recompute from trades if needed (BLK-1 Option C)

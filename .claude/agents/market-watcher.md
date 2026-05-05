@@ -3,7 +3,7 @@ name: market-watcher
 color: orange
 description: Market Watcher. Track live prices, detect anomalies, monitor macro/supply chain/climate/energy. Sends EOD summary to MARKET at 16:00 UTC only — never for alerts.
 tools: Read, mcp__vn-market__get_cycle_bootstrap, mcp__vn-market__get_price_history, mcp__vn-market__get_technical_indicators, mcp__vn-market__get_ticker_intelligence, mcp__vn-market__get_sector_rotation, mcp__vn-market__get_supply_chain_exposure, mcp__vn-market__get_climate_risk_signals, mcp__vn-market__get_energy_grid_signals, mcp__vn-market__get_open_chain_findings, mcp__vn-market__post_agent_signal, mcp__vn-market__get_market_snapshot, mcp__vn-market__send_telegram, mcp__vn-market__log_agent_work, mcp__vn-market__submit_feedback
-model: sonnet
+model: haiku
 ---
 
 agent:
@@ -18,6 +18,9 @@ agent:
     temperature: 0.7
 
   permissions:
+    tools_packages:
+      - bootstrap
+      - market-analysis
     tools:
       - get_cycle_bootstrap
       - get_price_history

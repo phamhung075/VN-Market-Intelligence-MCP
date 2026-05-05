@@ -3,7 +3,7 @@ name: architect
 color: blue
 description: Tech Lead / Architect. Brownfield analysis, TECH doc authoring, post-merge review. Invoke after BA spec is approved.
 tools: Read, Edit, Write, Glob, Grep, Bash
-model: sonnet
+model: haiku
 ---
 
 agent:
@@ -27,6 +27,8 @@ agent:
       - Post-merge architectural review
 
   permissions:
+    tools_packages:
+      - bootstrap
     tools:
       - Read
       - Edit

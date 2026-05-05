@@ -108,15 +108,7 @@ docker-compose logs -f      # Live logs
 docker-compose logs mcp-server --tail 50  # MCP logs only
 ```
 
-### Step 4: Cloudflare Tunnel Configuration
-
-The Cloudflare Tunnel runs as a macOS daemon and routes `/vn-market/*` requests to localhost:3000.
-
-**Public URL:** `https://zenmidi.com/vn-market/sse`
-
-Configuration is stored in `~/.cloudflared/config.yml`. For detailed setup including path prefix handling and streaming timeouts, see: **`docs/CLOUDFLARE_MCP_INTEGRATION.md`**
-
-### Step 5: Create 7 Analysis Agents in Claude Cowork
+### Step 4: Create 7 Analysis Agents in Claude Cowork
 
 MCP connector URL: `https://zenmidi.com/vn-market/sse`
 
@@ -132,7 +124,7 @@ MCP connector URL: `https://zenmidi.com/vn-market/sse`
 
 **One-time setup** (only if watchlist is empty): create an agent with `00-setup-watchlist.md`, run once, then delete it.
 
-### Step 6: Set Up the Dev Team Cron
+### Step 5: Set Up the Dev Team Cron
 
 The hourly auto-fix loop runs locally via Claude Code CLI:
 
@@ -175,9 +167,8 @@ You don't need to do anything daily. The system runs autonomously:
 | **Service flapping after deploy** | `docker-compose logs mcp-server --tail 50` to see errors, fix, then restart |
 | **Database locked (WAL bloat)** | `rm -f data/market.db-wal data/market.db-shm` then restart Docker |
 | **Port conflict (e.g., 5000 in use)** | `lsof -i :5000` to find process; docker-compose.yml remaps to 5010 |
-| **Tunnel down** | `cloudflared tunnel run --token ...` |
 | **Agent file updated by Dev Team** | You'll get a WORK Channel message. Copy new `.md` content into Cowork. |
-| **Want to ask a question** | Use Claude Desktop (connected to MCP server via localhost:3000) |
+| **Want to ask a question** | Use Claude Desktop (connected to MCP server) |
 | **Want to add a stock** | Tell Claude Desktop: "Add HPG to watchlist" |
 | **Want to change watchlist** | Edit `mcp.config.json` -> `market.watchlist`, restart Docker |
 | **Bad fix by Dev Team** | `git log --oneline -5` then `git revert <commit>` then restart Docker |

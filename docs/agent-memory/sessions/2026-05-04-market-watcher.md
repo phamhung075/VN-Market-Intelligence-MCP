@@ -283,3 +283,29 @@
 - **Agent signals in context**: HPG leverage (15B/day interest) + foreign net-sell 14,000B VND divergence (both expiring 03:07 UTC, read)
 - **Next cycle**: 10:00 UTC (off-hours, 30-min interval)
 
+
+---
+
+### Cycle (22:07 UTC) — off-hours scheduled run #3 — ABORTED, MCP tools not connected
+
+**Status:** BLOCKED — bootstrap could not run. No signals posted, no chains touched.
+
+**What I tried:**
+- Scheduled task `vn-market-watcher-offhours` fired at 22:07 UTC (env reported 2026-05-05 local).
+- Followed `.claude/flows/market-watcher/cycle.md` step 0 → `get_cycle_bootstrap(agent_name="market-watcher")`.
+- The tool is not present in this session's tool surface. Searched the deferred-tool index for `get_cycle_bootstrap`, `get_macro_snapshot`, `get_price_history`, `post_agent_signal`, `send_telegram`, `zenmidi`, `vn-market`, `ticker`, `price` — zero matches.
+- Verified the MCP endpoint is alive: `GET https://zenmidi.com/mcp` → HTTP 406 with the expected JSON-RPC error `"Client must accept text/event-stream"`. Server is up; it is simply not wired into this scheduled session as a connector.
+
+**Why I stopped:**
+Per `cycle-bootstrap/SKILL.md` — *"Never proceed with a degraded bootstrap — stale context produces worse signals than silence."* No fabricated regime, prices, or anomalies.
+
+**Why no BUG telegram was sent:**
+The fail-loud protocol calls `send_telegram(channel="bug")`. That tool is also absent from this session — there was no automated escalation path available to me.
+
+**Recommended follow-up (for `ops` next interactive session):**
+1. The cowork scheduled-task runner needs the `https://zenmidi.com/mcp` connector attached to the scheduler profile, not just to interactive sessions. If only interactive sessions have the connector, every off-hours cycle is silently no-opping like this one.
+2. Confirm whether the 18:07 UTC cycle on 2026-05-04 ran from the scheduler or from an interactive session. If interactive, that explains why it succeeded and this run did not.
+3. Once the connector is attached at the scheduler level, manually backfill the missed 22:07 UTC window.
+4. Consider an out-of-band failure path for the watcher (e.g. a webhook-based bug channel) that does not depend on the same MCP being healthy — today the watcher cannot report its own breakage.
+
+**Next scheduled cycle:** ~02:07 UTC 2026-05-05 (4h cadence). Will likely fail identically until the connector is wired into the scheduler.

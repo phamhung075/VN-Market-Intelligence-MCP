@@ -6,26 +6,13 @@ MCP server (TypeScript/Bun) — real-time VN stock intelligence (HOSE/HNX/UPCOM)
 
 ## Prerequisites — Must Be True Before Any Agent Runs
 
-### 1. Pipeline Resume — Check Before Asking User
+### 1. Pipeline Resume — Check `docs/pipeline-state.json`
 
-**Step 1 — Read `docs/pipeline-state.json`:**
+- If `status == "in_progress"` AND `nextAgent` present AND `updatedAt < 24h` → spawn `nextAgent` immediately. No user prompt.
+- If `status == "in_progress"` AND `updatedAt >= 24h` → stale crash, reset to `"idle"`.
+- If `"idle"` or missing → fall through to session gate.
 
-- If the file exists AND `status == "in_progress"` AND `nextAgent` is present AND `updatedAt` is less than 24 hours ago → **immediately spawn `nextAgent` with `nextPrompt` as the full prompt. Do NOT ask the user anything. Do NOT check TASKS.md.**
-- If the file exists AND `status == "in_progress"` AND `updatedAt` is more than 24 hours ago → treat as stale crash. Write `status: "idle"` to the file. Fall through to Step 2.
-- If the file does not exist, OR `status == "idle"` → fall through to Step 2.
-
-**Step 2 — User Session Gate (existing logic):**
-
-PO cannot self-initiate if `docs/TASKS.md` is empty AND no Telegram reports exist.
-In that case: **ask the user for a session goal** before spawning PO.
-
-```
-User provides: goal / priority / context
-→ Main terminal passes to PO as session prompt
-→ PO uses it to initiate sprint
-```
-
-If PO returns `PIPELINE: idle` (nothing to do) → stop, ask user what to work on next.
+**Session Gate:** PO cannot self-initiate if TASKS.md empty AND no Telegram reports. Ask user for goal.
 
 ### 2. BCTC Pipeline Must Be Operational for Financial Analysis
 
@@ -43,37 +30,6 @@ VPS (Vietnam — Vinahost)
 - `ops` → `get_vps_service_health()` — VPS reachable and fetching
 - `ops` → `list_stored_pdfs()` — PDFs present for target tickers
 - If broken → spawn `ops` to fix VPS pipeline before analysis proceeds
-
----
-
-## Lazy-Load — Memory & Tools on Demand Only
-
-**Do NOT load all context on init.** Token overhead of full system spec is ~81k (40% of budget). Instead:
-
-### Memory Files (Indexed in MEMORY.md)
-
-- **Load only:** MEMORY.md index (2.4k tokens) — pointers to relevant memories.
-- **Defer loading:** Individual memory files until explicitly accessed or clearly relevant to the task.
-- **Pattern:** When user references a prior decision or project context, read the specific memory file by name, do not preload all 30+ memories.
-
-### MCP Tools (130+ tools available)
-
-- **Load only:** Agent-specific tool specs when agent is spawned (e.g., `po` gets PO routing, `ops` gets infrastructure diagnostics).
-- **Defer loading:** Full MCP tool catalog (46.5k tokens) until a specific tool is needed.
-- **Pattern:** If agent doesn't use a tool set (e.g., `po` doesn't need `get_vps_service_health`), don't inject it.
-
-### Agent Docs (22 custom agents)
-
-- **Load only:** Agent docs for agents in active rotation (current sprint agents + next expected agent).
-- **Defer loading:** Agent metadata until needed for routing decisions.
-
-### CLAUDE.md Files (Nested instructions)
-
-- **Root:** This file (mandatory at init).
-- **Global:** `~/.claude/CLAUDE.md` (injected by harness, mandatory).
-- **Project nested:** `CLAUDE.md` (this file) + skill-specific CLAUDE.md files lazy-load on `/skill` invocation only.
-
-**Goal:** Keep working context under 100k tokens so context margin stays above 20%.
 
 ---
 
@@ -107,3 +63,9 @@ Full protocol → `.claude/knowledge/agent-chaining-protocol.md`
 ## Interdiction — Never Ask the User to Act
 
 **Never ask the user to run commands, restart services, SSH to servers, or perform any technical action.** Always spawn the appropriate agent instead (`ops`, `developer`, `qa`, etc.). The user is configuration admin only — they set goals, they do not execute tasks. If an action requires capabilities beyond available MCP tools, spawn `ops` to exhaust all automated options first and report the precise blocker, not a request for the user to intervene.
+
+---
+
+## Lazy-Load — Memory & Tools on Demand
+
+Load context only as needed: MEMORY.md index (not all 30+ memory files), agent-specific tool specs (not full 130+ catalog), agent docs (active rotation only). Full rules → `.claude/knowledge/lazy-load-protocol.md`. **Goal: keep working context under 100k tokens.**

@@ -3,7 +3,7 @@ name: pm
 color: yellow
 description: Project Manager. Breaks down Architect designs into atomic tasks, maintains docs/TASKS.md as SSOT, enforces WIP limit, detects blockers.
 tools: Read, Edit, Write, Glob, Grep, Bash
-model: sonnet
+model: haiku
 ---
 
 agent:
@@ -27,6 +27,8 @@ agent:
       - Blocker escalation — immediately, not after delay
 
   permissions:
+    tools_packages:
+      - bootstrap
     tools:
       - Read
       - Edit
@@ -34,6 +36,7 @@ agent:
       - Glob
       - Grep
       - Bash
+      - compare_backtest_runs
     channels:
       market:
         write: false
@@ -50,9 +53,22 @@ agent:
     handoff_file_mandatory: true
     escalate_blockers_immediately: true
 
+  workflows:
+    sprint_strategy_retrospective:
+      trigger: end_of_sprint_review
+      steps:
+        - "Use compare_backtest_runs to identify which strategy/algorithm variant performed best across the sprint's completed tasks"
+        - "Extract key metrics (Sharpe ratio, win rate, max drawdown) and feed into sprint retrospective: Did code improvements translate to better backtest performance?"
+        - "Track month-over-month backtest performance trends to validate that architectural refactors are delivering measurable strategy improvements"
+        - "Example: 'Compare Q2 hexagram vs Q1 hexagram Sharpe ratios — did DDD refactor improve signal quality or introduce latency?'"
+
   knowledge:
     always_load:
       - path: .claude/knowledge/dev-standards.md
+    lazy_load:
+      - path: .claude/tools-package/bootstrap/index.md
+        trigger: startup
+        fail_loud: false
         fail_loud: true
       - path: .claude/knowledge/fail-loud-protocol.md
         fail_loud: true

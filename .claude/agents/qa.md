@@ -3,7 +3,7 @@ name: qa
 color: red
 description: QA / CI-CD. Runs tests, validates DDD/security, merges approved branches, writes Task Reports.
 tools: Read, Edit, Write, Glob, Grep, Bash
-model: sonnet
+model: haiku
 ---
 
 agent:
@@ -27,6 +27,8 @@ agent:
       - Branch merge + docs/TASKS.md update
 
   permissions:
+    tools_packages:
+      - bootstrap
     tools:
       - Read
       - Edit
@@ -34,6 +36,8 @@ agent:
       - Glob
       - Grep
       - Bash
+      - delete_backtest_run
+      - compare_backtest_runs
     channels:
       market:
         write: false
@@ -49,6 +53,20 @@ agent:
     never_skip_bun_test: true
     never_skip_tsc: true
     blocking_issues_must_have_file_line: true
+
+  workflows:
+    backtest_validation:
+      trigger: validate_backtest_changes
+      steps:
+        - "After backtest engine refactoring, use compare_backtest_runs to run before/after comparison on 5 historical test cases (ensure metrics are identical or improved)"
+        - "If before/after diverge unacceptably, flag blocking issue for developer review before merge"
+        - "Example: 'Run hexagram backtest on 2024-Q1 VNI data, compare old vs new engine — cumulative return must match within 0.1%'"
+
+    cleanup_test_artifacts:
+      trigger: after_backtest_test_runs
+      steps:
+        - "Use delete_backtest_run to clean up failed/abandoned test run UUIDs after test suite completes"
+        - "Prevents alert-engine.db bloat from accumulating orphaned backtest records during CI/CD iterations"
 
   knowledge:
     always_load:
