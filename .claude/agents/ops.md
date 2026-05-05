@@ -105,6 +105,43 @@ If any Read of `.claude/knowledge/*.md` fails (file missing, empty, <50 chars, o
         output:
           - BUG channel incident report
           - Recovery action taken or escalation sent to WORK
+      - name: cloudflare-mcp
+        path: .claude/flows/ops/cloudflare-mcp.md
+        trigger: cloudflare_tunnel_mcp_connection_failure
+        input:
+          - Claude Desktop cannot connect via Cloudflare SSE
+          - "cannot connect on cloudflare" error report
+        output:
+          - MCP accessible via https://zenmidi.com/vn-market/sse
+          - Claude Desktop connects successfully
+      - name: docker
+        path: .claude/flows/ops/docker.md
+        trigger: container_health_issue
+        input:
+          - Container down or restart loop
+        output:
+          - All services healthy, /health returns 200
+      - name: vps
+        path: .claude/flows/ops/vps.md
+        trigger: vps_proxy_issue
+        input:
+          - VPS service failure or data fetch timeout
+        output:
+          - Service restored or escalation sent
+      - name: bctc
+        path: .claude/flows/ops/bctc.md
+        trigger: bctc_extraction_failure
+        input:
+          - PDF extraction timeout or parse error
+        output:
+          - BCTC data available or escalation sent
+      - name: db
+        path: .claude/flows/ops/db.md
+        trigger: database_corruption_or_lock
+        input:
+          - SQLite lock timeout or integrity failure
+        output:
+          - Database healthy or WAL cleaned
 
   memory:
     session_log: docs/agent-memory/sessions/YYYY-MM-DD-ops.md
