@@ -7,6 +7,9 @@
  *
  * This module is a thin wrapper; the actual SSE protocol framing is
  * handled by @modelcontextprotocol/sdk SSEServerTransport.
+ *
+ * HEARTBEAT FIX (2026-05-05): Added keep-alive heartbeat messages every 30s
+ * to prevent connection timeouts through proxies/Cloudflare.
  */
 
 import type { IncomingMessage, ServerResponse } from "node:http";
@@ -24,6 +27,8 @@ export type McpServerFactory = () => McpServer;
  */
 export class SseSessionManager {
   private readonly sessions = new Map<string, SSEServerTransport>();
+  private readonly heartbeatIntervals = new Map<string, ReturnType<typeof setInterval>>();
+  private readonly HEARTBEAT_INTERVAL = 30_000; // 30 seconds
 
   constructor(
     private readonly createServer: McpServerFactory,
@@ -41,18 +46,40 @@ export class SseSessionManager {
     this.log.info("[SseSessionManager] New SSE connection");
 
     const transport = new SSEServerTransport("/messages", res);
+    const sessionId = transport.sessionId;
 
-    this.sessions.set(transport.sessionId, transport);
-    this.log.debug("[SseSessionManager] Session registered", {
-      sessionId: transport.sessionId,
+    this.sessions.set(sessionId, transport);
+
+    // Start heartbeat to keep connection alive through proxies
+    this.log.info("[SseSessionManager] Setting up heartbeat", {
+      sessionId,
+      intervalMs: this.HEARTBEAT_INTERVAL,
     });
+    
+    const heartbeatInterval = setInterval(() => {
+      try {
+        // Send comment-only frame (ignored by clients but keeps connection alive)
+        res.write(": keep-alive\n\n");
+      } catch (err) {
+        this.log.info("[SseSessionManager] Heartbeat write failed — client disconnected", {
+          sessionId,
+          error: err instanceof Error ? err.message : String(err),
+        });
+        clearInterval(heartbeatInterval);
+      }
+    }, this.HEARTBEAT_INTERVAL);
+
+    this.heartbeatIntervals.set(sessionId, heartbeatInterval);
 
     // Clean up when the client disconnects
     res.on("close", () => {
-      this.sessions.delete(transport.sessionId);
-      this.log.debug("[SseSessionManager] Session removed", {
-        sessionId: transport.sessionId,
-      });
+      this.sessions.delete(sessionId);
+      const interval = this.heartbeatIntervals.get(sessionId);
+      if (interval) {
+        clearInterval(interval);
+        this.heartbeatIntervals.delete(sessionId);
+      }
+      this.log.info("[SseSessionManager] Session closed", { sessionId });
     });
 
     // Each session gets its own McpServer instance
